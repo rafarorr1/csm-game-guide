@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create:*)",
+      "Bash(export PATH=\"$HOME/local/node/bin:$PATH\")",
+      "Bash(npx create-vite@latest . --template react)",
+      "Bash(curl -fsSL https://nodejs.org/dist/v22.14.0/node-v22.14.0-darwin-arm64.tar.gz -o /tmp/node22.tar.gz)",
+      "Bash(rm -rf ~/local/node)",
+      "Bash(mkdir -p ~/local/node)",
+      "Bash(tar -xzf /tmp/node22.tar.gz -C ~/local/node --strip-components=1)",
+      "Bash(~/local/node/bin/node --version)",
+      "Bash(npx -y create-vite@latest /Users/rafaelrosales/Documents/AppW40k --template react)",
+      "Bash(npm init:*)",
+      "Bash(npm install:*)",
+      "Read(//opt/homebrew/bin/**)",
+      "Bash(command -v fnm nvm)",
+      "Bash(export PATH=\"/Users/rafaelrosales/local/node/bin:$PATH\")",
+      "Bash(npm run:*)",
+      "Bash(npx netlify-cli:*)",
+      "Bash(npx surge:*)",
+      "Bash(export PATH=\"/opt/homebrew/bin:/usr/local/bin:$PATH\")"
+    ]
+  }
+}
