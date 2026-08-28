@@ -94,7 +94,10 @@ async function jugarTutorial(lid, limite=4000){
   await startTutorial(lid);
   await sleep(400);
   TUT.rescates = [];
-  let ultimo=-1, quieto=0, tope=0;
+  // "Atascado" no es "el paso no cambia": ahora un paso puede esperarte
+  // legítimamente dos o tres turnos (te pide una carta que aún no puedes
+  // pagar). Sólo cuenta como atasco si TAMPOCO avanza la partida.
+  let ultimo=-1, ultimoTurno=-1, quieto=0, tope=0;
 
   for(let k=0;k<limite;k++){
     await sleep(45);
@@ -102,7 +105,7 @@ async function jugarTutorial(lid, limite=4000){
     const i = parseInt($1('#tutStep').textContent) - 1;
     if(i+1 > tope) tope = i+1;
     const permiso = (TUT_STEPS[i]||{}).allow || {};
-    if(i!==ultimo){ ultimo=i; quieto=0; }
+    if(i!==ultimo || T.G.turnNo!==ultimoTurno){ ultimo=i; ultimoTurno=T.G.turnNo; quieto=0; }
     else if(++quieto > 600) return {tope, fin:'atascado en '+(i+1)+': '+
       $1('#tutBody').textContent.replace(/\s+/g,' ').slice(0,60)};
 
