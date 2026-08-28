@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Estudio de cartas · Caoz Con Todo TCG</title>
+<!--
+  ============================================================================
+   ESTUDIO DE CARTAS
+  ----------------------------------------------------------------------------
+   Para ver las 88 cartas y los 5 Líderes con sus ilustraciones puestas, antes
+   de mandarlas al juego.
+
+   La idea que lo mantiene honesto: NO copia nada del juego. Carga index.html
+   en un iframe oculto y saca de ahí la base de cartas, la función que dibuja
+   una carta y su CSS. Lo que ves aquí es literalmente lo que verás jugando,
+   y si mañana cambia el diseño de las cartas, esto cambia solo.
+
+   El CSS del juego va dentro de un shadow root para que sus reglas globales
+   (body, tipografías, el tapete) no se coman la interfaz de este estudio.
+
+   Las imágenes se guardan en IndexedDB, así que siguen ahí cuando vuelves.
+   Nada sale de tu ordenador.
+
+   Necesita servidor (el iframe y el fetch no funcionan por file://):
+     python3 -m http.server 8745 --directory caoz_tcg
+   y luego  http://localhost:8745/estudio.html
+  ============================================================================
+-->
+<style>
+:root{
+  --fondo:#120e1c; --panel:#1b1430; --panel2:#241a3f; --linea:#3a2f55;
+  --texto:#e9e3f7; --tenue:#9b8fba; --oro:#f0c674; --verde:#54d18a; --rojo:#e0575b;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--texto);
+  font:14px/1.5 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif}
+
+/* ---------- barra superior ---------- */
+header{position:sticky;top:0;z-index:50;background:rgba(18,14,28,.96);
+  border-bottom:1px solid var(--linea);backdrop-filter:blur(8px)}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;padding:10px 16px}
+h1{font-size:16px;margin:0;color:var(--oro);white-space:nowrap}
+h1 small{color:var(--tenue);font-weight:400;font-size:12px;display:block}
+input[type=search],select{background:var(--panel);color:var(--texto);
+  border:1px solid var(--linea);border-radius:7px;padding:7px 10px;font-size:13px}
+input[type=search]{min-width:190px}
+.btn{background:var(--panel2);color:var(--texto);border:1px solid var(--linea);
+  border-radius:7px;padding:7px 12px;font-size:13px;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--oro)}
+.btn.oro{background:linear-gradient(180deg,#6b5220,#4a3714);border-color:var(--oro);color:#ffeab8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.crece{flex:1}
+.marcador{font-size:12px;color:var(--tenue);white-space:nowrap}
+.marcador b{color:var(--verde);font-size:14px}
+
+/* ---------- rejilla ---------- */
+main{padding:16px}
+.aviso{background:var(--panel);border:1px solid var(--linea);border-left:3px solid var(--oro);
+  border-radius:8px;padding:12px 14px;margin:0 0 14px;font-size:13px;color:#d6cceb}
+.aviso b{color:var(--oro)}
+.aviso code{background:#0c0916;padding:1px 5px;border-radius:4px;font-size:12px}
+
+/* ---------- panel de detalle ---------- */
+#detalle{position:fixed;inset:0;z-index:200;background:rgba(8,6,14,.86);
+  display:none;align-items:center;justify-content:center;padding:20px}
+#detalle.on{display:flex}
+.hoja{background:var(--panel);border:1px solid var(--linea);border-radius:14px;
+  max-width:980px;width:100%;max-height:92vh;overflow:auto;padding:18px 20px}
+.hoja h2{margin:0 0 2px;font-size:19px;color:var(--oro)}
+.hoja .sub{color:var(--tenue);font-size:12.5px;margin-bottom:14px}
+.tres{display:flex;gap:22px;align-items:flex-start;flex-wrap:wrap}
+.medida{text-align:center}
+.medida .et{font-size:11px;color:var(--tenue);margin-top:6px}
+.controles{display:flex;flex-direction:column;gap:10px;min-width:230px;flex:1}
+.controles label{font-size:12px;color:var(--tenue);display:block;margin-bottom:3px}
+.controles input[type=range]{width:100%}
+.zona{border:1px dashed var(--linea);border-radius:9px;padding:14px;text-align:center;
+  font-size:12.5px;color:var(--tenue);cursor:pointer}
+.zona:hover,.zona.encima{border-color:var(--oro);color:var(--texto);background:#1f1735}
+.fila{display:flex;gap:8px;flex-wrap:wrap}
+.mapa{font-size:11.5px;line-height:1.7;color:var(--tenue);border-top:1px solid var(--linea);
+  padding-top:10px;margin-top:4px}
+.mapa b{color:var(--texto)}
+.mapa .libre{color:var(--verde)}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="barra">
+    <h1>Estudio de cartas <small>Caoz Con Todo · el TCG del Domo</small></h1>
+    <input type="search" id="buscar" placeholder="Buscar por nombre…">
+    <select id="filtroTipo"><option value="">Todos los tipos</option></select>
+    <select id="filtroArte">
+      <option value="">Con y sin ilustración</option>
+      <option value="con">Solo las que ya tienen</option>
+      <option value="sin">Solo las que faltan</option>
+    </select>
+    <span class="crece"></span>
+    <span class="marcador" id="marcador">cargando…</span>
+    <button class="btn" id="btnImportar">Importar varias…</button>
+    <button class="btn" id="btnZip">Descargar ZIP</button>
+    <button class="btn oro" id="btnArtJs">Generar art.js</button>
+  </div>
+</header>
+
+<main>
+  <div class="aviso">
+    <b>Diseña a 750 × 1050 px</b> (proporción 5:7, la de una carta real a 300 dpi).
+    La ilustración llena la carta entera y el juego escribe encima el nombre, la tribu, el
+    texto y los números — así que <b>deja lo importante entre el 20 % y el 48 % de la altura</b>
+    (de 200 a 500 px). Abre cualquier carta para ver esas zonas dibujadas encima.
+    Para cargar muchas de golpe, nombra los archivos con el id de la carta:
+    <code>discipulo.png</code>, <code>titaus.webp</code>…
+  </div>
+  <div id="rejilla"></div>
+</main>
+
+<div id="detalle"><div class="hoja" id="hoja"></div></div>
+<input type="file" id="ficheroUno" accept="image/*" hidden>
+<input type="file" id="ficheroVarios" accept="image/*" multiple hidden>
+<iframe id="juego" src="index.html" style="position:fixed;left:-9999px;width:1280px;height:900px;border:0"></iframe>
+
+<script>
+'use strict';
+
+/* ===========================================================================
+   Medidas de la carta. Salen de medir el CSS real del juego (112×158 px en
+   escritorio) y están en porcentaje de la altura, que es lo que no cambia al
+   escalar. Si algún día se rediseña la carta, esto hay que volver a medirlo.
+   ======================================================================== */
+const LIENZO = {w:750, h:1050};
+
+/* Con la ilustración a sangre, el texto del juego cae encima del dibujo y sobre
+   un fondo claro no hay quien lo lea. Esto es el velo que tendrá que llevar el
+   juego: oscurece la cabecera y la mitad de abajo, y deja limpia justo la banda
+   donde va tu ilustración. Se previsualiza aquí para que juzgues los diseños
+   como se verán de verdad, no como se ven sueltos. */
+const VELO = 'linear-gradient(180deg,'
+  + 'rgba(10,7,18,.80) 0%, rgba(10,7,18,.34) 15%, rgba(10,7,18,0) 26%,'
+  + 'rgba(10,7,18,0) 44%, rgba(10,7,18,.55) 54%, rgba(10,7,18,.88) 72%,'
+  + 'rgba(10,7,18,.93) 100%)';
+let CON_VELO = true;
+const ZONAS = [
+  {de:5.1,  a:18.4, et:'coste y nombre',  color:'#e0575b'},
+  {de:18.4, a:48.4, et:'LIBRE — tu ilustración manda aquí', color:'#54d18a', libre:true},
+  {de:48.4, a:54.0, et:'tribu',           color:'#e0575b'},
+  {de:55.3, a:80.8, et:'texto de reglas', color:'#e0575b'},
+  {de:80.8, a:96.2, et:'ataque y vida',   color:'#e0575b'},
+];
+
+/* ===========================================================================
+   Guardado. IndexedDB porque son decenas de imágenes grandes: en localStorage
+   no caben (5 MB) y aquí caben cientos.
+   ======================================================================== */
+const BD = {
+  db:null,
+  abrir(){
+    return new Promise((ok,mal)=>{
+      const p = indexedDB.open('caoz-tcg-arte', 1);
+      p.onupgradeneeded = e => e.target.result.createObjectStore('arte', {keyPath:'id'});
+      p.onsuccess = e => { BD.db = e.target.result; ok(); };
+      p.onerror = () => mal(p.error);
+    });
+  },
+  tx(modo){ return BD.db.transaction('arte', modo).objectStore('arte'); },
+  guardar(reg){ return new Promise((ok,mal)=>{ const r=BD.tx('readwrite').put(reg);
+    r.onsuccess=()=>ok(); r.onerror=()=>mal(r.error); }); },
+  borrar(id){ return new Promise((ok,mal)=>{ const r=BD.tx('readwrite').delete(id);
+    r.onsuccess=()=>ok(); r.onerror=()=>mal(r.error); }); },
+  todo(){ return new Promise((ok,mal)=>{ const r=BD.tx('readonly').getAll();
+    r.onsuccess=()=>ok(r.result); r.onerror=()=>mal(r.error); }); },
+};
+
+/* ===========================================================================
+   Estado
+   ======================================================================== */
+let JUEGO = null;               // el window del iframe con el juego
+let FICHAS = [];                // [{id, n, t, tipo, esLider}]
+const ARTE = new Map();         // id -> {id, blob, url, encuadre}
+let ABIERTA = null;             // id de la carta abierta en el panel
+let RAIZ = null;                // shadow root de la rejilla
+
+const $ = s => document.querySelector(s);
+
+/* ===========================================================================
+   Arranque: esperar al juego y sacarle lo que necesitamos
+   ======================================================================== */
+async function arrancar(){
+  await BD.abrir();
+  JUEGO = await esperarAlJuego();
+  FICHAS = catalogar();
+  await cargarArteGuardado();
+  montarRejilla();
+  llenarFiltros();
+  pintar();
+  conectarBotones();
+}
+
+function esperarAlJuego(){
+  return new Promise((ok, mal) => {
+    const marco = $('#juego');
+    let intentos = 0;
+    const mirar = () => {
+      const w = marco.contentWindow;
+      if (w && w.TCG && w.TCG.CARDS && w.cardEl) return ok(w);
+      if (++intentos > 100) return mal(new Error('el juego no arrancó dentro del iframe'));
+      setTimeout(mirar, 100);
+    };
+    marco.addEventListener('load', mirar);
+    mirar();
+  });
+}
+
+/* Todo lo que lleva ilustración: las cartas jugables, las fichas y los Líderes. */
+function catalogar(){
+  const out = [];
+  const C = JUEGO.TCG.CARDS, L = JUEGO.TCG.LEADERS;
+  for (const id in C){
+    const c = C[id];
+    out.push({id, n:c.n, tipo:c.t, ficha:!!c.token, esLider:false, coste:c.c});
+  }
+  for (const id in L){
+    out.push({id:'lider_'+id, n:L[id].n, tipo:'líder', ficha:false, esLider:true, lid:id});
+  }
+  return out;
+}
+
+async function cargarArteGuardado(){
+  for (const reg of await BD.todo()){
+    reg.url = URL.createObjectURL(reg.blob);
+    ARTE.set(reg.id, reg);
+  }
+}
+
+/* ===========================================================================
+   La rejilla vive en un shadow root con el CSS del juego dentro, para que sus
+   reglas globales no se coman esta interfaz.
+   ======================================================================== */
+function montarRejilla(){
+  const caja = $('#rejilla');
+  RAIZ = caja.attachShadow({mode:'open'});
+
+  // el CSS del juego, tal cual
+  const cssJuego = [...JUEGO.document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+  // las variables viven en :root, que dentro de un shadow no aplica: se traducen a :host
+  const cssAdaptado = cssJuego.replace(/:root\s*{/g, ':host{');
+
+  const est = document.createElement('style');
+  est.textContent = cssAdaptado + `
+    :host{ --cw:112px; --ch:158px; display:block; background:transparent!important }
+    .malla{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));
+      gap:14px 10px;align-items:start}
+    .celda{display:flex;flex-direction:column;align-items:center;gap:5px;cursor:pointer}
+    .celda .pie{font-size:10.5px;color:#9b8fba;text-align:center;line-height:1.25;max-width:118px}
+    .celda .pie b{color:#e9e3f7;display:block;font-size:11px}
+    .celda.falta .card{outline:1px dashed #6b5a8c;outline-offset:2px}
+    .celda .marca{font-size:9.5px;padding:1px 6px;border-radius:20px;border:1px solid}
+    .marca.si{color:#54d18a;border-color:#2f6b4a;background:#14301f}
+    .marca.no{color:#9b8fba;border-color:#3a2f55;background:#1b1430}
+    .lidercard{width:var(--cw);height:var(--ch);border-radius:9px;border:1px solid #3a2f55;
+      background:linear-gradient(175deg,#2a1f3d,#171025);display:flex;flex-direction:column;
+      align-items:center;justify-content:center;gap:4px;overflow:hidden;position:relative;
+      background-size:cover;background-position:center}
+    .lidercard .em{font-size:40px}
+    .lidercard .nm{font-size:11px;font-weight:800;color:#f0c674;text-shadow:0 1px 3px #000}
+    .vacia{color:#9b8fba;padding:30px;text-align:center;grid-column:1/-1}
+  `;
+  RAIZ.appendChild(est);
+  const malla = document.createElement('div');
+  malla.className = 'malla';
+  RAIZ.appendChild(malla);
+}
+
+/* ===========================================================================
+   Dibujar una carta como se ve en el juego, con la ilustración a sangre
+   ======================================================================== */
+function nodoDeCarta(f){
+  let d;
+  if (f.esLider){
+    d = document.createElement('div');
+    d.className = 'lidercard';
+    const L = JUEGO.TCG.LEADERS[f.lid];
+    d.innerHTML = `<div class="em">${L.art}</div><div class="nm">${L.n}</div>`;
+  } else {
+    d = document.importNode(JUEGO.cardEl(f.id), true);
+  }
+  const reg = ARTE.get(f.id);
+  if (reg){
+    // a sangre: la ilustración es el fondo de la carta y el emoji sobra. El velo
+    // va también en el fondo (no como hijo) para que el texto quede encima solo.
+    d.style.backgroundImage = (CON_VELO ? VELO + ',' : '') + `url(${reg.url})`;
+    d.style.backgroundSize = 'cover';
+    d.style.backgroundPosition = `center ${reg.encuadre ?? 50}%`;
+    const em = d.querySelector('.art'); if (em) em.style.visibility = 'hidden';
+    const emL = d.querySelector('.em'); if (emL) emL.style.display = 'none';
+  }
+  return d;
+}
+
+function pintar(){
+  const malla = RAIZ.querySelector('.malla');
+  malla.innerHTML = '';
+  const texto = $('#buscar').value.trim().toLowerCase();
+  const tipo = $('#filtroTipo').value;
+  const conArte = $('#filtroArte').value;
+
+  const lista = FICHAS.filter(f => {
+    if (texto && !(f.n.toLowerCase().includes(texto) || f.id.includes(texto))) return false;
+    if (tipo && f.tipo !== tipo) return false;
+    if (conArte === 'con' && !ARTE.has(f.id)) return false;
+    if (conArte === 'sin' && ARTE.has(f.id)) return false;
+    return true;
+  });
+
+  if (!lista.length){
+    malla.innerHTML = '<div class="vacia">Nada con esos filtros.</div>';
+  }
+
+  for (const f of lista){
+    const celda = document.createElement('div');
+    celda.className = 'celda' + (ARTE.has(f.id) ? '' : ' falta');
+    celda.appendChild(nodoDeCarta(f));
+    const pie = document.createElement('div');
+    pie.className = 'pie';
+    pie.innerHTML = `<b>${f.n}</b>${f.id}
+      <div class="marca ${ARTE.has(f.id)?'si':'no'}">${ARTE.has(f.id)?'con arte':'falta'}</div>`;
+    celda.appendChild(pie);
+    celda.onclick = () => abrir(f.id);
+    malla.appendChild(celda);
+  }
+
+  const con = FICHAS.filter(f => ARTE.has(f.id)).length;
+  $('#marcador').innerHTML = `<b>${con}</b> / ${FICHAS.length} ilustradas`;
+  $('#btnZip').disabled = con === 0;
+  $('#btnArtJs').disabled = con === 0;
+}
+
+function llenarFiltros(){
+  const PLURAL = {personaje:'Personajes', hechizo:'Hechizos', trampa:'Trampas',
+                  objeto:'Objetos', lugar:'Lugares', 'líder':'Líderes'};
+  const tipos = [...new Set(FICHAS.map(f=>f.tipo))].sort();
+  const sel = $('#filtroTipo');
+  for (const t of tipos){
+    const o = document.createElement('option');
+    o.value = t; o.textContent = PLURAL[t] || (t[0].toUpperCase() + t.slice(1) + 's');
+    sel.appendChild(o);
+  }
+}
+
+/* ===========================================================================
+   Panel de detalle: los tres tamaños reales del juego y las zonas de texto
+   ======================================================================== */
+function abrir(id){
+  ABIERTA = id;
+  const f = FICHAS.find(x=>x.id===id);
+  const reg = ARTE.get(id);
+  const hoja = $('#hoja');
+  hoja.innerHTML = `
+    <h2>${f.n}</h2>
+    <div class="sub">id <code>${f.id}</code> · ${f.tipo}${f.ficha?' · ficha':''}</div>
+    <div class="tres">
+      <div id="vistas" style="display:flex;gap:18px;align-items:flex-start"></div>
+      <div class="controles">
+        <div class="zona" id="soltar">
+          Arrastra aquí la ilustración<br><span style="font-size:11px">o haz clic para buscarla</span>
+        </div>
+        <div>
+          <label>Encuadre vertical — <span id="valEnc">${reg?.encuadre ?? 50}</span>%</label>
+          <input type="range" id="encuadre" min="0" max="100" value="${reg?.encuadre ?? 50}"
+                 ${reg?'':'disabled'}>
+        </div>
+        <div class="fila">
+          <button class="btn" id="verZonas">Ver zonas de texto</button>
+          <button class="btn" id="verVelo">${CON_VELO?'Quitar el velo':'Poner el velo'}</button>
+          <button class="btn" id="quitar" ${reg?'':'disabled'}>Quitar</button>
+        </div>
+        <div style="font-size:11.5px;color:var(--tenue);margin-top:-4px">
+          El velo oscurece arriba y abajo para que el texto se lea sobre tu dibujo.
+          Es lo que llevará el juego: júzgalas con él puesto.
+        </div>
+        <div class="mapa">
+          <b>Dónde escribe el juego</b>, sobre tu lienzo de 750×1050:<br>
+          ${ZONAS.map(z=>`<span class="${z.libre?'libre':''}">${Math.round(z.de*10.5)}–${Math.round(z.a*10.5)} px · ${z.et}</span>`).join('<br>')}
+        </div>
+      </div>
+    </div>`;
+  $('#detalle').classList.add('on');
+  pintarVistas(false);
+
+  $('#soltar').onclick = () => $('#ficheroUno').click();
+  $('#verZonas').onclick = e => {
+    const activo = e.target.dataset.on === '1';
+    e.target.dataset.on = activo ? '0' : '1';
+    e.target.textContent = activo ? 'Ver zonas de texto' : 'Ocultar zonas';
+    pintarVistas(!activo);
+  };
+  $('#verVelo').onclick = () => { CON_VELO = !CON_VELO; pintar(); abrir(id); };
+  $('#quitar').onclick = async () => {
+    await BD.borrar(id);
+    const r = ARTE.get(id); if (r) URL.revokeObjectURL(r.url);
+    ARTE.delete(id); pintar(); abrir(id);
+  };
+  const rango = $('#encuadre');
+  rango.oninput = async () => {
+    $('#valEnc').textContent = rango.value;
+    const r = ARTE.get(id); if (!r) return;
+    r.encuadre = +rango.value;
+    await BD.guardar({id, blob:r.blob, encuadre:r.encuadre});
+    pintarVistas($('#verZonas').dataset.on === '1');
+  };
+
+  const zona = $('#soltar');
+  zona.ondragover = e => { e.preventDefault(); zona.classList.add('encima'); };
+  zona.ondragleave = () => zona.classList.remove('encima');
+  zona.ondrop = async e => {
+    e.preventDefault(); zona.classList.remove('encima');
+    const fich = [...e.dataTransfer.files].find(x=>x.type.startsWith('image/'));
+    if (fich) { await meterImagen(id, fich); pintar(); abrir(id); }
+  };
+}
+
+/* Los tres tamaños a los que se ve una carta jugando, para que compruebes que
+   se entiende igual en el móvil que en el escritorio. */
+function pintarVistas(conZonas){
+  const cont = $('#vistas');
+  cont.innerHTML = '';
+  const f = FICHAS.find(x=>x.id===ABIERTA);
+  const tam = [
+    {cw:74,  ch:106, et:'móvil · 74×106'},
+    {cw:112, ch:158, et:'escritorio · 112×158'},
+    {cw:224, ch:316, et:'ampliada ×2'},
+  ];
+  for (const t of tam){
+    const env = document.createElement('div');
+    env.className = 'medida';
+    const marco = document.createElement('div');
+    marco.style.cssText = `position:relative;width:${t.cw}px;height:${t.ch}px`;
+    const sombra = marco.attachShadow({mode:'open'});
+    const est = document.createElement('style');
+    const cssJuego = [...JUEGO.document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
+    est.textContent = cssJuego.replace(/:root\s*{/g, ':host{') +
+      `:host{--cw:${t.cw}px;--ch:${t.ch}px;display:block}
+       .zonas{position:absolute;inset:0;pointer-events:none}
+       .zonas div{position:absolute;left:0;right:0;border-top:1px solid;font-size:7px;
+         padding-left:2px;text-transform:uppercase;letter-spacing:.3px;opacity:.95}`;
+    sombra.appendChild(est);
+    sombra.appendChild(nodoDeCarta(f));
+    if (conZonas){
+      const capa = document.createElement('div');
+      capa.className = 'zonas';
+      capa.innerHTML = ZONAS.map(z=>
+        `<div style="top:${z.de}%;height:${z.a-z.de}%;border-color:${z.color};
+            background:${z.libre?'rgba(84,209,138,.16)':'rgba(224,87,91,.22)'};
+            color:${z.color}">${t.cw>100?z.et:''}</div>`).join('');
+      sombra.appendChild(capa);
+    }
+    env.appendChild(marco);
+    const et = document.createElement('div');
+    et.className = 'et'; et.textContent = t.et;
+    env.appendChild(et);
+    cont.appendChild(env);
+  }
+}
+
+/* ===========================================================================
+   Meter imágenes. Se normalizan a 750×1050 webp: recorte centrado al 5:7 y
+   una sola resolución para todas, que es lo que hace que la baraja se vea
+   uniforme y que el juego no cargue un PNG de 8 MB.
+   ======================================================================== */
+async function meterImagen(id, fichero){
+  const bitmap = await createImageBitmap(fichero);
+  const lienzo = document.createElement('canvas');
+  lienzo.width = LIENZO.w; lienzo.height = LIENZO.h;
+  const cx = lienzo.getContext('2d');
+  // recorte "cover": se llena la carta y sobra por el lado largo
+  const escala = Math.max(LIENZO.w / bitmap.width, LIENZO.h / bitmap.height);
+  const w = bitmap.width * escala, h = bitmap.height * escala;
+  cx.drawImage(bitmap, (LIENZO.w - w)/2, (LIENZO.h - h)/2, w, h);
+  const blob = await new Promise(r => lienzo.toBlob(r, 'image/webp', 0.92));
+  const anterior = ARTE.get(id);
+  if (anterior) URL.revokeObjectURL(anterior.url);
+  const reg = {id, blob, encuadre: anterior?.encuadre ?? 50};
+  await BD.guardar(reg);
+  reg.url = URL.createObjectURL(blob);
+  ARTE.set(id, reg);
+  return reg;
+}
+
+/* ===========================================================================
+   Sacar el trabajo de aquí
+   ======================================================================== */
+
+/* ZIP sin compresión, escrito a mano: las imágenes ya vienen comprimidas en
+   webp, así que comprimir otra vez no aporta y evita depender de librerías. */
+const CRC = (() => {
+  const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++){
+    let c = n;
+    for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1;
+    t[n] = c >>> 0;
+  }
+  return bytes => {
+    let c = 0xFFFFFFFF;
+    for (let i = 0; i < bytes.length; i++) c = t[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
+    return (c ^ 0xFFFFFFFF) >>> 0;
+  };
+})();
+
+async function hacerZip(entradas){
+  const cod = new TextEncoder();
+  const trozos = [], central = [];
+  let desplaz = 0;
+  const u32 = n => new Uint8Array([n&255, (n>>8)&255, (n>>16)&255, (n>>24)&255]);
+  const u16 = n => new Uint8Array([n&255, (n>>8)&255]);
+
+  for (const {nombre, datos} of entradas){
+    const nb = cod.encode(nombre);
+    const crc = CRC(datos);
+    const cab = [ u32(0x04034b50), u16(20), u16(0), u16(0), u16(0), u16(0),
+                  u32(crc), u32(datos.length), u32(datos.length), u16(nb.length), u16(0), nb ];
+    for (const p of cab) trozos.push(p);
+    trozos.push(datos);
+    const tamCab = 30 + nb.length;
+    const cen = [ u32(0x02014b50), u16(20), u16(20), u16(0), u16(0), u16(0), u16(0),
+                  u32(crc), u32(datos.length), u32(datos.length), u16(nb.length),
+                  u16(0), u16(0), u16(0), u16(0), u32(0), u32(desplaz), nb ];
+    central.push(...cen);
+    desplaz += tamCab + datos.length;
+  }
+  const inicioCentral = desplaz;
+  let tamCentral = 0;
+  for (const p of central) tamCentral += p.length;
+  const fin = [ u32(0x06054b50), u16(0), u16(0), u16(entradas.length), u16(entradas.length),
+                u32(tamCentral), u32(inicioCentral), u16(0) ];
+  return new Blob([...trozos, ...central, ...fin], {type:'application/zip'});
+}
+
+function descargar(blob, nombre){
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = nombre;
+  a.click();
+  setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
+}
+
+async function exportarZip(){
+  const entradas = [];
+  for (const [id, reg] of ARTE){
+    entradas.push({nombre:`art/${id}.webp`, datos:new Uint8Array(await reg.blob.arrayBuffer())});
+  }
+  entradas.push({nombre:'art/encuadres.json',
+    datos:new TextEncoder().encode(JSON.stringify(
+      Object.fromEntries([...ARTE].map(([id,r])=>[id, r.encuadre ?? 50])), null, 1))});
+  descargar(await hacerZip(entradas), 'arte-tcg.zip');
+}
+
+async function exportarArtJs(){
+  const partes = ['/* Ilustraciones del TCG. Generado por estudio.html — no editar a mano. */',
+                  'window.ART = {'];
+  for (const [id, reg] of ARTE){
+    const b64 = await new Promise(r => { const f = new FileReader();
+      f.onload = () => r(f.result); f.readAsDataURL(reg.blob); });
+    partes.push(`  ${JSON.stringify(id)}: {src:${JSON.stringify(b64)}, y:${reg.encuadre ?? 50}},`);
+  }
+  partes.push('};');
+  const texto = partes.join('\n');
+  descargar(new Blob([texto], {type:'text/javascript'}), 'art.js');
+}
+
+/* ===========================================================================
+   Botones y atajos
+   ======================================================================== */
+function conectarBotones(){
+  $('#buscar').oninput = pintar;
+  $('#filtroTipo').onchange = pintar;
+  $('#filtroArte').onchange = pintar;
+
+  $('#ficheroUno').onchange = async e => {
+    const f = e.target.files[0];
+    if (f && ABIERTA){ await meterImagen(ABIERTA, f); pintar(); abrir(ABIERTA); }
+    e.target.value = '';
+  };
+
+  $('#btnImportar').onclick = () => $('#ficheroVarios').click();
+  $('#ficheroVarios').onchange = async e => {
+    const sinSitio = [];
+    let puestas = 0;
+    for (const f of e.target.files){
+      const id = f.name.replace(/\.[^.]+$/, '');
+      if (FICHAS.some(x => x.id === id)){ await meterImagen(id, f); puestas++; }
+      else sinSitio.push(f.name);
+    }
+    pintar();
+    alert(`${puestas} ilustraciones puestas.` +
+      (sinSitio.length ? `\n\nEstas no las reconocí (el nombre debe ser el id de la carta):\n` +
+        sinSitio.slice(0,12).join('\n') : ''));
+    e.target.value = '';
+  };
+
+  $('#btnZip').onclick = exportarZip;
+  $('#btnArtJs').onclick = exportarArtJs;
+
+  $('#detalle').onclick = e => { if (e.target.id === 'detalle') cerrar(); };
+  addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+
+  // soltar imágenes sobre la ventana entera: van a la carta abierta
+  addEventListener('dragover', e => e.preventDefault());
+  addEventListener('drop', async e => {
+    e.preventDefault();
+    if (!ABIERTA) return;
+    const f = [...e.dataTransfer.files].find(x => x.type.startsWith('image/'));
+    if (f){ await meterImagen(ABIERTA, f); pintar(); abrir(ABIERTA); }
+  });
+}
+
+function cerrar(){ $('#detalle').classList.remove('on'); ABIERTA = null; }
+
+arrancar().catch(e => {
+  document.body.insertAdjacentHTML('afterbegin',
+    `<div class="aviso" style="margin:16px;border-left-color:#e0575b">
+       <b>No pude arrancar:</b> ${e.message}<br>
+       Esto necesita servidor. Levanta uno con
+       <code>python3 -m http.server 8745 --directory caoz_tcg</code>
+       y abre <code>http://localhost:8745/estudio.html</code>.
+     </div>`);
+});
+</script>
+</body>
+</html>

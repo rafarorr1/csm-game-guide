@@ -299,6 +299,73 @@ dibujan como cartas de verdad) + `motorTxt`, `turnos` (tramo → qué haces),
 enfrentamientos). `GUIA_DATOS` guarda el winrate medido en el arnés, que es lo
 que hace honesta la nota de dificultad.
 
+## El estudio de cartas
+
+`estudio.html` — para ver las 88 cartas y los 5 Líderes con sus ilustraciones puestas
+**antes** de mandarlas al juego.
+
+```bash
+python3 -m http.server 8747 --directory caoz_tcg
+```
+y abre `http://localhost:8747/estudio.html`. Necesita servidor: carga el juego en un
+iframe y por `file://` eso no funciona.
+
+Lo que lo mantiene honesto es que **no copia nada del juego**: carga `index.html` en un
+iframe oculto y saca de ahí `CARDS`, `LEADERS`, la función `cardEl()` que dibuja una carta
+y su CSS. Lo que ves en el estudio es literalmente lo que verás jugando, y si mañana cambia
+el diseño de las cartas, el estudio cambia solo. El CSS del juego va dentro de un
+**shadow root** para que sus reglas globales no se coman la interfaz del estudio; las
+variables `:root` se reescriben a `:host` porque dentro de un shadow `:root` no aplica.
+
+### Las medidas
+
+| | |
+|---|---|
+| Proporción | **5:7** (la de una carta real, 63×88 mm) |
+| Lienzo para diseñar | **750 × 1050 px** — una carta a 300 dpi |
+| En el juego | 112×158 px en escritorio, 88×126 en tablet, 74×106 en móvil |
+
+Con la ilustración **a sangre**, el juego escribe encima. Sobre el lienzo de 750×1050:
+
+| Zona | Píxeles |
+|---|---|
+| Coste y nombre | 55 – 195 |
+| **Libre para la ilustración** | **195 – 508** |
+| Tribu | 508 – 567 |
+| Texto de reglas | 581 – 848 |
+| Ataque y vida | 848 – 1010 |
+
+Esos porcentajes están medidos del CSS real y viven en `ZONAS`, dentro de `estudio.html`.
+**Si se rediseña la carta hay que volver a medirlos**, o el estudio mentirá.
+
+### Cómo va
+
+Sueltas una imagen sobre una carta y se normaliza a 750×1050 webp con recorte centrado —
+una sola resolución para toda la baraja, y el juego no carga un PNG de 8 MB. Se guardan en
+**IndexedDB** (en localStorage no caben) y siguen ahí al volver. Cada carta tiene su
+encuadre vertical por si el recorte centrado no le sienta bien.
+
+El panel de detalle enseña la carta a los **tres tamaños reales** del juego, para comprobar
+que se entiende igual en el móvil, y dibuja encima las **zonas de texto**.
+
+**El velo.** Con arte a sangre el texto cae sobre el dibujo y en un fondo claro no hay quien
+lo lea, así que el estudio previsualiza un velo que oscurece arriba y abajo dejando limpia
+la banda de la ilustración. **El juego todavía no lo lleva**: cuando se implante el soporte
+de ilustraciones habrá que ponerlo, y la constante `VELO` del estudio es el degradado a
+copiar.
+
+### Sacar el trabajo
+
+- **Descargar ZIP** → `art/<id>.webp` más `art/encuadres.json`. El ZIP se escribe a mano,
+  sin compresión (las imágenes ya vienen comprimidas) y sin librerías. Verificado con
+  `unzip -t` del sistema, no sólo con el lector propio.
+- **Generar art.js** → un `window.ART = {id:{src:'data:image/webp;base64,…', y:50}}` para
+  cuando el juego tenga que seguir siendo un archivo suelto.
+
+Para cargar muchas de golpe, «Importar varias…» y nombra los archivos con el id de la
+carta: `discipulo.png`, `titaus.webp`. Los ids salen de la sección `CARDS` del juego y se
+ven bajo cada carta en la rejilla.
+
 ## Cómo se trabaja aquí
 
 Todo esto existe porque el motor es un solo archivo donde todo se toca con todo:
