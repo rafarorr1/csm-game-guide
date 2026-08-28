@@ -3127,9 +3127,19 @@ function buildTut(lid){
  t:`Suma otro cuerpo: juega <b>${n(M.c2)}</b>.${CARDS[M.c2].c>2?' Si aún no te alcanza, termina el turno y lo bajas al siguiente.':''}<br><br>
     En este juego la mesa lo es todo: el que tiene más Personajes decide contra qué se pelea.`},
 
-{hi:'#myField', wait:g=>P(FOE).alma<20||g.active===FOE, allow:{attack:'face', end:true},
- t:`Ahora golpea. <b>Haz clic en un Personaje tuyo con borde verde</b> y luego en la
-    <b>carta de ${rival}</b>, al borde de su lado del tapete.`},
+/* Este paso espera a que ataques DE VERDAD (antes se daba por cumplido con sólo
+   terminar el turno, y entonces te saltabas la lección). Puede pasar
+   perfectamente que ahora mismo no tengas a nadie: si el rival te mató lo que
+   bajaste primero, lo único que te queda es lo que acabas de jugar, y eso entra
+   cansado. Por eso el texto te dice que termines el turno — y el paso sigue
+   aquí, esperándote, hasta que puedas pegar. */
+{hi:'#myField', wait:g=>P(FOE).alma<20, allow:{attack:'face', end:true},
+ t:g=>`Ahora golpea. <b>Haz clic en un Personaje tuyo con borde verde</b> y luego en la
+    <b>carta de ${rival}</b>, al borde de su lado del tapete.` +
+    (P(ME).field.some(u=>canAttack(u)) ? '' :
+     `<br><br><i>Ahora mismo no tienes a nadie con borde verde: lo que acaba de entrar
+      está cansado hasta tu próximo turno. <b>Termina el turno</b> y pega en el siguiente.
+      No te preocupes, este paso te espera.</i>`)},
 
 {t:[`Menos Alma. Poco, pero así se gana.`,
   `Regla clave: <b>atacar al Alma nunca recibe contraataque</b>. Atacar a un <b>Personaje</b>,
