@@ -400,6 +400,41 @@ PRUEBAS.suite('regresiones', async t => {
      da cero. Una prueba que no se pone roja cuando rompes el código a mano no
      vale nada; ese contador sí. */
 
+  /* El paso de atacar, cuando el rival te ha matado la primera criatura y lo
+     único que te queda acaba de entrar (le pasó a Rafaela con Titaus): tiene
+     que avisarte y esperarte, no pedirte algo imposible. Se monta el estado a
+     mano en vez de jugar una partida entera — es la misma comprobación y tarda
+     milisegundos. */
+  {
+    await T.setupMatch('rafaela','adreida',{fast:true,auto:true,silent:true});
+    const pasos = buildTut('rafaela');
+    const idx = pasos.findIndex(x=>x.allow && x.allow.attack==='face');
+    t.check(idx>=0, 'no encontré el paso que pide atacar al Alma');
+    const paso = pasos[idx];
+    const texto = ()=> String(typeof paso.t==='function' ? paso.t(T.G) : paso.t);
+
+    const u = T.mkUnit('titaus',0); u.sick = true; T.P(0).field.push(u); T.recalc();
+    t.check(!T.canAttack(u), 'lo recién bajado no debería poder atacar');
+    t.check(/no tienes a nadie/i.test(texto()),
+      'el paso debe avisarte de que no hay nadie listo y decirte que termines el turno');
+    T.G.active = 0;
+    t.check(!paso.wait(T.G),
+      'el paso no puede darse por cumplido sin atacar: eso se salta la lección');
+    // Y sobre todo: al TERMINAR EL TURNO tampoco. Ahí estaba el fallo — el paso
+    // se daba por bueno en cuanto pasabas turno, así que nunca llegabas a pegar.
+    T.G.active = 1;
+    t.check(!paso.wait(T.G),
+      'terminar el turno no puede dar el paso por cumplido: te saltas el ataque');
+    T.G.active = 0;
+
+    u.sick = false; T.recalc();
+    t.check(!/no tienes a nadie/i.test(texto()),
+      'con alguien listo no debe salir el aviso');
+    T.P(1).alma = 19;
+    t.check(paso.wait(T.G), 'atacando de verdad sí debe cumplirse');
+    t.nota(`paso ${idx+1}: avisa cuando no hay nadie listo y espera a que ataques`);
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();
