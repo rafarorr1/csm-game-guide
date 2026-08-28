@@ -114,6 +114,20 @@ async function jugarTutorial(lid, limite=4000){
     if($1('#ov').classList.contains('on')){
       const b=$1('#ovPanel .opts .btn')||$1('#ovPanel .gallery .card');
       if(b) b.click(); else esc(); continue; }
+    // Si el paso pide una carta y la puedes pagar, eso es lo que haría una
+    // persona: jugarla. Sin esta prioridad el arnés se quedaba dando vueltas en
+    // una selección de ataque a medias (allow suele traer attack:true además de
+    // la carta) y no llegaba nunca a bajarla.
+    if(permiso.hand){
+      const mano = T.P(0).hand;
+      const pedida = $$('#hand .card').find((e,j)=>
+        permiso.hand.includes(mano[j]) && !e.classList.contains('locked')
+        && e.classList.contains('playable'));
+      if(pedida){
+        if(SEL || $1('#prompt').classList.contains('on')){ esc(); continue; }
+        pedida.click(); continue;
+      }
+    }
     if($1('#prompt').classList.contains('on')){
       if(permiso.attack==='face'){ const l=$1('#lead1'); if(l){ l.click(); continue; } }
       if(permiso.attack){ const t=$1('#foeField .card.tgt')||$1('#lead1'); if(t){ t.click(); continue; } }
