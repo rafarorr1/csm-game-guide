@@ -299,6 +299,74 @@ dibujan como cartas de verdad) + `motorTxt`, `turnos` (tramo → qué haces),
 enfrentamientos). `GUIA_DATOS` guarda el winrate medido en el arnés, que es lo
 que hace honesta la nota de dificultad.
 
+## Cómo se trabaja aquí
+
+Todo esto existe porque el motor es un solo archivo donde todo se toca con todo:
+arreglar el tutorial rompía el fin de partida, arreglar la IA rompía el ataque.
+La regla de fondo es **no partir el archivo, poner la red debajo**.
+
+### Nunca directo en main
+
+```bash
+git checkout -b feat/lo-que-sea      # una rama por cosa
+# ... trabajas, commits pequeños ...
+./publicar.sh --solo-pruebas         # ¿sigue todo en verde?
+git checkout main && git merge feat/lo-que-sea
+```
+
+Main tiene que quedar siempre jugable. Si algo sale mal, `git checkout main`
+te devuelve a lo último que funcionaba.
+
+### Las pruebas
+
+Viven en `tests.js` y se abren en el propio juego, sin instalar nada:
+
+| | |
+|---|---|
+| `index.html?test=1` | todas |
+| `index.html?test=1&rapido=1` | sin los tutoriales (~7 s) |
+| `index.html?test=motor` | una suelta |
+
+Cinco suites: **motor** (300 partidas automáticas), **cartas** (las 84 una por
+una, en un tablero con Objetos y Llaves para que ninguna se quede sin probar),
+**cobertura** (cuántas cartas se juegan y cuántas Trampas saltan de verdad en
+100 partidas — avisa de los agujeros), **tutoriales** (los 5 mazos jugados a
+clics hasta 34/34) y **regresiones**.
+
+La suite de regresiones es la que impide que una función destruya otra: hay un
+caso por cada fallo que ya costó tiempo. Cuando algo se rompa y se arregle, el
+caso se queda escrito ahí. Están comprobadas saboteando el código a propósito
+—devolviendo cada bug a su sitio— y verificando que la prueba se pone roja: una
+prueba que nunca falla no prueba nada.
+
+Dos de ellas no ejecutan nada, **leen el código**: que nadie vuelva a encadenar
+animaciones con `Animation.finished` (esa promesa puede no resolverse nunca y
+cuelga el motor) y que ningún paso del tutorial espere criaturas en el campo en
+vez de mirar si la carta salió de la mano.
+
+### Publicar
+
+```bash
+./publicar.sh                 # pruebas rápidas y sube
+./publicar.sh --completo      # con los tutoriales (~2,5 min)
+./publicar.sh --beta          # a /tcg-beta/, para probar en el móvil
+```
+
+Corre las pruebas en el Chrome que ya tienes, sin ventana, y **si algo está en
+rojo no publica**. Antes de arrancar el navegador comprueba lo barato (sintaxis,
+la regla de `Animation.finished`, que no haya cambios sin commitear) para fallar
+en un segundo en vez de en cinco minutos, y al final verifica que la web sirve
+lo nuevo de verdad.
+
+Detalle que importa: sube **dos archivos por su nombre**, nunca `git add -A`.
+En la rama `gh-pages` vive también la PWA de Warhammer, y un add general se la
+llevaría por delante.
+
+El navegador avisa de que ha terminado con un `POST /resultado` que recoge
+`servidor_pruebas.py`. Se probó antes con `--virtual-time-budget` de Chrome y
+fue un error: esperaba a agotar el presupuesto en vez de a que las pruebas
+acabaran, así que una tanda de diez segundos tardaba varios minutos.
+
 ## Arquitectura
 
 Todo el juego vive en un `<script>` dentro de `index.html`, en 13 secciones
