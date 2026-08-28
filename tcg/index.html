@@ -108,6 +108,40 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #mat::before{content:"";position:absolute;inset:6px;border-radius:13px;
   border:1px dashed rgba(230,187,82,.13);pointer-events:none}
 .zone{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+.zone.fz{gap:10px}
+.fieldwrap{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center}
+.fieldwrap>.row{min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;
+  padding:14px 6px;margin:-14px 0;scrollbar-width:none;justify-content:safe center}
+.fieldwrap>.row::-webkit-scrollbar{display:none}
+.leaderslot{flex:0 0 auto}
+.leadercard{width:var(--lw);border-radius:11px;padding:5px 4px 6px;cursor:pointer;position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;transition:.15s;
+  border:2px solid var(--gold2);
+  background:linear-gradient(175deg,#33264a,#1a1226 70%);
+  box-shadow:inset 0 0 22px rgba(0,0,0,.6),0 4px 14px rgba(0,0,0,.5)}
+.leadercard:hover{border-color:var(--gold);transform:translateY(-3px)}
+.leadercard .lcName{font-size:10px;font-weight:900;color:var(--gold);line-height:1.05}
+.leadercard .lcArt{font-size:26px;line-height:1.1;filter:drop-shadow(0 2px 4px #000)}
+.leadercard .lcEp{font-size:7px;color:var(--dim);letter-spacing:.3px;line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
+.leadercard .lcAlma{margin-top:2px;font-size:15px;font-weight:900;color:#ffc0b8;
+  background:rgba(190,35,35,.55);border:1px solid rgba(255,140,130,.4);border-radius:7px;
+  padding:1px 7px;font-variant-numeric:tabular-nums;text-shadow:0 2px 4px #000}
+.leadercard .lcHab{margin-top:3px;font-size:7.5px;line-height:1.15;color:#a99ac6;
+  border-top:1px solid var(--line);padding-top:3px;width:100%}
+.leadercard .lcHab span{display:block;font-weight:900;color:var(--blue);font-size:9px}
+.leadercard.usable{border-color:var(--green);
+  box-shadow:0 0 0 2px rgba(79,192,125,.5),0 0 18px rgba(79,192,125,.45)}
+.leadercard.usable .lcHab span{color:var(--green)}
+.leadercard.spent{opacity:.6}
+.leadercard.tgt{border-color:var(--red);animation:pulse 1s infinite}
+:root{--lw:86px}
+@media(max-width:900px){ :root{--lw:70px} .leadercard .lcArt{font-size:21px}
+  .leadercard .lcName{font-size:9px} }
+@media(max-width:620px){ :root{--lw:56px} .leadercard .lcArt{font-size:17px}
+  .leadercard .lcName{font-size:7.5px} .leadercard .lcEp{display:none}
+  .leadercard .lcHab{font-size:6.5px} .leadercard .lcAlma{font-size:12px;padding:0 5px}
+  .zone.fz{gap:5px} }
 .zlabel{position:absolute;left:-20px;top:50%;transform:translateY(-50%) rotate(-90deg);
   font-size:8px;letter-spacing:2.5px;color:#584b78;white-space:nowrap;pointer-events:none}
 .slots{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -361,15 +395,23 @@ body.tutpause #tut{pointer-events:auto}
 /* inspector */
 #inspect{position:fixed;z-index:260;display:none;pointer-events:none}
 #inspect.on{display:block}
-.big{width:216px;min-height:300px;font-size:14px;background:linear-gradient(175deg,#31244a,#150f22);
-  border:2px solid var(--gold);border-radius:13px;padding:10px;box-shadow:0 16px 46px #000;
-  display:flex;flex-direction:column}
-.big .nm{font-size:15px;color:var(--gold)}
-.big .art{font-size:56px;padding:6px 0}
-.big .txt{font-size:11.6px;line-height:1.45;color:#ded3f0}
-.big .tribe{font-size:10px}
-.big .cost{width:29px;height:29px;font-size:16px}
-.big .atk,.big .hp{font-size:18px;min-width:28px}
+.big{width:252px;font-size:14px;background:linear-gradient(175deg,#33254e,#150f22);
+  border:2px solid var(--gold);border-radius:14px;padding:11px 12px 12px;
+  box-shadow:0 18px 52px #000,0 0 0 1px rgba(230,187,82,.25);
+  display:flex;flex-direction:column;gap:1px}
+.big .nm{font-size:15.5px;color:var(--gold);line-height:1.15}
+.big .art{font-size:58px;padding:4px 0 2px}
+.big .txt{font-size:12.2px;line-height:1.5;color:#e6dcf5;white-space:normal}
+.big .txt b{color:var(--gold)}
+.big .tribe{font-size:10px;white-space:normal;margin-bottom:5px}
+.big .cost{width:30px;height:30px;font-size:17px}
+.big .atk,.big .hp{font-size:20px;min-width:32px;padding:2px 8px}
+.big .keys{justify-content:center;margin:2px 0 5px}
+.big .kw{font-size:9.5px;padding:1px 6px}
+.bigsep{height:1px;background:var(--line);margin:7px 0 6px}
+.bigrow{font-size:11px;color:var(--dim);display:flex;gap:6px;align-items:baseline}
+.bigrow b{color:var(--ink);font-weight:800}
+.bigbase{font-size:10.5px;color:#8a7bab;text-align:center;margin-top:3px}
 
 /* galería */
 .gallery{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
@@ -452,13 +494,15 @@ body.tutpause #tut{pointer-events:auto}
       <div class="zone"><span class="zlabel">TRAMPAS</span>
         <div class="slots tr"><i></i><i></i><i></i></div>
         <div class="row traps" id="foeTraps"></div></div>
-      <div class="zone"><span class="zlabel">CAMPO RIVAL</span>
-        <div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="row" id="foeField"></div></div>
+      <div class="zone fz"><span class="zlabel">CAMPO RIVAL</span>
+        <div class="leaderslot" id="leaderFoe"></div>
+        <div class="fieldwrap"><div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="row" id="foeField"></div></div></div>
       <div class="midrow" id="midRow"></div>
-      <div class="zone"><span class="zlabel">TU CAMPO</span>
-        <div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
-        <div class="row" id="myField"></div></div>
+      <div class="zone fz"><span class="zlabel">TU CAMPO</span>
+        <div class="leaderslot" id="leaderMe"></div>
+        <div class="fieldwrap"><div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="row" id="myField"></div></div></div>
       <div class="zone"><span class="zlabel">TRAMPAS</span>
         <div class="slots tr"><i></i><i></i><i></i></div>
         <div class="row traps" id="myTraps"></div></div>
@@ -482,7 +526,6 @@ body.tutpause #tut{pointer-events:auto}
   <div class="tuthead"><span class="gm">🎲</span><span class="tt" id="tutKind">DUNGEON MASTER GERO</span><span class="step" id="tutStep"></span></div>
   <div class="tutbody" id="tutBody"></div>
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span>
-    <button class="btn sm" id="tutSkip">Saltar tutorial</button>
     <button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
@@ -2100,17 +2143,66 @@ function unitFill(d,u){
     <div class="stats"><span class="atk">${u.atk}</span><span class="hp">${hp}</span></div>`;
   attachInspect(d,c.id,u);
 }
+function inspectHTML(id,u){
+  const c=CARDS[id];
+  let kw='';
+  if(u){
+    const chips=[];
+    u.keys.forEach(k=>{ const m={prisa:['Prisa','good'],provocar:['Provocar','pro'],vuelo:['Vuelo','vue'],
+      sigilo:['Sigilo','sig'],arquero:['Arquero','vue'],regeneracion:['Regeneración','good'],
+      sinhonor:['Ignora Provocar','']}[k];
+      if(m) chips.push(`<span class="kw ${m[1]}">${m[0]}</span>`); });
+    if(u.sick&&!u.keys.has('prisa')) chips.push('<span class="kw bad">Entró este turno</span>');
+    if(u.attacked) chips.push('<span class="kw bad">Ya atacó</span>');
+    if(u.stunned>0) chips.push('<span class="kw bad">Aturdido</span>');
+    if(u.infected) chips.push('<span class="kw bad">Infectado</span>');
+    if(u.possessed) chips.push('<span class="kw bad">Poseído</span>');
+    if(chips.length) kw=`<div class="keys">${chips.join('')}</div>`;
+  }
+  const objs = u&&u.objs.length
+    ? `<div class="bigsep"></div>`+u.objs.map(o=>CARDS[o]
+        ? `<div class="bigrow">${CARDS[o].art} <b>${CARDS[o].n}</b></div><div class="txt" style="font-size:11px">${CARDS[o].x}</div>`
+        : '').join('')
+    : '';
+  const base = (u&&c.t==='personaje'&&(u.atk!==c.a||u.maxHp!==c.h))
+    ? `<div class="bigbase">Base ${c.a}/${c.h} · ahora ${u.atk}/${u.maxHp}</div>` : '';
+  return `<div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}${c.r===2?' ★':''}</div></div>
+    <div class="art">${c.art}</div>
+    <div class="tribe">${u?u.tribes.join(' · '):tribeLine(c)}</div>
+    ${kw}
+    <div class="txt">${c.x||''}</div>
+    ${objs}
+    ${c.t==='personaje'?`<div class="bigsep"></div><div class="stats">
+      <span class="atk">${u?u.atk:c.a}</span><span class="hp">${u?Math.max(0,u.maxHp-u.dmg):c.h}</span></div>${base}`:''}`;
+}
+function showInspectLeader(d,side){
+  const p=P(side), L=p.L, box=$('#inspectCard');
+  box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
+    <div class="art">${L.art}</div>
+    <div class="tribe">${L.ep} · ${L.arch}</div>
+    <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
+    <div class="bigsep"></div>
+    <div class="txt">${L.pasiva}</div>
+    <div class="bigsep"></div>
+    <div class="txt">${L.hab}</div>
+    ${L.hab2?`<div class="txt" style="margin-top:5px">${'<b>'+L.hab2.n+':</b> '+L.hab2.d}</div>`:''}
+    <div class="bigsep"></div>
+    <div class="bigrow">❤️ Alma <b>${Math.max(0,p.alma)}</b> · 🔷 <b>${p.pd}/${p.pdMax}</b> · 🗝️ <b>${keys(side)}</b></div>`;
+  placeInspect(d);
+}
+function placeInspect(d){
+  const box2=$('#inspect'); box2.classList.add('on');
+  const r=d.getBoundingClientRect();
+  const w=262, h=box2.firstElementChild.offsetHeight||360;
+  let x=r.right+10; if(x+w>innerWidth) x=r.left-w-10; if(x<6) x=6;
+  let y=Math.min(Math.max(8,r.top-40), Math.max(8,innerHeight-h-8));
+  box2.style.left=x+'px'; box2.style.top=y+'px';
+}
 function attachInspect(d,id,u){
-  d.onmouseenter=e=>{ const box=$('#inspectCard'); const c=CARDS[id];
-    box.innerHTML=`<div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}</div></div>
-      <div class="art">${c.art}</div><div class="tribe">${u?u.tribes.join(' · '):tribeLine(c)}</div>
-      <div class="txt">${c.x||''}</div>
-      ${c.t==='personaje'?`<div class="stats"><span class="atk">${u?u.atk:c.a}</span><span class="hp">${u?Math.max(0,u.maxHp-u.dmg):c.h}</span></div>`:''}`;
+  d.onmouseenter=e=>{ const box=$('#inspectCard');
+    box.innerHTML=inspectHTML(id,u);
     const box2=$('#inspect'); box2.classList.add('on');
-    const r=d.getBoundingClientRect();
-    let x=r.right+10; if(x+230>innerWidth) x=r.left-230;
-    let y=Math.min(Math.max(8,r.top-40), innerHeight-330);
-    box2.style.left=x+'px'; box2.style.top=y+'px';
+    placeInspect(d);
   };
   d.onmouseleave=()=>$('#inspect').classList.remove('on');
 }
@@ -2130,7 +2222,7 @@ const SUBCOLOR = {fuego:'#ff7a3a', fe:'#ffd76a', engano:'#b06aff', cancion:'#4aa
 function fxEl(u){ return u&&u.uid!=null ? $('#myField [data-uid="'+u.uid+'"]')||$('#foeField [data-uid="'+u.uid+'"]') : null; }
 function fxRect(target){
   // target: unidad | 'face0'/'face1' | elemento
-  if(target==='face0'||target==='face1'){ const a=$('#av'+(target==='face0'?ME:FOE))||$('#barMe .avatar'); return a?a.getBoundingClientRect():null; }
+  if(target==='face0'||target==='face1'){ const a=$('#lead'+(target==='face0'?ME:FOE)); return a?a.getBoundingClientRect():null; }
   const e = target instanceof Element ? target : fxEl(target);
   return e? e.getBoundingClientRect() : null;
 }
@@ -2244,9 +2336,9 @@ async function fxFace(side, amount){
       {transform:'translate(-50%,-90%) scale(.94)',opacity:0}],{duration:1450,easing:'cubic-bezier(.2,.9,.3,1)'});
     fxGone(d,1450); }
   fxStat(side,'.stat.alma');
-  const av=$('#av'+side) || (side===ME? $('#barMe .avatar') : $('#av'+FOE));
-  if(av) av.animate([{transform:'translate(0,0) scale(1)'},{transform:'translate(-5px,0) scale(1.15)'},
-    {transform:'translate(5px,0) scale(1.1)'},{transform:'translate(0,0) scale(1)'}],{duration:420});
+  const av=$('#lead'+side);
+  if(av) av.animate([{transform:'translate(0,0) scale(1)'},{transform:'translate(-6px,0) scale(1.08)'},
+    {transform:'translate(6px,0) scale(1.05)'},{transform:'translate(0,0) scale(1)'}],{duration:460});
   const v=el('div','fxvig'); v.style.color='rgba(224,40,40,.55)'; document.body.appendChild(v);
   v.animate([{opacity:0},{opacity:1,offset:.25},{opacity:0}],{duration:520}); fxGone(v,520);
   const b=$('#board');
@@ -2319,10 +2411,16 @@ async function fxDeath(u){
       {transform:'translate(-50%,-70%) scale(1.3)',opacity:1,offset:.4},
       {transform:'translate(-50%,-110%) scale(1)',opacity:0}],{duration:560}); fxGone(b,560); }
   if(e){ e.style.pointerEvents='none';
+    const pile=$(u.owner===ME?'#myGravePile':'#foeGravePile');
+    const pr=pile?pile.getBoundingClientRect():null, er=e.getBoundingClientRect();
+    const dx=pr? pr.left+pr.width/2-(er.left+er.width/2) : 0;
+    const dy=pr? pr.top+pr.height/2-(er.top+er.height/2) : 30;
     e.animate([{transform:'rotate(0) scale(1)',opacity:1,filter:'grayscale(0)'},
-      {transform:'rotate(-14deg) scale(.82) translateY(26px)',opacity:0,filter:'grayscale(1)'}],
-      {duration:420,easing:'ease-in',fill:'forwards'});
-    await nap(430);
+      {transform:'rotate(-10deg) scale(.9)',opacity:.9,filter:'grayscale(.7)',offset:.28},
+      {transform:`translate(${dx}px,${dy}px) rotate(-24deg) scale(.28)`,opacity:0,filter:'grayscale(1)'}],
+      {duration:620,easing:'cubic-bezier(.4,.1,.7,1)',fill:'forwards'});
+    await nap(560);
+    if(pile) pile.animate([{transform:'scale(1)'},{transform:'scale(1.22)'},{transform:'scale(1)'}],{duration:380});
   } else await nap(160);
 }
 /* hechizo: la carta sube al centro, brilla con el color de su subtipo y se deshace */
@@ -2385,11 +2483,7 @@ function fxStat(side, sel){
 /* ---------- barras ---------- */
 function barHTML(s){
   const p=P(s), me=s===ME;
-  return `<div class="who">
-      <div class="avatar ${G.active===s?'act':''}" id="av${s}">${p.L.art}</div>
-      <div><div style="font-weight:800;font-size:13px;color:var(--gold)">${p.L.n}</div>
-      <div style="font-size:10px;color:var(--dim)">${p.L.ep}</div></div>
-    </div>
+  return `<div class="who"><div style="font-weight:800;font-size:13px;color:var(--gold)">${p.L.n}</div></div>
     <div class="stat alma" title="Alma">❤️ <i>${Math.max(0,p.alma)}</i></div>
     <div class="stat pd" title="Puntos">🔷 <i>${p.pd}/${p.pdMax}</i></div>
     <div class="stat key" title="Llaves del Domo">🗝️ <i>${keys(s)}</i></div>
@@ -2400,6 +2494,31 @@ function barHTML(s){
     ${(!me&&G.active===s)?'<div class="turnpill">SU TURNO</div>':''}`;
 }
 
+function renderLeaders(){
+  [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
+    const host=$(sel); if(!host) return;
+    const p=P(side), L=p.L, mine=side===ME;
+    const usable = mine && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
+                && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
+    const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
+    host.innerHTML=`<div class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}" id="lead${side}">
+      <div class="lcName">${L.n}</div>
+      <div class="lcArt">${L.art}</div>
+      <div class="lcEp">${L.ep}</div>
+      <div class="lcAlma">❤️ ${Math.max(0,p.alma)}</div>
+      <div class="lcHab">${L.habName}<span>${p.leaderUsed&&mine?'usada':L.habCost+' PD'}</span></div>
+    </div>`;
+    const e=host.firstElementChild;
+    e.onmouseenter=()=>showInspectLeader(e,side);
+    e.onmouseleave=()=>$('#inspect').classList.remove('on');
+    e.onclick=()=>{
+      if(TGT&&isTargetable('face')&&!mine){ pickTarget('face'); return; }
+      if(!mine){ if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } return; }
+      if(!tutCan('leader')){ tutNope(); return; }
+      if(usable) useLeader(ME); else if(G.active===ME) toast(p.leaderUsed?'Ya usaste tu Habilidad este turno':`Necesitas ${L.habCost} PD`);
+    };
+  });
+}
 function renderPiles(){
   [[FOE,'#foePiles'],[ME,'#myPiles']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
@@ -2456,19 +2575,13 @@ function render(){
   if(!G||G.silent) return;
   $('#barFoe').innerHTML=barHTML(FOE);
   $('#barMe').innerHTML=barHTML(ME);
-  const av=$('#av'+FOE);
-  if(av){ av.style.cursor='pointer';
-    av.onclick=()=>{ if(TGT&&isTargetable('face')){ pickTarget('face'); return; }
-      if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } };
-    if(TGT&&isTargetable('face')) av.classList.add('act');
-    if(SEL&&canAttack(SEL)&&legalTargets(SEL).face) av.style.boxShadow='0 0 14px var(--red)'; else av.style.boxShadow='';
-  }
   // trampas rival
   const ft=$('#foeTraps'); ft.innerHTML='';
   P(FOE).traps.forEach(t=>{ const d=el('div','trapback', t.revealed?CARDS[t.id].art:'🪤');
     d.title=t.revealed?CARDS[t.id].n:'Trampa boca abajo'; ft.appendChild(d); });
   // campos
   renderPiles();
+  renderLeaders();
   renderField($('#foeField'), P(FOE).field, false);
   renderField($('#myField'),  P(ME).field,  true);
   const mt=$('#myTraps'); mt.innerHTML='';
@@ -2514,13 +2627,6 @@ function whyNot(s,id){
 function renderControls(){
   const c=$('#controls'); c.innerHTML='';
   const p=P(ME), L=p.L;
-  const chip=el('div','leaderchip'+((p.leaderUsed||p.pd<L.habCost||G.active!==ME)?' dis':''),
-    `<span class="lf">${L.art}</span><div><div class="ln">${L.habName}</div><div class="la">${L.habCost} PD${p.leaderUsed?' · usada':''}</div></div>`);
-  if(!tutCan('leader')) chip.classList.add('locked');
-  chip.onclick=()=>{ if(!tutCan('leader')){ tutNope(); return; }
-    if(!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME) useLeader(ME); };
-  chip.title=L.pasiva.replace(/<[^>]+>/g,'')+'\n'+L.hab.replace(/<[^>]+>/g,'');
-  c.appendChild(chip);
   if(SEL&&SEL.card.act){
     const a=SEL.card.act;
     const b=el('button','btn sm',`✨ ${a.n} (${a.cost} PD)`);
@@ -2532,7 +2638,7 @@ function renderControls(){
   e.onclick=()=>{ SEL=null; clearPrompt(); endTurn(); };
   c.appendChild(e);
   const r=el('button','btn sm','📜 Reglas'); r.onclick=()=>showRules(true); c.appendChild(r);
-  const g=el('button','btn sm','🕳️ Alcantarillas'); g.onclick=()=>showGrave(); c.appendChild(g);
+
 }
 function selectUnit(u){
   if(G.active!==ME) return;
@@ -2730,7 +2836,7 @@ const TUT_STEPS = [
      <b>También voy a parar la partida en el turno de ella</b> para contarte qué hace y por qué —
      entender al rival es la mitad del juego.`]},
 
-{hi:'#barMe', t:`Lo único que importa de verdad: <b>❤️ Alma 20</b>.<br><br>
+{hi:'#leaderMe', t:`Lo único que importa de verdad: <b>❤️ Alma 20</b>, la que lleva tu carta de Líder.<br><br>
   Si dejas la de Adreida en <b>0</b>, ganas. Si la tuya llega a 0, el Mago del Domo se queda con tu alma.
   Todo lo demás son herramientas para eso.`},
 
@@ -2776,8 +2882,8 @@ const TUT_STEPS = [
     Y tu Discípulo ya no está apagado: tiene el borde verde de "listo para atacar".`},
 
 {hi:'#myField', wait:g=>P(FOE).alma<20, allow:{attack:'face'},
- t:`<b>Haz clic en tu Discípulo</b> y luego en el <b>retrato de Adreida</b>, arriba a la izquierda.
-    Vas a pegarle directo al Alma.`},
+ t:`<b>Haz clic en tu Discípulo</b> y luego en la <b>carta de Adreida</b>, al borde de su lado
+    del tapete. Vas a pegarle directo al Alma.`},
 
 {t:[`Menos 1 de Alma. Poco, pero así se gana.`,
   `Regla clave: <b>atacar al Alma nunca recibe contraataque</b>.
@@ -2833,10 +2939,11 @@ const TUT_STEPS = [
    <b>Inspiración</b>: cada Canción que juegas le regala <b>+1 ATQ</b> a un aliado.<br><br>
    Mira el log de la derecha, ahí lo tienes escrito. Tu mazo entero gira alrededor de eso.`]},
 
-{hi:'#controls', wait:g=>P(ME).leaderUsed, allow:{leader:true},
- t:`Ahora tu <b>Habilidad de Líder</b>: <b>Sube el Volumen</b>, 2 PD, <b>+1 ATQ a todo tu campo</b>.
-    Se puede usar <b>una vez por turno</b> y se paga con PD, como una carta.<br><br>
-    Pulsa el escudo de Fender, abajo a la izquierda.`},
+{hi:'#leaderMe', wait:g=>P(ME).leaderUsed, allow:{leader:true},
+ t:`Esa carta del borde del tapete es <b>tu Líder</b>: ahí vive tu ❤️ Alma y su Habilidad.<br><br>
+    <b>Sube el Volumen</b>, 2 PD, <b>+1 ATQ a todo tu campo</b>. Se usa <b>una vez por turno</b>
+    y se paga con PD, como una carta.<br><br>
+    <i>Haz clic en tu carta de Fender.</i>`},
 
 {hi:'#myField', wait:g=>P(FOE).alma<19, allow:{attack:'face'},
  t:`Sin Provocar delante, el camino al Alma está libre. <b>Ataca al Alma</b> con tu Personaje.<br><br>
@@ -3255,7 +3362,6 @@ $('#mRules').onclick=()=>showRules(false);
 $('#selBack').onclick=()=>showScreen('menu');
 $('#selGo').onclick=()=>{ if(SELP&&SELF) startMatch(SELP,SELF); };
 $('#tutNext').onclick=()=>tutNext();
-$('#tutSkip').onclick=()=>tutEnd();
 $('#ov').onclick=e=>{ if(e.target.id==='ov') $('#ov').classList.remove('on'); };
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ if(TGT) finishTarget(null); else if(SEL){SEL=null;clearPrompt();render();}
