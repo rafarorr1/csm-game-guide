@@ -3377,16 +3377,18 @@ function tutNext(){
 function tutSatisfiable(){
   const a=tutAllow();
   if(!a||a.free) return true;
-  // De lo concreto a lo general: casi todos los pasos llevan end:true como
-  // escapatoria, y comprobarlo primero hacía que CUALQUIER paso pareciera
-  // cumplible mientras fuera tu turno. La red no saltaba nunca y un paso
-  // atascado lo estaba para siempre.
+  // Ojo con el orden. Esto NO mide "¿se va a cumplir el paso?", sino "¿puede
+  // el jugador hacer algo?": si puedes terminar el turno no estás encerrado,
+  // aunque el paso siga pendiente. Probé a poner a.hand primero, para que un
+  // paso que pide una carta impagable contara como imposible, y dejó plantado
+  // el tutorial de Fender en el paso de la Trampa. Si se vuelve a intentar,
+  // hay que correr la suite de tutoriales entera antes de darlo por bueno.
+  if(a.end)    return G.active===ME;
   if(a.hand)   return a.hand.some(id=>P(ME).hand.includes(id)&&canPlay(ME,id));
   if(a.leader){ const L=P(ME).L, p=P(ME);
     return G.active===ME&&!p.leaderUsed&&p.pd>=L.habCost&&(!L.habReq||L.habReq(G,ME)); }
   if(a.attack) return G.active===ME&&P(ME).field.some(u=>canAttack(u)&&
     (a.attack==='face'? legalTargets(u).face : legalTargets(u).units.length||legalTargets(u).face));
-  if(a.end)    return G.active===ME;
   return true;
 }
 function tutCheck(){
@@ -3408,7 +3410,7 @@ function tutCheck(){
       // Cada vez que la red tiene que rescatar a alguien es que el guion pedía
       // algo imposible. Se lleva la cuenta porque las pruebas la miran: un
       // tutorial que "termina" a base de rescates no está bien, sólo lo parece.
-      TUT.rescates = (TUT.rescates||0) + 1;
+      (TUT.rescates || (TUT.rescates=[])).push(TUT.i+1);
       setTimeout(()=>{ if(TUT.on&&!TUT.pending&&TUT_STEPS[TUT.i]===s) tutNext(); },400); }
     return;
   }
