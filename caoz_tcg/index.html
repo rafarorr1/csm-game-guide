@@ -4408,6 +4408,13 @@ window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutoria
   rollDice, roll,
   play:(id)=>playFromHand(ME,id), attack:(i,t)=>doAttack(P(ME).field[i],t==='face'?'face':P(FOE).field[t]),
   end:endTurn, fast:v=>{G.fast=v;}, render };
+
+/* Las pruebas viven en tests.js y sólo se cargan con ?test=... — así el juego
+   normal no paga nada por ellas y sigue siendo un archivo suelto que funciona
+   en file:// sin más compañía. */
+if(new URLSearchParams(location.search).has('test')){
+  const s=document.createElement('script'); s.src='tests.js'; document.head.appendChild(s);
+}
 </script>
 </body>
 </html>
