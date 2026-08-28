@@ -3497,68 +3497,156 @@ async function startMatch(a,b){
    sólo dibuja y manda intenciones, así que no hay nada que sincronizar ni
    azar que cuadrar entre las dos máquinas.
    ========================================================================== */
-// Relevos públicos (software ntfy, sin cuentas). Se publica en TODOS y se
-// sondea hasta que uno responde; entonces nos quedamos con ese. Si uno está
-// caído o bloqueado en la red de alguien, la partida sigue por otro.
-// Con ?relay=https://mi-relevo/ se fuerza uno solo (pruebas o instancia propia).
+/* ---- Canal MQTT sobre WebSocket ----------------------------------------
+   Segunda vía, de naturaleza distinta a la HTTP: los WebSockets no pasan por
+   CORS y usan otros dominios y puertos, así que sobreviven a redes donde el
+   fetch a los relevos está bloqueado. Cliente MQTT 3.1.1 mínimo escrito a
+   mano (CONNECT / SUBSCRIBE / PUBLISH QoS0 / PING): no hace falta librería. */
+const MQTT_URLS=['wss://broker.emqx.io:8084/mqtt',
+                 'wss://test.mosquitto.org:8081/mqtt',
+                 'wss://broker.hivemq.com:8884/mqtt'];
+const mqEnc=new TextEncoder(), mqDec=new TextDecoder();
+function mqLen(n){ const o=[]; do{ let d=n%128; n=Math.floor(n/128); if(n>0) d|=0x80; o.push(d); }while(n>0); return o; }
+function mqStr(s){ const b=mqEnc.encode(s); return [b.length>>8&255, b.length&255, ...b]; }
+function mqPkt(tipo, cuerpo){ return new Uint8Array([tipo, ...mqLen(cuerpo.length), ...cuerpo]); }
+function mqReadLen(b,i){ let m=1,v=0,x; do{ if(i>=b.length) return null; x=b[i++]; v+=(x&127)*m; m*=128; }while(x&128); return [v,i]; }
+
+function chMqtt(url, topic){
+  const ch={tipo:'mqtt', url, ok:false, ws:null, buf:new Uint8Array(0), ping:null, topic, err:''};
+  ch.open=()=>new Promise(res=>{
+    let ws; try{ ws=new WebSocket(url,'mqtt'); }catch(e){ ch.err=e.message; return res(false); }
+    ws.binaryType='arraybuffer'; ch.ws=ws;
+    const to=setTimeout(()=>{ ch.err='sin respuesta'; try{ws.close();}catch(_){} res(false); },9000);
+    ws.onopen=()=>{ const cid='caoz'+Math.random().toString(36).slice(2,10);
+      ws.send(mqPkt(0x10,[...mqStr('MQTT'),4,0x02,0,60,...mqStr(cid)])); };
+    ws.onmessage=e=>{
+      const inc=new Uint8Array(e.data), un=new Uint8Array(ch.buf.length+inc.length);
+      un.set(ch.buf); un.set(inc,ch.buf.length); ch.buf=un;
+      let i=0;
+      while(i<ch.buf.length){
+        const tipo=ch.buf[i]&0xF0, r=mqReadLen(ch.buf,i+1);
+        if(!r) break;
+        const [len,ini]=r; if(ini+len>ch.buf.length) break;
+        const cuerpo=ch.buf.subarray(ini,ini+len);
+        if(tipo===0x20){                                   // CONNACK
+          if(cuerpo[1]!==0){ ch.err='rechazado '+cuerpo[1]; clearTimeout(to); res(false); }
+          else ws.send(mqPkt(0x82,[0,1,...mqStr(ch.topic),0]));
+        } else if(tipo===0x90){                            // SUBACK: ya escuchamos
+          clearTimeout(to); ch.ok=true;
+          ch.ping=setInterval(()=>{ try{ ws.send(new Uint8Array([0xC0,0])); }catch(_){} },45000);
+          res(true);
+        } else if(tipo===0x30){                            // PUBLISH
+          const tl=(cuerpo[0]<<8)|cuerpo[1];
+          netRecvRaw(mqDec.decode(cuerpo.subarray(2+tl)));
+        }
+        i=ini+len;
+      }
+      ch.buf=ch.buf.slice(i);
+    };
+    ws.onerror=()=>{ ch.err='error de WebSocket'; clearTimeout(to); if(!ch.ok) res(false); };
+    ws.onclose=()=>{ ch.ok=false; clearInterval(ch.ping); };
+  });
+  ch.send=txt=>{ if(!ch.ok) return false;
+    try{ ch.ws.send(mqPkt(0x30,[...mqStr(ch.topic),...mqEnc.encode(txt)])); return true; }catch(_){ return false; } };
+  ch.close=()=>{ clearInterval(ch.ping); try{ ch.ws.close(); }catch(_){} };
+  return ch;
+}
+
+/* ---- Canal HTTP (ntfy) --------------------------------------------------
+   Sondeo con since: recupera lo enviado mientras no mirabas. */
 const NET_OVERRIDE=new URLSearchParams(location.search).get('relay');
-const NET_RELAYS = NET_OVERRIDE ? [NET_OVERRIDE.replace(/\/?$/,'/')]
+const HTTP_RELAYS = NET_OVERRIDE ? [NET_OVERRIDE.replace(/\/?$/,'/')]
   : ['https://ntfy.sh/','https://ntfy.envs.net/','https://ntfy.adminforge.de/'];
+function chHttp(base, topic){
+  const ch={tipo:'http', url:base, ok:false, topic, since:'30s', err:'', fallos:0, saltar:0};
+  const conCorte=(url,opt)=>{                 // sin esto, una red muerta cuelga minutos
+    const ac=new AbortController(); const t=setTimeout(()=>ac.abort(),4000);
+    return fetch(url,Object.assign({signal:ac.signal},opt||{})).finally(()=>clearTimeout(t));
+  };
+  ch.poll=async()=>{
+    if(ch.saltar>0){ ch.saltar--; return; }        // dormido: se reintenta cada tanto
+    try{
+      const r=await conCorte(base+ch.topic+'/json?poll=1&since='+encodeURIComponent(ch.since),{cache:'no-store'});
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      const txt=await r.text(); ch.ok=true; ch.err=''; ch.fallos=0;
+      if(!ch.avisado){ ch.avisado=true; netStatus(); }
+      if(!txt.trim()) return;
+      for(const linea of txt.trim().split('\n')){
+        let d; try{ d=JSON.parse(linea); }catch(_){ continue; }
+        if(d.id) ch.since=d.id;
+        if(d.event==='message'&&d.message) netRecvRaw(d.message);
+      }
+    }catch(e){ ch.ok=false; NET.err++;
+      ch.err=(e&&e.name==='AbortError')?'sin respuesta (4s)':((e&&e.message)||'fallo');
+      if(++ch.fallos>=2) ch.saltar=25;             // ~30 s antes de volver a intentarlo
+    }
+  };
+  ch.send=async txt=>{
+    try{ const r=await conCorte(base+ch.topic,{method:'POST',body:txt}); return r.ok; }
+    catch(e){ ch.err=(e&&e.name==='AbortError')?'sin respuesta (4s)':((e&&e.message)||'fallo'); return false; }
+  };
+  ch.close=()=>{};
+  return ch;
+}
+
 const NET_ABC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // sin I/O/0/1, que se confunden
 const NET={on:false,host:false,guest:false,code:null,topic:null,
-  seq:0,q:[],sending:false,pending:{},pid:1,acts:[],busy:false,
-  status:'',peer:false,onjoin:null,relay:null,seen:null,since:null,timer:null,
-  tx:0,rx:0,err:0};
+  sid:null,seq:0,q:[],sending:false,pending:{},pid:1,acts:[],busy:false,hechas:null,esperaAck:null,
+  status:'',peer:false,onjoin:null,seen:null,chs:[],timer:null,tx:0,rx:0,err:0};
 
 function netCode(){ let s=''; for(let i=0;i<5;i++) s+=NET_ABC[rnd(NET_ABC.length)]; return s; }
-function netStatus(t,cls){ NET.status=t; const e=$('#netStatus'); if(e){ e.textContent=t; e.className='netstatus '+(cls||''); }
-  const d=$('#netDiag'); if(d) d.textContent=`enviados ${NET.tx} · recibidos ${NET.rx}${NET.err?' · fallos '+NET.err:''}${NET.relay?' · vía '+NET.relay.replace(/https?:\/\//,'').replace(/\/$/,''):''}`; }
-
+function netVivos(){ return NET.chs.filter(c=>c.ok); }
+function netStatus(t,cls){
+  if(t!=null) NET.status=t;
+  const e=$('#netStatus'); if(e){ e.textContent=NET.status; e.className='netstatus '+(cls||(netVivos().length?'ok':'')); }
+  const d=$('#netDiag');
+  if(d){
+    const mq=NET.chs.filter(c=>c.tipo==='mqtt'), ht=NET.chs.filter(c=>c.tipo==='http');
+    const err=(NET.chs.find(c=>!c.ok&&c.err)||{}).err;
+    d.textContent=`vías: MQTT ${mq.filter(c=>c.ok).length}/${mq.length} · HTTP ${ht.filter(c=>c.ok).length}/${ht.length}`
+      +` · enviados ${NET.tx} · recibidos ${NET.rx}`+(err?` · último fallo: ${err}`:'');
+  }
+}
 async function netConnect(code, asHost){
   NET.code=code; NET.topic='caoztcg-v1-'+code.toLowerCase();
   NET.host=asHost; NET.guest=!asHost; NET.on=true;
   NET.seq=0; NET.q=[]; NET.sending=false; NET.pending={}; NET.acts=[]; NET.busy=false;
-  NET.peer=false; NET.relay=null; NET.seen=new Set(); NET.since={}; NET.tx=NET.rx=NET.err=0;
-  NET_RELAYS.forEach(r=>NET.since[r]='2m');      // recoge también lo enviado justo antes
+  NET.peer=false; NET.seen=new Set(); NET.tx=NET.rx=NET.err=0;
+  NET.sid=Math.random().toString(36).slice(2,10);   // sesión: evita choques de seq al reconectar
+  NET.hechas=new Set(); NET.esperaAck=new Map();
+  NET.chs.forEach(c=>c.close()); NET.chs=[];
   clearInterval(NET.timer);
-  NET.timer=setInterval(netPoll, 900);
   netStatus('conectando…');
-  await netPoll();
+  // dos naturalezas a la vez: si una está bloqueada, la otra suele pasar
+  const mqTopic='caoztcg/v1/'+code.toLowerCase();
+  if(!NET_OVERRIDE) MQTT_URLS.forEach(u=>NET.chs.push(chMqtt(u,mqTopic)));
+  HTTP_RELAYS.forEach(b=>NET.chs.push(chHttp(b,NET.topic)));
+  netStatus();                                  // se ven las vías desde el primer instante
+  NET.chs.forEach(c=>{ if(c.tipo==='mqtt') c.open().then(()=>netStatus()).catch(()=>netStatus()); });
+  NET.chs.forEach(c=>{ if(c.tipo==='http') c.poll().then(()=>netStatus()); });
+  NET.timer=setInterval(()=>{ NET.chs.forEach(c=>{ if(c.tipo==='http') c.poll(); }); netStatus(); },1100);
+  // aviso si en 12 s no hay ninguna vía viva
+  setTimeout(()=>{ if(NET.on&&!netVivos().length)
+    netStatus('No hay salida a ningún relevo. Prueba con datos móviles o desde otra red.','warn'); },12000);
   return true;
 }
 function netClose(){
   clearInterval(NET.timer); NET.timer=null;
-  NET.on=false; NET.host=false; NET.guest=false; NET.peer=false; NET.relay=null;
+  NET.chs.forEach(c=>c.close()); NET.chs=[];
+  NET.on=false; NET.host=false; NET.guest=false; NET.peer=false;
 }
-/* ---- sondeo: nada se pierde aunque se corte la conexión ---- */
-async function netPoll(){
-  if(!NET.on) return;
-  const lista = NET.relay? [NET.relay] : NET_RELAYS;
-  await Promise.all(lista.map(async base=>{
-    try{
-      const url=base+NET.topic+'/json?poll=1&since='+encodeURIComponent(NET.since[base]||'2m');
-      const r=await fetch(url,{cache:'no-store'});
-      if(!r.ok) throw new Error(r.status);
-      const txt=await r.text();
-      if(!txt.trim()) return;
-      for(const linea of txt.trim().split('\n')){
-        let d; try{ d=JSON.parse(linea); }catch(_){ continue; }
-        if(d.id) NET.since[base]=d.id;
-        if(d.event!=='message'||!d.message) continue;
-        if(NET.seen.has(d.id)) continue;
-        NET.seen.add(d.id);
-        let m; try{ m=JSON.parse(d.message); }catch(_){ continue; }
-        if(m.from===(NET.host?'host':'guest')) continue;    // eco de lo mío
-        if(!NET.relay){ NET.relay=base; netStatus(NET.status,'ok'); }   // este relevo funciona
-        NET.rx++; netRecv(m);
-      }
-    }catch(_){ NET.err++; }
-  }));
-  netStatus(NET.status, NET.relay?'ok':'');
+/* un mensaje puede llegar por varias vías: nos quedamos con el primero */
+function netRecvRaw(txt){
+  let m; try{ m=JSON.parse(txt); }catch(_){ return; }
+  if(!m||m.from===(NET.host?'host':'guest')) return;      // eco de lo mío
+  const clave=(m.sid||m.from)+':'+m.seq;
+  if(NET.seen.has(clave)) return;
+  NET.seen.add(clave);
+  NET.rx++; netStatus(null,'ok'); netRecv(m);
 }
 function netSend(msg){
   if(!NET.on) return;
-  msg.from=NET.host?'host':'guest'; msg.seq=++NET.seq;
+  msg.from=NET.host?'host':'guest'; msg.sid=NET.sid; msg.seq=++NET.seq;
   if(msg.t==='state') NET.q=NET.q.filter(m=>m.t!=='state');   // sólo vale el último estado
   NET.q.push(msg); netPump();
 }
@@ -3567,18 +3655,30 @@ async function netPump(){
   NET.sending=true;
   try{
     while(NET.q.length&&NET.on){
-      const m=NET.q.shift(), cuerpo=JSON.stringify(m);
-      const destinos = NET.relay? [NET.relay] : NET_RELAYS;
+      const msg=NET.q[0], txt=JSON.stringify(msg);
       let alguno=false;
-      await Promise.all(destinos.map(async base=>{
-        for(let i=0;i<3;i++){
-          try{ const r=await fetch(base+NET.topic,{method:'POST',body:cuerpo});
-            if(r.ok){ alguno=true; return; } }catch(_){}
-          await sleep(300*(i+1));
-        }
-      }));
-      if(alguno){ NET.tx++; } else { NET.err++; netStatus('sin conexión con el relevo','warn'); }
-      await sleep(160);
+      for(const c of NET.chs) if(c.tipo==='mqtt'&&c.ok&&c.send(txt)) alguno=true;
+      const httpVivos=NET.chs.filter(c=>c.tipo==='http'&&c.ok);
+      if(alguno){
+        httpVivos.forEach(c=>c.send(txt));        // ya entregado por MQTT: no esperamos al HTTP
+      } else {
+        // sin MQTT probamos el HTTP; si ninguno vive, se prueban todos por si revivió
+        const cand = httpVivos.length? httpVivos : NET.chs.filter(c=>c.tipo==='http'&&!c.saltar);
+        const r=await Promise.all(cand.map(c=>c.send(txt)));
+        if(r.some(Boolean)) alguno=true;
+      }
+      if(alguno){
+        NET.q.shift(); NET.tx++;
+        if(msg.__reintento) netStatus(null,'ok');
+      } else {
+        // NO se descarta: al arrancar las vías tardan un segundo en abrirse y
+        // tirar aquí el mensaje era justo lo que dejaba la sala esperando siempre
+        msg.__reintento=(msg.__reintento||0)+1;
+        if(msg.__reintento>25){ NET.q.shift(); NET.err++;
+          netStatus('no se pudo enviar: ninguna vía responde','warn'); }
+        else { netStatus('esperando conexión…','warn'); await sleep(600); continue; }
+      }
+      await sleep(120);
     }
   } finally { NET.sending=false; }
 }
@@ -3686,13 +3786,19 @@ async function netRecv(m){
       else NET.joinPend=m.leader||'fender';      // aún no listo: lo atendemos al asignar
       return;
     }
-    if(m.t==='act'){ NET.acts.push(m); netRunActs(); return; }
+    if(m.t==='act'){
+      if(m.aid&&NET.hechas.has(m.aid)){ netSend({t:'ack', aid:m.aid}); return; }   // ya hecha: sólo confirmar
+      if(m.aid) NET.hechas.add(m.aid);
+      NET.acts.push(m); netRunActs(); return;
+    }
     if(m.t==='reply'&&NET.pending[m.id]){ NET.pending[m.id](m.v); return; }
     if(m.t==='bye'){ netStatus('el rival se fue','warn'); toast('Tu rival ha salido'); return; }
   } else {
     if(m.t==='welcome'){ NET.peer=true; netStatus('partida en marcha','ok'); netGuestStart(m); return; }
     if(m.t==='state'){ netApply(m.s); return; }
     if(m.t==='prompt'){ netGuestPrompt(m); return; }
+    if(m.t==='ack'){ const p=NET.esperaAck.get(m.aid);
+      if(p){ clearInterval(p.t); NET.esperaAck.delete(m.aid); netStatus(null,'ok'); } return; }
     if(m.t==='bye'){ netStatus('el anfitrión se fue','warn'); toast('El anfitrión ha salido'); return; }
   }
 }
@@ -3703,6 +3809,7 @@ async function netRunActs(){
   while(NET.acts.length){
     const m=NET.acts.shift();
     try{ await netDoAct(m); }catch(e){ log('Jugada rival inválida: '+e.message,'sys'); }
+    if(m.aid) netSend({t:'ack', aid:m.aid});
     netPushState();
   }
   NET.busy=false;
@@ -3774,7 +3881,23 @@ function netGuestStart(m){
   render();
 }
 /* el invitado no toca el motor: manda intenciones */
-function gIntent(k,d){ netSend(Object.assign({t:'act',k},d||{})); }
+/* Intención del invitado con acuse: si el relevo pierde el mensaje, se reenvía
+   sola. El anfitrión ignora las repetidas por su identificador, así que nunca
+   se ejecuta dos veces. */
+function gIntent(k,d){
+  const aid=NET.sid+'-'+(++NET.pid);
+  const msg=Object.assign({t:'act',k,aid},d||{});
+  netSend(msg);
+  let intentos=0;
+  const t=setInterval(()=>{
+    if(!NET.on||!NET.esperaAck.has(aid)){ clearInterval(t); return; }
+    if(++intentos>5){ clearInterval(t); NET.esperaAck.delete(aid);
+      netStatus('tu jugada no llegó: revisa la conexión','warn'); return; }
+    netStatus('reenviando tu jugada…','warn');
+    netSend(msg);
+  },3500);
+  NET.esperaAck.set(aid,{t});
+}
 
 /* ---------- vestíbulo ---------- */
 let ONL={lider:null};
