@@ -251,10 +251,10 @@ PRUEBAS.suite('tutoriales', async t => {
     const r = await jugarTutorial(lid);
     t.nota(`${lid}: ${r.fin} · paso máximo ${r.tope}/${total} · rescatados los pasos [${(r.rescates||[]).join(', ')||'ninguno'}]`);
     if(r.tope < total) fallos.push(`${lid} se quedó en ${r.tope}/${total} (${r.fin})`);
-    // Los rescates se informan pero NO tumban la suite todavía: hay pasos que
-    // legítimamente se resuelven terminando el turno. Es el dato que faltaba
-    // cuando se coló el atasco del Discípulo repetido de Rafaela, así que
-    // conviene mirarlo: un número que sube es señal de que algo se plantó.
+    // Un rescate es Gero saltándose una lección porque el paso pedía algo que
+    // no podías hacer. Los cinco mazos llegan al final con cero, así que
+    // cualquiera que aparezca es una regresión de verdad.
+    if((r.rescates||[]).length) fallos.push(`${lid}: Gero se saltó los pasos ${r.rescates.join(', ')} en vez de esperarte`);
     await sleep(1200);   // deja morir el cartel de victoria de la partida anterior
   }
   t.check(fallos.length===0, fallos.join(' ;; '));
@@ -391,42 +391,14 @@ PRUEBAS.suite('regresiones', async t => {
     }
   }
 
-  /* Un paso que pide una carta más cara que tus PD tiene que ESPERARTE hasta
-     el turno siguiente, no saltarse la lección. Es lo que promete su propio
-     texto ("si aún no te alcanza, termina el turno y lo bajas al siguiente") y
-     lo que fallaba con Rafaela: Titaus cuesta 3 y en ese turno tienes 2. */
-  {
-    await startTutorial('rafaela');
-    await sleep(400);
-    TUT.rescates = [];
-    // ir hasta el paso que pide la SEGUNDA criatura (el caro)
-    let guardia=0;
-    while(guardia++ < 40){
-      const paso = TUT_STEPS[TUT.i];
-      if(paso && paso.allow && paso.allow.hand && paso.allow.hand[0]===TUT_MAZO.rafaela.c2) break;
-      if($1('#tutNext').style.display !== 'none'){ $1('#tutNext').click(); }
-      else if(document.body.classList.contains('tutpause')){ $1('#tutNext').click(); }
-      else {
-        // cumplir lo que pida para seguir avanzando
-        const carta = $1('#hand .card:not(.locked).playable');
-        if(carta) carta.click();
-        else { const fin = $$('#controls .btn.gold')[0]; if(fin && !fin.disabled) fin.click(); }
-      }
-      await sleep(300);
-    }
-    const paso = TUT_STEPS[TUT.i];
-    t.check(paso && paso.allow && paso.allow.hand && paso.allow.hand[0]===TUT_MAZO.rafaela.c2,
-      'no llegué al paso que pide la segunda criatura de Rafaela');
-    const coste = T.costOf(TUT_MAZO.rafaela.c2, 0);
-    t.nota(`rafaela: el paso pide ${TUT_MAZO.rafaela.c2} (${coste} PD) con ${T.P(0).pd} PD`);
-    const antes = TUT.i;
-    // esperar más que la red de seguridad (7 s) sin hacer nada
-    await sleep(11000);
-    t.check(TUT.i === antes,
-      `el paso que pide ${TUT_MAZO.rafaela.c2} se saltó solo en vez de esperar a que tengas PD`);
-    tutEnd();
-    await sleep(400);
-  }
+  /* NOTA: aquí hubo una prueba que intentaba comprobar a mano que el paso de
+     Titaus espera al turno siguiente. Se quitó porque no detectaba el fallo:
+     con el bug puesto a propósito seguía en verde, porque el rescate depende
+     de cuánto dure el turno del rival y a veces no llega a saltar.
+     Lo que sí lo detecta es el contador de rescates de la suite `tutoriales`:
+     con el fallo daba [11, 19] / [11, 27] / [11] en los cinco mazos, y sin él
+     da cero. Una prueba que no se pone roja cuando rompes el código a mano no
+     vale nada; ese contador sí. */
 
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
