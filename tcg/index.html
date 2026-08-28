@@ -68,6 +68,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .ltxt b{color:var(--ink)}
 
 /* ============ MESA ============ */
+#guide.on{display:flex;flex-direction:column}
 #board{display:none;grid-template-rows:auto 1fr auto;grid-template-columns:minmax(0,1fr);height:100%;overflow:hidden}
 #board.on{display:grid}
 #board>*{min-width:0}
@@ -436,6 +437,55 @@ body.tutpause #tut{pointer-events:auto}
   border-radius:20px;padding:3px 11px;font-size:12px;color:var(--dim);white-space:nowrap}
 .netchip b{color:var(--gold);letter-spacing:2px}
 
+/* ---- guías de estrategia ---- */
+#guide{background:radial-gradient(ellipse at 50% -20%,#241a3a,var(--bg) 65%)}
+.gbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,6,18,.8);
+  border-bottom:1px solid var(--line);flex-wrap:wrap;flex:0 0 auto}
+.gtabs{display:flex;gap:6px;flex-wrap:wrap}
+.gtab{display:flex;align-items:center;gap:6px;background:var(--panel);border:1px solid var(--line);
+  border-radius:20px;padding:5px 13px;font-size:12.5px;font-weight:700;color:var(--dim);transition:.15s}
+.gtab span{font-size:16px}
+.gtab:hover{border-color:var(--gold);color:var(--ink)}
+.gtab.on{border-color:var(--gold);color:var(--gold);background:linear-gradient(180deg,#3a2c12,#241a34)}
+.gbody{flex:1;overflow-y:auto;padding:20px 22px 40px;max-width:900px;margin:0 auto;width:100%}
+.ghead{display:flex;gap:18px;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap}
+.ghead .gart{font-size:62px;line-height:1;filter:drop-shadow(0 4px 10px #000)}
+.ghead h2{font-size:25px;color:var(--gold);line-height:1.15;margin-bottom:2px}
+.gsub{font-size:11.5px;letter-spacing:2px;text-transform:uppercase;color:var(--purple);font-weight:800}
+.glema{font-size:14.5px;color:#d9cdee;font-style:italic;margin-top:7px;line-height:1.4}
+.gmeta{display:flex;gap:14px;flex-wrap:wrap;margin-top:8px;font-size:11.5px;color:var(--dim)}
+.gmeta b{color:var(--ink)}
+.gsec{margin-bottom:22px}
+.gsec h3{font-size:15px;color:var(--gold);margin-bottom:7px;letter-spacing:.4px}
+.gsec p{font-size:13.8px;line-height:1.6;color:#ddd2ef}
+.gsec b{color:#fff}
+.gsec ul{margin:2px 0 0 18px}
+.gsec li{font-size:13.5px;line-height:1.55;color:#ddd2ef;margin-bottom:7px}
+.gsec.destacado{background:linear-gradient(180deg,rgba(138,92,240,.14),rgba(0,0,0,.2));
+  border:1px solid var(--purple2);border-left:3px solid var(--purple);
+  border-radius:12px;padding:14px 16px}
+.gcards{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+.gcards .card{cursor:default}
+.gcount{position:absolute;top:25px;left:3px;font-size:11px;font-weight:900;color:var(--gold);
+  background:rgba(8,4,14,.9);border:1px solid var(--gold2);border-radius:6px;padding:0 5px;
+  box-shadow:0 2px 6px #000}
+.gturnos{display:flex;flex-direction:column;gap:9px}
+.gturno{display:flex;gap:12px;align-items:flex-start}
+.gturno .gt{flex:0 0 62px;text-align:center;font-weight:900;font-size:12.5px;color:var(--gold);
+  background:rgba(230,187,82,.12);border:1px solid var(--gold2);border-radius:8px;padding:5px 0}
+.gturno p{flex:1;margin:0}
+.gvs{width:100%;border-collapse:collapse;font-size:13px}
+.gvs td{border-bottom:1px solid var(--line);padding:7px 8px;vertical-align:top;color:#ccc0e2}
+.gvs td:first-child{white-space:nowrap;width:1%}
+.gv{font-weight:800;white-space:nowrap;color:var(--dim)}
+.gv.bien{color:var(--green)} .gv.mal{color:var(--red)}
+.gplan{font-style:italic;color:#b5a8d0}
+@media(max-width:620px){
+  .gbody{padding:14px 12px 30px} .ghead .gart{font-size:44px} .ghead h2{font-size:20px}
+  .gturno{flex-direction:column;gap:3px} .gturno .gt{flex:none;display:inline-block;padding:3px 10px}
+  .gvs td{font-size:12px;padding:6px 4px}
+}
+
 /* galería */
 .gallery{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
 .filters{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
@@ -487,6 +537,7 @@ body.tutpause #tut{pointer-events:auto}
     <button class="btn gold" id="mTut">🎓 &nbsp;Tutorial — Aprende a jugar</button>
     <button class="btn" id="mPlay">⚔️ &nbsp;Partida contra el Domo</button>
     <button class="btn" id="mOnline">👥 &nbsp;Jugar con un amigo (online)</button>
+    <button class="btn" id="mGuides">📖 &nbsp;Guías de estrategia</button>
     <button class="btn" id="mCards">🃏 &nbsp;Ver todas las cartas</button>
     <button class="btn" id="mRules">📜 &nbsp;Reglas completas</button>
   </div>
@@ -500,10 +551,20 @@ body.tutpause #tut{pointer-events:auto}
   <div class="leaders" id="leaderList"></div>
   <div class="h2" style="margin-top:6px">RIVAL</div>
   <div class="leaders" id="foeList"></div>
-  <div style="display:flex;gap:10px;margin-top:8px">
+  <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center">
     <button class="btn" id="selBack">← Volver</button>
+    <button class="btn" id="selGuide">📖 Guía de este mazo</button>
     <button class="btn gold" id="selGo" disabled>Entrar al Domo →</button>
   </div>
+</div>
+
+<!-- ============ GUÍAS DE ESTRATEGIA ============ -->
+<div class="screen" id="guide">
+  <div class="gbar">
+    <button class="btn sm" id="guideBack">← Menú</button>
+    <div class="gtabs" id="guideTabs"></div>
+  </div>
+  <div class="gbody" id="guideBody"></div>
 </div>
 
 <!-- ============ MESA ============ -->
@@ -3992,15 +4053,223 @@ function onlJoinCode(){
     i.oninput=()=>{ i.value=i.value.toUpperCase().replace(/[^A-Z0-9]/g,''); }; } },80);
 }
 
+
+/* ==========================================================================
+   15. GUÍAS DE ESTRATEGIA — cómo se pilota cada mazo
+   Escritas sobre las listas reales de DECKS: las cartas y los números que
+   aparecen aquí son los que hay de verdad en cada mazo.
+   ========================================================================== */
+const GUIAS = {
+mohamed:{
+  dif:3, lema:'Que atacarte cueste caro, y ganar sin pelear.',
+  ganas:`Tú no ganas por daño: ganas por <b>Llaves</b>. Tu mazo entero está montado para
+    aburrir al rival mientras juntas dos y bajas el <b>Pergamino de Deseo Ilimitado</b>.
+    El daño que hagas es un bonus.`,
+  motor:['conserje','llavemago','pergamino','sangrefria','peaje'],
+  motorTxt:`Seis fuentes de Llave en 40 cartas y sólo necesitas <b>dos</b>: los tres
+    <b>Conserjes</b> (una al morir, y muere de un soplido), la <b>Llave del Mago</b>
+    (cuenta como una ella sola), <b>Lucy Fernando</b> y el <b>Sacrificio de Sangre</b>
+    del Mago del Domo, que además te deja matar a tu propio Conserje cuando te convenga.`,
+  turnos:[
+    ['1–3','<b>Conserje</b> e <b>Ilusión Menor</b> a la mesa. No intentes ganar el campo: intenta que atacarte sea incómodo. Con <b>Brick y Brock</b> cada ataque rival cuesta 1 PD, y el <b>Peaje del Puente</b> boca abajo hace el resto.'],
+    ['4–6','Limpia con <b>Golpe a Sangre Fría</b> (que te cuesta 2, no 3) y <b>El Acertijo</b>. Mientras tanto van cayendo Conserjes y sumando Llaves. Mira su mesa: si aparece <b>Talia Boss</b> o <b>Juan Gabriel</b>, mátalos ya — son los que apagan tu plan.'],
+    ['7+','Con 2 Llaves, baja el <b>Pergamino</b> y protégelo. <b>Contrato del Notario</b> boca abajo anula el hechizo que venga a destruirlo. Sólo tienes que sobrevivir hasta el inicio de tu segundo turno.']
+  ],
+  combo:`<b>Conserje + Sacrificio de Sangre.</b> Si te falta una Llave y el Conserje está
+    vivo pero nadie lo mata, el <b>Mago del Domo</b> lo destruye por 3 PD y te la da él mismo.
+    Y como el Mago gana 1 Alma cada vez que muere cualquier Personaje, cuanto más se pelea
+    el rival, más aguantas tú.`,
+  mano:`Quédate <b>Conserje</b>, <b>Ilusión Menor</b> y <b>Peaje del Puente</b>: son baratos
+    y compran los turnos que necesitas. Descarta el <b>Pergamino</b> de salida si no ves
+    ninguna fuente de Llave — es un ladrillo de 7 PD hasta el turno 7.`,
+  pierdes:[
+    'Contra <b>Fender</b>, por ir lento: él te mata antes del turno 7 si le dejas montar mesa. Tus Ilusiones y el Peaje son salvavidas, no lujos.',
+    'Por guardar <b>Golpe a Sangre Fría</b> esperando algo mejor. Sólo mata cosas de Costo 2 o menos: úsalo pronto, no lo reserves para el dragón.',
+    'Por bajar el Pergamino con la Zona de Trampas vacía. Es una Reliquia: <b>Disipar Magia</b> la borra por 2 PD.'
+  ],
+  vs:{fender:['Difícil','Es más rápido que tus Llaves.'],adreida:['Parejo','Sangre Fría no mata a sus grandes: usa Acertijo.'],
+      rafaela:['Favorable','Sólo Juan Gabriel puede pararte el Pergamino.'],talesin:['Parejo','Carrera de Llaves: Disipar Magia contra su Pergamino.']}
+},
+fender:{
+  dif:1, lema:'Llenar la mesa y rematar en un solo turno.',
+  ganas:`Sales rápido, sumas cuerpos baratos y en el turno 5 o 6 conviertes cuatro
+    Personajes pequeños en <b>diez o más de daño de golpe</b>. Si la partida llega al turno 9
+    sin que hayas ganado, ya la perdiste.`,
+  motor:['bob','balada','cantaberna','burla','discipulo'],
+  motorTxt:`Doce Personajes de Costo 1 y 2: siempre tienes algo que jugar. <b>Bob Carly</b>
+    le da <b>Prisa</b> a todo lo de Costo 3 o menos, así que lo que baje ataca ese mismo turno.
+    Y cada <b>Canción</b> dispara tu pasiva <b>Inspiración</b>: +1 ATQ extra, gratis, encima
+    de lo que ya haga la carta.`,
+  turnos:[
+    ['1–3','Cuerpos, cuerpos y cuerpos. <b>Discípulo de Rul</b>, <b>Matildus</b>, <b>Bartolomeo</b>. No pienses en intercambios buenos: piensa en tener cuatro cosas en mesa el turno 4.'],
+    ['4–5','Baja <b>Bob Carly</b>. A partir de ahí todo lo barato entra atacando y el rival no puede planear su defensa con un turno de margen.'],
+    ['6','El turno letal: <b>Balada de Valoria</b> (+1/+1 y Prisa a todos) + una <b>Canción de Taberna</b> + <b>Sube el Volumen</b>. Con cuatro cuerpos son 12 o más de daño en una pasada.']
+  ],
+  combo:`<b>Cuenta antes de atacar.</b> Cuatro Personajes de 1 ATQ = 4. Balada los sube a 2
+    (=8). Sube el Volumen a 3 (=12). Y cada Canción que juegues antes suma +1 más por
+    Inspiración. Ese es el turno que buscas desde que empieza la partida:
+    <b>primero todos los buffs, después todos los ataques</b>.`,
+  mano:`Quédate cualquier cosa de Costo 1 y 2 y una <b>Balada</b>. Si tu mano inicial no tiene
+    dos Personajes baratos, no la tienes. <b>Bob Carly</b> vale mucho más en la mano que
+    <b>Eric</b>.`,
+  pierdes:[
+    'Por vaciar la mano. Contra <b>Aliento de Ácido</b> o <b>Bola de Fuego</b> pierdes cuatro cuerpos de golpe: deja siempre dos Personajes en la mano para reconstruir.',
+    'Contra <b>Provocar</b>. Adreida convierte cualquier cosa de 4 ATQ en un muro y tu daño se estrella. <b>Zancada Larga</b> te deja ignorarlo con un atacante: guárdala para el turno letal.',
+    'Por atacar antes de buffear. Es el error más caro del mazo.'
+  ],
+  vs:{mohamed:['Favorable','Eres más rápido que sus Llaves.'],adreida:['Difícil','Provocar frena tu daño: Zancada Larga y Calentar Metal.'],
+      rafaela:['Parejo','Sus curaciones contra tu velocidad.'],talesin:['Favorable','Es lento: mátalo antes del turno 7.']}
+},
+adreida:{
+  dif:1, lema:'Cuerpos grandes que el rival está obligado a mirar.',
+  ganas:`Juegas en curva cosas gordas y dejas que tu pasiva haga el trabajo: con
+    <b>Intimidante</b>, <b>todo lo tuyo de 4 o más ATQ tiene Provocar</b>. Eso significa que
+    tú decides contra qué pelea el rival y cuándo. Ganas por acumulación, no por sorpresa.`,
+  motor:['mazo','horton','talia','trol','armadura'],
+  motorTxt:`El <b>Mazo de Brock</b> (+3 ATQ) es tu mejor carta y no lo parece: puesto en un
+    <b>Bartolomeo</b> de 1 ATQ lo convierte en un muro de 4 que el rival <i>tiene</i> que
+    atacar. Con <b>Auxilio</b> y <b>Armadura Mágica</b> esos muros aguantan dos turnos.`,
+  turnos:[
+    ['1–3','Curva limpia: Bartolomeo (2), <b>Augusto Bale</b> (3). Augusto además abarata tus Trampas, y llevas cinco.'],
+    ['4–6','Aquí manda el mazo: <b>Sir Horton</b>, <b>Lucius Bale</b>, <b>Talia Boss</b>, <b>Trol de la Mano Larga</b>. Casi todos superan los 4 ATQ, así que entran con Provocar puesto.'],
+    ['7+','<b>Juan Gabriel</b> cierra: 5/6 Arquero que además congela el Pergamino rival. Si llegas aquí con mesa, la partida es tuya.']
+  ],
+  combo:`<b>Saeta Guía + Golpe Directo.</b> La Saeta hace 3 daño y quita el contraataque de
+    ese objetivo; tu Habilidad da +2 ATQ y también anula el contraataque. Juntas matan
+    cualquier cosa <b>sin que te devuelvan un solo punto de daño</b>. Es el intercambio más
+    limpio del juego.`,
+  mano:`Quédate la curva: algo de 2, algo de 3 y un <b>Mazo de Brock</b>. <b>Contrahechizo</b>
+    es oro contra los mazos de barrido — guárdalo para el Aliento de Ácido, no lo gastes en
+    una Canción.`,
+  pierdes:[
+    'Contra Trampas. <b>Risa de Tasha</b> y <b>Gema del Conserje</b> castigan atacar con cartas grandes: <b>Modificar las Reglas</b> limpia su Zona de Trampas antes de la gran embestida.',
+    'Contra <b>Talesin</b>, por el <b>Aliento de Ácido</b> y por Tal. Talia Boss es tu mejor carta ahí: mátale el Pergamino antes de que llegue.',
+    'Por olvidar tu segunda Habilidad: si no vas a atacar, <b>Maratón de K-dramas</b> te da una carta gratis. Es 0 PD.'
+  ],
+  vs:{mohamed:['Parejo','Sus rebotes te hacen perder tempo.'],fender:['Favorable','Provocar apaga su turno letal.'],
+      rafaela:['Favorable','Tus cuerpos pasan por encima de los Discípulos.'],talesin:['Difícil','Aliento de Ácido y Tal.']}
+},
+rafaela:{
+  dif:2, lema:'Un enjambre que se cura solo y no se puede limpiar del todo.',
+  ganas:`Cada <b>Discípulo</b> que entra a tu campo cura 2, y los Discípulos genéricos
+    <b>crecen entre sí</b>. Tú no ganas una carrera: ganas alargando la partida hasta que su
+    mesa no puede con la tuya y tu Alma sigue casi intacta.`,
+  motor:['discipulo','titaus','espiritus','rulchete','leche'],
+  motorTxt:`Tres <b>Discípulo de Rul</b> más tres <b>Titaus</b> y tres <b>Matildus</b>: con
+    tres Discípulos en mesa, cada uno es un 3/2 por 1 PD. <b>Espíritus Guardianes</b> hace
+    que atacarte cueste 2 de daño por cabeza, y <b>Taumaturgia</b> te roba carta gratis
+    cuando ya tienes tres.`,
+  turnos:[
+    ['1–3','Suelta Discípulos sin miedo. Cada uno son 2 de curación por tu pasiva, así que aunque te estén pegando tu Alma no baja.'],
+    ['4–6','<b>Espíritus Guardianes</b>. A partir de aquí el rival paga peaje por atacarte y tú sigues sumando cuerpos. <b>Titaus</b> te filtra el mazo para encontrar lo que falte.'],
+    ['7+','<b>Rulchete</b> sobre <b>Machete</b> (o cualquier cosa de Costo 2 o menos) = un <b>7/7 con Vuelo</b> que casi nadie puede bloquear. Ése es tu remate.']
+  ],
+  combo:`<b>Rulchete sobre Machete.</b> Machete cuesta 1 y no hace nada; convertido en
+    <b>Dragón Celestial Morado 7/7 volador</b> gana la partida en dos ataques. Guárdalo hasta
+    tener el turno libre, porque vuelve a su forma al final de tu siguiente turno.`,
+  mano:`Quédate Discípulos y <b>Taumaturgia</b>. <b>Leche de Petunia</b> y <b>Auxilio</b>
+    valen mucho más en el turno 5 que en el 1: no los busques de salida.`,
+  pierdes:[
+    'Contra Dragones. <b>Adolfo y Remus</b> se cambian de bando si el rival controla uno: no los juegues si ves <b>Las Montañas de Tal</b> en la mesa.',
+    'Por curar demasiado pronto. Las curaciones no acumulan: guárdalas hasta que haya daño real que quitar.',
+    'Contra el <b>Pergamino</b>. Tu única respuesta es <b>Juan Gabriel</b>, que congela su contador. Si el rival junta Llaves, búscalo con Titaus ya.'
+  ],
+  vs:{mohamed:['Difícil','No tienes cómo parar el Pergamino salvo Juan Gabriel.'],fender:['Parejo','Tus curaciones contra su velocidad.'],
+      adreida:['Difícil','Sus cuerpos pasan por encima del enjambre.'],talesin:['Parejo','Espíritus Guardianes castiga su sacrificio de Eric.']}
+},
+talesin:{
+  dif:3, lema:'Todo en este mazo quiere morir.',
+  ganas:`Cada aliado que muere te da una <b>Ficha de Gracia</b>. Con cinco, <b>asciendes</b>:
+    +5 Alma y tus <b>Celestiales</b> ganan +2/+2 permanentes. Tu mazo no protege a nadie —
+    lo gasta. Y detrás viene <b>Tal</b> o el <b>Pergamino</b>.`,
+  motor:['matildus','eric','tal','montanas','domo'],
+  motorTxt:`<b>Matildus</b> explota en la cara de quien lo mata, <b>Eric</b> se sacrifica por
+    otro, el <b>Conserje</b> deja Llaves, <b>Eman 69</b> te da 2 PD al morir. Todo suma
+    Gracia. <b>Las Montañas de Tal</b> abaratan a los Dragones 2 PD: Tal deja de costar 10 y
+    baja el turno 8, o antes con <b>Puntos Robados</b>.`,
+  turnos:[
+    ['1–3','Cosas baratas y sacrificables. No te importa perderlas: es el plan. <b>Puntos Robados</b> temprano para acelerar después.'],
+    ['4–6','<b>Aliento de Ácido</b> limpia su mesa y, si mata a los tuyos también, mejor: más Gracia. <b>Rayo Abrasador</b> puede rematar a tus propios Personajes para llegar a cinco.'],
+    ['7+','Asciendes y bajas a <b>Tal</b> o el <b>Pergamino</b>. Con Tal en mesa el Pergamino <b>no necesita Llaves</b>, y llevas <b>El Domo</b> para que cada Llave cuente doble.']
+  ],
+  combo:`<b>Petunia + Ascensión.</b> Petunia muere y vuelve como <b>Petunia Sagrada</b>, que es
+    <i>Celestial</i>. Si asciendes después, se queda en <b>5/7 con Vuelo</b>. Y con
+    <b>Luz de Kenya</b> puedes hacer Celestial a cualquier otra cosa antes de ascender para
+    que se lleve el +2/+2.`,
+  mano:`Quédate <b>Matildus</b>, <b>Eric</b> y <b>Puntos Robados</b>. <b>Tal</b> en la mano
+    inicial es una carta muerta durante siete turnos: sólo consérvalo si también tienes
+    <b>Las Montañas</b>.`,
+  pierdes:[
+    'Por lento. Contra <b>Fender</b> estás muerto en el turno 6 si no encuentras <b>Aliento de Ácido</b> temprano.',
+    'Por contar mal la Gracia. Mira el contador ✨ de tu barra antes de sacrificar: llegar a 4 y quedarte ahí es perder la partida a medias.',
+    'Por bajar a <b>Lucy Fernando</b> sin un <b>Contrato</b>. Sin él no puede atacar: el <b>Contrato del Notario</b> boca abajo está en el mazo justo para eso.'
+  ],
+  vs:{mohamed:['Parejo','Carrera de Llaves.'],fender:['Difícil','Te mata antes de que arranques.'],
+      adreida:['Favorable','Aliento de Ácido y Tal la desbordan.'],rafaela:['Parejo','Sus Espíritus castigan tus sacrificios.']}
+}};
+
+const GUIA_DATOS = {mohamed:36, fender:37, adreida:90, rafaela:52, talesin:31};
+
+let GUIA_SEL='fender';
+function showGuides(id){
+  GUIA_SEL = id || GUIA_SEL;
+  showScreen('guide');
+  const tabs=$('#guideTabs'); tabs.innerHTML='';
+  Object.keys(LEADERS).forEach(k=>{
+    const L=LEADERS[k];
+    const t=el('button','gtab'+(k===GUIA_SEL?' on':''),`<span>${L.art}</span> ${L.n}`);
+    t.onclick=()=>showGuides(k); tabs.appendChild(t);
+  });
+  const L=LEADERS[GUIA_SEL], D=DECKS[GUIA_SEL], g=GUIAS[GUIA_SEL];
+  const c=$('#guideBody');
+  const estrellas=n=>'★'.repeat(n)+'☆'.repeat(3-n);
+  c.innerHTML=`
+    <div class="ghead">
+      <div class="gart">${L.art}</div>
+      <div>
+        <h2>${L.n} — “${D.n}”</h2>
+        <div class="gsub">${D.d}</div>
+        <div class="glema">“${g.lema}”</div>
+        <div class="gmeta"><span>Dificultad <b>${estrellas(g.dif)}</b></span>
+          <span>En 280 partidas de prueba ganó el <b>${GUIA_DATOS[GUIA_SEL]}%</b></span></div>
+      </div>
+    </div>
+    <div class="gsec"><h3>🏆 Cómo ganas</h3><p>${g.ganas}</p></div>
+    <div class="gsec"><h3>⚙️ Tu motor</h3><p>${g.motorTxt}</p><div class="gcards" id="gcards"></div></div>
+    <div class="gsec"><h3>🕐 Plan por turnos</h3><div class="gturnos">
+      ${g.turnos.map(([t,d])=>`<div class="gturno"><span class="gt">${t}</span><p>${d}</p></div>`).join('')}
+    </div></div>
+    <div class="gsec destacado"><h3>💥 La jugada</h3><p>${g.combo}</p></div>
+    <div class="gsec"><h3>🃏 Qué guardar en la mano inicial</h3><p>${g.mano}</p></div>
+    <div class="gsec"><h3>💀 Cómo pierdes</h3><ul>${g.pierdes.map(x=>`<li>${x}</li>`).join('')}</ul></div>
+    <div class="gsec"><h3>⚔️ Enfrentamientos</h3><table class="gvs">
+      ${Object.keys(g.vs).map(k=>`<tr><td>${LEADERS[k].art} <b>${LEADERS[k].n}</b></td>
+        <td class="gv ${g.vs[k][0]==='Favorable'?'bien':g.vs[k][0]==='Difícil'?'mal':''}">${g.vs[k][0]}</td>
+        <td>${g.vs[k][1]}</td></tr>`).join('')}
+    </table></div>
+    <div class="gsec"><h3>📋 El mazo entero</h3><p class="gplan">${D.plan}</p>
+      <div class="gcards" id="gdeck"></div></div>`;
+  const strip=$('#gcards');
+  g.motor.forEach(id=>strip.appendChild(cardEl(id,{})));
+  const deck=$('#gdeck');
+  D.list.forEach(([cid,n])=>{ const d=cardEl(cid,{});
+    if(n>1){ const b=el('div','gcount','×'+n); d.appendChild(b); }
+    deck.appendChild(d); });
+  c.scrollTop=0;
+}
+
 /* ==========================================================================
    13. ARRANQUE
    ========================================================================== */
 $('#mTut').onclick=()=>{ $('#log').innerHTML=''; startTutorial(); };
 $('#mOnline').onclick=()=>showOnline();
 $('#mPlay').onclick=()=>{ SELP=null; SELF=null; buildSelect(); $('#selGo').disabled=true; showScreen('select'); };
+$('#mGuides').onclick=()=>showGuides();
+$('#guideBack').onclick=()=>showScreen('menu');
 $('#mCards').onclick=()=>showGallery();
 $('#mRules').onclick=()=>showRules(false);
 $('#selBack').onclick=()=>showScreen('menu');
+$('#selGuide').onclick=()=>showGuides(SELP||'fender');
 $('#selGo').onclick=()=>{ if(SELP&&SELF) startMatch(SELP,SELF); };
 $('#tutNext').onclick=()=>tutNext();
 $('#ov').onclick=e=>{ if(e.target.id==='ov') $('#ov').classList.remove('on'); };
