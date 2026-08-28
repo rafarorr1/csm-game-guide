@@ -132,6 +132,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card.t-objeto{border-top:3px solid var(--c-objeto)}
 .card.t-lugar{border-top:3px solid var(--c-lugar)}
 .card.playable{box-shadow:0 0 0 2px var(--green),0 0 14px rgba(79,192,125,.4)}
+.card.locked{opacity:.3;filter:grayscale(.9);box-shadow:none;cursor:not-allowed}
+.card.locked:hover{transform:none;border-color:var(--line)}
+.leaderchip.locked{opacity:.3;filter:grayscale(.9);cursor:not-allowed}
 .card.unplayable{opacity:.55;filter:grayscale(.45)}
 .card.tgt{box-shadow:0 0 0 2px var(--red),0 0 16px rgba(224,82,74,.55);animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 3px var(--red),0 0 26px rgba(224,82,74,.85)}}
@@ -140,8 +143,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* unidad en campo */
 .unit{width:var(--cw);height:var(--ch)}
 .unit.sick{filter:saturate(.55) brightness(.82)}
-.unit.ready::after{content:"";position:absolute;inset:-2px;border-radius:10px;
-  border:1px solid rgba(79,192,125,.55);pointer-events:none}
+@keyframes readyGlow{
+  0%,100%{box-shadow:0 0 0 2px rgba(79,192,125,.55),0 0 14px rgba(79,192,125,.35)}
+  50%    {box-shadow:0 0 0 2px rgba(79,192,125,.95),0 0 26px rgba(79,192,125,.7)}}
+.card.unit.ready{border-color:var(--green);animation:readyGlow 1.9s ease-in-out infinite}
+.card.unit.ready .art{filter:drop-shadow(0 2px 4px #000) drop-shadow(0 0 8px rgba(79,192,125,.5))}
+.unit.ready::after{content:"⚔";position:absolute;top:-9px;right:-7px;width:20px;height:20px;
+  border-radius:50%;background:var(--green);color:#06240f;font-size:12px;font-weight:900;
+  display:grid;place-items:center;box-shadow:0 2px 8px #000;pointer-events:none;z-index:3}
+/* si además es objetivo válido, manda el rojo de objetivo */
+.card.unit.tgt{border-color:var(--red);animation:pulse 1s infinite}
+.card.unit.tgt::after{display:none}
 .unit .keys{display:flex;flex-wrap:wrap;gap:2px;margin-top:1px}
 .kw{font-size:7.5px;padding:0 3px;border-radius:3px;background:var(--panel2);
   border:1px solid var(--line);color:var(--dim);letter-spacing:.2px}
@@ -1724,7 +1736,8 @@ async function useRelic(s,r){
    7. COMBATE
    ========================================================================== */
 function canAttack(u){
-  if(!u||!u.alive||u.attacked||u.sick||u.stunned>0||u.atk<=0||G.over) return false;
+  if(!u||!u.alive||u.attacked||u.stunned>0||u.atk<=0||G.over) return false;
+  if(u.sick&&!u.keys.has('prisa')) return false;
   if(u.card.noAttack||u.blind) return false;
   if(u.card.clause&&!u.noClause&&!hasContract(u.side)) return false;
   return true;
@@ -2280,17 +2293,19 @@ function renderField(host, list, mine){
     }
     d.dataset.pv=u.maxHp-u.dmg;
     d.dataset.a=u.atk; d.dataset.h=u.maxHp;
-    const rest=(u.sick||u.stunned>0);
+    const rest=(u.sick&&!u.keys.has('prisa'))||u.stunned>0;
     const tgt=(TGT&&isTargetable(u)) ||
               (!mine&&SEL&&canAttack(SEL)&&legalTargets(SEL).units.includes(u));
     d.className='card unit t-personaje'+(rest?' sick':'')
       +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')
       +((mine&&SEL===u)?' selected':'');
     d.onclick = mine
-      ? ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }
+      ? ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }   // elegir objetivo siempre permitido
               if(SEL===u){ SEL=null; clearPrompt(); render(); return; }
+              if(!tutCan('select')){ tutNope(); return; }
               selectUnit(u); }
-      : ()=>{ if(TGT&&isTargetable(u)) pickTarget(u); else if(SEL&&canAttack(SEL)) tryAttack(SEL,u); };
+      : ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }
+              if(SEL&&canAttack(SEL)){ if(!tutCan('attack','unit')){ tutNope(); return; } tryAttack(SEL,u); } };
     if(host.children[i]!==d) host.insertBefore(d, host.children[i]||null);
   });
   [...host.children].forEach(d=>{ if(!seen.has(d.dataset.uid)) d.remove(); });
@@ -2303,8 +2318,8 @@ function render(){
   $('#barMe').innerHTML=barHTML(ME);
   const av=$('#av'+FOE);
   if(av){ av.style.cursor='pointer';
-    av.onclick=()=>{ if(TGT&&isTargetable('face')) pickTarget('face');
-      else if(SEL&&canAttack(SEL)) tryAttack(SEL,'face'); };
+    av.onclick=()=>{ if(TGT&&isTargetable('face')){ pickTarget('face'); return; }
+      if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } };
     if(TGT&&isTargetable('face')) av.classList.add('act');
     if(SEL&&canAttack(SEL)&&legalTargets(SEL).face) av.style.boxShadow='0 0 14px var(--red)'; else av.style.boxShadow='';
   }
@@ -2335,8 +2350,11 @@ function render(){
   P(ME).hand.forEach(id=>{
     const d=cardEl(id,{side:ME});
     const ok=canPlay(ME,id);
-    d.classList.add(ok?'playable':'unplayable');
-    d.onclick=()=>{ if(TGT) return; if(!ok){ toast(whyNot(ME,id)); return; }
+    const libre=tutCan('hand',id);
+    d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
+    d.onclick=()=>{ if(TGT) return;
+      if(!libre){ tutNope(); return; }
+      if(!ok){ toast(whyNot(ME,id)); return; }
       SEL=null; clearPrompt(); playFromHand(ME,id); };
     h.appendChild(d);
   });
@@ -2357,7 +2375,9 @@ function renderControls(){
   const p=P(ME), L=p.L;
   const chip=el('div','leaderchip'+((p.leaderUsed||p.pd<L.habCost||G.active!==ME)?' dis':''),
     `<span class="lf">${L.art}</span><div><div class="ln">${L.habName}</div><div class="la">${L.habCost} PD${p.leaderUsed?' · usada':''}</div></div>`);
-  chip.onclick=()=>{ if(!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME) useLeader(ME); };
+  if(!tutCan('leader')) chip.classList.add('locked');
+  chip.onclick=()=>{ if(!tutCan('leader')){ tutNope(); return; }
+    if(!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME) useLeader(ME); };
   chip.title=L.pasiva.replace(/<[^>]+>/g,'')+'\n'+L.hab.replace(/<[^>]+>/g,'');
   c.appendChild(chip);
   if(SEL&&SEL.card.act){
@@ -2367,7 +2387,7 @@ function renderControls(){
     b.onclick=()=>useAct(SEL); c.appendChild(b);
   }
   const e=el('button','btn gold','Terminar turno ⏭');
-  e.disabled=G.active!==ME||G.busy||G.over;
+  e.disabled=G.active!==ME||G.busy||G.over||!tutCan('end');
   e.onclick=()=>{ SEL=null; clearPrompt(); endTurn(); };
   c.appendChild(e);
   const r=el('button','btn sm','📜 Reglas'); r.onclick=()=>showRules(true); c.appendChild(r);
@@ -2577,7 +2597,7 @@ const TUT_STEPS = [
   Tu máximo sube <b>+1 cada turno</b> hasta 10 y <b>se rellena solo</b>. No hay que ahorrar
   ni buscar recursos: el turno 5 tendrás 5, quieras o no.`},
 
-{hi:'#hand', wait:g=>P(ME).field.length>=1,
+{hi:'#hand', wait:g=>P(ME).field.length>=1, allow:{hand:['discipulo']},
  t:`Con 1 PD solo te entra una cosa. <b>Juega el Discípulo de Rul</b> — clic en su carta.<br><br>
     El <b>borde verde</b> quiere decir "puedes pagarla ahora mismo". Las grises, no.`},
 
@@ -2586,7 +2606,7 @@ const TUT_STEPS = [
    Llega cansado del viaje. A partir de tu próximo turno ya reparte.<br><br>
    Solo las cartas que dicen <b>Prisa</b> se saltan esa espera.`]},
 
-{hi:'#controls', wait:g=>g.active===FOE,
+{hi:'#controls', wait:g=>g.active===FOE, allow:{end:true},
  t:`No te queda PD. Pulsa <b>Terminar turno</b> y vemos qué hace ella.`},
 
 /* ---------- turno 1 del rival ---------- */
@@ -2614,7 +2634,7 @@ const TUT_STEPS = [
  t:`Tu turno otra vez. Sin que hagas nada: <b>+1 PD</b> (ya llevas 2) y <b>+1 carta</b>.<br><br>
     Y tu Discípulo ya no está apagado: tiene el borde verde de "listo para atacar".`},
 
-{hi:'#myField', wait:g=>P(FOE).alma<20,
+{hi:'#myField', wait:g=>P(FOE).alma<20, allow:{attack:'face'},
  t:`<b>Haz clic en tu Discípulo</b> y luego en el <b>retrato de Adreida</b>, arriba a la izquierda.
     Vas a pegarle directo al Alma.`},
 
@@ -2623,10 +2643,10 @@ const TUT_STEPS = [
    Atacar a un <b>Personaje</b>, sí — ahí os pegáis los dos a la vez. Lo vas a ver en un momento
    en tus carnes.`]},
 
-{hi:'#hand', wait:g=>P(ME).field.length>=2,
+{hi:'#hand', wait:g=>P(ME).field.length>=2, allow:{hand:['bartolomeo']},
  t:`Te quedan 2 PD y el ataque fue gratis. <b>Juega a Bartolomeo</b> para tener otro cuerpo en mesa.`},
 
-{hi:'#controls', wait:g=>g.active===FOE, t:`Termina el turno.`},
+{hi:'#controls', wait:g=>g.active===FOE, allow:{end:true}, t:`Termina el turno.`},
 
 /* ---------- turno 2 del rival: Objetos, Provocar y combate ---------- */
 {on:'juega', when:(g,d)=>d.side===FOE, hi:'#foeField',
@@ -2661,7 +2681,7 @@ const TUT_STEPS = [
     Selecciona a tu Personaje y compruébalo: solo se marca él como objetivo.
     <b>Mientras haya un Provocar vivo, no puedes ni tocar su Alma</b> ni a ningún otro.`},
 
-{hi:'#hand', wait:g=>P(FOE).field.every(u=>u.card.id!=='bartolomeo'),
+{hi:'#hand', wait:g=>P(FOE).field.every(u=>u.card.id!=='bartolomeo'), allow:{hand:['burla']},
  t:`Hay que quitarlo de en medio, y con un choque perderías tu Personaje.<br><br>
     Usa <b>Burla Viciosa</b>: 1 PD, hace 1 daño. Con lo poquito que le queda, sobra.
     Juégala y elige a su Bartolomeo.`},
@@ -2672,19 +2692,19 @@ const TUT_STEPS = [
    <b>Inspiración</b>: cada Canción que juegas le regala <b>+1 ATQ</b> a un aliado.<br><br>
    Mira el log de la derecha, ahí lo tienes escrito. Tu mazo entero gira alrededor de eso.`]},
 
-{hi:'#controls', wait:g=>P(ME).leaderUsed,
+{hi:'#controls', wait:g=>P(ME).leaderUsed, allow:{leader:true},
  t:`Ahora tu <b>Habilidad de Líder</b>: <b>Sube el Volumen</b>, 2 PD, <b>+1 ATQ a todo tu campo</b>.
     Se puede usar <b>una vez por turno</b> y se paga con PD, como una carta.<br><br>
     Pulsa el escudo de Fender, abajo a la izquierda.`},
 
-{hi:'#myField', wait:g=>P(FOE).alma<19,
+{hi:'#myField', wait:g=>P(FOE).alma<19, allow:{attack:'face'},
  t:`Sin Provocar delante, el camino al Alma está libre. <b>Ataca al Alma</b> con tu Personaje.<br><br>
     Fíjate en que pega más fuerte que antes gracias a los dos buffs.`},
 
 {t:`Ese es el orden bueno de un turno: <b>primero los buffs, después los ataques</b>.
     Si atacas antes de buffear, el daño extra se pierde. Es el error número uno.`},
 
-{hi:'#controls', wait:g=>g.active===FOE, t:`Termina el turno.`},
+{hi:'#controls', wait:g=>g.active===FOE, allow:{end:true}, t:`Termina el turno.`},
 
 /* ---------- turno 3 del rival ---------- */
 {on:'finTurno', when:(g,d)=>d.side===FOE, hi:'#foeField',
@@ -2697,7 +2717,7 @@ const TUT_STEPS = [
  wait_t:'<i>Vuelve tu turno…</i>',
  t:`4 PD. Toca la última pieza que te falta por conocer: las <b>Trampas</b>.`},
 
-{hi:'#hand', wait:g=>P(ME).traps.length>=1,
+{hi:'#hand', wait:g=>P(ME).traps.length>=1, allow:{hand:['tasha']},
  t:`Coloca <b>Risa Incontrolable de Tasha</b> (2 PD).<br><br>
     Se pone <b>boca abajo</b>: Adreida ve que hay algo ahí, pero no sabe qué.`},
 
@@ -2706,7 +2726,7 @@ const TUT_STEPS = [
    ya le complica las cuentas.<br><br>
    Gasta el resto del turno como quieras (juega algo, ataca) y termina. A ver si pica.`]},
 
-{hi:'#controls', wait:g=>g.active===FOE, t:`Termina el turno.`},
+{hi:'#controls', wait:g=>g.active===FOE, allow:{free:true}, t:`Termina el turno.`},
 
 /* ---------- turno 4 del rival: salta la trampa ---------- */
 {on:'trampa',
@@ -2745,6 +2765,36 @@ const TUT_FOE_SCRIPT = [
 
 let TUT={i:0,on:false,pending:null,bubble:0,foeTurn:0,data:null,poll:null};
 
+/* Durante el tutorial solo se puede hacer lo que el paso pide: el resto de la
+   mano y los botones quedan bloqueados. Así no te pierdes jugando otra cosa. */
+function tutAllow(){
+  if(!TUT.on) return null;                    // fuera del tutorial, todo permitido
+  const s=TUT_STEPS[TUT.i];
+  if(!s) return null;
+  if(TUT.pending||s.on) return {};            // explicación en pausa o turno del rival
+  if(s.wait) return s.allow||{free:true};     // tarea: lo que declare
+  return {};                                  // cartel: solo leer
+}
+function tutCan(kind, data){
+  const a=tutAllow();
+  if(!a||a.free) return true;
+  switch(kind){
+    case 'hand':   return !!(a.hand&&a.hand.includes(data));
+    case 'end':    return !!a.end;
+    case 'leader': return !!a.leader;
+    case 'select': return !!a.attack;
+    case 'attack': return !!a.attack && (a.attack===true||a.attack===data);
+  }
+  return false;
+}
+function tutNope(){
+  const s=TUT_STEPS[TUT.i];
+  toast(s&&s.wait ? 'El tutorial te pide otra cosa' : 'Lee lo que dice Gero');
+  const box=$('#tut');
+  if(box) box.animate([{transform:'translateY(-50%) translateX(0)'},
+    {transform:'translateY(-50%) translateX(-8px)'},{transform:'translateY(-50%) translateX(8px)'},
+    {transform:'translateY(-50%) translateX(0)'}],{duration:300});
+}
 function tutStart(){
   TUT={i:0,on:true,pending:null,bubble:0,foeTurn:0,data:null,poll:null};
   TUT.poll=setInterval(tutCheck,500);
@@ -2786,6 +2836,7 @@ function tutRender(){
     next.className = isTask ? 'btn sm' : 'btn gold sm';
   }
   tutHighlight();
+  if(G) render();          // el tablero tiene que reflejar los permisos del paso nuevo
 }
 const tutShow = tutRender;
 function tutHighlight(){
