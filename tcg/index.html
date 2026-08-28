@@ -308,19 +308,26 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* dado */
 #dice{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:300;
-  pointer-events:none}
+  background:rgba(6,3,10,.72);backdrop-filter:blur(3px)}
 #dice.on{display:flex}
-.d20{width:132px;height:132px;display:grid;place-items:center;font-size:47px;font-weight:900;
+.dicebox{display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:26px 34px 22px;border-radius:20px;border:2px solid var(--gold2);
+  background:linear-gradient(180deg,#241a38,#150f22);box-shadow:0 24px 70px #000}
+.dtop{font-size:12px;letter-spacing:3px;color:var(--dim);text-transform:uppercase;
+  max-width:280px;text-align:center;line-height:1.3}
+.d20{width:150px;height:150px;display:grid;place-items:center;font-size:58px;font-weight:900;
   color:#fff;background:radial-gradient(circle at 34% 28%,#8a5cf0,#2a1550);
-  border:3px solid var(--gold);border-radius:22px;transform:rotate(-8deg);
-  box-shadow:0 0 60px rgba(138,92,240,.7);animation:dpop .35s}
-@keyframes dpop{from{transform:scale(.3) rotate(140deg);opacity:0}}
+  border:3px solid var(--gold);border-radius:24px;
+  box-shadow:0 0 60px rgba(138,92,240,.7);font-variant-numeric:tabular-nums}
+.d20.spin{filter:blur(1px);opacity:.85}
 .d20.crit{background:radial-gradient(circle at 34% 28%,#ffd76a,#8a5a12);color:#2a1a00;
-  box-shadow:0 0 80px rgba(255,215,106,.9)}
+  box-shadow:0 0 90px rgba(255,215,106,.95)}
 .d20.pifia{background:radial-gradient(circle at 34% 28%,#e0524a,#4a1010);
-  box-shadow:0 0 70px rgba(224,82,74,.9)}
-.dlabel{position:absolute;bottom:28%;font-size:19px;font-weight:900;letter-spacing:3px;color:var(--gold);
-  text-shadow:0 2px 10px #000}
+  box-shadow:0 0 80px rgba(224,82,74,.95)}
+.dlabel{font-size:21px;font-weight:900;letter-spacing:4px;color:var(--gold);
+  text-shadow:0 2px 10px #000;min-height:24px}
+.dlabel.pif{color:var(--red)}
+#dice .btn{min-width:190px;text-align:center;font-size:15px;padding:11px 18px}
 
 /* toast */
 #toast{position:fixed;left:50%;top:14%;transform:translateX(-50%);z-index:280;
@@ -520,7 +527,7 @@ body.tutpause #tut{pointer-events:auto}
 </div><!-- /app -->
 
 <div class="ov" id="ov"><div class="panel" id="ovPanel"></div></div>
-<div id="dice"><div class="d20" id="d20v">20</div><div class="dlabel" id="dlabel"></div></div>
+<div id="dice"><div class="dicebox" id="diceBox"></div></div>
 <div id="fx"></div>
 <div id="toast"></div>
 <div id="tut"><div class="tutbox">
@@ -1516,11 +1523,16 @@ async function cloudCheck(u){ // Nube de Dagas del rival
 async function roll(label, side){
   side = (side==null? G.active : side);
   let r = 1+rnd(20);
+  await rollDice(r,label,side===ME);            // primero se tira y se ve
   const ev={isRoll:true,value:r,side};
   if(r>=15) await trapWindow(1-side,'letal',ev);
   if(!ev.reroll) await fastWindow(1-side,{kind:'d20',ev});
-  if(ev.reroll){ const r2=1+rnd(20); log(`Repetición: ${r} y ${r2} → se queda con ${Math.min(r,r2)}.`,'roll'); r=Math.min(r,r2); }
-  await showDice(r,label);
+  if(ev.reroll){
+    const r2=1+rnd(20);
+    await rollDice(r2,'Te obligan a repetir — manda el peor',side===ME);
+    log(`Repetición: ${r} y ${r2} → se queda con ${Math.min(r,r2)}.`,'roll');
+    r=Math.min(r,r2);
+  }
   log(`🎲 <b>${label}</b>: ${r}${r===20?' — ¡CRÍTICO!':r===1?' — ¡PIFIA!':''}`,'roll');
   if(G.tutorial) await tutBeat('dado',{r,side});
   if(r===1){ log('Pifia: pierdes 1 Alma.','dmg'); await dmgFace(side,1,{src:'pifia'}); }
@@ -2043,14 +2055,37 @@ function toast(t){
   setTimeout(()=>{d.style.opacity=0;d.style.transition='.3s';},1200);
   setTimeout(()=>d.remove(),1600);
 }
-async function showDice(r,label){
-  if(G.silent) return;
-  const d=$('#dice'), v=$('#d20v'), l=$('#dlabel');
-  v.textContent=r; v.className='d20'+(r===20?' crit':r===1?' pifia':'');
-  l.textContent = r===20?'¡CRÍTICO!' : r===1?'¡PIFIA!' : (label||'');
-  d.classList.add('on');
-  await nap(950);
-  d.classList.remove('on');
+/* El dado se tira ANTES de que pase nada en el tablero: tú lo lanzas, ves el
+   número, y sólo al continuar se aplica el efecto. */
+async function rollDice(value, label, interactive){
+  if(!FXON()) return;
+  const ov=$('#dice'), box=$('#diceBox');
+  return new Promise(resolve=>{
+    box.innerHTML=`<div class="dtop">${label||'Tirada de d20'}</div>
+      <div class="d20" id="d20v">🎲</div>
+      <div class="dlabel" id="dlabel">${interactive?'':'&nbsp;'}</div>
+      <button class="btn gold" id="dbtn">${interactive?'🎲 &nbsp;TIRAR EL D20':'Tirando…'}</button>`;
+    ov.classList.add('on');
+    const v=$('#d20v'), lab=$('#dlabel'), btn=$('#dbtn');
+    let cerrado=false;
+    const done=()=>{ if(cerrado) return; cerrado=true; ov.classList.remove('on'); resolve(); };
+    const girar=async()=>{
+      btn.disabled=true; btn.textContent='Tirando…';
+      v.classList.add('spin');
+      const N=interactive?15:9;
+      for(let i=0;i<N;i++){ v.textContent=1+rnd(20); await sleep(42+i*(interactive?7:9)); }
+      v.classList.remove('spin');
+      v.textContent=value;
+      v.className='d20'+(value===20?' crit':value===1?' pifia':'');
+      v.animate([{transform:'scale(1.55) rotate(-14deg)'},{transform:'scale(1) rotate(0)'}],
+        {duration:460,easing:'cubic-bezier(.2,1.5,.4,1)'});
+      lab.textContent = value===20?'¡CRÍTICO!' : value===1?'¡PIFIA!' : '';
+      lab.className = 'dlabel'+(value===1?' pif':'');
+      btn.disabled=false; btn.textContent='Continuar →'; btn.onclick=done;
+      if(!interactive) setTimeout(done,1500);       // la del rival sigue sola
+    };
+    if(interactive) btn.onclick=girar; else setTimeout(girar,320);
+  });
 }
 function setPrompt(msg,btns){
   $('#pmsg').innerHTML=msg;
@@ -3009,8 +3044,10 @@ const TUT_STEPS = [
   `<b>Palabras clave</b>, todas escritas en la carta: <b>Prisa</b> (ataca al entrar),
    <b>Vuelo</b> (solo lo alcanzan Vuelo o Arquero), <b>Sigilo</b> (intocable hasta que ataque),
    <b>Regeneración</b>, <b>Infectado</b>, <b>Aturdido</b>.`,
-  `<b>El d20</b>: varias cartas te hacen tirar dado. <b>20 = Crítico</b>, <b>1 = Pifia</b>
-   (la carta falla y pierdes 1 Alma). Es la parte Caoz: úsalo cuando vas perdiendo, no cuando vas ganando.`,
+  `<b>El d20</b>: varias cartas te hacen tirar dado — y <b>lo tiras tú</b>: sale el dado, le das
+   a tirar y ves el número <i>antes</i> de que pase nada en la mesa.<br><br>
+   <b>20 = Crítico.</b> <b>1 = Pifia</b> (la carta falla y pierdes 1 Alma). Es la parte Caoz:
+   úsalo cuando vas perdiendo, no cuando vas ganando.`,
   `<b>La otra forma de ganar</b>: hay cartas que dan <b>🗝️ Llaves del Domo</b>. Con 2 puedes jugar el
    <b>Pergamino de Deseo Ilimitado</b>, y si sobrevive hasta tu segundo turno <b>ganas sin tocarle el Alma</b>.`,
   `Y ya está. La partida sigue: <b>deja su Alma en 0</b>.<br><br>
@@ -3434,6 +3471,7 @@ async function autoTurn(s){
 window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutorial, autoTurn, setupMatch,
   newGame, buildDeck, P, canPlay, aiScore, playFromHand, aiPickAttack, doAttack, canAttack, endTurn, recalc,
   mkUnit, dmgU, destroy, gainKey, keys, legalTargets, costOf, useLeader, startTurn, killUnit, healU, stun, infect,
+  rollDice, roll,
   play:(id)=>playFromHand(ME,id), attack:(i,t)=>doAttack(P(ME).field[i],t==='face'?'face':P(FOE).field[t]),
   end:endTurn, fast:v=>{G.fast=v;}, render };
 </script>
