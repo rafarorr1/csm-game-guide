@@ -1835,7 +1835,7 @@ function endGame(winner, why){
     const k=TUT_STEPS.findIndex(x=>x.strat);
     if(k>=0){
       if(TUT.i<k){ if(TUT.pending){ const r=TUT.pending; TUT.pending=null; r(); }
-        TUT.i=k; TUT.bubble=0; TUT.data=null; TUT.block=0; TUT.stepTurn=null;
+        TUT.i=k; TUT.bubble=0; TUT.data=null; TUT.block=0; TUT.stepTurn=null; TUT.jugadas=null;
         document.body.classList.remove('tutpause'); }
       TUT.endArgs=[winner,why]; tutRender(); return;
     }
@@ -1928,7 +1928,7 @@ async function playFromHand(s, id, forcedTargets){
     G.place={id,side:s};
   }
   recalc(); await checkDeaths(); render();
-  if(G.tutorial){ tutCheck(); await tutBeat('juega',{side:s,id}); }
+  if(G.tutorial){ tutApunta(s,id); tutCheck(); await tutBeat('juega',{side:s,id}); }
   return true;
 }
 
@@ -3088,7 +3088,7 @@ function buildTut(lid){
   Tu máximo sube <b>+1 cada turno</b> hasta 10 y <b>se rellena solo</b>. No hay que ahorrar:
   el turno 5 tendrás 5, quieras o no.`},
 
-{hi:'#hand', wait:g=>!P(ME).hand.includes(M.c1), allow:{hand:[M.c1], end:true},
+{hi:'#hand', wait:g=>tutJugada(M.c1), allow:{hand:[M.c1], end:true},
  t:`Empieza tu mesa: juega <b>${n(M.c1)}</b>.<br><br>
     El <b>borde verde</b> quiere decir "puedes pagarla ahora mismo"; las grises, no.
     ${CARDS[M.c1].c>1?'Si todavía no te alcanza, termina el turno y la juegas al siguiente: en este mazo el turno 1 suele estar vacío.':''}`},
@@ -3123,7 +3123,7 @@ function buildTut(lid){
  t:`Tu turno otra vez. Sin hacer nada: <b>+1 PD</b> y <b>+1 carta</b>. Y lo que bajaste ya no
     está apagado: tiene el borde verde de "listo para atacar".`},
 
-{hi:'#hand', wait:g=>!P(ME).hand.includes(M.c2), allow:{hand:[M.c2], end:true, attack:true},
+{hi:'#hand', wait:g=>tutJugada(M.c2), allow:{hand:[M.c2], end:true, attack:true},
  t:`Suma otro cuerpo: juega <b>${n(M.c2)}</b>.${CARDS[M.c2].c>2?' Si aún no te alcanza, termina el turno y lo bajas al siguiente.':''}<br><br>
     En este juego la mesa lo es todo: el que tiene más Personajes decide contra qué se pelea.`},
 
@@ -3167,7 +3167,7 @@ function buildTut(lid){
     Selecciona uno tuyo y compruébalo: sólo se marca él. <b>Mientras haya un Provocar vivo no
     puedes tocar su Alma</b> ni a ningún otro.`},
 
-{hi:'#hand', wait:g=>!P(FOE).field.some(u=>u.card.id==='bartolomeo')||!P(ME).hand.includes(M.quita), allow:{hand:[M.quita], end:true, attack:true},
+{hi:'#hand', wait:g=>!P(FOE).field.some(u=>u.card.id==='bartolomeo')||tutJugada(M.quita), allow:{hand:[M.quita], end:true, attack:true},
  t:`Hay que quitarlo de en medio, y chocando perderías tu Personaje.<br><br>
     ${M.quitaTxt} Juégala y elígelo a él.`},
 
@@ -3200,7 +3200,7 @@ function buildTut(lid){
  wait_t:'<i>Vuelve tu turno…</i>',
  t:`Toca la última pieza que te falta por conocer: las <b>Trampas</b>.`},
 
-{hi:'#hand', wait:g=>P(ME).traps.length>=1||!P(ME).hand.includes(M.trampa), allow:{hand:[M.trampa], end:true, attack:true},
+{hi:'#hand', wait:g=>P(ME).traps.length>=1||tutJugada(M.trampa), allow:{hand:[M.trampa], end:true, attack:true},
  t:`Coloca <b>${n(M.trampa)}</b>.<br><br>${M.trampaTxt}<br><br>
     Se pone <b>boca abajo</b>: ${rival} ve que hay algo ahí, pero no sabe qué.`},
 
@@ -3243,8 +3243,26 @@ function buildTut(lid){
 ];
 }
 
+/* ¿Has jugado esta carta en el paso actual?
+
+   Antes era `!hand.includes(id)`, y con dos copias de la misma carta el paso
+   no avanzaba nunca: jugabas una, quedaba la otra en la mano y el tutorial
+   seguía pidiéndote lo mismo señalando una carta que ya no podías pagar. A
+   Rafaela le llega el segundo Discípulo en el robo del primer turno, así que
+   le pasaba siempre.
+
+   No se cuentan copias —eso dependía de cuándo se leyera la mano por primera
+   vez, que es justo el tipo de detalle que se rompe solo—: se apunta lo que
+   juegas, que es la señal que el motor ya emite. Vale igual para Personajes,
+   Hechizos y Trampas, que no dejan rastro en el campo. */
+function tutJugada(id){ return !!TUT.jugadas && TUT.jugadas.has(id); }
+function tutApunta(side, id){
+  if(!TUT.on || side!==ME) return;
+  (TUT.jugadas || (TUT.jugadas = new Set())).add(id);
+}
+
 let TUT_STEPS=[];
-let TUT={i:0,on:false,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null,lider:'fender'};
+let TUT={i:0,on:false,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null,jugadas:null,lider:'fender'};
 
 /* Durante el tutorial solo se puede hacer lo que el paso pide: el resto de la
    mano y los botones quedan bloqueados. Así no te pierdes jugando otra cosa. */
@@ -3284,7 +3302,7 @@ function tutStart(){
   clearInterval(TUT.poll);            // si venías de otro tutorial, mata su sondeo
   if(TUT.pending) TUT.pending();
   document.body.classList.remove('tutpause');
-  TUT={i:0,on:true,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null,endArgs:null,lider:TUT.lider};
+  TUT={i:0,on:true,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null,jugadas:null,endArgs:null,lider:TUT.lider};
   document.body.classList.add('tut-on');
   TUT.poll=setInterval(tutCheck,500);
   tutRender();
@@ -3348,7 +3366,7 @@ function tutNext(){
   const s=TUT_STEPS[TUT.i]; if(!s){ tutEnd(); return; }
   if(!(s.on && !TUT.pending) && TUT.bubble < tutTexts(s).length-1){ TUT.bubble++; tutRender(); return; }
   const resume=TUT.pending;
-  TUT.pending=null; TUT.bubble=0; TUT.data=null; TUT.i++; TUT.block=0; TUT.stepTurn=null;
+  TUT.pending=null; TUT.bubble=0; TUT.data=null; TUT.i++; TUT.block=0; TUT.stepTurn=null; TUT.jugadas=null;
   document.body.classList.remove('tutpause');
   if(s.last){ tutEnd(); } else tutRender();
   if(resume) resume();
@@ -3359,12 +3377,16 @@ function tutNext(){
 function tutSatisfiable(){
   const a=tutAllow();
   if(!a||a.free) return true;
-  if(a.end)    return G.active===ME;
+  // De lo concreto a lo general: casi todos los pasos llevan end:true como
+  // escapatoria, y comprobarlo primero hacía que CUALQUIER paso pareciera
+  // cumplible mientras fuera tu turno. La red no saltaba nunca y un paso
+  // atascado lo estaba para siempre.
   if(a.hand)   return a.hand.some(id=>P(ME).hand.includes(id)&&canPlay(ME,id));
   if(a.leader){ const L=P(ME).L, p=P(ME);
     return G.active===ME&&!p.leaderUsed&&p.pd>=L.habCost&&(!L.habReq||L.habReq(G,ME)); }
   if(a.attack) return G.active===ME&&P(ME).field.some(u=>canAttack(u)&&
     (a.attack==='face'? legalTargets(u).face : legalTargets(u).units.length||legalTargets(u).face));
+  if(a.end)    return G.active===ME;
   return true;
 }
 function tutCheck(){
@@ -3383,6 +3405,10 @@ function tutCheck(){
     // paso imposible de cumplir durante un rato: no dejamos a nadie encerrado
     if(tutSatisfiable()) TUT.block=0;
     else if(++TUT.block>14){ TUT.block=0; toast('Gero pasa al siguiente paso');
+      // Cada vez que la red tiene que rescatar a alguien es que el guion pedía
+      // algo imposible. Se lleva la cuenta porque las pruebas la miran: un
+      // tutorial que "termina" a base de rescates no está bien, sólo lo parece.
+      TUT.rescates = (TUT.rescates||0) + 1;
       setTimeout(()=>{ if(TUT.on&&!TUT.pending&&TUT_STEPS[TUT.i]===s) tutNext(); },400); }
     return;
   }
@@ -3396,7 +3422,7 @@ function tutFlush(){
   while(TUT.on && !TUT.pending && guard++<8){
     const s=TUT_STEPS[TUT.i];
     if(!s||!s.wait||s.on||!s.wait(G)) break;
-    TUT.bubble=0; TUT.i++; TUT.block=0; TUT.stepTurn=null;
+    TUT.bubble=0; TUT.i++; TUT.block=0; TUT.stepTurn=null; TUT.jugadas=null;
     if(s.last){ tutEnd(); return; }
   }
   tutRender();
