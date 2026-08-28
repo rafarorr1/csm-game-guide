@@ -1828,7 +1828,19 @@ function endGame(winner, why){
   if(G.over) return;
   G.over=true;
   log(`<b>=== FIN: gana ${P(winner).L.n} ===</b>`);
-  setTimeout(()=>showEnd(winner,why),450);
+  // En el tutorial la partida puede acabar antes de la lección de estrategia — con
+  // Fender pasa casi siempre. Antes de enseñar el cartel de fin, Gero termina de
+  // contarte cómo se juega TU mazo: es justo lo que venías a aprender.
+  if(TUT.on){
+    const k=TUT_STEPS.findIndex(x=>x.strat);
+    if(k>=0){
+      if(TUT.i<k){ if(TUT.pending){ const r=TUT.pending; TUT.pending=null; r(); }
+        TUT.i=k; TUT.bubble=0; TUT.data=null; TUT.block=0; TUT.stepTurn=null;
+        document.body.classList.remove('tutpause'); }
+      TUT.endArgs=[winner,why]; tutRender(); return;
+    }
+  }
+  const g0=G; setTimeout(()=>{ if(G===g0&&G.over) showEnd(winner,why); },450);
 }
 
 /* ==========================================================================
@@ -2997,191 +3009,242 @@ async function aiTurn(){
      beat → espera un EVENTO de la partida (casi siempre del rival) y, cuando
             ocurre, PAUSA el motor y lo explica. Es lo que deja ver y entender
             los movimientos del enemigo en vez de que pasen en dos segundos.   */
-const TUT_STEPS = [
+/* El reparto de cada mazo: qué carta hace de qué en las lecciones. Todas salen
+   de la lista real del Protagonista, así que el tutorial te enseña TU mazo. */
+const TUT_MAZO = {
+fender:{ c1:'discipulo', c2:'bartolomeo', quita:'burla', trampa:'tasha',
+  mano:['discipulo','bartolomeo','burla','tasha','cantaberna'],
+  top:['balada','matildus','discipulo','zancada','palabracuracion','bob'],
+  quitaTxt:`<b>Burla Viciosa</b> (1 PD): 1 daño y −2 ATQ. Con lo poco que le queda, sobra.`,
+  quitaExtra:`Y ha pasado algo más: Burla Viciosa es una <b>Canción</b>, y tu pasiva
+    <b>Inspiración</b> acaba de regalarle <b>+1 ATQ</b> a un aliado. Encadenar Canciones
+    es todo tu plan de ataque.`,
+  trampaTxt:`<b>Risa Incontrolable de Tasha</b> (2 PD): cuando un Personaje rival declare un
+    ataque, se lo cancelas y encima queda <b>Aturdido</b>.` },
+mohamed:{ c1:'conserje', c2:'bartolomeo', quita:'sangrefria', trampa:'tasha',
+  mano:['conserje','bartolomeo','sangrefria','tasha','ilusion'],
+  top:['mensaje','machete','brickbrock','acertijo','disipar','minus'],
+  quitaTxt:`<b>Golpe a Sangre Fría</b> destruye cualquier Personaje de Costo 2 o menos.`,
+  quitaExtra:`Fíjate en el precio: la carta pone 3, pero tú has pagado <b>2</b>. Es un Hechizo
+    de <b>Engaño</b> y tu pasiva te los abarata todos en 1. Medio mazo lo es.`,
+  trampaTxt:`<b>Risa Incontrolable de Tasha</b> (2 PD): cancela un ataque rival y deja al
+    atacante <b>Aturdido</b>. Tu mazo va de que atacarte salga caro.` },
+adreida:{ c1:'machete', c2:'bartolomeo', quita:'saeta', trampa:'colapso',
+  mano:['machete','bartolomeo','saeta','colapso','augusto'],
+  top:['mazo','horton','auxilio','armadura','lucius','trol'],
+  quitaTxt:`<b>Saeta Guía</b> (2 PD): 3 daño radiante, de sobra.`,
+  quitaExtra:`Y deja al objetivo <b>marcado</b>: el siguiente ataque tuyo contra él no recibe
+    contraataque. Junta eso con tu Habilidad <b>Golpe Directo</b> y matas lo que quieras sin
+    recibir un solo punto de daño.`,
+  trampaTxt:`<b>Colapso de Paja</b> (3 PD): cuando ataque un Personaje rival de Costo 4 o más,
+    se lleva 4 de fuego, su ataque se cancela y queda <b>Aturdido</b>.` },
+rafaela:{ c1:'discipulo', c2:'titaus', quita:'saeta', trampa:'destello',
+  mano:['discipulo','titaus','saeta','destello','taumaturgia'],
+  top:['discipulo','matildus','leche','bendicion','espiritus','machete'],
+  quitaTxt:`<b>Saeta Guía</b> (2 PD): 3 daño radiante, de sobra.`,
+  quitaExtra:`Ojo a algo que ya ha pasado sin que lo pidieras: cada <b>Discípulo</b> que entra
+    a tu campo cura 2 por tu pasiva <b>Rebaño de Rul</b>. Por eso puedes permitirte recibir
+    golpes que a otro mazo lo hundirían.`,
+  trampaTxt:`<b>Destello Protector</b> (2 PD): cuando vayan a matarte un aliado, reduce ese
+    daño a la mitad. Tu mazo no gana rápido: gana no muriéndose.` },
+talesin:{ c1:'matildus', c2:'eric', quita:'proyectil', trampa:'esporas',
+  mano:['matildus','eric','proyectil','esporas','conserje'],
+  top:['rayoabrasador','puntosrobados','alientoacido','matildus','bob','puas'],
+  quitaTxt:`<b>Proyectil Mágico</b> (2 PD): 3 daño repartidos, y no hay Trampa que lo anule.`,
+  quitaExtra:`Y lo importante de tu mazo: cuando muere un aliado <b>tuyo</b> ganas una
+    <b>✨ Ficha de Gracia</b> — míralas en tu barra. Con cinco asciendes: +5 Alma y tus
+    Celestiales +2/+2. Aquí morir es parte del plan.`,
+  trampaTxt:`<b>Esporas del Demonio</b> (2 PD): cuando muera un aliado tuyo, <b>todo</b> el
+    campo rival queda Infectado. Tus muertes tienen que doler a alguien.` }
+};
+
+/* Guion del rival (siempre Adreida): así las lecciones encajan con la mesa. */
+const TUT_FOE_SCRIPT = [
+  {play:['bartolomeo'], attack:false},   // T1: baja un cuerpo, no ataca
+  {play:['mazo'],       attack:true },   // T2: Objeto → 4 ATQ → Provocar → choca
+  {play:['augusto'],    attack:true },
+  {play:['horton'],     attack:true },   // T4: cuesta 4, dispara Colapso de Paja
+  {play:['eric'],       attack:true },
+  {play:['lucius'],     attack:true },
+  {play:['trol'],       attack:true },
+];
+
+function buildTut(lid){
+  const M=TUT_MAZO[lid], L=LEADERS[lid], G0=GUIAS[lid];
+  const n=id=>CARDS[id].n;
+  const yo=L.n, rival='Adreida';
+  return [
 {t:[`¡Al Domo se entra sin saber jugar, se sale sabiendo! Soy <b>Gero</b>, el Dungeon Master.`,
-    `Llevas a <b>Fender, el Bardo Honesto</b> 🎸 contra <b>Adreida</b> ⚔️.<br><br>
-     No te voy a soltar el reglamento de golpe: jugamos, y te explico las cosas cuando aparecen.
-     <b>También voy a parar la partida en el turno de ella</b> para contarte qué hace y por qué —
-     entender al rival es la mitad del juego.`]},
+    `Llevas a <b>${yo}</b> ${L.art} y su mazo <b>“${DECKS[lid].n}”</b> contra <b>${rival}</b> ⚔️.<br><br>
+     No te voy a soltar el reglamento de golpe: jugamos con <b>tus</b> cartas y te explico las
+     cosas cuando aparecen. También voy a <b>parar la partida en el turno de ella</b> para
+     contarte qué hace y por qué.`]},
 
 {hi:'#leaderMe', t:`Lo único que importa de verdad: <b>❤️ Alma 20</b>, la que lleva tu carta de Líder.<br><br>
-  Si dejas la de Adreida en <b>0</b>, ganas. Si la tuya llega a 0, el Mago del Domo se queda con tu alma.
-  Todo lo demás son herramientas para eso.`},
+  Si dejas la de ${rival} en <b>0</b>, ganas. Si la tuya llega a 0, el Mago del Domo se queda
+  con tu alma. Todo lo demás son herramientas para eso.`},
 
 {hi:'#barMe', t:`<b>🔷 PD (Puntos)</b> es lo que puedes gastar cada turno. Ahora tienes <b>1</b>.<br><br>
-  Tu máximo sube <b>+1 cada turno</b> hasta 10 y <b>se rellena solo</b>. No hay que ahorrar
-  ni buscar recursos: el turno 5 tendrás 5, quieras o no.`},
+  Tu máximo sube <b>+1 cada turno</b> hasta 10 y <b>se rellena solo</b>. No hay que ahorrar:
+  el turno 5 tendrás 5, quieras o no.`},
 
-{hi:'#hand', wait:g=>P(ME).field.length>=1, allow:{hand:['discipulo']},
- t:`Con 1 PD solo te entra una cosa. <b>Juega el Discípulo de Rul</b> — clic en su carta.<br><br>
-    El <b>borde verde</b> quiere decir "puedes pagarla ahora mismo". Las grises, no.`},
+{hi:'#hand', wait:g=>!P(ME).hand.includes(M.c1), allow:{hand:[M.c1], end:true},
+ t:`Empieza tu mesa: juega <b>${n(M.c1)}</b>.<br><br>
+    El <b>borde verde</b> quiere decir "puedes pagarla ahora mismo"; las grises, no.
+    ${CARDS[M.c1].c>1?'Si todavía no te alcanza, termina el turno y la juegas al siguiente: en este mazo el turno 1 suele estar vacío.':''}`},
 
 {hi:'#myField', t:[`Ya está en tu <b>Campo</b> (caben 5 Personajes).`,
   `Fíjate en que se ve apagado: <b>un Personaje no puede atacar el turno que entra</b>.
-   Llega cansado del viaje. A partir de tu próximo turno ya reparte.<br><br>
-   Solo las cartas que dicen <b>Prisa</b> se saltan esa espera.`]},
+   Llega cansado del viaje. Sólo las cartas que dicen <b>Prisa</b> se saltan esa espera.`]},
 
 {hi:'#controls', wait:g=>g.active===FOE, allow:{end:true},
- t:`No te queda PD. Pulsa <b>Terminar turno</b> y vemos qué hace ella.`},
+ t:`Pulsa <b>Terminar turno</b> y vemos qué hace ella.`},
 
 /* ---------- turno 1 del rival ---------- */
 {on:'turno', when:(g,d)=>d.side===FOE, hi:'#barFoe',
  wait_t:'<i>Empieza el turno de Adreida…</i>',
- t:`Turno de Adreida. <b>Voy parando la partida en cada jugada suya</b> para que veas qué pasa.<br><br>
-    Ella juega con tus mismas reglas: le subió el máximo a PD y robó una carta.`},
+ t:`Turno de ${rival}. <b>Voy parando la partida en cada jugada suya</b> para que veas qué pasa.
+    Ella juega con tus mismas reglas: le subió el máximo de PD y robó una carta.`},
 
 {on:'juega', when:(g,d)=>d.side===FOE, hi:'#foeField',
  wait_t:'<i>A ver qué baja…</i>',
  t:(g,d)=>[`Jugó a <b>${CARDS[d.id].n}</b>.`,
-   `Y mira su contador <b>🃏 de mano</b>: en vez de bajar, se ha quedado igual.
-    Es porque Bartolomeo dice "<b>Al entrar: roba 1 carta</b>".<br><br>
-    Casi todos los Personajes traen una habilidad escrita. Léelas: ahí está el juego.`]},
+   `Y mira su contador <b>🃏 de mano</b>: no ha bajado. Es porque Bartolomeo dice
+    "<b>Al entrar: roba 1 carta</b>". Casi todos los Personajes traen habilidad escrita:
+    léelas, ahí está el juego.`]},
 
 {on:'finTurno', when:(g,d)=>d.side===FOE,
  wait_t:'<i>Sigue su turno…</i>',
- t:`Y no atacó: <b>su Bartolomeo también entró cansado</b>. Las reglas van para los dos.<br><br>
-    Como no atacó, aprovechó su habilidad alterna gratis (<i>Maratón de K-dramas</i>) para robar otra carta.
-    Cada Líder tiene trucos así.`},
+ t:`No atacó: <b>su Personaje también entró cansado</b>. Las reglas van para los dos.`},
 
 /* ---------- turno 2 del jugador ---------- */
 {on:'turno', when:(g,d)=>d.side===ME, hi:'#barMe',
  wait_t:'<i>Vuelve tu turno…</i>',
- t:`Tu turno otra vez. Sin que hagas nada: <b>+1 PD</b> (ya llevas 2) y <b>+1 carta</b>.<br><br>
-    Y tu Discípulo ya no está apagado: tiene el borde verde de "listo para atacar".`},
+ t:`Tu turno otra vez. Sin hacer nada: <b>+1 PD</b> y <b>+1 carta</b>. Y lo que bajaste ya no
+    está apagado: tiene el borde verde de "listo para atacar".`},
 
-{hi:'#myField', wait:g=>P(FOE).alma<20, allow:{attack:'face'},
- t:`<b>Haz clic en tu Discípulo</b> y luego en la <b>carta de Adreida</b>, al borde de su lado
-    del tapete. Vas a pegarle directo al Alma.`},
+{hi:'#hand', wait:g=>!P(ME).hand.includes(M.c2), allow:{hand:[M.c2], end:true, attack:true},
+ t:`Suma otro cuerpo: juega <b>${n(M.c2)}</b>.${CARDS[M.c2].c>2?' Si aún no te alcanza, termina el turno y lo bajas al siguiente.':''}<br><br>
+    En este juego la mesa lo es todo: el que tiene más Personajes decide contra qué se pelea.`},
 
-{t:[`Menos 1 de Alma. Poco, pero así se gana.`,
-  `Regla clave: <b>atacar al Alma nunca recibe contraataque</b>.
-   Atacar a un <b>Personaje</b>, sí — ahí os pegáis los dos a la vez. Lo vas a ver en un momento
-   en tus carnes.`]},
+{hi:'#myField', wait:g=>P(FOE).alma<20||g.active===FOE, allow:{attack:'face', end:true},
+ t:`Ahora golpea. <b>Haz clic en un Personaje tuyo con borde verde</b> y luego en la
+    <b>carta de ${rival}</b>, al borde de su lado del tapete.`},
 
-{hi:'#hand', wait:g=>P(ME).field.length>=2, allow:{hand:['bartolomeo']},
- t:`Te quedan 2 PD y el ataque fue gratis. <b>Juega a Bartolomeo</b> para tener otro cuerpo en mesa.`},
+{t:[`Menos Alma. Poco, pero así se gana.`,
+  `Regla clave: <b>atacar al Alma nunca recibe contraataque</b>. Atacar a un <b>Personaje</b>,
+   sí — ahí os pegáis los dos a la vez. Lo vas a ver en tus carnes ahora mismo.`]},
 
 {hi:'#controls', wait:g=>g.active===FOE, allow:{end:true}, t:`Termina el turno.`},
 
 /* ---------- turno 2 del rival: Objetos, Provocar y combate ---------- */
 {on:'juega', when:(g,d)=>d.side===FOE, hi:'#foeField',
  wait_t:'<i>Turno de Adreida…</i>',
- t:(g,d)=>[`Ojo a esto: jugó <b>${CARDS[d.id].n}</b>, que es un <b>Objeto</b>.<br><br>
-    Los Objetos no van al campo solos: <b>se equipan a un Personaje</b> y se destruyen con él.
-    Ese Mazo le da <b>+3 ATQ</b> a su Bartolomeo.`,
-   `Y ahora mira su carta: le ha salido una etiqueta nueva, <b>Provocar</b>.<br><br>
-    No estaba en el Mazo ni en Bartolomeo — es la <b>pasiva de Adreida</b>:
-    <i>todo lo suyo con 4 o más ATQ tiene Provocar</i>. Acaba de convertir a un sirviente
-    de 1 ATQ en un muro.`]},
+ t:(g,d)=>[`Ojo: jugó <b>${CARDS[d.id].n}</b>, que es un <b>Objeto</b>. Los Objetos no van
+    al campo solos: <b>se equipan a un Personaje</b> y se destruyen con él. Ese Mazo le da
+    <b>+3 ATQ</b>.`,
+   `Y mira su carta: le ha salido una etiqueta nueva, <b>Provocar</b>. No estaba ni en el Mazo
+    ni en Bartolomeo — es la <b>pasiva de Adreida</b>: <i>todo lo suyo con 4 o más ATQ tiene
+    Provocar</i>. Acaba de convertir a un sirviente de 1 ATQ en un muro.`]},
 
 {on:'ataque', when:(g,d)=>d.side===FOE, hi:'#foeField',
  wait_t:'<i>Está decidiendo a quién pegar…</i>',
- t:(g,d)=>`Va a atacar a <b>${d.target==='face'?'tu Alma':d.target.card.n}</b>, y te conviene mirar despacio.<br><br>
-   En un combate entre Personajes el daño es <b>simultáneo</b>: el atacante hace su ATQ
-   <b>y recibe el ATQ del defensor</b> en la misma pasada. No hay "bloquear": hay chocar.<br><br>
-   Dale a Entendido y lo ves.`},
+ t:(g,d)=>`Va a atacar a <b>${d.target==='face'?'tu Alma':d.target.card.n}</b>, y te conviene
+   mirar despacio. En un combate entre Personajes el daño es <b>simultáneo</b>: el atacante
+   hace su ATQ <b>y recibe el del defensor</b> en la misma pasada. No hay "bloquear": hay chocar.`},
 
 {on:'muerte', when:(g,d)=>d.side===ME, hi:'#myField',
  wait_t:'<i>…</i>',
- t:[`Ha caído. Tu Personaje se va a <b>las Alcantarillas</b> (el cementerio de este juego).`,
-   `Pero mira su Bartolomeo: le quedan menos PV que antes — ese es el contraataque.<br><br>
-    Y aquí va lo que más despista al principio: <b>el daño se queda</b>.
-    No se cura al final del turno. Un Personaje tocado sigue tocado hasta que alguien lo cure… o muera.
+ t:[`Ha caído. Se va a <b>las Alcantarillas</b> — la pila de la izquierda del tapete.`,
+   `Y aquí va lo que más despista al principio: <b>el daño se queda</b>. No se cura al final
+    del turno. Un Personaje tocado sigue tocado hasta que alguien lo cure… o muera.
     <b>Eso lo hace rematable.</b>`]},
 
-/* ---------- turno 3 del jugador: Provocar, Hechizos, Líder ---------- */
+/* ---------- turno 3: quitar el Provocar ---------- */
 {on:'turno', when:(g,d)=>d.side===ME, hi:'#foeField',
  wait_t:'<i>Vuelve tu turno…</i>',
- t:`Tu turno, 3 PD. Y tienes un problema: <b>su Bartolomeo tiene Provocar</b>.<br><br>
-    Selecciona a tu Personaje y compruébalo: solo se marca él como objetivo.
-    <b>Mientras haya un Provocar vivo, no puedes ni tocar su Alma</b> ni a ningún otro.`},
+ t:`Tu turno. Y tienes un problema: <b>ese Personaje suyo tiene Provocar</b>.
+    Selecciona uno tuyo y compruébalo: sólo se marca él. <b>Mientras haya un Provocar vivo no
+    puedes tocar su Alma</b> ni a ningún otro.`},
 
-{hi:'#hand', wait:g=>P(FOE).field.every(u=>u.card.id!=='bartolomeo'), allow:{hand:['burla']},
- t:`Hay que quitarlo de en medio, y con un choque perderías tu Personaje.<br><br>
-    Usa <b>Burla Viciosa</b>: 1 PD, hace 1 daño. Con lo poquito que le queda, sobra.
-    Juégala y elige a su Bartolomeo.`},
+{hi:'#hand', wait:g=>!P(FOE).field.some(u=>u.card.id==='bartolomeo')||!P(ME).hand.includes(M.quita), allow:{hand:[M.quita], end:true, attack:true},
+ t:`Hay que quitarlo de en medio, y chocando perderías tu Personaje.<br><br>
+    ${M.quitaTxt} Juégala y elígelo a él.`},
 
 {t:[`Fuera. Eso son los <b>Hechizos</b>: se usan una vez, van a las Alcantarillas y resuelven
-   lo que tus Personajes no pueden.`,
-  `Y ha pasado algo más. Burla Viciosa es una <b>Canción</b>, y tu pasiva de Líder es
-   <b>Inspiración</b>: cada Canción que juegas le regala <b>+1 ATQ</b> a un aliado.<br><br>
-   Mira el log de la derecha, ahí lo tienes escrito. Tu mazo entero gira alrededor de eso.`]},
+   lo que tus Personajes no pueden.`, M.quitaExtra]},
 
-{hi:'#leaderMe', wait:g=>P(ME).leaderUsed, allow:{leader:true},
+/* ---------- Habilidad de Líder ---------- */
+{hi:'#leaderMe', wait:g=>P(ME).leaderUsed, allow:{leader:true, end:true},
  t:`Esa carta del borde del tapete es <b>tu Líder</b>: ahí vive tu ❤️ Alma y su Habilidad.<br><br>
-    <b>Sube el Volumen</b>, 2 PD, <b>+1 ATQ a todo tu campo</b>. Se usa <b>una vez por turno</b>
-    y se paga con PD, como una carta.<br><br>
-    <i>Haz clic en tu carta de Fender.</i>`},
+    <b>${L.habName}</b> cuesta ${L.habCost} PD y se usa <b>una vez por turno</b>.
+    ${L.hab.replace(/^<b>[^<]*<\/b>\s*/,'')}<br><br>
+    <i>Haz clic en tu carta de ${yo}.</i>`},
 
-{hi:'#myField', wait:g=>P(FOE).alma<19, allow:{attack:'face'},
- t:`Sin Provocar delante, el camino al Alma está libre. <b>Ataca al Alma</b> con tu Personaje.<br><br>
-    Fíjate en que pega más fuerte que antes gracias a los dos buffs.`},
+{hi:'#myField', wait:g=>P(FOE).alma<19||g.active===FOE, allow:{attack:true, end:true},
+ t:`Sin Provocar delante, el camino está libre otra vez. <b>Ataca</b>.<br><br>
+    <i>Si en este momento no te queda nadie en pie, no pasa nada: termina el turno.</i>`},
 
-{t:`Ese es el orden bueno de un turno: <b>primero los buffs, después los ataques</b>.
-    Si atacas antes de buffear, el daño extra se pierde. Es el error número uno.`},
+{t:`Ese es el orden bueno de un turno: <b>primero los buffs y los hechizos, después los
+    ataques</b>. Si atacas antes de buffear, el daño extra se pierde. Es el error número uno.`},
 
 {hi:'#controls', wait:g=>g.active===FOE, allow:{end:true}, t:`Termina el turno.`},
 
-/* ---------- turno 3 del rival ---------- */
 {on:'finTurno', when:(g,d)=>d.side===FOE, hi:'#foeField',
  wait_t:'<i>Turno de Adreida…</i>',
- t:`Bajó otro Personaje y <b>no pudo atacar</b>: el nuevo entró cansado y al otro te lo cargaste tú.<br><br>
-    Eso es <b>tempo</b>: cada cosa que matas le cuesta un turno entero de recuperarse.`},
+ t:`Cada cosa que le matas le cuesta un turno entero de recuperarse. Eso es <b>tempo</b>, y
+    en este juego vale tanto como el daño.`},
 
-/* ---------- turno 4 del jugador: Trampas ---------- */
+/* ---------- Trampas ---------- */
 {on:'turno', when:(g,d)=>d.side===ME, hi:'#hand',
  wait_t:'<i>Vuelve tu turno…</i>',
- t:`4 PD. Toca la última pieza que te falta por conocer: las <b>Trampas</b>.`},
+ t:`Toca la última pieza que te falta por conocer: las <b>Trampas</b>.`},
 
-{hi:'#hand', wait:g=>P(ME).traps.length>=1, allow:{hand:['tasha']},
- t:`Coloca <b>Risa Incontrolable de Tasha</b> (2 PD).<br><br>
-    Se pone <b>boca abajo</b>: Adreida ve que hay algo ahí, pero no sabe qué.`},
+{hi:'#hand', wait:g=>P(ME).traps.length>=1||!P(ME).hand.includes(M.trampa), allow:{hand:[M.trampa], end:true, attack:true},
+ t:`Coloca <b>${n(M.trampa)}</b>.<br><br>${M.trampaTxt}<br><br>
+    Se pone <b>boca abajo</b>: ${rival} ve que hay algo ahí, pero no sabe qué.`},
 
-{t:[`No la activas tú. <b>Se dispara sola</b> cuando ocurre su condición — casi siempre en el turno de ella.`,
-  `Esta cancela un ataque y deja al atacante <b>Aturdido</b>. Solo por estar ahí boca abajo
-   ya le complica las cuentas.<br><br>
-   Gasta el resto del turno como quieras (juega algo, ataca) y termina. A ver si pica.`]},
+{t:[`No la activas tú. <b>Se dispara sola</b> cuando ocurre su condición, casi siempre en el
+   turno de ella.`,
+  `Sólo por estar ahí boca abajo ya le complica las cuentas. Gasta el resto del turno como
+   quieras y termina.`]},
 
 {hi:'#controls', wait:g=>g.active===FOE, allow:{free:true}, t:`Termina el turno.`},
 
-/* ---------- turno 4 del rival: salta la trampa ---------- */
 {on:'trampa',
- wait_t:'<i>Atento a su ataque…</i>',
- t:[`💥 <b>¡Ha picado!</b> Tu Trampa se dio la vuelta sola.`,
-   `Le contaste el chiste del aeropuerto: <b>el ataque se cancela</b> y su Personaje queda
-    <b>Aturdido</b> (se salta su próximo turno).<br><br>
-    Una Trampa barata boca abajo hace que el rival ataque con miedo. Ese es medio juego de control.`]},
+ wait_t:'<i>Atento a lo que hace…</i>',
+ t:(g,d)=>[`💥 <b>¡Saltó tu Trampa!</b> Se dio la vuelta sola.`,
+   `<b>${CARDS[d.id].n}</b> ha hecho su trabajo sin que tú tocaras nada. Una Trampa barata boca
+    abajo hace que el rival juegue con miedo: ése es medio juego de control.`]},
 
-/* ---------- cierre ---------- */
-{on:'turno', when:(g,d)=>d.side===ME, last:true,
+/* ---------- estrategia del mazo ---------- */
+{strat:true, on:'turno', when:(g,d)=>d.side===ME, hi:'#leaderMe',
  wait_t:'<i>Vuelve tu turno…</i>',
- t:[`Ya sabes jugar de verdad: recursos, cuerpos, combate, Hechizos, Líder y Trampas.
-   Te dejo lo que falta en tres frases y me callo.`,
-  `<b>Palabras clave</b>, todas escritas en la carta: <b>Prisa</b> (ataca al entrar),
-   <b>Vuelo</b> (solo lo alcanzan Vuelo o Arquero), <b>Sigilo</b> (intocable hasta que ataque),
-   <b>Regeneración</b>, <b>Infectado</b>, <b>Aturdido</b>.`,
-  `<b>El d20</b>: varias cartas te hacen tirar dado — y <b>lo tiras tú</b>: sale el dado, le das
-   a tirar y ves el número <i>antes</i> de que pase nada en la mesa.<br><br>
-   <b>20 = Crítico.</b> <b>1 = Pifia</b> (la carta falla y pierdes 1 Alma). Es la parte Caoz:
-   úsalo cuando vas perdiendo, no cuando vas ganando.`,
-  `<b>La otra forma de ganar</b>: hay cartas que dan <b>🗝️ Llaves del Domo</b>. Con 2 puedes jugar el
-   <b>Pergamino de Deseo Ilimitado</b>, y si sobrevive hasta tu segundo turno <b>ganas sin tocarle el Alma</b>.`,
-  `Y ya está. La partida sigue: <b>deja su Alma en 0</b>.<br><br>
-   Si te pierdes tienes <b>📜 Reglas</b> ahí abajo, y pasando el cursor por cualquier carta
-   la ves en grande. Suerte. 🎲`]},
-];
+ t:[`Ya sabes jugar. Ahora lo que de verdad importa: <b>cómo gana ESTE mazo</b>, porque no
+    todos ganan igual.`,
+   `<b>${DECKS[lid].n}</b> — ${DECKS[lid].d}.<br><br>${G0.ganas}`]},
 
-/* El rival va guionizado durante el tutorial: así las explicaciones siempre
-   encajan con lo que acaba de pasar en la mesa.                              */
-const TUT_FOE_SCRIPT = [
-  {play:['bartolomeo'], attack:false},   // T1: baja un cuerpo, no ataca
-  {play:['mazo'],       attack:true },   // T2: Objeto → 4 ATQ → Provocar → choca
-  {play:['augusto'],    attack:true },   // T3: baja otro, no le da para atacar
-  {play:['horton'],     attack:true },   // T4: ataca → salta la Trampa
-  {play:['eric'],       attack:true },
-];
+{strat:true, t:[`<b>Tu motor:</b> ${G0.motorTxt}`,
+   `<b>La jugada que buscas:</b> ${G0.combo}`]},
 
-let TUT={i:0,on:false,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null};
+{strat:true, t:[`<b>Y así es como se pierde con él:</b><br><br>• ${G0.pierdes[0]}`,
+   `• ${G0.pierdes[1]}<br><br>• ${G0.pierdes[2]}`]},
+
+{strat:true, t:[`Lo que queda por saber está escrito en las cartas: <b>Prisa</b>, <b>Vuelo</b> (sólo lo
+   alcanzan Vuelo o Arquero), <b>Sigilo</b>, <b>Regeneración</b>, <b>Infectado</b>.`,
+  `<b>El d20</b>: varias cartas te hacen tirar dado, y <b>lo tiras tú</b>: sale el dado, le das
+   y ves el número antes de que pase nada. <b>20 = Crítico</b>, <b>1 = Pifia</b> (falla y
+   pierdes 1 Alma).`,
+  `<b>La otra forma de ganar</b>: juntar <b>2 🗝️ Llaves del Domo</b> y jugar el
+   <b>Pergamino de Deseo Ilimitado</b>. Si aguanta hasta tu segundo turno, ganas sin tocarle
+   el Alma.`,
+  `Y ya está. Termina la partida y, cuando quieras más, en el menú tienes la <b>guía completa
+   de ${yo}</b> con el mazo entero. 🎲`], last:true},
+];
+}
+
+let TUT_STEPS=[];
+let TUT={i:0,on:false,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null,lider:'fender'};
 
 /* Durante el tutorial solo se puede hacer lo que el paso pide: el resto de la
    mano y los botones quedan bloqueados. Así no te pierdes jugando otra cosa. */
@@ -3189,7 +3252,11 @@ function tutAllow(){
   if(!TUT.on) return null;                    // fuera del tutorial, todo permitido
   const s=TUT_STEPS[TUT.i];
   if(!s) return null;
-  if(TUT.pending||s.on) return {};            // explicación en pausa o turno del rival
+  if(TUT.pending) return {};                  // explicación en pausa: no se toca nada
+  // Un beat espera un evento. Si el evento tiene que venir del rival pero todavía es TU
+  // turno, hay que dejarte jugar: si no, el cartel te pide terminar el turno con el botón
+  // bloqueado y la partida no avanza nunca.
+  if(s.on) return (G && !G.over && G.active===ME) ? {free:true} : {};
   if(s.wait) return s.allow||{free:true};     // tarea: lo que declare
   return {};                                  // cartel: solo leer
 }
@@ -3214,7 +3281,10 @@ function tutNope(){
     {transform:'translateY(-50%) translateX(0)'}],{duration:300});
 }
 function tutStart(){
-  TUT={i:0,on:true,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null};
+  clearInterval(TUT.poll);            // si venías de otro tutorial, mata su sondeo
+  if(TUT.pending) TUT.pending();
+  document.body.classList.remove('tutpause');
+  TUT={i:0,on:true,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null,endArgs:null,lider:TUT.lider};
   document.body.classList.add('tut-on');
   TUT.poll=setInterval(tutCheck,500);
   tutRender();
@@ -3230,7 +3300,9 @@ function tutRender(){
   $('#tut').classList.add('on');
   $('#tutStep').textContent=`${TUT.i+1}/${TUT_STEPS.length}`;
   const kind=$('#tutKind'), body=$('#tutBody'), wait=$('#tutWait'), next=$('#tutNext');
-  const waiting = s.on && !TUT.pending;      // paso reactivo aún sin disparar
+  // Un paso reactivo espera un evento del motor; si la partida ya terminó no va a
+  // llegar ninguno, así que se lee como un cartel normal en vez de colgarse.
+  const waiting = s.on && !TUT.pending && !(G&&G.over);
   // un beat del rival no puede dispararse si todavía es tu turno: hay que avisar
   const mustEnd = waiting && G && !G.over && G.active===ME;
   TUT.hint = mustEnd;
@@ -3355,10 +3427,12 @@ async function tutBeat(kind,data){
   await new Promise(res=>{ TUT.pending=res; tutRender(); });
 }
 function tutEnd(){
+  const pend=TUT.endArgs; TUT.endArgs=null;
   TUT.on=false; document.body.classList.remove('tut-on'); TUT.pending&&TUT.pending();
   TUT.pending=null; if(TUT.poll) clearInterval(TUT.poll);
   document.body.classList.remove('tutpause');
   $('#tut').classList.remove('on'); $$('.hi').forEach(e=>e.classList.remove('hi'));
+  if(pend){ const g0=G; setTimeout(()=>{ if(G===g0&&G.over) showEnd(pend[0],pend[1]); },400); }
 }
 
 /* turno guionizado del rival */
@@ -3382,18 +3456,46 @@ async function tutFoeTurn(){
   return true;
 }
 
-async function startTutorial(){
-  newGame('fender','adreida',{tutorial:true});
+/* elige con qué mazo aprender: el tutorial se reescribe con sus cartas */
+function showTutorialPick(){
+  const p=$('#ovPanel');
+  p.innerHTML=`<h3>🎓 ¿Con qué mazo quieres aprender?</h3>
+    <p>El tutorial usa <b>las cartas de ese Protagonista</b> y termina enseñándote su estrategia.
+       Si es tu primera partida, Fender es el más directo.</p>`;
+  const list=el('div','leaders');
+  // de más fácil a más difícil: el que se recomienda arriba tiene que salir primero
+  Object.keys(LEADERS).sort((a,b)=>GUIAS[a].dif-GUIAS[b].dif).forEach(id=>{
+    const L=LEADERS[id], D=DECKS[id], g=GUIAS[id];
+    const d=el('div','lcard',`<div class="lface">${L.art}</div><div class="lname">${L.n}</div>
+      <div class="larch">${D.d}</div>
+      <div class="ltxt"><b>“${D.n}”</b><br>${'★'.repeat(g.dif)+'☆'.repeat(3-g.dif)} · ${g.lema}</div>`);
+    d.onclick=()=>{ $('#ov').classList.remove('on'); $('#log').innerHTML=''; startTutorial(id); };
+    list.appendChild(d);
+  });
+  p.appendChild(list);
+  const row=el('div','opts');
+  const back=el('button','btn sm','Cancelar'); back.onclick=()=>$('#ov').classList.remove('on');
+  row.appendChild(back); p.appendChild(row);
+  openOv();
+}
+async function startTutorial(lid){
+  tutEnd();                           // limpieza por si había uno a medias
+  // y por si venías del cartel de victoria de la partida anterior
+  $('#ov').classList.remove('on'); clearPrompt(); SEL=null; TGT=null;
+  lid = lid && TUT_MAZO[lid] ? lid : 'fender';
+  TUT.lider=lid; TUT_STEPS=buildTut(lid);
+  const M=TUT_MAZO[lid];
+  newGame(lid,'adreida',{tutorial:true});
   G.fast=false; G.second=FOE;
   const give=(s,list)=>{ list.forEach(c=>{ const i=P(s).deck.indexOf(c); if(i>=0) P(s).deck.splice(i,1); });
     P(s).hand=[...list]; };
-  give(ME,['discipulo','bartolomeo','burla','tasha','cantaberna']);
+  give(ME,M.mano);
   give(FOE,['bartolomeo','mazo','augusto','horton','eric']);
   const top=(s,list)=>{ list.slice().reverse().forEach(c=>{ const i=P(s).deck.indexOf(c);
     if(i>=0){ P(s).deck.splice(i,1); P(s).deck.unshift(c); } }); };
-  top(ME,['balada','matildus','discipulo','zancada','palabracuracion','burla']);
+  top(ME,M.top);
   showScreen('board');
-  log('<b>Tutorial del Domo</b> — Gero toma el micrófono.','sys');
+  log('<b>Tutorial del Domo</b> — '+LEADERS[lid].n+' contra Adreida.','sys');
   G.turnNo=0; G.active=FOE;
   tutStart();
   await startTurn(ME);
@@ -4261,7 +4363,7 @@ function showGuides(id){
 /* ==========================================================================
    13. ARRANQUE
    ========================================================================== */
-$('#mTut').onclick=()=>{ $('#log').innerHTML=''; startTutorial(); };
+$('#mTut').onclick=()=>showTutorialPick();
 $('#mOnline').onclick=()=>showOnline();
 $('#mPlay').onclick=()=>{ SELP=null; SELF=null; buildSelect(); $('#selGo').disabled=true; showScreen('select'); };
 $('#mGuides').onclick=()=>showGuides();
