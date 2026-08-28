@@ -1,2 +1,28 @@
 node_modules/
 .claude/
+.DS_Store
+*.zip
+
+# Salidas y material pesado: se regeneran, no se versionan.
+resolve_doc_editor/out/
+**/venv/
+**/__pycache__/
+*.pyc
+
+# ---------------------------------------------------------------------------
+# Proyectos que NO se versionan (decisión de 2026-08-28: sólo entra el TCG).
+# Ojo: lo que está aquí abajo no tiene respaldo ni historial. Si algún día
+# quieres subir alguno, basta con borrar su línea y hacer `git add`.
+# ---------------------------------------------------------------------------
+caoz_amor/
+caoz_con_todo/
+caozcontodo_web/
+cuprica_gallery/
+medieval_tactics/
+thousand_sons_trainer/
+podcast_bleed_cleaner/
+podcast_mix_master/
+podcast_multicam_switcher/
+resolve_doc_editor/
+resolve_waveform_sync/
+quoter/
