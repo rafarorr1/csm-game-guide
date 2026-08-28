@@ -252,6 +252,29 @@ body.tutpause #tut{pointer-events:auto}
   box-shadow:0 0 24px rgba(230,187,82,.75);animation:hip 1.1s infinite;pointer-events:none}
 @keyframes hip{50%{box-shadow:0 0 40px rgba(230,187,82,1)}}
 
+/* ============ EFECTOS ============ */
+#fx{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden}
+.fxnum{position:absolute;font-weight:900;font-size:26px;letter-spacing:-.5px;
+  text-shadow:0 2px 0 #000,0 0 12px currentColor;white-space:nowrap;transform:translate(-50%,-50%)}
+.fxnum.dmg{color:#ff5a4e} .fxnum.heal{color:#5cf09a} .fxnum.buff{color:#ffd76a}
+.fxnum.xl{font-size:40px}
+.fxburst{position:absolute;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
+  background:radial-gradient(circle,rgba(255,255,255,.95) 0%,currentColor 42%,transparent 72%)}
+.fxring{position:absolute;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;
+  border:3px solid currentColor;box-shadow:0 0 22px currentColor}
+.fxslash{position:absolute;width:110px;height:5px;margin:-2px 0 0 -55px;border-radius:3px;
+  background:linear-gradient(90deg,transparent,#fff,transparent)}
+.fxvig{position:fixed;inset:0;pointer-events:none;z-index:149;
+  background:radial-gradient(ellipse at center,transparent 45%,currentColor 100%)}
+.fxcard{position:absolute;transform-origin:center;filter:drop-shadow(0 12px 30px #000)}
+.fxbanner{position:absolute;left:0;right:0;top:44%;text-align:center;font-weight:900;
+  font-size:clamp(26px,5vw,46px);letter-spacing:4px;color:var(--gold);
+  text-shadow:0 4px 24px #000,0 0 40px rgba(230,187,82,.6)}
+.fxbanner small{display:block;font-size:13px;letter-spacing:6px;color:var(--dim);margin-top:4px}
+.fxlabel{position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:15px;
+  letter-spacing:1px;padding:6px 14px;border-radius:20px;white-space:nowrap;
+  background:rgba(14,8,22,.92);border:2px solid currentColor;box-shadow:0 6px 24px #000}
+
 /* prompt banner */
 #prompt{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:210;
   background:rgba(18,10,28,.95);border:2px solid var(--red);border-radius:12px;
@@ -363,6 +386,7 @@ body.tutpause #tut{pointer-events:auto}
 
 <div class="ov" id="ov"><div class="panel" id="ovPanel"></div></div>
 <div id="dice"><div class="d20" id="d20v">20</div><div class="dlabel" id="dlabel"></div></div>
+<div id="fx"></div>
 <div id="toast"></div>
 <div id="tut"><div class="tutbox">
   <div class="tuthead"><span class="gm">🎲</span><span class="tt" id="tutKind">DUNGEON MASTER GERO</span><span class="step" id="tutStep"></span></div>
@@ -386,7 +410,7 @@ const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
-const nap = ms => (G&&G.fast) ? Promise.resolve() : sleep(ms);
+const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const rnd = n => Math.floor(Math.random()*n);
 const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
 const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
@@ -1156,19 +1180,22 @@ async function dmgU(u, n, opt={}){
   u.dmg+=n;
   if(opt.att) u.killer=opt.att;
   log(`${u.card.n} recibe ${n} daño (${Math.max(0,u.maxHp-u.dmg)}/${u.maxHp}).`,'dmg');
+  render();
+  await fxHit(u,n);
   await checkDeaths();
   return n;
 }
 function healU(u,n){
   if(!u||!u.alive) return;
   const before=u.dmg; u.dmg=Math.max(0,u.dmg-n);
-  if(before!==u.dmg) log(`${u.card.n} recupera ${before-u.dmg} PV.`,'heal');
+  if(before!==u.dmg){ log(`${u.card.n} recupera ${before-u.dmg} PV.`,'heal'); render(); fxHeal(u,before-u.dmg); }
 }
 async function dmgFace(s,n,opt={}){
   if(G.over) return;
   P(s).alma-=n;
   log(`<b>${P(s).L.n}</b> pierde ${n} Alma → ${Math.max(0,P(s).alma)}.`,'dmg');
   render();
+  await fxFace(s,n);
   if(P(s).alma<=0) endGame(1-s, 'El Mago del Domo reclama el alma de '+P(s).L.n+'.');
 }
 
@@ -1194,6 +1221,7 @@ async function destroy(u,opt={}){
 async function killUnit(u, opt={}){
   if(!u.alive) return;
   const s=u.side;
+  await fxDeath(u);                       // se anima mientras sigue en el campo
   const idx=P(s).field.indexOf(u); if(idx>=0) P(s).field.splice(idx,1);
   u.alive=false;
   G.diedThisTurn.push({id:u.card.id, side:s});
@@ -1333,7 +1361,7 @@ function gainKey(s,n,why){
   if(G.place && CARDS[G.place.id].doubleKeys) n*=2;
   P(s).llaves+=n;
   log(`🗝️ <b>${P(s).L.n}</b> gana ${n} Llave(s) del Domo (${why}). Total: ${keys(s)}.`);
-  render();
+  render(); fxStat(s,'.stat.key'); fxNumber(s===ME?'face0':'face1','🗝️ +'+n,'buff');
 }
 async function cloudCheck(u){ // Nube de Dagas del rival
   const foe=1-u.side;
@@ -1368,9 +1396,8 @@ async function trapWindow(side, event, ev){
     if(c.can && !c.can(G,side,ev)) continue;
     list.splice(i,1);
     P(side).grave.push(t.id);
-    toast(`🪤 ${c.n}`);
     log(`🪤 <b>${c.n}</b> se activa.`);
-    render(); await nap(520);
+    render(); await fxTrap(t.id); await nap(120);
     await c.fire(G,side,ev);
     render();
     if(G.tutorial) await tutBeat('trampa',{id:t.id,side});
@@ -1466,6 +1493,8 @@ async function startTurn(s){
   recalc();
   log(`<b>— Turno ${Math.ceil(G.turnNo/2)} de ${p.L.n} —</b> (${p.pd}/${p.pdMax} PD)`,'sys');
   render();
+  await fxBanner(s);
+  fxStat(s,'.stat.pd');
 
   // Lugar
   if(G.place && CARDS[G.place.id].onAnyStart) await CARDS[G.place.id].onAnyStart(G,s);
@@ -1584,7 +1613,8 @@ async function playFromHand(s, id, forcedTargets){
   P(s).hand.splice(P(s).hand.indexOf(id),1);
   log(`<b>${P(s).L.n}</b> juega <b>${c.n}</b> (${cost} PD).`);
   render();
-  await nap(300);
+  fxStat(s,'.stat.pd');
+  if(c.t==='hechizo') await fxSpell(id,s); else await nap(260);
 
   if(c.t==='hechizo'){
     const ev={cardId:id, kind:'hechizo', countered:false};
@@ -1758,6 +1788,7 @@ async function doAttack(u, target){
       else if(r<=5){ log('Eman pierde la apuesta y se hace el daño a sí mismo.','dmg');
         await dmgU(u,atk,{src:'ludopata'}); render(); return true; }
     }
+    await fxLunge(u,target);
     // Ilusión
     if(target!=='face' && target.card.illusion){
       log('La Ilusión se desvanece sin recibir daño.','sys');
@@ -1940,10 +1971,14 @@ function cardEl(id,opt={}){
   return d;
 }
 function unitEl(u){
-  const c=u.card;
   const d=el('div','card unit t-personaje');
-  if(u.sick||u.stunned>0) d.classList.add('sick');
-  else if(u.side===ME&&canAttack(u)) d.classList.add('ready');
+  d.dataset.uid=u.uid;
+  unitFill(d,u);
+  return d;
+}
+// el cascarón se reutiliza entre renders para que las animaciones no se corten
+function unitFill(d,u){
+  const c=u.card;
   const kw=[];
   u.keys.forEach(k=>{ const m={prisa:['Prisa','good'],provocar:['Provocar','pro'],vuelo:['Vuelo','vue'],
     sigilo:['Sigilo','sig'],arquero:['Arquero','vue'],regeneracion:['Regen','good'],sinhonor:['Sin honor','']}[k];
@@ -1962,7 +1997,6 @@ function unitEl(u){
     ${u.objs.length?`<div class="eq">${u.objs.map(o=>`<span title="${CARDS[o]?CARDS[o].n:''}">${CARDS[o]?CARDS[o].art:'✨'}</span>`).join('')}</div>`:''}
     <div class="stats"><span class="atk">${u.atk}</span><span class="hp">${hp}</span></div>`;
   attachInspect(d,c.id,u);
-  return d;
 }
 function attachInspect(d,id,u){
   d.onmouseenter=e=>{ const box=$('#inspectCard'); const c=CARDS[id];
@@ -1977,6 +2011,188 @@ function attachInspect(d,id,u){
     box2.style.left=x+'px'; box2.style.top=y+'px';
   };
   d.onmouseleave=()=>$('#inspect').classList.remove('on');
+}
+
+/* ==========================================================================
+   9.b EFECTOS VISUALES
+   Todo pasa por la Web Animations API: los valores son dinámicos (distancia
+   entre atacante y objetivo). La duración se encadena con sleep(), NO con
+   Animation.finished: esa promesa puede quedarse sin resolver aunque la
+   animación termine, y colgaría el motor. Nada corre con G.fast/G.silent.
+   ========================================================================== */
+const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
+const SUBCOLOR = {fuego:'#ff7a3a', fe:'#ffd76a', engano:'#b06aff', cancion:'#4aa6ff',
+                  contrato:'#ff4a6a', rapido:'#7affd0'};
+
+function fxEl(u){ return u&&u.uid!=null ? $('#myField [data-uid="'+u.uid+'"]')||$('#foeField [data-uid="'+u.uid+'"]') : null; }
+function fxRect(target){
+  // target: unidad | 'face0'/'face1' | elemento
+  if(target==='face0'||target==='face1'){ const a=$('#av'+(target==='face0'?ME:FOE))||$('#barMe .avatar'); return a?a.getBoundingClientRect():null; }
+  const e = target instanceof Element ? target : fxEl(target);
+  return e? e.getBoundingClientRect() : null;
+}
+function fxCenter(t){ const r=fxRect(t); return r? {x:r.left+r.width/2, y:r.top+r.height/2, r} : null; }
+function fxAdd(cls, x, y, extra){
+  const d=el('div',cls); d.style.left=x+'px'; d.style.top=y+'px';
+  if(extra) Object.assign(d.style, extra);
+  $('#fx').appendChild(d); return d;
+}
+function fxGone(d,ms){ setTimeout(()=>d.remove(), (ms||900)+60); }
+
+/* número flotante (daño, curación, buffs) */
+function fxNumber(target, text, kind, big){
+  if(!FXON()) return;
+  const c=fxCenter(target); if(!c) return;
+  const d=fxAdd('fxnum '+kind+(big?' xl':''), c.x, c.y-10);
+  d.textContent=text;
+  const a=d.animate([
+    {transform:'translate(-50%,-50%) scale(.4)', opacity:0},
+    {transform:'translate(-50%,-50%) scale(1.25)', opacity:1, offset:.25},
+    {transform:'translate(-50%,-50%) scale(1)', opacity:1, offset:.5},
+    {transform:'translate(-50%,-140%) scale(.9)', opacity:0}
+  ],{duration:900,easing:'cubic-bezier(.2,.8,.3,1)'});
+  fxGone(d,900);
+}
+/* golpe recibido: sacudida + destello rojo */
+async function fxHit(u, amount){
+  if(!FXON()) return;
+  fxNumber(u, '−'+amount, 'dmg');
+  const e=fxEl(u);
+  if(e){
+    e.animate([{transform:'translate(0,0)'},{transform:'translate(-7px,3px)'},
+      {transform:'translate(6px,-3px)'},{transform:'translate(-4px,2px)'},{transform:'translate(0,0)'}],
+      {duration:340,easing:'ease-out'});
+    e.animate([{filter:'brightness(1)'},{filter:'brightness(2.4) sepia(1) hue-rotate(-40deg) saturate(6)',offset:.15},
+      {filter:'brightness(1)'}],{duration:420});
+    const c=fxCenter(u);
+    if(c){ const b=fxAdd('fxburst',c.x,c.y,{color:'#ff5a4e'});
+      b.animate([{transform:'scale(.3)',opacity:.95},{transform:'scale(1.5)',opacity:0}],{duration:380,easing:'ease-out'}); fxGone(b,380); }
+  }
+  await nap(190);
+}
+function fxHeal(u, amount){
+  if(!FXON()) return;
+  fxNumber(u,'+'+amount,'heal');
+  const e=fxEl(u);
+  if(e) e.animate([{filter:'brightness(1)'},{filter:'brightness(1.8) hue-rotate(60deg)',offset:.3},{filter:'brightness(1)'}],{duration:520});
+}
+function fxBuff(u, text){
+  if(!FXON()) return;
+  fxNumber(u,text,'buff');
+  const e=fxEl(u);
+  if(e) e.animate([{transform:'scale(1)'},{transform:'scale(1.12)',offset:.35},{transform:'scale(1)'}],{duration:420,easing:'ease-out'});
+}
+/* ataque: embestida hacia el objetivo + tajo en el impacto */
+async function fxLunge(att, target){
+  if(!FXON()) return;
+  const e=fxEl(att); const from=fxCenter(att); const to=fxCenter(target==='face'?(att.side===ME?'face1':'face0'):target);
+  if(!e||!from||!to){ await nap(120); return; }
+  const dx=(to.x-from.x)*.42, dy=(to.y-from.y)*.42;
+  const a=e.animate([{transform:'translate(0,0)'},
+    {transform:`translate(${dx*-0.18}px,${dy*-0.18}px)`,offset:.22},
+    {transform:`translate(${dx}px,${dy}px)`,offset:.55},
+    {transform:'translate(0,0)'}],{duration:460,easing:'cubic-bezier(.3,-0.4,.4,1.4)'});
+  e.style.zIndex=60;
+  await nap(250);
+  const mx=(from.x+to.x)/2, my=(from.y+to.y)/2;
+  const ang=Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI;
+  const sl=fxAdd('fxslash',mx,my,{transform:`rotate(${ang}deg)`});
+  sl.animate([{opacity:0,transform:`rotate(${ang}deg) scaleX(.2)`},
+    {opacity:1,transform:`rotate(${ang}deg) scaleX(1)`,offset:.4},
+    {opacity:0,transform:`rotate(${ang}deg) scaleX(1.3)`}],{duration:320});
+  fxGone(sl,320);
+  setTimeout(()=>{ e.style.zIndex=''; },480);
+}
+/* daño al Alma: sacudida del retrato, viñeta roja y número grande */
+async function fxFace(side, amount){
+  if(!FXON()) return;
+  const key = side===ME?'face0':'face1';
+  fxNumber(key,'−'+amount,'dmg',true);
+  const av=$('#av'+side) || (side===ME? $('#barMe .avatar') : $('#av'+FOE));
+  if(av) av.animate([{transform:'translate(0,0) scale(1)'},{transform:'translate(-5px,0) scale(1.15)'},
+    {transform:'translate(5px,0) scale(1.1)'},{transform:'translate(0,0) scale(1)'}],{duration:420});
+  const v=el('div','fxvig'); v.style.color='rgba(224,40,40,.55)'; document.body.appendChild(v);
+  v.animate([{opacity:0},{opacity:1,offset:.25},{opacity:0}],{duration:520}); fxGone(v,520);
+  const b=$('#board');
+  if(b) b.animate([{transform:'translate(0,0)'},{transform:'translate(-4px,2px)'},
+    {transform:'translate(4px,-2px)'},{transform:'translate(0,0)'}],{duration:260});
+  await nap(300);
+}
+function fxSummon(e){
+  if(!FXON()||!e) return;
+  e.animate([{transform:'scale(.5) translateY(18px)',opacity:0},
+    {transform:'scale(1.06)',opacity:1,offset:.7},{transform:'scale(1)',opacity:1}],
+    {duration:380,easing:'cubic-bezier(.2,.9,.3,1.3)'});
+}
+async function fxDeath(u){
+  if(!FXON()) return;
+  const e=fxEl(u); const c=fxCenter(u);
+  if(c){ const b=fxAdd('fxnum dmg xl',c.x,c.y); b.textContent='💀';
+    b.animate([{transform:'translate(-50%,-50%) scale(.4)',opacity:0},
+      {transform:'translate(-50%,-70%) scale(1.3)',opacity:1,offset:.4},
+      {transform:'translate(-50%,-110%) scale(1)',opacity:0}],{duration:560}); fxGone(b,560); }
+  if(e){ e.style.pointerEvents='none';
+    e.animate([{transform:'rotate(0) scale(1)',opacity:1,filter:'grayscale(0)'},
+      {transform:'rotate(-14deg) scale(.82) translateY(26px)',opacity:0,filter:'grayscale(1)'}],
+      {duration:420,easing:'ease-in',fill:'forwards'});
+    await nap(430);
+  } else await nap(160);
+}
+/* hechizo: la carta sube al centro, brilla con el color de su subtipo y se deshace */
+async function fxSpell(cardId, side){
+  if(!FXON()) return;
+  const c=CARDS[cardId];
+  const color = (c.sub&&SUBCOLOR[c.sub[0]]) || '#8a5cf0';
+  const board=$('#field').getBoundingClientRect();
+  const cx=board.left+board.width/2, cy=board.top+board.height/2;
+  const mini=cardEl(cardId,{}); mini.classList.add('fxcard');
+  mini.style.left=(cx-56)+'px'; mini.style.top=(cy-79)+'px'; mini.onmouseenter=null;
+  $('#fx').appendChild(mini);
+  const fromY = side===ME? 220 : -220;
+  const a=mini.animate([
+    {transform:`translateY(${fromY}px) scale(.6) rotate(${side===ME?6:-6}deg)`,opacity:0},
+    {transform:'translateY(0) scale(1.35) rotate(0)',opacity:1,offset:.32},
+    {transform:'translateY(0) scale(1.35) rotate(0)',opacity:1,offset:.62},
+    {transform:'translateY(-30px) scale(1.55) rotate(0)',opacity:0}
+  ],{duration:900,easing:'cubic-bezier(.2,.8,.3,1)'});
+  const ring=fxAdd('fxring',cx,cy,{color});
+  ring.animate([{transform:'scale(.3)',opacity:0},{transform:'scale(1)',opacity:.9,offset:.35},
+    {transform:'scale(3.6)',opacity:0}],{duration:820,easing:'ease-out'});
+  fxGone(ring,820); fxGone(mini,900);
+  await nap(560);
+}
+/* trampa: se voltea con su nombre */
+async function fxTrap(cardId){
+  if(!FXON()) return;
+  const board=$('#field').getBoundingClientRect();
+  const d=fxAdd('fxlabel', board.left+board.width/2, board.top+board.height/2, {color:'var(--c-trampa)'});
+  d.innerHTML='🪤 '+CARDS[cardId].n;
+  d.animate([{transform:'translate(-50%,-50%) rotateX(90deg) scale(.7)',opacity:0},
+    {transform:'translate(-50%,-50%) rotateX(0) scale(1.15)',opacity:1,offset:.35},
+    {transform:'translate(-50%,-50%) rotateX(0) scale(1)',opacity:1,offset:.75},
+    {transform:'translate(-50%,-50%) scale(1.1)',opacity:0}],{duration:1100}); fxGone(d,1100);
+  await nap(600);
+}
+/* cartel de cambio de turno */
+async function fxBanner(side){
+  if(!FXON()) return;
+  const d=el('div','fxbanner');
+  d.innerHTML = (side===ME?'TU TURNO':'TURNO DE '+P(side).L.n.toUpperCase())
+    +'<small>'+(side===ME?'juega tus cartas':'observa su jugada')+'</small>';
+  $('#fx').appendChild(d);
+  d.animate([{transform:'translateX(-60px)',opacity:0,filter:'blur(6px)'},
+    {transform:'translateX(0)',opacity:1,filter:'blur(0)',offset:.25},
+    {transform:'translateX(0)',opacity:1,filter:'blur(0)',offset:.68},
+    {transform:'translateX(60px)',opacity:0,filter:'blur(6px)'}],{duration:1150}); fxGone(d,1150);
+  await nap(680);
+}
+/* pequeño destello en un contador de la barra (PD, Llaves, Alma) */
+function fxStat(side, sel){
+  if(!FXON()) return;
+  const bar=$(side===ME?'#barMe':'#barFoe'); if(!bar) return;
+  const e=bar.querySelector(sel); if(!e) return;
+  e.animate([{transform:'scale(1)'},{transform:'scale(1.4)',offset:.35},{transform:'scale(1)'}],
+    {duration:420,easing:'ease-out'});
 }
 
 /* ---------- barras ---------- */
@@ -1999,6 +2215,35 @@ function barHTML(s){
     ${(!me&&G.active===s)?'<div class="turnpill">SU TURNO</div>':''}`;
 }
 
+function renderField(host, list, mine){
+  const seen=new Set();
+  list.forEach((u,i)=>{
+    seen.add(String(u.uid));
+    let d=host.querySelector(':scope > [data-uid="'+u.uid+'"]');
+    if(!d){ d=unitEl(u); host.appendChild(d); fxSummon(d); }
+    else { const pa=d.dataset.a, ph=d.dataset.h; unitFill(d,u);
+      if(pa!==undefined && FXON()){          // buffs y debuffs, vengan de donde vengan
+        const da=u.atk-(+pa), dh=u.maxHp-(+ph);
+        if(da>0||dh>0) fxBuff(u,(da>0?'+'+da+' ATQ':'')+(da>0&&dh>0?' ':'')+(dh>0?'+'+dh+' PV':''));
+        else if(da<0) fxNumber(u,da+' ATQ','dmg');
+      } }
+    d.dataset.a=u.atk; d.dataset.h=u.maxHp;
+    const rest=(u.sick||u.stunned>0);
+    const tgt=(TGT&&isTargetable(u)) ||
+              (!mine&&SEL&&canAttack(SEL)&&legalTargets(SEL).units.includes(u));
+    d.className='card unit t-personaje'+(rest?' sick':'')
+      +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')
+      +((mine&&SEL===u)?' selected':'');
+    d.onclick = mine
+      ? ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }
+              if(SEL===u){ SEL=null; clearPrompt(); render(); return; }
+              selectUnit(u); }
+      : ()=>{ if(TGT&&isTargetable(u)) pickTarget(u); else if(SEL&&canAttack(SEL)) tryAttack(SEL,u); };
+    if(host.children[i]!==d) host.insertBefore(d, host.children[i]||null);
+  });
+  [...host.children].forEach(d=>{ if(!seen.has(d.dataset.uid)) d.remove(); });
+}
+
 let SEL=null; // unidad seleccionada para atacar
 function render(){
   if(!G||G.silent) return;
@@ -2016,20 +2261,8 @@ function render(){
   P(FOE).traps.forEach(t=>{ const d=el('div','trapback', t.revealed?CARDS[t.id].art:'🪤');
     d.title=t.revealed?CARDS[t.id].n:'Trampa boca abajo'; ft.appendChild(d); });
   // campos
-  const ff=$('#foeField'); ff.innerHTML='';
-  P(FOE).field.forEach(u=>{ const d=unitEl(u);
-    if(TGT&&isTargetable(u)) d.classList.add('tgt');
-    else if(SEL&&canAttack(SEL)&&legalTargets(SEL).units.includes(u)) d.classList.add('tgt');
-    d.onclick=()=>{ if(TGT&&isTargetable(u)) pickTarget(u); else if(SEL&&canAttack(SEL)) tryAttack(SEL,u); };
-    ff.appendChild(d); });
-  const mf=$('#myField'); mf.innerHTML='';
-  P(ME).field.forEach(u=>{ const d=unitEl(u);
-    if(TGT&&isTargetable(u)) d.classList.add('tgt');
-    if(SEL===u) d.classList.add('selected');
-    d.onclick=()=>{ if(TGT&&isTargetable(u)) { pickTarget(u); return; }
-      if(SEL===u){ SEL=null; clearPrompt(); render(); return; }
-      selectUnit(u); };
-    mf.appendChild(d); });
+  renderField($('#foeField'), P(FOE).field, false);
+  renderField($('#myField'),  P(ME).field,  true);
   const mt=$('#myTraps'); mt.innerHTML='';
   P(ME).traps.forEach(t=>{ const d=el('div','trapback mine',CARDS[t.id].art);
     d.title=CARDS[t.id].n+' — '+CARDS[t.id].x.replace(/<[^>]+>/g,''); mt.appendChild(d); });
@@ -2227,7 +2460,7 @@ async function aiTurn(){
     if(scripted){ if(!G.over){ await nap(400); await endTurn(); } return; }
   }
   G.busy=true;
-  const pause = ()=>nap(G.tutorial?700:430);
+  const pause = ()=>nap(G.tutorial?600:200);
   try{
     let guard=0, played=0; const skip=new Set();
     const maxPlays = 12;
