@@ -78,9 +78,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:19px;
   background:var(--panel2);border:1px solid var(--line)}
 .avatar.act{border-color:var(--gold);box-shadow:0 0 10px rgba(230,187,82,.45)}
-.stat{display:flex;align-items:center;gap:4px;background:var(--panel);border:1px solid var(--line);
-  border-radius:20px;padding:3px 10px;font-size:13px;font-weight:700;white-space:nowrap}
-.stat i{font-style:normal;opacity:.85}
+.stat{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);
+  border-radius:20px;padding:3px 11px;font-size:14px;font-weight:700;white-space:nowrap}
+.stat i{font-style:normal;opacity:1;font-size:17px;font-weight:900;
+  font-variant-numeric:tabular-nums;text-shadow:0 1px 3px #000}
+.stat.alma{border-color:rgba(224,82,74,.5)} .stat.pd{border-color:rgba(74,166,255,.45)}
+.stat.key{border-color:rgba(230,187,82,.45)}
 .stat.alma{color:var(--red)} .stat.pd{color:var(--blue)} .stat.key{color:var(--gold)}
 .stat.gr{color:var(--green)}
 .spacer{flex:1}
@@ -116,10 +119,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card .txt{font-size:8.4px;line-height:1.24;color:#cfc3e4;flex:1;overflow:hidden}
 .card .txt b{color:var(--gold)}
 .card .stats{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
-.card .atk,.card .hp{font-weight:900;font-size:13px;text-shadow:0 1px 3px #000;
-  min-width:20px;text-align:center;border-radius:5px;padding:0 3px}
-.card .atk{color:#ffcf8a;background:rgba(180,90,20,.35)}
-.card .hp{color:#ff9d95;background:rgba(180,30,30,.35)}
+.card .atk,.card .hp{font-weight:900;font-size:16px;line-height:1.15;
+  text-shadow:0 2px 4px #000;min-width:26px;text-align:center;border-radius:6px;
+  padding:1px 5px;border:1px solid transparent}
+.card .atk{color:#ffd9a0;background:rgba(190,95,20,.55);border-color:rgba(255,190,120,.35)}
+.card .hp{color:#ffc0b8;background:rgba(190,35,35,.55);border-color:rgba(255,140,130,.35)}
+.big .atk,.big .hp{font-size:22px;min-width:34px}
 .card .rar{position:absolute;top:2px;right:3px;font-size:9px;color:var(--gold)}
 .card.t-personaje{border-top:3px solid var(--c-personaje)}
 .card.t-hechizo{border-top:3px solid var(--c-hechizo)}
@@ -254,10 +259,18 @@ body.tutpause #tut{pointer-events:auto}
 
 /* ============ EFECTOS ============ */
 #fx{position:fixed;inset:0;pointer-events:none;z-index:150;overflow:hidden}
-.fxnum{position:absolute;font-weight:900;font-size:26px;letter-spacing:-.5px;
-  text-shadow:0 2px 0 #000,0 0 12px currentColor;white-space:nowrap;transform:translate(-50%,-50%)}
-.fxnum.dmg{color:#ff5a4e} .fxnum.heal{color:#5cf09a} .fxnum.buff{color:#ffd76a}
-.fxnum.xl{font-size:40px}
+.fxnum{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;
+  font-weight:900;font-size:36px;line-height:1;letter-spacing:0;
+  font-variant-numeric:tabular-nums;
+  padding:4px 14px 6px;border-radius:14px;
+  background:rgba(6,3,10,.94);border:3px solid currentColor;
+  box-shadow:0 0 22px currentColor,0 8px 22px rgba(0,0,0,.95),inset 0 0 12px rgba(0,0,0,.6);
+  text-shadow:0 0 14px currentColor,0 2px 0 rgba(0,0,0,.9)}
+.fxnum.dmg{color:#ff6b5f} .fxnum.heal{color:#5cf5a4} .fxnum.buff{color:#ffd25c}
+.fxnum.xl{font-size:58px;padding:6px 22px 9px;border-width:4px;border-radius:18px}
+.fxnum.plain{background:none;border:none;box-shadow:none;padding:0;font-size:52px}
+@media(max-width:900px){ .fxnum{font-size:30px;padding:3px 11px 5px} .fxnum.xl{font-size:46px} }
+@media(max-width:620px){ .fxnum{font-size:25px;padding:2px 9px 4px;border-width:2px} .fxnum.xl{font-size:36px} }
 .fxburst{position:absolute;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.95) 0%,currentColor 42%,transparent 72%)}
 .fxring{position:absolute;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;
@@ -2021,6 +2034,7 @@ function attachInspect(d,id,u){
    animación termine, y colgaría el motor. Nada corre con G.fast/G.silent.
    ========================================================================== */
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
+let FXSTACK = 0;
 const SUBCOLOR = {fuego:'#ff7a3a', fe:'#ffd76a', engano:'#b06aff', cancion:'#4aa6ff',
                   contrato:'#ff4a6a', rapido:'#7affd0'};
 
@@ -2037,21 +2051,35 @@ function fxAdd(cls, x, y, extra){
   if(extra) Object.assign(d.style, extra);
   $('#fx').appendChild(d); return d;
 }
+function fxClamp(d){                       // que no se salga por los bordes
+  const m=10, r=d.getBoundingClientRect();
+  let x=parseFloat(d.style.left), y=parseFloat(d.style.top);
+  if(r.left<m) x+=m-r.left;
+  if(r.right>innerWidth-m) x-=r.right-(innerWidth-m);
+  if(r.top<m) y+=m-r.top;
+  if(r.bottom>innerHeight-m) y-=r.bottom-(innerHeight-m);
+  d.style.left=x+'px'; d.style.top=y+'px';
+}
 function fxGone(d,ms){ setTimeout(()=>d.remove(), (ms||900)+60); }
 
 /* número flotante (daño, curación, buffs) */
 function fxNumber(target, text, kind, big){
   if(!FXON()) return;
   const c=fxCenter(target); if(!c) return;
-  const d=fxAdd('fxnum '+kind+(big?' xl':''), c.x, c.y-10);
+  // si caen varios seguidos en el mismo sitio, se escalonan para no taparse
+  const off=(FXSTACK++ % 3)*30;
+  setTimeout(()=>{ FXSTACK=Math.max(0,FXSTACK-1); },900);
+  const d=fxAdd('fxnum '+kind+(big?' xl':''), c.x, c.y-14-off);
   d.textContent=text;
-  const a=d.animate([
-    {transform:'translate(-50%,-50%) scale(.4)', opacity:0},
-    {transform:'translate(-50%,-50%) scale(1.25)', opacity:1, offset:.25},
-    {transform:'translate(-50%,-50%) scale(1)', opacity:1, offset:.5},
-    {transform:'translate(-50%,-140%) scale(.9)', opacity:0}
-  ],{duration:900,easing:'cubic-bezier(.2,.8,.3,1)'});
-  fxGone(d,900);
+  fxClamp(d);
+  d.animate([
+    {transform:'translate(-50%,-50%) scale(.45)', opacity:0},
+    {transform:'translate(-50%,-50%) scale(1.3)',  opacity:1, offset:.16},
+    {transform:'translate(-50%,-50%) scale(1)',    opacity:1, offset:.28},
+    {transform:'translate(-50%,-62%) scale(1)',    opacity:1, offset:.72},  // se queda quieto: da tiempo a leerlo
+    {transform:'translate(-50%,-115%) scale(.92)', opacity:0}
+  ],{duration:1350,easing:'cubic-bezier(.2,.9,.3,1)'});
+  fxGone(d,1350);
 }
 /* golpe recibido: sacudida + destello rojo */
 async function fxHit(u, amount){
@@ -2075,6 +2103,15 @@ function fxHeal(u, amount){
   fxNumber(u,'+'+amount,'heal');
   const e=fxEl(u);
   if(e) e.animate([{filter:'brightness(1)'},{filter:'brightness(1.8) hue-rotate(60deg)',offset:.3},{filter:'brightness(1)'}],{duration:520});
+}
+// salto del contador dentro de la carta: marca DÓNDE cambió el número
+function fxPop(e, color){
+  if(!e||!FXON()) return;
+  e.animate([{transform:'scale(1)',filter:'brightness(1)'},
+    {transform:'scale(1.75)',filter:'brightness(2.2)',offset:.3},
+    {transform:'scale(1)',filter:'brightness(1)'}],{duration:520,easing:'ease-out'});
+  e.style.boxShadow='0 0 16px '+color;
+  setTimeout(()=>{ e.style.boxShadow=''; },520);
 }
 function fxBuff(u, text){
   if(!FXON()) return;
@@ -2106,8 +2143,18 @@ async function fxLunge(att, target){
 /* daño al Alma: sacudida del retrato, viñeta roja y número grande */
 async function fxFace(side, amount){
   if(!FXON()) return;
-  const key = side===ME?'face0':'face1';
-  fxNumber(key,'−'+amount,'dmg',true);
+  const av0=fxRect(side===ME?'face0':'face1');
+  const fld=$('#field').getBoundingClientRect();
+  if(av0){ const off=(FXSTACK++%3)*34; setTimeout(()=>{FXSTACK=Math.max(0,FXSTACK-1);},900);
+    const d=fxAdd('fxnum dmg xl', fld.left+fld.width/2, side===ME? fld.bottom-70-off : fld.top+70+off);
+    d.textContent='−'+amount+' ❤️'; fxClamp(d);
+    d.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:0},
+      {transform:'translate(-50%,-50%) scale(1.3)',opacity:1,offset:.16},
+      {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.3},
+      {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.74},
+      {transform:'translate(-50%,-90%) scale(.94)',opacity:0}],{duration:1450,easing:'cubic-bezier(.2,.9,.3,1)'});
+    fxGone(d,1450); }
+  fxStat(side,'.stat.alma');
   const av=$('#av'+side) || (side===ME? $('#barMe .avatar') : $('#av'+FOE));
   if(av) av.animate([{transform:'translate(0,0) scale(1)'},{transform:'translate(-5px,0) scale(1.15)'},
     {transform:'translate(5px,0) scale(1.1)'},{transform:'translate(0,0) scale(1)'}],{duration:420});
@@ -2127,7 +2174,7 @@ function fxSummon(e){
 async function fxDeath(u){
   if(!FXON()) return;
   const e=fxEl(u); const c=fxCenter(u);
-  if(c){ const b=fxAdd('fxnum dmg xl',c.x,c.y); b.textContent='💀';
+  if(c){ const b=fxAdd('fxnum dmg xl plain',c.x,c.y); b.textContent='💀';
     b.animate([{transform:'translate(-50%,-50%) scale(.4)',opacity:0},
       {transform:'translate(-50%,-70%) scale(1.3)',opacity:1,offset:.4},
       {transform:'translate(-50%,-110%) scale(1)',opacity:0}],{duration:560}); fxGone(b,560); }
@@ -2226,7 +2273,12 @@ function renderField(host, list, mine){
         const da=u.atk-(+pa), dh=u.maxHp-(+ph);
         if(da>0||dh>0) fxBuff(u,(da>0?'+'+da+' ATQ':'')+(da>0&&dh>0?' ':'')+(dh>0?'+'+dh+' PV':''));
         else if(da<0) fxNumber(u,da+' ATQ','dmg');
-      } }
+        if(da!==0) fxPop(d.querySelector('.atk'), da>0?'#ffd25c':'#ff6b5f');
+      }
+      const pv=d.dataset.pv;
+      if(pv!==undefined && +pv!==u.maxHp-u.dmg) fxPop(d.querySelector('.hp'), (u.maxHp-u.dmg)>(+pv)?'#5cf5a4':'#ff6b5f');
+    }
+    d.dataset.pv=u.maxHp-u.dmg;
     d.dataset.a=u.atk; d.dataset.h=u.maxHp;
     const rest=(u.sick||u.stunned>0);
     const tgt=(TGT&&isTargetable(u)) ||
