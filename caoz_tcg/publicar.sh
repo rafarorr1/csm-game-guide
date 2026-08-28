@@ -158,15 +158,21 @@ gris "  subido: $(git rev-parse --short HEAD)"
 
 # ---------------------------------------------------------------------------
 paso "4/4 · Comprobando que está en la web"
-URL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
+URL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/index.html"
+ESPERADO="$(shasum -a 256 "$AQUI/index.html" | cut -d" " -f1)"
+# Se compara el archivo entero, no una palabra suelta. Antes esto buscaba
+# "TUT_MAZO", que ya estaba en la versión anterior: daba por publicado un
+# despliegue que aún servía el código viejo.
 for i in $(seq 1 10); do
   sleep 12
-  CODIGO="$(curl -s -o /tmp/publicado.html -w '%{http_code}' "$URL")"
-  if [ "$CODIGO" = "200" ] && grep -q "TUT_MAZO" /tmp/publicado.html; then
-    verde "  publicado y verificado: $URL"
+  CODIGO="$(curl -s -o /tmp/publicado.html -w "%{http_code}" "$URL?cb=$(date +%s)")"
+  SERVIDO="$(shasum -a 256 /tmp/publicado.html | cut -d" " -f1)"
+  if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ]; then
+    verde "  publicado y verificado byte a byte: https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
+    gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
     exit 0
   fi
-  gris "  intento $i: $CODIGO"
+  gris "  intento $i: $CODIGO$([ "$CODIGO" = "200" ] && echo " (aún sirve otra versión)")"
 done
 rojo "Se subió, pero la web aún no lo sirve. GitHub Pages tarda a veces; revisa $URL"
 exit 1
