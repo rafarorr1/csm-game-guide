@@ -7,16 +7,16 @@
 #  a la web y se descubría jugando.
 #
 #  Uso:
-#    ./publicar.sh                 pruebas rápidas (~10 s) y publica
+#    ./publicar.sh                 pruebas rápidas (~15 s) y publica
 #    ./publicar.sh --completo      añade los 5 tutoriales (~5 min) y publica
 #    ./publicar.sh --solo-pruebas  sólo comprueba, no toca la web
 #    ./publicar.sh --beta          publica en /tcg-beta/ para probarlo en el
 #                                  móvil sin tocar la versión que usa la gente
 #
 #  No necesita instalar nada: usa el Chrome que ya tienes y un servidor de
-#  Python de un solo uso.
+#  Python de un solo uso (servidor_pruebas.py).
 # ============================================================================
-set -euo pipefail
+set -uo pipefail
 
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$AQUI/.." && pwd)"
@@ -38,7 +38,7 @@ done
 rojo(){ printf '\033[31m%s\033[0m\n' "$*"; }
 verde(){ printf '\033[32m%s\033[0m\n' "$*"; }
 gris(){ printf '\033[90m%s\033[0m\n' "$*"; }
-paso(){ printf '\n\033[1m→ %s\033[0m\n' "$*"; }
+paso(){ printf '\n\033[1m-> %s\033[0m\n' "$*"; }
 
 # ---------------------------------------------------------------------------
 paso "1/4 · Comprobaciones baratas"
@@ -54,7 +54,8 @@ gris "  sintaxis correcta"
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
 # animación termine. Es una regla dura y se comprueba también aquí.
 if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html"; then
-  rojo 'index.html usa Animation.finished — encadena con sleep(), o el motor se cuelga'; exit 1
+  rojo 'index.html usa Animation.finished — encadena con sleep(), o el motor se cuelga'
+  exit 1
 fi
 gris "  sin Animation.finished"
 
@@ -73,44 +74,44 @@ paso "2/4 · Pruebas en Chrome sin ventana"
 PUERTO=8749
 while lsof -i ":$PUERTO" >/dev/null 2>&1; do PUERTO=$((PUERTO+1)); done
 
-python3 -m http.server "$PUERTO" --bind 127.0.0.1 --directory "$AQUI" >/dev/null 2>&1 &
+RESULTADO_JSON="$(mktemp)"; rm -f "$RESULTADO_JSON"
+python3 "$AQUI/servidor_pruebas.py" "$PUERTO" "$RESULTADO_JSON" >/dev/null 2>&1 &
 SERVIDOR=$!
 PERFIL="$(mktemp -d)"
-VOLCADO="$(mktemp)"
-limpiar(){ kill "$SERVIDOR" 2>/dev/null || true; rm -rf "$PERFIL" "$VOLCADO" 2>/dev/null || true; }
+NAVEGADOR=""
+limpiar(){ kill "$SERVIDOR" 2>/dev/null; [ -n "$NAVEGADOR" ] && kill "$NAVEGADOR" 2>/dev/null; rm -rf "$PERFIL" 2>/dev/null; true; }
 trap limpiar EXIT
 sleep 1
 
-[ "$SUITES" = "1" ] && gris "  corriendo TODO, incluidos los tutoriales (~5 min)" \
-                    || gris "  corriendo las rápidas (motor, cartas, cobertura, regresiones)"
+if [ "$SUITES" = "1" ]; then
+  gris "  corriendo TODO, incluidos los tutoriales (~5 min)"; ESPERA=600
+else
+  gris "  corriendo las rápidas (motor, cartas, cobertura, regresiones)"; ESPERA=120
+fi
 
-# El presupuesto de tiempo virtual deja que Chrome adelante los temporizadores;
-# el vigilante lo mata si aun así se atasca, para no dejar procesos sueltos.
+# Sin --virtual-time-budget a propósito: hacía que Chrome esperase a agotar el
+# presupuesto en vez de a que las pruebas acabaran, y una tanda de diez segundos
+# tardaba varios minutos. Ahora la página avisa por POST /resultado cuando
+# termina, así que esto tarda exactamente lo que tarden las pruebas.
 "$CHROME" --headless --disable-gpu --no-sandbox --user-data-dir="$PERFIL" \
-  --virtual-time-budget=600000 \
-  --dump-dom "http://127.0.0.1:$PUERTO/?test=$SUITES" 2>/dev/null > "$VOLCADO" &
+  --no-first-run --disable-extensions \
+  "http://127.0.0.1:$PUERTO/?test=$SUITES" >/dev/null 2>&1 &
 NAVEGADOR=$!
-( sleep 900; kill "$NAVEGADOR" 2>/dev/null ) & VIGILANTE=$!
-wait "$NAVEGADOR" 2>/dev/null || true
-kill "$VIGILANTE" 2>/dev/null || true
 
-python3 - "$VOLCADO" << 'PY'
-import re, sys, json
-h = open(sys.argv[1]).read()
-t = re.search(r'<title>([^<]*)</title>', h)
-titulo = t.group(1) if t else '(sin título)'
-m = re.search(r'id="pruebasMarca">(.*?)</pre>', h, re.S)
-if not m:
-    print('  NO TERMINARON — el navegador no dejó resultado.'); print('  título:', titulo)
-    sys.exit(1)
-res = json.loads(m.group(1).replace('&quot;','"').replace('&amp;','&').replace('&lt;','<').replace('&gt;','>'))
-for s in res['suites']:
-    print(('  ✅ ' if s['bien'] else '  ❌ ') + s['nombre'] + f" ({s['seg']}s)")
-    for n in s.get('notas', []): print('       ·', n)
-    if s.get('error'): print('       →', s['error'])
-sys.exit(0 if res['mal'] == 0 else 1)
-PY
+for _ in $(seq 1 "$ESPERA"); do
+  [ -f "$RESULTADO_JSON" ] && break
+  sleep 1
+done
+kill "$NAVEGADOR" 2>/dev/null; NAVEGADOR=""
+
+if [ ! -f "$RESULTADO_JSON" ]; then
+  rojo "Las pruebas no terminaron en ${ESPERA}s. Míralas a mano con: index.html?test=$SUITES"
+  exit 1
+fi
+
+python3 "$AQUI/leer_resultado.py" "$RESULTADO_JSON"
 RESULTADO=$?
+rm -f "$RESULTADO_JSON"
 
 if [ "$RESULTADO" -ne 0 ]; then
   echo; rojo "PRUEBAS EN ROJO — no se publica nada."
@@ -121,7 +122,8 @@ verde "  todas en verde"
 
 # ---------------------------------------------------------------------------
 if [ "$PUBLICAR" -eq 0 ]; then
-  paso "Listo (--solo-pruebas: no se ha tocado la web)"; exit 0
+  paso "Listo (--solo-pruebas: no se ha tocado la web)"
+  exit 0
 fi
 
 paso "3/4 · Publicando en /$DESTINO/"
@@ -133,13 +135,14 @@ mkdir -p "$PAGES/$DESTINO"
 cp "$AQUI/index.html" "$PAGES/$DESTINO/index.html"
 cp "$AQUI/tests.js"   "$PAGES/$DESTINO/tests.js"
 
-cd "$PAGES"
+cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
 git add "$DESTINO/index.html" "$DESTINO/tests.js"
 
 if git diff --cached --quiet; then
-  gris "  no hay cambios que publicar"; exit 0
+  gris "  no hay cambios que publicar"
+  exit 0
 fi
 
 VERSION="$(cd "$REPO" && git rev-parse --short HEAD)"
@@ -156,9 +159,10 @@ paso "4/4 · Comprobando que está en la web"
 URL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
 for i in $(seq 1 10); do
   sleep 12
-  CODIGO="$(curl -s -o /tmp/publicado.html -w '%{http_code}' "$URL" || true)"
+  CODIGO="$(curl -s -o /tmp/publicado.html -w '%{http_code}' "$URL")"
   if [ "$CODIGO" = "200" ] && grep -q "TUT_MAZO" /tmp/publicado.html; then
-    verde "  publicado y verificado: $URL"; exit 0
+    verde "  publicado y verificado: $URL"
+    exit 0
   fi
   gris "  intento $i: $CODIGO"
 done

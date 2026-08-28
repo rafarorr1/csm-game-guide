@@ -429,6 +429,13 @@ PRUEBAS.correr = async function(filtro){
 
   PRUEBAS.resultado = res;
   PRUEBAS.terminado = true;
+
+  // Si esto corre desde publicar.sh, el servidor de pruebas está escuchando en
+  // /resultado y es así como el script sabe que hemos terminado. Abriendo la
+  // página a mano no hay nadie al otro lado: el fallo se ignora a propósito.
+  try{ fetch('/resultado', {method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify(res)}).catch(()=>{}); }catch(e){}
+
   return res;
 };
 
