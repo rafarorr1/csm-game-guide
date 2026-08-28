@@ -3011,7 +3011,7 @@ const TUT_FOE_SCRIPT = [
   {play:['eric'],       attack:true },
 ];
 
-let TUT={i:0,on:false,pending:null,bubble:0,foeTurn:0,data:null,poll:null};
+let TUT={i:0,on:false,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null};
 
 /* Durante el tutorial solo se puede hacer lo que el paso pide: el resto de la
    mano y los botones quedan bloqueados. Así no te pierdes jugando otra cosa. */
@@ -3044,7 +3044,7 @@ function tutNope(){
     {transform:'translateY(-50%) translateX(0)'}],{duration:300});
 }
 function tutStart(){
-  TUT={i:0,on:true,pending:null,bubble:0,foeTurn:0,data:null,poll:null};
+  TUT={i:0,on:true,pending:null,bubble:0,foeTurn:0,data:null,poll:null,block:0,stepTurn:null};
   TUT.poll=setInterval(tutCheck,500);
   tutRender();
 }
@@ -3069,8 +3069,8 @@ function tutRender(){
     kind.textContent = mustEnd ? '🎯 TE TOCA' : '👁 MIRA AL RIVAL';
     body.innerHTML = (s.wait_t||'<i>Observa. Te aviso en cuanto pase algo que merezca explicación.</i>')
       + (mustEnd ? '<br><br><b>👉 Sigue tu turno y pulsa «Terminar turno» abajo</b> para que Adreida juegue.' : '');
-    wait.textContent = mustEnd ? '⏳ Te toca a ti' : '';
-    next.textContent='Saltar este paso'; next.className='btn sm';
+    wait.textContent = mustEnd ? '⏳ Te toca a ti' : '⏳';
+    next.style.display='none';
   } else {
     const texts=tutTexts(s);
     kind.textContent = s.on ? '👁 MIRA AL RIVAL' : (s.wait? '🎯 TE TOCA' : '🎲 GERO EXPLICA');
@@ -3078,10 +3078,10 @@ function tutRender(){
     const more = TUT.bubble < texts.length-1;
     const isTask = !more && s.wait;
     wait.textContent = isTask ? '⏳ Te toca a ti' : '';
-    // en un paso de acción el botón NO puede parecer un "vale, seguimos":
-    // sería saltarse la jugada sin hacerla y dejar la partida a medias
-    next.textContent = isTask ? 'Saltar este paso' : (more ? 'Sigue →' : (s.last?'¡A jugar! →':'Entendido →'));
-    next.className = isTask ? 'btn sm' : 'btn gold sm';
+    // en un paso de acción no hay botón: se avanza jugando, no leyendo
+    next.style.display = isTask ? 'none' : '';
+    next.textContent = more ? 'Sigue →' : (s.last?'¡A jugar! →':'Entendido →');
+    next.className = 'btn gold sm';
   }
   tutHighlight();
   if(G) render();          // el tablero tiene que reflejar los permisos del paso nuevo
@@ -3105,22 +3105,45 @@ function tutNext(){
   const s=TUT_STEPS[TUT.i]; if(!s){ tutEnd(); return; }
   if(!(s.on && !TUT.pending) && TUT.bubble < tutTexts(s).length-1){ TUT.bubble++; tutRender(); return; }
   const resume=TUT.pending;
-  TUT.pending=null; TUT.bubble=0; TUT.data=null; TUT.i++;
+  TUT.pending=null; TUT.bubble=0; TUT.data=null; TUT.i++; TUT.block=0; TUT.stepTurn=null;
   document.body.classList.remove('tutpause');
   if(s.last){ tutEnd(); } else tutRender();
   if(resume) resume();
 }
 /* pasos de acción: se cumplen solos */
+/* ¿el jugador puede cumplir AHORA lo que pide el paso? Sin botón de saltar,
+   esto es lo que garantiza que nunca se quede encerrado. */
+function tutSatisfiable(){
+  const a=tutAllow();
+  if(!a||a.free) return true;
+  if(a.end)    return G.active===ME;
+  if(a.hand)   return a.hand.some(id=>P(ME).hand.includes(id)&&canPlay(ME,id));
+  if(a.leader){ const L=P(ME).L, p=P(ME);
+    return G.active===ME&&!p.leaderUsed&&p.pd>=L.habCost&&(!L.habReq||L.habReq(G,ME)); }
+  if(a.attack) return G.active===ME&&P(ME).field.some(u=>canAttack(u)&&
+    (a.attack==='face'? legalTargets(u).face : legalTargets(u).units.length||legalTargets(u).face));
+  return true;
+}
 function tutCheck(){
   if(!TUT.on||TUT.pending) return;
   const s=TUT_STEPS[TUT.i];
   if(s&&s.on){                               // beat esperando: ¿cambió el aviso?
     if(TUT.hint !== (G && !G.over && G.active===ME)) tutRender();
+    // si pasó una ronda entera sin que llegue su evento, seguimos
+    if(TUT.stepTurn==null) TUT.stepTurn=G.turnNo;
+    else if(G.turnNo-TUT.stepTurn>=3){ TUT.stepTurn=null; tutNext(); }
     return;
   }
   if(!s||!s.wait) return;
   if(TUT.bubble < tutTexts(s).length-1) return;   // aún leyendo
-  if(!s.wait(G)) return;
+  if(!s.wait(G)){
+    // paso imposible de cumplir durante un rato: no dejamos a nadie encerrado
+    if(tutSatisfiable()) TUT.block=0;
+    else if(++TUT.block>14){ TUT.block=0; toast('Gero pasa al siguiente paso');
+      setTimeout(()=>{ if(TUT.on&&!TUT.pending&&TUT_STEPS[TUT.i]===s) tutNext(); },400); }
+    return;
+  }
+  TUT.block=0;
   setTimeout(()=>{ if(TUT.on&&!TUT.pending&&TUT_STEPS[TUT.i]===s) tutNext(); },700);
 }
 /* cierra ya los pasos de acción cumplidos: si no, el evento del motor
@@ -3130,7 +3153,7 @@ function tutFlush(){
   while(TUT.on && !TUT.pending && guard++<8){
     const s=TUT_STEPS[TUT.i];
     if(!s||!s.wait||s.on||!s.wait(G)) break;
-    TUT.bubble=0; TUT.i++;
+    TUT.bubble=0; TUT.i++; TUT.block=0; TUT.stepTurn=null;
     if(s.last){ tutEnd(); return; }
   }
   tutRender();
