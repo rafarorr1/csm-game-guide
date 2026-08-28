@@ -431,6 +431,7 @@ body.tutpause #tut{pointer-events:auto}
 .codeinput:focus{border-color:var(--gold)}
 .netstatus{font-size:12.5px;letter-spacing:.5px;color:var(--dim);text-align:center;margin:4px 0}
 .netstatus.ok{color:var(--green)} .netstatus.warn{color:var(--gold)}
+.netdiag{font-size:10.5px;color:#5f5480;text-align:center;margin:2px 0 6px;letter-spacing:.3px}
 .netchip{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);
   border-radius:20px;padding:3px 11px;font-size:12px;color:var(--dim);white-space:nowrap}
 .netchip b{color:var(--gold);letter-spacing:2px}
@@ -3496,63 +3497,90 @@ async function startMatch(a,b){
    sólo dibuja y manda intenciones, así que no hay nada que sincronizar ni
    azar que cuadrar entre las dos máquinas.
    ========================================================================== */
-// relevo por defecto: ntfy.sh (público, sin cuentas). Se puede apuntar a otro
-// compatible con ?relay=https://mi-relevo/ , por si algún día hace falta.
-const NET_BASE=(new URLSearchParams(location.search).get('relay')||'https://ntfy.sh/').replace(/\/?$/,'/');
+// Relevos públicos (software ntfy, sin cuentas). Se publica en TODOS y se
+// sondea hasta que uno responde; entonces nos quedamos con ese. Si uno está
+// caído o bloqueado en la red de alguien, la partida sigue por otro.
+// Con ?relay=https://mi-relevo/ se fuerza uno solo (pruebas o instancia propia).
+const NET_OVERRIDE=new URLSearchParams(location.search).get('relay');
+const NET_RELAYS = NET_OVERRIDE ? [NET_OVERRIDE.replace(/\/?$/,'/')]
+  : ['https://ntfy.sh/','https://ntfy.envs.net/','https://ntfy.adminforge.de/'];
 const NET_ABC='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';   // sin I/O/0/1, que se confunden
-const NET={on:false,host:false,guest:false,code:null,topic:null,es:null,
+const NET={on:false,host:false,guest:false,code:null,topic:null,
   seq:0,q:[],sending:false,pending:{},pid:1,acts:[],busy:false,
-  status:'',peer:false,onjoin:null};
+  status:'',peer:false,onjoin:null,relay:null,seen:null,since:null,timer:null,
+  tx:0,rx:0,err:0};
 
 function netCode(){ let s=''; for(let i=0;i<5;i++) s+=NET_ABC[rnd(NET_ABC.length)]; return s; }
-function netStatus(t,cls){ NET.status=t; const e=$('#netStatus'); if(e){ e.textContent=t; e.className='netstatus '+(cls||''); } }
+function netStatus(t,cls){ NET.status=t; const e=$('#netStatus'); if(e){ e.textContent=t; e.className='netstatus '+(cls||''); }
+  const d=$('#netDiag'); if(d) d.textContent=`enviados ${NET.tx} · recibidos ${NET.rx}${NET.err?' · fallos '+NET.err:''}${NET.relay?' · vía '+NET.relay.replace(/https?:\/\//,'').replace(/\/$/,''):''}`; }
 
-function netConnect(code, asHost){
+async function netConnect(code, asHost){
   NET.code=code; NET.topic='caoztcg-v1-'+code.toLowerCase();
   NET.host=asHost; NET.guest=!asHost; NET.on=true;
-  NET.seq=0; NET.q=[]; NET.pending={}; NET.acts=[]; NET.peer=false;
-  return new Promise(res=>{
-    let abierto=false;
-    const abrir=()=>{
-      const es=new EventSource(NET_BASE+NET.topic+'/sse'); NET.es=es;
-      es.onopen=()=>{ netStatus('conectado','ok'); if(!abierto){abierto=true; res(true);} };
-      es.onerror=()=>{ netStatus('reconectando…','warn'); };
-      es.onmessage=e=>{
-        let d,m; try{ d=JSON.parse(e.data); }catch(_){ return; }
-        if(d.event!=='message'||!d.message) return;
-        try{ m=JSON.parse(d.message); }catch(_){ return; }
-        if(m.from===(asHost?'host':'guest')) return;      // eco de lo mío
-        netRecv(m);
-      };
-    };
-    abrir();
-    setTimeout(()=>{ if(!abierto){abierto=true; res(true);} },4000);
-  });
+  NET.seq=0; NET.q=[]; NET.sending=false; NET.pending={}; NET.acts=[]; NET.busy=false;
+  NET.peer=false; NET.relay=null; NET.seen=new Set(); NET.since={}; NET.tx=NET.rx=NET.err=0;
+  NET_RELAYS.forEach(r=>NET.since[r]='2m');      // recoge también lo enviado justo antes
+  clearInterval(NET.timer);
+  NET.timer=setInterval(netPoll, 900);
+  netStatus('conectando…');
+  await netPoll();
+  return true;
 }
 function netClose(){
-  if(NET.es) try{ NET.es.close(); }catch(_){}
-  NET.on=false; NET.host=false; NET.guest=false; NET.es=null; NET.peer=false;
+  clearInterval(NET.timer); NET.timer=null;
+  NET.on=false; NET.host=false; NET.guest=false; NET.peer=false; NET.relay=null;
+}
+/* ---- sondeo: nada se pierde aunque se corte la conexión ---- */
+async function netPoll(){
+  if(!NET.on) return;
+  const lista = NET.relay? [NET.relay] : NET_RELAYS;
+  await Promise.all(lista.map(async base=>{
+    try{
+      const url=base+NET.topic+'/json?poll=1&since='+encodeURIComponent(NET.since[base]||'2m');
+      const r=await fetch(url,{cache:'no-store'});
+      if(!r.ok) throw new Error(r.status);
+      const txt=await r.text();
+      if(!txt.trim()) return;
+      for(const linea of txt.trim().split('\n')){
+        let d; try{ d=JSON.parse(linea); }catch(_){ continue; }
+        if(d.id) NET.since[base]=d.id;
+        if(d.event!=='message'||!d.message) continue;
+        if(NET.seen.has(d.id)) continue;
+        NET.seen.add(d.id);
+        let m; try{ m=JSON.parse(d.message); }catch(_){ continue; }
+        if(m.from===(NET.host?'host':'guest')) continue;    // eco de lo mío
+        if(!NET.relay){ NET.relay=base; netStatus(NET.status,'ok'); }   // este relevo funciona
+        NET.rx++; netRecv(m);
+      }
+    }catch(_){ NET.err++; }
+  }));
+  netStatus(NET.status, NET.relay?'ok':'');
 }
 function netSend(msg){
   if(!NET.on) return;
   msg.from=NET.host?'host':'guest'; msg.seq=++NET.seq;
-  if(msg.t==='state') NET.q=NET.q.filter(m=>m.t!=='state');   // solo vale el último estado
+  if(msg.t==='state') NET.q=NET.q.filter(m=>m.t!=='state');   // sólo vale el último estado
   NET.q.push(msg); netPump();
 }
 async function netPump(){
   if(NET.sending||!NET.q.length) return;
   NET.sending=true;
-  while(NET.q.length&&NET.on){
-    const m=NET.q.shift();
-    for(let i=0;i<4;i++){
-      try{ const r=await fetch(NET_BASE+NET.topic,{method:'POST',body:JSON.stringify(m)});
-        if(r.ok){ break; } }catch(_){}
-      await sleep(350*(i+1));
-      if(i===3) netStatus('problemas de conexión','warn');
+  try{
+    while(NET.q.length&&NET.on){
+      const m=NET.q.shift(), cuerpo=JSON.stringify(m);
+      const destinos = NET.relay? [NET.relay] : NET_RELAYS;
+      let alguno=false;
+      await Promise.all(destinos.map(async base=>{
+        for(let i=0;i<3;i++){
+          try{ const r=await fetch(base+NET.topic,{method:'POST',body:cuerpo});
+            if(r.ok){ alguno=true; return; } }catch(_){}
+          await sleep(300*(i+1));
+        }
+      }));
+      if(alguno){ NET.tx++; } else { NET.err++; netStatus('sin conexión con el relevo','warn'); }
+      await sleep(160);
     }
-    await sleep(200);            // holgura para no saturar el relevo público
-  }
-  NET.sending=false;
+  } finally { NET.sending=false; }
 }
 /* pregunta del anfitrión al invitado; espera su respuesta */
 function netAsk(payload){
@@ -3649,9 +3677,13 @@ async function netRecv(m){
   if(!NET.on) return;
   if(NET.host){
     if(m.t==='join'){
-      if(NET.peer) return;                       // ya hay rival
+      if(NET.peer){                              // ya emparejados: repite la bienvenida
+        if(NET.welcome) netSend(NET.welcome);
+        return;
+      }
       NET.peer=true; netStatus('rival conectado','ok');
       if(NET.onjoin) NET.onjoin(m.leader||'fender');
+      else NET.joinPend=m.leader||'fender';      // aún no listo: lo atendemos al asignar
       return;
     }
     if(m.t==='act'){ NET.acts.push(m); netRunActs(); return; }
@@ -3729,7 +3761,8 @@ function pickIndex(list,title){
 
 /* ---------- arranque de la partida en cada lado ---------- */
 function netHostStart(miLider, suLider){
-  netSend({t:'welcome', host:miLider, guest:suLider});
+  NET.welcome={t:'welcome', host:miLider, guest:suLider};
+  netSend(NET.welcome);
   showScreen('board'); $('#log').innerHTML='';
   setupMatch(miLider, suLider, {online:true});
 }
@@ -3791,6 +3824,7 @@ async function onlHost(){
     <p>Pásale este código a tu amigo. En cuanto lo escriba, empezamos.</p>
     <div class="roomcode" id="roomCode">${code}</div>
     <p class="netstatus" id="netStatus">conectando…</p>
+    <p class="netdiag" id="netDiag"></p>
     <p style="font-size:11.5px;color:#7a6d96">El código es la única llave de la sala:
        cualquiera que lo tenga puede entrar y ver la partida. No lo publiques.</p>`;
   const box=el('div','opts');
@@ -3802,12 +3836,14 @@ async function onlHost(){
   await netConnect(code,true);
   netStatus('esperando a tu amigo…','warn');
   NET.onjoin=(suLider)=>{ $('#ov').classList.remove('on'); netHostStart(ONL.lider,suLider); };
+  if(NET.joinPend){ const l=NET.joinPend; NET.joinPend=null; NET.onjoin(l); }
 }
 function onlJoinCode(){
   const p=$('#ovPanel');
   p.innerHTML=`<h3>Unirse a una sala</h3><p>Escribe el código que te pasó tu amigo.</p>
     <input id="joinCode" class="codeinput" maxlength="5" placeholder="ABCDE" autocomplete="off">
-    <p class="netstatus" id="netStatus"></p>`;
+    <p class="netstatus" id="netStatus"></p>
+    <p class="netdiag" id="netDiag"></p>`;
   const box=el('div','opts');
   const go=el('button','btn gold','Entrar →');
   go.onclick=async()=>{
@@ -3820,7 +3856,9 @@ function onlJoinCode(){
     let intentos=0;
     const reintento=setInterval(()=>{
       if(NET.peer||!NET.on){ clearInterval(reintento); return; }
-      if(++intentos>12){ clearInterval(reintento); netStatus('nadie responde: revisa el código','warn'); go.disabled=false; return; }
+      intentos++;
+      if(intentos>24){ netStatus('nadie responde. ¿Seguro que el código es ese y tu amigo sigue esperando?','warn'); go.disabled=false; }
+      else netStatus('buscando la sala… ('+intentos+')','warn');
       netSend({t:'join', leader:ONL.lider});
     },2500);
   };
