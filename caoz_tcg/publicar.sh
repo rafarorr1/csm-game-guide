@@ -77,6 +77,7 @@ while lsof -i ":$PUERTO" >/dev/null 2>&1; do PUERTO=$((PUERTO+1)); done
 RESULTADO_JSON="$(mktemp)"; rm -f "$RESULTADO_JSON"
 python3 "$AQUI/servidor_pruebas.py" "$PUERTO" "$RESULTADO_JSON" >/dev/null 2>&1 &
 SERVIDOR=$!
+disown "$SERVIDOR" 2>/dev/null   # para que bash no anuncie su muerte al final
 PERFIL="$(mktemp -d)"
 NAVEGADOR=""
 limpiar(){ kill "$SERVIDOR" 2>/dev/null; [ -n "$NAVEGADOR" ] && kill "$NAVEGADOR" 2>/dev/null; rm -rf "$PERFIL" 2>/dev/null; true; }
@@ -97,6 +98,7 @@ fi
   --no-first-run --disable-extensions \
   "http://127.0.0.1:$PUERTO/?test=$SUITES" >/dev/null 2>&1 &
 NAVEGADOR=$!
+disown "$NAVEGADOR" 2>/dev/null
 
 for _ in $(seq 1 "$ESPERA"); do
   [ -f "$RESULTADO_JSON" ] && break
