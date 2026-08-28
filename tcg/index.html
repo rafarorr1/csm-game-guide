@@ -91,8 +91,58 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   color:var(--gold);font-weight:700;font-size:12.5px}
 
 /* zona central */
-#field{position:relative;display:flex;flex-direction:column;justify-content:space-around;
-  gap:2px;padding:4px 10px;overflow:hidden;min-height:0}
+#field{position:relative;display:flex;flex-direction:row;align-items:stretch;
+  gap:8px;padding:6px 8px;overflow:hidden;min-height:0}
+
+/* ---- el tapete ---- */
+#mat{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;
+  justify-content:space-around;gap:2px;padding:6px 26px;border-radius:18px;
+  border:1px solid rgba(230,187,82,.28);
+  background:
+    radial-gradient(ellipse at 50% 50%, rgba(138,92,240,.13), transparent 62%),
+    repeating-linear-gradient(45deg, rgba(255,255,255,.014) 0 2px, transparent 2px 7px),
+    repeating-linear-gradient(-45deg, rgba(0,0,0,.16) 0 2px, transparent 2px 7px),
+    linear-gradient(180deg,#1b1329 0%,#140e20 50%,#1b1329 100%);
+  box-shadow:inset 0 0 70px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.03),
+             0 10px 34px rgba(0,0,0,.55)}
+#mat::before{content:"";position:absolute;inset:6px;border-radius:13px;
+  border:1px dashed rgba(230,187,82,.13);pointer-events:none}
+.zone{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
+.zlabel{position:absolute;left:-20px;top:50%;transform:translateY(-50%) rotate(-90deg);
+  font-size:8px;letter-spacing:2.5px;color:#584b78;white-space:nowrap;pointer-events:none}
+.slots{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  gap:8px;pointer-events:none;opacity:.5}
+.slots i{width:var(--cw);height:var(--ch);border-radius:9px;
+  border:1px dashed rgba(230,187,82,.14);background:rgba(0,0,0,.16)}
+.slots.tr i{width:64px;height:42px;border-radius:7px}
+
+/* ---- raíl lateral: mazo y alcantarillas ---- */
+#rail{width:92px;flex:0 0 auto;display:flex;flex-direction:column;
+  justify-content:space-between;gap:6px;padding:2px 0}
+.pilebox{display:flex;flex-direction:column;gap:14px}
+.pile{position:relative;height:60px;border-radius:9px;cursor:default;
+  display:grid;place-items:center;transition:.15s;border:1px solid var(--line)}
+.pile.deck{background:repeating-linear-gradient(45deg,#2a1c44,#2a1c44 4px,#33245200 4px,#332452 9px);
+  border-color:rgba(138,92,240,.5);box-shadow:0 3px 0 #1b1230,0 6px 0 #150e26,0 10px 16px rgba(0,0,0,.6)}
+.pile.grave{background:linear-gradient(180deg,#241a30,#171021);border-color:rgba(120,110,140,.4);
+  cursor:pointer}
+.pile.grave:hover{border-color:var(--gold);transform:translateY(-2px)}
+.pile.empty{opacity:.35;box-shadow:none}
+.pileart{font-size:22px;filter:drop-shadow(0 2px 3px #000);line-height:1}
+.pilen{position:absolute;right:4px;bottom:3px;font-size:15px;font-weight:900;
+  color:var(--ink);text-shadow:0 2px 4px #000;font-variant-numeric:tabular-nums}
+.pilelbl{position:absolute;left:0;right:0;top:-11px;text-align:center;font-size:7.5px;
+  letter-spacing:1.6px;color:#6a5d8a}
+.fxfly{position:absolute;width:44px;height:60px;border-radius:7px;
+  background:repeating-linear-gradient(45deg,#3a2a5c,#3a2a5c 4px,#2a1c44 4px,#2a1c44 9px);
+  border:1px solid rgba(138,92,240,.7);box-shadow:0 6px 18px #000;transform:translate(-50%,-50%)}
+
+@media(max-width:900px){ #rail{width:70px} .pile{height:50px} .pileart{font-size:18px}
+  #mat{padding:5px 20px} }
+@media(max-width:620px){ #rail{width:54px} .pile{height:42px} .pileart{font-size:15px}
+  .card .nm{max-height:2.5em;overflow:hidden} #log{opacity:.9}
+  .pilelbl{font-size:6.5px;letter-spacing:1px} .pilen{font-size:12px}
+  #mat{padding:4px 14px;border-radius:12px} .zlabel{display:none} }
 .row{display:flex;align-items:center;justify-content:center;gap:8px;min-height:0;
   flex-wrap:nowrap;padding:2px}
 .row.traps{min-height:44px;gap:6px}
@@ -115,10 +165,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card .nm{font-size:10.5px;font-weight:800;line-height:1.12;flex:1;letter-spacing:.1px}
 .card .art{font-size:30px;text-align:center;padding:3px 0 1px;filter:drop-shadow(0 2px 4px #000)}
 .card .tribe{font-size:8px;color:var(--dim);text-align:center;letter-spacing:.4px;
-  text-transform:uppercase;line-height:1.1;margin-bottom:2px}
+  text-transform:uppercase;line-height:1.1;margin-bottom:2px;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .txt{font-size:8.4px;line-height:1.24;color:#cfc3e4;flex:1;overflow:hidden}
 .card .txt b{color:var(--gold)}
-.card .stats{display:flex;justify-content:space-between;align-items:center;margin-top:2px}
+.card .stats{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:2px}
 .card .atk,.card .hp{font-weight:900;font-size:16px;line-height:1.15;
   text-shadow:0 2px 4px #000;min-width:26px;text-align:center;border-radius:6px;
   padding:1px 5px;border:1px solid transparent}
@@ -393,11 +444,25 @@ body.tutpause #tut{pointer-events:auto}
 <div class="screen" id="board">
   <div class="bar" id="barFoe"></div>
   <div id="field">
-    <div class="row traps" id="foeTraps"></div>
-    <div class="row" id="foeField"></div>
-    <div class="midrow" id="midRow"></div>
-    <div class="row" id="myField"></div>
-    <div class="row traps" id="myTraps"></div>
+    <div id="rail">
+      <div class="pilebox" id="foePiles"></div>
+      <div class="pilebox" id="myPiles"></div>
+    </div>
+    <div id="mat">
+      <div class="zone"><span class="zlabel">TRAMPAS</span>
+        <div class="slots tr"><i></i><i></i><i></i></div>
+        <div class="row traps" id="foeTraps"></div></div>
+      <div class="zone"><span class="zlabel">CAMPO RIVAL</span>
+        <div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="row" id="foeField"></div></div>
+      <div class="midrow" id="midRow"></div>
+      <div class="zone"><span class="zlabel">TU CAMPO</span>
+        <div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="row" id="myField"></div></div>
+      <div class="zone"><span class="zlabel">TRAMPAS</span>
+        <div class="slots tr"><i></i><i></i><i></i></div>
+        <div class="row traps" id="myTraps"></div></div>
+    </div>
     <div id="log"></div>
   </div>
   <div id="handzone">
@@ -998,7 +1063,9 @@ C('jabon',{n:'Barra de Jabón',t:'objeto',c:1,r:0,art:'🧼',equip:true,mod:{a:0
  x:'<b>Equipo.</b> No puede ser objetivo de Hechizos de Engaño. Si muere, recuperas Copia de Jabón de las Alcantarillas.',
  grants:{enganoProof:true},
  onHolderDie:async(g,s,u)=>{ const i=P(s).grave.indexOf('copiajabon');
-   if(i>=0){ P(s).grave.splice(i,1); P(s).hand.push('copiajabon'); log('La Barra de Jabón devuelve Copia de Jabón a tu mano.'); } }});
+   if(i>=0){ P(s).grave.splice(i,1); P(s).hand.push('copiajabon');
+     log('La Barra de Jabón devuelve Copia de Jabón a tu mano.');
+     fxNotice('🧼 La Barra de Jabón recupera Copia de Jabón','var(--c-objeto)'); } }});
 C('puntosrobados',{n:'Puntos Robados',t:'objeto',c:2,r:0,art:'💰',relic:true,
  x:'<b>Reliquia.</b> Gana 1 contador cada vez que muere un Personaje rival. Sacrifícala: ganas PD igual a los contadores (máx 4).',
  relicAct:{n:'Cobrar',cost:0,do:async(g,s,r)=>{ const n=Math.min(4,r.counters||0);
@@ -1186,7 +1253,9 @@ function costOf(cardId, s){
 async function dmgU(u, n, opt={}){
   if(!u||!u.alive||n<=0||G.over) return 0;
   if(opt.fire){
-    if(grant(u,'fireProof')){ log(`${u.card.n} es inmune al Fuego (Collar de Agua).`,'sys'); return 0; }
+    if(grant(u,'fireProof')){ log(`${u.card.n} es inmune al Fuego (Collar de Agua).`,'sys');
+      const src=u.objs.find(o=>CARDS[o]&&CARDS[o].grants&&CARDS[o].grants.fireProof);
+      fxObj(u, src||'collar', 'Inmune al Fuego'); await nap(700); return 0; }
     u.tookFire=true;
   }
   if(!opt.unstoppable && u.dmg+n >= u.maxHp){
@@ -1256,7 +1325,8 @@ async function killUnit(u, opt={}){
   // objetos equipados
   for(const o of u.objs){
     const oc=CARDS[o]; if(!oc) continue;
-    if(u.armaMagica && oc.equip){ P(u.owner).hand.push(o); log(`${oc.n} vuelve a la mano (Arma Mágica).`,'sys'); }
+    if(u.armaMagica && oc.equip){ P(u.owner).hand.push(o); log(`${oc.n} vuelve a la mano (Arma Mágica).`,'sys');
+      fxNotice('⚒️ '+oc.n+' vuelve a tu mano','var(--c-objeto)'); }
     else P(u.owner).grave.push(o);
     if(oc.onHolderDie) await oc.onHolderDie(G,u.owner,u);
   }
@@ -1267,7 +1337,8 @@ async function killUnit(u, opt={}){
   for(const side of [0,1]) for(const m of P(side).field)
     if(m.card.nexus && m.alive && !m.possessed){ P(side).alma++; log(`Nexo: ${P(side).L.n} gana 1 Alma.`,'heal'); }
   // Puntos Robados del rival
-  P(1-s).relics.forEach(r=>{ if(CARDS[r.id].id==='puntosrobados'){ r.counters=(r.counters||0)+1; } });
+  P(1-s).relics.forEach(r=>{ if(CARDS[r.id].id==='puntosrobados'){ r.counters=(r.counters||0)+1;
+    render(); fxStat(1-s,'.stat.relic'); fxNotice('💰 Puntos Robados: '+r.counters,'var(--c-objeto)'); } });
   // Lugar El Domo
   if(G.place && CARDS[G.place.id].domeDeath){
     P(s).alma--; P(1-s).pd++;
@@ -1321,6 +1392,7 @@ async function draw(s,n=1){
       await dmgFace(s,2,{src:'fatiga'}); continue;
     }
     const c=P(s).deck.shift(); P(s).hand.push(c);
+    render(); fxDraw(s);
     if(s===ME) log(`Robas <b>${CARDS[c].n}</b>.`);
     else log(`${P(s).L.n} roba una carta.`,'sys');
   }
@@ -1541,6 +1613,8 @@ async function startTurn(s){
   if(scroll){
     if(P(1-s).field.some(u=>u.card.freezeScroll)) log('Juan Gabriel congela el contador del Pergamino.','sys');
     else { p.scrollTurns++; log(`📜 El Pergamino brilla (${p.scrollTurns}/2).`);
+      render(); fxStat(s,'.stat.relic');
+      fxNotice('📜 Pergamino de Deseo Ilimitado — '+p.scrollTurns+'/2','var(--gold)'); await nap(900);
       if(p.scrollTurns>=2){ endGame(s,`${p.L.n} formula su Deseo Ilimitado. El Domo obedece.`); return; } }
   }
   if(G.over) return;
@@ -1681,8 +1755,10 @@ async function playFromHand(s, id, forcedTargets){
   else if(c.t==='trampa'){ P(s).traps.push({id, revealed:false});
     if(s===ME) log(`Colocas <b>${c.n}</b> boca abajo.`,'sys'); else log('El rival coloca una Trampa boca abajo.','sys'); }
   else if(c.t==='objeto'){
-    if(c.relic){ P(s).relics.push({id,counters:0}); }
-    else { const u=ts[0][0]; u.objs.push(id); log(`${c.n} se equipa a ${u.card.n}.`); }
+    if(c.relic){ P(s).relics.push({id,counters:0}); render();
+      fxNotice(c.art+' '+c.n+' en juego','var(--c-objeto)'); await nap(500); }
+    else { const u=ts[0][0]; u.objs.push(id); log(`${c.n} se equipa a ${u.card.n}.`);
+      recalc(); render(); fxObj(u,id,'Equipado a '+u.card.n); await nap(500); }
   }
   else if(c.t==='lugar'){
     if(G.place){ P(G.place.side).grave.push(G.place.id); log(`${CARDS[G.place.id].n} es reemplazado.`,'sys'); }
@@ -2178,6 +2254,57 @@ async function fxFace(side, amount){
     {transform:'translate(4px,-2px)'},{transform:'translate(0,0)'}],{duration:260});
   await nap(300);
 }
+/* una carta sale volando del mazo hacia la mano: da sentido al contador */
+function fxDraw(side){
+  if(!FXON()) return;
+  const pile=$(side===ME?'#myDeckPile':'#foeDeckPile'); if(!pile) return;
+  const r=pile.getBoundingClientRect();
+  const dst=(side===ME? $('#hand') : $('#barFoe'));
+  if(!dst) return;
+  const t=dst.getBoundingClientRect();
+  const d=fxAdd('fxfly', r.left+r.width/2, r.top+r.height/2);
+  d.animate([
+    {transform:'translate(-50%,-50%) scale(.6) rotate(-8deg)',opacity:0},
+    {transform:'translate(-50%,-50%) scale(1) rotate(0)',opacity:1,offset:.2},
+    {transform:`translate(${t.left+t.width/2-(r.left+r.width/2)-22}px,${t.top+t.height/2-(r.top+r.height/2)-30}px) scale(.75)`,opacity:0}
+  ],{duration:620,easing:'cubic-bezier(.3,.7,.3,1)'});
+  fxGone(d,620);
+  pile.animate([{transform:'translateY(0)'},{transform:'translateY(3px)'},{transform:'translateY(0)'}],{duration:340});
+}
+/* un Objeto se activa: salta su icono con el nombre, para que se vea qué hizo */
+function fxObj(target, objId, text){
+  if(!FXON()) return;
+  const c=fxCenter(target);
+  const art=CARDS[objId]?CARDS[objId].art:'✨';
+  const x=c?c.x:innerWidth/2, y=c?c.y-58:innerHeight/2;
+  const d=fxAdd('fxlabel', x, y, {color:'var(--c-objeto)'});
+  d.innerHTML=art+' '+(text||CARDS[objId].n);
+  fxClamp(d);
+  d.animate([{transform:'translate(-50%,-50%) scale(.5)',opacity:0},
+    {transform:'translate(-50%,-50%) scale(1.18)',opacity:1,offset:.2},
+    {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.34},
+    {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.74},
+    {transform:'translate(-50%,-120%) scale(.94)',opacity:0}],{duration:1400,easing:'ease-out'});
+  fxGone(d,1400);
+  const e=target&&target.uid!=null?fxEl(target):null;
+  const icon=e&&e.querySelector('.eq span');
+  if(icon) icon.animate([{transform:'scale(1)',filter:'brightness(1)'},
+    {transform:'scale(2)',filter:'brightness(2.4)',offset:.3},
+    {transform:'scale(1)',filter:'brightness(1)'}],{duration:700});
+}
+/* aviso centrado, para efectos sin dueño en el campo */
+function fxNotice(text, color){
+  if(!FXON()) return;
+  const b=$('#mat')||$('#field'); if(!b) return;
+  const r=b.getBoundingClientRect();
+  const d=fxAdd('fxlabel', r.left+r.width/2, r.top+r.height/2, {color:color||'var(--gold)'});
+  d.innerHTML=text; fxClamp(d);
+  d.animate([{transform:'translate(-50%,-50%) scale(.6)',opacity:0},
+    {transform:'translate(-50%,-50%) scale(1.1)',opacity:1,offset:.22},
+    {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.72},
+    {transform:'translate(-50%,-90%) scale(.95)',opacity:0}],{duration:1400});
+  fxGone(d,1400);
+}
 function fxSummon(e){
   if(!FXON()||!e) return;
   e.animate([{transform:'scale(.5) translateY(18px)',opacity:0},
@@ -2267,14 +2394,27 @@ function barHTML(s){
     <div class="stat pd" title="Puntos">🔷 <i>${p.pd}/${p.pdMax}</i></div>
     <div class="stat key" title="Llaves del Domo">🗝️ <i>${keys(s)}</i></div>
     ${p.leaderId==='talesin'&&!p.ascended?`<div class="stat gr" title="Fichas de Gracia">✨ <i>${p.gracia}/5</i></div>`:''}
-    ${p.relics.length?p.relics.map(r=>`<div class="stat" title="${CARDS[r.id].n}" data-relic="${r.id}">${CARDS[r.id].art} <i>${CARDS[r.id].scroll?p.scrollTurns+'/2':(r.counters||0)}</i></div>`).join(''):''}
+    ${p.relics.length?p.relics.map(r=>`<div class="stat relic" title="${CARDS[r.id].n}" data-relic="${r.id}">${CARDS[r.id].art} <i>${CARDS[r.id].scroll?p.scrollTurns+'/2':(r.counters||0)}</i></div>`).join(''):''}
     <div class="spacer"></div>
     <div class="stat" title="Cartas en mano">🃏 <i>${p.hand.length}</i></div>
-    <div class="stat" title="Mazo">📚 <i>${p.deck.length}</i></div>
-    <div class="stat" title="Alcantarillas">🕳️ <i>${p.grave.length}</i></div>
     ${(!me&&G.active===s)?'<div class="turnpill">SU TURNO</div>':''}`;
 }
 
+function renderPiles(){
+  [[FOE,'#foePiles'],[ME,'#myPiles']].forEach(([side,sel])=>{
+    const host=$(sel); if(!host) return;
+    const p=P(side), top=p.grave[p.grave.length-1];
+    host.innerHTML=`
+      <div class="pile deck${p.deck.length?'':' empty'}" id="${side===ME?'myDeckPile':'foeDeckPile'}"
+           title="Mazo — ${p.deck.length} cartas por robar">
+        <div class="pilelbl">MAZO</div><div class="pileart">🂠</div><div class="pilen">${p.deck.length}</div></div>
+      <div class="pile grave${p.grave.length?'':' empty'}" id="${side===ME?'myGravePile':'foeGravePile'}"
+           title="Alcantarillas — ${p.grave.length} cartas${top?' · arriba: '+CARDS[top].n:''}">
+        <div class="pilelbl">ALCANTARILLAS</div>
+        <div class="pileart">${top?CARDS[top].art:'🕳️'}</div><div class="pilen">${p.grave.length}</div></div>`;
+    host.querySelector('.pile.grave').onclick=()=>showGrave();
+  });
+}
 function renderField(host, list, mine){
   const seen=new Set();
   list.forEach((u,i)=>{
@@ -2328,6 +2468,7 @@ function render(){
   P(FOE).traps.forEach(t=>{ const d=el('div','trapback', t.revealed?CARDS[t.id].art:'🪤');
     d.title=t.revealed?CARDS[t.id].n:'Trampa boca abajo'; ft.appendChild(d); });
   // campos
+  renderPiles();
   renderField($('#foeField'), P(FOE).field, false);
   renderField($('#myField'),  P(ME).field,  true);
   const mt=$('#myTraps'); mt.innerHTML='';
