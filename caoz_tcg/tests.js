@@ -374,6 +374,43 @@ PRUEBAS.suite('regresiones', async t => {
     }
   }
 
+  /* Un paso que pide una carta más cara que tus PD tiene que ESPERARTE hasta
+     el turno siguiente, no saltarse la lección. Es lo que promete su propio
+     texto ("si aún no te alcanza, termina el turno y lo bajas al siguiente") y
+     lo que fallaba con Rafaela: Titaus cuesta 3 y en ese turno tienes 2. */
+  {
+    await startTutorial('rafaela');
+    await sleep(400);
+    TUT.rescates = [];
+    // ir hasta el paso que pide la SEGUNDA criatura (el caro)
+    let guardia=0;
+    while(guardia++ < 40){
+      const paso = TUT_STEPS[TUT.i];
+      if(paso && paso.allow && paso.allow.hand && paso.allow.hand[0]===TUT_MAZO.rafaela.c2) break;
+      if($1('#tutNext').style.display !== 'none'){ $1('#tutNext').click(); }
+      else if(document.body.classList.contains('tutpause')){ $1('#tutNext').click(); }
+      else {
+        // cumplir lo que pida para seguir avanzando
+        const carta = $1('#hand .card:not(.locked).playable');
+        if(carta) carta.click();
+        else { const fin = $$('#controls .btn.gold')[0]; if(fin && !fin.disabled) fin.click(); }
+      }
+      await sleep(300);
+    }
+    const paso = TUT_STEPS[TUT.i];
+    t.check(paso && paso.allow && paso.allow.hand && paso.allow.hand[0]===TUT_MAZO.rafaela.c2,
+      'no llegué al paso que pide la segunda criatura de Rafaela');
+    const coste = T.costOf(TUT_MAZO.rafaela.c2, 0);
+    t.nota(`rafaela: el paso pide ${TUT_MAZO.rafaela.c2} (${coste} PD) con ${T.P(0).pd} PD`);
+    const antes = TUT.i;
+    // esperar más que la red de seguridad (7 s) sin hacer nada
+    await sleep(11000);
+    t.check(TUT.i === antes,
+      `el paso que pide ${TUT_MAZO.rafaela.c2} se saltó solo en vez de esperar a que tengas PD`);
+    tutEnd();
+    await sleep(400);
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();
