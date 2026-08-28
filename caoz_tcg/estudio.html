@@ -108,9 +108,10 @@ main{padding:16px}
 <main>
   <div class="aviso">
     <b>Diseña a 750 × 1050 px</b> (proporción 5:7, la de una carta real a 300 dpi).
-    La ilustración llena la carta entera y el juego escribe encima el nombre, la tribu, el
-    texto y los números — así que <b>deja lo importante entre el 20 % y el 48 % de la altura</b>
-    (de 200 a 500 px). Abre cualquier carta para ver esas zonas dibujadas encima.
+    La ilustración llena la carta y el juego escribe encima: el nombre arriba, y abajo la
+    tribu, el texto y los números sobre un velo oscuro. <b>La cara y lo importante van entre
+    los 185 y los 445 px</b> — esa franja no la tapa nada nunca. De 445 a 590 px depende de
+    lo largo que sea el texto de esa carta. Abre cualquiera para verlo dibujado encima.
     Para cargar muchas de golpe, nombra los archivos con el id de la carta:
     <code>discipulo.png</code>, <code>titaus.webp</code>…
   </div>
@@ -138,16 +139,62 @@ const LIENZO = {w:750, h:1050};
    donde va tu ilustración. Se previsualiza aquí para que juzgues los diseños
    como se verán de verdad, no como se ven sueltos. */
 const VELO = 'linear-gradient(180deg,'
-  + 'rgba(10,7,18,.80) 0%, rgba(10,7,18,.34) 15%, rgba(10,7,18,0) 26%,'
-  + 'rgba(10,7,18,0) 44%, rgba(10,7,18,.55) 54%, rgba(10,7,18,.88) 72%,'
-  + 'rgba(10,7,18,.93) 100%)';
+  + 'rgba(10,7,18,.82) 0%, rgba(10,7,18,.30) 13%, rgba(10,7,18,0) 24%,'
+  + 'rgba(10,7,18,0) 100%)';   // sólo la cabecera: el pie lleva su propio velo
 let CON_VELO = true;
+
+/* ---------------------------------------------------------------------------
+   MAQUETACIÓN "A SANGRE"
+   Cuando la carta lleva ilustración, el hueco del emoji sobra y el texto no
+   puede quedarse flotando en mitad del dibujo: se agrupa abajo, sobre su
+   propio velo, que es donde se lee. Y las tipografías pasan a ser
+   proporcionales al tamaño de la carta — antes iban en píxeles fijos, así que
+   en la vista ampliada el texto se quedaba diminuto.
+
+   Esto es lo que tendrá que llevar el juego cuando se implanten las
+   ilustraciones; está aquí junto para poder copiarlo de una pieza.
+   ------------------------------------------------------------------------ */
+const CSS_ILUSTRADA = `
+.card.ilustrada{ font-size:calc(var(--cw) * 0.092); }
+.card.ilustrada .art{ display:none }
+.card.ilustrada .top{ position:relative; z-index:2; align-items:center }
+.card.ilustrada .nm{ font-size:1.06em; line-height:1.1;
+  text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.9) }
+.card.ilustrada .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
+  box-shadow:0 2px 6px rgba(0,0,0,.7) }
+.card.ilustrada .rar{ font-size:.9em; text-shadow:0 1px 3px #000 }
+
+/* el pie: tribu + texto + números, pegados abajo y con su velo */
+.card.ilustrada .pieCarta{
+  margin:auto -5px -5px; padding:1.05em .45em .35em; position:relative; z-index:2;
+  background:linear-gradient(180deg, rgba(8,6,14,0) 0%, rgba(8,6,14,.72) 30%,
+             rgba(8,6,14,.93) 58%, rgba(8,6,14,.97) 100%);
+}
+.card.ilustrada .pieCarta .tribe{ font-size:.72em; margin-bottom:.2em;
+  text-shadow:0 1px 2px #000 }
+/* El texto se acota a cuatro líneas. No es un capricho: con reglas largas el pie
+   se comía la carta entera y tapaba la ilustración (Brick y Brock empezaba al
+   17 % de la altura). El juego ya recorta así el texto de las cartas pequeñas;
+   quien quiera leerlo entero la amplía. */
+.card.ilustrada .pieCarta .txt{ font-size:.84em; line-height:1.28; flex:none;
+  color:#e6dcf5; text-shadow:0 1px 2px #000; display:-webkit-box;
+  -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden }
+/* en la vista ampliada cabe más, que para eso se amplía */
+.card.ilustrada.grande .pieCarta .txt{ -webkit-line-clamp:7 }
+.card.ilustrada .pieCarta .stats{ margin-top:.35em; padding-top:0 }
+.card.ilustrada .pieCarta .atk,
+.card.ilustrada .pieCarta .hp{ font-size:1.25em; min-width:2em; padding:.05em .35em;
+  box-shadow:0 2px 6px rgba(0,0,0,.6) }
+`;
+/* Medido sobre la maquetación a sangre, carta por carta. El pie crece con lo
+   largo que sea el texto de reglas, así que hay una franja que unas veces se ve
+   y otras no: en la de más texto (Brick y Brock) el pie arranca al 42,4 %, y en
+   un Hechizo corto no llega hasta el 56 %. */
 const ZONAS = [
-  {de:5.1,  a:18.4, et:'coste y nombre',  color:'#e0575b'},
-  {de:18.4, a:48.4, et:'LIBRE — tu ilustración manda aquí', color:'#54d18a', libre:true},
-  {de:48.4, a:54.0, et:'tribu',           color:'#e0575b'},
-  {de:55.3, a:80.8, et:'texto de reglas', color:'#e0575b'},
-  {de:80.8, a:96.2, et:'ataque y vida',   color:'#e0575b'},
+  {de:0,    a:17.4, et:'coste y nombre',  color:'#e0575b'},
+  {de:17.4, a:42.4, et:'LIBRE SIEMPRE — aquí va la cara', color:'#54d18a', libre:true},
+  {de:42.4, a:56.0, et:'a veces tapado, según el texto de la carta', color:'#f0c674'},
+  {de:56.0, a:100,  et:'texto y números', color:'#e0575b'},
 ];
 
 /* ===========================================================================
@@ -248,7 +295,7 @@ function montarRejilla(){
   const cssAdaptado = cssJuego.replace(/:root\s*{/g, ':host{');
 
   const est = document.createElement('style');
-  est.textContent = cssAdaptado + `
+  est.textContent = cssAdaptado + CSS_ILUSTRADA + `
     :host{ --cw:112px; --ch:158px; display:block; background:transparent!important }
     .malla{display:grid;grid-template-columns:repeat(auto-fill,minmax(128px,1fr));
       gap:14px 10px;align-items:start}
@@ -288,13 +335,19 @@ function nodoDeCarta(f){
   }
   const reg = ARTE.get(f.id);
   if (reg){
-    // a sangre: la ilustración es el fondo de la carta y el emoji sobra. El velo
-    // va también en el fondo (no como hijo) para que el texto quede encima solo.
+    d.classList.add('ilustrada');
     d.style.backgroundImage = (CON_VELO ? VELO + ',' : '') + `url(${reg.url})`;
     d.style.backgroundSize = 'cover';
     d.style.backgroundPosition = `center ${reg.encuadre ?? 50}%`;
-    const em = d.querySelector('.art'); if (em) em.style.visibility = 'hidden';
     const emL = d.querySelector('.em'); if (emL) emL.style.display = 'none';
+    // tribu, texto y números se agrupan en un pie que se va abajo del todo
+    const pie = document.createElement('div');
+    pie.className = 'pieCarta';
+    for (const sel of ['.tribe', '.txt', '.stats']){
+      const e = d.querySelector(sel);
+      if (e) pie.appendChild(e);
+    }
+    if (pie.children.length) d.appendChild(pie);
   }
   return d;
 }
@@ -382,7 +435,7 @@ function abrir(id){
         </div>
         <div class="mapa">
           <b>Dónde escribe el juego</b>, sobre tu lienzo de 750×1050:<br>
-          ${ZONAS.map(z=>`<span class="${z.libre?'libre':''}">${Math.round(z.de*10.5)}–${Math.round(z.a*10.5)} px · ${z.et}</span>`).join('<br>')}
+          ${ZONAS.map(z=>`<span class="${z.libre?'libre':''}" ${z.color==='#f0c674'?'style="color:#f0c674"':''}>${Math.round(z.de*10.5)}–${Math.round(z.a*10.5)} px · ${z.et}</span>`).join('<br>')}
         </div>
       </div>
     </div>`;
@@ -440,19 +493,21 @@ function pintarVistas(conZonas){
     const sombra = marco.attachShadow({mode:'open'});
     const est = document.createElement('style');
     const cssJuego = [...JUEGO.document.querySelectorAll('style')].map(s=>s.textContent).join('\n');
-    est.textContent = cssJuego.replace(/:root\s*{/g, ':host{') +
+    est.textContent = cssJuego.replace(/:root\s*{/g, ':host{') + CSS_ILUSTRADA +
       `:host{--cw:${t.cw}px;--ch:${t.ch}px;display:block}
        .zonas{position:absolute;inset:0;pointer-events:none}
        .zonas div{position:absolute;left:0;right:0;border-top:1px solid;font-size:7px;
          padding-left:2px;text-transform:uppercase;letter-spacing:.3px;opacity:.95}`;
     sombra.appendChild(est);
-    sombra.appendChild(nodoDeCarta(f));
+    const carta = nodoDeCarta(f);
+    if (t.cw >= 200) carta.classList.add('grande');
+    sombra.appendChild(carta);
     if (conZonas){
       const capa = document.createElement('div');
       capa.className = 'zonas';
       capa.innerHTML = ZONAS.map(z=>
         `<div style="top:${z.de}%;height:${z.a-z.de}%;border-color:${z.color};
-            background:${z.libre?'rgba(84,209,138,.16)':'rgba(224,87,91,.22)'};
+            background:${z.libre?'rgba(84,209,138,.16)':(z.color==='#f0c674'?'rgba(240,198,116,.16)':'rgba(224,87,91,.22)')};
             color:${z.color}">${t.cw>100?z.et:''}</div>`).join('');
       sombra.appendChild(capa);
     }
