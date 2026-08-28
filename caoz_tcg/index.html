@@ -3404,6 +3404,12 @@ function tutCheck(){
   if(!s||!s.wait) return;
   if(TUT.bubble < tutTexts(s).length-1) return;   // aún leyendo
   if(!s.wait(G)){
+    // Mientras juega el rival no te toca: el paso no es imposible, es que no es
+    // tu momento. Contarlo como bloqueo hacía que Gero se saltara la lección
+    // justo cuando su propio texto te decía "si aún no te alcanza, termina el
+    // turno y lo bajas al siguiente" — pedía Titaus (3 PD) con 2 PD y luego
+    // pasaba de página sin que llegaras a jugarlo.
+    if(G.active!==ME || G.busy){ TUT.block=0; return; }
     // paso imposible de cumplir durante un rato: no dejamos a nadie encerrado
     if(tutSatisfiable()) TUT.block=0;
     else if(++TUT.block>14){ TUT.block=0; toast('Gero pasa al siguiente paso');

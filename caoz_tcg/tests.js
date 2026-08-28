@@ -94,7 +94,10 @@ async function jugarTutorial(lid, limite=4000){
   await startTutorial(lid);
   await sleep(400);
   TUT.rescates = [];
-  let ultimo=-1, quieto=0, tope=0;
+  // "Atascado" no es "el paso no cambia": ahora un paso puede esperarte
+  // legítimamente dos o tres turnos (te pide una carta que aún no puedes
+  // pagar). Sólo cuenta como atasco si TAMPOCO avanza la partida.
+  let ultimo=-1, ultimoTurno=-1, quieto=0, tope=0;
 
   for(let k=0;k<limite;k++){
     await sleep(45);
@@ -102,7 +105,7 @@ async function jugarTutorial(lid, limite=4000){
     const i = parseInt($1('#tutStep').textContent) - 1;
     if(i+1 > tope) tope = i+1;
     const permiso = (TUT_STEPS[i]||{}).allow || {};
-    if(i!==ultimo){ ultimo=i; quieto=0; }
+    if(i!==ultimo || T.G.turnNo!==ultimoTurno){ ultimo=i; ultimoTurno=T.G.turnNo; quieto=0; }
     else if(++quieto > 600) return {tope, fin:'atascado en '+(i+1)+': '+
       $1('#tutBody').textContent.replace(/\s+/g,' ').slice(0,60)};
 
@@ -114,6 +117,20 @@ async function jugarTutorial(lid, limite=4000){
     if($1('#ov').classList.contains('on')){
       const b=$1('#ovPanel .opts .btn')||$1('#ovPanel .gallery .card');
       if(b) b.click(); else esc(); continue; }
+    // Si el paso pide una carta y la puedes pagar, eso es lo que haría una
+    // persona: jugarla. Sin esta prioridad el arnés se quedaba dando vueltas en
+    // una selección de ataque a medias (allow suele traer attack:true además de
+    // la carta) y no llegaba nunca a bajarla.
+    if(permiso.hand){
+      const mano = T.P(0).hand;
+      const pedida = $$('#hand .card').find((e,j)=>
+        permiso.hand.includes(mano[j]) && !e.classList.contains('locked')
+        && e.classList.contains('playable'));
+      if(pedida){
+        if(SEL || $1('#prompt').classList.contains('on')){ esc(); continue; }
+        pedida.click(); continue;
+      }
+    }
     if($1('#prompt').classList.contains('on')){
       if(permiso.attack==='face'){ const l=$1('#lead1'); if(l){ l.click(); continue; } }
       if(permiso.attack){ const t=$1('#foeField .card.tgt')||$1('#lead1'); if(t){ t.click(); continue; } }
@@ -234,10 +251,10 @@ PRUEBAS.suite('tutoriales', async t => {
     const r = await jugarTutorial(lid);
     t.nota(`${lid}: ${r.fin} · paso máximo ${r.tope}/${total} · rescatados los pasos [${(r.rescates||[]).join(', ')||'ninguno'}]`);
     if(r.tope < total) fallos.push(`${lid} se quedó en ${r.tope}/${total} (${r.fin})`);
-    // Los rescates se informan pero NO tumban la suite todavía: hay pasos que
-    // legítimamente se resuelven terminando el turno. Es el dato que faltaba
-    // cuando se coló el atasco del Discípulo repetido de Rafaela, así que
-    // conviene mirarlo: un número que sube es señal de que algo se plantó.
+    // Un rescate es Gero saltándose una lección porque el paso pedía algo que
+    // no podías hacer. Los cinco mazos llegan al final con cero, así que
+    // cualquiera que aparezca es una regresión de verdad.
+    if((r.rescates||[]).length) fallos.push(`${lid}: Gero se saltó los pasos ${r.rescates.join(', ')} en vez de esperarte`);
     await sleep(1200);   // deja morir el cartel de victoria de la partida anterior
   }
   t.check(fallos.length===0, fallos.join(' ;; '));
@@ -373,6 +390,15 @@ PRUEBAS.suite('regresiones', async t => {
       await sleep(400);
     }
   }
+
+  /* NOTA: aquí hubo una prueba que intentaba comprobar a mano que el paso de
+     Titaus espera al turno siguiente. Se quitó porque no detectaba el fallo:
+     con el bug puesto a propósito seguía en verde, porque el rescate depende
+     de cuánto dure el turno del rival y a veces no llega a saltar.
+     Lo que sí lo detecta es el contador de rescates de la suite `tutoriales`:
+     con el fallo daba [11, 19] / [11, 27] / [11] en los cinco mazos, y sin él
+     da cero. Una prueba que no se pone roja cuando rompes el código a mano no
+     vale nada; ese contador sí. */
 
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
