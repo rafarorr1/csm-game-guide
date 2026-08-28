@@ -93,11 +93,12 @@ async function jugarTutorial(lid, limite=4000){
 
   await startTutorial(lid);
   await sleep(400);
+  TUT.rescates = [];
   let ultimo=-1, quieto=0, tope=0;
 
   for(let k=0;k<limite;k++){
     await sleep(45);
-    if(!$1('#tut').classList.contains('on')) return {tope, fin:'cerrado'};
+    if(!$1('#tut').classList.contains('on')) return {tope, fin:'cerrado', rescates:TUT.rescates||[]};
     const i = parseInt($1('#tutStep').textContent) - 1;
     if(i+1 > tope) tope = i+1;
     const permiso = (TUT_STEPS[i]||{}).allow || {};
@@ -130,7 +131,7 @@ async function jugarTutorial(lid, limite=4000){
     if(permiso.attack){ const mia=$1('#myField .card.ready'); if(mia && !SEL){ mia.click(); continue; } }
     const fin=$$('#controls .btn.gold')[0]; if(fin && !fin.disabled){ fin.click(); continue; }
   }
-  return {tope, fin:'sin terminar'};
+  return {tope, fin:'sin terminar', rescates:TUT.rescates||[]};
 }
 
 /* El propio index.html como texto, para las reglas que se comprueban leyendo
@@ -231,8 +232,12 @@ PRUEBAS.suite('tutoriales', async t => {
   const total = 34, fallos=[];
   for(const lid of Object.keys(TUT_MAZO)){
     const r = await jugarTutorial(lid);
-    t.nota(`${lid}: ${r.fin} · paso máximo ${r.tope}/${total}`);
+    t.nota(`${lid}: ${r.fin} · paso máximo ${r.tope}/${total} · rescatados los pasos [${(r.rescates||[]).join(', ')||'ninguno'}]`);
     if(r.tope < total) fallos.push(`${lid} se quedó en ${r.tope}/${total} (${r.fin})`);
+    // Los rescates se informan pero NO tumban la suite todavía: hay pasos que
+    // legítimamente se resuelven terminando el turno. Es el dato que faltaba
+    // cuando se coló el atasco del Discípulo repetido de Rafaela, así que
+    // conviene mirarlo: un número que sube es señal de que algo se plantó.
     await sleep(1200);   // deja morir el cartel de victoria de la partida anterior
   }
   t.check(fallos.length===0, fallos.join(' ;; '));
@@ -335,6 +340,38 @@ PRUEBAS.suite('regresiones', async t => {
     // comentario que documenta esta misma regla contiene la palabra
     const usos = (src.match(/\.finished\s*\.then|await\s[^;\n]{0,60}\.finished\b/g)||[]).length;
     t.igual(usos, 0, 'alguien volvió a encadenar animaciones con Animation.finished');
+  }
+
+  /* Cartas repetidas en la mano: si el mazo del tutorial reparte dos copias de
+     la carta que el paso pide (a Rafaela le llega la segunda en el robo del
+     primer turno), jugar UNA no debe dejar el paso esperando a la otra.
+     Se hace clic en la ÚLTIMA copia a propósito: el arnés de los tutoriales
+     siempre pulsa la primera, y por eso este atasco pasó desapercibido. */
+  {
+    for(const lid of Object.keys(TUT_MAZO)){
+      await startTutorial(lid);
+      await sleep(400);
+      // avanzar los carteles hasta el primer paso que pida una carta concreta
+      let guardia=0;
+      while(guardia++ < 12){
+        const paso = TUT_STEPS[TUT.i];
+        if(paso && paso.allow && paso.allow.hand) break;
+        $1('#tutNext').click();
+        await sleep(250);
+      }
+      const paso = TUT_STEPS[TUT.i], antes = TUT.i;
+      t.check(paso && paso.allow && paso.allow.hand, `${lid}: no encontré el paso que pide una carta`);
+      const id = paso.allow.hand[0];
+      const copias = T.P(0).hand.filter(c=>c===id).length;
+      const idx = T.P(0).hand.lastIndexOf(id);
+      t.check(idx >= 0, `${lid}: la carta ${id} que pide el paso no está en la mano`);
+      $$('#hand .card')[idx].click();
+      await sleep(2500);
+      t.check(TUT.i > antes,
+        `${lid}: jugué ${id} (${copias} copias en mano) y el paso ${antes+1} no avanzó`);
+      tutEnd();
+      await sleep(400);
+    }
   }
 
   /* El log filtra lo privado: el rival no puede ver qué robas. */
