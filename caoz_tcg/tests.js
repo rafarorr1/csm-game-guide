@@ -435,6 +435,40 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota(`paso ${idx+1}: avisa cuando no hay nadie listo y espera a que ataques`);
   }
 
+  /* Los mazos son válidos y nadie cita cartas que ya no están.
+     Cambiar una lista (como en la v2) rompe en silencio tres sitios que las
+     nombran a mano: el guion del rival en el tutorial, los robos guionizados y
+     las cartas clave de las guías. Esto lo caza antes de publicar. */
+  {
+    const L = Object.keys(T.LEADERS);
+    const fallos = [];
+    for (const l of L){
+      const lista = T.DECKS[l].list;
+      const n = lista.reduce((a,x)=>a+x[1], 0);
+      const mx = Math.max(...lista.map(x=>x[1]));
+      if (n !== 40) fallos.push(`${l}: ${n} cartas, deben ser 40`);
+      if (mx > 3)   fallos.push(`${l}: ${mx} copias de una carta, el máximo es 3`);
+      for (const par of lista) if (!T.CARDS[par[0]]) fallos.push(`${l}: carta inexistente ${par[0]}`);
+    }
+    for (const lid of Object.keys(TUT_MAZO)){
+      const M = TUT_MAZO[lid], mio = new Set(T.DECKS[lid].list.map(x=>x[0]));
+      for (const id of [...M.mano, ...M.top, M.c1, M.c2, M.quita, M.trampa])
+        if (!mio.has(id)) fallos.push(`el tutorial de ${lid} reparte ${id} y no está en su mazo`);
+    }
+    const suyo = new Set(T.DECKS.adreida.list.map(x=>x[0]));   // el rival guionizado es Adreida
+    for (const paso of TUT_FOE_SCRIPT) for (const id of (paso.play||[]))
+      if (!suyo.has(id)) fallos.push(`el guion del rival juega ${id} y Adreida ya no lo lleva`);
+    for (const id of ['bartolomeo','mazo','augusto','horton','eric'])
+      if (!suyo.has(id)) fallos.push(`la mano guionizada del rival pide ${id}, que salió del mazo`);
+    for (const l of L){
+      const mio = new Set(T.DECKS[l].list.map(x=>x[0]));
+      for (const id of (GUIAS[l].motor||[]))
+        if (!mio.has(id)) fallos.push(`la guía de ${l} destaca ${id} y ya no está en su mazo`);
+    }
+    t.check(fallos.length===0, fallos.join(' ;; '));
+    t.nota('los 5 mazos con 40 cartas; el tutorial y las guías sólo citan cartas que siguen dentro');
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();
