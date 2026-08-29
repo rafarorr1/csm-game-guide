@@ -2806,6 +2806,9 @@ function renderControls(){
     endTurn(); };
   c.appendChild(e);
   const r=el('button','btn sm','📜 Reglas'); r.onclick=()=>showRules(true); c.appendChild(r);
+  // Salida al menú. No lleva tutCan(): el tutorial bloquea el tablero para que
+  // no te pierdas, pero irse siempre tiene que poder hacerse.
+  const s=el('button','btn sm','← Menú'); s.onclick=pedirSalirAlMenu; c.appendChild(s);
 
 }
 function selectUnit(u){
@@ -3657,6 +3660,32 @@ function showRules(inGame){
   const c=el('button','btn','Cerrar'); c.style.marginTop='14px';
   c.onclick=()=>{ $('#ov').classList.remove('on'); if(!inGame) showScreen('menu'); };
   p.appendChild(c); openOv();
+}
+
+/* ---------- salir de una partida ----------
+   Faltaba: desde el tablero no había forma de volver al menú. Las guías y la
+   selección de Líder sí la tenían, y el cartel de fin también, pero una partida
+   empezada era un callejón sin salida salvo recargando la página. */
+function salirAlMenu(){
+  tutEnd(); clearPrompt(); SEL=null; TGT=null;
+  $('#ov').classList.remove('on'); $('#inspect').classList.remove('on');
+  if(NET.on){ netSend({t:'bye'}); setTimeout(netClose,400); }   // avisar al rival
+  showScreen('menu');
+}
+function pedirSalirAlMenu(){
+  if(!G || G.over) return salirAlMenu();          // no hay nada que perder
+  const p=$('#ovPanel');
+  const online = NET.on;
+  p.innerHTML = `<h3>¿Salir al menú?</h3>
+    <p style="font-size:14.5px">La partida en curso <b>se pierde</b>.` +
+    (online ? ' Y tu rival se queda sin partida.' : '') + `</p>`;
+  const box=el('div','opts');
+  const si=el('button','btn','Sí, salir');
+  si.onclick=salirAlMenu;
+  const no=el('button','btn gold','Seguir jugando');
+  no.onclick=()=>{ $('#ov').classList.remove('on'); render(); };
+  box.appendChild(no); box.appendChild(si); p.appendChild(box);
+  openOv();
 }
 
 function showEnd(winner,why){

@@ -469,6 +469,41 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('los 5 mazos con 40 cartas; el tutorial y las guías sólo citan cartas que siguen dentro');
   }
 
+  /* Desde una partida se puede volver al menú. Faltaba: el tablero era un
+     callejón sin salida y había que recargar la página. Se comprueba también
+     dentro del tutorial, donde el resto de botones está bloqueado a propósito
+     — irse siempre tiene que poder hacerse. */
+  {
+    const boton = () => $$('#controls .btn').find(b => /Menú/.test(b.textContent));
+    await T.startMatch('fender','adreida');
+    await sleep(700);
+    t.check(!!boton(), 'no hay botón para volver al menú durante una partida');
+    boton().click(); await sleep(250);
+    t.check($1('#ov').classList.contains('on'),
+      'salir debería pedir confirmación, no abandonar de golpe');
+    const seguir = $$('#ovPanel .opts .btn').find(b=>/Seguir/.test(b.textContent));
+    t.check(!!seguir, 'falta la opción de seguir jugando');
+    seguir.click(); await sleep(250);
+    t.check($1('#board').classList.contains('on'), 'cancelar debería devolverte a la partida');
+
+    boton().click(); await sleep(250);
+    $$('#ovPanel .opts .btn').find(b=>/salir/.test(b.textContent)).click();
+    await sleep(400);
+    t.check($1('#menu').classList.contains('on'), 'confirmar debería llevarte al menú');
+
+    // y desde el tutorial, con el tablero bloqueado
+    await startTutorial('rafaela'); await sleep(700);
+    const b2 = boton();
+    t.check(b2 && !b2.disabled, 'en el tutorial también debe poderse salir al menú');
+    b2.click(); await sleep(250);
+    $$('#ovPanel .opts .btn').find(b=>/salir/.test(b.textContent)).click();
+    await sleep(500);
+    t.check($1('#menu').classList.contains('on'), 'no salí al menú desde el tutorial');
+    t.check(!TUT.on && !document.body.classList.contains('tut-on'),
+      'salir del tutorial debe dejarlo cerrado del todo');
+    t.nota('se puede volver al menú desde una partida y desde el tutorial');
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();
