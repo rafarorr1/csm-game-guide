@@ -540,7 +540,10 @@ PRUEBAS.suite('regresiones', async t => {
       'pulsar una carta ya no debe jugarla: se juegan arrastrando');
 
     await arrastrarAlTapete($1('#hand .card.playable'));
-    await sleep(600);
+    // se espera al HECHO, no a un reloj: con las animaciones activas jugar una
+    // carta tarda bastante más, y un sleep fijo fallaba según qué suite
+    // hubiera corrido antes.
+    for (let i=0; i<40 && T.P(0).hand.length >= antes.mano; i++) await sleep(100);
     t.check(T.P(0).hand.length < antes.mano, 'arrastrarla al tapete debería jugarla');
     t.check(!$1('#arrastre') && !$1('#soltaraqui'),
       'el arrastre dejó basura en pantalla');
@@ -652,6 +655,51 @@ PRUEBAS.suite('regresiones', async t => {
       + `— rebajada=${cr.slice(0,44)} / normal=${cn.slice(0,44)}`);
     caja.remove();
     t.nota('el descuento se ve sin robarle el color al tipo de carta');
+  }
+
+  /* Cuando algo se activa se ve la CARTA, no un cartel de texto: Hechizos,
+     Trampas y Habilidades de Líder. Antes las Trampas sólo enseñaban su nombre
+     y las Habilidades no enseñaban nada. */
+  {
+    try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
+    await T.startMatch('mohamed','adreida'); await sleep(600);
+
+    const enEscena = () => $$('#fx .fxcard').length;
+    const carteles = () => $$('.fxlabel').map(e=>e.textContent).join(' | ');
+
+    fxTrap('tasha', 1);                       // una Trampa del rival
+    await sleep(320);
+    t.check(enEscena() >= 1, 'al saltar una Trampa debería verse su carta');
+    t.check(/TRAMPA/.test(carteles()), 'la Trampa debería anunciarse');
+    await sleep(1400);
+
+    fxHabilidad(0);                           // la Habilidad de tu Líder
+    await sleep(320);
+    t.check(enEscena() >= 1, 'usar la Habilidad del Líder debería mostrar su carta');
+    t.check(/Manos Largas/.test(carteles()), 'debería decir qué Habilidad es');
+    await sleep(1400);
+
+    fxSpell('sangrefria', 1);                 // un Hechizo del rival
+    await sleep(320);
+    t.check(enEscena() >= 1, 'un Hechizo debería mostrar su carta');
+    await sleep(1400);
+    t.nota('Hechizos, Trampas y Habilidades suben su carta a escena');
+  }
+
+  /* Los ataques del rival se anuncian antes de llegar: quién va a por quién. */
+  {
+    await T.startMatch('fender','adreida'); await sleep(500);
+    const suyo = T.mkUnit('horton', 1); suyo.sick = false; T.P(1).field.push(suyo);
+    const mio  = T.mkUnit('discipulo', 0); mio.sick = false; T.P(0).field.push(mio);
+    T.recalc(); T.render(); await sleep(200);
+
+    const p = fxLunge(suyo, mio);
+    await sleep(300);
+    const dicho = $$('.fxlabel').map(e=>e.textContent).join(' | ');
+    t.check(/Sir Horton/.test(dicho) && /Discípulo/.test(dicho),
+      `un ataque del rival debe decir quién ataca a quién — decía: "${dicho}"`);
+    await p;
+    t.nota('los ataques del rival se anuncian antes de llegar');
   }
 
   /* El log filtra lo privado: el rival no puede ver qué robas. */
