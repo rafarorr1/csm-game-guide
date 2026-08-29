@@ -13,6 +13,33 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v5 — El volado, y las habilidades con nombre · 2026-08-28
+
+### La partida empieza con un volado
+
+Antes quien empezaba salía de un número aleatorio invisible y sólo lo contaba una línea del
+registro. Ahora **eliges cara o cruz**, la moneda gira y ves si te toca. Las reglas no
+cambian: sigue siendo 50/50 y el segundo sigue robando una carta extra.
+
+No aparece en el tutorial (ahí empiezas tú siempre, para que la lección encaje) ni en online
+(el orden lo fija el anfitrión). Y se puede saltar con `{volado:false}`, que es lo que usan
+las pruebas — si no, se quedarían esperando un clic que nadie va a dar.
+
+### Las cartas del tablero dicen qué saben hacer
+
+Una carta en el tablero enseñaba tribu, palabras clave y números, pero no **el nombre de sus
+habilidades**: había que acordarse o ampliarla. Ahora las lleva escritas: *Sacrificio* en
+Eric, *Peaje* y *Acertijo* en Brick y Brock, *Mochila* y *Banco de Puntos* en Machete.
+
+Van en chapas doradas y en cursiva, distintas de las palabras clave del juego (Prisa,
+Provocar…), que son verdes: unas son reglas generales y otras son lo que hace **esa** carta.
+
+Los nombres **salen del propio texto de la carta**, que ya los escribe en negrita y con dos
+puntos. Así no hay una segunda lista que mantener: si se reescribe una carta, su chapa
+cambia sola.
+
+---
+
 ## v4 — Vuelta al clic, y el turno del rival se entiende · 2026-08-28
 
 ### Las cartas se vuelven a jugar pulsándolas
