@@ -385,7 +385,13 @@ function pintar(){
   }
 
   const con = FICHAS.filter(f => ARTE.has(f.id)).length;
-  $('#marcador').innerHTML = `<b>${con}</b> / ${FICHAS.length} ilustradas`;
+  let bytes = 0; for (const r of ARTE.values()) bytes += r.blob.size;
+  const mb = bytes / 1048576;
+  // proyección a la baraja entera: sirve para saber cuánto pesará art/ en la web
+  const previsto = con ? (mb / con) * FICHAS.length : 0;
+  $('#marcador').innerHTML = `<b>${con}</b> / ${FICHAS.length} ilustradas` +
+    (con ? ` · ${mb.toFixed(1)} MB` +
+      (con < FICHAS.length ? ` · las 93 ≈ ${previsto.toFixed(0)} MB` : '') : '');
   $('#btnZip').disabled = con === 0;
   $('#btnArtJs').disabled = con === 0;
 }
@@ -412,7 +418,8 @@ function abrir(id){
   const hoja = $('#hoja');
   hoja.innerHTML = `
     <h2>${f.n}</h2>
-    <div class="sub">id <code>${f.id}</code> · ${f.tipo}${f.ficha?' · ficha':''}</div>
+    <div class="sub">id <code>${f.id}</code> · ${f.tipo}${f.ficha?' · ficha':''}${
+      reg ? ` · ${Math.round(reg.blob.size/1024)} KB en webp` : ''}</div>
     <div class="tres">
       <div id="vistas" style="display:flex;gap:18px;align-items:flex-start"></div>
       <div class="controles">
