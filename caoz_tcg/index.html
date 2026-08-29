@@ -10,13 +10,18 @@
   --line:#3a2c52; --gold:#e6bb52; --gold2:#8d6f21;
   --purple:#8a5cf0; --purple2:#4a2f8a;
   --red:#e0524a; --green:#4fc07d; --blue:#4aa6ff; --ink:#f0e9f8; --dim:#a294bd;
-  /* Cada clase de carta tiene su color. Tres tonos: el del borde, y el claro y
-     el oscuro con los que se pinta el círculo del coste. */
-  --c-personaje:#c06a3a; --c-personaje-cl:#f0a875; --c-personaje-os:#5e2c12;
-  --c-hechizo:#6a7fe0;   --c-hechizo-cl:#a9b6f5;   --c-hechizo-os:#2c3894;
-  --c-trampa:#b34aa0;    --c-trampa-cl:#e78bd6;    --c-trampa-os:#61205a;
-  --c-objeto:#3fa38a;    --c-objeto-cl:#7fdcc4;    --c-objeto-os:#175a4c;
-  --c-lugar:#8a8f3f;     --c-lugar-cl:#cdd280;     --c-lugar-os:#474a1c;
+  /* Cada clase de carta tiene su color, elegidos por Rafa. Tres tonos: el del
+     borde, y el claro y el oscuro con los que se pinta el círculo del coste.
+     Ojo al verde y al rojo: en el juego ya significan cosas (verde = puedes
+     jugarla / puede atacar; rojo = objetivo válido), pero esos son HALOS
+     (box-shadow) y esto son BORDES, así que conviven. Aun así, el verde de
+     Lugares es un esmeralda profundo, lejos del verde claro de Infectado y del
+     verde medio del halo de "jugable". */
+  --c-personaje:#3d8ef5; --c-personaje-cl:#8dc2ff; --c-personaje-os:#123f7d;  /* azul */
+  --c-hechizo:#9b5cf0;   --c-hechizo-cl:#c9a2fa;   --c-hechizo-os:#43208a;    /* violeta */
+  --c-trampa:#e0453c;    --c-trampa-cl:#ff8f86;    --c-trampa-os:#7a1912;     /* rojo */
+  --c-objeto:#e8c02f;    --c-objeto-cl:#ffe07d;    --c-objeto-os:#6f5406;     /* amarillo */
+  --c-lugar:#10996a;     --c-lugar-cl:#5fd6a8;     --c-lugar-os:#064a32;      /* verde esmeralda */
   --cw:112px; --ch:158px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -231,12 +236,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   box-shadow:0 0 6px color-mix(in srgb,var(--tipo) 55%,transparent)}
 /* el hover ya no roba el color del tipo: sólo lo ilumina */
 .card[class*="t-"]:hover{border-color:var(--tipo-cl)}
-.card.playable{box-shadow:0 0 0 2px var(--green),0 0 14px rgba(79,192,125,.4)}
+.card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green),0 0 15px rgba(79,192,125,.4)}
 .card.locked{opacity:.3;filter:grayscale(.9);box-shadow:none;cursor:not-allowed}
 .card.locked:hover{transform:none;border-color:var(--line)}
 .leaderchip.locked{opacity:.3;filter:grayscale(.9);cursor:not-allowed}
 .card.unplayable{opacity:.55;filter:grayscale(.45)}
-.card.tgt{box-shadow:0 0 0 2px var(--red),0 0 16px rgba(224,82,74,.55);animation:pulse 1s infinite}
+.card.tgt{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--red),0 0 17px rgba(224,82,74,.55);
+  animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 3px var(--red),0 0 26px rgba(224,82,74,.85)}}
 .card.selected{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(230,187,82,.6);transform:translateY(-7px)}
 
@@ -244,9 +250,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .unit{width:var(--cw);height:var(--ch)}
 .unit.sick{filter:saturate(.55) brightness(.82)}
 @keyframes readyGlow{
-  0%,100%{box-shadow:0 0 0 2px rgba(79,192,125,.55),0 0 14px rgba(79,192,125,.35)}
-  50%    {box-shadow:0 0 0 2px rgba(79,192,125,.95),0 0 26px rgba(79,192,125,.7)}}
-.card.unit.ready{border-color:var(--green);animation:readyGlow 1.9s ease-in-out infinite}
+  0%,100%{box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(79,192,125,.55),0 0 14px rgba(79,192,125,.35)}
+  50%    {box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(79,192,125,.95),0 0 26px rgba(79,192,125,.7)}}
+/* el borde NO se pinta de verde: ahí manda el color del tipo. El "puede atacar"
+   se ve en el anillo separado, el pulso y el distintivo de espadas. */
+.card.unit.ready{animation:readyGlow 1.9s ease-in-out infinite}
 .card.unit.ready .art{filter:drop-shadow(0 2px 4px #000) drop-shadow(0 0 8px rgba(79,192,125,.5))}
 .unit.ready::after{content:"⚔";position:absolute;top:-9px;right:-7px;width:20px;height:20px;
   border-radius:50%;background:var(--green);color:#06240f;font-size:12px;font-weight:900;
@@ -3204,8 +3212,9 @@ function buildTut(lid){
  t:`Empieza tu mesa: <b>arrastra ${n(M.c1)} al tapete</b> y suéltala ahí.
     Las cartas se juegan arrastrándolas, no pulsándolas.<br><br>
     El <b>borde verde</b> quiere decir "puedes pagarla ahora mismo"; las grises, no.
-    Y el color del borde te dice de qué clase es: los Personajes van en naranja, los
-    Hechizos en azul, las Trampas en morado, los Objetos en verde y los Lugares en oliva.
+    Y el color del borde te dice de qué clase es: <b>Personajes en azul</b>,
+    <b>Hechizos en violeta</b>, <b>Trampas en rojo</b>, <b>Objetos en amarillo</b> y
+    <b>Lugares en verde</b>.
     ${CARDS[M.c1].c>1?'Si todavía no te alcanza, termina el turno y la juegas al siguiente: en este mazo el turno 1 suele estar vacío.':''}`},
 
 {hi:'#myField', t:[`Ya está en tu <b>Campo</b> (caben 5 Personajes).`,
