@@ -23,12 +23,12 @@ listas. Los cinco mazos siguen con 40 cartas y máximo 3 copias por carta.
 
 | Mazo | v1 | v2 | |
 |---|---|---|---|
-| Adreida | 83,1 % | **72,8 %** | −10 |
-| Rafaela | 54,6 % | 59,4 % | +5 |
-| Mohamed | 35,5 % | **45,0 %** | +10 |
-| Fender | 39,0 % | 38,5 % | −1 |
-| Talesin | 37,8 % | 34,4 % | −3 |
-| **Brecha** | **47,6** | **38,4** | −9 |
+| Adreida | 83,1 % | **72,9 %** | −10 |
+| Rafaela | 54,6 % | 56,1 % | +2 |
+| Mohamed | 35,5 % | **43,0 %** | +8 |
+| Talesin | 37,8 % | 40,4 % | +3 |
+| Fender | 39,0 % | 37,6 % | −1 |
+| **Brecha** | **47,6** | **35,2** | −12 |
 
 De regalo, dos cosas que no se buscaban:
 
@@ -72,20 +72,30 @@ carta exacta, y quitarla del todo dejaba la lección sin sostén.
 Bola de Fuego (4 daño a todos los Personajes rivales) y Nube de Dagas **no estaban en ningún
 mazo**. Es el cambio que más rinde: +10 puntos.
 
-### Talesin — abaratar un mazo que no llegaba a jugar lo suyo
+### Talesin — abaratar sin desarmarlo
 
 | Fuera | | Dentro | |
 |---|---|---|---|
-| Tal, el Dragón Negro (10 PD) | ×1 | Rayo de Escarcha | ×2 |
-| El Mago del Domo (8 PD) | ×1 | Nube de Dagas | ×2 |
-| Lucy Fernando (6 PD) | ×1 | Proyectil Mágico | ×1 |
-| Púas Plateadas | ×2 | Rayo Abrasador | ×1 |
-| Contrahechizo | ×1 | Disipar Magia | ×1 |
-| Contrato del Notario | ×1 | El Conserje | ×1 |
-| Las Montañas de Tal | ×1 | | |
+| El Mago del Domo (8 PD) | ×1 | Rayo de Escarcha | ×2 |
+| Lucy Fernando (6 PD) | ×1 | Nube de Dagas | ×1 |
+| Púas Plateadas | ×2 | Proyectil Mágico | ×1 |
+| Contrahechizo | ×1 | Rayo Abrasador | ×1 |
+| Contrato del Notario | ×1 | Disipar Magia | ×1 |
+| | | El Conserje | ×1 |
 
-Su coste medio era 3,08, el más caro con diferencia, y las partidas duran 10 turnos: Tal
-(10 PD) era prácticamente injugable.
+Su coste medio era 3,08, el más caro con diferencia, y las partidas duran 10 turnos: no
+llegaba a jugar la mitad de su mazo.
+
+**Tal, el Dragón Negro y Las Montañas de Tal se quedan.** La primera versión de este cambio
+también los quitaba, y era un error doble. Uno de identidad: el mazo se llama «Ascensión»,
+su arquetipo es *Sacrificio · Rampa · Tal*, y sin Tal la rampa no tiene a qué subir. Y otro
+de mecánica, que se ve leyendo las cartas: **Las Montañas abaratan a los Dragones 2 PD**, así
+que Tal sale por 8 y no por 10, y **Tal permite jugar el Pergamino sin Llaves** — o sea que
+quitarlo dejaba al Pergamino y a El Domo, que duplica Llaves, sin la mitad de su plan.
+
+Medido, además, quitarlos le hacía **perder**: Talesin caía a 34,4 % sin ellos y sube a
+**40,4 %** con ellos. La versión que conserva la identidad del mazo es también la que
+funciona mejor.
 
 ### Fender — más cuerpos, menos cartas que se quedaban en la mano
 
@@ -108,9 +118,10 @@ Cambiar las listas obliga a revisar tres sitios que las citan por su nombre:
 
 - **Guion del rival en el tutorial**: jugaba el Trol en su séptimo turno → ahora Brick y Brock.
 - **Robos guionizados** (`TUT_MAZO[...].top`): Fender robaba Palabra de Curación y Bob Carly,
-  Talesin robaba Púas; Adreida robaba el Trol. Sustituidos por cartas que siguen en sus mazos.
-- **Cartas clave de las guías** (`GUIAS[...].motor`): Adreida destacaba Talia y el Trol,
-  Fender a Bob Carly, Talesin a Tal y Las Montañas. Actualizadas.
+  Talesin robaba Púas Plateadas y Adreida el Trol. Sustituidos por cartas que siguen dentro.
+- **Cartas clave de las guías** (`GUIAS[...].motor`): Adreida destacaba a Talia y al Trol, y
+  Fender a Bob Carly; las dos actualizadas. La de Talesin sigue destacando a Tal y a Las
+  Montañas, que se quedan en su mazo.
 
 Hay una comprobación para esto: recorre `TUT_MAZO`, `TUT_FOE_SCRIPT` y `GUIAS[].motor` y
 avisa si alguno cita una carta que ya no está en el mazo correspondiente. **Pasarla antes de
@@ -326,9 +337,9 @@ Las cinco listas completas tras los cambios. Generadas desde el propio juego, no
 
 #### Talesin — «Ascensión»
 
-*Sacrificio · Rampa · Tal* · 40 cartas · coste medio **2.52 PD** · cuerpos de 4+ ATQ: **3**
+*Sacrificio · Rampa · Tal* · 40 cartas · coste medio **2.70 PD** · cuerpos de 4+ ATQ: **4**
 
-**Personajes (16)**
+**Personajes (17)**
 
 | | Carta | Coste | ATQ/PV | Tribu |
 |---|---|---|---|---|
@@ -342,8 +353,9 @@ Las cinco listas completas tras los cambios. Generadas desde el propio juego, no
 | 1× | Eman 69 | 4 | 4/3 | Humano · Cazarrecompensas |
 | 1× | Sir Horton | 4 | 4/3 | Humano · Paladín |
 | 1× | Edbor | 5 | 5/4 | Humano · Paladín · Oathbreaker |
+| 1× | Tal, el Dragón Negro | 10 | 9/9 | Dragón |
 
-**Hechizos (15)**
+**Hechizos (13)**
 
 | | Carta | Coste |
 |---|---|---|
@@ -352,8 +364,8 @@ Las cinco listas completas tras los cambios. Generadas desde el propio juego, no
 | 1× | Cuerda Dimensional | 2 |
 | 2× | Disipar Magia | 2 |
 | 2× | Proyectil Mágico | 2 |
-| 2× | Nube de Dagas | 3 |
-| 3× | Rayo Abrasador | 3 |
+| 1× | Nube de Dagas | 3 |
+| 2× | Rayo Abrasador | 3 |
 | 2× | Aliento de Ácido | 4 |
 
 **Trampas (4)**
@@ -371,20 +383,21 @@ Las cinco listas completas tras los cambios. Generadas desde el propio juego, no
 | 1× | Llave del Mago | 3 |
 | 1× | Pergamino de Deseo Ilimitado | 7 |
 
-**Lugares (1)**
+**Lugares (2)**
 
 | | Carta | Coste |
 |---|---|---|
+| 1× | Las Montañas de Tal | 3 |
 | 1× | El Domo | 4 |
 
 ### Lo que esta versión NO arregla
 
-Adreida sigue en 72,8 %. Se probaron seis palancas y ninguna la baja de ~70 % moviendo solo
+Adreida sigue en 72,9 %. Se probaron seis palancas y ninguna la baja de ~70 % moviendo solo
 cartas:
 
 | Palanca | Adreida queda en |
 |---|---|
-| Esta v2 | 72,8 % |
+| Esta v2 | 72,9 % |
 | v2 + *Intimidante* solo a Paladines | 70,9 % |
 | v2 + *Golpe Directo* sin anular el contraataque | 69,8 % |
 | Quitarle *Intimidante* entera, sin tocar mazos | 62,5 % |

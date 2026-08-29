@@ -1260,9 +1260,10 @@ rafaela:{ n:'Los Doce Discípulos', d:'Enjambre · Fe · Aguante',
 talesin:{ n:'Ascensión', d:'Sacrificio · Rampa · Tal',
   plan:'Todo en este mazo quiere morir. Junta 5 Fichas de Gracia, asciende y baja a Tal en el turno 7.',
   list:[['conserje',3],['matildus',3],['machete',1],['petunia',1],['eric',3],['bob',1],
-        ['rantiago',1],['horton',1],['eman',1],['edbor',1],['rayoabrasador',3],['proyectil',2],
+        ['rantiago',1],['horton',1],['eman',1],['edbor',1],['rayoabrasador',2],['proyectil',2],
         ['alientoacido',2],['disipar',2],['cuerda',1],['hongos',1],['esporas',2],['talcadaver',2],
-        ['puntosrobados',2],['llavemago',1],['pergamino',1],['domo',1],['escarcha',2],['nubedagas',2]]},
+        ['puntosrobados',2],['llavemago',1],['pergamino',1],['domo',1],['escarcha',2],['nubedagas',1],
+        ['tal',1],['montanas',1]]},
 };
 function buildDeck(id){ const out=[]; DECKS[id].list.forEach(([c,n])=>{ for(let i=0;i<n;i++) out.push(c); }); return out; }
 
@@ -4316,7 +4317,7 @@ talesin:{
   ganas:`Cada aliado que muere te da una <b>Ficha de Gracia</b>. Con cinco, <b>asciendes</b>:
     +5 Alma y tus <b>Celestiales</b> ganan +2/+2 permanentes. Tu mazo no protege a nadie —
     lo gasta. Y detrás viene <b>Tal</b> o el <b>Pergamino</b>.`,
-  motor:['matildus','eric','rayoabrasador','escarcha','domo'],
+  motor:['matildus','eric','tal','montanas','domo'],
   motorTxt:`<b>Matildus</b> explota en la cara de quien lo mata, <b>Eric</b> se sacrifica por
     otro, el <b>Conserje</b> deja Llaves, <b>Eman 69</b> te da 2 PD al morir. Todo suma
     Gracia. <b>Las Montañas de Tal</b> abaratan a los Dragones 2 PD: Tal deja de costar 10 y
