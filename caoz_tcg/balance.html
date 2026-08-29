@@ -1,0 +1,423 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Banco de balance · Caoz Con Todo TCG</title>
+<!--
+  ============================================================================
+   BANCO DE BALANCE
+  ----------------------------------------------------------------------------
+   Juega miles de partidas solo y cuenta lo que pasa, para responder a dos
+   preguntas distintas:
+
+     1. ¿Está equilibrado?  — winrate por Protagonista, matriz de
+        enfrentamientos, ventaja de empezar, duración de las partidas.
+     2. ¿Hay algo que no funciona? — cartas que no se juegan nunca, Trampas que
+        no saltan, rutas de victoria muertas, turnos en los que no puedes hacer
+        nada, partidas que no terminan.
+
+   AVISO IMPORTANTE PARA LEER LOS NÚMEROS: juega el bot del juego, en los dos
+   lados. Eso hace la comparación justa entre mazos, pero mide "lo bien que le
+   va a este mazo EN MANOS DE ESTE BOT". Una carta que el bot no sabe usar sale
+   floja aquí y puede ser buenísima en tus manos. Los números señalan dónde
+   mirar; no deciden solos.
+
+   Se abre con servidor:  http://localhost:8745/balance.html
+  ============================================================================
+-->
+<style>
+:root{--fondo:#120e1c;--panel:#1b1430;--linea:#3a2f55;--texto:#e9e3f7;
+  --tenue:#9b8fba;--oro:#f0c674;--verde:#54d18a;--rojo:#e0575b;--ambar:#f0a94c}
+*{box-sizing:border-box}
+body{margin:0;background:var(--fondo);color:var(--texto);
+  font:14px/1.55 ui-sans-serif,-apple-system,"Segoe UI",Roboto,sans-serif;padding:18px}
+h1{font-size:19px;margin:0 0 3px;color:var(--oro)}
+h2{font-size:15px;margin:26px 0 8px;color:var(--oro);border-bottom:1px solid var(--linea);
+  padding-bottom:5px}
+.sub{color:var(--tenue);font-size:12.5px;margin-bottom:16px}
+.barra{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.btn{background:#241a3f;color:var(--texto);border:1px solid var(--linea);border-radius:7px;
+  padding:8px 14px;font-size:13px;cursor:pointer}
+.btn.oro{background:linear-gradient(180deg,#6b5220,#4a3714);border-color:var(--oro);color:#ffeab8}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+select{background:var(--panel);color:var(--texto);border:1px solid var(--linea);
+  border-radius:7px;padding:7px 10px}
+table{border-collapse:collapse;width:100%;font-size:13px;margin-bottom:6px}
+th,td{border:1px solid var(--linea);padding:5px 8px;text-align:right}
+th{background:#241a3f;color:var(--oro);font-weight:600}
+td:first-child,th:first-child{text-align:left}
+tr:hover td{background:#1f1735}
+.ok{color:var(--verde)} .mal{color:var(--rojo)} .medio{color:var(--ambar)}
+.nota{background:var(--panel);border-left:3px solid var(--oro);border-radius:7px;
+  padding:11px 14px;margin:10px 0;font-size:13px;color:#d6cceb}
+.nota.alerta{border-left-color:var(--rojo)}
+.nota.bien{border-left-color:var(--verde)}
+#progreso{font-size:13px;color:var(--tenue)}
+code{background:#0c0916;padding:1px 5px;border-radius:4px;font-size:12px}
+.muted{color:var(--tenue)}
+</style>
+</head>
+<body>
+
+<h1>Banco de balance</h1>
+<div class="sub">Caoz Con Todo · el TCG del Domo — juega solo y cuenta lo que pasa</div>
+
+<div class="barra">
+  <select id="cuantas">
+    <option value="20">500 partidas (20 por cruce) · rápido</option>
+    <option value="80" selected>2000 partidas (80 por cruce)</option>
+    <option value="200">5000 partidas (200 por cruce) · lento</option>
+  </select>
+  <button class="btn oro" id="correr">Jugar</button>
+  <button class="btn" id="copiar" disabled>Copiar informe</button>
+  <span id="progreso"></span>
+</div>
+
+<div id="salida"></div>
+
+<iframe id="juego" src="index.html" style="position:fixed;left:-9999px;width:1280px;height:900px;border:0"></iframe>
+
+<script>
+'use strict';
+const $ = s => document.querySelector(s);
+let J = null;                       // window del juego
+let INFORME = null;
+
+function esperarJuego(){
+  return new Promise((ok, mal) => {
+    let n = 0;
+    const mirar = () => {
+      const w = $('#juego').contentWindow;
+      if (w && w.TCG && w.TCG.CARDS) return ok(w);
+      if (++n > 100) return mal(new Error('el juego no arrancó en el iframe'));
+      setTimeout(mirar, 100);
+    };
+    $('#juego').addEventListener('load', mirar); mirar();
+  });
+}
+
+/* ===========================================================================
+   Una tanda. Se instrumenta por window (no por el objeto TCG: ése guarda
+   copias de las funciones que el motor no usa por dentro).
+   ======================================================================== */
+async function tanda(porCruce){
+  const T = J.TCG, L = Object.keys(T.LEADERS);
+  const d = {
+    partidas:0, sinTerminar:0, turnos:[], almaGanador:[],
+    porLider:{}, cruce:{}, primero:{gana:0, total:0},
+    motivo:{alma:0, pergamino:0, fatiga:0, otro:0},
+    jugadas:{}, jugadasPorLider:{}, trampasSaltadas:{}, trampasPuestas:{},
+    turnosMuertos:0, turnosTotales:0, manoAtascada:0,
+    llavesMax:0, conLlaves:0, errores:[],
+  };
+  for (const l of L){ d.porLider[l] = {gana:0, juega:0}; d.jugadasPorLider[l] = {}; }
+
+  // --- instrumentación ---
+  // Una Trampa que salta se saca de P(s).traps y va al cementerio, así que
+  // mirarlas al final de la partida NO las ve: la primera versión de esto daba
+  // un 1,3 % de activación y la conclusión "las Trampas no funcionan" era falsa.
+  // Hay que contarlas en el momento, envolviendo la ventana de Trampas.
+  const playOrig = J.playFromHand, finOrig = J.endGame, trapOrig = J.trapWindow;
+  let ladoDe = {};                    // side -> id de líder, para atribuir jugadas
+  let motivoUlt = null;
+
+  J.playFromHand = async function(s, id, ft){
+    const r = await playOrig(s, id, ft);
+    if (r){
+      d.jugadas[id] = (d.jugadas[id]||0) + 1;
+      const lid = ladoDe[s]; if (lid) d.jugadasPorLider[lid][id] = (d.jugadasPorLider[lid][id]||0)+1;
+      if (J.TCG.CARDS[id].t === 'trampa') d.trampasPuestas[id] = (d.trampasPuestas[id]||0)+1;
+    }
+    return r;
+  };
+  J.trapWindow = async function(side, evento, ev){
+    const antes = J.TCG.P(side).traps.map(t => t.id);
+    const r = await trapOrig(side, evento, ev);
+    const despues = J.TCG.P(side).traps.map(t => t.id);
+    if (despues.length < antes.length){
+      const resto = [...despues];
+      for (const id of antes){
+        const i = resto.indexOf(id);
+        if (i >= 0) resto.splice(i, 1);
+        else { d.trampasSaltadas[id] = (d.trampasSaltadas[id]||0) + 1; break; }
+      }
+    }
+    return r;
+  };
+  J.endGame = function(ganador, porque){
+    if (!J.TCG.G.over){
+      motivoUlt = /Deseo Ilimitado/.test(porque||'') ? 'pergamino' : 'alma';
+    }
+    return finOrig(ganador, porque);
+  };
+
+  const t0 = performance.now();
+  for (const a of L) for (const b of L){
+    const clave = a + ' vs ' + b;
+    d.cruce[clave] = {gana:0, total:0};
+    for (let k = 0; k < porCruce; k++){
+      try{
+        // alternar quién empieza para que no sesgue la muestra
+        const primero = k % 2;
+        ladoDe = {0:a, 1:b};
+        motivoUlt = null;
+        await T.setupMatch(a, b, {fast:true, auto:true, silent:true, first:primero});
+        let g = 0;
+        while (!T.G.over && g++ < 300) await T.autoTurn(T.G.active);
+
+        d.partidas++;
+        d.porLider[a].juega++; d.porLider[b].juega++;
+        d.cruce[clave].total++;
+        if (!T.G.over){ d.sinTerminar++; continue; }
+
+        const gana = T.P(0).alma > 0 && T.P(1).alma <= 0 ? 0
+                   : T.P(1).alma > 0 && T.P(0).alma <= 0 ? 1
+                   : (motivoUlt === 'pergamino' ? (T.P(0).scrollTurns >= 2 ? 0 : 1) : null);
+        if (gana === 0){ d.porLider[a].gana++; d.cruce[clave].gana++; }
+        else if (gana === 1) d.porLider[b].gana++;
+        if (gana !== null){
+          d.primero.total++;
+          if (gana === primero) d.primero.gana++;
+          d.almaGanador.push(T.P(gana).alma);
+        }
+        d.motivo[motivoUlt || 'otro']++;
+        d.turnos.push(T.G.turnNo);
+
+        for (const s of [0,1]){
+          const p = T.P(s);
+          if (p.llaves > d.llavesMax) d.llavesMax = p.llaves;
+          if (p.llaves >= 2) d.conLlaves++;
+        }
+      }catch(e){
+        d.errores.push(`${a} vs ${b}: ${e && e.message}`);
+      }
+    }
+    $('#progreso').textContent = `${d.partidas} partidas…`;
+    await new Promise(r => setTimeout(r, 0));      // dejar respirar a la interfaz
+  }
+  J.playFromHand = playOrig; J.endGame = finOrig; J.trapWindow = trapOrig;
+  d.segundos = ((performance.now() - t0) / 1000).toFixed(1);
+  return d;
+}
+
+/* ===========================================================================
+   Turnos muertos: ¿cuántas veces te toca y no puedes hacer NADA? Es la
+   pregunta de "¿la curva de PD funciona?", y se mide aparte porque hay que
+   mirar la mano en cada turno.
+   ======================================================================== */
+async function medirTurnosMuertos(veces){
+  const T = J.TCG, L = Object.keys(T.LEADERS);
+  let turnos = 0, muertos = 0, primerJuego = [];
+  for (const a of L){
+    for (let k = 0; k < veces; k++){
+      await T.setupMatch(a, L[(L.indexOf(a)+1) % L.length], {fast:true,auto:true,silent:true});
+      let g = 0, jugoAlgo = -1;
+      while (!T.G.over && g++ < 40){
+        const s = T.G.active;
+        if (s === 0){
+          turnos++;
+          const puede = T.P(0).hand.some(id => T.canPlay(0, id));
+          if (!puede) muertos++;
+          else if (jugoAlgo < 0) jugoAlgo = Math.ceil(T.G.turnNo / 2);
+        }
+        await T.autoTurn(s);
+      }
+      if (jugoAlgo > 0) primerJuego.push(jugoAlgo);
+    }
+  }
+  return {turnos, muertos, primerJuego};
+}
+
+/* ===========================================================================
+   Informe
+   ======================================================================== */
+function pct(a, b){ return b ? (100*a/b) : 0; }
+function color(v, bien, mal){ return v >= mal ? 'mal' : v >= bien ? 'medio' : 'ok'; }
+function media(a){ return a.length ? a.reduce((x,y)=>x+y,0)/a.length : 0; }
+function mediana(a){ if(!a.length) return 0; const s=[...a].sort((x,y)=>x-y);
+  return s[Math.floor(s.length/2)]; }
+
+function pintar(d, muertos){
+  const T = J.TCG, L = Object.keys(T.LEADERS);
+  const partes = [];
+  const avisos = [];
+
+  partes.push(`<div class="nota">${d.partidas} partidas en ${d.segundos} s.
+    Juega el bot del juego en los dos lados: la comparación entre mazos es justa, pero mide
+    <b>lo bien que le va a cada mazo en manos de este bot</b>. Una carta que el bot no sabe
+    usar sale floja aquí y puede ser buenísima en las tuyas.</div>`);
+
+  if (d.errores.length){
+    avisos.push(`<div class="nota alerta"><b>${d.errores.length} partidas reventaron.</b>
+      ${d.errores.slice(0,3).join(' · ')}</div>`);
+  }
+  if (d.sinTerminar){
+    avisos.push(`<div class="nota alerta"><b>${d.sinTerminar} partidas no terminaron</b>
+      en 300 turnos. Eso es un bucle o una posición muerta.</div>`);
+  }
+
+  /* --- winrate por mazo --- */
+  partes.push('<h2>Cada mazo, cuánto gana</h2><table><tr><th>Protagonista</th>' +
+    '<th>Partidas</th><th>Gana</th><th>%</th><th>Lectura</th></tr>');
+  const wr = {};
+  for (const l of L){
+    const p = d.porLider[l];
+    wr[l] = pct(p.gana, p.juega);
+    const desvio = Math.abs(wr[l] - 50);
+    const lectura = desvio < 5 ? '<span class="ok">equilibrado</span>'
+                  : desvio < 12 ? '<span class="medio">se nota</span>'
+                  : '<span class="mal">desequilibrado</span>';
+    partes.push(`<tr><td>${T.LEADERS[l].n}</td><td>${p.juega}</td><td>${p.gana}</td>
+      <td class="${color(desvio,5,12)}">${wr[l].toFixed(1)} %</td><td>${lectura}</td></tr>`);
+  }
+  partes.push('</table>');
+  const brecha = Math.max(...Object.values(wr)) - Math.min(...Object.values(wr));
+  partes.push(`<div class="muted" style="font-size:12.5px">Entre el mejor y el peor hay
+    <b>${brecha.toFixed(1)} puntos</b>. Por debajo de 15 se considera sano en un juego de 5 mazos;
+    por encima de 25, uno domina.</div>`);
+
+  /* --- matriz --- */
+  partes.push('<h2>Quién le gana a quién <span class="muted" style="font-size:12px">' +
+    '(% de victorias de la fila contra la columna)</span></h2><table><tr><th></th>' +
+    L.map(l=>`<th>${T.LEADERS[l].n}</th>`).join('') + '</tr>');
+  for (const a of L){
+    const celdas = L.map(b => {
+      const c = d.cruce[a+' vs '+b];
+      const v = pct(c.gana, c.total);
+      return `<td class="${a===b?'muted':color(Math.abs(v-50),15,28)}">${v.toFixed(0)}</td>`;
+    }).join('');
+    partes.push(`<tr><td>${T.LEADERS[a].n}</td>${celdas}</tr>`);
+  }
+  partes.push('</table>');
+
+  /* --- ritmo --- */
+  const t = d.turnos.map(x=>Math.ceil(x/2));
+  partes.push(`<h2>Ritmo</h2><table>
+    <tr><th>Qué</th><th>Valor</th></tr>
+    <tr><td>Turnos por jugador (media)</td><td>${media(t).toFixed(1)}</td></tr>
+    <tr><td>Turnos por jugador (mediana)</td><td>${mediana(t)}</td></tr>
+    <tr><td>Partida más corta / más larga</td><td>${Math.min(...t)} / ${Math.max(...t)}</td></tr>
+    <tr><td>Alma con la que gana el ganador (media)</td><td>${media(d.almaGanador).toFixed(1)} de 20</td></tr>
+    <tr><td>Ventaja de empezar</td><td class="${color(Math.abs(pct(d.primero.gana,d.primero.total)-50),4,8)}">
+      ${pct(d.primero.gana, d.primero.total).toFixed(1)} % gana quien empieza</td></tr>
+    </table>`);
+  const vent = pct(d.primero.gana, d.primero.total);
+  if (Math.abs(vent - 50) >= 8){
+    avisos.push(`<div class="nota alerta"><b>Empezar decide demasiado:</b> quien abre gana el
+      ${vent.toFixed(1)} % de las partidas. Lo normal en un TCG es 52–55 %.</div>`);
+  }
+
+  /* --- cómo se gana --- */
+  const tot = d.motivo.alma + d.motivo.pergamino + d.motivo.otro;
+  partes.push(`<h2>Cómo se gana</h2><table>
+    <tr><th>Ruta</th><th>Partidas</th><th>%</th></tr>
+    <tr><td>Bajar el Alma a 0</td><td>${d.motivo.alma}</td><td>${pct(d.motivo.alma,tot).toFixed(1)} %</td></tr>
+    <tr><td>Pergamino de Deseo Ilimitado</td><td>${d.motivo.pergamino}</td>
+        <td class="${d.motivo.pergamino===0?'mal':''}">${pct(d.motivo.pergamino,tot).toFixed(1)} %</td></tr>
+    </table>`);
+  if (d.motivo.pergamino === 0){
+    avisos.push(`<div class="nota alerta"><b>La victoria por Llaves no ocurre nunca.</b>
+      Es una de las dos formas de ganar del juego y en ${d.partidas} partidas no se dio ni una.
+      O es inalcanzable, o el bot no la busca.</div>`);
+  }
+
+  /* --- cartas muertas --- */
+  const jugables = Object.keys(T.CARDS).filter(id => !T.CARDS[id].token);
+  const nunca = jugables.filter(id => !d.jugadas[id]);
+  const enMazos = new Set();
+  for (const l of L) for (const [c] of T.DECKS[l].list) enMazos.add(c);
+  const nuncaYEnMazo = nunca.filter(id => enMazos.has(id));
+  partes.push(`<h2>Cartas que no se juegan</h2>`);
+  partes.push(`<div class="muted" style="font-size:12.5px;margin-bottom:8px">
+    De ${jugables.length} cartas, <b>${jugables.length - nunca.length}</b> se jugaron alguna vez.
+    ${nunca.length} no. Ojo: ${jugables.length - enMazos.size} cartas
+    <b>no están en ningún mazo precon</b>, así que no podían salir.</div>`);
+  if (nuncaYEnMazo.length){
+    partes.push(`<div class="nota alerta"><b>${nuncaYEnMazo.length} cartas están en un mazo y
+      aun así no se juegan nunca:</b><br>` +
+      nuncaYEnMazo.map(id=>`${T.CARDS[id].n} <code>${id}</code> (${T.CARDS[id].c} PD)`).join(' · ') +
+      `<br><br>O el bot no sabe usarlas, o su condición no se cumple casi nunca.</div>`);
+  } else {
+    partes.push(`<div class="nota bien">Todas las cartas que están en un mazo llegan a jugarse.</div>`);
+  }
+
+  /* --- trampas --- */
+  const trampas = jugables.filter(id => T.CARDS[id].t === 'trampa');
+  partes.push('<h2>Trampas</h2><table><tr><th>Trampa</th><th>Se pone</th><th>Salta</th>' +
+    '<th>% que salta</th></tr>');
+  for (const id of trampas){
+    const puesta = d.trampasPuestas[id] || 0, salta = d.trampasSaltadas[id] || 0;
+    const p = pct(salta, puesta);
+    partes.push(`<tr><td>${T.CARDS[id].n}</td><td>${puesta}</td><td>${salta}</td>
+      <td class="${puesta===0?'muted':(p<15?'mal':p<40?'medio':'ok')}">${puesta?p.toFixed(0)+' %':'—'}</td></tr>`);
+  }
+  partes.push('</table>');
+  const trampasFlojas = trampas.filter(id => (d.trampasPuestas[id]||0) >= 10 &&
+    pct(d.trampasSaltadas[id]||0, d.trampasPuestas[id]) < 15);
+  if (trampasFlojas.length){
+    avisos.push(`<div class="nota alerta"><b>Trampas que casi nunca saltan:</b> ` +
+      trampasFlojas.map(id=>T.CARDS[id].n).join(', ') +
+      `. Pagas por ellas y se quedan boca abajo: su condición pide algo que no pasa.</div>`);
+  }
+
+  /* --- turnos muertos --- */
+  if (muertos){
+    const p = pct(muertos.muertos, muertos.turnos);
+    partes.push(`<h2>Turnos en los que no puedes hacer nada</h2><table>
+      <tr><th>Qué</th><th>Valor</th></tr>
+      <tr><td>Turnos mirados</td><td>${muertos.turnos}</td></tr>
+      <tr><td>Turnos sin poder jugar nada</td><td class="${color(p,8,15)}">${muertos.muertos} (${p.toFixed(1)} %)</td></tr>
+      <tr><td>Turno en el que juegas tu primera carta (media)</td><td>${media(muertos.primerJuego).toFixed(2)}</td></tr>
+      </table>`);
+    if (p >= 15) avisos.push(`<div class="nota alerta"><b>Uno de cada ${Math.round(100/p)} turnos
+      te quedas mirando</b> sin poder jugar nada. Eso es mucho: o sobran cartas caras o falta PD.</div>`);
+  }
+
+  /* --- cartas más jugadas --- */
+  const top = Object.entries(d.jugadas).sort((a,b)=>b[1]-a[1]).slice(0,12);
+  partes.push('<h2>Las que más se juegan</h2><table><tr><th>Carta</th><th>Veces</th>' +
+    '<th>Por partida</th></tr>');
+  for (const [id, n] of top){
+    partes.push(`<tr><td>${T.CARDS[id].n} <span class="muted">${T.CARDS[id].c} PD</span></td>
+      <td>${n}</td><td>${(n/d.partidas).toFixed(2)}</td></tr>`);
+  }
+  partes.push('</table>');
+
+  $('#salida').innerHTML = (avisos.length
+    ? `<h2 style="margin-top:8px">Lo que hay que mirar</h2>${avisos.join('')}`
+    : '<div class="nota bien">Nada chirría en los avisos automáticos.</div>') + partes.join('');
+
+  INFORME = {winrate:wr, brecha, ventajaPrimero:vent, turnos:{media:media(t), mediana:mediana(t)},
+    motivo:d.motivo, nuncaJugadas:nuncaYEnMazo, trampasFlojas, sinTerminar:d.sinTerminar,
+    errores:d.errores, turnosMuertos:muertos, partidas:d.partidas};
+  $('#copiar').disabled = false;
+}
+
+/* ======================================================================== */
+async function arrancar(){
+  J = await esperarJuego();
+  $('#correr').onclick = async () => {
+    $('#correr').disabled = true;
+    $('#salida').innerHTML = '<div class="nota">Jugando…</div>';
+    const n = +$('#cuantas').value;
+    const d = await tanda(n);
+    $('#progreso').textContent = 'midiendo turnos muertos…';
+    const m = await medirTurnosMuertos(Math.max(4, Math.round(n/8)));
+    $('#progreso').textContent = '';
+    pintar(d, m);
+    $('#correr').disabled = false;
+    // para leerlo desde fuera (publicar.sh, o una corrida sin ventana)
+    window.RESULTADO = INFORME;
+    try{ fetch('/resultado', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(INFORME)}).catch(()=>{}); }catch(e){}
+  };
+  $('#copiar').onclick = () => navigator.clipboard.writeText(JSON.stringify(INFORME,null,1));
+  if (location.search.includes('auto')) $('#correr').click();
+}
+arrancar().catch(e => { $('#salida').innerHTML =
+  `<div class="nota alerta"><b>No pude arrancar:</b> ${e.message}. Necesita servidor:
+   <code>python3 -m http.server 8745 --directory caoz_tcg</code></div>`; });
+</script>
+</body>
+</html>
