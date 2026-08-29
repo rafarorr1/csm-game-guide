@@ -13,28 +13,56 @@ Cómo se anota una versión nueva:
 
 ---
 
-## v3 — Se arrastra para jugar, y cada carta tiene su color · 2026-08-28
+## v4 — Vuelta al clic, y el turno del rival se entiende · 2026-08-28
 
-No toca cartas ni mazos: **el balance de la v2 sigue igual**. Pero cambia cómo se maneja el
-juego, así que lleva número — quien venga de la v2 tiene que enterarse de que las cartas ya
-no se pulsan.
+### Las cartas se vuelven a jugar pulsándolas
 
-### Las cartas se juegan arrastrándolas
+**Se revierte el arrastre de la v3.** Probándolo se trababa: el `#hand` tiene scroll
+horizontal y en táctil el navegador se queda el gesto, así que arrastrar peleaba con
+desplazar la mano. Se podría haber intentado arreglar con `touch-action`, pero el clic ya
+funcionaba y no había ningún problema que resolver. Queda anotado por si algún día se
+retoma.
 
-Coges la carta y la sueltas en el tapete. **Pulsarla ya no la juega**, sólo te la deja ver.
+### El turno del rival se lee
 
-Mientras arrastras: la carta original se queda en su hueco atenuada, para que no baile la
-mano entera; un fantasma sigue al dedo o al ratón; el tapete se ilumina en verde; y un cartel
-dice *SUELTA PARA INVOCAR* o *SUELTA PARA JUGAR* según el tipo. Si sueltas fuera, la carta
-vuelve y te avisa.
+Sus jugadas iban a **200 ms**, menos de lo que se tarda en mirar. Ahora **620 ms**. Y antes
+de cada ataque se anuncia a quién va: el atacante brilla y sale «X ataca a Y» entre los dos,
+con 640 ms para leerlo. Un turno suyo con equipo, Trampa y ataque pasa de un borrón a unos
+8 segundos comprensibles.
 
-Está hecho con **Pointer Events**, que valen igual para ratón y para dedo: con eventos de
-ratón el móvil se quedaba fuera, y el drag-and-drop de HTML no funciona en táctil. Hay un
-umbral de 7 px para no confundir un toque con un arrastre, así que se puede seguir tocando una
-carta para mirarla.
+### Las activaciones enseñan su carta
 
-Arrastres: el tutorial decía «haz clic» y ahora enseña el gesto; el arnés de pruebas también
-arrastra de verdad, con pointerdown/move/up, en vez de llamar por dentro a la función.
+Los Hechizos ya subían su carta al centro, pero **las Trampas sólo enseñaban su nombre en
+texto** y **las Habilidades de Líder no enseñaban nada**. Ahora las tres comparten la misma
+animación, con su etiqueta: *🪤 ¡TRAMPA! Risa Incontrolable de Tasha*, *✨ Manos Largas —
+Mohamed*, *Adreida lanza Golpe a Sangre Fría*.
+
+**Lo del rival se queda quieto casi el doble de tiempo que lo tuyo** (1 s frente a medio):
+lo tuyo ya sabes lo que hace porque lo has elegido; lo suyo hay que leerlo.
+
+### El halo verde, sólo en el tutorial
+
+Jugando no hace falta adorno: las cartas que puedes usar se ven normales y las que no,
+apagadas (0,4 de opacidad y más gris). El halo verde se queda en el tutorial, que es donde se
+explica qué significa.
+
+### El descuento deja de robarle el color al tipo
+
+Con Mohamed, *Golpe a Sangre Fría* salía con el círculo verde en vez de violeta. No era un
+fallo del tipo: es Hechizo de **Engaño** y su pasiva se lo rebaja 1 PD, así que el círculo se
+pintaba de verde con un estilo en línea. La información es útil, así que se conserva de otra
+forma: el círculo mantiene siempre el color de su clase y el descuento se marca con un
+**anillo verde y una flecha ▼**.
+
+---
+
+## v3 — Cada carta tiene su color · 2026-08-28
+
+No toca cartas ni mazos: **el balance de la v2 sigue igual**.
+
+> **Nota:** esta versión también cambiaba las cartas a arrastrarse en vez de pulsarse. Se
+> revirtió en la v4 porque se trababa en táctil; lo que queda de la v3 son los colores, el
+> Infectado y la salida al menú.
 
 ### Cada clase de carta tiene su color
 

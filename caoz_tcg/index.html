@@ -307,21 +307,6 @@ body.tut-on .card.playable{
   padding:6px 2px 2px;min-height:calc(var(--ch) + 10px);scrollbar-width:thin}
 #hand::-webkit-scrollbar{height:6px}
 
-/* ---- arrastrar cartas al tapete ----
-   Las cartas se juegan arrastrándolas, no pulsándolas. El fantasma es un clon
-   que sigue al dedo o al ratón; el original se queda en su hueco, atenuado, para
-   que no baile la mano entera mientras arrastras. */
-#arrastre{position:fixed;z-index:400;pointer-events:none;opacity:.96;
-  transform:translate(-50%,-50%) rotate(-4deg) scale(1.06);
-  filter:drop-shadow(0 12px 22px rgba(0,0,0,.75))}
-.card.arrastrando{opacity:.28;filter:grayscale(.5)}
-#mat.zonaok{box-shadow:inset 0 0 0 2px var(--green),inset 0 0 44px rgba(79,192,125,.22)}
-#mat.zonano{box-shadow:inset 0 0 0 2px var(--red),inset 0 0 44px rgba(224,82,74,.16)}
-#soltaraqui{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
-  font-size:15px;font-weight:800;letter-spacing:1px;color:var(--green);
-  background:rgba(8,20,12,.86);border:2px dashed var(--green);border-radius:14px;
-  padding:10px 20px;pointer-events:none;z-index:5;text-shadow:0 2px 6px #000}
-#soltaraqui.no{color:var(--red);border-color:var(--red);background:rgba(28,8,10,.86)}
 #hand::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 .controls{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:4px}
 
@@ -2878,95 +2863,17 @@ function render(){
     const ok=canPlay(ME,id);
     const libre=tutCan('hand',id);
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
-    armarArrastre(d, id, ok, libre);
+    d.onclick=()=>{ if(TGT) return;
+      if(!libre){ tutNope(); return; }
+      if(!ok){ toast(whyNot(ME,id)); return; }
+      SEL=null; clearPrompt();
+      if(NET.guest){ gIntent('play',{id}); return; }
+      playFromHand(ME,id); };
     h.appendChild(d);
   });
   renderControls();
   if(G.tutorial) tutHighlight();
 }
-/* ===========================================================================
-   ARRASTRAR PARA JUGAR
-   Se usa Pointer Events, que valen igual para ratón y para dedo: con eventos de
-   ratón el móvil se quedaba fuera, y el drag-and-drop de HTML no funciona en
-   táctil. El clic ya no baja la carta — sólo la muestra —, que es justo lo que
-   se pidió: las cartas se juegan arrastrándolas al tapete.
-   ======================================================================== */
-let ARRASTRE = null;
-
-function armarArrastre(d, id, jugable, permitida){
-  d.onpointerdown = e => {
-    if (e.button > 0 || TGT || ARRASTRE) return;      // botón derecho o eligiendo objetivo
-    if (!permitida){ tutNope(); return; }
-    if (!jugable){ toast(whyNot(ME,id)); return; }
-    e.preventDefault();
-    const inicio = {x:e.clientX, y:e.clientY};
-    ARRASTRE = {id, d, inicio, activo:false, punteroId:e.pointerId};
-    d.setPointerCapture(e.pointerId);
-    d.onpointermove = moverArrastre;
-    d.onpointerup = soltarArrastre;
-    d.onpointercancel = cancelarArrastre;
-  };
-}
-
-function moverArrastre(e){
-  if (!ARRASTRE) return;
-  const dx = e.clientX - ARRASTRE.inicio.x, dy = e.clientY - ARRASTRE.inicio.y;
-  // umbral: por debajo de esto es un toque, no un arrastre
-  if (!ARRASTRE.activo && Math.hypot(dx,dy) < 7) return;
-  if (!ARRASTRE.activo){
-    ARRASTRE.activo = true;
-    $('#inspect').classList.remove('on');
-    const fantasma = ARRASTRE.d.cloneNode(true);
-    fantasma.id = 'arrastre';
-    fantasma.classList.remove('arrastrando');
-    document.body.appendChild(fantasma);
-    ARRASTRE.fantasma = fantasma;
-    ARRASTRE.d.classList.add('arrastrando');
-    const cartel = el('div','', CARDS[ARRASTRE.id].t==='personaje' ? 'SUELTA PARA INVOCAR' : 'SUELTA PARA JUGAR');
-    cartel.id = 'soltaraqui';
-    $('#mat').appendChild(cartel);
-  }
-  ARRASTRE.fantasma.style.left = e.clientX+'px';
-  ARRASTRE.fantasma.style.top  = e.clientY+'px';
-  const dentro = sobreElTapete(e);
-  $('#mat').classList.toggle('zonaok', dentro);
-  $('#mat').classList.toggle('zonano', !dentro);
-  const cartel = $('#soltaraqui');
-  if (cartel){ cartel.classList.toggle('no', !dentro);
-    cartel.textContent = dentro
-      ? (CARDS[ARRASTRE.id].t==='personaje' ? 'SUELTA PARA INVOCAR' : 'SUELTA PARA JUGAR')
-      : 'SUÉLTALA EN EL TAPETE'; }
-}
-
-function sobreElTapete(e){
-  const m = $('#mat').getBoundingClientRect();
-  return e.clientX>=m.left && e.clientX<=m.right && e.clientY>=m.top && e.clientY<=m.bottom;
-}
-
-function limpiarArrastre(){
-  if (!ARRASTRE) return;
-  if (ARRASTRE.fantasma) ARRASTRE.fantasma.remove();
-  ARRASTRE.d.classList.remove('arrastrando');
-  ARRASTRE.d.onpointermove = ARRASTRE.d.onpointerup = ARRASTRE.d.onpointercancel = null;
-  try{ ARRASTRE.d.releasePointerCapture(ARRASTRE.punteroId); }catch(err){}
-  $('#mat').classList.remove('zonaok','zonano');
-  const cartel = $('#soltaraqui'); if (cartel) cartel.remove();
-  ARRASTRE = null;
-}
-function cancelarArrastre(){ limpiarArrastre(); render(); }
-
-function soltarArrastre(e){
-  if (!ARRASTRE) return;
-  const {id, activo} = ARRASTRE;
-  const enTapete = sobreElTapete(e);
-  limpiarArrastre();
-  if (!activo){ render(); return; }          // fue un toque: no se juega nada
-  if (!enTapete){ toast('Arrastra la carta al tapete para jugarla'); render(); return; }
-  SEL = null; clearPrompt();
-  if (NET.guest){ gIntent('play',{id}); return; }
-  playFromHand(ME, id);
-}
-
 function whyNot(s,id){
   const c=CARDS[id];
   if(G.active!==s) return 'No es tu turno';
@@ -3269,8 +3176,7 @@ function buildTut(lid){
   el turno 5 tendrás 5, quieras o no.`},
 
 {hi:'#hand', wait:g=>tutJugada(M.c1), allow:{hand:[M.c1], end:true},
- t:`Empieza tu mesa: <b>arrastra ${n(M.c1)} al tapete</b> y suéltala ahí.
-    Las cartas se juegan arrastrándolas, no pulsándolas.<br><br>
+ t:`Empieza tu mesa: <b>pulsa ${n(M.c1)}</b> para jugarla.<br><br>
     El <b>borde verde</b> quiere decir "puedes pagarla ahora mismo"; las grises, no.
     Y el color del borde te dice de qué clase es: <b>Personajes en azul</b>,
     <b>Hechizos en violeta</b>, <b>Trampas en rojo</b>, <b>Objetos en amarillo</b> y
@@ -3308,7 +3214,7 @@ function buildTut(lid){
     está apagado: tiene el borde verde de "listo para atacar".`},
 
 {hi:'#hand', wait:g=>tutJugada(M.c2), allow:{hand:[M.c2], end:true, attack:true},
- t:`Suma otro cuerpo: <b>arrastra ${n(M.c2)} al tapete</b>.${CARDS[M.c2].c>2?' Si aún no te alcanza, termina el turno y lo bajas al siguiente.':''}<br><br>
+ t:`Suma otro cuerpo: juega <b>${n(M.c2)}</b>.${CARDS[M.c2].c>2?' Si aún no te alcanza, termina el turno y lo bajas al siguiente.':''}<br><br>
     En este juego la mesa lo es todo: el que tiene más Personajes decide contra qué se pelea.`},
 
 /* Este paso espera a que ataques DE VERDAD (antes se daba por cumplido con sólo

@@ -128,7 +128,7 @@ async function jugarTutorial(lid, limite=4000){
         && e.classList.contains('playable'));
       if(pedida){
         if(SEL || $1('#prompt').classList.contains('on')){ esc(); continue; }
-        await arrastrarAlTapete(pedida); continue;
+        pedida.click(); continue;
       }
     }
     if($1('#prompt').classList.contains('on')){
@@ -143,33 +143,12 @@ async function jugarTutorial(lid, limite=4000){
     if(visible()){ $1('#tutNext').click(); continue; }
     if(T.G.busy || T.G.resolving || !$1('#tutWait').textContent) continue;
 
-    const carta=$1('#hand .card:not(.locked).playable');
-    if(carta){ await arrastrarAlTapete(carta); continue; }
+    const carta=$1('#hand .card:not(.locked).playable'); if(carta){ carta.click(); continue; }
     const lider=$1('#lead0.usable'); if(lider){ lider.click(); continue; }
     if(permiso.attack){ const mia=$1('#myField .card.ready'); if(mia && !SEL){ mia.click(); continue; } }
     const fin=$$('#controls .btn.gold')[0]; if(fin && !fin.disabled){ fin.click(); continue; }
   }
   return {tope, fin:'sin terminar', rescates:TUT.rescates||[]};
-}
-
-/* Jugar una carta es arrastrarla al tapete, así que el arnés tiene que
-   arrastrar de verdad: pointerdown sobre la carta, unos cuantos move y un up
-   dentro de #mat. Pulsarla ya no hace nada, que es justo lo que se quería. */
-async function arrastrarAlTapete(carta){
-  const m = $1('#mat').getBoundingClientRect();
-  const a = carta.getBoundingClientRect();
-  const x0 = a.left + a.width/2, y0 = a.top + a.height/2;
-  const x1 = m.left + m.width/2, y1 = m.top + m.height/2;
-  const ev = (t,x,y) => new PointerEvent(t, {clientX:x, clientY:y, bubbles:true,
-    pointerId:1, button:0, buttons:1, isPrimary:true, pointerType:'mouse'});
-  carta.dispatchEvent(ev('pointerdown', x0, y0));
-  await sleep(20);
-  for (let i=1;i<=5;i++){
-    carta.dispatchEvent(ev('pointermove', x0+(x1-x0)*i/5, y0+(y1-y0)*i/5));
-    await sleep(16);
-  }
-  carta.dispatchEvent(ev('pointerup', x1, y1));
-  await sleep(120);
 }
 
 /* El propio index.html como texto, para las reglas que se comprueban leyendo
@@ -403,7 +382,7 @@ PRUEBAS.suite('regresiones', async t => {
       const copias = T.P(0).hand.filter(c=>c===id).length;
       const idx = T.P(0).hand.lastIndexOf(id);
       t.check(idx >= 0, `${lid}: la carta ${id} que pide el paso no está en la mano`);
-      await arrastrarAlTapete($$('#hand .card')[idx]);   // se juegan arrastrando
+      $$('#hand .card')[idx].click();
       await sleep(2500);
       t.check(TUT.i > antes,
         `${lid}: jugué ${id} (${copias} copias en mano) y el paso ${antes+1} no avanzó`);
@@ -525,29 +504,22 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('se puede volver al menú desde una partida y desde el tutorial');
   }
 
-  /* Las cartas se juegan ARRASTRÁNDOLAS, no pulsándolas. */
+  /* Las cartas se juegan pulsándolas. Se probó a arrastrarlas y se volvió atrás:
+     el #hand tiene scroll horizontal y en táctil el navegador se quedaba el
+     gesto, así que el arrastre se trababa. */
   {
     await T.startMatch('fender','adreida');
     await sleep(700);
     T.P(0).pd = 9; T.recalc(); T.render(); await sleep(150);
 
-    const antes = {mano:T.P(0).hand.length, campo:T.P(0).field.length};
+    const antes = T.P(0).hand.length;
     const carta = $1('#hand .card.playable');
     t.check(!!carta, 'no hay ninguna carta jugable con 9 PD');
-
-    carta.click(); await sleep(400);
-    t.check(T.P(0).hand.length === antes.mano,
-      'pulsar una carta ya no debe jugarla: se juegan arrastrando');
-
-    await arrastrarAlTapete($1('#hand .card.playable'));
-    // se espera al HECHO, no a un reloj: con las animaciones activas jugar una
-    // carta tarda bastante más, y un sleep fijo fallaba según qué suite
-    // hubiera corrido antes.
-    for (let i=0; i<40 && T.P(0).hand.length >= antes.mano; i++) await sleep(100);
-    t.check(T.P(0).hand.length < antes.mano, 'arrastrarla al tapete debería jugarla');
-    t.check(!$1('#arrastre') && !$1('#soltaraqui'),
-      'el arrastre dejó basura en pantalla');
-    t.nota('las cartas se juegan arrastrándolas; pulsarlas ya no');
+    carta.click();
+    // se espera al hecho, no a un reloj: con las animaciones activas tarda más
+    for (let i=0; i<40 && T.P(0).hand.length >= antes; i++) await sleep(100);
+    t.check(T.P(0).hand.length < antes, 'pulsar una carta jugable debería jugarla');
+    t.nota('las cartas se juegan pulsándolas');
   }
 
   /* Cada clase de carta con su color, en el borde y en el círculo del coste. */
