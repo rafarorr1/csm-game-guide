@@ -4663,6 +4663,33 @@ window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutoria
 if(new URLSearchParams(location.search).has('test')){
   const s=document.createElement('script'); s.src='tests.js'; document.head.appendChild(s);
 }
+
+/* Con ?biblia=1 el juego suelta todo lo suyo —cartas, Líderes, mazos, guías y el
+   texto de reglas— para que biblia.sh arme el PDF. La biblia sale de aquí y no
+   de una copia a mano: si mañana cambia una carta, cambia con ella. */
+if(new URLSearchParams(location.search).has('biblia')){
+  addEventListener('load',()=>setTimeout(()=>{
+    const d={
+      reglas: RULES_HTML,
+      lideres: Object.fromEntries(Object.keys(LEADERS).map(k=>{ const L=LEADERS[k];
+        return [k,{n:L.n,ep:L.ep,art:L.art,arch:L.arch,pasiva:L.pasiva,hab:L.hab,
+                   habCost:L.habCost,habName:L.habName,hab2:L.hab2||null,lore:L.lore}]; })),
+      cartas: Object.fromEntries(Object.keys(CARDS).map(id=>{ const c=CARDS[id];
+        return [id,{n:c.n,t:c.t,c:c.c,a:c.a??null,h:c.h??null,tr:c.tr||[],r:c.r||0,
+                    sub:c.sub||[],x:c.x||'',keys:c.keys||[],token:!!c.token,
+                    fast:!!c.fast,relic:!!c.relic}]; })),
+      mazos: Object.fromEntries(Object.keys(DECKS).map(k=>{ const D=DECKS[k];
+        return [k,{n:D.n,d:D.d,plan:D.plan,list:D.list}]; })),
+      guias: Object.fromEntries(Object.keys(GUIAS).map(k=>{ const g=GUIAS[k];
+        return [k,{dif:g.dif,lema:g.lema,ganas:g.ganas,motorTxt:g.motorTxt,
+                   combo:g.combo,mano:g.mano,pierdes:g.pierdes,turnos:g.turnos||[]}]; })),
+      colores: Object.fromEntries(['personaje','hechizo','trampa','objeto','lugar'].map(t=>
+        [t, getComputedStyle(document.documentElement).getPropertyValue('--c-'+t).trim()]))
+    };
+    fetch('/resultado',{method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify(d)}).catch(()=>{});
+  },400));
+}
 </script>
 </body>
 </html>

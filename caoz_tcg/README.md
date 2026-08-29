@@ -385,6 +385,28 @@ Para cargar muchas de golpe, «Importar varias…» y nombra los archivos con el
 carta: `discipulo.png`, `titaus.webp`. Los ids salen de la sección `CARDS` del juego y se
 ven bajo cada carta en la rejilla.
 
+## La Biblia del Domo
+
+`biblia.sh` genera un PDF con las reglas, las cinco clases de carta, las palabras clave, los
+cinco Protagonistas con su mazo entero, y **las 88 cartas** con su texto completo y en qué
+mazos precon aparece cada una.
+
+```bash
+./biblia.sh                      # deja La-Biblia-del-Domo.pdf al lado
+./biblia.sh ~/Desktop/tcg.pdf    # o donde quieras
+```
+
+Unas 18 páginas A4. No necesita instalar nada: usa el Chrome que ya tienes (`--print-to-pdf`)
+y un servidor de Python de un solo uso.
+
+**Los datos salen del juego, no de una copia a mano.** El propio `index.html`, abierto con
+`?biblia=1`, suelta `CARDS`, `LEADERS`, `DECKS`, `GUIAS` y el texto de reglas; `biblia.py`
+los maqueta. Si mañana cambia una carta o un mazo, la biblia cambia con ella — igual que el
+estudio de cartas y el banco de balance, que se alimentan del mismo sitio.
+
+El PDF **no se versiona** (se regenera, y es un binario de 1 MB que cambiaría entero cada
+vez). Está en `.gitignore`.
+
 ## Cómo se trabaja aquí
 
 Todo esto existe porque el motor es un solo archivo donde todo se toca con todo:

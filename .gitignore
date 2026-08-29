@@ -3,6 +3,9 @@ node_modules/
 .DS_Store
 *.zip
 
+# El PDF de la biblia se regenera con biblia.sh; no se versiona el binario.
+caoz_tcg/La-Biblia-del-Domo.pdf
+
 # Salidas y material pesado: se regeneran, no se versionan.
 resolve_doc_editor/out/
 **/venv/
