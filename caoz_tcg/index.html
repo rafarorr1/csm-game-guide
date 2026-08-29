@@ -10,8 +10,13 @@
   --line:#3a2c52; --gold:#e6bb52; --gold2:#8d6f21;
   --purple:#8a5cf0; --purple2:#4a2f8a;
   --red:#e0524a; --green:#4fc07d; --blue:#4aa6ff; --ink:#f0e9f8; --dim:#a294bd;
-  --c-personaje:#c06a3a; --c-hechizo:#6a7fe0; --c-trampa:#b34aa0;
-  --c-objeto:#3fa38a; --c-lugar:#8a8f3f;
+  /* Cada clase de carta tiene su color. Tres tonos: el del borde, y el claro y
+     el oscuro con los que se pinta el círculo del coste. */
+  --c-personaje:#c06a3a; --c-personaje-cl:#f0a875; --c-personaje-os:#5e2c12;
+  --c-hechizo:#6a7fe0;   --c-hechizo-cl:#a9b6f5;   --c-hechizo-os:#2c3894;
+  --c-trampa:#b34aa0;    --c-trampa-cl:#e78bd6;    --c-trampa-os:#61205a;
+  --c-objeto:#3fa38a;    --c-objeto-cl:#7fdcc4;    --c-objeto-os:#175a4c;
+  --c-lugar:#8a8f3f;     --c-lugar-cl:#cdd280;     --c-lugar-os:#474a1c;
   --cw:112px; --ch:158px;
 }
 *{box-sizing:border-box;margin:0;padding:0}
@@ -212,11 +217,20 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card .hp{color:#ffc0b8;background:rgba(190,35,35,.55);border-color:rgba(255,140,130,.35)}
 .big .atk,.big .hp{font-size:22px;min-width:34px}
 .card .rar{position:absolute;top:2px;right:3px;font-size:9px;color:var(--gold)}
-.card.t-personaje{border-top:3px solid var(--c-personaje)}
-.card.t-hechizo{border-top:3px solid var(--c-hechizo)}
-.card.t-trampa{border-top:3px solid var(--c-trampa)}
-.card.t-objeto{border-top:3px solid var(--c-objeto)}
-.card.t-lugar{border-top:3px solid var(--c-lugar)}
+/* El tipo manda en el borde entero y en el coste. Cada carta se reconoce por su
+   color antes de leerle el nombre. */
+.card.t-personaje{--tipo:var(--c-personaje);--tipo-cl:var(--c-personaje-cl);--tipo-os:var(--c-personaje-os)}
+.card.t-hechizo  {--tipo:var(--c-hechizo);  --tipo-cl:var(--c-hechizo-cl);  --tipo-os:var(--c-hechizo-os)}
+.card.t-trampa   {--tipo:var(--c-trampa);   --tipo-cl:var(--c-trampa-cl);   --tipo-os:var(--c-trampa-os)}
+.card.t-objeto   {--tipo:var(--c-objeto);   --tipo-cl:var(--c-objeto-cl);   --tipo-os:var(--c-objeto-os)}
+.card.t-lugar    {--tipo:var(--c-lugar);    --tipo-cl:var(--c-lugar-cl);    --tipo-os:var(--c-lugar-os)}
+.card[class*="t-"]{border-color:var(--tipo);border-top:3px solid var(--tipo)}
+.card[class*="t-"] .cost{
+  background:radial-gradient(circle at 35% 30%,var(--tipo-cl),var(--tipo-os));
+  border-color:var(--tipo-cl);
+  box-shadow:0 0 6px color-mix(in srgb,var(--tipo) 55%,transparent)}
+/* el hover ya no roba el color del tipo: sólo lo ilumina */
+.card[class*="t-"]:hover{border-color:var(--tipo-cl)}
 .card.playable{box-shadow:0 0 0 2px var(--green),0 0 14px rgba(79,192,125,.4)}
 .card.locked{opacity:.3;filter:grayscale(.9);box-shadow:none;cursor:not-allowed}
 .card.locked:hover{transform:none;border-color:var(--line)}
@@ -271,6 +285,22 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #hand{display:flex;justify-content:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;
   padding:6px 2px 2px;min-height:calc(var(--ch) + 10px);scrollbar-width:thin}
 #hand::-webkit-scrollbar{height:6px}
+
+/* ---- arrastrar cartas al tapete ----
+   Las cartas se juegan arrastrándolas, no pulsándolas. El fantasma es un clon
+   que sigue al dedo o al ratón; el original se queda en su hueco, atenuado, para
+   que no baile la mano entera mientras arrastras. */
+#arrastre{position:fixed;z-index:400;pointer-events:none;opacity:.96;
+  transform:translate(-50%,-50%) rotate(-4deg) scale(1.06);
+  filter:drop-shadow(0 12px 22px rgba(0,0,0,.75))}
+.card.arrastrando{opacity:.28;filter:grayscale(.5)}
+#mat.zonaok{box-shadow:inset 0 0 0 2px var(--green),inset 0 0 44px rgba(79,192,125,.22)}
+#mat.zonano{box-shadow:inset 0 0 0 2px var(--red),inset 0 0 44px rgba(224,82,74,.16)}
+#soltaraqui{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  font-size:15px;font-weight:800;letter-spacing:1px;color:var(--green);
+  background:rgba(8,20,12,.86);border:2px dashed var(--green);border-radius:14px;
+  padding:10px 20px;pointer-events:none;z-index:5;text-shadow:0 2px 6px #000}
+#soltaraqui.no{color:var(--red);border-color:var(--red);background:rgba(28,8,10,.86)}
 #hand::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 .controls{display:flex;align-items:center;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:4px}
 
@@ -373,6 +403,17 @@ body.tutpause #tut{pointer-events:auto}
   box-shadow:0 0 22px currentColor,0 8px 22px rgba(0,0,0,.95),inset 0 0 12px rgba(0,0,0,.6);
   text-shadow:0 0 14px currentColor,0 2px 0 rgba(0,0,0,.9)}
 .fxnum.dmg{color:#ff6b5f} .fxnum.heal{color:#5cf5a4} .fxnum.buff{color:#ffd25c}
+/* La infección tiene su propio verde, distinto del rojo del daño normal: al ver
+   el número ya sabes que lo que le está pasando es que está Infectado. */
+.fxnum.inf{color:#7cf07c;border-color:#7cf07c;
+  box-shadow:0 0 16px rgba(124,240,124,.55),0 4px 14px rgba(0,0,0,.6)}
+.card.infectado{
+  border-color:#5fd45f!important;
+  background:linear-gradient(175deg,#1f3a1f,#0f2410);
+  box-shadow:0 0 0 1px rgba(95,212,95,.5),0 0 14px rgba(95,212,95,.35)}
+.card.infectado .nm{color:#c8f7c8}
+.card.infectado::after{content:'☣';position:absolute;bottom:3px;left:4px;font-size:11px;
+  color:#7cf07c;text-shadow:0 1px 3px #000;pointer-events:none}
 .fxnum.xl{font-size:58px;padding:6px 22px 9px;border-width:4px;border-radius:18px}
 .fxnum.plain{background:none;border:none;box-shadow:none;padding:0;font-size:52px}
 @media(max-width:900px){ .fxnum{font-size:30px;padding:3px 11px 5px} .fxnum.xl{font-size:46px} }
@@ -1390,10 +1431,10 @@ async function dmgU(u, n, opt={}){
   }
   u.dmg+=n;
   if(opt.att) u.killer=opt.att;
-  netFx('hit',{uid:u.uid,n});
+  netFx('hit',{uid:u.uid,n,inf:opt.src==='infeccion'});
   log(`${u.card.n} recibe ${n} daño (${Math.max(0,u.maxHp-u.dmg)}/${u.maxHp}).`,'dmg');
   render();
-  await fxHit(u,n);
+  await fxHit(u, n, opt.src==='infeccion');
   await checkDeaths();
   return n;
 }
@@ -2405,9 +2446,9 @@ function fxNumber(target, text, kind, big){
   fxGone(d,1900);
 }
 /* golpe recibido: sacudida + destello rojo */
-async function fxHit(u, amount){
+async function fxHit(u, amount, porInfeccion){
   if(!FXON()) return;
-  fxNumber(u, '−'+amount, 'dmg');
+  fxNumber(u, '−'+amount, porInfeccion ? 'inf' : 'dmg');
   const e=fxEl(u);
   void 0;
   if(e){
@@ -2717,6 +2758,7 @@ function renderField(host, list, mine){
     const tgt=(TGT&&isTargetable(u)) ||
               (!mine&&SEL&&canAttack(SEL)&&legalTargets(SEL).units.includes(u));
     d.className='card unit t-personaje'+(rest?' sick':'')
+      +(u.infected?' infectado':'')      // verde mientras esté Infectado
       +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')
       +((mine&&SEL===u)?' selected':'');
     d.onclick = mine
@@ -2769,17 +2811,95 @@ function render(){
     const ok=canPlay(ME,id);
     const libre=tutCan('hand',id);
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
-    d.onclick=()=>{ if(TGT) return;
-      if(!libre){ tutNope(); return; }
-      if(!ok){ toast(whyNot(ME,id)); return; }
-      SEL=null; clearPrompt();
-      if(NET.guest){ gIntent('play',{id}); return; }
-      playFromHand(ME,id); };
+    armarArrastre(d, id, ok, libre);
     h.appendChild(d);
   });
   renderControls();
   if(G.tutorial) tutHighlight();
 }
+/* ===========================================================================
+   ARRASTRAR PARA JUGAR
+   Se usa Pointer Events, que valen igual para ratón y para dedo: con eventos de
+   ratón el móvil se quedaba fuera, y el drag-and-drop de HTML no funciona en
+   táctil. El clic ya no baja la carta — sólo la muestra —, que es justo lo que
+   se pidió: las cartas se juegan arrastrándolas al tapete.
+   ======================================================================== */
+let ARRASTRE = null;
+
+function armarArrastre(d, id, jugable, permitida){
+  d.onpointerdown = e => {
+    if (e.button > 0 || TGT || ARRASTRE) return;      // botón derecho o eligiendo objetivo
+    if (!permitida){ tutNope(); return; }
+    if (!jugable){ toast(whyNot(ME,id)); return; }
+    e.preventDefault();
+    const inicio = {x:e.clientX, y:e.clientY};
+    ARRASTRE = {id, d, inicio, activo:false, punteroId:e.pointerId};
+    d.setPointerCapture(e.pointerId);
+    d.onpointermove = moverArrastre;
+    d.onpointerup = soltarArrastre;
+    d.onpointercancel = cancelarArrastre;
+  };
+}
+
+function moverArrastre(e){
+  if (!ARRASTRE) return;
+  const dx = e.clientX - ARRASTRE.inicio.x, dy = e.clientY - ARRASTRE.inicio.y;
+  // umbral: por debajo de esto es un toque, no un arrastre
+  if (!ARRASTRE.activo && Math.hypot(dx,dy) < 7) return;
+  if (!ARRASTRE.activo){
+    ARRASTRE.activo = true;
+    $('#inspect').classList.remove('on');
+    const fantasma = ARRASTRE.d.cloneNode(true);
+    fantasma.id = 'arrastre';
+    fantasma.classList.remove('arrastrando');
+    document.body.appendChild(fantasma);
+    ARRASTRE.fantasma = fantasma;
+    ARRASTRE.d.classList.add('arrastrando');
+    const cartel = el('div','', CARDS[ARRASTRE.id].t==='personaje' ? 'SUELTA PARA INVOCAR' : 'SUELTA PARA JUGAR');
+    cartel.id = 'soltaraqui';
+    $('#mat').appendChild(cartel);
+  }
+  ARRASTRE.fantasma.style.left = e.clientX+'px';
+  ARRASTRE.fantasma.style.top  = e.clientY+'px';
+  const dentro = sobreElTapete(e);
+  $('#mat').classList.toggle('zonaok', dentro);
+  $('#mat').classList.toggle('zonano', !dentro);
+  const cartel = $('#soltaraqui');
+  if (cartel){ cartel.classList.toggle('no', !dentro);
+    cartel.textContent = dentro
+      ? (CARDS[ARRASTRE.id].t==='personaje' ? 'SUELTA PARA INVOCAR' : 'SUELTA PARA JUGAR')
+      : 'SUÉLTALA EN EL TAPETE'; }
+}
+
+function sobreElTapete(e){
+  const m = $('#mat').getBoundingClientRect();
+  return e.clientX>=m.left && e.clientX<=m.right && e.clientY>=m.top && e.clientY<=m.bottom;
+}
+
+function limpiarArrastre(){
+  if (!ARRASTRE) return;
+  if (ARRASTRE.fantasma) ARRASTRE.fantasma.remove();
+  ARRASTRE.d.classList.remove('arrastrando');
+  ARRASTRE.d.onpointermove = ARRASTRE.d.onpointerup = ARRASTRE.d.onpointercancel = null;
+  try{ ARRASTRE.d.releasePointerCapture(ARRASTRE.punteroId); }catch(err){}
+  $('#mat').classList.remove('zonaok','zonano');
+  const cartel = $('#soltaraqui'); if (cartel) cartel.remove();
+  ARRASTRE = null;
+}
+function cancelarArrastre(){ limpiarArrastre(); render(); }
+
+function soltarArrastre(e){
+  if (!ARRASTRE) return;
+  const {id, activo} = ARRASTRE;
+  const enTapete = sobreElTapete(e);
+  limpiarArrastre();
+  if (!activo){ render(); return; }          // fue un toque: no se juega nada
+  if (!enTapete){ toast('Arrastra la carta al tapete para jugarla'); render(); return; }
+  SEL = null; clearPrompt();
+  if (NET.guest){ gIntent('play',{id}); return; }
+  playFromHand(ME, id);
+}
+
 function whyNot(s,id){
   const c=CARDS[id];
   if(G.active!==s) return 'No es tu turno';
@@ -3081,8 +3201,11 @@ function buildTut(lid){
   el turno 5 tendrás 5, quieras o no.`},
 
 {hi:'#hand', wait:g=>tutJugada(M.c1), allow:{hand:[M.c1], end:true},
- t:`Empieza tu mesa: juega <b>${n(M.c1)}</b>.<br><br>
+ t:`Empieza tu mesa: <b>arrastra ${n(M.c1)} al tapete</b> y suéltala ahí.
+    Las cartas se juegan arrastrándolas, no pulsándolas.<br><br>
     El <b>borde verde</b> quiere decir "puedes pagarla ahora mismo"; las grises, no.
+    Y el color del borde te dice de qué clase es: los Personajes van en naranja, los
+    Hechizos en azul, las Trampas en morado, los Objetos en verde y los Lugares en oliva.
     ${CARDS[M.c1].c>1?'Si todavía no te alcanza, termina el turno y la juegas al siguiente: en este mazo el turno 1 suele estar vacío.':''}`},
 
 {hi:'#myField', t:[`Ya está en tu <b>Campo</b> (caben 5 Personajes).`,
@@ -3116,7 +3239,7 @@ function buildTut(lid){
     está apagado: tiene el borde verde de "listo para atacar".`},
 
 {hi:'#hand', wait:g=>tutJugada(M.c2), allow:{hand:[M.c2], end:true, attack:true},
- t:`Suma otro cuerpo: juega <b>${n(M.c2)}</b>.${CARDS[M.c2].c>2?' Si aún no te alcanza, termina el turno y lo bajas al siguiente.':''}<br><br>
+ t:`Suma otro cuerpo: <b>arrastra ${n(M.c2)} al tapete</b>.${CARDS[M.c2].c>2?' Si aún no te alcanza, termina el turno y lo bajas al siguiente.':''}<br><br>
     En este juego la mesa lo es todo: el que tiene más Personajes decide contra qué se pelea.`},
 
 /* Este paso espera a que ataques DE VERDAD (antes se daba por cumplido con sólo
@@ -3985,7 +4108,7 @@ function netApply(s){
 async function netPlayFx(list){
   for(const f of list){
     const u=f.uid!=null? [...P(0).field,...P(1).field].find(x=>x.uid===f.uid) : null;
-    if(f.k==='hit'&&u) await fxHit(u,f.n);
+    if(f.k==='hit'&&u) await fxHit(u,f.n,f.inf);
     else if(f.k==='heal'&&u) fxHeal(u,f.n);
     else if(f.k==='face') await fxFace(f.side,f.n);
     else if(f.k==='spell') await fxSpell(f.id,f.side);
