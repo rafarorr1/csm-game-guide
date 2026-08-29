@@ -540,7 +540,10 @@ PRUEBAS.suite('regresiones', async t => {
       'pulsar una carta ya no debe jugarla: se juegan arrastrando');
 
     await arrastrarAlTapete($1('#hand .card.playable'));
-    await sleep(600);
+    // se espera al HECHO, no a un reloj: con las animaciones activas jugar una
+    // carta tarda bastante más, y un sleep fijo fallaba según qué suite
+    // hubiera corrido antes.
+    for (let i=0; i<40 && T.P(0).hand.length >= antes.mano; i++) await sleep(100);
     t.check(T.P(0).hand.length < antes.mano, 'arrastrarla al tapete debería jugarla');
     t.check(!$1('#arrastre') && !$1('#soltaraqui'),
       'el arrastre dejó basura en pantalla');
