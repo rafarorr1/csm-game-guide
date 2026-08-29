@@ -1683,7 +1683,7 @@ async function trapWindow(side, event, ev){
     list.splice(i,1);
     P(side).grave.push(t.id);
     log(`🪤 <b>${c.n}</b> se activa.`);
-    render(); netFx('trap',{id:t.id}); await fxTrap(t.id); await nap(120);
+    render(); netFx('trap',{id:t.id,side}); await fxTrap(t.id,side); await nap(120);
     await c.fire(G,side,ev);
     render();
     if(G.tutorial) await tutBeat('trampa',{id:t.id,side});
@@ -1996,6 +1996,8 @@ async function useLeader(s){
   const ev={kind:'lider',cardId:null,countered:false};
   await trapWindow(1-s,'hechizoOHabilidad',ev);
   if(ev.countered){ render(); return true; }
+  await fxHabilidad(s);
+  netFx('hab',{side:s});
   await L.hab_do(G,s,ts);
   recalc(); await checkDeaths(); render();
   if(G.tutorial) tutCheck();
@@ -2510,6 +2512,20 @@ async function fxLunge(att, target){
   if(!FXON()) return;
   const e=fxEl(att); const from=fxCenter(att); const to=fxCenter(target==='face'?(att.side===ME?'face1':'face0'):target);
   if(!e||!from||!to){ await nap(120); return; }
+  // Si ataca el rival, primero se anuncia: quién va a por quién. Sin esto el
+  // golpe llegaba antes de que te diera tiempo a mirar de dónde salía.
+  if(att.side!==ME){
+    const destino = target==='face' ? P(ME).L.n : target.card.n;
+    const et=fxAdd('fxlabel',(from.x+to.x)/2,(from.y+to.y)/2-46,{color:'#ffb36b'});
+    et.textContent = att.card.n+' ataca a '+destino;
+    et.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.85)'},
+      {opacity:1,transform:'translate(-50%,-50%) scale(1)',offset:.25},
+      {opacity:1,offset:.75},{opacity:0}],{duration:1000});
+    fxGone(et,1000);
+    const halo=e.animate([{filter:'brightness(1)'},{filter:'brightness(1.7)'},
+      {filter:'brightness(1)'}],{duration:620,iterations:1});
+    await nap(640);
+  }
   const dx=(to.x-from.x)*.42, dy=(to.y-from.y)*.42;
   const a=e.animate([{transform:'translate(0,0)'},
     {transform:`translate(${dx*-0.18}px,${dy*-0.18}px)`,offset:.22},
@@ -2642,39 +2658,69 @@ async function fxDeath(u){
   } else await nap(160);
 }
 /* hechizo: la carta sube al centro, brilla con el color de su subtipo y se deshace */
-async function fxSpell(cardId, side){
+/* ---------------------------------------------------------------------------
+   CARTA EN ESCENA
+   Cuando algo se activa —un Hechizo, una Trampa, la Habilidad de un Líder— la
+   carta sube al centro, se queda quieta un momento y se va. Es la única forma
+   de que se entienda qué acaba de pasar: antes las Trampas sólo enseñaban su
+   nombre en texto y las Habilidades no enseñaban nada.
+   Se queda más rato si lo hace el rival: lo suyo hay que leerlo, no adivinarlo.
+   ------------------------------------------------------------------------ */
+async function fxCartaEnEscena(nodo, side, color, etiqueta, quieta){
   if(!FXON()) return;
-  const c=CARDS[cardId];
-  const color = (c.sub&&SUBCOLOR[c.sub[0]]) || '#8a5cf0';
   const board=$('#field').getBoundingClientRect();
   const cx=board.left+board.width/2, cy=board.top+board.height/2;
-  const mini=cardEl(cardId,{}); mini.classList.add('fxcard');
-  mini.style.left=(cx-56)+'px'; mini.style.top=(cy-79)+'px'; mini.onmouseenter=null;
-  $('#fx').appendChild(mini);
+  nodo.classList.add('fxcard');
+  nodo.style.left=(cx-56)+'px'; nodo.style.top=(cy-79)+'px';
+  nodo.onmouseenter=null; nodo.onpointerdown=null;
+  $('#fx').appendChild(nodo);
+  const total = quieta + 420;
+
+  if(etiqueta){
+    const et=fxAdd('fxlabel', cx, cy-120, {color});
+    et.textContent=etiqueta;
+    et.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.82)'},
+      {opacity:1,transform:'translate(-50%,-50%) scale(1)',offset:.2},
+      {opacity:1,offset:.82},{opacity:0}],{duration:total});
+    fxGone(et,total);
+  }
   const fromY = side===ME? 220 : -220;
-  const a=mini.animate([
+  nodo.animate([
     {transform:`translateY(${fromY}px) scale(.6) rotate(${side===ME?6:-6}deg)`,opacity:0},
-    {transform:'translateY(0) scale(1.35) rotate(0)',opacity:1,offset:.32},
-    {transform:'translateY(0) scale(1.35) rotate(0)',opacity:1,offset:.62},
+    {transform:'translateY(0) scale(1.35) rotate(0)',opacity:1,offset:.2},
+    {transform:'translateY(0) scale(1.35) rotate(0)',opacity:1,offset:.82},
     {transform:'translateY(-30px) scale(1.55) rotate(0)',opacity:0}
-  ],{duration:900,easing:'cubic-bezier(.2,.8,.3,1)'});
+  ],{duration:total,easing:'cubic-bezier(.2,.8,.3,1)'});
   const ring=fxAdd('fxring',cx,cy,{color});
   ring.animate([{transform:'scale(.3)',opacity:0},{transform:'scale(1)',opacity:.9,offset:.35},
     {transform:'scale(3.6)',opacity:0}],{duration:820,easing:'ease-out'});
-  fxGone(ring,820); fxGone(mini,900);
-  await nap(560);
+  fxGone(ring,820); fxGone(nodo,total);
+  await nap(quieta + 180);
 }
-/* trampa: se voltea con su nombre */
-async function fxTrap(cardId){
+/* cuánto se queda quieta: lo del rival, más tiempo */
+const fxQuieta = side => side===ME ? 520 : 1000;
+
+async function fxSpell(cardId, side){
+  const c=CARDS[cardId];
+  const color=(c.sub&&SUBCOLOR[c.sub[0]])||'#8a5cf0';
+  await fxCartaEnEscena(cardEl(cardId,{}), side, color,
+    side===ME ? null : P(FOE).L.n+' lanza '+c.n, fxQuieta(side));
+}
+/* trampa: ahora se ve la CARTA, no sólo su nombre */
+async function fxTrap(cardId, side){
+  const dueño = (side==null) ? FOE : side;
+  await fxCartaEnEscena(cardEl(cardId,{}), dueño, 'var(--c-trampa)',
+    '🪤 ¡TRAMPA! '+CARDS[cardId].n, fxQuieta(dueño));
+}
+/* habilidad de Líder: sube su carta con el nombre de la habilidad */
+async function fxHabilidad(side){
   if(!FXON()) return;
-  const board=$('#field').getBoundingClientRect();
-  const d=fxAdd('fxlabel', board.left+board.width/2, board.top+board.height/2, {color:'var(--c-trampa)'});
-  d.innerHTML='🪤 '+CARDS[cardId].n;
-  d.animate([{transform:'translate(-50%,-50%) rotateX(90deg) scale(.7)',opacity:0},
-    {transform:'translate(-50%,-50%) rotateX(0) scale(1.15)',opacity:1,offset:.35},
-    {transform:'translate(-50%,-50%) rotateX(0) scale(1)',opacity:1,offset:.75},
-    {transform:'translate(-50%,-50%) scale(1.1)',opacity:0}],{duration:1100}); fxGone(d,1100);
-  await nap(600);
+  const L=P(side).L;
+  const original=$('#lead'+(side===ME?0:1));
+  const nodo = original ? original.cloneNode(true) : cardEl('discipulo',{});
+  nodo.id=''; nodo.style.width='112px'; nodo.style.height='158px';
+  await fxCartaEnEscena(nodo, side, 'var(--gold)',
+    '✨ '+L.habName+' — '+L.n, fxQuieta(side));
 }
 /* cartel de cambio de turno */
 async function fxBanner(side){
@@ -3092,7 +3138,8 @@ async function aiTurn(){
     if(scripted){ if(!G.over){ await nap(400); await endTurn(); } return; }
   }
   G.busy=true;
-  const pause = ()=>nap(G.tutorial?600:200);
+  // 200 ms era ilegible: sus jugadas pasaban antes de que te dieras cuenta.
+  const pause = ()=>nap(G.tutorial?600:620);
   try{
     let guard=0, played=0; const skip=new Set();
     const maxPlays = 12;
@@ -4134,7 +4181,8 @@ async function netPlayFx(list){
     else if(f.k==='heal'&&u) fxHeal(u,f.n);
     else if(f.k==='face') await fxFace(f.side,f.n);
     else if(f.k==='spell') await fxSpell(f.id,f.side);
-    else if(f.k==='trap') await fxTrap(f.id);
+    else if(f.k==='trap') await fxTrap(f.id,f.side);
+    else if(f.k==='hab')  await fxHabilidad(f.side);
     else if(f.k==='banner') await fxBanner(f.side);
     else if(f.k==='dice') await rollDice(f.v,f.label,false);
     else if(f.k==='obj'&&u) fxObj(u,f.id,f.txt);
