@@ -590,6 +590,70 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('las Infectadas se ponen verdes y su daño sale en verde');
   }
 
+  /* El halo verde de "puedes jugarla" es SÓLO del tutorial. Jugando, las cartas
+     que puedes usar se ven normales y las que no, apagadas. */
+  {
+    document.body.classList.remove('tut-on');
+    const d = cardEl('eric'); d.classList.add('playable');
+    d.style.cssText = 'position:fixed;left:-9999px'; document.body.appendChild(d);
+    await sleep(60);
+    const jugando = getComputedStyle(d).boxShadow;
+    t.check(!/79, 192, 125/.test(jugando),
+      'jugando no debe haber halo verde en las cartas de la mano');
+
+    document.body.classList.add('tut-on');
+    await sleep(60);
+    t.check(/79, 192, 125/.test(getComputedStyle(d).boxShadow),
+      'en el tutorial sí debe verse el halo verde, que es donde se explica');
+    document.body.classList.remove('tut-on');
+
+    // y las que no puedes usar se distinguen por estar apagadas.
+    // La espera es larga a propósito: las cartas llevan transition:.13s y medir
+    // antes pilla la opacidad a mitad de camino (0,61 en vez de 0,4).
+    d.className = 'card t-personaje unplayable';
+    await sleep(300);
+    const apagada = getComputedStyle(d);
+    t.check(parseFloat(apagada.opacity) <= 0.5,
+      'una carta que no puedes jugar debería verse claramente apagada (opacidad '
+      + apagada.opacity + ', clases "' + d.className + '")');
+    d.remove();
+    t.nota('el halo verde vive sólo en el tutorial; jugando manda el contraste');
+  }
+
+  /* El círculo del coste conserva el color de su tipo aunque la carta esté
+     rebajada por una pasiva. Antes se pintaba de verde con un estilo en línea y
+     se cargaba el color: con Mohamed, Golpe a Sangre Fría (Hechizo) salía verde
+     en vez de violeta. Se construyen las cartas directamente en vez de fiarse de
+     lo que toque en la mano. */
+  {
+    await T.setupMatch('mohamed','adreida',{fast:true,auto:true,silent:true});
+    T.P(0).pd = 5; T.recalc();
+    t.check(T.costOf('sangrefria',0) < T.CARDS.sangrefria.c,
+      'con Mohamed, Sangre Fría debería costar 1 PD menos (es Hechizo de Engaño)');
+    t.check(T.costOf('mensaje',0) === T.CARDS.mensaje.c,
+      'Mensaje no es de Engaño: no debería llevar descuento');
+
+    const caja = document.createElement('div');
+    caja.style.cssText = 'position:fixed;left:-9999px';
+    const rebajada = cardEl('sangrefria', {side:0});
+    const normal   = cardEl('mensaje',    {side:0});
+    caja.appendChild(rebajada); caja.appendChild(normal);
+    document.body.appendChild(caja);
+    await sleep(250);
+
+    t.check(rebajada.querySelector('.cost').classList.contains('rebajado'),
+      'la carta rebajada debería marcarse como tal');
+    t.check(!normal.querySelector('.cost').classList.contains('rebajado'),
+      'la que no tiene descuento no debería marcarse');
+    const cr = getComputedStyle(rebajada.querySelector('.cost')).backgroundImage;
+    const cn = getComputedStyle(normal.querySelector('.cost')).backgroundImage;
+    t.check(cr === cn,
+      `dos Hechizos deben compartir color de coste, esté uno rebajado o no `
+      + `— rebajada=${cr.slice(0,44)} / normal=${cn.slice(0,44)}`);
+    caja.remove();
+    t.nota('el descuento se ve sin robarle el color al tipo de carta');
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();

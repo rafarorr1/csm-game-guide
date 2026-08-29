@@ -234,13 +234,26 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:radial-gradient(circle at 35% 30%,var(--tipo-cl),var(--tipo-os));
   border-color:var(--tipo-cl);
   box-shadow:0 0 6px color-mix(in srgb,var(--tipo) 55%,transparent)}
+/* Rebajada por una pasiva (los Hechizos de Engaño con Mohamed, por ejemplo).
+   Antes se pintaba el círculo entero de verde y se cargaba el color del tipo:
+   ahora el círculo sigue siendo del tipo y el descuento se ve en el anillo. */
+.card .cost.rebajado{position:relative;
+  box-shadow:0 0 0 2px #0d0a13,0 0 0 4px #6cf09a,0 0 10px rgba(108,240,154,.6)}
+.card .cost.rebajado::after{content:'▼';position:absolute;bottom:-9px;left:50%;
+  transform:translateX(-50%);font-size:8px;color:#6cf09a;text-shadow:0 1px 2px #000}
 /* el hover ya no roba el color del tipo: sólo lo ilumina */
 .card[class*="t-"]:hover{border-color:var(--tipo-cl)}
-.card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green),0 0 15px rgba(79,192,125,.4)}
+/* Jugando no hace falta adorno: las que puedes usar se ven normales y las que
+   no, apagadas. El halo verde se queda SÓLO para el tutorial, que es donde se
+   explica qué significa. */
+.card.playable{}
+body.tut-on .card.playable{
+  box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green),0 0 15px rgba(79,192,125,.4)}
 .card.locked{opacity:.3;filter:grayscale(.9);box-shadow:none;cursor:not-allowed}
 .card.locked:hover{transform:none;border-color:var(--line)}
 .leaderchip.locked{opacity:.3;filter:grayscale(.9);cursor:not-allowed}
-.card.unplayable{opacity:.55;filter:grayscale(.45)}
+.card.unplayable{opacity:.4;filter:grayscale(.72) brightness(.62)}
+.card.unplayable:hover{opacity:.62;filter:grayscale(.5) brightness(.78)}
 .card.tgt{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--red),0 0 17px rgba(224,82,74,.55);
   animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 3px var(--red),0 0 26px rgba(224,82,74,.85)}}
@@ -2295,7 +2308,7 @@ function cardEl(id,opt={}){
   const cost = opt.side!=null&&G ? costOf(id,opt.side) : c.c;
   const disc = cost<c.c;
   d.innerHTML=`
-    <div class="top"><div class="cost" ${disc?'style="background:radial-gradient(circle at 35% 30%,#9fe8a0,#1f7a3a);border-color:#b6f0b8"':''}>${cost}</div>
+    <div class="top"><div class="cost${disc?' rebajado':''}">${cost}</div>
       <div class="nm">${c.n}</div></div>
     ${c.r===2?'<div class="rar">★</div>':''}
     <div class="art">${c.art}</div>
