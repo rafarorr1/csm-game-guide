@@ -116,6 +116,267 @@ Hay una comprobación para esto: recorre `TUT_MAZO`, `TUT_FOE_SCRIPT` y `GUIAS[]
 avisa si alguno cita una carta que ya no está en el mazo correspondiente. **Pasarla antes de
 dar por buena cualquier versión que toque las listas.**
 
+### Cómo quedan los mazos
+
+Las cinco listas completas tras los cambios. Generadas desde el propio juego, no a mano.
+
+#### Mohamed — «El Mago Pitero»
+
+*Control · Engaño · Llaves* · 40 cartas · coste medio **2.50 PD** · cuerpos de 4+ ATQ: **3**
+
+**Personajes (15)**
+
+| | Carta | Coste | ATQ/PV | Tribu |
+|---|---|---|---|---|
+| 2× | El Conserje (Viejo Micket) | 1 | 0/1 | Kobold |
+| 2× | Machete (Glip) | 1 | 0/2 | Goblin |
+| 2× | Bartolomeo | 2 | 1/2 | Humano · Sirviente · Casa Boss |
+| 3× | Brick y Brock | 3 | 3/4 | Goblin · Ogro |
+| 2× | Minus | 3 | 2/5 | Minotauro · Valoria |
+| 1× | Rantiago, el Mirrey | 3 | 2/2 | Dragón · Mirrey |
+| 1× | Trol de la Mano Larga | 5 | 6/5 | Trol |
+| 1× | Lucy Fernando (Lucifer) | 6 | 5/5 | Diablo · Infernal |
+| 1× | El Mago del Domo | 8 | 4/8 | Humano · Mago |
+
+**Hechizos (16)**
+
+| | Carta | Coste |
+|---|---|---|
+| 3× | Ilusión Menor | 1 |
+| 2× | Mensaje | 1 |
+| 1× | Rayo de Escarcha | 1 |
+| 2× | Disipar Magia | 2 |
+| 2× | El Acertijo del Chícharo Castigado | 2 |
+| 3× | Golpe a Sangre Fría | 3 |
+| 2× | Nube de Dagas | 3 |
+| 1× | Pergamino de Bola de Fuego | 5 |
+
+**Trampas (4)**
+
+| | Carta | Coste |
+|---|---|---|
+| 2× | Peaje del Puente | 1 |
+| 1× | Risa Incontrolable de Tasha | 2 |
+| 1× | Contrato del Notario Infernal | 4 |
+
+**Objetos (4)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Barra de Jabón | 1 |
+| 1× | Sombrero de Brick | 1 |
+| 1× | Llave del Mago | 3 |
+| 1× | Pergamino de Deseo Ilimitado | 7 |
+
+**Lugares (1)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | El Puente de Brick y Brock | 1 |
+
+#### Fender — «Gira Mundial»
+
+*Aggro · Canciones · Tempo* · 40 cartas · coste medio **1.70 PD** · cuerpos de 4+ ATQ: **0**
+
+**Personajes (18)**
+
+| | Carta | Coste | ATQ/PV | Tribu |
+|---|---|---|---|---|
+| 3× | Discípulo de Rul | 1 | 1/2 | Elfo · Discípulo |
+| 1× | Machete (Glip) | 1 | 0/2 | Goblin |
+| 3× | Matildus | 1 | 1/1 | Elfo · Discípulo |
+| 3× | Adolfo y Remus | 2 | 2/2 | Elfo · Discípulo |
+| 3× | Bartolomeo | 2 | 1/2 | Humano · Sirviente · Casa Boss |
+| 1× | Petunia | 2 | 1/3 | Bestia · Vaca |
+| 3× | Eric | 3 | 3/3 | Humano · Paladín · Casa Boss |
+| 1× | Titaus | 3 | 2/3 | Elfa · Discípulo |
+
+**Hechizos (16)**
+
+| | Carta | Coste |
+|---|---|---|
+| 3× | Burla Viciosa | 1 |
+| 3× | Canción de Taberna | 1 |
+| 3× | Rayo de Escarcha | 1 |
+| 3× | Zancada Larga | 1 |
+| 3× | Balada de Valoria | 3 |
+| 1× | Paso Atronador | 3 |
+
+**Trampas (3)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Destello Protector | 2 |
+| 2× | Risa Incontrolable de Tasha | 2 |
+
+**Objetos (2)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Sombrero de Brick | 1 |
+| 1× | Mazo de Brock | 2 |
+
+**Lugares (1)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Antro Juan | 2 |
+
+#### Adreida — «De Frente»
+
+*Midrange · Paladines · Provocar* · 40 cartas · coste medio **2.27 PD** · cuerpos de 4+ ATQ: **4**
+
+**Personajes (18)**
+
+| | Carta | Coste | ATQ/PV | Tribu |
+|---|---|---|---|---|
+| 2× | El Conserje (Viejo Micket) | 1 | 0/1 | Kobold |
+| 2× | Machete (Glip) | 1 | 0/2 | Goblin |
+| 3× | Bartolomeo | 2 | 1/2 | Humano · Sirviente · Casa Boss |
+| 3× | Augusto Bale | 3 | 2/4 | Humano · Tomsage |
+| 1× | Brick y Brock | 3 | 3/4 | Goblin · Ogro |
+| 2× | Eric | 3 | 3/3 | Humano · Paladín · Casa Boss |
+| 1× | Aldrick Boss | 4 | 2/3 | Humano · Noble · Casa Boss |
+| 1× | Eman 69 | 4 | 4/3 | Humano · Cazarrecompensas |
+| 1× | Lucius Bale | 4 | 4/4 | Humano · Paladín · Tomsage |
+| 2× | Sir Horton | 4 | 4/3 | Humano · Paladín |
+
+**Hechizos (13)**
+
+| | Carta | Coste |
+|---|---|---|
+| 3× | Armadura Mágica | 1 |
+| 3× | Zancada Larga | 1 |
+| 3× | Auxilio | 2 |
+| 3× | Saeta Guía | 2 |
+| 1× | Modificar las Reglas | 5 |
+
+**Trampas (5)**
+
+| | Carta | Coste |
+|---|---|---|
+| 2× | Destello Protector | 2 |
+| 1× | Esporas del Demonio | 2 |
+| 2× | Colapso de Paja | 3 |
+
+**Objetos (3)**
+
+| | Carta | Coste |
+|---|---|---|
+| 2× | Collar Mágico de Agua | 2 |
+| 1× | Mazo de Brock | 2 |
+
+**Lugares (1)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Tomsage bajo asedio | 2 |
+
+#### Rafaela — «Los Doce Discípulos»
+
+*Enjambre · Fe · Aguante* · 40 cartas · coste medio **2.05 PD** · cuerpos de 4+ ATQ: **1**
+
+**Personajes (17)**
+
+| | Carta | Coste | ATQ/PV | Tribu |
+|---|---|---|---|---|
+| 3× | Discípulo de Rul | 1 | 1/2 | Elfo · Discípulo |
+| 1× | El Conserje (Viejo Micket) | 1 | 0/1 | Kobold |
+| 2× | Machete (Glip) | 1 | 0/2 | Goblin |
+| 3× | Matildus | 1 | 1/1 | Elfo · Discípulo |
+| 2× | Adolfo y Remus | 2 | 2/2 | Elfo · Discípulo |
+| 1× | Petunia | 2 | 1/3 | Bestia · Vaca |
+| 1× | Minus | 3 | 2/5 | Minotauro · Valoria |
+| 3× | Titaus | 3 | 2/3 | Elfa · Discípulo |
+| 1× | Juan Gabriel | 6 | 5/6 | Humano · Valoria · Arquero |
+
+**Hechizos (17)**
+
+| | Carta | Coste |
+|---|---|---|
+| 3× | Taumaturgia | 1 |
+| 1× | Auxilio | 2 |
+| 2× | Bendición de Rul | 2 |
+| 1× | Ceguera/Sordera | 2 |
+| 2× | Leche de Petunia | 2 |
+| 2× | Manos Ardientes | 2 |
+| 3× | Saeta Guía | 2 |
+| 2× | Espíritus Guardianes | 4 |
+| 1× | Rulchete, la Polimorfia Verdadera | 5 |
+
+**Trampas (3)**
+
+| | Carta | Coste |
+|---|---|---|
+| 2× | Destello Protector | 2 |
+| 1× | Esporas del Demonio | 2 |
+
+**Objetos (2)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Barra de Jabón | 1 |
+| 1× | Collar Mágico de Agua | 2 |
+
+**Lugares (1)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Antro Juan | 2 |
+
+#### Talesin — «Ascensión»
+
+*Sacrificio · Rampa · Tal* · 40 cartas · coste medio **2.52 PD** · cuerpos de 4+ ATQ: **3**
+
+**Personajes (16)**
+
+| | Carta | Coste | ATQ/PV | Tribu |
+|---|---|---|---|---|
+| 3× | El Conserje (Viejo Micket) | 1 | 0/1 | Kobold |
+| 1× | Machete (Glip) | 1 | 0/2 | Goblin |
+| 3× | Matildus | 1 | 1/1 | Elfo · Discípulo |
+| 1× | Petunia | 2 | 1/3 | Bestia · Vaca |
+| 1× | Bob Carly | 3 | 1/6 | Bestia · Caracol |
+| 3× | Eric | 3 | 3/3 | Humano · Paladín · Casa Boss |
+| 1× | Rantiago, el Mirrey | 3 | 2/2 | Dragón · Mirrey |
+| 1× | Eman 69 | 4 | 4/3 | Humano · Cazarrecompensas |
+| 1× | Sir Horton | 4 | 4/3 | Humano · Paladín |
+| 1× | Edbor | 5 | 5/4 | Humano · Paladín · Oathbreaker |
+
+**Hechizos (15)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | Hongos del Bosque | 1 |
+| 2× | Rayo de Escarcha | 1 |
+| 1× | Cuerda Dimensional | 2 |
+| 2× | Disipar Magia | 2 |
+| 2× | Proyectil Mágico | 2 |
+| 2× | Nube de Dagas | 3 |
+| 3× | Rayo Abrasador | 3 |
+| 2× | Aliento de Ácido | 4 |
+
+**Trampas (4)**
+
+| | Carta | Coste |
+|---|---|---|
+| 2× | Esporas del Demonio | 2 |
+| 2× | Tal Habla por el Cadáver | 3 |
+
+**Objetos (4)**
+
+| | Carta | Coste |
+|---|---|---|
+| 2× | Puntos Robados | 2 |
+| 1× | Llave del Mago | 3 |
+| 1× | Pergamino de Deseo Ilimitado | 7 |
+
+**Lugares (1)**
+
+| | Carta | Coste |
+|---|---|---|
+| 1× | El Domo | 4 |
+
 ### Lo que esta versión NO arregla
 
 Adreida sigue en 72,8 %. Se probaron seis palancas y ninguna la baja de ~70 % moviendo solo
