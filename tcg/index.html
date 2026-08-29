@@ -283,6 +283,28 @@ body.tut-on .card.playable{
 .kw.sig{color:#c9a6ff;border-color:#5a3f8a}
 .kw.bad{color:var(--red);border-color:#7a2a26}
 .kw.good{color:var(--green);border-color:#2a7a4a}
+/* Las habilidades propias de la carta, con su nombre. Se distinguen de las
+   palabras clave del juego (Prisa, Provocar…) por el color y la cursiva: unas
+   son reglas generales y otras son lo que hace ESA carta. */
+.kw.hab{color:#e8d9a0;border-color:#6b5a2a;background:#2a2213;font-style:italic}
+
+/* ---- el volado del inicio ---- */
+.volado{display:flex;flex-direction:column;align-items:center;gap:14px;padding:6px 0}
+.moneda{width:112px;height:112px;border-radius:50%;display:grid;place-items:center;
+  font-size:48px;font-weight:900;transform-style:preserve-3d;
+  background:radial-gradient(circle at 34% 28%,#ffe9a8,#b8860b 62%,#6b4d09);
+  border:3px solid #ffe9a8;color:#5a4207;
+  box-shadow:0 10px 26px rgba(0,0,0,.7),inset 0 -6px 14px rgba(0,0,0,.35)}
+.moneda.girando{animation:voltea 1.5s cubic-bezier(.25,.6,.3,1) forwards}
+@keyframes voltea{
+  0%  {transform:rotateY(0)      translateY(0)     scale(1)}
+  35% {transform:rotateY(900deg) translateY(-58px) scale(1.12)}
+  70% {transform:rotateY(1800deg)translateY(-20px) scale(1.06)}
+  100%{transform:rotateY(2520deg)translateY(0)     scale(1)}}
+.volado .lados{display:flex;gap:12px}
+.volado .lados .btn{font-size:15px;padding:12px 26px}
+.volado .dice{font-size:15px;color:var(--dim);min-height:22px;text-align:center}
+.volado .dice b{color:var(--gold)}
 .dmgbadge{position:absolute;bottom:26px;right:4px;font-size:10px;color:var(--red);font-weight:800}
 .eq{position:absolute;top:24px;right:2px;display:flex;flex-direction:column;gap:1px}
 .eq span{font-size:12px;filter:drop-shadow(0 1px 2px #000)}
@@ -1731,6 +1753,50 @@ async function aiFast(side,ctx,cands){
 /* ==========================================================================
    5. FLUJO DE TURNO
    ========================================================================== */
+/* ---------------------------------------------------------------------------
+   EL VOLADO
+   Antes quien empezaba salía de un rnd() invisible y sólo lo contaba una línea
+   del registro. Ahora eliges lado, se lanza la moneda y ves si te toca. Nada
+   cambia en las reglas: sigue siendo 50/50.
+   Devuelve quién empieza (0 = tú). Si no se puede preguntar —partidas
+   automáticas, tutorial, online— quien llama pasa el resultado por su cuenta.
+   ------------------------------------------------------------------------ */
+async function volado(nombreRival){
+  const p=$('#ovPanel');
+  const eleccion = await new Promise(ok=>{
+    p.innerHTML=`<h3>🪙 Cara o cruz</h3>
+      <p style="font-size:14.5px">Elige tu lado. Quien gane el volado empieza la partida.</p>
+      <div class="volado">
+        <div class="moneda" id="moneda">🪙</div>
+        <div class="lados">
+          <button class="btn gold" id="ladoCara">CARA</button>
+          <button class="btn" id="ladoCruz">CRUZ</button>
+        </div>
+        <div class="dice" id="voladoTxt"></div>
+      </div>`;
+    openOv();
+    $('#ladoCara').onclick=()=>ok('cara');
+    $('#ladoCruz').onclick=()=>ok('cruz');
+  });
+
+  $('#ladoCara').disabled=$('#ladoCruz').disabled=true;
+  $('#voladoTxt').innerHTML=`Pediste <b>${eleccion.toUpperCase()}</b>…`;
+  const salio = rnd(2)===0 ? 'cara' : 'cruz';
+  const moneda=$('#moneda');
+  moneda.classList.add('girando');
+  await nap(1500);
+  moneda.classList.remove('girando');
+  moneda.textContent = salio==='cara' ? '👑' : '⚔️';
+
+  const ganas = (salio===eleccion);
+  $('#voladoTxt').innerHTML =
+    `Salió <b>${salio.toUpperCase()}</b> ${salio==='cara'?'👑':'⚔️'} — ` +
+    (ganas ? '<b>empiezas tú</b>' : `empieza <b>${nombreRival}</b>`);
+  await nap(1400);
+  $('#ov').classList.remove('on');
+  return ganas ? ME : FOE;
+}
+
 async function setupMatch(myLeader, foeLeader, opts={}){
   newGame(myLeader, foeLeader, opts);
   G.fast=!!opts.fast; G.auto=!!opts.auto; G.silent=!!opts.silent;
@@ -2312,6 +2378,21 @@ function unitEl(u){
   unitFill(d,u);
   return d;
 }
+/* Los nombres de las habilidades salen del propio texto de la carta, que ya las
+   escribe en negrita y con dos puntos ("<b>Sacrificio:</b> cuando un aliado…").
+   Así no hay una segunda lista que mantener al día: si se reescribe una carta,
+   su chapa cambia sola. */
+const HAB_CACHE = {};
+function nombresDeHabilidad(cardId){
+  if(HAB_CACHE[cardId]) return HAB_CACHE[cardId];
+  const txt = (CARDS[cardId] && CARDS[cardId].x) || '';
+  const out = [];
+  const re = /<b>([^<:]{2,26}):<\/b>/g;
+  let m;
+  while((m = re.exec(txt))) out.push(m[1].trim());
+  return HAB_CACHE[cardId] = out;
+}
+
 // el cascarón se reutiliza entre renders para que las animaciones no se corten
 function unitFill(d,u){
   const c=u.card;
@@ -2329,7 +2410,8 @@ function unitFill(d,u){
     ${c.r===2?'<div class="rar">★</div>':''}
     <div class="art">${c.art}</div>
     <div class="tribe">${u.tribes.join(' · ')}</div>
-    <div class="keys">${kw.join('')}</div>
+    <div class="keys">${kw.join('')}${
+      nombresDeHabilidad(c.id).map(n=>`<span class="kw hab">${n}</span>`).join('')}</div>
     ${u.objs.length?`<div class="eq">${u.objs.map(o=>`<span title="${CARDS[o]?CARDS[o].n:''}">${CARDS[o]?CARDS[o].art:'✨'}</span>`).join('')}</div>`:''}
     <div class="stats"><span class="atk">${u.atk}</span><span class="hp">${hp}</span></div>`;
   attachInspect(d,c.id,u);
@@ -3804,11 +3886,16 @@ function showEnd(winner,why){
   openOv();
 }
 
-async function startMatch(a,b){
+async function startMatch(a, b, opts={}){
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
   $('#log').innerHTML='';
   showScreen('board');
-  await setupMatch(a,b,{});
+  // El volado necesita a alguien que elija lado. Se salta explícitamente con
+  // {volado:false} — lo usan las pruebas, que si no se quedarían esperando un
+  // clic que nadie va a dar.
+  const conVolado = opts.volado !== false;
+  const first = conVolado ? await volado(LEADERS[b].n) : null;
+  await setupMatch(a, b, first==null ? {} : {first});
 }
 
 

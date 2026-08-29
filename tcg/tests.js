@@ -475,7 +475,7 @@ PRUEBAS.suite('regresiones', async t => {
      — irse siempre tiene que poder hacerse. */
   {
     const boton = () => $$('#controls .btn').find(b => /Menú/.test(b.textContent));
-    await T.startMatch('fender','adreida');
+    await T.startMatch('fender','adreida',{volado:false});
     await sleep(700);
     t.check(!!boton(), 'no hay botón para volver al menú durante una partida');
     boton().click(); await sleep(250);
@@ -508,7 +508,7 @@ PRUEBAS.suite('regresiones', async t => {
      el #hand tiene scroll horizontal y en táctil el navegador se quedaba el
      gesto, así que el arrastre se trababa. */
   {
-    await T.startMatch('fender','adreida');
+    await T.startMatch('fender','adreida',{volado:false});
     await sleep(700);
     T.P(0).pd = 9; T.recalc(); T.render(); await sleep(150);
 
@@ -547,7 +547,7 @@ PRUEBAS.suite('regresiones', async t => {
 
   /* Infectado: la carta en verde y su daño en verde, no en rojo. */
   {
-    await T.startMatch('fender','adreida'); await sleep(600);
+    await T.startMatch('fender','adreida',{volado:false}); await sleep(600);
     const u = T.mkUnit('discipulo', 0); u.sick=false; T.P(0).field.push(u);
     T.recalc(); T.render(); await sleep(200);
     const antes = $1(`#myField .card[data-uid="${u.uid}"]`);
@@ -634,7 +634,7 @@ PRUEBAS.suite('regresiones', async t => {
      y las Habilidades no enseñaban nada. */
   {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
-    await T.startMatch('mohamed','adreida'); await sleep(600);
+    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(600);
 
     const enEscena = () => $$('#fx .fxcard').length;
     const carteles = () => $$('.fxlabel').map(e=>e.textContent).join(' | ');
@@ -660,7 +660,7 @@ PRUEBAS.suite('regresiones', async t => {
 
   /* Los ataques del rival se anuncian antes de llegar: quién va a por quién. */
   {
-    await T.startMatch('fender','adreida'); await sleep(500);
+    await T.startMatch('fender','adreida',{volado:false}); await sleep(500);
     const suyo = T.mkUnit('horton', 1); suyo.sick = false; T.P(1).field.push(suyo);
     const mio  = T.mkUnit('discipulo', 0); mio.sick = false; T.P(0).field.push(mio);
     T.recalc(); T.render(); await sleep(200);
@@ -672,6 +672,50 @@ PRUEBAS.suite('regresiones', async t => {
       `un ataque del rival debe decir quién ataca a quién — decía: "${dicho}"`);
     await p;
     t.nota('los ataques del rival se anuncian antes de llegar');
+  }
+
+  /* El volado: eliges lado, la moneda decide, y quien gana empieza de verdad.
+     Se comprueba que lo que dice el cartel y lo que hace el juego coinciden —
+     que es lo único que no puede fallar aquí. */
+  {
+    try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
+    let empezasteTu = 0;
+    for (let i = 0; i < 6; i++){
+      startMatch('fender','adreida');            // sin await: espera a que elijas
+      for (let k=0; k<40 && !$1('#ladoCara'); k++) await sleep(50);
+      t.check(!!$1('#ladoCara'), 'debería preguntarte cara o cruz al empezar');
+      (i % 2 ? $1('#ladoCruz') : $1('#ladoCara')).click();
+      for (let k=0; k<60 && $1('#ov').classList.contains('on'); k++) await sleep(100);
+      const dijo = $1('#voladoTxt') ? $1('#voladoTxt').textContent : '';
+      const empiezoYo = T.G.active === 0;
+      if (empiezoYo) empezasteTu++;
+      t.check(/empiezas tú/.test(dijo) === empiezoYo,
+        `el volado dijo "${dijo}" pero empieza ${empiezoYo?'el jugador':'el rival'}`);
+      await sleep(150);
+    }
+    t.nota(`volado: ganaste ${empezasteTu} de 6 (es una moneda, no tiene que salir 3)`);
+
+    // y se puede saltar, que es lo que usan estas pruebas
+    await T.startMatch('fender','adreida',{volado:false});
+    await sleep(400);
+    t.check(!$1('#ov').classList.contains('on'),
+      'con {volado:false} no debería preguntar nada');
+  }
+
+  /* Las cartas del tablero enseñan el nombre de sus habilidades. */
+  {
+    await T.startMatch('fender','adreida',{volado:false}); await sleep(500);
+    const u = T.mkUnit('brickbrock', 0); u.sick = false; T.P(0).field.push(u);
+    T.recalc(); T.render(); await sleep(250);
+    const carta = $1(`#myField .card[data-uid="${u.uid}"]`);
+    t.check(!!carta, 'no encontré la carta en el tablero');
+    const chapas = [...carta.querySelectorAll('.kw.hab')].map(e=>e.textContent);
+    t.check(chapas.includes('Peaje') && chapas.includes('Acertijo'),
+      `Brick y Brock debería enseñar sus dos habilidades — enseña: ${JSON.stringify(chapas)}`);
+    // y los nombres salen del texto de la carta, no de una lista aparte
+    t.check(/Peaje/.test(T.CARDS.brickbrock.x),
+      'los nombres deberían salir del propio texto de la carta');
+    t.nota('las cartas del tablero enseñan el nombre de sus habilidades');
   }
 
   /* El log filtra lo privado: el rival no puede ver qué robas. */
