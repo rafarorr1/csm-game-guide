@@ -5,10 +5,74 @@ Lo de arriba es lo más reciente.
 
 Cómo se anota una versión nueva:
 
-- **v2, v3…** cuando cambian las reglas, las cartas o los mazos — o sea, cuando una partida
-  se juega distinto. Aquí va siempre el antes y el después medido con `balance.html`.
+- **v2, v3…** cuando cambian las reglas, las cartas, los mazos o **la forma de manejar el
+  juego** — o sea, cuando una partida se juega distinto. Si el cambio toca al balance, aquí
+  va siempre el antes y el después medido con `balance.html`.
 - Los arreglos y las mejoras de interfaz no llevan número: van en «Sin numerar» abajo, o en
   el historial de git si son menores.
+
+---
+
+## v3 — Se arrastra para jugar, y cada carta tiene su color · 2026-08-28
+
+No toca cartas ni mazos: **el balance de la v2 sigue igual**. Pero cambia cómo se maneja el
+juego, así que lleva número — quien venga de la v2 tiene que enterarse de que las cartas ya
+no se pulsan.
+
+### Las cartas se juegan arrastrándolas
+
+Coges la carta y la sueltas en el tapete. **Pulsarla ya no la juega**, sólo te la deja ver.
+
+Mientras arrastras: la carta original se queda en su hueco atenuada, para que no baile la
+mano entera; un fantasma sigue al dedo o al ratón; el tapete se ilumina en verde; y un cartel
+dice *SUELTA PARA INVOCAR* o *SUELTA PARA JUGAR* según el tipo. Si sueltas fuera, la carta
+vuelve y te avisa.
+
+Está hecho con **Pointer Events**, que valen igual para ratón y para dedo: con eventos de
+ratón el móvil se quedaba fuera, y el drag-and-drop de HTML no funciona en táctil. Hay un
+umbral de 7 px para no confundir un toque con un arrastre, así que se puede seguir tocando una
+carta para mirarla.
+
+Arrastres: el tutorial decía «haz clic» y ahora enseña el gesto; el arnés de pruebas también
+arrastra de verdad, con pointerdown/move/up, en vez de llamar por dentro a la función.
+
+### Cada clase de carta tiene su color
+
+En el borde entero (antes sólo la franja de arriba) y en el círculo del coste, que iba
+siempre azul para todas.
+
+| Clase | Color |
+|---|---|
+| Personaje | azul |
+| Hechizo | violeta |
+| Trampa | rojo |
+| Objeto | amarillo |
+| Lugar | verde esmeralda |
+
+Los cinco se distinguen de sobra: el par más parecido, azul y violeta, está a **45,7** de
+distancia perceptual (por debajo de 25 se confunden de un vistazo).
+
+**Dos chocaban con colores que ya significaban algo.** El rojo de Trampa contra el halo rojo
+de «objetivo válido» estaba a 7,4 — casi el mismo color —, y el verde de Lugar contra el halo
+verde de «puedes jugarla», a 16,8. En pantalla se veían como una sola mancha. Se arregló
+**separando los dos anillos con un hueco del color del fondo**: primero el borde del tipo,
+luego el hueco, luego el halo del estado. Y «puede atacar» dejó de pintar el borde de verde
+—ahí manda el tipo— y se quedó con su anillo pulsante y el distintivo de espadas.
+
+### Infectado se ve
+
+La criatura Infectada se pone **verde** con su símbolo ☣, y **el daño de la infección sale en
+verde** en vez de rojo: al ver el número ya sabes que lo que le pasa es la infección y no un
+golpe. Ese verde está a 39,5 del verde de Lugares, así que no se confunden.
+
+### Se puede salir al menú
+
+Faltaba: desde una partida no había forma de volver al menú. Las guías, la selección de Líder
+y el cartel de fin sí la tenían; una partida empezada era un callejón sin salida salvo
+recargando la página. El botón va junto a Reglas, pide confirmación porque la partida se
+pierde, y en online avisa al rival para que no se quede esperando. No lleva el bloqueo del
+tutorial: el tablero se bloquea para que no te pierdas, pero irse siempre tiene que poder
+hacerse.
 
 ---
 
