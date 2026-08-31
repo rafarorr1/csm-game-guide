@@ -313,6 +313,13 @@ body.tut-on .card.playable{
 .revela .adonde.mano{color:var(--green)} .revela .adonde.grave{color:var(--dim)}
 .revela .adonde small{display:block;font-size:12.5px;font-weight:400;color:var(--dim);
   margin-top:3px;letter-spacing:0}
+
+/* ---- lo que hace falta y lo que pasa, en el diálogo del d20 ---- */
+.dpide{font-size:13px;color:var(--dim);margin:-2px 0 6px;letter-spacing:.3px}
+.dpide b{color:var(--gold);font-size:15px}
+.defecto{min-height:22px;font-size:14.5px;font-weight:800;margin:6px 0 2px;
+  text-align:center;line-height:1.35;max-width:280px}
+.defecto.bien{color:var(--green)} .defecto.mal{color:var(--red)}
 .dmgbadge{position:absolute;bottom:26px;right:4px;font-size:10px;color:var(--red);font-weight:800}
 .eq{position:absolute;top:24px;right:2px;display:flex;flex-direction:column;gap:1px}
 .eq span{font-size:12px;filter:drop-shadow(0 1px 2px #000)}
@@ -892,7 +899,8 @@ C('rantiago',{n:'Rantiago, el Mirrey',t:'personaje',c:3,a:2,h:2,tr:['Dragón','M
  hostage:true,
  enterTg:{k:'unidad',min:0,max:1,label:'invitado a la fiesta'},
  enter:async(g,s,u,ts)=>{ const t=ts&&ts[0]&&ts[0][0]; if(!t) return;
-   const r=await roll('Fiesta de hongos');
+   const r=await roll('Fiesta de hongos', null, {necesita:'11 o más', min:11,
+     siOk:'+2 ATQ permanentes', siMal:'Se pasa de hongos y queda Aturdido'});
    if(r<=10){ stun(t); log(`${t.card.n} se pasa de hongos: <b>Aturdido</b>.`,'dmg'); }
    else { t.pA+=2; log(`${t.card.n} se pone loco: +2 ATQ permanentes.`); } }});
 
@@ -958,7 +966,8 @@ C('acertijo',{n:'El Acertijo del Chícharo Castigado',t:'hechizo',c:2,sub:['enga
  req:(g,s)=>P(1-s).field.length>0,
  cast:async(g,s,ts)=>{ const u=ts[0][0];
    const dumb=u.tribes.includes('Goblin')||u.tribes.includes('Ogro');
-   const r = dumb?1:await roll('Acertijo del Chícharo');
+   const r = dumb?1:await roll('Acertijo del Chícharo', null, {necesita:'11 o más', min:11,
+     siOk:'Resuelve el acertijo y se queda', siMal:'No lo resuelve y vuelve a la mano'});
    if(dumb) log(`${u.card.n} ni lo intenta (Goblin/Ogro).`,'sys');
    if(r<=10){ log(`${u.card.n} no resuelve el acertijo y vuelve a la mano.`,'dmg'); bounce(u); }
    else log(`${u.card.n} resuelve el acertijo. No pasa nada.`,'sys'); }});
@@ -975,14 +984,16 @@ C('campanafe',{n:'Campaña de la Fe',t:'hechizo',c:4,sub:['engano'],r:1,art:'�
  req:(g,s)=>P(1-s).field.some(u=>u.tribes.includes('Discípulo')||u.tribes.includes('Elfo')),
  cast:async(g,s,ts)=>{ const u=ts[0][0];
    const auto=P(s).field.some(o=>o.tribes.includes('Dragón'));
-   const r = auto?20:await roll('Campaña de la Fe');
+   const r = auto?20:await roll('Campaña de la Fe', null, {necesita:'8 o más', min:8,
+     siOk:'Se convierte a tu causa', siMal:'La campaña no convence a nadie'});
    if(r>=8){ if(P(s).field.length<5){ moveUnit(u,1-s,s); log(`${u.card.n} se convierte a tu causa.`);} 
              else log('Tu campo está lleno; la conversión falla.','sys'); }
    else log('La campaña no convence a nadie.','sys'); }});
 
 C('hongos',{n:'Hongos del Bosque',t:'hechizo',c:1,r:0,art:'🍄',
  x:'d20 — 1-5: muere un aliado. 6-14: roba 1. 15-19: roba 2. 20: roba 3 y tus Personajes +1/+1 este turno.',
- cast:async(g,s)=>{ const r=await roll('Hongos del Bosque');
+ cast:async(g,s)=>{ const r=await roll('Hongos del Bosque', null, {necesita:'6 o más', min:6,
+     siOk:'Robas cartas (más cuanto más alto)', siMal:'Mal viaje: muere tu peor aliado'});
    if(r<=5){ const u=worstAlly(s); if(u){ log(`Mal viaje: ${u.card.n} muere.`,'dmg'); await destroy(u);} else log('Mal viaje, pero no hay a quién matar.','sys'); }
    else if(r<=14) await draw(s,1);
    else if(r<=19) await draw(s,2);
@@ -1099,7 +1110,9 @@ C('ceguera',{n:'Ceguera/Sordera',t:'hechizo',c:2,sub:['fe'],r:0,art:'🙈',
  tg:[{k:'unidadEnemiga',min:1,max:1}],
  req:(g,s)=>P(1-s).field.length>0,
  cast:async(g,s,ts)=>{ const u=ts[0][0];
-   if(u.tribes.includes('Dragón')){ const r=await roll('Resistencia del Dragón');
+   if(u.tribes.includes('Dragón')){ const r=await roll('Resistencia del Dragón', null,
+     {necesita:'11 o más', min:11, siOk:'El Dragón resiste la ceguera',
+      siMal:'No resiste: queda ciego y Aturdido'});
      if(r>=11){ log(`${u.card.n} resiste la ceguera.`,'sys'); return; } }
    stun(u); u.blind=true; log(`${u.card.n} queda ciego y sordo.`,'dmg'); }});
 
@@ -1301,7 +1314,9 @@ C('puente',{n:'El Puente de Brick y Brock',t:'lugar',c:1,r:0,art:'🌉',
 C('montanas',{n:'Las Montañas de Tal',t:'lugar',c:3,r:1,art:'⛰️',
  x:'Los Dragones cuestan 2 PD menos. Al inicio de cada turno, el jugador activo tira d20: con 1-3, Eman 69 aparece en el campo rival.',
  dragonDiscount:true,
- onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Tal');
+ onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Tal', null,
+     {necesita:'4 o más para que no pase nada', min:4,
+      siOk:'No aparece nadie', siMal:'¡Eman 69 aparece en el campo rival!'});
    if(r<=3 && P(1-s).field.length<5 && !P(1-s).field.some(u=>u.card.id==='eman')){
      const u=mkUnit('eman',1-s); P(1-s).field.push(u); recalc();
      log('¡Eman 69 aparece en el campo rival buscando trabajo!','sys'); } }});
@@ -1670,12 +1685,13 @@ async function cloudCheck(u){ // Nube de Dagas del rival
 }
 
 /* ---------- d20 ---------- */
-async function roll(label, side){
+async function roll(label, side, meta){
   side = (side==null? G.active : side);
   let r = 1+rnd(20);
-  if(NET.host&&side===FOE){ netFx('dice',{v:r,label});
-    await Promise.all([rollDice(r,label,false), netAsk({kind:'roll',value:r,label,fallback:1})]); }
-  else { if(NET.host) netFx('dice',{v:r,label}); await rollDice(r,label,side===ME); }
+  if(NET.host&&side===FOE){ netFx('dice',{v:r,label,meta:metaPlana(meta)});
+    await Promise.all([rollDice(r,label,false,meta), netAsk({kind:'roll',value:r,label,fallback:1})]); }
+  else { if(NET.host) netFx('dice',{v:r,label,meta:metaPlana(meta)});
+         await rollDice(r,label,side===ME,meta); }
   const ev={isRoll:true,value:r,side};
   if(r>=15) await trapWindow(1-side,'letal',ev);
   if(!ev.reroll) await fastWindow(1-side,{kind:'d20',ev});
@@ -1689,6 +1705,17 @@ async function roll(label, side){
   if(G.tutorial) await tutBeat('dado',{r,side});
   if(r===1){ log('Pifia: pierdes 1 Alma.','dmg'); await dmgFace(side,1,{src:'pifia'}); }
   return r;
+}
+
+/* La descripción de la tirada lleva una función (¿acierta o no?), que no cabe
+   en un mensaje de red: viaja el umbral y el rival reconstruye la comparación. */
+function metaPlana(m){
+  if(!m) return null;
+  return {necesita:m.necesita, min:m.min??null, max:m.max??null, siOk:m.siOk, siMal:m.siMal};
+}
+function metaViva(m){
+  if(!m) return null;
+  return {...m, ok:v => (m.min!=null ? v>=m.min : true) && (m.max!=null ? v<=m.max : true)};
 }
 
 /* ---------- ventana de Trampas ---------- */
@@ -2187,7 +2214,9 @@ async function doAttack(u, target){
     }
     // El Puente de Brick y Brock (lugar)
     if(target==='face' && G.place && CARDS[G.place.id].riddleBridge){
-      const r=await roll('Acertijo del Puente',s);
+      const r=await roll('Acertijo del Puente', s, {necesita:'8 o más', min:8,
+        siOk:'Resuelve el acertijo y puede atacar al Alma',
+        siMal:'No lo resuelve: no puede atacar al Alma'});
       if(r<8){ log('No resuelve el acertijo: no puede atacar al Alma.','sys'); u.attacked=true; render(); return true; }
     }
     P(s).attacked=true;
@@ -2215,7 +2244,8 @@ async function doAttack(u, target){
 
     // Miope (Minus)
     if(u.card.myopic && target!=='face'){
-      const r=await roll('Miope',s);
+      const r=await roll('Miope', s, {necesita:'11 o más', min:11,
+        siOk:'Ataca a quien quería', siMal:'No ve bien y ataca a otro al azar'});
       if(r<=10){ const pool=lt.units.filter(o=>o.alive);
         if(pool.length){ target=pool[rnd(pool.length)]; log(`Minus no ve bien y ataca a ${target.card.n}.`,'sys'); } }
     }
@@ -2225,7 +2255,9 @@ async function doAttack(u, target){
     if(P(s).fairy && target!=='face') atk+=1;
     // Ludópata (Eman 69)
     if(u.card.gambler){
-      const r=await roll('Ludópata',s);
+      const r=await roll('Ludópata', s, {necesita:'15 o más', min:15,
+        siOk:'¡Gana la apuesta! Daño doble',
+        siMal:'Pierde la apuesta (con 5 o menos, se hace el daño a sí mismo)'});
       if(r>=15){ atk*=2; log('¡Eman acierta la apuesta! Daño doble.','roll'); }
       else if(r<=5){ log('Eman pierde la apuesta y se hace el daño a sí mismo.','dmg');
         await dmgU(u,atk,{src:'ludopata'}); render(); return true; }
@@ -2347,13 +2379,20 @@ function toast(t){
 }
 /* El dado se tira ANTES de que pase nada en el tablero: tú lo lanzas, ves el
    número, y sólo al continuar se aplica el efecto. */
-async function rollDice(value, label, interactive){
+async function rollDice(value, label, interactive, meta){
   if(!FXON()) return;
   const ov=$('#dice'), box=$('#diceBox');
   return new Promise(resolve=>{
+    // meta describe la tirada: qué hace falta y qué pasa según salga. Sin ella
+    // el dado enseñaba un número suelto y el efecto sólo se contaba en el
+    // registro lateral, donde se pierde.
+    const pide = meta && meta.necesita
+      ? `<div class="dpide">Necesitas <b>${meta.necesita}</b></div>` : '';
     box.innerHTML=`<div class="dtop">${label||'Tirada de d20'}</div>
+      ${pide}
       <div class="d20" id="d20v">🎲</div>
       <div class="dlabel" id="dlabel">${interactive?'':'&nbsp;'}</div>
+      <div class="defecto" id="defecto"></div>
       <button class="btn gold" id="dbtn">${interactive?'🎲 &nbsp;TIRAR EL D20':'Tirando…'}</button>`;
     ov.classList.add('on');
     const v=$('#d20v'), lab=$('#dlabel'), btn=$('#dbtn');
@@ -2371,8 +2410,15 @@ async function rollDice(value, label, interactive){
         {duration:460,easing:'cubic-bezier(.2,1.5,.4,1)'});
       lab.textContent = value===20?'¡CRÍTICO!' : value===1?'¡PIFIA!' : '';
       lab.className = 'dlabel'+(value===1?' pif':'');
+      // y lo que de verdad importa: qué efecto tiene ese número
+      if(meta && meta.ok){
+        const bien = meta.ok(value);
+        const ef=$('#defecto');
+        ef.className = 'defecto ' + (bien?'bien':'mal');
+        ef.innerHTML = (bien?'✔ ':'✘ ') + (bien ? meta.siOk : meta.siMal);
+      }
       btn.disabled=false; btn.textContent='Continuar →'; btn.onclick=done;
-      if(!interactive) setTimeout(done,1500);       // la del rival sigue sola
+      if(!interactive) setTimeout(done, meta?2600:1500);   // con efecto, más rato
     };
     if(interactive) btn.onclick=girar; else setTimeout(girar,320);
   });
@@ -4258,7 +4304,7 @@ async function netPlayFx(list){
     else if(f.k==='hab')  await fxHabilidad(f.side);
     else if(f.k==='revela') await revelarCarta(f.id, f.mano, f.side);
     else if(f.k==='banner') await fxBanner(f.side);
-    else if(f.k==='dice') await rollDice(f.v,f.label,false);
+    else if(f.k==='dice') await rollDice(f.v,f.label,false,metaViva(f.meta));
     else if(f.k==='obj'&&u) fxObj(u,f.id,f.txt);
     else if(f.k==='notice') fxNotice(f.txt,f.color);
   }
