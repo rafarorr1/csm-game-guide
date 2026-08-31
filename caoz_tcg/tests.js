@@ -826,6 +826,39 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('la moneda usa los mismos dos iconos de principio a fin');
   }
 
+  /* El d20 dice qué hace falta y qué efecto ha tenido. Antes enseñaba un número
+     suelto y la consecuencia sólo se contaba en el registro lateral. */
+  {
+    try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
+    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(600);
+    const meta = {necesita:'8 o más', min:8, ok:v=>v>=8,
+                  siOk:'Se convierte a tu causa', siMal:'La campaña no convence a nadie'};
+
+    rollDice(12, 'Campaña de la Fe', false, meta);
+    for (let i=0; i<30 && !$1('.defecto')?.textContent; i++) await sleep(100);
+    t.check(/8 o más/.test($1('.dpide')?.textContent || ''),
+      'el dado debería decir qué hace falta antes de tirar');
+    t.check(/Se convierte/.test($1('.defecto').textContent),
+      'con 12 sobre 8+ debería anunciar que sale bien');
+    t.check($1('.defecto').className.includes('bien'), 'y marcarlo como acierto');
+    for (let i=0; i<40 && $1('#dice').classList.contains('on'); i++) await sleep(100);
+
+    rollDice(3, 'Campaña de la Fe', false, meta);
+    for (let i=0; i<30 && !/convence/.test($1('.defecto')?.textContent||''); i++) await sleep(100);
+    t.check(/no convence/i.test($1('.defecto').textContent),
+      'con 3 sobre 8+ debería anunciar que falla');
+    t.check($1('.defecto').className.includes('mal'), 'y marcarlo como fallo');
+    for (let i=0; i<40 && $1('#dice').classList.contains('on'); i++) await sleep(100);
+
+    // y ninguna tirada del juego se queda sin explicar
+    const src = await fuente();
+    const tiradas = (src.match(/await roll\(/g) || []).length;
+    const explicadas = (src.match(/necesita:/g) || []).length - 1;   // menos la de metaPlana
+    t.check(tiradas === explicadas,
+      `hay ${tiradas} tiradas de d20 y sólo ${explicadas} explican su efecto`);
+    t.nota(`las ${tiradas} tiradas de d20 dicen qué hace falta y qué pasa`);
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();

@@ -15,6 +15,18 @@ Cómo se anota una versión nueva:
 
 ## v5 — El volado, las habilidades con nombre, y ver lo que roba Manos Largas · 2026-08-28
 
+### El d20 dice qué hace falta y qué ha pasado
+
+Tirabas el dado, salía un número… y ya. Lo que ese número significaba sólo se contaba en el
+registro lateral, donde se pierde entre otras líneas.
+
+Ahora el propio diálogo del dado lo dice: **«Necesitas 8 o más»** antes de tirar, y después
+**«✔ Se convierte a tu causa»** en verde o **«✘ La campaña no convence a nadie»** en rojo.
+Las **nueve** tiradas del juego están explicadas, y hay una prueba que falla si se añade una
+sin explicar.
+
+Cuando tira el rival, el diálogo se queda 2,6 s en vez de 1,5: hay más que leer.
+
 ### Cada acción se anuncia con texto
 
 Unas jugadas se anunciaban y otras no, sin criterio: **sólo los Hechizos** enseñaban algo al
