@@ -15,6 +15,23 @@ Cómo se anota una versión nueva:
 
 ## v5 — El volado, las habilidades con nombre, y ver lo que roba Manos Largas · 2026-08-28
 
+### Cada acción se anuncia con texto
+
+Unas jugadas se anunciaban y otras no, sin criterio: **sólo los Hechizos** enseñaban algo al
+jugarse, y encima su etiqueta salía **únicamente si la jugaba el rival**. Ahora las cinco
+clases dicen lo que pasa — *«Mohamed invoca a Brick y Brock»*, *«coloca Peaje del Puente»*,
+*«saca Sombrero de Brick»*, *«cambia el escenario»* — con el color de su clase, y tanto si
+juegas tú como si juega el rival. Los ataques también se anuncian siempre, aunque sólo se
+hace una pausa para leerlos cuando ataca el rival: en tu turno ya sabes lo que haces.
+
+De una Trampa rival no se dice cuál es, que va boca abajo. Sólo que la ha puesto.
+
+### La moneda no cambia de iconos
+
+Empezaba con un 🪙 genérico y terminaba en 👑 o ⚔️, que salían de la nada. Ahora enseña 👑
+desde el principio, alterna entre las dos caras mientras gira, y se para en la que salga.
+Los botones llevan el icono de su cara: **👑 CARA** y **⚔️ CRUZ**.
+
 ### Manos Largas enseña la carta
 
 La Habilidad de Mohamed saca la carta de arriba del mazo rival y, según lo que sea, se la

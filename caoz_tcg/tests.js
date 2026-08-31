@@ -769,6 +769,63 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('Manos Largas enseña la carta y espera antes de moverla');
   }
 
+  /* TODA carta que se juega se anuncia con texto, sea del tipo que sea y la
+     juegue quien la juegue. Antes sólo los Hechizos enseñaban algo, y encima su
+     etiqueta salía únicamente si la jugaba el rival: por eso unas veces se veía
+     texto y otras no. */
+  {
+    try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
+    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(700);
+    const mudas = [];
+    const ejemplos = {personaje:'brickbrock', hechizo:'ilusion', trampa:'peaje', lugar:'puente'};
+    for (const [tipo, id] of Object.entries(ejemplos)){
+      T.P(0).pd = 9; T.P(0).hand = [id]; T.recalc(); T.render(); await sleep(180);
+      const antes = new Set($$('.fxlabel').map(e=>e.textContent));
+      T.play(id);
+      let dicho = '';
+      for (let i=0; i<28 && !dicho; i++){
+        await sleep(90);
+        for (const e of $$('.fxlabel'))
+          if (e.textContent && !antes.has(e.textContent)) { dicho = e.textContent; break; }
+      }
+      if (!dicho) mudas.push(tipo);
+      await sleep(1200);
+    }
+    // el Objeto necesita a quién equiparse, así que va aparte
+    const u = T.mkUnit('bartolomeo', 0); u.sick = false; T.P(0).field.push(u);
+    T.P(0).pd = 9; T.P(0).hand = ['sombrero']; T.recalc(); T.render(); await sleep(200);
+    const antes = new Set($$('.fxlabel').map(e=>e.textContent));
+    playFromHand(0, 'sombrero', [[u]]);
+    let dichoObj = '';
+    for (let i=0; i<28 && !dichoObj; i++){
+      await sleep(90);
+      for (const e of $$('.fxlabel'))
+        if (e.textContent && !antes.has(e.textContent)) { dichoObj = e.textContent; break; }
+    }
+    if (!dichoObj) mudas.push('objeto');
+
+    t.check(mudas.length === 0, 'estos tipos se juegan sin decir nada: ' + mudas.join(', '));
+    t.nota('las cinco clases de carta se anuncian al jugarse');
+  }
+
+  /* La moneda del volado enseña siempre los mismos dos iconos. */
+  {
+    startMatch('mohamed','adreida');
+    for (let i=0; i<40 && !$1('#moneda'); i++) await sleep(50);
+    const reposo = $1('#moneda').textContent;
+    const botones = $$('.volado .lados .btn').map(b=>b.textContent).join(' ');
+    t.check(['👑','⚔️'].includes(reposo),
+      `la moneda debería enseñar una de sus dos caras, no otro icono — enseña "${reposo}"`);
+    t.check(/👑/.test(botones) && /⚔️/.test(botones),
+      'los botones deberían llevar el icono de su cara');
+    $1('#ladoCara').click();
+    for (let i=0; i<60 && $1('#ov').classList.contains('on'); i++) await sleep(100);
+    const final = $1('#moneda') ? $1('#moneda').textContent : reposo;
+    t.check(['👑','⚔️'].includes(final),
+      `al terminar debería quedarse en una de las dos caras — quedó "${final}"`);
+    t.nota('la moneda usa los mismos dos iconos de principio a fin');
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();

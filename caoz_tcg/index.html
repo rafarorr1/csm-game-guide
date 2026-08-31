@@ -1776,13 +1776,16 @@ async function aiFast(side,ctx,cands){
 async function volado(nombreRival){
   const p=$('#ovPanel');
   const eleccion = await new Promise(ok=>{
+    // La moneda enseña 👑 desde el principio y acaba en 👑 o ⚔️, los mismos
+    // iconos que llevan los botones. Antes empezaba con un 🪙 genérico y el
+    // icono final salía de la nada.
     p.innerHTML=`<h3>🪙 Cara o cruz</h3>
       <p style="font-size:14.5px">Elige tu lado. Quien gane el volado empieza la partida.</p>
       <div class="volado">
-        <div class="moneda" id="moneda">🪙</div>
+        <div class="moneda" id="moneda">👑</div>
         <div class="lados">
-          <button class="btn gold" id="ladoCara">CARA</button>
-          <button class="btn" id="ladoCruz">CRUZ</button>
+          <button class="btn gold" id="ladoCara">👑 CARA</button>
+          <button class="btn" id="ladoCruz">⚔️ CRUZ</button>
         </div>
         <div class="dice" id="voladoTxt"></div>
       </div>`;
@@ -1796,7 +1799,9 @@ async function volado(nombreRival){
   const salio = rnd(2)===0 ? 'cara' : 'cruz';
   const moneda=$('#moneda');
   moneda.classList.add('girando');
+  const alterna=setInterval(()=>{ moneda.textContent = moneda.textContent==='👑'?'⚔️':'👑'; },110);
   await nap(1500);
+  clearInterval(alterna);
   moneda.classList.remove('girando');
   moneda.textContent = salio==='cara' ? '👑' : '⚔️';
 
@@ -2031,7 +2036,22 @@ async function playFromHand(s, id, forcedTargets){
   log(`<b>${P(s).L.n}</b> juega <b>${c.n}</b> (${cost} PD).`);
   render();
   fxStat(s,'.stat.pd');
-  if(c.t==='hechizo'){ netFx('spell',{id,side:(s===FOE?0:1)}); await fxSpell(id,s); } else await nap(260);
+  // Toda carta que se juega se anuncia. Antes sólo los Hechizos enseñaban algo,
+  // y encima su etiqueta salía únicamente si la jugaba el rival: por eso unas
+  // veces se veía texto y otras no.
+  if(c.t==='hechizo'){ netFx('spell',{id,side:(s===FOE?0:1)}); await fxSpell(id,s); }
+  else {
+    const quien = P(s).L.n;
+    const verbo = {personaje:'invoca a', trampa:'coloca una Trampa',
+                   objeto:'saca', lugar:'cambia el escenario:'}[c.t] || 'juega';
+    // de una Trampa rival no se dice cuál es: va boca abajo
+    const texto = (c.t==='trampa' && s!==ME)
+      ? `🪤 ${quien} coloca una Trampa`
+      : (c.t==='trampa' ? `🪤 ${quien} coloca ${c.n}` : `${c.art} ${quien} ${verbo} ${c.n}`);
+    netFx('notice',{txt:texto,color:'var(--c-'+c.t+')'});
+    fxNotice(texto, 'var(--c-'+c.t+')');
+    await nap(s===ME ? 380 : 620);
+  }
 
   if(c.t==='hechizo'){
     const ev={cardId:id, kind:'hechizo', countered:false};
@@ -2634,17 +2654,22 @@ async function fxLunge(att, target){
   if(!e||!from||!to){ await nap(120); return; }
   // Si ataca el rival, primero se anuncia: quién va a por quién. Sin esto el
   // golpe llegaba antes de que te diera tiempo a mirar de dónde salía.
-  if(att.side!==ME){
-    const destino = target==='face' ? P(ME).L.n : target.card.n;
+  {
+    const destino = target==='face'
+      ? (att.side===ME ? P(FOE).L.n : P(ME).L.n)
+      : target.card.n;
     const et=fxAdd('fxlabel',(from.x+to.x)/2,(from.y+to.y)/2-46,{color:'#ffb36b'});
     et.textContent = att.card.n+' ataca a '+destino;
     et.animate([{opacity:0,transform:'translate(-50%,-50%) scale(.85)'},
       {opacity:1,transform:'translate(-50%,-50%) scale(1)',offset:.25},
       {opacity:1,offset:.75},{opacity:0}],{duration:1000});
     fxGone(et,1000);
-    const halo=e.animate([{filter:'brightness(1)'},{filter:'brightness(1.7)'},
-      {filter:'brightness(1)'}],{duration:620,iterations:1});
-    await nap(640);
+    // sólo se espera cuando ataca el rival: en tu turno ya sabes lo que haces
+    if(att.side!==ME){
+      e.animate([{filter:'brightness(1)'},{filter:'brightness(1.7)'},
+        {filter:'brightness(1)'}],{duration:620,iterations:1});
+      await nap(640);
+    }
   }
   const dx=(to.x-from.x)*.42, dy=(to.y-from.y)*.42;
   const a=e.animate([{transform:'translate(0,0)'},
@@ -2823,8 +2848,10 @@ const fxQuieta = side => side===ME ? 520 : 1000;
 async function fxSpell(cardId, side){
   const c=CARDS[cardId];
   const color=(c.sub&&SUBCOLOR[c.sub[0]])||'#8a5cf0';
+  // la etiqueta sale SIEMPRE, tuya o suya: antes sólo se ponía para el rival y
+  // por eso unas jugadas se anunciaban y otras no
   await fxCartaEnEscena(cardEl(cardId,{}), side, color,
-    side===ME ? null : P(FOE).L.n+' lanza '+c.n, fxQuieta(side));
+    P(side).L.n+' lanza '+c.n, fxQuieta(side));
 }
 /* trampa: ahora se ve la CARTA, no sólo su nombre */
 async function fxTrap(cardId, side){
