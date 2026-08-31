@@ -305,6 +305,14 @@ body.tut-on .card.playable{
 .volado .lados .btn{font-size:15px;padding:12px 26px}
 .volado .dice{font-size:15px;color:var(--dim);min-height:22px;text-align:center}
 .volado .dice b{color:var(--gold)}
+
+/* ---- carta revelada del mazo ---- */
+.revela{display:flex;flex-direction:column;align-items:center;gap:12px;padding:4px 0}
+.revela .card{cursor:default;transform:scale(1.35);margin:16px 0 24px}
+.revela .adonde{font-size:16px;font-weight:800;text-align:center;letter-spacing:.3px}
+.revela .adonde.mano{color:var(--green)} .revela .adonde.grave{color:var(--dim)}
+.revela .adonde small{display:block;font-size:12.5px;font-weight:400;color:var(--dim);
+  margin-top:3px;letter-spacing:0}
 .dmgbadge{position:absolute;bottom:26px;right:4px;font-size:10px;color:var(--red);font-weight:800}
 .eq{position:absolute;top:24px;right:2px;display:flex;flex-direction:column;gap:1px}
 .eq span{font-size:12px;filter:drop-shadow(0 1px 2px #000)}
@@ -718,8 +726,12 @@ mohamed:{ n:'Mohamed', ep:'El Mago Pitero', art:'🧙‍♂️', arch:'Control �
   hab_do:async(g,s)=>{
     const d=P(1-s).deck; if(!d.length) return;
     const c=d.shift();
-    if(CARDS[c].t==='objeto'){ P(s).hand.push(c); log(`<b>Manos Largas</b>: Mohamed roba ${CARDS[c].n} del mazo rival.`);}
+    const aMano = CARDS[c].t==='objeto';
+    netFx('revela',{id:c, mano:aMano, side:s});
+    await revelarCarta(c, aMano, s);        // se ve la carta y a dónde va
+    if(aMano){ P(s).hand.push(c); log(`<b>Manos Largas</b>: Mohamed roba ${CARDS[c].n} del mazo rival.`);}
     else { P(1-s).grave.push(c); log(`<b>Manos Largas</b>: ${CARDS[c].n} va a las Alcantarillas rivales.`,'sys'); }
+    render();
   }},
 fender:{ n:'Fender', ep:'El Bardo Honesto', art:'🎸', arch:'Aggro · Canciones · Tempo',
   pasiva:'<b>Inspiración:</b> cada vez que juegas un Hechizo de Canción, un aliado gana +1 ATQ hasta el final del turno.',
@@ -1795,6 +1807,47 @@ async function volado(nombreRival){
   await nap(1400);
   $('#ov').classList.remove('on');
   return ganas ? ME : FOE;
+}
+
+/* ---------------------------------------------------------------------------
+   REVELAR UNA CARTA DEL MAZO
+   Manos Largas de Mohamed saca la carta de arriba del mazo rival y, según lo
+   que sea, se la queda o la tira. Antes eso pasaba sin verse: salía y
+   desaparecía, y sólo lo contaba una línea del registro. Ahora se enseña la
+   carta, se dice a dónde va, y espera a que le des a Continuar.
+   Si lo hace el rival no hay botón: se cierra sola, pero se queda más rato.
+   ------------------------------------------------------------------------ */
+async function revelarCarta(cardId, aMano, side){
+  if(!FXON() || G.auto) return;            // partidas automáticas: sin diálogos
+  const mio = side===ME;
+  const p=$('#ovPanel');
+  p.innerHTML=`<h3>👀 ${mio?'Miras':P(side).L.n+' mira'} el mazo rival</h3>
+    <div class="revela"><div id="revelaHueco"></div>
+      <div class="adonde ${aMano?'mano':'grave'}">
+        ${aMano ? '➜ '+(mio?'A TU MANO':'A SU MANO') : '➜ A LAS ALCANTARILLAS'}
+        <small>${aMano
+          ? 'Es un Objeto: quien mira se lo queda.'
+          : 'No es un Objeto: se descarta y se pierde.'}</small>
+      </div></div>`;
+  const carta=cardEl(cardId,{});
+  carta.onmouseenter=null;
+  $('#revelaHueco').appendChild(carta);
+  openOv();
+
+  if(mio){
+    await new Promise(ok=>{
+      const box=el('div','opts');
+      const b=el('button','btn gold','Continuar');
+      b.onclick=ok; box.appendChild(b); p.appendChild(box);
+    });
+  } else {
+    await nap(2600);                        // lo del rival se lee, no se pulsa
+  }
+  carta.animate([{transform:'scale(1.35)',opacity:1},
+    {transform:`translateY(${aMano?'220px':'-40px'}) scale(${aMano?'.7':'.5'}) rotate(${aMano?4:-8}deg)`,
+     opacity:0}],{duration:520,easing:'cubic-bezier(.4,0,.7,1)'});
+  await nap(540);
+  $('#ov').classList.remove('on');
 }
 
 async function setupMatch(myLeader, foeLeader, opts={}){
@@ -4176,6 +4229,7 @@ async function netPlayFx(list){
     else if(f.k==='spell') await fxSpell(f.id,f.side);
     else if(f.k==='trap') await fxTrap(f.id,f.side);
     else if(f.k==='hab')  await fxHabilidad(f.side);
+    else if(f.k==='revela') await revelarCarta(f.id, f.mano, f.side);
     else if(f.k==='banner') await fxBanner(f.side);
     else if(f.k==='dice') await rollDice(f.v,f.label,false);
     else if(f.k==='obj'&&u) fxObj(u,f.id,f.txt);

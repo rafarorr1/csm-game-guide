@@ -13,7 +13,20 @@ Cómo se anota una versión nueva:
 
 ---
 
-## v5 — El volado, y las habilidades con nombre · 2026-08-28
+## v5 — El volado, las habilidades con nombre, y ver lo que roba Manos Largas · 2026-08-28
+
+### Manos Largas enseña la carta
+
+La Habilidad de Mohamed saca la carta de arriba del mazo rival y, según lo que sea, se la
+queda o la tira. Eso pasaba **sin verse**: la carta salía y desaparecía, y sólo lo contaba
+una línea del registro.
+
+Ahora se enseña la carta a tamaño grande, con un cartel que dice a dónde va —**A TU MANO**
+en verde si es un Objeto, **A LAS ALCANTARILLAS** si no— y por qué. Espera a que le des a
+**Continuar**, y sólo entonces la carta vuela a su destino: nada se mueve antes.
+
+Si lo hace el rival no hay botón, se cierra sola, pero se queda 2,6 segundos para que dé
+tiempo a leerla. Y en online el rival ve lo mismo que tú.
 
 ### La partida empieza con un volado
 

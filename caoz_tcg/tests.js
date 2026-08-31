@@ -718,6 +718,57 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('las cartas del tablero enseñan el nombre de sus habilidades');
   }
 
+  /* Manos Largas enseña la carta que saca del mazo rival y espera a que le des
+     a Continuar. Antes salía y desaparecía sin verse. Se comprueban los dos
+     desenlaces y —lo importante— que NADA se mueve hasta que pulsas. */
+  {
+    try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
+    const seguir = () => $$('#ovPanel .btn').find(b=>/Continuar/.test(b.textContent));
+
+    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(700);
+
+    // caso 1: sale un Objeto → se lo queda
+    T.P(0).pd = 8; T.P(0).leaderUsed = false;
+    T.P(1).deck.unshift('mazo'); T.recalc(); T.render(); await sleep(150);
+    const manoAntes = T.P(0).hand.length;
+    T.useLeader(0);
+    for (let i=0; i<40 && !seguir(); i++) await sleep(100);
+    t.check(!!seguir(), 'debería enseñar la carta con un botón de Continuar');
+    t.check(!!$1('#revelaHueco .nm'), 'debería verse la carta revelada');
+    t.check(/A TU MANO/.test($1('.revela .adonde').textContent),
+      'debería decir que un Objeto va a tu mano');
+    t.check(T.P(0).hand.length === manoAntes,
+      'la carta no debe moverse hasta que pulses Continuar');
+    seguir().click();
+    for (let i=0; i<30 && T.P(0).hand.length === manoAntes; i++) await sleep(100);
+    t.check(T.P(0).hand.includes('mazo'), 'tras Continuar, el Objeto debería estar en tu mano');
+    // esperar a que el diálogo se cierre del todo: si no, el caso siguiente lee
+    // el cartel del anterior
+    for (let i=0; i<30 && $1('#ov').classList.contains('on'); i++) await sleep(100);
+
+    // caso 2: no es Objeto → a las Alcantarillas del rival
+    T.P(0).pd = 8; T.P(0).leaderUsed = false;
+    T.P(1).deck.unshift('horton'); T.recalc(); T.render(); await sleep(150);
+    const graveAntes = T.P(1).grave.length;
+    T.useLeader(0);
+    // se espera al CARTEL correcto, no sólo a que haya un botón
+    for (let i=0; i<40; i++){
+      const et = $1('.revela .adonde');
+      if (et && /ALCANTARILLAS/.test(et.textContent)) break;
+      await sleep(100);
+    }
+    const cartel = $1('.revela .adonde');
+    t.check(cartel && /ALCANTARILLAS/.test(cartel.textContent),
+      `lo que no es Objeto debería ir a las Alcantarillas — decía: "${cartel?cartel.textContent.trim():'nada'}"`);
+    t.check(T.P(1).grave.length === graveAntes, 'tampoco aquí debe moverse antes de pulsar');
+    seguir().click();
+    for (let i=0; i<30 && T.P(1).grave.length === graveAntes; i++) await sleep(100);
+    t.check(T.P(1).grave.includes('horton') && !T.P(0).hand.includes('horton'),
+      'tras Continuar debería estar en sus Alcantarillas, no en tu mano');
+    await sleep(400);
+    t.nota('Manos Largas enseña la carta y espera antes de moverla');
+  }
+
   /* El log filtra lo privado: el rival no puede ver qué robas. */
   {
     const src = await fuente();
