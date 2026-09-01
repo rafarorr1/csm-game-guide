@@ -724,10 +724,22 @@ PRUEBAS.suite('regresiones', async t => {
   {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
     const seguir = () => $$('#ovPanel .btn').find(b=>/Continuar/.test(b.textContent));
+    /* La Habilidad de Líder sólo se puede usar en TU turno: si no lo es,
+       useLeader devuelve false sin hacer nada y esta prueba acaba midiendo el
+       turno del rival en vez de Manos Largas. Antes esto se fiaba de un sleep
+       fijo y fallaba una vez de cada dos —al hacerse el tablero más pesado,
+       casi siempre—. Ahora se espera al turno de verdad, y los PD se ponen
+       DESPUÉS de esa espera: al empezar el turno se recalculan y se llevarían
+       por delante cualquier valor puesto antes. */
+    const miTurno = async () => {
+      for (let i=0; i<80 && T.G.active !== 0; i++) await sleep(100);
+      return T.G.active === 0;
+    };
 
     await T.startMatch('mohamed','adreida',{volado:false,first:0}); await sleep(700);
 
     // caso 1: sale un Objeto → se lo queda
+    t.check(await miTurno(), 'debería tocarte a ti para poder usar la Habilidad');
     T.P(0).pd = 8; T.P(0).leaderUsed = false;
     T.P(1).deck.unshift('mazo'); T.recalc(); T.render(); await sleep(150);
     const manoAntes = T.P(0).hand.length;
@@ -747,6 +759,7 @@ PRUEBAS.suite('regresiones', async t => {
     for (let i=0; i<30 && $1('#ov').classList.contains('on'); i++) await sleep(100);
 
     // caso 2: no es Objeto → a las Alcantarillas del rival
+    t.check(await miTurno(), 'y volver a tocarte para el segundo caso');
     T.P(0).pd = 8; T.P(0).leaderUsed = false;
     T.P(1).deck.unshift('horton'); T.recalc(); T.render(); await sleep(150);
     const graveAntes = T.P(1).grave.length;

@@ -2377,7 +2377,11 @@ async function startTurn(s){
   G.phase='principal';
   render();
   if(G.tutorial){ tutCheck(); await tutBeat('turno',{side:s}); }
-  if(s===FOE && !G.online) { await nap(600); await aiTurn(); }
+  // El turno del rival se encadena con el siguiente, y esa cadena sigue viva
+  // aunque empiece otra partida: si vuelves al menú y entras de nuevo, la IA de
+  // la anterior seguía jugando sobre la nueva. Cada newGame crea un G distinto,
+  // así que basta con mirar si sigue siendo el mismo antes de continuar.
+  if(s===FOE && !G.online) { const miG=G; await nap(600); if(G!==miG) return; await aiTurn(); }
   if(NET.host) netPushState();
 }
 
@@ -3688,10 +3692,14 @@ function aiPickAttack(u){
 
 async function aiTurn(){
   const s=FOE; if(G.over) return;
+  // Sello de la partida: el turno del rival hace muchas pausas, y en cualquiera
+  // de ellas puede arrancar otra partida. Si eso pasa, esta IA tiene que morir
+  // en el sitio en vez de seguir jugando sobre la mesa nueva.
+  const miG = G, viva = () => G === miG;
   if(G.tutorial && TUT.on){                    // durante el tutorial el rival va guionizado
     G.busy=true; let scripted=false;
-    try{ scripted=await tutFoeTurn(); } finally{ G.busy=false; }
-    if(scripted){ if(!G.over){ await nap(400); await endTurn(); } return; }
+    try{ scripted=await tutFoeTurn(); } finally{ if(viva()) G.busy=false; }
+    if(scripted){ if(viva() && !G.over){ await nap(400); if(viva()) await endTurn(); } return; }
   }
   G.busy=true;
   // 200 ms era ilegible: sus jugadas pasaban antes de que te dieras cuenta.
@@ -3699,7 +3707,7 @@ async function aiTurn(){
   try{
     let guard=0, played=0; const skip=new Set();
     const maxPlays = 12;
-    while(guard++<16 && !G.over && played<maxPlays){
+    while(guard++<16 && viva() && !G.over && played<maxPlays){
       const opts=P(s).hand.filter(id=>canPlay(s,id)&&!skip.has(id))
         .map(id=>({id,v:aiScore(id,s)})).filter(o=>o.v>0)
         .sort((a,b)=>b.v-a.v);
@@ -3707,33 +3715,34 @@ async function aiTurn(){
       await pause();
       if(await playFromHand(s,opts[0].id)) played++; else skip.add(opts[0].id);
     }
-    if(G.over) return;
+    if(!viva() || G.over) return;
     // habilidades activadas
     for(const u of [...P(s).field]){
       if(u.card.act && !u.actUsed && P(s).pd>=u.card.act.cost && (!u.card.act.req||u.card.act.req(G,s))){
-        await pause(); await useAct(u);
+        await pause(); if(!viva()) return; await useAct(u);
       }
     }
     // habilidad de líder
     const L=P(s).L;
     if(!P(s).leaderUsed && P(s).pd>=L.habCost && (!L.habReq||L.habReq(G,s))){
-      await pause(); await useLeader(s);
+      await pause(); if(!viva()) return; await useLeader(s);
     }
-    if(G.over) return;
+    if(!viva() || G.over) return;
     // combate
     G.phase='combate';
     let atkGuard=0;
-    while(atkGuard++<12 && !G.over){
+    while(atkGuard++<12 && viva() && !G.over){
       const ready=P(s).field.filter(canAttack).sort((a,b)=>b.atk-a.atk);
       if(!ready.length) break;
       const u=ready[0];
       const t=aiPickAttack(u);
       if(!t){ u.attacked=true; recalc(); continue; }
       await pause();
+      if(!viva()) return;
       await doAttack(u,t);
     }
-  } finally { G.busy=false; }
-  if(!G.over){ await nap(400); await endTurn(); }
+  } finally { if(viva()) G.busy=false; }
+  if(viva() && !G.over){ await nap(400); if(viva()) await endTurn(); }
 }
 
 /* ==========================================================================
