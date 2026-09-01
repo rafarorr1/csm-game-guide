@@ -475,7 +475,7 @@ PRUEBAS.suite('regresiones', async t => {
      — irse siempre tiene que poder hacerse. */
   {
     const boton = () => $$('#controls .btn').find(b => /Menú/.test(b.textContent));
-    await T.startMatch('fender','adreida',{volado:false});
+    await T.startMatch('fender','adreida',{volado:false,first:0});
     await sleep(700);
     t.check(!!boton(), 'no hay botón para volver al menú durante una partida');
     boton().click(); await sleep(250);
@@ -508,7 +508,7 @@ PRUEBAS.suite('regresiones', async t => {
      el #hand tiene scroll horizontal y en táctil el navegador se quedaba el
      gesto, así que el arrastre se trababa. */
   {
-    await T.startMatch('fender','adreida',{volado:false});
+    await T.startMatch('fender','adreida',{volado:false,first:0});
     await sleep(700);
     T.P(0).pd = 9; T.recalc(); T.render(); await sleep(150);
 
@@ -547,7 +547,7 @@ PRUEBAS.suite('regresiones', async t => {
 
   /* Infectado: la carta en verde y su daño en verde, no en rojo. */
   {
-    await T.startMatch('fender','adreida',{volado:false}); await sleep(600);
+    await T.startMatch('fender','adreida',{volado:false,first:0}); await sleep(600);
     const u = T.mkUnit('discipulo', 0); u.sick=false; T.P(0).field.push(u);
     T.recalc(); T.render(); await sleep(200);
     const antes = $1(`#myField .card[data-uid="${u.uid}"]`);
@@ -634,7 +634,7 @@ PRUEBAS.suite('regresiones', async t => {
      y las Habilidades no enseñaban nada. */
   {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
-    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(600);
+    await T.startMatch('mohamed','adreida',{volado:false,first:0}); await sleep(600);
 
     const enEscena = () => $$('#fx .fxcard').length;
     const carteles = () => $$('.fxlabel').map(e=>e.textContent).join(' | ');
@@ -660,7 +660,7 @@ PRUEBAS.suite('regresiones', async t => {
 
   /* Los ataques del rival se anuncian antes de llegar: quién va a por quién. */
   {
-    await T.startMatch('fender','adreida',{volado:false}); await sleep(500);
+    await T.startMatch('fender','adreida',{volado:false,first:0}); await sleep(500);
     const suyo = T.mkUnit('horton', 1); suyo.sick = false; T.P(1).field.push(suyo);
     const mio  = T.mkUnit('discipulo', 0); mio.sick = false; T.P(0).field.push(mio);
     T.recalc(); T.render(); await sleep(200);
@@ -696,15 +696,15 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota(`volado: ganaste ${empezasteTu} de 6 (es una moneda, no tiene que salir 3)`);
 
     // y se puede saltar, que es lo que usan estas pruebas
-    await T.startMatch('fender','adreida',{volado:false});
+    await T.startMatch('fender','adreida',{volado:false,first:0});
     await sleep(400);
     t.check(!$1('#ov').classList.contains('on'),
-      'con {volado:false} no debería preguntar nada');
+      'con {volado:false,first:0} no debería preguntar nada');
   }
 
   /* Las cartas del tablero enseñan el nombre de sus habilidades. */
   {
-    await T.startMatch('fender','adreida',{volado:false}); await sleep(500);
+    await T.startMatch('fender','adreida',{volado:false,first:0}); await sleep(500);
     const u = T.mkUnit('brickbrock', 0); u.sick = false; T.P(0).field.push(u);
     T.recalc(); T.render(); await sleep(250);
     const carta = $1(`#myField .card[data-uid="${u.uid}"]`);
@@ -725,7 +725,7 @@ PRUEBAS.suite('regresiones', async t => {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
     const seguir = () => $$('#ovPanel .btn').find(b=>/Continuar/.test(b.textContent));
 
-    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(700);
+    await T.startMatch('mohamed','adreida',{volado:false,first:0}); await sleep(700);
 
     // caso 1: sale un Objeto → se lo queda
     T.P(0).pd = 8; T.P(0).leaderUsed = false;
@@ -775,7 +775,7 @@ PRUEBAS.suite('regresiones', async t => {
      texto y otras no. */
   {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
-    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(700);
+    await T.startMatch('mohamed','adreida',{volado:false,first:0}); await sleep(700);
     const mudas = [];
     const ejemplos = {personaje:'brickbrock', hechizo:'ilusion', trampa:'peaje', lugar:'puente'};
     for (const [tipo, id] of Object.entries(ejemplos)){
@@ -830,7 +830,7 @@ PRUEBAS.suite('regresiones', async t => {
      suelto y la consecuencia sólo se contaba en el registro lateral. */
   {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
-    await T.startMatch('mohamed','adreida',{volado:false}); await sleep(600);
+    await T.startMatch('mohamed','adreida',{volado:false,first:0}); await sleep(600);
     const meta = {necesita:'8 o más', min:8, ok:v=>v>=8,
                   siOk:'Se convierte a tu causa', siMal:'La campaña no convence a nadie'};
 

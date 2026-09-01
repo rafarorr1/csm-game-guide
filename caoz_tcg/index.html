@@ -4453,7 +4453,15 @@ function showEnd(winner,why){
   openOv();
 }
 
+/* Cada partida lleva número. startMatch se PARA a esperar el volado, y en ese
+   hueco puede arrancar otra partida —el jugador vuelve al menú y entra de
+   nuevo, o una prueba encadena varias—. Sin este número, la partida vieja
+   seguía su camino al volver del volado y repartía encima de la nueva: te
+   cambiaba los PD y la mano a media jugada. Costaba de ver porque sólo pasa si
+   el reparto tardío coincide con lo siguiente que hagas. */
+let PARTIDA_N = 0;
 async function startMatch(a, b, opts={}){
+  const mia = ++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
   $('#log').innerHTML='';
   showScreen('board');
@@ -4461,7 +4469,14 @@ async function startMatch(a, b, opts={}){
   // {volado:false} — lo usan las pruebas, que si no se quedarían esperando un
   // clic que nadie va a dar.
   const conVolado = opts.volado !== false;
-  const first = conVolado ? await volado(LEADERS[b].n) : null;
+  // Sin volado se puede fijar quién empieza. Lo usan las pruebas: si se deja al
+  // azar, media docena de comprobaciones dependen de una carrera —si la IA
+  // termina su turno antes de que la prueba mire— y fallan una vez de cada dos
+  // sin que nada esté roto. Una prueba que falla a veces no vale para frenar
+  // una publicación, que es justo para lo que están.
+  const first = conVolado ? await volado(LEADERS[b].n)
+                          : (opts.first != null ? opts.first : null);
+  if(mia !== PARTIDA_N) return;      // arrancó otra mientras elegías: ésta ya no vale
   await setupMatch(a, b, first==null ? {} : {first});
 }
 
