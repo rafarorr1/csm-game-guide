@@ -22,30 +22,74 @@
   --c-trampa:#e0453c;    --c-trampa-cl:#ff8f86;    --c-trampa-os:#7a1912;     /* rojo */
   --c-objeto:#e8c02f;    --c-objeto-cl:#ffe07d;    --c-objeto-os:#6f5406;     /* amarillo */
   --c-lugar:#10996a;     --c-lugar-cl:#5fd6a8;     --c-lugar-os:#064a32;      /* verde esmeralda */
-  --cw:112px; --ch:158px;
+  --cw:126px; --ch:176px;          /* la carta en mesa */
+  --cwm:150px; --chm:210px;        /* en la mano, más grande: es la que vas a jugar */
+  /* La tipografía es la mitad del acabado. Serif con versalitas para los
+     nombres —da el aire de baraja impresa— y sans sólo para el cuerpo, que a
+     tamaño pequeño se lee mejor. Todo son fuentes del sistema: el juego sigue
+     siendo un archivo suelto que funciona sin conexión. */
+  --serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,"Times New Roman",serif;
+  --sans:"Trebuchet MS",system-ui,sans-serif;
+  /* la luz de la sala: cae de arriba y se apaga por los bordes */
+  --luz:#3a2a52; --sombra:#07050b;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
-  background:radial-gradient(ellipse at 50% -10%,#241a3a 0%,var(--bg) 60%) fixed;
-  color:var(--ink);font:14px/1.45 "Trebuchet MS",system-ui,sans-serif;
+  background:
+    radial-gradient(ellipse 90% 60% at 50% -8%, rgba(120,86,190,.30), transparent 62%),
+    radial-gradient(ellipse 70% 50% at 50% 108%, rgba(90,60,150,.16), transparent 60%),
+    linear-gradient(180deg,#150f22 0%,var(--bg) 55%,#080610 100%);
+  background-attachment:fixed;
+  color:var(--ink);font:14px/1.45 var(--sans);
   overflow:hidden;user-select:none;-webkit-tap-highlight-color:transparent;
+}
+/* La viñeta. Sin ella el tablero flota en un rectángulo plano; con ella la
+   mirada se va al centro, que es donde pasa la partida. */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:5;
+  background:radial-gradient(ellipse 78% 70% at 50% 46%, transparent 40%, rgba(4,2,8,.62) 100%);
 }
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .btn{
-  background:linear-gradient(180deg,var(--panel2),var(--panel));
-  border:1px solid var(--line);border-radius:8px;padding:8px 14px;
-  color:var(--ink);letter-spacing:.3px;transition:.15s;
+  background:linear-gradient(180deg,#2e2244,#1a1228);
+  border:1px solid var(--line);border-radius:9px;padding:9px 16px;
+  color:var(--ink);letter-spacing:.6px;font-weight:600;
+  transition:transform .13s, box-shadow .15s, border-color .13s, background .15s;
+  box-shadow:0 3px 0 rgba(0,0,0,.45), 0 5px 14px rgba(0,0,0,.45),
+             inset 0 1px 0 rgba(255,255,255,.10);
 }
-.btn:hover{border-color:var(--gold);background:linear-gradient(180deg,#31234a,#241a34)}
+.btn:hover{border-color:var(--gold);background:linear-gradient(180deg,#3b2b58,#251a3a);
+  transform:translateY(-1px);
+  box-shadow:0 4px 0 rgba(0,0,0,.45), 0 8px 20px rgba(0,0,0,.5),
+             inset 0 1px 0 rgba(255,255,255,.14)}
+.btn:active{transform:translateY(2px);box-shadow:0 1px 0 rgba(0,0,0,.45),0 2px 6px rgba(0,0,0,.4)}
 .btn:disabled{opacity:.35;cursor:not-allowed}
-.btn.gold{border-color:var(--gold2);background:linear-gradient(180deg,#5b451a,#3a2c12);color:var(--gold)}
-.btn.gold:hover{background:linear-gradient(180deg,#7a5d22,#4b3a16)}
+.btn.gold{border-color:var(--gold2);background:linear-gradient(180deg,#6b5320,#3d2f13);
+  color:#ffe6a8;font:600 14px/1 var(--serif);font-variant:small-caps;letter-spacing:1px;
+  text-shadow:0 1px 3px rgba(0,0,0,.7);
+  box-shadow:0 3px 0 #241a08, 0 6px 16px rgba(0,0,0,.5),
+             inset 0 1px 0 rgba(255,225,150,.28)}
+.btn.gold:hover{background:linear-gradient(180deg,#8a6b28,#54401a);border-color:var(--gold);
+  box-shadow:0 4px 0 #241a08, 0 9px 22px rgba(0,0,0,.55),
+             inset 0 1px 0 rgba(255,235,175,.36)}
 .btn.sm{padding:5px 10px;font-size:12px}
 .hidden{display:none!important}
 
 /* ============ PANTALLAS ============ */
-#app{position:fixed;inset:0}
+/* EL LIENZO
+   El tablero se dibuja SIEMPRE al mismo tamaño —un lienzo fijo— y luego se
+   escala entero para caber en la ventana. Así una carta guarda exactamente la
+   misma proporción respecto al tapete, al mazo y a la mano en cualquier
+   pantalla: lo que cambia es el zoom, no el diseño. Antes cada trozo encogía
+   por su cuenta con las media queries y las proporciones se desmontaban.
+   Sólo hay dos lienzos, uno apaisado y otro de pie, porque una pantalla de
+   móvil en vertical no admite el mismo reparto que un monitor. */
+#app{position:fixed;inset:0;overflow:hidden}
+#lienzo{position:absolute;left:50%;top:50%;
+  width:var(--LW,1600px);height:var(--LH,900px);
+  transform:translate(-50%,-50%) scale(var(--k,1));
+  transform-origin:50% 50%}
 .screen{position:absolute;inset:0;display:none;flex-direction:column}
 .screen.on{display:flex}
 
@@ -83,18 +127,30 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #board.on{display:grid}
 #board>*{min-width:0}
 
-.bar{display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(12,8,20,.7);
+.bar{display:flex;align-items:center;gap:11px;padding:8px 13px;
+  background:linear-gradient(180deg,rgba(20,13,32,.92),rgba(10,6,17,.80));
   border-bottom:1px solid var(--line);flex-wrap:wrap}
 .who{display:flex;align-items:center;gap:8px}
 .avatar{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;font-size:19px;
   background:var(--panel2);border:1px solid var(--line)}
 .avatar.act{border-color:var(--gold);box-shadow:0 0 10px rgba(230,187,82,.45)}
-.stat{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);
-  border-radius:20px;padding:3px 11px;font-size:14px;font-weight:700;white-space:nowrap}
-.stat i{font-style:normal;opacity:1;font-size:17px;font-weight:900;
-  font-variant-numeric:tabular-nums;text-shadow:0 1px 3px #000}
-.stat.alma{border-color:rgba(224,82,74,.5)} .stat.pd{border-color:rgba(74,166,255,.45)}
-.stat.key{border-color:rgba(230,187,82,.45)}
+/* Las chapas de Alma, PD y Llaves. Son lo primero que se mira al valorar la
+   partida, así que llevan relieve y cifra grande en serif: se leen de un
+   vistazo sin tener que buscarlas. */
+.stat{display:flex;align-items:center;gap:6px;
+  background:linear-gradient(180deg,#241a34,#160f24);
+  border:1px solid var(--line);border-radius:22px;padding:4px 13px;
+  font-size:14px;font-weight:700;white-space:nowrap;
+  box-shadow:0 2px 7px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08)}
+.stat i{font-style:normal;opacity:1;font:800 19px/1 var(--serif);
+  font-variant-numeric:tabular-nums;text-shadow:0 2px 4px #000}
+.stat.alma{border-color:rgba(224,82,74,.55);
+  box-shadow:0 2px 7px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08),
+             0 0 14px rgba(224,82,74,.16)}
+.stat.pd{border-color:rgba(74,166,255,.5);
+  box-shadow:0 2px 7px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08),
+             0 0 14px rgba(74,166,255,.14)}
+.stat.key{border-color:rgba(230,187,82,.5)}
 .stat.alma{color:var(--red)} .stat.pd{color:var(--blue)} .stat.key{color:var(--gold)}
 .stat.gr{color:var(--green)}
 .spacer{flex:1}
@@ -106,18 +162,118 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   gap:8px;padding:6px 8px;overflow:hidden;min-height:0}
 
 /* ---- el tapete ---- */
+/* EL TAPETE
+   La profundidad la pone el FONDO, no el contenido: el tapete se inclina en
+   perspectiva con ::before y las cartas se quedan planas encima. Así se gana el
+   aire de mesa vista desde el jugador sin deformar ni una carta —que además
+   descuadraría los rectángulos con los que las animaciones calculan de dónde a
+   dónde vuela cada cosa. */
 #mat{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;
-  justify-content:space-around;gap:2px;padding:6px 26px;border-radius:18px;
-  border:1px solid rgba(230,187,82,.28);
+  justify-content:space-around;gap:2px;padding:10px 30px;
+  transform:perspective(1700px) rotateX(8deg);transform-origin:50% 62%;
+  transform-style:preserve-3d}
+#mat::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  border-radius:20px;border:1px solid rgba(230,187,82,.30);
   background:
-    radial-gradient(ellipse at 50% 50%, rgba(138,92,240,.13), transparent 62%),
-    repeating-linear-gradient(45deg, rgba(255,255,255,.014) 0 2px, transparent 2px 7px),
-    repeating-linear-gradient(-45deg, rgba(0,0,0,.16) 0 2px, transparent 2px 7px),
-    linear-gradient(180deg,#1b1329 0%,#140e20 50%,#1b1329 100%);
-  box-shadow:inset 0 0 70px rgba(0,0,0,.75), inset 0 0 0 1px rgba(255,255,255,.03),
-             0 10px 34px rgba(0,0,0,.55)}
-#mat::before{content:"";position:absolute;inset:6px;border-radius:13px;
-  border:1px dashed rgba(230,187,82,.13);pointer-events:none}
+    /* la luz que cae desde arriba */
+    radial-gradient(ellipse 60% 45% at 50% 0%, rgba(236,196,110,.13), transparent 68%),
+    /* el fieltro */
+    repeating-linear-gradient(38deg, rgba(255,255,255,.016) 0 2px, transparent 2px 8px),
+    repeating-linear-gradient(-38deg, rgba(0,0,0,.20) 0 2px, transparent 2px 8px),
+    linear-gradient(180deg,#241a36 0%,#17102408 35%,#120c1c 72%,#0c0814 100%);
+  box-shadow:
+    inset 0 0 90px rgba(0,0,0,.80),
+    inset 0 1px 0 rgba(255,255,255,.06),
+    0 22px 60px rgba(0,0,0,.72);
+}
+/* ============ LA LUZ Y EL POLVO ============
+   El aire del Domo: motas suspendidas y un resplandor que respira. Va DETRÁS de
+   las cartas y dentro del tapete, así que hereda su misma inclinación —el polvo
+   flota sobre la mesa, no delante de la pantalla, que es lo que lo hace creíble.
+   Todo es CSS: ni un nodo por mota, ni un fotograma de JavaScript. */
+.ambiente{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+#polvo{border-radius:20px}
+/* el resplandor que sube y baja, como una lámpara sobre la mesa */
+.ambiente::before{content:"";position:absolute;inset:-10%;
+  background:
+    radial-gradient(ellipse 46% 38% at 50% 30%, rgba(236,196,110,.16), transparent 70%),
+    radial-gradient(ellipse 38% 30% at 30% 70%, rgba(138,92,240,.13), transparent 72%),
+    radial-gradient(ellipse 34% 28% at 74% 62%, rgba(90,150,240,.10), transparent 74%);
+  animation:respira 11s ease-in-out infinite}
+@keyframes respira{
+  0%,100%{opacity:.72;transform:scale(1)}
+  50%    {opacity:1;transform:scale(1.06)}}
+
+/* Tres capas de motas a distinta velocidad y tamaño: las cercanas son más
+   grandes y corren más, las lejanas apenas se mueven. Esa diferencia es la que
+   da sensación de profundidad; con una sola capa parecería una textura fija. */
+.ambiente i{position:absolute;inset:-40% -10%;display:block;
+  background-repeat:repeat;will-change:transform}
+.ambiente i:nth-child(1){
+  background-image:
+    radial-gradient(circle,rgba(255,232,190,.55) 1.2px,transparent 1.9px),
+    radial-gradient(circle,rgba(214,190,255,.40) 1px,transparent 1.6px);
+  background-size:190px 190px, 310px 260px;
+  background-position:0 0, 70px 120px;
+  animation:flota1 34s linear infinite;opacity:.75}
+.ambiente i:nth-child(2){
+  background-image:
+    radial-gradient(circle,rgba(255,244,214,.34) .9px,transparent 1.5px),
+    radial-gradient(circle,rgba(180,210,255,.28) .8px,transparent 1.4px);
+  background-size:130px 150px, 230px 200px;
+  background-position:40px 0, 150px 60px;
+  animation:flota2 52s linear infinite;opacity:.6}
+.ambiente i:nth-child(3){
+  background-image:radial-gradient(circle,rgba(255,220,160,.85) 1.6px,transparent 2.4px);
+  background-size:420px 380px;background-position:120px 40px;
+  animation:flota3 22s ease-in-out infinite;opacity:.55}
+/* suben en diagonal y vuelven al punto de partida: el ciclo no se nota porque
+   el desplazamiento es justo un múltiplo del patrón */
+@keyframes flota1{from{transform:translate3d(0,0,0)}   to{transform:translate3d(-190px,-190px,0)}}
+@keyframes flota2{from{transform:translate3d(0,0,0)}   to{transform:translate3d(115px,-150px,0)}}
+@keyframes flota3{
+  0%,100%{transform:translate3d(0,0,0)}
+  50%    {transform:translate3d(-30px,-46px,0)}}
+
+/* MOTAS POR DELANTE
+   Con el polvo sólo por detrás, las cartas se leían como recortes pegados
+   encima de una foto. Unas pocas motas cruzando POR DELANTE —grandes, borrosas
+   y muy tenues, como lo que pasa cerca del ojo— cosen las cartas al aire de la
+   sala: ya no hay un plano de cartas y otro de fondo, hay una mesa.
+   Son muy pocas a propósito: han de notarse sin llegar a distraer. */
+.ambiente.delante{z-index:40}
+.ambiente.delante i{
+  background-image:
+    radial-gradient(circle,rgba(255,236,200,.30) 2.6px,transparent 3.6px),
+    radial-gradient(circle,rgba(210,190,255,.22) 2px,transparent 3px);
+  background-size:560px 480px, 730px 620px;
+  background-position:80px 30px, 380px 260px;
+  filter:blur(1.6px);
+  animation:flota3 26s ease-in-out infinite;opacity:.5}
+
+/* EL VELO
+   La misma luz cae sobre el fieltro y sobre las cartas. Sin esto cada carta
+   traía su propia iluminación de fábrica y no había forma de creerse que
+   estaban todas en la misma mesa. Va en soft-light para teñir sin tapar:
+   aclara donde da la luz y oscurece los rincones, respetando los colores de
+   cada clase de carta. */
+#velo{position:absolute;inset:0;z-index:41;pointer-events:none;border-radius:20px;
+  mix-blend-mode:soft-light;opacity:.75;
+  background:
+    radial-gradient(ellipse 58% 44% at 50% 4%, rgba(255,232,178,.62), transparent 68%),
+    radial-gradient(ellipse 80% 70% at 50% 46%, transparent 42%, rgba(10,6,20,.55) 100%)}
+
+/* Quien pide menos movimiento se queda con la luz quieta y sin motas: el polvo
+   es ambiente, nunca información. */
+@media (prefers-reduced-motion:reduce){
+  .ambiente i{display:none}
+  .ambiente::before{animation:none}
+}
+
+/* el filo dorado interior, también inclinado, que remata el tapete */
+#mat::after{content:"";position:absolute;inset:9px 12px;z-index:-1;pointer-events:none;
+  border-radius:14px;border:1px dashed rgba(230,187,82,.16)}
 .zone{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
 .zone.fz{gap:10px}
 .fieldwrap{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center}
@@ -147,47 +303,80 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .leadercard.spent{opacity:.6}
 .leadercard.tgt{border-color:var(--red);animation:pulse 1s infinite}
 :root{--lw:86px}
-@media(max-width:900px){ :root{--lw:70px} .leadercard .lcArt{font-size:21px}
-  .leadercard .lcName{font-size:9px} }
-@media(max-width:620px){ :root{--lw:56px} .leadercard .lcArt{font-size:17px}
-  .leadercard .lcName{font-size:7.5px} .leadercard .lcEp{display:none}
-  .leadercard .lcHab{font-size:6.5px} .leadercard .lcAlma{font-size:12px;padding:0 5px}
-  .zone.fz{gap:5px} }
+body.vert{--lw:74px}
+body.vert .leadercard .lcArt{font-size:21px}
+body.vert .leadercard .lcName{font-size:9px}
+body.vert .leadercard .lcEp{display:none}
+body.vert .zone.fz{gap:6px}
 .zlabel{position:absolute;left:-20px;top:50%;transform:translateY(-50%) rotate(-90deg);
   font-size:8px;letter-spacing:2.5px;color:#584b78;white-space:nowrap;pointer-events:none}
 .slots{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  gap:8px;pointer-events:none;opacity:.5}
-.slots i{width:var(--cw);height:var(--ch);border-radius:9px;
-  border:1px dashed rgba(230,187,82,.14);background:rgba(0,0,0,.16)}
-.slots.tr i{width:64px;height:42px;border-radius:7px}
+  gap:10px;pointer-events:none;opacity:.62}
+.slots i{width:var(--cw);height:var(--ch);border-radius:11px;position:relative;
+  border:1px dashed rgba(230,187,82,.20);
+  background:linear-gradient(180deg,rgba(255,255,255,.022),rgba(0,0,0,.22));
+  box-shadow:inset 0 0 22px rgba(0,0,0,.45)}
+/* cada hueco dice cuál es, como en una mesa de torneo */
+.slots i::before{content:attr(data-l);position:absolute;top:6px;left:8px;
+  font:600 9px/1 var(--sans);letter-spacing:1.5px;color:rgba(230,187,82,.30)}
+.slots.tr i{width:74px;height:48px;border-radius:8px}
 
 /* ---- raíl lateral: mazo y alcantarillas ---- */
-#rail{width:92px;flex:0 0 auto;display:flex;flex-direction:column;
-  justify-content:space-between;gap:6px;padding:2px 0}
-.pilebox{display:flex;flex-direction:column;gap:14px}
-.pile{position:relative;height:60px;border-radius:9px;cursor:default;
-  display:grid;place-items:center;transition:.15s;border:1px solid var(--line)}
-.pile.deck{background:repeating-linear-gradient(45deg,#2a1c44,#2a1c44 4px,#33245200 4px,#332452 9px);
-  border-color:rgba(138,92,240,.5);box-shadow:0 3px 0 #1b1230,0 6px 0 #150e26,0 10px 16px rgba(0,0,0,.6)}
-.pile.grave{background:linear-gradient(180deg,#241a30,#171021);border-color:rgba(120,110,140,.4);
-  cursor:pointer}
-.pile.grave:hover{border-color:var(--gold);transform:translateY(-2px)}
-.pile.empty{opacity:.35;box-shadow:none}
-.pileart{font-size:22px;filter:drop-shadow(0 2px 3px #000);line-height:1}
-.pilen{position:absolute;right:4px;bottom:3px;font-size:15px;font-weight:900;
-  color:var(--ink);text-shadow:0 2px 4px #000;font-variant-numeric:tabular-nums}
-.pilelbl{position:absolute;left:0;right:0;top:-11px;text-align:center;font-size:7.5px;
-  letter-spacing:1.6px;color:#6a5d8a}
+#rail{width:112px;flex:0 0 auto;display:flex;flex-direction:column;
+  justify-content:space-between;gap:6px;padding:2px 0;perspective:800px}
+.pilebox{display:flex;flex-direction:column;gap:22px}
+/* EL MAZO
+   Un taco de cartas visto en ángulo, no un rectángulo. La inclinación es una
+   rotación en 3D; el grosor son capas apiladas en sombra, no nodos —así el
+   mazo sigue siendo un solo elemento y el contador no tiene que dibujar nada.
+   Se inclina hacia el jugador, igual que el tapete. */
+.pile{position:relative;height:96px;border-radius:10px;cursor:default;
+  display:grid;place-items:center;transition:transform .18s, box-shadow .16s, border-color .13s;
+  border:1px solid var(--line);transform-style:preserve-3d}
+.pile.deck{
+  transform:rotateX(30deg) rotateZ(-2deg);
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.11),transparent 42%),
+    repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),
+    linear-gradient(165deg,#33224f,#1b1230);
+  border-color:rgba(150,105,245,.60);
+  box-shadow:
+    /* el canto del taco: una capa por cada tanda de cartas */
+    0 3px 0 #3a2a5e, 0 5px 0 #2c2047, 0 7px 0 #372861,
+    0 9px 0 #291d43, 0 11px 0 #34255c, 0 13px 0 #261b3f,
+    0 15px 0 #312358, 0 17px 0 #231939, 0 19px 0 #2d2052,
+    0 21px 0 #1f1634, 0 23px 0 #291d4c, 0 25px 0 #1a122e,
+    0 34px 32px rgba(0,0,0,.75),
+    inset 0 0 0 1px rgba(255,255,255,.07)}
+.pile.deck:hover{transform:rotateX(30deg) rotateZ(-2deg) translateY(-3px)}
+/* el sello del dorso */
+.pile.deck::after{content:"";position:absolute;width:40px;height:40px;border-radius:50%;
+  border:1px solid rgba(198,158,255,.38);
+  box-shadow:inset 0 0 0 5px rgba(198,158,255,.11), 0 0 16px rgba(150,105,245,.25)}
+.pile.grave{height:74px;background:linear-gradient(180deg,#251b32,#150f1e);
+  border-color:rgba(120,110,140,.42);cursor:pointer;
+  box-shadow:inset 0 0 20px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.5)}
+.pile.grave:hover{border-color:var(--gold);transform:translateY(-3px);
+  box-shadow:inset 0 0 20px rgba(0,0,0,.6), 0 8px 18px rgba(0,0,0,.6)}
+.pile.empty{opacity:.32;box-shadow:none}
+.pileart{font-size:23px;filter:drop-shadow(0 2px 4px #000);line-height:1;position:relative;z-index:2}
+.pilen{position:absolute;right:8px;bottom:-4px;z-index:5;
+  font:800 22px/1 var(--serif);color:var(--gold);
+  text-shadow:0 2px 6px #000,0 0 12px rgba(0,0,0,.9);font-variant-numeric:tabular-nums}
+.pilelbl{position:absolute;left:0;right:0;top:-12px;text-align:center;
+  font:600 7.5px/1 var(--sans);letter-spacing:2px;color:#7a6ba0;text-transform:uppercase}
 .fxfly{position:absolute;width:44px;height:60px;border-radius:7px;
   background:repeating-linear-gradient(45deg,#3a2a5c,#3a2a5c 4px,#2a1c44 4px,#2a1c44 9px);
   border:1px solid rgba(138,92,240,.7);box-shadow:0 6px 18px #000;transform:translate(-50%,-50%)}
 
-@media(max-width:900px){ #rail{width:70px} .pile{height:50px} .pileart{font-size:18px}
-  #mat{padding:5px 20px} }
-@media(max-width:620px){ #rail{width:54px} .pile{height:42px} .pileart{font-size:15px}
-  .card .nm{max-height:2.5em;overflow:hidden} #log{opacity:.9}
-  .pilelbl{font-size:6.5px;letter-spacing:1px} .pilen{font-size:12px}
-  #mat{padding:4px 14px;border-radius:12px} .zlabel{display:none} }
+body.vert #rail{width:74px}
+body.vert .pile{height:74px} body.vert .pile.grave{height:58px}
+body.vert .pileart{font-size:19px} body.vert .pilen{font-size:17px}
+body.vert #mat{padding:6px 14px}
+body.vert #field{padding:6px 16px 6px 4px}
+body.vert .slots{gap:7px}
+body.vert .row{gap:7px}
+body.vert .zlabel{display:none}
 .row{display:flex;align-items:center;justify-content:center;gap:8px;min-height:0;
   flex-wrap:nowrap;padding:2px}
 .row.traps{min-height:44px;gap:6px}
@@ -196,32 +385,85 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .zonelabel{position:absolute;left:8px;font-size:10px;color:#5c507a;letter-spacing:2px;text-transform:uppercase}
 
 /* ============ CARTAS ============ */
+/* LA CARTA
+   Estructura de baraja impresa: el arte ocupa la mitad de arriba a sangre, el
+   nombre va sobre una banda que lo cruza, y las reglas debajo. El coste manda
+   en la esquina y las cifras de combate rematan abajo, cada una en su chapa.
+   El hueco del arte está pensado para que quepa una ilustración de verdad
+   cuando Rafa las tenga: hoy lleva el emoji, mañana un <img> a sangre. */
 .card{
-  width:var(--cw);height:var(--ch);border-radius:9px;position:relative;flex:0 0 auto;
-  background:linear-gradient(175deg,#2a1f3d,#171025);
-  border:1px solid var(--line);padding:5px;cursor:pointer;transition:.13s;
-  display:flex;flex-direction:column;overflow:hidden
+  width:var(--cw);height:var(--ch);border-radius:11px;position:relative;flex:0 0 auto;
+  background:linear-gradient(178deg,#2b2040 0%,#1b1329 42%,#150e22 100%);
+  border:1px solid var(--line);padding:0;cursor:pointer;overflow:hidden;
+  display:flex;flex-direction:column;
+  transition:transform .16s cubic-bezier(.2,.9,.3,1.2), box-shadow .16s, border-color .13s;
+  box-shadow:0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.07);
 }
-.card:hover{transform:translateY(-5px);border-color:var(--gold);z-index:20}
-.card .top{display:flex;align-items:flex-start;gap:4px}
-.card .cost{width:21px;height:21px;flex:0 0 auto;border-radius:50%;display:grid;place-items:center;
-  font-weight:900;font-size:12px;background:radial-gradient(circle at 35% 30%,#7fc4ff,#1f5fa8);
-  color:#fff;border:1px solid #9fd4ff;box-shadow:0 0 6px rgba(74,166,255,.5)}
-.card .nm{font-size:10.5px;font-weight:800;line-height:1.12;flex:1;letter-spacing:.1px}
-.card .art{font-size:30px;text-align:center;padding:3px 0 1px;filter:drop-shadow(0 2px 4px #000)}
-.card .tribe{font-size:8px;color:var(--dim);text-align:center;letter-spacing:.4px;
-  text-transform:uppercase;line-height:1.1;margin-bottom:2px;
+.card:hover{transform:translateY(-7px) scale(1.03);z-index:20;
+  box-shadow:0 14px 30px rgba(0,0,0,.7), 0 0 0 1px var(--tipo-cl,var(--gold)),
+             inset 0 1px 0 rgba(255,255,255,.12)}
+
+/* --- el arte, a sangre --- */
+.card .art{
+  position:relative;height:44%;flex:0 0 auto;display:grid;place-items:center;
+  font-size:38px;line-height:1;filter:drop-shadow(0 3px 6px rgba(0,0,0,.85));
+  background:
+    radial-gradient(ellipse 100% 80% at 50% 25%,
+      color-mix(in srgb,var(--tipo,#5a4a7a) 42%, transparent), transparent 70%),
+    linear-gradient(180deg, rgba(255,255,255,.06), rgba(0,0,0,.35));
+  overflow:hidden;
+}
+/* el degradado que funde el arte con el cuerpo, para que no haya un corte seco */
+.card .art::after{content:"";position:absolute;inset:auto 0 0 0;height:46%;
+  background:linear-gradient(180deg,transparent,#1b1329 92%)}
+.card .art img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+
+/* --- la banda del nombre, cruzando el arte --- */
+.card .top{position:absolute;inset:0;z-index:3;pointer-events:none;display:block}
+.card .nm{
+  position:absolute;left:0;right:0;top:calc(44% - 21px);z-index:3;
+  font:700 11.5px/1.14 var(--serif);font-variant:small-caps;letter-spacing:.5px;
+  padding:3px 7px 4px 8px;color:#fdf6e6;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  text-shadow:0 2px 5px rgba(0,0,0,.95), 0 0 14px rgba(0,0,0,.7);
+  background:linear-gradient(90deg, rgba(8,5,14,.90), rgba(8,5,14,.62) 78%, transparent);
+  border-top:1px solid color-mix(in srgb,var(--tipo,#6a5a8a) 60%, transparent);
+}
+/* --- el coste, en su sello --- */
+.card .cost{position:absolute;top:6px;left:6px;z-index:4;width:25px;height:25px;border-radius:50%;display:grid;place-items:center;
+  font:800 13px/1 var(--serif);
+  background:radial-gradient(circle at 35% 28%,#7fc4ff,#1f5fa8);
+  color:#fff;border:1px solid #9fd4ff;
+  box-shadow:0 2px 6px rgba(0,0,0,.7), 0 0 9px rgba(74,166,255,.45)}
+
+/* --- el cuerpo --- */
+.card .tribe{font:600 7.5px/1.1 var(--sans);color:#9c8fbb;text-align:center;
+  letter-spacing:1.4px;text-transform:uppercase;padding:4px 5px 2px;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.card .txt{font-size:8.4px;line-height:1.24;color:#cfc3e4;flex:1;overflow:hidden}
-.card .txt b{color:var(--gold)}
-.card .stats{display:flex;justify-content:space-between;align-items:center;margin-top:auto;padding-top:2px}
-.card .atk,.card .hp{font-weight:900;font-size:16px;line-height:1.15;
-  text-shadow:0 2px 4px #000;min-width:26px;text-align:center;border-radius:6px;
-  padding:1px 5px;border:1px solid transparent}
-.card .atk{color:#ffd9a0;background:rgba(190,95,20,.55);border-color:rgba(255,190,120,.35)}
-.card .hp{color:#ffc0b8;background:rgba(190,35,35,.55);border-color:rgba(255,140,130,.35)}
-.big .atk,.big .hp{font-size:22px;min-width:34px}
-.card .rar{position:absolute;top:2px;right:3px;font-size:9px;color:var(--gold)}
+.card .txt{font:9px/1.3 var(--sans);color:#cfc3e4;flex:1;overflow:hidden;
+  padding:0 7px;text-align:center}
+.card .txt b{color:var(--gold);font-weight:700}
+
+/* --- las cifras de combate, en chapa --- */
+.card .stats{display:flex;justify-content:space-between;align-items:flex-end;
+  margin-top:auto;padding:0 5px 5px}
+.card .atk,.card .hp{font:800 16px/1 var(--serif);
+  text-shadow:0 2px 4px #000;min-width:30px;text-align:center;border-radius:7px;
+  padding:3px 6px;border:1px solid transparent;
+  box-shadow:0 2px 5px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.18)}
+.card .atk{color:#ffe0b0;background:linear-gradient(180deg,#a8571a,#6d3510);
+  border-color:rgba(255,190,120,.45)}
+.card .hp{color:#ffc8c0;background:linear-gradient(180deg,#a82a2a,#6d1414);
+  border-color:rgba(255,140,130,.45)}
+.big .atk,.big .hp{font:800 21px/1 var(--serif);min-width:44px;text-align:center;
+  border-radius:8px;padding:5px 9px;border:1px solid transparent;text-shadow:0 2px 4px #000;
+  box-shadow:0 2px 6px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.18)}
+.big .atk{color:#ffe0b0;background:linear-gradient(180deg,#a8571a,#6d3510);
+  border-color:rgba(255,190,120,.45)}
+.big .hp{color:#ffc8c0;background:linear-gradient(180deg,#a82a2a,#6d1414);
+  border-color:rgba(255,140,130,.45)}
+.card .rar{position:absolute;top:5px;right:6px;z-index:4;font-size:10px;color:var(--gold);
+  text-shadow:0 1px 3px #000}
 /* El tipo manda en el borde entero y en el coste. Cada carta se reconoce por su
    color antes de leerle el nombre. */
 .card.t-personaje{--tipo:var(--c-personaje);--tipo-cl:var(--c-personaje-cl);--tipo-os:var(--c-personaje-os)}
@@ -229,7 +471,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card.t-trampa   {--tipo:var(--c-trampa);   --tipo-cl:var(--c-trampa-cl);   --tipo-os:var(--c-trampa-os)}
 .card.t-objeto   {--tipo:var(--c-objeto);   --tipo-cl:var(--c-objeto-cl);   --tipo-os:var(--c-objeto-os)}
 .card.t-lugar    {--tipo:var(--c-lugar);    --tipo-cl:var(--c-lugar-cl);    --tipo-os:var(--c-lugar-os)}
-.card[class*="t-"]{border-color:var(--tipo);border-top:3px solid var(--tipo)}
+.card[class*="t-"]{border:1px solid var(--tipo);
+  box-shadow:0 2px 6px rgba(0,0,0,.55),
+             inset 0 0 0 1px color-mix(in srgb,var(--tipo-cl) 26%, transparent)}
 .card[class*="t-"] .cost{
   background:radial-gradient(circle at 35% 30%,var(--tipo-cl),var(--tipo-os));
   border-color:var(--tipo-cl);
@@ -260,7 +504,9 @@ body.tut-on .card.playable{
 .card.selected{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(230,187,82,.6);transform:translateY(-7px)}
 
 /* unidad en campo */
-.unit{width:var(--cw);height:var(--ch)}
+.unit{width:var(--cw);height:var(--ch);
+  box-shadow:0 3px 6px rgba(0,0,0,.5), 0 12px 20px rgba(0,0,0,.55),
+             inset 0 1px 0 rgba(255,255,255,.07)}
 .unit.sick{filter:saturate(.55) brightness(.82)}
 @keyframes readyGlow{
   0%,100%{box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(79,192,125,.55),0 0 14px rgba(79,192,125,.35)}
@@ -339,9 +585,147 @@ body.tut-on .card.playable{
 .placecard .pt{font-size:10px;color:#b6b892;line-height:1.25}
 
 /* mano */
-#handzone{background:rgba(10,6,16,.82);border-top:1px solid var(--line);padding:6px 8px 8px}
-#hand{display:flex;justify-content:center;gap:6px;flex-wrap:nowrap;overflow-x:auto;overflow-y:visible;
-  padding:6px 2px 2px;min-height:calc(var(--ch) + 10px);scrollbar-width:thin}
+/* La mano descansa sobre una repisa iluminada, no sobre una franja negra: así
+   se separa del tablero sin cortarlo. */
+/* ============ LA MANO DEL RIVAL ============
+   Espejo de la tuya: mismo abanico, misma luz, mismo polvo, pero boca abajo y
+   al otro lado de la mesa. Saber cuántas cartas le quedan cambia cómo juegas
+   —si va vacío puedes arriesgar, si acaba de robar tres hay que temer una
+   Trampa— y hasta ahora eso vivía en un número pequeño de la barra.
+   Los dorsos son algo más chicos que los tuyos: están al fondo de la mesa, y
+   esa diferencia de tamaño es lo que coloca a cada uno en su sitio. */
+:root{--cwd:104px; --chd:146px; --cwd-asoma:78px}
+body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
+
+#foehandzone{position:relative;padding:6px 8px 4px;
+  display:flex;flex-direction:column;align-items:stretch;
+  background:
+    radial-gradient(ellipse 62% 100% at 50% 100%, rgba(236,196,110,.07), transparent 72%),
+    radial-gradient(ellipse 50% 90% at 50% 96%, rgba(138,92,240,.08), transparent 70%),
+    linear-gradient(0deg, rgba(14,9,22,.55) 0%, rgba(9,6,16,.84) 46%, rgba(5,3,10,.96) 100%)}
+/* la juntura, en espejo de la de abajo */
+#foehandzone::before{content:"";position:absolute;left:0;right:0;bottom:-26px;height:26px;
+  pointer-events:none;z-index:1;
+  background:linear-gradient(0deg, transparent, rgba(5,3,10,.5))}
+#foehandzone .velo{position:absolute;inset:0;z-index:3;pointer-events:none;
+  mix-blend-mode:soft-light;opacity:.5;
+  background:radial-gradient(ellipse 60% 78% at 50% 82%, rgba(255,232,178,.34), transparent 72%)}
+#polvoFoe{opacity:.4}
+
+#foeHand{--n:0;position:relative;z-index:2;
+  display:flex;justify-content:center;align-items:flex-start;gap:6px;
+  height:var(--cwd-asoma);overflow:hidden;
+  /* el punto de fuga arriba: sus cartas se alejan de ti, las tuyas se acercan */
+  perspective:1100px;perspective-origin:50% -50%}
+.dorso{
+  width:var(--cwd);height:var(--chd);flex:0 0 auto;border-radius:9px;position:relative;
+  --mitad:calc((var(--n) - 1) / 2);
+  --desde:calc(var(--i, 0) - var(--mitad));
+  --solape:max(6px, (var(--n) - 4) * 8px);
+  margin-inline:calc(-1 * var(--solape));
+  transform-origin:50% -140%;
+  /* el arco al revés: lo sostiene alguien enfrente */
+  transform:rotateX(-10deg)
+            rotate(calc(var(--desde) * -2.9deg))
+            translateY(calc(var(--desde) * var(--desde) * -2.2px));
+  background:
+    linear-gradient(180deg,rgba(255,255,255,.08),transparent 42%),
+    repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),
+    linear-gradient(165deg,#33224f,#1b1230);
+  border:1px solid rgba(150,105,245,.5);
+  box-shadow:0 5px 12px rgba(0,0,0,.62), 0 14px 26px rgba(0,0,0,.5),
+             inset 0 1px 0 rgba(255,255,255,.07)}
+/* el mismo sello que lleva el mazo, para que se lean como la misma baraja */
+.dorso::after{content:"";position:absolute;left:50%;top:50%;
+  width:34px;height:34px;margin:-17px 0 0 -17px;border-radius:50%;
+  border:1px solid rgba(198,158,255,.34);
+  box-shadow:inset 0 0 0 4px rgba(198,158,255,.10), 0 0 12px rgba(150,105,245,.20)}
+/* la barra del rival cuelga bajo sus cartas, como la tuya cuelga sobre las tuyas */
+#foehandzone .bar{position:relative;z-index:4;background:none;border:none;padding:2px 6px}
+
+/* LA MANO, DENTRO DE LA MISMA ESCENA
+   Antes había una franja negra con un filo dorado que partía la pantalla en dos:
+   arriba la mesa, abajo un cajón aparte. Ahora no hay línea. El suelo sigue
+   desde el tapete hacia ti, oscureciéndose como se oscurece lo que queda fuera
+   del foco, y la misma luz y el mismo polvo continúan por aquí abajo. */
+#handzone{position:relative;padding:6px 8px 8px;
+  background:
+    /* el reflejo del tapete cayendo hacia el jugador */
+    radial-gradient(ellipse 62% 100% at 50% 0%, rgba(236,196,110,.10), transparent 72%),
+    radial-gradient(ellipse 50% 90% at 50% 4%, rgba(138,92,240,.10), transparent 70%),
+    linear-gradient(180deg, rgba(14,9,22,.55) 0%, rgba(9,6,16,.86) 46%, rgba(5,3,10,.97) 100%)}
+/* la juntura: una sombra que difumina el filo en vez de subrayarlo */
+#handzone::before{content:"";position:absolute;left:0;right:0;top:-26px;height:26px;
+  pointer-events:none;z-index:1;
+  background:linear-gradient(180deg, transparent, rgba(5,3,10,.55))}
+/* la luz que cae sobre lo que sostienes: sin ella las cartas se hundían en el
+   suelo al quitar la franja negra que antes las recortaba */
+#handzone::after{content:"";position:absolute;left:50%;transform:translateX(-50%);
+  top:2%;width:min(1180px,94%);height:96%;pointer-events:none;z-index:0;
+  border-radius:50%/34%;
+  background:
+    radial-gradient(ellipse 60% 62% at 50% 46%, rgba(238,204,132,.15), transparent 72%),
+    radial-gradient(ellipse 74% 76% at 50% 52%, rgba(122,86,200,.13), transparent 76%);
+  filter:blur(2px)}
+#polvoMano{opacity:.55}
+/* la luz continúa sobre las cartas que sostienes, con la misma mezcla */
+#handzone .velo{position:absolute;inset:0;z-index:3;pointer-events:none;
+  mix-blend-mode:soft-light;opacity:.6;
+  background:radial-gradient(ellipse 60% 78% at 50% 18%, rgba(255,232,178,.45), transparent 72%)}
+/* EL ABANICO
+   Las cartas se abren en arco como se sostienen de verdad: la del medio recta y
+   las de los lados giradas y algo más bajas. El giro sale de dos números que
+   pone renderHand —qué puesto ocupa (--i) y cuántas hay (--n)—; el dibujo es
+   todo CSS, así que la mano se recoloca sola al robar o al jugar.
+   El origen del giro está por debajo de la carta: así rotan como un abanico
+   sujeto por abajo, y no cada una sobre su propio centro. */
+#hand{--n:1;position:relative;z-index:2;
+  display:flex;justify-content:center;align-items:flex-start;gap:6px;
+  flex-wrap:nowrap;
+  /* SIN overflow: con overflow-x:auto el navegador recorta también en vertical
+     (aunque pongas overflow-y:visible), y la carta ampliada se cortaba por
+     arriba. En su lugar, las cartas se montan más cuantas más tengas —que es
+     como se sostiene una mano de verdad— y así siempre caben sin recortar. */
+  padding:12px 8px 8px;min-height:calc(var(--chm) + 22px);
+  /* el punto de fuga por debajo y por delante: las cartas se echan hacia atrás
+     por arriba, como cuando las tienes en la mano y las miras desde encima */
+  perspective:1100px;perspective-origin:50% 150%}
+#hand .card{
+  width:var(--cwm);height:var(--chm);
+  --mitad:calc((var(--n) - 1) / 2);
+  --desde:calc(var(--i, 0) - var(--mitad));       /* cuánto se aparta del centro */
+  transform-origin:50% 240%;
+  transform:rotateX(10deg)
+            rotate(calc(var(--desde) * 2.9deg))
+            translateY(calc(var(--desde) * var(--desde) * 2.2px));
+  transition:transform .18s cubic-bezier(.2,.9,.3,1.25), box-shadow .16s, border-color .13s;
+  box-shadow:0 6px 14px rgba(0,0,0,.62), 0 16px 30px rgba(0,0,0,.5),
+             inset 0 1px 0 rgba(255,255,255,.09);
+}
+/* con la mano llena las cartas se montan, como en la vida */
+#hand .card{--solape:max(6px, (var(--n) - 4) * 8px);margin-inline:calc(-1 * var(--solape))}
+/* al pasar por encima se endereza, sube y crece: hasta que la sueltas conviene
+   verla entera y sin torcer */
+/* AL PASAR POR ENCIMA, LA CARTA CRECE
+   Antes saltaba un cuadro aparte con el texto y tenías que mirar a otro sitio.
+   Ahora la carta se endereza —también la inclinación— y crece 1,7 veces hasta
+   el tamaño al que se lee cómoda, sin moverse de su hueco en la mano. Crece
+   desde su base, así que sube sobre el tablero y no se hunde por abajo. */
+#hand .card{transform-origin:50% 240%}
+#hand .card:hover, #hand .card.finge-hover{
+  transform-origin:50% 100%;
+  transform:rotateX(0deg) rotate(0deg) translateY(-14px) scale(1.7);z-index:60;
+  box-shadow:0 34px 64px rgba(0,0,0,.9), 0 0 0 1px var(--tipo-cl,var(--gold)),
+             0 0 46px rgba(0,0,0,.6)}
+#hand .card.unplayable:hover, #hand .card.unplayable.finge-hover,
+#hand .card.locked:hover, #hand .card.locked.finge-hover{
+  opacity:1;filter:none}
+/* a ese tamaño el texto ya cabe entero: no hace falta recortarlo */
+#hand .card:hover .txt, #hand .card.finge-hover .txt{overflow:visible}
+#hand .card:hover .nm, #hand .card.finge-hover .nm{-webkit-line-clamp:3}
+/* la elegida se queda fuera del abanico para que se vea cuál es */
+#hand .card.selected{transform-origin:50% 100%;
+  transform:rotateX(0deg) rotate(0deg) translateY(-16px) scale(1.28);z-index:50}
 #hand::-webkit-scrollbar{height:6px}
 
 #hand::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
@@ -459,8 +843,11 @@ body.tutpause #tut{pointer-events:auto}
   color:#7cf07c;text-shadow:0 1px 3px #000;pointer-events:none}
 .fxnum.xl{font-size:58px;padding:6px 22px 9px;border-width:4px;border-radius:18px}
 .fxnum.plain{background:none;border:none;box-shadow:none;padding:0;font-size:52px}
-@media(max-width:900px){ .fxnum{font-size:30px;padding:3px 11px 5px} .fxnum.xl{font-size:46px} }
-@media(max-width:620px){ .fxnum{font-size:25px;padding:2px 9px 4px;border-width:2px} .fxnum.xl{font-size:36px} }
+/* Los números de daño viven fuera del lienzo (se posicionan en coordenadas de
+   pantalla), así que no los arrastra el scale: se escalan a mano con la misma
+   --k para que sigan pesando lo mismo respecto a las cartas. */
+.fxnum{font-size:calc(34px * var(--k,1));padding:calc(4px * var(--k,1)) calc(13px * var(--k,1))}
+.fxnum.xl{font-size:calc(52px * var(--k,1))}
 .fxburst{position:absolute;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.95) 0%,currentColor 42%,transparent 72%)}
 .fxring{position:absolute;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;
@@ -488,14 +875,40 @@ body.tutpause #tut{pointer-events:auto}
 /* inspector */
 #inspect{position:fixed;z-index:260;display:none;pointer-events:none}
 #inspect.on{display:block}
-.big{width:252px;font-size:14px;background:linear-gradient(175deg,#33254e,#150f22);
-  border:2px solid var(--gold);border-radius:14px;padding:11px 12px 12px;
-  box-shadow:0 18px 52px #000,0 0 0 1px rgba(230,187,82,.25);
-  display:flex;flex-direction:column;gap:1px}
-.big .nm{font-size:15.5px;color:var(--gold);line-height:1.15}
-.big .art{font-size:58px;padding:4px 0 2px}
-.big .txt{font-size:12.2px;line-height:1.5;color:#e6dcf5;white-space:normal}
-.big .txt b{color:var(--gold)}
+/* EL DETALLE
+   Una carta en mesa mide 132px: ahí las reglas caben pero no se leen a gusto.
+   Este panel es donde de verdad se lee la carta —nombre grande, texto a tamaño
+   de prosa, estados y Objetos— y por eso puede permitirse el ancho. Hereda las
+   piezas de .card, así que sólo hay que redefinir lo que cambia de tamaño. */
+.big{width:286px;font-size:14px;
+  background:linear-gradient(178deg,#33254e 0%,#1e1533 42%,#140e22 100%);
+  border:1px solid var(--tipo,var(--gold));border-radius:15px;padding:0;overflow:hidden;
+  box-shadow:0 26px 64px rgba(0,0,0,.85), 0 0 0 1px rgba(230,187,82,.18),
+             inset 0 1px 0 rgba(255,255,255,.10);
+  display:flex;flex-direction:column;gap:0}
+/* aquí el arte manda: es la mitad del panel y va a sangre */
+.big .art{position:relative;height:176px;flex:0 0 auto;font-size:74px;padding:0;
+  display:grid;place-items:center}
+.big .art::after{height:40%}
+.big .top{position:absolute;inset:0 0 auto 0;height:176px;z-index:3;pointer-events:none}
+.big .cost{top:9px;left:9px;width:31px;height:31px;font-size:16px}
+.big .nm{position:absolute;left:0;right:0;top:auto;bottom:0;
+  font:700 18px/1.15 var(--serif);font-variant:small-caps;letter-spacing:.7px;
+  color:#fdf6e6;padding:5px 11px 6px;-webkit-line-clamp:3;
+  background:linear-gradient(90deg,rgba(8,5,14,.94),rgba(8,5,14,.66) 82%,transparent);
+  border-top:1px solid color-mix(in srgb,var(--tipo,#6a5a8a) 62%,transparent)}
+.big .tribe{font:600 9px/1.2 var(--sans);letter-spacing:2px;padding:8px 12px 5px;
+  color:#a596c4}
+.big .txt{font:13px/1.55 var(--sans);color:#e6dcf5;white-space:normal;
+  padding:0 12px 10px;text-align:left;flex:none}
+.big .txt b{color:var(--gold);font-weight:700}
+.big .stats{padding:0 12px 12px;justify-content:flex-start;gap:8px}
+.big .rar{top:9px;right:11px;font-size:13px}
+.big .keys{padding:0 12px 9px}
+.big .bigsep{height:1px;background:linear-gradient(90deg,transparent,var(--line),transparent);
+  margin:2px 12px 9px}
+.big .bigrow{font:700 12.5px/1.3 var(--serif);color:var(--gold);padding:0 12px 3px}
+.big .bigbase{font:11px/1.3 var(--sans);color:#9c8fbb;padding:0 12px 9px;font-style:italic}
 .big .tribe{font-size:10px;white-space:normal;margin-bottom:5px}
 .big .cost{width:30px;height:30px;font-size:17px}
 .big .atk,.big .hp{font-size:20px;min-width:32px;padding:2px 8px}
@@ -584,32 +997,24 @@ body.tutpause #tut{pointer-events:auto}
 .rules td,.rules th{border:1px solid var(--line);padding:4px 6px;text-align:left}
 .rules th{background:var(--panel2);color:var(--gold)}
 
-@media(max-width:900px){
-  :root{--cw:88px;--ch:126px}
-  #log{width:168px;font-size:10px}
-  .card .txt{font-size:7.4px}
-}
+/* ---- el lienzo de pie: mismo diseño, reparto distinto ---- */
+body.vert{--cw:96px;--ch:134px;--cwm:112px;--chm:157px}
+body.vert #log{top:auto;bottom:6px;right:6px;left:6px;width:auto;max-height:132px;
+  background:rgba(8,5,14,.90);font-size:11px;padding:6px 8px}
+body.vert .card .txt{font-size:8px}
+body.vert #hand{padding:12px 6px 14px;gap:4px}
+body.vert .who>div>div:last-child{display:none}
+
+/* El tutorial y los avisos van FUERA del lienzo (tapan la pantalla entera, no
+   el tablero), así que estos sí miran la ventana de verdad. */
 @media(max-width:760px){
   #tut{left:50%;right:auto;top:4px;bottom:auto;transform:translateX(-50%);width:94vw}
   .tutbody{font-size:12.2px} .tutbox{padding:9px 11px}
-  #log{max-height:20vh}
-}
-@media(max-width:620px){
-  :root{--cw:74px;--ch:106px}
-  .card .nm{font-size:9px} .card .art{font-size:22px}
-  .card .txt{display:none}
-  .bar{gap:5px;padding:4px 6px}
-  .stat{padding:2px 7px;font-size:11.5px}
-  .avatar{width:27px;height:27px;font-size:15px}
-  .who>div>div:first-child{font-size:11px!important}
-  .who>div>div:last-child{display:none}
-  #log{width:150px;max-height:26vh;font-size:9.5px;top:4px;right:4px}
-  #hand{gap:4px}
 }
 </style>
 </head>
 <body>
-<div id="app">
+<div id="app"><div id="lienzo">
 
 <!-- ============ MENÚ ============ -->
 <div class="screen on" id="menu">
@@ -653,39 +1058,49 @@ body.tutpause #tut{pointer-events:auto}
 
 <!-- ============ MESA ============ -->
 <div class="screen" id="board">
-  <div class="bar" id="barFoe"></div>
+  <div id="foehandzone">
+    <div class="ambiente" id="polvoFoe" aria-hidden="true"><i></i><i></i></div>
+    <div class="velo" aria-hidden="true"></div>
+    <div id="foeHand" aria-hidden="true"></div>
+    <div class="bar" id="barFoe"></div>
+  </div>
   <div id="field">
     <div id="rail">
       <div class="pilebox" id="foePiles"></div>
       <div class="pilebox" id="myPiles"></div>
     </div>
     <div id="mat">
+      <div id="polvo" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="zone"><span class="zlabel">TRAMPAS</span>
-        <div class="slots tr"><i></i><i></i><i></i></div>
+        <div class="slots tr"><i data-l="T1"></i><i data-l="T2"></i><i data-l="T3"></i></div>
         <div class="row traps" id="foeTraps"></div></div>
       <div class="zone fz"><span class="zlabel">CAMPO RIVAL</span>
         <div class="leaderslot" id="leaderFoe"></div>
-        <div class="fieldwrap"><div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="fieldwrap"><div class="slots"><i data-l="L1"></i><i data-l="L2"></i><i data-l="L3"></i><i data-l="L4"></i><i data-l="L5"></i></div>
           <div class="row" id="foeField"></div></div></div>
       <div class="midrow" id="midRow"></div>
       <div class="zone fz"><span class="zlabel">TU CAMPO</span>
         <div class="leaderslot" id="leaderMe"></div>
-        <div class="fieldwrap"><div class="slots"><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="fieldwrap"><div class="slots"><i data-l="L1"></i><i data-l="L2"></i><i data-l="L3"></i><i data-l="L4"></i><i data-l="L5"></i></div>
           <div class="row" id="myField"></div></div></div>
       <div class="zone"><span class="zlabel">TRAMPAS</span>
-        <div class="slots tr"><i></i><i></i><i></i></div>
+        <div class="slots tr"><i data-l="T1"></i><i data-l="T2"></i><i data-l="T3"></i></div>
         <div class="row traps" id="myTraps"></div></div>
+      <div class="ambiente delante" id="polvoAlto" aria-hidden="true"><i></i></div>
+      <div id="velo" aria-hidden="true"></div>
     </div>
     <div id="log"></div>
   </div>
   <div id="handzone">
+    <div class="ambiente" id="polvoMano" aria-hidden="true"><i></i><i></i></div>
+    <div class="velo" aria-hidden="true"></div>
     <div class="bar" id="barMe" style="border:none;background:none;padding:2px 6px"></div>
     <div id="hand"></div>
     <div class="controls" id="controls"></div>
   </div>
 </div>
 
-</div><!-- /app -->
+</div></div><!-- /app -->
 
 <div class="ov" id="ov"><div class="panel" id="ovPanel"></div></div>
 <div id="dice"><div class="dicebox" id="diceBox"></div></div>
@@ -1962,7 +2377,11 @@ async function startTurn(s){
   G.phase='principal';
   render();
   if(G.tutorial){ tutCheck(); await tutBeat('turno',{side:s}); }
-  if(s===FOE && !G.online) { await nap(600); await aiTurn(); }
+  // El turno del rival se encadena con el siguiente, y esa cadena sigue viva
+  // aunque empiece otra partida: si vuelves al menú y entras de nuevo, la IA de
+  // la anterior seguía jugando sobre la nueva. Cada newGame crea un G distinto,
+  // así que basta con mirar si sigue siendo el mismo antes de continuar.
+  if(s===FOE && !G.online) { const miG=G; await nap(600); if(G!==miG) return; await aiTurn(); }
   if(NET.host) netPushState();
 }
 
@@ -2569,6 +2988,7 @@ function inspectHTML(id,u){
 }
 function showInspectLeader(d,side){
   const p=P(side), L=p.L, box=$('#inspectCard');
+  box.className='big';
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
     <div class="art">${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
@@ -2592,6 +3012,7 @@ function placeInspect(d){
 }
 function attachInspect(d,id,u){
   d.onmouseenter=e=>{ const box=$('#inspectCard');
+    box.className = 'big t-' + (CARDS[id] ? CARDS[id].t : 'personaje');
     box.innerHTML=inspectHTML(id,u);
     const box2=$('#inspect'); box2.classList.add('on');
     placeInspect(d);
@@ -2763,7 +3184,7 @@ function fxDraw(side){
   if(!FXON()) return;
   const pile=$(side===ME?'#myDeckPile':'#foeDeckPile'); if(!pile) return;
   const r=pile.getBoundingClientRect();
-  const dst=(side===ME? $('#hand') : $('#barFoe'));
+  const dst=(side===ME? $('#hand') : ($('#foeHand')||$('#barFoe')));
   if(!dst) return;
   const t=dst.getBoundingClientRect();
   const d=fxAdd('fxfly', r.left+r.width/2, r.top+r.height/2);
@@ -3039,6 +3460,22 @@ function render(){
   if(NET.host) netPushState();
   $('#barFoe').innerHTML=barHTML(FOE);
   $('#barMe').innerHTML=barHTML(ME);
+  // La mano del rival, boca abajo. No es adorno: saber cuántas cartas le quedan
+  // cambia cómo juegas —si va vacío puedes arriesgar, si va lleno hay Trampa—
+  // y hasta ahora eso vivía en un número pequeño de la barra.
+  const fh=$('#foeHand');
+  if(fh){
+    const n=P(FOE).hand.length;
+    if(fh.children.length!==n){          // sólo se rehace si cambió la cuenta
+      fh.innerHTML='';
+      for(let i=0;i<n;i++){
+        const d=el('div','dorso');
+        d.style.setProperty('--i',i);
+        fh.appendChild(d);
+      }
+    }
+    fh.style.setProperty('--n', n);
+  }
   // trampas rival
   const ft=$('#foeTraps'); ft.innerHTML='';
   P(FOE).traps.forEach(t=>{ const d=el('div','trapback', t.revealed?CARDS[t.id].art:'🪤');
@@ -3066,8 +3503,15 @@ function render(){
     mid.appendChild(b); });
   // mano
   const h=$('#hand'); h.innerHTML='';
-  P(ME).hand.forEach(id=>{
+  const mano=P(ME).hand, nMano=mano.length;
+  h.style.setProperty('--n', nMano);
+  mano.forEach((id,iMano)=>{
     const d=cardEl(id,{side:ME});
+    // el abanico se dibuja en CSS; aquí sólo se dice qué puesto ocupa cada una
+    d.style.setProperty('--i', iMano);
+    // en la mano la carta se amplía sola al pasar por encima: el cuadro aparte
+    // sobra y obligaba a mirar a otro sitio
+    d.onmouseenter=null; d.onmouseleave=null;
     const ok=canPlay(ME,id);
     const libre=tutCan('hand',id);
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
@@ -3079,6 +3523,7 @@ function render(){
       playFromHand(ME,id); };
     h.appendChild(d);
   });
+  h.classList.toggle('apretada', nMano>7);
   renderControls();
   if(G.tutorial) tutHighlight();
 }
@@ -3247,10 +3692,14 @@ function aiPickAttack(u){
 
 async function aiTurn(){
   const s=FOE; if(G.over) return;
+  // Sello de la partida: el turno del rival hace muchas pausas, y en cualquiera
+  // de ellas puede arrancar otra partida. Si eso pasa, esta IA tiene que morir
+  // en el sitio en vez de seguir jugando sobre la mesa nueva.
+  const miG = G, viva = () => G === miG;
   if(G.tutorial && TUT.on){                    // durante el tutorial el rival va guionizado
     G.busy=true; let scripted=false;
-    try{ scripted=await tutFoeTurn(); } finally{ G.busy=false; }
-    if(scripted){ if(!G.over){ await nap(400); await endTurn(); } return; }
+    try{ scripted=await tutFoeTurn(); } finally{ if(viva()) G.busy=false; }
+    if(scripted){ if(viva() && !G.over){ await nap(400); if(viva()) await endTurn(); } return; }
   }
   G.busy=true;
   // 200 ms era ilegible: sus jugadas pasaban antes de que te dieras cuenta.
@@ -3258,7 +3707,7 @@ async function aiTurn(){
   try{
     let guard=0, played=0; const skip=new Set();
     const maxPlays = 12;
-    while(guard++<16 && !G.over && played<maxPlays){
+    while(guard++<16 && viva() && !G.over && played<maxPlays){
       const opts=P(s).hand.filter(id=>canPlay(s,id)&&!skip.has(id))
         .map(id=>({id,v:aiScore(id,s)})).filter(o=>o.v>0)
         .sort((a,b)=>b.v-a.v);
@@ -3266,33 +3715,34 @@ async function aiTurn(){
       await pause();
       if(await playFromHand(s,opts[0].id)) played++; else skip.add(opts[0].id);
     }
-    if(G.over) return;
+    if(!viva() || G.over) return;
     // habilidades activadas
     for(const u of [...P(s).field]){
       if(u.card.act && !u.actUsed && P(s).pd>=u.card.act.cost && (!u.card.act.req||u.card.act.req(G,s))){
-        await pause(); await useAct(u);
+        await pause(); if(!viva()) return; await useAct(u);
       }
     }
     // habilidad de líder
     const L=P(s).L;
     if(!P(s).leaderUsed && P(s).pd>=L.habCost && (!L.habReq||L.habReq(G,s))){
-      await pause(); await useLeader(s);
+      await pause(); if(!viva()) return; await useLeader(s);
     }
-    if(G.over) return;
+    if(!viva() || G.over) return;
     // combate
     G.phase='combate';
     let atkGuard=0;
-    while(atkGuard++<12 && !G.over){
+    while(atkGuard++<12 && viva() && !G.over){
       const ready=P(s).field.filter(canAttack).sort((a,b)=>b.atk-a.atk);
       if(!ready.length) break;
       const u=ready[0];
       const t=aiPickAttack(u);
       if(!t){ u.attacked=true; recalc(); continue; }
       await pause();
+      if(!viva()) return;
       await doAttack(u,t);
     }
-  } finally { G.busy=false; }
-  if(!G.over){ await nap(400); await endTurn(); }
+  } finally { if(viva()) G.busy=false; }
+  if(viva() && !G.over){ await nap(400); if(viva()) await endTurn(); }
 }
 
 /* ==========================================================================
@@ -4012,7 +4462,15 @@ function showEnd(winner,why){
   openOv();
 }
 
+/* Cada partida lleva número. startMatch se PARA a esperar el volado, y en ese
+   hueco puede arrancar otra partida —el jugador vuelve al menú y entra de
+   nuevo, o una prueba encadena varias—. Sin este número, la partida vieja
+   seguía su camino al volver del volado y repartía encima de la nueva: te
+   cambiaba los PD y la mano a media jugada. Costaba de ver porque sólo pasa si
+   el reparto tardío coincide con lo siguiente que hagas. */
+let PARTIDA_N = 0;
 async function startMatch(a, b, opts={}){
+  const mia = ++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
   $('#log').innerHTML='';
   showScreen('board');
@@ -4020,7 +4478,14 @@ async function startMatch(a, b, opts={}){
   // {volado:false} — lo usan las pruebas, que si no se quedarían esperando un
   // clic que nadie va a dar.
   const conVolado = opts.volado !== false;
-  const first = conVolado ? await volado(LEADERS[b].n) : null;
+  // Sin volado se puede fijar quién empieza. Lo usan las pruebas: si se deja al
+  // azar, media docena de comprobaciones dependen de una carrera —si la IA
+  // termina su turno antes de que la prueba mire— y fallan una vez de cada dos
+  // sin que nada esté roto. Una prueba que falla a veces no vale para frenar
+  // una publicación, que es justo para lo que están.
+  const first = conVolado ? await volado(LEADERS[b].n)
+                          : (opts.first != null ? opts.first : null);
+  if(mia !== PARTIDA_N) return;      // arrancó otra mientras elegías: ésta ya no vale
   await setupMatch(a, b, first==null ? {} : {first});
 }
 
@@ -4784,6 +5249,33 @@ window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutoria
   play:(id)=>playFromHand(ME,id), attack:(i,t)=>doAttack(P(ME).field[i],t==='face'?'face':P(FOE).field[t]),
   end:endTurn, fast:v=>{G.fast=v;}, render };
 
+/* ==========================================================================
+   EL LIENZO — un tablero de tamaño fijo que se ajusta a la ventana
+   Se dibuja siempre a la misma medida y se escala entero. La consecuencia es
+   que las proporciones son idénticas en cualquier pantalla: una carta ocupa la
+   misma fracción del tapete en un monitor grande que en un móvil, y lo único
+   que cambia es cuánto hay que acercarse.
+   Hay dos lienzos porque un móvil de pie no admite el reparto de un monitor
+   apaisado; dentro de cada uno, nada depende ya del tamaño de la ventana.
+   ========================================================================== */
+const LIENZO = { ancho: [1600, 760], alto: [900, 1450] };   // [apaisado, de pie]
+
+function ajustarLienzo(){
+  const dePie = innerHeight > innerWidth * 1.05;   // el 5% evita que un cuadrado baile
+  const i = dePie ? 1 : 0;
+  const W = LIENZO.ancho[i], H = LIENZO.alto[i];
+  // el lienzo entero tiene que caber: manda la dimensión más apretada
+  const k = Math.min(innerWidth / W, innerHeight / H);
+  const r = document.documentElement.style;
+  r.setProperty('--LW', W + 'px');
+  r.setProperty('--LH', H + 'px');
+  r.setProperty('--k', k);
+  document.body.classList.toggle('vert', dePie);
+}
+addEventListener('resize', ajustarLienzo);
+addEventListener('orientationchange', ajustarLienzo);
+ajustarLienzo();
+
 /* Las pruebas viven en tests.js y sólo se cargan con ?test=... — así el juego
    normal no paga nada por ellas y sigue siendo un archivo suelto que funciona
    en file:// sin más compañía. */
@@ -4794,6 +5286,46 @@ if(new URLSearchParams(location.search).has('test')){
 /* Con ?biblia=1 el juego suelta todo lo suyo —cartas, Líderes, mazos, guías y el
    texto de reglas— para que biblia.sh arme el PDF. La biblia sale de aquí y no
    de una copia a mano: si mañana cambia una carta, cambia con ella. */
+/* Con ?foto=mohamed,adreida arranca una partida sin volado y con unas cuantas
+   cartas ya en mesa, para poder mirar el aspecto del tablero en una captura.
+   Es sólo un atajo de revisión: el juego normal no pasa por aquí. */
+if(new URLSearchParams(location.search).has('foto')){
+  addEventListener('load',()=>setTimeout(async()=>{
+    const q=new URLSearchParams(location.search);
+    const [a,b]=(q.get('foto')||'mohamed,adreida').split(',');
+    await startMatch(a,b,{volado:false});
+    if(q.has('mesa')){
+      // unas cuantas cartas puestas a mano, que un tablero vacío no enseña nada
+      const pon=(id,side)=>{const u=mkUnit(id,side); P(side).field.push(u); u.sick=false; return u;};
+      for(const id of (q.get('mesa')||'').split(',').filter(Boolean)){
+        const [cid,lado]=id.split(':'); pon(cid, lado==='1'?FOE:ME);
+      }
+      recalc(); render();
+    }
+    if(q.has('ver')) setTimeout(()=>{       // deja el detalle abierto en la captura
+      const id=q.get('ver'); const box=$('#inspectCard');
+      box.className='big t-'+(CARDS[id]?CARDS[id].t:'personaje');
+      box.innerHTML=inspectHTML(id,null);
+      const b2=$('#inspect'); b2.classList.add('on');
+      b2.style.left='1120px'; b2.style.top='120px';
+    }, 1400);
+    if(q.has('hover')) setTimeout(()=>{
+      const c=$('#hand').children[+q.get('hover')||0];
+      if(c) c.classList.add('finge-hover');
+    }, 1500);
+    if(q.has('medir')) setTimeout(()=>{
+      const m=(sel)=>{const e=$(sel); if(!e) return sel+':no';
+        const r=e.getBoundingClientRect();
+        return sel+' w='+Math.round(r.width)+' h='+Math.round(r.height)
+             +' x='+Math.round(r.left)+'..'+Math.round(r.right);};
+      document.title='MED '+['#lienzo','#rail','#mat','#foeField','#leaderFoe','#field']
+        .map(m).join(' | ')+' || win='+innerWidth+'x'+innerHeight
+        +' k='+getComputedStyle(document.documentElement).getPropertyValue('--k');
+    }, 1600);
+    document.body.classList.add('foto-lista');
+  },600));
+}
+
 if(new URLSearchParams(location.search).has('biblia')){
   addEventListener('load',()=>setTimeout(()=>{
     const d={
