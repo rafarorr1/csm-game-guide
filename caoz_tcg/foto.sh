@@ -12,7 +12,7 @@ URL="http://127.0.0.1:$PORT/index.html?foto=$LID"
 [ -n "$MESA" ] && URL="$URL&mesa=$MESA"
 [ -n "$4" ] && URL="$URL&hover=$4"
 "$CHROME" --headless --disable-gpu --hide-scrollbars \
-  --window-size=${W:-1600},${H:-1000} --virtual-time-budget=7000 \
+  --window-size=${W:-1600},$(( ${H:-1000} + 87 )) --virtual-time-budget=7000 \
   --screenshot="$OUT" "$URL" >/dev/null 2>&1
 kill $SRV 2>/dev/null
 [ -f "$OUT" ] && echo "foto: $OUT" || echo "no salió la foto"
