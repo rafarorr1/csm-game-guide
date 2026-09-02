@@ -164,7 +164,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* zona central */
 #field{position:relative;display:flex;flex-direction:row;align-items:stretch;
-  gap:8px;padding:6px 8px;overflow:hidden;min-height:0}
+  gap:8px;padding:6px 14px 6px 8px;overflow:hidden;min-height:0}
 
 /* ---- el tapete ---- */
 /* EL TAPETE
@@ -314,11 +314,6 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .leadercard.spent{opacity:.6}
 .leadercard.tgt{border-color:var(--red);animation:pulse 1s infinite}
 :root{--lw:86px}
-body.vert{--lw:74px}
-body.vert .leadercard .lcArt{font-size:21px}
-body.vert .leadercard .lcName{font-size:9px}
-body.vert .leadercard .lcEp{display:none}
-body.vert .zone.fz{gap:6px}
 .zlabel{position:absolute;left:-20px;top:50%;transform:translateY(-50%) rotate(-90deg);
   font-size:8px;letter-spacing:2.5px;color:#584b78;white-space:nowrap;pointer-events:none}
 .slots{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
@@ -359,13 +354,13 @@ body.vert .zone.fz{gap:6px}
 #rail .bar .spacer{display:none}
 #rail .bar .turnpill{grid-column:1/-1;text-align:center;font-size:11px;padding:3px 8px}
 #rail .bar .netchip{grid-column:1/-1;font-size:10.5px;justify-content:center}
-.pilebox{display:flex;flex-direction:column;gap:22px}
+.pilebox{display:flex;flex-direction:column;gap:18px}
 /* EL MAZO
    Un taco de cartas visto en ángulo, no un rectángulo. La inclinación es una
    rotación en 3D; el grosor son capas apiladas en sombra, no nodos —así el
    mazo sigue siendo un solo elemento y el contador no tiene que dibujar nada.
    Se inclina hacia el jugador, igual que el tapete. */
-.pile{position:relative;height:96px;border-radius:10px;cursor:default;
+.pile{position:relative;height:82px;border-radius:10px;cursor:default;
   display:grid;place-items:center;transition:transform .18s, box-shadow .16s, border-color .13s;
   border:1px solid var(--line);transform-style:preserve-3d}
 .pile.deck{
@@ -388,7 +383,7 @@ body.vert .zone.fz{gap:6px}
 .pile.deck::after{content:"";position:absolute;width:40px;height:40px;border-radius:50%;
   border:1px solid rgba(198,158,255,.38);
   box-shadow:inset 0 0 0 5px rgba(198,158,255,.11), 0 0 16px rgba(150,105,245,.25)}
-.pile.grave{height:74px;background:linear-gradient(180deg,#251b32,#150f1e);
+.pile.grave{height:60px;background:linear-gradient(180deg,#251b32,#150f1e);
   border-color:rgba(120,110,140,.42);cursor:pointer;
   box-shadow:inset 0 0 20px rgba(0,0,0,.6), 0 4px 12px rgba(0,0,0,.5)}
 .pile.grave:hover{border-color:var(--gold);transform:translateY(-3px);
@@ -404,20 +399,6 @@ body.vert .zone.fz{gap:6px}
   background:repeating-linear-gradient(45deg,#3a2a5c,#3a2a5c 4px,#2a1c44 4px,#2a1c44 9px);
   border:1px solid rgba(138,92,240,.7);box-shadow:0 6px 18px #000;transform:translate(-50%,-50%)}
 
-body.vert #rail{width:112px}
-body.vert #rail .bar{padding:6px 5px;gap:4px}
-body.vert #rail .bar .stat{padding:3px 7px;font-size:11px}
-body.vert #rail .bar .stat i{font-size:15px}
-body.vert .pile{height:74px} body.vert .pile.grave{height:58px}
-body.vert .pileart{font-size:19px} body.vert .pilen{font-size:17px}
-body.vert #mat{padding:6px 14px}
-body.vert #field{padding:6px 16px 6px 4px}
-body.vert #handzone{min-height:292px;flex:0 0 auto}
-body.vert #foehandzone{min-height:104px;flex:0 0 auto}
-body.vert #field{flex:1 1 auto;min-height:0}
-body.vert .slots{gap:7px}
-body.vert .row{gap:7px}
-body.vert .zlabel{display:none}
 .row{display:flex;align-items:center;justify-content:center;gap:8px;min-height:0;
   flex-wrap:nowrap;padding:2px}
 .row.traps{min-height:44px;gap:6px}
@@ -649,8 +630,7 @@ body.tut-on .card.playable{
    Trampa— y hasta ahora eso vivía en un número pequeño de la barra.
    Los dorsos son algo más chicos que los tuyos: están al fondo de la mesa, y
    esa diferencia de tamaño es lo que coloca a cada uno en su sitio. */
-:root{--cwd:104px; --chd:146px; --cwd-asoma:78px}
-body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
+:root{--cwd:112px; --chd:157px}
 
 #foehandzone{position:relative;padding:6px 8px 4px;
   display:flex;flex-direction:column;align-items:stretch;
@@ -668,8 +648,11 @@ body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
 #polvoFoe{opacity:.4}
 
 #foeHand{--n:0;position:relative;z-index:2;
-  display:flex;justify-content:center;align-items:flex-start;gap:6px;
-  height:var(--cwd-asoma);overflow:hidden;
+  /* SIN RECORTE. Antes sólo asomaban por arriba, recortadas a la mitad, y se
+     veían mutiladas. Se muestran enteras: es la mano del rival, y una mesa con
+     cartas cortadas no parece una mesa. */
+  display:flex;justify-content:center;align-items:flex-start;gap:8px;
+  min-height:calc(var(--chd) + 16px);overflow:visible;
   /* el punto de fuga arriba: sus cartas se alejan de ti, las tuyas se acercan */
   perspective:1100px;perspective-origin:50% -50%}
 .dorso{
@@ -766,7 +749,6 @@ body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
    solaparse a partir de la quinta y con la mano llena se tapaban unas a otras
    hasta no poder leer ninguna: había que adivinar qué tenías. */
 #hand .card{--solape:max(0px, (var(--n) - 8) * 13px);margin-inline:calc(-1 * var(--solape))}
-body.vert #hand .card{--solape:max(0px, (var(--n) - 5) * 11px)}
 /* al pasar por encima se endereza, sube y crece: hasta que la sueltas conviene
    verla entera y sin torcer */
 /* AL PASAR POR ENCIMA, LA CARTA CRECE
@@ -1061,12 +1043,6 @@ body.tutpause #tut{pointer-events:auto}
 .rules th{background:var(--panel2);color:var(--gold)}
 
 /* ---- el lienzo de pie: mismo diseño, reparto distinto ---- */
-body.vert{--cw:96px;--ch:134px;--cwm:112px;--chm:157px}
-body.vert #log{top:auto;bottom:6px;right:6px;left:6px;width:auto;max-height:132px;
-  background:rgba(8,5,14,.90);font-size:11px;padding:6px 8px}
-body.vert .card .txt{font-size:8px}
-body.vert #hand{padding:12px 6px 14px;gap:4px}
-body.vert .who>div>div:last-child{display:none}
 
 /* El tutorial y los avisos van FUERA del lienzo (tapan la pantalla entera, no
    el tablero), así que estos sí miran la ventana de verdad. */
@@ -5356,11 +5332,15 @@ window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutoria
    Hay dos lienzos porque un móvil de pie no admite el reparto de un monitor
    apaisado; dentro de cada uno, nada depende ya del tamaño de la ventana.
    ========================================================================== */
-/* Más alto que ancho de lo que pedía la pantalla: el tablero necesita apilar
-   la mano del rival, dos filas de campo, dos de Trampas y tu mano. Con 16:9 no
-   cabía y las cartas de arriba salían cortadas. Ahora manda el alto y lo que
-   sobra son bandas a los lados, que no estorban a nadie. */
-const LIENZO = { ancho: [1500, 830], alto: [1040, 1480] };   // [apaisado, de pie]
+/* UN SOLO LIENZO.
+   El tablero se dibuja siempre con la misma disposición y se escala entero para
+   caber. Antes había una segunda maqueta para pantallas altas y estrechas, y al
+   estirar la ventana el juego saltaba a ella: el registro se ponía encima de los
+   Puntos y las Llaves, y las Alcantarillas se montaban sobre el mazo. Una sola
+   maqueta no puede descuadrarse: si la ventana es estrecha, el tablero se hace
+   más pequeño y aparecen bandas, pero todo sigue en su sitio.
+   La versión de móvil será un diseño aparte, con su propio reparto. */
+const LIENZO = { ancho: 1500, alto: 1040 };
 
 /* Borde de seguridad: el tablero nunca llega al filo de la pantalla. Sin esto
    los botones de abajo y el registro quedaban pegados al canto —y en un móvil,
@@ -5368,16 +5348,13 @@ const LIENZO = { ancho: [1500, 830], alto: [1040, 1480] };   // [apaisado, de pi
 const MARGEN = 0.965;
 
 function ajustarLienzo(){
-  const dePie = innerHeight > innerWidth * 1.05;   // el 5% evita que un cuadrado baile
-  const i = dePie ? 1 : 0;
-  const W = LIENZO.ancho[i], H = LIENZO.alto[i];
+  const W = LIENZO.ancho, H = LIENZO.alto;
   // el lienzo entero tiene que caber: manda la dimensión más apretada
   const k = Math.min(innerWidth / W, innerHeight / H) * MARGEN;
   const r = document.documentElement.style;
   r.setProperty('--LW', W + 'px');
   r.setProperty('--LH', H + 'px');
   r.setProperty('--k', k);
-  document.body.classList.toggle('vert', dePie);
 }
 addEventListener('resize', ajustarLienzo);
 addEventListener('orientationchange', ajustarLienzo);
