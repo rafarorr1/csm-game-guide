@@ -690,6 +690,16 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **La ilustración nunca se sale de su carta** (build 73). Al poner un dibujo a un Líder, en el
+  editor la tarjeta se estiraba hasta tapar la interfaz entera —los menús desaparecían—. La
+  imagen se metía a su tamaño real, 750×1050 px, porque las reglas que la encajan colgaban de
+  `.card` y una tarjeta de Líder no es una carta: se quedaba fuera y entraba en el flujo.
+  Ahora el dibujo va dentro de una caja que recorta, y las reglas cuelgan de la propia imagen
+  en vez de su contenedor, así que valen en cualquier sitio donde se ponga una. Da igual el
+  tamaño del archivo y da igual cuánto la acerques: se queda dentro de la carta. Comprobado
+  con una imagen de 7000×5000 al 300 % de acercamiento —las tres vistas siguen midiendo
+  74×106, 112×158 y 224×316.
+- **Retirada la ilustración de Fender** para poder rehacerla.
 - **Una ilustración a medio guardar ya no tira el editor** (build 72). Al convertir la imagen,
   el navegador puede devolver nada —según el formato o el tamaño—, y eso se guardaba igual: un
   registro sin imagen. Al abrir el editor reventaba antes de pintar nada, y en cada recarga
