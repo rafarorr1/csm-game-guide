@@ -699,7 +699,9 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   tamaño del archivo y da igual cuánto la acerques: se queda dentro de la carta. Comprobado
   con una imagen de 7000×5000 al 300 % de acercamiento —las tres vistas siguen midiendo
   74×106, 112×158 y 224×316.
-- **Retirada la ilustración de Fender** para poder rehacerla.
+- **Retirada la ilustración de Fender** para poder rehacerla. Y al hacerlo se vio que publicar
+  sólo copiaba: el archivo de una ilustración quitada se quedaba en la web para siempre. No se
+  veía —el índice ya no la nombra— pero ahí seguía. Ahora se retira también de lo publicado.
 - **Una ilustración a medio guardar ya no tira el editor** (build 72). Al convertir la imagen,
   el navegador puede devolver nada —según el formato o el tamaño—, y eso se guardaba igual: un
   registro sin imagen. Al abrir el editor reventaba antes de pintar nada, y en cada recarga

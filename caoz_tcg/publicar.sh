@@ -157,7 +157,20 @@ cp "$AQUI/estudio.html" "$PAGES/$DESTINO/estudio.html"
 if [ -d "$AQUI/art" ]; then
   mkdir -p "$PAGES/$DESTINO/art"
   cp "$AQUI/art/"* "$PAGES/$DESTINO/art/" 2>/dev/null
-  gris "  $(ls -1 "$AQUI/art" | grep -c '\.webp$') ilustraciones incluidas"
+  # Y se retiran las que ya no están. Esto sólo copiaba: al quitar una
+  # ilustración, su archivo se quedaba publicado para siempre. No se veía en el
+  # juego —el índice ya no la nombra— pero ahí seguía.
+  RETIRADAS=0
+  for f in "$PAGES/$DESTINO/art/"*.webp; do
+    [ -e "$f" ] || continue
+    if [ ! -e "$AQUI/art/$(basename "$f")" ]; then
+      (cd "$PAGES" && git rm -q --ignore-unmatch "$DESTINO/art/$(basename "$f")")
+      rm -f "$f"
+      RETIRADAS=$((RETIRADAS+1))
+    fi
+  done
+  gris "  $(ls -1 "$AQUI/art" | grep -c '\.webp$') ilustraciones incluidas$(
+    [ "$RETIRADAS" -gt 0 ] && echo ", $RETIRADAS retirada(s)")"
 fi
 
 cd "$PAGES" || exit 1
