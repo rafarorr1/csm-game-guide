@@ -404,7 +404,7 @@ body.vert .zlabel{display:none}
   background:linear-gradient(178deg,#2b2040 0%,#1b1329 42%,#150e22 100%);
   border:1px solid var(--line);padding:0;cursor:pointer;overflow:hidden;
   display:flex;flex-direction:column;
-  transition:transform .16s cubic-bezier(.2,.9,.3,1.2), box-shadow .16s, border-color .13s;
+  transition:transform .24s cubic-bezier(.22,.61,.36,1), box-shadow .2s, border-color .15s;
   box-shadow:0 2px 6px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.07);
 }
 .card:hover{transform:translateY(-7px) scale(1.03);z-index:20;
@@ -429,10 +429,14 @@ body.vert .zlabel{display:none}
 /* --- la banda del nombre, cruzando el arte --- */
 .card .top{position:absolute;inset:0;z-index:3;pointer-events:none;display:block}
 .card .nm{
-  position:absolute;left:0;right:0;top:calc(44% - 21px);z-index:3;
+  /* Anclado por ABAJO, no por arriba: un nombre de tres líneas —"Risa
+     Incontrolable de Tasha"— crecía hacia abajo y se comía la tribu y el texto
+     de reglas, que quedaban escritos uno encima del otro. Creciendo hacia
+     arriba se mete en el arte, que es donde sobra sitio. */
+  position:absolute;left:0;right:0;bottom:56%;z-index:3;
   font:700 11.5px/1.14 var(--serif);font-variant:small-caps;letter-spacing:.5px;
   padding:3px 7px 4px 8px;color:#fdf6e6;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+  display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;
   text-shadow:0 2px 5px rgba(0,0,0,.95), 0 0 14px rgba(0,0,0,.7);
   background:linear-gradient(90deg, rgba(8,5,14,.90), rgba(8,5,14,.62) 78%, transparent);
   border-top:1px solid color-mix(in srgb,var(--tipo,#6a5a8a) 60%, transparent);
@@ -510,6 +514,16 @@ body.tut-on .card.playable{
   animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 3px var(--red),0 0 26px rgba(224,82,74,.85)}}
 .card.selected{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(230,187,82,.6);transform:translateY(-7px)}
+/* LAS CARTAS DEL TABLERO NO SE MUEVEN AL SEÑALARLAS, SÓLO CRECEN.
+   Subirlas 7px al pasar por encima sacaba el cursor de la carta si venías por
+   abajo: se encogía, el cursor volvía a entrar, se levantaba otra vez… y
+   parpadeaba sin parar, justo cuando intentabas pulsarla. Y al seleccionarla se
+   sumaba un segundo desplazamiento que la hacía saltar.
+   Creciendo desde el centro eso no puede pasar: la carta sólo gana superficie,
+   nunca se aparta de debajo del ratón. */
+.card.unit:hover{transform:scale(1.055)}
+.card.unit.selected{transform:scale(1.055)}
+.card.unit.selected:hover{transform:scale(1.075)}
 
 /* unidad en campo */
 .unit{width:var(--cw);height:var(--ch);
@@ -708,7 +722,7 @@ body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
   transform:rotateX(10deg)
             rotate(calc(var(--desde) * 2.9deg))
             translateY(calc(var(--desde) * var(--desde) * 2.2px));
-  transition:transform .18s cubic-bezier(.2,.9,.3,1.25), box-shadow .16s, border-color .13s;
+  transition:transform .30s cubic-bezier(.22,.61,.36,1), box-shadow .26s, border-color .18s;
   box-shadow:0 6px 14px rgba(0,0,0,.62), 0 16px 30px rgba(0,0,0,.5),
              inset 0 1px 0 rgba(255,255,255,.09);
 }
@@ -2086,7 +2100,7 @@ async function summonToken(s,tokenId,opt={}){
   const u=mkUnit(tokenId,s); P(s).field.push(u); recalc();
   if(opt.msg) log(opt.msg);
   await cloudCheck(u);
-  render(); return u;
+  render(); fxAterriza(u); return u;
 }
 function sacRelic(s,r){ const i=P(s).relics.indexOf(r); if(i>=0) P(s).relics.splice(i,1);
   P(s).grave.push(r.id); recalc(); render(); }
@@ -2394,7 +2408,7 @@ async function startTurn(s){
   // aunque empiece otra partida: si vuelves al menú y entras de nuevo, la IA de
   // la anterior seguía jugando sobre la nueva. Cada newGame crea un G distinto,
   // así que basta con mirar si sigue siendo el mismo antes de continuar.
-  if(s===FOE && !G.online) { const miG=G; await nap(600); if(G!==miG) return; await aiTurn(); }
+  if(s===FOE && !G.online) { const miG=G; await nap(780); if(G!==miG) return; await aiTurn(); }
   if(NET.host) netPushState();
 }
 
@@ -2536,6 +2550,7 @@ async function playFromHand(s, id, forcedTargets){
     P(s).field.push(u); recalc();
     if(u.keys.has('prisa')) u.sick=false;
     render();
+    fxAterriza(u);
     await cloudCheck(u);
     if(u.alive){
       if(c.enter) await c.enter(G,s,u,ts);
@@ -2615,6 +2630,12 @@ function canAttack(u){
   if(u.sick&&!u.keys.has('prisa')) return false;
   if(u.card.noAttack||u.blind) return false;
   if(u.card.clause&&!u.noClause&&!hasContract(u.side)) return false;
+  // Peaje de Brick y Brock: atacar cuesta 1 PD, así que sin PD no se puede.
+  // Esto se comprobaba sólo al resolver el ataque, y para entonces ya era
+  // tarde: la carta salía marcada como lista, el rival la intentaba una y otra
+  // vez —doce veces, con su pausa cada una— y el turno se quedaba colgado
+  // siete segundos repitiendo el mismo aviso.
+  if(P(u.side).pd<1 && P(1-u.side).field.some(o=>o.card.toll&&o.alive)) return false;
   return true;
 }
 function legalTargets(u){
@@ -3291,6 +3312,27 @@ async function fxDeath(u){
    nombre en texto y las Habilidades no enseñaban nada.
    Se queda más rato si lo hace el rival: lo suyo hay que leerlo, no adivinarlo.
    ------------------------------------------------------------------------ */
+/* EL ATERRIZAJE
+   La carta que baja al campo llegaba de la nada: en un fotograma no estaba y en
+   el siguiente sí. Ahora cae desde arriba —algo más grande, girada y brillando—
+   y se asienta con un pequeño rebote y un resplandor de su color de clase.
+   Dura menos de medio segundo: lo justo para que la vista siga adónde fue.
+   El polvo del tapete se levanta un poco a su alrededor con el mismo golpe. */
+function fxAterriza(u){
+  if(!FXON()) return;
+  const e = fxEl(u); if(!e) return;
+  const col = getComputedStyle(e).getPropertyValue('--tipo').trim() || '#8a5cf0';
+  e.animate([
+    {transform:'translateY(-40px) scale(1.20) rotate(-3.5deg)', opacity:0,
+     filter:'brightness(1.7)', boxShadow:'0 26px 40px rgba(0,0,0,.7), 0 0 0 0 '+col},
+    {transform:'translateY(3px) scale(1.03) rotate(.6deg)', opacity:1,
+     filter:'brightness(1.22)', boxShadow:'0 10px 22px rgba(0,0,0,.7), 0 0 26px 3px '+col,
+     offset:.60},
+    {transform:'translateY(0) scale(1) rotate(0deg)', opacity:1,
+     filter:'brightness(1)', boxShadow:'0 3px 6px rgba(0,0,0,.5), 0 0 0 0 transparent'}
+  ], {duration:440, easing:'cubic-bezier(.18,.72,.3,1)'});
+}
+
 async function fxCartaEnEscena(nodo, side, color, etiqueta, quieta){
   if(!FXON()) return;
   const board=$('#field').getBoundingClientRect();
@@ -3712,11 +3754,11 @@ async function aiTurn(){
   if(G.tutorial && TUT.on){                    // durante el tutorial el rival va guionizado
     G.busy=true; let scripted=false;
     try{ scripted=await tutFoeTurn(); } finally{ if(viva()) G.busy=false; }
-    if(scripted){ if(viva() && !G.over){ await nap(400); if(viva()) await endTurn(); } return; }
+    if(scripted){ if(viva() && !G.over){ await nap(560); if(viva()) await endTurn(); } return; }
   }
   G.busy=true;
   // 200 ms era ilegible: sus jugadas pasaban antes de que te dieras cuenta.
-  const pause = ()=>nap(G.tutorial?600:620);
+  const pause = ()=>nap(G.tutorial?700:820);
   try{
     let guard=0, played=0; const skip=new Set();
     const maxPlays = 12;
@@ -3752,10 +3794,13 @@ async function aiTurn(){
       if(!t){ u.attacked=true; recalc(); continue; }
       await pause();
       if(!viva()) return;
-      await doAttack(u,t);
+      // Si el ataque no llega a hacerse, esta unidad se da por gastada: sin
+      // esto el bucle la reintentaba con el mismo resultado hasta agotar el
+      // tope, y cada vuelta se lleva su pausa.
+      if(!await doAttack(u,t)){ u.attacked=true; recalc(); }
     }
   } finally { if(viva()) G.busy=false; }
-  if(viva() && !G.over){ await nap(400); if(viva()) await endTurn(); }
+  if(viva() && !G.over){ await nap(560); if(viva()) await endTurn(); }
 }
 
 /* ==========================================================================
@@ -5331,6 +5376,11 @@ if(new URLSearchParams(location.search).has('foto')){
       const b2=$('#inspect'); b2.classList.add('on');
       b2.style.left='1120px'; b2.style.top='120px';
     }, 1400);
+    if(q.has('mano')){            // cartas concretas en la mano, para retratarlas
+      P(ME).hand.length=0;
+      (q.get('mano')||'').split(',').filter(Boolean).forEach(id=>P(ME).hand.push(id));
+      render();
+    }
     if(q.has('hover')) setTimeout(()=>{
       const c=$('#hand').children[+q.get('hover')||0];
       if(c) c.classList.add('finge-hover');
