@@ -1353,8 +1353,41 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:57, fecha:'2026-09-01'};
+const BUILD = {n:58, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
+
+/* ==========================================================================
+   LAS ILUSTRACIONES
+   Las imágenes viven en art/<id>.webp y las prepara estudio.html, que además
+   guarda de cada una su encuadre —qué parte se ve cuando se recorta— en
+   art/encuadres.json. Ese archivo hace de índice: si un id no está, esa carta
+   todavía no tiene ilustración y se queda con su emoji.
+   Todo esto es OPCIONAL: sin la carpeta art/ el juego funciona igual que hasta
+   ahora. Así se pueden ir metiendo ilustraciones de una en una sin que nada se
+   rompa por el camino.
+   ========================================================================== */
+let ARTE = {};                       // id -> encuadre vertical (0-100)
+
+async function cargarArte(){
+  // Con doble clic (file://) el navegador no deja pedir archivos del disco:
+  // ni se intenta, para no llenar la consola de errores.
+  if(location.protocol === 'file:') return;
+  try{
+    const r = await fetch('art/encuadres.json', {cache:'no-cache'});
+    if(!r.ok) return;                // no hay ilustraciones todavía: emojis
+    ARTE = await r.json();
+  }catch(e){}                        // tampoco pasa nada: emojis
+}
+
+/* Lo que va dentro del hueco del arte. Si la imagen no llega a cargar —el
+   archivo falta o está corrupto— se cae al emoji sin dejar la carta vacía. */
+function artHTML(id, emoji){
+  const y = ARTE[id];
+  if(y == null) return emoji;
+  return `<img src="art/${id}.webp" alt="" loading="lazy"`
+       + ` style="object-position:50% ${y}%"`
+       + ` onerror="this.remove()">${emoji}`;
+}
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
@@ -3137,7 +3170,7 @@ function cardEl(id,opt={}){
     <div class="top"><div class="cost${disc?' rebajado':''}">${cost}</div>
       <div class="nm">${c.n}</div></div>
     ${c.r===2?'<div class="rar">★</div>':''}
-    <div class="art">${c.art}</div>
+    <div class="art">${artHTML(id, c.art)}</div>
     <div class="tribe">${tribeLine(c)}</div>
     <div class="txt">${c.x||''}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
@@ -3181,7 +3214,7 @@ function unitFill(d,u){
   d.innerHTML=`
     <div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}</div></div>
     ${c.r===2?'<div class="rar">★</div>':''}
-    <div class="art">${c.art}</div>
+    <div class="art">${artHTML(c.id, c.art)}</div>
     <div class="tribe">${u.tribes.join(' · ')}</div>
     <div class="keys">${kw.join('')}${
       nombresDeHabilidad(c.id).map(n=>`<span class="kw hab">${n}</span>`).join('')}</div>
@@ -3219,7 +3252,7 @@ function inspectHTML(id,u){
   const base = (u&&c.t==='personaje'&&(u.atk!==c.a||u.maxHp!==c.h))
     ? `<div class="bigbase">Base ${c.a}/${c.h} · ahora ${u.atk}/${u.maxHp}</div>` : '';
   return `<div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}${c.r===2?' ★':''}</div></div>
-    <div class="art">${c.art}</div>
+    <div class="art">${artHTML(id, c.art)}</div>
     <div class="tribe">${u?u.tribes.join(' · '):tribeLine(c)}</div>
     ${kw}
     <div class="txt">${c.x||''}</div>
@@ -3231,7 +3264,7 @@ function showInspectLeader(d,side){
   const p=P(side), L=p.L, box=$('#inspectCard');
   box.className='big';
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
-    <div class="art">${L.art}</div>
+    <div class="art">${artHTML('lider-'+p.leaderId, L.art)}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
     <div class="bigsep"></div>
@@ -5694,6 +5727,10 @@ function ajustarLienzo(){
 addEventListener('resize', ajustarLienzo);
 addEventListener('orientationchange', ajustarLienzo);
 ajustarLienzo();
+
+/* Las ilustraciones, si las hay. No se espera a que lleguen para dejar jugar:
+   el juego arranca con los emojis y se repinta cuando el índice está listo. */
+cargarArte().then(()=>{ if(Object.keys(ARTE).length && G && !G.silent) render(); });
 
 /* Las pruebas viven en tests.js y sólo se cargan con ?test=... — así el juego
    normal no paga nada por ellas y sigue siendo un archivo suelto que funciona
