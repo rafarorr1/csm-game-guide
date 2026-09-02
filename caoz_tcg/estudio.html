@@ -100,6 +100,7 @@ main{padding:16px}
     <span class="crece"></span>
     <span class="marcador" id="marcador">cargando…</span>
     <button class="btn" id="btnImportar">Importar varias…</button>
+    <button class="btn oro" id="btnSync">Sincronizar con el juego</button>
     <button class="btn" id="btnZip">Descargar ZIP</button>
     <button class="btn oro" id="btnArtJs">Generar art.js</button>
   </div>
@@ -614,6 +615,87 @@ function descargar(blob, nombre){
   setTimeout(()=>URL.revokeObjectURL(a.href), 4000);
 }
 
+/* ===========================================================================
+   SINCRONIZAR CON EL JUEGO
+   Un botón. Por dentro: pide una vez la carpeta del juego, la recuerda, y a
+   partir de ahí escribe las ilustraciones y el índice de encuadres directamente
+   en art/ — sin descargar zips ni descomprimir nada a mano.
+
+   El permiso a la carpeta se guarda en la misma base que las imágenes. El
+   navegador puede pedirlo otra vez al cabo de un tiempo o tras cerrarlo; eso no
+   se puede evitar, pero es un clic y no vuelve a preguntar en toda la sesión.
+
+   Sólo Chrome y Edge saben hacer esto. En los demás el botón lo dice y queda el
+   ZIP de siempre, que hace lo mismo con dos pasos más.
+   ======================================================================== */
+const HAY_SYNC = typeof window.showDirectoryPicker === 'function';
+
+async function carpetaGuardada(){
+  return new Promise(ok=>{ const r=BD.tx('readonly').get('__carpeta__');
+    r.onsuccess=()=>ok(r.result && r.result.handle); r.onerror=()=>ok(null); });
+}
+async function guardarCarpeta(handle){
+  return new Promise(ok=>{ const r=BD.tx('readwrite').put({id:'__carpeta__', handle});
+    r.onsuccess=()=>ok(); r.onerror=()=>ok(); });
+}
+async function conPermiso(h){
+  if(!h) return null;
+  const opc = {mode:'readwrite'};
+  if(await h.queryPermission(opc) === 'granted') return h;
+  if(await h.requestPermission(opc) === 'granted') return h;
+  return null;                                  // lo denegó: se vuelve a pedir
+}
+
+async function sincronizar(){
+  const btn = $('#btnSync');
+  if(!HAY_SYNC){
+    alert('Este navegador no puede escribir en carpetas.\n\n' +
+          'Funciona en Chrome y en Edge. Mientras tanto, "Descargar ZIP" hace lo ' +
+          'mismo: descomprímelo dentro de caoz_tcg/ y quedará la carpeta art/.');
+    return;
+  }
+  let dir = await conPermiso(await carpetaGuardada());
+  if(!dir){
+    try{
+      dir = await showDirectoryPicker({mode:'readwrite', id:'caoz-tcg'});
+    }catch(e){ return; }                        // cerró el diálogo: sin ruido
+    await guardarCarpeta(dir);
+  }
+  const antes = btn.textContent;
+  btn.disabled = true;
+  try{
+    // art/ dentro de la carpeta que eligió; se crea si no existe
+    const art = await dir.getDirectoryHandle('art', {create:true});
+    let n = 0;
+    for(const [id, reg] of ARTE){
+      const f = await art.getFileHandle(id + '.webp', {create:true});
+      const w = await f.createWritable();
+      await w.write(reg.blob);
+      await w.close();
+      n++;
+      btn.textContent = `Sincronizando… ${n}/${ARTE.size}`;
+    }
+    // el índice: sin él el juego no sabe qué cartas tienen ilustración
+    const idx = await art.getFileHandle('encuadres.json', {create:true});
+    const wi = await idx.createWritable();
+    await wi.write(JSON.stringify(
+      Object.fromEntries([...ARTE].map(([id,r])=>[id, r.encuadre ?? 50])), null, 1));
+    await wi.close();
+
+    btn.textContent = antes;
+    alert(`Listo: ${n} ilustracion${n===1?'':'es'} en art/.\n\n` +
+          'Ya se ven al recargar el juego. Para que salgan en la web publicada, ' +
+          'queda ejecutar ./publicar.sh');
+  }catch(e){
+    btn.textContent = antes;
+    alert('No se pudo escribir: ' + (e && e.message ? e.message : e) +
+          '\n\nSi elegiste una carpeta protegida (Escritorio, Documentos), el ' +
+          'navegador puede bloquearla. Elige la carpeta caoz_tcg del proyecto.');
+  }finally{
+    btn.disabled = false;
+  }
+}
+
 async function exportarZip(){
   const entradas = [];
   for (const [id, reg] of ARTE){
@@ -668,6 +750,8 @@ function conectarBotones(){
     e.target.value = '';
   };
 
+  $('#btnSync').onclick = sincronizar;
+  if(!HAY_SYNC) $('#btnSync').title = 'Necesita Chrome o Edge';
   $('#btnZip').onclick = exportarZip;
   $('#btnArtJs').onclick = exportarArtJs;
 
