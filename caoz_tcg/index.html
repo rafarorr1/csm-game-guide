@@ -650,53 +650,66 @@ body.tut-on .card.playable{
 .card.unit:hover .cajon, .card.unit.finge-hov .cajon{
   transform:translateX(-50%) translateY(0)}
 
-/* ============ LA CARTA ILUSTRADA ============
-   Cuando una carta tiene ilustración, ésta pasa a ser el fondo completo y
-   tribu, texto y cifras se agrupan abajo en un pie con su propio velo, que es
-   donde se leen. Las tipografías van en em, proporcionales al tamaño de la
-   carta: en píxeles fijos el texto se quedaba diminuto al ampliarla.
+/* ============ EL ACOMODO DE LA CARTA ============
+   Lo usan TODAS las cartas. El dibujo —una ilustración si la hay, y si no el
+   emoji sobre el color de su clase— ocupa la carta entera, y nombre, tribu,
+   texto y cifras se agrupan abajo en un pie con su propio velo, que es donde se
+   leen. Las tipografías van en em, proporcionales al tamaño de la carta: en
+   píxeles fijos el texto se quedaba diminuto al ampliarla.
 
    Esto viene TAL CUAL de estudio.html, que lo tenía resuelto antes de que el
    juego supiera leer imágenes. Se copia en vez de reescribirlo para que lo que
    se ve al preparar el arte sea exactamente lo que se ve en la mesa. Si se
    toca aquí, hay que tocarlo allí. */
 
-.card.ilustrada{ font-size:calc(var(--cw) * 0.092); }
-.card.ilustrada .art{ display:none }
-.card.ilustrada .top{ position:relative; z-index:2; align-items:center }
-.card.ilustrada .pieCarta .nm{ position:static; inset:auto; font-size:1.18em;
+.card.acomodo{ font-size:calc(var(--cw) * 0.092); }
+.card.acomodo.conarte .art{ display:none }
+/* Sin ilustración el emoji hace de dibujo: ocupa la carta entera sobre el
+   degradado de su clase, y el pie va igual que en las ilustradas. Así todas las
+   cartas se maquetan igual y no conviven dos diseños según cuáles hayas
+   dibujado ya. */
+.card.acomodo.sinarte .art{ position:absolute; inset:0; z-index:0; height:auto;
+  display:grid; place-items:center; font-size:3.1em; padding:0 0 22% 0;
+  border-radius:9px; overflow:hidden;
+  background:radial-gradient(ellipse 115% 72% at 50% 34%,
+    color-mix(in srgb,var(--tipo,#5a4a7a) 40%, transparent), transparent 74%),
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.42)) }
+.card.acomodo.sinarte .art::after{ content:""; position:absolute; inset:auto 0 0 0;
+  height:58%; background:linear-gradient(180deg,transparent,rgba(8,6,14,.92)) }
+.card.acomodo .top{ position:relative; z-index:2; align-items:center }
+.card.acomodo .pieCarta .nm{ position:static; inset:auto; font-size:1.18em;
   line-height:1.06; padding:0 0 .12em; margin:0; background:none; border:none;
   -webkit-line-clamp:2; color:#fdf6e6; text-align:center;
   text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.9) }
 /* nombre, tribu y texto comparten caja: el margen lateral lo pone el pie, no
    cada uno por su cuenta. Con paddings distintos no acababan de cuadrar. */
-.card.ilustrada .pieCarta .tribe,
-.card.ilustrada .pieCarta .txt{ padding-left:0; padding-right:0; text-align:center }
-.card.ilustrada .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
+.card.acomodo .pieCarta .tribe,
+.card.acomodo .pieCarta .txt{ padding-left:0; padding-right:0; text-align:center }
+.card.acomodo .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
   box-shadow:0 2px 6px rgba(0,0,0,.7) }
-.card.ilustrada .rar{ font-size:.9em; text-shadow:0 1px 3px #000 }
+.card.acomodo .rar{ font-size:.9em; text-shadow:0 1px 3px #000 }
 
 /* el pie: tribu + texto + números, pegados abajo y con su velo */
-.card.ilustrada .pieCarta{
+.card.acomodo .pieCarta{
   margin:auto -5px -5px; padding:1.05em .45em .3em; position:relative; z-index:2;
   display:flex; flex-direction:column; gap:0;
   background:linear-gradient(180deg, rgba(8,6,14,0) 0%, rgba(8,6,14,.72) 30%,
              rgba(8,6,14,.93) 58%, rgba(8,6,14,.97) 100%);
 }
-.card.ilustrada .pieCarta .tribe{ font-size:.68em; margin:0 0 .14em; line-height:1.1;
+.card.acomodo .pieCarta .tribe{ font-size:.68em; margin:0 0 .14em; line-height:1.1;
   text-shadow:0 1px 2px #000 }
 /* El texto se acota a cuatro líneas. No es un capricho: con reglas largas el pie
    se comía la carta entera y tapaba la ilustración (Brick y Brock empezaba al
    17 % de la altura). El juego ya recorta así el texto de las cartas pequeñas;
    quien quiera leerlo entero la amplía. */
-.card.ilustrada .pieCarta .txt{ font-size:.84em; line-height:1.16; flex:none;
+.card.acomodo .pieCarta .txt{ font-size:.84em; line-height:1.16; flex:none;
   color:#e6dcf5; text-shadow:0 1px 2px #000; display:-webkit-box;
   -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden }
 /* en la vista ampliada cabe más, que para eso se amplía */
-.card.ilustrada.grande .pieCarta .txt{ -webkit-line-clamp:7 }
-.card.ilustrada .pieCarta .stats{ margin-top:.35em; padding-top:0 }
-.card.ilustrada .pieCarta .atk,
-.card.ilustrada .pieCarta .hp{ font-size:1.25em; min-width:2em; padding:.05em .35em;
+.card.acomodo.grande .pieCarta .txt{ -webkit-line-clamp:7 }
+.card.acomodo .pieCarta .stats{ margin-top:.35em; padding-top:0 }
+.card.acomodo .pieCarta .atk,
+.card.acomodo .pieCarta .hp{ font-size:1.25em; min-width:2em; padding:.05em .35em;
   box-shadow:0 2px 6px rgba(0,0,0,.6) }
 
 /* unidad en campo */
@@ -1419,7 +1432,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:65, fecha:'2026-09-01'};
+const BUILD = {n:66, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -1484,10 +1497,46 @@ function encajarAncho(nodo, minFactor){
   }
 }
 
-/* Se pasa por las tribus de las cartas que hay en pantalla. Va tras el render,
-   cuando ya están colocadas: antes no se pueden medir. */
+/* El mismo problema pero en vertical: el texto de reglas se corta a media frase
+   —39 de las 84 cartas—, justo donde dice qué hace la carta.
+
+   Aquí no vale sólo encoger: el texto está limitado a 4 líneas con line-clamp, y
+   el clamp mide en líneas, así que al bajar la fuente encoge también la caja y
+   nunca entra más texto. Lo que se hace es cambiar líneas por tamaño: se mide el
+   hueco que ocupaba a su tamaño normal, se busca la fuente con la que el texto
+   ENTERO cabe en ese mismo hueco, y se sube el clamp a las líneas que caben.
+   La carta no crece; el texto deja de cortarse. */
+function encajarAlto(nodo, minFactor){
+  if(!nodo) return;
+  nodo.style.fontSize = '';
+  nodo.style.webkitLineClamp = '';
+  const hueco = nodo.clientHeight;                    // lo que ocupa tal cual
+  if(!hueco) return;                                  // aún no está en pantalla
+  nodo.style.webkitLineClamp = 'unset';               // el texto entero, sin cortar
+  if(nodo.scrollHeight <= hueco + 1){                 // cabía de sobra: se deja
+    nodo.style.webkitLineClamp = '';
+    return;
+  }
+  const base = parseFloat(getComputedStyle(nodo).fontSize);
+  const min = base * (minFactor || 0.70);
+  let t = Math.max(min, base * (hueco / nodo.scrollHeight));
+  nodo.style.fontSize = t.toFixed(2) + 'px';
+  for(let i = 0; i < 6 && nodo.scrollHeight > hueco + 1 && t > min + 0.01; i++){
+    t = Math.max(min, t * 0.95);
+    nodo.style.fontSize = t.toFixed(2) + 'px';
+  }
+  // y el clamp, a las líneas que de verdad caben en el hueco
+  const linea = parseFloat(getComputedStyle(nodo).lineHeight) || t * 1.16;
+  nodo.style.webkitLineClamp = String(Math.max(1, Math.floor(hueco / linea)));
+}
+
+/* Se pasa por los textos de las cartas que hay en pantalla. Va tras el render,
+   cuando ya están colocadas: antes no se pueden medir. La tribu primero, que al
+   partirse en dos líneas le quita sitio al texto de reglas. */
 function encajarTextos(raiz){
-  (raiz || document).querySelectorAll('.card .tribe').forEach(t => encajarAncho(t, 0.68));
+  const r = raiz || document;
+  r.querySelectorAll('.card .tribe').forEach(t => encajarAncho(t, 0.68));
+  r.querySelectorAll('.card .txt').forEach(t => encajarAlto(t, 0.70));
 }
 
 const VELO_ILUSTRADA =
@@ -1495,11 +1544,15 @@ const VELO_ILUSTRADA =
 
 function ilustrar(d, id){
   const y = ARTE[id];
-  if(y == null) return d;                       // sin ilustración: como siempre
-  d.classList.add('ilustrada');
-  d.style.backgroundImage = VELO_ILUSTRADA + `, url(art/${id}.webp)`;
-  d.style.backgroundSize = 'cover';
-  d.style.backgroundPosition = `center ${y}%`;
+  const hay = y != null;
+  // El acomodo es el mismo tenga o no ilustración: lo único que cambia es si el
+  // fondo lo pone el dibujo o el emoji sobre el color de su clase.
+  d.classList.add('acomodo', hay ? 'conarte' : 'sinarte');
+  if(hay){
+    d.style.backgroundImage = VELO_ILUSTRADA + `, url(art/${id}.webp)`;
+    d.style.backgroundSize = 'cover';
+    d.style.backgroundPosition = `center ${y}%`;
+  }
   const pie = document.createElement('div');
   pie.className = 'pieCarta';
   for(const sel of ['.nm', '.tribe', '.txt', '.stats']){
@@ -4844,7 +4897,9 @@ function showGallery(){
       g.appendChild(c);
     });
     p.appendChild(g);
-    encajarTextos(g);
+    // el panel todavía no está visible aquí y lo que no se ve mide cero: el
+    // ajuste va en el frame siguiente, ya colocado en pantalla
+    requestAnimationFrame(() => encajarTextos(g));
     if(!lista.length) p.appendChild(el('div','notagal','No hay cartas con ese filtro.'));
 
     const c=el('button','btn','Cerrar'); c.style.marginTop='14px';
@@ -6080,7 +6135,7 @@ if(new URLSearchParams(location.search).has('foto')){
       }
       // Zonas reales de una carta ilustrada, en % de su alto: para la plantilla
       {
-        const ci=$('#foeField .card.ilustrada') || $('#myField .card.ilustrada');
+        const ci=$('#foeField .card.conarte') || $('#myField .card.conarte');
         if(ci){
           const R=ci.getBoundingClientRect();
           const pct=e=>{const r=e.getBoundingClientRect();

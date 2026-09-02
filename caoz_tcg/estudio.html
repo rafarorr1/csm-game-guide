@@ -156,42 +156,54 @@ let CON_VELO = true;
    ilustraciones; está aquí junto para poder copiarlo de una pieza.
    ------------------------------------------------------------------------ */
 const CSS_ILUSTRADA = `
-.card.ilustrada{ font-size:calc(var(--cw) * 0.092); }
-.card.ilustrada .art{ display:none }
-.card.ilustrada .top{ position:relative; z-index:2; align-items:center }
-.card.ilustrada .pieCarta .nm{ position:static; inset:auto; font-size:1.18em;
+.card.acomodo{ font-size:calc(var(--cw) * 0.092); }
+.card.acomodo.conarte .art{ display:none }
+/* Sin ilustración el emoji hace de dibujo: ocupa la carta entera sobre el
+   degradado de su clase, y el pie va igual que en las ilustradas. Así todas las
+   cartas se maquetan igual y no conviven dos diseños según cuáles hayas
+   dibujado ya. */
+.card.acomodo.sinarte .art{ position:absolute; inset:0; z-index:0; height:auto;
+  display:grid; place-items:center; font-size:3.1em; padding:0 0 22% 0;
+  border-radius:9px; overflow:hidden;
+  background:radial-gradient(ellipse 115% 72% at 50% 34%,
+    color-mix(in srgb,var(--tipo,#5a4a7a) 40%, transparent), transparent 74%),
+    linear-gradient(180deg, rgba(255,255,255,.05), rgba(0,0,0,.42)) }
+.card.acomodo.sinarte .art::after{ content:""; position:absolute; inset:auto 0 0 0;
+  height:58%; background:linear-gradient(180deg,transparent,rgba(8,6,14,.92)) }
+.card.acomodo .top{ position:relative; z-index:2; align-items:center }
+.card.acomodo .pieCarta .nm{ position:static; inset:auto; font-size:1.18em;
   line-height:1.06; padding:0 0 .12em; margin:0; background:none; border:none;
   -webkit-line-clamp:2; color:#fdf6e6; text-align:center;
   text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.9) }
 /* nombre, tribu y texto comparten caja: el margen lateral lo pone el pie, no
    cada uno por su cuenta. Con paddings distintos no acababan de cuadrar. */
-.card.ilustrada .pieCarta .tribe,
-.card.ilustrada .pieCarta .txt{ padding-left:0; padding-right:0; text-align:center }
-.card.ilustrada .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
+.card.acomodo .pieCarta .tribe,
+.card.acomodo .pieCarta .txt{ padding-left:0; padding-right:0; text-align:center }
+.card.acomodo .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
   box-shadow:0 2px 6px rgba(0,0,0,.7) }
-.card.ilustrada .rar{ font-size:.9em; text-shadow:0 1px 3px #000 }
+.card.acomodo .rar{ font-size:.9em; text-shadow:0 1px 3px #000 }
 
 /* el pie: tribu + texto + números, pegados abajo y con su velo */
-.card.ilustrada .pieCarta{
+.card.acomodo .pieCarta{
   margin:auto -5px -5px; padding:1.05em .45em .3em; position:relative; z-index:2;
   display:flex; flex-direction:column; gap:0;
   background:linear-gradient(180deg, rgba(8,6,14,0) 0%, rgba(8,6,14,.72) 30%,
              rgba(8,6,14,.93) 58%, rgba(8,6,14,.97) 100%);
 }
-.card.ilustrada .pieCarta .tribe{ font-size:.68em; margin:0 0 .14em; line-height:1.1;
+.card.acomodo .pieCarta .tribe{ font-size:.68em; margin:0 0 .14em; line-height:1.1;
   text-shadow:0 1px 2px #000 }
 /* El texto se acota a cuatro líneas. No es un capricho: con reglas largas el pie
    se comía la carta entera y tapaba la ilustración (Brick y Brock empezaba al
    17 % de la altura). El juego ya recorta así el texto de las cartas pequeñas;
    quien quiera leerlo entero la amplía. */
-.card.ilustrada .pieCarta .txt{ font-size:.84em; line-height:1.16; flex:none;
+.card.acomodo .pieCarta .txt{ font-size:.84em; line-height:1.16; flex:none;
   color:#e6dcf5; text-shadow:0 1px 2px #000; display:-webkit-box;
   -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden }
 /* en la vista ampliada cabe más, que para eso se amplía */
-.card.ilustrada.grande .pieCarta .txt{ -webkit-line-clamp:7 }
-.card.ilustrada .pieCarta .stats{ margin-top:.35em; padding-top:0 }
-.card.ilustrada .pieCarta .atk,
-.card.ilustrada .pieCarta .hp{ font-size:1.25em; min-width:2em; padding:.05em .35em;
+.card.acomodo.grande .pieCarta .txt{ -webkit-line-clamp:7 }
+.card.acomodo .pieCarta .stats{ margin-top:.35em; padding-top:0 }
+.card.acomodo .pieCarta .atk,
+.card.acomodo .pieCarta .hp{ font-size:1.25em; min-width:2em; padding:.05em .35em;
   box-shadow:0 2px 6px rgba(0,0,0,.6) }
 `;
 /* Medido sobre la maquetación a sangre, carta por carta. El pie crece con lo
@@ -341,22 +353,25 @@ function nodoDeCarta(f){
   } else {
     d = document.importNode(JUEGO.cardEl(f.id), true);
   }
+  /* El acomodo es el mismo tenga o no ilustración: lo único que cambia es si el
+     fondo lo pone un dibujo o el emoji sobre el color de su clase. Antes
+     convivían dos maquetaciones y el mosaico parecía de dos juegos distintos. */
   const reg = ARTE.get(f.id);
+  d.classList.add('acomodo', reg ? 'conarte' : 'sinarte');
   if (reg){
-    d.classList.add('ilustrada');
     d.style.backgroundImage = (CON_VELO ? VELO + ',' : '') + `url(${reg.url})`;
     d.style.backgroundSize = 'cover';
     d.style.backgroundPosition = `center ${reg.encuadre ?? 50}%`;
     const emL = d.querySelector('.em'); if (emL) emL.style.display = 'none';
-    // tribu, texto y números se agrupan en un pie que se va abajo del todo
-    const pie = document.createElement('div');
-    pie.className = 'pieCarta';
-    for (const sel of ['.nm', '.tribe', '.txt', '.stats']){
-      const e = d.querySelector(sel);
-      if (e) pie.appendChild(e);
-    }
-    if (pie.children.length) d.appendChild(pie);
   }
+  // nombre, tribu, texto y números se agrupan en un pie que se va abajo del todo
+  const pie = document.createElement('div');
+  pie.className = 'pieCarta';
+  for (const sel of ['.nm', '.tribe', '.txt', '.stats']){
+    const e = d.querySelector(sel);
+    if (e) pie.appendChild(e);
+  }
+  if (pie.children.length) d.appendChild(pie);
   return d;
 }
 
@@ -391,6 +406,10 @@ function pintar(){
     celda.onclick = () => abrir(f.id);
     malla.appendChild(celda);
   }
+  /* El mismo ajuste de texto que hace el juego, para que lo que se ve aquí al
+     preparar el arte sea lo que se ve en la mesa. En el frame siguiente: recién
+     insertadas todavía no se pueden medir. */
+  requestAnimationFrame(() => JUEGO.encajarTextos && JUEGO.encajarTextos(malla));
 
   const con = FICHAS.filter(f => ARTE.has(f.id)).length;
   let bytes = 0; for (const r of ARTE.values()) bytes += r.blob.size;
@@ -517,6 +536,7 @@ function pintarVistas(conZonas){
     const carta = nodoDeCarta(f);
     if (t.cw >= 200) carta.classList.add('grande');
     sombra.appendChild(carta);
+    requestAnimationFrame(() => JUEGO.encajarTextos && JUEGO.encajarTextos(sombra));
     if (conZonas){
       const capa = document.createElement('div');
       capa.className = 'zonas';

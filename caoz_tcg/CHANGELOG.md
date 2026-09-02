@@ -690,6 +690,20 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Todas las cartas se maquetan igual** (build 66). Hasta ahora convivían dos diseños: las
+  que ya tenían ilustración usaban el dibujo a sangre con el pie de datos abajo, y las demás
+  seguían con el recuadro de arte a media carta. Como las ilustraciones van entrando de una
+  en una, el mosaico parecía de dos juegos distintos. Ahora el acomodo es el mismo para las
+  84: lo único que cambia es si el fondo lo pone un dibujo o el emoji sobre el color de su
+  clase.
+- **El texto se ajusta también en vertical.** El de reglas está limitado a cuatro líneas y
+  **39 de las 84 cartas se cortaban a media frase**, justo donde dice qué hace la carta. No
+  bastaba con encoger la letra —el límite se mide en líneas, así que al bajar la fuente
+  encogía la caja con ella—: ahora se mide el hueco que ocupa a su tamaño normal, se busca la
+  fuente con la que el texto entero cabe en ese mismo hueco y se suben las líneas
+  permitidas. La carta no crece y quedan 3 cartas recortadas en vez de 39; esas tres se leen
+  al pasar el cursor por encima.
+
 - **Estudio de cartas** (`estudio.html`) para ver las ilustraciones puestas antes de mandarlas
   al juego, y **banco de balance** (`balance.html`), que es el que produce los números de
   arriba.
