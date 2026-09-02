@@ -650,6 +650,51 @@ body.tut-on .card.playable{
 .card.unit:hover .cajon, .card.unit.finge-hov .cajon{
   transform:translateX(-50%) translateY(0)}
 
+/* ============ LA CARTA ILUSTRADA ============
+   Cuando una carta tiene ilustración, ésta pasa a ser el fondo completo y
+   tribu, texto y cifras se agrupan abajo en un pie con su propio velo, que es
+   donde se leen. Las tipografías van en em, proporcionales al tamaño de la
+   carta: en píxeles fijos el texto se quedaba diminuto al ampliarla.
+
+   Esto viene TAL CUAL de estudio.html, que lo tenía resuelto antes de que el
+   juego supiera leer imágenes. Se copia en vez de reescribirlo para que lo que
+   se ve al preparar el arte sea exactamente lo que se ve en la mesa. Si se
+   toca aquí, hay que tocarlo allí. */
+
+.card.ilustrada{ font-size:calc(var(--cw) * 0.092); }
+.card.ilustrada .art{ display:none }
+.card.ilustrada .top{ position:relative; z-index:2; align-items:center }
+.card.ilustrada .pieCarta .nm{ position:static; inset:auto; font-size:1.18em;
+  line-height:1.06; padding:0 0 .12em; margin:0; background:none; border:none;
+  -webkit-line-clamp:2; color:#fdf6e6;
+  text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.9) }
+.card.ilustrada .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
+  box-shadow:0 2px 6px rgba(0,0,0,.7) }
+.card.ilustrada .rar{ font-size:.9em; text-shadow:0 1px 3px #000 }
+
+/* el pie: tribu + texto + números, pegados abajo y con su velo */
+.card.ilustrada .pieCarta{
+  margin:auto -5px -5px; padding:1.05em .45em .3em; position:relative; z-index:2;
+  display:flex; flex-direction:column; gap:0;
+  background:linear-gradient(180deg, rgba(8,6,14,0) 0%, rgba(8,6,14,.72) 30%,
+             rgba(8,6,14,.93) 58%, rgba(8,6,14,.97) 100%);
+}
+.card.ilustrada .pieCarta .tribe{ font-size:.68em; margin:0 0 .14em; line-height:1.1;
+  text-shadow:0 1px 2px #000 }
+/* El texto se acota a cuatro líneas. No es un capricho: con reglas largas el pie
+   se comía la carta entera y tapaba la ilustración (Brick y Brock empezaba al
+   17 % de la altura). El juego ya recorta así el texto de las cartas pequeñas;
+   quien quiera leerlo entero la amplía. */
+.card.ilustrada .pieCarta .txt{ font-size:.84em; line-height:1.16; flex:none;
+  color:#e6dcf5; text-shadow:0 1px 2px #000; display:-webkit-box;
+  -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden }
+/* en la vista ampliada cabe más, que para eso se amplía */
+.card.ilustrada.grande .pieCarta .txt{ -webkit-line-clamp:7 }
+.card.ilustrada .pieCarta .stats{ margin-top:.35em; padding-top:0 }
+.card.ilustrada .pieCarta .atk,
+.card.ilustrada .pieCarta .hp{ font-size:1.25em; min-width:2em; padding:.05em .35em;
+  box-shadow:0 2px 6px rgba(0,0,0,.6) }
+
 /* unidad en campo */
 .unit{width:var(--cw);height:var(--ch);
   /* Sin recorte: la carta lo usaba para que el arte llegara a sangre hasta el
@@ -1353,7 +1398,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:58, fecha:'2026-09-01'};
+const BUILD = {n:59, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -1379,14 +1424,32 @@ async function cargarArte(){
   }catch(e){}                        // tampoco pasa nada: emojis
 }
 
-/* Lo que va dentro del hueco del arte. Si la imagen no llega a cargar —el
-   archivo falta o está corrupto— se cae al emoji sin dejar la carta vacía. */
-function artHTML(id, emoji){
+/* Convierte una carta ya montada en carta ILUSTRADA: la imagen pasa a ser el
+   fondo completo y tribu, texto y cifras se agrupan en un pie con velo, que es
+   donde se leen. Sin ilustración la carta se queda como estaba, con su ventana
+   de arte y el emoji: las dos formas conviven mientras se van dibujando.
+
+   Este montaje viene de estudio.html, que lo tenía resuelto antes de que el
+   juego supiera leer imágenes. Se adopta tal cual en vez de reinventarlo: así
+   lo que ves en el estudio es exactamente lo que verás en la mesa. */
+const VELO_ILUSTRADA =
+  'linear-gradient(180deg, rgba(8,6,14,0) 38%, rgba(8,6,14,.55) 66%, rgba(8,6,14,.92) 100%)';
+
+function ilustrar(d, id){
   const y = ARTE[id];
-  if(y == null) return emoji;
-  return `<img src="art/${id}.webp" alt="" loading="lazy"`
-       + ` style="object-position:50% ${y}%"`
-       + ` onerror="this.remove()">${emoji}`;
+  if(y == null) return d;                       // sin ilustración: como siempre
+  d.classList.add('ilustrada');
+  d.style.backgroundImage = VELO_ILUSTRADA + `, url(art/${id}.webp)`;
+  d.style.backgroundSize = 'cover';
+  d.style.backgroundPosition = `center ${y}%`;
+  const pie = document.createElement('div');
+  pie.className = 'pieCarta';
+  for(const sel of ['.nm', '.tribe', '.txt', '.stats']){
+    const e = d.querySelector(sel);
+    if(e) pie.appendChild(e);
+  }
+  if(pie.children.length) d.appendChild(pie);
+  return d;
 }
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
@@ -3170,11 +3233,12 @@ function cardEl(id,opt={}){
     <div class="top"><div class="cost${disc?' rebajado':''}">${cost}</div>
       <div class="nm">${c.n}</div></div>
     ${c.r===2?'<div class="rar">★</div>':''}
-    <div class="art">${artHTML(id, c.art)}</div>
+    <div class="art">${c.art}</div>
     <div class="tribe">${tribeLine(c)}</div>
     <div class="txt">${c.x||''}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
   d.dataset.card=id;
+  ilustrar(d, id);
   attachInspect(d,id);
   return d;
 }
@@ -3214,7 +3278,7 @@ function unitFill(d,u){
   d.innerHTML=`
     <div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}</div></div>
     ${c.r===2?'<div class="rar">★</div>':''}
-    <div class="art">${artHTML(c.id, c.art)}</div>
+    <div class="art">${c.art}</div>
     <div class="tribe">${u.tribes.join(' · ')}</div>
     <div class="keys">${kw.join('')}${
       nombresDeHabilidad(c.id).map(n=>`<span class="kw hab">${n}</span>`).join('')}</div>
@@ -3226,6 +3290,7 @@ function unitFill(d,u){
   // Sin panel flotante: en el tablero lo cuenta el cajón, y salían los dos a la
   // vez —el cajón junto a la carta y una copia gigante al lado—. El panel sigue
   // vivo en la galería y en las guías, donde no hay cajón.
+  ilustrar(d, c.id);
   d.onmouseenter=null; d.onmouseleave=null;
 }
 function inspectHTML(id,u){
@@ -3252,7 +3317,7 @@ function inspectHTML(id,u){
   const base = (u&&c.t==='personaje'&&(u.atk!==c.a||u.maxHp!==c.h))
     ? `<div class="bigbase">Base ${c.a}/${c.h} · ahora ${u.atk}/${u.maxHp}</div>` : '';
   return `<div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}${c.r===2?' ★':''}</div></div>
-    <div class="art">${artHTML(id, c.art)}</div>
+    <div class="art">${c.art}</div>
     <div class="tribe">${u?u.tribes.join(' · '):tribeLine(c)}</div>
     ${kw}
     <div class="txt">${c.x||''}</div>
@@ -3264,7 +3329,7 @@ function showInspectLeader(d,side){
   const p=P(side), L=p.L, box=$('#inspectCard');
   box.className='big';
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
-    <div class="art">${artHTML('lider-'+p.leaderId, L.art)}</div>
+    <div class="art">${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
     <div class="bigsep"></div>
@@ -5861,6 +5926,7 @@ if(new URLSearchParams(location.search).has('foto')){
       // no responde, es que algo la tapa; esto dice exactamente qué.
       // Rejilla completa sobre una carta del campo: en cada punto, qué elemento
       // recibiría el clic. Es la única forma de ver DÓNDE deja de responder.
+      let zonas='';
       const carta = $('#myField .card');
       let mapa = 'sin carta';
       // se prueba en los tres estados en que uno pulsa una carta del campo
@@ -5889,6 +5955,19 @@ if(new URLSearchParams(location.search).has('foto')){
         mapa = 'estado='+(estado||'reposo')+' '+Math.round(r.width)+'x'+Math.round(r.height)
              +' [' + filas.join('/') + ']'
              + ' fallan: ' + (Object.keys(fallos).length? JSON.stringify(fallos) : 'ninguno');
+      }
+      // Zonas reales de una carta ilustrada, en % de su alto: para la plantilla
+      {
+        const ci=$('#foeField .card.ilustrada') || $('#myField .card.ilustrada');
+        if(ci){
+          const R=ci.getBoundingClientRect();
+          const pct=e=>{const r=e.getBoundingClientRect();
+            return Math.round((r.top-R.top)/R.height*1000)/10+'..'
+                 + Math.round((r.bottom-R.top)/R.height*1000)/10;};
+          const q=sel=>{const e=ci.querySelector(sel); return e? sel+' '+pct(e) : sel+' -';};
+          zonas = 'CARTA '+Math.round(R.width)+'x'+Math.round(R.height)+' | '
+                + [q('.cost'),q('.nm'),q('.pieCarta'),q('.tribe'),q('.stats')].join(' | ');
+        } else zonas='sin carta ilustrada';
       }
       // ¿quién recorta el cajón? Se recorre hacia arriba buscando overflow
       let cadena='';
@@ -5920,7 +5999,7 @@ if(new URLSearchParams(location.search).has('foto')){
              +' | clases de la carta: '+carta.className;
         }
       }
-      const quien = cadena;
+      const quien = zonas + ' || ' + cadena;
       // ¿se sale algo del lienzo? Es la pregunta de verdad, y la contesta la
       // página en vez de mirar una captura a ojo
       const L=$('#lienzo').getBoundingClientRect();
