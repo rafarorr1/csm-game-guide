@@ -1419,7 +1419,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:64, fecha:'2026-09-01'};
+const BUILD = {n:65, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -1453,6 +1453,43 @@ async function cargarArte(){
    Este montaje viene de estudio.html, que lo tenía resuelto antes de que el
    juego supiera leer imágenes. Se adopta tal cual en vez de reinventarlo: así
    lo que ves en el estudio es exactamente lo que verás en la mesa. */
+/* TEXTO QUE SE ENCOGE PARA CABER
+   Los nombres de tribu no miden lo mismo: "ELFO · DISCÍPULO" entra de sobra y
+   "HUMANO · PALADÍN · TOMSAGE" no, así que se cortaba con puntos suspensivos y
+   perdías justo el dato. En vez de recortar, la letra se encoge lo justo.
+
+   Se mide UNA vez y se calcula el factor de golpe, en vez de ir bajando de
+   punto en punto: cada medición obliga al navegador a recalcular la página, y
+   con diez cartas en pantalla eso se nota. Hay un mínimo por debajo del cual no
+   baja: mejor recortar que dejarlo ilegible. */
+function encajarAncho(nodo, minFactor){
+  if(!nodo) return;
+  nodo.style.fontSize = '';                       // partir siempre de su tamaño
+  const ancho = nodo.clientWidth;
+  if(!ancho) return;                              // aún no está en pantalla
+  const sobra = nodo.scrollWidth / ancho;
+  if(sobra <= 1.001) return;                      // cabe: no se toca
+  const base = parseFloat(getComputedStyle(nodo).fontSize);
+  const min = base * (minFactor || 0.72);
+  const nuevo = Math.max(min, base / sobra * 0.97);
+  nodo.style.fontSize = nuevo.toFixed(2) + 'px';
+
+  /* Si ni encogiendo hasta el mínimo cabe —"HUMANO · PALADÍN · CASA BOSS" no
+     entra en 126px a ningún tamaño legible— se le da una segunda línea. Antes
+     que dejarlo en "CASA B…", que es perder justo el dato. */
+  if(nodo.scrollWidth > nodo.clientWidth + 1){
+    nodo.style.whiteSpace = 'normal';
+    nodo.style.lineHeight = '1.05';
+    nodo.style.textOverflow = 'clip';
+  }
+}
+
+/* Se pasa por las tribus de las cartas que hay en pantalla. Va tras el render,
+   cuando ya están colocadas: antes no se pueden medir. */
+function encajarTextos(raiz){
+  (raiz || document).querySelectorAll('.card .tribe').forEach(t => encajarAncho(t, 0.68));
+}
+
 const VELO_ILUSTRADA =
   'linear-gradient(180deg, rgba(8,6,14,0) 38%, rgba(8,6,14,.55) 66%, rgba(8,6,14,.92) 100%)';
 
@@ -3919,6 +3956,7 @@ function render(){
   });
   h.classList.toggle('apretada', nMano>7);
   renderControls();
+  encajarTextos();                 // las tribus largas, a la medida de su carta
   if(G.tutorial) tutHighlight();
 }
 function whyNot(s,id){
@@ -4806,6 +4844,7 @@ function showGallery(){
       g.appendChild(c);
     });
     p.appendChild(g);
+    encajarTextos(g);
     if(!lista.length) p.appendChild(el('div','notagal','No hay cartas con ese filtro.'));
 
     const c=el('button','btn','Cerrar'); c.style.marginTop='14px';
