@@ -614,18 +614,48 @@ body.tut-on .card.playable{
    parpadeaban justo al ir a pulsarlas. Y crecen hacia el lado que tienen libre
    —las tuyas hacia arriba, las del rival hacia abajo— para no salirse del
    tapete ni taparse entre filas. */
-.card.unit:hover, .card.unit.finge-hov{transform:scale(1.62);z-index:60}
-.card.unit.selected{transform:scale(1.10);z-index:40}
-.card.unit.selected:hover{transform:scale(1.62);z-index:60}
+.card.unit:hover, .card.unit.finge-hov{transform:scale(1.07);z-index:60}
+.card.unit.selected{transform:scale(1.07);z-index:40}
+.card.unit.selected:hover{transform:scale(1.10);z-index:60}
 #myField .card.unit:hover, #myField .card.unit.finge-hov,
 #myField .card.unit.selected{transform-origin:50% 100%}
 #foeField .card.unit:hover, #foeField .card.unit.finge-hov,
 #foeField .card.unit.selected{transform-origin:50% 0%}
-/* a ese tamaño el texto cabe entero */
-.card.unit:hover .txt{overflow:visible}
+
+/* EL CAJÓN
+   Ampliar la carta entera hasta poder leerla tapaba media mesa. Ahora crece sólo
+   lo justo para señalar cuál estás mirando, y lo que dice se cuenta aquí: un
+   panel más estrecho que la carta, colgado debajo, con sus habilidades y —si es
+   tuya y no puede atacar— el motivo. No intercepta el ratón, así que se puede
+   pulsar la carta a través de él. */
+.card.unit .cajon{
+  position:absolute;left:50%;top:calc(100% + 9px);transform:translateX(-50%) translateY(-4px);
+  width:88%;min-width:150px;z-index:70;pointer-events:none;
+  opacity:0;visibility:hidden;transition:opacity .16s, transform .16s;
+  background:linear-gradient(180deg,rgba(24,16,38,.98),rgba(12,8,20,.98));
+  border:1px solid var(--tipo,var(--line));border-radius:9px;padding:8px 10px;
+  font:10.6px/1.42 var(--sans);color:#cfc3e4;text-align:left;
+  box-shadow:0 12px 28px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.07)}
+.card.unit .cajon b{color:var(--gold)}
+.card.unit .cajon i{color:#9c8fbb}
+.card.unit .cajon .porque{margin-top:6px;padding-top:6px;
+  border-top:1px solid rgba(255,255,255,.10);color:#ff9d94;font-weight:600}
+.card.unit:hover .cajon, .card.unit.finge-hov .cajon{
+  opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+/* Tu fila está abajo del tapete: si el cajón cuelga hacia abajo se sale y se
+   corta. Se despliega hacia arriba, hacia el centro de la mesa, que es donde
+   hay sitio. La fila del rival hace lo contrario por el mismo motivo. */
+#myField .card.unit .cajon{top:auto;bottom:calc(100% + 9px);
+  transform:translateX(-50%) translateY(4px)}
+#myField .card.unit:hover .cajon, #myField .card.unit.finge-hov .cajon{
+  transform:translateX(-50%) translateY(0)}
 
 /* unidad en campo */
 .unit{width:var(--cw);height:var(--ch);
+  /* Sin recorte: la carta lo usaba para que el arte llegara a sangre hasta el
+     borde redondeado, pero también se comía el cajón que cuelga debajo. El arte
+     tiene su propio recorte, así que aquí sobra. */
+  overflow:visible;
   box-shadow:0 3px 6px rgba(0,0,0,.5), 0 12px 20px rgba(0,0,0,.55),
              inset 0 1px 0 rgba(255,255,255,.07)}
 .unit.sick{filter:saturate(.55) brightness(.82)}
@@ -1323,7 +1353,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:54, fecha:'2026-09-01'};
+const BUILD = {n:55, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
@@ -3156,7 +3186,10 @@ function unitFill(d,u){
     <div class="keys">${kw.join('')}${
       nombresDeHabilidad(c.id).map(n=>`<span class="kw hab">${n}</span>`).join('')}</div>
     ${u.objs.length?`<div class="eq">${u.objs.map(o=>`<span title="${CARDS[o]?CARDS[o].n:''}">${CARDS[o]?CARDS[o].art:'✨'}</span>`).join('')}</div>`:''}
-    <div class="stats"><span class="atk">${u.atk}</span><span class="hp">${hp}</span></div>`;
+    <div class="stats"><span class="atk">${u.atk}</span><span class="hp">${hp}</span></div>
+    <div class="cajon">${c.x||'<i>Sin habilidades.</i>'}${
+      (u.side===ME && !canAttack(u))
+        ? `<div class="porque">✕ ${porQueNoAtaca(u)}</div>` : ''}</div>`;
   attachInspect(d,c.id,u);
 }
 function inspectHTML(id,u){
@@ -3680,8 +3713,7 @@ function renderField(host, list, mine){
       +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')
       +(gastada?' gastada':'')
       +((mine&&SEL===u)?' selected':'');
-    // y al pasar por encima, el motivo, sin tener que pulsarla
-    d.title = mine && !canAttack(u) ? u.card.n+' — '+porQueNoAtaca(u) : '';
+    d.title='';   // el cajón ya lo cuenta; el aviso del sistema salía descolocado
     d.onclick = mine
       ? ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }   // elegir objetivo siempre permitido
               if(SEL===u){ SEL=null; clearPrompt(); render(); return; }
@@ -5683,6 +5715,9 @@ if(new URLSearchParams(location.search).has('pantalla')){
     // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
+    if(q.has('estado')) setTimeout(()=>{    // el estado, con tiempo para transicionar
+      const c=$('#myField .card'); if(c) c.classList.add(q.get('estado'));
+    }, 900);
     if(q.has('gastada')) setTimeout(()=>{   // una tuya que ya atacó, para retratarla
       const u=P(ME).field[0]; if(u){ u.attacked=true; recalc(); render(); }
     }, 650);
@@ -5751,6 +5786,9 @@ if(new URLSearchParams(location.search).has('foto')){
     // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
+    if(q.has('estado')) setTimeout(()=>{    // el estado, con tiempo para transicionar
+      const c=$('#myField .card'); if(c) c.classList.add(q.get('estado'));
+    }, 900);
     if(q.has('gastada')) setTimeout(()=>{   // una tuya que ya atacó, para retratarla
       const u=P(ME).field[0]; if(u){ u.attacked=true; recalc(); render(); }
     }, 650);
@@ -5785,7 +5823,6 @@ if(new URLSearchParams(location.search).has('foto')){
       let mapa = 'sin carta';
       // se prueba en los tres estados en que uno pulsa una carta del campo
       const estado = new URLSearchParams(location.search).get('estado')||'';
-      if(carta && estado) carta.classList.add(estado);
       if(carta){
         const r = carta.getBoundingClientRect();
         const filas = [];
@@ -5811,7 +5848,20 @@ if(new URLSearchParams(location.search).has('foto')){
              +' [' + filas.join('/') + ']'
              + ' fallan: ' + (Object.keys(fallos).length? JSON.stringify(fallos) : 'ninguno');
       }
-      const quien = mapa;
+      // ¿existe el cajón y por qué no se ve?
+      let caj='sin carta';
+      if(carta){
+        const k=carta.querySelector('.cajon');
+        if(!k) caj='NO EXISTE el .cajon en el DOM';
+        else{
+          const cs=getComputedStyle(k), r=k.getBoundingClientRect();
+          caj='cajon '+Math.round(r.width)+'x'+Math.round(r.height)
+             +' op='+cs.opacity+' vis='+cs.visibility+' disp='+cs.display
+             +' z='+cs.zIndex+' y='+Math.round(r.top)
+             +' | clases de la carta: '+carta.className;
+        }
+      }
+      const quien = mapa + ' || ' + caj;
       // ¿se sale algo del lienzo? Es la pregunta de verdad, y la contesta la
       // página en vez de mirar una captura a ojo
       const L=$('#lienzo').getBoundingClientRect();
