@@ -1,4 +1,9 @@
 {
  "augusto": 0,
- "lucius": 50
+ "lucius": 50,
+ "lider_fender": {
+  "x": 54,
+  "y": 51,
+  "z": 100
+ }
 }
