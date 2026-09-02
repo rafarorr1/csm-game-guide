@@ -1316,7 +1316,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:51, fecha:'2026-09-01'};
+const BUILD = {n:52, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
@@ -1952,10 +1952,7 @@ fender:{ n:'Gira Mundial', d:'Aggro · Canciones · Tempo',
         ['escarcha',3]]},
 adreida:{ n:'De Frente', d:'Midrange · Paladines · Provocar',
   plan:'Juega en curva cuerpos de 4+ ATQ que con Intimidante ganan Provocar, y fuerza intercambios favorables.',
-  list:[['machete',2],['bartolomeo',3],['augusto',3],['eric',2],['brickbrock',1],['lucius',1],
-        ['horton',2],['eman',1],['aldrick',1],['auxilio',3],['armadura',3],['zancada',3],
-        ['saeta',3],['modificar',1],['destello',2],['colapso',2],['esporas',1],['collar',2],
-        ['tomsage',1],['conserje',2],['mazo',1]]},
+  list:[['machete',3],['bartolomeo',3],['augusto',3],['eric',1],['brickbrock',1],['lucius',1],['horton',1],['aldrick',1],['auxilio',3],['armadura',3],['zancada',3],['saeta',3],['modificar',1],['destello',2],['colapso',2],['esporas',1],['collar',3],['tomsage',1],['conserje',3],['mazo',1]]},
 rafaela:{ n:'Los Doce Discípulos', d:'Enjambre · Fe · Aguante',
   plan:'Cada Discípulo que entra cura 2. Aguanta, escala el enjambre y cierra con Rulchete.',
   list:[['discipulo',3],['matildus',3],['machete',2],['adolfo',2],['titaus',3],['conserje',1],

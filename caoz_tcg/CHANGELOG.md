@@ -13,6 +13,67 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v6 — Adreida deja de ganar 7 de cada 10 · 2026-09-01
+
+### El problema no estaba donde lo buscábamos
+
+Adreida ganaba el **71,6%** de sus partidas y la brecha entre el mejor y el peor Líder era
+de **34,6 puntos**. La sospecha inicial —suya y mía— era su pasiva **Intimidante** o su
+habilidad **Golpe Directo**. Se probaron ocho variantes, 2000 partidas cada una:
+
+| Cambio | Adreida | Brecha |
+|---|---|---|
+| Base | 71,6 | 34,6 |
+| Golpe Directo cuesta 3 PD | 69,5 | 30,2 |
+| Provocar con 5+ ATQ | 64,0 | 23,2 |
+| Las dos juntas | 64,9 | 23,9 |
+| Provocar 5+ y sin quitar contraataque | 65,5 | 25,4 |
+| Provocar sólo al aliado de mayor ATQ | 69,9 | 30,8 |
+| Coste 3 + sólo el mayor provoca | 70,4 | 32,4 |
+| Sus cuerpos de 4 ATQ cuestan 5 PD | 68,4 | 28,9 |
+| Provocar 5+ y sus cuerpos suben a 5 ATQ | **74,2** | 37,6 |
+
+Tres cosas que dijeron los números, y ninguna era la esperada:
+
+**Subir el umbral de Provocar a 5 no modera Intimidante: la apaga.** Todos los personajes
+de 4+ ATQ del mazo tenían *exactamente* 4 — ninguno llegaba a 5. La pasiva sólo se
+activaría con buffs. Habría dejado a Adreida sin su seña de identidad, el mismo error que
+se cometió con Talesin en la v2. Además rompía una lección del tutorial, donde el Mazo de
+Brock lleva a Bartolomeo justo a 4 ATQ para enseñar Provocar.
+
+**Combinar cambios resta en lugar de sumar.** Cuatro pruebas distintas salieron peor que
+sus partes por separado.
+
+**El poder estaba en los cuerpos, no en la pasiva.** La última variante lo demuestra al
+revés: subirles 1 de ATQ la lleva a 74,2 *aunque la pasiva quede casi apagada*.
+
+### Lo que se cambió: tres cuerpos premium menos
+
+Ni la pasiva ni la habilidad se han tocado. Sólo la composición del mazo:
+
+| | Antes | Ahora |
+|---|---|---|
+| Sir Horton (4/3, c4) | 2 | 1 |
+| Eric (3/3, c3) | 2 | 1 |
+| Eman 69 (4/3, c4) | 1 | — |
+| El Conserje (0/1, c1) | 2 | 3 |
+| Machete (0/2, c1) | 2 | 3 |
+| Collar Mágico de Agua | 2 | 3 |
+
+Las tres plazas se llenaron con cartas baratas y defensivas. El primer reparto probado subía
+Auxilio y Zancada a 4 copias y **las pruebas lo rechazaron**: el máximo por carta son 3. El
+reparto legal da el mismo resultado (61,4 y 20,8 de brecha), así que no costó nada.
+
+Sigue siendo un mazo de cuerpos que provocan y pelean: conserva a Lucius, Sir Horton,
+Brick y Brock, Eric y Augusto. Lo que pierde es la **densidad** de cuerpos premium, que era
+lo que le dejaba plantar un muro tras otro sin que le costara.
+
+**Resultado — 6000 partidas en tres tandas:** Adreida baja a **61-62%** y la brecha a
+**20-24 puntos** (varía unos 4 puntos entre tandas; es el ruido normal a 2000 partidas).
+De paso, Mohamed sube de 42,9 a ~47: los cuerpos de Adreida eran justo lo que peor llevaba.
+
+---
+
 ## v5 — El volado, las habilidades con nombre, y ver lo que roba Manos Largas · 2026-08-28
 
 ### El d20 dice qué hace falta y qué ha pasado
