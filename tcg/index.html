@@ -606,16 +606,23 @@ body.tut-on .card.playable{
   animation:pulse 1s infinite}
 @keyframes pulse{50%{box-shadow:0 0 0 3px var(--red),0 0 26px rgba(224,82,74,.85)}}
 .card.selected{box-shadow:0 0 0 2px var(--gold),0 0 18px rgba(230,187,82,.6);transform:translateY(-7px)}
-/* LAS CARTAS DEL TABLERO NO SE MUEVEN AL SEÑALARLAS, SÓLO CRECEN.
-   Subirlas 7px al pasar por encima sacaba el cursor de la carta si venías por
-   abajo: se encogía, el cursor volvía a entrar, se levantaba otra vez… y
-   parpadeaba sin parar, justo cuando intentabas pulsarla. Y al seleccionarla se
-   sumaba un segundo desplazamiento que la hacía saltar.
-   Creciendo desde el centro eso no puede pasar: la carta sólo gana superficie,
-   nunca se aparta de debajo del ratón. */
-.card.unit:hover, .card.unit.finge-hov{transform:scale(1.055)}
-.card.unit.selected{transform:scale(1.055)}
-.card.unit.selected:hover{transform:scale(1.075)}
+/* LAS CARTAS DEL TABLERO CRECEN COMO LAS DE LA MANO.
+   Antes crecían un 5%, lo justo para notar que las señalabas pero no para
+   leerlas: había que fiarse del panel de detalle. Ahora se amplían igual que en
+   la mano, hasta el tamaño en que el texto se lee solo.
+   Nunca se DESPLAZAN, sólo crecen: moverlas sacaba el cursor de la carta y
+   parpadeaban justo al ir a pulsarlas. Y crecen hacia el lado que tienen libre
+   —las tuyas hacia arriba, las del rival hacia abajo— para no salirse del
+   tapete ni taparse entre filas. */
+.card.unit:hover, .card.unit.finge-hov{transform:scale(1.62);z-index:60}
+.card.unit.selected{transform:scale(1.10);z-index:40}
+.card.unit.selected:hover{transform:scale(1.62);z-index:60}
+#myField .card.unit:hover, #myField .card.unit.finge-hov,
+#myField .card.unit.selected{transform-origin:50% 100%}
+#foeField .card.unit:hover, #foeField .card.unit.finge-hov,
+#foeField .card.unit.selected{transform-origin:50% 0%}
+/* a ese tamaño el texto cabe entero */
+.card.unit:hover .txt{overflow:visible}
 
 /* unidad en campo */
 .unit{width:var(--cw);height:var(--ch);
@@ -1316,7 +1323,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:53, fecha:'2026-09-01'};
+const BUILD = {n:54, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
