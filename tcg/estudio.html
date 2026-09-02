@@ -176,11 +176,21 @@ const CSS_ILUSTRADA = `
    además acercar, y el navegador lo resuelve igual de bien a cualquier tamaño de
    carta. El encuadre son tres números: x, y —el punto que queda centrado— y z,
    el acercamiento, donde 100 es el mínimo que llena la carta. */
-.card.acomodo.conarte .dibujo{ position:absolute; inset:0; z-index:0;
-  width:100%; height:100%; object-fit:cover;
+/* LA CAJA DEL DIBUJO. Recorta: la ilustración no puede salirse de la carta por
+   grande que sea el archivo ni por mucho que la acerques. Va aparte de la carta
+   para no cortar lo que sí sobresale a propósito —el pie, las cintas.
+
+   Las reglas van sobre .dibujo a secas, sin depender de la clase del padre. Al
+   colgar de .card, una tarjeta de Líder se quedaba fuera: la imagen entraba en
+   el flujo a su tamaño real (750×1050) y estiraba la tarjeta hasta tapar la
+   pantalla. Cualquier sitio nuevo donde se ponga un dibujo queda cubierto. */
+.marcoDibujo{ position:absolute; inset:0; z-index:0; overflow:hidden;
+  border-radius:9px; pointer-events:none }
+.dibujo{ position:absolute; inset:0; width:100%; height:100%; max-width:100%;
+  max-height:100%; object-fit:cover;
   object-position:var(--ex,50%) var(--ey,50%);
   transform:scale(var(--ez,1)); transform-origin:var(--ex,50%) var(--ey,50%);
-  border-radius:9px; pointer-events:none; display:block }
+  pointer-events:none; display:block }
 /* el velo, encima del dibujo y debajo del texto */
 .card.acomodo.conarte::before{ content:""; position:absolute; inset:0; z-index:1;
   border-radius:9px; pointer-events:none;
@@ -189,7 +199,14 @@ const CSS_ILUSTRADA = `
 .card.acomodo.conarte.sinvelo::before{ display:none }
 /* Todo lo demás, por encima del velo. Las palabras clave —Provocar, Al entrar—
    se quedaban debajo y desaparecían de las cartas dibujadas. */
-.card.acomodo.conarte > *:not(.dibujo){ position:relative; z-index:2 }
+.card.acomodo.conarte > *:not(.marcoDibujo){ position:relative; z-index:2 }
+/* la tarjeta de Líder usa el mismo montaje. Ocupa su hueco entero: el dibujo va
+   en una caja absoluta y no aporta altura, así que sin esto la tarjeta se
+   quedaba en la altura del nombre. */
+.lidercard{ width:100%; height:100%; box-sizing:border-box }
+.lidercard.conarte{ position:relative; overflow:hidden }
+.lidercard.conarte > *:not(.marcoDibujo){ position:relative; z-index:2 }
+.lidercard.conarte .em{ display:none }
 /* Sin ilustración el emoji hace de dibujo: ocupa la carta entera sobre el
    degradado de su clase, y el pie va igual que en las ilustradas. Así todas las
    cartas se maquetan igual y no conviven dos diseños según cuáles hayas
@@ -453,14 +470,17 @@ function nodoDeCarta(f){
   if (conDibujo){
     const enc = encDe(f.id);
     const url = reg ? reg.url : `art/${f.id}.webp`;   // si no está aquí, la publicada
+    const caja = document.createElement('div');
+    caja.className = 'marcoDibujo';
     const img = document.createElement('img');
     img.className = 'dibujo'; img.alt = '';
     img.src = url;
+    caja.appendChild(img);
     d.style.setProperty('--ex', enc.x + '%');
     d.style.setProperty('--ey', enc.y + '%');
     d.style.setProperty('--ez', (enc.z / 100).toFixed(3));
     if (!CON_VELO) d.classList.add('sinvelo');
-    d.insertBefore(img, d.firstChild);
+    d.insertBefore(caja, d.firstChild);
     const emL = d.querySelector('.em'); if (emL) emL.style.display = 'none';
   }
   // nombre, tribu, texto y números se agrupan en un pie que se va abajo del todo
