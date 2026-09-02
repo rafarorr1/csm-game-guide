@@ -149,10 +149,19 @@ mkdir -p "$PAGES/$DESTINO"
 cp "$AQUI/index.html" "$PAGES/$DESTINO/index.html"
 cp "$AQUI/tests.js"   "$PAGES/$DESTINO/tests.js"
 
+# Las ilustraciones, si las hay. La carpeta la prepara estudio.html y es
+# opcional: sin ella el juego se publica igual, con los emojis.
+if [ -d "$AQUI/art" ]; then
+  mkdir -p "$PAGES/$DESTINO/art"
+  cp "$AQUI/art/"* "$PAGES/$DESTINO/art/" 2>/dev/null
+  gris "  $(ls -1 "$AQUI/art" | grep -c '\.webp$') ilustraciones incluidas"
+fi
+
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
 git add "$DESTINO/index.html" "$DESTINO/tests.js"
+[ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then
   gris "  no hay cambios que publicar"
