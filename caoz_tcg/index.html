@@ -155,6 +155,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   color:#ffe6a8;font:700 8.5px/1 var(--sans);letter-spacing:1.6px;
   padding:4px 32px;box-shadow:0 2px 8px rgba(0,0,0,.6)}
 
+/* Con ilustración, el retrato lo llena el dibujo y el emoji sobra. El velo de
+   abajo (.lface::after) sigue haciendo su trabajo: funde la imagen con la
+   tarjeta para que no parezca una foto pegada. */
+.lface.conarte{font-size:0;filter:none}
+
 /* el retrato, a sangre y con su propia luz */
 .lface{position:relative;height:124px;flex:0 0 auto;display:grid;place-items:center;
   font-size:56px;line-height:1;filter:drop-shadow(0 4px 8px rgba(0,0,0,.85));
@@ -372,6 +377,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .leadercard:hover{border-color:var(--gold);transform:translateY(-3px)}
 .leadercard .lcName{font-size:10px;font-weight:900;color:var(--gold);line-height:1.05}
 .leadercard .lcArt{font-size:26px;line-height:1.1;filter:drop-shadow(0 2px 4px #000)}
+/* Con ilustración, el dibujo pasa a ser el fondo del panel y el emoji sobra. El
+   velo es fuerte a propósito: encima van el Alma y la habilidad, y ahí se lee
+   durante toda la partida. */
+.leadercard.conarte{background-size:cover;background-position:center var(--enc,50%)}
+.leadercard.conarte .lcArt{display:none}
 .leadercard .lcEp{font-size:7px;color:var(--dim);letter-spacing:.3px;line-height:1.1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .leadercard .lcAlma{margin-top:2px;font-size:15px;font-weight:900;color:#ffc0b8;
@@ -1442,7 +1452,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:68, fecha:'2026-09-01'};
+const BUILD = {n:70, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -1551,6 +1561,23 @@ function encajarTextos(raiz){
 
 const VELO_ILUSTRADA =
   'linear-gradient(180deg, rgba(8,6,14,0) 38%, rgba(8,6,14,.55) 66%, rgba(8,6,14,.92) 100%)';
+
+/* Los Líderes también se dibujan. Van por su lado porque no son cartas: su
+   retrato es .lface, no el fondo entero, y el id que usa el editor lleva
+   delante 'lider_' para no chocar con el de una carta. */
+function ilustrarLider(d, lid){
+  const y = ARTE['lider_' + lid];
+  if(y == null) return d;                       // sin dibujo: su emoji de siempre
+  const cara = d.querySelector('.lface');
+  if(!cara) return d;
+  cara.classList.add('conarte');
+  cara.style.backgroundImage =
+    'radial-gradient(ellipse 100% 80% at 50% 26%, rgba(138,92,240,.18), transparent 70%), ' +
+    `url(art/lider_${lid}.webp)`;
+  cara.style.backgroundSize = 'cover';
+  cara.style.backgroundPosition = `center ${y}%`;
+  return d;
+}
 
 function ilustrar(d, id){
   const y = ARTE[id];
@@ -3449,8 +3476,9 @@ function inspectHTML(id,u){
 function showInspectLeader(d,side){
   const p=P(side), L=p.L, box=$('#inspectCard');
   box.className='big';
+  const yArt = ARTE['lider_' + p.leaderId];
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
-    <div class="art">${L.art}</div>
+    <div class="art"${yArt!=null ? ` style="background:url(art/lider_${p.leaderId}.webp) center ${yArt}%/cover;font-size:0"` : ''}>${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
     <div class="bigsep"></div>
@@ -3864,7 +3892,9 @@ function renderLeaders(){
     const usable = mine && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
                 && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
     const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
-    host.innerHTML=`<div class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}" id="lead${side}">
+    const yArt = ARTE['lider_' + p.leaderId];
+    host.innerHTML=`<div class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${yArt!=null?' conarte':''}" id="lead${side}"${
+      yArt!=null ? ` style="--enc:${yArt}%;background-image:linear-gradient(180deg,rgba(10,7,18,.86),rgba(10,7,18,.55) 42%,rgba(10,7,18,.92)),url(art/lider_${p.leaderId}.webp)"` : ''}>
       <div class="lcName">${L.n}</div>
       <div class="lcArt">${L.art}</div>
       <div class="lcEp">${L.ep}</div>
@@ -4785,6 +4815,7 @@ function showTutorialPick(){
     const d=el('div','lcard',`<div class="lface">${L.art}</div><div class="lname">${L.n}</div>
       <div class="larch">${D.d}</div>
       <div class="ltxt"><b>“${D.n}”</b><br>${'★'.repeat(g.dif)+'☆'.repeat(3-g.dif)} · ${g.lema}</div>`);
+    ilustrarLider(d, id);
     d.onclick=()=>{ $('#ov').classList.remove('on'); $('#log').innerHTML=''; startTutorial(id); };
     list.appendChild(d);
   });
@@ -4835,6 +4866,7 @@ function buildSelect(){
     d.onclick=()=>{ if(which==='me'){SELP=id;} else {SELF=id;}
       buildSelect(); $('#selGo').disabled=!(SELP&&SELF); };
     if((which==='me'&&SELP===id)||(which==='foe'&&SELF===id)) d.classList.add('sel');
+    ilustrarLider(d, id);
     return d;
   };
   const a=$('#leaderList'); a.innerHTML=''; Object.keys(LEADERS).forEach(id=>a.appendChild(mk(id,'me')));
@@ -5678,6 +5710,7 @@ function onlPickLeader(asHost){
     const L=LEADERS[id], D=DECKS[id];
     const d=el('div','lcard',`<div class="lface">${L.art}</div><div class="lname">${L.n}</div>
       <div class="larch">${D.d}</div><div class="ltxt">${L.pasiva}</div>`);
+    ilustrarLider(d, id);
     d.onclick=()=>{ ONL.lider=id; [...list.children].forEach(c=>c.classList.remove('sel'));
       d.classList.add('sel'); $('#onlGo').disabled=false; };
     list.appendChild(d);

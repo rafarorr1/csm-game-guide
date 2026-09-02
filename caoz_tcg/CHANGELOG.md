@@ -690,6 +690,17 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Los Líderes también se pueden ilustrar** (build 70). El juego sólo ponía ilustraciones a
+  las cartas, así que un Líder dibujado en el editor no se veía por ningún lado. Ahora sale en
+  la pantalla de elegir Protagonista, en el panel de la mesa y en la ficha grande que aparece
+  al pasar por encima. El editor los nombra `lider_<id>`.
+- **Sincronizar ya no borra lo que no tengas a mano.** El editor reescribía `encuadres.json`
+  entero con lo que hubiera en ese navegador, y como el almacén es por navegador y por puerto,
+  sincronizar una carta desde otro sitio dejaba fuera del índice a todas las demás: los `.webp`
+  seguían en la carpeta, pero el juego dejaba de verlos. Pasó de verdad —Augusto y Lucius
+  desaparecieron del índice al sincronizar a Fender— y se recuperaron antes de publicar. Ahora
+  el índice se funde con el que ya había y sólo se retiran las entradas cuya imagen ya no está.
+  El ZIP hace lo mismo.
 - **El editor de cartas entra por el menú** (build 68). `estudio.html` viaja con el juego y
   se publica con él, así que una actualización manda las dos cosas a la vez y el botón nunca
   apunta a una página que no existe. En tu ordenador se abre directo; publicado pide una
