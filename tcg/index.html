@@ -237,8 +237,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    dónde vuela cada cosa. */
 #mat{flex:1;min-width:0;position:relative;display:flex;flex-direction:column;
   justify-content:space-around;gap:2px;padding:10px 30px;
-  transform:perspective(1700px) rotateX(8deg);transform-origin:50% 62%;
-  transform-style:preserve-3d}
+  transform:perspective(1700px) rotateX(8deg);transform-origin:50% 62%}
+/* SIN preserve-3d, A PROPÓSITO.
+   Con él las cartas viven dentro del espacio 3D del tapete, y en cuanto una
+   recibe su propia transformación —al señalarla o al seleccionarla, que la hacen
+   crecer— el navegador deja de acertar dónde está para los clics: sólo respondía
+   el cuarto de arriba. Era el fallo que se resistía, y no se veía razonando,
+   porque en reposo la carta responde entera; sólo falla en los estados que
+   aplican transform. El tapete no necesita profundidad real entre sus hijos: le
+   basta con inclinarse él, y aplanado el reparto de clics vuelve a cuadrar. */
 #mat::before{
   content:"";position:absolute;inset:0;z-index:-1;
   border-radius:20px;border:1px solid rgba(230,187,82,.30);
@@ -430,7 +437,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    Se inclina hacia el jugador, igual que el tapete. */
 .pile{position:relative;height:82px;border-radius:10px;cursor:default;
   display:grid;place-items:center;transition:transform .18s, box-shadow .16s, border-color .13s;
-  border:1px solid var(--line);transform-style:preserve-3d}
+  border:1px solid var(--line)}
 .pile.deck{
   transform:rotateX(30deg) rotateZ(-2deg);
   background:
@@ -603,7 +610,7 @@ body.tut-on .card.playable{
    sumaba un segundo desplazamiento que la hacía saltar.
    Creciendo desde el centro eso no puede pasar: la carta sólo gana superficie,
    nunca se aparta de debajo del ratón. */
-.card.unit:hover{transform:scale(1.055)}
+.card.unit:hover, .card.unit.finge-hov{transform:scale(1.055)}
 .card.unit.selected{transform:scale(1.055)}
 .card.unit.selected:hover{transform:scale(1.075)}
 
@@ -5516,28 +5523,39 @@ if(new URLSearchParams(location.search).has('foto')){
         return sel+' w='+Math.round(r.width)+' h='+Math.round(r.height);};
       // ¿Quién recibe el clic sobre una carta del campo? Si la parte de abajo
       // no responde, es que algo la tapa; esto dice exactamente qué.
-      const nodos = [...document.querySelectorAll('#myField .card')];
-      const inv = nodos.map((c,i)=>{const cs=getComputedStyle(c); const r=c.getBoundingClientRect();
-        return i+':'+Math.round(r.width)+'x'+Math.round(r.height)+' op'+cs.opacity+' uid'+(c.dataset.uid||'-');}).join(' ; ');
-      const carta = nodos.find(c=>getComputedStyle(c).opacity!=='0') || nodos[0];
-      let quien = 'sin carta en campo';
+      // Rejilla completa sobre una carta del campo: en cada punto, qué elemento
+      // recibiría el clic. Es la única forma de ver DÓNDE deja de responder.
+      const carta = $('#myField .card');
+      let mapa = 'sin carta';
+      // se prueba en los tres estados en que uno pulsa una carta del campo
+      const estado = new URLSearchParams(location.search).get('estado')||'';
+      if(carta && estado) carta.classList.add(estado);
       if(carta){
         const r = carta.getBoundingClientRect();
-        let ok=[];
-        for(let f=0; f<=1.0001; f+=0.05){
-          const e = document.elementFromPoint(r.left + r.width/2, r.top + r.height*f);
-          if(e && (e===carta || carta.contains(e))) ok.push(Math.round(f*100));
+        const filas = [];
+        for(let fy=0.04; fy<=0.97; fy+=0.13){
+          let linea = '';
+          for(let fx=0.05; fx<=0.96; fx+=0.11){
+            const e = document.elementFromPoint(r.left + r.width*fx, r.top + r.height*fy);
+            linea += (e && (e===carta || carta.contains(e))) ? 'O' : '.';
+          }
+          filas.push(linea);
         }
-        const cx=r.left+r.width/2, cy=r.top+r.height/2;
-        const enc=document.elementFromPoint(cx,cy);
-        const cs=getComputedStyle(carta);
-        quien = 'unidades en estado='+P(ME).field.length+' nodos='+nodos.length+' ['+inv+'] || elegida '+Math.round(r.width)+'x'+Math.round(r.height)
-              + ' en y '+Math.round(r.top)+'..'+Math.round(r.bottom)
-              + ' | clase='+carta.className.slice(0,30)
-              + ' | pe='+cs.pointerEvents+' z='+cs.zIndex+' op='+cs.opacity
-              + ' | en el centro hay: '+(enc?(enc.id||enc.className||enc.tagName).toString().slice(0,34):'nada')
-              + ' | responde en %: ' + (ok.length? ok.join(',') : 'NINGUNO');
+        // y qué hay en los puntos que NO responden
+        const fallos = {};
+        for(let fy=0.04; fy<=0.97; fy+=0.13)
+          for(let fx=0.05; fx<=0.96; fx+=0.11){
+            const e = document.elementFromPoint(r.left + r.width*fx, r.top + r.height*fy);
+            if(!(e && (e===carta || carta.contains(e)))){
+              const k = e ? (e.id||e.className||e.tagName).toString().slice(0,22) : 'nada';
+              fallos[k] = (fallos[k]||0)+1;
+            }
+          }
+        mapa = 'estado='+(estado||'reposo')+' '+Math.round(r.width)+'x'+Math.round(r.height)
+             +' [' + filas.join('/') + ']'
+             + ' fallan: ' + (Object.keys(fallos).length? JSON.stringify(fallos) : 'ninguno');
       }
+      const quien = mapa;
       // ¿se sale algo del lienzo? Es la pregunta de verdad, y la contesta la
       // página en vez de mirar una captura a ojo
       const L=$('#lienzo').getBoundingClientRect();
