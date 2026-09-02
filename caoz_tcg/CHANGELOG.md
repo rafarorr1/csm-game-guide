@@ -13,6 +13,44 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v7 — Las Canciones de Fender dejan huella · 2026-09-02
+
+### Por qué perdía
+
+Fender llevaba siendo el Líder más débil desde la primera medición: **~41%** de victorias.
+Mirando su mazo, el problema salta sin necesidad de simular nada:
+
+- **Sus cuerpos son diminutos.** Matildus 1/1, Discípulo de Rul 1/2, Bartolomeo 1/2,
+  Machete 0/2. El más grande es Eric 3/3. Adreida tiene 4/4 y 4/3.
+- **Su curva se corta en 3.** No hay una sola carta de Costo 4 o 5. Es coherente con un
+  mazo agresivo —cerrar pronto— pero las partidas duran **11 turnos de media**: del quinto
+  en adelante tiene 5 a 10 PD y nada que hacer con ellos.
+
+Lo primero que se probó fue abaratar su habilidad, **Sube el Volumen**, de 2 PD a 1. No
+movió nada: 41,0. Su habilidad no era el problema.
+
+### Lo que se cambió
+
+**Inspiración pasa a dar +1 ATQ permanente** en vez de hasta el final del turno.
+
+Es un punto por Canción, y el mazo lleva diez. La diferencia es que ahora lo que construyes
+se queda: sus cuerpos siguen entrando pequeños, pero cada Canción los deja un poco más
+grandes **para el resto de la partida**. Eso arregla las dos cosas a la vez — le da algo
+que hacer con los PD de los turnos largos, y convierte a sus 1/2 en amenazas que crecen.
+
+Y refuerza lo que ya era: un bardo cuyo plan es encadenar Canciones. Antes eso era un
+estallido de un turno que había que cronometrar; ahora es una campaña.
+
+**Resultado — 6000 partidas en tres tandas:** Fender sube de ~41% a **45-48%** y la brecha
+entre el mejor y el peor Líder baja de ~21 a **16-20 puntos**. Es el reparto más compacto
+que ha tenido el juego:
+
+```
+rafaela ~59   adreida ~58   fender ~46   mohamed ~45   talesin ~42
+```
+
+---
+
 ## v6 — Adreida deja de ganar 7 de cada 10 · 2026-09-01
 
 ### El problema no estaba donde lo buscábamos
