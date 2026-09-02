@@ -988,11 +988,22 @@ body.tutpause #tut{pointer-events:auto}
   background:rgba(14,8,22,.92);border:2px solid currentColor;box-shadow:0 6px 24px #000}
 
 /* prompt banner */
-#prompt{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:210;
-  background:rgba(18,10,28,.95);border:2px solid var(--red);border-radius:12px;
-  padding:11px 18px;display:none;align-items:center;gap:12px;box-shadow:0 12px 40px #000}
+/* EL CARTEL DE "ELIGE UN OBJETIVO"
+   Estaba clavado en el centro exacto de la pantalla, que es justo donde están
+   las cartas del campo: se plantaba encima de ellas y se comía los clics. Al
+   equipar un Objeto o curar a un aliado, el tercio de arriba de la carta que
+   querías elegir no respondía —y elegir es lo único que el cartel te está
+   pidiendo que hagas—.
+   Ahora no intercepta nada (sólo sus botones lo hacen) y se coloca bajo el
+   tablero, donde no tapa ninguna carta. */
+#prompt{position:fixed;left:50%;bottom:23%;transform:translateX(-50%);z-index:210;
+  pointer-events:none;
+  background:rgba(18,10,28,.96);border:2px solid var(--red);border-radius:12px;
+  padding:11px 18px;display:none;align-items:center;gap:12px;
+  box-shadow:0 12px 40px #000, 0 0 0 1px rgba(224,82,74,.25)}
 #prompt.on{display:flex}
 #prompt .pmsg{font-weight:700;color:#ffd9d6;font-size:13.5px}
+#prompt button,#prompt #pbtns{pointer-events:auto}
 
 /* inspector */
 #inspect{position:fixed;z-index:260;display:none;pointer-events:none}
@@ -5475,6 +5486,12 @@ if(new URLSearchParams(location.search).has('pantalla')){
     const q=new URLSearchParams(location.search), p=q.get('pantalla');
     if(p==='select'){ SELP='mohamed'; SELF='adreida'; showScreen('select'); buildSelect(); }
     else showScreen(p);
+    // Reproduce el caso real: juegas un Objeto y el juego se queda esperando a
+    // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
+    if(q.has('equipar')) setTimeout(()=>{
+      P(ME).pd=9; P(ME).hand.push('sombrero'); render();
+      playFromHand(ME,'sombrero');           // sin await: se queda pidiendo objetivo
+    }, 700);
     if(q.has('medir')) setTimeout(()=>{
       const m=x=>{const e=$(x); if(!e) return x+':no';
         const r=e.getBoundingClientRect(), c=getComputedStyle(e);
@@ -5517,6 +5534,12 @@ if(new URLSearchParams(location.search).has('foto')){
       const c=$('#hand').children[+q.get('hover')||0];
       if(c) c.classList.add('finge-hover');
     }, 1500);
+    // Reproduce el caso real: juegas un Objeto y el juego se queda esperando a
+    // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
+    if(q.has('equipar')) setTimeout(()=>{
+      P(ME).pd=9; P(ME).hand.push('sombrero'); render();
+      playFromHand(ME,'sombrero');           // sin await: se queda pidiendo objetivo
+    }, 700);
     if(q.has('medir')) setTimeout(()=>{
       const m=(sel)=>{const e=$(sel); if(!e) return sel+':no';
         const r=e.getBoundingClientRect();
