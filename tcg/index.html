@@ -96,6 +96,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
      final, así que todo queda nítido por muy pequeña que sea la pantalla. */
   zoom:var(--k,1)}
 .screen{position:absolute;inset:0;display:none;flex-direction:column}
+/* EL TABLERO Y SU PANEL
+   El registro sale del tapete y pasa a su propia columna, fuera del juego: era
+   una caja flotando encima de la mesa que tapaba lo que hubiera debajo. Fuera
+   cabe entero, se lee de arriba abajo y deja el tablero limpio. */
+#mesa{min-width:0;min-height:0;overflow:hidden;
+  display:grid;grid-template-rows:auto 1fr auto}
+#panel{width:274px;display:flex;flex-direction:column;gap:6px;
+  padding:12px 14px 14px 8px;min-height:0}
+.panelttl{font:600 9.5px/1 var(--sans);letter-spacing:2.4px;color:#7a6ba0;
+  text-transform:uppercase;padding-left:2px}
 .screen.on{display:flex}
 
 /* ---- Menú ---- */
@@ -128,7 +138,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* ============ MESA ============ */
 #guide.on{display:flex;flex-direction:column}
-#board{display:none;grid-template-rows:auto 1fr auto;grid-template-columns:minmax(0,1fr);height:100%;overflow:hidden}
+/* Dos columnas: la mesa y, a su derecha, el panel del registro. Las tres filas
+   —mano del rival, tablero y tu mano— pasan a ser cosa de la mesa. */
+#board{display:none;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:100%;
+  height:100%;overflow:hidden}
 #board.on{display:grid}
 #board>*{min-width:0}
 
@@ -336,6 +349,12 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #rail{width:142px;flex:0 0 auto;display:flex;flex-direction:column;
   justify-content:space-between;gap:6px;padding:2px 0;perspective:800px}
 .raillado{display:flex;flex-direction:column;gap:7px;min-height:0}
+/* El costado derecho, sólo para las Alcantarillas: una arriba y otra abajo,
+   frente al mazo de cada uno. */
+#railder{width:112px;flex:0 0 auto;display:flex;flex-direction:column;
+  justify-content:space-between;gap:6px;padding:2px 0}
+#railder .pile.grave{height:92px}
+#railder .pilelbl{top:-13px}
 /* En rejilla de dos, no en columna: apilados de uno en uno las dos barras más
    los dos mazos no cabían en el alto del tablero y la de abajo salía cortada. */
 #rail .bar{display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:5px;padding:7px;
@@ -786,9 +805,11 @@ body.tut-on .card.playable{
 .leaderchip .la{font-size:9.5px;color:var(--dim)}
 
 /* log */
-#log{position:absolute;right:8px;top:6px;width:236px;max-height:38vh;overflow:auto;
-  background:rgba(10,6,18,.82);border:1px solid var(--line);border-radius:9px;padding:6px 8px;
-  font-size:10.8px;line-height:1.45;color:#bdb0d4;z-index:30;scrollbar-width:thin}
+#log{position:relative;flex:1;min-height:0;overflow:auto;
+  background:linear-gradient(180deg,rgba(14,9,24,.86),rgba(8,5,15,.92));
+  border:1px solid var(--line);border-radius:12px;padding:10px 12px;
+  font-size:11.6px;line-height:1.52;color:#bdb0d4;scrollbar-width:thin;
+  box-shadow:inset 0 0 26px rgba(0,0,0,.55)}
 #log::-webkit-scrollbar{width:5px}
 #log::-webkit-scrollbar-thumb{background:var(--line);border-radius:3px}
 #log div{margin-bottom:2px;border-bottom:1px solid rgba(255,255,255,.04);padding-bottom:2px}
@@ -1097,6 +1118,7 @@ body.tutpause #tut{pointer-events:auto}
 
 <!-- ============ MESA ============ -->
 <div class="screen" id="board">
+  <div id="mesa">
   <div id="foehandzone">
     <div class="ambiente" id="polvoFoe" aria-hidden="true"><i></i><i></i></div>
     <div class="velo" aria-hidden="true"></div>
@@ -1133,7 +1155,10 @@ body.tutpause #tut{pointer-events:auto}
       <div class="ambiente delante" id="polvoAlto" aria-hidden="true"><i></i></div>
       <div id="velo" aria-hidden="true"></div>
     </div>
-    <div id="log"></div>
+    <div id="railder">
+      <div class="pilebox" id="foeGrave"></div>
+      <div class="pilebox" id="myGrave"></div>
+    </div>
   </div>
   <div id="handzone">
     <div class="ambiente" id="polvoMano" aria-hidden="true"><i></i><i></i></div>
@@ -1141,6 +1166,11 @@ body.tutpause #tut{pointer-events:auto}
     <div id="hand"></div>
     <div class="controls" id="controls"></div>
   </div>
+  </div><!-- /mesa -->
+  <aside id="panel">
+    <div class="panelttl">REGISTRO</div>
+    <div id="log"></div>
+  </aside>
 </div>
 
 </div></div><!-- /app -->
@@ -3473,14 +3503,22 @@ function renderLeaders(){
     };
   });
 }
+/* El mazo vive en el costado izquierdo y las Alcantarillas en el derecho, cada
+   cosa en su lado de la mesa. Antes iban apiladas en la misma columna y ésta se
+   quedaba sin alto: la barra de abajo salía cortada. */
 function renderPiles(){
   [[FOE,'#foePiles'],[ME,'#myPiles']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
-    const p=P(side), top=p.grave[p.grave.length-1];
+    const p=P(side);
     host.innerHTML=`
       <div class="pile deck${p.deck.length?'':' empty'}" id="${side===ME?'myDeckPile':'foeDeckPile'}"
            title="Mazo — ${p.deck.length} cartas por robar">
-        <div class="pilelbl">MAZO</div><div class="pileart">🂠</div><div class="pilen">${p.deck.length}</div></div>
+        <div class="pilelbl">MAZO</div><div class="pileart">🂠</div><div class="pilen">${p.deck.length}</div></div>`;
+  });
+  [[FOE,'#foeGrave'],[ME,'#myGrave']].forEach(([side,sel])=>{
+    const host=$(sel); if(!host) return;
+    const p=P(side), top=p.grave[p.grave.length-1];
+    host.innerHTML=`
       <div class="pile grave${p.grave.length?'':' empty'}" id="${side===ME?'myGravePile':'foeGravePile'}"
            title="Alcantarillas — ${p.grave.length} cartas${top?' · arriba: '+CARDS[top].n:''}">
         <div class="pilelbl">ALCANTARILLAS</div>
@@ -5441,7 +5479,7 @@ if(new URLSearchParams(location.search).has('foto')){
         const dy=Math.max(0, Math.round(L.top-r.top), Math.round(r.bottom-L.bottom));
         if(dx>2||dy>2) fuera.push((e.id||e.className||e.tagName)+':'+dx+'x'+dy);
       });
-      const linea = 'MED '+['#lienzo','#field','#mat','#myField','#foeHand']
+      const linea = 'MED '+['#lienzo','#board','#mesa','#panel','#log','#field','#rail','#railder','#mat']
         .map(m).join(' | ')+' || win='+innerWidth+'x'+innerHeight
         +' k='+getComputedStyle(document.documentElement).getPropertyValue('--k')
         +' || QUIEN RECIBE EL CLIC: '+quien
