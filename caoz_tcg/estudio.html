@@ -160,8 +160,12 @@ const CSS_ILUSTRADA = `
 .card.ilustrada .top{ position:relative; z-index:2; align-items:center }
 .card.ilustrada .pieCarta .nm{ position:static; inset:auto; font-size:1.18em;
   line-height:1.06; padding:0 0 .12em; margin:0; background:none; border:none;
-  -webkit-line-clamp:2; color:#fdf6e6;
+  -webkit-line-clamp:2; color:#fdf6e6; text-align:center;
   text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.9) }
+/* nombre, tribu y texto comparten caja: el margen lateral lo pone el pie, no
+   cada uno por su cuenta. Con paddings distintos no acababan de cuadrar. */
+.card.ilustrada .pieCarta .tribe,
+.card.ilustrada .pieCarta .txt{ padding-left:0; padding-right:0; text-align:center }
 .card.ilustrada .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
   box-shadow:0 2px 6px rgba(0,0,0,.7) }
 .card.ilustrada .rar{ font-size:.9em; text-shadow:0 1px 3px #000 }
