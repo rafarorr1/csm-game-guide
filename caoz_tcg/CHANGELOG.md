@@ -690,6 +690,20 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El encuadre se ajusta dentro del editor: mover y acercar** (build 71). Antes sólo se podía
+  subir o bajar la ilustración; para cualquier otro ajuste había que reencuadrarla fuera y
+  volver a cargarla. Ahora se arrastra la carta grande para moverla y se usa la rueda para
+  acercar, con deslizadores y un botón de centrar como respaldo. El encuadre pasa de un número
+  a tres —`{x, y, z}`—, y **los encuadres antiguos siguen valiendo**: un número suelto se lee
+  como el desplazamiento vertical de siempre.
+  Para esto el dibujo pasa de ser un fondo a ser una imagen dentro de la carta, que es lo que
+  permite acercarlo sin recalcular nada a cada tamaño de carta.
+- **Preguntar antes de borrar una ilustración.** «Quitar» borraba en el acto, y la imagen sólo
+  vive en tu navegador. Ahora pide confirmación, y avisa aparte si esa carta ya está publicada
+  —en ese caso el `.webp` sigue en la carpeta y el juego la seguirá enseñando.
+- **La fusión del índice, con pruebas.** La pieza que ya borró ilustraciones una vez se sacó
+  aparte y tiene cinco comprobaciones que se ejecutan con `estudio.html?prueba=1`. Una es
+  exactamente el caso que falló: sincronizar sin nada cargado no debe borrar nada.
 - **Los Líderes también se pueden ilustrar** (build 70). El juego sólo ponía ilustraciones a
   las cartas, así que un Líder dibujado en el editor no se veía por ningún lado. Ahora sale en
   la pantalla de elegir Protagonista, en el panel de la mesa y en la ficha grande que aparece
