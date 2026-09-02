@@ -100,7 +100,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    El registro sale del tapete y pasa a su propia columna, fuera del juego: era
    una caja flotando encima de la mesa que tapaba lo que hubiera debajo. Fuera
    cabe entero, se lee de arriba abajo y deja el tablero limpio. */
-#mesa{min-width:0;min-height:0;overflow:hidden;
+#mesa{min-width:0;min-height:0;overflow:visible;
   display:grid;grid-template-rows:auto 1fr auto}
 #panel{width:274px;display:flex;flex-direction:column;gap:6px;
   padding:12px 14px 14px 8px;min-height:0}
@@ -228,8 +228,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   color:var(--gold);font-weight:700;font-size:12.5px}
 
 /* zona central */
-#field{position:relative;display:flex;flex-direction:row;align-items:stretch;
-  gap:8px;padding:6px 14px 6px 8px;overflow:hidden;min-height:0}
+#field{position:relative;z-index:5;display:flex;flex-direction:row;align-items:stretch;
+  gap:8px;padding:6px 14px 6px 8px;overflow:visible;min-height:0}
 
 /* ---- el tapete ---- */
 /* EL TAPETE
@@ -629,8 +629,7 @@ body.tut-on .card.playable{
    tuya y no puede atacar— el motivo. No intercepta el ratón, así que se puede
    pulsar la carta a través de él. */
 .card.unit .cajon{
-  position:absolute;left:50%;top:calc(100% + 9px);transform:translateX(-50%) translateY(-4px);
-  width:88%;min-width:150px;z-index:70;pointer-events:none;
+  position:absolute;left:50%;width:88%;min-width:150px;z-index:70;pointer-events:none;
   opacity:0;visibility:hidden;transition:opacity .16s, transform .16s;
   background:linear-gradient(180deg,rgba(24,16,38,.98),rgba(12,8,20,.98));
   border:1px solid var(--tipo,var(--line));border-radius:9px;padding:8px 10px;
@@ -642,12 +641,13 @@ body.tut-on .card.playable{
   border-top:1px solid rgba(255,255,255,.10);color:#ff9d94;font-weight:600}
 .card.unit:hover .cajon, .card.unit.finge-hov .cajon{
   opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
-/* Tu fila está abajo del tapete: si el cajón cuelga hacia abajo se sale y se
-   corta. Se despliega hacia arriba, hacia el centro de la mesa, que es donde
-   hay sitio. La fila del rival hace lo contrario por el mismo motivo. */
-#myField .card.unit .cajon{top:auto;bottom:calc(100% + 9px);
+/* Siempre POR ENCIMA de la carta, en las dos filas. Colgado debajo, el de tu
+   propia fila se cortaba contra el filo del tapete; y teniéndolo arriba en un
+   lado y abajo en el otro había que buscarlo en dos sitios distintos. Arriba
+   siempre: se sabe dónde mirar. */
+.card.unit .cajon{top:auto;bottom:calc(100% + 9px);
   transform:translateX(-50%) translateY(4px)}
-#myField .card.unit:hover .cajon, #myField .card.unit.finge-hov .cajon{
+.card.unit:hover .cajon, .card.unit.finge-hov .cajon{
   transform:translateX(-50%) translateY(0)}
 
 /* unidad en campo */
@@ -1353,7 +1353,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:55, fecha:'2026-09-01'};
+const BUILD = {n:56, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
@@ -3190,7 +3190,10 @@ function unitFill(d,u){
     <div class="cajon">${c.x||'<i>Sin habilidades.</i>'}${
       (u.side===ME && !canAttack(u))
         ? `<div class="porque">✕ ${porQueNoAtaca(u)}</div>` : ''}</div>`;
-  attachInspect(d,c.id,u);
+  // Sin panel flotante: en el tablero lo cuenta el cajón, y salían los dos a la
+  // vez —el cajón junto a la carta y una copia gigante al lado—. El panel sigue
+  // vivo en la galería y en las guías, donde no hay cajón.
+  d.onmouseenter=null; d.onmouseleave=null;
 }
 function inspectHTML(id,u){
   const c=CARDS[id];
@@ -5716,7 +5719,8 @@ if(new URLSearchParams(location.search).has('pantalla')){
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
     if(q.has('estado')) setTimeout(()=>{    // el estado, con tiempo para transicionar
-      const c=$('#myField .card'); if(c) c.classList.add(q.get('estado'));
+      const donde = q.has('rival') ? '#foeField .card' : '#myField .card';
+      const c=$(donde); if(c) c.classList.add(q.get('estado'));
     }, 900);
     if(q.has('gastada')) setTimeout(()=>{   // una tuya que ya atacó, para retratarla
       const u=P(ME).field[0]; if(u){ u.attacked=true; recalc(); render(); }
@@ -5787,7 +5791,8 @@ if(new URLSearchParams(location.search).has('foto')){
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
     if(q.has('estado')) setTimeout(()=>{    // el estado, con tiempo para transicionar
-      const c=$('#myField .card'); if(c) c.classList.add(q.get('estado'));
+      const donde = q.has('rival') ? '#foeField .card' : '#myField .card';
+      const c=$(donde); if(c) c.classList.add(q.get('estado'));
     }, 900);
     if(q.has('gastada')) setTimeout(()=>{   // una tuya que ya atacó, para retratarla
       const u=P(ME).field[0]; if(u){ u.attacked=true; recalc(); render(); }
@@ -5848,6 +5853,23 @@ if(new URLSearchParams(location.search).has('foto')){
              +' [' + filas.join('/') + ']'
              + ' fallan: ' + (Object.keys(fallos).length? JSON.stringify(fallos) : 'ninguno');
       }
+      // ¿quién recorta el cajón? Se recorre hacia arriba buscando overflow
+      let cadena='';
+      {
+        const cf=$('#foeField .card'), k=cf&&cf.querySelector('.cajon');
+        if(k){
+          const rk=k.getBoundingClientRect();
+          cadena='cajonRival y='+Math.round(rk.top)+'..'+Math.round(rk.bottom)+' :: ';
+          let e=k.parentElement, n=0;
+          while(e && n++<9){
+            const cs=getComputedStyle(e), r=e.getBoundingClientRect();
+            if(cs.overflow!=='visible'||cs.overflowY!=='visible')
+              cadena+=(e.id||e.className||e.tagName).toString().slice(0,14)
+                    +'['+cs.overflowY+' y'+Math.round(r.top)+'..'+Math.round(r.bottom)+'] ';
+            e=e.parentElement;
+          }
+        } else cadena='sin carta rival';
+      }
       // ¿existe el cajón y por qué no se ve?
       let caj='sin carta';
       if(carta){
@@ -5861,7 +5883,7 @@ if(new URLSearchParams(location.search).has('foto')){
              +' | clases de la carta: '+carta.className;
         }
       }
-      const quien = mapa + ' || ' + caj;
+      const quien = cadena;
       // ¿se sale algo del lienzo? Es la pregunta de verdad, y la contesta la
       // página en vez de mirar una captura a ojo
       const L=$('#lienzo').getBoundingClientRect();
