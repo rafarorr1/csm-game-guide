@@ -1237,7 +1237,24 @@ body.tutpause #tut{pointer-events:auto}
 }
 
 /* galería */
+/* LA GALERÍA
+   La carta crece al pasar por encima, igual que en la mano. Antes salía un
+   cuadro flotante aparte que además enseñaba el emoji aunque la carta tuviera
+   ilustración: dos formas distintas de mirar lo mismo, y una de ellas mentía.
+   Crece desde el centro para no salirse por ningún lado de la rejilla. */
 .gallery{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+.gallery .card{transition:transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .2s}
+.gallery .card:hover{transform:scale(1.75);z-index:60;
+  box-shadow:0 26px 52px rgba(0,0,0,.9), 0 0 0 1px var(--tipo-cl,var(--gold))}
+/* a ese tamaño el texto cabe entero */
+.gallery .card:hover .txt{display:block;overflow:visible}
+/* cuántas copias lleva el mazo que estás mirando */
+.copias{position:absolute;top:5px;right:6px;z-index:6;
+  background:linear-gradient(180deg,#6b5320,#3d2f13);color:#ffe6a8;
+  font:800 10px/1 var(--sans);padding:3px 6px;border-radius:7px;
+  border:1px solid var(--gold2);box-shadow:0 2px 6px rgba(0,0,0,.7)}
+.notagal{text-align:center;color:var(--dim);font-size:12.5px;margin:2px 0 10px}
+.notagal b{color:var(--gold)}
 .filters{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:12px}
 .filters .btn.on{border-color:var(--gold);color:var(--gold)}
 
@@ -1402,7 +1419,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:63, fecha:'2026-09-01'};
+const BUILD = {n:64, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4733,18 +4750,64 @@ function showGallery(){
   const p=$('#ovPanel');
   const types=['todas','personaje','hechizo','trampa','objeto','lugar'];
   let filter='todas';
+  let mazo='todos';                       // 'todos' o el id de un Líder
+
+  /* Las cartas de un mazo, con cuántas copias lleva. Sirve para filtrar y para
+     enseñar el ×2 o ×3 al lado de cada una: un mazo no es una lista de cartas
+     distintas, es cuántas veces repites cada una. */
+  const delMazo = lid => {
+    const m = {};
+    (DECKS[lid] ? DECKS[lid].list : []).forEach(([id,n]) => m[id] = n);
+    return m;
+  };
+
   const draw=()=>{
+    const enMazo = mazo==='todos' ? null : delMazo(mazo);
     p.innerHTML=`<h3>🃏 Cartas del set base</h3>
-      <p>${Object.keys(CARDS).filter(k=>!CARDS[k].token).length} cartas + 5 Líderes + 4 fichas. Pasa el cursor para ver el detalle.</p>`;
+      <p>${Object.keys(CARDS).filter(k=>!CARDS[k].token).length} cartas + 5 Líderes + 4 fichas.
+         Pasa el cursor por una carta para verla en grande.</p>`;
+
+    // primera fila: por Líder
+    const fm=el('div','filters');
+    const bt=el('button','btn sm'+(mazo==='todos'?' on':''),'Todos los mazos');
+    bt.onclick=()=>{mazo='todos';draw();}; fm.appendChild(bt);
+    Object.keys(LEADERS).forEach(lid=>{
+      const b=el('button','btn sm'+(mazo===lid?' on':''), LEADERS[lid].art+' '+LEADERS[lid].n);
+      b.onclick=()=>{mazo=lid;draw();}; fm.appendChild(b);
+    });
+    p.appendChild(fm);
+
+    // segunda fila: por tipo
     const f=el('div','filters');
     types.forEach(t=>{ const b=el('button','btn sm'+(filter===t?' on':''),cap(t));
       b.onclick=()=>{filter=t;draw();}; f.appendChild(b); });
     p.appendChild(f);
+
+    const lista = Object.keys(CARDS)
+      .filter(k=>!CARDS[k].token
+                 && (filter==='todas'||CARDS[k].t===filter)
+                 && (!enMazo || enMazo[k]))
+      .sort((a,b)=>CARDS[a].c-CARDS[b].c);
+
+    if(enMazo){
+      const total = lista.reduce((n,k)=>n+enMazo[k], 0);
+      p.appendChild(el('div','notagal',
+        `<b>${LEADERS[mazo].n}</b> — ${DECKS[mazo].d} · ${lista.length} cartas distintas`
+        + (filter==='todas' ? `, ${total} en total` : '')));
+    }
+
     const g=el('div','gallery');
-    Object.keys(CARDS).filter(k=>!CARDS[k].token && (filter==='todas'||CARDS[k].t===filter))
-      .sort((a,b)=>CARDS[a].c-CARDS[b].c)
-      .forEach(k=>g.appendChild(cardEl(k,{})));
+    lista.forEach(k=>{
+      const c=cardEl(k,{});
+      // en la galería la carta crece al pasar por encima, como en la mano: el
+      // cuadro flotante mostraba el emoji aunque la carta tuviera ilustración
+      c.onmouseenter=null; c.onmouseleave=null;
+      if(enMazo && enMazo[k]>1) c.appendChild(el('div','copias','×'+enMazo[k]));
+      g.appendChild(c);
+    });
     p.appendChild(g);
+    if(!lista.length) p.appendChild(el('div','notagal','No hay cartas con ese filtro.'));
+
     const c=el('button','btn','Cerrar'); c.style.marginTop='14px';
     c.onclick=()=>$('#ov').classList.remove('on'); p.appendChild(c);
   };
@@ -5824,6 +5887,14 @@ if(new URLSearchParams(location.search).has('pantalla')){
     // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
+    if(q.has('galeria')) setTimeout(()=>{ showGallery();
+      const m=q.get('galeria');
+      if(m && m!=='1'){                       // pulsa el filtro de ese mazo
+        const b=[...document.querySelectorAll('#ovPanel .filters .btn')]
+          .find(x=>x.textContent.includes(LEADERS[m] ? LEADERS[m].n : '@@'));
+        if(b) b.click();
+      }
+    }, 700);
     if(q.has('estado')) setTimeout(()=>{    // el estado, con tiempo para transicionar
       const donde = q.has('rival') ? '#foeField .card' : '#myField .card';
       const c=$(donde); if(c) c.classList.add(q.get('estado'));
@@ -5896,6 +5967,14 @@ if(new URLSearchParams(location.search).has('foto')){
     // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
+    if(q.has('galeria')) setTimeout(()=>{ showGallery();
+      const m=q.get('galeria');
+      if(m && m!=='1'){                       // pulsa el filtro de ese mazo
+        const b=[...document.querySelectorAll('#ovPanel .filters .btn')]
+          .find(x=>x.textContent.includes(LEADERS[m] ? LEADERS[m].n : '@@'));
+        if(b) b.click();
+      }
+    }, 700);
     if(q.has('estado')) setTimeout(()=>{    // el estado, con tiempo para transicionar
       const donde = q.has('rival') ? '#foeField .card' : '#myField .card';
       const c=$(donde); if(c) c.classList.add(q.get('estado'));

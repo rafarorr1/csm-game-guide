@@ -15,6 +15,7 @@ URL="http://127.0.0.1:$PORT/index.html?foto=$LID"
 [ -n "$EQUIPAR" ] && URL="$URL&equipar=1"
 [ -n "$CHAT" ] && URL="$URL&chat=1"
 [ -n "$GASTADA" ] && URL="$URL&gastada=1"
+[ -n "$GALERIA" ] && URL="$URL&galeria=$GALERIA"
 [ -n "$ESTADO" ] && URL="$URL&estado=$ESTADO&medir=1"
 [ -n "$RIVAL" ] && URL="$URL&rival=1"
 "$CHROME" --headless --disable-gpu --hide-scrollbars \
