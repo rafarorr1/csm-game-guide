@@ -1316,7 +1316,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:52, fecha:'2026-09-01'};
+const BUILD = {n:53, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
@@ -1350,7 +1350,7 @@ mohamed:{ n:'Mohamed', ep:'El Mago Pitero', art:'🧙‍♂️', arch:'Control �
     render();
   }},
 fender:{ n:'Fender', ep:'El Bardo Honesto', art:'🎸', arch:'Aggro · Canciones · Tempo',
-  pasiva:'<b>Inspiración:</b> cada vez que juegas un Hechizo de Canción, un aliado gana +1 ATQ hasta el final del turno.',
+  pasiva:'<b>Inspiración:</b> cada vez que juegas un Hechizo de Canción, un aliado gana +1 ATQ <b>permanente</b>.',
   hab:'<b>Sube el Volumen (2 PD):</b> todos tus Personajes ganan +1 ATQ hasta el final del turno.',
   habCost:2, habName:'Sube el Volumen',
   lore:'Tiefling carismático. Canta, baila y se gana la vida con música.',
@@ -2705,7 +2705,7 @@ async function playFromHand(s, id, forcedTargets){
     // Fender — Inspiración
     if(c.sub&&c.sub.includes('cancion')&&P(s).leaderId==='fender'){
       const t=P(s).field.slice().sort((a,b)=>b.atk-a.atk)[0];
-      if(t){ t.tA++; log(`🎸 Inspiración: ${t.card.n} +1 ATQ.`); }
+      if(t){ t.pA++; log(`🎸 Inspiración: ${t.card.n} +1 ATQ permanente.`); }
     }
     P(s).grave.push(id);
   }
@@ -4023,8 +4023,9 @@ fender:{ c1:'discipulo', c2:'bartolomeo', quita:'burla', trampa:'tasha',
   top:['balada','matildus','discipulo','zancada','escarcha','adolfo'],
   quitaTxt:`<b>Burla Viciosa</b> (1 PD): 1 daño y −2 ATQ. Con lo poco que le queda, sobra.`,
   quitaExtra:`Y ha pasado algo más: Burla Viciosa es una <b>Canción</b>, y tu pasiva
-    <b>Inspiración</b> acaba de regalarle <b>+1 ATQ</b> a un aliado. Encadenar Canciones
-    es todo tu plan de ataque.`,
+    <b>Inspiración</b> acaba de regalarle <b>+1 ATQ permanente</b> a un aliado. Ese punto
+    ya no se va al acabar el turno: encadenar Canciones es todo tu plan de ataque, y lo que
+    construyes se queda.`,
   trampaTxt:`<b>Risa Incontrolable de Tasha</b> (2 PD): cuando un Personaje rival declare un
     ataque, se lo cancelas y encima queda <b>Aturdido</b>.` },
 mohamed:{ c1:'conserje', c2:'bartolomeo', quita:'sangrefria', trampa:'tasha',
@@ -5400,8 +5401,9 @@ fender:{
   motor:['adolfo','balada','cantaberna','burla','discipulo'],
   motorTxt:`Doce Personajes de Costo 1 y 2: siempre tienes algo que jugar. <b>Bob Carly</b>
     le da <b>Prisa</b> a todo lo de Costo 3 o menos, así que lo que baje ataca ese mismo turno.
-    Y cada <b>Canción</b> dispara tu pasiva <b>Inspiración</b>: +1 ATQ extra, gratis, encima
-    de lo que ya haga la carta.`,
+    Y cada <b>Canción</b> dispara tu pasiva <b>Inspiración</b>: +1 ATQ <b>permanente</b>,
+    gratis, encima de lo que ya haga la carta. Tus cuerpos son pequeños, pero cada Canción
+    que cantas los deja un poco más grandes para siempre.`,
   turnos:[
     ['1–3','Cuerpos, cuerpos y cuerpos. <b>Discípulo de Rul</b>, <b>Matildus</b>, <b>Bartolomeo</b>. No pienses en intercambios buenos: piensa en tener cuatro cosas en mesa el turno 4.'],
     ['4–5','Baja <b>Bob Carly</b>. A partir de ahí todo lo barato entra atacando y el rival no puede planear su defensa con un turno de margen.'],
@@ -5409,8 +5411,10 @@ fender:{
   ],
   combo:`<b>Cuenta antes de atacar.</b> Cuatro Personajes de 1 ATQ = 4. Balada los sube a 2
     (=8). Sube el Volumen a 3 (=12). Y cada Canción que juegues antes suma +1 más por
-    Inspiración. Ese es el turno que buscas desde que empieza la partida:
-    <b>primero todos los buffs, después todos los ataques</b>.`,
+    Inspiración —y ése se queda—. Ese es el turno que buscas desde que empieza la partida:
+    <b>primero todos los buffs, después todos los ataques</b>. Pero no esperes al turno
+    perfecto para cantar: cada Canción temprana engorda a alguien para el resto de la
+    partida.`,
   mano:`Quédate cualquier cosa de Costo 1 y 2 y una <b>Balada</b>. Si tu mano inicial no tiene
     dos Personajes baratos, no la tienes. <b>Bob Carly</b> vale mucho más en la mano que
     <b>Eric</b>.`,
