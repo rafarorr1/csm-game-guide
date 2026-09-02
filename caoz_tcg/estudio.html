@@ -89,6 +89,7 @@ main{padding:16px}
 
 <header>
   <div class="barra">
+    <button class="btn" id="btnVolver" title="Volver al menú del juego">← Juego</button>
     <h1>Estudio de cartas <small>Caoz Con Todo · el TCG del Domo</small></h1>
     <input type="search" id="buscar" placeholder="Buscar por nombre…">
     <select id="filtroTipo"><option value="">Todos los tipos</option></select>
@@ -246,6 +247,7 @@ const BD = {
 let JUEGO = null;               // el window del iframe con el juego
 let FICHAS = [];                // [{id, n, t, tipo, esLider}]
 const ARTE = new Map();         // id -> {id, blob, url, encuadre}
+const PUBLICADAS = new Set();   // ids que ya viajan con el juego, en art/
 let ABIERTA = null;             // id de la carta abierta en el panel
 let RAIZ = null;                // shadow root de la rejilla
 
@@ -259,6 +261,7 @@ async function arrancar(){
   JUEGO = await esperarAlJuego();
   FICHAS = catalogar();
   await cargarArteGuardado();
+  await cargarPublicadas();
   montarRejilla();
   llenarFiltros();
   pintar();
@@ -293,6 +296,22 @@ function catalogar(){
   }
   return out;
 }
+
+/* Las que ya están publicadas. El estudio guarda tus imágenes en el almacén
+   del navegador, que es por origen: abrirlo en otro puerto lo deja en blanco y
+   parecía que faltaban ilustraciones ya hechas. El juego las sirve desde art/,
+   así que se leen de ahí y el estudio sabe cuáles están de verdad puestas. */
+async function cargarPublicadas(){
+  try{
+    const r = await fetch('art/encuadres.json', {cache:'no-store'});
+    if (!r.ok) return;
+    for (const id in await r.json()) PUBLICADAS.add(id);
+  } catch(_){}                                  // sin carpeta art/ todavía: normal
+}
+
+/* Tiene dibujo si lo has cargado aquí o si ya está publicado. Para ENSEÑARLA;
+   las operaciones que necesitan el archivo siguen mirando sólo ARTE. */
+function tieneArte(id){ return ARTE.has(id) || PUBLICADAS.has(id); }
 
 async function cargarArteGuardado(){
   for (const reg of await BD.todo()){
@@ -357,7 +376,12 @@ function nodoDeCarta(f){
      fondo lo pone un dibujo o el emoji sobre el color de su clase. Antes
      convivían dos maquetaciones y el mosaico parecía de dos juegos distintos. */
   const reg = ARTE.get(f.id);
-  d.classList.add('acomodo', reg ? 'conarte' : 'sinarte');
+  /* La carta puede venir del juego ya ilustrada desde art/. Se limpian las dos
+     clases antes de decidir: con ambas puestas se pintaba el emoji ENCIMA del
+     dibujo y se veían superpuestos. */
+  const conDibujo = !!reg || d.classList.contains('conarte');
+  d.classList.remove('conarte', 'sinarte');
+  d.classList.add('acomodo', conDibujo ? 'conarte' : 'sinarte');
   if (reg){
     d.style.backgroundImage = (CON_VELO ? VELO + ',' : '') + `url(${reg.url})`;
     d.style.backgroundSize = 'cover';
@@ -385,8 +409,8 @@ function pintar(){
   const lista = FICHAS.filter(f => {
     if (texto && !(f.n.toLowerCase().includes(texto) || f.id.includes(texto))) return false;
     if (tipo && f.tipo !== tipo) return false;
-    if (conArte === 'con' && !ARTE.has(f.id)) return false;
-    if (conArte === 'sin' && ARTE.has(f.id)) return false;
+    if (conArte === 'con' && !tieneArte(f.id)) return false;
+    if (conArte === 'sin' && tieneArte(f.id)) return false;
     return true;
   });
 
@@ -396,12 +420,12 @@ function pintar(){
 
   for (const f of lista){
     const celda = document.createElement('div');
-    celda.className = 'celda' + (ARTE.has(f.id) ? '' : ' falta');
+    celda.className = 'celda' + (tieneArte(f.id) ? '' : ' falta');
     celda.appendChild(nodoDeCarta(f));
     const pie = document.createElement('div');
     pie.className = 'pie';
     pie.innerHTML = `<b>${f.n}</b>${f.id}
-      <div class="marca ${ARTE.has(f.id)?'si':'no'}">${ARTE.has(f.id)?'con arte':'falta'}</div>`;
+      <div class="marca ${tieneArte(f.id)?'si':'no'}">${tieneArte(f.id)?'con arte':'falta'}</div>`;
     celda.appendChild(pie);
     celda.onclick = () => abrir(f.id);
     malla.appendChild(celda);
@@ -411,7 +435,7 @@ function pintar(){
      insertadas todavía no se pueden medir. */
   requestAnimationFrame(() => JUEGO.encajarTextos && JUEGO.encajarTextos(malla));
 
-  const con = FICHAS.filter(f => ARTE.has(f.id)).length;
+  const con = FICHAS.filter(f => tieneArte(f.id)).length;
   let bytes = 0; for (const r of ARTE.values()) bytes += r.blob.size;
   const mb = bytes / 1048576;
   // proyección a la baraja entera: sirve para saber cuánto pesará art/ en la web
@@ -744,6 +768,8 @@ async function exportarArtJs(){
    Botones y atajos
    ======================================================================== */
 function conectarBotones(){
+  // se entra desde el menú del juego, así que hay que poder volver
+  $('#btnVolver').onclick = () => { location.href = 'index.html'; };
   $('#buscar').oninput = pintar;
   $('#filtroTipo').onchange = pintar;
   $('#filtroArte').onchange = pintar;
