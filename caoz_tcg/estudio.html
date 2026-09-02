@@ -296,6 +296,7 @@ async function arrancar(){
   montarRejilla();
   llenarFiltros();
   document.head.appendChild(document.createElement('style')).textContent = CSS_PANEL;
+  avisarRotas();
   if (new URLSearchParams(location.search).has('prueba')) probarFusion();
   pintar();
   conectarBotones();
@@ -358,11 +359,33 @@ function normEnc(v){
 const encDe = id => normEnc(ARTE.get(id)?.encuadre ?? PUBLICADAS.get(id));
 const limitar = (n, min, max) => Math.min(max, Math.max(min, n));
 
+/* Un registro sin imagen tiraba el editor entero al arrancar, y en cada recarga
+   otra vez: sin forma de salir salvo borrar los datos del navegador a mano. Se
+   salta, se limpia y se avisa de cuál era. */
+const ROTAS = [];
+
 async function cargarArteGuardado(){
   for (const reg of await BD.todo()){
+    if (!(reg.blob instanceof Blob) || reg.blob.size === 0){
+      ROTAS.push(reg.id);
+      await BD.borrar(reg.id).catch(()=>{});
+      continue;
+    }
     reg.url = URL.createObjectURL(reg.blob);
     ARTE.set(reg.id, reg);
   }
+}
+
+function avisarRotas(){
+  if (!ROTAS.length) return;
+  document.querySelector('main').insertAdjacentHTML('afterbegin',
+    `<div class="aviso" style="border-left-color:#e0575b">
+       <b>${ROTAS.length} ilustración${ROTAS.length===1?'':'es'} se había${ROTAS.length===1?'':'n'}
+       guardado sin imagen</b> y no dejaba${ROTAS.length===1?'':'n'} abrir el editor:
+       <code>${ROTAS.join('</code>, <code>')}</code>.
+       Ya está${ROTAS.length===1?'':'n'} fuera. Vuelve a cargar es${ROTAS.length===1?'a':'as'}
+       ilustración${ROTAS.length===1?'':'es'} y listo.
+     </div>`);
 }
 
 /* ===========================================================================
@@ -727,7 +750,13 @@ async function meterImagen(id, fichero){
   const escala = Math.max(LIENZO.w / bitmap.width, LIENZO.h / bitmap.height);
   const w = bitmap.width * escala, h = bitmap.height * escala;
   cx.drawImage(bitmap, (LIENZO.w - w)/2, (LIENZO.h - h)/2, w, h);
-  const blob = await new Promise(r => lienzo.toBlob(r, 'image/webp', 0.92));
+  let blob = await new Promise(r => lienzo.toBlob(r, 'image/webp', 0.92));
+  // toBlob devuelve null si el navegador no puede con ese formato o tamaño. Sin
+  // esta comprobación se guardaba un registro sin imagen que luego no dejaba ni
+  // abrir el editor. Se reintenta en png, que soportan todos.
+  if (!blob) blob = await new Promise(r => lienzo.toBlob(r, 'image/png'));
+  if (!blob) throw new Error(
+    'El navegador no pudo convertir esa imagen. Prueba a exportarla como PNG o JPG normal.');
   const anterior = ARTE.get(id);
   if (anterior) URL.revokeObjectURL(anterior.url);
   const reg = {id, blob, encuadre: anterior?.encuadre ?? 50};
@@ -1022,13 +1051,19 @@ function conectarBotones(){
 function cerrar(){ $('#detalle').classList.remove('on'); ABIERTA = null; }
 
 arrancar().catch(e => {
+  /* Antes esto echaba la culpa al servidor pasara lo que pasara, y mandaba a
+     levantar uno que ya estaba levantado. Sólo se dice cuando encaja. */
+  const esDeServidor = location.protocol === 'file:';
   document.body.insertAdjacentHTML('afterbegin',
     `<div class="aviso" style="margin:16px;border-left-color:#e0575b">
        <b>No pude arrancar:</b> ${e.message}<br>
-       Esto necesita servidor. Levanta uno con
-       <code>python3 -m http.server 8745 --directory caoz_tcg</code>
-       y abre <code>http://localhost:8745/estudio.html</code>.
+       ${esDeServidor
+         ? 'Lo has abierto como archivo. Esto necesita servidor: levanta uno con ' +
+           '<code>python3 -m http.server 8745 --directory caoz_tcg</code> y abre ' +
+           '<code>http://localhost:8745/estudio.html</code>.'
+         : 'Si se repite al recargar, cuéntalo con este mensaje tal cual.'}
      </div>`);
+  console.error(e);
 });
 </script>
 </body>

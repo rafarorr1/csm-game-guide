@@ -690,6 +690,14 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Una ilustración a medio guardar ya no tira el editor** (build 72). Al convertir la imagen,
+  el navegador puede devolver nada —según el formato o el tamaño—, y eso se guardaba igual: un
+  registro sin imagen. Al abrir el editor reventaba antes de pintar nada, y en cada recarga
+  otra vez, sin más salida que borrar los datos del navegador a mano. Ahora esos registros se
+  saltan, se limpian y se dice cuáles eran; y de entrada no se guardan: si la conversión falla
+  se reintenta en png y, si tampoco, se avisa sin tocar nada.
+  De paso, el aviso de arranque dejó de echarle la culpa al servidor pasara lo que pasara
+  —mandaba a levantar uno que ya estaba levantado.
 - **El encuadre se ajusta dentro del editor: mover y acercar** (build 71). Antes sólo se podía
   subir o bajar la ilustración; para cualquier otro ajuste había que reencuadrarla fuera y
   volver a cargarla. Ahora se arrastra la carta grande para moverla y se usa la rueda para
