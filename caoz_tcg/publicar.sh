@@ -59,6 +59,18 @@ if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.htm
 fi
 gris "  sin Animation.finished"
 
+# El número de build tiene que corresponderse con el historial: si no, la
+# versión publicada dice una cosa y el commit del que salió es otro, y las notas
+# dejan de servir para nada.
+BUILD_EN_JUEGO="$(grep -o 'const BUILD = {n:[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
+BUILD_ESPERADO=$(( $(cd "$REPO" && git rev-list --count HEAD -- caoz_tcg/) ))
+if [ "$BUILD_EN_JUEGO" != "$BUILD_ESPERADO" ]; then
+  rojo "El build del juego dice $BUILD_EN_JUEGO y el historial va por $BUILD_ESPERADO."
+  rojo "Actualiza 'const BUILD = {n:...}' en index.html antes de publicar."
+  exit 1
+fi
+gris "  build $BUILD_EN_JUEGO al día"
+
 if [ -n "$(cd "$REPO" && git status --porcelain -- caoz_tcg/)" ]; then
   rojo 'Tienes cambios del TCG sin guardar en git. Haz commit antes de publicar,'
   rojo 'o lo que suba a la web no coincidirá con ninguna versión guardada.'

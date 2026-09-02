@@ -14,6 +14,7 @@ URL="http://127.0.0.1:$PORT/index.html?foto=$LID"
 [ -n "$5" ] && URL="$URL&mano=$5"
 [ -n "$EQUIPAR" ] && URL="$URL&equipar=1"
 [ -n "$CHAT" ] && URL="$URL&chat=1"
+[ -n "$GASTADA" ] && URL="$URL&gastada=1"
 "$CHROME" --headless --disable-gpu --hide-scrollbars \
   --window-size=${W:-1600},$(( ${H:-1000} + 87 )) --virtual-time-budget=7000 \
   --screenshot="$OUT" "$URL" >/dev/null 2>&1

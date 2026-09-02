@@ -125,6 +125,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .menucol .btn{padding:15px;font-size:15px;letter-spacing:.8px}
 .menucol .btn:first-child{font-size:16.5px;padding:17px}
 .foot{color:#6c5f85;font-size:11px;margin-top:10px}
+.build{display:block;margin-top:5px;font:600 9.5px/1 var(--sans);letter-spacing:1.4px;
+  color:#584b78;text-transform:uppercase}
+#buildPanel{text-align:right;margin:0;padding:2px 2px 0}
 
 /* ---- Selector de líder ---- */
 #select{padding:20px 18px;gap:10px;align-items:center;justify-content:center}
@@ -619,6 +622,17 @@ body.tut-on .card.playable{
   box-shadow:0 3px 6px rgba(0,0,0,.5), 0 12px 20px rgba(0,0,0,.55),
              inset 0 1px 0 rgba(255,255,255,.07)}
 .unit.sick{filter:saturate(.55) brightness(.82)}
+/* YA GASTADA: tuya, y este turno ya no hace nada más. Se apaga para poder ver
+   de un vistazo con cuáles te queda por atacar, en vez de repasarlas una a una.
+   Es una atenuación suave: la carta se sigue leyendo, sólo pierde el brillo. */
+.card.unit.gastada{filter:saturate(.42) brightness(.66);opacity:.86}
+.card.unit.gastada:hover{filter:saturate(.7) brightness(.86);opacity:1}
+/* la que ya atacó lleva además su marca, para no depender sólo del color */
+.card.unit.gastada::before{content:"✓";position:absolute;top:-8px;right:-6px;z-index:5;
+  width:19px;height:19px;border-radius:50%;display:grid;place-items:center;
+  background:linear-gradient(180deg,#4a4260,#2a2438);color:#cfc3e4;
+  font:700 11px/1 var(--sans);border:1px solid rgba(255,255,255,.18);
+  box-shadow:0 2px 6px rgba(0,0,0,.6)}
 @keyframes readyGlow{
   0%,100%{box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(79,192,125,.55),0 0 14px rgba(79,192,125,.35)}
   50%    {box-shadow:0 0 0 2px var(--bg),0 0 0 4px rgba(79,192,125,.95),0 0 26px rgba(79,192,125,.7)}}
@@ -861,7 +875,7 @@ body.tut-on .card.playable{
 .leaderchip .la{font-size:9.5px;color:var(--dim)}
 
 /* log */
-#log{position:relative;flex:1;min-height:0;overflow:auto;
+#log{position:relative;flex:2 1 0;min-height:0;overflow:auto;
   background:linear-gradient(180deg,rgba(14,9,24,.86),rgba(8,5,15,.92));
   border:1px solid var(--line);border-radius:12px;padding:10px 12px;
   font-size:11.6px;line-height:1.52;color:#bdb0d4;scrollbar-width:thin;
@@ -869,8 +883,9 @@ body.tut-on .card.playable{
 /* ============ CHAT DE LA SALA ============
    Sólo existe en partida online: fuera de ella no hay con quién hablar. Vive
    bajo el registro, en el mismo panel, para no robarle sitio al tablero. */
-#chatzona{display:flex;flex-direction:column;gap:6px;flex:0 0 auto;max-height:46%}
-#chat{flex:1;min-height:96px;overflow:auto;scrollbar-width:thin;
+#chatzona{display:flex;flex-direction:column;gap:6px;flex:1 1 0;min-height:0}
+#chatzona[hidden]{display:none}
+#chat{flex:1;min-height:0;overflow:auto;scrollbar-width:thin;
   background:linear-gradient(180deg,rgba(14,9,24,.86),rgba(8,5,15,.92));
   border:1px solid var(--line);border-radius:12px;padding:9px 11px;
   font-size:11.6px;line-height:1.5;color:#cabde0;
@@ -1177,7 +1192,8 @@ body.tutpause #tut{pointer-events:auto}
     <button class="btn" id="mCards">🃏 &nbsp;Ver todas las cartas</button>
     <button class="btn" id="mRules">📜 &nbsp;Reglas completas</button>
   </div>
-  <div class="foot">Set base — 5 Líderes · 92 cartas · 5 mazos preconstruidos</div>
+  <div class="foot">Set base — 5 Líderes · 92 cartas · 5 mazos preconstruidos
+    <span class="build" id="buildMenu"></span></div>
 </div>
 
 <!-- ============ SELECCIÓN ============ -->
@@ -1258,6 +1274,7 @@ body.tutpause #tut{pointer-events:auto}
   <aside id="panel">
     <div class="panelttl">REGISTRO</div>
     <div id="log"></div>
+    <div class="build" id="buildPanel"></div>
     <div id="chatzona" hidden>
       <div class="panelttl">CHAT</div>
       <div id="chat"></div>
@@ -1294,6 +1311,14 @@ body.tutpause #tut{pointer-events:auto}
 /* ---------- utilidades ---------- */
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
+/* LA VERSIÓN PUBLICADA
+   El número es cuántas veces se ha tocado el TCG en el historial, así que no es
+   un número inventado: cada build se corresponde con un commit concreto y se
+   puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
+   Para las notas de cada versión está CHANGELOG.md. */
+const BUILD = {n:51, fecha:'2026-09-01'};
+const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
+
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
@@ -3643,10 +3668,16 @@ function renderField(host, list, mine){
     const rest=(u.sick&&!u.keys.has('prisa'))||u.stunned>0;
     const tgt=(TGT&&isTargetable(u)) ||
               (!mine&&SEL&&canAttack(SEL)&&legalTargets(SEL).units.includes(u));
+    // "gastada": tuya y ya no puede atacar este turno. Sin esto había que
+    // acordarse de con cuáles habías atacado ya, mirando una por una.
+    const gastada = mine && !canAttack(u) && !u.card.noAttack && u.atk>0;
     d.className='card unit t-personaje'+(rest?' sick':'')
       +(u.infected?' infectado':'')      // verde mientras esté Infectado
       +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')
+      +(gastada?' gastada':'')
       +((mine&&SEL===u)?' selected':'');
+    // y al pasar por encima, el motivo, sin tener que pulsarla
+    d.title = mine && !canAttack(u) ? u.card.n+' — '+porQueNoAtaca(u) : '';
     d.onclick = mine
       ? ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }   // elegir objetivo siempre permitido
               if(SEL===u){ SEL=null; clearPrompt(); render(); return; }
@@ -3763,13 +3794,38 @@ function renderControls(){
   const s=el('button','btn sm','← Menú'); s.onclick=pedirSalirAlMenu; c.appendChild(s);
 
 }
+/* POR QUÉ NO PUEDE ATACAR
+   Una sola lista de motivos, en el mismo orden en que canAttack los comprueba.
+   Antes esto vivía suelto dentro de selectUnit y se quedó atrás: al añadir el
+   Peaje de Brick y Brock a canAttack no se añadió aquí, así que la carta decía
+   sólo "no puede atacar" sin decir por qué —y el motivo era que el rival te
+   cobraba un PD por atacar y no te quedaba ninguno—.
+   Teniéndolo aquí, cualquier condición nueva que se añada a canAttack sin pasar
+   por esta lista se delata sola: sale el texto de abajo, que dice justamente
+   que falta explicarlo. */
+function porQueNoAtaca(u){
+  if(!u) return 'No hay carta';
+  if(!u.alive) return 'Ya no está en el campo';
+  if(G.over) return 'La partida ha terminado';
+  if(u.stunned>0) return 'Está Aturdido: no puede atacar hasta el final de tu siguiente turno';
+  if(u.attacked) return 'Ya atacó este turno';
+  if(u.sick&&!u.keys.has('prisa')) return 'Entró al campo este turno; podrá atacar en tu próximo turno (le falta Prisa)';
+  if(u.atk<=0) return 'Tiene 0 de ATQ: sin ataque no puede pelear';
+  if(u.card.noAttack) return 'Esta carta nunca puede atacar';
+  if(u.blind) return 'Está cegado y no puede atacar';
+  if(u.card.clause&&!u.noClause&&!hasContract(u.side)) return 'Cláusula: sólo puede atacar si controlas un Contrato';
+  if(P(u.side).pd<1 && P(1-u.side).field.some(o=>o.card.toll&&o.alive))
+    return 'Peaje de Brick y Brock: atacar cuesta 1 PD y no te queda ninguno';
+  return 'No puede atacar (motivo sin explicar: avísanos)';
+}
+
 function selectUnit(u){
   if(G.active!==ME) return;
   if(!canAttack(u)){
     SEL=u; render();
-    let why = u.sick?'Entró este turno (sin Prisa)' : u.attacked?'Ya atacó este turno'
-      : u.stunned>0?'Está Aturdido' : u.card.noAttack?'No puede atacar'
-      : u.card.clause&&!hasContract(ME)?'Cláusula: necesitas un Contrato' : u.atk<=0?'0 de ATQ':'No puede atacar';
+    const why = porQueNoAtaca(u);
+    // también al Registro: si sólo sale en el cartel, se pierde al cerrarlo
+    log(`<b>${u.card.n}</b> no puede atacar — ${why}.`,'sys');
     setPrompt(`${u.card.n} — ${why}`,[{t:'Cerrar',fn:()=>{SEL=null;clearPrompt();render();}}]);
     return;
   }
@@ -4819,6 +4875,7 @@ function netStatus(t,cls){
 async function netConnect(code, asHost){
   NET.code=code; NET.topic='caoztcg-v1-'+code.toLowerCase();
   NET.host=asHost; NET.guest=!asHost; NET.on=true;
+  NET.miNombre = ONL.nombre || (asHost?'Anfitrión':'Invitado');
   chatVacio(); chatVisible(true);
   NET.seq=0; NET.q=[]; NET.sending=false; NET.pending={}; NET.acts=[]; NET.busy=false;
   NET.peer=false; NET.seen=new Set(); NET.tx=NET.rx=NET.err=0;
@@ -4879,14 +4936,14 @@ function chatMio(){
   const t=i.value.trim().slice(0,CHAT_MAX);
   i.value='';
   if(!t||!NET.on) return;
-  const yo = G ? P(ME).L.n : 'Tú';
+  const yo = NET.miNombre || (G ? P(ME).L.n : 'Tú');
   chatPinta(true, yo, t);
   netSend({t:'chat', de:yo, txt:t});
 }
 /* Llega del rival. Se recorta y se limpia por si el otro extremo mandara algo
    raro: aquí no se confía en que el mensaje venga bien formado. */
 function chatRecibe(m){
-  const de = String(m.de||'Rival').slice(0,24);
+  const de = String(m.de||NET.suNombre||'Rival').slice(0,24);
   const tx = String(m.txt||'').slice(0,CHAT_MAX);
   if(!tx) return;
   chatVisible(true);
@@ -5049,6 +5106,8 @@ async function netRecv(m){
         return;
       }
       NET.peer=true; netStatus('rival conectado','ok');
+      NET.suNombre = String(m.nombre||'').slice(0,18) || 'Tu rival';
+      log(`<b>${NET.suNombre}</b> entra en la sala.`,'sys');
       if(NET.onjoin) NET.onjoin(m.leader||'fender');
       else NET.joinPend=m.leader||'fender';      // aún no listo: lo atendemos al asignar
       return;
@@ -5063,7 +5122,9 @@ async function netRecv(m){
     if(m.t==='bye'){ netStatus('el rival se fue','warn'); toast('Tu rival ha salido'); return; }
   } else {
     if(m.t==='chat'){ chatRecibe(m); return; }
-    if(m.t==='welcome'){ NET.peer=true; netStatus('partida en marcha','ok'); netGuestStart(m); return; }
+    if(m.t==='welcome'){ NET.peer=true; netStatus('partida en marcha','ok');
+      NET.suNombre = String(m.nombre||'').slice(0,18) || 'Tu rival';
+      netGuestStart(m); return; }
     if(m.t==='state'){ netApply(m.s); return; }
     if(m.t==='prompt'){ netGuestPrompt(m); return; }
     if(m.t==='ack'){ const p=NET.esperaAck.get(m.aid);
@@ -5137,7 +5198,7 @@ function pickIndex(list,title){
 
 /* ---------- arranque de la partida en cada lado ---------- */
 function netHostStart(miLider, suLider){
-  NET.welcome={t:'welcome', host:miLider, guest:suLider};
+  NET.welcome={t:'welcome', host:miLider, guest:suLider, nombre:NET.miNombre||''};
   netSend(NET.welcome);
   showScreen('board'); $('#log').innerHTML='';
   setupMatch(miLider, suLider, {online:true});
@@ -5169,9 +5230,9 @@ function gIntent(k,d){
 }
 
 /* ---------- vestíbulo ---------- */
-let ONL={lider:null};
+let ONL={lider:null,nombre:''};
 function showOnline(){
-  ONL={lider:null};
+  ONL={lider:null,nombre:nombreGuardado()};
   const p=$('#ovPanel');
   p.innerHTML=`<h3>👥 Jugar con un amigo</h3>
     <p>Sin cuentas ni instalaciones: uno crea la sala y le pasa el código al otro
@@ -5184,11 +5245,47 @@ function showOnline(){
   const b1=el('button','btn gold','🎲 &nbsp;Crear sala — yo invito');
   const b2=el('button','btn','🔑 &nbsp;Unirme con un código');
   const b3=el('button','btn sm','Cancelar');
-  b1.onclick=()=>onlPickLeader(true); b2.onclick=()=>onlPickLeader(false);
+  b1.onclick=()=>onlPickNombre(true); b2.onclick=()=>onlPickNombre(false);
   b3.onclick=()=>{ $('#ov').classList.remove('on'); };
   box.appendChild(b1); box.appendChild(b2); box.appendChild(b3); p.appendChild(box);
   openOv();
 }
+/* CÓMO TE LLAMAS
+   Antes de elegir mazo, tu nombre: en el chat y en los avisos aparece esto y no
+   el del Protagonista, que además pueden repetir los dos. Se recuerda para la
+   próxima, si el navegador deja guardar (en file:// a veces no, y no pasa nada).
+   El nombre del rival llega por la red: es texto ajeno y se trata como tal —se
+   recorta al recibirlo y se pinta con textContent, nunca como HTML—. */
+function nombreGuardado(){
+  try{ return (localStorage.getItem('caoz_nombre')||'').slice(0,18); }catch(e){ return ''; }
+}
+function guardaNombre(n){ try{ localStorage.setItem('caoz_nombre', n); }catch(e){} }
+
+function onlPickNombre(asHost){
+  const p=$('#ovPanel');
+  p.innerHTML=`<h3>${asHost?'Crear sala':'Unirse'} — ¿cómo te llamas?</h3>
+    <p>Así te verá tu rival en el chat y en los avisos de la partida.</p>`;
+  const inp=el('input','codeinput');
+  inp.type='text'; inp.maxLength=18; inp.placeholder='Tu nombre';
+  inp.value=nombreGuardado(); inp.autocomplete='off';
+  inp.style.textTransform='none'; inp.style.letterSpacing='2px'; inp.style.fontSize='26px';
+  p.appendChild(inp);
+  const box=el('div','opts');
+  const ok=el('button','btn gold','Continuar →');
+  const no=el('button','btn sm','← Volver');
+  const seguir=()=>{
+    const n=(inp.value||'').trim().slice(0,18) || (asHost?'Anfitrión':'Invitado');
+    ONL.nombre=n; guardaNombre(n);
+    onlPickLeader(asHost);
+  };
+  ok.onclick=seguir;
+  inp.onkeydown=e=>{ if(e.key==='Enter'){ e.preventDefault(); seguir(); } };
+  no.onclick=()=>showOnline();
+  box.appendChild(ok); box.appendChild(no); p.appendChild(box);
+  openOv();
+  setTimeout(()=>inp.focus(),50);
+}
+
 function onlPickLeader(asHost){
   const p=$('#ovPanel');
   p.innerHTML=`<h3>${asHost?'Crear sala':'Unirse'} — elige tu Protagonista</h3>`;
@@ -5244,14 +5341,14 @@ function onlJoinCode(){
     go.disabled=true; netStatus('conectando…','');
     await netConnect(c,false);
     netStatus('buscando la sala…','warn');
-    netSend({t:'join', leader:ONL.lider});
+    netSend({t:'join', leader:ONL.lider, nombre:ONL.nombre});
     let intentos=0;
     const reintento=setInterval(()=>{
       if(NET.peer||!NET.on){ clearInterval(reintento); return; }
       intentos++;
       if(intentos>24){ netStatus('nadie responde. ¿Seguro que el código es ese y tu amigo sigue esperando?','warn'); go.disabled=false; }
       else netStatus('buscando la sala… ('+intentos+')','warn');
-      netSend({t:'join', leader:ONL.lider});
+      netSend({t:'join', leader:ONL.lider, nombre:ONL.nombre});
     },2500);
   };
   const back=el('button','btn sm','← Volver'); back.onclick=showOnline;
@@ -5475,6 +5572,7 @@ $('#mPlay').onclick=()=>{ SELP=null; SELF=null; buildSelect(); $('#selGo').disab
 $('#mGuides').onclick=()=>showGuides();
 /* El chat: Enviar, o Intro. El formulario evita que la página se recargue. */
 $('#chatform').onsubmit=e=>{ e.preventDefault(); chatMio(); };
+$$('.build').forEach(e=>e.textContent=buildTxt());
 $('#guideBack').onclick=()=>showScreen('menu');
 $('#mCards').onclick=()=>showGallery();
 $('#mRules').onclick=()=>showRules(false);
@@ -5577,6 +5675,9 @@ if(new URLSearchParams(location.search).has('pantalla')){
     // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
+    if(q.has('gastada')) setTimeout(()=>{   // una tuya que ya atacó, para retratarla
+      const u=P(ME).field[0]; if(u){ u.attacked=true; recalc(); render(); }
+    }, 650);
     if(q.has('chat')) setTimeout(()=>{ try{
       chatVacio(); chatVisible(true);
       chatPinta(true,'Mohamed','¿Vas a bajar al Trol o no?');
@@ -5642,6 +5743,9 @@ if(new URLSearchParams(location.search).has('foto')){
     // que elijas a quién equiparlo. Ése es el estado en que falla el clic.
     // Prueba del chat: incluye un mensaje con etiquetas dentro. Debe verse tal
     // cual, como texto, y NO convertirse en HTML.
+    if(q.has('gastada')) setTimeout(()=>{   // una tuya que ya atacó, para retratarla
+      const u=P(ME).field[0]; if(u){ u.attacked=true; recalc(); render(); }
+    }, 650);
     if(q.has('chat')) setTimeout(()=>{ try{
       chatVacio(); chatVisible(true);
       chatPinta(true,'Mohamed','¿Vas a bajar al Trol o no?');
