@@ -815,7 +815,7 @@ body.tut-on .card.playable{
    arriba la mesa, abajo un cajón aparte. Ahora no hay línea. El suelo sigue
    desde el tapete hacia ti, oscureciéndose como se oscurece lo que queda fuera
    del foco, y la misma luz y el mismo polvo continúan por aquí abajo. */
-#handzone{position:relative;padding:6px 8px 8px;
+#handzone{position:relative;z-index:8;padding:6px 8px 8px;
   background:
     /* el reflejo del tapete cayendo hacia el jugador */
     radial-gradient(ellipse 62% 100% at 50% 0%, rgba(236,196,110,.10), transparent 72%),
@@ -1353,7 +1353,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:56, fecha:'2026-09-01'};
+const BUILD = {n:57, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
