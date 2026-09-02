@@ -85,11 +85,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    por su cuenta con las media queries y las proporciones se desmontaban.
    Sólo hay dos lienzos, uno apaisado y otro de pie, porque una pantalla de
    móvil en vertical no admite el mismo reparto que un monitor. */
-#app{position:fixed;inset:0;overflow:hidden}
-#lienzo{position:absolute;left:50%;top:50%;
+#app{position:fixed;inset:0;overflow:hidden;display:grid;place-items:center}
+#lienzo{
+  position:relative;                 /* las pantallas van con inset:0: sin esto
+                                        se anclan a la ventana y se salen */
   width:var(--LW,1600px);height:var(--LH,900px);
-  transform:translate(-50%,-50%) scale(var(--k,1));
-  transform-origin:50% 50%}
+  /* zoom, NO transform:scale. Con scale el navegador dibuja el tablero a su
+     tamaño y luego estira ese mapa de bits: el texto sale borroso y los bordes
+     sucios. zoom rehace el cálculo y vuelve a dibujar las letras al tamaño
+     final, así que todo queda nítido por muy pequeña que sea la pantalla. */
+  zoom:var(--k,1)}
 .screen{position:absolute;inset:0;display:none;flex-direction:column}
 .screen.on{display:flex}
 
@@ -374,6 +379,9 @@ body.vert .pile{height:74px} body.vert .pile.grave{height:58px}
 body.vert .pileart{font-size:19px} body.vert .pilen{font-size:17px}
 body.vert #mat{padding:6px 14px}
 body.vert #field{padding:6px 16px 6px 4px}
+body.vert #handzone{min-height:292px;flex:0 0 auto}
+body.vert #foehandzone{min-height:104px;flex:0 0 auto}
+body.vert #field{flex:1 1 auto;min-height:0}
 body.vert .slots{gap:7px}
 body.vert .row{gap:7px}
 body.vert .zlabel{display:none}
@@ -686,7 +694,9 @@ body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
      (aunque pongas overflow-y:visible), y la carta ampliada se cortaba por
      arriba. En su lugar, las cartas se montan más cuantas más tengas —que es
      como se sostiene una mano de verdad— y así siempre caben sin recortar. */
-  padding:12px 8px 8px;min-height:calc(var(--chm) + 22px);
+  /* el hueco de abajo es para el arco: las cartas de los extremos caen unos
+     30px y sin este margen se metían debajo de los botones */
+  padding:12px 8px 34px;min-height:calc(var(--chm) + 46px);
   /* el punto de fuga por debajo y por delante: las cartas se echan hacia atrás
      por arriba, como cuando las tienes en la mano y las miras desde encima */
   perspective:1100px;perspective-origin:50% 150%}
@@ -702,8 +712,11 @@ body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
   box-shadow:0 6px 14px rgba(0,0,0,.62), 0 16px 30px rgba(0,0,0,.5),
              inset 0 1px 0 rgba(255,255,255,.09);
 }
-/* con la mano llena las cartas se montan, como en la vida */
-#hand .card{--solape:max(6px, (var(--n) - 4) * 8px);margin-inline:calc(-1 * var(--solape))}
+/* Las cartas sólo se montan cuando de verdad no caben. Antes empezaban a
+   solaparse a partir de la quinta y con la mano llena se tapaban unas a otras
+   hasta no poder leer ninguna: había que adivinar qué tenías. */
+#hand .card{--solape:max(0px, (var(--n) - 8) * 13px);margin-inline:calc(-1 * var(--solape))}
+body.vert #hand .card{--solape:max(0px, (var(--n) - 5) * 11px)}
 /* al pasar por encima se endereza, sube y crece: hasta que la sueltas conviene
    verla entera y sin torcer */
 /* AL PASAR POR ENCIMA, LA CARTA CRECE
@@ -5258,14 +5271,23 @@ window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutoria
    Hay dos lienzos porque un móvil de pie no admite el reparto de un monitor
    apaisado; dentro de cada uno, nada depende ya del tamaño de la ventana.
    ========================================================================== */
-const LIENZO = { ancho: [1600, 760], alto: [900, 1450] };   // [apaisado, de pie]
+/* Más alto que ancho de lo que pedía la pantalla: el tablero necesita apilar
+   la mano del rival, dos filas de campo, dos de Trampas y tu mano. Con 16:9 no
+   cabía y las cartas de arriba salían cortadas. Ahora manda el alto y lo que
+   sobra son bandas a los lados, que no estorban a nadie. */
+const LIENZO = { ancho: [1500, 830], alto: [1040, 1480] };   // [apaisado, de pie]
+
+/* Borde de seguridad: el tablero nunca llega al filo de la pantalla. Sin esto
+   los botones de abajo y el registro quedaban pegados al canto —y en un móvil,
+   bajo la barra del navegador o el notch. */
+const MARGEN = 0.965;
 
 function ajustarLienzo(){
   const dePie = innerHeight > innerWidth * 1.05;   // el 5% evita que un cuadrado baile
   const i = dePie ? 1 : 0;
   const W = LIENZO.ancho[i], H = LIENZO.alto[i];
   // el lienzo entero tiene que caber: manda la dimensión más apretada
-  const k = Math.min(innerWidth / W, innerHeight / H);
+  const k = Math.min(innerWidth / W, innerHeight / H) * MARGEN;
   const r = document.documentElement.style;
   r.setProperty('--LW', W + 'px');
   r.setProperty('--LH', H + 'px');
@@ -5316,11 +5338,22 @@ if(new URLSearchParams(location.search).has('foto')){
     if(q.has('medir')) setTimeout(()=>{
       const m=(sel)=>{const e=$(sel); if(!e) return sel+':no';
         const r=e.getBoundingClientRect();
-        return sel+' w='+Math.round(r.width)+' h='+Math.round(r.height)
-             +' x='+Math.round(r.left)+'..'+Math.round(r.right);};
-      document.title='MED '+['#lienzo','#rail','#mat','#foeField','#leaderFoe','#field']
+        return sel+' w='+Math.round(r.width)+' h='+Math.round(r.height);};
+      // ¿se sale algo del lienzo? Es la pregunta de verdad, y la contesta la
+      // página en vez de mirar una captura a ojo
+      const L=$('#lienzo').getBoundingClientRect();
+      const fuera=[];
+      document.querySelectorAll('#lienzo *').forEach(e=>{
+        const r=e.getBoundingClientRect();
+        if(r.width<2||r.height<2) return;
+        const dx=Math.max(0, Math.round(L.left-r.left), Math.round(r.right-L.right));
+        const dy=Math.max(0, Math.round(L.top-r.top), Math.round(r.bottom-L.bottom));
+        if(dx>2||dy>2) fuera.push((e.id||e.className||e.tagName)+':'+dx+'x'+dy);
+      });
+      document.title='MED '+['#lienzo','#field','#rail','#mat','#myField','#hand','#handzone']
         .map(m).join(' | ')+' || win='+innerWidth+'x'+innerHeight
-        +' k='+getComputedStyle(document.documentElement).getPropertyValue('--k');
+        +' k='+getComputedStyle(document.documentElement).getPropertyValue('--k')
+        +' || SE SALEN: '+(fuera.length?fuera.slice(0,8).join(' , '):'nada');
     }, 1600);
     document.body.classList.add('foto-lista');
   },600));
