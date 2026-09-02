@@ -247,7 +247,7 @@ const BD = {
 let JUEGO = null;               // el window del iframe con el juego
 let FICHAS = [];                // [{id, n, t, tipo, esLider}]
 const ARTE = new Map();         // id -> {id, blob, url, encuadre}
-const PUBLICADAS = new Set();   // ids que ya viajan con el juego, en art/
+const PUBLICADAS = new Map();   // id -> encuadre, de lo que ya viaja en art/
 let ABIERTA = null;             // id de la carta abierta en el panel
 let RAIZ = null;                // shadow root de la rejilla
 
@@ -305,7 +305,8 @@ async function cargarPublicadas(){
   try{
     const r = await fetch('art/encuadres.json', {cache:'no-store'});
     if (!r.ok) return;
-    for (const id in await r.json()) PUBLICADAS.add(id);
+    const idx = await r.json();
+    for (const id in idx) PUBLICADAS.set(id, idx[id]);
   } catch(_){}                                  // sin carpeta art/ todavía: normal
 }
 
@@ -719,16 +720,37 @@ async function sincronizar(){
       n++;
       btn.textContent = `Sincronizando… ${n}/${ARTE.size}`;
     }
-    // el índice: sin él el juego no sabe qué cartas tienen ilustración
+    /* El índice: sin él el juego no sabe qué cartas tienen ilustración.
+
+       Se FUNDE con el que ya hubiera, no lo reemplaza. Escribirlo entero desde
+       lo que hay en este navegador borraba del juego todas las ilustraciones
+       que no estuvieran aquí: como el almacén es por navegador y por puerto,
+       sincronizar una carta desde otro sitio se llevaba por delante el resto,
+       y sin decir nada —los .webp seguían en la carpeta, pero el juego dejaba
+       de verlos. */
     const idx = await art.getFileHandle('encuadres.json', {create:true});
+    let indice = {};
+    try{
+      indice = JSON.parse(await (await idx.getFile()).text()) || {};
+    }catch(_){ indice = {}; }                   // no había, o estaba roto
+
+    // de lo anterior se conserva lo que aún tenga su imagen en la carpeta
+    let heredadas = 0;
+    for(const id of Object.keys(indice)){
+      if(ARTE.has(id)) continue;                // lo de este navegador manda
+      try{ await art.getFileHandle(id + '.webp'); heredadas++; }
+      catch(_){ delete indice[id]; }            // sin imagen, la entrada sobra
+    }
+    for(const [id, r] of ARTE) indice[id] = r.encuadre ?? 50;
+
     const wi = await idx.createWritable();
-    await wi.write(JSON.stringify(
-      Object.fromEntries([...ARTE].map(([id,r])=>[id, r.encuadre ?? 50])), null, 1));
+    await wi.write(JSON.stringify(indice, null, 1));
     await wi.close();
 
     btn.textContent = antes;
-    alert(`Listo: ${n} ilustracion${n===1?'':'es'} en art/.\n\n` +
-          'Ya se ven al recargar el juego. Para que salgan en la web publicada, ' +
+    alert(`Listo: ${n} ilustracion${n===1?'':'es'} en art/` +
+          (heredadas ? `, y se conservan las ${heredadas} que ya estaban.` : '.') +
+          '\n\nYa se ven al recargar el juego. Para que salgan en la web publicada, ' +
           'queda ejecutar ./publicar.sh');
   }catch(e){
     btn.textContent = antes;
@@ -745,9 +767,14 @@ async function exportarZip(){
   for (const [id, reg] of ARTE){
     entradas.push({nombre:`art/${id}.webp`, datos:new Uint8Array(await reg.blob.arrayBuffer())});
   }
+  /* El índice lleva también las que ya están publicadas: el ZIP se descomprime
+     encima de art/, donde sus .webp siguen estando, y si no fueran en el índice
+     el juego dejaría de verlas. Mismo cuidado que al sincronizar. */
+  const indice = {};
+  for (const [id, y] of PUBLICADAS) indice[id] = y;
+  for (const [id, r] of ARTE) indice[id] = r.encuadre ?? 50;
   entradas.push({nombre:'art/encuadres.json',
-    datos:new TextEncoder().encode(JSON.stringify(
-      Object.fromEntries([...ARTE].map(([id,r])=>[id, r.encuadre ?? 50])), null, 1))});
+    datos:new TextEncoder().encode(JSON.stringify(indice, null, 1))});
   descargar(await hacerZip(entradas), 'arte-tcg.zip');
 }
 
