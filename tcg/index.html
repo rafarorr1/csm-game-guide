@@ -159,6 +159,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    abajo (.lface::after) sigue haciendo su trabajo: funde la imagen con la
    tarjeta para que no parezca una foto pegada. */
 .lface.conarte{font-size:0;filter:none}
+.art.conarte .dibujo{position:absolute;inset:0;z-index:0;width:100%;height:100%;
+  object-fit:cover;object-position:var(--ex,50%) var(--ey,50%);
+  transform:scale(var(--ez,1));transform-origin:var(--ex,50%) var(--ey,50%);
+  pointer-events:none;display:block}
+.lface.conarte .dibujo{position:absolute;inset:0;z-index:0;width:100%;height:100%;
+  object-fit:cover;object-position:var(--ex,50%) var(--ey,50%);
+  transform:scale(var(--ez,1));transform-origin:var(--ex,50%) var(--ey,50%);
+  pointer-events:none;display:block}
 
 /* el retrato, a sangre y con su propia luz */
 .lface{position:relative;height:124px;flex:0 0 auto;display:grid;place-items:center;
@@ -380,7 +388,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* Con ilustración, el dibujo pasa a ser el fondo del panel y el emoji sobra. El
    velo es fuerte a propósito: encima van el Alma y la habilidad, y ahí se lee
    durante toda la partida. */
-.leadercard.conarte{background-size:cover;background-position:center var(--enc,50%)}
+.leadercard.conarte .dibujo{position:absolute;inset:0;z-index:0;width:100%;height:100%;
+  object-fit:cover;object-position:var(--ex,50%) var(--ey,50%);
+  transform:scale(var(--ez,1));transform-origin:var(--ex,50%) var(--ey,50%);
+  border-radius:inherit;pointer-events:none;display:block}
+/* el velo: encima van el Alma y la habilidad, y ahí hay que leer toda la partida */
+.leadercard.conarte::before{content:"";position:absolute;inset:0;z-index:1;
+  border-radius:inherit;pointer-events:none;
+  background:linear-gradient(180deg,rgba(10,7,18,.86),rgba(10,7,18,.55) 42%,rgba(10,7,18,.92))}
+.leadercard.conarte > *:not(.dibujo){position:relative;z-index:2}
 .leadercard.conarte .lcArt{display:none}
 .leadercard .lcEp{font-size:7px;color:var(--dim);letter-spacing:.3px;line-height:1.1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
@@ -683,6 +699,25 @@ body.tut-on .card.playable{
 
 .card.acomodo{ font-size:calc(var(--cw) * 0.092); }
 .card.acomodo.conarte .art{ display:none }
+/* El dibujo va en un <img>, no de fondo. Con background sólo se puede elegir el
+   punto de la imagen que se ve; con la imagen y una transformación se puede
+   además acercar, y el navegador lo resuelve igual de bien a cualquier tamaño de
+   carta. El encuadre son tres números: x, y —el punto que queda centrado— y z,
+   el acercamiento, donde 100 es el mínimo que llena la carta. */
+.card.acomodo.conarte .dibujo{ position:absolute; inset:0; z-index:0;
+  width:100%; height:100%; object-fit:cover;
+  object-position:var(--ex,50%) var(--ey,50%);
+  transform:scale(var(--ez,1)); transform-origin:var(--ex,50%) var(--ey,50%);
+  border-radius:9px; pointer-events:none; display:block }
+/* el velo, encima del dibujo y debajo del texto */
+.card.acomodo.conarte::before{ content:""; position:absolute; inset:0; z-index:1;
+  border-radius:9px; pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,6,14,0) 38%, rgba(8,6,14,.55) 66%,
+             rgba(8,6,14,.92) 100%) }
+.card.acomodo.conarte.sinvelo::before{ display:none }
+/* Todo lo demás, por encima del velo. Las palabras clave —Provocar, Al entrar—
+   se quedaban debajo y desaparecían de las cartas dibujadas. */
+.card.acomodo.conarte > *:not(.dibujo){ position:relative; z-index:2 }
 /* Sin ilustración el emoji hace de dibujo: ocupa la carta entera sobre el
    degradado de su clase, y el pie va igual que en las ilustradas. Así todas las
    cartas se maquetan igual y no conviven dos diseños según cuáles hayas
@@ -1452,7 +1487,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:70, fecha:'2026-09-01'};
+const BUILD = {n:71, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -1559,37 +1594,50 @@ function encajarTextos(raiz){
   r.querySelectorAll('.card .txt').forEach(t => encajarAlto(t, 0.70));
 }
 
-const VELO_ILUSTRADA =
-  'linear-gradient(180deg, rgba(8,6,14,0) 38%, rgba(8,6,14,.55) 66%, rgba(8,6,14,.92) 100%)';
+/* El encuadre de una ilustración: qué punto queda centrado (x,y) y cuánto se
+   acerca (z, donde 100 es el mínimo que llena el hueco). Los primeros encuadres
+   se guardaron como un solo número —el desplazamiento vertical— y siguen
+   valiendo: se leen como el centro horizontal y sin acercar. */
+function encuadreDe(v){
+  if(v == null) return null;
+  if(typeof v === 'number') return {x:50, y:v, z:100};
+  return {x: v.x ?? 50, y: v.y ?? 50, z: v.z ?? 100};
+}
+
+/* Mete el dibujo al fondo del nodo y deja el encuadre en variables CSS, que es
+   lo que leen .dibujo y el retrato del Líder. */
+function ponerDibujo(nodo, url, enc){
+  const img = document.createElement('img');
+  img.className = 'dibujo';
+  img.alt = '';
+  img.src = url;
+  nodo.style.setProperty('--ex', enc.x + '%');
+  nodo.style.setProperty('--ey', enc.y + '%');
+  nodo.style.setProperty('--ez', (enc.z / 100).toFixed(3));
+  nodo.insertBefore(img, nodo.firstChild);
+  return img;
+}
 
 /* Los Líderes también se dibujan. Van por su lado porque no son cartas: su
    retrato es .lface, no el fondo entero, y el id que usa el editor lleva
    delante 'lider_' para no chocar con el de una carta. */
 function ilustrarLider(d, lid){
-  const y = ARTE['lider_' + lid];
-  if(y == null) return d;                       // sin dibujo: su emoji de siempre
+  const enc = encuadreDe(ARTE['lider_' + lid]);
+  if(!enc) return d;                            // sin dibujo: su emoji de siempre
   const cara = d.querySelector('.lface');
   if(!cara) return d;
   cara.classList.add('conarte');
-  cara.style.backgroundImage =
-    'radial-gradient(ellipse 100% 80% at 50% 26%, rgba(138,92,240,.18), transparent 70%), ' +
-    `url(art/lider_${lid}.webp)`;
-  cara.style.backgroundSize = 'cover';
-  cara.style.backgroundPosition = `center ${y}%`;
+  ponerDibujo(cara, `art/lider_${lid}.webp`, enc);
   return d;
 }
 
 function ilustrar(d, id){
-  const y = ARTE[id];
-  const hay = y != null;
+  const enc = encuadreDe(ARTE[id]);
+  const hay = enc != null;
   // El acomodo es el mismo tenga o no ilustración: lo único que cambia es si el
   // fondo lo pone el dibujo o el emoji sobre el color de su clase.
   d.classList.add('acomodo', hay ? 'conarte' : 'sinarte');
-  if(hay){
-    d.style.backgroundImage = VELO_ILUSTRADA + `, url(art/${id}.webp)`;
-    d.style.backgroundSize = 'cover';
-    d.style.backgroundPosition = `center ${y}%`;
-  }
+  if(hay) ponerDibujo(d, `art/${id}.webp`, enc);
   const pie = document.createElement('div');
   pie.className = 'pieCarta';
   for(const sel of ['.nm', '.tribe', '.txt', '.stats']){
@@ -3476,9 +3524,10 @@ function inspectHTML(id,u){
 function showInspectLeader(d,side){
   const p=P(side), L=p.L, box=$('#inspectCard');
   box.className='big';
-  const yArt = ARTE['lider_' + p.leaderId];
+  const encL = encuadreDe(ARTE['lider_' + p.leaderId]);
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
-    <div class="art"${yArt!=null ? ` style="background:url(art/lider_${p.leaderId}.webp) center ${yArt}%/cover;font-size:0"` : ''}>${L.art}</div>
+    <div class="art${encL?' conarte':''}"${encL ? ` style="position:relative;overflow:hidden;font-size:0;--ex:${encL.x}%;--ey:${encL.y}%;--ez:${(encL.z/100).toFixed(3)}"` : ''}>${
+      encL ? `<img class="dibujo" alt="" src="art/lider_${p.leaderId}.webp">` : ''}${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
     <div class="bigsep"></div>
@@ -3892,9 +3941,10 @@ function renderLeaders(){
     const usable = mine && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
                 && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
     const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
-    const yArt = ARTE['lider_' + p.leaderId];
-    host.innerHTML=`<div class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${yArt!=null?' conarte':''}" id="lead${side}"${
-      yArt!=null ? ` style="--enc:${yArt}%;background-image:linear-gradient(180deg,rgba(10,7,18,.86),rgba(10,7,18,.55) 42%,rgba(10,7,18,.92)),url(art/lider_${p.leaderId}.webp)"` : ''}>
+    const enc = encuadreDe(ARTE['lider_' + p.leaderId]);
+    host.innerHTML=`<div class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
+      enc ? ` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"` : ''}>
+      ${enc ? `<img class="dibujo" alt="" src="art/lider_${p.leaderId}.webp">` : ''}
       <div class="lcName">${L.n}</div>
       <div class="lcArt">${L.art}</div>
       <div class="lcEp">${L.ep}</div>
@@ -3960,7 +4010,13 @@ function renderField(host, list, mine){
     // "gastada": tuya y ya no puede atacar este turno. Sin esto había que
     // acordarse de con cuáles habías atacado ya, mirando una por una.
     const gastada = mine && !canAttack(u) && !u.card.noAttack && u.atk>0;
-    d.className='card unit t-personaje'+(rest?' sick':'')
+    /* El acomodo lo pone ilustrar() dentro de unitFill, y aquí se reescribía la
+       lista de clases entera: se perdía en cada refresco. No se notaba mientras
+       el dibujo iba de fondo en línea; con el dibujo en un <img> la carta se
+       desmontaba —el pie se salía por debajo—. Se conserva. */
+    const acomodo = d.classList.contains('conarte') ? ' acomodo conarte'
+                  : d.classList.contains('sinarte') ? ' acomodo sinarte' : '';
+    d.className='card unit t-personaje'+acomodo+(rest?' sick':'')
       +(u.infected?' infectado':'')      // verde mientras esté Infectado
       +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')
       +(gastada?' gastada':'')

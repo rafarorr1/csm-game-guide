@@ -83,6 +83,8 @@ main{padding:16px}
   padding-top:10px;margin-top:4px}
 .mapa b{color:var(--texto)}
 .mapa .libre{color:var(--verde)}
+
+/* el panel de encuadre (se inyecta desde CSS_PANEL al arrancar) */
 </style>
 </head>
 <body>
@@ -156,9 +158,38 @@ let CON_VELO = true;
    Esto es lo que tendrá que llevar el juego cuando se implanten las
    ilustraciones; está aquí junto para poder copiarlo de una pieza.
    ------------------------------------------------------------------------ */
+const CSS_PANEL = `
+.encuadrador{display:flex;flex-direction:column;gap:7px}
+.encuadrador label{font-size:12px;color:var(--tenue);line-height:1.35}
+.encuadrador .ejes{display:grid;grid-template-columns:64px 1fr 42px;align-items:center;gap:8px}
+.encuadrador .ejes span{font-size:11.5px;color:var(--tenue)}
+.encuadrador .ejes i{font-size:11.5px;font-style:normal;text-align:right;opacity:.85}
+.encuadrador input[type=range]{width:100%}
+.medida .marco{touch-action:none;user-select:none}
+`;
+
 const CSS_ILUSTRADA = `
 .card.acomodo{ font-size:calc(var(--cw) * 0.092); }
 .card.acomodo.conarte .art{ display:none }
+/* El dibujo va en un <img>, no de fondo. Con background sólo se puede elegir el
+   punto de la imagen que se ve; con la imagen y una transformación se puede
+   además acercar, y el navegador lo resuelve igual de bien a cualquier tamaño de
+   carta. El encuadre son tres números: x, y —el punto que queda centrado— y z,
+   el acercamiento, donde 100 es el mínimo que llena la carta. */
+.card.acomodo.conarte .dibujo{ position:absolute; inset:0; z-index:0;
+  width:100%; height:100%; object-fit:cover;
+  object-position:var(--ex,50%) var(--ey,50%);
+  transform:scale(var(--ez,1)); transform-origin:var(--ex,50%) var(--ey,50%);
+  border-radius:9px; pointer-events:none; display:block }
+/* el velo, encima del dibujo y debajo del texto */
+.card.acomodo.conarte::before{ content:""; position:absolute; inset:0; z-index:1;
+  border-radius:9px; pointer-events:none;
+  background:linear-gradient(180deg, rgba(8,6,14,0) 38%, rgba(8,6,14,.55) 66%,
+             rgba(8,6,14,.92) 100%) }
+.card.acomodo.conarte.sinvelo::before{ display:none }
+/* Todo lo demás, por encima del velo. Las palabras clave —Provocar, Al entrar—
+   se quedaban debajo y desaparecían de las cartas dibujadas. */
+.card.acomodo.conarte > *:not(.dibujo){ position:relative; z-index:2 }
 /* Sin ilustración el emoji hace de dibujo: ocupa la carta entera sobre el
    degradado de su clase, y el pie va igual que en las ilustradas. Así todas las
    cartas se maquetan igual y no conviven dos diseños según cuáles hayas
@@ -264,6 +295,8 @@ async function arrancar(){
   await cargarPublicadas();
   montarRejilla();
   llenarFiltros();
+  document.head.appendChild(document.createElement('style')).textContent = CSS_PANEL;
+  if (new URLSearchParams(location.search).has('prueba')) probarFusion();
   pintar();
   conectarBotones();
 }
@@ -313,6 +346,17 @@ async function cargarPublicadas(){
 /* Tiene dibujo si lo has cargado aquí o si ya está publicado. Para ENSEÑARLA;
    las operaciones que necesitan el archivo siguen mirando sólo ARTE. */
 function tieneArte(id){ return ARTE.has(id) || PUBLICADAS.has(id); }
+
+/* El encuadre: qué punto de la ilustración queda centrado (x,y) y cuánto se
+   acerca (z, donde 100 es el mínimo que llena la carta). Los primeros encuadres
+   eran un solo número —el desplazamiento vertical— y siguen valiendo. */
+function normEnc(v){
+  if (v == null) return {x:50, y:50, z:100};
+  if (typeof v === 'number') return {x:50, y:v, z:100};
+  return {x: v.x ?? 50, y: v.y ?? 50, z: v.z ?? 100};
+}
+const encDe = id => normEnc(ARTE.get(id)?.encuadre ?? PUBLICADAS.get(id));
+const limitar = (n, min, max) => Math.min(max, Math.max(min, n));
 
 async function cargarArteGuardado(){
   for (const reg of await BD.todo()){
@@ -383,10 +427,17 @@ function nodoDeCarta(f){
   const conDibujo = !!reg || d.classList.contains('conarte');
   d.classList.remove('conarte', 'sinarte');
   d.classList.add('acomodo', conDibujo ? 'conarte' : 'sinarte');
-  if (reg){
-    d.style.backgroundImage = (CON_VELO ? VELO + ',' : '') + `url(${reg.url})`;
-    d.style.backgroundSize = 'cover';
-    d.style.backgroundPosition = `center ${reg.encuadre ?? 50}%`;
+  if (conDibujo){
+    const enc = encDe(f.id);
+    const url = reg ? reg.url : `art/${f.id}.webp`;   // si no está aquí, la publicada
+    const img = document.createElement('img');
+    img.className = 'dibujo'; img.alt = '';
+    img.src = url;
+    d.style.setProperty('--ex', enc.x + '%');
+    d.style.setProperty('--ey', enc.y + '%');
+    d.style.setProperty('--ez', (enc.z / 100).toFixed(3));
+    if (!CON_VELO) d.classList.add('sinvelo');
+    d.insertBefore(img, d.firstChild);
     const emL = d.querySelector('.em'); if (emL) emL.style.display = 'none';
   }
   // nombre, tribu, texto y números se agrupan en un pie que se va abajo del todo
@@ -467,6 +518,7 @@ function abrir(id){
   ABIERTA = id;
   const f = FICHAS.find(x=>x.id===id);
   const reg = ARTE.get(id);
+  const E = encDe(id);
   const hoja = $('#hoja');
   hoja.innerHTML = `
     <h2>${f.n}</h2>
@@ -478,10 +530,25 @@ function abrir(id){
         <div class="zona" id="soltar">
           Arrastra aquí la ilustración<br><span style="font-size:11px">o haz clic para buscarla</span>
         </div>
-        <div>
-          <label>Encuadre vertical — <span id="valEnc">${reg?.encuadre ?? 50}</span>%</label>
-          <input type="range" id="encuadre" min="0" max="100" value="${reg?.encuadre ?? 50}"
-                 ${reg?'':'disabled'}>
+        <div class="encuadrador">
+          <label>Encuadre — <b>arrastra la carta grande</b> para mover
+            y usa la rueda para acercar.</label>
+          <div class="ejes">
+            <span>Horizontal</span>
+            <input type="range" id="encX" min="0" max="100" step="1" value="${E.x}" ${reg?'':'disabled'}>
+            <i id="valX">${E.x}%</i>
+          </div>
+          <div class="ejes">
+            <span>Vertical</span>
+            <input type="range" id="encY" min="0" max="100" step="1" value="${E.y}" ${reg?'':'disabled'}>
+            <i id="valY">${E.y}%</i>
+          </div>
+          <div class="ejes">
+            <span>Acercar</span>
+            <input type="range" id="encZ" min="100" max="300" step="1" value="${E.z}" ${reg?'':'disabled'}>
+            <i id="valZ">${E.z}%</i>
+          </div>
+          <button class="btn" id="centrar" ${reg?'':'disabled'}>Centrar y alejar del todo</button>
         </div>
         <div class="fila">
           <button class="btn" id="verZonas">Ver zonas de texto</button>
@@ -510,18 +577,84 @@ function abrir(id){
   };
   $('#verVelo').onclick = () => { CON_VELO = !CON_VELO; pintar(); abrir(id); };
   $('#quitar').onclick = async () => {
+    /* Preguntar antes. Borrar era inmediato y con el ratón encima de "Quitar"
+       no hay vuelta atrás: la imagen sólo vive en este navegador. */
+    const ok = confirm(
+      `¿Quitar la ilustración de ${f.n}?\n\n` +
+      'Se borra de este navegador y no se puede deshacer.' +
+      (PUBLICADAS.has(id)
+        ? `\n\nOJO: esta carta ya está publicada. El archivo art/${id}.webp sigue en ` +
+          'la carpeta y el juego la seguirá enseñando hasta que lo borres a mano.'
+        : ''));
+    if (!ok) return;
     await BD.borrar(id);
     const r = ARTE.get(id); if (r) URL.revokeObjectURL(r.url);
     ARTE.delete(id); pintar(); abrir(id);
   };
-  const rango = $('#encuadre');
-  rango.oninput = async () => {
-    $('#valEnc').textContent = rango.value;
+  /* Mover y acercar. Se guarda al soltar, no en cada píxel: arrastrando salen
+     cientos de eventos y escribir en la base en cada uno la atasca. */
+  let guardando = null;
+  const aplicar = (enc, guardar) => {
     const r = ARTE.get(id); if (!r) return;
-    r.encuadre = +rango.value;
-    await BD.guardar({id, blob:r.blob, encuadre:r.encuadre});
+    r.encuadre = {x: Math.round(enc.x), y: Math.round(enc.y), z: Math.round(enc.z)};
+    $('#encX').value = r.encuadre.x; $('#valX').textContent = r.encuadre.x + '%';
+    $('#encY').value = r.encuadre.y; $('#valY').textContent = r.encuadre.y + '%';
+    $('#encZ').value = r.encuadre.z; $('#valZ').textContent = r.encuadre.z + '%';
     pintarVistas($('#verZonas').dataset.on === '1');
+    if (guardar){
+      clearTimeout(guardando);
+      guardando = setTimeout(() => BD.guardar({id, blob:r.blob, encuadre:r.encuadre}), 200);
+    }
   };
+
+  for (const eje of ['X','Y','Z']){
+    const c = $('#enc' + eje);
+    if (c) c.oninput = () => {
+      const e = encDe(id);
+      e[eje.toLowerCase()] = +c.value;
+      aplicar(e, true);
+    };
+  }
+  const btnC = $('#centrar');
+  if (btnC) btnC.onclick = () => aplicar({x:50, y:50, z:100}, true);
+
+  /* Arrastrar sobre la carta grande. El desplazamiento se convierte a puntos de
+     encuadre: cuanto más acercada esté, menos hay que moverse para recorrerla,
+     y por eso se divide por el acercamiento. */
+  const grande = $('#vistas .medida:last-child .marco');
+  if (grande && reg){
+    grande.style.cursor = 'grab';
+    grande.onpointerdown = ev => {
+      ev.preventDefault();
+      const ini = encDe(id);
+      const x0 = ev.clientX, y0 = ev.clientY;
+      const w = grande.clientWidth || 224, h = grande.clientHeight || 316;
+      grande.setPointerCapture(ev.pointerId);
+      grande.style.cursor = 'grabbing';
+      const mover = e2 => {
+        const f = 100 / (ini.z / 100);
+        aplicar({
+          x: limitar(ini.x - (e2.clientX - x0) / w * f, 0, 100),
+          y: limitar(ini.y - (e2.clientY - y0) / h * f, 0, 100),
+          z: ini.z
+        }, false);
+      };
+      const soltar = () => {
+        grande.onpointermove = null; grande.onpointerup = null;
+        grande.style.cursor = 'grab';
+        aplicar(encDe(id), true);            // ahora sí, a la base
+      };
+      grande.onpointermove = mover;
+      grande.onpointerup = soltar;
+      grande.onpointercancel = soltar;
+    };
+    grande.onwheel = ev => {
+      ev.preventDefault();
+      const e = encDe(id);
+      e.z = limitar(e.z - Math.sign(ev.deltaY) * 6, 100, 300);
+      aplicar(e, true);
+    };
+  }
 
   const zona = $('#soltar');
   zona.ondragover = e => { e.preventDefault(); zona.classList.add('encima'); };
@@ -548,6 +681,7 @@ function pintarVistas(conZonas){
     const env = document.createElement('div');
     env.className = 'medida';
     const marco = document.createElement('div');
+    marco.className = 'marco';                  // lo busca el arrastre del encuadre
     marco.style.cssText = `position:relative;width:${t.cw}px;height:${t.ch}px`;
     const sombra = marco.attachShadow({mode:'open'});
     const est = document.createElement('style');
@@ -691,6 +825,52 @@ async function conPermiso(h){
   return null;                                  // lo denegó: se vuelve a pedir
 }
 
+/* LA FUSIÓN DEL ÍNDICE — se saca aparte para poder probarla.
+   Lo de este navegador manda; de lo que ya había se conserva todo lo que aún
+   tenga su imagen en la carpeta, y sólo se retiran las entradas huérfanas.
+   Escribir aquí el índice entero desde ARTE borraba del juego las
+   ilustraciones que no estuvieran en este navegador. */
+async function fundirIndice(previo, mias, hayImagen){
+  const indice = {};
+  let heredadas = 0;
+  for(const id of Object.keys(previo || {})){
+    if(mias.has(id)) continue;                  // lo tuyo se pone después
+    if(await hayImagen(id)){ indice[id] = previo[id]; heredadas++; }
+  }
+  for(const [id, enc] of mias) indice[id] = enc;
+  return {indice, heredadas};
+}
+
+/* La prueba de lo de arriba: es la pieza que ya borró ilustraciones una vez.
+   Se ejecuta sola al abrir el estudio con ?prueba=1 y avisa por consola. */
+async function probarFusion(){
+  const casos = [];
+  const di = (t, real, esperado) => casos.push(
+    {t, ok: JSON.stringify(real) === JSON.stringify(esperado), real, esperado});
+  const todas = async () => true, ninguna = async () => false;
+
+  let r = await fundirIndice({augusto:0, lucius:50}, new Map([['fender',{x:50,y:50,z:100}]]), todas);
+  di('conserva las que ya estaban al añadir una nueva',
+     r.indice, {augusto:0, lucius:50, fender:{x:50,y:50,z:100}});
+
+  r = await fundirIndice({augusto:0}, new Map([['augusto',{x:10,y:20,z:150}]]), todas);
+  di('lo de este navegador pisa a lo anterior', r.indice, {augusto:{x:10,y:20,z:150}});
+
+  r = await fundirIndice({fantasma:30}, new Map(), ninguna);
+  di('retira la entrada cuya imagen ya no está', r.indice, {});
+
+  r = await fundirIndice({}, new Map(), todas);
+  di('sin índice previo no falla', r.indice, {});
+
+  r = await fundirIndice({a:0, b:10}, new Map(), todas);
+  di('sincronizar sin nada cargado no borra nada', r.indice, {a:0, b:10});
+
+  const malas = casos.filter(c => !c.ok);
+  console[malas.length ? 'error' : 'log'](
+    `fusión del índice: ${casos.length - malas.length}/${casos.length} bien`, malas);
+  return {total: casos.length, malas};
+}
+
 async function sincronizar(){
   const btn = $('#btnSync');
   if(!HAY_SYNC){
@@ -729,19 +909,17 @@ async function sincronizar(){
        y sin decir nada —los .webp seguían en la carpeta, pero el juego dejaba
        de verlos. */
     const idx = await art.getFileHandle('encuadres.json', {create:true});
-    let indice = {};
+    let previo = {};
     try{
-      indice = JSON.parse(await (await idx.getFile()).text()) || {};
-    }catch(_){ indice = {}; }                   // no había, o estaba roto
+      previo = JSON.parse(await (await idx.getFile()).text()) || {};
+    }catch(_){ previo = {}; }                   // no había, o estaba roto
 
-    // de lo anterior se conserva lo que aún tenga su imagen en la carpeta
-    let heredadas = 0;
-    for(const id of Object.keys(indice)){
-      if(ARTE.has(id)) continue;                // lo de este navegador manda
-      try{ await art.getFileHandle(id + '.webp'); heredadas++; }
-      catch(_){ delete indice[id]; }            // sin imagen, la entrada sobra
-    }
-    for(const [id, r] of ARTE) indice[id] = r.encuadre ?? 50;
+    const mias = new Map([...ARTE].map(([id,r]) => [id, r.encuadre ?? 50]));
+    const hayImagen = async id => {
+      try{ await art.getFileHandle(id + '.webp'); return true; }
+      catch(_){ return false; }
+    };
+    const {indice, heredadas} = await fundirIndice(previo, mias, hayImagen);
 
     const wi = await idx.createWritable();
     await wi.write(JSON.stringify(indice, null, 1));
