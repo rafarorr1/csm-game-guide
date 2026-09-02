@@ -146,8 +146,11 @@ RAMA="$(cd "$PAGES" && git branch --show-current)"
 [ "$RAMA" = "gh-pages" ] || { rojo "$PAGES está en '$RAMA', debería estar en gh-pages"; exit 1; }
 
 mkdir -p "$PAGES/$DESTINO"
-cp "$AQUI/index.html" "$PAGES/$DESTINO/index.html"
-cp "$AQUI/tests.js"   "$PAGES/$DESTINO/tests.js"
+cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
+cp "$AQUI/tests.js"     "$PAGES/$DESTINO/tests.js"
+# El editor viaja con el juego: se entra desde el menú, así que una publicación
+# tiene que mandar los dos o el botón lleva a una página que no existe.
+cp "$AQUI/estudio.html" "$PAGES/$DESTINO/estudio.html"
 
 # Las ilustraciones, si las hay. La carpeta la prepara estudio.html y es
 # opcional: sin ella el juego se publica igual, con los emojis.
@@ -160,7 +163,7 @@ fi
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
-git add "$DESTINO/index.html" "$DESTINO/tests.js"
+git add "$DESTINO/index.html" "$DESTINO/tests.js" "$DESTINO/estudio.html"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then

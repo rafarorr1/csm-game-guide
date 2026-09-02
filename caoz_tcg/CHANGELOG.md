@@ -690,6 +690,22 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El editor de cartas entra por el menú** (build 68). `estudio.html` viaja con el juego y
+  se publica con él, así que una actualización manda las dos cosas a la vez y el botón nunca
+  apunta a una página que no existe. En tu ordenador se abre directo; publicado pide una
+  contraseña. **Esa contraseña oculta, no protege**: la página se descarga entera en el
+  navegador de quien entra, así que la comprobación se puede saltar leyendo el código —se
+  guarda el hash en vez del texto para que no se lea de un vistazo, y nada más. No es grave
+  porque el editor sólo escribe en el navegador de quien lo abre y en carpetas que esa
+  persona elige a mano: desde ahí nadie puede tocar este juego ni sus ilustraciones.
+  Protección de verdad pide un servidor.
+- **El editor sabe qué ilustraciones ya están puestas.** Guardaba tus imágenes sólo en el
+  almacén del navegador, que es por origen —el puerto cuenta—, así que abrirlo en otro puerto
+  lo dejaba en blanco y daba por perdidas ilustraciones ya publicadas. Ahora también lee
+  `art/encuadres.json`, que es lo que de verdad viaja con el juego.
+- **Arreglado el dibujo superpuesto al emoji en el editor.** Las cartas llegan del juego ya
+  ilustradas desde `art/`, y el editor añadía encima su propia decisión: quedaban marcadas a
+  la vez como con dibujo y sin dibujo, y se pintaba el emoji sobre la ilustración.
 - **Todas las cartas se maquetan igual** (build 66). Hasta ahora convivían dos diseños: las
   que ya tenían ilustración usaban el dibujo a sangre con el pie de datos abajo, y las demás
   seguían con el recuadro de arte a media carta. Como las ilustraciones van entrando de una

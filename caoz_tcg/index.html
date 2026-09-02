@@ -597,6 +597,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .card.playable{}
 body.tut-on .card.playable{
   box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green),0 0 15px rgba(79,192,125,.4)}
+/* El editor no es para jugar: va en el menú pero apagado, para que no compita
+   con el Tutorial ni con la partida. */
+.btn.taller{opacity:.5;font-size:12px;padding:8px 14px}
+.btn.taller:hover{opacity:.9}
+.puerta{display:flex;flex-direction:column;gap:10px;margin-top:12px}
+.puerta input{background:#120f1c;border:1px solid var(--line);border-radius:8px;
+  color:var(--ink);padding:10px 12px;font:inherit;font-size:14px;letter-spacing:2px}
+.puerta input:focus{outline:none;border-color:var(--purple)}
+.puerta .mal{color:var(--red);font-size:12.5px;min-height:16px}
 .card.locked{opacity:.3;filter:grayscale(.9);box-shadow:none;cursor:not-allowed}
 .card.locked:hover{transform:none;border-color:var(--line)}
 .leaderchip.locked{opacity:.3;filter:grayscale(.9);cursor:not-allowed}
@@ -1307,6 +1316,7 @@ body.tutpause #tut{pointer-events:auto}
     <button class="btn" id="mGuides">📖 &nbsp;Guías de estrategia</button>
     <button class="btn" id="mCards">🃏 &nbsp;Ver todas las cartas</button>
     <button class="btn" id="mRules">📜 &nbsp;Reglas completas</button>
+    <button class="btn taller" id="mEstudio">🎨 &nbsp;Editor de cartas</button>
   </div>
   <div class="foot">Set base — 5 Líderes · 92 cartas · 5 mazos preconstruidos
     <span class="build" id="buildMenu"></span></div>
@@ -1432,7 +1442,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:66, fecha:'2026-09-01'};
+const BUILD = {n:68, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4973,6 +4983,81 @@ const RULES_HTML=`
 <p>40 cartas exactas + 1 Líder. Máximo 3 copias de cada carta; las Legendarias (★) máximo 1.
 Recomendado: 16–20 Personajes, 10–14 Hechizos, 4–6 Trampas, 3–4 Objetos, 1–2 Lugares.</p>
 </div>`;
+/* ===========================================================================
+   EL EDITOR DE CARTAS, DESDE EL MENÚ
+   ---------------------------------------------------------------------------
+   El editor (estudio.html) viaja con el juego para que una actualización mande
+   las dos cosas a la vez. En tu ordenador se abre directo; publicado pide una
+   contraseña.
+
+   HAY QUE SER CLARO CON LO QUE ESTO ES: la página se descarga entera en el
+   navegador de quien entra, así que esta comprobación se puede saltar leyendo
+   el código. Guardar el hash en vez del texto evita que la contraseña se lea de
+   un vistazo, y nada más. Sirve para que el editor no esté a la vista de
+   cualquiera, no para impedir que alguien decidido entre.
+
+   Que no proteja no es grave: el editor sólo escribe en el navegador de quien
+   lo abre y en carpetas que esa persona elige a mano. Nadie puede tocar desde
+   ahí este juego ni sus ilustraciones. Protección de verdad pide un servidor.
+
+   Para cambiar la contraseña, saca el hash de la que quieras y pégalo abajo:
+       printf 'la-que-sea' | shasum -a 256
+   ======================================================================== */
+const LLAVE_ESTUDIO = '6fd79214aee801974e7c3e71130970e12a1e24042c6c0046b5ea6c20a2195321';
+const EDITOR = 'estudio.html';
+
+/* En tu propia máquina no tiene sentido preguntar nada. */
+function enCasa(){
+  const h = location.hostname;
+  return h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local');
+}
+
+async function huella(txt){
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
+
+function abrirEditor(){
+  if(enCasa() || sessionStorage.getItem('estudioOk') === '1'){
+    location.href = EDITOR;
+    return;
+  }
+  const p = $('#ovPanel');
+  p.innerHTML = '<h3>🎨 Editor de cartas</h3>' +
+    '<div style="color:var(--dim);font-size:13px">Aquí se preparan las ilustraciones ' +
+    'de las cartas. Hace falta la contraseña.</div>';
+  const caja = el('div','puerta');
+  const campo = document.createElement('input');
+  campo.type = 'password'; campo.autocomplete = 'off'; campo.placeholder = 'Contraseña';
+  const aviso = el('div','mal','');
+  const entrar = el('button','btn gold','Entrar');
+  const cerrar = el('button','btn','Cerrar');
+
+  const probar = async () => {
+    // crypto.subtle sólo existe en https o en local; si no, no se puede comprobar
+    if(!(window.crypto && crypto.subtle)){
+      aviso.textContent = 'Esta página no va por https: no puedo comprobarla.';
+      return;
+    }
+    if(await huella(campo.value) === LLAVE_ESTUDIO){
+      sessionStorage.setItem('estudioOk','1');     // no la vuelve a pedir en esta visita
+      location.href = EDITOR;
+    } else {
+      aviso.textContent = 'No es ésa.';
+      campo.value = ''; campo.focus();
+    }
+  };
+  entrar.onclick = probar;
+  campo.onkeydown = e => { if(e.key === 'Enter') probar(); };
+  cerrar.onclick = () => $('#ov').classList.remove('on');
+
+  caja.appendChild(campo); caja.appendChild(aviso);
+  caja.appendChild(entrar); caja.appendChild(cerrar);
+  p.appendChild(caja);
+  openOv();
+  setTimeout(() => campo.focus(), 50);
+}
+
 function showRules(inGame){
   const p=$('#ovPanel');
   p.innerHTML='<h3>📜 Reglas del Domo</h3>'+RULES_HTML;
@@ -5878,6 +5963,7 @@ $$('.build').forEach(e=>e.textContent=buildTxt());
 $('#guideBack').onclick=()=>showScreen('menu');
 $('#mCards').onclick=()=>showGallery();
 $('#mRules').onclick=()=>showRules(false);
+$('#mEstudio').onclick=()=>abrirEditor();
 $('#selBack').onclick=()=>showScreen('menu');
 $('#selGuide').onclick=()=>showGuides(SELP||'fender');
 $('#selGo').onclick=()=>{ if(SELP&&SELF) startMatch(SELP,SELF); };
