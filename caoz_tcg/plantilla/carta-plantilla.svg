@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="1400" viewBox="0 0 1000 1400">
+<title>Plantilla de carta — TCG del Domo</title>
+<g id="LIENZO"><rect width="1000" height="1400" fill="#1b1329"/></g>
+<g id="ZONAS" opacity="0.42">
+  <rect x="0" y="0.0" width="1000" height="243.6" fill="#e0575b"/>
+  <rect x="0" y="243.6" width="1000" height="350.0" fill="#54d18a"/>
+  <rect x="0" y="593.6" width="1000" height="190.39999999999998" fill="#f0c674"/>
+  <rect x="0" y="784.0" width="1000" height="616.0" fill="#e0575b"/>
+</g>
+<g id="GUIAS" fill="none" stroke="#ffffff" stroke-width="2" opacity="0.85">
+  <line x1="0" y1="243.6" x2="1000" y2="243.6" stroke-dasharray="14 10"/>
+  <line x1="0" y1="593.6" x2="1000" y2="593.6" stroke-dasharray="14 10"/>
+  <line x1="0" y1="784.0" x2="1000" y2="784.0" stroke-dasharray="14 10"/>
+  <rect x="0" y="0" width="1000" height="1400" rx="46" stroke-width="3"/>
+</g>
+<g id="ETIQUETAS" font-family="Helvetica,Arial" fill="#ffffff">
+  <text x="26" y="40.0" font-size="26" font-weight="bold">COSTE Y NOMBRE</text>
+  <text x="26" y="70.0" font-size="20" opacity="0.75">0% – 17.4%   (0 – 243 px)</text>
+  <text x="26" y="283.6" font-size="26" font-weight="bold">LIBRE SIEMPRE — AQUI VA LA CARA</text>
+  <text x="26" y="313.6" font-size="20" opacity="0.75">17.4% – 42.4%   (243 – 593 px)</text>
+  <text x="26" y="633.6" font-size="26" font-weight="bold">A VECES TAPADO (segun el texto de la carta)</text>
+  <text x="26" y="663.6" font-size="20" opacity="0.75">42.4% – 56.0%   (593 – 784 px)</text>
+  <text x="26" y="824.0" font-size="26" font-weight="bold">TEXTO Y NUMEROS</text>
+  <text x="26" y="854.0" font-size="20" opacity="0.75">56.0% – 100%   (784 – 1400 px)</text>
+  <text x="26" y="1370" font-size="22" opacity="0.8">1000 x 1400 px  ·  proporcion 5:7  ·  exportar como .webp</text>
+</g></svg>

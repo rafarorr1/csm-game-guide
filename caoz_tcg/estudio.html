@@ -158,7 +158,9 @@ const CSS_ILUSTRADA = `
 .card.ilustrada{ font-size:calc(var(--cw) * 0.092); }
 .card.ilustrada .art{ display:none }
 .card.ilustrada .top{ position:relative; z-index:2; align-items:center }
-.card.ilustrada .nm{ font-size:1.06em; line-height:1.1;
+.card.ilustrada .pieCarta .nm{ position:static; inset:auto; font-size:1.18em;
+  line-height:1.06; padding:0 0 .12em; margin:0; background:none; border:none;
+  -webkit-line-clamp:2; color:#fdf6e6;
   text-shadow:0 1px 3px #000,0 0 8px rgba(0,0,0,.9) }
 .card.ilustrada .cost{ width:2em; height:2em; font-size:.95em; flex:0 0 auto;
   box-shadow:0 2px 6px rgba(0,0,0,.7) }
@@ -166,17 +168,18 @@ const CSS_ILUSTRADA = `
 
 /* el pie: tribu + texto + números, pegados abajo y con su velo */
 .card.ilustrada .pieCarta{
-  margin:auto -5px -5px; padding:1.05em .45em .35em; position:relative; z-index:2;
+  margin:auto -5px -5px; padding:1.05em .45em .3em; position:relative; z-index:2;
+  display:flex; flex-direction:column; gap:0;
   background:linear-gradient(180deg, rgba(8,6,14,0) 0%, rgba(8,6,14,.72) 30%,
              rgba(8,6,14,.93) 58%, rgba(8,6,14,.97) 100%);
 }
-.card.ilustrada .pieCarta .tribe{ font-size:.72em; margin-bottom:.2em;
+.card.ilustrada .pieCarta .tribe{ font-size:.68em; margin:0 0 .14em; line-height:1.1;
   text-shadow:0 1px 2px #000 }
 /* El texto se acota a cuatro líneas. No es un capricho: con reglas largas el pie
    se comía la carta entera y tapaba la ilustración (Brick y Brock empezaba al
    17 % de la altura). El juego ya recorta así el texto de las cartas pequeñas;
    quien quiera leerlo entero la amplía. */
-.card.ilustrada .pieCarta .txt{ font-size:.84em; line-height:1.28; flex:none;
+.card.ilustrada .pieCarta .txt{ font-size:.84em; line-height:1.16; flex:none;
   color:#e6dcf5; text-shadow:0 1px 2px #000; display:-webkit-box;
   -webkit-line-clamp:4; -webkit-box-orient:vertical; overflow:hidden }
 /* en la vista ampliada cabe más, que para eso se amplía */
@@ -343,7 +346,7 @@ function nodoDeCarta(f){
     // tribu, texto y números se agrupan en un pie que se va abajo del todo
     const pie = document.createElement('div');
     pie.className = 'pieCarta';
-    for (const sel of ['.tribe', '.txt', '.stats']){
+    for (const sel of ['.nm', '.tribe', '.txt', '.stats']){
       const e = d.querySelector(sel);
       if (e) pie.appendChild(e);
     }
