@@ -282,8 +282,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .zone{position:relative;display:flex;align-items:center;justify-content:center;min-height:0}
 .zone.fz{gap:10px}
 .fieldwrap{flex:1;min-width:0;position:relative;display:flex;align-items:center;justify-content:center}
-.fieldwrap>.row{min-width:0;max-width:100%;overflow-x:auto;overflow-y:hidden;
-  padding:14px 6px;margin:-14px 0;scrollbar-width:none;justify-content:safe center}
+/* Sin recorte ni scroll. Con overflow, al crecer la carta al pasar por encima
+   el navegador la recortaba y reajustaba el desplazamiento: la carta se apartaba
+   de debajo del ratón, se encogía, volvía a entrar… y parpadeaba sin parar. El
+   margen negativo, además, corría el área sensible 14px hacia arriba, y por eso
+   sólo respondía por la parte de arriba. Las cinco caben de sobra: no hacía
+   falta ni el recorte ni el desplazamiento. */
+.fieldwrap>.row{min-width:0;max-width:100%;overflow:visible;
+  padding:6px;justify-content:center}
 .fieldwrap>.row::-webkit-scrollbar{display:none}
 .leaderslot{flex:0 0 auto}
 .leadercard{width:var(--lw);border-radius:11px;padding:5px 4px 6px;cursor:pointer;position:relative;
@@ -327,8 +333,32 @@ body.vert .zone.fz{gap:6px}
 .slots.tr i{width:74px;height:48px;border-radius:8px}
 
 /* ---- raíl lateral: mazo y alcantarillas ---- */
-#rail{width:112px;flex:0 0 auto;display:flex;flex-direction:column;
+/* EL COSTADO
+   Alma, Puntos y Llaves viven aquí, junto al mazo de cada uno. Antes iban en una
+   franja horizontal pegada al borde de la pantalla, lejos del tablero y de lo
+   que cuentan. Puestas al lado del mazo de su dueño se leen sin apartar la vista
+   de la mesa, y cada bando tiene su esquina. */
+#rail{width:142px;flex:0 0 auto;display:flex;flex-direction:column;
   justify-content:space-between;gap:6px;padding:2px 0;perspective:800px}
+.raillado{display:flex;flex-direction:column;gap:7px;min-height:0}
+/* En rejilla de dos, no en columna: apilados de uno en uno las dos barras más
+   los dos mazos no cabían en el alto del tablero y la de abajo salía cortada. */
+#rail .bar{display:grid;grid-template-columns:1fr 1fr;align-items:stretch;gap:5px;padding:7px;
+  border:1px solid var(--line);border-radius:12px;
+  background:linear-gradient(180deg,rgba(26,18,40,.92),rgba(12,8,20,.86));
+  box-shadow:0 4px 14px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.06)}
+#rail .bar .who{grid-column:1/-1;text-align:center;padding-bottom:3px;
+  border-bottom:1px solid rgba(255,255,255,.07)}
+#rail .bar .stat{justify-content:center;gap:4px;padding:3px 6px;font-size:11px}
+#rail .bar .stat i{font-size:16px}
+#rail .bar .stat.key{grid-column:1/-1}
+/* El contador de cartas en mano sobra aquí: los dorsos del rival ya se ven
+   arriba y tu mano la tienes delante. Quitarlo es lo que hace que las dos
+   columnas quepan sin apretarse. */
+#rail .bar .stat:not(.alma):not(.pd):not(.key):not(.gr):not(.relic){display:none}
+#rail .bar .spacer{display:none}
+#rail .bar .turnpill{grid-column:1/-1;text-align:center;font-size:11px;padding:3px 8px}
+#rail .bar .netchip{grid-column:1/-1;font-size:10.5px;justify-content:center}
 .pilebox{display:flex;flex-direction:column;gap:22px}
 /* EL MAZO
    Un taco de cartas visto en ángulo, no un rectángulo. La inclinación es una
@@ -374,7 +404,10 @@ body.vert .zone.fz{gap:6px}
   background:repeating-linear-gradient(45deg,#3a2a5c,#3a2a5c 4px,#2a1c44 4px,#2a1c44 9px);
   border:1px solid rgba(138,92,240,.7);box-shadow:0 6px 18px #000;transform:translate(-50%,-50%)}
 
-body.vert #rail{width:74px}
+body.vert #rail{width:112px}
+body.vert #rail .bar{padding:6px 5px;gap:4px}
+body.vert #rail .bar .stat{padding:3px 7px;font-size:11px}
+body.vert #rail .bar .stat i{font-size:15px}
 body.vert .pile{height:74px} body.vert .pile.grave{height:58px}
 body.vert .pileart{font-size:19px} body.vert .pilen{font-size:17px}
 body.vert #mat{padding:6px 14px}
@@ -643,13 +676,16 @@ body.vert{--cwd:84px; --chd:118px; --cwd-asoma:64px}
   width:var(--cwd);height:var(--chd);flex:0 0 auto;border-radius:9px;position:relative;
   --mitad:calc((var(--n) - 1) / 2);
   --desde:calc(var(--i, 0) - var(--mitad));
-  --solape:max(6px, (var(--n) - 4) * 8px);
+  /* Sólo se montan cuando de verdad no caben, igual que en tu mano. Antes se
+     solapaban siempre y no se distinguía una de otra. */
+  --solape:max(0px, (var(--n) - 7) * 12px);
   margin-inline:calc(-1 * var(--solape));
-  transform-origin:50% -140%;
-  /* el arco al revés: lo sostiene alguien enfrente */
+  transform-origin:50% 140%;
+  /* El arco va hacia ABAJO, nunca hacia arriba: subiéndolas se salían por el
+     borde de la pantalla y las de los extremos aparecían cortadas. */
   transform:rotateX(-10deg)
-            rotate(calc(var(--desde) * -2.9deg))
-            translateY(calc(var(--desde) * var(--desde) * -2.2px));
+            rotate(calc(var(--desde) * -2.6deg))
+            translateY(calc(var(--desde) * var(--desde) * 1.6px));
   background:
     linear-gradient(180deg,rgba(255,255,255,.08),transparent 42%),
     repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),
@@ -1089,12 +1125,17 @@ body.vert .who>div>div:last-child{display:none}
     <div class="ambiente" id="polvoFoe" aria-hidden="true"><i></i><i></i></div>
     <div class="velo" aria-hidden="true"></div>
     <div id="foeHand" aria-hidden="true"></div>
-    <div class="bar" id="barFoe"></div>
   </div>
   <div id="field">
     <div id="rail">
-      <div class="pilebox" id="foePiles"></div>
-      <div class="pilebox" id="myPiles"></div>
+      <div class="raillado">
+        <div class="bar" id="barFoe"></div>
+        <div class="pilebox" id="foePiles"></div>
+      </div>
+      <div class="raillado">
+        <div class="pilebox" id="myPiles"></div>
+        <div class="bar" id="barMe"></div>
+      </div>
     </div>
     <div id="mat">
       <div id="polvo" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -1121,7 +1162,6 @@ body.vert .who>div>div:last-child{display:none}
   <div id="handzone">
     <div class="ambiente" id="polvoMano" aria-hidden="true"><i></i><i></i></div>
     <div class="velo" aria-hidden="true"></div>
-    <div class="bar" id="barMe" style="border:none;background:none;padding:2px 6px"></div>
     <div id="hand"></div>
     <div class="controls" id="controls"></div>
   </div>
@@ -5389,6 +5429,30 @@ if(new URLSearchParams(location.search).has('foto')){
       const m=(sel)=>{const e=$(sel); if(!e) return sel+':no';
         const r=e.getBoundingClientRect();
         return sel+' w='+Math.round(r.width)+' h='+Math.round(r.height);};
+      // ¿Quién recibe el clic sobre una carta del campo? Si la parte de abajo
+      // no responde, es que algo la tapa; esto dice exactamente qué.
+      const nodos = [...document.querySelectorAll('#myField .card')];
+      const inv = nodos.map((c,i)=>{const cs=getComputedStyle(c); const r=c.getBoundingClientRect();
+        return i+':'+Math.round(r.width)+'x'+Math.round(r.height)+' op'+cs.opacity+' uid'+(c.dataset.uid||'-');}).join(' ; ');
+      const carta = nodos.find(c=>getComputedStyle(c).opacity!=='0') || nodos[0];
+      let quien = 'sin carta en campo';
+      if(carta){
+        const r = carta.getBoundingClientRect();
+        let ok=[];
+        for(let f=0; f<=1.0001; f+=0.05){
+          const e = document.elementFromPoint(r.left + r.width/2, r.top + r.height*f);
+          if(e && (e===carta || carta.contains(e))) ok.push(Math.round(f*100));
+        }
+        const cx=r.left+r.width/2, cy=r.top+r.height/2;
+        const enc=document.elementFromPoint(cx,cy);
+        const cs=getComputedStyle(carta);
+        quien = 'unidades en estado='+P(ME).field.length+' nodos='+nodos.length+' ['+inv+'] || elegida '+Math.round(r.width)+'x'+Math.round(r.height)
+              + ' en y '+Math.round(r.top)+'..'+Math.round(r.bottom)
+              + ' | clase='+carta.className.slice(0,30)
+              + ' | pe='+cs.pointerEvents+' z='+cs.zIndex+' op='+cs.opacity
+              + ' | en el centro hay: '+(enc?(enc.id||enc.className||enc.tagName).toString().slice(0,34):'nada')
+              + ' | responde en %: ' + (ok.length? ok.join(',') : 'NINGUNO');
+      }
       // ¿se sale algo del lienzo? Es la pregunta de verdad, y la contesta la
       // página en vez de mirar una captura a ojo
       const L=$('#lienzo').getBoundingClientRect();
@@ -5400,11 +5464,15 @@ if(new URLSearchParams(location.search).has('foto')){
         const dy=Math.max(0, Math.round(L.top-r.top), Math.round(r.bottom-L.bottom));
         if(dx>2||dy>2) fuera.push((e.id||e.className||e.tagName)+':'+dx+'x'+dy);
       });
-      document.title='MED '+['#lienzo','#field','#rail','#mat','#myField','#hand','#handzone']
+      const linea = 'MED '+['#lienzo','#field','#mat','#myField','#foeHand']
         .map(m).join(' | ')+' || win='+innerWidth+'x'+innerHeight
         +' k='+getComputedStyle(document.documentElement).getPropertyValue('--k')
-        +' || SE SALEN: '+(fuera.length?fuera.slice(0,8).join(' , '):'nada');
-    }, 1600);
+        +' || QUIEN RECIBE EL CLIC: '+quien
+        +' || SE SALEN: '+(fuera.length?fuera.slice(0,6).join(' , '):'nada');
+      document.title = linea;
+      fetch('/resultado',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({medicion:linea})}).catch(()=>{});
+    }, 3200);
     document.body.classList.add('foto-lista');
   },600));
 }
