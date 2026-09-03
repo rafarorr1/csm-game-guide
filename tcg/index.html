@@ -757,7 +757,11 @@ body.tut-on .card.playable{
 
 /* el pie: tribu + texto + números, pegados abajo y con su velo */
 .card.acomodo .pieCarta{
-  margin:auto -5px -5px; padding:1.05em .45em .3em; position:relative; z-index:2;
+  /* El pie se estira 5 px fuera de la carta por abajo y los lados para que su
+     velo llegue al borde; el padding tiene que devolver ese margen o el texto
+     queda pegado al canto. Con .3em abajo, las cartas sin números —Hechizos,
+     Trampas— acababan la última línea contra el filo. */
+  margin:auto -5px -5px; padding:1.05em .5em .62em; position:relative; z-index:2;
   display:flex; flex-direction:column; gap:0;
   background:linear-gradient(180deg, rgba(8,6,14,0) 0%, rgba(8,6,14,.72) 30%,
              rgba(8,6,14,.93) 58%, rgba(8,6,14,.97) 100%);
@@ -1499,7 +1503,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:78, fecha:'2026-09-01'};
+const BUILD = {n:79, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
