@@ -176,6 +176,132 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   color:#fdf6e6;padding:3px 11px 5px;
   text-shadow:0 2px 6px rgba(0,0,0,.95);
   background:linear-gradient(90deg,rgba(8,5,14,.92),rgba(8,5,14,.6) 80%,transparent)}
+/* ============ EL CARRETE DE PROTAGONISTAS ============
+   Las cinco cartas en abanico: la elegida al frente, recta y a tamaño completo;
+   las demás se apartan, se inclinan, encogen y se apagan. La distancia al centro
+   la pone el JS en --d, y de ahí salen el desplazamiento, el giro, la escala y
+   el brillo — una sola variable para que el movimiento sea coherente. */
+/* La pantalla se centra sola; el título sube y el bloque respira igual por
+   arriba y por abajo. Antes quedaba pegado al carrete y todo cargado abajo. */
+#select{justify-content:center;gap:2px;padding-top:0}
+#select .h2{margin-top:-14px}
+.carrete{position:relative;display:flex;align-items:center;justify-content:center;
+  width:min(1120px,96vw);margin:10px auto 0}
+.carrete .pista{position:relative;height:352px;flex:1;
+  perspective:1250px;perspective-origin:50% 44%}
+.carrete .giro{position:absolute;top:50%;transform:translateY(-50%);z-index:30;
+  width:44px;height:44px;border-radius:50%;border:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(48,36,74,.95),rgba(24,17,38,.95));
+  color:var(--gold);font:400 26px/1 var(--serif);cursor:pointer;
+  box-shadow:0 6px 18px rgba(0,0,0,.6);transition:.16s}
+.carrete .giro:hover{border-color:var(--gold);transform:translateY(-50%) scale(1.08)}
+.carrete .giro.izq{left:0} .carrete .giro.der{right:0}
+
+.pista .lcard{position:absolute;left:50%;top:0;width:236px;
+  --dist:max(var(--d),calc(var(--d) * -1));            /* |d| sin Math.abs */
+  /* Giradas de verdad en el espacio, no inclinadas en el plano: la perspectiva
+     la pone .pista y aquí cada carta rota sobre su eje vertical y se aleja según
+     lo lejos que esté del frente. Por eso se les ve el canto y el abanico tiene
+     fondo, en vez de parecer cinco pegatinas ladeadas.
+     No hace falta preserve-3d —basta con perspective en el padre—, y mejor así:
+     en este proyecto preserve-3d ya rompió una vez el poder pulsar las cartas. */
+  transform:translateX(-50%) translateX(calc(var(--d) * 176px))
+            translateZ(calc(var(--dist) * -120px))
+            rotateY(calc(var(--d) * -26deg))
+            rotate(calc(var(--d) * 2deg))
+            translateY(calc(var(--dist) * 12px));
+  z-index:calc(10 - var(--dist));
+  /* Apagadas, no borradas: a dos de distancia se quedaban casi negras y no se
+     veía a quién estabas a punto de girar. */
+  filter:brightness(calc(1 - var(--dist) * 0.20)) saturate(calc(1 - var(--dist) * 0.16));
+  transition:transform .42s cubic-bezier(.22,.61,.36,1), filter .42s, box-shadow .3s;
+  cursor:pointer}
+/* la del frente: recta, entera y con su halo */
+.pista .lcard.enfrente{
+  transform:translateX(-50%) translateZ(60px);
+  filter:none;border-color:var(--gold);
+  box-shadow:0 0 0 2px rgba(230,187,82,.5), 0 26px 60px rgba(0,0,0,.8),
+             0 0 90px rgba(138,92,240,.28)}
+.pista .lcard:not(.enfrente):hover{filter:brightness(.9)}
+/* en el carrete la carta es retrato: el texto largo vive en la ficha de abajo */
+.pista .lcard .lface{height:238px;font-size:78px}
+.pista .lcard .lname{top:206px;font-size:19px;text-align:center;padding:3px 10px 5px;
+  background:linear-gradient(90deg,transparent,rgba(8,5,14,.92) 18%,rgba(8,5,14,.92) 82%,transparent)}
+.pista .lcard .ltxt{display:none}
+.pista .lcard .larch{padding:26px 12px 12px;font-size:9.5px;text-align:center}
+.pista .lcard .lhab{display:block;padding:0 12px 13px;text-align:center;
+  font-size:11.5px;color:#cbbde8;line-height:1.35}
+.pista .lcard .lhab b{color:var(--gold)}
+/* Sin cinta de ELEGIDO: la carta del frente ya se distingue por estar recta,
+   entera, iluminada y con su halo. La cinta era decirlo dos veces. */
+.pista .lcard::after{content:none}
+
+.selsub{color:var(--dim);font-size:13px;text-align:center}
+
+/* EL PASO DEL RIVAL SE PONE ROJO.
+   No es decoración: el cambio de color dice sin palabras que ya no estás
+   eligiendo lo tuyo. La sala entera vira, no sólo un borde. */
+#select{transition:background .6s ease}
+#select.rival{background:radial-gradient(ellipse 70% 55% at 50% 42%,
+  rgba(120,24,28,.30), transparent 72%)}
+#select.rival .ambiente::before{
+  background:
+    radial-gradient(ellipse 46% 38% at 50% 30%, rgba(240,120,96,.20), transparent 70%),
+    radial-gradient(ellipse 38% 30% at 30% 70%, rgba(200,40,50,.16), transparent 72%),
+    radial-gradient(ellipse 34% 28% at 74% 62%, rgba(240,90,70,.12), transparent 74%)}
+#select.rival .h2{color:#ff9a8a;text-shadow:0 2px 14px rgba(224,82,74,.4)}
+#select.rival .fichaLider{border-color:rgba(224,82,74,.42)}
+#select.rival .pista .lcard.enfrente{border-color:#e0524a;
+  box-shadow:0 0 0 2px rgba(224,82,74,.5), 0 26px 60px rgba(0,0,0,.8),
+             0 0 90px rgba(224,82,74,.3)}
+#select.rival .pasos i.on{background:#e0524a;box-shadow:0 0 8px rgba(224,82,74,.6)}
+#select.rival .giro{color:#ff9a8a}
+#select.rival .btn.gold{background:linear-gradient(180deg,#7a2420,#4a1512);
+  border-color:#e0524a;color:#ffd9d2}
+/* en qué paso estás: primero tu Protagonista, luego el rival */
+.pasos{display:flex;gap:7px;justify-content:center;margin-top:10px}
+.pasos i{width:7px;height:7px;border-radius:50%;background:var(--line);
+  transition:.2s;flex:0 0 auto}
+.pasos i.on{background:var(--gold);box-shadow:0 0 8px rgba(230,187,82,.6);transform:scale(1.2)}
+
+/* la ficha de debajo: todo lo que hay que leer, de la que esté al frente */
+/* Alto FIJO, no mínimo: con altura variable el bloque crecía o encogía según lo
+   largo que fuera el texto de cada Líder y el carrete daba un salto al girar.
+   Cabe el más largo de los cinco y los demás centran su texto dentro. */
+.fichaLider{width:min(820px,94vw);height:172px;margin:8px auto 0;
+  display:flex;flex-direction:column;justify-content:center;
+  border:1px solid var(--line);border-radius:14px;padding:14px 22px;
+  background:linear-gradient(180deg,rgba(36,26,52,.72),rgba(20,14,34,.72));
+  text-align:center;transition:border-color .35s}
+.fichaLider .fn{font:700 23px/1.15 var(--serif);font-variant:small-caps;
+  letter-spacing:.6px;color:var(--gold)}
+.fichaLider .fa{font:700 10.5px/1.4 var(--sans);color:var(--purple);
+  text-transform:uppercase;letter-spacing:1.9px;margin:3px 0 9px}
+.fichaLider .fl{font-size:14px;color:#c2b5da;line-height:1.5}
+.fichaLider .fl + .fl{margin-top:6px}
+.fichaLider .fl b{color:var(--gold);font-weight:700}
+.fichaLider .fm{margin-top:9px;font-size:12.5px;color:var(--dim)}
+.fichaLider .fm b{color:#cbbde8}
+
+/* el rival, en pequeño: es una decisión menor y no debe competir con la tuya */
+.h2.chico{font-size:13px;margin-top:10px;opacity:.85}
+.rivales{display:flex;gap:9px;flex-wrap:wrap;justify-content:center;max-width:900px}
+.rivalchip{display:flex;align-items:center;gap:8px;padding:6px 12px 6px 7px;
+  border:1px solid var(--line);border-radius:11px;cursor:pointer;
+  background:linear-gradient(180deg,rgba(44,33,67,.8),rgba(22,15,38,.8));transition:.15s}
+.rivalchip:hover{border-color:var(--gold2);transform:translateY(-2px)}
+.rivalchip.sel{border-color:var(--gold);box-shadow:0 0 0 2px rgba(230,187,82,.3)}
+.rivalchip .rcara{width:38px;height:38px;border-radius:9px;overflow:hidden;position:relative;
+  display:grid;place-items:center;font-size:21px;flex:0 0 auto;
+  background:radial-gradient(ellipse at 50% 30%,rgba(138,92,240,.3),transparent 70%)}
+.rivalchip .rcara .dibujo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+  object-position:var(--ex,50%) var(--ey,50%);transform:scale(var(--ez,1));
+  transform-origin:var(--ex,50%) var(--ey,50%)}
+.rivalchip .rcara.conarte{font-size:0}
+.rivalchip .rn{font:700 13px/1.1 var(--serif);font-variant:small-caps;color:#fdf6e6}
+.rivalchip .rd{font:700 8px/1.2 var(--sans);color:var(--purple);
+  text-transform:uppercase;letter-spacing:1.2px}
+
 .larch{font:700 9px/1.3 var(--sans);color:var(--purple);text-transform:uppercase;
   letter-spacing:1.7px;padding:8px 12px 6px}
 .ltxt{font-size:11.4px;color:#b3a6cd;line-height:1.42;padding:0 12px 10px}
@@ -1415,16 +1541,24 @@ body.tutpause #tut{pointer-events:auto}
 
 <!-- ============ SELECCIÓN ============ -->
 <div class="screen" id="select">
-  <div class="ambiente" aria-hidden="true"><i></i><i></i></div>
+  <!-- el mismo polvo y la misma luz que la mesa: se entra al Domo desde aquí -->
+  <div class="ambiente" aria-hidden="true"><i></i><i></i><i></i></div>
   <div class="h2" id="selTitle">ELIGE TU PROTAGONISTA</div>
-  <div style="color:var(--dim);font-size:12.5px;text-align:center">Cada Líder trae su mazo preconstruido de 40 cartas.</div>
-  <div class="leaders" id="leaderList"></div>
-  <div class="h2" style="margin-top:6px">RIVAL</div>
-  <div class="leaders" id="foeList"></div>
-  <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap;justify-content:center">
+  <div class="selsub" id="selSub">Cada Líder trae su mazo preconstruido de 40 cartas.</div>
+  <!-- El carrete: las cinco cartas en abanico, la elegida al frente, y debajo su
+       ficha completa. Sirve para los dos pasos —tu Protagonista y luego el
+       rival—, así que la misma decisión se toma dos veces de la misma forma. -->
+  <div class="carrete">
+    <button class="giro izq" id="carrAnt" aria-label="Anterior">‹</button>
+    <div class="pista" id="leaderList"></div>
+    <button class="giro der" id="carrSig" aria-label="Siguiente">›</button>
+  </div>
+  <div class="fichaLider" id="fichaLider"></div>
+  <div class="pasos" id="selPasos"><i class="on"></i><i></i></div>
+  <div style="display:flex;gap:10px;margin-top:9px;flex-wrap:wrap;justify-content:center">
     <button class="btn" id="selBack">← Volver</button>
-    <button class="btn" id="selGuide">📖 Guía de este mazo</button>
-    <button class="btn gold" id="selGo" disabled>Entrar al Domo →</button>
+    <button class="btn" id="selAzar">🎲 Al azar</button>
+    <button class="btn gold" id="selGo">Elegir →</button>
   </div>
 </div>
 
@@ -1533,7 +1667,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:92, fecha:'2026-09-01'};
+const BUILD = {n:95, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5275,29 +5409,100 @@ async function startTutorial(lid){
 function showScreen(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); }
 
 let SELP=null, SELF=null;
+/* EL CARRETE DE PROTAGONISTAS.
+   Cinco cartas en abanico y la elegida al frente. La posición de cada una sale
+   de una sola variable —su distancia al centro— que el CSS convierte en
+   desplazamiento, giro, escala y brillo: así el movimiento es coherente y se
+   anima solo al cambiar de carta.
+
+   El rival va aparte y en pequeño, en fila de chips: es una decisión menor y
+   antes competía con la tuya siendo idéntica. */
+/* DOS PASOS: primero tu Protagonista, y cuando lo aceptas, tu rival.
+   Los dos usan el mismo carrete: la decisión se toma dos veces igual, y así la
+   segunda no parece un apéndice de la primera —antes el rival era una fila de
+   fichas idénticas debajo, compitiendo con la tuya. */
+let SEL_PASO = 'yo';                            // 'yo' | 'rival'
+
 function buildSelect(){
-  const mk=(id,which)=>{
-    const L=LEADERS[id], D=DECKS[id];
-    const d=el('div','lcard',`
-      <div class="lface">${L.art}</div>
-      <div class="lname">${L.n}</div>
-      <div class="larch">${D.d}</div>
-      <div class="ltxt"><b>“${D.n}”</b><br>${L.pasiva}</div>
-      <div class="ltxt">${L.hab}</div>`);
-    d.onclick=()=>{ if(which==='me'){SELP=id;} else {SELF=id;}
-      buildSelect(); $('#selGo').disabled=!(SELP&&SELF); };
-    if((which==='me'&&SELP===id)||(which==='foe'&&SELF===id)) d.classList.add('sel');
-    ilustrarLider(d, id);
-    return d;
-  };
-  const a=$('#leaderList'); a.innerHTML=''; Object.keys(LEADERS).forEach(id=>a.appendChild(mk(id,'me')));
-  const b=$('#foeList'); b.innerHTML='';
-  Object.keys(LEADERS).forEach(id=>b.appendChild(mk(id,'foe')));
-  const rand=el('div','lcard',`<div class="lface">🎲</div><div class="lname">Al azar</div>
-    <div class="larch">Que el Domo decida</div><div class="ltxt">Elige un Protagonista aleatorio como rival.</div>`);
-  rand.onclick=()=>{ const ks=Object.keys(LEADERS); SELF=ks[rnd(ks.length)]; buildSelect();
-    $('#selGo').disabled=!(SELP&&SELF); toast('Rival: '+LEADERS[SELF].n); };
-  b.appendChild(rand);
+  const ids = Object.keys(LEADERS);
+  const mio = SEL_PASO === 'yo';
+  if(!SELP) SELP = ids[0];
+  if(!mio && !SELF) SELF = ids.find(x=>x!==SELP) || ids[0];
+  const elegido = mio ? SELP : SELF;             // quién va al frente en este paso
+  const centro = Math.max(0, ids.indexOf(elegido));
+
+  $('#selTitle').textContent = mio ? 'ELIGE TU PROTAGONISTA' : 'ELIGE A TU RIVAL';
+  $('#selSub').innerHTML = mio
+    ? 'Cada Líder trae su mazo preconstruido de 40 cartas.'
+    : `Llevas a <b style="color:var(--gold)">${LEADERS[SELP].n}</b>. ¿Contra quién?`;
+  $('#selGo').textContent = mio ? 'Elegir →' : 'Entrar al Domo →';
+  $('#selBack').textContent = mio ? '← Volver' : '← Cambiar Protagonista';
+  const p = $('#selPasos').children;
+  p[0].classList.toggle('on', true); p[1].classList.toggle('on', !mio);
+  $('#select').classList.toggle('rival', !mio);   // la sala vira a rojo
+
+  /* LAS CARTAS SE CREAN UNA SOLA VEZ.
+     Antes se rehacía la pista entera en cada giro, y por eso el carrete saltaba
+     en vez de deslizarse: los nodos eran nuevos y el navegador no tenía nada
+     que animar. Ahora sólo cambian --d y la clase del frente, que es lo que las
+     transiciones del CSS saben mover. */
+  const pista = $('#leaderList');
+  if(pista.children.length !== ids.length){
+    pista.innerHTML='';
+    ids.forEach(id=>{
+      const L=LEADERS[id], D=DECKS[id];
+      const d=el('div','lcard',`
+        <div class="lface">${L.art}</div>
+        <div class="lname">${L.n}</div>
+        <div class="larch">${D.d}</div>
+        <div class="lhab">${L.habName} · <b>${L.habCost} PD</b></div>`);
+      d.dataset.lid = id;
+      d.onclick=()=>{ if(SEL_PASO==='yo') SELP=id; else SELF=id; buildSelect(); };
+      ilustrarLider(d, id);
+      pista.appendChild(d);
+    });
+  }
+  [...pista.children].forEach((d,i)=>{
+    /* Distancia al frente, dando la vuelta: con cinco cartas va de -2 a +2, así
+       que el abanico sale siempre simétrico esté elegida la que esté. */
+    let dd = i - centro;
+    if(dd >  ids.length/2) dd -= ids.length;
+    if(dd < -ids.length/2) dd += ids.length;
+    d.style.setProperty('--d', dd);
+    d.classList.toggle('enfrente', i===centro);
+  });
+
+  // la ficha: lo que hay que leer de la que está al frente
+  const L=LEADERS[elegido], D=DECKS[elegido];
+  $('#fichaLider').innerHTML = `
+    <div class="fn">${L.n} <span style="font-size:13px;color:var(--dim)">— ${L.ep}</span></div>
+    <div class="fa">${D.d}</div>
+    <div class="fl">${L.pasiva}</div>
+    <div class="fl">${L.hab}</div>
+    <div class="fm">Mazo <b>“${D.n}”</b> · 40 cartas · dificultad ${'★'.repeat(GUIAS[elegido].dif)}${'☆'.repeat(3-GUIAS[elegido].dif)}</div>`;
+
+  $('#selGo').disabled=false;
+}
+
+/* el botón de en medio: acepta el de este paso y pasa al siguiente */
+function selAceptar(){
+  if(SEL_PASO === 'yo'){
+    SEL_PASO = 'rival';
+    if(!SELF || SELF===SELP) SELF = Object.keys(LEADERS).find(x=>x!==SELP);
+    buildSelect();
+    return;
+  }
+  startMatch(SELP, SELF);
+}
+
+/* girar el carrete: con las flechas, con el teclado o pulsando una carta */
+function girarCarrete(paso){
+  const ids=Object.keys(LEADERS);
+  const actual = SEL_PASO==='yo' ? SELP : SELF;
+  const i=Math.max(0, ids.indexOf(actual));
+  const nuevo = ids[(i + paso + ids.length) % ids.length];
+  if(SEL_PASO==='yo') SELP=nuevo; else SELF=nuevo;
+  buildSelect();
 }
 
 function showGallery(){
@@ -6429,7 +6634,7 @@ function showGuides(id){
    ========================================================================== */
 $('#mTut').onclick=()=>showTutorialPick();
 $('#mOnline').onclick=()=>showOnline();
-$('#mPlay').onclick=()=>{ SELP=null; SELF=null; buildSelect(); $('#selGo').disabled=true; showScreen('select'); };
+$('#mPlay').onclick=()=>{ SELP=null; SELF=null; SEL_PASO='yo'; buildSelect(); showScreen('select'); };
 $('#mGuides').onclick=()=>showGuides();
 /* El chat: Enviar, o Intro. El formulario evita que la página se recargue. */
 $('#chatform').onsubmit=e=>{ e.preventDefault(); chatMio(); };
@@ -6438,9 +6643,29 @@ $('#guideBack').onclick=()=>showScreen('menu');
 $('#mCards').onclick=()=>showGallery();
 $('#mRules').onclick=()=>showRules(false);
 $('#mEstudio').onclick=()=>abrirEditor();
-$('#selBack').onclick=()=>showScreen('menu');
-$('#selGuide').onclick=()=>showGuides(SELP||'fender');
-$('#selGo').onclick=()=>{ if(SELP&&SELF) startMatch(SELP,SELF); };
+$('#carrAnt').onclick=()=>girarCarrete(-1);
+$('#carrSig').onclick=()=>girarCarrete(1);
+/* Con el teclado también: el carrete es lo único que se maneja en esta
+   pantalla y las flechas son lo primero que uno prueba. */
+addEventListener('keydown', e=>{
+  if(!$('#select').classList.contains('on')) return;
+  if(e.key==='ArrowLeft'){ e.preventDefault(); girarCarrete(-1); }
+  if(e.key==='ArrowRight'){ e.preventDefault(); girarCarrete(1); }
+});
+/* Atrás va un paso, no al menú: si estás eligiendo rival, lo que quieres
+   deshacer es el Protagonista, no salir de la pantalla. */
+$('#selBack').onclick=()=>{
+  if(SEL_PASO==='rival'){ SEL_PASO='yo'; buildSelect(); }
+  else showScreen('menu');
+};
+$('#selGo').onclick=()=>selAceptar();
+$('#selAzar').onclick=()=>{
+  const ids=Object.keys(LEADERS);
+  if(SEL_PASO==='yo') SELP=ids[rnd(ids.length)];
+  else { const otros=ids.filter(x=>x!==SELP); SELF=otros[rnd(otros.length)]; }
+  buildSelect();
+  toast((SEL_PASO==='yo'?'Llevas a ':'Rival: ')+LEADERS[SEL_PASO==='yo'?SELP:SELF].n);
+};
 $('#tutNext').onclick=()=>tutNext();
 $('#ov').onclick=e=>{ if(e.target.id==='ov') $('#ov').classList.remove('on'); };
 document.addEventListener('keydown',e=>{
