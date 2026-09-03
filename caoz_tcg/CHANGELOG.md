@@ -959,6 +959,14 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Elegir Protagonista es un carrete** (build 93). Antes eran cinco fichas idénticas en fila y
+  había que leerlas todas para decidir; ahora las cinco van en abanico, la elegida al frente a
+  tamaño completo con su retrato, y debajo una ficha con lo que hay que leer de ella: pasiva,
+  habilidad, mazo y dificultad. Se gira con las flechas, con el teclado o pulsando una carta.
+  La posición de cada carta sale de **una sola variable** —su distancia al frente, dando la
+  vuelta— y de ahí salen desplazamiento, giro, escala y brillo, así que el movimiento es
+  coherente y se anima solo. Y el rival pasa a una fila de chips pequeños: es una decisión
+  menor y antes competía con la tuya siendo idéntica.
 - **El tutorial deja de hablar de la carta equivocada, y sólo permite lo que necesita**
   (build 91). Dos lecciones se armaban dando por hecho qué había bajado el rival: una llamaba
   **Objeto** a lo que fuera —llegó a decirlo de Augusto Bale— y la otra explicaba la habilidad
