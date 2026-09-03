@@ -690,6 +690,13 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El editor enseña a los Líderes como se ven jugando** (build 77). Salían como tres cartas, y
+  un Líder no se ve nunca así: sale en el panelito de la mesa y en la tarjeta de elegir
+  Protagonista. Se encuadraba para un formato que no existe. Ahora se replican esos dos
+  montajes, con las mismas clases y el mismo CSS del juego.
+- **El panel del Líder con dibujo vuelve a tener forma de carta.** Al esconder el emoji se
+  escondían también sus 26 px de alto, y el panel quedaba cuadrado —distinto al de un Líder sin
+  dibujo. Se le guarda el hueco: ahí es además donde cae la cara de la ilustración.
 - **La ilustración nunca se sale de su carta** (build 73). Al poner un dibujo a un Líder, en el
   editor la tarjeta se estiraba hasta tapar la interfaz entera —los menús desaparecían—. La
   imagen se metía a su tamaño real, 750×1050 px, porque las reglas que la encajan colgaban de

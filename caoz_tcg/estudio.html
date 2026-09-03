@@ -709,17 +709,73 @@ function abrir(id){
   };
 }
 
+/* Cómo se ve un Líder EN EL JUEGO. Se replica su montaje —las mismas clases,
+   sobre el CSS del juego que ya vive en el shadow— para que lo que encuadras
+   aquí sea exactamente lo que va a salir en la mesa. */
+function encuadrarNodo(d, id){
+  const reg = ARTE.get(id);
+  if (!tieneArte(id)) return d;
+  const enc = encDe(id);
+  const caja = document.createElement('div');
+  caja.className = 'marcoDibujo';
+  const img = document.createElement('img');
+  img.className = 'dibujo'; img.alt = '';
+  img.src = reg ? reg.url : `art/${id}.webp`;
+  caja.appendChild(img);
+  d.style.setProperty('--ex', enc.x + '%');
+  d.style.setProperty('--ey', enc.y + '%');
+  d.style.setProperty('--ez', (enc.z / 100).toFixed(3));
+  d.classList.add('conarte');
+  d.insertBefore(caja, d.firstChild);
+  return d;
+}
+
+/* el panelito de la mesa, el que ves toda la partida */
+function nodoPanelLider(f){
+  const L = JUEGO.TCG.LEADERS[f.lid];
+  const d = document.createElement('div');
+  d.className = 'leadercard';
+  d.innerHTML = `<div class="lcName">${L.n}</div>
+    <div class="lcArt">${L.art}</div>
+    <div class="lcEp">${L.ep}</div>
+    <div class="lcAlma">❤️ 20</div>
+    <div class="lcHab">${L.habName}<span>${L.habCost} PD</span></div>`;
+  return encuadrarNodo(d, f.id);
+}
+
+/* la tarjeta de elegir Protagonista */
+function nodoSeleccionLider(f, doble){
+  const L = JUEGO.TCG.LEADERS[f.lid];
+  const D = JUEGO.TCG.DECKS ? JUEGO.TCG.DECKS[f.lid] : null;
+  const d = document.createElement('div');
+  d.className = 'lcard';
+  d.innerHTML = `<div class="lface">${L.art}</div>
+    <div class="lname">${L.n}</div>
+    <div class="larch">${D ? D.d : (L.arch || '')}</div>
+    <div class="ltxt">${L.pasiva || ''}</div>`;
+  d.style.width = '100%';
+  if (doble) d.style.zoom = '2';
+  const cara = d.querySelector('.lface');
+  if (tieneArte(f.id)){ encuadrarNodo(cara, f.id); cara.classList.add('conarte'); }
+  return d;
+}
+
 /* Los tres tamaños a los que se ve una carta jugando, para que compruebes que
    se entiende igual en el móvil que en el escritorio. */
 function pintarVistas(conZonas){
   const cont = $('#vistas');
   cont.innerHTML = '';
   const f = FICHAS.find(x=>x.id===ABIERTA);
-  const tam = [
-    {cw:74,  ch:106, et:'móvil · 74×106'},
-    {cw:112, ch:158, et:'escritorio · 112×158'},
-    {cw:224, ch:316, et:'ampliada ×2'},
-  ];
+  /* Un Líder no se ve nunca como una carta: en el juego sale en el panelito de
+     la mesa y en la tarjeta de elegir Protagonista. Enseñar tres cartas era
+     enseñar algo que no existe, y encuadrabas para un formato equivocado. */
+  const tam = f.esLider
+    ? [{cw:86,  ch:126, et:'en la mesa · tamaño real', panel:true},
+       {cw:214, ch:290, et:'al elegir Protagonista', selec:true},
+       {cw:428, ch:580, et:'al elegir · ×2',        selec:true}]
+    : [{cw:74,  ch:106, et:'móvil · 74×106'},
+       {cw:112, ch:158, et:'escritorio · 112×158'},
+       {cw:224, ch:316, et:'ampliada ×2'}];
   for (const t of tam){
     const env = document.createElement('div');
     env.className = 'medida';
@@ -735,8 +791,10 @@ function pintarVistas(conZonas){
        .zonas div{position:absolute;left:0;right:0;border-top:1px solid;font-size:7px;
          padding-left:2px;text-transform:uppercase;letter-spacing:.3px;opacity:.95}`;
     sombra.appendChild(est);
-    const carta = nodoDeCarta(f);
-    if (t.cw >= 200) carta.classList.add('grande');
+    const carta = t.panel ? nodoPanelLider(f)
+                : t.selec ? nodoSeleccionLider(f, t.cw >= 400)
+                : nodoDeCarta(f);
+    if (!t.panel && !t.selec && t.cw >= 200) carta.classList.add('grande');
     sombra.appendChild(carta);
     requestAnimationFrame(() => JUEGO.encajarTextos && JUEGO.encajarTextos(sombra));
     if (conZonas){

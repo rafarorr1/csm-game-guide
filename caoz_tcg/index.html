@@ -389,7 +389,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   border-radius:inherit;pointer-events:none;
   background:linear-gradient(180deg,rgba(10,7,18,.86),rgba(10,7,18,.55) 42%,rgba(10,7,18,.92))}
 .leadercard.conarte > *:not(.marcoDibujo){position:relative;z-index:2}
-.leadercard.conarte .lcArt{display:none}
+/* El emoji se esconde, pero su hueco se queda: con display:none el panel perdía
+   sus 26 px de alto y se volvía cuadrado, distinto al de los Líderes sin
+   dibujo. Ahí es además donde se ve la cara de la ilustración. */
+.leadercard.conarte .lcArt{visibility:hidden}
 .leadercard .lcEp{font-size:7px;color:var(--dim);letter-spacing:.3px;line-height:1.1;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .leadercard .lcAlma{margin-top:2px;font-size:15px;font-weight:900;color:#ffc0b8;
@@ -1496,7 +1499,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:76, fecha:'2026-09-01'};
+const BUILD = {n:77, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
