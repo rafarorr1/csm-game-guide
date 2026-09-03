@@ -959,11 +959,17 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
-- **Cortinilla de VS al empezar la partida** (build 98). Entre elegir rival y ver la mesa, las
+- **Cortinilla de VS al empezar la partida** (build 99). Entre elegir rival y ver la mesa, las
   dos cartas entran desde los lados, chocan en el centro con destello y fuego, aguantan cuatro
   segundos con el <b>VS</b> en medio y se apartan revelando el tablero. Sólo la ve quien juega:
   en partidas automáticas, silenciosas o del arnés no se monta siquiera — cuatro segundos de
   adorno no pueden colarse en una tanda de 2000 partidas.
+  Va **antes del volado**: Protagonista → rival → cortinilla → cara o cruz → mesa. La
+  presentación tiene que ir delante de la primera decisión; con el volado por delante, la
+  cortinilla llegaba después de haber elegido lado y quedaba fuera de sitio.
+  **No toca el balance**: el banco entra por `setupMatch`, nunca por `startMatch`, así que ni
+  el volado ni la cortinilla aparecen en sus 2000 partidas — y además fija él quién empieza.
+  Medido igualmente después del cambio: 18,3 de brecha contra 18,8, que es ruido.
 - **Los avisos de pantalla se apilan en vez de pisarse.** Todos salían en el centro exacto del
   tapete, así que dos a la vez quedaban uno encima del otro y no se leía ninguno. Con **Puntos
   Robados** pasaba siempre: gana un contador por cada rival que muere, y en un turno mueren

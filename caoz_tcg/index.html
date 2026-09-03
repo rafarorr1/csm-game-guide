@@ -1762,7 +1762,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:98, fecha:'2026-09-01'};
+const BUILD = {n:99, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5971,6 +5971,13 @@ async function startMatch(a, b, opts={}){
   // {volado:false} — lo usan las pruebas, que si no se quedarían esperando un
   // clic que nadie va a dar.
   const conVolado = opts.volado !== false;
+
+  /* Primero la cortinilla y luego el volado: la presentación va antes que la
+     primera decisión. Con el volado delante, la cortinilla llegaba después de
+     haber pedido cara o cruz y quedaba fuera de sitio. */
+  await cortinillaVS(a, b, opts);
+  if(mia !== PARTIDA_N) return;      // dura 4 s: puede haber arrancado otra
+
   // Sin volado se puede fijar quién empieza. Lo usan las pruebas: si se deja al
   // azar, media docena de comprobaciones dependen de una carrera —si la IA
   // termina su turno antes de que la prueba mire— y fallan una vez de cada dos
@@ -5979,8 +5986,6 @@ async function startMatch(a, b, opts={}){
   const first = conVolado ? await volado(LEADERS[b].n)
                           : (opts.first != null ? opts.first : null);
   if(mia !== PARTIDA_N) return;      // arrancó otra mientras elegías: ésta ya no vale
-  await cortinillaVS(a, b, opts);
-  if(mia !== PARTIDA_N) return;      // y otra vez: la cortinilla dura 4 segundos
   await setupMatch(a, b, first==null ? {} : {first});
 }
 

@@ -732,8 +732,13 @@ PRUEBAS.suite('regresiones', async t => {
       const gViejo = T.G;                        // para saber cuándo nace la nueva
       // sin la cortinilla del VS: aquí se prueba el volado, y son 4 s por vuelta
       startMatch('fender','adreida',{sinCortinilla:true});   // sin await: espera a que elijas
-      for (let k=0; k<40 && !$1('#ladoCara'); k++) await sleep(50);
-      t.check(!!$1('#ladoCara'), 'debería preguntarte cara o cruz al empezar');
+      /* Hay que esperar a un volado NUEVO, no al que quedó del anterior: al
+         terminar, sus botones siguen en el panel deshabilitados hasta que otra
+         cosa lo reemplaza. Mirando sólo si existe #ladoCara se leía el cartel de
+         la vuelta de antes, y decía lo contrario de lo que hacía la partida. */
+      for (let k=0; k<80 && !($1('#ladoCara') && !$1('#ladoCara').disabled); k++) await sleep(50);
+      t.check(!!$1('#ladoCara') && !$1('#ladoCara').disabled,
+        'debería preguntarte cara o cruz al empezar');
       (i % 2 ? $1('#ladoCruz') : $1('#ladoCara')).click();
       /* El cartel se lee MIENTRAS está en pantalla. Antes se esperaba a que el
          overlay se cerrase y se leía después, pero ese overlay lo comparten
@@ -885,9 +890,11 @@ PRUEBAS.suite('regresiones', async t => {
 
   /* La moneda del volado enseña siempre los mismos dos iconos. */
   {
-    startMatch('mohamed','adreida');
-    for (let i=0; i<40 && !$1('#moneda'); i++) await sleep(50);
-    const reposo = $1('#moneda').textContent;
+    // sin cortinilla: aquí se prueba la moneda, y son 4 s de espera por delante
+    startMatch('mohamed','adreida',{sinCortinilla:true});
+    for (let i=0; i<80 && !$1('#moneda'); i++) await sleep(50);
+    t.check(!!$1('#moneda'), 'el volado debería haber montado su moneda');
+    const reposo = $1('#moneda') ? $1('#moneda').textContent : '';
     const botones = $$('.volado .lados .btn').map(b=>b.textContent).join(' ');
     t.check(['👑','⚔️'].includes(reposo),
       `la moneda debería enseñar una de sus dos caras, no otro icono — enseña "${reposo}"`);
