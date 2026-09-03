@@ -828,6 +828,86 @@ body.tut-on .card.playable{
 .card.unit:hover .cajon, .card.unit.finge-hov .cajon{
   transform:translateX(-50%) translateY(0)}
 
+/* ============ LA CORTINILLA DEL VS ============
+   Las dos cartas entran desde los lados, chocan en el centro y se apartan. Todo
+   el movimiento va por clases que el JS enciende en orden —entra, choque,
+   sale—, así que los tiempos del CSS y los del guion se leen en el mismo sitio.
+   ======================================================================== */
+.vs{position:fixed;inset:0;z-index:400;overflow:hidden;pointer-events:none;
+  display:grid;place-items:center;background:rgba(6,4,10,.94)}
+.vs .vsfondo{position:absolute;inset:0;
+  background:radial-gradient(ellipse 60% 50% at 50% 50%, rgba(120,60,220,.22), transparent 70%),
+             radial-gradient(ellipse 40% 60% at 12% 50%, rgba(230,187,82,.10), transparent 72%),
+             radial-gradient(ellipse 40% 60% at 88% 50%, rgba(224,82,74,.12), transparent 72%)}
+
+/* las cartas: fuera de plano al empezar, al centro al chocar */
+.vs .vscard{position:absolute;top:50%;width:250px;
+  border:2px solid var(--gold2);border-radius:16px;overflow:hidden;
+  background:linear-gradient(178deg,#2c2143,#140e22);
+  box-shadow:0 30px 70px rgba(0,0,0,.85);
+  transition:transform .62s cubic-bezier(.16,.84,.3,1.06), opacity .4s}
+.vs .vscard .lface{height:236px;font-size:82px;position:relative}
+.vs .vscard .lname{position:absolute;left:0;right:0;top:204px;z-index:3;text-align:center;
+  font:700 21px/1.1 var(--serif);font-variant:small-caps;color:#fdf6e6;padding:4px 10px 6px;
+  text-shadow:0 2px 8px #000;
+  background:linear-gradient(90deg,transparent,rgba(8,5,14,.94) 16%,rgba(8,5,14,.94) 84%,transparent)}
+.vs .vscard .larch{text-align:center;padding:26px 12px 14px;font-size:10px}
+.vs .vscard.izq{left:50%;transform:translate(-160%,-50%) rotate(-16deg)}
+.vs .vscard.der{left:50%;transform:translate(60%,-50%) rotate(16deg)}
+.vs.entra .vscard.izq{transform:translate(-124%,-50%) rotate(-7deg)}
+.vs.entra .vscard.der{transform:translate(24%,-50%) rotate(7deg)}
+/* El choque: se acercan y rebotan, pero dejando el centro libre — si se juntan
+   del todo tapan el VS, que es lo que hay que leer. */
+.vs.choque .vscard.izq{transform:translate(-118%,-50%) rotate(-5deg)}
+.vs.choque .vscard.der{transform:translate(18%,-50%) rotate(5deg)}
+/* El rebote va en `translate` y `filter`, NO en `transform`: la posición de cada
+   carta vive en transform, y una animación que lo tocara la borraría — las
+   cartas saltaban al centro en cuanto empezaba la sacudida. */
+.vs.choque .vscard{animation:vsSacude .55s cubic-bezier(.36,.07,.19,.97)}
+@keyframes vsSacude{
+  0%  {filter:brightness(2.8); translate:0 0}
+  12% {filter:brightness(1)}
+  28% {translate:0 -5px}
+  58% {translate:0 3px}
+  100%{filter:brightness(1); translate:0 0}}
+/* y al final se apartan del todo */
+.vs.sale .vscard.izq{transform:translate(-230%,-50%) rotate(-22deg);opacity:0}
+.vs.sale .vscard.der{transform:translate(130%,-50%) rotate(22deg);opacity:0}
+
+/* el sello del centro */
+.vs .vssello{position:relative;z-index:8;
+  font:900 82px/1 var(--serif);letter-spacing:2px;
+  color:#fff;text-shadow:0 0 26px rgba(255,190,90,.9), 0 0 70px rgba(224,82,74,.8),
+    0 6px 0 #7a2420, 0 8px 24px rgba(0,0,0,.9);
+  opacity:0;transform:scale(3) rotate(-12deg);
+  transition:opacity .22s, transform .34s cubic-bezier(.2,1.5,.4,1)}
+.vs.choque .vssello{opacity:1;transform:scale(1) rotate(-6deg)}
+.vs.sale .vssello{opacity:0;transform:scale(1.6) rotate(-6deg);transition:.4s}
+
+/* el destello del impacto y el fuego que sube */
+.vs .vschispas{position:absolute;inset:0;opacity:0;z-index:6;mix-blend-mode:screen}
+.vs.choque .vschispas{animation:vsFogonazo 1.5s ease-out}
+.vs .vschispas::before{content:"";position:absolute;left:50%;top:50%;
+  width:34vw;height:34vw;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle, rgba(255,236,190,.95) 0%, rgba(255,150,60,.55) 26%,
+             rgba(224,82,74,.28) 46%, transparent 68%)}
+.vs .vschispas::after{content:"";position:absolute;left:50%;top:50%;
+  width:60vw;height:60vw;transform:translate(-50%,-50%);
+  background:
+    radial-gradient(circle at 50% 62%, rgba(255,170,60,.5) 0%, transparent 42%),
+    radial-gradient(circle at 42% 70%, rgba(255,110,40,.42) 0%, transparent 34%),
+    radial-gradient(circle at 58% 68%, rgba(255,200,90,.38) 0%, transparent 30%);
+  filter:blur(2px);animation:vsFuego 1.6s ease-out}
+@keyframes vsFogonazo{
+  0%{opacity:0;transform:scale(.15)}
+  6%{opacity:1;transform:scale(1.05)}
+  22%{opacity:.85;transform:scale(1.2)}
+  55%{opacity:.4;transform:scale(1.4)}
+  100%{opacity:0;transform:scale(1.7)}}
+@keyframes vsFuego{
+  0%{transform:translate(-50%,-40%) scale(.5);opacity:0}
+  20%{opacity:.9} 100%{transform:translate(-50%,-88%) scale(1.25);opacity:0}}
+
 /* ============ EL ACOMODO DE LA CARTA ============
    Lo usan TODAS las cartas. El dibujo —una ilustración si la hay, y si no el
    emoji sobre el color de su clase— ocupa la carta entera, y nombre, tribu,
@@ -1354,6 +1434,9 @@ body.tutpause #tut{pointer-events:auto}
   font-size:clamp(26px,5vw,46px);letter-spacing:4px;color:var(--gold);
   text-shadow:0 4px 24px #000,0 0 40px rgba(230,187,82,.6)}
 .fxbanner small{display:block;font-size:13px;letter-spacing:6px;color:var(--dim);margin-top:4px}
+/* cada aviso en su fila, y se desliza al hueco de arriba cuando el de encima se va */
+.fxlabel.apilado{transform:translate(-50%,-50%) translateY(calc(var(--fila,0) * 40px));
+  transition:transform .3s cubic-bezier(.22,.61,.36,1)}
 .fxlabel{position:absolute;transform:translate(-50%,-50%);font-weight:900;font-size:15px;
   letter-spacing:1px;padding:6px 14px;border-radius:20px;white-space:nowrap;
   background:rgba(14,8,22,.92);border:2px solid currentColor;box-shadow:0 6px 24px #000}
@@ -1679,7 +1762,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:97, fecha:'2026-09-01'};
+const BUILD = {n:99, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4225,17 +4308,39 @@ function fxObj(target, objId, text){
     {transform:'scale(1)',filter:'brightness(1)'}],{duration:700});
 }
 /* aviso centrado, para efectos sin dueño en el campo */
+/* LOS AVISOS SE APILAN, NO SE PISAN.
+   Todos salían en el centro exacto del tapete, así que dos a la vez quedaban uno
+   encima del otro y no se leía ninguno. Con Puntos Robados pasaba siempre: gana
+   un contador por cada rival que muere, y en un turno mueren varios.
+
+   Ahora cada aviso ocupa su fila y, cuando uno se va, los de abajo suben a
+   ocupar su sitio con una transición. Se ven todos, en el orden en que pasaron. */
+const FX_AVISOS = [];
+const FX_FILA = 40;                              // lo que ocupa cada aviso
+
+function fxRecolocaAvisos(){
+  FX_AVISOS.forEach((d,i)=>{ d.style.setProperty('--fila', i); });
+}
+
 function fxNotice(text, color){
   if(!FXON()) return;
   const b=$('#mat')||$('#field'); if(!b) return;
   const r=b.getBoundingClientRect();
-  const d=fxAdd('fxlabel', r.left+r.width/2, r.top+r.height/2, {color:color||'var(--gold)'});
-  d.innerHTML=text; fxClamp(d);
-  d.animate([{transform:'translate(-50%,-50%) scale(.6)',opacity:0},
-    {transform:'translate(-50%,-50%) scale(1.1)',opacity:1,offset:.22},
-    {transform:'translate(-50%,-50%) scale(1)',opacity:1,offset:.72},
-    {transform:'translate(-50%,-90%) scale(.95)',opacity:0}],{duration:1750});
+  const d=fxAdd('fxlabel apilado', r.left+r.width/2, r.top+r.height/2,
+                {color:color||'var(--gold)'});
+  d.innerHTML=text;
+  FX_AVISOS.push(d); fxRecolocaAvisos(); fxClamp(d);
+  /* La fila se aplica con una variable aparte para que la animación de entrada
+     y el reacomodo no se peleen por el mismo transform. */
+  d.animate([{opacity:0, scale:'.6'},
+    {opacity:1, scale:'1.1', offset:.22},
+    {opacity:1, scale:'1', offset:.72},
+    {opacity:0, scale:'.95'}],{duration:1750,easing:'ease-out'});
   fxGone(d,1750);
+  setTimeout(()=>{
+    const i=FX_AVISOS.indexOf(d);
+    if(i>=0){ FX_AVISOS.splice(i,1); fxRecolocaAvisos(); }
+  },1750);
 }
 function fxSummon(e){
   if(!FXON()||!e) return;
@@ -5809,6 +5914,54 @@ function showEnd(winner,why){
    cambiaba los PD y la mano a media jugada. Costaba de ver porque sólo pasa si
    el reparto tardío coincide con lo siguiente que hagas. */
 let PARTIDA_N = 0;
+/* ==========================================================================
+   LA CORTINILLA DEL VS
+   --------------------------------------------------------------------------
+   Cuatro segundos entre elegir y jugar: las dos cartas entran desde los lados,
+   chocan en el centro con destello y chispas, aguantan mientras se leen los dos
+   nombres, y se apartan dejando ver la mesa.
+
+   Va sobre su propia capa, por encima de todo, y se quita sola al acabar. Si el
+   jugador tiene los efectos apagados —o es una partida automática— no se monta
+   siquiera: es adorno, y el adorno no puede retrasar 4 segundos una tanda de
+   2000 partidas.
+   ======================================================================== */
+function cartaDeLiderVS(lid, lado){
+  const L=LEADERS[lid], D=DECKS[lid];
+  const d=el('div','vscard '+lado, `
+    <div class="lface">${L.art}</div>
+    <div class="lname">${L.n}</div>
+    <div class="larch">${D.d}</div>`);
+  ilustrarLider(d, lid);
+  return d;
+}
+
+async function cortinillaVS(a, b, opts={}){
+  /* Guarda propia: FXON() mira G, y aquí todavía no hay partida —la cortinilla
+     va justo antes de crearla—. Se salta en todo lo que no sea una persona
+     jugando: partidas automáticas, silenciosas, rápidas, y las que se piden sin
+     volado, que son las del arnés y el tutorial. Cuatro segundos de adorno no
+     pueden colarse en una tanda de 2000 partidas. */
+  if(opts.silent || opts.fast || opts.auto || opts.volado===false) return;
+  if(opts.sinCortinilla) return;                 // la usa el arnés: prueba otra cosa
+  if(document.hidden) return;
+  const capa = el('div','vs');
+  capa.innerHTML = '<div class="vsfondo"></div><div class="vschispas"></div>';
+  const izq = cartaDeLiderVS(a,'izq'), der = cartaDeLiderVS(b,'der');
+  const sello = el('div','vssello','VS');
+  capa.appendChild(izq); capa.appendChild(der); capa.appendChild(sello);
+  document.body.appendChild(capa);
+
+  await nap(60);
+  capa.classList.add('entra');          // las cartas vienen de fuera
+  await nap(620);
+  capa.classList.add('choque');         // el impacto: destello, fuego y sacudida
+  await nap(2500);                      // se leen los dos nombres
+  capa.classList.add('sale');           // se apartan y revelan la mesa
+  await nap(760);
+  capa.remove();
+}
+
 async function startMatch(a, b, opts={}){
   const mia = ++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
@@ -5818,6 +5971,13 @@ async function startMatch(a, b, opts={}){
   // {volado:false} — lo usan las pruebas, que si no se quedarían esperando un
   // clic que nadie va a dar.
   const conVolado = opts.volado !== false;
+
+  /* Primero la cortinilla y luego el volado: la presentación va antes que la
+     primera decisión. Con el volado delante, la cortinilla llegaba después de
+     haber pedido cara o cruz y quedaba fuera de sitio. */
+  await cortinillaVS(a, b, opts);
+  if(mia !== PARTIDA_N) return;      // dura 4 s: puede haber arrancado otra
+
   // Sin volado se puede fijar quién empieza. Lo usan las pruebas: si se deja al
   // azar, media docena de comprobaciones dependen de una carrera —si la IA
   // termina su turno antes de que la prueba mire— y fallan una vez de cada dos
