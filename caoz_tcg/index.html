@@ -498,9 +498,19 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   background:repeating-linear-gradient(45deg,#3a2a5c,#3a2a5c 4px,#2a1c44 4px,#2a1c44 9px);
   border:1px solid rgba(138,92,240,.7);box-shadow:0 6px 18px #000;transform:translate(-50%,-50%)}
 
-.row{display:flex;align-items:center;justify-content:center;gap:8px;min-height:0;
-  flex-wrap:nowrap;padding:2px}
-.row.traps{min-height:44px;gap:6px}
+/* LA MESA NO SE MUEVE.
+   Cada fila reserva SIEMPRE la altura de su hueco, esté vacía o llena. Sin esto
+   la fila de campo medía 7 px vacía y 117 con cartas, y como #mat reparte el
+   espacio sobrante entre las zonas (space-around), bajar un Personaje recolocaba
+   el tablero entero: el campo rival subía 17 px, la fila del medio 25, y las
+   trampas acababan pisando el sitio de las cartas.
+
+   La altura es la del hueco dibujado —.slots i mide var(--ch), .slots.tr i mide
+   48 px—, así que la fila ocupa exactamente lo que ocupa su guía y las dos cosas
+   quedan siempre alineadas. */
+.row{display:flex;align-items:center;justify-content:center;gap:8px;
+  min-height:var(--ch);flex-wrap:nowrap;padding:2px;box-sizing:content-box}
+.row.traps{min-height:48px;gap:6px}
 .midrow{display:flex;align-items:center;justify-content:center;gap:14px;min-height:34px;
   border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);padding:4px 0}
 .zonelabel{position:absolute;left:8px;font-size:10px;color:#5c507a;letter-spacing:2px;text-transform:uppercase}
@@ -1523,7 +1533,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:89, fecha:'2026-09-01'};
+const BUILD = {n:90, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================

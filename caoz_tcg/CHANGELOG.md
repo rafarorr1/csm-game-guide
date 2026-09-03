@@ -959,6 +959,15 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **La mesa deja de moverse al bajar cartas** (build 90). Las filas de campo no reservaban
+  altura: vacías medían 7 px y con cartas 117. Como el tapete reparte el espacio sobrante entre
+  sus cinco carriles, bajar un Personaje recolocaba el tablero entero —el campo rival subía
+  17 px, la fila del medio 25, las trampas 10— y las zonas acababan pisándose entre ellas.
+  Ahora cada fila reserva siempre la altura de su hueco dibujado, esté vacía o llena, así que la
+  fila y su guía quedan alineadas pase lo que pase. Comprobado con la mesa vacía, con una carta
+  y con los dos campos llenos más trampas: las cinco zonas dan exactamente las mismas
+  coordenadas, sin un solo solape, y tampoco se mueven al señalar o seleccionar una carta.
+
 - **El texto ya no toca el filo de la carta** (build 79). El pie se estira 5 px fuera de la carta
   para que su velo llegue al borde, y el relleno de abajo —.3 em— no llegaba a devolver ese
   margen: en las cartas sin números, Hechizos y Trampas, la última línea acababa contra el
