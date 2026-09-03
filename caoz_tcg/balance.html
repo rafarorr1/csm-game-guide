@@ -497,6 +497,60 @@ const AJUSTES = {
    de Adreida, R lo de Rafaela, T lo de Talesin, 1 todo. */
 const GRUPOS = { A:['auxilio','armadura'], R:['discipulo','taumaturgia'] };
 
+/* ==========================================================================
+   TRASCENDER GÉNERO Y ESPECIE — carta hipotética para Talesin (?trascender=1|2|3)
+   --------------------------------------------------------------------------
+   El diagnóstico, medido sobre 150 partidas suyas: asciende en el 64% de ellas,
+   pero en el turno 15 —la partida media dura 11— y con 0,24 Celestiales en
+   mesa. En 78 de cada 100 ascensiones el +2/+2 de su pasiva no alcanza a nadie.
+   Media habilidad de su Líder no existe.
+
+   Las tres versiones atacan eso por sitios distintos: hacer Celestiales en masa,
+   acelerar la Ascensión, y darle al premio alguien a quien llegar.
+   ======================================================================== */
+const TRASCENDER = {
+  1: { c:2, x:'Todos tus Personajes ganan la tribu <b>Celestial</b>.' },
+  2: { c:2, gracia:1,
+       x:'Todos tus Personajes ganan la tribu <b>Celestial</b>. Ganas <b>1 Ficha de Gracia</b>.' },
+  3: { c:2, gracia:1, tras:2,
+       x:'Todos tus Personajes ganan la tribu <b>Celestial</b>. Ganas <b>1 Ficha de Gracia</b>. Si ya has ascendido, además ganan <b>+2/+2 permanentes</b>.' },
+  /* Las dos de abajo atacan el diagnóstico de frente en vez de por los bordes:
+     4 acelera la Ascensión de verdad (llega en el turno 15 y la partida acaba en
+     el 11); 5 le da al premio algo que no dependa de tener campo, porque al
+     ascender su campo tiene 0,96 unidades. */
+  4: { c:2, gracia:3,
+       x:'Todos tus Personajes ganan la tribu <b>Celestial</b>. Ganas <b>3 Fichas de Gracia</b>.' },
+  5: { c:2, gracia:1, premio:'mano',
+       x:'Todos tus Personajes ganan la tribu <b>Celestial</b> y ganas <b>1 Ficha de Gracia</b>. Si ya has ascendido, robas <b>2 cartas</b> y ganas <b>2 PD</b>.' },
+};
+
+function ponerTrascender(v){
+  const cfg = TRASCENDER[v]; if(!cfg) return 'versión desconocida';
+  const T = J.TCG;
+  T.CARDS.trascender = { id:'trascender', n:'Trascender Género y Especie',
+    t:'hechizo', c:cfg.c, sub:['fe'], r:1, art:'🕊️', x:cfg.x,
+    req:(g,s)=>T.P(s).field.length>0,
+    cast:async(g,s)=>{ const p=T.P(s);
+      p.field.forEach(u=>{ if(!u.tribes.includes('Celestial')) u.tribes.push('Celestial'); });
+      if(cfg.tras && p.ascended) p.field.forEach(u=>{ u.pA+=cfg.tras; u.pH+=cfg.tras; });
+      if(cfg.premio==='mano' && p.ascended){
+        for(let i=0;i<2;i++) if(p.deck.length) p.hand.push(p.deck.shift());
+        p.pd += 2;
+      }
+      if(cfg.gracia && p.leaderId==='talesin' && !p.ascended){
+        p.gracia += cfg.gracia;
+        if(p.gracia>=5){ p.ascended=true; p.alma+=5;
+          p.field.forEach(o=>{ if(o.tribes.includes('Celestial')){o.pA+=2;o.pH+=2;} }); }
+      }
+      T.recalc(); } };
+  // entra en el mazo de Talesin en lugar de sus dos Rayos de Escarcha
+  const D = T.DECKS.talesin;
+  const m = new Map(D.list.map(([id,n])=>[id,n]));
+  m.delete('escarcha'); m.set('trascender', 2);
+  D.list = [...m.entries()];
+  return 'v'+v+' · ' + [...m.values()].reduce((a,b)=>a+b,0) + ' cartas';
+}
+
 function aplicarAjustes(cual){
   const hechos=[];
   const sólo = GRUPOS[cual];
@@ -512,6 +566,12 @@ function aplicarAjustes(cual){
 /* ======================================================================== */
 async function arrancar(){
   J = await esperarJuego();
+  const qTr = (location.search.match(/trascender=(\d)/)||[])[1];
+  if(qTr){
+    const r = ponerTrascender(qTr);
+    window.TRASCENDER_PUESTA = r;
+    $('#salida').innerHTML = '<div class="nota">Talesin con <b>Trascender Género y Especie</b> — ' + r + '</div>';
+  }
   const qAj = (location.search.match(/ajustes=(\w)/)||[])[1];
   if(qAj){
     const h = aplicarAjustes(qAj);
