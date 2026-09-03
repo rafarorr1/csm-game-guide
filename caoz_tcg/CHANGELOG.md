@@ -62,6 +62,21 @@ muerto en el sexto sigue siendo parte del juego.
 que rebarajar no pierde ni inventa cartas, que no se puede repetir, y que **no** se ofrece
 teniendo algo jugable.
 
+### Cómo se presenta
+
+La pregunta va **sobre unas cartas concretas**, así que taparlas era justo lo que no podía
+hacer. El cartel sale sin velo ni desenfoque, arriba del todo y lejos de la mano, y sólo él
+recibe el ratón: la mesa se ve entera y puedes pasar el cursor por tus cartas para leerlas
+mientras decides.
+
+Además la mano se **reparte a la vista** antes de preguntar —una carta tras otra saliendo del
+mazo, con su pausa— y la nueva también. Preguntar de golpe sobre unas cartas que aún no has
+mirado no es una decisión, es un susto.
+
+Un detalle que sólo se ve al usarlo: las cartas que no puedes jugar salen apagadas a
+propósito, pero en este momento son **todas**, y es justo cuando hay que mirarlas. Mientras el
+cartel está en pantalla, la mano se enciende.
+
 ### Lo que salió al añadirla
 
 Tres cosas que no se veían venir, las tres del mismo sitio: la pregunta comparte overlay con
