@@ -224,7 +224,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
              0 0 90px rgba(138,92,240,.28)}
 .pista .lcard:not(.enfrente):hover{filter:brightness(.9)}
 /* en el carrete la carta es retrato: el texto largo vive en la ficha de abajo */
-.pista .lcard .lface{height:238px;font-size:78px}
+/* El retrato acaba ANTES de que acabe la banda del nombre, no después: con 238
+   se salía casi 3 px por debajo y se veía una tira de ilustración asomando bajo
+   el título. Ahora la banda tapa el borde del dibujo con holgura, así que el
+   corte queda limpio aunque el nombre cambie de tamaño. */
+.pista .lcard .lface{height:230px;font-size:78px}
 .pista .lcard .lname{top:206px;font-size:19px;text-align:center;padding:3px 10px 5px;
   background:linear-gradient(90deg,transparent,rgba(8,5,14,.92) 18%,rgba(8,5,14,.92) 82%,transparent)}
 .pista .lcard .ltxt{display:none}
@@ -1675,7 +1679,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:96, fecha:'2026-09-01'};
+const BUILD = {n:97, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
