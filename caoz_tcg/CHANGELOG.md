@@ -959,7 +959,7 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
-- **Elegir Protagonista es un carrete, en dos pasos** (build 94). Antes eran cinco fichas idénticas en fila y
+- **Elegir Protagonista es un carrete, en dos pasos** (build 95). Antes eran cinco fichas idénticas en fila y
   había que leerlas todas para decidir; ahora las cinco van en abanico, la elegida al frente a
   tamaño completo con su retrato, y debajo una ficha con lo que hay que leer de ella: pasiva,
   habilidad, mazo y dificultad. Se gira con las flechas, con el teclado o pulsando una carta.
@@ -974,6 +974,14 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   para que la segunda decisión no parezca un apéndice de la primera. Antes el rival era una
   fila de fichas idénticas debajo, compitiendo con la tuya. Dos puntitos dicen por dónde vas, el
   botón de atrás vuelve un paso en vez de salir, y «🎲 Al azar» sirve para los dos.
+  **El carrete se desliza.** Antes saltaba, y no por falta de animación: se rehacía la pista
+  entera en cada giro, así que los nodos eran nuevos y el navegador no tenía nada que mover.
+  Ahora las cartas se crean una vez y sólo cambian su distancia al frente.
+  **La ficha tiene alto fijo** — cabe el texto del Líder más largo y los demás lo centran
+  dentro. Con alto variable, el bloque crecía o encogía al girar y el carrete daba un salto.
+  Y el paso del rival **tiñe la sala de rojo**: no es adorno, dice sin palabras que ya no
+  estás eligiendo lo tuyo. Los nombres se centran, la letra de la ficha crece, y se van la
+  cinta de «ELEGIDO» —la carta del frente ya se distingue de sobra— y el botón de la guía.
 - **El tutorial deja de hablar de la carta equivocada, y sólo permite lo que necesita**
   (build 91). Dos lecciones se armaban dando por hecho qué había bajado el rival: una llamaba
   **Objeto** a lo que fuera —llegó a decirlo de Augusto Bale— y la otra explicaba la habilidad
