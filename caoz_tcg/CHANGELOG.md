@@ -690,6 +690,10 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El texto ya no toca el filo de la carta** (build 79). El pie se estira 5 px fuera de la carta
+  para que su velo llegue al borde, y el relleno de abajo —.3 em— no llegaba a devolver ese
+  margen: en las cartas sin números, Hechizos y Trampas, la última línea acababa contra el
+  canto. Ahora ninguna de las 84 queda pegada.
 - **El editor enseña a los Líderes como se ven jugando** (build 77). Salían como tres cartas, y
   un Líder no se ve nunca así: sale en el panelito de la mesa y en la tarjeta de elegir
   Protagonista. Se encuadraba para un formato que no existe. Ahora se replican esos dos
