@@ -982,6 +982,11 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   Y el paso del rival **tiñe la sala de rojo**: no es adorno, dice sin palabras que ya no
   estás eligiendo lo tuyo. Los nombres se centran, la letra de la ficha crece, y se van la
   cinta de «ELEGIDO» —la carta del frente ya se distingue de sobra— y el botón de la guía.
+  **El nombre no se mueve nunca** (build 96): la ficha va en dos partes, el nombre y el
+  arquetipo clavados arriba y el texto repartido en lo que sobra. Centrando el bloque entero,
+  el título subía o bajaba según lo largo que fuera lo de abajo —con Talesin quedaba 6 px más
+  alto— y al girar el carrete daba un brinco. Ahora el nombre cae a la misma altura con los
+  cinco y el texto queda con el mismo hueco arriba que abajo.
 - **El tutorial deja de hablar de la carta equivocada, y sólo permite lo que necesita**
   (build 91). Dos lecciones se armaban dando por hecho qué había bajado el rival: una llamaba
   **Objeto** a lo que fuera —llegó a decirlo de Augusto Bale— y la otra explicaba la habilidad
