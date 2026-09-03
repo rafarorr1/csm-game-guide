@@ -272,7 +272,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .pasos i.on{background:var(--gold);box-shadow:0 0 8px rgba(230,187,82,.6);transform:scale(1.2)}
 
 /* el reloj del turno: discreto arriba del botón, y rojo cuando aprieta */
-#reloj{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);
+#reloj{position:absolute;right:0;bottom:calc(100% + 6px);
   font:800 13px/1 var(--sans);letter-spacing:1px;color:var(--dim);
   background:rgba(14,9,24,.9);border:1px solid var(--line);border-radius:20px;
   padding:5px 12px;pointer-events:none;transition:color .3s,border-color .3s}
@@ -1826,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:104, fecha:'2026-09-01'};
+const BUILD = {n:105, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -3621,7 +3621,13 @@ async function playFromHand(s, id, forcedTargets){
   }
   P(s).pd-=cost;
   P(s).hand.splice(P(s).hand.indexOf(id),1);
-  log(`<b>${P(s).L.n}</b> juega <b>${c.n}</b> (${cost} PD).`);
+  /* De una Trampa no se dice cuál es: va boca abajo. Esta línea anunciaba toda
+     carta jugada con su nombre y no era privada, así que en línea le cantaba al
+     rival la Trampa que acababas de poner. Era la fuga que quedaba. */
+  if(c.t==='trampa'){
+    log(`<b>${P(s).L.n}</b> juega <b>${c.n}</b> (${cost} PD).`, null, true);
+    logRed(`<b>${P(s).L.n}</b> coloca una Trampa (${cost} PD).`);
+  } else log(`<b>${P(s).L.n}</b> juega <b>${c.n}</b> (${cost} PD).`);
   render();
   fxStat(s,'.stat.pd');
   // Toda carta que se juega se anuncia. Antes sólo los Hechizos enseñaban algo,
@@ -3689,8 +3695,8 @@ async function playFromHand(s, id, forcedTargets){
        entero al rival y en línea le decía qué acababas de poner boca abajo.
        Él recibe la línea genérica, que es lo único que puede saber. */
     if(s===ME){
-      log(`Colocas <b>${c.n}</b> boca abajo.`,'sys',true);
-      if(G.online) log('El rival coloca una Trampa boca abajo.','sys');
+      log(`Colocas <b>${c.n}</b> boca abajo.`,'sys',true);   // sólo para ti
+      logRed('El rival coloca una Trampa boca abajo.','sys'); // sólo para él
     } else log('El rival coloca una Trampa boca abajo.','sys'); }
   else if(c.t==='objeto'){
     if(c.relic){ P(s).relics.push({id,counters:0}); render();
@@ -3951,6 +3957,17 @@ function isTargetable(t){ return TGT && TGT.pool && TGT.pool.includes(t); }
 /* ==========================================================================
    9. INTERFAZ
    ========================================================================== */
+/* Tres clases de línea:
+     log(txt)             la ven los dos
+     log(txt,cls,true)    sólo la ves tú (priv: no viaja)
+     logRed(txt)          sólo la ve el rival (no se pinta aquí, pero viaja)
+   La tercera hacía falta para las Trampas: tú tienes que leer cuál pusiste y él
+   sólo que pusiste una. Sin ella, o se lo decías todo o no le decías nada. */
+function logRed(txt,cls){
+  if(!G) return;
+  G.log.push({txt,cls,priv:false,soloRed:true});
+}
+
 function log(txt,cls,priv){
   if(!G) return;
   G.log.push({txt,cls,priv:!!priv});     // priv = no se manda al rival online
