@@ -13,6 +13,72 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v10 — La Ascensión de Talesin deja de premiar a los que ya no están · 2026-09-03
+
+### El cambio
+
+A la pasiva **Digno de Ascender** se le añade una frase:
+
+> *Después de ascender, cada Personaje que entre a tu campo nace **Celestial** y con **+2/+2**.*
+
+Lo demás sigue igual: 5 Fichas de Gracia, +5 Alma y +2/+2 a los Celestiales que haya en mesa.
+
+### El fallo que arregla
+
+Su Ascensión era **circular**: para conseguirla tienen que morírsele **cinco aliados**, y el
+premio era para **los aliados que le queden vivos**. Medido sobre 150 partidas suyas:
+
+- asciende en el **64%** de ellas — conseguirlo no era el problema;
+- pero en el **turno 15**, cuando la partida media dura 11;
+- con **0,96 Personajes** en mesa y **0,24 Celestiales**;
+- **en 75 de 96 ascensiones el +2/+2 no alcanzaba a nadie.**
+
+Media habilidad de su Líder no llegaba a existir.
+
+### Lo que se descartó antes de dar con esto
+
+Cinco versiones de una carta nueva y tres formas de tocar la pasiva, todas medidas:
+
+| | Talesin | brecha |
+|---|---|---|
+| Antes | 41,0 | 20,0 |
+| Carta «Trascender»: Celestial a todos | 40,2 | 21,2 |
+| Carta: + 1 Ficha de Gracia | 41,4 | 20,6 |
+| Carta: + 3 Fichas de Gracia | 41,1 | 19,6 |
+| Carta: premio en cartas y PD | 42,7 | 18,8 |
+| **Pasiva · herencia** | **45,5** | **18,2** |
+| Pasiva · botín (3 cartas, +2 PD máx) | 52,2 | 17,2 |
+| Pasiva · las dos | 56,8 | 16,1 |
+
+Lo que enseña la tercera fila: **acelerar la Ascensión no servía de nada**. Con tres Fichas de
+Gracia de regalo se quedaba en 41,1. El problema nunca fue *cuándo* llegaba el premio, sino que
+el premio no valía nada. Por eso ninguna carta lo arreglaba y sí lo hace la pasiva.
+
+Las dos últimas filas se descartaron por pasarse: dejaban a Talesin tercero y primero. Pasar
+del último al primero no es balancear.
+
+### Ya en el juego
+
+Cuatro tandas de 2000 partidas con el cambio puesto:
+
+| | Mohamed | Fender | Adreida | Rafaela | Talesin | brecha |
+|---|---|---|---|---|---|---|
+| Antes | 44,0 | 45,7 | 60,7 | 58,6 | 41,0 | 20,0 |
+| Ahora | 41,5 | 44,5 | 59,9 | 58,8 | **45,2** | **18,8** |
+
+Talesin por tanda: 44,5 · 45,4 · 45,2 · 45,6. Poca varianza para lo que suele dar este banco:
+el efecto es real.
+
+**Y deja algo a la vista:** el último pasa a ser **Mohamed** (41,5). La brecha se cierra un
+punto largo, pero el suelo sigue ahí y ahora tiene otro dueño. Adreida sigue en 60, y ya se
+midió que recortarle sus cartas de soporte no la mueve.
+
+Explicado en los cuatro sitios donde se cuenta la pasiva: la ficha del Líder, el aviso del
+momento de ascender, el tutorial de Talesin y su guía de estrategia. El editor de cartas lo
+lee del propio juego, así que sale solo.
+
+---
+
 ## v9 — Tal Habla por el Cadáver deja de ser una carta muerta · 2026-09-03
 
 ### El cambio
