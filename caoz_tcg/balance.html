@@ -524,6 +524,59 @@ const TRASCENDER = {
        x:'Todos tus Personajes ganan la tribu <b>Celestial</b> y ganas <b>1 Ficha de Gracia</b>. Si ya has ascendido, robas <b>2 cartas</b> y ganas <b>2 PD</b>.' },
 };
 
+/* ==========================================================================
+   LA PASIVA DE TALESIN (?pasiva=1|2|3)
+   --------------------------------------------------------------------------
+   El diagnóstico dice que su Ascensión es circular: para conseguirla tienen que
+   morírsele cinco aliados, y el premio —+2/+2 a sus Celestiales— es para los
+   aliados que le queden vivos. Al ascender le quedan 0,96 unidades y 0,24
+   Celestiales, así que el premio cae en el vacío 78 veces de cada 100.
+
+   Y ya sabemos que acelerarla no sirve: con 3 Fichas de regalo se quedó igual.
+   Así que las tres propuestas cambian QUÉ da, no CUÁNDO llega.
+
+   1 · El premio no se acaba: lo que baje después de ascender nace Celestial y
+       con +2/+2. Rompe la circularidad de raíz.
+   2 · El premio no depende del campo: al ascender robas 3 cartas y tu máximo de
+       PD sube 2, para siempre.
+   3 · Las dos.
+   ======================================================================== */
+let PASIVA_PUESTA = null;
+
+function ponerPasiva(v){
+  const T = J.TCG;
+  const conHerencia = (v==='1'||v==='3');
+  const conBotin    = (v==='2'||v==='3');
+
+  if(conHerencia){
+    const origMk = J.mkUnit;              // el motor llama a la global, no a TCG
+    J.mkUnit = function(cardId, side){
+      const u = origMk(cardId, side);
+      const p = T.P(side);
+      if(p && p.leaderId==='talesin' && p.ascended){
+        if(!u.tribes.includes('Celestial')) u.tribes.push('Celestial');
+        u.pA += 2; u.pH += 2;
+      }
+      return u;
+    };
+  }
+  if(conBotin){
+    const origKill = J.killUnit;
+    J.killUnit = async function(u, opt){
+      const p = T.P(u.side);
+      const antes = p && p.ascended;
+      const r = await origKill(u, opt);
+      if(p && !antes && p.ascended && p.leaderId==='talesin'){
+        for(let i=0;i<3;i++) if(p.deck.length) p.hand.push(p.deck.shift());
+        p.pdMax = Math.min(10, p.pdMax + 2);
+      }
+      return r;
+    };
+  }
+  PASIVA_PUESTA = 'v'+v+(conHerencia?' · herencia':'')+(conBotin?' · botín':'');
+  return PASIVA_PUESTA;
+}
+
 function ponerTrascender(v){
   const cfg = TRASCENDER[v]; if(!cfg) return 'versión desconocida';
   const T = J.TCG;
@@ -566,6 +619,11 @@ function aplicarAjustes(cual){
 /* ======================================================================== */
 async function arrancar(){
   J = await esperarJuego();
+  const qPas = (location.search.match(/pasiva=(\d)/)||[])[1];
+  if(qPas){
+    const r = ponerPasiva(qPas);
+    $('#salida').innerHTML = '<div class="nota">Talesin con <b>pasiva ajustada</b> — ' + r + '</div>';
+  }
   const qTr = (location.search.match(/trascender=(\d)/)||[])[1];
   if(qTr){
     const r = ponerTrascender(qTr);
