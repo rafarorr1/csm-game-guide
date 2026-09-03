@@ -453,9 +453,75 @@ function aplicarPropuesta(cual){
   return informe;
 }
 
+/* ==========================================================================
+   AJUSTAR CARTAS — «¿y si esta carta hiciera un poco menos, o un poco más?»
+   --------------------------------------------------------------------------
+   Con ?ajustes=1 se reescriben las cartas EN MEMORIA antes de jugar. El juego
+   no se toca. Es un banco de pruebas para ver si una idea de balance aguanta
+   2000 partidas antes de escribirla en el juego de verdad.
+
+   Las cinco de abajo salen de mirar QUÉ sostiene a los dos Líderes fuertes y
+   qué no llega a usar el más flojo, no de mirar las cartas una por una.
+   ======================================================================== */
+const AJUSTES = {
+  /* Adreida ×3, Rafaela ×1. +0/+6 repartidos por 2 PD es la ganancia de vida
+     más barata del juego, y con la pasiva de Adreida —4+ ATQ tienen Provocar—
+     construye muros que además obligan a atacarlos. Se queda en dos objetivos. */
+  auxilio: c => { c.tg[0].max = 2;
+    c.x = 'Hasta <b>dos</b> aliados ganan +0/+2 permanentes.'; },
+
+  /* Adreida ×3. +0/+3 permanentes por 1 PD, y encima cuenta como Objeto. */
+  armadura: c => { const antes = c.cast;
+    c.x = 'Un aliado sin Objeto gana <b>+0/+2</b> permanentes. Cuenta como su Objeto equipado.';
+    c.cast = async (g,s,ts) => { const u=ts[0][0]; u.pH+=2; u.objs.push('armadura'); }; },
+
+  /* Rafaela ×3, Fender ×3. Escala sin techo: con cuatro en mesa cada uno es un
+     4/2 que costó 1 PD. Se le pone tope. */
+  discipulo: c => { c.x = '<b>Fe ciega:</b> gana +1/+0 por cada otro Discípulo aliado, hasta +2.';
+    c.aura = (g,s,u) => { const n=J.TCG.P(s).field.filter(o=>o!==u&&o.tribes.includes('Discípulo')).length;
+      u.aA += Math.min(2,n); }; },
+
+  /* Rafaela ×3. Robar carta por 1 PD con tres Discípulos es su plan A y su
+     plan B a la vez. Con cuatro sigue siendo bueno, pero cuesta llegar. */
+  taumaturgia: c => { c.x = 'Tus Discípulos ganan +1/+0 hasta el final del turno. Si controlas <b>4</b> o más, roba 1 carta.';
+    c.cast = async (g,s) => { const p=J.TCG.P(s);
+      const d=p.field.filter(u=>u.tribes.includes('Discípulo'));
+      d.forEach(u=>u.tA++);
+      if(d.length>=4 && p.deck.length) p.hand.push(p.deck.shift()); }; },
+
+  /* Talesin ×2. El banco la marca como trampa que nunca salta: pide controlar
+     un Dragón, y el suyo cuesta 10 PD. Sin ese requisito hace lo que promete:
+     que sus muertos vuelvan un turno más, que es su plan entero. */
+  talcadaver: c => { c.x = '<b>Cuando un aliado muere:</b> vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.';
+    c.can = (g,s,ev) => J.TCG.P(s).field.length<5 && !ev.token; },
+};
+
+/* Para poder medir por separado de quién es el mérito: ?ajustes=A sólo toca lo
+   de Adreida, R lo de Rafaela, T lo de Talesin, 1 todo. */
+const GRUPOS = { A:['auxilio','armadura'], R:['discipulo','taumaturgia'], T:['talcadaver'] };
+
+function aplicarAjustes(cual){
+  const hechos=[];
+  const sólo = GRUPOS[cual];
+  for(const id in AJUSTES){
+    if(sólo && !sólo.includes(id)) continue;
+    const c = J.TCG.CARDS[id];
+    if(!c){ hechos.push(id+' NO EXISTE'); continue; }
+    AJUSTES[id](c); hechos.push(id);
+  }
+  return hechos;
+}
+
 /* ======================================================================== */
 async function arrancar(){
   J = await esperarJuego();
+  const qAj = (location.search.match(/ajustes=(\w)/)||[])[1];
+  if(qAj){
+    const h = aplicarAjustes(qAj);
+    window.AJUSTES_APLICADOS = h;
+    $('#salida').innerHTML = '<div class="nota">Simulando con <b>cartas ajustadas</b>: '
+      + h.join(' · ') + '</div>';
+  }
   const cual = (location.search.match(/cajon=(\d)/)||[])[1];
   if(cual){
     const inf = aplicarPropuesta(cual);
