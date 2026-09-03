@@ -102,8 +102,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    cabe entero, se lee de arriba abajo y deja el tablero limpio. */
 #mesa{min-width:0;min-height:0;overflow:visible;
   display:grid;grid-template-rows:auto 1fr auto}
+/* Por encima de la mano. #handzone lleva z-index para montarse sobre el tapete,
+   y el panel no llevaba ninguno: al crecer una carta al pasar por encima se
+   metía dentro del Registro y del chat, tapando lo que estabas leyendo. */
 #panel{width:274px;display:flex;flex-direction:column;gap:6px;
-  padding:12px 14px 14px 8px;min-height:0}
+  padding:12px 14px 14px 8px;min-height:0;position:relative;z-index:12}
 .panelttl{font:600 9.5px/1 var(--sans);letter-spacing:2.4px;color:#7a6ba0;
   text-transform:uppercase;padding-left:2px}
 .screen.on{display:flex}
@@ -815,6 +818,9 @@ body.tut-on .card.playable{
   box-shadow:0 12px 28px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.07)}
 .card.unit .cajon b{color:var(--gold)}
 .card.unit .cajon i{color:#9c8fbb}
+.card.unit .cajon .mods{margin-top:6px;padding-top:6px;
+  border-top:1px solid rgba(255,255,255,.10);color:#a99ac6;font-size:10px;line-height:1.5}
+.card.unit .cajon .mods b{color:#fdf6e6}
 .card.unit .cajon .porque{margin-top:6px;padding-top:6px;
   border-top:1px solid rgba(255,255,255,.10);color:#ff9d94;font-weight:600}
 .card.unit:hover .cajon, .card.unit.finge-hov .cajon{
@@ -823,7 +829,10 @@ body.tut-on .card.playable{
    propia fila se cortaba contra el filo del tapete; y teniéndolo arriba en un
    lado y abajo en el otro había que buscarlo en dos sitios distintos. Arriba
    siempre: se sabe dónde mirar. */
-.card.unit .cajon{top:auto;bottom:calc(100% + 9px);
+/* Separado de la carta: pegado a 9 px se comía las etiquetas de arriba —las
+   palabras clave y los nombres de habilidad— justo en la carta que estás
+   mirando. */
+.card.unit .cajon{top:auto;bottom:calc(100% + 18px);
   transform:translateX(-50%) translateY(4px)}
 .card.unit:hover .cajon, .card.unit.finge-hov .cajon{
   transform:translateX(-50%) translateY(0)}
@@ -1450,13 +1459,17 @@ body.tutpause #tut{pointer-events:auto}
    pidiendo que hagas—.
    Ahora no intercepta nada (sólo sus botones lo hacen) y se coloca bajo el
    tablero, donde no tapa ninguna carta. */
+/* Medida estable: sin ancho, la caja se ajustaba a cada texto y cambiaba de
+   tamaño y de sitio en cada aviso —descartar dos cartas seguidas la hacía dar
+   saltos—. Ahora ocupa siempre lo mismo y el texto se acomoda dentro. */
 #prompt{position:fixed;left:50%;bottom:23%;transform:translateX(-50%);z-index:210;
   pointer-events:none;
+  width:min(560px,88vw);box-sizing:border-box;
   background:rgba(18,10,28,.96);border:2px solid var(--red);border-radius:12px;
-  padding:11px 18px;display:none;align-items:center;gap:12px;
+  padding:11px 18px;display:none;align-items:center;justify-content:center;gap:12px;
   box-shadow:0 12px 40px #000, 0 0 0 1px rgba(224,82,74,.25)}
 #prompt.on{display:flex}
-#prompt .pmsg{font-weight:700;color:#ffd9d6;font-size:13.5px}
+#prompt .pmsg{font-weight:700;color:#ffd9d6;font-size:13.5px;flex:1;text-align:center}
 #prompt button,#prompt #pbtns{pointer-events:auto}
 
 /* inspector */
@@ -1762,7 +1775,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:101, fecha:'2026-09-01'};
+const BUILD = {n:102, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -3555,12 +3568,17 @@ async function playFromHand(s, id, forcedTargets){
     const quien = P(s).L.n;
     const verbo = {personaje:'invoca a', trampa:'coloca una Trampa',
                    objeto:'saca', lugar:'cambia el escenario:'}[c.t] || 'juega';
-    // de una Trampa rival no se dice cuál es: va boca abajo
-    const texto = (c.t==='trampa' && s!==ME)
-      ? `🪤 ${quien} coloca una Trampa`
-      : (c.t==='trampa' ? `🪤 ${quien} coloca ${c.n}` : `${c.art} ${quien} ${verbo} ${c.n}`);
-    netFx('notice',{txt:texto,color:'var(--c-'+c.t+')'});
-    fxNotice(texto, 'var(--c-'+c.t+')');
+    /* Una Trampa va boca abajo: su nombre no sale nunca del lado de quien la
+       pone. Antes se decidía con `s!==ME`, que en local vale pero en línea no:
+       ahí el anfitrión resuelve las dos partidas, así que al colocar la SUYA el
+       texto llevaba el nombre y netFx se lo mandaba al rival. Se filtraba la
+       carta boca abajo al otro jugador.
+       Ahora hay dos textos: el que se ve en casa y el que sale por la red. */
+    const enCasa  = (c.t==='trampa') ? `🪤 ${quien} coloca ${c.n}`
+                                     : `${c.art} ${quien} ${verbo} ${c.n}`;
+    const alRival = (c.t==='trampa') ? `🪤 ${quien} coloca una Trampa` : enCasa;
+    netFx('notice',{txt:alRival,color:'var(--c-'+c.t+')'});
+    fxNotice(s===ME ? enCasa : alRival, 'var(--c-'+c.t+')');
     await nap(s===ME ? 380 : 620);
   }
 
@@ -3603,7 +3621,13 @@ async function playFromHand(s, id, forcedTargets){
     }
   }
   else if(c.t==='trampa'){ P(s).traps.push({id, revealed:false});
-    if(s===ME) log(`Colocas <b>${c.n}</b> boca abajo.`,'sys'); else log('El rival coloca una Trampa boca abajo.','sys'); }
+    /* El nombre de TU Trampa es privado: sin la marca, el registro viajaba
+       entero al rival y en línea le decía qué acababas de poner boca abajo.
+       Él recibe la línea genérica, que es lo único que puede saber. */
+    if(s===ME){
+      log(`Colocas <b>${c.n}</b> boca abajo.`,'sys',true);
+      if(G.online) log('El rival coloca una Trampa boca abajo.','sys');
+    } else log('El rival coloca una Trampa boca abajo.','sys'); }
   else if(c.t==='objeto'){
     if(c.relic){ P(s).relics.push({id,counters:0}); render();
       fxNotice(c.art+' '+c.n+' en juego','var(--c-objeto)'); await nap(500); }
@@ -3695,7 +3719,15 @@ async function doAttack(u, target){
   if(G.resolving||!canAttack(u)) return false;
   const s=u.side, d=1-s;
   const lt=legalTargets(u);
-  if(target==='face' ? !lt.face : !lt.units.includes(target)) { toast('Objetivo ilegal'); return false; }
+  if(target==='face' ? !lt.face : !lt.units.includes(target)){
+    /* Se dice por qué, y también al Registro: el cartel se cierra y el motivo
+       se perdía, así que quedaba «no me deja atacar» sin explicación. */
+    const why = porQueNoEsObjetivo(u, target);
+    const limpio = why.replace(/<[^>]+>/g,'');
+    log(`<b>${u.card.n}</b> no puede atacar ahí — ${limpio}.`,'sys');
+    setPrompt(`${u.card.n}: ${why}`,[{t:'Entendido',fn:()=>{clearPrompt();render();}}]);
+    return false;
+  }
   G.resolving=true;
   try{
     // Peaje de Brick y Brock
@@ -4013,6 +4045,38 @@ function nombresDeHabilidad(cardId){
 }
 
 // el cascarón se reutiliza entre renders para que las animaciones no se corten
+/* DE DÓNDE SALEN SUS NÚMEROS.
+   La carta enseña el ATQ y los PV finales, pero no por qué: un 6/1 puede ser un
+   4/4 con dos Objetos y una Canción encima, o un 6/6 al que han pegado. Esto lo
+   desglosa en el cajón, que es donde se mira una carta con calma. */
+function modificadoresDe(u){
+  const base = u.card, filas = [];
+  const dif = (fin, ini) => fin===ini ? '' : ` <b>(${fin>ini?'+':''}${fin-ini})</b>`;
+  const trozos = [];
+  if(u.pA||u.pH) trozos.push(`${u.pA>=0?'+':''}${u.pA}/${u.pH>=0?'+':''}${u.pH} permanentes`);
+  if(u.tA||u.tH) trozos.push(`${u.tA>=0?'+':''}${u.tA}/${u.tH>=0?'+':''}${u.tH} este turno`);
+  if(u.aA||u.aH) trozos.push(`${u.aA>=0?'+':''}${u.aA}/${u.aH>=0?'+':''}${u.aH} por auras`);
+  let objA=0, objH=0;
+  u.objs.forEach(o=>{ const oc=CARDS[o]; if(oc&&oc.mod){ objA+=oc.mod.a||0; objH+=oc.mod.h||0; } });
+  if(objA||objH) trozos.push(`${objA>=0?'+':''}${objA}/${objH>=0?'+':''}${objH} de Objetos`);
+  if(u.possessed) trozos.push('Poseído: la mitad de ATQ y sin habilidades');
+
+  filas.push(`<b>${u.atk}</b>/<b>${Math.max(0,u.maxHp-u.dmg)}</b>` +
+    ` <i>(base ${base.a||0}/${base.h||0}${u.dmg?`, ${u.dmg} de daño`:''})</i>`);
+  if(trozos.length) filas.push('<i>'+trozos.join(' · ')+'</i>');
+  if(u.objs.length) filas.push('<i>Lleva: '+u.objs.map(o=>CARDS[o]?CARDS[o].n:o).join(', ')+'</i>');
+
+  const estados=[];
+  if(u.stunned>0) estados.push('Aturdido');
+  if(u.infected) estados.push('Infectado');
+  if(u.doomed) estados.push('Condenado');
+  if(u.blind) estados.push('Ciego');
+  if(u.sick && !u.keys.has('prisa')) estados.push('Recién entrado');
+  if(u.attacked) estados.push('Ya atacó');
+  if(estados.length) filas.push('<i>'+estados.join(' · ')+'</i>');
+  return filas.join('<br>');
+}
+
 function unitFill(d,u){
   const c=u.card;
   const kw=[];
@@ -4033,7 +4097,8 @@ function unitFill(d,u){
       nombresDeHabilidad(c.id).map(n=>`<span class="kw hab">${n}</span>`).join('')}</div>
     ${u.objs.length?`<div class="eq">${u.objs.map(o=>`<span title="${CARDS[o]?CARDS[o].n:''}">${CARDS[o]?CARDS[o].art:'✨'}</span>`).join('')}</div>`:''}
     <div class="stats"><span class="atk">${u.atk}</span><span class="hp">${hp}</span></div>
-    <div class="cajon">${c.x||'<i>Sin habilidades.</i>'}${
+    <div class="cajon">${c.x||'<i>Sin habilidades.</i>'}
+      <div class="mods">${modificadoresDe(u)}</div>${
       (u.side===ME && !canAttack(u))
         ? `<div class="porque">✕ ${porQueNoAtaca(u)}</div>` : ''}</div>`;
   // Sin panel flotante: en el tablero lo cuenta el cajón, y salían los dos a la
@@ -4747,6 +4812,39 @@ function porQueNoAtaca(u){
   if(P(u.side).pd<1 && P(1-u.side).field.some(o=>o.card.toll&&o.alive))
     return 'Peaje de Brick y Brock: atacar cuesta 1 PD y no te queda ninguno';
   return 'No puede atacar (motivo sin explicar: avísanos)';
+}
+
+/* Por qué ESE objetivo no vale. Es distinto de porQueNoAtaca: ahí la carta no
+   puede atacar a nadie; aquí puede, pero no a lo que has señalado. Antes sólo
+   salía «Objetivo ilegal», que no dice nada — sobre todo con Provocar, que es
+   la razón nueve de cada diez veces. */
+function porQueNoEsObjetivo(u, target){
+  const lt = legalTargets(u);
+  const alAlma = target==='face';
+
+  if(alAlma && !lt.face){
+    const muros = lt.units.filter(o=>o.keys.has('provocar'));
+    if(muros.length){
+      const n = muros.map(o=>o.card.n).join(', ');
+      return muros.length===1
+        ? `<b>${n}</b> tiene <b>Provocar</b>: hay que atacarlo a él antes que al Alma`
+        : `<b>${n}</b> tienen <b>Provocar</b>: hay que atacarlos antes que al Alma`;
+    }
+    if(u.card.id==='tal') return 'Tal no puede atacar al Alma mientras el rival tenga un rehén';
+    return 'No puedes atacar al Alma ahora mismo';
+  }
+
+  if(!alAlma){
+    if(!target.alive) return 'Ese Personaje ya no está en el campo';
+    if(target.keys.has('sigilo') && !target.revealed)
+      return `<b>${target.card.n}</b> está en <b>Sigilo</b>: no se le puede elegir hasta que ataque`;
+    if(target.keys.has('vuelo') && !u.keys.has('vuelo') && !u.keys.has('arquero'))
+      return `<b>${target.card.n}</b> tiene <b>Vuelo</b>: sólo le llegan los que vuelan o tienen Arquero`;
+    const muros = lt.units.filter(o=>o.keys.has('provocar'));
+    if(muros.length && !lt.units.includes(target))
+      return `<b>${muros.map(o=>o.card.n).join(', ')}</b> tiene <b>Provocar</b>: hay que atacarlo a él primero`;
+  }
+  return 'Ese objetivo no es legal ahora mismo';
 }
 
 function selectUnit(u){
