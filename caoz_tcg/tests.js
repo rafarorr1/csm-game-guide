@@ -681,12 +681,25 @@ PRUEBAS.suite('regresiones', async t => {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
     let empezasteTu = 0;
     for (let i = 0; i < 6; i++){
+      const gViejo = T.G;                        // para saber cuándo nace la nueva
       startMatch('fender','adreida');            // sin await: espera a que elijas
       for (let k=0; k<40 && !$1('#ladoCara'); k++) await sleep(50);
       t.check(!!$1('#ladoCara'), 'debería preguntarte cara o cruz al empezar');
       (i % 2 ? $1('#ladoCruz') : $1('#ladoCara')).click();
-      for (let k=0; k<60 && $1('#ov').classList.contains('on'); k++) await sleep(100);
-      const dijo = $1('#voladoTxt') ? $1('#voladoTxt').textContent : '';
+      /* El cartel se lee MIENTRAS está en pantalla. Antes se esperaba a que el
+         overlay se cerrase y se leía después, pero ese overlay lo comparten
+         todas las preguntas del juego: si al empezar el turno salía otra —la de
+         mano nueva— el cartel ya había sido reemplazado y se leía vacío. */
+      let dijo = '';
+      for (let k=0; k<90; k++){
+        const n = $1('#voladoTxt');
+        if (n && /empiez/i.test(n.textContent)){ dijo = n.textContent; break; }
+        await sleep(80);
+      }
+      /* Y hay que mirar a quién le toca en la partida NUEVA. Mirar la fase no
+         vale: hasta que newGame corre, G sigue siendo el de la partida
+         anterior, que ya estaba en juego — se leía el turno de la de antes. */
+      for (let k=0; k<90 && (T.G===gViejo || T.G.turnNo<1); k++) await sleep(80);
       const empiezoYo = T.G.active === 0;
       if (empiezoYo) empezasteTu++;
       t.check(/empiezas tú/.test(dijo) === empiezoYo,
@@ -878,6 +891,46 @@ PRUEBAS.suite('regresiones', async t => {
     t.check(/function log\([^)]*priv/.test(src),
       'log() perdió el parámetro priv y el online volvería a filtrar tus robos');
   }
+
+  /* MANO NUEVA — la regla que rehace una mano muerta en el primer turno.
+     Lo que no puede pasar nunca: que se pierdan o aparezcan cartas al
+     rebarajar, que se ofrezca cuando sí puedes jugar, o que se pueda repetir. */
+  {
+    await T.setupMatch('mohamed','adreida',{fast:true, auto:true, silent:true, first:0});
+    const p = T.P(0);
+
+    // 1) con una mano impagable la ofrece
+    const caras = Object.keys(T.CARDS).filter(id => T.CARDS[id].c >= 4 && !T.CARDS[id].token).slice(0,5);
+    p.hand = caras.slice();
+    p.manoRehecha = false;
+    T.G.turnNo = 1; T.G.active = 0; T.G.phase = 'principal';
+    t.check(window.puedeRehacerMano(0), 'con una mano que no puede jugar nada debería ofrecerla');
+
+    // 2) rebarajar no pierde ni inventa cartas
+    const total = p.hand.length + p.deck.length;
+    const vieja = p.hand.slice();
+    await window.ofrecerManoNueva(0);
+    t.check(p.hand.length === vieja.length,
+      `la mano nueva trae ${p.hand.length} cartas y la vieja tenía ${vieja.length}`);
+    t.check(p.hand.length + p.deck.length === total,
+      `rebarajar cambió el total de cartas: ${p.hand.length + p.deck.length} en vez de ${total}`);
+
+    // 3) una sola vez
+    t.check(p.manoRehecha === true, 'debería quedar marcada como usada');
+    p.hand = caras.slice();                       // otra mano muerta
+    t.check(!window.puedeRehacerMano(0), 'no puede ofrecerse dos veces en la misma partida');
+
+    // 4) no se ofrece si sí puedes jugar algo
+    const otro = T.P(1);
+    otro.manoRehecha = false;
+    const barato = Object.keys(T.CARDS).find(id => T.CARDS[id].c <= 1 && !T.CARDS[id].token
+                                                && T.CARDS[id].t === 'personaje');
+    otro.hand = [barato];
+    T.G.active = 1; otro.pd = 5;
+    t.check(!window.puedeRehacerMano(1), 'no debe ofrecerse teniendo una carta jugable');
+
+    t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
+  }
 });
 
 /* ===========================================================================
@@ -910,7 +963,28 @@ function pantalla(){
   return box;
 }
 
+/* EL DIÁLOGO DE MANO NUEVA, RESPONDIDO SOLO.
+   Las pruebas que juegan como jugador —pulsando cartas de verdad— se quedaban
+   colgadas cuando salía una mano muerta: el juego se para a preguntar y aquí no
+   hay nadie que conteste. Sólo pasaba a veces, según el barajado, así que se
+   veía como una tanda lenta o un fallo raro en otra prueba.
+   Este vigilante contesta que sí, que es lo que haría cualquiera. Vive en el
+   arnés a propósito: el juego no debe saber que lo están probando. */
+function vigilarManoNueva(){
+  const t = setInterval(() => {
+    const ov = $1('#ov');
+    if(!ov || !ov.classList.contains('on')) return;
+    const p = $1('#ovPanel');
+    if(!p || !/Devolverlas al mazo/.test(p.textContent)) return;
+    const si = [...p.querySelectorAll('.opts button, .opts .btn')]
+      .find(b => /mano nueva/i.test(b.textContent));
+    if(si) si.click();
+  }, 60);
+  return () => clearInterval(t);
+}
+
 PRUEBAS.correr = async function(filtro){
+  const dejarDeVigilar = vigilarManoNueva();
   const q = new URLSearchParams(location.search);
   filtro = filtro || (q.get('test')!=='1' ? q.get('test') : null);
   const rapido = q.get('rapido')==='1';
@@ -962,6 +1036,7 @@ PRUEBAS.correr = async function(filtro){
     marca.style.display='none'; document.body.appendChild(marca); }
   marca.textContent = JSON.stringify(res, null, 1);
 
+  dejarDeVigilar();
   PRUEBAS.resultado = res;
   PRUEBAS.terminado = true;
 

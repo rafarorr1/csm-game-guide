@@ -13,6 +13,74 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v8 — Mano nueva: el barajado deja de decidir partidas · 2026-09-02
+
+### La regla
+
+**Si en tu primer turno no puedes jugar absolutamente nada**, el juego te ofrece devolver la
+mano al mazo, barajarlo y robar otra del mismo tamaño.
+
+Condiciones, todas a la vez:
+
+- es tu **primer** turno (turno 1 o 2, según quién empiece);
+- **ninguna** carta de tu mano es jugable ahora mismo — no sólo por el Costo: `canPlay` mira
+  también el sitio en el campo, los requisitos y si hay objetivos válidos;
+- **una sola vez** por jugador y partida. La segunda mano es la que hay.
+
+Vale para los dos lados. La CPU la toma siempre que le toca, así que no es una ventaja del
+jugador: es la misma red para los dos.
+
+### Por qué
+
+Con 1 PD el primer turno, una mano sin nada de Costo 1 no es una mano difícil: es un turno
+perdido de regalo, decidido por el barajado antes de que juegues nada. Esto no te da poder
+—sólo aparece cuando ya no podías hacer nada—, sólo quita partidas resueltas por el reparto.
+
+### Lo que mide el banco
+
+Tres tandas de 2000 partidas con la regla y tres sin ella, todo lo demás igual:
+
+| | brecha entre Líderes | turnos muertos |
+|---|---|---|
+| **Sin** la regla | 20,5 · 20,5 · 20,6 → **20,5** | 18 · 24 · 29 → **~24** |
+| **Con** la regla | 21,8 · 23,9 · 18,8 → **21,5** | 13 · 20 · 13 → **~15** |
+
+Los dos números dicen cosas distintas y las dos importan:
+
+- **El balance no se mueve.** Un punto de brecha, con las tandas *con* la regla yendo de 18,8 a
+  23,9: eso es el ruido de siempre, no un efecto. Ningún Líder gana ni pierde por esto —los
+  cinco se quedan donde estaban: adreida ~61, rafaela ~58, fender ~45, mohamed ~44, talesin ~40.
+- **Los turnos muertos caen un 35%**, de ~24 a ~15 por tanda. Ése era el objetivo, y es lo
+  único que la regla cambia de verdad.
+
+No bajan a cero, y está bien que no lo hagan: la regla sólo mira el primer turno. Un turno
+muerto en el sexto sigue siendo parte del juego.
+
+### Cubierto por el arnés
+
+`tests.js` comprueba las cuatro cosas que no pueden fallar: que se ofrece con la mano muerta,
+que rebarajar no pierde ni inventa cartas, que no se puede repetir, y que **no** se ofrece
+teniendo algo jugable.
+
+### Lo que salió al añadirla
+
+Tres cosas que no se veían venir, las tres del mismo sitio: la pregunta comparte overlay con
+todo lo demás y llega justo después del volado.
+
+- **Se comía el cartel del volado.** El primer turno empieza al acabar el volado, que es
+  exactamente cuando esto salta, y la pregunta reemplazaba el cartel antes de que diera tiempo
+  a leer quién empieza. Ahora espera a que el overlay quede libre. Esto le pasaba al jugador,
+  no sólo a las pruebas.
+- **Colgaba las pruebas que juegan como jugador.** El juego se para a preguntar y en el arnés
+  no hay nadie que conteste. Sólo ocurría cuando el barajado daba una mano muerta, así que se
+  veía como una tanda lenta o un fallo raro en otra prueba. El arnés contesta ahora que sí; el
+  juego no tiene por qué saber que lo están probando.
+- **Destapó un fallo viejo en la prueba del volado**, que leía a quién le tocaba empezar de la
+  partida *anterior*: hasta que `newGame` corre, `G` sigue siendo el de antes. Pasaba
+  desapercibido porque casi siempre coincidía.
+
+---
+
 ## v7 — Las Canciones de Fender dejan huella · 2026-09-02
 
 ### Por qué perdía

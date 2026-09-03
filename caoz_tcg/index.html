@@ -1503,7 +1503,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:79, fecha:'2026-09-01'};
+const BUILD = {n:80, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2330,7 +2330,8 @@ function newPlayer(side, leaderId){
     deck:shuffle(buildDeck(leaderId)), hand:[], field:[], traps:[], grave:[], relics:[],
     alma:20, pd:0, pdMax:0, banked:0, llaves:0, pdTax:0, pdBonus:0,
     leaderUsed:false, attacked:false, petuniaUsed:false, gracia:0, ascended:false,
-    scrollTurns:0, limbo:[], clouds:[], spirits:0, fairy:false, kdrama:false };
+    scrollTurns:0, limbo:[], clouds:[], spirits:0, fairy:false, kdrama:false,
+    manoRehecha:false };
 }
 
 function newGame(myLeader, foeLeader, opts={}){
@@ -2851,6 +2852,56 @@ async function setupMatch(myLeader, foeLeader, opts={}){
 }
 async function drawSilent(s,n){ for(let i=0;i<n;i++){ if(P(s).deck.length) P(s).hand.push(P(s).deck.shift()); } }
 
+/* ============ MANO NUEVA ============
+   Si en tu primer turno no puedes jugar absolutamente nada, puedes devolver la
+   mano al mazo, barajarlo y robar otra del mismo tamaño.
+
+   Por qué existe: con 1 PD el primer turno, una mano sin nada de Costo 1 no es
+   una mano difícil, es un turno perdido de regalo, y eso lo decide el barajado
+   antes de que juegues. Esto no da ventaja —sólo se ofrece cuando ya no podías
+   hacer nada—, sólo quita partidas decididas por el reparto.
+
+   Condiciones, todas a la vez: es tu primer turno, no la has usado todavía, y
+   ninguna carta de tu mano es jugable ahora mismo (coste, sitio en el campo y
+   objetivos incluidos: canPlay ya lo mira todo). Una sola vez por jugador, y la
+   segunda mano es la que hay, salga como salga. Vale para los dos lados; la CPU
+   la toma siempre que le toca. */
+function puedeRehacerMano(s){
+  const p = P(s);
+  if(p.manoRehecha || G.tutorial || G.over) return false;
+  if(G.turnNo > 2) return false;                 // turno 1 y 2 son los primeros
+  if(!p.hand.length || !p.deck.length) return false;
+  return !p.hand.some(id => canPlay(s, id));     // de verdad no puedes nada
+}
+
+async function ofrecerManoNueva(s){
+  if(!puedeRehacerMano(s)) return;
+  const p = P(s);
+  /* El volado deja su cartel en este mismo overlay. Preguntando encima se comía
+     el resultado antes de que diera tiempo a leerlo: el primer turno empieza
+     justo después del volado, que es cuando esto salta. Se espera a que quede
+     libre. */
+  if(!G.silent && !G.auto){
+    const ov = $('#ov');
+    for(let k=0; k<40 && ov && ov.classList.contains('on'); k++) await nap(100);
+    if(!puedeRehacerMano(s)) return;             // por si algo cambió mientras
+  }
+  const cuantas = p.hand.length;
+  const sí = 0 === await ask(s,
+    `No puedes jugar ninguna de tus ${cuantas} cartas. ¿Devolverlas al mazo y robar otras ${cuantas}?`,
+    ['Sí, mano nueva', 'No, me la quedo'],
+    () => 0);                                     // la CPU siempre la toma
+  p.manoRehecha = true;                           // usada, se acepte o no
+  if(!sí){ log(`<b>${p.L.n}</b> se queda con su mano.`,'sys'); return; }
+
+  p.deck = shuffle(p.deck.concat(p.hand));
+  p.hand = [];
+  await drawSilent(s, cuantas);
+  log(`<b>${p.L.n}</b> devuelve su mano al mazo y roba ${cuantas} cartas nuevas.`,'sys');
+  render();
+  if(s === ME && !G.silent) fxNotice('🔄 Mano nueva', 'var(--gold)');
+}
+
 async function startTurn(s){
   if(G.over) return;
   G.active=s; G.turnNo++; G.diedThisTurn=[]; G.phase='puntos';
@@ -2915,6 +2966,8 @@ async function startTurn(s){
   if(G.over) return;
   G.phase='principal';
   render();
+  await ofrecerManoNueva(s);                      // sólo si no puedes hacer nada
+  if(G.over) return;
   if(G.tutorial){ tutCheck(); await tutBeat('turno',{side:s}); }
   // El turno del rival se encadena con el siguiente, y esa cadena sigue viva
   // aunque empiece otra partida: si vuelves al menú y entras de nuevo, la IA de
@@ -5060,6 +5113,10 @@ const RULES_HTML=`
 <li><b>Zona de Lugar</b> — 1 Lugar activo; el más reciente reemplaza al anterior.</li>
 <li><b>Las Alcantarillas</b> — el descarte.</li>
 <li><b>Mano</b> — límite de 8 al final de tu turno.</li></ul>
+<h4>Mano nueva</h4>
+<p>Si en tu <b>primer turno</b> no puedes jugar <b>ninguna</b> carta de tu mano, el juego te
+ofrece devolverla entera al mazo, barajarlo y robar otras tantas. <b>Una sola vez</b> por
+partida, y la segunda mano es la que hay. Vale igual para tu rival.</p>
 <h4>Estructura del turno</h4>
 <ol style="margin-left:18px">
 <li><b>Fase de Puntos</b> — +1 PD máximo y rellenas. Se aplican los efectos "al inicio de tu turno".</li>
