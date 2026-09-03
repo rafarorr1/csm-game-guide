@@ -1533,7 +1533,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:90, fecha:'2026-09-01'};
+const BUILD = {n:91, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4792,10 +4792,22 @@ function buildTut(lid){
 
 {on:'juega', when:(g,d)=>d.side===FOE, hi:'#foeField',
  wait_t:'<i>A ver qué baja…</i>',
- t:(g,d)=>[`Jugó a <b>${CARDS[d.id].n}</b>.`,
-   `Y mira su contador <b>🃏 de mano</b>: no ha bajado. Es porque Bartolomeo dice
-    "<b>Al entrar: roba 1 carta</b>". Casi todos los Personajes traen habilidad escrita:
-    léelas, ahí está el juego.`]},
+ /* También se arma con lo que ha bajado: antes explicaba la habilidad de
+    Bartolomeo aunque hubiera jugado otra cosa. */
+ t:(g,d)=>{
+   const c=CARDS[d.id], p=[`Jugó a <b>${c.n}</b>.`];
+   if(/Al entrar/i.test(c.x||''))
+     p.push(`Y mira lo que dice su carta: "<b>Al entrar</b>…". Esas palabras se resuelven en
+       cuanto toca la mesa, no cuando ataca. Casi todos los Personajes traen habilidad
+       escrita: léelas, ahí está el juego.`);
+   else if(c.x)
+     p.push(`Y lee su carta antes de decidir nada: <i>${c.x.replace(/<[^>]+>/g,'')}</i>.
+       Casi todos los Personajes traen habilidad escrita, y ahí está el juego.`);
+   else
+     p.push(`Casi todos los Personajes traen una habilidad escrita en la carta. Léelas antes
+       de decidir a quién pegas: ahí está el juego.`);
+   return p;
+ }},
 
 {on:'finTurno', when:(g,d)=>d.side===FOE,
  wait_t:'<i>Sigue su turno…</i>',
@@ -4832,14 +4844,28 @@ function buildTut(lid){
 {hi:'#controls', wait:g=>g.active===FOE, allow:{end:true}, t:`Termina el turno.`},
 
 /* ---------- turno 2 del rival: Objetos, Provocar y combate ---------- */
+/* El texto se arma con la carta que HA jugado, no con la que el guion esperaba.
+   Antes daba por hecho que era el Mazo de Brock, y cuando el rival no podía
+   equiparlo —sin Personaje que lo llevara— el guion se lo saltaba y esta
+   lección saltaba con la siguiente: llegó a llamar «Objeto» a Augusto Bale. */
 {on:'juega', when:(g,d)=>d.side===FOE, hi:'#foeField',
  wait_t:'<i>Turno de Adreida…</i>',
- t:(g,d)=>[`Ojo: jugó <b>${CARDS[d.id].n}</b>, que es un <b>Objeto</b>. Los Objetos no van
-    al campo solos: <b>se equipan a un Personaje</b> y se destruyen con él. Ese Mazo le da
-    <b>+3 ATQ</b>.`,
-   `Y mira su carta: le ha salido una etiqueta nueva, <b>Provocar</b>. No estaba ni en el Mazo
-    ni en Bartolomeo — es la <b>pasiva de Adreida</b>: <i>todo lo suyo con 4 o más ATQ tiene
-    Provocar</i>. Acaba de convertir a un sirviente de 1 ATQ en un muro.`]},
+ t:(g,d)=>{
+   const c=CARDS[d.id], parr=[];
+   if(c.t==='objeto') parr.push(`Ojo: jugó <b>${c.n}</b>, que es un <b>Objeto</b>. Los Objetos
+     no van al campo solos: <b>se equipan a un Personaje</b> y se destruyen con él.` +
+     (c.mod&&c.mod.a?` Ése le da <b>+${c.mod.a} ATQ</b>.`:''));
+   else if(c.t==='personaje') parr.push(`Ojo: bajó a <b>${c.n}</b> — un <b>Personaje</b>, de
+     ${c.a} ATQ y ${c.h} PV. Cuenta ya para su campo, pero no puede atacar el turno que entra.`);
+   else parr.push(`Ojo: jugó <b>${c.n}</b>.`);
+   // el segundo párrafo sólo si de verdad hay algo con Provocar por su pasiva
+   const muro = P(FOE).field.find(u=>u.alive && u.keys.has('provocar') && u.atk>=4);
+   if(muro) parr.push(`Y mira <b>${muro.card.n}</b>: le ha salido una etiqueta nueva,
+     <b>Provocar</b>. No venía en la carta — es la <b>pasiva de Adreida</b>: <i>todo lo suyo con
+     4 o más ATQ tiene Provocar</i>. Mientras esté ahí, tus Personajes tienen que pegarle a
+     ella antes que a nada.`);
+   return parr;
+ }},
 
 {on:'ataque', when:(g,d)=>d.side===FOE, hi:'#foeField',
  wait_t:'<i>Está decidiendo a quién pegar…</i>',
@@ -4900,10 +4926,12 @@ function buildTut(lid){
 
 {t:[`No la activas tú. <b>Se dispara sola</b> cuando ocurre su condición, casi siempre en el
    turno de ella.`,
-  `Sólo por estar ahí boca abajo ya le complica las cuentas. Gasta el resto del turno como
-   quieras y termina.`]},
+  `Sólo por estar ahí boca abajo ya le complica las cuentas. Cierra el turno y vamos a ver
+   cuándo salta.`]},
 
-{hi:'#controls', wait:g=>g.active===FOE, allow:{free:true}, t:`Termina el turno.`},
+/* Era el único hueco del tutorial donde se podía hacer cualquier cosa. Se cierra
+   como los demás: aquí lo único que hace falta es terminar el turno. */
+{hi:'#controls', wait:g=>g.active===FOE, allow:{end:true}, t:`Termina el turno.`},
 
 {on:'trampa',
  wait_t:'<i>Atento a lo que hace…</i>',
@@ -4968,7 +4996,11 @@ function tutAllow(){
   // Un beat espera un evento. Si el evento tiene que venir del rival pero todavía es TU
   // turno, hay que dejarte jugar: si no, el cartel te pide terminar el turno con el botón
   // bloqueado y la partida no avanza nunca.
-  if(s.on) return (G && !G.over && G.active===ME) ? {free:true} : {};
+  /* Esperando un evento del rival. Si todavía es tu turno hay que dejarte algo,
+     o el tutorial se queda pidiendo lo que no puedes hacer; pero lo único que
+     hace falta para llegar a su turno es terminar el tuyo. Antes se abría del
+     todo —{free:true}— y podías jugar cualquier cosa en mitad de la lección. */
+  if(s.on) return (G && !G.over && G.active===ME) ? (s.allow||{end:true}) : {};
   if(s.wait) return s.allow||{free:true};     // tarea: lo que declare
   return {};                                  // cartel: solo leer
 }
@@ -5168,8 +5200,15 @@ async function tutFoeTurn(){
   const sc=TUT_FOE_SCRIPT[TUT.foeTurn++];
   if(!sc) return false;
   for(const id of sc.play){
-    if(!P(FOE).hand.includes(id)||!canPlay(FOE,id)) continue;
-    await nap(800); await playFromHand(FOE,id);
+    if(P(FOE).hand.includes(id) && canPlay(FOE,id)){
+      await nap(800); await playFromHand(FOE,id); continue;
+    }
+    /* La lección de este turno cuenta con que baje ALGO —hay pasos esperando a
+       verlo—, así que si su carta no se puede jugar baja la que pueda en vez de
+       pasar el turno en blanco. Saltárselo en silencio desplazaba las lecciones
+       un turno y acababan hablando de la carta equivocada. */
+    const otra = P(FOE).hand.find(x=>canPlay(FOE,x));
+    if(otra){ await nap(800); await playFromHand(FOE,otra); }
   }
   if(sc.attack){
     let g=0;

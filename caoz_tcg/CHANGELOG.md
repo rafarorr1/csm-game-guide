@@ -959,6 +959,18 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El tutorial deja de hablar de la carta equivocada, y sólo permite lo que necesita**
+  (build 91). Dos lecciones se armaban dando por hecho qué había bajado el rival: una llamaba
+  **Objeto** a lo que fuera —llegó a decirlo de Augusto Bale— y la otra explicaba la habilidad
+  de Bartolomeo aunque hubiera jugado otra cosa. Pasaba porque el guion del rival, cuando no
+  podía jugar la carta prevista, se la saltaba **en silencio** y desplazaba las lecciones un
+  turno. Ahora los textos se arman con la carta que de verdad ha bajado —Objeto, Personaje o
+  Hechizo, con sus números y su texto—, y el guion baja lo que pueda en vez de pasar el turno
+  en blanco, para que la lección no se quede esperando.
+  Y lo segundo: mientras el tutorial esperaba una jugada del rival te dejaba hacer **cualquier
+  cosa** en tu turno. Ahora sólo deja terminar el turno, que es lo único que hace falta para
+  llegar al del rival. De los 34 pasos no queda ninguno abierto, y el arnés lo comprueba paso
+  por paso. Los cinco tutoriales siguen llegando al final sin un solo paso atascado.
 - **La mesa deja de moverse al bajar cartas** (build 90). Las filas de campo no reservaban
   altura: vacías medían 7 px y con cartas 117. Como el tapete reparte el espacio sobrante entre
   sus cinco carriles, bajar un Personaje recolocaba el tablero entero —el campo rival subía

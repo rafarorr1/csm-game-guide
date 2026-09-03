@@ -300,8 +300,33 @@ PRUEBAS.suite('regresiones', async t => {
     t.check(k>=0, 'el tutorial debería tener pasos reactivos');
     TUT.i = k; TUT.pending = null; T.G.active = 0; T.G.over = false;
     const permiso = tutAllow();
-    t.check(permiso && permiso.free,
-      'en tu propio turno, un paso reactivo debe dejarte jugar (si no, no puedes terminar el turno)');
+    /* Lo que importa es que puedas SALIR del punto muerto, no que se abra todo.
+       Antes esto comprobaba `permiso.free` —la implementación— y por eso se
+       ponía en rojo al cerrar el tutorial a lo imprescindible. Lo que no puede
+       pasar es que no te deje terminar el turno. */
+    t.check(permiso && tutCan('end'),
+      'en tu propio turno, un paso reactivo tiene que dejarte terminar el turno: si no, punto muerto');
+    t.check(!permiso.free,
+      'un paso reactivo no debe permitir cualquier cosa: sólo lo que hace falta para avanzar');
+    tutEnd();
+  }
+
+  /* El tutorial no deja hacer nada que no necesite para avanzar. Se recorren
+     TODOS sus pasos: ninguno puede abrirse del todo. */
+  {
+    await startTutorial('talesin');
+    await sleep(300);
+    const guardado = TUT.i;
+    const abiertos = [];
+    for (let i=0; i<TUT_STEPS.length; i++){
+      TUT.i = i; TUT.pending = null; T.G.active = 0; T.G.over = false;
+      const a = tutAllow();
+      if (a && a.free) abiertos.push(i + (TUT_STEPS[i].on ? ' (on:'+TUT_STEPS[i].on+')' : ''));
+    }
+    TUT.i = guardado;
+    t.check(!abiertos.length,
+      `estos pasos del tutorial permiten cualquier acción: ${abiertos.join(', ')}`);
+    t.nota('el tutorial sólo deja hacer lo que necesita para avanzar');
     tutEnd();
   }
 
