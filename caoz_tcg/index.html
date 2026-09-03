@@ -1579,6 +1579,9 @@ body.tutpause #tut{pointer-events:auto}
 .netchip{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);
   border-radius:20px;padding:3px 11px;font-size:12px;color:var(--dim);white-space:nowrap}
 .netchip b{color:var(--gold);letter-spacing:2px}
+.diariobtn{background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;
+  color:var(--dim);font-size:11px;padding:1px 5px;line-height:1.3}
+.diariobtn:hover{border-color:var(--gold2);color:var(--gold)}
 
 /* ---- guías de estrategia ---- */
 #guide{background:radial-gradient(ellipse at 50% -20%,#241a3a,var(--bg) 65%)}
@@ -1823,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:103, fecha:'2026-09-01'};
+const BUILD = {n:104, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4642,7 +4645,8 @@ function barHTML(s){
     <div class="spacer"></div>
     <div class="stat" title="Cartas en mano">🃏 <i>${p.hand.length}</i></div>
     ${(!me&&G.active===s)?'<div class="turnpill">SU TURNO</div>':''}
-    ${(!me&&NET.on)?`<div class="netchip">👥 sala <b>${NET.code}</b></div>`:''}`;
+    ${(!me&&NET.on)?`<div class="netchip">👥 sala <b>${NET.code}</b>
+       <button class="diariobtn" title="Descargar el diario de esta partida en línea">📄</button></div>`:''}`;
 }
 
 function renderLeaders(){
@@ -6353,6 +6357,15 @@ const NET={on:false,host:false,guest:false,code:null,topic:null,
 
 function netCode(){ let s=''; for(let i=0;i<5;i++) s+=NET_ABC[rnd(NET_ABC.length)]; return s; }
 function netVivos(){ return NET.chs.filter(c=>c.ok); }
+/* El botón del diario vive en una barra que se repinta en cada render, así que
+   se escucha desde arriba en vez de reengancharlo cada vez. */
+addEventListener('click', e=>{
+  if(e.target.classList && e.target.classList.contains('diariobtn')){
+    NETDIARIO.bajar();
+    toast('Diario descargado');
+  }
+});
+
 function netStatus(t,cls){
   if(t!=null) NET.status=t;
   const e=$('#netStatus'); if(e){ e.textContent=NET.status; e.className='netstatus '+(cls||(netVivos().length?'ok':'')); }
@@ -6450,19 +6463,70 @@ function netClose(){
   NET.on=false; NET.host=false; NET.guest=false; NET.peer=false;
 }
 /* un mensaje puede llegar por varias vías: nos quedamos con el primero */
+/* ==========================================================================
+   EL DIARIO DE LA PARTIDA EN LÍNEA
+   --------------------------------------------------------------------------
+   Guarda lo que entra, lo que sale y lo que el anfitrión hace con cada jugada
+   del invitado. Existe porque los fallos de aquí no se reproducen a mano: hacen
+   falta dos personas, dos redes y un momento concreto de la partida. Con esto,
+   cuando algo raro pasa, queda escrito qué se pidió y qué se contestó.
+
+   Se guarda en memoria —las últimas 500 entradas— y se descarga con el botón
+   «Diario» de la barra online, o desde la consola con NETDIARIO.bajar().
+   Lleva tus cartas y el chat de la partida, así que es tuyo: no se manda a
+   ninguna parte, sólo se descarga si tú lo pides.
+   ======================================================================== */
+const NETDIARIO = {
+  filas: [],
+  max: 500,
+  apunta(dir, tipo, detalle){
+    const t = new Date().toISOString().slice(11,23);
+    this.filas.push({t, dir, tipo, ...detalle});
+    if(this.filas.length > this.max) this.filas.shift();
+  },
+  texto(){
+    const cab = [
+      `Diario de partida en línea — Caoz Con Todo TCG build ${BUILD.n}`,
+      `Generado: ${new Date().toISOString()}`,
+      `Papel: ${NET.host?'anfitrión':'invitado'} · sala: ${NET.sala||'?'} · sid: ${NET.sid||'?'}`,
+      `Enviados: ${NET.seq||0} · recibidos: ${NET.rx||0}`,
+      G ? `Turno ${G.turnNo} · activo ${G.active===ME?'yo':'rival'} · ${G.over?'terminada':'en curso'}` : 'sin partida',
+      '─'.repeat(70), ''
+    ].join('\n');
+    return cab + this.filas.map(f=>{
+      const extra = Object.entries(f).filter(([k])=>!['t','dir','tipo'].includes(k))
+        .map(([k,v])=>`${k}=${typeof v==='object'?JSON.stringify(v):v}`).join(' ');
+      return `${f.t}  ${f.dir.padEnd(8)} ${String(f.tipo).padEnd(10)} ${extra}`;
+    }).join('\n');
+  },
+  bajar(){
+    const b=new Blob([this.texto()],{type:'text/plain'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download=`caoz-online-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.txt`;
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  }
+};
+
 function netRecvRaw(txt){
   let m; try{ m=JSON.parse(txt); }catch(_){ return; }
   if(!m||m.from===(NET.host?'host':'guest')) return;      // eco de lo mío
   const clave=(m.sid||m.from)+':'+m.seq;
   if(NET.seen.has(clave)) return;
   NET.seen.add(clave);
-  NET.rx++; netStatus(null,'ok'); netRecv(m);
+  NET.rx++; netStatus(null,'ok');
+  NETDIARIO.apunta('recibe', m.t, {seq:m.seq, de:m.from,
+    ...(m.k?{k:m.k}:{}), ...(m.id?{id:m.id}:{}), ...(m.aid?{aid:m.aid}:{}),
+    bytes:txt.length});
+  netRecv(m);
 }
 function netSend(msg){
   if(!NET.on) return;
   msg.from=NET.host?'host':'guest'; msg.sid=NET.sid; msg.seq=++NET.seq;
   if(msg.t==='state') NET.q=NET.q.filter(m=>m.t!=='state');   // sólo vale el último estado
   NET.q.push(msg); netPump();
+  NETDIARIO.apunta('envía', msg.t, {seq:msg.seq,
+    ...(msg.k?{k:msg.k}:{}), ...(msg.id?{id:msg.id}:{}), ...(msg.aid?{aid:msg.aid}:{})});
 }
 async function netPump(){
   if(NET.sending||!NET.q.length) return;
@@ -6619,6 +6683,13 @@ async function netRecv(m){
       netGuestStart(m); return; }
     if(m.t==='state'){ netApply(m.s); return; }
     if(m.t==='prompt'){ netGuestPrompt(m); return; }
+    if(m.t==='nope'){                          // el anfitrión rechazó tu jugada
+      const p=NET.esperaAck.get(m.aid);
+      if(p){ clearInterval(p.t); NET.esperaAck.delete(m.aid); }
+      toast(m.why||'Esa jugada no se pudo hacer');
+      log(`No se pudo: ${m.why||'jugada rechazada'}.`,'sys');
+      netStatus(null,'ok'); return;
+    }
     if(m.t==='ack'){ const p=NET.esperaAck.get(m.aid);
       if(p){ clearInterval(p.t); NET.esperaAck.delete(m.aid); netStatus(null,'ok'); } return; }
     if(m.t==='bye'){ netStatus('el anfitrión se fue','warn'); toast('El anfitrión ha salido'); return; }
@@ -6630,26 +6701,64 @@ async function netRunActs(){
   NET.busy=true;
   while(NET.acts.length){
     const m=NET.acts.shift();
-    try{ await netDoAct(m); }catch(e){ log('Jugada rival inválida: '+e.message,'sys'); }
+    let r={ok:false, why:'error interno'};
+    try{ r = await netDoAct(m); }
+    catch(e){ r={ok:false, why:e.message}; log('Jugada rival inválida: '+e.message,'sys'); }
+    NETDIARIO.apunta('resuelve', m.k, {aid:m.aid, ok:r.ok, ...(r.why?{motivo:r.why}:{})});
+    /* Si la jugada NO se pudo hacer hay que decírselo. Antes se mandaba el ack
+       igual: el invitado daba su jugada por buena, no pasaba nada en la mesa y
+       desde su lado el juego «no le dejaba bajar cartas» sin más explicación. */
     if(m.aid) netSend({t:'ack', aid:m.aid});
+    if(!r.ok && r.why) netSend({t:'nope', aid:m.aid, why:r.why});
     netPushState();
   }
   NET.busy=false;
 }
+
+/* Devuelve {ok, why}: quien la llama necesita saber si salió y, si no, por qué,
+   para poder contárselo al invitado. */
 async function netDoAct(m){
   const s=FOE;
-  if(G.over) return;
+  if(G.over) return {ok:false, why:'La partida ha terminado'};
   const mio=uid=>P(s).field.find(x=>x.uid===uid);
-  if(m.k==='play')        await playFromHand(s,m.id);
-  else if(m.k==='end')    { if(G.active===s) await endTurn(); }
-  else if(m.k==='leader') await useLeader(s);
-  else if(m.k==='act')    { const u=mio(m.uid); if(u) await useAct(u); }
-  else if(m.k==='relic')  { const r=P(s).relics.find(x=>x.id===m.id); if(r) await useRelic(s,r); }
-  else if(m.k==='attack'){
-    const u=mio(m.uid);
-    const t = m.target==='face' ? 'face' : P(ME).field.find(x=>x.uid===m.target);
-    if(u&&t) await doAttack(u,t);
+
+  if(m.k==='play'){
+    if(!canPlay(s,m.id)) return {ok:false, why:whyNot(s,m.id)};
+    return {ok: await playFromHand(s,m.id), why:'No se pudo jugar la carta'};
   }
+  if(m.k==='end'){
+    if(G.active!==s) return {ok:false, why:'No es tu turno'};
+    await endTurn(); return {ok:true};
+  }
+  if(m.k==='leader'){
+    const p=P(s), L=p.L;
+    if(p.leaderUsed) return {ok:false, why:'Ya usaste tu Habilidad de Líder este turno'};
+    if(p.pd<L.habCost) return {ok:false, why:`Tu Habilidad cuesta ${L.habCost} PD y tienes ${p.pd}`};
+    if(G.active!==s) return {ok:false, why:'No es tu turno'};
+    return {ok: await useLeader(s), why:'No hay objetivos para tu Habilidad'};
+  }
+  if(m.k==='act'){
+    const u=mio(m.uid);
+    if(!u) return {ok:false, why:'Ese Personaje ya no está en tu campo'};
+    return {ok: await useAct(u), why:'No se pudo usar esa habilidad'};
+  }
+  if(m.k==='relic'){
+    const r=P(s).relics.find(x=>x.id===m.id);
+    if(!r) return {ok:false, why:'Ya no tienes esa Reliquia'};
+    return {ok: await useRelic(s,r), why:'No se pudo usar la Reliquia'};
+  }
+  if(m.k==='attack'){
+    const u=mio(m.uid);
+    if(!u) return {ok:false, why:'Ese Personaje ya no está en tu campo'};
+    if(!canAttack(u)) return {ok:false, why:porQueNoAtaca(u)};
+    const t = m.target==='face' ? 'face' : P(ME).field.find(x=>x.uid===m.target);
+    if(t!=='face' && !t) return {ok:false, why:'Ese objetivo ya no está en el campo'};
+    const lt=legalTargets(u);
+    if(t==='face' ? !lt.face : !lt.units.includes(t))
+      return {ok:false, why:porQueNoEsObjetivo(u,t).replace(/<[^>]+>/g,'')};
+    return {ok: await doAttack(u,t), why:'No se pudo atacar'};
+  }
+  return {ok:false, why:'Jugada desconocida'};
 }
 
 /* ---------- el invitado responde a lo que le pide el anfitrión ---------- */

@@ -1000,6 +1000,16 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   **No toca el balance**: el banco entra por `setupMatch`, nunca por `startMatch`, así que ni
   el volado ni la cortinilla aparecen en sus 2000 partidas — y además fija él quién empieza.
   Medido igualmente después del cambio: 18,3 de brecha contra 18,8, que es ruido.
+- **Las jugadas del invitado dejan de fallar en silencio** (build 104). Era el fallo detrás de
+  «al invitado no le dejaba bajar cartas»: el anfitrión resuelve las jugadas del otro y, si una
+  no se podía hacer, la descartaba **sin decir nada** y mandaba el acuse igual. Desde el otro
+  lado la carta se pulsaba, no pasaba nada y no había explicación. Ahora el anfitrión contesta
+  con el motivo —el mismo texto que verías jugando solo— y sale en el aviso y en el Registro.
+- **Diario de la partida en línea.** Los fallos de aquí no se reproducen a mano: hacen falta dos
+  personas, dos redes y un momento concreto. Ahora queda escrito lo que entra, lo que sale y qué
+  hizo el anfitrión con cada jugada del invitado, con su motivo si la rechazó. Se descarga con
+  el botón 📄 junto al código de sala, o desde la consola con `NETDIARIO.bajar()`. Son las
+  últimas 500 entradas, se guardan sólo en tu navegador y no se mandan a ninguna parte.
 - **Reloj de turno: 1:30** (build 103). Si se acaba, pasa el turno igual que si pulsaras el
   botón — no se descarta ni se pierde nada. Sólo corre en tu turno y sólo cuando hay alguien
   jugando: en el tutorial no, que va a su ritmo y te para a explicarte cosas; ni en partidas
