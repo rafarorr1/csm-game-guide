@@ -271,6 +271,52 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   transition:.2s;flex:0 0 auto}
 .pasos i.on{background:var(--gold);box-shadow:0 0 8px rgba(230,187,82,.6);transform:scale(1.2)}
 
+/* el reloj del turno: discreto arriba del botón, y rojo cuando aprieta */
+#reloj{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 6px);
+  font:800 13px/1 var(--sans);letter-spacing:1px;color:var(--dim);
+  background:rgba(14,9,24,.9);border:1px solid var(--line);border-radius:20px;
+  padding:5px 12px;pointer-events:none;transition:color .3s,border-color .3s}
+#reloj[hidden]{display:none}
+#reloj.poco{color:#ff9d94;border-color:var(--red);
+  animation:relojLate 1s ease-in-out infinite}
+@keyframes relojLate{0%,100%{opacity:1}50%{opacity:.55}}
+.controls{position:relative}
+
+/* ---- efectos que siguen en juego (Nube de Dagas y compañía) ---- */
+#efectos{display:flex;flex-direction:column;gap:7px;align-items:center}
+#efectos[hidden]{display:none}
+.efecto{position:relative;width:44px;height:44px;border-radius:11px;cursor:default;
+  display:grid;place-items:center;
+  border:1px solid var(--line);background:linear-gradient(180deg,rgba(40,28,60,.9),rgba(18,12,30,.9));
+  box-shadow:0 4px 14px rgba(0,0,0,.55)}
+.efecto.mio{border-color:var(--gold2)}
+.efecto .ei{font-size:20px;line-height:1;filter:drop-shadow(0 2px 3px #000)}
+.efecto i{position:absolute;right:-4px;bottom:-4px;font-style:normal;
+  font:800 10px/1 var(--sans);color:#1a1226;background:var(--gold);
+  border-radius:50%;width:16px;height:16px;display:grid;place-items:center}
+/* La ficha del efecto y la de tus Trampas se pintan como el cajón de una carta.
+   Hay que darles el estilo entero: el del tablero cuelga de `.card.unit .cajon`
+   y no existe una regla `.cajon` suelta de la que heredar — sin esto salían sin
+   caja y, peor, visibles todas a la vez. */
+.efecto .cajon, .trapback.mine .cajon{
+  position:absolute;z-index:80;pointer-events:none;
+  opacity:0;visibility:hidden;transition:opacity .16s;
+  background:linear-gradient(180deg,rgba(24,16,38,.98),rgba(12,8,20,.98));
+  border:1px solid var(--line);border-radius:9px;padding:8px 10px;
+  font:10.6px/1.42 var(--sans);color:#cfc3e4;
+  box-shadow:0 12px 28px rgba(0,0,0,.8), inset 0 1px 0 rgba(255,255,255,.07)}
+.efecto .cajon b, .trapback.mine .cajon b{color:var(--gold)}
+.efecto .cajon i, .trapback.mine .cajon i{color:#9c8fbb;font-style:italic;
+  position:static;background:none;width:auto;height:auto;display:inline}
+.efecto .cajon{top:50%;right:calc(100% + 10px);width:190px;
+  transform:translateY(-50%);text-align:left}
+.efecto:hover .cajon{opacity:1;visibility:visible}
+.trapback.mine{position:relative}
+.trapback.mine .cajon{bottom:calc(100% + 10px);left:50%;width:200px;
+  transform:translateX(-50%);text-align:left}
+.trapback.mine:hover .cajon{opacity:1;visibility:visible}
+.cajon.trampa b{color:var(--gold)}
+
 /* la ficha de debajo: todo lo que hay que leer, de la que esté al frente */
 /* Alto FIJO, no mínimo: con altura variable el bloque crecía o encogía según lo
    largo que fuera el texto de cada Líder y el carrete daba un salto al girar.
@@ -1533,6 +1579,9 @@ body.tutpause #tut{pointer-events:auto}
 .netchip{display:flex;align-items:center;gap:5px;background:var(--panel);border:1px solid var(--line);
   border-radius:20px;padding:3px 11px;font-size:12px;color:var(--dim);white-space:nowrap}
 .netchip b{color:var(--gold);letter-spacing:2px}
+.diariobtn{background:none;border:1px solid var(--line);border-radius:6px;cursor:pointer;
+  color:var(--dim);font-size:11px;padding:1px 5px;line-height:1.3}
+.diariobtn:hover{border-color:var(--gold2);color:var(--gold)}
 
 /* ---- guías de estrategia ---- */
 #guide{background:radial-gradient(ellipse at 50% -20%,#241a3a,var(--bg) 65%)}
@@ -1720,6 +1769,7 @@ body.tutpause #tut{pointer-events:auto}
     </div>
     <div id="railder">
       <div class="pilebox" id="foeGrave"></div>
+      <div id="efectos" hidden></div>
       <div class="pilebox" id="myGrave"></div>
     </div>
   </div>
@@ -1728,6 +1778,7 @@ body.tutpause #tut{pointer-events:auto}
     <div class="velo" aria-hidden="true"></div>
     <div id="hand"></div>
     <div class="controls" id="controls"></div>
+    <div id="reloj" hidden></div>
   </div>
   </div><!-- /mesa -->
   <aside id="panel">
@@ -1775,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:102, fecha:'2026-09-01'};
+const BUILD = {n:104, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2045,10 +2096,21 @@ C('brickbrock',{n:'Brick y Brock',t:'personaje',c:3,a:3,h:4,tr:['Goblin','Ogro']
  x:'<b>Peaje:</b> los Personajes rivales solo pueden atacar si su controlador paga 1 PD. <b>Acertijo:</b> si el rival juega un Hechizo de Engaño, vuelven a la mano.',
  toll:true});
 
+/* Las Llaves del Domo sólo sirven para una cosa: el requisito del Pergamino. Es
+   la única línea del juego que las mira. Así que en un mazo sin Pergamino —De
+   Frente lleva tres Conserjes, Los Doce Discípulos uno— su habilidad no hacía
+   absolutamente nada y la carta mentía.
+   Ahora, si tu Líder no usa Llaves, su muerte te deja 1 PD. Sigue siendo una
+   carta floja, que es lo que el balance necesita que sea. */
+function usaLlaves(s){ return DECKS[P(s).leaderId].list.some(([id])=>id==='pergamino'); }
+
 C('conserje',{n:'El Conserje (Viejo Micket)',t:'personaje',c:1,a:0,h:1,tr:['Kobold'],r:0,art:'🧹',
- x:'<b>Al morir:</b> su controlador gana <b>1 Llave del Domo</b>. <i>Ciego:</i> no puede ser objetivo de Hechizos rivales.',
+ x:'<b>Al morir:</b> su controlador gana <b>1 Llave del Domo</b>, o <b>1 PD</b> si su Líder no usa Llaves. <i>Ciego:</i> no puede ser objetivo de Hechizos rivales.',
  spellProof:true,
- die:async(g,s,u)=>{ gainKey(s,1,'El Conserje deja caer una llave'); }});
+ die:async(g,s,u)=>{
+   if(usaLlaves(s)) gainKey(s,1,'El Conserje deja caer una llave');
+   else { P(s).pd++; log('🧹 El Conserje se deja el sueldo: +1 PD.','good'); render(); }
+ }});
 
 C('talia',{n:'Talia Boss',t:'personaje',c:5,a:5,h:4,tr:['Humana','Paladín','Casa Boss'],r:2,art:'👑',
  x:'<b>Cazamagos:</b> +3 ATQ al atacar a un Mago o Dragón. <b>Detener el juego:</b> el rival no puede jugar el Pergamino.',
@@ -3452,6 +3514,7 @@ async function startTurn(s){
   if(G.over) return;
   G.phase='principal';
   render();
+  relojArranca();                                 // 1:30 para jugar tu turno
   await ofrecerManoNueva(s);                      // sólo si no puedes hacer nada
   if(G.over) return;
   if(G.tutorial){ tutCheck(); await tutBeat('turno',{side:s}); }
@@ -3465,6 +3528,7 @@ async function startTurn(s){
 
 async function endTurn(){
   if(G.over||G.busy) return;
+  relojPara();
   const s=G.active, p=P(s);
   G.phase='final';
   if(G.tutorial) tutCheck();
@@ -4581,7 +4645,8 @@ function barHTML(s){
     <div class="spacer"></div>
     <div class="stat" title="Cartas en mano">🃏 <i>${p.hand.length}</i></div>
     ${(!me&&G.active===s)?'<div class="turnpill">SU TURNO</div>':''}
-    ${(!me&&NET.on)?`<div class="netchip">👥 sala <b>${NET.code}</b></div>`:''}`;
+    ${(!me&&NET.on)?`<div class="netchip">👥 sala <b>${NET.code}</b>
+       <button class="diariobtn" title="Descargar el diario de esta partida en línea">📄</button></div>`:''}`;
 }
 
 function renderLeaders(){
@@ -4716,8 +4781,38 @@ function render(){
   renderField($('#foeField'), P(FOE).field, false);
   renderField($('#myField'),  P(ME).field,  true);
   const mt=$('#myTraps'); mt.innerHTML='';
-  P(ME).traps.forEach(t=>{ const d=el('div','trapback mine',CARDS[t.id].art);
-    d.title=CARDS[t.id].n+' — '+CARDS[t.id].x.replace(/<[^>]+>/g,''); mt.appendChild(d); });
+  /* Tus Trampas, con su ficha al pasar por encima. Antes sólo llevaban el
+     tooltip del navegador: tarda un segundo en salir, no se puede dar estilo y
+     en la práctica nadie lo espera. Boca abajo lo están para el rival, no para
+     ti: tú necesitas acordarte de qué pusiste. */
+  P(ME).traps.forEach(t=>{ const c=CARDS[t.id];
+    const d=el('div','trapback mine',`${c.art}
+      <div class="cajon trampa"><b>${c.n}</b><br>${c.x}</div>`);
+    mt.appendChild(d); });
+  /* Lo que sigue activo aunque no esté en el campo. La Nube de Dagas dura tres
+     turnos y no se veía en ninguna parte: sabías que la jugaste y luego ya no,
+     y el rival tampoco tenía forma de saber por qué le pegaban al entrar. */
+  const efz=$('#efectos');
+  if(efz){
+    const vivos=[];
+    for(const lado of [ME,FOE]) P(lado).clouds.forEach(c=>{
+      if(c.until>G.turnNo) vivos.push({
+        art:'🗡️', n:'Nube de Dagas',
+        de: lado===ME?'tuya':'del rival',
+        txt:`2 daño a cada Personaje ${lado===ME?'rival':'tuyo'} que entre`,
+        turnos: Math.max(1, Math.ceil((c.until-G.turnNo)/2)) });
+    });
+    efz.innerHTML='';
+    efz.hidden = !vivos.length;
+    vivos.forEach(v=>{
+      const d=el('div','efecto'+(v.de==='tuya'?' mio':''),
+        `<span class="ei">${v.art}</span><i>${v.turnos}</i>
+         <div class="cajon"><b>${v.n}</b> (${v.de})<br>${v.txt}<br>
+           <i>Le quedan ${v.turnos} turno${v.turnos===1?'':'s'} tuyos</i></div>`);
+      efz.appendChild(d);
+    });
+  }
+
   // centro
   const mid=$('#midRow'); mid.innerHTML='';
   if(G.place){ const c=CARDS[G.place.id];
@@ -4747,7 +4842,10 @@ function render(){
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
     d.onclick=()=>{ if(TGT) return;
       if(!libre){ tutNope(); return; }
-      if(!ok){ toast(whyNot(ME,id)); return; }
+      /* Al Registro también: el aviso flotante se va solo y el motivo con él,
+         que es justo lo que uno quiere releer cuando algo no le deja jugar. */
+      if(!ok){ const w=whyNot(ME,id);
+        toast(w); log(`No puedes jugar <b>${CARDS[id].n}</b> — ${w}.`,'sys',true); return; }
       SEL=null; clearPrompt();
       if(NET.guest){ gIntent('play',{id}); return; }
       playFromHand(ME,id); };
@@ -4758,15 +4856,69 @@ function render(){
   encajarTextos();                 // las tribus largas, a la medida de su carta
   if(G.tutorial) tutHighlight();
 }
+/* Por qué no puedes jugar ESA carta. El orden es el mismo que el de canPlay,
+   para que el motivo que se enseña sea de verdad el que la bloquea. */
 function whyNot(s,id){
   const c=CARDS[id];
+  if(G.over) return 'La partida ha terminado';
   if(G.active!==s) return 'No es tu turno';
-  if(costOf(id,s)>P(s).pd) return `Necesitas ${costOf(id,s)} PD`;
-  if(c.t==='personaje'&&P(s).field.length>=5) return 'Campo lleno (máx. 5)';
-  if(c.t==='trampa'&&P(s).traps.length>=3) return 'Zona de Trampas llena (máx. 3)';
+  if(G.phase!=='principal'&&G.phase!=='combate') return 'Todavía no es la fase de jugar cartas';
+  if(costOf(id,s)>P(s).pd) return `Cuesta ${costOf(id,s)} PD y tienes ${P(s).pd}`;
+  if(c.t==='personaje'&&P(s).field.length>=5) return 'Tu campo está lleno: caben 5 Personajes';
+  if(c.t==='trampa'&&P(s).traps.length>=3) return 'Tu zona de Trampas está llena: caben 3';
+  /* Faltaba: un Objeto de equipo necesita a alguien con hueco. Sin esto el
+     motivo salía como «no hay objetivos válidos», que no dice qué falta. */
+  if(c.t==='objeto'&&c.equip&&!P(s).field.some(u=>u.objs.length<(u.card.objSlots||1)))
+    return 'No hay ningún Personaje tuyo con hueco para otro Objeto';
   if(c.scroll) return 'Necesitas 2 Llaves del Domo (o controlar a Tal)';
-  return 'No hay objetivos válidos';
+  if(c.req&&!c.req(G,s)) return 'Ahora mismo no se cumple lo que pide esta carta';
+  if(c.tg){ for(const g of c.tg) if(g.min>0 && !targetPool(s,g,null,c).length)
+    return `No hay ${g.label||'objetivos'} válidos para esta carta`; }
+  return 'No se puede jugar ahora mismo';
 }
+/* ==========================================================================
+   EL RELOJ DE TURNO — 1:30, y si se acaba pasa el turno
+   --------------------------------------------------------------------------
+   Sólo corre en TU turno y sólo cuando hay alguien mirando: en el tutorial no
+   —va a su ritmo y te para a explicarte cosas—, ni en partidas automáticas, ni
+   mientras el juego resuelve algo. Si llega a cero, termina el turno igual que
+   si pulsaras el botón: no se descarta nada ni se pierde nada, sólo se pasa.
+   ======================================================================== */
+const RELOJ_TURNO = 90;                          // segundos
+let RELOJ = {queda:0, id:null};
+
+function relojPara(){
+  if(RELOJ.id){ clearInterval(RELOJ.id); RELOJ.id=null; }
+  const e=$('#reloj'); if(e) e.hidden=true;
+}
+
+function relojArranca(){
+  relojPara();
+  if(!G || G.over || G.auto || G.silent || G.tutorial) return;
+  if(G.active!==ME) return;                      // el rival no juega contra reloj
+  RELOJ.queda = RELOJ_TURNO;
+  relojPinta();
+  RELOJ.id = setInterval(()=>{
+    if(!G || G.over || G.active!==ME){ relojPara(); return; }
+    if(G.busy || G.resolving) return;            // no corre mientras se resuelve algo
+    RELOJ.queda--;
+    relojPinta();
+    if(RELOJ.queda<=0){
+      relojPara();
+      log('⏱️ Se acabó el tiempo: pasa el turno.','sys');
+      if(NET.guest) gIntent('end'); else endTurn();
+    }
+  },1000);
+}
+
+function relojPinta(){
+  const e=$('#reloj'); if(!e) return;
+  e.hidden=false;
+  const m=Math.floor(RELOJ.queda/60), sg=RELOJ.queda%60;
+  e.textContent=`⏱️ ${m}:${String(Math.max(0,sg)).padStart(2,'0')}`;
+  e.classList.toggle('poco', RELOJ.queda<=15);
+}
+
 function renderControls(){
   const c=$('#controls'); c.innerHTML='';
   const p=P(ME), L=p.L;
@@ -6205,6 +6357,15 @@ const NET={on:false,host:false,guest:false,code:null,topic:null,
 
 function netCode(){ let s=''; for(let i=0;i<5;i++) s+=NET_ABC[rnd(NET_ABC.length)]; return s; }
 function netVivos(){ return NET.chs.filter(c=>c.ok); }
+/* El botón del diario vive en una barra que se repinta en cada render, así que
+   se escucha desde arriba en vez de reengancharlo cada vez. */
+addEventListener('click', e=>{
+  if(e.target.classList && e.target.classList.contains('diariobtn')){
+    NETDIARIO.bajar();
+    toast('Diario descargado');
+  }
+});
+
 function netStatus(t,cls){
   if(t!=null) NET.status=t;
   const e=$('#netStatus'); if(e){ e.textContent=NET.status; e.className='netstatus '+(cls||(netVivos().length?'ok':'')); }
@@ -6302,19 +6463,70 @@ function netClose(){
   NET.on=false; NET.host=false; NET.guest=false; NET.peer=false;
 }
 /* un mensaje puede llegar por varias vías: nos quedamos con el primero */
+/* ==========================================================================
+   EL DIARIO DE LA PARTIDA EN LÍNEA
+   --------------------------------------------------------------------------
+   Guarda lo que entra, lo que sale y lo que el anfitrión hace con cada jugada
+   del invitado. Existe porque los fallos de aquí no se reproducen a mano: hacen
+   falta dos personas, dos redes y un momento concreto de la partida. Con esto,
+   cuando algo raro pasa, queda escrito qué se pidió y qué se contestó.
+
+   Se guarda en memoria —las últimas 500 entradas— y se descarga con el botón
+   «Diario» de la barra online, o desde la consola con NETDIARIO.bajar().
+   Lleva tus cartas y el chat de la partida, así que es tuyo: no se manda a
+   ninguna parte, sólo se descarga si tú lo pides.
+   ======================================================================== */
+const NETDIARIO = {
+  filas: [],
+  max: 500,
+  apunta(dir, tipo, detalle){
+    const t = new Date().toISOString().slice(11,23);
+    this.filas.push({t, dir, tipo, ...detalle});
+    if(this.filas.length > this.max) this.filas.shift();
+  },
+  texto(){
+    const cab = [
+      `Diario de partida en línea — Caoz Con Todo TCG build ${BUILD.n}`,
+      `Generado: ${new Date().toISOString()}`,
+      `Papel: ${NET.host?'anfitrión':'invitado'} · sala: ${NET.sala||'?'} · sid: ${NET.sid||'?'}`,
+      `Enviados: ${NET.seq||0} · recibidos: ${NET.rx||0}`,
+      G ? `Turno ${G.turnNo} · activo ${G.active===ME?'yo':'rival'} · ${G.over?'terminada':'en curso'}` : 'sin partida',
+      '─'.repeat(70), ''
+    ].join('\n');
+    return cab + this.filas.map(f=>{
+      const extra = Object.entries(f).filter(([k])=>!['t','dir','tipo'].includes(k))
+        .map(([k,v])=>`${k}=${typeof v==='object'?JSON.stringify(v):v}`).join(' ');
+      return `${f.t}  ${f.dir.padEnd(8)} ${String(f.tipo).padEnd(10)} ${extra}`;
+    }).join('\n');
+  },
+  bajar(){
+    const b=new Blob([this.texto()],{type:'text/plain'});
+    const a=document.createElement('a');
+    a.href=URL.createObjectURL(b);
+    a.download=`caoz-online-${new Date().toISOString().slice(0,19).replace(/[:T]/g,'-')}.txt`;
+    a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),2000);
+  }
+};
+
 function netRecvRaw(txt){
   let m; try{ m=JSON.parse(txt); }catch(_){ return; }
   if(!m||m.from===(NET.host?'host':'guest')) return;      // eco de lo mío
   const clave=(m.sid||m.from)+':'+m.seq;
   if(NET.seen.has(clave)) return;
   NET.seen.add(clave);
-  NET.rx++; netStatus(null,'ok'); netRecv(m);
+  NET.rx++; netStatus(null,'ok');
+  NETDIARIO.apunta('recibe', m.t, {seq:m.seq, de:m.from,
+    ...(m.k?{k:m.k}:{}), ...(m.id?{id:m.id}:{}), ...(m.aid?{aid:m.aid}:{}),
+    bytes:txt.length});
+  netRecv(m);
 }
 function netSend(msg){
   if(!NET.on) return;
   msg.from=NET.host?'host':'guest'; msg.sid=NET.sid; msg.seq=++NET.seq;
   if(msg.t==='state') NET.q=NET.q.filter(m=>m.t!=='state');   // sólo vale el último estado
   NET.q.push(msg); netPump();
+  NETDIARIO.apunta('envía', msg.t, {seq:msg.seq,
+    ...(msg.k?{k:msg.k}:{}), ...(msg.id?{id:msg.id}:{}), ...(msg.aid?{aid:msg.aid}:{})});
 }
 async function netPump(){
   if(NET.sending||!NET.q.length) return;
@@ -6471,6 +6683,13 @@ async function netRecv(m){
       netGuestStart(m); return; }
     if(m.t==='state'){ netApply(m.s); return; }
     if(m.t==='prompt'){ netGuestPrompt(m); return; }
+    if(m.t==='nope'){                          // el anfitrión rechazó tu jugada
+      const p=NET.esperaAck.get(m.aid);
+      if(p){ clearInterval(p.t); NET.esperaAck.delete(m.aid); }
+      toast(m.why||'Esa jugada no se pudo hacer');
+      log(`No se pudo: ${m.why||'jugada rechazada'}.`,'sys');
+      netStatus(null,'ok'); return;
+    }
     if(m.t==='ack'){ const p=NET.esperaAck.get(m.aid);
       if(p){ clearInterval(p.t); NET.esperaAck.delete(m.aid); netStatus(null,'ok'); } return; }
     if(m.t==='bye'){ netStatus('el anfitrión se fue','warn'); toast('El anfitrión ha salido'); return; }
@@ -6482,26 +6701,64 @@ async function netRunActs(){
   NET.busy=true;
   while(NET.acts.length){
     const m=NET.acts.shift();
-    try{ await netDoAct(m); }catch(e){ log('Jugada rival inválida: '+e.message,'sys'); }
+    let r={ok:false, why:'error interno'};
+    try{ r = await netDoAct(m); }
+    catch(e){ r={ok:false, why:e.message}; log('Jugada rival inválida: '+e.message,'sys'); }
+    NETDIARIO.apunta('resuelve', m.k, {aid:m.aid, ok:r.ok, ...(r.why?{motivo:r.why}:{})});
+    /* Si la jugada NO se pudo hacer hay que decírselo. Antes se mandaba el ack
+       igual: el invitado daba su jugada por buena, no pasaba nada en la mesa y
+       desde su lado el juego «no le dejaba bajar cartas» sin más explicación. */
     if(m.aid) netSend({t:'ack', aid:m.aid});
+    if(!r.ok && r.why) netSend({t:'nope', aid:m.aid, why:r.why});
     netPushState();
   }
   NET.busy=false;
 }
+
+/* Devuelve {ok, why}: quien la llama necesita saber si salió y, si no, por qué,
+   para poder contárselo al invitado. */
 async function netDoAct(m){
   const s=FOE;
-  if(G.over) return;
+  if(G.over) return {ok:false, why:'La partida ha terminado'};
   const mio=uid=>P(s).field.find(x=>x.uid===uid);
-  if(m.k==='play')        await playFromHand(s,m.id);
-  else if(m.k==='end')    { if(G.active===s) await endTurn(); }
-  else if(m.k==='leader') await useLeader(s);
-  else if(m.k==='act')    { const u=mio(m.uid); if(u) await useAct(u); }
-  else if(m.k==='relic')  { const r=P(s).relics.find(x=>x.id===m.id); if(r) await useRelic(s,r); }
-  else if(m.k==='attack'){
-    const u=mio(m.uid);
-    const t = m.target==='face' ? 'face' : P(ME).field.find(x=>x.uid===m.target);
-    if(u&&t) await doAttack(u,t);
+
+  if(m.k==='play'){
+    if(!canPlay(s,m.id)) return {ok:false, why:whyNot(s,m.id)};
+    return {ok: await playFromHand(s,m.id), why:'No se pudo jugar la carta'};
   }
+  if(m.k==='end'){
+    if(G.active!==s) return {ok:false, why:'No es tu turno'};
+    await endTurn(); return {ok:true};
+  }
+  if(m.k==='leader'){
+    const p=P(s), L=p.L;
+    if(p.leaderUsed) return {ok:false, why:'Ya usaste tu Habilidad de Líder este turno'};
+    if(p.pd<L.habCost) return {ok:false, why:`Tu Habilidad cuesta ${L.habCost} PD y tienes ${p.pd}`};
+    if(G.active!==s) return {ok:false, why:'No es tu turno'};
+    return {ok: await useLeader(s), why:'No hay objetivos para tu Habilidad'};
+  }
+  if(m.k==='act'){
+    const u=mio(m.uid);
+    if(!u) return {ok:false, why:'Ese Personaje ya no está en tu campo'};
+    return {ok: await useAct(u), why:'No se pudo usar esa habilidad'};
+  }
+  if(m.k==='relic'){
+    const r=P(s).relics.find(x=>x.id===m.id);
+    if(!r) return {ok:false, why:'Ya no tienes esa Reliquia'};
+    return {ok: await useRelic(s,r), why:'No se pudo usar la Reliquia'};
+  }
+  if(m.k==='attack'){
+    const u=mio(m.uid);
+    if(!u) return {ok:false, why:'Ese Personaje ya no está en tu campo'};
+    if(!canAttack(u)) return {ok:false, why:porQueNoAtaca(u)};
+    const t = m.target==='face' ? 'face' : P(ME).field.find(x=>x.uid===m.target);
+    if(t!=='face' && !t) return {ok:false, why:'Ese objetivo ya no está en el campo'};
+    const lt=legalTargets(u);
+    if(t==='face' ? !lt.face : !lt.units.includes(t))
+      return {ok:false, why:porQueNoEsObjetivo(u,t).replace(/<[^>]+>/g,'')};
+    return {ok: await doAttack(u,t), why:'No se pudo atacar'};
+  }
+  return {ok:false, why:'Jugada desconocida'};
 }
 
 /* ---------- el invitado responde a lo que le pide el anfitrión ---------- */
