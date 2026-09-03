@@ -959,6 +959,15 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Cortinilla de VS al empezar la partida** (build 98). Entre elegir rival y ver la mesa, las
+  dos cartas entran desde los lados, chocan en el centro con destello y fuego, aguantan cuatro
+  segundos con el <b>VS</b> en medio y se apartan revelando el tablero. Sólo la ve quien juega:
+  en partidas automáticas, silenciosas o del arnés no se monta siquiera — cuatro segundos de
+  adorno no pueden colarse en una tanda de 2000 partidas.
+- **Los avisos de pantalla se apilan en vez de pisarse.** Todos salían en el centro exacto del
+  tapete, así que dos a la vez quedaban uno encima del otro y no se leía ninguno. Con **Puntos
+  Robados** pasaba siempre: gana un contador por cada rival que muere, y en un turno mueren
+  varios. Ahora cada aviso ocupa su fila y, cuando uno se va, los de abajo suben a su sitio.
 - **Elegir Protagonista es un carrete, en dos pasos** (build 95). Antes eran cinco fichas idénticas en fila y
   había que leerlas todas para decidir; ahora las cinco van en abanico, la elegida al frente a
   tamaño completo con su retrato, y debajo una ficha con lo que hay que leer de ella: pasiva,

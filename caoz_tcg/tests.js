@@ -311,6 +311,29 @@ PRUEBAS.suite('regresiones', async t => {
     tutEnd();
   }
 
+  /* LA CORTINILLA DEL VS: se monta, dura lo suyo y se limpia sola. Lo que no
+     puede pasar es que se quede pegada tapando la mesa. */
+  {
+    const t0 = Date.now();
+    const p = cortinillaVS('fender','adreida');
+    await sleep(300);
+    const capa = $1('.vs');
+    t.check(!!capa, 'la cortinilla del VS no llegó a montarse');
+    t.check(!!capa && capa.querySelectorAll('.vscard').length===2,
+      'la cortinilla debería enseñar las dos cartas');
+    await p;
+    const dur = Date.now() - t0;
+    t.check(!$1('.vs'), 'la cortinilla se quedó pegada en pantalla');
+    t.check(dur > 3000 && dur < 6000, `la cortinilla duró ${dur}ms; se esperaban ~4000`);
+
+    // y NO se monta cuando no la quieren: partidas automáticas y del arnés
+    await cortinillaVS('fender','adreida',{silent:true});
+    t.check(!$1('.vs'), 'no debería montarse en una partida silenciosa');
+    await cortinillaVS('fender','adreida',{sinCortinilla:true});
+    t.check(!$1('.vs'), 'no debería montarse si se pide sin ella');
+    t.nota('la cortinilla del VS aparece, dura ~4 s y se limpia');
+  }
+
   /* El tutorial no deja hacer nada que no necesite para avanzar. Se recorren
      TODOS sus pasos: ninguno puede abrirse del todo. */
   {
@@ -707,7 +730,8 @@ PRUEBAS.suite('regresiones', async t => {
     let empezasteTu = 0;
     for (let i = 0; i < 6; i++){
       const gViejo = T.G;                        // para saber cuándo nace la nueva
-      startMatch('fender','adreida');            // sin await: espera a que elijas
+      // sin la cortinilla del VS: aquí se prueba el volado, y son 4 s por vuelta
+      startMatch('fender','adreida',{sinCortinilla:true});   // sin await: espera a que elijas
       for (let k=0; k<40 && !$1('#ladoCara'); k++) await sleep(50);
       t.check(!!$1('#ladoCara'), 'debería preguntarte cara o cruz al empezar');
       (i % 2 ? $1('#ladoCruz') : $1('#ladoCara')).click();
