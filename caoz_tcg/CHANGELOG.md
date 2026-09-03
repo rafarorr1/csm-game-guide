@@ -13,6 +13,44 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v9 — Tal Habla por el Cadáver deja de ser una carta muerta · 2026-09-03
+
+### El cambio
+
+**Antes:** «Cuando un aliado muere **y controlas un Dragón**: vuelve al campo con 1 PV y +2 ATQ
+hasta el final del turno rival.»
+**Ahora:** sin el requisito de Dragón.
+
+### Por qué
+
+El banco la venía marcando tanda tras tanda como **trampa que nunca salta**, y al mirar por qué
+la respuesta era obvia: el único Dragón de peso del mazo de Talesin es Tal, que cuesta **10 PD**.
+La condición no se cumplía casi nunca, así que la carta ocupaba dos huecos de su mazo sin hacer
+nada. Sin el requisito hace lo que promete —que tus muertos vuelvan un turno más—, que además
+es exactamente el plan de Talesin.
+
+### Lo que mide el banco: nada
+
+Seis tandas de 2000 partidas con el cambio, frente a tres sin él:
+
+| | Mohamed | Fender | Adreida | Rafaela | Talesin | brecha |
+|---|---|---|---|---|---|---|
+| Antes | 43,3 | 45,4 | 59,8 | 60,3 | 41,1 | 20,2 |
+| Después | 44,0 | 45,7 | 60,7 | 58,6 | **41,0** | **20,0** |
+
+**El balance no se mueve.** Talesin se queda igual, y sus tandas van de 38,6 a 43,2: pura
+varianza. Una medición anterior de sólo dos tandas había dado +1,3 y parecía una mejora — no lo
+era, era ruido. Con 12000 partidas el efecto desaparece.
+
+Lo que sí cambia, y es consistente en las seis tandas: **ninguna trampa del juego se queda sin
+saltar**. Antes ésta salía siempre en esa lista.
+
+Se hace igualmente, y por eso: una carta muerta en un mazo es peor que una carta débil. La
+débil la juegas y decides que no valía; la muerta ocupa sitio y no llega a existir. Arreglarla
+es diseño, no balance, y conviene no confundir las dos cosas.
+
+---
+
 ## Sin numerar — El Cajón: 23 cartas nuevas, todavía fuera del juego · 2026-09-03
 
 No cambia ninguna partida: **ninguna de estas cartas está en un mazo**, así que no puede

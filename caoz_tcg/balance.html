@@ -489,16 +489,13 @@ const AJUSTES = {
       d.forEach(u=>u.tA++);
       if(d.length>=4 && p.deck.length) p.hand.push(p.deck.shift()); }; },
 
-  /* Talesin ×2. El banco la marca como trampa que nunca salta: pide controlar
-     un Dragón, y el suyo cuesta 10 PD. Sin ese requisito hace lo que promete:
-     que sus muertos vuelvan un turno más, que es su plan entero. */
-  talcadaver: c => { c.x = '<b>Cuando un aliado muere:</b> vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.';
-    c.can = (g,s,ev) => J.TCG.P(s).field.length<5 && !ev.token; },
+  /* Lo de Tal Habla por el Cadáver ya está en el juego: se quitó de aquí para
+     que el banco siga midiendo contra el estado real. */
 };
 
 /* Para poder medir por separado de quién es el mérito: ?ajustes=A sólo toca lo
    de Adreida, R lo de Rafaela, T lo de Talesin, 1 todo. */
-const GRUPOS = { A:['auxilio','armadura'], R:['discipulo','taumaturgia'], T:['talcadaver'] };
+const GRUPOS = { A:['auxilio','armadura'], R:['discipulo','taumaturgia'] };
 
 function aplicarAjustes(cual){
   const hechos=[];
