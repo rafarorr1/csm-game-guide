@@ -1523,7 +1523,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:81, fecha:'2026-09-01'};
+const BUILD = {n:82, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2904,6 +2904,12 @@ async function repartirALaVista(s){
 
 async function ofrecerManoNueva(s){
   if(!puedeRehacerMano(s)) return;
+  /* Esta pregunta se para a esperarte, y mientras espera puede empezar otra
+     partida —desde el menú, o encadenando partidas—. Si eso pasa, ésta ya no
+     pinta nada: seguir la dejaba aparecer sobre la partida nueva y pisar lo que
+     hubiera en pantalla, empezando por el cartel del volado. */
+  const miPartida = PARTIDA_N, miG = G;
+  const vive = () => miPartida === PARTIDA_N && miG === G && !G.over;
   const p = P(s);
   /* El volado deja su cartel en este mismo overlay. Preguntando encima se comía
      el resultado antes de que diera tiempo a leerlo: el primer turno empieza
@@ -2911,13 +2917,17 @@ async function ofrecerManoNueva(s){
      libre. */
   if(!G.silent && !G.auto){
     const ov = $('#ov');
-    for(let k=0; k<40 && ov && ov.classList.contains('on'); k++) await nap(100);
-    if(!puedeRehacerMano(s)) return;             // por si algo cambió mientras
+    for(let k=0; k<40 && ov && ov.classList.contains('on'); k++){
+      await nap(100);
+      if(!vive()) return;
+    }
+    if(!vive() || !puedeRehacerMano(s)) return;  // por si algo cambió mientras
     /* Primero se ve la mano, y luego se pregunta por ella. Se reparte a la
        vista —una carta tras otra saliendo del mazo— y se deja un respiro antes
        del cartel: preguntar de golpe sobre unas cartas que aún no has mirado no
        es una decisión, es un susto. */
     if(s === ME) await repartirALaVista(s);
+    if(!vive()) return;
   }
   const cuantas = p.hand.length;
   const sí = 0 === await ask(s,
@@ -2925,6 +2935,7 @@ async function ofrecerManoNueva(s){
     ['Sí, mano nueva', 'No, me la quedo'],
     () => 0,                                      // la CPU siempre la toma
     {suave:true, mirandoMano:true});              // sin tapar la mano: hay que verla
+  if(!vive()) return;                             // contestaste a una partida que ya no está
   p.manoRehecha = true;                           // usada, se acepte o no
   if(!sí){ log(`<b>${p.L.n}</b> se queda con su mano.`,'sys'); return; }
 

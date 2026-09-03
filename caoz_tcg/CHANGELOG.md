@@ -93,6 +93,11 @@ todo lo demás y llega justo después del volado.
 - **Destapó un fallo viejo en la prueba del volado**, que leía a quién le tocaba empezar de la
   partida *anterior*: hasta que `newGame` corre, `G` sigue siendo el de antes. Pasaba
   desapercibido porque casi siempre coincidía.
+- **Y podía aparecer sobre una partida que ya no existía.** La pregunta se para a esperarte, y
+  mientras espera puede empezar otra partida —desde el menú, o encadenando—. Al volver, seguía
+  como si nada y se plantaba encima de la nueva, pisando lo que hubiera en pantalla, empezando
+  por el cartel del volado. Ahora comprueba que su partida sigue viva en cada pausa. Es el
+  mismo cuidado que ya llevaba el turno de la CPU, y por la misma razón.
 
 ---
 
