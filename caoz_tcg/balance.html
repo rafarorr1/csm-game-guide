@@ -543,6 +543,35 @@ const TRASCENDER = {
    ======================================================================== */
 let PASIVA_PUESTA = null;
 
+/* ?conserje=1 — quitar los Conserjes de quien no tiene Pergamino.
+   Sus Llaves no sirven para nada ahí: el requisito del Pergamino es el único
+   sitio del juego que las mira. En Adreida son TRES huecos de mazo con una
+   carta a medias, y en Rafaela uno.
+   Ojo con la conclusión fácil: quitarle cartas flojas al Líder más fuerte lo
+   hace más fuerte, no menos. Por eso se mide antes de tocar nada. */
+function quitarConserjes(){
+  const T=J.TCG, hecho=[];
+  for(const lid of ['adreida','rafaela']){
+    const D=T.DECKS[lid];
+    const m=new Map(D.list.map(([id,n])=>[id,n]));
+    const cuantos=m.get('conserje')||0;
+    if(!cuantos) continue;
+    m.delete('conserje');
+    // se reponen con más cuerpo del propio arquetipo
+    const relleno = lid==='adreida' ? 'eric' : 'adolfo';
+    m.set(relleno, Math.min(3,(m.get(relleno)||0)+cuantos));
+    // si no cabe en 3 copias, se completa con lo siguiente del mazo
+    let total=[...m.values()].reduce((a,b)=>a+b,0);
+    const orden = lid==='adreida' ? ['horton','augusto','armadura'] : ['titaus','matildus','taumaturgia'];
+    for(const id of orden){ while(total<40 && (m.get(id)||0)<3){ m.set(id,(m.get(id)||0)+1); total++; } }
+    D.list=[...m.entries()];
+    hecho.push(`${lid}: −${cuantos} conserje, +${relleno} · ${total} cartas`);
+  }
+  return hecho.join(' | ');
+}
+
+/* Lo del Conserje ya está en el juego: se quita de aquí para medir contra
+   el estado real. Queda ?conserje=1, que enseña por qué NO hay que quitarlos. */
 function ponerPasiva(v){
   const T = J.TCG;
   const conHerencia = (v==='1'||v==='3');
@@ -619,6 +648,10 @@ function aplicarAjustes(cual){
 /* ======================================================================== */
 async function arrancar(){
   J = await esperarJuego();
+  if(location.search.includes('conserje')){
+    const r = quitarConserjes();
+    $('#salida').innerHTML = '<div class="nota">Sin Conserjes donde no sirven — ' + r + '</div>';
+  }
   const qPas = (location.search.match(/pasiva=(\d)/)||[])[1];
   if(qPas){
     const r = ponerPasiva(qPas);

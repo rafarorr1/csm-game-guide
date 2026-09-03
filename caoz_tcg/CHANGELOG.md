@@ -13,6 +13,36 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v11 — El Conserje deja de mentir en los mazos sin Pergamino · 2026-09-03
+
+**Al morir:** su controlador gana 1 Llave del Domo, **o 1 PD si su Líder no usa Llaves**.
+
+### Por qué
+
+Las Llaves sólo sirven para una cosa: el requisito del Pergamino. Es la **única línea del juego
+que las mira**. Así que en un mazo sin Pergamino la habilidad del Conserje no hacía
+absolutamente nada — y **De Frente lleva tres**, Los Doce Discípulos uno.
+
+### Lo que enseñó medirlo antes de tocarlo
+
+Lo primero que se probó fue lo obvio: quitarlos de esos dos mazos y reponer con cuerpo. Salió
+al revés de lo esperado:
+
+| | Mohamed | Fender | Adreida | Rafaela | Talesin | brecha |
+|---|---|---|---|---|---|---|
+| Como estaba | 44,0 | 45,7 | 60,7 | 58,6 | 45,2 | 18,8 |
+| **Quitando los Conserjes** | 38,4 | 41,5 | **70,1** | 58,3 | 41,8 | **32,0** |
+| Con la habilidad arreglada | 43,6 | 44,7 | 60,4 | 57,2 | 44,1 | **18,1** |
+
+**Quitarlos disparaba a Adreida de 60,7 a 70,1.** Esos tres Conserjes eran tres cartas flojas
+que estaban frenando al Líder más fuerte: sacarlas de su mazo lo mejora. Una carta a medias
+puede estar haciendo de lastre sin que nadie lo pusiera ahí a propósito.
+
+Arreglar la habilidad, en cambio, no mueve el balance —18,1 contra 18,8 es ruido— y la carta
+cumple lo que promete en los cinco mazos. Sigue siendo floja, que es lo que hace falta que sea.
+
+---
+
 ## v10 — La Ascensión de Talesin deja de premiar a los que ya no están · 2026-09-03
 
 ### El cambio
@@ -970,6 +1000,21 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   **No toca el balance**: el banco entra por `setupMatch`, nunca por `startMatch`, así que ni
   el volado ni la cortinilla aparecen en sus 2000 partidas — y además fija él quién empieza.
   Medido igualmente después del cambio: 18,3 de brecha contra 18,8, que es ruido.
+- **Reloj de turno: 1:30** (build 103). Si se acaba, pasa el turno igual que si pulsaras el
+  botón — no se descarta ni se pierde nada. Sólo corre en tu turno y sólo cuando hay alguien
+  jugando: en el tutorial no, que va a su ritmo y te para a explicarte cosas; ni en partidas
+  automáticas; ni mientras el juego está resolviendo algo. Se pone rojo en los últimos 15 s.
+- **La Nube de Dagas se ve mientras dura.** Quedaba flotando tres turnos sin aparecer en ningún
+  sitio: sabías que la jugaste y luego ya no, y el rival no tenía forma de saber por qué le
+  pegaban al entrar. Ahora sale en el raíl derecho con los turnos que le quedan y su ficha al
+  pasar por encima.
+- **Tus Trampas dicen cuál es y qué hace.** Sólo llevaban el tooltip del navegador: tarda un
+  segundo, no se puede dar estilo y nadie lo espera. Ahora tienen la misma ficha que las cartas.
+  Boca abajo lo están para el rival, no para ti.
+- **El juego dice por qué no puedes jugar una carta.** Ya avisaba, pero el motivo genérico era
+  «no hay objetivos válidos» y se iba solo. Ahora dice cuál es —cuánto cuesta y cuánto tienes,
+  campo lleno, zona de Trampas llena, ningún Personaje con hueco para otro Objeto, qué
+  objetivos faltan— y queda en el Registro.
 - **En línea ya no se filtra qué Trampa has puesto** (build 102). Iba boca abajo en el tablero,
   pero el aviso y el registro sí decían su nombre — y viajaban al rival. El fallo estaba en
   decidirlo con «si la Trampa no es mía, ocúltala»: en local vale, pero en línea el anfitrión
