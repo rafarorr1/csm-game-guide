@@ -931,6 +931,48 @@ PRUEBAS.suite('regresiones', async t => {
 
     t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
   }
+
+  /* EL CAJÓN — las cartas nuevas, todavía fuera de los mazos.
+     Lo que se comprueba: que se pueden jugar sin reventar, que sus trampas
+     usan disparadores que el motor conoce, y que NINGUNA se ha colado en un
+     mazo sin querer, que es lo único que las haría entrar en una partida. */
+  {
+    const cajon = Object.keys(T.CARDS).filter(id => T.CARDS[id].set==='cajon');
+    t.check(cajon.length > 0, 'no hay ninguna carta en el Cajón');
+
+    const eventos = ['ataque','ataqueAlma','hechizoOHabilidad','letal',
+                     'muerteAliada','muerteAliadaCombate'];
+    for (const id of cajon){
+      const c = T.CARDS[id];
+      t.check(!!c.n && !!c.art && !!c.x, `${id}: le falta nombre, arte o texto`);
+      if (c.t==='trampa')
+        t.check(eventos.includes(c.on), `${id}: dispara con "${c.on}", que el motor no conoce`);
+    }
+
+    const coladas = cajon.filter(id =>
+      Object.values(T.DECKS).some(d => d.list.some(([c]) => c===id)));
+    t.check(!coladas.length,
+      `estas cartas del Cajón están en un mazo y no deberían: ${coladas.join(', ')}`);
+
+    // y se juegan de verdad, con un tablero que les dé objetivos válidos
+    const rotas = [];
+    for (const id of cajon.filter(x => !T.CARDS[x].token)){
+      try{
+        await T.setupMatch('mohamed','adreida',{first:0,silent:true,fast:true,auto:true});
+        const p=T.P(0), f=T.P(1);
+        p.field.push(T.mkUnit('machete',0), T.mkUnit('matildus',0));
+        f.field.push(T.mkUnit('minus',1), T.mkUnit('discipulo',1), T.mkUnit('bob',1));
+        p.field.forEach(u=>u.sick=false); f.field.forEach(u=>u.sick=false);
+        p.field[0].objs.push('jabon');
+        T.recalc(); p.pd=10; T.G.active=0; T.G.phase='principal'; T.G.turnNo=3;
+        p.hand=[id];
+        if(!T.canPlay(0,id)){ rotas.push(id+' (no se puede jugar)'); continue; }
+        await T.playFromHand(0,id);
+      }catch(e){ rotas.push(id+': '+(e&&e.message||e)); }
+    }
+    t.check(!rotas.length, `cartas del Cajón que fallan al jugarse: ${rotas.join(' · ')}`);
+    t.nota(`el Cajón: ${cajon.length} cartas nuevas, jugables y fuera de los mazos`);
+  }
 });
 
 /* ===========================================================================

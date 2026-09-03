@@ -13,6 +13,50 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — El Cajón: 23 cartas nuevas, todavía fuera del juego · 2026-09-03
+
+No cambia ninguna partida: **ninguna de estas cartas está en un mazo**, así que no puede
+salir jugando. Se ven en «Ver todas las cartas» → **🗄️ El Cajón**, que es donde se prueban
+antes de decidir si entran.
+
+### De las 25 propuestas, 23
+
+Dos ya existían con el mismo nombre y el mismo efecto, así que no se duplicaron:
+
+| Propuesta | Ya estaba como |
+|---|---|
+| Copia de Jabón | **Copia de Jabón** (3 PD) — «elige un Objeto rival, copia a tu mano» |
+| Trampa de Escalera Colapsable | **Colapso de Paja** (3 PD) — Costo 4+ que ataca: 4 de fuego, cancela y aturde |
+
+Otras dos rozaban cartas existentes y se hicieron distintas a propósito, para que aporten en
+vez de repetir:
+
+- **Rulchete de Bajo Presupuesto** — el `rulchete` de siempre transforma un aliado en un Dragón
+  7/7; éste invoca una ficha 0/6 con Provocar. Uno es una amenaza, el otro un escudo.
+- **Esporas de Sir Horton** — las `esporas` existentes infectan a todo el campo rival cuando
+  muere un aliado; ésta infecta **y** posee a un solo objetivo. Área contra precisión.
+
+### Nada de reglas nuevas
+
+Están hechas con el vocabulario que el motor ya resuelve —Aturdido, Infectado, Poseído, Prisa,
+Sigilo, Arquero, fichas, daño de Fuego, destruir Objetos—, así que no hubo que tocar el motor.
+Donde el efecto original pedía una regla que no existe, se cambió por la pieza más cercana:
+
+- *doble ataque* → **Arquero** (golpea sin recibir contraataque);
+- *atacar a 3 objetivos* → 1 daño a tres rivales distintos, que es lo mismo contado en daño;
+- *robar una unidad* → **Poseído**, que ya es el «cambia de bando» del juego.
+
+Tres cartas cambiaron de tipo respecto a la propuesta: los Lentes, la Espada de Luz, los
+Brazos de Agua, el iPad Kid y la Espada de la Bóveda son **Objetos**, no Hechizos — se
+equipan, que es lo que decía su texto.
+
+### Comprobado
+
+El arnés juega las 23 con un tablero preparado para que todas tengan objetivo válido, dispara
+las 6 trampas y verifica que ninguna se ha colado en un mazo. Tres rondas seguidas en verde.
+
+---
+
 ## v8 — Mano nueva: el barajado deja de decidir partidas · 2026-09-02
 
 ### La regla
