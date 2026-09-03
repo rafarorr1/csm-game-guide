@@ -55,6 +55,39 @@ equipan, que es lo que decía su texto.
 El arnés juega las 23 con un tablero preparado para que todas tengan objetivo válido, dispara
 las 6 trampas y verifica que ninguna se ha colado en un mazo. Tres rondas seguidas en verde.
 
+### ¿Y si las metiéramos en los mazos? — medido antes de decidir
+
+`balance.html?cajon=1` y `?cajon=2` parchean las listas **en memoria** y juegan con ellas. Los
+mazos del juego no se tocan: al recargar sin el parámetro vuelven a ser los de siempre. Cada
+propuesta quita tantas cartas como mete, así que los mazos siguen siendo de 40.
+
+| | Mohamed | Fender | Adreida | Rafaela | Talesin | brecha |
+|---|---|---|---|---|---|---|
+| **Mazos de hoy** | 43,3 | 45,4 | 59,8 | 60,3 | 41,1 | **20,2** |
+| **A** — cambios en los cinco | 42,3 | 50,8 | 68,3 | 49,6 | 38,9 | **29,5** |
+| **B** — sólo a los tres flojos | 45,2 | 45,6 | 60,4 | 58,7 | 40,1 | **20,5** |
+
+Tres tandas de 2000 partidas cada fila.
+
+**A empeora el balance**, y de forma consistente (31,0 · 29,5 · 27,9). Dos culpables:
+
+- **Espada de Luz Celestial en Adreida.** +3 ATQ cruza el umbral de 4 y su pasiva regala
+  Provocar: la sinergia que la hacía atractiva es justo la que la rompe. Adreida ya era de las
+  fuertes y se va a 68.
+- **Cambiarle remoción por curación a Rafaela.** Perder Manos Ardientes y Ceguera por el Humo
+  de Bob Carly la hunde 10 puntos. Curar 2 a todo el campo no sustituye a matar algo.
+
+**B no mueve nada**: 20,5 contra 20,2 es ruido. Ninguno de esos tres cambios se nota.
+
+Y una lección de método que conviene no olvidar: **los porcentajes son relativos entre sí**.
+En A, el +5,4 de Fender y buena parte del +8,5 de Adreida no eran mérito de sus cartas nuevas,
+sino del desplome de Rafaela — hay menos partidas que perder contra ella. Se ve al comparar con
+B, donde Fender lleva las mismas cartas y sube 0,2. Un Líder puede «mejorar» sin tocarlo.
+
+**Conclusión: ninguna de estas cartas mejora el juego tal como está.** Las que hacen algo lo
+hacen para mal. Se quedan en el Cajón para los mazos de Gero y Pitágoras, que es donde se
+diseñaron para ir.
+
 ---
 
 ## v8 — Mano nueva: el barajado deja de decidir partidas · 2026-09-02
