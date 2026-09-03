@@ -267,16 +267,24 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* la ficha de debajo: todo lo que hay que leer, de la que esté al frente */
 /* Alto FIJO, no mínimo: con altura variable el bloque crecía o encogía según lo
    largo que fuera el texto de cada Líder y el carrete daba un salto al girar.
-   Cabe el más largo de los cinco y los demás centran su texto dentro. */
-.fichaLider{width:min(820px,94vw);height:172px;margin:8px auto 0;
-  display:flex;flex-direction:column;justify-content:center;
+   Cabe el más largo de los cinco y los demás reparten su texto dentro.
+
+   Y en dos partes: el nombre y el arquetipo SIEMPRE en el mismo sitio, y el
+   texto repartido en lo que sobra. Centrando el bloque entero, el nombre subía
+   o bajaba según lo largo que fuera lo de abajo —con Talesin quedaba 6 px más
+   alto que con los demás— y al girar el carrete el título daba un brinco. */
+.fichaLider{width:min(820px,94vw);height:186px;margin:8px auto 0;
+  display:flex;flex-direction:column;
   border:1px solid var(--line);border-radius:14px;padding:14px 22px;
   background:linear-gradient(180deg,rgba(36,26,52,.72),rgba(20,14,34,.72));
   text-align:center;transition:border-color .35s}
+.fichaLider .cabeza{flex:0 0 auto}                 /* clavada arriba */
+.fichaLider .cuerpo{flex:1;min-height:0;display:flex;flex-direction:column;
+  justify-content:center}                          /* centrado en lo que queda */
 .fichaLider .fn{font:700 23px/1.15 var(--serif);font-variant:small-caps;
   letter-spacing:.6px;color:var(--gold)}
 .fichaLider .fa{font:700 10.5px/1.4 var(--sans);color:var(--purple);
-  text-transform:uppercase;letter-spacing:1.9px;margin:3px 0 9px}
+  text-transform:uppercase;letter-spacing:1.9px;margin:3px 0 0}
 .fichaLider .fl{font-size:14px;color:#c2b5da;line-height:1.5}
 .fichaLider .fl + .fl{margin-top:6px}
 .fichaLider .fl b{color:var(--gold);font-weight:700}
@@ -1667,7 +1675,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:95, fecha:'2026-09-01'};
+const BUILD = {n:96, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5475,11 +5483,15 @@ function buildSelect(){
   // la ficha: lo que hay que leer de la que está al frente
   const L=LEADERS[elegido], D=DECKS[elegido];
   $('#fichaLider').innerHTML = `
-    <div class="fn">${L.n} <span style="font-size:13px;color:var(--dim)">— ${L.ep}</span></div>
-    <div class="fa">${D.d}</div>
-    <div class="fl">${L.pasiva}</div>
-    <div class="fl">${L.hab}</div>
-    <div class="fm">Mazo <b>“${D.n}”</b> · 40 cartas · dificultad ${'★'.repeat(GUIAS[elegido].dif)}${'☆'.repeat(3-GUIAS[elegido].dif)}</div>`;
+    <div class="cabeza">
+      <div class="fn">${L.n} <span style="font-size:13px;color:var(--dim)">— ${L.ep}</span></div>
+      <div class="fa">${D.d}</div>
+    </div>
+    <div class="cuerpo">
+      <div class="fl">${L.pasiva}</div>
+      <div class="fl">${L.hab}</div>
+      <div class="fm">Mazo <b>“${D.n}”</b> · 40 cartas · dificultad ${'★'.repeat(GUIAS[elegido].dif)}${'☆'.repeat(3-GUIAS[elegido].dif)}</div>
+    </div>`;
 
   $('#selGo').disabled=false;
 }
