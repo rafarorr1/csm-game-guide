@@ -1,6 +1,11 @@
 {
  "augusto": 0,
  "lucius": 50,
+ "lider_adreida": {
+  "x": 50,
+  "y": 5,
+  "z": 106
+ },
  "lider_fender": {
   "x": 0,
   "y": 2,
@@ -10,11 +15,6 @@
   "x": 50,
   "y": 6,
   "z": 100
- },
- "lider_adreida": {
-  "x": 50,
-  "y": 5,
-  "z": 106
  },
  "lider_talesin": {
   "x": 50,
