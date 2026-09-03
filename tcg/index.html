@@ -1523,7 +1523,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:82, fecha:'2026-09-01'};
+const BUILD = {n:86, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2243,9 +2243,14 @@ C('esporas',{n:'Esporas del Demonio',t:'trampa',c:2,r:0,art:'🦠',
  fire:async(g,s,ev)=>{ P(1-s).field.forEach(u=>infect(u));
    log('Esporas del Demonio: todo el campo rival queda Infectado.','dmg'); }});
 
+/* El requisito de controlar un Dragón la dejaba muerta: el único Dragón de peso
+   del mazo de Talesin cuesta 10 PD, así que la condición no se cumplía nunca y
+   el banco la marcaba tanda tras tanda como trampa que jamás salta. Sin él hace
+   lo que promete —que tus muertos vuelvan un turno más—, que es justo el plan de
+   Talesin. Medido: +1,3 a Talesin y ninguna trampa muerta en el juego. */
 C('talcadaver',{n:'Tal Habla por el Cadáver',t:'trampa',c:3,r:1,art:'🐉',
- x:'<b>Cuando un aliado muere y controlas un Dragón:</b> vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.',
- on:'muerteAliada', can:(g,s,ev)=>P(s).field.some(u=>u.tribes.includes('Dragón'))&&P(s).field.length<5&&!ev.token,
+ x:'<b>Cuando un aliado muere:</b> vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.',
+ on:'muerteAliada', can:(g,s,ev)=>P(s).field.length<5&&!ev.token,
  fire:async(g,s,ev)=>{ const u=mkUnit(ev.cardId,s); u.dmg=Math.max(0,statHp(u)-1); u.pA+=2; u.doomed=true;
    P(s).field.push(u); recalc(); log(`Tal habla por el cadáver de ${u.card.n}.`); }});
 
@@ -2300,6 +2305,167 @@ C('montanas',{n:'Las Montañas de Tal',t:'lugar',c:3,r:1,art:'⛰️',
 C('domo',{n:'El Domo',t:'lugar',c:4,r:1,art:'🔴',
  x:'Cada vez que un Personaje muere, su controlador pierde 1 Alma y el otro gana 1 PD. Las Llaves del Domo se ganan al doble.',
  domeDeath:true, doubleKeys:true});
+
+/* ==========================================================================
+   2b. EL CAJÓN — cartas nuevas, todavía fuera de los mazos
+   --------------------------------------------------------------------------
+   Salen de los episodios y están hechas con el mismo vocabulario que el resto:
+   nada aquí necesita reglas nuevas, sólo piezas que el motor ya sabe resolver
+   —Aturdido, Infectado, Poseído, Prisa, Sigilo, Arquero, fichas, daño de fuego.
+
+   Llevan set:'cajon' y NO están en ningún mazo: se ven en «Ver todas las
+   cartas» y se prueban ahí antes de decidir dónde entran. Cuando una se gane su
+   sitio, basta con meterla en la lista de un mazo.
+   ========================================================================== */
+
+/* ---- fichas del cajón ---- */
+C('tok_rulchete',{n:'Rulchete',t:'personaje',c:2,a:0,h:6,tr:['Dragón','Goblin'],r:0,art:'🐲',set:'cajon',
+ x:'<b>Provocar.</b> Ficha. Un dragón morado de bajo presupuesto: no pega, pero aguanta.',
+ keys:['provocar'], token:true});
+
+/* ---- hechizos ---- */
+C('gatobachatero',{n:'El Gato Bachatero',t:'hechizo',c:3,sub:['engano'],r:0,art:'🐈',set:'cajon',
+ x:'Los Personajes rivales de Costo 2 o menos quedan <b>Aturdidos</b>: se quedan mirando el baile.',
+ req:(g,s)=>P(1-s).field.some(u=>u.card.c<=2),
+ cast:async(g,s)=>{ let k=0;
+   for(const u of P(1-s).field) if(u.alive && u.card.c<=2){ stun(u); k++; }
+   log(`🐈 El gato baila bachata: ${k} rival${k===1?'':'es'} <b>Aturdido${k===1?'':'s'}</b>.`,'dmg'); }});
+
+C('fetichemino',{n:'Fetiche de Minotauro',t:'hechizo',c:2,r:0,art:'🥛',set:'cajon',
+ x:'Un Personaje rival <b>Bestia</b> o <b>Minotauro</b> queda <b>Aturdido</b> y tú robas 1 carta.',
+ tg:[{k:'unidadEnemiga',min:1,max:1,f:u=>u.tribes.includes('Bestia')||u.tribes.includes('Minotauro')}],
+ req:(g,s)=>P(1-s).field.some(u=>u.tribes.includes('Bestia')||u.tribes.includes('Minotauro')),
+ cast:async(g,s,ts)=>{ const u=ts[0][0]; stun(u);
+   log(`${u.card.n} suelta la guardia por una cubeta de leche.`,'dmg'); await draw(s,1); }});
+
+C('brujula',{n:'Brújula «She vale el doble»',t:'hechizo',c:2,r:0,art:'🧭',set:'cajon',
+ x:'2 daño a un Personaje rival. Si eso lo mata, robas 2 cartas: valía el doble.',
+ tg:[{k:'unidadEnemiga',min:1,max:1}],
+ req:(g,s)=>P(1-s).field.length>0,
+ cast:async(g,s,ts)=>{ const u=ts[0][0];
+   await dmgU(u,2,{src:'hechizo'});
+   if(!u.alive){ log('La brújula tenía razón: <b>valía el doble</b>. Robas 2.','good'); await draw(s,2); } }});
+
+C('viajehongos',{n:'Viaje de Hongos de Rantiago',t:'hechizo',c:2,r:0,art:'🍄',set:'cajon',
+ x:'Un aliado gana <b>+2/+2 permanentes</b> pero queda <b>Aturdido</b>: se siente gigante e intangible.',
+ tg:[{k:'unidadAliada',min:1,max:1}],
+ req:(g,s)=>P(s).field.length>0,
+ cast:async(g,s,ts)=>{ const u=ts[0][0]; u.pA+=2; u.pH+=2; stun(u); recalc();
+   log(`${u.card.n} se siente <b>gigante</b> (+2/+2) y no vuelve en sí este turno.`); }});
+
+C('humobob',{n:'El Humo de Bob Carly',t:'hechizo',c:3,r:0,art:'💨',set:'cajon',
+ x:'Todos tus Personajes curan 2 PV y ganan <b>Sigilo</b> hasta que ataquen.',
+ req:(g,s)=>P(s).field.length>0,
+ cast:async(g,s)=>{ for(const u of P(s).field) if(u.alive){ healU(u,2); addKey(u,'sigilo'); }
+   log('💨 Sándalo por toda la planicie: tu campo cura 2 y se esconde.','heal'); }});
+
+C('propaganda',{n:'Propaganda Electoral',t:'hechizo',c:4,sub:['engano'],r:1,art:'📢',set:'cajon',
+ x:'Todos los Personajes rivales de tribu <b>Elfo</b> o <b>Elfa</b> quedan <b>Poseídos</b>: pierden la mitad de su ATQ y sus habilidades.',
+ req:(g,s)=>P(1-s).field.some(u=>u.tribes.includes('Elfo')||u.tribes.includes('Elfa')),
+ cast:async(g,s)=>{ let k=0;
+   for(const u of P(1-s).field) if(u.alive && (u.tribes.includes('Elfo')||u.tribes.includes('Elfa'))){ possess(u); k++; }
+   log(`📢 «Vota por el candidato de la fe»: ${k} elfo${k===1?'':'s'} radicalizado${k===1?'':'s'}.`,'dmg'); }});
+
+C('ballesta',{n:'Ballesta de Triple Disparo',t:'hechizo',c:3,r:0,art:'🏹',set:'cajon',
+ x:'1 daño a tres Personajes rivales distintos.',
+ req:(g,s)=>P(1-s).field.length>0,
+ cast:async(g,s)=>{ log('🏹 Tres tiros seguidos.','dmg');
+   for(const u of [...P(1-s).field].slice(0,3)) if(u.alive) await dmgU(u,1,{src:'hechizo'}); }});
+
+C('lanzallamas',{n:'Lanzallamas de Desodorante',t:'hechizo',c:2,sub:['fuego'],r:0,art:'🧯',set:'cajon',
+ x:'3 daño de <b>Fuego</b> a un Personaje rival. El fuego le impide regenerar este turno.',
+ tg:[{k:'unidadEnemiga',min:1,max:1}],
+ req:(g,s)=>P(1-s).field.length>0,
+ cast:async(g,s,ts)=>{ log('🧯 Desodorante y encendedor: fuego improvisado.','dmg');
+   await dmgU(ts[0][0],3,{fire:true,src:'hechizo'}); }});
+
+C('lifestealer',{n:'Espada Life Stealer',t:'hechizo',c:3,r:1,art:'🗡️',set:'cajon',
+ x:'Un aliado gana <b>+2/+0 permanentes</b> y tú ganas <b>3 Alma</b>: la hoja devuelve lo que quita.',
+ tg:[{k:'unidadAliada',min:1,max:1}],
+ req:(g,s)=>P(s).field.length>0,
+ cast:async(g,s,ts)=>{ const u=ts[0][0]; u.pA+=2; recalc();
+   P(s).alma+=3; log(`${u.card.n} empuña la Life Stealer: +2 ATQ y 3 Alma para ti.`,'heal'); }});
+
+C('lecheslact',{n:'El Vaso de Leche Deslactosada',t:'hechizo',c:1,sub:['fe'],r:0,art:'🥛',set:'cajon',
+ x:'Un Personaje se calma: queda <b>Aturdido</b>. Si es tuyo, además cura 3 PV.',
+ tg:[{k:'unidad',min:1,max:1}],
+ req:(g,s)=>P(0).field.length+P(1).field.length>0,
+ cast:async(g,s,ts)=>{ const u=ts[0][0]; stun(u);
+   if(u.side===s){ healU(u,3); log(`${u.card.n} se toma su leche y se relaja (+3 PV).`,'heal'); }
+   else log(`${u.card.n} baja la guardia: hasta los psicópatas toman leche.`,'dmg'); }});
+
+C('rulchetebajo',{n:'Rulchete de Bajo Presupuesto',t:'hechizo',c:3,sub:['fe'],r:0,art:'🐲',set:'cajon',
+ x:'Invoca a <b>Rulchete</b> 0/6 con <b>Provocar</b>: un dragón morado que sólo sirve para ponerse delante.',
+ req:(g,s)=>P(s).field.length<5,
+ cast:async(g,s)=>{ await summonToken(s,'tok_rulchete',{msg:'🐲 ¡Rulchete se interpone!'}); }});
+
+C('esporashorton',{n:'Esporas de Sir Horton',t:'hechizo',c:3,r:1,art:'🍄',set:'cajon',
+ x:'Un Personaje rival queda <b>Infectado</b> y <b>Poseído</b>: ve cosas y ya no distingue a los suyos.',
+ tg:[{k:'unidadEnemiga',min:1,max:1}],
+ req:(g,s)=>P(1-s).field.length>0,
+ cast:async(g,s,ts)=>{ const u=ts[0][0]; infect(u); possess(u); recalc();
+   log(`A ${u.card.n} le brotan hongos en los ojos.`,'dmg'); }});
+
+/* ---- objetos ---- */
+C('lentesmachete',{n:'Los Lentes de Machete',t:'objeto',c:2,r:1,art:'👓',set:'cajon',equip:true,mod:{a:1,h:0},
+ x:'<b>Equipo.</b> +1 ATQ y <b>Arquero</b>: golpea sin recibir contraataque. Es lo único que quedó de él.',
+ gkeys:['arquero']});
+
+C('espadaluz',{n:'Espada de Luz Celestial',t:'objeto',c:3,r:1,art:'⚔️',set:'cajon',equip:true,mod:{a:3,h:0},
+ x:'<b>Equipo.</b> +3 ATQ e inmunidad a los Hechizos de <b>Engaño</b>: la luz no se deja embaucar.',
+ grants:{enganoProof:true}});
+
+C('brazosagua',{n:'Brazos de Agua de Barril',t:'objeto',c:3,r:0,art:'🌊',set:'cajon',equip:true,mod:{a:1,h:2},
+ x:'<b>Equipo.</b> +1/+2, <b>Arquero</b> e inmunidad al daño de <b>Fuego</b>.',
+ gkeys:['arquero'], grants:{fireProof:true}});
+
+C('ipadkid',{n:'El iPad Kid Silenciado',t:'objeto',c:1,r:0,art:'🎧',set:'cajon',equip:true,mod:{a:0,h:3},
+ x:'<b>Equipo.</b> +0/+3 e inmune a los Hechizos de <b>Engaño</b>: con los auriculares puestos no se entera de nada.',
+ grants:{enganoProof:true}});
+
+C('espadaboveda',{n:'Espada Común de la Bóveda',t:'objeto',c:1,r:0,art:'🗡️',set:'cajon',equip:true,mod:{a:1,h:0},
+ x:'<b>Equipo.</b> +1 ATQ. Una espada pitera del catálogo de la bóveda, pero es lo que había.'});
+
+/* ---- trampas ---- */
+C('eclipse',{n:'El Eclipse Arrugado',t:'trampa',c:2,r:0,art:'🌑',set:'cajon',
+ x:'<b>Cuando ataca un Personaje rival con Objetos:</b> se le destruye todo el equipo y queda al descubierto.',
+ on:'ataque', can:(g,s,ev)=>ev.att&&ev.att.objs.length>0,
+ fire:async(g,s,ev)=>{ const u=ev.att;
+   log(`El eclipse pilla a ${u.card.n} sin ropa: su equipo se destruye.`,'dmg');
+   for(const id of [...u.objs]) await destroyObject(1-s,{id,unit:u});
+   u.noFly=true; recalc(); }});
+
+C('afterparty',{n:'Invitación al After Party',t:'trampa',c:3,r:1,art:'🎉',set:'cajon',
+ x:'<b>Cuando ataca un Personaje rival de Costo 4 o más:</b> el ataque se cancela y vuelve a la mano de su dueño.',
+ on:'ataque', can:(g,s,ev)=>ev.att&&ev.att.card.c>=4,
+ fire:async(g,s,ev)=>{ ev.cancel=true;
+   log(`${ev.att.card.n} se va al after con las reptilukis.`,'sys'); bounce(ev.att); }});
+
+C('ciclope',{n:'Juguetes para el Cíclope',t:'trampa',c:2,r:0,art:'👁️',set:'cajon',
+ x:'<b>Cuando un Personaje rival ataca:</b> el ataque se cancela y aparecen 2 <b>Ilusiones</b> de señuelo.',
+ on:'ataque', can:(g,s,ev)=>true,
+ fire:async(g,s,ev)=>{ ev.cancel=true;
+   log('«Son juguetes interactivos, míralos»: el ataque se pierde.','sys');
+   for(let i=0;i<2;i++) if(P(s).field.length<5) await summonToken(s,'tok_ilusion'); }});
+
+C('ladrillos',{n:'Ladrillos de Edo Mex',t:'trampa',c:1,r:0,art:'🧱',set:'cajon',
+ x:'<b>Cuando ataca un Personaje rival con Prisa o Vuelo:</b> el ataque se cancela y queda <b>Aturdido</b>. Sin llantas no va a ningún lado.',
+ on:'ataque', can:(g,s,ev)=>ev.att&&(ev.att.keys.has('prisa')||ev.att.keys.has('vuelo')),
+ fire:async(g,s,ev)=>{ ev.cancel=true; stun(ev.att);
+   log(`${ev.att.card.n} amanece sobre ladrillos: sin llantas.`,'dmg'); }});
+
+C('lutorafaela',{n:'Luto Dramático de Rafaela',t:'trampa',c:2,r:0,art:'😭',set:'cajon',
+ x:'<b>Cuando muere un aliado:</b> tus Personajes ganan <b>+2 ATQ</b> hasta el final del turno.',
+ on:'muerteAliada', can:(g,s,ev)=>true,
+ fire:async(g,s,ev)=>{ let k=0; P(s).field.forEach(u=>{ if(u.alive){ u.tA+=2; k++; } }); recalc();
+   log(`El llanto de Rafaela enciende a ${k} aliado${k===1?'':'s'} (+2 ATQ).`,'good'); }});
+
+C('lanzallave',{n:'Lanzamiento de Llave Desesperado',t:'trampa',c:2,r:1,art:'🗝️',set:'cajon',
+ x:'<b>Cuando muere un aliado:</b> alcanza la llave y escapa del Domo — su carta vuelve a tu mano.',
+ on:'muerteAliada', can:(g,s,ev)=>ev.cardId && !ev.token,
+ fire:async(g,s,ev)=>{ P(s).hand.push(ev.cardId);
+   log(`${CARDS[ev.cardId].n} atrapa la llave al vuelo y escapa del Domo: vuelve a tu mano.`,'good');
+   render(); }});
 
 /* ==========================================================================
    3. MAZOS PRECONSTRUIDOS (40 cartas)
@@ -5079,10 +5245,17 @@ function showGallery(){
   };
 
   const draw=()=>{
-    const enMazo = mazo==='todos' ? null : delMazo(mazo);
-    p.innerHTML=`<h3>🃏 Cartas del set base</h3>
-      <p>${Object.keys(CARDS).filter(k=>!CARDS[k].token).length} cartas + 5 Líderes + 4 fichas.
-         Pasa el cursor por una carta para verla en grande.</p>`;
+    const enMazo = (mazo==='todos'||mazo==='cajon') ? null : delMazo(mazo);
+    const enElCajon = mazo==='cajon';
+    const base = Object.keys(CARDS).filter(k=>!CARDS[k].token && !CARDS[k].set).length;
+    const cajon = Object.keys(CARDS).filter(k=>!CARDS[k].token && CARDS[k].set==='cajon').length;
+    p.innerHTML = enElCajon
+      ? `<h3>🗄️ El Cajón</h3>
+         <p>${cajon} cartas nuevas, todavía fuera de los mazos. Están hechas y se pueden
+            probar, pero ninguna entra en una partida hasta que la metamos en una lista.</p>`
+      : `<h3>🃏 Cartas del set base</h3>
+         <p>${base} cartas + 5 Líderes + 4 fichas.
+            Pasa el cursor por una carta para verla en grande.</p>`;
 
     // primera fila: por Líder
     const fm=el('div','filters');
@@ -5092,6 +5265,10 @@ function showGallery(){
       const b=el('button','btn sm'+(mazo===lid?' on':''), LEADERS[lid].art+' '+LEADERS[lid].n);
       b.onclick=()=>{mazo=lid;draw();}; fm.appendChild(b);
     });
+    if(cajon){                              // el apartado aparte, si hay algo dentro
+      const bc=el('button','btn sm'+(enElCajon?' on':''),'🗄️ El Cajón');
+      bc.onclick=()=>{mazo='cajon';draw();}; fm.appendChild(bc);
+    }
     p.appendChild(fm);
 
     // segunda fila: por tipo
@@ -5100,9 +5277,12 @@ function showGallery(){
       b.onclick=()=>{filter=t;draw();}; f.appendChild(b); });
     p.appendChild(f);
 
+    /* El Cajón vive aparte: sus cartas no salen en «Todos los mazos» ni en el
+       de ningún Líder, porque todavía no son del juego. */
     const lista = Object.keys(CARDS)
       .filter(k=>!CARDS[k].token
                  && (filter==='todas'||CARDS[k].t===filter)
+                 && (enElCajon ? CARDS[k].set==='cajon' : !CARDS[k].set)
                  && (!enMazo || enMazo[k]))
       .sort((a,b)=>CARDS[a].c-CARDS[b].c);
 
