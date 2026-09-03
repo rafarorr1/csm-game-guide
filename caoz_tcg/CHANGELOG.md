@@ -1013,7 +1013,8 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
 - **Reloj de turno: 1:30** (build 103). Si se acaba, pasa el turno igual que si pulsaras el
   botón — no se descarta ni se pierde nada. Sólo corre en tu turno y sólo cuando hay alguien
   jugando: en el tutorial no, que va a su ritmo y te para a explicarte cosas; ni en partidas
-  automáticas; ni mientras el juego está resolviendo algo. Se pone rojo en los últimos 15 s.
+  automáticas; ni mientras el juego está resolviendo algo. Se pone rojo en los últimos 15 s, y
+  va a la derecha del tablero para no competir con «Terminar turno».
 - **La Nube de Dagas se ve mientras dura.** Quedaba flotando tres turnos sin aparecer en ningún
   sitio: sabías que la jugaste y luego ya no, y el rival no tenía forma de saber por qué le
   pegaban al entrar. Ahora sale en el raíl derecho con los turnos que le quedan y su ficha al
@@ -1025,7 +1026,13 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   «no hay objetivos válidos» y se iba solo. Ahora dice cuál es —cuánto cuesta y cuánto tienes,
   campo lleno, zona de Trampas llena, ningún Personaje con hueco para otro Objeto, qué
   objetivos faltan— y queda en el Registro.
-- **En línea ya no se filtra qué Trampa has puesto** (build 102). Iba boca abajo en el tablero,
+- **En línea ya no se filtra qué Trampa has puesto** (builds 102 y 105). Iban por tres sitios y
+  hubo que cerrar los tres. Los dos primeros —el aviso de pantalla y la línea «Colocas X boca
+  abajo»— en el 102; el tercero se escapó y era el más obvio: la línea que anuncia **toda**
+  carta jugada, «X juega Y (2 PD)», que también sale con las Trampas y no era privada.
+  Para arreglarlo hizo falta una tercera clase de línea de registro. Antes había dos —la que
+  ven los dos y la que sólo ves tú— y ninguna servía aquí: tú necesitas leer **cuál** pusiste y
+  él sólo que **pusiste una**. Ahora hay una que sólo ve el rival. Iba boca abajo en el tablero,
   pero el aviso y el registro sí decían su nombre — y viajaban al rival. El fallo estaba en
   decidirlo con «si la Trampa no es mía, ocúltala»: en local vale, pero en línea el anfitrión
   resuelve las dos partidas, así que al colocar **la suya** el texto llevaba el nombre y se lo
