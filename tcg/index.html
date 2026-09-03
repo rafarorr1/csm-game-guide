@@ -1523,7 +1523,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:86, fecha:'2026-09-01'};
+const BUILD = {n:89, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -1745,7 +1745,7 @@ rafaela:{ n:'Rafaela', ep:'Devota de Rul', art:'✨', arch:'Enjambre · Fe · Cu
     if(ts[0][0]) await dmgU(ts[0][0],1,{src:'leader'});
     if(ts[1]&&ts[1][0]&&ts[1][0].alive) healU(ts[1][0],1); }},
 talesin:{ n:'Talesin', ep:'El Heredero Celestial', art:'😇', arch:'Sacrificio · Rampa · Ascensión',
-  pasiva:'<b>Digno de Ascender:</b> cada vez que muere un aliado ganas 1 Ficha de Gracia. Con 5, <b>asciendes</b>: +5 Alma y tus Celestiales ganan +2/+2 permanentes.',
+  pasiva:'<b>Digno de Ascender:</b> cada vez que muere un aliado ganas 1 Ficha de Gracia. Con 5, <b>asciendes</b>: +5 Alma y tus Celestiales ganan +2/+2 permanentes. <b>Después de ascender, cada Personaje que entre a tu campo nace Celestial y con +2/+2.</b>',
   hab:'<b>Luz de Kenya (3 PD):</b> un aliado gana +1/+1 permanentes y la tribu Celestial.',
   habCost:3, habName:'Luz de Kenya', habTg:{k:'unidadAliada',min:1,max:1},
   lore:'Hijo del solar Kenya. Bajó en cuerpo humano para demostrar que es digno de ascender.',
@@ -2542,9 +2542,27 @@ function allObjects(s){
 }
 
 /* ---------- creación de unidades ---------- */
+/* LA HERENCIA DE TALESIN.
+   Su Ascensión pedía cinco muertos y premiaba a los vivos: para cuando llega, le
+   quedan 0,96 Personajes en mesa y 0,24 Celestiales, así que el +2/+2 no
+   alcanzaba a nadie 78 veces de cada 100. Medido sobre 150 partidas suyas.
+
+   El arreglo no es darle más ni antes —con 3 Fichas de regalo se quedaba igual—
+   sino que el premio no se acabe: lo que baje después de ascender también lo
+   cobra. Va aquí, en mkUnit, porque es el sitio por el que pasa toda unidad que
+   nace, venga de la mano, de una ficha o de una Trampa. Sube a Talesin de 41,0 a
+   45,5 sobre 6000 partidas. */
+function heredarAscension(u, side){
+  const p = P(side);
+  if(!p || p.leaderId!=='talesin' || !p.ascended) return u;
+  if(!u.tribes.includes('Celestial')) u.tribes.push('Celestial');
+  u.pA += 2; u.pH += 2;
+  return u;
+}
+
 function mkUnit(cardId, side){
   const c = CARDS[cardId];
-  return { uid:UID++, card:c, side, owner:side, tribes:[...(c.tr||[])],
+  const u = { uid:UID++, card:c, side, owner:side, tribes:[...(c.tr||[])],
     dmg:0, pA:0, pH:0, tA:0, tH:0, nA:0, nH:0, nUntil:-1, aA:0, aH:0,
     keysOwn:new Set(c.keys||[]), aKeys:new Set(), keys:new Set(),
     objs:[], alive:true, sick:true, attacked:false, attackedEver:false,
@@ -2552,6 +2570,7 @@ function mkUnit(cardId, side){
     atk:c.a||0, maxHp:c.h||1, actUsed:false, marked:false, noCounter:false,
     hotMetal:false, doomed:false, stolen:false, blind:false, revealed:false,
     noFly:false, trapProof:false, tIgnoreTaunt:false, noClause:false, killer:null };
+  return heredarAscension(u, side);
 }
 
 /* ---------- recálculo de estadísticas y auras ---------- */
@@ -2709,7 +2728,8 @@ async function killUnit(u, opt={}){
     if(P(s).gracia>=5){
       P(s).ascended=true; P(s).alma+=5;
       P(s).field.forEach(o=>{ if(o.tribes.includes('Celestial')){o.pA+=2;o.pH+=2;} });
-      toast('😇 ¡TALESIN ASCIENDE!'); log('<b>Talesin asciende</b>: +5 Alma y Celestiales +2/+2.','heal');
+      toast('😇 ¡TALESIN ASCIENDE!');
+      log('<b>Talesin asciende</b>: +5 Alma, Celestiales +2/+2, y a partir de ahora lo que baje nace Celestial con +2/+2.','heal');
     }
   }
   // trampas de muerte
@@ -4702,7 +4722,9 @@ talesin:{ c1:'matildus', c2:'eric', quita:'proyectil', trampa:'esporas',
   quitaTxt:`<b>Proyectil Mágico</b> (2 PD): 3 daño repartidos, y no hay Trampa que lo anule.`,
   quitaExtra:`Y lo importante de tu mazo: cuando muere un aliado <b>tuyo</b> ganas una
     <b>✨ Ficha de Gracia</b> — míralas en tu barra. Con cinco asciendes: +5 Alma y tus
-    Celestiales +2/+2. Aquí morir es parte del plan.`,
+    Celestiales +2/+2. Y de ahí en adelante <b>todo lo que bajes nace Celestial y con
+    +2/+2</b>, así que tu campo se rehace más fuerte de lo que era. Aquí morir es parte
+    del plan.`,
   trampaTxt:`<b>Esporas del Demonio</b> (2 PD): cuando muera un aliado tuyo, <b>todo</b> el
     campo rival queda Infectado. Tus muertes tienen que doler a alguien.` }
 };
@@ -6273,8 +6295,10 @@ rafaela:{
 talesin:{
   dif:3, lema:'Todo en este mazo quiere morir.',
   ganas:`Cada aliado que muere te da una <b>Ficha de Gracia</b>. Con cinco, <b>asciendes</b>:
-    +5 Alma y tus <b>Celestiales</b> ganan +2/+2 permanentes. Tu mazo no protege a nadie —
-    lo gasta. Y detrás viene <b>Tal</b> o el <b>Pergamino</b>.`,
+    +5 Alma y tus <b>Celestiales</b> ganan +2/+2 permanentes. Y lo que de verdad decide la
+    partida: <b>a partir de ahí, cada Personaje que bajes nace Celestial y con +2/+2</b>.
+    Ascender con el campo vacío no es un problema, es el momento de rellenarlo. Tu mazo no
+    protege a nadie — lo gasta. Y detrás viene <b>Tal</b> o el <b>Pergamino</b>.`,
   motor:['matildus','eric','tal','montanas','domo'],
   motorTxt:`<b>Matildus</b> explota en la cara de quien lo mata, <b>Eric</b> se sacrifica por
     otro, el <b>Conserje</b> deja Llaves, <b>Eman 69</b> te da 2 PD al morir. Todo suma
