@@ -970,6 +970,27 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   **No toca el balance**: el banco entra por `setupMatch`, nunca por `startMatch`, así que ni
   el volado ni la cortinilla aparecen en sus 2000 partidas — y además fija él quién empieza.
   Medido igualmente después del cambio: 18,3 de brecha contra 18,8, que es ruido.
+- **En línea ya no se filtra qué Trampa has puesto** (build 102). Iba boca abajo en el tablero,
+  pero el aviso y el registro sí decían su nombre — y viajaban al rival. El fallo estaba en
+  decidirlo con «si la Trampa no es mía, ocúltala»: en local vale, pero en línea el anfitrión
+  resuelve las dos partidas, así que al colocar **la suya** el texto llevaba el nombre y se lo
+  mandaba al otro. Ahora hay dos textos, el de casa y el que sale por la red, y la línea del
+  registro con el nombre va marcada como privada.
+- **El juego dice por qué no puedes atacar ahí.** Antes, señalar un objetivo ilegal soltaba
+  «Objetivo ilegal» y nada más. Ahora explica cuál es el motivo con nombres y palabras clave:
+  quién tiene **Provocar** y hay que atacar primero, quién tiene **Vuelo** y no alcanzas, quién
+  está en **Sigilo**. Va al cartel y al Registro, porque el cartel se cierra y el motivo se
+  perdía.
+- **El cajón de una carta enseña de dónde salen sus números.** La carta muestra el ATQ y los PV
+  finales, pero no por qué: un 9/5 puede ser un 6/5 con dos Objetos y una Canción encima. Ahora
+  desglosa la base, los modificadores permanentes, los del turno, los de auras y los de
+  Objetos, qué lleva equipado y en qué estados está. Y se separa de la carta: pegado se comía
+  sus propias etiquetas.
+- **El cartel de aviso no cambia de tamaño.** Se ajustaba a cada texto, así que dos avisos
+  seguidos —descartar dos cartas— lo hacían dar saltos. Ahora ocupa siempre lo mismo.
+- **La mano deja de meterse en el Registro y el chat.** La zona de la mano se monta sobre el
+  tapete con su capa propia y el panel lateral no tenía ninguna, así que una carta al crecer se
+  metía dentro de lo que estabas leyendo.
 - **Los efectos ya no reaparecen justo antes de irse** (build 101). Al acabar una animación, el
   elemento vuelve a su estado del CSS —visible— y se quedaba así los 60 ms que faltaban hasta
   borrarlo: el efecto se desvanecía y **volvía de golpe** un instante antes de desaparecer. Se
