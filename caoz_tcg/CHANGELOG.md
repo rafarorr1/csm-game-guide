@@ -970,6 +970,11 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
   **No toca el balance**: el banco entra por `setupMatch`, nunca por `startMatch`, así que ni
   el volado ni la cortinilla aparecen en sus 2000 partidas — y además fija él quién empieza.
   Medido igualmente después del cambio: 18,3 de brecha contra 18,8, que es ruido.
+- **Los efectos ya no reaparecen justo antes de irse** (build 101). Al acabar una animación, el
+  elemento vuelve a su estado del CSS —visible— y se quedaba así los 60 ms que faltaban hasta
+  borrarlo: el efecto se desvanecía y **volvía de golpe** un instante antes de desaparecer. Se
+  notaba en el cartel de «Turno de…», que es el que más dura, pero le pasaba a todos. Medido:
+  la opacidad iba 0,26 → 0,09 → **1** → borrado; ahora 0,35 → 0,08 → 0.
 - **Los avisos de pantalla se apilan en vez de pisarse.** Todos salían en el centro exacto del
   tapete, así que dos a la vez quedaban uno encima del otro y no se leía ninguno. Con **Puntos
   Robados** pasaba siempre: gana un contador por cada rival que muere, y en un turno mueren

@@ -1762,7 +1762,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:100, fecha:'2026-09-01'};
+const BUILD = {n:101, fecha:'2026-09-01'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4144,7 +4144,17 @@ function fxClamp(d){                       // que no se salga por los bordes
   if(r.bottom>innerHeight-m) y-=r.bottom-(innerHeight-m);
   d.style.left=x+'px'; d.style.top=y+'px';
 }
-function fxGone(d,ms){ setTimeout(()=>d.remove(), (ms||900)+60); }
+/* Al acabar una animación, el elemento vuelve a su estado del CSS —visible— y
+   se quedaba así los 60 ms que faltaban hasta borrarlo: el efecto se desvanecía
+   y REAPARECÍA de golpe justo antes de irse. Se veía en el cartel de «Turno
+   de…», que es el que más dura, pero le pasaba a todos.
+   Se apaga en cuanto la animación termina. Mientras corre manda ella, que en la
+   cascada va por encima de un estilo en línea, así que esto no la interrumpe. */
+function fxGone(d,ms){
+  const t = ms||900;
+  setTimeout(()=>{ d.style.opacity='0'; }, t);
+  setTimeout(()=>d.remove(), t+60);
+}
 
 /* número flotante (daño, curación, buffs) */
 function fxNumber(target, text, kind, big){
