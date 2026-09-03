@@ -959,14 +959,21 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
-- **Elegir Protagonista es un carrete** (build 93). Antes eran cinco fichas idénticas en fila y
+- **Elegir Protagonista es un carrete, en dos pasos** (build 94). Antes eran cinco fichas idénticas en fila y
   había que leerlas todas para decidir; ahora las cinco van en abanico, la elegida al frente a
   tamaño completo con su retrato, y debajo una ficha con lo que hay que leer de ella: pasiva,
   habilidad, mazo y dificultad. Se gira con las flechas, con el teclado o pulsando una carta.
   La posición de cada carta sale de **una sola variable** —su distancia al frente, dando la
   vuelta— y de ahí salen desplazamiento, giro, escala y brillo, así que el movimiento es
-  coherente y se anima solo. Y el rival pasa a una fila de chips pequeños: es una decisión
-  menor y antes competía con la tuya siendo idéntica.
+  coherente y se anima solo.
+  Las cartas giran **en el espacio**, no inclinadas en el plano: la perspectiva la pone la
+  pista y cada carta rota sobre su eje vertical y se aleja según lo lejos que esté del frente,
+  así que se les ve el canto y el abanico tiene fondo. Sin `preserve-3d`, que en este proyecto
+  ya rompió una vez el poder pulsar las cartas: basta con la perspectiva en el contenedor.
+  Y son **dos pasos**: primero tu Protagonista y, al aceptarlo, tu rival — con el mismo carrete,
+  para que la segunda decisión no parezca un apéndice de la primera. Antes el rival era una
+  fila de fichas idénticas debajo, compitiendo con la tuya. Dos puntitos dicen por dónde vas, el
+  botón de atrás vuelve un paso en vez de salir, y «🎲 Al azar» sirve para los dos.
 - **El tutorial deja de hablar de la carta equivocada, y sólo permite lo que necesita**
   (build 91). Dos lecciones se armaban dando por hecho qué había bajado el rival: una llamaba
   **Objeto** a lo que fuera —llegó a decirlo de Augusto Bale— y la otra explicaba la habilidad
