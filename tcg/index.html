@@ -113,15 +113,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 /* ---- Menú ---- */
 /* ==========================================================================
-   LA PORTADA
-   El resto del juego es morado —es el color del Domo— pero la portada es lo
-   primero que se ve, y lo primero que se ve tiene que ser el logo: oro, brasa
-   y piedra quemada. Así que el menú lleva su PROPIA paleta, declarada aquí
-   dentro y no en :root, para que la identidad cambie sin tocar la mesa.
+   LOS MENÚS
+   El tablero es morado —es el color del Domo— pero todo lo que hay ANTES de
+   entrar a jugar comparte la identidad del logo: oro, brasa y piedra quemada.
+   Esa identidad vive en `.portada`, no en `:root`, para que la lleven la
+   portada, el selector de Protagonista y las guías sin tocar la mesa.
    Todo el movimiento es CSS. Nada de esto corre en JavaScript salvo repartir
    las cartas del fondo una sola vez al arrancar.
    ========================================================================== */
-#menu{
+.portada{
   --oro:#f7d488; --oro2:#d9a441; --oro3:#8a5f1e;
   --brasa:#ff7a18; --brasa2:#e8340c; --sangre:#8b1a12;
   --piedra:#2a1c15; --piedra2:#170f0b;
@@ -131,29 +131,29 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
     radial-gradient(ellipse 70% 55% at 50% 8%,  rgba(255,122,24,.16), transparent 62%),
     radial-gradient(ellipse 90% 70% at 50% 108%, rgba(232,52,12,.20), transparent 66%),
     linear-gradient(180deg,#120c0a 0%,#1b110c 45%,#0b0706 100%)}
-#menu>*{position:relative;z-index:4}
+.portada>*{position:relative;z-index:4}
 /* EL VELO
    Las cartas del fondo cruzan por detrás de la columna de botones y, por muy
    apagadas que estén, un texto sobre una carta en movimiento se lee peor. Un
    óvalo oscuro entre el fondo y el contenido lo resuelve sin apagar la escena:
    el centro queda legible y los bordes siguen vivos. Las brasas van por
    ENCIMA del velo, que es lo que le da el chispazo delante del texto. */
-#menu::after{content:"";position:absolute;left:50%;top:52%;translate:-50% -50%;
-  width:980px;height:820px;z-index:2;pointer-events:none;border-radius:50%;
+.portada::after{content:"";position:absolute;left:50%;top:52%;translate:-50% -50%;
+  width:1240px;height:880px;z-index:2;pointer-events:none;border-radius:50%;
   background:radial-gradient(ellipse at center,
     rgba(9,5,4,.80) 0%, rgba(9,5,4,.62) 42%, rgba(9,5,4,.28) 66%, transparent 78%)}
 /* Las capas del fondo tienen que quedarse FUERA del flujo. La regla de arriba
-   es `#menu>*`, que gana en especificidad a `.ambiente{position:absolute}`, así
-   que al añadir el disco, la baraja y las brasas se metieron en la columna y
-   empujaron el logo y los botones 1 800 px hacia abajo: la portada se quedó en
-   negro. Se les devuelve el absolute con la misma especificidad. */
-#menu>.ambiente,#menu>.disco,#menu>.barajaFondo,#menu>.brasas{position:absolute}
-#menu>.ambiente{z-index:0}
-#menu>.disco{z-index:1}
-#menu>.barajaFondo{z-index:1}
-#menu>.brasas{z-index:3}
+   es `.portada>*`, que gana en especificidad a `.ambiente{position:absolute}`,
+   así que al añadir el disco, la baraja y las brasas se metieron en la columna
+   y empujaron el logo y los botones 1 800 px hacia abajo: la portada se quedó
+   en negro. Se les devuelve el absolute con la misma especificidad. */
+.portada>.ambiente,.portada>.disco,.portada>.barajaFondo,.portada>.brasas{position:absolute}
+.portada>.ambiente{z-index:0}
+.portada>.disco{z-index:1}
+.portada>.barajaFondo{z-index:1}
+.portada>.brasas{z-index:3}
 /* el polvo del Domo, aquí en tono brasa en vez de morado */
-#menu .ambiente i{filter:hue-rotate(-42deg) saturate(1.35)}
+.portada .ambiente i{filter:hue-rotate(-42deg) saturate(1.35)}
 
 /* EL DISCO DE RUNAS
    El logo se apoya en un disco de piedra con runas. Repetirlo detrás, girando
@@ -250,7 +250,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    alguien que llega nuevo, así que es el único con el oro relleno. */
 .menucol{display:flex;flex-direction:column;gap:9px;width:384px;max-width:88%;
   margin-top:24px}
-.menucol .btn{position:relative;overflow:hidden;padding:14px;font-size:15px;
+/* Placas de piedra con filo dorado, en TODAS las pantallas de menú y no sólo
+   en la columna de la portada: si el selector y las guías conservaran los
+   botones morados, el cambio de identidad se rompería justo al pasar de una
+   pantalla a la siguiente. */
+.portada .btn{position:relative;overflow:hidden;padding:14px;font-size:15px;
   letter-spacing:.9px;font-weight:800;border-radius:11px;
   color:#f3dfc2;
   background:linear-gradient(180deg,rgba(74,42,22,.92),rgba(30,17,11,.94));
@@ -259,30 +263,34 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
              inset 0 1px 0 rgba(255,220,170,.10);
   transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
 /* el brillo que cruza al pasar por encima */
-.menucol .btn::after{content:"";position:absolute;inset:0;
+.portada .btn::after{content:"";position:absolute;inset:0;
   background:linear-gradient(105deg,transparent 38%,rgba(255,232,190,.20) 50%,transparent 62%);
   translate:-120% 0;transition:translate .5s ease}
-.menucol .btn:hover:not(:disabled){transform:translateY(-2px);
+.portada .btn:hover:not(:disabled){transform:translateY(-2px);
   border-color:rgba(247,212,136,.75);
   box-shadow:0 5px 0 rgba(0,0,0,.5), 0 14px 30px rgba(255,122,24,.20),
              inset 0 1px 0 rgba(255,220,170,.16)}
-.menucol .btn:hover:not(:disabled)::after{translate:120% 0}
-.menucol .btn:active:not(:disabled){transform:translateY(1px);
+.portada .btn:hover:not(:disabled)::after{translate:120% 0}
+.portada .btn:active:not(:disabled){transform:translateY(1px);
   box-shadow:0 1px 0 rgba(0,0,0,.5), 0 6px 14px rgba(0,0,0,.5)}
 /* El botón del Tutorial lleva `btn gold`, y esa clase trae del resto del juego
    una tipografía serif con versalitas —la de los botones dorados de la mesa—.
    Aquí, en una columna de siete botones en sans, era el único distinto y se
    leía como un error de maquetación. Se le devuelve la familia de sus vecinos;
    el oro se queda, que es lo que lo destaca. */
+.portada .btn.gold,
 .menucol .btn:first-child{font-size:16.5px;padding:17px;color:#2a1a06;
   font-family:var(--sans);font-variant-caps:normal;font-weight:800;
   background:linear-gradient(180deg,#ffe9b8,var(--oro) 42%,var(--oro2) 78%,#a06f1c);
   border-color:rgba(255,238,200,.8);
   box-shadow:0 3px 0 #6d4410, 0 12px 28px rgba(255,122,24,.34),
              inset 0 1px 0 rgba(255,255,255,.5)}
+.portada .btn.gold:hover,
 .menucol .btn:first-child:hover{box-shadow:0 5px 0 #6d4410, 0 18px 40px rgba(255,122,24,.5),
              inset 0 1px 0 rgba(255,255,255,.55)}
+.portada .btn.gold{font-size:15px;padding:13px 22px}
 .menucol .btn.taller{opacity:.72;font-size:13.5px;padding:11px}
+.portada .btn.sm{padding:8px 13px;font-size:12.5px;border-radius:9px}
 
 .foot{color:#8a6f55;font-size:11px;margin-top:20px}
 
@@ -291,15 +299,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 @media (prefers-reduced-motion:reduce){
   .cartaFondo,.brasas i{animation:none;opacity:var(--op,.5)}
   .disco,.marcaWrap{animation:none}
-  .menucol .btn::after{display:none}}
+  .portada .btn::after{display:none}}
 .build{display:block;margin-top:5px;font:600 9.5px/1 var(--sans);letter-spacing:1.4px;
   color:#584b78;text-transform:uppercase}
 #buildPanel{text-align:right;margin:0;padding:2px 2px 0}
 
 /* ---- Selector de líder ---- */
 #select{padding:20px 18px;gap:10px;align-items:center;justify-content:center}
-#select>*{position:relative;z-index:2}
-#select .ambiente{z-index:0}
 .h2{font:700 23px/1.1 var(--serif);font-variant:small-caps;letter-spacing:2.4px;
   color:var(--gold);text-shadow:0 2px 12px rgba(230,187,82,.25)}
 .leaders{display:flex;gap:13px;flex-wrap:wrap;justify-content:center;max-width:1180px}
@@ -413,8 +419,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    No es decoración: el cambio de color dice sin palabras que ya no estás
    eligiendo lo tuyo. La sala entera vira, no sólo un borde. */
 #select{transition:background .6s ease}
-#select.rival{background:radial-gradient(ellipse 70% 55% at 50% 42%,
-  rgba(120,24,28,.30), transparent 72%)}
+/* Sobre la base de brasa el rojo tiene que ser MÁS rojo para leerse como un
+   cambio: contra el morado de antes bastaba un tinte, contra el naranja no. */
+#select.rival{background:
+  radial-gradient(ellipse 70% 55% at 50% 42%, rgba(190,26,20,.34), transparent 70%),
+  radial-gradient(ellipse 90% 70% at 50% 108%, rgba(139,26,18,.42), transparent 66%),
+  linear-gradient(180deg,#150807 0%,#240c09 45%,#0c0605 100%)}
+#select.rival .disco{filter:hue-rotate(-28deg) saturate(1.5)}
+#select.rival .cartaFondo{filter:hue-rotate(-24deg) saturate(1.3)}
+#select.rival .brasas i{background:radial-gradient(circle,#ffc0a8,#e8340c 42%,rgba(139,26,18,0) 72%)}
 #select.rival .ambiente::before{
   background:
     radial-gradient(ellipse 46% 38% at 50% 30%, rgba(240,120,96,.20), transparent 70%),
@@ -429,6 +442,36 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #select.rival .giro{color:#ff9a8a}
 #select.rival .btn.gold{background:linear-gradient(180deg,#7a2420,#4a1512);
   border-color:#e0524a;color:#ffd9d2}
+/* LO QUE QUEDABA MORADO EN LOS MENÚS
+   El selector y las guías traían la piedra y el violeta del tablero: la ficha
+   del Protagonista, las flechas del carrete, las pestañas de las guías. Con el
+   fondo ya en brasa, esos tres eran el único sitio donde se notaba que la
+   pantalla venía de otro diseño. */
+.portada .fichaLider{border-color:rgba(217,164,65,.30);
+  background:linear-gradient(180deg,rgba(52,32,18,.72),rgba(24,14,9,.76))}
+.portada .fichaLider .fn{color:var(--oro)}
+.portada .fichaLider .fa{color:var(--brasa)}
+.portada .fichaLider .fl{color:#d8c4ab}
+.portada .fichaLider .fl b{color:var(--oro)}
+.portada .fichaLider .fm{color:#a58a6c}
+.portada .fichaLider .fm b{color:#e5cfa8}
+.portada .selsub{color:#b79c7f}
+.portada .h2{color:var(--oro);text-shadow:0 2px 16px rgba(255,122,24,.30)}
+.portada .carrete .giro{border-color:rgba(217,164,65,.34);color:var(--oro);
+  background:linear-gradient(180deg,rgba(74,42,22,.95),rgba(28,16,10,.95))}
+.portada .carrete .giro:hover{border-color:var(--oro)}
+.portada .pasos i{background:rgba(217,164,65,.26)}
+.portada .pasos i.on{background:var(--oro);box-shadow:0 0 10px rgba(255,122,24,.7)}
+/* las guías */
+.portada .gbar{background:rgba(14,8,6,.86);border-bottom-color:rgba(217,164,65,.24)}
+.portada .gtab{background:linear-gradient(180deg,rgba(58,34,18,.9),rgba(26,15,10,.9));
+  border-color:rgba(217,164,65,.26);color:#b79c7f}
+.portada .gtab:hover{border-color:var(--oro);color:#f3dfc2}
+.portada .gtab.on{border-color:var(--oro);color:#2a1a06;
+  background:linear-gradient(180deg,#ffe9b8,var(--oro2))}
+.portada .ghead h2{color:var(--oro)}
+.portada .gsub{color:var(--brasa)}
+
 /* en qué paso estás: primero tu Protagonista, luego el rival */
 .pasos{display:flex;gap:7px;justify-content:center;margin-top:10px}
 .pasos i{width:7px;height:7px;border-radius:50%;background:var(--line);
@@ -1535,6 +1578,21 @@ body.tut-on .card.playable{
 .panel p{color:var(--dim);margin-bottom:10px}
 .opts{display:flex;flex-direction:column;gap:8px;margin-top:12px}
 
+/* la piel de brasa del overlay, sólo cuando se abre desde un menú */
+.ov.calido{background:rgba(10,6,4,.84)}
+.ov.calido .panel{border-color:rgba(217,164,65,.42);
+  background:linear-gradient(180deg,#2a1a10,#170f0b)}
+.ov.calido .panel h3{color:#f7d488}
+.ov.calido .panel p{color:#b79c7f}
+.ov.calido .panel .btn{border-color:rgba(217,164,65,.34);color:#f3dfc2;
+  background:linear-gradient(180deg,rgba(74,42,22,.92),rgba(30,17,11,.94))}
+.ov.calido .panel .btn:hover:not(:disabled){border-color:rgba(247,212,136,.75)}
+.ov.calido .panel .btn.gold{color:#2a1a06;border-color:rgba(255,238,200,.8);
+  background:linear-gradient(180deg,#ffe9b8,#d9a441 42%,#a06f1c)}
+/* los filtros de la galería son `btn sm`, y el activo lleva `.on` */
+.ov.calido .panel .btn.on{border-color:#f7d488;color:#f7d488;
+  background:linear-gradient(180deg,rgba(255,122,24,.24),rgba(0,0,0,.24))}
+
 /* PREGUNTA SIN TAPAR LA MESA.
    El overlay normal oscurece y desenfoca todo, que es lo que quieres al elegir
    objetivos. Pero para decidir si cambias la mano hay que VER la mano: se pide
@@ -1748,7 +1806,10 @@ body.tutpause #tut{pointer-events:auto}
 .diariobtn:hover{border-color:var(--gold2);color:var(--gold)}
 
 /* ---- guías de estrategia ---- */
-#guide{background:radial-gradient(ellipse at 50% -20%,#241a3a,var(--bg) 65%)}
+/* Las guías comparten la identidad de los menús con `.portada`; aquí sólo
+   queda lo suyo. El cuerpo tapa casi toda la pantalla, así que del fondo se
+   ve poco — pero lo poco que se ve tiene que ser el mismo sitio. */
+#guide{padding:0}
 .gbar{display:flex;align-items:center;gap:10px;padding:8px 12px;background:rgba(10,6,18,.8);
   border-bottom:1px solid var(--line);flex-wrap:wrap;flex:0 0 auto}
 .gtabs{display:flex;gap:6px;flex-wrap:wrap}
@@ -1775,6 +1836,18 @@ body.tutpause #tut{pointer-events:auto}
   border:1px solid var(--purple2);border-left:3px solid var(--purple);
   border-radius:12px;padding:14px 16px}
 .gcards{display:flex;flex-wrap:wrap;gap:7px;margin-top:11px}
+/* El cuerpo de las guías es el único sitio de los menús donde quedaba violeta
+   de verdad: el recuadro de «la jugada» y el texto largo. Las cartas de
+   ejemplo NO se tocan — su color dice de qué clase son y eso es información
+   del juego, no decoración. */
+.portada .gsec p,.portada .gsec li{color:#ddd0bd}
+.portada .gsec b{color:#fff4e2}
+.portada .gsec.destacado{background:linear-gradient(180deg,rgba(255,122,24,.13),rgba(0,0,0,.24));
+  border-color:rgba(217,164,65,.34);border-left-color:var(--brasa)}
+.portada .gturno .gt{color:var(--oro);background:rgba(247,212,136,.12);
+  border-color:rgba(217,164,65,.5)}
+.portada .gvs td{border-bottom-color:rgba(217,164,65,.20);color:#d4c3ad}
+.portada .gplan{color:#c3ab8d}
 .gcards .card{cursor:default}
 .gcount{position:absolute;top:25px;left:3px;font-size:11px;font-weight:900;color:var(--gold);
   background:rgba(8,4,14,.9);border:1px solid var(--gold2);border-radius:6px;padding:0 5px;
@@ -1841,12 +1914,7 @@ body.tutpause #tut{pointer-events:auto}
 <div id="app"><div id="lienzo">
 
 <!-- ============ MENÚ ============ -->
-<div class="screen on" id="menu">
-  <div class="ambiente" aria-hidden="true"><i></i><i></i><i></i></div>
-  <div class="disco" aria-hidden="true"></div>
-  <div class="disco dos" aria-hidden="true"></div>
-  <div class="barajaFondo" id="barajaFondo" aria-hidden="true"></div>
-  <div class="brasas" id="brasas" aria-hidden="true"></div>
+<div class="screen on portada" id="menu">
   <div class="marcaWrap">
     <img class="marca" id="marca" src="art/logo.webp" alt="Caoz Con Todo" hidden>
     <div class="marcaTexto" id="marcaTexto">Caoz Con Todo<small>EL JUEGO DE CARTAS DEL DOMO</small></div>
@@ -1867,9 +1935,7 @@ body.tutpause #tut{pointer-events:auto}
 </div>
 
 <!-- ============ SELECCIÓN ============ -->
-<div class="screen" id="select">
-  <!-- el mismo polvo y la misma luz que la mesa: se entra al Domo desde aquí -->
-  <div class="ambiente" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="screen portada" id="select">
   <div class="h2" id="selTitle">ELIGE TU PROTAGONISTA</div>
   <div class="selsub" id="selSub">Cada Líder trae su mazo preconstruido de 40 cartas.</div>
   <!-- El carrete: las cinco cartas en abanico, la elegida al frente, y debajo su
@@ -1890,7 +1956,7 @@ body.tutpause #tut{pointer-events:auto}
 </div>
 
 <!-- ============ GUÍAS DE ESTRATEGIA ============ -->
-<div class="screen" id="guide">
+<div class="screen portada" id="guide">
   <div class="gbar">
     <button class="btn sm" id="guideBack">← Menú</button>
     <div class="gtabs" id="guideTabs"></div>
@@ -1996,7 +2062,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:114, fecha:'2026-09-04'};
+const BUILD = {n:115, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4338,7 +4404,16 @@ function setPrompt(msg,btns){
   $('#prompt').classList.add('on');
 }
 function clearPrompt(){ $('#prompt').classList.remove('on'); }
-function openOv(){ $('#inspect').classList.remove('on'); $('#ov').classList.add('on'); }
+/* El overlay vale para dos mundos: la galería y las reglas se abren desde los
+   menús, y las preguntas y el cartel de fin se abren desde la mesa. Con una
+   sola piel, o desentonaba en los menús o desentonaba jugando. Así que al
+   abrirlo se mira DESDE DÓNDE: si la pantalla visible es un menú, el panel se
+   viste de brasa; si es el tablero, se queda morado como el resto de la mesa. */
+function openOv(){
+  $('#inspect').classList.remove('on');
+  $('#ov').classList.toggle('calido', !!document.querySelector('.screen.on.portada'));
+  $('#ov').classList.add('on');
+}
 
 /* opts.suave: la pregunta se hace sin tapar la mesa. Para cuando lo que se
    pregunta va SOBRE lo que hay en pantalla y hay que poder mirarlo. */
@@ -6339,7 +6414,8 @@ function showGallery(){
          <p>${cajon} cartas nuevas, todavía fuera de los mazos. Están hechas y se pueden
             probar, pero ninguna entra en una partida hasta que la metamos en una lista.</p>`
       : `<h3>🃏 Cartas del set base</h3>
-         <p>${base} cartas + 5 Líderes + 4 fichas.
+         <p>${base} cartas + ${Object.keys(LEADERS).length} Líderes
+            + ${Object.keys(CARDS).filter(k=>CARDS[k].token).length} fichas.
             Pasa el cursor por una carta para verla en grande.</p>`;
 
     // primera fila: por Líder
@@ -7658,8 +7734,20 @@ $$('.build').forEach(e=>e.textContent=buildTxt());
 function sembrarPortada(){
   const az = (a,b) => a + Math.random()*(b-a);
 
-  const baraja = $('#barajaFondo');
-  if(baraja && !baraja.children.length){
+  /* Las capas van por CÓDIGO y no en el HTML: son cuatro divs vacíos por
+     pantalla y repetirlos a mano en tres sitios es la forma segura de que un
+     día falte uno. Cada `.portada` recibe las suyas si no las tiene ya. */
+  $$('.portada').forEach(p => {
+    ['ambiente','disco','disco dos','barajaFondo','brasas'].forEach(cls => {
+      if(p.querySelector(':scope > .' + cls.split(' ')[0] + (cls.includes('dos')?'.dos':''))) return;
+      const d = el('div', cls); d.setAttribute('aria-hidden','true');
+      if(cls==='ambiente') d.innerHTML = '<i></i><i></i><i></i>';
+      p.insertBefore(d, p.firstChild);
+    });
+  });
+
+  $$('.portada > .barajaFondo').forEach(baraja => {
+    if(baraja.children.length) return;
     /* Doce y no más: son adorno, y el móvil tiene que ir fino. Las de delante
        —grandes, nítidas, rápidas— y las del fondo —chicas, borrosas, lentas—
        se reparten a propósito para que haya profundidad de verdad. */
@@ -7682,10 +7770,10 @@ function sembrarPortada(){
       if(lejos) d.style.filter = `blur(${az(1.2,2.8).toFixed(1)}px)`;
       baraja.appendChild(d);
     }
-  }
+  });
 
-  const brasas = $('#brasas');
-  if(brasas && !brasas.children.length){
+  $$('.portada > .brasas').forEach(brasas => {
+    if(brasas.children.length) return;
     for(let i=0; i<22; i++){
       const b = el('i','');
       b.style.setProperty('--b', az(2,5).toFixed(1)+'px');
@@ -7696,7 +7784,7 @@ function sembrarPortada(){
       b.style.setProperty('--esp',  (-az(0,18)).toFixed(1)+'s');
       brasas.appendChild(b);
     }
-  }
+  });
 
   /* EL LOGO
      Se prueban los formatos en orden y se usa el primero que cargue; si no hay
