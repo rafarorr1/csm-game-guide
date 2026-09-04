@@ -1168,6 +1168,34 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El combate pesa** (build 126). El combate ya tenía embestida, tajo, números de daño,
+  sacudida al recibir y la carta muerta volando a la pila; lo que le faltaba era
+  **contundencia**: el impacto era una línea blanca de 110 px, un golpe de 1 se veía igual que
+  uno de 7, el letal igual que cualquiera, la mesa sólo temblaba con daño al Alma, y el Fuego
+  no se distinguía de nada. Se escala, no se reconstruye:
+  · **Hit-stop.** En el contacto, la carta atacante se queda **clavada 70 ms** antes de volver.
+    Esa parada es lo que hace que el golpe pese; sin ella la carta pasa de largo. Va en dos
+    animaciones —ida con `fill:forwards`, luego vuelta— para poder parar en medio. Medido: la
+    carta llega a −88 px y se queda ahí dos muestras seguidas antes de regresar.
+  · **Chispas y anillo** en el punto de contacto, saliendo en un cono en la dirección del golpe.
+    19 chispas en el pico de un ataque cuerpo a cuerpo (12 de la embestida, 7 del golpe).
+  · **Sacudida de mesa proporcional** al daño también en golpes a Personajes: 1 punto casi no
+    se nota, 5 se siente, y un letal se siente más.
+  · **Golpe letal**: destello blanco sobre la carta, anillo mayor, y el número sale grande.
+  · **Fuego**: tinte y chispas en brasa en vez de rojo.
+  · **Muerte**: una bocanada de ceniza antes de volar a la pila — o de brasas y chispas si la
+    unidad murió quemada (`tookFire`). Verificado: la bocanada de una muerte por Fuego sale en
+    `rgb(255,154,60)`.
+  Todo detrás de `FXON()` y con tamaños en `--k`, porque `#fx` vive fuera del lienzo y no
+  hereda su zoom. Con `prefers-reduced-motion` no hay chispas, bocanadas ni sacudidas.
+  **Y un hueco real del online**: el invitado sólo recibía `hit`, así que **nunca veía la
+  embestida** — el rival golpeaba desde quieto. Ahora el anfitrión espeja también `lunge`, y
+  `hit` viaja con sus matices (fuego, letal, infección). Sigue pendiente que el invitado vea la
+  animación de muerte: aplica el estado y la carta desaparece.
+- **Una prueba comprobaba la implementación y no el comportamiento** (build 126). La de
+  «daño por infección en verde» buscaba la cadena literal `fxHit(u, n, opt.src==='infeccion')`
+  en el código y se puso en rojo al cambiar la firma de `fxHit` sin que el juego cambiara en
+  nada. Ahora hace un daño de infección y otro normal y mira de qué color sale cada número.
 - **Adreida es «La Guerrera Semiorca»** (build 125). Su epíteto era «De Frente», que es el
   nombre de su **mazo**, no de ella: era la única de los seis que no se describía a sí misma
   —El Mago Pitero, El Bardo Honesto, Devota de Rul, El Heredero Celestial, El Dungeon Master— y

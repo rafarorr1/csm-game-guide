@@ -1783,6 +1783,25 @@ body.tutpause #tut{pointer-events:auto}
 .fxnum.xl{font-size:calc(52px * var(--k,1))}
 .fxburst{position:absolute;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.95) 0%,currentColor 42%,transparent 72%)}
+/* EL IMPACTO
+   Chispas que salen del punto de contacto en la dirección del golpe, un anillo
+   que se expande, y polvo. Todo escala con --k porque #fx vive fuera del lienzo
+   y no hereda su zoom. Los colores los pone el JS por `color`: blanco-oro para
+   un golpe normal, brasa para el Fuego, ceniza para la muerte. */
+.fxspark{position:absolute;width:calc(7px * var(--k,1));height:calc(7px * var(--k,1));
+  margin:calc(-3.5px * var(--k,1)) 0 0 calc(-3.5px * var(--k,1));border-radius:50%;
+  background:radial-gradient(circle,#fff 0%,currentColor 55%,transparent 75%);
+  box-shadow:0 0 calc(8px * var(--k,1)) currentColor;will-change:transform,opacity}
+.fxspark.larga{width:calc(18px * var(--k,1));height:calc(4px * var(--k,1));
+  margin:calc(-2px * var(--k,1)) 0 0 calc(-9px * var(--k,1));border-radius:2px;
+  background:linear-gradient(90deg,transparent,currentColor,#fff)}
+.fxpuff{position:absolute;width:calc(14px * var(--k,1));height:calc(14px * var(--k,1));
+  margin:calc(-7px * var(--k,1)) 0 0 calc(-7px * var(--k,1));border-radius:50%;
+  background:radial-gradient(circle,currentColor 0%,transparent 70%);
+  filter:blur(calc(1.5px * var(--k,1)));will-change:transform,opacity}
+/* el destello blanco del golpe letal: cubre la carta y se apaga */
+.fxflash{position:absolute;border-radius:10px;background:#fff;pointer-events:none;
+  box-shadow:0 0 calc(40px * var(--k,1)) #fff}
 .fxring{position:absolute;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;
   border:3px solid currentColor;box-shadow:0 0 22px currentColor}
 .fxslash{position:absolute;width:110px;height:5px;margin:-2px 0 0 -55px;border-radius:3px;
@@ -2156,7 +2175,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:125, fecha:'2026-09-04'};
+const BUILD = {n:126, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -3391,10 +3410,11 @@ async function dmgU(u, n, opt={}){
   }
   u.dmg+=n;
   if(opt.att) u.killer=opt.att;
-  netFx('hit',{uid:u.uid,n,inf:opt.src==='infeccion'});
+  const golpe={inf:opt.src==='infeccion', fuego:!!opt.fire, letal:u.dmg>=u.maxHp};
+  netFx('hit',{uid:u.uid,n,...golpe});
   log(`${u.card.n} recibe ${n} daño (${Math.max(0,u.maxHp-u.dmg)}/${u.maxHp}).`,'dmg');
   render();
-  await fxHit(u, n, opt.src==='infeccion');
+  await fxHit(u, n, golpe);
   await checkDeaths();
   return n;
 }
@@ -4322,6 +4342,7 @@ async function doAttack(u, target){
       else if(r<=5){ log('Aidman pierde la apuesta y se hace el daño a sí mismo.','dmg');
         await dmgU(u,atk,{src:'ludopata'}); render(); return true; }
     }
+    netFx('lunge',{uid:u.uid, tg:target==='face' ? 'face' : target.uid, side:(s===FOE?0:1)});
     await fxLunge(u,target);
     // Ilusión
     if(target!=='face' && target.card.illusion){
@@ -4798,22 +4819,37 @@ function fxNumber(target, text, kind, big){
   fxGone(d,1900);
 }
 /* golpe recibido: sacudida + destello rojo */
-async function fxHit(u, amount, porInfeccion){
+/* opt: {inf, fuego, letal}. Un golpe de 1 y uno de 7 no pueden verse igual, y
+   el que mata menos aún: la sacudida escala con el daño, el Fuego va en brasa,
+   y el letal lleva un destello blanco encima de la carta. */
+async function fxHit(u, amount, opt){
   if(!FXON()) return;
-  fxNumber(u, '−'+amount, porInfeccion ? 'inf' : 'dmg');
+  if(typeof opt!=='object') opt={inf:!!opt};                // compat: antes era un booleano
+  const {inf=false, fuego=false, letal=false} = opt||{};
+  fxNumber(u, '−'+amount, inf ? 'inf' : 'dmg', letal || amount>=5);
   const e=fxEl(u);
-  void 0;
+  const c=fxCenter(u);
   if(e){
-    e.animate([{transform:'translate(0,0)'},{transform:'translate(-7px,3px)'},
-      {transform:'translate(6px,-3px)'},{transform:'translate(-4px,2px)'},{transform:'translate(0,0)'}],
+    const f = Math.min(1.6, .7 + amount/6);
+    e.animate([{transform:'translate(0,0)'},{transform:`translate(${-7*f}px,${3*f}px)`},
+      {transform:`translate(${6*f}px,${-3*f}px)`},{transform:`translate(${-4*f}px,${2*f}px)`},{transform:'translate(0,0)'}],
       {duration:340,easing:'ease-out'});
-    e.animate([{filter:'brightness(1)'},{filter:'brightness(2.4) sepia(1) hue-rotate(-40deg) saturate(6)',offset:.15},
-      {filter:'brightness(1)'}],{duration:420});
-    const c=fxCenter(u);
-    if(c){ const b=fxAdd('fxburst',c.x,c.y,{color:'#ff5a4e'});
-      b.animate([{transform:'scale(.3)',opacity:.95},{transform:'scale(1.5)',opacity:0}],{duration:380,easing:'ease-out'}); fxGone(b,380); }
+    const tinte = fuego ? 'brightness(2.2) sepia(1) hue-rotate(-18deg) saturate(7)'
+                        : 'brightness(2.4) sepia(1) hue-rotate(-40deg) saturate(6)';
+    e.animate([{filter:'brightness(1)'},{filter:tinte,offset:.15},{filter:'brightness(1)'}],{duration:420});
+    if(c){
+      const b=fxAdd('fxburst',c.x,c.y,{color: fuego ? FX_COLOR.fuego : '#ff5a4e'});
+      b.animate([{transform:'scale(.3)',opacity:.95},{transform:'scale(1.5)',opacity:0}],{duration:380,easing:'ease-out'}); fxGone(b,380);
+      fxChispas(c.x, c.y, {n: fuego ? 12 : 7, color: fuego ? FX_COLOR.fuego : FX_COLOR.golpe, fuerza: fuego ? 1.1 : .8});
+      if(letal){
+        const r=c.r, fl=fxAdd('fxflash', r.left, r.top, {width:r.width+'px', height:r.height+'px'});
+        fl.animate([{opacity:.95},{opacity:0}],{duration:360,easing:'ease-out'}); fxGone(fl,360);
+        fxAnillo(c.x, c.y, FX_COLOR.letal, 1.4);
+      }
+    }
   }
-  await nap(190);
+  fxSacudida(amount, letal);
+  await nap(letal ? 260 : 190);
 }
 function fxHeal(u, amount){
   if(!FXON()) return;
@@ -4860,22 +4896,110 @@ async function fxLunge(att, target){
       await nap(640);
     }
   }
-  const dx=(to.x-from.x)*.42, dy=(to.y-from.y)*.42;
-  const a=e.animate([{transform:'translate(0,0)'},
-    {transform:`translate(${dx*-0.18}px,${dy*-0.18}px)`,offset:.22},
-    {transform:`translate(${dx}px,${dy}px)`,offset:.55},
-    {transform:'translate(0,0)'}],{duration:460,easing:'cubic-bezier(.3,-0.4,.4,1.4)'});
+  /* La embestida en tres tiempos: se echa atrás, se lanza, y en el contacto se
+     QUEDA CLAVADA 70 ms —el hit-stop— antes de volver. Esa parada es lo que
+     hace que el golpe pese: sin ella la carta pasa de largo y el impacto es
+     un adorno. Va en dos animaciones y no en una para poder parar en medio;
+     la de ida lleva fill:forwards porque, sin él, al acabar la carta saltaría
+     a su sitio antes de la vuelta (la regla de siempre). */
+  const dx=(to.x-from.x)*.46, dy=(to.y-from.y)*.46;
   e.style.zIndex=60;
-  await nap(250);
-  const mx=(from.x+to.x)/2, my=(from.y+to.y)/2;
-  const ang=Math.atan2(to.y-from.y,to.x-from.x)*180/Math.PI;
+  const ida=e.animate([{transform:'translate(0,0)'},
+    {transform:`translate(${dx*-0.2}px,${dy*-0.2}px)`,offset:.35},
+    {transform:`translate(${dx}px,${dy}px)`}],
+    {duration:300,easing:'cubic-bezier(.45,-0.3,.6,1)',fill:'forwards'});
+  await nap(300);
+  // contacto
+  const mx=from.x+(to.x-from.x)*.52, my=from.y+(to.y-from.y)*.52;
+  const rad=Math.atan2(to.y-from.y,to.x-from.x), ang=rad*180/Math.PI;
   const sl=fxAdd('fxslash',mx,my,{transform:`rotate(${ang}deg)`});
   sl.animate([{opacity:0,transform:`rotate(${ang}deg) scaleX(.2)`},
     {opacity:1,transform:`rotate(${ang}deg) scaleX(1)`,offset:.4},
     {opacity:0,transform:`rotate(${ang}deg) scaleX(1.3)`}],{duration:320});
   fxGone(sl,320);
-  setTimeout(()=>{ e.style.zIndex=''; },480);
+  fxChispas(mx, my, {n:12, color:FX_COLOR.golpe, ang:rad, fuerza:1, largas:true});
+  fxAnillo(mx, my, FX_COLOR.golpe, .9);
+  await nap(70);                                            // hit-stop
+  const vuelta=e.animate([{transform:`translate(${dx}px,${dy}px)`},{transform:'translate(0,0)'}],
+    {duration:220,easing:'cubic-bezier(.2,.8,.3,1)'});
+  ida.cancel();                                             // libera el fill
+  setTimeout(()=>{ e.style.zIndex=''; },260);
 }
+/* ==========================================================================
+   EL IMPACTO
+   Lo que pasa en el punto de contacto. Lo llaman la embestida (al tocar) y el
+   golpe recibido (al restar vida), así que un ataque cuerpo a cuerpo lo dispara
+   dos veces con parámetros distintos y un hechizo sólo una.
+   Reglas de la casa: todo detrás de FXON(); los tamaños en --k porque #fx no
+   hereda el zoom del lienzo; y las sacudidas van sobre #board, cuya posición
+   no vive en transform, así que animarlo no borra nada.
+   ========================================================================== */
+const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
+const FX_COLOR = { golpe:'#ffd58a', fuego:'#ff7a3a', letal:'#ffffff', ceniza:'#a89f94', brasa:'#ff9a3c' };
+
+/* Chispas desde (x,y). `ang` es la dirección del golpe en radianes; las chispas
+   salen en un cono alrededor de ella. Sin ángulo, salen en todas direcciones. */
+function fxChispas(x, y, {n=10, color=FX_COLOR.golpe, ang=null, fuerza=1, largas=false}={}){
+  if(!FXON() || FX_SUAVE()) return;
+  const k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k'))||1;
+  for(let i=0;i<n;i++){
+    const a = ang==null ? Math.random()*Math.PI*2
+                        : ang + (Math.random()-.5)*1.4;            // cono de ±40°
+    const d = (26 + Math.random()*54) * fuerza * k;
+    const dx = Math.cos(a)*d, dy = Math.sin(a)*d + 10*k;           // caen un poco
+    const sp = fxAdd('fxspark'+(largas&&Math.random()<.5?' larga':''), x, y, {color});
+    const rot = largas ? `rotate(${a*180/Math.PI}deg)` : '';
+    sp.animate([
+      {transform:`translate(0,0) ${rot} scale(1)`, opacity:1},
+      {transform:`translate(${dx*.7}px,${dy*.6}px) ${rot} scale(1.1)`, opacity:1, offset:.45},
+      {transform:`translate(${dx}px,${dy+14*k}px) ${rot} scale(.2)`, opacity:0}
+    ],{duration:380+Math.random()*260, easing:'cubic-bezier(.15,.7,.3,1)'});
+    fxGone(sp, 640);
+  }
+}
+
+/* Anillo que se expande desde el contacto. */
+function fxAnillo(x, y, color, escala=1){
+  if(!FXON()) return;
+  const r = fxAdd('fxring', x, y, {color});
+  r.animate([{transform:`scale(.25)`,opacity:.95},{transform:`scale(${1.9*escala})`,opacity:0}],
+    {duration:420,easing:'ease-out'});
+  fxGone(r, 420);
+}
+
+/* Sacudida de la mesa proporcional al daño: 1 punto casi no se nota, 5 se
+   siente, un golpe letal se siente más. Con menos movimiento pedido, nada. */
+function fxSacudida(n, letal=false){
+  if(!FXON() || FX_SUAVE()) return;
+  const b=$('#board'); if(!b) return;
+  const f = Math.min(1, n/6) * (letal ? 1.5 : 1);
+  if(f < .12) return;
+  const px = v => (v*f).toFixed(1)+'px';
+  b.animate([
+    {transform:'translate(0,0)'},
+    {transform:`translate(${px(-7)},${px(3)})`},{transform:`translate(${px(6)},${px(-2)})`},
+    {transform:`translate(${px(-4)},${px(2)})`},{transform:`translate(${px(2)},${px(-1)})`},
+    {transform:'translate(0,0)'}],
+    {duration:260+120*f, easing:'ease-out'});
+}
+
+/* Bocanada al morir: ceniza gris, o brasas naranjas si murió por Fuego. */
+function fxBocanada(x, y, quemada){
+  if(!FXON() || FX_SUAVE()) return;
+  const k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k'))||1;
+  const color = quemada ? FX_COLOR.brasa : FX_COLOR.ceniza;
+  for(let i=0;i<14;i++){
+    const a = Math.random()*Math.PI*2, d = (18+Math.random()*46)*k;
+    const p = fxAdd('fxpuff', x+(Math.random()-.5)*40*k, y+(Math.random()-.5)*50*k, {color});
+    p.animate([
+      {transform:'translate(0,0) scale(.6)', opacity:.9},
+      {transform:`translate(${Math.cos(a)*d}px,${Math.sin(a)*d - (quemada?28:10)*k}px) scale(${quemada?1.3:2.2})`, opacity:0}
+    ],{duration:620+Math.random()*300, easing:'ease-out'});
+    fxGone(p, 920);
+  }
+  if(quemada) fxChispas(x, y, {n:8, color:FX_COLOR.fuego, fuerza:.9});
+}
+
 /* daño al Alma: sacudida del retrato, viñeta roja y número grande */
 async function fxFace(side, amount){
   if(!FXON()) return;
@@ -4989,6 +5113,7 @@ async function fxDeath(u){
       {transform:'translate(-50%,-50%) scale(1.15) rotate(0)',opacity:1,offset:.36},
       {transform:'translate(-50%,-62%) scale(1.15) rotate(0)',opacity:1,offset:.75},
       {transform:'translate(-50%,-105%) scale(.9)',opacity:0}],{duration:1300}); fxGone(b,1300); }
+  if(c) fxBocanada(c.x, c.y, !!u.tookFire);   // ceniza, o brasas si la quemaron
   if(e){ e.style.pointerEvents='none';
     // se clona sobre la capa de efectos: la fila del campo recorta lo que sale
     // de ella, y si no la carta se cortaría en el borde en vez de llegar a la pila
@@ -7282,7 +7407,11 @@ function netApply(s){
 async function netPlayFx(list){
   for(const f of list){
     const u=f.uid!=null? [...P(0).field,...P(1).field].find(x=>x.uid===f.uid) : null;
-    if(f.k==='hit'&&u) await fxHit(u,f.n,f.inf);
+    if(f.k==='hit'&&u) await fxHit(u,f.n,{inf:f.inf,fuego:f.fuego,letal:f.letal});
+    else if(f.k==='lunge'&&u){
+      const tg = f.tg==='face' ? 'face' : [...P(0).field,...P(1).field].find(x=>x.uid===f.tg);
+      if(tg) await fxLunge(u, tg);
+    }
     else if(f.k==='heal'&&u) fxHeal(u,f.n);
     else if(f.k==='face') await fxFace(f.side,f.n);
     else if(f.k==='spell') await fxSpell(f.id,f.side);
