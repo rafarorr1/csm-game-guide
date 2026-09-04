@@ -988,6 +988,34 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
   }
 
+  /* LA PASIVA DE GERO NO RUEDA ANTES DE QUE ÉL LA EXPLIQUE.
+     Su d20 se tira al inicio de CADA turno, así que en el tutorial lo primero
+     que veía el alumno era un dado cayendo del cielo antes de que nadie le
+     hubiera dicho qué es un d20, qué es un PD ni qué es el Alma. Una lección se
+     enseña y luego se ve. */
+  {
+    T.startTutorial('gero');
+    await sleep(300);
+    const k = TUT_STEPS.findIndex(x => x && x.pasiva);
+    t.check(k > 0, 'ningún paso del tutorial está marcado como el que explica la pasiva');
+
+    const i0 = TUT.i;
+    TUT.i = 0;      const alEmpezar = window.tutPasivaLista();
+    TUT.i = k - 1;  const justoAntes = window.tutPasivaLista();
+    TUT.i = k;      const alExplicarla = window.tutPasivaLista();
+    TUT.i = i0;
+    t.check(!alEmpezar,  'el dado rodaría en el paso 1, antes de explicar nada');
+    t.check(!justoAntes, `el dado rodaría en el paso ${k}, justo antes de la explicación`);
+    t.check(alExplicarla, `el dado sigue sin rodar en el paso ${k+1}, ya explicado`);
+
+    const on0 = TUT.on; TUT.on = false;
+    const fuera = window.tutPasivaLista(); TUT.on = on0;
+    t.check(fuera, 'fuera del tutorial la pasiva tiene que rodar siempre');
+
+    await T.startTutorial && sleep(0);
+    t.nota(`la pasiva de Gero espera al paso ${k+1}: primero se explica, luego se ve`);
+  }
+
   /* LA DIFICULTAD NO PUEDE APAGAR LA FICHA DEL CARRUSEL.
      Gero llegó con dificultad 4 y la ficha se pintaba con '☆'.repeat(3-dif):
      con 4 eso es repeat(-1), que lanza RangeError. Y como la ficha se arma de
