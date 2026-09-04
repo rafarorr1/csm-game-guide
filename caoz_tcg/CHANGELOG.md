@@ -1074,6 +1074,19 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Los dos huecos del Conserje ya tienen nombre** (build 108). *Placeholder Adreida* pasa a ser
+  **El Niño de la Lanza** (el chaval de 16 años que ayuda en la primera defensa del pueblo) y
+  *Placeholder Rafaela* pasa a ser **Julia**, una de las discípulas perdidas.
+  Cuerpo y efecto **idénticos** —1 PD, 0/1, inmune a Hechizos, +1 PD al morir—, así que el
+  balance no se toca: es la misma carta con otra cara.
+  La inmunidad a Hechizos venía del Conserje, que era ciego. Se quedó, pero cada una con su
+  motivo: a un chaval nadie le gasta un Hechizo, y a Julia no se la puede señalar porque nadie
+  sabe dónde está. Misma línea de código, distinta razón.
+  Se quedan en tribu **Humano** a propósito. Es la única tribu impresa que ninguna lógica del
+  juego lee, así que no cambia nada; ponerle *Tomsage* al niño haría que Augusto le diera
+  +1/+1 y ya sería otro cambio, con su medición aparte.
+  Y el nombre no cita al pueblo porque en los guiones aparece como Tomsage, Domsage, Townsfalk
+  y Townsfolk: «El Niño de la Lanza» funciona con las cuatro.
 - **Avisa antes de terminar el turno con PD sin gastar** (build 107). Los Puntos de Domo no se
   arrastran de un turno a otro —cada turno se recalculan desde cero— salvo los 2 que guarda
   Machete. Terminar con puntos encima es tirarlos, y no había nada que lo dijera.
