@@ -1168,6 +1168,18 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El botón se enciende y la pantalla entra** (build 124). Dos piezas que trabajan juntas.
+  Al pulsar, el botón **se enciende medio segundo**: un fogonazo con halo y un brillo que lo
+  cruza. Es el acuse de recibo, y de paso tapa el instante en que la pantalla cambia. Va por
+  delegación y en `pointerdown`, no en `click`, a propósito: el `click` de casi todos estos
+  botones cambia de pantalla, y para cuando llega el botón ya no se ve.
+  Y la pantalla nueva **entra**: sus bloques suben, se enfocan y aparecen escalonados —el
+  título primero, cada uno 45 ms después—, con un destello que cruza una sola vez.
+  Lo que hace que funcione es lo que **no** se mueve: el fondo es compartido y no se toca, así
+  que la escena de detrás sigue corriendo mientras lo de delante se recompone. Por eso parece
+  una sola sala y no dos pantallas.
+  Sólo entre menús: al tablero se llega por la cortinilla del VS, que ya es una transición, y
+  encadenar las dos sería una de más. Con `prefers-reduced-motion` no se mueve nada.
 - **El carrete vuelve a ser simétrico con seis Protagonistas** (build 123). Con cinco cartas el
   abanico salía solo: −2..+2, dos a cada lado. Con seis el reparto era −2..+3 —**tres cartas a
   un lado y dos al otro**—, y al girar de Talesyn a Mohamed se veían dos saltando de golpe al
