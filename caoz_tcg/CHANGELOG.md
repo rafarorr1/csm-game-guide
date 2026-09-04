@@ -1168,6 +1168,10 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El cartel de «Tu turno» sale antes que el dado de Gero** (build 112). El dado es lo primero
+  que **pasa** en el turno, no el anuncio de que el turno empieza. Estaba puesto antes del
+  cartel, así que el d20 aparecía todavía sobre la pantalla del turno anterior y parecía que lo
+  tiraba el rival. Ahora: cartel, y encima de la mesa ya tuya, el dado.
 - **La pasiva de Gero ya no rueda antes de que él la explique** (build 111). Su d20 se tira al
   inicio de **cada** turno, así que en el tutorial lo primero que veía el alumno era un dado
   cayendo del cielo — antes de que nadie le hubiera dicho qué es un d20, qué es un PD ni qué es

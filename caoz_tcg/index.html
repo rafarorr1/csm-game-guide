@@ -1826,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:111, fecha:'2026-09-03'};
+const BUILD = {n:112, fecha:'2026-09-03'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -3583,24 +3583,6 @@ async function startTurn(s){
   recalc();
   log(`<b>— Turno ${Math.ceil(G.turnNo/2)} de ${p.L.n} —</b> (${p.pd}/${p.pdMax} PD)`,'sys');
 
-  /* GERO — El dado decide.
-     Los tamaños no son simétricos y no es un descuido: los PD se desperdician
-     —si no tienes qué jugar, el punto de más se evapora— y el Alma siempre se
-     cobra. Medido, un ±2 «simétrico» le quitaba 5,6 puntos de victorias, y
-     subir el premio a +4 PD lo dejaba PEOR que +2 porque no le da tiempo a
-     gastarlos. +2 PD contra −1 Alma es lo que sale a cuenta: con +3 se iba a
-     55 % y por encima de todos menos Adreida; con +2 el juego entero se queda
-     en 15,5 de brecha, lo más sano que se ha medido. */
-  if(p.leaderId==='gero' && !G.over && tutPasivaLista()){
-    const d = await roll('El dado decide', s, {sola:true, necesita:'15 o más',
-      min:15, siOk:'+2 PD este turno', siMal:'−1 Alma si sale 10 o menos'});
-    if(d>=15){ p.pd+=2; log('🎲 <b>El dado decide</b>: 15+. Gero improvisa a lo grande: <b>+2 PD</b>.','good'); }
-    else if(d<=10){ log('🎲 <b>El dado decide</b>: 10 o menos. Sale mal: <b>−1 Alma</b>.','dmg');
-      await dmgFace(s,1,{src:'dado'}); }
-    else log('🎲 <b>El dado decide</b>: ni fu ni fa. Sigue el guion.','sys');
-    if(G.over) return;
-    render();
-  }
 
   /* EL REY — corte reunida. Se mira aquí, con el campo ya asentado. */
   if(!G.over && p.field.some(u=>u.alive && u.card.id==='rey')
@@ -3612,6 +3594,28 @@ async function startTurn(s){
   netFx('banner',{side:(s===FOE?0:1)});
   await fxBanner(s);
   fxStat(s,'.stat.pd');
+
+  /* GERO — El dado decide.
+     Va DESPUÉS del cartel de «Turno de…» a propósito: el dado es lo primero que
+     pasa en el turno, no el anuncio de que el turno empieza. Puesto antes, el
+     d20 aparecía sobre la pantalla del turno anterior y parecía que lo tiraba
+     el rival.
+     Los tamaños no son simétricos y tampoco es un descuido: los PD se
+     desperdician —si no tienes qué jugar, el punto de más se evapora— y el Alma
+     siempre se cobra. Medido, un ±2 «simétrico» le quitaba 5,6 puntos de
+     victorias, y subir el premio a +4 PD lo dejaba PEOR que +2 porque no le da
+     tiempo a gastarlos. Con +3 se iba al 55 % y por encima de todos menos
+     Adreida; con +2 el juego entero se queda en 15,5 de brecha. */
+  if(p.leaderId==='gero' && !G.over && tutPasivaLista()){
+    const d = await roll('El dado decide', s, {sola:true, necesita:'15 o más',
+      min:15, siOk:'+2 PD este turno', siMal:'−1 Alma si sale 10 o menos'});
+    if(d>=15){ p.pd+=2; log('🎲 <b>El dado decide</b>: 15+. Gero improvisa a lo grande: <b>+2 PD</b>.','good'); }
+    else if(d<=10){ log('🎲 <b>El dado decide</b>: 10 o menos. Sale mal: <b>−1 Alma</b>.','dmg');
+      await dmgFace(s,1,{src:'dado'}); }
+    else log('🎲 <b>El dado decide</b>: ni fu ni fa. Sigue el guion.','sys');
+    if(G.over) return;
+    render(); fxStat(s,'.stat.pd');
+  }
 
   // Lugar
   if(G.place && CARDS[G.place.id].onAnyStart) await CARDS[G.place.id].onAnyStart(G,s);
