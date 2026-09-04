@@ -1826,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:110, fecha:'2026-09-03'};
+const BUILD = {n:111, fecha:'2026-09-03'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -3591,7 +3591,7 @@ async function startTurn(s){
      gastarlos. +2 PD contra −1 Alma es lo que sale a cuenta: con +3 se iba a
      55 % y por encima de todos menos Adreida; con +2 el juego entero se queda
      en 15,5 de brecha, lo más sano que se ha medido. */
-  if(p.leaderId==='gero' && !G.over){
+  if(p.leaderId==='gero' && !G.over && tutPasivaLista()){
     const d = await roll('El dado decide', s, {sola:true, necesita:'15 o más',
       min:15, siOk:'+2 PD este turno', siMal:'−1 Alma si sale 10 o menos'});
     if(d>=15){ p.pd+=2; log('🎲 <b>El dado decide</b>: 15+. Gero improvisa a lo grande: <b>+2 PD</b>.','good'); }
@@ -5628,7 +5628,7 @@ function buildTut(lid){
  t:`Hay que quitarlo de en medio, y chocando perderías tu Personaje.<br><br>
     ${M.quitaTxt} Juégala y elígelo a él.`},
 
-{t:[`Fuera. Eso son los <b>Hechizos</b>: se usan una vez, van a las Alcantarillas y resuelven
+{pasiva:true, t:[`Fuera. Eso son los <b>Hechizos</b>: se usan una vez, van a las Alcantarillas y resuelven
    lo que tus Personajes no pueden.`, M.quitaExtra]},
 
 /* ---------- Habilidad de Líder ---------- */
@@ -6095,6 +6095,18 @@ function buildSelect(){
     </div>`;
 
   $('#selGo').disabled=false;
+}
+
+/* ¿Puede rodar ya la pasiva de Gero?
+   En el tutorial no, hasta que él la haya explicado. Rodaba desde el turno 1 y
+   lo primero que veía el alumno era un d20 cayendo del cielo antes de que
+   nadie le hubiera dicho qué es un d20, qué es un PD ni qué es el Alma. Una
+   lección se enseña y luego se ve, no al revés.
+   Fuera del tutorial rueda siempre. */
+function tutPasivaLista(){
+  if(!TUT.on) return true;
+  const k = TUT_STEPS.findIndex(x => x && x.pasiva);
+  return k < 0 || TUT.i >= k;
 }
 
 /* La dificultad se pinta con tres estrellas. Con un valor fuera de rango,

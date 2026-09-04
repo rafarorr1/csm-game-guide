@@ -1168,6 +1168,13 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **La pasiva de Gero ya no rueda antes de que él la explique** (build 111). Su d20 se tira al
+  inicio de **cada** turno, así que en el tutorial lo primero que veía el alumno era un dado
+  cayendo del cielo — antes de que nadie le hubiera dicho qué es un d20, qué es un PD ni qué es
+  el Alma. Una lección se enseña y luego se ve, no al revés.
+  Ahora el paso que la explica va marcado, y el dado espera a llegar ahí: paso **20 de 35**.
+  A partir de ese momento rueda con normalidad y el alumno lo ve funcionar con la explicación
+  todavía en pantalla. Fuera del tutorial rueda siempre, desde el turno 1.
 - **Seis NPCs del Domo entran al Cajón** (build 109). **Can, el de los Goblins** (invoca dos
   Goblins de Camino con Provocar), **Spider-Man** (Aturde al entrar, y +2/+2 mientras controles
   Antro Juan), **El Hermano del Trol** (Regeneración, inmune al Fuego, y al entrar busca el
