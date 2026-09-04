@@ -269,7 +269,13 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .menucol .btn:hover:not(:disabled)::after{translate:120% 0}
 .menucol .btn:active:not(:disabled){transform:translateY(1px);
   box-shadow:0 1px 0 rgba(0,0,0,.5), 0 6px 14px rgba(0,0,0,.5)}
+/* El botón del Tutorial lleva `btn gold`, y esa clase trae del resto del juego
+   una tipografía serif con versalitas —la de los botones dorados de la mesa—.
+   Aquí, en una columna de siete botones en sans, era el único distinto y se
+   leía como un error de maquetación. Se le devuelve la familia de sus vecinos;
+   el oro se queda, que es lo que lo destaca. */
 .menucol .btn:first-child{font-size:16.5px;padding:17px;color:#2a1a06;
+  font-family:var(--sans);font-variant-caps:normal;font-weight:800;
   background:linear-gradient(180deg,#ffe9b8,var(--oro) 42%,var(--oro2) 78%,#a06f1c);
   border-color:rgba(255,238,200,.8);
   box-shadow:0 3px 0 #6d4410, 0 12px 28px rgba(255,122,24,.34),
@@ -1990,7 +1996,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:113, fecha:'2026-09-04'};
+const BUILD = {n:114, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
