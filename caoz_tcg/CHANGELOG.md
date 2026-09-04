@@ -1168,6 +1168,21 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **La mano hace sitio** (build 127). La mano ya era un abanico —inclinación, giro por carta,
+  caída cuadrática, perspectiva, y la carta bajo el cursor se endereza y crece ×1,7—; lo que le
+  faltaba, y es lo que se siente, es que **las vecinas se aparten**: la carta crecía encima de
+  ellas en vez de hacerle hueco. Ahora cada carta recibe `--sep` según su distancia a la que
+  tienes bajo el cursor —la de al lado 0,74, la siguiente 0,38, a tres nada— y el CSS lo
+  convierte en un desplazamiento lateral que **crece con el solape** cuando la mano va llena.
+  No se apartan del todo a propósito: la ampliada tiene que quedar encima, para eso lleva
+  `z-index`; lo que se busca es que se vea que le hacen sitio.
+  Va por **delegación en `#hand`** y no en las cartas, porque `render()` rehace la mano entera
+  en cada repintado: un estado guardado en las cartas se perdería a la primera jugada. Sólo
+  toca variables CSS; el movimiento lo hace la transición que las cartas ya tenían.
+  Medido con un hover real sobre la carta central de siete: ±0,67 las vecinas inmediatas,
+  ±0,29 las siguientes, 0 el resto — simétrico y decreciente.
+  De paso: el punto 3 de la lista, el robo animado del mazo a la mano, **ya existía** (`fxDraw`).
+  Es una ficha genérica volando, no la cara de la carta; ésa es la mejora que queda ahí.
 - **El combate pesa** (build 126). El combate ya tenía embestida, tajo, números de daño,
   sacudida al recibir y la carta muerta volando a la pila; lo que le faltaba era
   **contundencia**: el impacto era una línea blanca de 110 px, un golpe de 1 se veía igual que
