@@ -1168,6 +1168,26 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Todos los menús comparten la identidad del logo** (build 115). La portada estrenó paleta de
+  oro y brasa en la 113, pero el selector de Protagonista y las guías seguían en morado, así
+  que la identidad se rompía justo al pasar de una pantalla a la siguiente. Ahora esa piel vive
+  en una clase, `.portada`, que llevan las tres: fondo de brasa, anillos de runas, cartas
+  flotando, velo y botones de piedra con filo dorado.
+  **El tablero no se toca.** El morado es el color del Domo y ahí se queda; lo que cambia es
+  todo lo que hay *antes* de entrar a jugar.
+  Las cuatro capas del fondo las pone ahora el **código** en cada `.portada` en vez de estar
+  escritas a mano en el HTML: eran cinco divs vacíos por pantalla y repetirlos en tres sitios
+  es la forma segura de que un día falte uno.
+  El paso del rival sigue poniéndose rojo, pero **más rojo**: contra el morado de antes bastaba
+  un tinte, contra el naranja no se notaba. Ahora viran también los anillos, las cartas y las
+  brasas.
+  Y el overlay —galería, reglas, online— mira **desde dónde lo abren**: si la pantalla visible
+  es un menú se viste de brasa, y si es el tablero se queda morado como el resto de la mesa.
+  Con una sola piel, o desentonaba en los menús o desentonaba jugando.
+  Las cartas de ejemplo de las guías y de la galería **no** cambian de color: el suyo dice de
+  qué clase son y eso es información del juego, no decoración.
+- **La galería deja de mentir en su cabecera** (build 115). Decía «96 cartas + 5 Líderes + 4
+  fichas» con los dos últimos números escritos a mano. Ahora los cuenta: 6 Líderes y 6 fichas.
 - **El botón del Tutorial ya usa la tipografía de sus vecinos** (build 114). Lleva la clase
   `btn gold`, y esa clase trae del resto del juego una serif con versalitas —la de los botones
   dorados de la mesa—. En una columna de siete botones en sans era el único distinto, y en vez
