@@ -112,22 +112,180 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .screen.on{display:flex}
 
 /* ---- Menú ---- */
-/* La primera pantalla: la misma sala del Domo que el tablero, con su luz y su
-   polvo. Antes era un fondo plano y el juego empezaba pareciendo otro juego. */
-#menu{align-items:center;justify-content:center;gap:18px;
-  text-align:center;padding:24px}
-#menu>*{position:relative;z-index:2}
-#menu .ambiente{z-index:0}
-.logo{font:900 clamp(34px,6.4vw,68px)/1.02 var(--serif);font-variant:small-caps;
+/* ==========================================================================
+   LA PORTADA
+   El resto del juego es morado —es el color del Domo— pero la portada es lo
+   primero que se ve, y lo primero que se ve tiene que ser el logo: oro, brasa
+   y piedra quemada. Así que el menú lleva su PROPIA paleta, declarada aquí
+   dentro y no en :root, para que la identidad cambie sin tocar la mesa.
+   Todo el movimiento es CSS. Nada de esto corre en JavaScript salvo repartir
+   las cartas del fondo una sola vez al arrancar.
+   ========================================================================== */
+#menu{
+  --oro:#f7d488; --oro2:#d9a441; --oro3:#8a5f1e;
+  --brasa:#ff7a18; --brasa2:#e8340c; --sangre:#8b1a12;
+  --piedra:#2a1c15; --piedra2:#170f0b;
+  align-items:center;justify-content:center;gap:0;
+  text-align:center;padding:30px 24px;overflow:hidden;
+  background:
+    radial-gradient(ellipse 70% 55% at 50% 8%,  rgba(255,122,24,.16), transparent 62%),
+    radial-gradient(ellipse 90% 70% at 50% 108%, rgba(232,52,12,.20), transparent 66%),
+    linear-gradient(180deg,#120c0a 0%,#1b110c 45%,#0b0706 100%)}
+#menu>*{position:relative;z-index:4}
+/* EL VELO
+   Las cartas del fondo cruzan por detrás de la columna de botones y, por muy
+   apagadas que estén, un texto sobre una carta en movimiento se lee peor. Un
+   óvalo oscuro entre el fondo y el contenido lo resuelve sin apagar la escena:
+   el centro queda legible y los bordes siguen vivos. Las brasas van por
+   ENCIMA del velo, que es lo que le da el chispazo delante del texto. */
+#menu::after{content:"";position:absolute;left:50%;top:52%;translate:-50% -50%;
+  width:980px;height:820px;z-index:2;pointer-events:none;border-radius:50%;
+  background:radial-gradient(ellipse at center,
+    rgba(9,5,4,.80) 0%, rgba(9,5,4,.62) 42%, rgba(9,5,4,.28) 66%, transparent 78%)}
+/* Las capas del fondo tienen que quedarse FUERA del flujo. La regla de arriba
+   es `#menu>*`, que gana en especificidad a `.ambiente{position:absolute}`, así
+   que al añadir el disco, la baraja y las brasas se metieron en la columna y
+   empujaron el logo y los botones 1 800 px hacia abajo: la portada se quedó en
+   negro. Se les devuelve el absolute con la misma especificidad. */
+#menu>.ambiente,#menu>.disco,#menu>.barajaFondo,#menu>.brasas{position:absolute}
+#menu>.ambiente{z-index:0}
+#menu>.disco{z-index:1}
+#menu>.barajaFondo{z-index:1}
+#menu>.brasas{z-index:3}
+/* el polvo del Domo, aquí en tono brasa en vez de morado */
+#menu .ambiente i{filter:hue-rotate(-42deg) saturate(1.35)}
+
+/* EL DISCO DE RUNAS
+   El logo se apoya en un disco de piedra con runas. Repetirlo detrás, girando
+   muy despacio, ata la portada al logo sin competir con él: por eso es enorme,
+   está muy apagado y tarda dos minutos en dar una vuelta. */
+.disco{position:absolute;left:50%;top:500px;
+  width:1010px;aspect-ratio:1;translate:-50% -50%;
+  z-index:1;pointer-events:none;opacity:.5;
+  background:
+    repeating-conic-gradient(from 0deg,
+      rgba(217,164,65,.16) 0deg 1.1deg, transparent 1.1deg 6deg);
+  -webkit-mask:radial-gradient(circle, transparent 60%, #000 61%, #000 66%, transparent 67%);
+          mask:radial-gradient(circle, transparent 60%, #000 61%, #000 66%, transparent 67%);
+  animation:gira 120s linear infinite}
+.disco.dos{width:760px;opacity:.42;animation-duration:86s;
+  animation-direction:reverse;
+  -webkit-mask:radial-gradient(circle, transparent 72%, #000 73%, #000 76%, transparent 77%);
+          mask:radial-gradient(circle, transparent 72%, #000 73%, #000 76%, transparent 77%)}
+@keyframes gira{to{rotate:360deg}}
+
+/* LAS CARTAS DEL FONDO
+   Suben despacio, giran un poco y se desvanecen. Las de delante son grandes,
+   nítidas y rápidas; las del fondo, pequeñas, borrosas y lentas. Esa diferencia
+   es lo único que hace que parezca un espacio y no un collage.
+   Nunca pasan por encima del texto: viven en z-index 1 y el menú en 3. */
+.barajaFondo{position:absolute;inset:0;z-index:1;pointer-events:none;overflow:hidden}
+.cartaFondo{position:absolute;top:100%;
+  width:var(--w);aspect-ratio:126/176;border-radius:10px;
+  opacity:0;will-change:transform,opacity;
+  background:
+    linear-gradient(180deg,rgba(255,225,170,.10),transparent 44%),
+    repeating-linear-gradient(45deg,rgba(90,45,20,.55) 0 4px,rgba(46,24,12,.55) 4px 9px),
+    linear-gradient(165deg,#4a2a16,#1d100a);
+  border:1px solid rgba(217,164,65,.42);
+  box-shadow:0 10px 30px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,220,170,.12);
+  animation:sube var(--dur) linear var(--esp) infinite}
+/* el sello del dorso, el mismo que llevan las cartas en la mesa */
+.cartaFondo::after{content:"";position:absolute;left:50%;top:50%;
+  width:36%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;
+  border:1px solid rgba(247,212,136,.34);
+  box-shadow:inset 0 0 0 4px rgba(247,212,136,.10), 0 0 14px rgba(255,122,24,.22)}
+@keyframes sube{
+  0%  {opacity:0;   transform:translate3d(0,0,0)                 rotate(var(--gir0)) scale(.98)}
+  12% {opacity:var(--op)}
+  85% {opacity:var(--op)}
+  100%{opacity:0;   transform:translate3d(var(--dx),-1240px,0)    rotate(var(--gir1)) scale(1.04)}}
+
+/* LAS BRASAS
+   Suben del borde de abajo, que es de donde viene la luz roja del fondo. */
+.brasas{position:absolute;inset:0;z-index:2;pointer-events:none;overflow:hidden}
+.brasas i{position:absolute;bottom:-12px;width:var(--b);aspect-ratio:1;border-radius:50%;
+  background:radial-gradient(circle,#ffd9a0,#ff7a18 42%,rgba(232,52,12,0) 72%);
+  opacity:0;will-change:transform,opacity;
+  animation:brasa var(--dur) linear var(--esp) infinite}
+@keyframes brasa{
+  0%  {opacity:0;   transform:translate3d(0,0,0) scale(.6)}
+  10% {opacity:.85}
+  70% {opacity:.55}
+  100%{opacity:0;   transform:translate3d(var(--dx),calc(-1 * var(--alto)),0) scale(1.15)}}
+
+/* EL LOGO */
+.marcaWrap{margin-top:0;
+  filter:drop-shadow(0 14px 34px rgba(255,122,24,.30)) drop-shadow(0 3px 10px rgba(0,0,0,.7));
+  animation:respiraLogo 7s ease-in-out infinite}
+.marca{display:block;width:720px;max-width:84%;height:auto}
+/* `display:block` gana a [hidden] y mientras no existe el logo se veía el
+   icono de imagen rota junto al título. */
+.marca[hidden]{display:none}
+.marcaTexto[hidden]{display:none}
+@keyframes respiraLogo{
+  0%,100%{transform:translateY(0)      scale(1)}
+  50%    {transform:translateY(-7px)   scale(1.012)}}
+/* Mientras no exista art/logo.webp, el nombre se pinta con la misma identidad
+   en vez de dejar un hueco. */
+.marcaTexto{font:900 80px/1 var(--serif);font-variant:small-caps;
   letter-spacing:3px;
-  background:linear-gradient(180deg,#fff3cf,var(--gold) 45%,#8a5a12);
+  background:linear-gradient(180deg,#fff6dd 6%,var(--oro) 32%,var(--oro2) 58%,#6d4410 100%);
   -webkit-background-clip:text;background-clip:text;color:transparent;
-  text-shadow:0 6px 28px rgba(230,187,82,.25);line-height:1.05}
-.sub{color:var(--dim);max-width:560px;font-size:15px;line-height:1.55}
-.menucol{display:flex;flex-direction:column;gap:11px;width:min(360px,86vw);margin-top:10px}
-.menucol .btn{padding:15px;font-size:15px;letter-spacing:.8px}
-.menucol .btn:first-child{font-size:16.5px;padding:17px}
-.foot{color:#6c5f85;font-size:11px;margin-top:10px}
+  text-shadow:0 0 44px rgba(255,122,24,.30)}
+.marcaTexto small{display:block;margin-top:8px;
+  font:800 14px/1 var(--sans);letter-spacing:7px;
+  -webkit-text-fill-color:var(--brasa);color:var(--brasa);text-shadow:none}
+
+/* el filete de brasa bajo el logo: cierra la cabecera y separa del menú */
+.filete{width:560px;max-width:78%;height:2px;margin:22px 0 0;
+  background:linear-gradient(90deg,transparent,var(--oro3) 18%,var(--oro) 50%,var(--oro3) 82%,transparent);
+  box-shadow:0 0 18px rgba(255,122,24,.5);border-radius:2px}
+
+.sub{color:#c8ab8a;max-width:620px;font-size:15px;line-height:1.6;
+  margin-top:16px;text-wrap:balance}
+
+/* LOS BOTONES
+   Placas de piedra con el filo dorado. El primero es el que quieres que pulse
+   alguien que llega nuevo, así que es el único con el oro relleno. */
+.menucol{display:flex;flex-direction:column;gap:9px;width:384px;max-width:88%;
+  margin-top:24px}
+.menucol .btn{position:relative;overflow:hidden;padding:14px;font-size:15px;
+  letter-spacing:.9px;font-weight:800;border-radius:11px;
+  color:#f3dfc2;
+  background:linear-gradient(180deg,rgba(74,42,22,.92),rgba(30,17,11,.94));
+  border:1px solid rgba(217,164,65,.34);
+  box-shadow:0 3px 0 rgba(0,0,0,.5), 0 10px 22px rgba(0,0,0,.45),
+             inset 0 1px 0 rgba(255,220,170,.10);
+  transition:transform .16s ease, box-shadow .16s ease, border-color .16s ease}
+/* el brillo que cruza al pasar por encima */
+.menucol .btn::after{content:"";position:absolute;inset:0;
+  background:linear-gradient(105deg,transparent 38%,rgba(255,232,190,.20) 50%,transparent 62%);
+  translate:-120% 0;transition:translate .5s ease}
+.menucol .btn:hover:not(:disabled){transform:translateY(-2px);
+  border-color:rgba(247,212,136,.75);
+  box-shadow:0 5px 0 rgba(0,0,0,.5), 0 14px 30px rgba(255,122,24,.20),
+             inset 0 1px 0 rgba(255,220,170,.16)}
+.menucol .btn:hover:not(:disabled)::after{translate:120% 0}
+.menucol .btn:active:not(:disabled){transform:translateY(1px);
+  box-shadow:0 1px 0 rgba(0,0,0,.5), 0 6px 14px rgba(0,0,0,.5)}
+.menucol .btn:first-child{font-size:16.5px;padding:17px;color:#2a1a06;
+  background:linear-gradient(180deg,#ffe9b8,var(--oro) 42%,var(--oro2) 78%,#a06f1c);
+  border-color:rgba(255,238,200,.8);
+  box-shadow:0 3px 0 #6d4410, 0 12px 28px rgba(255,122,24,.34),
+             inset 0 1px 0 rgba(255,255,255,.5)}
+.menucol .btn:first-child:hover{box-shadow:0 5px 0 #6d4410, 0 18px 40px rgba(255,122,24,.5),
+             inset 0 1px 0 rgba(255,255,255,.55)}
+.menucol .btn.taller{opacity:.72;font-size:13.5px;padding:11px}
+
+.foot{color:#8a6f55;font-size:11px;margin-top:20px}
+
+/* Quien haya pedido menos movimiento no ve nada moverse: ni cartas, ni brasas,
+   ni disco, ni logo. La portada sigue entera, sólo que quieta. */
+@media (prefers-reduced-motion:reduce){
+  .cartaFondo,.brasas i{animation:none;opacity:var(--op,.5)}
+  .disco,.marcaWrap{animation:none}
+  .menucol .btn::after{display:none}}
 .build{display:block;margin-top:5px;font:600 9.5px/1 var(--sans);letter-spacing:1.4px;
   color:#584b78;text-transform:uppercase}
 #buildPanel{text-align:right;margin:0;padding:2px 2px 0}
@@ -1679,8 +1837,15 @@ body.tutpause #tut{pointer-events:auto}
 <!-- ============ MENÚ ============ -->
 <div class="screen on" id="menu">
   <div class="ambiente" aria-hidden="true"><i></i><i></i><i></i></div>
-  <div class="logo">CAOZ CON TODO</div>
-  <div style="color:var(--purple);letter-spacing:5px;font-size:13px;font-weight:800">EL JUEGO DE CARTAS DEL DOMO</div>
+  <div class="disco" aria-hidden="true"></div>
+  <div class="disco dos" aria-hidden="true"></div>
+  <div class="barajaFondo" id="barajaFondo" aria-hidden="true"></div>
+  <div class="brasas" id="brasas" aria-hidden="true"></div>
+  <div class="marcaWrap">
+    <img class="marca" id="marca" src="art/logo.webp" alt="Caoz Con Todo" hidden>
+    <div class="marcaTexto" id="marcaTexto">Caoz Con Todo<small>EL JUEGO DE CARTAS DEL DOMO</small></div>
+  </div>
+  <div class="filete" aria-hidden="true"></div>
   <div class="sub">Dos jugadores entran al Domo. Cada uno lleva a un Protagonista como Líder y un mazo de 40 cartas.
     Gana quien reclame el alma del rival… o el Deseo.</div>
   <div class="menucol">
@@ -1692,8 +1857,7 @@ body.tutpause #tut{pointer-events:auto}
     <button class="btn" id="mRules">📜 &nbsp;Reglas completas</button>
     <button class="btn taller" id="mEstudio">🎨 &nbsp;Editor de cartas</button>
   </div>
-  <div class="foot">Set base — 5 Líderes · 92 cartas · 5 mazos preconstruidos
-    <span class="build" id="buildMenu"></span></div>
+  <div class="foot" id="menuFoot"><span class="build" id="buildMenu"></span></div>
 </div>
 
 <!-- ============ SELECCIÓN ============ -->
@@ -1826,7 +1990,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:112, fecha:'2026-09-03'};
+const BUILD = {n:113, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -7477,6 +7641,88 @@ $('#mGuides').onclick=()=>showGuides();
 /* El chat: Enviar, o Intro. El formulario evita que la página se recargue. */
 $('#chatform').onsubmit=e=>{ e.preventDefault(); chatMio(); };
 $$('.build').forEach(e=>e.textContent=buildTxt());
+
+/* ==========================================================================
+   LA PORTADA — lo poco que no puede hacer el CSS
+   Repartir las cartas y las brasas del fondo: cada una necesita su tamaño, su
+   deriva, su giro y su retraso propios, y eso son números, no clases. Se
+   crean UNA vez al arrancar y a partir de ahí las anima el CSS solo. Si se
+   rehicieran, perderían la animación a medias — es la regla de siempre.
+   ========================================================================== */
+function sembrarPortada(){
+  const az = (a,b) => a + Math.random()*(b-a);
+
+  const baraja = $('#barajaFondo');
+  if(baraja && !baraja.children.length){
+    /* Doce y no más: son adorno, y el móvil tiene que ir fino. Las de delante
+       —grandes, nítidas, rápidas— y las del fondo —chicas, borrosas, lentas—
+       se reparten a propósito para que haya profundidad de verdad. */
+    for(let i=0; i<12; i++){
+      const lejos = i % 3 !== 0;                    // dos de cada tres van al fondo
+      const d = el('div','cartaFondo');
+      const w = lejos ? az(52,84) : az(104,152);
+      d.style.setProperty('--w', w+'px');
+      d.style.left = az(-4, 96).toFixed(1)+'%';
+      d.style.setProperty('--dx', az(-90,90).toFixed(0)+'px');
+      d.style.setProperty('--gir0', az(-16,16).toFixed(1)+'deg');
+      d.style.setProperty('--gir1', az(-30,30).toFixed(1)+'deg');
+      d.style.setProperty('--op',  (lejos ? az(.14,.26) : az(.30,.46)).toFixed(2));
+      d.style.setProperty('--dur', az(lejos?34:22, lejos?52:34).toFixed(1)+'s');
+      /* El retraso es NEGATIVO a propósito: con retrasos positivos la portada
+         empieza vacía y las cartas van entrando de una en una durante medio
+         minuto. En negativo, cada una arranca ya empezada y la escena está
+         llena desde el primer fotograma. */
+      d.style.setProperty('--esp', (-az(0,46)).toFixed(1)+'s');
+      if(lejos) d.style.filter = `blur(${az(1.2,2.8).toFixed(1)}px)`;
+      baraja.appendChild(d);
+    }
+  }
+
+  const brasas = $('#brasas');
+  if(brasas && !brasas.children.length){
+    for(let i=0; i<22; i++){
+      const b = el('i','');
+      b.style.setProperty('--b', az(2,5).toFixed(1)+'px');
+      b.style.left = az(0,100).toFixed(1)+'%';
+      b.style.setProperty('--dx',   az(-70,70).toFixed(0)+'px');
+      b.style.setProperty('--alto', az(480,1000).toFixed(0)+'px');
+      b.style.setProperty('--dur',  az(9,18).toFixed(1)+'s');
+      b.style.setProperty('--esp',  (-az(0,18)).toFixed(1)+'s');
+      brasas.appendChild(b);
+    }
+  }
+
+  /* EL LOGO
+     Se prueban los formatos en orden y se usa el primero que cargue; si no hay
+     ninguno, se queda el nombre escrito con la misma identidad. Nunca un hueco
+     ni un icono de imagen rota.
+     Ojo al guardarlo: tiene que ser con FONDO TRANSPARENTE. El logo original
+     viene sobre blanco, y sobre esta portada oscura eso es un rectángulo
+     blanco alrededor del escudo. */
+  const img = $('#marca'), txt = $('#marcaTexto');
+  if(img && txt){
+    const formatos = ['art/logo.webp','art/logo.png'];
+    let k = 0;
+    img.onload  = () => { img.hidden = false; txt.hidden = true; };
+    img.onerror = () => {
+      if(++k < formatos.length){ img.src = formatos[k]; return; }
+      img.hidden = true; txt.hidden = false;
+    };
+    img.src = formatos[0];
+    if(img.complete && img.naturalWidth) img.onload();
+  }
+
+  /* El pie decía «5 Líderes · 92 cartas · 5 mazos» a mano, y llevaba tres
+     versiones mintiendo. Ahora los cuenta. */
+  const pie = $('#menuFoot');
+  if(pie){
+    const nL = Object.keys(LEADERS).length;
+    const nC = Object.keys(CARDS).filter(id=>!CARDS[id].token).length;
+    pie.insertAdjacentHTML('afterbegin',
+      `Set base — ${nL} Líderes · ${nC} cartas · ${nL} mazos preconstruidos<br>`);
+  }
+}
+sembrarPortada();
 $('#guideBack').onclick=()=>showScreen('menu');
 $('#mCards').onclick=()=>showGallery();
 $('#mRules').onclick=()=>showRules(false);
