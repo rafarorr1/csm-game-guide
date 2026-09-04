@@ -1168,6 +1168,26 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El carrete vuelve a ser simétrico con seis Protagonistas** (build 123). Con cinco cartas el
+  abanico salía solo: −2..+2, dos a cada lado. Con seis el reparto era −2..+3 —**tres cartas a
+  un lado y dos al otro**—, y al girar de Talesyn a Mohamed se veían dos saltando de golpe al
+  lado corto.
+  Con un número par **no hay reparto simétrico posible**, así que no se reparte mejor: se
+  **guarda una**. La carta del extremo opuesto se esconde detrás de la elegida —misma posición,
+  sin opacidad— y sale de ahí al girar, heredando la misma transición que las demás. El abanico
+  enseña siempre dos a cada lado.
+  La cuenta se ajusta sola al número de Líderes: con impares no esconde ninguna, y si algún día
+  son ocho esconderá una igual.
+- **Talesin se escribe Talesyn** (build 123). Cambia en su carta de Líder, en el aviso de su
+  Ascensión y en la guía de Adreida, que es donde se le nombra.
+  El **id interno sigue siendo `talesin`**, y esta vez a propósito: son 26 referencias entre
+  `index.html`, `balance.html` y el arnés, más el archivo `art/lider_talesin.webp` y su clave en
+  `encuadres.json`. Con Aidman el id se cambió porque eran seis sitios y ningún archivo; aquí
+  arrastra un binario y los parcheadores del banco, y el id no se ve por ningún lado.
+- **La letra de los botones dorados deja de verse emborronada** (build 123). Sobre oro la letra
+  va oscura, pero `.btn.gold` traía del resto del juego una `text-shadow` negra pensada para su
+  letra **clara**; con letra oscura esa sombra la ensucia. Ahora lleva un realce claro por
+  debajo, que es lo que hace legible un texto oscuro sobre metal.
 - **El logo, centrado y más pequeño** (build 122). Estaba descentrado por un `max-width` en
   porcentaje. `.marcaWrap` es un elemento flex con `align-items:center`, así que su ancho lo
   decide su contenido —la propia imagen—, y el `max-width:86%` cerraba el círculo: la caja

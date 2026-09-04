@@ -295,9 +295,14 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    Aquí, en una columna de siete botones en sans, era el único distinto y se
    leía como un error de maquetación. Se le devuelve la familia de sus vecinos;
    el oro se queda, que es lo que lo destaca. */
+/* Sobre oro, la letra va oscura — pero `.btn.gold` trae del resto del juego una
+   `text-shadow` negra pensada para su letra CLARA. Con la letra oscura esa
+   sombra la emborrona y parece impresa a presión. Aquí la sombra es un realce
+   claro por debajo, que es lo que hace legible un texto oscuro sobre metal. */
 .portada .btn.gold,
-.menucol .btn:first-child{font-size:16.5px;padding:17px;color:#2a1a06;
+.menucol .btn:first-child{font-size:16.5px;padding:17px;color:#3a2405;
   font-family:var(--sans);font-variant-caps:normal;font-weight:800;
+  text-shadow:0 1px 0 rgba(255,240,205,.55);
   background:linear-gradient(180deg,#ffe9b8,var(--oro) 42%,var(--oro2) 78%,#a06f1c);
   border-color:rgba(255,238,200,.8);
   box-shadow:0 3px 0 #6d4410, 0 12px 28px rgba(255,122,24,.34),
@@ -466,6 +471,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #select.rival .giro{color:#ff9a8a}
 #select.rival .btn.gold{background:linear-gradient(180deg,#7a2420,#4a1512);
   border-color:#e0524a;color:#ffd9d2}
+/* La que espera turno: detrás de la elegida, invisible y sin poder pulsarse.
+   Hereda la misma transición que las demás, así que al girar sale de detrás en
+   vez de aparecer de golpe. */
+.pista .lcard.guardada{opacity:0;pointer-events:none;z-index:0}
+
 /* LO QUE QUEDABA MORADO EN LOS MENÚS
    El selector y las guías traían la piedra y el violeta del tablero: la ficha
    del Protagonista, las flechas del carrete, las pestañas de las guías. Con el
@@ -2096,7 +2106,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:122, fecha:'2026-09-04'};
+const BUILD = {n:123, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2333,7 +2343,7 @@ rafaela:{ n:'Rafaela', ep:'Devota de Rul', art:'✨', arch:'Enjambre · Fe · Cu
   hab_do:async(g,s,ts)=>{ log('<b>Estornudo de Rul</b>: ¡achús!');
     if(ts[0][0]) await dmgU(ts[0][0],1,{src:'leader'});
     if(ts[1]&&ts[1][0]&&ts[1][0].alive) healU(ts[1][0],1); }},
-talesin:{ n:'Talesin', ep:'El Heredero Celestial', art:'😇', arch:'Sacrificio · Rampa · Ascensión',
+talesin:{ n:'Talesyn', ep:'El Heredero Celestial', art:'😇', arch:'Sacrificio · Rampa · Ascensión',
   pasiva:'<b>Digno de Ascender:</b> cada vez que muere un aliado ganas 1 Ficha de Gracia. Con 5, <b>asciendes</b>: +5 Alma y tus Celestiales ganan +2/+2 permanentes. <b>Después de ascender, cada Personaje que entre a tu campo nace Celestial y con +2/+2.</b>',
   hab:'<b>Luz de Kenya (3 PD):</b> un aliado gana +1/+1 permanentes y la tribu Celestial.',
   habCost:3, habName:'Luz de Kenya', habTg:{k:'unidadAliada',min:1,max:1},
@@ -3411,7 +3421,7 @@ async function killUnit(u, opt={}){
       P(s).ascended=true; P(s).alma+=5;
       P(s).field.forEach(o=>{ if(o.tribes.includes('Celestial')){o.pA+=2;o.pH+=2;} });
       toast('😇 ¡TALESIN ASCIENDE!');
-      log('<b>Talesin asciende</b>: +5 Alma, Celestiales +2/+2, y a partir de ahora lo que baje nace Celestial con +2/+2.','heal');
+      log('<b>Talesyn asciende</b>: +5 Alma, Celestiales +2/+2, y a partir de ahora lo que baje nace Celestial con +2/+2.','heal');
     }
   }
   // trampas de muerte
@@ -6364,12 +6374,22 @@ function buildSelect(){
     });
   }
   [...pista.children].forEach((d,i)=>{
-    /* Distancia al frente, dando la vuelta: con cinco cartas va de -2 a +2, así
-       que el abanico sale siempre simétrico esté elegida la que esté. */
-    let dd = i - centro;
-    if(dd >  ids.length/2) dd -= ids.length;
-    if(dd < -ids.length/2) dd += ids.length;
-    d.style.setProperty('--d', dd);
+    /* Distancia al frente, dando la vuelta.
+       Con CINCO cartas el abanico salía solo: -2..+2, dos a cada lado.
+       Con SEIS ya no: el reparto es -2..+3, tres cartas a un lado y dos al
+       otro, y al girar se veían dos saltando de golpe al lado corto.
+       La solución no es repartir mejor —con un número par no hay reparto
+       simétrico posible— sino guardar una: la carta del extremo opuesto se
+       esconde DETRÁS de la elegida (misma posición, sin opacidad) y sale de
+       ahí al girar. Así el abanico siempre enseña los mismos dos a cada lado.
+       Con impares no esconde ninguna: la cuenta se ajusta sola. */
+    const n = ids.length;
+    let dd = ((i - centro) % n + n) % n;      // 0..n-1
+    if(dd > n/2) dd -= n;                     // y ahora centrado en 0
+    const visibles = Math.floor((n - 1) / 2); // cuántas caben a cada lado
+    const guardada = Math.abs(dd) > visibles;
+    d.classList.toggle('guardada', guardada);
+    d.style.setProperty('--d', guardada ? 0 : dd);
     d.classList.toggle('enfrente', i===centro);
   });
 
@@ -7600,7 +7620,7 @@ adreida:{
     una Canción.`,
   pierdes:[
     'Contra Trampas. <b>Risa de Tasha</b> y <b>Gema del Conserje</b> castigan atacar con cartas grandes: <b>Modificar las Reglas</b> limpia su Zona de Trampas antes de la gran embestida.',
-    'Contra <b>Talesin</b>, por el <b>Aliento de Ácido</b> y por Tal. Talia Boss es tu mejor carta ahí: mátale el Pergamino antes de que llegue.',
+    'Contra <b>Talesyn</b>, por el <b>Aliento de Ácido</b> y por Tal. Talia Boss es tu mejor carta ahí: mátale el Pergamino antes de que llegue.',
     'Por olvidar tu segunda Habilidad: si no vas a atacar, <b>Maratón de K-dramas</b> te da una carta gratis. Es 0 PD.'
   ],
   vs:{mohamed:['Parejo','Sus rebotes te hacen perder tempo.'],fender:['Favorable','Provocar apaga su turno letal.'],
