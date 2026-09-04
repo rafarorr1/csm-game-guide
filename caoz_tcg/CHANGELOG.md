@@ -1168,6 +1168,21 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El paso a «Elige a tu rival» se funde, y las cartas del fondo son las de verdad** (build 118).
+  Dos cosas en el fondo compartido.
+  **El rojo entra fundido.** Un degradado **no se puede interpolar**: cambiar `background` de
+  naranja a rojo es un corte seco por mucho `transition` que se le ponga — por eso el viraje se
+  veía de golpe. Ahora el rojo es una **capa encima** y lo que se anima es su opacidad, que sí
+  funde. Medido: 0 → 0,20 → 0,85 → 1 en 750 ms, con los anillos y las cartas virando de tono al
+  mismo ritmo en vez de saltar.
+  **Las cartas que vuelan son cartas de verdad.** Ya no son dorsos genéricos: son las de los
+  seis Protagonistas, con su retrato, su nombre, su arquetipo y su Habilidad. La caja de fuera
+  es la que se mueve y dentro va una `.lcard` a tamaño real encogida con `scale`, así que el
+  diseño es **exactamente el mismo** que ves en el selector y no una imitación que haya que
+  mantener en dos sitios. Con seis Líderes y doce cartas, cada uno sale dos veces.
+  Los retratos se ponen **después** de que llegue `art/encuadres.json`: se carga por fetch, y
+  sembrando el fondo sin más las cartas se quedaban con el emoji para siempre.
+  Mohamed y Gero salen con su emoji porque todavía no tienen retrato.
 - **El fondo de los menús no se reinicia al cambiar de sección** (build 117). Cada pantalla
   llevaba su propia copia del fondo, así que al pasar de la portada al selector o a las guías
   la escena empezaba de cero: otras cartas, en otro sitio, desde el primer fotograma. El corte
