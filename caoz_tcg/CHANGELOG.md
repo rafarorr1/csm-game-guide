@@ -1074,6 +1074,18 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Seis NPCs del Domo entran al Cajón** (build 109). **Can, el de los Goblins** (invoca dos
+  Goblins de Camino con Provocar), **Spider-Man** (Aturde al entrar, y +2/+2 mientras controles
+  Antro Juan), **El Hermano del Trol** (Regeneración, inmune al Fuego, y al entrar busca el
+  Collar Mágico de Agua — su propio collar, que llevaba en el juego desde antes que él),
+  **Rambo** (3/1 con Prisa que muere al final del turno: entró solo al campo de batalla),
+  **El Coyote** (paga 2 PD y cruza a un aliado por debajo del Provocar) y **El Correcaminos**
+  (Prisa, y +2 ATQ si El Coyote está en *cualquier* campo — también el del rival).
+  El motivo no es sólo temático. El Cajón tenía 24 cartas y **ni un solo Personaje**: 23
+  Hechizos, Objetos y Trampas más una ficha. Un mazo del Dungeon Master, que reparte NPCs en
+  vez de aventureros, no se podía armar sin cuerpos propios — y medido, la diferencia entre
+  pedirlos prestados y tenerlos es de **30 % a 47 %** de victorias.
+  Como todas las del Cajón, no están en ningún mazo: no tocan el balance de nadie.
 - **Los dos huecos del Conserje ya tienen nombre** (build 108). *Placeholder Adreida* pasa a ser
   **El Niño de la Lanza** (el chaval de 16 años que ayuda en la primera defensa del pueblo) y
   *Placeholder Rafaela* pasa a ser **Julia**, una de las discípulas perdidas.
