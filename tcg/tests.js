@@ -605,10 +605,20 @@ PRUEBAS.suite('regresiones', async t => {
     const despues = $1(`#myField .card[data-uid="${u.uid}"]`);
     t.check(despues && despues.classList.contains('infectado'),
       'una criatura Infectada debería ponerse verde');
-    // y su daño lleva la clase del verde de infección, no la del rojo
+    // y su daño lleva la clase del verde de infección, no la del rojo.
+    // Se comprueba el COMPORTAMIENTO —que el número que sale sea verde— y no
+    // la forma de la llamada: antes buscaba la cadena literal
+    // `fxHit(u, n, opt.src==='infeccion')` y se puso en rojo al cambiar la
+    // firma de fxHit sin que el juego hubiera cambiado en nada.
+    $$('#fx .fxnum').forEach(e=>e.remove());
+    await T.dmgU(u, 1, {src:'infeccion'}); await sleep(80);
+    const numInf = $$('#fx .fxnum').find(e=>e.classList.contains('inf'));
+    t.check(!!numInf, 'el daño por infección debería salir con el número verde (.fxnum.inf)');
+    $$('#fx .fxnum').forEach(e=>e.remove());
+    await T.dmgU(u, 1, {src:'combate'}); await sleep(80);
+    const numRojo = $$('#fx .fxnum').find(e=>e.classList.contains('dmg') && !e.classList.contains('inf'));
+    t.check(!!numRojo, 'el daño normal debería salir con el número rojo (.fxnum.dmg)');
     const src = await fuente();
-    t.check(/fxHit\(u, ?n, ?opt\.src==='infeccion'\)/.test(src),
-      'el daño por infección debería pintarse distinto del daño normal');
     t.check(/\.fxnum\.inf\{/.test(src), 'falta el estilo verde del número de infección');
     t.nota('las Infectadas se ponen verdes y su daño sale en verde');
   }
