@@ -1168,6 +1168,13 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El logo ya está en la portada** (build 121). `art/logo.webp`, 1600×900 y 296 KB, sacado del
+  máster `ParaSpotify.png` (3840×3000, 6,3 MB).
+  El máster trae **1 200 px de margen transparente** arriba y abajo, y además unos restos casi
+  invisibles pegados a los bordes: recortando por la caja de alfa a secas salía el ancho
+  completo, sin recortar nada. Se recorta por **densidad de columna** —dónde hay al menos un 1 %
+  de píxeles opacos— que sí encuentra el arte de verdad, y se le dejan 16 px de aire.
+  A 680 px de ancho el logo mide 382 de alto y la columna entera cabe sin desbordar.
 - **«El juego de cartas», sin el Domo** (build 120). En la segunda temporada ya no hay Domo, así
   que el subtítulo de la portada y el título de la pestaña pierden esa coletilla.
   El subtítulo se saca además **fuera** del bloque del nombre: el nombre lo sustituye el logo
