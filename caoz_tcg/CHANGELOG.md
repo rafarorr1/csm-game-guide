@@ -1168,6 +1168,26 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Portada nueva** (build 113). El resto del juego es morado —es el color del Domo— pero lo
+  primero que se ve tiene que ser el logo, así que la portada lleva **su propia paleta**: oro,
+  brasa y piedra quemada, declarada dentro de `#menu` y no en `:root`, para que la identidad
+  cambie sin tocar la mesa.
+  Lo que hay detrás: **doce cartas** que suben, giran y se desvanecen —las de delante grandes,
+  nítidas y rápidas; las del fondo pequeñas, borrosas y lentas, que es lo único que hace que
+  parezca un espacio y no un collage—, **dos anillos de runas** girando en sentidos contrarios
+  (el disco de piedra del logo, repetido detrás y muy apagado), **veintidós brasas** subiendo
+  desde el borde de abajo, y un **velo** ovalado entre el fondo y el texto para que ninguna
+  carta le pase por detrás a un botón.
+  Los botones son placas de piedra con filo dorado y un brillo que las cruza al pasar por
+  encima; el del tutorial es el único con el oro relleno, porque es el que quieres que pulse
+  quien llega nuevo.
+  Todo el movimiento es CSS. JavaScript sólo reparte las cartas y las brasas **una vez** al
+  arrancar: si se rehicieran perderían la animación a medias.
+  Y el **logo** va arriba, en `art/logo.webp` (o `.png`). Mientras no exista, el nombre se pinta
+  con la misma identidad — nunca un hueco ni un icono de imagen rota.
+  Con `prefers-reduced-motion` no se mueve nada: la portada sigue entera, sólo que quieta.
+- **El pie de la portada deja de mentir** (build 113). Decía «5 Líderes · 92 cartas · 5 mazos»
+  escrito a mano, y llevaba tres versiones equivocado. Ahora los cuenta: 6 Líderes, 116 cartas.
 - **El cartel de «Tu turno» sale antes que el dado de Gero** (build 112). El dado es lo primero
   que **pasa** en el turno, no el anuncio de que el turno empieza. Estaba puesto antes del
   cartel, así que el d20 aparecía todavía sobre la pantalla del turno anterior y parecía que lo
