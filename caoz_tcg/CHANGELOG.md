@@ -1168,6 +1168,17 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El fondo de los menús no se reinicia al cambiar de sección** (build 117). Cada pantalla
+  llevaba su propia copia del fondo, así que al pasar de la portada al selector o a las guías
+  la escena empezaba de cero: otras cartas, en otro sitio, desde el primer fotograma. El corte
+  se veía, y era justo lo contrario de lo que un fondo así tiene que hacer.
+  Ahora el fondo es **uno solo** y vive fuera de las pantallas, como hermano suyo. Al cambiar de
+  sección no se toca: sólo se enciende al entrar a un menú y se apaga al entrar a la mesa. Entre
+  menú, selector y guías la escena ni se entera de que has cambiado de pantalla.
+  Medido: las cartas siguieron su recorrido a través del cambio (368 → 337 px) en vez de volver
+  a empezar.
+  El rojo del paso del rival ya no lo pinta `#select` sino el propio fondo, que es donde vive
+  ahora la escena que tiene que virar.
 - **Eman 69 se llama Aidman** (build 116). Se llamaba mal desde que entró. Cambia el nombre de
   la carta y las nueve líneas que lo dicen en voz alta: sus dos avisos al entrar y al morir,
   los dos de su tirada de Ludópata, y las tres de **Las Montañas de Tal**, que lo invocan en el
