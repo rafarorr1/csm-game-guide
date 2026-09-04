@@ -1168,6 +1168,15 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El logo, centrado y más pequeño** (build 122). Estaba descentrado por un `max-width` en
+  porcentaje. `.marcaWrap` es un elemento flex con `align-items:center`, así que su ancho lo
+  decide su contenido —la propia imagen—, y el `max-width:86%` cerraba el círculo: la caja
+  medía los 680 px del logo y entonces el 86 % encogía el logo a 585 **dentro** de esa caja de
+  680. Sobraban 95 px a la derecha, y como la imagen es un bloque sin márgenes automáticos,
+  quedaba pegada a la izquierda y descentrada respecto de los botones.
+  Ahora el ancho es fijo (470 px), el centrado explícito, y el tope de alto se queda por si
+  algún día el archivo viene con otra proporción. Comprobado midiendo: portada, logo, subtítulo
+  y columna de botones comparten el mismo centro.
 - **El logo ya está en la portada** (build 121). `art/logo.webp`, 1600×900 y 296 KB, sacado del
   máster `ParaSpotify.png` (3840×3000, 6,3 MB).
   El máster trae **1 200 px de margen transparente** arriba y abajo, y además unos restos casi

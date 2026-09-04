@@ -227,10 +227,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .marcaWrap{margin-top:0;
   filter:drop-shadow(0 14px 34px rgba(255,122,24,.30)) drop-shadow(0 3px 10px rgba(0,0,0,.7));
   animation:respiraLogo 7s ease-in-out infinite}
-/* El logo manda en el ancho, pero con tope de alto: si el archivo viniera con
-   otra proporción —o con mucho margen transparente alrededor— sin este tope se
-   comería la pantalla y empujaría los botones fuera. */
-.marca{display:block;width:680px;max-width:86%;height:auto;max-height:400px;object-fit:contain}
+/* OJO CON EL max-width EN PORCENTAJE.
+   `.marcaWrap` es un elemento flex con align-items:center, así que su ancho lo
+   decide su contenido — o sea, la propia imagen. Poner `max-width:86%` cerraba
+   el círculo: la caja medía los 680 px del logo, y entonces el 86 % encogía el
+   logo a 585 dentro de una caja de 680. Sobraban 95 px a la derecha y la imagen
+   quedaba pegada a la izquierda, descentrada respecto de los botones.
+   Ahora el ancho es fijo y el centrado explícito. El tope de alto se queda por
+   si algún día el archivo viene con otra proporción. */
+.marca{display:block;width:470px;max-width:100%;height:auto;
+  max-height:300px;object-fit:contain;margin-inline:auto}
 /* `display:block` gana a [hidden] y mientras no existe el logo se veía el
    icono de imagen rota junto al título. */
 .marca[hidden]{display:none}
@@ -2090,7 +2096,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:121, fecha:'2026-09-04'};
+const BUILD = {n:122, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
