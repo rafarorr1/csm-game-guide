@@ -1826,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:106, fecha:'2026-09-03'};
+const BUILD = {n:107, fecha:'2026-09-03'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4954,6 +4954,59 @@ function relojPinta(){
   e.classList.toggle('poco', RELOJ.queda<=15);
 }
 
+/* TERMINAR TURNO CON PUNTOS SIN GASTAR
+   Los PD no se arrastran de un turno a otro —cada turno se recalculan desde
+   cero— salvo los 2 que guarda Machete. Así que terminar con puntos encima es
+   tirarlos, y es un error que no avisa de ninguna forma.
+   Pero preguntar cada vez que sobre un punto sería un fastidio: con 1 PD y la
+   mano llena de cartas de 3 no hay nada que decidir. Sólo se pregunta cuando
+   esos puntos alcanzan para algo concreto, y la pregunta dice para qué.
+   Va en la barra de aviso y no en el panel grande a propósito: para contestar
+   hay que poder mirarse la mano. */
+function loQuePodriasHacer(s){
+  const p=P(s), L=p.L, out=[];
+  const n=p.hand.filter(id=>canPlay(s,id)).length;
+  if(n) out.push(n===1 ? 'jugar <b>1 carta</b>' : `jugar <b>${n} cartas</b>`);
+  if(!p.leaderUsed && p.pd>=L.habCost && (!L.habReq||L.habReq(G,s)))
+    out.push(`usar <b>${L.habName}</b>`);
+  p.field.forEach(u=>{ const a=u.card.act;
+    if(a && !u.actUsed && p.pd>=a.cost && !u.stunned && !u.possessed && (!a.req||a.req(G,s)))
+      out.push(`usar <b>${a.n}</b> de ${u.card.n}`);
+  });
+  return out;
+}
+
+function terminarTurnoYa(){
+  SEL=null; clearPrompt();
+  if(NET.guest){ gIntent('end'); return; }
+  endTurn();
+}
+
+function pedirTerminarTurno(){
+  if(!G||G.over||G.active!==ME||G.busy) return;
+  SEL=null; clearPrompt();
+  /* En el tutorial no se pregunta: sus pasos guionan cuándo se termina el
+     turno, y una pregunta de más lo deja atascado. */
+  if(G.tutorial){ terminarTurnoYa(); return; }
+  const p=P(ME);
+  const hacer = p.pd>0 ? loQuePodriasHacer(ME) : [];
+  if(!hacer.length){ terminarTurnoYa(); return; }
+
+  const lista = hacer.length>3 ? hacer.slice(0,3).join(', ')+' y algo más'
+              : hacer.length>1 ? hacer.slice(0,-1).join(', ')+' o '+hacer[hacer.length-1]
+              : hacer[0];
+  const machete = p.field.find(u=>u.card.bank);
+  const guarda = machete ? Math.min(2,p.pd) : 0;
+  const nota = guarda
+    ? ` 🎒 Machete guardará ${guarda} para el próximo turno; ${p.pd-guarda>0?'el resto se':'no se'} pierde${p.pd-guarda>0?'':'n'}.`
+    : ' Los PD no se guardan: se pierden.';
+
+  setPrompt(`Te quedan <b>${p.pd} PD</b> y todavía puedes ${lista}.${nota} ¿Terminar el turno?`, [
+    {t:'Sigo jugando', cls:'gold', fn:()=>{ clearPrompt(); render(); }},
+    {t:'Terminar turno ⏭', fn:terminarTurnoYa}
+  ]);
+}
+
 function renderControls(){
   const c=$('#controls'); c.innerHTML='';
   const p=P(ME), L=p.L;
@@ -4966,9 +5019,7 @@ function renderControls(){
   }
   const e=el('button','btn gold','Terminar turno ⏭');
   e.disabled=G.active!==ME||G.busy||G.over||!tutCan('end');
-  e.onclick=()=>{ SEL=null; clearPrompt();
-    if(NET.guest){ gIntent('end'); return; }
-    endTurn(); };
+  e.onclick=pedirTerminarTurno;
   c.appendChild(e);
   const r=el('button','btn sm','📜 Reglas'); r.onclick=()=>showRules(true); c.appendChild(r);
   // Salida al menú. No lleva tutCan(): el tutorial bloquea el tablero para que
@@ -7247,7 +7298,7 @@ $('#ov').onclick=e=>{ if(e.target.id==='ov') $('#ov').classList.remove('on'); };
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ if(TGT) finishTarget(null); else if(SEL){SEL=null;clearPrompt();render();}
     else $('#ov').classList.remove('on'); }
-  if(e.key===' '&&G&&!G.over&&G.active===ME&&!TGT){ e.preventDefault(); endTurn(); }
+  if(e.key===' '&&G&&!G.over&&G.active===ME&&!TGT){ e.preventDefault(); pedirTerminarTurno(); }
 });
 async function autoTurn(s){
   // usa la misma lógica del rival para el bando indicado (arnés de pruebas)
