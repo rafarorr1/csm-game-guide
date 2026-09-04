@@ -514,7 +514,7 @@ PRUEBAS.suite('regresiones', async t => {
         if (!mio.has(id)) fallos.push(`la guía de ${l} destaca ${id} y ya no está en su mazo`);
     }
     t.check(fallos.length===0, fallos.join(' ;; '));
-    t.nota('los 5 mazos con 40 cartas; el tutorial y las guías sólo citan cartas que siguen dentro');
+    t.nota(`los ${L.length} mazos con 40 cartas; el tutorial y las guías sólo citan cartas que siguen dentro`);
   }
 
   /* Desde una partida se puede volver al menú. Faltaba: el tablero era un
@@ -986,6 +986,32 @@ PRUEBAS.suite('regresiones', async t => {
     t.check(!window.puedeRehacerMano(1), 'no debe ofrecerse teniendo una carta jugable');
 
     t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
+  }
+
+  /* LA DIFICULTAD NO PUEDE APAGAR LA FICHA DEL CARRUSEL.
+     Gero llegó con dificultad 4 y la ficha se pintaba con '☆'.repeat(3-dif):
+     con 4 eso es repeat(-1), que lanza RangeError. Y como la ficha se arma de
+     una sola pieza con innerHTML, la excepción se llevaba el panel ENTERO: el
+     carrusel enseñaba a Gero y debajo seguía la descripción del Líder anterior.
+     Se comprueban las dos mitades del fallo: que ningún dato esté fuera de
+     rango, y que el pintor aguante aunque lo estuviera. */
+  {
+    const fallos = [];
+    for (const lid of Object.keys(T.LEADERS)){
+      const d = GUIAS[lid] && GUIAS[lid].dif;
+      if (!(d >= 1 && d <= 3)) fallos.push(`${lid}: dificultad ${d}, fuera de 1-3`);
+      if (!DECKS[lid]) fallos.push(`${lid}: no tiene mazo`);
+    }
+    t.check(fallos.length===0, fallos.join(' ;; '));
+
+    let revienta = null;
+    for (const v of [-1, 0, 1, 2, 3, 4, 99, null, undefined, NaN]){
+      try { const r = window.estrellas(v);
+            if (typeof r !== 'string' || r.length !== 3) revienta = `estrellas(${v}) = "${r}"`; }
+      catch(e){ revienta = `estrellas(${v}) lanzó ${e.name}`; }
+    }
+    t.check(!revienta, revienta || '');
+    t.nota('la ficha del carrusel aguanta cualquier dificultad, y ninguna está fuera de rango');
   }
 
   /* TERMINAR TURNO CON PD SIN GASTAR — la pregunta de confirmación.

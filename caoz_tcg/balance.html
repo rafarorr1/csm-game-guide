@@ -106,7 +106,7 @@ async function tanda(porCruce){
   const d = {
     partidas:0, sinTerminar:0, turnos:[], almaGanador:[],
     porLider:{}, cruce:{}, primero:{gana:0, total:0},
-    motivo:{alma:0, pergamino:0, fatiga:0, otro:0},
+    motivo:{alma:0, pergamino:0, corte:0, fatiga:0, otro:0},
     jugadas:{}, jugadasPorLider:{}, trampasSaltadas:{}, trampasPuestas:{},
     turnosMuertos:0, turnosTotales:0, manoAtascada:0,
     llavesMax:0, conLlaves:0, errores:[],
@@ -147,7 +147,11 @@ async function tanda(porCruce){
   };
   J.endGame = function(ganador, porque){
     if (!J.TCG.G.over){
-      motivoUlt = /Deseo Ilimitado/.test(porque||'') ? 'pergamino' : 'alma';
+      /* Tres rutas, no dos: El Rey de Gero gana reuniendo la corte, y sin esta
+         línea sus victorias se contaban como daño y la ruta parecía muerta. */
+      motivoUlt = /Deseo Ilimitado/.test(porque||'') ? 'pergamino'
+                : /corte/i.test(porque||'')          ? 'corte'
+                : 'alma';
     }
     return finOrig(ganador, porque);
   };
@@ -309,12 +313,14 @@ function pintar(d, muertos){
   }
 
   /* --- cómo se gana --- */
-  const tot = d.motivo.alma + d.motivo.pergamino + d.motivo.otro;
+  const tot = d.motivo.alma + d.motivo.pergamino + d.motivo.corte + d.motivo.otro;
   partes.push(`<h2>Cómo se gana</h2><table>
     <tr><th>Ruta</th><th>Partidas</th><th>%</th></tr>
     <tr><td>Bajar el Alma a 0</td><td>${d.motivo.alma}</td><td>${pct(d.motivo.alma,tot).toFixed(1)} %</td></tr>
     <tr><td>Pergamino de Deseo Ilimitado</td><td>${d.motivo.pergamino}</td>
         <td class="${d.motivo.pergamino===0?'mal':''}">${pct(d.motivo.pergamino,tot).toFixed(1)} %</td></tr>
+    <tr><td>Corte reunida (El Rey)</td><td>${d.motivo.corte}</td>
+        <td class="${d.motivo.corte===0?'mal':''}">${pct(d.motivo.corte,tot).toFixed(1)} %</td></tr>
     </table>`);
   if (d.motivo.pergamino === 0){
     avisos.push(`<div class="nota alerta"><b>La victoria por Llaves no ocurre nunca.</b>

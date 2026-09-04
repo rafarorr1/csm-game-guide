@@ -1826,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:109, fecha:'2026-09-03'};
+const BUILD = {n:110, fecha:'2026-09-03'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2037,6 +2037,22 @@ adreida:{ n:'Adreida', ep:'De Frente', art:'⚔️', arch:'Midrange · Provocar 
   habReq:(g,s)=>P(s).field.length>0,
   hab_do:async(g,s,ts)=>{ const u=ts[0][0]; u.tA+=2; u.noCounter=true;
     log(`<b>Golpe Directo</b>: ${u.card.n} +2 ATQ y sin contraataque.`); }},
+gero:{ n:'Gero', ep:'El Dungeon Master', art:'🎲', arch:'Caos · Tiradas · NPCs',
+  pasiva:'<b>El dado decide:</b> al inicio de tu turno se tira un d20. Con <b>15 o más</b> ganas <b>2 PD</b>; con <b>10 o menos</b> pierdes <b>1 Alma</b>.',
+  hab:'<b>Improvisar (2 PD):</b> mira la carta superior de tu mazo; si no te sirve, mándala a las Alcantarillas.',
+  habCost:2, habName:'Improvisar',
+  lore:'El Dungeon Master. No lleva un aventurero: lleva la mesa entera. Los NPC son suyos, y el dado también.',
+  habReq:(g,s)=>P(s).deck.length>0,
+  hab_do:async(g,s)=>{
+    const p=P(s); if(!p.deck.length) return;
+    const c=p.deck[0];
+    const tirar = await ask(s,`Lo siguiente que te toca es <b>${CARDS[c].n}</b>. ¿Lo dejas o lo tiras?`,
+      ['Lo dejo arriba','A las Alcantarillas'],(g2,s2)=>aiScore(c,s2)<14?1:0);
+    if(tirar===1){ p.deck.shift(); p.grave.push(c);
+      log(`<b>Improvisar</b>: ${CARDS[c].n} no llegó a pasar nunca.`,'sys'); }
+    else log('<b>Improvisar</b>: Gero deja el guion como estaba.','sys');
+    render();
+  }},
 rafaela:{ n:'Rafaela', ep:'Devota de Rul', art:'✨', arch:'Enjambre · Fe · Curación',
   pasiva:'<b>Rebaño de Rul:</b> cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.',
   hab:'<b>Estornudo de Rul (2 PD):</b> 1 daño a un Personaje y cura 1 PV a otro.',
@@ -2127,6 +2143,17 @@ C('julia',{n:'Julia',t:'personaje',c:1,a:0,h:1,tr:['Humano'],r:0,art:'🕯️',
  x:'<b>Al morir:</b> su controlador gana <b>1 PD</b>. <i>Perdida:</i> no puede ser objetivo de Hechizos rivales — nadie sabe dónde está.',
  spellProof:true,
  die:async(g,s,u)=>{ P(s).pd++; log('🕯️ Julia se pierde otra vez: +1 PD.','good'); render(); }});
+
+/* El Rey no gana por daño: gana por reunir la corte. Es la segunda ruta
+   alternativa del juego después del Pergamino, y la única que se gana
+   juntando gente en vez de destruirla.
+   El número es tres y no cuatro por una medición, no por gusto: con «El Rey y
+   la mesa llena» la corte se reunió CERO veces en 951 turnos con él vivo. La
+   mesa sí se llena —Gero llega a cinco en el 12 % de sus turnos—, pero El Rey
+   cuesta 7 PD y para cuando cae ya se han intercambiado cuerpos. Con tres, la
+   ruta vive. */
+C('rey',{n:'El Rey',t:'personaje',c:7,a:3,h:8,tr:['Humano','Noble'],r:2,art:'👑',
+ x:'<b>Corte reunida:</b> al inicio de tu turno, si controlas otros <b>3 Personajes</b> además de El Rey, <b>ganas la partida</b>.'});
 
 C('talia',{n:'Talia Boss',t:'personaje',c:5,a:5,h:4,tr:['Humana','Paladín','Casa Boss'],r:2,art:'👑',
  x:'<b>Cazamagos:</b> +3 ATQ al atacar a un Mago o Dragón. <b>Detener el juego:</b> el rival no puede jugar el Pergamino.',
@@ -2668,7 +2695,7 @@ C('fetichemino',{n:'Fetiche de Minotauro',t:'hechizo',c:2,r:0,art:'🥛',set:'ca
  cast:async(g,s,ts)=>{ const u=ts[0][0]; stun(u);
    log(`${u.card.n} suelta la guardia por una cubeta de leche.`,'dmg'); await draw(s,1); }});
 
-C('brujula',{n:'Brújula «She vale el doble»',t:'hechizo',c:2,r:0,art:'🧭',set:'cajon',
+C('brujula',{n:'Brújula «She vale el doble»',t:'hechizo',c:2,r:0,art:'🧭',
  x:'2 daño a un Personaje rival. Si eso lo mata, robas 2 cartas: valía el doble.',
  tg:[{k:'unidadEnemiga',min:1,max:1}],
  req:(g,s)=>P(1-s).field.length>0,
@@ -2724,7 +2751,7 @@ C('lecheslact',{n:'El Vaso de Leche Deslactosada',t:'hechizo',c:1,sub:['fe'],r:0
    if(u.side===s){ healU(u,3); log(`${u.card.n} se toma su leche y se relaja (+3 PV).`,'heal'); }
    else log(`${u.card.n} baja la guardia: hasta los psicópatas toman leche.`,'dmg'); }});
 
-C('rulchetebajo',{n:'Rulchete de Bajo Presupuesto',t:'hechizo',c:3,sub:['fe'],r:0,art:'🐲',set:'cajon',
+C('rulchetebajo',{n:'Rulchete de Bajo Presupuesto',t:'hechizo',c:3,sub:['fe'],r:0,art:'🐲',
  x:'Invoca a <b>Rulchete</b> 0/6 con <b>Provocar</b>: un dragón morado que sólo sirve para ponerse delante.',
  req:(g,s)=>P(s).field.length<5,
  cast:async(g,s)=>{ await summonToken(s,'tok_rulchete',{msg:'🐲 ¡Rulchete se interpone!'}); }});
@@ -2771,7 +2798,7 @@ C('afterparty',{n:'Invitación al After Party',t:'trampa',c:3,r:1,art:'🎉',set
  fire:async(g,s,ev)=>{ ev.cancel=true;
    log(`${ev.att.card.n} se va al after con las reptilukis.`,'sys'); bounce(ev.att); }});
 
-C('ciclope',{n:'Juguetes para el Cíclope',t:'trampa',c:2,r:0,art:'👁️',set:'cajon',
+C('ciclope',{n:'Juguetes para el Cíclope',t:'trampa',c:2,r:0,art:'👁️',
  x:'<b>Cuando un Personaje rival ataca:</b> el ataque se cancela y aparecen 2 <b>Ilusiones</b> de señuelo.',
  on:'ataque', can:(g,s,ev)=>true,
  fire:async(g,s,ev)=>{ ev.cancel=true;
@@ -2796,40 +2823,40 @@ C('lutorafaela',{n:'Luto Dramático de Rafaela',t:'trampa',c:2,r:0,art:'😭',se
    24 cartas y ningún Personaje. Un mazo del Dungeon Master —que reparte NPCs,
    no aventureros— no se puede armar sin ellos. */
 
-C('tok_goblincamino',{n:'Goblin de Camino',t:'personaje',c:1,a:1,h:1,tr:['Goblin'],r:0,art:'🪓',set:'cajon',
+C('tok_goblincamino',{n:'Goblin de Camino',t:'personaje',c:1,a:1,h:1,tr:['Goblin'],r:0,art:'🪓',
  x:'<b>Provocar.</b> Ficha. Uno de los goblins que Can pone en el camino.',
  keys:['provocar'], token:true});
 
-C('can',{n:'Can, el de los Goblins',t:'personaje',c:4,a:2,h:4,tr:['Humano'],r:1,art:'🛻',set:'cajon',
+C('can',{n:'Can, el de los Goblins',t:'personaje',c:4,a:2,h:4,tr:['Humano'],r:1,art:'🛻',
  x:'<b>Interceptar — al entrar:</b> invoca dos <b>Goblins de Camino</b> 1/1 con <b>Provocar</b>.',
  enter:async(g,s,u)=>{ for(let i=0;i<2;i++) await summonToken(s,'tok_goblincamino',
    {msg:'🪓 Can pone un goblin en el camino.'}); }});
 
-C('spiderman',{n:'Spider-Man',t:'personaje',c:3,a:2,h:4,tr:['Bestia','Araña'],r:1,art:'🕷️',set:'cajon',
+C('spiderman',{n:'Spider-Man',t:'personaje',c:3,a:2,h:4,tr:['Bestia','Araña'],r:1,art:'🕷️',
  x:'<b>Disfraz — al entrar:</b> un Personaje rival queda <b>Aturdido</b> del susto. Mientras controles <b>Antro Juan</b>, +2/+2.',
  enterTg:{k:'unidadEnemiga',min:0,max:1,label:'quien se lleva el susto'},
  enter:async(g,s,u,ts)=>{ const t=ts&&ts[0]&&ts[0][0]; if(!t) return;
    stun(t); log(`${t.card.n} descubre que el bartender es una araña: <b>Aturdido</b>.`,'dmg'); },
  aura:(g,s,u)=>{ if(G.place && G.place.id==='antro' && G.place.side===s){ u.aA+=2; u.aH+=2; } }});
 
-C('hermanotrol',{n:'El Hermano del Trol',t:'personaje',c:5,a:5,h:6,tr:['Trol'],r:1,art:'🪨',set:'cajon',
+C('hermanotrol',{n:'El Hermano del Trol',t:'personaje',c:5,a:5,h:6,tr:['Trol'],r:1,art:'🪨',
  x:'<b>Regeneración:</b> recupera 2 PV al inicio de tu turno. Inmune al daño de <b>Fuego</b>. <b>Al entrar:</b> busca el <b>Collar Mágico de Agua</b> en tu mazo.',
  keys:['regeneracion'], fireProof:true,
  enter:async(g,s,u)=>{ await search(s,c=>c==='collar','Collar Mágico de Agua'); }});
 
-C('rambo',{n:'Rambo',t:'personaje',c:1,a:3,h:1,tr:['Goblin'],r:0,art:'🎽',set:'cajon',
+C('rambo',{n:'Rambo',t:'personaje',c:1,a:3,h:1,tr:['Goblin'],r:0,art:'🎽',
  x:'<b>Prisa.</b> Debe atacar si puede. <b>Al final del turno, muere:</b> entró solo al campo de batalla.',
  keys:['prisa'], mustAttack:true,
  enter:async(g,s,u)=>{ u.doomed=G.turnNo; }});
 
-C('coyote',{n:'El Coyote',t:'personaje',c:3,a:2,h:3,tr:['Humano'],r:1,art:'🌵',set:'cajon',
+C('coyote',{n:'El Coyote',t:'personaje',c:3,a:2,h:3,tr:['Humano'],r:1,art:'🌵',
  x:'<b>Cruzar la frontera (2 PD):</b> un aliado ignora <b>Provocar</b> hasta el final del turno. Por un trato de negocios, claro.',
  act:{cost:2,n:'Cruzar la frontera',tg:{k:'unidadAliada',min:1,max:1},
    req:(g,s)=>P(s).field.length>0,
    do:async(g,s,u,ts)=>{ const t=ts[0][0]; t.tIgnoreTaunt=true;
      log(`El Coyote cruza a ${t.card.n} por debajo: ignora Provocar este turno.`); }}});
 
-C('correcaminos',{n:'El Correcaminos',t:'personaje',c:2,a:2,h:2,tr:['Bestia'],r:1,art:'🏃',set:'cajon',
+C('correcaminos',{n:'El Correcaminos',t:'personaje',c:2,a:2,h:2,tr:['Bestia'],r:1,art:'🏃',
  x:'<b>Prisa.</b> Debe atacar si puede. Si <b>El Coyote</b> está en <i>cualquier</i> campo, gana <b>+2 ATQ</b>.',
  keys:['prisa'], mustAttack:true,
  aura:(g,s,u)=>{ if([...P(0).field,...P(1).field].some(o=>o.card.id==='coyote')) u.aA+=2; }});
@@ -2861,6 +2888,12 @@ fender:{ n:'Gira Mundial', d:'Aggro · Canciones · Tempo',
 adreida:{ n:'De Frente', d:'Midrange · Paladines · Provocar',
   plan:'Juega en curva cuerpos de 4+ ATQ que con Intimidante ganan Provocar, y fuerza intercambios favorables.',
   list:[['machete',3],['bartolomeo',3],['augusto',3],['eric',1],['brickbrock',1],['lucius',1],['horton',1],['aldrick',1],['auxilio',3],['armadura',3],['zancada',3],['saeta',3],['modificar',1],['destello',2],['colapso',2],['esporas',1],['collar',3],['tomsage',1],['ninolanza',3],['mazo',1]]},
+gero:{ n:'La Mesa del DM', d:'Caos · Tiradas · NPCs',
+  plan:'Llena la mesa de NPCs y aguanta: con El Rey y otros tres en pie, la campaña termina.',
+  list:[['brickbrock',3],['minus',3],['eman',3],['can',3],['rambo',3],['correcaminos',2],
+        ['coyote',2],['spiderman',2],['bob',2],['rantiago',2],['hermanotrol',2],['machete',2],
+        ['lucy',1],['juangabriel',1],['rey',1],
+        ['rulchetebajo',2],['acertijo',2],['brujula',2],['ciclope',1],['peaje',1]]},
 rafaela:{ n:'Los Doce Discípulos', d:'Enjambre · Fe · Aguante',
   plan:'Cada Discípulo que entra cura 2. Aguanta, escala el enjambre y cierra con Rulchete.',
   list:[['discipulo',3],['matildus',3],['machete',2],['adolfo',2],['titaus',3],['julia',1],
@@ -3225,13 +3258,19 @@ async function cloudCheck(u){ // Nube de Dagas del rival
 }
 
 /* ---------- d20 ---------- */
+/* meta.sola: la tirada la hace el juego, no el jugador — sale, se resuelve y se
+   cierra sin pedir clic. Es para lo que ocurre TODOS los turnos por sí solo,
+   como la pasiva de Gero: pedir un clic ahí son diez clics por partida en algo
+   que no decides. Además bloqueaba el tutorial desde el primer paso, porque el
+   cartel del dado se abría encima y esperaba para siempre. */
 async function roll(label, side, meta){
   side = (side==null? G.active : side);
+  const mio = (side===ME) && !(meta && meta.sola);
   let r = 1+rnd(20);
   if(NET.host&&side===FOE){ netFx('dice',{v:r,label,meta:metaPlana(meta)});
     await Promise.all([rollDice(r,label,false,meta), netAsk({kind:'roll',value:r,label,fallback:1})]); }
   else { if(NET.host) netFx('dice',{v:r,label,meta:metaPlana(meta)});
-         await rollDice(r,label,side===ME,meta); }
+         await rollDice(r,label,mio,meta); }
   const ev={isRoll:true,value:r,side};
   if(r>=15) await trapWindow(1-side,'letal',ev);
   if(!ev.reroll) await fastWindow(1-side,{kind:'d20',ev});
@@ -3543,6 +3582,32 @@ async function startTurn(s){
   });
   recalc();
   log(`<b>— Turno ${Math.ceil(G.turnNo/2)} de ${p.L.n} —</b> (${p.pd}/${p.pdMax} PD)`,'sys');
+
+  /* GERO — El dado decide.
+     Los tamaños no son simétricos y no es un descuido: los PD se desperdician
+     —si no tienes qué jugar, el punto de más se evapora— y el Alma siempre se
+     cobra. Medido, un ±2 «simétrico» le quitaba 5,6 puntos de victorias, y
+     subir el premio a +4 PD lo dejaba PEOR que +2 porque no le da tiempo a
+     gastarlos. +2 PD contra −1 Alma es lo que sale a cuenta: con +3 se iba a
+     55 % y por encima de todos menos Adreida; con +2 el juego entero se queda
+     en 15,5 de brecha, lo más sano que se ha medido. */
+  if(p.leaderId==='gero' && !G.over){
+    const d = await roll('El dado decide', s, {sola:true, necesita:'15 o más',
+      min:15, siOk:'+2 PD este turno', siMal:'−1 Alma si sale 10 o menos'});
+    if(d>=15){ p.pd+=2; log('🎲 <b>El dado decide</b>: 15+. Gero improvisa a lo grande: <b>+2 PD</b>.','good'); }
+    else if(d<=10){ log('🎲 <b>El dado decide</b>: 10 o menos. Sale mal: <b>−1 Alma</b>.','dmg');
+      await dmgFace(s,1,{src:'dado'}); }
+    else log('🎲 <b>El dado decide</b>: ni fu ni fa. Sigue el guion.','sys');
+    if(G.over) return;
+    render();
+  }
+
+  /* EL REY — corte reunida. Se mira aquí, con el campo ya asentado. */
+  if(!G.over && p.field.some(u=>u.alive && u.card.id==='rey')
+     && p.field.filter(u=>u.alive).length>=4){
+    endGame(s, `${p.L.n} reúne la corte al completo: la campaña termina aquí.`);
+    return;
+  }
   render();
   netFx('banner',{side:(s===FOE?0:1)});
   await fxBanner(s);
@@ -5370,6 +5435,20 @@ rafaela:{ c1:'discipulo', c2:'titaus', quita:'saeta', trampa:'destello',
     golpes que a otro mazo lo hundirían.`,
   trampaTxt:`<b>Destello Protector</b> (2 PD): cuando vayan a matarte un aliado, reduce ese
     daño a la mitad. Tu mazo no gana rápido: gana no muriéndose.` },
+gero:{ c1:'machete', c2:'correcaminos', quita:'brujula', trampa:'ciclope',
+  mano:['machete','correcaminos','brujula','ciclope','can'],
+  top:['minus','eman','brickbrock','rambo','coyote','spiderman'],
+  quitaTxt:`<b>Brújula «She vale el doble»</b> (2 PD): 2 daño a un Personaje rival, y si eso
+    lo mata robas <b>2 cartas</b>.`,
+  quitaExtra:`Y ahora la parte que, la verdad, me da un poco de cosa explicar.<br><br>
+    Mi pasiva es <b>El dado decide</b>: al inicio de cada turno tuyo —mío— se tira un
+    <b>d20</b>. Con <b>15 o más</b> ganas <b>2 PD</b> de golpe. Con <b>10 o menos</b> pierdes
+    <b>1 Alma</b>. Y no, no puedes repetirla.<br><br>
+    Llevo cuatro temporadas diciéndole a la gente que las tiradas no se discuten. Ahora
+    resulta que a mí también me tocan. Me parece bien. Me parece muy bien. No pasa nada.`,
+  trampaTxt:`<b>Juguetes para el Cíclope</b> (2 PD): cuando un Personaje rival ataque, el
+    ataque se cancela y aparecen <b>2 Ilusiones</b> de señuelo. Dos cuerpos más en tu mesa,
+    que es exactamente lo que tu plan necesita.` },
 talesin:{ c1:'matildus', c2:'eric', quita:'proyectil', trampa:'esporas',
   mano:['matildus','eric','proyectil','esporas','conserje'],
   top:['rayoabrasador','puntosrobados','alientoacido','matildus','escarcha','proyectil'],
@@ -5398,8 +5477,22 @@ function buildTut(lid){
   const M=TUT_MAZO[lid], L=LEADERS[lid], G0=GUIAS[lid];
   const n=id=>CARDS[id].n;
   const yo=L.n, rival='Adreida';
+  const soyYo = lid==='gero';        // el DM narrando su propio mazo
   return [
-{t:[`¡Al Domo se entra sin saber jugar, se sale sabiendo! Soy <b>Gero</b>, el Dungeon Master.`,
+{t: soyYo ? [
+    `¡Al Domo se entra sin saber jugar, se sale sabiendo! Soy <b>Gero</b>, el Dungeon Master.`,
+    `Llevas a <b>Gero</b> 🎲 y su mazo <b>“${DECKS[lid].n}”</b> contra <b>${rival}</b> ⚔️, y…<br><br>
+     Un momento.`,
+    `<b>Gero</b> soy yo.<br><br>
+     ¿Me llevas… a mí? ¿Voy a explicarme a mí mismo cómo se juega conmigo?`,
+    `Vale. Vale, vale. Nadie me conoce mejor, eso está claro.<br><br>
+     Si me oyes decir “su mazo” y “mi mazo” en la misma frase, es que estoy improvisando —
+     que es literalmente mi Habilidad. Vamos allá.`,
+    `No te voy a soltar el reglamento de golpe: jugamos con <b>tus</b> cartas (mis cartas) y
+     te explico las cosas cuando aparecen. También voy a <b>parar la partida en el turno de
+     ella</b> para contarte qué hace y por qué.`
+  ] : [
+    `¡Al Domo se entra sin saber jugar, se sale sabiendo! Soy <b>Gero</b>, el Dungeon Master.`,
     `Llevas a <b>${yo}</b> ${L.art} y su mazo <b>“${DECKS[lid].n}”</b> contra <b>${rival}</b> ⚔️.<br><br>
      No te voy a soltar el reglamento de golpe: jugamos con <b>tus</b> cartas y te explico las
      cosas cuando aparecen. También voy a <b>parar la partida en el turno de ella</b> para
@@ -5595,6 +5688,12 @@ function buildTut(lid){
 
 {strat:true, t:[`<b>Y así es como se pierde con él:</b><br><br>• ${G0.pierdes[0]}`,
    `• ${G0.pierdes[1]}<br><br>• ${G0.pierdes[2]}`]},
+
+...(soyYo ? [{strat:true, t:[
+   `Y ya está: te he enseñado a jugar <b>conmigo</b>, contra una jugadora a la que también
+    dirijo yo, con unas reglas que escribí yo.`,
+   `Es la primera vez que el Dungeon Master no puede perder. Quiero que conste que <b>no</b>
+    lo he hecho a propósito.`]}] : []),
 
 {strat:true, t:[`Lo que queda por saber está escrito en las cartas: <b>Prisa</b>, <b>Vuelo</b> (sólo lo
    alcanzan Vuelo o Arquero), <b>Sigilo</b>, <b>Regeneración</b>, <b>Infectado</b>.`,
@@ -5992,10 +6091,20 @@ function buildSelect(){
     <div class="cuerpo">
       <div class="fl">${L.pasiva}</div>
       <div class="fl">${L.hab}</div>
-      <div class="fm">Mazo <b>“${D.n}”</b> · 40 cartas · dificultad ${'★'.repeat(GUIAS[elegido].dif)}${'☆'.repeat(3-GUIAS[elegido].dif)}</div>
+      <div class="fm">Mazo <b>“${D.n}”</b> · 40 cartas · dificultad ${estrellas(GUIAS[elegido].dif)}</div>
     </div>`;
 
   $('#selGo').disabled=false;
+}
+
+/* La dificultad se pinta con tres estrellas. Con un valor fuera de rango,
+   '☆'.repeat(3-4) lanza RangeError, y como esto va dentro de un innerHTML de
+   una sola pieza, la excepción se llevaba por delante la ficha ENTERA: el
+   carrusel enseñaba a Gero y la caja de abajo se quedaba con el Líder de
+   antes. Un dato mal puesto no puede apagar un panel. */
+function estrellas(n){
+  const d = Math.max(0, Math.min(3, n|0));
+  return '★'.repeat(d) + '☆'.repeat(3-d);
 }
 
 /* el botón de en medio: acepta el de este paso y pasa al siguiente */
@@ -7128,7 +7237,7 @@ mohamed:{
     'Por bajar el Pergamino con la Zona de Trampas vacía. Es una Reliquia: <b>Disipar Magia</b> la borra por 2 PD.'
   ],
   vs:{fender:['Difícil','Es más rápido que tus Llaves.'],adreida:['Parejo','Sangre Fría no mata a sus grandes: usa Acertijo.'],
-      rafaela:['Favorable','Sólo Juan Gabriel puede pararte el Pergamino.'],talesin:['Parejo','Carrera de Llaves: Disipar Magia contra su Pergamino.']}
+      rafaela:['Favorable','Sólo Juan Gabriel puede pararte el Pergamino.'],talesin:['Parejo','Carrera de Llaves: Disipar Magia contra su Pergamino.'],gero:['Difícil','Llena la mesa antes de que juntes dos Llaves.']}
 },
 fender:{
   dif:1, lema:'Llenar la mesa y rematar en un solo turno.',
@@ -7161,7 +7270,7 @@ fender:{
     'Por atacar antes de buffear. Es el error más caro del mazo.'
   ],
   vs:{mohamed:['Favorable','Eres más rápido que sus Llaves.'],adreida:['Difícil','Provocar frena tu daño: Zancada Larga y Calentar Metal.'],
-      rafaela:['Parejo','Sus curaciones contra tu velocidad.'],talesin:['Favorable','Es lento: mátalo antes del turno 7.']}
+      rafaela:['Parejo','Sus curaciones contra tu velocidad.'],talesin:['Favorable','Es lento: mátalo antes del turno 7.'],gero:['Favorable','Sus NPC son baratos y frágiles: barre y no dejes que se junten cuatro.']}
 },
 adreida:{
   dif:1, lema:'Cuerpos grandes que el rival está obligado a mirar.',
@@ -7190,7 +7299,7 @@ adreida:{
     'Por olvidar tu segunda Habilidad: si no vas a atacar, <b>Maratón de K-dramas</b> te da una carta gratis. Es 0 PD.'
   ],
   vs:{mohamed:['Parejo','Sus rebotes te hacen perder tempo.'],fender:['Favorable','Provocar apaga su turno letal.'],
-      rafaela:['Favorable','Tus cuerpos pasan por encima de los Discípulos.'],talesin:['Difícil','Aliento de Ácido y Tal.']}
+      rafaela:['Favorable','Tus cuerpos pasan por encima de los Discípulos.'],talesin:['Difícil','Aliento de Ácido y Tal.'],gero:['Favorable','Provocar e Intimidante le rompen la corte antes de que la junte.']}
 },
 rafaela:{
   dif:2, lema:'Un enjambre que se cura solo y no se puede limpiar del todo.',
@@ -7218,7 +7327,7 @@ rafaela:{
     'Contra el <b>Pergamino</b>. Tu única respuesta es <b>Juan Gabriel</b>, que congela su contador. Si el rival junta Llaves, búscalo con Titaus ya.'
   ],
   vs:{mohamed:['Difícil','No tienes cómo parar el Pergamino salvo Juan Gabriel.'],fender:['Parejo','Tus curaciones contra su velocidad.'],
-      adreida:['Difícil','Sus cuerpos pasan por encima del enjambre.'],talesin:['Parejo','Espíritus Guardianes castiga su sacrificio de Eric.']}
+      adreida:['Difícil','Sus cuerpos pasan por encima del enjambre.'],talesin:['Parejo','Espíritus Guardianes castiga su sacrificio de Eric.'],gero:['Parejo','Enjambre contra enjambre: gana el que aguante más de pie.']}
 },
 talesin:{
   dif:3, lema:'Todo en este mazo quiere morir.',
@@ -7250,10 +7359,49 @@ talesin:{
     'Por bajar a <b>Lucy Fernando</b> sin un <b>Contrato</b>. Sin él no puede atacar: el <b>Contrato del Notario</b> boca abajo está en el mazo justo para eso.'
   ],
   vs:{mohamed:['Parejo','Carrera de Llaves.'],fender:['Difícil','Te mata antes de que arranques.'],
-      adreida:['Favorable','Aliento de Ácido y Tal la desbordan.'],rafaela:['Parejo','Sus Espíritus castigan tus sacrificios.']}
-}};
+      adreida:['Favorable','Aliento de Ácido y Tal la desbordan.'],rafaela:['Parejo','Sus Espíritus castigan tus sacrificios.'],gero:['Difícil','Te llena la mesa antes de que asciendas.']}
+},
 
-const GUIA_DATOS = {mohamed:36, fender:37, adreida:90, rafaela:52, talesin:31};
+gero:{
+  dif:3, lema:'Tú no llevas un héroe: llevas la mesa entera.',
+  ganas:`Los demás Protagonistas entraron al Domo. Tú lo <b>narras</b>. Tu mazo no son
+    compañeros: son los <b>NPC</b> que repartes, y ganan por acumulación — cuantos más haya
+    en pie, más cerca estás de bajar a <b>El Rey</b> y cerrar la campaña sin pegar un golpe.`,
+  motor:['can','rambo','correcaminos','coyote','rey'],
+  motorTxt:`Cuerpos baratos que llegan de dos en dos. <b>Can</b> entra con <b>dos Goblins</b>
+    de regalo, así que él solo llena media mesa. <b>Rambo</b> cuesta 1 y pega 3 el turno que
+    entra. <b>El Correcaminos</b> corre más si <b>El Coyote</b> anda por ahí — aunque sea del
+    rival. Y todo eso existe para un momento: <b>El Rey</b> con otros tres en pie.`,
+  turnos:[
+    ['1–3','Cuerpos, cuerpos y cuerpos. <b>Machete</b>, <b>El Correcaminos</b>, <b>Rambo</b> si quieres tres de daño gratis. No mires el Alma del rival todavía: mira cuántos NPC tienes de pie al empezar tu turno.'],
+    ['4–6','<b>Can</b> es tu mejor turno: entra él y entran dos Goblins con Provocar, que además te protegen a los demás. <b>Juguetes para el Cíclope</b> boca abajo cancela el ataque que venga a romperte la mesa y te deja dos Ilusiones más.'],
+    ['7+','Con la mesa a cuatro, baja a <b>El Rey</b>. Sólo tienes que llegar vivo al inicio de tu siguiente turno con él y otros tres. El rival lo sabe y va a matar algo: por eso guardas <b>Peaje del Puente</b> y las Trampas para ese turno exacto.']
+  ],
+  combo:`<b>Can + El Rey.</b> Can pone tres cuerpos con una sola carta, así que la corte se
+    reúne en un turno en vez de en tres. Si te falta uno, <b>Rulchete de Bajo Presupuesto</b>
+    invoca un 0/6 con Provocar por 3 PD: no pega, pero cuenta — y aguanta.`,
+  mano:`Quédate lo barato. <b>Machete</b>, <b>El Correcaminos</b> y <b>Brújula</b> valen más
+    que <b>El Rey</b> de salida: él es un ladrillo de 7 PD hasta el turno 7, y sin mesa que
+    reunir no hace nada. Descártalo sin pena si la mano no tiene cuerpos.`,
+  pierdes:[
+    'Por bajar a <b>El Rey</b> con la mesa a dos. Es un 3/8 caro que no gana solo: si no hay tres más, es sólo un cuerpo grande.',
+    'Por olvidar que el <b>dado</b> también pierde. Con 10 o menos te cuesta 1 Alma, y eso son 10 puntos a lo largo de una partida larga: no alargues lo que puedas cerrar.',
+    'Por gastar las Trampas pronto. Tu mesa se rompe en un solo turno rival; guárdalas para el turno en que la corte esté a punto.'
+  ],
+  vs:{mohamed:['Favorable','Su plan es lento y el tuyo llena la mesa antes.'],
+      fender:['Difícil','Barre cuerpos baratos, que es exactamente lo que llevas.'],
+      adreida:['Difícil','Provocar y cuerpos grandes te desmontan la corte.'],
+      rafaela:['Parejo','Sus curaciones contra tu acumulación.'],
+      talesin:['Favorable','Aliento de Ácido te duele, pero llegas antes.']}
+}
+};
+
+/* Medido con balance.html: 4 tandas de 2880 partidas (11 520 en total), bot
+   contra bot en los 30 cruces. Llevaba tiempo diciendo que Adreida ganaba el
+   90 % «en 280 partidas», que era de una versión vieja del juego y de una
+   muestra veinte veces menor. */
+const GUIA_DATOS = {mohamed:40, fender:43, adreida:55, rafaela:53, talesin:40, gero:54};
+const GUIA_PARTIDAS = '11 520';
 
 let GUIA_SEL='fender';
 function showGuides(id){
@@ -7276,7 +7424,7 @@ function showGuides(id){
         <div class="gsub">${D.d}</div>
         <div class="glema">“${g.lema}”</div>
         <div class="gmeta"><span>Dificultad <b>${estrellas(g.dif)}</b></span>
-          <span>En 280 partidas de prueba ganó el <b>${GUIA_DATOS[GUIA_SEL]}%</b></span></div>
+          <span>En ${GUIA_PARTIDAS} partidas de prueba ganó el <b>${GUIA_DATOS[GUIA_SEL]}%</b></span></div>
       </div>
     </div>
     <div class="gsec"><h3>🏆 Cómo ganas</h3><p>${g.ganas}</p></div>

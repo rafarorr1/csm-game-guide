@@ -13,6 +13,100 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v13 — Gero, el Dungeon Master, entra como sexto Protagonista · 2026-09-03
+
+### El cambio
+
+El juego pasa de cinco mazos a **seis**. El nuevo no es un aventurero: es **quien narra**.
+
+> **Gero · El Dungeon Master** 🎲 — *Caos · Tiradas · NPCs*
+> **El dado decide:** al inicio de tu turno se tira un d20. Con **15 o más** ganas **2 PD**; con **10 o menos** pierdes **1 Alma**.
+> **Improvisar (2 PD):** mira la carta superior de tu mazo; si no te sirve, mándala a las Alcantarillas.
+
+Su mazo, **«La Mesa del DM»**, no lleva compañeros: lleva los **NPC** que él reparte —Brick y
+Brock, Minus, Eman, Can, Rambo, El Coyote, El Correcaminos, Spider-Man, Bob Carly, Rantiago,
+El Hermano del Trol— y una carta nueva que cierra la campaña.
+
+### La tercera ruta de victoria
+
+> **El Rey** (7 PD, 3/8) — **Corte reunida:** al inicio de tu turno, si controlas otros **3
+> Personajes** además de El Rey, **ganas la partida**.
+
+Es la primera forma de ganar **juntando** gente en vez de destruirla, y la tercera ruta del
+juego después de bajar el Alma a 0 y el Pergamino. Sale en el **5 %** de las partidas.
+
+El número es **tres y no cuatro**, y eso lo decidió una medición, no el gusto. Con «El Rey y la
+mesa llena» la corte se reunió **cero veces en 951 turnos** con él vivo:
+
+| Con El Rey vivo, Personajes en mesa | veces |
+|---|---|
+| ≥2 | 810 |
+| ≥3 | 567 |
+| ≥4 | 266 |
+| **≥5 (mesa llena)** | **0** |
+
+Y no es que la mesa no se llene: Gero llega a cinco en el **12 %** de sus turnos, segundo sólo
+detrás de Adreida. Es que El Rey cuesta 7 PD, y para cuando cae ya se han intercambiado
+cuerpos. Con tres, la ruta vive.
+
+### Por qué la pasiva no es simétrica
+
+La idea original era **+2 PD con 15+ / −2 Alma con 10−**. Medida, le quitaba **5,6 puntos** de
+victorias: es un impuesto, no una ventaja. Dos motivos, y el segundo es el interesante:
+
+1. **El d20 no reparte igual.** La banda de castigo (1-10) es el **50 %** de las caras; la de
+   premio (15-20), el **30 %**. Medido: 4 431 tiradas altas contra 7 585 bajas.
+2. **Los PD y el Alma no valen lo mismo.** Un PD de más se **desperdicia** si no tienes qué
+   jugar; el Alma **siempre se cobra**. Por eso subir el premio a +4 PD dejaba a Gero *peor*
+   (41,9 %) que con +2: no le da tiempo a gastarlos.
+
+Los umbrales 15 y 10 se quedan —son los que se sienten de D&D— y lo que cambia son los
+tamaños: **+2 PD contra −1 Alma**.
+
+### El balance, con seis mazos
+
+8 tandas de 2 880 partidas (23 040 en total):
+
+| | Mohamed | Fender | Adreida | **Gero** | Rafaela | Talesin | brecha |
+|---|---|---|---|---|---|---|---|
+| v12 (cinco mazos) | 42,3 | 45,1 | 60,6 | — | 57,5 | 44,6 | 18,3 |
+| **v13 (seis)** | 39,7 | 42,4 | 55,2 | **54,1** | 53,3 | 41,0 | **15,5** |
+
+**La brecha baja a 15,5 con un mazo más**, que es lo más sano que se ha medido nunca. Gero
+entra arriba, empatado con Adreida.
+
+### El tutorial, cuando el alumno es el propio Gero
+
+El tutorial lo narra Gero. Si eliges a Gero, Gero se da cuenta a mitad de la presentación:
+
+> *«Llevas a **Gero** 🎲 y su mazo “La Mesa del DM” contra Adreida ⚔️, y… Un momento.»*
+> *«**Gero** soy yo. ¿Me llevas… a mí? ¿Voy a explicarme a mí mismo cómo se juega conmigo?»*
+> *«Vale. Vale, vale. Nadie me conoce mejor, eso está claro. Si me oyes decir “su mazo” y “mi
+> mazo” en la misma frase, es que estoy improvisando — que es literalmente mi Habilidad.»*
+
+Y al explicar su propia pasiva: *«Llevo cuatro temporadas diciéndole a la gente que las
+tiradas no se discuten. Ahora resulta que a mí también me tocan. Me parece bien. Me parece muy
+bien. No pasa nada.»*
+
+### Dos arreglos que salieron por el camino
+
+- **El d20 de la pasiva ya no pide clic.** Como se tira **todos** los turnos, pedirlo eran diez
+  clics por partida en algo que no decides — y además abría su cartel encima del **primer paso
+  del tutorial** y lo dejaba esperando para siempre. Ahora sale, se resuelve y se cierra solo.
+  Las tiradas que sí decides siguen pidiendo el clic.
+- **Un dato fuera de rango apagaba la ficha del carrusel.** A Gero le puse dificultad 4 y la
+  ficha se pinta con `'☆'.repeat(3 - dif)`: con 4 eso es `repeat(-1)`, que lanza `RangeError`.
+  Como la ficha se arma de una pieza con `innerHTML`, la excepción se llevaba el **panel
+  entero**: el carrusel enseñaba a Gero y debajo seguía la descripción de Adreida. Arreglado el
+  dato y, sobre todo, blindado el pintor: un dato mal puesto no puede apagar un panel.
+
+### Y una cifra que llevaba tiempo mintiendo
+
+Las guías decían que Adreida ganaba el **90 % «en 280 partidas»**. Era de una versión vieja y
+de una muestra veinte veces menor. Ahora dicen los números medidos sobre **11 520 partidas**.
+
+---
+
 ## v12 — El Conserje vuelve a ser sólo de Llaves; los mazos sin Pergamino llevan carta propia · 2026-09-03
 
 ### El cambio
