@@ -230,7 +230,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* El logo manda en el ancho, pero con tope de alto: si el archivo viniera con
    otra proporción —o con mucho margen transparente alrededor— sin este tope se
    comería la pantalla y empujaría los botones fuera. */
-.marca{display:block;width:760px;max-width:86%;height:auto;max-height:300px;object-fit:contain}
+.marca{display:block;width:680px;max-width:86%;height:auto;max-height:400px;object-fit:contain}
 /* `display:block` gana a [hidden] y mientras no existe el logo se veía el
    icono de imagen rota junto al título. */
 .marca[hidden]{display:none}
@@ -2090,7 +2090,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:120, fecha:'2026-09-04'};
+const BUILD = {n:121, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
