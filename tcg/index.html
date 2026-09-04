@@ -1826,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:105, fecha:'2026-09-01'};
+const BUILD = {n:106, fecha:'2026-09-03'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2097,20 +2097,33 @@ C('brickbrock',{n:'Brick y Brock',t:'personaje',c:3,a:3,h:4,tr:['Goblin','Ogro']
  toll:true});
 
 /* Las Llaves del Domo sólo sirven para una cosa: el requisito del Pergamino. Es
-   la única línea del juego que las mira. Así que en un mazo sin Pergamino —De
-   Frente lleva tres Conserjes, Los Doce Discípulos uno— su habilidad no hacía
-   absolutamente nada y la carta mentía.
-   Ahora, si tu Líder no usa Llaves, su muerte te deja 1 PD. Sigue siendo una
-   carta floja, que es lo que el balance necesita que sea. */
-function usaLlaves(s){ return DECKS[P(s).leaderId].list.some(([id])=>id==='pergamino'); }
+   la única línea del juego que las mira. El Conserje las reparte, así que en un
+   mazo sin Pergamino —De Frente llevaba tres, Los Doce Discípulos uno— su
+   habilidad no hacía absolutamente nada y la carta mentía.
+   El primer arreglo fue una excepción dentro de la carta: «o 1 PD si tu Líder
+   no usa Llaves». Dejaba de mentir, pero a costa de que el Conserje llevara
+   encima una cláusula que en su propio mazo nunca se lee.
+   Ahora el reparto es otro: el Conserje vuelve a ser una carta de Llaves a
+   secas y vive sólo donde hay Pergamino (Mohamed y Talesin). Los mazos sin
+   Pergamino llevan en su lugar una carta propia que da el PD directamente.
+   Mismo cuerpo, mismo efecto, ningún texto de más — el banco lo confirma: son
+   las mismas cartas con otro nombre, y el balance no se mueve.
+   Los nombres son provisionales a propósito, a la espera de tema. */
 
 C('conserje',{n:'El Conserje (Viejo Micket)',t:'personaje',c:1,a:0,h:1,tr:['Kobold'],r:0,art:'🧹',
- x:'<b>Al morir:</b> su controlador gana <b>1 Llave del Domo</b>, o <b>1 PD</b> si su Líder no usa Llaves. <i>Ciego:</i> no puede ser objetivo de Hechizos rivales.',
+ x:'<b>Al morir:</b> su controlador gana <b>1 Llave del Domo</b>. <i>Ciego:</i> no puede ser objetivo de Hechizos rivales.',
  spellProof:true,
- die:async(g,s,u)=>{
-   if(usaLlaves(s)) gainKey(s,1,'El Conserje deja caer una llave');
-   else { P(s).pd++; log('🧹 El Conserje se deja el sueldo: +1 PD.','good'); render(); }
- }});
+ die:async(g,s,u)=>{ gainKey(s,1,'El Conserje deja caer una llave'); }});
+
+C('phadreida',{n:'Placeholder Adreida',t:'personaje',c:1,a:0,h:1,tr:['Humano'],r:0,art:'🧩',
+ x:'<b>Al morir:</b> su controlador gana <b>1 PD</b>. <i>Ciego:</i> no puede ser objetivo de Hechizos rivales.',
+ spellProof:true,
+ die:async(g,s,u)=>{ P(s).pd++; log(`🧩 ${u.card.n} cae y deja 1 PD atrás.`,'good'); render(); }});
+
+C('phrafaela',{n:'Placeholder Rafaela',t:'personaje',c:1,a:0,h:1,tr:['Humano'],r:0,art:'🧩',
+ x:'<b>Al morir:</b> su controlador gana <b>1 PD</b>. <i>Ciego:</i> no puede ser objetivo de Hechizos rivales.',
+ spellProof:true,
+ die:async(g,s,u)=>{ P(s).pd++; log(`🧩 ${u.card.n} cae y deja 1 PD atrás.`,'good'); render(); }});
 
 C('talia',{n:'Talia Boss',t:'personaje',c:5,a:5,h:4,tr:['Humana','Paladín','Casa Boss'],r:2,art:'👑',
  x:'<b>Cazamagos:</b> +3 ATQ al atacar a un Mago o Dragón. <b>Detener el juego:</b> el rival no puede jugar el Pergamino.',
@@ -2800,10 +2813,10 @@ fender:{ n:'Gira Mundial', d:'Aggro · Canciones · Tempo',
         ['escarcha',3]]},
 adreida:{ n:'De Frente', d:'Midrange · Paladines · Provocar',
   plan:'Juega en curva cuerpos de 4+ ATQ que con Intimidante ganan Provocar, y fuerza intercambios favorables.',
-  list:[['machete',3],['bartolomeo',3],['augusto',3],['eric',1],['brickbrock',1],['lucius',1],['horton',1],['aldrick',1],['auxilio',3],['armadura',3],['zancada',3],['saeta',3],['modificar',1],['destello',2],['colapso',2],['esporas',1],['collar',3],['tomsage',1],['conserje',3],['mazo',1]]},
+  list:[['machete',3],['bartolomeo',3],['augusto',3],['eric',1],['brickbrock',1],['lucius',1],['horton',1],['aldrick',1],['auxilio',3],['armadura',3],['zancada',3],['saeta',3],['modificar',1],['destello',2],['colapso',2],['esporas',1],['collar',3],['tomsage',1],['phadreida',3],['mazo',1]]},
 rafaela:{ n:'Los Doce Discípulos', d:'Enjambre · Fe · Aguante',
   plan:'Cada Discípulo que entra cura 2. Aguanta, escala el enjambre y cierra con Rulchete.',
-  list:[['discipulo',3],['matildus',3],['machete',2],['adolfo',2],['titaus',3],['conserje',1],
+  list:[['discipulo',3],['matildus',3],['machete',2],['adolfo',2],['titaus',3],['phrafaela',1],
         ['petunia',1],['minus',1],['juangabriel',1],['taumaturgia',3],['bendicion',2],['leche',2],
         ['manosardientes',2],['saeta',3],['auxilio',1],['espiritus',2],['ceguera',1],['rulchete',1],
         ['destello',2],['esporas',1],['collar',1],['jabon',1],['antro',1]]},
@@ -2888,6 +2901,11 @@ function mkUnit(cardId, side){
 }
 
 /* ---------- recálculo de estadísticas y auras ---------- */
+/* El umbral de Intimidante (Adreida). Es una variable y no un 4 suelto para
+   que el banco de balance pueda medir qué cuesta moverlo: es la única pieza
+   del mazo de Adreida cuyo recorte la baja. */
+let INTIMIDANTE_MIN = 4;
+
 function recalc(){
   if(!G) return;
   const all=[...P(0).field, ...P(1).field];
@@ -2914,7 +2932,7 @@ function recalc(){
     if(u.attackedEver) k.delete('sigilo');
     if(u.noFly) k.delete('vuelo');
     // Intimidante (Adreida)
-    if(P(u.side).leaderId==='adreida' && u.atk>=4) k.add('provocar');
+    if(P(u.side).leaderId==='adreida' && u.atk>=INTIMIDANTE_MIN) k.add('provocar');
     u.keys=k;
   });
 }
@@ -7257,6 +7275,8 @@ window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutoria
   newGame, buildDeck, P, canPlay, aiScore, playFromHand, aiPickAttack, doAttack, canAttack, endTurn, recalc,
   mkUnit, dmgU, destroy, gainKey, keys, legalTargets, costOf, useLeader, startTurn, killUnit, healU, stun, infect,
   rollDice, roll,
+  setIntimidante:v=>{ INTIMIDANTE_MIN=v; },
+  getIntimidante:()=>INTIMIDANTE_MIN,
   play:(id)=>playFromHand(ME,id), attack:(i,t)=>doAttack(P(ME).field[i],t==='face'?'face':P(FOE).field[t]),
   end:endTurn, fast:v=>{G.fast=v;}, render };
 
