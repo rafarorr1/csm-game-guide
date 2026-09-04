@@ -1826,7 +1826,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:108, fecha:'2026-09-03'};
+const BUILD = {n:109, fecha:'2026-09-03'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2789,6 +2789,50 @@ C('lutorafaela',{n:'Luto Dramático de Rafaela',t:'trampa',c:2,r:0,art:'😭',se
  on:'muerteAliada', can:(g,s,ev)=>true,
  fire:async(g,s,ev)=>{ let k=0; P(s).field.forEach(u=>{ if(u.alive){ u.tA+=2; k++; } }); recalc();
    log(`El llanto de Rafaela enciende a ${k} aliado${k===1?'':'s'} (+2 ATQ).`,'good'); }});
+
+/* ---- NPCs del Domo ----
+   Personajes que aparecen en los episodios y que no tenían carta. El Cajón
+   estaba lleno de Hechizos, Objetos y Trampas y no tenía ni un solo cuerpo:
+   24 cartas y ningún Personaje. Un mazo del Dungeon Master —que reparte NPCs,
+   no aventureros— no se puede armar sin ellos. */
+
+C('tok_goblincamino',{n:'Goblin de Camino',t:'personaje',c:1,a:1,h:1,tr:['Goblin'],r:0,art:'🪓',set:'cajon',
+ x:'<b>Provocar.</b> Ficha. Uno de los goblins que Can pone en el camino.',
+ keys:['provocar'], token:true});
+
+C('can',{n:'Can, el de los Goblins',t:'personaje',c:4,a:2,h:4,tr:['Humano'],r:1,art:'🛻',set:'cajon',
+ x:'<b>Interceptar — al entrar:</b> invoca dos <b>Goblins de Camino</b> 1/1 con <b>Provocar</b>.',
+ enter:async(g,s,u)=>{ for(let i=0;i<2;i++) await summonToken(s,'tok_goblincamino',
+   {msg:'🪓 Can pone un goblin en el camino.'}); }});
+
+C('spiderman',{n:'Spider-Man',t:'personaje',c:3,a:2,h:4,tr:['Bestia','Araña'],r:1,art:'🕷️',set:'cajon',
+ x:'<b>Disfraz — al entrar:</b> un Personaje rival queda <b>Aturdido</b> del susto. Mientras controles <b>Antro Juan</b>, +2/+2.',
+ enterTg:{k:'unidadEnemiga',min:0,max:1,label:'quien se lleva el susto'},
+ enter:async(g,s,u,ts)=>{ const t=ts&&ts[0]&&ts[0][0]; if(!t) return;
+   stun(t); log(`${t.card.n} descubre que el bartender es una araña: <b>Aturdido</b>.`,'dmg'); },
+ aura:(g,s,u)=>{ if(G.place && G.place.id==='antro' && G.place.side===s){ u.aA+=2; u.aH+=2; } }});
+
+C('hermanotrol',{n:'El Hermano del Trol',t:'personaje',c:5,a:5,h:6,tr:['Trol'],r:1,art:'🪨',set:'cajon',
+ x:'<b>Regeneración:</b> recupera 2 PV al inicio de tu turno. Inmune al daño de <b>Fuego</b>. <b>Al entrar:</b> busca el <b>Collar Mágico de Agua</b> en tu mazo.',
+ keys:['regeneracion'], fireProof:true,
+ enter:async(g,s,u)=>{ await search(s,c=>c==='collar','Collar Mágico de Agua'); }});
+
+C('rambo',{n:'Rambo',t:'personaje',c:1,a:3,h:1,tr:['Goblin'],r:0,art:'🎽',set:'cajon',
+ x:'<b>Prisa.</b> Debe atacar si puede. <b>Al final del turno, muere:</b> entró solo al campo de batalla.',
+ keys:['prisa'], mustAttack:true,
+ enter:async(g,s,u)=>{ u.doomed=G.turnNo; }});
+
+C('coyote',{n:'El Coyote',t:'personaje',c:3,a:2,h:3,tr:['Humano'],r:1,art:'🌵',set:'cajon',
+ x:'<b>Cruzar la frontera (2 PD):</b> un aliado ignora <b>Provocar</b> hasta el final del turno. Por un trato de negocios, claro.',
+ act:{cost:2,n:'Cruzar la frontera',tg:{k:'unidadAliada',min:1,max:1},
+   req:(g,s)=>P(s).field.length>0,
+   do:async(g,s,u,ts)=>{ const t=ts[0][0]; t.tIgnoreTaunt=true;
+     log(`El Coyote cruza a ${t.card.n} por debajo: ignora Provocar este turno.`); }}});
+
+C('correcaminos',{n:'El Correcaminos',t:'personaje',c:2,a:2,h:2,tr:['Bestia'],r:1,art:'🏃',set:'cajon',
+ x:'<b>Prisa.</b> Debe atacar si puede. Si <b>El Coyote</b> está en <i>cualquier</i> campo, gana <b>+2 ATQ</b>.',
+ keys:['prisa'], mustAttack:true,
+ aura:(g,s,u)=>{ if([...P(0).field,...P(1).field].some(o=>o.card.id==='coyote')) u.aA+=2; }});
 
 C('lanzallave',{n:'Lanzamiento de Llave Desesperado',t:'trampa',c:2,r:1,art:'🗝️',set:'cajon',
  x:'<b>Cuando muere un aliado:</b> alcanza la llave y escapa del Domo — su carta vuelve a tu mano.',
