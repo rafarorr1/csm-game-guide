@@ -121,16 +121,22 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    Todo el movimiento es CSS. Nada de esto corre en JavaScript salvo repartir
    las cartas del fondo una sola vez al arrancar.
    ========================================================================== */
-.portada{
+#fondoMenus,.portada{
   --oro:#f7d488; --oro2:#d9a441; --oro3:#8a5f1e;
   --brasa:#ff7a18; --brasa2:#e8340c; --sangre:#8b1a12;
-  --piedra:#2a1c15; --piedra2:#170f0b;
-  align-items:center;justify-content:center;gap:0;
-  text-align:center;padding:30px 24px;overflow:hidden;
+  --piedra:#2a1c15; --piedra2:#170f0b}
+/* El fondo compartido. Se enciende cuando la pantalla visible es un menú y se
+   apaga al entrar a la mesa; entre menú, selector y guías NO se toca, que es
+   justo lo que hace que no se reinicie. */
+#fondoMenus{position:absolute;inset:0;z-index:0;overflow:hidden;display:none;
+  transition:background .6s ease;
   background:
     radial-gradient(ellipse 70% 55% at 50% 8%,  rgba(255,122,24,.16), transparent 62%),
     radial-gradient(ellipse 90% 70% at 50% 108%, rgba(232,52,12,.20), transparent 66%),
     linear-gradient(180deg,#120c0a 0%,#1b110c 45%,#0b0706 100%)}
+#fondoMenus.on{display:block}
+.portada{align-items:center;justify-content:center;gap:0;
+  text-align:center;padding:30px 24px;overflow:hidden;background:transparent}
 .portada>*{position:relative;z-index:4}
 /* EL VELO
    Las cartas del fondo cruzan por detrás de la columna de botones y, por muy
@@ -138,22 +144,16 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    óvalo oscuro entre el fondo y el contenido lo resuelve sin apagar la escena:
    el centro queda legible y los bordes siguen vivos. Las brasas van por
    ENCIMA del velo, que es lo que le da el chispazo delante del texto. */
-.portada::after{content:"";position:absolute;left:50%;top:52%;translate:-50% -50%;
+#fondoMenus::after{content:"";position:absolute;left:50%;top:52%;translate:-50% -50%;
   width:1240px;height:880px;z-index:2;pointer-events:none;border-radius:50%;
   background:radial-gradient(ellipse at center,
     rgba(9,5,4,.80) 0%, rgba(9,5,4,.62) 42%, rgba(9,5,4,.28) 66%, transparent 78%)}
-/* Las capas del fondo tienen que quedarse FUERA del flujo. La regla de arriba
-   es `.portada>*`, que gana en especificidad a `.ambiente{position:absolute}`,
-   así que al añadir el disco, la baraja y las brasas se metieron en la columna
-   y empujaron el logo y los botones 1 800 px hacia abajo: la portada se quedó
-   en negro. Se les devuelve el absolute con la misma especificidad. */
-.portada>.ambiente,.portada>.disco,.portada>.barajaFondo,.portada>.brasas{position:absolute}
-.portada>.ambiente{z-index:0}
-.portada>.disco{z-index:1}
-.portada>.barajaFondo{z-index:1}
-.portada>.brasas{z-index:3}
+#fondoMenus>.ambiente{z-index:0}
+#fondoMenus>.disco{z-index:1}
+#fondoMenus>.barajaFondo{z-index:1}
+#fondoMenus>.brasas{z-index:3}
 /* el polvo del Domo, aquí en tono brasa en vez de morado */
-.portada .ambiente i{filter:hue-rotate(-42deg) saturate(1.35)}
+#fondoMenus .ambiente i{filter:hue-rotate(-42deg) saturate(1.35)}
 
 /* EL DISCO DE RUNAS
    El logo se apoya en un disco de piedra con runas. Repetirlo detrás, girando
@@ -418,16 +418,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 /* EL PASO DEL RIVAL SE PONE ROJO.
    No es decoración: el cambio de color dice sin palabras que ya no estás
    eligiendo lo tuyo. La sala entera vira, no sólo un borde. */
-#select{transition:background .6s ease}
 /* Sobre la base de brasa el rojo tiene que ser MÁS rojo para leerse como un
    cambio: contra el morado de antes bastaba un tinte, contra el naranja no. */
-#select.rival{background:
+#fondoMenus.rival{background:
   radial-gradient(ellipse 70% 55% at 50% 42%, rgba(190,26,20,.34), transparent 70%),
   radial-gradient(ellipse 90% 70% at 50% 108%, rgba(139,26,18,.42), transparent 66%),
   linear-gradient(180deg,#150807 0%,#240c09 45%,#0c0605 100%)}
-#select.rival .disco{filter:hue-rotate(-28deg) saturate(1.5)}
-#select.rival .cartaFondo{filter:hue-rotate(-24deg) saturate(1.3)}
-#select.rival .brasas i{background:radial-gradient(circle,#ffc0a8,#e8340c 42%,rgba(139,26,18,0) 72%)}
+#fondoMenus.rival .disco{filter:hue-rotate(-28deg) saturate(1.5)}
+#fondoMenus.rival .cartaFondo{filter:hue-rotate(-24deg) saturate(1.3)}
+#fondoMenus.rival .brasas i{background:radial-gradient(circle,#ffc0a8,#e8340c 42%,rgba(139,26,18,0) 72%)}
 #select.rival .ambiente::before{
   background:
     radial-gradient(ellipse 46% 38% at 50% 30%, rgba(240,120,96,.20), transparent 70%),
@@ -1913,6 +1912,13 @@ body.tutpause #tut{pointer-events:auto}
 <body>
 <div id="app"><div id="lienzo">
 
+<!-- EL FONDO DE LOS MENÚS, UNO SOLO PARA LAS TRES PANTALLAS.
+     Vive FUERA de ellas a propósito: si cada pantalla llevara el suyo, al
+     cambiar de sección el fondo se reiniciaría —otras cartas, en otro sitio,
+     empezando de cero— y se vería el corte. Así la escena no se entera de que
+     has cambiado de pantalla y sigue corriendo. -->
+<div id="fondoMenus" aria-hidden="true"></div>
+
 <!-- ============ MENÚ ============ -->
 <div class="screen on portada" id="menu">
   <div class="marcaWrap">
@@ -2062,7 +2068,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:116, fecha:'2026-09-04'};
+const BUILD = {n:117, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -6264,7 +6270,15 @@ async function startTutorial(lid){
 /* ==========================================================================
    12. PANTALLAS
    ========================================================================== */
-function showScreen(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); }
+/* Al cambiar de pantalla el fondo de los menús se enciende o se apaga, pero
+   entre menú, selector y guías NO se toca: sigue exactamente donde estaba. */
+function showScreen(id){
+  $$('.screen').forEach(s=>s.classList.remove('on'));
+  const pantalla = $('#'+id);
+  pantalla.classList.add('on');
+  const f = $('#fondoMenus');
+  if(f) f.classList.toggle('on', pantalla.classList.contains('portada'));
+}
 
 let SELP=null, SELF=null;
 /* EL CARRETE DE PROTAGONISTAS.
@@ -6298,6 +6312,7 @@ function buildSelect(){
   const p = $('#selPasos').children;
   p[0].classList.toggle('on', true); p[1].classList.toggle('on', !mio);
   $('#select').classList.toggle('rival', !mio);   // la sala vira a rojo
+  $('#fondoMenus').classList.toggle('rival', !mio);
 
   /* LAS CARTAS SE CREAN UNA SOLA VEZ.
      Antes se rehacía la pista entera en cada giro, y por eso el carrete saltaba
@@ -7734,19 +7749,20 @@ $$('.build').forEach(e=>e.textContent=buildTxt());
 function sembrarPortada(){
   const az = (a,b) => a + Math.random()*(b-a);
 
-  /* Las capas van por CÓDIGO y no en el HTML: son cuatro divs vacíos por
-     pantalla y repetirlos a mano en tres sitios es la forma segura de que un
-     día falte uno. Cada `.portada` recibe las suyas si no las tiene ya. */
-  $$('.portada').forEach(p => {
+  /* Las capas van por CÓDIGO y no en el HTML, y van en UN SOLO sitio: el
+     fondo compartido. Con una copia por pantalla, cambiar de sección
+     reiniciaba la escena entera —otras cartas, en otro sitio, desde cero— y
+     el corte se veía. */
+  const fondo = $('#fondoMenus');
+  if(fondo && !fondo.children.length){
     ['ambiente','disco','disco dos','barajaFondo','brasas'].forEach(cls => {
-      if(p.querySelector(':scope > .' + cls.split(' ')[0] + (cls.includes('dos')?'.dos':''))) return;
-      const d = el('div', cls); d.setAttribute('aria-hidden','true');
+      const d = el('div', cls);
       if(cls==='ambiente') d.innerHTML = '<i></i><i></i><i></i>';
-      p.insertBefore(d, p.firstChild);
+      fondo.appendChild(d);
     });
-  });
+  }
 
-  $$('.portada > .barajaFondo').forEach(baraja => {
+  $$('#fondoMenus > .barajaFondo').forEach(baraja => {
     if(baraja.children.length) return;
     /* Doce y no más: son adorno, y el móvil tiene que ir fino. Las de delante
        —grandes, nítidas, rápidas— y las del fondo —chicas, borrosas, lentas—
@@ -7772,7 +7788,7 @@ function sembrarPortada(){
     }
   });
 
-  $$('.portada > .brasas').forEach(brasas => {
+  $$('#fondoMenus > .brasas').forEach(brasas => {
     if(brasas.children.length) return;
     for(let i=0; i<22; i++){
       const b = el('i','');
@@ -7817,6 +7833,10 @@ function sembrarPortada(){
   }
 }
 sembrarPortada();
+/* El menú arranca con la clase `on` puesta en el HTML, sin pasar por
+   showScreen(), así que el fondo hay que encenderlo a mano la primera vez. */
+{ const f=$('#fondoMenus'), p0=$('.screen.on');
+  if(f && p0) f.classList.toggle('on', p0.classList.contains('portada')); }
 $('#guideBack').onclick=()=>showScreen('menu');
 $('#mCards').onclick=()=>showGallery();
 $('#mRules').onclick=()=>showRules(false);
