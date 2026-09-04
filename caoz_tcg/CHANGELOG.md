@@ -1168,6 +1168,13 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El botón del Tutorial ya usa la tipografía de sus vecinos** (build 114). Lleva la clase
+  `btn gold`, y esa clase trae del resto del juego una serif con versalitas —la de los botones
+  dorados de la mesa—. En una columna de siete botones en sans era el único distinto, y en vez
+  de destacar se leía como un error de maquetación. Ahora comparte familia con los demás; el
+  oro se queda, que es lo que de verdad lo destaca. El cambio va **sólo dentro de la portada**:
+  «Terminar turno», «Sigue →» del tutorial y los botones dorados del tablero siguen con su
+  serif, donde sí es la norma y no la excepción.
 - **Portada nueva** (build 113). El resto del juego es morado —es el color del Domo— pero lo
   primero que se ve tiene que ser el logo, así que la portada lleva **su propia paleta**: oro,
   brasa y piedra quemada, declarada dentro de `#menu` y no en `:root`, para que la identidad
