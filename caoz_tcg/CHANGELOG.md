@@ -1168,7 +1168,17 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
-- **El paso a «Elige a tu rival» se funde, y las cartas del fondo son las de verdad** (build 118).
+- **«El juego de cartas», sin el Domo** (build 120). En la segunda temporada ya no hay Domo, así
+  que el subtítulo de la portada y el título de la pestaña pierden esa coletilla.
+  El subtítulo se saca además **fuera** del bloque del nombre: el nombre lo sustituye el logo
+  cuando el archivo existe, pero esa línea tiene que quedarse siempre — dentro, desaparecía con
+  él. Y el logo se queda con **tope de alto** (300 px): si el archivo viniera con otra
+  proporción o con mucho margen transparente alrededor, sin ese tope se comía la pantalla y
+  empujaba los botones fuera. Probado con una imagen vertical, que es el peor caso.
+  El resto del juego **sigue hablando del Domo** a propósito: las Llaves del Domo, el Mago del
+  Domo, «Entrar al Domo». Eso es la temporada uno y sigue siendo verdad.
+
+- **El paso a «Elige a tu rival» se funde- **El paso a «Elige a tu rival» se funde, y las cartas del fondo son las de verdad** (build 118).
   Dos cosas en el fondo compartido.
   **El rojo entra fundido.** Un degradado **no se puede interpolar**: cambiar `background` de
   naranja a rojo es un corte seco por mucho `transition` que se le ponga — por eso el viraje se
