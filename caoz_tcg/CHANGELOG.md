@@ -13,6 +13,91 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v12 — El Conserje vuelve a ser sólo de Llaves; los mazos sin Pergamino llevan carta propia · 2026-09-03
+
+### El cambio
+
+El Conserje pierde la excepción que le puso la v11 y queda:
+
+> **Al morir:** su controlador gana **1 Llave del Domo**. *Ciego:* no puede ser objetivo de Hechizos rivales.
+
+Y sale de los dos mazos que no tienen Pergamino. En su lugar entran dos cartas nuevas, mismo
+cuerpo (1 PD, 0/1, Ciego) y con el efecto escrito de frente:
+
+> **Al morir:** su controlador gana **1 PD**.
+
+- **De Frente (Adreida)** — 3× *Placeholder Adreida*
+- **Los Doce Discípulos (Rafaela)** — 1× *Placeholder Rafaela*
+
+Los nombres son provisionales a propósito, a la espera de tema.
+
+### Por qué
+
+La v11 dejó al Conserje sin mentir, pero con una cláusula —«o 1 PD si tu Líder no usa
+Llaves»— que **en su propio mazo no se lee nunca**. El Conserje vive en Mohamed y en Talesin,
+que sí tienen Pergamino: para ellos la mitad del texto es ruido. Y al revés, en De Frente lo
+único que se leía era la excepción.
+
+Una carta por caso lo dice todo sin condicionales. El Conserje es una carta de Llaves y sólo
+está donde las Llaves valen algo.
+
+### El balance no se mueve, y no podía moverse
+
+Mismo cuerpo y mismo efecto: es la misma carta con otro nombre, repartida en dos. Medido con
+5 tandas de 2000 partidas antes y después:
+
+| | Mohamed | Fender | Adreida | Rafaela | Talesin | brecha |
+|---|---|---|---|---|---|---|
+| v11 | 43,7 | 45,1 | 60,1 | 57,6 | 43,6 | 16,5 |
+| **v12** | 42,3 | 45,1 | 60,6 | 57,5 | 44,6 | 18,3 |
+
+Todo dentro del ruido de la medición (±1,5 por tanda).
+
+### Lo que se aprendió buscando algo mejor que meter ahí
+
+Antes de aceptar un cuerpo tan flojo se midió qué costaría poner una carta que sirviera. El
+hueco de 1 PD de Adreida tiene una lista de precios muy clara:
+
+| Carta de 1 PD en el hueco | Adreida | Δ |
+|---|---|---|
+| El Conserje (0/1 + texto) | 61,3 | — |
+| 0/1 **en blanco, sin texto** | 61,0 | **0** |
+| 0/3 en blanco | 61,0 | **0** |
+| 0/3 con Provocar | 64,3 | +3,0 |
+| 1/1 en blanco | 64,4 | +3,1 |
+| 0/2, roba 1 al morir | 66,7 | +5,4 |
+
+Dos cosas que conviene no olvidar:
+
+1. **La habilidad del Conserje en Adreida valía cero medible**: un 0/1 sin texto ninguno da el
+   mismo resultado. Lo que ocupaba el hueco eran sus estadísticas, no su texto.
+2. **La vida es gratis y el ataque cuesta 3 puntos.** No porque un 0/3 sea buen muro — *en este
+   juego no hay bloqueo*: el que ataca elige objetivo y **Provocar es la única forma de desviar
+   un ataque**. Un 0/3 sin Provocar no para nada. Es un blanco, y por eso sale gratis.
+
+Y recortarle otras cartas la empeora todo:
+
+| Adreida | winrate | brecha |
+|---|---|---|
+| como está | 61,3 | 17,9 |
+| −2 Armadura Mágica | 66,1 | 24,7 |
+| −3 Collar Mágico de Agua | 68,8 | 28,0 |
+| −2 Armadura −2 Auxilio | **69,9** | **29,2** |
+
+**No hay ninguna carta suya cuyo recorte la baje.** El único sitio donde está su poder es la
+pasiva: con *Intimidante* apagada y sus cartas intactas se queda en **54,0 y la brecha en 13,9**,
+lo más sano que se ha medido nunca. Pero apagarla entera vale 7 puntos y darle tres cartas de
+verdad vale 8: no alcanza ni regalándole la pasiva.
+
+Conclusión: el 61 % de Adreida no son los Conserjes ni es una carta suelta — **sus otros 37
+naipes valen ~68 % solos**, y los tres huecos muertos eran lo único que lo disimulaba. El
+rediseño se hace cuando entren Gero y Pitágoras, que mueven todos los porcentajes de golpe.
+
+Para poder medirlo se le puso una perilla al umbral de *Intimidante* (`INTIMIDANTE_MIN`,
+expuesta como `TCG.setIntimidante`). Sigue valiendo 4: el juego no cambia.
+
+---
+
 ## v11 — El Conserje deja de mentir en los mazos sin Pergamino · 2026-09-03
 
 **Al morir:** su controlador gana 1 Llave del Domo, **o 1 PD si su Líder no usa Llaves**.
