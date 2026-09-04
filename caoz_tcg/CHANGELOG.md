@@ -1168,6 +1168,16 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Eman 69 se llama Aidman** (build 116). Se llamaba mal desde que entró. Cambia el nombre de
+  la carta y las nueve líneas que lo dicen en voz alta: sus dos avisos al entrar y al morir,
+  los dos de su tirada de Ludópata, y las tres de **Las Montañas de Tal**, que lo invocan en el
+  campo rival con un 1-3.
+  Se cambia también el **id interno** de `eman` a `aidman`. No hacía falta —el id no se ve— pero
+  ya arrastramos un `talesim` que en pantalla es Talesyn, y cada uno de esos desajustes es una
+  búsqueda fallida dentro de seis meses. Eran seis sitios: la carta, los dos mazos que la
+  llevan (Gero y Talesin), el reparto del tutorial y las dos líneas de Las Montañas.
+  Las entradas viejas de este registro **siguen diciendo Eman 69** a propósito: cuentan lo que
+  pasó cuando pasó, y reescribirlas sería falsear el historial.
 - **Todos los menús comparten la identidad del logo** (build 115). La portada estrenó paleta de
   oro y brasa en la 113, pero el selector de Protagonista y las guías seguían en morado, así
   que la identidad se rompía justo al pasar de una pantalla a la siguiente. Ahora esa piel vive

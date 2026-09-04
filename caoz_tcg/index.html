@@ -2062,7 +2062,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:115, fecha:'2026-09-04'};
+const BUILD = {n:116, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2429,11 +2429,11 @@ C('minus',{n:'Minus',t:'personaje',c:3,a:2,h:5,tr:['Minotauro','Valoria'],r:0,ar
  act:{cost:2,n:'Tienda de Objetos',do:async(g,s,u)=>{ await search(s,c=>CARDS[c].t==='objeto','Objeto'); }},
  myopic:true});
 
-C('eman',{n:'Eman 69',t:'personaje',c:4,a:4,h:3,tr:['Humano','Cazarrecompensas'],r:1,art:'🎲',
+C('aidman',{n:'Aidman',t:'personaje',c:4,a:4,h:3,tr:['Humano','Cazarrecompensas'],r:1,art:'🎲',
  x:'<b>Ludópata:</b> al atacar tira d20 — 15+ doble daño; 5 o menos se hace el daño a sí mismo. <b>Deudas:</b> al entrar pierdes 1 Alma; al morir ganas 2 PD.',
  gambler:true,
- enter:async(g,s,u)=>{ await dmgFace(s,1,{src:'deudas'}); log('Deudas de Eman: pierdes 1 Alma.','dmg'); },
- die:async(g,s,u)=>{ P(s).pd+=2; log('Eman 69 cobra sus deudas: +2 PD.'); }});
+ enter:async(g,s,u)=>{ await dmgFace(s,1,{src:'deudas'}); log('Deudas de Aidman: pierdes 1 Alma.','dmg'); },
+ die:async(g,s,u)=>{ P(s).pd+=2; log('Aidman cobra sus deudas: +2 PD.'); }});
 
 C('adolfo',{n:'Adolfo y Remus',t:'personaje',c:2,a:2,h:2,tr:['Elfo','Discípulo'],r:0,art:'👬',
  x:'<b>Radicalizables:</b> al inicio de tu turno, si el rival controla un Dragón, se pasan al campo rival.',
@@ -2887,14 +2887,14 @@ C('puente',{n:'El Puente de Brick y Brock',t:'lugar',c:1,r:0,art:'🌉',
  x:'Ningún Personaje puede atacar al Alma salvo que su controlador tire d20 y saque 8+.',
  riddleBridge:true});
 C('montanas',{n:'Las Montañas de Tal',t:'lugar',c:3,r:1,art:'⛰️',
- x:'Los Dragones cuestan 2 PD menos. Al inicio de cada turno, el jugador activo tira d20: con 1-3, Eman 69 aparece en el campo rival.',
+ x:'Los Dragones cuestan 2 PD menos. Al inicio de cada turno, el jugador activo tira d20: con 1-3, Aidman aparece en el campo rival.',
  dragonDiscount:true,
  onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Tal', null,
      {necesita:'4 o más para que no pase nada', min:4,
-      siOk:'No aparece nadie', siMal:'¡Eman 69 aparece en el campo rival!'});
-   if(r<=3 && P(1-s).field.length<5 && !P(1-s).field.some(u=>u.card.id==='eman')){
-     const u=mkUnit('eman',1-s); P(1-s).field.push(u); recalc();
-     log('¡Eman 69 aparece en el campo rival buscando trabajo!','sys'); } }});
+      siOk:'No aparece nadie', siMal:'¡Aidman aparece en el campo rival!'});
+   if(r<=3 && P(1-s).field.length<5 && !P(1-s).field.some(u=>u.card.id==='aidman')){
+     const u=mkUnit('aidman',1-s); P(1-s).field.push(u); recalc();
+     log('¡Aidman aparece en el campo rival buscando trabajo!','sys'); } }});
 C('domo',{n:'El Domo',t:'lugar',c:4,r:1,art:'🔴',
  x:'Cada vez que un Personaje muere, su controlador pierde 1 Alma y el otro gana 1 PD. Las Llaves del Domo se ganan al doble.',
  domeDeath:true, doubleKeys:true});
@@ -3126,7 +3126,7 @@ adreida:{ n:'De Frente', d:'Midrange · Paladines · Provocar',
   list:[['machete',3],['bartolomeo',3],['augusto',3],['eric',1],['brickbrock',1],['lucius',1],['horton',1],['aldrick',1],['auxilio',3],['armadura',3],['zancada',3],['saeta',3],['modificar',1],['destello',2],['colapso',2],['esporas',1],['collar',3],['tomsage',1],['ninolanza',3],['mazo',1]]},
 gero:{ n:'La Mesa del DM', d:'Caos · Tiradas · NPCs',
   plan:'Llena la mesa de NPCs y aguanta: con El Rey y otros tres en pie, la campaña termina.',
-  list:[['brickbrock',3],['minus',3],['eman',3],['can',3],['rambo',3],['correcaminos',2],
+  list:[['brickbrock',3],['minus',3],['aidman',3],['can',3],['rambo',3],['correcaminos',2],
         ['coyote',2],['spiderman',2],['bob',2],['rantiago',2],['hermanotrol',2],['machete',2],
         ['lucy',1],['juangabriel',1],['rey',1],
         ['rulchetebajo',2],['acertijo',2],['brujula',2],['ciclope',1],['peaje',1]]},
@@ -3139,7 +3139,7 @@ rafaela:{ n:'Los Doce Discípulos', d:'Enjambre · Fe · Aguante',
 talesin:{ n:'Ascensión', d:'Sacrificio · Rampa · Tal',
   plan:'Todo en este mazo quiere morir. Junta 5 Fichas de Gracia, asciende y baja a Tal en el turno 7.',
   list:[['conserje',3],['matildus',3],['machete',1],['petunia',1],['eric',3],['bob',1],
-        ['rantiago',1],['horton',1],['eman',1],['edbor',1],['rayoabrasador',2],['proyectil',2],
+        ['rantiago',1],['horton',1],['aidman',1],['edbor',1],['rayoabrasador',2],['proyectil',2],
         ['alientoacido',2],['disipar',2],['cuerda',1],['hongos',1],['esporas',2],['talcadaver',2],
         ['puntosrobados',2],['llavemago',1],['pergamino',1],['domo',1],['escarcha',2],['nubedagas',1],
         ['tal',1],['montanas',1]]},
@@ -4216,13 +4216,13 @@ async function doAttack(u, target){
     if(u.card.hunter && target!=='face' && target.tribes.some(t=>['Mago','Dragón'].includes(t))){
       atk+=3; log('Cazamagos: +3 ATQ.','sys'); }
     if(P(s).fairy && target!=='face') atk+=1;
-    // Ludópata (Eman 69)
+    // Ludópata (Aidman)
     if(u.card.gambler){
       const r=await roll('Ludópata', s, {necesita:'15 o más', min:15,
         siOk:'¡Gana la apuesta! Daño doble',
         siMal:'Pierde la apuesta (con 5 o menos, se hace el daño a sí mismo)'});
-      if(r>=15){ atk*=2; log('¡Eman acierta la apuesta! Daño doble.','roll'); }
-      else if(r<=5){ log('Eman pierde la apuesta y se hace el daño a sí mismo.','dmg');
+      if(r>=15){ atk*=2; log('¡Aidman acierta la apuesta! Daño doble.','roll'); }
+      else if(r<=5){ log('Aidman pierde la apuesta y se hace el daño a sí mismo.','dmg');
         await dmgU(u,atk,{src:'ludopata'}); render(); return true; }
     }
     await fxLunge(u,target);
@@ -5686,7 +5686,7 @@ rafaela:{ c1:'discipulo', c2:'titaus', quita:'saeta', trampa:'destello',
     daño a la mitad. Tu mazo no gana rápido: gana no muriéndose.` },
 gero:{ c1:'machete', c2:'correcaminos', quita:'brujula', trampa:'ciclope',
   mano:['machete','correcaminos','brujula','ciclope','can'],
-  top:['minus','eman','brickbrock','rambo','coyote','spiderman'],
+  top:['minus','aidman','brickbrock','rambo','coyote','spiderman'],
   quitaTxt:`<b>Brújula «She vale el doble»</b> (2 PD): 2 daño a un Personaje rival, y si eso
     lo mata robas <b>2 cartas</b>.`,
   quitaExtra:`Y ahora la parte que, la verdad, me da un poco de cosa explicar.<br><br>
@@ -7600,7 +7600,7 @@ talesin:{
     protege a nadie — lo gasta. Y detrás viene <b>Tal</b> o el <b>Pergamino</b>.`,
   motor:['matildus','eric','tal','montanas','domo'],
   motorTxt:`<b>Matildus</b> explota en la cara de quien lo mata, <b>Eric</b> se sacrifica por
-    otro, el <b>Conserje</b> deja Llaves, <b>Eman 69</b> te da 2 PD al morir. Todo suma
+    otro, el <b>Conserje</b> deja Llaves, <b>Aidman</b> te da 2 PD al morir. Todo suma
     Gracia. <b>Las Montañas de Tal</b> abaratan a los Dragones 2 PD: Tal deja de costar 10 y
     baja el turno 8, o antes con <b>Puntos Robados</b>.`,
   turnos:[
