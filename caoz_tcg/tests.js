@@ -988,6 +988,51 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
   }
 
+  /* TERMINAR TURNO CON PD SIN GASTAR — la pregunta de confirmación.
+     Lo que importa no es que salga un cartel, sino CUÁNDO sale: tiene que
+     avisar cuando los puntos alcanzan para algo, y callarse cuando no, o se
+     convierte en un clic de más en cada turno. */
+  {
+    await T.setupMatch('mohamed','adreida',{fast:true, auto:true, silent:true, first:0});
+    const G = T.G, p = T.P(0);
+    const preguntando = () => document.querySelector('#prompt').classList.contains('on');
+    const limpiar = () => { document.querySelector('#prompt').classList.remove('on');
+                            G.active = 0; G.phase = 'principal'; G.over = false; G.busy = false; };
+
+    // 1) con puntos y algo que hacer, pregunta
+    limpiar();
+    const barato = Object.keys(T.CARDS).find(id => T.CARDS[id].c <= 1 && !T.CARDS[id].token
+                                                && T.CARDS[id].t === 'personaje');
+    p.hand = [barato]; p.pd = 5; p.field.length = 0;
+    window.pedirTerminarTurno();
+    t.check(preguntando(), 'con PD de sobra y una carta jugable debería preguntar');
+    t.check(G.active === 0, 'preguntar no puede terminar el turno por su cuenta');
+
+    // 2) sin puntos, se calla y termina
+    limpiar();
+    p.hand = [barato]; p.pd = 0;
+    window.pedirTerminarTurno();
+    t.check(!preguntando(), 'sin PD no hay nada que avisar: no debe preguntar');
+
+    // 3) con puntos que no alcanzan para nada, se calla
+    limpiar();
+    const caro = Object.keys(T.CARDS).find(id => T.CARDS[id].c >= 7 && !T.CARDS[id].token);
+    p.hand = [caro]; p.pd = 1; p.leaderUsed = true; p.field.length = 0;
+    window.pedirTerminarTurno();
+    t.check(!preguntando(), 'si los PD no alcanzan para nada, preguntar sólo estorba');
+
+    // 4) en el tutorial nunca pregunta: sus pasos guionan el fin de turno
+    limpiar();
+    p.hand = [barato]; p.pd = 5; p.leaderUsed = false;
+    G.tutorial = {paso:0};
+    window.pedirTerminarTurno();
+    t.check(!preguntando(), 'el tutorial no puede quedarse esperando una pregunta de más');
+    G.tutorial = null;
+    document.querySelector('#prompt').classList.remove('on');
+
+    t.nota('terminar turno: avisa si los PD alcanzan para algo, y calla si no');
+  }
+
   /* EL CAJÓN — las cartas nuevas, todavía fuera de los mazos.
      Lo que se comprueba: que se pueden jugar sin reventar, que sus trampas
      usan disparadores que el motor conoce, y que NINGUNA se ha colado en un

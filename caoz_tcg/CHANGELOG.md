@@ -1074,6 +1074,24 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Avisa antes de terminar el turno con PD sin gastar** (build 107). Los Puntos de Domo no se
+  arrastran de un turno a otro —cada turno se recalculan desde cero— salvo los 2 que guarda
+  Machete. Terminar con puntos encima es tirarlos, y no había nada que lo dijera.
+  Lo que importa aquí no es que salga un cartel, sino **cuándo sale**. Preguntar cada vez que
+  sobre un punto sería un clic de más en todos los turnos: con 1 PD y la mano llena de cartas
+  de 3 no hay ninguna decisión que tomar. Así que sólo pregunta cuando esos puntos **alcanzan
+  para algo concreto** —una carta jugable, la Habilidad del Líder, la acción de un Personaje—
+  y el aviso dice para qué alcanzan: «Te quedan 4 PD y todavía puedes jugar 4 cartas o usar
+  Golpe Directo».
+  Va en la barra de aviso y no en el panel grande a propósito: para contestar hay que poder
+  mirarse la mano, y el panel la tapa.
+  Con Machete en mesa el texto cambia y dice cuántos guarda, porque ahí los puntos no se
+  pierden del todo.
+  **No pregunta** en el tutorial (sus pasos guionan cuándo se termina el turno y una pregunta
+  de más lo deja atascado), ni cuando se acaba el reloj de 1:30, ni en las partidas del bot:
+  el aviso cuelga del botón y de la barra espaciadora, no de `endTurn()`, así que el arnés y
+  las 2000 partidas del banco no lo ven.
+
 - **Cortinilla de VS al empezar la partida** (build 99). Entre elegir rival y ver la mesa, las
   dos cartas entran desde los lados, chocan en el centro con destello y fuego, aguantan cuatro
   segundos con el <b>VS</b> en medio y se apartan revelando el tablero. Sólo la ve quien juega:
