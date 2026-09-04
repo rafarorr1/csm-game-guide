@@ -988,6 +988,20 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
   }
 
+  /* EL CARTEL DE TURNO VA ANTES QUE EL DADO DE GERO.
+     El dado es lo primero que PASA en el turno, no el anuncio de que el turno
+     empieza. Puesto antes del cartel, el d20 aparecía sobre la pantalla del
+     turno anterior y parecía que lo tiraba el rival. */
+  {
+    const src = await fuente();
+    const cuerpo = src.slice(src.indexOf('async function startTurn('));
+    const cartel = cuerpo.indexOf('await fxBanner(s)');
+    const dado   = cuerpo.indexOf("roll('El dado decide'");
+    t.check(cartel > 0 && dado > 0 && cartel < dado,
+      `el dado de Gero se tira antes del cartel de turno (cartel en ${cartel}, dado en ${dado})`);
+    t.nota('el cartel de «Tu turno» sale antes que el dado de Gero');
+  }
+
   /* LA PASIVA DE GERO NO RUEDA ANTES DE QUE ÉL LA EXPLIQUE.
      Su d20 se tira al inicio de CADA turno, así que en el tutorial lo primero
      que veía el alumno era un dado cayendo del cielo antes de que nadie le
