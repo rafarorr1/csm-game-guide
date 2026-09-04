@@ -1569,7 +1569,16 @@ body.tut-on .card.playable{
   --mitad:calc((var(--n) - 1) / 2);
   --desde:calc(var(--i, 0) - var(--mitad));       /* cuánto se aparta del centro */
   transform-origin:50% 240%;
-  transform:rotateX(10deg)
+  /* LAS VECINAS SE APARTAN.
+     --sep lo pone el JS al pasar por encima de una carta: +1/−1 para las de al
+     lado, menos para las siguientes, 0 para el resto. Aquí se convierte en un
+     desplazamiento a lo largo de la mano que crece con el solape: cuanto más
+     llena va, más sitio hay que hacer para que la ampliada no tape a nadie.
+     Va ANTES de las rotaciones para que el desplazamiento sea lateral y no
+     siga el giro de la carta. */
+  --sep:0;
+  transform:translateX(calc(var(--sep) * (40px + var(--solape, 0px) * .8)))
+            rotateX(10deg)
             rotate(calc(var(--desde) * 2.9deg))
             translateY(calc(var(--desde) * var(--desde) * 2.2px));
   transition:transform .30s cubic-bezier(.22,.61,.36,1), box-shadow .26s, border-color .18s;
@@ -2175,7 +2184,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:126, fecha:'2026-09-04'};
+const BUILD = {n:127, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -6506,6 +6515,34 @@ function showScreen(id){
     if(b){ b.classList.remove('va'); void b.offsetWidth; b.classList.add('va');
            setTimeout(()=>b.classList.remove('va'), 500); }
   }
+}
+
+/* LA MANO HACE SITIO.
+   Al pasar por encima de una carta, las demás se apartan según lo cerca que
+   estén: la de al lado casi un hueco entero, la siguiente menos, y a tres ya
+   nada. Se hace por delegación en #hand y no en cada carta porque render()
+   rehace la mano entera en cada repintado: un estado guardado en las cartas se
+   perdería a la primera jugada. Sólo toca variables CSS; el movimiento lo hace
+   la transición que las cartas ya tienen. */
+{
+  const mano = $('#hand');
+  let ultima = null;
+  const reparte = h => {
+    [...mano.children].forEach(d => {
+      const i = +d.style.getPropertyValue('--i');
+      const dist = h==null ? 0 : i - h;
+      const fuerza = dist===0 ? 0 : Math.sign(dist) * Math.max(0, 1.10 - Math.abs(dist) * .36);
+      d.style.setProperty('--sep', fuerza.toFixed(2));
+    });
+  };
+  mano.addEventListener('pointerover', e => {
+    const c = e.target.closest && e.target.closest('#hand > .card');
+    if(!c) return;
+    const h = +c.style.getPropertyValue('--i');
+    if(h === ultima) return;
+    ultima = h; reparte(h);
+  });
+  mano.addEventListener('pointerleave', () => { ultima = null; reparte(null); });
 }
 
 /* El fogonazo del botón. Va por delegación y en `pointerdown` a propósito: el
