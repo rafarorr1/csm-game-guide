@@ -1168,6 +1168,11 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Adreida es «La Guerrera Semiorca»** (build 125). Su epíteto era «De Frente», que es el
+  nombre de su **mazo**, no de ella: era la única de los seis que no se describía a sí misma
+  —El Mago Pitero, El Bardo Honesto, Devota de Rul, El Heredero Celestial, El Dungeon Master— y
+  encima repetía lo que ya dice la ficha del mazo dos líneas más abajo. Lleva artículo como
+  cuatro de los otros cinco. El mazo se sigue llamando «De Frente».
 - **El botón se enciende y la pantalla entra** (build 124). Dos piezas que trabajan juntas.
   Al pulsar, el botón **se enciende medio segundo**: un fogonazo con halo y un brillo que lo
   cruza. Es el acuse de recibo, y de paso tapa el instante en que la pantalla cambia. Va por

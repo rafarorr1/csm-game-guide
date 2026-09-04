@@ -2156,7 +2156,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:124, fecha:'2026-09-04'};
+const BUILD = {n:125, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2357,7 +2357,10 @@ fender:{ n:'Fender', ep:'El Bardo Honesto', art:'🎸', arch:'Aggro · Canciones
   lore:'Tiefling carismático. Canta, baila y se gana la vida con música.',
   habReq:(g,s)=>P(s).field.length>0,
   hab_do:async(g,s)=>{ P(s).field.forEach(u=>{u.tA++;}); log('<b>Sube el Volumen</b>: +1 ATQ a todo tu campo.'); }},
-adreida:{ n:'Adreida', ep:'De Frente', art:'⚔️', arch:'Midrange · Provocar · Combate',
+/* Su epíteto era «De Frente», que es el nombre de su MAZO, no de ella: era la
+   única de los seis que no se describía a sí misma, y encima repetía lo que ya
+   dice la ficha del mazo dos líneas más abajo. El mazo se sigue llamando así. */
+adreida:{ n:'Adreida', ep:'La Guerrera Semiorca', art:'⚔️', arch:'Midrange · Provocar · Combate',
   pasiva:'<b>Intimidante:</b> tus Personajes con 4 o más ATQ tienen <b>Provocar</b>.',
   hab:'<b>Golpe Directo (2 PD):</b> un aliado gana +2 ATQ y no recibe daño de contraataque este turno.',
   habCost:2, habName:'Golpe Directo', habTg:{k:'unidadAliada',min:1,max:1},
