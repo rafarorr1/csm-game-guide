@@ -471,6 +471,55 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 #select.rival .giro{color:#ff9a8a}
 #select.rival .btn.gold{background:linear-gradient(180deg,#7a2420,#4a1512);
   border-color:#e0524a;color:#ffd9d2}
+/* ==========================================================================
+   EL FOGONAZO Y LA ENTRADA
+   Dos piezas que trabajan juntas. Al pulsar, el botón se enciende medio
+   segundo: es el acuse de recibo, y de paso tapa el instante en que la
+   pantalla cambia. Luego la pantalla nueva ENTRA —sube, se enfoca y aparece,
+   con sus bloques escalonados— en vez de aparecer de golpe.
+   Sólo entra el contenido: el fondo es compartido y no se toca, así que la
+   escena de detrás sigue corriendo mientras lo de delante se recompone. Ése es
+   justo el efecto que hace que parezca una sola sala y no dos pantallas.
+   ========================================================================== */
+@keyframes fogonazo{
+  0%  {filter:brightness(1)}
+  16% {filter:brightness(1.5) saturate(1.15)}
+  100%{filter:brightness(1)}}
+@keyframes fogonazoHalo{
+  0%  {box-shadow:0 0 0 0 rgba(255,214,140,.75), 0 0 0 0 rgba(255,122,24,.55)}
+  100%{box-shadow:0 0 0 10px rgba(255,214,140,0), 0 0 44px 16px rgba(255,122,24,0)}}
+@keyframes fogonazoBarrido{
+  0%  {translate:-120% 0}
+  100%{translate:120% 0}}
+.portada .btn.fogonazo{animation:fogonazo .5s ease-out}
+.portada .btn.fogonazo::before{content:"";position:absolute;inset:0;border-radius:inherit;
+  pointer-events:none;animation:fogonazoHalo .5s ease-out}
+.portada .btn.fogonazo::after{animation:fogonazoBarrido .5s ease-out}
+
+@keyframes entraPantalla{
+  from{opacity:0;transform:translateY(16px) scale(.982);filter:blur(7px)}
+  to  {opacity:1;transform:none;filter:blur(0)}}
+.screen.portada.entra > *{animation:entraPantalla .40s cubic-bezier(.2,.75,.3,1) both}
+/* escalonado: lo de arriba primero, y cada bloque un pelín después */
+.screen.portada.entra > *:nth-child(2){animation-delay:.045s}
+.screen.portada.entra > *:nth-child(3){animation-delay:.09s}
+.screen.portada.entra > *:nth-child(4){animation-delay:.13s}
+.screen.portada.entra > *:nth-child(5){animation-delay:.17s}
+.screen.portada.entra > *:nth-child(n+6){animation-delay:.2s}
+
+/* el destello que cruza al cambiar de pantalla: una sola pasada, muy corta */
+#barrido{position:absolute;inset:0;z-index:80;pointer-events:none;opacity:0;
+  background:linear-gradient(100deg,transparent 34%,rgba(255,206,140,.16) 50%,transparent 66%)}
+#barrido.va{animation:cruza .45s ease-out}
+@keyframes cruza{
+  0%  {opacity:0;translate:-60% 0}
+  30% {opacity:1}
+  100%{opacity:0;translate:60% 0}}
+
+@media (prefers-reduced-motion:reduce){
+  .portada .btn.fogonazo,.portada .btn.fogonazo::before,.portada .btn.fogonazo::after,
+  .screen.portada.entra > *,#barrido.va{animation:none}}
+
 /* La que espera turno: detrás de la elegida, invisible y sin poder pulsarse.
    Hereda la misma transición que las demás, así que al girar sale de detrás en
    vez de aparecer de golpe. */
@@ -1953,6 +2002,7 @@ body.tutpause #tut{pointer-events:auto}
      empezando de cero— y se vería el corte. Así la escena no se entera de que
      has cambiado de pantalla y sigue corriendo. -->
 <div id="fondoMenus" aria-hidden="true"></div>
+<div id="barrido" aria-hidden="true"></div>
 
 <!-- ============ MENÚ ============ -->
 <div class="screen on portada" id="menu">
@@ -2106,7 +2156,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:123, fecha:'2026-09-04'};
+const BUILD = {n:124, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -6311,12 +6361,36 @@ async function startTutorial(lid){
 /* Al cambiar de pantalla el fondo de los menús se enciende o se apaga, pero
    entre menú, selector y guías NO se toca: sigue exactamente donde estaba. */
 function showScreen(id){
-  $$('.screen').forEach(s=>s.classList.remove('on'));
+  const antes = $('.screen.on');
+  $$('.screen').forEach(s=>s.classList.remove('on','entra'));
   const pantalla = $('#'+id);
   pantalla.classList.add('on');
   const f = $('#fondoMenus');
   if(f) f.classList.toggle('on', pantalla.classList.contains('portada'));
+
+  /* La entrada sólo entre menús: al tablero se llega por la cortinilla del VS,
+     que ya es una transición, y encadenar las dos sería una de más. */
+  if(pantalla.classList.contains('portada') && antes !== pantalla){
+    pantalla.classList.remove('entra'); void pantalla.offsetWidth;   // reinicia
+    pantalla.classList.add('entra');
+    setTimeout(()=>pantalla.classList.remove('entra'), 700);
+    const b = $('#barrido');
+    if(b){ b.classList.remove('va'); void b.offsetWidth; b.classList.add('va');
+           setTimeout(()=>b.classList.remove('va'), 500); }
+  }
 }
+
+/* El fogonazo del botón. Va por delegación y en `pointerdown` a propósito: el
+   `click` de muchos de estos botones cambia de pantalla, y para entonces el
+   botón ya no se ve. Encendiéndolo al apretar, el destello ocurre mientras la
+   pantalla se recompone y tapa el corte. */
+document.addEventListener('pointerdown', e=>{
+  const b = e.target.closest && e.target.closest('.portada .btn');
+  if(!b || b.disabled) return;
+  b.classList.remove('fogonazo'); void b.offsetWidth;
+  b.classList.add('fogonazo');
+  setTimeout(()=>b.classList.remove('fogonazo'), 560);
+}, true);
 
 let SELP=null, SELF=null;
 /* EL CARRETE DE PROTAGONISTAS.
