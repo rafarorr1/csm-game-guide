@@ -1168,6 +1168,22 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **La carta que miras ya no brinca cuando juega el rival** (build 131). `render()` vaciaba y
+  volvía a crear la mano entera en cada repintado — también cuando jugaba el rival y tu mano
+  no había cambiado. La carta que tenías bajo el cursor se destruía y nacía otra igual, sin
+  ampliar, que al instante recibía el `:hover` y repetía la transición de entrada desde cero:
+  ése era el brinco. Y con ella se perdían el `--sep` de las vecinas y la inclinación.
+  Ahora la mano **se reconcilia**, como ya hacía la mesa por `uid`: se recorre la mano nueva
+  contra los nodos viejos en orden; si el siguiente nodo viejo es la misma carta se reutiliza
+  (coste, puesto y clases al día); si es una carta que ya no está en lo que queda de la mano,
+  se quita; si está más adelante, se crea la nueva en su sitio. Con la mano sin cambios no se
+  toca ni un nodo. Las clases transitorias se reponen igual que hacía el rehacer, para que el
+  tutorial vea exactamente lo mismo, y `ok`/`libre` se vuelven a mirar al pulsar, porque el
+  nodo ahora sobrevive a varios repintados.
+  Verificado: con Machete ampliada bajo el cursor, tres `render()` seguidos conservan el
+  mismo nodo, la matriz es idéntica a los 60 y 310 ms, la inclinación se mantiene y la vecina
+  sigue apartada. La reconciliación da el DOM correcto en los cinco casos: sin cambios, robar,
+  jugar una de dos copias, mano entera nueva y mano vacía.
 - **La carta en grande se inclina con el cursor** (build 130). Un `rotateX/rotateY` sutil —12°
   y 14° de recorrido total; más y la carta parece un cartón suelto— en los dos sitios donde una
   carta se ve en grande: la **carta ampliada de la mano** y el **panel de inspección** de las
