@@ -45,17 +45,19 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
   border-color:var(--gold,#e6bb52);box-shadow:0 0 0 2px rgba(230,187,82,.5),0 0 70px rgba(230,187,82,.55),0 40px 80px #000}
 .fin.derrota.entra .vscard.gana{border-color:#b83a30;box-shadow:0 0 0 2px rgba(224,82,74,.45),0 0 70px rgba(224,82,74,.5),0 40px 80px #000}
 .fin .vscard.pierde{transform:translate(-50%,-50%) translateY(-4vh) scale(.92);opacity:0;z-index:2}
-.fin.entra .vscard.pierde{transform:translate(-50%,-50%) translateY(23vh) translateX(30vw) scale(.55) rotate(10deg);opacity:.6;
+.fin.entra .vscard.pierde{transform:translate(-50%,-50%) translateY(26vh) translateX(34vw) scale(.5) rotate(10deg);opacity:.55;
   filter:grayscale(1) brightness(.45)}
 /* la grieta: unas líneas blancas que se encienden cuando la carta ya se ha hundido */
 .fin .vscard.pierde::after{content:"";position:absolute;inset:0;z-index:5;opacity:0;transition:opacity .5s .7s;pointer-events:none;
   background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'><g fill='none' stroke='rgba(255,255,255,.75)' stroke-width='.9'><polyline points='52,0 47,22 55,38 44,58 53,74 41,96 50,118 46,140'/><polyline points='47,22 30,30 18,26'/><polyline points='44,58 62,66 74,60'/><polyline points='41,96 26,104 20,120'/><polyline points='53,74 70,88'/></g></svg>") center/100% 100% no-repeat}
 .fin.entra .vscard.pierde::after{opacity:1}
 /* el sello */
-.fin .sello{position:relative;z-index:6;text-align:center;opacity:0;translate:0 13vh;transform:scale(3) rotate(-6deg);
+/* Sólo gira la palabra: el giro del bloque entero arrastraba el motivo y la
+   línea de turnos y Alma, y se veían descentrados. */
+.fin .sello{position:relative;z-index:6;text-align:center;opacity:0;translate:0 13vh;transform:scale(3);width:100%;padding:0 12px;
   transition:opacity .2s, transform .4s cubic-bezier(.2,1.5,.4,1)}
-.fin.sello-on .sello{opacity:1;transform:scale(1) rotate(-3deg)}
-.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:6px;
+.fin.sello-on .sello{opacity:1;transform:scale(1)}
+.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:6px;transform:rotate(-3deg);
   background-image:linear-gradient(180deg,#fff3c4 0%,#e6bb52 46%,#8d6f21 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 5px 0 #3a2a08) drop-shadow(0 0 28px rgba(230,187,82,.75))}
 .fin.derrota .sello b{background-image:linear-gradient(180deg,#ffd9d6 0%,#e0524a 46%,#4a1010 100%);
