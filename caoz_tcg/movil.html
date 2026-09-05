@@ -58,7 +58,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;tou
 .btn.on{border-color:var(--gold);color:var(--gold)}
 
 /* ============ PANTALLAS ============ */
-#app{position:fixed;inset:0;height:100%;height:100dvh;overflow:hidden;display:flex;justify-content:center}
+/* El alto lo mide JS con visualViewport (--vh): 100dvh en Chrome de iPhone
+   cuenta la barra de direcciones cuando está desplegada y la parte de arriba
+   quedaba debajo de ella en la primera carga. --vvt es el hueco que deja la
+   barra cuando el navegador la pliega. */
+#app{position:fixed;inset:0;top:var(--vvt,0px);height:100%;height:100dvh;height:var(--vh,100dvh);overflow:hidden;display:flex;justify-content:center}
 /* En un monitor se ve como un teléfono en medio: sirve para probarla sin uno */
 #tel{position:relative;width:100%;max-width:520px;height:100%;overflow:hidden}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;
@@ -743,8 +747,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=142"></script>
-<script src="final.js?b=142"></script>
+<script src="motor.js?b=143"></script>
+<script src="final.js?b=143"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -755,7 +759,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:142, fecha:'2026-09-05'};
+const BUILD = {n:143, fecha:'2026-09-05'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -833,6 +837,7 @@ function ajustarLienzo(){
   const W=anchoVisible(), H=altoVisible();
   const r=document.documentElement.style;
   r.setProperty('--vh', H+'px');
+  r.setProperty('--vvt', (window.visualViewport ? Math.round(visualViewport.offsetTop) : 0)+'px');
   // cinco Personajes por fila, con sus huecos, y que las dos filas quepan con
   // todo lo demás (barras, trampas, medio, mano) en el alto que hay
   const porAncho=Math.floor((W-10-6-4*5)/5);
@@ -848,7 +853,11 @@ function ajustarLienzo(){
 }
 addEventListener('resize', ajustarLienzo);
 addEventListener('orientationchange', ajustarLienzo);
-if(window.visualViewport) visualViewport.addEventListener('resize', ajustarLienzo);
+if(window.visualViewport){ visualViewport.addEventListener('resize', ajustarLienzo); visualViewport.addEventListener('scroll', ajustarLienzo); }
+addEventListener('pageshow', ajustarLienzo);
+addEventListener('load', ajustarLienzo);
+// la barra del navegador se asienta después del primer pintado: se vuelve a medir
+[150, 600, 1500].forEach(t=>setTimeout(ajustarLienzo, t));
 ajustarLienzo();
 
 /* ---------- pulsación larga: el "hover" del teléfono ---------- */
