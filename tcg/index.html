@@ -4,6 +4,17 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Caoz Con Todo — El Juego de Cartas</title>
+<!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
+     decide antes de cargar nada. Con ?escritorio=1 se queda aquí, y las
+     pruebas (?test) nunca se van. -->
+<script>
+(function(){
+  var q=new URLSearchParams(location.search);
+  if(q.has('escritorio')||q.has('test')||q.has('biblia')||q.has('foto')||q.has('pantalla')) return;
+  var tactil=matchMedia('(pointer:coarse)').matches, corto=Math.min(screen.width,screen.height)<700;
+  if(tactil&&corto) location.replace('movil.html'+location.search);
+})();
+</script>
 <style>
 :root{
   --bg:#0d0a13; --bg2:#150f1f; --panel:#1c1429; --panel2:#241a34;
@@ -2465,7 +2476,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=137"></script>
+<script src="motor.js?b=139"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2484,7 +2495,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:137, fecha:'2026-09-04'};
+const BUILD = {n:139, fecha:'2026-09-04'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
