@@ -30,6 +30,19 @@ byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y 
 
 ---
 
+## Sin numerar — Revancha y Menú dentro de la cinemática · 2026-09-05
+
+La cinemática se iba sola a los cuatro segundos, devolvía la mesa un instante y entonces
+salía el cartel de siempre con Revancha y Menú: dos pantallas para una decisión. Ahora la
+cinemática **se queda** —con el sello, el motivo, los turnos y el Alma de cada uno— y los dos
+botones aparecen debajo; un toque durante la animación la salta y trae los botones ya.
+`cinematicaFinal(winner, why, acciones)` recibe de cada pantalla qué hacer con cada botón
+(en online, Revancha sigue avisando de que hay que crear otra sala) y devuelve si se encargó
+del final; si no había efectos (`fast`, `silent`, pestaña escondida) sale el cartel de antes.
+Si empieza otra partida mientras espera, se retira sola.
+
+---
+
 ## Sin numerar — La cinemática del final · 2026-09-05
 
 El último punto de la lista de mejoras visuales, y el primero que se hace **para las dos
