@@ -139,8 +139,15 @@ fi
 # presupuesto en vez de a que las pruebas acabaran, y una tanda de diez segundos
 # tardaba varios minutos. Ahora la página avisa por POST /resultado cuando
 # termina, así que esto tarda exactamente lo que tarden las pruebas.
+# Sin estrangular: con el ordenador cargado, Chrome sin ventana trataba la
+# página como si estuviera en segundo plano —temporizadores a cámara lenta,
+# document.hidden a ratos— y los efectos no llegaban a dibujarse: una tanda
+# de 62 s con un rojo de «no salió el número verde», o ninguna respuesta.
+# En la pestaña visible la misma tanda estaba en verde.
 "$CHROME" --headless --disable-gpu --no-sandbox --user-data-dir="$PERFIL" \
-  --no-first-run --disable-extensions \
+  --no-first-run --disable-extensions --window-size=1600,1000 \
+  --disable-background-timer-throttling --disable-renderer-backgrounding \
+  --disable-backgrounding-occluded-windows --disable-features=CalculateNativeWinOcclusion \
   "http://127.0.0.1:$PUERTO/?test=$SUITES" >/dev/null 2>&1 &
 NAVEGADOR=$!
 disown "$NAVEGADOR" 2>/dev/null
