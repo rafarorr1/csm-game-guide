@@ -1796,6 +1796,49 @@ body.tutpause #tut{pointer-events:auto}
 .fxnum.xl{font-size:calc(52px * var(--k,1))}
 .fxburst{position:absolute;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.95) 0%,currentColor 42%,transparent 72%)}
+/* EL FOIL DE LAS LEGENDARIAS
+   Las cartas con ★ llevan una capa iridiscente encima: una banda de color que
+   sigue al cursor, un punteado de destellos, y en reposo una deriva lenta para
+   que una legendaria en mesa se note sin tocarla. Es lo que distingue una
+   colección de cartas de una lista de cartas.
+   --mx/--my (0..1) los pone el JS sólo en la carta bajo el cursor; sin ellos
+   la capa cae en el centro. Va con mix-blend-mode para que el color se sume a
+   lo que hay debajo —retrato o fondo— en vez de taparlo. pointer-events:none:
+   la capa nunca se interpone en un clic. */
+.card .foil{position:absolute;inset:0;z-index:3;pointer-events:none;border-radius:inherit;
+  --mx:.5;--my:.5;
+  background:
+    /* la banda iridiscente, que se desplaza con el cursor */
+    /* Una banda FINA: el arcoíris vive en unos 12 puntos de la diagonal y el
+       resto es transparente. Con una banda ancha y saturada el foil dejaba de
+       ser un brillo y se convertía en un lavado que tapaba la carta entera. */
+    linear-gradient(112deg,
+      transparent 42%,
+      rgba(255,120,160,.26) 46%, rgba(255,232,150,.42) 49%, rgba(255,255,255,.50) 50.5%,
+      rgba(150,255,220,.38) 52%, rgba(140,180,255,.26) 55%,
+      transparent 59%),
+    /* el punteado: dos rejillas de destellos a distinto paso */
+    radial-gradient(circle at 30% 20%, rgba(255,255,255,.34) 0 .8px, transparent 1.6px),
+    radial-gradient(circle at 70% 60%, rgba(255,255,255,.24) 0 .7px, transparent 1.5px);
+  background-size: 260% 260%, 26px 26px, 41px 41px;
+  background-position:
+    calc(var(--mx) * 100%) calc(var(--my) * 100%),
+    calc(var(--mx) * 12px) calc(var(--my) * 12px),
+    calc(var(--mx) * -9px) calc(var(--my) * -9px);
+  /* overlay y no color-dodge: dodge sobre el morado medio de la carta lo
+     reventaba a blanco y saturado; overlay tiñe respetando el contraste. */
+  mix-blend-mode:overlay;opacity:.55;
+  transition:opacity .25s ease;
+  animation:foilReposo 9s ease-in-out infinite}
+/* bajo el cursor el brillo sube y la deriva se detiene: manda la mano */
+.card:hover .foil,.card.finge-hover .foil{opacity:.9;animation:none}
+@keyframes foilReposo{
+  0%,100%{background-position: 30% 30%, 0 0, 0 0}
+  50%    {background-position: 70% 70%, 6px 6px, -5px -5px}}
+/* en la carta grande de inspección el punteado se ve más fino a ese tamaño */
+#inspect .card .foil{background-size:260% 260%, 34px 34px, 55px 55px}
+@media (prefers-reduced-motion:reduce){ .card .foil{animation:none} }
+
 /* EL IMPACTO
    Chispas que salen del punto de contacto en la dirección del golpe, un anillo
    que se expande, y polvo. Todo escala con --k porque #fx vive fuera del lienzo
@@ -2188,7 +2231,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:128, fecha:'2026-09-04'};
+const BUILD = {n:129, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -4604,7 +4647,7 @@ function cardEl(id,opt={}){
   d.innerHTML=`
     <div class="top"><div class="cost${disc?' rebajado':''}">${cost}</div>
       <div class="nm">${c.n}</div></div>
-    ${c.r===2?'<div class="rar">★</div>':''}
+    ${c.r===2?'<div class="rar">★</div><i class="foil" aria-hidden="true"></i>':''}
     <div class="art">${c.art}</div>
     <div class="tribe">${tribeLine(c)}</div>
     <div class="txt">${c.x||''}</div>
@@ -4681,7 +4724,7 @@ function unitFill(d,u){
   const hp=Math.max(0,u.maxHp-u.dmg);
   d.innerHTML=`
     <div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}</div></div>
-    ${c.r===2?'<div class="rar">★</div>':''}
+    ${c.r===2?'<div class="rar">★</div><i class="foil" aria-hidden="true"></i>':''}
     <div class="art">${c.art}</div>
     <div class="tribe">${u.tribes.join(' · ')}</div>
     <div class="keys">${kw.join('')}${
@@ -4721,7 +4764,7 @@ function inspectHTML(id,u){
     : '';
   const base = (u&&c.t==='personaje'&&(u.atk!==c.a||u.maxHp!==c.h))
     ? `<div class="bigbase">Base ${c.a}/${c.h} · ahora ${u.atk}/${u.maxHp}</div>` : '';
-  return `<div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}${c.r===2?' ★':''}</div></div>
+  return `${c.r===2?'<i class="foil" aria-hidden="true"></i>':''}<div class="top"><div class="cost">${c.c}</div><div class="nm">${c.n}${c.r===2?' ★':''}</div></div>
     <div class="art">${c.art}</div>
     <div class="tribe">${u?u.tribes.join(' · '):tribeLine(c)}</div>
     ${kw}
@@ -6536,6 +6579,29 @@ function showScreen(id){
     if(b){ b.classList.remove('va'); void b.offsetWidth; b.classList.add('va');
            setTimeout(()=>b.classList.remove('va'), 500); }
   }
+}
+
+/* EL FOIL SIGUE AL CURSOR.
+   Una sola escucha en el documento; sólo la carta bajo el cursor recibe
+   --mx/--my, y la anterior los pierde al salir. A ritmo de rAF: mover el ratón
+   dispara docenas de eventos por fotograma y no hace falta más de una lectura
+   por fotograma. */
+{
+  let cartaFoil = null, pendiente = null;
+  const suelta = () => { if(cartaFoil){ cartaFoil.style.removeProperty('--mx'); cartaFoil.style.removeProperty('--my'); cartaFoil = null; } };
+  document.addEventListener('pointermove', e => {
+    const c = e.target.closest && e.target.closest('.card');
+    if(!c || !c.querySelector(':scope > .foil')){ suelta(); return; }
+    if(c !== cartaFoil){ suelta(); cartaFoil = c; }
+    if(pendiente) return;
+    pendiente = requestAnimationFrame(() => {
+      pendiente = null; if(!cartaFoil) return;
+      const r = cartaFoil.getBoundingClientRect();
+      cartaFoil.style.setProperty('--mx', Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)).toFixed(3));
+      cartaFoil.style.setProperty('--my', Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)).toFixed(3));
+    });
+  }, {passive:true});
+  document.addEventListener('pointerleave', suelta, {passive:true});
 }
 
 /* LA MANO HACE SITIO.
