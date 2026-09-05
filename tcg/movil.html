@@ -94,17 +94,25 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;tou
   left:var(--x,50%);filter:blur(.3px)}
 @keyframes sube{0%{transform:translate(0,0) scale(1);opacity:0}8%{opacity:.9}
   100%{transform:translate(var(--dx,0px),-105dvh) scale(.35);opacity:0}}
-.cartaFondo{position:absolute;width:110px;height:154px;border-radius:9px;opacity:.14;
-  left:var(--x);top:var(--y);transform:rotate(var(--r,0deg));
-  animation:flota var(--dur,14s) ease-in-out var(--del,0s) infinite alternate;pointer-events:none}
+/* Las cartas del fondo suben desde abajo y se pierden por arriba, como en
+   el escritorio: antes sólo se mecían 26 px en 14 s a un 14 % de opacidad,
+   y en un teléfono eso es una carta quieta. */
+.cartaFondo{position:absolute;left:var(--x);top:100%;width:var(--w,110px);aspect-ratio:5/7;border-radius:9px;
+  opacity:0;pointer-events:none;will-change:transform,opacity;
+  animation:sube var(--dur,24s) linear var(--esp,0s) infinite}
 .cartaFondo .vscard{width:100%;height:100%;border:1px solid var(--gold2);border-radius:9px;overflow:hidden;
-  background:linear-gradient(178deg,#2c2143,#140e22)}
-.cartaFondo .lface{height:100%;font-size:44px}
-@keyframes flota{to{transform:rotate(calc(var(--r,0deg) + 6deg)) translateY(-26px)}}
+  background:linear-gradient(178deg,#2c2143,#140e22);box-shadow:0 14px 34px rgba(0,0,0,.8)}
+.cartaFondo .lface{height:100%;font-size:44px;display:grid;place-items:center}
+#fondoMenus.rival .cartaFondo{filter:hue-rotate(-26deg) saturate(1.25)}
+@keyframes sube{
+  0%  {opacity:0;transform:translate3d(0,0,0) rotate(var(--gir0,0deg)) scale(.98)}
+  12% {opacity:var(--op,.3)}
+  85% {opacity:var(--op,.3)}
+  100%{opacity:0;transform:translate3d(var(--dx,0px),-125vh,0) rotate(var(--gir1,0deg)) scale(1.04)}}
 
 /* ---- menú ---- */
 #menu{align-items:center;justify-content:center;gap:10px;text-align:center}
-.marca{width:min(84%,330px);max-height:190px;object-fit:contain;
+.marca{width:min(84%,330px);height:auto;aspect-ratio:16/9;object-fit:contain;
   filter:drop-shadow(0 8px 24px rgba(0,0,0,.8))}
 .marcaTexto{font:800 40px/1 var(--serif);font-variant:small-caps;color:var(--oro);letter-spacing:2px}
 .marcaSub{font:600 11px/1 var(--sans);letter-spacing:5px;color:var(--oro2);text-transform:uppercase}
@@ -676,8 +684,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 
 <!-- ============ MENÚ ============ -->
 <div class="screen on portada" id="menu">
-  <img class="marca" id="marca" src="art/logo.webp" alt="Caoz Con Todo" hidden>
-  <div class="marcaTexto" id="marcaTexto">Caoz Con Todo</div>
+  <img class="marca" id="marca" src="art/logo.webp" alt="Caoz Con Todo">
+  <div class="marcaTexto" id="marcaTexto" hidden>Caoz Con Todo</div>
   <div class="marcaSub">EL JUEGO DE CARTAS</div>
   <div class="filete" aria-hidden="true"></div>
   <div class="sub">Dos jugadores entran al Domo. Cada uno lleva a un Protagonista como Líder y un mazo de 40 cartas.
@@ -753,8 +761,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=146"></script>
-<script src="final.js?b=146"></script>
+<script src="motor.js?b=147"></script>
+<script src="final.js?b=147"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -765,7 +773,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:146, fecha:'2026-09-05'};
+const BUILD = {n:147, fecha:'2026-09-05'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -895,11 +903,16 @@ function showScreen(id){
 function sembrarPortada(){
   const f=$('#fondoMenus');
   const ids=Object.keys(LEADERS);
-  for(let i=0;i<6;i++){
-    const c=el('div','cartaFondo');
-    c.style.setProperty('--x', (5+Math.random()*70)+'%'); c.style.setProperty('--y', (4+Math.random()*80)+'%');
-    c.style.setProperty('--r', (Math.random()*40-20)+'deg');
-    c.style.setProperty('--dur', (11+Math.random()*9)+'s'); c.style.setProperty('--del', (-Math.random()*10)+'s');
+  const az=(a,b)=>a+Math.random()*(b-a);
+  for(let i=0;i<8;i++){
+    const c=el('div','cartaFondo'), lejos=i%2===0;
+    c.style.setProperty('--x', az(-4,78)+'%');
+    c.style.setProperty('--w', (lejos?az(70,95):az(100,130)).toFixed(0)+'px');
+    c.style.setProperty('--op', (lejos?az(.14,.22):az(.24,.36)).toFixed(2));
+    c.style.setProperty('--gir0', az(-18,18).toFixed(0)+'deg'); c.style.setProperty('--gir1', az(-18,18).toFixed(0)+'deg');
+    c.style.setProperty('--dx', az(-70,70).toFixed(0)+'px');
+    c.style.setProperty('--dur', (lejos?az(30,44):az(20,30)).toFixed(1)+'s');
+    c.style.setProperty('--esp', (-az(0,40)).toFixed(1)+'s');   // ya en vuelo al arrancar
     const v=el('div','vscard'); v.dataset.lid=ids[i%ids.length];
     v.innerHTML=`<div class="lface">${LEADERS[v.dataset.lid].art}</div>`;
     c.appendChild(v); f.appendChild(c);
@@ -2050,9 +2063,9 @@ $('#chatform').onsubmit=e=>{ e.preventDefault(); chatMio(); };
 // tocar la mesa fuera de la mano suelta la carta tocada
 $('#field').addEventListener('click', e=>{ if(e.target===e.currentTarget || e.target.classList.contains('zona') || e.target.classList.contains('row')) manoTocada(null); });
 $$('.build').forEach(e=>e.textContent=buildTxt());
-$('#marca').onload=()=>{ $('#marca').hidden=false; $('#marcaTexto').hidden=true; };
-$('#marca').onerror=()=>{ $('#marca').hidden=true; };
-if($('#marca').complete && $('#marca').naturalWidth) $('#marca').onload();
+// el logo va visible desde el principio; el texto sólo si la imagen falla
+$('#marca').onerror=()=>{ $('#marca').hidden=true; $('#marcaTexto').hidden=false; };
+if($('#marca').complete && !$('#marca').naturalWidth) $('#marca').onerror();
 sembrarPortada(); ilustrarFondo();
 $('#fondoMenus').classList.add('on');
 cargarArte().then(()=>{ ilustrarFondo(); if(Object.keys(ARTE).length && G && !G.silent) render(); });
