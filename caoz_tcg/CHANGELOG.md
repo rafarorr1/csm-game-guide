@@ -55,6 +55,27 @@ de un teléfono—, y **su propio reparto de la mesa**:
 - **El solape de la mano** se calcula sobre el ancho real y cabe en 460 con 7 cartas
   (32,7 px) — verificado: primera y última dentro de la zona.
 
+### Tres arreglos tras probarlo en un iPhone de verdad (build 136)
+
+- **La parte de arriba quedaba debajo de la barra de direcciones.** Safari cuenta la barra en
+  `100vh` y en el alto de la ventana fija, pero no en lo que de verdad se ve; el lienzo se
+  calculaba con ella dentro. Ahora se mide con `visualViewport` (y se recalcula al cambiar),
+  `#app` usa `100dvh` y respeta `safe-area-inset-top`.
+- **Todos los retratos salían estirados hacia arriba.** Son `<img>` con `object-fit:cover`
+  bajo un ancestro con `zoom` —todo el lienzo lo lleva—, y Safari **ignora `object-fit` con
+  `zoom` en la cadena** (fallo conocido de WebKit). En Chrome no se reproduce, por eso el
+  emulador no lo enseñó. En vertical el retrato se pinta como **fondo del marco**
+  (`background-size:cover`), que Safari sí respeta, y la `<img>` se oculta. Escritorio igual.
+- **La pulsación larga hace de hover.** 380 ms con el dedo quieto sobre una carta de la mano la
+  amplía; sobre una unidad en mesa abre su ficha. Y se traga el clic que suelta el dedo
+  después: una pulsación larga nunca juega ni selecciona. Verificado: ampliada sin jugar,
+  ficha abierta sin seleccionar.
+
+Lo que **no** se arregla con parches es el tamaño del texto: encoger la mesa de escritorio con
+`zoom` hace que quepa, no que se lea. Ése es el motivo de la v15, que empieza aquí: **un
+motor, dos renderizadores** — el motor sale a `motor.js` sin cambiar una línea, y el teléfono
+recibe su propia interfaz, diseñada en vertical con texto a tamaño nativo.
+
 ### El tutorial en el teléfono (build 135)
 
 El panel de Gero ocupa hasta un 40 % de la pantalla y arriba tapaba **justo el campo rival**
