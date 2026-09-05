@@ -122,9 +122,12 @@ sleep 1
 if [ "$SUITES" = "1" ]; then
   gris "  corriendo TODO, incluidos los tutoriales (~5 min)"; ESPERA=600
 else
-  # 180 y no 120: las regresiones solas tardan ~95 s, y con el ordenador ocupado
-  # se pasaban del límite. Daba un rojo que no era del juego sino del reloj.
-  gris "  corriendo las rápidas (motor, cartas, cobertura, regresiones)"; ESPERA=180
+  # 300 y no 180 (ni 120): las regresiones solas tardan ~110 s, y con el
+  # ordenador ocupado —el escritorio remoto, el navegador del panel— se
+  # pasaban del límite tres veces seguidas en una tarde. Daba un rojo que no
+  # era del juego sino del reloj; como la página avisa al terminar, el margen
+  # sobrante no se espera nunca.
+  gris "  corriendo las rápidas (motor, cartas, cobertura, regresiones)"; ESPERA=300
 fi
 
 # Sin --virtual-time-budget a propósito: hacía que Chrome esperase a agotar el
