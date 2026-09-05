@@ -1901,6 +1901,10 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
   background:radial-gradient(circle,currentColor 0%,transparent 70%);
   filter:blur(calc(1.5px * var(--k,1)));will-change:transform,opacity}
 /* el destello blanco del golpe letal: cubre la carta y se apaga */
+/* notas de Canción y otros glifos sueltos del estallido */
+.fxglifo{position:absolute;transform:translate(-50%,-50%);font-weight:900;
+  font-size:calc(26px * var(--k,1));color:currentColor;text-shadow:0 0 calc(12px * var(--k,1)) currentColor;
+  will-change:transform,opacity;pointer-events:none}
 .fxflash{position:absolute;border-radius:10px;background:#fff;pointer-events:none;
   box-shadow:0 0 calc(40px * var(--k,1)) #fff}
 .fxring{position:absolute;width:60px;height:60px;margin:-30px 0 0 -30px;border-radius:50%;
@@ -2290,7 +2294,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:132, fecha:'2026-09-04'};
+const BUILD = {n:133, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5317,11 +5321,102 @@ async function fxCartaEnEscena(nodo, side, color, etiqueta, quieta){
 /* cuánto se queda quieta: lo del rival, más tiempo */
 const fxQuieta = side => side===ME ? 520 : 1000;
 
+/* EL ESTALLIDO DEL HECHIZO
+   Cuando la carta se posa en escena, estalla con el carácter de su elemento.
+   Reutiliza las piezas del combate (chispas, bocanadas, anillos) con otra
+   paleta y otro movimiento: el Fuego sube y quema, la Fe asciende despacio y
+   brilla, el Engaño se expande como humo y deriva, la Canción son ondas y
+   notas, el Contrato un sello seco, lo Rápido trazos horizontales. Todo tras
+   FXON(), y sin partículas con prefers-reduced-motion (queda el anillo). */
+const FX_ELEMENTO = {
+  fuego:   {color:'#ff7a3a', claro:'#ffd28a'},
+  fe:      {color:'#ffd76a', claro:'#fff3c4'},
+  engano:  {color:'#b06aff', claro:'#e2c6ff'},
+  cancion: {color:'#4aa6ff', claro:'#bfe0ff'},
+  contrato:{color:'#ff4a6a', claro:'#ffc0cc'},
+  rapido:  {color:'#7affd0', claro:'#d6fff1'},
+};
+function fxMotas(x, y, {n=10, color, dy=-60, dx=30, escala=1, dur=900, sube=true}={}){
+  const k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k'))||1;
+  for(let i=0;i<n;i++){
+    const p = fxAdd('fxpuff', x+(Math.random()-.5)*70*k, y+(Math.random()-.5)*60*k, {color});
+    const tx = (Math.random()-.5)*dx*2*k, ty = (sube ? -(20+Math.random()*Math.abs(dy)) : (Math.random()-.5)*dy)*k;
+    p.animate([
+      {transform:'translate(0,0) scale(.5)', opacity:.95},
+      {transform:`translate(${tx*.6}px,${ty*.6}px) scale(${escala})`, opacity:.8, offset:.5},
+      {transform:`translate(${tx}px,${ty}px) scale(${escala*1.3})`, opacity:0}
+    ],{duration:dur+Math.random()*400, easing:'ease-out'});
+    fxGone(p, dur+500);
+  }
+}
+function fxEstallido(x, y, sub){
+  if(!FXON()) return;
+  const e = FX_ELEMENTO[sub]; if(!e) return;
+  const k = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--k'))||1;
+  fxAnillo(x, y, e.color, 1.6);
+  if(FX_SUAVE()) return;
+  switch(sub){
+    case 'fuego': {
+      const fl=fxAdd('fxburst', x, y, {color:e.color});
+      fl.animate([{transform:'scale(.4)',opacity:.9},{transform:'scale(2.6)',opacity:0}],{duration:520,easing:'ease-out'}); fxGone(fl,520);
+      fxChispas(x, y, {n:18, color:e.color, fuerza:1.3, largas:true});
+      fxMotas(x, y, {n:12, color:e.color, dy:-120, dx:40, escala:1.2, dur:800});
+      break; }
+    case 'fe': {
+      const fl=fxAdd('fxburst', x, y, {color:e.claro});
+      fl.animate([{transform:'scale(.5)',opacity:.7},{transform:'scale(2.2)',opacity:0}],{duration:900,easing:'ease-out'}); fxGone(fl,900);
+      fxMotas(x, y, {n:16, color:e.claro, dy:-110, dx:60, escala:.8, dur:1300});
+      fxChispas(x, y, {n:8, color:e.claro, fuerza:.6});
+      break; }
+    case 'engano': {
+      fxMotas(x, y, {n:16, color:e.color, dy:70, dx:110, escala:3, dur:1100, sube:false});
+      const fl=fxAdd('fxburst', x, y, {color:'#5a2a9a'});
+      fl.animate([{transform:'scale(.6)',opacity:.6},{transform:'scale(2.8)',opacity:0}],{duration:900,easing:'ease-out'}); fxGone(fl,900);
+      break; }
+    case 'cancion': {
+      [0,140,280].forEach(t=>setTimeout(()=>fxAnillo(x, y, e.color, 2.2), t));
+      for(let i=0;i<6;i++){
+        const g=fxAdd('fxglifo', x+(Math.random()-.5)*60*k, y, {color:e.claro});
+        g.textContent = i%2 ? '♪' : '♫';
+        const tx=(Math.random()-.5)*160*k, ty=-(60+Math.random()*90)*k;
+        g.animate([{transform:'translate(-50%,-50%) scale(.4)',opacity:0},
+          {transform:`translate(calc(-50% + ${tx*.4}px), calc(-50% + ${ty*.4}px)) scale(1.1)`,opacity:1,offset:.3},
+          {transform:`translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(.9) rotate(${(Math.random()-.5)*40}deg)`,opacity:0}],
+          {duration:1100+Math.random()*300, easing:'cubic-bezier(.2,.7,.3,1)'});
+        fxGone(g, 1450);
+      }
+      break; }
+    case 'contrato': {
+      fxChispas(x, y, {n:10, color:e.color, fuerza:.9, largas:true});
+      const fl=fxAdd('fxburst', x, y, {color:e.color});
+      fl.animate([{transform:'scale(.3)',opacity:.9},{transform:'scale(1.6)',opacity:0}],{duration:360,easing:'ease-out'}); fxGone(fl,360);
+      break; }
+    case 'rapido': {
+      for(let i=0;i<8;i++){
+        const sp=fxAdd('fxspark larga', x, y+(Math.random()-.5)*50*k, {color:e.claro});
+        const dir = i%2 ? 1 : -1, d=(60+Math.random()*90)*k;
+        sp.animate([{transform:'translate(0,0) scaleX(.4)',opacity:1},{transform:`translate(${dir*d}px,0) scaleX(1.6)`,opacity:0}],
+          {duration:300+Math.random()*160, easing:'ease-out'});
+        fxGone(sp, 500);
+      }
+      break; }
+  }
+}
+
 async function fxSpell(cardId, side){
   const c=CARDS[cardId];
   const color=(c.sub&&SUBCOLOR[c.sub[0]])||'#8a5cf0';
   // la etiqueta sale SIEMPRE, tuya o suya: antes sólo se ponía para el rival y
   // por eso unas jugadas se anunciaban y otras no
+  /* El estallido se programa para el instante en que la carta se POSA: el
+     presentador la deja quieta al 20 % de su duración total (quieta + 420). Se
+     dispara aparte para no tocar el presentador, que comparten las trampas y
+     las habilidades. */
+  if(FXON() && c.sub && FX_ELEMENTO[c.sub[0]]){
+    const board=$('#field').getBoundingClientRect();
+    const cx=board.left+board.width/2, cy=board.top+board.height/2;
+    setTimeout(()=>fxEstallido(cx, cy, c.sub[0]), (fxQuieta(side)+420)*0.2);
+  }
   await fxCartaEnEscena(cardEl(cardId,{}), side, color,
     P(side).L.n+' lanza '+c.n, fxQuieta(side));
 }
