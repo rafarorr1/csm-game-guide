@@ -1947,7 +1947,9 @@ html.movil .controls .btn.gold{padding:9px 14px;font-size:13px}
 html.movil #reloj{font-size:11px;padding:4px 9px}
 
 /* el tutorial de Gero: arriba, a lo ancho, y con scroll si se alarga */
-html.movil #tut{left:6px;right:6px;top:6px;width:auto;transform:none;max-height:40vh;overflow:auto}
+html.movil #tut{left:6px;right:6px;top:6px;width:auto;transform:none;max-height:40vh;overflow:auto;
+  transition:top .3s ease, bottom .3s ease}
+html.movil #tut.abajo{top:auto;bottom:6px}
 html.movil .tutbox{padding:9px 11px;font-size:12.5px}
 
 /* la ficha en grande: anclada ABAJO, sobre la mano. Arriba tapaba el campo
@@ -2470,7 +2472,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:134, fecha:'2026-09-04'};
+const BUILD = {n:135, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -6755,6 +6757,12 @@ function tutRender(){
     next.textContent = more ? 'Sigue →' : (s.last?'¡A jugar! →':'Entendido →');
     next.className = 'btn gold sm';
   }
+  /* En vertical el panel de Gero es grande y tapa media pantalla. Va ABAJO,
+     sobre la mano, cuando el paso mira al rival —su campo, su barra, un beat en
+     espera— y ARRIBA en el resto, incluido «pulsa Terminar turno abajo», que
+     no puede taparse a sí mismo. */
+  const abajo = !mustEnd && (!!s.on || /foe|Foe|midRow/.test(s.hi||''));   // «te toca» siempre arriba
+  $('#tut').classList.toggle('abajo', abajo);
   tutHighlight();
   if(G) render();          // el tablero tiene que reflejar los permisos del paso nuevo
 }

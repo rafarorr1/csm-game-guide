@@ -55,6 +55,14 @@ de un teléfono—, y **su propio reparto de la mesa**:
 - **El solape de la mano** se calcula sobre el ancho real y cabe en 460 con 7 cartas
   (32,7 px) — verificado: primera y última dentro de la zona.
 
+### El tutorial en el teléfono (build 135)
+
+El panel de Gero ocupa hasta un 40 % de la pantalla y arriba tapaba **justo el campo rival**
+que señala en los pasos «mira al rival». Ahora **baja sobre la mano** cuando el paso mira al
+rival —su campo, su barra, un beat en espera— y se queda **arriba** en el resto, incluido
+«te toca: pulsa Terminar turno abajo», que no puede taparse a sí mismo. Verificado paso a
+paso: intro arriba, beat del rival abajo, «te toca» arriba, paso de la mano arriba.
+
 ### Verificado en un 375×812 emulado con toque
 
 Portada, selector, guías, mesa con 7 en mano y 5 rivales en campo, toque-amplía y
