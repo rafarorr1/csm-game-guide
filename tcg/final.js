@@ -45,7 +45,7 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
   border-color:var(--gold,#e6bb52);box-shadow:0 0 0 2px rgba(230,187,82,.5),0 0 70px rgba(230,187,82,.55),0 40px 80px #000}
 .fin.derrota.entra .vscard.gana{border-color:#b83a30;box-shadow:0 0 0 2px rgba(224,82,74,.45),0 0 70px rgba(224,82,74,.5),0 40px 80px #000}
 .fin .vscard.pierde{transform:translate(-50%,-50%) translateY(-4vh) scale(.92);opacity:0;z-index:2}
-.fin.entra .vscard.pierde{transform:translate(-50%,-50%) translateY(31vh) translateX(28vw) scale(.55) rotate(10deg);opacity:.6;
+.fin.entra .vscard.pierde{transform:translate(-50%,-50%) translateY(23vh) translateX(30vw) scale(.55) rotate(10deg);opacity:.6;
   filter:grayscale(1) brightness(.45)}
 /* la grieta: unas líneas blancas que se encienden cuando la carta ya se ha hundido */
 .fin .vscard.pierde::after{content:"";position:absolute;inset:0;z-index:5;opacity:0;transition:opacity .5s .7s;pointer-events:none;
@@ -80,8 +80,16 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 @keyframes finSube{0%{translate:0 0;opacity:0}10%{opacity:.95}100%{translate:var(--dx) -108vh;opacity:0}}
 @keyframes finCae{0%{translate:0 0;opacity:0}10%{opacity:.7}100%{translate:var(--dx) 108vh;opacity:0}}
 .fin .toca{position:absolute;bottom:calc(env(safe-area-inset-bottom,0px) + 18px);left:0;right:0;text-align:center;
-  font:600 11px/1 var(--sans,sans-serif);letter-spacing:3px;color:#7a6ba0;opacity:0;transition:opacity .6s 1.5s}
-.fin.sello-on .toca{opacity:1}
+  font:600 11px/1 var(--sans,sans-serif);letter-spacing:3px;color:#7a6ba0;opacity:0;transition:opacity .6s .4s}
+.fin.va .toca{opacity:1}
+.fin.botones .toca{opacity:0;transition:none}
+/* revancha o menú, aquí mismo: la cinemática no se va hasta que se elige */
+.fin .finbtns{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 7vh);z-index:8;
+  display:flex;gap:12px;justify-content:center;flex-wrap:wrap;padding:0 16px;
+  opacity:0;translate:0 16px;pointer-events:none;transition:opacity .5s, translate .5s}
+.fin.botones .finbtns{opacity:1;translate:0 0;pointer-events:auto}
+.fin .finbtns .btn{font-size:16px;padding:13px 24px;min-width:150px;text-align:center}
+.fin.botones{cursor:default}
 @media (prefers-reduced-motion: reduce){ .fin .finluz, .fin .brasa{animation:none} }
 `;
 
@@ -94,8 +102,8 @@ if(!document.getElementById('finCss')){
 /* Devuelve cuando la cinemática ha terminado (o se ha saltado). Quien la
    llama abre el cartel después, comprobando que la partida sigue siendo la
    misma: durante estos cuatro segundos puede empezar otra. */
-async function cinematicaFinal(winner, why){
-  if(typeof FXON !== 'function' || !FXON() || G.auto) return;
+async function cinematicaFinal(winner, why, acciones){
+  if(typeof FXON !== 'function' || !FXON() || G.auto) return false;
   const g0 = G, gano = winner === ME;
   const capa = el('div', 'fin ' + (gano ? 'victoria' : 'derrota'));
   capa.innerHTML = '<div class="finluz"></div><div class="fogonazo"></div>';
@@ -114,16 +122,36 @@ async function cinematicaFinal(winner, why){
   const alma = s => Math.max(0, P(s).alma);
   capa.appendChild(el('div', 'sello',
     `<b>${gano ? 'VICTORIA' : 'DERROTA'}</b><small>${why || ''}</small>` +
-    `<i>${P(winner).L.n} ❤️ ${alma(winner)} &nbsp;·&nbsp; ${P(1 - winner).L.n} ❤️ ${alma(1 - winner)}</i>`));
-  capa.appendChild(el('div', 'toca', 'TOCA PARA CONTINUAR'));
+    `<i>Turnos: ${Math.ceil(G.turnNo / 2)} &nbsp;·&nbsp; ${P(winner).L.n} ❤️ ${alma(winner)} &nbsp;·&nbsp; ${P(1 - winner).L.n} ❤️ ${alma(1 - winner)}</i>`));
+  capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
+  /* Los botones viven aquí, no en un cartel aparte: la cinemática se queda
+     hasta que se elige. Antes se iba sola y devolvía a la mesa un instante,
+     y luego salía el cartel de siempre: dos pantallas para una decisión. */
+  let elegido = null, elige;
+  const eleccion = new Promise(r => { elige = r; });
+  const btns = el('div', 'finbtns');
+  const cerrar = async (que) => {
+    if(elegido) return; elegido = que;
+    capa.classList.add('sale'); document.body.classList.remove('fin-on');
+    await nap(380); capa.remove(); elige(que);
+  };
+  const bRev = el('button', 'btn gold', '↺ Revancha');
+  const bMenu = el('button', 'btn', '← Menú principal');
+  bRev.onclick = e => { e.stopPropagation(); cerrar('revancha').then(() => acciones && acciones.revancha && acciones.revancha()); };
+  bMenu.onclick = e => { e.stopPropagation(); cerrar('menu').then(() => acciones && acciones.menu && acciones.menu()); };
+  btns.appendChild(bRev); btns.appendChild(bMenu);
+  capa.appendChild(btns);
+
+  // un toque salta la animación y trae los botones ya
   let saltado = false, salta;
   const saltar = new Promise(r => { salta = r; });
   capa.onclick = () => { saltado = true; salta(); };
   document.body.appendChild(capa);
   document.body.classList.add('fin-on');
+  const vive = () => G === g0 && document.body.contains(capa);
   // sigue mientras la partida sea ésta y nadie haya tocado
-  const espera = async ms => { await Promise.race([nap(ms), saltar]); return !saltado && G === g0 && document.body.contains(capa); };
+  const espera = async ms => { await Promise.race([nap(ms), saltar]); return !saltado && vive(); };
 
   await nap(30);
   capa.classList.add('va', 'luz');
@@ -135,9 +163,13 @@ async function cinematicaFinal(winner, why){
     if(app && !gano) app.animate([{translate:'0 0'},{translate:'-7px 4px'},{translate:'7px -4px'},{translate:'-4px 2px'},{translate:'0 0'}],{duration:340});
     if(app && gano) app.animate([{filter:'saturate(.35) brightness(.55)'},{filter:'saturate(.6) brightness(1.4)',offset:.12},{filter:'saturate(.35) brightness(.55)'}],{duration:900});
   }
-  await espera(2600);
-  capa.classList.add('sale');
-  document.body.classList.remove('fin-on');
-  await nap(480);
-  capa.remove();
+  await espera(1500);
+  if(!vive()){ capa.remove(); document.body.classList.remove('fin-on'); return true; }   // empezó otra partida: ya no pinta nada
+  capa.classList.add('va', 'luz', 'entra', 'sello-on', 'botones');   // por si se saltó a medias
+  capa.onclick = null;
+  // y se espera a la decisión; si mientras tanto empieza otra partida, se retira
+  const vigia = setInterval(() => { if(!vive()){ clearInterval(vigia); capa.remove(); document.body.classList.remove('fin-on'); elige(null); } }, 400);
+  await eleccion;
+  clearInterval(vigia);
+  return true;
 }
