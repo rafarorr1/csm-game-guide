@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Caoz Con Todo — El Juego de Cartas</title>
 <style>
 :root{
@@ -400,8 +400,8 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
      fondo, en vez de parecer cinco pegatinas ladeadas.
      No hace falta preserve-3d —basta con perspective en el padre—, y mejor así:
      en este proyecto preserve-3d ya rompió una vez el poder pulsar las cartas. */
-  transform:translateX(-50%) translateX(calc(var(--d) * 176px))
-            translateZ(calc(var(--dist) * -120px))
+  transform:translateX(-50%) translateX(calc(var(--d) * var(--paso, 176px)))
+            translateZ(calc(var(--dist) * var(--fondo, -120px)))
             rotateY(calc(var(--d) * -26deg))
             rotate(calc(var(--d) * 2deg))
             translateY(calc(var(--dist) * 12px));
@@ -1802,6 +1802,182 @@ body.tutpause #tut{pointer-events:auto}
 .fxnum.xl{font-size:calc(52px * var(--k,1))}
 .fxburst{position:absolute;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.95) 0%,currentColor 42%,transparent 72%)}
+/* ==========================================================================
+   LA VERSIÓN VERTICAL (html.movil)
+   Todo lo de aquí abajo sólo existe con la clase `movil` en <html>, que pone
+   ajustarLienzo cuando la ventana es más alta que ancha y estrecha. La versión
+   de escritorio no cambia: estas reglas la sobreescriben, no la tocan.
+   Principios: un solo carril; el registro es una hoja que se despliega; las
+   cartas se reducen con `zoom` por región y NO con transform, para que el
+   toque siga acertando en ellas; y como en táctil no hay hover, la mano se
+   amplía al primer toque y juega al segundo.
+   ========================================================================== */
+/* En táctil: sin zoom por doble toque ni retraso de 300 ms en lo que se pulsa,
+   y sin que un toque largo seleccione texto de las cartas. */
+html.movil body{touch-action:manipulation;-webkit-user-select:none;user-select:none;
+  -webkit-tap-highlight-color:transparent}
+html.movil #log, html.movil .gbody, html.movil #chat, html.movil .panel{-webkit-user-select:text;user-select:text}
+/* ---- menús ---- */
+html.movil .portada{padding:22px 16px}
+html.movil .marca{width:330px;max-height:220px}
+html.movil .marcaTexto{font-size:44px;letter-spacing:2px}
+html.movil .marcaSub{font-size:11px;letter-spacing:5px}
+html.movil .filete{width:300px}
+html.movil .sub{font-size:13px;max-width:400px;line-height:1.5}
+html.movil .menucol{width:380px;gap:8px}
+html.movil .menucol .btn{padding:12px;font-size:14px}
+html.movil .menucol .btn:first-child{padding:14px;font-size:15px}
+html.movil .foot{font-size:10px}
+html.movil #fondoMenus::after{width:560px;height:900px}
+html.movil .disco{width:620px;top:420px}
+html.movil .disco.dos{width:440px}
+html.movil .cartaFondo{--w:calc(var(--w) * .8)}
+/* el selector: cartas más chicas y el abanico más cerrado */
+html.movil #select{padding:16px 6px;gap:4px}
+html.movil #select .h2{font-size:19px;letter-spacing:1.6px;margin-top:0}
+html.movil .selsub{font-size:12px}
+html.movil .carrete{width:448px;margin:4px auto 0}
+html.movil .carrete .pista{height:330px;perspective:900px}
+html.movil .pista .lcard{width:138px;--paso:90px;--fondo:-80px}
+html.movil .carrete .giro{width:36px;height:36px;font-size:22px}
+html.movil .fichaLider{width:436px;height:auto;min-height:160px;padding:10px 12px;margin-top:6px}
+html.movil .fichaLider .fn{font-size:19px}
+html.movil .fichaLider .fl{font-size:12.5px;line-height:1.45}
+html.movil .fichaLider .fm{font-size:11px;margin-top:6px}
+html.movil #select .btn{padding:10px 14px;font-size:13px}
+html.movil .portada .btn.gold{padding:11px 16px;font-size:14px}
+/* guías */
+html.movil .gbar{padding:6px 8px;gap:6px}
+html.movil .gtab{padding:4px 9px;font-size:11.5px}
+html.movil .gbody{padding:12px 10px 30px}
+html.movil .ghead .gart{font-size:44px} html.movil .ghead h2{font-size:20px}
+
+/* ---- la mesa: un solo carril ---- */
+html.movil #board{grid-template-columns:1fr}
+html.movil #mesa{grid-template-rows:auto 1fr auto}
+/* el registro es una hoja que sube desde abajo; el botón vive en los controles */
+html.movil #panel{position:absolute;left:0;right:0;bottom:0;top:auto;width:auto;height:58%;
+  z-index:70;padding:10px 12px 12px;gap:6px;
+  background:linear-gradient(180deg,rgba(14,9,24,.98),rgba(8,5,15,.99));
+  border-top:1px solid var(--gold2);border-radius:16px 16px 0 0;
+  box-shadow:0 -14px 40px rgba(0,0,0,.7);
+  translate:0 105%;transition:translate .32s cubic-bezier(.2,.8,.3,1)}
+html.movil #panel.abierto{translate:0 0}
+html.movil #panel .panelttl{padding:4px 2px 6px;font-size:11px;cursor:pointer}
+html.movil #panel .panelttl::after{content:"  ▾ cerrar";color:var(--dim);letter-spacing:1px;font-weight:600}
+html.movil #buildPanel{display:none}
+
+/* Los ítems de la rejilla de #mesa nacen con min-width:auto y se ensanchan al
+   ancho mínimo de su contenido: la mano, con siete cartas de 150 px, obligaba
+   a #handzone a medir más que el lienzo y todo se salía por la derecha. En
+   escritorio no se notaba porque sobran 1500 px. */
+html.movil #mesa, html.movil #handzone, html.movil #foehandzone, html.movil #field{min-width:0;max-width:100%}
+html.movil #hand, html.movil #foeHand{max-width:100%}
+html.movil .controls{flex-wrap:wrap}
+
+/* la mano del rival: una tira pequeña arriba */
+html.movil #foehandzone{padding:3px 6px 2px}
+html.movil #foeHand{zoom:.34;min-height:calc(var(--chd) + 8px)}
+
+/* #field pasa de tres columnas (raíl | tapete | raíl) a una rejilla vertical:
+   barra rival + su tumba / tapete / barra propia + su tumba. Los raíles se
+   disuelven (display:contents) para que sus hijos entren en la rejilla. */
+html.movil #field{display:grid;grid-template-columns:1fr auto;grid-template-rows:auto 1fr auto;
+  grid-template-areas:"foeBar foeGrave" "mat mat" "meBar meGrave";
+  gap:3px 6px;padding:2px 6px}
+html.movil #rail, html.movil #railder{display:contents}
+html.movil #rail > .raillado:first-child{grid-area:foeBar;flex-direction:row;align-items:center;gap:8px}
+html.movil #rail > .raillado:last-child{grid-area:meBar;flex-direction:row-reverse;align-items:center;gap:8px}
+html.movil #foeGrave{grid-area:foeGrave;align-self:center}
+html.movil #myGrave{grid-area:meGrave;align-self:center}
+html.movil #efectos{grid-area:mat;justify-self:end;align-self:start;z-index:6;margin:6px 6px 0 0;
+  flex-direction:row;gap:4px}
+html.movil #efectos:not([hidden]){display:flex}
+/* La barra, en UNA fila: con 19 px de número y 13 px de padding las tres
+   píldoras se apilaban en tres filas y la barra medía más que el tapete. */
+html.movil .bar{flex:1;min-width:0;flex-wrap:nowrap;overflow:hidden;padding:3px 7px;gap:5px;
+  border:1px solid var(--line);border-radius:10px;font-size:11px}
+html.movil .bar .who{gap:5px}
+html.movil .bar .avatar{width:24px;height:24px;font-size:13px}
+html.movil .bar .stat{padding:2px 8px;gap:4px;font-size:11px;border-radius:14px}
+html.movil .bar .stat i{font-size:13px}
+html.movil .bar .turnpill{padding:2px 7px;font-size:9.5px}
+html.movil .bar .netchip{padding:2px 6px;font-size:9.5px}
+html.movil .pilebox{flex-direction:row;gap:8px}
+html.movil .pile{height:44px;width:34px;font-size:11px}
+html.movil #railder .pile.grave{height:44px}
+html.movil .pilelbl{display:none}
+
+/* el tapete: sin inclinación (en vertical estira las filas) y con cada región
+   reducida con zoom para que quepan las cinco cartas más el Líder */
+html.movil #mat{padding:4px 6px;gap:2px;transform:none;justify-content:space-evenly}
+html.movil .zone.fz{gap:6px}
+html.movil .fieldwrap{zoom:.54}
+html.movil .zone:not(.fz){zoom:.6}
+html.movil .leaderslot{zoom:.62}
+html.movil .zlabel{font-size:9px}
+html.movil .midrow{min-height:26px;font-size:11px;gap:8px;padding:2px 0}
+html.movil .placecard{font-size:11px}
+html.movil .midrow .btn{padding:4px 8px;font-size:11px}
+
+/* la mano: más chica, y el hover se sustituye por el toque */
+html.movil #handzone{padding:4px 4px 6px}
+html.movil #hand{zoom:.56;padding:8px 4px 38px;min-height:calc(var(--chm) + 44px)}
+/* .tocada hace lo que hacía :hover: se endereza, sube y crece */
+html.movil #hand .card.tocada{
+  transform-origin:50% 100%;
+  transform:rotateX(0deg) rotate(0deg) translateY(-14px) scale(1.7);z-index:60;
+  box-shadow:0 34px 64px rgba(0,0,0,.9), 0 0 0 1px var(--tipo-cl,var(--gold)), 0 0 46px rgba(0,0,0,.6)}
+html.movil #hand .card.tocada .txt{overflow:visible}
+html.movil #hand .card.tocada .nm{-webkit-line-clamp:3}
+html.movil #hand .card.tocada.playable::after{content:"toca otra vez para jugarla";
+  position:absolute;left:50%;bottom:-22px;translate:-50% 0;white-space:nowrap;
+  font:700 8px/1 var(--sans);letter-spacing:1px;text-transform:uppercase;color:#ffe6a8;
+  background:rgba(14,9,24,.92);border:1px solid var(--gold2);border-radius:20px;padding:4px 9px}
+/* en táctil no hay hover: la regla de hover no puede disparar la ampliación */
+html.movil #hand .card:hover{transform-origin:50% 240%;
+  transform:translateX(calc(var(--sep) * (40px + var(--solape, 0px) * .8)))
+            rotateX(10deg) rotate(calc(var(--desde) * 2.9deg))
+            translateY(calc(var(--desde) * var(--desde) * 2.2px));z-index:auto;
+  box-shadow:0 6px 14px rgba(0,0,0,.62), 0 16px 30px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.09)}
+html.movil #hand .card:hover .txt{overflow:hidden}
+html.movil .controls{gap:6px;margin-top:2px}
+html.movil .controls .btn{padding:8px 11px;font-size:12px}
+html.movil .controls .btn.gold{padding:9px 14px;font-size:13px}
+html.movil #reloj{font-size:11px;padding:4px 9px}
+
+/* el tutorial de Gero: arriba, a lo ancho, y con scroll si se alarga */
+html.movil #tut{left:6px;right:6px;top:6px;width:auto;transform:none;max-height:40vh;overflow:auto}
+html.movil .tutbox{padding:9px 11px;font-size:12.5px}
+
+/* la ficha en grande: anclada ABAJO, sobre la mano. Arriba tapaba el campo
+   rival, que es justo donde vas a tocar el objetivo del ataque; la mano, en
+   cambio, no hace falta mientras eliges a quién pegar. */
+html.movil #inspect{left:8px !important;right:8px;top:auto !important;bottom:8px;width:auto}
+html.movil #inspect .big{width:auto;max-width:380px;margin:0 auto;font-size:12.5px;zoom:.9}
+/* .art y .top miden lo mismo (176) porque .top es un bloque absoluto que lleva
+   el coste y el nombre anclado a su fondo: si se encoge uno solo, el nombre se
+   queda flotando donde acababa el otro. Van juntos. */
+html.movil #inspect .big .art{height:98px;font-size:44px}
+html.movil #inspect .big .top{height:98px}
+html.movil #inspect .big .nm{font-size:15px;padding:3px 10px 4px}
+html.movil #inspect .big .cost{width:26px;height:26px;font-size:14px;top:7px;left:7px}
+html.movil #inspect .big .txt{font-size:12.5px;line-height:1.4;padding:0 10px 8px}
+html.movil #inspect .big .tribe{padding:6px 10px 3px}
+html.movil #inspect .big .stats{padding:0 10px 8px}
+
+/* la cortinilla del VS: dos cartas de 250 no caben en 460 */
+html.movil .vs .vscard{width:170px}
+html.movil .vs .vscard .lface{height:160px;font-size:60px}
+html.movil .vs .vscard .lname{top:130px;font-size:16px}
+html.movil .vssello{font-size:64px}
+/* el aviso de turno y los avisos flotantes, a la medida */
+html.movil .fxbanner{font-size:28px;letter-spacing:2px}
+html.movil .fxlabel{font-size:12px;max-width:300px;white-space:normal;text-align:center}
+html.movil .fxnum{font-size:calc(26px * var(--k,1))}
+html.movil .fxnum.xl{font-size:calc(40px * var(--k,1))}
+html.movil #prompt{width:min(560px,94vw);padding:9px 12px;gap:8px;bottom:30%;flex-wrap:wrap;font-size:13px}
+
 /* EL ALMA EN PELIGRO
    Por debajo de 6 de Alma la mesa lo dice sin que haya que leer el número: la
    carta de Líder LATE y una viñeta roja cierra los bordes. Las dos cosas se
@@ -2294,7 +2470,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:133, fecha:'2026-09-04'};
+const BUILD = {n:134, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5478,6 +5654,7 @@ function barHTML(s){
 }
 
 function renderLeaders(){
+  if(document.documentElement.classList.contains('movil') && !SEL) $('#inspect').classList.remove('on');
   /* El peligro y el remate son estado, no efecto: se deciden aquí y el CSS
      hace el resto. Con la partida acabada se apaga: el final ya tiene su cartel. */
   {
@@ -5680,7 +5857,8 @@ function render(){
       const desde=(nMano-1)/2, ang=desde*2.9*Math.PI/180;
       const vuelo=(2.4*ch - ch/2)*Math.sin(ang);        // brazo desde el pivote al centro de la carta
       const necesario=nMano*cw+(nMano-1)*6+2*vuelo;
-      const sol=Math.max(0,(necesario-ancho)/(2*nMano));
+      const crudo=(necesario-ancho)/(2*nMano);
+      const sol=crudo>0 ? crudo+3 : 0;                  // +3 de aire sólo cuando hay que apretar
       h.style.setProperty('--solape-js', sol.toFixed(1)+'px');
     } else h.style.removeProperty('--solape-js');
   }
@@ -5726,6 +5904,15 @@ function render(){
     /* ok y libre se vuelven a mirar al pulsar: el nodo puede sobrevivir a
        varios repintados y lo que valía al crearlo puede haber cambiado. */
     d.onclick=()=>{ if(TGT) return;
+      /* En táctil no hay hover: el primer toque amplía la carta (como hacía el
+         hover) y el segundo la juega. Tocar otra la cambia; tocar fuera cierra. */
+      if(document.documentElement.classList.contains('movil')){
+        if(!d.classList.contains('tocada')){
+          $$('#hand .card.tocada').forEach(x=>x.classList.remove('tocada'));
+          d.classList.add('tocada'); return;
+        }
+        d.classList.remove('tocada');
+      }
       if(!tutCan('hand',id)){ tutNope(); return; }
       /* Al Registro también: el aviso flotante se va solo y el motivo con él,
          que es justo lo que uno quiere releer cuando algo no le deja jugar. */
@@ -5872,6 +6059,12 @@ function renderControls(){
   e.onclick=pedirTerminarTurno;
   c.appendChild(e);
   const r=el('button','btn sm','📜 Reglas'); r.onclick=()=>showRules(true); c.appendChild(r);
+  /* En vertical el registro es una hoja que se despliega: aquí vive su botón. */
+  if(document.documentElement.classList.contains('movil')){
+    const reg=el('button','btn sm','🗒 Registro');
+    reg.onclick=()=>$('#panel').classList.toggle('abierto');
+    c.appendChild(reg);
+  }
   // Salida al menú. No lleva tutCan(): el tutorial bloquea el tablero para que
   // no te pierdas, pero irse siempre tiene que poder hacerse.
   const s=el('button','btn sm','← Menú'); s.onclick=pedirSalirAlMenu; c.appendChild(s);
@@ -5938,7 +6131,7 @@ function porQueNoEsObjetivo(u, target){
 function selectUnit(u){
   if(G.active!==ME) return;
   if(!canAttack(u)){
-    SEL=u; render();
+    SEL=u; render(); fichaTactil(u);
     const why = porQueNoAtaca(u);
     // también al Registro: si sólo sale en el cartel, se pierde al cerrarlo
     log(`<b>${u.card.n}</b> no puede atacar — ${why}.`,'sys');
@@ -5950,6 +6143,17 @@ function selectUnit(u){
   setPrompt(`⚔️ ${u.card.n} (${u.atk} ATQ) — elige objetivo${lt.face?' o ataca al Alma rival':''}`,
     [{t:'Cancelar',fn:()=>{SEL=null;clearPrompt();render();}}]);
   render();
+  fichaTactil(u);
+}
+/* En táctil no hay hover, así que tocar una unidad —para atacar con ella o
+   para ver por qué no puede— enseña también su ficha, anclada arriba, sin
+   tapar la mano ni bloquear la elección del objetivo (el panel no recibe
+   toques). Se cierra sola al deseleccionar. */
+function fichaTactil(u){
+  if(!document.documentElement.classList.contains('movil') || !u) return;
+  const box=$('#inspectCard'); if(!box) return;
+  box.className='big t-'+u.card.t; box.innerHTML=inspectHTML(u.card.id,u);
+  $('#inspect').classList.add('on');
 }
 async function tryAttack(u,t){
   clearPrompt(); const uu=u; SEL=null;
@@ -6839,6 +7043,18 @@ function showScreen(id){
     ultima = h; reparte(h);
   });
   mano.addEventListener('pointerleave', () => { ultima = null; reparte(null); });
+}
+
+/* La versión vertical: la hoja del registro se cierra tocando su título, y la
+   carta ampliada de la mano se cierra tocando fuera de la mano. */
+{
+  const ttl = document.querySelector('#panel .panelttl');
+  if(ttl) ttl.addEventListener('click', ()=>$('#panel').classList.remove('abierto'));
+  document.addEventListener('pointerdown', e=>{
+    if(!document.documentElement.classList.contains('movil')) return;
+    if(e.target.closest && e.target.closest('#hand')) return;
+    $$('#hand .card.tocada').forEach(x=>x.classList.remove('tocada'));
+  }, {passive:true});
 }
 
 /* El fogonazo del botón. Va por delegación y en `pointerdown` a propósito: el
@@ -8515,6 +8731,16 @@ window.TCG={ get G(){return G;}, CARDS, LEADERS, DECKS, startMatch, startTutoria
    más pequeño y aparecen bandas, pero todo sigue en su sitio.
    La versión de móvil será un diseño aparte, con su propio reparto. */
 const LIENZO = { ancho: 1500, alto: 1040 };
+/* EL LIENZO VERTICAL
+   Un teléfono de pie no admite el reparto de un monitor apaisado: a 1500 de
+   ancho el zoom lo dejaría en un cuarto y no se leería nada. Así que hay un
+   segundo lienzo con la proporción de un teléfono (460×980 ≈ 0,47, como un
+   393×852) y su PROPIO reparto de la mesa, escrito en CSS bajo `html.movil`.
+   La clase la decide un solo sitio —ajustarLienzo— y no un @media, para poder
+   forzarla desde un escritorio y comprobarla, y para que el arnés, que corre
+   apaisado, no la vea nunca. */
+const LIENZO_V = { ancho: 460, alto: 980 };
+const esMovil = () => innerHeight > innerWidth && innerWidth < 820;
 
 /* Borde de seguridad: el tablero nunca llega al filo de la pantalla. Sin esto
    los botones de abajo y el registro quedaban pegados al canto —y en un móvil,
@@ -8522,13 +8748,21 @@ const LIENZO = { ancho: 1500, alto: 1040 };
 const MARGEN = 0.965;
 
 function ajustarLienzo(){
-  const W = LIENZO.ancho, H = LIENZO.alto;
+  const movil = esMovil();
+  document.documentElement.classList.toggle('movil', movil);
+  const L = movil ? LIENZO_V : LIENZO;
+  const W = L.ancho, H = L.alto;
   // el lienzo entero tiene que caber: manda la dimensión más apretada
   const k = Math.min(innerWidth / W, innerHeight / H) * MARGEN;
   const r = document.documentElement.style;
   r.setProperty('--LW', W + 'px');
   r.setProperty('--LH', H + 'px');
   r.setProperty('--k', k);
+  /* Al cambiar de lienzo la mano tiene que volver a medir su hueco (el solape
+     se calcula sobre el ancho real), así que se repinta si hay partida. */
+  if(ajustarLienzo.ultimo !== undefined && ajustarLienzo.ultimo !== movil
+     && typeof G !== 'undefined' && G && !G.silent && typeof render === 'function') render();
+  ajustarLienzo.ultimo = movil;
 }
 addEventListener('resize', ajustarLienzo);
 addEventListener('orientationchange', ajustarLienzo);

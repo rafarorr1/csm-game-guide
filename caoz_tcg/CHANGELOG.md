@@ -13,6 +13,57 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v14 — La versión para teléfono, en vertical · 2026-09-04
+
+### El cambio
+
+El juego se puede jugar **en un teléfono de pie**. La versión de escritorio no cambia en nada:
+todo lo nuevo vive bajo una clase `movil` en `<html>` que sólo se pone cuando la ventana es más
+alta que ancha y estrecha (`< 820 px`).
+
+### Cómo está hecho
+
+El juego dibuja en un lienzo fijo de 1500×1040 que se escala con `zoom`. A un teléfono eso le
+dejaba todo a un cuarto de tamaño. Ahora hay un **segundo lienzo, de 460×980** —la proporción
+de un teléfono—, y **su propio reparto de la mesa**:
+
+- **Un solo carril.** La rejilla `raíl | tapete | raíl` se convierte en `barra rival + su tumba
+  / tapete / barra propia + su tumba`; los raíles se disuelven (`display:contents`) para que sus
+  hijos entren en la rejilla vertical. Las barras de Alma y PD van en **una fila** compacta.
+- **Las cartas se reducen con `zoom` por región** —campo, trampas, Líder, mano, mano rival— y
+  **no con `transform`**, para que el toque siga acertando en ellas.
+- **El registro es una hoja** que sube desde abajo con su botón en los controles y se cierra
+  tocando su título.
+- **En táctil no hay hover.** En la mano, el **primer toque amplía** la carta (como hacía el
+  hover) y el **segundo la juega**; tocar otra la cambia, tocar fuera cierra. Al tocar una
+  unidad en mesa —para atacar o para ver por qué no puede— su ficha se abre **abajo, sobre la
+  mano**: arriba tapaba el campo rival, justo donde vas a tocar el objetivo.
+- El tutorial de Gero se ancla arriba a lo ancho; la cortinilla del VS, los avisos, el d20 y
+  los carteles se ajustan a la medida.
+- `viewport` con `maximum-scale=1` y `viewport-fit=cover`, y `touch-action:manipulation`: sin
+  zoom por doble toque ni retraso de 300 ms en lo que se pulsa. Sin esa etiqueta un teléfono
+  real finge 980 px de ancho y nada de esto se activaría.
+
+### Lo que salió por el camino
+
+- **`#handzone` se ensanchaba al ancho mínimo de la mano.** Los ítems de la rejilla nacen con
+  `min-width:auto`, y siete cartas de 150 px obligaban a la zona a medir más que el lienzo:
+  todo se salía por la derecha. En escritorio nunca se notó porque sobran 1500 px.
+- **La ficha en grande se descomponía** al encogerla: `.art` y `.top` miden lo mismo porque
+  `.top` es un bloque absoluto con el nombre anclado a su fondo; encoger sólo uno deja el
+  nombre flotando. Van juntos.
+- **El solape de la mano** se calcula sobre el ancho real y cabe en 460 con 7 cartas
+  (32,7 px) — verificado: primera y última dentro de la zona.
+
+### Verificado en un 375×812 emulado con toque
+
+Portada, selector, guías, mesa con 7 en mano y 5 rivales en campo, toque-amplía y
+toque-juega (campo 3→4, PD 5→2), ficha táctil abajo sin tapar el campo rival, hoja del
+registro, tutorial, cortinilla, d20, mano nueva, galería, online y fin de partida. En
+escritorio: `movil` no se activa, lienzo 1500, arnés 4/4.
+
+---
+
 ## v13 — Gero, el Dungeon Master, entra como sexto Protagonista · 2026-09-03
 
 ### El cambio
