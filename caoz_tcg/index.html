@@ -253,7 +253,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
    quedaba pegada a la izquierda, descentrada respecto de los botones.
    Ahora el ancho es fijo y el centrado explícito. El tope de alto se queda por
    si algún día el archivo viene con otra proporción. */
-.marca{display:block;width:470px;max-width:100%;height:auto;
+.marca{display:block;width:470px;max-width:100%;height:auto;aspect-ratio:16/9;
   max-height:300px;object-fit:contain;margin-inline:auto}
 /* `display:block` gana a [hidden] y mientras no existe el logo se veía el
    icono de imagen rota junto al título. */
@@ -2348,8 +2348,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <!-- ============ MENÚ ============ -->
 <div class="screen on portada" id="menu">
   <div class="marcaWrap">
-    <img class="marca" id="marca" src="art/logo.webp" alt="Caoz Con Todo" hidden>
-    <div class="marcaTexto" id="marcaTexto">Caoz Con Todo</div>
+    <img class="marca" id="marca" src="art/logo.webp" alt="Caoz Con Todo">
+    <div class="marcaTexto" id="marcaTexto" hidden>Caoz Con Todo</div>
   </div>
   <!-- El subtítulo va FUERA de .marcaWrap: el nombre lo sustituye el logo
        cuando existe, pero esta línea se queda siempre. -->
@@ -2483,8 +2483,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=146"></script>
-<script src="final.js?b=146"></script>
+<script src="motor.js?b=147"></script>
+<script src="final.js?b=147"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2503,7 +2503,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:146, fecha:'2026-09-05'};
+const BUILD = {n:147, fecha:'2026-09-05'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -5070,13 +5070,16 @@ function sembrarPortada(){
   if(img && txt){
     const formatos = ['art/logo.webp','art/logo.png'];
     let k = 0;
+    /* El logo va visible desde el primer pintado y el texto escondido: antes
+       era al revés y se veía «Caoz Con Todo» escrito un instante y luego el
+       escudo encima. El texto sólo sale si ningún formato carga. El hueco lo
+       reserva aspect-ratio, para que nada salte cuando llega la imagen. */
     img.onload  = () => { img.hidden = false; txt.hidden = true; };
     img.onerror = () => {
       if(++k < formatos.length){ img.src = formatos[k]; return; }
       img.hidden = true; txt.hidden = false;
     };
-    img.src = formatos[0];
-    if(img.complete && img.naturalWidth) img.onload();
+    if(img.complete && !img.naturalWidth) img.onerror();
   }
 
   /* El pie decía «5 Líderes · 92 cartas · 5 mazos» a mano, y llevaba tres
