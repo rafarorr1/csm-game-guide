@@ -4,6 +4,13 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Caoz Con Todo — El Juego de Cartas</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="art/icono-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="art/icono-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Caoz TCG">
 <!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
      decide antes de cargar nada. Con ?escritorio=1 se queda aquí, y las
      pruebas (?test) nunca se van. -->
@@ -2476,8 +2483,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=145"></script>
-<script src="final.js?b=145"></script>
+<script src="motor.js?b=146"></script>
+<script src="final.js?b=146"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2496,7 +2503,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:145, fecha:'2026-09-05'};
+const BUILD = {n:146, fecha:'2026-09-05'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -5468,6 +5475,14 @@ if(new URLSearchParams(location.search).has('biblia')){
     fetch('/resultado',{method:'POST',headers:{'Content-Type':'application/json'},
       body:JSON.stringify(d)}).catch(()=>{});
   },400));
+}
+
+/* LA APP. El service worker (sw.js) guarda el juego para abrir sin red y
+   desde la pantalla de inicio. Sólo en https y fuera de las pruebas, que
+   necesitan leer siempre lo último del servidor. */
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
+   && !new URLSearchParams(location.search).has('test')){
+  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
 }
 </script>
 </body>

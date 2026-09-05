@@ -30,6 +30,48 @@ byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y 
 
 ---
 
+## v17 — El juego es una app: instalable y sin red · 2026-09-05
+
+### El cambio
+
+Desde el teléfono, **«Añadir a pantalla de inicio»** deja el juego como una app: icono con el
+logo, se abre a pantalla completa **sin barra de ningún navegador** (Safari, Chrome…), y
+carga aunque no haya red. Lo mismo vale en escritorio (Chrome ofrece instalarlo).
+
+### Por qué
+
+Dos cosas que pasaron el mismo día. La barra de direcciones de Chrome en iPhone tapaba el
+menú en la primera carga (se arregló midiendo con `visualViewport`, pero la barra sigue
+ahí); y la operadora de Rafa no enrutaba GitHub Pages en 5G (se arregló sirviendo desde
+Cloudflare). Instalado como app, ninguna de las dos existe: no hay barra, y la primera
+carga con wifi deja el juego guardado en el teléfono.
+
+### Cómo está hecho
+
+- `manifest.webmanifest`: nombre, colores, `display: standalone`, iconos 192/512 y uno
+  *maskable* (el logo con más margen, para las máscaras redondas de Android). Los iconos se
+  generan del logo con un fondo de brasa y morado (`art/icono-*.png`); el de 180 es para iOS.
+- `sw.js`, el *service worker*: al instalarse guarda las dos pantallas, el motor, la
+  cinemática, el manifiesto, el logo, los iconos y **todas las ilustraciones que lista
+  `art/encuadres.json`**. HTML y JS van *red primero, caché de respaldo* (una versión nueva
+  llega en cuanto hay conexión; sin conexión se juega la última vista); las ilustraciones,
+  *caché primero*. La `?b=N` de `motor.js` viaja en la petición pero no en la clave de la
+  caché (`ignoreSearch`). Los relevos del online no pasan por él. Nada con `?test` tampoco.
+- La caché lleva la build en el nombre (`caoz-tcg-146`): al activarse una versión nueva
+  borra las viejas. **`publicar.sh` exige que `VERSION` de `sw.js` sea la `BUILD`**: sin
+  subirla, la app instalada nunca se enteraría de que hay versión nueva.
+- Las dos pantallas registran `sw.js` al cargar (sólo en https o localhost, nunca con
+  `?test`), y llevan `<link rel="manifest">`, `apple-touch-icon` y las metas de iOS.
+- `publicar.sh` copia y verifica byte a byte también `sw.js` y el manifiesto, e incluye
+  los iconos en la subida.
+
+### Lo que no cambia
+
+Nada del juego: mismas reglas, mismo motor, mismas pantallas. Quien lo abra en el navegador
+sin instalarlo lo ve igual que antes (y también gana la caché).
+
+---
+
 ## Sin numerar — Revancha y Menú dentro de la cinemática · 2026-09-05
 
 La cinemática se iba sola a los cuatro segundos, devolvía la mesa un instante y entonces

@@ -59,6 +59,10 @@ fi
 python3 -c "import sys; s=open(sys.argv[1]).read(); i=s.rindex('<script>')+8; j=s.rindex('</script>'); print(s[i:j])" "$AQUI/movil.html" > /tmp/movil_ui.js
 node --check /tmp/movil_ui.js || { rojo 'movil.html tiene un error de sintaxis'; exit 1; }
 node --check "$AQUI/final.js" || { rojo 'final.js tiene un error de sintaxis'; exit 1; }
+node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }
+# El service worker lleva la build en VERSION: es lo que le dice al teléfono
+# que hay una caché nueva. Sin subirlo, la app instalada se quedaría con la vieja.
+SW_V="$(grep -o '^const VERSION = [0-9]*' "$AQUI/sw.js" | grep -o '[0-9]*$')"
 # La cinemática del final la comparten las dos pantallas y va con la misma build
 for H in index.html movil.html; do
   F_SRC="$(grep -o 'final.js?b=[0-9]*' "$AQUI/$H" | grep -o '[0-9]*$')"
@@ -72,6 +76,7 @@ B_SRC="$(grep -o 'motor.js?b=[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
 B_NUM="$(grep -o 'const BUILD = {n:[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
 [ "$B_SRC" = "$B_NUM" ] || { rojo "index.html carga motor.js?b=$B_SRC pero BUILD es $B_NUM: actualiza los dos"; exit 1; }
 [ "$B_MOVIL" = "$B_NUM" ] && [ "$B_MOVIL_SRC" = "$B_NUM" ] || { rojo "movil.html va en build $B_MOVIL (motor ?b=$B_MOVIL_SRC) y index.html en $B_NUM: actualiza los tres"; exit 1; }
+[ "$SW_V" = "$B_NUM" ] || { rojo "sw.js lleva VERSION = $SW_V y BUILD es $B_NUM: súbelo también"; exit 1; }
 gris "  sintaxis correcta"
 
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
@@ -178,6 +183,9 @@ cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
 cp "$AQUI/movil.html"   "$PAGES/$DESTINO/movil.html"
 cp "$AQUI/final.js"     "$PAGES/$DESTINO/final.js"
+cp "$AQUI/sw.js"        "$PAGES/$DESTINO/sw.js"
+cp "$AQUI/manifest.webmanifest" "$PAGES/$DESTINO/manifest.webmanifest"
+cp "$AQUI"/art/icono-*.png "$PAGES/$DESTINO/art/"
 cp "$AQUI/tests.js"     "$PAGES/$DESTINO/tests.js"
 # El editor viaja con el juego: se entra desde el menú, así que una publicación
 # tiene que mandar los dos o el botón lleva a una página que no existe.
@@ -207,7 +215,7 @@ fi
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
-git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then
@@ -239,7 +247,7 @@ comprobar_cloudflare(){
   for j in $(seq 1 12); do
     sleep 10
     local ok=1
-    for f in index.html motor.js movil.html final.js; do
+    for f in index.html motor.js movil.html final.js sw.js manifest.webmanifest; do
       local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
       local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
       [ "$srv" = "$esp" ] || { ok=0; break; }
