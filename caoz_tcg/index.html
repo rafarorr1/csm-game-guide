@@ -1802,6 +1802,45 @@ body.tutpause #tut{pointer-events:auto}
 .fxnum.xl{font-size:calc(52px * var(--k,1))}
 .fxburst{position:absolute;width:90px;height:90px;margin:-45px 0 0 -45px;border-radius:50%;
   background:radial-gradient(circle,rgba(255,255,255,.95) 0%,currentColor 42%,transparent 72%)}
+/* EL ALMA EN PELIGRO
+   Por debajo de 6 de Alma la mesa lo dice sin que haya que leer el número: la
+   carta de Líder LATE y una viñeta roja cierra los bordes. Las dos cosas se
+   intensifican con --peligro (0..1: 0,17 con 5 de Alma, 0,83 con 1) y el
+   latido se acelera a medida que baja.
+   El latido va sobre .leaderslot (#leaderMe), que persiste, y no sobre la
+   carta de dentro, que render() rehace con innerHTML a cada jugada: una
+   animación ahí se reiniciaría a cada repintado, el mismo brinco que tenía la
+   mano. La viñeta es un elemento fijo aparte de las viñetas transitorias de
+   fxFace, que siguen destellando encima cuando llega un golpe.
+   Y lo simétrico: cuando es el RIVAL quien está a 5 o menos, su Líder respira
+   en dorado. No es peligro, es «remata». */
+:root{--peligro:0; --latido:calc(1.5s - var(--peligro) * .8s)}
+/* Ceñida a los BORDES: transparente hasta el 60 % del radio, y el centro un
+   poco por encima de la mitad para que la banda de abajo —donde está la mano
+   que tienes que leer— quede más ligera que la de arriba y los lados. La
+   primera versión arrancaba en el 38 % y a 2 de Alma lavaba de rojo la
+   pantalla entera, mano incluida: justo cuando más falta hace leer. */
+#vineta{position:fixed;inset:0;pointer-events:none;z-index:148;opacity:0;
+  transition:opacity .7s ease;
+  background:radial-gradient(ellipse 82% 76% at 50% 46%, transparent 60%, rgba(170,14,22,.30) 82%, rgba(120,6,14,.88) 100%)}
+body.peligro #vineta{opacity:calc(.14 + var(--peligro) * .42);
+  animation:vinetaRespira var(--latido) ease-in-out infinite}
+@keyframes vinetaRespira{
+  0%,100%{filter:brightness(1)}
+  50%    {filter:brightness(1.35)}}
+body.peligro #leaderMe{animation:late var(--latido) ease-in-out infinite;will-change:transform,filter}
+@keyframes late{
+  0%,100%{transform:scale(1);   filter:drop-shadow(0 0 0 rgba(255,60,60,0))}
+  38%    {transform:scale(1.035);filter:drop-shadow(0 0 calc(8px + var(--peligro) * 12px) rgba(255,60,60,calc(.45 + var(--peligro) * .4)))}
+  52%    {transform:scale(1.012)}
+  66%    {transform:scale(1.03); filter:drop-shadow(0 0 calc(6px + var(--peligro) * 10px) rgba(255,60,60,calc(.35 + var(--peligro) * .35)))}}
+body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:filter}
+@keyframes remate{
+  0%,100%{filter:drop-shadow(0 0 0 rgba(247,212,136,0))}
+  50%    {filter:drop-shadow(0 0 16px rgba(247,212,136,.75))}}
+@media (prefers-reduced-motion:reduce){
+  body.peligro #vineta,body.peligro #leaderMe,body.remate #leaderFoe{animation:none}}
+
 /* EL FOIL DE LAS LEGENDARIAS
    Las cartas con ★ llevan una capa iridiscente encima: una banda de color que
    sigue al cursor, un punteado de destellos, y en reposo una deriva lenta para
@@ -2224,6 +2263,7 @@ body.tutpause #tut{pointer-events:auto}
 
 <div class="ov" id="ov"><div class="panel" id="ovPanel"></div></div>
 <div id="dice"><div class="dicebox" id="diceBox"></div></div>
+<div id="vineta" aria-hidden="true"></div>
 <div id="fx"></div>
 <div id="toast"></div>
 <div id="tut"><div class="tutbox">
@@ -2250,7 +2290,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:131, fecha:'2026-09-04'};
+const BUILD = {n:132, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5343,6 +5383,15 @@ function barHTML(s){
 }
 
 function renderLeaders(){
+  /* El peligro y el remate son estado, no efecto: se deciden aquí y el CSS
+     hace el resto. Con la partida acabada se apaga: el final ya tiene su cartel. */
+  {
+    const mia=P(ME).alma, suya=P(FOE).alma, viva=!G.over;
+    const peligro = viva && mia>0 && mia<=5;
+    document.body.classList.toggle('peligro', peligro);
+    document.documentElement.style.setProperty('--peligro', peligro ? ((6-mia)/6).toFixed(2) : '0');
+    document.body.classList.toggle('remate', viva && suya>0 && suya<=5);
+  }
   [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
     const p=P(side), L=p.L, mine=side===ME;
@@ -6618,6 +6667,8 @@ function showScreen(id){
   pantalla.classList.add('on');
   const f = $('#fondoMenus');
   if(f) f.classList.toggle('on', pantalla.classList.contains('portada'));
+  /* el peligro es de la mesa: fuera de ella no puede quedarse encendido */
+  if(id!=='board'){ document.body.classList.remove('peligro','remate'); }
 
   /* La entrada sólo entre menús: al tablero se llega por la cortinilla del VS,
      que ya es una transición, y encadenar las dos sería una de más. */

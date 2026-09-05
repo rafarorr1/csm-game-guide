@@ -1168,6 +1168,23 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **El Alma en peligro se siente** (build 132). Por debajo de 6 de Alma la mesa lo dice sin
+  que haya que leer el número: la **carta de Líder late** y una **viñeta roja cierra los
+  bordes**. Las dos se intensifican con `--peligro` (0,17 con 5 de Alma, 0,83 con 1) y el
+  latido se acelera a medida que baja: 1,36 s a 5, 0,96 s a 2, 0,84 s a 1.
+  Y lo simétrico: cuando es el **rival** quien está a 5 o menos, su Líder respira en dorado.
+  No es peligro, es «remata».
+  Es estado, no efecto: se decide al pintar a los Líderes y el CSS hace el resto; nada corre en
+  JavaScript. El latido va sobre `.leaderslot`, que persiste, y no sobre la carta de dentro, que
+  `render()` rehace a cada jugada — una animación ahí se reiniciaría a cada repintado, el mismo
+  brinco que tenía la mano. Al salir al menú se apaga. Con `prefers-reduced-motion`, sin latido
+  ni respiración.
+  La primera viñeta **lavaba de rojo la pantalla entera** a 2 de Alma, mano incluida — justo
+  cuando más falta hace leer las cartas. Ahora está ceñida a los bordes (transparente hasta el
+  60 % del radio), con la mitad de tope, y el centro un poco por encima de la mitad para que la
+  banda de abajo, donde vive la mano, quede más ligera.
+  Verificado: 6 → apagado; 5, 2 y 1 → intensidad, opacidad y latido en escala; rival a 4 →
+  dorado; al menú → limpio.
 - **La carta que miras ya no brinca cuando juega el rival** (build 131). `render()` vaciaba y
   volvía a crear la mano entera en cada repintado — también cuando jugaba el rival y tu mano
   no había cambiado. La carta que tenías bajo el cursor se destruía y nacía otra igual, sin
