@@ -155,7 +155,13 @@ async function jugarTutorial(lid, limite=4000){
    el código en vez de ejecutándolo. */
 let _fuente=null;
 async function fuente(){
-  if(_fuente===null) _fuente = await (await fetch(location.pathname)).text();
+  /* El código vive en dos archivos desde la v15 —motor.js y la pantalla— y
+     las pruebas que buscan patrones en el código tienen que ver los dos. */
+  if(_fuente===null){
+    const a = await (await fetch(location.pathname)).text();
+    const b = await (await fetch('motor.js')).text().catch(()=>'');
+    _fuente = a + '\n' + b;
+  }
   return _fuente;
 }
 
