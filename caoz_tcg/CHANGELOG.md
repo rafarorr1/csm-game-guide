@@ -23,8 +23,9 @@ servir el juego desde donde sí llegan.
 
 Ahora el proyecto **caoz-tcg** de Cloudflare Pages está conectado a la rama `gh-pages` de
 este repo y publica solo la carpeta `tcg` cada vez que `publicar.sh` la sube. La dirección
-que se reparte pasa a ser **https://caoz-tcg.pages.dev/**; GitHub Pages queda de espejo con
-los mismos bytes. `publicar.sh` espera a Cloudflare y comprueba los cuatro archivos byte a
+que se reparte pasa a ser **https://juego.caozcontodo.com/** (subdominio del dominio de Rafa,
+CNAME en GoDaddy hacia `caoz-tcg.pages.dev`, que también responde); GitHub Pages queda de
+espejo con los mismos bytes. `publicar.sh` espera a Cloudflare y comprueba los cuatro archivos byte a
 byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y sale con error.
 
 ---

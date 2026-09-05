@@ -228,9 +228,11 @@ gris "  subido: $(git rev-parse --short HEAD)"
 # caoz-tcg está conectado a la rama gh-pages de este mismo repo y publica la
 # carpeta tcg solo, sin que aquí haya que hacer nada más que esperarlo y
 # comprobar que sirve los mismos bytes. GitHub Pages queda de espejo.
-CF_URL="https://caoz-tcg.pages.dev"
+# La dirección oficial es el subdominio de Rafa (CNAME en GoDaddy hacia
+# caoz-tcg.pages.dev); pages.dev sigue respondiendo con lo mismo.
+CF_URL="https://juego.caozcontodo.com"
 comprobar_cloudflare(){
-  gris "  esperando a Cloudflare Pages ($CF_URL)"
+  gris "  esperando a Cloudflare Pages ($CF_URL, también caoz-tcg.pages.dev)"
   for j in $(seq 1 12); do
     sleep 10
     local ok=1
