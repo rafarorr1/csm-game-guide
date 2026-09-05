@@ -1815,8 +1815,16 @@ body.tutpause #tut{pointer-events:auto}
 /* En táctil: sin zoom por doble toque ni retraso de 300 ms en lo que se pulsa,
    y sin que un toque largo seleccione texto de las cartas. */
 html.movil body{touch-action:manipulation;-webkit-user-select:none;user-select:none;
-  -webkit-tap-highlight-color:transparent}
+  -webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+/* la ventana visible, y el hueco de arriba del notch */
+html.movil #app{height:100dvh;inset:0 0 auto 0;padding-top:env(safe-area-inset-top, 0px);box-sizing:border-box}
 html.movil #log, html.movil .gbody, html.movil #chat, html.movil .panel{-webkit-user-select:text;user-select:text}
+/* Los retratos, como fondo y no como <img>: object-fit + zoom estira en Safari */
+html.movil .marcoDibujo::before{content:"";position:absolute;inset:0;
+  background-image:var(--url);background-size:cover;background-repeat:no-repeat;
+  background-position:var(--ex,50%) var(--ey,50%);
+  transform:scale(var(--ez,1));transform-origin:var(--ex,50%) var(--ey,50%)}
+html.movil .dibujo{display:none}
 /* ---- menús ---- */
 html.movil .portada{padding:22px 16px}
 html.movil .marca{width:330px;max-height:220px}
@@ -2472,7 +2480,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:135, fecha:'2026-09-04'};
+const BUILD = {n:136, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -2599,6 +2607,11 @@ function ponerDibujo(nodo, url, enc){
   img.alt = '';
   img.src = url;
   caja.appendChild(img);
+  /* La misma imagen, también como fondo del marco: en Safari de iOS un <img>
+     con object-fit bajo un ancestro con `zoom` (todo el lienzo lo lleva) se
+     estira a la caja — fallo conocido de WebKit—, así que la versión vertical
+     pinta el retrato como fondo, que sí respeta el recorte, y esconde la img. */
+  caja.style.setProperty('--url', `url("${url}")`);
   nodo.style.setProperty('--ex', enc.x + '%');
   nodo.style.setProperty('--ey', enc.y + '%');
   nodo.style.setProperty('--ez', (enc.z / 100).toFixed(3));
@@ -7053,6 +7066,42 @@ function showScreen(id){
   mano.addEventListener('pointerleave', () => { ultima = null; reparte(null); });
 }
 
+/* LA PULSACIÓN LARGA HACE DE HOVER (versión vertical).
+   Dejar el dedo 380 ms sobre una carta sin moverlo hace lo que en escritorio
+   hace pasar el ratón: en la mano, la amplía (.tocada); en la mesa, abre la
+   ficha de la unidad. Y se traga el clic que suelta el dedo después, para que
+   una pulsación larga nunca juegue ni seleccione. */
+{
+  let temporizador=null, origen=null, larga=false;
+  const cancela=()=>{ if(temporizador){ clearTimeout(temporizador); temporizador=null; } };
+  document.addEventListener('pointerdown', e=>{
+    if(!document.documentElement.classList.contains('movil')) return;
+    const c=e.target.closest && e.target.closest('#hand > .card, #myField .card, #foeField .card');
+    if(!c) return;
+    larga=false; origen=[e.clientX,e.clientY];
+    temporizador=setTimeout(()=>{
+      temporizador=null; larga=true;
+      if(c.closest('#hand')){
+        $$('#hand .card.tocada').forEach(x=>{ if(x!==c) x.classList.remove('tocada'); });
+        c.classList.add('tocada');
+      } else if(c.dataset.uid!=null){
+        const u=[...P(0).field,...P(1).field].find(x=>String(x.uid)===c.dataset.uid);
+        if(u) fichaTactil(u);
+      }
+    }, 380);
+  }, {passive:true});
+  document.addEventListener('pointermove', e=>{
+    if(!temporizador||!origen) return;
+    if(Math.hypot(e.clientX-origen[0], e.clientY-origen[1])>8) cancela();   // se movió: es un arrastre
+  }, {passive:true});
+  document.addEventListener('pointerup', cancela, {passive:true});
+  document.addEventListener('pointercancel', cancela, {passive:true});
+  // el clic que viene tras una pulsación larga no cuenta
+  document.addEventListener('click', e=>{
+    if(larga){ larga=false; e.stopPropagation(); e.preventDefault(); }
+  }, true);
+}
+
 /* La versión vertical: la hoja del registro se cierra tocando su título, y la
    carta ampliada de la mano se cierra tocando fuera de la mano. */
 {
@@ -8748,20 +8797,26 @@ const LIENZO = { ancho: 1500, alto: 1040 };
    forzarla desde un escritorio y comprobarla, y para que el arnés, que corre
    apaisado, no la vea nunca. */
 const LIENZO_V = { ancho: 460, alto: 980 };
-const esMovil = () => innerHeight > innerWidth && innerWidth < 820;
+const esMovil = () => innerHeight > innerWidth && innerWidth < 820;   // la proporción no cambia con la barra
 
 /* Borde de seguridad: el tablero nunca llega al filo de la pantalla. Sin esto
    los botones de abajo y el registro quedaban pegados al canto —y en un móvil,
    bajo la barra del navegador o el notch. */
 const MARGEN = 0.965;
 
+/* En Safari de iOS la barra de direcciones cuenta en 100vh y en el alto de la
+   ventana fija, pero no en lo que de verdad se ve: el lienzo se calculaba con
+   ella dentro y la parte de arriba quedaba escondida debajo. Se mide con
+   visualViewport, que es lo que el jugador tiene delante, y #app usa 100dvh. */
+const altoVisible = () => (window.visualViewport ? visualViewport.height : innerHeight);
+const anchoVisible = () => (window.visualViewport ? visualViewport.width  : innerWidth);
 function ajustarLienzo(){
   const movil = esMovil();
   document.documentElement.classList.toggle('movil', movil);
   const L = movil ? LIENZO_V : LIENZO;
   const W = L.ancho, H = L.alto;
   // el lienzo entero tiene que caber: manda la dimensión más apretada
-  const k = Math.min(innerWidth / W, innerHeight / H) * MARGEN;
+  const k = Math.min(anchoVisible() / W, altoVisible() / H) * MARGEN;
   const r = document.documentElement.style;
   r.setProperty('--LW', W + 'px');
   r.setProperty('--LH', H + 'px');
@@ -8774,6 +8829,7 @@ function ajustarLienzo(){
 }
 addEventListener('resize', ajustarLienzo);
 addEventListener('orientationchange', ajustarLienzo);
+if(window.visualViewport) visualViewport.addEventListener('resize', ajustarLienzo);
 ajustarLienzo();
 
 /* Las ilustraciones, si las hay. No se espera a que lleguen para dejar jugar:
