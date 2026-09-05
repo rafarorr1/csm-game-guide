@@ -1168,6 +1168,15 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **La mano ya no se sale de su zona** (build 128). Con ocho cartas, las de los extremos
+  quedaban cortadas por los bordes. La causa: el solape sólo empezaba a partir de la **novena**
+  (`(n − 8) × 13px`), pero ocho de 150 px ya no caben en la zona — y el giro del abanico empuja
+  las de los extremos unos 70 px más hacia fuera cada una, porque pivotan 240 % por debajo de
+  su alto.
+  Un umbral fijo estaba mal planteado. Ahora `render()` **mide el hueco real** y solapa lo justo
+  para que quepan todas, contando el vuelo del giro; la fórmula vieja queda sólo de respaldo
+  para cuando la mano está oculta y mide cero. Verificado con manos de 5, 8, 9 y 10 cartas:
+  solape 0 → 11,8 → 20,2 → 27,0 px, y la primera y la última siempre dentro de la zona.
 - **La mano hace sitio** (build 127). La mano ya era un abanico —inclinación, giro por carta,
   caída cuadrática, perspectiva, y la carta bajo el cursor se endereza y crece ×1,7—; lo que le
   faltaba, y es lo que se siente, es que **las vecinas se aparten**: la carta crecía encima de
