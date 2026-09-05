@@ -1168,6 +1168,24 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **La carta en grande se inclina con el cursor** (build 130). Un `rotateX/rotateY` sutil —12°
+  y 14° de recorrido total; más y la carta parece un cartón suelto— en los dos sitios donde una
+  carta se ve en grande: la **carta ampliada de la mano** y el **panel de inspección** de las
+  cartas de Líder. La perspectiva va en el padre y **sin `preserve-3d`**, que en este proyecto ya
+  rompió una vez el poder pulsar las cartas.
+  Sale de las mismas variables que el foil: el rastreador que pone `--mx/--my` en la carta bajo
+  el cursor deja de exigir foil y vale para todas — **un rastreador, dos efectos**. Para el
+  panel hay un matiz: es `pointer-events:none` y el cursor está sobre la carta *origen*, así que
+  el panel se lleva una copia de las variables y se inclina como si el cursor estuviera sobre
+  él. En la mano, la transición se acorta a 0,16 s **sólo en estado hover**: como la dicta el
+  estado destino, entrar es rápido y el seguimiento ágil, y salir conserva los 0,30 s.
+  Por el camino salió dónde vive de verdad el panel `#inspect`: la mano, la galería y el tutorial
+  **anulan** `attachInspect` porque sus cartas se amplían solas; el panel se abre sólo desde las
+  **cartas de Líder en mesa** (`.leadercard`) y el modo `?ver=`. El rastreador atendía sólo a
+  `.card`, así que sin extenderlo el panel nunca habría recibido las variables.
+  Verificado: en la mano, con el cursor en el borde izquierdo de Juan Gabriel (`--mx 0,025`)
+  la matriz da `m2 0,225 / m8 −0,132`; en el panel, de 0,1/0,1 a 0,9/0,9 la matriz cambia de
+  signo simétricamente (`m2 +0,097 ↔ −0,097`). Al salir, las variables se sueltan.
 - **Foil en las legendarias** (build 129). Las cartas con ★ llevan ahora una capa iridiscente:
   una **banda fina** que sigue al cursor, un punteado de destellos, y en reposo una deriva lenta
   para que una legendaria en mesa se note sin tocarla. Hasta hoy nada distinguía una legendaria
