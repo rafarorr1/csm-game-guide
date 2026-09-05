@@ -46,7 +46,7 @@ paso "1/4 · Comprobaciones baratas"
 # fallar en un segundo en vez de en cinco minutos.
 
 node --check <(python3 -c "
-s=open('$AQUI/index.html').read(); i=s.index('<script>')+8; j=s.rindex('</script>'); print(s[i:j])") \
+s=open('$AQUI/index.html').read(); i=s.rindex('<script>')+8; j=s.rindex('</script>'); print(s[i:j])") \
   || { rojo 'index.html tiene un error de sintaxis'; exit 1; }
 node --check "$AQUI/tests.js" || { rojo 'tests.js tiene un error de sintaxis'; exit 1; }
 node --check "$AQUI/motor.js" || { rojo 'motor.js tiene un error de sintaxis'; exit 1; }
