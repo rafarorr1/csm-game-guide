@@ -10,7 +10,7 @@
 <link rel="icon" type="image/png" sizes="192x192" href="art/icono-192.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 <meta name="apple-mobile-web-app-title" content="Caoz TCG">
 <!-- ==========================================================================
      LA PANTALLA DEL TELÉFONO
@@ -80,18 +80,17 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;tou
 /* La clase la pone ajustarLienzo (navigator.standalone o el media query): con
    sólo el media query, en algún iOS no entraba y el juego seguía midiéndose
    con el visor, corto por abajo. */
-/* iOS le da a la app un alto de pantalla-menos-barra (874−62=812) pero la
-   pinta desde el borde de arriba: con bottom:0 el juego acababa 62 px antes
-   del final. En modo app se dibuja con el alto real de la pantalla. */
-html.app #app{top:0;height:var(--vh)}
+/* En modo app la barra de estado es opaca (con la translúcida iOS daba una
+   vista de pantalla-menos-barra pegada arriba y dejaba negros los 62 px de
+   abajo, imposibles de pintar). La vista empieza bajo la barra y llega al
+   borde: el juego la llena sin medir nada. */
+html.app #app{top:0;bottom:0;height:auto}
 /* Bajo la hora y la batería, nuestro propio fondo oscuro: sin él iOS ponía un
    velo claro para que se leyeran. Termina justo donde acaba la barra, sin
    comerse el título de debajo. */
-html.app #tel::before{content:"";position:absolute;left:0;right:0;top:0;height:var(--arriba);z-index:50;pointer-events:none;
-  background:rgba(8,6,16,.9)}
-/* y las pantallas empiezan un poco más abajo de la barra, no pegadas a ella */
-html.app .screen{padding-top:calc(var(--arriba) + 16px)}
-html.app #board{padding-top:calc(var(--arriba) + 10px)}
+/* con la barra opaca el margen de arriba es 0: un respiro pequeño basta */
+html.app .screen{padding-top:calc(var(--arriba) + 14px)}
+html.app #board{padding-top:calc(var(--arriba) + 8px)}
 /* En un monitor se ve como un teléfono en medio: sirve para probarla sin uno */
 #tel{position:relative;width:100%;max-width:520px;height:100%;overflow:hidden}
 .screen{position:absolute;inset:0;display:none;flex-direction:column;
@@ -788,8 +787,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=153"></script>
-<script src="final.js?b=153"></script>
+<script src="motor.js?b=155"></script>
+<script src="final.js?b=155"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -800,7 +799,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:153, fecha:'2026-09-05'};
+const BUILD = {n:155, fecha:'2026-09-05'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
