@@ -1588,7 +1588,11 @@ body.tut-on .card.playable{
 /* Las cartas sólo se montan cuando de verdad no caben. Antes empezaban a
    solaparse a partir de la quinta y con la mano llena se tapaban unas a otras
    hasta no poder leer ninguna: había que adivinar qué tenías. */
-#hand .card{--solape:max(0px, (var(--n) - 8) * 13px);margin-inline:calc(-1 * var(--solape))}
+/* El solape lo decide render() midiendo el hueco real (--solape-js); la fórmula
+   de abajo es sólo el respaldo para cuando no hay medida (mano oculta). Con un
+   umbral fijo en 8 cartas, ocho de 150 px ya no cabían y las de los extremos se
+   salían de la zona — y el giro del abanico las empuja aún más hacia fuera. */
+#hand .card{--solape:var(--solape-js, max(0px, (var(--n) - 8) * 13px));margin-inline:calc(-1 * var(--solape))}
 /* al pasar por encima se endereza, sube y crece: hasta que la sueltas conviene
    verla entera y sin torcer */
 /* AL PASAR POR ENCIMA, LA CARTA CRECE
@@ -2184,7 +2188,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:127, fecha:'2026-09-04'};
+const BUILD = {n:128, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5457,6 +5461,23 @@ function render(){
   const h=$('#hand'); h.innerHTML='';
   const mano=P(ME).hand, nMano=mano.length;
   h.style.setProperty('--n', nMano);
+  /* CUÁNTO SE JUNTAN. Se mide el hueco y se solapa lo justo para que quepan
+     TODAS, contando lo que el giro del abanico empuja los extremos hacia fuera:
+     la carta pivota 240 % por debajo de su alto, así que a 10° la del extremo
+     se corre unos 70 px. Cada carta lleva margen negativo a los dos lados, de
+     ahí el 2n del reparto. Si la mano está oculta mide 0 y se deja el respaldo. */
+  {
+    const raiz=getComputedStyle(document.documentElement);
+    const cw=parseFloat(raiz.getPropertyValue('--cwm'))||150, ch=parseFloat(raiz.getPropertyValue('--chm'))||210;
+    const ancho=h.clientWidth-16;                     // menos el padding lateral
+    if(ancho>0 && nMano>1){
+      const desde=(nMano-1)/2, ang=desde*2.9*Math.PI/180;
+      const vuelo=(2.4*ch - ch/2)*Math.sin(ang);        // brazo desde el pivote al centro de la carta
+      const necesario=nMano*cw+(nMano-1)*6+2*vuelo;
+      const sol=Math.max(0,(necesario-ancho)/(2*nMano));
+      h.style.setProperty('--solape-js', sol.toFixed(1)+'px');
+    } else h.style.removeProperty('--solape-js');
+  }
   mano.forEach((id,iMano)=>{
     const d=cardEl(id,{side:ME});
     // el abanico se dibuja en CSS; aquí sólo se dice qué puesto ocupa cada una
