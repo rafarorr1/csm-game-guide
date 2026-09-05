@@ -2250,7 +2250,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:130, fecha:'2026-09-04'};
+const BUILD = {n:131, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -5520,7 +5520,7 @@ function render(){
     b.onclick=()=>{ if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); };
     mid.appendChild(b); });
   // mano
-  const h=$('#hand'); h.innerHTML='';
+  const h=$('#hand');
   const mano=P(ME).hand, nMano=mano.length;
   h.style.setProperty('--n', nMano);
   /* CUÁNTO SE JUNTAN. Se mide el hueco y se solapa lo justo para que quepan
@@ -5540,27 +5540,58 @@ function render(){
       h.style.setProperty('--solape-js', sol.toFixed(1)+'px');
     } else h.style.removeProperty('--solape-js');
   }
+  /* LA MANO SE RECONCILIA, NO SE REHACE.
+     Antes se vaciaba y se volvía a crear entera en cada repintado — también
+     cuando jugaba el RIVAL y tu mano no había cambiado. La carta que tenías
+     bajo el cursor se destruía y nacía otra igual, sin ampliar, que al instante
+     recibía el :hover y repetía la transición de entrada desde cero: ese era el
+     brinco. Y con ella se perdían el --sep de las vecinas y la inclinación.
+     Ahora se recorre la mano nueva contra los nodos viejos en orden: si el
+     siguiente nodo viejo es la misma carta se reutiliza; si es una carta que
+     ya no está en lo que queda de la mano, se quita (se jugó o se descartó);
+     si está más adelante, se crea la nueva en su sitio. Con la mano sin cambios
+     no se toca ni un nodo. Las clases transitorias se reponen igual que hacía
+     el rehacer, para que el tutorial vea exactamente lo mismo. */
+  const viejos=[...h.children];
+  let j=0;
   mano.forEach((id,iMano)=>{
-    const d=cardEl(id,{side:ME});
+    let d=null;
+    while(j<viejos.length){
+      const v=viejos[j];
+      if(v.dataset.card===id){ d=v; j++; break; }
+      if(!mano.slice(iMano).includes(v.dataset.card)){ v.remove(); j++; continue; }
+      break;                                   // está más adelante: aquí va una nueva
+    }
+    if(!d){
+      d=cardEl(id,{side:ME});
+      // en la mano la carta se amplía sola al pasar por encima: el cuadro aparte
+      // sobra y obligaba a mirar a otro sitio
+      d.onmouseenter=null; d.onmouseleave=null;
+      h.insertBefore(d, viejos[j]||null);
+    } else {
+      // el coste puede cambiar con el estado (descuentos, peajes): al día
+      const cost=costOf(id,ME), ce=d.querySelector('.cost');
+      if(ce){ ce.textContent=cost; ce.classList.toggle('rebajado', cost<CARDS[id].c); }
+      d.classList.remove('locked','playable','unplayable','hi','selected');
+    }
     // el abanico se dibuja en CSS; aquí sólo se dice qué puesto ocupa cada una
     d.style.setProperty('--i', iMano);
-    // en la mano la carta se amplía sola al pasar por encima: el cuadro aparte
-    // sobra y obligaba a mirar a otro sitio
-    d.onmouseenter=null; d.onmouseleave=null;
     const ok=canPlay(ME,id);
     const libre=tutCan('hand',id);
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
+    /* ok y libre se vuelven a mirar al pulsar: el nodo puede sobrevivir a
+       varios repintados y lo que valía al crearlo puede haber cambiado. */
     d.onclick=()=>{ if(TGT) return;
-      if(!libre){ tutNope(); return; }
+      if(!tutCan('hand',id)){ tutNope(); return; }
       /* Al Registro también: el aviso flotante se va solo y el motivo con él,
          que es justo lo que uno quiere releer cuando algo no le deja jugar. */
-      if(!ok){ const w=whyNot(ME,id);
+      if(!canPlay(ME,id)){ const w=whyNot(ME,id);
         toast(w); log(`No puedes jugar <b>${CARDS[id].n}</b> — ${w}.`,'sys',true); return; }
       SEL=null; clearPrompt();
       if(NET.guest){ gIntent('play',{id}); return; }
       playFromHand(ME,id); };
-    h.appendChild(d);
   });
+  for(; j<viejos.length; j++) viejos[j].remove();   // los que sobran al final
   h.classList.toggle('apretada', nMano>7);
   renderControls();
   encajarTextos();                 // las tribus largas, a la medida de su carta
