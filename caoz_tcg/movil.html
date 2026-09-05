@@ -283,6 +283,10 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;tou
 #controls{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 #controls .btn{padding:7px 9px;font-size:12px}
 #controls .btn.gold{font-size:13px;padding:7px 12px}
+/* mensajes sin leer: un punto en el botón del registro hasta que se abre la hoja */
+#controls .btn.aviso{position:relative;border-color:var(--gold)}
+#controls .btn.aviso::after{content:attr(data-n);position:absolute;top:-7px;right:-7px;min-width:17px;height:17px;padding:0 4px;
+  border-radius:9px;background:var(--red);color:#fff;font:800 10px/17px var(--sans);text-align:center;box-shadow:0 2px 6px #000}
 #reloj{font:800 12px/1 var(--serif);color:var(--gold);padding:0 4px}
 #reloj.poco{color:var(--red)}
 #reloj[hidden]{display:none}
@@ -580,7 +584,7 @@ body.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green)
 .defecto{min-height:20px;font-size:14px;font-weight:800;text-align:center;line-height:1.35;max-width:260px}
 .defecto.bien{color:var(--green)} .defecto.mal{color:var(--red)}
 #dice .btn{min-width:180px;text-align:center;font-size:15px;padding:11px 18px}
-#toast{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 20px);max-width:500px;top:calc(var(--arriba) + 56px);z-index:280;display:flex;flex-direction:column;
+#toast{position:fixed;left:50%;transform:translateX(-50%);width:calc(100% - 20px);max-width:500px;top:calc(var(--arriba) + 56px);z-index:320;display:flex;flex-direction:column;
   gap:6px;align-items:center;pointer-events:none}
 .tst{background:rgba(20,12,32,.95);border:1px solid var(--gold2);border-radius:9px;padding:8px 14px;font-weight:700;
   color:var(--gold);font-size:13px;text-align:center;animation:tin .25s;box-shadow:0 8px 24px #000;max-width:100%}
@@ -761,8 +765,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=147"></script>
-<script src="final.js?b=147"></script>
+<script src="motor.js?b=148"></script>
+<script src="final.js?b=148"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -773,7 +777,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:147, fecha:'2026-09-05'};
+const BUILD = {n:148, fecha:'2026-09-05'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1531,7 +1535,10 @@ function renderControls(){
   const reloj=el('span','','' ); reloj.id='reloj'; reloj.hidden=true; c.appendChild(reloj);
   if(RELOJ.id) relojPinta();
   c.appendChild(el('span','spacer'));
-  const reg=el('button','btn sm','🗒'); reg.title='Registro'; reg.onclick=()=>{ abrirHoja('panel'); const L=$('#log'); L.scrollTop=L.scrollHeight; }; c.appendChild(reg);
+  const reg=el('button','btn sm','🗒'); reg.id='btnRegistro'; reg.title='Registro';
+  reg.onclick=()=>{ abrirHoja('panel'); const L=$('#log'); L.scrollTop=L.scrollHeight; CHAT_SIN_LEER=0; marcarChat();
+    const ch=$('#chat'); if(ch) ch.scrollTop=ch.scrollHeight; };
+  c.appendChild(reg); marcarChat();
   const r=el('button','btn sm','📜'); r.onclick=()=>showRules(true); c.appendChild(r);
   const s=el('button','btn sm','✕'); s.title='Salir al menú'; s.onclick=pedirSalirAlMenu; c.appendChild(s);
 }
@@ -1707,11 +1714,23 @@ function chatMio(){
   const yo=NET.miNombre||(G?P(ME).L.n:'Tú');
   chatPinta(true,yo,t); netSend({t:'chat',de:yo,txt:t});
 }
+let CHAT_SIN_LEER=0;
 function chatRecibe(m){
   const de=String(m.de||NET.suNombre||'Rival').slice(0,24), tx=String(m.txt||'').slice(0,CHAT_MAX);
   if(!tx) return;
   chatVisible(true); chatPinta(false,de,tx);
+  /* El aviso flotante se perdía si llegaba con el dado o una pregunta encima
+     —el toast iba por debajo—, o si no se estaba mirando. Ahora va por encima
+     de todo, la línea sobre la mano también lo cuenta, y el botón del
+     registro lleva la cuenta de lo que queda sin leer hasta que se abre. */
   toast('💬 '+de+': '+tx.slice(0,60));
+  const t=$('#ticker'); if(t){ t.textContent='💬 '+de+': '+tx.slice(0,70); t.classList.add('on'); clearTimeout(TICKER_T); TICKER_T=setTimeout(()=>t.classList.remove('on'),4000); }
+  if(!$('#panel').classList.contains('on')){ CHAT_SIN_LEER++; marcarChat(); }
+  vibra(30);
+}
+function marcarChat(){
+  const b=$('#btnRegistro'); if(!b) return;
+  b.classList.toggle('aviso', CHAT_SIN_LEER>0); b.dataset.n=CHAT_SIN_LEER;
 }
 const NETDIARIO={
   filas:[], max:500,

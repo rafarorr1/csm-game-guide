@@ -30,6 +30,18 @@ byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y 
 
 ---
 
+## Sin numerar — Online probado teléfono contra escritorio · 2026-09-05
+
+Primera partida en línea con la pantalla del teléfono de anfitrión (Rafa, Gero) y el
+escritorio de invitado: seis vías vivas (3 MQTT + 3 HTTP), nombres, mano nueva del invitado
+por prompt, cartas, ataque, dado de la pasiva y chat en los dos sentidos. Lo único que falló:
+en el teléfono **no se notaba que había llegado un mensaje**. El aviso flotante iba por debajo
+del dado y de las preguntas, y si no se estaba mirando la pantalla no quedaba rastro. Ahora
+va por encima de todo, la línea que asoma sobre la mano lo repite, vibra, y el botón del
+registro 🗒 lleva la cuenta de mensajes sin leer hasta que se abre la hoja.
+
+---
+
 ## v17 — El juego es una app: instalable y sin red · 2026-09-05
 
 ### El cambio
