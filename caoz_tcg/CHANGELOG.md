@@ -13,6 +13,54 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v16 — La pantalla del teléfono, de cero: `movil.html` · 2026-09-04
+
+### El cambio
+
+Los teléfonos ya no cargan la mesa de escritorio encogida: van a **`movil.html`**, una
+pantalla hecha para un teléfono de pie sobre el mismo `motor.js`. `index.html` los manda
+allí antes de cargar nada (`pointer:coarse` y lado corto menor de 700 px); con
+`?escritorio=1` se quedan en la de siempre, y al pie del menú del teléfono hay un enlace de
+vuelta. Las pruebas (`?test`) nunca se redirigen.
+
+### Qué es distinto de la v14
+
+- **Sin `zoom`.** El texto va a su tamaño: las cartas de la mano miden 92–128 px según el
+  alto del teléfono, las de la mesa lo que quepa para cinco en fila (58–96 px), y lo que
+  sobra de alto se lo lleva la mano, que es lo que se lee.
+- **Tocar y mantener.** Un toque en una carta de la mano la levanta y enseña una píldora con
+  su nombre, su coste y el botón *Jugar* (o el motivo por el que no se puede); el segundo
+  toque la juega. Mantener pulsada cualquier carta —mano, mesa, galería— abre su **ficha**
+  en una hoja inferior, que es el *hover* del teléfono. Tocar un Personaje tuyo lo
+  selecciona para atacar; tocar el rival o su Líder, ataca.
+- **Hojas inferiores** para la ficha y el registro (con el chat online dentro). La última
+  línea del registro asoma un momento sobre la mano.
+- **Selector de Líder en lista**, no en carrete: seis filas con retrato, arquetipo,
+  Habilidad y dificultad, y la ficha del elegido debajo.
+- Los retratos de Líder van en `<img>` normal: sin `zoom` no hay fallo de Safari que esquivar.
+- Vibración corta al recibir daño y al empezar tu turno (sólo tras un toque real: antes el
+  navegador lo anota como error).
+- El contrato del motor es el mismo: las ~50 funciones que `index.html` le da al motor
+  (`render`, `ask`, `pickCard`, `rollDice`, `log`, los `fx*`, el tutorial, la red) están
+  aquí con los mismos nombres y los mismos ids que mira el tutorial (`#hand`, `#myField`,
+  `#leaderMe`, `#controls`, `#barMe`…).
+
+### Guardas en `publicar.sh`
+
+`node --check` del script de `movil.html`, su `BUILD` y su `motor.js?b=` tienen que
+coincidir con los de `index.html`, y se copia y verifica byte a byte en la web junto a los
+otros dos archivos.
+
+### Comprobado
+
+Partida en el navegador con la pantalla emulada: jugar cartas, atacar al Alma y a un
+Personaje, terminar turno, la IA juega, la ficha por pulsación larga, el registro, el
+tutorial arranca y bloquea lo que debe, selector, galería. Arnés de escritorio en verde con
+la redirección puesta. Queda por mirar en un iPhone real: la barra de direcciones y la
+pulsación larga con el dedo.
+
+---
+
 ## v15 — Un motor, dos pantallas: el motor sale a `motor.js` · 2026-09-04
 
 ### El cambio

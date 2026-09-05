@@ -54,11 +54,18 @@ node --check "$AQUI/motor.js" || { rojo 'motor.js tiene un error de sintaxis'; e
 if grep -qE 'document\.|\$\(|innerHTML|\.classList' "$AQUI/motor.js"; then
   rojo 'motor.js toca el DOM (document/$()/innerHTML/classList): eso va en la pantalla'; exit 1
 fi
+# La pantalla del teléfono: mismo motor, misma build, y su script tiene que
+# compilar igual que el de escritorio.
+python3 -c "import sys; s=open(sys.argv[1]).read(); i=s.rindex('<script>')+8; j=s.rindex('</script>'); print(s[i:j])" "$AQUI/movil.html" > /tmp/movil_ui.js
+node --check /tmp/movil_ui.js || { rojo 'movil.html tiene un error de sintaxis'; exit 1; }
+B_MOVIL="$(grep -o 'const BUILD = {n:[0-9]*' "$AQUI/movil.html" | grep -o '[0-9]*$')"
+B_MOVIL_SRC="$(grep -o 'motor.js?b=[0-9]*' "$AQUI/movil.html" | grep -o '[0-9]*$')"
 # index.html carga motor.js?b=<build>: si no coincide con BUILD, un navegador con el
 # motor viejo en caché jugaría con reglas de una versión y pantalla de otra.
 B_SRC="$(grep -o 'motor.js?b=[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
 B_NUM="$(grep -o 'const BUILD = {n:[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
 [ "$B_SRC" = "$B_NUM" ] || { rojo "index.html carga motor.js?b=$B_SRC pero BUILD es $B_NUM: actualiza los dos"; exit 1; }
+[ "$B_MOVIL" = "$B_NUM" ] && [ "$B_MOVIL_SRC" = "$B_NUM" ] || { rojo "movil.html va en build $B_MOVIL (motor ?b=$B_MOVIL_SRC) y index.html en $B_NUM: actualiza los tres"; exit 1; }
 gris "  sintaxis correcta"
 
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
@@ -160,6 +167,7 @@ RAMA="$(cd "$PAGES" && git branch --show-current)"
 mkdir -p "$PAGES/$DESTINO"
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
+cp "$AQUI/movil.html"   "$PAGES/$DESTINO/movil.html"
 cp "$AQUI/tests.js"     "$PAGES/$DESTINO/tests.js"
 # El editor viaja con el juego: se entra desde el menú, así que una publicación
 # tiene que mandar los dos o el botón lleva a una página que no existe.
@@ -189,7 +197,7 @@ fi
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
-git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/tests.js" "$DESTINO/estudio.html"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then
@@ -214,6 +222,8 @@ ESPERADO="$(shasum -a 256 "$AQUI/index.html" | cut -d" " -f1)"
 # viejo, la partida arrancaría con reglas de otra versión. Se comprueban los dos.
 URL_MOTOR="https://rafarorr1.github.io/csm-game-guide/$DESTINO/motor.js"
 ESPERADO_MOTOR="$(shasum -a 256 "$AQUI/motor.js" | cut -d" " -f1)"
+URL_MOVIL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/movil.html"
+ESPERADO_MOVIL="$(shasum -a 256 "$AQUI/movil.html" | cut -d" " -f1)"
 # Se compara el archivo entero, no una palabra suelta. Antes esto buscaba
 # "TUT_MAZO", que ya estaba en la versión anterior: daba por publicado un
 # despliegue que aún servía el código viejo.
@@ -223,8 +233,9 @@ for i in $(seq 1 10); do
   SERVIDO="$(shasum -a 256 /tmp/publicado.html | cut -d" " -f1)"
   CODIGO_MOTOR="$(curl -s -o /tmp/publicado_motor.js -w "%{http_code}" "$URL_MOTOR?cb=$(date +%s)")"
   SERVIDO_MOTOR="$(shasum -a 256 /tmp/publicado_motor.js | cut -d" " -f1)"
-  if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ]; then
-    verde "  publicado y verificado byte a byte (index.html y motor.js): https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
+  SERVIDO_MOVIL="$(curl -s "$URL_MOVIL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
+  if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ]; then
+    verde "  publicado y verificado byte a byte (index.html, motor.js y movil.html): https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
     gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
     exit 0
   fi
