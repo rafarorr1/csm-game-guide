@@ -1168,6 +1168,23 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Foil en las legendarias** (build 129). Las cartas con ★ llevan ahora una capa iridiscente:
+  una **banda fina** que sigue al cursor, un punteado de destellos, y en reposo una deriva lenta
+  para que una legendaria en mesa se note sin tocarla. Hasta hoy nada distinguía una legendaria
+  de una común salvo la estrella y un número; es lo que hace que una colección de cartas
+  parezca valiosa.
+  Va en un elemento real (`<i class="foil">`) y no en un pseudoelemento, para no chocar con los
+  estados que ya usan `::after`; en las tres plantillas donde se pinta la ★ —la carta, la unidad
+  en mesa y la carta grande de inspección—. `pointer-events:none`: la capa nunca se interpone
+  en un clic. Sólo la carta bajo el cursor recibe `--mx/--my`, por delegación en el documento y
+  a ritmo de `rAF`; al salir los pierde.
+  La primera versión era un **lavado arcoíris saturado** que se comía la carta entera —Juan
+  Gabriel quedaba ilegible—: `color-dodge` sobre el morado medio de la carta lo reventaba. Un
+  foil real enciende los brillos y deja leer lo de debajo. Banda a un 12 % de la diagonal, mitad
+  de alfa, `overlay` en vez de `dodge`, 0,55 en reposo y 0,9 bajo el cursor.
+  Verificado: capa sólo en Juan Gabriel y Tal (no en Machete, Taumaturgia ni Matildus), también
+  en la unidad en mesa; el cursor la mueve (`--mx 0,54 / --my 0,75`) y la suelta al salir. Con
+  `prefers-reduced-motion`, sin deriva en reposo.
 - **La mano ya no se sale de su zona** (build 128). Con ocho cartas, las de los extremos
   quedaban cortadas por los bordes. La causa: el solape sólo empezaba a partir de la **novena**
   (`(n − 8) × 13px`), pero ocho de 150 px ya no caben en la zona — y el giro del abanico empuja
