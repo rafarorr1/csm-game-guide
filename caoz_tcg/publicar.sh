@@ -58,6 +58,12 @@ fi
 # compilar igual que el de escritorio.
 python3 -c "import sys; s=open(sys.argv[1]).read(); i=s.rindex('<script>')+8; j=s.rindex('</script>'); print(s[i:j])" "$AQUI/movil.html" > /tmp/movil_ui.js
 node --check /tmp/movil_ui.js || { rojo 'movil.html tiene un error de sintaxis'; exit 1; }
+node --check "$AQUI/final.js" || { rojo 'final.js tiene un error de sintaxis'; exit 1; }
+# La cinemática del final la comparten las dos pantallas y va con la misma build
+for H in index.html movil.html; do
+  F_SRC="$(grep -o 'final.js?b=[0-9]*' "$AQUI/$H" | grep -o '[0-9]*$')"
+  [ "$F_SRC" = "$(grep -o 'motor.js?b=[0-9]*' "$AQUI/$H" | grep -o '[0-9]*$')" ] || { rojo "$H carga final.js?b=$F_SRC y motor.js con otra build"; exit 1; }
+done
 B_MOVIL="$(grep -o 'const BUILD = {n:[0-9]*' "$AQUI/movil.html" | grep -o '[0-9]*$')"
 B_MOVIL_SRC="$(grep -o 'motor.js?b=[0-9]*' "$AQUI/movil.html" | grep -o '[0-9]*$')"
 # index.html carga motor.js?b=<build>: si no coincide con BUILD, un navegador con el
@@ -70,7 +76,7 @@ gris "  sintaxis correcta"
 
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
 # animación termine. Es una regla dura y se comprueba también aquí.
-if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js"; then
+if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js" "$AQUI/movil.html" "$AQUI/final.js"; then
   rojo 'index.html usa Animation.finished — encadena con sleep(), o el motor se cuelga'
   exit 1
 fi
@@ -168,6 +174,7 @@ mkdir -p "$PAGES/$DESTINO"
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
 cp "$AQUI/movil.html"   "$PAGES/$DESTINO/movil.html"
+cp "$AQUI/final.js"     "$PAGES/$DESTINO/final.js"
 cp "$AQUI/tests.js"     "$PAGES/$DESTINO/tests.js"
 # El editor viaja con el juego: se entra desde el menú, así que una publicación
 # tiene que mandar los dos o el botón lleva a una página que no existe.
@@ -197,7 +204,7 @@ fi
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
-git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/tests.js" "$DESTINO/estudio.html"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then
@@ -224,6 +231,8 @@ URL_MOTOR="https://rafarorr1.github.io/csm-game-guide/$DESTINO/motor.js"
 ESPERADO_MOTOR="$(shasum -a 256 "$AQUI/motor.js" | cut -d" " -f1)"
 URL_MOVIL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/movil.html"
 ESPERADO_MOVIL="$(shasum -a 256 "$AQUI/movil.html" | cut -d" " -f1)"
+URL_FINAL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/final.js"
+ESPERADO_FINAL="$(shasum -a 256 "$AQUI/final.js" | cut -d" " -f1)"
 # Se compara el archivo entero, no una palabra suelta. Antes esto buscaba
 # "TUT_MAZO", que ya estaba en la versión anterior: daba por publicado un
 # despliegue que aún servía el código viejo.
@@ -234,8 +243,9 @@ for i in $(seq 1 10); do
   CODIGO_MOTOR="$(curl -s -o /tmp/publicado_motor.js -w "%{http_code}" "$URL_MOTOR?cb=$(date +%s)")"
   SERVIDO_MOTOR="$(shasum -a 256 /tmp/publicado_motor.js | cut -d" " -f1)"
   SERVIDO_MOVIL="$(curl -s "$URL_MOVIL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
-  if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ]; then
-    verde "  publicado y verificado byte a byte (index.html, motor.js y movil.html): https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
+  SERVIDO_FINAL="$(curl -s "$URL_FINAL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
+  if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ] && [ "$SERVIDO_FINAL" = "$ESPERADO_FINAL" ]; then
+    verde "  publicado y verificado byte a byte (index.html, motor.js, movil.html y final.js): https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
     gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
     exit 0
   fi

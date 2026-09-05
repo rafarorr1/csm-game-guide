@@ -2476,7 +2476,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=139"></script>
+<script src="motor.js?b=140"></script>
+<script src="final.js?b=140"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2495,7 +2496,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:139, fecha:'2026-09-04'};
+const BUILD = {n:140, fecha:'2026-09-05'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -4544,6 +4545,11 @@ function pedirSalirAlMenu(){
 }
 
 function showEnd(winner,why){
+  const g0=G;
+  cinematicaFinal(winner,why).then(()=>{ if(G===g0) panelFinal(winner,why); });
+}
+/* el cartel de siempre, con los números */
+function panelFinal(winner,why){
   const win = winner===ME;
   const p=$('#ovPanel');
   p.innerHTML=`<h3 style="font-size:26px">${win?'🏆 ¡VICTORIA!':'💀 DERROTA'}</h3>

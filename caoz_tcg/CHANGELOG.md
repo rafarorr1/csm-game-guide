@@ -13,6 +13,32 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — La cinemática del final · 2026-09-05
+
+El último punto de la lista de mejoras visuales, y el primero que se hace **para las dos
+pantallas a la vez**: `final.js`, que cargan `index.html` y `movil.html` después del motor.
+Cuando acaba la partida, antes del cartel con los números, la mesa se apaga y desatura, el
+Líder que pierde se hunde en gris hacia la esquina y se agrieta, el que gana sube con sus
+rayos de luz girando detrás, y cae el sello: **VICTORIA** en oro con brasas que suben,
+**DERROTA** en brasa y ceniza que cae, con fogonazo, sacudida y —en el teléfono— vibración.
+Debajo, el motivo y el Alma con la que acabó cada uno. Cuatro segundos, o un toque para
+saltarla; el cartel de siempre sale después.
+
+Cómo está hecho: `showEnd()` en las dos pantallas llama a `cinematicaFinal()` y, cuando
+termina, abre el cartel **si la partida sigue siendo la misma** (en esos cuatro segundos
+puede empezar otra, que es justo lo que ya guardaba una prueba). No se ejecuta con
+`G.fast`, `G.silent`, en partidas automáticas ni con la pestaña escondida, así que el arnés
+y el banco no la pagan. `final.js` trae su propio CSS y sólo pide de fuera lo que las dos
+pantallas tienen con el mismo nombre (`el`, `nap`, `FXON`, `cartaDeLiderVS`).
+
+Dos tropiezos que quedan anotados: el atajo `background:` pisa `background-clip`, y el
+DERROTA salía como una barra roja en vez de letras (ahora va en `background-image`); y la
+tarjeta de Líder del carrete de escritorio trae un `top:96px` en `.lname` que, en posición
+relativa, seguía desplazando el nombre fuera de la tarjeta (se anula con `inset:auto`).
+`publicar.sh` comprueba, copia y verifica `final.js` como a los otros tres.
+
+---
+
 ## v16 — La pantalla del teléfono, de cero: `movil.html` · 2026-09-04
 
 ### El cambio
