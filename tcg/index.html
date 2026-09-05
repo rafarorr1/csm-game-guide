@@ -1603,7 +1603,13 @@ body.tut-on .card.playable{
 #hand .card{transform-origin:50% 240%}
 #hand .card:hover, #hand .card.finge-hover{
   transform-origin:50% 100%;
-  transform:rotateX(0deg) rotate(0deg) translateY(-14px) scale(1.7);z-index:60;
+  /* la ampliada se inclina con el cursor: mismas variables que el foil. La
+     transición se acorta SÓLO aquí: como la dicta el estado destino, entrar es
+     rápido (y el seguimiento del cursor, ágil) y salir conserva los 0,30 s. */
+  --tx:calc((var(--mx, .5) - .5) * 16deg);
+  --ty:calc((var(--my, .5) - .5) * -12deg);
+  transition-duration:.16s;
+  transform:rotateX(var(--ty)) rotateY(var(--tx)) rotate(0deg) translateY(-14px) scale(1.7);z-index:60;
   box-shadow:0 34px 64px rgba(0,0,0,.9), 0 0 0 1px var(--tipo-cl,var(--gold)),
              0 0 46px rgba(0,0,0,.6)}
 #hand .card.unplayable:hover, #hand .card.unplayable.finge-hover,
@@ -1899,14 +1905,27 @@ body.tutpause #tut{pointer-events:auto}
 #prompt button,#prompt #pbtns{pointer-events:auto}
 
 /* inspector */
-#inspect{position:fixed;z-index:260;display:none;pointer-events:none}
+/* La perspectiva va en el PADRE y sin preserve-3d: en este proyecto preserve-3d
+   ya rompió una vez el poder pulsar las cartas. Aquí además no hay nada que
+   pulsar —el panel no recibe eventos— pero la regla se mantiene por costumbre. */
+#inspect{position:fixed;z-index:260;display:none;pointer-events:none;perspective:900px}
 #inspect.on{display:block}
 /* EL DETALLE
    Una carta en mesa mide 132px: ahí las reglas caben pero no se leen a gusto.
    Este panel es donde de verdad se lee la carta —nombre grande, texto a tamaño
    de prosa, estados y Objetos— y por eso puede permitirse el ancho. Hereda las
    piezas de .card, así que sólo hay que redefinir lo que cambia de tamaño. */
+/* LA INCLINACIÓN 3D
+   --mx/--my (0..1) son la posición del cursor sobre la carta ORIGEN —el panel
+   no recibe eventos—, copiadas aquí por el rastreador. De ellas salen dos
+   ángulos pequeños: arriba/abajo inclina en X, izquierda/derecha en Y. Sutil a
+   propósito: 12° y 14° de recorrido total; más y la carta parece un cartón
+   suelto. Sin cursor, 0°. */
 .big{width:286px;font-size:14px;
+  --tx:calc((var(--mx, .5) - .5) * 14deg);
+  --ty:calc((var(--my, .5) - .5) * -12deg);
+  transform:rotateX(var(--ty)) rotateY(var(--tx));transform-origin:50% 50%;
+  transition:transform .14s ease-out;will-change:transform;
   background:linear-gradient(178deg,#33254e 0%,#1e1533 42%,#140e22 100%);
   border:1px solid var(--tipo,var(--gold));border-radius:15px;padding:0;overflow:hidden;
   box-shadow:0 26px 64px rgba(0,0,0,.85), 0 0 0 1px rgba(230,187,82,.18),
@@ -2231,7 +2250,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    un número inventado: cada build se corresponde con un commit concreto y se
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
-const BUILD = {n:129, fecha:'2026-09-04'};
+const BUILD = {n:130, fecha:'2026-09-04'};
 const buildTxt = ()=>`build ${BUILD.n} · ${BUILD.fecha}`;
 
 /* ==========================================================================
@@ -6587,18 +6606,31 @@ function showScreen(id){
    dispara docenas de eventos por fotograma y no hace falta más de una lectura
    por fotograma. */
 {
+  /* Vale para TODAS las cartas, no sólo las legendarias: el foil sólo lo usan
+     ellas, pero la inclinación 3D la usan la carta ampliada de la mano y el
+     panel de inspección, que se lleva una copia de las variables. */
   let cartaFoil = null, pendiente = null;
-  const suelta = () => { if(cartaFoil){ cartaFoil.style.removeProperty('--mx'); cartaFoil.style.removeProperty('--my'); cartaFoil = null; } };
+  const panel = () => $('#inspectCard');
+  const suelta = () => {
+    if(cartaFoil){ cartaFoil.style.removeProperty('--mx'); cartaFoil.style.removeProperty('--my'); cartaFoil = null; }
+    const b = panel(); if(b){ b.style.removeProperty('--mx'); b.style.removeProperty('--my'); }
+  };
+  /* También las cartas de Líder en mesa (.leadercard): son el único sitio donde
+     el panel de inspección se abre de verdad —mano, galería y tutorial se
+     amplían solas—, y sin ellas el panel nunca recibiría las variables. */
   document.addEventListener('pointermove', e => {
-    const c = e.target.closest && e.target.closest('.card');
-    if(!c || !c.querySelector(':scope > .foil')){ suelta(); return; }
+    const c = e.target.closest && e.target.closest('.card, .leadercard');
+    if(!c){ suelta(); return; }
     if(c !== cartaFoil){ suelta(); cartaFoil = c; }
     if(pendiente) return;
     pendiente = requestAnimationFrame(() => {
       pendiente = null; if(!cartaFoil) return;
       const r = cartaFoil.getBoundingClientRect();
-      cartaFoil.style.setProperty('--mx', Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)).toFixed(3));
-      cartaFoil.style.setProperty('--my', Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)).toFixed(3));
+      const mx = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width)).toFixed(3);
+      const my = Math.min(1, Math.max(0, (e.clientY - r.top) / r.height)).toFixed(3);
+      cartaFoil.style.setProperty('--mx', mx); cartaFoil.style.setProperty('--my', my);
+      const b = panel();
+      if(b && $('#inspect').classList.contains('on')){ b.style.setProperty('--mx', mx); b.style.setProperty('--my', my); }
     });
   }, {passive:true});
   document.addEventListener('pointerleave', suelta, {passive:true});
