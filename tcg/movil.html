@@ -793,8 +793,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=158"></script>
-<script src="final.js?b=158"></script>
+<script src="motor.js?b=159"></script>
+<script src="final.js?b=159"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -805,7 +805,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:158, fecha:'2026-09-05'};
+const BUILD = {n:159, fecha:'2026-09-05'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -939,16 +939,24 @@ function showScreen(id){
 function sembrarPortada(){
   const f=$('#fondoMenus');
   const ids=Object.keys(LEADERS);
+  /* Siete cartas en cuatro carriles y repartidas en el tiempo: al azar puro
+     salían dos o tres encimadas en el mismo sitio. Cada una va en su carril
+     (con un poco de juego) y arranca en un punto distinto del recorrido, así
+     que nunca coinciden a la misma altura. Las "lejanas" son más chicas,
+     más tenues y algo borrosas: profundidad, no montón. */
   const az=(a,b)=>a+Math.random()*(b-a);
-  for(let i=0;i<8;i++){
+  const carriles=[1,25,49,71], N=7;
+  for(let i=0;i<N;i++){
     const c=el('div','cartaFondo'), lejos=i%2===0;
-    c.style.setProperty('--x', az(-4,78)+'%');
-    c.style.setProperty('--w', (lejos?az(70,95):az(100,130)).toFixed(0)+'px');
-    c.style.setProperty('--op', (lejos?az(.14,.22):az(.24,.36)).toFixed(2));
-    c.style.setProperty('--gir0', az(-18,18).toFixed(0)+'deg'); c.style.setProperty('--gir1', az(-18,18).toFixed(0)+'deg');
-    c.style.setProperty('--dx', az(-70,70).toFixed(0)+'px');
-    c.style.setProperty('--dur', (lejos?az(30,44):az(20,30)).toFixed(1)+'s');
-    c.style.setProperty('--esp', (-az(0,40)).toFixed(1)+'s');   // ya en vuelo al arrancar
+    c.style.setProperty('--x', (carriles[i%carriles.length]+az(-5,5)).toFixed(0)+'%');
+    c.style.setProperty('--w', (lejos?az(64,84):az(96,118)).toFixed(0)+'px');
+    c.style.setProperty('--op', (lejos?az(.12,.18):az(.22,.30)).toFixed(2));
+    c.style.setProperty('--gir0', az(-14,14).toFixed(0)+'deg'); c.style.setProperty('--gir1', az(-14,14).toFixed(0)+'deg');
+    c.style.setProperty('--dx', az(-30,30).toFixed(0)+'px');
+    const dur=lejos?az(36,46):az(26,34);
+    c.style.setProperty('--dur', dur.toFixed(1)+'s');
+    c.style.setProperty('--esp', (-(i/N)*dur - az(0,2)).toFixed(1)+'s');   // cada una en un punto del recorrido
+    if(lejos) c.style.filter='blur(1.2px)';
     const v=el('div','vscard'); v.dataset.lid=ids[i%ids.length];
     v.innerHTML=`<div class="lface">${LEADERS[v.dataset.lid].art}</div>`;
     c.appendChild(v); f.appendChild(c);
