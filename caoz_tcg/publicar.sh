@@ -222,6 +222,35 @@ git push -q origin gh-pages
 gris "  subido: $(git rev-parse --short HEAD)"
 
 # ---------------------------------------------------------------------------
+# CLOUDFLARE PAGES — la dirección que se reparte.
+# La operadora móvil de Rafa (y de media audiencia) no enruta *.github.io en
+# 5G, así que el juego se sirve también desde Cloudflare Pages: el proyecto
+# caoz-tcg está conectado a la rama gh-pages de este mismo repo y publica la
+# carpeta tcg solo, sin que aquí haya que hacer nada más que esperarlo y
+# comprobar que sirve los mismos bytes. GitHub Pages queda de espejo.
+CF_URL="https://caoz-tcg.pages.dev"
+comprobar_cloudflare(){
+  gris "  esperando a Cloudflare Pages ($CF_URL)"
+  for j in $(seq 1 12); do
+    sleep 10
+    local ok=1
+    for f in index.html motor.js movil.html final.js; do
+      local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
+      local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
+      [ "$srv" = "$esp" ] || { ok=0; break; }
+    done
+    if [ "$ok" = "1" ]; then
+      verde "  publicado y verificado byte a byte en Cloudflare: $CF_URL/"
+      gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
+      return 0
+    fi
+    gris "  intento $j: Cloudflare aún sirve otra versión"
+  done
+  rojo "GitHub ya lo sirve, pero Cloudflare aún no. Mira el despliegue en dash.cloudflare.com → Workers & Pages → caoz-tcg"
+  return 1
+}
+
+# ---------------------------------------------------------------------------
 paso "4/4 · Comprobando que está en la web"
 URL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/index.html"
 ESPERADO="$(shasum -a 256 "$AQUI/index.html" | cut -d" " -f1)"
@@ -245,9 +274,9 @@ for i in $(seq 1 10); do
   SERVIDO_MOVIL="$(curl -s "$URL_MOVIL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
   SERVIDO_FINAL="$(curl -s "$URL_FINAL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
   if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ] && [ "$SERVIDO_FINAL" = "$ESPERADO_FINAL" ]; then
-    verde "  publicado y verificado byte a byte (index.html, motor.js, movil.html y final.js): https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
-    gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
-    exit 0
+    verde "  GitHub Pages verificado byte a byte (index.html, motor.js, movil.html y final.js)"
+    comprobar_cloudflare
+    exit $?
   fi
   gris "  intento $i: $CODIGO$([ "$CODIGO" = "200" ] && echo " (aún sirve otra versión)")"
 done

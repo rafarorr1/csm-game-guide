@@ -13,6 +13,22 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — El juego se sirve desde Cloudflare Pages · 2026-09-05
+
+La operadora móvil de Rafa —y por tanto la de buena parte de quien vaya a jugar— **no
+enruta `*.github.io` en 5G** (sí github.com; sí todo lo demás; con wifi va). Se comprobó
+que no era DNS ni el juego: con la app 1.1.1.1 + WARP, que saca el tráfico por la red de
+Cloudflare, cargaba al instante. La solución no puede ser que la gente instale nada: es
+servir el juego desde donde sí llegan.
+
+Ahora el proyecto **caoz-tcg** de Cloudflare Pages está conectado a la rama `gh-pages` de
+este repo y publica solo la carpeta `tcg` cada vez que `publicar.sh` la sube. La dirección
+que se reparte pasa a ser **https://caoz-tcg.pages.dev/**; GitHub Pages queda de espejo con
+los mismos bytes. `publicar.sh` espera a Cloudflare y comprueba los cuatro archivos byte a
+byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y sale con error.
+
+---
+
 ## Sin numerar — La cinemática del final · 2026-09-05
 
 El último punto de la lista de mejoras visuales, y el primero que se hace **para las dos
