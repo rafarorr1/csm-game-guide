@@ -49,11 +49,21 @@ node --check <(python3 -c "
 s=open('$AQUI/index.html').read(); i=s.index('<script>')+8; j=s.rindex('</script>'); print(s[i:j])") \
   || { rojo 'index.html tiene un error de sintaxis'; exit 1; }
 node --check "$AQUI/tests.js" || { rojo 'tests.js tiene un error de sintaxis'; exit 1; }
+node --check "$AQUI/motor.js" || { rojo 'motor.js tiene un error de sintaxis'; exit 1; }
+# El motor no puede tocar la pantalla: si lo hace, la versión móvil hereda el fallo.
+if grep -qE 'document\.|\$\(|innerHTML|\.classList' "$AQUI/motor.js"; then
+  rojo 'motor.js toca el DOM (document/$()/innerHTML/classList): eso va en la pantalla'; exit 1
+fi
+# index.html carga motor.js?b=<build>: si no coincide con BUILD, un navegador con el
+# motor viejo en caché jugaría con reglas de una versión y pantalla de otra.
+B_SRC="$(grep -o 'motor.js?b=[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
+B_NUM="$(grep -o 'const BUILD = {n:[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
+[ "$B_SRC" = "$B_NUM" ] || { rojo "index.html carga motor.js?b=$B_SRC pero BUILD es $B_NUM: actualiza los dos"; exit 1; }
 gris "  sintaxis correcta"
 
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
 # animación termine. Es una regla dura y se comprueba también aquí.
-if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html"; then
+if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js"; then
   rojo 'index.html usa Animation.finished — encadena con sleep(), o el motor se cuelga'
   exit 1
 fi
@@ -149,6 +159,7 @@ RAMA="$(cd "$PAGES" && git branch --show-current)"
 
 mkdir -p "$PAGES/$DESTINO"
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
+cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
 cp "$AQUI/tests.js"     "$PAGES/$DESTINO/tests.js"
 # El editor viaja con el juego: se entra desde el menú, así que una publicación
 # tiene que mandar los dos o el botón lleva a una página que no existe.
@@ -178,7 +189,7 @@ fi
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
-git add "$DESTINO/index.html" "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/tests.js" "$DESTINO/estudio.html"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then
@@ -199,6 +210,10 @@ gris "  subido: $(git rev-parse --short HEAD)"
 paso "4/4 · Comprobando que está en la web"
 URL="https://rafarorr1.github.io/csm-game-guide/$DESTINO/index.html"
 ESPERADO="$(shasum -a 256 "$AQUI/index.html" | cut -d" " -f1)"
+# El motor va aparte desde v15: si la web sirviera el index nuevo con el motor
+# viejo, la partida arrancaría con reglas de otra versión. Se comprueban los dos.
+URL_MOTOR="https://rafarorr1.github.io/csm-game-guide/$DESTINO/motor.js"
+ESPERADO_MOTOR="$(shasum -a 256 "$AQUI/motor.js" | cut -d" " -f1)"
 # Se compara el archivo entero, no una palabra suelta. Antes esto buscaba
 # "TUT_MAZO", que ya estaba en la versión anterior: daba por publicado un
 # despliegue que aún servía el código viejo.
@@ -206,8 +221,10 @@ for i in $(seq 1 10); do
   sleep 12
   CODIGO="$(curl -s -o /tmp/publicado.html -w "%{http_code}" "$URL?cb=$(date +%s)")"
   SERVIDO="$(shasum -a 256 /tmp/publicado.html | cut -d" " -f1)"
-  if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ]; then
-    verde "  publicado y verificado byte a byte: https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
+  CODIGO_MOTOR="$(curl -s -o /tmp/publicado_motor.js -w "%{http_code}" "$URL_MOTOR?cb=$(date +%s)")"
+  SERVIDO_MOTOR="$(shasum -a 256 /tmp/publicado_motor.js | cut -d" " -f1)"
+  if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ]; then
+    verde "  publicado y verificado byte a byte (index.html y motor.js): https://rafarorr1.github.io/csm-game-guide/$DESTINO/"
     gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
     exit 0
   fi

@@ -13,6 +13,61 @@ Cómo se anota una versión nueva:
 
 ---
 
+## v15 — Un motor, dos pantallas: el motor sale a `motor.js` · 2026-09-04
+
+### El cambio
+
+El juego deja de ser un solo archivo. **`motor.js`** lleva las cartas, los Líderes, los mazos,
+las reglas, la IA, la red, las guías y el guion del tutorial — todo lo que no toca la pantalla.
+**`index.html`** conserva la pantalla de escritorio y lo carga primero. Nada cambia de sitio
+dentro de cada función: el código es el mismo, sólo que en dos archivos.
+
+### Por qué
+
+La versión vertical del teléfono (v14) demostró que encoger la mesa de escritorio con `zoom`
+hace que quepa, no que se lea. El teléfono necesita **su propia pantalla**, diseñada en
+vertical con texto a tamaño nativo. Y una segunda pantalla no puede ser una segunda copia de
+las mecánicas —dos motores que mantener, dos sets de cartas que se desincronizan a la primera
+carta nueva, dos balances—, así que primero hay que separar el motor. El proyecto ya estaba
+más preparado de lo que parecía: el motor sólo habla con la pantalla a través de `render()`,
+`ask()`, `roll()`, `log()` y los `fx*()`, todos globales sustituibles — el banco de balance
+lleva meses reemplazándolos para medir sin ventana.
+
+### Cómo se hizo el corte
+
+Por segmentos (cada declaración de nivel superior y lo que la sigue), con dos reglas: va a la
+pantalla lo que **toca el DOM** o lo que **ejecuta algo al cargar** más allá de declarar
+(`window.TCG=…`, `addEventListener`, bloques sueltos); todo lo demás va al motor **en su orden
+original**, con `'use strict'` en los dos. Ninguna de las 122 cartas toca el DOM: hablan con
+la pantalla sólo por nombre. Resultado: 308 segmentos y ~3 950 líneas de motor.
+
+Los dos archivos son scripts clásicos que comparten el ámbito global, así que mover código
+no cambia nada… salvo lo que se ejecuta al cargar: un `window.TCG={…, render}` en el motor
+fallaría porque `render` aún no existe. Por eso esa exportación se queda en la pantalla, y
+por lo mismo un alias como `const tutShow = tutRender` va con la pantalla aunque no toque el
+DOM: se evalúa al cargar y nombra a una función que todavía no existe. El primer corte lo
+dejó en el motor y el archivo entero abortaba en esa línea —sin `LIENZO`, sin `NET`, sin
+nada de lo que venía después—; la regla del corte ahora manda a la pantalla todo alias de
+nivel superior cuyo valor sea un nombre de la pantalla.
+
+### Guardas nuevas en `publicar.sh`
+
+- `node --check motor.js`, y **el motor no puede tocar la página**: si aparece `document`,
+  `$()`, `innerHTML` o `classList` en `motor.js`, no se publica.
+- `index.html` carga `motor.js?b=<build>` y el número tiene que coincidir con `BUILD`: sin
+  eso, un navegador con el motor viejo en caché jugaría con reglas de una versión y pantalla
+  de otra.
+- `fuente()` del arnés lee los dos archivos, porque varias pruebas buscan patrones en el código.
+
+### Comprobado
+
+Arnés en verde con el código partido, banco de balance con las mismas cifras, el editor de
+cartas carga (sigue leyendo `TCG.CARDS` y `cardEl` del iframe, que ahora trae los dos
+archivos), y la partida, el tutorial y los menús se ven igual que en la build anterior.
+`publicar.sh` verifica en la web `index.html` **y** `motor.js` byte a byte.
+
+---
+
 ## v14 — La versión para teléfono, en vertical · 2026-09-04
 
 ### El cambio
