@@ -18,7 +18,7 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 156;
+const VERSION = 157;
 const CACHE = 'caoz-tcg-' + VERSION;
 const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'manifest.webmanifest',
                 'art/encuadres.json', 'art/logo.webp',
