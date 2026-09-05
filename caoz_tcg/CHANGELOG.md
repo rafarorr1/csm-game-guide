@@ -1168,6 +1168,20 @@ Las cinco listas del documento de diseño original, tal cual. 84 cartas jugables
 
 Arreglos y mejoras que no cambian cómo se juega. El detalle está en el historial de git.
 
+- **Los hechizos estallan según su elemento** (build 133). La carta ya subía a escena con un
+  color por subtipo; ahora, en el instante en que **se posa**, estalla con el carácter de su
+  elemento: el **Fuego** sube y quema (brasas, chispas largas, fogonazo cálido); la **Fe**
+  asciende despacio y brilla (motas doradas, resplandor suave); el **Engaño** se expande como
+  humo violeta y deriva; la **Canción** son ondas concéntricas y notas ♪♫; el **Contrato** un
+  sello seco con chispas rojas; lo **Rápido** trazos turquesa horizontales.
+  Reutiliza las piezas del combate —chispas, bocanadas, anillos— con otra paleta y otro
+  movimiento, así que no hay un segundo sistema de partículas que mantener. El estallido se
+  programa desde `fxSpell` para el 20 % de la duración del presentador, que es cuando la carta
+  queda quieta, **sin tocar el presentador**, que comparten las trampas y las habilidades de
+  Líder. Viaja al invitado porque `fxSpell` ya viajaba. Con `prefers-reduced-motion` queda sólo
+  el anillo.
+  Verificado en los seis: fuego 12 brasas + 18 chispas, fe 16 motas + 8, engaño 16 bocanadas,
+  canción 6 notas + 5 ondas, contrato 10 chispas, rápido 8 trazos — cada uno con su color.
 - **El Alma en peligro se siente** (build 132). Por debajo de 6 de Alma la mesa lo dice sin
   que haya que leer el número: la **carta de Líder late** y una **viñeta roja cierra los
   bordes**. Las dos se intensifican con `--peligro` (0,17 con 5 de Alma, 0,83 con 1) y el
