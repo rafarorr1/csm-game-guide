@@ -30,6 +30,18 @@ byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y 
 
 ---
 
+## Sin numerar — Se retira la mesa encogida de la v14 · 2026-09-05
+
+Desde la v16 los teléfonos van a `movil.html`, así que la versión vertical que vivía dentro
+de `index.html` (la mesa de escritorio reducida con `zoom` bajo la clase `html.movil`) no la
+alcanzaba nadie: ~190 líneas de CSS, el modelo de toque y pulsación larga, la hoja del
+registro, el anclaje del panel de Gero, `esMovil` y el segundo lienzo `LIENZO_V` del motor.
+Todo fuera. `fichaTactil()` se queda como función vacía porque el motor la llama al
+seleccionar una unidad (en el teléfono sí hace algo). Nada cambia en escritorio: el arnés lo
+confirma, y `index.html` pierde 280 líneas.
+
+---
+
 ## Sin numerar — Online probado teléfono contra escritorio · 2026-09-05
 
 Primera partida en línea con la pantalla del teléfono de anfitrión (Rafa, Gero) y el

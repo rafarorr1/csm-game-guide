@@ -3941,13 +3941,3 @@ async function autoTurn(s){
 }
 
 const LIENZO = { ancho: 1500, alto: 1040 };
-/* EL LIENZO VERTICAL
-   Un teléfono de pie no admite el reparto de un monitor apaisado: a 1500 de
-   ancho el zoom lo dejaría en un cuarto y no se leería nada. Así que hay un
-   segundo lienzo con la proporción de un teléfono (460×980 ≈ 0,47, como un
-   393×852) y su PROPIO reparto de la mesa, escrito en CSS bajo `html.movil`.
-   La clase la decide un solo sitio —ajustarLienzo— y no un @media, para poder
-   forzarla desde un escritorio y comprobarla, y para que el arnés, que corre
-   apaisado, no la vea nunca. */
-
-const LIENZO_V = { ancho: 460, alto: 980 };
