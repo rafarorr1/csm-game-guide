@@ -793,8 +793,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=160"></script>
-<script src="final.js?b=160"></script>
+<script src="motor.js?b=161"></script>
+<script src="final.js?b=161"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -805,7 +805,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:160, fecha:'2026-09-05'};
+const BUILD = {n:161, fecha:'2026-09-06'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1180,7 +1180,7 @@ function endGame(winner, why){
 function showEnd(winner,why){
   const g0=G;
   const acciones={
-    revancha:()=>{ if(NET.on){ toast('En online, volved al menú y cread una sala nueva'); panelFinal(winner,why); return; }
+    revancha:()=>{ if(NET.on){ proponerRevancha(); return; }
       startMatch(P(ME).leaderId,P(FOE).leaderId); },
     menu:()=>{ tutEnd(); clearPrompt(); cerrarHojas(); if(NET.on){ netSend({t:'bye'}); setTimeout(netClose,400); } showScreen('menu'); }
   };
@@ -1193,7 +1193,7 @@ function panelFinal(winner,why){
     <p>Turnos: ${Math.ceil(G.turnNo/2)} · Tu Alma: ${Math.max(0,P(ME).alma)} · Alma rival: ${Math.max(0,P(FOE).alma)}</p>`;
   const box=el('div','opts');
   const again=el('button','btn gold','↺ Revancha');
-  again.onclick=()=>{ cerrarOv(); if(NET.on){ toast('En online, volved al menú y cread una sala nueva'); return; } startMatch(P(ME).leaderId,P(FOE).leaderId); };
+  again.onclick=()=>{ cerrarOv(); if(NET.on){ proponerRevancha(); return; } startMatch(P(ME).leaderId,P(FOE).leaderId); };
   const menu=el('button','btn','← Menú principal');
   menu.onclick=()=>{ cerrarOv(); tutEnd(); clearPrompt(); if(NET.on){ netSend({t:'bye'}); setTimeout(netClose,400); } showScreen('menu'); };
   box.appendChild(again); box.appendChild(menu); p.appendChild(box); openOv();
@@ -1842,13 +1842,23 @@ async function onlHost(){
     <div class="roomcode" id="roomCode">${code}</div><p class="netstatus" id="netStatus">conectando…</p><p class="netdiag" id="netDiag"></p>
     <p style="font-size:11.5px;color:#7a6d96">Cualquiera con el código puede entrar. No lo publiques.</p>`;
   const box=el('div','opts');
+  const enlace=enlaceDeSala(code);
+  const sh=el('button','btn gold', navigator.share ? '🔗 Compartir enlace' : '🔗 Copiar enlace');
+  sh.onclick=()=>compartirEnlace(enlace);
   const cp=el('button','btn','📋 Copiar código'); cp.onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(code); toast('Código copiado'); };
   const cancel=el('button','btn sm','Cancelar'); cancel.onclick=()=>{ netSend({t:'bye'}); netClose(); cerrarOv(); };
-  box.appendChild(cp); box.appendChild(cancel); p.appendChild(box); openOv();
+  box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box); openOv();
   await netConnect(code,true);
   netStatus('esperando a tu amigo…','warn');
   NET.onjoin=(suLider)=>{ cerrarOv(); netHostStart(ONL.lider,suLider); };
   if(NET.joinPend){ const l=NET.joinPend; NET.joinPend=null; NET.onjoin(l); }
+}
+/* la dirección de la sala: la del juego, sin el nombre de archivo, con ?sala= */
+function enlaceDeSala(code){ return location.origin + location.pathname.replace(/[^/]*$/,'') + '?sala=' + code; }
+async function compartirEnlace(enlace){
+  if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas', text:'Entra a mi sala del Domo:', url:enlace}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+  if(navigator.clipboard){ try{ await navigator.clipboard.writeText(enlace); toast('Enlace copiado'); return; }catch(e){} }
+  toast(enlace);
 }
 function onlJoinCode(){
   const p=$('#ovPanel');
@@ -1872,6 +1882,7 @@ function onlJoinCode(){
   };
   const back=el('button','btn sm','← Volver'); back.onclick=showOnline;
   box.appendChild(go); box.appendChild(back); p.appendChild(box); openOv();
+  if(ONL.sala){ const i=$('#joinCode'); if(i){ i.value=ONL.sala; } ONL.sala=null; setTimeout(()=>go.click(), 120); }
   setTimeout(()=>{ const i=$('#joinCode'); if(i){ i.focus(); i.oninput=()=>{ i.value=i.value.toUpperCase().replace(/[^A-Z0-9]/g,''); }; } },80);
 }
 
@@ -2138,6 +2149,8 @@ $('#fondoMenus').classList.add('on');
 cargarArte().then(()=>{ ilustrarFondo(); if(Object.keys(ARTE).length && G && !G.silent) render(); });
 /* ?foto=lider,rival y ?pantalla=… son atajos de revisión, como en escritorio */
 { const q=new URLSearchParams(location.search);
+  const sala=(q.get('sala')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+  if(sala.length>=4){ ONL.sala=sala; history.replaceState(null,'',location.pathname); setTimeout(()=>onlPickNombre(false),300); }
   if(q.has('pantalla')){ const p=q.get('pantalla');
     if(p==='select'){ SELP='mohamed'; SELF='adreida'; SEL_PASO='yo'; buildSelect(); showScreen('select'); }
     else if(p==='guide') showGuides(); else showScreen(p); }

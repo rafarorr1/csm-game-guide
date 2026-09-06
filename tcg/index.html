@@ -2298,8 +2298,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=160"></script>
-<script src="final.js?b=160"></script>
+<script src="motor.js?b=161"></script>
+<script src="final.js?b=161"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2318,7 +2318,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:160, fecha:'2026-09-05'};
+const BUILD = {n:161, fecha:'2026-09-06'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -4296,7 +4296,7 @@ function pedirSalirAlMenu(){
 function showEnd(winner,why){
   const g0=G;
   const acciones={
-    revancha:()=>{ if(NET.on){ toast('En online, volved al menú y cread una sala nueva'); panelFinal(winner,why); return; }
+    revancha:()=>{ if(NET.on){ proponerRevancha(); return; }
       startMatch(P(ME).leaderId,P(FOE).leaderId); },
     menu:()=>{ tutEnd(); clearPrompt(); if(NET.on){ netSend({t:'bye'}); setTimeout(netClose,400); } showScreen('menu'); }
   };
@@ -4314,7 +4314,7 @@ function panelFinal(winner,why){
   const box=el('div','opts');
   const again=el('button','btn gold','↺ Revancha');
   again.onclick=()=>{ $('#ov').classList.remove('on');
-    if(NET.on){ toast('En online, volved al menú y cread una sala nueva'); return; }
+    if(NET.on){ proponerRevancha(); return; }
     startMatch(P(ME).leaderId,P(FOE).leaderId); };
   const menu=el('button','btn','← Menú principal');
   menu.onclick=()=>{ $('#ov').classList.remove('on'); tutEnd(); clearPrompt();
@@ -4622,10 +4622,15 @@ async function onlHost(){
     <p style="font-size:11.5px;color:#7a6d96">El código es la única llave de la sala:
        cualquiera que lo tenga puede entrar y ver la partida. No lo publiques.</p>`;
   const box=el('div','opts');
+  /* El enlace abre el juego ya dentro de la sala: en el teléfono se comparte
+     por WhatsApp y el otro sólo pone su nombre y elige Protagonista. */
+  const enlace=enlaceDeSala(code);
+  const sh=el('button','btn gold', navigator.share ? '🔗 Compartir enlace' : '🔗 Copiar enlace');
+  sh.onclick=()=>compartirEnlace(enlace);
   const cp=el('button','btn','📋 Copiar código');
   cp.onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(code); toast('Código copiado'); };
   const cancel=el('button','btn sm','Cancelar'); cancel.onclick=()=>{ netSend({t:'bye'}); netClose(); $('#ov').classList.remove('on'); };
-  box.appendChild(cp); box.appendChild(cancel); p.appendChild(box);
+  box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box);
   openOv();
   await netConnect(code,true);
   netStatus('esperando a tu amigo…','warn');
@@ -4633,6 +4638,13 @@ async function onlHost(){
   if(NET.joinPend){ const l=NET.joinPend; NET.joinPend=null; NET.onjoin(l); }
 }
 
+/* la dirección de la sala: la del juego, sin el nombre de archivo, con ?sala= */
+function enlaceDeSala(code){ return location.origin + location.pathname.replace(/[^/]*$/,'') + '?sala=' + code; }
+async function compartirEnlace(enlace){
+  if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas', text:'Entra a mi sala del Domo:', url:enlace}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
+  if(navigator.clipboard){ try{ await navigator.clipboard.writeText(enlace); toast('Enlace copiado'); return; }catch(e){} }
+  toast(enlace);
+}
 function onlJoinCode(){
   const p=$('#ovPanel');
   p.innerHTML=`<h3>Unirse a una sala</h3><p>Escribe el código que te pasó tu amigo.</p>
@@ -4660,6 +4672,7 @@ function onlJoinCode(){
   const back=el('button','btn sm','← Volver'); back.onclick=showOnline;
   box.appendChild(go); box.appendChild(back); p.appendChild(box);
   openOv();
+  if(ONL.sala){ const i=$('#joinCode'); if(i){ i.value=ONL.sala; } ONL.sala=null; setTimeout(()=>go.click(), 120); }
   setTimeout(()=>{ const i=$('#joinCode'); if(i){ i.focus();
     i.oninput=()=>{ i.value=i.value.toUpperCase().replace(/[^A-Z0-9]/g,''); }; } },80);
 }
@@ -4959,6 +4972,11 @@ if(new URLSearchParams(location.search).has('test')){
    cartas ya en mesa, para poder mirar el aspecto del tablero en una captura.
    Es sólo un atajo de revisión: el juego normal no pasa por aquí. */
 /* ?pantalla=menu|select|guide para retratar las pantallas de fuera de partida */
+/* ?sala=CÓDIGO: se llega por el enlace de invitación. Se pide nombre y
+   Protagonista y se entra solo en esa sala. El parámetro se quita de la
+   dirección para que una recarga no vuelva a intentar entrar. */
+{ const q=new URLSearchParams(location.search), sala=(q.get('sala')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+  if(sala.length>=4){ ONL.sala=sala; history.replaceState(null,'',location.pathname); setTimeout(()=>onlPickNombre(false),300); } }
 if(new URLSearchParams(location.search).has('pantalla')){
   addEventListener('load',()=>setTimeout(()=>{
     const q=new URLSearchParams(location.search), p=q.get('pantalla');
