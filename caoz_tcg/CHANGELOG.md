@@ -30,6 +30,23 @@ byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y 
 
 ---
 
+## Sin numerar — Récords locales y el aviso de instalar · 2026-09-06
+
+**Récords.** El juego apunta, en el navegador (o en la app instalada), cuántas partidas se
+han jugado y ganado con cada Protagonista, la racha actual y la mejor, y la victoria más
+rápida en turnos; y aparte el total y el marcador online. Se ven en **🏆 Tus récords** del
+menú, con un botón para borrarlos. La cinemática del final añade una línea bajo el marcador:
+«Racha de 3 con Fender · ¡tu mejor racha!», «¡tu victoria más rápida: 6 turnos!» o «Se corta
+una racha de 4». No cuentan el tutorial ni las partidas automáticas o rápidas (las del
+arnés). Todo vive en `final.js`, compartido por las dos pantallas.
+
+**Instalar.** iOS no ofrece instalar la app por su cuenta, así que el menú del teléfono lo
+cuenta una vez —*Compartir → Añadir a pantalla de inicio*— cuando no se está ya en la app;
+«Ahora no» lo quita y se recuerda. En Android, cuando el navegador avisa de que se puede
+instalar, el mismo cartel trae un botón que lo hace directamente.
+
+---
+
 ## Sin numerar — Enlace de invitación y revancha en la misma sala · 2026-09-06
 
 **Enlace.** Al crear una sala, además del código hay un botón **🔗 Compartir enlace** (en el

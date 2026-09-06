@@ -67,6 +67,17 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 .fin .sello i{display:block;font-style:normal;margin-top:9px;opacity:0;transition:opacity .5s .45s;
   font:700 clamp(11px,2.8vw,13px)/1.4 var(--sans,sans-serif);letter-spacing:2.5px;color:var(--dim,#a294bd)}
 .fin.sello-on .sello small,.fin.sello-on .sello i{opacity:1}
+.fin .sello i.racha{color:var(--gold,#e6bb52);letter-spacing:1px;font-size:clamp(11.5px,3vw,14px);margin-top:6px}
+.fin.derrota .sello i.racha{color:#c9a6ff}
+.records .rtot{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:4px 0 12px;font-size:13px;color:var(--dim,#a294bd)}
+.records .rtot b{color:var(--gold,#e6bb52);font-size:20px;font-family:var(--serif,serif)}
+.records table{width:100%;border-collapse:collapse;font-size:12.5px}
+.records th{font:600 9.5px/1 var(--sans,sans-serif);letter-spacing:1.5px;text-transform:uppercase;color:#7a6ba0;padding:4px 6px;text-align:left}
+.records td{padding:6px;border-top:1px solid rgba(255,255,255,.07);white-space:nowrap}
+.records td b{color:#fdf6e6}
+.records td i{font-style:normal;color:var(--green,#4fc07d);font-size:11px}
+.records tr.sin td{opacity:.45}
+.records .rnota{font-size:11.5px;color:#7a6d96;margin-top:10px;text-align:center}
 /* el fogonazo del impacto */
 .fin .fogonazo{position:absolute;left:50%;top:50%;width:80vmax;height:80vmax;translate:-50% -50%;border-radius:50%;opacity:0;
   mix-blend-mode:screen;pointer-events:none;
@@ -94,6 +105,73 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 .fin.botones{cursor:default}
 @media (prefers-reduced-motion: reduce){ .fin .finluz, .fin .brasa{animation:none} }
 `;
+
+/* ==========================================================================
+   RÉCORDS LOCALES
+   Cuántas partidas se han jugado y ganado con cada Protagonista, la racha, y
+   la victoria más rápida. Viven en el navegador (localStorage): sin cuentas,
+   sin red. Los anota showEnd() en las dos pantallas, salvo tutorial y
+   partidas automáticas o rápidas (las del arnés).
+   ========================================================================== */
+const RECORDS_CLAVE = 'caoz_records_v1';
+let RECORD_ULTIMO = null;          // lo que acaba de pasar, para la cinemática
+
+function leerRecords(){
+  try{ const r = JSON.parse(localStorage.getItem(RECORDS_CLAVE)); if(r && r.lideres) return r; }catch(e){}
+  return {lideres:{}, total:{jugadas:0, ganadas:0}, online:{jugadas:0, ganadas:0}};
+}
+function guardarRecords(r){ try{ localStorage.setItem(RECORDS_CLAVE, JSON.stringify(r)); }catch(e){} }
+function borrarRecords(){ try{ localStorage.removeItem(RECORDS_CLAVE); }catch(e){} }
+
+function anotarRecord(gane, lid, turnos, modo){
+  const r = leerRecords();
+  const L = r.lideres[lid] || (r.lideres[lid] = {jugadas:0, ganadas:0, racha:0, mejorRacha:0, rapida:null});
+  const rachaAntes = L.racha;
+  L.jugadas++; r.total.jugadas++;
+  if(modo === 'online'){ r.online.jugadas++; if(gane) r.online.ganadas++; }
+  let nuevaRapida = false;
+  if(gane){
+    L.ganadas++; r.total.ganadas++; L.racha++;
+    if(L.racha > L.mejorRacha) L.mejorRacha = L.racha;
+    if(L.rapida == null || turnos < L.rapida){ nuevaRapida = L.rapida != null; L.rapida = turnos; }
+  } else L.racha = 0;
+  L.ultima = new Date().toISOString().slice(0,10);
+  guardarRecords(r);
+  RECORD_ULTIMO = {gane, lid, racha:L.racha, mejorRacha:L.mejorRacha, rachaAntes, nuevaRapida, turnos};
+  return RECORD_ULTIMO;
+}
+
+/* la línea que la cinemática pone bajo el marcador */
+function fraseDeRecord(){
+  const u = RECORD_ULTIMO; if(!u || !LEADERS[u.lid]) return '';
+  const n = LEADERS[u.lid].n;
+  if(u.gane){
+    let t = u.racha >= 2 ? `Racha de ${u.racha} con ${n}` : `Primera de una racha con ${n}`;
+    if(u.racha >= 2 && u.racha === u.mejorRacha && u.racha > 1) t += ' · ¡tu mejor racha!';
+    if(u.nuevaRapida) t += ` · ¡tu victoria más rápida: ${u.turnos} turnos!`;
+    return t;
+  }
+  return u.rachaAntes >= 2 ? `Se corta una racha de ${u.rachaAntes} con ${n}` : '';
+}
+
+/* el cuadro de récords, para el panel de cualquiera de las dos pantallas */
+function recordsHTML(){
+  const r = leerRecords();
+  const ids = Object.keys(LEADERS);
+  const pct = (g, j) => j ? Math.round(100*g/j) + ' %' : '—';
+  const filas = ids.map(id => { const L = r.lideres[id] || {jugadas:0, ganadas:0, racha:0, mejorRacha:0, rapida:null};
+    return `<tr class="${L.jugadas?'':'sin'}"><td>${LEADERS[id].art} <b>${LEADERS[id].n}</b></td>
+      <td>${L.jugadas}</td><td>${L.ganadas}</td><td>${pct(L.ganadas, L.jugadas)}</td>
+      <td>${L.mejorRacha || '—'}${L.racha >= 2 ? ` <i>(${L.racha} ahora)</i>` : ''}</td><td>${L.rapida != null ? L.rapida + ' t.' : '—'}</td></tr>`; }).join('');
+  return `<div class="records">
+    <div class="rtot"><span><b>${r.total.jugadas}</b> partidas</span><span><b>${r.total.ganadas}</b> ganadas</span>
+      <span><b>${pct(r.total.ganadas, r.total.jugadas)}</b> victorias</span>
+      ${r.online.jugadas ? `<span>online <b>${r.online.ganadas}/${r.online.jugadas}</b></span>` : ''}</div>
+    <table><thead><tr><th>Protagonista</th><th>Jug.</th><th>Gan.</th><th>%</th><th>Racha</th><th>Más rápida</th></tr></thead>
+      <tbody>${filas}</tbody></table>
+    <p class="rnota">Se guardan en este navegador (o en la app instalada). No cuentan el tutorial.</p>
+  </div>`;
+}
 
 if(!document.getElementById('finCss')){
   const st = document.createElement('style');
@@ -132,6 +210,7 @@ async function cinematicaFinal(winner, why, acciones){
   capa.appendChild(el('div', 'sello',
     `<b>${gano ? 'VICTORIA' : 'DERROTA'}</b><small>${why || ''}</small>` +
     `<i>Turnos: ${Math.ceil(G.turnNo / 2)} &nbsp;·&nbsp; ${P(winner).L.n} ❤️ ${alma(winner)} &nbsp;·&nbsp; ${P(1 - winner).L.n} ❤️ ${alma(1 - winner)}</i>`));
+  { const fr = fraseDeRecord(); if(fr) capa.querySelector('.sello').appendChild(el('i', 'racha', fr)); }
   capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
   /* Los botones viven aquí, no en un cartel aparte: la cinemática se queda
