@@ -30,6 +30,28 @@ byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y 
 
 ---
 
+## Sin numerar — Enlace de invitación y revancha en la misma sala · 2026-09-06
+
+**Enlace.** Al crear una sala, además del código hay un botón **🔗 Compartir enlace** (en el
+teléfono abre la hoja de compartir del sistema —WhatsApp y demás—; en escritorio lo copia).
+El enlace es la dirección del juego con `?sala=CÓDIGO`: quien lo abre ve directamente «¿cómo
+te llamas?», elige Protagonista y entra solo en esa sala, sin teclear nada. El parámetro se
+quita de la dirección al llegar para que una recarga no vuelva a intentar entrar. Vale en
+las dos pantallas, y `index.html` lo conserva al mandar a los teléfonos a `movil.html`.
+
+**Revancha.** Antes, en línea, «Revancha» sólo decía que había que volver al menú y crear
+otra sala. Ahora cualquiera de los dos la pide (desde la cinemática o el cartel), al otro le
+sale la pregunta —por encima de la cinemática, que se retira—, y si acepta el anfitrión
+vuelve a arrancar con los mismos Líderes por la misma sala: la bienvenida de siempre, que
+al invitado le reconstruye el tablero. Si dice que no, un aviso y ya. Son tres mensajes
+nuevos del relevo (`revancha`, `revanchaOk`, `revanchaNo`) y dos funciones del motor
+(`proponerRevancha`, `pedirRevancha`).
+
+Probado con dos pestañas: anfitrión en escritorio, invitado por enlace en la pantalla del
+teléfono, y una revancha pedida por el invitado y aceptada por el anfitrión.
+
+---
+
 ## Sin numerar — Se retira la mesa encogida de la v14 · 2026-09-05
 
 Desde la v16 los teléfonos van a `movil.html`, así que la versión vertical que vivía dentro

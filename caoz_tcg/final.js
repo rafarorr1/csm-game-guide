@@ -101,6 +101,13 @@ if(!document.getElementById('finCss')){
   document.head.appendChild(st);
 }
 
+/* La retira desde fuera (llega una pregunta que tiene que verse encima, como
+   la revancha del rival). El vigía de dentro nota que ya no está y suelta. */
+function cerrarCinematica(){
+  const c = document.querySelector('.fin');
+  if(c){ c.remove(); document.body.classList.remove('fin-on'); }
+}
+
 /* Devuelve cuando la cinemática ha terminado (o se ha saltado). Quien la
    llama abre el cartel después, comprobando que la partida sigue siendo la
    misma: durante estos cuatro segundos puede empezar otra. */

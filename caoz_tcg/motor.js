@@ -3576,6 +3576,9 @@ async function netRecv(m){
     }
     if(m.t==='reply'&&NET.pending[m.id]){ NET.pending[m.id](m.v); return; }
     if(m.t==='chat'){ chatRecibe(m); return; }
+    if(m.t==='revancha'){ pedirRevancha(true); return; }
+    if(m.t==='revanchaOk'){ if(NET.welcome) netHostStart(NET.welcome.host, NET.welcome.guest); return; }
+    if(m.t==='revanchaNo'){ toast((NET.suNombre||'Tu rival')+' no quiere revancha'); return; }
     if(m.t==='bye'){ netStatus('el rival se fue','warn'); toast('Tu rival ha salido'); return; }
   } else {
     if(m.t==='chat'){ chatRecibe(m); return; }
@@ -3593,9 +3596,32 @@ async function netRecv(m){
     }
     if(m.t==='ack'){ const p=NET.esperaAck.get(m.aid);
       if(p){ clearInterval(p.t); NET.esperaAck.delete(m.aid); netStatus(null,'ok'); } return; }
+    if(m.t==='revancha'){ pedirRevancha(false); return; }
+    if(m.t==='revanchaNo'){ toast((NET.suNombre||'El anfitrión')+' no quiere revancha'); return; }
     if(m.t==='bye'){ netStatus('el anfitrión se fue','warn'); toast('El anfitrión ha salido'); return; }
   }
 }
+/* REVANCHA EN LA MISMA SALA
+   Antes, al acabar, había que volver al menú, crear otra sala y dictar otro
+   código. Ahora cualquiera de los dos pulsa Revancha: se lo propone al otro,
+   y si acepta el anfitrión vuelve a arrancar la partida con los mismos
+   Líderes por la misma sala (la bienvenida de siempre, que al invitado le
+   reconstruye el tablero). Si dice que no, se avisa y ya. */
+
+function proponerRevancha(){
+  if(!NET.on || !NET.peer) { toast('Tu rival ya no está en la sala'); return; }
+  netSend({t:'revancha'});
+  toast('Revancha propuesta: esperando a '+(NET.suNombre||'tu rival')+'…');
+}
+
+async function pedirRevancha(soyHost){
+  if(typeof cerrarCinematica==='function') cerrarCinematica();   // la pregunta va encima
+  const i = await ask(ME, (NET.suNombre||'Tu rival')+' pide revancha. ¿Otra partida?', ['¡Revancha!','No, gracias']);
+  if(i!==0){ netSend({t:'revanchaNo'}); return; }
+  if(soyHost){ if(NET.welcome) netHostStart(NET.welcome.host, NET.welcome.guest); }
+  else netSend({t:'revanchaOk'});
+}
+
 /* las intenciones del invitado se ejecutan de una en una */
 
 async function netRunActs(){
