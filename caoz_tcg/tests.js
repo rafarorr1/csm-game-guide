@@ -343,10 +343,15 @@ PRUEBAS.suite('menuMovil', async t => {
     const d=marco.contentDocument,visor=marco.contentWindow;
     const velo=visor.getComputedStyle(d.querySelector('#menu')).backgroundImage;
     t.check(!/(?:^|[^a])rgb\(/.test(velo),'Una capa opaca está ocultando el fondo animado del menú.');
+    t.check(!!d.querySelector('.home-clock'),'La esfera dorada debe enmarcar el logo.');
+    t.check(!d.querySelector('.home-motto,.home-caption'),'Las frases retiradas no deben ocupar espacio.');
     const cartas=[...d.querySelectorAll('#fondoMenus .cartaFondo')],brasas=[...d.querySelectorAll('#fondoMenus .brasa')];
     t.check(cartas.length===7&&brasas.length===16,'La portada debe conservar sus cartas flotantes y brasas.');
     if(!visor.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      const rotor=d.querySelector('.home-vortex svg');
+      const giro=visor.getComputedStyle(rotor).rotate;
       const antes=visor.getComputedStyle(cartas[3]).transform;await sleep(200);
+      t.check(visor.getComputedStyle(rotor).rotate!==giro,'El remolino del fondo debe girar.');
       t.check(visor.getComputedStyle(cartas[3]).transform!==antes,'Las cartas del fondo deben desplazarse.');
     }
     for(const [w,h] of [[320,568],[375,667],[390,844],[430,932],[844,390]]){

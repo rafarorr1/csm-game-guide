@@ -13,6 +13,16 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Propuesta de esfera y remolino · 2026-09-07
+
+Build 175, beta: vuelve el aro tipo reloj detrás del logo, con marcas doradas
+y anillos que giran a distinta velocidad. Un remolino vectorial rojo se mueve
+por detrás; se mantienen las brasas y las cartas. Se retiran las dos frases
+de la portada. Los botones crecen un 4,5 % con cursor y responden al toque con
+una pulsación corta, sin alterar el espacio reservado para cada control.
+Se respetan movimiento reducido, foco de teclado y los cinco tamaños probados.
+La propuesta usa gráficos propios; la referencia de Balatro guía el movimiento.
+
 ## Sin numerar — El fondo del Domo vuelve a moverse · 2026-09-07
 
 Build 174, beta: conserva los botones compactos del nuevo inicio móvil y recupera
