@@ -261,3 +261,74 @@ async function cinematicaFinal(winner, why, acciones){
   clearInterval(vigia);
   return true;
 }
+
+/* Volado compartido: la elección y el resultado usan exactamente la misma moneda.
+   Sólo rnd decide el turno; la animación nunca altera el resultado. */
+async function voladoDomo(nombreRival){
+  if(!document.getElementById('voladoDomoCss')){
+    const estilo=document.createElement('style');estilo.id='voladoDomoCss';
+    estilo.textContent=`
+#ovPanel:has(.volado-domo){width:min(540px,calc(100vw - 28px));max-width:540px;padding:0;overflow:auto;border:1px solid #9e80504d;border-radius:22px;background:#100d18;box-shadow:0 32px 100px #000c,0 0 70px #9d6b2015}
+.volado-domo{position:relative;isolation:isolate;text-align:center;padding:30px 28px 24px;color:#f4e5c5;background:radial-gradient(ellipse at 50% 38%,#48304466,transparent 61%),linear-gradient(150deg,#21192a,#100d18 70%);overflow:hidden}
+.volado-domo::before{content:'';position:absolute;inset:9px;border:1px solid #b99b5526;border-radius:15px;pointer-events:none;z-index:-1}
+.volado-domo .vd-kicker{font:600 10px/1.4 var(--sans,sans-serif);letter-spacing:.32em;text-transform:uppercase;color:#b79b68}
+.volado-domo h3{font:500 clamp(28px,6vw,38px)/1.2 var(--serif,serif);letter-spacing:.025em;margin:9px 0;color:#f6e7c6}
+.volado-domo .vd-intro{font:13px/1.5 var(--sans,sans-serif);color:#b9afc4;margin:0;max-width:330px;margin-inline:auto}
+.volado-domo .volado{padding:0;gap:0}
+.vd-stage{position:relative;display:grid;place-items:center;width:100%;height:238px;margin:4px 0 0;isolation:isolate}
+.vd-stage::before{content:'';position:absolute;width:204px;height:204px;border:1px solid #c9a75b24;border-radius:50%;box-shadow:0 0 0 20px #c9a75b08,0 0 0 21px #c9a75b14;z-index:-1}
+.vd-stage::after{content:'';position:absolute;bottom:20px;width:100px;height:12px;border-radius:50%;background:#0008;filter:blur(7px);z-index:-1}
+.volado-domo #moneda{position:relative;display:grid;place-items:center;width:144px;height:144px;border-radius:50%;font-size:0;color:#51341a;border:3px solid #e7c67a;background:radial-gradient(circle at 35% 22%,#fff0b3 0%,#d4a955 31%,#b68435 58%,#edce83 79%,#a77428 100%);box-shadow:inset 0 0 0 4px #674319,inset 0 0 0 6px #f5d78b,inset 0 0 0 10px #9a6b2e88,0 6px 0 #64401d,0 9px 0 #342215,0 18px 30px #0009;animation:vd-flotar 4s ease-in-out infinite}
+.volado-domo #moneda::before{content:'';position:absolute;inset:14px;border:1px dashed #65441d9c;border-radius:50%;pointer-events:none}
+.vd-icon{width:64px;height:64px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 0 #fff0b088)}
+.vd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+.volado-domo #moneda.girando{animation:vd-lanzar 1.5s cubic-bezier(.3,.05,.2,1) both}
+.volado-domo .lados{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:360px}
+.volado-domo .lados .btn{display:flex;align-items:center;justify-content:center;gap:12px;min-height:67px;padding:12px 18px;border:1px solid #b69a6555;border-radius:12px;background:linear-gradient(#342a3d,#211a2b);color:#e6d4af;box-shadow:inset 0 1px 0 #ffffff09;transition:background .18s,border-color .18s,box-shadow .18s;cursor:pointer}
+.volado-domo .lados .vd-icon{width:30px;height:30px;stroke-width:2.3;color:#c9a66b;filter:none}
+.volado-domo .vd-choice{text-align:left;font:600 16px/1.2 var(--serif,serif);letter-spacing:.025em}
+.volado-domo .vd-choice small{display:block;font:10px/1.5 var(--sans,sans-serif);letter-spacing:.1em;text-transform:uppercase;color:#9d90aa;margin-top:3px}
+.volado-domo .lados .btn:hover:not(:disabled),.volado-domo .lados .btn:focus-visible{border-color:#e4c47a;background:#463348;outline:2px solid #e4c47a;outline-offset:3px}
+.volado-domo .lados .btn[aria-pressed=true]{border-color:#e4c47a;background:linear-gradient(#514033,#30231f);box-shadow:0 0 22px #c7953520}
+.volado-domo .lados .btn:disabled{cursor:default;opacity:.4}
+.volado-domo .lados .btn[aria-pressed=true]:disabled{opacity:1}
+.volado-domo .dice{min-height:52px;margin-top:18px;font:13px/1.5 var(--sans,sans-serif);color:#b9afc4;max-width:100%}
+.volado-domo .dice b{color:#f2d590;font-weight:600}
+.volado-domo .vd-result{display:block;margin-top:4px;font:500 23px/1.2 var(--serif,serif);color:#f7e8c7}
+.volado-domo .vd-foot{font:9px/1.5 var(--sans,sans-serif);letter-spacing:.22em;text-transform:uppercase;color:#786d87;border-top:1px solid #b69a651c;padding-top:15px;margin:0}
+@keyframes vd-flotar{50%{translate:0 -7px}}
+@keyframes vd-lanzar{0%{transform:translateY(0) scaleX(1) rotate(-8deg)}18%{transform:translateY(-32px) scaleX(.08) rotate(16deg)}35%{transform:translateY(-46px) scaleX(1) rotate(-12deg)}50%{transform:translateY(-40px) scaleX(.06) rotate(14deg)}65%{transform:translateY(-24px) scaleX(1) rotate(-9deg)}80%{transform:translateY(-10px) scaleX(.08) rotate(7deg)}92%{transform:translateY(3px) scaleX(1) rotate(-3deg)}100%{transform:translateY(0) scaleX(1) rotate(0)}}
+@media(max-height:640px){.volado-domo{padding:20px}.vd-stage{height:180px}.vd-stage::before{width:164px;height:164px}.volado-domo #moneda{width:118px;height:118px}.volado-domo .dice{margin-top:12px}.volado-domo .vd-foot{padding-top:10px}}
+@media(prefers-reduced-motion:reduce){.volado-domo #moneda,.volado-domo #moneda.girando{animation:none}.volado-domo *{transition:none}}
+`;
+    document.head.appendChild(estilo);
+  }
+  const icono=lado=>`<span class="vd-sr">${lado==='cara'?'👑':'⚔️'}</span><svg class="vd-icon" viewBox="0 0 64 64" aria-hidden="true">${lado==='cara'?'<path d="M12 20l10 10 10-17 10 17 10-10-6 27H18z"/><path d="M18 40h28M20 51h24"/><circle cx="12" cy="17" r="2"/><circle cx="32" cy="10" r="2"/><circle cx="52" cy="17" r="2"/>':'<path d="M14 9l9 5 24 28-5 5-28-24zM9 47l11-11M12 44l-5 5 8 8 5-5M50 9l-9 5-24 28 5 5 28-24zM44 36l11 11M44 52l5 5 8-8-5-5"/>'}</svg>`;
+  const p=document.getElementById('ovPanel');
+  p.innerHTML=`<section class="volado-domo" aria-labelledby="vd-title"><div class="vd-kicker">El ritual de apertura</div><h3 id="vd-title">Cara o cruz</h3><p class="vd-intro">Elige el sello de tu suerte.<br>Quien gane dará el primer paso en el Domo.</p><div class="volado"><div class="vd-stage"><div class="moneda" id="moneda" role="img" aria-label="Moneda: cara">${icono('cara')}</div></div><div class="lados"><button class="btn" id="ladoCara" aria-pressed="false">${icono('cara')}<span class="vd-choice">Cara<small>La corona</small></span></button><button class="btn" id="ladoCruz" aria-pressed="false">${icono('cruz')}<span class="vd-choice">Cruz<small>Las espadas</small></span></button></div><div class="dice" id="voladoTxt" role="status" aria-live="polite">La moneda espera tu elección.</div></div><p class="vd-foot">Dos sellos · Una oportunidad</p></section>`;
+  const panel=p.firstElementChild,moneda=p.querySelector('#moneda'),texto=p.querySelector('#voladoTxt');
+  openOv();
+  const botones=[p.querySelector('#ladoCara'),p.querySelector('#ladoCruz')];
+  const eleccion=await new Promise(resolve=>{
+    botones.forEach((boton,i)=>boton.onclick=()=>{
+      botones.forEach(b=>b.disabled=true);boton.setAttribute('aria-pressed','true');
+      resolve(i===0?'cara':'cruz');
+    });
+    botones[0].focus({preventScroll:true});
+  });
+  texto.textContent='Elegiste '+eleccion.toUpperCase()+'. La moneda está en el aire…';
+  const salio=rnd(2)===0?'cara':'cruz';
+  const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
+  moneda.classList.add('girando');
+  let cara=true;
+  const alterna=reducido?null:setInterval(()=>{cara=!cara;moneda.innerHTML=icono(cara?'cara':'cruz');},180);
+  try{await nap(reducido?350:1500);}finally{if(alterna!==null)clearInterval(alterna);}
+  moneda.classList.remove('girando');moneda.style.animation='none';
+  moneda.innerHTML=icono(salio);moneda.setAttribute('aria-label','Moneda: '+salio);
+  const ganas=salio===eleccion;
+  texto.innerHTML=`Salió <b>${salio.toUpperCase()}</b><span class="vd-result"></span>`;
+  texto.querySelector('.vd-result').textContent=ganas?'empiezas tú':'empieza '+nombreRival;
+  await nap(1500);
+  if(p.contains(panel))document.getElementById('ov').classList.remove('on');
+  return ganas?ME:FOE;
+}

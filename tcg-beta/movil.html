@@ -819,8 +819,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=169"></script>
-<script src="final.js?b=169"></script>
+<script src="motor.js?b=172"></script>
+<script src="final.js?b=172"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -831,7 +831,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:169, fecha:'2026-09-07'};
+const BUILD = {n:172, fecha:'2026-09-07'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1149,28 +1149,7 @@ function pedirSalirAlMenu(){
 }
 
 /* ---------- el volado, la cortinilla y el arranque ---------- */
-async function volado(nombreRival){
-  const p=$('#ovPanel');
-  const eleccion=await new Promise(ok=>{
-    p.innerHTML=`<h3>🪙 Cara o cruz</h3><p>Elige tu lado. Quien gane el volado empieza la partida.</p>
-      <div class="volado"><div class="moneda" id="moneda">👑</div>
-        <div class="lados"><button class="btn gold" id="ladoCara">👑 CARA</button><button class="btn" id="ladoCruz">⚔️ CRUZ</button></div>
-        <div class="dice" id="voladoTxt"></div></div>`;
-    openOv();
-    $('#ladoCara').onclick=()=>ok('cara'); $('#ladoCruz').onclick=()=>ok('cruz');
-  });
-  $('#ladoCara').disabled=$('#ladoCruz').disabled=true;
-  $('#voladoTxt').innerHTML=`Pediste <b>${eleccion.toUpperCase()}</b>…`;
-  const salio=rnd(2)===0?'cara':'cruz', moneda=$('#moneda');
-  moneda.classList.add('girando');
-  const alterna=setInterval(()=>{ moneda.textContent=moneda.textContent==='👑'?'⚔️':'👑'; },110);
-  await nap(1500); clearInterval(alterna); moneda.classList.remove('girando');
-  moneda.textContent=salio==='cara'?'👑':'⚔️';
-  const ganas=salio===eleccion;
-  $('#voladoTxt').innerHTML=`Salió <b>${salio.toUpperCase()}</b> ${salio==='cara'?'👑':'⚔️'} — `+(ganas?'<b>empiezas tú</b>':`empieza <b>${nombreRival}</b>`);
-  await nap(1400); cerrarOv();
-  return ganas?ME:FOE;
-}
+async function volado(nombreRival){ return voladoDomo(nombreRival); }
 function cartaDeLiderVS(lid, lado){
   const L=LEADERS[lid], D=DECKS[lid];
   const d=el('div','vscard '+lado,`<div class="lface">${L.art}</div><div class="lname">${L.n}</div><div class="larch">${D.d}</div>`);
@@ -1198,7 +1177,7 @@ async function startMatch(a,b,opts={}){
 }
 function endGame(winner, why){
   if(G.over) return;
-  G.over=true;
+  G.over=true; G.winner=winner; G.endWhy=why;
   log(`<b>=== FIN: gana ${P(winner).L.n} ===</b>`);
   if(TUT.on){
     const k=TUT_STEPS.findIndex(x=>x.strat);
@@ -1456,7 +1435,7 @@ function fichaTactil(u){}
 
 /* ---------- jugar de la mano ---------- */
 function jugarDeLaMano(id){
-  if(TGT) return;
+  if(TGT||G.resolving) return;
   if(!tutCan('hand',id)){ tutNope(); return; }
   if(!canPlay(ME,id)){ const w=whyNot(ME,id); toast(w); log(`No puedes jugar <b>${CARDS[id].n}</b> — ${w}.`,'sys',true); return; }
   SEL=null; clearPrompt(); manoTocada(null);
@@ -1468,7 +1447,7 @@ function manoTocada(d){
   const pill=$('#jugarPill');
   if(!d){ pill.classList.remove('on'); pill.innerHTML=''; return; }
   d.classList.add('tocada');
-  const id=d.dataset.card, c=CARDS[id], ok=canPlay(ME,id)&&tutCan('hand',id);
+  const id=d.dataset.card, c=CARDS[id], ok=!G.resolving&&canPlay(ME,id)&&tutCan('hand',id);
   pill.innerHTML=`<span><b>${c.n}</b> · ${costOf(id,ME)} PD</span>`;
   const ver=el('button','btn sm','Ver'); ver.onclick=e=>{ e.stopPropagation(); abrirFicha(id,null,{jugar:ok}); };
   pill.appendChild(ver);
@@ -1488,7 +1467,7 @@ function renderLeaders(){
   [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
     const p=P(side), L=p.L, mine=side===ME;
-    const usable=mine&&!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME&&!G.over&&(!L.habReq||L.habReq(G,side))&&tutCan('leader');
+    const usable=mine&&!G.resolving&&!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME&&!G.over&&(!L.habReq||L.habReq(G,side))&&tutCan('leader');
     const target=!mine&&((TGT&&isTargetable('face'))||(SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     host.innerHTML=`<div class="lider${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}" id="lead${side}">
       ${rostroLider(p.leaderId)}
@@ -1497,6 +1476,7 @@ function renderLeaders(){
     e.onclick=()=>{
       if(TGT&&isTargetable('face')&&!mine){ pickTarget('face'); return; }
       if(!mine){ if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } else fichaLider(side); return; }
+      if(G.resolving) return;
       if(!tutCan('leader')){ tutNope(); return; }
       if(usable){ if(NET.guest){ gIntent('leader'); return; } useLeader(ME); }
       else if(G.active===ME&&!p.leaderUsed&&p.pd<L.habCost) toast(`Necesitas ${L.habCost} PD`);
@@ -1574,7 +1554,8 @@ function render(){
   } else mid.appendChild(el('div','',`<span style="color:#4c4266;font-size:9px;letter-spacing:2px">— SIN LUGAR ACTIVO —</span>`));
   P(ME).relics.forEach(r=>{ const c=CARDS[r.id]; if(!c.relicAct) return;
     const b=el('button','btn sm',`${c.art} ${c.relicAct.n} (${r.counters||0})`);
-    b.onclick=()=>{ if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); }; mid.appendChild(b); });
+    b.disabled=G.resolving||G.active!==ME||G.over||P(ME).pd<c.relicAct.cost;
+    b.onclick=()=>{ if(G.resolving) return; if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); }; mid.appendChild(b); });
   // la mano: se reconcilia, no se rehace (la carta tocada sobrevive al repintado)
   const h=$('#hand'), mano=P(ME).hand;
   const viejos=[...h.children]; let j=0;
@@ -1588,9 +1569,9 @@ function render(){
     else { const cost=costOf(id,ME), ce=d.querySelector('.cost');
       if(ce){ ce.textContent=cost; ce.classList.toggle('rebajado', cost<CARDS[id].c); }
       d.classList.remove('locked','playable','unplayable','hi'); }
-    const ok=canPlay(ME,id), libre=tutCan('hand',id);
+    const ok=!G.resolving&&canPlay(ME,id), libre=tutCan('hand',id);
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
-    d.onclick=()=>{ if(TGT) return;
+    d.onclick=()=>{ if(TGT||G.resolving) return;
       if(d.classList.contains('tocada')){ jugarDeLaMano(id); return; }
       manoTocada(d); };
   });
@@ -1604,10 +1585,10 @@ function renderControls(){
   const c=$('#controls'); c.innerHTML='';
   const p=P(ME);
   if(SEL&&SEL.card.act){ const a=SEL.card.act;
-    const b=el('button','btn sm',`✨ ${a.n} (${a.cost} PD)`); b.disabled=SEL.actUsed||p.pd<a.cost;
-    b.onclick=()=>{ if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); }; c.appendChild(b); }
+    const b=el('button','btn sm',`✨ ${a.n} (${a.cost} PD)`); b.disabled=G.resolving||!canUseAct(SEL);
+    b.onclick=()=>{ if(G.resolving||!canUseAct(SEL)) return; if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); }; c.appendChild(b); }
   const e=el('button','btn gold','Terminar turno ⏭');
-  e.disabled=G.active!==ME||G.busy||G.over||!tutCan('end'); e.onclick=pedirTerminarTurno; c.appendChild(e);
+  e.disabled=G.active!==ME||G.busy||G.resolving||G.over||!tutCan('end'); e.onclick=pedirTerminarTurno; c.appendChild(e);
   const reloj=el('span','','' ); reloj.id='reloj'; reloj.hidden=true; c.appendChild(reloj);
   if(RELOJ.id) relojPinta();
   c.appendChild(el('span','spacer'));
@@ -2084,8 +2065,9 @@ async function fxDeath(u){
   if(e){ e.style.pointerEvents='none';
     const pile=$(u.owner===ME?'#myGravePile':'#foeGravePile'), er=e.getBoundingClientRect(), pr=pile?pile.getBoundingClientRect():null;
     const dx=pr?pr.left+pr.width/2-(er.left+er.width/2):0, dy=pr?pr.top+pr.height/2-(er.top+er.height/2):40;
-    const ghost=e.cloneNode(true); ghost.className='card unit t-personaje';
+    const ghost=e.cloneNode(true); ghost.classList.remove('ready','tgt','selected','finge-hov');
     ghost.style.cssText=`position:absolute;left:${er.left}px;top:${er.top}px;width:${er.width}px;height:${er.height}px;margin:0;pointer-events:none;z-index:5`;
+    ghost.style.fontSize=(parseFloat(getComputedStyle(e).fontSize)*er.width/e.offsetWidth)+'px';
     $('#fx').appendChild(ghost); e.style.visibility='hidden';
     ghost.animate([{transform:'rotate(0) scale(1)',opacity:1,filter:'grayscale(0)'},{transform:'rotate(-10deg) scale(.92)',opacity:1,filter:'grayscale(.6)',offset:.3},
       {transform:`translate(${dx}px,${dy}px) rotate(-28deg) scale(.2)`,opacity:0,filter:'grayscale(1)'}],{duration:820,easing:'cubic-bezier(.45,.05,.6,1)',fill:'forwards'});
