@@ -13,6 +13,14 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Vuelta al menú original · 2026-09-07
+
+Build 176, beta: se recupera íntegramente el menú móvil de la build 172 por
+preferencia del usuario. Se retiran las propuestas de inicio de las builds
+173–175 y sus pruebas específicas de diseño. Se mantienen las correcciones de
+jugabilidad, integración y auditoría de la build 172, junto con sus regresiones.
+Producción ya conserva ese menú y no se modifica.
+
 ## Sin numerar — Propuesta de esfera y remolino · 2026-09-07
 
 Build 175, beta: vuelve el aro tipo reloj detrás del logo, con marcas doradas
