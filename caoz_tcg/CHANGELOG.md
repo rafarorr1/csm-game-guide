@@ -13,6 +13,18 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — El fondo del Domo vuelve a moverse · 2026-09-07
+
+Build 174, beta: conserva los botones compactos del nuevo inicio móvil y recupera
+el fondo rojo, las siete cartas flotantes y las dieciséis brasas del menú original.
+La portada deja de tapar esa capa con un fondo opaco; se retiran los retratos fijos
+y el aro estático. Se añade una respiración suave del rojo, con el movimiento
+pausado cuando el dispositivo pide reducir animaciones. Las brasas recuperan su
+animación propia, separada de la de las cartas. En horizontal se simplifican los
+botones secundarios para respetar la franja de estado sin introducir scroll.
+La suite del menú verifica que el fondo no quede tapado, que las cartas se muevan,
+la cabecera bajo el área protegida y las siete acciones en cinco tamaños.
+
 ## Sin numerar — Inicio móvil del Domo · 2026-09-07
 
 Build 173: portada móvil con escena de marca flexible, acción principal Jugar,
