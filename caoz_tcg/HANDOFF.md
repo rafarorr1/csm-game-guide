@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 181 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 182 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -319,3 +319,7 @@ Mohamed, Fender, Talesyn, Rafaela, Adreida y Gero. Progreso local por escalón, 
 partidas a medias. Alma rival 16/20/24/28/32/40; no modifica mazos ni IA.
 setupMatch recibe opts.campana y showEnd deriva el resultado al flujo de campaña.
 Suite campana: derrota, seis victorias, duplicados, recarga y aislamiento.
+
+Build 182: selección de campaña con carrusel de cartas del estilo de escritorio,
+flechas y gesto horizontal. La escalera asciende visualmente desde abajo; sólo
+se muestran identidades vencidas y el próximo rival. Se conserva el guardado v1.

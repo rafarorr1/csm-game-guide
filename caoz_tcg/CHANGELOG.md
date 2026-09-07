@@ -13,6 +13,15 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Ascenso y revelación de rivales · 2026-09-07
+
+Build 182, beta: la escalera coloca el primer combate abajo y el jefe arriba.
+Se ocultan nombre, retrato y atributos de los rivales posteriores al próximo
+combate; se revelan al avanzar. El selector de campaña usa cartas persistentes,
+profundidad y transición lateral como el carrusel de escritorio, con flechas,
+teclado y deslizamiento táctil. Confirmar fija el Protagonista de la campaña.
+Se conserva el progreso existente y el funcionamiento de los combates.
+
 ## Sin numerar — Prototipo de campaña · 2026-09-07
 
 Build 181, beta. Escalera de seis combates con elección inicial de Protagonista,
