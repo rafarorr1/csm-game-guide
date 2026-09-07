@@ -13,6 +13,19 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Auditoría de interfaz y resolución · 2026-09-07
+
+Build 172: las habilidades deshabilitadas reflejan las condiciones del motor;
+Las acciones de mano, líder, reliquias y fin de turno esperan a que termine el ataque. La copia de una carta al morir
+conserva su diseño y su escala. El daño de combate llega identificado por el motor,
+sin confundir infección con un golpe ni depender de una pausa menor a dos segundos.
+En el invitado, los lotes de efectos se reproducen en orden y el fin de partida
+recibe el ganador y motivo del anfitrión, incluidas las victorias por Deseo o El Rey.
+El menú distingue colección de set base; el banco cuenta las partidas según los
+líderes actuales y contabiliza también las victorias de El Rey. Los nombres
+largos de las cartas se muestran completos y centrados. Casos nuevos en la suite auditoria, reproducidos en rojo antes
+de corregirlos. No se cambian cartas, mazos ni balance.
+
 ## Sin numerar — El ritual de apertura · 2026-09-07
 
 Build 171: volado compartido por escritorio y móvil en final-core.js. Moneda

@@ -34,6 +34,7 @@ body.aaa-polish .card.acomodo .pieCarta .nm{
   border:1px solid #7c683b;border-radius:3px;
   background:linear-gradient(#302338,#140f1d);color:#f4e3b5;
   font-size:1.12em;line-height:1.12;font-variant:small-caps;letter-spacing:.035em;
+  display:block;-webkit-line-clamp:unset;overflow-wrap:anywhere;text-wrap:balance;flex-shrink:0;
 }
 body.aaa-polish .card.acomodo .pieCarta .tribe{
   position:relative;z-index:2;font-size:.6em;line-height:1.15;letter-spacing:.035em;
@@ -179,7 +180,7 @@ body.aaa-combat .card.unit:hover{filter:none}
   }
 
   async function aaaCounter(counterEl,hitEl,amount,letal){
-    if(!counterEl||!hitEl){aaaDamageNumber(STATE.last&&STATE.last.att,amount,{letal});return;}
+    if(!counterEl||!hitEl||!counterEl.isConnected||!hitEl.isConnected){aaaDamageNumber(STATE.last&&STATE.last.att,amount,{letal});return;}
     const a=aaaCenterOfEl(counterEl),b=aaaCenterOfEl(hitEl);if(!a||!b)return;
     const dx=(b.x-a.x)*.18,dy=(b.y-a.y)*.18;
     counterEl.style.zIndex='78';
@@ -222,7 +223,7 @@ body.aaa-combat .card.unit:hover{filter:none}
       const dx=(to.x-from.x)*.28,dy=(to.y-from.y)*.28;
       const targetObj=target==='face'?null:target;
       const targetEl=targetObj?aaaUnitEl(targetObj):aaaFace(1-att.side);
-      STATE.last={att,target:targetObj,attEl:e,targetEl,from,to,t:Date.now(),hits:0};
+      STATE.last={g:G,att,target:targetObj,attEl:e,targetEl,from,to,t:Date.now(),hits:0};
       e.style.zIndex='82';
 
       // anticipación: apenas se mueve, pero comprime la carta y corta el ritmo
@@ -254,22 +255,22 @@ body.aaa-combat .card.unit:hover{filter:none}
     };
 
     /* El primer fxHit del combate sólo muestra la consecuencia del golpe que ya
-       vimos. El segundo, si cae sobre el atacante inmediatamente después, es el
-       contraataque: se anima físicamente desde la carta defensora. */
+       vimos. El motor identifica el segundo como daño de combate del defensor:
+       es el contraataque, aunque una Trampa haya pausado la secuencia; se anima físicamente desde la carta defensora. */
     window.fxHit=async function aaaFxHit(u,amount,opt){
       if(!aaaFX()||!aaaMotionOK()){ if(oldHit)return oldHit(u,amount,opt); return; }
       if(typeof opt!=='object')opt={inf:!!opt}; opt=opt||{};
-      const S=STATE.last,now=Date.now();
-      if(S&&now-S.t<1500&&S.target&&u===S.target&&S.hits===0){
+      const S=STATE.last;
+      if(S&&S.g===G&&opt.combate&&opt.atacante===S.att.uid&&S.target&&u.uid===S.target.uid&&S.hits===0){
         S.hits=1;
         await aaaNap(55);aaaDamageNumber(u,amount,{letal:!!opt.letal});
         if(opt.letal)aaaSound('lethal',.75);
         await aaaNap(680);
         return;
       }
-      if(S&&now-S.t<1800&&u===S.att&&S.hits===1&&S.targetEl){
+      if(S&&S.g===G&&opt.combate&&S.target&&opt.atacante===S.target.uid&&u.uid===S.att.uid&&S.hits===1){
         S.hits=2;
-        await aaaCounter(S.targetEl,S.attEl,amount,!!opt.letal);
+        await aaaCounter(aaaUnitEl(S.target),aaaUnitEl(u),amount,!!opt.letal);
         return;
       }
       if(oldHit)return oldHit(u,amount,opt);

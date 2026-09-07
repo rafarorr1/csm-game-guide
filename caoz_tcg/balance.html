@@ -65,9 +65,9 @@ code{background:#0c0916;padding:1px 5px;border-radius:4px;font-size:12px}
 
 <div class="barra">
   <select id="cuantas">
-    <option value="20">500 partidas (20 por cruce) · rápido</option>
-    <option value="80" selected>2000 partidas (80 por cruce)</option>
-    <option value="200">5000 partidas (200 por cruce) · lento</option>
+    <option value="20">720 partidas (20 por cruce) · rápido</option>
+    <option value="80" selected>2880 partidas (80 por cruce)</option>
+    <option value="200">7200 partidas (200 por cruce) · lento</option>
   </select>
   <button class="btn oro" id="correr">Jugar</button>
   <button class="btn" id="copiar" disabled>Copiar informe</button>
@@ -175,9 +175,8 @@ async function tanda(porCruce){
         d.cruce[clave].total++;
         if (!T.G.over){ d.sinTerminar++; continue; }
 
-        const gana = T.P(0).alma > 0 && T.P(1).alma <= 0 ? 0
-                   : T.P(1).alma > 0 && T.P(0).alma <= 0 ? 1
-                   : (motivoUlt === 'pergamino' ? (T.P(0).scrollTurns >= 2 ? 0 : 1) : null);
+        // La victoria la decide el motor: también puede ser por Deseo o por El Rey.
+        const gana = T.G.winner;
         if (gana === 0){ d.porLider[a].gana++; d.cruce[clave].gana++; }
         else if (gana === 1) d.porLider[b].gana++;
         if (gana !== null){
@@ -278,7 +277,7 @@ function pintar(d, muertos){
   partes.push('</table>');
   const brecha = Math.max(...Object.values(wr)) - Math.min(...Object.values(wr));
   partes.push(`<div class="muted" style="font-size:12.5px">Entre el mejor y el peor hay
-    <b>${brecha.toFixed(1)} puntos</b>. Por debajo de 15 se considera sano en un juego de 5 mazos;
+    <b>${brecha.toFixed(1)} puntos</b>. Por debajo de 15 se considera sano en un juego de ${L.length} mazos;
     por encima de 25, uno domina.</div>`);
 
   /* --- matriz --- */
@@ -654,6 +653,11 @@ function aplicarAjustes(cual){
 /* ======================================================================== */
 async function arrancar(){
   J = await esperarJuego();
+  const cruces=Object.keys(J.TCG.LEADERS).length**2;
+  for(const o of $('#cuantas').options){
+    const n=Number(o.value);
+    o.textContent=`${cruces*n} partidas (${n} por cruce)`+(n===20?' · rápido':n===200?' · lento':'');
+  }
   if(location.search.includes('conserje')){
     const r = quitarConserjes();
     $('#salida').innerHTML = '<div class="nota">Sin Conserjes donde no sirven — ' + r + '</div>';
@@ -699,7 +703,8 @@ async function arrancar(){
     $('#correr').disabled = false;
     // para leerlo desde fuera (publicar.sh, o una corrida sin ventana)
     window.RESULTADO = INFORME;
-    try{ fetch('/resultado', {method:'POST', headers:{'Content-Type':'application/json'},
+    // Incrustado en el arnés, el resultado lo entrega la suite completa.
+    if(window===window.top) try{ fetch('/resultado', {method:'POST', headers:{'Content-Type':'application/json'},
       body: JSON.stringify(INFORME)}).catch(()=>{}); }catch(e){}
   };
   $('#copiar').onclick = () => navigator.clipboard.writeText(JSON.stringify(INFORME,null,1));

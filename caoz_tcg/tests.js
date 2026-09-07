@@ -309,11 +309,101 @@ PRUEBAS.suite('visual', async t => {
     'el panel de reglas no debe tapar el combate');
   await pelea;
   t.check(!document.querySelector('.fxlabel'),'el aviso debe desaparecer antes del impacto');
-  const golpe=fxHit(b,1,{});await sleep(100);
+  const golpe=fxHit(b,1,{combate:true,atacante:a.uid});await sleep(100);
   t.check(document.querySelectorAll('.aaa-dmg').length===1,'debe verse una sola cifra de daño');
   await golpe;
   t.check(!document.querySelector('.aaa-dmg'),'la cifra debe retirarse antes del siguiente golpe');
   t.check(!document.body.classList.contains('aaa-combat'),'los paneles deben recuperarse al terminar');
+});
+
+PRUEBAS.suite('banco', async t => {
+  const marco=document.createElement('iframe');marco.src='balance.html?auto';
+  marco.style.cssText='position:fixed;left:-10000px;width:1280px;height:900px';document.body.appendChild(marco);
+  try{
+    let d;
+    for(let i=0;i<200;i++){
+      await sleep(100);d=marco.contentDocument;
+      if(d&&d.querySelector('#copiar')&&!d.querySelector('#copiar').disabled)break;
+    }
+    const tabla=d&&d.querySelector('#salida table');
+    t.check(!!tabla,'El banco debe terminar y presentar sus resultados.');
+    const filas=[...tabla.querySelectorAll('tr')].slice(1);
+    const victorias=filas.reduce((n,f)=>n+Number(f.cells[2].textContent),0);
+    const participaciones=filas.reduce((n,f)=>n+Number(f.cells[1].textContent),0);
+    t.check(victorias===participaciones/2,'El banco pierde victorias: '+victorias+' de '+participaciones/2);
+    t.nota(victorias+' partidas, todas con ganador contabilizado.');
+  }finally{marco.remove();}
+});
+
+PRUEBAS.suite('tipografia', async t => {
+  showGallery();await sleep(200);
+  try{
+    const nombres=[...document.querySelectorAll('#ov .gallery .card .nm')];
+    t.check(nombres.length>80,'La galería debe presentar el set base para revisar sus títulos.');
+    const cortados=nombres.filter(e=>e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2);
+    t.check(!cortados.length,'Nombres recortados: '+cortados.map(e=>e.textContent).join(', '));
+    t.check(nombres.every(e=>getComputedStyle(e).textAlign==='center'),'Los nombres deben estar centrados.');
+  }finally{document.querySelector('#ov').classList.remove('on');}
+});
+
+PRUEBAS.suite('auditoria', async t => {
+  const fallos=[];const comprobar=(ok,m)=>{if(!ok)fallos.push(m);};
+  await T.startMatch('fender','adreida',{volado:false,first:0});
+  const u=T.mkUnit('minus',0);u.sick=false;u.stunned=1;T.P(0).field.push(u);T.P(0).pd=10;
+  T.recalc();selectUnit(u);
+  const boton=[...document.querySelectorAll('#controls button')].find(b=>b.textContent.includes(u.card.act.n));
+  comprobar(boton&&boton.disabled,'La habilidad de una unidad aturdida aparece habilitada.');
+  const pdAntes=T.P(0).pd;
+  comprobar(await useAct(u)===false&&T.P(0).pd===pdAntes,'Una habilidad aturdida no debe gastar PD.');
+  u.stunned=0;renderControls();
+  comprobar(canUseAct(u)&&![...document.querySelectorAll('#controls button')].find(b=>b.textContent.includes(u.card.act.n)).disabled,'La habilidad válida debe estar disponible.');
+  u.possessed=true;comprobar(!canUseAct(u),'Una unidad poseída no puede usar habilidad.');u.possessed=false;
+  clearPrompt();SEL=null;
+  G.resolving=true;renderControls();
+  const terminar=[...document.querySelectorAll('#controls button')].find(b=>b.textContent.includes('Terminar'));
+  comprobar(terminar&&terminar.disabled,'Se puede terminar el turno durante un combate.');
+  const turnoAntes=G.active, faseAntes=G.phase;
+  await endTurn();pedirTerminarTurno();
+  comprobar(G.active===turnoAntes&&G.phase===faseAntes,'Terminar turno debe esperar al combate incluso por llamada directa.');
+  G.resolving=false;
+  const caraOriginal=window.fxFace;let simultaneas=0,maximas=0;
+  try{
+    window.fxFace=async()=>{simultaneas++;maximas=Math.max(maximas,simultaneas);await sleep(50);simultaneas--;};
+    await Promise.all([netPlayFx([{k:'face',side:0,n:1}]),netPlayFx([{k:'face',side:0,n:1}])]);
+    comprobar(maximas===1,'Los efectos de estados online consecutivos se superponen.');
+  }finally{window.fxFace=caraOriginal;}
+  u.stunned=0;T.render();await sleep(400);
+  const muerte=fxDeath(u);await sleep(60);
+  const fantasma=document.querySelector('#fx .card');
+  comprobar(fantasma&&fantasma.classList.contains('acomodo'),'La animación de muerte pierde el diseño de la carta.');
+  await muerte;
+  const originalShow=window.showEnd;let fin=null;
+  try{
+    window.showEnd=(winner,why)=>{fin={winner,why};};
+    G.over=true;G.winner=FOE;G.endWhy='Victoria por Deseo';
+    const estado=netSnap();
+    comprobar(estado.winner===ME && estado.why==='Victoria por Deseo','La red no transmite el ganador y motivo reales.');
+    G.over=false;G.overShown=false;netApply(estado);await sleep(750);
+    comprobar(fin&&fin.winner===ME&&fin.why==='Victoria por Deseo','El invitado muestra derrota cuando gana por Deseo.');
+  }finally{window.showEnd=originalShow;}
+  await T.startMatch('fender','adreida',{volado:false,first:0});
+  const a=T.mkUnit('horton',1),b=T.mkUnit('discipulo',0);T.P(1).field.push(a);T.P(0).field.push(b);T.recalc();T.render();
+  await fxLunge(a,b);
+  const dano=fxHit(b,1,{inf:true});await sleep(100);
+  comprobar(!!document.querySelector('.fxnum.inf'),'La infección inmediatamente después de un ataque pierde su color verde.');
+  await dano;
+  const originales=[window.playFromHand,window.useLeader,window.useRelic];let entradas=0;
+  try{
+    window.playFromHand=window.useLeader=window.useRelic=async()=>{entradas++;return false;};
+    G.resolving=true;T.P(0).pd=10;T.P(0).hand=['matildus'];T.P(0).relics=[{id:'puntosrobados',counters:1}];T.render();
+    if(typeof jugarDeLaMano==='function')jugarDeLaMano('matildus');
+    else document.querySelector('#hand .card').click();
+    document.querySelector('#leaderMe').firstElementChild.click();
+    [...document.querySelectorAll('#midRow button')].find(b=>b.textContent.includes('Cobrar')).click();
+    comprobar(entradas===0,'Mano, líder y reliquia permiten acciones durante el combate.');
+  }finally{[window.playFromHand,window.useLeader,window.useRelic]=originales;G.resolving=false;T.render();}
+  t.check(!fallos.length,fallos.join('\n'));
+  t.nota('Habilidades, muerte de cartas, victoria online e identificación del daño.');
 });
 
 PRUEBAS.suite('regresiones', async t => {
@@ -779,7 +869,7 @@ PRUEBAS.suite('regresiones', async t => {
     t.check(/Sir Horton/.test(dicho) && /Discípulo/.test(dicho),
       `un ataque del rival debe decir quién ataca a quién — decía: "${dicho}"`);
     await p;
-    const golpeAAA=fxHit(mio,1,{});
+    const golpeAAA=fxHit(mio,1,{combate:true,atacante:suyo.uid});
     await sleep(100);
     const numero=$1('#fx .aaa-dmg');
     t.check(numero && numero.style.top && Number.isFinite(parseFloat(numero.style.top)),

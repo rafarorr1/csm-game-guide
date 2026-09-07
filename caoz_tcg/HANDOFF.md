@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 166 · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 172 (rama feature/aaa-combat-cards, local) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -35,7 +35,8 @@ motor.js      el motor: cartas, Líderes, mazos, reglas, turno, combate, IA, red
               guion del tutorial. NO toca el DOM.
 index.html    pantalla de escritorio (CSS + JS). Redirige a los teléfonos a movil.html.
 movil.html    pantalla del teléfono, de pie. Hecha de cero sobre el mismo motor.
-final.js      compartido por las dos pantallas: cinemática de fin de partida y récords.
+final.js      cargador de final-core.js (final, récords y volado) y polish-aaa.js
+              (cartas y animaciones de combate), compartidos por las dos pantallas.
 sw.js         service worker (la app instalable). manifest.webmanifest + art/icono-*.png.
 tests.js      arnés (?test=1). balance.html: banco de balance. estudio.html: editor de arte.
 publicar.sh   publicación con guardas. servidor_pruebas.py / leer_resultado.py: su apoyo.
