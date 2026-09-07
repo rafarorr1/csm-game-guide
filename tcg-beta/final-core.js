@@ -518,9 +518,19 @@ function campanaDialogo(){
 function campanaBoton(texto,accion,principal=false){
   const b=document.createElement('button');b.className='btn'+(principal?' gold':'');b.textContent=texto;b.onclick=accion;return b;
 }
+function campanaAcciones(...botones){const pie=document.createElement('footer');pie.className='campanaAcciones';pie.append(...botones);return pie;}
+function campanaAjustarVentana(){
+  const v=window.visualViewport,s=document.documentElement.style;
+  s.setProperty('--campana-alto',(v?v.height:innerHeight)+'px');
+  s.setProperty('--campana-desfase',(v?v.offsetTop:0)+'px');
+}
+addEventListener('resize',campanaAjustarVentana);
+if(window.visualViewport){visualViewport.addEventListener('resize',campanaAjustarVentana);visualViewport.addEventListener('scroll',campanaAjustarVentana);}
+campanaAjustarVentana();
 function campanaCerrar(){const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaCabecera(d,titulo,sub){
-  d.innerHTML='<div class="campanaSello">CAMPAÑA · PROTOTIPO</div><h2 id="campanaTitulo"></h2><p class="campanaSub"></p>';
+  d.dataset.vista='mensaje';
+  d.innerHTML='<header class="campanaCabecera"><div class="campanaSello">CAMPAÑA · PROTOTIPO</div><h2 id="campanaTitulo"></h2><p class="campanaSub"></p></header>';
   d.querySelector('h2').textContent=titulo;d.querySelector('p').textContent=sub;
 }
 function abrirCampana(){
@@ -530,6 +540,7 @@ function abrirCampana(){
 }
 function campanaElegir(){
   const d=campanaDialogo();campanaCabecera(d,'Elige tu Protagonista','Desliza las cartas para elegir quién subirá al Domo.');
+  d.dataset.vista='seleccion';
   const ids=Object.keys(LEADERS);let centro=0;
   const pista=document.createElement('div');pista.className='campanaCarrusel';pista.setAttribute('aria-label','Protagonistas');
   const ficha=document.createElement('div');ficha.className='campanaFicha';ficha.setAttribute('aria-live','polite');
@@ -562,12 +573,14 @@ function campanaElegir(){
   const confirmar=campanaBoton('Elegir Protagonista',()=>{
     campanaPasoAnterior=null;campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:ids[centro],etapa:0});campanaRuta();
   },true);confirmar.classList.add('campanaConfirmar');
-  d.append(pista,controles,ficha,confirmar,campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));elegir(0);
+  const seleccion=document.createElement('div');seleccion.className='campanaSeleccion';seleccion.append(pista,controles,ficha);
+  d.append(seleccion,campanaAcciones(confirmar,campanaBoton('Menú principal',()=>{campanaCerrar();showScreen('menu');})));elegir(0);
 }
 function campanaRuta(aviso=''){
   const p=campanaLeer();if(!p){campanaElegir();return;}
   const completa=p.etapa===CAMPANA_RIVALES.length,d=campanaDialogo();
   campanaCabecera(d,completa?'El Domo es tuyo':'La mesa del Domo',aviso||(LEADERS[p.lider].n+' · '+p.etapa+' de 6 rivales vencidos'));
+  d.dataset.vista='mapa';
   const mesa=document.createElement('div');mesa.className='campanaMesa';
   const tablero=document.createElement('div');tablero.className='campanaTablero';
   tablero.innerHTML=`<svg class="campanaGeografia" viewBox="0 0 600 440" preserveAspectRatio="none" aria-hidden="true">
@@ -614,14 +627,13 @@ function campanaRuta(aviso=''){
     peon.querySelector('.campanaPeonCuerpo').animate([{translate:'0 0'},{translate:'0 -10px'},{translate:'0 0'}],{duration:275,iterations:4});
   }
   campanaPasoAnterior=null;
-  const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero y completaste esta campaña.':'Cada combate empieza con tu mazo completo y 20 de Alma. Los rivales ganan resistencia. Si sales o pierdes, puedes reintentar el mismo combate.';d.appendChild(ayuda);
-  if(!completa)d.appendChild(campanaBoton('Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,()=>campanaCombatir(),true));
-  else d.appendChild(campanaBoton('Jugar una nueva campaña',campanaElegir,true));
-  d.appendChild(campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));
-  if(!completa)d.appendChild(campanaBoton('Empezar de nuevo',()=>{
+  const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero. Campaña completada.':'Mazo completo · 20 de Alma por duelo. Tu avance se guarda.';d.appendChild(ayuda);
+  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':'Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaCombatir(),true),campanaBoton('Menú principal',()=>{campanaCerrar();showScreen('menu');}));
+  if(!completa)acciones.appendChild(campanaBoton('Reiniciar',()=>{
     campanaCabecera(d,'¿Reiniciar la campaña?','Perderás el avance de esta escalera cuando elijas un nuevo Protagonista.');
-    d.append(campanaBoton('Elegir nuevo Protagonista',campanaElegir),campanaBoton('Conservar mi avance',()=>campanaRuta(),true));
+    d.append(campanaAcciones(campanaBoton('Conservar mi avance',()=>campanaRuta(),true),campanaBoton('Elegir nuevo Protagonista',campanaElegir)));
   }));
+  d.appendChild(acciones);
 }
 async function campanaCombatir(){
   const p=campanaLeer();if(!p||p.etapa>=6||campanaLanzando)return;
@@ -643,39 +655,46 @@ function campanaFinal(winner,why){
   campanaCabecera(d,winner===ME?(completa?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',
     winner===ME?(completa?'Derrotaste a Gero. El Domo es tuyo.':'Has superado a '+LEADERS[CAMPANA_RIVALES[meta.etapa].lider].n+'. El siguiente combate está desbloqueado.'):'No pierdes tu progreso. Puedes volver a desafiar a este rival.');
   const resultado=document.createElement('p');resultado.className='campanaNota';resultado.textContent=why||'';d.appendChild(resultado);
-  if(!completa)d.appendChild(campanaBoton(winner===ME?'Avanzar en el mapa':'Reintentar combate',()=>winner===ME?campanaRuta():campanaCombatir(),true));
-  d.appendChild(campanaBoton(completa?'Ver campaña completada':'Ver el mapa',()=>campanaRuta(),completa));
-  d.appendChild(campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));
+  const acciones=campanaAcciones();
+  if(!completa)acciones.appendChild(campanaBoton(winner===ME?'Avanzar en el mapa':'Reintentar combate',()=>winner===ME?campanaRuta():campanaCombatir(),true));
+  acciones.append(campanaBoton(completa?'Ver campaña completada':'Ver el mapa',()=>campanaRuta(),completa),campanaBoton('Menú principal',()=>{campanaCerrar();showScreen('menu');}));d.appendChild(acciones);
 }
 {
   const css=document.createElement('style');css.textContent=`
-  #campanaPanel{margin:auto;width:min(94vw,650px);max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;padding:26px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
+  #campanaPanel{--alto-util:calc(var(--campana-alto,100dvh) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));box-sizing:border-box;position:fixed;inset:calc(var(--campana-desfase,0px) + max(12px,env(safe-area-inset-top))) 0 auto;margin:0 auto;width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),650px);max-height:var(--alto-util);overflow:hidden;overscroll-behavior:contain;padding:18px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
+  #campanaPanel[open]{display:flex;flex-direction:column;gap:10px}
+  #campanaPanel[data-vista="mapa"],#campanaPanel[data-vista="seleccion"]{height:min(850px,var(--alto-util))}
+  #campanaPanel[data-vista="mensaje"]{bottom:max(12px,env(safe-area-inset-bottom));height:fit-content;margin:auto}
+  .campanaCabecera,.campanaAcciones{flex:none;min-width:0}
+  .campanaAcciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+  #campanaPanel .campanaAcciones .btn{width:100%;min-width:0;min-height:44px;margin:0;padding:8px;white-space:normal}
+  .campanaAcciones>.gold,.campanaAcciones>:only-child,.campanaAcciones>:last-child:nth-child(2){grid-column:1/-1}
+  .campanaSeleccion{display:flex;flex:1;min-height:0;flex-direction:column;gap:6px}
 
-  .campanaCarrusel{position:relative;height:315px;perspective:850px;overflow:hidden;touch-action:pan-y;--paso:118px}
-  .campanaCarta{position:absolute;left:50%;top:20px;width:180px;min-height:260px;padding:0;overflow:hidden;border:1px solid #896038;border-radius:12px;background:linear-gradient(#38261e,#140f0c);color:#ecd8b2;
+  .campanaCarrusel{position:relative;flex:1;min-height:140px;max-height:315px;perspective:850px;overflow:hidden;touch-action:pan-y;--paso:118px}
+  .campanaCarta{position:absolute;left:50%;top:20px;width:180px;height:calc(100% - 48px);max-height:260px;min-height:0;display:flex;flex-direction:column;padding:0;overflow:hidden;border:1px solid #896038;border-radius:12px;background:linear-gradient(#38261e,#140f0c);color:#ecd8b2;
     transform:translateX(-50%) translateX(calc(var(--d)*var(--paso))) translateZ(calc(var(--dist)*-120px)) rotateY(calc(var(--d)*-26deg)) rotate(calc(var(--d)*2deg)) translateY(calc(var(--dist)*12px));
     z-index:calc(10 - var(--dist));filter:brightness(calc(1 - var(--dist)*.20));transition:transform .42s cubic-bezier(.22,.61,.36,1),filter .42s,box-shadow .3s;cursor:pointer}
   .campanaCarta.enfrente{transform:translateX(-50%) translateZ(60px);filter:none;border-color:#e6bb52;box-shadow:0 0 0 2px #e6bb5270,0 18px 45px #0009}
   .campanaCarta:focus-visible{outline:2px solid #ffe1a0;outline-offset:2px}
   .campanaCarta.guardada{opacity:0;pointer-events:none}
-  .campanaCarta .lface{position:relative;display:grid;place-items:center;width:100%;height:175px;font-size:65px;overflow:hidden}
+  .campanaCarta .lface{position:relative;display:grid;place-items:center;width:100%;flex:1;min-height:0;font-size:clamp(30px,7vh,65px);overflow:hidden}
   .campanaCarta .lname{display:block;font:800 20px/1.2 var(--serif);padding:6px 4px;background:#100b09}
   .campanaCarta .larch,.campanaCarta .lhab{display:block;padding:7px 8px;font:10px/1.3 var(--sans);color:#cbb89b}
   .campanaFlechas{display:flex;align-items:center;justify-content:center;gap:16px;color:#beaa89;font:12px var(--sans)}
   .campanaFlechas .btn{min-width:48px;min-height:44px}
-  .campanaFicha{padding:16px 8px;font:13px/1.45 var(--sans);min-height:125px}.campanaFicha p{margin:8px 0}.campanaFicha small{color:#c6ab7b}
-  #campanaPanel .campanaRuta{max-height:390px;overflow-y:auto;padding:5px 4px;overscroll-behavior:contain}
+  .campanaFicha{flex:none;padding:4px;font:12px/1.35 var(--sans);min-height:0}.campanaFicha p{margin:5px 0}.campanaFicha small{color:#c6ab7b}
   .campanaRuta li{position:relative}.campanaRuta li+li::before{content:'';position:absolute;width:1px;height:10px;background:#be905566;left:32px;top:-10px}
   .campanaOculto{width:48px;height:58px;flex:0 0 48px;display:grid;place-items:center;border:1px solid #a0784555;border-radius:8px;font:32px var(--serif);color:#bc9c6a;background:#261c15}
-  @media(max-width:500px){.campanaCarrusel{--paso:84px;height:300px}.campanaCarta{width:156px;min-height:244px}.campanaCarta .lface{height:153px}}
+  @media(max-width:500px){.campanaCarrusel{--paso:84px}.campanaCarta{width:156px}}
   @media(prefers-reduced-motion:reduce){.campanaCarta{transition:none}}
   #campanaPanel:focus{outline:none}
   #campanaPanel .btn:focus-visible{outline:2px solid #f2d391;outline-offset:3px}
   #campanaPanel .btn:not(.gold){background:linear-gradient(150deg,#463021,#211812);border-color:#a47b4655}
   #campanaPanel::backdrop{background:#080509c9;backdrop-filter:blur(6px)}
-  #campanaPanel h2{font:800 clamp(25px,5vw,36px)/1.15 var(--serif);color:#f2d391;margin:8px 0 12px}
+  #campanaPanel h2{font:800 clamp(22px,4.5vw,32px)/1.15 var(--serif);color:#f2d391;margin:5px 0}
   .campanaSello{font:700 10px/1.3 var(--sans);letter-spacing:3px;color:#c99659}
-  .campanaSub,.campanaNota{font:14px/1.5 var(--sans);color:#c7b499;margin:10px 0 18px}
+  .campanaSub,.campanaNota{flex:none;font:12px/1.4 var(--sans);color:#c7b499;margin:4px 0}
   #campanaPanel>.btn{display:block;width:100%;min-height:46px;margin-top:10px;white-space:normal}
   .campanaElegir{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:22px 0}
   .campanaElegir .btn{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;padding:14px 8px}
@@ -689,10 +708,10 @@ function campanaFinal(winner,why){
   .campanaRuta li.jefe{border-color:#c4544c}.campanaRuta b{font:700 18px/1.2 var(--serif)}
   .campanaRuta small{display:block;margin-top:5px;font:11px/1.4 var(--sans);color:#c1af92}
   .campanaNumero{width:20px;flex:0 0 20px;font:800 18px var(--serif);color:#d6b56e}
-  @media(max-width:400px){#campanaPanel{padding:20px 14px}.campanaRuta li{gap:8px;padding:8px}}
+  @media(max-width:400px){#campanaPanel{padding:12px}.campanaRuta li{gap:8px;padding:8px}}
 
-  .campanaMesa{position:relative;margin:18px -8px 24px;padding:13px 10px 24px;border-radius:16px;perspective:1000px;background:repeating-linear-gradient(3deg,#27150e 0px,#382015 8px,#2b190f 12px,#482c1b 14px);box-shadow:inset 0 2px 12px #000b,0 12px 22px #0007}
-  .campanaTablero{height:425px;position:relative;border:6px solid #806039;border-radius:9px;background:radial-gradient(ellipse at 40% 35%,#ccb982,#a58a56);transform:rotateX(18deg) rotateZ(-2deg);box-shadow:0 3px 0 #5b3e24,0 7px 0 #402819,0 20px 25px #0007,inset 0 0 35px #54351b88;isolation:isolate}
+  .campanaMesa{position:relative;flex:1;min-height:0;margin:0;padding:13px 12px 24px;border-radius:16px;perspective:1000px;background:repeating-linear-gradient(3deg,#27150e 0px,#382015 8px,#2b190f 12px,#482c1b 14px);box-shadow:inset 0 2px 12px #000b,0 12px 22px #0007}
+  .campanaTablero{height:100%;box-sizing:border-box;position:relative;border:6px solid #806039;border-radius:9px;background:radial-gradient(ellipse at 40% 35%,#ccb982,#a58a56);transform:rotateX(10deg) rotateZ(-1deg);box-shadow:0 3px 0 #5b3e24,0 7px 0 #402819,0 14px 18px #0007,inset 0 0 35px #54351b88;isolation:isolate}
   .campanaGeografia{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   .campanaNiebla,.campanaNieblaRetirada{position:absolute;inset:0;width:100%;height:100%;border-radius:3px;overflow:hidden;z-index:12;pointer-events:none}
   .campanaBruma{animation:campanaBrumaFlota 14s ease-in-out infinite alternate}
@@ -717,7 +736,22 @@ function campanaFinal(winner,why){
   .campanaPeonCuerpo>span{position:absolute;top:-14px;left:-6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#ffe9ae,#b78227);border:2px solid #d8b568;font-size:17px}
   .campanaPeonBase{position:absolute;bottom:0;left:0;width:30px;height:13px;border-radius:50%;background:linear-gradient(#e3bd64,#88571e);border:1px solid #76501c;box-shadow:0 3px 0 #543514}
   .campanaEncuentro:focus-visible{outline:2px solid #fff3ce;outline-offset:4px;border-radius:8px}
-  @media(max-width:400px){.campanaTablero{height:365px;border-width:4px}.campanaMesa{padding:8px 6px 16px}.campanaMesa .campanaRuta li{width:70px}.campanaMesa .campanaRuta b{font-size:10px}}
+  @media(max-width:400px){.campanaTablero{border-width:4px}.campanaMesa{padding:8px 8px 16px}.campanaMesa .campanaRuta li{width:70px}.campanaMesa .campanaRuta b{font-size:10px}}
+  @media(max-height:650px){
+    #campanaPanel{padding:10px;gap:6px}.campanaSello{font-size:9px;letter-spacing:2px}
+    #campanaPanel h2{font-size:22px}.campanaSub,.campanaNota{font-size:11px;margin:2px 0}
+    .campanaFicha{font-size:11px;line-height:1.25}.campanaFicha p{margin:3px 0}
+    .campanaCarta .lname{font-size:16px;padding:4px}.campanaCarta .larch,.campanaCarta .lhab{font-size:9px;padding:4px}
+    .campanaFlechas{font-size:11px}.campanaFlechas .btn{min-height:40px}
+  }
+  @media(min-aspect-ratio:6/5) and (max-height:650px){
+    #campanaPanel[data-vista="mapa"],#campanaPanel[data-vista="seleccion"]{width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),1000px);display:grid;grid-template-columns:minmax(0,1.25fr) minmax(210px,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:8px 16px}
+    .campanaCabecera{grid-column:2;grid-row:1}.campanaMesa{grid-column:1;grid-row:1/4;height:100%}
+    .campanaNota{grid-column:2;grid-row:2;align-self:center}.campanaAcciones{grid-column:2;grid-row:3}
+    .campanaSeleccion{display:contents}.campanaCarrusel{grid-column:1;grid-row:1/3;height:100%;min-height:0}
+    .campanaFlechas{grid-column:1;grid-row:3}.campanaFicha{grid-column:2;grid-row:2;align-self:center}
+    .campanaCarta{width:150px}.campanaCarrusel{--paso:88px}
+  }
   `;document.head.appendChild(css);
 }
 
