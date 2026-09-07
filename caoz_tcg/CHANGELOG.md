@@ -13,6 +13,14 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Botones del Domo y Campaña · 2026-09-07
+
+Build 177, beta: propuesta de botones móviles con relieve metálico, acción principal
+dorada, Campaña en granate y accesos secundarios en dos columnas. Se conserva el
+fondo original completo, el logo y los textos. Hover suave, respuesta al toque y
+foco visible. Campaña abre un diálogo accesible con «Proximamente», retorno al menú
+y cierre con Escape. No cambia el motor ni la producción.
+
 ## Sin numerar — Vuelta al menú original · 2026-09-07
 
 Build 176, beta: se recupera íntegramente el menú móvil de la build 172 por
