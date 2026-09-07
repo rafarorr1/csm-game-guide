@@ -335,6 +335,26 @@ PRUEBAS.suite('banco', async t => {
   }finally{marco.remove();}
 });
 
+PRUEBAS.suite('menuMovil', async t => {
+  const marco=document.createElement('iframe');marco.src='movil.html?test=menu-layout&cb='+Date.now();
+  marco.style.cssText='position:fixed;left:-10000px;width:390px;height:844px;border:0';document.body.appendChild(marco);
+  try{
+    await new Promise((ok,mal)=>{marco.onload=ok;marco.onerror=mal;});await sleep(1800);
+    const d=marco.contentDocument;
+    for(const [w,h] of [[320,568],[375,667],[390,844],[430,932],[844,390]]){
+      marco.style.width=w+'px';marco.style.height=h+'px';await sleep(250);
+      d.documentElement.classList.add('app');d.documentElement.style.setProperty('--arriba','47px');d.documentElement.style.setProperty('--abajo','34px');await sleep(60);
+      const menu=d.querySelector('#menu'),r=menu.getBoundingClientRect();
+      t.check(menu.scrollHeight<=menu.clientHeight+1,'El menú instalado tiene scroll a '+w+'×'+h+' ('+menu.scrollHeight+'/'+menu.clientHeight+') '+[...menu.children].map(e=>e.className+':'+Math.round(e.getBoundingClientRect().height)).join(', '));
+      for(const id of ['mPlay','mOnline','mTut','mCards','mGuides','mRules','mRecords']){
+        const b=d.getElementById(id).getBoundingClientRect();
+        t.check(b.width>=44&&b.height>=44&&b.top>=r.top&&b.bottom<=r.bottom,'Botón inaccesible: '+id+' a '+w+'×'+h);
+      }
+    }
+    t.nota('Cinco tamaños, áreas seguras y siete acciones accesibles sin scroll.');
+  }finally{marco.remove();}
+});
+
 PRUEBAS.suite('tipografia', async t => {
   showGallery();await sleep(200);
   try{

@@ -13,6 +13,17 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Inicio móvil del Domo · 2026-09-07
+
+Build 173: portada móvil con escena de marca flexible, acción principal Jugar,
+accesos Con amigos y Aprender, y navegación compacta a colección, guías, reglas
+y récords. Iconos vectoriales coherentes, fondo oscuro y botón dorado. El alto
+sobrante lo recibe la escena, sin empujar los controles fuera de la pantalla.
+Se conservan las áreas seguras y el aviso de instalación no altera el reparto.
+La regresión menuMovil reprodujo el scroll anterior en 320×568 y comprueba ahora
+cinco tamaños hasta 430×932 y 844×390, áreas seguras y botones de al menos 44 px.
+No cambia el motor ni el balance.
+
 ## Sin numerar — Auditoría de interfaz y resolución · 2026-09-07
 
 Build 172: las habilidades deshabilitadas reflejan las condiciones del motor;

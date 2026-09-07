@@ -110,8 +110,10 @@ Las tres partes son **scripts clásicos que comparten el ámbito global**. Regla
   la geometría y sí el velo).
 - Diagnóstico sin ordenador: **pulsación larga sobre el número de build** en el menú del
   teléfono enseña las medidas reales (alto del visor, `#app`, márgenes).
-- El menú del teléfono se centra con márgenes automáticos, no con `justify-content:center`:
-  centrado, al desbordar recorta arriba y abajo y Safari no aplica `safe center` en columnas.
+- El menú móvil reparte el alto con una escena flexible y controles de tamaño táctil fijo.
+  No volver a apilar siete botones grandes: reaparece el scroll. La suite `menuMovil`
+  comprueba áreas seguras y cinco tamaños. El scroll queda sólo como respaldo accesible
+  para dimensiones extremas, nunca se recorta contenido para disimular el desbordamiento.
 - Para probar en el panel de un navegador de escritorio: `movil.html` se ve como un teléfono
   centrado de 520 px; la pulsación larga se simula con `PointerEvent`. La emulación táctil
   de algunos paneles cuelga los clics: mejor ratón.
