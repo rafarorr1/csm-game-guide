@@ -335,6 +335,7 @@ PRUEBAS.suite('campana', async t => {
       w.document.querySelector('.campanaConfirmar').click();
       const ruta=w.document.querySelector('.campanaRuta');
       t.check(ruta.firstElementChild.dataset.etapa==='5'&&ruta.lastElementChild.dataset.etapa==='0',pagina+': la escalera debe ascender desde abajo.');
+      t.check(!!w.document.querySelector('.campanaMesa .campanaPeon'),pagina+': falta la ficha en el tablero.');
       t.check(ruta.querySelectorAll('[data-campana-lider]').length===1&&!ruta.textContent.includes('Gero'),pagina+': no deben revelarse los rivales futuros.');
       t.check(w.campanaLeer().etapa===0,pagina+': la campaña debe empezar desde cero.');
       await w.campanaCombatir();
@@ -350,6 +351,8 @@ PRUEBAS.suite('campana', async t => {
         w.endGame(0,'Victoria de prueba');await sleep(600);
         t.check(w.campanaLeer().etapa===etapa+1,pagina+': la victoria no se guardó.');
         w.campanaRuta();
+        t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||w.document.querySelector('.campanaPeon').getAnimations().length>0,pagina+': falta la animación de avance.');
+        t.check(w.document.querySelector('.campanaPeon').dataset.etapa===String(etapa+1),pagina+': la ficha no avanzó tras la victoria.');
         t.check(w.document.querySelectorAll('.campanaRuta [data-campana-lider]').length===Math.min(6,etapa+2),pagina+': se revelan rivales antes de tiempo.');
         w.showEnd(0,'Aviso repetido');t.check(w.campanaLeer().etapa===etapa+1,pagina+': una victoria duplicada avanza dos veces.');
         if(etapa===1){

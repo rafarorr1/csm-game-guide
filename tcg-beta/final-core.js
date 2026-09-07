@@ -467,6 +467,9 @@ const CAMPANA_RIVALES=[
   {lider:'rafaela',alma:28},{lider:'adreida',alma:32},{lider:'gero',alma:40}
 ];
 const CAMPANA_CLAVE='caoz.campana.v1'+(new URLSearchParams(location.search).has('test')?'.prueba':'');
+const CAMPANA_CASILLAS=[[22,84],[68,73],[33,60],[73,47],[40,32],[62,17]];
+let campanaPasoAnterior=null;
+function campanaPosicionFicha(etapa){return etapa>=6?[50,9]:[CAMPANA_CASILLAS[etapa][0]-12,CAMPANA_CASILLAS[etapa][1]+3];}
 let campanaMemoria=null,campanaLanzando=false;
 function campanaLeer(){
   let dato=campanaMemoria;
@@ -529,23 +532,52 @@ function campanaElegir(){
   let ignorarClic=0;pista.addEventListener('click',e=>{if(Date.now()<ignorarClic){e.preventDefault();e.stopPropagation();}},true);
   pista.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();elegir(centro+(e.key==='ArrowLeft'?-1:1));cartas[centro].focus({preventScroll:true});}});
   const confirmar=campanaBoton('Elegir Protagonista',()=>{
-    campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:ids[centro],etapa:0});campanaRuta();
+    campanaPasoAnterior=null;campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:ids[centro],etapa:0});campanaRuta();
   },true);confirmar.classList.add('campanaConfirmar');
   d.append(pista,controles,ficha,confirmar,campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));elegir(0);
 }
 function campanaRuta(aviso=''){
   const p=campanaLeer();if(!p){campanaElegir();return;}
   const completa=p.etapa===CAMPANA_RIVALES.length,d=campanaDialogo();
-  campanaCabecera(d,completa?'El Domo es tuyo':'Camino al jefe final',aviso||(LEADERS[p.lider].n+' · '+p.etapa+' de 6 rivales vencidos'));
-  const lista=document.createElement('ol');lista.className='campanaRuta';
+  campanaCabecera(d,completa?'El Domo es tuyo':'La mesa del Domo',aviso||(LEADERS[p.lider].n+' · '+p.etapa+' de 6 rivales vencidos'));
+  const mesa=document.createElement('div');mesa.className='campanaMesa';
+  const tablero=document.createElement('div');tablero.className='campanaTablero';
+  tablero.innerHTML=`<svg class="campanaGeografia" viewBox="0 0 600 440" preserveAspectRatio="none" aria-hidden="true">
+    <defs><pattern id="campanaTrama" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M0 16L16 0" stroke="#714b21" stroke-opacity=".045"/></pattern></defs>
+    <rect width="600" height="440" fill="url(#campanaTrama)"/>
+    <path d="M60 35Q205 110 95 190T125 420M82 25Q225 110 118 195T146 424" fill="none" stroke="#586d63" stroke-width="6" opacity=".35"/>
+    <path d="M438 22L493 112L390 112Z" fill="#776447" opacity=".45"/><path d="M438 22L438 112L390 112Z" fill="#c3ac76"/>
+    <path d="M187 208L220 264L150 264Z" fill="#7b674b" opacity=".55"/>
+    <path d="M450 278L472 323H428Z M476 295L496 337H457Z M436 318L455 357H417Z" fill="#506047" opacity=".55"/>
+    <path d="M84 414L132 370L408 321L198 264L438 207L240 141L372 75L300 30" fill="none" stroke="#5d3a21" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" opacity=".25"/>
+    <path d="M84 414L132 370L408 321L198 264L438 207L240 141L372 75L300 30" fill="none" stroke="#eddba1" stroke-width="7" stroke-dasharray="3 12" stroke-linecap="round"/>
+    <circle cx="527" cy="382" r="25" fill="none" stroke="#77502e" opacity=".5"/><path d="M527 352L534 382L527 412L520 382Z M497 382L527 375L557 382L527 389Z" fill="#77502e" opacity=".5"/>
+  </svg><span class="campanaCima" aria-hidden="true">♛</span>`;
+  const lista=document.createElement('ol');lista.className='campanaRuta';lista.setAttribute('aria-label','Camino de encuentros, desde la salida hasta la cima');
   CAMPANA_RIVALES.map((r,i)=>({r,i})).reverse().forEach(({r,i})=>{
     const fila=document.createElement('li');fila.className=(i<p.etapa?'vencido':i===p.etapa?'actual':'pendiente')+(i===5?' jefe':'');
-    fila.dataset.etapa=i;
+    fila.dataset.etapa=i;fila.style.left=CAMPANA_CASILLAS[i][0]+'%';fila.style.top=CAMPANA_CASILLAS[i][1]+'%';
     if(i>p.etapa){
-      fila.innerHTML=`<span class="campanaNumero">${i+1}</span><span class="campanaOculto" aria-hidden="true">?</span><div><b>Rival desconocido</b><small>${i===5?'JEFE FINAL · ':''}Por descubrir</small></div>`;
-    }else fila.innerHTML=`<span class="campanaNumero">${i<p.etapa?'✓':i+1}</span><span class="lface">${LEADERS[r.lider].art}</span><div><b>${LEADERS[r.lider].n}</b><small>${i===5?'JEFE FINAL · ':''}${r.alma} Alma · ${i<p.etapa?'Vencido':i===p.etapa?'Tu siguiente combate':'Por desbloquear'}</small></div>`;
-    if(i<=p.etapa){fila.dataset.campanaLider=r.lider;ilustrarLider(fila,r.lider);}lista.appendChild(fila);
-  });d.appendChild(lista);requestAnimationFrame(()=>{const actual=lista.querySelector('.actual');lista.scrollTop=actual?Math.max(0,actual.offsetTop-lista.offsetTop-lista.clientHeight+actual.offsetHeight+8):0;});
+      fila.innerHTML=`<span class="campanaOculto" aria-hidden="true">?</span><b>Desconocido</b><span class="campanaNumero">${i+1}</span>`;
+      fila.setAttribute('aria-label','Encuentro '+(i+1)+': rival desconocido');
+    }else{
+      const ficha=campanaBoton('',()=>{if(i===p.etapa)campanaCombatir();else toast(LEADERS[r.lider].n+': encuentro superado');});ficha.className='campanaEncuentro';
+      ficha.innerHTML=`<span class="lface">${LEADERS[r.lider].art}</span><b>${LEADERS[r.lider].n}</b><span class="campanaNumero">${i<p.etapa?'✓':i+1}</span>`;
+      ficha.setAttribute('aria-label',LEADERS[r.lider].n+(i<p.etapa?', vencido':', combatir · '+r.alma+' Alma'));
+      fila.dataset.campanaLider=r.lider;fila.appendChild(ficha);ilustrarLider(fila,r.lider);
+    }
+    lista.appendChild(fila);
+  });
+  const peon=document.createElement('div');peon.className='campanaPeon';peon.setAttribute('role','img');peon.setAttribute('aria-label','Tu ficha: '+LEADERS[p.lider].n);
+  peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span>`;
+  const destino=campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionFicha(campanaPasoAnterior);
+  peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
+  tablero.append(lista,peon);mesa.appendChild(tablero);d.appendChild(mesa);
+  if(campanaPasoAnterior!==null&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    peon.animate([{left:origen[0]+'%',top:origen[1]+'%'},{left:destino[0]+'%',top:destino[1]+'%'}],{duration:1100,easing:'ease-in-out'});
+    peon.querySelector('.campanaPeonCuerpo').animate([{translate:'0 0'},{translate:'0 -10px'},{translate:'0 0'}],{duration:275,iterations:4});
+  }
+  campanaPasoAnterior=null;
   const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero y completaste esta campaña.':'Cada combate empieza con tu mazo completo y 20 de Alma. Los rivales ganan resistencia. Si sales o pierdes, puedes reintentar el mismo combate.';d.appendChild(ayuda);
   if(!completa)d.appendChild(campanaBoton('Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,()=>campanaCombatir(),true));
   else d.appendChild(campanaBoton('Jugar una nueva campaña',campanaElegir,true));
@@ -569,14 +601,14 @@ function campanaFinal(winner,why){
   if(!meta||!p||meta.id!==p.id)return;
   if(!G.campanaResuelta){
     G.campanaResuelta=true;
-    if(winner===ME&&p.etapa===meta.etapa){p.etapa++;campanaGuardar(p);}
+    if(winner===ME&&p.etapa===meta.etapa){campanaPasoAnterior=p.etapa;p.etapa++;campanaGuardar(p);}
   }
   const d=campanaDialogo(),completa=p.etapa===6;
   campanaCabecera(d,winner===ME?(completa?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',
     winner===ME?(completa?'Derrotaste a Gero. El Domo es tuyo.':'Has superado a '+LEADERS[CAMPANA_RIVALES[meta.etapa].lider].n+'. El siguiente combate está desbloqueado.'):'No pierdes tu progreso. Puedes volver a desafiar a este rival.');
   const resultado=document.createElement('p');resultado.className='campanaNota';resultado.textContent=why||'';d.appendChild(resultado);
-  if(!completa)d.appendChild(campanaBoton(winner===ME?'Continuar al siguiente combate':'Reintentar combate',()=>campanaCombatir(),true));
-  d.appendChild(campanaBoton(completa?'Ver campaña completada':'Ver la escalera',()=>campanaRuta(),completa));
+  if(!completa)d.appendChild(campanaBoton(winner===ME?'Avanzar en el mapa':'Reintentar combate',()=>winner===ME?campanaRuta():campanaCombatir(),true));
+  d.appendChild(campanaBoton(completa?'Ver campaña completada':'Ver el mapa',()=>campanaRuta(),completa));
   d.appendChild(campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));
 }
 {
@@ -622,6 +654,27 @@ function campanaFinal(winner,why){
   .campanaRuta small{display:block;margin-top:5px;font:11px/1.4 var(--sans);color:#c1af92}
   .campanaNumero{width:20px;flex:0 0 20px;font:800 18px var(--serif);color:#d6b56e}
   @media(max-width:400px){#campanaPanel{padding:20px 14px}.campanaRuta li{gap:8px;padding:8px}}
+
+  .campanaMesa{position:relative;margin:18px -8px 24px;padding:13px 10px 24px;border-radius:16px;perspective:1000px;background:repeating-linear-gradient(3deg,#27150e 0px,#382015 8px,#2b190f 12px,#482c1b 14px);box-shadow:inset 0 2px 12px #000b,0 12px 22px #0007}
+  .campanaTablero{height:425px;position:relative;border:6px solid #806039;border-radius:9px;background:radial-gradient(ellipse at 40% 35%,#ccb982,#a58a56);transform:rotateX(18deg) rotateZ(-2deg);box-shadow:0 3px 0 #5b3e24,0 7px 0 #402819,0 20px 25px #0007,inset 0 0 35px #54351b88;isolation:isolate}
+  .campanaGeografia{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .campanaCima{position:absolute;left:50%;top:2%;font:28px var(--serif);color:#643b23;translate:-50% 0}
+  #campanaPanel .campanaMesa .campanaRuta{position:absolute;inset:0;display:block;max-height:none;overflow:visible;margin:0;padding:0;list-style:none}
+  .campanaMesa .campanaRuta li{position:absolute;width:82px;height:67px;display:block;translate:-50% -50%;padding:0;border:none;background:none;box-shadow:none;text-align:center;opacity:1}
+  .campanaMesa .campanaRuta li+li::before{display:none}
+  .campanaEncuentro{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:0;background:none;border:0;color:#f1ddb0;cursor:pointer}
+  .campanaMesa .campanaRuta .lface,.campanaMesa .campanaOculto{position:relative;display:grid;place-items:center;width:43px;height:43px;flex:none;border-radius:50%;font-size:25px;border:2px solid #705032;background:#30231c;box-shadow:0 4px 0 #4e3421,0 7px 8px #24150788;margin:0 auto;overflow:hidden}
+  .campanaMesa .campanaRuta .actual .lface{border-color:#ffe6a4;box-shadow:0 4px 0 #765327,0 0 0 4px #fff0b533,0 6px 18px #fff0b5aa}
+  .campanaMesa .campanaRuta .vencido .lface{border-color:#587847;filter:saturate(.45)}
+  .campanaMesa .campanaRuta .campanaOculto{background:linear-gradient(#46392b,#29221d);color:#b29e79;border-color:#6f6047}
+  .campanaMesa .campanaRuta b{display:block;margin:7px 0 0;padding:3px 5px;border-radius:4px;background:#2d1d13ed;color:#ead6b2;font:700 11px/1.2 var(--serif);white-space:nowrap}
+  .campanaMesa .campanaRuta .campanaNumero{position:absolute;right:9px;top:0;width:17px;height:17px;display:grid;place-items:center;border-radius:50%;font:800 10px var(--sans);background:#e0c28a;color:#3c2715}
+  .campanaPeon{position:absolute;width:30px;height:58px;translate:-50% -75%;pointer-events:none;z-index:20;filter:drop-shadow(4px 6px 3px #27170aaa)}
+  .campanaPeonCuerpo{position:absolute;left:5px;bottom:7px;width:20px;height:41px;border-radius:45% 45% 25% 25%;background:linear-gradient(90deg,#92651e,#ffe3a0 45%,#bd8b38);border:1px solid #80541e;z-index:2}
+  .campanaPeonCuerpo>span{position:absolute;top:-14px;left:-6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#ffe9ae,#b78227);border:2px solid #d8b568;font-size:17px}
+  .campanaPeonBase{position:absolute;bottom:0;left:0;width:30px;height:13px;border-radius:50%;background:linear-gradient(#e3bd64,#88571e);border:1px solid #76501c;box-shadow:0 3px 0 #543514}
+  .campanaEncuentro:focus-visible{outline:2px solid #fff3ce;outline-offset:4px;border-radius:8px}
+  @media(max-width:400px){.campanaTablero{height:365px;border-width:4px}.campanaMesa{padding:8px 6px 16px}.campanaMesa .campanaRuta li{width:70px}.campanaMesa .campanaRuta b{font-size:10px}}
   `;document.head.appendChild(css);
 }
 
