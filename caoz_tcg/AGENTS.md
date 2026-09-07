@@ -3,7 +3,8 @@
 Esto es lo que un asistente (o una persona nueva) necesita saber antes de tocar el juego.
 Lo que está aquí no se deduce del código; lo que sí se deduce vive en `README.md` (cómo se
 juega y cómo está montado) y en `CHANGELOG.md` (el diario de diseño: cada cambio con su
-porqué y sus números). Todo en español, también los comentarios y los mensajes de commit.
+porqué y sus números). **`HANDOFF.md`** es la puerta de entrada larga para quien llega de
+fuera: arquitectura, flujo de turno, datos, IA, online, deploy, pruebas, deuda y assets. Todo en español, también los comentarios y los mensajes de commit.
 
 ## Qué es
 

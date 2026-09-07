@@ -1,7 +1,9 @@
 # Caoz Con Todo — El Juego de Cartas del Domo
 
-Simulador jugable del TCG. Single-file: `index.html`, sin dependencias, sin build.
-Ábrelo y ya.
+Simulador jugable del TCG. Sin dependencias, sin build: un motor (`motor.js`) y dos
+pantallas (`index.html` para escritorio, `movil.html` para el teléfono), más `final.js`
+(piezas compartidas) y la app instalable (`sw.js`, `manifest.webmanifest`). Ábrelo y ya.
+Si vienes de fuera, empieza por **`HANDOFF.md`** y **`AGENTS.md`**.
 
 ```bash
 python3 -m http.server 8745 --directory caoz_tcg
@@ -477,8 +479,13 @@ acabaran, así que una tanda de diez segundos tardaba varios minutos.
 
 ## Arquitectura
 
-Todo el juego vive en un `<script>` dentro de `index.html`, en 13 secciones
-numeradas y comentadas:
+Desde la v15 el juego son varios scripts clásicos que comparten el ámbito global:
+**`motor.js`** (cartas, Líderes, mazos, reglas, IA, red, guías y guion del tutorial; no toca
+el DOM), **`index.html`** (la pantalla de escritorio), **`movil.html`** (la del teléfono, de
+pie, hecha de cero sobre el mismo motor) y **`final.js`** (cinemática de fin de partida y
+récords, compartidos). El motor habla con la pantalla llamando funciones por nombre
+(`render`, `ask`, `roll`, `log`, `fx*`…), que existen en las dos pantallas. Detalle completo
+en `HANDOFF.md` §2–§6. Dentro del motor, el orden sigue siendo el de las secciones de siempre:
 
 1. `LEADERS` — los 5 Protagonistas.
 2. `CARDS` — la base de datos de cartas.
