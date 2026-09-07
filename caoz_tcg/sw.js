@@ -18,7 +18,7 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 179;
+const VERSION = 180;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
 const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'polish-aaa.js', 'manifest.webmanifest',

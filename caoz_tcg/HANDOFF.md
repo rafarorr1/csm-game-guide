@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 179 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 180 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -264,7 +264,7 @@ Bugs / limitaciones:
 - `augusto.webp` y `lucius.webp` son la **misma imagen**; Mohamed y Gero no tienen retrato
   (van con emoji). Sólo Rafa puede aportar arte.
 - La galería de escritorio dice «Pasa el cursor» aunque se esté en táctil (menor).
-- El reloj de turno (1:30) no corre para el rival online: cada cliente sólo vigila su turno.
+- Reloj online de 90 segundos: el anfitrión controla ambos turnos y sincroniza el tiempo al invitado.
 - Gero: su pasiva rueda todos los turnos; en el tutorial espera al paso 20 a propósito.
 
 Deuda técnica:

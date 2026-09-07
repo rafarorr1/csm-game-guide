@@ -2356,14 +2356,16 @@ let RELOJ = {queda:0, id:null};
 function relojArranca(){
   relojPara();
   if(!G || G.over || G.auto || G.silent || G.tutorial) return;
-  if(G.active!==ME) return;                      // el rival no juega contra reloj
+  if(NET.guest || (!G.online && G.active!==ME)) return; // online: manda un único reloj, el del anfitrión
   RELOJ.queda = RELOJ_TURNO;
   relojPinta();
+  const turno=G.turnNo;
   RELOJ.id = setInterval(()=>{
-    if(!G || G.over || G.active!==ME){ relojPara(); return; }
-    if(G.busy || G.resolving) return;            // no corre mientras se resuelve algo
+    if(!G || G.over || G.turnNo!==turno || (!G.online&&G.active!==ME)){ relojPara(); return; }
+    if(G.busy || G.resolving || (NET.host&&Object.keys(NET.pending).length)) return; // las decisiones y efectos pausan el reloj
     RELOJ.queda--;
     relojPinta();
+    if(NET.host)netSend({t:'clock',turn:G.turnNo,queda:RELOJ.queda});
     if(RELOJ.queda<=0){
       relojPara();
       log('⏱️ Se acabó el tiempo: pasa el turno.','sys');
@@ -3405,7 +3407,7 @@ async function netConnect(code, asHost){
   NET.miNombre = ONL.nombre || (asHost?'Anfitrión':'Invitado');
   chatVacio(); chatVisible(true);
   NET.seq=0; NET.q=[]; NET.sending=false; NET.pending={}; NET.acts=[]; NET.busy=false;
-  NET.peer=false; NET.seen=new Set(); NET.tx=NET.rx=NET.err=0;
+  NET.peer=false;NET.peerSid=null;NET.partidaId=null;NET.ultimoRival=Date.now();NET.avisoAusente=false;NET.ultimoPulso=0; NET.seen=new Set(); NET.tx=NET.rx=NET.err=0;
   NET.sid=Math.random().toString(36).slice(2,10);   // sesión: evita choques de seq al reconectar
   NET.hechas=new Set(); NET.esperaAck=new Map();
   NET.chs.forEach(c=>c.close()); NET.chs=[];
@@ -3418,7 +3420,7 @@ async function netConnect(code, asHost){
   netStatus();                                  // se ven las vías desde el primer instante
   NET.chs.forEach(c=>{ if(c.tipo==='mqtt') c.open().then(()=>netStatus()).catch(()=>netStatus()); });
   NET.chs.forEach(c=>{ if(c.tipo==='http') c.poll().then(()=>netStatus()); });
-  NET.timer=setInterval(()=>{ NET.chs.forEach(c=>{ if(c.tipo==='http') c.poll(); }); netStatus(); },1100);
+  NET.timer=setInterval(()=>{ NET.chs.forEach(c=>{ if(c.tipo==='http') c.poll(); }); netStatus();netPulso(); },1100);
   // aviso si en 12 s no hay ninguna vía viva
   setTimeout(()=>{ if(NET.on&&!netVivos().length)
     netStatus('No hay salida a ningún relevo. Prueba con datos móviles o desde otra red.','warn'); },12000);
@@ -3442,7 +3444,9 @@ function netClose(){
   chatVisible(false);
   clearInterval(NET.timer); NET.timer=null;
   NET.chs.forEach(c=>c.close()); NET.chs=[];
-  NET.on=false; NET.host=false; NET.guest=false; NET.peer=false;
+  NET.on=false; NET.host=false; NET.guest=false; NET.peer=false;NET.partidaId=null;NET.iniciando=false;NET.welcome=null;NET.onjoin=null;NET.joinPend=null;
+  if(NET.esperaAck)NET.esperaAck.forEach(p=>clearInterval(p.t));
+  relojPara();
 }
 /* un mensaje puede llegar por varias vías: nos quedamos con el primero */
 /* ==========================================================================
@@ -3461,7 +3465,8 @@ function netClose(){
 
 function netRecvRaw(txt){
   let m; try{ m=JSON.parse(txt); }catch(_){ return; }
-  if(!m||m.from===(NET.host?'host':'guest')) return;      // eco de lo mío
+  if(!m||m.from===(NET.host?'host':'guest')) return;
+  if(NET.peerSid&&m.sid!==NET.peerSid)return;      // eco de lo mío
   const clave=(m.sid||m.from)+':'+m.seq;
   if(NET.seen.has(clave)) return;
   NET.seen.add(clave);
@@ -3543,12 +3548,12 @@ function netSnap(){
     grave:p.grave.slice(),
     traps:p.traps.map(t=>(propio||t.revealed)?{id:t.id,revealed:t.revealed}:{id:null,revealed:false}),
     relics:p.relics.map(r=>({id:r.id,counters:r.counters||0})),
-    field:p.field.map(uni)}; };
+    clouds:p.clouds.map(c=>({...c})),field:p.field.map(uni)}; };
   const desde=G.logSent||0;
   const nuevo=G.log.slice(desde).filter(l=>!l.priv); G.logSent=G.log.length;
   const fx=G.fxq||[]; G.fxq=[];
   return {me:lado(FOE,true), foe:lado(ME,false),
-    turn:G.turnNo, active:(G.active===FOE?0:1), phase:G.phase, over:G.over,
+    reloj:RELOJ.queda,turn:G.turnNo, active:(G.active===FOE?0:1), phase:G.phase, over:G.over,
     winner:Number.isInteger(G.winner)?1-G.winner:null, why:G.endWhy||null,
     place:G.place?{id:G.place.id,side:(G.place.side===FOE?0:1)}:null,
     logN:nuevo, fx};
@@ -3575,7 +3580,7 @@ function netApply(s){
     p.alma=d.alma; p.pd=d.pd; p.pdMax=d.pdMax; p.llaves=d.llaves;
     p.gracia=d.gracia; p.ascended=d.asc; p.scrollTurns=d.scroll; p.leaderUsed=d.used;
     p.hand=d.hand.slice(); p.deck=d.deck.slice(); p.grave=d.grave.slice();
-    p.traps=d.traps.slice(); p.relics=d.relics.slice();
+    p.traps=d.traps.slice(); p.relics=d.relics.slice();p.clouds=(d.clouds||[]).map(c=>({...c}));
     p.field=d.field.map(x=>{ const u=mkUnit(x.c,lado); u.uid=x.uid; u.owner=lado;
       u.dmg=x.dmg; u.tribes=x.tr.slice(); u.keysOwn=new Set(x.kown); u.objs=x.objs.slice();
       u.sick=x.sick; u.attacked=x.att; u.attackedEver=x.ever; u.stunned=x.stun;
@@ -3590,7 +3595,8 @@ function netApply(s){
   G.winner=Number.isInteger(s.winner)?s.winner:null; G.endWhy=s.why||null;
   G.place=s.place?{id:s.place.id,side:s.place.side}:null;
   (s.logN||[]).forEach(l=>log(l.txt,l.cls));
-  recalc(); render();
+  RELOJ.queda=Number.isFinite(s.reloj)?s.reloj:RELOJ_TURNO;
+  recalc(); render();if(G.over)relojPara();else relojPinta();
   netPlayFx(s.fx||[]);
   if(s.over&&!G.overShown){ G.overShown=true;
     const gano = P(ME).alma>0 && P(FOE).alma<=0;
@@ -3635,13 +3641,21 @@ async function netPlayFxLote(list,partida){
 
 async function netRecv(m){
   if(!NET.on) return;
+  NET.ultimoRival=Date.now();NET.avisoAusente=false;
+  if(m.t==='pulse'){netSend({t:'pulseAck'});return;}
+  if(m.t==='pulseAck')return;
+  if(m.t==='ready'&&NET.host&&m.partida===NET.partidaId){NET.rivalListo=true;return;}
+  if(m.t==='coinAck'&&NET.host&&m.partida===NET.partidaId){NET.monedaLista=true;return;}
+  if(m.t==='coin'&&NET.guest){onlineMonedaRecibe(m);return;}
+  if(m.t==='clock'&&NET.guest){if(G&&!G.over&&G.turnNo===m.turn){RELOJ.queda=m.queda;relojPinta();}return;}
+  if(m.t==='bye'){netRivalAusente(true);return;}
   if(NET.host){
     if(m.t==='join'){
       if(NET.peer){                              // ya emparejados: repite la bienvenida
         if(NET.welcome) netSend(NET.welcome);
         return;
       }
-      NET.peer=true; netStatus('rival conectado','ok');
+      NET.peer=true;NET.peerSid=m.sid||null; netStatus('rival conectado','ok');
       NET.suNombre = String(m.nombre||'').slice(0,18) || 'Tu rival';
       log(`<b>${NET.suNombre}</b> entra en la sala.`,'sys');
       if(NET.onjoin) NET.onjoin(m.leader||'fender');
@@ -3661,7 +3675,7 @@ async function netRecv(m){
     if(m.t==='bye'){ netStatus('el rival se fue','warn'); toast('Tu rival ha salido'); return; }
   } else {
     if(m.t==='chat'){ chatRecibe(m); return; }
-    if(m.t==='welcome'){ NET.peer=true; netStatus('partida en marcha','ok');
+    if(m.t==='welcome'){ NET.peer=true;NET.peerSid=m.sid||null; netStatus('partida en marcha','ok');
       NET.suNombre = String(m.nombre||'').slice(0,18) || 'Tu rival';
       netGuestStart(m); return; }
     if(m.t==='state'){ netApply(m.s); return; }
@@ -4048,3 +4062,20 @@ async function autoTurn(s){
 }
 
 const LIENZO = { ancho: 1500, alto: 1040 };
+
+/* Presencia de la sala: una pérdida local de red nunca concede una victoria. */
+function netPulso(ahora=Date.now()){
+  if(!NET.on||!NET.peer)return;
+  if(ahora-(NET.ultimoPulso||0)>=5000){NET.ultimoPulso=ahora;netSend({t:'pulse'});}
+  if(!G||!G.online||G.over)return;
+  if(!netVivos().length||!netTieneInternet()){NET.ultimoRival=ahora;return;}
+  const ausencia=ahora-(NET.ultimoRival||ahora);
+  if(ausencia>=15000&&!NET.avisoAusente){NET.avisoAusente=true;toast('Tu rival perdió la conexión. Esperando hasta 60 segundos para que regrese…');}
+  if(ausencia>=60000)netRivalAusente(false);
+}
+function netRivalAusente(explicito){
+  if(!G||!G.online||G.over||!NET.peer)return;
+  G.over=true;G.winner=ME;G.endWhy=explicito?'Tu rival abandonó la partida.':'Tu rival no se reconectó en 60 segundos.';
+  relojPara();log(G.endWhy,'sys');if(NET.host)netPushState();NET.peer=false;
+  showEnd(ME,G.endWhy);
+}

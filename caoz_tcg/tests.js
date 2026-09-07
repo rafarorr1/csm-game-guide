@@ -316,6 +316,85 @@ PRUEBAS.suite('visual', async t => {
   t.check(!document.body.classList.contains('aaa-combat'),'los paneles deben recuperarse al terminar');
 });
 
+PRUEBAS.suite('onlineInvitacion', async t => {
+  const relay=new URLSearchParams(location.search).get('relay');
+  if(!relay||!/^http:\/\/(127\.0\.0\.1|localhost):/.test(relay)){t.nota('Prueba de transporte disponible sólo con relay local explícito.');return;}
+  const marcos=[];
+  const abrir=async url=>{const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';f.src=url;const cargado=new Promise(r=>f.onload=r);document.body.appendChild(f);marcos.push(f);await cargado;return f.contentWindow;};
+  try{
+    const h=await abrir('index.html?test=online-interno&relay='+encodeURIComponent(relay));
+    h.eval("ONL={lider:'fender',nombre:'Rafa Prueba'}");h.ask=async()=>0;await h.onlHost();
+    const codigo=h.document.querySelector('#roomCode').textContent;
+    const j=await abrir('movil.html?test=online-interno&sala='+codigo+'&relay='+encodeURIComponent(relay));j.ask=async()=>0;
+    await sleep(400);const d=j.document;
+    d.querySelector('.nombreinput').value='Amigo Prueba';
+    [...d.querySelectorAll('#ovPanel button')].find(b=>b.textContent==='Continuar →').click();
+    d.querySelector('#ovPanel .ltile').click();d.querySelector('#onlGo').click();
+    for(let n=0;n<250;n++){await sleep(100);if(j.eval('G&&G.online&&G.turnNo>0'))break;}
+    t.check(j.eval('G&&G.online&&G.turnNo>0'),'La invitación no llegó al tablero mediante el relevo local.');
+    t.check(!d.querySelector('#ov').classList.contains('on'),'El formulario de código tapa la partida.');
+    t.check(!d.querySelector('#reloj').hidden,'Falta reloj tras entrar por invitación.');
+    t.check(h.eval('G.active')===1-j.eval('G.active'),'El turno no coincide entre los dos clientes.');
+    j.netSend({t:'bye'});for(let n=0;n<40;n++){await sleep(100);if(h.eval('G.over'))break;}
+    t.check(h.eval('G.over&&G.winner===ME'),'Salir no concede la victoria al otro jugador.');
+  }finally{marcos.forEach(f=>{f.contentWindow.netClose();f.remove();});}
+});
+
+PRUEBAS.suite('onlineFlujo', async t => {
+  newGame('fender','adreida');G.online=true;G.turnNo=3;G.phase='principal';
+  RELOJ.queda=42;P(0).clouds=[{until:8}];const foto=netSnap();
+  t.check(foto.reloj===42,'El estado online debe incluir el temporizador.');
+  t.check(foto.foe.clouds&&foto.foe.clouds.length===1,'La nube debe viajar al invitado.');
+  const marcos=[];
+  try{
+    for(const pagina of ['index.html','movil.html']){
+      const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+      f.src=pagina+'?test=online-interno&b='+Date.now();const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);marcos.push(f);await carga;
+    }
+    const [h,j]=marcos.map(f=>f.contentWindow), nh=h.eval('NET'),nj=j.eval('NET');
+    const mensajes=[];
+    for(const [w,n,host,nombre,sid] of [[h,nh,true,'Rafa <b>','hostPrueba'],[j,nj,false,'Amigo','guestPrueba']]){
+      Object.assign(n,{on:true,host,guest:!host,peer:true,sid,miNombre:nombre,suNombre:host?'Amigo':'Rafa <b>',seq:0,seen:new Set(),chs:[{ok:true,close(){}}],hechas:new Set(),esperaAck:new Map(),ultimoRival:Date.now()});
+      w.netStatus=()=>{};w.netTieneInternet=()=>true;
+      w.ask=async()=>0;
+    }
+    h.netSend=m=>{mensajes.push(m.t);queueMicrotask(()=>j.netRecv({...m,sid:nh.sid}));};
+    j.netSend=m=>{mensajes.push(m.t);queueMicrotask(()=>h.netRecv({...m,sid:nj.sid}));};
+    const inicio=h.netHostStart('fender','adreida');await sleep(100);
+    t.check([...h.document.querySelectorAll('.vs .lname')].map(n=>n.textContent).join('|')==='Rafa <b>|Amigo','VS debe usar los nombres de jugadores como texto.');
+    await inicio;await sleep(400);
+    t.check(mensajes.includes('coin')&&mensajes.includes('coinAck'),'El volado debe verse y confirmarse en los dos lados.');
+    t.check(h.eval('G.active')===1-j.eval('G.active'),'El volado debe asignar el mismo turno en ambas perspectivas.');
+    const partida=j.eval('G');await j.netRecv({...nh.welcome,sid:nh.sid});
+    t.check(j.eval('G')===partida,'Una bienvenida repetida no debe reiniciar la partida.');
+    await sleep(1100);
+    t.check(!j.document.querySelector('#reloj').hidden,'El invitado debe ver el reloj.');
+    t.check(h.eval('RELOJ.queda')===j.eval('RELOJ.queda'),'El reloj debe sincronizarse.');
+    h.eval('P(0).clouds=[{until:G.turnNo+6}]');h.netPushState();await sleep(300);
+    t.check(j.eval('P(1).clouds.length')===1,'La nube del anfitrión debe verse del lado rival.');
+    const d=j.document,reg=d.querySelector('#btnRegistro');
+    t.check(!!reg,'Debe existir el botón Registro.');
+    {
+      reg.dispatchEvent(new j.PointerEvent('pointerdown',{bubbles:true,clientX:100,clientY:100}));
+      reg.dispatchEvent(new j.PointerEvent('pointermove',{bubbles:true,clientX:40,clientY:100}));
+      reg.dispatchEvent(new j.PointerEvent('pointerup',{bubbles:true,clientX:40,clientY:100}));reg.click();
+      t.check(!d.querySelector('#panel').classList.contains('on'),'Arrastrar no debe abrir el registro.');
+      await sleep(550);reg.click();t.check(d.querySelector('#panel').classList.contains('on'),'Un toque deliberado debe abrir el registro.');
+    }
+    nh.ultimoRival=Date.now()-61000;h.netTieneInternet=()=>false;h.netPulso();
+    t.check(!h.eval('G.over'),'Perder tu propia red no debe darte victoria.');
+    h.netTieneInternet=()=>true;nh.ultimoRival=Date.now()-61000;h.netPulso();
+    t.check(h.eval('G.over&&G.winner===ME'),'La ausencia de 60 segundos debe resolver la partida.');
+    await sleep(300);
+    t.check(j.eval('G.over&&G.winner===FOE'),'La victoria del anfitrión debe sincronizarse.');
+    j.newGame('fender','adreida');j.eval('G.online=true;NET.peer=true');await j.netRecv({t:'bye'});
+    t.check(j.eval('G.over&&G.winner===ME'),'La salida explícita del anfitrión debe dar la victoria al invitado.');
+    for(const w of [h,j]){
+      t.check(w.codigoInvitacion('https://juego.caozcontodo.com/?sala=ABCDE&b=180')==='ABCDE','Debe aceptarse el enlace pegado.');
+    }
+  }finally{marcos.forEach(f=>{f.contentWindow.netClose();f.remove();});}
+});
+
 PRUEBAS.suite('nubeDagasUI', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -1506,7 +1585,7 @@ PRUEBAS.correr = async function(filtro){
   // Si esto corre desde publicar.sh, el servidor de pruebas está escuchando en
   // /resultado y es así como el script sabe que hemos terminado. Abriendo la
   // página a mano no hay nadie al otro lado: el fallo se ignora a propósito.
-  try{ fetch('/resultado', {method:'POST', headers:{'Content-Type':'application/json'},
+  if(window===window.top)try{ fetch('/resultado', {method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify(res)}).catch(()=>{}); }catch(e){}
 
   return res;

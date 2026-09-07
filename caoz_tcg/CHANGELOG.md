@@ -13,6 +13,23 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Arranque y continuidad online · 2026-09-07
+
+Build 180, beta: VS con nombres de jugadores y volado compartido antes de repartir.
+Acuses de presentación y moneda, con bienvenida idempotente para evitar reinicios
+por mensajes repetidos. El anfitrión controla los 90 segundos de ambos jugadores;
+el tiempo y las nubes activas viajan al invitado. Un arrastre móvil no abre Registro.
+La invitación retira el formulario al entrar, acepta URL pegada y ofrece copiar el
+código para abrir la app instalada manualmente. No promete redirigir enlaces externos
+a la PWA: esa elección depende del sistema y del navegador.
+
+Presencia cada 5 segundos: aviso tras 15 sin recibir al rival, victoria tras 60 si
+la conexión local sigue disponible; abandono explícito resuelto de inmediato. Sin
+servidor de arbitraje, una partición de red entre clientes no puede distinguirse
+perfectamente de un abandono: el resultado por ausencia se decide localmente.
+Pruebas onlineFlujo y onlineInvitacion (esta última sólo con relevo local explícito),
+además del arnés del proyecto. Sin cambios de cartas ni balance.
+
 ## Sin numerar — Nube de Dagas visible y confirmación · 2026-09-07
 
 Build 179, beta: cada nube aparece del lado de quien la activó, con indicador rojo

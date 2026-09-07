@@ -372,3 +372,91 @@ async function confirmarNubeDagas(id){
     return respuesta===1&&G===partida&&G.turnNo===turno;
   }finally{avisoDagasPendiente=false;}
 }
+
+/* Inicio online con acuse: una bienvenida repetida nunca reparte otra vez. */
+function netTieneInternet(){return navigator.onLine!==false;}
+function codigoInvitacion(valor){
+  let texto=String(valor||'').trim();
+  if(texto.includes('://')){try{texto=new URL(texto).searchParams.get('sala')||'';}catch(_){return '';}}
+  return texto.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+}
+function onlineEspera(texto,volver=false){
+  const panel=document.getElementById('ovPanel');panel.innerHTML='';
+  const titulo=document.createElement('h3');titulo.textContent=texto;panel.appendChild(titulo);
+  if(volver){const b=document.createElement('button');b.className='btn';b.textContent='Volver al menú';b.onclick=()=>{netSend({t:'bye'});netClose();document.getElementById('ov').classList.remove('on');showScreen('menu');};panel.appendChild(b);}
+  openOv();
+}
+function onlinePreparar(a,b){
+  tutEnd();clearPrompt();SEL=null;TGT=null;
+  document.getElementById('ov').classList.remove('on');
+  newGame(a,b,{});G.fast=false;G.online=true;G.guest=NET.guest;
+  showScreen('board');document.getElementById('log').innerHTML='';render();
+}
+async function onlineEsperarAcuse(id,campo,mensaje){
+  for(let i=0;i<300;i++){
+    if(!NET.on||NET.partidaId!==id)return false;
+    if(NET[campo])return true;
+    if(i%20===0)netSend({...mensaje});
+    await sleep(100);
+  }
+  onlineEspera('No llegó la respuesta de tu rival. Volved a entrar con el código de sala.',true);return false;
+}
+async function iniciarOnlineHost(a,b){
+  if(NET.iniciando)return;
+  const id=NET.sid+'-'+Date.now();NET.partidaId=id;NET.iniciando=true;
+  NET.rivalListo=false;NET.monedaLista=false;
+  NET.welcome={t:'welcome',host:a,guest:b,nombre:NET.miNombre||'Anfitrión',partida:id};
+  try{
+    onlinePreparar(a,b);netSend({...NET.welcome});
+    await cortinillaVS(a,b,{nombres:[NET.miNombre||'Anfitrión',NET.suNombre||'Invitado']});
+    if(!await onlineEsperarAcuse(id,'rivalListo',NET.welcome))return;
+    const eleccion=await ask(ME,'Cara o cruz — elige tu lado',['Cara','Cruz']);
+    if(!NET.on||NET.partidaId!==id)return;
+    const resultado=rnd(2),first=resultado===eleccion?ME:FOE;
+    const moneda={t:'coin',partida:id,resultado,first};
+    netSend({...moneda});await onlineMostrarMoneda(resultado,first===ME?NET.miNombre:NET.suNombre);
+    if(!await onlineEsperarAcuse(id,'monedaLista',moneda))return;
+    document.getElementById('ov').classList.remove('on');
+    await setupMatch(a,b,{online:true,first});
+  }finally{if(NET.partidaId===id)NET.iniciando=false;}
+}
+async function iniciarOnlineGuest(m){
+  const id=m.partida||m.sid;
+  if(NET.partidaId===id){if(NET.vsListo)netSend({t:'ready',partida:id});return;}
+  NET.partidaId=id;NET.vsListo=false;NET.monedaRecibida=null;
+  onlinePreparar(m.guest,m.host);
+  await cortinillaVS(m.guest,m.host,{nombres:[NET.miNombre||'Invitado',NET.suNombre||'Anfitrión']});
+  if(!NET.on||NET.partidaId!==id)return;
+  NET.vsListo=true;onlineEspera('Tu rival está eligiendo cara o cruz…');netSend({t:'ready',partida:id});
+}
+async function onlineMonedaRecibe(m){
+  if(m.partida!==NET.partidaId||!NET.vsListo)return;
+  if(NET.monedaRecibida===m.partida){if(NET.monedaTerminada)netSend({t:'coinAck',partida:m.partida});return;}
+  NET.monedaRecibida=m.partida;NET.monedaTerminada=false;
+  await onlineMostrarMoneda(m.resultado,m.first===0?NET.suNombre:NET.miNombre);
+  if(!NET.on||NET.partidaId!==m.partida)return;
+  NET.monedaTerminada=true;document.getElementById('ov').classList.remove('on');netSend({t:'coinAck',partida:m.partida});
+}
+async function onlineMostrarMoneda(resultado,nombre){
+  const panel=document.getElementById('ovPanel');panel.innerHTML='<div class="volado"><h3>Cara o cruz</h3><div class="onlineMoneda" aria-label="Moneda girando">✦</div><p class="onlineResultado">La moneda está en el aire…</p></div>';
+  openOv();const moneda=panel.querySelector('.onlineMoneda'),texto=panel.querySelector('.onlineResultado');
+  await sleep(1400);moneda.classList.add('quieta');moneda.textContent=resultado===0?'☀':'☾';
+  moneda.setAttribute('aria-label',resultado===0?'Cara':'Cruz');
+  texto.textContent=(resultado===0?'Cara':'Cruz')+' — empieza '+(nombre||'tu rival');await sleep(1800);
+}
+{
+  const css=document.createElement('style');css.textContent=`
+  .onlineMoneda{width:110px;height:110px;display:grid;place-items:center;border:6px double #e5c37a;border-radius:50%;background:radial-gradient(circle at 35% 25%,#f9df9b,#bc8132 65%,#744719);color:#402009;font-size:55px;box-shadow:0 8px 28px #0008;animation:monedaOnline .3s linear infinite}
+  .onlineMoneda.quieta{animation:none}
+  .onlineResultado{text-align:center}
+  @keyframes monedaOnline{50%{scale:.15 1;rotate:12deg}}
+  @media(prefers-reduced-motion:reduce){.onlineMoneda{animation:none}}
+  `;document.head.appendChild(css);
+}
+function onlineAyudaInstalada(panel){
+  if(!ONL.sala||navigator.standalone||matchMedia('(display-mode:standalone)').matches)return;
+  const texto=document.createElement('p');texto.textContent='Puedes jugar aquí. Si prefieres tu app instalada, copia el código y abre Con amigos → Unirme desde su icono.';
+  const boton=document.createElement('button');boton.className='btn sm';boton.textContent='Copiar código para la app: '+ONL.sala;
+  boton.onclick=async()=>{try{await navigator.clipboard.writeText(ONL.sala);toast('Código copiado');}catch(_){toast('Código de sala: '+ONL.sala);}};
+  panel.append(texto,boton);
+}
