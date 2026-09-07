@@ -13,6 +13,17 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Campaña sin desplazamiento · 2026-09-07
+
+Build 185, beta: selector y mapa se reparten la altura visible real del navegador,
+incluidas sus barras y áreas seguras. El tablero usa el espacio restante y los
+controles permanecen completos al pie; en horizontal pasan a una columna lateral.
+El carrusel conserva las cartas deslizantes con retrato flexible y ficha compacta.
+Se acorta la nota del mapa y se agrupan Menú principal y Reiniciar.
+Regresión campanaPantalla: ambas interfaces, seis protagonistas, mapas inicial/final,
+cinco tamaños de 320×480 a 844×390 y cambios de orientación. Reproducida en rojo
+antes del arreglo; comprueba contenido y controles, no sólo overflow oculto.
+
 ## Sin numerar — Niebla de exploración en campaña · 2026-09-07
 
 Build 184, beta: bruma sobre la región inexplorada del tablero, con borde difuso

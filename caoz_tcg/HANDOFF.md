@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 184 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 185 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -332,3 +332,8 @@ Build 184: campanaCrearNiebla deriva una máscara SVG del escalón guardado.
 La capa decorativa cubre sólo la región pendiente; al avanzar, la anterior
 se desvanece sobre la nueva y se retira con temporizador. No hay niebla desde
 la etapa 5, ni animación con movimiento reducido. No cambia el guardado v1.
+
+Build 185: diálogo de campaña con cabecera, contenido flexible y campanaAcciones.
+campanaAjustarVentana sigue visualViewport; data-vista seleccion/mapa reparte
+la altura disponible sin scroll. En horizontal bajo se distribuye en dos columnas.
+Suite campanaPantalla cubre tamaños, giros, protagonistas y etapas sin recortes.

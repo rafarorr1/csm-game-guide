@@ -384,6 +384,32 @@ PRUEBAS.suite('campana', async t => {
   }
 });
 
+PRUEBAS.suite('campanaPantalla', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-pantalla-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;
+    const comprobar=()=>{
+      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect();
+      t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el panel de campaña exige scroll.');
+      t.check(r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': el diálogo sale de la pantalla.');
+      d.querySelectorAll('.campanaAcciones .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo').forEach(n=>{
+        const b=n.getBoundingClientRect();t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+n.textContent);
+      });
+    };
+    try{
+      for(const [ancho,alto] of [[390,844],[320,568],[320,480],[844,390],[568,320]]){
+        f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(80);
+        w.campanaElegir();await sleep(60);comprobar();
+        for(let i=0;i<6;i++){w.document.querySelector('[aria-label="Protagonista siguiente"]').click();comprobar();}
+        for(const etapa of [0,5,6]){
+          w.campanaGuardar({version:1,id:'pantalla',lider:'fender',etapa});w.campanaRuta();await sleep(60);comprobar();
+        }
+      }
+    }finally{w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('onlineInvitacion', async t => {
   const relay=new URLSearchParams(location.search).get('relay');
   if(!relay||!/^http:\/\/(127\.0\.0\.1|localhost):/.test(relay)){t.nota('Prueba de transporte disponible sólo con relay local explícito.');return;}
