@@ -2255,9 +2255,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
       <div id="velo" aria-hidden="true"></div>
     </div>
     <div id="railder">
-      <div class="pilebox" id="foeGrave"></div>
-      <div id="efectos" hidden></div>
-      <div class="pilebox" id="myGrave"></div>
+      <div class="efectosLado"><div class="pilebox" id="foeGrave"></div><div id="efectosRival" hidden></div></div>
+      <div class="efectosLado"><div id="efectos" hidden></div><div class="pilebox" id="myGrave"></div></div>
     </div>
   </div>
   <div id="handzone">
@@ -2299,8 +2298,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=178"></script>
-<script src="final.js?b=178"></script>
+<script src="motor.js?b=180"></script>
+<script src="final.js?b=180"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2318,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:178, fecha:'2026-09-07'};
+const BUILD = {n:180, fecha:'2026-09-07'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3536,28 +3535,7 @@ function render(){
   /* Lo que sigue activo aunque no esté en el campo. La Nube de Dagas dura tres
      turnos y no se veía en ninguna parte: sabías que la jugaste y luego ya no,
      y el rival tampoco tenía forma de saber por qué le pegaban al entrar. */
-  const efz=$('#efectos');
-  if(efz){
-    const vivos=[];
-    for(const lado of [ME,FOE]) P(lado).clouds.forEach(c=>{
-      if(c.until>G.turnNo) vivos.push({
-        art:'🗡️', n:'Nube de Dagas',
-        de: lado===ME?'tuya':'del rival',
-        txt:`2 daño a cada Personaje ${lado===ME?'rival':'tuyo'} que entre`,
-        turnos: Math.max(1, Math.ceil((c.until-G.turnNo)/2)) });
-    });
-    efz.innerHTML='';
-    efz.hidden = !vivos.length;
-    vivos.forEach(v=>{
-      const d=el('div','efecto'+(v.de==='tuya'?' mio':''),
-        `<span class="ei">${v.art}</span><i>${v.turnos}</i>
-         <div class="cajon"><b>${v.n}</b> (${v.de})<br>${v.txt}<br>
-           <i>Le quedan ${v.turnos} turno${v.turnos===1?'':'s'} tuyos</i></div>`);
-      efz.appendChild(d);
-    });
-  }
-
-  // centro
+  renderNubesDagas();
   const mid=$('#midRow'); mid.innerHTML='';
   if(G.place){ const c=CARDS[G.place.id];
     const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn">${c.n} <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
@@ -3634,12 +3612,13 @@ function render(){
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
     /* ok y libre se vuelven a mirar al pulsar: el nodo puede sobrevivir a
        varios repintados y lo que valía al crearlo puede haber cambiado. */
-    d.onclick=()=>{ if(TGT||G.resolving) return;
+    d.onclick=async()=>{ if(TGT||G.resolving) return;
       if(!tutCan('hand',id)){ tutNope(); return; }
       /* Al Registro también: el aviso flotante se va solo y el motivo con él,
          que es justo lo que uno quiere releer cuando algo no le deja jugar. */
       if(!canPlay(ME,id)){ const w=whyNot(ME,id);
         toast(w); log(`No puedes jugar <b>${CARDS[id].n}</b> — ${w}.`,'sys',true); return; }
+      if(!await confirmarNubeDagas(id)||!canPlay(ME,id)||G.resolving||TGT)return;
       SEL=null; clearPrompt();
       if(NET.guest){ gIntent('play',{id}); return; }
       playFromHand(ME,id); };
@@ -4327,6 +4306,7 @@ async function cortinillaVS(a, b, opts={}){
   const capa = el('div','vs');
   capa.innerHTML = '<div class="vsfondo"></div><div class="vschispas"></div>';
   const izq = cartaDeLiderVS(a,'izq'), der = cartaDeLiderVS(b,'der');
+  if(opts.nombres){izq.querySelector('.lname').textContent=opts.nombres[0];der.querySelector('.lname').textContent=opts.nombres[1];}
   const sello = el('div','vssello','VS');
   capa.appendChild(izq); capa.appendChild(der); capa.appendChild(sello);
   document.body.appendChild(capa);
@@ -4494,27 +4474,15 @@ function pickIndex(list,title){
 
 /* ---------- arranque de la partida en cada lado ---------- */
 
-function netHostStart(miLider, suLider){
-  NET.welcome={t:'welcome', host:miLider, guest:suLider, nombre:NET.miNombre||''};
-  netSend(NET.welcome);
-  showScreen('board'); $('#log').innerHTML='';
-  setupMatch(miLider, suLider, {online:true});
-}
-
-function netGuestStart(m){
-  newGame(m.guest, m.host, {});          // esqueleto: yo soy 0, el anfitrión 1
-  G.fast=false; G.online=true; G.guest=true;
-  showScreen('board'); $('#log').innerHTML='';
-  log('<b>Partida online</b> — sala '+NET.code,'sys');
-  render();
-}
+function netHostStart(a,b){return iniciarOnlineHost(a,b);}
+function netGuestStart(m){return iniciarOnlineGuest(m);}
 /* el invitado no toca el motor: manda intenciones */
 /* Intención del invitado con acuse: si el relevo pierde el mensaje, se reenvía
    sola. El anfitrión ignora las repetidas por su identificador, así que nunca
    se ejecuta dos veces. */
 
 function showOnline(){
-  ONL={lider:null,nombre:nombreGuardado()};
+  ONL={lider:null,nombre:nombreGuardado(),sala:ONL.sala||null};
   const p=$('#ovPanel');
   p.innerHTML=`<h3>👥 Jugar con un amigo</h3>
     <p>Sin cuentas ni instalaciones: uno crea la sala y le pasa el código al otro
@@ -4543,6 +4511,7 @@ function onlPickNombre(asHost){
   const p=$('#ovPanel');
   p.innerHTML=`<h3>${asHost?'Crear sala':'Unirse'} — ¿cómo te llamas?</h3>
     <p>Así te verá tu rival en el chat y en los avisos de la partida.</p>`;
+  onlineAyudaInstalada(p);
   const inp=el('input','codeinput');
   inp.type='text'; inp.maxLength=18; inp.placeholder='Tu nombre';
   inp.value=nombreGuardado(); inp.autocomplete='off';
@@ -4614,7 +4583,7 @@ async function onlHost(){
 }
 
 /* la dirección de la sala: la del juego, sin el nombre de archivo, con ?sala= */
-function enlaceDeSala(code){ return location.origin + location.pathname.replace(/[^/]*$/,'') + '?sala=' + code; }
+function enlaceDeSala(code){return location.origin+location.pathname.replace(/[^/]*$/,'')+'?sala='+encodeURIComponent(code)+'&b='+BUILD.n;}
 async function compartirEnlace(enlace){
   if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas', text:'Entra a mi sala del Domo:', url:enlace}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
   if(navigator.clipboard){ try{ await navigator.clipboard.writeText(enlace); toast('Enlace copiado'); return; }catch(e){} }
@@ -4622,15 +4591,15 @@ async function compartirEnlace(enlace){
 }
 function onlJoinCode(){
   const p=$('#ovPanel');
-  p.innerHTML=`<h3>Unirse a una sala</h3><p>Escribe el código que te pasó tu amigo.</p>
-    <input id="joinCode" class="codeinput" maxlength="5" placeholder="ABCDE" autocomplete="off">
+  p.innerHTML=`<h3>Unirse a una sala</h3><p>Pega el código o el enlace que te pasó tu amigo.</p>
+    <input id="joinCode" class="codeinput" maxlength="300" placeholder="Código o enlace de invitación" autocomplete="off">
     <p class="netstatus" id="netStatus"></p>
     <p class="netdiag" id="netDiag"></p>`;
   const box=el('div','opts');
   const go=el('button','btn gold','Entrar →');
   go.onclick=async()=>{
-    const c=($('#joinCode').value||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-    if(c.length<4){ netStatus('El código son 5 caracteres','warn'); return; }
+    const c=codigoInvitacion($('#joinCode').value);
+    if(c.length!==5){ netStatus('El código son 5 caracteres','warn'); return; }
     go.disabled=true; netStatus('conectando…','');
     await netConnect(c,false);
     netStatus('buscando la sala…','warn');
@@ -4639,17 +4608,17 @@ function onlJoinCode(){
     const reintento=setInterval(()=>{
       if(NET.peer||!NET.on){ clearInterval(reintento); return; }
       intentos++;
-      if(intentos>24){ netStatus('nadie responde. ¿Seguro que el código es ese y tu amigo sigue esperando?','warn'); go.disabled=false; }
+      if(intentos>24){ clearInterval(reintento); netStatus('nadie responde. ¿Seguro que el código es ese y tu amigo sigue esperando?','warn'); go.disabled=false; }
       else netStatus('buscando la sala… ('+intentos+')','warn');
       netSend({t:'join', leader:ONL.lider, nombre:ONL.nombre});
     },2500);
   };
-  const back=el('button','btn sm','← Volver'); back.onclick=showOnline;
+  const back=el('button','btn sm','← Volver'); back.onclick=()=>{netClose();showOnline();};
   box.appendChild(go); box.appendChild(back); p.appendChild(box);
   openOv();
   if(ONL.sala){ const i=$('#joinCode'); if(i){ i.value=ONL.sala; } ONL.sala=null; setTimeout(()=>go.click(), 120); }
   setTimeout(()=>{ const i=$('#joinCode'); if(i){ i.focus();
-    i.oninput=()=>{ i.value=i.value.toUpperCase().replace(/[^A-Z0-9]/g,''); }; } },80);
+    i.oninput=()=>{ if(!i.value.includes('://'))i.value=i.value.toUpperCase(); }; } },80);
 }
 
 
@@ -4952,7 +4921,7 @@ if(new URLSearchParams(location.search).has('test')){
    Protagonista y se entra solo en esa sala. El parámetro se quita de la
    dirección para que una recarga no vuelva a intentar entrar. */
 { const q=new URLSearchParams(location.search), sala=(q.get('sala')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
-  if(sala.length>=4){ ONL.sala=sala; history.replaceState(null,'',location.pathname); setTimeout(()=>onlPickNombre(false),300); } }
+  if(sala.length>=4){ ONL.sala=sala; history.replaceState(null,'',location.pathname); setTimeout(()=>{if(!ONL.nombre)ONL.nombre=nombreGuardado();onlPickNombre(false);},300); } }
 if(new URLSearchParams(location.search).has('pantalla')){
   addEventListener('load',()=>setTimeout(()=>{
     const q=new URLSearchParams(location.search), p=q.get('pantalla');
