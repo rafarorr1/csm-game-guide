@@ -13,92 +13,73 @@
 
 (function CAOZ_AAA(){
   const AAA_CSS = `
-/* ===== Tarjeta full-bleed: acero oscuro + acento por tipo ===== */
+/* Marco y tres medallones, como la referencia: coste arriba, ATQ/PV abajo.
+   Los envoltorios no crean cajas de posición: los círculos se anclan a la carta. */
 body.aaa-polish .card.acomodo{
-  border:1.5px solid color-mix(in srgb,var(--tipo-cl,var(--gold)) 58%,#15131a 42%);
-  border-radius:12px;
-  background:linear-gradient(178deg,#26242b 0%,#15151a 54%,#0b0c10 100%);
-  box-shadow:
-    inset 0 1px 0 rgba(255,255,255,.16),
-    inset 0 0 0 1px rgba(0,0,0,.5),
-    inset 0 -18px 34px rgba(0,0,0,.36),
-    0 7px 16px rgba(0,0,0,.48);
+  overflow:visible;
+  border:1.5px solid color-mix(in srgb,var(--tipo-cl,var(--gold)) 35%,#b49a53 65%);border-radius:9px;
+  background:linear-gradient(150deg,#2b2238,#100e17 75%);
+  box-shadow:inset 0 0 0 3px #19151f,inset 0 0 0 4px #706044,0 5px 13px #0008;
 }
-body.aaa-polish .card.acomodo::after{
-  content:"";position:absolute;inset:3px;border-radius:9px;z-index:6;pointer-events:none;
-  border:1px solid rgba(255,255,255,.11);
-  box-shadow:inset 0 0 18px rgba(0,0,0,.42);
-}
-body.aaa-polish .card.acomodo .marcoDibujo{border-radius:10px}
-body.aaa-polish .card.acomodo .dibujo{
-  filter:saturate(1.06) contrast(1.04) brightness(.94);
-  transition:filter .2s ease;
-}
+body.aaa-polish .card.acomodo .marcoDibujo{inset:5px;border-radius:4px}
+body.aaa-polish .card.acomodo.sinarte .art{inset:5px;border-radius:4px;padding-bottom:32%}
+body.aaa-polish .card.acomodo .top{position:static;z-index:auto}
 body.aaa-polish .card.acomodo .pieCarta{
-  margin:auto -5px -5px;
-  padding:1.45em .58em .62em;
-  background:
-    linear-gradient(180deg,transparent 0%,rgba(8,9,13,.40) 20%,rgba(8,9,13,.88) 47%,rgba(5,6,9,.98) 100%);
+  position:static;z-index:auto;margin:auto 0 .5em;padding:0 .15em .15em;
+  background:none;gap:.22em;
 }
-body.aaa-polish .card.acomodo .pieCarta::before{
-  content:"";position:absolute;left:.45em;right:.45em;top:1.02em;height:1px;pointer-events:none;
-  background:linear-gradient(90deg,transparent,var(--tipo-cl,var(--gold)),transparent);
-  opacity:.7;box-shadow:0 0 8px var(--tipo,var(--gold));
-}
+body.aaa-polish .card.acomodo .pieCarta::before{display:none}
 body.aaa-polish .card.acomodo .pieCarta .nm{
-  font-size:1.16em;font-weight:800;letter-spacing:.035em;font-variant:small-caps;
-  color:#fffaf0;text-shadow:0 2px 4px #000,0 0 12px #000;
+  position:relative;z-index:2;padding:.28em .18em;margin:0;
+  border:1px solid #7c683b;border-radius:3px;
+  background:linear-gradient(#302338,#140f1d);color:#f4e3b5;
+  font-size:1.12em;line-height:1.12;font-variant:small-caps;letter-spacing:.035em;
 }
 body.aaa-polish .card.acomodo .pieCarta .tribe{
-  font-size:.64em;letter-spacing:.075em;text-transform:uppercase;color:#b8b0c4;
+  position:relative;z-index:2;font-size:.6em;line-height:1.15;letter-spacing:.035em;
+  margin:0;color:#c2b4cb;background:#17111ed9;
 }
 body.aaa-polish .card.acomodo .pieCarta .txt{
-  color:#ded9e5;font-size:.80em;line-height:1.18;text-shadow:0 1px 2px #000;
+  position:relative;z-index:2;box-sizing:border-box;padding:.4em .5em;
+  text-align:left;font-size:.8em;line-height:1.2;color:#ded5e6;
+  border:1px solid #615335;border-radius:3px;background:#120e1beb;
 }
-body.aaa-polish .card.acomodo .cost{
-  width:2.12em;height:2.12em;border-radius:50%;border:1px solid rgba(255,255,255,.42);
-  background:
-    radial-gradient(circle at 34% 26%,rgba(255,255,255,.65),transparent 25%),
-    radial-gradient(circle at 42% 38%,var(--tipo-cl,var(--gold)),var(--tipo,var(--gold)) 55%,var(--tipo-os,#33234f) 100%);
-  color:#fff;font-weight:950;text-shadow:0 1px 2px rgba(0,0,0,.85);
-  box-shadow:0 2px 7px rgba(0,0,0,.72),inset 0 0 0 1px rgba(0,0,0,.36),0 0 9px color-mix(in srgb,var(--tipo,var(--gold)) 45%,transparent);
-}
-body.aaa-polish .card.acomodo .pieCarta .stats{
-  position:relative;margin-top:.30em;min-height:2.25em;align-items:flex-end;
-}
+body.aaa-polish .card.acomodo .pieCarta .stats{display:contents;position:static}
+body.aaa-polish .card.acomodo .cost,
 body.aaa-polish .card.acomodo .pieCarta .atk,
 body.aaa-polish .card.acomodo .pieCarta .hp{
-  display:grid;place-items:center;min-width:2.14em;width:2.14em;height:2.14em;padding:0;border-radius:50%;
-  border:1px solid rgba(255,255,255,.30);font-weight:950;color:#fff;
-  text-shadow:0 1px 2px #000;box-shadow:0 3px 7px rgba(0,0,0,.68),inset 0 0 0 1px rgba(0,0,0,.45);
+  position:absolute;z-index:7;box-sizing:border-box;display:grid;place-items:center;
+  font-size:1.03em;line-height:1;width:1.85em;height:1.85em;min-width:0;
+  padding:0;border-radius:50%;border:1.5px solid #d7b957;color:#fff6dc;
+  text-shadow:0 2px 3px #000;box-shadow:inset 0 0 0 2px #ffffff18,0 2px 5px #0009;
+}
+body.aaa-polish .card.acomodo .cost{
+  left:-.38em;top:-.38em;
+  background:radial-gradient(circle at 35% 25%,#8761d0,#3a2064 58%,#171020);
 }
 body.aaa-polish .card.acomodo .pieCarta .atk{
-  background:radial-gradient(circle at 38% 28%,#f5cf9b,#a86126 52%,#4b2914 100%);
+  left:-.38em;bottom:-.38em;background:radial-gradient(circle at 35% 25%,#d49232,#895015 58%,#32200f);
 }
 body.aaa-polish .card.acomodo .pieCarta .hp{
-  background:radial-gradient(circle at 38% 28%,#ffb1ad,#ad3d3b 52%,#51191b 100%);
+  right:-.38em;bottom:-.38em;background:radial-gradient(circle at 35% 25%,#d85b6f,#822239 58%,#310e1b);
 }
-body.aaa-polish .card.unit.selected{
-  filter:brightness(1.08);
-  box-shadow:0 12px 26px rgba(0,0,0,.58),0 0 0 1px rgba(255,255,255,.22),0 0 18px color-mix(in srgb,var(--tipo-cl,var(--gold)) 70%,transparent);
-}
-body.aaa-polish .card.unit.tgt{
-  box-shadow:0 12px 26px rgba(0,0,0,.58),0 0 0 2px rgba(224,82,74,.62),0 0 20px rgba(224,82,74,.34);
-}
-
+body.aaa-polish .card.unit .pieCarta{margin-bottom:1em}
 body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green),0 0 15px rgba(79,192,125,.4)}
+/* Una carta que atraviesa el cursor no debe desplegar su ficha sobre la pelea. */
+body.aaa-combat .cajon,body.aaa-combat #inspect{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
+body.aaa-combat .card.unit:hover{filter:none}
 
 /* ===== Combate ===== */
 .aaa-contact{position:fixed;z-index:355;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none;
   background:#fff;mix-blend-mode:screen;box-shadow:0 0 12px 5px rgba(255,255,255,.9),0 0 42px 20px rgba(255,133,70,.54)}
-.aaa-contact::before{content:"";position:absolute;left:50%;top:50%;width:92px;height:2px;translate:-50% -50%;rotate:var(--ang,0deg);
+.aaa-contact::before{content:"";position:absolute;left:50%;top:50%;width:42px;height:2px;translate:-50% -50%;rotate:var(--ang,0deg);
   background:linear-gradient(90deg,transparent,#fff 42%,#ffd29a 52%,transparent);box-shadow:0 0 12px #ff9a54}
 .aaa-wave{position:fixed;z-index:354;width:28px;height:28px;margin:-14px 0 0 -14px;border:2px solid rgba(255,219,177,.9);border-radius:50%;pointer-events:none;opacity:0}
 .aaa-shard{position:fixed;z-index:356;width:var(--w,15px);height:2px;left:0;top:0;transform-origin:0 50%;pointer-events:none;border-radius:2px;
   background:linear-gradient(90deg,#fff,var(--c,#ffc27d),transparent);box-shadow:0 0 6px var(--c,#ffc27d)}
-.aaa-dmg{position:fixed;z-index:360;pointer-events:none;translate:-50% -50%;font:950 clamp(24px,4.2vw,44px)/1 var(--serif,serif);letter-spacing:-.03em;
+.aaa-dmg{position:fixed;z-index:360;pointer-events:none;translate:-50% -50%;font:950 clamp(18px,2.5vw,28px)/1 var(--serif,serif);letter-spacing:-.03em;
   color:#fff2ec;text-shadow:0 3px 0 #651e19,0 7px 18px rgba(0,0,0,.88),0 0 14px rgba(255,87,66,.54)}
-.aaa-dmg.lethal{font-size:clamp(29px,5vw,52px);color:#fff;filter:drop-shadow(0 0 10px rgba(255,255,255,.7))}
+.aaa-dmg.lethal{font-size:clamp(22px,2.8vw,32px);color:#fff;filter:drop-shadow(0 0 10px rgba(255,255,255,.7))}
 .aaa-hit-vignette{position:fixed;inset:0;z-index:351;pointer-events:none;opacity:0;
   background:radial-gradient(ellipse at center,transparent 46%,rgba(116,19,15,.35) 100%)}
 .aaa-counter-tag{position:fixed;z-index:359;translate:-50% -50%;pointer-events:none;color:#d7c6ee;
@@ -178,26 +159,17 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
     const ang=Math.atan2(dy,dx)*180/Math.PI;
     const c=aaaAdd('aaa-contact',x,y); c.style.setProperty('--ang',ang+'deg');
     c.animate([{opacity:0,scale:'.35'},{opacity:1,scale:'1.15',offset:.18},{opacity:0,scale:'3.6'}],{duration:230,easing:'ease-out'}); aaaGone(c,250);
-    const w=aaaAdd('aaa-wave',x,y);
-    w.animate([{opacity:.95,scale:'.35'},{opacity:0,scale:power>1.2?'5.2':'4'}],{duration:330,easing:'cubic-bezier(.1,.7,.2,1)'});aaaGone(w,350);
-    for(let i=0;i<8+Math.round(power*3);i++){
+    for(let i=0;i<4;i++){
       const a=Math.atan2(dy,dx)+(Math.random()-.5)*1.55;
-      const len=20+Math.random()*46*power;
+      const len=12+Math.random()*20*power;
       const s=aaaAdd('aaa-shard',x,y);s.style.setProperty('--w',(9+Math.random()*17)+'px');s.style.rotate=(a*180/Math.PI)+'deg';
       s.animate([{translate:'0 0',opacity:1,scale:'1'},{translate:(Math.cos(a)*len)+'px '+(Math.sin(a)*len)+'px',opacity:0,scale:'.45'}],{duration:220+Math.random()*170,easing:'cubic-bezier(.12,.7,.2,1)'});aaaGone(s,430);
-    }
-    const v=document.createElement('div');v.className='aaa-hit-vignette';document.body.appendChild(v);
-    v.animate([{opacity:0},{opacity:Math.min(.62,.23*power),offset:.12},{opacity:0}],{duration:260});aaaGone(v,280);
-    const board=document.getElementById('board')||document.getElementById('field')||document.getElementById('app');
-    if(board&&aaaMotionOK()){
-      const sx=Math.max(-10,Math.min(10,dx*.018))*power, sy=Math.max(-7,Math.min(7,dy*.014))*power;
-      board.animate([{translate:'0 0'},{translate:(sx*-1)+'px '+(sy*-1)+'px',offset:.16},{translate:(sx*.55)+'px '+(sy*.55)+'px',offset:.43},{translate:(sx*-.2)+'px '+(sy*-.2)+'px',offset:.7},{translate:'0 0'}],{duration:210,easing:'ease-out'});
     }
   }
 
   function aaaDamageNumber(u,n,opt={}){
     const c=aaaCenter(u);if(!c)return;
-    const d=aaaAdd('aaa-dmg'+(opt.letal?' lethal':''),c.x,c.y-Math.max(8,c.h*.05)); d.textContent='−'+n;
+    const d=aaaAdd('aaa-dmg'+(opt.letal?' lethal':''),Math.max(25,Math.min(innerWidth-25,c.x)),Math.max(35,c.y-c.h/2-10)); d.textContent='−'+n;
     d.animate([
       {opacity:0,translate:'-50% -34%',scale:'.68'},
       {opacity:1,translate:'-50% -66%',scale:'1.22',offset:.22},
@@ -209,9 +181,7 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
   async function aaaCounter(counterEl,hitEl,amount,letal){
     if(!counterEl||!hitEl){aaaDamageNumber(STATE.last&&STATE.last.att,amount,{letal});return;}
     const a=aaaCenterOfEl(counterEl),b=aaaCenterOfEl(hitEl);if(!a||!b)return;
-    const dx=(b.x-a.x)*.30,dy=(b.y-a.y)*.30;
-    const tag=aaaAdd('aaa-counter-tag',(a.x+b.x)/2,(a.y+b.y)/2-22);tag.textContent='contraataque';
-    tag.animate([{opacity:0,translate:'-50% -35%'},{opacity:1,translate:'-50% -50%',offset:.24},{opacity:0,translate:'-50% -80%'}],{duration:520});aaaGone(tag,550);
+    const dx=(b.x-a.x)*.18,dy=(b.y-a.y)*.18;
     counterEl.style.zIndex='78';
     aaaSound('counter',1);
     const ida=counterEl.animate([
@@ -228,7 +198,7 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
     hitEl.animate([{translate:'0 0',rotate:'0deg'},{translate:(dx*.12)+'px '+(dy*.12)+'px',rotate:(dx>0?'1.2deg':'-1.2deg'),offset:.18},{translate:(-dx*.035)+'px '+(-dy*.035)+'px',rotate:'0deg',offset:.55},{translate:'0 0'}],{duration:250,easing:'ease-out'});
     await aaaNap(80);aaaDamageNumber(STATE.last.att,amount,{letal});
     if(letal)aaaSound('lethal',1);
-    await aaaNap(150);counterEl.style.zIndex='';
+    await aaaNap(680);counterEl.style.zIndex='';
   }
 
   function install(){
@@ -247,9 +217,9 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
       if(!e||!from||!to){ if(oldLunge)return oldLunge(att,target); await aaaNap(90);return; }
       const aviso=aaaAdd('fxlabel',(from.x+to.x)/2,(from.y+to.y)/2-46);
       aviso.textContent=att.card.n+' ataca a '+(target==='face'?P(1-att.side).L.n:target.card.n);
-      aaaGone(aviso,1000);
-      if(att.side!==ME) await aaaNap(640);
-      const dx=(to.x-from.x)*.43,dy=(to.y-from.y)*.43;
+      await aaaNap(att.side!==ME?640:340);
+      aviso.remove();
+      const dx=(to.x-from.x)*.28,dy=(to.y-from.y)*.28;
       const targetObj=target==='face'?null:target;
       const targetEl=targetObj?aaaUnitEl(targetObj):aaaFace(1-att.side);
       STATE.last={att,target:targetObj,attEl:e,targetEl,from,to,t:Date.now(),hits:0};
@@ -280,7 +250,7 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
         {translate:(dx*.08)+'px '+(dy*.08)+'px',scale:'1.012',offset:.48},
         {translate:'0 0',scale:'1'}
       ],{duration:215,easing:'cubic-bezier(.16,.72,.22,1)'});
-      await aaaNap(170);e.style.zIndex='';
+      await aaaNap(220);e.style.zIndex='';
     };
 
     /* El primer fxHit del combate sólo muestra la consecuencia del golpe que ya
@@ -294,6 +264,7 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
         S.hits=1;
         await aaaNap(55);aaaDamageNumber(u,amount,{letal:!!opt.letal});
         if(opt.letal)aaaSound('lethal',.75);
+        await aaaNap(680);
         return;
       }
       if(S&&now-S.t<1800&&u===S.att&&S.hits===1&&S.targetEl){
@@ -303,6 +274,17 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
       }
       if(oldHit)return oldHit(u,amount,opt);
     };
+
+    let animaciones=0;
+    for(const hook of ['fxLunge','fxHit']){
+      const efecto=window[hook];
+      window[hook]=async function(...args){
+        if(!aaaFX())return efecto(...args);
+        animaciones++;document.body.classList.add('aaa-combat');
+        try{return await efecto(...args);}
+        finally{if(--animaciones===0)document.body.classList.remove('aaa-combat');}
+      };
+    }
 
     /* API mínima para pruebas manuales desde consola. */
     window.CAOZ_AAA={version:1,sound:aaaSound,impact:aaaImpact,state:STATE};

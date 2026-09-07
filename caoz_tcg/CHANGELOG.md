@@ -13,6 +13,16 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Cartas con medallones y combate legible · 2026-09-07
+
+Build 170: coste en la esquina superior izquierda, ATQ y PV en las inferiores;
+marco dorado con matiz por tipo, nombre y reglas en recuadros oscuros.
+Durante los golpes se ocultan las fichas que abre el cursor, se retira el aviso
+antes del impacto y se espera a que termine cada cifra de daño. Menos partículas,
+sin velo ni sacudida de toda la mesa; contraataque sin otro cartel superpuesto.
+La suite visual comprueba las esquinas y la retirada de paneles y cifras;
+se validó que falla al restaurar el diseño anterior. El motor no cambia.
+
 ## Sin numerar — Integración AAA y publicación beta · 2026-09-07
 
 Build 169: se publican y validan final-core.js y polish-aaa.js junto al cargador;

@@ -286,6 +286,36 @@ PRUEBAS.suite('integracion', async t => {
 
 });
 
+PRUEBAS.suite('visual', async t => {
+  const carta=cardEl('eric');
+  carta.style.cssText='position:fixed;left:40px;top:40px;width:180px;height:252px';
+  document.body.appendChild(carta);
+  try{
+    const r=carta.getBoundingClientRect();
+    for(const [selector,derecha,abajo] of [['.cost',false,false],['.atk',false,true],['.hp',true,true]]){
+      const n=carta.querySelector(selector).getBoundingClientRect();
+      t.check(Math.abs(n.x+n.width/2-(derecha?r.right:r.left))<r.width*.12 &&
+        Math.abs(n.y+n.height/2-(abajo?r.bottom:r.top))<r.height*.08,
+        selector+' debe quedar en su esquina');
+    }
+  }finally{carta.remove();}
+  await T.startMatch('fender','adreida',{volado:false,first:0});
+  const a=T.mkUnit('horton',1),b=T.mkUnit('discipulo',0);
+  T.P(1).field.push(a);T.P(0).field.push(b);T.recalc();T.render();
+  const nodo=fxEl(a);nodo.classList.add('finge-hov');
+  const pelea=fxLunge(a,b);
+  await sleep(100);
+  t.check(getComputedStyle(nodo.querySelector('.cajon')).visibility==='hidden',
+    'el panel de reglas no debe tapar el combate');
+  await pelea;
+  t.check(!document.querySelector('.fxlabel'),'el aviso debe desaparecer antes del impacto');
+  const golpe=fxHit(b,1,{});await sleep(100);
+  t.check(document.querySelectorAll('.aaa-dmg').length===1,'debe verse una sola cifra de daño');
+  await golpe;
+  t.check(!document.querySelector('.aaa-dmg'),'la cifra debe retirarse antes del siguiente golpe');
+  t.check(!document.body.classList.contains('aaa-combat'),'los paneles deben recuperarse al terminar');
+});
+
 PRUEBAS.suite('regresiones', async t => {
   /* La IA no atacaba nunca: G.busy servía a la vez de "IA ocupada" y de
      reentrada de doAttack, así que se bloqueaba a sí misma. */
@@ -749,10 +779,12 @@ PRUEBAS.suite('regresiones', async t => {
     t.check(/Sir Horton/.test(dicho) && /Discípulo/.test(dicho),
       `un ataque del rival debe decir quién ataca a quién — decía: "${dicho}"`);
     await p;
-    await fxHit(mio,1,{});
+    const golpeAAA=fxHit(mio,1,{});
+    await sleep(100);
     const numero=$1('#fx .aaa-dmg');
     t.check(numero && numero.style.top && Number.isFinite(parseFloat(numero.style.top)),
       'el número AAA debe tener una coordenada vertical válida');
+    await golpeAAA;
     t.nota('los ataques del rival se anuncian antes de llegar');
   }
 
