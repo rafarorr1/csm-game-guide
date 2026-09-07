@@ -1488,24 +1488,55 @@ async function fastWindow(side, ctx){
   if(NET.host&&side===FOE){
     const c=await netAsk({kind:'pick',ids:cands,title:'⚡ Respuesta rápida',cancellable:true,fallback:null});
     if(!c||!P(side).hand.includes(c)) return;
-    P(side).pd-=costOf(c,side); P(side).hand.splice(P(side).hand.indexOf(c),1); P(side).grave.push(c);
+    P(side).pd-=costOf(c,side); P(side).hand.splice(P(side).hand.indexOf(c),1);
     log(`⚡ ${P(side).L.n} responde con <b>${CARDS[c].n}</b>.`);
-    const card=CARDS[c];
-    if(card.counter) await card.castCounter(G,side,ctx.ev);
-    else if(card.reroll) await card.castReroll(G,side,ctx.ev);
-    render(); return;
+    await lanzarRapido(side,c,ctx); return;
   }
   if(side!==ME||G.auto){ await aiFast(side,ctx,cands); return; }
   const c=await pickCard(side,cands,'⚡ Respuesta rápida — ¿jugar un Hechizo Rápido?',true);
   if(!c) return;
   P(side).pd-=costOf(c,side);
-  const i=P(side).hand.indexOf(c); P(side).hand.splice(i,1); P(side).grave.push(c);
+  const i=P(side).hand.indexOf(c); P(side).hand.splice(i,1);
   log(`⚡ Juegas <b>${CARDS[c].n}</b> como respuesta.`);
+  await lanzarRapido(side,c,ctx);
+}
+
+/* UN RÁPIDO ES UN HECHIZO. Se resolvían aquí por su cuenta, y por eso se
+   saltaban lo que playFromHand hace con cualquier Hechizo después de lanzarlo:
+   la Inspiración de Fender (Palabra de Curación es Canción Y Rápido), el
+   Acertijo de Brick y Brock, la tumba, el recálculo y las muertes. Y el
+   invitado en línea ni siquiera lanzaba los que no fueran contrahechizo o
+   repetición. Ahora los tres caminos pasan por aquí. */
+
+async function lanzarRapido(side,c,ctx){
   const card=CARDS[c];
+  await antesDeHechizo(side,c);
   if(card.counter) await card.castCounter(G,side,ctx.ev);
   else if(card.reroll) await card.castReroll(G,side,ctx.ev);
-  else { const ts=await resolveTargets(side,card,null); if(ts) await card.cast(G,side,ts); }
-  render();
+  else if(card.cast){ const ts=await resolveTargets(side,card,null); if(ts) await card.cast(G,side,ts); }
+  await trasHechizo(side,c);
+}
+
+/* lo que pasa alrededor de CUALQUIER Hechizo, se juegue desde la mano o como
+   respuesta rápida */
+
+async function antesDeHechizo(s,id){
+  const c=CARDS[id];
+  // Brick y Brock — Acertijo
+  if(c.sub&&c.sub.includes('engano')){
+    for(const u of [...P(1-s).field]) if(u.card.toll){ log('El Acertijo devuelve a Brick y Brock a la mano.','sys'); bounce(u); }
+  }
+}
+
+async function trasHechizo(s,id){
+  const c=CARDS[id];
+  // Fender — Inspiración
+  if(c.sub&&c.sub.includes('cancion')&&P(s).leaderId==='fender'){
+    const t=P(s).field.slice().sort((a,b)=>b.atk-a.atk)[0];
+    if(t){ t.pA++; log(`🎸 Inspiración: ${t.card.n} +1 ATQ permanente.`); }
+  }
+  P(s).grave.push(id);
+  recalc(); await checkDeaths(); render();
 }
 
 async function aiFast(side,ctx,cands){
@@ -1516,12 +1547,10 @@ async function aiFast(side,ctx,cands){
   if(card.heal && ctx.kind==='ataque') use=false;
   if(!use) return;
   P(side).pd-=costOf(c,side);
-  P(side).hand.splice(P(side).hand.indexOf(c),1); P(side).grave.push(c);
+  P(side).hand.splice(P(side).hand.indexOf(c),1);
   log(`⚡ ${P(side).L.n} responde con <b>${card.n}</b>.`);
   await nap(450);
-  if(card.counter) await card.castCounter(G,side,ctx.ev);
-  else if(card.reroll) await card.castReroll(G,side,ctx.ev);
-  render();
+  await lanzarRapido(side,c,ctx);
 }
 
 /* ==========================================================================
@@ -1694,6 +1723,8 @@ async function endTurn(){
   if(G.over||G.busy) return;
   relojPara();
   const s=G.active, p=P(s);
+  await cumplirAtaquesObligados(s);            // los que deben atacar, atacan
+  if(G.over) return;
   G.phase='final';
   if(G.tutorial) tutCheck();
   // Adreida — Maratón de K-dramas
@@ -1801,17 +1832,9 @@ async function playFromHand(s, id, forcedTargets){
       if(!ev.countered) await fastWindow(1-s,{kind:'hechizo',ev});
     }
     if(ev.countered){ P(s).grave.push(id); render(); return true; }
-    // Brick y Brock — Acertijo
-    if(c.sub&&c.sub.includes('engano')){
-      for(const u of [...P(1-s).field]) if(u.card.toll){ log('El Acertijo devuelve a Brick y Brock a la mano.','sys'); bounce(u); }
-    }
+    await antesDeHechizo(s,id);
     if(c.cast) await c.cast(G,s,ts);
-    // Fender — Inspiración
-    if(c.sub&&c.sub.includes('cancion')&&P(s).leaderId==='fender'){
-      const t=P(s).field.slice().sort((a,b)=>b.atk-a.atk)[0];
-      if(t){ t.pA++; log(`🎸 Inspiración: ${t.card.n} +1 ATQ permanente.`); }
-    }
-    P(s).grave.push(id);
+    await trasHechizo(s,id);
   }
   else if(c.t==='personaje'){
     const u=mkUnit(id,s);
@@ -1915,6 +1938,33 @@ function canAttack(u){
   // siete segundos repitiendo el mismo aviso.
   if(P(u.side).pd<1 && P(1-u.side).field.some(o=>o.card.toll&&o.alive)) return false;
   return true;
+}
+
+/* «DEBE ATACAR SI PUEDE»
+   Sir Horton, Rambo y El Correcaminos lo dicen en su texto (mustAttack), y no
+   lo aplicaba nadie: un jugador podía dejarlos quietos y quedarse con la
+   ventaja sin la desventaja. Ahora: al pedir terminar el turno, si uno de
+   ellos puede atacar, se avisa y no se termina (el jugador elige el blanco);
+   y si el turno se cierra de todas formas —el reloj, el anfitrión cerrando
+   por el invitado— ataca solo: al Alma si puede, y si no al Personaje con
+   menos vida. El tutorial queda fuera: va guionizado y un ataque de más lo
+   descuadra. La IA ya atacaba con todo lo que podía. */
+
+function atacantesObligados(s){
+  return P(s).field.filter(u => u.alive && u.card.mustAttack && canAttack(u)
+    && (legalTargets(u).face || legalTargets(u).units.length));
+}
+
+async function cumplirAtaquesObligados(s){
+  if(G.tutorial) return;
+  let guard=0;
+  while(guard++<6 && !G.over){
+    const u=atacantesObligados(s)[0]; if(!u) break;
+    const lt=legalTargets(u);
+    const t = lt.face ? 'face' : lt.units.slice().sort((a,b)=>(a.maxHp-a.dmg)-(b.maxHp-b.dmg))[0];
+    log(`⚔️ <b>${u.card.n}</b> debe atacar si puede: ataca solo.`,'sys');
+    if(!await doAttack(u,t)){ u.attacked=true; recalc(); }
+  }
 }
 
 function legalTargets(u){
@@ -2341,6 +2391,14 @@ function pedirTerminarTurno(){
   /* En el tutorial no se pregunta: sus pasos guionan cuándo se termina el
      turno, y una pregunta de más lo deja atascado. */
   if(G.tutorial){ terminarTurnoYa(); return; }
+  const deben=atacantesObligados(ME);
+  if(deben.length){
+    const n=deben.map(u=>'<b>'+u.card.n+'</b>').join(' y ');
+    setPrompt(`${n} debe atacar si puede. Ataca con ${deben.length>1?'ellos':'él'} antes de terminar el turno.`,
+      [{t:'Entendido',cls:'gold',fn:()=>{ clearPrompt(); render(); }}]);
+    log(`${deben.map(u=>u.card.n).join(' y ')} debe atacar antes de terminar el turno.`,'sys',true);
+    return;
+  }
   const p=P(ME);
   const hacer = p.pd>0 ? loQuePodriasHacer(ME) : [];
   if(!hacer.length){ terminarTurnoYa(); return; }
@@ -3657,6 +3715,8 @@ async function netDoAct(m){
   }
   if(m.k==='end'){
     if(G.active!==s) return {ok:false, why:'No es tu turno'};
+    const deben=atacantesObligados(s);
+    if(deben.length) return {ok:false, why:deben.map(u=>u.card.n).join(' y ')+' debe atacar antes de terminar el turno'};
     await endTurn(); return {ok:true};
   }
   if(m.k==='leader'){
