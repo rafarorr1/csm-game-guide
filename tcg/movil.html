@@ -138,6 +138,31 @@ html.app #board{padding-top:calc(var(--arriba) + 32px)}
   85% {opacity:var(--op,.3)}
   100%{opacity:0;transform:translate3d(var(--dx,0px),-125vh,0) rotate(var(--gir1,0deg)) scale(1.04)}}
 
+/* Entrada compartida visualmente con escritorio; el fondo permanece en movimiento. */
+@keyframes entraPantalla{
+  from{opacity:0;transform:translateY(16px) scale(.982);filter:blur(7px)}
+  to  {opacity:1;transform:none;filter:blur(0)}}
+.screen.portada.entra > *{animation:entraPantalla .40s cubic-bezier(.2,.75,.3,1) both}
+/* escalonado: lo de arriba primero, y cada bloque un pelín después */
+.screen.portada.entra > *:nth-child(2){animation-delay:.045s}
+.screen.portada.entra > *:nth-child(3){animation-delay:.09s}
+.screen.portada.entra > *:nth-child(4){animation-delay:.13s}
+.screen.portada.entra > *:nth-child(5){animation-delay:.17s}
+.screen.portada.entra > *:nth-child(n+6){animation-delay:.2s}
+
+/* el destello que cruza al cambiar de pantalla: una sola pasada, muy corta */
+#barrido{position:absolute;inset:0;z-index:80;pointer-events:none;opacity:0;
+  background:linear-gradient(100deg,transparent 34%,rgba(255,206,140,.16) 50%,transparent 66%)}
+#barrido.va{animation:cruza .45s ease-out}
+@keyframes cruza{
+  0%  {opacity:0;translate:-60% 0}
+  30% {opacity:1}
+  100%{opacity:0;translate:60% 0}}
+
+@media (prefers-reduced-motion:reduce){
+  .screen.portada.entra > *,#barrido.va{animation:none}}
+
+
 /* ---- menú ---- */
 /* Si el menú no cabe (récords, el cartel de instalar, pantallas cortas) se
    desplaza en vez de cortarse: `safe center` centra cuando cabe y alinea
@@ -163,6 +188,30 @@ html.app #board{padding-top:calc(var(--arriba) + 32px)}
   background:linear-gradient(180deg,rgba(74,42,22,.92),rgba(30,17,11,.94))}
 .portada .btn.gold{color:#2a1a06;border-color:rgba(255,238,200,.8);
   background:linear-gradient(180deg,#ffe9b8,#d9a441 42%,#a06f1c);text-shadow:none}
+/* Botones de la portada: metal cálido, jerarquía y relieve; el fondo original sigue visible. */
+#menu .menucol{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+#menu .menucol .btn{position:relative;min-height:48px;padding:12px 10px;border-radius:10px;
+  border:1px solid #9b704550;background:linear-gradient(160deg,#38281eee,#171310ee);
+  box-shadow:inset 0 1px 0 #ffedc31c,0 3px 0 #090807,0 6px 14px #0005;
+  color:#e9d7b9;font-size:13px;letter-spacing:.3px;transition:scale .18s ease,border-color .18s ease,filter .18s ease}
+#menu .menucol .principal{grid-column:1/-1;min-height:58px;border-color:#f4d58c;
+  background:linear-gradient(115deg,#a67129,#edce88 48%,#bb873b);color:#25170a;
+  font:800 19px/1.2 var(--serif);letter-spacing:1px;text-shadow:0 1px #ffe8af80;
+  box-shadow:inset 0 1px 0 #fff3c9,0 3px 0 #62401a,0 7px 22px #0006}
+#menu .menucol .campana{grid-column:1/-1;min-height:50px;background:linear-gradient(115deg,#421b1aee,#642925ee,#341918ee);
+  border-color:#b38454a0;color:#f4ddbc;font:700 17px/1.2 var(--serif);letter-spacing:1.2px}
+#menu .menucol .adorno{display:inline-block;margin:0 12px;font-size:12px;vertical-align:middle;opacity:.65}
+#menu .menucol .btn:focus-visible{outline:2px solid #ffe1a0;outline-offset:4px}
+@media(hover:hover){#menu .menucol .btn:hover{scale:1.025;border-color:#e9c789;filter:brightness(1.14);z-index:1}}
+#menu .menucol .btn:active{scale:.98}
+#campanaAviso{margin:auto;width:min(88vw,360px);padding:32px 24px 24px;border:1px solid #b58a50;border-radius:16px;
+  color:#edd7b4;text-align:center;background:radial-gradient(ellipse at top,#5b2923,#201511 70%);
+  box-shadow:0 24px 90px #000b,inset 0 0 0 5px #e8c3880a}
+#campanaAviso::backdrop{background:#100b0bc9;backdrop-filter:blur(5px)}
+#campanaAviso h2{margin:0;color:#f2d597;font:700 29px/1.2 var(--serif)}
+#campanaAviso p{margin:24px 0 30px;font-size:18px;letter-spacing:2px}
+#campanaAviso .btn{width:100%;min-height:48px;white-space:normal}
+@media(prefers-reduced-motion:reduce){#menu .menucol .btn{transition:none}}
 .portada .btn.taller{opacity:.55;font-size:12px;padding:9px}
 .foot{font-size:10px;color:#7a5c3a;letter-spacing:1px;margin-top:6px}
 /* el aviso de instalar: una vez, y se quita con «Ahora no» */
@@ -733,6 +782,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 <body>
 <div id="app"><div id="tel">
 <div id="fondoMenus" aria-hidden="true"></div>
+<div id="barrido" aria-hidden="true"></div>
 
 <!-- ============ MENÚ ============ -->
 <div class="screen on portada" id="menu">
@@ -743,13 +793,14 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="sub">Dos jugadores entran al Domo. Cada uno lleva a un Protagonista como Líder y un mazo de 40 cartas.
     Gana quien reclame el alma del rival… o el Deseo.</div>
   <div class="menucol">
-    <button class="btn gold" id="mTut">🎓 &nbsp;Tutorial — Aprende a jugar</button>
-    <button class="btn" id="mPlay">⚔️ &nbsp;Partida contra el Domo</button>
-    <button class="btn" id="mOnline">👥 &nbsp;Jugar con un amigo (online)</button>
-    <button class="btn" id="mGuides">📖 &nbsp;Guías de estrategia</button>
-    <button class="btn" id="mCards">🃏 &nbsp;Ver todas las cartas</button>
-    <button class="btn" id="mRules">📜 &nbsp;Reglas completas</button>
-    <button class="btn" id="mRecords">🏆 &nbsp;Tus récords</button>
+    <button class="btn principal" id="mPlay"><span class="adorno" aria-hidden="true">✦</span>Jugar contra el Domo<span class="adorno" aria-hidden="true">✦</span></button>
+    <button class="btn campana" id="mCampana" aria-haspopup="dialog">Campaña</button>
+    <button class="btn" id="mTut">Tutorial</button>
+    <button class="btn" id="mOnline">Con amigos</button>
+    <button class="btn" id="mCards">Colección de cartas</button>
+    <button class="btn" id="mGuides">Guías de estrategia</button>
+    <button class="btn" id="mRules">Reglas</button>
+    <button class="btn" id="mRecords">Tus récords</button>
   </div>
   <div class="instalar" id="instalar" hidden>
     <b>Llévatelo como app</b>
@@ -758,6 +809,12 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   </div>
   <div class="foot"><span class="build" id="buildMenu"></span> · <a href="index.html?escritorio=1">versión de escritorio</a></div>
 </div>
+
+<dialog id="campanaAviso" aria-labelledby="campanaTitulo" aria-describedby="campanaMensaje">
+  <h2 id="campanaTitulo">Campaña</h2>
+  <p id="campanaMensaje">Proximamente</p>
+  <form method="dialog"><button class="btn gold" autofocus>Volver al menú principal</button></form>
+</dialog>
 
 <!-- ============ SELECCIÓN ============ -->
 <div class="screen portada" id="select">
@@ -819,8 +876,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=172"></script>
-<script src="final.js?b=172"></script>
+<script src="motor.js?b=178"></script>
+<script src="final.js?b=178"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -831,7 +888,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:172, fecha:'2026-09-07'};
+const BUILD = {n:178, fecha:'2026-09-07'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -956,11 +1013,22 @@ function pulsacionLarga(nodo, fn){
 }
 
 /* ---------- pantallas ---------- */
+let entradaMenuTimer, barridoMenuTimer;
 function showScreen(id){
-  $$('.screen').forEach(s=>s.classList.remove('on'));
+  const antes=$('.screen.on');
+  clearTimeout(entradaMenuTimer);clearTimeout(barridoMenuTimer);
+  $$('.screen').forEach(s=>s.classList.remove('on','entra'));
   const p=$('#'+id); p.classList.add('on');
+  const barrido=$('#barrido');barrido.classList.remove('va');
   $('#fondoMenus').classList.toggle('on', p.classList.contains('portada'));
   if(id!=='board'){ document.body.classList.remove('peligro','remate'); cerrarHojas(); }
+  // La mesa tiene su propio VS. Entre menús entra sólo el contenido, como en escritorio.
+  if(p.classList.contains('portada') && antes!==p){
+    void p.offsetWidth;p.classList.add('entra');
+    void barrido.offsetWidth;barrido.classList.add('va');
+    entradaMenuTimer=setTimeout(()=>p.classList.remove('entra'),700);
+    barridoMenuTimer=setTimeout(()=>barrido.classList.remove('va'),500);
+  }
 }
 function sembrarPortada(){
   const f=$('#fondoMenus');
@@ -2133,6 +2201,8 @@ function fxStat(side,sel){
 /* ==========================================================================
    ARRANQUE
    ========================================================================== */
+$('#mCampana').onclick=()=>$('#campanaAviso').showModal();
+$('#campanaAviso').addEventListener('close',()=>{showScreen('menu');$('#mCampana').focus();});
 $('#mTut').onclick=()=>showTutorialPick();
 $('#mOnline').onclick=()=>showOnline();
 $('#mPlay').onclick=()=>{ SELP=null; SELF=null; SEL_PASO='yo'; buildSelect(); showScreen('select'); };
