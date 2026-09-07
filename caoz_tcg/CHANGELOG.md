@@ -30,6 +30,46 @@ byte también allí; si Cloudflare tarda más de dos minutos, lo dice en rojo y 
 
 ---
 
+## v18 — «Debe atacar si puede» se aplica, y los Rápidos son Hechizos · 2026-09-06
+
+Dos fallos de reglas que encontró una revisión externa del código (ChatGPT, con el paquete
+de revisión), los dos ciertos.
+
+### «Debe atacar si puede»
+
+Sir Horton, Rambo y El Correcaminos lo dicen en su texto (`mustAttack:true`) y **nadie lo
+aplicaba**: la propiedad sólo existía en sus definiciones. Un jugador podía bajar a Horton
+(4/4 por 3 con Prisa) y quedarse con la ventaja sin la desventaja; la IA, en cambio, ataca
+siempre con todo lo que puede, así que en el banco la carta sí pagaba su precio. Adreida,
+la que lleva a Horton, es la que más gana (57 %), y eso hace pensar que en manos humanas el
+desequilibrio era mayor que el medido.
+
+Ahora: al pedir **Terminar turno**, si uno de ellos puede atacar, sale el aviso y el turno no
+termina —el blanco lo sigue eligiendo el jugador—; y si el turno se cierra de todas formas
+(el reloj de 1:30, o el anfitrión cerrando por el invitado) **ataca solo**: al Alma si puede
+y si no al Personaje con menos vida. El anfitrión rechaza el fin de turno del invitado con
+el mismo motivo. El tutorial queda fuera de la regla: va guionizado y un ataque de más lo
+descuadra. Funciones nuevas del motor: `atacantesObligados(s)`, `cumplirAtaquesObligados(s)`.
+
+### Los Rápidos pasan por los mismos efectos que cualquier Hechizo
+
+`fastWindow()` resolvía los Hechizos Rápidos por su cuenta y se saltaba lo que
+`playFromHand()` hace con cualquier Hechizo después de lanzarlo: la **Inspiración de Fender**
+(Palabra de Curación es Canción y Rápido a la vez), el Acertijo de Brick y Brock, la tumba,
+el recálculo y las muertes. Y el invitado en línea ni siquiera lanzaba los que no fueran
+contrahechizo o repetición. Ahora los tres caminos (jugador, IA, invitado) pasan por
+`lanzarRapido()`, y los ganchos comunes viven en `antesDeHechizo()` / `trasHechizo()`, que
+también usa `playFromHand`.
+
+### Comprobado
+
+Dos regresiones nuevas en el arnés: con Sir Horton listo, Terminar turno avisa y no termina,
+y `endTurn()` lo hace atacar solo; y Palabra de Curación jugada como respuesta con Fender da
++1 ATQ y acaba en las Alcantarillas. Banco de balance sin cambios de fondo (la IA ya
+cumplía la regla; los Rápidos casi no están en los mazos).
+
+---
+
 ## Sin numerar — Récords locales y el aviso de instalar · 2026-09-06
 
 **Récords.** El juego apunta, en el navegador (o en la app instalada), cuántas partidas se

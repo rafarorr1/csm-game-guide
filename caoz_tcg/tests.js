@@ -1158,6 +1158,47 @@ PRUEBAS.suite('regresiones', async t => {
     t.check(!rotas.length, `cartas del Cajón que fallan al jugarse: ${rotas.join(' · ')}`);
     t.nota(`el Cajón: ${cajon.length} cartas nuevas, jugables y fuera de los mazos`);
   }
+
+  /* «Debe atacar si puede» (Sir Horton, Rambo, El Correcaminos) estaba escrito
+     en las cartas y no lo aplicaba nadie: se podía dejarlos quietos. */
+  {
+    await T.startMatch('adreida','fender',{volado:false,first:0,fast:true}); await sleep(400);
+    // la partida puede seguir en el arranque del turno (cartel, dado): se fuerza el estado
+    T.G.active = 0; T.G.phase = 'principal'; T.G.busy = false; T.G.over = false;
+    const u = T.mkUnit('horton', 0); u.sick=false; T.P(0).field.push(u); T.recalc(); T.render();
+    T.P(0).pd = 0;
+    window.pedirTerminarTurno(); await sleep(150);
+    t.check(T.G.active===0 && $1('#prompt').classList.contains('on') && /debe atacar/i.test($1('#pmsg').textContent),
+      'con Sir Horton listo, terminar el turno debe avisar de que debe atacar, y no terminar');
+    window.clearPrompt();
+    const almaAntes = T.P(1).alma;
+    await T.endTurn(); await sleep(200);
+    // no se mira u.attacked: en rápido el rival ya jugó y el turno nuevo lo puso a cero
+    t.check(T.G.log.some(l => /ataca solo/.test(l.txt)) && T.P(1).alma < almaAntes,
+      `si el turno se cierra de todas formas (el reloj), Sir Horton ataca solo (Alma rival ${almaAntes}→${T.P(1).alma})`);
+    t.nota('«debe atacar si puede» frena el fin de turno y, si se cierra igual, ataca solo');
+  }
+
+  /* Los Hechizos Rápidos se resolvían fuera de playFromHand y se saltaban la
+     Inspiración de Fender: Palabra de Curación es Canción y Rápido a la vez. */
+  {
+    await T.startMatch('fender','adreida',{volado:false,first:0,fast:true}); await sleep(400);
+    T.G.busy = false; T.G.over = false;
+    const u = T.mkUnit('discipulo', 0); u.sick=false; T.P(0).field.push(u); T.recalc();
+    T.P(0).hand = ['palabracuracion']; T.P(0).pd = 3;
+    T.G.active = 1;                              // se responde en el turno del rival
+    const antes = u.atk, viejo = window.pickCard, viejoT = window.resolveTargets;
+    window.pickCard = async () => 'palabracuracion';
+    window.resolveTargets = async () => [[u]];        // sin esto se queda esperando un clic
+    try{ await window.fastWindow(0, {kind:'ataque', ev:{}}); }
+    finally { window.pickCard = viejo; window.resolveTargets = viejoT; }
+    T.recalc();
+    t.check(u.atk === antes+1, `Palabra de Curación con Fender debe dar Inspiración: ATQ ${antes}→${u.atk}`);
+    t.check(T.P(0).grave.includes('palabracuracion') && !T.P(0).hand.includes('palabracuracion'),
+      'el Rápido tiene que acabar en las Alcantarillas y fuera de la mano');
+    T.G.active = 0;
+    t.nota('los Hechizos Rápidos pasan por los mismos efectos que cualquier Hechizo (Inspiración)');
+  }
 });
 
 /* ===========================================================================
