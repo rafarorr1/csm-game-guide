@@ -13,6 +13,15 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Campaña como tablero sobre una mesa · 2026-09-07
+
+Build 183, beta: el recorrido se presenta en un mapa de pergamino sobre madera,
+con relieve, perspectiva y un camino entre seis encuentros. Una ficha dorada con
+el símbolo del Protagonista marca su posición. Tras la victoria, Avanzar en el
+mapa anima su desplazamiento al siguiente combate; al completar llega a la cima.
+El próximo encuentro se puede pulsar para luchar. Se conservan carrusel, rivales
+ocultos, progreso y combates. El movimiento reducido elimina la animación de viaje.
+
 ## Sin numerar — Ascenso y revelación de rivales · 2026-09-07
 
 Build 182, beta: la escalera coloca el primer combate abajo y el jefe arriba.
