@@ -1187,7 +1187,8 @@ async function dmgU(u, n, opt={}){
   }
   u.dmg+=n;
   if(opt.att) u.killer=opt.att;
-  const golpe={inf:opt.src==='infeccion', fuego:!!opt.fire, letal:u.dmg>=u.maxHp};
+  const golpe={inf:opt.src==='infeccion', fuego:!!opt.fire, letal:u.dmg>=u.maxHp,
+    combate:opt.src==='combate', atacante:opt.att?opt.att.uid:null};
   netFx('hit',{uid:u.uid,n,...golpe});
   log(`${u.card.n} recibe ${n} daño (${Math.max(0,u.maxHp-u.dmg)}/${u.maxHp}).`,'dmg');
   render();
@@ -1720,7 +1721,7 @@ async function startTurn(s){
 }
 
 async function endTurn(){
-  if(G.over||G.busy) return;
+  if(G.over||G.busy||G.resolving) return;
   relojPara();
   const s=G.active, p=P(s);
   await cumplirAtaquesObligados(s);            // los que deben atacar, atacan
@@ -1902,10 +1903,15 @@ async function useLeader(s){
 
 /* ---------- habilidad activada de personaje ---------- */
 
+function canUseAct(u){
+  if(!G||G.over||!u||!u.alive) return false;
+  const a=u.card.act,s=u.side;
+  return !!(a&&!u.actUsed&&P(s).pd>=a.cost&&G.active===s&&u.stunned<=0&&!u.possessed&&(!a.req||a.req(G,s)));
+}
+
 async function useAct(u){
+  if(!canUseAct(u)) return false;
   const s=u.side, a=u.card.act;
-  if(!a||u.actUsed||P(s).pd<a.cost||G.active!==s||u.stunned>0||u.possessed) return false;
-  if(a.req&&!a.req(G,s)) { toast('No se puede usar ahora'); return false; }
   let ts=null;
   if(a.tg){ ts=await resolveTargets(s,{tg:[a.tg]},u); if(ts===null) return false; }
   P(s).pd-=a.cost; u.actUsed=true;
@@ -1996,7 +2002,7 @@ async function doAttack(u, target){
     setPrompt(`${u.card.n}: ${why}`,[{t:'Entendido',fn:()=>{clearPrompt();render();}}]);
     return false;
   }
-  G.resolving=true;
+  G.resolving=true; render();
   try{
     // Peaje de Brick y Brock
     if(P(d).field.some(o=>o.card.toll&&o.alive)){
@@ -2386,7 +2392,7 @@ function terminarTurnoYa(){
 }
 
 function pedirTerminarTurno(){
-  if(!G||G.over||G.active!==ME||G.busy) return;
+  if(!G||G.over||G.active!==ME||G.busy||G.resolving) return;
   SEL=null; clearPrompt();
   /* En el tutorial no se pregunta: sus pasos guionan cuándo se termina el
      turno, y una pregunta de más lo deja atascado. */
@@ -3543,6 +3549,7 @@ function netSnap(){
   const fx=G.fxq||[]; G.fxq=[];
   return {me:lado(FOE,true), foe:lado(ME,false),
     turn:G.turnNo, active:(G.active===FOE?0:1), phase:G.phase, over:G.over,
+    winner:Number.isInteger(G.winner)?1-G.winner:null, why:G.endWhy||null,
     place:G.place?{id:G.place.id,side:(G.place.side===FOE?0:1)}:null,
     logN:nuevo, fx};
 }
@@ -3580,19 +3587,33 @@ function netApply(s){
   };
   poner(0,s.me,0); poner(1,s.foe,1);
   G.turnNo=s.turn; G.active=s.active; G.phase=s.phase; G.over=s.over;
+  G.winner=Number.isInteger(s.winner)?s.winner:null; G.endWhy=s.why||null;
   G.place=s.place?{id:s.place.id,side:s.place.side}:null;
   (s.logN||[]).forEach(l=>log(l.txt,l.cls));
   recalc(); render();
   netPlayFx(s.fx||[]);
   if(s.over&&!G.overShown){ G.overShown=true;
     const gano = P(ME).alma>0 && P(FOE).alma<=0;
-    setTimeout(()=>showEnd(gano?ME:FOE, gano?'Tu rival se queda sin Alma.':'Te quedas sin Alma.'),700); }
+    // El anfitrión también conoce las victorias por Deseo y por El Rey.
+    const partida=G, ganador=G.winner===null?(gano?ME:FOE):G.winner;
+    const motivo=G.endWhy||(gano?'Tu rival se queda sin Alma.':'Te quedas sin Alma.');
+    setTimeout(()=>{if(G===partida&&G.over)showEnd(ganador,motivo);},700); }
 }
 
-async function netPlayFx(list){
+let netFxPartida=null,netFxCola=Promise.resolve();
+function netPlayFx(list){
+  const partida=G;
+  if(netFxPartida!==partida){netFxPartida=partida;netFxCola=Promise.resolve();}
+  // Los estados pueden llegar antes de que termine la animación anterior.
+  const turno=netFxCola.then(()=>netPlayFxLote(list,partida));
+  netFxCola=turno.catch(()=>{});
+  return turno;
+}
+async function netPlayFxLote(list,partida){
   for(const f of list){
+    if(G!==partida) return;
     const u=f.uid!=null? [...P(0).field,...P(1).field].find(x=>x.uid===f.uid) : null;
-    if(f.k==='hit'&&u) await fxHit(u,f.n,{inf:f.inf,fuego:f.fuego,letal:f.letal});
+    if(f.k==='hit'&&u) await fxHit(u,f.n,{inf:f.inf,fuego:f.fuego,letal:f.letal,combate:f.combate,atacante:f.atacante});
     else if(f.k==='lunge'&&u){
       const tg = f.tg==='face' ? 'face' : [...P(0).field,...P(1).field].find(x=>x.uid===f.tg);
       if(tg) await fxLunge(u, tg);

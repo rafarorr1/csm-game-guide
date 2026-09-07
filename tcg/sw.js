@@ -18,9 +18,10 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 166;
-const CACHE = 'caoz-tcg-' + VERSION;
-const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'manifest.webmanifest',
+const VERSION = 172;
+const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
+const CACHE = PREFIJO + VERSION;
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'polish-aaa.js', 'manifest.webmanifest',
                 'art/encuadres.json', 'art/logo.webp',
                 'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
 
@@ -49,7 +50,7 @@ self.addEventListener('install', ev => {
 self.addEventListener('activate', ev => {
   ev.waitUntil((async () => {
     const claves = await caches.keys();
-    await Promise.all(claves.filter(k => k.startsWith('caoz-tcg-') && k !== CACHE).map(k => caches.delete(k)));
+    await Promise.all(claves.filter(k => k.startsWith(PREFIJO) && k !== CACHE).map(k => caches.delete(k)));
     await self.clients.claim();
   })());
 });

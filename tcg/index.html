@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=166"></script>
-<script src="final.js?b=166"></script>
+<script src="motor.js?b=172"></script>
+<script src="final.js?b=172"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:166, fecha:'2026-09-07'};
+const BUILD = {n:172, fecha:'2026-09-07'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2447,46 +2447,7 @@ const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h
 
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 
-async function volado(nombreRival){
-  const p=$('#ovPanel');
-  const eleccion = await new Promise(ok=>{
-    // La moneda enseña 👑 desde el principio y acaba en 👑 o ⚔️, los mismos
-    // iconos que llevan los botones. Antes empezaba con un 🪙 genérico y el
-    // icono final salía de la nada.
-    p.innerHTML=`<h3>🪙 Cara o cruz</h3>
-      <p style="font-size:14.5px">Elige tu lado. Quien gane el volado empieza la partida.</p>
-      <div class="volado">
-        <div class="moneda" id="moneda">👑</div>
-        <div class="lados">
-          <button class="btn gold" id="ladoCara">👑 CARA</button>
-          <button class="btn" id="ladoCruz">⚔️ CRUZ</button>
-        </div>
-        <div class="dice" id="voladoTxt"></div>
-      </div>`;
-    openOv();
-    $('#ladoCara').onclick=()=>ok('cara');
-    $('#ladoCruz').onclick=()=>ok('cruz');
-  });
-
-  $('#ladoCara').disabled=$('#ladoCruz').disabled=true;
-  $('#voladoTxt').innerHTML=`Pediste <b>${eleccion.toUpperCase()}</b>…`;
-  const salio = rnd(2)===0 ? 'cara' : 'cruz';
-  const moneda=$('#moneda');
-  moneda.classList.add('girando');
-  const alterna=setInterval(()=>{ moneda.textContent = moneda.textContent==='👑'?'⚔️':'👑'; },110);
-  await nap(1500);
-  clearInterval(alterna);
-  moneda.classList.remove('girando');
-  moneda.textContent = salio==='cara' ? '👑' : '⚔️';
-
-  const ganas = (salio===eleccion);
-  $('#voladoTxt').innerHTML =
-    `Salió <b>${salio.toUpperCase()}</b> ${salio==='cara'?'👑':'⚔️'} — ` +
-    (ganas ? '<b>empiezas tú</b>' : `empieza <b>${nombreRival}</b>`);
-  await nap(1400);
-  $('#ov').classList.remove('on');
-  return ganas ? ME : FOE;
-}
+async function volado(nombreRival){ return voladoDomo(nombreRival); }
 
 /* ---------------------------------------------------------------------------
    REVELAR UNA CARTA DEL MAZO
@@ -2580,7 +2541,7 @@ async function ofrecerManoNueva(s){
 
 function endGame(winner, why){
   if(G.over) return;
-  G.over=true;
+  G.over=true; G.winner=winner; G.endWhy=why;
   log(`<b>=== FIN: gana ${P(winner).L.n} ===</b>`);
   // En el tutorial la partida puede acabar antes de la lección de estrategia — con
   // Fender pasa casi siempre. Antes de enseñar el cartel de fin, Gero termina de
@@ -3216,9 +3177,10 @@ async function fxDeath(u){
     const dx=pr? pr.left+pr.width/2-(er.left+er.width/2) : 0;
     const dy=pr? pr.top+pr.height/2-(er.top+er.height/2) : 40;
     const ghost=e.cloneNode(true);
-    ghost.className='card unit t-personaje';
+    ghost.classList.remove('ready','tgt','selected','finge-hov');
     ghost.style.cssText=`position:absolute;left:${er.left}px;top:${er.top}px;`
       +`width:${er.width}px;height:${er.height}px;margin:0;pointer-events:none;z-index:5`;
+    ghost.style.fontSize=(parseFloat(getComputedStyle(e).fontSize)*er.width/e.offsetWidth)+'px';
     $('#fx').appendChild(ghost);
     e.style.visibility='hidden';
     ghost.animate([{transform:'rotate(0) scale(1)',opacity:1,filter:'grayscale(0)'},
@@ -3433,7 +3395,7 @@ function renderLeaders(){
   [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
     const p=P(side), L=p.L, mine=side===ME;
-    const usable = mine && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
+    const usable = mine && !G.resolving && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
                 && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
     const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     const enc = encuadreDe(ARTE['lider_' + p.leaderId]);
@@ -3452,6 +3414,7 @@ function renderLeaders(){
     e.onclick=()=>{
       if(TGT&&isTargetable('face')&&!mine){ pickTarget('face'); return; }
       if(!mine){ if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } return; }
+      if(G.resolving) return;
       if(!tutCan('leader')){ tutNope(); return; }
       if(usable){ if(NET.guest){ gIntent('leader'); return; } useLeader(ME); }
       else if(G.active===ME) toast(p.leaderUsed?'Ya usaste tu Habilidad este turno':`Necesitas ${L.habCost} PD`);
@@ -3605,7 +3568,8 @@ function render(){
   P(ME).relics.forEach(r=>{ const c=CARDS[r.id];
     if(!c.relicAct) return;
     const b=el('button','btn sm',`${c.art} ${c.relicAct.n} (${r.counters||0})`);
-    b.onclick=()=>{ if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); };
+    b.disabled=G.resolving||G.active!==ME||G.over||P(ME).pd<c.relicAct.cost;
+    b.onclick=()=>{ if(G.resolving) return; if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); };
     mid.appendChild(b); });
   // mano
   const h=$('#hand');
@@ -3665,12 +3629,12 @@ function render(){
     }
     // el abanico se dibuja en CSS; aquí sólo se dice qué puesto ocupa cada una
     d.style.setProperty('--i', iMano);
-    const ok=canPlay(ME,id);
+    const ok=!G.resolving&&canPlay(ME,id);
     const libre=tutCan('hand',id);
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
     /* ok y libre se vuelven a mirar al pulsar: el nodo puede sobrevivir a
        varios repintados y lo que valía al crearlo puede haber cambiado. */
-    d.onclick=()=>{ if(TGT) return;
+    d.onclick=()=>{ if(TGT||G.resolving) return;
       if(!tutCan('hand',id)){ tutNope(); return; }
       /* Al Registro también: el aviso flotante se va solo y el motivo con él,
          que es justo lo que uno quiere releer cuando algo no le deja jugar. */
@@ -3718,12 +3682,12 @@ function renderControls(){
   if(SEL&&SEL.card.act){
     const a=SEL.card.act;
     const b=el('button','btn sm',`✨ ${a.n} (${a.cost} PD)`);
-    b.disabled=SEL.actUsed||p.pd<a.cost;
-    b.onclick=()=>{ if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); };
+    b.disabled=G.resolving||!canUseAct(SEL);
+    b.onclick=()=>{ if(G.resolving||!canUseAct(SEL)) return; if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); };
     c.appendChild(b);
   }
   const e=el('button','btn gold','Terminar turno ⏭');
-  e.disabled=G.active!==ME||G.busy||G.over||!tutCan('end');
+  e.disabled=G.active!==ME||G.busy||G.resolving||G.over||!tutCan('end');
   e.onclick=pedirTerminarTurno;
   c.appendChild(e);
   const r=el('button','btn sm','📜 Reglas'); r.onclick=()=>showRules(true); c.appendChild(r);
@@ -4855,7 +4819,7 @@ function sembrarPortada(){
     const nL = Object.keys(LEADERS).length;
     const nC = Object.keys(CARDS).filter(id=>!CARDS[id].token).length;
     pie.insertAdjacentHTML('afterbegin',
-      `Set base — ${nL} Líderes · ${nC} cartas · ${nL} mazos preconstruidos<br>`);
+      `Colección — ${nL} Líderes · ${nC} cartas · ${nL} mazos preconstruidos<br>`);
   }
 }
 sembrarPortada();
