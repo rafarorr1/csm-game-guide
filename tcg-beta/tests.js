@@ -340,11 +340,20 @@ PRUEBAS.suite('menuMovil', async t => {
   marco.style.cssText='position:fixed;left:-10000px;width:390px;height:844px;border:0';document.body.appendChild(marco);
   try{
     await new Promise((ok,mal)=>{marco.onload=ok;marco.onerror=mal;});await sleep(1800);
-    const d=marco.contentDocument;
+    const d=marco.contentDocument,visor=marco.contentWindow;
+    const velo=visor.getComputedStyle(d.querySelector('#menu')).backgroundImage;
+    t.check(!/(?:^|[^a])rgb\(/.test(velo),'Una capa opaca está ocultando el fondo animado del menú.');
+    const cartas=[...d.querySelectorAll('#fondoMenus .cartaFondo')],brasas=[...d.querySelectorAll('#fondoMenus .brasa')];
+    t.check(cartas.length===7&&brasas.length===16,'La portada debe conservar sus cartas flotantes y brasas.');
+    if(!visor.matchMedia('(prefers-reduced-motion: reduce)').matches){
+      const antes=visor.getComputedStyle(cartas[3]).transform;await sleep(200);
+      t.check(visor.getComputedStyle(cartas[3]).transform!==antes,'Las cartas del fondo deben desplazarse.');
+    }
     for(const [w,h] of [[320,568],[375,667],[390,844],[430,932],[844,390]]){
       marco.style.width=w+'px';marco.style.height=h+'px';await sleep(250);
       d.documentElement.classList.add('app');d.documentElement.style.setProperty('--arriba','47px');d.documentElement.style.setProperty('--abajo','34px');await sleep(60);
       const menu=d.querySelector('#menu'),r=menu.getBoundingClientRect();
+      t.check(d.querySelector('.home-top').getBoundingClientRect().top>=71,'La cabecera debe quedar debajo de la franja de estado de la app.');
       t.check(menu.scrollHeight<=menu.clientHeight+1,'El menú instalado tiene scroll a '+w+'×'+h+' ('+menu.scrollHeight+'/'+menu.clientHeight+') '+[...menu.children].map(e=>e.className+':'+Math.round(e.getBoundingClientRect().height)).join(', '));
       for(const id of ['mPlay','mOnline','mTut','mCards','mGuides','mRules','mRecords']){
         const b=d.getElementById(id).getBoundingClientRect();
