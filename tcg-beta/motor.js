@@ -1570,6 +1570,8 @@ async function setupMatch(myLeader, foeLeader, opts={}){
   newGame(myLeader, foeLeader, opts);
   G.fast=!!opts.fast; G.auto=!!opts.auto; G.silent=!!opts.silent;
   G.online=!!opts.online; G.logSent=0; G.fxq=[];
+  // Los modificadores del prototipo sólo existen dentro de su propia partida.
+  if(opts.campana&&!opts.online){G.campana={...opts.campana};P(FOE).alma=opts.campana.alma;}
   const first = opts.first!=null ? opts.first : (rnd(2));
   G.second = 1-first;
   log(`<b>${P(first).L.n}</b> gana la tirada de inicio y empieza.`,'sys');
