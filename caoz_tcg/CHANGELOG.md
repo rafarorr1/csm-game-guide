@@ -13,6 +13,13 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — El ritual de apertura · 2026-09-07
+
+Build 171: volado compartido por escritorio y móvil en final-core.js. Moneda
+dorada con corona y espadas dibujadas, botones con elección persistente,
+lanzamiento y anuncio de quién empieza. Foco de teclado, estado anunciado y
+alternativa sin movimiento. Se conserva la tirada aleatoria y el reparto.
+
 ## Sin numerar — Cartas con medallones y combate legible · 2026-09-07
 
 Build 170: coste en la esquina superior izquierda, ATQ y PV en las inferiores;

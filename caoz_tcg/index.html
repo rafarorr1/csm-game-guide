@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=170"></script>
-<script src="final.js?b=170"></script>
+<script src="motor.js?b=171"></script>
+<script src="final.js?b=171"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:170, fecha:'2026-09-07'};
+const BUILD = {n:171, fecha:'2026-09-07'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2447,46 +2447,7 @@ const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h
 
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 
-async function volado(nombreRival){
-  const p=$('#ovPanel');
-  const eleccion = await new Promise(ok=>{
-    // La moneda enseña 👑 desde el principio y acaba en 👑 o ⚔️, los mismos
-    // iconos que llevan los botones. Antes empezaba con un 🪙 genérico y el
-    // icono final salía de la nada.
-    p.innerHTML=`<h3>🪙 Cara o cruz</h3>
-      <p style="font-size:14.5px">Elige tu lado. Quien gane el volado empieza la partida.</p>
-      <div class="volado">
-        <div class="moneda" id="moneda">👑</div>
-        <div class="lados">
-          <button class="btn gold" id="ladoCara">👑 CARA</button>
-          <button class="btn" id="ladoCruz">⚔️ CRUZ</button>
-        </div>
-        <div class="dice" id="voladoTxt"></div>
-      </div>`;
-    openOv();
-    $('#ladoCara').onclick=()=>ok('cara');
-    $('#ladoCruz').onclick=()=>ok('cruz');
-  });
-
-  $('#ladoCara').disabled=$('#ladoCruz').disabled=true;
-  $('#voladoTxt').innerHTML=`Pediste <b>${eleccion.toUpperCase()}</b>…`;
-  const salio = rnd(2)===0 ? 'cara' : 'cruz';
-  const moneda=$('#moneda');
-  moneda.classList.add('girando');
-  const alterna=setInterval(()=>{ moneda.textContent = moneda.textContent==='👑'?'⚔️':'👑'; },110);
-  await nap(1500);
-  clearInterval(alterna);
-  moneda.classList.remove('girando');
-  moneda.textContent = salio==='cara' ? '👑' : '⚔️';
-
-  const ganas = (salio===eleccion);
-  $('#voladoTxt').innerHTML =
-    `Salió <b>${salio.toUpperCase()}</b> ${salio==='cara'?'👑':'⚔️'} — ` +
-    (ganas ? '<b>empiezas tú</b>' : `empieza <b>${nombreRival}</b>`);
-  await nap(1400);
-  $('#ov').classList.remove('on');
-  return ganas ? ME : FOE;
-}
+async function volado(nombreRival){ return voladoDomo(nombreRival); }
 
 /* ---------------------------------------------------------------------------
    REVELAR UNA CARTA DEL MAZO
