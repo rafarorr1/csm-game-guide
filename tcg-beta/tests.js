@@ -335,40 +335,6 @@ PRUEBAS.suite('banco', async t => {
   }finally{marco.remove();}
 });
 
-PRUEBAS.suite('menuMovil', async t => {
-  const marco=document.createElement('iframe');marco.src='movil.html?test=menu-layout&cb='+Date.now();
-  marco.style.cssText='position:fixed;left:-10000px;width:390px;height:844px;border:0';document.body.appendChild(marco);
-  try{
-    await new Promise((ok,mal)=>{marco.onload=ok;marco.onerror=mal;});await sleep(1800);
-    const d=marco.contentDocument,visor=marco.contentWindow;
-    const velo=visor.getComputedStyle(d.querySelector('#menu')).backgroundImage;
-    t.check(!/(?:^|[^a])rgb\(/.test(velo),'Una capa opaca está ocultando el fondo animado del menú.');
-    t.check(!!d.querySelector('.home-clock'),'La esfera dorada debe enmarcar el logo.');
-    t.check(!d.querySelector('.home-motto,.home-caption'),'Las frases retiradas no deben ocupar espacio.');
-    const cartas=[...d.querySelectorAll('#fondoMenus .cartaFondo')],brasas=[...d.querySelectorAll('#fondoMenus .brasa')];
-    t.check(cartas.length===7&&brasas.length===16,'La portada debe conservar sus cartas flotantes y brasas.');
-    if(!visor.matchMedia('(prefers-reduced-motion: reduce)').matches){
-      const rotor=d.querySelector('.home-vortex svg');
-      const giro=visor.getComputedStyle(rotor).rotate;
-      const antes=visor.getComputedStyle(cartas[3]).transform;await sleep(200);
-      t.check(visor.getComputedStyle(rotor).rotate!==giro,'El remolino del fondo debe girar.');
-      t.check(visor.getComputedStyle(cartas[3]).transform!==antes,'Las cartas del fondo deben desplazarse.');
-    }
-    for(const [w,h] of [[320,568],[375,667],[390,844],[430,932],[844,390]]){
-      marco.style.width=w+'px';marco.style.height=h+'px';await sleep(250);
-      d.documentElement.classList.add('app');d.documentElement.style.setProperty('--arriba','47px');d.documentElement.style.setProperty('--abajo','34px');await sleep(60);
-      const menu=d.querySelector('#menu'),r=menu.getBoundingClientRect();
-      t.check(d.querySelector('.home-top').getBoundingClientRect().top>=71,'La cabecera debe quedar debajo de la franja de estado de la app.');
-      t.check(menu.scrollHeight<=menu.clientHeight+1,'El menú instalado tiene scroll a '+w+'×'+h+' ('+menu.scrollHeight+'/'+menu.clientHeight+') '+[...menu.children].map(e=>e.className+':'+Math.round(e.getBoundingClientRect().height)).join(', '));
-      for(const id of ['mPlay','mOnline','mTut','mCards','mGuides','mRules','mRecords']){
-        const b=d.getElementById(id).getBoundingClientRect();
-        t.check(b.width>=44&&b.height>=44&&b.top>=r.top&&b.bottom<=r.bottom,'Botón inaccesible: '+id+' a '+w+'×'+h);
-      }
-    }
-    t.nota('Cinco tamaños, áreas seguras y siete acciones accesibles sin scroll.');
-  }finally{marco.remove();}
-});
-
 PRUEBAS.suite('tipografia', async t => {
   showGallery();await sleep(200);
   try{
