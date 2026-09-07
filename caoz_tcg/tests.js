@@ -316,6 +316,43 @@ PRUEBAS.suite('visual', async t => {
   t.check(!document.body.classList.contains('aaa-combat'),'los paneles deben recuperarse al terminar');
 });
 
+PRUEBAS.suite('nubeDagasUI', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    f.src=pagina+'?test=nube-interna&b='+Date.now();
+    const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);
+    try{
+      await carga;const w=f.contentWindow,d=f.contentDocument;const jugador=w.eval('P');
+      w.newGame('fender','adreida');jugador(1).clouds=[{until:0}];w.render();
+      t.check(!!d.querySelector('#efectosRival .efecto'),pagina+': falta nube activa en el lado rival, incluido su último turno.');
+      t.check(!d.querySelector('#efectos .efecto'),pagina+': la nube rival aparece en tu lado.');
+      jugador(0).clouds=[{until:6}];w.render();
+      t.check(!!d.querySelector('#efectos .efecto'),pagina+': falta la nube propia.');
+      const icono=d.querySelector('#efectosRival .ei');
+      t.check(w.getComputedStyle(icono).animationName==='dagasAlerta',pagina+': falta el parpadeo rojo.');
+      jugador(0).hand=['minus'];jugador(0).pd=10;
+      w.eval("G.phase='principal';G.fast=true");w.showScreen('board');w.render();
+      t.check(d.querySelector('#efectosRival').getBoundingClientRect().top<d.querySelector('#efectos').getBoundingClientRect().top,pagina+': los indicadores no respetan los lados.');
+      d.querySelector('#hand .card').click();
+      if(pagina==='movil.html')d.querySelector('#jugarPill button.gold').click();
+      t.check(d.querySelector('#ov').classList.contains('on')&&d.querySelector('#ovPanel').textContent.includes('2 de daño'),pagina+': tocar la carta no abre la confirmación.');
+      const cancelar=[...d.querySelectorAll('#ovPanel button')].find(b=>b.textContent==='Cancelar');
+      t.check(!!cancelar,pagina+': falta Cancelar.');cancelar.click();await sleep(0);
+      t.check(jugador(0).pd===10&&jugador(0).hand.includes('minus'),pagina+': el clic cancelado jugó la carta.');
+      let preguntas=0;w.ask=async()=>{preguntas++;return 0;};
+      t.check(await w.confirmarNubeDagas('minus')===false,pagina+': cancelar debe frenar la jugada.');
+      t.check(jugador(0).pd===10&&jugador(0).hand.includes('minus'),pagina+': cancelar consume recursos.');
+      w.ask=async()=>{preguntas++;return 1;};
+      t.check(await w.confirmarNubeDagas('minus')===true,pagina+': confirmar debe permitir continuar.');
+      await w.confirmarNubeDagas('nubedagas');
+      t.check(preguntas===2,pagina+': no debe advertir para un hechizo.');
+      jugador(1).clouds=[{until:-1}];w.render();
+      t.check(!d.querySelector('#efectosRival .efecto'),pagina+': la nube caducada sigue visible.');
+      t.check(await w.confirmarNubeDagas('minus')===true&&preguntas===2,pagina+': nube propia o caducada genera aviso.');
+    }finally{f.remove();}
+  }
+});
+
 PRUEBAS.suite('entradaMovil', async t => {
   const marco=document.createElement('iframe');
   marco.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';

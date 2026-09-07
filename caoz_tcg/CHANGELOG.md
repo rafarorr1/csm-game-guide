@@ -13,6 +13,15 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Nube de Dagas visible y confirmación · 2026-09-07
+
+Build 179, beta: cada nube aparece del lado de quien la activó, con indicador rojo
+pulsante (fijo con movimiento reducido). El indicador dura lo mismo que el daño,
+incluido el último turno. Antes de jugar un Personaje bajo una nube rival se pide
+confirmación; cancelar conserva carta y PD. La advertencia precede también al envío
+de la jugada del invitado online. Motor y balance sin cambios. Regresión nubeDagasUI
+en escritorio y móvil, comprobada en rojo antes del arreglo.
+
 ## Sin numerar — Cortinilla de entrada móvil · 2026-09-07
 
 Build 178, beta: Jugar contra el Domo y los cambios entre menús recuperan el

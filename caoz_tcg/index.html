@@ -2255,9 +2255,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
       <div id="velo" aria-hidden="true"></div>
     </div>
     <div id="railder">
-      <div class="pilebox" id="foeGrave"></div>
-      <div id="efectos" hidden></div>
-      <div class="pilebox" id="myGrave"></div>
+      <div class="efectosLado"><div class="pilebox" id="foeGrave"></div><div id="efectosRival" hidden></div></div>
+      <div class="efectosLado"><div id="efectos" hidden></div><div class="pilebox" id="myGrave"></div></div>
     </div>
   </div>
   <div id="handzone">
@@ -2299,8 +2298,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=178"></script>
-<script src="final.js?b=178"></script>
+<script src="motor.js?b=179"></script>
+<script src="final.js?b=179"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2318,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:178, fecha:'2026-09-07'};
+const BUILD = {n:179, fecha:'2026-09-07'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3536,28 +3535,7 @@ function render(){
   /* Lo que sigue activo aunque no esté en el campo. La Nube de Dagas dura tres
      turnos y no se veía en ninguna parte: sabías que la jugaste y luego ya no,
      y el rival tampoco tenía forma de saber por qué le pegaban al entrar. */
-  const efz=$('#efectos');
-  if(efz){
-    const vivos=[];
-    for(const lado of [ME,FOE]) P(lado).clouds.forEach(c=>{
-      if(c.until>G.turnNo) vivos.push({
-        art:'🗡️', n:'Nube de Dagas',
-        de: lado===ME?'tuya':'del rival',
-        txt:`2 daño a cada Personaje ${lado===ME?'rival':'tuyo'} que entre`,
-        turnos: Math.max(1, Math.ceil((c.until-G.turnNo)/2)) });
-    });
-    efz.innerHTML='';
-    efz.hidden = !vivos.length;
-    vivos.forEach(v=>{
-      const d=el('div','efecto'+(v.de==='tuya'?' mio':''),
-        `<span class="ei">${v.art}</span><i>${v.turnos}</i>
-         <div class="cajon"><b>${v.n}</b> (${v.de})<br>${v.txt}<br>
-           <i>Le quedan ${v.turnos} turno${v.turnos===1?'':'s'} tuyos</i></div>`);
-      efz.appendChild(d);
-    });
-  }
-
-  // centro
+  renderNubesDagas();
   const mid=$('#midRow'); mid.innerHTML='';
   if(G.place){ const c=CARDS[G.place.id];
     const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn">${c.n} <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
@@ -3634,12 +3612,13 @@ function render(){
     d.classList.add(!libre?'locked':(ok?'playable':'unplayable'));
     /* ok y libre se vuelven a mirar al pulsar: el nodo puede sobrevivir a
        varios repintados y lo que valía al crearlo puede haber cambiado. */
-    d.onclick=()=>{ if(TGT||G.resolving) return;
+    d.onclick=async()=>{ if(TGT||G.resolving) return;
       if(!tutCan('hand',id)){ tutNope(); return; }
       /* Al Registro también: el aviso flotante se va solo y el motivo con él,
          que es justo lo que uno quiere releer cuando algo no le deja jugar. */
       if(!canPlay(ME,id)){ const w=whyNot(ME,id);
         toast(w); log(`No puedes jugar <b>${CARDS[id].n}</b> — ${w}.`,'sys',true); return; }
+      if(!await confirmarNubeDagas(id)||!canPlay(ME,id)||G.resolving||TGT)return;
       SEL=null; clearPrompt();
       if(NET.guest){ gIntent('play',{id}); return; }
       playFromHand(ME,id); };
