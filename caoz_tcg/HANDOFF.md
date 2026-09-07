@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 183 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 184 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -327,3 +327,8 @@ se muestran identidades vencidas y el próximo rival. Se conserva el guardado v1
 Build 183: mapa en tablero de mesa con perspectiva CSS, encuentros pulsables
 y peón del Protagonista. Tras ganar, Avanzar en el mapa muestra el desplazamiento
 al siguiente encuentro; movimiento reducido respeta la posición sin animación.
+
+Build 184: campanaCrearNiebla deriva una máscara SVG del escalón guardado.
+La capa decorativa cubre sólo la región pendiente; al avanzar, la anterior
+se desvanece sobre la nueva y se retira con temporizador. No hay niebla desde
+la etapa 5, ni animación con movimiento reducido. No cambia el guardado v1.

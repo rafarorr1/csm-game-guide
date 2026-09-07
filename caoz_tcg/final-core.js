@@ -470,6 +470,34 @@ const CAMPANA_CLAVE='caoz.campana.v1'+(new URLSearchParams(location.search).has(
 const CAMPANA_CASILLAS=[[22,84],[68,73],[33,60],[73,47],[40,32],[62,17]];
 let campanaPasoAnterior=null;
 function campanaPosicionFicha(etapa){return etapa>=6?[50,9]:[CAMPANA_CASILLAS[etapa][0]-12,CAMPANA_CASILLAS[etapa][1]+3];}
+let campanaNieblaId=0;
+function campanaCrearNiebla(etapa,retirada=false){
+  if(etapa>=CAMPANA_RIVALES.length-1)return null;
+  const [x,y]=CAMPANA_CASILLAS[etapa],limite=y+4,id='niebla'+(++campanaNieblaId);
+  const niebla=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  niebla.setAttribute('class',retirada?'campanaNieblaRetirada':'campanaNiebla');
+  niebla.setAttribute('viewBox','0 0 600 440');niebla.setAttribute('preserveAspectRatio','none');
+  niebla.setAttribute('aria-hidden','true');niebla.setAttribute('focusable','false');
+  niebla.dataset.etapa=etapa;niebla.style.setProperty('--niebla-limite',limite+'%');
+  // La frontera sube con el avance; una abertura deja legible el encuentro actual.
+  niebla.innerHTML=`<defs>
+    <linearGradient id="${id}frontera" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="440">
+      <stop offset="${limite-17}%" stop-color="white"/><stop offset="${limite}%" stop-color="black"/>
+    </linearGradient>
+    <radialGradient id="${id}claro"><stop offset=".55" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="0"/></radialGradient>
+    <radialGradient id="${id}nube"><stop stop-color="#f1f0dd" stop-opacity=".55"/><stop offset="1" stop-color="#e4e9db" stop-opacity="0"/></radialGradient>
+    <filter id="${id}borde" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".009 .016" numOctaves="2" seed="7" result="viento"/><feDisplacementMap in="SourceGraphic" in2="viento" scale="38" xChannelSelector="R" yChannelSelector="G"/></filter>
+    <mask id="${id}mascara" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="440" style="mask-type:luminance">
+      <rect x="-30" y="-30" width="660" height="500" fill="url(#${id}frontera)" filter="url(#${id}borde)"/>
+      <ellipse cx="${x*6}" cy="${y*4.4-7}" rx="100" ry="66" fill="url(#${id}claro)"/>
+    </mask>
+  </defs><g mask="url(#${id}mascara)">
+    <rect width="600" height="440" fill="#b8c4bf" fill-opacity=".97"/>
+    <g class="campanaBruma" fill="url(#${id}nube)"><ellipse cx="115" cy="80" rx="250" ry="110"/><ellipse cx="465" cy="215" rx="260" ry="125"/><ellipse cx="170" cy="345" rx="240" ry="100"/></g>
+    <g class="campanaBruma campanaBrumaLejana" fill="url(#${id}nube)"><ellipse cx="400" cy="45" rx="290" ry="90"/><ellipse cx="120" cy="230" rx="270" ry="95"/></g>
+  </g>`;
+  return niebla;
+}
 let campanaMemoria=null,campanaLanzando=false;
 function campanaLeer(){
   let dato=campanaMemoria;
@@ -572,8 +600,16 @@ function campanaRuta(aviso=''){
   peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span>`;
   const destino=campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionFicha(campanaPasoAnterior);
   peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
-  tablero.append(lista,peon);mesa.appendChild(tablero);d.appendChild(mesa);
+  tablero.append(lista,peon);
+  const niebla=campanaCrearNiebla(p.etapa);if(niebla)tablero.appendChild(niebla);
+  mesa.appendChild(tablero);d.appendChild(mesa);
   if(campanaPasoAnterior!==null&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
+    const retirada=campanaCrearNiebla(campanaPasoAnterior,true);
+    if(retirada){
+      tablero.appendChild(retirada);
+      retirada.animate([{opacity:1},{opacity:0}],{duration:1100,easing:'ease-in-out',fill:'forwards'});
+      setTimeout(()=>retirada.remove(),1200);
+    }
     peon.animate([{left:origen[0]+'%',top:origen[1]+'%'},{left:destino[0]+'%',top:destino[1]+'%'}],{duration:1100,easing:'ease-in-out'});
     peon.querySelector('.campanaPeonCuerpo').animate([{translate:'0 0'},{translate:'0 -10px'},{translate:'0 0'}],{duration:275,iterations:4});
   }
@@ -658,10 +694,17 @@ function campanaFinal(winner,why){
   .campanaMesa{position:relative;margin:18px -8px 24px;padding:13px 10px 24px;border-radius:16px;perspective:1000px;background:repeating-linear-gradient(3deg,#27150e 0px,#382015 8px,#2b190f 12px,#482c1b 14px);box-shadow:inset 0 2px 12px #000b,0 12px 22px #0007}
   .campanaTablero{height:425px;position:relative;border:6px solid #806039;border-radius:9px;background:radial-gradient(ellipse at 40% 35%,#ccb982,#a58a56);transform:rotateX(18deg) rotateZ(-2deg);box-shadow:0 3px 0 #5b3e24,0 7px 0 #402819,0 20px 25px #0007,inset 0 0 35px #54351b88;isolation:isolate}
   .campanaGeografia{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .campanaNiebla,.campanaNieblaRetirada{position:absolute;inset:0;width:100%;height:100%;border-radius:3px;overflow:hidden;z-index:12;pointer-events:none}
+  .campanaBruma{animation:campanaBrumaFlota 14s ease-in-out infinite alternate}
+  .campanaBrumaLejana{animation-duration:19s;animation-direction:alternate-reverse}
+  @keyframes campanaBrumaFlota{from{transform:translate(-22px,-8px)}to{transform:translate(24px,10px)}}
+  #campanaPanel:not([open]) .campanaBruma{animation-play-state:paused}
+  @media(prefers-reduced-motion:reduce){.campanaBruma{animation:none}}
   .campanaCima{position:absolute;left:50%;top:2%;font:28px var(--serif);color:#643b23;translate:-50% 0}
   #campanaPanel .campanaMesa .campanaRuta{position:absolute;inset:0;display:block;max-height:none;overflow:visible;margin:0;padding:0;list-style:none}
   .campanaMesa .campanaRuta li{position:absolute;width:82px;height:67px;display:block;translate:-50% -50%;padding:0;border:none;background:none;box-shadow:none;text-align:center;opacity:1}
   .campanaMesa .campanaRuta li+li::before{display:none}
+  .campanaMesa .campanaRuta .pendiente{visibility:hidden}
   .campanaEncuentro{display:flex;flex-direction:column;align-items:center;justify-content:center;width:100%;padding:0;background:none;border:0;color:#f1ddb0;cursor:pointer}
   .campanaMesa .campanaRuta .lface,.campanaMesa .campanaOculto{position:relative;display:grid;place-items:center;width:43px;height:43px;flex:none;border-radius:50%;font-size:25px;border:2px solid #705032;background:#30231c;box-shadow:0 4px 0 #4e3421,0 7px 8px #24150788;margin:0 auto;overflow:hidden}
   .campanaMesa .campanaRuta .actual .lface{border-color:#ffe6a4;box-shadow:0 4px 0 #765327,0 0 0 4px #fff0b533,0 6px 18px #fff0b5aa}

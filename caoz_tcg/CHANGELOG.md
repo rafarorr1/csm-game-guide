@@ -13,6 +13,16 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Niebla de exploración en campaña · 2026-09-07
+
+Build 184, beta: bruma sobre la región inexplorada del tablero, con borde difuso
+y movimiento suave. Cada victoria despeja el camino al siguiente rival mientras
+avanza la ficha; al llegar al jefe, el mapa queda completamente descubierto.
+Las etiquetas futuras permanecen ocultas. El despejado se recupera del progreso
+guardado y la capa decorativa no intercepta toques. Movimiento reducido elimina
+el flotar y la transición. La suite de campaña recorre el despejado en ambas
+pantallas y comprueba su persistencia tras recargar.
+
 ## Sin numerar — Campaña como tablero sobre una mesa · 2026-09-07
 
 Build 183, beta: el recorrido se presenta en un mapa de pergamino sobre madera,

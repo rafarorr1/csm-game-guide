@@ -322,6 +322,16 @@ PRUEBAS.suite('campana', async t => {
     f.src=pagina+'?test=campana-interna';const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);await carga;
     let w=f.contentWindow;
     const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;};
+    const comprobarNiebla=etapa=>{
+      const n=w.document.querySelector('.campanaTablero .campanaNiebla');
+      if(etapa>=5){t.check(!n,pagina+': la niebla debe desaparecer al llegar al jefe final.');return 0;}
+      t.check(!!n&&n.dataset.etapa===String(etapa),pagina+': la niebla no corresponde al avance de la campaña.');
+      const estilo=w.getComputedStyle(n),valor=estilo.getPropertyValue('--niebla-limite').trim(),limite=parseFloat(valor);
+      t.check(n.getAttribute('aria-hidden')==='true'&&estilo.pointerEvents==='none',pagina+': la niebla decorativa no debe bloquear controles ni lectores de pantalla.');
+      t.check(valor.endsWith('%')&&Number.isFinite(limite)&&limite>0&&limite<=100,pagina+': la niebla necesita una extensión válida sobre el mapa.');
+      t.check(n.querySelector('linearGradient stop:last-child').getAttribute('offset')===valor,pagina+': la máscara visible debe seguir el límite de niebla guardado.');
+      return limite;
+    };
     try{
       preparar();w.localStorage.removeItem('caoz.campana.v1.prueba');
       w.document.querySelector('#mCampana').click();
@@ -338,6 +348,7 @@ PRUEBAS.suite('campana', async t => {
       t.check(!!w.document.querySelector('.campanaMesa .campanaPeon'),pagina+': falta la ficha en el tablero.');
       t.check(ruta.querySelectorAll('[data-campana-lider]').length===1&&!ruta.textContent.includes('Gero'),pagina+': no deben revelarse los rivales futuros.');
       t.check(w.campanaLeer().etapa===0,pagina+': la campaña debe empezar desde cero.');
+      let limiteNiebla=comprobarNiebla(0);
       await w.campanaCombatir();
       t.check(w.eval('G.campana.etapa===0&&P(1).alma===16&&P(0).alma===20'),pagina+': primer encuentro incorrecto.');
       w.endGame(1,'Derrota de prueba');await sleep(600);
@@ -354,10 +365,15 @@ PRUEBAS.suite('campana', async t => {
         t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||w.document.querySelector('.campanaPeon').getAnimations().length>0,pagina+': falta la animación de avance.');
         t.check(w.document.querySelector('.campanaPeon').dataset.etapa===String(etapa+1),pagina+': la ficha no avanzó tras la victoria.');
         t.check(w.document.querySelectorAll('.campanaRuta [data-campana-lider]').length===Math.min(6,etapa+2),pagina+': se revelan rivales antes de tiempo.');
+        const nuevoLimite=comprobarNiebla(etapa+1);
+        if(etapa<4)t.check(nuevoLimite<limiteNiebla,pagina+': ganar debe despejar otra parte del mapa.');
+        limiteNiebla=nuevoLimite;
         w.showEnd(0,'Aviso repetido');t.check(w.campanaLeer().etapa===etapa+1,pagina+': una victoria duplicada avanza dos veces.');
         if(etapa===1){
           const recarga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-interna&recarga=1';await recarga;w=f.contentWindow;preparar();
           t.check(w.campanaLeer().etapa===2,pagina+': se perdió el progreso al recargar.');
+          w.document.querySelector('#mCampana').click();
+          t.check(comprobarNiebla(2)===limiteNiebla,pagina+': recargar debe conservar la parte del mapa ya despejada.');
         }
       }
       t.check(w.document.querySelector('#campanaPanel').textContent.includes('¡Campaña completada!'),pagina+': falta el cierre de campaña.');
