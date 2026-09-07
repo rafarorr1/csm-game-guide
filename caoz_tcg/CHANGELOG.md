@@ -13,6 +13,14 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Cortinilla de entrada móvil · 2026-09-07
+
+Build 178, beta: Jugar contra el Domo y los cambios entre menús recuperan el
+barrido dorado y la entrada escalonada del escritorio. El fondo no se reinicia.
+La transición se limpia incluso al navegar rápidamente y no se añade al VS.
+Respeta movimiento reducido. Regresión entradaMovil comprobada en rojo antes
+del arreglo y en verde después.
+
 ## Sin numerar — Botones del Domo y Campaña · 2026-09-07
 
 Build 177, beta: propuesta de botones móviles con relieve metálico, acción principal
