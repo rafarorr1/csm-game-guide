@@ -332,3 +332,43 @@ async function voladoDomo(nombreRival){
   if(p.contains(panel))document.getElementById('ov').classList.remove('on');
   return ganas?ME:FOE;
 }
+
+/* Nube de Dagas: indicador del dueño y aviso previo, compartidos por ambas pantallas. */
+{
+  const estiloDagas=document.createElement('style');
+  estiloDagas.textContent=`
+    #efectos,#efectosRival{display:flex;gap:6px;align-items:center}
+    #efectos[hidden],#efectosRival[hidden]{display:none}
+    .efectosLado{display:flex;flex-direction:column;align-items:center;gap:8px}
+    .efecto.dagas{padding:0;border-color:#ef5555;background:linear-gradient(#551f2b,#241016);cursor:pointer}
+    .efecto.dagas .ei{color:#ff4545;animation:dagasAlerta 1.15s ease-in-out infinite}
+    @keyframes dagasAlerta{0%,100%{opacity:1;filter:drop-shadow(0 0 7px #ff2525)}50%{opacity:.5;filter:drop-shadow(0 0 2px #ff2525)}}
+    @media(prefers-reduced-motion:reduce){.efecto.dagas .ei{animation:none;filter:drop-shadow(0 0 5px #ff2525)}}`;
+  document.head.appendChild(estiloDagas);
+}
+function renderNubesDagas(){
+  for(const lado of [ME,FOE]){
+    const zona=document.getElementById(lado===ME?'efectos':'efectosRival');if(!zona)continue;
+    const nubes=P(lado).clouds.filter(c=>c.until>=G.turnNo);
+    zona.innerHTML='';zona.hidden=!nubes.length;
+    nubes.forEach(c=>{
+      const turnos=Math.max(1,Math.ceil((c.until-G.turnNo)/2));
+      const texto=`Nube de Dagas de ${P(lado).L.n}: 2 daño a cada Personaje ${lado===ME?'rival':'tuyo'} que entre. ${turnos} turno${turnos===1?'':'s'}.`;
+      const d=document.createElement('button');d.type='button';d.className='efecto dagas';
+      d.setAttribute('aria-label',texto);d.title=texto;
+      d.innerHTML=`<span class="ei" aria-hidden="true">🗡&#xfe0e;</span><i>${turnos}</i>`;
+      d.onclick=()=>toast(texto);zona.appendChild(d);
+    });
+  }
+}
+let avisoDagasPendiente=false;
+async function confirmarNubeDagas(id){
+  if(avisoDagasPendiente)return false;
+  if(CARDS[id].t!=='personaje'||!P(FOE).clouds.some(c=>c.until>=G.turnNo))return true;
+  avisoDagasPendiente=true;
+  const partida=G,turno=G.turnNo;
+  try{
+    const respuesta=await ask(ME,`Nube de Dagas está activa: ${CARDS[id].n} recibirá 2 de daño al entrar. ¿Seguro que quieres jugarlo?`,['Cancelar','Sí, jugar'],()=>0);
+    return respuesta===1&&G===partida&&G.turnNo===turno;
+  }finally{avisoDagasPendiente=false;}
+}
