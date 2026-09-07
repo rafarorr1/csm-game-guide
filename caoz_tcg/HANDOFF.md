@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 180 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 181 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -311,3 +311,11 @@ Deuda técnica:
 
 Contacto/propietario: Rafa (rafarorr1). Decide él: qué cartas cambian, qué entra del Cajón,
 el arte, y cuándo se publica algo que cambia cómo se juega.
+
+## Campaña (prototipo build 181)
+
+Entrada en ambos menús; implementación compartida en final-core.js. Seis rivales:
+Mohamed, Fender, Talesyn, Rafaela, Adreida y Gero. Progreso local por escalón, no
+partidas a medias. Alma rival 16/20/24/28/32/40; no modifica mazos ni IA.
+setupMatch recibe opts.campana y showEnd deriva el resultado al flujo de campaña.
+Suite campana: derrota, seis victorias, duplicados, recarga y aislamiento.

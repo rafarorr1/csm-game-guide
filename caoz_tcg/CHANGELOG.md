@@ -13,6 +13,20 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Prototipo de campaña · 2026-09-07
+
+Build 181, beta. Escalera de seis combates con elección inicial de Protagonista,
+mazos existentes y Gero como jefe final. Las victorias desbloquean el siguiente
+combate; una derrota permite reintentar. Progreso guardado entre combates, nueva
+campaña con confirmación y cierre de campaña al vencer al jefe.
+
+Dificultad provisional explícita: Alma rival de 16, 20, 24, 28, 32 y 40. Cada
+combate reinicia tu mazo y tus 20 de Alma. No hay cambios en mazos, cartas ni IA;
+la resistencia creciente no garantiza dificultad estrictamente creciente entre
+emparejamientos. Este prototipo valida el recorrido; su balance queda por probar.
+Los ajustes sólo se aplican a partidas marcadas como campaña. Prueba automática
+de recorrido completo, derrota, reintento, guardado tras recargar y aislamiento.
+
 ## Sin numerar — Arranque y continuidad online · 2026-09-07
 
 Build 180, beta: VS con nombres de jugadores y volado compartido antes de repartir.

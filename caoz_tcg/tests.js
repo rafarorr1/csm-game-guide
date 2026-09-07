@@ -316,6 +316,44 @@ PRUEBAS.suite('visual', async t => {
   t.check(!document.body.classList.contains('aaa-combat'),'los paneles deben recuperarse al terminar');
 });
 
+PRUEBAS.suite('campana', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    f.src=pagina+'?test=campana-interna';const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);await carga;
+    let w=f.contentWindow;
+    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;};
+    try{
+      preparar();w.localStorage.removeItem('caoz.campana.v1.prueba');
+      w.document.querySelector('#mCampana').click();
+      t.check(w.document.querySelector('#campanaPanel').open,pagina+': Campaña debe abrirse desde el menú.');
+      w.document.querySelector('.campanaElegir button').click();
+      t.check(w.campanaLeer().etapa===0,pagina+': la campaña debe empezar desde cero.');
+      await w.campanaCombatir();
+      t.check(w.eval('G.campana.etapa===0&&P(1).alma===16&&P(0).alma===20'),pagina+': primer encuentro incorrecto.');
+      w.endGame(1,'Derrota de prueba');await sleep(600);
+      t.check(w.campanaLeer().etapa===0,pagina+': perder no debe avanzar.');
+      t.check(w.document.querySelector('#campanaPanel').textContent.includes('Reintentar combate'),pagina+': falta reintentar.');
+      for(let etapa=0;etapa<6;etapa++){
+        await w.campanaCombatir();
+        t.check(w.eval('G.campana.etapa')===etapa,pagina+': se saltó un combate.');
+        t.check(w.eval('P(1).alma')===[16,20,24,28,32,40][etapa],pagina+': resistencia rival incorrecta.');
+        if(etapa===5)t.check(w.eval("P(1).leaderId==='gero'"),pagina+': Gero debe ser el jefe final.');
+        w.endGame(0,'Victoria de prueba');await sleep(600);
+        t.check(w.campanaLeer().etapa===etapa+1,pagina+': la victoria no se guardó.');
+        w.showEnd(0,'Aviso repetido');t.check(w.campanaLeer().etapa===etapa+1,pagina+': una victoria duplicada avanza dos veces.');
+        if(etapa===1){
+          const recarga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-interna&recarga=1';await recarga;w=f.contentWindow;preparar();
+          t.check(w.campanaLeer().etapa===2,pagina+': se perdió el progreso al recargar.');
+        }
+      }
+      t.check(w.document.querySelector('#campanaPanel').textContent.includes('¡Campaña completada!'),pagina+': falta el cierre de campaña.');
+      w.campanaCerrar();await w.setupMatch('fender','adreida',{first:0,fast:true});
+      t.check(!w.eval('G.campana')&&w.eval('P(1).alma')===20,pagina+': los modificadores se filtraron a una partida normal.');
+      t.check(w.campanaLeer().etapa===6,pagina+': una partida normal alteró el progreso.');
+    }finally{w.relojPara();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('onlineInvitacion', async t => {
   const relay=new URLSearchParams(location.search).get('relay');
   if(!relay||!/^http:\/\/(127\.0\.0\.1|localhost):/.test(relay)){t.nota('Prueba de transporte disponible sólo con relay local explícito.');return;}

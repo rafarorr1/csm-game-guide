@@ -460,3 +460,122 @@ function onlineAyudaInstalada(panel){
   boton.onclick=async()=>{try{await navigator.clipboard.writeText(ONL.sala);toast('Código copiado');}catch(_){toast('Código de sala: '+ONL.sala);}};
   panel.append(texto,boton);
 }
+
+/* CAMPAÑA · prototipo de escalera. El guardado contiene progreso, nunca una partida a medias. */
+const CAMPANA_RIVALES=[
+  {lider:'mohamed',alma:16},{lider:'fender',alma:20},{lider:'talesin',alma:24},
+  {lider:'rafaela',alma:28},{lider:'adreida',alma:32},{lider:'gero',alma:40}
+];
+const CAMPANA_CLAVE='caoz.campana.v1'+(new URLSearchParams(location.search).has('test')?'.prueba':'');
+let campanaMemoria=null,campanaLanzando=false;
+function campanaLeer(){
+  let dato=campanaMemoria;
+  try{if(!dato)dato=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
+  if(!dato||dato.version!==1||typeof dato.id!=='string'||!LEADERS[dato.lider]||!Number.isInteger(dato.etapa)||dato.etapa<0||dato.etapa>CAMPANA_RIVALES.length)return null;
+  return dato;
+}
+function campanaGuardar(dato){
+  campanaMemoria=dato;
+  try{localStorage.setItem(CAMPANA_CLAVE,JSON.stringify(dato));return true;}
+  catch(_){toast('No se pudo guardar en este navegador. Puedes continuar mientras no cierres el juego.');return false;}
+}
+function campanaDialogo(){
+  let d=document.getElementById('campanaPanel');
+  if(!d){d=document.createElement('dialog');d.id='campanaPanel';d.setAttribute('aria-labelledby','campanaTitulo');document.body.appendChild(d);}
+  if(!d.open){d.showModal();cargarArte().then(()=>d.querySelectorAll('[data-campana-lider]').forEach(n=>{if(!n.querySelector('.marcoDibujo'))ilustrarLider(n,n.dataset.campanaLider);}));}return d;
+}
+function campanaBoton(texto,accion,principal=false){
+  const b=document.createElement('button');b.className='btn'+(principal?' gold':'');b.textContent=texto;b.onclick=accion;return b;
+}
+function campanaCerrar(){const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+function campanaCabecera(d,titulo,sub){
+  d.innerHTML='<div class="campanaSello">CAMPAÑA · PROTOTIPO</div><h2 id="campanaTitulo"></h2><p class="campanaSub"></p>';
+  d.querySelector('h2').textContent=titulo;d.querySelector('p').textContent=sub;
+}
+function abrirCampana(){
+  const progreso=campanaLeer();
+  if(!progreso){campanaElegir();return;}
+  campanaRuta();
+}
+function campanaElegir(){
+  const d=campanaDialogo();campanaCabecera(d,'El ascenso al Domo','Elige un Protagonista. Su mazo te acompañará en los seis combates.');
+  const lista=document.createElement('div');lista.className='campanaElegir';
+  Object.keys(LEADERS).forEach(id=>{
+    const b=campanaBoton('',()=>{
+      campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:id,etapa:0});campanaRuta();
+    });
+    b.innerHTML=`<span class="lface">${LEADERS[id].art}</span><b>${LEADERS[id].n}</b><small>${DECKS[id].d}</small>`;
+    b.dataset.campanaLider=id;ilustrarLider(b,id);lista.appendChild(b);
+  });d.appendChild(lista);d.appendChild(campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));
+}
+function campanaRuta(aviso=''){
+  const p=campanaLeer();if(!p){campanaElegir();return;}
+  const completa=p.etapa===CAMPANA_RIVALES.length,d=campanaDialogo();
+  campanaCabecera(d,completa?'El Domo es tuyo':'Camino al jefe final',aviso||(LEADERS[p.lider].n+' · '+p.etapa+' de 6 rivales vencidos'));
+  const lista=document.createElement('ol');lista.className='campanaRuta';
+  CAMPANA_RIVALES.forEach((r,i)=>{
+    const fila=document.createElement('li');fila.className=(i<p.etapa?'vencido':i===p.etapa?'actual':'pendiente')+(i===5?' jefe':'');
+    fila.innerHTML=`<span class="campanaNumero">${i<p.etapa?'✓':i+1}</span><span class="lface">${LEADERS[r.lider].art}</span><div><b>${LEADERS[r.lider].n}</b><small>${i===5?'JEFE FINAL · ':''}${r.alma} Alma · ${i<p.etapa?'Vencido':i===p.etapa?'Tu siguiente combate':'Por desbloquear'}</small></div>`;
+    fila.dataset.campanaLider=r.lider;ilustrarLider(fila,r.lider);lista.appendChild(fila);
+  });d.appendChild(lista);
+  const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero y completaste esta campaña.':'Cada combate empieza con tu mazo completo y 20 de Alma. Los rivales ganan resistencia. Si sales o pierdes, puedes reintentar el mismo combate.';d.appendChild(ayuda);
+  if(!completa)d.appendChild(campanaBoton('Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,()=>campanaCombatir(),true));
+  else d.appendChild(campanaBoton('Jugar una nueva campaña',campanaElegir,true));
+  d.appendChild(campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));
+  if(!completa)d.appendChild(campanaBoton('Empezar de nuevo',()=>{
+    campanaCabecera(d,'¿Reiniciar la campaña?','Perderás el avance de esta escalera cuando elijas un nuevo Protagonista.');
+    d.append(campanaBoton('Elegir nuevo Protagonista',campanaElegir),campanaBoton('Conservar mi avance',()=>campanaRuta(),true));
+  }));
+}
+async function campanaCombatir(){
+  const p=campanaLeer();if(!p||p.etapa>=6||campanaLanzando)return;
+  if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
+  campanaLanzando=true;campanaCerrar();cerrarCinematica();
+  const rival=CAMPANA_RIVALES[p.etapa];
+  try{await startMatch(p.lider,rival.lider,{campana:{id:p.id,etapa:p.etapa,alma:rival.alma}});}
+  finally{campanaLanzando=false;}
+}
+function campanaFinal(winner,why){
+  relojPara();
+  const meta=G.campana,p=campanaLeer();
+  if(!meta||!p||meta.id!==p.id)return;
+  if(!G.campanaResuelta){
+    G.campanaResuelta=true;
+    if(winner===ME&&p.etapa===meta.etapa){p.etapa++;campanaGuardar(p);}
+  }
+  const d=campanaDialogo(),completa=p.etapa===6;
+  campanaCabecera(d,winner===ME?(completa?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',
+    winner===ME?(completa?'Derrotaste a Gero. El Domo es tuyo.':'Has superado a '+LEADERS[CAMPANA_RIVALES[meta.etapa].lider].n+'. El siguiente combate está desbloqueado.'):'No pierdes tu progreso. Puedes volver a desafiar a este rival.');
+  const resultado=document.createElement('p');resultado.className='campanaNota';resultado.textContent=why||'';d.appendChild(resultado);
+  if(!completa)d.appendChild(campanaBoton(winner===ME?'Continuar al siguiente combate':'Reintentar combate',()=>campanaCombatir(),true));
+  d.appendChild(campanaBoton(completa?'Ver campaña completada':'Ver la escalera',()=>campanaRuta(),completa));
+  d.appendChild(campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));
+}
+{
+  const css=document.createElement('style');css.textContent=`
+  #campanaPanel{margin:auto;width:min(94vw,650px);max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;padding:26px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
+  #campanaPanel:focus{outline:none}
+  #campanaPanel .btn:focus-visible{outline:2px solid #f2d391;outline-offset:3px}
+  #campanaPanel .btn:not(.gold){background:linear-gradient(150deg,#463021,#211812);border-color:#a47b4655}
+  #campanaPanel::backdrop{background:#080509c9;backdrop-filter:blur(6px)}
+  #campanaPanel h2{font:800 clamp(25px,5vw,36px)/1.15 var(--serif);color:#f2d391;margin:8px 0 12px}
+  .campanaSello{font:700 10px/1.3 var(--sans);letter-spacing:3px;color:#c99659}
+  .campanaSub,.campanaNota{font:14px/1.5 var(--sans);color:#c7b499;margin:10px 0 18px}
+  #campanaPanel>.btn{display:block;width:100%;min-height:46px;margin-top:10px;white-space:normal}
+  .campanaElegir{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:22px 0}
+  .campanaElegir .btn{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0;padding:14px 8px}
+  .campanaElegir small{font-size:11px;line-height:1.3;color:#c8b590}
+  .campanaElegir .lface,.campanaRuta .lface{width:48px;height:58px;flex:0 0 48px;position:relative;overflow:hidden;border-radius:8px;font-size:32px;display:grid;place-items:center}
+  .campanaElegir .lface .dibujo,.campanaRuta .lface .dibujo{position:absolute;inset:0;background-size:cover;background-position:center}
+  .campanaRuta{list-style:none;padding:0;margin:20px 0;display:flex;flex-direction:column;gap:9px;text-align:left}
+  .campanaRuta li{display:flex;align-items:center;gap:12px;padding:10px 12px;border:1px solid #85623950;border-radius:10px;background:#100d0cb3}
+  .campanaRuta li.actual{border-color:#ebc579;box-shadow:0 0 18px #d7a34b20;background:linear-gradient(100deg,#60401e,#281911)}
+  .campanaRuta li.pendiente{opacity:.6}.campanaRuta li.vencido{border-color:#79a17f66}
+  .campanaRuta li.jefe{border-color:#c4544c}.campanaRuta b{font:700 18px/1.2 var(--serif)}
+  .campanaRuta small{display:block;margin-top:5px;font:11px/1.4 var(--sans);color:#c1af92}
+  .campanaNumero{width:20px;flex:0 0 20px;font:800 18px var(--serif);color:#d6b56e}
+  @media(max-width:400px){#campanaPanel{padding:20px 14px}.campanaRuta li{gap:8px;padding:8px}}
+  `;document.head.appendChild(css);
+}
+
+addEventListener('load',()=>{if(new URLSearchParams(location.search).get('campana')==='1')abrirCampana();});
