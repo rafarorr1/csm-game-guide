@@ -316,6 +316,24 @@ PRUEBAS.suite('visual', async t => {
   t.check(!document.body.classList.contains('aaa-combat'),'los paneles deben recuperarse al terminar');
 });
 
+PRUEBAS.suite('entradaMovil', async t => {
+  const marco=document.createElement('iframe');
+  marco.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+  marco.src='movil.html?test=entrada-interna&b='+Date.now();
+  const cargado=new Promise(resolve=>marco.onload=resolve);document.body.appendChild(marco);
+  try{
+    await cargado;const d=marco.contentDocument;const w=marco.contentWindow;
+    d.querySelector('#mPlay').click();
+    t.check(d.querySelector('#select').classList.contains('on'),'Jugar debe abrir la selección.');
+    t.check(!!d.querySelector('#barrido.va'),'Jugar debe activar la cortinilla móvil.');
+    t.check(d.querySelector('#select').classList.contains('entra'),'La selección debe entrar animada.');
+    await sleep(750);
+    t.check(!d.querySelector('#barrido.va')&&!d.querySelector('.screen.entra'),'La transición debe limpiarse.');
+    w.showScreen('menu');w.showScreen('board');
+    t.check(!d.querySelector('#barrido.va'),'El tablero no debe heredar una cortinilla de menú.');
+  }finally{marco.remove();}
+});
+
 PRUEBAS.suite('banco', async t => {
   const marco=document.createElement('iframe');marco.src='balance.html?auto';
   marco.style.cssText='position:fixed;left:-10000px;width:1280px;height:900px';document.body.appendChild(marco);
