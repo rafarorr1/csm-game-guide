@@ -326,7 +326,16 @@ PRUEBAS.suite('campana', async t => {
       preparar();w.localStorage.removeItem('caoz.campana.v1.prueba');
       w.document.querySelector('#mCampana').click();
       t.check(w.document.querySelector('#campanaPanel').open,pagina+': Campaña debe abrirse desde el menú.');
-      w.document.querySelector('.campanaElegir button').click();
+      const cartas=[...w.document.querySelectorAll('.campanaCarta')];
+      t.check(cartas.length===6,pagina+': deben existir seis cartas en el carrusel.');
+      w.document.querySelector('[aria-label="Protagonista siguiente"]').click();
+      t.check(w.document.querySelector('.campanaCarta.enfrente').dataset.campanaLider==='fender',pagina+': el carrusel no gira.');
+      t.check(w.document.querySelector('.campanaCarta')===cartas[0],pagina+': el giro recrea las cartas y pierde la animación.');
+      w.document.querySelector('[aria-label="Protagonista anterior"]').click();
+      w.document.querySelector('.campanaConfirmar').click();
+      const ruta=w.document.querySelector('.campanaRuta');
+      t.check(ruta.firstElementChild.dataset.etapa==='5'&&ruta.lastElementChild.dataset.etapa==='0',pagina+': la escalera debe ascender desde abajo.');
+      t.check(ruta.querySelectorAll('[data-campana-lider]').length===1&&!ruta.textContent.includes('Gero'),pagina+': no deben revelarse los rivales futuros.');
       t.check(w.campanaLeer().etapa===0,pagina+': la campaña debe empezar desde cero.');
       await w.campanaCombatir();
       t.check(w.eval('G.campana.etapa===0&&P(1).alma===16&&P(0).alma===20'),pagina+': primer encuentro incorrecto.');
@@ -340,6 +349,8 @@ PRUEBAS.suite('campana', async t => {
         if(etapa===5)t.check(w.eval("P(1).leaderId==='gero'"),pagina+': Gero debe ser el jefe final.');
         w.endGame(0,'Victoria de prueba');await sleep(600);
         t.check(w.campanaLeer().etapa===etapa+1,pagina+': la victoria no se guardó.');
+        w.campanaRuta();
+        t.check(w.document.querySelectorAll('.campanaRuta [data-campana-lider]').length===Math.min(6,etapa+2),pagina+': se revelan rivales antes de tiempo.');
         w.showEnd(0,'Aviso repetido');t.check(w.campanaLeer().etapa===etapa+1,pagina+': una victoria duplicada avanza dos veces.');
         if(etapa===1){
           const recarga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-interna&recarga=1';await recarga;w=f.contentWindow;preparar();

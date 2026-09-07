@@ -498,26 +498,54 @@ function abrirCampana(){
   campanaRuta();
 }
 function campanaElegir(){
-  const d=campanaDialogo();campanaCabecera(d,'El ascenso al Domo','Elige un Protagonista. Su mazo te acompañará en los seis combates.');
-  const lista=document.createElement('div');lista.className='campanaElegir';
-  Object.keys(LEADERS).forEach(id=>{
-    const b=campanaBoton('',()=>{
-      campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:id,etapa:0});campanaRuta();
+  const d=campanaDialogo();campanaCabecera(d,'Elige tu Protagonista','Desliza las cartas para elegir quién subirá al Domo.');
+  const ids=Object.keys(LEADERS);let centro=0;
+  const pista=document.createElement('div');pista.className='campanaCarrusel';pista.setAttribute('aria-label','Protagonistas');
+  const ficha=document.createElement('div');ficha.className='campanaFicha';ficha.setAttribute('aria-live','polite');
+  const cartas=ids.map((id,i)=>{
+    const L=LEADERS[id],D=DECKS[id],c=campanaBoton('',()=>elegir(i));c.className='campanaCarta';
+    c.innerHTML=`<span class="lface">${L.art}</span><b class="lname">${L.n}</b><span class="larch">${D.d}</span><span class="lhab">${L.habName} · ${L.habCost} PD</span>`;
+    c.dataset.campanaLider=id;c.setAttribute('aria-label',L.n);ilustrarLider(c,id);pista.appendChild(c);return c;
+  });
+  function elegir(i){
+    centro=(i+ids.length)%ids.length;
+    cartas.forEach((c,j)=>{
+      let distancia=(j-centro+ids.length)%ids.length;if(distancia>ids.length/2)distancia-=ids.length;
+      const oculta=Math.abs(distancia)>Math.floor((ids.length-1)/2);
+      c.classList.toggle('guardada',oculta);c.classList.toggle('enfrente',j===centro);
+      c.style.setProperty('--d',oculta?0:distancia);c.style.setProperty('--dist',Math.abs(distancia));
+      c.setAttribute('aria-pressed',String(j===centro));c.setAttribute('aria-hidden',String(oculta));c.tabIndex=j===centro?0:-1;c.disabled=oculta;
     });
-    b.innerHTML=`<span class="lface">${LEADERS[id].art}</span><b>${LEADERS[id].n}</b><small>${DECKS[id].d}</small>`;
-    b.dataset.campanaLider=id;ilustrarLider(b,id);lista.appendChild(b);
-  });d.appendChild(lista);d.appendChild(campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));
+    const L=LEADERS[ids[centro]];ficha.innerHTML=`<b>${L.n} — ${L.ep}</b><p>${L.pasiva}</p><small>Mazo «${DECKS[ids[centro]].n}» · 40 cartas</small>`;
+  }
+  const controles=document.createElement('div');controles.className='campanaFlechas';
+  const anterior=campanaBoton('←',()=>elegir(centro-1)),siguiente=campanaBoton('→',()=>elegir(centro+1));
+  anterior.setAttribute('aria-label','Protagonista anterior');siguiente.setAttribute('aria-label','Protagonista siguiente');
+  controles.append(anterior,document.createTextNode('Desliza para elegir'),siguiente);
+  let x=null;
+  pista.addEventListener('pointerdown',e=>{x=e.clientX;});
+  pista.addEventListener('pointerup',e=>{if(x!==null&&Math.abs(e.clientX-x)>35){elegir(centro+(e.clientX<x?1:-1));ignorarClic=Date.now()+400;}x=null;});
+  pista.addEventListener('pointercancel',()=>{x=null;});
+  let ignorarClic=0;pista.addEventListener('click',e=>{if(Date.now()<ignorarClic){e.preventDefault();e.stopPropagation();}},true);
+  pista.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();elegir(centro+(e.key==='ArrowLeft'?-1:1));cartas[centro].focus({preventScroll:true});}});
+  const confirmar=campanaBoton('Elegir Protagonista',()=>{
+    campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:ids[centro],etapa:0});campanaRuta();
+  },true);confirmar.classList.add('campanaConfirmar');
+  d.append(pista,controles,ficha,confirmar,campanaBoton('Volver al menú principal',()=>{campanaCerrar();showScreen('menu');}));elegir(0);
 }
 function campanaRuta(aviso=''){
   const p=campanaLeer();if(!p){campanaElegir();return;}
   const completa=p.etapa===CAMPANA_RIVALES.length,d=campanaDialogo();
   campanaCabecera(d,completa?'El Domo es tuyo':'Camino al jefe final',aviso||(LEADERS[p.lider].n+' · '+p.etapa+' de 6 rivales vencidos'));
   const lista=document.createElement('ol');lista.className='campanaRuta';
-  CAMPANA_RIVALES.forEach((r,i)=>{
+  CAMPANA_RIVALES.map((r,i)=>({r,i})).reverse().forEach(({r,i})=>{
     const fila=document.createElement('li');fila.className=(i<p.etapa?'vencido':i===p.etapa?'actual':'pendiente')+(i===5?' jefe':'');
-    fila.innerHTML=`<span class="campanaNumero">${i<p.etapa?'✓':i+1}</span><span class="lface">${LEADERS[r.lider].art}</span><div><b>${LEADERS[r.lider].n}</b><small>${i===5?'JEFE FINAL · ':''}${r.alma} Alma · ${i<p.etapa?'Vencido':i===p.etapa?'Tu siguiente combate':'Por desbloquear'}</small></div>`;
-    fila.dataset.campanaLider=r.lider;ilustrarLider(fila,r.lider);lista.appendChild(fila);
-  });d.appendChild(lista);
+    fila.dataset.etapa=i;
+    if(i>p.etapa){
+      fila.innerHTML=`<span class="campanaNumero">${i+1}</span><span class="campanaOculto" aria-hidden="true">?</span><div><b>Rival desconocido</b><small>${i===5?'JEFE FINAL · ':''}Por descubrir</small></div>`;
+    }else fila.innerHTML=`<span class="campanaNumero">${i<p.etapa?'✓':i+1}</span><span class="lface">${LEADERS[r.lider].art}</span><div><b>${LEADERS[r.lider].n}</b><small>${i===5?'JEFE FINAL · ':''}${r.alma} Alma · ${i<p.etapa?'Vencido':i===p.etapa?'Tu siguiente combate':'Por desbloquear'}</small></div>`;
+    if(i<=p.etapa){fila.dataset.campanaLider=r.lider;ilustrarLider(fila,r.lider);}lista.appendChild(fila);
+  });d.appendChild(lista);requestAnimationFrame(()=>{const actual=lista.querySelector('.actual');lista.scrollTop=actual?Math.max(0,actual.offsetTop-lista.offsetTop-lista.clientHeight+actual.offsetHeight+8):0;});
   const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero y completaste esta campaña.':'Cada combate empieza con tu mazo completo y 20 de Alma. Los rivales ganan resistencia. Si sales o pierdes, puedes reintentar el mismo combate.';d.appendChild(ayuda);
   if(!completa)d.appendChild(campanaBoton('Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,()=>campanaCombatir(),true));
   else d.appendChild(campanaBoton('Jugar una nueva campaña',campanaElegir,true));
@@ -554,6 +582,25 @@ function campanaFinal(winner,why){
 {
   const css=document.createElement('style');css.textContent=`
   #campanaPanel{margin:auto;width:min(94vw,650px);max-height:90dvh;overflow-y:auto;overscroll-behavior:contain;padding:26px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
+
+  .campanaCarrusel{position:relative;height:315px;perspective:850px;overflow:hidden;touch-action:pan-y;--paso:118px}
+  .campanaCarta{position:absolute;left:50%;top:20px;width:180px;min-height:260px;padding:0;overflow:hidden;border:1px solid #896038;border-radius:12px;background:linear-gradient(#38261e,#140f0c);color:#ecd8b2;
+    transform:translateX(-50%) translateX(calc(var(--d)*var(--paso))) translateZ(calc(var(--dist)*-120px)) rotateY(calc(var(--d)*-26deg)) rotate(calc(var(--d)*2deg)) translateY(calc(var(--dist)*12px));
+    z-index:calc(10 - var(--dist));filter:brightness(calc(1 - var(--dist)*.20));transition:transform .42s cubic-bezier(.22,.61,.36,1),filter .42s,box-shadow .3s;cursor:pointer}
+  .campanaCarta.enfrente{transform:translateX(-50%) translateZ(60px);filter:none;border-color:#e6bb52;box-shadow:0 0 0 2px #e6bb5270,0 18px 45px #0009}
+  .campanaCarta:focus-visible{outline:2px solid #ffe1a0;outline-offset:2px}
+  .campanaCarta.guardada{opacity:0;pointer-events:none}
+  .campanaCarta .lface{position:relative;display:grid;place-items:center;width:100%;height:175px;font-size:65px;overflow:hidden}
+  .campanaCarta .lname{display:block;font:800 20px/1.2 var(--serif);padding:6px 4px;background:#100b09}
+  .campanaCarta .larch,.campanaCarta .lhab{display:block;padding:7px 8px;font:10px/1.3 var(--sans);color:#cbb89b}
+  .campanaFlechas{display:flex;align-items:center;justify-content:center;gap:16px;color:#beaa89;font:12px var(--sans)}
+  .campanaFlechas .btn{min-width:48px;min-height:44px}
+  .campanaFicha{padding:16px 8px;font:13px/1.45 var(--sans);min-height:125px}.campanaFicha p{margin:8px 0}.campanaFicha small{color:#c6ab7b}
+  #campanaPanel .campanaRuta{max-height:390px;overflow-y:auto;padding:5px 4px;overscroll-behavior:contain}
+  .campanaRuta li{position:relative}.campanaRuta li+li::before{content:'';position:absolute;width:1px;height:10px;background:#be905566;left:32px;top:-10px}
+  .campanaOculto{width:48px;height:58px;flex:0 0 48px;display:grid;place-items:center;border:1px solid #a0784555;border-radius:8px;font:32px var(--serif);color:#bc9c6a;background:#261c15}
+  @media(max-width:500px){.campanaCarrusel{--paso:84px;height:300px}.campanaCarta{width:156px;min-height:244px}.campanaCarta .lface{height:153px}}
+  @media(prefers-reduced-motion:reduce){.campanaCarta{transition:none}}
   #campanaPanel:focus{outline:none}
   #campanaPanel .btn:focus-visible{outline:2px solid #f2d391;outline-offset:3px}
   #campanaPanel .btn:not(.gold){background:linear-gradient(150deg,#463021,#211812);border-color:#a47b4655}
