@@ -86,6 +86,8 @@ body.aaa-polish .card.unit.tgt{
   box-shadow:0 12px 26px rgba(0,0,0,.58),0 0 0 2px rgba(224,82,74,.62),0 0 20px rgba(224,82,74,.34);
 }
 
+body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green),0 0 15px rgba(79,192,125,.4)}
+
 /* ===== Combate ===== */
 .aaa-contact{position:fixed;z-index:355;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none;
   background:#fff;mix-blend-mode:screen;box-shadow:0 0 12px 5px rgba(255,255,255,.9),0 0 42px 20px rgba(255,133,70,.54)}
@@ -122,13 +124,13 @@ body.aaa-polish .card.unit.tgt{
   function aaaGone(el,ms){ setTimeout(()=>{ try{el.remove();}catch(e){} },ms); }
   function aaaCenterOfEl(e){ if(!e)return null; const r=e.getBoundingClientRect(); return {x:r.left+r.width/2,y:r.top+r.height/2,w:r.width,h:r.height}; }
   function aaaCenter(u){
-    try{ if(typeof fxCenter==='function') return fxCenter(u); }catch(e){}
+    try{ if(typeof fxCenter==='function') { const c=fxCenter(u); return c ? {...c,w:c.r?.width||0,h:c.r?.height||0} : null; } }catch(e){}
     try{ return aaaCenterOfEl(typeof fxEl==='function'?fxEl(u):null); }catch(e){return null;}
   }
   function aaaUnitEl(u){ try{return typeof fxEl==='function'?fxEl(u):null;}catch(e){return null;} }
   function aaaFace(side){
     const id = side===ME ? 'face0' : 'face1';
-    return document.getElementById(id) || document.getElementById(side===ME?'leaderMe':'leaderFoe');
+    return document.getElementById('lead'+side) || document.getElementById(id) || document.getElementById(side===ME?'leaderMe':'leaderFoe');
   }
   function aaaTargetCenter(att,target){
     if(target!=='face') return aaaCenter(target);
@@ -243,6 +245,10 @@ body.aaa-polish .card.unit.tgt{
       if(!aaaFX()||!aaaMotionOK()){ if(oldLunge)return oldLunge(att,target); return; }
       const e=aaaUnitEl(att),from=aaaCenter(att),to=aaaTargetCenter(att,target);
       if(!e||!from||!to){ if(oldLunge)return oldLunge(att,target); await aaaNap(90);return; }
+      const aviso=aaaAdd('fxlabel',(from.x+to.x)/2,(from.y+to.y)/2-46);
+      aviso.textContent=att.card.n+' ataca a '+(target==='face'?P(1-att.side).L.n:target.card.n);
+      aaaGone(aviso,1000);
+      if(att.side!==ME) await aaaNap(640);
       const dx=(to.x-from.x)*.43,dy=(to.y-from.y)*.43;
       const targetObj=target==='face'?null:target;
       const targetEl=targetObj?aaaUnitEl(targetObj):aaaFace(1-att.side);
@@ -295,14 +301,7 @@ body.aaa-polish .card.unit.tgt{
         await aaaCounter(S.targetEl,S.attEl,amount,!!opt.letal);
         return;
       }
-      // daño que no viene de esta pelea (hechizo, trampa, inicio de turno...)
-      const e=aaaUnitEl(u),c=aaaCenter(u);
-      if(e&&c){
-        aaaImpact(c.x,c.y,0,1,Math.min(1.35,.75+amount*.08));aaaSound('hit',Math.min(1.2,.7+amount*.07));
-        e.animate([{translate:'0 0'},{translate:(Math.random()>.5?5:-5)+'px 1px',offset:.22},{translate:(Math.random()>.5?2:-2)+'px -1px',offset:.48},{translate:'0 0'}],{duration:230});
-      }
-      await aaaNap(45);aaaDamageNumber(u,amount,{letal:!!opt.letal});
-      if(opt.letal)aaaSound('lethal',.8);
+      if(oldHit)return oldHit(u,amount,opt);
     };
 
     /* API mínima para pruebas manuales desde consola. */

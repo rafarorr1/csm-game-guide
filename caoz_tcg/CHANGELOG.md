@@ -13,6 +13,14 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Integración AAA y publicación beta · 2026-09-07
+
+Build 169: se publican y validan final-core.js y polish-aaa.js junto al cargador;
+se incluyen en la caché sin conexión y se separan las cachés por ruta.
+Se conserva el halo verde del tutorial, el anuncio de los ataques y el color del daño por infección;
+los números de combate usan la altura real de la carta. La beta verifica su
+propia URL de GitHub Pages. No cambia el motor ni las reglas.
+
 ## Sin numerar — El juego se sirve desde Cloudflare Pages · 2026-09-05
 
 La operadora móvil de Rafa —y por tanto la de buena parte de quien vaya a jugar— **no

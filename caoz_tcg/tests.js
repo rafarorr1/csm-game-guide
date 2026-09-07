@@ -271,8 +271,22 @@ PRUEBAS.suite('tutoriales', async t => {
    Esto es lo que impide que una función destruya otra: cada vez que algo se
    rompa y se arregle, el caso se queda escrito aquí.
    ======================================================================== */
-PRUEBAS.suite('regresiones', async t => {
+PRUEBAS.suite('integracion', async t => {
+  // El cargador y el modo sin conexión necesitan las dos piezas compartidas.
+  {
+    t.check(!!window.CAOZ_AAA, 'la capa AAA debe instalarse al cargar ambas piezas');
+    const sw = await (await fetch('sw.js')).text();
+    for(const archivo of ['final-core.js','polish-aaa.js']){
+      const respuesta=await fetch(archivo);
+      t.check(respuesta.ok && (await respuesta.text()).includes('use strict'), archivo+' debe estar publicado');
+      t.check(sw.includes("'"+archivo+"'"), archivo+' debe estar en la caché inicial');
+    }
+  }
 
+
+});
+
+PRUEBAS.suite('regresiones', async t => {
   /* La IA no atacaba nunca: G.busy servía a la vez de "IA ocupada" y de
      reentrada de doAttack, así que se bloqueaba a sí misma. */
   {
@@ -735,6 +749,10 @@ PRUEBAS.suite('regresiones', async t => {
     t.check(/Sir Horton/.test(dicho) && /Discípulo/.test(dicho),
       `un ataque del rival debe decir quién ataca a quién — decía: "${dicho}"`);
     await p;
+    await fxHit(mio,1,{});
+    const numero=$1('#fx .aaa-dmg');
+    t.check(numero && numero.style.top && Number.isFinite(parseFloat(numero.style.top)),
+      'el número AAA debe tener una coordenada vertical válida');
     t.nota('los ataques del rival se anuncian antes de llegar');
   }
 
