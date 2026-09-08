@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=203"></script>
-<script src="final.js?b=203"></script>
+<script src="motor.js?b=207"></script>
+<script src="final.js?b=207"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:203, fecha:'2026-09-08'};
+const BUILD = {n:207, fecha:'2026-09-08'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2776,7 +2776,7 @@ function showInspectLeader(d,side){
     ${L.hab2?`<div class="txt" style="margin-top:5px">${'<b>'+L.hab2.n+':</b> '+L.hab2.d}</div>`:''}
     <div class="bigsep"></div>
     <div class="bigrow">❤️ Alma <b>${Math.max(0,p.alma)}</b> · 🔷 <b>${p.pd}/${p.pdMax}</b> · 🗝️ <b>${keys(side)}</b></div>`;
-  placeInspect(d);
+  campanaVestirFicha(box,side);placeInspect(d);
 }
 
 function placeInspect(d){
@@ -3411,6 +3411,7 @@ function renderLeaders(){
       <div class="lcHab">${L.habName}<span>${p.leaderUsed&&mine?'usada':L.habCost+' PD'}</span></div>
     </div>`;
     const e=host.firstElementChild;
+    if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
     e.onmouseenter=()=>showInspectLeader(e,side);
     e.onmouseleave=()=>$('#inspect').classList.remove('on');
     e.onclick=()=>{
@@ -3501,6 +3502,7 @@ function render(){
   if(NET.host) netPushState();
   $('#barFoe').innerHTML=barHTML(FOE);
   $('#barMe').innerHTML=barHTML(ME);
+  if(G.campana?.personaje)$('#barMe .who>div').textContent=campanaNormalizarPersonaje(G.campana.personaje).nombre;
   // La mano del rival, boca abajo. No es adorno: saber cuántas cartas le quedan
   // cambia cómo juegas —si va vacío puedes arriesgar, si va lleno hay Trampa—
   // y hasta ahora eso vivía en un número pequeño de la barra.
@@ -4298,7 +4300,7 @@ async function cortinillaVS(a, b, opts={}){
   if(document.hidden) return;
   const capa = el('div','vs');
   capa.innerHTML = '<div class="vsfondo"></div><div class="vschispas"></div>';
-  const izq = cartaDeLiderVS(a,'izq'), der = cartaDeLiderVS(b,'der');
+  const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq'), der = cartaDeLiderVS(b,'der');
   if(opts.nombres){izq.querySelector('.lname').textContent=opts.nombres[0];der.querySelector('.lname').textContent=opts.nombres[1];}
   const sello = el('div','vssello','VS');
   capa.appendChild(izq); capa.appendChild(der); capa.appendChild(sello);

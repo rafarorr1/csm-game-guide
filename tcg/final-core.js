@@ -257,14 +257,19 @@ async function cinematicaFinal(winner, why, acciones){
     b.style.setProperty('--del', (-Math.random() * 9) + 's');
     capa.appendChild(b);
   }
-  const pierde = cartaDeLiderVS(P(1 - winner).leaderId, 'pierde');
-  const gana   = cartaDeLiderVS(P(winner).leaderId, 'gana');
+  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde');
+  const pierde = carta(1-winner);
+  const gana   = carta(winner);
   capa.appendChild(pierde); capa.appendChild(gana);
   const alma = s => Math.max(0, P(s).alma);
   capa.appendChild(el('div', 'sello',
     `<b>${gano ? 'VICTORIA' : 'DERROTA'}</b><small>${why || ''}</small>` +
     `<i>Turnos: ${Math.ceil(G.turnNo / 2)} &nbsp;·&nbsp; ${P(winner).L.n} ❤️ ${alma(winner)} &nbsp;·&nbsp; ${P(1 - winner).L.n} ❤️ ${alma(1 - winner)}</i>`));
   { const fr = fraseDeRecord(); if(fr) capa.querySelector('.sello').appendChild(el('i', 'racha', fr)); }
+  if(G.campana?.personaje){
+    const nombre=s=>s===ME?campanaNormalizarPersonaje(G.campana.personaje).nombre:P(s).L.n;
+    capa.querySelector('.sello>i').textContent='Turnos: '+Math.ceil(G.turnNo/2)+' · '+nombre(winner)+' ❤️ '+alma(winner)+' · '+nombre(1-winner)+' ❤️ '+alma(1-winner);
+  }
   if(!gano)capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
   /* Los botones viven aquí, no en un cartel aparte: la cinemática se queda
@@ -568,6 +573,7 @@ function campanaLeer(){
   try{if(!dato)dato=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
   if(!dato||dato.version!==1||typeof dato.id!=='string'||!LEADERS[dato.lider]||!Number.isInteger(dato.etapa)||dato.etapa<0||dato.etapa>CAMPANA_RIVALES.length)return null;
   if(dato.mesaPendiente!=null&&(!Number.isInteger(dato.mesaPendiente)||dato.mesaPendiente!==dato.etapa-1||dato.mesaPendiente<0||dato.mesaPendiente>5))delete dato.mesaPendiente;
+  if(dato.personaje)dato.personaje=campanaNormalizarPersonaje(dato.personaje);
   return dato;
 }
 function campanaGuardar(dato){
@@ -613,7 +619,7 @@ function campanaAnimarEntrada(){
   campanaEntradaTimer=setTimeout(campanaLimpiarEntrada,700);
 }
 let campanaMesaEscena=null,campanaPreparando=null;
-function campanaLimpiarMesa(){campanaLimpiarPreparacion();if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
+function campanaLimpiarMesa(){campanaLimpiarPreparacion();campanaLimpiarCreador();if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
 function campanaCerrar(){if(typeof campanaCancelarAscenso==='function')campanaCancelarAscenso();campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaVolverAlMenu(){
   campanaCerrar();showScreen('menu');
@@ -632,11 +638,12 @@ function campanaCabecera(d,titulo,sub){
 function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   const progreso=campanaLeer();
-  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&progreso.deseo))campanaRuta();else campanaElegir();
+  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&progreso.deseo))campanaRuta();else campanaCrear();
   campanaAnimarEntrada();
 }
 function campanaElegir(){
-  const d=campanaDialogo();campanaCabecera(d,'Elige tu Protagonista','Desliza las cartas para elegir quién subirá al Domo.');
+  const borrador=campanaLeerBorrador(),d=campanaDialogo();campanaCabecera(d,'Elige tu mazo',borrador.personaje.nombre+' llevará las cartas y habilidades del Protagonista que elijas.');
+  d.querySelector('.campanaSello').textContent='2 / 2 · TU MAZO';
   d.dataset.vista='seleccion';
   const ids=Object.keys(LEADERS);let centro=0;
   const pista=document.createElement('div');pista.className='campanaCarrusel';pista.setAttribute('aria-label','Protagonistas');
@@ -648,6 +655,7 @@ function campanaElegir(){
   });
   function elegir(i){
     centro=(i+ids.length)%ids.length;
+    borrador.lider=ids[centro];campanaGuardarBorrador();
     cartas.forEach((c,j)=>{
       let distancia=(j-centro+ids.length)%ids.length;if(distancia>ids.length/2)distancia-=ids.length;
       const oculta=Math.abs(distancia)>Math.floor((ids.length-1)/2);
@@ -667,20 +675,20 @@ function campanaElegir(){
   pista.addEventListener('pointercancel',()=>{x=null;});
   let ignorarClic=0;pista.addEventListener('click',e=>{if(Date.now()<ignorarClic){e.preventDefault();e.stopPropagation();}},true);
   pista.addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='ArrowRight'){e.preventDefault();elegir(centro+(e.key==='ArrowLeft'?-1:1));cartas[centro].focus({preventScroll:true});}});
-  const confirmar=campanaBoton('Elegir Protagonista',()=>{
-    campanaPasoAnterior=null;campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:ids[centro],etapa:0});campanaRuta();
+  const confirmar=campanaBoton('Comenzar campaña',()=>{
+    campanaPasoAnterior=null;campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:ids[centro],personaje:campanaNormalizarPersonaje(borrador.personaje),etapa:0});campanaLimpiarBorrador();campanaRuta();campanaAnimarEntrada();
   },true);confirmar.classList.add('campanaConfirmar');
   const seleccion=document.createElement('div');seleccion.className='campanaSeleccion';seleccion.append(pista,controles,ficha);
-  d.append(seleccion,campanaAcciones(confirmar,campanaBoton('Menú principal',campanaVolverAlMenu)));elegir(0);
+  d.append(seleccion,campanaAcciones(confirmar,campanaBoton('Editar miniatura',()=>{campanaCrear();campanaAnimarEntrada();}),campanaBoton('Menú principal',campanaVolverAlMenu)));elegir(Math.max(0,ids.indexOf(borrador.lider)));
 }
 function campanaRuta(aviso=''){
-  const progreso=campanaLeer();if(!progreso){campanaElegir();return;}
+  const progreso=campanaLeer();if(!progreso){campanaCrear();return;}
   const victoria=Number.isInteger(progreso.mesaPendiente)?progreso.mesaPendiente:null;
   const p=victoria===null?progreso:{...progreso,etapa:victoria};
   const completa=p.etapa===CAMPANA_RIVALES.length;
   if(completa&&typeof campanaAbrirDeseo==='function'){campanaAbrirDeseo();return;}
   const d=campanaDialogo();
-  campanaCabecera(d,completa?'El Domo es tuyo':'La mesa del Domo',aviso||(LEADERS[p.lider].n+' · '+progreso.etapa+' de 6 rivales vencidos'));
+  campanaCabecera(d,completa?'El Domo es tuyo':'La mesa del Domo',aviso||(campanaNombre(p)+' · '+progreso.etapa+' de 6 rivales vencidos'));
   d.dataset.vista='mapa';
   const mesa=document.createElement('div');mesa.className='campanaMesa';
   const tablero=document.createElement('div');tablero.className='campanaTablero';
@@ -710,14 +718,17 @@ function campanaRuta(aviso=''){
     }
     lista.appendChild(fila);
   });
-  const peon=document.createElement('div');peon.className='campanaPeon';peon.setAttribute('role','img');peon.setAttribute('aria-label','Tu ficha: '+LEADERS[p.lider].n);
+  const peon=document.createElement('div');peon.className='campanaPeon';peon.setAttribute('role','img');peon.setAttribute('aria-label','Tu ficha: '+campanaNombre(p));
   peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span><span class="campanaTu" aria-hidden="true">TÚ</span>`;
+  peon.querySelector('.campanaTu').textContent=campanaNombre(p);
+  if(p.personaje){const color=CAMPANA_ASPECTO.color[p.personaje.color][1];peon.querySelector('.campanaPeonCuerpo').style.background=color;peon.querySelector('.campanaPeonCuerpo>span').textContent=p.personaje.equipo==='baston'?'✦':p.personaje.equipo==='libro'?'📖':'⚔';}
   const destino=victoria!==null||p.enEncuentro&&p.etapa<6?campanaPosicionEncuentro(p.etapa):campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionEncuentro(campanaPasoAnterior);
   peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
   tablero.append(lista,peon);
   const niebla=campanaCrearNiebla(p.etapa);if(niebla)tablero.appendChild(niebla);
   const camara=document.createElement('div');camara.className='campanaCamara';camara.appendChild(tablero);
   mesa.appendChild(camara);d.appendChild(mesa);
+  if(p.personaje){const carta=campanaCartaJugador(p.personaje,p.lider);carta.classList.add('campanaIdentidad');mesa.appendChild(carta);}
   if(campanaPasoAnterior!==null&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
     const retirada=campanaCrearNiebla(campanaPasoAnterior,true);
     if(retirada){
@@ -730,14 +741,14 @@ function campanaRuta(aviso=''){
   }
   const pasoAnterior=campanaPasoAnterior;
   campanaPasoAnterior=null;
-  const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero. Campaña completada.':'Mazo completo · 20 de Alma por duelo. Tu avance se guarda.';d.appendChild(ayuda);
-  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':(p.enEncuentro?'Ver combate contra ':'Acercarse a ')+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaSeleccionar(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
+  const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero. Campaña completada.':'Mazo de '+LEADERS[p.lider].n+' · 20 de Alma por duelo. Tu avance se guarda.';d.appendChild(ayuda);
+  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':(p.enEncuentro?'Ver combate contra ':'Acercarse a ')+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaCrear:()=>campanaSeleccionar(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
   if(!completa)acciones.appendChild(campanaBoton('Reiniciar',()=>{
-    campanaCabecera(d,'¿Reiniciar la campaña?','Perderás el avance de esta escalera cuando elijas un nuevo Protagonista.');
-    d.append(campanaAcciones(campanaBoton('Conservar mi avance',()=>campanaRuta(),true),campanaBoton('Elegir nuevo Protagonista',campanaElegir)));
+    campanaCabecera(d,'¿Reiniciar la campaña?','El avance actual se reemplazará cuando confirmes tu nuevo personaje y mazo.');
+    d.append(campanaAcciones(campanaBoton('Conservar mi avance',()=>campanaRuta(),true),campanaBoton('Crear nuevo personaje',campanaCrear)));
   }));
   d.appendChild(acciones);
-  if(window.crearMesaCampana)campanaMesaEscena=crearMesaCampana(mesa,{etapa:p.etapa,lider:p.lider,casillas:CAMPANA_CASILLAS,esperas:CAMPANA_ESPERAS,etapaAnterior:pasoAnterior,posicion:destino});
+  if(window.crearMesaCampana)campanaMesaEscena=crearMesaCampana(mesa,{etapa:p.etapa,lider:p.lider,personaje:p.personaje,casillas:CAMPANA_CASILLAS,esperas:CAMPANA_ESPERAS,etapaAnterior:pasoAnterior,posicion:destino});
   // En la mesa 3D la cámara proyecta la etiqueta junto a la miniatura que avanza.
   // La animación porcentual anterior sólo corresponde al mapa HTML alternativo.
   if(campanaMesaEscena){peon.getAnimations().forEach(a=>a.cancel());peon.querySelector('.campanaPeonCuerpo').getAnimations().forEach(a=>a.cancel());}
@@ -802,7 +813,7 @@ function campanaVencerPrueba(e){
   if(!campanaPruebaDisponible()||campanaPreparando!==e||!e.dialogo?.open||!p||p.id!==e.id||p.etapa!==e.etapa||p.mesaPendiente!=null||NET.on)return;
   const rival=CAMPANA_RIVALES[p.etapa];
   campanaLimpiarPreparacion();campanaCerrar();cerrarCinematica();
-  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma};G.over=true;P(1).alma=0;
+  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje};G.over=true;P(1).alma=0;
   campanaFinal(ME,'Victoria de prueba · Beta');
 }
 function campanaMostrarEncuentro(e,p){
@@ -812,6 +823,7 @@ function campanaMostrarEncuentro(e,p){
     <div class="campanaDuelo"><div class="campanaCombatiente"><span>TU PROTAGONISTA</span><b>${LEADERS[p.lider].n}</b><strong>20 <small>ALMA</small></strong><span>${DECKS[p.lider].list.reduce((n,c)=>n+c[1],0)} cartas</span></div><span class="campanaDueloVS" aria-hidden="true">VS</span><div class="campanaCombatiente rival"><span>RIVAL</span><b>${lider.n}</b><strong>${rival.alma} <small>ALMA</small></strong><span>${mazo.list.reduce((n,c)=>n+c[1],0)} cartas</span></div></div>
     <p class="campanaCondiciones">El volado decide quién empieza.<br>Gana para ${p.etapa===5?'completar la campaña':'revelar el siguiente encuentro'}.</p>`;
   const volver=()=>campanaLimpiarPreparacion(true);
+  if(p.personaje){const propio=d.querySelector('.campanaCombatiente');propio.querySelector('span').textContent='TU HÉROE';propio.querySelector('b').textContent=campanaNombre(p);propio.querySelector('span:last-child').textContent='Mazo de '+LEADERS[p.lider].n+' · 40 cartas';}
   const entrar=()=>{if(campanaPreparando!==e)return;campanaLimpiarPreparacion();campanaCombatir();};
   const acciones=campanaAcciones(campanaBoton('Entrar al combate',entrar,true),campanaBoton('Volver a la mesa',volver));
   if(campanaPruebaDisponible()){const prueba=campanaBoton('Vencer rival · Prueba beta',()=>campanaVencerPrueba(e));prueba.dataset.pruebaCampana='1';acciones.appendChild(prueba);}
@@ -852,7 +864,7 @@ async function campanaCombatir(){
     if(!await campanaAcercarMapa(p.etapa))return;
     p.enEncuentro=true;campanaGuardar(p);
     campanaCerrar();cerrarCinematica();
-    await startMatch(p.lider,rival.lider,{campana:{id:p.id,etapa:p.etapa,alma:rival.alma}});
+    await startMatch(p.lider,rival.lider,{nombres:[campanaNombre(p),LEADERS[rival.lider].n],campana:{id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje}});
   }
   finally{campanaLanzando=false;}
 }
@@ -876,7 +888,7 @@ function campanaFinal(winner,why){
 
 {
   const css=document.createElement('style');css.textContent=`
-  #campanaPanel{--alto-util:calc(var(--campana-alto,100dvh) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));box-sizing:border-box;position:fixed;inset:calc(var(--campana-desfase,0px) + max(12px,env(safe-area-inset-top))) 0 auto;margin:0 auto;width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),650px);max-height:var(--alto-util);overflow:hidden;overscroll-behavior:contain;padding:18px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
+  #campanaPanel{--alto-util:calc(var(--campana-alto,100dvh) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));box-sizing:border-box;position:fixed;inset:calc(var(--campana-desfase,0px) + max(12px,env(safe-area-inset-top))) 0 calc(100% - var(--campana-desfase,0px) - var(--campana-alto,100dvh) + max(12px,env(safe-area-inset-bottom)));margin:auto;width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),650px);max-height:var(--alto-util);overflow:hidden;overscroll-behavior:contain;padding:18px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
   #campanaPanel[open]{display:flex;flex-direction:column;gap:10px}
   #campanaPanel .campanaBarrido{position:fixed;inset:0;z-index:100}
   #campanaPanel.campanaEntra>:not(.campanaBarrido){animation:entraPantalla .40s cubic-bezier(.2,.75,.3,1) both}
@@ -885,7 +897,7 @@ function campanaFinal(winner,why){
   #campanaPanel.campanaEntra>:not(.campanaBarrido):nth-child(4){animation-delay:.13s}
   @media(prefers-reduced-motion:reduce){#campanaPanel.campanaEntra>*{animation:none}}
   #campanaPanel[data-vista="mapa"],#campanaPanel[data-vista="seleccion"]{height:min(850px,var(--alto-util))}
-  #campanaPanel[data-vista="mensaje"]{bottom:max(12px,env(safe-area-inset-bottom));height:fit-content;margin:auto}
+  #campanaPanel[data-vista="mensaje"]{height:fit-content}
   .campanaCabecera,.campanaAcciones{flex:none;min-width:0}
   .campanaAcciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #campanaPanel .campanaAcciones .btn{width:100%;min-width:0;min-height:44px;margin:0;padding:8px;white-space:normal}

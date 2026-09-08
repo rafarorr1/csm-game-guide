@@ -336,6 +336,7 @@ PRUEBAS.suite('campana', async t => {
       preparar();w.localStorage.removeItem('caoz.campana.v1.prueba');
       w.document.querySelector('#mCampana').click();
       t.check(w.document.querySelector('#campanaPanel').open,pagina+': Campaña debe abrirse desde el menú.');
+      w.document.querySelector('[data-creador-continuar]').click();
       const cartas=[...w.document.querySelectorAll('.campanaCarta')];
       t.check(cartas.length===6,pagina+': deben existir seis cartas en el carrusel.');
       w.document.querySelector('[aria-label="Protagonista siguiente"]').click();
@@ -599,7 +600,8 @@ PRUEBAS.suite('campanaDeseo', async t => {
       t.check(opacidad>0&&opacidad<1&&w.getComputedStyle(panel,'::backdrop').backgroundColor==='rgba(0, 0, 0, 0)',pagina+': a mitad del revelado debe verse el menú a través del negro, sin un fondo modal opaco. '+JSON.stringify({opacidad,fondo:w.getComputedStyle(panel,'::backdrop').backgroundColor,animacion:revelado.animationName||revelado.transitionProperty}));
       await avanzar(2999);t.check(panel.isConnected&&panel.dataset.fase==='menu',pagina+': se aprovechan los tres segundos para revelar el menú.');
       await avanzar(1);t.check(!d.querySelector('#campanaDeseo')&&d.querySelector('#menu.on'),pagina+': el menú queda disponible al terminar su fundido.');
-      w.eval('campanaMemoria=null');w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='seleccion'&&!d.querySelector('#campanaDeseo'),pagina+': después del deseo, Campaña empieza con una nueva selección de Protagonista.');
+      w.eval('campanaMemoria=null');w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='creador'&&!d.querySelector('#campanaDeseo'),pagina+': después del deseo, Campaña empieza creando un personaje nuevo.');
+      d.querySelector('[data-creador-continuar]').click();
       d.querySelector('.campanaConfirmar').click();t.check(w.campanaLeer().etapa===0&&!w.campanaLeer().deseo&&w.campanaLeer().id!=='deseo-prueba',pagina+': elegir Protagonista crea una campaña nueva sin el progreso ni el deseo anteriores.');
       w.campanaCerrar();
       w.dispatchEvent(new w.Event('online'));await sleep(0);
@@ -664,8 +666,8 @@ PRUEBAS.suite('campanaEntrada', async t => {
       t.check(panel.open&&!!b&&panel.classList.contains('campanaEntra'),pagina+': Campaña debe activar la entrada dorada.');
       t.check(b.parentElement===panel&&b.getAttribute('aria-hidden')==='true'&&w.getComputedStyle(b).pointerEvents==='none',pagina+': el barrido debe estar delante del diálogo sin interceptar toques.');
       t.check(w.getComputedStyle(b).backgroundImage===w.getComputedStyle(d.querySelector('#barrido')).backgroundImage,pagina+': la campaña debe usar el mismo barrido dorado de los menús.');
-      const carta=panel.querySelector('.campanaCarta');d.querySelector('#mCampana').click();
-      t.check(panel.querySelector('.campanaCarta')===carta&&panel.querySelectorAll('.campanaBarrido').length===1,pagina+': un doble toque reinicia la entrada.');
+      const figura=panel.querySelector('.creadorLienzo');d.querySelector('#mCampana').click();
+      t.check(!!figura&&panel.querySelector('.creadorLienzo')===figura&&panel.querySelectorAll('.campanaBarrido').length===1,pagina+': un doble toque reinicia la entrada.');
       await sleep(750);
       t.check(!panel.querySelector('.campanaBarrido')&&!panel.classList.contains('campanaEntra'),pagina+': la entrada no se limpia.');
       w.campanaGuardar({version:1,id:'entrada',lider:'fender',etapa:2});w.campanaCerrar();w.abrirCampana();await sleep(0);
@@ -839,6 +841,133 @@ PRUEBAS.suite('campanaPantalla', async t => {
   }
 });
 
+/* Los diálogos nativos viven fuera del lienzo: deben centrarse en el visor real. */
+PRUEBAS.suite('menusCentrados', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:1920px;height:1080px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=centrado-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,media=w.matchMedia;
+    w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+    const comprobar=(selector,nombre)=>{
+      const d=w.document.querySelector(selector),r=d.getBoundingClientRect();
+      t.check(r.width>0&&r.height>0,pagina+': '+nombre+' debe estar visible.');
+      t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2&&Math.abs(r.top+r.height/2-w.innerHeight/2)<2,pagina+': '+nombre+' no está centrado en '+w.innerWidth+'×'+w.innerHeight+'.');
+      t.check(r.left>=0&&r.top>=0&&r.right<=w.innerWidth+1&&r.bottom<=w.innerHeight+1,pagina+': '+nombre+' sale del visor.');
+    };
+    try{
+      for(const [ancho,alto] of [[1920,1080],[1440,900],[1280,720]]){
+        f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(80);
+        w.campanaElegir();comprobar('#campanaPanel','selección');
+        w.campanaGuardar({version:1,id:'centrado',lider:'fender',etapa:0});w.campanaRuta();comprobar('#campanaPanel','mesa');
+        await w.campanaSeleccionar();await sleep(280);comprobar('#campanaEncuentroPanel','encuentro');w.campanaLimpiarPreparacion(true);
+        w.campanaCabecera(w.campanaDialogo(),'Reiniciar campaña','Confirmación');comprobar('#campanaPanel','mensaje');w.campanaCerrar();
+        w.campanaGuardar({version:1,id:'centrado',lider:'fender',etapa:6});w.campanaRuta();comprobar('#campanaDeseo','deseo');w.campanaCerrarDeseo();
+        // Las hojas móviles se anclan abajo deliberadamente; los menús desktop se centran.
+        if(pagina==='index.html')for(const abrir of ['showGallery','showRules','showRecords','showOnline','showTutorialPick']){
+          w[abrir]();comprobar('#ovPanel',abrir);w.cerrarOv();
+        }
+      }
+    }finally{w.matchMedia=media;w.campanaCerrarDeseo();w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaCreador', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:390px;height:664px';
+    const cargar=()=>new Promise(r=>{f.onload=r;f.src=pagina+'?test=creador-interno';});const carga=cargar();document.body.appendChild(f);await carga;
+    let w=f.contentWindow;
+    const reducir=()=>{const media=w.matchMedia;w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);};reducir();
+    const tocar=s=>{const b=w.document.querySelector(s);t.check(!!b,pagina+': falta '+s);b.click();};
+    const ajustar=async(a,h)=>{f.style.width=a+'px';f.style.height=h+'px';await sleep(60);};
+    const cabe=()=>{
+      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect(),pie=d.querySelector('.campanaAcciones').getBoundingClientRect();
+      t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el creador exige scroll en '+w.innerWidth+'×'+w.innerHeight);
+      t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2&&Math.abs(r.top+r.height/2-w.innerHeight/2)<2,pagina+': creador descentrado');
+      d.querySelectorAll('input,button,fieldset,.creadorVista').forEach(n=>{const b=n.getBoundingClientRect();if(!b.width||!b.height)return;t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+(n.title||n.textContent||n.id));if(n.closest('.creadorCuerpo')&&b.left<pie.right&&b.right>pie.left)t.check(b.bottom<=pie.top+1,pagina+': los controles se enciman al botón Continuar en '+w.innerWidth+'×'+w.innerHeight);});
+    };
+    try{
+      w.eval('campanaMemoria=null');w.localStorage.removeItem('caoz.campana.v1.prueba');w.campanaLimpiarBorrador();
+      for(const [a,h] of [[1920,1080],[390,664],[320,568],[320,480],[844,390],[568,320]]){
+        await ajustar(a,h);w.campanaCrear();await sleep(30);for(const k of ['figura','colores','equipo']){tocar('[data-categoria="'+k+'"]');cabe();}
+      }
+      await ajustar(390,844);w.campanaCrear();
+      const input=w.document.querySelector('#creadorNombre');input.value='<Rafa>';input.dispatchEvent(new w.Event('input'));
+      input.focus();await ajustar(390,350);w.campanaTecladoCreador();t.check(w.document.querySelector('#campanaPanel').classList.contains('creadorTeclado'),pagina+': falta espacio para escribir con teclado');cabe();input.blur();await ajustar(390,844);w.campanaTecladoCreador();
+      tocar('[data-valor="guardian"]');tocar('[data-valor="sombrero"]');tocar('[data-categoria="colores"]');
+      const antes=w.document.querySelector('.creadorLienzo').toDataURL();tocar('[data-campo="color"][data-valor="azul"]');t.check(antes!==w.document.querySelector('.creadorLienzo').toDataURL(),pagina+': cambiar la capa no redibuja la miniatura');
+      tocar('[data-campo="piel"][data-valor="ebano"]');tocar('[data-categoria="equipo"]');tocar('[data-valor="libro"]');
+      const vista=w.document.querySelector('.creadorLienzo');tocar('[data-creador-continuar]');t.check(!vista.isConnected,pagina+': el creador no libera su visor');
+      tocar('[aria-label="Protagonista siguiente"]');const esperado=w.campanaLeerBorrador().personaje;
+      [...w.document.querySelectorAll('.campanaAcciones button')].find(n=>n.textContent==='Editar miniatura').click();t.check(w.document.querySelector('#creadorNombre').value==='<Rafa>'&&w.campanaLeerBorrador().lider==='fender',pagina+': volver a editar pierde el personaje o mazo');
+      tocar('[data-creador-continuar]');t.check(w.document.querySelector('.campanaCarta.enfrente').dataset.campanaLider==='fender',pagina+': el carrusel olvida el mazo');
+      tocar('.campanaConfirmar');let p=w.campanaLeer();t.check(p.lider==='fender'&&JSON.stringify(p.personaje)===JSON.stringify(esperado),pagina+': confirmar cambia la apariencia o el mazo');
+      t.check(w.document.querySelector('.campanaSub').textContent.includes('<Rafa>')&&!w.document.querySelector('rafa'),pagina+': el nombre debe tratarse como texto');
+      w.campanaCerrar();await cargar();w=f.contentWindow;reducir();w.abrirCampana();p=w.campanaLeer();
+      t.check(JSON.stringify(p.personaje)===JSON.stringify(esperado)&&w.document.querySelector('#campanaPanel').dataset.vista==='mapa',pagina+': recargar no conserva el personaje');
+      const lienzo=w.document.querySelector('.campanaLienzo3d');t.check(JSON.parse(lienzo.dataset.personaje).equipo==='libro',pagina+': la mesa no usa la miniatura propia');
+      await w.campanaSeleccionar();t.check(w.document.querySelector('.campanaCombatiente b').textContent==='<Rafa>',pagina+': el encuentro pierde el nombre');w.campanaLimpiarPreparacion(true);
+      let inicio;w.startMatch=async(a,b,op)=>{inicio={a,b,op};w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana));};await w.campanaCombatir();
+      t.check(inicio.a==='fender'&&inicio.op.nombres[0]==='<Rafa>'&&w.eval('P(0).leaderId')==='fender'&&w.eval('P(0).deck.length')===40,pagina+': la campaña no inicia con el mazo elegido');
+      let acciones;w.cinematicaFinal=async(_a,_b,op)=>{acciones=op;return true;};w.campanaFinal(0,'Prueba de avance');t.check(w.campanaLeer().etapa===1&&w.campanaLeer().personaje.color==='azul',pagina+': una victoria pierde la apariencia');
+      acciones.revancha();await sleep(20);t.check(JSON.parse(w.document.querySelector('.campanaLienzo3d').dataset.personaje).nombre==='<Rafa>',pagina+': volver a la mesa cambia la miniatura');
+      w.campanaCerrar();w.campanaGuardar({version:1,id:'anterior',lider:'adreida',etapa:3});w.abrirCampana();t.check(w.campanaLeer().etapa===3&&!w.campanaLeer().personaje,pagina+': una campaña anterior debe poder continuar');
+      const normal=w.campanaNormalizarPersonaje({nombre:'x'.repeat(100),color:'url(evil)',equipo:'inventado'});t.check(normal.nombre.length===24&&normal.color==='vino'&&normal.equipo==='espada',pagina+': los datos guardados requieren valores válidos');
+    }finally{w.campanaCerrar();w.campanaLimpiarBorrador();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaMiniatura', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=miniatura-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia,ahora=w.performance.now;
+    try{
+      // Dos superficies que se cruzan: ordenar por profundidad media no puede
+      // dibujar ambas correctamente. Verificar píxeles, también sin WebGL.
+      const lienzo=d.createElement('canvas');lienzo.width=64;lienzo.height=64;const ctx=lienzo.getContext('2d');
+      const caras=[{v:[[4,4,2],[60,4,8],[32,60,4]],color:'#ff0000'},{v:[[4,4,8],[60,4,2],[32,60,4]],color:'#0000ff'}];
+      const pintar=orden=>{ctx.clearRect(0,0,64,64);w.campanaPintarMalla(ctx,orden,v=>({x:v[0],y:v[1],d:v[2]}),64,64);return [[13,12],[50,12]].map(([x,y])=>[...ctx.getImageData(x,y,1,1).data]);};
+      for(const cpu of [false,true]){
+        if(cpu)w.eval('campanaRaster.gl=null');
+        const a=pintar(caras),b=pintar(caras.slice().reverse());
+        t.check(a[0][0]>a[0][2]*2&&a[1][2]>a[1][0]*2,pagina+': una superficie lejana tapa la cercana'+(cpu?' sin GPU':''));
+        t.check(JSON.stringify(a)===JSON.stringify(b),pagina+': el retrato depende del orden de los polígonos');
+      }
+      w.eval('campanaRaster=null');
+      const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',figura:'mago',peinado:'capucha',equipo:'libro',color:'azul'});
+      const retrato=w.campanaRetrato(personaje);
+      t.check(retrato===w.campanaRetrato({...personaje,nombre:'Otro nombre'}),pagina+': se debe reutilizar la foto mientras no cambie la apariencia');
+      t.check(retrato!==w.campanaRetrato({...personaje,equipo:'espada'}),pagina+': cambiar equipo no cambia el retrato');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      w.campanaGuardar({version:1,id:'miniatura',lider:'fender',personaje,etapa:1,enEncuentro:true});w.campanaRuta();
+      t.check(d.querySelector('.campanaTu').textContent==='<Ariadna>'&&!d.querySelector('ariadna'),pagina+': el nombre de la ficha se interpreta como HTML o sigue diciendo TÚ');
+      t.check(d.querySelector('.campanaIdentidad img').src===retrato,pagina+': falta la carta del jugador sobre la mesa');
+      const escena=w.eval('campanaMesaEscena');await escena.saltarHacia(1).promesa;
+      const r=w.eval('CAMPANA_CASILLAS[1]'),p=escena.posicion,giro=escena.orientacion;
+      t.check(Math.sin(giro)*(r[0]-p[0])>0&&Math.cos(giro)*(r[1]-p[1])>0,pagina+': la miniatura termina mirando en otra dirección');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:false}:media.call(w,q);
+      let tiempo=0;w.performance.now=()=>tiempo;const ataque=escena.golpear();
+      const proyeccion=()=>{const q=escena.posicion;return(q[0]-p[0])*(r[0]-p[0])+(q[1]-p[1])*(r[1]-p[1]);};
+      tiempo=220;t.check(proyeccion()<0,pagina+': falta la carga hacia atrás antes del golpe');
+      tiempo=370;t.check(proyeccion()>20,pagina+': la ficha no llega al golpe después de cargar');
+      tiempo=600;t.check(w.campanaPoseGolpe(tiempo).caida===1,pagina+': el enemigo tarda demasiado en caer');
+      escena.destruir();t.check(await ataque===false,pagina+': cerrar durante el golpe deja una victoria tardía');w.performance.now=ahora;
+      w.campanaCerrar();
+      // Mismo mazo en ambos lados: sólo la carta del jugador cambia.
+      w.newGame('fender','fender');w.eval('G.campana='+JSON.stringify({personaje})+';G.fast=false;G.auto=false;G.silent=false;G.over=true');w.FXON=()=>true;
+      w.render();t.check(d.querySelector('#leaderMe .liderJugador img')?.src===retrato&&!d.querySelector('#leaderFoe .liderJugador'),pagina+': la mesa de combate confunde personaje y mazo');
+      w.cortinillaVS('fender','fender',{campana:{personaje}});await sleep(30);
+      t.check(d.querySelector('.vs .izq.cartaJugador img')?.src===retrato&&!d.querySelector('.vs .der.cartaJugador'),pagina+': el VS usa al protagonista en vez de la miniatura');
+      d.querySelector('.vs')?.remove();w.cinematicaFinal(0,'Victoria de prueba',{});await sleep(30);
+      t.check(d.querySelector('.fin .gana.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .pierde.cartaJugador'),pagina+': la victoria usa otra foto o modifica al rival');
+      t.check(d.querySelector('.fin .lname')&&d.querySelector('.fin .sello>i').textContent.includes('<Ariadna>')&&!d.querySelector('ariadna'),pagina+': el final pierde o interpreta el nombre');
+      w.cerrarCinematica();w.cinematicaFinal(1,'Derrota de prueba',{});await sleep(30);
+      t.check(d.querySelector('.fin .pierde.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .gana.cartaJugador'),pagina+': al perder se intercambian las identidades');
+      w.cerrarCinematica();w.newGame('fender','fender');w.render();t.check(!d.querySelector('.liderJugador'),pagina+': una partida normal conserva la apariencia de campaña');
+    }finally{w.performance.now=ahora;w.matchMedia=media;w.cerrarCinematica();w.campanaCerrar();w.relojPara();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('onlineInvitacion', async t => {
   const relay=new URLSearchParams(location.search).get('relay');
   if(!relay||!/^http:\/\/(127\.0\.0\.1|localhost):/.test(relay)){t.nota('Prueba de transporte disponible sólo con relay local explícito.');return;}
@@ -861,6 +990,68 @@ PRUEBAS.suite('onlineInvitacion', async t => {
     j.netSend({t:'bye'});for(let n=0;n<40;n++){await sleep(100);if(h.eval('G.over'))break;}
     t.check(h.eval('G.over&&G.winner===ME'),'Salir no concede la victoria al otro jugador.');
   }finally{marcos.forEach(f=>{f.contentWindow.netClose();f.remove();});}
+});
+
+/* Rantiago necesita que la confirmación del dado vuelva al motor antes de
+   aplicar el +2. Se usan los mensajes y los dos diálogos reales, sin relevos públicos. */
+PRUEBAS.suite('rantiago', async t => {
+  const esperar=async(cond,ms=6500)=>{const fin=Date.now()+ms;while(!cond()&&Date.now()<fin)await sleep(25);t.check(cond(),'La jugada de Rantiago no terminó a tiempo.');};
+  for(const paginas of [['index.html','movil.html'],['movil.html','index.html']])for(const lado of [1,0]){
+    const marcos=[];
+    try{
+      for(const pagina of paginas){
+        const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=rantiago-interno';document.body.appendChild(f);marcos.push(f);await carga;
+      }
+      const [h,j]=marcos.map(f=>f.contentWindow),clientes=[h,j],dados=[[],[]];
+      clientes.forEach((w,i)=>{
+        w.newGame(i?'talesin':'mohamed',i?'mohamed':'talesin');
+        w.eval('G.online=true;G.phase="principal";G.turnNo=3');
+        Object.assign(w.eval('NET'),{on:true,host:i===0,guest:i===1,peer:true,sid:'rantiago-'+i,hechas:new Set(),esperaAck:new Map(),chs:[{ok:true,close(){}}]});
+        Object.defineProperty(w.document,'hidden',{get:()=>false,configurable:true});w.netStatus=()=>{};w.Math.random=()=>.5;
+        const original=w.rollDice;w.rollDice=(valor,nombre,interactivo,meta)=>{dados[i].push({valor,interactivo});return original(valor,nombre,interactivo,meta);};
+        w.netSend=m=>{const copia=JSON.parse(JSON.stringify({...m,sid:'rantiago-'+i}));queueMicrotask(()=>clientes[1-i].netRecv(copia));};
+        w.showScreen('board');
+      });
+      h.eval('G.active='+lado);h.eval('P(0).hand=[];P(1).hand=[]');h.eval('P('+lado+').hand=["rantiago"];P('+lado+').pd=10');
+      const objetivo=h.mkUnit('bartolomeo',lado);objetivo.sick=false;h.eval('P('+lado+')').field=[objetivo];h.recalc();h.render();
+      await esperar(()=>j.eval('P('+(1-lado)+').field.length')===1);await sleep(200);
+      const jugador=clientes[lado],d=jugador.document;
+      if(lado===1)j.gIntent('play',{id:'rantiago'});else h.playFromHand(0,'rantiago');
+      await esperar(()=>!!jugador.eval('TGT'));d.querySelector('#myField [data-uid="'+objetivo.uid+'"]').click();
+      await esperar(()=>dados[lado].length>0);await sleep(350);
+      const caso=paginas.join(' → ')+(lado?' · juega invitado':' · juega anfitrión');
+      t.check(dados[lado].length===1&&dados[lado][0].interactivo,caso+': el jugador debe recibir una sola tirada interactiva, sin otra animación que la tape.');
+      t.check(dados[1-lado].length===1&&!dados[1-lado][0].interactivo,caso+': el rival sólo debe ver una tirada de espectador.');
+      d.querySelector('#dbtn').click();await esperar(()=>!d.querySelector('#dbtn').disabled&&d.querySelector('#dbtn').textContent.includes('Continuar'));
+      t.check(d.querySelector('#d20v').textContent==='11'&&d.querySelector('#defecto').textContent.includes('+2 ATQ'),caso+': el 11 debe anunciar el aumento de ataque.');
+      d.querySelector('#dbtn').click();
+      await esperar(()=>h.eval('P('+lado+').field[0].pA')===2&&j.eval('P('+(1-lado)+').field[0]?.pA')===2&&Object.keys(h.eval('NET.pending')).length===0&&!h.eval('NET.busy'));
+      for(const [w,s] of [[h,lado],[j,1-lado]]){
+        t.check(w.eval('P('+s+').field[0].atk')===3&&w.document.querySelector('[data-uid="'+objetivo.uid+'"] .atk').textContent==='3',caso+': el ataque debe subir de 1 a 3 en ambos clientes.');
+      }
+      // Otro estado de red no debe borrar el incremento permanente.
+      h.netPushState();await sleep(250);t.check(j.eval('P('+(1-lado)+').field[0].pA')===2,caso+': el +2 debe sobrevivir a una nueva sincronización.');
+    }finally{marcos.forEach(f=>{f.contentWindow.netSend=()=>{};f.contentWindow.netClose();f.remove();});}
+  }
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=rantiago-local-interno';document.body.appendChild(f);await carga;const w=f.contentWindow;
+    try{
+      for(const modo of ['local','campana','ia'])for(const valor of [10,11,20]){
+        w.newGame('talesin','mohamed');w.eval('G.fast=true;G.auto=true;G.silent=true;G.active=0;G.phase="principal"');
+        if(modo==='campana')w.eval('G.campana={id:"rantiago",etapa:0,alma:16}');
+        const s=modo==='ia'?1:0;w.eval('G.active='+s);w.eval('P(0).hand=[];P(1).hand=[]');w.eval('P('+s+').hand=["rantiago"];P('+s+').pd=10');
+        const u=w.mkUnit('bartolomeo',s);u.sick=false;w.eval('P('+s+')').field=[u];w.recalc();w.Math.random=()=>(valor-.5)/20;
+        await w.playFromHand(s,'rantiago',[[u]]);
+        t.check(u.pA===(valor>=11?2:0)&&u.atk===(valor>=11?3:1)&&(u.stunned>0)===(valor<=10),pagina+' · '+modo+': resultado incorrecto con '+valor+'.');
+        if(valor>=11){
+          w.eval('G.online=true');await w.endTurn();await w.endTurn();
+          t.check(u.pA===2&&u.atk===3,pagina+' · '+modo+': el beneficio debe ser permanente.');
+          const alma=w.eval('P('+(1-s)+').alma');await w.doAttack(u,'face');
+          t.check(w.eval('P('+(1-s)+').alma')===alma-3,pagina+' · '+modo+': el ataque aumentado debe hacer daño real.');
+        }
+      }
+    }finally{w.relojPara();f.remove();}
+  }
 });
 
 PRUEBAS.suite('onlineFlujo', async t => {
