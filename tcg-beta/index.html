@@ -527,9 +527,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .screen.portada.entra > *:nth-child(n+6){animation-delay:.2s}
 
 /* el destello que cruza al cambiar de pantalla: una sola pasada, muy corta */
-#barrido{position:absolute;inset:0;z-index:80;pointer-events:none;opacity:0;
+#barrido,.campanaBarrido{position:absolute;inset:0;z-index:80;pointer-events:none;opacity:0;
   background:linear-gradient(100deg,transparent 34%,rgba(255,206,140,.16) 50%,transparent 66%)}
-#barrido.va{animation:cruza .45s ease-out}
+#barrido.va,.campanaBarrido.va{animation:cruza .45s ease-out}
 @keyframes cruza{
   0%  {opacity:0;translate:-60% 0}
   30% {opacity:1}
@@ -537,7 +537,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 @media (prefers-reduced-motion:reduce){
   .portada .btn.fogonazo,.portada .btn.fogonazo::before,.portada .btn.fogonazo::after,
-  .screen.portada.entra > *,#barrido.va{animation:none}}
+  .screen.portada.entra > *,#barrido.va,.campanaBarrido.va{animation:none}}
 
 /* La que espera turno: detrás de la elegida, invisible y sin poder pulsarse.
    Hereda la misma transición que las demás, así que al girar sale de detrás en
@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=185"></script>
-<script src="final.js?b=185"></script>
+<script src="motor.js?b=186"></script>
+<script src="final.js?b=186"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:185, fecha:'2026-09-07'};
+const BUILD = {n:186, fecha:'2026-09-07'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;

@@ -512,7 +512,11 @@ function campanaGuardar(dato){
 }
 function campanaDialogo(){
   let d=document.getElementById('campanaPanel');
-  if(!d){d=document.createElement('dialog');d.id='campanaPanel';d.setAttribute('aria-labelledby','campanaTitulo');document.body.appendChild(d);}
+  if(!d){
+    d=document.createElement('dialog');d.id='campanaPanel';d.setAttribute('aria-labelledby','campanaTitulo');document.body.appendChild(d);
+    d.addEventListener('close',()=>{if(!d.open)campanaLimpiarEntrada();});
+    d.addEventListener('cancel',campanaLimpiarEntrada);
+  }
   if(!d.open){d.showModal();cargarArte().then(()=>d.querySelectorAll('[data-campana-lider]').forEach(n=>{if(!n.querySelector('.marcoDibujo'))ilustrarLider(n,n.dataset.campanaLider);}));}return d;
 }
 function campanaBoton(texto,accion,principal=false){
@@ -527,16 +531,33 @@ function campanaAjustarVentana(){
 addEventListener('resize',campanaAjustarVentana);
 if(window.visualViewport){visualViewport.addEventListener('resize',campanaAjustarVentana);visualViewport.addEventListener('scroll',campanaAjustarVentana);}
 campanaAjustarVentana();
-function campanaCerrar(){const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+let campanaEntradaTimer;
+function campanaLimpiarEntrada(){
+  clearTimeout(campanaEntradaTimer);
+  const d=document.getElementById('campanaPanel');if(!d)return;
+  d.classList.remove('campanaEntra');const b=d.querySelector('.campanaBarrido');if(b)b.remove();
+}
+function campanaAnimarEntrada(){
+  campanaLimpiarEntrada();
+  if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const d=document.getElementById('campanaPanel');if(!d||!d.open)return;
+  // El diálogo está por encima de los menús: el destello debe vivir en esa misma capa.
+  const b=document.createElement('div');b.className='campanaBarrido va';b.setAttribute('aria-hidden','true');
+  d.appendChild(b);d.classList.add('campanaEntra');
+  campanaEntradaTimer=setTimeout(campanaLimpiarEntrada,700);
+}
+function campanaCerrar(){campanaLimpiarEntrada();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaCabecera(d,titulo,sub){
+  campanaLimpiarEntrada();
   d.dataset.vista='mensaje';
   d.innerHTML='<header class="campanaCabecera"><div class="campanaSello">CAMPAÑA · PROTOTIPO</div><h2 id="campanaTitulo"></h2><p class="campanaSub"></p></header>';
   d.querySelector('h2').textContent=titulo;d.querySelector('p').textContent=sub;
 }
 function abrirCampana(){
+  const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   const progreso=campanaLeer();
-  if(!progreso){campanaElegir();return;}
-  campanaRuta();
+  if(progreso)campanaRuta();else campanaElegir();
+  campanaAnimarEntrada();
 }
 function campanaElegir(){
   const d=campanaDialogo();campanaCabecera(d,'Elige tu Protagonista','Desliza las cartas para elegir quién subirá al Domo.');
@@ -663,6 +684,12 @@ function campanaFinal(winner,why){
   const css=document.createElement('style');css.textContent=`
   #campanaPanel{--alto-util:calc(var(--campana-alto,100dvh) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));box-sizing:border-box;position:fixed;inset:calc(var(--campana-desfase,0px) + max(12px,env(safe-area-inset-top))) 0 auto;margin:0 auto;width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),650px);max-height:var(--alto-util);overflow:hidden;overscroll-behavior:contain;padding:18px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
   #campanaPanel[open]{display:flex;flex-direction:column;gap:10px}
+  #campanaPanel .campanaBarrido{position:fixed;inset:0;z-index:100}
+  #campanaPanel.campanaEntra>:not(.campanaBarrido){animation:entraPantalla .40s cubic-bezier(.2,.75,.3,1) both}
+  #campanaPanel.campanaEntra>:not(.campanaBarrido):nth-child(2){animation-delay:.045s}
+  #campanaPanel.campanaEntra>:not(.campanaBarrido):nth-child(3){animation-delay:.09s}
+  #campanaPanel.campanaEntra>:not(.campanaBarrido):nth-child(4){animation-delay:.13s}
+  @media(prefers-reduced-motion:reduce){#campanaPanel.campanaEntra>*{animation:none}}
   #campanaPanel[data-vista="mapa"],#campanaPanel[data-vista="seleccion"]{height:min(850px,var(--alto-util))}
   #campanaPanel[data-vista="mensaje"]{bottom:max(12px,env(safe-area-inset-bottom));height:fit-content;margin:auto}
   .campanaCabecera,.campanaAcciones{flex:none;min-width:0}
