@@ -182,7 +182,7 @@ function campanaPoseGolpe(ms){
       const desde=posicionJugador(),rival=op.casillas[etapa],hasta=[rival[0]+(rival[0]<50?12:-12),rival[1]+5];
       let resolver,terminado=false,temporizador;
       const promesa=new Promise(r=>resolver=r);
-      const terminar=ok=>{if(terminado)return;terminado=true;clearTimeout(temporizador);posicionFija=ok?hasta:desde;salto=null;baseSucia=true;escena();posiciones();dibujar(performance.now());resolver(ok);};
+      const terminar=ok=>{if(terminado)return;terminado=true;clearTimeout(temporizador);posicionFija=ok?hasta:desde;if(ok)window.CAOZ_AUDIO?.play('table_hop');salto=null;baseSucia=true;escena();posiciones();dibujar(performance.now());resolver(ok);};
       const giro=orientacionJugador();giroFijo=direccion(hasta,rival);salto={desde,hasta,giro,inicio:performance.now(),terminar};
       if(reducir()||document.hidden)terminar(true);else{baseSucia=true;dibujar(performance.now());temporizador=setTimeout(()=>terminar(true),900);}
       return{promesa,cancelar:()=>terminar(false)};
@@ -245,6 +245,7 @@ function campanaPoseGolpe(ms){
       const distanciaRival=Math.hypot(jugador[0]-rival[0],jugador[1]-rival[1]);
       const cercania=Math.max(0,Math.min(1,(22-distanciaRival)/9));
       canvas.dataset.despejeRival=cercania.toFixed(3);
+      if(cercania>.9&&!nieblaSonada){nieblaSonada=true;window.CAOZ_AUDIO?.play('fog_reveal');}
       const ultima=huellas[huellas.length-1];
       if(!ultima||Math.hypot(jugador[0]-ultima[0],jugador[1]-ultima[1])>1)huellas.push(jugador.slice());
       const limite=Math.min(95,jugador[1]+8);
@@ -266,11 +267,15 @@ function campanaPoseGolpe(ms){
       op.casillas.forEach((p,i)=>{const n=tablero.querySelector('[data-etapa="'+i+'"]');if(!n)return;const q=proyectar(punto(p,.12));n.style.left=q.x/ancho*100+'%';n.style.top=q.y/alto*100+'%';});
       const peon=tablero.querySelector('.campanaPeon'),q=proyectar(punto(posicionJugador(),.1+levitacion));if(peon){peon.style.left=q.x/ancho*100+'%';peon.style.top=q.y/alto*100+'%';}
     }
+    let ultimoPaso=0,nieblaSonada=false;
     function dibujar(t=0){
       if(!vivo)return;
       const estabaAvanzando=avance<1;
       if(avance<1){baseSucia=true;avance=reducir()?1:Math.min(1,Math.max(0,(performance.now()-inicio)/1100));if(avance===1)giroFijo=direccion(posicionJugador(),op.casillas[Math.min(5,op.etapa)]);escena();}
       if(salto||derribo){baseSucia=true;escena();}
+      const paso=salto?Math.floor(progresoSalto()*3):avance<1?Math.floor(avance*4):0;
+      if(paso>ultimoPaso)window.CAOZ_AUDIO?.play('table_hop');ultimoPaso=paso;
+      if(derribo&&!derribo.sono&&performance.now()-derribo.inicio>=370){derribo.sono=true;window.CAOZ_AUDIO?.play('table_hit');}
       canvas.dataset.avanzando=avance<1?'1':'0';
       canvas.dataset.saltando=salto?'1':'0';canvas.dataset.derribando=derribo?'1':'0';
       if(baseSucia||avance<1){

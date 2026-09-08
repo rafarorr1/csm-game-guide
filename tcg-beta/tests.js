@@ -560,7 +560,10 @@ PRUEBAS.suite('campanaDeseo', async t => {
     };
     try{
       w.localStorage.removeItem(clave);
-      w.fetch=async(url,op)=>{if(new URL(url,w.location.href).pathname.includes('/art/'))return fetchOriginal(url,op);peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
+      w.fetch=async(url,op)=>{const ruta=new URL(url,w.location.href).pathname;
+        // El sonido consulta su catálogo: son lecturas independientes del deseo.
+        if((!op?.method||op.method==='GET')&&(ruta.includes('/art/')||ruta.includes('/audio/')||ruta.endsWith('/api/sfx/catalogo')))return fetchOriginal(url,op);
+        peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
       w.campanaGuardar({version:1,id:'deseo-prueba',lider:'fender',etapa:5});w.campanaAbrirDeseo();
       t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo sólo se ofrece al vencer a todos los rivales.');
       w.campanaGuardar({...w.campanaLeer(),etapa:6,mesaPendiente:5});w.campanaAbrirDeseo();
@@ -1112,6 +1115,43 @@ PRUEBAS.suite('onlineFlujo', async t => {
 /* El Lugar ocupa su altura real, incluso con texto largo o una Reliquia.
    Regresión de la captura móvil: el flex comprimía #midRow y las cartas
    propias quedaban encima del Puente y de su texto. */
+PRUEBAS.suite('sonidos', async t => {
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
+  const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=sonidos-interna';document.body.appendChild(f);
+  try{
+    await carga;const w=f.contentWindow,a=w.CAOZ_AUDIO;await a.listo;
+    t.igual(a.catalogo.length,34,'El banco debe estar disponible también en móvil');
+    t.igual(a.magia({id:'escarcha',n:'Rayo de Escarcha'}),'spell_frost','Escarcha no debe confundirse con electricidad por la palabra Rayo');
+    t.igual(a.magia({id:'pasoatronador',n:'Thunder step',sub:['cancion']}),'spell_lightning','Thunder step conserva su descarga');
+    t.igual(a.magia({id:'contrahechizo'}),'shield','Contrahechizo utiliza el sello protector');
+    let comienzos=0,paradas=0;
+    const parametro=()=>({value:0,setTargetAtTime(){}}),nodo=()=>({connect(){},disconnect(){},gain:parametro()});
+    w.AudioContext=class{
+      constructor(){this.state='suspended';this.currentTime=0;this.destination={};}
+      resume(){this.state='running';return Promise.resolve();}
+      createGain(){return nodo();}
+      createDynamicsCompressor(){return {...nodo(),threshold:parametro(),knee:parametro(),ratio:parametro(),attack:parametro(),release:parametro()};}
+      decodeAudioData(){return Promise.resolve({duration:1});}
+      createBufferSource(){return {...nodo(),playbackRate:{value:1},start(){comienzos++;},stop(){paradas++;this.onended?.();}};}
+    };
+    w.newGame('fender','mohamed');w.eval('G.fast=false;G.auto=false;G.silent=false');
+    a.configurar({silencio:false,volumen:.7});await a.desbloquear();await Promise.all(a.catalogo.map(s=>a.cargar(s.id)));
+    t.check(a.play('attack_hit'),'El contacto debe reproducirse tras desbloquear audio');
+    t.igual(comienzos,1,'Un contacto produce una sola voz');
+    a.play('attack_hit');t.igual(comienzos,1,'El límite evita golpes duplicados en el mismo instante');
+    a.configurar({silencio:true});t.igual(a.estado.voces,0,'Silenciar corta las voces que ya estaban sonando');
+    t.check(paradas>0,'Silenciar detiene la fuente de audio');
+    t.check(!a.play('heal'),'Silenciar también impide los efectos nuevos');
+    a.configurar({silencio:false,volumen:50});t.igual(a.ajustes.volumen,1,'El volumen no puede exceder el máximo');
+    for(const modo of ['fast','silent','auto']){w.eval('G.'+modo+'=true');t.check(!a.play('heal'),'No debe sonar en modo '+modo);w.eval('G.'+modo+'=false');}
+    for(const s of a.catalogo)a.play(s.id);
+    t.check(a.estado.voces<=8,'Una ráfaga de efectos no puede saturar con más de ocho voces');
+    a.detener();t.igual(a.estado.voces,0,'Al salir no quedan fuentes sonando');
+    t.check(!a.play('sonido_inexistente'),'Un id desconocido es inocuo para el motor');
+    t.nota('Banco móvil, categorías, contacto único, silencio, límites y modos rápidos verificados.');
+  }finally{f.contentWindow.CAOZ_AUDIO?.detener();f.remove();}
+});
+
 PRUEBAS.suite('terrenoMovil', async t => {
   const f=document.createElement('iframe');
   f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px;border:0';

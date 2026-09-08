@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=207"></script>
-<script src="final.js?b=207"></script>
+<script src="motor.js?b=208"></script>
+<script src="final.js?b=208"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:207, fecha:'2026-09-08'};
+const BUILD = {n:208, fecha:'2026-09-08'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2600,10 +2600,10 @@ async function rollDice(value, label, interactive, meta){
     const done=()=>{ if(cerrado) return; cerrado=true; ov.classList.remove('on'); resolve(); };
     const girar=async()=>{
       btn.disabled=true; btn.textContent='Tirando…';
-      v.classList.add('spin');
+      v.classList.add('spin'); window.CAOZ_AUDIO?.play('dice_roll');
       const N=interactive?15:9;
       for(let i=0;i<N;i++){ v.textContent=1+rnd(20); await sleep(42+i*(interactive?7:9)); }
-      v.classList.remove('spin');
+      v.classList.remove('spin'); window.CAOZ_AUDIO?.play('dice_land');
       v.textContent=value;
       v.className='d20'+(value===20?' crit':value===1?' pifia':'');
       v.animate([{transform:'scale(1.55) rotate(-14deg)'},{transform:'scale(1) rotate(0)'}],
@@ -4309,7 +4309,7 @@ async function cortinillaVS(a, b, opts={}){
   await nap(60);
   capa.classList.add('entra');          // las cartas vienen de fuera
   await nap(620);
-  capa.classList.add('choque');         // el impacto: destello, fuego y sacudida
+  capa.classList.add('choque'); window.CAOZ_AUDIO?.play('vs');         // el impacto: destello, fuego y sacudida
   await nap(2500);                      // se leen los dos nombres
   capa.classList.add('sale');           // se apartan y revelan la mesa
   await nap(760);

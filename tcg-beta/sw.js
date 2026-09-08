@@ -18,10 +18,10 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 207;
+const VERSION = 208;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
-const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'polish-aaa.js', 'manifest.webmanifest',
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
                 'art/encuadres.json', 'art/logo.webp',
                 'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
 
@@ -43,6 +43,8 @@ self.addEventListener('install', ev => {
     // las ilustraciones que fallen (un id sin dibujo aún) no impiden instalar
     const arte = await listaDeArte();
     await Promise.all(arte.map(u => c.add(u).catch(() => {})));
+    // El audio es opcional: un sonido caído nunca impide actualizar la PWA.
+    try{const r=await fetch('audio/catalogo.json'),j=await r.json();await Promise.all(j.sonidos.map(async s=>{try{const r=await fetch(s.archivo,{signal:AbortSignal.timeout(8000)});if(r.ok)await c.put(s.archivo,r);}catch(e){}}));}catch(e){}
     await self.skipWaiting();
   })());
 });
@@ -66,6 +68,14 @@ self.addEventListener('fetch', ev => {
   const url = new URL(req.url);
   if(url.origin !== self.location.origin) return;           // relevos y demás: directos
   if(url.search.includes('test=')) return;                    // el arnés no pasa por la caché
+  // La sesión y los datos privados jamás se guardan en la PWA. Sólo los WAV
+  // públicos con hash inmutable pueden reproducirse también sin conexión.
+  const audioRemoto=/\/api\/sfx\/audio\/[a-f0-9]{64}$/.test(url.pathname);
+  if(url.pathname.includes('/api/sfx/')&&!audioRemoto)return;
+  if(audioRemoto||/\/audio\/.+\.wav$/.test(url.pathname)){
+    if(req.headers.has('range'))return;
+    ev.respondWith((async()=>{const c=await caches.open(CACHE),hit=await c.match(url.origin+url.pathname);if(hit)return hit;try{const r=await fetch(req);if(r.status===200)c.put(url.origin+url.pathname,r.clone());return r;}catch(e){return new Response('',{status:504});}})());return;
+  }
 
   if(esArte(url)){
     ev.respondWith((async () => {
