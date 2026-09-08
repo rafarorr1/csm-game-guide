@@ -407,6 +407,24 @@ PRUEBAS.suite('azarYCriticos', async t => {
   }
 });
 
+PRUEBAS.suite('victoriaCentrada', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=final-centrado-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;
+    try{
+      const estilo=w.document.createElement('style');estilo.textContent=w.eval('FIN_CSS');w.document.head.appendChild(estilo);
+      const fin=w.document.createElement('div');fin.className='fin sello-on';fin.innerHTML='<div class="sello"><b>VICTORIA</b><small>Victoria de prueba</small><i>Turnos: 7 · Fender 17 · Mohamed 0</i></div>';w.document.body.appendChild(fin);
+      await sleep(30);
+      const caja=fin.querySelector('.sello').getBoundingClientRect(),pantalla=fin.getBoundingClientRect();
+      t.check(Math.abs(caja.x+caja.width/2-(pantalla.x+pantalla.width/2))<1,pagina+': resultado centrado horizontalmente.');
+      t.check(Math.abs(caja.top-(pantalla.y+pantalla.height/2))<2,pagina+': el título debe comenzar en el centro vertical, sin desplazar toda la información hacia abajo.');
+      t.check(w.getComputedStyle(fin.querySelector('b')).transform==='none',pagina+': título sin inclinación.');
+      t.check(w.eval("CARDS.pasoatronador.n")==='Thunder step',pagina+': nombre actualizado de Thunder step.');
+    }finally{f.remove();}
+  }
+});
+
 PRUEBAS.suite('campanaContinuidad', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -428,6 +446,9 @@ PRUEBAS.suite('campanaContinuidad', async t => {
       w.document.querySelector('#campanaPanel .campanaAcciones .gold').click();await sleep(50);
       t.check(w.campanaLeer().mesaPendiente==null&&w.document.querySelector('.campanaLienzo3d').dataset.avanzando==='1',pagina+': continuar debe caminar al siguiente rival.');
       const posicion=w.eval('campanaMesaEscena.posicion'),origen=w.campanaPosicionEncuentro(0);t.check(Math.hypot(posicion[0]-origen[0],posicion[1]-origen[1])<6,pagina+': el avance debe partir del rival vencido, nunca del inicio.');
+      t.check(Number(w.document.querySelector('.campanaLienzo3d').dataset.despejeRival)<.2,pagina+': el siguiente rival no debe despejarse al empezar a caminar.');
+      await sleep(1200);
+      t.check(Number(w.document.querySelector('.campanaLienzo3d').dataset.despejeRival)>.95,pagina+': al llegar debe descubrirse completamente el rival.');
       w.campanaCerrar();w.startMatch=async(...args)=>partidas.push(args);
       w.newGame('fender','fender');w.eval("G.campana={id:'continuidad',etapa:1,alma:20};G.over=true;");
       w.showEnd(1,'Derrota de prueba');await sleep(0);final.acciones.revancha();await sleep(30);

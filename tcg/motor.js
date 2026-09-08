@@ -604,7 +604,7 @@ C('zancada',{n:'Zancada Larga',t:'hechizo',c:1,r:0,art:'👟',
 
 /* ---- Grimorio: soporte ---- */
 
-C('pasoatronador',{n:'Paso Atronador',t:'hechizo',c:3,sub:['cancion'],r:0,art:'⚡',
+C('pasoatronador',{n:'Thunder step',t:'hechizo',c:3,sub:['cancion'],r:0,art:'⚡',
  x:'Devuelve a tu mano un aliado (y opcionalmente otro de Costo 2 o menos). Luego 2 daño a un Personaje rival. Si devolviste a Machete, roba 1.',
  tg:[{k:'unidadAliada',min:1,max:2},{k:'unidadEnemiga',min:0,max:1}],
  req:(g,s)=>P(s).field.length>0,

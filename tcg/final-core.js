@@ -108,10 +108,10 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 /* el sello */
 /* Sólo gira la palabra: el giro del bloque entero arrastraba el motivo y la
    línea de turnos y Alma, y se veían descentrados. */
-.fin .sello{position:relative;z-index:6;text-align:center;opacity:0;translate:0 13vh;transform:scale(3);width:100%;padding:0 12px;
+.fin .sello{position:absolute;left:0;right:0;top:50%;box-sizing:border-box;z-index:6;text-align:center;opacity:0;transform:scale(3);width:auto;padding:0 16px;
   transition:opacity .2s, transform .4s cubic-bezier(.2,1.5,.4,1)}
 .fin.sello-on .sello{opacity:1;transform:scale(1)}
-.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:6px;transform:rotate(-3deg);
+.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:3px;
   background-image:linear-gradient(180deg,#fff3c4 0%,#e6bb52 46%,#8d6f21 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 5px 0 #3a2a08) drop-shadow(0 0 28px rgba(230,187,82,.75))}
 .fin.derrota .sello b{background-image:linear-gradient(180deg,#ffd9d6 0%,#e0524a 46%,#4a1010 100%);
