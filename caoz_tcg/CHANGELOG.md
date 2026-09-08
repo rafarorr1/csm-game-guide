@@ -13,6 +13,15 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Beta disponible por Cloudflare · 2026-09-07
+
+Build 188: la beta se entrega también desde beta.caoz-tcg.pages.dev para
+resolver el acceso desde el iPhone con 5G, cuya operadora no enruta github.io.
+El flujo --beta envía los mismos archivos ya validados a una rama de preview
+independiente y comprueba lo servido por ambas redes byte a byte. Producción
+sigue en build 180. Tres pruebas de publicación cubren aislamiento, reintentos
+y rechazos; enviar el árbol de producción por error reproduce el rojo.
+
 ## Sin numerar — Acercamiento al combate y VS móvil · 2026-09-07
 
 Build 187, beta: Combatir acerca la cámara al encuentro durante 500 ms antes

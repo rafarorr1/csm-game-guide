@@ -10,8 +10,8 @@
 #    ./publicar.sh                 pruebas rápidas (~15 s) y publica
 #    ./publicar.sh --completo      añade los 5 tutoriales (~5 min) y publica
 #    ./publicar.sh --solo-pruebas  sólo comprueba, no toca la web
-#    ./publicar.sh --beta          publica en /tcg-beta/ para probarlo en el
-#                                  móvil sin tocar la versión que usa la gente
+#    ./publicar.sh --beta          publica /tcg-beta/ y el preview de Cloudflare
+#                                  para móviles, sin cambiar producción
 #
 #  No necesita instalar nada: usa el Chrome que ya tienes y un servidor de
 #  Python de un solo uso (servidor_pruebas.py).
@@ -108,6 +108,7 @@ if [ -n "$(cd "$REPO" && git status --porcelain -- caoz_tcg/)" ]; then
   exit 1
 fi
 gris "  todo commiteado ($(cd "$REPO" && git rev-parse --short HEAD) en $(cd "$REPO" && git branch --show-current))"
+python3 "$AQUI/pruebas_publicacion.py" || { rojo 'Fallaron las guardas de publicación beta'; exit 1; }
 
 # ---------------------------------------------------------------------------
 paso "2/4 · Pruebas en Chrome sin ventana"
@@ -232,9 +233,7 @@ git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTIN
 
 if git diff --cached --quiet; then
   gris "  no hay cambios que publicar"
-  exit 0
-fi
-
+else
 VERSION="$(cd "$REPO" && git rev-parse --short HEAD)"
 git commit -q -m "Publica el TCG ($VERSION) en /$DESTINO/
 
@@ -243,6 +242,7 @@ Pruebas en verde antes de subir.
 Co-Authored-By: Codex <noreply@openai.com>" || exit 1
 git push -q origin gh-pages || exit 1
 gris "  subido: $(git rev-parse --short HEAD)"
+fi
 
 # ---------------------------------------------------------------------------
 # CLOUDFLARE PAGES — la dirección que se reparte.
@@ -271,7 +271,7 @@ comprobar_cloudflare(){
     fi
     gris "  intento $j: Cloudflare aún sirve otra versión"
   done
-  rojo "GitHub ya lo sirve, pero Cloudflare aún no. Mira el despliegue en dash.cloudflare.com → Workers & Pages → caoz-tcg"
+  rojo "GitHub ya lo sirve, pero $CF_URL aún no. Mira el despliegue en dash.cloudflare.com → Workers & Pages → caoz-tcg"
   return 1
 }
 
@@ -305,7 +305,13 @@ for i in $(seq 1 10); do
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$f" || { rojo "$f no coincide con la versión local"; exit 1; }
     done
     if [ "$DESTINO" = "tcg-beta" ]; then
-      verde "Beta verificada: https://rafarorr1.github.io/csm-game-guide/tcg-beta/"
+      # Cloudflare sólo toma tcg como salida. La rama beta contiene exactamente
+      # el árbol tcg-beta validado, bajo ese nombre, en un preview independiente.
+      # No se cambia gh-pages/tcg ni se envía nada a main.
+      python3 "$AQUI/beta_cloudflare.py" "$PAGES" || exit 1
+      CF_URL="https://beta.caoz-tcg.pages.dev"
+      comprobar_cloudflare || exit 1
+      verde "Beta verificada para móvil: $CF_URL/movil.html?b=$B_NUM"
       exit 0
     fi
     comprobar_cloudflare

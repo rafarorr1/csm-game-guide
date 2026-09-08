@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 187 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 188 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -350,3 +350,16 @@ de cerrar el diálogo y arrancar el VS. campanaCancelarZoom restaura controles y
 resuelve el viaje cancelado al cerrar o navegar. Movimiento reducido lo omite.
 El primer naipe del VS sigue siendo el jugador local; sólo el CSS móvil lo sitúa
 al 72% de alto y al rival al 28%. Suites campanaCombate y versusMovil.
+
+
+Build 188: beta accesible también en https://beta.caoz-tcg.pages.dev/ para redes
+móviles que no enrutan github.io. publicar.sh --beta verifica GitHub y llama a
+beta_cloudflare.py: crea/avanza únicamente refs/heads/beta con un árbol que
+contiene tcg = gh-pages:tcg-beta. No cambia el checkout, gh-pages/tcg ni main.
+Cloudflare lo toma como preview (producción sigue ligada a gh-pages); se verifica
+byte a byte también en Cloudflare. Si el contenido ya estaba publicado se puede
+repetir --beta para reintentar el preview. El script exige gh-pages limpio y
+sin commits locales pendientes de enviar; rechaza una rama beta ajena y nunca
+fuerza el push. pruebas_publicacion.py comprueba aislamiento, bytes, reintentos,
+avance y guardas con repositorios temporales; sabotaje enviando tcg detectado.
+El juego conserva el comportamiento de build 187; sólo cambia la entrega.
