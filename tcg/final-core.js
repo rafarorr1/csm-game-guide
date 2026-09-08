@@ -37,7 +37,9 @@ function animarTransicionMenu(pantalla,ventana=null){
   }
   menuEntradaNodo=pantalla;menuBarridoNodo=barrido;
   void pantalla.offsetWidth;
-  pantalla.classList.add(ventana?'menuEntra':'entra');
+  // Al regresar, el principal ya debe verse debajo del oro. Repetir su entrada
+  // escalonada ocultaba logo y botones durante casi todo el barrido.
+  if(ventana||pantalla.id!=='menu')pantalla.classList.add(ventana?'menuEntra':'entra');
   if(barrido){void barrido.offsetWidth;barrido.classList.add('va');}
   menuBarridoTimer=setTimeout(()=>{if(barrido){barrido.classList.remove('va');if(ventana)barrido.remove();}},500);
   menuEntradaTimer=setTimeout(limpiarTransicionMenu,700);
