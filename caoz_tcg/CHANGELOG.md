@@ -13,6 +13,19 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Menús de campaña centrados en escritorio · 2026-09-08
+
+Build 205, beta. La selección de Protagonista y la mesa se centraban sólo en
+horizontal: el borde superior fijo de 12 px las dejaba 103 px arriba del centro
+en un visor de 1920×1080. El diálogo ahora reparte el espacio vertical mediante
+márgenes automáticos dentro del visualViewport, respetando las áreas seguras.
+Las confirmaciones comparten esos límites sin transformar el panel.
+
+La regresión `menusCentrados` falla antes del arreglo y pasa después. Comprueba
+selección, mesa, encuentro, mensaje y deseo en ambas pantallas con tres tamaños
+de escritorio; también galería, reglas, récords, online y tutorial de desktop.
+Las pruebas existentes de campaña cubren los teléfonos pequeños y apaisados.
+
 ## Sin numerar — Rantiago confirma su Fiesta de hongos online · 2026-09-08
 
 Build 204, beta. La tirada del invitado llegaba dos veces: como decisión
