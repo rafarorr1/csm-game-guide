@@ -1416,10 +1416,15 @@ async function cloudCheck(u){ // Nube de Dagas del rival
 
 async function roll(label, side, meta){
   side = (side==null? G.active : side);
+  // Las cartas describen el umbral; ambas pantallas necesitan también la
+  // comparación para enseñar el efecto del número que acaba de salir.
+  if(meta&&!meta.ok) meta=metaViva(meta);
   const mio = (side===ME) && !(meta && meta.sola);
   let r = 1+rnd(20);
-  if(NET.host&&side===FOE){ netFx('dice',{v:r,label,meta:metaPlana(meta)});
-    await Promise.all([rollDice(r,label,false,meta), netAsk({kind:'roll',value:r,label,fallback:1})]); }
+  if(NET.host&&side===FOE){
+    // La petición ya abre el dado del invitado. Enviarlo además como efecto
+    // de espectador reemplazaba su botón y dejaba al motor esperando 90 s.
+    await Promise.all([rollDice(r,label,false,meta), netAsk({kind:'roll',value:r,label,meta:metaPlana(meta),fallback:1})]); }
   else { if(NET.host) netFx('dice',{v:r,label,meta:metaPlana(meta)});
          await rollDice(r,label,mio,meta); }
   const ev={isRoll:true,value:r,side};
@@ -3798,7 +3803,7 @@ async function netGuestPrompt(m){
   } else if(m.kind==='from'){
     const idx=await pickIndex(m.list,m.title); responder(idx);
   } else if(m.kind==='roll'){
-    await rollDice(m.value,m.label,true); responder(1);
+    await rollDice(m.value,m.label,true,metaViva(m.meta)); responder(1);
   } else if(m.kind==='targets'){
     const v=await guestTargets(m); responder(v);
   }

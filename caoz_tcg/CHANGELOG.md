@@ -13,6 +13,20 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Rantiago confirma su Fiesta de hongos online · 2026-09-08
+
+Build 204, beta. La tirada del invitado llegaba dos veces: como decisión
+interactiva y como animación de espectador. La segunda reemplazaba el botón
+de la primera y el motor seguía esperando hasta 90 segundos antes de aplicar
+el efecto. Ahora el invitado recibe una sola tirada y su confirmación permite
+resolver el +2 de ataque de inmediato. El dado muestra también su consecuencia
+en local y en línea. No cambia la regla: 1–10 Aturdido; 11–20 +2 ATQ permanentes.
+
+Regresión reproducida en rojo y verificada en anfitrión/invitado con ambas
+pantallas. Pruebas de local, campaña e IA con 10/11/20, permanencia, número
+visible, sincronización y daño real. Producción está en 203 desde la publicación
+autorizada; este arreglo se prepara en beta.
+
 ## Sin numerar — El haz llega antes de abrirse · 2026-09-08
 
 Build 203, beta. Primero desciende un haz recto y angosto. Al llegar a la

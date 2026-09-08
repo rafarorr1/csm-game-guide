@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 203 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 204 (beta; producción 203, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -570,3 +570,25 @@ hasta el cono de 202 durante 850 ms; abrirHaloAscenso despliega el halo al mismo
 tiempo. Las tres animaciones se omiten con movimiento reducido. Conserva
 ascenso, resplandor a blanco y revelado del menú. Revisión visual de caída,
 apertura intermedia y cono final en ambas pantallas. Sólo beta.
+
+
+Build 203 se publicó también en producción con autorización explícita del
+usuario: gh-pages a359cfd, fuente 336c27d. Actualización desde 195 conserva
+campaña y arranca sin red; selección, VS, volado y partida verificados en ambas
+pantallas. No se hizo merge a main.
+
+Build 204 (beta): Rantiago online quedaba esperando la confirmación del
+invitado. roll enviaba la misma tirada por prompt y por fx; al llegar el estado
+con ese fx se reemplazaba el botón del diálogo interactivo. La promesa original
+no se resolvía hasta el fallback de 90 s, así que el +2 seguía pendiente.
+Se reprodujo en dos clientes con 13: una tirada interactiva y otra automática,
+NET.pending activo, pA=0. El dado del invitado ahora viaja sólo por prompt,
+con meta serializada. metaViva reconstruye el resultado en netGuestPrompt;
+roll también prepara la comparación para las tiradas locales (antes faltaba
+el texto de éxito/error porque las cartas sólo declaraban min/max).
+
+La suite rantiago reproduce el rojo previo y comprueba anfitrión/invitado en
+ambas combinaciones de pantallas, una tirada por cliente, confirmación, ataque
+visible y sincronización. Además prueba 10/11/20 en local, campaña e IA,
+permanencia durante dos cambios de turno y daño real. No modifica costes,
+estadísticas, objetivos, azar ni reglas del +2. Publicación beta; producción 203.
