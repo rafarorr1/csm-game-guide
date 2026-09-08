@@ -632,7 +632,7 @@ function campanaCabecera(d,titulo,sub){
 function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   const progreso=campanaLeer();
-  if(progreso)campanaRuta();else campanaElegir();
+  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&progreso.deseo))campanaRuta();else campanaElegir();
   campanaAnimarEntrada();
 }
 function campanaElegir(){

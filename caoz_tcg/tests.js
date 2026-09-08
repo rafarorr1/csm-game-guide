@@ -515,7 +515,7 @@ PRUEBAS.suite('campanaDeseo', async t => {
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=deseo-interno';document.body.appendChild(f);await carga;
     const w=f.contentWindow,d=w.document,clave='caoz.deseos.v1.prueba',peticiones=[];
-    const ponerTimer=w.setTimeout,quitarTimer=w.clearTimeout;let ahora=0,id=0,pendientes=new Map();
+    const ponerTimer=w.setTimeout,quitarTimer=w.clearTimeout,fetchOriginal=w.fetch.bind(w);let ahora=0,id=0,pendientes=new Map();
     const avanzar=async ms=>{
       const hasta=ahora+ms;
       for(let limite=0;limite<100;limite++){
@@ -526,7 +526,7 @@ PRUEBAS.suite('campanaDeseo', async t => {
     };
     try{
       w.localStorage.removeItem(clave);
-      w.fetch=async(url,op)=>{peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
+      w.fetch=async(url,op)=>{if(new URL(url,w.location.href).pathname.includes('/art/'))return fetchOriginal(url,op);peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
       w.campanaGuardar({version:1,id:'deseo-prueba',lider:'fender',etapa:5});w.campanaAbrirDeseo();
       t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo sólo se ofrece al vencer a todos los rivales.');
       w.campanaGuardar({...w.campanaLeer(),etapa:6,mesaPendiente:5});w.campanaAbrirDeseo();
@@ -557,9 +557,14 @@ PRUEBAS.suite('campanaDeseo', async t => {
       t.check(fuego.left<=0&&fuego.top<=0&&fuego.right>=ancho&&fuego.bottom>=alto,pagina+': el fuego debe cubrir toda la pantalla.');
       await avanzar(1000);t.check(!panel.querySelector('form')&&panel.querySelector('.deseoConcedido').textContent==='Deseo concedido',pagina+': el fuego revela únicamente Deseo concedido.');
       await avanzar(2000);t.check(panel.dataset.fase==='concedido'&&!panel.querySelector('canvas')&&panel.textContent==='Deseo concedido',pagina+': al disiparse el fuego sólo queda el mensaje.');
-      await avanzar(4999);t.check(panel.dataset.fase==='concedido',pagina+': el mensaje permanece cinco segundos completos.');
-      await avanzar(1);t.check(panel.dataset.fase==='negro',pagina+': después de cinco segundos debe fundirse a negro.');
-      await avanzar(1100);t.check(!d.querySelector('#campanaDeseo')&&d.querySelector('#menu.on'),pagina+': después del negro regresa al menú principal.');
+      await avanzar(2999);t.check(panel.dataset.fase==='concedido',pagina+': el mensaje permanece tres segundos completos.');
+      await avanzar(1);t.check(panel.dataset.fase==='fundido',pagina+': después de tres segundos debe fundirse a negro.');
+      await avanzar(1000);t.check(panel.dataset.fase==='negro',pagina+': al terminar el fundido comienza el negro completo.');
+      await avanzar(2999);t.check(panel.isConnected&&panel.dataset.fase==='negro',pagina+': el negro completo debe durar tres segundos.');
+      await avanzar(1);t.check(!d.querySelector('#campanaDeseo')&&d.querySelector('#menu.on'),pagina+': después del negro regresa al menú principal.');
+      w.eval('campanaMemoria=null');w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='seleccion'&&!d.querySelector('#campanaDeseo'),pagina+': después del deseo, Campaña empieza con una nueva selección de Protagonista.');
+      d.querySelector('.campanaConfirmar').click();t.check(w.campanaLeer().etapa===0&&!w.campanaLeer().deseo&&w.campanaLeer().id!=='deseo-prueba',pagina+': elegir Protagonista crea una campaña nueva sin el progreso ni el deseo anteriores.');
+      w.campanaCerrar();
       w.dispatchEvent(new w.Event('online'));await sleep(0);
       t.check(peticiones.length===0&&!w.localStorage.getItem(clave),pagina+': volver a tener conexión tampoco debe enviar el deseo simulado.');
       w.campanaGuardar({version:1,id:'otro-deseo',lider:'mohamed',etapa:6});w.campanaAbrirDeseo();

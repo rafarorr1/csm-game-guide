@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 199 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 200 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -520,3 +520,11 @@ PUBLICAR integra módulo de deseo y SW lo precarga. Campaña antigua stubea
 campanaAbrirDeseo para conservar alcance, campanaDeseo cubre cierre completo
 simulado y cero peticiones de red. La niebla descarta etapa 6 antes de buscar
 un rival, para mantener funcional el mapa alternativo ya completo.
+
+
+Build 200: abrirCampana detecta etapa 6 con deseo guardado y abre campanaElegir,
+compatible con progresos de 199. Confirmar genera otro id, etapa 0, sin deseo.
+La secuencia después del fuego es concedido 3000 ms → fundido 1000 ms → negro 3000 ms
+→ menú. campanaDeseo comprueba tiempos, relectura del guardado y nueva selección;
+el espía fetch permite las ilustraciones del selector pero detecta envíos del
+deseo. Rojo del reinicio reproducido restaurando la condición anterior.

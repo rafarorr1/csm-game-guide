@@ -37,8 +37,10 @@
     esperar(e,reducido?250:1000,()=>{e.form.remove();e.mensaje=document.createElement('h1');e.mensaje.className='deseoConcedido';e.mensaje.textContent='Deseo concedido';d.appendChild(e.mensaje);});
     esperar(e,duracion,()=>{
       cancelAnimationFrame(e.raf);c.remove();d.dataset.fase='concedido';
-      // Cinco segundos completos con el mensaje visible, después del fuego.
-      esperar(e,5000,()=>{d.dataset.fase='negro';esperar(e,1100,()=>{showScreen('menu');limpiarTransicionMenu();limpiar();});});
+      // Tres segundos de mensaje, fundido y tres segundos de negro completo.
+      esperar(e,3000,()=>{d.dataset.fase='fundido';esperar(e,1000,()=>{
+        d.dataset.fase='negro';esperar(e,3000,()=>{showScreen('menu');limpiarTransicionMenu();limpiar();});
+      });});
     });
   }
   window.campanaAbrirDeseo=function(){
@@ -72,7 +74,7 @@
   .deseoFuego{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
   .deseoConcedido{position:relative;z-index:1;text-shadow:0 0 30px #d17b27;transition:opacity 1s}
   #campanaDeseo[data-fase="concedido"]{background:#0b0503}
-  #campanaDeseo[data-fase="negro"]{background:#000;transition:background 1s}#campanaDeseo[data-fase="negro"] .deseoConcedido{opacity:0}
+  #campanaDeseo[data-fase="fundido"],#campanaDeseo[data-fase="negro"]{background:#000;transition:background 1s}#campanaDeseo[data-fase="fundido"] .deseoConcedido,#campanaDeseo[data-fase="negro"] .deseoConcedido{opacity:0}
   @media(max-height:480px){#campanaDeseo{padding:12px 24px}.deseoFormulario{gap:7px}#campanaDeseo h1{font-size:23px}.deseoSello{display:none}.deseoPrivacidad,.deseoEstado{font-size:10px}.deseoFormulario label{font-size:12px}#deseoTexto{padding:8px}.deseoFormulario .btn{min-height:40px;padding:8px;font-size:16px}}
   `;document.head.appendChild(css);
 })();

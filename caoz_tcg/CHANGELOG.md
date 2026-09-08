@@ -13,6 +13,16 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Volver a jugar después del deseo · 2026-09-08
+
+Build 200, beta. Abrir Campaña después de un deseo vuelve al selector de
+Protagonista; confirmar crea un progreso nuevo, incluso tras recargar o con
+un deseo guardado en la beta anterior. Antes de pedir el deseo se conserva
+el final pendiente. «Deseo concedido» dura tres segundos; después de un segundo
+de fundido la pantalla permanece completamente negra tres segundos y vuelve
+al menú. El envío continúa simulado. Regresión campanaDeseo en móvil/escritorio,
+con sabotaje del reinicio y comprobación exacta de tiempos. Producción sigue 195.
+
 ## Sin numerar — El deseo del Domo · 2026-09-08
 
 Build 199, beta. Mesa centrada por el centroide de su superficie, cámara estable
