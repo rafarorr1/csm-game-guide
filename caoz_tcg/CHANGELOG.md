@@ -13,6 +13,27 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Creador de personaje para campaña · 2026-09-08
+
+Build 206, beta. Las campañas nuevas comienzan con un creador de miniatura:
+nombre, figura, peinado, piel, cabello, capa y equipo. La vista previa dibuja
+la misma geometría que usa el personaje sobre la mesa, al avanzar, golpear y
+ascender. El segundo paso conserva el carrusel para elegir las 40 cartas y
+habilidades de un Protagonista; esa elección no modifica la apariencia.
+
+El borrador permite volver a editar y conserva la selección del mazo. Sólo
+«Comenzar campaña» reemplaza un avance anterior. El personaje se guarda con
+la campaña, aparece por su nombre en el mapa, el encuentro y el VS. Las
+partidas guardadas antes del creador siguen funcionando con su miniatura
+original. Completar el deseo vuelve a iniciar el flujo de creación.
+
+Regresión `campanaCreador`: dos interfaces, seis tamaños, teclado reducido,
+cambio visual de color, ida y vuelta al mazo, recarga, personaje y mazo al
+combatir, continuidad tras victoria y compatibilidad de guardados. El ajuste
+compacto se comprueba por sabotaje: al retirarlo, reaparece el solapamiento
+del botón Continuar. El módulo entra en el precaché PWA y en todas las guardas
+de sintaxis, copia y comparación de la publicación oficial.
+
 ## Sin numerar — Menús de campaña centrados en escritorio · 2026-09-08
 
 Build 205, beta. La selección de Protagonista y la mesa se centraban sólo en

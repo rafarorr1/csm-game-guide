@@ -53,6 +53,7 @@
   }
   let materiales=null;
   window.crearMesaCampana=function(contenedor,op){
+    const personalizada=op.personaje?campanaGeometriaPersonaje(op.personaje):null;
     const canvas=document.createElement('canvas');canvas.className='campanaLienzo3d';canvas.setAttribute('aria-hidden','true');
     let ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return null;
     const bruma=document.createElement('canvas'),brumaCtx=bruma.getContext('2d');if(!brumaCtx)return null;
@@ -90,6 +91,7 @@
     }
     function miniatura(p,lider,jugador=false,vencido=false,caida=0){
       const comienzo=caras.length,[x,y,z]=p,c=vencido?'#62685d':tonos[lider]||'#596477';sombras.push([x+.16,z+.16,.65]);
+      if(jugador&&personalizada){personalizada.forEach(f=>cara(f.v.map(v=>[x+v[0]*1.08,y+v[1]*1.22,z+v[2]*1.08]),f.color));canvas.dataset.personaje=JSON.stringify(campanaNormalizarPersonaje(op.personaje));return;}
       cilindro(x,y+.02,z,.43,.14,'#272927');cilindro(x,y+.16,z,.37,.09,jugador?'#b39756':vencido?'#67735c':'#776955');
       caja(x-.13,y+.25,z,.15,.17,.23,'#3b3530');caja(x+.13,y+.25,z,.15,.17,.23,'#3b3530');
       cilindro(x,y+.35,z,.29,.72,c,.14,10);cilindro(x,y+.93,z,.2,.2,c,.12,10);

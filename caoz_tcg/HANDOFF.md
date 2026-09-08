@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 205 (beta; producción 203, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 206 (beta; producción 203, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,22 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 206 incorpora `campana-personaje.js`, cargado por `final.js` después del
+núcleo compartido. `abrirCampana` abre `campanaCrear` para partidas nuevas y
+conserva `campanaRuta` para avances existentes. `campanaElegir` es el segundo
+paso (mazo). El borrador usa `CAMPANA_CLAVE + '.creador'`; el avance confirmado
+mantiene `version:1` y añade `personaje` opcional, normalizado contra catálogos
+cerrados. Sólo al confirmar el mazo se sustituye la campaña y se borra el
+borrador. No añadir apariencia a `LEADERS` ni mutar las reglas por el aspecto:
+`lider` sigue decidiendo el mazo y las habilidades.
+
+`campanaGeometriaPersonaje` genera las caras compartidas entre el visor y la
+mesa; la mesa conserva sus animaciones y cámara. `campanaLimpiarCreador` libera
+el visor al navegar. El módulo está incluido en SW y publicación. Para probar
+el creador con un avance anterior, usar Reiniciar → Crear nuevo personaje.
+La suite `campanaCreador` prueba el recorrido y la conservación del personaje;
+`campana`, `campanaEntrada` y `campanaDeseo` usan ya la entrada de dos pasos.
 
 Un juego de cartas coleccionables (TCG) jugable en el navegador, en español, ambientado en la
 serie de D&D «Caoz Con Todo» de Rafa. Dos jugadores entran al Domo con un Protagonista como
