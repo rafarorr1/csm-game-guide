@@ -63,7 +63,7 @@
     if(!materiales)materiales={papel:material(768,1152,true),madera:material(1024,768,false)};
     const {papel,madera}=materiales;
     let ancho=1,alto=1,largo=18,escala=1,cx=0,cy=0,raf=0,ultimo=0,vivo=true;
-    let salto=null,posicionFija=null,derribo=null,derribado=false;
+    let salto=null,posicionFija=null,derribo=null,derribado=false,levitacion=0;
     let caras=[],sombras=[],llamas=[],dados=[];
     let avance=op.etapaAnterior===null||op.etapaAnterior===undefined?1:0;
     const huellas=[];
@@ -184,7 +184,7 @@
       // Sólo se construyen miniaturas de rivales ya descubiertos.
       op.casillas.forEach((p,i)=>{if(i<=op.etapa)miniatura(punto(p,.09),['mohamed','fender','talesin','rafaela','adreida','gero'][i],false,i<op.etapa,i<op.etapa||derribado&&i===op.etapa?1:derribo&&i===op.etapa?Math.min(1,Math.max(0,((performance.now()-derribo.inicio)/1250-.25)/.5)):0);});
       const altura=salto?Math.abs(Math.sin(progresoSalto()*Math.PI*3))*.8:avance<1?Math.abs(Math.sin(avance*Math.PI*4))*.25:0;
-      miniatura(punto(posicionJugador(),.09+altura),op.lider,true);
+      miniatura(punto(posicionJugador(),.09+altura+levitacion),op.lider,true);
       canvas.dataset.miniaturas=String(Math.min(6,op.etapa+1)+1);
     }
     function poligono(v){ctx.beginPath();v.forEach((p,i)=>{if(i)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});ctx.closePath();}
@@ -232,7 +232,7 @@
     }
     function posiciones(){
       op.casillas.forEach((p,i)=>{const n=tablero.querySelector('[data-etapa="'+i+'"]');if(!n)return;const q=proyectar(punto(p,.12));n.style.left=q.x/ancho*100+'%';n.style.top=q.y/alto*100+'%';});
-      const peon=tablero.querySelector('.campanaPeon'),q=proyectar(punto(posicionJugador(),.1));if(peon){peon.style.left=q.x/ancho*100+'%';peon.style.top=q.y/alto*100+'%';}
+      const peon=tablero.querySelector('.campanaPeon'),q=proyectar(punto(posicionJugador(),.1+levitacion));if(peon){peon.style.left=q.x/ancho*100+'%';peon.style.top=q.y/alto*100+'%';}
     }
     function dibujar(t=0){
       if(!vivo)return;
@@ -276,6 +276,6 @@
     const observador=new ResizeObserver(ajustar);observador.observe(camara);ajustar();
     function cuadro(t){if(!vivo||!canvas.isConnected)return;if(!document.hidden&&!reducir()&&t-ultimo>(salto||derribo||avance<1?28:65)){ultimo=t;dibujar(t);}raf=requestAnimationFrame(cuadro);}
     raf=requestAnimationFrame(cuadro);
-    return{foco(i,altura=.5){const q=proyectar(punto(op.casillas[i],altura));return[q.x/ancho*100,q.y/alto*100];},saltarHacia,reposar,golpear,destruir(){vivo=false;if(derribo)derribo.terminar(false);if(salto)salto.terminar(false);cancelAnimationFrame(raf);observador.disconnect();canvas.remove();contenedor.classList.remove('campanaMesa3d');},get posicion(){return posicionJugador().slice();},get encuadre(){return bordeMesa().map(v=>{const p=proyectar(v);return[p.x/ancho*100,p.y/alto*100];});},get activa(){return vivo;}};
+    return{elevar(p){if(!vivo)return;levitacion=Math.max(0,Math.min(1,p))*2.2;canvas.dataset.elevacion=String(levitacion);baseSucia=true;escena();posiciones();dibujar(performance.now());},get focoJugador(){const q=proyectar(punto(posicionJugador(),.1+levitacion));return[q.x/ancho*100,q.y/alto*100];},foco(i,altura=.5){const q=proyectar(punto(op.casillas[i],altura));return[q.x/ancho*100,q.y/alto*100];},saltarHacia,reposar,golpear,destruir(){vivo=false;if(derribo)derribo.terminar(false);if(salto)salto.terminar(false);cancelAnimationFrame(raf);observador.disconnect();canvas.remove();contenedor.classList.remove('campanaMesa3d');},get posicion(){return posicionJugador().slice();},get encuadre(){return bordeMesa().map(v=>{const p=proyectar(v);return[p.x/ancho*100,p.y/alto*100];});},get activa(){return vivo;}};
   };
 })();

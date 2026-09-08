@@ -321,7 +321,7 @@ PRUEBAS.suite('campana', async t => {
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     f.src=pagina+'?test=campana-interna';const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);await carga;
     let w=f.contentWindow;
-    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;w.cinematicaFinal=async()=>false;w.campanaAbrirDeseo=undefined;};
+    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;w.cinematicaFinal=async()=>false;w.campanaAbrirDeseo=undefined;w.campanaAscenderAlDeseo=undefined;};
     const comprobarNiebla=etapa=>{
       const n=w.document.querySelector('.campanaTablero .campanaNiebla');
       if(etapa>=5){t.check(!n,pagina+': la niebla debe desaparecer al llegar al jefe final.');return 0;}
@@ -415,6 +415,7 @@ PRUEBAS.suite('campanaPruebaBeta', async t => {
     try{
       w.matchMedia=()=>({matches:true});
       w.cinematicaFinal=async(g,m,a)=>{acciones=a;return true;};
+      w.campanaAscenderAlDeseo=undefined;
       w.campanaGuardar({version:1,id:'beta-recorrido',lider:'fender',etapa:0});
       for(let etapa=0;etapa<6;etapa++){
         w.campanaRuta();await w.campanaSeleccionar();
@@ -492,6 +493,7 @@ PRUEBAS.suite('campanaSinDestello', async t => {
       w.campanaGuardar({version:1,id:'transicion',lider:'fender',etapa:0});
       w.newGame('fender','mohamed');w.eval("G.campana={id:'transicion',etapa:0,alma:16};G.over=true;G.fast=false;G.auto=false;");
       w.showScreen('menu');w.showEnd(0,'Victoria de prueba');await sleep(40);
+      t.check(!d.querySelector('.fin .toca'),pagina+': la victoria no debe mostrar Toca para saltar.');
       d.querySelector('.fin').click();await sleep(50);
       d.querySelector('.finbtns .gold').click();await sleep(20);
       const panel=d.getElementById('campanaPanel');
@@ -507,6 +509,31 @@ PRUEBAS.suite('campanaSinDestello', async t => {
       await sleep(60);
       t.check(panel.open&&panel.querySelector('.campanaLienzo3d').dataset.avanzando==='1',pagina+': la marcha sigue en el mismo diálogo sin exponer el menú.');
     }finally{w.cerrarCinematica();w.campanaCerrar();w.relojPara();f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaAscenso', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=ascenso-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana;const timers=new Map();let id=90000;
+    try{
+      w.crearMesaCampana=(c,op)=>{const mesa=crear(c,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
+      w.setTimeout=(fn,ms,...args)=>{if(ms===5000||ms===1000){const k=++id;timers.set(k,{fn:()=>fn(...args),ms});return k;}return poner(fn,ms,...args);};
+      w.clearTimeout=k=>{if(timers.has(k))timers.delete(k);else quitar(k);};
+      const vencer=()=>{w.campanaGuardar({version:1,id:'ascenso',lider:'fender',etapa:6,mesaPendiente:5});w.campanaRuta();};
+      vencer();await sleep(50);
+      const luz=d.getElementById('campanaAscenso'),mesa=w.eval('campanaMesaEscena');
+      t.check(luz?.open&&luz.dataset.fase==='rayo'&&!d.querySelector('#campanaDeseo'),pagina+': el derribo de Gero inicia automáticamente el rayo antes del deseo.');
+      const abajo=mesa.focoJugador[1];mesa.elevar(1);t.check(mesa.focoJugador[1]<abajo&&Number(d.querySelector('.campanaLienzo3d').dataset.elevacion)>2,pagina+': se eleva la miniatura real, no sólo su etiqueta.');
+      const blanco=[...timers.values()].find(x=>x.ms===5000);t.check(!!blanco,pagina+': el rayo debe durar cinco segundos.');blanco.fn();
+      t.check(luz.dataset.fase==='blanco'&&w.getComputedStyle(luz).backgroundColor==='rgb(255, 255, 255)',pagina+': a los cinco segundos la pantalla se vuelve blanca.');
+      const r=luz.getBoundingClientRect();t.check(r.left<=0&&r.top<=0&&r.right>=w.innerWidth&&r.bottom>=w.innerHeight,pagina+': el blanco debe cubrir toda la pantalla. '+JSON.stringify({x:r.x,y:r.y,w:r.width,h:r.height,vw:w.innerWidth,vh:w.innerHeight}));
+      t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo no aparece antes de terminar el blanco.');
+      const revelar=[...timers.values()].find(x=>x.ms===1000);t.check(!!revelar,pagina+': el blanco permanece un segundo.');revelar.fn();
+      t.check(!d.querySelector('#campanaAscenso')&&d.querySelector('#campanaDeseo')?.open&&w.campanaLeer().mesaPendiente==null,pagina+': el blanco revela el formulario sin volver al menú.');
+      w.campanaCerrarDeseo();timers.clear();vencer();await sleep(0);const cancelado=[...timers.values()].find(x=>x.ms===5000);w.campanaCerrar();cancelado.fn();
+      t.check(!d.querySelector('#campanaAscenso')&&!d.querySelector('#campanaDeseo'),pagina+': cerrar cancela el ascenso y sus acciones tardías.');
+    }finally{w.campanaCancelarAscenso();w.campanaCerrarDeseo();w.setTimeout=poner;w.clearTimeout=quitar;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
@@ -1460,8 +1487,11 @@ PRUEBAS.suite('regresiones', async t => {
 
   /* Infectado: la carta en verde y su daño en verde, no en rojo. */
   {
-    await T.startMatch('fender','adreida',{volado:false,first:0}); await sleep(600);
-    const u = T.mkUnit('discipulo', 0); u.sick=false; T.P(0).field.push(u);
+    // Escenario aislado: esta prueba mide colores, no el inicio de partida.
+    // startMatch puede seguir ocupado por la prueba anterior y conservar a
+    // Eric, cuya pregunta de sacrificio dejaba esta suite esperando un clic.
+    relojPara();T.newGame('fender','adreida');showScreen('board');
+    const u = T.mkUnit('discipulo', 0); u.sick=false; T.P(0).field=[u];
     T.recalc(); T.render(); await sleep(200);
     const antes = $1(`#myField .card[data-uid="${u.uid}"]`);
     t.check(antes && !antes.classList.contains('infectado'),

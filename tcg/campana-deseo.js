@@ -5,6 +5,44 @@
   function limpiar(){if(!escena)return;escena.cancelado=true;cancelAnimationFrame(escena.raf);escena.timers.forEach(clearTimeout);escena.d.close();escena.d.remove();escena=null;}
   window.campanaCerrarDeseo=limpiar;
   function esperar(e,ms,fn){const id=setTimeout(()=>{if(!e.cancelado)fn();},ms);e.timers.push(id);}
+  let ascenso=null;
+  window.campanaCancelarAscenso=function(){
+    if(!ascenso)return;const e=ascenso;ascenso=null;e.cancelado=true;cancelAnimationFrame(e.raf);e.timers.forEach(clearTimeout);
+    if(e.mesa?.activa)e.mesa.elevar(0);if(e.animacion)e.animacion.cancel();e.d.close();e.d.remove();
+  };
+  window.campanaAscenderAlDeseo=function(){
+    const p=campanaLeer(),panel=document.getElementById('campanaPanel');
+    if(ascenso||!panel?.open||!p||p.etapa!==6||p.mesaPendiente!==5)return;
+    const d=document.createElement('dialog');d.id='campanaAscenso';d.dataset.fase='rayo';d.setAttribute('aria-label','La luz del Domo eleva a tu Protagonista');
+    d.innerHTML='<div class="ascensoRayo"><div class="ascensoNucleo"></div><div class="ascensoHalo"></div></div>';
+    const e={d,mesa:campanaMesaEscena,timers:[],raf:0,cancelado:false},rayo=d.firstElementChild;ascenso=e;
+    const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches,peon=panel.querySelector('.campanaPeon');
+    const inicio=performance.now();let anterior=0;
+    function cuadro(t){
+      if(e.cancelado)return;
+      if(!panel.open){campanaCancelarAscenso();return;}
+      if(t-anterior>30){
+        anterior=t;const transcurrido=Math.max(0,t-inicio),avance=Math.min(1,Math.max(0,(transcurrido-650)/4350));
+        if(e.mesa)e.mesa.elevar(reducido?0:avance*avance);
+        const limite=d.getBoundingClientRect();let x,y;
+        if(e.mesa){const c=panel.querySelector('.campanaCamara').getBoundingClientRect(),f=e.mesa.focoJugador;x=c.left+c.width*f[0]/100;y=c.top+c.height*f[1]/100;}
+        else{const r=peon.getBoundingClientRect();x=r.left+r.width/2;y=r.bottom;}
+        rayo.style.left=(x-limite.left)+'px';rayo.style.height=Math.max(0,(y-limite.top)*(reducido?1:Math.min(1,transcurrido/650)))+'px';
+      }
+      e.raf=requestAnimationFrame(cuadro);
+    }
+    d.addEventListener('cancel',ev=>ev.preventDefault());document.body.appendChild(d);d.showModal();
+    if(!e.mesa&&!reducido)e.animacion=peon.animate([{translate:'0 0'},{translate:'0 -55px'}],{delay:650,duration:4350,easing:'ease-in',fill:'forwards'});
+    e.raf=requestAnimationFrame(cuadro);
+    esperar(e,5000,()=>{cancelAnimationFrame(e.raf);d.dataset.fase='blanco';
+      esperar(e,1000,()=>{
+        const actual=campanaLeer();if(actual!==p){campanaCancelarAscenso();return;}
+        delete p.mesaPendiente;p.enEncuentro=false;campanaGuardar(p);
+        // El nuevo diálogo se monta antes de quitar la cobertura blanca.
+        ascenso=null;e.cancelado=true;campanaAbrirDeseo();d.close();d.remove();
+      });
+    });
+  };
   function fuego(e){
     const d=e.d,c=document.createElement('canvas');c.className='deseoFuego';c.setAttribute('aria-hidden','true');d.appendChild(c);
     const ctx=c.getContext('2d'),reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -61,6 +99,12 @@
     d.addEventListener('cancel',ev=>ev.preventDefault());document.body.appendChild(d);d.showModal();campanaCerrar();cerrarCinematica();
   };
   const css=document.createElement('style');css.textContent=`
+  #campanaAscenso{position:fixed;inset:0;margin:0;padding:0;border:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:transparent;overflow:hidden;pointer-events:auto}
+  #campanaAscenso::backdrop{background:#08050b22}
+  .ascensoRayo{position:absolute;top:0;width:140px;transform:translateX(-50%);background:linear-gradient(90deg,#ffe9ad00,#ffe9ad24 18%,#fffce630 46%,#ffffee55 50%,#fffce630 54%,#ffe9ad24 82%,#ffe9ad00);filter:drop-shadow(0 0 20px #ffe9b4);pointer-events:none}
+  .ascensoNucleo{position:absolute;inset:0 49.3%;background:linear-gradient(#ffffff90,#fff9cb55);box-shadow:0 0 18px 4px #fff2b050}
+  .ascensoHalo{position:absolute;bottom:-10px;left:15%;width:70%;height:22px;border-radius:50%;background:#fffce833;box-shadow:0 0 20px 5px #fff7bd50}
+  #campanaAscenso[data-fase="blanco"]{background:#fff}#campanaAscenso[data-fase="blanco"] .ascensoRayo{display:none}#campanaAscenso[data-fase="blanco"]::backdrop{background:#fff}
   #campanaDeseo{position:fixed;inset:0;top:var(--campana-desfase,0px);margin:0;border:0;padding:24px;width:100vw;max-width:none;height:var(--campana-alto,100dvh);max-height:none;box-sizing:border-box;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#402213,#120a0a 60%,#050304);color:#ffedbc;z-index:500;}
   #campanaDeseo[open]{display:grid;place-items:center}#campanaDeseo::backdrop{background:#050304}
   .deseoFormulario{width:min(540px,100%);max-height:100%;display:flex;flex-direction:column;gap:14px;text-align:center;min-height:0}
