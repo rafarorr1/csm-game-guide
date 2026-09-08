@@ -514,8 +514,8 @@ function campanaDialogo(){
   let d=document.getElementById('campanaPanel');
   if(!d){
     d=document.createElement('dialog');d.id='campanaPanel';d.setAttribute('aria-labelledby','campanaTitulo');document.body.appendChild(d);
-    d.addEventListener('close',()=>{if(!d.open)campanaLimpiarEntrada();});
-    d.addEventListener('cancel',campanaLimpiarEntrada);
+    d.addEventListener('close',()=>{if(!d.open){campanaCancelarZoom();campanaLimpiarEntrada();}});
+    d.addEventListener('cancel',()=>{campanaCancelarZoom();campanaLimpiarEntrada();});
   }
   if(!d.open){d.showModal();cargarArte().then(()=>d.querySelectorAll('[data-campana-lider]').forEach(n=>{if(!n.querySelector('.marcoDibujo'))ilustrarLider(n,n.dataset.campanaLider);}));}return d;
 }
@@ -546,8 +546,9 @@ function campanaAnimarEntrada(){
   d.appendChild(b);d.classList.add('campanaEntra');
   campanaEntradaTimer=setTimeout(campanaLimpiarEntrada,700);
 }
-function campanaCerrar(){campanaLimpiarEntrada();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+function campanaCerrar(){campanaCancelarZoom();campanaLimpiarEntrada();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaCabecera(d,titulo,sub){
+  campanaCancelarZoom();
   campanaLimpiarEntrada();
   d.dataset.vista='mensaje';
   d.innerHTML='<header class="campanaCabecera"><div class="campanaSello">CAMPAÑA · PROTOTIPO</div><h2 id="campanaTitulo"></h2><p class="campanaSub"></p></header>';
@@ -636,7 +637,8 @@ function campanaRuta(aviso=''){
   peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
   tablero.append(lista,peon);
   const niebla=campanaCrearNiebla(p.etapa);if(niebla)tablero.appendChild(niebla);
-  mesa.appendChild(tablero);d.appendChild(mesa);
+  const camara=document.createElement('div');camara.className='campanaCamara';camara.appendChild(tablero);
+  mesa.appendChild(camara);d.appendChild(mesa);
   if(campanaPasoAnterior!==null&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
     const retirada=campanaCrearNiebla(campanaPasoAnterior,true);
     if(retirada){
@@ -656,12 +658,40 @@ function campanaRuta(aviso=''){
   }));
   d.appendChild(acciones);
 }
+let campanaCancelarAcercamiento=null;
+function campanaCancelarZoom(){if(campanaCancelarAcercamiento)campanaCancelarAcercamiento();}
+function campanaAcercarMapa(etapa){
+  const d=document.getElementById('campanaPanel'),camara=d&&d.querySelector('.campanaCamara');
+  if(!d||!d.open||!camara||matchMedia('(prefers-reduced-motion:reduce)').matches||document.hidden)return Promise.resolve(true);
+  campanaLimpiarEntrada();
+  // La cámara envuelve al tablero: su escala no altera la perspectiva ni la posición de las fichas.
+  const [x,y]=CAMPANA_CASILLAS[etapa],origen=camara.style.transformOrigin;
+  camara.style.transformOrigin=x+'% '+y+'%';
+  const animacion=camara.animate([{scale:'1',translate:'0 0'},{scale:'1.7',translate:(50-x)+'% '+(50-y)+'%'}],{duration:500,easing:'cubic-bezier(.4,0,.7,1)',fill:'forwards'});
+  const botones=[...d.querySelectorAll('button')].map(b=>({b,disabled:b.disabled}));botones.forEach(({b})=>b.disabled=true);
+  d.classList.add('campanaAcercando');
+  return new Promise(resolve=>{
+    let acabado=false,temporizador;
+    const terminar=continuar=>{
+      if(acabado)return;acabado=true;clearTimeout(temporizador);
+      campanaCancelarAcercamiento=null;animacion.cancel();camara.style.transformOrigin=origen;
+      d.classList.remove('campanaAcercando');botones.forEach(({b,disabled})=>b.disabled=disabled);
+      resolve(continuar);
+    };
+    campanaCancelarAcercamiento=()=>terminar(false);
+    temporizador=setTimeout(()=>terminar(true),500);
+  });
+}
 async function campanaCombatir(){
   const p=campanaLeer();if(!p||p.etapa>=6||campanaLanzando)return;
   if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
-  campanaLanzando=true;campanaCerrar();cerrarCinematica();
+  campanaLanzando=true;
   const rival=CAMPANA_RIVALES[p.etapa];
-  try{await startMatch(p.lider,rival.lider,{campana:{id:p.id,etapa:p.etapa,alma:rival.alma}});}
+  try{
+    if(!await campanaAcercarMapa(p.etapa))return;
+    campanaCerrar();cerrarCinematica();
+    await startMatch(p.lider,rival.lider,{campana:{id:p.id,etapa:p.etapa,alma:rival.alma}});
+  }
   finally{campanaLanzando=false;}
 }
 function campanaFinal(winner,why){
@@ -738,6 +768,9 @@ function campanaFinal(winner,why){
   @media(max-width:400px){#campanaPanel{padding:12px}.campanaRuta li{gap:8px;padding:8px}}
 
   .campanaMesa{position:relative;flex:1;min-height:0;margin:0;padding:13px 12px 24px;border-radius:16px;perspective:1000px;background:repeating-linear-gradient(3deg,#27150e 0px,#382015 8px,#2b190f 12px,#482c1b 14px);box-shadow:inset 0 2px 12px #000b,0 12px 22px #0007}
+  .campanaCamara{height:100%;position:relative;perspective:1000px}
+  .campanaAcercando .campanaMesa{overflow:hidden}
+  .campanaAcercando .campanaAcciones,.campanaAcercando>.campanaNota{opacity:.2;transition:opacity .25s}
   .campanaTablero{height:100%;box-sizing:border-box;position:relative;border:6px solid #806039;border-radius:9px;background:radial-gradient(ellipse at 40% 35%,#ccb982,#a58a56);transform:rotateX(10deg) rotateZ(-1deg);box-shadow:0 3px 0 #5b3e24,0 7px 0 #402819,0 14px 18px #0007,inset 0 0 35px #54351b88;isolation:isolate}
   .campanaGeografia{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
   .campanaNiebla,.campanaNieblaRetirada{position:absolute;inset:0;width:100%;height:100%;border-radius:3px;overflow:hidden;z-index:12;pointer-events:none}

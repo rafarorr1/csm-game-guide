@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 186 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 187 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -343,3 +343,10 @@ Build 186: abrirCampana llama a campanaAnimarEntrada tras montar el selector/map
 campanaLimpiarEntrada cancela temporizador y efectos al navegar/cerrar; close
 comprueba !d.open para no limpiar una reapertura rápida. Movimiento reducido
 omite el efecto. Suite campanaEntrada cubre inicio, reentrada, doble toque y limpieza.
+
+Build 187: campanaAcercarMapa anima .campanaCamara con escala y desplazamiento
+hacia el encuentro durante 500 ms. campanaCombatir espera el temporizador antes
+de cerrar el diálogo y arrancar el VS. campanaCancelarZoom restaura controles y
+resuelve el viaje cancelado al cerrar o navegar. Movimiento reducido lo omite.
+El primer naipe del VS sigue siendo el jugador local; sólo el CSS móvil lo sitúa
+al 72% de alto y al rival al 28%. Suites campanaCombate y versusMovil.

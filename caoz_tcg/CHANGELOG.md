@@ -13,6 +13,19 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Acercamiento al combate y VS móvil · 2026-09-07
+
+Build 187, beta: Combatir acerca la cámara al encuentro durante 500 ms antes
+de cerrar el mapa y mostrar el VS. Una envoltura conserva la perspectiva del
+tablero; los controles se desactivan durante el viaje. Doble toque inicia una
+sola partida y Escape/cerrar/cambiar de vista cancela el acercamiento. Movimiento
+reducido omite el zoom. Los reintentos desde el resultado van directamente al VS.
+En el VS móvil el jugador local aparece abajo y el rival arriba, conservando
+nombres y mazos, también online. Escritorio mantiene la presentación lateral.
+Suites campanaCombate y versusMovil reproducidas en rojo antes del arreglo;
+se comprueban los seis encuentros, los 500 ms y la cancelación. Revisión visual
+de la secuencia completa con clics reales en móvil y escritorio.
+
 ## Sin numerar — Entrada dorada a Campaña · 2026-09-07
 
 Build 186, beta: Campaña comparte el barrido dorado de 450 ms de los menús,
