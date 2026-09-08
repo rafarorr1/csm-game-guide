@@ -13,6 +13,18 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Reabrir la campaña sin conexión en Cloudflare · 2026-09-07
+
+Build 192, beta: conserva la mesa 3D de la 191 y corrige la primera recarga sin
+conexión en la dirección móvil de Cloudflare. Cloudflare redirige movil.html a
+/movil; la instalación guardaba el archivo, pero no encontraba esa dirección
+hasta haberla visitado otra vez con el worker activo. Ahora las rutas conocidas
+sin extensión recuperan el HTML precargado. Regresión pwaSinConexion reproducida
+en rojo antes del arreglo; cubre móvil, escritorio, raíz, módulo 3D, parámetros y
+ámbitos de publicación sin sustituir rutas desconocidas por el juego. También
+normaliza las respuestas HTML redirigidas para que Chrome acepte su copia sin
+red, comprobado con navegación real y por sabotaje.
+
 ## Sin numerar — Mesa de aventura en 3D · 2026-09-07
 
 Build 191, prueba en beta: la campaña se presenta sobre una mesa de madera con

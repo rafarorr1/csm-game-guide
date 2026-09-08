@@ -405,3 +405,18 @@ campanaMesa (incluido sabotaje de esa cancelación), campanaPantalla y suite de
 campaña cubren integración, limpieza, encaje y avance. sw.js y publicar.sh incluyen
 el módulo nuevo en precaché, sintaxis, copia y verificación de bytes.
 Publicación prevista sólo por --beta; producción permanece en 190.
+
+
+Build 192: al verificar la mesa instalada desde Cloudflare se reprodujo un fallo
+anterior del worker: /movil (redirección de movil.html) devolvía 504 en la primera
+recarga sin red, aunque movil.html estaba precargado. sw.js resuelve index/movil/
+estudio sin extensión contra sus archivos HTML, limitados al ámbito registrado.
+La raíz conserva su alternativa index.html y las rutas desconocidas siguen en
+504. pwaSinConexion ejecuta el worker real con fetch caído y caché recién
+instalada, en / y /tcg-beta/; rojo antes del arreglo. Conserva la mesa de 191.
+La prueba de navegación real también mostró que Chrome rechaza un Response
+precargado con redirected=true cuando navega sin red. sinRedireccion conserva
+el cuerpo, estado y cabeceras en una respuesta nueva para las alternativas HTML
+y las copias directas de código/documentos. Se verificó el rojo al retirar esa
+normalización, y el ciclo completo en navegador con servidor local que reproduce
+los 308 de Cloudflare, en móvil y escritorio, incluyendo combate tras recarga.
