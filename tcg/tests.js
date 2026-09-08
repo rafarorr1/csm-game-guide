@@ -362,7 +362,7 @@ PRUEBAS.suite('campana', async t => {
         w.endGame(0,'Victoria de prueba');await sleep(600);
         t.check(w.campanaLeer().etapa===etapa+1,pagina+': la victoria no se guardó.');
         w.campanaRuta();
-        t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||w.document.querySelector('.campanaPeon').getAnimations().length>0,pagina+': falta la animación de avance.');
+        t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||(w.document.querySelector('.campanaLienzo3d')?w.document.querySelector('.campanaLienzo3d').dataset.avanzando==='1':w.document.querySelector('.campanaPeon').getAnimations().length>0),pagina+': falta la animación de avance.');
         t.check(w.document.querySelector('.campanaPeon').dataset.etapa===String(etapa+1),pagina+': la ficha no avanzó tras la victoria.');
         t.check(w.document.querySelectorAll('.campanaRuta [data-campana-lider]').length===Math.min(6,etapa+2),pagina+': se revelan rivales antes de tiempo.');
         const nuevoLimite=comprobarNiebla(etapa+1);
@@ -450,6 +450,40 @@ PRUEBAS.suite('campanaEntrada', async t => {
   }
 });
 
+PRUEBAS.suite('campanaMesa', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-mesa-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,contexto=w.HTMLCanvasElement.prototype.getContext,media=w.matchMedia;
+    try{
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      w.campanaGuardar({version:1,id:'mesa',lider:'fender',etapa:0});w.campanaRuta();await sleep(50);
+      const escena=w.eval('campanaMesaEscena'),lienzo=d.querySelector('.campanaLienzo3d'),rival=d.querySelector('.campanaRuta .actual');
+      t.check(lienzo&&lienzo.dataset.lista==='1'&&lienzo.width>100,pagina+': la mesa debe dibujarse, también con movimiento reducido.');
+      const imagen=lienzo.toDataURL(),antes=rival.style.left;
+      d.querySelector('[aria-label="Girar mesa a la derecha"]').click();
+      t.check(lienzo.toDataURL()!==imagen&&rival.style.left!==antes,pagina+': girar debe mover tanto la geometría como el objetivo del encuentro.');
+      const foco=escena.foco(0);t.check(foco.every(n=>Number.isFinite(n)&&n>0&&n<100),pagina+': el zoom debe apuntar al rival visible.');
+      t.check(w.campanaLeer().etapa===0,pagina+': mirar la mesa no puede cambiar el progreso.');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:false}:media.call(w,q);
+      w.campanaGuardar({...w.campanaLeer(),etapa:1});w.eval('campanaPasoAnterior=0');w.campanaRuta();await sleep(100);
+      const peon=d.querySelector('.campanaPeon'),mapa=d.querySelector('.campanaTablero').getBoundingClientRect(),ficha=peon.getBoundingClientRect();
+      const esperado=mapa.left+parseFloat(peon.style.left)/100*mapa.width;
+      t.check(Math.abs(ficha.left+ficha.width/2-esperado)<2,pagina+': durante el avance, TÚ debe seguir la proyección de la miniatura, sin la animación del mapa antiguo.');
+      const avanzando=d.querySelector('.campanaLienzo3d');await sleep(1150);
+      t.check(avanzando.dataset.avanzando==='0',pagina+': el avance de la miniatura debe terminar.');
+      w.campanaElegir();t.check(!escena.activa&&!lienzo.isConnected&&!d.querySelector('.campanaVista'),pagina+': cambiar de menú debe liberar la escena anterior.');
+      w.campanaRuta();const segunda=w.eval('campanaMesaEscena');w.campanaCerrar();
+      t.check(!segunda.activa,pagina+': cerrar debe detener la mesa.');
+      // Si el teléfono no ofrece Canvas 2D, el mapa HTML sigue siendo jugable.
+      w.HTMLCanvasElement.prototype.getContext=function(tipo,...args){return tipo==='2d'?null:contexto.call(this,tipo,...args);};
+      w.campanaRuta();
+      t.check(!d.querySelector('.campanaMesa3d')&&!d.querySelector('.campanaLienzo3d')&&!!d.querySelector('.campanaEncuentro'),pagina+': sin lienzo debe conservarse el mapa y su encuentro.');
+      t.check(w.getComputedStyle(d.querySelector('.campanaRuta .actual .lface')).display!=='none',pagina+': el mapa alternativo debe mostrar al rival.');
+    }finally{w.HTMLCanvasElement.prototype.getContext=contexto;w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('campanaPantalla', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -459,7 +493,7 @@ PRUEBAS.suite('campanaPantalla', async t => {
       const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect();
       t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el panel de campaña exige scroll.');
       t.check(r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': el diálogo sale de la pantalla.');
-      d.querySelectorAll('.campanaAcciones .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo').forEach(n=>{
+      d.querySelectorAll('.campanaAcciones .btn,.campanaVista .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo').forEach(n=>{
         const b=n.getBoundingClientRect();t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+n.textContent);
       });
     };
