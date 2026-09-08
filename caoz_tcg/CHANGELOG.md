@@ -13,6 +13,27 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Miniatura y carta propias · 2026-09-08
+
+Build 207, beta. La miniatura del creador usa superficies continuas, normales
+suaves, rostro, capa con pliegues y equipo con volumen. Creador, retrato y mesa
+comparten un dibujado con profundidad por píxel: ordenar polígonos por su
+centro ocultaba partes del personaje. Un único contexto WebGL reutilizado
+hace el dibujado; sin GPU se conserva la profundidad mediante un z-buffer en
+Canvas, y los retratos se guardan en memoria para no generarlos en cada turno.
+
+La ficha gira hacia el rival durante el trayecto. El golpe tiene 260 ms de
+carga, 110 ms de aceleración, contacto breve y recuperación; el rival cae en
+190 ms tras el impacto. Su base conserva separación al acercarse y el nombre
+del jugador sustituye a «TÚ». La carta muestra una foto de la propia miniatura
+en la mesa de campaña, en el tablero, en el VS y en victoria/derrota. Las
+habilidades y las 40 cartas siguen perteneciendo al mazo seleccionado.
+
+La regresión `campanaMiniatura` compara píxeles de superficies cruzadas con y
+sin GPU, comprueba giro y carga, cancelación, caché del retrato y la identidad
+en ambos lados del resultado, incluso cuando los dos usan el mismo mazo.
+Los sabotajes de profundidad y giro vuelven roja la prueba correspondiente.
+
 ## Sin numerar — Creador de personaje para campaña · 2026-09-08
 
 Build 206, beta. Las campañas nuevas comienzan con un creador de miniatura:

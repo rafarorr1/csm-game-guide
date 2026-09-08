@@ -916,6 +916,58 @@ PRUEBAS.suite('campanaCreador', async t => {
   }
 });
 
+PRUEBAS.suite('campanaMiniatura', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=miniatura-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia,ahora=w.performance.now;
+    try{
+      // Dos superficies que se cruzan: ordenar por profundidad media no puede
+      // dibujar ambas correctamente. Verificar píxeles, también sin WebGL.
+      const lienzo=d.createElement('canvas');lienzo.width=64;lienzo.height=64;const ctx=lienzo.getContext('2d');
+      const caras=[{v:[[4,4,2],[60,4,8],[32,60,4]],color:'#ff0000'},{v:[[4,4,8],[60,4,2],[32,60,4]],color:'#0000ff'}];
+      const pintar=orden=>{ctx.clearRect(0,0,64,64);w.campanaPintarMalla(ctx,orden,v=>({x:v[0],y:v[1],d:v[2]}),64,64);return [[13,12],[50,12]].map(([x,y])=>[...ctx.getImageData(x,y,1,1).data]);};
+      for(const cpu of [false,true]){
+        if(cpu)w.eval('campanaRaster.gl=null');
+        const a=pintar(caras),b=pintar(caras.slice().reverse());
+        t.check(a[0][0]>a[0][2]*2&&a[1][2]>a[1][0]*2,pagina+': una superficie lejana tapa la cercana'+(cpu?' sin GPU':''));
+        t.check(JSON.stringify(a)===JSON.stringify(b),pagina+': el retrato depende del orden de los polígonos');
+      }
+      w.eval('campanaRaster=null');
+      const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',figura:'mago',peinado:'capucha',equipo:'libro',color:'azul'});
+      const retrato=w.campanaRetrato(personaje);
+      t.check(retrato===w.campanaRetrato({...personaje,nombre:'Otro nombre'}),pagina+': se debe reutilizar la foto mientras no cambie la apariencia');
+      t.check(retrato!==w.campanaRetrato({...personaje,equipo:'espada'}),pagina+': cambiar equipo no cambia el retrato');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      w.campanaGuardar({version:1,id:'miniatura',lider:'fender',personaje,etapa:1,enEncuentro:true});w.campanaRuta();
+      t.check(d.querySelector('.campanaTu').textContent==='<Ariadna>'&&!d.querySelector('ariadna'),pagina+': el nombre de la ficha se interpreta como HTML o sigue diciendo TÚ');
+      t.check(d.querySelector('.campanaIdentidad img').src===retrato,pagina+': falta la carta del jugador sobre la mesa');
+      const escena=w.eval('campanaMesaEscena');await escena.saltarHacia(1).promesa;
+      const r=w.eval('CAMPANA_CASILLAS[1]'),p=escena.posicion,giro=escena.orientacion;
+      t.check(Math.sin(giro)*(r[0]-p[0])>0&&Math.cos(giro)*(r[1]-p[1])>0,pagina+': la miniatura termina mirando en otra dirección');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:false}:media.call(w,q);
+      let tiempo=0;w.performance.now=()=>tiempo;const ataque=escena.golpear();
+      const proyeccion=()=>{const q=escena.posicion;return(q[0]-p[0])*(r[0]-p[0])+(q[1]-p[1])*(r[1]-p[1]);};
+      tiempo=220;t.check(proyeccion()<0,pagina+': falta la carga hacia atrás antes del golpe');
+      tiempo=370;t.check(proyeccion()>20,pagina+': la ficha no llega al golpe después de cargar');
+      tiempo=600;t.check(w.campanaPoseGolpe(tiempo).caida===1,pagina+': el enemigo tarda demasiado en caer');
+      escena.destruir();t.check(await ataque===false,pagina+': cerrar durante el golpe deja una victoria tardía');w.performance.now=ahora;
+      w.campanaCerrar();
+      // Mismo mazo en ambos lados: sólo la carta del jugador cambia.
+      w.newGame('fender','fender');w.eval('G.campana='+JSON.stringify({personaje})+';G.fast=false;G.auto=false;G.silent=false;G.over=true');w.FXON=()=>true;
+      w.render();t.check(d.querySelector('#leaderMe .liderJugador img')?.src===retrato&&!d.querySelector('#leaderFoe .liderJugador'),pagina+': la mesa de combate confunde personaje y mazo');
+      w.cortinillaVS('fender','fender',{campana:{personaje}});await sleep(30);
+      t.check(d.querySelector('.vs .izq.cartaJugador img')?.src===retrato&&!d.querySelector('.vs .der.cartaJugador'),pagina+': el VS usa al protagonista en vez de la miniatura');
+      d.querySelector('.vs')?.remove();w.cinematicaFinal(0,'Victoria de prueba',{});await sleep(30);
+      t.check(d.querySelector('.fin .gana.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .pierde.cartaJugador'),pagina+': la victoria usa otra foto o modifica al rival');
+      t.check(d.querySelector('.fin .lname')&&d.querySelector('.fin .sello>i').textContent.includes('<Ariadna>')&&!d.querySelector('ariadna'),pagina+': el final pierde o interpreta el nombre');
+      w.cerrarCinematica();w.cinematicaFinal(1,'Derrota de prueba',{});await sleep(30);
+      t.check(d.querySelector('.fin .pierde.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .gana.cartaJugador'),pagina+': al perder se intercambian las identidades');
+      w.cerrarCinematica();w.newGame('fender','fender');w.render();t.check(!d.querySelector('.liderJugador'),pagina+': una partida normal conserva la apariencia de campaña');
+    }finally{w.performance.now=ahora;w.matchMedia=media;w.cerrarCinematica();w.campanaCerrar();w.relojPara();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('onlineInvitacion', async t => {
   const relay=new URLSearchParams(location.search).get('relay');
   if(!relay||!/^http:\/\/(127\.0\.0\.1|localhost):/.test(relay)){t.nota('Prueba de transporte disponible sólo con relay local explícito.');return;}

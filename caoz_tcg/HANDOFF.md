@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 206 (beta; producción 203, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 207 (beta; producción 203, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,21 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 207 pule la geometría de `campana-personaje.js` y añade
+`campanaPintarMalla`: WebGL compartido con profundidad por píxel y alternativa
+CPU cuando falta o se pierde el contexto. No volver a ordenar las caras de
+las miniaturas por profundidad media; la regresión `campanaMiniatura` detecta
+el fallo con dos superficies cruzadas y distintos órdenes de pintado.
+`campanaRetrato` cachea hasta 12 apariencias; `campanaCartaJugador` y las
+adaptaciones del líder/ficha usan la misma foto. El VS recibe el personaje
+por opciones (todavía no existe G); el final lo lee de `G.campana.personaje`
+y decide por el lado ME, nunca por el id del mazo. Nombres siempre como texto.
+
+`campanaPoseGolpe` contiene la secuencia de 940 ms de la mesa. La orientación
+sigue al rival, incluido el final del trayecto. `golpear` y `saltarHacia`
+conservan sus contratos de cancelación. El personaje sigue siendo cosmético;
+no se modifican motor, balance, mazos ni el online.
 
 Build 206 incorpora `campana-personaje.js`, cargado por `final.js` después del
 núcleo compartido. `abrirCampana` abre `campanaCrear` para partidas nuevas y
