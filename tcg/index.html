@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=195"></script>
-<script src="final.js?b=195"></script>
+<script src="motor.js?b=203"></script>
+<script src="final.js?b=203"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:195, fecha:'2026-09-07'};
+const BUILD = {n:203, fecha:'2026-09-08'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2608,7 +2608,7 @@ async function rollDice(value, label, interactive, meta){
       v.className='d20'+(value===20?' crit':value===1?' pifia':'');
       v.animate([{transform:'scale(1.55) rotate(-14deg)'},{transform:'scale(1) rotate(0)'}],
         {duration:460,easing:'cubic-bezier(.2,1.5,.4,1)'});
-      lab.textContent = value===20?'¡CRÍTICO!' : value===1?'¡PIFIA!' : '';
+      lab.textContent = value===20?'¡CRÍTICO!' : value===1?'¡CRÍTICO!' : '';
       lab.className = 'dlabel'+(value===1?' pif':'');
       // y lo que de verdad importa: qué efecto tiene ese número
       if(meta && meta.ok){

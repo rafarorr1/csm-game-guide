@@ -18,10 +18,10 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 195;
+const VERSION = 203;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
-const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'polish-aaa.js', 'manifest.webmanifest',
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'campana-deseo.js', 'polish-aaa.js', 'manifest.webmanifest',
                 'art/encuadres.json', 'art/logo.webp',
                 'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
 

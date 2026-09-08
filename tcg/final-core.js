@@ -108,10 +108,10 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 /* el sello */
 /* Sólo gira la palabra: el giro del bloque entero arrastraba el motivo y la
    línea de turnos y Alma, y se veían descentrados. */
-.fin .sello{position:relative;z-index:6;text-align:center;opacity:0;translate:0 13vh;transform:scale(3);width:100%;padding:0 12px;
+.fin .sello{position:absolute;left:0;right:0;top:50%;box-sizing:border-box;z-index:6;text-align:center;opacity:0;transform:scale(3);width:auto;padding:0 16px;
   transition:opacity .2s, transform .4s cubic-bezier(.2,1.5,.4,1)}
 .fin.sello-on .sello{opacity:1;transform:scale(1)}
-.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:6px;transform:rotate(-3deg);
+.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:3px;
   background-image:linear-gradient(180deg,#fff3c4 0%,#e6bb52 46%,#8d6f21 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 5px 0 #3a2a08) drop-shadow(0 0 28px rgba(230,187,82,.75))}
 .fin.derrota .sello b{background-image:linear-gradient(180deg,#ffd9d6 0%,#e0524a 46%,#4a1010 100%);
@@ -265,7 +265,7 @@ async function cinematicaFinal(winner, why, acciones){
     `<b>${gano ? 'VICTORIA' : 'DERROTA'}</b><small>${why || ''}</small>` +
     `<i>Turnos: ${Math.ceil(G.turnNo / 2)} &nbsp;·&nbsp; ${P(winner).L.n} ❤️ ${alma(winner)} &nbsp;·&nbsp; ${P(1 - winner).L.n} ❤️ ${alma(1 - winner)}</i>`));
   { const fr = fraseDeRecord(); if(fr) capa.querySelector('.sello').appendChild(el('i', 'racha', fr)); }
-  capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
+  if(!gano)capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
   /* Los botones viven aquí, no en un cartel aparte: la cinemática se queda
      hasta que se elige. Antes se iba sola y devolvía a la mesa un instante,
@@ -274,14 +274,21 @@ async function cinematicaFinal(winner, why, acciones){
   const eleccion = new Promise(r => { elige = r; });
   const btns = el('div', 'finbtns');
   const cerrar = async (que) => {
-    if(elegido) return; elegido = que;
+    if(elegido) return false; elegido = que;
+    // Preparar la siguiente vista antes del fundido evita descubrir el menú
+    // que había detrás. Si abre un diálogo, el final comparte su capa superior.
+    if(que==='revancha'&&typeof acciones?.prepararRevancha==='function'){
+      const destino=acciones.prepararRevancha();
+      if(destino?.isConnected){destino.appendChild(capa);void capa.offsetWidth;}
+    }
     capa.classList.add('sale'); document.body.classList.remove('fin-on');
     await nap(380); capa.remove(); elige(que);
+    return true;
   };
-  const bRev = el('button', 'btn gold', '↺ Revancha');
+  const bRev = el('button', 'btn gold', acciones?.textoPrincipal || '↺ Revancha');
   const bMenu = el('button', 'btn', '← Menú principal');
-  bRev.onclick = e => { e.stopPropagation(); cerrar('revancha').then(() => acciones && acciones.revancha && acciones.revancha()); };
-  bMenu.onclick = e => { e.stopPropagation(); cerrar('menu').then(() => acciones && acciones.menu && acciones.menu()); };
+  bRev.onclick = e => { e.stopPropagation(); cerrar('revancha').then(ok => ok && acciones && acciones.revancha && acciones.revancha()); };
+  bMenu.onclick = e => { e.stopPropagation(); cerrar('menu').then(ok => ok && acciones && acciones.menu && acciones.menu()); };
   btns.appendChild(bRev); btns.appendChild(bMenu);
   capa.appendChild(btns);
 
@@ -523,7 +530,8 @@ const CAMPANA_RIVALES=[
 const CAMPANA_CLAVE='caoz.campana.v1'+(new URLSearchParams(location.search).has('test')?'.prueba':'');
 const CAMPANA_CASILLAS=[[22,84],[68,73],[33,60],[73,47],[40,32],[62,17]];
 // Apartaderos del camino: la ficha espera libre de las peanas ya descubiertas.
-const CAMPANA_ESPERAS=[[62,94],[74,93],[82,64],[20,51],[14,46],[25,18]];
+const CAMPANA_ESPERAS=[[62,94],[56,78],[45,65],[61,52],[52,37],[50,22]];
+function campanaPosicionEncuentro(etapa){const [x,y]=CAMPANA_CASILLAS[etapa];return [x+(x<50?12:-12),y+5];}
 let campanaPasoAnterior=null;
 function campanaPosicionFicha(etapa){return etapa>=6?[50,9]:CAMPANA_ESPERAS[etapa];}
 let campanaNieblaId=0;
@@ -540,12 +548,12 @@ function campanaCrearNiebla(etapa,retirada=false){
     <linearGradient id="${id}frontera" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="440">
       <stop offset="${limite-17}%" stop-color="white"/><stop offset="${limite}%" stop-color="black"/>
     </linearGradient>
-    <radialGradient id="${id}claro"><stop offset=".55" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="0"/></radialGradient>
+    <radialGradient id="${id}claro"><stop offset=".8" stop-color="black"/><stop offset="1" stop-color="black" stop-opacity="0"/></radialGradient>
     <radialGradient id="${id}nube"><stop stop-color="#f1f0dd" stop-opacity=".55"/><stop offset="1" stop-color="#e4e9db" stop-opacity="0"/></radialGradient>
     <filter id="${id}borde" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".009 .016" numOctaves="2" seed="7" result="viento"/><feDisplacementMap in="SourceGraphic" in2="viento" scale="38" xChannelSelector="R" yChannelSelector="G"/></filter>
     <mask id="${id}mascara" maskUnits="userSpaceOnUse" x="0" y="0" width="600" height="440" style="mask-type:luminance">
       <rect x="-30" y="-30" width="660" height="500" fill="url(#${id}frontera)" filter="url(#${id}borde)"/>
-      <ellipse cx="${x*6}" cy="${y*4.4-7}" rx="100" ry="66" fill="url(#${id}claro)"/>
+      <ellipse cx="${x*6}" cy="${y*4.4-22}" rx="115" ry="90" fill="url(#${id}claro)"/>
     </mask>
   </defs><g mask="url(#${id}mascara)">
     <rect width="600" height="440" fill="#b8c4bf" fill-opacity=".97"/>
@@ -559,6 +567,7 @@ function campanaLeer(){
   let dato=campanaMemoria;
   try{if(!dato)dato=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
   if(!dato||dato.version!==1||typeof dato.id!=='string'||!LEADERS[dato.lider]||!Number.isInteger(dato.etapa)||dato.etapa<0||dato.etapa>CAMPANA_RIVALES.length)return null;
+  if(dato.mesaPendiente!=null&&(!Number.isInteger(dato.mesaPendiente)||dato.mesaPendiente!==dato.etapa-1||dato.mesaPendiente<0||dato.mesaPendiente>5))delete dato.mesaPendiente;
   return dato;
 }
 function campanaGuardar(dato){
@@ -605,7 +614,7 @@ function campanaAnimarEntrada(){
 }
 let campanaMesaEscena=null,campanaPreparando=null;
 function campanaLimpiarMesa(){campanaLimpiarPreparacion();if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
-function campanaCerrar(){campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+function campanaCerrar(){if(typeof campanaCancelarAscenso==='function')campanaCancelarAscenso();campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaVolverAlMenu(){
   campanaCerrar();showScreen('menu');
   // La campaña es un diálogo: debajo ya estaba el menú, así que el regreso
@@ -623,7 +632,7 @@ function campanaCabecera(d,titulo,sub){
 function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   const progreso=campanaLeer();
-  if(progreso)campanaRuta();else campanaElegir();
+  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&progreso.deseo))campanaRuta();else campanaElegir();
   campanaAnimarEntrada();
 }
 function campanaElegir(){
@@ -665,9 +674,13 @@ function campanaElegir(){
   d.append(seleccion,campanaAcciones(confirmar,campanaBoton('Menú principal',campanaVolverAlMenu)));elegir(0);
 }
 function campanaRuta(aviso=''){
-  const p=campanaLeer();if(!p){campanaElegir();return;}
-  const completa=p.etapa===CAMPANA_RIVALES.length,d=campanaDialogo();
-  campanaCabecera(d,completa?'El Domo es tuyo':'La mesa del Domo',aviso||(LEADERS[p.lider].n+' · '+p.etapa+' de 6 rivales vencidos'));
+  const progreso=campanaLeer();if(!progreso){campanaElegir();return;}
+  const victoria=Number.isInteger(progreso.mesaPendiente)?progreso.mesaPendiente:null;
+  const p=victoria===null?progreso:{...progreso,etapa:victoria};
+  const completa=p.etapa===CAMPANA_RIVALES.length;
+  if(completa&&typeof campanaAbrirDeseo==='function'){campanaAbrirDeseo();return;}
+  const d=campanaDialogo();
+  campanaCabecera(d,completa?'El Domo es tuyo':'La mesa del Domo',aviso||(LEADERS[p.lider].n+' · '+progreso.etapa+' de 6 rivales vencidos'));
   d.dataset.vista='mapa';
   const mesa=document.createElement('div');mesa.className='campanaMesa';
   const tablero=document.createElement('div');tablero.className='campanaTablero';
@@ -699,7 +712,7 @@ function campanaRuta(aviso=''){
   });
   const peon=document.createElement('div');peon.className='campanaPeon';peon.setAttribute('role','img');peon.setAttribute('aria-label','Tu ficha: '+LEADERS[p.lider].n);
   peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span><span class="campanaTu" aria-hidden="true">TÚ</span>`;
-  const destino=campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionFicha(campanaPasoAnterior);
+  const destino=victoria!==null||p.enEncuentro&&p.etapa<6?campanaPosicionEncuentro(p.etapa):campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionEncuentro(campanaPasoAnterior);
   peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
   tablero.append(lista,peon);
   const niebla=campanaCrearNiebla(p.etapa);if(niebla)tablero.appendChild(niebla);
@@ -718,16 +731,32 @@ function campanaRuta(aviso=''){
   const pasoAnterior=campanaPasoAnterior;
   campanaPasoAnterior=null;
   const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero. Campaña completada.':'Mazo completo · 20 de Alma por duelo. Tu avance se guarda.';d.appendChild(ayuda);
-  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':'Acercarse a '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaSeleccionar(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
+  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':(p.enEncuentro?'Ver combate contra ':'Acercarse a ')+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaSeleccionar(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
   if(!completa)acciones.appendChild(campanaBoton('Reiniciar',()=>{
     campanaCabecera(d,'¿Reiniciar la campaña?','Perderás el avance de esta escalera cuando elijas un nuevo Protagonista.');
     d.append(campanaAcciones(campanaBoton('Conservar mi avance',()=>campanaRuta(),true),campanaBoton('Elegir nuevo Protagonista',campanaElegir)));
   }));
   d.appendChild(acciones);
-  if(window.crearMesaCampana)campanaMesaEscena=crearMesaCampana(mesa,{etapa:p.etapa,lider:p.lider,casillas:CAMPANA_CASILLAS,esperas:CAMPANA_ESPERAS,etapaAnterior:pasoAnterior});
+  if(window.crearMesaCampana)campanaMesaEscena=crearMesaCampana(mesa,{etapa:p.etapa,lider:p.lider,casillas:CAMPANA_CASILLAS,esperas:CAMPANA_ESPERAS,etapaAnterior:pasoAnterior,posicion:destino});
   // En la mesa 3D la cámara proyecta la etiqueta junto a la miniatura que avanza.
   // La animación porcentual anterior sólo corresponde al mapa HTML alternativo.
   if(campanaMesaEscena){peon.getAnimations().forEach(a=>a.cancel());peon.querySelector('.campanaPeonCuerpo').getAnimations().forEach(a=>a.cancel());}
+  if(victoria!==null){
+    ayuda.textContent='¡Rival vencido!';acciones.replaceChildren();
+    const seguir=campanaBoton(progreso.etapa===6?'Completar campaña':'Continuar',()=>{
+      const actual=campanaLeer();if(actual!==progreso||actual.mesaPendiente!==victoria)return;
+      delete actual.mesaPendiente;actual.enEncuentro=true;campanaPasoAnterior=victoria;campanaGuardar(actual);campanaRuta();
+    },true);
+    seguir.disabled=true;acciones.append(seguir,campanaBoton('Menú principal',campanaVolverAlMenu));
+    const viaje=campanaMesaEscena?campanaMesaEscena.golpear():campanaGolpeHTML(peon,lista.querySelector('[data-etapa="'+victoria+'"]'));
+    viaje.then(ok=>{if(!ok||!seguir.isConnected)return;if(victoria===5&&typeof campanaAscenderAlDeseo==='function'){acciones.style.visibility='hidden';ayuda.textContent='';campanaAscenderAlDeseo();}else seguir.disabled=false;const rival=lista.querySelector('.actual');rival.classList.add('vencido');rival.querySelector('.campanaNumero').textContent='✓';rival.querySelector('button').setAttribute('aria-label',LEADERS[CAMPANA_RIVALES[victoria].lider].n+', vencido');});
+  }
+}
+function campanaGolpeHTML(peon,rival){
+  const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches||document.hidden;
+  if(!reducido){peon.animate([{translate:'0 0'},{translate:'-18px -5px',offset:.3},{translate:'0 0'}],{duration:650});rival.animate([{rotate:'0deg'},{rotate:'82deg',translate:'16px 10px'}],{duration:750,delay:300,fill:'forwards'});}
+  else rival.style.rotate='82deg';
+  return new Promise(r=>setTimeout(()=>r(peon.isConnected),reducido?0:1250));
 }
 function campanaLimpiarPreparacion(regresar=false){
   const e=campanaPreparando;if(!e)return;campanaPreparando=null;
@@ -752,17 +781,29 @@ function campanaSaltarHTML(peon,etapa){
 }
 async function campanaSeleccionar(){
   const p=campanaLeer(),panel=document.getElementById('campanaPanel');
-  if(!p||p.etapa>=6||!panel||!panel.open||panel.dataset.vista!=='mapa'||campanaPreparando||campanaLanzando)return;
+  if(!p||p.mesaPendiente!=null||p.etapa>=6||!panel||!panel.open||panel.dataset.vista!=='mapa'||campanaPreparando||campanaLanzando)return;
   if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
   campanaLimpiarEntrada();
   const peon=panel.querySelector('.campanaPeon'),botones=[...panel.querySelectorAll('.campanaEncuentro,.campanaAcciones>.gold')].map(b=>({b,disabled:b.disabled}));
   const e={id:p.id,etapa:p.etapa,panel,peon,origen:[peon.style.left,peon.style.top],botones,viaje:null,dialogo:null};
   campanaPreparando=e;botones.forEach(({b})=>b.disabled=true);panel.classList.add('campanaVisitando');
-  e.viaje=campanaMesaEscena?campanaMesaEscena.saltarHacia(p.etapa):campanaSaltarHTML(peon,p.etapa);
+  e.viaje=p.enEncuentro?{promesa:Promise.resolve(true),cancelar(){}}:campanaMesaEscena?campanaMesaEscena.saltarHacia(p.etapa):campanaSaltarHTML(peon,p.etapa);
   const llego=await e.viaje.promesa;
   if(!llego||campanaPreparando!==e||!panel.open)return;
   const actual=campanaLeer();if(!actual||actual.id!==e.id||actual.etapa!==e.etapa){campanaLimpiarPreparacion(true);return;}
   campanaMostrarEncuentro(e,actual);
+}
+// Herramienta temporal de la beta: no se habilita en el dominio de producción.
+function campanaPruebaDisponible(){
+  return ['localhost','127.0.0.1','beta.caoz-tcg.pages.dev'].includes(location.hostname)||location.hostname==='rafarorr1.github.io'&&location.pathname.startsWith('/csm-game-guide/tcg-beta/');
+}
+function campanaVencerPrueba(e){
+  const p=campanaLeer();
+  if(!campanaPruebaDisponible()||campanaPreparando!==e||!e.dialogo?.open||!p||p.id!==e.id||p.etapa!==e.etapa||p.mesaPendiente!=null||NET.on)return;
+  const rival=CAMPANA_RIVALES[p.etapa];
+  campanaLimpiarPreparacion();campanaCerrar();cerrarCinematica();
+  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma};G.over=true;P(1).alma=0;
+  campanaFinal(ME,'Victoria de prueba · Beta');
 }
 function campanaMostrarEncuentro(e,p){
   const rival=CAMPANA_RIVALES[p.etapa],lider=LEADERS[rival.lider],mazo=DECKS[rival.lider],d=document.createElement('dialog');
@@ -773,6 +814,7 @@ function campanaMostrarEncuentro(e,p){
   const volver=()=>campanaLimpiarPreparacion(true);
   const entrar=()=>{if(campanaPreparando!==e)return;campanaLimpiarPreparacion();campanaCombatir();};
   const acciones=campanaAcciones(campanaBoton('Entrar al combate',entrar,true),campanaBoton('Volver a la mesa',volver));
+  if(campanaPruebaDisponible()){const prueba=campanaBoton('Vencer rival · Prueba beta',()=>campanaVencerPrueba(e));prueba.dataset.pruebaCampana='1';acciones.appendChild(prueba);}
   d.appendChild(acciones);d.addEventListener('cancel',ev=>{ev.preventDefault();volver();});
   d.addEventListener('close',()=>{if(campanaPreparando===e)volver();});
   document.body.appendChild(d);d.showModal();acciones.querySelector('.gold').focus({preventScroll:true});
@@ -808,6 +850,7 @@ async function campanaCombatir(){
   const rival=CAMPANA_RIVALES[p.etapa];
   try{
     if(!await campanaAcercarMapa(p.etapa))return;
+    p.enEncuentro=true;campanaGuardar(p);
     campanaCerrar();cerrarCinematica();
     await startMatch(p.lider,rival.lider,{campana:{id:p.id,etapa:p.etapa,alma:rival.alma}});
   }
@@ -815,20 +858,22 @@ async function campanaCombatir(){
 }
 function campanaFinal(winner,why){
   relojPara();
-  const meta=G.campana,p=campanaLeer();
-  if(!meta||!p||meta.id!==p.id)return;
-  if(!G.campanaResuelta){
-    G.campanaResuelta=true;
-    if(winner===ME&&p.etapa===meta.etapa){campanaPasoAnterior=p.etapa;p.etapa++;campanaGuardar(p);}
-  }
-  const d=campanaDialogo(),completa=p.etapa===6;
-  campanaCabecera(d,winner===ME?(completa?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',
-    winner===ME?(completa?'Derrotaste a Gero. El Domo es tuyo.':'Has superado a '+LEADERS[CAMPANA_RIVALES[meta.etapa].lider].n+'. El siguiente combate está desbloqueado.'):'No pierdes tu progreso. Puedes volver a desafiar a este rival.');
-  const resultado=document.createElement('p');resultado.className='campanaNota';resultado.textContent=why||'';d.appendChild(resultado);
-  const acciones=campanaAcciones();
-  if(!completa)acciones.appendChild(campanaBoton(winner===ME?'Avanzar en el mapa':'Reintentar combate',()=>{campanaRuta();if(winner!==ME)campanaSeleccionar();},true));
-  acciones.append(campanaBoton(completa?'Ver campaña completada':'Ver el mapa',()=>campanaRuta(),completa),campanaBoton('Menú principal',campanaVolverAlMenu));d.appendChild(acciones);
+  const g=G,meta=g.campana,p=campanaLeer();
+  if(!meta||!p||meta.id!==p.id||g.campanaResuelta)return;
+  g.campanaResuelta=true;RECORD_ULTIMO=null;
+  if(winner===ME&&p.etapa===meta.etapa){p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;campanaGuardar(p);}
+  let mesaPreparada=false;
+  const acciones={textoPrincipal:winner===ME?'Volver a la mesa':'↺ Revancha',
+    prepararRevancha:winner===ME?()=>{if(G!==g)return;campanaRuta();mesaPreparada=true;return document.getElementById('campanaPanel');}:null,
+    revancha:()=>{if(G!==g)return;if(winner===ME){if(!mesaPreparada)campanaRuta();}else campanaCombatir();},
+    menu:()=>{if(G===g)campanaVolverAlMenu();}};
+  cinematicaFinal(winner,why,acciones).then(hecho=>{
+    if(hecho||G!==g)return;
+    const d=campanaDialogo();campanaCabecera(d,winner===ME?(p.etapa===6?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',why||'');
+    d.append(campanaAcciones(campanaBoton(winner===ME?'Volver a la mesa':'Reintentar combate',acciones.revancha,true),campanaBoton('Menú principal',acciones.menu)));
+  });
 }
+
 {
   const css=document.createElement('style');css.textContent=`
   #campanaPanel{--alto-util:calc(var(--campana-alto,100dvh) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));box-sizing:border-box;position:fixed;inset:calc(var(--campana-desfase,0px) + max(12px,env(safe-area-inset-top))) 0 auto;margin:0 auto;width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),650px);max-height:var(--alto-util);overflow:hidden;overscroll-behavior:contain;padding:18px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
