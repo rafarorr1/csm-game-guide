@@ -17,4 +17,5 @@
   document.write('<script src="campana-deseo.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-mesa.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="polish-aaa.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="audio-domo.js?b='+encodeURIComponent(b)+'"><\/script>');
 })();
