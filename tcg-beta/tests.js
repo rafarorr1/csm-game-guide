@@ -863,6 +863,68 @@ PRUEBAS.suite('onlineInvitacion', async t => {
   }finally{marcos.forEach(f=>{f.contentWindow.netClose();f.remove();});}
 });
 
+/* Rantiago necesita que la confirmación del dado vuelva al motor antes de
+   aplicar el +2. Se usan los mensajes y los dos diálogos reales, sin relevos públicos. */
+PRUEBAS.suite('rantiago', async t => {
+  const esperar=async(cond,ms=6500)=>{const fin=Date.now()+ms;while(!cond()&&Date.now()<fin)await sleep(25);t.check(cond(),'La jugada de Rantiago no terminó a tiempo.');};
+  for(const paginas of [['index.html','movil.html'],['movil.html','index.html']])for(const lado of [1,0]){
+    const marcos=[];
+    try{
+      for(const pagina of paginas){
+        const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=rantiago-interno';document.body.appendChild(f);marcos.push(f);await carga;
+      }
+      const [h,j]=marcos.map(f=>f.contentWindow),clientes=[h,j],dados=[[],[]];
+      clientes.forEach((w,i)=>{
+        w.newGame(i?'talesin':'mohamed',i?'mohamed':'talesin');
+        w.eval('G.online=true;G.phase="principal";G.turnNo=3');
+        Object.assign(w.eval('NET'),{on:true,host:i===0,guest:i===1,peer:true,sid:'rantiago-'+i,hechas:new Set(),esperaAck:new Map(),chs:[{ok:true,close(){}}]});
+        Object.defineProperty(w.document,'hidden',{get:()=>false,configurable:true});w.netStatus=()=>{};w.Math.random=()=>.5;
+        const original=w.rollDice;w.rollDice=(valor,nombre,interactivo,meta)=>{dados[i].push({valor,interactivo});return original(valor,nombre,interactivo,meta);};
+        w.netSend=m=>{const copia=JSON.parse(JSON.stringify({...m,sid:'rantiago-'+i}));queueMicrotask(()=>clientes[1-i].netRecv(copia));};
+        w.showScreen('board');
+      });
+      h.eval('G.active='+lado);h.eval('P(0).hand=[];P(1).hand=[]');h.eval('P('+lado+').hand=["rantiago"];P('+lado+').pd=10');
+      const objetivo=h.mkUnit('bartolomeo',lado);objetivo.sick=false;h.eval('P('+lado+')').field=[objetivo];h.recalc();h.render();
+      await esperar(()=>j.eval('P('+(1-lado)+').field.length')===1);await sleep(200);
+      const jugador=clientes[lado],d=jugador.document;
+      if(lado===1)j.gIntent('play',{id:'rantiago'});else h.playFromHand(0,'rantiago');
+      await esperar(()=>!!jugador.eval('TGT'));d.querySelector('#myField [data-uid="'+objetivo.uid+'"]').click();
+      await esperar(()=>dados[lado].length>0);await sleep(350);
+      const caso=paginas.join(' → ')+(lado?' · juega invitado':' · juega anfitrión');
+      t.check(dados[lado].length===1&&dados[lado][0].interactivo,caso+': el jugador debe recibir una sola tirada interactiva, sin otra animación que la tape.');
+      t.check(dados[1-lado].length===1&&!dados[1-lado][0].interactivo,caso+': el rival sólo debe ver una tirada de espectador.');
+      d.querySelector('#dbtn').click();await esperar(()=>!d.querySelector('#dbtn').disabled&&d.querySelector('#dbtn').textContent.includes('Continuar'));
+      t.check(d.querySelector('#d20v').textContent==='11'&&d.querySelector('#defecto').textContent.includes('+2 ATQ'),caso+': el 11 debe anunciar el aumento de ataque.');
+      d.querySelector('#dbtn').click();
+      await esperar(()=>h.eval('P('+lado+').field[0].pA')===2&&j.eval('P('+(1-lado)+').field[0]?.pA')===2&&Object.keys(h.eval('NET.pending')).length===0&&!h.eval('NET.busy'));
+      for(const [w,s] of [[h,lado],[j,1-lado]]){
+        t.check(w.eval('P('+s+').field[0].atk')===3&&w.document.querySelector('[data-uid="'+objetivo.uid+'"] .atk').textContent==='3',caso+': el ataque debe subir de 1 a 3 en ambos clientes.');
+      }
+      // Otro estado de red no debe borrar el incremento permanente.
+      h.netPushState();await sleep(250);t.check(j.eval('P('+(1-lado)+').field[0].pA')===2,caso+': el +2 debe sobrevivir a una nueva sincronización.');
+    }finally{marcos.forEach(f=>{f.contentWindow.netSend=()=>{};f.contentWindow.netClose();f.remove();});}
+  }
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=rantiago-local-interno';document.body.appendChild(f);await carga;const w=f.contentWindow;
+    try{
+      for(const modo of ['local','campana','ia'])for(const valor of [10,11,20]){
+        w.newGame('talesin','mohamed');w.eval('G.fast=true;G.auto=true;G.silent=true;G.active=0;G.phase="principal"');
+        if(modo==='campana')w.eval('G.campana={id:"rantiago",etapa:0,alma:16}');
+        const s=modo==='ia'?1:0;w.eval('G.active='+s);w.eval('P(0).hand=[];P(1).hand=[]');w.eval('P('+s+').hand=["rantiago"];P('+s+').pd=10');
+        const u=w.mkUnit('bartolomeo',s);u.sick=false;w.eval('P('+s+')').field=[u];w.recalc();w.Math.random=()=>(valor-.5)/20;
+        await w.playFromHand(s,'rantiago',[[u]]);
+        t.check(u.pA===(valor>=11?2:0)&&u.atk===(valor>=11?3:1)&&(u.stunned>0)===(valor<=10),pagina+' · '+modo+': resultado incorrecto con '+valor+'.');
+        if(valor>=11){
+          w.eval('G.online=true');await w.endTurn();await w.endTurn();
+          t.check(u.pA===2&&u.atk===3,pagina+' · '+modo+': el beneficio debe ser permanente.');
+          const alma=w.eval('P('+(1-s)+').alma');await w.doAttack(u,'face');
+          t.check(w.eval('P('+(1-s)+').alma')===alma-3,pagina+' · '+modo+': el ataque aumentado debe hacer daño real.');
+        }
+      }
+    }finally{w.relojPara();f.remove();}
+  }
+});
+
 PRUEBAS.suite('onlineFlujo', async t => {
   newGame('fender','adreida');G.online=true;G.turnNo=3;G.phase='principal';
   RELOJ.queda=42;P(0).clouds=[{until:8}];const foto=netSnap();
