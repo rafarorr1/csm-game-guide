@@ -568,7 +568,7 @@ function campanaDialogo(){
   let d=document.getElementById('campanaPanel');
   if(!d){
     d=document.createElement('dialog');d.id='campanaPanel';d.setAttribute('aria-labelledby','campanaTitulo');document.body.appendChild(d);
-    d.addEventListener('close',()=>{if(!d.open){campanaCancelarZoom();campanaLimpiarEntrada();}});
+    d.addEventListener('close',()=>{if(!d.open){campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();}});
     d.addEventListener('cancel',e=>{e.preventDefault();campanaVolverAlMenu();});
   }
   if(!d.open){d.showModal();cargarArte().then(()=>d.querySelectorAll('[data-campana-lider]').forEach(n=>{if(!n.querySelector('.marcoDibujo'))ilustrarLider(n,n.dataset.campanaLider);}));}return d;
@@ -601,7 +601,9 @@ function campanaAnimarEntrada(){
   d.appendChild(b);d.classList.add('campanaEntra');
   campanaEntradaTimer=setTimeout(campanaLimpiarEntrada,700);
 }
-function campanaCerrar(){campanaCancelarZoom();campanaLimpiarEntrada();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+let campanaMesaEscena=null;
+function campanaLimpiarMesa(){if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
+function campanaCerrar(){campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaVolverAlMenu(){
   campanaCerrar();showScreen('menu');
   // La campaña es un diálogo: debajo ya estaba el menú, así que el regreso
@@ -611,6 +613,7 @@ function campanaVolverAlMenu(){
 function campanaCabecera(d,titulo,sub){
   campanaCancelarZoom();
   campanaLimpiarEntrada();
+  campanaLimpiarMesa();
   d.dataset.vista='mensaje';
   d.innerHTML='<header class="campanaCabecera"><div class="campanaSello">CAMPAÑA · PROTOTIPO</div><h2 id="campanaTitulo"></h2><p class="campanaSub"></p></header>';
   d.querySelector('h2').textContent=titulo;d.querySelector('p').textContent=sub;
@@ -693,7 +696,7 @@ function campanaRuta(aviso=''){
     lista.appendChild(fila);
   });
   const peon=document.createElement('div');peon.className='campanaPeon';peon.setAttribute('role','img');peon.setAttribute('aria-label','Tu ficha: '+LEADERS[p.lider].n);
-  peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span>`;
+  peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span><span class="campanaTu" aria-hidden="true">TÚ</span>`;
   const destino=campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionFicha(campanaPasoAnterior);
   peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
   tablero.append(lista,peon);
@@ -710,6 +713,7 @@ function campanaRuta(aviso=''){
     peon.animate([{left:origen[0]+'%',top:origen[1]+'%'},{left:destino[0]+'%',top:destino[1]+'%'}],{duration:1100,easing:'ease-in-out'});
     peon.querySelector('.campanaPeonCuerpo').animate([{translate:'0 0'},{translate:'0 -10px'},{translate:'0 0'}],{duration:275,iterations:4});
   }
+  const pasoAnterior=campanaPasoAnterior;
   campanaPasoAnterior=null;
   const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero. Campaña completada.':'Mazo completo · 20 de Alma por duelo. Tu avance se guarda.';d.appendChild(ayuda);
   const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':'Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaCombatir(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
@@ -718,6 +722,10 @@ function campanaRuta(aviso=''){
     d.append(campanaAcciones(campanaBoton('Conservar mi avance',()=>campanaRuta(),true),campanaBoton('Elegir nuevo Protagonista',campanaElegir)));
   }));
   d.appendChild(acciones);
+  if(window.crearMesaCampana)campanaMesaEscena=crearMesaCampana(mesa,{etapa:p.etapa,lider:p.lider,casillas:CAMPANA_CASILLAS,etapaAnterior:pasoAnterior});
+  // En la mesa 3D la cámara proyecta la etiqueta junto a la miniatura que avanza.
+  // La animación porcentual anterior sólo corresponde al mapa HTML alternativo.
+  if(campanaMesaEscena){peon.getAnimations().forEach(a=>a.cancel());peon.querySelector('.campanaPeonCuerpo').getAnimations().forEach(a=>a.cancel());}
 }
 let campanaCancelarAcercamiento=null;
 function campanaCancelarZoom(){if(campanaCancelarAcercamiento)campanaCancelarAcercamiento();}
@@ -726,7 +734,7 @@ function campanaAcercarMapa(etapa){
   if(!d||!d.open||!camara||matchMedia('(prefers-reduced-motion:reduce)').matches||document.hidden)return Promise.resolve(true);
   campanaLimpiarEntrada();
   // La cámara envuelve al tablero: su escala no altera la perspectiva ni la posición de las fichas.
-  const [x,y]=CAMPANA_CASILLAS[etapa],origen=camara.style.transformOrigin;
+  const [x,y]=campanaMesaEscena?campanaMesaEscena.foco(etapa):CAMPANA_CASILLAS[etapa],origen=camara.style.transformOrigin;
   camara.style.transformOrigin=x+'% '+y+'%';
   const animacion=camara.animate([{scale:'1',translate:'0 0'},{scale:'1.7',translate:(50-x)+'% '+(50-y)+'%'}],{duration:500,easing:'cubic-bezier(.4,0,.7,1)',fill:'forwards'});
   const botones=[...d.querySelectorAll('button')].map(b=>({b,disabled:b.disabled}));botones.forEach(({b})=>b.disabled=true);
@@ -852,6 +860,7 @@ function campanaFinal(winner,why){
   .campanaMesa .campanaRuta .campanaOculto{background:linear-gradient(#46392b,#29221d);color:#b29e79;border-color:#6f6047}
   .campanaMesa .campanaRuta b{display:block;margin:7px 0 0;padding:3px 5px;border-radius:4px;background:#2d1d13ed;color:#ead6b2;font:700 11px/1.2 var(--serif);white-space:nowrap}
   .campanaMesa .campanaRuta .campanaNumero{position:absolute;right:9px;top:0;width:17px;height:17px;display:grid;place-items:center;border-radius:50%;font:800 10px var(--sans);background:#e0c28a;color:#3c2715}
+  .campanaTu{display:none}
   .campanaPeon{position:absolute;width:30px;height:58px;translate:-50% -75%;pointer-events:none;z-index:20;filter:drop-shadow(4px 6px 3px #27170aaa)}
   .campanaPeonCuerpo{position:absolute;left:5px;bottom:7px;width:20px;height:41px;border-radius:45% 45% 25% 25%;background:linear-gradient(90deg,#92651e,#ffe3a0 45%,#bd8b38);border:1px solid #80541e;z-index:2}
   .campanaPeonCuerpo>span{position:absolute;top:-14px;left:-6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#ffe9ae,#b78227);border:2px solid #d8b568;font-size:17px}

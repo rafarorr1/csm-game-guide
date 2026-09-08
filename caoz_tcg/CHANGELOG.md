@@ -13,6 +13,24 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Mesa de aventura en 3D · 2026-09-07
+
+Build 191, prueba en beta: la campaña se presenta sobre una mesa de madera con
+pergamino cuadriculado, miniaturas pintadas sobre peanas, dados de veinte caras,
+velas y un diario. Se puede girar la cámara arrastrando o con dos botones.
+La ficha del jugador avanza entre encuentros y la niebla se retira al conquistar
+el mapa; sólo se construyen los rivales descubiertos. El acercamiento de 500 ms
+apunta ahora a la miniatura en perspectiva antes del VS. Se mantienen selección,
+progreso guardado, dificultad, reglas y transiciones doradas.
+
+Geometría proyectada en Canvas 2D, sin dependencias ni descargas de modelos. La
+mesa estática se guarda en un lienzo auxiliar; sólo bruma y velas se redibujan,
+y la escena se libera al navegar. Los controles HTML conservan teclado y nombres
+accesibles; sin Canvas se utiliza el mapa anterior. Movimiento reducido conserva
+la vista y permite girarla manualmente. La prueba de etiqueta durante el avance
+se validó por sabotaje; las pruebas de encaje incluyen los controles de cámara.
+Se entrega únicamente como beta; producción conserva la build 190.
+
 ## Sin numerar — Regreso inmediato al menú principal · 2026-09-07
 
 Build 190, beta: al volver de cualquier menú, el principal aparece completo

@@ -60,6 +60,7 @@ python3 -c "import sys; s=open(sys.argv[1]).read(); i=s.rindex('<script>')+8; j=
 node --check /tmp/movil_ui.js || { rojo 'movil.html tiene un error de sintaxis'; exit 1; }
 node --check "$AQUI/final.js" || { rojo 'final.js tiene un error de sintaxis'; exit 1; }
 node --check "$AQUI/final-core.js" || exit 1
+node --check "$AQUI/campana-mesa.js" || exit 1
 node --check "$AQUI/polish-aaa.js" || exit 1
 node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }
 # El service worker lleva la build en VERSION: es lo que le dice al teléfono
@@ -83,7 +84,7 @@ gris "  sintaxis correcta"
 
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
 # animación termine. Es una regla dura y se comprueba también aquí.
-if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js" "$AQUI/movil.html" "$AQUI/final.js" "$AQUI/final-core.js" "$AQUI/polish-aaa.js"; then
+if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js" "$AQUI/movil.html" "$AQUI/final.js" "$AQUI/final-core.js" "$AQUI/campana-mesa.js" "$AQUI/polish-aaa.js"; then
   rojo 'index.html usa Animation.finished — encadena con sleep(), o el motor se cuelga'
   exit 1
 fi
@@ -195,6 +196,7 @@ cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
 cp "$AQUI/movil.html"   "$PAGES/$DESTINO/movil.html"
 cp "$AQUI/final.js"     "$PAGES/$DESTINO/final.js"
 cp "$AQUI/final-core.js" "$PAGES/$DESTINO/final-core.js"
+cp "$AQUI/campana-mesa.js" "$PAGES/$DESTINO/campana-mesa.js"
 cp "$AQUI/polish-aaa.js" "$PAGES/$DESTINO/polish-aaa.js"
 cp "$AQUI/sw.js"        "$PAGES/$DESTINO/sw.js"
 cp "$AQUI/manifest.webmanifest" "$PAGES/$DESTINO/manifest.webmanifest"
@@ -228,7 +230,7 @@ fi
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
-git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/final-core.js" "$DESTINO/polish-aaa.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/final-core.js" "$DESTINO/campana-mesa.js" "$DESTINO/polish-aaa.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then
@@ -259,7 +261,7 @@ comprobar_cloudflare(){
   for j in $(seq 1 12); do
     sleep 10
     local ok=1
-    for f in index.html motor.js movil.html final.js final-core.js polish-aaa.js sw.js manifest.webmanifest; do
+    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js polish-aaa.js sw.js manifest.webmanifest; do
       local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
       local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
       [ "$srv" = "$esp" ] || { ok=0; break; }
@@ -300,7 +302,7 @@ for i in $(seq 1 10); do
   SERVIDO_FINAL="$(curl -s "$URL_FINAL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
   if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ] && [ "$SERVIDO_FINAL" = "$ESPERADO_FINAL" ]; then
     verde "  GitHub Pages verificado byte a byte (index.html, motor.js, movil.html y final.js)"
-    for f in final-core.js polish-aaa.js sw.js manifest.webmanifest; do
+    for f in final-core.js campana-mesa.js polish-aaa.js sw.js manifest.webmanifest; do
       curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/$f?cb=$(date +%s)" -o "/tmp/caoz-verificar-$f" || exit 1
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$f" || { rojo "$f no coincide con la versión local"; exit 1; }
     done

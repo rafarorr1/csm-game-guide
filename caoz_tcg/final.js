@@ -1,7 +1,8 @@
 /* ==========================================================================
    CAOZ CON TODO — scripts compartidos
    --------------------------------------------------------------------------
-   final-core.js conserva la cinemática/records histórica; polish-aaa.js monta
+   final-core.js conserva la cinemática/records histórica; campana-mesa.js dibuja
+   la mesa de campaña y polish-aaa.js monta
    la nueva capa visual de combate y cartas. Se cargan de forma síncrona para
    que el script específico de index.html/movil.html encuentre las funciones
    compartidas exactamente igual que antes.
@@ -12,5 +13,6 @@
   let b='166';
   try{ b=new URL(src,location.href).searchParams.get('b')||b; }catch(e){}
   document.write('<script src="final-core.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="campana-mesa.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="polish-aaa.js?b='+encodeURIComponent(b)+'"><\/script>');
 })();

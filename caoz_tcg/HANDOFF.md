@@ -385,3 +385,23 @@ es #menu; conserva el barrido dorado de 450 ms y las entradas de los secundarios
 La aparición escalonada anterior ocultaba el principal entre 400 y 600 ms.
 menusDorados ahora comprueba la opacidad inmediata y durante el barrido desde
 los ocho menús, incluidos Escape y fondo. Rojo reproducido antes del arreglo.
+
+
+Build 191: prototipo de mesa D&D en campana-mesa.js, cargado por final.js tras
+final-core.js. crearMesaCampana recibe etapa, líder, casillas y etapaAnterior;
+retorna foco(etapa), girar(delta), destruir() y activa. campanaMesaEscena se
+libera desde campanaCabecera, campanaCerrar y el evento close. Conserva el mapa
+HTML accesible como alternativa si Canvas no está disponible; la niebla DOM
+mantiene sus metadatos mientras la bruma visible se proyecta en la mesa.
+La geometría, los materiales de madera/pergamino y las miniaturas son locales,
+sin bibliotecas ni modelos externos. Cámara con perspectiva, arrastre horizontal
+y botones; las etiquetas y el foco del acercamiento usan la misma proyección.
+Cachea materiales por ventana y la escena estática por cámara/tamaño; actualiza
+bruma/velas hasta 15 fps y pausa el dibujo con documento oculto o movimiento
+reducido. ResizeObserver usa clientWidth/Height para no medir la escala de entrada.
+Avance de 1100 ms interpola la miniatura y la niebla; se cancela la vieja animación
+porcentual del peón HTML en esta vista para mantener TÚ sobre su ficha. Regresión
+campanaMesa (incluido sabotaje de esa cancelación), campanaPantalla y suite de
+campaña cubren integración, limpieza, encaje y avance. sw.js y publicar.sh incluyen
+el módulo nuevo en precaché, sintaxis, copia y verificación de bytes.
+Publicación prevista sólo por --beta; producción permanece en 190.
