@@ -450,6 +450,25 @@ PRUEBAS.suite('campanaEntrada', async t => {
   }
 });
 
+PRUEBAS.suite('pwaSinConexion', async t => {
+  const codigo=await (await fetch('sw.js?test=pwa-interna')).text();
+  for(const ruta of ['/','/tcg-beta/']){
+    const scope='https://domo.invalid'+ruta,eventos={},guardados=new Map();
+    for(const [archivo,texto] of [['index.html','escritorio'],['movil.html','telefono'],['campana-mesa.js','mesa']])guardados.set(new URL(archivo,scope).href,texto);
+    const cache={async match(p,op={}){const u=new URL(p.url||p,scope);if(op.ignoreSearch)u.search='';if(!guardados.has(u.href))return;const r=new Response(guardados.get(u.href),{headers:{'Content-Type':u.pathname.endsWith('.html')?'text/html':'text/javascript'}});if(u.pathname.endsWith('.html'))Object.defineProperty(r,'redirected',{value:true});return r;}};
+    const entorno={registration:{scope},location:{origin:'https://domo.invalid'},addEventListener:(nombre,fn)=>eventos[nombre]=fn};
+    // Ejecutar el worker real con red caída y una caché que sólo tiene el precaché.
+    new Function('self','caches','fetch',codigo)(entorno,{open:async()=>cache},async()=>{throw Error('Sin conexión de prueba');});
+    for(const [pagina,texto] of [['movil?b=192&campana=1','telefono'],['index?b=192','escritorio'],['?campana=1','escritorio'],['campana-mesa.js?b=192','mesa']]){
+      let respuesta;eventos.fetch({request:new Request(new URL(pagina,scope)),respondWith:p=>respuesta=p});
+      const r=await respuesta;t.check(r.status===200&&await r.text()===texto,ruta+pagina+': la ruta de Cloudflare debe encontrar su archivo guardado sin conexión.');
+      t.check(!r.redirected,ruta+pagina+': la copia precargada no puede conservar una redirección que el navegador rechaza sin red.');
+    }
+    let respuesta;eventos.fetch({request:new Request(new URL('desconocido',scope)),respondWith:p=>respuesta=p});
+    t.check((await respuesta).status===504,ruta+': una ruta desconocida no debe confundirse con el juego.');
+  }
+});
+
 PRUEBAS.suite('campanaMesa', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
