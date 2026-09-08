@@ -14,10 +14,10 @@
     const p=campanaLeer(),panel=document.getElementById('campanaPanel');
     if(ascenso||!panel?.open||!p||p.etapa!==6||p.mesaPendiente!==5)return;
     const d=document.createElement('dialog');d.id='campanaAscenso';d.dataset.fase='rayo';d.setAttribute('aria-label','La luz del Domo eleva a tu Protagonista');
-    d.innerHTML='<div class="ascensoRayo"><div class="ascensoNucleo"></div><div class="ascensoHalo"></div></div>';
+    d.innerHTML='<div class="ascensoRayo"><div class="ascensoCono"></div><div class="ascensoNucleo"></div><div class="ascensoHalo"></div></div><div class="ascensoResplandor"></div>';
     const e={d,mesa:campanaMesaEscena,timers:[],raf:0,cancelado:false},rayo=d.firstElementChild;ascenso=e;
     const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches,peon=panel.querySelector('.campanaPeon');
-    const inicio=performance.now();let anterior=0;
+    const inicio=performance.now();let anterior=-Infinity;
     function cuadro(t){
       if(e.cancelado)return;
       if(!panel.open){campanaCancelarAscenso();return;}
@@ -27,13 +27,18 @@
         const limite=d.getBoundingClientRect();let x,y;
         if(e.mesa){const c=panel.querySelector('.campanaCamara').getBoundingClientRect(),f=e.mesa.focoJugador;x=c.left+c.width*f[0]/100;y=c.top+c.height*f[1]/100;}
         else{const r=peon.getBoundingClientRect();x=r.left+r.width/2;y=r.bottom;}
-        rayo.style.left=(x-limite.left)+'px';rayo.style.height=Math.max(0,(y-limite.top)*(reducido?1:Math.min(1,transcurrido/650)))+'px';
+        x-=limite.left;y-=limite.top;
+        rayo.style.left=x+'px';rayo.style.height=Math.max(0,y*(reducido?1:Math.min(1,transcurrido/650)))+'px';
+        // El resplandor nace junto a la ficha y crece hasta cubrir incluso
+        // la esquina más lejana con el centro blanco de su degradado.
+        d.style.setProperty('--luz-x',x+'px');d.style.setProperty('--luz-y',y+'px');
+        d.style.setProperty('--luz-diametro',4*Math.hypot(Math.max(x,limite.width-x),Math.max(y,limite.height-y))+'px');
       }
       e.raf=requestAnimationFrame(cuadro);
     }
     d.addEventListener('cancel',ev=>ev.preventDefault());document.body.appendChild(d);d.showModal();
     if(!e.mesa&&!reducido)e.animacion=peon.animate([{translate:'0 0'},{translate:'0 -55px'}],{delay:650,duration:4350,easing:'ease-in',fill:'forwards'});
-    e.raf=requestAnimationFrame(cuadro);
+    cuadro(inicio);
     esperar(e,5000,()=>{cancelAnimationFrame(e.raf);d.dataset.fase='blanco';
       esperar(e,1000,()=>{
         const actual=campanaLeer();if(actual!==p){campanaCancelarAscenso();return;}
@@ -75,9 +80,11 @@
     esperar(e,reducido?250:1000,()=>{e.form.remove();e.mensaje=document.createElement('h1');e.mensaje.className='deseoConcedido';e.mensaje.textContent='Deseo concedido';d.appendChild(e.mensaje);});
     esperar(e,duracion,()=>{
       cancelAnimationFrame(e.raf);c.remove();d.dataset.fase='concedido';
-      // Tres segundos de mensaje, fundido y tres segundos de negro completo.
+      // El menú se prepara bajo el negro; esos tres segundos se aprovechan
+      // para revelarlo sin un corte al retirar el diálogo.
       esperar(e,3000,()=>{d.dataset.fase='fundido';esperar(e,1000,()=>{
-        d.dataset.fase='negro';esperar(e,3000,()=>{showScreen('menu');limpiarTransicionMenu();limpiar();});
+        showScreen('menu');limpiarTransicionMenu();e.mensaje.remove();
+        d.dataset.fase='menu';esperar(e,3000,limpiar);
       });});
     });
   }
@@ -101,10 +108,13 @@
   const css=document.createElement('style');css.textContent=`
   #campanaAscenso{position:fixed;inset:0;margin:0;padding:0;border:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:transparent;overflow:hidden;pointer-events:auto}
   #campanaAscenso::backdrop{background:#08050b22}
-  .ascensoRayo{position:absolute;top:0;width:140px;transform:translateX(-50%);background:linear-gradient(90deg,#ffe9ad00,#ffe9ad24 18%,#fffce630 46%,#ffffee55 50%,#fffce630 54%,#ffe9ad24 82%,#ffe9ad00);filter:drop-shadow(0 0 20px #ffe9b4);pointer-events:none}
-  .ascensoNucleo{position:absolute;inset:0 49.3%;background:linear-gradient(#ffffff90,#fff9cb55);box-shadow:0 0 18px 4px #fff2b050}
-  .ascensoHalo{position:absolute;bottom:-10px;left:15%;width:70%;height:22px;border-radius:50%;background:#fffce833;box-shadow:0 0 20px 5px #fff7bd50}
-  #campanaAscenso[data-fase="blanco"]{background:#fff}#campanaAscenso[data-fase="blanco"] .ascensoRayo{display:none}#campanaAscenso[data-fase="blanco"]::backdrop{background:#fff}
+  .ascensoRayo{position:absolute;top:0;width:clamp(210px,28vw,360px);transform:translateX(-50%);filter:drop-shadow(0 0 18px #ffe9b480);pointer-events:none}
+  .ascensoCono{position:absolute;inset:0;clip-path:polygon(43% 0,57% 0,100% 100%,0 100%);background:linear-gradient(180deg,#fffdeccc,#fff9d54a 32%,#fff4bb12),linear-gradient(90deg,#ffe6a80a,#fff9d943 36%,#ffffee66 50%,#fff9d943 64%,#ffe6a80a)}
+  .ascensoNucleo{position:absolute;inset:0;clip-path:polygon(48% 0,52% 0,67% 100%,33% 100%);background:linear-gradient(#fffef4a0,#fff9cb18)}
+  .ascensoHalo{position:absolute;bottom:-14px;left:0;width:100%;height:28px;border-radius:50%;background:radial-gradient(ellipse,#fffce855,#fff4bd22 50%,#fff4bd00 72%);box-shadow:0 0 24px 3px #fff7bd30}
+  .ascensoResplandor{position:absolute;left:var(--luz-x,50%);top:var(--luz-y,60%);width:var(--luz-diametro,400vmax);height:var(--luz-diametro,400vmax);translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,#fff 0 52%,#fffcedb3 66%,#ffe8a14d 80%,#ffe8a100 100%);animation:resplandorAscenso 1.2s cubic-bezier(.4,0,.6,1) 3.8s both;pointer-events:none}
+  @keyframes resplandorAscenso{0%{scale:.015;opacity:0}25%{opacity:.65}100%{scale:1;opacity:1}}
+  #campanaAscenso[data-fase="blanco"]{background:#fff}#campanaAscenso[data-fase="blanco"]>div{display:none}#campanaAscenso[data-fase="blanco"]::backdrop{background:#fff}
   #campanaDeseo{position:fixed;inset:0;top:var(--campana-desfase,0px);margin:0;border:0;padding:24px;width:100vw;max-width:none;height:var(--campana-alto,100dvh);max-height:none;box-sizing:border-box;overflow:hidden;background:radial-gradient(ellipse at 50% 30%,#402213,#120a0a 60%,#050304);color:#ffedbc;z-index:500;}
   #campanaDeseo[open]{display:grid;place-items:center}#campanaDeseo::backdrop{background:#050304}
   .deseoFormulario{width:min(540px,100%);max-height:100%;display:flex;flex-direction:column;gap:14px;text-align:center;min-height:0}
@@ -118,7 +128,10 @@
   .deseoFuego{position:absolute;inset:0;width:100%;height:100%;z-index:3;pointer-events:none}
   .deseoConcedido{position:relative;z-index:1;text-shadow:0 0 30px #d17b27;transition:opacity 1s}
   #campanaDeseo[data-fase="concedido"]{background:#0b0503}
-  #campanaDeseo[data-fase="fundido"],#campanaDeseo[data-fase="negro"]{background:#000;transition:background 1s}#campanaDeseo[data-fase="fundido"] .deseoConcedido,#campanaDeseo[data-fase="negro"] .deseoConcedido{opacity:0}
+  #campanaDeseo[data-fase="fundido"]{background:#000;transition:background 1s}#campanaDeseo[data-fase="fundido"] .deseoConcedido{opacity:0}
+  #campanaDeseo[data-fase="menu"]{background:#000;transition:none;animation:deseoRevelarMenu 3s cubic-bezier(.4,0,.2,1) both}#campanaDeseo[data-fase="menu"]::backdrop{background:transparent}
+  @keyframes deseoRevelarMenu{from{opacity:1}to{opacity:0}}
+  @media(prefers-reduced-motion:reduce){.ascensoResplandor{animation-name:resplandorAscensoSuave}@keyframes resplandorAscensoSuave{from{scale:1;opacity:0}to{scale:1;opacity:1}}}
   @media(max-height:480px){#campanaDeseo{padding:12px 24px}.deseoFormulario{gap:7px}#campanaDeseo h1{font-size:23px}.deseoSello{display:none}.deseoPrivacidad,.deseoEstado{font-size:10px}.deseoFormulario label{font-size:12px}#deseoTexto{padding:8px}.deseoFormulario .btn{min-height:40px;padding:8px;font-size:16px}}
   `;document.head.appendChild(css);
 })();
