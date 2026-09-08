@@ -384,6 +384,31 @@ PRUEBAS.suite('campana', async t => {
   }
 });
 
+PRUEBAS.suite('campanaEntrada', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-entrada-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;
+    try{
+      w.localStorage.removeItem('caoz.campana.v1.prueba');d.querySelector('#mCampana').click();
+      const panel=d.querySelector('#campanaPanel'),b=panel.querySelector('.campanaBarrido');
+      t.check(panel.open&&!!b&&panel.classList.contains('campanaEntra'),pagina+': Campaña debe activar la entrada dorada.');
+      t.check(b.parentElement===panel&&b.getAttribute('aria-hidden')==='true'&&w.getComputedStyle(b).pointerEvents==='none',pagina+': el barrido debe estar delante del diálogo sin interceptar toques.');
+      t.check(w.getComputedStyle(b).backgroundImage===w.getComputedStyle(d.querySelector('#barrido')).backgroundImage,pagina+': la campaña debe usar el mismo barrido dorado de los menús.');
+      const carta=panel.querySelector('.campanaCarta');d.querySelector('#mCampana').click();
+      t.check(panel.querySelector('.campanaCarta')===carta&&panel.querySelectorAll('.campanaBarrido').length===1,pagina+': un doble toque reinicia la entrada.');
+      await sleep(750);
+      t.check(!panel.querySelector('.campanaBarrido')&&!panel.classList.contains('campanaEntra'),pagina+': la entrada no se limpia.');
+      w.campanaGuardar({version:1,id:'entrada',lider:'fender',etapa:2});w.campanaCerrar();w.abrirCampana();await sleep(0);
+      t.check(panel.dataset.vista==='mapa'&&!!panel.querySelector('.campanaBarrido')&&w.campanaLeer().etapa===2,pagina+': retomar la campaña debe animarse y conservar el avance.');
+      w.campanaElegir();
+      t.check(!panel.querySelector('.campanaBarrido')&&!panel.classList.contains('campanaEntra'),pagina+': cambiar de vista durante la entrada deja efectos pegados.');
+      w.campanaCerrar();w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);w.abrirCampana();
+      t.check(panel.open&&!panel.querySelector('.campanaBarrido')&&!panel.classList.contains('campanaEntra'),pagina+': movimiento reducido debe abrir directamente.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('campanaPantalla', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';

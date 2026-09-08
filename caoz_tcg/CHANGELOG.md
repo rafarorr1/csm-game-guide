@@ -13,6 +13,17 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Entrada dorada a Campaña · 2026-09-07
+
+Build 186, beta: Campaña comparte el barrido dorado de 450 ms de los menús,
+con aparición escalonada del título, selector o mapa y botones. El destello
+vive dentro del diálogo para verse por encima de la campaña. Funciona desde
+el menú y desde el enlace directo, al iniciar o retomar el avance guardado.
+Doble toque no reinicia la entrada; cerrar, Escape o cambiar de vista retiran
+el efecto y su temporizador. Movimiento reducido abre directamente.
+Suite campanaEntrada en ambas pantallas, reproducida en rojo antes del cambio.
+Comprobación visual y de controles reales; se conserva el diseño sin scroll.
+
 ## Sin numerar — Campaña sin desplazamiento · 2026-09-07
 
 Build 185, beta: selector y mapa se reparten la altura visible real del navegador,

@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 185 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 186 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -337,3 +337,9 @@ Build 185: diálogo de campaña con cabecera, contenido flexible y campanaAccion
 campanaAjustarVentana sigue visualViewport; data-vista seleccion/mapa reparte
 la altura disponible sin scroll. En horizontal bajo se distribuye en dos columnas.
 Suite campanaPantalla cubre tamaños, giros, protagonistas y etapas sin recortes.
+
+Build 186: abrirCampana llama a campanaAnimarEntrada tras montar el selector/mapa.
+.campanaBarrido comparte el CSS de #barrido y vive dentro del diálogo (capa modal).
+campanaLimpiarEntrada cancela temporizador y efectos al navegar/cerrar; close
+comprueba !d.open para no limpiar una reapertura rápida. Movimiento reducido
+omite el efecto. Suite campanaEntrada cubre inicio, reentrada, doble toque y limpieza.
