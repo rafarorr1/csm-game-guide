@@ -14,6 +14,58 @@
    ========================================================================== */
 'use strict';
 
+/* Una entrada dorada para pantallas y ventanas de menú. Los temporizadores
+   se cancelan al navegar: una entrada anterior no puede cortar la siguiente. */
+let menuEntradaTimer,menuBarridoTimer,menuEntradaNodo,menuBarridoNodo;
+function limpiarTransicionMenu(){
+  clearTimeout(menuEntradaTimer);clearTimeout(menuBarridoTimer);
+  if(menuEntradaNodo)menuEntradaNodo.classList.remove('entra','menuEntra');
+  if(menuBarridoNodo){
+    menuBarridoNodo.classList.remove('va');
+    if(menuBarridoNodo.classList.contains('barridoModal'))menuBarridoNodo.remove();
+  }
+  menuEntradaNodo=null;menuBarridoNodo=null;
+}
+function animarTransicionMenu(pantalla,ventana=null){
+  limpiarTransicionMenu();
+  if(!pantalla||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  const barrido=ventana?document.createElement('div'):document.getElementById('barrido');
+  if(ventana){
+    barrido.className='barridoModal';barrido.setAttribute('aria-hidden','true');
+    // Hermano del panel, para cubrirlo sin desplazarse al recorrer la colección.
+    ventana.appendChild(barrido);
+  }
+  menuEntradaNodo=pantalla;menuBarridoNodo=barrido;
+  void pantalla.offsetWidth;
+  pantalla.classList.add(ventana?'menuEntra':'entra');
+  if(barrido){void barrido.offsetWidth;barrido.classList.add('va');}
+  menuBarridoTimer=setTimeout(()=>{if(barrido){barrido.classList.remove('va');if(ventana)barrido.remove();}},500);
+  menuEntradaTimer=setTimeout(limpiarTransicionMenu,700);
+}
+function cerrarOv(){
+  const ov=document.getElementById('ov'),abierto=ov.classList.contains('on');
+  ov.classList.remove('on','suave');
+  const mano=document.getElementById('hand');if(mano)mano.classList.remove('mirando');
+  if(!abierto)return;
+  limpiarTransicionMenu();
+  const pantalla=document.querySelector('.screen.on.portada');
+  if(pantalla)animarTransicionMenu(pantalla);
+}
+{
+  const css=document.createElement('style');css.textContent=`
+  #ov .barridoModal{position:fixed;inset:0;z-index:2}
+  #ovPanel.menuEntra{animation:entraPantalla .40s cubic-bezier(.2,.75,.3,1) both}
+  @media(prefers-reduced-motion:reduce){#ovPanel.menuEntra{animation:none}}`;
+  document.head.appendChild(css);
+  // Escape sólo cierra ventanas de menú; las decisiones de combate mantienen
+  // sus controles y el diálogo de campaña conserva su cancelación nativa.
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape'&&!document.querySelector('#campanaPanel[open]')&&document.querySelector('.screen.on.portada')&&document.querySelector('#ov.on')){
+      e.preventDefault();e.stopImmediatePropagation();cerrarOv();
+    }
+  });
+}
+
 const FIN_CSS = `
 .fin{position:fixed;inset:0;z-index:390;display:grid;place-items:center;overflow:hidden;cursor:pointer;
   background:rgba(6,4,10,0);transition:background .9s}
@@ -329,7 +381,7 @@ async function voladoDomo(nombreRival){
   texto.innerHTML=`Salió <b>${salio.toUpperCase()}</b><span class="vd-result"></span>`;
   texto.querySelector('.vd-result').textContent=ganas?'empiezas tú':'empieza '+nombreRival;
   await nap(1500);
-  if(p.contains(panel))document.getElementById('ov').classList.remove('on');
+  if(p.contains(panel))cerrarOv();
   return ganas?ME:FOE;
 }
 
@@ -383,12 +435,12 @@ function codigoInvitacion(valor){
 function onlineEspera(texto,volver=false){
   const panel=document.getElementById('ovPanel');panel.innerHTML='';
   const titulo=document.createElement('h3');titulo.textContent=texto;panel.appendChild(titulo);
-  if(volver){const b=document.createElement('button');b.className='btn';b.textContent='Volver al menú';b.onclick=()=>{netSend({t:'bye'});netClose();document.getElementById('ov').classList.remove('on');showScreen('menu');};panel.appendChild(b);}
+  if(volver){const b=document.createElement('button');b.className='btn';b.textContent='Volver al menú';b.onclick=()=>{netSend({t:'bye'});netClose();cerrarOv();showScreen('menu');};panel.appendChild(b);}
   openOv();
 }
 function onlinePreparar(a,b){
   tutEnd();clearPrompt();SEL=null;TGT=null;
-  document.getElementById('ov').classList.remove('on');
+  cerrarOv();
   newGame(a,b,{});G.fast=false;G.online=true;G.guest=NET.guest;
   showScreen('board');document.getElementById('log').innerHTML='';render();
 }
@@ -416,7 +468,7 @@ async function iniciarOnlineHost(a,b){
     const moneda={t:'coin',partida:id,resultado,first};
     netSend({...moneda});await onlineMostrarMoneda(resultado,first===ME?NET.miNombre:NET.suNombre);
     if(!await onlineEsperarAcuse(id,'monedaLista',moneda))return;
-    document.getElementById('ov').classList.remove('on');
+    cerrarOv();
     await setupMatch(a,b,{online:true,first});
   }finally{if(NET.partidaId===id)NET.iniciando=false;}
 }
@@ -435,7 +487,7 @@ async function onlineMonedaRecibe(m){
   NET.monedaRecibida=m.partida;NET.monedaTerminada=false;
   await onlineMostrarMoneda(m.resultado,m.first===0?NET.suNombre:NET.miNombre);
   if(!NET.on||NET.partidaId!==m.partida)return;
-  NET.monedaTerminada=true;document.getElementById('ov').classList.remove('on');netSend({t:'coinAck',partida:m.partida});
+  NET.monedaTerminada=true;cerrarOv();netSend({t:'coinAck',partida:m.partida});
 }
 async function onlineMostrarMoneda(resultado,nombre){
   const panel=document.getElementById('ovPanel');panel.innerHTML='<div class="volado"><h3>Cara o cruz</h3><div class="onlineMoneda" aria-label="Moneda girando">✦</div><p class="onlineResultado">La moneda está en el aire…</p></div>';
@@ -515,7 +567,7 @@ function campanaDialogo(){
   if(!d){
     d=document.createElement('dialog');d.id='campanaPanel';d.setAttribute('aria-labelledby','campanaTitulo');document.body.appendChild(d);
     d.addEventListener('close',()=>{if(!d.open){campanaCancelarZoom();campanaLimpiarEntrada();}});
-    d.addEventListener('cancel',()=>{campanaCancelarZoom();campanaLimpiarEntrada();});
+    d.addEventListener('cancel',e=>{e.preventDefault();campanaVolverAlMenu();});
   }
   if(!d.open){d.showModal();cargarArte().then(()=>d.querySelectorAll('[data-campana-lider]').forEach(n=>{if(!n.querySelector('.marcoDibujo'))ilustrarLider(n,n.dataset.campanaLider);}));}return d;
 }
@@ -538,6 +590,7 @@ function campanaLimpiarEntrada(){
   d.classList.remove('campanaEntra');const b=d.querySelector('.campanaBarrido');if(b)b.remove();
 }
 function campanaAnimarEntrada(){
+  limpiarTransicionMenu();
   campanaLimpiarEntrada();
   if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   const d=document.getElementById('campanaPanel');if(!d||!d.open)return;
@@ -547,6 +600,12 @@ function campanaAnimarEntrada(){
   campanaEntradaTimer=setTimeout(campanaLimpiarEntrada,700);
 }
 function campanaCerrar(){campanaCancelarZoom();campanaLimpiarEntrada();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+function campanaVolverAlMenu(){
+  campanaCerrar();showScreen('menu');
+  // La campaña es un diálogo: debajo ya estaba el menú, así que el regreso
+  // también debe animarse cuando showScreen no cambia la pantalla activa.
+  animarTransicionMenu(document.getElementById('menu'));
+}
 function campanaCabecera(d,titulo,sub){
   campanaCancelarZoom();
   campanaLimpiarEntrada();
@@ -596,7 +655,7 @@ function campanaElegir(){
     campanaPasoAnterior=null;campanaGuardar({version:1,id:Date.now().toString(36)+'-'+Math.random().toString(36).slice(2),lider:ids[centro],etapa:0});campanaRuta();
   },true);confirmar.classList.add('campanaConfirmar');
   const seleccion=document.createElement('div');seleccion.className='campanaSeleccion';seleccion.append(pista,controles,ficha);
-  d.append(seleccion,campanaAcciones(confirmar,campanaBoton('Menú principal',()=>{campanaCerrar();showScreen('menu');})));elegir(0);
+  d.append(seleccion,campanaAcciones(confirmar,campanaBoton('Menú principal',campanaVolverAlMenu)));elegir(0);
 }
 function campanaRuta(aviso=''){
   const p=campanaLeer();if(!p){campanaElegir();return;}
@@ -651,7 +710,7 @@ function campanaRuta(aviso=''){
   }
   campanaPasoAnterior=null;
   const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero. Campaña completada.':'Mazo completo · 20 de Alma por duelo. Tu avance se guarda.';d.appendChild(ayuda);
-  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':'Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaCombatir(),true),campanaBoton('Menú principal',()=>{campanaCerrar();showScreen('menu');}));
+  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':'Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaCombatir(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
   if(!completa)acciones.appendChild(campanaBoton('Reiniciar',()=>{
     campanaCabecera(d,'¿Reiniciar la campaña?','Perderás el avance de esta escalera cuando elijas un nuevo Protagonista.');
     d.append(campanaAcciones(campanaBoton('Conservar mi avance',()=>campanaRuta(),true),campanaBoton('Elegir nuevo Protagonista',campanaElegir)));
@@ -708,7 +767,7 @@ function campanaFinal(winner,why){
   const resultado=document.createElement('p');resultado.className='campanaNota';resultado.textContent=why||'';d.appendChild(resultado);
   const acciones=campanaAcciones();
   if(!completa)acciones.appendChild(campanaBoton(winner===ME?'Avanzar en el mapa':'Reintentar combate',()=>winner===ME?campanaRuta():campanaCombatir(),true));
-  acciones.append(campanaBoton(completa?'Ver campaña completada':'Ver el mapa',()=>campanaRuta(),completa),campanaBoton('Menú principal',()=>{campanaCerrar();showScreen('menu');}));d.appendChild(acciones);
+  acciones.append(campanaBoton(completa?'Ver campaña completada':'Ver el mapa',()=>campanaRuta(),completa),campanaBoton('Menú principal',campanaVolverAlMenu));d.appendChild(acciones);
 }
 {
   const css=document.createElement('style');css.textContent=`

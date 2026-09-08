@@ -592,6 +592,47 @@ PRUEBAS.suite('nubeDagasUI', async t => {
   }
 });
 
+PRUEBAS.suite('menusDorados', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=menus-internos';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;
+    const barridos=()=>[...d.querySelectorAll('#barrido.va,.barridoModal.va,.campanaBarrido.va')];
+    const comprobar=(etiqueta)=>{
+      const b=barridos();t.check(b.length===1,pagina+': '+etiqueta+' debe tener un solo barrido dorado.');
+      t.check(w.getComputedStyle(b[0]).animationName==='cruza'&&w.getComputedStyle(b[0]).pointerEvents==='none',pagina+': '+etiqueta+' debe animar sin bloquear los botones.');
+    };
+    try{
+      w.localStorage.removeItem('caoz.campana.v1.prueba');
+      for(const [boton,salida] of [['mPlay','#selBack'],['mGuides','#guideBack'],['mCampana',null],['mTut',null],['mOnline',null],['mCards',null],['mRules',null],['mRecords',null]]){
+        d.querySelector('#'+boton).click();comprobar('entrar en '+boton);
+        const modal=d.querySelector('#ov.on');
+        if(modal)t.check(!!modal.querySelector('.barridoModal')&&d.querySelector('#ovPanel').classList.contains('menuEntra'),pagina+': el barrido debe dibujarse delante de la ventana.');
+        const panel=boton==='mCampana'?d.querySelector('#campanaPanel'):d.querySelector('#ovPanel');
+        const cerrar=salida?d.querySelector(salida):[...panel.querySelectorAll('button')].find(b=>/^(Cerrar|Cancelar|Menú principal)$/.test(b.textContent.trim()));
+        t.check(!!cerrar,pagina+': falta regreso de '+boton);cerrar.click();comprobar('volver de '+boton);
+        t.check(d.querySelector('#menu.on')&&!d.querySelector('#ov.on')&&!d.querySelector('#campanaPanel[open]'),pagina+': '+boton+' no regresa al menú principal.');
+      }
+      await sleep(750);
+      t.check(!barridos().length&&!d.querySelector('.menuEntra,.screen.entra'),pagina+': quedan efectos al terminar.');
+      w.showRecords();d.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));comprobar('cerrar récords con Escape');
+      t.check(!d.querySelector('#ov.on'),pagina+': Escape deja la ventana abierta.');
+      w.showOnline();d.querySelector('#ov').click();comprobar('cerrar al tocar el fondo');
+      t.check(!d.querySelector('#ov.on'),pagina+': tocar el fondo no regresa al menú.');
+      w.abrirCampana();d.querySelector('#campanaPanel').dispatchEvent(new Event('cancel',{cancelable:true}));comprobar('cerrar Campaña con Escape');
+      t.check(!d.querySelector('#campanaPanel[open]'),pagina+': Escape deja abierta Campaña.');
+      w.showRecords();await sleep(350);w.cerrarOv();w.showOnline();await sleep(400);
+      t.check(d.querySelector('#ovPanel').classList.contains('menuEntra'),pagina+': un temporizador anterior corta la entrada nueva.');
+      w.showScreen('board');w.cerrarOv();w.showRules(true);
+      t.check(!barridos().length&&!d.querySelector('.menuEntra'),pagina+': los diálogos de combate heredan transiciones de menú.');
+      w.cerrarOv();t.check(!barridos().length,pagina+': cerrar reglas en combate activa el barrido.');
+      w.showScreen('menu');w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      w.showOnline();t.check(!barridos().length&&!d.querySelector('.menuEntra,.screen.entra'),pagina+': movimiento reducido debe abrir sin animación.');
+      w.cerrarOv();t.check(!barridos().length,pagina+': movimiento reducido debe regresar sin animación.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('entradaMovil', async t => {
   const marco=document.createElement('iframe');
   marco.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
