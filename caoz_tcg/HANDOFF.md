@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 200 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 201 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -528,3 +528,20 @@ La secuencia después del fuego es concedido 3000 ms → fundido 1000 ms → neg
 → menú. campanaDeseo comprueba tiempos, relectura del guardado y nueva selección;
 el espía fetch permite las ilustraciones del selector pero detecta envíos del
 deseo. Rojo del reinicio reproducido restaurando la condición anterior.
+
+
+Build 201: campanaAscenderAlDeseo en campana-deseo.js se inicia al resolver
+golpear de victoria 5. Mantiene mesaPendiente hasta terminar rayo 5000 ms y
+blanco 1000 ms; después limpia pendiente y abre campanaAbrirDeseo antes de retirar
+el blanco. campanaCancelarAscenso desde campanaCerrar elimina timers/rAF y
+restaura altura. crearMesaCampana expone elevar(0..1) y focoJugador; eleva
+geometría y etiqueta juntos hasta 2.2 unidades. Alternativa HTML usa translate.
+Movimiento reducido mantiene luz y tiempos sin elevar. Victoria omite .toca;
+la posibilidad de tocar para acelerar permanece, sólo desaparece el aviso.
+Suite campanaAscenso y check en campanaSinDestello. Las suites antiguas de
+progreso stubean ascenso para conservar su alcance. Publicación sólo beta.
+
+Regresiones: el caso visual Infectado usa newGame + campo sólo con Discípulo,
+en vez de startMatch (podía retornar por ocupado y conservar a Eric del caso
+anterior). El diagnóstico quedó esperando «¿Eric se sacrifica en su lugar?».
+No cambia motor ni interacción de jugadores; evita azar e interferencia del arnés.

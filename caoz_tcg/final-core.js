@@ -265,7 +265,7 @@ async function cinematicaFinal(winner, why, acciones){
     `<b>${gano ? 'VICTORIA' : 'DERROTA'}</b><small>${why || ''}</small>` +
     `<i>Turnos: ${Math.ceil(G.turnNo / 2)} &nbsp;·&nbsp; ${P(winner).L.n} ❤️ ${alma(winner)} &nbsp;·&nbsp; ${P(1 - winner).L.n} ❤️ ${alma(1 - winner)}</i>`));
   { const fr = fraseDeRecord(); if(fr) capa.querySelector('.sello').appendChild(el('i', 'racha', fr)); }
-  capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
+  if(!gano)capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
   /* Los botones viven aquí, no en un cartel aparte: la cinemática se queda
      hasta que se elige. Antes se iba sola y devolvía a la mesa un instante,
@@ -614,7 +614,7 @@ function campanaAnimarEntrada(){
 }
 let campanaMesaEscena=null,campanaPreparando=null;
 function campanaLimpiarMesa(){campanaLimpiarPreparacion();if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
-function campanaCerrar(){campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+function campanaCerrar(){if(typeof campanaCancelarAscenso==='function')campanaCancelarAscenso();campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaVolverAlMenu(){
   campanaCerrar();showScreen('menu');
   // La campaña es un diálogo: debajo ya estaba el menú, así que el regreso
@@ -749,7 +749,7 @@ function campanaRuta(aviso=''){
     },true);
     seguir.disabled=true;acciones.append(seguir,campanaBoton('Menú principal',campanaVolverAlMenu));
     const viaje=campanaMesaEscena?campanaMesaEscena.golpear():campanaGolpeHTML(peon,lista.querySelector('[data-etapa="'+victoria+'"]'));
-    viaje.then(ok=>{if(!ok||!seguir.isConnected)return;seguir.disabled=false;const rival=lista.querySelector('.actual');rival.classList.add('vencido');rival.querySelector('.campanaNumero').textContent='✓';rival.querySelector('button').setAttribute('aria-label',LEADERS[CAMPANA_RIVALES[victoria].lider].n+', vencido');});
+    viaje.then(ok=>{if(!ok||!seguir.isConnected)return;if(victoria===5&&typeof campanaAscenderAlDeseo==='function'){acciones.style.visibility='hidden';ayuda.textContent='';campanaAscenderAlDeseo();}else seguir.disabled=false;const rival=lista.querySelector('.actual');rival.classList.add('vencido');rival.querySelector('.campanaNumero').textContent='✓';rival.querySelector('button').setAttribute('aria-label',LEADERS[CAMPANA_RIVALES[victoria].lider].n+', vencido');});
   }
 }
 function campanaGolpeHTML(peon,rival){

@@ -13,6 +13,22 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — La luz del Domo · 2026-09-08
+
+Build 201, beta. Victoria ya no muestra «Toca para saltar». Al terminar el
+derribo de Gero, un rayo desciende automáticamente desde arriba hasta la ficha
+y la miniatura real se eleva gradualmente. A los cinco segundos la pantalla
+se vuelve blanca; un segundo después revela el formulario del deseo. Sustituye
+el botón final de completar campaña; conserva el envío simulado y su cierre.
+El rayo vive en un diálogo transparente a pantalla completa y sigue la proyección
+de la ficha. Cerrar cancela timers y elevación; movimiento reducido conserva
+la luz sin el desplazamiento. Suite campanaAscenso comprueba integración,
+elevación, tiempos, cobertura y cancelación; sabotaje de duración detectado.
+La prueba visual de infección ahora crea su propio estado: una partida previa
+podía conservar a Eric y dejar el arnés esperando su confirmación de sacrificio.
+Se reprodujo la espera y se aisló el escenario sin cambiar las reglas.
+Producción sigue en 195.
+
 ## Sin numerar — Volver a jugar después del deseo · 2026-09-08
 
 Build 200, beta. Abrir Campaña después de un deseo vuelve al selector de
