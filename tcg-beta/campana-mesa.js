@@ -66,6 +66,7 @@
     let salto=null,posicionFija=null,derribo=null,derribado=false;
     let caras=[],sombras=[],llamas=[],dados=[];
     let avance=op.etapaAnterior===null||op.etapaAnterior===undefined?1:0;
+    const huellas=[];
     const inicio=performance.now();
     const yaw=.18,elev=.82,ce=Math.cos(elev),se=Math.sin(elev),distancia=32;
     const reducir=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
@@ -191,8 +192,13 @@
     }
     function niebla(t){
       if(op.etapa>=5&&avance>=1)return;
-      const fin=op.etapa>=5?0:op.casillas[op.etapa][1]-5,antes=op.etapaAnterior==null?fin:op.casillas[Math.min(5,op.etapaAnterior)][1]-5;
-      const limite=antes+(fin-antes)*avance;
+      const jugador=posicionJugador(),rival=op.casillas[op.etapa];
+      const distanciaRival=Math.hypot(jugador[0]-rival[0],jugador[1]-rival[1]);
+      const cercania=Math.max(0,Math.min(1,(22-distanciaRival)/9));
+      canvas.dataset.despejeRival=cercania.toFixed(3);
+      const ultima=huellas[huellas.length-1];
+      if(!ultima||Math.hypot(jugador[0]-ultima[0],jugador[1]-ultima[1])>1)huellas.push(jugador.slice());
+      const limite=Math.min(95,jugador[1]+8);
       const destino=ctx;ctx=brumaCtx;ctx.clearRect(0,0,ancho,alto);
       // Una bruma baja sobre el terreno, sin cubrir los objetos del borde de la mesa.
       for(let j=0;j<12;j++)for(let i=0;i<6;i++){
@@ -202,9 +208,10 @@
       }
       // Abertura suave que despeja cuerpo, cabeza y ficha del jugador.
       ctx.globalCompositeOperation='destination-out';
-      const claros=[...op.casillas.filter((_,i)=>i<=op.etapa),posicionJugador()];
-      claros.forEach(p=>{const a=proyectar(punto(p,.05)),b=proyectar(punto(p,2.6)),r=Math.abs(escala/a.d)*1.5;ctx.save();ctx.translate(a.x,(a.y+b.y)/2);ctx.scale(r,Math.abs(a.y-b.y)/2+r*.7);const g=ctx.createRadialGradient(0,0,0,0,0,1);g.addColorStop(0,'#000');g.addColorStop(.72,'#000');g.addColorStop(1,'#0000');ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);ctx.restore();});
-      ctx.globalCompositeOperation='source-over';ctx=destino;ctx.drawImage(bruma,0,0,ancho,alto);
+      const claros=[...op.casillas.filter((_,i)=>i<op.etapa),...huellas,jugador];
+      claros.push(rival);
+      claros.forEach((p,i)=>{ctx.globalAlpha=i===claros.length-1?cercania:1;const a=proyectar(punto(p,.05)),b=proyectar(punto(p,2.6)),r=Math.abs(escala/a.d)*1.5;ctx.save();ctx.translate(a.x,(a.y+b.y)/2);ctx.scale(r,Math.abs(a.y-b.y)/2+r*.7);const g=ctx.createRadialGradient(0,0,0,0,0,1);g.addColorStop(0,'#000');g.addColorStop(.72,'#000');g.addColorStop(1,'#0000');ctx.fillStyle=g;ctx.fillRect(-1,-1,2,2);ctx.restore();});
+      ctx.globalAlpha=1;ctx.globalCompositeOperation='source-over';ctx=destino;ctx.drawImage(bruma,0,0,ancho,alto);
     }
     function posiciones(){
       op.casillas.forEach((p,i)=>{const n=tablero.querySelector('[data-etapa="'+i+'"]');if(!n)return;const q=proyectar(punto(p,.12));n.style.left=q.x/ancho*100+'%';n.style.top=q.y/alto*100+'%';});
