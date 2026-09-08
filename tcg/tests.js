@@ -407,6 +407,31 @@ PRUEBAS.suite('azarYCriticos', async t => {
   }
 });
 
+PRUEBAS.suite('campanaPruebaBeta', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=beta-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;let acciones;
+    try{
+      w.matchMedia=()=>({matches:true});
+      w.cinematicaFinal=async(g,m,a)=>{acciones=a;return true;};
+      w.campanaGuardar({version:1,id:'beta-recorrido',lider:'fender',etapa:0});
+      for(let etapa=0;etapa<6;etapa++){
+        w.campanaRuta();await w.campanaSeleccionar();
+        const boton=w.document.querySelector('[data-prueba-campana]');
+        t.check(!!boton,pagina+': falta victoria temporal al llegar al rival.');
+        boton.click();boton.click();await sleep(0);
+        t.check(w.campanaLeer().etapa===etapa+1&&w.campanaLeer().mesaPendiente===etapa,pagina+': la victoria temporal debe avanzar exactamente un encuentro.');
+        acciones.revancha();await sleep(30);
+        const seguir=w.document.querySelector('#campanaPanel .campanaAcciones .gold');
+        t.check(seguir.textContent===(etapa===5?'Completar campaña':'Continuar'),pagina+': continuar no debe revelar al siguiente rival.');
+        seguir.click();
+      }
+      t.check(w.campanaLeer().etapa===6&&!w.document.querySelector('[data-prueba-campana]'),pagina+': campaña completada sin victoria extra.');
+    }finally{w.campanaCerrar();w.relojPara();f.remove();}
+  }
+});
+
 PRUEBAS.suite('victoriaCentrada', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';

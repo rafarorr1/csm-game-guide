@@ -734,7 +734,7 @@ function campanaRuta(aviso=''){
   if(campanaMesaEscena){peon.getAnimations().forEach(a=>a.cancel());peon.querySelector('.campanaPeonCuerpo').getAnimations().forEach(a=>a.cancel());}
   if(victoria!==null){
     ayuda.textContent='¡Rival vencido!';acciones.replaceChildren();
-    const seguir=campanaBoton(progreso.etapa===6?'Completar campaña':'Seguir contra '+LEADERS[CAMPANA_RIVALES[progreso.etapa].lider].n,()=>{
+    const seguir=campanaBoton(progreso.etapa===6?'Completar campaña':'Continuar',()=>{
       const actual=campanaLeer();if(actual!==progreso||actual.mesaPendiente!==victoria)return;
       delete actual.mesaPendiente;actual.enEncuentro=true;campanaPasoAnterior=victoria;campanaGuardar(actual);campanaRuta();
     },true);
@@ -784,6 +784,18 @@ async function campanaSeleccionar(){
   const actual=campanaLeer();if(!actual||actual.id!==e.id||actual.etapa!==e.etapa){campanaLimpiarPreparacion(true);return;}
   campanaMostrarEncuentro(e,actual);
 }
+// Herramienta temporal de la beta: no se habilita en el dominio de producción.
+function campanaPruebaDisponible(){
+  return ['localhost','127.0.0.1','beta.caoz-tcg.pages.dev'].includes(location.hostname)||location.hostname==='rafarorr1.github.io'&&location.pathname.startsWith('/csm-game-guide/tcg-beta/');
+}
+function campanaVencerPrueba(e){
+  const p=campanaLeer();
+  if(!campanaPruebaDisponible()||campanaPreparando!==e||!e.dialogo?.open||!p||p.id!==e.id||p.etapa!==e.etapa||p.mesaPendiente!=null||NET.on)return;
+  const rival=CAMPANA_RIVALES[p.etapa];
+  campanaLimpiarPreparacion();campanaCerrar();cerrarCinematica();
+  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma};G.over=true;P(1).alma=0;
+  campanaFinal(ME,'Victoria de prueba · Beta');
+}
 function campanaMostrarEncuentro(e,p){
   const rival=CAMPANA_RIVALES[p.etapa],lider=LEADERS[rival.lider],mazo=DECKS[rival.lider],d=document.createElement('dialog');
   d.id='campanaEncuentroPanel';d.setAttribute('aria-labelledby','campanaEncuentroTitulo');e.dialogo=d;
@@ -793,6 +805,7 @@ function campanaMostrarEncuentro(e,p){
   const volver=()=>campanaLimpiarPreparacion(true);
   const entrar=()=>{if(campanaPreparando!==e)return;campanaLimpiarPreparacion();campanaCombatir();};
   const acciones=campanaAcciones(campanaBoton('Entrar al combate',entrar,true),campanaBoton('Volver a la mesa',volver));
+  if(campanaPruebaDisponible()){const prueba=campanaBoton('Vencer rival · Prueba beta',()=>campanaVencerPrueba(e));prueba.dataset.pruebaCampana='1';acciones.appendChild(prueba);}
   d.appendChild(acciones);d.addEventListener('cancel',ev=>{ev.preventDefault();volver();});
   d.addEventListener('close',()=>{if(campanaPreparando===e)volver();});
   document.body.appendChild(d);d.showModal();acciones.querySelector('.gold').focus({preventScroll:true});
