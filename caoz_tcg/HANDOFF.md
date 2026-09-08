@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 189 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 190 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -377,3 +377,11 @@ showScreen cancela los efectos al pasar al tablero y deja el VS como entrada.
 Movimiento reducido omite las animaciones. Suite menusDorados cubre ocho menús,
 regresos, Escape, fondo, navegación rápida y aislamiento de las reglas en combate,
 en ambas interfaces. Rojo reproducido antes del arreglo y revisión visual con clics.
+
+
+Build 190: regresar al principal mantiene su logo y botones visibles desde el
+primer instante. animarTransicionMenu omite la clase entra cuando el destino
+es #menu; conserva el barrido dorado de 450 ms y las entradas de los secundarios.
+La aparición escalonada anterior ocultaba el principal entre 400 y 600 ms.
+menusDorados ahora comprueba la opacidad inmediata y durante el barrido desde
+los ocho menús, incluidos Escape y fondo. Rojo reproducido antes del arreglo.

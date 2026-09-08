@@ -602,6 +602,12 @@ PRUEBAS.suite('menusDorados', async t => {
       const b=barridos();t.check(b.length===1,pagina+': '+etiqueta+' debe tener un solo barrido dorado.');
       t.check(w.getComputedStyle(b[0]).animationName==='cruza'&&w.getComputedStyle(b[0]).pointerEvents==='none',pagina+': '+etiqueta+' debe animar sin bloquear los botones.');
     };
+    const regresoVisible=()=>{
+      for(const nodo of d.querySelectorAll('#menu>.marcaWrap,#menu>.marca,#menu>.menucol')){
+        const css=w.getComputedStyle(nodo);
+        t.check(css.opacity==='1'&&!css.animationName.includes('entraPantalla'),pagina+': al regresar, el logo y los botones deben estar visibles inmediatamente debajo del oro.');
+      }
+    };
     try{
       w.localStorage.removeItem('caoz.campana.v1.prueba');
       for(const [boton,salida] of [['mPlay','#selBack'],['mGuides','#guideBack'],['mCampana',null],['mTut',null],['mOnline',null],['mCards',null],['mRules',null],['mRecords',null]]){
@@ -612,14 +618,18 @@ PRUEBAS.suite('menusDorados', async t => {
         const cerrar=salida?d.querySelector(salida):[...panel.querySelectorAll('button')].find(b=>/^(Cerrar|Cancelar|Menú principal)$/.test(b.textContent.trim()));
         t.check(!!cerrar,pagina+': falta regreso de '+boton);cerrar.click();comprobar('volver de '+boton);
         t.check(d.querySelector('#menu.on')&&!d.querySelector('#ov.on')&&!d.querySelector('#campanaPanel[open]'),pagina+': '+boton+' no regresa al menú principal.');
+        regresoVisible();await sleep(130);regresoVisible();
       }
       await sleep(750);
       t.check(!barridos().length&&!d.querySelector('.menuEntra,.screen.entra'),pagina+': quedan efectos al terminar.');
       w.showRecords();d.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));comprobar('cerrar récords con Escape');
+      regresoVisible();
       t.check(!d.querySelector('#ov.on'),pagina+': Escape deja la ventana abierta.');
       w.showOnline();d.querySelector('#ov').click();comprobar('cerrar al tocar el fondo');
+      regresoVisible();
       t.check(!d.querySelector('#ov.on'),pagina+': tocar el fondo no regresa al menú.');
       w.abrirCampana();d.querySelector('#campanaPanel').dispatchEvent(new Event('cancel',{cancelable:true}));comprobar('cerrar Campaña con Escape');
+      regresoVisible();
       t.check(!d.querySelector('#campanaPanel[open]'),pagina+': Escape deja abierta Campaña.');
       w.showRecords();await sleep(350);w.cerrarOv();w.showOnline();await sleep(400);
       t.check(d.querySelector('#ovPanel').classList.contains('menuEntra'),pagina+': un temporizador anterior corta la entrada nueva.');

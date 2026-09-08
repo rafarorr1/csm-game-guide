@@ -13,6 +13,14 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Regreso inmediato al menú principal · 2026-09-07
+
+Build 190, beta: al volver de cualquier menú, el principal aparece completo
+inmediatamente y el oro pasa por encima. Se elimina sólo su aparición escalonada
+con desenfoque, que ocultaba logo y botones durante buena parte de la transición.
+Las entradas a los menús secundarios conservan el efecto aprobado. Regresión
+de visibilidad desde el primer instante en ambas pantallas, reproducida en rojo.
+
 ## Sin numerar — Transiciones doradas en todos los menús · 2026-09-07
 
 Build 189, beta: Jugar, Campaña, Tutorial, Con amigos, Colección, Guías, Reglas
