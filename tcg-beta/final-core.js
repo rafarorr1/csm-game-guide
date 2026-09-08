@@ -876,7 +876,7 @@ function campanaFinal(winner,why){
 
 {
   const css=document.createElement('style');css.textContent=`
-  #campanaPanel{--alto-util:calc(var(--campana-alto,100dvh) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));box-sizing:border-box;position:fixed;inset:calc(var(--campana-desfase,0px) + max(12px,env(safe-area-inset-top))) 0 auto;margin:0 auto;width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),650px);max-height:var(--alto-util);overflow:hidden;overscroll-behavior:contain;padding:18px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
+  #campanaPanel{--alto-util:calc(var(--campana-alto,100dvh) - max(12px,env(safe-area-inset-top)) - max(12px,env(safe-area-inset-bottom)));box-sizing:border-box;position:fixed;inset:calc(var(--campana-desfase,0px) + max(12px,env(safe-area-inset-top))) 0 calc(100% - var(--campana-desfase,0px) - var(--campana-alto,100dvh) + max(12px,env(safe-area-inset-bottom)));margin:auto;width:min(calc(100vw - 24px - env(safe-area-inset-left) - env(safe-area-inset-right)),650px);max-height:var(--alto-util);overflow:hidden;overscroll-behavior:contain;padding:18px;border:1px solid #a67b44;border-radius:18px;background:radial-gradient(ellipse at top,#592620,#201511 65%);color:#ead8bc;box-shadow:0 25px 100px #000c;text-align:center}
   #campanaPanel[open]{display:flex;flex-direction:column;gap:10px}
   #campanaPanel .campanaBarrido{position:fixed;inset:0;z-index:100}
   #campanaPanel.campanaEntra>:not(.campanaBarrido){animation:entraPantalla .40s cubic-bezier(.2,.75,.3,1) both}
@@ -885,7 +885,7 @@ function campanaFinal(winner,why){
   #campanaPanel.campanaEntra>:not(.campanaBarrido):nth-child(4){animation-delay:.13s}
   @media(prefers-reduced-motion:reduce){#campanaPanel.campanaEntra>*{animation:none}}
   #campanaPanel[data-vista="mapa"],#campanaPanel[data-vista="seleccion"]{height:min(850px,var(--alto-util))}
-  #campanaPanel[data-vista="mensaje"]{bottom:max(12px,env(safe-area-inset-bottom));height:fit-content;margin:auto}
+  #campanaPanel[data-vista="mensaje"]{height:fit-content}
   .campanaCabecera,.campanaAcciones{flex:none;min-width:0}
   .campanaAcciones{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   #campanaPanel .campanaAcciones .btn{width:100%;min-width:0;min-height:44px;margin:0;padding:8px;white-space:normal}
