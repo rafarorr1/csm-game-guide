@@ -362,7 +362,7 @@ PRUEBAS.suite('campana', async t => {
         w.endGame(0,'Victoria de prueba');await sleep(600);
         t.check(w.campanaLeer().etapa===etapa+1,pagina+': la victoria no se guardó.');
         w.campanaRuta();
-        t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||w.document.querySelector('.campanaPeon').getAnimations().length>0,pagina+': falta la animación de avance.');
+        t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||(w.document.querySelector('.campanaLienzo3d')?w.document.querySelector('.campanaLienzo3d').dataset.avanzando==='1':w.document.querySelector('.campanaPeon').getAnimations().length>0),pagina+': falta la animación de avance.');
         t.check(w.document.querySelector('.campanaPeon').dataset.etapa===String(etapa+1),pagina+': la ficha no avanzó tras la victoria.');
         t.check(w.document.querySelectorAll('.campanaRuta [data-campana-lider]').length===Math.min(6,etapa+2),pagina+': se revelan rivales antes de tiempo.');
         const nuevoLimite=comprobarNiebla(etapa+1);
@@ -450,16 +450,113 @@ PRUEBAS.suite('campanaEntrada', async t => {
   }
 });
 
+PRUEBAS.suite('pwaSinConexion', async t => {
+  const codigo=await (await fetch('sw.js?test=pwa-interna')).text();
+  for(const ruta of ['/','/tcg-beta/']){
+    const scope='https://domo.invalid'+ruta,eventos={},guardados=new Map();
+    for(const [archivo,texto] of [['index.html','escritorio'],['movil.html','telefono'],['campana-mesa.js','mesa']])guardados.set(new URL(archivo,scope).href,texto);
+    const cache={async match(p,op={}){const u=new URL(p.url||p,scope);if(op.ignoreSearch)u.search='';if(!guardados.has(u.href))return;const r=new Response(guardados.get(u.href),{headers:{'Content-Type':u.pathname.endsWith('.html')?'text/html':'text/javascript'}});if(u.pathname.endsWith('.html'))Object.defineProperty(r,'redirected',{value:true});return r;}};
+    const entorno={registration:{scope},location:{origin:'https://domo.invalid'},addEventListener:(nombre,fn)=>eventos[nombre]=fn};
+    // Ejecutar el worker real con red caída y una caché que sólo tiene el precaché.
+    new Function('self','caches','fetch',codigo)(entorno,{open:async()=>cache},async()=>{throw Error('Sin conexión de prueba');});
+    for(const [pagina,texto] of [['movil?b=192&campana=1','telefono'],['index?b=192','escritorio'],['?campana=1','escritorio'],['campana-mesa.js?b=192','mesa']]){
+      let respuesta;eventos.fetch({request:new Request(new URL(pagina,scope)),respondWith:p=>respuesta=p});
+      const r=await respuesta;t.check(r.status===200&&await r.text()===texto,ruta+pagina+': la ruta de Cloudflare debe encontrar su archivo guardado sin conexión.');
+      t.check(!r.redirected,ruta+pagina+': la copia precargada no puede conservar una redirección que el navegador rechaza sin red.');
+    }
+    let respuesta;eventos.fetch({request:new Request(new URL('desconocido',scope)),respondWith:p=>respuesta=p});
+    t.check((await respuesta).status===504,ruta+': una ruta desconocida no debe confundirse con el juego.');
+  }
+});
+
+PRUEBAS.suite('campanaMesa', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-mesa-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,contexto=w.HTMLCanvasElement.prototype.getContext,media=w.matchMedia;
+    try{
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      w.campanaGuardar({version:1,id:'mesa',lider:'fender',etapa:0});w.campanaRuta();await sleep(50);
+      const escena=w.eval('campanaMesaEscena'),lienzo=d.querySelector('.campanaLienzo3d'),rival=d.querySelector('.campanaRuta .actual');
+      t.check(lienzo&&lienzo.dataset.lista==='1'&&lienzo.width>100,pagina+': la mesa debe dibujarse, también con movimiento reducido.');
+      const imagen=lienzo.toDataURL(),antes=rival.style.left;
+      lienzo.dispatchEvent(new w.PointerEvent('pointerdown',{clientX:50,pointerId:1}));lienzo.dispatchEvent(new w.PointerEvent('pointermove',{clientX:200,pointerId:1}));
+      t.check(!d.querySelector('.campanaVista')&&lienzo.toDataURL()===imagen&&rival.style.left===antes,pagina+': la cámara debe permanecer fija, sin controles de giro.');
+      const nombre=rival.querySelector('b').getBoundingClientRect(),yo=d.querySelector('.campanaTu').getBoundingClientRect();
+      t.check(yo.left>=nombre.right||yo.right<=nombre.left||yo.top>=nombre.bottom||yo.bottom<=nombre.top,pagina+': las etiquetas del jugador y su rival se sobreponen.');
+      const foco=escena.foco(0);t.check(foco.every(n=>Number.isFinite(n)&&n>0&&n<100),pagina+': el zoom debe apuntar al rival visible.');
+      t.check(w.campanaLeer().etapa===0,pagina+': mirar la mesa no puede cambiar el progreso.');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:false}:media.call(w,q);
+      w.campanaGuardar({...w.campanaLeer(),etapa:1});w.eval('campanaPasoAnterior=0');w.campanaRuta();await sleep(100);
+      const peon=d.querySelector('.campanaPeon'),mapa=d.querySelector('.campanaTablero').getBoundingClientRect(),ficha=peon.getBoundingClientRect();
+      const esperado=mapa.left+parseFloat(peon.style.left)/100*mapa.width;
+      t.check(Math.abs(ficha.left+ficha.width/2-esperado)<2,pagina+': durante el avance, TÚ debe seguir la proyección de la miniatura, sin la animación del mapa antiguo.');
+      const avanzando=d.querySelector('.campanaLienzo3d');await sleep(1150);
+      t.check(avanzando.dataset.avanzando==='0',pagina+': el avance de la miniatura debe terminar.');
+      w.campanaElegir();t.check(!escena.activa&&!lienzo.isConnected&&!d.querySelector('.campanaVista'),pagina+': cambiar de menú debe liberar la escena anterior.');
+      w.campanaRuta();const segunda=w.eval('campanaMesaEscena');w.campanaCerrar();
+      t.check(!segunda.activa,pagina+': cerrar debe detener la mesa.');
+      // Si el teléfono no ofrece Canvas 2D, el mapa HTML sigue siendo jugable.
+      w.HTMLCanvasElement.prototype.getContext=function(tipo,...args){return tipo==='2d'?null:contexto.call(this,tipo,...args);};
+      w.campanaRuta();
+      t.check(!d.querySelector('.campanaMesa3d')&&!d.querySelector('.campanaLienzo3d')&&!!d.querySelector('.campanaEncuentro'),pagina+': sin lienzo debe conservarse el mapa y su encuentro.');
+      t.check(w.getComputedStyle(d.querySelector('.campanaRuta .actual .lface')).display!=='none',pagina+': el mapa alternativo debe mostrar al rival.');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);await w.campanaSeleccionar();
+      t.check(d.querySelector('#campanaEncuentroPanel')?.open,pagina+': la confirmación también debe abrirse con el mapa alternativo.');
+    }finally{w.HTMLCanvasElement.prototype.getContext=contexto;w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaEncuentro', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-encuentro-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;let llamadas=[];
+    w.startMatch=async(a,b,opts)=>llamadas.push({a,b,opts});
+    const pulsar=texto=>[...d.querySelectorAll('#campanaEncuentroPanel button')].find(b=>b.textContent===texto).click();
+    try{
+      w.campanaGuardar({version:1,id:'encuentro',lider:'fender',etapa:0});w.campanaRuta();
+      const mesa=d.querySelector('.campanaLienzo3d'),peon=d.querySelector('.campanaPeon'),origen=peon.style.left;
+      const viaje=w.campanaSeleccionar();await w.campanaSeleccionar();await sleep(100);
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&llamadas.length===0&&mesa.dataset.saltando==='1',pagina+': primero debe saltar la ficha, sin abrir la ventana ni comenzar el combate.');
+      await viaje;await sleep(280);
+      const detalle=d.querySelector('#campanaEncuentroPanel'),r=detalle.getBoundingClientRect();
+      t.check(detalle.open&&d.querySelectorAll('#campanaEncuentroPanel').length===1&&llamadas.length===0,pagina+': llegar debe mostrar una sola confirmación, sin iniciar el combate.');
+      t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2&&Math.abs(r.top+r.height/2-w.innerHeight/2)<2,pagina+': la ventana del encuentro debe quedar centrada.');
+      t.check(detalle.textContent.includes('Contra Mohamed')&&detalle.querySelector('.rival strong').textContent.trim()==='16 ALMA',pagina+': las especificaciones no corresponden a Mohamed.');
+      t.check(peon.style.left!==origen,pagina+': la ficha no llegó al encuentro.');
+      pulsar('Volver a la mesa');
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&d.querySelector('.campanaLienzo3d')===mesa&&peon.style.left===origen&&w.campanaLeer().etapa===0&&llamadas.length===0,pagina+': volver debe conservar la mesa y el progreso, sin empezar el duelo.');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      for(let etapa=0;etapa<6;etapa++){
+        w.campanaGuardar({...w.campanaLeer(),etapa});w.campanaRuta();await w.campanaSeleccionar();
+        t.check(d.querySelector('#campanaEncuentroPanel .rival strong').textContent.trim()===[16,20,24,28,32,40][etapa]+' ALMA',pagina+': el aviso debe mostrar el Alma real de cada rival.');
+        pulsar('Volver a la mesa');
+      }
+      w.campanaGuardar({...w.campanaLeer(),etapa:0});w.campanaRuta();await w.campanaSeleccionar();
+      w.matchMedia=media;const entrar=d.querySelector('#campanaEncuentroPanel .gold');entrar.click();entrar.click();
+      t.check(llamadas.length===0&&!d.querySelector('#campanaEncuentroPanel'),pagina+': entrar debe cerrar la confirmación antes del acercamiento.');
+      await sleep(600);t.check(llamadas.length===1&&llamadas[0].b==='mohamed'&&llamadas[0].opts.campana.alma===16,pagina+': confirmar debe arrancar una sola vez el encuentro mostrado.');
+      llamadas=[];w.campanaRuta();const cancelado=w.campanaSeleccionar();w.campanaCerrar();await cancelado;await sleep(1000);
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&llamadas.length===0,pagina+': cerrar durante los saltos no debe dejar una ventana tardía ni iniciar una partida.');
+      w.campanaRuta();w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);await w.campanaSeleccionar();
+      d.querySelector('#campanaEncuentroPanel').dispatchEvent(new w.Event('cancel',{cancelable:true}));
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&d.querySelector('#campanaPanel').open,pagina+': Escape debe volver a la mesa.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('campanaPantalla', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-pantalla-interna';document.body.appendChild(f);await carga;
-    const w=f.contentWindow;
+    const w=f.contentWindow,media=w.matchMedia;
+    w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
     const comprobar=()=>{
       const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect();
       t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el panel de campaña exige scroll.');
       t.check(r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': el diálogo sale de la pantalla.');
-      d.querySelectorAll('.campanaAcciones .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo').forEach(n=>{
+      d.querySelectorAll('.campanaAcciones .btn,.campanaVista .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo').forEach(n=>{
         const b=n.getBoundingClientRect();t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+n.textContent);
       });
     };
@@ -470,9 +567,15 @@ PRUEBAS.suite('campanaPantalla', async t => {
         for(let i=0;i<6;i++){w.document.querySelector('[aria-label="Protagonista siguiente"]').click();comprobar();}
         for(const etapa of [0,5,6]){
           w.campanaGuardar({version:1,id:'pantalla',lider:'fender',etapa});w.campanaRuta();await sleep(60);comprobar();
+          if(etapa<6){
+            await w.campanaSeleccionar();const aviso=w.document.querySelector('#campanaEncuentroPanel'),r=aviso.getBoundingClientRect();
+            t.check(aviso.scrollHeight<=aviso.clientHeight+1&&aviso.scrollWidth<=aviso.clientWidth+1&&r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': la ventana del encuentro exige scroll o sale de la pantalla.');
+            aviso.querySelectorAll('button').forEach(b=>{const a=b.getBoundingClientRect();t.check(a.top>=r.top&&a.bottom<=r.bottom+1&&a.left>=r.left&&a.right<=r.right+1,pagina+': un botón del encuentro queda recortado.');});
+            w.campanaLimpiarPreparacion(true);
+          }
         }
       }
-    }finally{w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
@@ -553,6 +656,60 @@ PRUEBAS.suite('onlineFlujo', async t => {
       t.check(w.codigoInvitacion('https://juego.caozcontodo.com/?sala=ABCDE&b=180')==='ABCDE','Debe aceptarse el enlace pegado.');
     }
   }finally{marcos.forEach(f=>{f.contentWindow.netClose();f.remove();});}
+});
+
+/* El Lugar ocupa su altura real, incluso con texto largo o una Reliquia.
+   Regresión de la captura móvil: el flex comprimía #midRow y las cartas
+   propias quedaban encima del Puente y de su texto. */
+PRUEBAS.suite('terrenoMovil', async t => {
+  const f=document.createElement('iframe');
+  f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px;border:0';
+  const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=terreno-interna';document.body.appendChild(f);
+  try{
+    await carga;const w=f.contentWindow,d=f.contentDocument;
+    w.newGame('fender','mohamed');
+    w.eval("G.fast=true;G.phase='principal';P(0).pd=10;P(0).hand=['matildus','adolfo','eric','discipulo','puente'];");
+    w.showScreen('board');
+    const comprobar=etiqueta=>{
+      const rect=s=>d.querySelector(s).getBoundingClientRect();
+      const campo=rect('#field'),medio=rect('#midRow');
+      for(const elemento of d.querySelector('#midRow').children){
+        const r=elemento.getBoundingClientRect();
+        t.check(r.top>=medio.top&&r.bottom<=medio.bottom,etiqueta+': el terreno y sus acciones deben caber dentro de la franja central.');
+      }
+      for(const lado of ['foeField','myField'])for(const carta of d.querySelectorAll('#'+lado+' .card')){
+        const r=carta.getBoundingClientRect();
+        t.check(r.width>=44,etiqueta+': las cartas deben conservar un tamaño tocable.');
+        const cajas=[r,...[...carta.querySelectorAll('.cost,.atk,.hp')].map(e=>e.getBoundingClientRect())];
+        const listo=w.getComputedStyle(carta,'::after');
+        if(listo.content!== 'none'&&listo.display!=='none')cajas.push({top:r.top+parseFloat(listo.top),bottom:r.top+parseFloat(listo.top)+parseFloat(listo.height)});
+        for(const caja of cajas){
+          t.check(lado==='foeField'?caja.bottom<=medio.top-1:caja.top>=medio.bottom+1,etiqueta+': una carta o su indicador invade el terreno ('+lado+').');
+          t.check(caja.top>=campo.top&&caja.bottom<=campo.bottom,etiqueta+': las cartas deben caber en el campo.');
+        }
+        t.check(r.left>=campo.left&&r.right<=campo.right,etiqueta+': cinco cartas deben caber a lo ancho.');
+      }
+      t.check(rect('#myTraps').bottom<=campo.bottom+.5,etiqueta+': las trampas no deben invadir la barra del jugador ('+rect('#myTraps').bottom+' > '+campo.bottom+').');
+      t.check(rect('#controls').bottom<=rect('#board').bottom+.5,etiqueta+': los controles deben quedar dentro de la pantalla.');
+    };
+    for(const [ancho,alto,app] of [[390,664,false],[320,568,false],[402,812,true],[430,932,false]]){
+      Object.defineProperty(w.navigator,'standalone',{value:app,configurable:true});
+      f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(60);w.ajustarLienzo();
+      for(const cantidad of [2,5]){
+        w.eval(`for(const s of [0,1]){P(s).field=[];for(let i=0;i<${cantidad};i++){const u=mkUnit(s?'conserje':'matildus',s);u.sick=false;P(s).field.push(u);}}recalc();`);
+        for(const lugar of [null,'puente','montanas',null]){
+          w.eval(`G.place=${lugar?JSON.stringify({id:lugar,side:1}):'null'};P(0).relics=[];`);w.render();await sleep(40);
+          comprobar(`${ancho}×${alto}, ${cantidad} cartas, ${lugar||'sin Lugar'}`);
+        }
+      }
+      w.eval("G.place={id:'puente',side:0};P(0).relics=[{id:'puntosrobados',counters:2}];");w.render();await sleep(40);
+      comprobar(`${ancho}×${alto}, Puente y Reliquia`);
+      d.querySelector('#hand .card').click();await sleep(40);
+      comprobar(`${ancho}×${alto}, carta seleccionada en mano`);w.manoTocada(null);
+      d.querySelector('.placecard').click();
+      t.check(d.querySelector('#inspect.on')?.textContent.includes('El Puente de Brick y Brock'),'El terreno debe seguir abriendo su ficha.');w.cerrarHojas();
+    }
+  }finally{f.contentWindow.relojPara();f.remove();}
 });
 
 PRUEBAS.suite('nubeDagasUI', async t => {

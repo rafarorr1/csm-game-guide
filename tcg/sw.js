@@ -18,10 +18,10 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 190;
+const VERSION = 195;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
-const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'polish-aaa.js', 'manifest.webmanifest',
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'polish-aaa.js', 'manifest.webmanifest',
                 'art/encuadres.json', 'art/logo.webp',
                 'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
 
@@ -56,6 +56,9 @@ self.addEventListener('activate', ev => {
 });
 
 const esArte = url => /\/art\/.+\.(webp|png|jpg)$/.test(url.pathname);
+// Un HTML precargado puede venir de una redirección de Cloudflare. Al navegar
+// sin red Chrome no acepta esa marca: conservar sus bytes y cabeceras la elimina.
+const sinRedireccion = r => r.redirected ? new Response(r.body,{status:r.status,statusText:r.statusText,headers:r.headers}) : r;
 
 self.addEventListener('fetch', ev => {
   const req = ev.request;
@@ -87,9 +90,16 @@ self.addEventListener('fetch', ev => {
       return r;
     }catch(e){
       const hit = await c.match(req, {ignoreSearch: true});
-      if(hit) return hit;
+      if(hit) return sinRedireccion(hit);
+      // Cloudflare quita .html de la dirección visible, pero el precaché conserva
+      // el nombre del archivo. La primera recarga sin red también debe encontrarlo.
+      for(const pagina of ['index','movil','estudio']){
+        if(url.pathname===new URL(pagina,self.registration.scope).pathname){
+          const guardada=await c.match(pagina+'.html');if(guardada)return sinRedireccion(guardada);
+        }
+      }
       // la raíz sin red: la pantalla de escritorio, que decide sola si ir al teléfono
-      if(url.pathname.endsWith('/')) { const idx = await c.match('index.html'); if(idx) return idx; }
+      if(url.pathname.endsWith('/')) { const idx = await c.match('index.html'); if(idx) return sinRedireccion(idx); }
       return new Response('Sin conexión y sin copia guardada.', {status: 504, headers: {'Content-Type': 'text/plain; charset=utf-8'}});
     }
   })());
