@@ -839,6 +839,36 @@ PRUEBAS.suite('campanaPantalla', async t => {
   }
 });
 
+/* Los diálogos nativos viven fuera del lienzo: deben centrarse en el visor real. */
+PRUEBAS.suite('menusCentrados', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:1920px;height:1080px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=centrado-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,media=w.matchMedia;
+    w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+    const comprobar=(selector,nombre)=>{
+      const d=w.document.querySelector(selector),r=d.getBoundingClientRect();
+      t.check(r.width>0&&r.height>0,pagina+': '+nombre+' debe estar visible.');
+      t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2&&Math.abs(r.top+r.height/2-w.innerHeight/2)<2,pagina+': '+nombre+' no está centrado en '+w.innerWidth+'×'+w.innerHeight+'.');
+      t.check(r.left>=0&&r.top>=0&&r.right<=w.innerWidth+1&&r.bottom<=w.innerHeight+1,pagina+': '+nombre+' sale del visor.');
+    };
+    try{
+      for(const [ancho,alto] of [[1920,1080],[1440,900],[1280,720]]){
+        f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(80);
+        w.campanaElegir();comprobar('#campanaPanel','selección');
+        w.campanaGuardar({version:1,id:'centrado',lider:'fender',etapa:0});w.campanaRuta();comprobar('#campanaPanel','mesa');
+        await w.campanaSeleccionar();await sleep(280);comprobar('#campanaEncuentroPanel','encuentro');w.campanaLimpiarPreparacion(true);
+        w.campanaCabecera(w.campanaDialogo(),'Reiniciar campaña','Confirmación');comprobar('#campanaPanel','mensaje');w.campanaCerrar();
+        w.campanaGuardar({version:1,id:'centrado',lider:'fender',etapa:6});w.campanaRuta();comprobar('#campanaDeseo','deseo');w.campanaCerrarDeseo();
+        // Las hojas móviles se anclan abajo deliberadamente; los menús desktop se centran.
+        if(pagina==='index.html')for(const abrir of ['showGallery','showRules','showRecords','showOnline','showTutorialPick']){
+          w[abrir]();comprobar('#ovPanel',abrir);w.cerrarOv();
+        }
+      }
+    }finally{w.matchMedia=media;w.campanaCerrarDeseo();w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('onlineInvitacion', async t => {
   const relay=new URLSearchParams(location.search).get('relay');
   if(!relay||!/^http:\/\/(127\.0\.0\.1|localhost):/.test(relay)){t.nota('Prueba de transporte disponible sólo con relay local explícito.');return;}
