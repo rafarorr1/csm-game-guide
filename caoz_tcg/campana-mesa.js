@@ -93,9 +93,26 @@
       cilindro(x,y+.02,z,.43,.14,'#272927');cilindro(x,y+.16,z,.37,.09,jugador?'#b39756':vencido?'#67735c':'#776955');
       caja(x-.13,y+.25,z,.15,.17,.23,'#3b3530');caja(x+.13,y+.25,z,.15,.17,.23,'#3b3530');
       cilindro(x,y+.35,z,.29,.72,c,.14,10);cilindro(x,y+.93,z,.2,.2,c,.12,10);
-      esfera(x,y+1.27,z,.24,vencido?'#89917e':'#c3ac8d',1.15);
+      if(lider!=='gero')esfera(x,y+1.27,z,.24,vencido?'#89917e':'#c3ac8d',1.15);
       cilindro(x,y+.72,z,.295,.06,'#bda06a',.26,12);
-      if(lider==='mohamed'||lider==='gero'){
+      if(lider==='gero'){
+        // Gero: capa amplia, capucha y grimorio abierto que se distinguen del bastón de Mohamed.
+        const capa=vencido?'#586052':'#542650',forro=vencido?'#87917e':'#ad6a95',hojas=vencido?'#b6b39c':'#fff0c8';
+        cara([[x-.22,y+1.13,z-.12],[x-.49,y+.35,z-.33],[x,y+.25,z-.42],[x,y+1.17,z-.22]],capa);
+        cara([[x,y+1.17,z-.22],[x,y+.25,z-.42],[x+.49,y+.35,z-.33],[x+.22,y+1.13,z-.12]],capa);
+        cara([[x-.22,y+1.13,z-.12],[x-.49,y+.35,z-.33],[x-.4,y+.29,z+.1],[x-.27,y+.99,z+.1]],forro);
+        cara([[x+.22,y+1.13,z-.12],[x+.27,y+.99,z+.1],[x+.4,y+.29,z+.1],[x+.49,y+.35,z-.33]],forro);
+        esfera(x,y+1.36,z-.045,.31,capa,1.22);
+        esfera(x,y+1.31,z+.2,.19,vencido?'#89917e':'#ceb899',1.12);
+        // El lomo queda más bajo que los bordes; las páginas miran a la cámara.
+        const pagina=(lado,borde)=>[[x,y+.89,z+.22],[x+lado*.45,y+1.035,z+.22],[x+lado*.45,y+.95,z+.69],[x,y+.8,z+.69]].map(v=>[v[0],v[1]+borde,v[2]]);
+        for(const lado of [-1,1]){cara(pagina(lado,-.035),'#bfa363');cara(pagina(lado,0),hojas);esfera(x+lado*.39,y+.88,z+.34,.095,vencido?'#89917e':'#ceb899');}
+        caja(x,y+.82,z+.46,.025,.025,.48,'#9b7040');
+        for(const lado of [-1,1])for(let j=0;j<3;j++){
+          const zz=z+.32+j*.085,yy=y+.89-(zz-z-.22)*.19;
+          cara([[x+lado*.12,yy+.04,zz],[x+lado*.34,yy+.112,zz],[x+lado*.34,yy+.112,zz+.013],[x+lado*.12,yy+.04,zz+.013]],'#977955');
+        }
+      }else if(lider==='mohamed'){
         cilindro(x,y+1.43,z,.3,.04,c);cilindro(x,y+1.47,z,.24,.49,c,.015,10);
         cilindro(x+.4,y+.15,z,.035,1.65,'#766148',.028,8);esfera(x+.4,y+1.8,z,.12,'#9bc1bc');
       }else if(lider==='talesin'){
@@ -191,7 +208,7 @@
       for(const c of lista){const l=.62+.42*Math.abs(c.n.reduce((s,v,i)=>s+v*luz[i],0));ctx.fillStyle=tinta(c.color,l);poligono(c.p);ctx.fill();ctx.strokeStyle='#19130d24';ctx.lineWidth=.35;ctx.stroke();}
     }
     function niebla(t){
-      if(op.etapa>=5&&avance>=1)return;
+      if(op.etapa>=op.casillas.length||op.etapa>=5&&avance>=1)return;
       const jugador=posicionJugador(),rival=op.casillas[op.etapa];
       const distanciaRival=Math.hypot(jugador[0]-rival[0],jugador[1]-rival[1]);
       const cercania=Math.max(0,Math.min(1,(22-distanciaRival)/9));
@@ -242,19 +259,23 @@
       const sombra=ctx.createRadialGradient(ancho*.5,alto*.5,ancho*.25,ancho*.5,alto*.5,Math.max(ancho,alto)*.7);sombra.addColorStop(0,'#080a0800');sombra.addColorStop(1,'#080a085f');ctx.fillStyle=sombra;ctx.fillRect(0,0,ancho,alto);
       if(estabaAvanzando||salto||derribo)posiciones();canvas.dataset.lista='1';
     }
+    function bordeMesa(){return[[-6.4,0,-largo/2-1.2],[6.4,0,-largo/2-1.2],[6.4,-.7,largo/2+1.2],[-6.4,-.7,largo/2+1.2]];}
     function encuadrar(){
-      const vertices=[[-6.4,0,-largo/2-1.2],[6.4,0,-largo/2-1.2],[6.4,-.7,largo/2+1.2],[-6.4,-.7,largo/2+1.2]].map(vista);
-      const xs=vertices.map(p=>p.x),ys=vertices.map(p=>p.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys)-.035,y1=Math.max(...ys);
-      const disponible=alto;escala=Math.min(ancho*.96/(x1-x0),disponible*.97/(y1-y0))*1.298;cx=ancho/2-(x0+x1)*escala/2;cy=disponible/2-(y0+y1)*escala/2;
-      // Mantener las dos piezas del encuentro dentro del encuadre al acercar.
-      const puntos=[posicionJugador(),op.casillas[Math.min(5,op.etapa)]].flatMap(p=>[proyectar(punto(p,.1)),proyectar(punto(p,2.6))]);
-      const minY=Math.min(...puntos.map(p=>p.y)),maxY=Math.max(...puntos.map(p=>p.y));cy+=Math.max(0,alto*.09-minY)-Math.max(0,maxY-alto*.89);
+      const vertices=bordeMesa().map(vista);
+      const xs=vertices.map(p=>p.x),ys=vertices.map(p=>p.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys),y1=Math.max(...ys);
+      escala=Math.min(ancho*.96/(x1-x0),alto*.97/(y1-y0))*1.298;
+      // Centrar la superficie visible, no la caja de sus esquinas: la perspectiva
+      // hace que la esquina frontal pese mucho más y desplazaba la mesa a la derecha.
+      // Este centro es fijo para todos los encuentros y durante los desplazamientos.
+      let area=0,centroX=0,centroY=0;
+      vertices.forEach((p,i)=>{const q=vertices[(i+1)%vertices.length],a=p.x*q.y-q.x*p.y;area+=a;centroX+=(p.x+q.x)*a;centroY+=(p.y+q.y)*a;});
+      cx=ancho/2-centroX/(3*area)*escala;cy=alto/2-centroY/(3*area)*escala;
       posiciones();
     }
     function ajustar(){ancho=Math.max(1,camara.clientWidth);alto=Math.max(1,camara.clientHeight);const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.round(ancho*dpr);canvas.height=Math.round(alto*dpr);pantalla.setTransform(dpr,0,0,dpr,0,0);bruma.width=canvas.width;bruma.height=canvas.height;brumaCtx.setTransform(dpr,0,0,dpr,0,0);fondo.width=canvas.width;fondo.height=canvas.height;fondoCtx.setTransform(dpr,0,0,dpr,0,0);baseSucia=true;largo=Math.max(12,Math.min(24,15*alto/ancho));escena();encuadrar();dibujar();}
     const observador=new ResizeObserver(ajustar);observador.observe(camara);ajustar();
     function cuadro(t){if(!vivo||!canvas.isConnected)return;if(!document.hidden&&!reducir()&&t-ultimo>(salto||derribo||avance<1?28:65)){ultimo=t;dibujar(t);}raf=requestAnimationFrame(cuadro);}
     raf=requestAnimationFrame(cuadro);
-    return{foco(i){const q=proyectar(punto(op.casillas[i],.5));return[q.x/ancho*100,q.y/alto*100];},saltarHacia,reposar,golpear,destruir(){vivo=false;if(derribo)derribo.terminar(false);if(salto)salto.terminar(false);cancelAnimationFrame(raf);observador.disconnect();canvas.remove();contenedor.classList.remove('campanaMesa3d');},get posicion(){return posicionJugador().slice();},get activa(){return vivo;}};
+    return{foco(i,altura=.5){const q=proyectar(punto(op.casillas[i],altura));return[q.x/ancho*100,q.y/alto*100];},saltarHacia,reposar,golpear,destruir(){vivo=false;if(derribo)derribo.terminar(false);if(salto)salto.terminar(false);cancelAnimationFrame(raf);observador.disconnect();canvas.remove();contenedor.classList.remove('campanaMesa3d');},get posicion(){return posicionJugador().slice();},get encuadre(){return bordeMesa().map(v=>{const p=proyectar(v);return[p.x/ancho*100,p.y/alto*100];});},get activa(){return vivo;}};
   };
 })();

@@ -13,6 +13,25 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — El deseo del Domo · 2026-09-08
+
+Build 199, beta. Mesa centrada por el centroide de su superficie, cámara estable
+entre etapas y zoom 1.298. Gero: capa púrpura, capucha y libro abierto. La victoria
+prepara la mesa debajo antes de desvanecerse, sin descubrir el menú principal.
+Al finalizar el derribo de Gero y completar campaña aparece «Venciste a todos los
+héroes. Pide un deseo». El texto pasa por fuego a pantalla completa, «Deseo
+concedido» durante cinco segundos, fundido a negro y menú.
+
+campana-deseo.js conserva el borrador local y simula el envío durante 900 ms,
+sin peticiones de red, cola remota ni credenciales. Después muestra el fuego,
+el mensaje durante cinco segundos y el fundido al menú. La conexión con GitHub
+queda aplazada a petición del usuario; no se publica ningún backend.
+
+campanaSinDestello, campanaEncuadre y campanaDeseo comprobadas con sabotaje.
+La niebla deja de consultar rivales al representar el mapa completo (etapa 6),
+lo que evita un error de la alternativa de mapa usada por las pruebas.
+Producción sigue 195.
+
 ## Sin numerar — Recorrido rápido de campaña · 2026-09-08
 
 Build 198, beta. Mesa con 10 % más de zoom (1.18 → 1.298). El botón tras

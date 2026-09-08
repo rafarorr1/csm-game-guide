@@ -274,14 +274,21 @@ async function cinematicaFinal(winner, why, acciones){
   const eleccion = new Promise(r => { elige = r; });
   const btns = el('div', 'finbtns');
   const cerrar = async (que) => {
-    if(elegido) return; elegido = que;
+    if(elegido) return false; elegido = que;
+    // Preparar la siguiente vista antes del fundido evita descubrir el menú
+    // que había detrás. Si abre un diálogo, el final comparte su capa superior.
+    if(que==='revancha'&&typeof acciones?.prepararRevancha==='function'){
+      const destino=acciones.prepararRevancha();
+      if(destino?.isConnected){destino.appendChild(capa);void capa.offsetWidth;}
+    }
     capa.classList.add('sale'); document.body.classList.remove('fin-on');
     await nap(380); capa.remove(); elige(que);
+    return true;
   };
   const bRev = el('button', 'btn gold', acciones?.textoPrincipal || '↺ Revancha');
   const bMenu = el('button', 'btn', '← Menú principal');
-  bRev.onclick = e => { e.stopPropagation(); cerrar('revancha').then(() => acciones && acciones.revancha && acciones.revancha()); };
-  bMenu.onclick = e => { e.stopPropagation(); cerrar('menu').then(() => acciones && acciones.menu && acciones.menu()); };
+  bRev.onclick = e => { e.stopPropagation(); cerrar('revancha').then(ok => ok && acciones && acciones.revancha && acciones.revancha()); };
+  bMenu.onclick = e => { e.stopPropagation(); cerrar('menu').then(ok => ok && acciones && acciones.menu && acciones.menu()); };
   btns.appendChild(bRev); btns.appendChild(bMenu);
   capa.appendChild(btns);
 
@@ -670,7 +677,9 @@ function campanaRuta(aviso=''){
   const progreso=campanaLeer();if(!progreso){campanaElegir();return;}
   const victoria=Number.isInteger(progreso.mesaPendiente)?progreso.mesaPendiente:null;
   const p=victoria===null?progreso:{...progreso,etapa:victoria};
-  const completa=p.etapa===CAMPANA_RIVALES.length,d=campanaDialogo();
+  const completa=p.etapa===CAMPANA_RIVALES.length;
+  if(completa&&typeof campanaAbrirDeseo==='function'){campanaAbrirDeseo();return;}
+  const d=campanaDialogo();
   campanaCabecera(d,completa?'El Domo es tuyo':'La mesa del Domo',aviso||(LEADERS[p.lider].n+' · '+progreso.etapa+' de 6 rivales vencidos'));
   d.dataset.vista='mapa';
   const mesa=document.createElement('div');mesa.className='campanaMesa';
@@ -853,8 +862,10 @@ function campanaFinal(winner,why){
   if(!meta||!p||meta.id!==p.id||g.campanaResuelta)return;
   g.campanaResuelta=true;RECORD_ULTIMO=null;
   if(winner===ME&&p.etapa===meta.etapa){p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;campanaGuardar(p);}
+  let mesaPreparada=false;
   const acciones={textoPrincipal:winner===ME?'Volver a la mesa':'↺ Revancha',
-    revancha:()=>{if(G!==g)return;if(winner===ME)campanaRuta();else campanaCombatir();},
+    prepararRevancha:winner===ME?()=>{if(G!==g)return;campanaRuta();mesaPreparada=true;return document.getElementById('campanaPanel');}:null,
+    revancha:()=>{if(G!==g)return;if(winner===ME){if(!mesaPreparada)campanaRuta();}else campanaCombatir();},
     menu:()=>{if(G===g)campanaVolverAlMenu();}};
   cinematicaFinal(winner,why,acciones).then(hecho=>{
     if(hecho||G!==g)return;

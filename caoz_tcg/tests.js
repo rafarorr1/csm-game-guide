@@ -321,7 +321,7 @@ PRUEBAS.suite('campana', async t => {
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     f.src=pagina+'?test=campana-interna';const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);await carga;
     let w=f.contentWindow;
-    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;w.cinematicaFinal=async()=>false;};
+    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;w.cinematicaFinal=async()=>false;w.campanaAbrirDeseo=undefined;};
     const comprobarNiebla=etapa=>{
       const n=w.document.querySelector('.campanaTablero .campanaNiebla');
       if(etapa>=5){t.check(!n,pagina+': la niebla debe desaparecer al llegar al jefe final.');return 0;}
@@ -482,6 +482,94 @@ PRUEBAS.suite('campanaContinuidad', async t => {
   }
 });
 
+PRUEBAS.suite('campanaSinDestello', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-transicion-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document;
+    try{
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.FXON=()=>true;
+      w.campanaGuardar({version:1,id:'transicion',lider:'fender',etapa:0});
+      w.newGame('fender','mohamed');w.eval("G.campana={id:'transicion',etapa:0,alma:16};G.over=true;G.fast=false;G.auto=false;");
+      w.showScreen('menu');w.showEnd(0,'Victoria de prueba');await sleep(40);
+      d.querySelector('.fin').click();await sleep(50);
+      d.querySelector('.finbtns .gold').click();await sleep(20);
+      const panel=d.getElementById('campanaPanel');
+      t.check(panel?.open&&panel.querySelector('.campanaLienzo3d')?.dataset.lista==='1',pagina+': la mesa debe estar lista antes de que se desvanezca la victoria, sin mostrar el menú debajo.');
+      t.check(panel.contains(d.querySelector('.fin.sale')),pagina+': la victoria debe fundirse sobre la mesa en la misma capa del diálogo.');
+      t.check(Number(w.getComputedStyle(d.querySelector('.fin.sale')).opacity)>0,pagina+': el cambio de capa debe conservar el fundido, sin un corte instantáneo.');
+      await sleep(420);
+      t.check(panel.open&&!d.querySelector('.fin'),pagina+': al terminar el fundido debe quedar la mesa abierta.');
+      await sleep(1000);
+      const seguir=panel.querySelector('.campanaAcciones .gold');t.check(!seguir.disabled,pagina+': continuar disponible después del golpe.');
+      seguir.click();
+      t.check(panel.open&&panel.dataset.vista==='mapa',pagina+': continuar mantiene abierto el mapa durante el cambio de rival.');
+      await sleep(60);
+      t.check(panel.open&&panel.querySelector('.campanaLienzo3d').dataset.avanzando==='1',pagina+': la marcha sigue en el mismo diálogo sin exponer el menú.');
+    }finally{w.cerrarCinematica();w.campanaCerrar();w.relojPara();f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaDeseo', async t => {
+  for(const [pagina,ancho,alto] of [['index.html',1280,800],['movil.html',390,664]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=deseo-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,clave='caoz.deseos.v1.prueba',peticiones=[];
+    const ponerTimer=w.setTimeout,quitarTimer=w.clearTimeout;let ahora=0,id=0,pendientes=new Map();
+    const avanzar=async ms=>{
+      const hasta=ahora+ms;
+      for(let limite=0;limite<100;limite++){
+        const siguiente=[...pendientes.values()].filter(p=>p.cuando<=hasta).sort((a,b)=>a.cuando-b.cuando)[0];
+        if(!siguiente)break;ahora=siguiente.cuando;pendientes.delete(siguiente.id);siguiente.fn();await sleep(0);
+      }
+      ahora=hasta;await sleep(0);
+    };
+    try{
+      w.localStorage.removeItem(clave);
+      w.fetch=async(url,op)=>{peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
+      w.campanaGuardar({version:1,id:'deseo-prueba',lider:'fender',etapa:5});w.campanaAbrirDeseo();
+      t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo sólo se ofrece al vencer a todos los rivales.');
+      w.campanaGuardar({...w.campanaLeer(),etapa:6,mesaPendiente:5});w.campanaAbrirDeseo();
+      t.check(!d.querySelector('#campanaDeseo'),pagina+': debe terminar el derribo de Gero antes del deseo.');
+      const progreso={...w.campanaLeer()};delete progreso.mesaPendiente;w.campanaGuardar(progreso);w.campanaRuta();
+      const panel=d.getElementById('campanaDeseo'),form=panel?.querySelector('form'),texto=panel?.querySelector('textarea'),boton=panel?.querySelector('button');
+      t.check(panel?.open&&panel.dataset.fase==='formulario',pagina+': completar la campaña abre el formulario de deseo.');
+      t.check(panel.querySelector('h1').innerText.replace(/\s+/g,' ').trim()==='Venciste a todos los héroes. Pide un deseo'&&boton.textContent==='Pedir deseo',pagina+': mensaje y acción final exactos.');
+      const caja=panel.getBoundingClientRect(),campo=texto.getBoundingClientRect(),accion=boton.getBoundingClientRect();
+      t.check(Math.abs(caja.width-ancho)<2&&Math.abs(caja.height-alto)<2&&campo.top>=0&&accion.bottom<=alto&&form.scrollHeight<=form.clientHeight+1,pagina+': el formulario debe caber en la pantalla sin desplazamiento.');
+      w.setTimeout=(fn,ms=0,...args)=>{const timer=++id;pendientes.set(timer,{id:timer,cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return timer;};
+      w.clearTimeout=timer=>pendientes.delete(timer);
+      texto.value='   ';form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await sleep(0);
+      t.check(peticiones.length===0&&!boton.disabled&&panel.dataset.fase==='formulario',pagina+': un deseo vacío debe conservar el formulario.');
+      const deseo='<img src=x onerror="window.deseoEjecutado=1"> Que todos vuelvan al Domo.';
+      texto.value=deseo;texto.dispatchEvent(new w.Event('input',{bubbles:true}));
+      t.check(texto.value===deseo&&!panel.querySelector('img')&&!w.deseoEjecutado,pagina+': el deseo se trata como texto, sin ejecutar etiquetas.');
+      t.check(w.campanaLeer().borradorDeseo===deseo,pagina+': el borrador se conserva mientras se escribe.');
+      t.check(panel.textContent.includes('Prueba beta · envío simulado'),pagina+': el formulario debe indicar que el envío es una simulación.');
+      form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));form.dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await sleep(0);
+      t.check(panel.dataset.fase==='envio'&&boton.disabled&&boton.textContent==='Enviando…',pagina+': pedir el deseo muestra el envío simulado sin permitir un segundo envío.');
+      t.check(w.campanaLeer().deseo?.deseo===deseo&&w.campanaLeer().deseo.simulado===true,pagina+': el deseo debe conservarse en el progreso local marcado como simulado.');
+      await avanzar(899);t.check(panel.dataset.fase==='envio',pagina+': el envío simulado debe mantener su breve transición.');
+      await avanzar(1);
+      t.check(panel.dataset.fase==='fuego'&&boton.disabled&&panel.querySelectorAll('canvas').length===1,pagina+': pedir el deseo inicia un solo fuego aunque se pulse dos veces.');
+      t.check(peticiones.length===0&&!w.localStorage.getItem(clave),pagina+': la simulación no envía deseos ni crea una cola para enviarlos después.');
+      const fuego=panel.querySelector('canvas').getBoundingClientRect();
+      t.check(fuego.left<=0&&fuego.top<=0&&fuego.right>=ancho&&fuego.bottom>=alto,pagina+': el fuego debe cubrir toda la pantalla.');
+      await avanzar(1000);t.check(!panel.querySelector('form')&&panel.querySelector('.deseoConcedido').textContent==='Deseo concedido',pagina+': el fuego revela únicamente Deseo concedido.');
+      await avanzar(2000);t.check(panel.dataset.fase==='concedido'&&!panel.querySelector('canvas')&&panel.textContent==='Deseo concedido',pagina+': al disiparse el fuego sólo queda el mensaje.');
+      await avanzar(4999);t.check(panel.dataset.fase==='concedido',pagina+': el mensaje permanece cinco segundos completos.');
+      await avanzar(1);t.check(panel.dataset.fase==='negro',pagina+': después de cinco segundos debe fundirse a negro.');
+      await avanzar(1100);t.check(!d.querySelector('#campanaDeseo')&&d.querySelector('#menu.on'),pagina+': después del negro regresa al menú principal.');
+      w.dispatchEvent(new w.Event('online'));await sleep(0);
+      t.check(peticiones.length===0&&!w.localStorage.getItem(clave),pagina+': volver a tener conexión tampoco debe enviar el deseo simulado.');
+      w.campanaGuardar({version:1,id:'otro-deseo',lider:'mohamed',etapa:6});w.campanaAbrirDeseo();
+      const segundo=d.getElementById('campanaDeseo');segundo.querySelector('textarea').value='Que el Domo prospere';segundo.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await sleep(0);
+      await avanzar(900);
+      t.check(segundo.dataset.fase==='fuego'&&peticiones.length===0&&!w.localStorage.getItem(clave),pagina+': otra campaña permite repetir el final simulado sin registros remotos.');
+    }finally{w.campanaCerrarDeseo();w.setTimeout=ponerTimer;w.clearTimeout=quitarTimer;w.campanaCerrar();w.relojPara();w.localStorage.removeItem(clave);w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('campanaCombate', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -605,6 +693,36 @@ PRUEBAS.suite('campanaMesa', async t => {
   }
 });
 
+PRUEBAS.suite('campanaEncuadre', async t => {
+  const centroide=vertices=>{let area=0,x=0,y=0;vertices.forEach((p,i)=>{const q=vertices[(i+1)%vertices.length],a=p[0]*q[1]-q[0]*p[1];area+=a;x+=(p[0]+q[0])*a;y+=(p[1]+q[1])*a;});return[x/(3*area),y/(3*area)];};
+  for(const [pagina,ancho,alto] of [['index.html',1440,960],['index.html',390,740],['movil.html',390,740],['movil.html',320,568],['movil.html',844,390]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-encuadre-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;const encuadres=new Map();
+    const contexto=pagina+' '+ancho+'×'+alto;
+    try{
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      for(let etapa=0;etapa<6;etapa++){
+        w.campanaGuardar({version:1,id:'encuadre',lider:'fender',etapa,enEncuentro:true});w.campanaRuta();await sleep(35);
+        const escena=w.eval('campanaMesaEscena'),centro=centroide(escena.encuadre);
+        t.check(centro.every(n=>Math.abs(n-50)<.1),contexto+': la superficie de la mesa debe quedar centrada, también en el encuentro '+etapa+'.');
+        const lienzo=d.querySelector('.campanaLienzo3d'),tamano=lienzo.width+'×'+lienzo.height,encuadre=JSON.stringify(escena.encuadre);
+        if(encuadres.has(tamano))t.check(encuadre===encuadres.get(tamano),contexto+': la cámara no debe desplazarse al cambiar de rival con el mismo tamaño de mesa.');
+        else encuadres.set(tamano,encuadre);
+        for(const altura of [.1,etapa===5?2.25:2.6])t.check(escena.foco(etapa,altura).every(n=>n>=0&&n<=100),contexto+': el rival '+etapa+' debe caber entero, de la base a la cabeza.');
+        const mesa=d.querySelector('.campanaCamara').getBoundingClientRect();
+        for(const selector of ['.campanaRuta .actual b','.campanaTu']){
+          const r=d.querySelector(selector).getBoundingClientRect();
+          t.check(r.left>=mesa.left-1&&r.right<=mesa.right+1&&r.top>=mesa.top-1&&r.bottom<=mesa.bottom+1,contexto+': la etiqueta '+selector+' del encuentro '+etapa+' queda fuera del mapa.');
+        }
+      }
+      w.matchMedia=media;w.campanaAbrirDeseo=undefined;
+      w.campanaGuardar({version:1,id:'encuadre-final',lider:'fender',etapa:6});w.eval('campanaPasoAnterior=5');w.campanaRuta();
+      t.check(d.querySelector('.campanaLienzo3d')?.dataset.lista==='1',pagina+': el mapa completo debe dibujarse sin consultar un séptimo rival.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('campanaEncuentro', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -651,10 +769,12 @@ PRUEBAS.suite('campanaPantalla', async t => {
     const w=f.contentWindow,media=w.matchMedia;
     w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
     const comprobar=()=>{
-      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect();
+      const d=w.document.querySelector('#campanaDeseo[open]')||w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect();
+      t.check(d.open&&r.width>0&&r.height>0,pagina+': debe medirse el diálogo visible de campaña.');
       t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el panel de campaña exige scroll.');
       t.check(r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': el diálogo sale de la pantalla.');
-      d.querySelectorAll('.campanaAcciones .btn,.campanaVista .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo').forEach(n=>{
+      d.querySelectorAll('.campanaAcciones .btn,.campanaVista .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo,.deseoFormulario>*').forEach(n=>{
+        if(w.getComputedStyle(n).display==='none')return;
         const b=n.getBoundingClientRect();t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+n.textContent);
       });
     };
@@ -670,10 +790,10 @@ PRUEBAS.suite('campanaPantalla', async t => {
             t.check(aviso.scrollHeight<=aviso.clientHeight+1&&aviso.scrollWidth<=aviso.clientWidth+1&&r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': la ventana del encuentro exige scroll o sale de la pantalla.');
             aviso.querySelectorAll('button').forEach(b=>{const a=b.getBoundingClientRect();t.check(a.top>=r.top&&a.bottom<=r.bottom+1&&a.left>=r.left&&a.right<=r.right+1,pagina+': un botón del encuentro queda recortado.');});
             w.campanaLimpiarPreparacion(true);
-          }
+          }else w.campanaCerrarDeseo();
         }
       }
-    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{w.matchMedia=media;w.campanaCerrarDeseo();w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 

@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 198 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 199 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -499,3 +499,24 @@ en campanaEncuentroPanel y sólo aparece en localhost, 127.0.0.1, beta.caoz-tcg.
 y GitHub /tcg-beta/. Retirar campanaPruebaDisponible/campanaVencerPrueba y su
 botón cuando termine la revisión. Suite campanaPruebaBeta prueba seis etapas,
 doble clic y texto sin spoilers en ambas interfaces.
+
+
+Build 199 (beta): campana-mesa centra el centroide de su superficie, no su caja
+proyectada ni una compensación por rival. Gero: capa/capucha/libro. API encuadre
+para comprobar geometría. cinematicaFinal admite prepararRevancha antes del
+fundido; campaña monta mesa bajo .fin en el diálogo, evita el menú de fondo y
+callbacks duplicados. campanaSinDestello prueba el fundido real.
+
+campana-deseo.js se carga después de final-core; campanaRuta deriva a él al llegar
+a etapa 6 sin mesaPendiente. Diálogo opaco, texto como texto, simulación de envío
+900 ms, fuego 3000 ms (500 ms con movimiento reducido), cinco segundos del mensaje
+y 1100 ms negro antes del menú. Borrador y deseo simulado se guardan en el progreso
+local. No hay fetch, colas, secretos ni backend publicado; envío GitHub cancelado
+por ahora por el usuario. El material preparado para futuro está fuera del repo
+en work/registro-deseos-futuro. Se creó sólo README en rama campaign-wishes,
+sin deseos enviados. No hace falta configurar Cloudflare en esta versión.
+
+PUBLICAR integra módulo de deseo y SW lo precarga. Campaña antigua stubea
+campanaAbrirDeseo para conservar alcance, campanaDeseo cubre cierre completo
+simulado y cero peticiones de red. La niebla descarta etapa 6 antes de buscar
+un rival, para mantener funcional el mapa alternativo ya completo.
