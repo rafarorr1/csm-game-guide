@@ -522,8 +522,10 @@ const CAMPANA_RIVALES=[
 ];
 const CAMPANA_CLAVE='caoz.campana.v1'+(new URLSearchParams(location.search).has('test')?'.prueba':'');
 const CAMPANA_CASILLAS=[[22,84],[68,73],[33,60],[73,47],[40,32],[62,17]];
+// Apartaderos del camino: la ficha espera libre de las peanas ya descubiertas.
+const CAMPANA_ESPERAS=[[62,94],[74,93],[82,64],[20,51],[14,46],[25,18]];
 let campanaPasoAnterior=null;
-function campanaPosicionFicha(etapa){return etapa>=6?[50,9]:[CAMPANA_CASILLAS[etapa][0]-12,CAMPANA_CASILLAS[etapa][1]+3];}
+function campanaPosicionFicha(etapa){return etapa>=6?[50,9]:CAMPANA_ESPERAS[etapa];}
 let campanaNieblaId=0;
 function campanaCrearNiebla(etapa,retirada=false){
   if(etapa>=CAMPANA_RIVALES.length-1)return null;
@@ -601,8 +603,8 @@ function campanaAnimarEntrada(){
   d.appendChild(b);d.classList.add('campanaEntra');
   campanaEntradaTimer=setTimeout(campanaLimpiarEntrada,700);
 }
-let campanaMesaEscena=null;
-function campanaLimpiarMesa(){if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
+let campanaMesaEscena=null,campanaPreparando=null;
+function campanaLimpiarMesa(){campanaLimpiarPreparacion();if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
 function campanaCerrar(){campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaVolverAlMenu(){
   campanaCerrar();showScreen('menu');
@@ -688,9 +690,9 @@ function campanaRuta(aviso=''){
       fila.innerHTML=`<span class="campanaOculto" aria-hidden="true">?</span><b>Desconocido</b><span class="campanaNumero">${i+1}</span>`;
       fila.setAttribute('aria-label','Encuentro '+(i+1)+': rival desconocido');
     }else{
-      const ficha=campanaBoton('',()=>{if(i===p.etapa)campanaCombatir();else toast(LEADERS[r.lider].n+': encuentro superado');});ficha.className='campanaEncuentro';
+      const ficha=campanaBoton('',()=>{if(i===p.etapa)campanaSeleccionar();else toast(LEADERS[r.lider].n+': encuentro superado');});ficha.className='campanaEncuentro';
       ficha.innerHTML=`<span class="lface">${LEADERS[r.lider].art}</span><b>${LEADERS[r.lider].n}</b><span class="campanaNumero">${i<p.etapa?'✓':i+1}</span>`;
-      ficha.setAttribute('aria-label',LEADERS[r.lider].n+(i<p.etapa?', vencido':', combatir · '+r.alma+' Alma'));
+      ficha.setAttribute('aria-label',LEADERS[r.lider].n+(i<p.etapa?', vencido':', ver combate · '+r.alma+' Alma'));
       fila.dataset.campanaLider=r.lider;fila.appendChild(ficha);ilustrarLider(fila,r.lider);
     }
     lista.appendChild(fila);
@@ -716,16 +718,64 @@ function campanaRuta(aviso=''){
   const pasoAnterior=campanaPasoAnterior;
   campanaPasoAnterior=null;
   const ayuda=document.createElement('p');ayuda.className='campanaNota';ayuda.textContent=completa?'Venciste a Gero. Campaña completada.':'Mazo completo · 20 de Alma por duelo. Tu avance se guarda.';d.appendChild(ayuda);
-  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':'Combatir contra '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaCombatir(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
+  const acciones=campanaAcciones(campanaBoton(completa?'Nueva campaña':'Acercarse a '+LEADERS[CAMPANA_RIVALES[p.etapa].lider].n,completa?campanaElegir:()=>campanaSeleccionar(),true),campanaBoton('Menú principal',campanaVolverAlMenu));
   if(!completa)acciones.appendChild(campanaBoton('Reiniciar',()=>{
     campanaCabecera(d,'¿Reiniciar la campaña?','Perderás el avance de esta escalera cuando elijas un nuevo Protagonista.');
     d.append(campanaAcciones(campanaBoton('Conservar mi avance',()=>campanaRuta(),true),campanaBoton('Elegir nuevo Protagonista',campanaElegir)));
   }));
   d.appendChild(acciones);
-  if(window.crearMesaCampana)campanaMesaEscena=crearMesaCampana(mesa,{etapa:p.etapa,lider:p.lider,casillas:CAMPANA_CASILLAS,etapaAnterior:pasoAnterior});
+  if(window.crearMesaCampana)campanaMesaEscena=crearMesaCampana(mesa,{etapa:p.etapa,lider:p.lider,casillas:CAMPANA_CASILLAS,esperas:CAMPANA_ESPERAS,etapaAnterior:pasoAnterior});
   // En la mesa 3D la cámara proyecta la etiqueta junto a la miniatura que avanza.
   // La animación porcentual anterior sólo corresponde al mapa HTML alternativo.
   if(campanaMesaEscena){peon.getAnimations().forEach(a=>a.cancel());peon.querySelector('.campanaPeonCuerpo').getAnimations().forEach(a=>a.cancel());}
+}
+function campanaLimpiarPreparacion(regresar=false){
+  const e=campanaPreparando;if(!e)return;campanaPreparando=null;
+  if(e.viaje)e.viaje.cancelar();
+  if(e.dialogo){e.dialogo.close();e.dialogo.remove();}
+  e.panel.classList.remove('campanaVisitando');e.botones.forEach(({b,disabled})=>b.disabled=disabled);
+  if(regresar){
+    if(campanaMesaEscena)campanaMesaEscena.reposar();
+    else{e.peon.style.left=e.origen[0];e.peon.style.top=e.origen[1];}
+    const actual=e.panel.querySelector('.actual .campanaEncuentro');if(actual)actual.focus({preventScroll:true});
+  }
+}
+function campanaSaltarHTML(peon,etapa){
+  const desde=[parseFloat(peon.style.left),parseFloat(peon.style.top)],[x,y]=CAMPANA_CASILLAS[etapa],hasta=[x+(x<50?12:-12),y+5];
+  const duracion=matchMedia('(prefers-reduced-motion:reduce)').matches||document.hidden?0:900;
+  const pasos=Array.from({length:7},(_,i)=>({left:(desde[0]+(hasta[0]-desde[0])*i/6)+'%',top:(desde[1]+(hasta[1]-desde[1])*i/6-(i%2?6:0))+'%',easing:i%2?'ease-in':'ease-out'}));
+  const animacion=duracion?peon.animate(pasos,{duration:duracion}):null;
+  let resolver,acabado=false,timer;const promesa=new Promise(r=>resolver=r);
+  const terminar=ok=>{if(acabado)return;acabado=true;clearTimeout(timer);if(animacion)animacion.cancel();if(ok){peon.style.left=hasta[0]+'%';peon.style.top=hasta[1]+'%';}resolver(ok);};
+  if(duracion)timer=setTimeout(()=>terminar(true),duracion);else terminar(true);
+  return{promesa,cancelar:()=>terminar(false)};
+}
+async function campanaSeleccionar(){
+  const p=campanaLeer(),panel=document.getElementById('campanaPanel');
+  if(!p||p.etapa>=6||!panel||!panel.open||panel.dataset.vista!=='mapa'||campanaPreparando||campanaLanzando)return;
+  if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
+  campanaLimpiarEntrada();
+  const peon=panel.querySelector('.campanaPeon'),botones=[...panel.querySelectorAll('.campanaEncuentro,.campanaAcciones>.gold')].map(b=>({b,disabled:b.disabled}));
+  const e={id:p.id,etapa:p.etapa,panel,peon,origen:[peon.style.left,peon.style.top],botones,viaje:null,dialogo:null};
+  campanaPreparando=e;botones.forEach(({b})=>b.disabled=true);panel.classList.add('campanaVisitando');
+  e.viaje=campanaMesaEscena?campanaMesaEscena.saltarHacia(p.etapa):campanaSaltarHTML(peon,p.etapa);
+  const llego=await e.viaje.promesa;
+  if(!llego||campanaPreparando!==e||!panel.open)return;
+  const actual=campanaLeer();if(!actual||actual.id!==e.id||actual.etapa!==e.etapa){campanaLimpiarPreparacion(true);return;}
+  campanaMostrarEncuentro(e,actual);
+}
+function campanaMostrarEncuentro(e,p){
+  const rival=CAMPANA_RIVALES[p.etapa],lider=LEADERS[rival.lider],mazo=DECKS[rival.lider],d=document.createElement('dialog');
+  d.id='campanaEncuentroPanel';d.setAttribute('aria-labelledby','campanaEncuentroTitulo');e.dialogo=d;
+  d.innerHTML=`<header class="campanaEncuentroCabecera"><div class="campanaSello">${p.etapa===5?'JEFE FINAL':'ENCUENTRO '+(p.etapa+1)+' DE 6'}</div><h2 id="campanaEncuentroTitulo">Contra ${lider.n}</h2><p>${mazo.n} · ${mazo.d}</p></header>
+    <div class="campanaDuelo"><div class="campanaCombatiente"><span>TU PROTAGONISTA</span><b>${LEADERS[p.lider].n}</b><strong>20 <small>ALMA</small></strong><span>${DECKS[p.lider].list.reduce((n,c)=>n+c[1],0)} cartas</span></div><span class="campanaDueloVS" aria-hidden="true">VS</span><div class="campanaCombatiente rival"><span>RIVAL</span><b>${lider.n}</b><strong>${rival.alma} <small>ALMA</small></strong><span>${mazo.list.reduce((n,c)=>n+c[1],0)} cartas</span></div></div>
+    <p class="campanaCondiciones">El volado decide quién empieza.<br>Gana para ${p.etapa===5?'completar la campaña':'revelar el siguiente encuentro'}.</p>`;
+  const volver=()=>campanaLimpiarPreparacion(true);
+  const entrar=()=>{if(campanaPreparando!==e)return;campanaLimpiarPreparacion();campanaCombatir();};
+  const acciones=campanaAcciones(campanaBoton('Entrar al combate',entrar,true),campanaBoton('Volver a la mesa',volver));
+  d.appendChild(acciones);d.addEventListener('cancel',ev=>{ev.preventDefault();volver();});
+  d.addEventListener('close',()=>{if(campanaPreparando===e)volver();});
+  document.body.appendChild(d);d.showModal();acciones.querySelector('.gold').focus({preventScroll:true});
 }
 let campanaCancelarAcercamiento=null;
 function campanaCancelarZoom(){if(campanaCancelarAcercamiento)campanaCancelarAcercamiento();}
@@ -776,7 +826,7 @@ function campanaFinal(winner,why){
     winner===ME?(completa?'Derrotaste a Gero. El Domo es tuyo.':'Has superado a '+LEADERS[CAMPANA_RIVALES[meta.etapa].lider].n+'. El siguiente combate está desbloqueado.'):'No pierdes tu progreso. Puedes volver a desafiar a este rival.');
   const resultado=document.createElement('p');resultado.className='campanaNota';resultado.textContent=why||'';d.appendChild(resultado);
   const acciones=campanaAcciones();
-  if(!completa)acciones.appendChild(campanaBoton(winner===ME?'Avanzar en el mapa':'Reintentar combate',()=>winner===ME?campanaRuta():campanaCombatir(),true));
+  if(!completa)acciones.appendChild(campanaBoton(winner===ME?'Avanzar en el mapa':'Reintentar combate',()=>{campanaRuta();if(winner!==ME)campanaSeleccionar();},true));
   acciones.append(campanaBoton(completa?'Ver campaña completada':'Ver el mapa',()=>campanaRuta(),completa),campanaBoton('Menú principal',campanaVolverAlMenu));d.appendChild(acciones);
 }
 {
@@ -866,6 +916,27 @@ function campanaFinal(winner,why){
   .campanaPeonCuerpo>span{position:absolute;top:-14px;left:-6px;width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:radial-gradient(circle at 35% 30%,#ffe9ae,#b78227);border:2px solid #d8b568;font-size:17px}
   .campanaPeonBase{position:absolute;bottom:0;left:0;width:30px;height:13px;border-radius:50%;background:linear-gradient(#e3bd64,#88571e);border:1px solid #76501c;box-shadow:0 3px 0 #543514}
   .campanaEncuentro:focus-visible{outline:2px solid #fff3ce;outline-offset:4px;border-radius:8px}
+  .campanaVisitando .campanaAcciones>.gold{opacity:.65;pointer-events:none}
+  #campanaEncuentroPanel{box-sizing:border-box;position:fixed;inset:0;margin:auto;height:fit-content;width:min(460px,calc(100vw - 32px));max-height:calc(var(--campana-alto,100dvh) - 24px);overflow:hidden;padding:24px;border:1px solid #c69a57;border-radius:18px;background:radial-gradient(ellipse at top,#57382b,#201814 72%);color:#ecddc2;box-shadow:0 25px 100px #000c;text-align:center}
+  #campanaEncuentroPanel[open]{display:grid;gap:16px;animation:campanaDetalleEntra .24s ease-out}
+  #campanaEncuentroPanel::backdrop{background:#08090ccc;backdrop-filter:blur(4px)}
+  #campanaEncuentroPanel h2{margin:7px 0 8px;font:800 28px/1.1 var(--serif);color:#f5d69a}
+  .campanaEncuentroCabecera p{margin:0;color:#cbb899;font:12px/1.4 var(--sans)}
+  .campanaDuelo{display:grid;grid-template-columns:1fr 28px 1fr;align-items:center;gap:8px}
+  .campanaCombatiente{display:flex;flex-direction:column;align-items:center;gap:7px;padding:14px 8px;border:1px solid #b58e504d;border-radius:12px;background:#e1b6670b}
+  .campanaCombatiente.rival{border-color:#b85a504d;background:#cc675010}
+  .campanaCombatiente>span{font:10px/1.2 var(--sans);color:#c5b397}.campanaCombatiente>span:first-child{font-size:8px;letter-spacing:1px}
+  .campanaCombatiente b{font:700 18px/1.1 var(--serif)}.campanaCombatiente strong{font:800 28px/1 var(--serif);color:#f1ce87}.campanaCombatiente strong small{font:9px var(--sans)}
+  .campanaDueloVS{font:800 13px var(--serif);color:#a88858}
+  .campanaCondiciones{margin:0;color:#c6b499;font:12px/1.5 var(--sans)}
+  #campanaEncuentroPanel .campanaAcciones{display:grid;grid-template-columns:1fr;gap:8px}
+  #campanaEncuentroPanel .btn{min-height:44px;width:100%;margin:0;padding:9px;white-space:normal}
+  #campanaEncuentroPanel .btn:not(.gold){background:linear-gradient(150deg,#463021,#211812);border-color:#a47b4655}
+  #campanaEncuentroPanel .btn:focus-visible{outline:2px solid #ffe1a0;outline-offset:3px}
+  @keyframes campanaDetalleEntra{from{opacity:0;scale:.96;translate:0 8px}to{opacity:1;scale:1;translate:0 0}}
+  @media(max-height:650px){#campanaEncuentroPanel{padding:14px}#campanaEncuentroPanel[open]{gap:10px}#campanaEncuentroPanel h2{font-size:24px}.campanaCombatiente{padding:10px 6px;gap:5px}}
+  @media(min-aspect-ratio:6/5) and (max-height:500px){#campanaEncuentroPanel{width:min(740px,calc(100vw - 32px))}#campanaEncuentroPanel[open]{grid-template-columns:minmax(0,1.4fr) minmax(165px,1fr);gap:8px 20px}.campanaEncuentroCabecera,.campanaDuelo,.campanaCondiciones{grid-column:1}#campanaEncuentroPanel .campanaAcciones{grid-column:2;grid-row:1/4;align-self:center}.campanaCombatiente{padding:6px;gap:4px}.campanaCombatiente strong{font-size:24px}.campanaEncuentroCabecera p,.campanaCondiciones{font-size:10px}#campanaEncuentroPanel h2{font-size:22px;margin:5px 0}}
+  @media(prefers-reduced-motion:reduce){#campanaEncuentroPanel[open]{animation:none}}
   @media(max-width:400px){.campanaTablero{border-width:4px}.campanaMesa{padding:8px 8px 16px}.campanaMesa .campanaRuta li{width:70px}.campanaMesa .campanaRuta b{font-size:10px}}
   @media(max-height:650px){
     #campanaPanel{padding:10px;gap:6px}.campanaSello{font-size:9px;letter-spacing:2px}

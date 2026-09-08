@@ -480,8 +480,10 @@ PRUEBAS.suite('campanaMesa', async t => {
       const escena=w.eval('campanaMesaEscena'),lienzo=d.querySelector('.campanaLienzo3d'),rival=d.querySelector('.campanaRuta .actual');
       t.check(lienzo&&lienzo.dataset.lista==='1'&&lienzo.width>100,pagina+': la mesa debe dibujarse, también con movimiento reducido.');
       const imagen=lienzo.toDataURL(),antes=rival.style.left;
-      d.querySelector('[aria-label="Girar mesa a la derecha"]').click();
-      t.check(lienzo.toDataURL()!==imagen&&rival.style.left!==antes,pagina+': girar debe mover tanto la geometría como el objetivo del encuentro.');
+      lienzo.dispatchEvent(new w.PointerEvent('pointerdown',{clientX:50,pointerId:1}));lienzo.dispatchEvent(new w.PointerEvent('pointermove',{clientX:200,pointerId:1}));
+      t.check(!d.querySelector('.campanaVista')&&lienzo.toDataURL()===imagen&&rival.style.left===antes,pagina+': la cámara debe permanecer fija, sin controles de giro.');
+      const nombre=rival.querySelector('b').getBoundingClientRect(),yo=d.querySelector('.campanaTu').getBoundingClientRect();
+      t.check(yo.left>=nombre.right||yo.right<=nombre.left||yo.top>=nombre.bottom||yo.bottom<=nombre.top,pagina+': las etiquetas del jugador y su rival se sobreponen.');
       const foco=escena.foco(0);t.check(foco.every(n=>Number.isFinite(n)&&n>0&&n<100),pagina+': el zoom debe apuntar al rival visible.');
       t.check(w.campanaLeer().etapa===0,pagina+': mirar la mesa no puede cambiar el progreso.');
       w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:false}:media.call(w,q);
@@ -499,7 +501,48 @@ PRUEBAS.suite('campanaMesa', async t => {
       w.campanaRuta();
       t.check(!d.querySelector('.campanaMesa3d')&&!d.querySelector('.campanaLienzo3d')&&!!d.querySelector('.campanaEncuentro'),pagina+': sin lienzo debe conservarse el mapa y su encuentro.');
       t.check(w.getComputedStyle(d.querySelector('.campanaRuta .actual .lface')).display!=='none',pagina+': el mapa alternativo debe mostrar al rival.');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);await w.campanaSeleccionar();
+      t.check(d.querySelector('#campanaEncuentroPanel')?.open,pagina+': la confirmación también debe abrirse con el mapa alternativo.');
     }finally{w.HTMLCanvasElement.prototype.getContext=contexto;w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaEncuentro', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-encuentro-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;let llamadas=[];
+    w.startMatch=async(a,b,opts)=>llamadas.push({a,b,opts});
+    const pulsar=texto=>[...d.querySelectorAll('#campanaEncuentroPanel button')].find(b=>b.textContent===texto).click();
+    try{
+      w.campanaGuardar({version:1,id:'encuentro',lider:'fender',etapa:0});w.campanaRuta();
+      const mesa=d.querySelector('.campanaLienzo3d'),peon=d.querySelector('.campanaPeon'),origen=peon.style.left;
+      const viaje=w.campanaSeleccionar();await w.campanaSeleccionar();await sleep(100);
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&llamadas.length===0&&mesa.dataset.saltando==='1',pagina+': primero debe saltar la ficha, sin abrir la ventana ni comenzar el combate.');
+      await viaje;await sleep(280);
+      const detalle=d.querySelector('#campanaEncuentroPanel'),r=detalle.getBoundingClientRect();
+      t.check(detalle.open&&d.querySelectorAll('#campanaEncuentroPanel').length===1&&llamadas.length===0,pagina+': llegar debe mostrar una sola confirmación, sin iniciar el combate.');
+      t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2&&Math.abs(r.top+r.height/2-w.innerHeight/2)<2,pagina+': la ventana del encuentro debe quedar centrada.');
+      t.check(detalle.textContent.includes('Contra Mohamed')&&detalle.querySelector('.rival strong').textContent.trim()==='16 ALMA',pagina+': las especificaciones no corresponden a Mohamed.');
+      t.check(peon.style.left!==origen,pagina+': la ficha no llegó al encuentro.');
+      pulsar('Volver a la mesa');
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&d.querySelector('.campanaLienzo3d')===mesa&&peon.style.left===origen&&w.campanaLeer().etapa===0&&llamadas.length===0,pagina+': volver debe conservar la mesa y el progreso, sin empezar el duelo.');
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      for(let etapa=0;etapa<6;etapa++){
+        w.campanaGuardar({...w.campanaLeer(),etapa});w.campanaRuta();await w.campanaSeleccionar();
+        t.check(d.querySelector('#campanaEncuentroPanel .rival strong').textContent.trim()===[16,20,24,28,32,40][etapa]+' ALMA',pagina+': el aviso debe mostrar el Alma real de cada rival.');
+        pulsar('Volver a la mesa');
+      }
+      w.campanaGuardar({...w.campanaLeer(),etapa:0});w.campanaRuta();await w.campanaSeleccionar();
+      w.matchMedia=media;const entrar=d.querySelector('#campanaEncuentroPanel .gold');entrar.click();entrar.click();
+      t.check(llamadas.length===0&&!d.querySelector('#campanaEncuentroPanel'),pagina+': entrar debe cerrar la confirmación antes del acercamiento.');
+      await sleep(600);t.check(llamadas.length===1&&llamadas[0].b==='mohamed'&&llamadas[0].opts.campana.alma===16,pagina+': confirmar debe arrancar una sola vez el encuentro mostrado.');
+      llamadas=[];w.campanaRuta();const cancelado=w.campanaSeleccionar();w.campanaCerrar();await cancelado;await sleep(1000);
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&llamadas.length===0,pagina+': cerrar durante los saltos no debe dejar una ventana tardía ni iniciar una partida.');
+      w.campanaRuta();w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);await w.campanaSeleccionar();
+      d.querySelector('#campanaEncuentroPanel').dispatchEvent(new w.Event('cancel',{cancelable:true}));
+      t.check(!d.querySelector('#campanaEncuentroPanel')&&d.querySelector('#campanaPanel').open,pagina+': Escape debe volver a la mesa.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
@@ -507,7 +550,8 @@ PRUEBAS.suite('campanaPantalla', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-pantalla-interna';document.body.appendChild(f);await carga;
-    const w=f.contentWindow;
+    const w=f.contentWindow,media=w.matchMedia;
+    w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
     const comprobar=()=>{
       const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect();
       t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el panel de campaña exige scroll.');
@@ -523,9 +567,15 @@ PRUEBAS.suite('campanaPantalla', async t => {
         for(let i=0;i<6;i++){w.document.querySelector('[aria-label="Protagonista siguiente"]').click();comprobar();}
         for(const etapa of [0,5,6]){
           w.campanaGuardar({version:1,id:'pantalla',lider:'fender',etapa});w.campanaRuta();await sleep(60);comprobar();
+          if(etapa<6){
+            await w.campanaSeleccionar();const aviso=w.document.querySelector('#campanaEncuentroPanel'),r=aviso.getBoundingClientRect();
+            t.check(aviso.scrollHeight<=aviso.clientHeight+1&&aviso.scrollWidth<=aviso.clientWidth+1&&r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': la ventana del encuentro exige scroll o sale de la pantalla.');
+            aviso.querySelectorAll('button').forEach(b=>{const a=b.getBoundingClientRect();t.check(a.top>=r.top&&a.bottom<=r.bottom+1&&a.left>=r.left&&a.right<=r.right+1,pagina+': un botón del encuentro queda recortado.');});
+            w.campanaLimpiarPreparacion(true);
+          }
         }
       }
-    }finally{w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
