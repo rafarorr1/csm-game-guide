@@ -321,7 +321,7 @@ PRUEBAS.suite('campana', async t => {
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     f.src=pagina+'?test=campana-interna';const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);await carga;
     let w=f.contentWindow;
-    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;};
+    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;w.cinematicaFinal=async()=>false;};
     const comprobarNiebla=etapa=>{
       const n=w.document.querySelector('.campanaTablero .campanaNiebla');
       if(etapa>=5){t.check(!n,pagina+': la niebla debe desaparecer al llegar al jefe final.');return 0;}
@@ -361,7 +361,7 @@ PRUEBAS.suite('campana', async t => {
         if(etapa===5)t.check(w.eval("P(1).leaderId==='gero'"),pagina+': Gero debe ser el jefe final.');
         w.endGame(0,'Victoria de prueba');await sleep(600);
         t.check(w.campanaLeer().etapa===etapa+1,pagina+': la victoria no se guardó.');
-        w.campanaRuta();
+        w.campanaRuta();await sleep(1300);w.document.querySelector('#campanaPanel .campanaAcciones .gold').click();
         t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||(w.document.querySelector('.campanaLienzo3d')?w.document.querySelector('.campanaLienzo3d').dataset.avanzando==='1':w.document.querySelector('.campanaPeon').getAnimations().length>0),pagina+': falta la animación de avance.');
         t.check(w.document.querySelector('.campanaPeon').dataset.etapa===String(etapa+1),pagina+': la ficha no avanzó tras la victoria.');
         t.check(w.document.querySelectorAll('.campanaRuta [data-campana-lider]').length===Math.min(6,etapa+2),pagina+': se revelan rivales antes de tiempo.');
@@ -376,11 +376,63 @@ PRUEBAS.suite('campana', async t => {
           t.check(comprobarNiebla(2)===limiteNiebla,pagina+': recargar debe conservar la parte del mapa ya despejada.');
         }
       }
-      t.check(w.document.querySelector('#campanaPanel').textContent.includes('¡Campaña completada!'),pagina+': falta el cierre de campaña.');
+      t.check(w.document.querySelector('#campanaPanel').textContent.includes('Campaña completada'),pagina+': falta el cierre de campaña.');
       w.campanaCerrar();await w.setupMatch('fender','adreida',{first:0,fast:true});
       t.check(!w.eval('G.campana')&&w.eval('P(1).alma')===20,pagina+': los modificadores se filtraron a una partida normal.');
       t.check(w.campanaLeer().etapa===6,pagina+': una partida normal alteró el progreso.');
     }finally{w.relojPara();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('azarYCriticos', async t => {
+  let total=0;for(let i=0;i<10000;i++)total+=rnd(2);
+  t.check(total>4500&&total<5500,'La muestra del volado debe ser compatible con 50/50.');t.nota('10000 volados: '+total+' caras de un lado y '+(10000-total)+' del otro.');
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=azar-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,azar=w.Math.random;
+    try{
+      w.newGame('fender','mohamed');w.eval('G.fast=true');
+      for(const eleccion of [0,1])for(const moneda of [0,1]){
+        w.Math.random=()=>moneda?.9:.1;const tirada=w.voladoDomo('Rival');
+        d.querySelector(eleccion?'#ladoCruz':'#ladoCara').click();
+        t.check(await tirada===(eleccion===moneda?0:1),pagina+': elección, resultado y primer turno deben coincidir.');
+        t.check(d.querySelector('#moneda').getAttribute('aria-label')==='Moneda: '+(moneda?'cruz':'cara'),pagina+': la animación debe terminar con el lado sorteado.');
+      }
+      w.Math.random=azar;w.eval('G.fast=false');Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      const dado=w.rollDice(1,'Prueba',true,{ok:n=>n>=8,siOk:'Acierto',siMal:'No alcanza'});d.querySelector('#dbtn').click();await sleep(1700);
+      t.check(d.querySelector('#dlabel').textContent==='¡CRÍTICO!',pagina+': un 1 debe decir CRÍTICO.');
+      t.check(d.querySelector('#defecto').textContent.includes('No alcanza'),pagina+': el nuevo texto no debe alterar la regla del dado.');d.querySelector('#dbtn').click();await dado;
+    }finally{w.Math.random=azar;w.relojPara();f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaContinuidad', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=continuidad-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;let final,partidas=[];
+    try{
+      w.campanaGuardar({version:1,id:'continuidad',lider:'fender',etapa:0});
+      w.newGame('fender','mohamed');w.eval("G.campana={id:'continuidad',etapa:0,alma:16};G.over=true;");
+      w.cinematicaFinal=async(ganador,motivo,acciones)=>{final={ganador,acciones};return true;};
+      w.showEnd(0,'Victoria de prueba');await sleep(0);
+      t.check(final&&final.ganador===0,pagina+': campaña debe usar la victoria animada normal.');
+      t.check(w.campanaLeer().etapa===1&&w.campanaLeer().mesaPendiente===0,pagina+': debe guardar el rival vencido para la escena de mesa.');
+      w.showEnd(0,'Duplicado');t.check(w.campanaLeer().etapa===1,pagina+': no avanzar dos veces.');
+      final.acciones.revancha();await sleep(50);
+      t.check(w.document.querySelector('.campanaLienzo3d').dataset.derribando==='1',pagina+': al volver, la miniatura debe golpear al rival.');
+      t.check(w.document.querySelector('#campanaPanel .campanaAcciones .gold').disabled,pagina+': no avanzar durante el golpe.');
+      await sleep(1400);
+      t.check(w.document.querySelector('.campanaLienzo3d').dataset.derribado==='0',pagina+': el rival debe quedar tumbado.');
+      w.document.querySelector('#campanaPanel .campanaAcciones .gold').click();await sleep(50);
+      t.check(w.campanaLeer().mesaPendiente==null&&w.document.querySelector('.campanaLienzo3d').dataset.avanzando==='1',pagina+': continuar debe caminar al siguiente rival.');
+      const posicion=w.eval('campanaMesaEscena.posicion'),origen=w.campanaPosicionEncuentro(0);t.check(Math.hypot(posicion[0]-origen[0],posicion[1]-origen[1])<6,pagina+': el avance debe partir del rival vencido, nunca del inicio.');
+      w.campanaCerrar();w.startMatch=async(...args)=>partidas.push(args);
+      w.newGame('fender','fender');w.eval("G.campana={id:'continuidad',etapa:1,alma:20};G.over=true;");
+      w.showEnd(1,'Derrota de prueba');await sleep(0);final.acciones.revancha();await sleep(30);
+      t.check(partidas.length===1&&partidas[0][2].campana.etapa===1&&!w.document.querySelector('#campanaPanel').open,pagina+': revancha debe entrar directamente al mismo duelo.');
+    }finally{w.cerrarCinematica();w.campanaCerrar();w.relojPara();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
