@@ -527,9 +527,9 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .screen.portada.entra > *:nth-child(n+6){animation-delay:.2s}
 
 /* el destello que cruza al cambiar de pantalla: una sola pasada, muy corta */
-#barrido{position:absolute;inset:0;z-index:80;pointer-events:none;opacity:0;
+#barrido,.campanaBarrido,.barridoModal{position:absolute;inset:0;z-index:80;pointer-events:none;opacity:0;
   background:linear-gradient(100deg,transparent 34%,rgba(255,206,140,.16) 50%,transparent 66%)}
-#barrido.va{animation:cruza .45s ease-out}
+#barrido.va,.campanaBarrido.va,.barridoModal.va{animation:cruza .45s ease-out}
 @keyframes cruza{
   0%  {opacity:0;translate:-60% 0}
   30% {opacity:1}
@@ -537,7 +537,7 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 
 @media (prefers-reduced-motion:reduce){
   .portada .btn.fogonazo,.portada .btn.fogonazo::before,.portada .btn.fogonazo::after,
-  .screen.portada.entra > *,#barrido.va{animation:none}}
+  .screen.portada.entra > *,#barrido.va,.campanaBarrido.va,.barridoModal.va{animation:none}}
 
 /* La que espera turno: detrás de la elegida, invisible y sin poder pulsarse.
    Hereda la misma transición que las demás, así que al girar sale de detrás en
@@ -2174,6 +2174,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
     Gana quien reclame el alma del rival… o el Deseo.</div>
   <div class="menucol">
     <button class="btn gold" id="mTut">🎓 &nbsp;Tutorial — Aprende a jugar</button>
+    <button class="btn" id="mCampana" aria-haspopup="dialog">Campaña</button>
     <button class="btn" id="mPlay">⚔️ &nbsp;Partida contra el Domo</button>
     <button class="btn" id="mOnline">👥 &nbsp;Jugar con un amigo (online)</button>
     <button class="btn" id="mGuides">📖 &nbsp;Guías de estrategia</button>
@@ -2298,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=180"></script>
-<script src="final.js?b=180"></script>
+<script src="motor.js?b=190"></script>
+<script src="final.js?b=190"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2318,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:180, fecha:'2026-09-07'};
+const BUILD = {n:190, fecha:'2026-09-07'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2487,7 +2488,7 @@ async function revelarCarta(cardId, aMano, side){
     {transform:`translateY(${aMano?'220px':'-40px'}) scale(${aMano?'.7':'.5'}) rotate(${aMano?4:-8}deg)`,
      opacity:0}],{duration:520,easing:'cubic-bezier(.4,0,.7,1)'});
   await nap(540);
-  $('#ov').classList.remove('on');
+  cerrarOv();
 }
 
 async function ofrecerManoNueva(s){
@@ -2639,8 +2640,10 @@ function clearPrompt(){ $('#prompt').classList.remove('on'); }
 
 function openOv(){
   $('#inspect').classList.remove('on');
-  $('#ov').classList.toggle('calido', !!document.querySelector('.screen.on.portada'));
-  $('#ov').classList.add('on');
+  const ov=$('#ov'),primera=!ov.classList.contains('on');
+  ov.classList.toggle('calido',!!document.querySelector('.screen.on.portada'));
+  ov.classList.add('on');
+  if(primera&&ov.classList.contains('calido'))animarTransicionMenu($('#ovPanel'),ov);
 }
 
 /* opts.suave: la pregunta se hace sin tapar la mesa. Para cuando lo que se
@@ -2654,7 +2657,7 @@ function ask(s,title,options,aiFn,opts={}){
     p.innerHTML=`<h3>${title}</h3>`;
     const box=el('div','opts');
     options.forEach((o,i)=>{ const b=el('button','btn',o);
-      b.onclick=()=>{ $('#ov').classList.remove('on','suave');
+      b.onclick=()=>{ cerrarOv();
         const h=$('#hand'); if(h) h.classList.remove('mirando');
         res(i); }; box.appendChild(b); });
     p.appendChild(box);
@@ -2673,10 +2676,10 @@ function pickCard(s,ids,title,cancellable){
     p.innerHTML=`<h3>${title}</h3>`;
     const box=el('div','gallery');
     ids.forEach(id=>{ const c=cardEl(id,{});
-      c.onclick=()=>{ $('#ov').classList.remove('on'); res(id); }; box.appendChild(c); });
+      c.onclick=()=>{ cerrarOv(); res(id); }; box.appendChild(c); });
     p.appendChild(box);
     if(cancellable){ const b=el('button','btn','Pasar'); b.style.marginTop='12px';
-      b.onclick=()=>{ $('#ov').classList.remove('on'); res(null); }; p.appendChild(b); }
+      b.onclick=()=>{ cerrarOv(); res(null); }; p.appendChild(b); }
     openOv();
   });
 }
@@ -2689,7 +2692,7 @@ function pickFrom(s,list,title){
     const p=$('#ovPanel'); p.innerHTML=`<h3>${title}</h3>`;
     const box=el('div','opts');
     list.forEach(o=>{ const b=el('button','btn',CARDS[o.id].art+' '+CARDS[o.id].n+(o.unit?` (en ${o.unit.card.n})`:' (Reliquia)'));
-      b.onclick=()=>{ $('#ov').classList.remove('on'); res(o); }; box.appendChild(b); });
+      b.onclick=()=>{ cerrarOv(); res(o); }; box.appendChild(b); });
     p.appendChild(box); openOv();
   });
 }
@@ -3824,12 +3827,12 @@ function showTutorialPick(){
       <div class="larch">${D.d}</div>
       <div class="ltxt"><b>“${D.n}”</b><br>${'★'.repeat(g.dif)+'☆'.repeat(3-g.dif)} · ${g.lema}</div>`);
     ilustrarLider(d, id);
-    d.onclick=()=>{ $('#ov').classList.remove('on'); $('#log').innerHTML=''; startTutorial(id); };
+    d.onclick=()=>{ cerrarOv(); $('#log').innerHTML=''; startTutorial(id); };
     list.appendChild(d);
   });
   p.appendChild(list);
   const row=el('div','opts');
-  const back=el('button','btn sm','Cancelar'); back.onclick=()=>$('#ov').classList.remove('on');
+  const back=el('button','btn sm','Cancelar'); back.onclick=()=>cerrarOv();
   row.appendChild(back); p.appendChild(row);
   openOv();
 }
@@ -3837,7 +3840,7 @@ function showTutorialPick(){
 async function startTutorial(lid){
   tutEnd();                           // limpieza por si había uno a medias
   // y por si venías del cartel de victoria de la partida anterior
-  $('#ov').classList.remove('on'); clearPrompt(); SEL=null; TGT=null;
+  cerrarOv(); clearPrompt(); SEL=null; TGT=null;
   lid = lid && TUT_MAZO[lid] ? lid : 'fender';
   TUT.lider=lid; TUT_STEPS=buildTut(lid);
   const M=TUT_MAZO[lid];
@@ -3864,25 +3867,14 @@ async function startTutorial(lid){
    entre menú, selector y guías NO se toca: sigue exactamente donde estaba. */
 
 function showScreen(id){
-  const antes = $('.screen.on');
-  $$('.screen').forEach(s=>s.classList.remove('on','entra'));
-  const pantalla = $('#'+id);
+  const antes=$('.screen.on'),pantalla=$('#'+id),esMenu=pantalla.classList.contains('portada');
+  if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
+  $$('.screen').forEach(s=>s.classList.remove('on'));
   pantalla.classList.add('on');
-  const f = $('#fondoMenus');
-  if(f) f.classList.toggle('on', pantalla.classList.contains('portada'));
-  /* el peligro es de la mesa: fuera de ella no puede quedarse encendido */
-  if(id!=='board'){ document.body.classList.remove('peligro','remate'); }
-
-  /* La entrada sólo entre menús: al tablero se llega por la cortinilla del VS,
-     que ya es una transición, y encadenar las dos sería una de más. */
-  if(pantalla.classList.contains('portada') && antes !== pantalla){
-    pantalla.classList.remove('entra'); void pantalla.offsetWidth;   // reinicia
-    pantalla.classList.add('entra');
-    setTimeout(()=>pantalla.classList.remove('entra'), 700);
-    const b = $('#barrido');
-    if(b){ b.classList.remove('va'); void b.offsetWidth; b.classList.add('va');
-           setTimeout(()=>b.classList.remove('va'), 500); }
-  }
+  $('#fondoMenus').classList.toggle('on',esMenu);
+  if(id!=='board'){document.body.classList.remove('peligro','remate');}
+  // El tablero entra con su propio VS; las pantallas de menú comparten el oro.
+  if(esMenu&&antes!==pantalla)animarTransicionMenu(pantalla);
 }
 
 /* EL FOIL SIGUE AL CURSOR.
@@ -4137,7 +4129,7 @@ function showGallery(){
     if(!lista.length) p.appendChild(el('div','notagal','No hay cartas con ese filtro.'));
 
     const c=el('button','btn','Cerrar'); c.style.marginTop='14px';
-    c.onclick=()=>$('#ov').classList.remove('on'); p.appendChild(c);
+    c.onclick=()=>cerrarOv(); p.appendChild(c);
   };
   draw(); openOv();
 }
@@ -4156,7 +4148,7 @@ function showGrave(){
     p.appendChild(g);
   });
   const c=el('button','btn','Cerrar'); c.style.marginTop='14px';
-  c.onclick=()=>$('#ov').classList.remove('on'); p.appendChild(c);
+  c.onclick=()=>cerrarOv(); p.appendChild(c);
   openOv();
 }
 
@@ -4192,7 +4184,7 @@ function abrirEditor(){
   };
   entrar.onclick = probar;
   campo.onkeydown = e => { if(e.key === 'Enter') probar(); };
-  cerrar.onclick = () => $('#ov').classList.remove('on');
+  cerrar.onclick = () => cerrarOv();
 
   caja.appendChild(campo); caja.appendChild(aviso);
   caja.appendChild(entrar); caja.appendChild(cerrar);
@@ -4205,7 +4197,7 @@ function showRecords(){
   const p=$('#ovPanel');
   p.innerHTML='<h3>🏆 Tus récords</h3>'+recordsHTML();
   const box=el('div','opts');
-  const c=el('button','btn','Cerrar'); c.onclick=()=>{ $('#ov').classList.remove('on'); };
+  const c=el('button','btn','Cerrar'); c.onclick=()=>{ cerrarOv(); };
   const b=el('button','btn sm','Borrar récords'); b.onclick=()=>{ if(confirm('¿Borrar todos los récords de este navegador?')){ borrarRecords(); showRecords(); } };
   box.appendChild(c); box.appendChild(b); p.appendChild(box); openOv();
 }
@@ -4213,7 +4205,7 @@ function showRules(inGame){
   const p=$('#ovPanel');
   p.innerHTML='<h3>📜 Reglas del Domo</h3>'+RULES_HTML;
   const c=el('button','btn','Cerrar'); c.style.marginTop='14px';
-  c.onclick=()=>{ $('#ov').classList.remove('on'); if(!inGame) showScreen('menu'); };
+  c.onclick=()=>{ cerrarOv(); if(!inGame) showScreen('menu'); };
   p.appendChild(c); openOv();
 }
 
@@ -4224,7 +4216,7 @@ function showRules(inGame){
 
 function salirAlMenu(){
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
-  $('#ov').classList.remove('on'); $('#inspect').classList.remove('on');
+  cerrarOv(); $('#inspect').classList.remove('on');
   if(NET.on){ netSend({t:'bye'}); setTimeout(netClose,400); }   // avisar al rival
   showScreen('menu');
 }
@@ -4240,12 +4232,13 @@ function pedirSalirAlMenu(){
   const si=el('button','btn','Sí, salir');
   si.onclick=salirAlMenu;
   const no=el('button','btn gold','Seguir jugando');
-  no.onclick=()=>{ $('#ov').classList.remove('on'); render(); };
+  no.onclick=()=>{ cerrarOv(); render(); };
   box.appendChild(no); box.appendChild(si); p.appendChild(box);
   openOv();
 }
 
 function showEnd(winner,why){
+  if(G.campana){campanaFinal(winner,why);return;}
   const g0=G;
   RECORD_ULTIMO=null;
   if(!G.tutorial && !G.auto && !G.fast && !G.silent) anotarRecord(winner===ME, P(ME).leaderId, Math.ceil(G.turnNo/2), NET.on?'online':'ia');
@@ -4267,11 +4260,11 @@ function panelFinal(winner,why){
     <p>Turnos jugados: ${Math.ceil(G.turnNo/2)} · Tu Alma: ${Math.max(0,P(ME).alma)} · Alma rival: ${Math.max(0,P(FOE).alma)}</p>`;
   const box=el('div','opts');
   const again=el('button','btn gold','↺ Revancha');
-  again.onclick=()=>{ $('#ov').classList.remove('on');
+  again.onclick=()=>{ cerrarOv();
     if(NET.on){ proponerRevancha(); return; }
     startMatch(P(ME).leaderId,P(FOE).leaderId); };
   const menu=el('button','btn','← Menú principal');
-  menu.onclick=()=>{ $('#ov').classList.remove('on'); tutEnd(); clearPrompt();
+  menu.onclick=()=>{ cerrarOv(); tutEnd(); clearPrompt();
     if(NET.on){ netSend({t:'bye'}); setTimeout(netClose,400); } showScreen('menu'); };
   box.appendChild(again); box.appendChild(menu); p.appendChild(box);
   openOv();
@@ -4345,7 +4338,7 @@ async function startMatch(a, b, opts={}){
   const first = conVolado ? await volado(LEADERS[b].n)
                           : (opts.first != null ? opts.first : null);
   if(mia !== PARTIDA_N) return;      // arrancó otra mientras elegías: ésta ya no vale
-  await setupMatch(a, b, first==null ? {} : {first});
+  await setupMatch(a,b,{...(first==null?{}:{first}),...(opts.campana?{campana:opts.campana}:{})});
 }
 
 
@@ -4467,7 +4460,7 @@ function pickIndex(list,title){
     const p=$('#ovPanel'); p.innerHTML=`<h3>${title}</h3>`;
     const box=el('div','opts');
     list.forEach((o,i)=>{ const b=el('button','btn',(CARDS[o.id]?CARDS[o.id].art+' '+CARDS[o.id].n:o.id)+(o.en?' (en '+o.en+')':''));
-      b.onclick=()=>{ $('#ov').classList.remove('on'); res(i); }; box.appendChild(b); });
+      b.onclick=()=>{ cerrarOv(); res(i); }; box.appendChild(b); });
     p.appendChild(box); openOv();
   });
 }
@@ -4496,7 +4489,7 @@ function showOnline(){
   const b2=el('button','btn','🔑 &nbsp;Unirme con un código');
   const b3=el('button','btn sm','Cancelar');
   b1.onclick=()=>onlPickNombre(true); b2.onclick=()=>onlPickNombre(false);
-  b3.onclick=()=>{ $('#ov').classList.remove('on'); };
+  b3.onclick=()=>{ cerrarOv(); };
   box.appendChild(b1); box.appendChild(b2); box.appendChild(b3); p.appendChild(box);
   openOv();
 }
@@ -4573,12 +4566,12 @@ async function onlHost(){
   sh.onclick=()=>compartirEnlace(enlace);
   const cp=el('button','btn','📋 Copiar código');
   cp.onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(code); toast('Código copiado'); };
-  const cancel=el('button','btn sm','Cancelar'); cancel.onclick=()=>{ netSend({t:'bye'}); netClose(); $('#ov').classList.remove('on'); };
+  const cancel=el('button','btn sm','Cancelar'); cancel.onclick=()=>{ netSend({t:'bye'}); netClose(); cerrarOv(); };
   box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box);
   openOv();
   await netConnect(code,true);
   netStatus('esperando a tu amigo…','warn');
-  NET.onjoin=(suLider)=>{ $('#ov').classList.remove('on'); netHostStart(ONL.lider,suLider); };
+  NET.onjoin=(suLider)=>{ cerrarOv(); netHostStart(ONL.lider,suLider); };
   if(NET.joinPend){ const l=NET.joinPend; NET.joinPend=null; NET.onjoin(l); }
 }
 
@@ -4680,6 +4673,7 @@ function showGuides(id){
    ========================================================================== */
 $('#mTut').onclick=()=>showTutorialPick();
 $('#mOnline').onclick=()=>showOnline();
+$('#mCampana').onclick=abrirCampana;
 $('#mPlay').onclick=()=>{ SELP=null; SELF=null; SEL_PASO='yo'; buildSelect(); showScreen('select'); };
 $('#mGuides').onclick=()=>showGuides();
 /* El chat: Enviar, o Intro. El formulario evita que la página se recargue. */
@@ -4825,10 +4819,10 @@ $('#selAzar').onclick=()=>{
   toast((SEL_PASO==='yo'?'Llevas a ':'Rival: ')+LEADERS[SEL_PASO==='yo'?SELP:SELF].n);
 };
 $('#tutNext').onclick=()=>tutNext();
-$('#ov').onclick=e=>{ if(e.target.id==='ov') $('#ov').classList.remove('on'); };
+$('#ov').onclick=e=>{ if(e.target.id==='ov') cerrarOv(); };
 document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){ if(TGT) finishTarget(null); else if(SEL){SEL=null;clearPrompt();render();}
-    else $('#ov').classList.remove('on'); }
+  if(e.key==='Escape'){ if(document.querySelector('#campanaPanel[open]'))return; if(TGT) finishTarget(null); else if(SEL){SEL=null;clearPrompt();render();}
+    else cerrarOv(); }
   if(e.key===' '&&G&&!G.over&&G.active===ME&&!TGT){ e.preventDefault(); pedirTerminarTurno(); }
 });
 

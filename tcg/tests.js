@@ -316,6 +316,166 @@ PRUEBAS.suite('visual', async t => {
   t.check(!document.body.classList.contains('aaa-combat'),'los paneles deben recuperarse al terminar');
 });
 
+PRUEBAS.suite('campana', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    f.src=pagina+'?test=campana-interna';const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);await carga;
+    let w=f.contentWindow;
+    const preparar=()=>{w.cortinillaVS=async()=>{};w.volado=async()=>0;w.ask=async()=>1;};
+    const comprobarNiebla=etapa=>{
+      const n=w.document.querySelector('.campanaTablero .campanaNiebla');
+      if(etapa>=5){t.check(!n,pagina+': la niebla debe desaparecer al llegar al jefe final.');return 0;}
+      t.check(!!n&&n.dataset.etapa===String(etapa),pagina+': la niebla no corresponde al avance de la campaña.');
+      const estilo=w.getComputedStyle(n),valor=estilo.getPropertyValue('--niebla-limite').trim(),limite=parseFloat(valor);
+      t.check(n.getAttribute('aria-hidden')==='true'&&estilo.pointerEvents==='none',pagina+': la niebla decorativa no debe bloquear controles ni lectores de pantalla.');
+      t.check(valor.endsWith('%')&&Number.isFinite(limite)&&limite>0&&limite<=100,pagina+': la niebla necesita una extensión válida sobre el mapa.');
+      t.check(n.querySelector('linearGradient stop:last-child').getAttribute('offset')===valor,pagina+': la máscara visible debe seguir el límite de niebla guardado.');
+      return limite;
+    };
+    try{
+      preparar();w.localStorage.removeItem('caoz.campana.v1.prueba');
+      w.document.querySelector('#mCampana').click();
+      t.check(w.document.querySelector('#campanaPanel').open,pagina+': Campaña debe abrirse desde el menú.');
+      const cartas=[...w.document.querySelectorAll('.campanaCarta')];
+      t.check(cartas.length===6,pagina+': deben existir seis cartas en el carrusel.');
+      w.document.querySelector('[aria-label="Protagonista siguiente"]').click();
+      t.check(w.document.querySelector('.campanaCarta.enfrente').dataset.campanaLider==='fender',pagina+': el carrusel no gira.');
+      t.check(w.document.querySelector('.campanaCarta')===cartas[0],pagina+': el giro recrea las cartas y pierde la animación.');
+      w.document.querySelector('[aria-label="Protagonista anterior"]').click();
+      w.document.querySelector('.campanaConfirmar').click();
+      const ruta=w.document.querySelector('.campanaRuta');
+      t.check(ruta.firstElementChild.dataset.etapa==='5'&&ruta.lastElementChild.dataset.etapa==='0',pagina+': la escalera debe ascender desde abajo.');
+      t.check(!!w.document.querySelector('.campanaMesa .campanaPeon'),pagina+': falta la ficha en el tablero.');
+      t.check(ruta.querySelectorAll('[data-campana-lider]').length===1&&!ruta.textContent.includes('Gero'),pagina+': no deben revelarse los rivales futuros.');
+      t.check(w.campanaLeer().etapa===0,pagina+': la campaña debe empezar desde cero.');
+      let limiteNiebla=comprobarNiebla(0);
+      await w.campanaCombatir();
+      t.check(w.eval('G.campana.etapa===0&&P(1).alma===16&&P(0).alma===20'),pagina+': primer encuentro incorrecto.');
+      w.endGame(1,'Derrota de prueba');await sleep(600);
+      t.check(w.campanaLeer().etapa===0,pagina+': perder no debe avanzar.');
+      t.check(w.document.querySelector('#campanaPanel').textContent.includes('Reintentar combate'),pagina+': falta reintentar.');
+      for(let etapa=0;etapa<6;etapa++){
+        await w.campanaCombatir();
+        t.check(w.eval('G.campana.etapa')===etapa,pagina+': se saltó un combate.');
+        t.check(w.eval('P(1).alma')===[16,20,24,28,32,40][etapa],pagina+': resistencia rival incorrecta.');
+        if(etapa===5)t.check(w.eval("P(1).leaderId==='gero'"),pagina+': Gero debe ser el jefe final.');
+        w.endGame(0,'Victoria de prueba');await sleep(600);
+        t.check(w.campanaLeer().etapa===etapa+1,pagina+': la victoria no se guardó.');
+        w.campanaRuta();
+        t.check(w.matchMedia('(prefers-reduced-motion:reduce)').matches||w.document.querySelector('.campanaPeon').getAnimations().length>0,pagina+': falta la animación de avance.');
+        t.check(w.document.querySelector('.campanaPeon').dataset.etapa===String(etapa+1),pagina+': la ficha no avanzó tras la victoria.');
+        t.check(w.document.querySelectorAll('.campanaRuta [data-campana-lider]').length===Math.min(6,etapa+2),pagina+': se revelan rivales antes de tiempo.');
+        const nuevoLimite=comprobarNiebla(etapa+1);
+        if(etapa<4)t.check(nuevoLimite<limiteNiebla,pagina+': ganar debe despejar otra parte del mapa.');
+        limiteNiebla=nuevoLimite;
+        w.showEnd(0,'Aviso repetido');t.check(w.campanaLeer().etapa===etapa+1,pagina+': una victoria duplicada avanza dos veces.');
+        if(etapa===1){
+          const recarga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-interna&recarga=1';await recarga;w=f.contentWindow;preparar();
+          t.check(w.campanaLeer().etapa===2,pagina+': se perdió el progreso al recargar.');
+          w.document.querySelector('#mCampana').click();
+          t.check(comprobarNiebla(2)===limiteNiebla,pagina+': recargar debe conservar la parte del mapa ya despejada.');
+        }
+      }
+      t.check(w.document.querySelector('#campanaPanel').textContent.includes('¡Campaña completada!'),pagina+': falta el cierre de campaña.');
+      w.campanaCerrar();await w.setupMatch('fender','adreida',{first:0,fast:true});
+      t.check(!w.eval('G.campana')&&w.eval('P(1).alma')===20,pagina+': los modificadores se filtraron a una partida normal.');
+      t.check(w.campanaLeer().etapa===6,pagina+': una partida normal alteró el progreso.');
+    }finally{w.relojPara();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaCombate', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-combate-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;let llamadas=[];
+    w.startMatch=async(a,b,opts)=>llamadas.push({a,b,opts,cuando:Date.now(),abierta:d.querySelector('#campanaPanel').open});
+    try{
+      for(let etapa=0;etapa<6;etapa++){
+        w.campanaGuardar({version:1,id:'zoom',lider:'fender',etapa});w.campanaRuta();llamadas=[];
+        const inicio=Date.now(),viaje=w.campanaCombatir();await w.campanaCombatir();
+        t.check(llamadas.length===0&&d.querySelector('#campanaPanel').open,pagina+': el VS se abre antes del zoom.');
+        const camara=d.querySelector('.campanaCamara');
+        t.check(!!camara&&camara.getAnimations().some(a=>a.effect.getTiming().duration===500),pagina+': falta el acercamiento de medio segundo.');
+        await viaje;
+        t.check(llamadas.length===1&&llamadas[0].cuando-inicio>=450&&!llamadas[0].abierta,pagina+': el zoom debe entregar el control al VS una sola vez.');
+        t.check(llamadas[0].a==='fender'&&llamadas[0].b===['mohamed','fender','talesin','rafaela','adreida','gero'][etapa]&&llamadas[0].opts.campana.etapa===etapa,pagina+': cambió el encuentro al acercar el mapa.');
+        t.check(!camara.getAnimations().length&&!d.querySelector('.campanaAcercando'),pagina+': el zoom no se limpia.');
+      }
+      w.campanaGuardar({version:1,id:'zoom',lider:'fender',etapa:0});w.campanaRuta();llamadas=[];
+      const cancelado=w.campanaCombatir();w.campanaCerrar();await cancelado;
+      t.check(llamadas.length===0,pagina+': cerrar durante el zoom no debe iniciar la partida.');
+      w.campanaRuta();w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      await w.campanaCombatir();
+      t.check(llamadas.length===1&&!d.querySelector('.campanaAcercando'),pagina+': movimiento reducido debe permitir combatir sin zoom.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('versusMovil', async t => {
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+  const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=versus-movil-interno';document.body.appendChild(f);await carga;
+  const w=f.contentWindow;let presentacion;
+  try{
+    presentacion=w.cortinillaVS('fender','mohamed',{nombres:['Jugador de prueba','Rival de prueba']});
+    const cartas=[...w.document.querySelectorAll('.vs .vscard')],jugador=cartas.find(c=>c.querySelector('.lname').textContent==='Jugador de prueba'),rival=cartas.find(c=>c.querySelector('.lname').textContent==='Rival de prueba');
+    t.check(!!jugador&&!!rival,'El VS debe conservar los nombres de jugador y rival.');
+    const yo=jugador.getBoundingClientRect(),otro=rival.getBoundingClientRect();
+    t.check(yo.top+yo.height/2>otro.top+otro.height/2,'En móvil, el jugador debe estar debajo del rival.');
+  }finally{if(presentacion)await presentacion;f.remove();}
+});
+
+PRUEBAS.suite('campanaEntrada', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-entrada-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;
+    try{
+      w.localStorage.removeItem('caoz.campana.v1.prueba');d.querySelector('#mCampana').click();
+      const panel=d.querySelector('#campanaPanel'),b=panel.querySelector('.campanaBarrido');
+      t.check(panel.open&&!!b&&panel.classList.contains('campanaEntra'),pagina+': Campaña debe activar la entrada dorada.');
+      t.check(b.parentElement===panel&&b.getAttribute('aria-hidden')==='true'&&w.getComputedStyle(b).pointerEvents==='none',pagina+': el barrido debe estar delante del diálogo sin interceptar toques.');
+      t.check(w.getComputedStyle(b).backgroundImage===w.getComputedStyle(d.querySelector('#barrido')).backgroundImage,pagina+': la campaña debe usar el mismo barrido dorado de los menús.');
+      const carta=panel.querySelector('.campanaCarta');d.querySelector('#mCampana').click();
+      t.check(panel.querySelector('.campanaCarta')===carta&&panel.querySelectorAll('.campanaBarrido').length===1,pagina+': un doble toque reinicia la entrada.');
+      await sleep(750);
+      t.check(!panel.querySelector('.campanaBarrido')&&!panel.classList.contains('campanaEntra'),pagina+': la entrada no se limpia.');
+      w.campanaGuardar({version:1,id:'entrada',lider:'fender',etapa:2});w.campanaCerrar();w.abrirCampana();await sleep(0);
+      t.check(panel.dataset.vista==='mapa'&&!!panel.querySelector('.campanaBarrido')&&w.campanaLeer().etapa===2,pagina+': retomar la campaña debe animarse y conservar el avance.');
+      w.campanaElegir();
+      t.check(!panel.querySelector('.campanaBarrido')&&!panel.classList.contains('campanaEntra'),pagina+': cambiar de vista durante la entrada deja efectos pegados.');
+      w.campanaCerrar();w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);w.abrirCampana();
+      t.check(panel.open&&!panel.querySelector('.campanaBarrido')&&!panel.classList.contains('campanaEntra'),pagina+': movimiento reducido debe abrir directamente.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('campanaPantalla', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-pantalla-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;
+    const comprobar=()=>{
+      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect();
+      t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el panel de campaña exige scroll.');
+      t.check(r.top>=0&&r.bottom<=w.innerHeight+1&&r.left>=0&&r.right<=w.innerWidth+1,pagina+': el diálogo sale de la pantalla.');
+      d.querySelectorAll('.campanaAcciones .btn,.campanaFlechas .btn,.campanaFicha,#campanaTitulo').forEach(n=>{
+        const b=n.getBoundingClientRect();t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+n.textContent);
+      });
+    };
+    try{
+      for(const [ancho,alto] of [[390,844],[320,568],[320,480],[844,390],[568,320]]){
+        f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(80);
+        w.campanaElegir();await sleep(60);comprobar();
+        for(let i=0;i<6;i++){w.document.querySelector('[aria-label="Protagonista siguiente"]').click();comprobar();}
+        for(const etapa of [0,5,6]){
+          w.campanaGuardar({version:1,id:'pantalla',lider:'fender',etapa});w.campanaRuta();await sleep(60);comprobar();
+        }
+      }
+    }finally{w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
 PRUEBAS.suite('onlineInvitacion', async t => {
   const relay=new URLSearchParams(location.search).get('relay');
   if(!relay||!/^http:\/\/(127\.0\.0\.1|localhost):/.test(relay)){t.nota('Prueba de transporte disponible sólo con relay local explícito.');return;}
@@ -429,6 +589,57 @@ PRUEBAS.suite('nubeDagasUI', async t => {
       t.check(!d.querySelector('#efectosRival .efecto'),pagina+': la nube caducada sigue visible.');
       t.check(await w.confirmarNubeDagas('minus')===true&&preguntas===2,pagina+': nube propia o caducada genera aviso.');
     }finally{f.remove();}
+  }
+});
+
+PRUEBAS.suite('menusDorados', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=menus-internos';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;
+    const barridos=()=>[...d.querySelectorAll('#barrido.va,.barridoModal.va,.campanaBarrido.va')];
+    const comprobar=(etiqueta)=>{
+      const b=barridos();t.check(b.length===1,pagina+': '+etiqueta+' debe tener un solo barrido dorado.');
+      t.check(w.getComputedStyle(b[0]).animationName==='cruza'&&w.getComputedStyle(b[0]).pointerEvents==='none',pagina+': '+etiqueta+' debe animar sin bloquear los botones.');
+    };
+    const regresoVisible=()=>{
+      for(const nodo of d.querySelectorAll('#menu>.marcaWrap,#menu>.marca,#menu>.menucol')){
+        const css=w.getComputedStyle(nodo);
+        t.check(css.opacity==='1'&&!css.animationName.includes('entraPantalla'),pagina+': al regresar, el logo y los botones deben estar visibles inmediatamente debajo del oro.');
+      }
+    };
+    try{
+      w.localStorage.removeItem('caoz.campana.v1.prueba');
+      for(const [boton,salida] of [['mPlay','#selBack'],['mGuides','#guideBack'],['mCampana',null],['mTut',null],['mOnline',null],['mCards',null],['mRules',null],['mRecords',null]]){
+        d.querySelector('#'+boton).click();comprobar('entrar en '+boton);
+        const modal=d.querySelector('#ov.on');
+        if(modal)t.check(!!modal.querySelector('.barridoModal')&&d.querySelector('#ovPanel').classList.contains('menuEntra'),pagina+': el barrido debe dibujarse delante de la ventana.');
+        const panel=boton==='mCampana'?d.querySelector('#campanaPanel'):d.querySelector('#ovPanel');
+        const cerrar=salida?d.querySelector(salida):[...panel.querySelectorAll('button')].find(b=>/^(Cerrar|Cancelar|Menú principal)$/.test(b.textContent.trim()));
+        t.check(!!cerrar,pagina+': falta regreso de '+boton);cerrar.click();comprobar('volver de '+boton);
+        t.check(d.querySelector('#menu.on')&&!d.querySelector('#ov.on')&&!d.querySelector('#campanaPanel[open]'),pagina+': '+boton+' no regresa al menú principal.');
+        regresoVisible();await sleep(130);regresoVisible();
+      }
+      await sleep(750);
+      t.check(!barridos().length&&!d.querySelector('.menuEntra,.screen.entra'),pagina+': quedan efectos al terminar.');
+      w.showRecords();d.dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));comprobar('cerrar récords con Escape');
+      regresoVisible();
+      t.check(!d.querySelector('#ov.on'),pagina+': Escape deja la ventana abierta.');
+      w.showOnline();d.querySelector('#ov').click();comprobar('cerrar al tocar el fondo');
+      regresoVisible();
+      t.check(!d.querySelector('#ov.on'),pagina+': tocar el fondo no regresa al menú.');
+      w.abrirCampana();d.querySelector('#campanaPanel').dispatchEvent(new Event('cancel',{cancelable:true}));comprobar('cerrar Campaña con Escape');
+      regresoVisible();
+      t.check(!d.querySelector('#campanaPanel[open]'),pagina+': Escape deja abierta Campaña.');
+      w.showRecords();await sleep(350);w.cerrarOv();w.showOnline();await sleep(400);
+      t.check(d.querySelector('#ovPanel').classList.contains('menuEntra'),pagina+': un temporizador anterior corta la entrada nueva.');
+      w.showScreen('board');w.cerrarOv();w.showRules(true);
+      t.check(!barridos().length&&!d.querySelector('.menuEntra'),pagina+': los diálogos de combate heredan transiciones de menú.');
+      w.cerrarOv();t.check(!barridos().length,pagina+': cerrar reglas en combate activa el barrido.');
+      w.showScreen('menu');w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      w.showOnline();t.check(!barridos().length&&!d.querySelector('.menuEntra,.screen.entra'),pagina+': movimiento reducido debe abrir sin animación.');
+      w.cerrarOv();t.check(!barridos().length,pagina+': movimiento reducido debe regresar sin animación.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
