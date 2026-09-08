@@ -299,13 +299,14 @@ html.app #board{padding-top:calc(var(--arriba) + 32px)}
   background:
     radial-gradient(ellipse 80% 50% at 50% 50%, rgba(120,86,190,.16), transparent 70%),
     linear-gradient(180deg,rgba(28,20,42,.5),rgba(14,9,22,.6))}
-.zona{display:flex;align-items:center;gap:4px;padding:0 3px}
+.zona{display:flex;align-items:center;gap:4px;padding:0 3px;flex-shrink:0}
 .zona .zlabel{position:absolute;left:8px;font:600 8px/1 var(--sans);letter-spacing:2px;color:#5c507a}
-.row{display:flex;justify-content:center;align-items:center;gap:5px;min-height:var(--ch);flex:1;padding:3px 2px}
+/* Se reserva también el espacio de las cifras y del indicador de ataque. */
+.row{display:flex;justify-content:center;align-items:center;gap:5px;min-height:calc(var(--ch) + 14px);flex:1;padding:9px 2px 5px}
 .row.traps{min-height:30px;gap:5px;padding:1px}
 .pilas{display:flex;gap:4px;flex:0 0 auto}
 #efectos{display:flex;gap:6px;margin-right:4px} #efectos[hidden]{display:none}
-.midrow{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;padding:2px 6px;
+.midrow{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;flex:0 0 auto;padding:2px 6px;
   border-top:1px dashed rgba(58,44,82,.7);border-bottom:1px dashed rgba(58,44,82,.7);flex-wrap:wrap}
 .midrow .btn.sm{font-size:11px;padding:4px 8px}
 
@@ -870,8 +871,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=193"></script>
-<script src="final.js?b=193"></script>
+<script src="motor.js?b=194"></script>
+<script src="final.js?b=194"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -882,7 +883,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:193, fecha:'2026-09-07'};
+const BUILD = {n:194, fecha:'2026-09-07'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -977,6 +978,35 @@ function ajustarLienzo(){
   const sobra=H-(46+46+30+30+30+2*ch+40+30);
   const cwm=Math.max(92, Math.min(128, Math.floor((sobra-24)/1.4)));
   r.setProperty('--cwm', cwm+'px'); r.setProperty('--chm', Math.round(cwm*1.4)+'px');
+  ajustarCampo();
+}
+/* El Lugar puede ocupar varias líneas o compartir la franja con Reliquias.
+   El cálculo inicial es sólo un máximo: las cartas de mesa se ajustan al alto
+   que realmente queda, sin comprimir el terreno ni las filas de Trampas. */
+function ajustarCampo(){
+  const campo=document.getElementById('field');
+  if(!campo.clientHeight)return;
+  const filas=['foeField','myField'].map(id=>document.getElementById(id));
+  const zonas=filas.map(f=>f.parentElement), estilo=getComputedStyle(campo);
+  const fijo=[...campo.children].filter(e=>!zonas.includes(e)).reduce((n,e)=>n+e.getBoundingClientRect().height,0)
+    +parseFloat(estilo.rowGap)*(campo.children.length-1);
+  const bordes=filas.reduce((n,e)=>{const c=getComputedStyle(e);return n+parseFloat(c.paddingTop)+parseFloat(c.paddingBottom);},0);
+  const raiz=getComputedStyle(document.documentElement),mano=document.getElementById('handzone');
+  const maximo=parseFloat(raiz.getPropertyValue('--cw'));
+  // En un teléfono corto, reducir primero la mano sólo lo necesario para
+  // conservar al menos 44 px de ancho tocable en las cartas del campo.
+  const disponible=campo.getBoundingClientRect().height-fijo-bordes+parseFloat(getComputedStyle(mano).getPropertyValue('--chm'));
+  const chm=Math.max(70,Math.min(parseFloat(raiz.getPropertyValue('--chm')),Math.floor(disponible-2*Math.ceil(Math.min(44,maximo)*1.4))));
+  mano.style.setProperty('--chm',chm+'px');mano.style.setProperty('--cwm',Math.round(chm/1.4)+'px');
+  const cw=Math.max(1,Math.min(maximo,Math.floor((disponible-chm)/2/1.4)));
+  campo.style.setProperty('--cw',cw+'px');campo.style.setProperty('--ch',Math.floor(cw*1.4)+'px');
+  encajarTextos(mano);
+}
+// También cambia el espacio cuando aparece la opción Jugar, una ayuda o una
+// acción. Observar sus contenedores evita depender de un modelo de teléfono.
+if(window.ResizeObserver){
+  const reparto=new ResizeObserver(()=>ajustarCampo());
+  ['field','midRow','foeTraps','myTraps'].forEach(id=>reparto.observe(document.getElementById(id)));
 }
 addEventListener('resize', ajustarLienzo);
 addEventListener('orientationchange', ajustarLienzo);
@@ -1639,7 +1669,7 @@ function render(){
   for(;j<viejos.length;j++) viejos[j].remove();
   if(!$('#hand .card.tocada')) manoTocada(null);
   renderControls();
-  encajarTextos($('#hand'));
+  ajustarCampo();
   if(G.tutorial) tutHighlight();
 }
 function renderControls(){

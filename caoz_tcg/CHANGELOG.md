@@ -13,6 +13,21 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — El terreno conserva su espacio · 2026-09-07
+
+Build 194, beta: en móvil, la franja del Lugar conserva la altura de su texto
+y de las acciones de Reliquias. Antes se comprimía hasta 30 px y el Puente
+quedaba debajo de las cartas propias. Las filas reservan también el espacio
+para los medallones y el indicador de ataque.
+
+El campo mide el alto disponible al cambiar el Lugar, el visor o la selección
+de la mano. Ajusta las cartas sin invadir las trampas ni añadir desplazamiento
+vertical; en pantallas cortas comparte el espacio con la mano para conservar
+44 px de ancho tocable en mesa. Sin cambios al motor ni a las reglas.
+Regresión terrenoMovil: rojo con el reparto anterior y verde con dos/cinco
+cartas, cuatro tamaños, app instalada, Lugar añadido/reemplazado/retirado,
+Reliquia y carta seleccionada. Se comprueba también que abre la ficha del Lugar.
+
 ## Sin numerar — Llegar al encuentro antes de combatir · 2026-09-07
 
 Build 193, beta: cámara fija desde el ángulo elegido, un poco más baja, sin

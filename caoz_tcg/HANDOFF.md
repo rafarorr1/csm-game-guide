@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 190 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 194 (beta; producción 190, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -441,3 +441,17 @@ Suite campanaEncuentro cubre espera antes del aviso, seis especificaciones,
 confirmación única, regreso, Escape y cierre durante los saltos; campanaMesa
 comprueba cámara fija y alternativa sin Canvas, y campanaPantalla incluye el
 aviso en cinco tamaños. Centrado del diálogo reproducido en rojo antes del arreglo.
+
+
+Build 194: corrección del solapamiento móvil entre cartas y Lugar. .midrow y
+.zona no se comprimen; las filas de Personajes reservan 9 px arriba y 5 abajo
+para cifras e indicador de ataque. ajustarCampo mide el alto real de #field,
+Lugar y Trampas, y limita --cw/--ch sólo dentro del campo. Si hace falta,
+reduce la mano para conservar 44 px tocables en mesa. Se ejecuta al renderizar
+y al ajustar el visor; ResizeObserver recoge cambios de alto por selección de
+mano, ayudas y acciones. No toca el motor, el escritorio ni la campaña.
+Suite terrenoMovil valida separación, tamaño tocable, límites del campo y de
+los controles en 320×568, 390×664, 402×812 (app) y 430×932; dos/cinco cartas,
+Lugar añadido/cambiado/retirado, Reliquia, mano seleccionada y ficha del Lugar.
+El primer pase con el reparto antiguo falló por invasión del indicador de
+ataque; el terreno también desbordaba su franja en la reproducción visual.
