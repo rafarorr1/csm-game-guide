@@ -13,6 +13,15 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Publicación con revisión visible · 2026-09-07
+
+Build 195, beta: publica la corrección de terreno de 194. Las 23 suites
+pasaron en Chrome visible (205,4 s), mientras el publicador sin ventana agotó
+su límite de 300 s dos veces y no publicó. publicar.sh acepta --visible para
+usar esa misma revisión en una ventana: conserva suites, límites, resultado
+obligatorio, bloqueo ante fallos y comprobación byte a byte de lo servido.
+Sin cambios adicionales a la interfaz ni a las reglas.
+
 ## Sin numerar — El terreno conserva su espacio · 2026-09-07
 
 Build 194, beta: en móvil, la franja del Lugar conserva la altura de su texto

@@ -8,6 +8,7 @@
 #
 #  Uso:
 #    ./publicar.sh                 pruebas rápidas (~15 s) y publica
+#    ./publicar.sh --visible       mismas guardas, con Chrome visible
 #    ./publicar.sh --completo      añade los 5 tutoriales (~5 min) y publica
 #    ./publicar.sh --solo-pruebas  sólo comprueba, no toca la web
 #    ./publicar.sh --beta          publica /tcg-beta/ y el preview de Cloudflare
@@ -25,12 +26,14 @@ CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 DESTINO="tcg"
 SUITES="1&rapido=1"
 PUBLICAR=1
+MODO_NAVEGADOR=(--headless --disable-gpu)
 
 for arg in "$@"; do
   case "$arg" in
     --completo)     SUITES="1" ;;
     --solo-pruebas) PUBLICAR=0 ;;
     --beta)         DESTINO="tcg-beta" ;;
+    --visible)      MODO_NAVEGADOR=(--new-window) ;;
     *) echo "opción desconocida: $arg"; exit 2 ;;
   esac
 done
@@ -112,7 +115,7 @@ gris "  todo commiteado ($(cd "$REPO" && git rev-parse --short HEAD) en $(cd "$R
 python3 "$AQUI/pruebas_publicacion.py" || { rojo 'Fallaron las guardas de publicación beta'; exit 1; }
 
 # ---------------------------------------------------------------------------
-paso "2/4 · Pruebas en Chrome sin ventana"
+paso "2/4 · Pruebas en Chrome"
 [ -x "$CHROME" ] || { rojo "No encuentro Chrome en $CHROME"; exit 1; }
 
 PUERTO=8749
@@ -148,7 +151,7 @@ fi
 # document.hidden a ratos— y los efectos no llegaban a dibujarse: una tanda
 # de 62 s con un rojo de «no salió el número verde», o ninguna respuesta.
 # En la pestaña visible la misma tanda estaba en verde.
-"$CHROME" --headless --disable-gpu --no-sandbox --user-data-dir="$PERFIL" \
+"$CHROME" "${MODO_NAVEGADOR[@]}" --no-sandbox --user-data-dir="$PERFIL" \
   --no-first-run --disable-extensions --window-size=1600,1000 \
   --disable-background-timer-throttling --disable-renderer-backgrounding \
   --disable-backgrounding-occluded-windows --disable-features=CalculateNativeWinOcclusion \

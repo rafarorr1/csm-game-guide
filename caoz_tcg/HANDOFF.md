@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 194 (beta; producción 190, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 195 (beta; producción 190, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -455,3 +455,11 @@ los controles en 320×568, 390×664, 402×812 (app) y 430×932; dos/cinco cartas
 Lugar añadido/cambiado/retirado, Reliquia, mano seleccionada y ficha del Lugar.
 El primer pase con el reparto antiguo falló por invasión del indicador de
 ataque; el terreno también desbordaba su franja en la reproducción visual.
+
+
+Build 195 publica el arreglo de 194. El flujo habitual sin ventana agotó 300 s
+dos veces; las 23 suites pasaron en ventana visible en 205,4 s. --visible en
+publicar.sh cambia únicamente el modo de lanzamiento de Chrome (con ventana y
+aceleración normal); no omite suites, no acepta resultados externos y conserva
+el límite, la parada ante fallos y las verificaciones de publicación. Usar
+./publicar.sh --beta --visible cuando la revisión sin ventana se estrangule.
