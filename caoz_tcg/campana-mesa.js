@@ -5,8 +5,7 @@
 (function(){
   const css=document.createElement('style');css.textContent=`
     .campanaMesa.campanaMesa3d{padding:0;overflow:hidden;background:#171714;border:1px solid #aa875a55;box-shadow:inset 0 0 25px #0007,0 10px 30px #0005}
-    .campanaLienzo3d{position:absolute;inset:0;width:100%;height:100%;touch-action:none;cursor:grab}
-    .campanaLienzo3d:active{cursor:grabbing}
+    .campanaLienzo3d{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
     .campanaMesa3d .campanaTablero{position:absolute;inset:0;border:0;border-radius:0;background:none;box-shadow:none;transform:none;pointer-events:none}
     .campanaMesa3d .campanaGeografia,.campanaMesa3d .campanaCima,.campanaMesa3d .campanaNiebla,.campanaMesa3d .campanaNieblaRetirada{visibility:hidden}
     .campanaMesa3d .campanaPeon{width:30px;height:12px;translate:-50% 4px;filter:none}
@@ -19,11 +18,7 @@
     .campanaMesa3d .campanaRuta .actual b{border-color:#e7c783;color:#ffe5a4;box-shadow:0 0 14px #dba95f3a,0 3px 6px #0006}
     .campanaMesa3d .campanaRuta .vencido b{color:#b9c1a6;border-color:#73816d}
     .campanaMesa3d .campanaRuta .campanaNumero{top:auto;bottom:-3px;left:9px;right:auto;width:13px;height:13px;font-size:8px;background:#af8e54;color:#181611;pointer-events:none}
-    .campanaVista{position:absolute;z-index:2;bottom:5px;left:50%;translate:-50% 0;display:flex;align-items:center;gap:8px;white-space:nowrap;border-radius:10px;background:#141512cb;color:#c6b48d;font:10px var(--sans);padding:0 4px;box-shadow:0 2px 12px #0006}
-    #campanaPanel .campanaVista .btn{width:40px;min-width:40px;min-height:40px;padding:0;margin:0;font:24px Georgia;border:0;background:transparent;color:#e2c58c}
-    .campanaAcercando .campanaVista{opacity:0;pointer-events:none}
     @media(min-width:900px) and (min-height:651px){#campanaPanel[data-vista="mapa"]{width:min(1000px,calc(100vw - 48px))}.campanaMesa3d .campanaRuta b{font-size:12px}}
-    @media(max-height:500px){.campanaVista{bottom:2px;gap:3px}.campanaVista span{font-size:9px}#campanaPanel .campanaVista .btn{min-height:32px;width:32px;min-width:32px}}
   `;document.head.appendChild(css);
   const TAU=Math.PI*2;
   const sub=(a,b)=>a.map((v,i)=>v-b[i]);
@@ -66,11 +61,12 @@
     camara.prepend(canvas);contenedor.classList.add('campanaMesa3d');
     if(!materiales)materiales={papel:material(768,1152,true),madera:material(1024,768,false)};
     const {papel,madera}=materiales;
-    let ancho=1,alto=1,largo=18,yaw=-.14,escala=1,cx=0,cy=0,raf=0,ultimo=0,vivo=true,arrastre=null;
+    let ancho=1,alto=1,largo=18,escala=1,cx=0,cy=0,raf=0,ultimo=0,vivo=true;
+    let salto=null,posicionFija=null;
     let caras=[],sombras=[],llamas=[],dados=[];
     let avance=op.etapaAnterior===null||op.etapaAnterior===undefined?1:0;
     const inicio=performance.now();
-    const elev=.83,ce=Math.cos(elev),se=Math.sin(elev),distancia=32;
+    const yaw=.28,elev=.74,ce=Math.cos(elev),se=Math.sin(elev),distancia=32;
     const reducir=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
     function vista(v){const x=v[0]*Math.cos(yaw)-v[2]*Math.sin(yaw),z=v[0]*Math.sin(yaw)+v[2]*Math.cos(yaw),d=distancia-v[1]*se-z*ce;return{x:x/d,y:(z*se-v[1]*ce)/d,d};}
     function proyectar(v){const p=vista(v);return{x:cx+p.x*escala,y:cy+p.y*escala,d:p.d};}
@@ -121,9 +117,23 @@
     }
     function vela(x,z,h){cilindro(x,.06,z,.46,.09,'#9d7b43');cilindro(x,.15,z,.3,h,'#d6c7a1');cilindro(x,h+.15,z,.22,.025,'#aa926e');caja(x,h+.17,z,.03,.15,.03,'#28201a');llamas.push([x,h+.43,z]);sombras.push([x+.2,z+.2,.6]);}
     function posicionJugador(){
-      const ficha=etapa=>etapa>=6?[50,9]:[op.casillas[etapa][0]+(op.casillas[etapa][0]<50?24:-24),op.casillas[etapa][1]+9];
+      if(salto){const t=progresoSalto();return salto.desde.map((v,i)=>v+(salto.hasta[i]-v)*t);}
+      if(posicionFija)return posicionFija;
+      const ficha=etapa=>etapa>=6?[50,9]:op.esperas[etapa];
       const fin=ficha(op.etapa),desde=ficha(op.etapaAnterior==null?op.etapa:op.etapaAnterior);return fin.map((v,i)=>desde[i]+(v-desde[i])*avance);
     }
+    function progresoSalto(){return salto?Math.min(1,Math.max(0,(performance.now()-salto.inicio)/900)):1;}
+    function saltarHacia(etapa){
+      if(salto)salto.terminar(false);
+      const desde=posicionJugador(),rival=op.casillas[etapa],hasta=[rival[0]+(rival[0]<50?12:-12),rival[1]+5];
+      let resolver,terminado=false,temporizador;
+      const promesa=new Promise(r=>resolver=r);
+      const terminar=ok=>{if(terminado)return;terminado=true;clearTimeout(temporizador);posicionFija=ok?hasta:desde;salto=null;baseSucia=true;escena();posiciones();dibujar(performance.now());resolver(ok);};
+      salto={desde,hasta,inicio:performance.now(),terminar};
+      if(reducir()||document.hidden)terminar(true);else{baseSucia=true;dibujar(performance.now());temporizador=setTimeout(()=>terminar(true),900);}
+      return{promesa,cancelar:()=>terminar(false)};
+    }
+    function reposar(){if(salto)salto.terminar(false);posicionFija=null;avance=1;baseSucia=true;escena();posiciones();dibujar(performance.now());}
     function escena(){
       caras=[];sombras=[];llamas=[];dados=[];
       caja(0,-.73,0,12.4,.55,largo+2,'#3f2b20',0,0);caja(0,-.18,0,12.65,.19,largo+2.1,'#725031',0,0);
@@ -142,7 +152,8 @@
       for(let i=0;i<3;i++){const x=3.15+(i%2)*.5,z=-largo*.28+i*.75;cilindro(x,.08,z,.38,.08,'#8b8064');cilindro(x,.16,z,.45,.9+i*.1,'#8e9388',.045,5);}
       // Sólo se construyen miniaturas de rivales ya descubiertos.
       op.casillas.forEach((p,i)=>{if(i<=op.etapa)miniatura(punto(p,.09),['mohamed','fender','talesin','rafaela','adreida','gero'][i],false,i<op.etapa);});
-      miniatura(punto(posicionJugador(),.09+(avance<1?Math.abs(Math.sin(avance*Math.PI*4))*.25:0)),op.lider,true);
+      const altura=salto?Math.abs(Math.sin(progresoSalto()*Math.PI*3))*.8:avance<1?Math.abs(Math.sin(avance*Math.PI*4))*.25:0;
+      miniatura(punto(posicionJugador(),.09+altura),op.lider,true);
       canvas.dataset.miniaturas=String(Math.min(6,op.etapa+1)+1);
     }
     function poligono(v){ctx.beginPath();v.forEach((p,i)=>{if(i)ctx.lineTo(p.x,p.y);else ctx.moveTo(p.x,p.y);});ctx.closePath();}
@@ -184,7 +195,9 @@
       if(!vivo)return;
       const estabaAvanzando=avance<1;
       if(avance<1){baseSucia=true;avance=reducir()?1:Math.min(1,Math.max(0,(performance.now()-inicio)/1100));escena();}
+      if(salto){baseSucia=true;escena();}
       canvas.dataset.avanzando=avance<1?'1':'0';
+      canvas.dataset.saltando=salto?'1':'0';
       if(baseSucia||avance<1){
       ctx=fondoCtx;
       const g=ctx.createRadialGradient(ancho*.25,alto*.2,2,ancho*.5,alto*.5,Math.max(ancho,alto)*.75);g.addColorStop(0,'#594330');g.addColorStop(1,'#0e1110');ctx.fillStyle=g;ctx.fillRect(0,0,ancho,alto);
@@ -201,24 +214,17 @@
       niebla(t);
       llamas.forEach((p,i)=>{const q=proyectar(p),h=Math.max(7,escala/q.d*.34),f=reducir()?1:1+Math.sin(t*.007+i)*.08;const luz=ctx.createRadialGradient(q.x,q.y,0,q.x,q.y,h*4);luz.addColorStop(0,'#ffd98250');luz.addColorStop(1,'#ff9b2500');ctx.fillStyle=luz;ctx.fillRect(q.x-h*4,q.y-h*4,h*8,h*8);ctx.fillStyle='#eaa348';ctx.beginPath();ctx.ellipse(q.x,q.y,h*.27,h*f,0,0,TAU);ctx.fill();ctx.fillStyle='#fff0be';ctx.beginPath();ctx.ellipse(q.x,q.y+h*.25,h*.15,h*.55,0,0,TAU);ctx.fill();});
       const sombra=ctx.createRadialGradient(ancho*.5,alto*.5,ancho*.25,ancho*.5,alto*.5,Math.max(ancho,alto)*.7);sombra.addColorStop(0,'#080a0800');sombra.addColorStop(1,'#080a085f');ctx.fillStyle=sombra;ctx.fillRect(0,0,ancho,alto);
-      if(estabaAvanzando)posiciones();canvas.dataset.lista='1';
+      if(estabaAvanzando||salto)posiciones();canvas.dataset.lista='1';
     }
     function encuadrar(){
       const vertices=[[-6.4,0,-largo/2-1.2],[6.4,0,-largo/2-1.2],[6.4,-.7,largo/2+1.2],[-6.4,-.7,largo/2+1.2]].map(vista);
       const xs=vertices.map(p=>p.x),ys=vertices.map(p=>p.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys)-.035,y1=Math.max(...ys);
-      const disponible=alto-38;escala=Math.min(ancho*.96/(x1-x0),disponible*.97/(y1-y0));cx=ancho/2-(x0+x1)*escala/2;cy=disponible/2-(y0+y1)*escala/2;posiciones();
+      const disponible=alto;escala=Math.min(ancho*.96/(x1-x0),disponible*.97/(y1-y0));cx=ancho/2-(x0+x1)*escala/2;cy=disponible/2-(y0+y1)*escala/2;posiciones();
     }
     function ajustar(){ancho=Math.max(1,camara.clientWidth);alto=Math.max(1,camara.clientHeight);const dpr=Math.min(devicePixelRatio||1,1.5);canvas.width=Math.round(ancho*dpr);canvas.height=Math.round(alto*dpr);pantalla.setTransform(dpr,0,0,dpr,0,0);fondo.width=canvas.width;fondo.height=canvas.height;fondoCtx.setTransform(dpr,0,0,dpr,0,0);baseSucia=true;largo=Math.max(12,Math.min(24,15*alto/ancho));escena();encuadrar();dibujar();}
-    function mover(dx){baseSucia=true;yaw=Math.max(-.5,Math.min(.5,yaw+dx));encuadrar();dibujar(performance.now());}
-    canvas.addEventListener('pointerdown',e=>{arrastre=e.clientX;canvas.setPointerCapture(e.pointerId);});
-    canvas.addEventListener('pointermove',e=>{if(arrastre===null)return;const dx=e.clientX-arrastre;arrastre=e.clientX;mover(dx*.003);});
-    canvas.addEventListener('pointerup',()=>{arrastre=null;});canvas.addEventListener('pointercancel',()=>{arrastre=null;});
-    const controles=document.createElement('div');controles.className='campanaVista';
-    for(const [texto,signo] of [['Girar mesa a la izquierda',-1],['Girar mesa a la derecha',1]]){const b=document.createElement('button');b.className='btn';b.type='button';b.setAttribute('aria-label',texto);b.textContent=signo<0?'↶':'↷';b.onclick=()=>mover(signo*.12);controles.appendChild(b);}
-    const consejo=document.createElement('span');consejo.textContent='Arrastra para mirar';controles.insertBefore(consejo,controles.lastChild);contenedor.appendChild(controles);
     const observador=new ResizeObserver(ajustar);observador.observe(camara);ajustar();
-    function cuadro(t){if(!vivo||!canvas.isConnected)return;if(!document.hidden&&!reducir()&&t-ultimo>65){ultimo=t;dibujar(t);}raf=requestAnimationFrame(cuadro);}
+    function cuadro(t){if(!vivo||!canvas.isConnected)return;if(!document.hidden&&!reducir()&&t-ultimo>(salto||avance<1?28:65)){ultimo=t;dibujar(t);}raf=requestAnimationFrame(cuadro);}
     raf=requestAnimationFrame(cuadro);
-    return{foco(i){const q=proyectar(punto(op.casillas[i],.5));return[q.x/ancho*100,q.y/alto*100];},girar:mover,destruir(){vivo=false;cancelAnimationFrame(raf);observador.disconnect();canvas.remove();controles.remove();contenedor.classList.remove('campanaMesa3d');},get activa(){return vivo;}};
+    return{foco(i){const q=proyectar(punto(op.casillas[i],.5));return[q.x/ancho*100,q.y/alto*100];},saltarHacia,reposar,destruir(){vivo=false;if(salto)salto.terminar(false);cancelAnimationFrame(raf);observador.disconnect();canvas.remove();contenedor.classList.remove('campanaMesa3d');},get activa(){return vivo;}};
   };
 })();

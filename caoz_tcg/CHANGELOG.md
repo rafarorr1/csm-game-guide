@@ -13,6 +13,22 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Llegar al encuentro antes de combatir · 2026-09-07
+
+Build 193, beta: cámara fija desde el ángulo elegido, un poco más baja, sin
+arrastre ni botones para girarla. La ficha espera en un punto separado de las
+peanas descubiertas. Al tocar al rival o «Acercarse a…» da tres saltos durante
+900 ms y abre los detalles: mazo y estilo rival, cartas y Alma de ambos bandos,
+volado y objetivo. «Entrar al combate» cierra el aviso y ejecuta el acercamiento
+de 500 ms antes del VS; «Volver a la mesa» devuelve la ficha a su espera y
+conserva el mismo mapa. Reintentar también pasa por esta confirmación.
+
+Salir o navegar durante los saltos cancela el viaje; los toques repetidos no
+abren ventanas ni partidas duplicadas. La alternativa sin Canvas y movimiento
+reducido conservan el flujo. La ventana se centra y adapta a teléfonos pequeños
+y horizontales sin scroll. Regresión de centrado reproducida en rojo y pruebas
+del flujo completo, los seis encuentros, Escape, cancelación y vuelta a la mesa.
+
 ## Sin numerar — Reabrir la campaña sin conexión en Cloudflare · 2026-09-07
 
 Build 192, beta: conserva la mesa 3D de la 191 y corrige la primera recarga sin

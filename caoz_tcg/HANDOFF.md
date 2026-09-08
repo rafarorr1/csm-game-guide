@@ -420,3 +420,24 @@ el cuerpo, estado y cabeceras en una respuesta nueva para las alternativas HTML
 y las copias directas de código/documentos. Se verificó el rojo al retirar esa
 normalización, y el ciclo completo en navegador con servidor local que reproduce
 los 308 de Cloudflare, en móvil y escritorio, incluyendo combate tras recarga.
+
+
+Build 193: cámara fija en campana-mesa.js (yaw .28, elevación .74), sin API ni
+controles de giro. CAMPANA_ESPERAS en final-core.js es la fuente de posiciones
+separadas para esperar cada combate, compartida con el mapa HTML alternativo.
+La escena ofrece saltarHacia(etapa) -> {promesa,cancelar} y reposar(); el primer
+método interpola tres saltos de 900 ms y usa un temporizador independiente del
+dibujo. Movimiento reducido/documento oculto completan el viaje inmediatamente.
+Se conservan el avance entre etapas y la niebla; no se modifica el motor.
+
+campanaSeleccionar abre la preparación sólo desde una mesa visible y bloquea
+reentradas. campanaPreparando conserva viaje, controles y diálogo; al llegar,
+campanaMostrarEncuentro abre #campanaEncuentroPanel en la capa modal con datos
+de CAMPANA_RIVALES y DECKS. La confirmación llama a campanaCombatir (zoom + VS);
+volver/Escape restaura la posición y el foco sin rehacer la mesa ni escribir
+avance. campanaLimpiarPreparacion cancela viajes y avisos al cerrar/navegar para
+impedir una ventana tardía. La alternativa HTML anima con WAAPI y temporizador.
+Suite campanaEncuentro cubre espera antes del aviso, seis especificaciones,
+confirmación única, regreso, Escape y cierre durante los saltos; campanaMesa
+comprueba cámara fija y alternativa sin Canvas, y campanaPantalla incluye el
+aviso en cinco tamaños. Centrado del diálogo reproducido en rojo antes del arreglo.
