@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 188 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-07 · build 189 (beta, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -363,3 +363,17 @@ sin commits locales pendientes de enviar; rechaza una rama beta ajena y nunca
 fuerza el push. pruebas_publicacion.py comprueba aislamiento, bytes, reintentos,
 avance y guardas con repositorios temporales; sabotaje enviando tcg detectado.
 El juego conserva el comportamiento de build 187; sólo cambia la entrega.
+
+
+Build 189: todos los menús usan el barrido dorado al entrar y regresar.
+animarTransicionMenu/limpiarTransicionMenu en final-core.js comparten los
+temporizadores de pantalla y ventana; cerrarOv también es compartida. openOv
+anima sólo la primera apertura desde una portada; volver a dibujar filtros
+no reinicia la entrada. barridoModal vive dentro de ov, como hermano del panel,
+para pasar por delante sin interceptar toques ni desplazarse con la colección.
+Campaña limpia el efecto anterior al entrar y campanaVolverAlMenu anima el
+regreso incluso cuando el menú ya estaba debajo; Escape usa esa misma salida.
+showScreen cancela los efectos al pasar al tablero y deja el VS como entrada.
+Movimiento reducido omite las animaciones. Suite menusDorados cubre ocho menús,
+regresos, Escape, fondo, navegación rápida y aislamiento de las reglas en combate,
+en ambas interfaces. Rojo reproducido antes del arreglo y revisión visual con clics.

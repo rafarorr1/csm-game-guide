@@ -13,6 +13,17 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Transiciones doradas en todos los menús · 2026-09-07
+
+Build 189, beta: Jugar, Campaña, Tutorial, Con amigos, Colección, Guías, Reglas
+y Récords comparten el barrido dorado de 450 ms al entrar y volver al menú
+principal. Las ventanas aparecen suavemente por delante del fondo animado.
+Cerrar, Cancelar, Escape y tocar fuera de una ventana de menú usan el mismo
+regreso; las decisiones del combate conservan su comportamiento. Se cancelan
+los temporizadores anteriores al navegar rápido y se respeta movimiento reducido.
+Regresión menusDorados en ambas pantallas, reproducida en rojo antes del cambio;
+revisión del destello visible y de los botones con clics reales.
+
 ## Sin numerar — Beta disponible por Cloudflare · 2026-09-07
 
 Build 188: la beta se entrega también desde beta.caoz-tcg.pages.dev para
