@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 197 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 198 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -490,3 +490,12 @@ guarda huellas locales del recorrido y abre el claro del rival según distancia
 usa top:50%, left/right:0 y título sin rotación. Thunder step conserva el id
 pasoatronador y sus reglas. victoriaCentrada y campanaContinuidad comprueban
 centrado, nombre y ausencia de despeje prematuro; sabotajes detectados.
+
+
+Build 198 (beta): escala de mesa 1.298 (+10 %). Continuar oculta el nombre
+futuro. campanaVencerPrueba crea el estado de victoria de campaña y reutiliza
+campanaFinal sin iniciar turnos ni registrar récords normales. El botón vive
+en campanaEncuentroPanel y sólo aparece en localhost, 127.0.0.1, beta.caoz-tcg.pages.dev
+y GitHub /tcg-beta/. Retirar campanaPruebaDisponible/campanaVencerPrueba y su
+botón cuando termine la revisión. Suite campanaPruebaBeta prueba seis etapas,
+doble clic y texto sin spoilers en ambas interfaces.

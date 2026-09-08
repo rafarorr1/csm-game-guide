@@ -13,6 +13,16 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Recorrido rápido de campaña · 2026-09-08
+
+Build 198, beta. Mesa con 10 % más de zoom (1.18 → 1.298). El botón tras
+vencer dice «Continuar», sin adelantar el nombre del siguiente rival.
+La ventana del encuentro añade «Vencer rival · Prueba beta» para recorrer
+los seis encuentros pasando por victoria, derribo y avance normales. Sólo
+se habilita en beta y localhost; no en producción. Doble clic protegido por
+la identidad de la preparación; no modifica récords de partidas normales.
+Suite campanaPruebaBeta recorre los seis rivales en ambas interfaces.
+
 ## Sin numerar — Niebla por proximidad y resultado centrado · 2026-09-08
 
 Build 197, beta. La niebla se despeja siguiendo la posición real de la ficha,

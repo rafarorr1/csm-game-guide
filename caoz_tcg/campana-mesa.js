@@ -245,7 +245,7 @@
     function encuadrar(){
       const vertices=[[-6.4,0,-largo/2-1.2],[6.4,0,-largo/2-1.2],[6.4,-.7,largo/2+1.2],[-6.4,-.7,largo/2+1.2]].map(vista);
       const xs=vertices.map(p=>p.x),ys=vertices.map(p=>p.y),x0=Math.min(...xs),x1=Math.max(...xs),y0=Math.min(...ys)-.035,y1=Math.max(...ys);
-      const disponible=alto;escala=Math.min(ancho*.96/(x1-x0),disponible*.97/(y1-y0))*1.18;cx=ancho/2-(x0+x1)*escala/2;cy=disponible/2-(y0+y1)*escala/2;
+      const disponible=alto;escala=Math.min(ancho*.96/(x1-x0),disponible*.97/(y1-y0))*1.298;cx=ancho/2-(x0+x1)*escala/2;cy=disponible/2-(y0+y1)*escala/2;
       // Mantener las dos piezas del encuentro dentro del encuadre al acercar.
       const puntos=[posicionJugador(),op.casillas[Math.min(5,op.etapa)]].flatMap(p=>[proyectar(punto(p,.1)),proyectar(punto(p,2.6))]);
       const minY=Math.min(...puntos.map(p=>p.y)),maxY=Math.max(...puntos.map(p=>p.y));cy+=Math.max(0,alto*.09-minY)-Math.max(0,maxY-alto*.89);
