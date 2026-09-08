@@ -128,7 +128,7 @@ Las tres partes son **scripts clásicos que comparten el ámbito global**. Regla
 
 ## Pendiente conocido
 
-- Sonido: no hay ninguno. Es lo primero de la lista.
+- Sonido: `audio-domo.js` + `audio/catalogo.json`; estudio privado `sonidos.html` y API `_worker.js`. Ver `SONIDOS.md`. El juego conserva el banco original sin API.
 - El Cajón: 21 cartas hechas y jugables (`set:'cajon'`) fuera de los mazos, a la espera de
   decidir si entran en los seis o forman un séptimo Protagonista. Constructor de mazos después.
 - Dificultad de la IA (hoy hay una sola).

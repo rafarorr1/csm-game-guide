@@ -28,6 +28,7 @@ function limpiarTransicionMenu(){
 }
 function animarTransicionMenu(pantalla,ventana=null){
   limpiarTransicionMenu();
+  if(pantalla)window.CAOZ_AUDIO?.play('menu_gold');
   if(!pantalla||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   const barrido=ventana?document.createElement('div'):document.getElementById('barrido');
   if(ventana){
@@ -303,6 +304,7 @@ async function cinematicaFinal(winner, why, acciones){
   capa.onclick = () => { saltado = true; salta(); };
   document.body.appendChild(capa);
   document.body.classList.add('fin-on');
+  window.CAOZ_AUDIO?.detener();window.CAOZ_AUDIO?.play(gano?'victory':'defeat');
   const vive = () => G === g0 && document.body.contains(capa);
   // sigue mientras la partida sea ésta y nadie haya tocado
   const espera = async ms => { await Promise.race([nap(ms), saltar]); return !saltado && vive(); };
@@ -385,11 +387,11 @@ async function voladoDomo(nombreRival){
   texto.textContent='Elegiste '+eleccion.toUpperCase()+'. La moneda está en el aire…';
   const salio=rnd(2)===0?'cara':'cruz';
   const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  moneda.classList.add('girando');
+  moneda.classList.add('girando');window.CAOZ_AUDIO?.play('coin_flip');
   let cara=true;
   const alterna=reducido?null:setInterval(()=>{cara=!cara;moneda.innerHTML=icono(cara?'cara':'cruz');},180);
   try{await nap(reducido?350:1500);}finally{if(alterna!==null)clearInterval(alterna);}
-  moneda.classList.remove('girando');moneda.style.animation='none';
+  moneda.classList.remove('girando');window.CAOZ_AUDIO?.play('coin_land');moneda.style.animation='none';
   moneda.innerHTML=icono(salio);moneda.setAttribute('aria-label','Moneda: '+salio);
   const ganas=salio===eleccion;
   texto.innerHTML=`Salió <b>${salio.toUpperCase()}</b><span class="vd-result"></span>`;
@@ -506,7 +508,7 @@ async function onlineMonedaRecibe(m){
 async function onlineMostrarMoneda(resultado,nombre){
   const panel=document.getElementById('ovPanel');panel.innerHTML='<div class="volado"><h3>Cara o cruz</h3><div class="onlineMoneda" aria-label="Moneda girando">✦</div><p class="onlineResultado">La moneda está en el aire…</p></div>';
   openOv();const moneda=panel.querySelector('.onlineMoneda'),texto=panel.querySelector('.onlineResultado');
-  await sleep(1400);moneda.classList.add('quieta');moneda.textContent=resultado===0?'☀':'☾';
+  window.CAOZ_AUDIO?.play('coin_flip');await sleep(1400);window.CAOZ_AUDIO?.play('coin_land');moneda.classList.add('quieta');moneda.textContent=resultado===0?'☀':'☾';
   moneda.setAttribute('aria-label',resultado===0?'Cara':'Cruz');
   texto.textContent=(resultado===0?'Cara':'Cruz')+' — empieza '+(nombre||'tu rival');await sleep(1800);
 }

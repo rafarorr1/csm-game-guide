@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 207 (beta; producción 203, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 208 (beta; producción 207, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,18 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 208 añade el banco original de 34 SFX, el mezclador compartido
+`audio-domo.js` y el estudio privado `sonidos.html`. El motor no cambia.
+La API `_worker.js` guarda reemplazos en D1, con cookie HttpOnly, validación
+WAV, comprobación de origen y revisiones para evitar pisar otro guardado.
+Requiere `SFX_DB`, `SFX_ADMIN_HASH` y `SFX_SESSION_KEY` sólo en el entorno que
+se habilite. Ver `SONIDOS.md`; ninguna credencial va en Git. La activación
+remota depende de conectar estas vinculaciones en Cloudflare. El banco local
+funciona también cuando el backend no responde. El SW nunca cachea sesiones
+ni datos privados. Los originales y los reemplazos con hash se pueden guardar
+para reproducción sin conexión; restaurar devuelve al archivo original.
+
 
 Build 207 pule la geometría de `campana-personaje.js` y añade
 `campanaPintarMalla`: WebGL compartido con profundidad por píxel y alternativa

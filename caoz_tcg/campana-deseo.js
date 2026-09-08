@@ -38,7 +38,7 @@
     }
     d.addEventListener('cancel',ev=>ev.preventDefault());document.body.appendChild(d);d.showModal();
     if(!e.mesa&&!reducido)e.animacion=peon.animate([{translate:'0 0'},{translate:'0 -55px'}],{delay:650,duration:4350,easing:'ease-in',fill:'forwards'});
-    cuadro(inicio);
+    window.CAOZ_AUDIO?.play('ascension');cuadro(inicio);
     esperar(e,5000,()=>{cancelAnimationFrame(e.raf);d.dataset.fase='blanco';
       esperar(e,1000,()=>{
         const actual=campanaLeer();if(actual!==p){campanaCancelarAscenso();return;}
@@ -51,7 +51,7 @@
   function fuego(e){
     const d=e.d,c=document.createElement('canvas');c.className='deseoFuego';c.setAttribute('aria-hidden','true');d.appendChild(c);
     const ctx=c.getContext('2d'),reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
-    const inicio=performance.now();d.dataset.fase='fuego';
+    const inicio=performance.now();d.dataset.fase='fuego';window.CAOZ_AUDIO?.play('wish_fire');
     const duracion=reducido?500:3000;
     function dibujar(t){
       if(e.cancelado)return;const p=Math.min(1,(t-inicio)/duracion),w=d.clientWidth,h=d.clientHeight;
@@ -79,7 +79,7 @@
     if(!reducido&&ctx)e.raf=requestAnimationFrame(dibujar);else c.style.background='#ff9a22';
     esperar(e,reducido?250:1000,()=>{e.form.remove();e.mensaje=document.createElement('h1');e.mensaje.className='deseoConcedido';e.mensaje.textContent='Deseo concedido';d.appendChild(e.mensaje);});
     esperar(e,duracion,()=>{
-      cancelAnimationFrame(e.raf);c.remove();d.dataset.fase='concedido';
+      cancelAnimationFrame(e.raf);c.remove();d.dataset.fase='concedido';window.CAOZ_AUDIO?.play('wish_granted');
       // El menú se prepara bajo el negro; esos tres segundos se aprovechan
       // para revelarlo sin un corte al retirar el diálogo.
       esperar(e,3000,()=>{d.dataset.fase='fundido';esperar(e,1000,()=>{

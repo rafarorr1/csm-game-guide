@@ -90,7 +90,7 @@ body.aaa-combat .card.unit:hover{filter:none}
 }
 `;
 
-  const STATE = {last:null, audio:null, gain:null, unlocked:false};
+  const STATE = {last:null};
 
   function aaaFX(){
     try{return typeof FXON==='function' ? FXON() : true;}catch(e){return true;}
@@ -120,40 +120,9 @@ body.aaa-combat .card.unit:hover{filter:none}
   }
   function aaaMotionOK(){ return !matchMedia('(prefers-reduced-motion: reduce)').matches; }
 
-  /* ---- Audio procedural: sin archivos externos ---- */
-  function aaaUnlock(){
-    if(STATE.unlocked) return;
-    STATE.unlocked=true;
-    try{
-      const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
-      STATE.audio=new AC(); STATE.gain=STATE.audio.createGain(); STATE.gain.gain.value=.19; STATE.gain.connect(STATE.audio.destination);
-      if(STATE.audio.state==='suspended') STATE.audio.resume();
-    }catch(e){}
-  }
-  document.addEventListener('pointerdown',aaaUnlock,{once:true,capture:true});
-  function aaaTone(freq,dur,opt={}){
-    const a=STATE.audio,g=STATE.gain;if(!a||!g)return;
-    try{
-      const o=a.createOscillator(),v=a.createGain(),now=a.currentTime;
-      o.type=opt.type||'sine'; o.frequency.setValueAtTime(freq,now);
-      if(opt.to) o.frequency.exponentialRampToValueAtTime(Math.max(20,opt.to),now+dur);
-      v.gain.setValueAtTime(.0001,now);v.gain.exponentialRampToValueAtTime(opt.vol||.18,now+.008);v.gain.exponentialRampToValueAtTime(.0001,now+dur);
-      o.connect(v);v.connect(g);o.start(now);o.stop(now+dur+.02);
-    }catch(e){}
-  }
-  function aaaNoise(dur=.08,vol=.12){
-    const a=STATE.audio,g=STATE.gain;if(!a||!g)return;
-    try{
-      const n=Math.max(1,Math.floor(a.sampleRate*dur)),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);
-      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
-      const s=a.createBufferSource(),v=a.createGain();s.buffer=b;v.gain.value=vol;s.connect(v);v.connect(g);s.start();
-    }catch(e){}
-  }
+  /* Un solo mezclador compartido; el contacto conserva su sincronía visual. */
   function aaaSound(k,p=1){
-    if(k==='wind'){aaaTone(190,.11,{type:'sawtooth',to:72,vol:.06*p});aaaNoise(.07,.035*p);}
-    else if(k==='hit'){aaaTone(72,.13,{type:'sine',to:42,vol:.24*p});aaaTone(330,.045,{type:'square',to:120,vol:.055*p});aaaNoise(.07,.11*p);}
-    else if(k==='counter'){aaaTone(250,.08,{type:'sawtooth',to:95,vol:.055*p});aaaNoise(.045,.045*p);}
-    else if(k==='lethal'){aaaTone(49,.28,{type:'sine',to:32,vol:.28*p});aaaNoise(.12,.08*p);}
+    window.CAOZ_AUDIO?.play({wind:'attack_wind',hit:'attack_hit',counter:'counter',lethal:'lethal'}[k],{volumen:p});
   }
 
   function aaaImpact(x,y,dx,dy,power=1){

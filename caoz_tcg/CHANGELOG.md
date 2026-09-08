@@ -1,5 +1,24 @@
 # Registro de versiones — el TCG del Domo
 
+
+### Sin numerar · build 208 · Propuesta sonora y estudio privado
+
+- 34 SFX originales: fricción de cartas, percusión sobre madera, metal, impactos,
+  familias de magia, dados, volado, VS y cierre de campaña. Audio con margen de
+  mezcla y variación pequeña por reproducción. No se utilizan muestras de otros juegos.
+- Un solo mezclador para escritorio y móvil. Silencio y volumen persistentes;
+  máximo ocho voces, desbloqueo por gesto y recuperación tras suspender la app.
+  Las descargas son independientes del motor y nunca retrasan una jugada.
+- Estudio de sonidos con categorías, búsqueda, onda, links para reproducir,
+  prueba de reemplazo, conversión a WAV, volumen por efecto y restauración.
+  Backend privado en Cloudflare D1, con sesiones protegidas y control de
+  concurrencia. API separada de la caché privada de la PWA.
+- Escarcha tiene sonido de hielo; Thunder step conserva el rayo. Contrahechizo
+  utiliza la resonancia protectora. El impacto de la animación de cartas sigue
+  marcando el momento del sonido; no cambia el daño, los mazos ni las reglas.
+- Guardas de publicación incluyen integridad de los 34 WAV, pruebas de la API,
+  suite de audio y verificación de los archivos servidos.
+
 Qué cambia en cada versión del juego y **por qué**, con los números que lo justifican.
 Lo de arriba es lo más reciente.
 

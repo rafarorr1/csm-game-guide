@@ -67,6 +67,11 @@ node --check "$AQUI/campana-mesa.js" || exit 1
 node --check "$AQUI/campana-personaje.js" || exit 1
 node --check "$AQUI/campana-deseo.js" || exit 1
 node --check "$AQUI/polish-aaa.js" || exit 1
+node --check "$AQUI/audio-domo.js" || exit 1
+node --check "$AQUI/sonidos.js" || exit 1
+node --check "$AQUI/_worker.js" || exit 1
+python3 "$AQUI/verificar_sonidos.py" || exit 1
+node "$AQUI/pruebas_sonidos.mjs" || exit 1
 node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }
 # El service worker lleva la build en VERSION: es lo que le dice al teléfono
 # que hay una caché nueva. Sin subirlo, la app instalada se quedaría con la vieja.
@@ -195,7 +200,9 @@ RAMA="$(cd "$PAGES" && git branch --show-current)"
 [ "$RAMA" = "gh-pages" ] || { rojo "$PAGES está en '$RAMA', debería estar en gh-pages"; exit 1; }
 
 [ -z "$(cd "$PAGES" && git status --porcelain)" ] || { rojo 'El worktree de publicación tiene cambios pendientes'; exit 1; }
-mkdir -p "$PAGES/$DESTINO/art"
+mkdir -p "$PAGES/$DESTINO/art" "$PAGES/$DESTINO/audio"
+for f in audio-domo.js sonidos.html sonidos.js sonidos.css _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
+cp "$AQUI"/audio/*.wav "$AQUI/audio/catalogo.json" "$PAGES/$DESTINO/audio/" || exit 1
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
 cp "$AQUI/movil.html"   "$PAGES/$DESTINO/movil.html"
@@ -238,6 +245,7 @@ cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
 git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/final-core.js" "$DESTINO/campana-mesa.js" "$DESTINO/campana-personaje.js" "$DESTINO/campana-deseo.js" "$DESTINO/polish-aaa.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/audio-domo.js" "$DESTINO/sonidos.html" "$DESTINO/sonidos.js" "$DESTINO/sonidos.css" "$DESTINO/_worker.js" "$DESTINO/_routes.json" "$DESTINO/audio"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
 if git diff --cached --quiet; then
@@ -274,6 +282,7 @@ comprobar_cloudflare(){
       [ "$srv" = "$esp" ] || { ok=0; break; }
     done
     if [ "$ok" = "1" ]; then
+      python3 "$AQUI/verificar_audio_web.py" "$CF_URL" || return 1
       verde "  publicado y verificado byte a byte en Cloudflare: $CF_URL/"
       gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
       return 0
@@ -313,6 +322,7 @@ for i in $(seq 1 10); do
       curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/$f?cb=$(date +%s)" -o "/tmp/caoz-verificar-$f" || exit 1
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$f" || { rojo "$f no coincide con la versión local"; exit 1; }
     done
+    python3 "$AQUI/verificar_audio_web.py" "https://rafarorr1.github.io/csm-game-guide/$DESTINO" || exit 1
     if [ "$DESTINO" = "tcg-beta" ]; then
       # Cloudflare sólo toma tcg como salida. La rama beta contiene exactamente
       # el árbol tcg-beta validado, bajo ese nombre, en un preview independiente.
