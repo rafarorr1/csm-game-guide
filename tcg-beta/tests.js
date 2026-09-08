@@ -658,6 +658,60 @@ PRUEBAS.suite('onlineFlujo', async t => {
   }finally{marcos.forEach(f=>{f.contentWindow.netClose();f.remove();});}
 });
 
+/* El Lugar ocupa su altura real, incluso con texto largo o una Reliquia.
+   Regresión de la captura móvil: el flex comprimía #midRow y las cartas
+   propias quedaban encima del Puente y de su texto. */
+PRUEBAS.suite('terrenoMovil', async t => {
+  const f=document.createElement('iframe');
+  f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px;border:0';
+  const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=terreno-interna';document.body.appendChild(f);
+  try{
+    await carga;const w=f.contentWindow,d=f.contentDocument;
+    w.newGame('fender','mohamed');
+    w.eval("G.fast=true;G.phase='principal';P(0).pd=10;P(0).hand=['matildus','adolfo','eric','discipulo','puente'];");
+    w.showScreen('board');
+    const comprobar=etiqueta=>{
+      const rect=s=>d.querySelector(s).getBoundingClientRect();
+      const campo=rect('#field'),medio=rect('#midRow');
+      for(const elemento of d.querySelector('#midRow').children){
+        const r=elemento.getBoundingClientRect();
+        t.check(r.top>=medio.top&&r.bottom<=medio.bottom,etiqueta+': el terreno y sus acciones deben caber dentro de la franja central.');
+      }
+      for(const lado of ['foeField','myField'])for(const carta of d.querySelectorAll('#'+lado+' .card')){
+        const r=carta.getBoundingClientRect();
+        t.check(r.width>=44,etiqueta+': las cartas deben conservar un tamaño tocable.');
+        const cajas=[r,...[...carta.querySelectorAll('.cost,.atk,.hp')].map(e=>e.getBoundingClientRect())];
+        const listo=w.getComputedStyle(carta,'::after');
+        if(listo.content!== 'none'&&listo.display!=='none')cajas.push({top:r.top+parseFloat(listo.top),bottom:r.top+parseFloat(listo.top)+parseFloat(listo.height)});
+        for(const caja of cajas){
+          t.check(lado==='foeField'?caja.bottom<=medio.top-1:caja.top>=medio.bottom+1,etiqueta+': una carta o su indicador invade el terreno ('+lado+').');
+          t.check(caja.top>=campo.top&&caja.bottom<=campo.bottom,etiqueta+': las cartas deben caber en el campo.');
+        }
+        t.check(r.left>=campo.left&&r.right<=campo.right,etiqueta+': cinco cartas deben caber a lo ancho.');
+      }
+      t.check(rect('#myTraps').bottom<=campo.bottom+.5,etiqueta+': las trampas no deben invadir la barra del jugador ('+rect('#myTraps').bottom+' > '+campo.bottom+').');
+      t.check(rect('#controls').bottom<=rect('#board').bottom+.5,etiqueta+': los controles deben quedar dentro de la pantalla.');
+    };
+    for(const [ancho,alto,app] of [[390,664,false],[320,568,false],[402,812,true],[430,932,false]]){
+      Object.defineProperty(w.navigator,'standalone',{value:app,configurable:true});
+      f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(60);w.ajustarLienzo();
+      for(const cantidad of [2,5]){
+        w.eval(`for(const s of [0,1]){P(s).field=[];for(let i=0;i<${cantidad};i++){const u=mkUnit(s?'conserje':'matildus',s);u.sick=false;P(s).field.push(u);}}recalc();`);
+        for(const lugar of [null,'puente','montanas',null]){
+          w.eval(`G.place=${lugar?JSON.stringify({id:lugar,side:1}):'null'};P(0).relics=[];`);w.render();await sleep(40);
+          comprobar(`${ancho}×${alto}, ${cantidad} cartas, ${lugar||'sin Lugar'}`);
+        }
+      }
+      w.eval("G.place={id:'puente',side:0};P(0).relics=[{id:'puntosrobados',counters:2}];");w.render();await sleep(40);
+      comprobar(`${ancho}×${alto}, Puente y Reliquia`);
+      d.querySelector('#hand .card').click();await sleep(40);
+      comprobar(`${ancho}×${alto}, carta seleccionada en mano`);w.manoTocada(null);
+      d.querySelector('.placecard').click();
+      t.check(d.querySelector('#inspect.on')?.textContent.includes('El Puente de Brick y Brock'),'El terreno debe seguir abriendo su ficha.');w.cerrarHojas();
+    }
+  }finally{f.contentWindow.relojPara();f.remove();}
+});
+
 PRUEBAS.suite('nubeDagasUI', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
