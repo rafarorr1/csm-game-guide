@@ -109,9 +109,13 @@
   #campanaAscenso{position:fixed;inset:0;margin:0;padding:0;border:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:transparent;overflow:hidden;pointer-events:auto}
   #campanaAscenso::backdrop{background:#08050b22}
   .ascensoRayo{position:absolute;top:0;width:clamp(210px,28vw,360px);transform:translateX(-50%);filter:drop-shadow(0 0 18px #ffe9b480);pointer-events:none}
-  .ascensoCono{position:absolute;inset:0;clip-path:polygon(43% 0,57% 0,100% 100%,0 100%);background:linear-gradient(180deg,#fffdeccc,#fff9d54a 32%,#fff4bb12),linear-gradient(90deg,#ffe6a80a,#fff9d943 36%,#ffffee66 50%,#fff9d943 64%,#ffe6a80a)}
-  .ascensoNucleo{position:absolute;inset:0;clip-path:polygon(48% 0,52% 0,67% 100%,33% 100%);background:linear-gradient(#fffef4a0,#fff9cb18)}
-  .ascensoHalo{position:absolute;bottom:-14px;left:0;width:100%;height:28px;border-radius:50%;background:radial-gradient(ellipse,#fffce855,#fff4bd22 50%,#fff4bd00 72%);box-shadow:0 0 24px 3px #fff7bd30}
+  .ascensoCono{position:absolute;inset:0;clip-path:polygon(43% 0,57% 0,100% 100%,0 100%);background:linear-gradient(180deg,#fffdeccc,#fff9d54a 32%,#fff4bb12),linear-gradient(90deg,#ffe6a80a,#fff9d943 36%,#ffffee66 50%,#fff9d943 64%,#ffe6a80a);animation:abrirHazAscenso .85s ease-in-out .65s both}
+  .ascensoNucleo{position:absolute;inset:0;clip-path:polygon(48% 0,52% 0,67% 100%,33% 100%);background:linear-gradient(#fffef4a0,#fff9cb18);animation:abrirNucleoAscenso .85s ease-in-out .65s both}
+  .ascensoHalo{position:absolute;bottom:-14px;left:0;width:100%;height:28px;border-radius:50%;background:radial-gradient(ellipse,#fffce855,#fff4bd22 50%,#fff4bd00 72%);box-shadow:0 0 24px 3px #fff7bd30;animation:abrirHaloAscenso .85s ease-in-out .65s both}
+  /* Primero llega el haz recto (650 ms); sólo al tocar la ficha abre el cono. */
+  @keyframes abrirHazAscenso{from{clip-path:polygon(46% 0,54% 0,54% 100%,46% 100%)}to{clip-path:polygon(43% 0,57% 0,100% 100%,0 100%)}}
+  @keyframes abrirNucleoAscenso{from{clip-path:polygon(49.3% 0,50.7% 0,50.7% 100%,49.3% 100%)}to{clip-path:polygon(48% 0,52% 0,67% 100%,33% 100%)}}
+  @keyframes abrirHaloAscenso{from{scale:.08 1;opacity:0}to{scale:1 1;opacity:1}}
   .ascensoResplandor{position:absolute;left:var(--luz-x,50%);top:var(--luz-y,60%);width:var(--luz-diametro,400vmax);height:var(--luz-diametro,400vmax);translate:-50% -50%;border-radius:50%;background:radial-gradient(circle,#fff 0 52%,#fffcedb3 66%,#ffe8a14d 80%,#ffe8a100 100%);animation:resplandorAscenso 1.2s cubic-bezier(.4,0,.6,1) 3.8s both;pointer-events:none}
   @keyframes resplandorAscenso{0%{scale:.015;opacity:0}25%{opacity:.65}100%{scale:1;opacity:1}}
   #campanaAscenso[data-fase="blanco"]{background:#fff}#campanaAscenso[data-fase="blanco"]>div{display:none}#campanaAscenso[data-fase="blanco"]::backdrop{background:#fff}
@@ -131,7 +135,7 @@
   #campanaDeseo[data-fase="fundido"]{background:#000;transition:background 1s}#campanaDeseo[data-fase="fundido"] .deseoConcedido{opacity:0}
   #campanaDeseo[data-fase="menu"]{background:#000;transition:none;animation:deseoRevelarMenu 3s cubic-bezier(.4,0,.2,1) both}#campanaDeseo[data-fase="menu"]::backdrop{background:transparent}
   @keyframes deseoRevelarMenu{from{opacity:1}to{opacity:0}}
-  @media(prefers-reduced-motion:reduce){.ascensoResplandor{animation-name:resplandorAscensoSuave}@keyframes resplandorAscensoSuave{from{scale:1;opacity:0}to{scale:1;opacity:1}}}
+  @media(prefers-reduced-motion:reduce){.ascensoCono,.ascensoNucleo,.ascensoHalo{animation:none}.ascensoResplandor{animation-name:resplandorAscensoSuave}@keyframes resplandorAscensoSuave{from{scale:1;opacity:0}to{scale:1;opacity:1}}}
   @media(max-height:480px){#campanaDeseo{padding:12px 24px}.deseoFormulario{gap:7px}#campanaDeseo h1{font-size:23px}.deseoSello{display:none}.deseoPrivacidad,.deseoEstado{font-size:10px}.deseoFormulario label{font-size:12px}#deseoTexto{padding:8px}.deseoFormulario .btn{min-height:40px;padding:8px;font-size:16px}}
   `;document.head.appendChild(css);
 })();
