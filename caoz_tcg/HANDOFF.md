@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-07 · build 195 (beta; producción 190, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 196 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -463,3 +463,22 @@ publicar.sh cambia únicamente el modo de lanzamiento de Chrome (con ventana y
 aceleración normal); no omite suites, no acepta resultados externos y conserva
 el límite, la parada ante fallos y las verificaciones de publicación. Usar
 ./publicar.sh --beta --visible cuando la revisión sin ventana se estrangule.
+
+
+Build 196 (beta): campanaFinal ahora reutiliza cinematicaFinal; la acción
+principal admite textoPrincipal. La campaña marca G.campanaResuelta una vez y
+guarda mesaPendiente=etapa vencida antes de incrementar etapa. campanaRuta
+representa ese encuentro hasta terminar golpear() y pulsar Seguir; luego limpia
+mesaPendiente y anima desde campanaPosicionEncuentro del vencido hasta el nuevo.
+enEncuentro conserva la posición junto al rival al volver/cargar. Revancha de
+derrota llama directamente a campanaCombatir. La alternativa sin Canvas también
+anima golpe/caída; desmontar la escena cancela la animación y su promesa.
+
+campana-mesa.js: golpear() dura 1250 ms (temporizador independiente de rAF),
+interpola una embestida y rota las caras del enemigo hasta quedar tumbado.
+En etapas posteriores todos los vencidos se dibujan caídos. La bruma se dibuja
+en un lienzo transparente y se despeja con destination-out alrededor de las
+miniaturas reveladas y del jugador. Zoom 1.18, yaw .18, elevación .82, recuadro
+ajustado para que quepan las dos piezas actuales. Texturas y árboles más verdes.
+Suite campanaContinuidad y azarYCriticos; campana mantiene su prueba de progreso
+sin cinemática (stub explícito) y ahora pulsa Seguir después del derribo.

@@ -13,6 +13,33 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Victoria y continuidad en la mesa · 2026-09-08
+
+Build 196, beta. La campaña usa la cinemática normal de victoria/derrota.
+Después de ganar, «Volver a la mesa» muestra a nuestra miniatura golpeando al
+rival, que cae y permanece tumbado. Al terminar se habilita «Seguir contra…»:
+la ficha camina desde el encuentro vencido hasta el siguiente, sin volver al
+apartadero inicial. El guardado conserva el derribo pendiente y la posición
+alcanzada; repetir un aviso de victoria no vuelve a avanzar. Tras una derrota,
+Revancha arranca el mismo encuentro directamente, con VS y volado.
+
+La cámara fija se acerca un 18 %, ajusta el encuadre al jugador y rival, y usa
+un ángulo ligeramente más elevado. Terreno verde, árboles de copa redonda y
+cabezas algo mayores dan un aspecto de miniaturas de tablero. La niebla se
+borra con un borde suave alrededor de cuerpo, cabeza y peana de cada rival
+revelado y del jugador; los enemigos futuros siguen sin construirse. Etiquetas
+separadas para no tapar las piezas cercanas.
+
+Un 1 natural muestra «¡CRÍTICO!» (en rojo) en ambas pantallas. No cambia el
+resultado de las reglas. El volado conserva rnd(2): muestra de 10 000 con
+5 048/4 952, y las cuatro combinaciones de elección/resultado devuelven el
+primer turno correcto. Cuatro victorias seguidas son compatibles con 50/50.
+
+Regresiones: campaña llama a la cinemática, guarda una sola victoria, espera
+al derribo, parte del rival vencido al avanzar y reintenta sin mesa; volado
+compara elección, cara dibujada y ganador; d20 comprueba texto y efecto.
+La prueba de continuidad falló antes del arreglo.
+
 ## Sin numerar — Publicación con revisión visible · 2026-09-07
 
 Build 195, beta: publica la corrección de terreno de 194. Las 23 suites
