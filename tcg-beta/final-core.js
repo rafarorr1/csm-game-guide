@@ -257,14 +257,19 @@ async function cinematicaFinal(winner, why, acciones){
     b.style.setProperty('--del', (-Math.random() * 9) + 's');
     capa.appendChild(b);
   }
-  const pierde = cartaDeLiderVS(P(1 - winner).leaderId, 'pierde');
-  const gana   = cartaDeLiderVS(P(winner).leaderId, 'gana');
+  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde');
+  const pierde = carta(1-winner);
+  const gana   = carta(winner);
   capa.appendChild(pierde); capa.appendChild(gana);
   const alma = s => Math.max(0, P(s).alma);
   capa.appendChild(el('div', 'sello',
     `<b>${gano ? 'VICTORIA' : 'DERROTA'}</b><small>${why || ''}</small>` +
     `<i>Turnos: ${Math.ceil(G.turnNo / 2)} &nbsp;·&nbsp; ${P(winner).L.n} ❤️ ${alma(winner)} &nbsp;·&nbsp; ${P(1 - winner).L.n} ❤️ ${alma(1 - winner)}</i>`));
   { const fr = fraseDeRecord(); if(fr) capa.querySelector('.sello').appendChild(el('i', 'racha', fr)); }
+  if(G.campana?.personaje){
+    const nombre=s=>s===ME?campanaNormalizarPersonaje(G.campana.personaje).nombre:P(s).L.n;
+    capa.querySelector('.sello>i').textContent='Turnos: '+Math.ceil(G.turnNo/2)+' · '+nombre(winner)+' ❤️ '+alma(winner)+' · '+nombre(1-winner)+' ❤️ '+alma(1-winner);
+  }
   if(!gano)capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
   /* Los botones viven aquí, no en un cartel aparte: la cinemática se queda
@@ -715,6 +720,7 @@ function campanaRuta(aviso=''){
   });
   const peon=document.createElement('div');peon.className='campanaPeon';peon.setAttribute('role','img');peon.setAttribute('aria-label','Tu ficha: '+campanaNombre(p));
   peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span><span class="campanaTu" aria-hidden="true">TÚ</span>`;
+  peon.querySelector('.campanaTu').textContent=campanaNombre(p);
   if(p.personaje){const color=CAMPANA_ASPECTO.color[p.personaje.color][1];peon.querySelector('.campanaPeonCuerpo').style.background=color;peon.querySelector('.campanaPeonCuerpo>span').textContent=p.personaje.equipo==='baston'?'✦':p.personaje.equipo==='libro'?'📖':'⚔';}
   const destino=victoria!==null||p.enEncuentro&&p.etapa<6?campanaPosicionEncuentro(p.etapa):campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionEncuentro(campanaPasoAnterior);
   peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
@@ -722,6 +728,7 @@ function campanaRuta(aviso=''){
   const niebla=campanaCrearNiebla(p.etapa);if(niebla)tablero.appendChild(niebla);
   const camara=document.createElement('div');camara.className='campanaCamara';camara.appendChild(tablero);
   mesa.appendChild(camara);d.appendChild(mesa);
+  if(p.personaje){const carta=campanaCartaJugador(p.personaje,p.lider);carta.classList.add('campanaIdentidad');mesa.appendChild(carta);}
   if(campanaPasoAnterior!==null&&!matchMedia('(prefers-reduced-motion:reduce)').matches){
     const retirada=campanaCrearNiebla(campanaPasoAnterior,true);
     if(retirada){
