@@ -13,6 +13,19 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Del resplandor al menú · 2026-09-08
+
+Build 202, beta. El rayo del final tiene forma cónica, más ancho junto a la
+miniatura, con halo y núcleo translúcidos. En los últimos 1,2 segundos del
+ascenso el blanco crece desde su brillo y cubre gradualmente la pantalla;
+permanece completamente blanco un segundo antes del deseo. Con movimiento
+reducido cambia la opacidad sin expandir el resplandor.
+Después de desaparecer «Deseo concedido», el menú ya está preparado bajo el
+negro y se revela durante los tres segundos finales. Se elimina la espera
+negra seguida de un corte al menú. El envío sigue simulado, y volver a Campaña
+inicia una partida nueva. Regresiones de ambos fundidos en móvil y escritorio,
+con estados intermedios y sabotajes detectados. Producción sigue en 195.
+
 ## Sin numerar — La luz del Domo · 2026-09-08
 
 Build 201, beta. Victoria ya no muestra «Toca para saltar». Al terminar el

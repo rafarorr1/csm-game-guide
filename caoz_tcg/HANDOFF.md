@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 201 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 202 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -545,3 +545,20 @@ Regresiones: el caso visual Infectado usa newGame + campo sólo con Discípulo,
 en vez de startMatch (podía retornar por ocupado y conservar a Eric del caso
 anterior). El diagnóstico quedó esperando «¿Eric se sacrifica en su lugar?».
 No cambia motor ni interacción de jugadores; evita azar e interferencia del arnés.
+
+
+Build 202: el cierre aprovecha los tres segundos finales para revelar el menú.
+Después de concedido 3000 ms y fundido a negro 1000 ms, showScreen monta el menú
+bajo #campanaDeseo, retira el mensaje y limpia el barrido dorado; fase menu
+desvanece la cobertura negra durante 3000 ms con backdrop transparente. El
+diálogo mantiene los controles bloqueados hasta finalizar y se limpia igual
+que antes. Continúan el deseo simulado y el reinicio de campaña.
+
+El rayo mide 210–360 px, se abre en cono hacia la ficha y conserva un núcleo
+translúcido. ascensoResplandor se centra con translate independiente de scale:
+desde 3800 hasta 5000 ms crece un degradado radial cuyo centro blanco alcanza
+todas las esquinas. Los cinco segundos de ascenso y el segundo de blanco
+completo se conservan. Movimiento reducido usa un fundido uniforme sin expansión.
+Las suites campanaAscenso/campanaDeseo comprueban estados intermedios, origen
+del brillo y menú preparado bajo un velo parcialmente transparente. Se verificó
+el rojo al suprimir cada fundido. Publicación sólo beta; producción 195.
