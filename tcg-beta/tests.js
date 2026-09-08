@@ -384,6 +384,47 @@ PRUEBAS.suite('campana', async t => {
   }
 });
 
+PRUEBAS.suite('campanaCombate', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=campana-combate-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;let llamadas=[];
+    w.startMatch=async(a,b,opts)=>llamadas.push({a,b,opts,cuando:Date.now(),abierta:d.querySelector('#campanaPanel').open});
+    try{
+      for(let etapa=0;etapa<6;etapa++){
+        w.campanaGuardar({version:1,id:'zoom',lider:'fender',etapa});w.campanaRuta();llamadas=[];
+        const inicio=Date.now(),viaje=w.campanaCombatir();await w.campanaCombatir();
+        t.check(llamadas.length===0&&d.querySelector('#campanaPanel').open,pagina+': el VS se abre antes del zoom.');
+        const camara=d.querySelector('.campanaCamara');
+        t.check(!!camara&&camara.getAnimations().some(a=>a.effect.getTiming().duration===500),pagina+': falta el acercamiento de medio segundo.');
+        await viaje;
+        t.check(llamadas.length===1&&llamadas[0].cuando-inicio>=450&&!llamadas[0].abierta,pagina+': el zoom debe entregar el control al VS una sola vez.');
+        t.check(llamadas[0].a==='fender'&&llamadas[0].b===['mohamed','fender','talesin','rafaela','adreida','gero'][etapa]&&llamadas[0].opts.campana.etapa===etapa,pagina+': cambió el encuentro al acercar el mapa.');
+        t.check(!camara.getAnimations().length&&!d.querySelector('.campanaAcercando'),pagina+': el zoom no se limpia.');
+      }
+      w.campanaGuardar({version:1,id:'zoom',lider:'fender',etapa:0});w.campanaRuta();llamadas=[];
+      const cancelado=w.campanaCombatir();w.campanaCerrar();await cancelado;
+      t.check(llamadas.length===0,pagina+': cerrar durante el zoom no debe iniciar la partida.');
+      w.campanaRuta();w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
+      await w.campanaCombatir();
+      t.check(llamadas.length===1&&!d.querySelector('.campanaAcercando'),pagina+': movimiento reducido debe permitir combatir sin zoom.');
+    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+PRUEBAS.suite('versusMovil', async t => {
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+  const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=versus-movil-interno';document.body.appendChild(f);await carga;
+  const w=f.contentWindow;let presentacion;
+  try{
+    presentacion=w.cortinillaVS('fender','mohamed',{nombres:['Jugador de prueba','Rival de prueba']});
+    const cartas=[...w.document.querySelectorAll('.vs .vscard')],jugador=cartas.find(c=>c.querySelector('.lname').textContent==='Jugador de prueba'),rival=cartas.find(c=>c.querySelector('.lname').textContent==='Rival de prueba');
+    t.check(!!jugador&&!!rival,'El VS debe conservar los nombres de jugador y rival.');
+    const yo=jugador.getBoundingClientRect(),otro=rival.getBoundingClientRect();
+    t.check(yo.top+yo.height/2>otro.top+otro.height/2,'En móvil, el jugador debe estar debajo del rival.');
+  }finally{if(presentacion)await presentacion;f.remove();}
+});
+
 PRUEBAS.suite('campanaEntrada', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
