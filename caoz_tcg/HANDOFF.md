@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 202 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 203 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -562,3 +562,11 @@ completo se conservan. Movimiento reducido usa un fundido uniforme sin expansió
 Las suites campanaAscenso/campanaDeseo comprueban estados intermedios, origen
 del brillo y menú preparado bajo un velo parcialmente transparente. Se verificó
 el rojo al suprimir cada fundido. Publicación sólo beta; producción 195.
+
+
+Build 203: el rayo primero cae como un haz recto angosto durante 650 ms.
+Al alcanzar la ficha, abrirHazAscenso/abrirNucleoAscenso interpolan los polígonos
+hasta el cono de 202 durante 850 ms; abrirHaloAscenso despliega el halo al mismo
+tiempo. Las tres animaciones se omiten con movimiento reducido. Conserva
+ascenso, resplandor a blanco y revelado del menú. Revisión visual de caída,
+apertura intermedia y cono final en ambas pantallas. Sólo beta.

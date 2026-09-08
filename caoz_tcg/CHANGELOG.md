@@ -13,6 +13,14 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — El haz llega antes de abrirse · 2026-09-08
+
+Build 203, beta. Primero desciende un haz recto y angosto. Al llegar a la
+miniatura abre progresivamente la base hasta formar el cono y desplegar su
+halo. La caída dura 650 ms y la apertura 850 ms; se conservan el ascenso,
+el fundido a blanco y la aparición gradual del menú. Revisión de los tres
+momentos en móvil y escritorio. Producción sigue en 195.
+
 ## Sin numerar — Del resplandor al menú · 2026-09-08
 
 Build 202, beta. El rayo del final tiene forma cónica, más ancho junto a la
