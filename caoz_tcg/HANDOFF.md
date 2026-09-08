@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 196 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 197 (beta; producción 195, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -482,3 +482,11 @@ miniaturas reveladas y del jugador. Zoom 1.18, yaw .18, elevación .82, recuadro
 ajustado para que quepan las dos piezas actuales. Texturas y árboles más verdes.
 Suite campanaContinuidad y azarYCriticos; campana mantiene su prueba de progreso
 sin cinemática (stub explícito) y ahora pulsa Seguir después del derribo.
+
+
+Build 197 (beta): campana-mesa.js vincula el límite de bruma a posicionJugador,
+guarda huellas locales del recorrido y abre el claro del rival según distancia
+(22 a 13 unidades del mapa). Los vencidos siguen despejados. El sello de final
+usa top:50%, left/right:0 y título sin rotación. Thunder step conserva el id
+pasoatronador y sus reglas. victoriaCentrada y campanaContinuidad comprueban
+centrado, nombre y ausencia de despeje prematuro; sabotajes detectados.

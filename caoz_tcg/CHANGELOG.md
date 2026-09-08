@@ -13,6 +13,16 @@ Cómo se anota una versión nueva:
 
 ---
 
+## Sin numerar — Niebla por proximidad y resultado centrado · 2026-09-08
+
+Build 197, beta. La niebla se despeja siguiendo la posición real de la ficha,
+conservando sus huellas durante el recorrido; el siguiente rival se descubre
+por proximidad, no al empezar el desplazamiento. El resultado de la partida
+comienza en el centro vertical, con título horizontal e información centrada.
+Paso Atronador pasa a llamarse «Thunder step»; conserva id, coste y efectos.
+Regresiones de centrado y proximidad comprobadas en rojo por sabotaje y en verde
+con el arreglo en ambas interfaces. Producción permanece en build 195.
+
 ## Sin numerar — Victoria y continuidad en la mesa · 2026-09-08
 
 Build 196, beta. La campaña usa la cinemática normal de victoria/derrota.
