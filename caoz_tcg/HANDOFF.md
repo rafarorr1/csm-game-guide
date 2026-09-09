@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 217 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 218 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,16 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 218 elimina las pausas de las pruebas a petición del usuario. No hay
+botón de pausa ni pausa por Escape, blur, visibilidad o un fotograma lento.
+El modelo consume el tiempo transcurrido al recuperar un fotograma, incluidos
+los peligros: ocultar la pestaña no regala una victoria. Blur sólo libera los
+controles pulsados. La salida se ofrece antes de empezar y en el resultado.
+`bloquearDesplazamiento` fija body, bloquea overflow de html/body y cancela
+wheel/touchmove mientras vive el diálogo; restaura el desplazamiento al cerrar.
+La suite `pitagorasSinPausa` cubre ambos clientes y los tres juegos; prueba
+foco, teclado, tiempo ausente, scroll y limpieza.
 
 Build 217 valida también el jugador activo al reanudar `ofrecerManoNueva`.
 Pasar de turno durante el reparto visual ya no abre una pregunta atrasada
@@ -27,9 +37,9 @@ es `art/pitagoras-abismo-v216.webp` (177 KiB). Los estados históricos `reto` y
 `pitagoras-pruebas.js` contiene tres modelos deterministas y su UI Canvas:
 isométrico, láseres y FPS por raycasting. API `PITAGORAS_PRUEBAS.iniciar` devuelve
 una promesa `{sobrevivio,cancelado,abandonado?}`; `cancelar()` resuelve una vez y
-limpia entradas, RAF y timers. Cada prueba dura 20 segundos ACTIVOS y concede
-3 vidas locales. Pausar por foco/visibilidad exige reanudación; nunca premiar
-el tiempo oculto. Sin dependencias ni conexión adicional.
+limpia entradas, RAF y timers. Cada prueba dura 20 segundos sin pausa y concede
+3 vidas locales. El tiempo oculto también simula peligros y daño al volver;
+nunca premiarlo sin ejecutar el modelo. Sin dependencias ni conexión adicional.
 
 `pitagoras-combate.js` alterna las pruebas por `G.editorPruebas`, preserva el
 estado previo de `G.resolving` y expone `campanaInterferenciaPitagoras` al motor.

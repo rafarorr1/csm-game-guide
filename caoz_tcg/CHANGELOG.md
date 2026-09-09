@@ -1,6 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 218 · Pruebas sin scroll ni pausa
+
+- Bloqueo del desplazamiento y rebote de la página inferior mientras está
+  abierto un minijuego, con restauración al volver a la mesa o cancelar.
+- Eliminados el botón de pausa, Escape para pausar y las pausas automáticas
+  por foco, pestaña oculta o fotogramas lentos. Los controles siguen funcionando.
+- El tiempo transcurrido se simula completo, incluyendo perseguidores y daño;
+  salir de la pestaña no concede una victoria gratuita. La salida al menú queda
+  disponible en la introducción y en el resultado.
+- Regresión para ambos clientes y los tres juegos; gestos táctiles revisados
+  en 320×568, 390×844 y 844×390.
+
 ### Sin numerar · build 217 · Ofertas de mano en su turno
 
 - Si el jugador pasa de turno mientras se reparten visualmente sus cartas,

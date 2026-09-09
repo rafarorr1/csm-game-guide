@@ -507,6 +507,33 @@ PRUEBAS.suite('manoNuevaTurno',async t=>{
   }
 });
 
+PRUEBAS.suite('pitagorasSinPausa',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=sin-pausa-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const alto=d.createElement('div');alto.style.height='3500px';d.body.appendChild(alto);d.body.style.overflow='auto';d.documentElement.style.overflow='auto';
+      for(const tipo of ['isometrico','laseres','fps']){
+        const promesa=w.PITAGORAS_PRUEBAS.iniciar({tipo,nombre:'Viajera',semilla:6});
+        t.check(!d.querySelector('.ppPausa')&&w.getComputedStyle(d.body).position==='fixed'&&w.getComputedStyle(d.documentElement).overflow==='hidden',pagina+': sin botón de pausa y con bloqueo de raíz');
+        for(const evento of [new w.WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:200}),new w.Event('touchmove',{bubbles:true,cancelable:true})]){d.querySelector('.ppLienzo').dispatchEvent(evento);t.check(evento.defaultPrevented,pagina+': el gesto no desplaza el documento');}
+        w.scrollTo(0,200);t.check(w.scrollY===0,pagina+': la página inferior no tiene desplazamiento');
+        d.querySelector('.ppBotones .ppBoton').click();await sleep(20);t.igual(w.PITAGORAS_PRUEBAS.estado.fase,'jugando',pagina+': empieza la prueba');
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Escape',cancelable:true}));d.querySelector('.pitPrueba').dispatchEvent(new w.Event('cancel',{cancelable:true}));w.dispatchEvent(new w.Event('blur'));Object.defineProperty(d,'hidden',{configurable:true,get:()=>true});d.dispatchEvent(new w.Event('visibilitychange'));avanzar(.75);
+        t.check(w.PITAGORAS_PRUEBAS.estado.fase==='jugando'&&w.PITAGORAS_PRUEBAS.estado.t>=.74,pagina+': Escape, foco, pestaña oculta y fotograma lento no pausan');
+        Object.defineProperty(d,'hidden',{configurable:true,get:()=>false});avanzar(20);
+        const estado=w.PITAGORAS_PRUEBAS.estado;t.check(estado.fase==='resultado'&&!estado.sobrevivio&&estado.vidas===0,pagina+': el tiempo ausente simula los peligros, no concede una victoria gratuita');
+        d.querySelector('.ppBotones .ppBoton').click();const resultado=await promesa;
+        t.check(!resultado.sobrevivio&&!resultado.cancelado&&!d.querySelector('.pitPrueba')&&!d.body.classList.contains('pitPruebaAbierta')&&!d.documentElement.classList.contains('pitPruebaAbierta'),pagina+': resultado y desbloqueo del documento');
+        t.igual(w.getComputedStyle(d.body).overflow,'auto',pagina+': restaura las reglas de desplazamiento anteriores');
+      }
+      const cancelada=w.PITAGORAS_PRUEBAS.iniciar({tipo:'fps'});w.PITAGORAS_PRUEBAS.cancelar();t.check((await cancelada).cancelado&&!d.body.classList.contains('pitPruebaAbierta'),pagina+': cancelar también desbloquea');
+    }finally{w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
 PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
   const M=window.PITAGORAS_PRUEBAS?.modelo;t.check(!!M,'Falta el modelo de las tres pruebas.');
   const guiar=(s,mem)=>{
