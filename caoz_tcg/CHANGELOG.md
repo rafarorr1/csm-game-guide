@@ -1,6 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 209 · Historia oculta del Domo
+
+- En «Elige tu protagonista», derecha, izquierda, derecha, izquierda, derecha,
+  derecha, izquierda, izquierda abre un diálogo secreto centrado con la futura
+  recompensa del cómic exclusivo. Por ahora anuncia «Próximamente», sin descarga ficticia.
+- Se reconoce con flechas y teclado en escritorio, y con gestos horizontales
+  en móvil. No se activa al elegir rival ni contando teclas mantenidas; salir
+  del selector reinicia el código. Escape o el botón devuelven a la selección.
+- Suite comicSecreto comprueba ambos clientes, entrada incompleta, aislamiento,
+  reinicio, cierre y encuadre. El motor, la campaña y los audios guardados no cambian.
+
 ### Sin numerar · build 208 · Propuesta sonora y estudio privado
 
 - 34 SFX originales: fricción de cartas, percusión sobre madera, metal, impactos,

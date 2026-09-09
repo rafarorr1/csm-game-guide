@@ -635,3 +635,11 @@ ambas combinaciones de pantallas, una tirada por cliente, confirmación, ataque
 visible y sincronización. Además prueba 10/11/20 en local, campaña e IA,
 permanencia durante dos cambios de turno y daño real. No modifica costes,
 estadísticas, objetivos, azar ni reglas del +2. Publicación beta; producción 203.
+
+
+Build 209: easter egg en la selección normal del jugador. Lógica compartida al
+final de final-core.js; secuencia [1,-1,1,-1,1,1,-1,-1], dirección física del dedo
+en gestos. Envuelve girarCarrete sin modificar motor.js. Teclado centralizado,
+repetición ignorada y estado reiniciado al salir/elegir rival/usar otro control.
+Diálogo nativo comicSecreto, sin descarga hasta disponer del cómic. Añadir el
+PDF y su enlace dentro de revelar() cuando esté aprobado. Suite comicSecreto.
