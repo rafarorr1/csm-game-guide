@@ -29,7 +29,7 @@
   window.campanaPrepararRival=function(){
     if(typeof G==='undefined'||!G?.campana?.jefeSecreto)return;
     const p=P(FOE);if(p.L.n==='Pitágoras')return;
-    p.L={...p.L,n:'Pitágoras',ep:'El Editor',art:'👓',lore:'El último corte le pertenece al Editor.'};
+    p.L={...p.L,n:'Pitágoras',ep:'El Editor',art:'☠',lore:'El último corte le pertenece al Editor.'};
   };
   window.campanaCartaPitagoras=function(lado){
     const carta=cartaDeLiderVS('adreida',lado);carta.classList.add('cartaPitagoras');
@@ -48,7 +48,7 @@
     const retrato=document.createElement('img');retrato.className='retratoPitagoras';retrato.alt='Pitágoras, el Editor';
     if(typeof retratoPitagoras==='function')retrato.src=retratoPitagoras();nodo.prepend(retrato);
     for(const selector of ['.ln','.lcName','.nm']){const n=nodo.querySelector(selector);if(n)n.textContent='Pitágoras';}
-    const arte=nodo.querySelector('.lcArt');if(arte){arte.textContent='👓';arte.style.visibility='hidden';}
+    const arte=nodo.querySelector('.lcArt');if(arte){arte.textContent='☠';arte.style.visibility='hidden';}
   };
   function instalar(){
     const s=document.createElement('style');s.textContent=`

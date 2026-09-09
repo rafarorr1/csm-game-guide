@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=215"></script>
-<script src="final.js?b=215"></script>
+<script src="motor.js?b=216"></script>
+<script src="final.js?b=216"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:215, fecha:'2026-09-09'};
+const BUILD = {n:216, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2542,6 +2542,7 @@ async function ofrecerManoNueva(s){
 function endGame(winner, why){
   if(G.over) return;
   G.over=true; G.winner=winner; G.endWhy=why;
+  campanaCancelarInterferencia();
   log(`<b>=== FIN: gana ${P(winner).L.n} ===</b>`);
   // En el tutorial la partida puede acabar antes de la lección de estrategia — con
   // Fender pasa casi siempre. Antes de enseñar el cartel de fin, Gero termina de
@@ -3870,6 +3871,7 @@ async function startTutorial(lid){
    entre menú, selector y guías NO se toca: sigue exactamente donde estaba. */
 
 function showScreen(id){
+  if(id!=='board')campanaCancelarInterferencia();
   const antes=$('.screen.on'),pantalla=$('#'+id),esMenu=pantalla.classList.contains('portada');
   if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
   $$('.screen').forEach(s=>s.classList.remove('on'));
@@ -4318,6 +4320,7 @@ async function cortinillaVS(a, b, opts={}){
 }
 
 async function startMatch(a, b, opts={}){
+  campanaCancelarInterferencia();
   const mia = ++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
   $('#log').innerHTML='';

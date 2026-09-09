@@ -582,7 +582,7 @@ function campanaLeer(){
   if(dato.mesaPendiente!=null&&(!Number.isInteger(dato.mesaPendiente)||dato.mesaPendiente!==dato.etapa-1||dato.mesaPendiente<0||dato.mesaPendiente>5))delete dato.mesaPendiente;
   if(dato.personaje)dato.personaje=campanaNormalizarPersonaje(dato.personaje);
   if(dato.prueba!==true)delete dato.prueba;
-  if(dato.etapa!==6||!['ascenso','reto','esporas','trono','combate','final','completado'].includes(dato.secreto))delete dato.secreto;
+  if(dato.etapa!==6||!['ascenso','revelacion','reto','esporas','trono','combate','final','completado'].includes(dato.secreto))delete dato.secreto;
   // También la primera lectura tras recargar es el avance vivo. Las escenas
   // comprueban su identidad para cancelar sólo al empezar otra campaña.
   if(!campanaEnsayoGero)campanaMemoria=dato;

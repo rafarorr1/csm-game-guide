@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 215 (beta; producción 207, rama feature/aaa-combat-cards) · v19 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 216 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,38 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 216 cambia el secreto a terror: `campana-deseo.js` congela el ascenso a
+2400 ms, espera 450 ms y entrega el pie normalizado de la miniatura a
+`montarRevelacionPitagoras`. Ojos a 2200 ms, aparición a 3600 y encuentro a
+7600; se habilita Combatir sobre la misma escena, imagen y canvas del viajero.
+El arte original
+es `art/pitagoras-abismo-v216.webp` (177 KiB). Los estados históricos `reto` y
+`esporas` se reanudan mediante `revelacion`, sin el antiguo botón intermedio.
+
+`pitagoras-pruebas.js` contiene tres modelos deterministas y su UI Canvas:
+isométrico, láseres y FPS por raycasting. API `PITAGORAS_PRUEBAS.iniciar` devuelve
+una promesa `{sobrevivio,cancelado,abandonado?}`; `cancelar()` resuelve una vez y
+limpia entradas, RAF y timers. Cada prueba dura 20 segundos ACTIVOS y concede
+3 vidas locales. Pausar por foco/visibilidad exige reanudación; nunca premiar
+el tiempo oculto. Sin dependencias ni conexión adicional.
+
+`pitagoras-combate.js` alterna las pruebas por `G.editorPruebas`, preserva el
+estado previo de `G.resolving` y expone `campanaInterferenciaPitagoras` al motor.
+El helper `pruebaDelEditor` sólo atiende cartas del FOE en campaña secreta local;
+los caminos normal, contrarrestado y Rápido esperan la misma promesa. No actúa
+por fichas creadas, habilidades, online, auto, fast ni silent. Al volver aplica
+exactamente 2 de Alma al Editor si sobrevivió, al ME si perdió; una cancelación
+no cobra daño. Revalidar la identidad de G después de cada espera: una acción
+anterior nunca debe terminar ni desbloquear una revancha o partida nueva.
+`campanaCancelarInterferencia` se llama al salir, comenzar partida y terminarla.
+
+Las suites `pitagorasMinijuegosModelo`, `pitagorasIntegracion` y
+`pitagorasRevelacion` y `pitagorasContinuidad` cubren la supervivencia y ambos
+clientes,
+incluidas carga lenta, imagen fallida, guardas, hechizos contrarrestados y
+cancelación durante respuestas a ataques/tiradas. Mantener también las pruebas
+puras y de controles del módulo, además del recorrido beta real de Gero.
 
 Build 215 añade `campanaBotonFinalGero` a los controles de ambas pantallas.
 Sólo beta/local contra Gero; `campanaProbarFinalGero` también valida llamadas
@@ -33,7 +65,7 @@ Los timers tienen salida al ocultar/cerrar y no dependen de Animation.finished.
 `campana-secreto.js` guarda sellos por mazo en `caoz.campana.logros.v1`, separados
 de `CAMPANA_CLAVE`; sufijo `.simulados` para los botones beta y `.prueba` para
 el arnés. API `CAMPANA_LOGROS.leer/tiene/total/ganador(prueba)` y evento
-`caoz:campana-logros`. El progreso conserva `secreto`: ascenso, reto, esporas,
+`caoz:campana-logros`. El progreso conserva `secreto`: ascenso, revelacion (antes reto/esporas),
 trono, combate, final y completado. En la sexta marca se interrumpe el ascenso
 normal a los 2400 ms; antes de seis marcas conserva el deseo habitual.
 

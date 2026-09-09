@@ -1,6 +1,28 @@
 # Registro de versiones — el TCG del Domo
 
 
+### v20 · build 216 · El Editor rompe el juego
+
+- El ascenso se congela antes de apagarse la mesa. Sólo queda el viajero, que
+  desciende hasta el borde inferior; unos ojos preceden la aparición gradual
+  de Pitágoras, fusionado con sus monitores y computadora. Ilustración original
+  compartida por revelación, encuentro y carta; continuidad sin destellos.
+- Cada carta que juega Pitágoras interrumpe su duelo con una prueba de 20
+  segundos: shooter isométrico con perseguidores, arena de rayos anunciados
+  y shooter en primera persona con paredes, columnas y enemigos que rodean
+  obstáculos. Se alternan los tres géneros durante la pelea.
+- Movimiento y disparo por teclado/ratón o dos controles táctiles inferiores.
+  Tres vidas por prueba; sobrevivir quita 2 de Alma a Pitágoras, perder las
+  tres quita 2 al viajero. El duelo continúa desde su estado anterior.
+- IA y temporizador de turno esperan el resultado. Ocultar la pestaña o perder
+  el foco pausa la prueba y exige continuar; salir cancela la acción pendiente.
+  Los modos rápidos y el online conservan su comportamiento.
+- El botón beta de Gero permite probar la nueva revelación completa conservando
+  campaña y sellos reales. Se mantienen el final del Editor, reconocimiento
+  del viajero y portada con su nombre.
+- Regresiones de revelación, cartas interrumpidas, cancelación y supervivencia;
+  recorridos reales desde Gero y revisión en escritorio y tamaños móviles.
+
 ### Sin numerar · build 215 · Atajo beta al final de Gero
 
 - Botón «Beta · Vencer a Gero y ver el final» en las batallas locales contra
