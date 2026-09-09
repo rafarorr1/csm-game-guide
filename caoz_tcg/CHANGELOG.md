@@ -1,6 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 213 · Alcantarillas como pilas de cartas
+
+- Cada bando muestra la última carta descartada boca arriba, con su ilustración,
+  encuadre y marco. Los cantos desalineados dan volumen al montón sin cambiar su
+  huella ni desplazar el campo conforme crece; máximo cinco capas decorativas.
+- Contador de descartes y botón accesible para abrir las Alcantarillas. Al retirar
+  la carta superior se muestra la anterior; al vaciar la pila queda un hueco.
+- Componente compartido por escritorio y móvil; el estado online conserva la
+  orientación de cada jugador. No cambia el motor, las reglas ni el orden del descarte.
+- Revisión visual a 1500, 390 y 320 px; abrir, retirar y vaciar ambas pilas.
+
 ### Sin numerar · build 212 · Roce natural de cartas
 
 - El hover utiliza un solo archivo, incluido cualquier reemplazo del estudio.

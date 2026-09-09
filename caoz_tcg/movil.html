@@ -871,8 +871,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=212"></script>
-<script src="final.js?b=212"></script>
+<script src="motor.js?b=213"></script>
+<script src="final.js?b=213"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -883,7 +883,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:212, fecha:'2026-09-08'};
+const BUILD = {n:213, fecha:'2026-09-08'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1619,16 +1619,16 @@ function renderField(host, list, mine){
   [...host.children].forEach(d=>{ if(!seen.has(d.dataset.uid)) d.remove(); });
 }
 function pilasHTML(side){
-  const p=P(side), me=side===ME, top=p.grave[p.grave.length-1];
-  return `<div class="stat pila" id="${me?'myDeckPile':'foeDeckPile'}" title="Mazo">🂠 <i>${p.deck.length}</i></div>
-    <div class="stat pila grave" id="${me?'myGravePile':'foeGravePile'}" title="Alcantarillas">${top?CARDS[top].art:'🕳️'} <i>${p.grave.length}</i></div>`;
+  const p=P(side), me=side===ME;
+  return `<div class="stat pila" id="${me?'myDeckPile':'foeDeckPile'}" title="Mazo">🂠 <i>${p.deck.length}</i></div>`;
 }
 function render(){
   if(!G||G.silent) return;
   if(NET.host) netPushState();
   $('#barFoe').innerHTML=barHTML(FOE); $('#pilasFoe').innerHTML=pilasHTML(FOE);
   $('#barMe').innerHTML=barHTML(ME);   $('#pilasMe').innerHTML=pilasHTML(ME);
-  $$('.stat.grave').forEach(g=>g.onclick=showGrave);
+  $('#pilasFoe').appendChild(crearPilaAlcantarillas(FOE));
+  $('#pilasMe').appendChild(crearPilaAlcantarillas(ME));
   const ft=$('#foeTraps'); ft.innerHTML='';
   P(FOE).traps.forEach(t=>{ ft.appendChild(el('div','trapback', t.revealed?CARDS[t.id].art:'🪤')); });
   renderLeaders();
