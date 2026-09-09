@@ -1,6 +1,27 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 221 · Controles y recuerdos
+
+- FPS con palanca para mirar y botón de disparo independiente. Tres dedos
+  simultáneos, giro sin fuego y disparo sin giro. Clic izquierdo dispara;
+  arrastrar con el derecho mira. Se mantienen teclado y controles accesibles.
+- Arte FPS con cuadrícula de píxeles, atlas animado de pasos, heridas y muerte.
+  Retícula y sonido distinguen fallo, impacto y eliminación; retroceso del
+  monstruo y cadáver que se disuelve, siempre ocultos tras las paredes.
+- La cosecha gira suavemente en 360° hacia movimiento/puntería, también sin
+  disparar. Proyectiles alineados con el arma. Suelo con musgo y piedra viva;
+  marcas con pulso creciente, explosión y aro de fuego temporal con colisión.
+- El último puente usa tres carriles discretos y botones de cambio. Cada
+  pulsación avanza uno; mantenerla no desliza. Velocidad de 9.5 a 16.5 y
+  oleadas de 1.45 a .95 s, con rutas y saltos superables.
+- La memoria del Editor reemplaza al duelo de espada (id histórico duelo).
+  Primera ronda: cinco cartas, una pareja, un segundo para memorizar y cinco
+  para escoger. Rondas de seis y siete cartas, con tiempo decreciente.
+  La prueba exige tres parejas y conservar vidas al acabar los veinte segundos.
+- Regresiones de multitáctil, acierto/fallo/muerte, giro/aro, flancos de carril,
+  memoria con reloj y selección real. El laboratorio conserva progreso y honores.
+
 ### Sin numerar · build 220 · Seis realidades del Editor
 
 - La cosecha ahora es 100 % cenital: suelo, cuerpos, movimiento y disparos

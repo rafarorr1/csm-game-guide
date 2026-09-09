@@ -167,9 +167,9 @@ const C = (id,o)=>{ o.id=id; CARDS[id]=o; return o; };
 // Seis cartas exclusivas del Editor: su efecto se resuelve en pruebaDelEditor.
 // No forman parte de los seis mazos ni de la colección del jugador.
 const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro','editorcarrera','editororbita','editorduelo'];
-for(const [id,n,tipo,art] of [['editorcosecha','La cosecha','isometrico','☠'],['editorcorte','El corte final','laseres','✧'],['editorcuadro','Fuera de cuadro','fps','◈'],['editorcarrera','El último puente','carrera','⌁'],['editororbita','Órbita muerta','orbital','✦'],['editorduelo','El filo del Editor','duelo','⚔']]){
+for(const [id,n,tipo,art] of [['editorcosecha','La cosecha','isometrico','☠'],['editorcorte','El corte final','laseres','✧'],['editorcuadro','Fuera de cuadro','fps','◈'],['editorcarrera','El último puente','carrera','⌁'],['editororbita','Órbita muerta','orbital','✦'],['editorduelo','La memoria del Editor','duelo','▣']]){
   C(id,{n,t:'hechizo',c:2,r:0,token:true,set:'editor',art,editorJuego:tipo,uncounterable:true,
-    x:'Prueba del Editor · 20 segundos · 3 vidas. Sobrevive: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma.',
+    x:(tipo==='duelo'?'Recuerda al menos 3 parejas en 20 segundos y conserva tus vidas. ':'Prueba del Editor · 20 segundos · 3 vidas. ')+'Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma.',
     req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest,
     cast:async()=>{}});
 }

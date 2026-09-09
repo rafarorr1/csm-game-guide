@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 220 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 221 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,34 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 221 pule controles y cambia duelo por memoria, conservando seis ids.
+FPS: `.ppDisparo` es un tercer control independiente del stick derecho. El
+modelo expone acierto/baja/fallo, ultimoDisparo {x,y,d,acerto,letal,id} y caidos
+con edad<.6 s. Sólo impactos de disparos producen confirmación; contacto de
+monstruo produce dolor. El renderer usa un atlas pixelado y no muta el modelo.
+
+Cosecha interpola p.a por el arco corto, con prioridad a puntería, autoapuntado
+al disparar o movimiento. Las balas salen según p.a real. avisoMarca describe
+pulso de 2→12 Hz; se dibuja estático con movimiento reducido. Tras 1.1 s de
+aviso: explosión .26 s, aro 1.7 s y ceniza .65 s. El aro hiere sólo su banda.
+
+Carrera: jugador.x y carril son enteros -1/0/1; carrilVisual y carrilCambio
+animan el salto lateral, sin cambiar la lógica de colisión. Cada input mx
+necesita un flanco; dos botones .ppCarrilBoton sustituyen la palanca izquierda.
+Velocidad y oleadas progresan con t. La guía usa cambios y saltos reales.
+
+Memoria: tipo duelo / carta editorduelo, nombre La memoria del Editor.
+Entrada elegir índice|null. cartasMemoria, elegidasMemoria, faseMemoria,
+rondaMemoria, parejas y hastaMemoria viven en el modelo determinista; ocultar
+la pestaña consume plazos. Una pareja, 5→6→7 cartas y 1→.8 s de exposición;
+5→4 s para elegir. Tres vidas; >=3 parejas al llegar20 s para ganar. La guía
+recuerda sólo cartas reveladas y requiere memoria persistente entre pasos.
+
+Extensión UI: API.montadores[tipo](s,{nodo,escuchar}) tras construir s.ui;
+API.actualizadores[tipo](s) desde pintar. s.ui incluye controles; s.elegir se
+consume por fotograma. Los montadores registran limpieza en s.limpiar. Memoria
+usa botones .ppMemoriaCarta, sin joysticks, con foco/teclado y sin scroll.
 
 Build 220 transforma La cosecha en cenital real: proyección ortogonal y ejes
 idénticos entre pantalla, teclado, mando de movimiento, puntería y proyectiles.

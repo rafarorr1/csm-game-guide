@@ -9,7 +9,7 @@
     const nodo=(tag,clase,txt,par=d)=>{const n=document.createElement(tag);n.className=clase;if(txt)n.textContent=txt;par.appendChild(n);return n;};
     const cab=nodo('header','elCab','');nodo('small','','LAS REALIDADES DEL EDITOR · BETA',cab);nodo('h1','','Cruza el umbral',cab).id='laboratorioTitulo';nodo('p','','Elige una carta para probar su mundo.',cab);
     const lista=nodo('div','elMundos','');
-    for(const [tipo,etiqueta] of [['isometrico','CENITAL'],['laseres','ESQUIVA'],['fps','PRIMERA PERSONA'],['carrera','NUEVO · CARRERA'],['orbital','NUEVO · SUPERVIVENCIA ESPACIAL'],['duelo','NUEVO · DUELO RÍTMICO']]){
+    for(const [tipo,etiqueta] of [['isometrico','CENITAL'],['laseres','ESQUIVA'],['fps','FPS · RETRO'],['carrera','TRES CARRILES'],['orbital','NUEVO · SUPERVIVENCIA ESPACIAL'],['duelo','NUEVO · MEMORIA']]){
       const info=PITAGORAS_PRUEBAS.tipos[tipo];if(!info)continue;
       const b=nodo('button','elMundo','',lista);b.type='button';b.dataset.tipo=tipo;b.setAttribute('aria-label',info.nombre);
       const arte=nodo('canvas','elArte','',b);arte.setAttribute('aria-hidden','true');arte.width=420;arte.height=220;window.PITAGORAS_CINE?.pintarCarta(arte,tipo,0,true);
