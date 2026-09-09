@@ -107,10 +107,17 @@
     const envolver=(nombre,antes)=>{const f=window[nombre];if(typeof f!=='function')return;window[nombre]=function(...args){if(permitido())antes(...args);return f.apply(this,args);};};
     for(const [hook,id] of Object.entries({fxDraw:'card_draw',fxSummon:'card_play',fxObj:'card_play',fxHeal:'heal',fxBuff:'buff',fxHabilidad:'spell_arcane',fxBanner:'turn'}))envolver(hook,()=>play(id));
     envolver('fxSpell',id=>play(magia({...CARDS[id],id})));
-    envolver('fxFace',side=>{const s=window.CAOZ_AAA?.state.last;if(s&&s.g===G&&!s.target&&s.att.side!==side&&!s.almaSonada&&Date.now()-s.t<3000){s.almaSonada=true;return;}play('attack_hit');});
+    envolver('fxFace',(side,n)=>{if(n>0)play('leader_hit');});
     envolver('fxHit',(u,n,opt)=>{if(!opt?.combate||matchMedia('(prefers-reduced-motion:reduce)').matches)play(opt?.letal?'lethal':'attack_hit');});
     // Los hooks conservan argumentos, resultado y promesa tanto en anfitrión como invitado.
-    document.addEventListener('pointerover',e=>{const b=e.target.closest('button');if(e.pointerType==='mouse'&&b&&!b.disabled&&!b.contains(e.relatedTarget))play('ui_hover');});
+    document.addEventListener('pointerover',e=>{
+      if(e.pointerType!=='mouse')return;
+      const carta=e.target.closest('#hand .card');
+      if(carta){if(!carta.contains(e.relatedTarget))play('card_hover');return;}
+      const b=e.target.closest('button');if(b&&!b.disabled&&!b.contains(e.relatedTarget))play('ui_hover');
+    });
+    document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&e.target.closest('#hand .card'))play('card_hover');});
+    document.addEventListener('focusin',e=>{if(e.target.matches('#hand .card'))play('card_hover');});
     document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled&&!b.closest('.audioControles'))play(/volver|regresar|menú|cancelar/i.test(b.textContent)?'ui_back':'ui_confirm');},true);
     for(const padre of [document.getElementById('buildMenu')?.parentElement,document.getElementById('buildPanel')?.parentElement]){
       if(!padre)continue;

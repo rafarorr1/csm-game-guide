@@ -208,7 +208,9 @@ body.aaa-combat .card.unit:hover{filter:none}
         {translate:dx+'px '+dy+'px',scale:'1.075',rotate:(dx>0?'1.6deg':'-1.6deg')}
       ],{duration:118,easing:'cubic-bezier(.1,.82,.2,1)',fill:'forwards'});
       await aaaNap(108);
-      aaaImpact((from.x+to.x)/2,(from.y+to.y)/2,to.x-from.x,to.y-from.y,1);aaaSound('hit',1);
+      aaaImpact((from.x+to.x)/2,(from.y+to.y)/2,to.x-from.x,to.y-from.y,1);
+      // El protagonista suena en fxFace, al perder Alma y recibir su reacción.
+      if(targetObj)aaaSound('hit',1);
       if(typeof vibra==='function') try{vibra([20]);}catch(e){}
       if(targetEl&&targetObj){
         targetEl.animate([{translate:'0 0',rotate:'0deg'},{translate:(dx*.10)+'px '+(dy*.10)+'px',rotate:(dx>0?'1.4deg':'-1.4deg'),offset:.22},{translate:'0 0',rotate:'0deg'}],{duration:255,easing:'ease-out'});

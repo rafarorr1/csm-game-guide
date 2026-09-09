@@ -440,13 +440,18 @@ PRUEBAS.suite('victoriaCentrada', async t => {
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=final-centrado-interno';document.body.appendChild(f);await carga;
     const w=f.contentWindow;
     try{
-      const estilo=w.document.createElement('style');estilo.textContent=w.eval('FIN_CSS');w.document.head.appendChild(estilo);
+      const estilo=w.document.createElement('style');estilo.textContent=w.eval('FIN_CSS')+' .fin .sello{animation:none!important}';w.document.head.appendChild(estilo);
       const fin=w.document.createElement('div');fin.className='fin sello-on';fin.innerHTML='<div class="sello"><b>VICTORIA</b><small>Victoria de prueba</small><i>Turnos: 7 · Fender 17 · Mohamed 0</i></div>';w.document.body.appendChild(fin);
-      await sleep(30);
-      const caja=fin.querySelector('.sello').getBoundingClientRect(),pantalla=fin.getBoundingClientRect();
-      t.check(Math.abs(caja.x+caja.width/2-(pantalla.x+pantalla.width/2))<1,pagina+': resultado centrado horizontalmente.');
-      t.check(Math.abs(caja.top-(pantalla.y+pantalla.height/2))<2,pagina+': el título debe comenzar en el centro vertical, sin desplazar toda la información hacia abajo.');
-      t.check(w.getComputedStyle(fin.querySelector('b')).transform==='none',pagina+': título sin inclinación.');
+      await w.document.fonts.ready;
+      for(const [ancho,alto] of [[320,568],[390,844],[1440,900]]){
+        f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(30);
+        const palabra=fin.querySelector('b'),caja=palabra.getBoundingClientRect(),pantalla=fin.getBoundingClientRect();
+        t.check(Math.abs(caja.x+caja.width/2-(pantalla.x+pantalla.width/2))<1,pagina+': palabra centrada horizontalmente a '+ancho);
+        t.check(Math.abs(caja.y+caja.height/2-(pantalla.y+pantalla.height/2))<1,pagina+': la palabra misma debe estar en el centro vertical a '+ancho);
+        const rango=w.document.createRange();rango.selectNodeContents(palabra);const texto=rango.getBoundingClientRect();
+        t.check(texto.left>=pantalla.left+12&&texto.right<=pantalla.right-12,pagina+': el texto se sale del visor a '+ancho);
+        t.check(w.getComputedStyle(palabra).transform==='none',pagina+': título sin inclinación.');
+      }
       t.check(w.eval("CARDS.pasoatronador.n")==='Thunder step',pagina+': nombre actualizado de Thunder step.');
     }finally{f.remove();}
   }
@@ -1165,7 +1170,7 @@ PRUEBAS.suite('sonidos', async t => {
   const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=sonidos-interna';document.body.appendChild(f);
   try{
     await carga;const w=f.contentWindow,a=w.CAOZ_AUDIO;await a.listo;
-    t.igual(a.catalogo.length,34,'El banco debe estar disponible también en móvil');
+    t.igual(a.catalogo.length,37,'El banco debe estar disponible también en móvil');
     t.igual(a.magia({id:'escarcha',n:'Rayo de Escarcha'}),'spell_frost','Escarcha no debe confundirse con electricidad por la palabra Rayo');
     t.igual(a.magia({id:'pasoatronador',n:'Thunder step',sub:['cancion']}),'spell_lightning','Thunder step conserva su descarga');
     t.igual(a.magia({id:'contrahechizo'}),'shield','Contrahechizo utiliza el sello protector');
@@ -1195,6 +1200,42 @@ PRUEBAS.suite('sonidos', async t => {
     t.check(!a.play('sonido_inexistente'),'Un id desconocido es inocuo para el motor');
     t.nota('Banco móvil, categorías, contacto único, silencio, límites y modos rápidos verificados.');
   }finally{f.contentWindow.CAOZ_AUDIO?.detener();f.remove();}
+});
+
+PRUEBAS.suite('sonidosMomentos', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=sonidos-momentos-interna';document.body.appendChild(f);
+    try{
+      await carga;const w=f.contentWindow,d=f.contentDocument,a=w.CAOZ_AUDIO,eventos=[];await a.listo;
+      const param=()=>({value:0,setTargetAtTime(){}}),nodo=()=>({connect(){},disconnect(){},gain:param()});
+      w.AudioContext=class{
+        constructor(){this.state='running';this.currentTime=0;this.destination={};}resume(){return Promise.resolve();}
+        createGain(){return nodo();}createDynamicsCompressor(){return {...nodo(),threshold:param(),knee:param(),ratio:param(),attack:param(),release:param()};}
+        decodeAudioData(){return Promise.resolve({duration:1});}
+        createBufferSource(){return {...nodo(),playbackRate:{value:1},start(){},stop(){this.onended?.();}};}
+      };
+      w.newGame('fender','mohamed');w.eval('G.fast=false;G.auto=false;G.silent=false');w.render();w.showScreen('board');
+      a.configurar({silencio:false,volumen:.7});await a.desbloquear();await Promise.all(a.catalogo.map(s=>a.cargar(s.id)));
+      w.addEventListener('caoz:sfx',e=>eventos.push({id:e.detail.id,t:w.performance.now()}));
+      const contar=id=>eventos.filter(e=>e.id===id).length;
+      const carta=d.createElement('div');carta.className='card';carta.innerHTML='<span>Prueba</span>';d.querySelector('#hand').appendChild(carta);
+      carta.dispatchEvent(new w.PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));t.igual(contar('card_hover'),1,pagina+': hover de carta debe sonar');
+      await sleep(100);carta.firstChild.dispatchEvent(new w.PointerEvent('pointerover',{bubbles:true,pointerType:'mouse',relatedTarget:carta}));t.igual(contar('card_hover'),1,pagina+': moverse dentro de la carta no duplica hover');
+      carta.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerType:'touch'}));t.igual(contar('card_hover'),2,pagina+': la exploración táctil tiene sonido');carta.remove();
+      const u=w.eval("P(0).field.push(mkUnit('discipulo',0));P(0).field.at(-1)");w.render();
+      await w.fxLunge(u,'face');t.igual(contar('attack_hit'),0,pagina+': el ataque al protagonista no duplica el golpe genérico');
+      await w.fxFace(1,2);t.igual(contar('leader_hit'),1,pagina+': el protagonista debe sonar al recibir el golpe');
+      await sleep(100);await w.fxFace(0,1);t.igual(contar('leader_hit'),2,pagina+': ambos protagonistas usan el sonido propio');
+      await sleep(100);const antes=contar('leader_hit');a.configurar({silencio:true});await w.fxFace(1,1);t.igual(contar('leader_hit'),antes,pagina+': respeta silencio');a.configurar({silencio:false});
+      let aterriza=0;const observar=new w.MutationObserver(()=>{if(!aterriza&&d.querySelector('.fin.sello-on'))aterriza=w.performance.now();});observar.observe(d.body,{subtree:true,attributes:true,attributeFilter:['class']});
+      w.cinematicaFinal(0,'Victoria de prueba',{});await sleep(2150);observar.disconnect();
+      const golpes=eventos.filter(e=>e.id==='victory_slam');t.igual(golpes.length,1,pagina+': Victoria tiene un único impacto propio');
+      t.check(golpes[0].t-aterriza>=150&&golpes[0].t-aterriza<450,pagina+': el sonido debe coincidir con la llegada del sello, no con el comienzo del final');
+      w.cerrarCinematica();
+      w.cinematicaFinal(0,'Salida anticipada',{});await sleep(50);d.querySelector('.fin').click();await sleep(350);t.igual(contar('victory_slam'),1,pagina+': saltar no dispara un golpe tardío');
+    }finally{f.contentWindow.CAOZ_AUDIO?.detener();f.contentWindow.cerrarCinematica();f.remove();}
+  }
 });
 
 PRUEBAS.suite('terrenoMovil', async t => {

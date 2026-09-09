@@ -106,13 +106,13 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 .fin .vscard.pierde::after{content:"";position:absolute;inset:0;z-index:5;opacity:0;transition:opacity .5s .7s;pointer-events:none;
   background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'><g fill='none' stroke='rgba(255,255,255,.75)' stroke-width='.9'><polyline points='52,0 47,22 55,38 44,58 53,74 41,96 50,118 46,140'/><polyline points='47,22 30,30 18,26'/><polyline points='44,58 62,66 74,60'/><polyline points='41,96 26,104 20,120'/><polyline points='53,74 70,88'/></g></svg>") center/100% 100% no-repeat}
 .fin.entra .vscard.pierde::after{opacity:1}
-/* el sello */
-/* Sólo gira la palabra: el giro del bloque entero arrastraba el motivo y la
-   línea de turnos y Alma, y se veían descentrados. */
-.fin .sello{position:absolute;left:0;right:0;top:50%;box-sizing:border-box;z-index:6;text-align:center;opacity:0;transform:scale(3);width:auto;padding:0 16px;
-  transition:opacity .2s, transform .4s cubic-bezier(.2,1.5,.4,1)}
-.fin.sello-on .sello{opacity:1;transform:scale(1)}
-.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:3px;
+/* Se centra la línea del título en el visor; la explicación queda debajo.
+   La escala usa ese mismo centro y toca su tamaño final a los 220 ms. */
+.fin .sello{--tam-sello:clamp(36px,11.8vw,104px);position:absolute;left:0;right:0;top:calc(50% - var(--tam-sello)/2);box-sizing:border-box;z-index:6;text-align:center;opacity:0;transform:scale(3);transform-origin:50% calc(var(--tam-sello)/2);width:auto;padding:0 16px}
+.fin.sello-on .sello{opacity:1;transform:scale(1);animation:finSelloImpacto .4s linear}
+@keyframes finSelloImpacto{0%{opacity:0;transform:scale(3)}55%{opacity:1;transform:scale(1)}72%{transform:scale(.95)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.fin.sello-on .sello{animation:none}}
+.fin .sello b{display:block;font:900 var(--tam-sello)/1 var(--serif,serif);letter-spacing:0;white-space:nowrap;
   background-image:linear-gradient(180deg,#fff3c4 0%,#e6bb52 46%,#8d6f21 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 5px 0 #3a2a08) drop-shadow(0 0 28px rgba(230,187,82,.75))}
 .fin.derrota .sello b{background-image:linear-gradient(180deg,#ffd9d6 0%,#e0524a 46%,#4a1010 100%);
@@ -314,6 +314,10 @@ async function cinematicaFinal(winner, why, acciones){
   if(await espera(520)) capa.classList.add('entra');
   if(await espera(1050)){
     capa.classList.add('sello-on');
+    if(gano){
+      const golpe=()=>{if(vive()&&!saltado)window.CAOZ_AUDIO?.play('victory_slam',{variar:false});};
+      if(matchMedia('(prefers-reduced-motion:reduce)').matches)golpe();else setTimeout(golpe,220);
+    }
     if(typeof vibra === 'function') vibra(gano ? [30, 50, 30] : [90]);
     const app = document.getElementById('app');
     if(app && !gano) app.animate([{translate:'0 0'},{translate:'-7px 4px'},{translate:'7px -4px'},{translate:'-4px 2px'},{translate:'0 0'}],{duration:340});
