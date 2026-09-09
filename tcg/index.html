@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=213"></script>
-<script src="final.js?b=213"></script>
+<script src="motor.js?b=214"></script>
+<script src="final.js?b=214"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:213, fecha:'2026-09-08'};
+const BUILD = {n:214, fecha:'2026-09-08'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2579,7 +2579,12 @@ function toast(t){
 /* El dado se tira ANTES de que pase nada en el tablero: tú lo lanzas, ves el
    número, y sólo al continuar se aplica el efecto. */
 
-async function rollDice(value, label, interactive, meta){
+function d20FisicoDisponible(){
+  return !!window.CAOZ_D20 && FXON() && (!new URLSearchParams(location.search).has('test')||window.CAOZ_D20_PRUEBA===true);
+}
+function prepararTiradaD20(label, interactive, meta){return window.CAOZ_D20?.preparar(label,interactive,meta)||Promise.resolve({x:0,z:-.6,fuerza:.6});}
+async function rollDice(value, label, interactive, meta, fisica){
+  if(fisica&&window.CAOZ_D20){if(!FXON())return;return window.CAOZ_D20.mostrar(value,label,interactive,meta,fisica);}
   if(!FXON()) return;
   const ov=$('#dice'), box=$('#diceBox');
   return new Promise(resolve=>{
@@ -2776,7 +2781,7 @@ function showInspectLeader(d,side){
     ${L.hab2?`<div class="txt" style="margin-top:5px">${'<b>'+L.hab2.n+':</b> '+L.hab2.d}</div>`:''}
     <div class="bigsep"></div>
     <div class="bigrow">❤️ Alma <b>${Math.max(0,p.alma)}</b> · 🔷 <b>${p.pd}/${p.pdMax}</b> · 🗝️ <b>${keys(side)}</b></div>`;
-  campanaVestirFicha(box,side);placeInspect(d);
+  campanaVestirFicha(box,side);if(side===FOE&&G.campana?.jefeSecreto)campanaVestirPitagoras(box);placeInspect(d);
 }
 
 function placeInspect(d){
@@ -3412,6 +3417,7 @@ function renderLeaders(){
     </div>`;
     const e=host.firstElementChild;
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
+    if(!mine&&G.campana?.jefeSecreto)campanaVestirPitagoras(e);
     e.onmouseenter=()=>showInspectLeader(e,side);
     e.onmouseleave=()=>$('#inspect').classList.remove('on');
     e.onclick=()=>{
@@ -3493,6 +3499,7 @@ function renderField(host, list, mine){
 
 function render(){
   if(!G||G.silent) return;
+  campanaPrepararRival();
   if(NET.host) netPushState();
   $('#barFoe').innerHTML=barHTML(FOE);
   $('#barMe').innerHTML=barHTML(ME);
@@ -4294,7 +4301,7 @@ async function cortinillaVS(a, b, opts={}){
   if(document.hidden) return;
   const capa = el('div','vs');
   capa.innerHTML = '<div class="vsfondo"></div><div class="vschispas"></div>';
-  const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq'), der = cartaDeLiderVS(b,'der');
+  const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq'), der = opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der');
   if(opts.nombres){izq.querySelector('.lname').textContent=opts.nombres[0];der.querySelector('.lname').textContent=opts.nombres[1];}
   const sello = el('div','vssello','VS');
   capa.appendChild(izq); capa.appendChild(der); capa.appendChild(sello);
@@ -4331,7 +4338,7 @@ async function startMatch(a, b, opts={}){
   // termina su turno antes de que la prueba mire— y fallan una vez de cada dos
   // sin que nada esté roto. Una prueba que falla a veces no vale para frenar
   // una publicación, que es justo para lo que están.
-  const first = conVolado ? await volado(LEADERS[b].n)
+  const first = conVolado ? await volado(opts.nombres?.[1]||LEADERS[b].n)
                           : (opts.first != null ? opts.first : null);
   if(mia !== PARTIDA_N) return;      // arrancó otra mientras elegías: ésta ya no vale
   await setupMatch(a,b,{...(first==null?{}:{first}),...(opts.campana?{campana:opts.campana}:{})});

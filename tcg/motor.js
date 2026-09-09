@@ -1414,31 +1414,56 @@ async function cloudCheck(u){ // Nube de Dagas del rival
    que no decides. Además bloqueaba el tutorial desde el primer paso, porque el
    cartel del dado se abría encima y esperaba para siempre. */
 
+async function resolverD20(label,side,meta){
+  const partida=G,eraOnline=NET.on,interactivo=side===ME&&!(meta&&meta.sola);
+  let fisica=null,r;
+  if(typeof d20FisicoDisponible==='function'&&d20FisicoDisponible()&&(!NET.on||NET.d20Remoto===1)){
+    const remoto=NET.host&&side===FOE,manual=!(meta&&meta.sola);
+    const entrada=remoto&&manual
+      ? await netAsk({kind:'rollLaunch',label,meta:metaPlana(meta),fallback:{x:0,z:-.6,fuerza:.6},espera:45000})
+      : await prepararTiradaD20(label,interactivo,meta);
+    if((!remoto&&entrada&&entrada.cancelada)||G!==partida||G.over||(eraOnline&&!NET.on))return 0;
+    // El invitado sólo aporta un gesto acotado. La semilla nace DESPUÉS del
+    // gesto, en el anfitrión, y nunca se acepta un número enviado por el rival.
+    const impulso=globalThis.CAOZ_D20.impulsoValido(entrada);
+    for(let intento=0;intento<8;intento++){
+      const bytes=new Uint32Array(1);
+      if(globalThis.crypto&&globalThis.crypto.getRandomValues)globalThis.crypto.getRandomValues(bytes);else bytes[0]=rnd(4294967296);
+      const tirada=globalThis.CAOZ_D20.simular(bytes[0],impulso);
+      if(tirada.asentado){fisica=globalThis.CAOZ_D20.empaquetar(tirada);r=tirada.valor;break;}
+      log('El dado quedó inclinado: se repite el lanzamiento.','sys');
+    }
+    if(!fisica){globalThis.CAOZ_D20.cancelar();toast('El dado no pudo asentarse. Intenta la jugada otra vez.');return 0;}
+  }else r=1+rnd(20);
+  if(NET.host&&side===FOE){
+    // Un único diálogo interactivo en el invitado, sin otro fx que lo sustituya.
+    await Promise.all([rollDice(r,label,false,meta,fisica),netAsk({kind:'roll',value:r,label,meta:metaPlana(meta),fisica,interactive:!(meta&&meta.sola),fallback:1,espera:fisica?45000:90000})]);
+  }else{
+    if(NET.host){netFx('dice',{v:r,label,meta:metaPlana(meta),fisica});if(fisica)netPushState();}
+    await rollDice(r,label,interactivo,meta,fisica);
+  }
+  return G===partida&&!G.over?r:0;
+}
+
 async function roll(label, side, meta){
   side = (side==null? G.active : side);
   // Las cartas describen el umbral; ambas pantallas necesitan también la
   // comparación para enseñar el efecto del número que acaba de salir.
   if(meta&&!meta.ok) meta=metaViva(meta);
-  const mio = (side===ME) && !(meta && meta.sola);
-  let r = 1+rnd(20);
-  if(NET.host&&side===FOE){
-    // La petición ya abre el dado del invitado. Enviarlo además como efecto
-    // de espectador reemplazaba su botón y dejaba al motor esperando 90 s.
-    await Promise.all([rollDice(r,label,false,meta), netAsk({kind:'roll',value:r,label,meta:metaPlana(meta),fallback:1})]); }
-  else { if(NET.host) netFx('dice',{v:r,label,meta:metaPlana(meta)});
-         await rollDice(r,label,mio,meta); }
+  let r=await resolverD20(label,side,meta);
+  if(!r)return 0;
   const ev={isRoll:true,value:r,side};
   if(r>=15) await trapWindow(1-side,'letal',ev);
   if(!ev.reroll) await fastWindow(1-side,{kind:'d20',ev});
   if(ev.reroll){
-    const r2=1+rnd(20);
-    await rollDice(r2,'Te obligan a repetir — manda el peor',side===ME);
+    const r2=await resolverD20('Te obligan a repetir — manda el peor',side,null);
+    if(!r2)return 0;
     log(`Repetición: ${r} y ${r2} → se queda con ${Math.min(r,r2)}.`,'roll');
     r=Math.min(r,r2);
   }
-  log(`🎲 <b>${label}</b>: ${r}${r===20?' — ¡CRÍTICO!':r===1?' — ¡PIFIA!':''}`,'roll');
+  log(`🎲 <b>${label}</b>: ${r}${r===20?' — ¡CRÍTICO!':r===1?' — ¡CRÍTICO!':''}`,'roll');
   if(G.tutorial) await tutBeat('dado',{r,side});
-  if(r===1){ log('Pifia: pierdes 1 Alma.','dmg'); await dmgFace(side,1,{src:'pifia'}); }
+  if(r===1){ log('Crítico (1): pierdes 1 Alma.','dmg'); await dmgFace(side,1,{src:'pifia'}); }
   return r;
 }
 
@@ -1447,7 +1472,7 @@ async function roll(label, side, meta){
 
 function metaPlana(m){
   if(!m) return null;
-  return {necesita:m.necesita, min:m.min??null, max:m.max??null, siOk:m.siOk, siMal:m.siMal};
+  return {necesita:m.necesita, min:m.min??null, max:m.max??null, siOk:m.siOk, siMal:m.siMal, sola:!!m.sola};
 }
 
 function metaViva(m){
@@ -2993,7 +3018,7 @@ function buildTut(lid){
 {strat:true, t:[`Lo que queda por saber está escrito en las cartas: <b>Prisa</b>, <b>Vuelo</b> (sólo lo
    alcanzan Vuelo o Arquero), <b>Sigilo</b>, <b>Regeneración</b>, <b>Infectado</b>.`,
   `<b>El d20</b>: varias cartas te hacen tirar dado, y <b>lo tiras tú</b>: sale el dado, le das
-   y ves el número antes de que pase nada. <b>20 = Crítico</b>, <b>1 = Pifia</b> (falla y
+   y ves el número antes de que pase nada. <b>20 = Crítico</b>, <b>1 = Crítico (fallo)</b> (falla y
    pierdes 1 Alma).`,
   `<b>La otra forma de ganar</b>: juntar <b>2 🗝️ Llaves del Domo</b> y jugar el
    <b>Pergamino de Deseo Ilimitado</b>. Si aguanta hasta tu segundo turno, ganas sin tocarle
@@ -3213,7 +3238,7 @@ const RULES_HTML=`
 <tr><td><b>Puntos (PD)</b></td><td>Tu recurso. El máximo sube 1 por turno (tope 10) y se rellena al inicio de tu turno.</td></tr>
 <tr><td><b>Líder</b></td><td>Tu Protagonista. Tiene una Pasiva siempre activa y una Habilidad que se paga con PD, una vez por turno.</td></tr>
 <tr><td><b>Llaves del Domo</b></td><td>Fichas que dan ciertas cartas. Con 2 puedes jugar el Pergamino.</td></tr>
-<tr><td><b>d20</b></td><td>20 natural = Crítico. 1 natural = Pifia: la carta falla y pierdes 1 Alma.</td></tr></table>
+<tr><td><b>d20</b></td><td>20 natural = Crítico. 1 natural = Crítico (fallo): la carta falla y pierdes 1 Alma.</td></tr></table>
 <h4>Zonas</h4>
 <ul><li><b>Campo</b> — hasta 5 Personajes.</li>
 <li><b>Zona de Trampas</b> — hasta 3 cartas boca abajo.</li>
@@ -3414,7 +3439,7 @@ async function netConnect(code, asHost){
   NET.miNombre = ONL.nombre || (asHost?'Anfitrión':'Invitado');
   chatVacio(); chatVisible(true);
   NET.seq=0; NET.q=[]; NET.sending=false; NET.pending={}; NET.acts=[]; NET.busy=false;
-  NET.peer=false;NET.peerSid=null;NET.partidaId=null;NET.ultimoRival=Date.now();NET.avisoAusente=false;NET.ultimoPulso=0; NET.seen=new Set(); NET.tx=NET.rx=NET.err=0;
+  NET.peer=false;NET.peerSid=null;NET.d20Remoto=0;NET.partidaId=null;NET.ultimoRival=Date.now();NET.avisoAusente=false;NET.ultimoPulso=0; NET.seen=new Set(); NET.tx=NET.rx=NET.err=0;
   NET.sid=Math.random().toString(36).slice(2,10);   // sesión: evita choques de seq al reconectar
   NET.hechas=new Set(); NET.esperaAck=new Map();
   NET.chs.forEach(c=>c.close()); NET.chs=[];
@@ -3448,10 +3473,12 @@ async function netConnect(code, asHost){
 const CHAT_MAX = 180;
 
 function netClose(){
+  globalThis.CAOZ_D20?.cancelar();
+  Object.values(NET.pending||{}).forEach(p=>p.cancelarD20?.());
   chatVisible(false);
   clearInterval(NET.timer); NET.timer=null;
   NET.chs.forEach(c=>c.close()); NET.chs=[];
-  NET.on=false; NET.host=false; NET.guest=false; NET.peer=false;NET.partidaId=null;NET.iniciando=false;NET.welcome=null;NET.onjoin=null;NET.joinPend=null;
+  NET.on=false; NET.host=false; NET.guest=false; NET.peer=false;NET.d20Remoto=0;NET.partidaId=null;NET.iniciando=false;NET.welcome=null;NET.onjoin=null;NET.joinPend=null;
   if(NET.esperaAck)NET.esperaAck.forEach(p=>clearInterval(p.t));
   relojPara();
 }
@@ -3486,6 +3513,7 @@ function netRecvRaw(txt){
 
 function netSend(msg){
   if(!NET.on) return;
+  if(msg.t==='join'||msg.t==='welcome')msg.d20Fisico=globalThis.CAOZ_D20?1:0;
   msg.from=NET.host?'host':'guest'; msg.sid=NET.sid; msg.seq=++NET.seq;
   if(msg.t==='state') NET.q=NET.q.filter(m=>m.t!=='state');   // sólo vale el último estado
   NET.q.push(msg); netPump();
@@ -3532,9 +3560,10 @@ function netAsk(payload){
     const id=NET.pid++;
     let hecho=false;
     NET.pending[id]=v=>{ if(hecho) return; hecho=true; delete NET.pending[id]; res(v); };
+    if(payload.kind==='rollLaunch'||payload.kind==='roll')NET.pending[id].cancelarD20=()=>NET.pending[id]?.(payload.fallback);
     netSend({t:'prompt', id, ...payload});
     setTimeout(()=>{ if(!hecho){ hecho=true; delete NET.pending[id];
-      log('El rival no responde; se resuelve solo.','sys'); res(payload.fallback!==undefined?payload.fallback:0); } },90000);
+      log('El rival no responde; se resuelve solo.','sys'); res(payload.fallback!==undefined?payload.fallback:0); } },Math.min(90000,Math.max(1000,Number(payload.espera)||90000)));
   });
 }
 
@@ -3638,7 +3667,7 @@ async function netPlayFxLote(list,partida){
     else if(f.k==='hab')  await fxHabilidad(f.side);
     else if(f.k==='revela') await revelarCarta(f.id, f.mano, f.side);
     else if(f.k==='banner') await fxBanner(f.side);
-    else if(f.k==='dice') await rollDice(f.v,f.label,false,metaViva(f.meta));
+    else if(f.k==='dice') await rollDice(f.v,f.label,false,metaViva(f.meta),f.fisica);
     else if(f.k==='obj'&&u) fxObj(u,f.id,f.txt);
     else if(f.k==='notice') fxNotice(f.txt,f.color);
   }
@@ -3662,7 +3691,7 @@ async function netRecv(m){
         if(NET.welcome) netSend(NET.welcome);
         return;
       }
-      NET.peer=true;NET.peerSid=m.sid||null; netStatus('rival conectado','ok');
+      NET.peer=true;NET.peerSid=m.sid||null;NET.d20Remoto=m.d20Fisico===1?1:0; netStatus('rival conectado','ok');
       NET.suNombre = String(m.nombre||'').slice(0,18) || 'Tu rival';
       log(`<b>${NET.suNombre}</b> entra en la sala.`,'sys');
       if(NET.onjoin) NET.onjoin(m.leader||'fender');
@@ -3682,7 +3711,7 @@ async function netRecv(m){
     if(m.t==='bye'){ netStatus('el rival se fue','warn'); toast('Tu rival ha salido'); return; }
   } else {
     if(m.t==='chat'){ chatRecibe(m); return; }
-    if(m.t==='welcome'){ NET.peer=true;NET.peerSid=m.sid||null; netStatus('partida en marcha','ok');
+    if(m.t==='welcome'){ NET.peer=true;NET.peerSid=m.sid||null;NET.d20Remoto=m.d20Fisico===1?1:0; netStatus('partida en marcha','ok');
       NET.suNombre = String(m.nombre||'').slice(0,18) || 'Tu rival';
       netGuestStart(m); return; }
     if(m.t==='state'){ netApply(m.s); return; }
@@ -3802,8 +3831,10 @@ async function netGuestPrompt(m){
     const c=await pickCard(ME,m.ids,m.title,m.cancellable); responder(c);
   } else if(m.kind==='from'){
     const idx=await pickIndex(m.list,m.title); responder(idx);
+  } else if(m.kind==='rollLaunch'){
+    const impulso=await prepararTiradaD20(m.label,true,metaViva(m.meta));responder(impulso);
   } else if(m.kind==='roll'){
-    await rollDice(m.value,m.label,true,metaViva(m.meta)); responder(1);
+    await rollDice(m.value,m.label,m.interactive!==false,metaViva(m.meta),m.fisica); responder(1);
   } else if(m.kind==='targets'){
     const v=await guestTargets(m); responder(v);
   }
