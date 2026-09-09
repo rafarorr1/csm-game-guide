@@ -408,6 +408,202 @@ PRUEBAS.suite('azarYCriticos', async t => {
   }
 });
 
+PRUEBAS.suite('d20Fisico', async t => {
+  const F=window.CAOZ_D20;
+  t.check(F&&F.caras.length===20&&new Set(F.caras.map(c=>c.valor)).size===20,'D20 con veinte caras físicas distintas.');
+  const frecuencias=Array(20).fill(0);let maximo=0;
+  for(let i=0;i<240;i++){
+    const impulso=i%3===0?{x:i%2?-1:1,z:i%4<2?-1:1,fuerza:1}:undefined;
+    const r=F.simular(i,impulso);frecuencias[r.valor-1]++;maximo=Math.max(maximo,r.duracion);
+    t.check(r.asentado&&r.apoyos.length>=3&&r.alineacion>.9997,'La tirada '+i+' debe terminar apoyada sobre una cara.');
+    const p=r.frames.at(-1);t.check(F.leer(p.q).valor===r.valor,'El valor debe venir de la orientación final, no de otro sorteo.');
+    t.check(F.vertices.every(v=>p.p[1]+F.girar(v,p.q)[1]>-.0015),'El dado no atraviesa la mesa.');
+    if(i<12){const otra=F.simular(i,impulso);t.check(JSON.stringify(r.frames)===JSON.stringify(otra.frames),'Misma semilla y gesto: misma trayectoria.');}
+    const red=F.desempaquetar(F.empaquetar(r));t.check(red&&F.leer(red.frames.at(-1).q).valor===r.valor,'La trayectoria de red conserva la cara.');
+  }
+  t.check(frecuencias.every(n=>n>=3&&n<=27),'Las veinte caras deben aparecer sin un sesgo evidente en la muestra fija.');
+  t.nota('240 lanzamientos físicos: '+frecuencias.join(', ')+' · duración máxima '+maximo.toFixed(2)+' s.');
+  t.check(F.impulsoValido({x:Infinity,z:-99,fuerza:100}).x===0&&F.impulsoValido({z:-99}).z===-1&&F.impulsoValido({fuerza:100}).fuerza===1,'El impulso remoto se limita a valores válidos.');
+  const esperar=async(fn,ms=7000)=>{const fin=Date.now()+ms;while(!fn()&&Date.now()<fin)await sleep(15);t.check(fn(),'El d20 no terminó su fase esperada.');};
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=d20-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument;
+    try{
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.CAOZ_D20_PRUEBA=true;
+      w.newGame('fender','mohamed');w.showScreen('board');w.render();
+      const random=w.crypto.getRandomValues.bind(w.crypto);w.crypto.getRandomValues=a=>{a[0]=1;return a;};
+      w.Math.random=()=>.999;const esperado=w.CAOZ_D20.simular(1).valor;
+      const tirada=w.resolverD20('Coraje de Drantiago',0,w.metaViva({min:11,necesita:'11+',siOk:'+2 ATQ',siMal:'No alcanza'}));
+      t.check(!!d.querySelector('#dice.fisico #dbtn')&&d.querySelector('#dbtn').textContent.includes('Tirar'),pagina+': el jugador puede lanzar desde la mesa.');
+      d.querySelector('#dbtn').click();await esperar(()=>!!d.querySelector('#dice').dataset.d20Valor);
+      t.check(d.querySelector('#d20v').textContent===String(esperado)&&d.querySelector('#dice').dataset.d20Asentado==='true',pagina+': la cara física se muestra y sigue apoyada.');
+      t.check(d.querySelector('#defecto').textContent.includes(esperado>=11?'+2 ATQ':'No alcanza'),pagina+': el umbral usa el resultado físico.');
+      d.querySelector('#dbtn').click();t.check(await tirada===esperado,pagina+': el motor recibe la cara física en vez de rnd(20).');
+      w.matchMedia=()=>({matches:true});const breve=w.resolverD20('Automático',0,{sola:true});await esperar(()=>!!d.querySelector('#dice').dataset.d20Valor);d.querySelector('#dbtn').click();await breve;
+      const pendiente=w.resolverD20('Cancelación',0,null);w.showScreen('menu');await pendiente;t.check(!d.querySelector('#dice').classList.contains('on'),pagina+': salir del tablero no deja una promesa ni un dado flotante.');
+      w.crypto.getRandomValues=random;
+    }finally{w.CAOZ_D20.cancelar();w.relojPara();f.remove();}
+  }
+});
+
+PRUEBAS.suite('d20OnlineFisico', async t => {
+  const esperar=async(fn,ms=6500)=>{const fin=Date.now()+ms;while(!fn()&&Date.now()<fin)await sleep(12);t.check(fn(),'El d20 online no terminó su fase esperada.');};
+  for(const paginas of [['index.html','movil.html'],['movil.html','index.html']]){
+    const marcos=[];
+    try{
+      for(const pagina of paginas){const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=d20-red-interno';document.body.appendChild(f);marcos.push(f);await carga;}
+      const clientes=marcos.map(f=>f.contentWindow),[h,j]=clientes,registro=[];
+      clientes.forEach((w,i)=>{
+        w.newGame(i?'mohamed':'fender',i?'fender':'mohamed');w.eval('G.online=true;G.phase="principal";G.turnNo=3;G.fast=false;G.auto=false;G.silent=false');w.CAOZ_D20_PRUEBA=true;
+        Object.defineProperty(w.document,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:true});w.netStatus=()=>{};
+        Object.assign(w.eval('NET'),{on:true,host:i===0,guest:i===1,peer:true,d20Remoto:1,sid:'d20-'+i,hechas:new Set(),esperaAck:new Map(),chs:[{ok:true,close(){}}]});
+        w.netSend=m=>{registro.push({lado:i,t:m.t,kind:m.kind,fisica:m.fisica,fx:m.s?.fx});const copia=JSON.parse(JSON.stringify({...m,sid:'d20-'+i}));queueMicrotask(()=>clientes[1-i].netRecv(copia));};w.showScreen('board');w.render();
+      });
+      let semillas=0;h.crypto.getRandomValues=a=>{semillas++;a[0]=1;return a;};j.crypto.getRandomValues=()=>{throw Error('El invitado intentó sortear el resultado.');};
+      for(const lado of [1,0]){
+        semillas=0;const promesa=h.resolverD20('Prueba física online',lado,h.metaViva({min:11,necesita:'11+',siOk:'+2 ATQ',siMal:'No alcanza'})),jugador=clientes[lado];
+        await esperar(()=>jugador.document.querySelector('#dbtn')?.textContent.includes('Tirar'));t.check(semillas===0,'La semilla autoritativa debe nacer después del gesto.');jugador.document.querySelector('#dbtn').click();
+        await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));
+        const esperado=h.CAOZ_D20.simular(1).valor,valores=clientes.map(w=>+w.document.querySelector('#dice').dataset.d20Valor);
+        t.check(valores.every(v=>v===esperado),paginas.join('→')+': ambos clientes ven la misma cara calculada por el anfitrión.');
+        clientes.forEach(w=>w.document.querySelector('#dbtn').click());t.check(await promesa===esperado&&semillas===1,'Una sola simulación autoritativa devuelve el valor al motor.');await sleep(190);
+      }
+      // La carta real debe aplicar el beneficio después de confirmar el dado.
+      h.eval('G.active=1;P(0).hand=[];P(1).hand=["rantiago"];P(1).pd=10');const aliado=h.mkUnit('bartolomeo',1);h.eval('P(1)').field=[aliado];h.recalc();h.render();await sleep(190);
+      const coraje=h.playFromHand(1,'rantiago',[[aliado]]);await esperar(()=>j.document.querySelector('#dbtn')?.textContent.includes('Tirar'));j.document.querySelector('#dbtn').click();await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));clientes.forEach(w=>w.document.querySelector('#dbtn').click());await coraje;
+      await esperar(()=>aliado.pA===2&&j.eval('P(0).field[0]?.pA')===2);t.check(aliado.atk===3&&j.eval('P(0).field[0]?.atk')===3,'Rantiago aplica +2 ATQ físico y lo sincroniza en ambos clientes.');
+      const antes=registro.length,sola=h.resolverD20('Pasiva',1,h.metaViva({sola:true,min:11}));await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));clientes.forEach(w=>w.document.querySelector('#dbtn').click());await sola;
+      t.check(!registro.slice(antes).some(m=>m.kind==='rollLaunch'),'La pasiva del invitado no debe pedir un gesto.');
+      let n=0;h.crypto.getRandomValues=a=>{a[0]=[3,7][n++];return a;};h.trapWindow=async(s,ev,o)=>{if(o?.isRoll)o.reroll=true;};h.fastWindow=async(s,o)=>{if(o?.kind==='d20')o.ev.reroll=true;};const desde=registro.length,repeticion=h.roll('Repetir',1,null),valores=[];
+      for(let i=0;i<2;i++){await esperar(()=>j.document.querySelector('#dbtn')?.textContent.includes('Tirar'));j.document.querySelector('#dbtn').click();await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));valores.push(+j.document.querySelector('#dice').dataset.d20Valor);clientes.forEach(w=>w.document.querySelector('#dbtn').click());await sleep(190);}
+      t.check(await repeticion===Math.min(...valores),'La repetición física conserva el peor de los dos resultados.');const ultimos=registro.slice(desde);
+      t.check(ultimos.filter(m=>m.kind==='roll').length===2&&!ultimos.some(m=>m.fx?.some(f=>f.k==='dice')),'Cada tirada del invitado llega una vez, sin duplicado que tape el botón.');
+      // Un cliente anterior a este build no entiende rollLaunch. Negociar la
+      // capacidad mantiene el diálogo clásico sin esperar su timeout.
+      h.eval('NET.d20Remoto=0');h.Math.random=()=>.999;clientes.forEach(w=>w.rollDice=async()=>{});const antiguo=registro.length;
+      t.check(await h.resolverD20('Cliente anterior',1,null)===20,'Con un cliente anterior se conserva la tirada clásica.');
+      t.check(!registro.slice(antiguo).some(m=>m.kind==='rollLaunch'||m.fisica),'No enviar solicitudes físicas a un cliente sin capacidad negociada.');
+      h.eval('NET.peer=false');h.eval('NET.onjoin=()=>{}');h.netRecv({t:'join',sid:'nuevo',d20Fisico:1});t.check(h.eval('NET.d20Remoto')===1,'El anfitrión lee la capacidad anunciada al entrar.');
+      j.netGuestStart=()=>{};j.netRecv({t:'welcome',sid:'nuevo',d20Fisico:1});t.check(j.eval('NET.d20Remoto')===1,'El invitado lee la capacidad de bienvenida.');
+      j.netRecv({t:'welcome',sid:'viejo'});t.check(j.eval('NET.d20Remoto')===0,'Sin anuncio, el protocolo conserva compatibilidad.');
+      t.nota(paginas.join(' → ')+': dos lados, pasiva automática, repetición, mismo resultado y cliente anterior.');
+    }finally{marcos.forEach(f=>{const w=f.contentWindow;w.netSend=()=>{};w.netClose();w.CAOZ_D20.cancelar();f.remove();});}
+  }
+});
+
+PRUEBAS.suite('pitagorasVisual',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',320,568]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=pitagoras-visual-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now,media=w.matchMedia;
+    const pendientes=new Map(),cuadros=new Map(),escenas=[];let ahora=10000,id=990000;
+    const host=d.createElement('div');host.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:999999;background:#000';d.body.appendChild(host);
+    const avanzar=ms=>{
+      const hasta=ahora+ms;let vueltas=0;
+      for(;;){const par=[...pendientes].sort((a,b)=>a[1].cuando-b[1].cuando||a[0]-b[0])[0];if(!par||par[1].cuando>hasta)break;
+        t.check(++vueltas<400,pagina+': temporizadores finitos.');pendientes.delete(par[0]);ahora=par[1].cuando;par[1].fn();
+      }ahora=hasta;
+    };
+    const pintar=()=>{const lista=[...cuadros.values()];cuadros.clear();lista.forEach(fn=>fn(ahora));};
+    const montar=(nombre,op)=>{const e=w[nombre](host,op);escenas.push(e);return e;};
+    try{
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:false}:media.call(w,q);
+      w.setTimeout=(fn,ms=0,...args)=>{const k=++id;pendientes.set(k,{cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return k;};
+      w.clearTimeout=k=>{if(!pendientes.delete(k))quitar(k);};w.performance.now=()=>ahora;
+      w.requestAnimationFrame=fn=>{const k=++id;cuadros.set(k,fn);return k;};w.cancelAnimationFrame=k=>{if(!cuadros.delete(k))caf(k);};
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      let luchas=0;const escena=montar('montarEscenaPitagoras',{onFight:()=>luchas++});
+      const boton=escena.boss,figura=escena.elemento.querySelector('.pitIlustracion'),r=boton.getBoundingClientRect();
+      t.check(figura?.tagName.toLowerCase()==='svg'&&boton.tagName==='BUTTON'&&boton.getAttribute('aria-label').includes('Pitágoras'),pagina+': trono real y acceso con teclado.');
+      t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.top>=0&&r.right<=ancho&&r.bottom<=alto-60,pagina+': figura tocable y separada de los controles inferiores.');
+      t.check(figura.querySelectorAll('use').length>20&&w.retratoPitagoras().startsWith('data:image/svg+xml'),pagina+': escenografía y retrato originales disponibles.');
+      boton.click();boton.click();t.igual(luchas,1,pagina+': un doble clic sólo inicia un combate.');escena.destruir();
+      const cerrada=montar('montarEscenaPitagoras',{onFight:()=>luchas++}),botonRetirado=cerrada.boss;cerrada.destruir();botonRetirado.click();
+      t.igual(luchas,1,pagina+': una referencia a una escena cerrada no puede iniciar combate.');t.check(!host.querySelector('.pitEscena'),pagina+': desmontar retira el trono.');
+      let cubiertas=0;const esporas=montar('montarEsporasPitagoras',{onCubierto:()=>cubiertas++});
+      avanzar(900);pintar();const c=esporas.elemento.querySelector('canvas'),ctx=c.getContext('2d'),pixeles=ctx.getImageData(0,0,c.width,c.height).data;
+      let pintados=0;for(let i=3;i<pixeles.length;i+=997*4)if(pixeles[i])pintados++;
+      t.check(c.width>0&&c.height>0&&pintados>0,pagina+': las esporas se dibujan realmente antes de cubrir.');
+      avanzar(1099);t.check(!esporas.cubierto&&cubiertas===0,pagina+': no se adelanta la cobertura de dos segundos.');
+      avanzar(1);t.check(esporas.cubierto&&cubiertas===1&&esporas.elemento.dataset.fase==='cubierto',pagina+': a los dos segundos queda completamente negro.');
+      t.igual(w.getComputedStyle(esporas.elemento).backgroundColor,'rgb(0, 0, 0)',pagina+': cobertura negra independiente de Canvas');avanzar(1000);t.igual(cubiertas,1,pagina+': la notificación de cobertura no se repite');esporas.destruir();
+      let finales=0;const nombre='<img src=x onerror=1>',frase='Tú, '+nombre+', tú sí eres el verdadero Caoz Con Todo.';
+      const final=montar('montarFinalPitagoras',{personaje:{nombre,color:'azul',equipo:'baston'},nombre,onTerminar:()=>finales++});
+      pintar();avanzar(1799);t.igual(final.elemento.dataset.fase,'implosion',pagina+': la implosión precede al cuarto');avanzar(1);
+      t.igual(final.elemento.dataset.fase,'cuarto',pagina+': después de la explosión se revela el cuarto oscuro');
+      const miniatura=final.elemento.querySelector('.pitMiniatura'),texto=final.elemento.querySelector('.pitReconocimiento');
+      t.check(miniatura?.tagName==='CANVAS'&&miniatura.width>0&&miniatura.height>0,pagina+': el cuarto muestra la miniatura real del jugador.');
+      avanzar(1000);t.check(texto.textContent.length>0&&texto.textContent.length<frase.length,pagina+': el texto se revela progresivamente.');
+      for(let letras=0;final.elemento.dataset.fase!=='texto'&&letras<150;letras++){
+        t.check(final.elemento.dataset.fase!=='negro'&&finales===0,pagina+': terminar la frase debe dejar seis segundos para leer, no iniciar el negro.');
+        const proximo=[...pendientes.values()].sort((a,b)=>a.cuando-b.cuando)[0];t.check(!!proximo,pagina+': sigue pendiente revelar el mensaje.');avanzar(proximo.cuando-ahora);
+      }
+      t.igual(texto.textContent,frase,pagina+': frase completa conserva el nombre como texto');
+      t.check(!texto.querySelector('*'),pagina+': el nombre no introduce etiquetas HTML.');t.igual(finales,0,pagina+': completar la frase no termina el final');
+      avanzar(5999);t.check(final.elemento.dataset.fase==='texto'&&finales===0,pagina+': permite seis segundos completos de lectura DESPUÉS de la última letra.');
+      avanzar(1);t.check(final.elemento.dataset.fase==='negro'&&finales===0,pagina+': sólo después de leer comienza el negro.');
+      avanzar(999);t.igual(finales,0,pagina+': el fundido negro permanece un segundo');avanzar(1);t.igual(finales,1,pagina+': el menú llega después del negro');final.destruir();
+      const pendiente=montar('montarEsporasPitagoras',{onCubierto:()=>cubiertas++});pendiente.destruir();
+      const interrumpido=montar('montarFinalPitagoras',{personaje:{nombre:'Viajero'},onTerminar:()=>finales++});interrumpido.destruir();
+      avanzar(20000);pintar();t.check(cubiertas===1&&finales===1&&!host.childElementCount,pagina+': desmontar cancela también las acciones tardías.');
+      t.check(cuadros.size===0&&pendientes.size===0,pagina+': no quedan dibujos ni temporizadores de las escenas.');
+    }finally{
+      escenas.forEach(e=>e.destruir());host.remove();w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;w.matchMedia=media;w.relojPara();f.remove();
+    }
+  }
+});
+
+PRUEBAS.suite('campanaSecreto',async t=>{
+  const claves=['caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
+  const previos=claves.map(k=>localStorage.getItem(k));
+  try{for(const pagina of ['index.html','movil.html']){
+    claves.forEach(k=>localStorage.removeItem(k));
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=secreto-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana,timers=new Map();let timerId=98000,acciones,cubrir,pelear,terminar,partidas=[];
+    try{
+      w.matchMedia=()=>({matches:true});
+      w.setTimeout=(fn,ms,...args)=>{if([2400,1000,900].includes(ms)){const id=++timerId;timers.set(id,{ms,fn:()=>fn(...args)});return id;}return poner(fn,ms,...args);};
+      w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
+      const ejecutar=ms=>{const par=[...timers].find(([id,t])=>t.ms===ms);t.check(!!par,pagina+': falta temporizador de '+ms+' ms.');if(par){timers.delete(par[0]);par[1].fn();}};
+      w.crearMesaCampana=(host,op)=>{const mesa=crear(host,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
+      w.cinematicaFinal=async(g,m,a)=>{acciones=a;return true;};
+      w.montarEsporasPitagoras=(host,op)=>{cubrir=op.onCubierto;return {destruir(){}};};
+      w.montarEscenaPitagoras=(host,op)=>{pelear=op.onFight;return {destruir(){}};};
+      w.montarFinalPitagoras=(host,op)=>{terminar=op.onTerminar;const n=d.createElement('b');n.textContent=op.nombre;host.appendChild(n);return {destruir(){}};};
+      w.startMatch=async(a,b,op)=>{partidas.push({a,b,op});w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana));};
+      const ids=w.eval('Object.keys(DECKS)'),ganar=(lider,prueba=false)=>{
+        const p={version:1,id:'secreto-'+lider+'-'+prueba,lider,personaje:w.campanaNormalizarPersonaje({nombre:'Ari <h1>'}),etapa:5,...(prueba?{prueba:true}:{})};
+        w.campanaGuardar(p);w.newGame(lider,'gero');w.eval('G.campana='+JSON.stringify({id:p.id,etapa:5,prueba})+';G.over=true');w.campanaFinal(0,'Victoria');return p;
+      };
+      for(let i=0;i<ids.length;i++){
+        const p=ganar(ids[i]);t.igual(w.CAMPANA_LOGROS.total(),i+1,pagina+': sello de mazo distinto');
+        w.campanaFinal(0,'Duplicado');t.igual(w.CAMPANA_LOGROS.total(),i+1,pagina+': una misma victoria no duplica sellos');
+        t.check(i===5?p.secreto==='ascenso':!p.secreto,pagina+': sólo los seis mazos abren el secreto.');
+      }
+      w.eval('campanaMemoria=null');
+      acciones.revancha();await sleep(40);t.check(d.querySelector('#campanaAscenso')?.open,pagina+': el sexto triunfo empieza el ascenso normal.');
+      ejecutar(2400);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='reto'&&!d.querySelector('#campanaDeseo')&&!d.querySelector('#campanaAscenso'),pagina+': el reto interrumpe el ascenso antes del deseo.');
+      t.igual(d.querySelector('.secretoReto h1').textContent,'¿Crees que eso fue todo?',pagina+': texto de interrupción');
+      d.querySelector('.secretoReto button').click();cubrir();t.igual(d.querySelector('#campanaSecreto').dataset.fase,'negro',pagina+': cobertura completa');
+      t.check(!pelear,pagina+': el trono espera un segundo de negro.');ejecutar(1000);t.check(!!pelear,pagina+': revela al Editor.');
+      pelear();pelear();await sleep(0);t.igual(partidas.length,1,pagina+': un doble toque inicia una sola pelea');
+      const partida=partidas[0];t.igual(partida.b,'adreida',pagina+': reglas del mazo de Adreida');
+      t.check(partida.op.campana.jefeSecreto&&partida.op.campana.etapa===6&&partida.op.nombres[1]==='Pitágoras',pagina+': identidad del jefe independiente de su mazo.');
+      w.eval('G.over=true');w.campanaFinal(1,'Derrota');acciones.revancha();await sleep(0);t.igual(partidas.length,2,pagina+': revancha directa sin regresar al trono');
+      w.eval('G.over=true');w.campanaFinal(0,'Victoria');t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='final',pagina+': el Editor inicia su final especial.');
+      t.igual(w.CAMPANA_LOGROS.ganador().nombre,'Ari <h1>',pagina+': conserva el nombre como texto');t.check(!d.querySelector('#campanaSecreto h1'),pagina+': el nombre no inyecta HTML.');
+      terminar();ejecutar(900);t.check(!d.querySelector('#campanaSecreto')&&w.campanaLeer().secreto==='completado',pagina+': vuelve al menú con el final persistido.');
+      w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='creador',pagina+': después del final empieza un personaje nuevo.');w.campanaCerrar();
+      t.igual(w.CAMPANA_LOGROS.total(),6,pagina+': reiniciar no borra los seis sellos');
+      const p=ganar(ids[0],true);t.check(!p.secreto,pagina+': seis sellos reales no completan un ensayo de un solo mazo.');
+      t.igual(w.CAMPANA_LOGROS.total(true),1,pagina+': ensayo separado');t.igual(w.CAMPANA_LOGROS.total(),6,pagina+': no contamina los sellos reales');
+      // Una recarga reanuda el encuentro pendiente, no repite victorias ni borra logros.
+      p.secreto='combate';w.campanaGuardar(p);w.eval('campanaMemoria=null');w.campanaAbrirSecreto();t.igual(d.querySelector('#campanaSecreto').dataset.fase,'trono',pagina+': relectura del combate devuelve al Editor.');
+      const pendiente=pelear;w.campanaCerrar();pendiente();await sleep(0);t.igual(partidas.length,2,pagina+': un callback de escena cerrada no inicia otro combate.');
+    }finally{w.campanaCerrar();w.campanaCerrarDeseo();w.relojPara();w.setTimeout=poner;w.clearTimeout=quitar;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }}finally{claves.forEach((k,i)=>{if(previos[i]==null)localStorage.removeItem(k);else localStorage.setItem(k,previos[i]);});}
+});
+
 PRUEBAS.suite('campanaPruebaBeta', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';

@@ -39,6 +39,12 @@
     d.addEventListener('cancel',ev=>ev.preventDefault());document.body.appendChild(d);d.showModal();
     if(!e.mesa&&!reducido)e.animacion=peon.animate([{translate:'0 0'},{translate:'0 -55px'}],{delay:650,duration:4350,easing:'ease-in',fill:'forwards'});
     window.CAOZ_AUDIO?.play('ascension');cuadro(inicio);
+    if(p.secreto==='ascenso'&&typeof campanaAbrirSecreto==='function'){
+      // El sexto sello corta el ascenso cuando ya se ve elevarse la ficha,
+      // antes de que el resplandor blanco revele el deseo habitual.
+      esperar(e,2400,()=>{if(campanaLeer()!==p){campanaCancelarAscenso();return;}p.secreto='reto';delete p.mesaPendiente;campanaGuardar(p);campanaAbrirSecreto();});
+      return;
+    }
     esperar(e,5000,()=>{cancelAnimationFrame(e.raf);d.dataset.fase='blanco';
       esperar(e,1000,()=>{
         const actual=campanaLeer();if(actual!==p){campanaCancelarAscenso();return;}

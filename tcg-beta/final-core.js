@@ -258,7 +258,7 @@ async function cinematicaFinal(winner, why, acciones){
     b.style.setProperty('--del', (-Math.random() * 9) + 's');
     capa.appendChild(b);
   }
-  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde');
+  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):G.campana?.jefeSecreto&&s!==ME&&window.campanaCartaPitagoras?campanaCartaPitagoras(s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde');
   const pierde = carta(1-winner);
   const gana   = carta(winner);
   capa.appendChild(pierde); capa.appendChild(gana);
@@ -580,6 +580,11 @@ function campanaLeer(){
   if(!dato||dato.version!==1||typeof dato.id!=='string'||!LEADERS[dato.lider]||!Number.isInteger(dato.etapa)||dato.etapa<0||dato.etapa>CAMPANA_RIVALES.length)return null;
   if(dato.mesaPendiente!=null&&(!Number.isInteger(dato.mesaPendiente)||dato.mesaPendiente!==dato.etapa-1||dato.mesaPendiente<0||dato.mesaPendiente>5))delete dato.mesaPendiente;
   if(dato.personaje)dato.personaje=campanaNormalizarPersonaje(dato.personaje);
+  if(dato.prueba!==true)delete dato.prueba;
+  if(dato.etapa!==6||!['ascenso','reto','esporas','trono','combate','final','completado'].includes(dato.secreto))delete dato.secreto;
+  // También la primera lectura tras recargar es el avance vivo. Las escenas
+  // comprueban su identidad para cancelar sólo al empezar otra campaña.
+  campanaMemoria=dato;
   return dato;
 }
 function campanaGuardar(dato){
@@ -626,7 +631,7 @@ function campanaAnimarEntrada(){
 }
 let campanaMesaEscena=null,campanaPreparando=null;
 function campanaLimpiarMesa(){campanaLimpiarPreparacion();campanaLimpiarCreador();if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
-function campanaCerrar(){if(typeof campanaCancelarAscenso==='function')campanaCancelarAscenso();campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+function campanaCerrar(){if(typeof campanaCancelarSecreto==='function')campanaCancelarSecreto();if(typeof campanaCancelarAscenso==='function')campanaCancelarAscenso();campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaVolverAlMenu(){
   campanaCerrar();showScreen('menu');
   // La campaña es un diálogo: debajo ya estaba el menú, así que el regreso
@@ -644,7 +649,7 @@ function campanaCabecera(d,titulo,sub){
 function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   const progreso=campanaLeer();
-  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&progreso.deseo))campanaRuta();else campanaCrear();
+  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&(progreso.deseo||progreso.secreto==='completado')))campanaRuta();else campanaCrear();
   campanaAnimarEntrada();
 }
 function campanaElegir(){
@@ -689,6 +694,7 @@ function campanaElegir(){
 }
 function campanaRuta(aviso=''){
   const progreso=campanaLeer();if(!progreso){campanaCrear();return;}
+  if(progreso.etapa===6&&progreso.secreto&&progreso.secreto!=='ascenso'&&typeof campanaAbrirSecreto==='function'){campanaAbrirSecreto();return;}
   const victoria=Number.isInteger(progreso.mesaPendiente)?progreso.mesaPendiente:null;
   const p=victoria===null?progreso:{...progreso,etapa:victoria};
   const completa=p.etapa===CAMPANA_RIVALES.length;
@@ -818,8 +824,11 @@ function campanaVencerPrueba(e){
   const p=campanaLeer();
   if(!campanaPruebaDisponible()||campanaPreparando!==e||!e.dialogo?.open||!p||p.id!==e.id||p.etapa!==e.etapa||p.mesaPendiente!=null||NET.on)return;
   const rival=CAMPANA_RIVALES[p.etapa];
+  // Una victoria rápida convierte toda esta campaña en ensayo. Sus sellos
+  // viven separados de los logros obtenidos jugando los seis combates.
+  p.prueba=true;campanaGuardar(p);
   campanaLimpiarPreparacion();campanaCerrar();cerrarCinematica();
-  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje};G.over=true;P(1).alma=0;
+  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje,prueba:true};G.over=true;P(1).alma=0;
   campanaFinal(ME,'Victoria de prueba · Beta');
 }
 function campanaMostrarEncuentro(e,p){
@@ -870,7 +879,7 @@ async function campanaCombatir(){
     if(!await campanaAcercarMapa(p.etapa))return;
     p.enEncuentro=true;campanaGuardar(p);
     campanaCerrar();cerrarCinematica();
-    await startMatch(p.lider,rival.lider,{nombres:[campanaNombre(p),LEADERS[rival.lider].n],campana:{id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje}});
+    await startMatch(p.lider,rival.lider,{nombres:[campanaNombre(p),LEADERS[rival.lider].n],campana:{id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje,prueba:!!p.prueba}});
   }
   finally{campanaLanzando=false;}
 }
@@ -878,8 +887,9 @@ function campanaFinal(winner,why){
   relojPara();
   const g=G,meta=g.campana,p=campanaLeer();
   if(!meta||!p||meta.id!==p.id||g.campanaResuelta)return;
+  if(meta.jefeSecreto&&typeof campanaFinalSecreto==='function'){campanaFinalSecreto(winner,why);return;}
   g.campanaResuelta=true;RECORD_ULTIMO=null;
-  if(winner===ME&&p.etapa===meta.etapa){p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;campanaGuardar(p);}
+  if(winner===ME&&p.etapa===meta.etapa){p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;if(p.etapa===6&&typeof campanaMarcarGero==='function')campanaMarcarGero(p);campanaGuardar(p);}
   let mesaPreparada=false;
   const acciones={textoPrincipal:winner===ME?'Volver a la mesa':'↺ Revancha',
     prepararRevancha:winner===ME?()=>{if(G!==g)return;campanaRuta();mesaPreparada=true;return document.getElementById('campanaPanel');}:null,
