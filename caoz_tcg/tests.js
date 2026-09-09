@@ -937,6 +937,10 @@ PRUEBAS.suite('campanaMiniatura', async t => {
         t.check(JSON.stringify(a)===JSON.stringify(b),pagina+': el retrato depende del orden de los polígonos');
       }
       w.eval('campanaRaster=null');
+      const retratoCompleto=selector=>{
+        const carta=d.querySelector(selector),foto=carta?.querySelector('img');
+        t.check(foto&&foto.offsetWidth>=carta.clientWidth-2&&foto.offsetHeight>=carta.clientHeight-2,pagina+': el retrato no llena '+selector);
+      };
       const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',figura:'mago',peinado:'capucha',equipo:'libro',color:'azul'});
       const retrato=w.campanaRetrato(personaje);
       t.check(retrato===w.campanaRetrato({...personaje,nombre:'Otro nombre'}),pagina+': se debe reutilizar la foto mientras no cambie la apariencia');
@@ -945,6 +949,7 @@ PRUEBAS.suite('campanaMiniatura', async t => {
       w.campanaGuardar({version:1,id:'miniatura',lider:'fender',personaje,etapa:1,enEncuentro:true});w.campanaRuta();
       t.check(d.querySelector('.campanaTu').textContent==='<Ariadna>'&&!d.querySelector('ariadna'),pagina+': el nombre de la ficha se interpreta como HTML o sigue diciendo TÚ');
       t.check(d.querySelector('.campanaIdentidad img').src===retrato,pagina+': falta la carta del jugador sobre la mesa');
+      retratoCompleto('.campanaIdentidad');
       const escena=w.eval('campanaMesaEscena');await escena.saltarHacia(1).promesa;
       const r=w.eval('CAMPANA_CASILLAS[1]'),p=escena.posicion,giro=escena.orientacion;
       t.check(Math.sin(giro)*(r[0]-p[0])>0&&Math.cos(giro)*(r[1]-p[1])>0,pagina+': la miniatura termina mirando en otra dirección');
@@ -959,10 +964,13 @@ PRUEBAS.suite('campanaMiniatura', async t => {
       // Mismo mazo en ambos lados: sólo la carta del jugador cambia.
       w.newGame('fender','fender');w.eval('G.campana='+JSON.stringify({personaje})+';G.fast=false;G.auto=false;G.silent=false;G.over=true');w.FXON=()=>true;
       w.render();t.check(d.querySelector('#leaderMe .liderJugador img')?.src===retrato&&!d.querySelector('#leaderFoe .liderJugador'),pagina+': la mesa de combate confunde personaje y mazo');
+      if(pagina==='index.html')retratoCompleto('#leaderMe .liderJugador');
       w.cortinillaVS('fender','fender',{campana:{personaje}});await sleep(30);
       t.check(d.querySelector('.vs .izq.cartaJugador img')?.src===retrato&&!d.querySelector('.vs .der.cartaJugador'),pagina+': el VS usa al protagonista en vez de la miniatura');
+      retratoCompleto('.vs .izq.cartaJugador');
       d.querySelector('.vs')?.remove();w.cinematicaFinal(0,'Victoria de prueba',{});await sleep(30);
       t.check(d.querySelector('.fin .gana.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .pierde.cartaJugador'),pagina+': la victoria usa otra foto o modifica al rival');
+      retratoCompleto('.fin .gana.cartaJugador');
       t.check(d.querySelector('.fin .lname')&&d.querySelector('.fin .sello>i').textContent.includes('<Ariadna>')&&!d.querySelector('ariadna'),pagina+': el final pierde o interpreta el nombre');
       w.cerrarCinematica();w.cinematicaFinal(1,'Derrota de prueba',{});await sleep(30);
       t.check(d.querySelector('.fin .pierde.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .gana.cartaJugador'),pagina+': al perder se intercambian las identidades');

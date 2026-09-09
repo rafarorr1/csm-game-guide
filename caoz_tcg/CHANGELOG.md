@@ -1,6 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 210 · Retrato completo del jugador
+
+- La imagen del Viajero y de los personajes creados ocupa toda su carta en la
+  mesa de campaña, el VS y el final de partida. Nombre y mazo quedan encima de
+  un degradado legible, sin el recuadro de imagen separado.
+- La carta de líder propia en el combate de escritorio reutiliza el fondo y
+  velo de los protagonistas. Conserva su tamaño y la posición de las estadísticas.
+- La suite campanaMiniatura comprueba que el retrato cubra la carta completa
+  en ambas pantallas, además de conservar la identidad y la imagen del rival.
+
 ### Sin numerar · build 209 · Historia oculta del Domo
 
 - En «Elige tu protagonista», derecha, izquierda, derecha, izquierda, derecha,
