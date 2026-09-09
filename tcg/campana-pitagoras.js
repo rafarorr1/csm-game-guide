@@ -2,7 +2,7 @@
    Cada escena posee sus temporizadores y se desmonta sin dejar animaciones vivas. */
 'use strict';
 (function(){
-  const TIEMPOS=Object.freeze({esporas:2000,implosion:1800,revelacion:4200,lectura:6000,negro:1000});
+  const TIEMPOS=Object.freeze({esporas:2000,implosion:2200,oscuridad:2200,aparicion:1800,revelacion:4200,lectura:6000,negro:1400,oscuridadReducida:240,aparicionReducida:350,negroReducido:450});
   window.PITAGORAS_TIEMPOS=TIEMPOS;
   const reducir=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
   function escena(host,clase){
@@ -104,32 +104,41 @@
     const ro=new ResizeObserver(pintar);ro.observe(host);e.limpiezas.push(()=>ro.disconnect());pintar();
   }
   window.montarFinalPitagoras=function(host,{personaje,nombre,onTerminar}={}){
-    const e=escena(host,'pitFinal');e.elemento.dataset.fase='implosion';
-    const cuarto=document.createElement('div');cuarto.className='pitCuarto';cuarto.innerHTML='<div class="pitLuzCuarto" aria-hidden="true"></div><div class="pitHeroe"></div><p class="pitReconocimiento" aria-live="polite"></p>';
-    e.elemento.appendChild(cuarto);miniatura(cuarto.querySelector('.pitHeroe'),personaje,e);
-    const l=lienzo(e,'pitCapaParticulas'),inicio=performance.now(),reducido=reducir();
-    const paneles=Array.from({length:28},(_,i)=>({a:i*Math.PI/14,r:.42+(i%5)*.075,v:1+(i%3)*.19}));
-    if(l.ctx&&!reducido)e.dibujar(t=>{
-      const p=Math.min(1,(t-inicio)/TIEMPOS.implosion),{ctx,w,h}=l,cx=w/2,cy=h*.48,radio=Math.hypot(w,h);ctx.clearRect(0,0,w,h);
-      ctx.fillStyle=p<.58?'#080d12':'#020305';ctx.fillRect(0,0,w,h);
-      for(const q of paneles){const avance=p<.56?Math.pow(1-p/.56,2):Math.pow((p-.56)/.44,.65)*1.55;const r=radio*q.r*avance,a=q.a+(p<.56?p*p*1.8:p*.22),x=cx+Math.cos(a)*r,y=cy+Math.sin(a)*r,tam=radio*(p<.56?.13:.045)*(p<.56?1-p:.8);
-        ctx.save();ctx.translate(x,y);ctx.rotate(a+p*q.v);ctx.beginPath();ctx.moveTo(-tam,-tam*.6);ctx.lineTo(tam*.85,-tam*.45);ctx.lineTo(tam*.43,tam);ctx.closePath();ctx.fillStyle=p<.56?'#18222b':`rgba(199,223,192,${Math.max(0,(1-p)*1.6)})`;ctx.fill();ctx.strokeStyle=p<.56?'#506252':'#dce3c2';ctx.lineWidth=1;ctx.stroke();ctx.restore();}
-      const pulso=Math.max(0,1-Math.abs(p-.59)/.12);
-      if(pulso>0){const g=ctx.createRadialGradient(cx,cy,0,cx,cy,Math.max(1,radio*pulso*.75));g.addColorStop(0,'#f5ffe8');g.addColorStop(.09,'#d6edbd');g.addColorStop(.35,'#7f9c7770');g.addColorStop(1,'#23322800');ctx.fillStyle=g;ctx.fillRect(0,0,w,h);}
-      if(p>.75){ctx.fillStyle=`rgba(0,0,0,${(p-.75)/.25})`;ctx.fillRect(0,0,w,h);}
-    });
-    const mensaje=cuarto.querySelector('.pitReconocimiento');
+    const e=escena(host,'pitFinal'),reducido=reducir();e.elemento.dataset.fase='oscuridad';
+    const entrada=reducido?TIEMPOS.oscuridadReducida:TIEMPOS.oscuridad,aparicion=reducido?TIEMPOS.aparicionReducida:TIEMPOS.aparicion;
+    e.elemento.style.setProperty('--pit-entrada',entrada+'ms');e.elemento.style.setProperty('--pit-aparicion',aparicion+'ms');e.elemento.style.setProperty('--pit-salida',(reducido?TIEMPOS.negroReducido:TIEMPOS.negro)+'ms');
+    const velo=document.createElement('div');velo.className='pitUmbral';velo.setAttribute('aria-hidden','true');e.elemento.appendChild(velo);
+    const cuarto=document.createElement('div');cuarto.className='pitCuarto';cuarto.innerHTML='<div class="pitContenido"><div class="pitHeroe"><div class="pitLuzCuarto" aria-hidden="true"></div><div class="pitFiguraFinal"></div><div class="pitSueloLuz" aria-hidden="true"></div></div><p class="pitReconocimiento" aria-hidden="true"></p></div><p class="pitAnuncio" aria-live="polite" aria-atomic="true"></p>';
+    e.elemento.appendChild(cuarto);miniatura(cuarto.querySelector('.pitFiguraFinal'),personaje,e);
+    const mensaje=cuarto.querySelector('.pitReconocimiento'),anuncio=cuarto.querySelector('.pitAnuncio');
     const identidad=typeof nombre==='string'&&nombre.trim()?nombre.trim().slice(0,24):typeof campanaNormalizarPersonaje==='function'?campanaNormalizarPersonaje(personaje).nombre:'Viajero';
     const frase='Tú, '+identidad+', tú sí eres el verdadero Caoz Con Todo.';
-    function leer(){e.elemento.dataset.fase='texto';mensaje.textContent=frase;
-      e.esperar(TIEMPOS.lectura,()=>{e.elemento.dataset.fase='negro';e.esperar(TIEMPOS.negro,()=>{if(e.activa)onTerminar?.();});});
+    const letras=[];
+    // La frase ocupa su espacio final desde el primer cuadro. Revelar letras
+    // no vuelve a centrar las líneas, no mueve al héroe ni interpreta el nombre.
+    for(const [i,texto] of ['Tú, '+identidad+', ','tú sí eres el verdadero ','Caoz Con Todo.'].entries()){
+      const linea=document.createElement('span');linea.className='pitLinea'+(i===2?' pitTituloFinal':'');
+      for(const letra of Array.from(texto)){const n=document.createElement('span');n.className='pitLetra';n.textContent=letra;linea.appendChild(n);letras.push(n);}mensaje.appendChild(linea);
     }
-    e.esperar(reducido?200:TIEMPOS.implosion,()=>{e.parar();l.c.remove();e.elemento.dataset.fase='cuarto';
-      // Un único anuncio accesible evita leer una frase nueva por cada letra.
-      if(reducido){leer();return;}mensaje.setAttribute('aria-live','off');
-      const letras=Array.from(frase),intervalo=TIEMPOS.revelacion/letras.length;let visibles=0;
-      function escribir(){if(!e.activa)return;visibles++;mensaje.textContent=letras.slice(0,visibles).join('');if(visibles<letras.length)e.esperar(intervalo,escribir);else{mensaje.setAttribute('aria-live','polite');leer();}}
-      e.esperar(400,escribir);
+    const l=lienzo(e,'pitCapaParticulas pitPolvoFinal'),inicio=performance.now();
+    if(l.ctx&&!reducido)e.dibujar(t=>{
+      const {ctx,w,h}=l,tiempo=Math.max(0,t-inicio),revelado=Math.max(0,Math.min(1,(tiempo-entrada)/aparicion));ctx.clearRect(0,0,w,h);
+      if(!revelado)return;const r=cuarto.querySelector('.pitHeroe').getBoundingClientRect(),base=e.elemento.getBoundingClientRect(),cx=r.left-base.left+r.width*.5,cy=r.top-base.top+r.height*.56;
+      ctx.fillStyle='#d6c5a6';const salida=e.elemento.dataset.fase==='negro'?Math.max(0,1-(tiempo-e.salidaEn)/TIEMPOS.negro):1;
+      for(let i=0;i<24;i++){const a=i*2.39996,x=cx+Math.sin(a+tiempo*.00004)*r.width*(.2+i%5*.065),y=cy+(((i*.618034-tiempo*.000022)%1+1)%1-.5)*r.height*1.2;
+        ctx.globalAlpha=(.09+i%4*.025)*revelado*salida;ctx.beginPath();ctx.arc(x,y,.5+i%3*.35,0,Math.PI*2);ctx.fill();}ctx.globalAlpha=1;
+    });
+    function leer(){e.elemento.dataset.fase='texto';anuncio.textContent=frase;
+      e.esperar(TIEMPOS.lectura,()=>{e.salidaEn=performance.now()-inicio;e.elemento.dataset.fase='negro';e.esperar(reducido?TIEMPOS.negroReducido:TIEMPOS.negro,()=>{e.parar();if(e.activa)onTerminar?.();});});
+    }
+    e.esperar(entrada,()=>{e.elemento.dataset.fase='cuarto';
+      e.esperar(aparicion,()=>{
+        e.elemento.dataset.fase='revelando';
+        if(reducido){letras.forEach(n=>n.classList.add('revelada'));leer();return;}
+        const asiento=650,intervalo=(TIEMPOS.revelacion-asiento)/Math.max(1,letras.length-1);let visibles=0;
+        function escribir(){if(!e.activa)return;letras[visibles++].classList.add('revelada');if(visibles<letras.length)e.esperar(intervalo,escribir);else e.esperar(asiento,leer);}
+        escribir();
+      });
     });
     return e;
   };
@@ -152,9 +161,26 @@
     @media(max-height:450px){.pitBossNombre{left:24%;bottom:8px}.pitBossNombre strong{font-size:27px}.pitBossNombre>span{font-size:11px}.pitBossNombre small{margin-top:3px;font-size:10px}}
     @media(prefers-reduced-motion:reduce){.pitOjos{transition-duration:250ms}.pitBossNombre{transition:none}.pitCriaturaImagen{transition-timing-function:linear}}
     .pitCapaParticulas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:5}.pitEsporas{z-index:20;pointer-events:auto;background:transparent}.pitEsporas::after{content:'';position:absolute;inset:0;background:#000;opacity:0;animation:pitCubrir var(--pit-duracion,2000ms) ease-in both}.pitEsporas[data-fase="cubierto"]{background:#000}.pitEsporas[data-fase="cubierto"]::after{animation:none;opacity:1}@keyframes pitCubrir{0%,35%{opacity:0}100%{opacity:1}}
-    .pitFinal{z-index:10;background:#000;color:#e8e7d7}.pitCuarto{position:absolute;inset:0;display:grid;grid-template-rows:minmax(0,1fr) auto;align-items:end;justify-items:center;padding:9vh 24px 12vh;box-sizing:border-box;opacity:0;background:#000}.pitFinal[data-fase="cuarto"] .pitCuarto,.pitFinal[data-fase="texto"] .pitCuarto{opacity:1;transition:opacity .65s}.pitLuzCuarto{position:absolute;inset:0;background:radial-gradient(ellipse at 50% 69%,#adb6a30f 0,#0000 39%);pointer-events:none}.pitHeroe{position:relative;width:min(390px,74vw);height:100%;max-height:58vh;min-height:0;filter:brightness(.78) saturate(.6);z-index:1}.pitMiniatura{display:block;width:100%;height:100%;object-fit:contain}.pitReconocimiento{position:relative;z-index:2;align-self:start;min-height:3.6em;max-width:760px;margin:22px 0 0;font:500 clamp(21px,3.4vw,38px)/1.4 var(--serif,Georgia,serif);text-align:center;text-wrap:balance;overflow-wrap:anywhere;text-shadow:0 0 22px #c6d1ac33}.pitFinal[data-fase="negro"] .pitCuarto{opacity:0;transition:opacity 1s ease-in}
-    @media(max-width:600px){.pitCuarto{padding:9vh 18px 12vh}.pitHeroe{max-height:52vh}.pitReconocimiento{font-size:23px}}
-    @media(max-height:520px){.pitCuarto{grid-template-columns:43% 57%;grid-template-rows:1fr;align-items:center;padding:8vh 6vw}.pitHeroe{max-height:80vh;width:100%}.pitReconocimiento{align-self:center;min-height:0;font-size:24px;margin:0}}
-    @media(prefers-reduced-motion:reduce){.pitCuarto{transition:none!important}.pitEsporas::after{animation-duration:200ms}}
+    .pitFinal{z-index:10;background:transparent;color:#e8e0d1}
+    .pitUmbral{position:absolute;inset:0;background:#000;opacity:0;animation:pitEntrarOscuridad var(--pit-entrada,2200ms) cubic-bezier(.42,0,.38,1) both}
+    .pitFinal:not([data-fase="oscuridad"]) .pitUmbral{animation:none;opacity:1}
+    @keyframes pitEntrarOscuridad{0%{opacity:0}100%{opacity:1}}
+    .pitCuarto{position:absolute;inset:0;display:grid;place-items:center;box-sizing:border-box;padding:max(18px,env(safe-area-inset-top)) 22px max(18px,env(safe-area-inset-bottom));opacity:0;transition:opacity var(--pit-aparicion,1800ms) cubic-bezier(.2,.05,.2,1);background:transparent}
+    .pitFinal[data-fase="cuarto"] .pitCuarto,.pitFinal[data-fase="revelando"] .pitCuarto,.pitFinal[data-fase="texto"] .pitCuarto{opacity:1}
+    .pitContenido{width:min(800px,100%);min-width:0;display:flex;flex-direction:column;align-items:center;gap:clamp(16px,3vh,30px);position:relative}
+    .pitHeroe{position:relative;flex:none;width:min(320px,58vw);height:min(350px,38vh);z-index:1;isolation:isolate}
+    .pitFiguraFinal{position:absolute;inset:0;z-index:1;filter:brightness(.95) saturate(.76) drop-shadow(0 0 9px #d5c6a31a)}
+    .pitLuzCuarto{position:absolute;inset:-30% -32% -5%;background:radial-gradient(ellipse at 50% 65%,#c2b99a17 0,#8d938509 30%,transparent 67%);pointer-events:none}
+    .pitSueloLuz{position:absolute;left:50%;bottom:4%;translate:-50% 0;width:110%;height:12%;border-radius:50%;background:radial-gradient(ellipse,#cfc1a426,#a5997312 40%,transparent 71%);filter:blur(5px);z-index:0;pointer-events:none}
+    .pitMiniatura{display:block;width:100%;height:100%;object-fit:contain}
+    .pitReconocimiento{position:relative;z-index:2;width:100%;max-width:760px;margin:0;min-width:0;font:400 clamp(20px,3vw,34px)/1.48 var(--serif,Georgia,serif);text-align:center;overflow-wrap:anywhere;color:#c4beb4;text-shadow:0 0 24px #dbc9a522}
+    .pitLinea{display:block;white-space:normal}.pitTituloFinal{margin-top:.24em;font:600 clamp(28px,4vw,49px)/1.25 var(--serif,Georgia,serif);color:#eee2c9;letter-spacing:.02em;text-shadow:0 0 28px #dab77824}
+    .pitLetra{opacity:0;filter:blur(5px);transition:opacity .42s ease,filter .65s ease}.pitLetra.revelada{opacity:1;filter:blur(0)}
+    .pitAnuncio{position:absolute;clip-path:inset(50%);width:1px;height:1px;overflow:hidden;white-space:nowrap;margin:0;padding:0;border:0}
+    .pitFinal[data-fase="negro"] .pitCuarto{opacity:0;transition:opacity var(--pit-salida,1400ms) cubic-bezier(.42,0,.7,1)}
+    .pitPolvoFinal{z-index:2}
+    @media(max-width:600px){.pitCuarto{padding-left:18px;padding-right:18px}.pitHeroe{height:min(330px,36vh);width:65vw}.pitReconocimiento{font-size:clamp(19px,5.6vw,25px)}.pitTituloFinal{font-size:clamp(27px,7.5vw,36px)}}
+    @media(max-height:520px){.pitCuarto{padding-top:12px;padding-bottom:12px}.pitContenido{gap:10px}.pitHeroe{width:160px;height:36vh}.pitReconocimiento{font-size:18px;line-height:1.35}.pitTituloFinal{font-size:26px;margin-top:.15em}}
+    @media(prefers-reduced-motion:reduce){.pitLetra{transition:none;filter:none}.pitEsporas::after{animation-duration:200ms}}
   `;document.head.appendChild(css);
 })();
