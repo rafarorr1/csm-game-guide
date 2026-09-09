@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 216 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 217 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,10 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 217 valida también el jugador activo al reanudar `ofrecerManoNueva`.
+Pasar de turno durante el reparto visual ya no abre una pregunta atrasada
+sobre una prueba del Editor. Suite `manoNuevaTurno` en ambos clientes.
 
 Build 216 cambia el secreto a terror: `campana-deseo.js` congela el ascenso a
 2400 ms, espera 450 ms y entrega el pie normalizado de la miniatura a

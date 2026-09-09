@@ -1,6 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 217 · Ofertas de mano en su turno
+
+- Si el jugador pasa de turno mientras se reparten visualmente sus cartas,
+  la pregunta de mano nueva pendiente se descarta. Antes podía aparecer tarde
+  sobre el turno rival o detrás de una prueba del Editor.
+- Se conserva el derecho a cambiar la mano; una oferta vigente funciona igual.
+  Regresión en ambas pantallas y comprobación retirando la guarda.
+
 ### v20 · build 216 · El Editor rompe el juego
 
 - El ascenso se congela antes de apagarse la mesa. Sólo queda el viajero, que

@@ -18,7 +18,7 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 216;
+const VERSION = 217;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
 const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'pitagoras-pruebas.js', 'pitagoras-combate.js', 'dado-fisico.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
