@@ -1115,6 +1115,43 @@ PRUEBAS.suite('onlineFlujo', async t => {
 /* El Lugar ocupa su altura real, incluso con texto largo o una Reliquia.
    Regresión de la captura móvil: el flex comprimía #midRow y las cartas
    propias quedaban encima del Puente y de su texto. */
+PRUEBAS.suite('comicSecreto', async t => {
+  for(const archivo of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;inset:0;width:390px;height:740px;z-index:999999';
+    const carga=new Promise(r=>f.onload=r);f.src=archivo+'?test=comic-interna';document.body.appendChild(f);
+    try{
+      await carga;const w=f.contentWindow,d=f.contentDocument;
+      const preparar=()=>{w.eval("SEL_PASO='yo';SELP=null;buildSelect();showScreen('select');");};
+      const abierto=()=>!!d.querySelector('#comicSecreto[open]');
+      const tecla=(paso,repeat=false)=>d.body.dispatchEvent(new w.KeyboardEvent('keydown',{key:paso===1?'ArrowRight':'ArrowLeft',bubbles:true,repeat}));
+      const codigo=[1,-1,1,-1,1,1,-1,-1];
+      preparar();await sleep(50);
+      codigo.slice(0,7).forEach(p=>tecla(p));t.check(!abierto(),archivo+': siete movimientos no abren');
+      tecla(-1,true);t.check(!abierto(),archivo+': mantener una tecla no completa el secreto');
+      tecla(-1);t.check(abierto(),archivo+': ocho movimientos abren el secreto');
+      const dialogo=d.querySelector('#comicSecreto'),elegido=w.eval('SELP');
+      tecla(1);t.igual(w.eval('SELP'),elegido,archivo+': el pop up no mueve el selector');
+      t.check(!dialogo.querySelector('a[download],a[href]'),archivo+': no hay descarga ficticia');
+      dialogo.querySelector('button').click();await sleep(30);t.check(!abierto(),archivo+': volver cierra');
+      codigo.slice(0,4).forEach(p=>tecla(p));w.showScreen('menu');await sleep(30);preparar();await sleep(30);
+      codigo.slice(4).forEach(p=>tecla(p));t.check(!abierto(),archivo+': salir borra la secuencia');
+      w.eval("SEL_PASO='rival';buildSelect();");await sleep(30);codigo.forEach(p=>tecla(p));t.check(!abierto(),archivo+': rival excluido');
+      preparar();await sleep(30);
+      if(archivo==='index.html')codigo.forEach(p=>d.querySelector(p===1?'#carrSig':'#carrAnt').click());
+      else{
+        const pista=d.querySelector('#leaderList');
+        for(const p of codigo){
+          pista.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,isPrimary:true,button:0,pointerId:1,clientX:160,clientY:180}));
+          pista.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,isPrimary:true,button:0,pointerId:1,clientX:160+p*70,clientY:184}));
+        }
+      }
+      t.check(abierto(),archivo+': flechas o gestos también desbloquean');
+      const r=dialogo.getBoundingClientRect();t.check(Math.abs((r.left+r.right)/2-w.innerWidth/2)<2,archivo+': pop up centrado');
+      t.check(r.top>=0&&r.bottom<=w.innerHeight+1,archivo+': pop up cabe en pantalla');
+    }finally{f.remove();}
+  }
+});
+
 PRUEBAS.suite('sonidos', async t => {
   const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
   const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=sonidos-interna';document.body.appendChild(f);
