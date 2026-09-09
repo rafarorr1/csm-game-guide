@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=224"></script>
-<script src="final.js?b=224"></script>
+<script src="motor.js?b=225"></script>
+<script src="final.js?b=225"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:224, fecha:'2026-09-09'};
+const BUILD = {n:225, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3403,7 +3403,7 @@ function renderLeaders(){
   [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
     const p=P(side), L=p.L, mine=side===ME;
-    const usable = mine && !G.resolving && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
+    const usable = mine && !TGT && !G.resolving && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
                 && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
     const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     const enc = encuadreDe(ARTE['lider_' + p.leaderId]);
@@ -3422,7 +3422,7 @@ function renderLeaders(){
     e.onmouseenter=()=>showInspectLeader(e,side);
     e.onmouseleave=()=>$('#inspect').classList.remove('on');
     e.onclick=()=>{
-      if(TGT&&isTargetable('face')&&!mine){ pickTarget('face'); return; }
+      if(TGT){ pickTarget(mine?null:'face'); return; }
       if(!mine){ if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } return; }
       if(G.resolving) return;
       if(!tutCan('leader')){ tutNope(); return; }
@@ -3487,11 +3487,11 @@ function renderField(host, list, mine){
       +((mine&&SEL===u)?' selected':'');
     d.title='';   // el cajón ya lo cuenta; el aviso del sistema salía descolocado
     d.onclick = mine
-      ? ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }   // elegir objetivo siempre permitido
+      ? ()=>{ if(TGT){ pickTarget(u); return; }   // un objetivo inválido no cambia a selección de ataque
               if(SEL===u){ SEL=null; clearPrompt(); render(); return; }
               if(!tutCan('select')){ tutNope(); return; }
               selectUnit(u); }
-      : ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }
+      : ()=>{ if(TGT){ pickTarget(u); return; }
               if(SEL&&canAttack(SEL)){ if(!tutCan('attack','unit')){ tutNope(); return; } tryAttack(SEL,u); } };
     if(host.children[i]!==d) host.insertBefore(d, host.children[i]||null);
   });
@@ -3553,8 +3553,8 @@ function render(){
   P(ME).relics.forEach(r=>{ const c=CARDS[r.id];
     if(!c.relicAct) return;
     const b=el('button','btn sm',`${c.art} ${c.relicAct.n} (${r.counters||0})`);
-    b.disabled=G.resolving||G.active!==ME||G.over||P(ME).pd<c.relicAct.cost;
-    b.onclick=()=>{ if(G.resolving) return; if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); };
+    b.disabled=!!TGT||G.resolving||G.active!==ME||G.over||P(ME).pd<c.relicAct.cost;
+    b.onclick=()=>{ if(TGT||G.resolving) return; if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); };
     mid.appendChild(b); });
   // mano
   const h=$('#hand');
@@ -3669,12 +3669,12 @@ function renderControls(){
   if(SEL&&SEL.card.act){
     const a=SEL.card.act;
     const b=el('button','btn sm',`✨ ${a.n} (${a.cost} PD)`);
-    b.disabled=G.resolving||!canUseAct(SEL);
-    b.onclick=()=>{ if(G.resolving||!canUseAct(SEL)) return; if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); };
+    b.disabled=!!TGT||G.resolving||!canUseAct(SEL);
+    b.onclick=()=>{ if(TGT||G.resolving||!canUseAct(SEL)) return; if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); };
     c.appendChild(b);
   }
   const e=el('button','btn gold','Terminar turno ⏭');
-  e.disabled=G.active!==ME||G.busy||G.resolving||G.over||!tutCan('end');
+  e.disabled=!!TGT||G.active!==ME||G.busy||G.resolving||G.over||!tutCan('end');
   e.onclick=pedirTerminarTurno;
   c.appendChild(e);
   const r=el('button','btn sm','📜 Reglas'); r.onclick=()=>showRules(true); c.appendChild(r);

@@ -781,7 +781,7 @@ PRUEBAS.suite('pitagorasCarrilesMemoria',async t=>{
   for(let seed=1;seed<=12;seed++){const m=M.crear({tipo:'duelo',semilla:seed}),datos={};let ultima=0;for(let i=0;i<1200&&!m.terminado;i++){if(m.rondaMemoria!==ultima){ultima=m.rondaMemoria;t.check(pareja(m).length===2&&m.cartasMemoria.every(id=>typeof id==='string'&&T.CARDS[id]),'Memoria: cada ronda conserva una sola pareja de cartas reales');t.check(Math.abs(m.reveladoMemoria-Math.max(1.3,1.5-(m.rondaMemoria-1)*.05))<1e-8,'Memoria: el plazo de exposición conserva los .5 segundos extra en todas las dificultades');}M.paso(m,API.guiasPrueba.duelo(m,datos),1/60);}t.check(m.sobrevivio&&m.t===20,'Memoria: el plazo ampliado permite completar el reto mediante elecciones reales');}
   const error=M.crear({tipo:'duelo',semilla:1});M.paso(error,{},1.51);const a=0,b=error.cartasMemoria.findIndex(v=>v!==error.cartasMemoria[0]);M.paso(error,{elegir:a},.016);M.paso(error,{},.016);M.paso(error,{elegir:b},.016);t.check(error.vidas===2&&error.parejas===0&&error.faseMemoria==='resultado','Memoria: una pareja equivocada cuesta exactamente una vida');
   const timeout=M.crear({tipo:'duelo'});M.paso(timeout,{},6.49);t.check(timeout.vidas===3&&timeout.faseMemoria==='elegir','Memoria: el plazo no se cobra antes de los cinco segundos');M.paso(timeout,{},.03);t.check(timeout.vidas===2&&timeout.faseMemoria==='resultado','Memoria: agotar el plazo sin escoger una pareja cuesta una vida');M.paso(timeout,{},20);t.check(timeout.terminado&&!timeout.sobrevivio&&timeout.vidas===0,'Memoria: un fotograma ausente consume todas las rondas, sin victoria por inactividad');
-  const insuficiente=M.crear({tipo:'duelo'});insuficiente.invulnerable=60;M.paso(insuficiente,{},20);t.check(insuficiente.terminado&&!insuficiente.sobrevivio,'Memoria: tener vidas al llegar al límite no basta sin tres parejas');
+  const parcial=M.crear({tipo:'duelo'});M.paso(parcial,{},1.51);const parejaParcial=pareja(parcial);M.paso(parcial,{elegir:parejaParcial[0]},.016);M.paso(parcial,{},.016);M.paso(parcial,{elegir:parejaParcial[1]},.016);M.paso(parcial,{},20);t.check(parcial.terminado&&parcial.sobrevivio&&parcial.parejas===1&&parcial.vidas===1&&parcial.fallosMemoria===2,'Memoria: al cumplir veinte segundos conserva el acierto y la vida restante, sin exigir tres parejas');
   const completo=M.crear({tipo:'duelo',semilla:8}),guia={};for(let i=0;i<1200&&!completo.terminado;i++)M.paso(completo,API.guiasPrueba.duelo(completo,guia),1/60);t.check(completo.terminado&&completo.sobrevivio&&completo.parejas>=3&&completo.t===20,'Memoria: recordar y escoger parejas permite ganar mediante entradas reales');
 });
 
@@ -901,6 +901,149 @@ PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
 });
 
 
+PRUEBAS.suite('relojObjetivos', async t => {
+  const red={host:NET.host,guest:NET.guest,on:NET.on,pending:NET.pending},fin=window.endTurn;
+  const esperar=ms=>new Promise(res=>setTimeout(res,ms));let finales=0;
+  try{
+    relojPara();if(TGT)finishTarget(null);SEL=null;
+    NET.host=NET.guest=NET.on=false;NET.pending={};newGame('adreida','fender');
+    G.fast=true;G.active=ME;G.phase='principal';G.turnNo=4;
+    P(ME).pd=P(ME).pdMax=10;P(ME).hand=['armadura'];P(ME).field=[mkUnit('eric',ME)];
+    recalc();showScreen('board');render();
+    window.endTurn=()=>{finales++;};
+    const hechizo=playFromHand(ME,'armadura'),seleccion=TGT;
+    relojArranca();RELOJ.queda=1;await esperar(1250);
+    t.check(RELOJ.queda===1&&finales===0&&TGT===seleccion,'El reloj termina turno mientras Armadura espera objetivo.');
+    t.check(P(ME).pd===10&&P(ME).hand.includes('armadura'),'Esperar objetivo consume carta o PD.');
+    finishTarget(null);t.igual(await hechizo,false,'Cancelar Armadura no resuelve correctamente tras pausar el reloj.');
+    await esperar(1150);
+    t.check(finales===1&&RELOJ.queda===0&&!RELOJ.id,'El reloj no reanuda al terminar la selección.');
+
+    finales=0;NET.host=true;G.online=true;NET.pending.reloj225=()=>{};
+    relojArranca();RELOJ.queda=1;await esperar(1250);
+    t.check(finales===0&&RELOJ.queda===1,'El anfitrión termina turno mientras el invitado decide.');
+    delete NET.pending.reloj225;await esperar(1150);
+    t.check(finales===1&&!RELOJ.id,'El anfitrión no reanuda al recibir la decisión del invitado.');
+    NET.host=false;NET.guest=true;relojArranca();t.check(!RELOJ.id,'El invitado no debe tener un reloj autoritativo independiente.');
+    t.nota('Intervalos reales: pausa con objetivo local/remoto, reanuda tras cancelar/responder; el invitado usa el reloj del anfitrión.');
+  }finally{
+    relojPara();if(TGT)finishTarget(null);SEL=null;clearPrompt();window.endTurn=fin;Object.assign(NET,red);
+  }
+});
+
+PRUEBAS.suite('objetivosEquipo', async t => {
+  const red={host:NET.host,guest:NET.guest,on:NET.on}, preguntar=window.netAsk;
+  const preparar=()=>{
+    if(TGT)finishTarget(null);SEL=null;clearPrompt();relojPara();
+    NET.host=NET.guest=NET.on=false;newGame('adreida','fender');
+    G.fast=true;G.active=ME;G.phase='principal';G.turnNo=4;
+    P(ME).pd=P(ME).pdMax=10;P(ME).hand=['armadura'];
+    const equipada=mkUnit('bartolomeo',ME),libre=mkUnit('eric',ME),enemiga=mkUnit('matildus',FOE);
+    equipada.objs.push('collar');P(ME).field=[equipada,libre];P(FOE).field=[enemiga];
+    P(ME).relics=[{id:'puntosrobados',counters:2}];
+    recalc();showScreen('board');render();return{equipada,libre,enemiga};
+  };
+  const tocar=u=>document.querySelector(`[data-uid="${u.uid}"]`).click();
+  const cancelar=()=>[...document.querySelectorAll('#pbtns button')].find(b=>b.textContent==='Cancelar');
+  try{
+    let {equipada,libre,enemiga}=preparar();
+    const vida=libre.maxHp,pendiente=playFromHand(ME,'armadura'),seleccion=TGT;
+    const aviso=document.querySelector('#prompt').textContent;
+    tocar(equipada);tocar(enemiga);document.querySelector('#leaderMe').firstElementChild.click();
+    t.check(TGT===seleccion&&SEL===null,'Un objetivo inválido reemplaza la selección del hechizo por un ataque/habilidad.');
+    t.igual(document.querySelector('#prompt').textContent,aviso,'Se perdió el aviso de objetivos o Cancelar.');
+    t.check(cancelar()&&!cancelar().disabled,'La selección debe poder cancelarse después del toque inválido.');
+    t.check(isTargetable(libre)&&!isTargetable(equipada),'Armadura sólo admite aliados sin Objeto.');
+    t.igual(P(ME).pd,10,'Un objetivo inválido consume PD.');t.igual(P(ME).hand[0],'armadura','Se consumió el hechizo sin objetivo.');
+    t.igual(equipada.objs.join(','),'collar','El toque inválido modifica el equipo existente.');
+    const terminar=[...document.querySelectorAll('#controls button')].find(b=>b.textContent.includes('Terminar'));
+    t.check(terminar.disabled,'Terminar turno sustituye una elección pendiente.');
+    const relic=[...document.querySelectorAll('#midRow button')].find(b=>b.textContent.includes('Cobrar'));
+    t.check(relic.disabled,'La reliquia interrumpe la elección pendiente.');
+    tocar(libre);
+    t.check(await pendiente,'No se pudo elegir otro aliado válido después del inválido.');
+    t.igual(P(ME).pd,9,'Armadura debe costar exactamente 1 PD.');
+    t.igual(libre.maxHp,vida+3,'El aliado libre no recibe +3 PV.');
+    t.check(libre.objs.includes('armadura')&&TGT===null&&SEL===null,'La elección no quedó completamente resuelta.');
+
+    ({equipada,libre}=preparar());const cancelada=playFromHand(ME,'armadura');tocar(equipada);cancelar().click();
+    t.igual(await cancelada,false,'Cancelar debe abortar Armadura.');
+    t.check(TGT===null&&P(ME).pd===10&&P(ME).hand.includes('armadura'),'Cancelar consume carta/PD o deja un bloqueo.');
+    const siguiente=playFromHand(ME,'armadura');tocar(libre);t.check(await siguiente,'No se puede volver a jugar tras cancelar.');
+
+    ({equipada,libre}=preparar());NET.guest=true;
+    const remota=guestTargets({card:'armadura',groups:[{k:'unidadAliada',min:1,max:1,pool:[libre.uid]}]});
+    const original=libre,estado=netSnap();[estado.me,estado.foe]=[estado.foe,estado.me];estado.me.hand=P(ME).hand.slice();estado.active=ME;estado.logN=[];estado.fx=[];
+    netApply(estado);libre=P(ME).field.find(u=>u.uid===original.uid);equipada=P(ME).field.find(u=>u.uid===equipada.uid);
+    t.check(libre!==original&&isTargetable(libre),'Un refresco online pierde la identidad del objetivo autorizado.');
+    tocar(equipada);t.check(TGT&&SEL===null&&cancelar(),'El invitado queda atascado al tocar un aliado equipado.');
+    libre.objs.push('mazo');recalc();render();t.check(!isTargetable(libre),'Un uid autorizado permite Armadura aunque el nuevo estado ya tenga Objeto.');
+    tocar(libre);t.check(TGT&&P(ME).pd===10,'El objetivo que dejó de ser válido consume la selección.');
+    libre.objs=[];recalc();render();tocar(libre);
+    const respuesta=await remota;t.igual(respuesta[0][0],libre.uid,'La respuesta online no conserva el uid correcto.');
+    t.check(TGT===null,'El invitado mantiene objetivos después de responder.');
+
+    preparar();NET.host=true;
+    const legal=mkUnit('eric',FOE),ilegal=mkUnit('bartolomeo',FOE);ilegal.objs.push('collar');P(FOE).field=[legal,ilegal];recalc();
+    window.netAsk=async()=>[[ilegal.uid]];
+    t.igual(await resolveTargets(FOE,CARDS.armadura,null),null,'El anfitrión acepta un aliado equipado desde la red.');
+    window.netAsk=async()=>[[legal.uid]];
+    t.check((await resolveTargets(FOE,CARDS.armadura,null))[0][0]===legal,'El anfitrión rechaza el aliado legal de la red.');
+    window.netAsk=async()=>null;t.igual(await resolveTargets(FOE,CARDS.armadura,null),null,'Cancelar online debe resolver sin carta ni gasto.');
+    t.nota('Clic inválido → válido/cancelar; filtros de Objeto intactos; invitado con refresco de estado y validación del anfitrión.');
+  }finally{
+    window.netAsk=preguntar;if(TGT)finishTarget(null);SEL=null;clearPrompt();relojPara();Object.assign(NET,red);
+  }
+});
+
+PRUEBAS.suite('pitagorasMemoriaAlma',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=memoria-alma-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout;let finales=[];
+    try{
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:true});w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);
+      for(const n of ['fxSpell','fxFace','fxHit','fxTrap','fxDeath','fxLunge','fxBanner'])w[n]=async()=>{};
+      for(const n of ['fxNotice','fxAterriza','fxObj','fxStat','fxNumber'])w[n]=()=>{};
+      w.campanaFinalSecreto=(ganador,motivo)=>finales.push({ganador,motivo});
+      const arena=(alma=20)=>{w.newGame('fender','adreida');w.campanaGuardar({version:1,id:'memoria-alma',lider:'fender',etapa:6,secreto:'combate'});w.eval("G.phase='principal';G.active=1;G.turnNo=3;P(0).pd=P(1).pd=20;P(0).alma=20;P(1).alma="+alma+";P(0).hand=[];P(1).hand=['editorduelo'];G.campana={id:'memoria-alma',etapa:6,jefeSecreto:true}");finales=[];w.showScreen('board');return w.eval('G');};
+      arena();w.campanaInterferenciaPitagoras=async(s,id,g,acertar)=>{
+        acertar(1);t.check(w.eval('P(1).alma===19&&P(0).alma===20'),pagina+': la primera pareja resta exactamente una Alma al instante');
+        acertar(1);acertar(4);acertar(-1);t.igual(w.eval('P(1).alma'),19,pagina+': entradas duplicadas o fuera de secuencia no fabrican aciertos');
+        acertar(2);return {sobrevivio:false,cancelado:false,parejas:2,fallosMemoria:3,vidas:0};
+      };
+      await w.playFromHand(1,'editorduelo');t.check(w.eval('P(1).alma===18&&P(0).alma===15&&P(1).field.length===1'),pagina+': tres fallos cobran cinco Alma y conservan ambos aciertos, sin ±2 extra');
+      arena();let antiguo;w.campanaInterferenciaPitagoras=async(s,id,g,acertar)=>{antiguo=acertar;acertar(1);return {sobrevivio:true,cancelado:false,parejas:1,fallosMemoria:2,vidas:1};};
+      await w.playFromHand(1,'editorduelo');antiguo(2);t.check(w.eval('P(1).alma===19&&P(0).alma===20'),pagina+': sobrevivir con una pareja no exige tres ni agrega daño, y el callback se cierra');
+      arena();w.campanaInterferenciaPitagoras=async()=>({sobrevivio:true,cancelado:false,parejas:3,fallosMemoria:0,vidas:3});await w.playFromHand(1,'editorduelo');t.check(w.eval('P(1).alma===17&&P(0).alma===20'),pagina+': los aciertos pendientes se liquidan una sola vez sin bono genérico');
+      arena(1);w.campanaInterferenciaPitagoras=async(s,id,g,acertar)=>{const r=acertar(1);t.check(r.derrotado&&!g.over&&!finales.length,pagina+': el acierto letal espera a cerrar el juego para presentar el final');return{sobrevivio:true,cancelado:false,parejas:1,fallosMemoria:0,vidas:3};};
+      await w.playFromHand(1,'editorduelo');await sleep(20);t.check(w.eval('G.over&&P(1).alma===0&&P(0).alma===20')&&finales.length===1&&finales[0].ganador===0,pagina+': un único final de victoria, sin vida negativa ni daño al jugador');
+      arena();w.eval('P(0).alma=5');w.campanaInterferenciaPitagoras=async()=>({sobrevivio:false,cancelado:false,parejas:0,fallosMemoria:3,vidas:0});await w.playFromHand(1,'editorduelo');await sleep(20);t.check(w.eval('G.over&&P(0).alma===0')&&finales.length===1&&finales[0].ganador===1,pagina+': los cinco puntos pueden terminar la partida en derrota');
+      arena();w.campanaInterferenciaPitagoras=async(s,id,g,acertar)=>{w.newGame('fender','adreida');t.check(acertar(1).cancelado,pagina+': un callback de otra partida se invalida');return{sobrevivio:false,cancelado:false,parejas:3,fallosMemoria:3,vidas:0};};await w.playFromHand(1,'editorduelo');t.check(w.eval('!G.over&&P(0).alma===20&&P(1).alma===20'),pagina+': resultado antiguo no cobra aciertos ni derrota a una partida nueva');
+      arena();w.campanaInterferenciaPitagoras=async(s,id,g,acertar)=>{antiguo=acertar;return {sobrevivio:false,cancelado:true,parejas:3,fallosMemoria:3};};await w.playFromHand(1,'editorduelo');antiguo(1);t.check(w.eval('P(0).alma===20&&P(1).alma===20'),pagina+': una prueba cancelada no puede cobrar después');
+    }finally{w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasMemoriaResultado',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=memoria-resultado-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout;let ahora=10000,uid=0,modelo;const cuadros=new Map(),aciertos=[];
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=()=>({matches:true});M.crear=op=>(modelo=crear(op));
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const p=w.PITAGORAS_PRUEBAS.iniciar({tipo:'duelo',semilla:11,objetivoParejas:1,onPareja:n=>{aciertos.push(n);return{derrotado:true};}});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(1.51);
+      const pareja=modelo.cartasMemoria.map((v,i,a)=>a.indexOf(v)!==a.lastIndexOf(v)?i:-1).filter(i=>i>=0);
+      d.querySelectorAll('.ppMemoriaCarta')[pareja[0]].click();avanzar(.016);d.querySelectorAll('.ppMemoriaCarta')[pareja[1]].click();avanzar(.016);avanzar(.2);
+      t.check(modelo.terminado&&modelo.sobrevivio&&modelo.t<20&&aciertos.join(',')==='1',pagina+': el clic real notifica una pareja y detiene el reloj al derrotar al Editor');
+      t.check(d.querySelector('.ppResultadoInfo').textContent.includes('Pitágoras −1 de Alma')&&!d.querySelector('.ppResultadoInfo').textContent.includes('−2'),pagina+': el resultado muestra el daño real de memoria');
+      d.querySelector('.ppBotones .ppBoton').click();const r=await p;t.check(r.sobrevivio&&!r.cancelado&&r.parejas===1&&r.fallosMemoria===0&&r.vidas===3,pagina+': el resultado entrega parejas y fallos exactos al motor');
+      const q=w.PITAGORAS_PRUEBAS.iniciar({tipo:'duelo',semilla:4,onPareja:n=>aciertos.push(n)});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(20);
+      t.check(modelo.terminado&&!modelo.sobrevivio&&modelo.vidas===0&&modelo.fallosMemoria===3,pagina+': los tres plazos agotados consumen tres vidas aunque falten fotogramas');
+      t.check(d.querySelector('.ppResultadoInfo').textContent.includes('Tu personaje −5 de Alma'),pagina+': la derrota anuncia el coste de cinco Alma');d.querySelector('.ppBotones .ppBoton').click();const fin=await q;t.check(fin.fallosMemoria===3&&fin.parejas===0&&!fin.sobrevivio,pagina+': la derrota entrega tres fallos y cero parejas');
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
 PRUEBAS.suite('pitagorasIntegracion',async t=>{
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-integracion-interna';document.body.appendChild(f);await carga;
@@ -925,7 +1068,7 @@ PRUEBAS.suite('pitagorasIntegracion',async t=>{
       // Las seis cartas son cuerpos del TCG, no hechizos de un solo uso.
       // Se prueba el turno real que quita cansancio antes del ataque real.
       for(const id of ids){
-        arena();inmediato({sobrevivio:true,cancelado:false});w.eval('P(1)').hand=[id];
+        arena();inmediato({sobrevivio:true,cancelado:false,parejas:2,fallosMemoria:0});w.eval('P(1)').hand=[id];
         t.check(await w.playFromHand(1,id),pagina+': se juega '+id);const u=w.eval('P(1)').field[0];
         t.check(u&&u.card.id===id&&u.card.t==='personaje'&&u.alive&&u.atk>0&&u.maxHp>0&&!u.card.token,pagina+': cuerpo y estadísticas propios de '+id);
         t.check(u.sick&&!w.canAttack(u)&&!await w.doAttack(u,'face'),pagina+': respeta el cansancio al entrar');
@@ -2296,6 +2439,28 @@ PRUEBAS.suite('nubeDagasUI', async t => {
       t.check(await w.confirmarNubeDagas('minus')===true&&preguntas===2,pagina+': nube propia o caducada genera aviso.');
     }finally{f.remove();}
   }
+});
+
+PRUEBAS.suite('cerrarCartaMovil', async t => {
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:320px;height:568px';
+  const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=cerrar-carta-interno&b='+Date.now();document.body.appendChild(f);
+  try{
+    await carga;const w=f.contentWindow,d=f.contentDocument;w.newGame('fender','adreida');
+    w.eval("G.active=ME;G.phase='principal';G.fast=true;P(ME).pd=10;P(ME).hand=['minus','bob'];");w.showScreen('board');w.render();
+    for(const pd of [10,0]){
+      w.eval('P(ME).pd='+pd);w.render();const carta=d.querySelector('#hand .card');carta.click();
+      const pill=d.querySelector('#jugarPill'),cerrar=pill.querySelector('button[aria-label="Cerrar menú de carta"]');
+      t.check(pill.classList.contains('on')&&cerrar,'La carta debe ofrecer cerrar incluso cuando no se pueda jugar.');
+      const r=cerrar.getBoundingClientRect(),p=pill.getBoundingClientRect();
+      t.check(r.width>=44&&r.height>=44&&r.left>=p.left&&r.right<=p.right,'Cerrar conserva un área táctil de 44 px dentro del menú pequeño.');
+      for(const b of pill.querySelectorAll('button:not(.cerrarPill)')){const q=b.getBoundingClientRect();t.check(q.right<=r.left||q.bottom<=r.top||q.top>=r.bottom,'Cerrar no tapa Ver ni Jugar.');}
+      const antes=w.eval('JSON.stringify({mano:P(ME).hand,pd:P(ME).pd,campo:P(ME).field.length,grave:P(ME).grave})');
+      cerrar.click();w.render();
+      t.check(!pill.classList.contains('on')&&!d.querySelector('#hand .tocada'),'Cerrar retira el menú y la selección, también tras repintar.');
+      t.igual(w.eval('JSON.stringify({mano:P(ME).hand,pd:P(ME).pd,campo:P(ME).field.length,grave:P(ME).grave})'),antes,'Cerrar nunca juega ni consume la carta');
+      d.querySelectorAll('#hand .card')[1].click();t.check(pill.classList.contains('on')&&pill.textContent.includes('Bob'),'Se puede elegir otra carta inmediatamente.');pill.querySelector('.cerrarPill').click();
+    }
+  }finally{f.remove();}
 });
 
 PRUEBAS.suite('menusDorados', async t => {

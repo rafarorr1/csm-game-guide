@@ -1,5 +1,23 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 225 · Objetivos y recuerdos
+
+- Armadura Mágica conserva la selección y Cancelar al tocar una unidad que
+  ya tiene Objeto. Se puede elegir otro aliado sin gastar carta ni PD hasta
+  confirmar un objetivo válido. El invitado online conserva la selección
+  tras recibir un estado nuevo y el anfitrión revalida los objetivos.
+  El reloj pausa mientras se elige para evitar resolver cartas fuera de turno.
+- El menú táctil de cartas añade una × de 44 px para cerrarlo, tanto si la
+  carta se puede jugar como si está bloqueada. Cerrar no consume la carta.
+- Memoria: cada pareja acertada quita inmediatamente 1 Alma a Pitágoras;
+  cada error o plazo agotado consume una de las tres vidas de la prueba.
+  Al tercer fallo el jugador pierde 5 Alma. Los aciertos ya cobrados se
+  conservan aunque después falle, sin sumar los ±2 de los otros minijuegos.
+  Sobrevivir veinte segundos conserva los aciertos sin exigir tres parejas.
+  Un acierto letal espera el regreso de la nube antes del final de campaña.
+- Publicación autorizada en beta y producción, escritorio y móvil, con
+  actualización de la caché instalada. Sin merge a main.
+
 ### Sin numerar · build 224 · El Domo devorado
 
 - Pitágoras invade la mesa con una masa oscura, raíces y tentáculos de piel

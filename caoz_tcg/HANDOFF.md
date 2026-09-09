@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 224 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 225 (candidato autorizado para beta y producción; producción anterior 224, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,31 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 225 corrige los objetivos de Armadura y añade el cierre del menú de
+cartas móvil. Una selección `TGT` pendiente tiene prioridad sobre ataques,
+líderes, reliquias y fin de turno. Un clic inválido conserva aviso/Cancelar y
+recursos. `isTargetable` compara uid+lado y revalida el filtro vigente; el
+anfitrión revalida los grupos, cantidades y duplicados recibidos del invitado.
+
+Memoria ya no usa la recompensa genérica de ±2: `onPareja` notifica cada
+acierto al motor y resta 1 Alma al Editor inmediatamente, una sola vez. Tres
+fallos consumen las tres vidas de la prueba y cobran 5 Alma al jugador. Se
+conserva lo acertado incluso en derrota; llegar a veinte segundos con vidas
+no exige tres parejas. El resultado entrega `parejas`, `fallosMemoria` y
+`vidas`. Un acierto letal detiene la prueba y sólo ejecuta el final después de
+retirar la nube. Callbacks/resultados de otra partida no pueden cobrar daño.
+El reloj también pausa mientras existe `TGT` y reanuda al resolverlo.
+Regresiones: `relojObjetivos`, `objetivosEquipo`, `cerrarCartaMovil`,
+`pitagorasMemoriaAlma` y
+`pitagorasMemoriaResultado`, además de las suites de integración existentes.
+
+Producción 224 ya estaba publicada y verificada antes de este cambio. El
+estudio de sonidos de producción tiene su propia base y credenciales,
+independientes de beta; conserva nueve reemplazos en siete archivos únicos.
+No copiar bases ni secretos al publicar el código. Se autorizó publicar 225
+en ambos entornos con `publicar.sh`; consultar el despliegue servido para
+confirmar el estado final. No hacer merge ni push a main.
 
 Build 224 intensifica la invasión de `pitagoras-mesa.js`: núcleo oscuro detrás
 del retrato, masas orgánicas en los bordes, raíces secundarias, niebla procedural,
@@ -50,7 +75,8 @@ conserva 40 cartas cíclicas, 40 Alma y la base de Adreida. `DECKS` no cambia.
 
 `pruebaDelEditor` y `campanaInterferenciaPitagoras` exigen `editorJuego`: cartas
 normales, ataques, muertes y habilidades no abren otra prueba. Una prueba por
-carta pagada, una respuesta de ±2 Alma, controles/IA detenidos hasta regresar.
+carta pagada, una respuesta de ±2 Alma salvo memoria (reglas de 225 arriba),
+controles/IA detenidos hasta regresar.
 La carta de la transición muestra ataque/vida reales y 20 segundos; en la mesa
 usa el mismo grabado del minijuego si todavía no tiene ilustración oficial.
 
@@ -116,7 +142,8 @@ Memoria: tipo duelo / carta editorduelo, nombre La memoria del Editor.
 Entrada elegir índice|null. cartasMemoria, elegidasMemoria, faseMemoria,
 rondaMemoria, parejas y hastaMemoria viven en el modelo determinista; ocultar
 la pestaña consume plazos. Una pareja, 5→6→7 cartas y 1.5→1.3 s de exposición;
-5→4 s para elegir. Tres vidas; >=3 parejas al llegar20 s para ganar. La guía
+5→4 s para elegir. Tres vidas; desde 225 cada pareja resta 1 Alma y tres fallos cuestan 5 Alma;
+se puede sobrevivir veinte segundos con menos de tres parejas. La guía
 recuerda sólo cartas reveladas y requiere memoria persistente entre pasos.
 
 Extensión UI: API.montadores[tipo](s,{nodo,escuchar}) tras construir s.ui;
