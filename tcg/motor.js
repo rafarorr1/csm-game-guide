@@ -171,7 +171,7 @@ const C = (id,o)=>{ o.id=id; CARDS[id]=o; return o; };
 const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro','editorcarrera','editororbita','editorduelo'];
 for(const [id,n,tipo,art,a,h] of [['editorcosecha','La cosecha','isometrico','☠',2,3],['editorcorte','El corte final','laseres','✧',3,2],['editorcuadro','Fuera de cuadro','fps','◈',3,2],['editorcarrera','El último puente','carrera','⌁',2,4],['editororbita','Órbita muerta','orbital','✦',2,3],['editorduelo','La memoria del Editor','duelo','▣',2,4]]){
   C(id,{n,t:'personaje',c:2,a,h,tr:['Pesadilla'],r:0,set:'editor',art,editorJuego:tipo,
-    x:'<b>Al jugar:</b> '+(tipo==='duelo'?'recuerda al menos 3 parejas en 20 segundos y conserva tus vidas. ':'prueba del Editor · 20 segundos · 3 vidas. ')+'Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. <b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
+    x:'<b>Al jugar:</b> '+(tipo==='duelo'?'memoria · 20 segundos · 3 vidas. Cada pareja acertada quita 1 Alma a Pitágoras. Cada fallo consume 1 vida de la prueba; al tercer fallo pierdes 5 Alma. ':'prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. ')+'<b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
     req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on});
 }
 
@@ -1949,8 +1949,35 @@ async function playFromHand(s, id, forcedTargets){
    no inicia juegos. Esperar aquí detiene la IA hasta volver a la mesa. */
 async function pruebaDelEditor(s,id,partida=G){
   if(!CARDS[id]?.editorJuego||G!==partida||!partida||partida.over||s!==FOE||!partida.campana?.jefeSecreto||partida.online||partida.guest||NET.on||partida.auto||partida.fast||partida.silent||typeof campanaInterferenciaPitagoras!=='function')return;
-  const resultado=await campanaInterferenciaPitagoras(s,id,partida);
+  const memoria=CARDS[id].editorJuego==='duelo';let aciertos=0,aceptaAciertos=true,resultado;
+  // El contador sólo avanza una pareja a la vez. El resultado posterior no
+  // vuelve a cobrar los aciertos que ya llegaron durante la prueba.
+  const acertar=numero=>{
+    if(!aceptaAciertos||!memoria||G!==partida||partida.over)return {cancelado:true};
+    if(Number.isInteger(numero)&&numero===aciertos+1&&numero<=40&&P(FOE).alma>0){
+      aciertos=numero;P(FOE).alma--;log('Recordaste una pareja. Pitágoras pierde 1 Alma.','dmg');render();
+    }
+    return {derrotado:P(FOE).alma<=0};
+  };
+  try{resultado=await campanaInterferenciaPitagoras(s,id,partida,memoria?acertar:null);}
+  finally{aceptaAciertos=false;}
   if(G!==partida||partida.over||!resultado||resultado.cancelado||typeof resultado.sobrevivio!=='boolean')return;
+  if(memoria){
+    // Se conserva cada acierto incluso si después se agotan las vidas. Una
+    // derrota sólo cobra cinco Alma, sin sumar el coste de los otros juegos.
+    const parejas=Number.isInteger(resultado.parejas)?Math.max(0,Math.min(40,resultado.parejas)):0;
+    const pendientes=Math.min(Math.max(0,parejas-aciertos),Math.max(0,P(FOE).alma));
+    if(pendientes){P(FOE).alma-=pendientes;log('Recordaste '+pendientes+' '+(pendientes===1?'pareja':'parejas')+'. Pitágoras pierde '+pendientes+' Alma.','dmg');}
+    const derrota=resultado.fallosMemoria>=3&&P(FOE).alma>0;
+    if(derrota){P(ME).alma-=5;log('Perdiste tus tres vidas en la memoria del Editor. Pierdes 5 Alma.','dmg');}
+    render();if(derrota)await fxFace(ME,5);else if(pendientes)await fxFace(FOE,pendientes);
+    if(G!==partida||partida.over)return;
+    // El final empieza después de retirar la prueba y su nube. Nunca debajo
+    // del minijuego, ni dos veces por un acierto y su resultado final.
+    if(P(FOE).alma<=0)endGame(ME,'Rompiste el último recuerdo de Pitágoras.');
+    else if(P(ME).alma<=0)endGame(FOE,'Pitágoras consumió tu Alma.');
+    return;
+  }
   const lado=resultado.sobrevivio?FOE:ME;
   P(lado).alma-=2;
   log(resultado.sobrevivio?'Sobreviviste al corte del Editor. Pitágoras pierde 2 Alma.':'El Editor te alcanza. Pierdes 2 Alma.','dmg');
@@ -2208,8 +2235,18 @@ function resolveTargets(s, cardLike, self){
       groups:groups.map(g=>({k:g.k,min:g.min,max:g.max,rep:!!g.rep,label:g.label||'',
         pool:targetPool(s,g,self,cardLike).map(x=>x==='face'?'face':(x&&x.uid!=null?x.uid:null)).filter(v=>v!==null)})),
       fallback:null})
-    .then(v=>v===null?null:v.map(a=>a.map(x=>x==='face'?'face':
-      [...P(0).field,...P(1).field].find(u=>u.uid===x)).filter(Boolean)));
+    .then(v=>{
+      if(!Array.isArray(v)||v.length!==groups.length)return null;
+      const elegidos=[];
+      for(let i=0;i<groups.length;i++){
+        const g=groups[i], ids=v[i], pool=targetPool(s,g,self,cardLike);
+        if(!Array.isArray(ids)||ids.length<g.min||ids.length>g.max||(!g.rep&&new Set(ids).size!==ids.length))return null;
+        const grupo=ids.map(id=>pool.find(x=>x==='face'?id==='face':x?.uid===id));
+        if(grupo.some(x=>x===undefined))return null;
+        elegidos.push(grupo);
+      }
+      return elegidos;
+    });
   if(s!==ME||G.auto) return Promise.resolve(aiTargets(s,groups,self,cardLike));
   return new Promise(res=>{
     TGT={s,groups,self,card:cardLike,gi:0,chosen:groups.map(()=>[]),res};
@@ -2243,8 +2280,13 @@ function showTargetPrompt(g,pool){
 function pickTarget(t){
   if(!TGT) return;
   const g=TGT.groups[TGT.gi], arr=TGT.chosen[TGT.gi];
-  if(!g.rep && arr.includes(t)) return;
-  if(!TGT.pool.includes(t)) return;
+  if(!isTargetable(t)){
+    toast(TGT.card?.id==='armadura'&&t?.side===TGT.s&&t?.objs?.length
+      ? 'Ya tiene un Objeto. Elige otro aliado sin Objeto o cancela.'
+      : 'Ese objetivo no sirve para esta carta. Elige uno resaltado o cancela.');
+    return;
+  }
+  if(!g.rep && arr.some(x=>mismoObjetivo(x,t))) return;
   arr.push(t);
   if(arr.length>=g.max){ TGT.gi++; stepTarget(); }
   else showTargetPrompt(g,TGT.pool), render();
@@ -2252,7 +2294,19 @@ function pickTarget(t){
 
 function finishTarget(v){ const r=TGT.res; TGT=null; clearPrompt(); render(); r(v); }
 
-function isTargetable(t){ return TGT && TGT.pool && TGT.pool.includes(t); }
+/* El anfitrión puede refrescar el estado mientras el invitado decide: sus
+   unidades se reconstruyen, pero el uid sigue siendo el mismo objetivo. */
+function mismoObjetivo(a,b){
+  return a===b || !!(a&&b&&a.uid!=null&&b.uid===a.uid&&a.side===b.side);
+}
+function isTargetable(t){
+  if(!TGT||!TGT.pool?.some(x=>mismoObjetivo(x,t)))return false;
+  if(t!=='face'&&t?.uid==null)return true; // los objetos conservan su referencia de selección
+  const g=TGT.groups[TGT.gi], regla=g.poolRef?TGT.card.tg?.[TGT.gi]:g;
+  // Además del uid autorizado, se conserva el filtro vigente de la carta:
+  // un aliado que recibió Objeto durante un refresco ya no admite Armadura.
+  return !regla || targetPool(TGT.s,regla,TGT.self,TGT.card).some(x=>mismoObjetivo(x,t));
+}
 
 /* ==========================================================================
    9. INTERFAZ
@@ -2449,7 +2503,7 @@ function relojArranca(){
   const turno=G.turnNo;
   RELOJ.id = setInterval(()=>{
     if(!G || G.over || G.turnNo!==turno || (!G.online&&G.active!==ME)){ relojPara(); return; }
-    if(G.busy || G.resolving || (NET.host&&Object.keys(NET.pending).length)) return; // las decisiones y efectos pausan el reloj
+    if(G.busy || G.resolving || TGT || (NET.host&&Object.keys(NET.pending).length)) return; // las decisiones y efectos pausan el reloj
     RELOJ.queda--;
     relojPinta();
     if(NET.host)netSend({t:'clock',turn:G.turnNo,queda:RELOJ.queda});
@@ -2481,7 +2535,7 @@ function terminarTurnoYa(){
 }
 
 function pedirTerminarTurno(){
-  if(!G||G.over||G.active!==ME||G.busy||G.resolving) return;
+  if(!G||G.over||G.active!==ME||G.busy||G.resolving||TGT) return;
   SEL=null; clearPrompt();
   /* En el tutorial no se pregunta: sus pasos guionan cuándo se termina el
      turno, y una pregunta de más lo deja atascado. */
@@ -2564,6 +2618,8 @@ function porQueNoEsObjetivo(u, target){
 }
 
 function selectUnit(u){
+  // Una elección pendiente siempre tiene prioridad sobre seleccionar atacante.
+  if(TGT){ pickTarget(u); return; }
   if(G.active!==ME) return;
   if(!canAttack(u)){
     SEL=u; render(); fichaTactil(u);
@@ -3902,7 +3958,7 @@ function guestTargets(p){
   return new Promise(res=>{
     const busca=v=>v==='face'?'face':[...P(0).field,...P(1).field].find(u=>u.uid===v);
     const groups=p.groups.map(g=>Object.assign({},g,{poolRef:(g.pool||[]).map(busca).filter(Boolean)}));
-    TGT={s:ME, groups, self:null, card:{}, gi:0, chosen:groups.map(()=>[]),
+    TGT={s:ME, groups, self:null, card:CARDS[p.card]||{}, gi:0, chosen:groups.map(()=>[]),
       res:v=>res(v===null?null:v.map(a=>a.map(x=>x==='face'?'face':x.uid)))};
     stepTarget();
   });
