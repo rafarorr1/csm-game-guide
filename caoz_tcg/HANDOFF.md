@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 226 (candidato autorizado para beta y producción; producción anterior 224, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 227 (candidato beta; producción 226 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -12,10 +12,22 @@ números) → el código.
 
 ## 1. Qué es y dónde está
 
+Build 227 añade el progreso al botón `#mCampana` desde `campana-honores.js`.
+Después del primer sello real se muestran los seis retratos, completados en
+color y pendientes en gris. Se lee `CAMPANA_LOGROS.leer(false)` para excluir
+ensayos aunque estén activos. No hay nueva persistencia ni cambios al motor.
+`caoz:campana-logros`, `storage`, `showScreen` y el evento `caoz:arte` refrescan
+los medallones sin sustituir el botón. Los cuatro retratos ilustrados usan un
+primer plano propio; Mohamed y Gero conservan sus símbolos hasta tener arte.
+Texto accesible enumera los seis estados. Mantiene el tamaño del botón móvil.
+Validación externa: 0/1/6 mazos, nueva campaña, recarga, otra pestaña, ensayos,
+activación tocando la imagen y cuatro tamaños/modos de pantalla.
+Esta versión se publica sólo en beta; producción permanece en 226.
+
 Build 226 integra la regresión `editorCartas` con el nuevo resultado de memoria: dos
 parejas declaradas equivalen a dos Alma, sin dar por hecho el premio fijo.
 La publicación de 225 se detuvo antes de subir archivos por esa expectativa
-antigua; la versión anterior publicada sigue siendo 224.
+antigua. La build 226 quedó publicada y verificada en beta y producción.
 
 Build 225 corrige los objetivos de Armadura y añade el cierre del menú de
 cartas móvil. Una selección `TGT` pendiente tiene prioridad sobre ataques,
@@ -35,12 +47,14 @@ Regresiones: `relojObjetivos`, `objetivosEquipo`, `cerrarCartaMovil`,
 `pitagorasMemoriaAlma` y
 `pitagorasMemoriaResultado`, además de las suites de integración existentes.
 
-Producción 224 ya estaba publicada y verificada antes de este cambio. El
+Producción 226 está publicada y verificada. El
 estudio de sonidos de producción tiene su propia base y credenciales,
 independientes de beta; conserva nueve reemplazos en siete archivos únicos.
-No copiar bases ni secretos al publicar el código. Se autorizó publicar 226
-en ambos entornos con `publicar.sh`; consultar el despliegue servido para
-confirmar el estado final. No hacer merge ni push a main.
+No copiar bases ni secretos al publicar el código. La producción 226 requirió
+reintentar el mismo despliegue de Cloudflare porque la API de sonidos no
+respondía; el reintento devolvió el servicio sin cambiar código, datos ni
+configuración. Verificar también la API tras publicar. No hacer merge ni
+push a main.
 
 Build 224 intensifica la invasión de `pitagoras-mesa.js`: núcleo oscuro detrás
 del retrato, masas orgánicas en los bordes, raíces secundarias, niebla procedural,

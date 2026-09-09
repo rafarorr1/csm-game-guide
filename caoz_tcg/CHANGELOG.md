@@ -1,5 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 227 · Los seis rostros de la campaña
+
+- Tras completar la campaña con el primer mazo, el botón Campaña muestra los
+  seis protagonistas: los completados en color con una pequeña marca dorada,
+  los pendientes en gris. Se reutilizan los logros guardados al vencer a Gero;
+  iniciar otra campaña conserva los retratos y los ensayos beta no los alteran.
+- Primeros planos de las ilustraciones disponibles, símbolos actuales para
+  Mohamed y Gero, y descripción del progreso para lectores de pantalla.
+  El botón completo sigue abriendo la campaña en escritorio y móvil.
+- Actualiza al terminar una campaña, recargar, volver al menú o recibir cambios
+  de otra pestaña. La carga tardía de las ilustraciones refresca los retratos.
+- Publicación sólo beta. Producción conserva la build 226; sin merge a main.
+
 ### Sin numerar · build 226 · Validación del resultado de memoria
 
 - La regresión de las seis Pesadillas declara las parejas de memoria al
