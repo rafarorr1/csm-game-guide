@@ -23,6 +23,7 @@
   document.write('<script src="pitagoras-mundos.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="pitagoras-cine.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="pitagoras-fps.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-pixel.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="pitagoras-laboratorio.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="pitagoras-combate.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="dado-fisico.js?b='+encodeURIComponent(b)+'"><\/script>');

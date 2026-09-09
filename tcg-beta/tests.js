@@ -699,7 +699,7 @@ PRUEBAS.suite('pitagorasCarrilesUI',async t=>{
 });
 
 PRUEBAS.suite('pitagorasMemoriaUI',async t=>{
-  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844],['movil.html',320,568],['movil.html',844,390]]){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=memoria-ui-interna';document.body.appendChild(f);await carga;
     const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
     try{
@@ -710,10 +710,12 @@ PRUEBAS.suite('pitagorasMemoriaUI',async t=>{
       for(let ronda=1;ronda<=3;ronda++){
         const cartas=[...d.querySelectorAll('.ppMemoriaCarta:not([hidden])')];t.igual(cartas.length,Math.min(7,4+ronda),pagina+': cantidad de cartas en ronda '+ronda);
         t.check(cartas.every(b=>b.disabled&&b.classList.contains('ppRevelada')),pagina+': las caras están a la vista sólo para memorizar');
+        const catalogo=w.eval('CARDS');t.check(modelo.cartasMemoria.every(id=>typeof id==='string'&&catalogo[id]),pagina+': las cartas visibles pertenecen al catálogo del juego');t.check(cartas.every((b,i)=>b.getAttribute('aria-label')==='Carta '+(i+1)+': '+catalogo[modelo.cartasMemoria[i]].n),pagina+': las etiquetas anuncian el nombre real de cada carta');t.check(cartas.every((b,i)=>[['.ppMemoriaCoste','c'],['.ppMemoriaAtaque','a'],['.ppMemoriaVida','h']].every(([selector,dato])=>b.querySelector(selector).textContent===String(catalogo[modelo.cartasMemoria[i]][dato]))),pagina+': las cifras de las cartas coinciden con su coste, ataque y vida oficiales');t.check(Math.abs(modelo.reveladoMemoria-Math.max(1.3,1.5-(ronda-1)*.05))<1e-8,pagina+': la ronda conserva medio segundo adicional para observar');
         for(const b of cartas){const r=b.getBoundingClientRect();t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.top>=0&&r.right<=w.innerWidth+1&&r.bottom<=w.innerHeight+1,pagina+': cada carta cabe y mantiene un blanco táctil de al menos 44 px');}
-        const nombres=cartas.map(b=>b.getAttribute('aria-label').replace(/^Carta \d+: /,'')),pareja=cartas.map((_,i)=>i).filter(i=>nombres.indexOf(nombres[i])!==nombres.lastIndexOf(nombres[i]));t.igual(pareja.length,2,pagina+': las ilustraciones y etiquetas muestran exactamente una pareja');
+        const nombres=cartas.map(b=>b.getAttribute('aria-label').replace(/^Carta \d+: /,'')),pareja=cartas.map((_,i)=>i).filter(i=>nombres.indexOf(nombres[i])!==nombres.lastIndexOf(nombres[i]));t.igual(pareja.length,2,pagina+': las ilustraciones y etiquetas muestran exactamente una pareja');t.check(cartas[pareja[0]].querySelector('canvas').toDataURL()===cartas[pareja[1]].querySelector('canvas').toDataURL(),pagina+': las dos copias de la pareja muestran exactamente el mismo arte');
         cartas[pareja[0]].click();avanzar(.05);t.check(!modelo.elegidasMemoria.length,pagina+': tocar mientras están reveladas no adelanta la selección');avanzar(modelo.hastaMemoria-modelo.t+.001);
         t.check(cartas.every(b=>!b.disabled&&!b.classList.contains('ppRevelada')&&b.getAttribute('aria-label').endsWith('oculta')),pagina+': al voltearlas se oculta también la identidad accesible');
+        t.check(cartas.every(b=>!b.querySelector('.ppMemoriaFrente').textContent.trim()),pagina+': los nombres y las cifras no permanecen disponibles detrás de cartas ocultas');t.check(cartas.every(b=>{const c=b.querySelector('canvas');return!c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0);}),pagina+': al voltear tampoco permanecen píxeles de la ilustración en las cartas ocultas');
         cartas[pareja[0]].click();avanzar(.016);t.check(modelo.elegidasMemoria.length===1&&cartas[pareja[0]].disabled&&cartas.filter(b=>b.classList.contains('ppRevelada')).length===1,pagina+': el primer clic revela sólo la carta escogida');
         w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Digit'+(pareja[1]+1),cancelable:true}));avanzar(.016);
         t.check(modelo.parejas===ronda&&modelo.faseMemoria==='resultado'&&cartas.every(b=>b.disabled),pagina+': una elección por teclado completa la pareja e impide dobles cobros');
@@ -748,14 +750,71 @@ PRUEBAS.suite('pitagorasCarrilesMemoria',async t=>{
   const temprano=M.crear({tipo:'carrera'}),tarde=M.crear({tipo:'carrera'});temprano.invulnerable=tarde.invulnerable=60;M.paso(temprano,{},1);M.paso(tarde,{},16);t.check(tarde.velocidad>temprano.velocidad+3,'Puente: la velocidad aumenta durante el trayecto');t.check((tarde.siguiente-tarde.t)<1.46&&tarde.oleada>Math.floor(tarde.t/1.45),'Puente: los obstáculos aparecen con mayor frecuencia en la segunda mitad');
   const pareja=s=>s.cartasMemoria.map((v,i)=>i).filter(i=>s.cartasMemoria.indexOf(s.cartasMemoria[i])!==s.cartasMemoria.lastIndexOf(s.cartasMemoria[i]));
   const memoria=M.crear({tipo:'duelo',semilla:17});t.check(memoria.faseMemoria==='mostrar'&&memoria.cartasMemoria.length===5&&pareja(memoria).length===2,'Memoria: presenta cinco cartas con exactamente una pareja');
-  const par=pareja(memoria);M.paso(memoria,{elegir:par[0]},.4);t.check(!memoria.elegidasMemoria.length,'Memoria: no acepta elecciones durante la exhibición');M.paso(memoria,{},.59);t.igual(memoria.faseMemoria,'mostrar','Memoria: conserva el primer segundo completo para memorizar');M.paso(memoria,{},.02);t.check(memoria.faseMemoria==='elegir'&&Math.abs(memoria.limiteMemoria-5)<1e-8,'Memoria: al ocultarse ofrece cinco segundos para elegir');
+  t.check(memoria.cartasMemoria.every(id=>typeof id==='string'&&API.cartasMemoria.includes(id)&&T.CARDS[id]),'Memoria: la pareja y sus distractores son cartas reales del catálogo del juego');t.check(Math.abs(memoria.reveladoMemoria-1.5)<1e-8,'Memoria: la primera exposición dura 1.5 segundos');
+  const par=pareja(memoria);M.paso(memoria,{elegir:par[0]},.4);t.check(!memoria.elegidasMemoria.length,'Memoria: no acepta elecciones durante la exhibición');M.paso(memoria,{},1.09);t.igual(memoria.faseMemoria,'mostrar','Memoria: conserva un segundo y medio completo para memorizar');M.paso(memoria,{},.02);t.check(memoria.faseMemoria==='elegir'&&Math.abs(memoria.limiteMemoria-5)<1e-8,'Memoria: al ocultarse ofrece cinco segundos para elegir');
   M.paso(memoria,{elegir:-1},.016);M.paso(memoria,{elegir:999},.016);M.paso(memoria,{elegir:.5},.016);t.check(!memoria.elegidasMemoria.length,'Memoria: ignora índices fuera de la mesa y valores fraccionarios');
   M.paso(memoria,{elegir:par[0]},.2);M.paso(memoria,{elegir:par[0]},.2);M.paso(memoria,{},.02);M.paso(memoria,{elegir:par[0]},.02);t.check(memoria.elegidasMemoria.length===1&&memoria.parejas===0,'Memoria: mantener o repetir la misma carta no fabrica una pareja');
-  M.paso(memoria,{},.016);M.paso(memoria,{elegir:par[1]},.016);t.check(memoria.parejas===1&&memoria.vidas===3&&memoria.faseMemoria==='resultado','Memoria: dos cartas iguales resuelven una pareja sin perder vida');const ronda=memoria.rondaMemoria;M.paso(memoria,{},.7);t.check(memoria.rondaMemoria===ronda+1&&memoria.cartasMemoria.length===6&&memoria.limiteMemoria<5,'Memoria: la ronda siguiente añade distractores y reduce el plazo');
-  const error=M.crear({tipo:'duelo',semilla:1});M.paso(error,{},1.01);const a=0,b=error.cartasMemoria.findIndex(v=>v!==error.cartasMemoria[0]);M.paso(error,{elegir:a},.016);M.paso(error,{},.016);M.paso(error,{elegir:b},.016);t.check(error.vidas===2&&error.parejas===0&&error.faseMemoria==='resultado','Memoria: una pareja equivocada cuesta exactamente una vida');
-  const timeout=M.crear({tipo:'duelo'});M.paso(timeout,{},5.99);t.check(timeout.vidas===3&&timeout.faseMemoria==='elegir','Memoria: el plazo no se cobra antes de los cinco segundos');M.paso(timeout,{},.03);t.check(timeout.vidas===2&&timeout.faseMemoria==='resultado','Memoria: agotar el plazo sin escoger una pareja cuesta una vida');M.paso(timeout,{},20);t.check(timeout.terminado&&!timeout.sobrevivio&&timeout.vidas===0,'Memoria: un fotograma ausente consume todas las rondas, sin victoria por inactividad');
+  M.paso(memoria,{},.016);M.paso(memoria,{elegir:par[1]},.016);t.check(memoria.parejas===1&&memoria.vidas===3&&memoria.faseMemoria==='resultado','Memoria: dos cartas iguales resuelven una pareja sin perder vida');const ronda=memoria.rondaMemoria;M.paso(memoria,{},.7);t.check(memoria.rondaMemoria===ronda+1&&memoria.cartasMemoria.length===6&&memoria.limiteMemoria<5,'Memoria: la ronda siguiente añade distractores y reduce el plazo');t.check(Math.abs(memoria.reveladoMemoria-1.45)<1e-8,'Memoria: el medio segundo adicional también permanece en la siguiente ronda');
+  for(let seed=1;seed<=12;seed++){const m=M.crear({tipo:'duelo',semilla:seed}),datos={};let ultima=0;for(let i=0;i<1200&&!m.terminado;i++){if(m.rondaMemoria!==ultima){ultima=m.rondaMemoria;t.check(pareja(m).length===2&&m.cartasMemoria.every(id=>typeof id==='string'&&T.CARDS[id]),'Memoria: cada ronda conserva una sola pareja de cartas reales');t.check(Math.abs(m.reveladoMemoria-Math.max(1.3,1.5-(m.rondaMemoria-1)*.05))<1e-8,'Memoria: el plazo de exposición conserva los .5 segundos extra en todas las dificultades');}M.paso(m,API.guiasPrueba.duelo(m,datos),1/60);}t.check(m.sobrevivio&&m.t===20,'Memoria: el plazo ampliado permite completar el reto mediante elecciones reales');}
+  const error=M.crear({tipo:'duelo',semilla:1});M.paso(error,{},1.51);const a=0,b=error.cartasMemoria.findIndex(v=>v!==error.cartasMemoria[0]);M.paso(error,{elegir:a},.016);M.paso(error,{},.016);M.paso(error,{elegir:b},.016);t.check(error.vidas===2&&error.parejas===0&&error.faseMemoria==='resultado','Memoria: una pareja equivocada cuesta exactamente una vida');
+  const timeout=M.crear({tipo:'duelo'});M.paso(timeout,{},6.49);t.check(timeout.vidas===3&&timeout.faseMemoria==='elegir','Memoria: el plazo no se cobra antes de los cinco segundos');M.paso(timeout,{},.03);t.check(timeout.vidas===2&&timeout.faseMemoria==='resultado','Memoria: agotar el plazo sin escoger una pareja cuesta una vida');M.paso(timeout,{},20);t.check(timeout.terminado&&!timeout.sobrevivio&&timeout.vidas===0,'Memoria: un fotograma ausente consume todas las rondas, sin victoria por inactividad');
   const insuficiente=M.crear({tipo:'duelo'});insuficiente.invulnerable=60;M.paso(insuficiente,{},20);t.check(insuficiente.terminado&&!insuficiente.sobrevivio,'Memoria: tener vidas al llegar al límite no basta sin tres parejas');
   const completo=M.crear({tipo:'duelo',semilla:8}),guia={};for(let i=0;i<1200&&!completo.terminado;i++)M.paso(completo,API.guiasPrueba.duelo(completo,guia),1/60);t.check(completo.terminado&&completo.sobrevivio&&completo.parejas>=3&&completo.t===20,'Memoria: recordar y escoger parejas permite ganar mediante entradas reales');
+});
+
+PRUEBAS.suite('pitagorasPresionFinal',async t=>{
+  const M=window.PITAGORAS_PRUEBAS.modelo;
+  // Ventanas de la misma partida: el pico se mide por criaturas aparecidas,
+  // sin depender de lo bien que dispare un controlador de prueba.
+  const oleada=M.crear({tipo:'isometrico',semilla:19});oleada.invulnerable=60;oleada.proximaMarca=Infinity;let primeras=0,tarde=0;
+  for(let i=0;i<1200&&!oleada.terminado;i++){oleada.enemigos=[];M.paso(oleada,{},1/60);if(i===299)primeras=oleada.apariciones;if(i===899)tarde=oleada.apariciones;}
+  t.check(Number.isFinite(primeras)&&oleada.apariciones-tarde>=primeras*2,'Cosecha: los últimos cinco segundos traen al menos el doble de criaturas que los primeros');
+  const suelo=M.crear({tipo:'isometrico',semilla:7});suelo.siguiente=Infinity;suelo.proximaMarca=Infinity;suelo.invulnerable=60;M.paso(suelo,{},11.99);
+  t.check(suelo.losas.length===0,'Cosecha: el suelo se conserva entero durante la primera mitad');M.paso(suelo,{},.03);t.check(suelo.losas.length>0&&suelo.losas.every(l=>!l.hueco),'Cosecha: una losa nueva primero avisa, sin abrir un hueco instantáneo');M.paso(suelo,{},7.98);
+  t.check(suelo.losas.some(l=>l.hueco)&&suelo.losas.length<=10,'Cosecha: la recta final deja huecos reales con una cantidad acotada');
+  for(let n=-6;n<=6;n+=.5)t.check(!M.enHueco(suelo,n,0)&&!M.enHueco(suelo,0,n),'Cosecha: siempre permanece una ruta de suelo continuo entre los cuatro lados');
+  const contacto=(edad,x=2,y=2)=>{const s=M.crear({tipo:'isometrico'});s.siguiente=Infinity;s.proximaMarca=Infinity;s.proximaLosa=Infinity;Object.assign(s.jugador,{x,y});s.losas=[{x:2,y:2,ancho:2,alto:2,edad,aviso:1.25,caida:.45,hueco:edad>=1.7}];return s;};
+  const temblor=contacto(1.23);M.paso(temblor,{},.01);t.check(temblor.vidas===3&&temblor.jugador.x===2&&temblor.jugador.y===2,'Cosecha: el aviso de grietas permite salir sin daño');
+  const derrumbe=contacto(1.4);M.paso(derrumbe,{},.01);t.check(derrumbe.vidas===3,'Cosecha: la animación de desprendimiento todavía permite escapar');
+  const caida=contacto(1.69);M.paso(caida,{},.02);t.check(caida.vidas===2&&!M.enHueco(caida,caida.jugador.x,caida.jugador.y)&&caida.caidaJugador>0,'Cosecha: caer cuesta una vida y devuelve la miniatura a suelo seguro');
+  const inmune=contacto(2);inmune.invulnerable=1;M.paso(inmune,{},.016);t.check(inmune.vidas===3&&!M.enHueco(inmune,inmune.jugador.x,inmune.jugador.y),'Cosecha: la invulnerabilidad evita doble daño pero nunca deja atrapada la miniatura en el vacío');
+  const borde=contacto(2,3.02,2);M.paso(borde,{},.016);t.check(borde.vidas===3&&borde.jugador.x===3.02,'Cosecha: el suelo junto al borde del hueco permanece transitable');
+  const criatura=contacto(2,0,0);criatura.enemigos=[{id:1,x:2,y:2,r:.35,hp:1,vel:0,aparece:0,dolor:0,fase:0}];M.paso(criatura,{},.016);t.check(!criatura.enemigos.length&&criatura.muertes===0,'Cosecha: los monstruos también caen sin contar como un disparo del jugador');
+  t.check(typeof M.prepararRayo==='function','Corte: los patrones forman parte del modelo determinista');
+  const patron=(tiempo,semilla)=>{const s=M.crear({tipo:'laseres',semilla});s.t=tiempo;s.siguiente=Infinity;M.prepararRayo(s);return s;},inicio=patron(4,1),final=patron(17,1);
+  t.check(inicio.rayos.length===1&&final.rayos.length>=4,'Corte: los disparos aislados evolucionan a secuencias en la recta final');
+  const formas=new Set();
+  for(let semilla=1;semilla<=20;semilla++){
+    const s=patron(17,semilla),igual=patron(17,semilla);t.check(JSON.stringify(s.rayos)===JSON.stringify(igual.rayos),'Corte: la misma semilla reproduce el mismo patrón y calendario');
+    const tiempos=s.rayos.map(r=>r.aviso-r.edad).sort((a,b)=>a-b);t.check(tiempos.every((v,i)=>i===0||v-tiempos[i-1]>=.2),'Corte: cada disparo tiene su momento propio, sin una descarga simultánea oculta');
+    t.check(s.rayos.every(r=>r.aviso>=.9&&Math.abs(Math.hypot(r.nx,r.ny)-1)<1e-8),'Corte: incluso al final cada franja anuncia su peligro al menos .9 segundos');
+    for(const r of s.rayos){formas.add(r.patron);const p={x:r.nx*r.offset,y:r.ny*r.offset},solo=M.crear({tipo:'laseres'});solo.siguiente=Infinity;Object.assign(solo.jugador,p);solo.rayos=[{...r}];const falta=r.aviso-r.edad;M.paso(solo,{},falta-.02);t.igual(solo.vidas,3,'Corte: una franja programada no hace daño antes de su aviso completo');M.paso(solo,{},.03);t.igual(solo.vidas,2,'Corte: el disparo hiere exactamente en la franja que anunció');}
+    // En cada instante de la secuencia queda espacio visible y transitable;
+    // las guías de supervivencia comprueban además que se puede alcanzarlo.
+    const limite=Math.max(...s.rayos.map(r=>r.aviso-r.edad+r.activo));
+    for(let q=0;q<=limite;q+=.1){let libre=false;for(let y=-5.5;y<=5.5&&!libre;y+=1)for(let x=-5.5;x<=5.5&&!libre;x+=1)libre=s.rayos.every(r=>r.edad+q<r.aviso||r.edad+q>=r.aviso+r.activo||Math.abs(x*r.nx+y*r.ny-r.offset)>r.ancho+s.jugador.r+.15);t.check(libre,'Corte: la secuencia nunca convierte toda la arena en daño inevitable');}
+  }
+  t.check(formas.size>=3,'Corte: la recta final alterna al menos tres familias de ataques');
+  const cronologia=M.crear({tipo:'laseres',semilla:13});cronologia.invulnerable=60;for(let i=0;i<1200&&!cronologia.terminado;i++){M.paso(cronologia,{},1/60);const amenazas=new Set(cronologia.rayos.filter(r=>r.edad>=0&&r.edad<r.aviso+r.activo).map(r=>r.idSecuencia));t.check(amenazas.size<=1,'Corte: una secuencia completa termina antes de anunciar la siguiente');}
+});
+
+PRUEBAS.suite('pitagorasPixel',async t=>{
+  const API=window.PITAGORAS_PRUEBAS,M=API.modelo,tipos=['isometrico','laseres','carrera','orbital','duelo'];
+  t.check(typeof API.pintarEscena==='function'&&tipos.every(tipo=>API.pixel?.pintores.includes(tipo)),'Las cinco realidades comparten la presentación pixelada del FPS');
+  for(const [ancho,alto] of [[370,614],[1280,690]])for(const tipo of tipos){
+    const lienzo=document.createElement('canvas');lienzo.width=ancho;lienzo.height=alto;const c=lienzo.getContext('2d'),modelo=M.crear({tipo,semilla:23}),s={tipo,ancho,alto,modelo,reducido:true};
+    const antes=JSON.stringify(M.instantanea(modelo));let pintadas=0;
+    const escena=ctx=>{pintadas++;const w=s.ancho,h=s.alto;ctx.fillStyle='#000000';ctx.fillRect(0,0,w,h);ctx.fillStyle='#ffffff';ctx.fillRect(w*.7-4,h*.3-4,8,8);};
+    API.pintarEscena(s,c,escena);
+    const blanco=c.getImageData(Math.round(ancho*.7),Math.round(alto*.3),1,1).data;
+    t.check(pintadas===1&&blanco[0]>220&&blanco[1]>220&&blanco[2]>220,tipo+': el escalado mantiene el marcador en el mismo punto visible del campo');
+    t.check(s.ancho===ancho&&s.alto===alto&&JSON.stringify(M.instantanea(modelo))===antes,tipo+': pintar restaura el encuadre y no altera tiempo, posición, azar ni colisiones');
+    const capa=s.editorPixel?.lienzo;t.check(capa&&capa.width*capa.height<=95000&&capa.width<ancho&&capa.height<alto,tipo+': el arte se dibuja en una superficie acotada, incluso en escritorio');
+    const copiar=s.editorPixel;API.pintarEscena(s,c,escena);t.check(s.editorPixel===copiar&&s.editorPixel.lienzo===capa,tipo+': los fotogramas reutilizan el mismo lienzo');
+    const pintor=API.pintores?.[tipo];if(pintor){API.pintarEscena(s,c,ctx=>pintor(s,ctx));t.check(JSON.stringify(M.instantanea(modelo))===antes,tipo+': el escenario real tampoco escribe en el modelo');}
+    let fallo=false;try{API.pintarEscena(s,c,()=>{throw Error('prueba del pintor');});}catch(e){fallo=e.message==='prueba del pintor';}
+    t.check(fallo&&s.ancho===ancho&&s.alto===alto,tipo+': un error de dibujo tampoco cambia los ejes de los controles');
+  }
 });
 
 PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
@@ -764,7 +823,7 @@ PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
     if(window.PITAGORAS_PRUEBAS.guiasPrueba?.[s.tipo])return window.PITAGORAS_PRUEBAS.guiasPrueba[s.tipo](s,mem);
     const p=s.jugador;
     if(s.tipo==='isometrico'){const a=s.t*.8,dx=Math.cos(a)*4-p.x,dy=Math.sin(a)*4-p.y,d=Math.hypot(dx,dy)||1;return{mx:dx/d,my:dy/d,accion:true};}
-    if(s.tipo==='laseres'){let mx=0,my=0;for(const r of s.rayos){if(r.edad>=r.aviso+r.activo)continue;const d=p.x*r.nx+p.y*r.ny-r.offset;if(Math.abs(d)<r.ancho+p.r+.65){let signo=d<0?-1:1;if(Math.abs(d)<.15)signo=r.nx*p.x+r.ny*p.y>0?-1:1;mx+=r.nx*signo*(1.4-Math.abs(d))*3;my+=r.ny*signo*(1.4-Math.abs(d))*3;}}return{mx,my};}
+    if(s.tipo==='laseres'){let mx=0,my=0;for(const r of s.rayos){if(r.edad<0||r.edad>=r.aviso+r.activo)continue;const d=p.x*r.nx+p.y*r.ny-r.offset;if(Math.abs(d)<r.ancho+p.r+.65){const lados=mem.lados||(mem.lados={});let signo=lados[r.id];if(!signo){signo=Math.abs(d)<.15?(r.nx*p.x+r.ny*p.y>0?-1:1):(d<0?-1:1);lados[r.id]=signo;}mx+=r.nx*signo*(1.4-Math.abs(d))*3;my+=r.ny*signo*(1.4-Math.abs(d))*3;}}const urgente=s.rayos.some(r=>r.edad>=0&&r.aviso-r.edad<.3&&r.edad<r.aviso+r.activo&&Math.abs(p.x*r.nx+p.y*r.ny-r.offset)<r.ancho+p.r+.4);return{mx,my,accion:urgente&&s.recargaImpulso<=0};}
     const puntos=[[13.6,13.6],[2.4,13.6],[2.4,2.4],[13.6,2.4]];let destino=puntos[mem.i||0],dx=destino[0]-p.x,dy=destino[1]-p.y,d=Math.hypot(dx,dy);if(d<.4){mem.i=((mem.i||0)+1)%4;destino=puntos[mem.i];dx=destino[0]-p.x;dy=destino[1]-p.y;d=Math.hypot(dx,dy);}dx/=d;dy/=d;
     const enemigos=s.enemigos.filter(e=>e.aparece<=0).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)),a=enemigos[0]?Math.atan2(enemigos[0].y-p.y,enemigos[0].x-p.x):Math.atan2(dy,dx),da=Math.atan2(Math.sin(a-p.a),Math.cos(a-p.a));
     return{mx:-dx*Math.sin(p.a)+dy*Math.cos(p.a),my:-dx*Math.cos(p.a)-dy*Math.sin(p.a),giro:da*8,accion:true};
