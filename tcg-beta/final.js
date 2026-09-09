@@ -19,6 +19,8 @@
   document.write('<script src="campana-pitagoras.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-secreto.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-honores.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-pruebas.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-combate.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="dado-fisico.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="polish-aaa.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="audio-domo.js?b='+encodeURIComponent(b)+'"><\/script>');

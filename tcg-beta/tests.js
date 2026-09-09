@@ -491,6 +491,238 @@ PRUEBAS.suite('d20OnlineFisico', async t => {
   }
 });
 
+PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
+  const M=window.PITAGORAS_PRUEBAS?.modelo;t.check(!!M,'Falta el modelo de las tres pruebas.');
+  const guiar=(s,mem)=>{
+    const p=s.jugador;
+    if(s.tipo==='isometrico'){const a=s.t*.8,dx=Math.cos(a)*4-p.x,dy=Math.sin(a)*4-p.y,d=Math.hypot(dx,dy)||1;return{mx:dx/d,my:dy/d,accion:true};}
+    if(s.tipo==='laseres'){let mx=0,my=0;for(const r of s.rayos){if(r.edad>=r.aviso+r.activo)continue;const d=p.x*r.nx+p.y*r.ny-r.offset;if(Math.abs(d)<r.ancho+p.r+.65){let signo=d<0?-1:1;if(Math.abs(d)<.15)signo=r.nx*p.x+r.ny*p.y>0?-1:1;mx+=r.nx*signo*(1.4-Math.abs(d))*3;my+=r.ny*signo*(1.4-Math.abs(d))*3;}}return{mx,my};}
+    const puntos=[[13.6,13.6],[2.4,13.6],[2.4,2.4],[13.6,2.4]];let destino=puntos[mem.i||0],dx=destino[0]-p.x,dy=destino[1]-p.y,d=Math.hypot(dx,dy);if(d<.4){mem.i=((mem.i||0)+1)%4;destino=puntos[mem.i];dx=destino[0]-p.x;dy=destino[1]-p.y;d=Math.hypot(dx,dy);}dx/=d;dy/=d;
+    const enemigos=s.enemigos.filter(e=>e.aparece<=0).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)),a=enemigos[0]?Math.atan2(enemigos[0].y-p.y,enemigos[0].x-p.x):Math.atan2(dy,dx),da=Math.atan2(Math.sin(a-p.a),Math.cos(a-p.a));
+    return{mx:-dx*Math.sin(p.a)+dy*Math.cos(p.a),my:-dx*Math.cos(p.a)-dy*Math.sin(p.a),giro:da*8,accion:true};
+  };
+  for(const tipo of ['isometrico','laseres','fps']){
+    const quieto=M.crear({tipo,semilla:6});for(let i=0;i<1200&&!quieto.terminado;i++)M.paso(quieto,{},1/60);
+    t.check(quieto.terminado&&!quieto.sobrevivio&&quieto.vidas===0&&quieto.t<20,tipo+': los peligros causan una derrota real sin jugar.');
+    const s=M.crear({tipo,semilla:1}),repetido=M.crear({tipo,semilla:1}),mem={},otro={};
+    for(let i=0;i<1200&&!s.terminado;i++){M.paso(s,guiar(s,mem),1/60);M.paso(repetido,guiar(repetido,otro),1/60);}
+    t.check(s.terminado&&s.sobrevivio&&s.vidas>0&&s.t===20,tipo+': se puede sobrevivir veinte segundos con movimiento y combate reales.');
+    t.check(JSON.stringify(M.instantanea(s))===JSON.stringify(M.instantanea(repetido)),tipo+': semilla y controles reproducen exactamente la partida.');
+    const reloj=M.crear({tipo});reloj.siguiente=Infinity;reloj.proximaMarca=Infinity;M.paso(reloj,{},19.99);t.check(!reloj.terminado,tipo+': no hay victoria antes de veinte segundos.');M.paso(reloj,{},.01);t.check(reloj.terminado&&reloj.sobrevivio&&reloj.t===20,tipo+': el límite exacto de tiempo resuelve la supervivencia.');
+    t.nota(tipo+': supervivencia real en 20 s con '+s.vidas+' vidas; inmóvil pierde en '+quieto.t.toFixed(2)+' s.');
+  }
+  const dano=M.crear({tipo:'fps'});dano.siguiente=Infinity;M.herir(dano);for(let i=0;i<60;i++)M.herir(dano);t.check(dano.vidas===2,'Un contacto múltiple no consume las tres vidas.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.vidas===1,'La invulnerabilidad expira y permite un segundo golpe.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.terminado&&!dano.sobrevivio&&dano.vidas===0,'El tercer golpe termina el intento.');
+  const laser=M.crear({tipo:'laseres'});laser.siguiente=Infinity;laser.rayos=[{nx:1,ny:0,offset:laser.jugador.x,edad:0,aviso:1.4,activo:.36,ancho:.37}];M.paso(laser,{},1.3);t.check(laser.vidas===3,'El aviso del láser no hace daño.');M.paso(laser,{},.11);t.check(laser.vidas===2,'El láser activo colisiona en la franja anunciada.');
+  const iso=M.crear({tipo:'isometrico'});iso.siguiente=Infinity;iso.proximaMarca=Infinity;Object.assign(iso.jugador,{x:0,y:0,a:0});iso.enemigos=[{id:1,x:1,y:0,r:.35,hp:1,vel:0,aparece:0,dolor:0,fase:0}];M.paso(iso,{accion:true,apuntar:0},.03);t.check(iso.muertes===1&&iso.enemigos.length===0,'El disparo isométrico elimina al monstruo que toca.');
+  const fps=M.crear({tipo:'fps'});fps.siguiente=Infinity;Object.assign(fps.jugador,{x:3.5,y:3.5,a:0});fps.enemigos=[{id:1,x:6.5,y:3.5,r:.34,hp:2,vel:0,aparece:0,dolor:0,fase:0}];M.paso(fps,{accion:true},.03);t.check(fps.enemigos[0].hp===2,'Los disparos FPS no atraviesan las columnas.');M.paso(fps,{my:-1},.5);t.check(fps.jugador.x<3.73,'El jugador FPS colisiona con las paredes.');
+  const visible=M.crear({tipo:'fps'});visible.siguiente=Infinity;Object.assign(visible.jugador,{x:3.5,y:8.5,a:0});visible.enemigos=[{id:1,x:6.5,y:8.5,r:.34,hp:2,vel:0,aparece:0,dolor:0,fase:0}];M.paso(visible,{accion:true},.03);t.check(visible.enemigos[0].hp===1,'Apuntar y disparar en FPS daña al perseguidor visible.');
+});
+
+
+PRUEBAS.suite('pitagorasIntegracion',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-integracion-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,interferencia=w.campanaInterferenciaPitagoras,rapida=w.fastWindow,objetivos=w.resolveTargets,resolverDado=w.resolverD20,finTurno=w.endTurn;let eventos=[],finales=[];
+    try{
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:true});
+      // Sólo abreviamos las pausas cosméticas; ninguna promesa del minijuego
+      // se resuelve hasta que la prueba entrega explícitamente un resultado.
+      w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);
+      for(const nombre of ['fxSpell','fxFace','fxHit','fxTrap'])w[nombre]=async()=>{};
+      for(const nombre of ['fxNotice','fxAterriza','fxObj','fxStat','fxNumber'])w[nombre]=()=>{};
+      w.ask=async()=>1;w.campanaFinalSecreto=(ganador,motivo)=>{finales.push({ganador,motivo});};
+      const hasta=async(pred,mensaje)=>{for(let n=0;n<400&&!pred();n++)await sleep(0);t.check(pred(),pagina+': '+mensaje);};
+      const arena=(side=1,jefe=true)=>{
+        w.newGame('fender','adreida');w.campanaGuardar({version:1,id:'editor-prueba',lider:'fender',etapa:6,secreto:'combate'});
+        w.eval("G.phase='principal';G.active="+side+";G.turnNo=3;P(0).pd=P(1).pd=20;P(0).alma=P(1).alma=20;P(0).hand=[];P(1).hand=[];P(0).leaderUsed=P(1).leaderUsed=true;G.campana="+(jefe?"{id:'editor-prueba',etapa:6,jefeSecreto:true}":'undefined'));
+        eventos=[];finales=[];w.showScreen('board');return w.eval('G');
+      };
+      const inmediato=resultado=>{w.campanaInterferenciaPitagoras=async(side,id,g)=>{eventos.push({side,id,g});return resultado;};};
+      const diferir=()=>{const pendientes=[];w.campanaInterferenciaPitagoras=(side,id,g)=>new Promise(resolve=>{eventos.push({side,id,g});pendientes.push(resolve);});return pendientes;};
+      // Las seis clases pasan por la misma frontera, después de pagar y
+      // resolver la carta. La ficha que crea Ilusión no es otra carta jugada.
+      for(const id of ['matildus','nubedagas','peaje','puntosrobados','collar','puente','ilusion']){
+        arena();inmediato({sobrevivio:true,cancelado:false});let ts;
+        if(id==='collar'){const u=w.mkUnit('minus',1);w.eval('P(1)').field.push(u);w.recalc();ts=[[u]];}
+        w.eval('P(1)').hand=[id];t.check(await w.playFromHand(1,id,ts),pagina+': se juega '+id);
+        t.check(eventos.length===1&&eventos[0].id===id&&eventos[0].side===1,pagina+': una sola interferencia por '+id);
+        t.igual(w.eval('P(1).alma'),18,pagina+': sobrevivir quita exactamente 2 al Editor');t.igual(w.eval('P(0).alma'),20,pagina+': sobrevivir no daña al jugador');
+        if(id==='ilusion')t.igual(w.eval('P(1).field.length'),1,pagina+': Ilusión invoca una ficha sin interrupción extra');
+      }
+      arena();inmediato({sobrevivio:false,cancelado:false});w.eval("P(1).hand=['matildus']");await w.playFromHand(1,'matildus');t.igual(w.eval('P(0).alma'),18,pagina+': fallar quita 2 al jugador');t.igual(w.eval('P(1).alma'),20,pagina+': fallar no daña al Editor');
+      arena();inmediato({cancelado:true});w.eval("P(1).hand=['matildus']");await w.playFromHand(1,'matildus');t.igual(w.eval('P(0).alma+P(1).alma'),40,pagina+': cancelar no inflige daño');
+      // Una anulación sucede después del pago: la carta sí fue jugada.
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['nubedagas'];P(0).traps=[{id:'notario'}]");await w.playFromHand(1,'nubedagas');
+      t.check(eventos.length===1&&eventos[0].id==='nubedagas'&&w.eval("P(1).grave.includes('nubedagas')&&P(1).clouds.length===0"),pagina+': el hechizo anulado cuenta una vez sin resolver su efecto.');
+      // Coste insuficiente y selección cancelada nunca cruzan la frontera.
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['minus'];P(1).pd=0");t.check(!await w.playFromHand(1,'minus')&&!eventos.length,pagina+': sin PD no hay minijuego.');
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['collar']");w.eval('P(1)').field.push(w.mkUnit('minus',1));w.recalc();w.resolveTargets=async()=>null;
+      t.check(!await w.playFromHand(1,'collar')&&!eventos.length&&w.eval("P(1).hand.includes('collar')&&P(1).pd===20"),pagina+': cancelar objetivos no juega ni interrumpe.');w.resolveTargets=objetivos;
+      for(const caso of ['jugador','normal','auto','fast','silent','online','guest','sala']){
+        arena(caso==='jugador'?0:1,caso!=='normal');inmediato({sobrevivio:true});
+        if(['auto','fast','silent','online','guest'].includes(caso))w.eval('G.'+caso+'=true');if(caso==='sala')w.eval('NET.on=true');
+        const side=caso==='jugador'?0:1;w.eval('P('+side+')').hand=['matildus'];await w.playFromHand(side,'matildus');
+        t.check(!eventos.length&&w.eval('P(0).alma+P(1).alma')===40,pagina+': no modifica '+caso);w.eval('NET.on=false');
+      }
+      arena();inmediato({sobrevivio:true});await w.summonToken(1,'tok_ilusion');w.eval("P(1).traps=[{id:'peaje'}]");await w.trapWindow(1,'ataqueAlma',{});t.check(!eventos.length,pagina+': activar una trampa o invocar una ficha no es jugar otra carta.');
+      // El rival responde desde la mano durante nuestro turno. No pasa por
+      // playFromHand, pero debe abrir exactamente la misma interrupción.
+      arena(0);inmediato({sobrevivio:true});w.eval("P(1).hand=['contrahechizo']");const contra={cardId:'espiritus',countered:false};await w.fastWindow(1,{kind:'hechizo',ev:contra});
+      t.check(contra.countered&&eventos.length===1&&eventos[0].id==='contrahechizo'&&w.eval('P(1).alma')===18,pagina+': respuesta rápida del Editor contada una vez.');
+      // Dos cartas de la IA: mientras no respondamos, la segunda sigue en
+      // su mano y el turno no llega al combate ni al relevo del jugador.
+      arena();const pendientes=diferir();w.eval("P(1).hand=['matildus','minus']");let termino=false,cedio=false;w.endTurn=async()=>{cedio=true;};
+      const turno=w.aiTurn().then(()=>{termino=true;});await hasta(()=>eventos.length>=1,'la primera carta abre la interrupción');await sleep(20);
+      t.check(eventos.length===1&&!termino&&!cedio&&w.eval('G.busy&&P(1).hand.length===1&&P(1).field.length===1'),pagina+': la IA espera el minijuego.');
+      pendientes[0]({sobrevivio:true});await hasta(()=>eventos.length===2,'la IA sólo juega la segunda carta al resolver la primera');
+      t.check(!termino&&!cedio,pagina+': el segundo minijuego también mantiene detenido el turno.');pendientes[1]({sobrevivio:false});await turno;w.endTurn=finTurno;
+      t.check(cedio&&w.eval('P(0).alma===18&&P(1).alma===18'),pagina+': un resultado por carta y después continúa la IA.');
+      // Cancelar una respuesta rápida al empezar otra partida no deja que el
+      // hechizo suspendido modifique las cartas o el Alma de la partida nueva.
+      arena(0);const respuesta=diferir();w.eval("P(0).hand=['espiritus'];P(1).hand=['contrahechizo']");const hechizo=w.playFromHand(0,'espiritus');await hasta(()=>respuesta.length===1,'respuesta rápida pendiente');
+      w.newGame('fender','adreida');const nueva=w.eval('G');respuesta[0]({sobrevivio:true});await hechizo;
+      t.check(w.eval('G')===nueva&&w.eval('P(0).alma===20&&P(1).alma===20&&P(0).spirits===0'),pagina+': no reanuda el hechizo anterior en otra partida.');
+      arena(0);const repeticion=diferir();let tiradas=0;w.resolverD20=async()=>{tiradas++;return 17;};w.eval("P(1).hand=['puas']");const dado=w.roll('Prueba del Editor',0);await hasta(()=>repeticion.length===1,'Púas interrumpe la tirada');
+      w.newGame('fender','adreida');repeticion[0]({sobrevivio:true});t.igual(await dado,0,pagina+': una tirada cancelada no entrega un valor antiguo');t.igual(tiradas,1,pagina+': no pide otro d20 tras empezar una partida nueva');w.resolverD20=resolverDado;
+      // El cero de cancelación no es una tirada baja para Hongos: al volver
+      // del minijuego no puede matar un aliado creado en otra partida.
+      arena(0);const viajeInterrumpido=diferir();w.resolverD20=async()=>17;w.eval("P(0).hand=['hongos'];P(1).hand=['puas']");
+      const hongos=w.playFromHand(0,'hongos');await hasta(()=>viajeInterrumpido.length===1,'Púas del Editor abre una prueba durante Hongos');
+      t.check(eventos[0].id==='puas'&&w.eval("!P(0).hand.includes('hongos')&&P(0).pd===19&&P(1).grave.includes('puas')"),pagina+': ambas cartas fueron jugadas antes de cancelar el minijuego');
+      w.newGame('fender','adreida');const partidaNueva=w.eval('G'),aliadoNuevo=w.mkUnit('matildus',0);w.eval('P(0)').field.push(aliadoNuevo);w.recalc();
+      viajeInterrumpido[0]({sobrevivio:true});await hongos;w.resolverD20=resolverDado;
+      t.check(w.eval('G')===partidaNueva&&aliadoNuevo.alive&&w.eval('P(0)').field.includes(aliadoNuevo)&&w.eval('P(0).grave.length===0&&P(0).alma===20&&P(1).alma===20&&!G.over'),pagina+': Hongos cancelado no interpreta cero ni mata al aliado de la partida nueva');
+      // La ventana de respuesta de un ataque comparte esa frontera. Su
+      // finally tampoco puede desbloquear una resolución de la partida nueva.
+      arena(0);let seguirAtaque;w.fastWindow=async()=>new Promise(r=>{seguirAtaque=r;});const atacante=w.mkUnit('matildus',0);atacante.sick=false;w.eval('P(0)').field.push(atacante);w.recalc();
+      const ataque=w.doAttack(atacante,'face');await hasta(()=>!!seguirAtaque,'ataque suspendido en su ventana de respuesta');w.newGame('fender','adreida');w.eval('G.resolving=true');seguirAtaque();await ataque;
+      t.check(w.eval('P(0).alma===20&&P(1).alma===20&&G.resolving'),pagina+': el ataque cancelado no daña ni desbloquea la partida nueva.');w.fastWindow=rapida;
+      // Llegar a cero sigue entrando al final secreto mediante showEnd.
+      for(const sobrevivio of [true,false]){
+        arena();inmediato({sobrevivio});w.eval('P('+(sobrevivio?1:0)+').alma=2');w.eval("P(1).hand=['matildus']");await w.playFromHand(1,'matildus');
+        await hasta(()=>finales.length===1,'el daño letal entra en el final de campaña');t.igual(finales[0].ganador,sobrevivio?0:1,pagina+': ganador correcto del daño letal');t.check(w.eval('G.over'),pagina+': el combate termina al llegar a cero');
+      }
+      // El controlador real conserva el estado de resolución, alterna las
+      // tres pruebas y cancela la promesa al abandonar la mesa o cambiar G.
+      w.campanaInterferenciaPitagoras=interferencia;const llamadas=[],respuestas=[];let cancelaciones=0;
+      w.PITAGORAS_PRUEBAS={iniciar:op=>{llamadas.push(op);return new Promise(r=>respuestas.push(r));},cancelar:()=>{cancelaciones++;respuestas.at(-1)?.({cancelado:true});}};
+      arena();const actual=w.eval('G');w.eval('G.resolving=true');
+      for(let i=0;i<3;i++){
+        const esperando=w.campanaInterferenciaPitagoras(1,'matildus',actual);await hasta(()=>llamadas.length===i+1,'abre prueba '+i);
+        t.check(w.eval('G.editorEnPrueba&&G.resolving'),pagina+': pausa los controles mientras se juega.');t.igual(llamadas[i].duracion,20,pagina+': duración de veinte segundos');respuestas[i]({sobrevivio:true,cancelado:false});await esperando;
+        t.check(w.eval('G.resolving')===true&&!w.eval('G.editorEnPrueba'),pagina+': restaura la resolución previa.');
+      }
+      t.check(llamadas.map(x=>x.tipo).join(',')==='isometrico,laseres,fps',pagina+': alterna los tres minijuegos.');
+      for(const salida of ['menu','nuevo','revancha']){
+        arena();const antes=llamadas.length;
+        w.eval("P(1).hand=['matildus']");const carta=w.playFromHand(1,'matildus');await hasta(()=>llamadas.length>antes,'minijuego para cancelar '+salida);
+        const tarde=respuestas.at(-1);
+        if(salida==='menu')w.showScreen('menu');else if(salida==='nuevo')w.newGame('fender','adreida');else{w.cortinillaVS=async()=>{};await w.startMatch('fender','adreida',{volado:false,first:0});}
+        tarde({sobrevivio:true});await carta;t.check(!w.eval('G.editorEnPrueba'),pagina+': salir cancela la prueba pendiente');t.check(w.eval('P(0).alma===20&&P(1).alma===20'),pagina+': el resultado tardío de '+salida+' no hace daño.');
+      }
+      t.check(cancelaciones>=3,pagina+': cancela también la escena de minijuego.');
+    }finally{w.eval('NET.on=false');w.campanaCancelarInterferencia?.();w.campanaCerrar();w.relojPara();w.setTimeout=poner;w.fastWindow=rapida;w.resolveTargets=objetivos;w.resolverD20=resolverDado;w.endTurn=finTurno;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+
+PRUEBAS.suite('pitagorasContinuidad',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px;border:0';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=continuidad-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now;
+    const montar=w.montarRevelacionPitagoras,empezar=w.startMatch,clave=w.eval('CAMPANA_CLAVE'),guardado=w.localStorage.getItem(clave);
+    const pendientes=new Map(),cuadros=new Map();let ahora=10000,id=990000,revelacion=null,partidas=[];
+    const avanzar=ms=>{const hasta=ahora+ms;let limite=0;for(;;){const p=[...pendientes].sort((a,b)=>a[1].cuando-b[1].cuando)[0];if(!p||p[1].cuando>hasta)break;t.check(++limite<200,'Temporizadores finitos');pendientes.delete(p[0]);ahora=p[1].cuando;p[1].fn();}ahora=hasta;};
+    const pintar=()=>{const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+    const tienePixeles=c=>{const foto=d.createElement('canvas');foto.width=c.width;foto.height=c.height;const ctx=foto.getContext('2d');ctx.drawImage(c,0,0);return ctx.getImageData(0,0,foto.width,foto.height).data.some((v,i)=>i%4===3&&v>0);};
+    try{
+      w.setTimeout=(fn,ms=0,...args)=>{const k=++id;pendientes.set(k,{cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return k;};w.clearTimeout=k=>{if(!pendientes.delete(k))quitar(k);};
+      w.requestAnimationFrame=fn=>{const k=++id;cuadros.set(k,fn);return k;};w.cancelAnimationFrame=k=>{if(!cuadros.delete(k))caf(k);};w.performance.now=()=>ahora;
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      w.montarRevelacionPitagoras=(host,op)=>{revelacion=montar(host,op);return revelacion;};
+      w.startMatch=(a,b,op)=>{partidas.push({a,b,op});return Promise.resolve();};
+      w.campanaGuardar({version:1,id:'continuidad-'+pagina,lider:'fender',etapa:6,secreto:'revelacion',prueba:true,personaje:w.campanaNormalizarPersonaje({nombre:'Ariadna',color:'violeta',equipo:'libro'})});
+      w.campanaAbrirSecreto();
+      t.check(revelacion&&d.querySelector('#campanaSecreto').dataset.fase==='revelacion',pagina+': el controlador monta la revelación real');
+      if(!revelacion.imagen.complete||!revelacion.imagen.naturalWidth)await new Promise(r=>revelacion.imagen.addEventListener('load',r,{once:true}));
+      const seccion=revelacion.elemento,imagen=revelacion.imagen,mini=seccion.querySelector('.pitFiguraTestigo canvas');
+      pintar();t.check(mini&&tienePixeles(mini),pagina+': miniatura dibujada antes del traspaso');
+      avanzar(1800);pintar();const antes=mini.getBoundingClientRect();avanzar(5800);pintar();
+      const panel=d.querySelector('#campanaSecreto'),despues=d.querySelector('.pitFiguraTestigo canvas'),boss=d.querySelector('.pitBoss');
+      t.igual(panel.dataset.fase,'trono',pagina+': el callback real guarda y abre el encuentro');
+      t.igual(w.campanaLeer().secreto,'trono',pagina+': el controlador persiste el encuentro');
+      t.check(d.querySelector('.pitAbismo')===seccion&&d.querySelector('.pitCriaturaImagen')===imagen&&despues===mini,pagina+': conserva sección, imagen decodificada y canvas, sin reconstrucción');
+      t.check(tienePixeles(despues),pagina+': el primer cuadro del encuentro conserva al viajero visible');
+      const rect=despues.getBoundingClientRect();t.check(Math.abs(rect.x-antes.x)<1&&Math.abs(rect.y-antes.y)<1,pagina+': la miniatura tampoco salta de posición');
+      t.check(d.querySelectorAll('.pitBoss').length===1&&!boss.disabled&&boss.tabIndex===0&&!boss.hasAttribute('aria-hidden'),pagina+': un solo objetivo accesible al terminar la revelación');
+      boss.click();boss.click();await Promise.resolve();
+      t.igual(partidas.length,1,pagina+': doble clic inicia una sola partida');
+      t.check(partidas[0].b==='adreida'&&partidas[0].op.campana.jefeSecreto&&partidas[0].op.nombres[0]==='Ariadna',pagina+': conserva las reglas del jefe y la identidad del viajero');
+      t.check(!seccion.isConnected&&!d.querySelector('#campanaSecreto'),pagina+': el combate desmonta la escena al salir');
+      avanzar(20000);pintar();t.check(!d.querySelector('#campanaSecreto')&&partidas.length===1,pagina+': temporizadores tardíos no reabren el encuentro');
+    }finally{
+      w.campanaCancelarSecreto();w.relojPara();w.montarRevelacionPitagoras=montar;w.startMatch=empezar;w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;
+      if(guardado===null)w.localStorage.removeItem(clave);else w.localStorage.setItem(clave,guardado);f.remove();
+    }
+  }
+});
+
+
+PRUEBAS.suite('pitagorasRevelacion',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',320,568]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=revelacion-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now,media=w.matchMedia,prop=Object.getOwnPropertyDescriptor(w.HTMLImageElement.prototype,'src');
+    const pendientes=new Map(),cuadros=new Map(),escenas=[];let ahora=10000,id=980000,bloquear=false,reducido=false;
+    const host=d.createElement('div');host.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:999999;background:#000';d.body.appendChild(host);
+    const avanzar=ms=>{const hasta=ahora+ms;let guardia=0;for(;;){const p=[...pendientes].sort((a,b)=>a[1].cuando-b[1].cuando)[0];if(!p||p[1].cuando>hasta)break;t.check(++guardia<200,pagina+': temporizadores finitos');pendientes.delete(p[0]);ahora=p[1].cuando;p[1].fn();}ahora=hasta;};
+    const pintar=()=>{const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+    const crear=op=>{const e=w.montarRevelacionPitagoras(host,{personaje:{nombre:'Ari',color:'azul',equipo:'baston'},origen:{x:.4,y:.42},...op});escenas.push(e);return e;};
+    const cargada=e=>new Promise(resolve=>{if(e.elemento.dataset.arte==='listo')resolve();else e.imagen.addEventListener('load',resolve,{once:true});});
+    try{
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:reducido}:media.call(w,q);
+      w.setTimeout=(fn,ms=0,...args)=>{const k=++id;pendientes.set(k,{cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return k;};w.clearTimeout=k=>{if(!pendientes.delete(k))quitar(k);};
+      w.performance.now=()=>ahora;w.requestAnimationFrame=fn=>{const k=++id;cuadros.set(k,fn);return k;};w.cancelAnimationFrame=k=>{if(!cuadros.delete(k))caf(k);};
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      Object.defineProperty(w.HTMLImageElement.prototype,'src',{...prop,set(v){if(bloquear&&String(v).includes('pitagoras-abismo'))this.dataset.demora=v;else prop.set.call(this,v);}});
+      let reveladas=0;const e=crear({onRevelado:()=>reveladas++});await cargada(e);
+      const inicial=e.testigo.getBoundingClientRect(),ojos=e.elemento.querySelector('.pitOjos');
+      t.igual(w.getComputedStyle(e.elemento).backgroundColor,'rgb(0, 0, 0)',pagina+': negro total desde el primer cuadro');
+      t.check(w.getComputedStyle(e.imagen).opacity==='0'&&w.getComputedStyle(ojos).opacity==='0'&&w.getComputedStyle(e.elemento.querySelector('.pitBossNombre')).opacity==='0',pagina+': al inicio sólo se ve el héroe, sin rival ni textos.');
+      t.check(Math.abs(inicial.left+inicial.width/2-ancho*.4)<1&&Math.abs(inicial.bottom-alto*.42)<1,pagina+': parte del punto del ascenso en el visor.');
+      const mini=e.testigo.querySelector('canvas');t.check(mini?.width>0&&mini.height>0,pagina+': conserva la miniatura real iluminada.');
+      e.boss.click();avanzar(1800);pintar();const abajo=e.testigo.getBoundingClientRect();
+      t.check(abajo.bottom>inicial.bottom+alto*.2&&Math.abs(abajo.left+abajo.width/2-ancho/2)<1,pagina+': el héroe desciende hacia el centro inferior.');
+      t.check(cuadros.size===0,pagina+': termina el dibujo continuo al completar el desplazamiento.');
+      avanzar(400);t.igual(e.elemento.dataset.fase,'ojos',pagina+': aparecen los ojos antes del cuerpo');t.igual(w.getComputedStyle(e.imagen).opacity,'0',pagina+': el cuerpo sigue completamente oculto al aparecer los ojos');
+      t.check(w.getComputedStyle(ojos).transitionDuration!=='0s',pagina+': los ojos tienen entrada gradual, sin destellos.');
+      avanzar(1400);t.igual(e.elemento.dataset.fase,'surgiendo',pagina+': comienza la aparición lenta');
+      t.igual(w.getComputedStyle(e.imagen).transitionDuration,'3.6s',pagina+': el cuerpo se descubre con un fundido largo');
+      avanzar(3999);t.check(!e.revelado&&reveladas===0,pagina+': no habilita combate mientras termina la aparición.');avanzar(1);
+      t.check(e.revelado&&reveladas===1&&e.elemento.dataset.fase==='revelado',pagina+': revela una sola vez tras el fundido.');
+      // La nueva escena recibe el MISMO nodo decodificado: evita un cuadro vacío.
+      const imagen=e.imagen,antes=e.presencia.getBoundingClientRect(),trono=w.montarEscenaPitagoras(host,{personaje:{nombre:'Ari',color:'azul',equipo:'baston'}});escenas.push(trono);e.destruir();
+      const despues=trono.presencia.getBoundingClientRect(),objetivo=trono.boss.getBoundingClientRect();
+      t.check(trono.imagen===imagen&&trono.imagen.naturalWidth>0,pagina+': reutiliza la imagen decodificada al entrar al encuentro.');
+      t.check(w.getComputedStyle(trono.imagen).opacity==='1'&&w.getComputedStyle(trono.imagen).transitionDuration==='0s',pagina+': no vuelve a ocultar al monstruo al terminar la revelación.');
+      t.check(Math.abs(antes.x-despues.x)<1&&Math.abs(antes.y-despues.y)<1&&Math.abs(antes.width-despues.width)<1&&Math.abs(antes.height-despues.height)<1,pagina+': el monstruo no cambia de tamaño ni posición.');
+      t.check(objetivo.width>=44&&objetivo.height>=44&&objetivo.bottom<=alto-80,pagina+': área de combate tocable y separada del menú.');trono.destruir();
+      bloquear=true;let lentas=0;const lenta=crear({onRevelado:()=>lentas++});avanzar(8000);t.check(!lenta.revelado&&lentas===0&&lenta.elemento.dataset.fase==='ojos',pagina+': una imagen lenta conserva ojos y negro, no muestra de golpe el cuerpo.');
+      prop.set.call(lenta.imagen,lenta.imagen.dataset.demora);await cargada(lenta);t.igual(lenta.elemento.dataset.fase,'surgiendo',pagina+': cuando llega la imagen comienza su fundido completo');
+      avanzar(3999);t.igual(lentas,0,pagina+': también espera el fundido con red lenta');avanzar(1);t.igual(lentas,1,pagina+': la carga lenta termina sin bloquear');lenta.destruir();
+      let fallidas=0;const fallida=crear({onRevelado:()=>fallidas++});fallida.imagen.dispatchEvent(new w.Event('error'));
+      t.check(fallida.elemento.dataset.arte==='alternativa'&&w.getComputedStyle(fallida.elemento.querySelector('.pitContorno')).opacity==='0',pagina+': fallar el arte tampoco muestra contenido en el negro inicial.');
+      avanzar(7600);t.check(fallida.revelado&&fallidas===1,pagina+': el error del arte ofrece una salida funcional, sin espera infinita.');fallida.destruir();
+      let tardias=0;const cancelada=crear({onRevelado:()=>tardias++});avanzar(2300);cancelada.destruir();cancelada.imagen.dispatchEvent(new w.Event('load'));avanzar(20000);pintar();t.igual(tardias,0,pagina+': cerrar cancela temporizadores, animación y cargas tardías');
+      bloquear=false;reducido=true;const breve=crear({onRevelado:()=>tardias++});await cargada(breve);avanzar(1199);t.igual(tardias,0,pagina+': movimiento reducido conserva una transición gradual');avanzar(1);t.check(breve.revelado&&tardias===1,pagina+': movimiento reducido completa en 1.2 segundos sin trasladar al héroe.');breve.destruir();
+      t.check(!host.childElementCount&&pendientes.size===0&&cuadros.size===0,pagina+': todas las escenas se limpian completamente.');
+    }finally{
+      escenas.forEach(e=>e.destruir());host.remove();Object.defineProperty(w.HTMLImageElement.prototype,'src',prop);w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;w.matchMedia=media;w.relojPara();f.remove();
+    }
+  }
+});
+
 PRUEBAS.suite('pitagorasVisual',async t=>{
   for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',320,568]]){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
@@ -514,9 +746,9 @@ PRUEBAS.suite('pitagorasVisual',async t=>{
       Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
       let luchas=0;const escena=montar('montarEscenaPitagoras',{onFight:()=>luchas++});
       const boton=escena.boss,figura=escena.elemento.querySelector('.pitIlustracion'),r=boton.getBoundingClientRect();
-      t.check(figura?.tagName.toLowerCase()==='svg'&&boton.tagName==='BUTTON'&&boton.getAttribute('aria-label').includes('Pitágoras'),pagina+': trono real y acceso con teclado.');
+      t.check(figura?.tagName.toLowerCase()==='img'&&boton.tagName==='BUTTON'&&boton.getAttribute('aria-label').includes('Pitágoras'),pagina+': trono real y acceso con teclado.');
       t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.top>=0&&r.right<=ancho&&r.bottom<=alto-60,pagina+': figura tocable y separada de los controles inferiores.');
-      t.check(figura.querySelectorAll('use').length>20&&w.retratoPitagoras().startsWith('data:image/svg+xml'),pagina+': escenografía y retrato originales disponibles.');
+      await figura.decode();t.check(figura.naturalWidth>500&&w.retratoPitagoras().endsWith('pitagoras-abismo-v216.webp'),pagina+': monstruo y retrato comparten la ilustración cargada.');
       boton.click();boton.click();t.igual(luchas,1,pagina+': un doble clic sólo inicia un combate.');escena.destruir();
       const cerrada=montar('montarEscenaPitagoras',{onFight:()=>luchas++}),botonRetirado=cerrada.boss;cerrada.destruir();botonRetirado.click();
       t.igual(luchas,1,pagina+': una referencia a una escena cerrada no puede iniciar combate.');t.check(!host.querySelector('.pitEscena'),pagina+': desmontar retira el trono.');
@@ -576,7 +808,7 @@ PRUEBAS.suite('betaFinalGero',async t=>{
       nueva();w.campanaPruebaDisponible=()=>false;w.render();t.check(!d.querySelector('#betaFinalGero'),pagina+': producción no muestra la herramienta.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': producción bloquea también la función.');w.campanaPruebaDisponible=disponible;
       for(const estado of ['G.busy=true','G.resolving=true','TUT.pending=()=>{}']){nueva();w.eval(estado);w.render();t.check(d.querySelector('#betaFinalGero')?.disabled,pagina+': espera una resolución pendiente.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': no interrumpe '+estado);w.eval('TUT.pending=null');}
       nueva();d.querySelector('#dice').classList.add('on');w.render();t.check(d.querySelector('#betaFinalGero')?.disabled,pagina+': no interrumpe el d20 de la pasiva de Gero.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': la función rechaza el dado pendiente.');d.querySelector('#dice').classList.remove('on');
-      w.setTimeout=(fn,ms,...args)=>{if(ms===2400){const id=++siguiente;timers.set(id,()=>fn(...args));return id;}return poner(fn,ms,...args);};w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
+      w.setTimeout=(fn,ms,...args)=>{if(ms===2400||ms===450){const id=++siguiente;timers.set(id,()=>fn(...args));return id;}return poner(fn,ms,...args);};w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
       w.crearMesaCampana=(host,op)=>{const mesa=crear(host,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
       w.cinematicaFinal=async(ganador,motivo,acciones)=>{finales++;t.check(ganador===0&&acciones.continuarAutomaticamente,pagina+': conserva Victoria y solicita avanzar automáticamente al ascenso.');acciones.prepararRevancha?.();acciones.revancha();return true;};
       nueva();w.eval('G.tutorial=true');w.render();t.check(!d.querySelector('#betaFinalGero').disabled,pagina+': el tutorial local quieto también permite el ensayo.');const g=w.eval('G');d.querySelector('#betaFinalGero').click();w.campanaProbarFinalGero();await sleep(550);
@@ -586,7 +818,7 @@ PRUEBAS.suite('betaFinalGero',async t=>{
       t.igual(w.localStorage.getItem(clave),avanceReal,pagina+': conserva byte a byte el avance real');t.igual(w.localStorage.getItem(logros),sellosReales,pagina+': conserva los sellos reales');t.check(w.CAMPANA_LOGROS.total(true)<=1,pagina+': no inventa seis victorias.');
       t.check(d.querySelector('#campanaAscenso')?.open,pagina+': la Victoria llega al rayo sin otro clic.');
       const interrumpir=[...timers.values()][0];t.check(!!interrumpir,pagina+': programa la interrupción del sexto sello simulado.');interrumpir();
-      t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='reto'&&!d.querySelector('#campanaDeseo'),pagina+': revela el reto del Editor.');
+      t.igual(d.querySelector('#campanaAscenso')?.dataset.fase,'detenido',pagina+': detiene primero el ascenso.');const quieto=[...timers.values()].at(-1);quieto();t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='revelacion'&&!d.querySelector('#campanaDeseo'),pagina+': revela al Editor desde la oscuridad.');
       w.campanaVolverAlMenu();w.abrirCampana();t.check(w.campanaLeer().id===previo.id&&w.campanaLeer().etapa===3,pagina+': reabrir Campaña devuelve el avance original.');
       t.igual(w.localStorage.getItem(clave),avanceReal,pagina+': tampoco modifica el guardado al abandonar el ensayo');
     }finally{
@@ -605,12 +837,12 @@ PRUEBAS.suite('campanaSecreto',async t=>{
     const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana,timers=new Map();let timerId=98000,acciones,cubrir,pelear,terminar,partidas=[];
     try{
       w.matchMedia=()=>({matches:true});
-      w.setTimeout=(fn,ms,...args)=>{if([2400,1000,900].includes(ms)){const id=++timerId;timers.set(id,{ms,fn:()=>fn(...args)});return id;}return poner(fn,ms,...args);};
+      w.setTimeout=(fn,ms,...args)=>{if([2400,450,1000,900].includes(ms)){const id=++timerId;timers.set(id,{ms,fn:()=>fn(...args)});return id;}return poner(fn,ms,...args);};
       w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
       const ejecutar=ms=>{const par=[...timers].find(([id,t])=>t.ms===ms);t.check(!!par,pagina+': falta temporizador de '+ms+' ms.');if(par){timers.delete(par[0]);par[1].fn();}};
       w.crearMesaCampana=(host,op)=>{const mesa=crear(host,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
       w.cinematicaFinal=async(g,m,a)=>{acciones=a;return true;};
-      w.montarEsporasPitagoras=(host,op)=>{cubrir=op.onCubierto;return {destruir(){}};};
+      w.montarRevelacionPitagoras=(host,op)=>{cubrir=op.onRevelado;return {destruir(){}};};
       w.montarEscenaPitagoras=(host,op)=>{pelear=op.onFight;return {destruir(){}};};
       w.montarFinalPitagoras=(host,op)=>{terminar=op.onTerminar;const n=d.createElement('b');n.textContent=op.nombre;host.appendChild(n);return {destruir(){}};};
       w.startMatch=async(a,b,op)=>{partidas.push({a,b,op});w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana));};
@@ -625,10 +857,10 @@ PRUEBAS.suite('campanaSecreto',async t=>{
       }
       w.eval('campanaMemoria=null');
       acciones.revancha();await sleep(40);t.check(d.querySelector('#campanaAscenso')?.open,pagina+': el sexto triunfo empieza el ascenso normal.');
-      ejecutar(2400);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='reto'&&!d.querySelector('#campanaDeseo')&&!d.querySelector('#campanaAscenso'),pagina+': el reto interrumpe el ascenso antes del deseo.');
-      t.igual(d.querySelector('.secretoReto h1').textContent,'¿Crees que eso fue todo?',pagina+': texto de interrupción');
-      d.querySelector('.secretoReto button').click();cubrir();t.igual(d.querySelector('#campanaSecreto').dataset.fase,'negro',pagina+': cobertura completa');
-      t.check(!pelear,pagina+': el trono espera un segundo de negro.');ejecutar(1000);t.check(!!pelear,pagina+': revela al Editor.');
+      ejecutar(2400);t.igual(d.querySelector('#campanaAscenso')?.dataset.fase,'detenido',pagina+': el héroe se detiene antes de oscurecer.');ejecutar(450);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='revelacion'&&!d.querySelector('#campanaDeseo')&&!d.querySelector('#campanaAscenso'),pagina+': la revelación interrumpe el ascenso antes del deseo.');
+      t.check(!d.querySelector('.pitBoss'),pagina+': no se puede atacar antes de revelar al monstruo');
+      t.check(!pelear,pagina+': el monstruo espera su revelación.');cubrir();
+      t.check(!!pelear,pagina+': al terminar el fundido se permite combatir.');
       pelear();pelear();await sleep(0);t.igual(partidas.length,1,pagina+': un doble toque inicia una sola pelea');
       const partida=partidas[0];t.igual(partida.b,'adreida',pagina+': reglas del mazo de Adreida');
       t.check(partida.op.campana.jefeSecreto&&partida.op.campana.etapa===6&&partida.op.nombres[1]==='Pitágoras',pagina+': identidad del jefe independiente de su mazo.');

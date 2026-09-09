@@ -320,6 +320,7 @@ C('rantiago',{n:'Rantiago, el Mirrey',t:'personaje',c:3,a:2,h:2,tr:['Dragón','M
  enter:async(g,s,u,ts)=>{ const t=ts&&ts[0]&&ts[0][0]; if(!t) return;
    const r=await roll('Fiesta de hongos', null, {necesita:'11 o más', min:11,
      siOk:'+2 ATQ permanentes', siMal:'Se pasa de hongos y queda Aturdido'});
+   if(G!==g||g.over)return;
    if(r<=10){ stun(t); log(`${t.card.n} se pasa de hongos: <b>Aturdido</b>.`,'dmg'); }
    else { t.pA+=2; log(`${t.card.n} se pone loco: +2 ATQ permanentes.`); } }});
 
@@ -392,6 +393,7 @@ C('acertijo',{n:'El Acertijo del Chícharo Castigado',t:'hechizo',c:2,sub:['enga
    const dumb=u.tribes.includes('Goblin')||u.tribes.includes('Ogro');
    const r = dumb?1:await roll('Acertijo del Chícharo', null, {necesita:'11 o más', min:11,
      siOk:'Resuelve el acertijo y se queda', siMal:'No lo resuelve y vuelve a la mano'});
+   if(G!==g||g.over)return;
    if(dumb) log(`${u.card.n} ni lo intenta (Goblin/Ogro).`,'sys');
    if(r<=10){ log(`${u.card.n} no resuelve el acertijo y vuelve a la mano.`,'dmg'); bounce(u); }
    else log(`${u.card.n} resuelve el acertijo. No pasa nada.`,'sys'); }});
@@ -410,6 +412,7 @@ C('campanafe',{n:'Campaña de la Fe',t:'hechizo',c:4,sub:['engano'],r:1,art:'�
    const auto=P(s).field.some(o=>o.tribes.includes('Dragón'));
    const r = auto?20:await roll('Campaña de la Fe', null, {necesita:'8 o más', min:8,
      siOk:'Se convierte a tu causa', siMal:'La campaña no convence a nadie'});
+   if(G!==g||g.over)return;
    if(r>=8){ if(P(s).field.length<5){ moveUnit(u,1-s,s); log(`${u.card.n} se convierte a tu causa.`);} 
              else log('Tu campo está lleno; la conversión falla.','sys'); }
    else log('La campaña no convence a nadie.','sys'); }});
@@ -418,6 +421,7 @@ C('hongos',{n:'Hongos del Bosque',t:'hechizo',c:1,r:0,art:'🍄',
  x:'d20 — 1-5: muere un aliado. 6-14: roba 1. 15-19: roba 2. 20: roba 3 y tus Personajes +1/+1 este turno.',
  cast:async(g,s)=>{ const r=await roll('Hongos del Bosque', null, {necesita:'6 o más', min:6,
      siOk:'Robas cartas (más cuanto más alto)', siMal:'Mal viaje: muere tu peor aliado'});
+   if(G!==g||g.over)return;
    if(r<=5){ const u=worstAlly(s); if(u){ log(`Mal viaje: ${u.card.n} muere.`,'dmg'); await destroy(u);} else log('Mal viaje, pero no hay a quién matar.','sys'); }
    else if(r<=14) await draw(s,1);
    else if(r<=19) await draw(s,2);
@@ -539,6 +543,7 @@ C('ceguera',{n:'Ceguera/Sordera',t:'hechizo',c:2,sub:['fe'],r:0,art:'🙈',
    if(u.tribes.includes('Dragón')){ const r=await roll('Resistencia del Dragón', null,
      {necesita:'11 o más', min:11, siOk:'El Dragón resiste la ceguera',
       siMal:'No resiste: queda ciego y Aturdido'});
+   if(G!==g||g.over)return;
      if(r>=11){ log(`${u.card.n} resiste la ceguera.`,'sys'); return; } }
    stun(u); u.blind=true; log(`${u.card.n} queda ciego y sordo.`,'dmg'); }});
 
@@ -764,6 +769,7 @@ C('montanas',{n:'Las Montañas de Tal',t:'lugar',c:3,r:1,art:'⛰️',
  onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Tal', null,
      {necesita:'4 o más para que no pase nada', min:4,
       siOk:'No aparece nadie', siMal:'¡Aidman aparece en el campo rival!'});
+   if(G!==g||g.over)return;
    if(r<=3 && P(1-s).field.length<5 && !P(1-s).field.some(u=>u.card.id==='aidman')){
      const u=mkUnit('aidman',1-s); P(1-s).field.push(u); recalc();
      log('¡Aidman aparece en el campo rival buscando trabajo!','sys'); } }});
@@ -1047,6 +1053,7 @@ function newPlayer(side, leaderId){
 }
 
 function newGame(myLeader, foeLeader, opts={}){
+  if(typeof campanaCancelarInterferencia==='function')campanaCancelarInterferencia();
   G = { pl:[newPlayer(0,myLeader), newPlayer(1,foeLeader)],
         active:0, turnNo:0, phase:'inicio', over:false, log:[],
         place:null, diedThisTurn:[], busy:false, fast:false, tutorial:!!opts.tutorial,
@@ -1446,6 +1453,7 @@ async function resolverD20(label,side,meta){
 }
 
 async function roll(label, side, meta){
+  const partida=G;
   side = (side==null? G.active : side);
   // Las cartas describen el umbral; ambas pantallas necesitan también la
   // comparación para enseñar el efecto del número que acaba de salir.
@@ -1455,6 +1463,7 @@ async function roll(label, side, meta){
   const ev={isRoll:true,value:r,side};
   if(r>=15) await trapWindow(1-side,'letal',ev);
   if(!ev.reroll) await fastWindow(1-side,{kind:'d20',ev});
+  if(G!==partida||partida.over)return 0;
   if(ev.reroll){
     const r2=await resolverD20('Te obligan a repetir — manda el peor',side,null);
     if(!r2)return 0;
@@ -1540,12 +1549,15 @@ async function fastWindow(side, ctx){
    repetición. Ahora los tres caminos pasan por aquí. */
 
 async function lanzarRapido(side,c,ctx){
+  const partida=G;
   const card=CARDS[c];
   await antesDeHechizo(side,c);
   if(card.counter) await card.castCounter(G,side,ctx.ev);
   else if(card.reroll) await card.castReroll(G,side,ctx.ev);
   else if(card.cast){ const ts=await resolveTargets(side,card,null); if(ts) await card.cast(G,side,ts); }
+  if(G!==partida||partida.over)return;
   await trasHechizo(side,c);
+  await pruebaDelEditor(side,c,partida);
 }
 
 /* lo que pasa alrededor de CUALQUIER Hechizo, se juegue desde la mano o como
@@ -1647,6 +1659,7 @@ async function repartirALaVista(s){
 }
 
 async function startTurn(s){
+  const partida=G;
   if(G.over) return;
   G.active=s; G.turnNo++; G.diedThisTurn=[]; G.phase='puntos';
   const p=P(s);
@@ -1701,6 +1714,7 @@ async function startTurn(s){
   if(p.leaderId==='gero' && !G.over && tutPasivaLista()){
     const d = await roll('El dado decide', s, {sola:true, necesita:'15 o más',
       min:15, siOk:'+2 PD este turno', siMal:'−1 Alma si sale 10 o menos'});
+    if(G!==partida||partida.over)return;
     if(d>=15){ p.pd+=2; log('🎲 <b>El dado decide</b>: 15+. Gero improvisa a lo grande: <b>+2 PD</b>.','good'); }
     else if(d<=10){ log('🎲 <b>El dado decide</b>: 10 o menos. Sale mal: <b>−1 Alma</b>.','dmg');
       await dmgFace(s,1,{src:'dado'}); }
@@ -1711,6 +1725,7 @@ async function startTurn(s){
 
   // Lugar
   if(G.place && CARDS[G.place.id].onAnyStart) await CARDS[G.place.id].onAnyStart(G,s);
+  if(G!==partida||partida.over)return;
   // habilidades "al inicio de tu turno"
   for(const u of [...p.field]) if(u.alive && u.card.onStart && !u.possessed) await u.card.onStart(G,s,u);
   // Infectado
@@ -1814,6 +1829,7 @@ function canPlay(s,id){
 }
 
 async function playFromHand(s, id, forcedTargets){
+  const partida=G;
   if(!canPlay(s,id)) return false;
   const c=CARDS[id], cost=costOf(id,s);
   let ts=null;
@@ -1864,9 +1880,11 @@ async function playFromHand(s, id, forcedTargets){
       await trapWindow(1-s,'hechizoOHabilidad',ev);
       if(!ev.countered) await fastWindow(1-s,{kind:'hechizo',ev});
     }
-    if(ev.countered){ P(s).grave.push(id); render(); return true; }
+    if(G!==partida||partida.over)return true;
+    if(ev.countered){ P(s).grave.push(id); render(); await pruebaDelEditor(s,id,partida);return true; }
     await antesDeHechizo(s,id);
     if(c.cast) await c.cast(G,s,ts);
+    if(G!==partida||partida.over)return true;
     await trasHechizo(s,id);
   }
   else if(c.t==='personaje'){
@@ -1906,9 +1924,27 @@ async function playFromHand(s, id, forcedTargets){
     if(G.place){ P(G.place.side).grave.push(G.place.id); log(`${CARDS[G.place.id].n} es reemplazado.`,'sys'); }
     G.place={id,side:s};
   }
+  if(G!==partida||partida.over)return true;
   recalc(); await checkDeaths(); render();
   if(G.tutorial){ tutApunta(s,id); tutCheck(); await tutBeat('juega',{side:s,id}); }
+  await pruebaDelEditor(s,id,partida);
   return true;
+}
+
+/* El Editor cambia de juego por cada carta pagada, una vez resuelta. Esperar
+   aquí detiene también la IA y las respuestas rápidas hasta volver a la mesa. */
+async function pruebaDelEditor(s,id,partida=G){
+  if(G!==partida||!partida||partida.over||s!==FOE||!partida.campana?.jefeSecreto||partida.online||partida.guest||NET.on||partida.auto||partida.fast||partida.silent||typeof campanaInterferenciaPitagoras!=='function')return;
+  const resultado=await campanaInterferenciaPitagoras(s,id,partida);
+  if(G!==partida||partida.over||!resultado||resultado.cancelado||typeof resultado.sobrevivio!=='boolean')return;
+  const lado=resultado.sobrevivio?FOE:ME;
+  P(lado).alma-=2;
+  log(resultado.sobrevivio?'Sobreviviste al corte del Editor. Pitágoras pierde 2 Alma.':'El Editor te alcanza. Pierdes 2 Alma.','dmg');
+  render();await fxFace(lado,2);
+  // Otra partida puede comenzar durante el impacto: no concluirla por el
+  // resultado de una prueba que pertenecía a la anterior.
+  if(G!==partida||partida.over)return;
+  if(P(lado).alma<=0)endGame(1-lado,resultado.sobrevivio?'Rompiste el último juego de Pitágoras.':'Pitágoras consumió tu Alma.');
 }
 
 /* ---------- habilidad de líder ---------- */
@@ -2022,6 +2058,7 @@ function legalTargets(u){
 function hasContract(s){ return P(s).traps.some(t=>CARDS[t.id].contract); }
 
 async function doAttack(u, target){
+  const partida=G;
   if(G.resolving||!canAttack(u)) return false;
   const s=u.side, d=1-s;
   const lt=legalTargets(u);
@@ -2046,6 +2083,7 @@ async function doAttack(u, target){
       const r=await roll('Acertijo del Puente', s, {necesita:'8 o más', min:8,
         siOk:'Resuelve el acertijo y puede atacar al Alma',
         siMal:'No lo resuelve: no puede atacar al Alma'});
+      if(G!==partida||partida.over)return false;
       if(r<8){ log('No resuelve el acertijo: no puede atacar al Alma.','sys'); u.attacked=true; render(); return true; }
     }
     P(s).attacked=true;
@@ -2067,6 +2105,7 @@ async function doAttack(u, target){
       if(!ev.cancel && target==='face') await trapWindow(d,'ataqueAlma',ev);
     }
     if(!ev.cancel) await fastWindow(d,{kind:'ataque',ev});
+    if(G!==partida||partida.over)return false;
     u.attacked=true; u.attackedEver=true; recalc();
     if(ev.cancel||!u.alive){ render(); return true; }
     if(target!=='face' && !target.alive){ render(); return true; }
@@ -2075,6 +2114,7 @@ async function doAttack(u, target){
     if(u.card.myopic && target!=='face'){
       const r=await roll('Miope', s, {necesita:'11 o más', min:11,
         siOk:'Ataca a quien quería', siMal:'No ve bien y ataca a otro al azar'});
+      if(G!==partida||partida.over)return false;
       if(r<=10){ const pool=lt.units.filter(o=>o.alive);
         if(pool.length){ target=pool[rnd(pool.length)]; log(`Minus no ve bien y ataca a ${target.card.n}.`,'sys'); } }
     }
@@ -2087,6 +2127,7 @@ async function doAttack(u, target){
       const r=await roll('Ludópata', s, {necesita:'15 o más', min:15,
         siOk:'¡Gana la apuesta! Daño doble',
         siMal:'Pierde la apuesta (con 5 o menos, se hace el daño a sí mismo)'});
+      if(G!==partida||partida.over)return false;
       if(r>=15){ atk*=2; log('¡Aidman acierta la apuesta! Daño doble.','roll'); }
       else if(r<=5){ log('Aidman pierde la apuesta y se hace el daño a sí mismo.','dmg');
         await dmgU(u,atk,{src:'ludopata'}); render(); return true; }
@@ -2111,7 +2152,7 @@ async function doAttack(u, target){
     render();
     if(G.tutorial) tutCheck();
     return true;
-  } finally { G.resolving=false; render(); }
+  } finally { if(G===partida){G.resolving=false; render();} }
 }
 
 /* ==========================================================================

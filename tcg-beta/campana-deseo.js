@@ -42,7 +42,19 @@
     if(p.secreto==='ascenso'&&typeof campanaAbrirSecreto==='function'){
       // El sexto sello corta el ascenso cuando ya se ve elevarse la ficha,
       // antes de que el resplandor blanco revele el deseo habitual.
-      esperar(e,2400,()=>{if(campanaLeer()!==p){campanaCancelarAscenso();return;}p.secreto='reto';delete p.mesaPendiente;campanaGuardar(p);campanaAbrirSecreto();});
+      esperar(e,2400,()=>{
+        if(campanaLeer()!==p){campanaCancelarAscenso();return;}
+        cancelAnimationFrame(e.raf);e.animacion?.pause();d.dataset.fase='detenido';
+        const marco=d.getBoundingClientRect();
+        const origen={x:Math.max(0,Math.min(1,parseFloat(rayo.style.left)/marco.width)),y:Math.max(0,Math.min(1,parseFloat(rayo.style.height)/marco.height))};
+        window.CAOZ_AUDIO?.detener();
+        // La ficha queda inmóvil antes del corte a oscuridad. El nuevo plano
+        // conserva su posición y después la lleva al borde inferior.
+        esperar(e,450,()=>{
+          if(campanaLeer()!==p){campanaCancelarAscenso();return;}
+          p.secreto='revelacion';delete p.mesaPendiente;campanaGuardar(p);campanaAbrirSecreto({origen});
+        });
+      });
       return;
     }
     esperar(e,5000,()=>{cancelAnimationFrame(e.raf);d.dataset.fase='blanco';
@@ -114,6 +126,7 @@
   const css=document.createElement('style');css.textContent=`
   #campanaAscenso{position:fixed;inset:0;margin:0;padding:0;border:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:transparent;overflow:hidden;pointer-events:auto}
   #campanaAscenso::backdrop{background:#08050b22}
+  #campanaAscenso[data-fase="detenido"] *{animation-play-state:paused!important}
   .ascensoRayo{position:absolute;top:0;width:clamp(210px,28vw,360px);transform:translateX(-50%);filter:drop-shadow(0 0 18px #ffe9b480);pointer-events:none}
   .ascensoCono{position:absolute;inset:0;clip-path:polygon(43% 0,57% 0,100% 100%,0 100%);background:linear-gradient(180deg,#fffdeccc,#fff9d54a 32%,#fff4bb12),linear-gradient(90deg,#ffe6a80a,#fff9d943 36%,#ffffee66 50%,#fff9d943 64%,#ffe6a80a);animation:abrirHazAscenso .85s ease-in-out .65s both}
   .ascensoNucleo{position:absolute;inset:0;clip-path:polygon(48% 0,52% 0,67% 100%,33% 100%);background:linear-gradient(#fffef4a0,#fff9cb18);animation:abrirNucleoAscenso .85s ease-in-out .65s both}
