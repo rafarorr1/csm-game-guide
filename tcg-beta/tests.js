@@ -491,6 +491,22 @@ PRUEBAS.suite('d20OnlineFisico', async t => {
   }
 });
 
+PRUEBAS.suite('manoNuevaTurno',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=mano-turno-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;
+    try{
+      w.newGame('fender','adreida');w.eval("G.phase='principal';G.turnNo=1;G.active=0;P(0).hand=['tal'];P(0).pd=1;");w.cerrarOv();
+      let terminarReparto,preguntas=0;w.repartirALaVista=()=>new Promise(r=>terminarReparto=r);w.ask=async()=>{preguntas++;return 1;};
+      const oferta=w.ofrecerManoNueva(0);t.check(!!terminarReparto,pagina+': la oferta espera a mostrar las cartas');
+      w.eval('G.active=1;G.turnNo=2');terminarReparto();await oferta;
+      t.check(preguntas===0&&!w.eval('P(0).manoRehecha'),pagina+': pasar de turno durante el reparto cancela la pregunta antigua sin gastar el cambio de mano');
+      w.eval('G.active=0;G.turnNo=1');const vigente=w.ofrecerManoNueva(0);terminarReparto();await vigente;
+      t.check(preguntas===1&&w.eval('P(0).manoRehecha'),pagina+': la oferta del turno vigente sigue funcionando');
+    }finally{f.remove();}
+  }
+});
+
 PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
   const M=window.PITAGORAS_PRUEBAS?.modelo;t.check(!!M,'Falta el modelo de las tres pruebas.');
   const guiar=(s,mem)=>{
