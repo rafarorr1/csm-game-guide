@@ -18,11 +18,11 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 215;
+const VERSION = 216;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
-const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'dado-fisico.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
-                'art/encuadres.json', 'art/logo.webp',
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'pitagoras-pruebas.js', 'pitagoras-combate.js', 'dado-fisico.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
+                'art/encuadres.json', 'art/logo.webp', 'art/pitagoras-abismo-v216.webp',
                 'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
 
 /* las ilustraciones: las que lista el índice, más los seis Líderes por si acaso */

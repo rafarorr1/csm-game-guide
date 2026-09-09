@@ -55,28 +55,26 @@
   function guardarFase(e,nombre){const p=campanaLeer();if(!vigente(e))return null;p.secreto=nombre;delete p.mesaPendiente;campanaGuardar(p);return p;}
   function mensajePrueba(e,p){if(!p.prueba)return;const m=document.createElement('small');m.className='secretoPrueba';m.textContent='Prueba beta · sellos de ensayo';e.d.appendChild(m);}
   function prepararTrono(e){
-    const p=guardarFase(e,'trono');if(!p)return;fase(e,'trono');
-    const host=document.createElement('div');host.className='secretoEscena';e.d.appendChild(host);
-    if(window.montarEscenaPitagoras)e.visual=montarEscenaPitagoras(host,{personaje:p.personaje,onFight:()=>combatir(e)});
-    else{const b=campanaBoton('Pitágoras · El Editor — Combatir',()=>combatir(e),true);host.appendChild(b);}
+    const p=guardarFase(e,'trono');if(!p)return;
+    if(e.visual?.revelado&&typeof e.visual.habilitarCombate==='function'){
+      // La revelación se vuelve interactiva sin volver a dibujar al héroe ni
+      // desmontar la imagen que Safari ya tiene decodificada en pantalla.
+      e.d.dataset.fase='trono';e.visual.habilitarCombate(()=>combatir(e));
+    }else{
+      fase(e,'trono');const host=document.createElement('div');host.className='secretoEscena';e.d.appendChild(host);
+      if(window.montarEscenaPitagoras)e.visual=montarEscenaPitagoras(host,{personaje:p.personaje,onFight:()=>combatir(e)});
+      else{const b=campanaBoton('Pitágoras · El Editor — Combatir',()=>combatir(e),true);host.appendChild(b);}
+    }
     const volver=campanaBoton('Menú principal',campanaVolverAlMenu);volver.classList.add('secretoMenu');e.d.appendChild(volver);mensajePrueba(e,p);
     if(campanaPruebaDisponible()){
       const prueba=campanaBoton('Vencer al Editor · Prueba beta',()=>vencerPrueba(e));prueba.classList.add('secretoVencer');prueba.dataset.pruebaCampana='pitagoras';e.d.appendChild(prueba);
     }
   }
-  function esporas(e){
-    const p=guardarFase(e,'esporas');if(!p)return;fase(e,'esporas');
-    let cubierto=false;
-    const alCubrir=()=>{if(!vigente(e)||cubierto)return;cubierto=true;e.d.dataset.fase='negro';esperar(e,1000,()=>prepararTrono(e));};
-    if(window.montarEsporasPitagoras)e.visual=montarEsporasPitagoras(e.d,{onCubierto:alCubrir});else esperar(e,2000,alCubrir);
-  }
-  function reto(e){
-    const p=guardarFase(e,'reto');if(!p)return;fase(e,'reto');
-    const centro=document.createElement('section');centro.className='secretoReto';
-    const luz=document.createElement('div');luz.className='secretoLuz';luz.setAttribute('aria-hidden','true');
-    const h=document.createElement('h1');h.id='secretoTitulo';h.textContent='¿Crees que eso fue todo?';
-    const b=campanaBoton('...',()=>{if(vigente(e)&&e.d.dataset.fase==='reto')esporas(e);},true);b.setAttribute('aria-label','Descubrir quién interrumpió el ascenso');
-    centro.append(h,b);e.d.append(luz,centro);mensajePrueba(e,p);b.focus({preventScroll:true});
+  function revelar(e,origen){
+    const p=guardarFase(e,'revelacion');if(!p)return;fase(e,'revelacion');
+    const terminar=()=>{if(vigente(e)&&e.d.dataset.fase==='revelacion')prepararTrono(e);};
+    if(window.montarRevelacionPitagoras)e.visual=montarRevelacionPitagoras(e.d,{personaje:p.personaje,origen,onRevelado:terminar});
+    else esperar(e,1200,terminar);
   }
   function terminar(e){
     const p=guardarFase(e,'completado');if(!p)return;
@@ -92,16 +90,16 @@
       const h=document.createElement('h1');h.textContent='Tú, '+campanaNombre(p)+', tú sí eres el verdadero Caoz Con Todo.';e.d.appendChild(h);esperar(e,6000,()=>terminar(e));
     }
   }
-  window.campanaAbrirSecreto=function(){
+  window.campanaAbrirSecreto=function(opciones={}){
     const p=campanaLeer();if(!p||p.etapa!==6||!p.secreto)return;
     if(escena?.id===p.id&&escena.d.open)return;
     if(p.secreto==='completado'){campanaCrear();return;}
     campanaCerrar();cerrarCinematica();
     const d=document.createElement('dialog');d.id='campanaSecreto';d.setAttribute('aria-label','El secreto del Domo');
     const e={d,id:p.id,timers:[],cancelado:false,visual:null,lanzando:false};escena=e;
-    d.addEventListener('cancel',ev=>{ev.preventDefault();if(['reto','trono'].includes(d.dataset.fase))campanaVolverAlMenu();});
+    d.addEventListener('cancel',ev=>{ev.preventDefault();if(['revelacion','trono'].includes(d.dataset.fase))campanaVolverAlMenu();});
     d.addEventListener('close',()=>{if(!d.open&&escena===e)limpiar();});document.body.appendChild(d);d.showModal();
-    if(p.secreto==='final')final(e);else if(['trono','combate'].includes(p.secreto))prepararTrono(e);else if(p.secreto==='esporas')esporas(e);else reto(e);
+    if(p.secreto==='final')final(e);else if(['trono','combate'].includes(p.secreto))prepararTrono(e);else revelar(e,opciones.origen);
   };
   function opciones(p){return {nombres:[campanaNombre(p),'Pitágoras'],campana:{id:p.id,etapa:6,alma:40,personaje:p.personaje,jefeSecreto:true,prueba:!!p.prueba}};}
   async function combatir(e){
@@ -124,7 +122,7 @@
     p.secreto='combate';campanaGuardar(p);
     const acciones={textoPrincipal:'↺ Revancha contra Pitágoras',revancha:()=>{if(G===g)combatir();},menu:()=>{if(G===g)campanaVolverAlMenu();}};
     cinematicaFinal(winner,why,acciones).then(hecho=>{
-      if(hecho||G!==g)return;const d=campanaDialogo();campanaCabecera(d,'El Editor sigue en su trono','Tu revancha empieza directamente en el combate.');
+      if(hecho||G!==g)return;const d=campanaDialogo();campanaCabecera(d,'Pitágoras sigue al acecho','Tu revancha empieza directamente en el combate.');
       d.append(campanaAcciones(campanaBoton('Revancha contra Pitágoras',acciones.revancha,true),campanaBoton('Menú principal',acciones.menu)));
     });
   };
