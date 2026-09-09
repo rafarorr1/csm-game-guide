@@ -189,7 +189,7 @@ PRUEBAS.suite('motor', async t => {
    sobre un objetivo que canPlay creía válido y la resolución real no.
    ======================================================================== */
 PRUEBAS.suite('cartas', async t => {
-  const ids = Object.keys(T.CARDS).filter(id => !T.CARDS[id].token);
+  const ids = Object.keys(T.CARDS).filter(id => !T.CARDS[id].token && !T.CARDS[id].editorJuego);
   const rotas=[], nojugables=[];
   for(const id of ids){
     // dos intentos: tablero normal y tablero con Objetos y Llaves. Si con el
@@ -238,7 +238,7 @@ PRUEBAS.suite('cobertura', async t => {
     }
   } finally { window.playFromHand = playOrig; }
 
-  const total = Object.keys(T.CARDS).filter(id=>!T.CARDS[id].token).length;
+  const total = Object.keys(T.CARDS).filter(id=>!T.CARDS[id].token && !T.CARDS[id].editorJuego).length;
   t.nota(`cartas jugadas ${jugadas.size}/${total} · trampas saltadas ${trampas.size}/${trampasTotales.length}`);
   const sinTrampa = trampasTotales.filter(id=>!trampas.has(id));
   if(sinTrampa.length) t.nota('trampas que nunca saltaron: '+sinTrampa.join(', '));
@@ -517,7 +517,7 @@ PRUEBAS.suite('editorCartas',async t=>{
       const tipos=[];w.PITAGORAS_PRUEBAS.iniciar=async op=>{tipos.push(op);return{sobrevivio:true,cancelado:false};};
       await w.setupMatch('fender','adreida',{first:0,campana:{id:'mazo-editor',jefeSecreto:true,alma:40}});
       const ids=w.eval('CARTAS_EDITOR.slice()');t.check(w.eval('[...P(1).deck,...P(1).hand].length===40 && [...P(1).deck,...P(1).hand].every(id=>CARDS[id].editorJuego)'),pagina+': mazo propio antes de repartir');
-      for(const id of ids){w.eval("G.active=1;P(1).pd=6;P(1).hand=['"+id+"']");const alma=w.eval('P(1).alma');t.check(await w.playFromHand(1,id),pagina+': juega '+id);t.igual(w.eval('P(1).pd'),4,pagina+': paga sus 2 PD');t.igual(w.eval('P(1).alma'),alma-2,pagina+': una sola aplicación del resultado');t.check(w.eval('P(1).grave').includes(id),pagina+': carta real en Alcantarillas');}
+      for(const id of ids){w.eval("G.active=1;P(1).field=[];P(1).pd=6;P(1).hand=['"+id+"']");const alma=w.eval('P(1).alma');t.check(await w.playFromHand(1,id),pagina+': juega '+id);t.igual(w.eval('P(1).pd'),4,pagina+': paga sus 2 PD');t.igual(w.eval('P(1).alma'),alma-2,pagina+': una sola aplicación del resultado');t.check(w.eval('P(1).field').some(u=>u.card.id===id&&u.alive&&u.sick)&&!w.eval('P(1).grave').includes(id),pagina+': la pesadilla queda en mesa con cansancio y no se descarta');}
       t.check(tipos.map(o=>o.tipo).join(',')==='isometrico,laseres,fps,carrera,orbital,duelo'&&tipos.every(o=>o.cinematica===true)&&genericas===0,pagina+': cada carta llama a su juego sin otra presentación genérica');
       await w.setupMatch('fender','adreida',{first:0});t.check(w.eval('[...P(1).hand,...P(1).deck].every(id=>!CARDS[id].editorJuego)'),pagina+': partida normal conserva Adreida');
       t.igual(w.eval('JSON.stringify(DECKS)'),originales,pagina+': los seis mazos no cambian');
@@ -861,13 +861,13 @@ PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
 PRUEBAS.suite('pitagorasIntegracion',async t=>{
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-integracion-interna';document.body.appendChild(f);await carga;
-    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,interferencia=w.campanaInterferenciaPitagoras,rapida=w.fastWindow,objetivos=w.resolveTargets,resolverDado=w.resolverD20,finTurno=w.endTurn;let eventos=[],finales=[];
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,interferencia=w.campanaInterferenciaPitagoras,finTurno=w.endTurn,turnoIA=w.aiTurn;let eventos=[],finales=[];
     try{
       Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:true});
-      // Sólo abreviamos las pausas cosméticas; ninguna promesa del minijuego
-      // se resuelve hasta que la prueba entrega explícitamente un resultado.
+      // Sólo abreviamos pausas cosméticas. Cada prueba conserva su promesa
+      // pendiente hasta que este caso entregue un resultado explícito.
       w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);
-      for(const nombre of ['fxSpell','fxFace','fxHit','fxTrap'])w[nombre]=async()=>{};
+      for(const nombre of ['fxSpell','fxFace','fxHit','fxTrap','fxDeath','fxLunge','fxBanner'])w[nombre]=async()=>{};
       for(const nombre of ['fxNotice','fxAterriza','fxObj','fxStat','fxNumber'])w[nombre]=()=>{};
       w.ask=async()=>1;w.campanaFinalSecreto=(ganador,motivo)=>{finales.push({ganador,motivo});};
       const hasta=async(pred,mensaje)=>{for(let n=0;n<400&&!pred();n++)await sleep(0);t.check(pred(),pagina+': '+mensaje);};
@@ -878,92 +878,155 @@ PRUEBAS.suite('pitagorasIntegracion',async t=>{
       };
       const inmediato=resultado=>{w.campanaInterferenciaPitagoras=async(side,id,g)=>{eventos.push({side,id,g});return resultado;};};
       const diferir=()=>{const pendientes=[];w.campanaInterferenciaPitagoras=(side,id,g)=>new Promise(resolve=>{eventos.push({side,id,g});pendientes.push(resolve);});return pendientes;};
-      // Las seis clases pasan por la misma frontera, después de pagar y
-      // resolver la carta. La ficha que crea Ilusión no es otra carta jugada.
-      for(const id of ['matildus','nubedagas','peaje','puntosrobados','collar','puente','ilusion']){
-        arena();inmediato({sobrevivio:true,cancelado:false});let ts;
-        if(id==='collar'){const u=w.mkUnit('minus',1);w.eval('P(1)').field.push(u);w.recalc();ts=[[u]];}
-        w.eval('P(1)').hand=[id];t.check(await w.playFromHand(1,id,ts),pagina+': se juega '+id);
-        t.check(eventos.length===1&&eventos[0].id===id&&eventos[0].side===1,pagina+': una sola interferencia por '+id);
-        t.igual(w.eval('P(1).alma'),18,pagina+': sobrevivir quita exactamente 2 al Editor');t.igual(w.eval('P(0).alma'),20,pagina+': sobrevivir no daña al jugador');
-        if(id==='ilusion')t.igual(w.eval('P(1).field.length'),1,pagina+': Ilusión invoca una ficha sin interrupción extra');
+      const ids=w.eval('CARTAS_EDITOR.slice()');
+      // Las seis cartas son cuerpos del TCG, no hechizos de un solo uso.
+      // Se prueba el turno real que quita cansancio antes del ataque real.
+      for(const id of ids){
+        arena();inmediato({sobrevivio:true,cancelado:false});w.eval('P(1)').hand=[id];
+        t.check(await w.playFromHand(1,id),pagina+': se juega '+id);const u=w.eval('P(1)').field[0];
+        t.check(u&&u.card.id===id&&u.card.t==='personaje'&&u.alive&&u.atk>0&&u.maxHp>0&&!u.card.token,pagina+': cuerpo y estadísticas propios de '+id);
+        t.check(u.sick&&!w.canAttack(u)&&!await w.doAttack(u,'face'),pagina+': respeta el cansancio al entrar');
+        t.check(eventos.length===1&&eventos[0].id===id&&w.eval('P(1).alma===18&&P(0).alma===20&&P(1).grave.length===0'),pagina+': una prueba y la carta permanece viva');
+        w.aiTurn=async()=>{};await w.startTurn(1);w.aiTurn=turnoIA;w.eval("P(0).hand=[];P(1).leaderUsed=true;G.phase='combate'");
+        t.check(w.canAttack(u)&&await w.doAttack(u,'face'),pagina+': el siguiente turno habilita el ataque');
+        t.igual(w.eval('P(0).alma'),20-u.atk,pagina+': ataque inflige sus estadísticas');
+        t.check(eventos.length===1&&!await w.doAttack(u,'face'),pagina+': atacar no abre otro juego ni permite doble ataque');
+        await w.dmgU(u,u.maxHp,{src:'prueba',unstoppable:true});await w.checkDeaths();
+        t.check(!u.alive&&!w.eval('P(1)').field.includes(u)&&w.eval('P(1).grave').includes(id)&&!w.canAttack(u),pagina+': muerte real y carta en Alcantarillas');
       }
-      arena();inmediato({sobrevivio:false,cancelado:false});w.eval("P(1).hand=['matildus']");await w.playFromHand(1,'matildus');t.igual(w.eval('P(0).alma'),18,pagina+': fallar quita 2 al jugador');t.igual(w.eval('P(1).alma'),20,pagina+': fallar no daña al Editor');
-      arena();inmediato({cancelado:true});w.eval("P(1).hand=['matildus']");await w.playFromHand(1,'matildus');t.igual(w.eval('P(0).alma+P(1).alma'),40,pagina+': cancelar no inflige daño');
-      // Una anulación sucede después del pago: la carta sí fue jugada.
-      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['nubedagas'];P(0).traps=[{id:'notario'}]");await w.playFromHand(1,'nubedagas');
-      t.check(eventos.length===1&&eventos[0].id==='nubedagas'&&w.eval("P(1).grave.includes('nubedagas')&&P(1).clouds.length===0"),pagina+': el hechizo anulado cuenta una vez sin resolver su efecto.');
-      // Coste insuficiente y selección cancelada nunca cruzan la frontera.
-      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['minus'];P(1).pd=0");t.check(!await w.playFromHand(1,'minus')&&!eventos.length,pagina+': sin PD no hay minijuego.');
-      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['collar']");w.eval('P(1)').field.push(w.mkUnit('minus',1));w.recalc();w.resolveTargets=async()=>null;
-      t.check(!await w.playFromHand(1,'collar')&&!eventos.length&&w.eval("P(1).hand.includes('collar')&&P(1).pd===20"),pagina+': cancelar objetivos no juega ni interrumpe.');w.resolveTargets=objetivos;
+      // El jugador puede bloquear a una pesadilla con Provocar y combatirla.
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcorte']");await w.playFromHand(1,'editorcorte');
+      const pesadilla=w.eval('P(1)').field[0],guardian=w.mkUnit('bartolomeo',0);pesadilla.sick=false;w.eval('P(0)').field.push(guardian);w.recalc();guardian.keys.add('provocar');
+      t.check(!w.legalTargets(pesadilla).face&&!await w.doAttack(pesadilla,'face'),pagina+': Provocar protege el Alma del jugador');
+      const vida=guardian.dmg;await w.doAttack(pesadilla,guardian);t.check(guardian.dmg>vida||!guardian.alive,pagina+': la pesadilla también pelea contra cartas');
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');const devuelta=w.eval('P(1)').field[0];w.bounce(devuelta);
+      t.check(!devuelta.alive&&w.eval("P(1).hand.includes('editorcosecha')&&P(1).field.length===0"),pagina+': devolver a la mano no desvanece una ficha');
+      // El límite de cinco evita apilar seis cuerpos y tampoco cobra una
+      // prueba ni PD si la última carta no tiene espacio para entrar.
+      arena();inmediato({sobrevivio:true});for(const id of ids.slice(0,5)){w.eval('P(1)').hand=[id];await w.playFromHand(1,id);}w.eval('P(1)').hand=[ids[5]];const pd=w.eval('P(1).pd');
+      t.check(!w.canPlay(1,ids[5])&&!await w.playFromHand(1,ids[5])&&w.eval('P(1).field.length')===5&&w.eval('P(1).pd')===pd&&eventos.length===5,pagina+': campo lleno no paga ni abre una sexta prueba');
+      arena();inmediato({sobrevivio:false,cancelado:false});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.check(w.eval('P(0).alma===18&&P(1).alma===20&&P(1).field.length===1'),pagina+': fallar conserva la carta y quita sólo 2 al jugador');
+      arena();inmediato({cancelado:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.igual(w.eval('P(0).alma+P(1).alma'),40,pagina+': cancelar no inflige daño');
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha'];P(1).pd=0");t.check(!await w.playFromHand(1,'editorcosecha')&&!eventos.length,pagina+': sin PD no hay minijuego');
+      // El Editor sólo abre pruebas por sus seis pesadillas. Los hechizos,
+      // fichas y respuestas normales conservan sus reglas de siempre.
+      for(const id of ['matildus','nubedagas','peaje','puntosrobados','puente','ilusion']){arena();inmediato({sobrevivio:true});w.eval('P(1)').hand=[id];await w.playFromHand(1,id);t.check(!eventos.length&&w.eval('P(0).alma+P(1).alma')===40,pagina+': carta normal sin interferencia '+id);}
+      arena(0);inmediato({sobrevivio:true});w.eval("P(1).hand=['contrahechizo']");const contra={cardId:'espiritus',countered:false};await w.fastWindow(1,{kind:'hechizo',ev:contra});t.check(contra.countered&&!eventos.length,pagina+': respuesta rápida normal sin minijuego');
+      arena();inmediato({sobrevivio:true});await w.summonToken(1,'tok_ilusion');t.check(!eventos.length,pagina+': invocar una ficha no juega una pesadilla');
       for(const caso of ['jugador','normal','auto','fast','silent','online','guest','sala']){
         arena(caso==='jugador'?0:1,caso!=='normal');inmediato({sobrevivio:true});
         if(['auto','fast','silent','online','guest'].includes(caso))w.eval('G.'+caso+'=true');if(caso==='sala')w.eval('NET.on=true');
-        const side=caso==='jugador'?0:1;w.eval('P('+side+')').hand=['matildus'];await w.playFromHand(side,'matildus');
+        const side=caso==='jugador'?0:1;w.eval('P('+side+')').hand=['editorcosecha'];await w.playFromHand(side,'editorcosecha');
         t.check(!eventos.length&&w.eval('P(0).alma+P(1).alma')===40,pagina+': no modifica '+caso);w.eval('NET.on=false');
       }
-      arena();inmediato({sobrevivio:true});await w.summonToken(1,'tok_ilusion');w.eval("P(1).traps=[{id:'peaje'}]");await w.trapWindow(1,'ataqueAlma',{});t.check(!eventos.length,pagina+': activar una trampa o invocar una ficha no es jugar otra carta.');
-      // El rival responde desde la mano durante nuestro turno. No pasa por
-      // playFromHand, pero debe abrir exactamente la misma interrupción.
-      arena(0);inmediato({sobrevivio:true});w.eval("P(1).hand=['contrahechizo']");const contra={cardId:'espiritus',countered:false};await w.fastWindow(1,{kind:'hechizo',ev:contra});
-      t.check(contra.countered&&eventos.length===1&&eventos[0].id==='contrahechizo'&&w.eval('P(1).alma')===18,pagina+': respuesta rápida del Editor contada una vez.');
-      // Dos cartas de la IA: mientras no respondamos, la segunda sigue en
-      // su mano y el turno no llega al combate ni al relevo del jugador.
-      arena();const pendientes=diferir();w.eval("P(1).hand=['matildus','minus']");let termino=false,cedio=false;w.endTurn=async()=>{cedio=true;};
-      const turno=w.aiTurn().then(()=>{termino=true;});await hasta(()=>eventos.length>=1,'la primera carta abre la interrupción');await sleep(20);
-      t.check(eventos.length===1&&!termino&&!cedio&&w.eval('G.busy&&P(1).hand.length===1&&P(1).field.length===1'),pagina+': la IA espera el minijuego.');
-      pendientes[0]({sobrevivio:true});await hasta(()=>eventos.length===2,'la IA sólo juega la segunda carta al resolver la primera');
-      t.check(!termino&&!cedio,pagina+': el segundo minijuego también mantiene detenido el turno.');pendientes[1]({sobrevivio:false});await turno;w.endTurn=finTurno;
-      t.check(cedio&&w.eval('P(0).alma===18&&P(1).alma===18'),pagina+': un resultado por carta y después continúa la IA.');
-      // Cancelar una respuesta rápida al empezar otra partida no deja que el
-      // hechizo suspendido modifique las cartas o el Alma de la partida nueva.
-      arena(0);const respuesta=diferir();w.eval("P(0).hand=['espiritus'];P(1).hand=['contrahechizo']");const hechizo=w.playFromHand(0,'espiritus');await hasta(()=>respuesta.length===1,'respuesta rápida pendiente');
-      w.newGame('fender','adreida');const nueva=w.eval('G');respuesta[0]({sobrevivio:true});await hechizo;
-      t.check(w.eval('G')===nueva&&w.eval('P(0).alma===20&&P(1).alma===20&&P(0).spirits===0'),pagina+': no reanuda el hechizo anterior en otra partida.');
-      arena(0);const repeticion=diferir();let tiradas=0;w.resolverD20=async()=>{tiradas++;return 17;};w.eval("P(1).hand=['puas']");const dado=w.roll('Prueba del Editor',0);await hasta(()=>repeticion.length===1,'Púas interrumpe la tirada');
-      w.newGame('fender','adreida');repeticion[0]({sobrevivio:true});t.igual(await dado,0,pagina+': una tirada cancelada no entrega un valor antiguo');t.igual(tiradas,1,pagina+': no pide otro d20 tras empezar una partida nueva');w.resolverD20=resolverDado;
-      // El cero de cancelación no es una tirada baja para Hongos: al volver
-      // del minijuego no puede matar un aliado creado en otra partida.
-      arena(0);const viajeInterrumpido=diferir();w.resolverD20=async()=>17;w.eval("P(0).hand=['hongos'];P(1).hand=['puas']");
-      const hongos=w.playFromHand(0,'hongos');await hasta(()=>viajeInterrumpido.length===1,'Púas del Editor abre una prueba durante Hongos');
-      t.check(eventos[0].id==='puas'&&w.eval("!P(0).hand.includes('hongos')&&P(0).pd===19&&P(1).grave.includes('puas')"),pagina+': ambas cartas fueron jugadas antes de cancelar el minijuego');
-      w.newGame('fender','adreida');const partidaNueva=w.eval('G'),aliadoNuevo=w.mkUnit('matildus',0);w.eval('P(0)').field.push(aliadoNuevo);w.recalc();
-      viajeInterrumpido[0]({sobrevivio:true});await hongos;w.resolverD20=resolverDado;
-      t.check(w.eval('G')===partidaNueva&&aliadoNuevo.alive&&w.eval('P(0)').field.includes(aliadoNuevo)&&w.eval('P(0).grave.length===0&&P(0).alma===20&&P(1).alma===20&&!G.over'),pagina+': Hongos cancelado no interpreta cero ni mata al aliado de la partida nueva');
-      // La ventana de respuesta de un ataque comparte esa frontera. Su
-      // finally tampoco puede desbloquear una resolución de la partida nueva.
-      arena(0);let seguirAtaque;w.fastWindow=async()=>new Promise(r=>{seguirAtaque=r;});const atacante=w.mkUnit('matildus',0);atacante.sick=false;w.eval('P(0)').field.push(atacante);w.recalc();
-      const ataque=w.doAttack(atacante,'face');await hasta(()=>!!seguirAtaque,'ataque suspendido en su ventana de respuesta');w.newGame('fender','adreida');w.eval('G.resolving=true');seguirAtaque();await ataque;
-      t.check(w.eval('P(0).alma===20&&P(1).alma===20&&G.resolving'),pagina+': el ataque cancelado no daña ni desbloquea la partida nueva.');w.fastWindow=rapida;
-      // Llegar a cero sigue entrando al final secreto mediante showEnd.
-      for(const sobrevivio of [true,false]){
-        arena();inmediato({sobrevivio});w.eval('P('+(sobrevivio?1:0)+').alma=2');w.eval("P(1).hand=['matildus']");await w.playFromHand(1,'matildus');
-        await hasta(()=>finales.length===1,'el daño letal entra en el final de campaña');t.igual(finales[0].ganador,sobrevivio?0:1,pagina+': ganador correcto del daño letal');t.check(w.eval('G.over'),pagina+': el combate termina al llegar a cero');
-      }
-      // El controlador real conserva el estado de resolución, alterna las
-      // seis pruebas y cancela la promesa al abandonar la mesa o cambiar G.
+      // Dos cartas reales de la IA esperan cada prueba antes de continuar;
+      // ninguna puede atacar en el mismo turno en que acaba de entrar.
+      arena();const pendientes=diferir();w.eval("P(1).hand=['editorcosecha','editorcorte']");let termino=false,cedio=false;w.endTurn=async()=>{cedio=true;};
+      const turno=w.aiTurn().then(()=>{termino=true;});await hasta(()=>eventos.length===1,'la primera carta abre la interrupción');await sleep(20);
+      t.check(!termino&&!cedio&&w.eval('G.busy&&P(1).hand.length===1&&P(1).field.length===1'),pagina+': la IA espera con la carta ya en mesa');
+      pendientes[0]({sobrevivio:true});await hasta(()=>eventos.length===2,'la IA sólo juega la segunda al resolver la primera');
+      t.check(!termino&&!cedio,pagina+': la segunda prueba también bloquea el turno');pendientes[1]({sobrevivio:false});await turno;
+      t.check(cedio&&w.eval('P(0).alma===18&&P(1).alma===18&&P(1).field.length===2&&P(1).field.every(u=>u.sick&&!u.attacked)'),pagina+': un resultado por carta y ningún ataque prematuro');
+      w.eval('P(1).field.forEach(u=>u.sick=false);P(1).hand=[];G.phase="principal"');await w.aiTurn();w.endTurn=finTurno;
+      t.check(w.eval('P(0).alma')===13&&eventos.length===2,pagina+': la IA reutiliza los dos cuerpos para atacar sin repetir pruebas');
+      // Llegar a cero entra al final de campaña. El resultado de una prueba
+      // anterior nunca debe descontar Alma de la siguiente partida.
+      for(const sobrevivio of [true,false]){arena();inmediato({sobrevivio});w.eval('P('+(sobrevivio?1:0)+').alma=2');w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');await hasta(()=>finales.length===1,'el daño letal entra en el final');t.igual(finales[0].ganador,sobrevivio?0:1,pagina+': ganador del daño letal');}
+      arena();const anulada=diferir();w.eval("P(1).hand=['editorcosecha']");const antigua=w.playFromHand(1,'editorcosecha');await hasta(()=>anulada.length===1,'prueba pendiente al empezar otra partida');w.newGame('fender','adreida');const nueva=w.eval('G');anulada[0]({sobrevivio:true});await antigua;t.check(w.eval('G')===nueva&&w.eval('P(0).alma===20&&P(1).alma===20&&P(1).field.length===0'),pagina+': el resultado antiguo no cambia la nueva partida');
+      // Controlador real: una llamada duplicada no consume otra prueba y
+      // conserva el bloqueo anterior incluso después de resolver o cancelar.
       w.campanaInterferenciaPitagoras=interferencia;const llamadas=[],respuestas=[];let cancelaciones=0;
       w.PITAGORAS_PRUEBAS={iniciar:op=>{llamadas.push(op);return new Promise(r=>respuestas.push(r));},cancelar:()=>{cancelaciones++;respuestas.at(-1)?.({cancelado:true});}};
       arena();const actual=w.eval('G');w.eval('G.resolving=true');
-      for(let i=0;i<7;i++){
-        const esperando=w.campanaInterferenciaPitagoras(1,'matildus',actual);await hasta(()=>llamadas.length===i+1,'abre prueba '+i);
-        t.check(w.eval('G.editorEnPrueba&&G.resolving'),pagina+': pausa los controles mientras se juega.');t.igual(llamadas[i].duracion,20,pagina+': duración de veinte segundos');respuestas[i]({sobrevivio:true,cancelado:false});await esperando;
-        t.check(w.eval('G.resolving')===true&&!w.eval('G.editorEnPrueba'),pagina+': restaura la resolución previa.');
+      for(let i=0;i<6;i++){
+        const esperando=w.campanaInterferenciaPitagoras(1,ids[i],actual);await hasta(()=>llamadas.length===i+1,'abre prueba '+i);
+        t.check(w.eval('G.editorEnPrueba&&G.resolving'),pagina+': bloquea los controles durante la prueba');
+        const duplicada=await w.campanaInterferenciaPitagoras(1,ids[i],actual);t.check(duplicada.cancelado&&llamadas.length===i+1&&w.eval('G.editorPruebas')===i+1,pagina+': rechazo único de la reentrada');
+        t.igual(llamadas[i].duracion,20,pagina+': veinte segundos');respuestas[i]({sobrevivio:true,cancelado:false});await esperando;t.check(w.eval('G.resolving')&&!w.eval('G.editorEnPrueba'),pagina+': restaura el bloqueo previo');
       }
-      t.check(llamadas.map(x=>x.tipo).join(',')==='isometrico,laseres,fps,carrera,orbital,duelo,isometrico',pagina+': recorre los seis minijuegos y reinicia el ciclo.');
+      t.check(llamadas.map(x=>x.tipo).join(',')==='isometrico,laseres,fps,carrera,orbital,duelo',pagina+': cada carta conserva su juego');
+      const normal=w.campanaInterferenciaPitagoras(1,'matildus',actual);await sleep(10);t.check(!w.eval('G.editorEnPrueba')&&llamadas.length===6,pagina+': una llamada directa con carta normal no abre otra prueba');t.check((await normal).cancelado,pagina+': rechaza la carta normal también en el controlador');
       for(const salida of ['menu','nuevo','revancha']){
-        arena();const antes=llamadas.length;
-        w.eval("P(1).hand=['matildus']");const carta=w.playFromHand(1,'matildus');await hasta(()=>llamadas.length>antes,'minijuego para cancelar '+salida);
-        const tarde=respuestas.at(-1);
+        arena();const antes=llamadas.length;w.eval("P(1).hand=['editorcosecha']");const carta=w.playFromHand(1,'editorcosecha');await hasta(()=>llamadas.length>antes,'prueba para cancelar '+salida);const tarde=respuestas.at(-1);
         if(salida==='menu')w.showScreen('menu');else if(salida==='nuevo')w.newGame('fender','adreida');else{w.cortinillaVS=async()=>{};await w.startMatch('fender','adreida',{volado:false,first:0});}
-        tarde({sobrevivio:true});await carta;t.check(!w.eval('G.editorEnPrueba'),pagina+': salir cancela la prueba pendiente');t.check(w.eval('P(0).alma===20&&P(1).alma===20'),pagina+': el resultado tardío de '+salida+' no hace daño.');
+        tarde({sobrevivio:true});await carta;t.check(!w.eval('G.editorEnPrueba')&&w.eval('P(0).alma===20&&P(1).alma===20'),pagina+': salir cancela la prueba y su daño '+salida);
       }
-      t.check(cancelaciones>=3,pagina+': cancela también la escena de minijuego.');
-    }finally{w.eval('NET.on=false');w.campanaCancelarInterferencia?.();w.campanaCerrar();w.relojPara();w.setTimeout=poner;w.fastWindow=rapida;w.resolveTargets=objetivos;w.resolverD20=resolverDado;w.endTurn=finTurno;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+      t.check(cancelaciones>=3,pagina+': también cancela la escena');
+    }finally{w.eval('NET.on=false');w.campanaCancelarInterferencia?.();w.campanaCerrar();w.relojPara();w.setTimeout=poner;w.endTurn=finTurno;w.aiTurn=turnoIA;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
+
+PRUEBAS.suite('pitagorasMesa',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-mesa-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,A=w.PITAGORAS_MESA,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now;let ahora=10000,secuencia=0,reducida=false;const timers=new Map(),cuadros=new Map();
+    try{
+      t.check(!!A,pagina+': carga la mesa compartida');Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:reducida});
+      w.setTimeout=(fn,ms,...args)=>{const id=++secuencia;timers.set(id,{en:ahora+ms,fn:()=>fn(...args)});return id;};w.clearTimeout=id=>timers.delete(id);w.requestAnimationFrame=fn=>{const id=++secuencia;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;
+      const avanzar=ms=>{const hasta=ahora+ms;while(true){const p=[...timers].filter(([,v])=>v.en<=hasta).sort((a,b)=>a[1].en-b[1].en)[0];if(!p)break;ahora=p[1].en;timers.delete(p[0]);p[1].fn();}ahora=hasta;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const preparar=()=>{A.cancelar();w.newGame('fender','adreida');w.eval("G.phase='principal';G.active=0;G.campana={id:'mesa-editor',etapa:6,jefeSecreto:true,alma:40};P(1).alma=40");w.showScreen('board');w.render();A.actualizar(w.eval('G'));return w.eval('G');};
+      const g=preparar(),antes=JSON.stringify(g);
+      // El navegador puede entregar un primer RAF con sello anterior al
+      // performance.now de creación: ningún índice de tentáculo será negativo.
+      avanzar(-1);t.check(A.estado.rafActivo,pagina+': primer fotograma anterior no detiene el lienzo');avanzar(17);const c=d.querySelector('.pitMesaInvasion');
+      t.check(A.estado.activo&&c&&w.getComputedStyle(c).pointerEvents==='none'&&c.getAttribute('aria-hidden')==='true',pagina+': infección decorativa sin bloquear cartas ni lectores');
+      t.check(A.estado.ancho===w.innerWidth&&A.estado.alto===w.innerHeight&&Number.isFinite(A.estado.origen.x)&&Number.isFinite(A.estado.origen.y),pagina+': geometría en píxeles del visor');
+      t.igual(A.estado.objetivo,0,pagina+': invasión inicial');t.igual(JSON.stringify(g),antes,pagina+': dibujar no modifica la partida');
+      let anterior=0;for(const alma of [30,20,10,0]){w.eval('P(1).alma='+alma);A.actualizar(g);avanzar(100);t.igual(A.estado.objetivo,(40-alma)/40,pagina+': avance proporcional al daño '+alma);t.check(A.estado.progreso>anterior&&A.estado.progreso<=A.estado.objetivo,pagina+': tentáculos se extienden gradualmente');anterior=A.estado.progreso;}
+      w.eval('P(1).alma=30');A.actualizar(g);t.igual(A.estado.objetivo,1,pagina+': sanar no rebobina el universo consumido');
+      let resueltas=0;g.over=true;const disolucion=A.disolver(g).then(x=>{resueltas++;return x;}),duplicada=A.disolver(g);t.check(A.estado.fase==='disolviendo'&&A.estado.particulas>0&&resueltas===0,pagina+': la derrota convierte la invasión en esporas');
+      avanzar(A.tiempos.disolucion-1);await sleep(0);t.check(resueltas===0&&A.estado.fase==='disolviendo',pagina+': espera toda la disolución');
+      avanzar(1);t.check(A.estado.fase==='mesa'&&A.estado.particulas===0&&d.querySelector('#leaderFoe').classList.contains('pmEditorDesvanecido'),pagina+': desaparece Pitágoras y deja la mesa normal');
+      const ctx=c.getContext('2d'),pix=ctx.getImageData(0,0,c.width,c.height).data;t.check(!pix.some((v,i)=>i%4===3&&v),pagina+': ninguna mancha ni tentáculo queda encima de la mesa');
+      avanzar(A.tiempos.mesa-1);await sleep(0);t.igual(resueltas,0,pagina+': mantiene un instante la mesa limpia antes del epílogo');avanzar(1);
+      t.check(await disolucion&&await duplicada&&resueltas===1&&!A.estado.activo&&!A.estado.rafActivo&&!d.querySelector('.pitMesaInvasion'),pagina+': resultado único y elimina lienzo y animación');
+      A.actualizar(g);t.check(!A.estado.activo&&!await A.disolver(g),pagina+': el mismo enemigo no reaparece ni repite la disolución');A.cancelar();t.check(!d.querySelector('.pmEditorDisolviendo,.pmEditorDesvanecido'),pagina+': cancelar también restaura el retrato');
+      for(const salida of ['cancelar','menu','nuevo']){const h=preparar();h.over=true;const p=A.disolver(h);avanzar(200);if(salida==='cancelar')A.cancelar();else if(salida==='menu')w.showScreen('menu');else w.newGame('fender','adreida');avanzar(A.tiempos.disolucion+A.tiempos.mesa+100);t.check(!(await p)&&!A.estado.activo&&!d.querySelector('.pitMesaInvasion,.pmEditorDesvanecido,.pmEditorDisolviendo'),pagina+': '+salida+' cancela el final y limpia todas las capas');}
+      for(const flag of ['normal','online','guest','sala','fast','silent','auto']){const h=preparar();A.cancelar();if(flag==='normal')delete h.campana;else if(flag==='sala')w.eval('NET.on=true');else h[flag]=true;A.actualizar(h);t.check(!A.estado.activo&&!d.querySelector('.pitMesaInvasion'),pagina+': no invade '+flag);if(['fast','silent','auto'].includes(flag))t.check(await A.disolver(h),pagina+': '+flag+' permite terminar sin efectos ni espera');w.eval('NET.on=false');}
+      const referenciaVieja=preparar();A.cancelar();w.newGame('fender','adreida');A.actualizar(referenciaVieja);t.check(!A.estado.activo,pagina+': un render tardío no vuelve a montar el universo anterior');const rechazada=A.disolver(referenciaVieja);t.check(!A.estado.activo,pagina+': una llamada tardía tampoco inicia la disolución anterior');t.check(!(await rechazada),pagina+': la referencia vieja se cancela inmediatamente');
+      reducida=true;const h=preparar();w.eval('P(1).alma=10');A.actualizar(h);avanzar(16);t.igual(A.estado.progreso,.75,pagina+': movimiento reducido no retrasa la información');h.over=true;const p=A.disolver(h);avanzar(A.tiempos.reducida+A.tiempos.mesaReducida);t.check(await p&&!A.estado.activo,pagina+': disolución breve accesible también termina');
+    }finally{A?.cancelar();w.relojPara();w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;w.eval('NET.on=false');f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasDesenlace',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-desenlace-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,clave=w.eval('CAMPANA_CLAVE'),previo=w.localStorage.getItem(clave);let aperturas=0,derrotas=0;const pendientes=[];
+    try{
+      w.campanaAbrirSecreto=()=>{aperturas++;};w.cinematicaFinal=async()=>{derrotas++;return true;};
+      w.PITAGORAS_MESA.disolver=g=>new Promise(resolve=>pendientes.push({g,resolve}));
+      const preparar=()=>{w.newGame('fender','adreida');w.campanaGuardar({version:1,id:'desenlace-editor',lider:'fender',etapa:6,secreto:'combate'});w.eval("G.campana={id:'desenlace-editor',etapa:6,jefeSecreto:true};G.over=true;P(1).alma=0");return w.eval('G');};
+      const g=preparar();w.campanaFinalSecreto(0,'Victoria');w.campanaFinalSecreto(0,'Victoria repetida');
+      t.check(pendientes.length===1&&pendientes[0].g===g&&aperturas===0&&g.campanaResuelta,pagina+': ganar inicia una sola disolución sin saltarse la mesa');
+      t.igual(w.campanaLeer().secreto,'final',pagina+': conserva el desenlace si se recarga durante las esporas');
+      pendientes[0].resolve(true);await sleep(0);t.igual(aperturas,1,pagina+': el epílogo espera a que la mesa quede limpia');
+      preparar();w.campanaFinalSecreto(0,'Victoria');pendientes.at(-1).resolve(false);await sleep(0);t.igual(aperturas,1,pagina+': una disolución cancelada no abre el epílogo');
+      preparar();w.campanaFinalSecreto(0,'Victoria');const vieja=pendientes.at(-1);w.newGame('fender','adreida');vieja.resolve(true);await sleep(0);t.igual(aperturas,1,pagina+': una partida nueva invalida el final pendiente');
+      preparar();w.campanaFinalSecreto(0,'Victoria');const reemplazada=pendientes.at(-1);w.campanaGuardar({version:1,id:'otra-campana',lider:'fender',etapa:2});reemplazada.resolve(true);await sleep(0);t.igual(aperturas,1,pagina+': no abre el final sobre otro avance');
+      preparar();const antes=pendientes.length;w.campanaFinalSecreto(1,'Derrota');await sleep(0);t.check(pendientes.length===antes&&derrotas===1&&w.campanaLeer().secreto==='combate',pagina+': una derrota conserva la revancha y no disuelve al vencedor');
+      // El acceso beta y sus botones también pertenecen a una sola partida.
+      // Una referencia de DOM antigua no daña una campaña ni una sala nueva.
+      const disponible=w.campanaPruebaDisponible;let comienzos=0;
+      w.startMatch=async(a,b,op)=>{comienzos++;w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana)+";G.phase='principal';G.active=0;P(1).alma=40");w.showScreen('board');};w.fxFace=async()=>{};
+      w.campanaGuardar({version:1,id:'avance-real-preservado',lider:'fender',etapa:3});const guardado=w.localStorage.getItem(clave),logros=w.localStorage.getItem('caoz.campana.logros.v1.prueba');
+      t.check(await w.campanaEnsayarPitagoras(),pagina+': el atajo abre un ensayo identificado');t.check(w.campanaLeer().prueba&&w.eval('G.campana.pruebaEditor')&&w.localStorage.getItem(clave)===guardado,pagina+': el ensayo no sustituye el avance real');
+      const host=d.createElement('div');w.campanaBotonesEditorBeta(host);const botonViejo=host.querySelector('button');t.check(botonViejo&&!botonViejo.disabled,pagina+': ensayo permite probar daño en un turno libre');await botonViejo.onclick();t.igual(w.eval('P(1).alma'),30,pagina+': botón vigente descuenta diez');
+      w.newGame('fender','adreida');w.eval("G.phase='principal';G.active=0;G.campana={id:'campana-real',etapa:2};P(1).alma=20");await botonViejo.onclick();t.igual(w.eval('P(1).alma'),20,pagina+': botón viejo no daña otra partida');
+      for(const flag of ['produccion','online','guest','sala']){
+        t.check(await w.campanaEnsayarPitagoras(),pagina+': prepara ensayo para comprobar '+flag);w.campanaBotonesEditorBeta(host);const boton=host.querySelector('button'),n=comienzos;
+        if(flag==='produccion')w.campanaPruebaDisponible=()=>false;else if(flag==='sala')w.eval('NET.on=true');else w.eval('G.'+flag+'=true');
+        await boton.onclick();t.check(w.eval('P(1).alma')===40&&!await w.campanaEnsayarPitagoras()&&comienzos===n,pagina+': botón y acceso rechazan '+flag);w.campanaBotonesEditorBeta(host);t.check(!host.querySelector('button'),pagina+': '+flag+' tampoco muestra botón');
+        w.campanaPruebaDisponible=disponible;w.eval('NET.on=false;G.online=false;G.guest=false');
+      }
+      t.check(w.localStorage.getItem(clave)===guardado&&w.localStorage.getItem('caoz.campana.logros.v1.prueba')===logros,pagina+': todas las pruebas conservan avance y logros reales');
+      let reanudar;w.startMatch=()=>new Promise(resolve=>{reanudar=resolve;});const arranque=w.campanaEnsayarPitagoras();await sleep(0);t.check(!!reanudar,pagina+': arranque pendiente durante la transición');
+      w.newGame('fender','adreida');w.campanaGuardar({version:1,id:'campana-posterior',lider:'fender',etapa:2});w.eval("G.campana={id:'campana-posterior',etapa:2}");const posterior=w.localStorage.getItem(clave);reanudar();
+      t.check(!(await arranque)&&!w.eval('G.campana.pruebaEditor')&&w.campanaLeer().id==='campana-posterior'&&w.localStorage.getItem(clave)===posterior,pagina+': terminar un arranque antiguo no convierte la campaña nueva en ensayo');
+    }finally{w.campanaCerrar();w.relojPara();if(previo==null)w.localStorage.removeItem(clave);else w.localStorage.setItem(clave,previo);f.remove();}
+  }
+});
 
 PRUEBAS.suite('pitagorasContinuidad',async t=>{
   for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
@@ -1181,6 +1244,7 @@ PRUEBAS.suite('campanaSecreto',async t=>{
       const ejecutar=ms=>{const par=[...timers].find(([id,t])=>t.ms===ms);t.check(!!par,pagina+': falta temporizador de '+ms+' ms.');if(par){timers.delete(par[0]);par[1].fn();}};
       w.crearMesaCampana=(host,op)=>{const mesa=crear(host,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
       w.cinematicaFinal=async(g,m,a)=>{acciones=a;return true;};
+      w.PITAGORAS_MESA.disolver=async()=>true;
       w.montarRevelacionPitagoras=(host,op)=>{cubrir=op.onRevelado;return {destruir(){}};};
       w.montarEscenaPitagoras=(host,op)=>{pelear=op.onFight;return {destruir(){}};};
       w.montarFinalPitagoras=(host,op)=>{terminar=op.onTerminar;const n=d.createElement('b');n.textContent=op.nombre;host.appendChild(n);return {destruir(){}};};
@@ -1204,7 +1268,7 @@ PRUEBAS.suite('campanaSecreto',async t=>{
       const partida=partidas[0];t.igual(partida.b,'adreida',pagina+': reglas del mazo de Adreida');
       t.check(partida.op.campana.jefeSecreto&&partida.op.campana.etapa===6&&partida.op.nombres[1]==='Pitágoras',pagina+': identidad del jefe independiente de su mazo.');
       w.eval('G.over=true');w.campanaFinal(1,'Derrota');acciones.revancha();await sleep(0);t.igual(partidas.length,2,pagina+': revancha directa sin regresar al trono');
-      w.eval('G.over=true');w.campanaFinal(0,'Victoria');t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='final',pagina+': el Editor inicia su final especial.');
+      w.eval('G.over=true');w.campanaFinal(0,'Victoria');await sleep(0);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='final',pagina+': el Editor inicia su final especial.');
       t.igual(w.CAMPANA_LOGROS.ganador().nombre,'Ari <h1>',pagina+': conserva el nombre como texto');t.check(!d.querySelector('#campanaSecreto h1'),pagina+': el nombre no inyecta HTML.');
       terminar();ejecutar(900);t.check(!d.querySelector('#campanaSecreto')&&w.campanaLeer().secreto==='completado',pagina+': vuelve al menú con el final persistido.');
       w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='creador',pagina+': después del final empieza un personaje nuevo.');w.campanaCerrar();
@@ -2645,7 +2709,7 @@ PRUEBAS.suite('regresiones', async t => {
     const tipos = ['personaje','hechizo','trampa','objeto','lugar'];
     const vistos = {};
     for (const tipo of tipos){
-      const id = Object.keys(T.CARDS).find(x => T.CARDS[x].t===tipo && !T.CARDS[x].token);
+      const id = Object.keys(T.CARDS).find(x => T.CARDS[x].t===tipo && !T.CARDS[x].token && !T.CARDS[x].editorJuego);
       const d = cardEl(id);   // tests.js corre dentro del juego: es su propia función
       d.style.cssText = 'position:fixed;left:-9999px';
       document.body.appendChild(d);
@@ -3045,7 +3109,7 @@ PRUEBAS.suite('regresiones', async t => {
     const p = T.P(0);
 
     // 1) con una mano impagable la ofrece
-    const caras = Object.keys(T.CARDS).filter(id => T.CARDS[id].c >= 4 && !T.CARDS[id].token).slice(0,5);
+    const caras = Object.keys(T.CARDS).filter(id => T.CARDS[id].c >= 4 && !T.CARDS[id].token && !T.CARDS[id].editorJuego).slice(0,5);
     p.hand = caras.slice();
     p.manoRehecha = false;
     T.G.turnNo = 1; T.G.active = 0; T.G.phase = 'principal';
@@ -3173,7 +3237,7 @@ PRUEBAS.suite('regresiones', async t => {
 
     // 3) con puntos que no alcanzan para nada, se calla
     limpiar();
-    const caro = Object.keys(T.CARDS).find(id => T.CARDS[id].c >= 7 && !T.CARDS[id].token);
+    const caro = Object.keys(T.CARDS).find(id => T.CARDS[id].c >= 7 && !T.CARDS[id].token && !T.CARDS[id].editorJuego);
     p.hand = [caro]; p.pd = 1; p.leaderUsed = true; p.field.length = 0;
     window.pedirTerminarTurno();
     t.check(!preguntando(), 'si los PD no alcanzan para nada, preguntar sólo estorba');

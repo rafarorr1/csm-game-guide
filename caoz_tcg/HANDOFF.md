@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 222 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 223 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,39 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 223 convierte las seis `CARTAS_EDITOR` en Personajes/Pesadilla de coste 2.
+Ataque/vida: Cosecha 2/3, Corte 3/2, Cuadro 3/2, Puente 2/4, Órbita 2/3,
+Memoria 2/4. Entran cansadas, permanecen tras el minijuego, atacan con IA normal,
+pueden morir/rebotar y van a las Alcantarillas. Máximo 5. No son tokens; quedan
+fuera de colección y del banco normal por `set`/`editorJuego`. El mazo secreto
+conserva 40 cartas cíclicas, 40 Alma y la base de Adreida. `DECKS` no cambia.
+
+`pruebaDelEditor` y `campanaInterferenciaPitagoras` exigen `editorJuego`: cartas
+normales, ataques, muertes y habilidades no abren otra prueba. Una prueba por
+carta pagada, una respuesta de ±2 Alma, controles/IA detenidos hasta regresar.
+La carta de la transición muestra ataque/vida reales y 20 segundos; en la mesa
+usa el mismo grabado del minijuego si todavía no tiene ilustración oficial.
+
+`pitagoras-mesa.js`: `PITAGORAS_MESA.actualizar(G)` al final de ambos render;
+`showScreen` distinto de `board` cancela. Capa en coordenadas del visor, sin input,
+recorta cartas/controles/texto. Tentáculos aumentan con máximo daño relativo
+observado; curarse no reduce invasión. No modifica motor ni coordenadas.
+
+Victoria secreta: `campanaFinalSecreto` guarda `secreto='final'` y espera
+`PITAGORAS_MESA.disolver(g)`: 2300 ms de esporas + 700 ms de mesa limpia
+(240 + 160 ms con movimiento reducido). Sólo después abre el epílogo previo.
+Guardas de partida/id y el resultado de cancelación impiden finales tardíos.
+Repetir `disolver` comparte la promesa; un `WeakSet` evita reapariciones.
+RAF, temporizadores y observadores se retiran al salir. Los temporizadores
+también comprueban la partida actual y la mesa visible si no hay fotogramas.
+
+Atajo beta `/?editor=batalla` o botón en `/?editor=1`: `campanaEnsayarPitagoras`
+usa `campanaEnsayoGero` sólo en memoria, con el protagonista guardado o Fender.
+No fabrica seis sellos ni sobrescribe la campaña real. `meta.pruebaEditor`
+habilita «Beta · Pitágoras −10 Alma» en turno propio sin acción pendiente:
+permite recorrer
+la invasión y derrota. No aparece en campaña normal, online o producción.
 
 Build 222 comparte la dirección pixel art del FPS con los otros cinco juegos.
 `pitagoras-pixel.js` se carga tras fps.js: pintores propios y framebuffer

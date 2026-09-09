@@ -328,7 +328,7 @@ function pintar(d, muertos){
   }
 
   /* --- cartas muertas --- */
-  const jugables = Object.keys(T.CARDS).filter(id => !T.CARDS[id].token);
+  const jugables = Object.keys(T.CARDS).filter(id => !T.CARDS[id].token && !T.CARDS[id].editorJuego);
   const nunca = jugables.filter(id => !d.jugadas[id]);
   const enMazos = new Set();
   for (const l of L) for (const [c] of T.DECKS[l].list) enMazos.add(c);

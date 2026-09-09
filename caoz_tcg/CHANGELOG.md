@@ -1,6 +1,20 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 223 · Pitágoras consume la mesa
+
+- Las seis cartas de sus minijuegos son Pesadillas con ataque y vida propios:
+  permanecen en el campo al regresar y pueden atacar desde su siguiente turno.
+  Se pueden combatir, destruir y devolver a la mano como otros personajes.
+- Tentáculos orgánicos y esporas se extienden desde Pitágoras cuanto más daño
+  recibe. La invasión protege la lectura y las zonas pulsables del tablero.
+- Al vencerlo, su presencia se desintegra durante 2.3 s; la mesa normal vuelve
+  a quedar a la vista durante 0.7 s antes de continuar el epílogo de la campaña.
+- Entrada directa a la batalla de ensayo desde el laboratorio beta, con un
+  control de daño para revisar su invasión y derrota sin completar seis mazos.
+  El ensayo conserva los progresos y honores reales del jugador.
+- Se mantienen los minijuegos aprobados y los seis mazos habituales.
+
 ### Sin numerar · build 222 · Seis pesadillas de píxeles
 
 - Dirección visual compartida con el FPS: sprites animados, paletas de piedra,
