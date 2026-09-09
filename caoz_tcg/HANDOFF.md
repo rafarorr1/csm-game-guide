@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 221 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 222 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,28 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 222 comparte la dirección pixel art del FPS con los otros cinco juegos.
+`pitagoras-pixel.js` se carga tras fps.js: pintores propios y framebuffer
+limitado mediante API.pintarEscena(s,ctx,dibujar). Restaura ancho/alto en finally;
+la cuadrícula visual no cambia modelo, proyecciones ni controles DOM.
+
+Cosecha: presionCosecha crece de 0 a 1 entre12 y20 s. Más apariciones,
+dobles desde presión>.6, hasta32 enemigos; intervalo final .28 s. Losas2×2
+fuera de la cruz central avisan1.25 s y caen.45 s antes de ser huecos.
+Caer hiere una vez y devuelve a un punto de la cruz, evitando fuego/enemigos.
+Los monstruos también caen, sin contar como disparo acertado. Sólo renderer
+consulta esos rectángulos; nunca altera la selección de losas ni el azar.
+
+Corte final: unico→barrido3→barrido/abanico/cruce4. Cada rayo conserva aviso
+completo (1.4→1.05 s). Edad negativa significa demora invisible; comienza
+telegráfico en0, dispara enaviso. Intervalos.42→.31 s; no se superponen
+secuencias completas. El impulso conserva controles y recuperación.
+
+Memoria usa diez ids CARDS reales, una única pareja por ronda; exposición
+1.5→1.3 s (+.5), elección5→4 s. La ilustración/fallback se congela por id
+al comenzar la ronda, sin cambios por descarga tardía ni copias diferentes.
+Cartas ocultas borran nombres, cifras y canvas, también en accesibilidad.
 
 Build 221 pule controles y cambia duelo por memoria, conservando seis ids.
 FPS: `.ppDisparo` es un tercer control independiente del stick derecho. El
@@ -31,7 +53,7 @@ Velocidad y oleadas progresan con t. La guía usa cambios y saltos reales.
 Memoria: tipo duelo / carta editorduelo, nombre La memoria del Editor.
 Entrada elegir índice|null. cartasMemoria, elegidasMemoria, faseMemoria,
 rondaMemoria, parejas y hastaMemoria viven en el modelo determinista; ocultar
-la pestaña consume plazos. Una pareja, 5→6→7 cartas y 1→.8 s de exposición;
+la pestaña consume plazos. Una pareja, 5→6→7 cartas y 1.5→1.3 s de exposición;
 5→4 s para elegir. Tres vidas; >=3 parejas al llegar20 s para ganar. La guía
 recuerda sólo cartas reveladas y requiere memoria persistente entre pasos.
 

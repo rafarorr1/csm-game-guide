@@ -1,6 +1,21 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 222 · Seis pesadillas de píxeles
+
+- Dirección visual compartida con el FPS: sprites animados, paletas de piedra,
+  fuego y oscuridad, texturas por baldosas y píxeles nítidos en los demás juegos.
+- La cosecha se intensifica en los últimos ocho segundos: más criaturas,
+  oleadas dobles al final y losas que se resquebrajan antes de caer. La cruz
+  central conserva suelo firme; los huecos afectan también a los perseguidores.
+- El corte final añade barridos, abanicos y cruces en secuencia, con dirección
+  variable y menor separación al final. Cada disparo conserva su aviso visible.
+- Memoria concede medio segundo extra en cada ronda y utiliza cartas reales
+  con nombre, coste, ataque y vida. Una pareja de apariencia idéntica y sin
+  revelar identidades mientras están boca abajo, aunque cargue tarde el arte.
+- Se mantienen los veinte segundos, tres vidas, controles y transición de humo.
+  Publicación sólo beta para probar la dificultad antes de producción.
+
 ### Sin numerar · build 221 · Controles y recuerdos
 
 - FPS con palanca para mirar y botón de disparo independiente. Tres dedos

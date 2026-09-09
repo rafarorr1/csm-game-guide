@@ -14,7 +14,7 @@
   const MAPA=['1111111111111111','1000000000000001','1000000000000001','1000110000110001','1000110000110001','1000000000000001','1000000000000001','1000000000000001','1000000000000001','1000000000000001','1000000000000001','1000110000110001','1000110000110001','1000000000000001','1000000000000001','1111111111111111'];
   function crear(op={}){
     const tipo=tipoValido(op.tipo),semilla=Number.isFinite(op.semilla)?op.semilla>>>0:187341,s={tipo,semilla,azar:semilla,t:0,duracion:clamp(Number(op.duracion)||20,10,60),vidas:3,invulnerable:0,terminado:false,sobrevivio:false,
-      jugador:tipo==='fps'?{x:8,y:12.8,a:-Math.PI/2,r:.28}:{x:0,y:2.5,a:-Math.PI/2,r:.32},enemigos:[],balas:[],rayos:[],marcas:[],proximaMarca:3.8,particulas:[],eventos:[],muertes:0,disparos:0,siguiente:.8,enfriar:0,impacto:0,fogonazo:0,acierto:0,baja:0,fallo:0,caidos:[],ultimoDisparo:null,impulso:0,recargaImpulso:0,ultimoMovimiento:{x:0,y:-1},pulsado:false,id:0,mapa:MAPA.slice(),camino:null,caminoEn:0};
+      jugador:tipo==='fps'?{x:8,y:12.8,a:-Math.PI/2,r:.28}:{x:0,y:2.5,a:-Math.PI/2,r:.32},enemigos:[],balas:[],rayos:[],marcas:[],proximaMarca:3.8,losas:[],proximaLosa:12,presionCosecha:0,caidaJugador:0,apariciones:0,secuencia:0,particulas:[],eventos:[],muertes:0,disparos:0,siguiente:.8,enfriar:0,impacto:0,fogonazo:0,acierto:0,baja:0,fallo:0,caidos:[],ultimoDisparo:null,impulso:0,recargaImpulso:0,ultimoMovimiento:{x:0,y:-1},pulsado:false,id:0,mapa:MAPA.slice(),camino:null,caminoEn:0};
     return s;
   }
   const pared=(s,x,y)=>!s.mapa[Math.floor(y)]||s.mapa[Math.floor(y)][Math.floor(x)]!=='0';
@@ -30,14 +30,59 @@
   function herir(s){if(s.invulnerable>0||s.terminado)return false;s.vidas--;s.invulnerable=1.1;s.impacto=.42;s.eventos.push('dolor');polvo(s,s.jugador.x,s.jugador.y,'#ef3455',14);if(s.vidas<=0){s.terminado=true;s.sobrevivio=false;}return true;}
   function aparecer(s){
     const p=s.jugador;let x,y;
-    for(let i=0;i<12;i++){if(s.tipo==='fps'){const sitios=[[2,2],[8,2],[13,2],[2,8],[13,8],[2,13],[13,13]];[x,y]=sitios[Math.floor(azar(s)*sitios.length)];x+=azar(s)*.35;y+=azar(s)*.35;}else{const a=Math.floor(azar(s)*4),d=azar(s)*12-6;x=a<2?(a?-6.3:6.3):d;y=a<2?d:(a===2?-6.3:6.3);}if(Math.hypot(x-p.x,y-p.y)>4)break;}
-    s.enemigos.push({id:++s.id,x,y,r:s.tipo==='fps'?.34:.35,hp:s.tipo==='fps'?2:1,vel:(s.tipo==='fps'?1.25:1.65)+s.t*.032,aparece:.65,dolor:0,fase:azar(s)*TAU});
+    for(let i=0;i<12;i++){if(s.tipo==='fps'){const sitios=[[2,2],[8,2],[13,2],[2,8],[13,8],[2,13],[13,13]];[x,y]=sitios[Math.floor(azar(s)*sitios.length)];x+=azar(s)*.35;y+=azar(s)*.35;}else{const a=Math.floor(azar(s)*4),d=azar(s)*12-6;x=a<2?(a?-6.3:6.3):d;y=a<2?d:(a===2?-6.3:6.3);}if(Math.hypot(x-p.x,y-p.y)>4&&(s.tipo==='fps'||!enHueco(s,x,y)))break;}
+    s.apariciones++;s.enemigos.push({id:++s.id,x,y,r:s.tipo==='fps'?.34:.35,hp:s.tipo==='fps'?2:1,vel:(s.tipo==='fps'?1.25:1.65)+s.t*.032+(s.tipo==='isometrico'?s.presionCosecha*.55:0),aparece:.65,dolor:0,fase:azar(s)*TAU});
   }
+  // Cada corte conserva su aviso completo. La demora escalona el disparo,
+  // no acorta la oportunidad de esquivarlo; una secuencia no invade la siguiente.
   function prepararRayo(s){
-    const angulos=s.t<6?[0,Math.PI/2]:[0,Math.PI/2,Math.PI/4,-Math.PI/4],a=angulos[Math.floor(azar(s)*angulos.length)],nx=Math.cos(a),ny=Math.sin(a);
-    let offset=azar(s)<.6?nx*s.jugador.x+ny*s.jugador.y:(azar(s)-.5)*9;
-    offset=clamp(offset,-5.6,5.6);s.rayos.push({id:++s.id,nx,ny,offset,edad:0,aviso:1.4,activo:.36,ancho:.37,emitido:false});
-    if(s.t>10){s.rayos.push({id:++s.id,nx,ny,offset:clamp(offset+(offset>0?-2.8:2.8),-5.8,5.8),edad:0,aviso:1.4,activo:.36,ancho:.37,emitido:false});}
+    const final=s.t>=12,medio=s.t>=6,idSecuencia=++s.secuencia;
+    const patron=!medio?'unico':!final?'barrido':['barrido','abanico','cruce'][Math.floor(azar(s)*3)];
+    const angulos=final?[0,Math.PI/2,Math.PI/4,-Math.PI/4,Math.PI/6,-Math.PI/6]:[0,Math.PI/2];
+    const a=angulos[Math.floor(azar(s)*angulos.length)],sentido=azar(s)<.5?-1:1;
+    const n=!medio?1:final?4:3,aviso=!medio?1.4:final?1.05:1.2,activo=final?.26:.32;
+    const intervalo=final?.31:.42,nx=Math.cos(a),ny=Math.sin(a);
+    const centro=clamp(nx*s.jugador.x+ny*s.jugador.y,-3.5,3.5);
+    for(let i=0;i<n;i++){
+      const giro=patron==='abanico'?sentido*(i-1.5)*Math.PI/7:patron==='cruce'?(i%2)*Math.PI/2:0;
+      const rx=Math.cos(a+giro),ry=Math.sin(a+giro);
+      let offset=patron==='barrido'?centro+(i-(n-1)/2)*1.65*sentido:rx*s.jugador.x+ry*s.jugador.y;
+      if(patron==='unico'&&azar(s)>.6)offset=(azar(s)-.5)*9;
+      if(patron==='cruce')offset+=(i<2?-1:1)*1.25;
+      const demora=i*intervalo;
+      s.rayos.push({id:++s.id,nx:rx,ny:ry,offset:clamp(offset,-5.6,5.6),edad:-demora,demora,aviso,activo,ancho:.37,emitido:false,patron,idSecuencia});
+    }
+    s.siguiente=s.t+(n-1)*intervalo+aviso+activo+(final?.18:.3);
+  }
+  function enHueco(s,x,y){return s.losas.some(l=>l.hueco&&Math.abs(x-l.x)<l.ancho/2&&Math.abs(y-l.y)<l.alto/2);}
+  function prepararLosa(s){
+    if(s.losas.length>=10)return;
+    const candidatas=[];
+    for(const x of [-6,-4,-2,2,4,6])for(const y of [-6,-4,-2,2,4,6]){
+      if(s.losas.some(l=>l.x===x&&l.y===y))continue;
+      candidatas.push({x,y,peso:Math.hypot(x-s.jugador.x,y-s.jugador.y)+azar(s)*7});
+    }
+    candidatas.sort((a,b)=>a.peso-b.peso);const q=candidatas[0];if(!q)return;
+    s.losas.push({id:++s.id,x:q.x,y:q.y,ancho:2,alto:2,edad:0,aviso:1.25,caida:.45,hueco:false});
+    s.eventos.push('grieta');
+  }
+  function actualizarSuelo(s,dt){
+    s.presionCosecha=clamp((s.t-12)/8,0,1);s.caidaJugador=Math.max(0,s.caidaJugador-dt);
+    if(s.t>=s.proximaLosa){prepararLosa(s);s.proximaLosa=s.t+1.05-s.presionCosecha*.45;}
+    for(const l of s.losas){l.edad+=dt;if(!l.hueco&&l.edad>=l.aviso+l.caida){l.hueco=true;s.eventos.push('derrumbe');polvo(s,l.x,l.y,'#b08563',12);}}
+    const p=s.jugador;
+    if(enHueco(s,p.x,p.y)){
+      herir(s);s.caidaJugador=.35;
+      // La cruz central permanece firme. Escogemos su punto cercano menos
+      // expuesto a criaturas/fuego para que una caída no quite las tres vidas.
+      const seguros=[];for(let i=-6;i<=6;i+=.5)for(const [x,y] of [[0,i],[i,0]]){
+        let riesgo=Math.hypot(x-p.x,y-p.y);
+        for(const e of s.enemigos)if(e.hp>0)riesgo+=Math.max(0,1.6-Math.hypot(x-e.x,y-e.y))*8;
+        for(const m of s.marcas)if(m.edad<m.aviso+m.activo+m.fuego&&Math.hypot(x-m.x,y-m.y)<m.r+.6)riesgo+=12;
+        seguros.push({x,y,riesgo});
+      }
+      seguros.sort((a,b)=>a.riesgo-b.riesgo);p.x=seguros[0].x;p.y=seguros[0].y;
+    }
   }
   function flujo(s){
     const dist=Array.from({length:16},()=>Array(16).fill(999)),x=Math.floor(s.jugador.x),y=Math.floor(s.jugador.y),cola=[[x,y]];dist[y][x]=0;
@@ -73,11 +118,12 @@
     }
     s.pulsado=!!e.accion;
     if(s.tipo==='laseres'){
-      if(s.t>=s.siguiente){prepararRayo(s);s.siguiente=s.t+(s.t<8?1.8:1.35);}
+      if(s.t>=s.siguiente)prepararRayo(s);
       for(const r of s.rayos){r.edad+=dt;if(r.edad>=r.aviso&&r.edad<r.aviso+r.activo){if(!r.emitido){s.eventos.push('laser');r.emitido=true;}if(Math.abs(p.x*r.nx+p.y*r.ny-r.offset)<r.ancho+p.r)herir(s);}}
       s.rayos=s.rayos.filter(r=>r.edad<r.aviso+r.activo+.25);
     }else{
       if(s.tipo==='isometrico'){
+        actualizarSuelo(s,dt);
         if(s.t>=s.proximaMarca){s.marcas.push({x:p.x,y:p.y,edad:0,aviso:1.1,activo:.26,fuego:1.7,anchoFuego:.18,ceniza:.65,r:1.05,emitido:false});s.proximaMarca+=4;}
         for(const marca of s.marcas){marca.edad+=dt;const transcurrido=marca.edad-marca.aviso,dist=Math.hypot(p.x-marca.x,p.y-marca.y);
           if(transcurrido>=0&&transcurrido<marca.activo){if(!marca.emitido){marca.emitido=true;s.eventos.push('explosion');polvo(s,marca.x,marca.y,'#ffb65b',16);}if(dist<marca.r+p.r)herir(s);}
@@ -85,13 +131,18 @@
         }
         s.marcas=s.marcas.filter(m=>m.edad<m.aviso+m.activo+(m.fuego||0)+(m.ceniza||.2));
       }
-      if(s.t>=s.siguiente&&s.enemigos.length<19){aparecer(s);s.siguiente=s.t+Math.max(.52,(s.tipo==='fps'?1.65:1.25)-s.t*.018);}
+      if(s.t>=s.siguiente&&(s.tipo!=='fps'||s.enemigos.length<19)){
+        const cosecha=s.tipo==='isometrico',presion=cosecha?s.presionCosecha:0,limite=cosecha?32:19;
+        for(let i=0;i<(presion>.6?2:1)&&s.enemigos.length<limite;i++)aparecer(s);
+        const base=Math.max(.52,(cosecha?1.25:1.65)-s.t*.018);s.siguiente=s.t+base*(1-presion)+.28*presion;
+      }
       if(e.accion)disparar(s,e);
       if(s.tipo==='fps'&&(!s.camino||s.t-s.caminoEn>.4))flujo(s);
       for(const u of s.enemigos){u.aparece=Math.max(0,u.aparece-dt);u.dolor=Math.max(0,u.dolor-dt);if(u.aparece>0||u.hp<=0)continue;
         let tx=p.x,ty=p.y,dx=tx-u.x,dy=ty-u.y,d=Math.hypot(dx,dy);
         if(s.tipo==='fps'&&d>1.3&&raycast(s,u.x,u.y,dx/d,dy/d,d).d<d-.2){let val=999;const x=Math.floor(u.x),y=Math.floor(u.y);for(const [xx,yy] of [[x,y],[x+1,y],[x-1,y],[x,y+1],[x,y-1]]){const v=s.camino[yy]?.[xx]??999;if(v<val){val=v;tx=xx+.5;ty=yy+.5;}}dx=tx-u.x;dy=ty-u.y;d=Math.hypot(dx,dy);}
         u.aturdido=Math.max(0,(u.aturdido||0)-dt);const dir=norm(dx,dy);if(!u.aturdido)mover(s,u,dir.x*u.vel*dt,dir.y*u.vel*dt);
+        if(s.tipo==='isometrico'&&enHueco(s,u.x,u.y)){u.hp=0;polvo(s,u.x,u.y,'#524557',4);continue;}
         if(Math.hypot(u.x-p.x,u.y-p.y)<u.r+p.r+.06&&herir(s)){u.hp=0;if(s.tipo!=='fps')s.eventos.push('acierto');}
       }
       for(const b of s.balas){b.x+=b.vx*dt;b.y+=b.vy*dt;b.t-=dt;for(const u of s.enemigos){if(u.hp>0&&u.aparece<=0&&b.t>0&&Math.hypot(b.x-u.x,b.y-u.y)<u.r+.11){u.hp--;b.t=0;if(u.hp<=0){s.muertes++;s.eventos.push('acierto');polvo(s,u.x,u.y,'#c23c4c',9);}}}}
@@ -103,7 +154,7 @@
   function paso(s,entrada={},dt=1/60){if(s.terminado)return s;dt=clamp(Number(dt)||0,0,60);while(dt>1e-8&&!s.terminado){const q=Math.min(dt,1/60,s.duracion-s.t);subpaso(s,entrada,q);dt-=q;}return s;}
   function instantanea(s){return JSON.parse(JSON.stringify(s));}
   function avisoMarca(m){const progreso=clamp(m.edad/m.aviso,0,1),frecuencia=2+10*progreso*progreso;return{progreso,frecuencia,pulso:(1+Math.sin(TAU*(2*m.edad+10*m.edad**3/(3*m.aviso**2))))/2};}
-  global.PITAGORAS_PRUEBAS={modelo:{crear,paso,instantanea,herir,raycast,pared,avisoMarca},tipos:TIPOS};
+  global.PITAGORAS_PRUEBAS={modelo:{crear,paso,instantanea,herir,raycast,pared,avisoMarca,enHueco,prepararLosa,prepararRayo},tipos:TIPOS};
 })(typeof window!=='undefined'?window:globalThis);
 
 (function(global){
@@ -387,8 +438,12 @@
   function pintar(s){
     const canvas=s.ui.canvas,rect=s.ui.campo.getBoundingClientRect(),w=Math.max(1,rect.width),h=Math.max(1,rect.height),dpr=Math.min(devicePixelRatio||1,1.5);s.ancho=w;s.alto=h;
     if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}const c=canvas.getContext('2d');if(!c)return;c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,w,h);
-    materiales(s);c.save();if(!s.reducido&&s.modelo.impacto>0){const f=s.modelo.impacto*4;c.translate(Math.sin(s.modelo.t*79)*f,Math.cos(s.modelo.t*97)*f);}if(API.pintores?.[s.tipo])API.pintores[s.tipo](s,c);else if(s.tipo==='isometrico')isometrico(s,c);else if(s.tipo==='laseres')laseres(s,c);else fps(s,c);c.restore();atmosfera(s,c);
-    const g=c.createRadialGradient(w*.5,h*.45,Math.min(w,h)*.24,w*.5,h*.45,Math.max(w,h)*.72);g.addColorStop(0,'transparent');g.addColorStop(1,s.modelo.impacto>0?'#a71f47a6':'#030408bb');c.fillStyle=g;c.fillRect(0,0,w,h);
+    materiales(s);
+    const dibujar=ctx=>{
+      const ww=s.ancho,hh=s.alto;ctx.save();try{if(!s.reducido&&s.modelo.impacto>0){const f=s.modelo.impacto*4;ctx.translate(Math.sin(s.modelo.t*79)*f,Math.cos(s.modelo.t*97)*f);}if(API.pintores?.[s.tipo])API.pintores[s.tipo](s,ctx);else if(s.tipo==='isometrico')isometrico(s,ctx);else if(s.tipo==='laseres')laseres(s,ctx);else fps(s,ctx);}finally{ctx.restore();}atmosfera(s,ctx);
+      const g=ctx.createRadialGradient(ww*.5,hh*.45,Math.min(ww,hh)*.24,ww*.5,hh*.45,Math.max(ww,hh)*.72);g.addColorStop(0,'transparent');g.addColorStop(1,s.modelo.impacto>0?'#a71f47a6':'#030408bb');ctx.fillStyle=g;ctx.fillRect(0,0,ww,hh);
+    };
+    if(API.pintarEscena)API.pintarEscena(s,c,dibujar);else dibujar(c);
 
     const restantes=Math.max(0,Math.ceil(s.modelo.duracion-s.modelo.t));if(s.ultimoSegundo!==restantes){s.ultimoSegundo=restantes;s.ui.tiempo.textContent=String(restantes).padStart(2,'0');s.ui.tiempo.setAttribute('aria-label',restantes+' segundos restantes');}
     s.ui.progreso.style.transform=`scaleX(${1-s.modelo.t/s.modelo.duracion})`;s.ui.corazones.forEach((c,i)=>c.classList.toggle('off',i>=s.modelo.vidas));s.ui.vidas.setAttribute('aria-label',s.modelo.vidas+' vidas');if(s.tipo==='laseres'){s.ui.derecha.classList.toggle('ppRecargando',s.modelo.recargaImpulso>0);s.ui.derecha.setAttribute('aria-label',s.modelo.recargaImpulso>0?'Impulso recargando':'Impulso listo');}API.actualizadores?.[s.tipo]?.(s);
@@ -402,6 +457,8 @@
   function efectos(s){
     const eventos=s.modelo.eventos.splice(0);if(eventos.includes('dolor')){global.CAOZ_AUDIO?.play('leader_hit',{volumen:.55});s.ui.lectura.textContent=s.modelo.vidas+' vidas restantes.';}
     if(eventos.includes('explosion'))global.CAOZ_AUDIO?.play('spell_fire',{volumen:.48});
+    if(eventos.includes('derrumbe'))global.CAOZ_AUDIO?.play('attack_hit',{volumen:.3});
+    if(eventos.includes('grieta'))s.ui.lectura.textContent='El suelo se resquebraja. Busca las baldosas firmes.';
     if(s.tipo==='fps'){if(eventos.includes('disparo'))global.CAOZ_AUDIO?.play('spell_arcane',{volumen:.2});if(eventos.includes('eliminacion')){global.CAOZ_AUDIO?.play('lethal',{volumen:.62});s.ui.lectura.textContent='Monstruo eliminado.';}else if(eventos.includes('acierto')){global.CAOZ_AUDIO?.play('attack_hit',{volumen:.56});s.ui.lectura.textContent='Disparo acertado.';}return;}
     if(eventos.includes('laser'))global.CAOZ_AUDIO?.play('spell_lightning',{volumen:.35});else if(eventos.includes('acierto'))global.CAOZ_AUDIO?.play('attack_hit',{volumen:.35});else if(eventos.includes('disparo'))global.CAOZ_AUDIO?.play('spell_arcane',{volumen:.18});else if(eventos.includes('impulso'))global.CAOZ_AUDIO?.play('attack_wind',{volumen:.3});
   }
