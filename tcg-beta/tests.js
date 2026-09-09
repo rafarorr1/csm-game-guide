@@ -1202,6 +1202,47 @@ PRUEBAS.suite('sonidos', async t => {
   }finally{f.contentWindow.CAOZ_AUDIO?.detener();f.remove();}
 });
 
+PRUEBAS.suite('hoverNatural', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=hover-natural-interna';document.body.appendChild(f);
+    let reloj,azar;
+    try{
+      await carga;const w=f.contentWindow,d=f.contentDocument,a=w.CAOZ_AUDIO,tomas=[];await a.listo;
+      reloj=w.performance.now;azar=w.Math.random;
+      const param=()=>({value:0,setTargetAtTime(){}}),nodo=()=>({connect(){},disconnect(){},gain:param()});
+      w.AudioContext=class{
+        constructor(){this.state='running';this.currentTime=0;this.destination={};}resume(){return Promise.resolve();}
+        createGain(){return nodo();}createDynamicsCompressor(){return {...nodo(),threshold:param(),knee:param(),ratio:param(),attack:param(),release:param()};}
+        decodeAudioData(){return Promise.resolve({duration:1});}
+        createBufferSource(){return {...nodo(),playbackRate:{value:1},connect(g){this.destino=g;},start(){tomas.push({ritmo:this.playbackRate.value,ganancia:this.destino.gain.value,buffer:this.buffer});},stop(){this.onended?.();}};}
+      };
+      w.newGame('fender','mohamed');w.eval('G.fast=false;G.auto=false;G.silent=false');a.configurar({silencio:false,volumen:.7});await a.desbloquear();await a.cargar('card_hover');await a.cargar('victory_slam');
+      let tiempo=reloj.call(w.performance)+1000,paso=0;w.performance.now=()=>tiempo;
+      w.Math.random=()=>[.12,.2,.86,.8,.36,.4,.64,.6][paso++%8];
+      const base=a.catalogo.find(s=>s.id==='card_hover').volumen;
+      for(let i=0;i<8;i++){tiempo+=200;a.play('card_hover',{intensidad:.5});}
+      t.igual(tomas.length,8,pagina+': cada roce debe producir una voz');
+      t.check(tomas.every(v=>v.ritmo>=2**(-1/12)&&v.ritmo<=2**(1/12)),pagina+': pitch limitado a un semitono');
+      t.check(tomas.every((v,i)=>!i||v.ritmo!==tomas[i-1].ritmo),pagina+': no repetir el mismo pitch consecutivo');
+      t.check(tomas.every(v=>v.buffer===tomas[0].buffer),pagina+': usar siempre el mismo archivo decodificado');
+      t.check(new Set(tomas.map(v=>v.ganancia)).size>1,pagina+': también debe variar el volumen');
+      t.check(tomas.every(v=>v.ganancia>=base*.91*.9-.0001&&v.ganancia<=base*.91*1.1+.0001),pagina+': variación de volumen moderada y relativa al estudio');
+      tiempo+=200;a.play('card_hover',{variar:false,intensidad:1});t.igual(tomas.at(-1).ritmo,1,pagina+': reproducción sin variación');t.igual(tomas.at(-1).ganancia,base,pagina+': conserva el volumen original sin variación');
+      tiempo+=200;a.play('victory_slam');t.igual(tomas.at(-1).ritmo,1,pagina+': Victoria conserva su identidad sonora');
+      w.Math.random=()=>.5;
+      const carta=d.createElement('div');carta.className='card';carta.innerHTML='<span>Prueba</span>';d.querySelector('#hand').appendChild(carta);
+      const mover=(tipo,x)=>carta.dispatchEvent(new w.PointerEvent(tipo,{bubbles:true,pointerType:'mouse',pointerId:1,clientX:x,clientY:100}));
+      const barrido=rapido=>{w.dispatchEvent(new w.Event('blur'));tiempo+=200;mover('pointermove',100);tiempo+=20;mover('pointermove',rapido?140:102);tiempo+=20;mover('pointerover',rapido?180:104);return tomas.at(-1).ganancia;};
+      const suave=barrido(false),fuerte=barrido(true);t.check(fuerte>suave*1.1,pagina+': un barrido rápido se siente más marcado');
+      tiempo+=200;mover('pointerover',600);t.check(tomas.at(-1).ganancia<fuerte,pagina+': una pausa no conserva la velocidad del barrido anterior');
+      const cantidad=tomas.length;tiempo+=200;carta.firstChild.dispatchEvent(new w.PointerEvent('pointerover',{bubbles:true,pointerType:'mouse',relatedTarget:carta}));t.igual(tomas.length,cantidad,pagina+': no repetir dentro de la misma carta');
+      tiempo+=200;carta.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerType:'touch'}));t.check(tomas.at(-1).ganancia>suave&&tomas.at(-1).ganancia<fuerte,pagina+': el toque usa una intensidad intermedia');
+      const antes=tomas.length;a.configurar({silencio:true});tiempo+=200;mover('pointerover',900);t.igual(tomas.length,antes,pagina+': el silencio se respeta también al mover rápido');
+    }finally{if(reloj)f.contentWindow.performance.now=reloj;if(azar)f.contentWindow.Math.random=azar;f.contentWindow.CAOZ_AUDIO?.detener();f.remove();}
+  }
+});
+
 PRUEBAS.suite('sonidosMomentos', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
