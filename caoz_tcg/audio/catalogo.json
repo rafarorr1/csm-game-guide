@@ -375,6 +375,39 @@
       "volumen": 0.61,
       "intervalo": 1200,
       "version": "e9681f59d7f09294"
+    },
+    {
+      "id": "leader_hit",
+      "nombre": "Golpe al protagonista",
+      "grupo": "Combate",
+      "detalle": "Golpe de cuerpo grave, cuero y una fractura arcana al perder Alma.",
+      "archivo": "audio/leader_hit.wav",
+      "duracion": 0.85,
+      "volumen": 0.82,
+      "intervalo": 90,
+      "version": "d0ed2b52faeaa82f"
+    },
+    {
+      "id": "card_hover",
+      "nombre": "Rozar carta en la mano",
+      "grupo": "Cartas",
+      "detalle": "Roce ligero de papel al explorar las cartas de tu mano.",
+      "archivo": "audio/card_hover.wav",
+      "duracion": 0.2,
+      "volumen": 0.22,
+      "intervalo": 90,
+      "version": "56233feafb7f9bcc"
+    },
+    {
+      "id": "victory_slam",
+      "nombre": "Impacto de Victoria",
+      "grupo": "Finales",
+      "detalle": "Golpe profundo de piedra y bronce al aterrizar el título.",
+      "archivo": "audio/victory_slam.wav",
+      "duracion": 1.35,
+      "volumen": 0.8,
+      "intervalo": 1000,
+      "version": "e82264d1123df2a2"
     }
   ]
 }

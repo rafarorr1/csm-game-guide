@@ -1,6 +1,23 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 211 · Sonidos de contacto y Victoria centrada
+
+- Tres SFX propios y reemplazables en el estudio: golpe al protagonista, roce
+  sobre cartas de la mano e impacto del título de Victoria. Banco de 37 sonidos.
+- El golpe al protagonista suena junto a su reacción al perder Alma. El ataque
+  deja de duplicar el impacto genérico y se elimina la supresión por un ataque
+  anterior que podía silenciar daños posteriores. Mismo hook en local y online.
+- Hover de mano sin duplicaciones al pasar sobre elementos de la misma carta;
+  equivalente al tocarla en móvil. Se respetan silencio y volumen maestro.
+- El sello de Victoria alcanza su escala de contacto a los 220 ms y dispara
+  allí el sonido, separado de la fanfarria inicial. Cerrar o saltar evita sonidos
+  tardíos; con movimiento reducido el impacto es inmediato.
+- Se centra la palabra, no el borde superior del bloque de resultado. Tamaño
+  ajustado para 320 px y sin espaciado que desplace visualmente las letras.
+- Suites victoriaCentrada y sonidosMomentos prueban ambos clientes, encuadre,
+  contacto único, navegación de mano, sincronía y cancelación del sonido.
+
 ### Sin numerar · build 210 · Retrato completo del jugador
 
 - La imagen del Viajero y de los personajes creados ocupa toda su carta en la

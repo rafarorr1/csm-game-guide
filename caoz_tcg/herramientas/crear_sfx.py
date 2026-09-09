@@ -68,6 +68,15 @@ def fabricar(id, nombre, grupo, detalle, d, receta, ganancia=.75, intervalo=80):
         if id in ('lethal','table_hit'):
             for j in range(7): golpe(.10+j*.042,180+j*145,.15/(j+1)**.45,dec=.04)
         if id=='attack_hit': nota(.018,740,.13,.1)
+    elif receta=='alma':
+        golpe(.004,62,.95,dec=.24); golpe(.012,143,.48,dec=.09)
+        sumar(envolvente(ruido(.23,90,2600),.002,.055),.006,.4)
+        nota(.022,460,.16,.18,'metal'); nota(.028,690,.08,.13,'metal')
+    elif receta=='sello':
+        golpe(.004,48,1.05,dec=.28); golpe(.009,96,.7,dec=.18)
+        sumar(envolvente(ruido(.25,220,6400),.001,.042),.005,.45)
+        for en,f in [(.014,196),(.02,293.66),(.026,392)]: nota(en,f,.20,.29,'metal')
+        soplo(.07,.42,.12,80,1500)
     elif receta=='paso':
         golpe(.008,235,.7,dec=.035); golpe(.025,110,.4,dec=.052); soplo(.018,.09,.07,900,7000)
     elif receta=='oro':
@@ -169,6 +178,9 @@ for args in [
  ('ascension','El haz del deseo','Finales','Armónicos que crecen con el rayo y la ascensión.',5.70,'ascension',.63,1200),
  ('wish_fire','El fuego del deseo','Finales','Una llamarada amplia con pequeñas brasas.',2.30,'fuego',.76,1200),
  ('wish_granted','Deseo concedido','Finales','Cristal y bronce abiertos, con espacio para el silencio.',2.70,'deseo',.61,1200),
+ ('leader_hit','Golpe al protagonista','Combate','Golpe de cuerpo grave, cuero y una fractura arcana al perder Alma.',.85,'alma',.82,90),
+ ('card_hover','Rozar carta en la mano','Cartas','Roce ligero de papel al explorar las cartas de tu mano.',.20,'papel',.22,90),
+ ('victory_slam','Impacto de Victoria','Finales','Golpe profundo de piedra y bronce al aterrizar el título.',1.35,'sello',.80,1000),
 ]: fabricar(*args)
 (ROOT/'catalogo.json').write_text(json.dumps({'version':1,'nombre':'El sonido del Domo','sonidos':CAT},ensure_ascii=False,indent=2)+'\n')
 print(json.dumps({'sonidos':len(CAT),'MB':round(sum(f.stat().st_size for f in ROOT.glob('*.wav'))/1e6,2)},ensure_ascii=False))

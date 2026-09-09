@@ -10,4 +10,4 @@ def verificar(archivo):
     if hashlib.sha256(publicado).digest()!=hashlib.sha256((raiz/archivo).read_bytes()).digest():raise ValueError(archivo+' no coincide con el archivo validado.')
 with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
     list(pool.map(verificar,archivos))
-print('Estudio y 34 sonidos verificados byte a byte en '+base)
+print('Estudio y 37 sonidos verificados byte a byte en '+base)

@@ -1,6 +1,6 @@
 # El sonido del Domo
 
-Propuesta 01, build 208. Banco original de 34 efectos de fantasía: materiales
+Propuesta 01, build 211. Banco original de 37 efectos de fantasía: materiales
 cercanos, preparación antes del impacto y espacio para que se entienda cada acción.
 Los WAV se crearon para el proyecto mediante síntesis de resonadores, fricción,
 percusión, cuerdas y reflexiones de sala. No son grabaciones extraídas de Baldur's Gate.
@@ -86,8 +86,16 @@ edición genera otra URL, por lo que no reutiliza la copia anterior.
 mezcla. `node pruebas_sonidos.mjs` usa SQLite en memoria (Node 22.13 o posterior)
 para probar el backend real sin servicios externos. `?test=sonidos` comprueba el
 mezclador y las familias, y forma parte de las guardas habituales. La publicación
-compara también los 34 archivos de audio byte a byte.
+compara también los 37 archivos de audio byte a byte.
 
 `herramientas/crear_sfx.py` reproduce el banco con una semilla fija. Esta herramienta
 de autoría necesita NumPy; no se carga ni se publica como dependencia del juego.
 Los WAV ya generados no requieren Python ni ninguna librería para reproducirse.
+
+
+Build 211 añade leader_hit (reacción al perder Alma), card_hover (hover o toque
+sobre cartas de la mano) y victory_slam (220 ms después de comenzar la caída del
+sello; inmediato con movimiento reducido). El motivo victory sigue al inicio
+como fanfarria independiente. Saltar o cerrar el final cancela el impacto pendiente.
+Los tres IDs se admiten en el estudio privado y el backend; los reemplazos
+existentes se conservan. Suite sonidosMomentos cubre ambos clientes y silencio.
