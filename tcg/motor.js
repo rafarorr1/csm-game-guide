@@ -164,10 +164,10 @@ const CARDS = {};
 
 const C = (id,o)=>{ o.id=id; CARDS[id]=o; return o; };
 
-// Cartas exclusivas del Editor: su efecto se resuelve en pruebaDelEditor.
+// Seis cartas exclusivas del Editor: su efecto se resuelve en pruebaDelEditor.
 // No forman parte de los seis mazos ni de la colección del jugador.
-const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro'];
-for(const [id,n,tipo,art] of [['editorcosecha','La cosecha','isometrico','☠'],['editorcorte','El corte final','laseres','✧'],['editorcuadro','Fuera de cuadro','fps','◈']]){
+const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro','editorcarrera','editororbita','editorduelo'];
+for(const [id,n,tipo,art] of [['editorcosecha','La cosecha','isometrico','☠'],['editorcorte','El corte final','laseres','✧'],['editorcuadro','Fuera de cuadro','fps','◈'],['editorcarrera','El último puente','carrera','⌁'],['editororbita','Órbita muerta','orbital','✦'],['editorduelo','El filo del Editor','duelo','⚔']]){
   C(id,{n,t:'hechizo',c:2,r:0,token:true,set:'editor',art,editorJuego:tipo,uncounterable:true,
     x:'Prueba del Editor · 20 segundos · 3 vidas. Sobrevive: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma.',
     req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest,
@@ -1624,7 +1624,7 @@ async function setupMatch(myLeader, foeLeader, opts={}){
   G.fast=!!opts.fast; G.auto=!!opts.auto; G.silent=!!opts.silent;
   G.online=!!opts.online; G.logSent=0; G.fxq=[];
   // Los modificadores del prototipo sólo existen dentro de su propia partida.
-  if(opts.campana&&!opts.online){G.campana={...opts.campana};P(FOE).alma=opts.campana.alma;if(opts.campana.jefeSecreto)P(FOE).deck=Array.from({length:40},(_,i)=>CARTAS_EDITOR[i%3]);}
+  if(opts.campana&&!opts.online){G.campana={...opts.campana};P(FOE).alma=opts.campana.alma;if(opts.campana.jefeSecreto)P(FOE).deck=Array.from({length:40},(_,i)=>CARTAS_EDITOR[i%CARTAS_EDITOR.length]);}
   const first = opts.first!=null ? opts.first : (rnd(2));
   G.second = 1-first;
   log(`<b>${P(first).L.n}</b> gana la tirada de inicio y empieza.`,'sys');
