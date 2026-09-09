@@ -225,7 +225,19 @@
   function resolver(s,r){
     if(!s||s.cerrada)return;s.cerrada=true;cancelAnimationFrame(s.raf);for(const t of s.timers)clearTimeout(t);s.timers.clear();s.limpiar.forEach(f=>f());vaciarEntrada(s);s.observer?.disconnect();
     s.nube?.remove();if(s.dialog.open)s.dialog.close();s.dialog.remove();s.desbloquear?.();if(actual===s)actual=null;
-    try{s.previo?.focus?.({preventScroll:true});}catch(_){}s.resolver(r);if(r.abandonado){try{s.op.onAbandonar?.();}catch(e){console.warn('Salida de la prueba:',e);}}
+    try{s.previo?.focus?.({preventScroll:true});}catch(_){}s.resolver(s.tipo==='duelo'&&!r.cancelado?{...r,parejas:s.modelo.parejas,fallosMemoria:s.modelo.fallosMemoria,vidas:s.modelo.vidas}:r);if(r.abandonado){try{s.op.onAbandonar?.();}catch(e){console.warn('Salida de la prueba:',e);}}
+  }
+  function saldoMemoria(s){return 'Pitágoras −'+s.modelo.parejas+' de Alma'+(s.modelo.fallosMemoria>=3?' · Tu personaje −5 de Alma':'');}
+  function notificarParejas(s){
+    if(s.tipo!=='duelo')return;
+    // Un acierto es un evento, no un efecto ligado a pintar: repetir cuadros
+    // o volver a la mesa no debe restar la misma Alma una segunda vez.
+    while((s.parejasNotificadas||0)<s.modelo.parejas){
+      s.parejasNotificadas=(s.parejasNotificadas||0)+1;
+      const r=s.op.onPareja?.(s.parejasNotificadas);
+      if(r?.cancelado){resolver(s,{sobrevivio:false,cancelado:true});return;}
+      if(r?.derrotado){s.modelo.terminado=true;s.modelo.sobrevivio=true;return;}
+    }
   }
   // Una sola superficie modal conserva mesa, humo y juego sin un fotograma vacío.
   // El reloj arranca únicamente al despejarse la nube y habilitar controles.
@@ -254,7 +266,7 @@
     const arte=nodo('div','ppCartaArte',null,carta);if(global.PITAGORAS_CINE){s.arteCarta=nodo('canvas','ppArteCanvas',null,arte);s.arteCarta.setAttribute('aria-hidden','true');}else if(s.tipo!=='laseres'){const img=nodo('img','',null,arte);img.src=esbirro.src;img.alt='Esbirro del Editor';img.onerror=()=>img.remove();}for(let i=0;i<5;i++)nodo('i','',null,arte);
     nodo('h1','',s.info.nombre,carta);nodo('p','',s.info.sub,carta);
     const stats=nodo('div','ppCartaStats',null,carta);for(const [n,l] of [[ficha?.a??2,'ATAQUE'],[ficha?.h??3,'VIDA'],[s.modelo.duracion,'SEGUNDOS']]){const stat=nodo('span','',null,stats);nodo('b','',String(n),stat);nodo('small','',l,stat);}
-    nodo('div','ppCartaRegla',(s.tipo==='duelo'?'Recuerda tres parejas. ':'')+'3 vidas · Sobrevive: el Editor pierde 2 Alma. Al volver, esta Pesadilla permanece en la mesa.',carta);
+    nodo('div','ppCartaRegla',(s.tipo==='duelo'?'Cada pareja: Pitágoras −1 Alma. Cada fallo: −1 vida de la prueba. Al tercer fallo: tu personaje −5 Alma. ':'3 vidas · Sobrevive: el Editor pierde 2 Alma. ')+'Al volver, esta Pesadilla permanece en la mesa.',carta);
     programa(s,()=>{s.fase='cubriendo';nubeHacia(s,1,850);carta.classList.add('ppCartaConsumida');},s.reducido?250:1150);
     programa(s,()=>{s.humo=1;s.dialog.classList.remove('ppMesaVisible');carta.remove();s.fase='revelando';nubeHacia(s,0,1000);},s.reducido?430:2050);
     programa(s,()=>{s.fase='jugando';s.humo=0;s.ultimo=performance.now();s.dialog.focus({preventScroll:true});s.ui.lectura.textContent=s.info.nombre+'. '+s.info.control;},s.reducido?610:3050);
@@ -263,7 +275,7 @@
     const mensaje=nodo('div','ppDesenlace',null,s.dialog);mensaje.setAttribute('role','status');
     nodo('small','',s.modelo.sobrevivio?'REALIDAD RECUPERADA':'EL EDITOR COBRA SU PRECIO',mensaje);
     nodo('strong','',s.modelo.sobrevivio?(s.tipo==='duelo'?'Recuerdo protegido':'Sobreviviste'):(s.tipo==='duelo'?'Recuerdo borrado':'Te encontró'),mensaje);
-    nodo('span','',s.modelo.sobrevivio?'Pitágoras −2 de Alma':'Tu personaje −2 de Alma',mensaje);
+    nodo('span','',s.tipo==='duelo'?saldoMemoria(s):s.modelo.sobrevivio?'Pitágoras −2 de Alma':'Tu personaje −2 de Alma',mensaje);
     programa(s,()=>{s.fase='regresando';global.CAOZ_AUDIO?.play('spell_shadow',{volumen:.35});nubeHacia(s,1,750);},s.reducido?350:950);
     programa(s,()=>{s.humo=1;mensaje.remove();s.dialog.classList.add('ppMesaVisible');nubeHacia(s,0,850);},s.reducido?530:1750);
     programa(s,()=>resolver(s,{sobrevivio:s.modelo.sobrevivio,cancelado:false}),s.reducido?720:2650);
@@ -274,7 +286,7 @@
     nodo('div','ppAntetitulo',modo==='intro'?'Prueba '+s.info.numero+' · Pitágoras':modo==='resultado'?'La prueba ha terminado':'Abandonar la prueba',panel);
     const titulo=nodo('h1','ppTitulo',modo==='intro'?s.info.nombre:modo==='resultado'?(s.modelo.sobrevivio?'Sigues aquí.':'Te encontró.'):'¿Volver al menú?',panel);titulo.id='ppTitulo-'+s.id;
     nodo('p','ppSub',modo==='intro'?s.info.sub:modo==='resultado'?(s.modelo.sobrevivio?'El Editor también puede sangrar.':'No todo queda en la mesa.'):'La partida contra Pitágoras terminará.',panel);
-    const texto=modo==='intro'?s.info.texto:modo==='resultado'?(s.modelo.sobrevivio?'Superaste la prueba. Pitágoras pierde 2 de Alma.':s.tipo==='duelo'&&s.modelo.vidas>0?'No completaste tres parejas. Tu personaje pierde 2 de Alma.':'Perdiste tus 3 vidas. Tu personaje pierde 2 de Alma.'):'Puedes regresar a la prueba o abandonar y volver al menú principal.';
+    const texto=modo==='intro'?s.info.texto:modo==='resultado'?(s.tipo==='duelo'?saldoMemoria(s)+'.':s.modelo.sobrevivio?'Superaste la prueba. Pitágoras pierde 2 de Alma.':'Perdiste tus 3 vidas. Tu personaje pierde 2 de Alma.'):'Puedes regresar a la prueba o abandonar y volver al menú principal.';
     nodo('p',modo==='resultado'?'ppResultadoInfo':'ppTexto',texto,panel);
     if(modo==='intro'){const reglas=nodo('div','ppReglas',null,panel);nodo('span','','20 segundos',reglas);nodo('span','','3 vidas',reglas);const ayuda=nodo('p','ppAyuda',s.info.control,panel);nodo('span','ppTeclado',s.info.teclado,ayuda);}
     const botones=nodo('div','ppBotones',null,panel),btn=nodo('button','ppBoton',modo==='intro'?'Entrar a la prueba':modo==='resultado'?'Volver a la mesa':'Volver',botones);btn.type='button';
@@ -506,7 +518,7 @@
     if(s.fase==='jugando'){
       // No hay pausa: al recuperar un fotograma se simula todo el tiempo
       // transcurrido, incluidos peligros y daño, sin regalar una victoria.
-      M.paso(s.modelo,entrada(s,dt),dt);efectos(s);if(s.modelo.terminado){s.fase='resultado';vaciarEntrada(s);if(s.op.cinematica)salidaCinematica(s);else hacerPanel(s,'resultado');global.CAOZ_AUDIO?.play(s.modelo.sobrevivio?'buff':'defeat',{volumen:.4});}
+      M.paso(s.modelo,entrada(s,dt),dt);notificarParejas(s);if(s.cerrada)return;efectos(s);if(s.modelo.terminado){s.fase='resultado';vaciarEntrada(s);if(s.op.cinematica)salidaCinematica(s);else hacerPanel(s,'resultado');global.CAOZ_AUDIO?.play(s.modelo.sobrevivio?'buff':'defeat',{volumen:.4});}
     }
     pintar(s);pintarNube(s);if(s.arteCarta&&s.carta?.isConnected)global.PITAGORAS_CINE?.pintarCarta(s.arteCarta,s.tipo,ahora/1000,s.reducido);s.raf=requestAnimationFrame(t=>bucle(s,t));
   }

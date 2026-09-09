@@ -13,7 +13,7 @@
   const NUEVOS={
     carrera:{nombre:'El último puente',numero:'IV',sub:'El mundo se derrumba detrás de ti.',texto:'Corre 20 segundos por el puente del Editor. Cambia de carril y salta los sellos que atraviesan el camino.',control:'Flechas: saltar entre tres carriles. Derecha: saltar. El puente acelera a medida que avanzas.',teclado:'A/D o flechas: carriles · Espacio: saltar.',accion:'SALTAR',glifo:'↑',ayuda:'Salta los sellos. Evita las columnas.',instruccion:'Que nada te detenga.',movimiento:'TRES CARRILES'},
     orbital:{nombre:'Órbita muerta',numero:'V',sub:'Hasta las estrellas quieren borrarte.',texto:'Sobrevive 20 segundos a las descargas de una estrella muerta. Esquiva los proyectiles y usa el escudo para atravesar el peligro.',control:'Izquierda: moverte. Derecha: escudo fugaz; se recarga después de usarlo.',teclado:'WASD o flechas: moverte · Espacio: escudo de impulso.',accion:'ESCUDO',glifo:'◇',ayuda:'El escudo te protege un instante.',instruccion:'Baila entre las estrellas.',movimiento:'NAVEGAR'},
-    duelo:{nombre:'La memoria del Editor',numero:'VI',sub:'Recuerda lo que intenta borrarte.',texto:'Encuentra la pareja entre cinco cartas antes de que se borre tu recuerdo. Memoriza durante un segundo y medio y elige las dos iguales. Necesitas tres parejas en 20 segundos.',control:'Observa las cartas y toca las dos que son iguales cuando se volteen. Cada ronda exige recordar más.',teclado:'Haz clic o usa Tab y Enter. También puedes elegir con las teclas 1–7.',accion:'RECORDAR',glifo:'◇',ayuda:'Encuentra al menos tres parejas.',instruccion:'Observa. Recuerda. Elige.',movimiento:'MEMORIA'}
+    duelo:{nombre:'La memoria del Editor',numero:'VI',sub:'Recuerda lo que intenta borrarte.',texto:'Memoriza las cartas durante un segundo y medio y elige las dos iguales. Cada pareja quita 1 Alma a Pitágoras. Cada fallo consume una vida de la prueba: al tercer fallo pierdes 5 Alma. Tienes 20 segundos.',control:'Observa las cartas y toca las dos que son iguales cuando se volteen. Cada ronda exige recordar más.',teclado:'Haz clic o usa Tab y Enter. También puedes elegir con las teclas 1–7.',accion:'RECORDAR',glifo:'◇',ayuda:'Cada pareja quita 1 Alma a Pitágoras.',instruccion:'Observa. Recuerda. Elige.',movimiento:'MEMORIA'}
   };
   Object.assign(API.tipos,NUEVOS);
   function azar(s){let t=s.azar+=0x6D2B79F5;t=Math.imul(t^t>>>15,t|1);t^=t+Math.imul(t^t>>>7,t|61);return((t^t>>>14)>>>0)/4294967296;}
@@ -22,7 +22,7 @@
     if(!NUEVOS[op.tipo])return crearBase(op);
     const s=crearBase({...op,tipo:'laseres'});s.tipo=op.tipo;s.jugador={x:0,y:s.tipo==='orbital'?4:0,a:-Math.PI/2,r:s.tipo==='orbital'?.2:.28};
     Object.assign(s,{salto:0,saltoV:0,obstaculos:[],siguiente:.65,oleada:0,distancia:0,velocidad:9.5,carril:0,carrilVisual:0,carrilDesde:0,carrilCambio:0,direccionCarril:0,escudo:0,estela:[],ataques:[],parada:0,recargaParada:0,paradas:0,combo:0,juicio:0,juicioTexto:'',ultimoMovimiento:{x:0,y:-1}});
-    if(s.tipo==='duelo'){Object.assign(s,{rondaMemoria:0,parejas:0,fallosMemoria:0,elegirAnterior:null});nuevaMemoria(s);}return s;
+    if(s.tipo==='duelo'){Object.assign(s,{rondaMemoria:0,parejas:0,fallosMemoria:0,elegirAnterior:null,objetivoParejas:Number.isInteger(op.objetivoParejas)&&op.objetivoParejas>0?op.objetivoParejas:null});nuevaMemoria(s);}return s;
   };
   function carrera(s,e,dt){
     const p=s.jugador,direccion=Math.abs(Number(e.mx)||0)>.45?Math.sign(e.mx):0;
@@ -71,7 +71,8 @@
   }
   function resolverMemoria(s,acierto,motivo){
     s.faseMemoria='resultado';s.hastaMemoria=s.t+.6;s.resultadoMemoria=acierto?'PAREJA ENCONTRADA':motivo;s.juicio=.6;
-    if(acierto){s.parejas++;s.muertes++;s.fogonazo=.18;s.eventos.push('acierto');}else{s.fallosMemoria++;M.herir(s);}
+    if(acierto){s.parejas++;s.muertes++;s.fogonazo=.18;s.eventos.push('acierto');if(s.objetivoParejas&&s.parejas>=s.objetivoParejas){s.terminado=true;s.sobrevivio=true;}}
+    else{s.fallosMemoria++;s.invulnerable=0;M.herir(s);}
   }
   function duelo(s,e,dt){
     // Las fases viven en tiempo simulado: esconder la pestaña sigue gastando
@@ -92,7 +93,7 @@
     for(const k of ['invulnerable','impacto','fogonazo','recargaImpulso'])s[k]=Math.max(0,s[k]-dt);
     if(s.tipo==='carrera')carrera(s,e,dt);else if(s.tipo==='orbital')orbital(s,e,dt);else duelo(s,e,dt);
     s.pulsado=!!e.accion;for(const q of s.particulas){q.x+=q.vx*dt;q.y+=q.vy*dt;q.t-=dt;}s.particulas=s.particulas.filter(q=>q.t>0);
-    if(!s.terminado&&s.t>=s.duracion-1e-8){s.t=s.duracion;s.terminado=true;s.sobrevivio=s.tipo!=='duelo'||s.parejas>=3;}
+    if(!s.terminado&&s.t>=s.duracion-1e-8){s.t=s.duracion;s.terminado=true;s.sobrevivio=true;}
   }
   M.paso=function(s,e={},dt=1/60){if(!NUEVOS[s.tipo])return pasoBase(s,e,dt);dt=limite(Number(dt)||0,0,60);while(dt>1e-8&&!s.terminado){const q=Math.min(dt,1/60,s.duracion-s.t);pasoNuevo(s,e,q);dt-=q;}return s;};
 
@@ -306,19 +307,20 @@
     else s.mov.x=0;
   };
   API.montadores.duelo=function(s,{nodo,escuchar}){
-    instalarMemoriaCSS();for(const id of MEMORIA_CARTAS)imagenMemoria(id);s.elegir=null;s.ui.controles.style.display='none';const panel=nodo('section','ppMemoria',null,s.ui.campo),cab=nodo('div','ppMemoriaCabecera',null,panel),ronda=nodo('div','ppMemoriaRonda','',cab),consigna=nodo('div','ppMemoriaConsigna','Memoriza las cartas',cab),plazo=nodo('div','ppMemoriaPlazo',null,cab),barra=nodo('i','',null,plazo),mesa=nodo('div','ppMemoriaMesa',null,panel),pie=nodo('div','ppMemoriaPie',null,panel),sellos=nodo('div','ppMemoriaSellos',null,pie),dato=nodo('div','ppMemoriaDato','0 / 3 parejas',pie),ayuda=nodo('div','','Recuerda las dos cartas iguales.',pie),botones=[];
-    for(let i=0;i<3;i++)nodo('i','',null,sellos);mesa.setAttribute('aria-label','Cartas de memoria');
+    instalarMemoriaCSS();for(const id of MEMORIA_CARTAS)imagenMemoria(id);s.elegir=null;s.ui.controles.style.display='none';const panel=nodo('section','ppMemoria',null,s.ui.campo),cab=nodo('div','ppMemoriaCabecera',null,panel),ronda=nodo('div','ppMemoriaRonda','',cab),consigna=nodo('div','ppMemoriaConsigna','Memoriza las cartas',cab),plazo=nodo('div','ppMemoriaPlazo',null,cab),barra=nodo('i','',null,plazo),mesa=nodo('div','ppMemoriaMesa',null,panel),pie=nodo('div','ppMemoriaPie',null,panel),sellos=nodo('div','ppMemoriaSellos',null,pie),dato=nodo('div','ppMemoriaDato','Pitágoras −0 Alma · 0 / 3 fallos',pie),ayuda=nodo('div','','Recuerda las dos cartas iguales.',pie),botones=[];
+    sellos.setAttribute('aria-hidden','true');mesa.setAttribute('aria-label','Cartas de memoria');
     const elegir=i=>{const m=s.modelo;if(s.fase==='jugando'&&m.faseMemoria==='elegir'&&!m.elegidasMemoria.includes(i)&&i<m.cartasMemoria.length)s.elegir=i;};
     for(let i=0;i<7;i++){const b=nodo('button','ppMemoriaCarta',null,mesa);b.type='button';b.dataset.indice=String(i);const dorso=nodo('span','ppMemoriaDorso',null,b);nodo('b','','◇',dorso);nodo('small','',String(i+1),dorso);const frente=nodo('span','ppMemoriaFrente',null,b),arte=nodo('canvas','',null,frente),texto=nodo('span','ppMemoriaNombre','',frente),coste=nodo('i','ppMemoriaCifra ppMemoriaCoste','',frente),ataque=nodo('i','ppMemoriaCifra ppMemoriaAtaque','',frente),vida=nodo('i','ppMemoriaCifra ppMemoriaVida','',frente);arte.setAttribute('aria-hidden','true');dorso.setAttribute('aria-hidden','true');frente.setAttribute('aria-hidden','true');escuchar(s,'click',b,()=>elegir(i));botones.push({b,frente,arte,texto,coste,ataque,vida,id:null});}
     escuchar(s,'keydown',global,e=>{if(s.fase!=='jugando')return;const indice=/^(Digit|Numpad)[1-7]$/.test(e.code)?Number(e.code.slice(-1))-1:null,b=e.target?.closest?.('.ppMemoriaCarta');if(indice!==null||((e.code==='Enter'||e.code==='Space')&&b)){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)elegir(indice===null?Number(b.dataset.indice):indice);}},true);
     s.ui.memoria={panel,ronda,consigna,barra,mesa,sellos,dato,ayuda,botones,clave:'',tam:'',rondaArte:0,artes:new Set()};s.limpiar.push(()=>{s.elegir=null;panel.remove();});API.actualizadores.duelo(s);
   };
   API.actualizadores.duelo=function(s){
-    const u=s.ui.memoria;if(!u)return;const m=s.modelo,n=m.cartasMemoria.length,clave=[m.rondaMemoria,m.faseMemoria,m.elegidasMemoria.join(','),m.parejas,s.fase].join('|');
+    const u=s.ui.memoria;if(!u)return;const m=s.modelo,n=m.cartasMemoria.length,clave=[m.rondaMemoria,m.faseMemoria,m.elegidasMemoria.join(','),m.parejas,m.fallosMemoria,s.fase].join('|');
     // Congelar la representación al empezar la ronda evita que una descarga
     // cambie el recuerdo a mitad de la exposición o revele primero una copia.
     if(s.fase==='jugando'&&u.rondaArte!==m.rondaMemoria){u.rondaArte=m.rondaMemoria;u.artes=new Set(m.cartasMemoria.filter(id=>{const img=imagenMemoria(id);return img&&img.complete&&img.naturalWidth;}));}
-    if(clave!==u.clave){u.clave=clave;u.panel.dataset.fase=m.faseMemoria;u.panel.dataset.resultado=m.resultadoMemoria==='PAREJA ENCONTRADA'?'acierto':'fallo';u.ronda.textContent='Recuerdo '+String(m.rondaMemoria).padStart(2,'0');u.consigna.textContent=m.faseMemoria==='mostrar'?'Memoriza las cartas':m.faseMemoria==='elegir'?'Encuentra la pareja':m.resultadoMemoria;u.dato.textContent=m.parejas>=3?m.parejas+' parejas · Resiste':m.parejas+' / 3 parejas';u.ayuda.textContent=m.faseMemoria==='mostrar'?'Dos son iguales. Recuerda dónde están.':m.faseMemoria==='elegir'?'Elige las dos cartas que recuerdas.':m.resultadoMemoria==='PAREJA ENCONTRADA'?'El Editor no puede borrar ese recuerdo.':'Concéntrate en el siguiente recuerdo.';[...u.sellos.children].forEach((el,i)=>el.classList.toggle('ppLogrado',i<m.parejas));
+    if(clave!==u.clave){u.clave=clave;u.panel.dataset.fase=m.faseMemoria;u.panel.dataset.resultado=m.resultadoMemoria==='PAREJA ENCONTRADA'?'acierto':'fallo';u.ronda.textContent='Recuerdo '+String(m.rondaMemoria).padStart(2,'0');u.consigna.textContent=m.faseMemoria==='mostrar'?'Memoriza las cartas':m.faseMemoria==='elegir'?'Encuentra la pareja':m.resultadoMemoria;u.dato.textContent='Pitágoras −'+m.parejas+' Alma · '+m.fallosMemoria+' / 3 fallos';u.ayuda.textContent=m.faseMemoria==='mostrar'?'Dos son iguales. Cada pareja quita 1 Alma a Pitágoras.':m.faseMemoria==='elegir'?'Elige las dos cartas que recuerdas.':m.resultadoMemoria==='PAREJA ENCONTRADA'?'Pitágoras pierde 1 Alma.':'Pierdes 1 vida de la prueba. Tres fallos cuestan 5 Alma.';
+      while(u.sellos.children.length<m.parejas){const sello=document.createElement('i');sello.className='ppLogrado';u.sellos.appendChild(sello);}
       for(let i=0;i<u.botones.length;i++){
         const q=u.botones[i],id=m.cartasMemoria[i];q.b.hidden=i>=n;const seleccion=i<n&&m.elegidasMemoria.includes(i),revelada=i<n&&s.fase==='jugando'&&(m.faseMemoria!=='elegir'||seleccion),carta=revelada?cartaMemoria(id):null;
         q.frente.hidden=!revelada;q.b.classList.toggle('ppRevelada',revelada);q.b.classList.toggle('ppSeleccionada',seleccion);q.b.disabled=i>=n||s.fase!=='jugando'||m.faseMemoria!=='elegir'||seleccion;q.b.setAttribute('aria-pressed',String(seleccion));q.b.setAttribute('aria-label','Carta '+(i+1)+(carta?': '+carta.n:', oculta'));
