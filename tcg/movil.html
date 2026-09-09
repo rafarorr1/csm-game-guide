@@ -871,8 +871,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=222"></script>
-<script src="final.js?b=222"></script>
+<script src="motor.js?b=223"></script>
+<script src="final.js?b=223"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -883,7 +883,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:222, fecha:'2026-09-09'};
+const BUILD = {n:223, fecha:'2026-09-09'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1047,7 +1047,7 @@ function pulsacionLarga(nodo, fn){
 }
 /* ---------- pantallas ---------- */
 function showScreen(id){
-  if(id!=='board')campanaCancelarInterferencia();
+  if(id!=='board'){campanaCancelarInterferencia();window.PITAGORAS_MESA?.cancelar();}
   const antes=$('.screen.on'),pantalla=$('#'+id),esMenu=pantalla.classList.contains('portada');
   if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
   $$('.screen').forEach(s=>s.classList.remove('on'));
@@ -1682,6 +1682,7 @@ function render(){
   if(!$('#hand .card.tocada')) manoTocada(null);
   renderControls();
   ajustarCampo();
+  window.PITAGORAS_MESA?.actualizar(G);
   if(G.tutorial) tutHighlight();
 }
 function renderControls(){
@@ -1702,6 +1703,7 @@ function renderControls(){
   const r=el('button','btn sm','📜'); r.onclick=()=>showRules(true); c.appendChild(r);
   const s=el('button','btn sm','✕'); s.title='Salir al menú'; s.onclick=pedirSalirAlMenu; c.appendChild(s);
   campanaBotonFinalGero(c);
+  window.campanaBotonesEditorBeta?.(c);
 }
 function relojPara(){ if(RELOJ.id){ clearInterval(RELOJ.id); RELOJ.id=null; } const e=$('#reloj'); if(e) e.hidden=true; }
 function relojPinta(){
