@@ -1,6 +1,23 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 220 · Seis realidades del Editor
+
+- La cosecha ahora es 100 % cenital: suelo, cuerpos, movimiento y disparos
+  comparten los ejes de pantalla. Conserva las reglas de supervivencia.
+- Tres juegos nuevos jugables: El último puente (carriles y salto), Órbita
+  muerta (proyectiles y escudo) y El filo del Editor (esquiva y paradas).
+  Cartas reales en el mazo exclusivo del jefe: coste 2 PD, 20 s y 3 vidas.
+- Nube con turbulencia, filamentos y esporas; alternativa Canvas y movimiento
+  reducido. Grabados propios para seis cartas y materiales nuevos de HUD.
+- Escenarios y efectos revisados: suelo cenital con sigilos, puente en
+  perspectiva, nebulosa, duelo ante el Editor, cámara de láseres y archivo FPS.
+- Laboratorio en beta /?editor=1 para probarlos individualmente sin recorrer
+  la campaña ni cambiar el avance. Ajustado a móvil, horizontal y escritorio.
+- Ampliadas las regresiones a seis juegos; controles cenitales comprobados
+  con teclado, ratón y táctil; sabotaje de la rotación anterior detectado.
+  Nuevos modelos: 90 recorridos guiados completos, con derrota real al no actuar.
+
 ### Sin numerar · build 219 · Del naipe a la pesadilla
 
 - El duelo del Editor entra sin confirmaciones: carta de la prueba, nube

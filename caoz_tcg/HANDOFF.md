@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 219 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 220 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,38 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 220 transforma La cosecha en cenital real: proyección ortogonal y ejes
+idénticos entre pantalla, teclado, mando de movimiento, puntería y proyectiles.
+El id histórico `isometrico` se conserva para partidas/pruebas y cartas;
+`topdown` es también alias de entrada. El modelo de sus peligros no cambia.
+
+`pitagoras-mundos.js` añade carrera (El último puente), orbital (Órbita muerta)
+y duelo (El filo del Editor), con reglas puras, pintores y guías del arnés.
+Se carga después de pruebas.js; envuelve modelo.crear/paso para sus tipos,
+añade metadatos de controles y API.pintores. No repetir su registro.
+CARTAS_EDITOR tiene seis hechizos y el mazo del jefe alterna módulo length,
+sin modificar los seis mazos del jugador. Todos conservan 20 s, 3 vidas y
+resultado de ±2 Alma. El nuevo renderer de láseres no cambia sus colisiones.
+
+`pitagoras-cine.js` pinta humo con WebGL limitado y alternativa Canvas, seis
+ilustraciones procedurales para las cartas y materiales de HUD. Se reutiliza
+un contexto; no hay RAF propio. Conserva opacidad total al cambiar escena y
+fundido simple con movimiento reducido. `pitagoras-fps.js` registra el pintor
+FPS con texturas, iluminación y profundidad, sobre el mismo raycast/modelo.
+Los cuatro módulos nuevos están en final.js, SW, sintaxis y publicación.
+
+`pitagoras-laboratorio.js`: /?editor=1 abre un selector de seis pruebas sólo en
+beta/localhost. Usa la miniatura guardada como apariencia, pero no escribe
+campaña, honores ni récords. Los seis botones inician el juego real con nube;
+al regresar se pueden probar otros. No está disponible en producción/online.
+Su cierre restaura eventos y viewport. No agregarlo al menú de producción.
+
+Regresiones: topdown con inputs reales + sabotaje de la antigua rotación;
+modelos de seis pruebas (supervivencia, derrota, semilla y choques concretos),
+cartas, ciclo de seis, cancelación y scroll en ambos clientes. Revisar también
+el laboratorio en móvil pequeño/horizontal y la cobertura de humo sin WebGL.
+
 
 Build 219 usa `cinematica:true` desde el puente del combate. La API directa
 conserva la introducción manual para el arnés. En juego real no se abren
