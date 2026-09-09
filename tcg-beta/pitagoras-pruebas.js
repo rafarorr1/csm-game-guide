@@ -218,11 +218,12 @@
   function entradaCinematica(s){
     s.fase='carta';s.ui.capa.hidden=true;s.dialog.classList.add('ppCinematica','ppMesaVisible');crearNube(s);
     const carta=nodo('article','ppCartaJuego',null,s.dialog);s.carta=carta;carta.dataset.tipo=s.tipo;carta.setAttribute('aria-label','Pitágoras juega '+s.info.nombre);
-    nodo('div','ppCartaEdicion','PITÁGORAS · HECHIZO · 2 PD',carta);
+    const ficha=typeof CARDS!=='undefined'?(CARDS[s.op.cartaId]||Object.values(CARDS).find(c=>c.editorJuego===s.tipo)):null;
+    nodo('div','ppCartaEdicion','PITÁGORAS · PESADILLA · '+(ficha?.c??2)+' PD',carta);
     const arte=nodo('div','ppCartaArte',null,carta);if(global.PITAGORAS_CINE){s.arteCarta=nodo('canvas','ppArteCanvas',null,arte);s.arteCarta.setAttribute('aria-hidden','true');}else if(s.tipo!=='laseres'){const img=nodo('img','',null,arte);img.src=esbirro.src;img.alt='Esbirro del Editor';img.onerror=()=>img.remove();}for(let i=0;i<5;i++)nodo('i','',null,arte);
     nodo('h1','',s.info.nombre,carta);nodo('p','',s.info.sub,carta);
-    const stats=nodo('div','ppCartaStats',null,carta);for(const [n,l] of [[s.modelo.duracion,'SEGUNDOS'],[3,'VIDAS'],[2,'ALMA']]){const stat=nodo('span','',null,stats);nodo('b','',String(n),stat);nodo('small','',l,stat);}
-    nodo('div','ppCartaRegla',s.tipo==='duelo'?'Recuerda al menos tres parejas y resiste hasta el final.':'Sobrevive y hiere al Editor. Cae y entrega tu Alma.',carta);
+    const stats=nodo('div','ppCartaStats',null,carta);for(const [n,l] of [[ficha?.a??2,'ATAQUE'],[ficha?.h??3,'VIDA'],[s.modelo.duracion,'SEGUNDOS']]){const stat=nodo('span','',null,stats);nodo('b','',String(n),stat);nodo('small','',l,stat);}
+    nodo('div','ppCartaRegla',(s.tipo==='duelo'?'Recuerda tres parejas. ':'')+'3 vidas · Sobrevive: el Editor pierde 2 Alma. Al volver, esta Pesadilla permanece en la mesa.',carta);
     programa(s,()=>{s.fase='cubriendo';nubeHacia(s,1,850);carta.classList.add('ppCartaConsumida');},s.reducido?250:1150);
     programa(s,()=>{s.humo=1;s.dialog.classList.remove('ppMesaVisible');carta.remove();s.fase='revelando';nubeHacia(s,0,1000);},s.reducido?430:2050);
     programa(s,()=>{s.fase='jugando';s.humo=0;s.ultimo=performance.now();s.dialog.focus({preventScroll:true});s.ui.lectura.textContent=s.info.nombre+'. '+s.info.control;},s.reducido?610:3050);

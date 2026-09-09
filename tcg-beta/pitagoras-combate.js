@@ -12,7 +12,7 @@
     e.mirada?.remove();document.body.classList.remove('editorInterfiere');
   };
   window.campanaInterferenciaPitagoras=async function(side,id,g){
-    if(G!==g||!g||g.over||!g.campana?.jefeSecreto||side!==FOE||NET.on||g.online||g.guest||g.fast||g.silent||g.auto||!window.PITAGORAS_PRUEBAS)return {cancelado:true};
+    if(G!==g||!g||g.over||!CARDS[id]?.editorJuego||!g.campana?.jefeSecreto||side!==FOE||NET.on||g.online||g.guest||g.fast||g.silent||g.auto||!window.PITAGORAS_PRUEBAS)return {cancelado:true};
     // Una segunda llamada no inicia dos juegos encima ni cobra dos resultados.
     if(activa)return {cancelado:true};
     const numero=Number.isInteger(g.editorPruebas)?g.editorPruebas:0;
@@ -35,7 +35,7 @@
       await new Promise(r=>{const t=setTimeout(r,matchMedia('(prefers-reduced-motion:reduce)').matches?120:750);e.cancelarEspera=()=>{clearTimeout(t);r();};});
       if(!vigente(e))return {cancelado:true};
       const personaje=g.campana.personaje||campanaNormalizarPersonaje({nombre:P(ME).L.n});
-      const resultado=await PITAGORAS_PRUEBAS.iniciar({tipo:CARDS[id]?.editorJuego||tipos[numero%tipos.length],personaje,nombre:campanaNormalizarPersonaje(personaje).nombre,duracion:20,cinematica:true});
+      const resultado=await PITAGORAS_PRUEBAS.iniciar({cartaId:id,tipo:CARDS[id]?.editorJuego||tipos[numero%tipos.length],personaje,nombre:campanaNormalizarPersonaje(personaje).nombre,duracion:20,cinematica:true});
       if(resultado?.abandonado&&vigente(e)){campanaCancelarInterferencia();campanaVolverAlMenu();return {cancelado:true};}
       if(!vigente(e))return {cancelado:true};
       return resultado;

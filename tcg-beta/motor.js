@@ -164,14 +164,15 @@ const CARDS = {};
 
 const C = (id,o)=>{ o.id=id; CARDS[id]=o; return o; };
 
-// Seis cartas exclusivas del Editor: su efecto se resuelve en pruebaDelEditor.
-// No forman parte de los seis mazos ni de la colección del jugador.
+// Seis Pesadillas exclusivas del Editor. Al bajarlas se juega su prueba y
+// después conservan cuerpo en la mesa: cansancio, ataques, daño y Alcantarillas
+// siguen las mismas reglas que cualquier Personaje. No forman parte de los
+// seis mazos ni de la colección del jugador.
 const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro','editorcarrera','editororbita','editorduelo'];
-for(const [id,n,tipo,art] of [['editorcosecha','La cosecha','isometrico','☠'],['editorcorte','El corte final','laseres','✧'],['editorcuadro','Fuera de cuadro','fps','◈'],['editorcarrera','El último puente','carrera','⌁'],['editororbita','Órbita muerta','orbital','✦'],['editorduelo','La memoria del Editor','duelo','▣']]){
-  C(id,{n,t:'hechizo',c:2,r:0,token:true,set:'editor',art,editorJuego:tipo,uncounterable:true,
-    x:(tipo==='duelo'?'Recuerda al menos 3 parejas en 20 segundos y conserva tus vidas. ':'Prueba del Editor · 20 segundos · 3 vidas. ')+'Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma.',
-    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest,
-    cast:async()=>{}});
+for(const [id,n,tipo,art,a,h] of [['editorcosecha','La cosecha','isometrico','☠',2,3],['editorcorte','El corte final','laseres','✧',3,2],['editorcuadro','Fuera de cuadro','fps','◈',3,2],['editorcarrera','El último puente','carrera','⌁',2,4],['editororbita','Órbita muerta','orbital','✦',2,3],['editorduelo','La memoria del Editor','duelo','▣',2,4]]){
+  C(id,{n,t:'personaje',c:2,a,h,tr:['Pesadilla'],r:0,set:'editor',art,editorJuego:tipo,
+    x:'<b>Al jugar:</b> '+(tipo==='duelo'?'recuerda al menos 3 parejas en 20 segundos y conserva tus vidas. ':'prueba del Editor · 20 segundos · 3 vidas. ')+'Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. <b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
+    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on});
 }
 
 
@@ -1943,10 +1944,11 @@ async function playFromHand(s, id, forcedTargets){
   return true;
 }
 
-/* El Editor cambia de juego por cada carta pagada, una vez resuelta. Esperar
-   aquí detiene también la IA y las respuestas rápidas hasta volver a la mesa. */
+/* Sólo jugar una Pesadilla del Editor abre su prueba, una vez resuelta la
+   entrada. Atacarla, devolverla a la mano o invocar una copia por otro efecto
+   no inicia juegos. Esperar aquí detiene la IA hasta volver a la mesa. */
 async function pruebaDelEditor(s,id,partida=G){
-  if(G!==partida||!partida||partida.over||s!==FOE||!partida.campana?.jefeSecreto||partida.online||partida.guest||NET.on||partida.auto||partida.fast||partida.silent||typeof campanaInterferenciaPitagoras!=='function')return;
+  if(!CARDS[id]?.editorJuego||G!==partida||!partida||partida.over||s!==FOE||!partida.campana?.jefeSecreto||partida.online||partida.guest||NET.on||partida.auto||partida.fast||partida.silent||typeof campanaInterferenciaPitagoras!=='function')return;
   const resultado=await campanaInterferenciaPitagoras(s,id,partida);
   if(G!==partida||partida.over||!resultado||resultado.cancelado||typeof resultado.sobrevivio!=='boolean')return;
   const lado=resultado.sobrevivio?FOE:ME;

@@ -101,7 +101,7 @@
     d.addEventListener('close',()=>{if(!d.open&&escena===e)limpiar();});document.body.appendChild(d);d.showModal();
     if(p.secreto==='final')final(e);else if(['trono','combate'].includes(p.secreto))prepararTrono(e);else revelar(e,opciones.origen);
   };
-  function opciones(p){return {nombres:[campanaNombre(p),'Pitágoras'],campana:{id:p.id,etapa:6,alma:40,personaje:p.personaje,jefeSecreto:true,prueba:!!p.prueba}};}
+  function opciones(p){return {nombres:[campanaNombre(p),'Pitágoras'],campana:{id:p.id,etapa:6,alma:40,personaje:p.personaje,jefeSecreto:true,prueba:!!p.prueba,pruebaEditor:!!p.pruebaEditor}};}
   async function combatir(e){
     const p=campanaLeer();if(!p||p.etapa!==6||!['trono','combate'].includes(p.secreto)||campanaLanzando||e&&!vigente(e))return;
     if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
@@ -113,12 +113,43 @@
     const p=campanaLeer();if(!campanaPruebaDisponible()||!vigente(e)||e.d.dataset.fase!=='trono'||NET.on)return;
     p.prueba=true;p.secreto='combate';campanaGuardar(p);campanaCerrar();cerrarCinematica();
     newGame(p.lider,'adreida');G.campana=opciones(p).campana;G.over=true;P(FOE).alma=0;
-    if(window.campanaPrepararRival)campanaPrepararRival();campanaFinal(ME,'Victoria de prueba · Beta');
+    if(window.campanaPrepararRival)campanaPrepararRival();showScreen('board');render();campanaFinal(ME,'Victoria de prueba · Beta');
   }
-  window.campanaFinalSecreto=function(winner,why){
+  window.campanaEnsayarPitagoras=async function(){
+    if(!campanaPruebaDisponible()||NET.on||G?.online||G?.guest||campanaLanzando||PITAGORAS_PRUEBAS?.activa)return false;
+    const anterior=campanaLeer(),ensayoAnterior=campanaEnsayoGero;
+    const lider=anterior?.lider||'fender',personaje=campanaNormalizarPersonaje(anterior?.personaje||{nombre:'Viajero'});
+    // El ensayo usa el mismo recorrido que la campaña y guarda únicamente en
+    // memoria; nunca sustituye el avance ni concede sellos reales.
+    const ensayo={version:1,id:'ensayo-editor-'+Date.now(),lider,personaje,etapa:6,secreto:'combate',prueba:true,pruebaEditor:true};
+    campanaEnsayoGero=ensayo;
+    try{await combatir();return campanaEnsayoGero===ensayo&&G?.campana?.id===ensayo.id&&!!G.campana.pruebaEditor;}
+    catch(error){if(campanaEnsayoGero===ensayo)campanaEnsayoGero=ensayoAnterior;throw error;}
+  };
+  window.campanaBotonesEditorBeta=function(host){
+    host.querySelector('#betaEditorDano')?.remove();
+    const g=G;
+    const vigente=()=>G===g&&campanaPruebaDisponible()&&g?.campana?.pruebaEditor&&g.campana.jefeSecreto&&campanaEnsayoGero?.id===g.campana.id&&!g.over&&!g.online&&!g.guest&&!NET.on;
+    if(!vigente())return;
+    const b=campanaBoton('Beta · Pitágoras −10 Alma',async()=>{
+      if(!vigente()||accionPendiente())return;
+      g.resolving=true;P(FOE).alma=Math.max(0,P(FOE).alma-10);render();
+      try{await fxFace(FOE,10);if(G!==g||g.over)return;if(P(FOE).alma<=0)endGame(ME,'El Editor se disuelve.');}
+      finally{g.resolving=false;if(G===g)render();}
+    });
+    b.id='betaEditorDano';b.classList.add('betaFinalGero');b.disabled=accionPendiente();host.appendChild(b);
+  };
+  window.campanaFinalSecreto=async function(winner,why){
     const g=G,p=campanaLeer();if(!p||p.etapa!==6||!g.campana?.jefeSecreto||p.id!==g.campana.id||g.campanaResuelta)return;
     g.campanaResuelta=true;RECORD_ULTIMO=null;relojPara();
-    if(winner===ME){p.secreto='final';campanaGuardar(p);campanaAbrirSecreto();return;}
+    if(winner===ME){
+      p.secreto='final';campanaGuardar(p);
+      // La mesa debe respirar otra vez antes de abrir el epílogo. Guardamos el
+      // final antes de la animación para poder retomarlo si se cierra la app.
+      const limpio=window.PITAGORAS_MESA?await PITAGORAS_MESA.disolver(g):true;
+      if(limpio&&G===g&&campanaLeer()?.id===p.id&&campanaLeer()?.secreto==='final')campanaAbrirSecreto();
+      return;
+    }
     p.secreto='combate';campanaGuardar(p);
     const acciones={textoPrincipal:'↺ Revancha contra Pitágoras',revancha:()=>{if(G===g)combatir();},menu:()=>{if(G===g)campanaVolverAlMenu();}};
     cinematicaFinal(winner,why,acciones).then(hecho=>{
