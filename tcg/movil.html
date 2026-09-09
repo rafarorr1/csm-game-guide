@@ -871,8 +871,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=207"></script>
-<script src="final.js?b=207"></script>
+<script src="motor.js?b=224"></script>
+<script src="final.js?b=224"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -883,7 +883,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:207, fecha:'2026-09-08'};
+const BUILD = {n:224, fecha:'2026-09-09'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1047,6 +1047,7 @@ function pulsacionLarga(nodo, fn){
 }
 /* ---------- pantallas ---------- */
 function showScreen(id){
+  if(id!=='board'){campanaCancelarInterferencia();window.PITAGORAS_MESA?.cancelar();}
   const antes=$('.screen.on'),pantalla=$('#'+id),esMenu=pantalla.classList.contains('portada');
   if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
   $$('.screen').forEach(s=>s.classList.remove('on'));
@@ -1253,13 +1254,14 @@ function cartaDeLiderVS(lid, lado){
 async function cortinillaVS(a,b,opts={}){
   if(opts.silent||opts.fast||opts.auto||opts.volado===false||opts.sinCortinilla||document.hidden) return;
   const capa=el('div','vs'); capa.innerHTML='<div class="vsfondo"></div><div class="vschispas"></div>';
-  capa.appendChild(opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq')); capa.appendChild(cartaDeLiderVS(b,'der')); capa.appendChild(el('div','vssello','VS'));
+  capa.appendChild(opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq')); capa.appendChild(opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der')); capa.appendChild(el('div','vssello','VS'));
   if(opts.nombres)capa.querySelectorAll('.lname').forEach((n,i)=>n.textContent=opts.nombres[i]);
   document.body.appendChild(capa);
-  await nap(60); capa.classList.add('entra'); await nap(620); capa.classList.add('choque'); await nap(2200);
+  await nap(60); capa.classList.add('entra'); await nap(620); capa.classList.add('choque'); window.CAOZ_AUDIO?.play('vs'); await nap(2200);
   capa.classList.add('sale'); await nap(760); capa.remove();
 }
 async function startMatch(a,b,opts={}){
+  campanaCancelarInterferencia();
   const mia=++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null; cerrarHojas();
   $('#log').innerHTML='';
@@ -1267,13 +1269,14 @@ async function startMatch(a,b,opts={}){
   const conVolado=opts.volado!==false;
   await cortinillaVS(a,b,opts);
   if(mia!==PARTIDA_N) return;
-  const first=conVolado ? await volado(LEADERS[b].n) : (opts.first!=null?opts.first:null);
+  const first=conVolado ? await volado(opts.nombres?.[1]||LEADERS[b].n) : (opts.first!=null?opts.first:null);
   if(mia!==PARTIDA_N) return;
   await setupMatch(a,b,{...(first==null?{}:{first}),...(opts.campana?{campana:opts.campana}:{})});
 }
 function endGame(winner, why){
   if(G.over) return;
   G.over=true; G.winner=winner; G.endWhy=why;
+  campanaCancelarInterferencia();
   log(`<b>=== FIN: gana ${P(winner).L.n} ===</b>`);
   if(TUT.on){
     const k=TUT_STEPS.findIndex(x=>x.strat);
@@ -1331,7 +1334,12 @@ function toast(t){
   setTimeout(()=>{d.style.opacity=0;d.style.transition='.3s';},1400);
   setTimeout(()=>d.remove(),1800);
 }
-async function rollDice(value, label, interactive, meta){
+function d20FisicoDisponible(){
+  return !!window.CAOZ_D20 && FXON() && (!new URLSearchParams(location.search).has('test')||window.CAOZ_D20_PRUEBA===true);
+}
+function prepararTiradaD20(label, interactive, meta){return window.CAOZ_D20?.preparar(label,interactive,meta)||Promise.resolve({x:0,z:-.6,fuerza:.6});}
+async function rollDice(value, label, interactive, meta, fisica){
+  if(fisica&&window.CAOZ_D20){if(!FXON())return;return window.CAOZ_D20.mostrar(value,label,interactive,meta,fisica);}
   if(!FXON()) return;
   const ov=$('#dice'), box=$('#diceBox');
   return new Promise(resolve=>{
@@ -1344,10 +1352,10 @@ async function rollDice(value, label, interactive, meta){
     let cerrado=false;
     const done=()=>{ if(cerrado) return; cerrado=true; ov.classList.remove('on'); resolve(); };
     const girar=async()=>{
-      btn.disabled=true; btn.textContent='Tirando…'; v.classList.add('spin');
+      btn.disabled=true; btn.textContent='Tirando…'; v.classList.add('spin'); window.CAOZ_AUDIO?.play('dice_roll');
       const N=interactive?15:9;
       for(let i=0;i<N;i++){ v.textContent=1+rnd(20); await sleep(42+i*(interactive?7:9)); }
-      v.classList.remove('spin'); v.textContent=value;
+      v.classList.remove('spin'); window.CAOZ_AUDIO?.play('dice_land'); v.textContent=value;
       v.className='d20'+(value===20?' crit':value===1?' pifia':'');
       v.animate([{transform:'scale(1.5) rotate(-14deg)'},{transform:'scale(1) rotate(0)'}],{duration:460,easing:'cubic-bezier(.2,1.5,.4,1)'});
       lab.textContent=value===20?'¡CRÍTICO!':value===1?'¡CRÍTICO!':'';
@@ -1427,7 +1435,7 @@ async function revelarCarta(cardId, aMano, side){
 async function ofrecerManoNueva(s){
   if(!puedeRehacerMano(s)) return;
   const miPartida=PARTIDA_N, miG=G;
-  const vive=()=>miPartida===PARTIDA_N&&miG===G&&!G.over;
+  const vive=()=>miPartida===PARTIDA_N&&miG===G&&!G.over&&G.active===s;
   const p=P(s);
   if(!G.silent&&!G.auto){
     const ov=$('#ov');
@@ -1523,7 +1531,7 @@ function fichaLider(side){
     <div class="bigsep"></div><div class="bigrow">❤️ Alma ${Math.max(0,p.alma)} · 🔷 ${p.pd}/${p.pdMax} · 🗝️ ${keys(side)}</div>`;
   const btns=$('#inspectBtns'); btns.innerHTML='';
   const c=el('button','btn','Cerrar'); c.onclick=cerrarHojas; btns.appendChild(c);
-  campanaVestirFicha(box,side);
+  campanaVestirFicha(box,side);if(side===FOE&&G.campana?.jefeSecreto)campanaVestirPitagoras(box);
   abrirHoja('inspect');
 }
 /* el motor la llama al seleccionar una unidad; aquí la ficha taparía a los
@@ -1573,6 +1581,7 @@ function renderLeaders(){
       <div><div class="ln">${L.n}</div><div class="lh">${mine?L.habName+' · <b>'+(p.leaderUsed?'usada':L.habCost+' PD')+'</b>':L.ep}</div></div></div>`;
     const e=host.firstElementChild;
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
+    if(!mine&&G.campana?.jefeSecreto)campanaVestirPitagoras(e);
     e.onclick=()=>{
       if(TGT&&isTargetable('face')&&!mine){ pickTarget('face'); return; }
       if(!mine){ if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } else fichaLider(side); return; }
@@ -1619,16 +1628,17 @@ function renderField(host, list, mine){
   [...host.children].forEach(d=>{ if(!seen.has(d.dataset.uid)) d.remove(); });
 }
 function pilasHTML(side){
-  const p=P(side), me=side===ME, top=p.grave[p.grave.length-1];
-  return `<div class="stat pila" id="${me?'myDeckPile':'foeDeckPile'}" title="Mazo">🂠 <i>${p.deck.length}</i></div>
-    <div class="stat pila grave" id="${me?'myGravePile':'foeGravePile'}" title="Alcantarillas">${top?CARDS[top].art:'🕳️'} <i>${p.grave.length}</i></div>`;
+  const p=P(side), me=side===ME;
+  return `<div class="stat pila" id="${me?'myDeckPile':'foeDeckPile'}" title="Mazo">🂠 <i>${p.deck.length}</i></div>`;
 }
 function render(){
   if(!G||G.silent) return;
+  campanaPrepararRival();
   if(NET.host) netPushState();
   $('#barFoe').innerHTML=barHTML(FOE); $('#pilasFoe').innerHTML=pilasHTML(FOE);
   $('#barMe').innerHTML=barHTML(ME);   $('#pilasMe').innerHTML=pilasHTML(ME);
-  $$('.stat.grave').forEach(g=>g.onclick=showGrave);
+  $('#pilasFoe').appendChild(crearPilaAlcantarillas(FOE));
+  $('#pilasMe').appendChild(crearPilaAlcantarillas(ME));
   const ft=$('#foeTraps'); ft.innerHTML='';
   P(FOE).traps.forEach(t=>{ ft.appendChild(el('div','trapback', t.revealed?CARDS[t.id].art:'🪤')); });
   renderLeaders();
@@ -1672,6 +1682,7 @@ function render(){
   if(!$('#hand .card.tocada')) manoTocada(null);
   renderControls();
   ajustarCampo();
+  window.PITAGORAS_MESA?.actualizar(G);
   if(G.tutorial) tutHighlight();
 }
 function renderControls(){
@@ -1691,6 +1702,8 @@ function renderControls(){
   c.appendChild(reg); marcarChat();
   const r=el('button','btn sm','📜'); r.onclick=()=>showRules(true); c.appendChild(r);
   const s=el('button','btn sm','✕'); s.title='Salir al menú'; s.onclick=pedirSalirAlMenu; c.appendChild(s);
+  campanaBotonFinalGero(c);
+  window.campanaBotonesEditorBeta?.(c);
 }
 function relojPara(){ if(RELOJ.id){ clearInterval(RELOJ.id); RELOJ.id=null; } const e=$('#reloj'); if(e) e.hidden=true; }
 function relojPinta(){

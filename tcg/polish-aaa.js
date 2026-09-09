@@ -70,6 +70,40 @@ body.aaa-polish.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px v
 body.aaa-combat .cajon,body.aaa-combat #inspect{visibility:hidden!important;opacity:0!important;pointer-events:none!important}
 body.aaa-combat .card.unit:hover{filter:none}
 
+/* Alcantarillas: naipes físicos, con la última carta descartada boca arriba.
+   La huella es fija: la altura visual del montón no mueve el campo. */
+.alcantarillaPila{--escala-pila:.30;position:relative;display:block;flex:0 0 auto;
+  width:112px;height:92px;padding:0;border:0;border-radius:10px;background:none;
+  color:var(--gold);cursor:pointer;isolation:isolate;touch-action:manipulation}
+.alcantarillaPila:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.alcantarillaBase{position:absolute;inset:9px 14px 3px;border-radius:50%;
+  background:radial-gradient(ellipse,#0009,transparent 70%);pointer-events:none}
+.alcantarillaCartas{position:absolute;left:50%;top:5px;width:190px;height:264px;
+  transform:translateX(-50%) scale(var(--escala-pila));transform-origin:top center;pointer-events:none}
+.alcantarillaCanto{position:absolute;inset:0;border:3px solid #92806a;border-radius:9px;
+  background:linear-gradient(145deg,#463348,#201827);box-shadow:0 3px 0 #d4c4a1,0 7px 9px #0009;
+  transform:translate(var(--dx),var(--dy)) rotate(var(--giro))}
+body.aaa-polish .alcantarillaCartas .card{--cw:190px;--ch:264px;width:190px;height:264px;
+  font-size:14px;position:absolute;inset:0;margin:0;transform:rotate(-4deg);pointer-events:none;
+  text-align:center;filter:none;transition:none}
+.alcantarillaCartas .foil{display:none}
+.alcantarillaVacia{position:absolute;inset:7px 28px 4px;border:1px dashed #6e607080;border-radius:7px;
+  display:grid;place-items:center;font:24px/1 var(--serif);color:#817087;background:#120e1b55}
+.alcantarillaNumero{position:absolute;right:11px;bottom:0;z-index:2;min-width:24px;padding:3px 5px;
+  border:1px solid #9a8050;border-radius:12px;background:linear-gradient(#39283f,#17111f);
+  font:800 16px/1 var(--serif);font-variant-numeric:tabular-nums;box-shadow:0 2px 6px #0009}
+.alcantarillaNombre{position:absolute;top:-12px;left:0;right:0;font:600 7px/1 var(--sans);
+  letter-spacing:1px;color:#aa98b9;text-align:center}
+.pilas{align-items:center}
+.pilas .alcantarillaPila{--escala-pila:.20;width:56px;height:30px}
+.pilas .alcantarillaPila::after{content:'';position:absolute;inset:-7px 0;z-index:3}
+.pilas .alcantarillaCartas{top:0;left:44%;transform:translateX(-50%) scale(var(--escala-pila)) rotateX(60deg)}
+.pilas .alcantarillaNumero{right:0;bottom:0;min-width:18px;font-size:11px;padding:2px 4px}
+.pilas .alcantarillaNombre{display:none}
+.pilas .alcantarillaVacia{inset:3px 12px 3px 6px;font-size:17px}
+.pilas .alcantarillaBase{inset:6px 3px 0}
+@media(hover:hover){.alcantarillaPila:hover .alcantarillaCartas{filter:brightness(1.15)}}
+
 /* ===== Combate ===== */
 .aaa-contact{position:fixed;z-index:355;width:18px;height:18px;margin:-9px 0 0 -9px;border-radius:50%;pointer-events:none;
   background:#fff;mix-blend-mode:screen;box-shadow:0 0 12px 5px rgba(255,255,255,.9),0 0 42px 20px rgba(255,133,70,.54)}
@@ -90,7 +124,33 @@ body.aaa-combat .card.unit:hover{filter:none}
 }
 `;
 
-  const STATE = {last:null, audio:null, gain:null, unlocked:false};
+  // Usa el estado visible de cada bando: el online ya lo entrega volteado.
+  window.crearPilaAlcantarillas=function(side){
+    const cartas=P(side).grave,ultima=cartas[cartas.length-1];
+    const pila=document.createElement('button');pila.type='button';pila.className='alcantarillaPila';
+    pila.id=side===ME?'myGravePile':'foeGravePile';
+    const descripcion='Alcantarillas de '+P(side).L.n+' — '+cartas.length+(cartas.length===1?' carta':' cartas')+(ultima?' · arriba: '+CARDS[ultima].n:' · vacías');
+    pila.title=descripcion;pila.setAttribute('aria-label',descripcion);
+    pila.innerHTML='<span class="alcantarillaBase" aria-hidden="true"></span><span class="alcantarillaNombre" aria-hidden="true">ALCANTARILLAS</span>';
+    if(ultima){
+      const monte=document.createElement('span');monte.className='alcantarillaCartas';monte.setAttribute('aria-hidden','true');
+      // Hasta cinco cantos; el contador conserva el total sin crear decenas de nodos.
+      const capas=Math.min(5,cartas.length-1);
+      for(let i=capas;i>0;i--){
+        const canto=document.createElement('span');canto.className='alcantarillaCanto';
+        canto.style.cssText='--dx:'+((i%2?1:-1)*(4+i*2))+'px;--dy:'+(i*5)+'px;--giro:'+(i%2?6:-8)+'deg';
+        monte.appendChild(canto);
+      }
+      // La copia conserva ilustración y encuadre, sin los eventos de una carta jugable.
+      monte.appendChild(cardEl(ultima,{}).cloneNode(true));pila.appendChild(monte);
+    }else{
+      const vacia=document.createElement('span');vacia.className='alcantarillaVacia';vacia.textContent='○';vacia.setAttribute('aria-hidden','true');pila.appendChild(vacia);
+    }
+    const numero=document.createElement('span');numero.className='alcantarillaNumero';numero.textContent=cartas.length;numero.setAttribute('aria-hidden','true');pila.appendChild(numero);
+    pila.onclick=()=>showGrave();return pila;
+  };
+
+  const STATE = {last:null};
 
   function aaaFX(){
     try{return typeof FXON==='function' ? FXON() : true;}catch(e){return true;}
@@ -120,40 +180,9 @@ body.aaa-combat .card.unit:hover{filter:none}
   }
   function aaaMotionOK(){ return !matchMedia('(prefers-reduced-motion: reduce)').matches; }
 
-  /* ---- Audio procedural: sin archivos externos ---- */
-  function aaaUnlock(){
-    if(STATE.unlocked) return;
-    STATE.unlocked=true;
-    try{
-      const AC=window.AudioContext||window.webkitAudioContext; if(!AC)return;
-      STATE.audio=new AC(); STATE.gain=STATE.audio.createGain(); STATE.gain.gain.value=.19; STATE.gain.connect(STATE.audio.destination);
-      if(STATE.audio.state==='suspended') STATE.audio.resume();
-    }catch(e){}
-  }
-  document.addEventListener('pointerdown',aaaUnlock,{once:true,capture:true});
-  function aaaTone(freq,dur,opt={}){
-    const a=STATE.audio,g=STATE.gain;if(!a||!g)return;
-    try{
-      const o=a.createOscillator(),v=a.createGain(),now=a.currentTime;
-      o.type=opt.type||'sine'; o.frequency.setValueAtTime(freq,now);
-      if(opt.to) o.frequency.exponentialRampToValueAtTime(Math.max(20,opt.to),now+dur);
-      v.gain.setValueAtTime(.0001,now);v.gain.exponentialRampToValueAtTime(opt.vol||.18,now+.008);v.gain.exponentialRampToValueAtTime(.0001,now+dur);
-      o.connect(v);v.connect(g);o.start(now);o.stop(now+dur+.02);
-    }catch(e){}
-  }
-  function aaaNoise(dur=.08,vol=.12){
-    const a=STATE.audio,g=STATE.gain;if(!a||!g)return;
-    try{
-      const n=Math.max(1,Math.floor(a.sampleRate*dur)),b=a.createBuffer(1,n,a.sampleRate),d=b.getChannelData(0);
-      for(let i=0;i<n;i++) d[i]=(Math.random()*2-1)*(1-i/n);
-      const s=a.createBufferSource(),v=a.createGain();s.buffer=b;v.gain.value=vol;s.connect(v);v.connect(g);s.start();
-    }catch(e){}
-  }
+  /* Un solo mezclador compartido; el contacto conserva su sincronía visual. */
   function aaaSound(k,p=1){
-    if(k==='wind'){aaaTone(190,.11,{type:'sawtooth',to:72,vol:.06*p});aaaNoise(.07,.035*p);}
-    else if(k==='hit'){aaaTone(72,.13,{type:'sine',to:42,vol:.24*p});aaaTone(330,.045,{type:'square',to:120,vol:.055*p});aaaNoise(.07,.11*p);}
-    else if(k==='counter'){aaaTone(250,.08,{type:'sawtooth',to:95,vol:.055*p});aaaNoise(.045,.045*p);}
-    else if(k==='lethal'){aaaTone(49,.28,{type:'sine',to:32,vol:.28*p});aaaNoise(.12,.08*p);}
+    window.CAOZ_AUDIO?.play({wind:'attack_wind',hit:'attack_hit',counter:'counter',lethal:'lethal'}[k],{volumen:p});
   }
 
   function aaaImpact(x,y,dx,dy,power=1){
@@ -239,7 +268,9 @@ body.aaa-combat .card.unit:hover{filter:none}
         {translate:dx+'px '+dy+'px',scale:'1.075',rotate:(dx>0?'1.6deg':'-1.6deg')}
       ],{duration:118,easing:'cubic-bezier(.1,.82,.2,1)',fill:'forwards'});
       await aaaNap(108);
-      aaaImpact((from.x+to.x)/2,(from.y+to.y)/2,to.x-from.x,to.y-from.y,1);aaaSound('hit',1);
+      aaaImpact((from.x+to.x)/2,(from.y+to.y)/2,to.x-from.x,to.y-from.y,1);
+      // El protagonista suena en fxFace, al perder Alma y recibir su reacción.
+      if(targetObj)aaaSound('hit',1);
       if(typeof vibra==='function') try{vibra([20]);}catch(e){}
       if(targetEl&&targetObj){
         targetEl.animate([{translate:'0 0',rotate:'0deg'},{translate:(dx*.10)+'px '+(dy*.10)+'px',rotate:(dx>0?'1.4deg':'-1.4deg'),offset:.22},{translate:'0 0',rotate:'0deg'}],{duration:255,easing:'ease-out'});

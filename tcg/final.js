@@ -16,5 +16,18 @@
   document.write('<script src="campana-personaje.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-deseo.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-mesa.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="campana-pitagoras.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="campana-secreto.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="campana-honores.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-pruebas.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-mundos.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-cine.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-fps.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-pixel.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-laboratorio.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-combate.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="pitagoras-mesa.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="dado-fisico.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="polish-aaa.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="audio-domo.js?b='+encodeURIComponent(b)+'"><\/script>');
 })();

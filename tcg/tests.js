@@ -189,7 +189,7 @@ PRUEBAS.suite('motor', async t => {
    sobre un objetivo que canPlay creía válido y la resolución real no.
    ======================================================================== */
 PRUEBAS.suite('cartas', async t => {
-  const ids = Object.keys(T.CARDS).filter(id => !T.CARDS[id].token);
+  const ids = Object.keys(T.CARDS).filter(id => !T.CARDS[id].token && !T.CARDS[id].editorJuego);
   const rotas=[], nojugables=[];
   for(const id of ids){
     // dos intentos: tablero normal y tablero con Objetos y Llaves. Si con el
@@ -238,7 +238,7 @@ PRUEBAS.suite('cobertura', async t => {
     }
   } finally { window.playFromHand = playOrig; }
 
-  const total = Object.keys(T.CARDS).filter(id=>!T.CARDS[id].token).length;
+  const total = Object.keys(T.CARDS).filter(id=>!T.CARDS[id].token && !T.CARDS[id].editorJuego).length;
   t.nota(`cartas jugadas ${jugadas.size}/${total} · trampas saltadas ${trampas.size}/${trampasTotales.length}`);
   const sinTrampa = trampasTotales.filter(id=>!trampas.has(id));
   if(sinTrampa.length) t.nota('trampas que nunca saltaron: '+sinTrampa.join(', '));
@@ -408,6 +408,937 @@ PRUEBAS.suite('azarYCriticos', async t => {
   }
 });
 
+PRUEBAS.suite('d20Fisico', async t => {
+  const F=window.CAOZ_D20;
+  t.check(F&&F.caras.length===20&&new Set(F.caras.map(c=>c.valor)).size===20,'D20 con veinte caras físicas distintas.');
+  const frecuencias=Array(20).fill(0);let maximo=0;
+  for(let i=0;i<240;i++){
+    const impulso=i%3===0?{x:i%2?-1:1,z:i%4<2?-1:1,fuerza:1}:undefined;
+    const r=F.simular(i,impulso);frecuencias[r.valor-1]++;maximo=Math.max(maximo,r.duracion);
+    t.check(r.asentado&&r.apoyos.length>=3&&r.alineacion>.9997,'La tirada '+i+' debe terminar apoyada sobre una cara.');
+    const p=r.frames.at(-1);t.check(F.leer(p.q).valor===r.valor,'El valor debe venir de la orientación final, no de otro sorteo.');
+    t.check(F.vertices.every(v=>p.p[1]+F.girar(v,p.q)[1]>-.0015),'El dado no atraviesa la mesa.');
+    if(i<12){const otra=F.simular(i,impulso);t.check(JSON.stringify(r.frames)===JSON.stringify(otra.frames),'Misma semilla y gesto: misma trayectoria.');}
+    const red=F.desempaquetar(F.empaquetar(r));t.check(red&&F.leer(red.frames.at(-1).q).valor===r.valor,'La trayectoria de red conserva la cara.');
+  }
+  t.check(frecuencias.every(n=>n>=3&&n<=27),'Las veinte caras deben aparecer sin un sesgo evidente en la muestra fija.');
+  t.nota('240 lanzamientos físicos: '+frecuencias.join(', ')+' · duración máxima '+maximo.toFixed(2)+' s.');
+  t.check(F.impulsoValido({x:Infinity,z:-99,fuerza:100}).x===0&&F.impulsoValido({z:-99}).z===-1&&F.impulsoValido({fuerza:100}).fuerza===1,'El impulso remoto se limita a valores válidos.');
+  const esperar=async(fn,ms=7000)=>{const fin=Date.now()+ms;while(!fn()&&Date.now()<fin)await sleep(15);t.check(fn(),'El d20 no terminó su fase esperada.');};
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=d20-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument;
+    try{
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.CAOZ_D20_PRUEBA=true;
+      w.newGame('fender','mohamed');w.showScreen('board');w.render();
+      const random=w.crypto.getRandomValues.bind(w.crypto);w.crypto.getRandomValues=a=>{a[0]=1;return a;};
+      w.Math.random=()=>.999;const esperado=w.CAOZ_D20.simular(1).valor;
+      const tirada=w.resolverD20('Coraje de Drantiago',0,w.metaViva({min:11,necesita:'11+',siOk:'+2 ATQ',siMal:'No alcanza'}));
+      t.check(!!d.querySelector('#dice.fisico #dbtn')&&d.querySelector('#dbtn').textContent.includes('Tirar'),pagina+': el jugador puede lanzar desde la mesa.');
+      d.querySelector('#dbtn').click();await esperar(()=>!!d.querySelector('#dice').dataset.d20Valor);
+      t.check(d.querySelector('#d20v').textContent===String(esperado)&&d.querySelector('#dice').dataset.d20Asentado==='true',pagina+': la cara física se muestra y sigue apoyada.');
+      t.check(d.querySelector('#defecto').textContent.includes(esperado>=11?'+2 ATQ':'No alcanza'),pagina+': el umbral usa el resultado físico.');
+      d.querySelector('#dbtn').click();t.check(await tirada===esperado,pagina+': el motor recibe la cara física en vez de rnd(20).');
+      w.matchMedia=()=>({matches:true});const breve=w.resolverD20('Automático',0,{sola:true});await esperar(()=>!!d.querySelector('#dice').dataset.d20Valor);d.querySelector('#dbtn').click();await breve;
+      const pendiente=w.resolverD20('Cancelación',0,null);w.showScreen('menu');await pendiente;t.check(!d.querySelector('#dice').classList.contains('on'),pagina+': salir del tablero no deja una promesa ni un dado flotante.');
+      w.crypto.getRandomValues=random;
+    }finally{w.CAOZ_D20.cancelar();w.relojPara();f.remove();}
+  }
+});
+
+PRUEBAS.suite('d20OnlineFisico', async t => {
+  const esperar=async(fn,ms=6500)=>{const fin=Date.now()+ms;while(!fn()&&Date.now()<fin)await sleep(12);t.check(fn(),'El d20 online no terminó su fase esperada.');};
+  for(const paginas of [['index.html','movil.html'],['movil.html','index.html']]){
+    const marcos=[];
+    try{
+      for(const pagina of paginas){const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=d20-red-interno';document.body.appendChild(f);marcos.push(f);await carga;}
+      const clientes=marcos.map(f=>f.contentWindow),[h,j]=clientes,registro=[];
+      clientes.forEach((w,i)=>{
+        w.newGame(i?'mohamed':'fender',i?'fender':'mohamed');w.eval('G.online=true;G.phase="principal";G.turnNo=3;G.fast=false;G.auto=false;G.silent=false');w.CAOZ_D20_PRUEBA=true;
+        Object.defineProperty(w.document,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:true});w.netStatus=()=>{};
+        Object.assign(w.eval('NET'),{on:true,host:i===0,guest:i===1,peer:true,d20Remoto:1,sid:'d20-'+i,hechas:new Set(),esperaAck:new Map(),chs:[{ok:true,close(){}}]});
+        w.netSend=m=>{registro.push({lado:i,t:m.t,kind:m.kind,fisica:m.fisica,fx:m.s?.fx});const copia=JSON.parse(JSON.stringify({...m,sid:'d20-'+i}));queueMicrotask(()=>clientes[1-i].netRecv(copia));};w.showScreen('board');w.render();
+      });
+      let semillas=0;h.crypto.getRandomValues=a=>{semillas++;a[0]=1;return a;};j.crypto.getRandomValues=()=>{throw Error('El invitado intentó sortear el resultado.');};
+      for(const lado of [1,0]){
+        semillas=0;const promesa=h.resolverD20('Prueba física online',lado,h.metaViva({min:11,necesita:'11+',siOk:'+2 ATQ',siMal:'No alcanza'})),jugador=clientes[lado];
+        await esperar(()=>jugador.document.querySelector('#dbtn')?.textContent.includes('Tirar'));t.check(semillas===0,'La semilla autoritativa debe nacer después del gesto.');jugador.document.querySelector('#dbtn').click();
+        await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));
+        const esperado=h.CAOZ_D20.simular(1).valor,valores=clientes.map(w=>+w.document.querySelector('#dice').dataset.d20Valor);
+        t.check(valores.every(v=>v===esperado),paginas.join('→')+': ambos clientes ven la misma cara calculada por el anfitrión.');
+        clientes.forEach(w=>w.document.querySelector('#dbtn').click());t.check(await promesa===esperado&&semillas===1,'Una sola simulación autoritativa devuelve el valor al motor.');await sleep(190);
+      }
+      // La carta real debe aplicar el beneficio después de confirmar el dado.
+      h.eval('G.active=1;P(0).hand=[];P(1).hand=["rantiago"];P(1).pd=10');const aliado=h.mkUnit('bartolomeo',1);h.eval('P(1)').field=[aliado];h.recalc();h.render();await sleep(190);
+      const coraje=h.playFromHand(1,'rantiago',[[aliado]]);await esperar(()=>j.document.querySelector('#dbtn')?.textContent.includes('Tirar'));j.document.querySelector('#dbtn').click();await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));clientes.forEach(w=>w.document.querySelector('#dbtn').click());await coraje;
+      await esperar(()=>aliado.pA===2&&j.eval('P(0).field[0]?.pA')===2);t.check(aliado.atk===3&&j.eval('P(0).field[0]?.atk')===3,'Rantiago aplica +2 ATQ físico y lo sincroniza en ambos clientes.');
+      const antes=registro.length,sola=h.resolverD20('Pasiva',1,h.metaViva({sola:true,min:11}));await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));clientes.forEach(w=>w.document.querySelector('#dbtn').click());await sola;
+      t.check(!registro.slice(antes).some(m=>m.kind==='rollLaunch'),'La pasiva del invitado no debe pedir un gesto.');
+      let n=0;h.crypto.getRandomValues=a=>{a[0]=[3,7][n++];return a;};h.trapWindow=async(s,ev,o)=>{if(o?.isRoll)o.reroll=true;};h.fastWindow=async(s,o)=>{if(o?.kind==='d20')o.ev.reroll=true;};const desde=registro.length,repeticion=h.roll('Repetir',1,null),valores=[];
+      for(let i=0;i<2;i++){await esperar(()=>j.document.querySelector('#dbtn')?.textContent.includes('Tirar'));j.document.querySelector('#dbtn').click();await esperar(()=>clientes.every(w=>!!w.document.querySelector('#dice').dataset.d20Valor));valores.push(+j.document.querySelector('#dice').dataset.d20Valor);clientes.forEach(w=>w.document.querySelector('#dbtn').click());await sleep(190);}
+      t.check(await repeticion===Math.min(...valores),'La repetición física conserva el peor de los dos resultados.');const ultimos=registro.slice(desde);
+      t.check(ultimos.filter(m=>m.kind==='roll').length===2&&!ultimos.some(m=>m.fx?.some(f=>f.k==='dice')),'Cada tirada del invitado llega una vez, sin duplicado que tape el botón.');
+      // Un cliente anterior a este build no entiende rollLaunch. Negociar la
+      // capacidad mantiene el diálogo clásico sin esperar su timeout.
+      h.eval('NET.d20Remoto=0');h.Math.random=()=>.999;clientes.forEach(w=>w.rollDice=async()=>{});const antiguo=registro.length;
+      t.check(await h.resolverD20('Cliente anterior',1,null)===20,'Con un cliente anterior se conserva la tirada clásica.');
+      t.check(!registro.slice(antiguo).some(m=>m.kind==='rollLaunch'||m.fisica),'No enviar solicitudes físicas a un cliente sin capacidad negociada.');
+      h.eval('NET.peer=false');h.eval('NET.onjoin=()=>{}');h.netRecv({t:'join',sid:'nuevo',d20Fisico:1});t.check(h.eval('NET.d20Remoto')===1,'El anfitrión lee la capacidad anunciada al entrar.');
+      j.netGuestStart=()=>{};j.netRecv({t:'welcome',sid:'nuevo',d20Fisico:1});t.check(j.eval('NET.d20Remoto')===1,'El invitado lee la capacidad de bienvenida.');
+      j.netRecv({t:'welcome',sid:'viejo'});t.check(j.eval('NET.d20Remoto')===0,'Sin anuncio, el protocolo conserva compatibilidad.');
+      t.nota(paginas.join(' → ')+': dos lados, pasiva automática, repetición, mismo resultado y cliente anterior.');
+    }finally{marcos.forEach(f=>{const w=f.contentWindow;w.netSend=()=>{};w.netClose();w.CAOZ_D20.cancelar();f.remove();});}
+  }
+});
+
+PRUEBAS.suite('manoNuevaTurno',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=mano-turno-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;
+    try{
+      w.newGame('fender','adreida');w.eval("G.phase='principal';G.turnNo=1;G.active=0;P(0).hand=['tal'];P(0).pd=1;");w.cerrarOv();
+      let terminarReparto,preguntas=0;w.repartirALaVista=()=>new Promise(r=>terminarReparto=r);w.ask=async()=>{preguntas++;return 1;};
+      const oferta=w.ofrecerManoNueva(0);t.check(!!terminarReparto,pagina+': la oferta espera a mostrar las cartas');
+      w.eval('G.active=1;G.turnNo=2');terminarReparto();await oferta;
+      t.check(preguntas===0&&!w.eval('P(0).manoRehecha'),pagina+': pasar de turno durante el reparto cancela la pregunta antigua sin gastar el cambio de mano');
+      w.eval('G.active=0;G.turnNo=1');const vigente=w.ofrecerManoNueva(0);terminarReparto();await vigente;
+      t.check(preguntas===1&&w.eval('P(0).manoRehecha'),pagina+': la oferta del turno vigente sigue funcionando');
+    }finally{f.remove();}
+  }
+});
+
+PRUEBAS.suite('editorCartas',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=cartas-editor-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,poner=w.setTimeout;
+    try{
+      const originales=w.eval('JSON.stringify(DECKS)');w.startTurn=async s=>w.eval("G.active="+s+";G.phase='principal';G.turnNo=3");
+      w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.fxFace=async()=>{};w.fxStat=()=>{};let genericas=0;w.fxSpell=async()=>{genericas++;};
+      const tipos=[];w.PITAGORAS_PRUEBAS.iniciar=async op=>{tipos.push(op);return{sobrevivio:true,cancelado:false};};
+      await w.setupMatch('fender','adreida',{first:0,campana:{id:'mazo-editor',jefeSecreto:true,alma:40}});
+      const ids=w.eval('CARTAS_EDITOR.slice()');t.check(w.eval('[...P(1).deck,...P(1).hand].length===40 && [...P(1).deck,...P(1).hand].every(id=>CARDS[id].editorJuego)'),pagina+': mazo propio antes de repartir');
+      for(const id of ids){w.eval("G.active=1;P(1).field=[];P(1).pd=6;P(1).hand=['"+id+"']");const alma=w.eval('P(1).alma');t.check(await w.playFromHand(1,id),pagina+': juega '+id);t.igual(w.eval('P(1).pd'),4,pagina+': paga sus 2 PD');t.igual(w.eval('P(1).alma'),alma-2,pagina+': una sola aplicación del resultado');t.check(w.eval('P(1).field').some(u=>u.card.id===id&&u.alive&&u.sick)&&!w.eval('P(1).grave').includes(id),pagina+': la pesadilla queda en mesa con cansancio y no se descarta');}
+      t.check(tipos.map(o=>o.tipo).join(',')==='isometrico,laseres,fps,carrera,orbital,duelo'&&tipos.every(o=>o.cinematica===true)&&genericas===0,pagina+': cada carta llama a su juego sin otra presentación genérica');
+      await w.setupMatch('fender','adreida',{first:0});t.check(w.eval('[...P(1).hand,...P(1).deck].every(id=>!CARDS[id].editorJuego)'),pagina+': partida normal conserva Adreida');
+      t.igual(w.eval('JSON.stringify(DECKS)'),originales,pagina+': los seis mazos no cambian');
+      w.eval("P(0).hand=['editorcosecha'];P(0).pd=10");t.check(!w.canPlay(0,'editorcosecha'),pagina+': carta exclusiva del jefe');
+      await w.setupMatch('fender','adreida',{first:0,online:true,campana:{jefeSecreto:true,alma:40}});t.check(w.eval('[...P(1).hand,...P(1).deck].every(id=>!CARDS[id].editorJuego)'),pagina+': no entra al online');
+    }finally{w.campanaCancelarInterferencia();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasTransiciones',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=transicion-editor-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument;let ahora=10000,id=0;const timers=new Map(),cuadros=new Map(),paso=w.PITAGORAS_PRUEBAS.modelo.paso;
+    try{
+      w.setTimeout=(fn,ms)=>{const n=++id;timers.set(n,{fn,en:ahora+ms});return n;};w.clearTimeout=n=>timers.delete(n);w.requestAnimationFrame=fn=>{const n=++id;cuadros.set(n,fn);return n;};w.cancelAnimationFrame=n=>cuadros.delete(n);w.performance.now=()=>ahora;w.matchMedia=()=>({matches:false});
+      const avanzar=ms=>{const fin=ahora+ms;while(true){const prox=[...timers].filter(([,v])=>v.en<=fin).sort((a,b)=>a[1].en-b[1].en)[0];if(!prox)break;ahora=prox[1].en;timers.delete(prox[0]);prox[1].fn();}ahora=fin;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      for(const tipo of ['isometrico','laseres','fps','carrera','orbital','duelo'])for(const gana of [false,true]){
+        // La supervivencia se valida con los modelos reales en su suite; aquí
+        // aislamos ambos resultados para probar toda la secuencia visual.
+        w.PITAGORAS_PRUEBAS.modelo.paso=(s,e,dt)=>{s.t=Math.min(s.duracion,s.t+dt);if(s.t>=s.duracion){s.terminado=true;s.sobrevivio=gana;s.vidas=gana?2:0;}return s;};
+        let veces=0;const promesa=w.PITAGORAS_PRUEBAS.iniciar({tipo,semilla:6,cinematica:true}).then(r=>{veces++;return r;});
+        t.check(!d.querySelector('.ppPanel')&&d.querySelector('.ppCartaJuego h1').textContent===w.PITAGORAS_PRUEBAS.tipos[tipo].nombre,pagina+': carta del juego y ninguna confirmación');
+        avanzar(1149);t.check(w.PITAGORAS_PRUEBAS.estado.t===0&&d.querySelector('.ppMesaVisible'),pagina+': la carta sigue sobre la mesa, reloj detenido sólo durante entrada');
+        avanzar(901);t.check(w.PITAGORAS_PRUEBAS.estado.fase==='revelando'&&!d.querySelector('.ppMesaVisible')&&!d.querySelector('.ppCartaJuego'),pagina+': cambia de escena bajo la nube');
+        const nube=d.querySelector('.ppNube'),ctx=nube.getContext('2d');t.igual(ctx.getImageData(nube.width/2,nube.height/2,1,1).data[3],255,pagina+': cobertura opaca en el intercambio');
+        avanzar(1000);t.check(w.PITAGORAS_PRUEBAS.estado.fase==='jugando'&&w.PITAGORAS_PRUEBAS.estado.t===0,pagina+': arranca automáticamente con veinte segundos completos');
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Escape',cancelable:true}));avanzar(20000);
+        t.check(w.PITAGORAS_PRUEBAS.estado.fase==='resultado'&&!d.querySelector('.ppPanel')&&d.querySelector('.ppDesenlace'),pagina+': resultado breve sin botones');
+        avanzar(1750);t.check(w.PITAGORAS_PRUEBAS.estado.fase==='regresando'&&d.querySelector('.ppMesaVisible'),pagina+': la mesa reaparece bajo el humo');
+        avanzar(900);const r=await promesa;t.check(r.sobrevivio===gana&&!r.cancelado&&veces===1&&!d.querySelector('.pitPrueba')&&!d.body.classList.contains('pitPruebaAbierta'),pagina+': resultado único y limpieza automática');
+      }
+      // Salir desde cualquier fase no deja una nube ni un arranque tardío.
+      for(const tipo of ['isometrico','laseres','fps','carrera','orbital','duelo'])for(const ms of [0,1300,2200,3100]){const p=w.PITAGORAS_PRUEBAS.iniciar({tipo,cinematica:true});avanzar(ms);w.PITAGORAS_PRUEBAS.cancelar();avanzar(4000);t.check((await p).cancelado&&!d.querySelector('.pitPrueba,.ppNube')&&!w.PITAGORAS_PRUEBAS.activa,pagina+': cancelación limpia de '+tipo+' a '+ms+' ms');}
+    }finally{w.PITAGORAS_PRUEBAS.modelo.paso=paso;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasSinPausa',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=sin-pausa-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const alto=d.createElement('div');alto.style.height='3500px';d.body.appendChild(alto);d.body.style.overflow='auto';d.documentElement.style.overflow='auto';
+      for(const tipo of ['isometrico','laseres','fps','carrera','orbital','duelo']){
+        const promesa=w.PITAGORAS_PRUEBAS.iniciar({tipo,nombre:'Viajera',semilla:6});
+        t.check(!d.querySelector('.ppPausa')&&w.getComputedStyle(d.body).position==='fixed'&&w.getComputedStyle(d.documentElement).overflow==='hidden',pagina+': sin botón de pausa y con bloqueo de raíz');
+        for(const evento of [new w.WheelEvent('wheel',{bubbles:true,cancelable:true,deltaY:200}),new w.Event('touchmove',{bubbles:true,cancelable:true})]){d.querySelector('.ppLienzo').dispatchEvent(evento);t.check(evento.defaultPrevented,pagina+': el gesto no desplaza el documento');}
+        w.scrollTo(0,200);t.check(w.scrollY===0,pagina+': la página inferior no tiene desplazamiento');
+        d.querySelector('.ppBotones .ppBoton').click();await sleep(20);t.igual(w.PITAGORAS_PRUEBAS.estado.fase,'jugando',pagina+': empieza la prueba');
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Escape',cancelable:true}));d.querySelector('.pitPrueba').dispatchEvent(new w.Event('cancel',{cancelable:true}));w.dispatchEvent(new w.Event('blur'));Object.defineProperty(d,'hidden',{configurable:true,get:()=>true});d.dispatchEvent(new w.Event('visibilitychange'));avanzar(.75);
+        t.check(w.PITAGORAS_PRUEBAS.estado.fase==='jugando'&&w.PITAGORAS_PRUEBAS.estado.t>=.74,pagina+': Escape, foco, pestaña oculta y fotograma lento no pausan');
+        Object.defineProperty(d,'hidden',{configurable:true,get:()=>false});avanzar(20);
+        const estado=w.PITAGORAS_PRUEBAS.estado;t.check(estado.fase==='resultado'&&!estado.sobrevivio&&estado.vidas===0,pagina+': el tiempo ausente simula los peligros, no concede una victoria gratuita');
+        d.querySelector('.ppBotones .ppBoton').click();const resultado=await promesa;
+        t.check(!resultado.sobrevivio&&!resultado.cancelado&&!d.querySelector('.pitPrueba')&&!d.body.classList.contains('pitPruebaAbierta')&&!d.documentElement.classList.contains('pitPruebaAbierta'),pagina+': resultado y desbloqueo del documento');
+        t.igual(w.getComputedStyle(d.body).overflow,'auto',pagina+': restaura las reglas de desplazamiento anteriores');
+      }
+      const cancelada=w.PITAGORAS_PRUEBAS.iniciar({tipo:'fps'});w.PITAGORAS_PRUEBAS.cancelar();t.check((await cancelada).cancelado&&!d.body.classList.contains('pitPruebaAbierta'),pagina+': cancelar también desbloquea');
+    }finally{w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasLaboratorio',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=laboratorio-interna&editor=1';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,permitido=w.campanaPruebaDisponible,clave=w.eval('CAMPANA_CLAVE'),previo=w.localStorage.getItem(clave);let ahora=10000,uid=0;const timers=new Map(),cuadros=new Map();
+    const guardados=()=>JSON.stringify(Object.keys(w.localStorage).filter(k=>/campana|records/.test(k)).sort().map(k=>[k,w.localStorage.getItem(k)]));
+    try{
+      t.check(!!d.querySelector('.editorLaboratorio[open]'),pagina+': el enlace de beta abre el selector de pruebas');
+      w.campanaGuardar({version:1,id:'no-tocar-laboratorio',lider:'fender',etapa:4,personaje:{nombre:'Nébula'}});w.newGame('fender','adreida');
+      const partida=w.eval('G'),antes=JSON.stringify(partida),datos=guardados();
+      w.setTimeout=(fn,ms)=>{const id=++uid;timers.set(id,{fn,en:ahora+ms});return id;};w.clearTimeout=id=>timers.delete(id);w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.matchMedia=()=>({matches:false});
+      const avanzar=ms=>{const fin=ahora+ms;while(true){const p=[...timers].filter(([,v])=>v.en<=fin).sort((a,b)=>a[1].en-b[1].en)[0];if(!p)break;ahora=p[1].en;timers.delete(p[0]);p[1].fn();}ahora=fin;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const laboratorio=d.querySelector('.editorLaboratorio'),botones=[...laboratorio.querySelectorAll('.elMundo')],salir=laboratorio.querySelector('.elSalir');
+      t.igual(botones.map(b=>b.dataset.tipo).join(','),'isometrico,laseres,fps,carrera,orbital,duelo',pagina+': seis mundos accesibles desde el enlace');
+      for(const boton of botones){
+        boton.click();boton.click();t.check(d.querySelectorAll('.pitPrueba').length===1&&salir.disabled&&laboratorio.querySelector('.elMundos').inert,pagina+': doble clic no superpone dos juegos');
+        avanzar(3050);t.igual(w.PITAGORAS_PRUEBAS.estado.tipo,boton.dataset.tipo,pagina+': la carta abre su juego real');t.igual(w.PITAGORAS_PRUEBAS.estado.fase,'jugando',pagina+': entra automáticamente sin preguntas');
+        avanzar(20000);t.igual(w.PITAGORAS_PRUEBAS.estado.fase,'resultado',pagina+': la prueba real llega a un resultado');avanzar(2650);await sleep(0);
+        t.check(laboratorio.open&&!d.querySelector('.pitPrueba')&&!salir.disabled&&!laboratorio.querySelector('.elMundos').inert&&boton.dataset.probado==='1',pagina+': regresa al mismo selector y permite probar otra carta');
+        t.check(w.eval('G')===partida&&JSON.stringify(partida)===antes&&guardados()===datos,pagina+': probar '+boton.dataset.tipo+' no cambia combate, campaña, honores ni récords');
+      }
+      // Un cierre externo durante el humo cancela el ensayo y su retorno tardío.
+      botones[0].click();avanzar(1300);laboratorio.close();await sleep(0);avanzar(30000);await sleep(0);
+      t.check(!w.PITAGORAS_PRUEBAS.activa&&!d.querySelector('.editorLaboratorio,.pitPrueba')&&!d.body.classList.contains('pitPruebaAbierta'),pagina+': cerrar limpia el juego, el humo y el bloqueo de scroll');
+      w.campanaPruebaDisponible=()=>false;w.abrirLaboratorioEditor();t.check(!d.querySelector('.editorLaboratorio'),pagina+': no se abre fuera de beta');w.campanaPruebaDisponible=permitido;
+      for(const caso of ['NET.on','G.online','G.guest']){w.eval(caso+'=true');w.abrirLaboratorioEditor();t.check(!d.querySelector('.editorLaboratorio'),pagina+': no se abre con '+caso);w.eval(caso+'=false');}
+      w.abrirLaboratorioEditor();t.check(!!d.querySelector('.editorLaboratorio'),pagina+': puede volver a abrirse tras la cancelación');
+    }finally{w.PITAGORAS_PRUEBAS.cancelar();d.querySelector('.editorLaboratorio')?.close();w.campanaPruebaDisponible=permitido;if(previo===null)w.localStorage.removeItem(clave);else w.localStorage.setItem(clave,previo);f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasTopdown',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=cenital-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);
+      M.crear=op=>{modelo=crear(op);modelo.siguiente=Infinity;modelo.proximaMarca=Infinity;return modelo;};
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const promesa=w.PITAGORAS_PRUEBAS.iniciar({tipo:'isometrico',semilla:1});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(0);
+      const tecla=(tipo,code)=>w.dispatchEvent(new w.KeyboardEvent(tipo,{code,cancelable:true}));
+      for(const [code,x,y] of [['KeyD',1,0],['KeyW',0,-1],['ArrowLeft',-1,0],['ArrowDown',0,1]]){
+        Object.assign(modelo.jugador,{x:0,y:0});tecla('keydown',code);avanzar(.1);tecla('keyup',code);
+        const p=modelo.jugador;t.check(p.x*x+p.y*y>.4&&Math.abs(p.x*y-p.y*x)<1e-8,pagina+': '+code+' mueve en el eje que ve el jugador, sin diagonal');
+      }
+      const pads=d.querySelectorAll('.ppPad'),gesto=(el,id,x,y)=>{const r=el.getBoundingClientRect();el.setPointerCapture=()=>{};el.dispatchEvent(new w.PointerEvent('pointerdown',{pointerId:id,pointerType:'touch',clientX:r.left+r.width*(.5+x*.3),clientY:r.top+r.height*(.5+y*.3),button:0,bubbles:true,cancelable:true}));};
+      for(const [x,y] of [[1,0],[0,-1],[-1,0],[0,1]]){
+        Object.assign(modelo.jugador,{x:0,y:0});gesto(pads[0],71,x,y);avanzar(.1);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:71}));
+        const p=modelo.jugador;t.check(p.x*x+p.y*y>.3&&Math.abs(p.x*y-p.y*x)<1e-8,pagina+': el control táctil conserva su dirección en pantalla');
+        modelo.enfriar=0;modelo.balas=[];gesto(pads[1],72,x,y);avanzar(.8);modelo.enfriar=0;modelo.balas=[];avanzar(.016);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:72}));
+        const b=modelo.balas[0];t.check(!!b&&b.vx*x+b.vy*y>12&&Math.abs(b.vx*y-b.vy*x)<.01,pagina+': apuntar con el control derecho dispara por ese mismo eje');
+      }
+      const lienzo=d.querySelector('.ppLienzo');lienzo.setPointerCapture=()=>{};
+      for(const [x,y] of [[1,0],[0,-1],[-1,0],[0,1]]){
+        Object.assign(modelo.jugador,{x:0,y:0});modelo.enfriar=0;modelo.balas=[];avanzar(0);
+        const r=lienzo.getBoundingClientRect(),op={pointerId:73,pointerType:'mouse',clientX:r.left+r.width/2+x*50,clientY:r.top+r.height/2+y*50,button:0,bubbles:true,cancelable:true};
+        lienzo.dispatchEvent(new w.PointerEvent('pointermove',op));avanzar(.8);lienzo.dispatchEvent(new w.PointerEvent('pointerdown',op));avanzar(.016);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:73}));
+        const b=modelo.balas[0];t.check(!!b&&b.vx*x+b.vy*y>12&&Math.abs(b.vx*y-b.vy*x)<.01,pagina+': el ratón apunta al lugar visible del lienzo');
+      }
+      // El cursor queda quieto mientras camina el personaje: el ángulo debe
+      // seguir apuntando al mismo lugar visible, incluso con la cámara móvil.
+      Object.assign(modelo.jugador,{x:0,y:0});avanzar(0);const rect=lienzo.getBoundingClientRect(),cursor={x:rect.left+rect.width/2+85,y:rect.top+rect.height/2};
+      lienzo.dispatchEvent(new w.PointerEvent('pointermove',{pointerId:74,pointerType:'mouse',clientX:cursor.x,clientY:cursor.y,bubbles:true}));avanzar(.5);tecla('keydown','KeyW');avanzar(.4);tecla('keyup','KeyW');avanzar(.6);
+      const esc=Math.min(rect.width/11.5,rect.height/12.5),pj=modelo.jugador,objetivo=Math.atan2(cursor.y-rect.top-rect.height/2-pj.y*esc*.64,cursor.x-rect.left-rect.width/2-pj.x*esc*.64),error=Math.atan2(Math.sin(pj.a-objetivo),Math.cos(pj.a-objetivo));
+      t.check(pj.y<-1.5&&Math.abs(error)<.002,pagina+': caminar conserva la puntería hacia el cursor estacionario');
+      // Levantar el dedo suelta ambos controles: no queda movimiento o fuego.
+      const antes={...modelo.jugador},disparos=modelo.disparos;avanzar(.4);t.check(modelo.jugador.x===antes.x&&modelo.jugador.y===antes.y&&modelo.disparos===disparos,pagina+': soltar los controles detiene las acciones');
+      w.PITAGORAS_PRUEBAS.cancelar();t.check((await promesa).cancelado&&!d.querySelector('.pitPrueba'),pagina+': salir limpia la escena cenital');
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasControlesFPS',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=controles-fps-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);
+      M.crear=op=>{modelo=crear(op);modelo.siguiente=Infinity;return modelo;};
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const p=w.PITAGORAS_PRUEBAS.iniciar({tipo:'fps'});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(0);
+      const pads=d.querySelectorAll('.ppPad'),mover=pads[0],mirar=pads[1],disparar=d.querySelector('.ppDisparo');t.check(!!disparar&&disparar!==mirar&&!mirar.contains(disparar),pagina+': mirar y disparar son controles separados');
+      const r=mirar.getBoundingClientRect(),b=disparar.getBoundingClientRect();t.check(b.width>=44&&b.height>=44&&(b.right<=r.left||b.left>=r.right||b.bottom<=r.top||b.top>=r.bottom),pagina+': el botón de disparar tiene 44 px y no se superpone a la palanca');
+      const dedo=(el,id,x=0,y=0)=>{const r=el.getBoundingClientRect();el.setPointerCapture=()=>{};el.dispatchEvent(new w.PointerEvent('pointerdown',{pointerId:id,pointerType:'touch',clientX:r.left+r.width*(.5+x*.3),clientY:r.top+r.height*(.5+y*.3),button:0,bubbles:true,cancelable:true}));};
+      const soltar=id=>w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:id,pointerType:'touch',bubbles:true}));
+      Object.assign(modelo.jugador,{x:8,y:8,a:0});dedo(mover,81,0,-1);dedo(mirar,82,1,0);avanzar(.2);
+      t.check(modelo.jugador.x>8&&modelo.jugador.a>0&&modelo.disparos===0,pagina+': dos palancas simultáneas caminan y giran sin disparar');
+      dedo(disparar,83);avanzar(.1);t.check(modelo.disparos>0,pagina+': el tercer dedo dispara mientras ambos mandos siguen pulsados');
+      soltar(81);soltar(82);const quieto={...modelo.jugador},tiros=modelo.disparos;avanzar(.5);
+      t.check(modelo.jugador.x===quieto.x&&modelo.jugador.y===quieto.y&&modelo.jugador.a===quieto.a&&modelo.disparos>tiros,pagina+': soltar los mandos no suelta el disparo independiente');
+      dedo(mirar,84,-1,0);soltar(83);const a=modelo.jugador.a,n=modelo.disparos;avanzar(.4);
+      t.check(modelo.jugador.a<a&&modelo.disparos===n,pagina+': soltar el disparo permite seguir mirando sin balas involuntarias');
+      w.dispatchEvent(new w.Event('blur'));const trasBlur={...modelo.jugador};avanzar(.4);t.check(modelo.jugador.a===trasBlur.a&&modelo.disparos===n,pagina+': perder foco libera todas las entradas sin pausar el reloj');
+      w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Space',cancelable:true}));avanzar(.1);w.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Space',cancelable:true}));t.check(modelo.disparos>n,pagina+': Espacio conserva un disparo independiente para escritorio');
+      w.PITAGORAS_PRUEBAS.cancelar();t.check((await p).cancelado&&!d.querySelector('.pitPrueba'),pagina+': cancelar retira los tres controles');
+      // El Corte usa una sola palanca y un botón de acción independiente.
+      // Conservamos los controles FPS anteriores dentro de la misma suite.
+      const corte=w.PITAGORAS_PRUEBAS.iniciar({tipo:'laseres'});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(0);
+      const impulso=d.querySelector('.ppImpulso'),palanca=d.querySelector('.ppControles .ppPad:not(.ppImpulso)');
+      t.check(impulso?.tagName==='BUTTON'&&!impulso.querySelector('.ppPulgar')&&d.querySelectorAll('.ppControles .ppPulgar').length===1,pagina+': Impulso es un botón, no una segunda palanca');
+      const ri=impulso.getBoundingClientRect(),rm=palanca.getBoundingClientRect();t.check(ri.width>=44&&ri.height>=44&&ri.right<=w.innerWidth&&ri.bottom<=w.innerHeight&&(ri.left>=rm.right||ri.right<=rm.left),pagina+': botón y palanca caben separados con tamaño táctil');
+      const registro=[];const paso=M.paso;M.paso=(m,e,dt)=>{const r=paso(m,e,dt);registro.push(...m.eventos.filter(x=>x==='impulso'));return r;};
+      try{
+        Object.assign(modelo.jugador,{x:0,y:0});dedo(palanca,91,1,0);avanzar(.1);const x=modelo.jugador.x;dedo(impulso,92);avanzar(.1);
+        t.check(modelo.jugador.x-x>.9&&modelo.recargaImpulso>2&&registro.length===1,pagina+': segundo dedo da un impulso real en la dirección del movimiento');
+        t.check(impulso.getAttribute('aria-disabled')==='true'&&/\d/.test(impulso.querySelector('.ppImpulsoEstado').textContent),pagina+': la recarga se ve y se anuncia');
+        soltar(91);avanzar(2.5);t.check(registro.length===1&&modelo.recargaImpulso===0,pagina+': mantener el botón no dispara impulsos al recargarse');soltar(92);avanzar(.02);
+        t.check(impulso.getAttribute('aria-disabled')!=='true'&&impulso.querySelector('.ppImpulsoEstado').textContent.includes('LISTO'),pagina+': vuelve a indicar que el impulso está disponible');
+        dedo(impulso,93);avanzar(.02);soltar(93);avanzar(.02);dedo(impulso,94);avanzar(.02);t.igual(registro.length,2,pagina+': volver a pulsar durante la recarga no la salta');
+        w.dispatchEvent(new w.PointerEvent('pointercancel',{pointerId:94,pointerType:'touch',bubbles:true}));avanzar(2.3);dedo(impulso,95);avanzar(.02);t.igual(registro.length,3,pagina+': cancelar un dedo libera el botón para la próxima pulsación');
+        impulso.dispatchEvent(new w.PointerEvent('lostpointercapture',{pointerId:95,pointerType:'touch',bubbles:true}));avanzar(2.3);
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Space',cancelable:true}));avanzar(.02);w.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Space',cancelable:true}));t.igual(registro.length,4,pagina+': Espacio activa el mismo impulso tras perder la captura');
+        avanzar(2.3);impulso.focus();impulso.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Enter',bubbles:true,cancelable:true}));avanzar(.02);impulso.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Enter',bubbles:true,cancelable:true}));t.igual(registro.length,5,pagina+': Enter activa el botón enfocado');
+        avanzar(2.3);dedo(impulso,96);w.dispatchEvent(new w.PointerEvent('pointercancel',{pointerId:96,pointerType:'touch',bubbles:true}));avanzar(.02);t.igual(registro.length,5,pagina+': cancelar antes del primer fotograma no deja un impulso pendiente');
+        dedo(impulso,97);soltar(97);avanzar(.02);t.igual(registro.length,6,pagina+': un toque corto normal sí se conserva hasta el siguiente fotograma');
+        w.PITAGORAS_PRUEBAS.cancelar();t.check((await corte).cancelado&&!d.querySelector('.ppImpulso'),pagina+': cancelar retira el botón y sus entradas');
+      }finally{M.paso=paso;}
+
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasCarrilesUI',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=carriles-ui-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);M.crear=op=>{modelo=crear(op);modelo.siguiente=Infinity;return modelo;};
+      const avanzar=(n=8)=>{for(let i=0;i<n;i++){ahora+=1000/60;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));}};
+      const p=w.PITAGORAS_PRUEBAS.iniciar({tipo:'carrera'});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar();
+      const derecha=d.querySelector('.ppCarrilBoton[data-direccion="1"]'),izquierda=d.querySelector('.ppCarrilBoton[data-direccion="-1"]');for(const b of [derecha,izquierda]){const r=b.getBoundingClientRect();t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.right<=w.innerWidth&&r.bottom<=w.innerHeight,pagina+': las flechas de carril caben y tienen al menos 44 px');}
+      derecha.dispatchEvent(new w.PointerEvent('pointerdown',{pointerId:97,pointerType:'touch',button:0,bubbles:true,cancelable:true}));avanzar(25);t.igual(modelo.carril,1,pagina+': mantener una flecha táctil cambia un solo carril');w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:97,pointerType:'touch'}));
+      izquierda.focus();for(let i=0;i<2;i++){izquierda.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Enter',bubbles:true,cancelable:true}));izquierda.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Enter',bubbles:true,cancelable:true}));}avanzar();
+      t.check(modelo.carril===-1&&modelo.jugador.x===-1,pagina+': dos pulsaciones rápidas conservan ambos cambios de carril');
+      for(let i=0;i<2;i++)derecha.dispatchEvent(new w.PointerEvent('pointerdown',{pointerId:98+i,pointerType:'touch',button:0,bubbles:true,cancelable:true}));avanzar();t.igual(modelo.carril,1,pagina+': dos toques entre fotogramas tampoco se fusionan');
+      t.igual(modelo.salto,0,pagina+': usar las flechas no activa el salto de obstáculos');w.PITAGORAS_PRUEBAS.cancelar();t.check((await p).cancelado&&!d.querySelector('.pitPrueba'),pagina+': salir retira la cola de cambios pendientes');
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasMemoriaUI',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844],['movil.html',320,568],['movil.html',844,390]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=memoria-ui-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);M.crear=op=>(modelo=crear(op));
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const p=w.PITAGORAS_PRUEBAS.iniciar({tipo:'duelo',semilla:11});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(0);
+      t.check(w.getComputedStyle(d.querySelector('.ppControles')).display==='none',pagina+': el puzzle retira palancas y presenta cartas como controles');
+      for(let ronda=1;ronda<=3;ronda++){
+        const cartas=[...d.querySelectorAll('.ppMemoriaCarta:not([hidden])')];t.igual(cartas.length,Math.min(7,4+ronda),pagina+': cantidad de cartas en ronda '+ronda);
+        t.check(cartas.every(b=>b.disabled&&b.classList.contains('ppRevelada')),pagina+': las caras están a la vista sólo para memorizar');
+        const catalogo=w.eval('CARDS');t.check(modelo.cartasMemoria.every(id=>typeof id==='string'&&catalogo[id]),pagina+': las cartas visibles pertenecen al catálogo del juego');t.check(cartas.every((b,i)=>b.getAttribute('aria-label')==='Carta '+(i+1)+': '+catalogo[modelo.cartasMemoria[i]].n),pagina+': las etiquetas anuncian el nombre real de cada carta');t.check(cartas.every((b,i)=>[['.ppMemoriaCoste','c'],['.ppMemoriaAtaque','a'],['.ppMemoriaVida','h']].every(([selector,dato])=>b.querySelector(selector).textContent===String(catalogo[modelo.cartasMemoria[i]][dato]))),pagina+': las cifras de las cartas coinciden con su coste, ataque y vida oficiales');t.check(Math.abs(modelo.reveladoMemoria-Math.max(1.3,1.5-(ronda-1)*.05))<1e-8,pagina+': la ronda conserva medio segundo adicional para observar');
+        for(const b of cartas){const r=b.getBoundingClientRect();t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.top>=0&&r.right<=w.innerWidth+1&&r.bottom<=w.innerHeight+1,pagina+': cada carta cabe y mantiene un blanco táctil de al menos 44 px');}
+        const nombres=cartas.map(b=>b.getAttribute('aria-label').replace(/^Carta \d+: /,'')),pareja=cartas.map((_,i)=>i).filter(i=>nombres.indexOf(nombres[i])!==nombres.lastIndexOf(nombres[i]));t.igual(pareja.length,2,pagina+': las ilustraciones y etiquetas muestran exactamente una pareja');t.check(cartas[pareja[0]].querySelector('canvas').toDataURL()===cartas[pareja[1]].querySelector('canvas').toDataURL(),pagina+': las dos copias de la pareja muestran exactamente el mismo arte');
+        cartas[pareja[0]].click();avanzar(.05);t.check(!modelo.elegidasMemoria.length,pagina+': tocar mientras están reveladas no adelanta la selección');avanzar(modelo.hastaMemoria-modelo.t+.001);
+        t.check(cartas.every(b=>!b.disabled&&!b.classList.contains('ppRevelada')&&b.getAttribute('aria-label').endsWith('oculta')),pagina+': al voltearlas se oculta también la identidad accesible');
+        t.check(cartas.every(b=>!b.querySelector('.ppMemoriaFrente').textContent.trim()),pagina+': los nombres y las cifras no permanecen disponibles detrás de cartas ocultas');t.check(cartas.every(b=>{const c=b.querySelector('canvas');return!c.getContext('2d').getImageData(0,0,c.width,c.height).data.some((v,i)=>i%4===3&&v>0);}),pagina+': al voltear tampoco permanecen píxeles de la ilustración en las cartas ocultas');
+        cartas[pareja[0]].click();avanzar(.016);t.check(modelo.elegidasMemoria.length===1&&cartas[pareja[0]].disabled&&cartas.filter(b=>b.classList.contains('ppRevelada')).length===1,pagina+': el primer clic revela sólo la carta escogida');
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Digit'+(pareja[1]+1),cancelable:true}));avanzar(.016);
+        t.check(modelo.parejas===ronda&&modelo.faseMemoria==='resultado'&&cartas.every(b=>b.disabled),pagina+': una elección por teclado completa la pareja e impide dobles cobros');
+        t.igual(d.querySelectorAll('.ppMemoriaSellos .ppLogrado').length,ronda,pagina+': el progreso refleja las parejas realmente encontradas');avanzar(.62);
+      }
+      t.check(w.scrollY===0&&w.getComputedStyle(d.documentElement).overflow==='hidden',pagina+': el puzzle permanece sin desplazamiento');w.PITAGORAS_PRUEBAS.cancelar();t.check((await p).cancelado&&!d.querySelector('.ppMemoria,.pitPrueba'),pagina+': salir limpia cartas y escuchas del puzzle');
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasImpactos',async t=>{
+  const M=window.PITAGORAS_PRUEBAS.modelo,escenario=(hp=2,oculto=false)=>{const s=M.crear({tipo:'fps',semilla:1});s.siguiente=Infinity;Object.assign(s.jugador,{x:3.5,y:oculto?3.5:8.5,a:0});s.enemigos=[{id:1,x:6.5,y:s.jugador.y,r:.34,hp,vel:0,aparece:0,dolor:0,fase:0}];return s;};
+  const acierto=escenario();M.paso(acierto,{accion:true},.016);t.check(acierto.enemigos[0].hp===1&&acierto.acierto>0&&!acierto.baja&&!acierto.fallo&&acierto.ultimoDisparo?.acerto&&!acierto.ultimoDisparo.letal,'FPS: un impacto confirmado tiene señal de acierto, distinta de fallo y baja');
+  const baja=escenario(1);M.paso(baja,{accion:true},.016);t.check(baja.muertes===1&&baja.enemigos.length===0&&baja.baja>0&&baja.ultimoDisparo?.letal&&baja.caidos.length===1,'FPS: matar elimina al perseguidor y deja su animación de caída');M.paso(baja,{},.7);t.check(baja.caidos.length===0,'FPS: el cadáver animado se retira después de caer');
+  const tapado=escenario(1,true);M.paso(tapado,{accion:true},.016);t.check(tapado.enemigos[0].hp===1&&!tapado.acierto&&!tapado.baja&&tapado.fallo>0&&tapado.ultimoDisparo?.acerto===false&&!tapado.caidos.length,'FPS: la columna bloquea daño, confirmación y muerte');
+  const contacto=escenario();contacto.enemigos[0].x=contacto.jugador.x+.4;M.paso(contacto,{},.016);t.check(contacto.vidas===2&&!contacto.acierto&&!contacto.baja&&!contacto.caidos.length&&!contacto.eventos.some(e=>e==='acierto'||e==='eliminacion'),'FPS: recibir un contacto no confirma un disparo ni una baja inexistentes');
+  const fallado=escenario();fallado.jugador.a=Math.PI/2;M.paso(fallado,{accion:true},.016);t.check(fallado.fallo>0&&!fallado.acierto&&!fallado.baja&&fallado.enemigos[0].hp===2,'FPS: disparar fuera del monstruo no reproduce la señal de acierto');
+  const iso=M.crear({tipo:'isometrico'});iso.siguiente=Infinity;iso.proximaMarca=Infinity;Object.assign(iso.jugador,{x:0,y:0,a:Math.PI-.05});M.paso(iso,{apuntar:-Math.PI+.05},.016);
+  t.check(iso.jugador.a>Math.PI-.05&&iso.jugador.a<Math.PI+.05&&iso.disparos===0,'Cosecha: cruza 180 grados por el arco corto y gira sin disparar');M.paso(iso,{apuntar:-Math.PI+.05},.8);t.check(Math.abs(Math.atan2(Math.sin(iso.jugador.a+Math.PI-.05),Math.cos(iso.jugador.a+Math.PI-.05)))<.002,'Cosecha: el giro continuo alcanza la orientación solicitada');
+  iso.jugador.a=0;M.paso(iso,{mx:.3,my:.7},.016);t.check(iso.jugador.a>0&&iso.jugador.a<Math.atan2(.7,.3)&&iso.disparos===0,'Cosecha: caminar también orienta el cuerpo progresivamente');M.paso(iso,{apuntar:2,accion:true},.016);const b=iso.balas.at(-1);t.check(!!b&&Math.abs(Math.atan2(b.vy,b.vx)-iso.jugador.a)<1e-6,'Cosecha: la bala sale alineada al arma durante el giro');
+  const marca=(edad,x)=>{const s=M.crear({tipo:'isometrico'});s.siguiente=Infinity;s.proximaMarca=Infinity;Object.assign(s.jugador,{x,y:0});s.marcas=[{x:0,y:0,edad,aviso:1.1,activo:.26,fuego:1.7,anchoFuego:.18,r:1.05,emitido:edad>=1.1}];return s;};
+  const aviso=marca(1,0);M.paso(aviso,{},.09);t.igual(aviso.vidas,3,'Cosecha: el círculo no daña antes de explotar');M.paso(aviso,{},.02);t.igual(aviso.vidas,2,'Cosecha: la explosión daña dentro del disco');
+  const centro=marca(1.5,0),aro=marca(1.5,1.05),fuera=marca(1.5,1.8);for(const s of [centro,aro,fuera])M.paso(s,{},.016);t.check(centro.vidas===3&&aro.vidas===2&&fuera.vidas===3,'Cosecha: después de explotar sólo quema el aro, con interior y exterior seguros');
+  const ceniza=marca(3.1,1.05);M.paso(ceniza,{},.016);t.check(ceniza.vidas===3,'Cosecha: el aro deja de dañar al consumirse');M.paso(ceniza,{},1);t.check(!ceniza.marcas.length,'Cosecha: se limpia la ceniza del suelo');
+  const lenta=M.avisoMarca({...aviso.marcas[0],edad:.1}),rapida=M.avisoMarca({...aviso.marcas[0],edad:1});t.check(rapida.frecuencia>lenta.frecuencia&&rapida.progreso>lenta.progreso,'Cosecha: el aviso acelera su parpadeo conforme se acerca la explosión');
+});
+
+PRUEBAS.suite('pitagorasCarrilesMemoria',async t=>{
+  const API=window.PITAGORAS_PRUEBAS,M=API.modelo;
+  const s=M.crear({tipo:'carrera'});s.siguiente=Infinity;M.paso(s,{mx:-1},.3);t.check(s.carril===-1&&s.jugador.x===-1,'Puente: una dirección termina en el carril izquierdo, nunca entre carriles');M.paso(s,{mx:1},.3);t.check(s.carril===0&&s.jugador.x===0,'Puente: cambiar de dirección avanza exactamente un carril');M.paso(s,{mx:1},1);t.check(s.carril===0,'Puente: mantener el mando no desliza ni cruza un segundo carril');M.paso(s,{mx:0},.02);M.paso(s,{mx:1},.3);t.check(s.carril===1&&s.jugador.x===1,'Puente: soltar y volver a pulsar habilita el siguiente salto de carril');M.paso(s,{},.02);M.paso(s,{mx:1},.3);t.check(s.carril===1,'Puente: el carril derecho es un límite firme');
+  const centro=M.crear({tipo:'carrera'});centro.siguiente=Infinity;M.paso(centro,{mx:.3},.5);t.igual(centro.carril,0,'Puente: la zona muerta evita cambios por ruido del mando');
+  const temprano=M.crear({tipo:'carrera'}),tarde=M.crear({tipo:'carrera'});temprano.invulnerable=tarde.invulnerable=60;M.paso(temprano,{},1);M.paso(tarde,{},16);t.check(tarde.velocidad>temprano.velocidad+3,'Puente: la velocidad aumenta durante el trayecto');t.check((tarde.siguiente-tarde.t)<1.46&&tarde.oleada>Math.floor(tarde.t/1.45),'Puente: los obstáculos aparecen con mayor frecuencia en la segunda mitad');
+  const pareja=s=>s.cartasMemoria.map((v,i)=>i).filter(i=>s.cartasMemoria.indexOf(s.cartasMemoria[i])!==s.cartasMemoria.lastIndexOf(s.cartasMemoria[i]));
+  const memoria=M.crear({tipo:'duelo',semilla:17});t.check(memoria.faseMemoria==='mostrar'&&memoria.cartasMemoria.length===5&&pareja(memoria).length===2,'Memoria: presenta cinco cartas con exactamente una pareja');
+  t.check(memoria.cartasMemoria.every(id=>typeof id==='string'&&API.cartasMemoria.includes(id)&&T.CARDS[id]),'Memoria: la pareja y sus distractores son cartas reales del catálogo del juego');t.check(Math.abs(memoria.reveladoMemoria-1.5)<1e-8,'Memoria: la primera exposición dura 1.5 segundos');
+  const par=pareja(memoria);M.paso(memoria,{elegir:par[0]},.4);t.check(!memoria.elegidasMemoria.length,'Memoria: no acepta elecciones durante la exhibición');M.paso(memoria,{},1.09);t.igual(memoria.faseMemoria,'mostrar','Memoria: conserva un segundo y medio completo para memorizar');M.paso(memoria,{},.02);t.check(memoria.faseMemoria==='elegir'&&Math.abs(memoria.limiteMemoria-5)<1e-8,'Memoria: al ocultarse ofrece cinco segundos para elegir');
+  M.paso(memoria,{elegir:-1},.016);M.paso(memoria,{elegir:999},.016);M.paso(memoria,{elegir:.5},.016);t.check(!memoria.elegidasMemoria.length,'Memoria: ignora índices fuera de la mesa y valores fraccionarios');
+  M.paso(memoria,{elegir:par[0]},.2);M.paso(memoria,{elegir:par[0]},.2);M.paso(memoria,{},.02);M.paso(memoria,{elegir:par[0]},.02);t.check(memoria.elegidasMemoria.length===1&&memoria.parejas===0,'Memoria: mantener o repetir la misma carta no fabrica una pareja');
+  M.paso(memoria,{},.016);M.paso(memoria,{elegir:par[1]},.016);t.check(memoria.parejas===1&&memoria.vidas===3&&memoria.faseMemoria==='resultado','Memoria: dos cartas iguales resuelven una pareja sin perder vida');const ronda=memoria.rondaMemoria;M.paso(memoria,{},.7);t.check(memoria.rondaMemoria===ronda+1&&memoria.cartasMemoria.length===6&&memoria.limiteMemoria<5,'Memoria: la ronda siguiente añade distractores y reduce el plazo');t.check(Math.abs(memoria.reveladoMemoria-1.45)<1e-8,'Memoria: el medio segundo adicional también permanece en la siguiente ronda');
+  for(let seed=1;seed<=12;seed++){const m=M.crear({tipo:'duelo',semilla:seed}),datos={};let ultima=0;for(let i=0;i<1200&&!m.terminado;i++){if(m.rondaMemoria!==ultima){ultima=m.rondaMemoria;t.check(pareja(m).length===2&&m.cartasMemoria.every(id=>typeof id==='string'&&T.CARDS[id]),'Memoria: cada ronda conserva una sola pareja de cartas reales');t.check(Math.abs(m.reveladoMemoria-Math.max(1.3,1.5-(m.rondaMemoria-1)*.05))<1e-8,'Memoria: el plazo de exposición conserva los .5 segundos extra en todas las dificultades');}M.paso(m,API.guiasPrueba.duelo(m,datos),1/60);}t.check(m.sobrevivio&&m.t===20,'Memoria: el plazo ampliado permite completar el reto mediante elecciones reales');}
+  const error=M.crear({tipo:'duelo',semilla:1});M.paso(error,{},1.51);const a=0,b=error.cartasMemoria.findIndex(v=>v!==error.cartasMemoria[0]);M.paso(error,{elegir:a},.016);M.paso(error,{},.016);M.paso(error,{elegir:b},.016);t.check(error.vidas===2&&error.parejas===0&&error.faseMemoria==='resultado','Memoria: una pareja equivocada cuesta exactamente una vida');
+  const timeout=M.crear({tipo:'duelo'});M.paso(timeout,{},6.49);t.check(timeout.vidas===3&&timeout.faseMemoria==='elegir','Memoria: el plazo no se cobra antes de los cinco segundos');M.paso(timeout,{},.03);t.check(timeout.vidas===2&&timeout.faseMemoria==='resultado','Memoria: agotar el plazo sin escoger una pareja cuesta una vida');M.paso(timeout,{},20);t.check(timeout.terminado&&!timeout.sobrevivio&&timeout.vidas===0,'Memoria: un fotograma ausente consume todas las rondas, sin victoria por inactividad');
+  const insuficiente=M.crear({tipo:'duelo'});insuficiente.invulnerable=60;M.paso(insuficiente,{},20);t.check(insuficiente.terminado&&!insuficiente.sobrevivio,'Memoria: tener vidas al llegar al límite no basta sin tres parejas');
+  const completo=M.crear({tipo:'duelo',semilla:8}),guia={};for(let i=0;i<1200&&!completo.terminado;i++)M.paso(completo,API.guiasPrueba.duelo(completo,guia),1/60);t.check(completo.terminado&&completo.sobrevivio&&completo.parejas>=3&&completo.t===20,'Memoria: recordar y escoger parejas permite ganar mediante entradas reales');
+});
+
+PRUEBAS.suite('pitagorasPresionFinal',async t=>{
+  const M=window.PITAGORAS_PRUEBAS.modelo;
+  // Ventanas de la misma partida: el pico se mide por criaturas aparecidas,
+  // sin depender de lo bien que dispare un controlador de prueba.
+  const oleada=M.crear({tipo:'isometrico',semilla:19});oleada.invulnerable=60;oleada.proximaMarca=Infinity;let primeras=0,tarde=0;
+  for(let i=0;i<1200&&!oleada.terminado;i++){oleada.enemigos=[];M.paso(oleada,{},1/60);if(i===299)primeras=oleada.apariciones;if(i===899)tarde=oleada.apariciones;}
+  t.check(Number.isFinite(primeras)&&oleada.apariciones-tarde>=primeras*2,'Cosecha: los últimos cinco segundos traen al menos el doble de criaturas que los primeros');
+  const suelo=M.crear({tipo:'isometrico',semilla:7});suelo.siguiente=Infinity;suelo.proximaMarca=Infinity;suelo.invulnerable=60;M.paso(suelo,{},11.99);
+  t.check(suelo.losas.length===0,'Cosecha: el suelo se conserva entero durante la primera mitad');M.paso(suelo,{},.03);t.check(suelo.losas.length>0&&suelo.losas.every(l=>!l.hueco),'Cosecha: una losa nueva primero avisa, sin abrir un hueco instantáneo');M.paso(suelo,{},7.98);
+  t.check(suelo.losas.some(l=>l.hueco)&&suelo.losas.length<=10,'Cosecha: la recta final deja huecos reales con una cantidad acotada');
+  for(let n=-6;n<=6;n+=.5)t.check(!M.enHueco(suelo,n,0)&&!M.enHueco(suelo,0,n),'Cosecha: siempre permanece una ruta de suelo continuo entre los cuatro lados');
+  const contacto=(edad,x=2,y=2)=>{const s=M.crear({tipo:'isometrico'});s.siguiente=Infinity;s.proximaMarca=Infinity;s.proximaLosa=Infinity;Object.assign(s.jugador,{x,y});s.losas=[{x:2,y:2,ancho:2,alto:2,edad,aviso:1.25,caida:.45,hueco:edad>=1.7}];return s;};
+  const temblor=contacto(1.23);M.paso(temblor,{},.01);t.check(temblor.vidas===3&&temblor.jugador.x===2&&temblor.jugador.y===2,'Cosecha: el aviso de grietas permite salir sin daño');
+  const derrumbe=contacto(1.4);M.paso(derrumbe,{},.01);t.check(derrumbe.vidas===3,'Cosecha: la animación de desprendimiento todavía permite escapar');
+  const caida=contacto(1.69);M.paso(caida,{},.02);t.check(caida.vidas===2&&!M.enHueco(caida,caida.jugador.x,caida.jugador.y)&&caida.caidaJugador>0,'Cosecha: caer cuesta una vida y devuelve la miniatura a suelo seguro');
+  const inmune=contacto(2);inmune.invulnerable=1;M.paso(inmune,{},.016);t.check(inmune.vidas===3&&!M.enHueco(inmune,inmune.jugador.x,inmune.jugador.y),'Cosecha: la invulnerabilidad evita doble daño pero nunca deja atrapada la miniatura en el vacío');
+  const borde=contacto(2,3.02,2);M.paso(borde,{},.016);t.check(borde.vidas===3&&borde.jugador.x===3.02,'Cosecha: el suelo junto al borde del hueco permanece transitable');
+  const criatura=contacto(2,0,0);criatura.enemigos=[{id:1,x:2,y:2,r:.35,hp:1,vel:0,aparece:0,dolor:0,fase:0}];M.paso(criatura,{},.016);t.check(!criatura.enemigos.length&&criatura.muertes===0,'Cosecha: los monstruos también caen sin contar como un disparo del jugador');
+  t.check(typeof M.prepararRayo==='function','Corte: los patrones forman parte del modelo determinista');
+  const patron=(tiempo,semilla)=>{const s=M.crear({tipo:'laseres',semilla});s.t=tiempo;s.siguiente=Infinity;M.prepararRayo(s);return s;},inicio=patron(4,1),final=patron(17,1);
+  t.check(inicio.rayos.length>=2&&final.rayos.length>=6&&final.rayos.length>inicio.rayos.length,'Corte: comienza con presión y aumenta hasta seis disparos por secuencia');
+  const formas=new Set();
+  for(let semilla=1;semilla<=20;semilla++){
+    const s=patron(17,semilla),igual=patron(17,semilla);t.check(JSON.stringify(s.rayos)===JSON.stringify(igual.rayos),'Corte: la misma semilla reproduce el mismo patrón y calendario');
+    const tiempos=s.rayos.map(r=>r.aviso-r.edad).sort((a,b)=>a-b);t.check(tiempos.every((v,i)=>i===0||v-tiempos[i-1]>=.2),'Corte: cada disparo tiene su momento propio, sin una descarga simultánea oculta');
+    t.check(s.rayos.every(r=>r.aviso>=.9&&Math.abs(Math.hypot(r.nx,r.ny)-1)<1e-8),'Corte: incluso al final cada franja anuncia su peligro al menos .9 segundos');
+    for(const r of s.rayos){formas.add(r.patron);const p={x:r.nx*r.offset,y:r.ny*r.offset},solo=M.crear({tipo:'laseres'});solo.siguiente=Infinity;Object.assign(solo.jugador,p);solo.rayos=[{...r}];const falta=r.aviso-r.edad;M.paso(solo,{},falta-.02);t.igual(solo.vidas,3,'Corte: una franja programada no hace daño antes de su aviso completo');M.paso(solo,{},.03);t.igual(solo.vidas,2,'Corte: el disparo hiere exactamente en la franja que anunció');}
+    // En cada instante de la secuencia queda espacio visible y transitable;
+    // las guías de supervivencia comprueban además que se puede alcanzarlo.
+    const limite=Math.max(...s.rayos.map(r=>r.aviso-r.edad+r.activo));
+    for(let q=0;q<=limite;q+=.1){let libre=false;for(let y=-5.5;y<=5.5&&!libre;y+=1)for(let x=-5.5;x<=5.5&&!libre;x+=1)libre=s.rayos.every(r=>r.edad+q<r.aviso||r.edad+q>=r.aviso+r.activo||Math.abs(x*r.nx+y*r.ny-r.offset)>r.ancho+s.jugador.r+.15);t.check(libre,'Corte: la secuencia nunca convierte toda la arena en daño inevitable');}
+  }
+  t.check(formas.size>=3,'Corte: la recta final alterna al menos tres familias de ataques');
+  for(const [x,y] of [[-6.55,-6.55],[-6.55,6.55],[6.55,-6.55],[6.55,6.55]]){
+    const esquina=M.crear({tipo:'laseres',semilla:6});Object.assign(esquina.jugador,{x,y});M.prepararRayo(esquina);const primer=esquina.rayos[0];t.check(Math.abs(primer.offset-primer.nx*x-primer.ny*y)<1e-8,'Corte: el emisor alcanza la posición real del jugador incluso en el borde');M.paso(esquina,{},20);
+    t.check(esquina.terminado&&!esquina.sobrevivio&&esquina.vidas===0,'Corte: quedarse quieto en una esquina tampoco ofrece refugio permanente');
+  }
+  const ritmo=M.crear({tipo:'laseres',semilla:11});ritmo.invulnerable=60;let primeros=0,ultimos=0;
+  for(let i=0;i<1200;i++){M.paso(ritmo,{},1/60);const n=ritmo.eventos.filter(x=>x==='laser').length;ritmo.eventos=[];if(ritmo.t<=5)primeros+=n;if(ritmo.t>=15)ultimos+=n;}
+  t.check(primeros>=2&&ultimos>=primeros*2,'Corte: la descarga final contiene al menos el doble de disparos que los primeros cinco segundos');
+  const fijado=patron(17,1),ultimo=fijado.rayos.at(-1);fijado.rayos=[ultimo];fijado.siguiente=Infinity;Object.assign(fijado.jugador,{x:-6,y:-5});const espera=-ultimo.edad;
+  M.paso(fijado,{},espera+.01);t.check(ultimo.fijado&&Math.abs(ultimo.offset-ultimo.nx*fijado.jugador.x-ultimo.ny*fijado.jugador.y)<1e-8,'Corte: el último emisor busca al jugador cuando empieza su aviso');const offset=ultimo.offset;M.paso(fijado,{mx:1,my:1},.3);t.igual(ultimo.offset,offset,'Corte: moverse durante el aviso no cambia la franja anunciada');
+  const guia=window.PITAGORAS_PRUEBAS.guiasPrueba.laseres;t.check(typeof guia==='function','Corte: existe un controlador de prueba que sólo lee avisos visibles');
+  const visible=M.crear({tipo:'laseres',semilla:9}),oculto=M.crear({tipo:'laseres',semilla:9});oculto.rayos=[{id:9,nx:1,ny:0,offset:0,edad:-1,aviso:1,activo:.3,ancho:.4}];
+  t.igual(JSON.stringify(guia(visible,{})),JSON.stringify(guia(oculto,{})),'Corte: la guía no anticipa emisores que el jugador aún no puede ver');
+  for(let semilla=1;semilla<=12;semilla++){
+    const s=M.crear({tipo:'laseres',semilla}),mem={};let distancia=0;
+    for(let i=0;i<1200&&!s.terminado;i++){const antes=JSON.stringify(s),e=guia(s,mem),p={...s.jugador};t.igual(JSON.stringify(s),antes,'Corte: calcular una evasión no modifica posición, vidas, azar ni peligros');M.paso(s,e,1/60);distancia+=Math.hypot(s.jugador.x-p.x,s.jugador.y-p.y);}
+    t.check(s.sobrevivio&&s.t===20&&s.vidas>0&&distancia>8,'Corte: los patrones se pueden superar con movimiento real en doce semillas distintas');
+  }
+
+
+  const cronologia=M.crear({tipo:'laseres',semilla:13});cronologia.invulnerable=60;for(let i=0;i<1200&&!cronologia.terminado;i++){M.paso(cronologia,{},1/60);const amenazas=new Set(cronologia.rayos.filter(r=>r.edad>=0&&r.edad<r.aviso+r.activo).map(r=>r.idSecuencia));t.check(amenazas.size<=1,'Corte: una secuencia completa termina antes de anunciar la siguiente');}
+});
+
+PRUEBAS.suite('pitagorasPixel',async t=>{
+  const API=window.PITAGORAS_PRUEBAS,M=API.modelo,tipos=['isometrico','laseres','carrera','orbital','duelo'];
+  t.check(typeof API.pintarEscena==='function'&&tipos.every(tipo=>API.pixel?.pintores.includes(tipo)),'Las cinco realidades comparten la presentación pixelada del FPS');
+  for(const [ancho,alto] of [[370,614],[1280,690]])for(const tipo of tipos){
+    const lienzo=document.createElement('canvas');lienzo.width=ancho;lienzo.height=alto;const c=lienzo.getContext('2d'),modelo=M.crear({tipo,semilla:23}),s={tipo,ancho,alto,modelo,reducido:true};
+    const antes=JSON.stringify(M.instantanea(modelo));let pintadas=0;
+    const escena=ctx=>{pintadas++;const w=s.ancho,h=s.alto;ctx.fillStyle='#000000';ctx.fillRect(0,0,w,h);ctx.fillStyle='#ffffff';ctx.fillRect(w*.7-4,h*.3-4,8,8);};
+    API.pintarEscena(s,c,escena);
+    const blanco=c.getImageData(Math.round(ancho*.7),Math.round(alto*.3),1,1).data;
+    t.check(pintadas===1&&blanco[0]>220&&blanco[1]>220&&blanco[2]>220,tipo+': el escalado mantiene el marcador en el mismo punto visible del campo');
+    t.check(s.ancho===ancho&&s.alto===alto&&JSON.stringify(M.instantanea(modelo))===antes,tipo+': pintar restaura el encuadre y no altera tiempo, posición, azar ni colisiones');
+    const capa=s.editorPixel?.lienzo;t.check(capa&&capa.width*capa.height<=95000&&capa.width<ancho&&capa.height<alto,tipo+': el arte se dibuja en una superficie acotada, incluso en escritorio');
+    const copiar=s.editorPixel;API.pintarEscena(s,c,escena);t.check(s.editorPixel===copiar&&s.editorPixel.lienzo===capa,tipo+': los fotogramas reutilizan el mismo lienzo');
+    const pintor=API.pintores?.[tipo];if(pintor){API.pintarEscena(s,c,ctx=>pintor(s,ctx));t.check(JSON.stringify(M.instantanea(modelo))===antes,tipo+': el escenario real tampoco escribe en el modelo');}
+    let fallo=false;try{API.pintarEscena(s,c,()=>{throw Error('prueba del pintor');});}catch(e){fallo=e.message==='prueba del pintor';}
+    t.check(fallo&&s.ancho===ancho&&s.alto===alto,tipo+': un error de dibujo tampoco cambia los ejes de los controles');
+  }
+});
+
+PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
+  const M=window.PITAGORAS_PRUEBAS?.modelo;t.check(!!M,'Faltan los modelos de las seis pruebas.');
+  const guiar=(s,mem)=>{
+    if(window.PITAGORAS_PRUEBAS.guiasPrueba?.[s.tipo])return window.PITAGORAS_PRUEBAS.guiasPrueba[s.tipo](s,mem);
+    const p=s.jugador;
+    if(s.tipo==='isometrico'){const a=s.t*.8,dx=Math.cos(a)*4-p.x,dy=Math.sin(a)*4-p.y,d=Math.hypot(dx,dy)||1;return{mx:dx/d,my:dy/d,accion:true};}
+    if(s.tipo==='laseres'){let mx=0,my=0;for(const r of s.rayos){if(r.edad<0||r.edad>=r.aviso+r.activo)continue;const d=p.x*r.nx+p.y*r.ny-r.offset;if(Math.abs(d)<r.ancho+p.r+.65){const lados=mem.lados||(mem.lados={});let signo=lados[r.id];if(!signo){signo=Math.abs(d)<.15?(r.nx*p.x+r.ny*p.y>0?-1:1):(d<0?-1:1);lados[r.id]=signo;}mx+=r.nx*signo*(1.4-Math.abs(d))*3;my+=r.ny*signo*(1.4-Math.abs(d))*3;}}const urgente=s.rayos.some(r=>r.edad>=0&&r.aviso-r.edad<.3&&r.edad<r.aviso+r.activo&&Math.abs(p.x*r.nx+p.y*r.ny-r.offset)<r.ancho+p.r+.4);return{mx,my,accion:urgente&&s.recargaImpulso<=0};}
+    const puntos=[[13.6,13.6],[2.4,13.6],[2.4,2.4],[13.6,2.4]];let destino=puntos[mem.i||0],dx=destino[0]-p.x,dy=destino[1]-p.y,d=Math.hypot(dx,dy);if(d<.4){mem.i=((mem.i||0)+1)%4;destino=puntos[mem.i];dx=destino[0]-p.x;dy=destino[1]-p.y;d=Math.hypot(dx,dy);}dx/=d;dy/=d;
+    const enemigos=s.enemigos.filter(e=>e.aparece<=0).sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y)),a=enemigos[0]?Math.atan2(enemigos[0].y-p.y,enemigos[0].x-p.x):Math.atan2(dy,dx),da=Math.atan2(Math.sin(a-p.a),Math.cos(a-p.a));
+    return{mx:-dx*Math.sin(p.a)+dy*Math.cos(p.a),my:-dx*Math.cos(p.a)-dy*Math.sin(p.a),giro:da*8,accion:true};
+  };
+  for(const tipo of ['isometrico','laseres','fps','carrera','orbital','duelo']){
+    const quieto=M.crear({tipo,semilla:6});for(let i=0;i<1200&&!quieto.terminado;i++)M.paso(quieto,{},1/60);
+    t.check(quieto.terminado&&!quieto.sobrevivio&&quieto.vidas===0&&quieto.t<20,tipo+': los peligros causan una derrota real sin jugar.');
+    const s=M.crear({tipo,semilla:1}),repetido=M.crear({tipo,semilla:1}),mem={},otro={};
+    for(let i=0;i<1200&&!s.terminado;i++){M.paso(s,guiar(s,mem),1/60);M.paso(repetido,guiar(repetido,otro),1/60);}
+    t.check(s.terminado&&s.sobrevivio&&s.vidas>0&&s.t===20,tipo+': se puede sobrevivir veinte segundos con movimiento y combate reales.');
+    t.check(JSON.stringify(M.instantanea(s))===JSON.stringify(M.instantanea(repetido)),tipo+': semilla y controles reproducen exactamente la partida.');
+    const reloj=M.crear({tipo});reloj.siguiente=Infinity;reloj.proximaMarca=Infinity;reloj.invulnerable=60;const memoriaReloj={};while(reloj.t<19.99-1e-8&&!reloj.terminado)M.paso(reloj,tipo==='duelo'?guiar(reloj,memoriaReloj):{},Math.min(1/60,19.99-reloj.t));t.check(!reloj.terminado,tipo+': no hay victoria antes de veinte segundos.');M.paso(reloj,{},.01);t.check(reloj.terminado&&reloj.sobrevivio&&reloj.t===20,tipo+': el límite exacto de tiempo resuelve la supervivencia.');
+    t.nota(tipo+': supervivencia real en 20 s con '+s.vidas+' vidas; inmóvil pierde en '+quieto.t.toFixed(2)+' s.');
+  }
+  const dano=M.crear({tipo:'fps'});dano.siguiente=Infinity;M.herir(dano);for(let i=0;i<60;i++)M.herir(dano);t.check(dano.vidas===2,'Un contacto múltiple no consume las tres vidas.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.vidas===1,'La invulnerabilidad expira y permite un segundo golpe.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.terminado&&!dano.sobrevivio&&dano.vidas===0,'El tercer golpe termina el intento.');
+  const laser=M.crear({tipo:'laseres'});laser.siguiente=Infinity;laser.rayos=[{nx:1,ny:0,offset:laser.jugador.x,edad:0,aviso:1.4,activo:.36,ancho:.37}];M.paso(laser,{},1.3);t.check(laser.vidas===3,'El aviso del láser no hace daño.');M.paso(laser,{},.11);t.check(laser.vidas===2,'El láser activo colisiona en la franja anunciada.');
+  const impulsoSuave=M.crear({tipo:'laseres'});impulsoSuave.siguiente=Infinity;Object.assign(impulsoSuave.jugador,{x:0,y:0});M.paso(impulsoSuave,{mx:.12},.02);const origenImpulso=impulsoSuave.jugador.x;M.paso(impulsoSuave,{mx:.12,accion:true},.1);t.check(impulsoSuave.jugador.x-origenImpulso>1.2,'Corte: un toque suave de palanca elige dirección, sin debilitar la distancia del impulso');
+  const iso=M.crear({tipo:'isometrico'});iso.siguiente=Infinity;iso.proximaMarca=Infinity;Object.assign(iso.jugador,{x:0,y:0,a:0});iso.enemigos=[{id:1,x:1,y:0,r:.35,hp:1,vel:0,aparece:0,dolor:0,fase:0}];M.paso(iso,{accion:true,apuntar:0},.03);t.check(iso.muertes===1&&iso.enemigos.length===0,'El disparo cenital elimina al monstruo que toca.');
+  const fps=M.crear({tipo:'fps'});fps.siguiente=Infinity;Object.assign(fps.jugador,{x:3.5,y:3.5,a:0});fps.enemigos=[{id:1,x:6.5,y:3.5,r:.34,hp:2,vel:0,aparece:0,dolor:0,fase:0}];M.paso(fps,{accion:true},.03);t.check(fps.enemigos[0].hp===2,'Los disparos FPS no atraviesan las columnas.');M.paso(fps,{my:-1},.5);t.check(fps.jugador.x<3.73,'El jugador FPS colisiona con las paredes.');
+  const visible=M.crear({tipo:'fps'});visible.siguiente=Infinity;Object.assign(visible.jugador,{x:3.5,y:8.5,a:0});visible.enemigos=[{id:1,x:6.5,y:8.5,r:.34,hp:2,vel:0,aparece:0,dolor:0,fase:0}];M.paso(visible,{accion:true},.03);t.check(visible.enemigos[0].hp===1,'Apuntar y disparar en FPS daña al perseguidor visible.');
+  // Encuentros controlados: cada acción cambia una colisión real; las guías
+  // anteriores no bastarían si el juego pudiera ganarse ignorando su mecánica.
+  const puente=(tipo,entrada)=>{const s=M.crear({tipo:'carrera'});s.siguiente=Infinity;s.obstaculos=[{id:1,z:2.5,carril:0,tipo,paso:false}];M.paso(s,entrada,.3);return s;};
+  t.check(puente('sello',{}).vidas===2&&puente('sello',{accion:true}).vidas===3,'Carrera: saltar libra un sello que daña al cruzarlo por tierra.');
+  t.check(puente('columna',{accion:true}).vidas===2&&puente('columna',{mx:1}).vidas===3,'Carrera: una columna exige cambiar de carril; saltar no la atraviesa.');
+  const nave=M.crear({tipo:'orbital'});nave.siguiente=Infinity;
+  const proyectil=()=>nave.balas.push({x:nave.jugador.x,y:nave.jugador.y,vx:0,vy:0,r:.2,t:1,edad:0});
+  proyectil();M.paso(nave,{accion:true},.02);t.check(nave.vidas===3&&nave.muertes===1&&nave.balas.length===0,'Órbita: el escudo absorbe y destruye un proyectil en contacto.');
+  M.paso(nave,{},.6);proyectil();M.paso(nave,{accion:true},.02);t.check(nave.vidas===2,'Órbita: el escudo agotado no puede reutilizarse durante su recarga.');
+  M.paso(nave,{},2.1);proyectil();M.paso(nave,{accion:true},.02);t.check(nave.vidas===2&&nave.muertes===2,'Órbita: al recargarse vuelve a proteger.');
+
+
+});
+
+
+PRUEBAS.suite('pitagorasIntegracion',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-integracion-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,interferencia=w.campanaInterferenciaPitagoras,finTurno=w.endTurn,turnoIA=w.aiTurn;let eventos=[],finales=[];
+    try{
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:true});
+      // Sólo abreviamos pausas cosméticas. Cada prueba conserva su promesa
+      // pendiente hasta que este caso entregue un resultado explícito.
+      w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);
+      for(const nombre of ['fxSpell','fxFace','fxHit','fxTrap','fxDeath','fxLunge','fxBanner'])w[nombre]=async()=>{};
+      for(const nombre of ['fxNotice','fxAterriza','fxObj','fxStat','fxNumber'])w[nombre]=()=>{};
+      w.ask=async()=>1;w.campanaFinalSecreto=(ganador,motivo)=>{finales.push({ganador,motivo});};
+      const hasta=async(pred,mensaje)=>{for(let n=0;n<400&&!pred();n++)await sleep(0);t.check(pred(),pagina+': '+mensaje);};
+      const arena=(side=1,jefe=true)=>{
+        w.newGame('fender','adreida');w.campanaGuardar({version:1,id:'editor-prueba',lider:'fender',etapa:6,secreto:'combate'});
+        w.eval("G.phase='principal';G.active="+side+";G.turnNo=3;P(0).pd=P(1).pd=20;P(0).alma=P(1).alma=20;P(0).hand=[];P(1).hand=[];P(0).leaderUsed=P(1).leaderUsed=true;G.campana="+(jefe?"{id:'editor-prueba',etapa:6,jefeSecreto:true}":'undefined'));
+        eventos=[];finales=[];w.showScreen('board');return w.eval('G');
+      };
+      const inmediato=resultado=>{w.campanaInterferenciaPitagoras=async(side,id,g)=>{eventos.push({side,id,g});return resultado;};};
+      const diferir=()=>{const pendientes=[];w.campanaInterferenciaPitagoras=(side,id,g)=>new Promise(resolve=>{eventos.push({side,id,g});pendientes.push(resolve);});return pendientes;};
+      const ids=w.eval('CARTAS_EDITOR.slice()');
+      // Las seis cartas son cuerpos del TCG, no hechizos de un solo uso.
+      // Se prueba el turno real que quita cansancio antes del ataque real.
+      for(const id of ids){
+        arena();inmediato({sobrevivio:true,cancelado:false});w.eval('P(1)').hand=[id];
+        t.check(await w.playFromHand(1,id),pagina+': se juega '+id);const u=w.eval('P(1)').field[0];
+        t.check(u&&u.card.id===id&&u.card.t==='personaje'&&u.alive&&u.atk>0&&u.maxHp>0&&!u.card.token,pagina+': cuerpo y estadísticas propios de '+id);
+        t.check(u.sick&&!w.canAttack(u)&&!await w.doAttack(u,'face'),pagina+': respeta el cansancio al entrar');
+        t.check(eventos.length===1&&eventos[0].id===id&&w.eval('P(1).alma===18&&P(0).alma===20&&P(1).grave.length===0'),pagina+': una prueba y la carta permanece viva');
+        w.aiTurn=async()=>{};await w.startTurn(1);w.aiTurn=turnoIA;w.eval("P(0).hand=[];P(1).leaderUsed=true;G.phase='combate'");
+        t.check(w.canAttack(u)&&await w.doAttack(u,'face'),pagina+': el siguiente turno habilita el ataque');
+        t.igual(w.eval('P(0).alma'),20-u.atk,pagina+': ataque inflige sus estadísticas');
+        t.check(eventos.length===1&&!await w.doAttack(u,'face'),pagina+': atacar no abre otro juego ni permite doble ataque');
+        await w.dmgU(u,u.maxHp,{src:'prueba',unstoppable:true});await w.checkDeaths();
+        t.check(!u.alive&&!w.eval('P(1)').field.includes(u)&&w.eval('P(1).grave').includes(id)&&!w.canAttack(u),pagina+': muerte real y carta en Alcantarillas');
+      }
+      // El jugador puede bloquear a una pesadilla con Provocar y combatirla.
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcorte']");await w.playFromHand(1,'editorcorte');
+      const pesadilla=w.eval('P(1)').field[0],guardian=w.mkUnit('bartolomeo',0);pesadilla.sick=false;w.eval('P(0)').field.push(guardian);w.recalc();guardian.keys.add('provocar');
+      t.check(!w.legalTargets(pesadilla).face&&!await w.doAttack(pesadilla,'face'),pagina+': Provocar protege el Alma del jugador');
+      const vida=guardian.dmg;await w.doAttack(pesadilla,guardian);t.check(guardian.dmg>vida||!guardian.alive,pagina+': la pesadilla también pelea contra cartas');
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');const devuelta=w.eval('P(1)').field[0];w.bounce(devuelta);
+      t.check(!devuelta.alive&&w.eval("P(1).hand.includes('editorcosecha')&&P(1).field.length===0"),pagina+': devolver a la mano no desvanece una ficha');
+      // El límite de cinco evita apilar seis cuerpos y tampoco cobra una
+      // prueba ni PD si la última carta no tiene espacio para entrar.
+      arena();inmediato({sobrevivio:true});for(const id of ids.slice(0,5)){w.eval('P(1)').hand=[id];await w.playFromHand(1,id);}w.eval('P(1)').hand=[ids[5]];const pd=w.eval('P(1).pd');
+      t.check(!w.canPlay(1,ids[5])&&!await w.playFromHand(1,ids[5])&&w.eval('P(1).field.length')===5&&w.eval('P(1).pd')===pd&&eventos.length===5,pagina+': campo lleno no paga ni abre una sexta prueba');
+      arena();inmediato({sobrevivio:false,cancelado:false});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.check(w.eval('P(0).alma===18&&P(1).alma===20&&P(1).field.length===1'),pagina+': fallar conserva la carta y quita sólo 2 al jugador');
+      arena();inmediato({cancelado:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.igual(w.eval('P(0).alma+P(1).alma'),40,pagina+': cancelar no inflige daño');
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha'];P(1).pd=0");t.check(!await w.playFromHand(1,'editorcosecha')&&!eventos.length,pagina+': sin PD no hay minijuego');
+      // El Editor sólo abre pruebas por sus seis pesadillas. Los hechizos,
+      // fichas y respuestas normales conservan sus reglas de siempre.
+      for(const id of ['matildus','nubedagas','peaje','puntosrobados','puente','ilusion']){arena();inmediato({sobrevivio:true});w.eval('P(1)').hand=[id];await w.playFromHand(1,id);t.check(!eventos.length&&w.eval('P(0).alma+P(1).alma')===40,pagina+': carta normal sin interferencia '+id);}
+      arena(0);inmediato({sobrevivio:true});w.eval("P(1).hand=['contrahechizo']");const contra={cardId:'espiritus',countered:false};await w.fastWindow(1,{kind:'hechizo',ev:contra});t.check(contra.countered&&!eventos.length,pagina+': respuesta rápida normal sin minijuego');
+      arena();inmediato({sobrevivio:true});await w.summonToken(1,'tok_ilusion');t.check(!eventos.length,pagina+': invocar una ficha no juega una pesadilla');
+      for(const caso of ['jugador','normal','auto','fast','silent','online','guest','sala']){
+        arena(caso==='jugador'?0:1,caso!=='normal');inmediato({sobrevivio:true});
+        if(['auto','fast','silent','online','guest'].includes(caso))w.eval('G.'+caso+'=true');if(caso==='sala')w.eval('NET.on=true');
+        const side=caso==='jugador'?0:1;w.eval('P('+side+')').hand=['editorcosecha'];await w.playFromHand(side,'editorcosecha');
+        t.check(!eventos.length&&w.eval('P(0).alma+P(1).alma')===40,pagina+': no modifica '+caso);w.eval('NET.on=false');
+      }
+      // Dos cartas reales de la IA esperan cada prueba antes de continuar;
+      // ninguna puede atacar en el mismo turno en que acaba de entrar.
+      arena();const pendientes=diferir();w.eval("P(1).hand=['editorcosecha','editorcorte']");let termino=false,cedio=false;w.endTurn=async()=>{cedio=true;};
+      const turno=w.aiTurn().then(()=>{termino=true;});await hasta(()=>eventos.length===1,'la primera carta abre la interrupción');await sleep(20);
+      t.check(!termino&&!cedio&&w.eval('G.busy&&P(1).hand.length===1&&P(1).field.length===1'),pagina+': la IA espera con la carta ya en mesa');
+      pendientes[0]({sobrevivio:true});await hasta(()=>eventos.length===2,'la IA sólo juega la segunda al resolver la primera');
+      t.check(!termino&&!cedio,pagina+': la segunda prueba también bloquea el turno');pendientes[1]({sobrevivio:false});await turno;
+      t.check(cedio&&w.eval('P(0).alma===18&&P(1).alma===18&&P(1).field.length===2&&P(1).field.every(u=>u.sick&&!u.attacked)'),pagina+': un resultado por carta y ningún ataque prematuro');
+      w.eval('P(1).field.forEach(u=>u.sick=false);P(1).hand=[];G.phase="principal"');await w.aiTurn();w.endTurn=finTurno;
+      t.check(w.eval('P(0).alma')===13&&eventos.length===2,pagina+': la IA reutiliza los dos cuerpos para atacar sin repetir pruebas');
+      // Llegar a cero entra al final de campaña. El resultado de una prueba
+      // anterior nunca debe descontar Alma de la siguiente partida.
+      for(const sobrevivio of [true,false]){arena();inmediato({sobrevivio});w.eval('P('+(sobrevivio?1:0)+').alma=2');w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');await hasta(()=>finales.length===1,'el daño letal entra en el final');t.igual(finales[0].ganador,sobrevivio?0:1,pagina+': ganador del daño letal');}
+      arena();const anulada=diferir();w.eval("P(1).hand=['editorcosecha']");const antigua=w.playFromHand(1,'editorcosecha');await hasta(()=>anulada.length===1,'prueba pendiente al empezar otra partida');w.newGame('fender','adreida');const nueva=w.eval('G');anulada[0]({sobrevivio:true});await antigua;t.check(w.eval('G')===nueva&&w.eval('P(0).alma===20&&P(1).alma===20&&P(1).field.length===0'),pagina+': el resultado antiguo no cambia la nueva partida');
+      // Controlador real: una llamada duplicada no consume otra prueba y
+      // conserva el bloqueo anterior incluso después de resolver o cancelar.
+      w.campanaInterferenciaPitagoras=interferencia;const llamadas=[],respuestas=[];let cancelaciones=0;
+      w.PITAGORAS_PRUEBAS={iniciar:op=>{llamadas.push(op);return new Promise(r=>respuestas.push(r));},cancelar:()=>{cancelaciones++;respuestas.at(-1)?.({cancelado:true});}};
+      arena();const actual=w.eval('G');w.eval('G.resolving=true');
+      for(let i=0;i<6;i++){
+        const esperando=w.campanaInterferenciaPitagoras(1,ids[i],actual);await hasta(()=>llamadas.length===i+1,'abre prueba '+i);
+        t.check(w.eval('G.editorEnPrueba&&G.resolving'),pagina+': bloquea los controles durante la prueba');
+        const duplicada=await w.campanaInterferenciaPitagoras(1,ids[i],actual);t.check(duplicada.cancelado&&llamadas.length===i+1&&w.eval('G.editorPruebas')===i+1,pagina+': rechazo único de la reentrada');
+        t.igual(llamadas[i].duracion,20,pagina+': veinte segundos');respuestas[i]({sobrevivio:true,cancelado:false});await esperando;t.check(w.eval('G.resolving')&&!w.eval('G.editorEnPrueba'),pagina+': restaura el bloqueo previo');
+      }
+      t.check(llamadas.map(x=>x.tipo).join(',')==='isometrico,laseres,fps,carrera,orbital,duelo',pagina+': cada carta conserva su juego');
+      const normal=w.campanaInterferenciaPitagoras(1,'matildus',actual);await sleep(10);t.check(!w.eval('G.editorEnPrueba')&&llamadas.length===6,pagina+': una llamada directa con carta normal no abre otra prueba');t.check((await normal).cancelado,pagina+': rechaza la carta normal también en el controlador');
+      for(const salida of ['menu','nuevo','revancha']){
+        arena();const antes=llamadas.length;w.eval("P(1).hand=['editorcosecha']");const carta=w.playFromHand(1,'editorcosecha');await hasta(()=>llamadas.length>antes,'prueba para cancelar '+salida);const tarde=respuestas.at(-1);
+        if(salida==='menu')w.showScreen('menu');else if(salida==='nuevo')w.newGame('fender','adreida');else{w.cortinillaVS=async()=>{};await w.startMatch('fender','adreida',{volado:false,first:0});}
+        tarde({sobrevivio:true});await carta;t.check(!w.eval('G.editorEnPrueba')&&w.eval('P(0).alma===20&&P(1).alma===20'),pagina+': salir cancela la prueba y su daño '+salida);
+      }
+      t.check(cancelaciones>=3,pagina+': también cancela la escena');
+    }finally{w.eval('NET.on=false');w.campanaCancelarInterferencia?.();w.campanaCerrar();w.relojPara();w.setTimeout=poner;w.endTurn=finTurno;w.aiTurn=turnoIA;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+
+PRUEBAS.suite('pitagorasMesa',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-mesa-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,A=w.PITAGORAS_MESA,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now;let ahora=10000,secuencia=0,reducida=false;const timers=new Map(),cuadros=new Map();
+    try{
+      t.check(!!A,pagina+': carga la mesa compartida');Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.matchMedia=()=>({matches:reducida});
+      w.setTimeout=(fn,ms,...args)=>{const id=++secuencia;timers.set(id,{en:ahora+ms,fn:()=>fn(...args)});return id;};w.clearTimeout=id=>timers.delete(id);w.requestAnimationFrame=fn=>{const id=++secuencia;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;
+      const avanzar=ms=>{const hasta=ahora+ms;while(true){const p=[...timers].filter(([,v])=>v.en<=hasta).sort((a,b)=>a[1].en-b[1].en)[0];if(!p)break;ahora=p[1].en;timers.delete(p[0]);p[1].fn();}ahora=hasta;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const preparar=()=>{A.cancelar();w.newGame('fender','adreida');w.eval("G.phase='principal';G.active=0;G.campana={id:'mesa-editor',etapa:6,jefeSecreto:true,alma:40};P(1).alma=40");w.showScreen('board');w.render();A.actualizar(w.eval('G'));return w.eval('G');};
+      const g=preparar(),antes=JSON.stringify(g);
+      // El navegador puede entregar un primer RAF con sello anterior al
+      // performance.now de creación: ningún índice de tentáculo será negativo.
+      avanzar(-1);t.check(A.estado.rafActivo,pagina+': primer fotograma anterior no detiene el lienzo');avanzar(17);const c=d.querySelector('.pitMesaInvasion');
+      t.check(A.estado.activo&&c&&w.getComputedStyle(c).pointerEvents==='none'&&c.getAttribute('aria-hidden')==='true',pagina+': infección decorativa sin bloquear cartas ni lectores');
+      t.check(A.estado.ancho===w.innerWidth&&A.estado.alto===w.innerHeight&&Number.isFinite(A.estado.origen.x)&&Number.isFinite(A.estado.origen.y),pagina+': geometría en píxeles del visor');
+      t.igual(A.estado.objetivo,0,pagina+': invasión inicial');t.igual(JSON.stringify(g),antes,pagina+': dibujar no modifica la partida');
+      let anterior=0;for(const alma of [30,20,10,0]){w.eval('P(1).alma='+alma);A.actualizar(g);avanzar(100);t.igual(A.estado.objetivo,(40-alma)/40,pagina+': avance proporcional al daño '+alma);t.check(A.estado.progreso>anterior&&A.estado.progreso<=A.estado.objetivo,pagina+': tentáculos se extienden gradualmente');anterior=A.estado.progreso;}
+      w.eval('P(1).alma=30');A.actualizar(g);t.igual(A.estado.objetivo,1,pagina+': sanar no rebobina el universo consumido');
+      let resueltas=0;g.over=true;const disolucion=A.disolver(g).then(x=>{resueltas++;return x;}),duplicada=A.disolver(g);t.check(A.estado.fase==='disolviendo'&&A.estado.particulas>0&&resueltas===0,pagina+': la derrota convierte la invasión en esporas');
+      avanzar(A.tiempos.disolucion-1);await sleep(0);t.check(resueltas===0&&A.estado.fase==='disolviendo',pagina+': espera toda la disolución');
+      avanzar(1);t.check(A.estado.fase==='mesa'&&A.estado.particulas===0&&d.querySelector('#leaderFoe').classList.contains('pmEditorDesvanecido'),pagina+': desaparece Pitágoras y deja la mesa normal');
+      const ctx=c.getContext('2d'),pix=ctx.getImageData(0,0,c.width,c.height).data;t.check(!pix.some((v,i)=>i%4===3&&v),pagina+': ninguna mancha ni tentáculo queda encima de la mesa');
+      avanzar(A.tiempos.mesa-1);await sleep(0);t.igual(resueltas,0,pagina+': mantiene un instante la mesa limpia antes del epílogo');avanzar(1);
+      t.check(await disolucion&&await duplicada&&resueltas===1&&!A.estado.activo&&!A.estado.rafActivo&&!d.querySelector('.pitMesaInvasion'),pagina+': resultado único y elimina lienzo y animación');
+      A.actualizar(g);t.check(!A.estado.activo&&!await A.disolver(g),pagina+': el mismo enemigo no reaparece ni repite la disolución');A.cancelar();t.check(!d.querySelector('.pmEditorDisolviendo,.pmEditorDesvanecido'),pagina+': cancelar también restaura el retrato');
+      for(const salida of ['cancelar','menu','nuevo']){const h=preparar();h.over=true;const p=A.disolver(h);avanzar(200);if(salida==='cancelar')A.cancelar();else if(salida==='menu')w.showScreen('menu');else w.newGame('fender','adreida');avanzar(A.tiempos.disolucion+A.tiempos.mesa+100);t.check(!(await p)&&!A.estado.activo&&!d.querySelector('.pitMesaInvasion,.pmEditorDesvanecido,.pmEditorDisolviendo'),pagina+': '+salida+' cancela el final y limpia todas las capas');}
+      const sinEscena=preparar();A.cancelar();sinEscena.over=true;const directo=A.disolver(sinEscena);avanzar(-1);t.check(A.estado.rafActivo,pagina+': disolver sin escena previa tolera un primer RAF anterior a la creación');A.cancelar();t.check(!(await directo),pagina+': también cancela el primer cuadro de una disolución directa');
+      for(const flag of ['normal','online','guest','sala','fast','silent','auto']){const h=preparar();A.cancelar();if(flag==='normal')delete h.campana;else if(flag==='sala')w.eval('NET.on=true');else h[flag]=true;A.actualizar(h);t.check(!A.estado.activo&&!d.querySelector('.pitMesaInvasion'),pagina+': no invade '+flag);if(['fast','silent','auto'].includes(flag))t.check(await A.disolver(h),pagina+': '+flag+' permite terminar sin efectos ni espera');w.eval('NET.on=false');}
+      const referenciaVieja=preparar();A.cancelar();w.newGame('fender','adreida');A.actualizar(referenciaVieja);t.check(!A.estado.activo,pagina+': un render tardío no vuelve a montar el universo anterior');const rechazada=A.disolver(referenciaVieja);t.check(!A.estado.activo,pagina+': una llamada tardía tampoco inicia la disolución anterior');t.check(!(await rechazada),pagina+': la referencia vieja se cancela inmediatamente');
+      reducida=true;const h=preparar();w.eval('P(1).alma=10');A.actualizar(h);avanzar(16);t.igual(A.estado.progreso,.75,pagina+': movimiento reducido no retrasa la información');h.over=true;const p=A.disolver(h);avanzar(A.tiempos.reducida+A.tiempos.mesaReducida);t.check(await p&&!A.estado.activo,pagina+': disolución breve accesible también termina');
+    }finally{A?.cancelar();w.relojPara();w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;w.eval('NET.on=false');f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasDesenlace',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=editor-desenlace-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,clave=w.eval('CAMPANA_CLAVE'),previo=w.localStorage.getItem(clave);let aperturas=0,derrotas=0;const pendientes=[];
+    try{
+      w.campanaAbrirSecreto=()=>{aperturas++;};w.cinematicaFinal=async()=>{derrotas++;return true;};
+      w.PITAGORAS_MESA.disolver=g=>new Promise(resolve=>pendientes.push({g,resolve}));
+      const preparar=()=>{w.newGame('fender','adreida');w.campanaGuardar({version:1,id:'desenlace-editor',lider:'fender',etapa:6,secreto:'combate'});w.eval("G.campana={id:'desenlace-editor',etapa:6,jefeSecreto:true};G.over=true;P(1).alma=0");return w.eval('G');};
+      const g=preparar();w.campanaFinalSecreto(0,'Victoria');w.campanaFinalSecreto(0,'Victoria repetida');
+      t.check(pendientes.length===1&&pendientes[0].g===g&&aperturas===0&&g.campanaResuelta,pagina+': ganar inicia una sola disolución sin saltarse la mesa');
+      t.igual(w.campanaLeer().secreto,'final',pagina+': conserva el desenlace si se recarga durante las esporas');
+      pendientes[0].resolve(true);await sleep(0);t.igual(aperturas,1,pagina+': el epílogo espera a que la mesa quede limpia');
+      preparar();w.campanaFinalSecreto(0,'Victoria');pendientes.at(-1).resolve(false);await sleep(0);t.igual(aperturas,1,pagina+': una disolución cancelada no abre el epílogo');
+      preparar();w.campanaFinalSecreto(0,'Victoria');const vieja=pendientes.at(-1);w.newGame('fender','adreida');vieja.resolve(true);await sleep(0);t.igual(aperturas,1,pagina+': una partida nueva invalida el final pendiente');
+      preparar();w.campanaFinalSecreto(0,'Victoria');const reemplazada=pendientes.at(-1);w.campanaGuardar({version:1,id:'otra-campana',lider:'fender',etapa:2});reemplazada.resolve(true);await sleep(0);t.igual(aperturas,1,pagina+': no abre el final sobre otro avance');
+      preparar();const antes=pendientes.length;w.campanaFinalSecreto(1,'Derrota');await sleep(0);t.check(pendientes.length===antes&&derrotas===1&&w.campanaLeer().secreto==='combate',pagina+': una derrota conserva la revancha y no disuelve al vencedor');
+      // El acceso beta y sus botones también pertenecen a una sola partida.
+      // Una referencia de DOM antigua no daña una campaña ni una sala nueva.
+      const disponible=w.campanaPruebaDisponible;let comienzos=0;
+      w.startMatch=async(a,b,op)=>{comienzos++;w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana)+";G.phase='principal';G.active=0;P(1).alma=40");w.showScreen('board');};w.fxFace=async()=>{};
+      w.campanaGuardar({version:1,id:'avance-real-preservado',lider:'fender',etapa:3});const guardado=w.localStorage.getItem(clave),logros=w.localStorage.getItem('caoz.campana.logros.v1.prueba');
+      t.check(await w.campanaEnsayarPitagoras(),pagina+': el atajo abre un ensayo identificado');t.check(w.campanaLeer().prueba&&w.eval('G.campana.pruebaEditor')&&w.localStorage.getItem(clave)===guardado,pagina+': el ensayo no sustituye el avance real');
+      const host=d.createElement('div');w.campanaBotonesEditorBeta(host);const botonViejo=host.querySelector('button');t.check(botonViejo&&!botonViejo.disabled,pagina+': ensayo permite probar daño en un turno libre');await botonViejo.onclick();t.igual(w.eval('P(1).alma'),30,pagina+': botón vigente descuenta diez');
+      w.newGame('fender','adreida');w.eval("G.phase='principal';G.active=0;G.campana={id:'campana-real',etapa:2};P(1).alma=20");await botonViejo.onclick();t.igual(w.eval('P(1).alma'),20,pagina+': botón viejo no daña otra partida');
+      for(const flag of ['produccion','online','guest','sala']){
+        t.check(await w.campanaEnsayarPitagoras(),pagina+': prepara ensayo para comprobar '+flag);w.campanaBotonesEditorBeta(host);const boton=host.querySelector('button'),n=comienzos;
+        if(flag==='produccion')w.campanaPruebaDisponible=()=>false;else if(flag==='sala')w.eval('NET.on=true');else w.eval('G.'+flag+'=true');
+        await boton.onclick();t.check(w.eval('P(1).alma')===40&&!await w.campanaEnsayarPitagoras()&&comienzos===n,pagina+': botón y acceso rechazan '+flag);w.campanaBotonesEditorBeta(host);t.check(!host.querySelector('button'),pagina+': '+flag+' tampoco muestra botón');
+        w.campanaPruebaDisponible=disponible;w.eval('NET.on=false;G.online=false;G.guest=false');
+      }
+      t.check(w.localStorage.getItem(clave)===guardado&&w.localStorage.getItem('caoz.campana.logros.v1.prueba')===logros,pagina+': todas las pruebas conservan avance y logros reales');
+      let reanudar;w.startMatch=()=>new Promise(resolve=>{reanudar=resolve;});const arranque=w.campanaEnsayarPitagoras();await sleep(0);t.check(!!reanudar,pagina+': arranque pendiente durante la transición');
+      w.newGame('fender','adreida');w.campanaGuardar({version:1,id:'campana-posterior',lider:'fender',etapa:2});w.eval("G.campana={id:'campana-posterior',etapa:2}");const posterior=w.localStorage.getItem(clave);reanudar();
+      t.check(!(await arranque)&&!w.eval('G.campana.pruebaEditor')&&w.campanaLeer().id==='campana-posterior'&&w.localStorage.getItem(clave)===posterior,pagina+': terminar un arranque antiguo no convierte la campaña nueva en ensayo');
+    }finally{w.campanaCerrar();w.relojPara();if(previo==null)w.localStorage.removeItem(clave);else w.localStorage.setItem(clave,previo);f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasContinuidad',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px;border:0';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=continuidad-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now;
+    const montar=w.montarRevelacionPitagoras,empezar=w.startMatch,clave=w.eval('CAMPANA_CLAVE'),guardado=w.localStorage.getItem(clave);
+    const pendientes=new Map(),cuadros=new Map();let ahora=10000,id=990000,revelacion=null,partidas=[];
+    const avanzar=ms=>{const hasta=ahora+ms;let limite=0;for(;;){const p=[...pendientes].sort((a,b)=>a[1].cuando-b[1].cuando)[0];if(!p||p[1].cuando>hasta)break;t.check(++limite<200,'Temporizadores finitos');pendientes.delete(p[0]);ahora=p[1].cuando;p[1].fn();}ahora=hasta;};
+    const pintar=()=>{const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+    const tienePixeles=c=>{const foto=d.createElement('canvas');foto.width=c.width;foto.height=c.height;const ctx=foto.getContext('2d');ctx.drawImage(c,0,0);return ctx.getImageData(0,0,foto.width,foto.height).data.some((v,i)=>i%4===3&&v>0);};
+    try{
+      w.setTimeout=(fn,ms=0,...args)=>{const k=++id;pendientes.set(k,{cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return k;};w.clearTimeout=k=>{if(!pendientes.delete(k))quitar(k);};
+      w.requestAnimationFrame=fn=>{const k=++id;cuadros.set(k,fn);return k;};w.cancelAnimationFrame=k=>{if(!cuadros.delete(k))caf(k);};w.performance.now=()=>ahora;
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      w.montarRevelacionPitagoras=(host,op)=>{revelacion=montar(host,op);return revelacion;};
+      w.startMatch=(a,b,op)=>{partidas.push({a,b,op});return Promise.resolve();};
+      w.campanaGuardar({version:1,id:'continuidad-'+pagina,lider:'fender',etapa:6,secreto:'revelacion',prueba:true,personaje:w.campanaNormalizarPersonaje({nombre:'Ariadna',color:'violeta',equipo:'libro'})});
+      w.campanaAbrirSecreto();
+      t.check(revelacion&&d.querySelector('#campanaSecreto').dataset.fase==='revelacion',pagina+': el controlador monta la revelación real');
+      if(!revelacion.imagen.complete||!revelacion.imagen.naturalWidth)await new Promise(r=>revelacion.imagen.addEventListener('load',r,{once:true}));
+      const seccion=revelacion.elemento,imagen=revelacion.imagen,mini=seccion.querySelector('.pitFiguraTestigo canvas');
+      pintar();t.check(mini&&tienePixeles(mini),pagina+': miniatura dibujada antes del traspaso');
+      avanzar(1800);pintar();const antes=mini.getBoundingClientRect();avanzar(5800);pintar();
+      const panel=d.querySelector('#campanaSecreto'),despues=d.querySelector('.pitFiguraTestigo canvas'),boss=d.querySelector('.pitBoss');
+      t.igual(panel.dataset.fase,'trono',pagina+': el callback real guarda y abre el encuentro');
+      t.igual(w.campanaLeer().secreto,'trono',pagina+': el controlador persiste el encuentro');
+      t.check(d.querySelector('.pitAbismo')===seccion&&d.querySelector('.pitCriaturaImagen')===imagen&&despues===mini,pagina+': conserva sección, imagen decodificada y canvas, sin reconstrucción');
+      t.check(tienePixeles(despues),pagina+': el primer cuadro del encuentro conserva al viajero visible');
+      const rect=despues.getBoundingClientRect();t.check(Math.abs(rect.x-antes.x)<1&&Math.abs(rect.y-antes.y)<1,pagina+': la miniatura tampoco salta de posición');
+      t.check(d.querySelectorAll('.pitBoss').length===1&&!boss.disabled&&boss.tabIndex===0&&!boss.hasAttribute('aria-hidden'),pagina+': un solo objetivo accesible al terminar la revelación');
+      boss.click();boss.click();await Promise.resolve();
+      t.igual(partidas.length,1,pagina+': doble clic inicia una sola partida');
+      t.check(partidas[0].b==='adreida'&&partidas[0].op.campana.jefeSecreto&&partidas[0].op.nombres[0]==='Ariadna',pagina+': conserva las reglas del jefe y la identidad del viajero');
+      t.check(!seccion.isConnected&&!d.querySelector('#campanaSecreto'),pagina+': el combate desmonta la escena al salir');
+      avanzar(20000);pintar();t.check(!d.querySelector('#campanaSecreto')&&partidas.length===1,pagina+': temporizadores tardíos no reabren el encuentro');
+    }finally{
+      w.campanaCancelarSecreto();w.relojPara();w.montarRevelacionPitagoras=montar;w.startMatch=empezar;w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;
+      if(guardado===null)w.localStorage.removeItem(clave);else w.localStorage.setItem(clave,guardado);f.remove();
+    }
+  }
+});
+
+
+PRUEBAS.suite('pitagorasRevelacion',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',320,568]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=revelacion-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now,media=w.matchMedia,prop=Object.getOwnPropertyDescriptor(w.HTMLImageElement.prototype,'src');
+    const pendientes=new Map(),cuadros=new Map(),escenas=[];let ahora=10000,id=980000,bloquear=false,reducido=false;
+    const host=d.createElement('div');host.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:999999;background:#000';d.body.appendChild(host);
+    const avanzar=ms=>{const hasta=ahora+ms;let guardia=0;for(;;){const p=[...pendientes].sort((a,b)=>a[1].cuando-b[1].cuando)[0];if(!p||p[1].cuando>hasta)break;t.check(++guardia<200,pagina+': temporizadores finitos');pendientes.delete(p[0]);ahora=p[1].cuando;p[1].fn();}ahora=hasta;};
+    const pintar=()=>{const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+    const crear=op=>{const e=w.montarRevelacionPitagoras(host,{personaje:{nombre:'Ari',color:'azul',equipo:'baston'},origen:{x:.4,y:.42},...op});escenas.push(e);return e;};
+    const cargada=e=>new Promise(resolve=>{if(e.elemento.dataset.arte==='listo')resolve();else e.imagen.addEventListener('load',resolve,{once:true});});
+    try{
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:reducido}:media.call(w,q);
+      w.setTimeout=(fn,ms=0,...args)=>{const k=++id;pendientes.set(k,{cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return k;};w.clearTimeout=k=>{if(!pendientes.delete(k))quitar(k);};
+      w.performance.now=()=>ahora;w.requestAnimationFrame=fn=>{const k=++id;cuadros.set(k,fn);return k;};w.cancelAnimationFrame=k=>{if(!cuadros.delete(k))caf(k);};
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      Object.defineProperty(w.HTMLImageElement.prototype,'src',{...prop,set(v){if(bloquear&&String(v).includes('pitagoras-abismo'))this.dataset.demora=v;else prop.set.call(this,v);}});
+      let reveladas=0;const e=crear({onRevelado:()=>reveladas++});await cargada(e);
+      const inicial=e.testigo.getBoundingClientRect(),ojos=e.elemento.querySelector('.pitOjos');
+      t.igual(w.getComputedStyle(e.elemento).backgroundColor,'rgb(0, 0, 0)',pagina+': negro total desde el primer cuadro');
+      t.check(w.getComputedStyle(e.imagen).opacity==='0'&&w.getComputedStyle(ojos).opacity==='0'&&w.getComputedStyle(e.elemento.querySelector('.pitBossNombre')).opacity==='0',pagina+': al inicio sólo se ve el héroe, sin rival ni textos.');
+      t.check(Math.abs(inicial.left+inicial.width/2-ancho*.4)<1&&Math.abs(inicial.bottom-alto*.42)<1,pagina+': parte del punto del ascenso en el visor.');
+      const mini=e.testigo.querySelector('canvas');t.check(mini?.width>0&&mini.height>0,pagina+': conserva la miniatura real iluminada.');
+      e.boss.click();avanzar(1800);pintar();const abajo=e.testigo.getBoundingClientRect();
+      t.check(abajo.bottom>inicial.bottom+alto*.2&&Math.abs(abajo.left+abajo.width/2-ancho/2)<1,pagina+': el héroe desciende hacia el centro inferior.');
+      t.check(cuadros.size===0,pagina+': termina el dibujo continuo al completar el desplazamiento.');
+      avanzar(400);t.igual(e.elemento.dataset.fase,'ojos',pagina+': aparecen los ojos antes del cuerpo');t.igual(w.getComputedStyle(e.imagen).opacity,'0',pagina+': el cuerpo sigue completamente oculto al aparecer los ojos');
+      t.check(w.getComputedStyle(ojos).transitionDuration!=='0s',pagina+': los ojos tienen entrada gradual, sin destellos.');
+      avanzar(1400);t.igual(e.elemento.dataset.fase,'surgiendo',pagina+': comienza la aparición lenta');
+      t.igual(w.getComputedStyle(e.imagen).transitionDuration,'3.6s',pagina+': el cuerpo se descubre con un fundido largo');
+      avanzar(3999);t.check(!e.revelado&&reveladas===0,pagina+': no habilita combate mientras termina la aparición.');avanzar(1);
+      t.check(e.revelado&&reveladas===1&&e.elemento.dataset.fase==='revelado',pagina+': revela una sola vez tras el fundido.');
+      // La nueva escena recibe el MISMO nodo decodificado: evita un cuadro vacío.
+      const imagen=e.imagen,antes=e.presencia.getBoundingClientRect(),trono=w.montarEscenaPitagoras(host,{personaje:{nombre:'Ari',color:'azul',equipo:'baston'}});escenas.push(trono);e.destruir();
+      const despues=trono.presencia.getBoundingClientRect(),objetivo=trono.boss.getBoundingClientRect();
+      t.check(trono.imagen===imagen&&trono.imagen.naturalWidth>0,pagina+': reutiliza la imagen decodificada al entrar al encuentro.');
+      t.check(w.getComputedStyle(trono.imagen).opacity==='1'&&w.getComputedStyle(trono.imagen).transitionDuration==='0s',pagina+': no vuelve a ocultar al monstruo al terminar la revelación.');
+      t.check(Math.abs(antes.x-despues.x)<1&&Math.abs(antes.y-despues.y)<1&&Math.abs(antes.width-despues.width)<1&&Math.abs(antes.height-despues.height)<1,pagina+': el monstruo no cambia de tamaño ni posición.');
+      t.check(objetivo.width>=44&&objetivo.height>=44&&objetivo.bottom<=alto-80,pagina+': área de combate tocable y separada del menú.');trono.destruir();
+      bloquear=true;let lentas=0;const lenta=crear({onRevelado:()=>lentas++});avanzar(8000);t.check(!lenta.revelado&&lentas===0&&lenta.elemento.dataset.fase==='ojos',pagina+': una imagen lenta conserva ojos y negro, no muestra de golpe el cuerpo.');
+      prop.set.call(lenta.imagen,lenta.imagen.dataset.demora);await cargada(lenta);t.igual(lenta.elemento.dataset.fase,'surgiendo',pagina+': cuando llega la imagen comienza su fundido completo');
+      avanzar(3999);t.igual(lentas,0,pagina+': también espera el fundido con red lenta');avanzar(1);t.igual(lentas,1,pagina+': la carga lenta termina sin bloquear');lenta.destruir();
+      let fallidas=0;const fallida=crear({onRevelado:()=>fallidas++});fallida.imagen.dispatchEvent(new w.Event('error'));
+      t.check(fallida.elemento.dataset.arte==='alternativa'&&w.getComputedStyle(fallida.elemento.querySelector('.pitContorno')).opacity==='0',pagina+': fallar el arte tampoco muestra contenido en el negro inicial.');
+      avanzar(7600);t.check(fallida.revelado&&fallidas===1,pagina+': el error del arte ofrece una salida funcional, sin espera infinita.');fallida.destruir();
+      let tardias=0;const cancelada=crear({onRevelado:()=>tardias++});avanzar(2300);cancelada.destruir();cancelada.imagen.dispatchEvent(new w.Event('load'));avanzar(20000);pintar();t.igual(tardias,0,pagina+': cerrar cancela temporizadores, animación y cargas tardías');
+      bloquear=false;reducido=true;const breve=crear({onRevelado:()=>tardias++});await cargada(breve);avanzar(1199);t.igual(tardias,0,pagina+': movimiento reducido conserva una transición gradual');avanzar(1);t.check(breve.revelado&&tardias===1,pagina+': movimiento reducido completa en 1.2 segundos sin trasladar al héroe.');breve.destruir();
+      t.check(!host.childElementCount&&pendientes.size===0&&cuadros.size===0,pagina+': todas las escenas se limpian completamente.');
+    }finally{
+      escenas.forEach(e=>e.destruir());host.remove();Object.defineProperty(w.HTMLImageElement.prototype,'src',prop);w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;w.matchMedia=media;w.relojPara();f.remove();
+    }
+  }
+});
+
+PRUEBAS.suite('pitagorasVisual',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',320,568]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=pitagoras-visual-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,raf=w.requestAnimationFrame,caf=w.cancelAnimationFrame,reloj=w.performance.now,media=w.matchMedia;
+    const pendientes=new Map(),cuadros=new Map(),escenas=[];let ahora=10000,id=990000;
+    const host=d.createElement('div');host.style.cssText='position:fixed;inset:0;width:100vw;height:100vh;z-index:999999;background:#000';d.body.appendChild(host);
+    const avanzar=ms=>{
+      const hasta=ahora+ms;let vueltas=0;
+      for(;;){const par=[...pendientes].sort((a,b)=>a[1].cuando-b[1].cuando||a[0]-b[0])[0];if(!par||par[1].cuando>hasta)break;
+        t.check(++vueltas<400,pagina+': temporizadores finitos.');pendientes.delete(par[0]);ahora=par[1].cuando;par[1].fn();
+      }ahora=hasta;
+    };
+    const pintar=()=>{const lista=[...cuadros.values()];cuadros.clear();lista.forEach(fn=>fn(ahora));};
+    const montar=(nombre,op)=>{const e=w[nombre](host,op);escenas.push(e);return e;};
+    try{
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:false}:media.call(w,q);
+      w.setTimeout=(fn,ms=0,...args)=>{const k=++id;pendientes.set(k,{cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return k;};
+      w.clearTimeout=k=>{if(!pendientes.delete(k))quitar(k);};w.performance.now=()=>ahora;
+      w.requestAnimationFrame=fn=>{const k=++id;cuadros.set(k,fn);return k;};w.cancelAnimationFrame=k=>{if(!cuadros.delete(k))caf(k);};
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      let luchas=0;const escena=montar('montarEscenaPitagoras',{onFight:()=>luchas++});
+      const boton=escena.boss,figura=escena.elemento.querySelector('.pitIlustracion'),r=boton.getBoundingClientRect();
+      t.check(figura?.tagName.toLowerCase()==='img'&&boton.tagName==='BUTTON'&&boton.getAttribute('aria-label').includes('Pitágoras'),pagina+': trono real y acceso con teclado.');
+      t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.top>=0&&r.right<=ancho&&r.bottom<=alto-60,pagina+': figura tocable y separada de los controles inferiores.');
+      await figura.decode();t.check(figura.naturalWidth>500&&w.retratoPitagoras().endsWith('pitagoras-abismo-v216.webp'),pagina+': monstruo y retrato comparten la ilustración cargada.');
+      boton.click();boton.click();t.igual(luchas,1,pagina+': un doble clic sólo inicia un combate.');escena.destruir();
+      const cerrada=montar('montarEscenaPitagoras',{onFight:()=>luchas++}),botonRetirado=cerrada.boss;cerrada.destruir();botonRetirado.click();
+      t.igual(luchas,1,pagina+': una referencia a una escena cerrada no puede iniciar combate.');t.check(!host.querySelector('.pitEscena'),pagina+': desmontar retira el trono.');
+      let cubiertas=0;const esporas=montar('montarEsporasPitagoras',{onCubierto:()=>cubiertas++});
+      avanzar(900);pintar();const c=esporas.elemento.querySelector('canvas'),ctx=c.getContext('2d'),pixeles=ctx.getImageData(0,0,c.width,c.height).data;
+      let pintados=0;for(let i=3;i<pixeles.length;i+=997*4)if(pixeles[i])pintados++;
+      t.check(c.width>0&&c.height>0&&pintados>0,pagina+': las esporas se dibujan realmente antes de cubrir.');
+      avanzar(1099);t.check(!esporas.cubierto&&cubiertas===0,pagina+': no se adelanta la cobertura de dos segundos.');
+      avanzar(1);t.check(esporas.cubierto&&cubiertas===1&&esporas.elemento.dataset.fase==='cubierto',pagina+': a los dos segundos queda completamente negro.');
+      t.igual(w.getComputedStyle(esporas.elemento).backgroundColor,'rgb(0, 0, 0)',pagina+': cobertura negra independiente de Canvas');avanzar(1000);t.igual(cubiertas,1,pagina+': la notificación de cobertura no se repite');esporas.destruir();
+      let finales=0;const nombre='<img src=x onerror=1>',frase='Tú, '+nombre+', tú sí eres el verdadero Caoz Con Todo.',tiempos=w.PITAGORAS_TIEMPOS;
+      const final=montar('montarFinalPitagoras',{personaje:{nombre,color:'azul',equipo:'baston'},nombre,onTerminar:()=>finales++});
+      const miniatura=final.elemento.querySelector('.pitMiniatura'),texto=final.elemento.querySelector('.pitReconocimiento'),anuncio=final.elemento.querySelector('.pitAnuncio'),contenido=final.elemento.querySelector('.pitContenido'),heroe=final.elemento.querySelector('.pitHeroe');
+      const transparente=n=>w.getComputedStyle(n).backgroundColor==='rgba(0, 0, 0, 0)';
+      t.check(final.elemento.dataset.fase==='oscuridad'&&transparente(final.elemento)&&transparente(final.elemento.querySelector('.pitCuarto')),pagina+': conserva la mesa visible bajo un fundido inicial transparente');
+      t.check(w.getComputedStyle(final.elemento.querySelector('.pitUmbral')).animationName==='pitEntrarOscuridad',pagina+': la oscuridad entra con fundido, sin un corte negro inicial');
+      t.check(miniatura?.tagName==='CANVAS'&&miniatura.width>0&&miniatura.height>0,pagina+': prepara la miniatura real desde el primer cuadro');
+      t.check(texto.textContent===frase&&texto.querySelectorAll('.pitLinea').length===3&&!texto.querySelector('.revelada')&&!anuncio.textContent,pagina+': reserva las tres líneas completas sin enseñar ni anunciar el mensaje antes de tiempo');
+      const letras=[...texto.querySelectorAll('.pitLetra')],rects=[contenido,heroe,texto].map(n=>n.getBoundingClientRect());
+      const centrado=()=>{for(const n of [contenido,heroe,texto]){const r=n.getBoundingClientRect();t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2,pagina+': héroe y mensaje centrados horizontalmente');}const r=contenido.getBoundingClientRect();t.check(Math.abs(r.top+r.height/2-w.innerHeight/2)<2&&r.top>=0&&r.bottom<=w.innerHeight,pagina+': el conjunto ocupa el centro vertical sin recortarse');};centrado();
+      pintar();avanzar(tiempos.oscuridad-1);t.igual(final.elemento.dataset.fase,'oscuridad',pagina+': termina primero el fundido desde la mesa');avanzar(1);
+      t.check(final.elemento.dataset.fase==='cuarto'&&!texto.querySelector('.revelada'),pagina+': el héroe empieza a aparecer antes de escribir');
+      avanzar(tiempos.aparicion-1);t.igual(final.elemento.dataset.fase,'cuarto',pagina+': conserva toda la aparición del héroe');avanzar(1);t.igual(final.elemento.dataset.fase,'revelando',pagina+': la frase comienza después de revelar al héroe');
+      avanzar(1000);const visibles=texto.querySelectorAll('.revelada').length;t.check(visibles>0&&visibles<letras.length&&texto.textContent===frase&&!anuncio.textContent,pagina+': la opacidad revela letras progresivamente sin reconstruir el texto');
+      for(let pasos=0;final.elemento.dataset.fase!=='texto'&&pasos<150;pasos++){
+        t.check(final.elemento.dataset.fase==='revelando'&&finales===0,pagina+': la frase termina antes de contar los seis segundos de lectura');
+        const proximo=[...pendientes.values()].sort((a,b)=>a.cuando-b.cuando)[0];t.check(!!proximo,pagina+': queda una revelación programada');avanzar(proximo.cuando-ahora);
+      }
+      t.check(final.elemento.dataset.fase==='texto'&&texto.querySelectorAll('.revelada').length===letras.length&&anuncio.textContent===frase,pagina+': completa la frase y la anuncia una sola vez');
+      t.check(letras.every((n,i)=>texto.querySelectorAll('.pitLetra')[i]===n)&&!texto.querySelector('img,script,iframe,[onerror]'),pagina+': conserva cada nodo y trata el nombre como texto');
+      centrado();[contenido,heroe,texto].forEach((n,i)=>{const r=n.getBoundingClientRect(),a=rects[i];t.check(Math.abs(r.x-a.x)<1&&Math.abs(r.y-a.y)<1&&Math.abs(r.width-a.width)<1&&Math.abs(r.height-a.height)<1,pagina+': revelar letras no desplaza ni redimensiona el héroe o la frase');});
+      avanzar(tiempos.lectura-1);t.check(final.elemento.dataset.fase==='texto'&&finales===0,pagina+': seis segundos completos después de la última letra');avanzar(1);t.check(final.elemento.dataset.fase==='negro'&&finales===0,pagina+': después de leer comienza el fundido a negro');
+      avanzar(tiempos.negro-1);t.igual(finales,0,pagina+': el menú espera a que termine el fundido negro');avanzar(1);t.igual(finales,1,pagina+': sólo el negro completo permite regresar al menú');final.destruir();
+      const pendiente=montar('montarEsporasPitagoras',{onCubierto:()=>cubiertas++});pendiente.destruir();
+      for(const ms of [0,tiempos.oscuridad+100,tiempos.oscuridad+tiempos.aparicion+100,tiempos.oscuridad+tiempos.aparicion+tiempos.revelacion+100,tiempos.oscuridad+tiempos.aparicion+tiempos.revelacion+tiempos.lectura+100]){
+        const interrumpido=montar('montarFinalPitagoras',{personaje:{nombre:'Viajero'},onTerminar:()=>finales++});avanzar(ms);pintar();interrumpido.destruir();avanzar(20000);pintar();t.igual(finales,1,pagina+': desmontar en cualquier fase cancela el regreso tardío al menú');
+      }
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);
+      const breve=montar('montarFinalPitagoras',{personaje:{nombre:'Viajera'},onTerminar:()=>finales++});avanzar(tiempos.oscuridadReducida-1);t.igual(breve.elemento.dataset.fase,'oscuridad',pagina+': movimiento reducido conserva un fundido breve');avanzar(1+tiempos.aparicionReducida);
+      t.check(breve.elemento.dataset.fase==='texto'&&breve.elemento.querySelectorAll('.pitLetra').length===breve.elemento.querySelectorAll('.pitLetra.revelada').length,pagina+': movimiento reducido muestra el mensaje completo sin animar letras');
+      avanzar(tiempos.lectura-1);t.igual(finales,1,pagina+': movimiento reducido también respeta los seis segundos de lectura');avanzar(1+tiempos.negroReducido);t.igual(finales,2,pagina+': la versión reducida completa el mismo desenlace');breve.destruir();
+      t.check(cubiertas===1&&!host.childElementCount&&cuadros.size===0&&pendientes.size===0,pagina+': todas las variantes limpian escenas, dibujos y temporizadores');
+    }finally{
+      escenas.forEach(e=>e.destruir());host.remove();w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;w.matchMedia=media;w.relojPara();f.remove();
+    }
+  }
+});
+
+PRUEBAS.suite('betaFinalGero',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=beta-final-gero-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana,disponible=w.campanaPruebaDisponible,timers=new Map();let siguiente=97000,finales=0;
+    const clave='caoz.campana.v1.prueba',logros='caoz.campana.logros.v1.prueba',simulados=logros+'.simulados',anteriores=[clave,logros,simulados].map(k=>w.localStorage.getItem(k));
+    try{
+      w.matchMedia=()=>({matches:true});Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      const previo={version:1,id:'campana-real-conservada',lider:'talesin',personaje:w.campanaNormalizarPersonaje({nombre:'Mi héroe guardado'}),etapa:3,enEncuentro:true};w.campanaGuardar(previo);
+      w.localStorage.setItem(logros,JSON.stringify({version:1,mazos:{talesin:{nombre:'Mi héroe guardado',fecha:1234}},ganador:null}));w.localStorage.removeItem(simulados);
+      const avanceReal=w.localStorage.getItem(clave),sellosReales=w.localStorage.getItem(logros);
+      const nueva=(foe='gero')=>{w.newGame('fender',foe);w.eval("G.phase='principal';G.active=ME;G.busy=false;G.resolving=false");w.showScreen('board');w.render();};
+      nueva();t.check(!!d.querySelector('#betaFinalGero'),pagina+': falta el botón beta contra Gero.');
+      // Presencia y acción se validan por separado: un botón viejo puede seguir
+      // recibiendo un evento al cambiar de partida o desconectarse una sala.
+      const botonViejo=d.querySelector('#betaFinalGero');
+      for(const estado of ["NET.on=true","G.online=true","G.guest=true","G.auto=true","G.silent=true"]){
+        nueva();w.eval(estado);w.render();const boton=d.querySelector('#betaFinalGero');t.check(estado==='G.silent=true'||!boton||boton.disabled,pagina+': no permite ensayar con '+estado);
+        w.campanaProbarFinalGero();t.check(!w.eval('G.over')&&w.campanaLeer().id===previo.id,pagina+': una llamada directa está bloqueada con '+estado);w.eval('NET.on=false');
+      }
+      nueva('adreida');botonViejo.click();w.campanaProbarFinalGero();t.check(!w.eval('G.over')&&w.campanaLeer().id===previo.id,pagina+': un botón de la partida anterior no vence a otro rival.');
+      nueva();w.campanaPruebaDisponible=()=>false;w.render();t.check(!d.querySelector('#betaFinalGero'),pagina+': producción no muestra la herramienta.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': producción bloquea también la función.');w.campanaPruebaDisponible=disponible;
+      for(const estado of ['G.busy=true','G.resolving=true','TUT.pending=()=>{}']){nueva();w.eval(estado);w.render();t.check(d.querySelector('#betaFinalGero')?.disabled,pagina+': espera una resolución pendiente.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': no interrumpe '+estado);w.eval('TUT.pending=null');}
+      nueva();d.querySelector('#dice').classList.add('on');w.render();t.check(d.querySelector('#betaFinalGero')?.disabled,pagina+': no interrumpe el d20 de la pasiva de Gero.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': la función rechaza el dado pendiente.');d.querySelector('#dice').classList.remove('on');
+      w.setTimeout=(fn,ms,...args)=>{if(ms===2400||ms===450){const id=++siguiente;timers.set(id,()=>fn(...args));return id;}return poner(fn,ms,...args);};w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
+      w.crearMesaCampana=(host,op)=>{const mesa=crear(host,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
+      w.cinematicaFinal=async(ganador,motivo,acciones)=>{finales++;t.check(ganador===0&&acciones.continuarAutomaticamente,pagina+': conserva Victoria y solicita avanzar automáticamente al ascenso.');acciones.prepararRevancha?.();acciones.revancha();return true;};
+      nueva();w.eval('G.tutorial=true');w.render();t.check(!d.querySelector('#betaFinalGero').disabled,pagina+': el tutorial local quieto también permite el ensayo.');const g=w.eval('G');d.querySelector('#betaFinalGero').click();w.campanaProbarFinalGero();await sleep(550);
+      t.check(w.eval('G')===g&&w.eval('G.over&&P(FOE).alma===0'),pagina+': termina la partida actual una sola vez.');t.igual(finales,1,pagina+': una sola pantalla de Victoria');t.check(!w.eval('G.tutorial||TUT.on'),pagina+': sale limpiamente del tutorial.');
+      const ensayo=w.campanaLeer();t.check(ensayo.id!==previo.id&&ensayo.prueba&&ensayo.etapa===6&&ensayo.secreto==='ascenso',pagina+': un ensayo aislado permite ascenso sin seis mazos ganados.');
+      t.check(w.eval('G.campana.pruebaFinalGero')===true,pagina+': la partida queda marcada como prueba de final.');
+      t.igual(w.localStorage.getItem(clave),avanceReal,pagina+': conserva byte a byte el avance real');t.igual(w.localStorage.getItem(logros),sellosReales,pagina+': conserva los sellos reales');t.check(w.CAMPANA_LOGROS.total(true)<=1,pagina+': no inventa seis victorias.');
+      t.check(d.querySelector('#campanaAscenso')?.open,pagina+': la Victoria llega al rayo sin otro clic.');
+      const interrumpir=[...timers.values()][0];t.check(!!interrumpir,pagina+': programa la interrupción del sexto sello simulado.');interrumpir();
+      t.igual(d.querySelector('#campanaAscenso')?.dataset.fase,'detenido',pagina+': detiene primero el ascenso.');const quieto=[...timers.values()].at(-1);quieto();t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='revelacion'&&!d.querySelector('#campanaDeseo'),pagina+': revela al Editor desde la oscuridad.');
+      w.campanaVolverAlMenu();w.abrirCampana();t.check(w.campanaLeer().id===previo.id&&w.campanaLeer().etapa===3,pagina+': reabrir Campaña devuelve el avance original.');
+      t.igual(w.localStorage.getItem(clave),avanceReal,pagina+': tampoco modifica el guardado al abandonar el ensayo');
+    }finally{
+      w.eval('NET.on=false');w.campanaCerrar();w.relojPara();w.campanaPruebaDisponible=disponible;w.setTimeout=poner;w.clearTimeout=quitar;
+      [clave,logros,simulados].forEach((k,i)=>{if(anteriores[i]==null)w.localStorage.removeItem(k);else w.localStorage.setItem(k,anteriores[i]);});f.remove();
+    }
+  }
+});
+
+PRUEBAS.suite('campanaSecreto',async t=>{
+  const claves=['caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
+  const previos=claves.map(k=>localStorage.getItem(k));
+  try{for(const pagina of ['index.html','movil.html']){
+    claves.forEach(k=>localStorage.removeItem(k));
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=secreto-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana,mostrar=w.HTMLDialogElement.prototype.showModal,aperturasFinales=[],timers=new Map();let timerId=98000,acciones,cubrir,pelear,terminar,partidas=[];
+    try{
+      w.matchMedia=()=>({matches:true});
+      w.HTMLDialogElement.prototype.showModal=function(...args){const final=this.id==='campanaSecreto'&&w.campanaLeer()?.secreto==='final',r=mostrar.apply(this,args);if(final)aperturasFinales.push({fase:this.dataset.fase,fondo:w.getComputedStyle(this).backgroundColor,velo:w.getComputedStyle(this,'::backdrop').backgroundColor});return r;};
+      w.setTimeout=(fn,ms,...args)=>{if([2400,450,1000,900].includes(ms)){const id=++timerId;timers.set(id,{ms,fn:()=>fn(...args)});return id;}return poner(fn,ms,...args);};
+      w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
+      const ejecutar=ms=>{const par=[...timers].find(([id,t])=>t.ms===ms);t.check(!!par,pagina+': falta temporizador de '+ms+' ms.');if(par){timers.delete(par[0]);par[1].fn();}};
+      w.crearMesaCampana=(host,op)=>{const mesa=crear(host,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
+      w.cinematicaFinal=async(g,m,a)=>{acciones=a;return true;};
+      w.PITAGORAS_MESA.disolver=async()=>true;
+      w.montarRevelacionPitagoras=(host,op)=>{cubrir=op.onRevelado;return {destruir(){}};};
+      w.montarEscenaPitagoras=(host,op)=>{pelear=op.onFight;return {destruir(){}};};
+      w.montarFinalPitagoras=(host,op)=>{terminar=op.onTerminar;const n=d.createElement('b');n.textContent=op.nombre;host.appendChild(n);return {destruir(){}};};
+      w.startMatch=async(a,b,op)=>{partidas.push({a,b,op});w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana));};
+      const ids=w.eval('Object.keys(DECKS)'),ganar=(lider,prueba=false)=>{
+        const p={version:1,id:'secreto-'+lider+'-'+prueba,lider,personaje:w.campanaNormalizarPersonaje({nombre:'Ari <h1>'}),etapa:5,...(prueba?{prueba:true}:{})};
+        w.campanaGuardar(p);w.newGame(lider,'gero');w.eval('G.campana='+JSON.stringify({id:p.id,etapa:5,prueba})+';G.over=true');w.campanaFinal(0,'Victoria');return p;
+      };
+      for(let i=0;i<ids.length;i++){
+        const p=ganar(ids[i]);t.igual(w.CAMPANA_LOGROS.total(),i+1,pagina+': sello de mazo distinto');
+        w.campanaFinal(0,'Duplicado');t.igual(w.CAMPANA_LOGROS.total(),i+1,pagina+': una misma victoria no duplica sellos');
+        t.check(i===5?p.secreto==='ascenso':!p.secreto,pagina+': sólo los seis mazos abren el secreto.');
+      }
+      w.eval('campanaMemoria=null');
+      acciones.revancha();await sleep(40);t.check(d.querySelector('#campanaAscenso')?.open,pagina+': el sexto triunfo empieza el ascenso normal.');
+      ejecutar(2400);t.igual(d.querySelector('#campanaAscenso')?.dataset.fase,'detenido',pagina+': el héroe se detiene antes de oscurecer.');ejecutar(450);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='revelacion'&&!d.querySelector('#campanaDeseo')&&!d.querySelector('#campanaAscenso'),pagina+': la revelación interrumpe el ascenso antes del deseo.');
+      t.check(!d.querySelector('.pitBoss'),pagina+': no se puede atacar antes de revelar al monstruo');
+      t.check(!pelear,pagina+': el monstruo espera su revelación.');cubrir();
+      t.check(!!pelear,pagina+': al terminar el fundido se permite combatir.');
+      pelear();pelear();await sleep(0);t.igual(partidas.length,1,pagina+': un doble toque inicia una sola pelea');
+      const partida=partidas[0];t.igual(partida.b,'adreida',pagina+': reglas del mazo de Adreida');
+      t.check(partida.op.campana.jefeSecreto&&partida.op.campana.etapa===6&&partida.op.nombres[1]==='Pitágoras',pagina+': identidad del jefe independiente de su mazo.');
+      w.eval('G.over=true');w.campanaFinal(1,'Derrota');acciones.revancha();await sleep(0);t.igual(partidas.length,2,pagina+': revancha directa sin regresar al trono');
+      w.eval('G.over=true');w.campanaFinal(0,'Victoria');await sleep(0);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='final',pagina+': el Editor inicia su final especial.');t.check(aperturasFinales.length===1&&aperturasFinales[0].fase==='final'&&aperturasFinales[0].fondo==='rgba(0, 0, 0, 0)'&&aperturasFinales[0].velo==='rgba(0, 0, 0, 0)',pagina+': la primera apertura del epílogo conserva la mesa bajo un diálogo y fondo transparentes');
+      t.igual(w.CAMPANA_LOGROS.ganador().nombre,'Ari <h1>',pagina+': conserva el nombre como texto');t.check(!d.querySelector('#campanaSecreto h1'),pagina+': el nombre no inyecta HTML.');
+      terminar();ejecutar(900);t.check(!d.querySelector('#campanaSecreto')&&w.campanaLeer().secreto==='completado',pagina+': vuelve al menú con el final persistido.');
+      w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='creador',pagina+': después del final empieza un personaje nuevo.');w.campanaCerrar();
+      t.igual(w.CAMPANA_LOGROS.total(),6,pagina+': reiniciar no borra los seis sellos');
+      const p=ganar(ids[0],true);t.check(!p.secreto,pagina+': seis sellos reales no completan un ensayo de un solo mazo.');
+      t.igual(w.CAMPANA_LOGROS.total(true),1,pagina+': ensayo separado');t.igual(w.CAMPANA_LOGROS.total(),6,pagina+': no contamina los sellos reales');
+      // Una recarga reanuda el encuentro pendiente, no repite victorias ni borra logros.
+      p.secreto='combate';w.campanaGuardar(p);w.eval('campanaMemoria=null');w.campanaAbrirSecreto();t.igual(d.querySelector('#campanaSecreto').dataset.fase,'trono',pagina+': relectura del combate devuelve al Editor.');
+      const pendiente=pelear;w.campanaCerrar();pendiente();await sleep(0);t.igual(partidas.length,2,pagina+': un callback de escena cerrada no inicia otro combate.');
+    }finally{w.campanaCerrar();w.campanaCerrarDeseo();w.relojPara();w.setTimeout=poner;w.clearTimeout=quitar;w.HTMLDialogElement.prototype.showModal=mostrar;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }}finally{claves.forEach((k,i)=>{if(previos[i]==null)localStorage.removeItem(k);else localStorage.setItem(k,previos[i]);});}
+});
+
 PRUEBAS.suite('campanaPruebaBeta', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -440,13 +1371,18 @@ PRUEBAS.suite('victoriaCentrada', async t => {
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=final-centrado-interno';document.body.appendChild(f);await carga;
     const w=f.contentWindow;
     try{
-      const estilo=w.document.createElement('style');estilo.textContent=w.eval('FIN_CSS');w.document.head.appendChild(estilo);
+      const estilo=w.document.createElement('style');estilo.textContent=w.eval('FIN_CSS')+' .fin .sello{animation:none!important}';w.document.head.appendChild(estilo);
       const fin=w.document.createElement('div');fin.className='fin sello-on';fin.innerHTML='<div class="sello"><b>VICTORIA</b><small>Victoria de prueba</small><i>Turnos: 7 · Fender 17 · Mohamed 0</i></div>';w.document.body.appendChild(fin);
-      await sleep(30);
-      const caja=fin.querySelector('.sello').getBoundingClientRect(),pantalla=fin.getBoundingClientRect();
-      t.check(Math.abs(caja.x+caja.width/2-(pantalla.x+pantalla.width/2))<1,pagina+': resultado centrado horizontalmente.');
-      t.check(Math.abs(caja.top-(pantalla.y+pantalla.height/2))<2,pagina+': el título debe comenzar en el centro vertical, sin desplazar toda la información hacia abajo.');
-      t.check(w.getComputedStyle(fin.querySelector('b')).transform==='none',pagina+': título sin inclinación.');
+      await w.document.fonts.ready;
+      for(const [ancho,alto] of [[320,568],[390,844],[1440,900]]){
+        f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(30);
+        const palabra=fin.querySelector('b'),caja=palabra.getBoundingClientRect(),pantalla=fin.getBoundingClientRect();
+        t.check(Math.abs(caja.x+caja.width/2-(pantalla.x+pantalla.width/2))<1,pagina+': palabra centrada horizontalmente a '+ancho);
+        t.check(Math.abs(caja.y+caja.height/2-(pantalla.y+pantalla.height/2))<1,pagina+': la palabra misma debe estar en el centro vertical a '+ancho);
+        const rango=w.document.createRange();rango.selectNodeContents(palabra);const texto=rango.getBoundingClientRect();
+        t.check(texto.left>=pantalla.left+12&&texto.right<=pantalla.right-12,pagina+': el texto se sale del visor a '+ancho);
+        t.check(w.getComputedStyle(palabra).transform==='none',pagina+': título sin inclinación.');
+      }
       t.check(w.eval("CARDS.pasoatronador.n")==='Thunder step',pagina+': nombre actualizado de Thunder step.');
     }finally{f.remove();}
   }
@@ -560,7 +1496,10 @@ PRUEBAS.suite('campanaDeseo', async t => {
     };
     try{
       w.localStorage.removeItem(clave);
-      w.fetch=async(url,op)=>{if(new URL(url,w.location.href).pathname.includes('/art/'))return fetchOriginal(url,op);peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
+      w.fetch=async(url,op)=>{const ruta=new URL(url,w.location.href).pathname;
+        // El sonido consulta su catálogo: son lecturas independientes del deseo.
+        if((!op?.method||op.method==='GET')&&(ruta.includes('/art/')||ruta.includes('/audio/')||ruta.endsWith('/api/sfx/catalogo')))return fetchOriginal(url,op);
+        peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
       w.campanaGuardar({version:1,id:'deseo-prueba',lider:'fender',etapa:5});w.campanaAbrirDeseo();
       t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo sólo se ofrece al vencer a todos los rivales.');
       w.campanaGuardar({...w.campanaLeer(),etapa:6,mesaPendiente:5});w.campanaAbrirDeseo();
@@ -934,6 +1873,10 @@ PRUEBAS.suite('campanaMiniatura', async t => {
         t.check(JSON.stringify(a)===JSON.stringify(b),pagina+': el retrato depende del orden de los polígonos');
       }
       w.eval('campanaRaster=null');
+      const retratoCompleto=selector=>{
+        const carta=d.querySelector(selector),foto=carta?.querySelector('img');
+        t.check(foto&&foto.offsetWidth>=carta.clientWidth-2&&foto.offsetHeight>=carta.clientHeight-2,pagina+': el retrato no llena '+selector);
+      };
       const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',figura:'mago',peinado:'capucha',equipo:'libro',color:'azul'});
       const retrato=w.campanaRetrato(personaje);
       t.check(retrato===w.campanaRetrato({...personaje,nombre:'Otro nombre'}),pagina+': se debe reutilizar la foto mientras no cambie la apariencia');
@@ -942,6 +1885,7 @@ PRUEBAS.suite('campanaMiniatura', async t => {
       w.campanaGuardar({version:1,id:'miniatura',lider:'fender',personaje,etapa:1,enEncuentro:true});w.campanaRuta();
       t.check(d.querySelector('.campanaTu').textContent==='<Ariadna>'&&!d.querySelector('ariadna'),pagina+': el nombre de la ficha se interpreta como HTML o sigue diciendo TÚ');
       t.check(d.querySelector('.campanaIdentidad img').src===retrato,pagina+': falta la carta del jugador sobre la mesa');
+      retratoCompleto('.campanaIdentidad');
       const escena=w.eval('campanaMesaEscena');await escena.saltarHacia(1).promesa;
       const r=w.eval('CAMPANA_CASILLAS[1]'),p=escena.posicion,giro=escena.orientacion;
       t.check(Math.sin(giro)*(r[0]-p[0])>0&&Math.cos(giro)*(r[1]-p[1])>0,pagina+': la miniatura termina mirando en otra dirección');
@@ -956,10 +1900,13 @@ PRUEBAS.suite('campanaMiniatura', async t => {
       // Mismo mazo en ambos lados: sólo la carta del jugador cambia.
       w.newGame('fender','fender');w.eval('G.campana='+JSON.stringify({personaje})+';G.fast=false;G.auto=false;G.silent=false;G.over=true');w.FXON=()=>true;
       w.render();t.check(d.querySelector('#leaderMe .liderJugador img')?.src===retrato&&!d.querySelector('#leaderFoe .liderJugador'),pagina+': la mesa de combate confunde personaje y mazo');
+      if(pagina==='index.html')retratoCompleto('#leaderMe .liderJugador');
       w.cortinillaVS('fender','fender',{campana:{personaje}});await sleep(30);
       t.check(d.querySelector('.vs .izq.cartaJugador img')?.src===retrato&&!d.querySelector('.vs .der.cartaJugador'),pagina+': el VS usa al protagonista en vez de la miniatura');
+      retratoCompleto('.vs .izq.cartaJugador');
       d.querySelector('.vs')?.remove();w.cinematicaFinal(0,'Victoria de prueba',{});await sleep(30);
       t.check(d.querySelector('.fin .gana.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .pierde.cartaJugador'),pagina+': la victoria usa otra foto o modifica al rival');
+      retratoCompleto('.fin .gana.cartaJugador');
       t.check(d.querySelector('.fin .lname')&&d.querySelector('.fin .sello>i').textContent.includes('<Ariadna>')&&!d.querySelector('ariadna'),pagina+': el final pierde o interpreta el nombre');
       w.cerrarCinematica();w.cinematicaFinal(1,'Derrota de prueba',{});await sleep(30);
       t.check(d.querySelector('.fin .pierde.cartaJugador img')?.src===retrato&&!d.querySelector('.fin .gana.cartaJugador'),pagina+': al perder se intercambian las identidades');
@@ -1112,6 +2059,157 @@ PRUEBAS.suite('onlineFlujo', async t => {
 /* El Lugar ocupa su altura real, incluso con texto largo o una Reliquia.
    Regresión de la captura móvil: el flex comprimía #midRow y las cartas
    propias quedaban encima del Puente y de su texto. */
+PRUEBAS.suite('comicSecreto', async t => {
+  for(const archivo of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;inset:0;width:390px;height:740px;z-index:999999';
+    const carga=new Promise(r=>f.onload=r);f.src=archivo+'?test=comic-interna';document.body.appendChild(f);
+    try{
+      await carga;const w=f.contentWindow,d=f.contentDocument;
+      const preparar=()=>{w.eval("SEL_PASO='yo';SELP=null;buildSelect();showScreen('select');");};
+      const abierto=()=>!!d.querySelector('#comicSecreto[open]');
+      const tecla=(paso,repeat=false)=>d.body.dispatchEvent(new w.KeyboardEvent('keydown',{key:paso===1?'ArrowRight':'ArrowLeft',bubbles:true,repeat}));
+      const codigo=[1,-1,1,-1,1,1,-1,-1];
+      preparar();await sleep(50);
+      codigo.slice(0,7).forEach(p=>tecla(p));t.check(!abierto(),archivo+': siete movimientos no abren');
+      tecla(-1,true);t.check(!abierto(),archivo+': mantener una tecla no completa el secreto');
+      tecla(-1);t.check(abierto(),archivo+': ocho movimientos abren el secreto');
+      const dialogo=d.querySelector('#comicSecreto'),elegido=w.eval('SELP');
+      tecla(1);t.igual(w.eval('SELP'),elegido,archivo+': el pop up no mueve el selector');
+      t.check(!dialogo.querySelector('a[download],a[href]'),archivo+': no hay descarga ficticia');
+      dialogo.querySelector('button').click();await sleep(30);t.check(!abierto(),archivo+': volver cierra');
+      codigo.slice(0,4).forEach(p=>tecla(p));w.showScreen('menu');await sleep(30);preparar();await sleep(30);
+      codigo.slice(4).forEach(p=>tecla(p));t.check(!abierto(),archivo+': salir borra la secuencia');
+      w.eval("SEL_PASO='rival';buildSelect();");await sleep(30);codigo.forEach(p=>tecla(p));t.check(!abierto(),archivo+': rival excluido');
+      preparar();await sleep(30);
+      if(archivo==='index.html')codigo.forEach(p=>d.querySelector(p===1?'#carrSig':'#carrAnt').click());
+      else{
+        const pista=d.querySelector('#leaderList');
+        for(const p of codigo){
+          pista.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,isPrimary:true,button:0,pointerId:1,clientX:160,clientY:180}));
+          pista.dispatchEvent(new w.PointerEvent('pointerup',{bubbles:true,isPrimary:true,button:0,pointerId:1,clientX:160+p*70,clientY:184}));
+        }
+      }
+      t.check(abierto(),archivo+': flechas o gestos también desbloquean');
+      const r=dialogo.getBoundingClientRect();t.check(Math.abs((r.left+r.right)/2-w.innerWidth/2)<2,archivo+': pop up centrado');
+      t.check(r.top>=0&&r.bottom<=w.innerHeight+1,archivo+': pop up cabe en pantalla');
+    }finally{f.remove();}
+  }
+});
+
+PRUEBAS.suite('sonidos', async t => {
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
+  const carga=new Promise(r=>f.onload=r);f.src='movil.html?test=sonidos-interna';document.body.appendChild(f);
+  try{
+    await carga;const w=f.contentWindow,a=w.CAOZ_AUDIO;await a.listo;
+    t.igual(a.catalogo.length,37,'El banco debe estar disponible también en móvil');
+    t.igual(a.magia({id:'escarcha',n:'Rayo de Escarcha'}),'spell_frost','Escarcha no debe confundirse con electricidad por la palabra Rayo');
+    t.igual(a.magia({id:'pasoatronador',n:'Thunder step',sub:['cancion']}),'spell_lightning','Thunder step conserva su descarga');
+    t.igual(a.magia({id:'contrahechizo'}),'shield','Contrahechizo utiliza el sello protector');
+    let comienzos=0,paradas=0;
+    const parametro=()=>({value:0,setTargetAtTime(){}}),nodo=()=>({connect(){},disconnect(){},gain:parametro()});
+    w.AudioContext=class{
+      constructor(){this.state='suspended';this.currentTime=0;this.destination={};}
+      resume(){this.state='running';return Promise.resolve();}
+      createGain(){return nodo();}
+      createDynamicsCompressor(){return {...nodo(),threshold:parametro(),knee:parametro(),ratio:parametro(),attack:parametro(),release:parametro()};}
+      decodeAudioData(){return Promise.resolve({duration:1});}
+      createBufferSource(){return {...nodo(),playbackRate:{value:1},start(){comienzos++;},stop(){paradas++;this.onended?.();}};}
+    };
+    w.newGame('fender','mohamed');w.eval('G.fast=false;G.auto=false;G.silent=false');
+    a.configurar({silencio:false,volumen:.7});await a.desbloquear();await Promise.all(a.catalogo.map(s=>a.cargar(s.id)));
+    t.check(a.play('attack_hit'),'El contacto debe reproducirse tras desbloquear audio');
+    t.igual(comienzos,1,'Un contacto produce una sola voz');
+    a.play('attack_hit');t.igual(comienzos,1,'El límite evita golpes duplicados en el mismo instante');
+    a.configurar({silencio:true});t.igual(a.estado.voces,0,'Silenciar corta las voces que ya estaban sonando');
+    t.check(paradas>0,'Silenciar detiene la fuente de audio');
+    t.check(!a.play('heal'),'Silenciar también impide los efectos nuevos');
+    a.configurar({silencio:false,volumen:50});t.igual(a.ajustes.volumen,1,'El volumen no puede exceder el máximo');
+    for(const modo of ['fast','silent','auto']){w.eval('G.'+modo+'=true');t.check(!a.play('heal'),'No debe sonar en modo '+modo);w.eval('G.'+modo+'=false');}
+    for(const s of a.catalogo)a.play(s.id);
+    t.check(a.estado.voces<=8,'Una ráfaga de efectos no puede saturar con más de ocho voces');
+    a.detener();t.igual(a.estado.voces,0,'Al salir no quedan fuentes sonando');
+    t.check(!a.play('sonido_inexistente'),'Un id desconocido es inocuo para el motor');
+    t.nota('Banco móvil, categorías, contacto único, silencio, límites y modos rápidos verificados.');
+  }finally{f.contentWindow.CAOZ_AUDIO?.detener();f.remove();}
+});
+
+PRUEBAS.suite('hoverNatural', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=hover-natural-interna';document.body.appendChild(f);
+    let reloj,azar;
+    try{
+      await carga;const w=f.contentWindow,d=f.contentDocument,a=w.CAOZ_AUDIO,tomas=[];await a.listo;
+      reloj=w.performance.now;azar=w.Math.random;
+      const param=()=>({value:0,setTargetAtTime(){}}),nodo=()=>({connect(){},disconnect(){},gain:param()});
+      w.AudioContext=class{
+        constructor(){this.state='running';this.currentTime=0;this.destination={};}resume(){return Promise.resolve();}
+        createGain(){return nodo();}createDynamicsCompressor(){return {...nodo(),threshold:param(),knee:param(),ratio:param(),attack:param(),release:param()};}
+        decodeAudioData(){return Promise.resolve({duration:1});}
+        createBufferSource(){return {...nodo(),playbackRate:{value:1},connect(g){this.destino=g;},start(){tomas.push({ritmo:this.playbackRate.value,ganancia:this.destino.gain.value,buffer:this.buffer});},stop(){this.onended?.();}};}
+      };
+      w.newGame('fender','mohamed');w.eval('G.fast=false;G.auto=false;G.silent=false');a.configurar({silencio:false,volumen:.7});await a.desbloquear();await a.cargar('card_hover');await a.cargar('victory_slam');
+      let tiempo=reloj.call(w.performance)+1000,paso=0;w.performance.now=()=>tiempo;
+      w.Math.random=()=>[.12,.2,.86,.8,.36,.4,.64,.6][paso++%8];
+      const base=a.catalogo.find(s=>s.id==='card_hover').volumen;
+      for(let i=0;i<8;i++){tiempo+=200;a.play('card_hover',{intensidad:.5});}
+      t.igual(tomas.length,8,pagina+': cada roce debe producir una voz');
+      t.check(tomas.every(v=>v.ritmo>=2**(-1/12)&&v.ritmo<=2**(1/12)),pagina+': pitch limitado a un semitono');
+      t.check(tomas.every((v,i)=>!i||v.ritmo!==tomas[i-1].ritmo),pagina+': no repetir el mismo pitch consecutivo');
+      t.check(tomas.every(v=>v.buffer===tomas[0].buffer),pagina+': usar siempre el mismo archivo decodificado');
+      t.check(new Set(tomas.map(v=>v.ganancia)).size>1,pagina+': también debe variar el volumen');
+      t.check(tomas.every(v=>v.ganancia>=base*.91*.9-.0001&&v.ganancia<=base*.91*1.1+.0001),pagina+': variación de volumen moderada y relativa al estudio');
+      tiempo+=200;a.play('card_hover',{variar:false,intensidad:1});t.igual(tomas.at(-1).ritmo,1,pagina+': reproducción sin variación');t.igual(tomas.at(-1).ganancia,base,pagina+': conserva el volumen original sin variación');
+      tiempo+=200;a.play('victory_slam');t.igual(tomas.at(-1).ritmo,1,pagina+': Victoria conserva su identidad sonora');
+      w.Math.random=()=>.5;
+      const carta=d.createElement('div');carta.className='card';carta.innerHTML='<span>Prueba</span>';d.querySelector('#hand').appendChild(carta);
+      const mover=(tipo,x)=>carta.dispatchEvent(new w.PointerEvent(tipo,{bubbles:true,pointerType:'mouse',pointerId:1,clientX:x,clientY:100}));
+      const barrido=rapido=>{w.dispatchEvent(new w.Event('blur'));tiempo+=200;mover('pointermove',100);tiempo+=20;mover('pointermove',rapido?140:102);tiempo+=20;mover('pointerover',rapido?180:104);return tomas.at(-1).ganancia;};
+      const suave=barrido(false),fuerte=barrido(true);t.check(fuerte>suave*1.1,pagina+': un barrido rápido se siente más marcado');
+      tiempo+=200;mover('pointerover',600);t.check(tomas.at(-1).ganancia<fuerte,pagina+': una pausa no conserva la velocidad del barrido anterior');
+      const cantidad=tomas.length;tiempo+=200;carta.firstChild.dispatchEvent(new w.PointerEvent('pointerover',{bubbles:true,pointerType:'mouse',relatedTarget:carta}));t.igual(tomas.length,cantidad,pagina+': no repetir dentro de la misma carta');
+      tiempo+=200;carta.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerType:'touch'}));t.check(tomas.at(-1).ganancia>suave&&tomas.at(-1).ganancia<fuerte,pagina+': el toque usa una intensidad intermedia');
+      const antes=tomas.length;a.configurar({silencio:true});tiempo+=200;mover('pointerover',900);t.igual(tomas.length,antes,pagina+': el silencio se respeta también al mover rápido');
+    }finally{if(reloj)f.contentWindow.performance.now=reloj;if(azar)f.contentWindow.Math.random=azar;f.contentWindow.CAOZ_AUDIO?.detener();f.remove();}
+  }
+});
+
+PRUEBAS.suite('sonidosMomentos', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=sonidos-momentos-interna';document.body.appendChild(f);
+    try{
+      await carga;const w=f.contentWindow,d=f.contentDocument,a=w.CAOZ_AUDIO,eventos=[];await a.listo;
+      const param=()=>({value:0,setTargetAtTime(){}}),nodo=()=>({connect(){},disconnect(){},gain:param()});
+      w.AudioContext=class{
+        constructor(){this.state='running';this.currentTime=0;this.destination={};}resume(){return Promise.resolve();}
+        createGain(){return nodo();}createDynamicsCompressor(){return {...nodo(),threshold:param(),knee:param(),ratio:param(),attack:param(),release:param()};}
+        decodeAudioData(){return Promise.resolve({duration:1});}
+        createBufferSource(){return {...nodo(),playbackRate:{value:1},start(){},stop(){this.onended?.();}};}
+      };
+      w.newGame('fender','mohamed');w.eval('G.fast=false;G.auto=false;G.silent=false');w.render();w.showScreen('board');
+      a.configurar({silencio:false,volumen:.7});await a.desbloquear();await Promise.all(a.catalogo.map(s=>a.cargar(s.id)));
+      w.addEventListener('caoz:sfx',e=>eventos.push({id:e.detail.id,t:w.performance.now()}));
+      const contar=id=>eventos.filter(e=>e.id===id).length;
+      const carta=d.createElement('div');carta.className='card';carta.innerHTML='<span>Prueba</span>';d.querySelector('#hand').appendChild(carta);
+      carta.dispatchEvent(new w.PointerEvent('pointerover',{bubbles:true,pointerType:'mouse'}));t.igual(contar('card_hover'),1,pagina+': hover de carta debe sonar');
+      await sleep(100);carta.firstChild.dispatchEvent(new w.PointerEvent('pointerover',{bubbles:true,pointerType:'mouse',relatedTarget:carta}));t.igual(contar('card_hover'),1,pagina+': moverse dentro de la carta no duplica hover');
+      carta.dispatchEvent(new w.PointerEvent('pointerdown',{bubbles:true,pointerType:'touch'}));t.igual(contar('card_hover'),2,pagina+': la exploración táctil tiene sonido');carta.remove();
+      const u=w.eval("P(0).field.push(mkUnit('discipulo',0));P(0).field.at(-1)");w.render();
+      await w.fxLunge(u,'face');t.igual(contar('attack_hit'),0,pagina+': el ataque al protagonista no duplica el golpe genérico');
+      await w.fxFace(1,2);t.igual(contar('leader_hit'),1,pagina+': el protagonista debe sonar al recibir el golpe');
+      await sleep(100);await w.fxFace(0,1);t.igual(contar('leader_hit'),2,pagina+': ambos protagonistas usan el sonido propio');
+      await sleep(100);const antes=contar('leader_hit');a.configurar({silencio:true});await w.fxFace(1,1);t.igual(contar('leader_hit'),antes,pagina+': respeta silencio');a.configurar({silencio:false});
+      let aterriza=0;const observar=new w.MutationObserver(()=>{if(!aterriza&&d.querySelector('.fin.sello-on'))aterriza=w.performance.now();});observar.observe(d.body,{subtree:true,attributes:true,attributeFilter:['class']});
+      w.cinematicaFinal(0,'Victoria de prueba',{});await sleep(2150);observar.disconnect();
+      const golpes=eventos.filter(e=>e.id==='victory_slam');t.igual(golpes.length,1,pagina+': Victoria tiene un único impacto propio');
+      t.check(golpes[0].t-aterriza>=150&&golpes[0].t-aterriza<450,pagina+': el sonido debe coincidir con la llegada del sello, no con el comienzo del final');
+      w.cerrarCinematica();
+      w.cinematicaFinal(0,'Salida anticipada',{});await sleep(50);d.querySelector('.fin').click();await sleep(350);t.igual(contar('victory_slam'),1,pagina+': saltar no dispara un golpe tardío');
+    }finally{f.contentWindow.CAOZ_AUDIO?.detener();f.contentWindow.cerrarCinematica();f.remove();}
+  }
+});
+
 PRUEBAS.suite('terrenoMovil', async t => {
   const f=document.createElement('iframe');
   f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px;border:0';
@@ -1668,7 +2766,7 @@ PRUEBAS.suite('regresiones', async t => {
     const tipos = ['personaje','hechizo','trampa','objeto','lugar'];
     const vistos = {};
     for (const tipo of tipos){
-      const id = Object.keys(T.CARDS).find(x => T.CARDS[x].t===tipo && !T.CARDS[x].token);
+      const id = Object.keys(T.CARDS).find(x => T.CARDS[x].t===tipo && !T.CARDS[x].token && !T.CARDS[x].editorJuego);
       const d = cardEl(id);   // tests.js corre dentro del juego: es su propia función
       d.style.cssText = 'position:fixed;left:-9999px';
       document.body.appendChild(d);
@@ -2068,7 +3166,7 @@ PRUEBAS.suite('regresiones', async t => {
     const p = T.P(0);
 
     // 1) con una mano impagable la ofrece
-    const caras = Object.keys(T.CARDS).filter(id => T.CARDS[id].c >= 4 && !T.CARDS[id].token).slice(0,5);
+    const caras = Object.keys(T.CARDS).filter(id => T.CARDS[id].c >= 4 && !T.CARDS[id].token && !T.CARDS[id].editorJuego).slice(0,5);
     p.hand = caras.slice();
     p.manoRehecha = false;
     T.G.turnNo = 1; T.G.active = 0; T.G.phase = 'principal';
@@ -2196,7 +3294,7 @@ PRUEBAS.suite('regresiones', async t => {
 
     // 3) con puntos que no alcanzan para nada, se calla
     limpiar();
-    const caro = Object.keys(T.CARDS).find(id => T.CARDS[id].c >= 7 && !T.CARDS[id].token);
+    const caro = Object.keys(T.CARDS).find(id => T.CARDS[id].c >= 7 && !T.CARDS[id].token && !T.CARDS[id].editorJuego);
     p.hand = [caro]; p.pd = 1; p.leaderUsed = true; p.field.length = 0;
     window.pedirTerminarTurno();
     t.check(!preguntando(), 'si los PD no alcanzan para nada, preguntar sólo estorba');

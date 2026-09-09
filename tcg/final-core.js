@@ -28,6 +28,7 @@ function limpiarTransicionMenu(){
 }
 function animarTransicionMenu(pantalla,ventana=null){
   limpiarTransicionMenu();
+  if(pantalla)window.CAOZ_AUDIO?.play('menu_gold');
   if(!pantalla||matchMedia('(prefers-reduced-motion:reduce)').matches)return;
   const barrido=ventana?document.createElement('div'):document.getElementById('barrido');
   if(ventana){
@@ -105,13 +106,13 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 .fin .vscard.pierde::after{content:"";position:absolute;inset:0;z-index:5;opacity:0;transition:opacity .5s .7s;pointer-events:none;
   background:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 140' preserveAspectRatio='none'><g fill='none' stroke='rgba(255,255,255,.75)' stroke-width='.9'><polyline points='52,0 47,22 55,38 44,58 53,74 41,96 50,118 46,140'/><polyline points='47,22 30,30 18,26'/><polyline points='44,58 62,66 74,60'/><polyline points='41,96 26,104 20,120'/><polyline points='53,74 70,88'/></g></svg>") center/100% 100% no-repeat}
 .fin.entra .vscard.pierde::after{opacity:1}
-/* el sello */
-/* Sólo gira la palabra: el giro del bloque entero arrastraba el motivo y la
-   línea de turnos y Alma, y se veían descentrados. */
-.fin .sello{position:absolute;left:0;right:0;top:50%;box-sizing:border-box;z-index:6;text-align:center;opacity:0;transform:scale(3);width:auto;padding:0 16px;
-  transition:opacity .2s, transform .4s cubic-bezier(.2,1.5,.4,1)}
-.fin.sello-on .sello{opacity:1;transform:scale(1)}
-.fin .sello b{display:block;font:900 clamp(46px,13vw,104px)/1 var(--serif,serif);letter-spacing:3px;
+/* Se centra la línea del título en el visor; la explicación queda debajo.
+   La escala usa ese mismo centro y toca su tamaño final a los 220 ms. */
+.fin .sello{--tam-sello:clamp(36px,11.8vw,104px);position:absolute;left:0;right:0;top:calc(50% - var(--tam-sello)/2);box-sizing:border-box;z-index:6;text-align:center;opacity:0;transform:scale(3);transform-origin:50% calc(var(--tam-sello)/2);width:auto;padding:0 16px}
+.fin.sello-on .sello{opacity:1;transform:scale(1);animation:finSelloImpacto .4s linear}
+@keyframes finSelloImpacto{0%{opacity:0;transform:scale(3)}55%{opacity:1;transform:scale(1)}72%{transform:scale(.95)}100%{transform:scale(1)}}
+@media(prefers-reduced-motion:reduce){.fin.sello-on .sello{animation:none}}
+.fin .sello b{display:block;font:900 var(--tam-sello)/1 var(--serif,serif);letter-spacing:0;white-space:nowrap;
   background-image:linear-gradient(180deg,#fff3c4 0%,#e6bb52 46%,#8d6f21 100%);-webkit-background-clip:text;background-clip:text;color:transparent;
   filter:drop-shadow(0 5px 0 #3a2a08) drop-shadow(0 0 28px rgba(230,187,82,.75))}
 .fin.derrota .sello b{background-image:linear-gradient(180deg,#ffd9d6 0%,#e0524a 46%,#4a1010 100%);
@@ -257,7 +258,7 @@ async function cinematicaFinal(winner, why, acciones){
     b.style.setProperty('--del', (-Math.random() * 9) + 's');
     capa.appendChild(b);
   }
-  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde');
+  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):G.campana?.jefeSecreto&&s!==ME&&window.campanaCartaPitagoras?campanaCartaPitagoras(s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde');
   const pierde = carta(1-winner);
   const gana   = carta(winner);
   capa.appendChild(pierde); capa.appendChild(gana);
@@ -303,6 +304,7 @@ async function cinematicaFinal(winner, why, acciones){
   capa.onclick = () => { saltado = true; salta(); };
   document.body.appendChild(capa);
   document.body.classList.add('fin-on');
+  window.CAOZ_AUDIO?.detener();window.CAOZ_AUDIO?.play(gano?'victory':'defeat');
   const vive = () => G === g0 && document.body.contains(capa);
   // sigue mientras la partida sea ésta y nadie haya tocado
   const espera = async ms => { await Promise.race([nap(ms), saltar]); return !saltado && vive(); };
@@ -312,6 +314,10 @@ async function cinematicaFinal(winner, why, acciones){
   if(await espera(520)) capa.classList.add('entra');
   if(await espera(1050)){
     capa.classList.add('sello-on');
+    if(gano){
+      const golpe=()=>{if(vive()&&!saltado)window.CAOZ_AUDIO?.play('victory_slam',{variar:false});};
+      if(matchMedia('(prefers-reduced-motion:reduce)').matches)golpe();else setTimeout(golpe,220);
+    }
     if(typeof vibra === 'function') vibra(gano ? [30, 50, 30] : [90]);
     const app = document.getElementById('app');
     if(app && !gano) app.animate([{translate:'0 0'},{translate:'-7px 4px'},{translate:'7px -4px'},{translate:'-4px 2px'},{translate:'0 0'}],{duration:340});
@@ -323,6 +329,7 @@ async function cinematicaFinal(winner, why, acciones){
   capa.onclick = null;
   // y se espera a la decisión; si mientras tanto empieza otra partida, se retira
   const vigia = setInterval(() => { if(!vive()){ clearInterval(vigia); capa.remove(); document.body.classList.remove('fin-on'); elige(null); } }, 400);
+  if(acciones?.continuarAutomaticamente&&vive()) bRev.click();
   await eleccion;
   clearInterval(vigia);
   return true;
@@ -385,11 +392,11 @@ async function voladoDomo(nombreRival){
   texto.textContent='Elegiste '+eleccion.toUpperCase()+'. La moneda está en el aire…';
   const salio=rnd(2)===0?'cara':'cruz';
   const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  moneda.classList.add('girando');
+  moneda.classList.add('girando');window.CAOZ_AUDIO?.play('coin_flip');
   let cara=true;
   const alterna=reducido?null:setInterval(()=>{cara=!cara;moneda.innerHTML=icono(cara?'cara':'cruz');},180);
   try{await nap(reducido?350:1500);}finally{if(alterna!==null)clearInterval(alterna);}
-  moneda.classList.remove('girando');moneda.style.animation='none';
+  moneda.classList.remove('girando');window.CAOZ_AUDIO?.play('coin_land');moneda.style.animation='none';
   moneda.innerHTML=icono(salio);moneda.setAttribute('aria-label','Moneda: '+salio);
   const ganas=salio===eleccion;
   texto.innerHTML=`Salió <b>${salio.toUpperCase()}</b><span class="vd-result"></span>`;
@@ -506,7 +513,7 @@ async function onlineMonedaRecibe(m){
 async function onlineMostrarMoneda(resultado,nombre){
   const panel=document.getElementById('ovPanel');panel.innerHTML='<div class="volado"><h3>Cara o cruz</h3><div class="onlineMoneda" aria-label="Moneda girando">✦</div><p class="onlineResultado">La moneda está en el aire…</p></div>';
   openOv();const moneda=panel.querySelector('.onlineMoneda'),texto=panel.querySelector('.onlineResultado');
-  await sleep(1400);moneda.classList.add('quieta');moneda.textContent=resultado===0?'☀':'☾';
+  window.CAOZ_AUDIO?.play('coin_flip');await sleep(1400);window.CAOZ_AUDIO?.play('coin_land');moneda.classList.add('quieta');moneda.textContent=resultado===0?'☀':'☾';
   moneda.setAttribute('aria-label',resultado===0?'Cara':'Cruz');
   texto.textContent=(resultado===0?'Cara':'Cruz')+' — empieza '+(nombre||'tu rival');await sleep(1800);
 }
@@ -567,16 +574,24 @@ function campanaCrearNiebla(etapa,retirada=false){
   </g>`;
   return niebla;
 }
-let campanaMemoria=null,campanaLanzando=false;
+let campanaMemoria=null,campanaLanzando=false,campanaEnsayoGero=null;
 function campanaLeer(){
-  let dato=campanaMemoria;
+  let dato=campanaEnsayoGero||campanaMemoria;
   try{if(!dato)dato=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
   if(!dato||dato.version!==1||typeof dato.id!=='string'||!LEADERS[dato.lider]||!Number.isInteger(dato.etapa)||dato.etapa<0||dato.etapa>CAMPANA_RIVALES.length)return null;
   if(dato.mesaPendiente!=null&&(!Number.isInteger(dato.mesaPendiente)||dato.mesaPendiente!==dato.etapa-1||dato.mesaPendiente<0||dato.mesaPendiente>5))delete dato.mesaPendiente;
   if(dato.personaje)dato.personaje=campanaNormalizarPersonaje(dato.personaje);
+  if(dato.prueba!==true)delete dato.prueba;
+  if(dato.etapa!==6||!['ascenso','revelacion','reto','esporas','trono','combate','final','completado'].includes(dato.secreto))delete dato.secreto;
+  // También la primera lectura tras recargar es el avance vivo. Las escenas
+  // comprueban su identidad para cancelar sólo al empezar otra campaña.
+  if(!campanaEnsayoGero)campanaMemoria=dato;
   return dato;
 }
 function campanaGuardar(dato){
+  // Este recorrido temporal no reemplaza la campaña que el jugador guardó.
+  if(campanaEnsayoGero&&dato?.id===campanaEnsayoGero.id){campanaEnsayoGero=dato;return true;}
+  campanaEnsayoGero=null;
   campanaMemoria=dato;
   try{localStorage.setItem(CAMPANA_CLAVE,JSON.stringify(dato));return true;}
   catch(_){toast('No se pudo guardar en este navegador. Puedes continuar mientras no cierres el juego.');return false;}
@@ -620,7 +635,7 @@ function campanaAnimarEntrada(){
 }
 let campanaMesaEscena=null,campanaPreparando=null;
 function campanaLimpiarMesa(){campanaLimpiarPreparacion();campanaLimpiarCreador();if(campanaMesaEscena)campanaMesaEscena.destruir();campanaMesaEscena=null;}
-function campanaCerrar(){if(typeof campanaCancelarAscenso==='function')campanaCancelarAscenso();campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
+function campanaCerrar(){if(typeof campanaCancelarSecreto==='function')campanaCancelarSecreto();if(typeof campanaCancelarAscenso==='function')campanaCancelarAscenso();campanaCancelarZoom();campanaLimpiarEntrada();campanaLimpiarMesa();const d=document.getElementById('campanaPanel');if(d&&d.open)d.close();}
 function campanaVolverAlMenu(){
   campanaCerrar();showScreen('menu');
   // La campaña es un diálogo: debajo ya estaba el menú, así que el regreso
@@ -637,8 +652,9 @@ function campanaCabecera(d,titulo,sub){
 }
 function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
+  campanaEnsayoGero=null;
   const progreso=campanaLeer();
-  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&progreso.deseo))campanaRuta();else campanaCrear();
+  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&(progreso.deseo||progreso.secreto==='completado')))campanaRuta();else campanaCrear();
   campanaAnimarEntrada();
 }
 function campanaElegir(){
@@ -683,6 +699,7 @@ function campanaElegir(){
 }
 function campanaRuta(aviso=''){
   const progreso=campanaLeer();if(!progreso){campanaCrear();return;}
+  if(progreso.etapa===6&&progreso.secreto&&progreso.secreto!=='ascenso'&&typeof campanaAbrirSecreto==='function'){campanaAbrirSecreto();return;}
   const victoria=Number.isInteger(progreso.mesaPendiente)?progreso.mesaPendiente:null;
   const p=victoria===null?progreso:{...progreso,etapa:victoria};
   const completa=p.etapa===CAMPANA_RIVALES.length;
@@ -812,8 +829,11 @@ function campanaVencerPrueba(e){
   const p=campanaLeer();
   if(!campanaPruebaDisponible()||campanaPreparando!==e||!e.dialogo?.open||!p||p.id!==e.id||p.etapa!==e.etapa||p.mesaPendiente!=null||NET.on)return;
   const rival=CAMPANA_RIVALES[p.etapa];
+  // Una victoria rápida convierte toda esta campaña en ensayo. Sus sellos
+  // viven separados de los logros obtenidos jugando los seis combates.
+  p.prueba=true;campanaGuardar(p);
   campanaLimpiarPreparacion();campanaCerrar();cerrarCinematica();
-  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje};G.over=true;P(1).alma=0;
+  newGame(p.lider,rival.lider);G.campana={id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje,prueba:true};G.over=true;P(1).alma=0;
   campanaFinal(ME,'Victoria de prueba · Beta');
 }
 function campanaMostrarEncuentro(e,p){
@@ -864,7 +884,7 @@ async function campanaCombatir(){
     if(!await campanaAcercarMapa(p.etapa))return;
     p.enEncuentro=true;campanaGuardar(p);
     campanaCerrar();cerrarCinematica();
-    await startMatch(p.lider,rival.lider,{nombres:[campanaNombre(p),LEADERS[rival.lider].n],campana:{id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje}});
+    await startMatch(p.lider,rival.lider,{nombres:[campanaNombre(p),LEADERS[rival.lider].n],campana:{id:p.id,etapa:p.etapa,alma:rival.alma,personaje:p.personaje,prueba:!!p.prueba}});
   }
   finally{campanaLanzando=false;}
 }
@@ -872,15 +892,24 @@ function campanaFinal(winner,why){
   relojPara();
   const g=G,meta=g.campana,p=campanaLeer();
   if(!meta||!p||meta.id!==p.id||g.campanaResuelta)return;
+  if(meta.jefeSecreto&&typeof campanaFinalSecreto==='function'){campanaFinalSecreto(winner,why);return;}
   g.campanaResuelta=true;RECORD_ULTIMO=null;
-  if(winner===ME&&p.etapa===meta.etapa){p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;campanaGuardar(p);}
+  const ensayoFinal=meta.pruebaFinalGero===true&&p===campanaEnsayoGero&&p.prueba===true&&campanaPruebaDisponible();
+  if(winner===ME&&p.etapa===meta.etapa){
+    p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;
+    if(p.etapa===6&&typeof campanaMarcarGero==='function')campanaMarcarGero(p);
+    if(ensayoFinal&&p.etapa===6)p.secreto='ascenso';
+    campanaGuardar(p);
+  }
   let mesaPreparada=false;
   const acciones={textoPrincipal:winner===ME?'Volver a la mesa':'↺ Revancha',
+    continuarAutomaticamente:ensayoFinal&&winner===ME,
     prepararRevancha:winner===ME?()=>{if(G!==g)return;campanaRuta();mesaPreparada=true;return document.getElementById('campanaPanel');}:null,
     revancha:()=>{if(G!==g)return;if(winner===ME){if(!mesaPreparada)campanaRuta();}else campanaCombatir();},
     menu:()=>{if(G===g)campanaVolverAlMenu();}};
   cinematicaFinal(winner,why,acciones).then(hecho=>{
     if(hecho||G!==g)return;
+    if(acciones.continuarAutomaticamente){acciones.revancha();return;}
     const d=campanaDialogo();campanaCabecera(d,winner===ME?(p.etapa===6?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',why||'');
     d.append(campanaAcciones(campanaBoton(winner===ME?'Volver a la mesa':'Reintentar combate',acciones.revancha,true),campanaBoton('Menú principal',acciones.menu)));
   });
@@ -1014,3 +1043,72 @@ function campanaFinal(winner,why){
 }
 
 addEventListener('load',()=>{if(new URLSearchParams(location.search).get('campana')==='1')abrirCampana();});
+
+/* Secreto del selector: ocho movimientos consecutivos, sólo al elegir al jugador.
+   La descarga se añadirá aquí cuando exista el PDF; no se simula un enlace roto. */
+addEventListener('DOMContentLoaded',()=>{
+  const selector=document.getElementById('select'),pista=document.getElementById('leaderList');
+  if(!selector||!pista)return;
+  const codigo=[1,-1,1,-1,1,1,-1,-1];
+  let pasos=[],inicio=null,ignorarClickHasta=0,dialogo=null;
+  const activo=()=>selector.classList.contains('on')&&SEL_PASO==='yo'&&!document.querySelector('dialog[open]')&&!document.querySelector('#ov.on');
+  const reiniciar=()=>{pasos=[];inicio=null;};
+  function revelar(){
+    reiniciar();
+    if(!dialogo){
+      const css=document.createElement('style');css.textContent=`
+        #comicSecreto{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(480px,calc(100vw - 32px));height:fit-content;max-height:calc(100dvh - 32px);padding:32px 26px;border:1px solid #bc9655;border-radius:22px;color:#f9edce;background:radial-gradient(ellipse at 50% 0%,#503525 0%,#211826 52%,#100d17 100%);text-align:center;box-shadow:0 24px 100px #000b,0 0 55px #bd8b342c;font:16px/1.5 system-ui,sans-serif;overflow:auto}
+        #comicSecreto::backdrop{background:#08050dd9;backdrop-filter:blur(7px)}
+        #comicSecreto[open]{animation:comicAparece .4s ease-out}
+        #comicSecreto .comicSello{display:block;margin:0 auto 18px;width:66px;height:66px;border:1px solid #bb9656;border-radius:50%;font:38px/66px Georgia,serif;color:#ffe3a3;box-shadow:0 0 35px #d1a44835}
+        #comicSecreto .comicKicker{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#d1ac70}
+        #comicSecreto h2{font:700 clamp(26px,7vw,36px)/1.15 Georgia,serif;margin:12px 0 16px;color:#ffe4ad}
+        #comicSecreto p{margin:10px 0;color:#d0c2bc}#comicSecreto .comicPronto{display:block;margin:22px 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#e4bd79}
+        #comicSecreto button{display:block;width:100%;min-height:48px;padding:12px 16px;border:1px solid #b78d45;border-radius:12px;background:linear-gradient(#735520,#3a2b15);color:#fff0ce;font:700 15px/1.3 system-ui;cursor:pointer}
+        #comicSecreto button:hover{filter:brightness(1.15)}#comicSecreto button:focus-visible{outline:2px solid #ffe5a7;outline-offset:4px}
+        @keyframes comicAparece{from{opacity:0;scale:.94;translate:0 10px}to{opacity:1;scale:1;translate:0 0}}
+        @media(prefers-reduced-motion:reduce){#comicSecreto[open]{animation:none}}
+        @media(max-height:500px){#comicSecreto{padding:16px 22px}#comicSecreto .comicSello{display:none}#comicSecreto h2{margin:8px 0}#comicSecreto .comicPronto{margin:12px 0}}
+      `;document.head.appendChild(css);
+      dialogo=document.createElement('dialog');dialogo.id='comicSecreto';
+      dialogo.setAttribute('aria-labelledby','comicSecretoTitulo');dialogo.setAttribute('aria-describedby','comicSecretoDescripcion');
+      dialogo.innerHTML='<span class="comicSello" aria-hidden="true">✦</span><div class="comicKicker">Un secreto del Domo</div><h2 id="comicSecretoTitulo">Secreto descubierto</h2><p id="comicSecretoDescripcion">Encontraste una historia oculta.<br>Un cómic exclusivo de Caoz Con Todo te espera aquí.</p><span class="comicPronto">Próximamente</span><button type="button" autofocus>Volver a la selección</button>';
+      document.body.appendChild(dialogo);
+      dialogo.querySelector('button').onclick=()=>dialogo.close();
+      dialogo.addEventListener('close',reiniciar);
+    }
+    dialogo.showModal();window.CAOZ_AUDIO?.play('ui_confirm');
+  }
+  const girarOriginal=window.girarCarrete;
+  window.girarCarrete=function(paso){
+    if(dialogo?.open)return;
+    const contar=activo()&&(paso===1||paso===-1);
+    const resultado=girarOriginal.apply(this,arguments);
+    if(!contar){reiniciar();return resultado;}
+    pasos.push(paso);if(pasos.length>codigo.length)pasos.shift();
+    if(pasos.length===codigo.length&&pasos.every((p,i)=>p===codigo[i]))revelar();
+    return resultado;
+  };
+  // Se centralizan las teclas para no contar dos veces una pulsación en escritorio.
+  window.addEventListener('keydown',e=>{
+    if(!selector.classList.contains('on')||!['ArrowLeft','ArrowRight'].includes(e.key))return;
+    if(e.target.closest?.('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]'))return;
+    e.preventDefault();if(e.repeat)return;
+    window.girarCarrete(e.key==='ArrowRight'?1:-1);
+  });
+  selector.addEventListener('click',e=>{
+    if(performance.now()<ignorarClickHasta){e.preventDefault();e.stopImmediatePropagation();return;}
+    if(!e.target.closest('#carrAnt,#carrSig'))reiniciar();
+  },true);
+  // El gesto horizontal sigue la dirección del dedo; el desplazamiento vertical sigue libre.
+  pista.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.button===0&&activo())inicio={x:e.clientX,y:e.clientY,id:e.pointerId};});
+  pista.addEventListener('pointercancel',()=>{inicio=null;});
+  pista.addEventListener('pointerup',e=>{
+    const p=inicio;inicio=null;if(!p||p.id!==e.pointerId||!activo())return;
+    const dx=e.clientX-p.x,dy=e.clientY-p.y;
+    if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    ignorarClickHasta=performance.now()+350;window.girarCarrete(dx>0?1:-1);
+  });
+  pista.style.touchAction='pan-y';
+  new MutationObserver(()=>{if(!selector.classList.contains('on')||SEL_PASO!=='yo')reiniciar();}).observe(selector,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
+});

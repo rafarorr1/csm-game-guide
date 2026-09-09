@@ -38,7 +38,25 @@
     }
     d.addEventListener('cancel',ev=>ev.preventDefault());document.body.appendChild(d);d.showModal();
     if(!e.mesa&&!reducido)e.animacion=peon.animate([{translate:'0 0'},{translate:'0 -55px'}],{delay:650,duration:4350,easing:'ease-in',fill:'forwards'});
-    cuadro(inicio);
+    window.CAOZ_AUDIO?.play('ascension');cuadro(inicio);
+    if(p.secreto==='ascenso'&&typeof campanaAbrirSecreto==='function'){
+      // El sexto sello corta el ascenso cuando ya se ve elevarse la ficha,
+      // antes de que el resplandor blanco revele el deseo habitual.
+      esperar(e,2400,()=>{
+        if(campanaLeer()!==p){campanaCancelarAscenso();return;}
+        cancelAnimationFrame(e.raf);e.animacion?.pause();d.dataset.fase='detenido';
+        const marco=d.getBoundingClientRect();
+        const origen={x:Math.max(0,Math.min(1,parseFloat(rayo.style.left)/marco.width)),y:Math.max(0,Math.min(1,parseFloat(rayo.style.height)/marco.height))};
+        window.CAOZ_AUDIO?.detener();
+        // La ficha queda inmóvil antes del corte a oscuridad. El nuevo plano
+        // conserva su posición y después la lleva al borde inferior.
+        esperar(e,450,()=>{
+          if(campanaLeer()!==p){campanaCancelarAscenso();return;}
+          p.secreto='revelacion';delete p.mesaPendiente;campanaGuardar(p);campanaAbrirSecreto({origen});
+        });
+      });
+      return;
+    }
     esperar(e,5000,()=>{cancelAnimationFrame(e.raf);d.dataset.fase='blanco';
       esperar(e,1000,()=>{
         const actual=campanaLeer();if(actual!==p){campanaCancelarAscenso();return;}
@@ -51,7 +69,7 @@
   function fuego(e){
     const d=e.d,c=document.createElement('canvas');c.className='deseoFuego';c.setAttribute('aria-hidden','true');d.appendChild(c);
     const ctx=c.getContext('2d'),reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
-    const inicio=performance.now();d.dataset.fase='fuego';
+    const inicio=performance.now();d.dataset.fase='fuego';window.CAOZ_AUDIO?.play('wish_fire');
     const duracion=reducido?500:3000;
     function dibujar(t){
       if(e.cancelado)return;const p=Math.min(1,(t-inicio)/duracion),w=d.clientWidth,h=d.clientHeight;
@@ -79,7 +97,7 @@
     if(!reducido&&ctx)e.raf=requestAnimationFrame(dibujar);else c.style.background='#ff9a22';
     esperar(e,reducido?250:1000,()=>{e.form.remove();e.mensaje=document.createElement('h1');e.mensaje.className='deseoConcedido';e.mensaje.textContent='Deseo concedido';d.appendChild(e.mensaje);});
     esperar(e,duracion,()=>{
-      cancelAnimationFrame(e.raf);c.remove();d.dataset.fase='concedido';
+      cancelAnimationFrame(e.raf);c.remove();d.dataset.fase='concedido';window.CAOZ_AUDIO?.play('wish_granted');
       // El menú se prepara bajo el negro; esos tres segundos se aprovechan
       // para revelarlo sin un corte al retirar el diálogo.
       esperar(e,3000,()=>{d.dataset.fase='fundido';esperar(e,1000,()=>{
@@ -108,6 +126,7 @@
   const css=document.createElement('style');css.textContent=`
   #campanaAscenso{position:fixed;inset:0;margin:0;padding:0;border:0;width:100vw;height:100dvh;max-width:none;max-height:none;background:transparent;overflow:hidden;pointer-events:auto}
   #campanaAscenso::backdrop{background:#08050b22}
+  #campanaAscenso[data-fase="detenido"] *{animation-play-state:paused!important}
   .ascensoRayo{position:absolute;top:0;width:clamp(210px,28vw,360px);transform:translateX(-50%);filter:drop-shadow(0 0 18px #ffe9b480);pointer-events:none}
   .ascensoCono{position:absolute;inset:0;clip-path:polygon(43% 0,57% 0,100% 100%,0 100%);background:linear-gradient(180deg,#fffdeccc,#fff9d54a 32%,#fff4bb12),linear-gradient(90deg,#ffe6a80a,#fff9d943 36%,#ffffee66 50%,#fff9d943 64%,#ffe6a80a);animation:abrirHazAscenso .85s ease-in-out .65s both}
   .ascensoNucleo{position:absolute;inset:0;clip-path:polygon(48% 0,52% 0,67% 100%,33% 100%);background:linear-gradient(#fffef4a0,#fff9cb18);animation:abrirNucleoAscenso .85s ease-in-out .65s both}

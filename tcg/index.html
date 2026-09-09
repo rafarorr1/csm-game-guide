@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=207"></script>
-<script src="final.js?b=207"></script>
+<script src="motor.js?b=224"></script>
+<script src="final.js?b=224"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:207, fecha:'2026-09-08'};
+const BUILD = {n:224, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2498,7 +2498,7 @@ async function ofrecerManoNueva(s){
      pinta nada: seguir la dejaba aparecer sobre la partida nueva y pisar lo que
      hubiera en pantalla, empezando por el cartel del volado. */
   const miPartida = PARTIDA_N, miG = G;
-  const vive = () => miPartida === PARTIDA_N && miG === G && !G.over;
+  const vive = () => miPartida === PARTIDA_N && miG === G && !G.over && G.active === s;
   const p = P(s);
   /* El volado deja su cartel en este mismo overlay. Preguntando encima se comía
      el resultado antes de que diera tiempo a leerlo: el primer turno empieza
@@ -2542,6 +2542,7 @@ async function ofrecerManoNueva(s){
 function endGame(winner, why){
   if(G.over) return;
   G.over=true; G.winner=winner; G.endWhy=why;
+  campanaCancelarInterferencia();
   log(`<b>=== FIN: gana ${P(winner).L.n} ===</b>`);
   // En el tutorial la partida puede acabar antes de la lección de estrategia — con
   // Fender pasa casi siempre. Antes de enseñar el cartel de fin, Gero termina de
@@ -2579,7 +2580,12 @@ function toast(t){
 /* El dado se tira ANTES de que pase nada en el tablero: tú lo lanzas, ves el
    número, y sólo al continuar se aplica el efecto. */
 
-async function rollDice(value, label, interactive, meta){
+function d20FisicoDisponible(){
+  return !!window.CAOZ_D20 && FXON() && (!new URLSearchParams(location.search).has('test')||window.CAOZ_D20_PRUEBA===true);
+}
+function prepararTiradaD20(label, interactive, meta){return window.CAOZ_D20?.preparar(label,interactive,meta)||Promise.resolve({x:0,z:-.6,fuerza:.6});}
+async function rollDice(value, label, interactive, meta, fisica){
+  if(fisica&&window.CAOZ_D20){if(!FXON())return;return window.CAOZ_D20.mostrar(value,label,interactive,meta,fisica);}
   if(!FXON()) return;
   const ov=$('#dice'), box=$('#diceBox');
   return new Promise(resolve=>{
@@ -2600,10 +2606,10 @@ async function rollDice(value, label, interactive, meta){
     const done=()=>{ if(cerrado) return; cerrado=true; ov.classList.remove('on'); resolve(); };
     const girar=async()=>{
       btn.disabled=true; btn.textContent='Tirando…';
-      v.classList.add('spin');
+      v.classList.add('spin'); window.CAOZ_AUDIO?.play('dice_roll');
       const N=interactive?15:9;
       for(let i=0;i<N;i++){ v.textContent=1+rnd(20); await sleep(42+i*(interactive?7:9)); }
-      v.classList.remove('spin');
+      v.classList.remove('spin'); window.CAOZ_AUDIO?.play('dice_land');
       v.textContent=value;
       v.className='d20'+(value===20?' crit':value===1?' pifia':'');
       v.animate([{transform:'scale(1.55) rotate(-14deg)'},{transform:'scale(1) rotate(0)'}],
@@ -2776,7 +2782,7 @@ function showInspectLeader(d,side){
     ${L.hab2?`<div class="txt" style="margin-top:5px">${'<b>'+L.hab2.n+':</b> '+L.hab2.d}</div>`:''}
     <div class="bigsep"></div>
     <div class="bigrow">❤️ Alma <b>${Math.max(0,p.alma)}</b> · 🔷 <b>${p.pd}/${p.pdMax}</b> · 🗝️ <b>${keys(side)}</b></div>`;
-  campanaVestirFicha(box,side);placeInspect(d);
+  campanaVestirFicha(box,side);if(side===FOE&&G.campana?.jefeSecreto)campanaVestirPitagoras(box);placeInspect(d);
 }
 
 function placeInspect(d){
@@ -3412,6 +3418,7 @@ function renderLeaders(){
     </div>`;
     const e=host.firstElementChild;
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
+    if(!mine&&G.campana?.jefeSecreto)campanaVestirPitagoras(e);
     e.onmouseenter=()=>showInspectLeader(e,side);
     e.onmouseleave=()=>$('#inspect').classList.remove('on');
     e.onclick=()=>{
@@ -3439,13 +3446,7 @@ function renderPiles(){
   });
   [[FOE,'#foeGrave'],[ME,'#myGrave']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
-    const p=P(side), top=p.grave[p.grave.length-1];
-    host.innerHTML=`
-      <div class="pile grave${p.grave.length?'':' empty'}" id="${side===ME?'myGravePile':'foeGravePile'}"
-           title="Alcantarillas — ${p.grave.length} cartas${top?' · arriba: '+CARDS[top].n:''}">
-        <div class="pilelbl">ALCANTARILLAS</div>
-        <div class="pileart">${top?CARDS[top].art:'🕳️'}</div><div class="pilen">${p.grave.length}</div></div>`;
-    host.querySelector('.pile.grave').onclick=()=>showGrave();
+    host.replaceChildren(crearPilaAlcantarillas(side));
   });
 }
 
@@ -3499,6 +3500,7 @@ function renderField(host, list, mine){
 
 function render(){
   if(!G||G.silent) return;
+  campanaPrepararRival();
   if(NET.host) netPushState();
   $('#barFoe').innerHTML=barHTML(FOE);
   $('#barMe').innerHTML=barHTML(ME);
@@ -3632,6 +3634,7 @@ function render(){
   h.classList.toggle('apretada', nMano>7);
   renderControls();
   encajarTextos();                 // las tribus largas, a la medida de su carta
+  window.PITAGORAS_MESA?.actualizar(G);
   if(G.tutorial) tutHighlight();
 }
 /* Por qué no puedes jugar ESA carta. El orden es el mismo que el de canPlay,
@@ -3678,7 +3681,8 @@ function renderControls(){
   // Salida al menú. No lleva tutCan(): el tutorial bloquea el tablero para que
   // no te pierdas, pero irse siempre tiene que poder hacerse.
   const s=el('button','btn sm','← Menú'); s.onclick=pedirSalirAlMenu; c.appendChild(s);
-
+  campanaBotonFinalGero(c);
+  window.campanaBotonesEditorBeta?.(c);
 }
 /* POR QUÉ NO PUEDE ATACAR
    Una sola lista de motivos, en el mismo orden en que canAttack los comprueba.
@@ -3869,6 +3873,7 @@ async function startTutorial(lid){
    entre menú, selector y guías NO se toca: sigue exactamente donde estaba. */
 
 function showScreen(id){
+  if(id!=='board'){campanaCancelarInterferencia();window.PITAGORAS_MESA?.cancelar();}
   const antes=$('.screen.on'),pantalla=$('#'+id),esMenu=pantalla.classList.contains('portada');
   if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
   $$('.screen').forEach(s=>s.classList.remove('on'));
@@ -4300,7 +4305,7 @@ async function cortinillaVS(a, b, opts={}){
   if(document.hidden) return;
   const capa = el('div','vs');
   capa.innerHTML = '<div class="vsfondo"></div><div class="vschispas"></div>';
-  const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq'), der = cartaDeLiderVS(b,'der');
+  const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq'), der = opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der');
   if(opts.nombres){izq.querySelector('.lname').textContent=opts.nombres[0];der.querySelector('.lname').textContent=opts.nombres[1];}
   const sello = el('div','vssello','VS');
   capa.appendChild(izq); capa.appendChild(der); capa.appendChild(sello);
@@ -4309,7 +4314,7 @@ async function cortinillaVS(a, b, opts={}){
   await nap(60);
   capa.classList.add('entra');          // las cartas vienen de fuera
   await nap(620);
-  capa.classList.add('choque');         // el impacto: destello, fuego y sacudida
+  capa.classList.add('choque'); window.CAOZ_AUDIO?.play('vs');         // el impacto: destello, fuego y sacudida
   await nap(2500);                      // se leen los dos nombres
   capa.classList.add('sale');           // se apartan y revelan la mesa
   await nap(760);
@@ -4317,6 +4322,7 @@ async function cortinillaVS(a, b, opts={}){
 }
 
 async function startMatch(a, b, opts={}){
+  campanaCancelarInterferencia();
   const mia = ++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
   $('#log').innerHTML='';
@@ -4337,7 +4343,7 @@ async function startMatch(a, b, opts={}){
   // termina su turno antes de que la prueba mire— y fallan una vez de cada dos
   // sin que nada esté roto. Una prueba que falla a veces no vale para frenar
   // una publicación, que es justo para lo que están.
-  const first = conVolado ? await volado(LEADERS[b].n)
+  const first = conVolado ? await volado(opts.nombres?.[1]||LEADERS[b].n)
                           : (opts.first != null ? opts.first : null);
   if(mia !== PARTIDA_N) return;      // arrancó otra mientras elegías: ésta ya no vale
   await setupMatch(a,b,{...(first==null?{}:{first}),...(opts.campana?{campana:opts.campana}:{})});
@@ -4799,13 +4805,7 @@ $('#mRecords').onclick=()=>showRecords();
 $('#mEstudio').onclick=()=>abrirEditor();
 $('#carrAnt').onclick=()=>girarCarrete(-1);
 $('#carrSig').onclick=()=>girarCarrete(1);
-/* Con el teclado también: el carrete es lo único que se maneja en esta
-   pantalla y las flechas son lo primero que uno prueba. */
-addEventListener('keydown', e=>{
-  if(!$('#select').classList.contains('on')) return;
-  if(e.key==='ArrowLeft'){ e.preventDefault(); girarCarrete(-1); }
-  if(e.key==='ArrowRight'){ e.preventDefault(); girarCarrete(1); }
-});
+/* Teclado y gestos compartidos en final-core.js. */
 /* Atrás va un paso, no al menú: si estás eligiendo rival, lo que quieres
    deshacer es el Protagonista, no salir de la pantalla. */
 $('#selBack').onclick=()=>{

@@ -221,15 +221,23 @@ function campanaRetrato(personaje){
 function campanaCartaJugador(personaje,lider,lado=''){
   const p=campanaNormalizarPersonaje(personaje),c=document.createElement('div');c.className='vscard cartaJugador '+lado;
   c.innerHTML='<div class="lface"></div><div class="lname"></div><div class="larch"></div>';
-  const foto=document.createElement('img');foto.src=campanaRetrato(p);foto.alt='Miniatura de '+p.nombre;c.querySelector('.lface').appendChild(foto);c.querySelector('.lname').textContent=p.nombre;c.querySelector('.larch').textContent='Mazo de '+LEADERS[lider].n;
+  const foto=document.createElement('img');foto.src=campanaRetrato(p);foto.alt='Miniatura de '+p.nombre;foto.className='retratoJugador';c.prepend(foto);c.querySelector('.lname').textContent=p.nombre;c.querySelector('.larch').textContent='Mazo de '+LEADERS[lider].n;
   return c;
 }
 function campanaVestirLider(nodo,personaje,lider){
   if(!personaje)return;const p=campanaNormalizarPersonaje(personaje);nodo.classList.add('liderJugador');
   const foto=document.createElement('img');foto.src=campanaRetrato(p);foto.alt='Miniatura de '+p.nombre;
   const nombre=nodo.querySelector('.lcName,.ln');if(nombre)nombre.textContent=p.nombre;
-  const rostro=nodo.querySelector('.lrostro,.lcArt');if(rostro){rostro.replaceChildren(foto);rostro.style.visibility='visible';}
-  nodo.querySelector('.marcoDibujo')?.remove();nodo.classList.remove('conarte');
+  nodo.querySelector('.marcoDibujo')?.remove();
+  const rostro=nodo.querySelector('.lrostro,.lcArt');
+  if(nodo.classList.contains('leadercard')){
+    // La carta de escritorio usa el mismo fondo completo y velo que los Líderes.
+    const marco=document.createElement('div');marco.className='marcoDibujo';foto.className='dibujo';marco.appendChild(foto);nodo.prepend(marco);nodo.classList.add('conarte');
+    if(rostro)rostro.style.removeProperty('visibility');
+  }else{
+    if(rostro){rostro.replaceChildren(foto);rostro.style.visibility='visible';}
+    nodo.classList.remove('conarte');
+  }
   const ep=nodo.querySelector('.lcEp');if(ep)ep.textContent='Mazo de '+LEADERS[lider].n;
 }
 function campanaVestirFicha(nodo,side){
@@ -290,16 +298,20 @@ function campanaCrear(){
 {
   const css=document.createElement('style');css.textContent=`
   .cartaJugador{background:linear-gradient(145deg,#776043,#17131d 55%);border-color:#d9bb79}
-  .cartaJugador .lface{position:relative;overflow:hidden;background:#24202a}
-  .cartaJugador .lface>img{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;object-position:50% 36%;transform:none}
+  .vscard.cartaJugador{isolation:isolate}
+  .vscard.cartaJugador>.retratoJugador{position:absolute;inset:0;z-index:0;display:block;width:100%;height:100%;object-fit:cover;object-position:50% 36%;pointer-events:none}
+  .vscard.cartaJugador::before{content:'';position:absolute;inset:0;z-index:1;pointer-events:none;background:linear-gradient(180deg,transparent 45%,#100c1866 65%,#100c18ed 100%)}
+  .vscard.cartaJugador .lface{position:relative;overflow:hidden;background:none;filter:none}
+  .vscard.cartaJugador .lface::after{display:none}
+  .vscard.cartaJugador .lname,.vscard.cartaJugador .larch{z-index:2;background:none;text-shadow:0 2px 6px #000}
+  .vscard.cartaJugador .larch{position:relative}
   .cartaJugador .lname{overflow-wrap:anywhere;text-align:center}
   .vs .cartaJugador .larch,.fin .cartaJugador .larch,.cartaJugador .larch{color:#e4c98f;text-align:center}
   #campanaPanel .campanaIdentidad{position:absolute;inset:12px 12px auto auto;left:auto;top:12px;translate:none;transform:none;rotate:3deg;width:clamp(68px,12vw,114px);height:auto;display:flex;flex-direction:column;gap:0;z-index:3;overflow:hidden;border:1px solid #cfb778;border-radius:8px;box-shadow:0 5px 15px #0006;pointer-events:none;opacity:1}
   #campanaPanel .campanaIdentidad .lface{width:100%;height:auto;aspect-ratio:4/5;margin:0;border:0;border-radius:0;font-size:0}
-  #campanaPanel .campanaIdentidad .lname{position:static;inset:auto;margin:0;padding:4px 3px 2px;font:700 clamp(9px,1.2vw,14px)/1.1 var(--serif);color:#ffdf9e;background:#211922}
-  #campanaPanel .campanaIdentidad .larch{margin:0;padding:2px 2px 5px;font:7px/1.2 var(--sans);letter-spacing:.3px;background:#211922}
-  .leadercard.liderJugador .lcArt{position:relative;overflow:hidden;font-size:0;width:100%;height:48px}
-  .leadercard.liderJugador .lcArt img{width:100%;height:100%;object-fit:contain}
+  #campanaPanel .campanaIdentidad .lname{position:static;inset:auto;margin:0;padding:4px 3px 2px;font:700 clamp(9px,1.2vw,14px)/1.1 var(--serif);color:#ffdf9e;background:none}
+  #campanaPanel .campanaIdentidad .larch{margin:0;padding:2px 2px 5px;font:7px/1.2 var(--sans);letter-spacing:.3px;background:none}
+  .leadercard.liderJugador .marcoDibujo img{width:100%;height:100%;object-fit:cover;object-position:50% 36%;transform:none}
   .liderJugador .lrostro img{object-position:50% 24%;transform:scale(1.4);transform-origin:50% 27%}
   .liderJugador .lcName,.liderJugador .ln{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .liderJugador.lider>div:last-child{min-width:0;max-width:108px}
