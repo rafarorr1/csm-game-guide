@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=212"></script>
-<script src="final.js?b=212"></script>
+<script src="motor.js?b=213"></script>
+<script src="final.js?b=213"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:212, fecha:'2026-09-08'};
+const BUILD = {n:213, fecha:'2026-09-08'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3439,13 +3439,7 @@ function renderPiles(){
   });
   [[FOE,'#foeGrave'],[ME,'#myGrave']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
-    const p=P(side), top=p.grave[p.grave.length-1];
-    host.innerHTML=`
-      <div class="pile grave${p.grave.length?'':' empty'}" id="${side===ME?'myGravePile':'foeGravePile'}"
-           title="Alcantarillas — ${p.grave.length} cartas${top?' · arriba: '+CARDS[top].n:''}">
-        <div class="pilelbl">ALCANTARILLAS</div>
-        <div class="pileart">${top?CARDS[top].art:'🕳️'}</div><div class="pilen">${p.grave.length}</div></div>`;
-    host.querySelector('.pile.grave').onclick=()=>showGrave();
+    host.replaceChildren(crearPilaAlcantarillas(side));
   });
 }
 
