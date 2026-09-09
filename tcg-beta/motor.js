@@ -164,6 +164,17 @@ const CARDS = {};
 
 const C = (id,o)=>{ o.id=id; CARDS[id]=o; return o; };
 
+// Cartas exclusivas del Editor: su efecto se resuelve en pruebaDelEditor.
+// No forman parte de los seis mazos ni de la colección del jugador.
+const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro'];
+for(const [id,n,tipo,art] of [['editorcosecha','La cosecha','isometrico','☠'],['editorcorte','El corte final','laseres','✧'],['editorcuadro','Fuera de cuadro','fps','◈']]){
+  C(id,{n,t:'hechizo',c:2,r:0,token:true,set:'editor',art,editorJuego:tipo,uncounterable:true,
+    x:'Prueba del Editor · 20 segundos · 3 vidas. Sobrevive: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma.',
+    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest,
+    cast:async()=>{}});
+}
+
+
 /* ---------------------- PERSONAJES ---------------------- */
 
 C('augusto',{n:'Augusto Bale',t:'personaje',c:3,a:2,h:4,tr:['Humano','Tomsage'],r:0,art:'🛡️',
@@ -1613,7 +1624,7 @@ async function setupMatch(myLeader, foeLeader, opts={}){
   G.fast=!!opts.fast; G.auto=!!opts.auto; G.silent=!!opts.silent;
   G.online=!!opts.online; G.logSent=0; G.fxq=[];
   // Los modificadores del prototipo sólo existen dentro de su propia partida.
-  if(opts.campana&&!opts.online){G.campana={...opts.campana};P(FOE).alma=opts.campana.alma;}
+  if(opts.campana&&!opts.online){G.campana={...opts.campana};P(FOE).alma=opts.campana.alma;if(opts.campana.jefeSecreto)P(FOE).deck=Array.from({length:40},(_,i)=>CARTAS_EDITOR[i%3]);}
   const first = opts.first!=null ? opts.first : (rnd(2));
   G.second = 1-first;
   log(`<b>${P(first).L.n}</b> gana la tirada de inicio y empieza.`,'sys');
@@ -1855,7 +1866,8 @@ async function playFromHand(s, id, forcedTargets){
   // Toda carta que se juega se anuncia. Antes sólo los Hechizos enseñaban algo,
   // y encima su etiqueta salía únicamente si la jugaba el rival: por eso unas
   // veces se veía texto y otras no.
-  if(c.t==='hechizo'){ netFx('spell',{id,side:(s===FOE?0:1)}); await fxSpell(id,s); }
+  if(c.editorJuego){ /* La carta y su nube las presenta la prueba compartida. */ }
+  else if(c.t==='hechizo'){ netFx('spell',{id,side:(s===FOE?0:1)}); await fxSpell(id,s); }
   else {
     const quien = P(s).L.n;
     const verbo = {personaje:'invoca a', trampa:'coloca una Trampa',
@@ -2621,6 +2633,7 @@ function aiTargets(s, groups, self, card){
 function aiScore(id,s){
   const c=CARDS[id], p=P(s), foe=P(1-s);
   const cost=costOf(id,s);
+  if(c.editorJuego)return 24;
   let v=0;
   switch(c.t){
     case 'personaje':

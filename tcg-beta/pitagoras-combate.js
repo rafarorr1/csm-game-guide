@@ -35,7 +35,7 @@
       await new Promise(r=>{const t=setTimeout(r,matchMedia('(prefers-reduced-motion:reduce)').matches?120:750);e.cancelarEspera=()=>{clearTimeout(t);r();};});
       if(!vigente(e))return {cancelado:true};
       const personaje=g.campana.personaje||campanaNormalizarPersonaje({nombre:P(ME).L.n});
-      const resultado=await PITAGORAS_PRUEBAS.iniciar({tipo:tipos[numero%tipos.length],personaje,nombre:campanaNormalizarPersonaje(personaje).nombre,duracion:20});
+      const resultado=await PITAGORAS_PRUEBAS.iniciar({tipo:CARDS[id]?.editorJuego||tipos[numero%tipos.length],personaje,nombre:campanaNormalizarPersonaje(personaje).nombre,duracion:20,cinematica:true});
       if(resultado?.abandonado&&vigente(e)){campanaCancelarInterferencia();campanaVolverAlMenu();return {cancelado:true};}
       if(!vigente(e))return {cancelado:true};
       return resultado;
