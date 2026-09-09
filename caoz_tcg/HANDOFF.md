@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 214 (beta; producción 207, rama feature/aaa-combat-cards) · v19 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 215 (beta; producción 207, rama feature/aaa-combat-cards) · v19 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,15 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 215 añade `campanaBotonFinalGero` a los controles de ambas pantallas.
+Sólo beta/local contra Gero; `campanaProbarFinalGero` también valida llamadas
+sin botón y bloquea online, decisiones pendientes y turnos de IA. El ensayo
+`campanaEnsayoGero` vive sólo en memoria: `campanaLeer/Guardar` lo usan sin
+reemplazar `CAMPANA_CLAVE`; `abrirCampana` lo descarta para recuperar el avance
+original. La meta `pruebaFinalGero` permite continuar automáticamente tras la
+Victoria y forzar el secreto sólo dentro de ese ensayo. No fabrica seis sellos.
+Regresión `betaFinalGero` en ambas interfaces y comprobación por sabotaje.
 
 Build 214 añade `dado-fisico.js`: simulación pura de un icosaedro y presentación
 Canvas. `resolverD20` recoge el gesto, simula y entrega la cara final a `roll`;

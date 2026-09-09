@@ -1,6 +1,19 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 215 · Atajo beta al final de Gero
+
+- Botón «Beta · Vencer a Gero y ver el final» en las batallas locales contra
+  Gero, tanto normales como de campaña y tutorial. Espera al turno del jugador
+  y a que termine la acción actual; no aparece ni funciona online o en producción.
+- Activa la Victoria animada y continúa automáticamente a la mesa, el golpe,
+  el ascenso y el reto de Pitágoras, sin tener que reunir seis sellos.
+- Recorrido de ensayo en memoria: conserva el avance guardado y los logros
+  reales. Al reabrir Campaña o recargar se recupera el avance anterior.
+- Botón revisado en escritorio y teléfonos de 390 y 320 px. Regresión para
+  guardas, reentrada, conservación del guardado y ascenso automático; sabotaje
+  del acceso al final secreto para verificar que detecta una integración rota.
+
 ### v19 · build 214 · D20 físico y el último corte
 
 - El d20 se lanza con un gesto o botón: icosaedro rígido, gravedad, rebote,
