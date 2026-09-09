@@ -1016,3 +1016,72 @@ function campanaFinal(winner,why){
 }
 
 addEventListener('load',()=>{if(new URLSearchParams(location.search).get('campana')==='1')abrirCampana();});
+
+/* Secreto del selector: ocho movimientos consecutivos, sólo al elegir al jugador.
+   La descarga se añadirá aquí cuando exista el PDF; no se simula un enlace roto. */
+addEventListener('DOMContentLoaded',()=>{
+  const selector=document.getElementById('select'),pista=document.getElementById('leaderList');
+  if(!selector||!pista)return;
+  const codigo=[1,-1,1,-1,1,1,-1,-1];
+  let pasos=[],inicio=null,ignorarClickHasta=0,dialogo=null;
+  const activo=()=>selector.classList.contains('on')&&SEL_PASO==='yo'&&!document.querySelector('dialog[open]')&&!document.querySelector('#ov.on');
+  const reiniciar=()=>{pasos=[];inicio=null;};
+  function revelar(){
+    reiniciar();
+    if(!dialogo){
+      const css=document.createElement('style');css.textContent=`
+        #comicSecreto{box-sizing:border-box;position:fixed;inset:0;margin:auto;width:min(480px,calc(100vw - 32px));height:fit-content;max-height:calc(100dvh - 32px);padding:32px 26px;border:1px solid #bc9655;border-radius:22px;color:#f9edce;background:radial-gradient(ellipse at 50% 0%,#503525 0%,#211826 52%,#100d17 100%);text-align:center;box-shadow:0 24px 100px #000b,0 0 55px #bd8b342c;font:16px/1.5 system-ui,sans-serif;overflow:auto}
+        #comicSecreto::backdrop{background:#08050dd9;backdrop-filter:blur(7px)}
+        #comicSecreto[open]{animation:comicAparece .4s ease-out}
+        #comicSecreto .comicSello{display:block;margin:0 auto 18px;width:66px;height:66px;border:1px solid #bb9656;border-radius:50%;font:38px/66px Georgia,serif;color:#ffe3a3;box-shadow:0 0 35px #d1a44835}
+        #comicSecreto .comicKicker{font-size:10px;letter-spacing:3px;text-transform:uppercase;color:#d1ac70}
+        #comicSecreto h2{font:700 clamp(26px,7vw,36px)/1.15 Georgia,serif;margin:12px 0 16px;color:#ffe4ad}
+        #comicSecreto p{margin:10px 0;color:#d0c2bc}#comicSecreto .comicPronto{display:block;margin:22px 0;font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#e4bd79}
+        #comicSecreto button{display:block;width:100%;min-height:48px;padding:12px 16px;border:1px solid #b78d45;border-radius:12px;background:linear-gradient(#735520,#3a2b15);color:#fff0ce;font:700 15px/1.3 system-ui;cursor:pointer}
+        #comicSecreto button:hover{filter:brightness(1.15)}#comicSecreto button:focus-visible{outline:2px solid #ffe5a7;outline-offset:4px}
+        @keyframes comicAparece{from{opacity:0;scale:.94;translate:0 10px}to{opacity:1;scale:1;translate:0 0}}
+        @media(prefers-reduced-motion:reduce){#comicSecreto[open]{animation:none}}
+        @media(max-height:500px){#comicSecreto{padding:16px 22px}#comicSecreto .comicSello{display:none}#comicSecreto h2{margin:8px 0}#comicSecreto .comicPronto{margin:12px 0}}
+      `;document.head.appendChild(css);
+      dialogo=document.createElement('dialog');dialogo.id='comicSecreto';
+      dialogo.setAttribute('aria-labelledby','comicSecretoTitulo');dialogo.setAttribute('aria-describedby','comicSecretoDescripcion');
+      dialogo.innerHTML='<span class="comicSello" aria-hidden="true">✦</span><div class="comicKicker">Un secreto del Domo</div><h2 id="comicSecretoTitulo">Secreto descubierto</h2><p id="comicSecretoDescripcion">Encontraste una historia oculta.<br>Un cómic exclusivo de Caoz Con Todo te espera aquí.</p><span class="comicPronto">Próximamente</span><button type="button" autofocus>Volver a la selección</button>';
+      document.body.appendChild(dialogo);
+      dialogo.querySelector('button').onclick=()=>dialogo.close();
+      dialogo.addEventListener('close',reiniciar);
+    }
+    dialogo.showModal();window.CAOZ_AUDIO?.play('ui_confirm');
+  }
+  const girarOriginal=window.girarCarrete;
+  window.girarCarrete=function(paso){
+    if(dialogo?.open)return;
+    const contar=activo()&&(paso===1||paso===-1);
+    const resultado=girarOriginal.apply(this,arguments);
+    if(!contar){reiniciar();return resultado;}
+    pasos.push(paso);if(pasos.length>codigo.length)pasos.shift();
+    if(pasos.length===codigo.length&&pasos.every((p,i)=>p===codigo[i]))revelar();
+    return resultado;
+  };
+  // Se centralizan las teclas para no contar dos veces una pulsación en escritorio.
+  window.addEventListener('keydown',e=>{
+    if(!selector.classList.contains('on')||!['ArrowLeft','ArrowRight'].includes(e.key))return;
+    if(e.target.closest?.('input,textarea,select,[contenteditable="true"]')||document.querySelector('dialog[open]'))return;
+    e.preventDefault();if(e.repeat)return;
+    window.girarCarrete(e.key==='ArrowRight'?1:-1);
+  });
+  selector.addEventListener('click',e=>{
+    if(performance.now()<ignorarClickHasta){e.preventDefault();e.stopImmediatePropagation();return;}
+    if(!e.target.closest('#carrAnt,#carrSig'))reiniciar();
+  },true);
+  // El gesto horizontal sigue la dirección del dedo; el desplazamiento vertical sigue libre.
+  pista.addEventListener('pointerdown',e=>{if(e.isPrimary&&e.button===0&&activo())inicio={x:e.clientX,y:e.clientY,id:e.pointerId};});
+  pista.addEventListener('pointercancel',()=>{inicio=null;});
+  pista.addEventListener('pointerup',e=>{
+    const p=inicio;inicio=null;if(!p||p.id!==e.pointerId||!activo())return;
+    const dx=e.clientX-p.x,dy=e.clientY-p.y;
+    if(Math.abs(dx)<45||Math.abs(dx)<Math.abs(dy)*1.5)return;
+    ignorarClickHasta=performance.now()+350;window.girarCarrete(dx>0?1:-1);
+  });
+  pista.style.touchAction='pan-y';
+  new MutationObserver(()=>{if(!selector.classList.contains('on')||SEL_PASO!=='yo')reiniciar();}).observe(selector,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
+});
