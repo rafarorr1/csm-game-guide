@@ -630,21 +630,132 @@ PRUEBAS.suite('pitagorasTopdown',async t=>{
       for(const [x,y] of [[1,0],[0,-1],[-1,0],[0,1]]){
         Object.assign(modelo.jugador,{x:0,y:0});gesto(pads[0],71,x,y);avanzar(.1);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:71}));
         const p=modelo.jugador;t.check(p.x*x+p.y*y>.3&&Math.abs(p.x*y-p.y*x)<1e-8,pagina+': el control táctil conserva su dirección en pantalla');
-        modelo.enfriar=0;modelo.balas=[];gesto(pads[1],72,x,y);avanzar(.03);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:72}));
-        const b=modelo.balas[0];t.check(!!b&&b.vx*x+b.vy*y>12&&Math.abs(b.vx*y-b.vy*x)<1e-8,pagina+': apuntar con el control derecho dispara por ese mismo eje');
+        modelo.enfriar=0;modelo.balas=[];gesto(pads[1],72,x,y);avanzar(.8);modelo.enfriar=0;modelo.balas=[];avanzar(.016);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:72}));
+        const b=modelo.balas[0];t.check(!!b&&b.vx*x+b.vy*y>12&&Math.abs(b.vx*y-b.vy*x)<.01,pagina+': apuntar con el control derecho dispara por ese mismo eje');
       }
       const lienzo=d.querySelector('.ppLienzo');lienzo.setPointerCapture=()=>{};
       for(const [x,y] of [[1,0],[0,-1],[-1,0],[0,1]]){
         Object.assign(modelo.jugador,{x:0,y:0});modelo.enfriar=0;modelo.balas=[];avanzar(0);
         const r=lienzo.getBoundingClientRect(),op={pointerId:73,pointerType:'mouse',clientX:r.left+r.width/2+x*50,clientY:r.top+r.height/2+y*50,button:0,bubbles:true,cancelable:true};
-        lienzo.dispatchEvent(new w.PointerEvent('pointermove',op));lienzo.dispatchEvent(new w.PointerEvent('pointerdown',op));avanzar(.03);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:73}));
-        const b=modelo.balas[0];t.check(!!b&&b.vx*x+b.vy*y>12&&Math.abs(b.vx*y-b.vy*x)<1e-8,pagina+': el ratón apunta al lugar visible del lienzo');
+        lienzo.dispatchEvent(new w.PointerEvent('pointermove',op));avanzar(.8);lienzo.dispatchEvent(new w.PointerEvent('pointerdown',op));avanzar(.016);w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:73}));
+        const b=modelo.balas[0];t.check(!!b&&b.vx*x+b.vy*y>12&&Math.abs(b.vx*y-b.vy*x)<.01,pagina+': el ratón apunta al lugar visible del lienzo');
       }
+      // El cursor queda quieto mientras camina el personaje: el ángulo debe
+      // seguir apuntando al mismo lugar visible, incluso con la cámara móvil.
+      Object.assign(modelo.jugador,{x:0,y:0});avanzar(0);const rect=lienzo.getBoundingClientRect(),cursor={x:rect.left+rect.width/2+85,y:rect.top+rect.height/2};
+      lienzo.dispatchEvent(new w.PointerEvent('pointermove',{pointerId:74,pointerType:'mouse',clientX:cursor.x,clientY:cursor.y,bubbles:true}));avanzar(.5);tecla('keydown','KeyW');avanzar(.4);tecla('keyup','KeyW');avanzar(.6);
+      const esc=Math.min(rect.width/11.5,rect.height/12.5),pj=modelo.jugador,objetivo=Math.atan2(cursor.y-rect.top-rect.height/2-pj.y*esc*.64,cursor.x-rect.left-rect.width/2-pj.x*esc*.64),error=Math.atan2(Math.sin(pj.a-objetivo),Math.cos(pj.a-objetivo));
+      t.check(pj.y<-1.5&&Math.abs(error)<.002,pagina+': caminar conserva la puntería hacia el cursor estacionario');
       // Levantar el dedo suelta ambos controles: no queda movimiento o fuego.
       const antes={...modelo.jugador},disparos=modelo.disparos;avanzar(.4);t.check(modelo.jugador.x===antes.x&&modelo.jugador.y===antes.y&&modelo.disparos===disparos,pagina+': soltar los controles detiene las acciones');
       w.PITAGORAS_PRUEBAS.cancelar();t.check((await promesa).cancelado&&!d.querySelector('.pitPrueba'),pagina+': salir limpia la escena cenital');
     }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
   }
+});
+
+PRUEBAS.suite('pitagorasControlesFPS',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=controles-fps-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);
+      M.crear=op=>{modelo=crear(op);modelo.siguiente=Infinity;return modelo;};
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const p=w.PITAGORAS_PRUEBAS.iniciar({tipo:'fps'});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(0);
+      const pads=d.querySelectorAll('.ppPad'),mover=pads[0],mirar=pads[1],disparar=d.querySelector('.ppDisparo');t.check(!!disparar&&disparar!==mirar&&!mirar.contains(disparar),pagina+': mirar y disparar son controles separados');
+      const r=mirar.getBoundingClientRect(),b=disparar.getBoundingClientRect();t.check(b.width>=44&&b.height>=44&&(b.right<=r.left||b.left>=r.right||b.bottom<=r.top||b.top>=r.bottom),pagina+': el botón de disparar tiene 44 px y no se superpone a la palanca');
+      const dedo=(el,id,x=0,y=0)=>{const r=el.getBoundingClientRect();el.setPointerCapture=()=>{};el.dispatchEvent(new w.PointerEvent('pointerdown',{pointerId:id,pointerType:'touch',clientX:r.left+r.width*(.5+x*.3),clientY:r.top+r.height*(.5+y*.3),button:0,bubbles:true,cancelable:true}));};
+      const soltar=id=>w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:id,pointerType:'touch',bubbles:true}));
+      Object.assign(modelo.jugador,{x:8,y:8,a:0});dedo(mover,81,0,-1);dedo(mirar,82,1,0);avanzar(.2);
+      t.check(modelo.jugador.x>8&&modelo.jugador.a>0&&modelo.disparos===0,pagina+': dos palancas simultáneas caminan y giran sin disparar');
+      dedo(disparar,83);avanzar(.1);t.check(modelo.disparos>0,pagina+': el tercer dedo dispara mientras ambos mandos siguen pulsados');
+      soltar(81);soltar(82);const quieto={...modelo.jugador},tiros=modelo.disparos;avanzar(.5);
+      t.check(modelo.jugador.x===quieto.x&&modelo.jugador.y===quieto.y&&modelo.jugador.a===quieto.a&&modelo.disparos>tiros,pagina+': soltar los mandos no suelta el disparo independiente');
+      dedo(mirar,84,-1,0);soltar(83);const a=modelo.jugador.a,n=modelo.disparos;avanzar(.4);
+      t.check(modelo.jugador.a<a&&modelo.disparos===n,pagina+': soltar el disparo permite seguir mirando sin balas involuntarias');
+      w.dispatchEvent(new w.Event('blur'));const trasBlur={...modelo.jugador};avanzar(.4);t.check(modelo.jugador.a===trasBlur.a&&modelo.disparos===n,pagina+': perder foco libera todas las entradas sin pausar el reloj');
+      w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Space',cancelable:true}));avanzar(.1);w.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Space',cancelable:true}));t.check(modelo.disparos>n,pagina+': Espacio conserva un disparo independiente para escritorio');
+      w.PITAGORAS_PRUEBAS.cancelar();t.check((await p).cancelado&&!d.querySelector('.pitPrueba'),pagina+': cancelar retira los tres controles');
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasCarrilesUI',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=carriles-ui-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);M.crear=op=>{modelo=crear(op);modelo.siguiente=Infinity;return modelo;};
+      const avanzar=(n=8)=>{for(let i=0;i<n;i++){ahora+=1000/60;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));}};
+      const p=w.PITAGORAS_PRUEBAS.iniciar({tipo:'carrera'});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar();
+      const derecha=d.querySelector('.ppCarrilBoton[data-direccion="1"]'),izquierda=d.querySelector('.ppCarrilBoton[data-direccion="-1"]');for(const b of [derecha,izquierda]){const r=b.getBoundingClientRect();t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.right<=w.innerWidth&&r.bottom<=w.innerHeight,pagina+': las flechas de carril caben y tienen al menos 44 px');}
+      derecha.dispatchEvent(new w.PointerEvent('pointerdown',{pointerId:97,pointerType:'touch',button:0,bubbles:true,cancelable:true}));avanzar(25);t.igual(modelo.carril,1,pagina+': mantener una flecha táctil cambia un solo carril');w.dispatchEvent(new w.PointerEvent('pointerup',{pointerId:97,pointerType:'touch'}));
+      izquierda.focus();for(let i=0;i<2;i++){izquierda.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Enter',bubbles:true,cancelable:true}));izquierda.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Enter',bubbles:true,cancelable:true}));}avanzar();
+      t.check(modelo.carril===-1&&modelo.jugador.x===-1,pagina+': dos pulsaciones rápidas conservan ambos cambios de carril');
+      for(let i=0;i<2;i++)derecha.dispatchEvent(new w.PointerEvent('pointerdown',{pointerId:98+i,pointerType:'touch',button:0,bubbles:true,cancelable:true}));avanzar();t.igual(modelo.carril,1,pagina+': dos toques entre fotogramas tampoco se fusionan');
+      t.igual(modelo.salto,0,pagina+': usar las flechas no activa el salto de obstáculos');w.PITAGORAS_PRUEBAS.cancelar();t.check((await p).cancelado&&!d.querySelector('.pitPrueba'),pagina+': salir retira la cola de cambios pendientes');
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasMemoriaUI',async t=>{
+  for(const [pagina,ancho,alto] of [['index.html',1440,900],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=memoria-ui-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,M=w.PITAGORAS_PRUEBAS.modelo,crear=M.crear,poner=w.setTimeout,media=w.matchMedia;let ahora=10000,uid=0,modelo;const cuadros=new Map();
+    try{
+      w.requestAnimationFrame=fn=>{const id=++uid;cuadros.set(id,fn);return id;};w.cancelAnimationFrame=id=>cuadros.delete(id);w.performance.now=()=>ahora;w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);M.crear=op=>(modelo=crear(op));
+      const avanzar=seg=>{ahora+=seg*1000;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      const p=w.PITAGORAS_PRUEBAS.iniciar({tipo:'duelo',semilla:11});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(0);
+      t.check(w.getComputedStyle(d.querySelector('.ppControles')).display==='none',pagina+': el puzzle retira palancas y presenta cartas como controles');
+      for(let ronda=1;ronda<=3;ronda++){
+        const cartas=[...d.querySelectorAll('.ppMemoriaCarta:not([hidden])')];t.igual(cartas.length,Math.min(7,4+ronda),pagina+': cantidad de cartas en ronda '+ronda);
+        t.check(cartas.every(b=>b.disabled&&b.classList.contains('ppRevelada')),pagina+': las caras están a la vista sólo para memorizar');
+        for(const b of cartas){const r=b.getBoundingClientRect();t.check(r.width>=44&&r.height>=44&&r.left>=0&&r.top>=0&&r.right<=w.innerWidth+1&&r.bottom<=w.innerHeight+1,pagina+': cada carta cabe y mantiene un blanco táctil de al menos 44 px');}
+        const nombres=cartas.map(b=>b.getAttribute('aria-label').replace(/^Carta \d+: /,'')),pareja=cartas.map((_,i)=>i).filter(i=>nombres.indexOf(nombres[i])!==nombres.lastIndexOf(nombres[i]));t.igual(pareja.length,2,pagina+': las ilustraciones y etiquetas muestran exactamente una pareja');
+        cartas[pareja[0]].click();avanzar(.05);t.check(!modelo.elegidasMemoria.length,pagina+': tocar mientras están reveladas no adelanta la selección');avanzar(modelo.hastaMemoria-modelo.t+.001);
+        t.check(cartas.every(b=>!b.disabled&&!b.classList.contains('ppRevelada')&&b.getAttribute('aria-label').endsWith('oculta')),pagina+': al voltearlas se oculta también la identidad accesible');
+        cartas[pareja[0]].click();avanzar(.016);t.check(modelo.elegidasMemoria.length===1&&cartas[pareja[0]].disabled&&cartas.filter(b=>b.classList.contains('ppRevelada')).length===1,pagina+': el primer clic revela sólo la carta escogida');
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Digit'+(pareja[1]+1),cancelable:true}));avanzar(.016);
+        t.check(modelo.parejas===ronda&&modelo.faseMemoria==='resultado'&&cartas.every(b=>b.disabled),pagina+': una elección por teclado completa la pareja e impide dobles cobros');
+        t.igual(d.querySelectorAll('.ppMemoriaSellos .ppLogrado').length,ronda,pagina+': el progreso refleja las parejas realmente encontradas');avanzar(.62);
+      }
+      t.check(w.scrollY===0&&w.getComputedStyle(d.documentElement).overflow==='hidden',pagina+': el puzzle permanece sin desplazamiento');w.PITAGORAS_PRUEBAS.cancelar();t.check((await p).cancelado&&!d.querySelector('.ppMemoria,.pitPrueba'),pagina+': salir limpia cartas y escuchas del puzzle');
+    }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasImpactos',async t=>{
+  const M=window.PITAGORAS_PRUEBAS.modelo,escenario=(hp=2,oculto=false)=>{const s=M.crear({tipo:'fps',semilla:1});s.siguiente=Infinity;Object.assign(s.jugador,{x:3.5,y:oculto?3.5:8.5,a:0});s.enemigos=[{id:1,x:6.5,y:s.jugador.y,r:.34,hp,vel:0,aparece:0,dolor:0,fase:0}];return s;};
+  const acierto=escenario();M.paso(acierto,{accion:true},.016);t.check(acierto.enemigos[0].hp===1&&acierto.acierto>0&&!acierto.baja&&!acierto.fallo&&acierto.ultimoDisparo?.acerto&&!acierto.ultimoDisparo.letal,'FPS: un impacto confirmado tiene señal de acierto, distinta de fallo y baja');
+  const baja=escenario(1);M.paso(baja,{accion:true},.016);t.check(baja.muertes===1&&baja.enemigos.length===0&&baja.baja>0&&baja.ultimoDisparo?.letal&&baja.caidos.length===1,'FPS: matar elimina al perseguidor y deja su animación de caída');M.paso(baja,{},.7);t.check(baja.caidos.length===0,'FPS: el cadáver animado se retira después de caer');
+  const tapado=escenario(1,true);M.paso(tapado,{accion:true},.016);t.check(tapado.enemigos[0].hp===1&&!tapado.acierto&&!tapado.baja&&tapado.fallo>0&&tapado.ultimoDisparo?.acerto===false&&!tapado.caidos.length,'FPS: la columna bloquea daño, confirmación y muerte');
+  const contacto=escenario();contacto.enemigos[0].x=contacto.jugador.x+.4;M.paso(contacto,{},.016);t.check(contacto.vidas===2&&!contacto.acierto&&!contacto.baja&&!contacto.caidos.length&&!contacto.eventos.some(e=>e==='acierto'||e==='eliminacion'),'FPS: recibir un contacto no confirma un disparo ni una baja inexistentes');
+  const fallado=escenario();fallado.jugador.a=Math.PI/2;M.paso(fallado,{accion:true},.016);t.check(fallado.fallo>0&&!fallado.acierto&&!fallado.baja&&fallado.enemigos[0].hp===2,'FPS: disparar fuera del monstruo no reproduce la señal de acierto');
+  const iso=M.crear({tipo:'isometrico'});iso.siguiente=Infinity;iso.proximaMarca=Infinity;Object.assign(iso.jugador,{x:0,y:0,a:Math.PI-.05});M.paso(iso,{apuntar:-Math.PI+.05},.016);
+  t.check(iso.jugador.a>Math.PI-.05&&iso.jugador.a<Math.PI+.05&&iso.disparos===0,'Cosecha: cruza 180 grados por el arco corto y gira sin disparar');M.paso(iso,{apuntar:-Math.PI+.05},.8);t.check(Math.abs(Math.atan2(Math.sin(iso.jugador.a+Math.PI-.05),Math.cos(iso.jugador.a+Math.PI-.05)))<.002,'Cosecha: el giro continuo alcanza la orientación solicitada');
+  iso.jugador.a=0;M.paso(iso,{mx:.3,my:.7},.016);t.check(iso.jugador.a>0&&iso.jugador.a<Math.atan2(.7,.3)&&iso.disparos===0,'Cosecha: caminar también orienta el cuerpo progresivamente');M.paso(iso,{apuntar:2,accion:true},.016);const b=iso.balas.at(-1);t.check(!!b&&Math.abs(Math.atan2(b.vy,b.vx)-iso.jugador.a)<1e-6,'Cosecha: la bala sale alineada al arma durante el giro');
+  const marca=(edad,x)=>{const s=M.crear({tipo:'isometrico'});s.siguiente=Infinity;s.proximaMarca=Infinity;Object.assign(s.jugador,{x,y:0});s.marcas=[{x:0,y:0,edad,aviso:1.1,activo:.26,fuego:1.7,anchoFuego:.18,r:1.05,emitido:edad>=1.1}];return s;};
+  const aviso=marca(1,0);M.paso(aviso,{},.09);t.igual(aviso.vidas,3,'Cosecha: el círculo no daña antes de explotar');M.paso(aviso,{},.02);t.igual(aviso.vidas,2,'Cosecha: la explosión daña dentro del disco');
+  const centro=marca(1.5,0),aro=marca(1.5,1.05),fuera=marca(1.5,1.8);for(const s of [centro,aro,fuera])M.paso(s,{},.016);t.check(centro.vidas===3&&aro.vidas===2&&fuera.vidas===3,'Cosecha: después de explotar sólo quema el aro, con interior y exterior seguros');
+  const ceniza=marca(3.1,1.05);M.paso(ceniza,{},.016);t.check(ceniza.vidas===3,'Cosecha: el aro deja de dañar al consumirse');M.paso(ceniza,{},1);t.check(!ceniza.marcas.length,'Cosecha: se limpia la ceniza del suelo');
+  const lenta=M.avisoMarca({...aviso.marcas[0],edad:.1}),rapida=M.avisoMarca({...aviso.marcas[0],edad:1});t.check(rapida.frecuencia>lenta.frecuencia&&rapida.progreso>lenta.progreso,'Cosecha: el aviso acelera su parpadeo conforme se acerca la explosión');
+});
+
+PRUEBAS.suite('pitagorasCarrilesMemoria',async t=>{
+  const API=window.PITAGORAS_PRUEBAS,M=API.modelo;
+  const s=M.crear({tipo:'carrera'});s.siguiente=Infinity;M.paso(s,{mx:-1},.3);t.check(s.carril===-1&&s.jugador.x===-1,'Puente: una dirección termina en el carril izquierdo, nunca entre carriles');M.paso(s,{mx:1},.3);t.check(s.carril===0&&s.jugador.x===0,'Puente: cambiar de dirección avanza exactamente un carril');M.paso(s,{mx:1},1);t.check(s.carril===0,'Puente: mantener el mando no desliza ni cruza un segundo carril');M.paso(s,{mx:0},.02);M.paso(s,{mx:1},.3);t.check(s.carril===1&&s.jugador.x===1,'Puente: soltar y volver a pulsar habilita el siguiente salto de carril');M.paso(s,{},.02);M.paso(s,{mx:1},.3);t.check(s.carril===1,'Puente: el carril derecho es un límite firme');
+  const centro=M.crear({tipo:'carrera'});centro.siguiente=Infinity;M.paso(centro,{mx:.3},.5);t.igual(centro.carril,0,'Puente: la zona muerta evita cambios por ruido del mando');
+  const temprano=M.crear({tipo:'carrera'}),tarde=M.crear({tipo:'carrera'});temprano.invulnerable=tarde.invulnerable=60;M.paso(temprano,{},1);M.paso(tarde,{},16);t.check(tarde.velocidad>temprano.velocidad+3,'Puente: la velocidad aumenta durante el trayecto');t.check((tarde.siguiente-tarde.t)<1.46&&tarde.oleada>Math.floor(tarde.t/1.45),'Puente: los obstáculos aparecen con mayor frecuencia en la segunda mitad');
+  const pareja=s=>s.cartasMemoria.map((v,i)=>i).filter(i=>s.cartasMemoria.indexOf(s.cartasMemoria[i])!==s.cartasMemoria.lastIndexOf(s.cartasMemoria[i]));
+  const memoria=M.crear({tipo:'duelo',semilla:17});t.check(memoria.faseMemoria==='mostrar'&&memoria.cartasMemoria.length===5&&pareja(memoria).length===2,'Memoria: presenta cinco cartas con exactamente una pareja');
+  const par=pareja(memoria);M.paso(memoria,{elegir:par[0]},.4);t.check(!memoria.elegidasMemoria.length,'Memoria: no acepta elecciones durante la exhibición');M.paso(memoria,{},.59);t.igual(memoria.faseMemoria,'mostrar','Memoria: conserva el primer segundo completo para memorizar');M.paso(memoria,{},.02);t.check(memoria.faseMemoria==='elegir'&&Math.abs(memoria.limiteMemoria-5)<1e-8,'Memoria: al ocultarse ofrece cinco segundos para elegir');
+  M.paso(memoria,{elegir:-1},.016);M.paso(memoria,{elegir:999},.016);M.paso(memoria,{elegir:.5},.016);t.check(!memoria.elegidasMemoria.length,'Memoria: ignora índices fuera de la mesa y valores fraccionarios');
+  M.paso(memoria,{elegir:par[0]},.2);M.paso(memoria,{elegir:par[0]},.2);M.paso(memoria,{},.02);M.paso(memoria,{elegir:par[0]},.02);t.check(memoria.elegidasMemoria.length===1&&memoria.parejas===0,'Memoria: mantener o repetir la misma carta no fabrica una pareja');
+  M.paso(memoria,{},.016);M.paso(memoria,{elegir:par[1]},.016);t.check(memoria.parejas===1&&memoria.vidas===3&&memoria.faseMemoria==='resultado','Memoria: dos cartas iguales resuelven una pareja sin perder vida');const ronda=memoria.rondaMemoria;M.paso(memoria,{},.7);t.check(memoria.rondaMemoria===ronda+1&&memoria.cartasMemoria.length===6&&memoria.limiteMemoria<5,'Memoria: la ronda siguiente añade distractores y reduce el plazo');
+  const error=M.crear({tipo:'duelo',semilla:1});M.paso(error,{},1.01);const a=0,b=error.cartasMemoria.findIndex(v=>v!==error.cartasMemoria[0]);M.paso(error,{elegir:a},.016);M.paso(error,{},.016);M.paso(error,{elegir:b},.016);t.check(error.vidas===2&&error.parejas===0&&error.faseMemoria==='resultado','Memoria: una pareja equivocada cuesta exactamente una vida');
+  const timeout=M.crear({tipo:'duelo'});M.paso(timeout,{},5.99);t.check(timeout.vidas===3&&timeout.faseMemoria==='elegir','Memoria: el plazo no se cobra antes de los cinco segundos');M.paso(timeout,{},.03);t.check(timeout.vidas===2&&timeout.faseMemoria==='resultado','Memoria: agotar el plazo sin escoger una pareja cuesta una vida');M.paso(timeout,{},20);t.check(timeout.terminado&&!timeout.sobrevivio&&timeout.vidas===0,'Memoria: un fotograma ausente consume todas las rondas, sin victoria por inactividad');
+  const insuficiente=M.crear({tipo:'duelo'});insuficiente.invulnerable=60;M.paso(insuficiente,{},20);t.check(insuficiente.terminado&&!insuficiente.sobrevivio,'Memoria: tener vidas al llegar al límite no basta sin tres parejas');
+  const completo=M.crear({tipo:'duelo',semilla:8}),guia={};for(let i=0;i<1200&&!completo.terminado;i++)M.paso(completo,API.guiasPrueba.duelo(completo,guia),1/60);t.check(completo.terminado&&completo.sobrevivio&&completo.parejas>=3&&completo.t===20,'Memoria: recordar y escoger parejas permite ganar mediante entradas reales');
 });
 
 PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
@@ -665,7 +776,7 @@ PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
     for(let i=0;i<1200&&!s.terminado;i++){M.paso(s,guiar(s,mem),1/60);M.paso(repetido,guiar(repetido,otro),1/60);}
     t.check(s.terminado&&s.sobrevivio&&s.vidas>0&&s.t===20,tipo+': se puede sobrevivir veinte segundos con movimiento y combate reales.');
     t.check(JSON.stringify(M.instantanea(s))===JSON.stringify(M.instantanea(repetido)),tipo+': semilla y controles reproducen exactamente la partida.');
-    const reloj=M.crear({tipo});reloj.siguiente=Infinity;reloj.proximaMarca=Infinity;reloj.invulnerable=60;M.paso(reloj,{},19.99);t.check(!reloj.terminado,tipo+': no hay victoria antes de veinte segundos.');M.paso(reloj,{},.01);t.check(reloj.terminado&&reloj.sobrevivio&&reloj.t===20,tipo+': el límite exacto de tiempo resuelve la supervivencia.');
+    const reloj=M.crear({tipo});reloj.siguiente=Infinity;reloj.proximaMarca=Infinity;reloj.invulnerable=60;const memoriaReloj={};while(reloj.t<19.99-1e-8&&!reloj.terminado)M.paso(reloj,tipo==='duelo'?guiar(reloj,memoriaReloj):{},Math.min(1/60,19.99-reloj.t));t.check(!reloj.terminado,tipo+': no hay victoria antes de veinte segundos.');M.paso(reloj,{},.01);t.check(reloj.terminado&&reloj.sobrevivio&&reloj.t===20,tipo+': el límite exacto de tiempo resuelve la supervivencia.');
     t.nota(tipo+': supervivencia real en 20 s con '+s.vidas+' vidas; inmóvil pierde en '+quieto.t.toFixed(2)+' s.');
   }
   const dano=M.crear({tipo:'fps'});dano.siguiente=Infinity;M.herir(dano);for(let i=0;i<60;i++)M.herir(dano);t.check(dano.vidas===2,'Un contacto múltiple no consume las tres vidas.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.vidas===1,'La invulnerabilidad expira y permite un segundo golpe.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.terminado&&!dano.sobrevivio&&dano.vidas===0,'El tercer golpe termina el intento.');
@@ -683,10 +794,7 @@ PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
   proyectil();M.paso(nave,{accion:true},.02);t.check(nave.vidas===3&&nave.muertes===1&&nave.balas.length===0,'Órbita: el escudo absorbe y destruye un proyectil en contacto.');
   M.paso(nave,{},.6);proyectil();M.paso(nave,{accion:true},.02);t.check(nave.vidas===2,'Órbita: el escudo agotado no puede reutilizarse durante su recarga.');
   M.paso(nave,{},2.1);proyectil();M.paso(nave,{accion:true},.02);t.check(nave.vidas===2&&nave.muertes===2,'Órbita: al recargarse vuelve a proteger.');
-  const espada=(edad,barrido,entrada,dt)=>{const s=M.crear({tipo:'duelo'});s.siguiente=Infinity;s.ataques=[{id:1,edad,aviso:1.18,objetivo:0,lado:1,barrido,resuelto:false}];M.paso(s,entrada,dt);return s;};
-  const preciso=espada(1.1,true,{accion:true},.15),anticipado=espada(.4,true,{accion:true},.9);
-  t.check(preciso.vidas===3&&preciso.paradas===1&&anticipado.vidas===2&&anticipado.paradas===0,'Duelo: la parada exige el momento del impacto; mantenerla desde antes no protege.');
-  t.check(espada(.6,false,{mx:1},.7).vidas===3&&espada(.6,true,{mx:1},.7).vidas===2,'Duelo: desplazarse esquiva el filo estrecho, pero la onda requiere parada.');
+
 
 });
 
