@@ -66,6 +66,10 @@ node --check "$AQUI/final-core.js" || exit 1
 node --check "$AQUI/campana-mesa.js" || exit 1
 node --check "$AQUI/campana-personaje.js" || exit 1
 node --check "$AQUI/campana-deseo.js" || exit 1
+node --check "$AQUI/campana-pitagoras.js" || exit 1
+node --check "$AQUI/campana-secreto.js" || exit 1
+node --check "$AQUI/campana-honores.js" || exit 1
+node --check "$AQUI/dado-fisico.js" || exit 1
 node --check "$AQUI/polish-aaa.js" || exit 1
 node --check "$AQUI/audio-domo.js" || exit 1
 node --check "$AQUI/sonidos.js" || exit 1
@@ -94,7 +98,7 @@ gris "  sintaxis correcta"
 
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
 # animación termine. Es una regla dura y se comprueba también aquí.
-if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js" "$AQUI/movil.html" "$AQUI/final.js" "$AQUI/final-core.js" "$AQUI/campana-mesa.js" "$AQUI/campana-personaje.js" "$AQUI/campana-deseo.js" "$AQUI/polish-aaa.js"; then
+if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js" "$AQUI/movil.html" "$AQUI/final.js" "$AQUI/final-core.js" "$AQUI/campana-mesa.js" "$AQUI/campana-personaje.js" "$AQUI/campana-deseo.js" "$AQUI/campana-pitagoras.js" "$AQUI/campana-secreto.js" "$AQUI/campana-honores.js" "$AQUI/dado-fisico.js" "$AQUI/polish-aaa.js"; then
   rojo 'index.html usa Animation.finished — encadena con sleep(), o el motor se cuelga'
   exit 1
 fi
@@ -146,7 +150,9 @@ else
   # pasaban del límite tres veces seguidas en una tarde. Daba un rojo que no
   # era del juego sino del reloj; como la página avisa al terminar, el margen
   # sobrante no se espera nunca.
-  gris "  corriendo las rápidas (motor, cartas, cobertura, regresiones)"; ESPERA=300
+  # D20 físico y final secreto añaden simulación y recorridos reales. La tanda
+  # anterior ya rozaba 300 s; el margen no se espera si llega el resultado.
+  gris "  corriendo las rápidas (motor, cartas, cobertura, regresiones)"; ESPERA=420
 fi
 
 # Sin --virtual-time-budget a propósito: hacía que Chrome esperase a agotar el
@@ -211,6 +217,10 @@ cp "$AQUI/final-core.js" "$PAGES/$DESTINO/final-core.js"
 cp "$AQUI/campana-mesa.js" "$PAGES/$DESTINO/campana-mesa.js"
 cp "$AQUI/campana-personaje.js" "$PAGES/$DESTINO/campana-personaje.js"
 cp "$AQUI/campana-deseo.js" "$PAGES/$DESTINO/campana-deseo.js"
+cp "$AQUI/campana-pitagoras.js" "$PAGES/$DESTINO/campana-pitagoras.js"
+cp "$AQUI/campana-secreto.js" "$PAGES/$DESTINO/campana-secreto.js"
+cp "$AQUI/campana-honores.js" "$PAGES/$DESTINO/campana-honores.js"
+cp "$AQUI/dado-fisico.js" "$PAGES/$DESTINO/dado-fisico.js"
 cp "$AQUI/polish-aaa.js" "$PAGES/$DESTINO/polish-aaa.js"
 cp "$AQUI/sw.js"        "$PAGES/$DESTINO/sw.js"
 cp "$AQUI/manifest.webmanifest" "$PAGES/$DESTINO/manifest.webmanifest"
@@ -244,7 +254,7 @@ fi
 cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
-git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/final-core.js" "$DESTINO/campana-mesa.js" "$DESTINO/campana-personaje.js" "$DESTINO/campana-deseo.js" "$DESTINO/polish-aaa.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/final-core.js" "$DESTINO/campana-mesa.js" "$DESTINO/campana-personaje.js" "$DESTINO/campana-deseo.js" "$DESTINO/campana-pitagoras.js" "$DESTINO/campana-secreto.js" "$DESTINO/campana-honores.js" "$DESTINO/dado-fisico.js" "$DESTINO/polish-aaa.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
 git add "$DESTINO/audio-domo.js" "$DESTINO/sonidos.html" "$DESTINO/sonidos.js" "$DESTINO/sonidos.css" "$DESTINO/_worker.js" "$DESTINO/_routes.json" "$DESTINO/audio"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
@@ -276,7 +286,7 @@ comprobar_cloudflare(){
   for j in $(seq 1 12); do
     sleep 10
     local ok=1
-    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js polish-aaa.js sw.js manifest.webmanifest; do
+    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js dado-fisico.js polish-aaa.js sw.js manifest.webmanifest; do
       local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
       local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
       [ "$srv" = "$esp" ] || { ok=0; break; }
@@ -318,7 +328,7 @@ for i in $(seq 1 10); do
   SERVIDO_FINAL="$(curl -s "$URL_FINAL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
   if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ] && [ "$SERVIDO_FINAL" = "$ESPERADO_FINAL" ]; then
     verde "  GitHub Pages verificado byte a byte (index.html, motor.js, movil.html y final.js)"
-    for f in final-core.js campana-mesa.js campana-personaje.js campana-deseo.js polish-aaa.js sw.js manifest.webmanifest; do
+    for f in final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js dado-fisico.js polish-aaa.js sw.js manifest.webmanifest; do
       curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/$f?cb=$(date +%s)" -o "/tmp/caoz-verificar-$f" || exit 1
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$f" || { rojo "$f no coincide con la versión local"; exit 1; }
     done

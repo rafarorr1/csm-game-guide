@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-08 · build 208 (beta; producción 207, rama feature/aaa-combat-cards) · v18 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-08 · build 214 (beta; producción 207, rama feature/aaa-combat-cards) · v19 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,31 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 214 añade `dado-fisico.js`: simulación pura de un icosaedro y presentación
+Canvas. `resolverD20` recoge el gesto, simula y entrega la cara final a `roll`;
+`rollDice` acepta una trayectoria autoritativa. El anfitrión elige la semilla
+tras recibir el impulso limitado del invitado; el paquete lleva muestras de
+posición/orientación, por lo que no depende de diferencias numéricas entre
+Safari y Chrome. No aceptar un valor elegido por el invitado. El arnés histórico
+no activa física; `CAOZ_D20_PRUEBA=true` permite ensayarla en suites específicas.
+Los timers tienen salida al ocultar/cerrar y no dependen de Animation.finished.
+
+`campana-secreto.js` guarda sellos por mazo en `caoz.campana.logros.v1`, separados
+de `CAMPANA_CLAVE`; sufijo `.simulados` para los botones beta y `.prueba` para
+el arnés. API `CAMPANA_LOGROS.leer/tiene/total/ganador(prueba)` y evento
+`caoz:campana-logros`. El progreso conserva `secreto`: ascenso, reto, esporas,
+trono, combate, final y completado. En la sexta marca se interrumpe el ascenso
+normal a los 2400 ms; antes de seis marcas conserva el deseo habitual.
+
+`campana-pitagoras.js` dibuja el Editor, su retrato y las escenas de esporas y
+final con APIs que devuelven `destruir()`. `campana-honores.js` pinta sellos en
+los selectores, nombre ganador en la portada y adapta la identidad rival de
+VS/tablero/final. El mazo sigue siendo Adreida; `G.campana.jefeSecreto` determina
+la apariencia y la copia local de `P(FOE).L`, nunca `LEADERS.adreida`.
+Sellos reales se obtienen con nuevas victorias; no se infieren triunfos pasados
+ni ensayos de versiones anteriores. No hay backend ni sincronización entre
+dispositivos para estos logros.
 
 Build 208 añade el banco original de 34 SFX, el mezclador compartido
 `audio-domo.js` y el estudio privado `sonidos.html`. El motor no cambia.

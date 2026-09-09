@@ -9,6 +9,9 @@ Si vienes de fuera, empieza por **`HANDOFF.md`** y **`AGENTS.md`**.
 python3 -m http.server 8745 --directory caoz_tcg
 ```
 
+Las tiradas de d20 en partida se pueden lanzar deslizando sobre su mesa o con
+el botón: el número que queda arriba determina el efecto de la tirada.
+
 También está registrado en `.claude/launch.json` como `caoz-tcg`.
 
 ## Qué hay dentro
@@ -16,7 +19,8 @@ También está registrado en `.claude/launch.json` como `caoz-tcg`.
 | Modo | Qué es |
 |---|---|
 | **🎓 Tutorial** | Partida guiada de 34 pasos narrada por el DM Gero, **con el mazo que tú elijas**, pensada para alguien que **nunca ha jugado un TCG**. Avanza al ritmo del jugador y —lo importante— **pausa la partida durante el turno del rival** para explicar cada jugada suya: qué carta bajó y por qué, de dónde sale el Provocar, qué pasa en un combate, por qué salta tu Trampa. Al terminar, la partida sigue siendo real: la juegas hasta ganar. |
-| **⚔️ Partida contra el Domo** | Los 5 Protagonistas con sus 5 mazos preconstruidos de 40 cartas, contra una IA que juega curva, quita, buffs, trampas, habilidades activadas y respuestas rápidas. |
+| **⚔️ Partida contra el Domo** | Los 6 Protagonistas con sus 6 mazos preconstruidos de 40 cartas, contra una IA que juega curva, quita, buffs, trampas, habilidades activadas y respuestas rápidas. |
+| **Campaña** | Crea tu miniatura, elige un mazo y vence a seis rivales hasta Gero. Cada mazo con el que lo venzas recibe una marca permanente en este navegador. Al reunir las seis, el Domo guarda una última sorpresa. |
 | **👥 Jugar con un amigo (online)** | Uno crea la sala y recibe un **código de 5 caracteres**; el otro lo escribe y a jugar. Sin cuentas, sin instalar nada, sin servidor propio. |
 | **📖 Guías de estrategia** | Una guía por Protagonista escrita sobre su lista real: cómo ganas, el motor, plan por turnos, la jugada estrella, mulligan, cómo pierdes, enfrentamientos y el mazo entero. Con la dificultad y el winrate medido en las partidas de prueba. |
 | **🃏 Ver todas las cartas** | Galería filtrable por tipo con el texto completo de las 84 cartas. |

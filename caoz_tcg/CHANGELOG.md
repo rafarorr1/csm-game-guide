@@ -1,6 +1,31 @@
 # Registro de versiones — el TCG del Domo
 
 
+### v19 · build 214 · D20 físico y el último corte
+
+- El d20 se lanza con un gesto o botón: icosaedro rígido, gravedad, rebote,
+  rozamiento y lectura de la cara superior sólo al quedar apoyado. El motor
+  usa esa cara; no se elige un número para disfrazarlo de animación.
+- Online: el anfitrión genera la semilla después del gesto validado y transmite
+  el recorrido compacto. Ambos clientes ven la misma tirada; las repeticiones
+  mantienen la regla del peor resultado. Los modos rápidos conservan su ruta
+  instantánea; movimiento reducido muestra el resultado físico sin recorrido.
+- Vencer a Gero deja un sello persistente en el mazo utilizado. Seis mazos
+  distintos interrumpen el ascenso con «¿Crees que eso fue todo?» y «...». Las
+  esporas cubren la pantalla y esperan un segundo antes de revelar al Editor.
+- Pitágoras aparece en su trono de latas, junto a dos monitores. Usa temporalmente
+  el mazo, habilidades y 40 de Alma de Adreida, con nombre/retrato propios; no se
+  modifica el catálogo global de protagonistas. Revancha directa tras perder.
+- Su derrota abre implosión, explosión y cuarto oscuro con la miniatura creada.
+  El reconocimiento se escribe gradualmente, permanece seis segundos completos
+  y da paso al negro y al menú coronado con el nombre del jugador.
+- Progreso del secreto y sellos separados del reinicio de campaña. Persistencia
+  local, sin cuentas ni backend nuevo; las victorias simuladas de beta se guardan
+  aparte. Recarga y cancelación conservan la fase pendiente sin callbacks tardíos.
+- Corregida la identidad del avance leído al recargar antes del ascenso. Se
+  incluyen regresiones de física, integración de tiradas, progresión y tiempos
+  visuales del final, además de las comprobaciones del juego existente.
+
 ### Sin numerar · build 213 · Alcantarillas como pilas de cartas
 
 - Cada bando muestra la última carta descartada boca arriba, con su ilustración,
