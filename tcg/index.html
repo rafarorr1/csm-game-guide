@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=214"></script>
-<script src="final.js?b=214"></script>
+<script src="motor.js?b=215"></script>
+<script src="final.js?b=215"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:214, fecha:'2026-09-08'};
+const BUILD = {n:215, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3679,7 +3679,7 @@ function renderControls(){
   // Salida al menú. No lleva tutCan(): el tutorial bloquea el tablero para que
   // no te pierdas, pero irse siempre tiene que poder hacerse.
   const s=el('button','btn sm','← Menú'); s.onclick=pedirSalirAlMenu; c.appendChild(s);
-
+  campanaBotonFinalGero(c);
 }
 /* POR QUÉ NO PUEDE ATACAR
    Una sola lista de motivos, en el mismo orden en que canAttack los comprueba.

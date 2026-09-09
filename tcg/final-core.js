@@ -329,6 +329,7 @@ async function cinematicaFinal(winner, why, acciones){
   capa.onclick = null;
   // y se espera a la decisión; si mientras tanto empieza otra partida, se retira
   const vigia = setInterval(() => { if(!vive()){ clearInterval(vigia); capa.remove(); document.body.classList.remove('fin-on'); elige(null); } }, 400);
+  if(acciones?.continuarAutomaticamente&&vive()) bRev.click();
   await eleccion;
   clearInterval(vigia);
   return true;
@@ -573,9 +574,9 @@ function campanaCrearNiebla(etapa,retirada=false){
   </g>`;
   return niebla;
 }
-let campanaMemoria=null,campanaLanzando=false;
+let campanaMemoria=null,campanaLanzando=false,campanaEnsayoGero=null;
 function campanaLeer(){
-  let dato=campanaMemoria;
+  let dato=campanaEnsayoGero||campanaMemoria;
   try{if(!dato)dato=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
   if(!dato||dato.version!==1||typeof dato.id!=='string'||!LEADERS[dato.lider]||!Number.isInteger(dato.etapa)||dato.etapa<0||dato.etapa>CAMPANA_RIVALES.length)return null;
   if(dato.mesaPendiente!=null&&(!Number.isInteger(dato.mesaPendiente)||dato.mesaPendiente!==dato.etapa-1||dato.mesaPendiente<0||dato.mesaPendiente>5))delete dato.mesaPendiente;
@@ -584,10 +585,13 @@ function campanaLeer(){
   if(dato.etapa!==6||!['ascenso','reto','esporas','trono','combate','final','completado'].includes(dato.secreto))delete dato.secreto;
   // También la primera lectura tras recargar es el avance vivo. Las escenas
   // comprueban su identidad para cancelar sólo al empezar otra campaña.
-  campanaMemoria=dato;
+  if(!campanaEnsayoGero)campanaMemoria=dato;
   return dato;
 }
 function campanaGuardar(dato){
+  // Este recorrido temporal no reemplaza la campaña que el jugador guardó.
+  if(campanaEnsayoGero&&dato?.id===campanaEnsayoGero.id){campanaEnsayoGero=dato;return true;}
+  campanaEnsayoGero=null;
   campanaMemoria=dato;
   try{localStorage.setItem(CAMPANA_CLAVE,JSON.stringify(dato));return true;}
   catch(_){toast('No se pudo guardar en este navegador. Puedes continuar mientras no cierres el juego.');return false;}
@@ -648,6 +652,7 @@ function campanaCabecera(d,titulo,sub){
 }
 function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
+  campanaEnsayoGero=null;
   const progreso=campanaLeer();
   if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&(progreso.deseo||progreso.secreto==='completado')))campanaRuta();else campanaCrear();
   campanaAnimarEntrada();
@@ -889,14 +894,22 @@ function campanaFinal(winner,why){
   if(!meta||!p||meta.id!==p.id||g.campanaResuelta)return;
   if(meta.jefeSecreto&&typeof campanaFinalSecreto==='function'){campanaFinalSecreto(winner,why);return;}
   g.campanaResuelta=true;RECORD_ULTIMO=null;
-  if(winner===ME&&p.etapa===meta.etapa){p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;if(p.etapa===6&&typeof campanaMarcarGero==='function')campanaMarcarGero(p);campanaGuardar(p);}
+  const ensayoFinal=meta.pruebaFinalGero===true&&p===campanaEnsayoGero&&p.prueba===true&&campanaPruebaDisponible();
+  if(winner===ME&&p.etapa===meta.etapa){
+    p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;
+    if(p.etapa===6&&typeof campanaMarcarGero==='function')campanaMarcarGero(p);
+    if(ensayoFinal&&p.etapa===6)p.secreto='ascenso';
+    campanaGuardar(p);
+  }
   let mesaPreparada=false;
   const acciones={textoPrincipal:winner===ME?'Volver a la mesa':'↺ Revancha',
+    continuarAutomaticamente:ensayoFinal&&winner===ME,
     prepararRevancha:winner===ME?()=>{if(G!==g)return;campanaRuta();mesaPreparada=true;return document.getElementById('campanaPanel');}:null,
     revancha:()=>{if(G!==g)return;if(winner===ME){if(!mesaPreparada)campanaRuta();}else campanaCombatir();},
     menu:()=>{if(G===g)campanaVolverAlMenu();}};
   cinematicaFinal(winner,why,acciones).then(hecho=>{
     if(hecho||G!==g)return;
+    if(acciones.continuarAutomaticamente){acciones.revancha();return;}
     const d=campanaDialogo();campanaCabecera(d,winner===ME?(p.etapa===6?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',why||'');
     d.append(campanaAcciones(campanaBoton(winner===ME?'Volver a la mesa':'Reintentar combate',acciones.revancha,true),campanaBoton('Menú principal',acciones.menu)));
   });

@@ -19,6 +19,33 @@
     if(!d.mazos[p.lider]){d.mazos[p.lider]={nombre:campanaNombre(p),fecha:Date.now()};guardar(d,prueba);}
     if(ids.every(id=>d.mazos[id])&&!p.secreto)p.secreto='ascenso';
   };
+  function puedeEnsayarGero(){
+    return campanaPruebaDisponible()&&G&&!G.over&&!G.auto&&!G.silent&&!G.online&&!G.guest&&!NET.on&&P(FOE).leaderId==='gero';
+  }
+  function accionPendiente(){
+    return G.busy||G.resolving||G.active!==ME||G.phase!=='principal'||!!TGT||!!TUT.pending||!!document.querySelector('#dice.on,#ov.on,.vs');
+  }
+  window.campanaBotonFinalGero=function(controles){
+    controles.querySelector('#betaFinalGero')?.remove();
+    if(!puedeEnsayarGero())return;
+    const b=campanaBoton('Beta · Vencer a Gero y ver el final',campanaProbarFinalGero);
+    b.id='betaFinalGero';b.classList.add('betaFinalGero');b.disabled=accionPendiente();
+    b.title=b.disabled?'Disponible en tu turno, al terminar la acción actual.':'Victoria, ascenso y Pitágoras. Tu campaña guardada se conserva.';
+    controles.appendChild(b);
+  };
+  window.campanaProbarFinalGero=function(){
+    if(!puedeEnsayarGero()||accionPendiente())return false;
+    const lider=P(ME).leaderId;
+    const personaje=campanaNormalizarPersonaje(G.campana?.personaje||{nombre:P(ME).L.n});
+    // Ensayo en memoria: no fabrica seis sellos ni sobrescribe otra campaña.
+    campanaEnsayoGero={version:1,id:'ensayo-gero-'+Date.now(),lider,personaje,etapa:5,prueba:true,enEncuentro:true};
+    G.over=true;G.winner=ME;G.endWhy='Victoria de prueba · Beta';P(FOE).alma=0;
+    G.campana={id:campanaEnsayoGero.id,etapa:5,alma:40,personaje,prueba:true,pruebaFinalGero:true};
+    G.campanaResuelta=false;G.tutorial=false;SEL=null;
+    tutEnd();clearPrompt();relojPara();cerrarOv();
+    if(typeof cerrarHojas==='function')cerrarHojas();
+    render();campanaFinal(ME,G.endWhy);return true;
+  };
   let escena=null;
   function vigente(e){const p=campanaLeer();return escena===e&&!e.cancelado&&p?.id===e.id;}
   function limpiar(){const e=escena;if(!e)return;escena=null;e.cancelado=true;e.timers.forEach(clearTimeout);e.visual?.destruir();if(e.d.open)e.d.close();e.d.remove();}
@@ -102,6 +129,9 @@
     });
   };
   const css=document.createElement('style');css.textContent=`
+  #controls .betaFinalGero{min-height:44px;padding:7px 12px;font:600 12px/1.2 var(--sans,sans-serif);color:#ddc4f6;border:1px dashed #9671bd;background:#271b38;white-space:normal}
+  #controls .betaFinalGero:disabled{opacity:.45}
+  @media(max-width:700px){#controls .betaFinalGero{flex:1 0 100%;order:-1}}
   #campanaSecreto{position:fixed;inset:0;top:var(--campana-desfase,0px);margin:0;padding:0;border:0;width:100vw;height:var(--campana-alto,100dvh);max-width:none;max-height:none;overflow:hidden;box-sizing:border-box;color:#f4ebdb;background:#030305;text-align:center}
   #campanaSecreto[open]{display:grid;place-items:center}#campanaSecreto::backdrop{background:#000}
   .secretoReto{position:relative;z-index:2;display:grid;justify-items:center;gap:28px;padding:24px;max-width:780px}

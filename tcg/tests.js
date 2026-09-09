@@ -553,6 +553,49 @@ PRUEBAS.suite('pitagorasVisual',async t=>{
   }
 });
 
+PRUEBAS.suite('betaFinalGero',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=beta-final-gero-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana,disponible=w.campanaPruebaDisponible,timers=new Map();let siguiente=97000,finales=0;
+    const clave='caoz.campana.v1.prueba',logros='caoz.campana.logros.v1.prueba',simulados=logros+'.simulados',anteriores=[clave,logros,simulados].map(k=>w.localStorage.getItem(k));
+    try{
+      w.matchMedia=()=>({matches:true});Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
+      const previo={version:1,id:'campana-real-conservada',lider:'talesin',personaje:w.campanaNormalizarPersonaje({nombre:'Mi héroe guardado'}),etapa:3,enEncuentro:true};w.campanaGuardar(previo);
+      w.localStorage.setItem(logros,JSON.stringify({version:1,mazos:{talesin:{nombre:'Mi héroe guardado',fecha:1234}},ganador:null}));w.localStorage.removeItem(simulados);
+      const avanceReal=w.localStorage.getItem(clave),sellosReales=w.localStorage.getItem(logros);
+      const nueva=(foe='gero')=>{w.newGame('fender',foe);w.eval("G.phase='principal';G.active=ME;G.busy=false;G.resolving=false");w.showScreen('board');w.render();};
+      nueva();t.check(!!d.querySelector('#betaFinalGero'),pagina+': falta el botón beta contra Gero.');
+      // Presencia y acción se validan por separado: un botón viejo puede seguir
+      // recibiendo un evento al cambiar de partida o desconectarse una sala.
+      const botonViejo=d.querySelector('#betaFinalGero');
+      for(const estado of ["NET.on=true","G.online=true","G.guest=true","G.auto=true","G.silent=true"]){
+        nueva();w.eval(estado);w.render();const boton=d.querySelector('#betaFinalGero');t.check(estado==='G.silent=true'||!boton||boton.disabled,pagina+': no permite ensayar con '+estado);
+        w.campanaProbarFinalGero();t.check(!w.eval('G.over')&&w.campanaLeer().id===previo.id,pagina+': una llamada directa está bloqueada con '+estado);w.eval('NET.on=false');
+      }
+      nueva('adreida');botonViejo.click();w.campanaProbarFinalGero();t.check(!w.eval('G.over')&&w.campanaLeer().id===previo.id,pagina+': un botón de la partida anterior no vence a otro rival.');
+      nueva();w.campanaPruebaDisponible=()=>false;w.render();t.check(!d.querySelector('#betaFinalGero'),pagina+': producción no muestra la herramienta.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': producción bloquea también la función.');w.campanaPruebaDisponible=disponible;
+      for(const estado of ['G.busy=true','G.resolving=true','TUT.pending=()=>{}']){nueva();w.eval(estado);w.render();t.check(d.querySelector('#betaFinalGero')?.disabled,pagina+': espera una resolución pendiente.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': no interrumpe '+estado);w.eval('TUT.pending=null');}
+      nueva();d.querySelector('#dice').classList.add('on');w.render();t.check(d.querySelector('#betaFinalGero')?.disabled,pagina+': no interrumpe el d20 de la pasiva de Gero.');w.campanaProbarFinalGero();t.check(!w.eval('G.over'),pagina+': la función rechaza el dado pendiente.');d.querySelector('#dice').classList.remove('on');
+      w.setTimeout=(fn,ms,...args)=>{if(ms===2400){const id=++siguiente;timers.set(id,()=>fn(...args));return id;}return poner(fn,ms,...args);};w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
+      w.crearMesaCampana=(host,op)=>{const mesa=crear(host,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
+      w.cinematicaFinal=async(ganador,motivo,acciones)=>{finales++;t.check(ganador===0&&acciones.continuarAutomaticamente,pagina+': conserva Victoria y solicita avanzar automáticamente al ascenso.');acciones.prepararRevancha?.();acciones.revancha();return true;};
+      nueva();w.eval('G.tutorial=true');w.render();t.check(!d.querySelector('#betaFinalGero').disabled,pagina+': el tutorial local quieto también permite el ensayo.');const g=w.eval('G');d.querySelector('#betaFinalGero').click();w.campanaProbarFinalGero();await sleep(550);
+      t.check(w.eval('G')===g&&w.eval('G.over&&P(FOE).alma===0'),pagina+': termina la partida actual una sola vez.');t.igual(finales,1,pagina+': una sola pantalla de Victoria');t.check(!w.eval('G.tutorial||TUT.on'),pagina+': sale limpiamente del tutorial.');
+      const ensayo=w.campanaLeer();t.check(ensayo.id!==previo.id&&ensayo.prueba&&ensayo.etapa===6&&ensayo.secreto==='ascenso',pagina+': un ensayo aislado permite ascenso sin seis mazos ganados.');
+      t.check(w.eval('G.campana.pruebaFinalGero')===true,pagina+': la partida queda marcada como prueba de final.');
+      t.igual(w.localStorage.getItem(clave),avanceReal,pagina+': conserva byte a byte el avance real');t.igual(w.localStorage.getItem(logros),sellosReales,pagina+': conserva los sellos reales');t.check(w.CAMPANA_LOGROS.total(true)<=1,pagina+': no inventa seis victorias.');
+      t.check(d.querySelector('#campanaAscenso')?.open,pagina+': la Victoria llega al rayo sin otro clic.');
+      const interrumpir=[...timers.values()][0];t.check(!!interrumpir,pagina+': programa la interrupción del sexto sello simulado.');interrumpir();
+      t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='reto'&&!d.querySelector('#campanaDeseo'),pagina+': revela el reto del Editor.');
+      w.campanaVolverAlMenu();w.abrirCampana();t.check(w.campanaLeer().id===previo.id&&w.campanaLeer().etapa===3,pagina+': reabrir Campaña devuelve el avance original.');
+      t.igual(w.localStorage.getItem(clave),avanceReal,pagina+': tampoco modifica el guardado al abandonar el ensayo');
+    }finally{
+      w.eval('NET.on=false');w.campanaCerrar();w.relojPara();w.campanaPruebaDisponible=disponible;w.setTimeout=poner;w.clearTimeout=quitar;
+      [clave,logros,simulados].forEach((k,i)=>{if(anteriores[i]==null)w.localStorage.removeItem(k);else w.localStorage.setItem(k,anteriores[i]);});f.remove();
+    }
+  }
+});
+
 PRUEBAS.suite('campanaSecreto',async t=>{
   const claves=['caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
   const previos=claves.map(k=>localStorage.getItem(k));
