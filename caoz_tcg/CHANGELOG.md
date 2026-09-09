@@ -1,6 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 212 · Roce natural de cartas
+
+- El hover utiliza un solo archivo, incluido cualquier reemplazo del estudio.
+  Varía hasta un semitono y evita repetir consecutivamente la misma altura.
+- Volumen aleatorio ±10% alrededor de la intensidad del gesto: un movimiento
+  lento queda más suave y un barrido rápido se marca ligeramente más. Una pausa,
+  salir de la ventana o perder el foco reinicia la medida de velocidad.
+- El toque y el foco de teclado usan una intensidad intermedia. Se conservan
+  los límites de repetición, el silencio y el volumen del estudio y del jugador.
+- Los finales conservan pitch fijo; no se crean archivos adicionales. La suite
+  hoverNatural comprueba fuente única, límites, gestos, pausas y silencio.
+
 ### Sin numerar · build 211 · Sonidos de contacto y Victoria centrada
 
 - Tres SFX propios y reemplazables en el estudio: golpe al protagonista, roce

@@ -1,6 +1,6 @@
 # El sonido del Domo
 
-Propuesta 01, build 211. Banco original de 37 efectos de fantasía: materiales
+Propuesta 01, build 212. Banco original de 37 efectos de fantasía: materiales
 cercanos, preparación antes del impacto y espacio para que se entienda cada acción.
 Los WAV se crearon para el proyecto mediante síntesis de resonadores, fricción,
 percusión, cuerdas y reflexiones de sala. No son grabaciones extraídas de Baldur's Gate.
@@ -99,3 +99,12 @@ sello; inmediato con movimiento reducido). El motivo victory sigue al inicio
 como fanfarria independiente. Saltar o cerrar el final cancela el impacto pendiente.
 Los tres IDs se admiten en el estudio privado y el backend; los reemplazos
 existentes se conservan. Suite sonidosMomentos cubre ambos clientes y silencio.
+
+
+Build 212: card_hover conserva un único archivo. El mezclador elige entre siete
+alturas de −1 a +1 semitonos sin repetición consecutiva, aplica ±10% de volumen
+sobre una intensidad entre .82 y 1 según la velocidad reciente del mouse, y
+usa .883 en toque/teclado. El volumen del estudio sigue siendo la referencia,
+con ganancia final limitada a 1 y el volumen maestro aplicado después.
+No se modifica el archivo ni se simulan grabaciones distintas. La reproducción
+sin variación conserva pitch y volumen base. Los sonidos de Finales no cambian.

@@ -67,6 +67,7 @@
     finally{precargando=false;}
   }
   function detener(){generacion++;for(const v of voces){try{v.s.stop();}catch(e){}v.s.disconnect();v.g.disconnect();}voces.clear();}
+  let ultimoTonoHover=null;
   function play(id,op={}){
     const s=catalogo.get(id),ahora=performance.now();
     if(!s||!permitido()||contexto?.state!=='running'||s.volumen===0||ahora-(ultimos.get(id)??-Infinity)<s.intervalo)return false;
@@ -78,11 +79,18 @@
       if(s.grupo==='Interfaz'&&iguales.length>=2){try{iguales[0].s.stop();}catch(e){}}
       while(voces.size>=8){const v=voces.values().next().value;try{v.s.stop();}catch(e){}voces.delete(v);}
       const fuente=contexto.createBufferSource(),g=contexto.createGain();fuente.buffer=b;
-      fuente.playbackRate.value=op.variar===false||s.grupo==='Finales'?1:1+(Math.random()-.5)*.055;
-      g.gain.value=s.volumen*limitar(op.volumen,1);fuente.connect(g);g.connect(maestro);
+      let matiz=1;
+      if(id==='card_hover'&&op.variar!==false){
+        // Un único archivo; cambia el gesto, no el sonido elegido en el estudio.
+        const tonos=[-1,-.65,-.3,0,.3,.65,1].filter(x=>x!==ultimoTonoHover);
+        ultimoTonoHover=tonos[Math.floor(Math.random()*tonos.length)];
+        fuente.playbackRate.value=2**(ultimoTonoHover/12);
+        matiz=(.9+Math.random()*.2)*(.82+.18*limitar(op.intensidad,.35));
+      }else fuente.playbackRate.value=op.variar===false||s.grupo==='Finales'?1:1+(Math.random()-.5)*.055;
+      g.gain.value=Math.min(1,s.volumen*limitar(op.volumen,1)*matiz);fuente.connect(g);g.connect(maestro);
       const voz={s:fuente,g,grupo:s.grupo,id};voces.add(voz);
       fuente.onended=()=>{voces.delete(voz);fuente.disconnect();g.disconnect();};fuente.start();
-      window.dispatchEvent(new CustomEvent('caoz:sfx',{detail:{id,version:s.version}}));
+      window.dispatchEvent(new CustomEvent('caoz:sfx',{detail:{id,version:s.version,ritmo:fuente.playbackRate.value,ganancia:g.gain.value}}));
     };
     const b=buffers.get(id);if(b?.version===s.version)iniciar(b.buffer);else cargar(id).then(iniciar).catch(()=>{});
     return true;
@@ -110,10 +118,22 @@
     envolver('fxFace',(side,n)=>{if(n>0)play('leader_hit');});
     envolver('fxHit',(u,n,opt)=>{if(!opt?.combate||matchMedia('(prefers-reduced-motion:reduce)').matches)play(opt?.letal?'lethal':'attack_hit');});
     // Los hooks conservan argumentos, resultado y promesa tanto en anfitrión como invitado.
+    let movimiento=null,velocidad=0;
+    function intensidadMouse(e){
+      const ahora=performance.now(),previo=movimiento,dt=previo?ahora-previo.t:Infinity;
+      if(previo&&dt<1)return limitar(velocidad/1.4,0);
+      if(!previo||previo.id!==e.pointerId||dt>150)velocidad=0;
+      else velocidad=.65*Math.min(2,Math.hypot(e.clientX-previo.x,e.clientY-previo.y)/dt)+.35*velocidad;
+      movimiento={x:e.clientX,y:e.clientY,t:ahora,id:e.pointerId};
+      return limitar(velocidad/1.4,0);
+    }
+    document.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')intensidadMouse(e);},{passive:true});
+    window.addEventListener('blur',()=>{movimiento=null;velocidad=0;});
+    document.addEventListener('pointerout',e=>{if(e.pointerType==='mouse'&&!e.relatedTarget){movimiento=null;velocidad=0;}});
     document.addEventListener('pointerover',e=>{
       if(e.pointerType!=='mouse')return;
       const carta=e.target.closest('#hand .card');
-      if(carta){if(!carta.contains(e.relatedTarget))play('card_hover');return;}
+      if(carta){if(!carta.contains(e.relatedTarget))play('card_hover',{intensidad:intensidadMouse(e)});return;}
       const b=e.target.closest('button');if(b&&!b.disabled&&!b.contains(e.relatedTarget))play('ui_hover');
     });
     document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&e.target.closest('#hand .card'))play('card_hover');});
