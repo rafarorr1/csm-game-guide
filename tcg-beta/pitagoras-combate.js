@@ -2,7 +2,7 @@
    el motor conserva las cartas y aplica el resultado al regresar. */
 'use strict';
 (function(){
-  const tipos=['isometrico','laseres','fps'];
+  const tipos=['isometrico','laseres','fps','carrera','orbital','duelo'];
   let activa=null;
   function vigente(e){return activa===e&&!e.cancelada&&G===e.g&&!e.g.over;}
   window.campanaCancelarInterferencia=function(){
