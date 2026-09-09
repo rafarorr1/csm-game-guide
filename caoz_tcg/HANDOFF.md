@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 223 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 224 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,35 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 224 intensifica la invasión de `pitagoras-mesa.js`: núcleo oscuro detrás
+del retrato, masas orgánicas en los bordes, raíces secundarias, niebla procedural,
+piel húmeda, ojos rojos y una silueta colosal de Pitágoras tras las cartas.
+Reutiliza `art/pitagoras-abismo-v216.webp`, con negro y bordes fundidos en una
+caché Canvas de 600 px; una carga tardía sólo llena esa caché, nunca reabre la
+escena. Crece con el máximo daño observado; mantiene las
+máscaras de cartas/controles, la alternativa sin Canvas y la cancelación de 223.
+
+Láseres: cuatro fases de 2/4/5/6 rayos por secuencia; avisos de
+1.30/1.14/1.02/0.94 s y disparos cada 0.62/0.38/0.29/0.24 s. Los rayos de
+acecho fijan el blanco al comenzar su aviso, jamás durante el aviso visible.
+Se elimina el refugio artificial del borde; se conservan 20 s y 3 vidas.
+`.ppImpulso` es un botón real, con recarga de 2.2 s, estado y barra visibles.
+Mantenerlo pulsado no repite el impulso. Movimiento, teclado y multitáctil
+siguen independientes. `guiasPrueba.laseres` compara trayectorias usando sólo
+rayos visibles para validar que la dificultad permite sobrevivir sin trampas.
+
+Final: se conserva la disolución y la mesa despejada de 223. Después el diálogo
+y su backdrop nacen transparentes ANTES de `showModal`; `.pitUmbral` funde la
+mesa a negro en 2200 ms. Se revela el héroe durante 1800 ms y la frase durante
+4200 ms, con 6000 ms completos de lectura y 1400 ms de fundido al negro antes
+del menú. Fases: oscuridad → cuarto → revelando → texto → negro. El menú
+aparece con su fundido de 900 ms. Movimiento reducido: 240 + 350 ms, mensaje
+completo sin letras animadas, lectura igual y negro de 450 ms.
+La frase se construye íntegra mediante `textContent`, en tres líneas y spans
+`.pitLetra`; sólo cambia su opacidad/filtro. Así no se recortan nombres ni se
+recolocan héroe/texto al escribir. `.pitAnuncio` anuncia la frase una sola vez.
+Se conserva `PITAGORAS_TIEMPOS.implosion` como alias de `oscuridad`.
 
 Build 223 convierte las seis `CARTAS_EDITOR` en Personajes/Pesadilla de coste 2.
 Ataque/vida: Cosecha 2/3, Corte 3/2, Cuadro 3/2, Puente 2/4, Órbita 2/3,

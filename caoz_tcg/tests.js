@@ -676,6 +676,29 @@ PRUEBAS.suite('pitagorasControlesFPS',async t=>{
       w.dispatchEvent(new w.Event('blur'));const trasBlur={...modelo.jugador};avanzar(.4);t.check(modelo.jugador.a===trasBlur.a&&modelo.disparos===n,pagina+': perder foco libera todas las entradas sin pausar el reloj');
       w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Space',cancelable:true}));avanzar(.1);w.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Space',cancelable:true}));t.check(modelo.disparos>n,pagina+': Espacio conserva un disparo independiente para escritorio');
       w.PITAGORAS_PRUEBAS.cancelar();t.check((await p).cancelado&&!d.querySelector('.pitPrueba'),pagina+': cancelar retira los tres controles');
+      // El Corte usa una sola palanca y un botón de acción independiente.
+      // Conservamos los controles FPS anteriores dentro de la misma suite.
+      const corte=w.PITAGORAS_PRUEBAS.iniciar({tipo:'laseres'});d.querySelector('.ppBotones .ppBoton').click();await sleep(20);avanzar(0);
+      const impulso=d.querySelector('.ppImpulso'),palanca=d.querySelector('.ppControles .ppPad:not(.ppImpulso)');
+      t.check(impulso?.tagName==='BUTTON'&&!impulso.querySelector('.ppPulgar')&&d.querySelectorAll('.ppControles .ppPulgar').length===1,pagina+': Impulso es un botón, no una segunda palanca');
+      const ri=impulso.getBoundingClientRect(),rm=palanca.getBoundingClientRect();t.check(ri.width>=44&&ri.height>=44&&ri.right<=w.innerWidth&&ri.bottom<=w.innerHeight&&(ri.left>=rm.right||ri.right<=rm.left),pagina+': botón y palanca caben separados con tamaño táctil');
+      const registro=[];const paso=M.paso;M.paso=(m,e,dt)=>{const r=paso(m,e,dt);registro.push(...m.eventos.filter(x=>x==='impulso'));return r;};
+      try{
+        Object.assign(modelo.jugador,{x:0,y:0});dedo(palanca,91,1,0);avanzar(.1);const x=modelo.jugador.x;dedo(impulso,92);avanzar(.1);
+        t.check(modelo.jugador.x-x>.9&&modelo.recargaImpulso>2&&registro.length===1,pagina+': segundo dedo da un impulso real en la dirección del movimiento');
+        t.check(impulso.getAttribute('aria-disabled')==='true'&&/\d/.test(impulso.querySelector('.ppImpulsoEstado').textContent),pagina+': la recarga se ve y se anuncia');
+        soltar(91);avanzar(2.5);t.check(registro.length===1&&modelo.recargaImpulso===0,pagina+': mantener el botón no dispara impulsos al recargarse');soltar(92);avanzar(.02);
+        t.check(impulso.getAttribute('aria-disabled')!=='true'&&impulso.querySelector('.ppImpulsoEstado').textContent.includes('LISTO'),pagina+': vuelve a indicar que el impulso está disponible');
+        dedo(impulso,93);avanzar(.02);soltar(93);avanzar(.02);dedo(impulso,94);avanzar(.02);t.igual(registro.length,2,pagina+': volver a pulsar durante la recarga no la salta');
+        w.dispatchEvent(new w.PointerEvent('pointercancel',{pointerId:94,pointerType:'touch',bubbles:true}));avanzar(2.3);dedo(impulso,95);avanzar(.02);t.igual(registro.length,3,pagina+': cancelar un dedo libera el botón para la próxima pulsación');
+        impulso.dispatchEvent(new w.PointerEvent('lostpointercapture',{pointerId:95,pointerType:'touch',bubbles:true}));avanzar(2.3);
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Space',cancelable:true}));avanzar(.02);w.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Space',cancelable:true}));t.igual(registro.length,4,pagina+': Espacio activa el mismo impulso tras perder la captura');
+        avanzar(2.3);impulso.focus();impulso.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Enter',bubbles:true,cancelable:true}));avanzar(.02);impulso.dispatchEvent(new w.KeyboardEvent('keyup',{code:'Enter',bubbles:true,cancelable:true}));t.igual(registro.length,5,pagina+': Enter activa el botón enfocado');
+        avanzar(2.3);dedo(impulso,96);w.dispatchEvent(new w.PointerEvent('pointercancel',{pointerId:96,pointerType:'touch',bubbles:true}));avanzar(.02);t.igual(registro.length,5,pagina+': cancelar antes del primer fotograma no deja un impulso pendiente');
+        dedo(impulso,97);soltar(97);avanzar(.02);t.igual(registro.length,6,pagina+': un toque corto normal sí se conserva hasta el siguiente fotograma');
+        w.PITAGORAS_PRUEBAS.cancelar();t.check((await corte).cancelado&&!d.querySelector('.ppImpulso'),pagina+': cancelar retira el botón y sus entradas');
+      }finally{M.paso=paso;}
+
     }finally{M.crear=crear;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
   }
 });
@@ -782,7 +805,7 @@ PRUEBAS.suite('pitagorasPresionFinal',async t=>{
   const criatura=contacto(2,0,0);criatura.enemigos=[{id:1,x:2,y:2,r:.35,hp:1,vel:0,aparece:0,dolor:0,fase:0}];M.paso(criatura,{},.016);t.check(!criatura.enemigos.length&&criatura.muertes===0,'Cosecha: los monstruos también caen sin contar como un disparo del jugador');
   t.check(typeof M.prepararRayo==='function','Corte: los patrones forman parte del modelo determinista');
   const patron=(tiempo,semilla)=>{const s=M.crear({tipo:'laseres',semilla});s.t=tiempo;s.siguiente=Infinity;M.prepararRayo(s);return s;},inicio=patron(4,1),final=patron(17,1);
-  t.check(inicio.rayos.length===1&&final.rayos.length>=4,'Corte: los disparos aislados evolucionan a secuencias en la recta final');
+  t.check(inicio.rayos.length>=2&&final.rayos.length>=6&&final.rayos.length>inicio.rayos.length,'Corte: comienza con presión y aumenta hasta seis disparos por secuencia');
   const formas=new Set();
   for(let semilla=1;semilla<=20;semilla++){
     const s=patron(17,semilla),igual=patron(17,semilla);t.check(JSON.stringify(s.rayos)===JSON.stringify(igual.rayos),'Corte: la misma semilla reproduce el mismo patrón y calendario');
@@ -795,6 +818,25 @@ PRUEBAS.suite('pitagorasPresionFinal',async t=>{
     for(let q=0;q<=limite;q+=.1){let libre=false;for(let y=-5.5;y<=5.5&&!libre;y+=1)for(let x=-5.5;x<=5.5&&!libre;x+=1)libre=s.rayos.every(r=>r.edad+q<r.aviso||r.edad+q>=r.aviso+r.activo||Math.abs(x*r.nx+y*r.ny-r.offset)>r.ancho+s.jugador.r+.15);t.check(libre,'Corte: la secuencia nunca convierte toda la arena en daño inevitable');}
   }
   t.check(formas.size>=3,'Corte: la recta final alterna al menos tres familias de ataques');
+  for(const [x,y] of [[-6.55,-6.55],[-6.55,6.55],[6.55,-6.55],[6.55,6.55]]){
+    const esquina=M.crear({tipo:'laseres',semilla:6});Object.assign(esquina.jugador,{x,y});M.prepararRayo(esquina);const primer=esquina.rayos[0];t.check(Math.abs(primer.offset-primer.nx*x-primer.ny*y)<1e-8,'Corte: el emisor alcanza la posición real del jugador incluso en el borde');M.paso(esquina,{},20);
+    t.check(esquina.terminado&&!esquina.sobrevivio&&esquina.vidas===0,'Corte: quedarse quieto en una esquina tampoco ofrece refugio permanente');
+  }
+  const ritmo=M.crear({tipo:'laseres',semilla:11});ritmo.invulnerable=60;let primeros=0,ultimos=0;
+  for(let i=0;i<1200;i++){M.paso(ritmo,{},1/60);const n=ritmo.eventos.filter(x=>x==='laser').length;ritmo.eventos=[];if(ritmo.t<=5)primeros+=n;if(ritmo.t>=15)ultimos+=n;}
+  t.check(primeros>=2&&ultimos>=primeros*2,'Corte: la descarga final contiene al menos el doble de disparos que los primeros cinco segundos');
+  const fijado=patron(17,1),ultimo=fijado.rayos.at(-1);fijado.rayos=[ultimo];fijado.siguiente=Infinity;Object.assign(fijado.jugador,{x:-6,y:-5});const espera=-ultimo.edad;
+  M.paso(fijado,{},espera+.01);t.check(ultimo.fijado&&Math.abs(ultimo.offset-ultimo.nx*fijado.jugador.x-ultimo.ny*fijado.jugador.y)<1e-8,'Corte: el último emisor busca al jugador cuando empieza su aviso');const offset=ultimo.offset;M.paso(fijado,{mx:1,my:1},.3);t.igual(ultimo.offset,offset,'Corte: moverse durante el aviso no cambia la franja anunciada');
+  const guia=window.PITAGORAS_PRUEBAS.guiasPrueba.laseres;t.check(typeof guia==='function','Corte: existe un controlador de prueba que sólo lee avisos visibles');
+  const visible=M.crear({tipo:'laseres',semilla:9}),oculto=M.crear({tipo:'laseres',semilla:9});oculto.rayos=[{id:9,nx:1,ny:0,offset:0,edad:-1,aviso:1,activo:.3,ancho:.4}];
+  t.igual(JSON.stringify(guia(visible,{})),JSON.stringify(guia(oculto,{})),'Corte: la guía no anticipa emisores que el jugador aún no puede ver');
+  for(let semilla=1;semilla<=12;semilla++){
+    const s=M.crear({tipo:'laseres',semilla}),mem={};let distancia=0;
+    for(let i=0;i<1200&&!s.terminado;i++){const antes=JSON.stringify(s),e=guia(s,mem),p={...s.jugador};t.igual(JSON.stringify(s),antes,'Corte: calcular una evasión no modifica posición, vidas, azar ni peligros');M.paso(s,e,1/60);distancia+=Math.hypot(s.jugador.x-p.x,s.jugador.y-p.y);}
+    t.check(s.sobrevivio&&s.t===20&&s.vidas>0&&distancia>8,'Corte: los patrones se pueden superar con movimiento real en doce semillas distintas');
+  }
+
+
   const cronologia=M.crear({tipo:'laseres',semilla:13});cronologia.invulnerable=60;for(let i=0;i<1200&&!cronologia.terminado;i++){M.paso(cronologia,{},1/60);const amenazas=new Set(cronologia.rayos.filter(r=>r.edad>=0&&r.edad<r.aviso+r.activo).map(r=>r.idSecuencia));t.check(amenazas.size<=1,'Corte: una secuencia completa termina antes de anunciar la siguiente');}
 });
 
@@ -840,6 +882,7 @@ PRUEBAS.suite('pitagorasMinijuegosModelo', async t => {
   }
   const dano=M.crear({tipo:'fps'});dano.siguiente=Infinity;M.herir(dano);for(let i=0;i<60;i++)M.herir(dano);t.check(dano.vidas===2,'Un contacto múltiple no consume las tres vidas.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.vidas===1,'La invulnerabilidad expira y permite un segundo golpe.');M.paso(dano,{},1.11);M.herir(dano);t.check(dano.terminado&&!dano.sobrevivio&&dano.vidas===0,'El tercer golpe termina el intento.');
   const laser=M.crear({tipo:'laseres'});laser.siguiente=Infinity;laser.rayos=[{nx:1,ny:0,offset:laser.jugador.x,edad:0,aviso:1.4,activo:.36,ancho:.37}];M.paso(laser,{},1.3);t.check(laser.vidas===3,'El aviso del láser no hace daño.');M.paso(laser,{},.11);t.check(laser.vidas===2,'El láser activo colisiona en la franja anunciada.');
+  const impulsoSuave=M.crear({tipo:'laseres'});impulsoSuave.siguiente=Infinity;Object.assign(impulsoSuave.jugador,{x:0,y:0});M.paso(impulsoSuave,{mx:.12},.02);const origenImpulso=impulsoSuave.jugador.x;M.paso(impulsoSuave,{mx:.12,accion:true},.1);t.check(impulsoSuave.jugador.x-origenImpulso>1.2,'Corte: un toque suave de palanca elige dirección, sin debilitar la distancia del impulso');
   const iso=M.crear({tipo:'isometrico'});iso.siguiente=Infinity;iso.proximaMarca=Infinity;Object.assign(iso.jugador,{x:0,y:0,a:0});iso.enemigos=[{id:1,x:1,y:0,r:.35,hp:1,vel:0,aparece:0,dolor:0,fase:0}];M.paso(iso,{accion:true,apuntar:0},.03);t.check(iso.muertes===1&&iso.enemigos.length===0,'El disparo cenital elimina al monstruo que toca.');
   const fps=M.crear({tipo:'fps'});fps.siguiente=Infinity;Object.assign(fps.jugador,{x:3.5,y:3.5,a:0});fps.enemigos=[{id:1,x:6.5,y:3.5,r:.34,hp:2,vel:0,aparece:0,dolor:0,fase:0}];M.paso(fps,{accion:true},.03);t.check(fps.enemigos[0].hp===2,'Los disparos FPS no atraviesan las columnas.');M.paso(fps,{my:-1},.5);t.check(fps.jugador.x<3.73,'El jugador FPS colisiona con las paredes.');
   const visible=M.crear({tipo:'fps'});visible.siguiente=Infinity;Object.assign(visible.jugador,{x:3.5,y:8.5,a:0});visible.enemigos=[{id:1,x:6.5,y:8.5,r:.34,hp:2,vel:0,aparece:0,dolor:0,fase:0}];M.paso(visible,{accion:true},.03);t.check(visible.enemigos[0].hp===1,'Apuntar y disparar en FPS daña al perseguidor visible.');
@@ -983,6 +1026,7 @@ PRUEBAS.suite('pitagorasMesa',async t=>{
       t.check(await disolucion&&await duplicada&&resueltas===1&&!A.estado.activo&&!A.estado.rafActivo&&!d.querySelector('.pitMesaInvasion'),pagina+': resultado único y elimina lienzo y animación');
       A.actualizar(g);t.check(!A.estado.activo&&!await A.disolver(g),pagina+': el mismo enemigo no reaparece ni repite la disolución');A.cancelar();t.check(!d.querySelector('.pmEditorDisolviendo,.pmEditorDesvanecido'),pagina+': cancelar también restaura el retrato');
       for(const salida of ['cancelar','menu','nuevo']){const h=preparar();h.over=true;const p=A.disolver(h);avanzar(200);if(salida==='cancelar')A.cancelar();else if(salida==='menu')w.showScreen('menu');else w.newGame('fender','adreida');avanzar(A.tiempos.disolucion+A.tiempos.mesa+100);t.check(!(await p)&&!A.estado.activo&&!d.querySelector('.pitMesaInvasion,.pmEditorDesvanecido,.pmEditorDisolviendo'),pagina+': '+salida+' cancela el final y limpia todas las capas');}
+      const sinEscena=preparar();A.cancelar();sinEscena.over=true;const directo=A.disolver(sinEscena);avanzar(-1);t.check(A.estado.rafActivo,pagina+': disolver sin escena previa tolera un primer RAF anterior a la creación');A.cancelar();t.check(!(await directo),pagina+': también cancela el primer cuadro de una disolución directa');
       for(const flag of ['normal','online','guest','sala','fast','silent','auto']){const h=preparar();A.cancelar();if(flag==='normal')delete h.campana;else if(flag==='sala')w.eval('NET.on=true');else h[flag]=true;A.actualizar(h);t.check(!A.estado.activo&&!d.querySelector('.pitMesaInvasion'),pagina+': no invade '+flag);if(['fast','silent','auto'].includes(flag))t.check(await A.disolver(h),pagina+': '+flag+' permite terminar sin efectos ni espera');w.eval('NET.on=false');}
       const referenciaVieja=preparar();A.cancelar();w.newGame('fender','adreida');A.actualizar(referenciaVieja);t.check(!A.estado.activo,pagina+': un render tardío no vuelve a montar el universo anterior');const rechazada=A.disolver(referenciaVieja);t.check(!A.estado.activo,pagina+': una llamada tardía tampoco inicia la disolución anterior');t.check(!(await rechazada),pagina+': la referencia vieja se cancela inmediatamente');
       reducida=true;const h=preparar();w.eval('P(1).alma=10');A.actualizar(h);avanzar(16);t.igual(A.estado.progreso,.75,pagina+': movimiento reducido no retrasa la información');h.over=true;const p=A.disolver(h);avanzar(A.tiempos.reducida+A.tiempos.mesaReducida);t.check(await p&&!A.estado.activo,pagina+': disolución breve accesible también termina');
@@ -1161,26 +1205,38 @@ PRUEBAS.suite('pitagorasVisual',async t=>{
       avanzar(1099);t.check(!esporas.cubierto&&cubiertas===0,pagina+': no se adelanta la cobertura de dos segundos.');
       avanzar(1);t.check(esporas.cubierto&&cubiertas===1&&esporas.elemento.dataset.fase==='cubierto',pagina+': a los dos segundos queda completamente negro.');
       t.igual(w.getComputedStyle(esporas.elemento).backgroundColor,'rgb(0, 0, 0)',pagina+': cobertura negra independiente de Canvas');avanzar(1000);t.igual(cubiertas,1,pagina+': la notificación de cobertura no se repite');esporas.destruir();
-      let finales=0;const nombre='<img src=x onerror=1>',frase='Tú, '+nombre+', tú sí eres el verdadero Caoz Con Todo.';
+      let finales=0;const nombre='<img src=x onerror=1>',frase='Tú, '+nombre+', tú sí eres el verdadero Caoz Con Todo.',tiempos=w.PITAGORAS_TIEMPOS;
       const final=montar('montarFinalPitagoras',{personaje:{nombre,color:'azul',equipo:'baston'},nombre,onTerminar:()=>finales++});
-      pintar();avanzar(1799);t.igual(final.elemento.dataset.fase,'implosion',pagina+': la implosión precede al cuarto');avanzar(1);
-      t.igual(final.elemento.dataset.fase,'cuarto',pagina+': después de la explosión se revela el cuarto oscuro');
-      const miniatura=final.elemento.querySelector('.pitMiniatura'),texto=final.elemento.querySelector('.pitReconocimiento');
-      t.check(miniatura?.tagName==='CANVAS'&&miniatura.width>0&&miniatura.height>0,pagina+': el cuarto muestra la miniatura real del jugador.');
-      avanzar(1000);t.check(texto.textContent.length>0&&texto.textContent.length<frase.length,pagina+': el texto se revela progresivamente.');
-      for(let letras=0;final.elemento.dataset.fase!=='texto'&&letras<150;letras++){
-        t.check(final.elemento.dataset.fase!=='negro'&&finales===0,pagina+': terminar la frase debe dejar seis segundos para leer, no iniciar el negro.');
-        const proximo=[...pendientes.values()].sort((a,b)=>a.cuando-b.cuando)[0];t.check(!!proximo,pagina+': sigue pendiente revelar el mensaje.');avanzar(proximo.cuando-ahora);
+      const miniatura=final.elemento.querySelector('.pitMiniatura'),texto=final.elemento.querySelector('.pitReconocimiento'),anuncio=final.elemento.querySelector('.pitAnuncio'),contenido=final.elemento.querySelector('.pitContenido'),heroe=final.elemento.querySelector('.pitHeroe');
+      const transparente=n=>w.getComputedStyle(n).backgroundColor==='rgba(0, 0, 0, 0)';
+      t.check(final.elemento.dataset.fase==='oscuridad'&&transparente(final.elemento)&&transparente(final.elemento.querySelector('.pitCuarto')),pagina+': conserva la mesa visible bajo un fundido inicial transparente');
+      t.check(w.getComputedStyle(final.elemento.querySelector('.pitUmbral')).animationName==='pitEntrarOscuridad',pagina+': la oscuridad entra con fundido, sin un corte negro inicial');
+      t.check(miniatura?.tagName==='CANVAS'&&miniatura.width>0&&miniatura.height>0,pagina+': prepara la miniatura real desde el primer cuadro');
+      t.check(texto.textContent===frase&&texto.querySelectorAll('.pitLinea').length===3&&!texto.querySelector('.revelada')&&!anuncio.textContent,pagina+': reserva las tres líneas completas sin enseñar ni anunciar el mensaje antes de tiempo');
+      const letras=[...texto.querySelectorAll('.pitLetra')],rects=[contenido,heroe,texto].map(n=>n.getBoundingClientRect());
+      const centrado=()=>{for(const n of [contenido,heroe,texto]){const r=n.getBoundingClientRect();t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2,pagina+': héroe y mensaje centrados horizontalmente');}const r=contenido.getBoundingClientRect();t.check(Math.abs(r.top+r.height/2-w.innerHeight/2)<2&&r.top>=0&&r.bottom<=w.innerHeight,pagina+': el conjunto ocupa el centro vertical sin recortarse');};centrado();
+      pintar();avanzar(tiempos.oscuridad-1);t.igual(final.elemento.dataset.fase,'oscuridad',pagina+': termina primero el fundido desde la mesa');avanzar(1);
+      t.check(final.elemento.dataset.fase==='cuarto'&&!texto.querySelector('.revelada'),pagina+': el héroe empieza a aparecer antes de escribir');
+      avanzar(tiempos.aparicion-1);t.igual(final.elemento.dataset.fase,'cuarto',pagina+': conserva toda la aparición del héroe');avanzar(1);t.igual(final.elemento.dataset.fase,'revelando',pagina+': la frase comienza después de revelar al héroe');
+      avanzar(1000);const visibles=texto.querySelectorAll('.revelada').length;t.check(visibles>0&&visibles<letras.length&&texto.textContent===frase&&!anuncio.textContent,pagina+': la opacidad revela letras progresivamente sin reconstruir el texto');
+      for(let pasos=0;final.elemento.dataset.fase!=='texto'&&pasos<150;pasos++){
+        t.check(final.elemento.dataset.fase==='revelando'&&finales===0,pagina+': la frase termina antes de contar los seis segundos de lectura');
+        const proximo=[...pendientes.values()].sort((a,b)=>a.cuando-b.cuando)[0];t.check(!!proximo,pagina+': queda una revelación programada');avanzar(proximo.cuando-ahora);
       }
-      t.igual(texto.textContent,frase,pagina+': frase completa conserva el nombre como texto');
-      t.check(!texto.querySelector('*'),pagina+': el nombre no introduce etiquetas HTML.');t.igual(finales,0,pagina+': completar la frase no termina el final');
-      avanzar(5999);t.check(final.elemento.dataset.fase==='texto'&&finales===0,pagina+': permite seis segundos completos de lectura DESPUÉS de la última letra.');
-      avanzar(1);t.check(final.elemento.dataset.fase==='negro'&&finales===0,pagina+': sólo después de leer comienza el negro.');
-      avanzar(999);t.igual(finales,0,pagina+': el fundido negro permanece un segundo');avanzar(1);t.igual(finales,1,pagina+': el menú llega después del negro');final.destruir();
+      t.check(final.elemento.dataset.fase==='texto'&&texto.querySelectorAll('.revelada').length===letras.length&&anuncio.textContent===frase,pagina+': completa la frase y la anuncia una sola vez');
+      t.check(letras.every((n,i)=>texto.querySelectorAll('.pitLetra')[i]===n)&&!texto.querySelector('img,script,iframe,[onerror]'),pagina+': conserva cada nodo y trata el nombre como texto');
+      centrado();[contenido,heroe,texto].forEach((n,i)=>{const r=n.getBoundingClientRect(),a=rects[i];t.check(Math.abs(r.x-a.x)<1&&Math.abs(r.y-a.y)<1&&Math.abs(r.width-a.width)<1&&Math.abs(r.height-a.height)<1,pagina+': revelar letras no desplaza ni redimensiona el héroe o la frase');});
+      avanzar(tiempos.lectura-1);t.check(final.elemento.dataset.fase==='texto'&&finales===0,pagina+': seis segundos completos después de la última letra');avanzar(1);t.check(final.elemento.dataset.fase==='negro'&&finales===0,pagina+': después de leer comienza el fundido a negro');
+      avanzar(tiempos.negro-1);t.igual(finales,0,pagina+': el menú espera a que termine el fundido negro');avanzar(1);t.igual(finales,1,pagina+': sólo el negro completo permite regresar al menú');final.destruir();
       const pendiente=montar('montarEsporasPitagoras',{onCubierto:()=>cubiertas++});pendiente.destruir();
-      const interrumpido=montar('montarFinalPitagoras',{personaje:{nombre:'Viajero'},onTerminar:()=>finales++});interrumpido.destruir();
-      avanzar(20000);pintar();t.check(cubiertas===1&&finales===1&&!host.childElementCount,pagina+': desmontar cancela también las acciones tardías.');
-      t.check(cuadros.size===0&&pendientes.size===0,pagina+': no quedan dibujos ni temporizadores de las escenas.');
+      for(const ms of [0,tiempos.oscuridad+100,tiempos.oscuridad+tiempos.aparicion+100,tiempos.oscuridad+tiempos.aparicion+tiempos.revelacion+100,tiempos.oscuridad+tiempos.aparicion+tiempos.revelacion+tiempos.lectura+100]){
+        const interrumpido=montar('montarFinalPitagoras',{personaje:{nombre:'Viajero'},onTerminar:()=>finales++});avanzar(ms);pintar();interrumpido.destruir();avanzar(20000);pintar();t.igual(finales,1,pagina+': desmontar en cualquier fase cancela el regreso tardío al menú');
+      }
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true}:media.call(w,q);
+      const breve=montar('montarFinalPitagoras',{personaje:{nombre:'Viajera'},onTerminar:()=>finales++});avanzar(tiempos.oscuridadReducida-1);t.igual(breve.elemento.dataset.fase,'oscuridad',pagina+': movimiento reducido conserva un fundido breve');avanzar(1+tiempos.aparicionReducida);
+      t.check(breve.elemento.dataset.fase==='texto'&&breve.elemento.querySelectorAll('.pitLetra').length===breve.elemento.querySelectorAll('.pitLetra.revelada').length,pagina+': movimiento reducido muestra el mensaje completo sin animar letras');
+      avanzar(tiempos.lectura-1);t.igual(finales,1,pagina+': movimiento reducido también respeta los seis segundos de lectura');avanzar(1+tiempos.negroReducido);t.igual(finales,2,pagina+': la versión reducida completa el mismo desenlace');breve.destruir();
+      t.check(cubiertas===1&&!host.childElementCount&&cuadros.size===0&&pendientes.size===0,pagina+': todas las variantes limpian escenas, dibujos y temporizadores');
     }finally{
       escenas.forEach(e=>e.destruir());host.remove();w.setTimeout=poner;w.clearTimeout=quitar;w.requestAnimationFrame=raf;w.cancelAnimationFrame=caf;w.performance.now=reloj;w.matchMedia=media;w.relojPara();f.remove();
     }
@@ -1236,9 +1292,10 @@ PRUEBAS.suite('campanaSecreto',async t=>{
   try{for(const pagina of ['index.html','movil.html']){
     claves.forEach(k=>localStorage.removeItem(k));
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=secreto-interno';document.body.appendChild(f);await carga;
-    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana,timers=new Map();let timerId=98000,acciones,cubrir,pelear,terminar,partidas=[];
+    const w=f.contentWindow,d=f.contentDocument,poner=w.setTimeout,quitar=w.clearTimeout,crear=w.crearMesaCampana,mostrar=w.HTMLDialogElement.prototype.showModal,aperturasFinales=[],timers=new Map();let timerId=98000,acciones,cubrir,pelear,terminar,partidas=[];
     try{
       w.matchMedia=()=>({matches:true});
+      w.HTMLDialogElement.prototype.showModal=function(...args){const final=this.id==='campanaSecreto'&&w.campanaLeer()?.secreto==='final',r=mostrar.apply(this,args);if(final)aperturasFinales.push({fase:this.dataset.fase,fondo:w.getComputedStyle(this).backgroundColor,velo:w.getComputedStyle(this,'::backdrop').backgroundColor});return r;};
       w.setTimeout=(fn,ms,...args)=>{if([2400,450,1000,900].includes(ms)){const id=++timerId;timers.set(id,{ms,fn:()=>fn(...args)});return id;}return poner(fn,ms,...args);};
       w.clearTimeout=id=>{if(timers.has(id))timers.delete(id);else quitar(id);};
       const ejecutar=ms=>{const par=[...timers].find(([id,t])=>t.ms===ms);t.check(!!par,pagina+': falta temporizador de '+ms+' ms.');if(par){timers.delete(par[0]);par[1].fn();}};
@@ -1268,7 +1325,7 @@ PRUEBAS.suite('campanaSecreto',async t=>{
       const partida=partidas[0];t.igual(partida.b,'adreida',pagina+': reglas del mazo de Adreida');
       t.check(partida.op.campana.jefeSecreto&&partida.op.campana.etapa===6&&partida.op.nombres[1]==='Pitágoras',pagina+': identidad del jefe independiente de su mazo.');
       w.eval('G.over=true');w.campanaFinal(1,'Derrota');acciones.revancha();await sleep(0);t.igual(partidas.length,2,pagina+': revancha directa sin regresar al trono');
-      w.eval('G.over=true');w.campanaFinal(0,'Victoria');await sleep(0);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='final',pagina+': el Editor inicia su final especial.');
+      w.eval('G.over=true');w.campanaFinal(0,'Victoria');await sleep(0);t.check(d.querySelector('#campanaSecreto')?.dataset.fase==='final',pagina+': el Editor inicia su final especial.');t.check(aperturasFinales.length===1&&aperturasFinales[0].fase==='final'&&aperturasFinales[0].fondo==='rgba(0, 0, 0, 0)'&&aperturasFinales[0].velo==='rgba(0, 0, 0, 0)',pagina+': la primera apertura del epílogo conserva la mesa bajo un diálogo y fondo transparentes');
       t.igual(w.CAMPANA_LOGROS.ganador().nombre,'Ari <h1>',pagina+': conserva el nombre como texto');t.check(!d.querySelector('#campanaSecreto h1'),pagina+': el nombre no inyecta HTML.');
       terminar();ejecutar(900);t.check(!d.querySelector('#campanaSecreto')&&w.campanaLeer().secreto==='completado',pagina+': vuelve al menú con el final persistido.');
       w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='creador',pagina+': después del final empieza un personaje nuevo.');w.campanaCerrar();
@@ -1278,7 +1335,7 @@ PRUEBAS.suite('campanaSecreto',async t=>{
       // Una recarga reanuda el encuentro pendiente, no repite victorias ni borra logros.
       p.secreto='combate';w.campanaGuardar(p);w.eval('campanaMemoria=null');w.campanaAbrirSecreto();t.igual(d.querySelector('#campanaSecreto').dataset.fase,'trono',pagina+': relectura del combate devuelve al Editor.');
       const pendiente=pelear;w.campanaCerrar();pendiente();await sleep(0);t.igual(partidas.length,2,pagina+': un callback de escena cerrada no inicia otro combate.');
-    }finally{w.campanaCerrar();w.campanaCerrarDeseo();w.relojPara();w.setTimeout=poner;w.clearTimeout=quitar;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{w.campanaCerrar();w.campanaCerrarDeseo();w.relojPara();w.setTimeout=poner;w.clearTimeout=quitar;w.HTMLDialogElement.prototype.showModal=mostrar;w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }}finally{claves.forEach((k,i)=>{if(previos[i]==null)localStorage.removeItem(k);else localStorage.setItem(k,previos[i]);});}
 });
 

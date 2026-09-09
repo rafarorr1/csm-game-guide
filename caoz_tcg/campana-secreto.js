@@ -96,6 +96,9 @@
     if(p.secreto==='completado'){campanaCrear();return;}
     campanaCerrar();cerrarCinematica();
     const d=document.createElement('dialog');d.id='campanaSecreto';d.setAttribute('aria-label','El secreto del Domo');
+    // La primera pintura del final conserva la mesa debajo del fundido.
+    // Establecerlo después de showModal provocaba un corte negro de un cuadro.
+    if(p.secreto==='final')d.dataset.fase='final';
     const e={d,id:p.id,timers:[],cancelado:false,visual:null,lanzando:false};escena=e;
     d.addEventListener('cancel',ev=>{ev.preventDefault();if(['revelacion','trono'].includes(d.dataset.fase))campanaVolverAlMenu();});
     d.addEventListener('close',()=>{if(!d.open&&escena===e)limpiar();});document.body.appendChild(d);d.showModal();
@@ -163,6 +166,7 @@
   @media(max-width:700px){#controls .betaFinalGero{flex:1 0 100%;order:-1}}
   #campanaSecreto{position:fixed;inset:0;top:var(--campana-desfase,0px);margin:0;padding:0;border:0;width:100vw;height:var(--campana-alto,100dvh);max-width:none;max-height:none;overflow:hidden;box-sizing:border-box;color:#f4ebdb;background:#030305;text-align:center}
   #campanaSecreto[open]{display:grid;place-items:center}#campanaSecreto::backdrop{background:#000}
+  #campanaSecreto[data-fase="final"],#campanaSecreto[data-fase="final"]::backdrop{background:transparent}
   .secretoReto{position:relative;z-index:2;display:grid;justify-items:center;gap:28px;padding:24px;max-width:780px}
   .secretoReto h1{font:600 clamp(30px,6.5vw,64px)/1.18 var(--serif,serif);text-wrap:balance;margin:0;color:#eee8d8;text-shadow:0 0 38px #ecddaa44;animation:secretoPregunta .8s ease-out both}
   .secretoReto .btn{font-size:28px;min-width:120px;min-height:52px;letter-spacing:.12em}

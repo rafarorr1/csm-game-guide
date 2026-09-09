@@ -1,5 +1,20 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 224 · El Domo devorado
+
+- Pitágoras invade la mesa con una masa oscura, raíces y tentáculos de piel
+  húmeda, niebla y su figura monstruosa emergiendo detrás de las cartas.
+  La oscuridad y los ojos rojos crecen al dañarlo y conservan la
+  lectura de cartas, estadísticas y controles.
+- El corte final combina secuencias de hasta seis rayos, con más presión hacia
+  el final y ataques que alcanzan también los bordes. Cada aviso sigue dando
+  tiempo para escapar; los rayos dejan de seguirte una vez mostrados.
+- Un botón de impulso sustituye a la segunda palanca de los láseres. Muestra
+  la recarga y responde por toque, clic o teclado, una vez por pulsación.
+- El final deja atrás la explosión poligonal: la mesa se funde a negro,
+  aparece el héroe bajo una luz tenue y se revela el mensaje en una composición
+  centrada que permanece fija. Tras seis segundos de lectura, el final se
+  desvanece y da paso al menú. Sin cortes ni destellos entre escenas.
 
 ### Sin numerar · build 223 · Pitágoras consume la mesa
 
