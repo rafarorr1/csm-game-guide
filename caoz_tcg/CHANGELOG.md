@@ -1,6 +1,23 @@
 # Registro de versiones — el TCG del Domo
 
 
+### Sin numerar · build 219 · Del naipe a la pesadilla
+
+- El duelo del Editor entra sin confirmaciones: carta de la prueba, nube
+  oscura, revelado del escenario y arranque automático. Los 20 segundos
+  empiezan al despejarse la cobertura. Resultado breve y regreso automático.
+- Las cartas de transición llevan el nombre de cada juego y sus reglas reales:
+  20 segundos, 3 vidas y 2 de Alma. Tres hechizos exclusivos de coste 2 PD
+  forman el mazo de 40 cartas del jefe; no afectan a los seis mazos normales.
+- Humo continuo sobre la mesa y el minijuego en el mismo diálogo, cancelable
+  sin dejar capas o temporizadores. Conserva bloqueo de scroll y ausencia de pausa.
+- Piedra, iluminación fría, braseros, bruma y ceniza; cámara isométrica más
+  próxima y controles metálicos. Esbirro original con transparencia, generado
+  con image_gen, compartido por los perseguidores y dos cartas de transición.
+- Suite pitagorasTransiciones: ambas pantallas, tres pruebas, éxito/derrota,
+  cobertura opaca al intercambiar escenas y cancelación durante cada fase.
+  Sabotaje detectado al restaurar la introducción con botón.
+
 ### Sin numerar · build 218 · Pruebas sin scroll ni pausa
 
 - Bloqueo del desplazamiento y rebote de la página inferior mientras está

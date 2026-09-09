@@ -290,7 +290,7 @@ comprobar_cloudflare(){
   for j in $(seq 1 12); do
     sleep 10
     local ok=1
-    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-combate.js dado-fisico.js polish-aaa.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp; do
+    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-combate.js dado-fisico.js polish-aaa.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp; do
       local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
       local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
       [ "$srv" = "$esp" ] || { ok=0; break; }
@@ -332,7 +332,7 @@ for i in $(seq 1 10); do
   SERVIDO_FINAL="$(curl -s "$URL_FINAL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
   if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ] && [ "$SERVIDO_FINAL" = "$ESPERADO_FINAL" ]; then
     verde "  GitHub Pages verificado byte a byte (index.html, motor.js, movil.html y final.js)"
-    for f in final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-combate.js dado-fisico.js polish-aaa.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp; do
+    for f in final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-combate.js dado-fisico.js polish-aaa.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp; do
       curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/$f?cb=$(date +%s)" -o "/tmp/caoz-verificar-$(basename "$f")" || exit 1
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$(basename "$f")" || { rojo "$f no coincide con la versión local"; exit 1; }
     done

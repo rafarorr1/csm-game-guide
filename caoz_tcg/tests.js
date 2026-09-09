@@ -507,6 +507,52 @@ PRUEBAS.suite('manoNuevaTurno',async t=>{
   }
 });
 
+PRUEBAS.suite('editorCartas',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=cartas-editor-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,poner=w.setTimeout;
+    try{
+      const originales=w.eval('JSON.stringify(DECKS)');w.startTurn=async s=>w.eval("G.active="+s+";G.phase='principal';G.turnNo=3");
+      w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.fxFace=async()=>{};w.fxStat=()=>{};let genericas=0;w.fxSpell=async()=>{genericas++;};
+      const tipos=[];w.PITAGORAS_PRUEBAS.iniciar=async op=>{tipos.push(op);return{sobrevivio:true,cancelado:false};};
+      await w.setupMatch('fender','adreida',{first:0,campana:{id:'mazo-editor',jefeSecreto:true,alma:40}});
+      const ids=w.eval('CARTAS_EDITOR.slice()');t.check(w.eval('[...P(1).deck,...P(1).hand].length===40 && [...P(1).deck,...P(1).hand].every(id=>CARDS[id].editorJuego)'),pagina+': mazo propio antes de repartir');
+      for(const id of ids){w.eval("G.active=1;P(1).pd=6;P(1).hand=['"+id+"']");const alma=w.eval('P(1).alma');t.check(await w.playFromHand(1,id),pagina+': juega '+id);t.igual(w.eval('P(1).pd'),4,pagina+': paga sus 2 PD');t.igual(w.eval('P(1).alma'),alma-2,pagina+': una sola aplicación del resultado');t.check(w.eval('P(1).grave').includes(id),pagina+': carta real en Alcantarillas');}
+      t.check(tipos.map(o=>o.tipo).join(',')==='isometrico,laseres,fps'&&tipos.every(o=>o.cinematica===true)&&genericas===0,pagina+': cada carta llama a su juego sin otra presentación genérica');
+      await w.setupMatch('fender','adreida',{first:0});t.check(w.eval('[...P(1).hand,...P(1).deck].every(id=>!CARDS[id].editorJuego)'),pagina+': partida normal conserva Adreida');
+      t.igual(w.eval('JSON.stringify(DECKS)'),originales,pagina+': los seis mazos no cambian');
+      w.eval("P(0).hand=['editorcosecha'];P(0).pd=10");t.check(!w.canPlay(0,'editorcosecha'),pagina+': carta exclusiva del jefe');
+      await w.setupMatch('fender','adreida',{first:0,online:true,campana:{jefeSecreto:true,alma:40}});t.check(w.eval('[...P(1).hand,...P(1).deck].every(id=>!CARDS[id].editorJuego)'),pagina+': no entra al online');
+    }finally{w.campanaCancelarInterferencia();f.remove();}
+  }
+});
+
+PRUEBAS.suite('pitagorasTransiciones',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=transicion-editor-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument;let ahora=10000,id=0;const timers=new Map(),cuadros=new Map(),paso=w.PITAGORAS_PRUEBAS.modelo.paso;
+    try{
+      w.setTimeout=(fn,ms)=>{const n=++id;timers.set(n,{fn,en:ahora+ms});return n;};w.clearTimeout=n=>timers.delete(n);w.requestAnimationFrame=fn=>{const n=++id;cuadros.set(n,fn);return n;};w.cancelAnimationFrame=n=>cuadros.delete(n);w.performance.now=()=>ahora;w.matchMedia=()=>({matches:false});
+      const avanzar=ms=>{const fin=ahora+ms;while(true){const prox=[...timers].filter(([,v])=>v.en<=fin).sort((a,b)=>a[1].en-b[1].en)[0];if(!prox)break;ahora=prox[1].en;timers.delete(prox[0]);prox[1].fn();}ahora=fin;const fs=[...cuadros.values()];cuadros.clear();fs.forEach(fn=>fn(ahora));};
+      for(const tipo of ['isometrico','laseres','fps'])for(const gana of [false,true]){
+        w.PITAGORAS_PRUEBAS.modelo.paso=(s,e,dt)=>{if(gana){s.siguiente=Infinity;s.proximaMarca=Infinity;}return paso(s,e,dt);};
+        let veces=0;const promesa=w.PITAGORAS_PRUEBAS.iniciar({tipo,semilla:6,cinematica:true}).then(r=>{veces++;return r;});
+        t.check(!d.querySelector('.ppPanel')&&d.querySelector('.ppCartaJuego h1').textContent===w.PITAGORAS_PRUEBAS.tipos[tipo].nombre,pagina+': carta del juego y ninguna confirmación');
+        avanzar(1149);t.check(w.PITAGORAS_PRUEBAS.estado.t===0&&d.querySelector('.ppMesaVisible'),pagina+': la carta sigue sobre la mesa, reloj detenido sólo durante entrada');
+        avanzar(901);t.check(w.PITAGORAS_PRUEBAS.estado.fase==='revelando'&&!d.querySelector('.ppMesaVisible')&&!d.querySelector('.ppCartaJuego'),pagina+': cambia de escena bajo la nube');
+        const nube=d.querySelector('.ppNube'),ctx=nube.getContext('2d');t.igual(ctx.getImageData(nube.width/2,nube.height/2,1,1).data[3],255,pagina+': cobertura opaca en el intercambio');
+        avanzar(1000);t.check(w.PITAGORAS_PRUEBAS.estado.fase==='jugando'&&w.PITAGORAS_PRUEBAS.estado.t===0,pagina+': arranca automáticamente con veinte segundos completos');
+        w.dispatchEvent(new w.KeyboardEvent('keydown',{code:'Escape',cancelable:true}));avanzar(20000);
+        t.check(w.PITAGORAS_PRUEBAS.estado.fase==='resultado'&&!d.querySelector('.ppPanel')&&d.querySelector('.ppDesenlace'),pagina+': resultado breve sin botones');
+        avanzar(1750);t.check(w.PITAGORAS_PRUEBAS.estado.fase==='regresando'&&d.querySelector('.ppMesaVisible'),pagina+': la mesa reaparece bajo el humo');
+        avanzar(900);const r=await promesa;t.check(r.sobrevivio===gana&&!r.cancelado&&veces===1&&!d.querySelector('.pitPrueba')&&!d.body.classList.contains('pitPruebaAbierta'),pagina+': resultado único y limpieza automática');
+      }
+      // Salir desde cualquier fase no deja una nube ni un arranque tardío.
+      for(const ms of [0,1300,2200,3100]){const p=w.PITAGORAS_PRUEBAS.iniciar({cinematica:true});avanzar(ms);w.PITAGORAS_PRUEBAS.cancelar();avanzar(4000);t.check((await p).cancelado&&!d.querySelector('.pitPrueba,.ppNube')&&!w.PITAGORAS_PRUEBAS.activa,pagina+': cancelación limpia a '+ms+' ms');}
+    }finally{w.PITAGORAS_PRUEBAS.modelo.paso=paso;w.PITAGORAS_PRUEBAS.cancelar();f.remove();}
+  }
+});
+
 PRUEBAS.suite('pitagorasSinPausa',async t=>{
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=sin-pausa-interna';document.body.appendChild(f);await carga;

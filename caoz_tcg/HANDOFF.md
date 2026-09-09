@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 218 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 219 (beta; producción 207, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,23 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 219 usa `cinematica:true` desde el puente del combate. La API directa
+conserva la introducción manual para el arnés. En juego real no se abren
+paneles: carta 1150 ms → nube 900 ms → revelado 1000 ms → prueba. Resultado
+950 ms → cobertura 800 ms → regreso 900 ms. El reloj empieza tras el revelado.
+El motor registra tres cartas editorJuego (hechizos de 2 PD, 20 s / 3 vidas /
+2 Alma, no contrarrestables), exclusivas del jefe local. setupMatch sustituye
+sólo su mazo antes del robo inicial por 40 cartas alternadas. El puente elige
+la prueba según el id pagado; omite la animación genérica de hechizo para
+mostrar una sola carta. No modificar los seis DECKS ni LEADERS compartidos.
+`ppMesaVisible` transparenta diálogo/backdrop y oculta sólo su shell; nunca
+se cierra el diálogo en mitad del humo. `resolver` retira nube, RAF, timers
+y bloqueo de scroll. Movimiento reducido acorta la entrada y funde el humo.
+El sprite `art/esbirro-editor-v219.webp` conserva alfa; carga sin bloquear y
+usa la criatura Canvas previa si falla. Se precarga en SW. Suite
+`pitagorasTransiciones` cubre flujo automático y limpiezas en ambos clientes.
+
 
 Build 218 elimina las pausas de las pruebas a petición del usuario. No hay
 botón de pausa ni pausa por Escape, blur, visibilidad o un fotograma lento.
