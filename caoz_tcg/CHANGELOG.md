@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 226 · Validación del resultado de memoria
+
+- La regresión de las seis Pesadillas declara las parejas de memoria al
+  simular el resultado. Dos parejas quitan dos Alma, sin presuponer el premio
+  fijo anterior. Conserva la verificación de coste, cuerpos y aplicación única.
+- Publicación de los tres arreglos de 225 en beta y producción; el intento
+  anterior se detuvo en las pruebas, antes de publicar archivos del juego.
+
 ### Sin numerar · build 225 · Objetivos y recuerdos
 
 - Armadura Mágica conserva la selección y Cancelar al tocar una unidad que

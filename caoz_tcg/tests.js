@@ -514,7 +514,7 @@ PRUEBAS.suite('editorCartas',async t=>{
     try{
       const originales=w.eval('JSON.stringify(DECKS)');w.startTurn=async s=>w.eval("G.active="+s+";G.phase='principal';G.turnNo=3");
       w.setTimeout=(fn,ms,...args)=>poner(fn,Math.min(ms,1),...args);w.fxFace=async()=>{};w.fxStat=()=>{};let genericas=0;w.fxSpell=async()=>{genericas++;};
-      const tipos=[];w.PITAGORAS_PRUEBAS.iniciar=async op=>{tipos.push(op);return{sobrevivio:true,cancelado:false};};
+      const tipos=[];w.PITAGORAS_PRUEBAS.iniciar=async op=>{tipos.push(op);return{sobrevivio:true,cancelado:false,...(op.tipo==='duelo'?{parejas:2,fallosMemoria:0,vidas:3}:{})};};
       await w.setupMatch('fender','adreida',{first:0,campana:{id:'mazo-editor',jefeSecreto:true,alma:40}});
       const ids=w.eval('CARTAS_EDITOR.slice()');t.check(w.eval('[...P(1).deck,...P(1).hand].length===40 && [...P(1).deck,...P(1).hand].every(id=>CARDS[id].editorJuego)'),pagina+': mazo propio antes de repartir');
       for(const id of ids){w.eval("G.active=1;P(1).field=[];P(1).pd=6;P(1).hand=['"+id+"']");const alma=w.eval('P(1).alma');t.check(await w.playFromHand(1,id),pagina+': juega '+id);t.igual(w.eval('P(1).pd'),4,pagina+': paga sus 2 PD');t.igual(w.eval('P(1).alma'),alma-2,pagina+': una sola aplicación del resultado');t.check(w.eval('P(1).field').some(u=>u.card.id===id&&u.alive&&u.sick)&&!w.eval('P(1).grave').includes(id),pagina+': la pesadilla queda en mesa con cansancio y no se descarta');}

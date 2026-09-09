@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 225 (candidato autorizado para beta y producción; producción anterior 224, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 226 (candidato autorizado para beta y producción; producción anterior 224, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,11 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 226 integra la regresión `editorCartas` con el nuevo resultado de memoria: dos
+parejas declaradas equivalen a dos Alma, sin dar por hecho el premio fijo.
+La publicación de 225 se detuvo antes de subir archivos por esa expectativa
+antigua; la versión anterior publicada sigue siendo 224.
 
 Build 225 corrige los objetivos de Armadura y añade el cierre del menú de
 cartas móvil. Una selección `TGT` pendiente tiene prioridad sobre ataques,
@@ -33,7 +38,7 @@ Regresiones: `relojObjetivos`, `objetivosEquipo`, `cerrarCartaMovil`,
 Producción 224 ya estaba publicada y verificada antes de este cambio. El
 estudio de sonidos de producción tiene su propia base y credenciales,
 independientes de beta; conserva nueve reemplazos en siete archivos únicos.
-No copiar bases ni secretos al publicar el código. Se autorizó publicar 225
+No copiar bases ni secretos al publicar el código. Se autorizó publicar 226
 en ambos entornos con `publicar.sh`; consultar el despliegue servido para
 confirmar el estado final. No hacer merge ni push a main.
 
