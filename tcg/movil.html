@@ -369,12 +369,16 @@ html.app #board{padding-top:calc(var(--arriba) + 32px)}
 /* el aviso de la carta tocada: qué es y cómo jugarla */
 #jugarPill{position:absolute;left:10px;right:10px;top:-10px;z-index:8;
   display:none;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
-  background:rgba(14,8,22,.96);border:1px solid var(--gold2);border-radius:14px;padding:6px 10px;
+  background:rgba(14,8,22,.96);border:1px solid var(--gold2);border-radius:14px;padding:8px 52px 8px 10px;min-height:52px;box-sizing:border-box;
   font-size:12px;color:#e6dcf5;box-shadow:0 8px 24px #000}
 #jugarPill.on{display:flex}
 #jugarPill b{color:var(--gold)}
 #jugarPill .btn{padding:5px 12px;font-size:12px}
 #jugarPill .porque{flex:1 1 100%;text-align:center;color:#ff9d94;font-size:11px;line-height:1.3}
+#jugarPill .cerrarPill{position:absolute;right:3px;top:3px;width:44px;height:44px;display:grid;place-items:center;
+  padding:0;border:1px solid #8f789a55;border-radius:10px;background:#32223a88;color:#eee5f7;font:26px/1 system-ui;touch-action:manipulation;cursor:pointer}
+#jugarPill .cerrarPill:active{background:#60416d;color:white}
+#jugarPill .cerrarPill:focus-visible{outline:2px solid var(--gold);outline-offset:-3px}
 #controls{display:flex;gap:5px;align-items:center;flex-wrap:wrap}
 #controls .btn{padding:7px 9px;font-size:12px}
 #controls .btn.gold{font-size:13px;padding:7px 12px}
@@ -844,7 +848,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div id="handzone">
     <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns"></span></div>
     <div id="ticker"></div>
-    <div id="jugarPill"></div>
+    <div id="jugarPill" role="group" aria-label="Acciones de la carta"></div>
     <div id="hand"></div>
     <div class="controls" id="controls"></div>
   </div>
@@ -871,8 +875,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=224"></script>
-<script src="final.js?b=224"></script>
+<script src="motor.js?b=226"></script>
+<script src="final.js?b=226"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -883,7 +887,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:224, fecha:'2026-09-09'};
+const BUILD = {n:226, fecha:'2026-09-09'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1560,6 +1564,8 @@ function manoTocada(d){
   pill.appendChild(ver);
   if(ok){ const b=el('button','btn sm gold','▶ Jugar'); b.onclick=e=>{ e.stopPropagation(); jugarDeLaMano(id); }; pill.appendChild(b); }
   else if(G.active===ME){ const w=el('span','porque'); w.textContent=whyNot(ME,id); pill.appendChild(w); }
+  const cerrar=el('button','cerrarPill','×');cerrar.type='button';cerrar.setAttribute('aria-label','Cerrar menú de carta');
+  cerrar.onclick=e=>{e.preventDefault();e.stopPropagation();manoTocada(null);};pill.appendChild(cerrar);
   pill.classList.add('on');
   d.scrollIntoView({inline:'center',block:'nearest',behavior:'smooth'});
 }
@@ -1574,7 +1580,7 @@ function renderLeaders(){
   [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
     const p=P(side), L=p.L, mine=side===ME;
-    const usable=mine&&!G.resolving&&!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME&&!G.over&&(!L.habReq||L.habReq(G,side))&&tutCan('leader');
+    const usable=mine&&!TGT&&!G.resolving&&!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME&&!G.over&&(!L.habReq||L.habReq(G,side))&&tutCan('leader');
     const target=!mine&&((TGT&&isTargetable('face'))||(SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     host.innerHTML=`<div class="lider${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}" id="lead${side}">
       ${rostroLider(p.leaderId)}
@@ -1583,7 +1589,7 @@ function renderLeaders(){
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
     if(!mine&&G.campana?.jefeSecreto)campanaVestirPitagoras(e);
     e.onclick=()=>{
-      if(TGT&&isTargetable('face')&&!mine){ pickTarget('face'); return; }
+      if(TGT){ pickTarget(mine?null:'face'); return; }
       if(!mine){ if(SEL&&canAttack(SEL)){ if(!tutCan('attack','face')){ tutNope(); return; } tryAttack(SEL,'face'); } else fichaLider(side); return; }
       if(G.resolving) return;
       if(!tutCan('leader')){ tutNope(); return; }
@@ -1615,12 +1621,12 @@ function renderField(host, list, mine){
     d.className='card unit t-personaje'+acomodo+(rest?' sick':'')+(u.infected?' infectado':'')
       +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')+(gastada?' gastada':'')+((mine&&SEL===u)?' selected':'');
     d.onclick=mine
-      ? ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }
+      ? ()=>{ if(TGT){ pickTarget(u); return; }
               if(SEL===u){ SEL=null; clearPrompt(); render(); return; }
               if(!tutCan('select')){ tutNope(); return; }
               if(G.active!==ME){ abrirFicha(u.card.id,u); return; }
               selectUnit(u); }
-      : ()=>{ if(TGT&&isTargetable(u)){ pickTarget(u); return; }
+      : ()=>{ if(TGT){ pickTarget(u); return; }
               if(SEL&&canAttack(SEL)){ if(!tutCan('attack','unit')){ tutNope(); return; } tryAttack(SEL,u); }
               else abrirFicha(u.card.id,u); };
     if(host.children[i]!==d) host.insertBefore(d, host.children[i]||null);
@@ -1652,13 +1658,13 @@ function render(){
   if(G.place){ const c=CARDS[G.place.id];
     const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn">${c.n} <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
     if(TGT&&isTargetable(G.place)) d.classList.add('tgt');
-    d.onclick=()=>{ if(TGT&&isTargetable(G.place)) pickTarget(G.place); else abrirFicha(G.place.id,null); };
+    d.onclick=()=>{ if(TGT){ pickTarget(G.place); return; } abrirFicha(G.place.id,null); };
     mid.appendChild(d);
   } else mid.appendChild(el('div','',`<span style="color:#4c4266;font-size:9px;letter-spacing:2px">— SIN LUGAR ACTIVO —</span>`));
   P(ME).relics.forEach(r=>{ const c=CARDS[r.id]; if(!c.relicAct) return;
     const b=el('button','btn sm',`${c.art} ${c.relicAct.n} (${r.counters||0})`);
-    b.disabled=G.resolving||G.active!==ME||G.over||P(ME).pd<c.relicAct.cost;
-    b.onclick=()=>{ if(G.resolving) return; if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); }; mid.appendChild(b); });
+    b.disabled=!!TGT||G.resolving||G.active!==ME||G.over||P(ME).pd<c.relicAct.cost;
+    b.onclick=()=>{ if(TGT||G.resolving) return; if(NET.guest){ gIntent('relic',{id:r.id}); return; } useRelic(ME,r); }; mid.appendChild(b); });
   // la mano: se reconcilia, no se rehace (la carta tocada sobrevive al repintado)
   const h=$('#hand'), mano=P(ME).hand;
   const viejos=[...h.children]; let j=0;
@@ -1689,10 +1695,10 @@ function renderControls(){
   const c=$('#controls'); c.innerHTML='';
   const p=P(ME);
   if(SEL&&SEL.card.act){ const a=SEL.card.act;
-    const b=el('button','btn sm',`✨ ${a.n} (${a.cost} PD)`); b.disabled=G.resolving||!canUseAct(SEL);
-    b.onclick=()=>{ if(G.resolving||!canUseAct(SEL)) return; if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); }; c.appendChild(b); }
+    const b=el('button','btn sm',`✨ ${a.n} (${a.cost} PD)`); b.disabled=!!TGT||G.resolving||!canUseAct(SEL);
+    b.onclick=()=>{ if(TGT||G.resolving||!canUseAct(SEL)) return; if(NET.guest){ gIntent('act',{uid:SEL.uid}); SEL=null; render(); return; } useAct(SEL); }; c.appendChild(b); }
   const e=el('button','btn gold','Terminar turno ⏭');
-  e.disabled=G.active!==ME||G.busy||G.resolving||G.over||!tutCan('end'); e.onclick=pedirTerminarTurno; c.appendChild(e);
+  e.disabled=!!TGT||G.active!==ME||G.busy||G.resolving||G.over||!tutCan('end'); e.onclick=pedirTerminarTurno; c.appendChild(e);
   const reloj=el('span','','' ); reloj.id='reloj'; reloj.hidden=true; c.appendChild(reloj);
   if(RELOJ.id||(G.online&&!G.over)) relojPinta();
   c.appendChild(el('span','spacer'));
