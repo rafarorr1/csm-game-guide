@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=216"></script>
-<script src="final.js?b=216"></script>
+<script src="motor.js?b=217"></script>
+<script src="final.js?b=217"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:216, fecha:'2026-09-09'};
+const BUILD = {n:217, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2498,7 +2498,7 @@ async function ofrecerManoNueva(s){
      pinta nada: seguir la dejaba aparecer sobre la partida nueva y pisar lo que
      hubiera en pantalla, empezando por el cartel del volado. */
   const miPartida = PARTIDA_N, miG = G;
-  const vive = () => miPartida === PARTIDA_N && miG === G && !G.over;
+  const vive = () => miPartida === PARTIDA_N && miG === G && !G.over && G.active === s;
   const p = P(s);
   /* El volado deja su cartel en este mismo overlay. Preguntando encima se comía
      el resultado antes de que diera tiempo a leerlo: el primer turno empieza
