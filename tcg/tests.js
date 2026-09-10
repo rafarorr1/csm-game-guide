@@ -2513,13 +2513,18 @@ PRUEBAS.suite('menusDorados', async t => {
     try{
       w.localStorage.removeItem('caoz.campana.v1.prueba');
       for(const [boton,salida] of [['mPlay','#selBack'],['mGuides','#guideBack'],['mCampana',null],['mTut',null],['mOnline',null],['mCards',null],['mRules',null],['mRecords',null]]){
+        const extra=!!d.querySelector('#extras #'+boton);
+        if(extra){d.querySelector('#mExtras').click();comprobar('entrar en Extras');}
+        t.check(d.querySelector('#'+boton).getClientRects().length>0,pagina+': '+boton+' debe estar visible antes de pulsarlo.');
         d.querySelector('#'+boton).click();comprobar('entrar en '+boton);
         const modal=d.querySelector('#ov.on');
         if(modal)t.check(!!modal.querySelector('.barridoModal')&&d.querySelector('#ovPanel').classList.contains('menuEntra'),pagina+': el barrido debe dibujarse delante de la ventana.');
         const panel=boton==='mCampana'?d.querySelector('#campanaPanel'):d.querySelector('#ovPanel');
         const cerrar=salida?d.querySelector(salida):[...panel.querySelectorAll('button')].find(b=>/^(Cerrar|Cancelar|Menú principal)$/.test(b.textContent.trim()));
         t.check(!!cerrar,pagina+': falta regreso de '+boton);cerrar.click();comprobar('volver de '+boton);
-        t.check(d.querySelector('#menu.on')&&!d.querySelector('#ov.on')&&!d.querySelector('#campanaPanel[open]'),pagina+': '+boton+' no regresa al menú principal.');
+        t.check(d.querySelector(extra?'#extras.on':'#menu.on')&&!d.querySelector('#ov.on')&&!d.querySelector('#campanaPanel[open]'),pagina+': '+boton+' no regresa a su menú.');
+        if(extra){d.querySelector('#extrasBack').click();comprobar('volver de Extras');}
+        t.check(!!d.querySelector('#menu.on'),pagina+': falta regreso al menú principal.');
         regresoVisible();await sleep(130);regresoVisible();
       }
       await sleep(750);
