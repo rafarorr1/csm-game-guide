@@ -178,6 +178,53 @@ function leerRecords(){
 function guardarRecords(r){ try{ localStorage.setItem(RECORDS_CLAVE, JSON.stringify(r)); }catch(e){} }
 function borrarRecords(){ try{ localStorage.removeItem(RECORDS_CLAVE); }catch(e){} }
 
+/* Borrado explícito desde Extras. Sólo progreso: no cachés, arte ni ajustes.
+   Recargar después del borrado descarta también campañas, sellos y escenas
+   retenidos en memoria. Nunca se borra al abrir o cancelar la confirmación. */
+function clavesProgresoLocal(){
+  const pruebas=new URLSearchParams(location.search).has('test')?'.prueba':'';
+  const logros='caoz.campana.logros.v1'+pruebas;
+  return [CAMPANA_CLAVE,CAMPANA_CLAVE+'.creador',logros,logros+'.simulados',RECORDS_CLAVE,'caoz_nombre'];
+}
+function borrarProgresoLocal(){
+  const claves=clavesProgresoLocal(),anteriores=new Map();
+  try{
+    // Leer todo primero: si el navegador bloquea el almacenamiento, no empezar.
+    for(const clave of claves)anteriores.set(clave,localStorage.getItem(clave));
+    for(const clave of claves)localStorage.removeItem(clave);
+    if(claves.some(clave=>localStorage.getItem(clave)!==null))throw Error('Borrado incompleto');
+    return true;
+  }catch(_){
+    // Si falla a mitad, intentar conservar el progreso anterior.
+    for(const [clave,valor] of anteriores){try{if(valor!==null)localStorage.setItem(clave,valor);}catch(_){} }
+    return false;
+  }
+}
+function confirmarBorradoProgreso(){
+  if(!document.querySelector('#extras.on'))return;
+  const panel=document.getElementById('ovPanel');
+  panel.innerHTML='<h3 id="borrarProgresoTitulo">¿Borrar todo tu progreso?</h3>'+
+    '<p>Se eliminarán tu campaña, tu personaje, todos los logros de los mazos y del final secreto, tus récords y tu nombre guardado en este navegador o app.</p>'+
+    '<p><b>No se puede deshacer.</b> Tus ajustes de sonido se conservarán.</p>';
+  const aviso=el('p','');aviso.id='borrarProgresoError';aviso.setAttribute('role','alert');aviso.hidden=true;panel.appendChild(aviso);
+  const opciones=el('div','opts');opciones.style.cssText='display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:18px';
+  const cancelar=el('button','btn','Cancelar');cancelar.id='borrarProgresoCancelar';
+  cancelar.onclick=()=>{cerrarOv();document.getElementById('mBorrarProgreso').focus({preventScroll:true});};
+  const borrar=el('button','btn','Sí, borrar todo');borrar.id='borrarProgresoConfirmar';
+  borrar.style.cssText='background:linear-gradient(135deg,#6d2929,#351313);color:#ffe1d8;border-color:#b36958';
+  borrar.onclick=()=>{
+    if(borrar.disabled)return;borrar.disabled=true;
+    if(borrarProgresoLocal()){
+      // La misma URL conserva la versión beta/móvil y empieza sin datos vivos.
+      location.reload();
+    }else{
+      aviso.hidden=false;aviso.textContent='No se pudo completar el borrado. El navegador no permitió modificar los datos. Inténtalo de nuevo.';
+      borrar.disabled=false;
+    }
+  };
+  opciones.append(cancelar,borrar);panel.appendChild(opciones);openOv();cancelar.focus({preventScroll:true});
+}
+
 function anotarRecord(gane, lid, turnos, modo){
   const r = leerRecords();
   const L = r.lideres[lid] || (r.lideres[lid] = {jugadas:0, ganadas:0, racha:0, mejorRacha:0, rapida:null});

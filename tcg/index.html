@@ -2160,7 +2160,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 .extrasOpciones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(100%,480px);margin:8px 0}
 .extrasOpciones .btn{min-height:62px;padding:12px;font-size:14px;line-height:1.35}
 .extrasOpciones>.btn:last-child:nth-child(odd){grid-column:1/-1}
-#extrasBack{margin-top:8px;min-height:44px;font-size:14px}
+#extras #mBorrarProgreso{margin-top:4px;min-height:44px;padding:10px 18px;font-size:13px;color:#eab2a7;border-color:#a2544d80;background:#351918bb}
+#extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
 </head>
@@ -2208,6 +2209,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
     <button class="btn" id="mRecords">Tus récords</button>
     <button class="btn taller" id="mEstudio">Editor de cartas</button>
   </div>
+  <button class="btn" id="mBorrarProgreso" aria-haspopup="dialog">Borrar mi progreso</button>
   <button class="btn" id="extrasBack">← Menú principal</button>
 </div>
 
@@ -2324,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=230"></script>
-<script src="final.js?b=230"></script>
+<script src="motor.js?b=231"></script>
+<script src="final.js?b=231"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2344,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:230, fecha:'2026-09-09'};
+const BUILD = {n:231, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -4706,6 +4708,7 @@ function showGuides(id){
 /* ==========================================================================
    13. ARRANQUE
    ========================================================================== */
+$('#mBorrarProgreso').onclick=()=>confirmarBorradoProgreso();
 $('#mExtras').onclick=()=>{showScreen('extras');$('#extrasBack').focus({preventScroll:true});};
 $('#extrasBack').onclick=()=>{showScreen('menu');$('#mExtras').focus({preventScroll:true});};
 $('#mTut').onclick=()=>showTutorialPick();

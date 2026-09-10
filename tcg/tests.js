@@ -2494,6 +2494,52 @@ PRUEBAS.suite('cerrarCartaMovil', async t => {
   }finally{f.remove();}
 });
 
+PRUEBAS.suite('borrarProgreso', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const cargar=()=>new Promise(resolve=>f.addEventListener('load',resolve,{once:true}));
+    const carga=cargar();f.src=pagina+'?test=borrado-interno';document.body.appendChild(f);await carga;
+    let w=f.contentWindow,d=w.document;
+    const claves=['caoz.campana.v1.prueba','caoz.campana.v1.prueba.creador','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados','caoz_records_v1','caoz_nombre'],ajustes='caoz.sonido.v1',ajeno='prueba.datos.ajenos';
+    const guardar=[...claves,ajustes,ajeno],copia=new Map(guardar.map(k=>[k,localStorage.getItem(k)]));
+    try{
+      const campana={version:1,id:'borrado-de-prueba',lider:'adreida',etapa:3,personaje:{nombre:'Ariadna'}};
+      const logros={version:1,mazos:{adreida:{nombre:'Ariadna',fecha:1234}},ganador:{nombre:'Ariadna',lider:'adreida',fecha:1234}};
+      localStorage.setItem(claves[0],JSON.stringify(campana));localStorage.setItem(claves[1],JSON.stringify({personaje:{nombre:'Ariadna'},lider:'adreida'}));
+      localStorage.setItem(claves[2],JSON.stringify(logros));localStorage.setItem(claves[3],JSON.stringify(logros));
+      localStorage.setItem(claves[4],JSON.stringify({lideres:{adreida:{ganadas:2,jugadas:3}},total:{ganadas:2,jugadas:3},online:{jugadas:0,ganadas:0}}));
+      localStorage.setItem(claves[5],'Ariadna');localStorage.setItem(ajustes,'{"volumen":0.25,"silencio":true}');localStorage.setItem(ajeno,'conservar');
+      const datos=claves.map(k=>localStorage.getItem(k));
+      w.campanaLeer();w.campanaLeerBorrador();w.CAMPANA_LOGROS.leer();w.showScreen('extras');
+      d.querySelector('#mBorrarProgreso').click();
+      t.check(d.querySelector('#ov.on')&&d.activeElement.id==='borrarProgresoCancelar',pagina+': pide confirmación con Cancelar enfocado.');
+      t.check(claves.every((k,i)=>localStorage.getItem(k)===datos[i]),pagina+': abrir no borra datos.');
+      d.querySelector('#borrarProgresoCancelar').click();
+      t.check(d.querySelector('#extras.on')&&!d.querySelector('#ov.on')&&claves.every((k,i)=>localStorage.getItem(k)===datos[i]),pagina+': cancelar conserva el progreso.');
+      d.querySelector('#mBorrarProgreso').click();
+      const quitar=w.Storage.prototype.removeItem;
+      try{
+        w.Storage.prototype.removeItem=function(k){if(k===claves[1])throw Error('Almacenamiento bloqueado');return quitar.call(this,k);};
+        d.querySelector('#borrarProgresoConfirmar').click();
+        t.check(!d.querySelector('#borrarProgresoError').hidden&&!d.querySelector('#borrarProgresoConfirmar').disabled,pagina+': fallo de almacenamiento visible y permite reintentar.');
+        t.check(claves.every((k,i)=>localStorage.getItem(k)===datos[i]),pagina+': restaura los datos tras un fallo parcial.');
+      }finally{w.Storage.prototype.removeItem=quitar;}
+      const recarga=cargar();d.querySelector('#borrarProgresoConfirmar').click();await recarga;
+      w=f.contentWindow;d=w.document;
+      t.check(claves.every(k=>localStorage.getItem(k)===null),pagina+': borra campaña, creador, logros normales y beta, récords y nombre.');
+      t.check(w.campanaLeer()===null&&w.campanaLeerBorrador().personaje.nombre==='Viajero',pagina+': descarta también las copias en memoria.');
+      t.check(w.CAMPANA_LOGROS.total()===0&&w.CAMPANA_LOGROS.total(true)===0&&!w.CAMPANA_LOGROS.ganador(),pagina+': no queda ningún sello ni final secreto.');
+      t.check(d.querySelectorAll('#mCampana .campanaRetrato').length===6&&!d.querySelector('#mCampana .completado')&&!d.querySelector('#menu.campanaCoronado'),pagina+': vuelve al logo normal y seis retratos grises.');
+      t.check(w.leerRecords().total.jugadas===0&&w.nombreGuardado()==='',pagina+': récords y nombre empiezan vacíos.');
+      t.check(localStorage.getItem(ajustes)==='{"volumen":0.25,"silencio":true}'&&localStorage.getItem(ajeno)==='conservar',pagina+': conserva preferencias y datos ajenos.');
+      d.querySelector('#mCampana').click();t.check(d.querySelector('#campanaPanel').dataset.vista==='creador',pagina+': la campaña abre un personaje nuevo.');
+      w.campanaVolverAlMenu();
+    }finally{
+      f.remove();for(const [k,v] of copia){if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}
+    }
+  }
+});
+
 PRUEBAS.suite('menusDorados', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
