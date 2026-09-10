@@ -1,5 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 229 · Las victorias beta colorean los retratos
+
+- En la beta, ganar con los botones temporales también colorea el retrato del
+  mazo en Campaña. Se leen tanto los logros normales como los ensayos guardados,
+  así que una victoria de prueba anterior se reconoce sin repetir la campaña.
+- Los ensayos siguen guardados por separado: fuera de la beta sólo se muestran
+  victorias normales. No cambia cómo se desbloquea el final secreto.
+- Regresión con el botón real de victoria de Adreida, progreso mixto, nueva
+  campaña, recarga y vista fuera de beta. Falla con el lector anterior y pasa
+  con el arreglo en escritorio y móvil. Publicación sólo beta.
+
 ### Sin numerar · build 228 · Retratos visibles desde el inicio
 
 - El botón Campaña muestra siempre los seis protagonistas, incluso sin haber

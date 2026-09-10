@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 228 (candidato beta; producción 226 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 229 (candidato beta; producción 226 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -12,11 +12,18 @@ números) → el código.
 
 ## 1. Qué es y dónde está
 
+Build 229 colorea también las victorias de ensayo en el botón Campaña de la
+beta, usando `campanaPruebaDisponible()`. Une las claves de los logros reales
+y simulados sólo para presentar los retratos. Reconoce los ensayos anteriores
+sin migración ni escrituras. Fuera de beta usa únicamente los logros reales;
+el final secreto sigue contando sus sellos de forma independiente. Regresión
+`campanaRetratosBeta`, comprobada roja antes del arreglo y verde después.
+
 Build 228 mantiene siempre visibles los seis retratos dentro del botón
 `#mCampana`, desde el inicio y aun con cero logros. Al completar cada mazo, su
 retrato pasa de gris a color. Corrige la condición de primera victoria de 227.
-Se lee `CAMPANA_LOGROS.leer(false)` desde `campana-honores.js` para excluir
-ensayos aunque estén activos. No hay nueva persistencia ni cambios al motor.
+Desde 229 `campana-honores.js` lee `CAMPANA_LOGROS.leer(false)` y, sólo en
+beta, también `leer(true)`. No hay nueva persistencia ni cambios al motor.
 `caoz:campana-logros`, `storage`, `showScreen` y el evento `caoz:arte` refrescan
 los medallones sin sustituir el botón. Los cuatro retratos ilustrados usan un
 primer plano propio; Mohamed y Gero conservan sus símbolos hasta tener arte.
