@@ -1,5 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 230 · Tres modos principales y Extras
+
+- El menú de escritorio y móvil presenta Jugar contra el Domo, Campaña y Online
+  como tres botones grandes. Campaña conserva sus seis retratos y su progreso.
+- Extras reúne Tutorial, Colección de cartas, Guías de estrategia, Reglas y
+  Tus récords; escritorio también conserva el Editor de cartas. La nueva
+  pantalla mantiene el fondo animado y el barrido dorado en ambos sentidos.
+- Cerrar las ventanas y regresar de Guías devuelve a Extras. Su botón Menú
+  principal vuelve a la portada sin pasar por pantallas intermedias.
+- Verificación de navegación, centrado, transiciones y retratos en ambas
+  interfaces; menú y Extras sin desbordamiento en 320×568, 390×844, app móvil
+  de 390×752 y escritorio de 1440×900. Publicación sólo beta; producción 229.
+
 ### Sin numerar · build 229 · Las victorias beta colorean los retratos
 
 - En la beta, ganar con los botones temporales también colorea el retrato del

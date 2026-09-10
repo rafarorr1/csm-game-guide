@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 229 (candidato beta; producción 226 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 230 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,16 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 230 reorganiza ambas portadas: `mPlay`, `mCampana`, `mOnline` y
+`mExtras`, en ese orden. Online reemplaza el nombre Con amigos. La pantalla
+`#extras.portada` contiene los demás botones con sus ids y acciones originales;
+el editor continúa exclusivo de escritorio. `showScreen` conserva el fondo y
+el oro. Guías recuerda su origen al abrirse; sus pestañas no lo sobrescriben.
+Reglas cierra su ventana sin forzar la portada. `extrasBack` vuelve al menú.
+No se alteran motor, logros, audio ni red. `menusDorados` recorre ahora Extras
+antes de pulsar sus opciones y comprueba el regreso a la pantalla correcta.
+Producción 229 fue publicada y verificada; esta nueva build es sólo beta.
 
 Build 229 colorea también las victorias de ensayo en el botón Campaña de la
 beta, usando `campanaPruebaDisponible()`. Une las claves de los logros reales
@@ -30,7 +40,7 @@ primer plano propio; Mohamed y Gero conservan sus símbolos hasta tener arte.
 Texto accesible enumera los seis estados. Mantiene el tamaño del botón móvil.
 Validación externa: 0/1/6 mazos, nueva campaña, recarga, otra pestaña, ensayos,
 activación tocando la imagen y cuatro tamaños/modos de pantalla.
-Esta versión se publica sólo en beta; producción permanece en 226.
+Las builds 227–229 ya están integradas en producción 229.
 
 Build 226 integra la regresión `editorCartas` con el nuevo resultado de memoria: dos
 parejas declaradas equivalen a dos Alma, sin dar por hecho el premio fijo.
