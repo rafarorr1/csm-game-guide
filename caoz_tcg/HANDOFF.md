@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 236 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 237 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,12 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build237 estabiliza la prueba de clic: espera la promesa real de playFromHand
+hasta la entrada completa de Eric, no sólo su salida de la mano. Se observó el
+bloqueo real por Sacrificio durante la publicación beta236. El juego no cambia.
+Producción236 y sus estudios ya fueron verificados byte a byte y por navegador;
+beta permaneció234 al detenerse el arnés. Publicar237 en ambos destinos y verificar.
 
 Build 236 completa el empaquetado del estudio único: publicar.sh copiaba
 estudio-publicacion.js/css, pero faltaban en el git add explícito de gh-pages.

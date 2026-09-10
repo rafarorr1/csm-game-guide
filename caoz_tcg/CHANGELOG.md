@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 237 · Esperar la jugada completa en las pruebas
+
+- La prueba de clic en una carta espera hasta que termina su entrada al campo.
+  Antes sólo esperaba que saliera de la mano; si era Eric, su entrada tardía
+  contaminaba la prueba siguiente y detenía la publicación pidiendo Sacrificio.
+- Usa Eric de forma determinista, comprueba que aterriza y limita la espera.
+  Es una corrección del arnés; no cambia reglas, cartas ni la interfaz del juego.
+
 ### Sin numerar · build 236 · Publicar todos los archivos del estudio
 
 - Incluye los controles y estilos compartidos del estudio en el commit publicado;
