@@ -13,6 +13,8 @@
   let b='166';
   try{ b=new URL(src,location.href).searchParams.get('b')||b; }catch(e){}
   document.write('<link rel="stylesheet" href="acabados.css?b='+encodeURIComponent(b)+'">');
+  document.write('<script src="arte-vistas.js?b='+encodeURIComponent(b)+'"><\/script>');
+  if(new URLSearchParams(location.search).has('estudioVista'))document.write('<script src="estudio-vista.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="arte-remoto.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="final-core.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-personaje.js?b='+encodeURIComponent(b)+'"><\/script>');
