@@ -1,5 +1,9 @@
 # El sonido del Domo
 
+**Build 235:** el flujo vigente está en [ESTUDIOS.md](ESTUDIOS.md): estudio
+único, guardado privado y botones separados para beta y producción. Los detalles
+históricos de guardado directo por entorno que siguen corresponden a234.
+
 Propuesta 01, build 212. Banco original de 37 efectos de fantasía: materiales
 cercanos, preparación antes del impacto y espacio para que se entienda cada acción.
 Los WAV se crearon para el proyecto mediante síntesis de resonadores, fricción,

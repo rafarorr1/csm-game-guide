@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 234 (beta; producción 229, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 235 (local; beta y producción 234, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,15 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 235 unifica /estudio y /sonidos en juego.caozcontodo.com, con borradores
+privados y publicación independiente a beta/producción. Ver ESTUDIOS.md.
+El código está preparado; la conexión SFX_BETA_DB de Production fue bloqueada
+por revisión automática por ampliación de acceso. Falta autorización explícita
+para guardarla, activar ESTUDIO_UNICO=1 en ambos entornos y publicar mediante
+el flujo oficial. No hay cambios remotos de esta build todavía. No merge a main.
+Las referencias a producción229 en los bloques históricos siguientes describen
+su publicación original; producción234 ya fue publicada y Tal migrado después.
 
 Build 234 añade versiones Normal, Foil y Foil dorado al estudio y al juego.
 La prioridad visual es Dorado → Foil → Normal, independiente de la rareza

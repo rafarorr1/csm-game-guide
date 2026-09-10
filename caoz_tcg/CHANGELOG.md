@@ -1,5 +1,20 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 235 · Estudios únicos con publicación por destino
+
+- Cartas y sonidos comparten un único acceso en el dominio oficial. Los enlaces
+  de beta llevan al mismo estudio. Una biblioteca privada conserva los borradores;
+  guardar ya no modifica directamente ninguna partida.
+- Cada panel muestra cambios pendientes y botones para publicar en beta o
+  producción, con lista de las cartas o sonidos que se enviarán. Conserva los
+  tres acabados, su prioridad, encuadres, archivos y volúmenes.
+- Publicación atómica por destino, revisión de la biblioteca y del destino,
+  archivos preparados en tandas pequeñas y reintentos sin activaciones parciales.
+  No traslada claves ni sesiones; las APIs públicas mantienen su contrato.
+- Pruebas con dos bases aisladas, restauración, concurrencia, interrupciones,
+  privacidad y sabotajes de destino, autenticación y control de publicación.
+- Producción y beta234 siguen intactas hasta activar la conexión autorizada.
+
 ### Sin numerar · build 234 · Normal, Foil y Foil dorado
 
 - Tres versiones por carta en el estudio: imagen propia o ilustración Normal

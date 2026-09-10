@@ -1,5 +1,9 @@
 # Estudio de ilustraciones del Domo
 
+**Build 235:** el flujo vigente está en [ESTUDIOS.md](ESTUDIOS.md): estudio
+único, guardado privado y botones separados para beta y producción. Los detalles
+históricos de guardado directo por entorno que siguen corresponden a234.
+
 El editor se abre en `estudio.html` o `/estudio`. Comparte la clave y la sesión
 privada del estudio de sonidos **del mismo entorno**. La beta y producción
 mantienen sus propias bases y credenciales. El diseño y las operaciones son

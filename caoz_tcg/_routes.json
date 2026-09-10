@@ -1,1 +1,1 @@
-{"version":1,"include":["/api/sfx/*","/api/arte/*"],"exclude":[]}
+{"version":1,"include":["/api/sfx/*","/api/arte/*","/api/estudio/*","/estudio","/estudio.html","/sonidos","/sonidos.html"],"exclude":[]}

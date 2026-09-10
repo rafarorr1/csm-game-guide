@@ -2,7 +2,7 @@
 import concurrent.futures,hashlib,json,subprocess,sys
 from pathlib import Path
 raiz=Path(__file__).resolve().parent
-archivos=['audio-domo.js','sonidos.html','sonidos.js','sonidos.css','audio/catalogo.json']
+archivos=['audio-domo.js','sonidos.html','sonidos.js','estudio-publicacion.js','estudio-publicacion.css','sonidos.css','audio/catalogo.json']
 archivos += [s['archivo'] for s in json.loads((raiz/'audio/catalogo.json').read_text())['sonidos']]
 base=sys.argv[1].rstrip('/')+'/'
 def verificar(archivo):

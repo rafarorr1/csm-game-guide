@@ -4,7 +4,7 @@ from pathlib import Path
 raiz = Path(__file__).resolve().parent
 base = sys.argv[1].rstrip('/') + '/'
 catalogo = json.loads((raiz / 'art/catalogo.json').read_text())
-archivos = ['estudio.html', 'estudio.js', 'estudio.css', 'arte-remoto.js', 'acabados.css', 'art/catalogo.json']
+archivos = ['estudio.html', 'estudio.js', 'estudio-publicacion.js', 'estudio-publicacion.css', 'estudio.css', 'arte-remoto.js', 'acabados.css', 'art/catalogo.json']
 archivos += [c['original']['url'] for c in catalogo['cartas'] if c['original']]
 def verificar(archivo):
     remoto = subprocess.check_output(['curl', '-fsSL', '--max-time', '25', base + archivo], stderr=subprocess.PIPE)

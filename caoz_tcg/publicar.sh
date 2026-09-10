@@ -82,12 +82,14 @@ node --check "$AQUI/polish-aaa.js" || exit 1
 node --check "$AQUI/audio-domo.js" || exit 1
 node --check "$AQUI/sonidos.js" || exit 1
 node --check "$AQUI/estudio.js" || exit 1
+node --check "$AQUI/estudio-publicacion.js" || exit 1
 node --check "$AQUI/arte-remoto.js" || exit 1
 node "$AQUI/generar_catalogo_arte.mjs" --comprobar || exit 1
 node --check "$AQUI/_worker.js" || exit 1
 python3 "$AQUI/verificar_sonidos.py" || exit 1
 node "$AQUI/pruebas_sonidos.mjs" || exit 1
 node "$AQUI/pruebas_arte.mjs" || exit 1
+node "$AQUI/pruebas_estudio.mjs" || exit 1
 node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }
 # El service worker lleva la build en VERSION: es lo que le dice al teléfono
 # que hay una caché nueva. Sin subirlo, la app instalada se quedaría con la vieja.
@@ -221,7 +223,7 @@ RAMA="$(cd "$PAGES" && git branch --show-current)"
 
 [ -z "$(cd "$PAGES" && git status --porcelain)" ] || { rojo 'El worktree de publicación tiene cambios pendientes'; exit 1; }
 mkdir -p "$PAGES/$DESTINO/art" "$PAGES/$DESTINO/audio"
-for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css arte-remoto.js acabados.css _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
+for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js estudio-publicacion.css arte-remoto.js acabados.css _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
 cp "$AQUI"/audio/*.wav "$AQUI/audio/catalogo.json" "$PAGES/$DESTINO/audio/" || exit 1
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
