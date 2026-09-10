@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 227 (candidato beta; producción 226 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 228 (candidato beta; producción 226 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -12,9 +12,10 @@ números) → el código.
 
 ## 1. Qué es y dónde está
 
-Build 227 añade el progreso al botón `#mCampana` desde `campana-honores.js`.
-Después del primer sello real se muestran los seis retratos, completados en
-color y pendientes en gris. Se lee `CAMPANA_LOGROS.leer(false)` para excluir
+Build 228 mantiene siempre visibles los seis retratos dentro del botón
+`#mCampana`, desde el inicio y aun con cero logros. Al completar cada mazo, su
+retrato pasa de gris a color. Corrige la condición de primera victoria de 227.
+Se lee `CAMPANA_LOGROS.leer(false)` desde `campana-honores.js` para excluir
 ensayos aunque estén activos. No hay nueva persistencia ni cambios al motor.
 `caoz:campana-logros`, `storage`, `showScreen` y el evento `caoz:arte` refrescan
 los medallones sin sustituir el botón. Los cuatro retratos ilustrados usan un

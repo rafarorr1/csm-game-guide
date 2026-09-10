@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 228 · Retratos visibles desde el inicio
+
+- El botón Campaña muestra siempre los seis protagonistas, incluso sin haber
+  completado ningún mazo. Comienzan en gris y cada uno toma color al conseguir
+  su sello real. Ya no hace falta una primera victoria para verlos en el menú.
+- Conserva el progreso existente, el encuadre de los rostros y el tamaño compacto
+  del botón en móvil y escritorio. Los ensayos beta no colorean los retratos.
+- Publicación sólo beta; producción conserva la build 226.
+
 ### Sin numerar · build 227 · Los seis rostros de la campaña
 
 - Tras completar la campaña con el primer mazo, el botón Campaña muestra los
