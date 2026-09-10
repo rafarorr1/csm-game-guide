@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 232 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 233 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,30 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 233 reemplaza el editor local por estudio.html/js/css, con sesión
+compartida con sonidos y tablas ilustraciones/imagenes en el binding SFX_DB
+existente. Beta y producción mantienen sus propias bases y claves. Consultar
+ILUSTRACIONES.md para contratos, límites, restauración y borradores IndexedDB.
+El catálogo de 134 entradas se deriva con generar_catalogo_arte.mjs del motor;
+publicar.sh exige que art/catalogo.json esté al día. No hay claves cliente.
+
+arte-remoto.js se carga antes de final-core.js; combina originales con el
+catálogo público, actualiza nodos existentes y reintenta imágenes al recuperar
+conexión aunque no cambie su revisión. urlArte(id) centraliza sus URLs. La PWA
+conserva una caché independiente de la build sólo para arte público; las rutas
+privadas nunca pasan por CacheStorage. La ronda de memoria congela su imagen
+para que un cambio remoto no altere las parejas a mitad de la prueba.
+El único cambio del motor elimina la antigua puerta cliente del editor;
+reglas y mazos permanecen iguales. arteRemoto cubre la recuperación y falla
+al sabotear el reintento. pruebas_arte.mjs prueba el worker real con SQLite y
+credenciales ficticias. La UI se comprueba con sesión real local, subida,
+encuadre, segunda sesión, conflicto, restauración y tamaños 320–1440 px.
+El servidor del arnés usa ThreadingHTTPServer: una conexión especulativa de
+Chrome bloqueaba todas las demás con HTTPServer y agotaba los 420 segundos.
+La regresión de concurrencia verifica un GET y POST /resultado manteniendo
+abierto un socket ocioso; falla con la clase antigua. El plazo no se amplió.
+Publicar sólo beta; producción conserva 229. No hacer merge ni push a main.
 
 Build 232 coloca Campaña antes de Jugar contra el Domo en ambas interfaces.
 Los cuatro botones principales comparten el fondo borgoña de Campaña, borde,
@@ -656,11 +680,12 @@ Deuda técnica:
   (iconos de la app, generados del logo con PIL; ver el script en el CHANGELOG v17).
 - `ParaSpotify.png` (raíz, 6,3 MB): el **logo original** que pasó Rafa; `logo.webp` sale de él.
 - `plantilla/carta-plantilla.svg` y `.png`: la plantilla de carta para maquetar ilustraciones.
-- `estudio.html`: el editor de encuadres. Carga `index.html` en un iframe y usa sus cartas;
-  «Sincronizar con el juego» y «Exportar» (`exportar-datos.sh`) escriben `art/encuadres.json`
-  y las ilustraciones. Está protegido con contraseña en la web (`LLAVE_ESTUDIO`, un hash).
-- Las ilustraciones nuevas van como `art/<id>.webp` (proporción de carta, 750×1050 de
-  referencia) y una entrada en `encuadres.json`; el juego las recoge solo (`cargarArte`).
+- `estudio.html/js/css`: panel privado de encuadres y reemplazos en D1, con sesión
+  compartida con sonidos. Ya no usa el iframe ni la antigua contraseña cliente.
+  Recupera borradores IndexedDB de forma explícita. Ver `ILUSTRACIONES.md`.
+- Los originales versionados van como `art/<id>.webp` y una entrada en
+  `encuadres.json`. Los reemplazos del panel se sirven por hash desde la API;
+  `arte-remoto.js` los combina con los originales. Proporción de referencia 5:7.
 - `biblia.sh` genera `La-Biblia-del-Domo.pdf` (todas las cartas, Líderes, mazos, guías y
   reglas) desde el propio juego; es la forma más cómoda de leer el contenido.
 

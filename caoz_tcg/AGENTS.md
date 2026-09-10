@@ -26,7 +26,7 @@ build, sin cuentas: archivos sueltos que funcionan con cualquier servidor estát
 | `tests.js` | El arnés. Se carga sólo con `?test=1` (`&rapido=1` salta los tutoriales). Suites: motor, cartas, cobertura, tutoriales, regresiones. |
 | `balance.html` | El banco de balance: 2880 partidas IA contra IA por tanda (`?auto`). |
 | `publicar.sh` | Publica. Con guardas; ver abajo. |
-| `estudio.html`, `art/encuadres.json` | El editor de ilustraciones y el índice de encuadres (x, y, z por carta). |
+| `estudio.html/js/css`, `arte-remoto.js` | Estudio privado de ilustraciones, sesión compartida con sonidos y reemplazos persistentes en D1. Originales en `art/encuadres.json`; catálogo derivado en `art/catalogo.json`. Ver `ILUSTRACIONES.md`. |
 | `biblia.sh` / `biblia.py` | Genera «La Biblia del Domo» en PDF a partir de los datos del propio juego (`?biblia=1`). |
 
 Las tres partes son **scripts clásicos que comparten el ámbito global**. Reglas del corte:

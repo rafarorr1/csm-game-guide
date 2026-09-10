@@ -901,8 +901,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=232"></script>
-<script src="final.js?b=232"></script>
+<script src="motor.js?b=233"></script>
+<script src="final.js?b=233"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -913,7 +913,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:232, fecha:'2026-09-09'};
+const BUILD = {n:233, fecha:'2026-09-09'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -954,34 +954,43 @@ function encajarTextos(raiz){
 
 /* ---------- ilustraciones ---------- */
 function ponerDibujo(nodo, url, enc){
-  const caja=document.createElement('div'); caja.className='marcoDibujo';
-  const img=document.createElement('img'); img.className='dibujo'; img.alt=''; img.src=url;
-  caja.appendChild(img);
-  nodo.style.setProperty('--ex', enc.x+'%'); nodo.style.setProperty('--ey', enc.y+'%');
+  // Reutiliza el marco: una edición remota no debe duplicar ni rehacer cartas.
+  const marcos=[...nodo.querySelectorAll(':scope > .marcoDibujo')];
+  let caja=marcos.shift();marcos.forEach(n=>n.remove());
+  if(!caja){caja=document.createElement('div');caja.className='marcoDibujo';nodo.prepend(caja);}
+  let img=caja.querySelector('img');
+  if(!img){img=document.createElement('img');img.className='dibujo';img.alt='';caja.appendChild(img);}
+  if(img.getAttribute('src')!==url)img.src=url;
+  caja.style.setProperty('--url', `url("${url}")`);
+  nodo.style.setProperty('--ex', enc.x+'%');nodo.style.setProperty('--ey', enc.y+'%');
   nodo.style.setProperty('--ez', (enc.z/100).toFixed(3));
-  nodo.insertBefore(caja, nodo.firstChild);
   return img;
 }
+
 function ilustrarLider(d, lid){
-  const enc=encuadreDe(ARTE['lider_'+lid]); if(!enc) return d;
-  const cara=d.querySelector('.lface'); if(!cara) return d;
-  cara.classList.add('conarte'); ponerDibujo(cara, `art/lider_${lid}.webp`, enc);
+  const cara=d.querySelector('.lface');if(!cara)return d;
+  cara.dataset.arteId='lider_'+lid;
+  const enc=encuadreDe(ARTE['lider_'+lid]);if(!enc)return d;
+  cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid),enc);
   return d;
 }
 function ilustrar(d, id){
-  const enc=encuadreDe(ARTE[id]), hay=enc!=null;
-  d.classList.add('acomodo', hay?'conarte':'sinarte');
-  if(hay) ponerDibujo(d, `art/${id}.webp`, enc);
-  const pie=document.createElement('div'); pie.className='pieCarta';
-  for(const sel of ['.nm','.tribe','.txt','.stats']){ const e=d.querySelector(sel); if(e) pie.appendChild(e); }
-  if(pie.children.length) d.appendChild(pie);
+  d.dataset.arteId=id;
+  const enc=encuadreDe(ARTE[id]),hay=enc!=null;
+  d.classList.add('acomodo');d.classList.toggle('conarte',hay);d.classList.toggle('sinarte',!hay);
+  if(hay)ponerDibujo(d,urlArte(id),enc);
+  let pie=d.querySelector(':scope > .pieCarta');
+  if(!pie){pie=document.createElement('div');pie.className='pieCarta';}
+  for(const sel of ['.nm','.tribe','.txt','.stats']){const e=d.querySelector(sel);if(e&&!pie.contains(e))pie.appendChild(e);}
+  if(pie.children.length&&!pie.parentNode)d.appendChild(pie);
   return d;
 }
+
 /* el retrato del Líder para la barra: la imagen si la hay, si no su emoji */
 function rostroLider(lid){
   const enc=encuadreDe(ARTE['lider_'+lid]);
-  if(!enc) return `<div class="lrostro">${LEADERS[lid].art}</div>`;
-  return `<div class="lrostro" style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"><img alt="" src="art/lider_${lid}.webp"></div>`;
+  if(!enc) return `<div class="lrostro" data-arte-id="lider_${lid}">${LEADERS[lid].art}</div>`;
+  return `<div class="lrostro" data-arte-id="lider_${lid}" style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"><img alt="" src="${urlArte('lider_'+lid)}"></div>`;
 }
 
 /* ---------- el reparto del alto: las cartas crecen hasta llenar lo que hay ---------- */
@@ -1120,7 +1129,7 @@ function sembrarPortada(){
     f.appendChild(b);
   }
 }
-function ilustrarFondo(){ $$('#fondoMenus .cartaFondo .vscard[data-lid]').forEach(n=>{ if(!n.querySelector('.marcoDibujo')) ilustrarLider(n, n.dataset.lid); }); }
+function ilustrarFondo(){ $$('#fondoMenus .cartaFondo .vscard[data-lid]').forEach(n=>{ ilustrarLider(n, n.dataset.lid); }); }
 
 /* ---------- selección de Líder: una lista de pie ---------- */
 function buildSelect(){
@@ -1532,9 +1541,10 @@ function abrirFicha(id,u,opts={}){
   box.className='big t-'+(CARDS[id]?CARDS[id].t:'personaje');
   box.innerHTML=inspectHTML(id,u);
   const art=box.querySelector('.art'), enc=encuadreDe(ARTE[id]);
+  if(art)art.dataset.arteId=id;
   if(art&&enc){ art.classList.add('conarte'); art.style.setProperty('--ex',enc.x+'%'); art.style.setProperty('--ey',enc.y+'%');
     art.style.setProperty('--ez',(enc.z/100).toFixed(3));
-    art.insertAdjacentHTML('afterbegin',`<div class="marcoDibujo"><img alt="" src="art/${id}.webp"></div>`); }
+    art.insertAdjacentHTML('afterbegin',`<div class="marcoDibujo"><img alt="" src="${urlArte(id)}"></div>`); }
   if(u){
     const mods=modificadoresDe(u);
     if(mods) box.insertAdjacentHTML('beforeend',`<div class="mods">${mods}</div>`);
@@ -1554,8 +1564,8 @@ function fichaLider(side){
   box.className='big';
   const enc=encuadreDe(ARTE['lider_'+p.leaderId]);
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
-    <div class="art${enc?' conarte':''}"${enc?` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"`:''}>${
-      enc?`<div class="marcoDibujo"><img alt="" src="art/lider_${p.leaderId}.webp"></div>`:''}${L.art}</div>
+    <div data-arte-id="lider_${p.leaderId}" class="art${enc?' conarte':''}"${enc?` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"`:''}>${
+      enc?`<div class="marcoDibujo"><img alt="" src="${urlArte('lider_'+p.leaderId)}"></div>`:''}${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:12px">${L.lore}</div>
     <div class="bigsep"></div><div class="txt">${L.pasiva}</div><div class="bigsep"></div><div class="txt">${L.hab}</div>
@@ -2316,7 +2326,7 @@ $('#marca').onerror=()=>{ $('#marca').hidden=true; $('#marcaTexto').hidden=false
 if($('#marca').complete && !$('#marca').naturalWidth) $('#marca').onerror();
 sembrarPortada(); ilustrarFondo();
 $('#fondoMenus').classList.add('on');
-cargarArte().then(()=>{ ilustrarFondo(); window.dispatchEvent(new Event('caoz:arte')); if(Object.keys(ARTE).length && G && !G.silent) render(); });
+cargarArte().then(()=>ilustrarFondo());
 /* ?foto=lider,rival y ?pantalla=… son atajos de revisión, como en escritorio */
 { const q=new URLSearchParams(location.search);
   const sala=(q.get('sala')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);

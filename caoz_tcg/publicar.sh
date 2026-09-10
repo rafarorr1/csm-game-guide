@@ -81,9 +81,13 @@ node --check "$AQUI/dado-fisico.js" || exit 1
 node --check "$AQUI/polish-aaa.js" || exit 1
 node --check "$AQUI/audio-domo.js" || exit 1
 node --check "$AQUI/sonidos.js" || exit 1
+node --check "$AQUI/estudio.js" || exit 1
+node --check "$AQUI/arte-remoto.js" || exit 1
+node "$AQUI/generar_catalogo_arte.mjs" --comprobar || exit 1
 node --check "$AQUI/_worker.js" || exit 1
 python3 "$AQUI/verificar_sonidos.py" || exit 1
 node "$AQUI/pruebas_sonidos.mjs" || exit 1
+node "$AQUI/pruebas_arte.mjs" || exit 1
 node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }
 # El service worker lleva la build en VERSION: es lo que le dice al teléfono
 # que hay una caché nueva. Sin subirlo, la app instalada se quedaría con la vieja.
@@ -172,12 +176,14 @@ fi
 # document.hidden a ratos— y los efectos no llegaban a dibujarse: una tanda
 # de 62 s con un rojo de «no salió el número verde», o ninguna respuesta.
 # En la pestaña visible la misma tanda estaba en verde.
-"$CHROME" "${MODO_NAVEGADOR[@]}" --no-sandbox --user-data-dir="$PERFIL" \
+"$CHROME" "${MODO_NAVEGADOR[@]}" --no-sandbox --user-data-dir="$PERFIL" --remote-debugging-port=0 \
   --no-first-run --disable-extensions --window-size=1600,1000 \
   --disable-background-timer-throttling --disable-renderer-backgrounding \
   --disable-backgrounding-occluded-windows --disable-features=CalculateNativeWinOcclusion \
   "http://127.0.0.1:$PUERTO/?test=$SUITES" >/dev/null 2>&1 &
 NAVEGADOR=$!
+# Puerto de depuración local y efímero: permite revisar la prueba activa si no termina.
+gris "  perfil de diagnóstico: $PERFIL"
 disown "$NAVEGADOR" 2>/dev/null
 
 for _ in $(seq 1 "$ESPERA"); do
@@ -215,7 +221,7 @@ RAMA="$(cd "$PAGES" && git branch --show-current)"
 
 [ -z "$(cd "$PAGES" && git status --porcelain)" ] || { rojo 'El worktree de publicación tiene cambios pendientes'; exit 1; }
 mkdir -p "$PAGES/$DESTINO/art" "$PAGES/$DESTINO/audio"
-for f in audio-domo.js sonidos.html sonidos.js sonidos.css _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
+for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css arte-remoto.js _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
 cp "$AQUI"/audio/*.wav "$AQUI/audio/catalogo.json" "$PAGES/$DESTINO/audio/" || exit 1
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
@@ -271,6 +277,7 @@ cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
 git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/final-core.js" "$DESTINO/campana-mesa.js" "$DESTINO/campana-personaje.js" "$DESTINO/campana-deseo.js" "$DESTINO/campana-pitagoras.js" "$DESTINO/campana-secreto.js" "$DESTINO/campana-honores.js" "$DESTINO/pitagoras-pruebas.js" "$DESTINO/pitagoras-mundos.js" "$DESTINO/pitagoras-cine.js" "$DESTINO/pitagoras-laboratorio.js" "$DESTINO/pitagoras-fps.js" "$DESTINO/pitagoras-pixel.js" "$DESTINO/pitagoras-combate.js" "$DESTINO/pitagoras-mesa.js" "$DESTINO/dado-fisico.js" "$DESTINO/polish-aaa.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/estudio.js" "$DESTINO/estudio.css" "$DESTINO/arte-remoto.js"
 git add "$DESTINO/audio-domo.js" "$DESTINO/sonidos.html" "$DESTINO/sonidos.js" "$DESTINO/sonidos.css" "$DESTINO/_worker.js" "$DESTINO/_routes.json" "$DESTINO/audio"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
@@ -309,6 +316,7 @@ comprobar_cloudflare(){
     done
     if [ "$ok" = "1" ]; then
       python3 "$AQUI/verificar_audio_web.py" "$CF_URL" || return 1
+      python3 "$AQUI/verificar_arte_web.py" "$CF_URL" || return 1
       verde "  publicado y verificado byte a byte en Cloudflare: $CF_URL/"
       gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
       return 0
@@ -349,6 +357,7 @@ for i in $(seq 1 10); do
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$(basename "$f")" || { rojo "$f no coincide con la versión local"; exit 1; }
     done
     python3 "$AQUI/verificar_audio_web.py" "https://rafarorr1.github.io/csm-game-guide/$DESTINO" || exit 1
+    python3 "$AQUI/verificar_arte_web.py" "https://rafarorr1.github.io/csm-game-guide/$DESTINO" || exit 1
     if [ "$DESTINO" = "tcg-beta" ]; then
       # Cloudflare sólo toma tcg como salida. La rama beta contiene exactamente
       # el árbol tcg-beta validado, bajo ese nombre, en un preview independiente.

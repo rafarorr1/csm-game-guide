@@ -1,5 +1,24 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 233 · Estudio privado de ilustraciones por internet
+
+- Rediseña el editor con el lenguaje visual del estudio de sonidos: biblioteca
+  de 134 cartas y protagonistas, búsqueda, filtros, vista previa y encuadre.
+  Permite subir JPEG, PNG o WebP y restaurar la ilustración original.
+- Comparte acceso con sonidos en el mismo entorno. Guarda imágenes y encuadres
+  en la nube con revisión por carta para evitar sobrescribir cambios de otra
+  sesión. Los borradores del editor anterior se recuperan sin publicarse solos.
+- Escritorio, móvil, retratos y cartas de memoria reciben los cambios sin
+  reiniciar partidas. Conserva originales y arte descargado sin conexión;
+  recupera imágenes fallidas al regresar la red. La PWA excluye datos privados.
+- Catálogo derivado del motor y validado antes de publicar. Pruebas de acceso,
+  archivos, encuadres, concurrencia, restauración, aislamiento de sonidos y
+  regresión del reintento con catálogo idéntico, comprobada por sabotaje.
+- El servidor de validación atiende conexiones simultáneas para evitar que
+  una precarga de Chrome bloquee el arnés; regresión comprobada con un socket
+  ocioso. Se conservan todas las guardas y el tiempo límite de publicación.
+- Publicación sólo beta; producción permanece en 229.
+
 ### Sin numerar · build 232 · Campaña primero y botones del mismo color
 
 - Campaña pasa al primer lugar y Jugar contra el Domo al segundo, seguidos de

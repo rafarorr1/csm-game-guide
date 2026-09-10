@@ -1,5 +1,10 @@
 """Pruebas de publicación con repositorios locales, sin servicios externos."""
 import subprocess
+import socket
+import sys
+import time
+import json
+import http.client
 import tempfile
 import unittest
 from pathlib import Path
@@ -69,6 +74,56 @@ class BetaCloudflare(unittest.TestCase):
             publicar(self.repo)
         self.assertEqual(self.git('ls-remote', 'origin', 'refs/heads/beta').split()[0],
                          self.git('rev-parse', 'HEAD'))
+
+
+class ServidorPruebas(unittest.TestCase):
+    def test_precarga_ociosa_no_bloquea_archivos_ni_resultado(self):
+        # Chrome puede abrir un socket antes de enviar el GET. Esa precarga
+        # no debe detener los iframes ni la entrega final del arnés.
+        with tempfile.TemporaryDirectory() as carpeta:
+            salida = Path(carpeta) / 'resultado.json'
+            with socket.socket() as reserva:
+                reserva.bind(('127.0.0.1', 0))
+                puerto = reserva.getsockname()[1]
+            proceso = subprocess.Popen([sys.executable,
+                str(Path(__file__).with_name('servidor_pruebas.py')),
+                str(puerto), str(salida)], stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL)
+            ocioso = None
+            try:
+                for _ in range(100):
+                    try:
+                        ocioso = socket.create_connection(('127.0.0.1', puerto), timeout=.1)
+                        break
+                    except OSError:
+                        if proceso.poll() is not None:
+                            self.fail('No arrancó el servidor de pruebas.')
+                        time.sleep(.02)
+                self.assertIsNotNone(ocioso, 'El servidor debe arrancar.')
+                time.sleep(.1)
+                cliente = http.client.HTTPConnection('127.0.0.1', puerto, timeout=2)
+                try:
+                    cliente.request('GET', '/motor.js')
+                    respuesta = cliente.getresponse()
+                    self.assertEqual(respuesta.status, 200)
+                    self.assertIn(b'CARDS', respuesta.read())
+                finally:
+                    cliente.close()
+                cliente = http.client.HTTPConnection('127.0.0.1', puerto, timeout=2)
+                try:
+                    cliente.request('POST', '/resultado', body='{"ok":1,"mal":0}',
+                                    headers={'Content-Type': 'application/json'})
+                    respuesta = cliente.getresponse()
+                    self.assertEqual(respuesta.status, 204)
+                    respuesta.read()
+                finally:
+                    cliente.close()
+                self.assertEqual(json.loads(salida.read_text()), {'ok': 1, 'mal': 0})
+            finally:
+                if ocioso:
+                    ocioso.close()
+                proceso.terminate()
+                proceso.wait(timeout=5)
 
 
 if __name__ == '__main__':

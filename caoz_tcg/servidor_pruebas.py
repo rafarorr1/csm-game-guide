@@ -12,7 +12,7 @@ script sabe exactamente cuándo ha terminado, y tarda lo que tarden las pruebas.
     python3 servidor_pruebas.py <puerto> <archivo-de-salida>
 """
 import sys, os, json
-from http.server import SimpleHTTPRequestHandler, HTTPServer
+from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 
 PUERTO = int(sys.argv[1]) if len(sys.argv) > 1 else 8749
 SALIDA = sys.argv[2] if len(sys.argv) > 2 else 'resultado.json'
@@ -44,4 +44,6 @@ class Manejador(SimpleHTTPRequestHandler):
 
 
 if __name__ == '__main__':
-    HTTPServer(('127.0.0.1', PUERTO), Manejador).serve_forever()
+    # Chrome precarga conexiones sin enviar todavía el GET. Atender cada una
+    # por separado evita que una precarga detenga los iframes o POST /resultado.
+    ThreadingHTTPServer(('127.0.0.1', PUERTO), Manejador).serve_forever()

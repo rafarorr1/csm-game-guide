@@ -8,8 +8,9 @@ percusión, cuerdas y reflexiones de sala. No son grabaciones extraídas de Bald
 ## Escuchar y cambiar
 
 Abrir `sonidos.html` (también desde **Estudio de ilustraciones → Estudio de sonidos**).
-El panel pide su propia clave. Esa clave la verifica el servidor: no es el antiguo
-control de acceso del editor de cartas. La sesión dura ocho horas y se puede cerrar.
+El panel comparte la clave y la sesión con el estudio de ilustraciones del
+mismo entorno. Esa clave la verifica el servidor; el antiguo control cliente
+del editor de cartas fue retirado. La sesión dura ocho horas y se puede cerrar.
 
 Cada entrada permite escuchar el efecto, abrir su archivo directamente y ajustar
 su volumen. **Reemplazar sonido** admite los formatos que decodifique el navegador
@@ -26,7 +27,7 @@ después de 24 horas. El panel avisa si otra sesión guardó antes, sin sobrescr
 ## Activación en Cloudflare Pages
 
 El despliegue del juego sigue siendo `./publicar.sh --beta`. `_worker.js` y
-`_routes.json` viajan en esa publicación; sólo `/api/sfx/*` ejecuta el backend.
+`_routes.json` viajan en esa publicación; `/api/sfx/*` y `/api/arte/*` ejecutan el backend.
 Los archivos del juego conservan su alojamiento estático. No se despliega código
 por un procedimiento alternativo.
 
@@ -108,3 +109,6 @@ usa .883 en toque/teclado. El volumen del estudio sigue siendo la referencia,
 con ganancia final limitada a 1 y el volumen maestro aplicado después.
 No se modifica el archivo ni se simulan grabaciones distintas. La reproducción
 sin variación conserva pitch y volumen base. Los sonidos de Finales no cambian.
+
+El estudio de ilustraciones comparte la sesión y la base con tablas separadas.
+Ver `ILUSTRACIONES.md` para imágenes, encuadres y recuperación de borradores.
