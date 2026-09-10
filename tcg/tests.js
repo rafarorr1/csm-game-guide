@@ -1429,6 +1429,37 @@ PRUEBAS.suite('betaFinalGero',async t=>{
   }
 });
 
+PRUEBAS.suite('campanaRetratosBeta',async t=>{
+  const claves=['caoz.campana.v1.prueba','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
+  const previos=claves.map(k=>localStorage.getItem(k));
+  try{for(const pagina of ['index.html','movil.html']){
+    claves.forEach(k=>localStorage.removeItem(k));
+    const reales=JSON.stringify({version:1,mazos:{talesin:{nombre:'Victoria normal',fecha:1234}},ganador:null});
+    localStorage.setItem(claves[1],reales);
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=retratos-beta-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow;let d=f.contentDocument;
+    const color=id=>d.querySelector('[data-mazo="'+id+'"]')?.classList.contains('completado');
+    try{
+      t.check(color('talesin')&&!color('adreida'),pagina+': al iniciar sólo está coloreada la victoria normal.');
+      w.cinematicaFinal=async()=>true;
+      w.newGame('adreida','gero');w.eval("G.phase='principal';G.active=ME;G.busy=false;G.resolving=false");w.showScreen('board');w.render();
+      d.querySelector('#betaFinalGero').click();
+      t.check(w.CAMPANA_LOGROS.tiene('adreida',true)&&!w.CAMPANA_LOGROS.tiene('adreida'),pagina+': el botón guarda Adreida como ensayo.');
+      t.check(color('adreida')&&color('talesin'),pagina+': el ensayo colorea Adreida junto con las victorias normales.');
+      t.igual(localStorage.getItem(claves[1]),reales,pagina+': no convierte el ensayo en un logro normal.');
+      w.campanaVolverAlMenu();w.campanaGuardar({version:1,id:'otra-campana',lider:'mohamed',etapa:0});w.showScreen('menu');
+      t.check(color('adreida'),pagina+': el color no depende de seguir dentro del ensayo.');
+      const recarga=new Promise(r=>f.onload=r);f.src=pagina+'?test=retratos-beta-interno&recarga=1';await recarga;d=f.contentDocument;
+      t.check(color('adreida')&&color('talesin'),pagina+': reconoce los ensayos guardados al recargar.');
+      t.igual(d.querySelectorAll('#mCampana .completado').length,2,pagina+': cada mazo cuenta una vez.');
+      w.campanaPruebaDisponible=()=>false;w.campanaActualizarHonores();
+      t.check(!color('adreida')&&color('talesin'),pagina+': fuera de beta sólo se muestran logros normales.');
+      t.igual(localStorage.getItem(claves[1]),reales,pagina+': leer el progreso no escribe logros.');
+    }finally{w.campanaCerrar();w.relojPara();f.remove();}
+  }}finally{claves.forEach((k,i)=>{if(previos[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,previos[i]);});}
+});
+
 PRUEBAS.suite('campanaSecreto',async t=>{
   const claves=['caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
   const previos=claves.map(k=>localStorage.getItem(k));

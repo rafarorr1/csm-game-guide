@@ -20,9 +20,12 @@
     const boton=document.getElementById('mCampana'),logros=window.CAMPANA_LOGROS;
     if(!boton||!logros)return;
     // Los seis retratos aparecen desde el inicio, pendientes en gris.
-    // El menú muestra los logros reales, también durante un ensayo beta.
+    // En beta se muestran también los ensayos, incluidos los ya guardados.
+    // Sólo cambia la presentación: los logros normales siguen separados.
     // No depende de la campaña activa: empezar otra no borra estos recuerdos.
-    const ids=Object.keys(DECKS).filter(id=>LEADERS[id]),mazos=logros.leer(false).mazos;
+    const ids=Object.keys(DECKS).filter(id=>LEADERS[id]);
+    const beta=typeof campanaPruebaDisponible==='function'&&campanaPruebaDisponible();
+    const mazos={...logros.leer(false).mazos,...(beta?logros.leer(true).mazos:{})};
     const ganados=ids.filter(id=>mazos[id]),total=ganados.length;
     boton.classList.add('campanaConRetratos');
     let fila=boton.querySelector('.campanaRetratos'),descripcion=document.getElementById('campanaProgresoDescripcion');
