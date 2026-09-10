@@ -1474,6 +1474,75 @@ PRUEBAS.suite('arteRemoto',async t=>{
   }}finally{if(guardado===null)localStorage.removeItem(clave);else localStorage.setItem(clave,guardado);}
 });
 
+PRUEBAS.suite('acabadosArte',async t=>{
+  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
+  try{for(const pagina of ['index.html','movil.html']){
+    localStorage.removeItem(clave);
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=acabados-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,renderAntes=w.render;let datos={cartas:[]};
+    try{
+      await w.cargarArte();await w.CAOZ_ARTE.refrescar();
+      w.fetch=async(url,op)=>String(url).includes('/api/arte/catalogo')?new w.Response(JSON.stringify(datos),{headers:{'Content-Type':'application/json'}}):fetchAntes(url,op);
+      const registro=(id,acabado,x,op={})=>({id,acabado,revision:1,activo:true,heredada:acabado!=='normal',hash:null,mime:null,x,y:24,z:135,...op});
+      const fila=(id,normal,foil=null,dorado=null)=>({id,variantes:{normal,foil,dorado}});
+      const originales=w.eval('JSON.stringify(ARTE.augusto)');
+      w.newGame('fender','adreida');w.eval("G.phase='principal';G.active=ME;G.busy=false;G.resolving=false;P(ME).hand=['augusto','lucius']");w.showScreen('board');w.render();w.relojPara();
+      const g=w.eval('G'),carta=d.querySelector('#hand [data-arte-id="augusto"]'),marco=carta.querySelector('.marcoDibujo'),legendaria=d.querySelector('#hand [data-arte-id="lucius"]');
+      const vs=w.cartaDeLiderVS('fender','');d.body.appendChild(vs);
+      const animacion=carta.animate([{opacity:.95},{opacity:1}],{duration:60000});
+      w.render=()=>{throw Error('Cambiar un acabado no debe rehacer la batalla.');};
+      t.igual(legendaria.dataset.acabado,'normal',pagina+': una Legendaria empieza con impresión normal.');
+      t.check(legendaria.querySelector('.rar')?.textContent==='★'&&w.getComputedStyle(legendaria.querySelector('.foil')).display==='none',pagina+': conserva la estrella de rareza sin añadir brillo automático.');
+      const normal=registro('augusto','normal',11),foil=registro('augusto','foil',37),dorado=registro('augusto','dorado',69);
+      datos={cartas:[fila('augusto',normal,foil),fila('lider_fender',null,registro('lider_fender','foil',41))]};await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.dataset.acabado,'foil',pagina+': un acabado puede aplicarse a una carta común.');
+      t.igual(carta.style.getPropertyValue('--ex'),'37%',pagina+': Foil conserva su encuadre propio.');
+      t.igual(w.urlArte('augusto'),'art/augusto.webp',pagina+': Foil puede heredar el original estático.');
+      t.igual(vs.dataset.acabado,'foil',pagina+': el VS existente recibe el acabado del protagonista.');
+      datos={cartas:[fila('augusto',normal,foil,dorado),fila('lucius',null,null,registro('lucius','dorado',50)),fila('lider_fender',null,null,registro('lider_fender','dorado',42)),fila('lider_adreida',null,null,registro('lider_adreida','dorado',42))]};await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.dataset.acabado,'dorado',pagina+': Dorado gana sobre Foil y Normal.');
+      t.igual(carta.style.getPropertyValue('--ex'),'69%',pagina+': el ganador aporta su encuadre.');
+      t.igual(vs.dataset.acabado,'dorado',pagina+': también cambia el VS sin recrearlo.');
+      t.check(w.eval('G')===g&&d.querySelector('#hand [data-arte-id="augusto"]')===carta&&carta.querySelector('.marcoDibujo')===marco,pagina+': conserva partida, carta y marco.');
+      t.igual(animacion.playState,'running',pagina+': el acabado no cancela la animación en curso.');
+      for(let i=0;i<3;i++)w.CAOZ_ARTE.actualizar();
+      t.igual(carta.querySelectorAll(':scope>.marcoDibujo').length,1,pagina+': no duplica marcos.');
+      t.igual(carta.querySelectorAll(':scope>.pieCarta').length,1,pagina+': no duplica texto ni cifras.');
+      t.igual(w.cardEl('augusto').dataset.acabado,'dorado',pagina+': las cartas nuevas de biblioteca y mano reciben el acabado.');
+      t.igual(w.unitEl(w.mkUnit('augusto',0)).dataset.acabado,'dorado',pagina+': las unidades nuevas reciben el acabado.');
+      const jefe=w.campanaCartaPitagoras('');t.check(!jefe.hasAttribute('data-acabado')&&!jefe.querySelector('[data-acabado]'),pagina+': Pitágoras no hereda la impresión de Adreida.');
+      const viajero=d.createElement('div');viajero.className='vscard cartaJugador';viajero.dataset.acabado='dorado';viajero.innerHTML='<div class="lface" data-arte-id="lider_fender" data-acabado="dorado"></div>';w.CAOZ_ARTE.acabar(viajero,'lider_fender');
+      t.check(!viajero.hasAttribute('data-acabado')&&!viajero.querySelector('[data-acabado]'),pagina+': una identidad propia no hereda el acabado del mazo.');
+      const guardada=JSON.parse(w.localStorage.getItem(clave)).cartas.find(c=>c.id==='augusto');
+      t.check(guardada.acabado==='dorado'&&guardada.variantes.foil.x===37,pagina+': conserva las variantes públicas y el ganador para abrir sin conexión.');
+      const retirada=acabado=>registro('augusto',acabado,null,{revision:2,activo:false,heredada:false,x:null,y:null,z:null});
+      datos={cartas:[fila('augusto',normal,foil,retirada('dorado'))]};await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.dataset.acabado,'foil',pagina+': retirar Dorado vuelve a Foil.');
+      datos={cartas:[fila('augusto',normal,retirada('foil'),retirada('dorado'))]};await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.dataset.acabado,'normal',pagina+': retirar ambos premium vuelve a Normal.');
+      t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': restaura el encuadre de Normal.');
+      datos={cartas:[fila('augusto',normal,null,registro('augusto','dorado',null,{x:null,y:null,z:null}))]};await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.dataset.acabado,'normal',pagina+': un registro premium sin encuadre no está disponible.');
+      // Esta carta no está en el DOM: se comprueba la selección de archivos sin
+      // generar una descarga falsa. Las imágenes reales se verifican en la PWA.
+      const hashA='a'.repeat(64),hashB='b'.repeat(64),base=registro('tal','normal',10,{hash:hashA,mime:'image/webp'}),heredada=registro('tal','foil',35),propia=registro('tal','dorado',70,{hash:hashB,mime:'image/png',heredada:false});
+      datos={cartas:[fila('tal',base,heredada,propia)]};await w.CAOZ_ARTE.refrescar();
+      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashB,pagina+': Dorado puede utilizar su propia ilustración.');
+      datos={cartas:[fila('tal',base,heredada)]};await w.CAOZ_ARTE.refrescar();
+      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashA,pagina+': Foil hereda la ilustración remota de Normal.');
+      datos={cartas:[fila('tal',{...base,revision:2,hash:hashB},heredada)]};await w.CAOZ_ARTE.refrescar();
+      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashB,pagina+': cambiar Normal actualiza la herencia aunque Foil conserve su revisión.');
+      t.igual(w.eval('ARTE.tal.x'),35,pagina+': cambiar la imagen heredada mantiene el encuadre de Foil.');
+      datos={cartas:[{id:'augusto',revision:3,hash:null,mime:null,x:null,y:null,z:null}]};await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.dataset.acabado,'normal',pagina+': el catálogo antiguo sigue siendo Normal.');
+      t.igual(w.eval('JSON.stringify(ARTE.augusto)'),originales,pagina+': restaurar vuelve al encuadre original.');
+      t.igual(w.getComputedStyle(carta.querySelector('.marcoDibujo'),'::after').content,'none',pagina+': Normal queda limpio después de retirar los acabados.');
+      animacion.cancel();vs.remove();
+    }finally{w.fetch=fetchAntes;w.render=renderAntes;w.relojPara();f.remove();}
+  }}finally{if(guardado===null)localStorage.removeItem(clave);else localStorage.setItem(clave,guardado);}
+});
+
 PRUEBAS.suite('campanaRetratosBeta',async t=>{
   const claves=['caoz.campana.v1.prueba','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
   const previos=claves.map(k=>localStorage.getItem(k));

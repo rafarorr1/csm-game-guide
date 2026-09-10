@@ -12,6 +12,7 @@
   const src=(document.currentScript&&document.currentScript.src)||'';
   let b='166';
   try{ b=new URL(src,location.href).searchParams.get('b')||b; }catch(e){}
+  document.write('<link rel="stylesheet" href="acabados.css?b='+encodeURIComponent(b)+'">');
   document.write('<script src="arte-remoto.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="final-core.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-personaje.js?b='+encodeURIComponent(b)+'"><\/script>');

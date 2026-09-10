@@ -101,7 +101,7 @@ async function api(req,env){
 }
 // Las ilustraciones comparten el acceso del estudio, pero no sus tablas ni archivos.
 // D1 limita cada BLOB/fila a 2 MB; 1.5 MB deja margen para metadatos.
-const MAXIMO_ARTE=1500000,preparacionesArte=new WeakMap(),catalogosArte=new WeakMap();
+const MAXIMO_ARTE=1500000,ACABADOS_ARTE=['normal','foil','dorado'],preparacionesArte=new WeakMap(),catalogosArte=new WeakMap();
 const falloArte=(mensaje,status=400)=>{throw Object.assign(Error(mensaje),{status});};
 function encuadreArte(datos){
   if(!datos||Array.isArray(datos)||Object.keys(datos).some(k=>!['x','y','z'].includes(k))||
@@ -180,6 +180,8 @@ function validarImagenArte(b,mime){
 async function prepararArte(db){
   if(!preparacionesArte.has(db))preparacionesArte.set(db,db.batch([
     db.prepare('CREATE TABLE IF NOT EXISTS ilustraciones (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0, hash TEXT, anterior TEXT, nombre TEXT, mime TEXT, ancho INTEGER, alto INTEGER, x REAL, y REAL, z REAL, actualizado TEXT)'),
+    // Normal conserva la tabla y las revisiones existentes, sin copiar ni sobrescribir datos.
+    db.prepare("CREATE TABLE IF NOT EXISTS ilustraciones_acabados (id TEXT NOT NULL, acabado TEXT NOT NULL CHECK(acabado IN ('foil','dorado')), activo INTEGER NOT NULL DEFAULT 0, revision INTEGER NOT NULL DEFAULT 0, hash TEXT, anterior TEXT, nombre TEXT, mime TEXT, ancho INTEGER, alto INTEGER, x REAL, y REAL, z REAL, actualizado TEXT, PRIMARY KEY(id,acabado))"),
     db.prepare('CREATE TABLE IF NOT EXISTS imagenes (hash TEXT PRIMARY KEY, contenido BLOB NOT NULL, mime TEXT NOT NULL, creado INTEGER NOT NULL)')
   ]).catch(e=>{preparacionesArte.delete(db);throw e;}));
   return preparacionesArte.get(db);
@@ -195,14 +197,40 @@ async function idsArte(req,env){
   })().catch(e=>{catalogosArte.delete(env.ASSETS);throw e;}));
   return catalogosArte.get(env.ASSETS);
 }
+function arteVacio(id,acabado='normal'){
+  return {id,acabado,activo:acabado==='normal'?1:0,revision:0,hash:null,anterior:null,nombre:null,mime:null,ancho:null,alto:null,x:null,y:null,z:null,actualizado:null};
+}
+function registroArte(registro,normal,privado){
+  const activo=registro.acabado==='normal'||!!registro.activo;
+  const heredada=activo&&registro.acabado!=='normal'&&!registro.hash;
+  const imagen=heredada?(normal||arteVacio(registro.id)):registro;
+  const salida={id:registro.id,acabado:registro.acabado,activo,heredada,revision:registro.revision,hash:imagen.hash,mime:imagen.mime,ancho:imagen.ancho,alto:imagen.alto,x:registro.x,y:registro.y,z:registro.z,actualizado:registro.actualizado};
+  if(privado){salida.anterior=registro.anterior;salida.nombre=imagen.nombre;}
+  return salida;
+}
+async function filasArte(db,privado,id=null){
+  // Una sola lectura produce una vista consistente de normal y sus acabados.
+  const campos='revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado',filtro=id?' WHERE id=?':'';
+  let consulta=db.prepare("SELECT id,'normal' AS acabado,1 AS activo,"+campos+' FROM ilustraciones'+filtro+' UNION ALL SELECT id,acabado,activo,'+campos+' FROM ilustraciones_acabados'+filtro);
+  if(id)consulta=consulta.bind(id,id);
+  const {results}=await consulta.all(),porCarta=new Map();
+  for(const r of results){if(!porCarta.has(r.id))porCarta.set(r.id,{normal:null,foil:null,dorado:null});porCarta.get(r.id)[r.acabado]=r;}
+  return [...porCarta].map(([id,registros])=>{
+    const variantes=Object.fromEntries(ACABADOS_ARTE.map(a=>[a,registros[a]?registroArte(registros[a],registros.normal,privado):null]));
+    const acabado=['dorado','foil'].find(a=>variantes[a]?.activo)||'normal';
+    const normal=variantes.normal||registroArte(arteVacio(id),null,privado);
+    // El panel anterior sólo edita normal: no darle la revisión de otro acabado.
+    const plana=privado?normal:(variantes[acabado]||normal);
+    return {...plana,acabado,variantes};
+  }).sort((a,b)=>a.id.localeCompare(b.id));
+}
 async function apiArte(req,env){
   const u=new URL(req.url),ruta=u.pathname.slice('/api/arte/'.length),db=env.SFX_DB;
   if(!db||!env.SFX_ADMIN_HASH||!env.SFX_SESSION_KEY)return json({error:'El estudio privado está pendiente de conectar con Cloudflare.'},503);
   if(!['GET','HEAD'].includes(req.method)&&req.headers.get('origin')!==u.origin)return json({error:'Origen no autorizado.'},403);
   await prepararArte(db);
   if(req.method==='GET'&&ruta==='catalogo'){
-    const {results}=await db.prepare('SELECT id,revision,hash,mime,ancho,alto,x,y,z,actualizado FROM ilustraciones').all();
-    return json({cartas:results});
+    return json({cartas:await filasArte(db,false)});
   }
   if(['GET','HEAD'].includes(req.method)&&/^imagen\/[a-f0-9]{64}$/.test(ruta)){
     const hash=ruta.slice(7),fila=await db.prepare('SELECT contenido,mime FROM imagenes WHERE hash=?').bind(hash).first();
@@ -213,15 +241,19 @@ async function apiArte(req,env){
   }
   if(!await autenticado(req,env))return json({error:'Inicia sesión para administrar las ilustraciones.'},401);
   if(req.method==='GET'&&ruta==='privado'){
-    const {results}=await db.prepare('SELECT id,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado FROM ilustraciones').all();
-    return json({cartas:results,entorno:env.CF_PAGES_BRANCH==='gh-pages'?'produccion':'beta'});
+    return json({cartas:await filasArte(db,true),entorno:env.CF_PAGES_BRANCH==='gh-pages'?'produccion':'beta'});
   }
   if(ruta.startsWith('carta/')){
-    const id=ruta.slice(6);if(!(await idsArte(req,env)).has(id))return json({error:'Carta desconocida.'},404);
+    const partes=ruta.slice(6).split('/'),id=partes[0],acabado=partes[1]||'normal';
+    if(partes.length>2||!ACABADOS_ARTE.includes(acabado))return json({error:'Acabado desconocido.'},404);
+    if(!(await idsArte(req,env)).has(id))return json({error:'Carta desconocida.'},404);
     if(!['PUT','PATCH','DELETE'].includes(req.method))return json({error:'Método no permitido.'},405);
     const rev=req.headers.get('if-match');if(!/^\d{1,9}$/.test(rev||''))return json({error:'Recarga el catálogo antes de guardar.'},428);
-    await db.prepare('INSERT OR IGNORE INTO ilustraciones(id) VALUES (?)').bind(id).run();
-    const actual=await db.prepare('SELECT * FROM ilustraciones WHERE id=?').bind(id).first();
+    let actual;
+    if(acabado==='normal'){
+      await db.prepare('INSERT OR IGNORE INTO ilustraciones(id) VALUES (?)').bind(id).run();
+      actual=await db.prepare('SELECT * FROM ilustraciones WHERE id=?').bind(id).first();
+    }else actual=await db.prepare('SELECT * FROM ilustraciones_acabados WHERE id=? AND acabado=?').bind(id,acabado).first()||arteVacio(id,acabado);
     if(actual.revision!==Number(rev))return json({error:'Esta carta cambió en otra ventana. Recarga y revisa la nueva versión.'},409);
     let {hash,anterior,nombre,mime,ancho,alto,x,y,z}=actual;
     if(req.method==='PUT'){
@@ -237,11 +269,20 @@ async function apiArte(req,env){
       anterior=actual.hash||actual.anterior;hash=null;nombre=null;mime=null;ancho=null;alto=null;x=null;y=null;z=null;
     }
     const actualizado=new Date().toISOString();
-    const cambio=await db.prepare('UPDATE ilustraciones SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,revision=revision+1,actualizado=? WHERE id=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado,id,Number(rev)).run();
+    let cambio;
+    if(acabado==='normal')cambio=await db.prepare('UPDATE ilustraciones SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,revision=revision+1,actualizado=? WHERE id=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado,id,Number(rev)).run();
+    else{
+      // La variante sólo aparece tras una escritura válida. INSERT y CAS son atómicos.
+      const cambios=await db.batch([
+        db.prepare('INSERT OR IGNORE INTO ilustraciones_acabados(id,acabado) VALUES (?,?)').bind(id,acabado),
+        db.prepare('UPDATE ilustraciones_acabados SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,activo=?,revision=revision+1,actualizado=? WHERE id=? AND acabado=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,req.method==='DELETE'?0:1,actualizado,id,acabado,Number(rev))
+      ]);cambio=cambios[1];
+    }
     if(cambio.meta.changes!==1)return json({error:'Otra sesión guardó primero. Recarga el estudio.'},409);
     // Guarda la imagen anterior y respeta las partidas abiertas durante 24 horas.
-    await db.prepare('DELETE FROM imagenes WHERE creado<? AND hash NOT IN (SELECT hash FROM ilustraciones WHERE hash IS NOT NULL UNION SELECT anterior FROM ilustraciones WHERE anterior IS NOT NULL)').bind(Date.now()-86400000).run();
-    return json({ok:true,id,revision:Number(rev)+1,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado});
+    await db.prepare('DELETE FROM imagenes WHERE creado<? AND hash NOT IN (SELECT hash FROM ilustraciones WHERE hash IS NOT NULL UNION SELECT anterior FROM ilustraciones WHERE anterior IS NOT NULL UNION SELECT hash FROM ilustraciones_acabados WHERE hash IS NOT NULL UNION SELECT anterior FROM ilustraciones_acabados WHERE anterior IS NOT NULL)').bind(Date.now()-86400000).run();
+    const [carta]=await filasArte(db,true,id),variante=carta.variantes[acabado];
+    return json({ok:true,...variante,variante,carta});
   }
   return json({error:'Ruta no encontrada.'},404);
 }

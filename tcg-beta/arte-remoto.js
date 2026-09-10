@@ -13,6 +13,24 @@
     for(const [id,e]of Object.entries(datos))if(conocido(id)&&((typeof e==='number'&&Number.isFinite(e)&&e>=0&&e<=100)||encValido(e)))limpios[id]=e;
     return limpios;
   }
+  const ACABADOS=['normal','foil','dorado'];
+  function limpiarRegistro(e,id,acabado='normal'){
+    if(!e||!Number.isInteger(e.revision)||e.revision<0||(e.id!=null&&e.id!==id))return null;
+    if(e.hash!==null&&(!HASH.test(e.hash)||!MIME.has(e.mime)))return null;
+    if(!encValido(e)&&!(e.hash===null&&e.x===null&&e.y===null&&e.z===null))return null;
+    return {id,revision:e.revision,hash:e.hash,mime:e.mime||null,x:e.x,y:e.y,z:e.z,
+      acabado,activo:e.activo!==false,heredada:acabado!=='normal'&&(e.heredada===true||e.hash===null)};
+  }
+  function elegirVariantes(id,variantes){
+    const normal=variantes.normal;
+    const acabado=['dorado','foil'].find(a=>variantes[a]?.activo&&encValido(variantes[a]))||'normal';
+    const elegida=variantes[acabado]||{id,revision:0,hash:null,mime:null,x:null,y:null,z:null,activo:true};
+    // El acabado no cambia reglas ni rareza. Una edición de encuadre premium
+    // puede utilizar la ilustración normal y conservar su recorte propio.
+    const hash=elegida.heredada?normal?.hash||null:elegida.hash;
+    const mime=elegida.heredada?normal?.mime||null:elegida.mime;
+    return {...elegida,id,acabado,hash,mime,variantes};
+  }
   function limpiarCatalogo(datos){
     if(!datos||!Array.isArray(datos.cartas)||datos.cartas.length>1000)return null;
     const limpios=[],vistos=new Set();
@@ -20,10 +38,15 @@
       if(!e||typeof e.id!=='string')return null;
       // Una fila de una carta retirada no impide actualizar las demás.
       if(!conocido(e.id))continue;
-      if(vistos.has(e.id)||!Number.isInteger(e.revision)||e.revision<0)return null;
-      if(e.hash!==null&&(!HASH.test(e.hash)||!MIME.has(e.mime)))return null;
-      if(!encValido(e)&&!(e.hash===null&&e.x===null&&e.y===null&&e.z===null))return null;
-      vistos.add(e.id);limpios.push({id:e.id,revision:e.revision,hash:e.hash,mime:e.mime||null,x:e.x,y:e.y,z:e.z});
+      if(vistos.has(e.id))return null;vistos.add(e.id);
+      if(e.variantes&&typeof e.variantes==='object'&&!Array.isArray(e.variantes)){
+        const variantes={};for(const a of ACABADOS)variantes[a]=limpiarRegistro(e.variantes[a],e.id,a);
+        limpios.push(elegirVariantes(e.id,variantes));
+      }else{
+        // Cachés y catálogos anteriores a las variantes siguen siendo normales.
+        const normal=limpiarRegistro(e,e.id);if(!normal)return null;
+        limpios.push(elegirVariantes(e.id,{normal,foil:null,dorado:null}));
+      }
     }
     return limpios.sort((a,b)=>a.id.localeCompare(b.id));
   }
@@ -33,6 +56,17 @@
   }
   function remoto(id){return cartas.find(e=>e.id===id);}
   window.urlArte=function(id){const e=remoto(id);return e?.hash?'api/arte/imagen/'+e.hash:'art/'+id+'.webp';};
+  window.acabadoArte=id=>remoto(id)?.acabado||'normal';
+  function acabar(nodo,id){
+    if(!nodo)return;
+    const propio=nodo.closest(EXCLUIR);
+    if(propio){propio.removeAttribute('data-acabado');propio.querySelectorAll('[data-acabado]').forEach(n=>n.removeAttribute('data-acabado'));return;}
+    let carta=nodo;
+    if(nodo.classList.contains('lface'))carta=nodo.closest('.vscard,.lcard,.ltile,.campanaCarta')||nodo;
+    else if(nodo.classList.contains('art'))carta=nodo.closest('.big')||nodo;
+    if(carta!==nodo)nodo.removeAttribute('data-acabado');
+    const acabado=window.acabadoArte(id);if(carta.dataset.acabado!==acabado)carta.dataset.acabado=acabado;
+  }
   function variables(nodo,enc){
     for(const [prop,v]of Object.entries({'--ex':enc.x+'%','--ey':enc.y+'%','--ez':(enc.z/100).toFixed(3)}))nodo.style.setProperty(prop,v);
   }
@@ -43,8 +77,9 @@
     if(nodo.classList.contains('lrostro'))nodo.textContent=LEADERS[nodo.dataset.arteId.slice(6)]?.art||'';
   }
   function pintar(nodo){
+    const id=nodo.dataset.arteId;acabar(nodo,id);
     if(nodo.closest(EXCLUIR))return;
-    const id=nodo.dataset.arteId,enc=encuadreDe(ARTE[id]);
+    const enc=encuadreDe(ARTE[id]);
     if(!enc){quitar(nodo);return;}
     const url=window.urlArte(id);variables(nodo,enc);
     if(nodo.classList.contains('lrostro')){
@@ -100,7 +135,7 @@
     if(enc&&img.getAttribute('src')!==base){img.src=base;variables(nodo,enc);img.parentElement?.style.setProperty('--url','url("'+base+'")');}
     else quitar(nodo);
   },true);
-  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,modificado:id=>{const e=remoto(id);return !!e&&(!!e.hash||encValido(e));}});
+  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,modificado:id=>{const e=remoto(id);return !!e&&(!!e.hash||encValido(e));}});
   addEventListener('online',()=>void refrescar());
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refrescar();});
   setInterval(()=>{if(!document.hidden)void refrescar();},60000);
