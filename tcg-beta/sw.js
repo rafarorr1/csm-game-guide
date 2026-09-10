@@ -18,7 +18,7 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 234;
+const VERSION = 237;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
 // Los reemplazos ya vistos sobreviven al cambio de build. Sólo contiene el
@@ -71,6 +71,7 @@ self.addEventListener('fetch', ev => {
   const url = new URL(req.url);
   if(url.origin !== self.location.origin) return;           // relevos y demás: directos
   if(url.search.includes('test=')) return;                    // el arnés no pasa por la caché
+  if(url.pathname.includes('/api/estudio/'))return;          // borradores privados
   const catalogoArte=/\/api\/arte\/catalogo$/.test(url.pathname);
   const imagenArte=/\/api\/arte\/imagen\/[a-f0-9]{64}$/.test(url.pathname);
   if(url.pathname.includes('/api/arte/')&&!catalogoArte&&!imagenArte)return;
