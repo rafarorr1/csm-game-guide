@@ -42,9 +42,10 @@
       }
       retrato.classList.toggle('completado',!!mazos[id]);
       retrato.title=LEADERS[id].n+' · '+(mazos[id]?'Campaña completada':'Pendiente');
-      const enc=encuadreDe(ARTE['lider_'+id])&&(rostros[id]||{x:50,y:20,z:220});let img=retrato.querySelector('img');
+      const enc=encuadreDe(ARTE['lider_'+id])&&(window.CAOZ_ARTE?.modificado('lider_'+id)?encuadreDe(ARTE['lider_'+id]):(rostros[id]||{x:50,y:20,z:220}));let img=retrato.querySelector('img');
       if(!enc){img?.remove();continue;}
-      if(!img){img=document.createElement('img');img.alt='';img.draggable=false;img.src='art/lider_'+id+'.webp';img.onerror=()=>{img.hidden=true;};retrato.appendChild(img);}
+      if(!img){img=document.createElement('img');img.alt='';img.draggable=false;img.onerror=()=>{img.hidden=true;};retrato.appendChild(img);}
+      const url=urlArte('lider_'+id);if(img.hidden||img.getAttribute('src')!==url){img.hidden=false;img.src=url;}
       img.style.width=enc.z+'%';img.style.transform='translate(-'+enc.x+'%,-'+enc.y+'%)';
     }
   }
@@ -67,6 +68,7 @@
   };
   window.campanaCartaPitagoras=function(lado){
     const carta=cartaDeLiderVS('adreida',lado);carta.classList.add('cartaPitagoras');
+    window.CAOZ_ARTE?.acabar(carta,'lider_adreida');
     carta.querySelectorAll('.marcoDibujo,.retratoPitagoras').forEach(n=>n.remove());
     const arte=document.createElement('img');arte.className='retratoPitagoras';arte.alt='Pitágoras, el Editor';
     if(typeof retratoPitagoras==='function')arte.src=retratoPitagoras();carta.prepend(arte);
@@ -77,6 +79,7 @@
   };
   window.campanaVestirPitagoras=function(nodo){
     if(!nodo)return;nodo.classList.add('identidadPitagoras');
+    window.CAOZ_ARTE?.acabar(nodo,'lider_adreida');
     // Cada pantalla conserva su marco, cifras y zonas pulsables.
     nodo.querySelectorAll('.marcoDibujo,.lrostro,.retratoPitagoras').forEach(n=>n.remove());
     const retrato=document.createElement('img');retrato.className='retratoPitagoras';retrato.alt='Pitágoras, el Editor';

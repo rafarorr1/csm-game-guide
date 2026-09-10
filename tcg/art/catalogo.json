@@ -1,0 +1,2286 @@
+{
+  "version": 1,
+  "cartas": [
+    {
+      "id": "editorcosecha",
+      "nombre": "La cosecha",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 2,
+      "vida": 3,
+      "texto": "Al jugar: prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. Después permanece en la mesa y puede atacar desde el siguiente turno.",
+      "tribu": "Pesadilla",
+      "simbolo": "☠",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "editorcorte",
+      "nombre": "El corte final",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 3,
+      "vida": 2,
+      "texto": "Al jugar: prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. Después permanece en la mesa y puede atacar desde el siguiente turno.",
+      "tribu": "Pesadilla",
+      "simbolo": "✧",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "editorcuadro",
+      "nombre": "Fuera de cuadro",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 3,
+      "vida": 2,
+      "texto": "Al jugar: prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. Después permanece en la mesa y puede atacar desde el siguiente turno.",
+      "tribu": "Pesadilla",
+      "simbolo": "◈",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "editorcarrera",
+      "nombre": "El último puente",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 2,
+      "vida": 4,
+      "texto": "Al jugar: prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. Después permanece en la mesa y puede atacar desde el siguiente turno.",
+      "tribu": "Pesadilla",
+      "simbolo": "⌁",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "editororbita",
+      "nombre": "Órbita muerta",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 2,
+      "vida": 3,
+      "texto": "Al jugar: prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. Después permanece en la mesa y puede atacar desde el siguiente turno.",
+      "tribu": "Pesadilla",
+      "simbolo": "✦",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "editorduelo",
+      "nombre": "La memoria del Editor",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 2,
+      "vida": 4,
+      "texto": "Al jugar: memoria · 20 segundos · 3 vidas. Cada pareja acertada quita 1 Alma a Pitágoras. Cada fallo consume 1 vida de la prueba; al tercer fallo pierdes 5 Alma. Después permanece en la mesa y puede atacar desde el siguiente turno.",
+      "tribu": "Pesadilla",
+      "simbolo": "▣",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "augusto",
+      "nombre": "Augusto Bale",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 2,
+      "vida": 4,
+      "texto": "Al entrar: los demás Tomsage aliados ganan +1/+1. Veterano: tus Trampas cuestan 1 menos.",
+      "tribu": "Humano · Tomsage",
+      "simbolo": "🛡️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": {
+        "url": "art/augusto.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 0,
+          "z": 100
+        }
+      }
+    },
+    {
+      "id": "lucius",
+      "nombre": "Lucius Bale",
+      "tipo": "personaje",
+      "coste": 4,
+      "ataque": 4,
+      "vida": 4,
+      "texto": "Al entrar: ganas 1 PD este turno. El mejor de Tomsage: si es tu único Personaje, gana +2/+2.",
+      "tribu": "Humano · Paladín · Tomsage",
+      "simbolo": "🗡️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": {
+        "url": "art/lucius.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 50,
+          "z": 100
+        }
+      }
+    },
+    {
+      "id": "machete",
+      "nombre": "Machete (Glip)",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 0,
+      "vida": 2,
+      "texto": "Mochila: puede llevar hasta 2 Objetos. Banco de Puntos: en tu Fase Final guarda hasta 2 PD sin usar.",
+      "tribu": "Goblin",
+      "simbolo": "🎒",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Fender",
+        "Adreida",
+        "Gero",
+        "Rafaela",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "petunia",
+      "nombre": "Petunia",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 1,
+      "vida": 3,
+      "texto": "Montura — al entrar: un aliado gana Prisa. Al morir — Ascensión: vuelve como Petunia Sagrada 3/5 con Vuelo (una vez por partida).",
+      "tribu": "Bestia · Vaca",
+      "simbolo": "🐄",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Rafaela",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "bob",
+      "nombre": "Bob Carly",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 1,
+      "vida": 6,
+      "texto": "Transporte: tus Personajes de Costo 3 o menos tienen Prisa. Relajado: Bob no puede atacar.",
+      "tribu": "Bestia · Caracol",
+      "simbolo": "🐌",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "brickbrock",
+      "nombre": "Brick y Brock",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 3,
+      "vida": 4,
+      "texto": "Peaje: los Personajes rivales solo pueden atacar si su controlador paga 1 PD. Acertijo: si el rival juega un Hechizo de Engaño, vuelven a la mano.",
+      "tribu": "Goblin · Ogro",
+      "simbolo": "🌉",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Adreida",
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "conserje",
+      "nombre": "El Conserje (Viejo Micket)",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 0,
+      "vida": 1,
+      "texto": "Al morir: su controlador gana 1 Llave del Domo. Ciego: no puede ser objetivo de Hechizos rivales.",
+      "tribu": "Kobold",
+      "simbolo": "🧹",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "ninolanza",
+      "nombre": "El Niño de la Lanza",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 0,
+      "vida": 1,
+      "texto": "Al morir: su controlador gana 1 PD. Novato: no puede ser objetivo de Hechizos rivales — nadie gasta magia en un chaval.",
+      "tribu": "Humano",
+      "simbolo": "🔱",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "julia",
+      "nombre": "Julia",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 0,
+      "vida": 1,
+      "texto": "Al morir: su controlador gana 1 PD. Perdida: no puede ser objetivo de Hechizos rivales — nadie sabe dónde está.",
+      "tribu": "Humano",
+      "simbolo": "🕯️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "rey",
+      "nombre": "El Rey",
+      "tipo": "personaje",
+      "coste": 7,
+      "ataque": 3,
+      "vida": 8,
+      "texto": "Corte reunida: al inicio de tu turno, si controlas otros 3 Personajes además de El Rey, ganas la partida.",
+      "tribu": "Humano · Noble",
+      "simbolo": "👑",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "talia",
+      "nombre": "Talia Boss",
+      "tipo": "personaje",
+      "coste": 5,
+      "ataque": 5,
+      "vida": 4,
+      "texto": "Cazamagos: +3 ATQ al atacar a un Mago o Dragón. Detener el juego: el rival no puede jugar el Pergamino.",
+      "tribu": "Humana · Paladín · Casa Boss",
+      "simbolo": "👑",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "aldrick",
+      "nombre": "Aldrick Boss",
+      "tipo": "personaje",
+      "coste": 4,
+      "ataque": 2,
+      "vida": 3,
+      "texto": "Contratar — al entrar: busca un Paladín en tu mazo y ponlo en tu mano. Recompensa: cuando Talia Boss entre bajo tu control, roba 2.",
+      "tribu": "Humano · Noble · Casa Boss",
+      "simbolo": "📜",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "bartolomeo",
+      "nombre": "Bartolomeo",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 1,
+      "vida": 2,
+      "texto": "Al entrar: roba 1 carta. Pomposo: tus Nobles cuestan 1 PD menos.",
+      "tribu": "Humano · Sirviente · Casa Boss",
+      "simbolo": "🤵",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Fender",
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "eric",
+      "nombre": "Eric",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 3,
+      "vida": 3,
+      "texto": "Sacrificio: cuando un aliado vaya a recibir daño letal, puedes destruir a Eric en su lugar (el daño se anula).",
+      "tribu": "Humano · Paladín · Casa Boss",
+      "simbolo": "🛡️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Adreida",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "horton",
+      "nombre": "Sir Horton",
+      "tipo": "personaje",
+      "coste": 4,
+      "ataque": 4,
+      "vida": 3,
+      "texto": "Arrogante: debe atacar cada turno si puede. Esporas: al morir, un Personaje rival queda Infectado.",
+      "tribu": "Humano · Paladín",
+      "simbolo": "🐴",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "edbor",
+      "nombre": "Edbor",
+      "tipo": "personaje",
+      "coste": 5,
+      "ataque": 5,
+      "vida": 4,
+      "texto": "Votos rotos — al entrar: puedes destruir otro Paladín aliado; si lo haces ganas 1 Llave. Sin honor: ignora Provocar.",
+      "tribu": "Humano · Paladín · Oathbreaker",
+      "simbolo": "🗡️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "juangabriel",
+      "nombre": "Juan Gabriel",
+      "tipo": "personaje",
+      "coste": 6,
+      "ataque": 5,
+      "vida": 6,
+      "texto": "Arco Dorado: Arquero. Alcalde: los demás Valoria aliados ganan +0/+2. Ganar tiempo: el Pergamino rival no cuenta turnos.",
+      "tribu": "Humano · Valoria · Arquero",
+      "simbolo": "🏹",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "minus",
+      "nombre": "Minus",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 2,
+      "vida": 5,
+      "texto": "Tienda de Objetos (2 PD, 1×turno): busca un Objeto en tu mazo. Miope: al atacar, d20; con 10 o menos ataca a un rival al azar.",
+      "tribu": "Minotauro · Valoria",
+      "simbolo": "🐮",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Gero",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "aidman",
+      "nombre": "Aidman",
+      "tipo": "personaje",
+      "coste": 4,
+      "ataque": 4,
+      "vida": 3,
+      "texto": "Ludópata: al atacar tira d20 — 15+ doble daño; 5 o menos se hace el daño a sí mismo. Deudas: al entrar pierdes 1 Alma; al morir ganas 2 PD.",
+      "tribu": "Humano · Cazarrecompensas",
+      "simbolo": "🎲",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "adolfo",
+      "nombre": "Adolfo y Remus",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 2,
+      "vida": 2,
+      "texto": "Radicalizables: al inicio de tu turno, si el rival controla un Dragón, se pasan al campo rival.",
+      "tribu": "Elfo · Discípulo",
+      "simbolo": "👬",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "titaus",
+      "nombre": "Titaus",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 2,
+      "vida": 3,
+      "texto": "Inteligente — al entrar: mira las 3 cartas superiores de tu mazo y pon una en tu mano. Sirve a Tal: si controlas un Dragón, +2/+2.",
+      "tribu": "Elfa · Discípulo",
+      "simbolo": "📖",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "matildus",
+      "nombre": "Matildus",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 1,
+      "vida": 1,
+      "texto": "Amanita muscaria — al morir: hace 2 daño al Personaje que lo mató.",
+      "tribu": "Elfo · Discípulo",
+      "simbolo": "🍄",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Rafaela",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "discipulo",
+      "nombre": "Discípulo de Rul",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 1,
+      "vida": 2,
+      "texto": "Fe ciega: gana +1/+0 por cada otro Discípulo aliado.",
+      "tribu": "Elfo · Discípulo",
+      "simbolo": "🙏",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "tal",
+      "nombre": "Tal, el Dragón Negro",
+      "tipo": "personaje",
+      "coste": 10,
+      "ataque": 9,
+      "vida": 9,
+      "texto": "Vuelo. Aliento de Ácido — al entrar: 3 daño a todos los Personajes rivales. Poseer (3 PD): revive un rival muerto este turno como 2/2 en tu campo. Ganador de la temporada: puedes jugar el Pergamino sin Llaves.",
+      "tribu": "Dragón",
+      "simbolo": "🐉",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "rantiago",
+      "nombre": "Rantiago, el Mirrey",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 2,
+      "vida": 2,
+      "texto": "Rehén: el Tal rival no puede atacar a tu Alma. Fiesta de hongos — al entrar: elige un Personaje y tira d20 — 1-10 Aturdido; 11-20 gana +2 ATQ permanentes.",
+      "tribu": "Dragón · Mirrey",
+      "simbolo": "🕶️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Gero",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "trol",
+      "nombre": "Trol de la Mano Larga",
+      "tipo": "personaje",
+      "coste": 5,
+      "ataque": 6,
+      "vida": 5,
+      "texto": "Cobrar piso: al inicio de tu turno el rival pierde 1 PD máximo ese turno. Collar de Agua: inmune al daño de Fuego. Regeneración: recupera 2 PV al inicio de tu turno.",
+      "tribu": "Trol",
+      "simbolo": "👹",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "lucy",
+      "nombre": "Lucy Fernando (Lucifer)",
+      "tipo": "personaje",
+      "coste": 6,
+      "ataque": 5,
+      "vida": 5,
+      "texto": "Cláusula: no puede atacar salvo que controles un Contrato. Custodio de la Llave — al entrar: el rival elige perder 4 Alma o darte 1 Llave. Inmune a Aturdido.",
+      "tribu": "Diablo · Infernal",
+      "simbolo": "😈",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "magodomo",
+      "nombre": "El Mago del Domo",
+      "tipo": "personaje",
+      "coste": 8,
+      "ataque": 4,
+      "vida": 8,
+      "texto": "Nexo: cada vez que muere cualquier Personaje ganas 1 Alma. Sacrificio de Sangre (3 PD): destruye un aliado y gana 1 Llave. Vínculo: si muere, pierdes 3 Alma.",
+      "tribu": "Humano · Mago",
+      "simbolo": "🔮",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "tok_petunia",
+      "nombre": "Petunia Sagrada",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 3,
+      "vida": 5,
+      "texto": "Vuelo. Ficha. Petunia ha ascendido.",
+      "tribu": "Bestia · Vaca · Celestial",
+      "simbolo": "🐄",
+      "esLider": false,
+      "ficha": true,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "tok_ilusion",
+      "nombre": "Ilusión",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 0,
+      "vida": 1,
+      "texto": "Provocar. Ficha. Si un Personaje la ataca, no hace daño y la Ilusión desaparece.",
+      "tribu": "Ilusión",
+      "simbolo": "👻",
+      "esLider": false,
+      "ficha": true,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "tok_poseido",
+      "nombre": "Poseído",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 2,
+      "vida": 2,
+      "texto": "Ficha sin habilidades.",
+      "tribu": "Poseído",
+      "simbolo": "🧟",
+      "esLider": false,
+      "ficha": true,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "tok_dragon",
+      "nombre": "Dragón Celestial Morado",
+      "tipo": "personaje",
+      "coste": 5,
+      "ataque": 7,
+      "vida": 7,
+      "texto": "Vuelo. Forma temporal otorgada por Rulchete.",
+      "tribu": "Dragón · Celestial",
+      "simbolo": "🐲",
+      "esLider": false,
+      "ficha": true,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "rulchete",
+      "nombre": "Rulchete, la Polimorfia Verdadera",
+      "tipo": "hechizo",
+      "coste": 5,
+      "ataque": null,
+      "vida": null,
+      "texto": "Transforma un aliado de Costo 2 o menos en un Dragón Celestial Morado 7/7 con Vuelo hasta el final de tu siguiente turno.",
+      "tribu": "",
+      "simbolo": "🐲",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "cuerda",
+      "nombre": "Cuerda Dimensional",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Retira hasta 3 aliados del campo hasta el inicio de tu siguiente turno. Al volver recuperan 2 PV.",
+      "tribu": "",
+      "simbolo": "🪢",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "copiajabon",
+      "nombre": "Copia de Jabón",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Elige un Objeto que controle el rival. Crea una copia exacta en tu mano.",
+      "tribu": "",
+      "simbolo": "🧼",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "acertijo",
+      "nombre": "El Acertijo del Chícharo Castigado",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Elige un Personaje rival. Su controlador tira d20: 11+ no pasa nada; 10 o menos vuelve a su mano. Goblin y Ogro siempre fallan.",
+      "tribu": "",
+      "simbolo": "🫛",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "leche",
+      "nombre": "Leche de Petunia",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Restaura 2 PV a todos tus Personajes (4 si controlas a Petunia).",
+      "tribu": "",
+      "simbolo": "🥛",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "campanafe",
+      "nombre": "Campaña de la Fe",
+      "tipo": "hechizo",
+      "coste": 4,
+      "ataque": null,
+      "vida": null,
+      "texto": "Elige un Discípulo o Elfo rival. d20: 8+ pasa a tu control. Si controlas un Dragón, pasa automáticamente.",
+      "tribu": "",
+      "simbolo": "📣",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "hongos",
+      "nombre": "Hongos del Bosque",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "d20 — 1-5: muere un aliado. 6-14: roba 1. 15-19: roba 2. 20: roba 3 y tus Personajes +1/+1 este turno.",
+      "tribu": "",
+      "simbolo": "🍄",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "alientoacido",
+      "nombre": "Aliento de Ácido",
+      "tipo": "hechizo",
+      "coste": 4,
+      "ataque": null,
+      "vida": null,
+      "texto": "2 daño a todos los Personajes rivales (4 si controlas un Dragón).",
+      "tribu": "",
+      "simbolo": "🟢",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "cantaberna",
+      "nombre": "Canción de Taberna",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un aliado gana +2/+0 hasta el final del turno. Roba 1 carta.",
+      "tribu": "",
+      "simbolo": "🍺",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender"
+      ],
+      "original": null
+    },
+    {
+      "id": "balada",
+      "nombre": "Balada de Valoria",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Todos tus Personajes ganan +1/+1 hasta el final del turno y Prisa.",
+      "tribu": "",
+      "simbolo": "🎶",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender"
+      ],
+      "original": null
+    },
+    {
+      "id": "sangrefria",
+      "nombre": "Golpe a Sangre Fría",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Destruye un Personaje rival de Costo 2 o menos. No activa su habilidad Al morir.",
+      "tribu": "",
+      "simbolo": "🔪",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "bendicion",
+      "nombre": "Bendición de Rul",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un aliado gana +1/+3 permanentes. Si es Discípulo, además roba 1.",
+      "tribu": "",
+      "simbolo": "🌟",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "modificar",
+      "nombre": "Modificar las Reglas",
+      "tipo": "hechizo",
+      "coste": 5,
+      "ataque": null,
+      "vida": null,
+      "texto": "Elige: anula todas las Trampas rivales; o roba 3 y descarta 1; o un Infernal aliado pierde su Cláusula.",
+      "tribu": "",
+      "simbolo": "📋",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "bolafuego",
+      "nombre": "Pergamino de Bola de Fuego",
+      "tipo": "hechizo",
+      "coste": 5,
+      "ataque": null,
+      "vida": null,
+      "texto": "4 daño a todos los Personajes rivales. Cuesta 2 PD menos si controlas a Augusto o Lucius Bale.",
+      "tribu": "",
+      "simbolo": "🔥",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "manosardientes",
+      "nombre": "Manos Ardientes",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "2 daño a hasta dos Personajes rivales de Costo 3 o menos.",
+      "tribu": "",
+      "simbolo": "🔥",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "rayoabrasador",
+      "nombre": "Rayo Abrasador",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Tres rayos de 1 daño. Repártelos entre Personajes rivales y el Alma rival.",
+      "tribu": "",
+      "simbolo": "☄️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "saeta",
+      "nombre": "Saeta Guía",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "3 daño radiante a un Personaje rival. El siguiente ataque aliado contra él no recibe contraataque.",
+      "tribu": "",
+      "simbolo": "💫",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "escarcha",
+      "nombre": "Rayo de Escarcha",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "1 daño a un Personaje rival. Pierde Prisa y tiene −1 ATQ hasta el final del turno rival.",
+      "tribu": "",
+      "simbolo": "❄️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Fender",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "proyectil",
+      "nombre": "Proyectil Mágico",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "3 daño repartidos entre Personajes rivales. Impacta sin fallar: no puede ser anulado.",
+      "tribu": "",
+      "simbolo": "🔷",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "nubedagas",
+      "nombre": "Nube de Dagas",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Queda en el campo hasta el inicio de tu tercer turno. Cada Personaje rival que entre al campo recibe 2 daño.",
+      "tribu": "",
+      "simbolo": "🗡️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "burla",
+      "nombre": "Burla Viciosa",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "1 daño a un Personaje rival y −2 ATQ hasta el final del turno rival.",
+      "tribu": "",
+      "simbolo": "🤬",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender"
+      ],
+      "original": null
+    },
+    {
+      "id": "calentarmetal",
+      "nombre": "Calentar Metal",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un Personaje rival con Objeto o de tribu Paladín recibe 2 daño ahora y 2 al inicio de su próximo turno. Su controlador puede pagar 2 PD para destruir el Objeto y detenerlo.",
+      "tribu": "",
+      "simbolo": "♨️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "ceguera",
+      "nombre": "Ceguera/Sordera",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un Personaje rival no puede atacar hasta el final de su próximo turno y pierde Vuelo. Si es Dragón, d20 11+ resiste.",
+      "tribu": "",
+      "simbolo": "🙈",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "luzhadas",
+      "nombre": "Luz de Hadas",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Hasta el final del turno los rivales pierden Sigilo y Vuelo, y tus ataques contra ellos hacen +1 daño.",
+      "tribu": "",
+      "simbolo": "🧚",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "mensaje",
+      "nombre": "Mensaje",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Mira las Trampas colocadas del rival. Roba 1 carta.",
+      "tribu": "",
+      "simbolo": "✉️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "disipar",
+      "nombre": "Disipar Magia",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Elige: destruye un Objeto o Reliquia rival; o quita todos los estados a un aliado; o devuelve un Personaje robado o poseído.",
+      "tribu": "",
+      "simbolo": "🌀",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "contrahechizo",
+      "nombre": "Contrahechizo",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Rápido. Anula un Hechizo rival. Si costaba 5 o más, roba 1.",
+      "tribu": "",
+      "simbolo": "🚫",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "puas",
+      "nombre": "Púas Plateadas",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Rápido. Cuando el rival tire un d20, obligalo a repetir y quedarse con el peor. Roba 1 carta.",
+      "tribu": "",
+      "simbolo": "🪡",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "ilusion",
+      "nombre": "Ilusión Menor",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Crea una Ficha Ilusión 0/1 con Provocar. Cuando un Personaje la ataca, no hace daño y la Ilusión desaparece.",
+      "tribu": "",
+      "simbolo": "👻",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "disfrazarse",
+      "nombre": "Disfrazarse",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un aliado gana Sigilo y copia una tribu de cualquier Personaje. Las Trampas rivales no pueden responder a sus ataques este turno.",
+      "tribu": "",
+      "simbolo": "🎭",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "zancada",
+      "nombre": "Zancada Larga",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un aliado gana Prisa e ignora Provocar este turno.",
+      "tribu": "",
+      "simbolo": "👟",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "pasoatronador",
+      "nombre": "Thunder step",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Devuelve a tu mano un aliado (y opcionalmente otro de Costo 2 o menos). Luego 2 daño a un Personaje rival. Si devolviste a Machete, roba 1.",
+      "tribu": "",
+      "simbolo": "⚡",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender"
+      ],
+      "original": null
+    },
+    {
+      "id": "espiritus",
+      "nombre": "Espíritus Guardianes",
+      "tipo": "hechizo",
+      "coste": 4,
+      "ataque": null,
+      "vida": null,
+      "texto": "Hasta el inicio de tu siguiente turno, cada Personaje rival que declare un ataque recibe 2 daño antes del combate y tiene −1 ATQ.",
+      "tribu": "",
+      "simbolo": "🐉",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "auxilio",
+      "nombre": "Auxilio",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Hasta tres aliados ganan +0/+2 permanentes.",
+      "tribu": "",
+      "simbolo": "🤲",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "armadura",
+      "nombre": "Armadura Mágica",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un aliado sin Objeto gana +0/+3 permanentes. Cuenta como su Objeto equipado.",
+      "tribu": "",
+      "simbolo": "🥋",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "armamagica",
+      "nombre": "Arma Mágica",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un Objeto de Equipo aliado otorga +1/+1 adicional permanente. Si su portador muere, el Objeto vuelve a tu mano.",
+      "tribu": "",
+      "simbolo": "⚒️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "palabracuracion",
+      "nombre": "Palabra de Curación",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Rápido. Restaura 3 PV a un aliado o 3 Alma a ti.",
+      "tribu": "",
+      "simbolo": "💚",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "taumaturgia",
+      "nombre": "Taumaturgia",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Tus Discípulos ganan +1/+0 hasta el final del turno. Si controlas 3 o más, roba 1 carta.",
+      "tribu": "",
+      "simbolo": "🕯️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "tasha",
+      "nombre": "Risa Incontrolable de Tasha",
+      "tipo": "trampa",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando un Personaje rival declara un ataque: el ataque se cancela y queda Aturdido.",
+      "tribu": "",
+      "simbolo": "🤣",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Fender"
+      ],
+      "original": null
+    },
+    {
+      "id": "destello",
+      "nombre": "Destello Protector",
+      "tipo": "trampa",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando el rival saca 15+ en un d20 o va a hacer daño letal a un aliado: obliga a repetir con el peor resultado, o reduce ese daño a la mitad.",
+      "tribu": "",
+      "simbolo": "🔆",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Adreida",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "gemaconserje",
+      "nombre": "Gema del Conserje",
+      "tipo": "trampa",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando un aliado muere por un ataque directo: el atacante queda Poseído — pierde la mitad de su ATQ y todas sus habilidades.",
+      "tribu": "",
+      "simbolo": "💎",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "colapso",
+      "nombre": "Colapso de Paja",
+      "tipo": "trampa",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando un Personaje rival de Costo 4 o más ataca: 4 daño de fuego, su ataque se cancela y queda Aturdido.",
+      "tribu": "",
+      "simbolo": "🔥",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "notario",
+      "nombre": "Contrato del Notario Infernal",
+      "tipo": "trampa",
+      "coste": 4,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando el rival juega un Hechizo de Costo 3+ o usa su Habilidad de Líder: se anula. Ambos descartan 1 al azar. Cuenta como Contrato.",
+      "tribu": "",
+      "simbolo": "🖋️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "peaje",
+      "nombre": "Peaje del Puente",
+      "tipo": "trampa",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando el rival ataca a tu Alma: paga 1 PD o el ataque se cancela. Si paga, tú ganas 1 PD en tu siguiente turno.",
+      "tribu": "",
+      "simbolo": "🪙",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "esporas",
+      "nombre": "Esporas del Demonio",
+      "tipo": "trampa",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando un aliado muere: todos los Personajes rivales quedan Infectados.",
+      "tribu": "",
+      "simbolo": "🦠",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida",
+        "Rafaela",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "talcadaver",
+      "nombre": "Tal Habla por el Cadáver",
+      "tipo": "trampa",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando un aliado muere: vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.",
+      "tribu": "",
+      "simbolo": "🐉",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "collar",
+      "nombre": "Collar Mágico de Agua",
+      "tipo": "objeto",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +0/+3 e inmunidad al daño de Fuego.",
+      "tribu": "",
+      "simbolo": "📿",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "arco",
+      "nombre": "Arco Dorado de Juan",
+      "tipo": "objeto",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +2 ATQ y Arquero.",
+      "tribu": "",
+      "simbolo": "🏹",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "mazo",
+      "nombre": "Mazo de Brock",
+      "tipo": "objeto",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +3 ATQ. Pierde Sigilo y Vuelo (pesa demasiado).",
+      "tribu": "",
+      "simbolo": "🔨",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "sombrero",
+      "nombre": "Sombrero de Brick",
+      "tipo": "objeto",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. Gana Sigilo hasta que ataque.",
+      "tribu": "",
+      "simbolo": "🎩",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Fender"
+      ],
+      "original": null
+    },
+    {
+      "id": "jabon",
+      "nombre": "Barra de Jabón",
+      "tipo": "objeto",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. No puede ser objetivo de Hechizos de Engaño. Si muere, recuperas Copia de Jabón de las Alcantarillas.",
+      "tribu": "",
+      "simbolo": "🧼",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "puntosrobados",
+      "nombre": "Puntos Robados",
+      "tipo": "objeto",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Reliquia. Gana 1 contador cada vez que muere un Personaje rival. Sacrifícala: ganas PD igual a los contadores (máx 4).",
+      "tribu": "",
+      "simbolo": "💰",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "llavemago",
+      "nombre": "Llave del Mago",
+      "tipo": "objeto",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Reliquia. Cuenta como 1 Llave del Domo. Si un rival fuera a robarla, se destruye en su lugar.",
+      "tribu": "",
+      "simbolo": "🗝️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "pergamino",
+      "nombre": "Pergamino de Deseo Ilimitado",
+      "tipo": "objeto",
+      "coste": 7,
+      "ataque": null,
+      "vida": null,
+      "texto": "Reliquia. Solo con 2+ Llaves (o controlando a Tal). Al inicio de tu segundo turno con él en el campo, ganas la partida. Si lo pierdes, pierdes todas tus Llaves.",
+      "tribu": "",
+      "simbolo": "📜",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed",
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "tomsage",
+      "nombre": "Tomsage bajo asedio",
+      "tipo": "lugar",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Trol, Ogro y Goblin ganan +1/+1. Al inicio de cada turno, el jugador activo pierde 1 PD máximo.",
+      "tribu": "",
+      "simbolo": "🏰",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": null
+    },
+    {
+      "id": "antro",
+      "nombre": "Antro Juan",
+      "tipo": "lugar",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "En la Fase Final, cada jugador puede pagar 2 PD para robar 1 carta. Los Valoria tienen +0/+1.",
+      "tribu": "",
+      "simbolo": "🍻",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Fender",
+        "Rafaela"
+      ],
+      "original": null
+    },
+    {
+      "id": "puente",
+      "nombre": "El Puente de Brick y Brock",
+      "tipo": "lugar",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Ningún Personaje puede atacar al Alma salvo que su controlador tire d20 y saque 8+.",
+      "tribu": "",
+      "simbolo": "🌉",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "montanas",
+      "nombre": "Las Montañas de Tal",
+      "tipo": "lugar",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Los Dragones cuestan 2 PD menos. Al inicio de cada turno, el jugador activo tira d20: con 1-3, Aidman aparece en el campo rival.",
+      "tribu": "",
+      "simbolo": "⛰️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "domo",
+      "nombre": "El Domo",
+      "tipo": "lugar",
+      "coste": 4,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cada vez que un Personaje muere, su controlador pierde 1 Alma y el otro gana 1 PD. Las Llaves del Domo se ganan al doble.",
+      "tribu": "",
+      "simbolo": "🔴",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
+      "id": "tok_rulchete",
+      "nombre": "Rulchete",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 0,
+      "vida": 6,
+      "texto": "Provocar. Ficha. Un dragón morado de bajo presupuesto: no pega, pero aguanta.",
+      "tribu": "Dragón · Goblin",
+      "simbolo": "🐲",
+      "esLider": false,
+      "ficha": true,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "gatobachatero",
+      "nombre": "El Gato Bachatero",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Los Personajes rivales de Costo 2 o menos quedan Aturdidos: se quedan mirando el baile.",
+      "tribu": "",
+      "simbolo": "🐈",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "fetichemino",
+      "nombre": "Fetiche de Minotauro",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un Personaje rival Bestia o Minotauro queda Aturdido y tú robas 1 carta.",
+      "tribu": "",
+      "simbolo": "🥛",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "brujula",
+      "nombre": "Brújula «She vale el doble»",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "2 daño a un Personaje rival. Si eso lo mata, robas 2 cartas: valía el doble.",
+      "tribu": "",
+      "simbolo": "🧭",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "viajehongos",
+      "nombre": "Viaje de Hongos de Rantiago",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un aliado gana +2/+2 permanentes pero queda Aturdido: se siente gigante e intangible.",
+      "tribu": "",
+      "simbolo": "🍄",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "humobob",
+      "nombre": "El Humo de Bob Carly",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Todos tus Personajes curan 2 PV y ganan Sigilo hasta que ataquen.",
+      "tribu": "",
+      "simbolo": "💨",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "propaganda",
+      "nombre": "Propaganda Electoral",
+      "tipo": "hechizo",
+      "coste": 4,
+      "ataque": null,
+      "vida": null,
+      "texto": "Todos los Personajes rivales de tribu Elfo o Elfa quedan Poseídos: pierden la mitad de su ATQ y sus habilidades.",
+      "tribu": "",
+      "simbolo": "📢",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "ballesta",
+      "nombre": "Ballesta de Triple Disparo",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "1 daño a tres Personajes rivales distintos.",
+      "tribu": "",
+      "simbolo": "🏹",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "lanzallamas",
+      "nombre": "Lanzallamas de Desodorante",
+      "tipo": "hechizo",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "3 daño de Fuego a un Personaje rival. El fuego le impide regenerar este turno.",
+      "tribu": "",
+      "simbolo": "🧯",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "lifestealer",
+      "nombre": "Espada Life Stealer",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un aliado gana +2/+0 permanentes y tú ganas 3 Alma: la hoja devuelve lo que quita.",
+      "tribu": "",
+      "simbolo": "🗡️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "lecheslact",
+      "nombre": "El Vaso de Leche Deslactosada",
+      "tipo": "hechizo",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un Personaje se calma: queda Aturdido. Si es tuyo, además cura 3 PV.",
+      "tribu": "",
+      "simbolo": "🥛",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "rulchetebajo",
+      "nombre": "Rulchete de Bajo Presupuesto",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Invoca a Rulchete 0/6 con Provocar: un dragón morado que sólo sirve para ponerse delante.",
+      "tribu": "",
+      "simbolo": "🐲",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "esporashorton",
+      "nombre": "Esporas de Sir Horton",
+      "tipo": "hechizo",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Un Personaje rival queda Infectado y Poseído: ve cosas y ya no distingue a los suyos.",
+      "tribu": "",
+      "simbolo": "🍄",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "lentesmachete",
+      "nombre": "Los Lentes de Machete",
+      "tipo": "objeto",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +1 ATQ y Arquero: golpea sin recibir contraataque. Es lo único que quedó de él.",
+      "tribu": "",
+      "simbolo": "👓",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "espadaluz",
+      "nombre": "Espada de Luz Celestial",
+      "tipo": "objeto",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +3 ATQ e inmunidad a los Hechizos de Engaño: la luz no se deja embaucar.",
+      "tribu": "",
+      "simbolo": "⚔️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "brazosagua",
+      "nombre": "Brazos de Agua de Barril",
+      "tipo": "objeto",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +1/+2, Arquero e inmunidad al daño de Fuego.",
+      "tribu": "",
+      "simbolo": "🌊",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "ipadkid",
+      "nombre": "El iPad Kid Silenciado",
+      "tipo": "objeto",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +0/+3 e inmune a los Hechizos de Engaño: con los auriculares puestos no se entera de nada.",
+      "tribu": "",
+      "simbolo": "🎧",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "espadaboveda",
+      "nombre": "Espada Común de la Bóveda",
+      "tipo": "objeto",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Equipo. +1 ATQ. Una espada pitera del catálogo de la bóveda, pero es lo que había.",
+      "tribu": "",
+      "simbolo": "🗡️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "eclipse",
+      "nombre": "El Eclipse Arrugado",
+      "tipo": "trampa",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando ataca un Personaje rival con Objetos: se le destruye todo el equipo y queda al descubierto.",
+      "tribu": "",
+      "simbolo": "🌑",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "afterparty",
+      "nombre": "Invitación al After Party",
+      "tipo": "trampa",
+      "coste": 3,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando ataca un Personaje rival de Costo 4 o más: el ataque se cancela y vuelve a la mano de su dueño.",
+      "tribu": "",
+      "simbolo": "🎉",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "ciclope",
+      "nombre": "Juguetes para el Cíclope",
+      "tipo": "trampa",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando un Personaje rival ataca: el ataque se cancela y aparecen 2 Ilusiones de señuelo.",
+      "tribu": "",
+      "simbolo": "👁️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "ladrillos",
+      "nombre": "Ladrillos de Edo Mex",
+      "tipo": "trampa",
+      "coste": 1,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando ataca un Personaje rival con Prisa o Vuelo: el ataque se cancela y queda Aturdido. Sin llantas no va a ningún lado.",
+      "tribu": "",
+      "simbolo": "🧱",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "lutorafaela",
+      "nombre": "Luto Dramático de Rafaela",
+      "tipo": "trampa",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando muere un aliado: tus Personajes ganan +2 ATQ hasta el final del turno.",
+      "tribu": "",
+      "simbolo": "😭",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "tok_goblincamino",
+      "nombre": "Goblin de Camino",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 1,
+      "vida": 1,
+      "texto": "Provocar. Ficha. Uno de los goblins que Can pone en el camino.",
+      "tribu": "Goblin",
+      "simbolo": "🪓",
+      "esLider": false,
+      "ficha": true,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "can",
+      "nombre": "Can, el de los Goblins",
+      "tipo": "personaje",
+      "coste": 4,
+      "ataque": 2,
+      "vida": 4,
+      "texto": "Interceptar — al entrar: invoca dos Goblins de Camino 1/1 con Provocar.",
+      "tribu": "Humano",
+      "simbolo": "🛻",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "spiderman",
+      "nombre": "Spider-Man",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 2,
+      "vida": 4,
+      "texto": "Disfraz — al entrar: un Personaje rival queda Aturdido del susto. Mientras controles Antro Juan, +2/+2.",
+      "tribu": "Bestia · Araña",
+      "simbolo": "🕷️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "hermanotrol",
+      "nombre": "El Hermano del Trol",
+      "tipo": "personaje",
+      "coste": 5,
+      "ataque": 5,
+      "vida": 6,
+      "texto": "Regeneración: recupera 2 PV al inicio de tu turno. Inmune al daño de Fuego. Al entrar: busca el Collar Mágico de Agua en tu mazo.",
+      "tribu": "Trol",
+      "simbolo": "🪨",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "rambo",
+      "nombre": "Rambo",
+      "tipo": "personaje",
+      "coste": 1,
+      "ataque": 3,
+      "vida": 1,
+      "texto": "Prisa. Debe atacar si puede. Al final del turno, muere: entró solo al campo de batalla.",
+      "tribu": "Goblin",
+      "simbolo": "🎽",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "coyote",
+      "nombre": "El Coyote",
+      "tipo": "personaje",
+      "coste": 3,
+      "ataque": 2,
+      "vida": 3,
+      "texto": "Cruzar la frontera (2 PD): un aliado ignora Provocar hasta el final del turno. Por un trato de negocios, claro.",
+      "tribu": "Humano",
+      "simbolo": "🌵",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "correcaminos",
+      "nombre": "El Correcaminos",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 2,
+      "vida": 2,
+      "texto": "Prisa. Debe atacar si puede. Si El Coyote está en cualquier campo, gana +2 ATQ.",
+      "tribu": "Bestia",
+      "simbolo": "🏃",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "lanzallave",
+      "nombre": "Lanzamiento de Llave Desesperado",
+      "tipo": "trampa",
+      "coste": 2,
+      "ataque": null,
+      "vida": null,
+      "texto": "Cuando muere un aliado: alcanza la llave y escapa del Domo — su carta vuelve a tu mano.",
+      "tribu": "",
+      "simbolo": "🗝️",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [],
+      "original": null
+    },
+    {
+      "id": "lider_mohamed",
+      "nombre": "Mohamed",
+      "tipo": "lider",
+      "coste": null,
+      "ataque": null,
+      "vida": null,
+      "texto": "Disfraz de Mago: tus Hechizos de Engaño cuestan 1 PD menos (mínimo 1).\nManos Largas (2 PD): mira la carta superior del mazo rival. Si es un Objeto, a tu mano; si no, a sus Alcantarillas.",
+      "tribu": "Control · Engaño · Llaves",
+      "simbolo": "🧙‍♂️",
+      "esLider": true,
+      "ficha": false,
+      "mazos": [
+        "Mohamed"
+      ],
+      "original": null
+    },
+    {
+      "id": "lider_fender",
+      "nombre": "Fender",
+      "tipo": "lider",
+      "coste": null,
+      "ataque": null,
+      "vida": null,
+      "texto": "Inspiración: cada vez que juegas un Hechizo de Canción, un aliado gana +1 ATQ permanente.\nSube el Volumen (2 PD): todos tus Personajes ganan +1 ATQ hasta el final del turno.",
+      "tribu": "Aggro · Canciones · Tempo",
+      "simbolo": "🎸",
+      "esLider": true,
+      "ficha": false,
+      "mazos": [
+        "Fender"
+      ],
+      "original": {
+        "url": "art/lider_fender.webp",
+        "encuadre": {
+          "x": 0,
+          "y": 2,
+          "z": 105
+        }
+      }
+    },
+    {
+      "id": "lider_adreida",
+      "nombre": "Adreida",
+      "tipo": "lider",
+      "coste": null,
+      "ataque": null,
+      "vida": null,
+      "texto": "Intimidante: tus Personajes con 4 o más ATQ tienen Provocar.\nGolpe Directo (2 PD): un aliado gana +2 ATQ y no recibe daño de contraataque este turno.",
+      "tribu": "Midrange · Provocar · Combate",
+      "simbolo": "⚔️",
+      "esLider": true,
+      "ficha": false,
+      "mazos": [
+        "Adreida"
+      ],
+      "original": {
+        "url": "art/lider_adreida.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 5,
+          "z": 106
+        }
+      }
+    },
+    {
+      "id": "lider_gero",
+      "nombre": "Gero",
+      "tipo": "lider",
+      "coste": null,
+      "ataque": null,
+      "vida": null,
+      "texto": "El dado decide: al inicio de tu turno se tira un d20. Con 15 o más ganas 2 PD; con 10 o menos pierdes 1 Alma.\nImprovisar (2 PD): mira la carta superior de tu mazo; si no te sirve, mándala a las Alcantarillas.",
+      "tribu": "Caos · Tiradas · NPCs",
+      "simbolo": "🎲",
+      "esLider": true,
+      "ficha": false,
+      "mazos": [
+        "Gero"
+      ],
+      "original": null
+    },
+    {
+      "id": "lider_rafaela",
+      "nombre": "Rafaela",
+      "tipo": "lider",
+      "coste": null,
+      "ataque": null,
+      "vida": null,
+      "texto": "Rebaño de Rul: cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.\nEstornudo de Rul (2 PD): 1 daño a un Personaje y cura 1 PV a otro.",
+      "tribu": "Enjambre · Fe · Curación",
+      "simbolo": "✨",
+      "esLider": true,
+      "ficha": false,
+      "mazos": [
+        "Rafaela"
+      ],
+      "original": {
+        "url": "art/lider_rafaela.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 6,
+          "z": 100
+        }
+      }
+    },
+    {
+      "id": "lider_talesin",
+      "nombre": "Talesyn",
+      "tipo": "lider",
+      "coste": null,
+      "ataque": null,
+      "vida": null,
+      "texto": "Digno de Ascender: cada vez que muere un aliado ganas 1 Ficha de Gracia. Con 5, asciendes: +5 Alma y tus Celestiales ganan +2/+2 permanentes. Después de ascender, cada Personaje que entre a tu campo nace Celestial y con +2/+2.\nLuz de Kenya (3 PD): un aliado gana +1/+1 permanentes y la tribu Celestial.",
+      "tribu": "Sacrificio · Rampa · Ascensión",
+      "simbolo": "😇",
+      "esLider": true,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": {
+        "url": "art/lider_talesin.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 11,
+          "z": 100
+        }
+      }
+    }
+  ]
+}

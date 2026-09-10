@@ -249,12 +249,13 @@
   }
   const arteMemoria=new Map();
   function cartaMemoria(id){return typeof CARDS!=='undefined'?CARDS[id]:null;}
-  function imagenMemoria(id){
+  function imagenMemoria(id,actualizar=false){
     // Lucius está incluido en el paquete; los demás usan exactamente su arte
     // oficial del juego, incluido su emoji mientras no tengan ilustración.
     const enc=typeof ARTE!=='undefined'?ARTE[id]:null;if(id!=='lucius'&&enc==null)return null;
-    if(arteMemoria.has(id))return arteMemoria.get(id);
-    const imagen=new Image();arteMemoria.set(id,imagen);imagen.src='art/'+id+'.webp';return imagen;
+    const url=urlArte(id),previa=arteMemoria.get(id);
+    if(previa&&(!actualizar||previa.getAttribute('src')===url)){if(actualizar)previa.encuadre=encuadreDe(ARTE[id]);return previa;}
+    const imagen=new Image();imagen.encuadre=encuadreDe(ARTE[id]);arteMemoria.set(id,imagen);imagen.src=url;return imagen;
   }
   function instalarMemoriaCSS(){
     if(document.getElementById('ppMemoriaCSS'))return;const estilo=document.createElement('style');estilo.id='ppMemoriaCSS';estilo.textContent=`
@@ -266,11 +267,20 @@
       .pitPrueba .ppMemoriaCarta[hidden]{display:none}.pitPrueba .ppMemoriaCarta:disabled{opacity:1;cursor:default}.pitPrueba .ppMemoriaCarta:focus-visible{outline:2px solid #f0d09e}.pitPrueba .ppMemoriaCarta:not(:disabled):hover{translate:0 -3px;border-color:#e3c38d;box-shadow:0 9px 18px #0009,0 0 20px #d7be6d22}.pitPrueba .ppMemoriaCarta.ppSeleccionada{border-color:#f1d59e;box-shadow:0 0 0 1px #efd4a3,0 0 26px #d9b67944}.pitPrueba .ppMemoria[data-fase="resultado"][data-resultado="fallo"] .ppMemoriaCarta.ppSeleccionada{border-color:#e1918b;box-shadow:0 0 20px #dc746633}.pitPrueba .ppMemoria[data-resultado="acierto"] .ppMemoriaCarta.ppSeleccionada{border-color:#bde8c2;box-shadow:0 0 0 1px #a4d9b1,0 0 30px #8ed0a244}
       .pitPrueba .ppMemoriaFrente,.pitPrueba .ppMemoriaDorso{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;transition:scale .16s ease,opacity .13s;pointer-events:none;overflow:hidden}.pitPrueba .ppMemoriaFrente{opacity:0;scale:0 1;background:#141021;padding:4px;box-sizing:border-box;border:2px solid #cfb981;box-shadow:inset 0 0 0 2px #090913;align-items:stretch}.pitPrueba .ppMemoriaFrente[hidden]{display:none}.pitPrueba .ppMemoriaFrente canvas{position:absolute;inset:3px 3px 20%;width:calc(100% - 6px);height:78%;object-fit:fill;display:block;image-rendering:pixelated}.pitPrueba .ppMemoriaNombre{position:absolute;left:5px;right:5px;bottom:16%;min-height:19%;display:flex;align-items:center;justify-content:center;padding:2px;box-sizing:border-box;background:#110d21e8;border:1px solid #c9ac685e;font:600 var(--pm-nombre,11px)/1.08 Georgia,serif;color:#f0dfb5;text-align:center;overflow-wrap:anywhere}.pitPrueba .ppMemoriaCifra{position:absolute;width:var(--pm-cifra,23px);height:var(--pm-cifra,23px);display:grid;place-items:center;border:1px solid #e5c886;box-shadow:inset 0 0 0 2px #0c0d2299;font:700 var(--pm-numero,15px)/1 Georgia,serif;font-style:normal;color:#fff0ce;border-radius:3px}.pitPrueba .ppMemoriaCoste{left:2px;top:2px;background:#4b3277}.pitPrueba .ppMemoriaAtaque{left:2px;bottom:2px;background:#826029}.pitPrueba .ppMemoriaVida{right:2px;bottom:2px;background:#842d41}
       .pitPrueba .ppMemoriaDorso{background:repeating-linear-gradient(45deg,transparent 0 8px,#79949d09 8px 9px),radial-gradient(ellipse at 50% 45%,#263546,#121925 75%);color:#c7b186}.pitPrueba .ppMemoriaDorso:before{content:'';position:absolute;inset:8px;border:1px solid #a5936244;border-radius:4px}.pitPrueba .ppMemoriaDorso b{font:normal clamp(30px,10vw,54px) Georgia;filter:drop-shadow(0 0 9px #cbb27844)}.pitPrueba .ppMemoriaDorso small{position:absolute;top:10px;left:12px;font:500 10px system-ui;color:#b3b3ac}.pitPrueba .ppMemoriaCarta.ppRevelada .ppMemoriaFrente{opacity:1;scale:1 1;transition-delay:.11s}.pitPrueba .ppMemoriaCarta.ppRevelada .ppMemoriaDorso{opacity:0;scale:0 1}.pitPrueba .ppMemoriaCarta:not(.ppRevelada) .ppMemoriaDorso{transition-delay:.11s}
+      /* El acabado sólo pertenece al frente: ningún borde o resplandor del
+         botón o del dorso puede delatar una pareja mientras está oculta. */
+      .pitPrueba .ppMemoriaFrente[data-acabado="normal"]{border-color:#cfb981}
+      .pitPrueba .ppMemoriaFrente[data-acabado="foil"]{border-color:#c5d1de;border-image:linear-gradient(130deg,#e7eef4,#7a8aa8,#dcf8ea,#ab9cce,#e7eef4) 1;box-shadow:inset 0 0 0 2px #0d1324,inset 0 0 12px #b8dbe529}
+      .pitPrueba .ppMemoriaFrente[data-acabado="dorado"]{border-color:#f1d38a;border-image:linear-gradient(130deg,#fff5c4,#9a6729,#fff0b2,#ba8239,#ffe9aa) 1;box-shadow:inset 0 0 0 2px #5f391a,inset 0 0 12px #ecc36a38}
+      .pitPrueba .ppMemoriaFrente:is([data-acabado="foil"],[data-acabado="dorado"])::after{content:'';position:absolute;inset:0;pointer-events:none;z-index:1;background-image:var(--acabado-brillo,linear-gradient(115deg,transparent 36%,#edecfa66 49%,transparent 63%));background-size:280% 160%;mix-blend-mode:screen;opacity:.22;animation:ppMemoriaReflejo 7s ease-in-out infinite}
+      .pitPrueba .ppMemoriaNombre,.pitPrueba .ppMemoriaCifra{z-index:2}
+      @keyframes ppMemoriaReflejo{0%,10%,100%{background-position:0% 40%;opacity:.14}50%,65%{background-position:100% 60%;opacity:.28}}
       .pitPrueba .ppMemoriaPie{text-align:center;display:flex;flex-direction:column;align-items:center;gap:8px;color:#bbbfb9;font:12px system-ui;line-height:1.3}.pitPrueba .ppMemoriaSellos{display:flex;gap:8px}.pitPrueba .ppMemoriaSellos i{width:8px;height:8px;border:1px solid #b09b75;rotate:45deg;background:#121923}.pitPrueba .ppMemoriaSellos i.ppLogrado{background:#ead0a0;box-shadow:0 0 12px #e2c28477}.pitPrueba .ppMemoriaDato{font:600 10px system-ui;color:#d2b98b;letter-spacing:1.5px;text-transform:uppercase}
       .pitPrueba .ppCarriles{display:flex;gap:8px;align-items:center}.pitPrueba .ppCarrilBoton{appearance:none;min-width:44px;width:58px;height:66px;min-height:44px;border:1px solid #a88f655d;border-radius:11px;background:linear-gradient(155deg,#293039,#141b24);box-shadow:inset 0 1px #d4c19224,0 5px 14px #0006;color:#ecdbb8;font:29px Georgia;touch-action:none;cursor:pointer}.pitPrueba .ppCarrilBoton:active{background:#46505a;border-color:#ecd29a}.pitPrueba .ppCarrilBoton:focus-visible{outline:2px solid #f5d397;outline-offset:3px}.pitPrueba[data-tipo="carrera"] .ppCentroControl{max-width:150px}
       @media(max-width:380px){.pitPrueba .ppCarrilBoton{width:44px;height:60px}.pitPrueba .ppCarriles{gap:5px}.pitPrueba[data-tipo="carrera"] .ppCentroControl{font-size:8px;max-width:70px}.pitPrueba[data-tipo="carrera"] .ppCentroControl b{font-size:10px}.pitPrueba .ppMemoria{gap:8px}.pitPrueba .ppMemoriaRonda{font-size:9px}}
       @media(max-height:440px){.pitPrueba .ppMemoria{padding:7px 10px 9px;gap:5px}.pitPrueba .ppMemoriaCabecera{display:flex;align-items:center;justify-content:center;gap:15px}.pitPrueba .ppMemoriaRonda{margin:0;font-size:9px}.pitPrueba .ppMemoriaConsigna{font-size:20px}.pitPrueba .ppMemoriaPlazo{width:100px;margin:0}.pitPrueba .ppMemoriaPie{flex-direction:row;justify-content:center;gap:14px;font-size:10px}.pitPrueba .ppMemoriaDato{font-size:9px}.pitPrueba .ppCarrilBoton{height:48px;width:50px}}
       @media(prefers-reduced-motion:reduce){.pitPrueba .ppMemoriaCarta,.pitPrueba .ppMemoriaFrente,.pitPrueba .ppMemoriaDorso{transition:none!important;transition-delay:0s!important}}
+      @media(prefers-reduced-motion:reduce){.pitPrueba .ppMemoriaFrente[data-acabado]::after{animation:none!important;background-position:46% 50%;opacity:.18}}
     `;document.head.appendChild(estilo);
   }
   function pintarRecuerdo(lienzo,id,ilustrada){
@@ -281,7 +291,7 @@
     for(let y=0;y<112;y+=4)for(let x=0;x<96;x+=4){const v=Math.sin(x*.18+y*.12);c.fillStyle=v>.4?'#263145':v<-.4?'#1b2134':'#202b3d';c.fillRect(x,y,4,4);}
     const imagen=imagenMemoria(id);
     if(ilustrada&&imagen&&imagen.complete&&imagen.naturalWidth){
-      const dato=typeof ARTE!=='undefined'?ARTE[id]:null,enc=typeof encuadreDe==='function'?encuadreDe(dato)||{x:50,y:50,z:100}:{x:50,y:50,z:100},z=Math.max(1,enc.z/100),esc=Math.max(96/imagen.naturalWidth,112/imagen.naturalHeight)*z,an=imagen.naturalWidth*esc,al=imagen.naturalHeight*esc,xx=(96-an)*enc.x/100,yy=(112-al)*enc.y/100;c.drawImage(imagen,Math.round(xx),Math.round(yy),Math.round(an),Math.round(al));
+      const enc=imagen.encuadre||{x:50,y:50,z:100},z=Math.max(1,enc.z/100),esc=Math.max(96/imagen.naturalWidth,112/imagen.naturalHeight)*z,an=imagen.naturalWidth*esc,al=imagen.naturalHeight*esc,xx=(96-an)*enc.x/100,yy=(112-al)*enc.y/100;c.drawImage(imagen,Math.round(xx),Math.round(yy),Math.round(an),Math.round(al));
     }else{
       c.textAlign='center';c.textBaseline='middle';c.font='49px "Apple Color Emoji","Segoe UI Emoji",sans-serif';c.fillText(carta.art||'',48,56);
     }
@@ -307,18 +317,24 @@
     else s.mov.x=0;
   };
   API.montadores.duelo=function(s,{nodo,escuchar}){
-    instalarMemoriaCSS();for(const id of MEMORIA_CARTAS)imagenMemoria(id);s.elegir=null;s.ui.controles.style.display='none';const panel=nodo('section','ppMemoria',null,s.ui.campo),cab=nodo('div','ppMemoriaCabecera',null,panel),ronda=nodo('div','ppMemoriaRonda','',cab),consigna=nodo('div','ppMemoriaConsigna','Memoriza las cartas',cab),plazo=nodo('div','ppMemoriaPlazo',null,cab),barra=nodo('i','',null,plazo),mesa=nodo('div','ppMemoriaMesa',null,panel),pie=nodo('div','ppMemoriaPie',null,panel),sellos=nodo('div','ppMemoriaSellos',null,pie),dato=nodo('div','ppMemoriaDato','Pitágoras −0 Alma · 0 / 3 fallos',pie),ayuda=nodo('div','','Recuerda las dos cartas iguales.',pie),botones=[];
+    instalarMemoriaCSS();for(const id of MEMORIA_CARTAS)imagenMemoria(id,true);s.elegir=null;s.ui.controles.style.display='none';const panel=nodo('section','ppMemoria',null,s.ui.campo),cab=nodo('div','ppMemoriaCabecera',null,panel),ronda=nodo('div','ppMemoriaRonda','',cab),consigna=nodo('div','ppMemoriaConsigna','Memoriza las cartas',cab),plazo=nodo('div','ppMemoriaPlazo',null,cab),barra=nodo('i','',null,plazo),mesa=nodo('div','ppMemoriaMesa',null,panel),pie=nodo('div','ppMemoriaPie',null,panel),sellos=nodo('div','ppMemoriaSellos',null,pie),dato=nodo('div','ppMemoriaDato','Pitágoras −0 Alma · 0 / 3 fallos',pie),ayuda=nodo('div','','Recuerda las dos cartas iguales.',pie),botones=[];
     sellos.setAttribute('aria-hidden','true');mesa.setAttribute('aria-label','Cartas de memoria');
     const elegir=i=>{const m=s.modelo;if(s.fase==='jugando'&&m.faseMemoria==='elegir'&&!m.elegidasMemoria.includes(i)&&i<m.cartasMemoria.length)s.elegir=i;};
     for(let i=0;i<7;i++){const b=nodo('button','ppMemoriaCarta',null,mesa);b.type='button';b.dataset.indice=String(i);const dorso=nodo('span','ppMemoriaDorso',null,b);nodo('b','','◇',dorso);nodo('small','',String(i+1),dorso);const frente=nodo('span','ppMemoriaFrente',null,b),arte=nodo('canvas','',null,frente),texto=nodo('span','ppMemoriaNombre','',frente),coste=nodo('i','ppMemoriaCifra ppMemoriaCoste','',frente),ataque=nodo('i','ppMemoriaCifra ppMemoriaAtaque','',frente),vida=nodo('i','ppMemoriaCifra ppMemoriaVida','',frente);arte.setAttribute('aria-hidden','true');dorso.setAttribute('aria-hidden','true');frente.setAttribute('aria-hidden','true');escuchar(s,'click',b,()=>elegir(i));botones.push({b,frente,arte,texto,coste,ataque,vida,id:null});}
     escuchar(s,'keydown',global,e=>{if(s.fase!=='jugando')return;const indice=/^(Digit|Numpad)[1-7]$/.test(e.code)?Number(e.code.slice(-1))-1:null,b=e.target?.closest?.('.ppMemoriaCarta');if(indice!==null||((e.code==='Enter'||e.code==='Space')&&b)){e.preventDefault();e.stopImmediatePropagation();if(!e.repeat)elegir(indice===null?Number(b.dataset.indice):indice);}},true);
-    s.ui.memoria={panel,ronda,consigna,barra,mesa,sellos,dato,ayuda,botones,clave:'',tam:'',rondaArte:0,artes:new Set()};s.limpiar.push(()=>{s.elegir=null;panel.remove();});API.actualizadores.duelo(s);
+    s.ui.memoria={panel,ronda,consigna,barra,mesa,sellos,dato,ayuda,botones,clave:'',tam:'',rondaArte:0,artes:new Set(),acabados:new Map()};s.limpiar.push(()=>{s.elegir=null;panel.remove();});API.actualizadores.duelo(s);
   };
   API.actualizadores.duelo=function(s){
     const u=s.ui.memoria;if(!u)return;const m=s.modelo,n=m.cartasMemoria.length,clave=[m.rondaMemoria,m.faseMemoria,m.elegidasMemoria.join(','),m.parejas,m.fallosMemoria,s.fase].join('|');
     // Congelar la representación al empezar la ronda evita que una descarga
     // cambie el recuerdo a mitad de la exposición o revele primero una copia.
-    if(s.fase==='jugando'&&u.rondaArte!==m.rondaMemoria){u.rondaArte=m.rondaMemoria;u.artes=new Set(m.cartasMemoria.filter(id=>{const img=imagenMemoria(id);return img&&img.complete&&img.naturalWidth;}));}
+    if(s.fase==='jugando'&&u.rondaArte!==m.rondaMemoria){
+      u.rondaArte=m.rondaMemoria;u.artes=new Set();u.acabados=new Map();
+      for(const id of m.cartasMemoria){
+        const img=imagenMemoria(id,true);if(img&&img.complete&&img.naturalWidth)u.artes.add(id);
+        const acabado=typeof acabadoArte==='function'?acabadoArte(id):'normal';u.acabados.set(id,['foil','dorado'].includes(acabado)?acabado:'normal');
+      }
+    }
     if(clave!==u.clave){u.clave=clave;u.panel.dataset.fase=m.faseMemoria;u.panel.dataset.resultado=m.resultadoMemoria==='PAREJA ENCONTRADA'?'acierto':'fallo';u.ronda.textContent='Recuerdo '+String(m.rondaMemoria).padStart(2,'0');u.consigna.textContent=m.faseMemoria==='mostrar'?'Memoriza las cartas':m.faseMemoria==='elegir'?'Encuentra la pareja':m.resultadoMemoria;u.dato.textContent='Pitágoras −'+m.parejas+' Alma · '+m.fallosMemoria+' / 3 fallos';u.ayuda.textContent=m.faseMemoria==='mostrar'?'Dos son iguales. Cada pareja quita 1 Alma a Pitágoras.':m.faseMemoria==='elegir'?'Elige las dos cartas que recuerdas.':m.resultadoMemoria==='PAREJA ENCONTRADA'?'Pitágoras pierde 1 Alma.':'Pierdes 1 vida de la prueba. Tres fallos cuestan 5 Alma.';
       while(u.sellos.children.length<m.parejas){const sello=document.createElement('i');sello.className='ppLogrado';u.sellos.appendChild(sello);}
       for(let i=0;i<u.botones.length;i++){
@@ -327,6 +343,7 @@
         // Una carta oculta no deja identidad en texto, tooltip, aria ni píxeles
         // del frente. Ambos dorsos son iguales y sólo conservan su posición.
         q.id=revelada?id:null;q.texto.textContent=carta?carta.n:'';q.coste.textContent=carta?String(carta.c):'';q.ataque.textContent=carta?String(carta.a):'';q.vida.textContent=carta?String(carta.h):'';
+        if(carta)q.frente.dataset.acabado=u.acabados.get(id)||'normal';else q.frente.removeAttribute('data-acabado');
         if(carta)pintarRecuerdo(q.arte,id,u.artes.has(id));else q.arte.getContext('2d').clearRect(0,0,q.arte.width,q.arte.height);
       }
       s.ui.lectura.textContent=u.consigna.textContent+'. '+u.dato.textContent;

@@ -1,4 +1,4 @@
-/* API privada de SFX para Cloudflare Pages. El juego y el arte siguen estáticos.
+/* Estudios privados de SFX e ilustraciones para Cloudflare Pages.
    SFX_DB es una base D1 propia del entorno; las claves sólo viven en secretos.
    Nunca se autoriza una escritura con una contraseña incluida en JavaScript. */
 const enc=new TextEncoder(),MAXIMO=1600044,COOKIE='__Host-caoz-sfx';
@@ -99,9 +99,197 @@ async function api(req,env){
   }
   return json({error:'Ruta no encontrada.'},404);
 }
+// Las ilustraciones comparten el acceso del estudio, pero no sus tablas ni archivos.
+// D1 limita cada BLOB/fila a 2 MB; 1.5 MB deja margen para metadatos.
+const MAXIMO_ARTE=1500000,ACABADOS_ARTE=['normal','foil','dorado'],preparacionesArte=new WeakMap(),catalogosArte=new WeakMap();
+const falloArte=(mensaje,status=400)=>{throw Object.assign(Error(mensaje),{status});};
+function encuadreArte(datos){
+  if(!datos||Array.isArray(datos)||Object.keys(datos).some(k=>!['x','y','z'].includes(k))||
+    !['x','y','z'].every(k=>typeof datos[k]==='number'&&Number.isFinite(datos[k]))||
+    datos.x<0||datos.x>100||datos.y<0||datos.y>100||datos.z<100||datos.z>300)
+    falloArte('El encuadre requiere x e y de 0 a 100 y zoom de 100 a 300.');
+  return {x:datos.x,y:datos.y,z:datos.z};
+}
+function dimensionesArte(ancho,alto){
+  if(!Number.isInteger(ancho)||!Number.isInteger(alto)||ancho<16||alto<16||ancho>4096||alto>4096||ancho*alto>16000000)
+    falloArte('La ilustración debe medir de 16 a 4096 píxeles por lado y hasta 16 megapíxeles.');
+  return {ancho,alto};
+}
+// Se comprueban la firma y la estructura del contenedor; nunca se acepta SVG/HTML
+// ni se confía en la extensión del archivo o en las dimensiones enviadas por el cliente.
+function validarImagenArte(b,mime){
+  const v=new DataView(b.buffer,b.byteOffset,b.byteLength),texto=(i,n)=>String.fromCharCode(...b.subarray(i,i+n));
+  const mal=()=>falloArte('La imagen está dañada o no coincide con su formato.');
+  if(mime==='image/png'){
+    if(b.length<57||!b.subarray(0,8).every((n,i)=>n===[137,80,78,71,13,10,26,10][i]))mal();
+    let p=8,dim=null,datos=false,fin=false;
+    while(p+12<=b.length){
+      const n=v.getUint32(p),tipo=texto(p+4,4);if(p+12+n>b.length)mal();
+      if(!dim&&tipo!=='IHDR')mal();
+      if(tipo==='IHDR'){
+        if(dim||n!==13)mal();
+        dim=dimensionesArte(v.getUint32(p+8),v.getUint32(p+12));
+        const profundidad=b[p+16],color=b[p+17];
+        if(!({0:[1,2,4,8,16],2:[8,16],3:[1,2,4,8],4:[8,16],6:[8,16]})[color]?.includes(profundidad)||b[p+18]!==0||b[p+19]!==0||b[p+20]>1)mal();
+      }else if(tipo==='IDAT'){if(n)datos=true;}
+      else if(tipo==='acTL')falloArte('Utiliza una ilustración estática, sin animación.');
+      else if(tipo==='IEND'){if(n!==0||p+12!==b.length)mal();fin=true;break;}
+      p+=12+n;
+    }
+    if(!dim||!datos||!fin)mal();return dim;
+  }
+  if(mime==='image/jpeg'){
+    if(b.length<30||b[0]!==255||b[1]!==216||b[b.length-2]!==255||b[b.length-1]!==217)mal();
+    let p=2,dim=null;
+    while(p+4<=b.length){
+      if(b[p++]!==255)mal();while(b[p]===255)p++;
+      const marca=b[p++];if(marca===217||marca===0)mal();
+      if(marca===1||(marca>=208&&marca<=215))continue;
+      const n=v.getUint16(p);if(n<2||p+n>b.length)mal();
+      if([192,193,194].includes(marca)){
+        if(dim||n<11||b[p+2]!==8||![1,3,4].includes(b[p+7])||n!==8+3*b[p+7])mal();
+        dim=dimensionesArte(v.getUint16(p+5),v.getUint16(p+3));
+      }
+      if(marca===218){if(!dim||n<6||p+n>=b.length-2)mal();return dim;}
+      p+=n;
+    }
+    mal();
+  }
+  if(mime==='image/webp'){
+    if(b.length<26||texto(0,4)!=='RIFF'||texto(8,4)!=='WEBP'||v.getUint32(4,true)!==b.length-8)mal();
+    let p=12,dim=null,lienzo=null;
+    const u24=i=>b[i]|b[i+1]<<8|b[i+2]<<16;
+    while(p+8<=b.length){
+      const tipo=texto(p,4),n=v.getUint32(p+4,true),q=p+8,fin=q+n+(n%2);if(fin>b.length)mal();
+      if(tipo==='VP8X'){
+        if(n!==10||lienzo||dim||(b[q]&2))mal();
+        lienzo=dimensionesArte(u24(q+4)+1,u24(q+7)+1);
+      }else if(tipo==='VP8 '){
+        if(dim||n<11||(b[q]&1)||texto(q+3,3)!=='\x9d\x01\x2a')mal();
+        dim=dimensionesArte(v.getUint16(q+6,true)&16383,v.getUint16(q+8,true)&16383);
+      }else if(tipo==='VP8L'){
+        if(dim||n<6||b[q]!==47||(b[q+4]&224))mal();
+        const bits=v.getUint32(q+1,true);dim=dimensionesArte((bits&16383)+1,((bits>>>14)&16383)+1);
+      }else if(tipo==='ANIM'||tipo==='ANMF')falloArte('Utiliza una ilustración estática, sin animación.');
+      p=fin;
+    }
+    if(p!==b.length||!dim||(lienzo&&(lienzo.ancho!==dim.ancho||lienzo.alto!==dim.alto)))mal();return dim;
+  }
+  falloArte('Utiliza una imagen WebP, PNG o JPEG.',415);
+}
+async function prepararArte(db){
+  if(!preparacionesArte.has(db))preparacionesArte.set(db,db.batch([
+    db.prepare('CREATE TABLE IF NOT EXISTS ilustraciones (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0, hash TEXT, anterior TEXT, nombre TEXT, mime TEXT, ancho INTEGER, alto INTEGER, x REAL, y REAL, z REAL, actualizado TEXT)'),
+    // Normal conserva la tabla y las revisiones existentes, sin copiar ni sobrescribir datos.
+    db.prepare("CREATE TABLE IF NOT EXISTS ilustraciones_acabados (id TEXT NOT NULL, acabado TEXT NOT NULL CHECK(acabado IN ('foil','dorado')), activo INTEGER NOT NULL DEFAULT 0, revision INTEGER NOT NULL DEFAULT 0, hash TEXT, anterior TEXT, nombre TEXT, mime TEXT, ancho INTEGER, alto INTEGER, x REAL, y REAL, z REAL, actualizado TEXT, PRIMARY KEY(id,acabado))"),
+    db.prepare('CREATE TABLE IF NOT EXISTS imagenes (hash TEXT PRIMARY KEY, contenido BLOB NOT NULL, mime TEXT NOT NULL, creado INTEGER NOT NULL)')
+  ]).catch(e=>{preparacionesArte.delete(db);throw e;}));
+  return preparacionesArte.get(db);
+}
+async function idsArte(req,env){
+  if(!catalogosArte.has(env.ASSETS))catalogosArte.set(env.ASSETS,(async()=>{
+    const respuesta=await env.ASSETS.fetch(new Request(new URL('/art/catalogo.json',req.url)));
+    if(!respuesta.ok)falloArte('No se pudo cargar el catálogo de cartas. Intenta de nuevo.',503);
+    const datos=await respuesta.json();
+    if(datos?.version!==1||!Array.isArray(datos.cartas)||!datos.cartas.length||datos.cartas.some(c=>typeof c?.id!=='string'||!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(c.id)))
+      falloArte('El catálogo de cartas no es válido.',503);
+    return new Set(datos.cartas.map(c=>c.id));
+  })().catch(e=>{catalogosArte.delete(env.ASSETS);throw e;}));
+  return catalogosArte.get(env.ASSETS);
+}
+function arteVacio(id,acabado='normal'){
+  return {id,acabado,activo:acabado==='normal'?1:0,revision:0,hash:null,anterior:null,nombre:null,mime:null,ancho:null,alto:null,x:null,y:null,z:null,actualizado:null};
+}
+function registroArte(registro,normal,privado){
+  const activo=registro.acabado==='normal'||!!registro.activo;
+  const heredada=activo&&registro.acabado!=='normal'&&!registro.hash;
+  const imagen=heredada?(normal||arteVacio(registro.id)):registro;
+  const salida={id:registro.id,acabado:registro.acabado,activo,heredada,revision:registro.revision,hash:imagen.hash,mime:imagen.mime,ancho:imagen.ancho,alto:imagen.alto,x:registro.x,y:registro.y,z:registro.z,actualizado:registro.actualizado};
+  if(privado){salida.anterior=registro.anterior;salida.nombre=imagen.nombre;}
+  return salida;
+}
+async function filasArte(db,privado,id=null){
+  // Una sola lectura produce una vista consistente de normal y sus acabados.
+  const campos='revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado',filtro=id?' WHERE id=?':'';
+  let consulta=db.prepare("SELECT id,'normal' AS acabado,1 AS activo,"+campos+' FROM ilustraciones'+filtro+' UNION ALL SELECT id,acabado,activo,'+campos+' FROM ilustraciones_acabados'+filtro);
+  if(id)consulta=consulta.bind(id,id);
+  const {results}=await consulta.all(),porCarta=new Map();
+  for(const r of results){if(!porCarta.has(r.id))porCarta.set(r.id,{normal:null,foil:null,dorado:null});porCarta.get(r.id)[r.acabado]=r;}
+  return [...porCarta].map(([id,registros])=>{
+    const variantes=Object.fromEntries(ACABADOS_ARTE.map(a=>[a,registros[a]?registroArte(registros[a],registros.normal,privado):null]));
+    const acabado=['dorado','foil'].find(a=>variantes[a]?.activo)||'normal';
+    const normal=variantes.normal||registroArte(arteVacio(id),null,privado);
+    // El panel anterior sólo edita normal: no darle la revisión de otro acabado.
+    const plana=privado?normal:(variantes[acabado]||normal);
+    return {...plana,acabado,variantes};
+  }).sort((a,b)=>a.id.localeCompare(b.id));
+}
+async function apiArte(req,env){
+  const u=new URL(req.url),ruta=u.pathname.slice('/api/arte/'.length),db=env.SFX_DB;
+  if(!db||!env.SFX_ADMIN_HASH||!env.SFX_SESSION_KEY)return json({error:'El estudio privado está pendiente de conectar con Cloudflare.'},503);
+  if(!['GET','HEAD'].includes(req.method)&&req.headers.get('origin')!==u.origin)return json({error:'Origen no autorizado.'},403);
+  await prepararArte(db);
+  if(req.method==='GET'&&ruta==='catalogo'){
+    return json({cartas:await filasArte(db,false)});
+  }
+  if(['GET','HEAD'].includes(req.method)&&/^imagen\/[a-f0-9]{64}$/.test(ruta)){
+    const hash=ruta.slice(7),fila=await db.prepare('SELECT contenido,mime FROM imagenes WHERE hash=?').bind(hash).first();
+    if(!fila)return json({error:'Ilustración no encontrada.'},404);
+    const b=new Uint8Array(fila.contenido),headers={'Content-Type':fila.mime,'X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=31536000, immutable','Content-Length':String(b.length),ETag:'"'+hash+'"','Content-Security-Policy':"default-src 'none'; sandbox"};
+    if(req.headers.get('if-none-match')===headers.ETag)return new Response(null,{status:304,headers});
+    return new Response(req.method==='HEAD'?null:b,{headers});
+  }
+  if(!await autenticado(req,env))return json({error:'Inicia sesión para administrar las ilustraciones.'},401);
+  if(req.method==='GET'&&ruta==='privado'){
+    return json({cartas:await filasArte(db,true),entorno:env.CF_PAGES_BRANCH==='gh-pages'?'produccion':'beta'});
+  }
+  if(ruta.startsWith('carta/')){
+    const partes=ruta.slice(6).split('/'),id=partes[0],acabado=partes[1]||'normal';
+    if(partes.length>2||!ACABADOS_ARTE.includes(acabado))return json({error:'Acabado desconocido.'},404);
+    if(!(await idsArte(req,env)).has(id))return json({error:'Carta desconocida.'},404);
+    if(!['PUT','PATCH','DELETE'].includes(req.method))return json({error:'Método no permitido.'},405);
+    const rev=req.headers.get('if-match');if(!/^\d{1,9}$/.test(rev||''))return json({error:'Recarga el catálogo antes de guardar.'},428);
+    let actual;
+    if(acabado==='normal'){
+      await db.prepare('INSERT OR IGNORE INTO ilustraciones(id) VALUES (?)').bind(id).run();
+      actual=await db.prepare('SELECT * FROM ilustraciones WHERE id=?').bind(id).first();
+    }else actual=await db.prepare('SELECT * FROM ilustraciones_acabados WHERE id=? AND acabado=?').bind(id,acabado).first()||arteVacio(id,acabado);
+    if(actual.revision!==Number(rev))return json({error:'Esta carta cambió en otra ventana. Recarga y revisa la nueva versión.'},409);
+    let {hash,anterior,nombre,mime,ancho,alto,x,y,z}=actual;
+    if(req.method==='PUT'){
+      mime=(req.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
+      if(!['image/webp','image/png','image/jpeg'].includes(mime))falloArte('Utiliza una imagen WebP, PNG o JPEG.',415);
+      ({x,y,z}=encuadreArte(JSON.parse(req.headers.get('x-arte-encuadre')||'null')));
+      const b=await cuerpo(req,MAXIMO_ARTE);({ancho,alto}=validarImagenArte(b,mime));hash=await sha(b);anterior=actual.hash||actual.anterior;
+      nombre=decodeURIComponent(req.headers.get('x-arte-nombre')||'Ilustración').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,100)||'Ilustración';
+      await db.prepare('INSERT OR IGNORE INTO imagenes(hash,contenido,mime,creado) VALUES (?,?,?,?)').bind(hash,b.buffer,mime,Date.now()).run();
+    }else if(req.method==='PATCH'){
+      ({x,y,z}=encuadreArte(JSON.parse(new TextDecoder().decode(await cuerpo(req,1000)))));
+    }else{
+      anterior=actual.hash||actual.anterior;hash=null;nombre=null;mime=null;ancho=null;alto=null;x=null;y=null;z=null;
+    }
+    const actualizado=new Date().toISOString();
+    let cambio;
+    if(acabado==='normal')cambio=await db.prepare('UPDATE ilustraciones SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,revision=revision+1,actualizado=? WHERE id=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado,id,Number(rev)).run();
+    else{
+      // La variante sólo aparece tras una escritura válida. INSERT y CAS son atómicos.
+      const cambios=await db.batch([
+        db.prepare('INSERT OR IGNORE INTO ilustraciones_acabados(id,acabado) VALUES (?,?)').bind(id,acabado),
+        db.prepare('UPDATE ilustraciones_acabados SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,activo=?,revision=revision+1,actualizado=? WHERE id=? AND acabado=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,req.method==='DELETE'?0:1,actualizado,id,acabado,Number(rev))
+      ]);cambio=cambios[1];
+    }
+    if(cambio.meta.changes!==1)return json({error:'Otra sesión guardó primero. Recarga el estudio.'},409);
+    // Guarda la imagen anterior y respeta las partidas abiertas durante 24 horas.
+    await db.prepare('DELETE FROM imagenes WHERE creado<? AND hash NOT IN (SELECT hash FROM ilustraciones WHERE hash IS NOT NULL UNION SELECT anterior FROM ilustraciones WHERE anterior IS NOT NULL UNION SELECT hash FROM ilustraciones_acabados WHERE hash IS NOT NULL UNION SELECT anterior FROM ilustraciones_acabados WHERE anterior IS NOT NULL)').bind(Date.now()-86400000).run();
+    const [carta]=await filasArte(db,true,id),variante=carta.variantes[acabado];
+    return json({ok:true,...variante,variante,carta});
+  }
+  return json({error:'Ruta no encontrada.'},404);
+}
 export default {
   async fetch(req,env){
-    if(!new URL(req.url).pathname.startsWith('/api/sfx/'))return env.ASSETS.fetch(req);
-    try{return await api(req,env);}catch(e){return json({error:e.status?e.message:e instanceof SyntaxError?'Solicitud no válida.':e.message?.startsWith('D1_')?'No se pudo guardar. Intenta de nuevo.':e.message||'No se pudo completar la solicitud.'},e.status||400);}
+    const ruta=new URL(req.url).pathname,esArte=ruta.startsWith('/api/arte/');
+    if(!esArte&&!ruta.startsWith('/api/sfx/'))return env.ASSETS.fetch(req);
+    try{return await (esArte?apiArte(req,env):api(req,env));}catch(e){return json({error:e.status?e.message:e instanceof SyntaxError?'Solicitud no válida.':e.message?.startsWith('D1_')?'No se pudo guardar. Intenta de nuevo.':e.message||'No se pudo completar la solicitud.'},e.status||400);}
   }
 };
