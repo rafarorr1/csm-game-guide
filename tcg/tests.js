@@ -3115,15 +3115,27 @@ PRUEBAS.suite('regresiones', async t => {
   {
     await T.startMatch('fender','adreida',{volado:false,first:0});
     await sleep(700);
-    T.P(0).pd = 9; T.recalc(); T.render(); await sleep(150);
+    T.P(0).pd = 9; T.P(0).hand = ['eric']; T.recalc(); T.render(); await sleep(150);
 
-    const antes = T.P(0).hand.length;
-    const carta = $1('#hand .card.playable');
-    t.check(!!carta, 'no hay ninguna carta jugable con 9 PD');
-    carta.click();
-    // se espera al hecho, no a un reloj: con las animaciones activas tarda más
-    for (let i=0; i<40 && T.P(0).hand.length >= antes; i++) await sleep(100);
-    t.check(T.P(0).hand.length < antes, 'pulsar una carta jugable debería jugarla');
+    // Salir de la mano sucede antes de la animación y de entrar al campo.
+    // Esperar sólo ese cambio dejaba a Eric aterrizar en el escenario siguiente,
+    // donde su Sacrificio detenía la prueba de infección pidiendo una respuesta.
+    const jugar = window.playFromHand;
+    let iniciar, limite;
+    const jugada = new Promise(resolver => { iniciar = resolver; });
+    window.playFromHand = (...args) => { const pendiente = jugar(...args); iniciar(pendiente); return pendiente; };
+    try {
+      const carta = $1('#hand .card.playable');
+      t.check(!!carta, 'Eric debería poder jugarse con 9 PD');
+      carta.click();
+      await Promise.race([jugada, new Promise((_, rechazar) => {
+        limite = setTimeout(() => rechazar(new FalloDePrueba('La carta no terminó de entrar al campo')), 8000);
+      })]);
+      t.check(!T.P(0).hand.includes('eric') && T.P(0).field.some(u=>u.card.id==='eric'),
+        'el clic debe completar la entrada de Eric antes de empezar otro escenario');
+    } finally {
+      clearTimeout(limite); window.playFromHand = jugar;
+    }
     t.nota('las cartas se juegan pulsándolas');
   }
 
