@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 232 · Campaña primero y botones del mismo color
+
+- Campaña pasa al primer lugar y Jugar contra el Domo al segundo, seguidos de
+  Online y Extras. Los cuatro comparten el fondo borgoña y el borde de Campaña.
+- Conserva retratos, acciones y transiciones en escritorio y móvil. Extras
+  mantiene su tamaño compacto y la opción de borrar el progreso.
+- Publicación sólo beta; producción permanece en 229.
+
 ### Sin numerar · build 231 · Empezar desde cero desde Extras
 
 - Extras incorpora «Borrar mi progreso», con confirmación explícita y Cancelar

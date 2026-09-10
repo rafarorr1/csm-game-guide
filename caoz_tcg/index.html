@@ -2151,9 +2151,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 /* Tres destinos principales y una puerta discreta al resto del juego. */
 #menu .menucol{display:flex;flex-direction:column}
 #menu .menucol #mPlay,#menu .menucol #mCampana,#menu .menucol #mOnline{min-height:54px;font:700 19px/1.2 var(--serif);letter-spacing:1px}
-#menu .menucol #mCampana{background:linear-gradient(115deg,#421b1aee,#642925ee,#341918ee);border-color:#b38454a0;color:#f4ddbc}
-#menu .menucol #mOnline{background:linear-gradient(115deg,#24323aee,#354b50ee,#1b292fee);border-color:#a8b3a66b;color:#e6eadc}
-#menu .menucol #mExtras{min-height:42px;padding:9px 16px;margin-top:4px;font-size:14px;letter-spacing:2px;background:#160f0b88;border-color:#b3845440;box-shadow:none}
+#menu .menucol #mCampana,#menu .menucol #mPlay,#menu .menucol #mOnline,#menu .menucol #mExtras{background:linear-gradient(115deg,#421b1aee,#642925ee,#341918ee);border-color:#b38454a0;color:#f4ddbc;text-shadow:none;box-shadow:inset 0 1px 0 #ffedc31c,0 3px 0 #090807,0 6px 14px #0005}
+#menu .menucol #mExtras{min-height:42px;padding:9px 16px;margin-top:4px;font-size:14px;letter-spacing:2px}
 #mExtras span{position:absolute;right:18px;font-size:21px;line-height:16px;color:#c4a36d}
 #extras{align-items:center;justify-content:center;gap:16px;text-align:center;padding:24px}
 #extras h2{margin:0;color:#f1d298;font:700 38px/1.15 var(--serif);letter-spacing:2px}
@@ -2189,8 +2188,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
   <div class="sub">Dos jugadores entran al Domo. Cada uno lleva a un Protagonista como Líder y un mazo de 40 cartas.
     Gana quien reclame el alma del rival… o el Deseo.</div>
   <div class="menucol">
-    <button class="btn principal gold" id="mPlay">Jugar contra el Domo</button>
     <button class="btn campana" id="mCampana" aria-haspopup="dialog" aria-label="Campaña"><span class="campanaEtiqueta">Campaña</span></button>
+    <button class="btn" id="mPlay">Jugar contra el Domo</button>
     <button class="btn online" id="mOnline" aria-haspopup="dialog">Online</button>
     <button class="btn extras" id="mExtras" aria-controls="extras">Extras <span aria-hidden="true">›</span></button>
   </div>
@@ -2326,8 +2325,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=231"></script>
-<script src="final.js?b=231"></script>
+<script src="motor.js?b=232"></script>
+<script src="final.js?b=232"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2345,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:231, fecha:'2026-09-09'};
+const BUILD = {n:232, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;

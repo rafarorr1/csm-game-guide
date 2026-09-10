@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 231 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 232 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,12 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 232 coloca Campaña antes de Jugar contra el Domo en ambas interfaces.
+Los cuatro botones principales comparten el fondo borgoña de Campaña, borde,
+texto y sombra. Se elimina la clase gold de Jugar y se sobrescribe el estilo
+histórico del primer botón de escritorio para que no vuelva a pintarse oro.
+Sin cambios a acciones ni persistencia. Sólo beta; producción conserva 229.
 
 Build 231 añade `mBorrarProgreso` a Extras en ambas pantallas. El diálogo
 compartido `confirmarBorradoProgreso()` vive en final-core.js. Sólo el botón
