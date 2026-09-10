@@ -7,18 +7,22 @@ import worker from './_worker.js';
 
 function baseLocal(){
   const sqlite=new DatabaseSync(':memory:');
-  let barreraLecturas=null;
+  let barreraLecturas=null,colaBatch=Promise.resolve();
   class Consulta{
     constructor(sql){this.sql=sql;this.args=[];}
     bind(...args){this.args=args.map(v=>v instanceof ArrayBuffer?new Uint8Array(v):v);return this;}
-    async first(){const fila=sqlite.prepare(this.sql).get(...this.args)||null;if(barreraLecturas&&this.sql==='SELECT * FROM ilustraciones WHERE id=?')await barreraLecturas();return fila;}
+    async first(){const fila=sqlite.prepare(this.sql).get(...this.args)||null;if(barreraLecturas&&/^SELECT \* FROM ilustraciones(?:_acabados)? WHERE id=\?/.test(this.sql))await barreraLecturas();return fila;}
     async all(){return {results:sqlite.prepare(this.sql).all(...this.args)};}
     async run(){const r=sqlite.prepare(this.sql).run(...this.args);return {meta:{changes:r.changes}};}
   }
   return {sqlite,coincidirLecturas(){
     let cantidad=0,resolver;const ambas=new Promise(r=>resolver=r);
     barreraLecturas=async()=>{if(++cantidad===2){barreraLecturas=null;resolver();}await ambas;};
-  },binding:{prepare:s=>new Consulta(s),async batch(cmds){sqlite.exec('BEGIN');try{const r=[];for(const c of cmds)r.push(await c.run());sqlite.exec('COMMIT');return r;}catch(e){sqlite.exec('ROLLBACK');throw e;}}}};
+  },binding:{prepare:s=>new Consulta(s),batch(cmds){
+    // D1 ejecuta cada batch como una transacción indivisible; SQLite local mantiene esa cola.
+    const siguiente=colaBatch.then(async()=>{sqlite.exec('BEGIN');try{const r=[];for(const c of cmds)r.push(await c.run());sqlite.exec('COMMIT');return r;}catch(e){sqlite.exec('ROLLBACK');throw e;}});
+    colaBatch=siguiente.catch(()=>{});return siguiente;
+  }}};
 }
 const {sqlite:db,binding,coincidirLecturas}=baseLocal(),clave=randomBytes(24).toString('hex'),hash=v=>createHash('sha256').update(v).digest('hex');
 const catalogo=readFileSync(new URL('./art/catalogo.json',import.meta.url)),rutas=[];
@@ -96,6 +100,87 @@ assert.equal((await llamar('carta/lucius','DELETE',undefined,{'If-Match':'1'})).
 assert.equal(db.prepare('SELECT x FROM ilustraciones WHERE id=?').get('lucius').x,null);
 assert.equal(rutas.filter(r=>r==='/art/catalogo.json').length,1,'el catálogo se valida una vez por binding de assets');
 assert.equal(await (await llamar('/estudio')).text(),'Juego estático');
+
+// Acabados: una vista previa/solicitud inválida no crea foil o dorado disponibles.
+const recorte={x:18,y:22,z:120},rutaAcabado=a=>'carta/machete/'+a;
+async function editarAcabado(a,metodo,rev,cuerpo=recorte,mime='image/webp'){
+  const respuesta=await llamar(rutaAcabado(a),metodo,metodo==='PATCH'?JSON.stringify(cuerpo):metodo==='DELETE'?undefined:cuerpo,metodo==='PUT'?put(rev,mime,recorte):{'If-Match':String(rev)});
+  const datos=await respuesta.json();return {status:respuesta.status,...datos};
+}
+const filaPublica=async id=>(await (await llamar('catalogo','GET',undefined,{Cookie:''})).json()).cartas.find(c=>c.id===id);
+const filaPrivada=async id=>(await (await llamar('privado')).json()).cartas.find(c=>c.id===id);
+assert.equal((await llamar(rutaAcabado('bronce'),'PATCH',JSON.stringify(recorte),{'If-Match':'0'})).status,404);
+assert.equal((await llamar(rutaAcabado('foil/extra'),'DELETE',undefined,{'If-Match':'0'})).status,404);
+assert.equal((await llamar(rutaAcabado('foil'),'PATCH',JSON.stringify(recorte),{'If-Match':'0',Cookie:''})).status,401);
+assert.equal((await llamar(rutaAcabado('foil'),'PATCH',JSON.stringify(recorte),{'If-Match':'0',Origin:'https://otro.invalid'})).status,403);
+assert.equal((await llamar(rutaAcabado('foil'),'PATCH',JSON.stringify(recorte))).status,428);
+assert.equal((await editarAcabado('foil','PUT',0,'<svg/>','image/svg+xml')).status,415);
+assert.equal((await editarAcabado('dorado','PATCH',0,{x:1,y:1,z:900})).status,400);
+assert.equal(await filaPublica('machete'),undefined);
+assert.equal(db.prepare('SELECT COUNT(*) AS n FROM ilustraciones_acabados').get().n,0);
+let variante=await editarAcabado('foil','PATCH',0);assert.equal(variante.status,200);assert.equal(variante.revision,1);assert.equal(variante.activo,true);assert.equal(variante.heredada,true);assert.equal(variante.hash,null);
+assert.deepEqual(variante.variante,variante.carta.variantes.foil);assert.equal(variante.carta.variantes.normal,null);assert.equal(variante.carta.variantes.dorado,null);
+assert.equal(variante.carta.acabado,'foil');assert.equal(variante.carta.revision,0,'El plano privado sigue mostrando la revisión normal');
+assert.equal((await filaPublica('machete')).acabado,'foil');
+variante=await editarAcabado('dorado','PATCH',0,{x:25,y:35,z:145});assert.equal(variante.status,200);assert.equal(variante.carta.acabado,'dorado');
+assert.equal(variante.carta.variantes.foil.revision,1);assert.equal((await filaPublica('machete')).z,145);
+// Guardar normal cambia las imágenes heredadas, nunca los encuadres propios del acabado.
+variante=await editarAcabado('normal','PUT',0,png,'image/png');assert.equal(variante.status,200);assert.equal(variante.carta.variantes.foil.hash,hash(png));assert.equal(variante.carta.variantes.dorado.hash,hash(png));
+assert.equal(variante.carta.variantes.foil.z,120);assert.equal(variante.carta.variantes.dorado.z,145);
+assert.equal((await filaPublica('machete')).hash,hash(png));
+variante=await editarAcabado('foil','PUT',1,webp);assert.equal(variante.status,200);assert.equal(variante.heredada,false);assert.equal(variante.hash,hash(webp));assert.equal(variante.carta.acabado,'dorado');
+variante=await editarAcabado('foil','PATCH',2,{x:33,y:44,z:160});assert.equal(variante.status,200);assert.equal(variante.hash,hash(webp),'PATCH no sustituye la imagen propia por normal');
+variante=await editarAcabado('normal','PUT',1,jpg,'image/jpeg');assert.equal(variante.status,200);assert.equal(variante.carta.hash,hash(jpg));
+assert.equal(variante.carta.variantes.foil.hash,hash(webp));assert.equal(variante.carta.variantes.dorado.hash,hash(jpg));
+assert.equal((await filaPublica('machete')).mime,'image/jpeg');
+variante=await editarAcabado('dorado','DELETE',1);assert.equal(variante.status,200);assert.equal(variante.revision,2);assert.equal(variante.activo,false);assert.equal(variante.heredada,false);
+for(const k of ['hash','mime','ancho','alto','x','y','z'])assert.equal(variante[k],null);
+let seleccionada=await filaPublica('machete');assert.equal(seleccionada.acabado,'foil');assert.equal(seleccionada.hash,hash(webp));assert.equal(seleccionada.z,160);
+assert.equal((await filaPrivada('machete')).hash,hash(jpg),'El cliente233 no confunde el ganador con el original normal');
+assert.equal((await editarAcabado('dorado','PATCH',0)).status,409,'Un tombstone nunca reinicia la revisión');
+variante=await editarAcabado('dorado','PATCH',2);assert.equal(variante.status,200);assert.equal(variante.activo,true);assert.equal(variante.revision,3);assert.equal(variante.hash,hash(jpg));
+assert.equal((await editarAcabado('dorado','DELETE',3)).status,200);
+variante=await editarAcabado('foil','DELETE',3);assert.equal(variante.status,200);assert.equal(variante.anterior,hash(webp));assert.equal(variante.carta.acabado,'normal');
+seleccionada=await filaPublica('machete');assert.equal(seleccionada.hash,hash(jpg));assert.equal(seleccionada.variantes.foil.activo,false);assert.equal(seleccionada.variantes.dorado.activo,false);
+variante=await editarAcabado('normal','DELETE',2);assert.equal(variante.status,200);assert.equal(variante.activo,true);assert.equal(variante.revision,3);assert.equal((await filaPublica('machete')).hash,null);
+// Dos escrituras al mismo acabado compiten; acabados distintos pueden guardarse a la vez.
+coincidirLecturas();const mismas=await Promise.all([42,58].map(x=>editarAcabado('foil','PATCH',4,{...recorte,x})));assert.deepEqual(mismas.map(r=>r.status).sort(),[200,409]);
+coincidirLecturas();const separadas=await Promise.all([editarAcabado('foil','PATCH',5),editarAcabado('dorado','PATCH',4)]);assert.deepEqual(separadas.map(r=>r.status),[200,200]);
+seleccionada=await filaPublica('machete');assert.equal(seleccionada.acabado,'dorado');assert.equal(seleccionada.variantes.foil.revision,6);assert.equal(seleccionada.variantes.dorado.revision,5);assert.equal(seleccionada.variantes.normal.revision,3);
+for(const v of Object.values(seleccionada.variantes)){assert(!('anterior' in v)&&!('nombre' in v),'Los metadatos privados tampoco se filtran dentro de variantes');}
+// La limpieza respeta archivos compartidos y anteriores de cualquier acabado.
+assert.equal((await editarAcabado('foil','PUT',6,webp)).status,200);
+assert.equal((await editarAcabado('dorado','PUT',5,webp)).status,200);
+db.prepare('UPDATE imagenes SET creado=?').run(Date.now()-172800000);
+assert.equal((await editarAcabado('foil','PUT',7,png,'image/png')).status,200);
+assert.equal((await editarAcabado('foil','PUT',8,jpg,'image/jpeg')).status,200);
+assert.equal((await llamar('imagen/'+hash(webp),'HEAD',undefined,{Cookie:''})).status,200,'Dorado mantiene la imagen que foil dejó de referenciar');
+assert.equal((await editarAcabado('dorado','DELETE',6)).status,200);
+assert.equal((await llamar('imagen/'+hash(webp),'HEAD',undefined,{Cookie:''})).status,200,'La imagen anterior de dorado se conserva');
+assert.equal((await editarAcabado('dorado','PUT',7,png,'image/png')).status,200);
+assert.equal((await editarAcabado('dorado','PUT',8,jpg,'image/jpeg')).status,200);
+assert.equal((await llamar('imagen/'+hash(webp),'HEAD',undefined,{Cookie:''})).status,404,'Un archivo viejo ya sin referencias sí se retira');
+assert.equal((await llamar('imagen/'+hash(png),'HEAD',undefined,{Cookie:''})).status,200);
+// Restaurar normal no borra un acabado activo; una herencia sin imagen vuelve al símbolo.
+assert.equal((await llamar('carta/matildus/normal','PUT',png,put(0,'image/png'))).status,200);
+assert.equal((await llamar('carta/matildus/foil','PATCH',JSON.stringify(recorte),{'If-Match':'0'})).status,200);
+assert.equal((await llamar('carta/matildus/normal','DELETE',undefined,{'If-Match':'1'})).status,200);
+const sinBase=await filaPublica('matildus');assert.equal(sinBase.acabado,'foil');assert.equal(sinBase.hash,null);assert.equal(sinBase.heredada,true);assert.equal(sinBase.x,18);assert.equal(sinBase.variantes.foil.revision,1);
+assert.equal(JSON.stringify(db.prepare('SELECT * FROM sonidos').all()),sonidosAntes,'Los acabados no modifican SFX');
+
+// Una base existente233 se interpreta como normal sin reescribir un solo valor.
+const antigua=baseLocal();antigua.sqlite.exec('CREATE TABLE ilustraciones (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0, hash TEXT, anterior TEXT, nombre TEXT, mime TEXT, ancho INTEGER, alto INTEGER, x REAL, y REAL, z REAL, actualizado TEXT); CREATE TABLE imagenes (hash TEXT PRIMARY KEY, contenido BLOB NOT NULL, mime TEXT NOT NULL, creado INTEGER NOT NULL)');
+antigua.sqlite.prepare('INSERT INTO ilustraciones VALUES(?,?,?,?,?,?,?,?,?,?,?,?)').run('augusto',17,hash(png),hash(jpg),'Archivo histórico','image/png',192,192,24.5,70,166,'2026-09-09T10:00:00.000Z');
+antigua.sqlite.prepare('INSERT INTO imagenes VALUES(?,?,?,?)').run(hash(png),png,'image/png',1);
+const historico=JSON.stringify(antigua.sqlite.prepare('SELECT * FROM ilustraciones').all()),envAntiguo={...env,SFX_DB:antigua.binding};
+const migrado=(await (await llamar('privado','GET',undefined,{},envAntiguo)).json()).cartas[0];
+assert.equal(migrado.acabado,'normal');assert.equal(migrado.revision,17);assert.equal(migrado.hash,hash(png));assert.equal(migrado.nombre,'Archivo histórico');assert.equal(migrado.variantes.normal.anterior,hash(jpg));assert.equal(migrado.variantes.foil,null);assert.equal(migrado.variantes.dorado,null);
+assert.equal(JSON.stringify(antigua.sqlite.prepare('SELECT * FROM ilustraciones').all()),historico);
+assert.equal((await llamar('imagen/'+hash(png),'GET',undefined,{Cookie:''},envAntiguo)).status,200);
+assert.equal((await llamar('carta/augusto','PATCH',JSON.stringify(recorte),{'If-Match':'17'},envAntiguo)).status,200,'La ruta histórica conserva revisión y edición normal');
+assert.equal((await llamar('carta/augusto/normal','PATCH',JSON.stringify(recorte),{'If-Match':'17'},envAntiguo)).status,409,'Las dos rutas comparten CAS normal');
+assert.equal((await llamar('carta/augusto/normal','PATCH',JSON.stringify(recorte),{'If-Match':'18'},envAntiguo)).status,200);
+antigua.sqlite.close();
 // La caché de preparación no puede saltarse tablas ni filtrar filas a otro entorno.
 const otra=baseLocal(),produccion={...env,SFX_DB:otra.binding,SFX_SESSION_KEY:randomBytes(32).toString('hex'),CF_PAGES_BRANCH:'gh-pages'};
 assert.deepEqual((await (await llamar('catalogo','GET',undefined,{},produccion)).json()).cartas,[]);
@@ -107,4 +192,4 @@ cookie='';assert.equal((await llamar('privado')).status,401);
 assert.equal((await llamar('catalogo')).status,200);
 assert.deepEqual(readFileSync(new URL('./art/lider_adreida.webp',import.meta.url)),webp,'el original permanece intacto');
 otra.sqlite.close();db.close();
-console.log('Backend de ilustraciones: sesión compartida, CSRF, catálogo real, formatos, dimensiones, recorte, CAS, restauración, caché pública y aislamiento SFX/entornos en verde.');
+console.log('Backend de ilustraciones: acceso, imágenes, migración normal, prioridad dorado/foil, herencia, CAS por acabado, restauración, limpieza compartida y aislamiento SFX/entornos en verde.');

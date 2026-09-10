@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 233 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 234 (beta; producción 229, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,18 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 234 añade versiones Normal, Foil y Foil dorado al estudio y al juego.
+La prioridad visual es Dorado → Foil → Normal, independiente de la rareza
+de reglas. Conserva los registros existentes como Normal, sin reescribirlos.
+Cada acabado admite imagen propia o herencia de la imagen Normal con encuadre
+independiente. Retirar un acabado conserva su revisión y vuelve al siguiente.
+El worker mantiene autenticación y revisiones por variante; la limpieza de
+imágenes respeta referencias de todas ellas. Ver ILUSTRACIONES.md para el
+contrato compatible y la diferencia entre catálogo público y privado.
+acabados.css comparte marcos y reflejos entre estudio y juego. Se incluye en
+la precarga de la PWA y en la comprobación byte a byte de publicación.
+Publicar sólo beta; producción conserva 229. No hacer merge ni push a main.
 
 Build 233 reemplaza el editor local por estudio.html/js/css, con sesión
 compartida con sonidos y tablas ilustraciones/imagenes en el binding SFX_DB
@@ -522,7 +534,7 @@ C('horton',{n:'Sir Horton', t:'personaje', c:3, a:4, h:4, tr:['Humano','Paladín
 ```
 
 Campos comunes: `n` nombre, `t` tipo (`personaje|hechizo|trampa|objeto|lugar`), `c` coste,
-`a`/`h` ATQ/PV, `tr` tribus, `r` rareza (2 = foil), `art` emoji, `x` texto (HTML),
+`a`/`h` ATQ/PV, `tr` tribus, `r` rareza (2 = legendaria; el acabado se administra aparte), `art` emoji, `x` texto (HTML),
 `sub` subtipos de Hechizo (`fuego|fe|engano|cancion|contrato|rapido`), `keys` palabras clave
 (`prisa|provocar|vuelo|sigilo|arquero|regeneracion|sinhonor`), `set:'cajon'` (fuera de los
 mazos), `token:true` (fichas). Hooks async `(g, s, u, ts)`: `enter`, `die`, `onStart`,

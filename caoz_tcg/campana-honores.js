@@ -68,6 +68,7 @@
   };
   window.campanaCartaPitagoras=function(lado){
     const carta=cartaDeLiderVS('adreida',lado);carta.classList.add('cartaPitagoras');
+    window.CAOZ_ARTE?.acabar(carta,'lider_adreida');
     carta.querySelectorAll('.marcoDibujo,.retratoPitagoras').forEach(n=>n.remove());
     const arte=document.createElement('img');arte.className='retratoPitagoras';arte.alt='Pitágoras, el Editor';
     if(typeof retratoPitagoras==='function')arte.src=retratoPitagoras();carta.prepend(arte);
@@ -78,6 +79,7 @@
   };
   window.campanaVestirPitagoras=function(nodo){
     if(!nodo)return;nodo.classList.add('identidadPitagoras');
+    window.CAOZ_ARTE?.acabar(nodo,'lider_adreida');
     // Cada pantalla conserva su marco, cifras y zonas pulsables.
     nodo.querySelectorAll('.marcoDibujo,.lrostro,.retratoPitagoras').forEach(n=>n.remove());
     const retrato=document.createElement('img');retrato.className='retratoPitagoras';retrato.alt='Pitágoras, el Editor';

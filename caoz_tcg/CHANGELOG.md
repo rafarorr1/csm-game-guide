@@ -1,5 +1,25 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 234 · Normal, Foil y Foil dorado
+
+- Tres versiones por carta en el estudio: imagen propia o ilustración Normal
+  compartida, con encuadres independientes y vista previa antes de guardar.
+  El selector muestra la versión en juego y las disponibles.
+- El juego usa automáticamente Dorado → Foil → Normal. Retirar una versión
+  vuelve a la siguiente sin perder las demás. Las ilustraciones anteriores
+  quedan en Normal; las revisiones impiden sobrescribir otra sesión.
+- Acabados compartidos entre estudio, escritorio y móvil: Normal sin reflejo,
+  Foil iridiscente y Foil dorado con marco metálico. La estrella de rareza
+  conserva su significado y no activa el brillo por sí misma.
+- Catálogos compatibles con la versión anterior, sin cambiar reglas ni mazos.
+  La caché pública conserva los acabados; el panel privado sigue fuera de ella.
+- En memoria de Pitágoras, el acabado se congela por ronda y sólo aparece en
+  el frente revelado: los dorsos no dan pistas sobre la identidad de la carta.
+- Pruebas de migración, herencia, prioridad, restauración y concurrencia por
+  acabado; regresión en ambas pantallas y sabotajes de prioridad, herencia,
+  rareza y limpieza. Recorridos del estudio con dos sesiones y PWA sin conexión.
+- Publicación sólo beta; producción permanece en 229.
+
 ### Sin numerar · build 233 · Estudio privado de ilustraciones por internet
 
 - Rediseña el editor con el lenguaje visual del estudio de sonidos: biblioteca

@@ -2326,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=233"></script>
-<script src="final.js?b=233"></script>
+<script src="motor.js?b=234"></script>
+<script src="final.js?b=234"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:233, fecha:'2026-09-09'};
+const BUILD = {n:234, fecha:'2026-09-10'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2439,13 +2439,13 @@ function ponerDibujo(nodo, url, enc){
 
 function ilustrarLider(d, lid){
   const cara=d.querySelector('.lface');if(!cara)return d;
-  cara.dataset.arteId='lider_'+lid;
+  cara.dataset.arteId='lider_'+lid;CAOZ_ARTE.acabar(d,'lider_'+lid);
   const enc=encuadreDe(ARTE['lider_'+lid]);if(!enc)return d;
   cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid),enc);
   return d;
 }
 function ilustrar(d, id){
-  d.dataset.arteId=id;
+  d.dataset.arteId=id;CAOZ_ARTE.acabar(d,id);
   const enc=encuadreDe(ARTE[id]),hay=enc!=null;
   d.classList.add('acomodo');d.classList.toggle('conarte',hay);d.classList.toggle('sinarte',!hay);
   if(hay)ponerDibujo(d,urlArte(id),enc);
@@ -2795,7 +2795,7 @@ function showInspectLeader(d,side){
     ${L.hab2?`<div class="txt" style="margin-top:5px">${'<b>'+L.hab2.n+':</b> '+L.hab2.d}</div>`:''}
     <div class="bigsep"></div>
     <div class="bigrow">❤️ Alma <b>${Math.max(0,p.alma)}</b> · 🔷 <b>${p.pd}/${p.pdMax}</b> · 🗝️ <b>${keys(side)}</b></div>`;
-  campanaVestirFicha(box,side);if(side===FOE&&G.campana?.jefeSecreto)campanaVestirPitagoras(box);placeInspect(d);
+  campanaVestirFicha(box,side);if(side===FOE&&G.campana?.jefeSecreto)campanaVestirPitagoras(box);CAOZ_ARTE.acabar(box,'lider_'+p.leaderId);placeInspect(d);
 }
 
 function placeInspect(d){
@@ -2812,7 +2812,7 @@ function attachInspect(d,id,u){
     box.className = 'big t-' + (CARDS[id] ? CARDS[id].t : 'personaje');
     box.innerHTML=inspectHTML(id,u);
     const art=box.querySelector('.art'),enc=encuadreDe(ARTE[id]);
-    if(art){art.dataset.arteId=id;if(enc){art.classList.add('conarte');ponerDibujo(art,urlArte(id),enc);}}
+    if(art){art.dataset.arteId=id;CAOZ_ARTE.acabar(art,id);if(enc){art.classList.add('conarte');ponerDibujo(art,urlArte(id),enc);}}
     const box2=$('#inspect'); box2.classList.add('on');
     placeInspect(d);
   };
@@ -3422,7 +3422,7 @@ function renderLeaders(){
                 && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
     const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     const enc = encuadreDe(ARTE['lider_' + p.leaderId]);
-    host.innerHTML=`<div data-arte-id="lider_${p.leaderId}" class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
+    host.innerHTML=`<div data-arte-id="lider_${p.leaderId}" data-acabado="${acabadoArte('lider_'+p.leaderId)}" class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
       enc ? ` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"` : ''}>
       ${enc ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId)}"></div>` : ''}
       <div class="lcName">${L.n}</div>
@@ -3434,6 +3434,7 @@ function renderLeaders(){
     const e=host.firstElementChild;
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
     if(!mine&&G.campana?.jefeSecreto)campanaVestirPitagoras(e);
+    if(e.matches('.liderJugador,.identidadPitagoras'))CAOZ_ARTE.acabar(e,'lider_'+p.leaderId);
     e.onmouseenter=()=>showInspectLeader(e,side);
     e.onmouseleave=()=>$('#inspect').classList.remove('on');
     e.onclick=()=>{
