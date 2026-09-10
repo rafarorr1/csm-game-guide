@@ -3007,3 +3007,12 @@ Arreglos y mejoras que no cambian cómo se juega. El detalle está en el histori
 - Arreglos del tutorial: cartas repetidas en la mano, pasos que no esperaban a que pudieras
   cumplirlos, y la lección de estrategia que se perdía si ganabas antes de llegar a ella.
 - El arnés de pruebas (`tests.js`, `?test=1`) y la publicación con freno (`publicar.sh`).
+
+
+### Sin numerar · build 238 · Encuadres por vista en el estudio
+
+La ficha horizontal ampliada heredaba el recorte vertical de la carta completa.
+Ahora el estudio previsualiza cada superficie con los constructores del juego y
+conserva sus encuadres de forma independiente para móvil, escritorio y cada acabado.
+Zoom50–300% permite dejar margen bajo el marco dorado. Se conservan imágenes,
+encuadres anteriores, revisiones concurrentes y publicaciones por destino.

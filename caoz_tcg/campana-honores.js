@@ -42,7 +42,7 @@
       }
       retrato.classList.toggle('completado',!!mazos[id]);
       retrato.title=LEADERS[id].n+' · '+(mazos[id]?'Campaña completada':'Pendiente');
-      const enc=encuadreDe(ARTE['lider_'+id])&&(window.CAOZ_ARTE?.modificado('lider_'+id)?encuadreDe(ARTE['lider_'+id]):(rostros[id]||{x:50,y:20,z:220}));let img=retrato.querySelector('img');
+      const enc=encuadreDe(ARTE['lider_'+id])&&(window.CAOZ_ARTE?.modificado('lider_'+id)?(CAOZ_ARTE.encuadre('lider_'+id,(document.getElementById('panelCerrar')?'movil_':'desktop_')+'honor')):(rostros[id]||{x:50,y:20,z:220}));let img=retrato.querySelector('img');
       if(!enc){img?.remove();continue;}
       if(!img){img=document.createElement('img');img.alt='';img.draggable=false;img.onerror=()=>{img.hidden=true;};retrato.appendChild(img);}
       const url=urlArte('lider_'+id);if(img.hidden||img.getAttribute('src')!==url){img.hidden=false;img.src=url;}

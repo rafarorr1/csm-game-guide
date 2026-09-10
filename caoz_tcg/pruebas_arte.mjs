@@ -59,7 +59,7 @@ assert.equal((await llamar('carta/augusto','PUT',png.subarray(0,png.length-5),pu
 assert.equal((await llamar('carta/augusto','PUT',jpg.subarray(0,jpg.length-2),put(0,'image/jpeg'))).status,400);
 const enorme=Buffer.from(png);enorme.writeUInt32BE(5000,16);
 assert.equal((await llamar('carta/augusto','PUT',enorme,put(0,'image/png'))).status,400);
-for(const encuadre of [{x:-1,y:50,z:100},{x:50,y:101,z:100},{x:50,y:50,z:99},{x:50,y:50,z:301},{x:'50',y:50,z:100},{x:50,y:50},{x:50,y:50,z:100,hash:'inventado'},null]){
+for(const encuadre of [{x:-1,y:50,z:100},{x:50,y:101,z:100},{x:50,y:50,z:49},{x:50,y:50,z:301},{x:'50',y:50,z:100},{x:50,y:50},{x:50,y:50,z:100,hash:'inventado'},null]){
   assert.equal((await llamar('carta/augusto','PUT',webp,put(0,'image/webp',encuadre))).status,400);
 }
 let r=await llamar('carta/augusto','PUT',webp,put(0,'image/webp',{x:31.5,y:62,z:145}));assert.equal(r.status,200);let carta=await r.json();
@@ -175,7 +175,7 @@ antigua.sqlite.prepare('INSERT INTO imagenes VALUES(?,?,?,?)').run(hash(png),png
 const historico=JSON.stringify(antigua.sqlite.prepare('SELECT * FROM ilustraciones').all()),envAntiguo={...env,SFX_DB:antigua.binding};
 const migrado=(await (await llamar('privado','GET',undefined,{},envAntiguo)).json()).cartas[0];
 assert.equal(migrado.acabado,'normal');assert.equal(migrado.revision,17);assert.equal(migrado.hash,hash(png));assert.equal(migrado.nombre,'Archivo histórico');assert.equal(migrado.variantes.normal.anterior,hash(jpg));assert.equal(migrado.variantes.foil,null);assert.equal(migrado.variantes.dorado,null);
-assert.equal(JSON.stringify(antigua.sqlite.prepare('SELECT * FROM ilustraciones').all()),historico);
+assert.equal(JSON.stringify(antigua.sqlite.prepare('SELECT * FROM ilustraciones').all().map(({vistas,...fila})=>fila)),historico);
 assert.equal((await llamar('imagen/'+hash(png),'GET',undefined,{Cookie:''},envAntiguo)).status,200);
 assert.equal((await llamar('carta/augusto','PATCH',JSON.stringify(recorte),{'If-Match':'17'},envAntiguo)).status,200,'La ruta histórica conserva revisión y edición normal');
 assert.equal((await llamar('carta/augusto/normal','PATCH',JSON.stringify(recorte),{'If-Match':'17'},envAntiguo)).status,409,'Las dos rutas comparten CAS normal');
@@ -187,6 +187,21 @@ assert.deepEqual((await (await llamar('catalogo','GET',undefined,{},produccion))
 assert.equal((await llamar('privado','GET',undefined,{},produccion)).status,401);
 assert.equal((await llamar('privado','GET',undefined,{}, {...env,CF_PAGES_BRANCH:'gh-pages'})).status,200);
 assert.equal((await (await llamar('privado','GET',undefined,{}, {...env,CF_PAGES_BRANCH:'gh-pages'})).json()).entorno,'produccion');
+// Un encuadre horizontal no puede sobreescribir el retrato completo ni otro acabado.
+let previa=(await (await llamar('privado')).json()).cartas.find(c=>c.id==='augusto');
+let rev=previa.variantes.normal.revision;
+const vistas={movil_detalle:{x:23,y:17,z:90},desktop_mano:{x:65,y:42,z:50}};
+r=await llamar('carta/augusto','PATCH',JSON.stringify({x:50,y:50,z:90,vistas}),{'If-Match':String(rev),'Content-Type':'application/json'});
+assert.equal(r.status,200);let ajustada=await r.json();assert.deepEqual(ajustada.vistas,vistas);assert.equal(ajustada.z,90);
+assert.equal((await llamar('carta/augusto','PATCH',JSON.stringify({x:50,y:50,z:100,vistas}),{'If-Match':String(rev),'Content-Type':'application/json'})).status,409);
+r=await llamar('carta/augusto','PATCH',JSON.stringify({x:52,y:50,z:80}),{'If-Match':String(++rev),'Content-Type':'application/json'});
+assert.equal(r.status,200);assert.deepEqual((await r.json()).vistas,vistas,'Un cliente anterior conserva las vistas');
+for(const incorrectas of [{desconocida:{x:50,y:50,z:90}},{movil_detalle:{x:50,y:50,z:49}},{movil_detalle:{x:50,y:50,z:90,vistas:{}}}]){
+ assert.equal((await llamar('carta/augusto','PATCH',JSON.stringify({x:50,y:50,z:90,vistas:incorrectas}),{'If-Match':String(rev+1),'Content-Type':'application/json'})).status,400);
+}
+r=await llamar('carta/augusto','PATCH',JSON.stringify({x:50,y:50,z:90,vistas:{}}),{'If-Match':String(++rev),'Content-Type':'application/json'});assert.equal(r.status,200);assert.deepEqual((await r.json()).vistas,{});
+console.log('Encuadres por vista, zoom 50–300, compatibilidad y conflicto: OK');
+
 assert.equal((await llamar('/api/sfx/sesion','DELETE')).status,200);
 cookie='';assert.equal((await llamar('privado')).status,401);
 assert.equal((await llamar('catalogo')).status,200);

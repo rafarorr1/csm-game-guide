@@ -9,6 +9,28 @@ privada del estudio de sonidos **del mismo entorno**. La beta y producción
 mantienen sus propias bases y credenciales. El diseño y las operaciones son
 independientes de las reglas del juego: aquí se cambia arte y encuadre.
 
+## Encuadres por vista · build 238
+
+El estudio ofrece previsualizaciones con los mismos constructores y CSS del juego,
+en escritorio y móvil. Cambiar de vista conserva los ajustes pendientes: cada
+superficie y acabado tiene sus propios controles horizontal, vertical y zoom.
+Las cartas incluyen mano, campo (personajes), ficha ampliada, colección, descarte,
+carta revelada y memoria. Los protagonistas incluyen selección, VS, fin de partida,
+barra de combate, ficha ampliada, campaña, ruta y retrato de logros.
+
+El zoom admite **50–300%**. Por debajo de100 la imagen se reduce dentro de su marco;
+el marco, las reglas y las cifras conservan su tamaño. «Usar encuadre base» retira
+sólo la excepción de la vista elegida. Las vistas sin excepción conservan el
+encuadre previo de esa versión, así que no se altera ningún diseño guardado.
+
+`vistas` acompaña a x/y/z como mapa opcional (p. ej. `movil_detalle`). Las tablas
+reciben una columna TEXT mediante migración aditiva. La misma revisión CAS protege
+imagen, acabado y vistas; las publicaciones incluyen el mapa en la instantánea.
+Un cliente antiguo que no envía `vistas` las conserva; DELETE las retira junto a
+esa versión. El consumidor guarda también el mapa público para abrir sin red.
+`arte-vistas.js` identifica superficies; `estudio-vista.js` funciona sólo dentro
+de un iframe de previsualización del mismo origen, sin iniciar partidas reales.
+
 ## Versiones y acabados
 
 Cada carta tiene tres versiones: **Normal**, **Foil** y **Foil dorado**. El
@@ -42,7 +64,7 @@ Seleccionar un archivo o cambiar su encuadre sólo prepara una vista previa.
 Guardar publica el reemplazo o encuadre en el entorno indicado. Las imágenes
 se convierten en el navegador a un archivo pequeño; el servidor valida también
 su formato, tamaño y dimensiones. Admite WebP, PNG y JPEG estáticos hasta
-1.500.000 bytes. El encuadre usa x/y entre 0 y 100, zoom entre 100 y 300.
+1.500.000 bytes. El encuadre usa x/y entre 0 y 100, zoom entre 50 y 300.
 Restaurar Normal original recupera la ilustración y encuadre del repositorio;
 si nunca hubo imagen original, esa versión vuelve al símbolo de la carta.
 

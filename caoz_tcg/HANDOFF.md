@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 237 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 238 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,16 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build238 añade previsualizaciones reales por superficie al estudio y zoom50–300%.
+Las vistas son independientes por dispositivo y acabado; se publican con la misma
+instantánea que la imagen. Migración aditiva de vistas en tablas de arte públicas
+y privadas; conserva revisiones, blobs y originales. Ver ILUSTRACIONES.md.
+Regresión encuadresVistas en ambas pantallas, sabotaje de selección de encuadre,
+API/CAS/migración/destinos y UI local con recarga, acabados y anchuras320–1440px.
+No se cambiaron las ilustraciones privadas del usuario ni sus publicaciones de arte.
+La entrega se valida y despliega con el publicador oficial. Conservar main intacta.
+
 
 Build237 estabiliza la prueba de clic: espera la promesa real de playFromHand
 hasta la entrada completa de Eric, no sólo su salida de la mano. Se observó el

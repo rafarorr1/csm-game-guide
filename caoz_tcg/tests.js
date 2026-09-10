@@ -1429,6 +1429,37 @@ PRUEBAS.suite('betaFinalGero',async t=>{
   }
 });
 
+PRUEBAS.suite('encuadresVistas',async t=>{
+  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,antes=localStorage.getItem(clave);
+  try{for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=encuadres-interno';document.body.append(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,plataforma=pagina==='movil.html'?'movil':'desktop';
+    try{
+      await w.cargarArte();await w.CAOZ_ARTE.refrescar();w.newGame('fender','adreida');
+      const vistas={[plataforma+'_detalle']:{x:17,y:23,z:90},[plataforma+'_campo']:{x:74,y:62,z:50}};
+      const normal={id:'augusto',revision:1,hash:null,mime:null,x:50,y:50,z:120};
+      const dorado={...normal,acabado:'dorado',activo:true,heredada:true,x:61,y:40,z:100,vistas};
+      w.fetch=async (u,op)=>String(u).includes('/api/arte/catalogo')?new w.Response(JSON.stringify({cartas:[{...dorado,variantes:{normal,foil:null,dorado}}]})):fetchAntes(u,op);
+      await w.CAOZ_ARTE.refrescar();
+      const mano=w.cardEl('augusto'),campo=w.unitEl(w.mkUnit('augusto',0)),detalle=d.createElement('div');detalle.className='big';detalle.innerHTML='<div class="art" data-arte-id="augusto"></div>';
+      d.body.append(mano,campo,detalle);await new Promise(r=>w.requestAnimationFrame(r));
+      const art=detalle.querySelector('.art');
+      t.igual(mano.style.getPropertyValue('--ex'),'61%',pagina+': mano conserva la base del acabado ganador.');
+      t.igual(campo.style.getPropertyValue('--ex'),'74%',pagina+': campo usa su propio encuadre.');
+      t.igual(campo.style.getPropertyValue('--ez'),'0.500',pagina+': campo permite reducir al 50%.');
+      t.igual(art.style.getPropertyValue('--ex'),'17%',pagina+': la ficha horizontal no hereda el recorte de la mano.');
+      t.igual(art.style.getPropertyValue('--ez'),'0.900',pagina+': ficha conserva zoom 90%.');
+      t.igual(detalle.dataset.acabado,'dorado',pagina+': el marco dorado sobrevive al cambio de superficie.');
+      const guardada=JSON.parse(w.localStorage.getItem(clave)).cartas.find(c=>c.id==='augusto');
+      t.igual(guardada.vistas[plataforma+'_detalle'].z,90,pagina+': conserva las vistas para volver sin red.');
+      t.check(!w.CAOZ_VISTAS.valido({x:50,y:50,z:49})&&w.CAOZ_VISTAS.valido({x:50,y:50,z:50}),pagina+': valida el límite de zoom.');
+      t.igual(w.CAOZ_VISTAS.identificar(art),plataforma+'_detalle',pagina+': reconoce la superficie sin etiquetas del estudio.');
+      mano.remove();campo.remove();detalle.remove();
+    }finally{w.fetch=fetchAntes;w.relojPara();f.remove();}
+  }}finally{if(antes===null)localStorage.removeItem(clave);else localStorage.setItem(clave,antes);}
+});
+
 PRUEBAS.suite('arteRemoto',async t=>{
   const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){

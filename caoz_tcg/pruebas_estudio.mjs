@@ -70,4 +70,13 @@ assert.deepEqual(carreras.map(r=>r.status).sort(),[200,409]);
 assert.equal((await req('/api/estudio/sfx/audio/'+sha(wav),'GET',undefined,{Cookie:''})).status,401);
 assert.equal(beta.db.prepare('SELECT count(*) AS n FROM accesos').get().n,0);
 assert.equal((await req('/api/estudio/sfx/estado','GET',undefined,{Cookie:cookie+'x'})).status,401);
+// Las vistas viajan con el acabado y conservan la separación entre destinos.
+const perfiles={movil_detalle:{x:14,y:22,z:90},desktop_mano:{x:60,y:45,z:50}};
+await dato('/api/estudio/arte/carta/tal/normal','PATCH',JSON.stringify({x:50,y:50,z:90,vistas:perfiles}),{'If-Match':'2'});
+const antesVistas=JSON.stringify(await dato('/api/arte/catalogo'));
+ep=await dato('/api/estudio/arte/estado');await dato('/api/estudio/arte/publicar/beta','POST',undefined,{'If-Match':ep.beta.huella});
+assert.deepEqual((await dato('/api/arte/catalogo','GET',undefined,{},eb)).cartas[0].vistas,perfiles);
+assert.equal(JSON.stringify(await dato('/api/arte/catalogo')),antesVistas);
+ep=await dato('/api/estudio/arte/estado');await dato('/api/estudio/arte/publicar/produccion','POST',undefined,{'If-Match':ep.produccion.huella});
+assert.deepEqual((await dato('/api/arte/catalogo')).cartas[0].vistas,perfiles);
 prod.db.close();beta.db.close();console.log('Estudio único: migración, borradores privados, dos destinos, acabados, CAS, volúmenes, publicación atómica y reintentos en verde.');
