@@ -5,9 +5,10 @@
   const BASE=new URL('.',location.href),CLAVE='caoz_arte_publico_v1:'+BASE.pathname;
   const HASH=/^[a-f0-9]{64}$/,MIME=new Set(['image/webp','image/png','image/jpeg']);
   const EXCLUIR='.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras';
+  let muestra=null;
   let originales={},cartas=[],carga=null,peticion=null,firma='',hayFallos=false;
   const conocido=id=>typeof id==='string'&&(Object.hasOwn(CARDS,id)||(id.startsWith('lider_')&&Object.hasOwn(LEADERS,id.slice(6))));
-  const encValido=e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.z)&&e.x>=0&&e.x<=100&&e.y>=0&&e.y<=100&&e.z>=100&&e.z<=300;
+  const encValido=e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.z)&&e.x>=0&&e.x<=100&&e.y>=0&&e.y<=100&&e.z>=50&&e.z<=300;
   function limpiarOriginales(datos){
     const limpios={};if(!datos||typeof datos!=='object'||Array.isArray(datos))return limpios;
     for(const [id,e]of Object.entries(datos))if(conocido(id)&&((typeof e==='number'&&Number.isFinite(e)&&e>=0&&e<=100)||encValido(e)))limpios[id]=e;
@@ -19,7 +20,7 @@
     if(e.hash!==null&&(!HASH.test(e.hash)||!MIME.has(e.mime)))return null;
     if(!encValido(e)&&!(e.hash===null&&e.x===null&&e.y===null&&e.z===null))return null;
     return {id,revision:e.revision,hash:e.hash,mime:e.mime||null,x:e.x,y:e.y,z:e.z,
-      acabado,activo:e.activo!==false,heredada:acabado!=='normal'&&(e.heredada===true||e.hash===null)};
+      vistas:CAOZ_VISTAS.limpiar(e.vistas),acabado,activo:e.activo!==false,heredada:acabado!=='normal'&&(e.heredada===true||e.hash===null)};
   }
   function elegirVariantes(id,variantes){
     const normal=variantes.normal;
@@ -55,8 +56,8 @@
     ARTE={...originales};for(const e of cartas)if(encValido(e))ARTE[e.id]={x:e.x,y:e.y,z:e.z};
   }
   function remoto(id){return cartas.find(e=>e.id===id);}
-  window.urlArte=function(id){const e=remoto(id);return e?.hash?'api/arte/imagen/'+e.hash:'art/'+id+'.webp';};
-  window.acabadoArte=id=>remoto(id)?.acabado||'normal';
+  window.urlArte=function(id){if(muestra?.id===id)return muestra.url||'art/'+id+'.webp';const e=remoto(id);return e?.hash?'api/arte/imagen/'+e.hash:'art/'+id+'.webp';};
+  window.acabadoArte=id=>muestra?.id===id?muestra.acabado:remoto(id)?.acabado||'normal';
   function acabar(nodo,id){
     if(!nodo)return;
     const propio=nodo.closest(EXCLUIR);
@@ -67,6 +68,7 @@
     if(carta!==nodo)nodo.removeAttribute('data-acabado');
     const acabado=window.acabadoArte(id);if(carta.dataset.acabado!==acabado)carta.dataset.acabado=acabado;
   }
+  function encuadreVista(id,vista){if(muestra?.id===id)return muestra.url?muestra.encuadre:null;return remoto(id)?.vistas?.[vista]||encuadreDe(ARTE[id]);}
   function variables(nodo,enc){
     for(const [prop,v]of Object.entries({'--ex':enc.x+'%','--ey':enc.y+'%','--ez':(enc.z/100).toFixed(3)}))nodo.style.setProperty(prop,v);
   }
@@ -79,7 +81,7 @@
   function pintar(nodo){
     const id=nodo.dataset.arteId;acabar(nodo,id);
     if(nodo.closest(EXCLUIR))return;
-    const enc=encuadreDe(ARTE[id]);
+    const enc=encuadreVista(id,CAOZ_VISTAS.identificar(nodo));
     if(!enc){quitar(nodo);return;}
     const url=window.urlArte(id);variables(nodo,enc);
     if(nodo.classList.contains('lrostro')){
@@ -100,6 +102,7 @@
     catch(e){return null;}finally{clearTimeout(t);}
   }
   function refrescar(){
+    if(new URLSearchParams(location.search).has('estudioVista'))return Promise.resolve(false);
     if(location.protocol==='file:')return Promise.resolve(false);
     if(peticion)return peticion;
     peticion=(async()=>{
@@ -135,7 +138,14 @@
     if(enc&&img.getAttribute('src')!==base){img.src=base;variables(nodo,enc);img.parentElement?.style.setProperty('--url','url("'+base+'")');}
     else quitar(nodo);
   },true);
-  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,modificado:id=>{const e=remoto(id);return !!e&&(!!e.hash||encValido(e));}});
+  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:id=>{const e=remoto(id);return !!e&&(!!e.hash||encValido(e));}});
+  // Una carta puede construirse fuera del DOM; al entrar ya conocemos su superficie.
+  // Sólo se observan nodos añadidos: modificar el encuadre no dispara un bucle.
+  const pendientes=new Set();let programado=false;
+  new MutationObserver(cambios=>{
+    for(const c of cambios)for(const n of c.addedNodes)if(n.nodeType===1){if(n.matches('[data-arte-id]'))pendientes.add(n);n.querySelectorAll('[data-arte-id]').forEach(x=>pendientes.add(x));}
+    if(pendientes.size&&!programado){programado=true;queueMicrotask(()=>{programado=false;for(const n of pendientes)if(n.isConnected)pintar(n);pendientes.clear();});}
+  }).observe(document.documentElement,{childList:true,subtree:true});
   addEventListener('online',()=>void refrescar());
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refrescar();});
   setInterval(()=>{if(!document.hidden)void refrescar();},60000);
