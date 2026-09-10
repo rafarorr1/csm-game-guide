@@ -7,6 +7,8 @@ import json
 import http.client
 import tempfile
 import unittest
+import os
+import re
 from pathlib import Path
 from beta_cloudflare import publicar
 
@@ -74,6 +76,33 @@ class BetaCloudflare(unittest.TestCase):
             publicar(self.repo)
         self.assertEqual(self.git('ls-remote', 'origin', 'refs/heads/beta').split()[0],
                          self.git('rev-parse', 'HEAD'))
+
+    def test_estudios_publican_sus_dependencias_en_ambos_destinos(self):
+        # Ejecutar la copia y el commit reales contra el remoto local detecta
+        # archivos copiados que nunca llegan a git (como ocurrió en build235).
+        fuente = Path(__file__).resolve().parent
+        script = (fuente / 'publicar.sh').read_text()
+        bloque = script[script.index('paso "3/4'):script.index('# CLOUDFLARE PAGES')]
+        dependencias = {'estudio.html', 'sonidos.html'}
+        for panel in ['estudio.html', 'sonidos.html']:
+            dependencias.update(re.findall(r'(?:src|href)="([^"?]+\.(?:js|css))(?:\?[^\"]*)?"',
+                                           (fuente / panel).read_text()))
+        for destino in ['tcg', 'tcg-beta']:
+            with self.subTest(destino=destino):
+                otro = 'tcg-beta' if destino == 'tcg' else 'tcg'
+                intacto = self.git('rev-parse', 'HEAD:' + otro)
+                subprocess.run(['bash'], input='set -uo pipefail\npaso(){ :; }; gris(){ :; }; rojo(){ :; }\n' + bloque,
+                               text=True, capture_output=True, check=True,
+                               env={**os.environ, 'AQUI': str(fuente), 'REPO': str(self.repo),
+                                    'PAGES': str(self.repo), 'DESTINO': destino})
+                for archivo in sorted(dependencias):
+                    publicado = subprocess.check_output(['git', '-C', str(self.repo),
+                                                          'show', 'HEAD:' + destino + '/' + archivo],
+                                                         stderr=subprocess.PIPE)
+                    self.assertEqual(publicado, (fuente / archivo).read_bytes(), archivo)
+                self.assertEqual(self.git('status', '--porcelain'), '')
+                self.assertEqual(self.git('rev-parse', 'HEAD:' + otro), intacto)
+                self.assertEqual(self.git('show', 'HEAD:otra-app.txt'), 'otra aplicación')
 
 
 class ServidorPruebas(unittest.TestCase):

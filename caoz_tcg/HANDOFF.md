@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 235 (local; beta y producción 234, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 236 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -12,12 +12,20 @@ números) → el código.
 
 ## 1. Qué es y dónde está
 
+Build 236 completa el empaquetado del estudio único: publicar.sh copiaba
+estudio-publicacion.js/css, pero faltaban en el git add explícito de gh-pages.
+La nueva regresión ejecuta la fase real de copia/commit en repositorios locales,
+verifica cada JS/CSS de ambos paneles en ambos destinos y conserva la otra PWA.
+Sin el arreglo falla por archivos ausentes; con él ambos destinos quedan limpios.
+El usuario autorizó expresamente la conexión SFX_BETA_DB, que ya está guardada
+en Production. ESTUDIO_UNICO=1 ya está configurado en Production y Preview.
+Publicar236 primero en producción y después beta por el flujo oficial, verificar
+los catálogos y archivos remotos. Conservar main intacta.
+
 Build 235 unifica /estudio y /sonidos en juego.caozcontodo.com, con borradores
 privados y publicación independiente a beta/producción. Ver ESTUDIOS.md.
-El código está preparado; la conexión SFX_BETA_DB de Production fue bloqueada
-por revisión automática por ampliación de acceso. Falta autorización explícita
-para guardarla, activar ESTUDIO_UNICO=1 en ambos entornos y publicar mediante
-el flujo oficial. No hay cambios remotos de esta build todavía. No merge a main.
+Su primer despliegue detectó dos archivos del panel sin incluir en git, corregidos
+en236. Las bibliotecas y claves existentes se conservan. No merge a main.
 Las referencias a producción229 en los bloques históricos siguientes describen
 su publicación original; producción234 ya fue publicada y Tal migrado después.
 

@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 236 · Publicar todos los archivos del estudio
+
+- Incluye los controles y estilos compartidos del estudio en el commit publicado;
+  antes se copiaban, pero quedaban fuera de git y no llegaban a la web.
+- La regresión publica los archivos reales en dos repositorios locales y comprueba
+  todas las dependencias de cartas y sonidos, así como el aislamiento de destinos.
+- Conexión entre estudio y beta autorizada y configurada; conserva cartas,
+  acabados, sonidos, claves y la rama main. Sin cambios de reglas ni balance.
+
 ### Sin numerar · build 235 · Estudios únicos con publicación por destino
 
 - Cartas y sonidos comparten un único acceso en el dominio oficial. Los enlaces
