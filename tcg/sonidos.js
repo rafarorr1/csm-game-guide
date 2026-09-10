@@ -1,16 +1,17 @@
 'use strict';
 (function(){
-  const $=id=>document.getElementById(id),base=new URL('.',location.href),api=new URL('api/sfx/',base);
+  if(!window.CAOZ_ESTUDIO)return;
+  const $=id=>document.getElementById(id),base=new URL('.',location.href),api=new URL('api/estudio/sfx/',base);
   let banco=[],privados=new Map(),seleccion='attack_hit',grupo='Todos',pendiente=null,ocupado=false,tokenDemo=0,decodificador,ondaPeticion=0;
   const player=new Audio();player.preload='auto';
   const estado=(txt,error=false)=>{$('estado').textContent=txt;$('estado').classList.toggle('error',error);};
   const actual=()=>banco.find(s=>s.id===seleccion);
   const mezcla=s=>({...s,...privados.get(s.id),nombre:s.nombre,nombreArchivo:privados.get(s.id)?.nombre});
-  const url=s=>new URL(s.hash?'api/sfx/audio/'+s.hash:s.archivo,base).href;
+  const url=s=>new URL(s.hash?'api/estudio/sfx/audio/'+s.hash:s.archivo,base).href;
   async function pedir(ruta,op={}){
     // Las PWA anteriores a 208 ya omiten peticiones con «test=» de su caché.
     // Usar esa salida mientras se actualizan evita que almacenen datos privados.
-    const destino=new URL(ruta,api);destino.searchParams.set('test','sin-cache-admin');
+    const destino=ruta==='sesion'?new URL('api/sfx/sesion',base):new URL(ruta,api);destino.searchParams.set('test','sin-cache-admin');
     const r=await fetch(destino,{...op,credentials:'same-origin',cache:'no-store',signal:AbortSignal.timeout(15000)});
     let j;try{j=await r.json();}catch(e){throw Error('El servidor privado todavía no está disponible en esta dirección.');}
     if(!r.ok){const e=Error(j.error||'No se pudo completar la operación.');e.status=r.status;throw e;}return j;
@@ -45,7 +46,7 @@
   }
   function lista(){
     const q=$('buscar').value.toLocaleLowerCase('es'),filtrados=banco.filter(s=>(grupo==='Todos'||s.grupo===grupo)&&[s.nombre,s.detalle,s.id].join(' ').toLocaleLowerCase('es').includes(q));
-    $('lista').replaceChildren();$('cantidad').textContent=filtrados.length+' sonidos';
+    $('lista').replaceChildren();$('cantidad').textContent=filtrados.length+' sonido'+(filtrados.length===1?'':'s');
     for(const original of filtrados){
       const s=mezcla(original),fila=document.createElement('div');fila.className='sonido'+(s.id===seleccion?' elegido':'');
       const p=document.createElement('button');p.className='play';p.textContent='▶';p.setAttribute('aria-label','Reproducir '+original.nombre);
@@ -64,10 +65,10 @@
   async function cargar(){
     const [c,p]=await Promise.all([fetch(new URL('audio/catalogo.json',base),{cache:'no-store'}).then(r=>{if(!r.ok)throw Error('No se pudo cargar la biblioteca.');return r.json();}),pedir('privado')]);
     banco=c.sonidos;privados=new Map(p.sonidos.map(s=>[s.id,s]));
-    $('acceso').hidden=true;$('estudio').hidden=false;$('salir').hidden=false;$('entorno').textContent=p.entorno.toUpperCase();
-    const sitio=p.entorno==='produccion'?'producción':'beta';
+    $('acceso').hidden=true;$('estudio').hidden=false;$('salir').hidden=false;$('entorno').textContent='ESTUDIO ÚNICO';
+    const sitio='el estudio';
     $('guardar').textContent='Guardar reemplazo en '+sitio;$('guardarVolumen').textContent='Guardar volumen en '+sitio;
-    $('cuenta').textContent=banco.length+' sonidos · Guardado en la nube';grupos();lista();detalle();estado('Estudio conectado. Los originales están protegidos y siempre se pueden restaurar.');
+    $('cuenta').textContent=banco.length+' sonidos · Guardado en la nube';grupos();lista();detalle();await CAOZ_ESTUDIO.conectar({tipo:'sfx',estado,bloquear:botones,recargar:cargar,pendiente:()=>ocupado||!!pendiente||Number($('volumen').value)!==Math.round(mezcla(actual()).volumen*100),nombre:id=>banco.find(s=>s.id===id)?.nombre||id});estado('Estudio conectado. Los originales están protegidos y siempre se pueden restaurar.');
   }
   function fallo(e){
     if(e.status===401){detener();descartar();$('estudio').hidden=true;$('acceso').hidden=false;$('salir').hidden=true;}
@@ -87,7 +88,7 @@
     if(ocupado)return;const s=actual(),p=privados.get(s.id);botones(true);detener();estado('Guardando en el estudio privado…');
     try{
       const r=await pedir('sonido/'+s.id,{method,body,headers:{'If-Match':String(p?.revision||0),'X-SFX-Original-Volume':String(s.volumen),...extra}});
-      privados.set(s.id,r);descartar();lista();detalle();estado('Guardado. La beta recibirá este sonido al volver al juego o en aproximadamente un minuto con conexión.');
+      privados.set(s.id,r);descartar();lista();detalle();estado('Guardado en el estudio. Publica los cambios cuando quieras llevarlos al juego.');await CAOZ_ESTUDIO.actualizar();
     }catch(e){fallo(e);}finally{botones(false);}
   }
   $('guardarVolumen').onclick=()=>guardar('PATCH',JSON.stringify({volumen:Number($('volumen').value)/100}),{'Content-Type':'application/json'});

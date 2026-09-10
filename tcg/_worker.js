@@ -29,13 +29,13 @@ function validarWav(b){
   let pico=0;for(let i=44;i<b.length;i+=2)pico=Math.max(pico,Math.abs(v.getInt16(i,true)));
   if(pico<10)throw Error('El archivo está vacío o no tiene sonido audible.');return duracion;
 }
-let iniciada;
+const preparacionesSfx=new WeakMap();
 async function preparar(db){
-  if(!iniciada)iniciada=db.batch([
+  if(!preparacionesSfx.has(db))preparacionesSfx.set(db,db.batch([
     db.prepare('CREATE TABLE IF NOT EXISTS sonidos (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0, hash TEXT, anterior TEXT, nombre TEXT, duracion REAL, volumen REAL NOT NULL DEFAULT 1, actualizado TEXT)'),
     db.prepare('CREATE TABLE IF NOT EXISTS audios (hash TEXT PRIMARY KEY, contenido BLOB NOT NULL, creado INTEGER NOT NULL)'),
     db.prepare('CREATE TABLE IF NOT EXISTS accesos (ip TEXT PRIMARY KEY, n INTEGER NOT NULL, vence INTEGER NOT NULL)')
-  ]).catch(e=>{iniciada=null;throw e;});return iniciada;
+  ]).catch(e=>{preparacionesSfx.delete(db);throw e;}));return preparacionesSfx.get(db);
 }
 async function api(req,env){
   const u=new URL(req.url),ruta=u.pathname.replace(/^\/api\/sfx\/?/,'');
@@ -286,9 +286,120 @@ async function apiArte(req,env){
   }
   return json({error:'Ruta no encontrada.'},404);
 }
+// Biblioteca única privada. Los borradores viven en tablas propias de producción;
+// publicar copia una instantánea a un destino, sin compartir claves ni catálogos vivos.
+const tablasEstudio=['sonidos','audios','accesos','ilustraciones','ilustraciones_acabados','imagenes'];
+const basesEstudio=new WeakMap(),iniciosEstudio=new WeakMap(),controlesEstudio=new WeakMap();
+const URL_ESTUDIO='https://juego.caozcontodo.com';
+function baseEstudio(db){
+  if(!basesEstudio.has(db))basesEstudio.set(db,{prepare(sql){return db.prepare(sql.replace(/\b(sonidos|audios|accesos|ilustraciones_acabados|ilustraciones|imagenes)\b/g,t=>t+'_estudio'));},batch:cmds=>db.batch(cmds)});
+  return basesEstudio.get(db);
+}
+async function iniciarEstudio(db){
+  if(!iniciosEstudio.has(db))iniciosEstudio.set(db,(async()=>{
+    const borrador=baseEstudio(db);await preparar(db);await prepararArte(db);await preparar(borrador);await prepararArte(borrador);
+    await db.prepare('CREATE TABLE IF NOT EXISTS estudio_inicio (id TEXT PRIMARY KEY)').run();
+    // La marca forma parte de la misma transacción: dos primeros accesos no
+    // vuelven a importar originales encima de una edición recién guardada.
+    await db.batch([...tablasEstudio.filter(t=>t!=='accesos').map(t=>db.prepare("INSERT OR IGNORE INTO "+t+"_estudio SELECT * FROM "+t+" WHERE NOT EXISTS (SELECT 1 FROM estudio_inicio WHERE id='235')")),db.prepare("INSERT OR IGNORE INTO estudio_inicio(id) VALUES ('235')")]);
+  })().catch(e=>{iniciosEstudio.delete(db);throw e;}));return iniciosEstudio.get(db);
+}
+async function controlEstudio(db){
+  if(!controlesEstudio.has(db))controlesEstudio.set(db,db.batch([
+    db.prepare('CREATE TABLE IF NOT EXISTS estudio_lotes (tipo TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0, huella TEXT, actualizado TEXT)'),
+    db.prepare('CREATE TABLE IF NOT EXISTS estudio_guardia (valor INTEGER NOT NULL CHECK(valor=1))')
+  ]).catch(e=>{controlesEstudio.delete(db);throw e;}));return controlesEstudio.get(db);
+}
+const camposSonido=['id','hash','nombre','duracion','volumen'];
+const camposImagen=['id','acabado','activo','hash','nombre','mime','ancho','alto','x','y','z'];
+async function leerEstudio(db,tipo){
+  if(tipo==='sfx'){await preparar(db);return (await db.prepare('SELECT * FROM sonidos ORDER BY id').all()).results;}
+  await prepararArte(db);
+  return (await db.prepare("SELECT id,'normal' AS acabado,1 AS activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado FROM ilustraciones UNION ALL SELECT id,acabado,activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado FROM ilustraciones_acabados ORDER BY id,acabado").all()).results;
+}
+const claveFila=r=>r.id+'/'+(r.acabado||'');
+function contenidoEstudio(r,tipo){
+  const vacio=tipo==='sfx'?{id:r.id,hash:null,nombre:null,duracion:null,volumen:volumenBase[r.id]}:{...arteVacio(r.id,r.acabado),activo:r.acabado==='normal'?1:0};
+  return Object.fromEntries((tipo==='sfx'?camposSonido:camposImagen).filter(k=>k!=='nombre').map(k=>[k,r[k]??vacio[k]??null]));
+}
+async function planEstudio(env,tipo,destino){
+  const db=destino==='beta'?env.SFX_BETA_DB:env.SFX_DB;
+  if(!db)falloArte('No se pudo conectar con '+(destino==='beta'?'beta':'producción')+'. Los cambios siguen guardados.',503);
+  const fuente=await leerEstudio(baseEstudio(env.SFX_DB),tipo),publicado=await leerEstudio(db,tipo);await controlEstudio(db);
+  const revision=(await db.prepare('SELECT revision FROM estudio_lotes WHERE tipo=?').bind(tipo).first())?.revision||0;
+  const actuales=new Map(publicado.map(r=>[claveFila(r),r])),idsFuente=new Set(fuente.map(r=>r.id));
+  const candidatas=[...fuente];
+  // Retirar un acabado del borrador también lo retira al publicar esa carta.
+  for(const r of publicado)if(idsFuente.has(r.id)&&!fuente.some(f=>claveFila(f)===claveFila(r)))candidatas.push({...arteVacio(r.id,r.acabado)});
+  const cambios=candidatas.filter(r=>JSON.stringify(contenidoEstudio(r,tipo))!==JSON.stringify(contenidoEstudio(actuales.get(claveFila(r))||{id:r.id,acabado:r.acabado},tipo)));
+  const huella=await sha(JSON.stringify({tipo,destino,revision,fuente,publicado}));
+  return {db,fuente,publicado,cambios,huella,revision,ids:[...new Set(cambios.map(r=>r.id))]};
+}
+async function estadoEstudio(env,tipo){
+  const salida={};for(const destino of ['beta','produccion']){
+    try{const p=await planEstudio(env,tipo,destino);salida[destino]={pendientes:p.ids.length,ids:p.ids,huella:p.huella};}
+    catch(e){salida[destino]={error:'Destino no disponible. Actualiza para volver a intentar.'};}
+  }return salida;
+}
+function upsertEstudio(db,tabla,filas,campos){
+  const valores=campos.map(k=>"json_extract(value,'$."+k+"')").join(','),identidad=tabla==='ilustraciones_acabados'?'id,acabado':'id';
+  const editables=campos.filter(k=>!['id','acabado','revision'].includes(k));
+  return db.prepare('INSERT INTO '+tabla+' ('+campos.join(',')+') SELECT '+valores+' FROM json_each(?) WHERE 1 ON CONFLICT('+identidad+') DO UPDATE SET '+editables.map(k=>k+'=excluded.'+k).join(',')+',revision='+tabla+'.revision+1').bind(JSON.stringify(filas));
+}
+async function publicarEstudio(req,env,tipo,destino){
+  const p=await planEstudio(env,tipo,destino),recibida=req.headers.get('if-match');
+  if(!/^[a-f0-9]{64}$/.test(recibida||''))return json({error:'Actualiza los cambios antes de publicar.'},428);
+  if(recibida!==p.huella)return json({error:'La biblioteca o el destino cambió en otra sesión. Revisa los cambios de nuevo.'},409);
+  if(!p.cambios.length)return json({ok:true,pendientes:0,publicados:0});
+  const tabla=tipo==='sfx'?'audios':'imagenes',fuente=baseEstudio(env.SFX_DB),hashes=[...new Set(p.cambios.map(r=>r.hash).filter(Boolean))];
+  const disponibles=new Set((await p.db.prepare('SELECT hash FROM '+tabla).all()).results.map(r=>r.hash));
+  const faltan=hashes.filter(h=>!disponibles.has(h));
+  // Hasta seis archivos por petición mantiene acotadas memoria y consultas.
+  // Estos archivos aún no se referencian desde el catálogo del juego.
+  for(const hash of faltan.slice(0,6)){
+    const archivo=await fuente.prepare('SELECT * FROM '+tabla+' WHERE hash=?').bind(hash).first();if(!archivo)falloArte('Falta un archivo del borrador. Revisa la biblioteca antes de publicar.',409);
+    const b=new Uint8Array(archivo.contenido);if(await sha(b)!==hash)falloArte('No se pudo verificar un archivo del borrador.',409);
+    const sql=tipo==='sfx'?'INSERT OR IGNORE INTO audios(hash,contenido,creado) VALUES (?,?,?)':'INSERT OR IGNORE INTO imagenes(hash,contenido,creado,mime) VALUES (?,?,?,?)';
+    const args=[hash,b.buffer,Date.now()];if(tipo==='arte')args.push(archivo.mime);await p.db.prepare(sql).bind(...args).run();
+  }
+  if(faltan.length>6)return json({ok:true,preparando:true,faltan:faltan.length-6});
+  const fecha=new Date().toISOString(),actuales=new Map(p.publicado.map(r=>[claveFila(r),r]));
+  const filas=p.cambios.map(r=>({...r,anterior:actuales.get(claveFila(r))?.hash||actuales.get(claveFila(r))?.anterior||null,revision:1,actualizado:fecha}));
+  const comandos=[p.db.prepare('INSERT INTO estudio_guardia(valor) VALUES (CASE WHEN COALESCE((SELECT revision FROM estudio_lotes WHERE tipo=?),0)=? THEN 1 ELSE 0 END)').bind(tipo,p.revision)];
+  if(tipo==='sfx')comandos.push(upsertEstudio(p.db,'sonidos',filas,[...camposSonido,'anterior','revision','actualizado']));
+  else{
+    const campos=['id','hash','anterior','nombre','mime','ancho','alto','x','y','z','revision','actualizado'];
+    comandos.push(upsertEstudio(p.db,'ilustraciones',filas.filter(r=>r.acabado==='normal'),campos));
+    comandos.push(upsertEstudio(p.db,'ilustraciones_acabados',filas.filter(r=>r.acabado!=='normal'),[...campos,'acabado','activo']));
+  }
+  comandos.push(p.db.prepare('INSERT INTO estudio_lotes(tipo,revision,huella,actualizado) VALUES (?,1,?,?) ON CONFLICT(tipo) DO UPDATE SET revision=revision+1,huella=excluded.huella,actualizado=excluded.actualizado').bind(tipo,p.huella,fecha),p.db.prepare('DELETE FROM estudio_guardia'));
+  try{await p.db.batch(comandos);}catch(e){if(String(e.message).includes('CHECK constraint'))return json({error:'Otra sesión publicó primero. Actualiza para revisar el resultado.'},409);throw e;}
+  return json({ok:true,publicados:p.ids.length,destino,fecha});
+}
+async function apiEstudio(req,env){
+  const u=new URL(req.url),m=/^\/api\/estudio\/(arte|sfx)\/(.+)$/.exec(u.pathname);
+  if(!m)return json({error:'Ruta no encontrada.'},404);
+  if(env.CF_PAGES_BRANCH!=='gh-pages')return json({error:'Abre el estudio único para editar y publicar.',estudio:URL_ESTUDIO},409);
+  if(!env.SFX_DB||!env.SFX_ADMIN_HASH||!env.SFX_SESSION_KEY)return json({error:'El estudio no está conectado.'},503);
+  if(req.headers.get('origin')&&req.headers.get('origin')!==u.origin||!['GET','HEAD'].includes(req.method)&&req.headers.get('origin')!==u.origin)return json({error:'Origen no autorizado.'},403);
+  if(!await autenticado(req,env))return json({error:'Inicia sesión en el estudio.'},401);
+  await iniciarEstudio(env.SFX_DB);const [,tipo,ruta]=m;
+  if(ruta==='estado'&&req.method==='GET')return json(await estadoEstudio(env,tipo));
+  if(/^publicar\/(beta|produccion)$/.test(ruta)&&req.method==='POST')return publicarEstudio(req,env,tipo,ruta.split('/')[1]);
+  if(!/^(privado|imagen\/[a-f0-9]{64}|audio\/[a-f0-9]{64}|carta\/[a-zA-Z0-9_-]+\/(normal|foil|dorado)|sonido\/[a-z_]+)$/.test(ruta))return json({error:'Ruta no encontrada.'},404);
+  const url=new URL(req.url);url.pathname='/api/'+tipo+'/'+ruta;
+  const respuesta=await (tipo==='arte'?apiArte:api)(new Request(url,req),{...env,SFX_DB:baseEstudio(env.SFX_DB)});
+  const segura=new Response(respuesta.body,respuesta);segura.headers.set('Cache-Control','no-store');return segura;
+}
+
 export default {
   async fetch(req,env){
-    const ruta=new URL(req.url).pathname,esArte=ruta.startsWith('/api/arte/');
+    const url=new URL(req.url),ruta=url.pathname,esArte=ruta.startsWith('/api/arte/');
+    if(env.ESTUDIO_UNICO==='1'){
+      if(/^\/(estudio|sonidos)(\.html)?\/?$/.test(ruta)&&url.origin!==URL_ESTUDIO)return Response.redirect(URL_ESTUDIO+'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),302);
+      if((esArte||ruta.startsWith('/api/sfx/'))&&!['GET','HEAD'].includes(req.method)&&ruta!=='/api/sfx/sesion')return json({error:'Guarda y publica desde el estudio único.',estudio:URL_ESTUDIO},409);
+    }
+    if(ruta.startsWith('/api/estudio/')){try{return await apiEstudio(req,env);}catch(e){return json({error:e.status?e.message:'No se pudo completar la operación. Los cambios guardados se conservan.'},e.status||503);}}
     if(!esArte&&!ruta.startsWith('/api/sfx/'))return env.ASSETS.fetch(req);
     try{return await (esArte?apiArte(req,env):api(req,env));}catch(e){return json({error:e.status?e.message:e instanceof SyntaxError?'Solicitud no válida.':e.message?.startsWith('D1_')?'No se pudo guardar. Intenta de nuevo.':e.message||'No se pudo completar la solicitud.'},e.status||400);}
   }

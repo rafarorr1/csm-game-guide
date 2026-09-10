@@ -1,6 +1,7 @@
 /* Estudio privado de ilustraciones. No modifica las reglas ni los borradores antiguos. */
 'use strict';
 (function(){
+  if(!window.CAOZ_ESTUDIO)return;
   const $=id=>document.getElementById(id),base=new URL('.',location.href);
   const tipos={lider:'Protagonistas',lugar:'Terrenos',personaje:'Personajes',hechizo:'Hechizos',objeto:'Objetos',terreno:'Terrenos',trampa:'Trampas',rapido:'Hechizos rápidos'};
   const acabados={normal:'Normal',foil:'Foil',dorado:'Foil dorado'};
@@ -15,16 +16,16 @@
   const ganadora=c=>['dorado','foil','normal'].find(a=>creada(c,a));
   const encuadre=(c,a=acabado)=>{const p=registro(c,a);return normalizar(p?.x!=null?{x:p.x,y:p.y,z:p.z}:a!=='normal'?encuadre(c,'normal'):c.original?.encuadre);};
   const revision=(c,a=acabado)=>Number(registro(c,a)?.revision||0);
-  const nombreEntorno=()=>entorno==='produccion'?'producción':'beta';
+  const nombreEntorno=()=>'el estudio';
   const estadoArte=c=>{const a=ganadora(c),p=registro(c,a);return p?.hash?'reemplazada':c.original?'original':'sin';};
   const etiquetas={reemplazada:'Reemplazada',original:'Original',sin:'Sin imagen'};
   const estado=(mensaje,error=false)=>{$('estado').textContent=mensaje;$('estado').classList.toggle('error',error);};
-  function urlSegura(ruta){if(!ruta)return null;try{const u=new URL(ruta,base);return u.origin===location.origin&&/^https?:$/.test(u.protocol)?u.href:null;}catch(e){return null;}}
+  function urlSegura(ruta){if(!ruta)return null;try{const u=new URL(CAOZ_ESTUDIO.ruta(ruta),base);return u.origin===location.origin&&/^https?:$/.test(u.protocol)?u.href:null;}catch(e){return null;}}
   const urlVersion=(c,a=acabado)=>{const p=registro(c,a);return p?.hash?urlSegura('api/arte/imagen/'+encodeURIComponent(p.hash)):a!=='normal'?urlVersion(c,'normal'):urlSegura(c.original?.url);};
   const urlActual=c=>urlVersion(c,ganadora(c));
   async function pedir(ruta,op={}){
     // También evita las cachés de las versiones antiguas de la app instalada.
-    const u=new URL(ruta,base);u.searchParams.set('test','sin-cache-admin');
+    const u=new URL(CAOZ_ESTUDIO.ruta(ruta),base);u.searchParams.set('test','sin-cache-admin');
     const controlador=new AbortController(),temporizador=setTimeout(()=>controlador.abort(),20000);
     try{
       const r=await fetch(u,{...op,credentials:'same-origin',cache:'no-store',signal:controlador.signal});
@@ -61,10 +62,10 @@
     const enJuego=ganadora(c);
     for(const [a,suf] of [['normal','Normal'],['foil','Foil'],['dorado','Dorado']]){
       const boton=$('version'+suf);boton.setAttribute('aria-pressed',String(a===acabado));boton.classList.toggle('enJuego',a===enJuego);
-      $('estado'+suf).textContent=a===enJuego?'En juego':creada(c,a)?'Disponible':'No creada';
+      $('estado'+suf).textContent=a===enJuego?'En la biblioteca':creada(c,a)?'Disponible':'No creada';
       boton.setAttribute('aria-label',acabados[a]+': '+$('estado'+suf).textContent);
     }
-    $('versionEnJuego').textContent='En juego: '+acabados[enJuego]+'. Prioridad automática: Foil dorado → Foil → Normal.';
+    $('versionEnJuego').textContent='En la biblioteca: '+acabados[enJuego]+'. Prioridad automática: Foil dorado → Foil → Normal.';
     const nueva=acabado!=='normal'&&!creada(c),imagenNormal=!!urlVersion(c,'normal');
     $('crearAcabado').hidden=!nueva;
     $('crearAcabadoTexto').textContent='Previsualiza '+acabados[acabado]+' con '+(imagenNormal?'la ilustración Normal':'el símbolo de la carta')+', o sube un diseño propio.';
@@ -86,7 +87,7 @@
     $('borrador').hidden=!pendiente;
     if(pendiente){$('archivoNombre').textContent=pendiente.blob?pendiente.nombre+' · '+Math.round(pendiente.blob.size/1024)+' KB · WebP':pendiente.crear?'Crear '+acabados[acabado]+' de '+c.nombre:'Nuevo encuadre '+acabados[acabado]+' de '+c.nombre;
       const esGanadora=acabado==='dorado'||acabado==='foil'&&!creada(c,'dorado')||acabado==='normal'&&ganadora(c)==='normal';
-      $('alcance').textContent='Se guardará sólo la versión '+acabados[acabado]+' en '+nombreEntorno()+'. '+(esGanadora?'Será la versión que verán los jugadores.':'El juego seguirá mostrando '+acabados[ganadora(c)]+', que tiene prioridad.')+' Las demás versiones se conservan.';}
+      $('alcance').textContent='Se guardará sólo la versión '+acabados[acabado]+' en '+nombreEntorno()+'. '+(esGanadora?'Será la versión prioritaria cuando publiques la carta.':'El juego seguirá mostrando '+acabados[ganadora(c)]+', que tiene prioridad.')+' Las demás versiones se conservan.';}
     versiones();botones();
   }
   function detalle(){
@@ -127,8 +128,9 @@
     cartas=catalogo.cartas;privados=new Map(datos.cartas.map(c=>[c.id,c]));entorno=datos.entorno;autenticado=true;
     if(!actual()){seleccion=cartas.find(c=>c.id==='lider_fender')?.id||cartas.find(c=>c.original)?.id||cartas[0].id;acabado=ganadora(actual());}
     if(pendiente&&pendiente.revision!==revision(actual(),pendiente.acabado))conflicto=true;
-    $('acceso').hidden=true;$('estudio').hidden=false;$('salir').hidden=false;$('entorno').textContent=entorno==='produccion'?'PRODUCCIÓN':'BETA';
+    $('acceso').hidden=true;$('estudio').hidden=false;$('salir').hidden=false;$('entorno').textContent='ESTUDIO ÚNICO';
     $('cuenta').textContent=cartas.length+' cartas · Guardado en la nube';grupos();lista();detalle();
+    await CAOZ_ESTUDIO.conectar({tipo:'arte',estado,bloquear,recargar:cargar,pendiente:()=>ocupado||!!pendiente,nombre:id=>cartas.find(c=>c.id===id)?.nombre||id});
     estado(conflicto?'Hay una versión nueva de esta carta. Actualiza la revisión antes de volver a editar.':pendiente?'Sesión recuperada. Tu vista previa sigue sin publicar.':'Estudio conectado. Elige una carta para revisar o reemplazar su ilustración.');
   }
   function fallo(e){
@@ -182,7 +184,7 @@
       const fila=resultado.carta,modificada=fila?.variantes?.[version]||resultado.variante||resultado;
       if(modificada.id!==c.id||!Number.isInteger(Number(modificada.revision)))throw Error('No se pudo confirmar la revisión guardada. Actualiza la biblioteca antes de continuar.');
       if(fila?.variantes)privados.set(c.id,fila);else{const anterior=privados.get(c.id)||{id:c.id};privados.set(c.id,{...anterior,variantes:{normal:registro(c,'normal'),foil:registro(c,'foil'),dorado:registro(c,'dorado'),[version]:modificada}});}
-      descartar();lista();detalle();estado((method==='DELETE'?(version==='normal'?'Normal original restaurada':'Versión '+acabados[version]+' eliminada'):acabados[version]+' guardado')+' en '+nombreEntorno()+'. En juego: '+acabados[ganadora(c)]+'.');
+      descartar();lista();detalle();estado((method==='DELETE'?(version==='normal'?'Normal original restaurada':'Versión '+acabados[version]+' eliminada'):acabados[version]+' guardado')+' en '+nombreEntorno()+'. Publica los cambios cuando quieras llevarlos al juego.');await CAOZ_ESTUDIO.actualizar();
     }catch(e){if(!e.status){conflicto=true;$('conflicto').querySelector('strong').textContent='No pudimos confirmar el guardado.';$('conflicto').querySelector('p').textContent='Actualiza la revisión para comprobar qué llegó al estudio antes de hacer otro cambio.';botones();}fallo(e);}finally{bloquear(false);}
   }
   $('guardar').onclick=()=>guardar(pendiente?.blob?'PUT':'PATCH');
@@ -191,7 +193,7 @@
     const esNormal=acabado==='normal',enJuego=esNormal?ganadora(c):['dorado','foil','normal'].find(a=>a!==acabado&&creada(c,a));
     const titulo=esNormal?'Restaurar Normal de '+c.nombre:'Eliminar '+acabados[acabado]+' de '+c.nombre;
     const destinoNormal=c.original?'su imagen y encuadre originales':'el símbolo de esta carta';
-    const mensaje=(esNormal?'Se restaurará sólo la versión Normal a '+destinoNormal+'.':'Se eliminará sólo la versión '+acabados[acabado]+'.')+' En juego: '+acabados[enJuego]+'. Las demás versiones se conservan.'+(pendiente?' También se descartará tu vista previa.':'');
+    const mensaje=(esNormal?'Se restaurará sólo la versión Normal a '+destinoNormal+'.':'Se eliminará sólo la versión '+acabados[acabado]+'.')+' En la biblioteca: '+acabados[enJuego]+'. Las demás versiones se conservan.'+(pendiente?' También se descartará tu vista previa.':'');
     if(await confirmar(titulo,mensaje,esNormal?'Restaurar Normal':'Eliminar esta versión'))await guardar('DELETE');
   };
   for(const [a,suf] of [['normal','Normal'],['foil','Foil'],['dorado','Dorado']])$('version'+suf).onclick=async()=>{
