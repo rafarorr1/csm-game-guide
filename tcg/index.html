@@ -2174,7 +2174,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
     Gana quien reclame el alma del rival… o el Deseo.</div>
   <div class="menucol">
     <button class="btn gold" id="mTut">🎓 &nbsp;Tutorial — Aprende a jugar</button>
-    <button class="btn" id="mCampana" aria-haspopup="dialog">Campaña</button>
+    <button class="btn" id="mCampana" aria-haspopup="dialog" aria-label="Campaña"><span class="campanaEtiqueta">Campaña</span></button>
     <button class="btn" id="mPlay">⚔️ &nbsp;Partida contra el Domo</button>
     <button class="btn" id="mOnline">👥 &nbsp;Jugar con un amigo (online)</button>
     <button class="btn" id="mGuides">📖 &nbsp;Guías de estrategia</button>
@@ -2299,8 +2299,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=226"></script>
-<script src="final.js?b=226"></script>
+<script src="motor.js?b=229"></script>
+<script src="final.js?b=229"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2319,7 +2319,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:226, fecha:'2026-09-09'};
+const BUILD = {n:229, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -4896,6 +4896,7 @@ function ilustrarFondo(){
 ilustrarFondo();
 cargarArte().then(()=>{
   ilustrarFondo();
+  window.dispatchEvent(new Event('caoz:arte'));
   if(Object.keys(ARTE).length && G && !G.silent) render();
 });
 
