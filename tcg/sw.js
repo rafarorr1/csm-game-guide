@@ -18,13 +18,13 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 233;
+const VERSION = 234;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
 // Los reemplazos ya vistos sobreviven al cambio de build. Sólo contiene el
 // catálogo público y sus imágenes inmutables; nunca sesiones ni administración.
 const ARTE_PUBLICO='caoz-arte-publico-'+new URL(self.registration.scope).pathname+'-v1';
-const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'arte-remoto.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'pitagoras-pruebas.js', 'pitagoras-combate.js', 'pitagoras-mesa.js', 'pitagoras-mundos.js', 'pitagoras-cine.js', 'pitagoras-laboratorio.js', 'pitagoras-fps.js', 'pitagoras-pixel.js', 'dado-fisico.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'arte-remoto.js', 'acabados.css', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'pitagoras-pruebas.js', 'pitagoras-combate.js', 'pitagoras-mesa.js', 'pitagoras-mundos.js', 'pitagoras-cine.js', 'pitagoras-laboratorio.js', 'pitagoras-fps.js', 'pitagoras-pixel.js', 'dado-fisico.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
                 'art/encuadres.json', 'art/logo.webp', 'art/pitagoras-abismo-v216.webp', 'art/esbirro-editor-v219.webp',
                 'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
 
