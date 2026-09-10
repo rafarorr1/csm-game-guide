@@ -901,8 +901,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=237"></script>
-<script src="final.js?b=237"></script>
+<script src="motor.js?b=238"></script>
+<script src="final.js?b=238"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -913,7 +913,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:237, fecha:'2026-09-10'};
+const BUILD = {n:238, fecha:'2026-09-10'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -954,6 +954,7 @@ function encajarTextos(raiz){
 
 /* ---------- ilustraciones ---------- */
 function ponerDibujo(nodo, url, enc){
+  enc=window.CAOZ_ARTE?.encuadre(nodo.dataset.arteId,CAOZ_VISTAS.identificar(nodo))||enc;
   // Reutiliza el marco: una edición remota no debe duplicar ni rehacer cartas.
   const marcos=[...nodo.querySelectorAll(':scope > .marcoDibujo')];
   let caja=marcos.shift();marcos.forEach(n=>n.remove());
@@ -2341,7 +2342,7 @@ cargarArte().then(()=>ilustrarFondo());
    desde la pantalla de inicio. Sólo en https y fuera de las pruebas, que
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
-   && !new URLSearchParams(location.search).has('test')){
+   && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
   addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
 }
 </script>

@@ -5,16 +5,19 @@
   const $=id=>document.getElementById(id),base=new URL('.',location.href);
   const tipos={lider:'Protagonistas',lugar:'Terrenos',personaje:'Personajes',hechizo:'Hechizos',objeto:'Objetos',terreno:'Terrenos',trampa:'Trampas',rapido:'Hechizos rápidos'};
   const acabados={normal:'Normal',foil:'Foil',dorado:'Foil dorado'};
+  let dispositivo='desktop',superficie='mano',vistaLista=false;
+  const claveVista=()=>dispositivo+'_'+superficie;
   let cartas=[],privados=new Map(),seleccion='',acabado='normal',tipo='',entorno='',pendiente=null,conflicto=false,ocupado=false,autenticado=false;
   const actual=()=>cartas.find(c=>c.id===seleccion);
   const textoTipo=t=>tipos[t]||String(t||'Carta').replace(/^./,s=>s.toUpperCase());
   const limitar=(valor,min,max,defecto)=>Number.isFinite(Number(valor))?Math.round(Math.max(min,Math.min(max,Number(valor)))):defecto;
-  const normalizar=e=>({x:limitar(e?.x??50,0,100,50),y:limitar(typeof e==='number'?e:e?.y??50,0,100,50),z:limitar(e?.z??100,100,300,100)});
+  const normalizar=e=>({x:limitar(e?.x??50,0,100,50),y:limitar(typeof e==='number'?e:e?.y??50,0,100,50),z:limitar(e?.z??100,50,300,100)});
   // Las filas antiguas representan Normal; cada versión nueva tiene su propia revisión.
   const registro=(c,a=acabado)=>{const fila=privados.get(c.id);return fila?.variantes?fila.variantes[a]||null:a==='normal'?fila||null:null;};
   const creada=(c,a=acabado)=>a==='normal'||!!(registro(c,a)&&registro(c,a).activo!==false&&(registro(c,a).activo===true||registro(c,a).hash||registro(c,a).x!=null));
   const ganadora=c=>['dorado','foil','normal'].find(a=>creada(c,a));
   const encuadre=(c,a=acabado)=>{const p=registro(c,a);return normalizar(p?.x!=null?{x:p.x,y:p.y,z:p.z}:a!=='normal'?encuadre(c,'normal'):c.original?.encuadre);};
+  const encuadres=c=>CAOZ_VISTAS.limpiar(registro(c)?.vistas);
   const revision=(c,a=acabado)=>Number(registro(c,a)?.revision||0);
   const nombreEntorno=()=>'el estudio';
   const estadoArte=c=>{const a=ganadora(c),p=registro(c,a);return p?.hash?'reemplazada':c.original?'original':'sin';};
@@ -45,7 +48,7 @@
     $('entrar').disabled=ocupado;
     const c=actual(),hayImagen=!!(pendiente?.url||(c&&urlVersion(c))),p=c&&registro(c);
     for(const id of ['archivo','recargar','salir','recuperar','descartar','restaurar','actualizarRevision','versionNormal','versionFoil','versionDorado'])$(id).disabled=ocupado;
-    for(const id of ['encX','encY','encZ','centrar'])$(id).disabled=ocupado||!hayImagen||conflicto;
+    for(const id of ['encX','encY','encZ','centrar','heredarVista'])$(id).disabled=ocupado||!hayImagen||conflicto;
     $('archivo').disabled=ocupado||conflicto;$('recuperar').disabled=ocupado||conflicto;
     $('usarIlustracion').disabled=ocupado||conflicto||!c||acabado==='normal'||creada(c);
     $('guardar').disabled=ocupado||!pendiente||conflicto||!autenticado;
@@ -57,6 +60,23 @@
     for(const k of ['x','y','z']){const suf=k.toUpperCase();$('enc'+suf).value=e[k];$('val'+suf).textContent=e[k]+'%';}
     $('vista').style.setProperty('--ex',e.x+'%');$('vista').style.setProperty('--ey',e.y+'%');$('vista').style.setProperty('--ez',String(e.z/100));
   }
+  function actualizarVistaJuego(c,ruta,baseEnc){
+    const opciones=CAOZ_VISTAS.disponibles(c);if(!opciones.includes(superficie))superficie=opciones[0];
+    $('vistaDesktop').setAttribute('aria-pressed',String(dispositivo==='desktop'));$('vistaMovil').setAttribute('aria-pressed',String(dispositivo==='movil'));
+    $('vistasOpciones').replaceChildren();for(const k of opciones){const b=document.createElement('button');b.textContent=CAOZ_VISTAS.nombres[k];b.setAttribute('aria-pressed',String(superficie===k));b.onclick=()=>{superficie=k;vista();};$('vistasOpciones').append(b);}
+    const key=claveVista(),mapa=pendiente?.vistas||encuadres(c),propio=!!mapa[key];
+    $('encuadreTitulo').textContent=CAOZ_VISTAS.nombres[superficie]+' · '+(dispositivo==='movil'?'Móvil':'Escritorio');
+    $('vistaAyuda').textContent=(propio?'Encuadre independiente.':'Usa el encuadre base.')+' Puedes cambiar de vista sin perder los ajustes pendientes.';
+    const frame=$('juegoVista'),pagina=dispositivo==='movil'?'movil.html':'index.html';
+    if(frame.dataset.pagina!==pagina){vistaLista=false;frame.dataset.pagina=pagina;frame.src=pagina+'?estudioVista=1&escritorio=1';$('vistaEstado').textContent='Preparando vista real…';}
+    if(vistaLista)frame.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:c.id,acabado,url:ruta,encuadre:mapa[key]||baseEnc,vista:key},location.origin);
+  }
+  for(const d of ['desktop','movil'])$('vista'+(d==='desktop'?'Desktop':'Movil')).onclick=()=>{dispositivo=d;vista();};
+  addEventListener('message',e=>{
+    if(e.origin!==location.origin||e.source!==$('juegoVista').contentWindow)return;
+    if(e.data?.tipo==='caoz:vista-lista'){vistaLista=true;vista();}
+    if(e.data?.tipo==='caoz:vista-medida')$('vistaEstado').textContent=e.data.texto;
+  });
   function versiones(){
     const c=actual();if(!c)return;
     const enJuego=ganadora(c);
@@ -80,7 +100,8 @@
     $('textoCarta').textContent=c.texto||'';$('textoCarta').hidden=!c.texto;$('simbolo').textContent=c.simbolo||'✦';$('simbolo').hidden=!!ruta;
     $('imagen').hidden=!ruta;if(ruta){if($('imagen').src!==ruta)$('imagen').src=ruta;}else $('imagen').removeAttribute('src');
     for(const [id,valor] of [['coste',c.coste],['ataque',c.ataque],['vida',c.vida]]){$(id).hidden=c.esLider||valor==null;$(id).textContent=valor??'';}
-    aplicarEncuadre(e);
+    actualizarVistaJuego(c,ruta,e);
+    aplicarEncuadre(pendiente?.vistas?.[claveVista()]||(!pendiente?encuadres(c)[claveVista()]:null)||e);
     const heredada=acabado!=='normal'&&(nueva||p?.heredada);
     $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':p?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):c.original?'Ilustración original'+(p?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
     if(heredada&&!pendiente?.blob)$('origen').textContent+=' Usa ilustración Normal: si cambia su imagen, se actualizará también aquí.';
@@ -142,14 +163,16 @@
   $('salir').onclick=async()=>{if(ocupado||!await puedeDescartar())return;bloquear(true);try{await pedir('api/sfx/sesion',{method:'DELETE'});descartar();privados.clear();fallo(Object.assign(Error('Sesión cerrada.'),{status:401}));estado('Sesión cerrada. Los cambios guardados siguen en el estudio.');}catch(e){fallo(e);}finally{bloquear(false);}};
   $('recargar').onclick=refrescar;$('actualizarRevision').onclick=refrescar;$('buscar').oninput=lista;$('filtroArte').onchange=lista;
   $('verBiblioteca').onclick=()=>document.querySelector('.banco').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+  function iniciarEncuadres(){pendiente||={id:seleccion,acabado,crear:acabado!=='normal'&&!creada(actual()),revision:revision(actual()),encuadre:encuadre(actual()),vistas:encuadres(actual())};pendiente.vistas||=encuadres(actual());}
   function editarEncuadre(){
     if(ocupado||conflicto||!actual())return;
     const e=normalizar({x:$('encX').value,y:$('encY').value,z:$('encZ').value});
-    pendiente||={id:seleccion,acabado,crear:acabado!=='normal'&&!creada(actual()),revision:revision(actual()),encuadre:e};pendiente.encuadre=e;
-    if(!pendiente.blob&&!pendiente.crear&&JSON.stringify(e)===JSON.stringify(encuadre(actual())))descartar();
+    iniciarEncuadres();pendiente.vistas[claveVista()]=e;
+    if(!pendiente.blob&&!pendiente.crear&&JSON.stringify(pendiente.vistas)===JSON.stringify(encuadres(actual())))descartar();
     vista();
   }
   for(const id of ['encX','encY','encZ'])$(id).oninput=editarEncuadre;
+  $('heredarVista').onclick=()=>{if(ocupado||conflicto)return;iniciarEncuadres();delete pendiente.vistas[claveVista()];vista();};
   $('centrar').onclick=()=>{aplicarEncuadre({x:50,y:50,z:100});editarEncuadre();};
   $('descartar').onclick=async()=>{if(ocupado||!await puedeDescartar())return;descartar(false);detalle();estado(conflicto?'Vista previa descartada. Actualiza la revisión para continuar.':'Vista previa descartada. La ilustración publicada sigue igual.');};
   $('imagen').onerror=()=>{if($('imagen').hidden)return;$('imagen').hidden=true;$('simbolo').hidden=false;estado('No se pudo cargar esta imagen. Actualiza o revisa tu conexión antes de guardar.',true);};
@@ -169,15 +192,15 @@
   async function preparar(archivo,nombre,enc=null){
     if(ocupado||conflicto)return;if(!await puedeDescartar()){$('archivo').value='';return;}
     bloquear(true);estado('Preparando la ilustración para la vista previa…');
-    try{const preparada=await convertir(archivo);descartar();pendiente={id:seleccion,acabado,crear:acabado!=='normal'&&!creada(actual()),revision:revision(actual()),...preparada,url:URL.createObjectURL(preparada.blob),nombre:Array.from(String(nombre||'Ilustración')).slice(0,150).join(''),encuadre:normalizar(enc)};vista();estado('La vista previa está lista. Ajusta el encuadre y guarda cuando te guste.');}
+    try{const preparada=await convertir(archivo);descartar();pendiente={id:seleccion,acabado,crear:acabado!=='normal'&&!creada(actual()),revision:revision(actual()),...preparada,url:URL.createObjectURL(preparada.blob),nombre:Array.from(String(nombre||'Ilustración')).slice(0,150).join(''),encuadre:normalizar(enc),vistas:encuadres(actual())};vista();estado('La vista previa está lista. Ajusta el encuadre y guarda cuando te guste.');}
     catch(e){fallo(e);}finally{$('archivo').value='';bloquear(false);}
   }
   $('archivo').onchange=()=>{const archivo=$('archivo').files[0];if(archivo)preparar(archivo,archivo.name);};
   async function guardar(method){
     if(ocupado||conflicto||!autenticado)return;const c=actual(),version=acabado;if(!c||method!=='DELETE'&&(!pendiente||pendiente.id!==c.id||pendiente.acabado!==version))return;
     const r=method==='DELETE'?revision(c,version):pendiente.revision;let body,headers={'If-Match':String(r)};
-    if(method==='PUT'){body=pendiente.blob;headers={...headers,'Content-Type':'image/webp','X-Arte-Nombre':encodeURIComponent(pendiente.nombre),'X-Arte-Encuadre':JSON.stringify(pendiente.encuadre)};}
-    if(method==='PATCH'){body=JSON.stringify(pendiente.encuadre);headers['Content-Type']='application/json';}
+    if(method==='PUT'){body=pendiente.blob;headers={...headers,'Content-Type':'image/webp','X-Arte-Nombre':encodeURIComponent(pendiente.nombre),'X-Arte-Encuadre':JSON.stringify({...pendiente.encuadre,vistas:pendiente.vistas||encuadres(c)})};}
+    if(method==='PATCH'){body=JSON.stringify({...pendiente.encuadre,vistas:pendiente.vistas||encuadres(c)});headers['Content-Type']='application/json';}
     bloquear(true);estado('Guardando '+acabados[version]+' en '+nombreEntorno()+'…');
     try{
       const resultado=await pedir('api/arte/carta/'+encodeURIComponent(c.id)+'/'+version,{method,headers,body});
@@ -201,7 +224,7 @@
   };
   $('usarIlustracion').onclick=async()=>{
     const c=actual();if(ocupado||conflicto||!c||acabado==='normal'||creada(c)||!await puedeDescartar())return;
-    descartar();pendiente={id:c.id,acabado,crear:true,revision:revision(c),encuadre:encuadre(c,'normal')};vista();estado('Vista previa '+acabados[acabado]+' lista. Guarda para crear esta versión.');
+    descartar();pendiente={id:c.id,acabado,crear:true,revision:revision(c),encuadre:encuadre(c,'normal'),vistas:CAOZ_VISTAS.limpiar(registro(c,'normal')?.vistas)};vista();estado('Vista previa '+acabados[acabado]+' lista. Guarda para crear esta versión.');
   };
   async function leerLocales(){
     if(!window.indexedDB)throw Error('Este navegador no permite recuperar los borradores locales.');

@@ -103,12 +103,18 @@ async function api(req,env){
 // D1 limita cada BLOB/fila a 2 MB; 1.5 MB deja margen para metadatos.
 const MAXIMO_ARTE=1500000,ACABADOS_ARTE=['normal','foil','dorado'],preparacionesArte=new WeakMap(),catalogosArte=new WeakMap();
 const falloArte=(mensaje,status=400)=>{throw Object.assign(Error(mensaje),{status});};
-function encuadreArte(datos){
-  if(!datos||Array.isArray(datos)||Object.keys(datos).some(k=>!['x','y','z'].includes(k))||
+const VISTAS_ARTE=new Set(['revelada','ruta','mano','campo','detalle','coleccion','descarte','memoria','seleccion','vs','victoria','hud','campana','honor'].flatMap(v=>['desktop_'+v,'movil_'+v]));
+function encuadreArte(datos,esVista=false){
+  if(!datos||Array.isArray(datos)||Object.keys(datos).some(k=>!(esVista?['x','y','z']:['x','y','z','vistas']).includes(k))||
     !['x','y','z'].every(k=>typeof datos[k]==='number'&&Number.isFinite(datos[k]))||
-    datos.x<0||datos.x>100||datos.y<0||datos.y>100||datos.z<100||datos.z>300)
-    falloArte('El encuadre requiere x e y de 0 a 100 y zoom de 100 a 300.');
-  return {x:datos.x,y:datos.y,z:datos.z};
+    datos.x<0||datos.x>100||datos.y<0||datos.y>100||datos.z<50||datos.z>300)
+    falloArte('El encuadre requiere x e y de 0 a 100 y zoom de 50 a 300.');
+  const salida={x:datos.x,y:datos.y,z:datos.z};
+  if(!esVista&&Object.hasOwn(datos,'vistas')){
+    if(!datos.vistas||Array.isArray(datos.vistas)||typeof datos.vistas!=='object'||Object.keys(datos.vistas).some(k=>!VISTAS_ARTE.has(k)))falloArte('Vista de carta desconocida.');
+    salida.vistas=Object.fromEntries(Object.keys(datos.vistas).sort().map(k=>[k,encuadreArte(datos.vistas[k],true)]));
+  }
+  return salida;
 }
 function dimensionesArte(ancho,alto){
   if(!Number.isInteger(ancho)||!Number.isInteger(alto)||ancho<16||alto<16||ancho>4096||alto>4096||ancho*alto>16000000)
@@ -183,7 +189,13 @@ async function prepararArte(db){
     // Normal conserva la tabla y las revisiones existentes, sin copiar ni sobrescribir datos.
     db.prepare("CREATE TABLE IF NOT EXISTS ilustraciones_acabados (id TEXT NOT NULL, acabado TEXT NOT NULL CHECK(acabado IN ('foil','dorado')), activo INTEGER NOT NULL DEFAULT 0, revision INTEGER NOT NULL DEFAULT 0, hash TEXT, anterior TEXT, nombre TEXT, mime TEXT, ancho INTEGER, alto INTEGER, x REAL, y REAL, z REAL, actualizado TEXT, PRIMARY KEY(id,acabado))"),
     db.prepare('CREATE TABLE IF NOT EXISTS imagenes (hash TEXT PRIMARY KEY, contenido BLOB NOT NULL, mime TEXT NOT NULL, creado INTEGER NOT NULL)')
-  ]).catch(e=>{preparacionesArte.delete(db);throw e;}));
+  ]).then(async()=>{
+    // Migración aditiva: conserva ilustraciones, revisiones y acabados existentes.
+    for(const tabla of ['ilustraciones','ilustraciones_acabados']){
+      const columnas=(await db.prepare('PRAGMA table_info('+tabla+')').all()).results;
+      if(!columnas.some(c=>c.name==='vistas'))try{await db.prepare('ALTER TABLE '+tabla+' ADD COLUMN vistas TEXT').run();}catch(e){if(!/duplicate column/i.test(String(e.message)))throw e;}
+    }
+  }).catch(e=>{preparacionesArte.delete(db);throw e;}));
   return preparacionesArte.get(db);
 }
 async function idsArte(req,env){
@@ -198,19 +210,19 @@ async function idsArte(req,env){
   return catalogosArte.get(env.ASSETS);
 }
 function arteVacio(id,acabado='normal'){
-  return {id,acabado,activo:acabado==='normal'?1:0,revision:0,hash:null,anterior:null,nombre:null,mime:null,ancho:null,alto:null,x:null,y:null,z:null,actualizado:null};
+  return {id,acabado,activo:acabado==='normal'?1:0,revision:0,hash:null,anterior:null,nombre:null,mime:null,ancho:null,alto:null,x:null,y:null,z:null,vistas:null,actualizado:null};
 }
 function registroArte(registro,normal,privado){
   const activo=registro.acabado==='normal'||!!registro.activo;
   const heredada=activo&&registro.acabado!=='normal'&&!registro.hash;
   const imagen=heredada?(normal||arteVacio(registro.id)):registro;
-  const salida={id:registro.id,acabado:registro.acabado,activo,heredada,revision:registro.revision,hash:imagen.hash,mime:imagen.mime,ancho:imagen.ancho,alto:imagen.alto,x:registro.x,y:registro.y,z:registro.z,actualizado:registro.actualizado};
+  const salida={id:registro.id,acabado:registro.acabado,activo,heredada,revision:registro.revision,hash:imagen.hash,mime:imagen.mime,ancho:imagen.ancho,alto:imagen.alto,x:registro.x,y:registro.y,z:registro.z,vistas:registro.vistas?JSON.parse(registro.vistas):{},actualizado:registro.actualizado};
   if(privado){salida.anterior=registro.anterior;salida.nombre=imagen.nombre;}
   return salida;
 }
 async function filasArte(db,privado,id=null){
   // Una sola lectura produce una vista consistente de normal y sus acabados.
-  const campos='revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado',filtro=id?' WHERE id=?':'';
+  const campos='revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado',filtro=id?' WHERE id=?':'';
   let consulta=db.prepare("SELECT id,'normal' AS acabado,1 AS activo,"+campos+' FROM ilustraciones'+filtro+' UNION ALL SELECT id,acabado,activo,'+campos+' FROM ilustraciones_acabados'+filtro);
   if(id)consulta=consulta.bind(id,id);
   const {results}=await consulta.all(),porCarta=new Map();
@@ -255,27 +267,28 @@ async function apiArte(req,env){
       actual=await db.prepare('SELECT * FROM ilustraciones WHERE id=?').bind(id).first();
     }else actual=await db.prepare('SELECT * FROM ilustraciones_acabados WHERE id=? AND acabado=?').bind(id,acabado).first()||arteVacio(id,acabado);
     if(actual.revision!==Number(rev))return json({error:'Esta carta cambió en otra ventana. Recarga y revisa la nueva versión.'},409);
-    let {hash,anterior,nombre,mime,ancho,alto,x,y,z}=actual;
+    let {hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas}=actual;
+    const recibir=datos=>{const e=encuadreArte(datos);({x,y,z}=e);if(e.vistas)vistas=JSON.stringify(e.vistas);};
     if(req.method==='PUT'){
       mime=(req.headers.get('content-type')||'').split(';')[0].trim().toLowerCase();
       if(!['image/webp','image/png','image/jpeg'].includes(mime))falloArte('Utiliza una imagen WebP, PNG o JPEG.',415);
-      ({x,y,z}=encuadreArte(JSON.parse(req.headers.get('x-arte-encuadre')||'null')));
+      recibir(JSON.parse(req.headers.get('x-arte-encuadre')||'null'));
       const b=await cuerpo(req,MAXIMO_ARTE);({ancho,alto}=validarImagenArte(b,mime));hash=await sha(b);anterior=actual.hash||actual.anterior;
       nombre=decodeURIComponent(req.headers.get('x-arte-nombre')||'Ilustración').replace(/[\u0000-\u001f\u007f<>]/g,'').trim().slice(0,100)||'Ilustración';
       await db.prepare('INSERT OR IGNORE INTO imagenes(hash,contenido,mime,creado) VALUES (?,?,?,?)').bind(hash,b.buffer,mime,Date.now()).run();
     }else if(req.method==='PATCH'){
-      ({x,y,z}=encuadreArte(JSON.parse(new TextDecoder().decode(await cuerpo(req,1000)))));
+      recibir(JSON.parse(new TextDecoder().decode(await cuerpo(req,6000))));
     }else{
-      anterior=actual.hash||actual.anterior;hash=null;nombre=null;mime=null;ancho=null;alto=null;x=null;y=null;z=null;
+      anterior=actual.hash||actual.anterior;hash=null;nombre=null;mime=null;ancho=null;alto=null;x=null;y=null;z=null;vistas=null;
     }
     const actualizado=new Date().toISOString();
     let cambio;
-    if(acabado==='normal')cambio=await db.prepare('UPDATE ilustraciones SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,revision=revision+1,actualizado=? WHERE id=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado,id,Number(rev)).run();
+    if(acabado==='normal')cambio=await db.prepare('UPDATE ilustraciones SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,vistas=?,revision=revision+1,actualizado=? WHERE id=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado,id,Number(rev)).run();
     else{
       // La variante sólo aparece tras una escritura válida. INSERT y CAS son atómicos.
       const cambios=await db.batch([
         db.prepare('INSERT OR IGNORE INTO ilustraciones_acabados(id,acabado) VALUES (?,?)').bind(id,acabado),
-        db.prepare('UPDATE ilustraciones_acabados SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,activo=?,revision=revision+1,actualizado=? WHERE id=? AND acabado=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,req.method==='DELETE'?0:1,actualizado,id,acabado,Number(rev))
+        db.prepare('UPDATE ilustraciones_acabados SET hash=?,anterior=?,nombre=?,mime=?,ancho=?,alto=?,x=?,y=?,z=?,vistas=?,activo=?,revision=revision+1,actualizado=? WHERE id=? AND acabado=? AND revision=?').bind(hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,req.method==='DELETE'?0:1,actualizado,id,acabado,Number(rev))
       ]);cambio=cambios[1];
     }
     if(cambio.meta.changes!==1)return json({error:'Otra sesión guardó primero. Recarga el estudio.'},409);
@@ -311,11 +324,11 @@ async function controlEstudio(db){
   ]).catch(e=>{controlesEstudio.delete(db);throw e;}));return controlesEstudio.get(db);
 }
 const camposSonido=['id','hash','nombre','duracion','volumen'];
-const camposImagen=['id','acabado','activo','hash','nombre','mime','ancho','alto','x','y','z'];
+const camposImagen=['id','acabado','activo','hash','nombre','mime','ancho','alto','x','y','z','vistas'];
 async function leerEstudio(db,tipo){
   if(tipo==='sfx'){await preparar(db);return (await db.prepare('SELECT * FROM sonidos ORDER BY id').all()).results;}
   await prepararArte(db);
-  return (await db.prepare("SELECT id,'normal' AS acabado,1 AS activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado FROM ilustraciones UNION ALL SELECT id,acabado,activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,actualizado FROM ilustraciones_acabados ORDER BY id,acabado").all()).results;
+  return (await db.prepare("SELECT id,'normal' AS acabado,1 AS activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado FROM ilustraciones UNION ALL SELECT id,acabado,activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado FROM ilustraciones_acabados ORDER BY id,acabado").all()).results;
 }
 const claveFila=r=>r.id+'/'+(r.acabado||'');
 function contenidoEstudio(r,tipo){
@@ -368,7 +381,7 @@ async function publicarEstudio(req,env,tipo,destino){
   const comandos=[p.db.prepare('INSERT INTO estudio_guardia(valor) VALUES (CASE WHEN COALESCE((SELECT revision FROM estudio_lotes WHERE tipo=?),0)=? THEN 1 ELSE 0 END)').bind(tipo,p.revision)];
   if(tipo==='sfx')comandos.push(upsertEstudio(p.db,'sonidos',filas,[...camposSonido,'anterior','revision','actualizado']));
   else{
-    const campos=['id','hash','anterior','nombre','mime','ancho','alto','x','y','z','revision','actualizado'];
+    const campos=['id','hash','anterior','nombre','mime','ancho','alto','x','y','z','vistas','revision','actualizado'];
     comandos.push(upsertEstudio(p.db,'ilustraciones',filas.filter(r=>r.acabado==='normal'),campos));
     comandos.push(upsertEstudio(p.db,'ilustraciones_acabados',filas.filter(r=>r.acabado!=='normal'),[...campos,'acabado','activo']));
   }

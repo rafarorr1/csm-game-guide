@@ -2326,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=237"></script>
-<script src="final.js?b=237"></script>
+<script src="motor.js?b=238"></script>
+<script src="final.js?b=238"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:237, fecha:'2026-09-10'};
+const BUILD = {n:238, fecha:'2026-09-10'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2420,6 +2420,7 @@ function encajarTextos(raiz){
    valiendo: se leen como el centro horizontal y sin acercar. */
 
 function ponerDibujo(nodo, url, enc){
+  enc=window.CAOZ_ARTE?.encuadre(nodo.dataset.arteId,CAOZ_VISTAS.identificar(nodo))||enc;
   // Reutiliza el marco: una edición remota no debe duplicar ni rehacer cartas.
   const marcos=[...nodo.querySelectorAll(':scope > .marcoDibujo')];
   let caja=marcos.shift();marcos.forEach(n=>n.remove());
@@ -5154,7 +5155,7 @@ if(new URLSearchParams(location.search).has('biblia')){
    desde la pantalla de inicio. Sólo en https y fuera de las pruebas, que
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
-   && !new URLSearchParams(location.search).has('test')){
+   && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
   addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js').catch(()=>{}); });
 }
 </script>

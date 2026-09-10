@@ -254,8 +254,8 @@
     // oficial del juego, incluido su emoji mientras no tengan ilustración.
     const enc=typeof ARTE!=='undefined'?ARTE[id]:null;if(id!=='lucius'&&enc==null)return null;
     const url=urlArte(id),previa=arteMemoria.get(id);
-    if(previa&&(!actualizar||previa.getAttribute('src')===url)){if(actualizar)previa.encuadre=encuadreDe(ARTE[id]);return previa;}
-    const imagen=new Image();imagen.encuadre=encuadreDe(ARTE[id]);arteMemoria.set(id,imagen);imagen.src=url;return imagen;
+    if(previa&&(!actualizar||previa.getAttribute('src')===url)){if(actualizar)previa.encuadre=(window.CAOZ_ARTE?.encuadre(id,(document.getElementById('panelCerrar')?'movil_':'desktop_')+'memoria')||encuadreDe(ARTE[id]));return previa;}
+    const imagen=new Image();imagen.encuadre=(window.CAOZ_ARTE?.encuadre(id,(document.getElementById('panelCerrar')?'movil_':'desktop_')+'memoria')||encuadreDe(ARTE[id]));arteMemoria.set(id,imagen);imagen.src=url;return imagen;
   }
   function instalarMemoriaCSS(){
     if(document.getElementById('ppMemoriaCSS'))return;const estilo=document.createElement('style');estilo.id='ppMemoriaCSS';estilo.textContent=`
@@ -291,13 +291,22 @@
     for(let y=0;y<112;y+=4)for(let x=0;x<96;x+=4){const v=Math.sin(x*.18+y*.12);c.fillStyle=v>.4?'#263145':v<-.4?'#1b2134':'#202b3d';c.fillRect(x,y,4,4);}
     const imagen=imagenMemoria(id);
     if(ilustrada&&imagen&&imagen.complete&&imagen.naturalWidth){
-      const enc=imagen.encuadre||{x:50,y:50,z:100},z=Math.max(1,enc.z/100),esc=Math.max(96/imagen.naturalWidth,112/imagen.naturalHeight)*z,an=imagen.naturalWidth*esc,al=imagen.naturalHeight*esc,xx=(96-an)*enc.x/100,yy=(112-al)*enc.y/100;c.drawImage(imagen,Math.round(xx),Math.round(yy),Math.round(an),Math.round(al));
+      const enc=imagen.encuadre||{x:50,y:50,z:100},z=Math.max(.5,enc.z/100),esc=Math.max(96/imagen.naturalWidth,112/imagen.naturalHeight)*z,an=imagen.naturalWidth*esc,al=imagen.naturalHeight*esc,xx=(96-an)*enc.x/100,yy=(112-al)*enc.y/100;c.drawImage(imagen,Math.round(xx),Math.round(yy),Math.round(an),Math.round(al));
     }else{
       c.textAlign='center';c.textBaseline='middle';c.font='49px "Apple Color Emoji","Segoe UI Emoji",sans-serif';c.fillText(carta.art||'',48,56);
     }
     // Dos tonos escalonados mantienen el nombre legible sin tapar la figura.
     c.fillStyle='#0c0b1744';c.fillRect(0,96,96,8);c.fillStyle='#0c0b1788';c.fillRect(0,104,96,8);
   }
+  // El estudio usa el mismo pintor de memoria, sin iniciar una prueba ni un temporizador.
+  API.vistaMemoria=id=>{
+    instalarMemoriaCSS();const carta=typeof CARDS!=='undefined'?CARDS[id]:null;
+    const b=document.createElement('div');b.className='ppMemoriaCarta ppRevelada';b.style.cssText='--pm-ancho:120px;--pm-alto:178px;--pm-nombre:12px;--pm-cifra:24px;width:120px;height:178px';
+    const frente=document.createElement('span');frente.className='ppMemoriaFrente';frente.dataset.acabado=acabadoArte(id);b.append(frente);
+    const arte=document.createElement('canvas');frente.append(arte);const img=imagenMemoria(id,true);
+    const pintar=()=>pintarRecuerdo(arte,id,!!img?.naturalWidth);if(img&&!img.complete)img.addEventListener('load',pintar,{once:true});pintar();
+    for(const [cl,v]of [['ppMemoriaNombre',carta?.n],['ppMemoriaCifra ppMemoriaCoste',carta?.c],['ppMemoriaCifra ppMemoriaAtaque',carta?.a],['ppMemoriaCifra ppMemoriaVida',carta?.h]]){const n=document.createElement('span');n.className=cl;n.textContent=v??'';frente.append(n);}return b;
+  };
   API.montadores=API.montadores||{};API.actualizadores=API.actualizadores||{};
   API.montadores.carrera=function(s,{nodo,escuchar}){
     instalarMemoriaCSS();const grupo=s.ui.izquierda.parentNode;s.ui.izquierda.hidden=true;s.ui.izquierda.tabIndex=-1;const fila=nodo('div','ppCarriles',null,grupo);grupo.insertBefore(fila,grupo.firstChild);s.pulsosCarril=[];s.pulsoCarrilActivo=false;
