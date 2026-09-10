@@ -249,12 +249,13 @@
   }
   const arteMemoria=new Map();
   function cartaMemoria(id){return typeof CARDS!=='undefined'?CARDS[id]:null;}
-  function imagenMemoria(id){
+  function imagenMemoria(id,actualizar=false){
     // Lucius está incluido en el paquete; los demás usan exactamente su arte
     // oficial del juego, incluido su emoji mientras no tengan ilustración.
     const enc=typeof ARTE!=='undefined'?ARTE[id]:null;if(id!=='lucius'&&enc==null)return null;
-    if(arteMemoria.has(id))return arteMemoria.get(id);
-    const imagen=new Image();arteMemoria.set(id,imagen);imagen.src='art/'+id+'.webp';return imagen;
+    const url=urlArte(id),previa=arteMemoria.get(id);
+    if(previa&&(!actualizar||previa.getAttribute('src')===url)){if(actualizar)previa.encuadre=encuadreDe(ARTE[id]);return previa;}
+    const imagen=new Image();imagen.encuadre=encuadreDe(ARTE[id]);arteMemoria.set(id,imagen);imagen.src=url;return imagen;
   }
   function instalarMemoriaCSS(){
     if(document.getElementById('ppMemoriaCSS'))return;const estilo=document.createElement('style');estilo.id='ppMemoriaCSS';estilo.textContent=`
@@ -281,7 +282,7 @@
     for(let y=0;y<112;y+=4)for(let x=0;x<96;x+=4){const v=Math.sin(x*.18+y*.12);c.fillStyle=v>.4?'#263145':v<-.4?'#1b2134':'#202b3d';c.fillRect(x,y,4,4);}
     const imagen=imagenMemoria(id);
     if(ilustrada&&imagen&&imagen.complete&&imagen.naturalWidth){
-      const dato=typeof ARTE!=='undefined'?ARTE[id]:null,enc=typeof encuadreDe==='function'?encuadreDe(dato)||{x:50,y:50,z:100}:{x:50,y:50,z:100},z=Math.max(1,enc.z/100),esc=Math.max(96/imagen.naturalWidth,112/imagen.naturalHeight)*z,an=imagen.naturalWidth*esc,al=imagen.naturalHeight*esc,xx=(96-an)*enc.x/100,yy=(112-al)*enc.y/100;c.drawImage(imagen,Math.round(xx),Math.round(yy),Math.round(an),Math.round(al));
+      const enc=imagen.encuadre||{x:50,y:50,z:100},z=Math.max(1,enc.z/100),esc=Math.max(96/imagen.naturalWidth,112/imagen.naturalHeight)*z,an=imagen.naturalWidth*esc,al=imagen.naturalHeight*esc,xx=(96-an)*enc.x/100,yy=(112-al)*enc.y/100;c.drawImage(imagen,Math.round(xx),Math.round(yy),Math.round(an),Math.round(al));
     }else{
       c.textAlign='center';c.textBaseline='middle';c.font='49px "Apple Color Emoji","Segoe UI Emoji",sans-serif';c.fillText(carta.art||'',48,56);
     }
@@ -307,7 +308,7 @@
     else s.mov.x=0;
   };
   API.montadores.duelo=function(s,{nodo,escuchar}){
-    instalarMemoriaCSS();for(const id of MEMORIA_CARTAS)imagenMemoria(id);s.elegir=null;s.ui.controles.style.display='none';const panel=nodo('section','ppMemoria',null,s.ui.campo),cab=nodo('div','ppMemoriaCabecera',null,panel),ronda=nodo('div','ppMemoriaRonda','',cab),consigna=nodo('div','ppMemoriaConsigna','Memoriza las cartas',cab),plazo=nodo('div','ppMemoriaPlazo',null,cab),barra=nodo('i','',null,plazo),mesa=nodo('div','ppMemoriaMesa',null,panel),pie=nodo('div','ppMemoriaPie',null,panel),sellos=nodo('div','ppMemoriaSellos',null,pie),dato=nodo('div','ppMemoriaDato','Pitágoras −0 Alma · 0 / 3 fallos',pie),ayuda=nodo('div','','Recuerda las dos cartas iguales.',pie),botones=[];
+    instalarMemoriaCSS();for(const id of MEMORIA_CARTAS)imagenMemoria(id,true);s.elegir=null;s.ui.controles.style.display='none';const panel=nodo('section','ppMemoria',null,s.ui.campo),cab=nodo('div','ppMemoriaCabecera',null,panel),ronda=nodo('div','ppMemoriaRonda','',cab),consigna=nodo('div','ppMemoriaConsigna','Memoriza las cartas',cab),plazo=nodo('div','ppMemoriaPlazo',null,cab),barra=nodo('i','',null,plazo),mesa=nodo('div','ppMemoriaMesa',null,panel),pie=nodo('div','ppMemoriaPie',null,panel),sellos=nodo('div','ppMemoriaSellos',null,pie),dato=nodo('div','ppMemoriaDato','Pitágoras −0 Alma · 0 / 3 fallos',pie),ayuda=nodo('div','','Recuerda las dos cartas iguales.',pie),botones=[];
     sellos.setAttribute('aria-hidden','true');mesa.setAttribute('aria-label','Cartas de memoria');
     const elegir=i=>{const m=s.modelo;if(s.fase==='jugando'&&m.faseMemoria==='elegir'&&!m.elegidasMemoria.includes(i)&&i<m.cartasMemoria.length)s.elegir=i;};
     for(let i=0;i<7;i++){const b=nodo('button','ppMemoriaCarta',null,mesa);b.type='button';b.dataset.indice=String(i);const dorso=nodo('span','ppMemoriaDorso',null,b);nodo('b','','◇',dorso);nodo('small','',String(i+1),dorso);const frente=nodo('span','ppMemoriaFrente',null,b),arte=nodo('canvas','',null,frente),texto=nodo('span','ppMemoriaNombre','',frente),coste=nodo('i','ppMemoriaCifra ppMemoriaCoste','',frente),ataque=nodo('i','ppMemoriaCifra ppMemoriaAtaque','',frente),vida=nodo('i','ppMemoriaCifra ppMemoriaVida','',frente);arte.setAttribute('aria-hidden','true');dorso.setAttribute('aria-hidden','true');frente.setAttribute('aria-hidden','true');escuchar(s,'click',b,()=>elegir(i));botones.push({b,frente,arte,texto,coste,ataque,vida,id:null});}
@@ -318,7 +319,7 @@
     const u=s.ui.memoria;if(!u)return;const m=s.modelo,n=m.cartasMemoria.length,clave=[m.rondaMemoria,m.faseMemoria,m.elegidasMemoria.join(','),m.parejas,m.fallosMemoria,s.fase].join('|');
     // Congelar la representación al empezar la ronda evita que una descarga
     // cambie el recuerdo a mitad de la exposición o revele primero una copia.
-    if(s.fase==='jugando'&&u.rondaArte!==m.rondaMemoria){u.rondaArte=m.rondaMemoria;u.artes=new Set(m.cartasMemoria.filter(id=>{const img=imagenMemoria(id);return img&&img.complete&&img.naturalWidth;}));}
+    if(s.fase==='jugando'&&u.rondaArte!==m.rondaMemoria){u.rondaArte=m.rondaMemoria;u.artes=new Set(m.cartasMemoria.filter(id=>{const img=imagenMemoria(id,true);return img&&img.complete&&img.naturalWidth;}));}
     if(clave!==u.clave){u.clave=clave;u.panel.dataset.fase=m.faseMemoria;u.panel.dataset.resultado=m.resultadoMemoria==='PAREJA ENCONTRADA'?'acierto':'fallo';u.ronda.textContent='Recuerdo '+String(m.rondaMemoria).padStart(2,'0');u.consigna.textContent=m.faseMemoria==='mostrar'?'Memoriza las cartas':m.faseMemoria==='elegir'?'Encuentra la pareja':m.resultadoMemoria;u.dato.textContent='Pitágoras −'+m.parejas+' Alma · '+m.fallosMemoria+' / 3 fallos';u.ayuda.textContent=m.faseMemoria==='mostrar'?'Dos son iguales. Cada pareja quita 1 Alma a Pitágoras.':m.faseMemoria==='elegir'?'Elige las dos cartas que recuerdas.':m.resultadoMemoria==='PAREJA ENCONTRADA'?'Pitágoras pierde 1 Alma.':'Pierdes 1 vida de la prueba. Tres fallos cuestan 5 Alma.';
       while(u.sellos.children.length<m.parejas){const sello=document.createElement('i');sello.className='ppLogrado';u.sellos.appendChild(sello);}
       for(let i=0;i<u.botones.length;i++){

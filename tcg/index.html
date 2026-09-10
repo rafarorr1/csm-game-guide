@@ -1996,6 +1996,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 /* aquí el arte manda: es la mitad del panel y va a sangre */
 .big .art{position:relative;height:176px;flex:0 0 auto;font-size:74px;padding:0;
   display:grid;place-items:center}
+.big .art.conarte{font-size:0}
 .big .art::after{height:40%}
 .big .top{position:absolute;inset:0 0 auto 0;height:176px;z-index:3;pointer-events:none}
 .big .cost{top:9px;left:9px;width:31px;height:31px;font-size:16px}
@@ -2325,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=232"></script>
-<script src="final.js?b=232"></script>
+<script src="motor.js?b=233"></script>
+<script src="final.js?b=233"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2345,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:232, fecha:'2026-09-09'};
+const BUILD = {n:233, fecha:'2026-09-09'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2419,22 +2420,16 @@ function encajarTextos(raiz){
    valiendo: se leen como el centro horizontal y sin acercar. */
 
 function ponerDibujo(nodo, url, enc){
-  const caja = document.createElement('div');
-  caja.className = 'marcoDibujo';               // recorta: nunca se sale
-  const img = document.createElement('img');
-  img.className = 'dibujo';
-  img.alt = '';
-  img.src = url;
-  caja.appendChild(img);
-  /* La misma imagen, también como fondo del marco: en Safari de iOS un <img>
-     con object-fit bajo un ancestro con `zoom` (todo el lienzo lo lleva) se
-     estira a la caja — fallo conocido de WebKit—, así que la versión vertical
-     pinta el retrato como fondo, que sí respeta el recorte, y esconde la img. */
+  // Reutiliza el marco: una edición remota no debe duplicar ni rehacer cartas.
+  const marcos=[...nodo.querySelectorAll(':scope > .marcoDibujo')];
+  let caja=marcos.shift();marcos.forEach(n=>n.remove());
+  if(!caja){caja=document.createElement('div');caja.className='marcoDibujo';nodo.prepend(caja);}
+  let img=caja.querySelector('img');
+  if(!img){img=document.createElement('img');img.className='dibujo';img.alt='';caja.appendChild(img);}
+  if(img.getAttribute('src')!==url)img.src=url;
   caja.style.setProperty('--url', `url("${url}")`);
-  nodo.style.setProperty('--ex', enc.x + '%');
-  nodo.style.setProperty('--ey', enc.y + '%');
-  nodo.style.setProperty('--ez', (enc.z / 100).toFixed(3));
-  nodo.insertBefore(caja, nodo.firstChild);
+  nodo.style.setProperty('--ex', enc.x+'%');nodo.style.setProperty('--ey', enc.y+'%');
+  nodo.style.setProperty('--ez', (enc.z/100).toFixed(3));
   return img;
 }
 
@@ -2443,29 +2438,21 @@ function ponerDibujo(nodo, url, enc){
    delante 'lider_' para no chocar con el de una carta. */
 
 function ilustrarLider(d, lid){
-  const enc = encuadreDe(ARTE['lider_' + lid]);
-  if(!enc) return d;                            // sin dibujo: su emoji de siempre
-  const cara = d.querySelector('.lface');
-  if(!cara) return d;
-  cara.classList.add('conarte');
-  ponerDibujo(cara, `art/lider_${lid}.webp`, enc);
+  const cara=d.querySelector('.lface');if(!cara)return d;
+  cara.dataset.arteId='lider_'+lid;
+  const enc=encuadreDe(ARTE['lider_'+lid]);if(!enc)return d;
+  cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid),enc);
   return d;
 }
-
 function ilustrar(d, id){
-  const enc = encuadreDe(ARTE[id]);
-  const hay = enc != null;
-  // El acomodo es el mismo tenga o no ilustración: lo único que cambia es si el
-  // fondo lo pone el dibujo o el emoji sobre el color de su clase.
-  d.classList.add('acomodo', hay ? 'conarte' : 'sinarte');
-  if(hay) ponerDibujo(d, `art/${id}.webp`, enc);
-  const pie = document.createElement('div');
-  pie.className = 'pieCarta';
-  for(const sel of ['.nm', '.tribe', '.txt', '.stats']){
-    const e = d.querySelector(sel);
-    if(e) pie.appendChild(e);
-  }
-  if(pie.children.length) d.appendChild(pie);
+  d.dataset.arteId=id;
+  const enc=encuadreDe(ARTE[id]),hay=enc!=null;
+  d.classList.add('acomodo');d.classList.toggle('conarte',hay);d.classList.toggle('sinarte',!hay);
+  if(hay)ponerDibujo(d,urlArte(id),enc);
+  let pie=d.querySelector(':scope > .pieCarta');
+  if(!pie){pie=document.createElement('div');pie.className='pieCarta';}
+  for(const sel of ['.nm','.tribe','.txt','.stats']){const e=d.querySelector(sel);if(e&&!pie.contains(e))pie.appendChild(e);}
+  if(pie.children.length&&!pie.parentNode)d.appendChild(pie);
   return d;
 }
 
@@ -2797,8 +2784,8 @@ function showInspectLeader(d,side){
   box.className='big';
   const encL = encuadreDe(ARTE['lider_' + p.leaderId]);
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
-    <div class="art${encL?' conarte':''}"${encL ? ` style="position:relative;overflow:hidden;font-size:0;--ex:${encL.x}%;--ey:${encL.y}%;--ez:${(encL.z/100).toFixed(3)}"` : ''}>${
-      encL ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="art/lider_${p.leaderId}.webp"></div>` : ''}${L.art}</div>
+    <div data-arte-id="lider_${p.leaderId}" class="art${encL?' conarte':''}"${encL ? ` style="--ex:${encL.x}%;--ey:${encL.y}%;--ez:${(encL.z/100).toFixed(3)}"` : ''}>${
+      encL ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId)}"></div>` : ''}${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
     <div class="bigsep"></div>
@@ -2824,6 +2811,8 @@ function attachInspect(d,id,u){
   d.onmouseenter=e=>{ const box=$('#inspectCard');
     box.className = 'big t-' + (CARDS[id] ? CARDS[id].t : 'personaje');
     box.innerHTML=inspectHTML(id,u);
+    const art=box.querySelector('.art'),enc=encuadreDe(ARTE[id]);
+    if(art){art.dataset.arteId=id;if(enc){art.classList.add('conarte');ponerDibujo(art,urlArte(id),enc);}}
     const box2=$('#inspect'); box2.classList.add('on');
     placeInspect(d);
   };
@@ -3433,9 +3422,9 @@ function renderLeaders(){
                 && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
     const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     const enc = encuadreDe(ARTE['lider_' + p.leaderId]);
-    host.innerHTML=`<div class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
+    host.innerHTML=`<div data-arte-id="lider_${p.leaderId}" class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
       enc ? ` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"` : ''}>
-      ${enc ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="art/lider_${p.leaderId}.webp"></div>` : ''}
+      ${enc ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId)}"></div>` : ''}
       <div class="lcName">${L.n}</div>
       <div class="lcArt">${L.art}</div>
       <div class="lcEp">${L.ep}</div>
@@ -4185,46 +4174,7 @@ function showGrave(){
   openOv();
 }
 
-function abrirEditor(){
-  if(enCasa() || sessionStorage.getItem('estudioOk') === '1'){
-    location.href = EDITOR;
-    return;
-  }
-  const p = $('#ovPanel');
-  p.innerHTML = '<h3>🎨 Editor de cartas</h3>' +
-    '<div style="color:var(--dim);font-size:13px">Aquí se preparan las ilustraciones ' +
-    'de las cartas. Hace falta la contraseña.</div>';
-  const caja = el('div','puerta');
-  const campo = document.createElement('input');
-  campo.type = 'password'; campo.autocomplete = 'off'; campo.placeholder = 'Contraseña';
-  const aviso = el('div','mal','');
-  const entrar = el('button','btn gold','Entrar');
-  const cerrar = el('button','btn','Cerrar');
-
-  const probar = async () => {
-    // crypto.subtle sólo existe en https o en local; si no, no se puede comprobar
-    if(!(window.crypto && crypto.subtle)){
-      aviso.textContent = 'Esta página no va por https: no puedo comprobarla.';
-      return;
-    }
-    if(await huella(campo.value) === LLAVE_ESTUDIO){
-      sessionStorage.setItem('estudioOk','1');     // no la vuelve a pedir en esta visita
-      location.href = EDITOR;
-    } else {
-      aviso.textContent = 'No es ésa.';
-      campo.value = ''; campo.focus();
-    }
-  };
-  entrar.onclick = probar;
-  campo.onkeydown = e => { if(e.key === 'Enter') probar(); };
-  cerrar.onclick = () => cerrarOv();
-
-  caja.appendChild(campo); caja.appendChild(aviso);
-  caja.appendChild(entrar); caja.appendChild(cerrar);
-  p.appendChild(caja);
-  openOv();
-  setTimeout(() => campo.focus(), 50);
-}
+function abrirEditor(){ location.href='estudio.html'; }
 
 function showRecords(){
   const p=$('#ovPanel');
@@ -4925,11 +4875,7 @@ function ilustrarFondo(){
   $$('#fondoMenus .cartaFondo .vscard[data-lid]').forEach(n=>ilustrarLider(n, n.dataset.lid));
 }
 ilustrarFondo();
-cargarArte().then(()=>{
-  ilustrarFondo();
-  window.dispatchEvent(new Event('caoz:arte'));
-  if(Object.keys(ARTE).length && G && !G.silent) render();
-});
+cargarArte().then(()=>ilustrarFondo());
 
 /* Las pruebas viven en tests.js y sólo se cargan con ?test=... — así el juego
    normal no paga nada por ellas y sigue siendo un archivo suelto que funciona

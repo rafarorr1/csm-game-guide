@@ -1429,6 +1429,51 @@ PRUEBAS.suite('betaFinalGero',async t=>{
   }
 });
 
+PRUEBAS.suite('arteRemoto',async t=>{
+  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
+  try{for(const pagina of ['index.html','movil.html']){
+    localStorage.removeItem(clave);
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=arte-remoto-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,renderAntes=w.render;let datos={cartas:[]},caida=false;
+    try{
+      await w.cargarArte();await w.CAOZ_ARTE.refrescar();
+      const original=w.eval('JSON.stringify(ARTE.augusto)'),liderOriginal=w.eval('JSON.stringify(ARTE.lider_fender)');
+      w.fetch=async(url,op)=>{
+        if(String(url).includes('/api/arte/catalogo')){
+          t.igual(op.credentials,'omit',pagina+': el juego no envía una sesión privada para leer arte.');
+          if(caida)throw Error('Sin red');return new w.Response(JSON.stringify(datos),{headers:{'Content-Type':'application/json'}});
+        }
+        return fetchAntes(url,op);
+      };
+      w.newGame('fender','mohamed');w.eval("G.phase='principal';G.active=ME;G.busy=false;G.resolving=false;P(ME).hand=['augusto']");w.showScreen('board');w.render();w.relojPara();
+      const g=w.eval('G'),carta=d.querySelector('#hand [data-arte-id="augusto"]'),marco=carta.querySelector('.marcoDibujo');
+      w.render=()=>{throw Error('Una edición de arte no debe reiniciar el render del combate.');};
+      datos={cartas:[{id:'augusto',revision:1,hash:null,mime:null,x:61,y:17,z:132},{id:'lider_fender',revision:1,hash:null,mime:null,x:42,y:18,z:140},{id:'una_carta_retirada',revision:1,hash:null,x:null,y:null,z:null}]};
+      await w.CAOZ_ARTE.refrescar();
+      t.check(w.eval('G')===g&&d.querySelector('#hand [data-arte-id="augusto"]')===carta,pagina+': conserva la partida y la carta seleccionable.');
+      t.check(carta.querySelector('.marcoDibujo')===marco,pagina+': conserva el mismo marco y sus animaciones.');
+      t.igual(carta.style.getPropertyValue('--ex'),'61%',pagina+': aplica el encuadre recibido.');
+      t.igual(w.urlArte('augusto'),'art/augusto.webp',pagina+': permite editar sólo el encuadre del original.');
+      for(let i=0;i<3;i++)w.CAOZ_ARTE.actualizar();
+      t.igual(carta.querySelectorAll(':scope > .marcoDibujo').length,1,pagina+': repetir el refresco no duplica marcos.');
+      t.igual(carta.querySelectorAll(':scope > .pieCarta').length,1,pagina+': no duplica texto ni cifras.');
+      // Reproduce el evento real de una descarga fallida: el catálogo no cambia
+      // al volver la conexión y, aun así, el mismo nodo tiene que recuperarse.
+      carta.querySelector('img').dispatchEvent(new w.Event('error'));
+      t.igual(carta.querySelectorAll(':scope > .marcoDibujo').length,0,pagina+': una imagen fallida vuelve al símbolo.');
+      await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.querySelectorAll(':scope > .marcoDibujo').length,1,pagina+': vuelve a intentar la imagen sin exigir otra revisión.');
+      datos={cartas:[{id:'augusto',revision:2,hash:null,mime:null,x:null,y:null,z:null},{id:'lider_fender',revision:2,hash:null,mime:null,x:null,y:null,z:null}]};
+      await w.CAOZ_ARTE.refrescar();
+      t.igual(w.eval('JSON.stringify(ARTE.augusto)'),original,pagina+': restaurar conserva el encuadre numérico heredado.');
+      t.igual(w.eval('JSON.stringify(ARTE.lider_fender)'),liderOriginal,pagina+': restaurar devuelve también el retrato original.');
+      caida=true;await w.CAOZ_ARTE.refrescar();
+      t.igual(w.eval('JSON.stringify(ARTE.augusto)'),original,pagina+': un servicio caído no borra el arte disponible.');
+    }finally{w.fetch=fetchAntes;w.render=renderAntes;w.relojPara();f.remove();}
+  }}finally{if(guardado===null)localStorage.removeItem(clave);else localStorage.setItem(clave,guardado);}
+});
+
 PRUEBAS.suite('campanaRetratosBeta',async t=>{
   const claves=['caoz.campana.v1.prueba','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
   const previos=claves.map(k=>localStorage.getItem(k));
@@ -1670,9 +1715,14 @@ PRUEBAS.suite('campanaDeseo', async t => {
     };
     try{
       w.localStorage.removeItem(clave);
-      w.fetch=async(url,op)=>{const ruta=new URL(url,w.location.href).pathname;
-        // El sonido consulta su catálogo: son lecturas independientes del deseo.
-        if((!op?.method||op.method==='GET')&&(ruta.includes('/art/')||ruta.includes('/audio/')||ruta.endsWith('/api/sfx/catalogo')))return fetchOriginal(url,op);
+      w.fetch=async(url,op)=>{
+        const pedido=url instanceof w.Request?url:null,destino=new URL(pedido?.url||url,w.location.href),ruta=destino.pathname;
+        const lectura=destino.origin===w.location.origin&&(op?.method||pedido?.method||'GET').toUpperCase()==='GET'&&(op?.body??pedido?.body)==null;
+        // Los catálogos públicos se consultan sin datos del deseo. La excepción
+        // es exacta: jamás admite otro origen, un cuerpo o parámetros privados.
+        const catalogo=!destino.search&&!destino.hash&&['api/sfx/catalogo','api/arte/catalogo'].some(p=>ruta===new URL(p,w.location.href).pathname);
+        const archivo=['art/','audio/'].some(p=>ruta.startsWith(new URL(p,w.location.href).pathname));
+        if(lectura&&(archivo||catalogo))return fetchOriginal(url,op);
         peticiones.push({url,op});throw new Error('La simulación no debe enviar deseos.');};
       w.campanaGuardar({version:1,id:'deseo-prueba',lider:'fender',etapa:5});w.campanaAbrirDeseo();
       t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo sólo se ofrece al vencer a todos los rivales.');
