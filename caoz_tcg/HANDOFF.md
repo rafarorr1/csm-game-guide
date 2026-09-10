@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-09 · build 230 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-09 · build 231 (candidato beta; producción 229 verificada, rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,19 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build 231 añade `mBorrarProgreso` a Extras en ambas pantallas. El diálogo
+compartido `confirmarBorradoProgreso()` vive en final-core.js. Sólo el botón
+«Sí, borrar todo» llama `borrarProgresoLocal()`, comprueba la eliminación de
+seis claves explícitas y recarga para descartar memoria/escenas/identidad.
+Campaña, creador y logros respetan el espacio `.prueba` bajo `?test`; en juego
+normal borra también los sellos `.simulados`. No usa `localStorage.clear()`.
+Conserva preferencias de sonido, arte, acceso al estudio y otros datos.
+Ante error intenta restaurar lo leído y mantiene el diálogo con aviso/reintento.
+Regresión `borrarProgreso` prueba cancelación, fallo parcial, recarga y primera
+campaña. Falla si se omite borrar récords y pasa al restaurarlo. Las pruebas
+usan datos ficticios aislados; no se borró el progreso personal del usuario.
+Publicar sólo beta; producción sigue 229.
 
 Build 230 reorganiza ambas portadas: `mPlay`, `mCampana`, `mOnline` y
 `mExtras`, en ese orden. Online reemplaza el nombre Con amigos. La pantalla

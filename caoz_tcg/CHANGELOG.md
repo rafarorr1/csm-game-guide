@@ -1,5 +1,20 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 231 · Empezar desde cero desde Extras
+
+- Extras incorpora «Borrar mi progreso», con confirmación explícita y Cancelar
+  enfocado inicialmente. Borra campaña, miniatura, sellos reales y de ensayo,
+  final secreto, récords y nombre guardado de este navegador o app.
+- Conserva sonido, ilustraciones y datos ajenos. La eliminación usa una lista
+  explícita de claves, verifica el resultado y recarga para descartar también
+  el progreso en memoria. Si el almacenamiento falla, intenta restaurar los
+  valores anteriores y permite reintentar sin anunciar un borrado correcto.
+- Regresión `borrarProgreso`: abrir/cancelar, fallo parcial, confirmar, recarga,
+  retratos grises, logo original, nuevo creador y conservación de preferencias
+  en escritorio y móvil. Verificada por sabotaje omitiendo los récords.
+- Extras y confirmación comprobados en cuatro tamaños, incluido 320×568 sin
+  scroll. Publicación sólo beta; producción permanece en 229.
+
 ### Sin numerar · build 230 · Tres modos principales y Extras
 
 - El menú de escritorio y móvil presenta Jugar contra el Domo, Campaña y Online
