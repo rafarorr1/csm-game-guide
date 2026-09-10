@@ -19,13 +19,13 @@
   function actualizarRetratos(){
     const boton=document.getElementById('mCampana'),logros=window.CAMPANA_LOGROS;
     if(!boton||!logros)return;
-    // El menú muestra los seis logros reales, también durante un ensayo beta.
+    // Los seis retratos aparecen desde el inicio, pendientes en gris.
+    // El menú muestra los logros reales, también durante un ensayo beta.
     // No depende de la campaña activa: empezar otra no borra estos recuerdos.
     const ids=Object.keys(DECKS).filter(id=>LEADERS[id]),mazos=logros.leer(false).mazos;
     const ganados=ids.filter(id=>mazos[id]),total=ganados.length;
-    boton.classList.toggle('campanaConSellos',total>0);
+    boton.classList.add('campanaConRetratos');
     let fila=boton.querySelector('.campanaRetratos'),descripcion=document.getElementById('campanaProgresoDescripcion');
-    if(!total){fila?.remove();descripcion?.remove();boton.removeAttribute('aria-describedby');return;}
     if(!fila){fila=document.createElement('span');fila.className='campanaRetratos';fila.setAttribute('aria-hidden','true');boton.appendChild(fila);}
     if(!descripcion){descripcion=document.createElement('span');descripcion.id='campanaProgresoDescripcion';descripcion.className='campanaSoloLectores';boton.appendChild(descripcion);}
     descripcion.textContent=total+' de '+ids.length+' mazos completados. '+ids.map(id=>LEADERS[id].n+': '+(mazos[id]?'completado':'pendiente')).join('. ')+'.';
@@ -83,7 +83,7 @@
   };
   function instalar(){
     const s=document.createElement('style');s.textContent=`
-#menu .menucol #mCampana.campanaConSellos{display:flex;align-items:center;justify-content:center;gap:14px;padding-block:8px}
+#menu .menucol #mCampana.campanaConRetratos{display:flex;align-items:center;justify-content:center;gap:14px;padding-block:8px}
 .campanaEtiqueta{flex:0 0 auto}
 .campanaRetratos{display:flex;align-items:center;gap:4px;flex:0 0 auto;letter-spacing:0}
 .campanaRetrato{position:relative;display:block;width:28px;height:28px;border:1px solid #9a938b;
@@ -96,7 +96,7 @@
 .campanaRetrato img{position:absolute;left:50%;top:50%;height:auto;max-width:none}
 .campanaRetrato img[hidden]{display:none}
 .campanaSoloLectores{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
-@media(max-width:380px){#menu .menucol #mCampana.campanaConSellos{gap:10px}.campanaRetrato{width:24px;height:24px}.campanaRetratoSimbolo{font-size:18px}}
+@media(max-width:380px){#menu .menucol #mCampana.campanaConRetratos{gap:10px}.campanaRetrato{width:24px;height:24px}.campanaRetratoSimbolo{font-size:18px}}
 .marcaGero{position:absolute;right:9px;top:9px;z-index:9;display:grid;place-items:center;
  width:30px;height:30px;border:1px solid #f1d291;border-radius:50%;color:#fff0bf;
  font:800 21px/1 var(--serif);background:radial-gradient(circle at 35% 25%,#a78338,#443010 70%);
