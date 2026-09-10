@@ -3391,43 +3391,6 @@ partida, y la segunda mano es la que hay. Vale igual para tu rival.</p>
 <p>40 cartas exactas + 1 Líder. Máximo 3 copias de cada carta; las Legendarias (★) máximo 1.
 Recomendado: 16–20 Personajes, 10–14 Hechizos, 4–6 Trampas, 3–4 Objetos, 1–2 Lugares.</p>
 </div>`;
-/* ===========================================================================
-   EL EDITOR DE CARTAS, DESDE EL MENÚ
-   ---------------------------------------------------------------------------
-   El editor (estudio.html) viaja con el juego para que una actualización mande
-   las dos cosas a la vez. En tu ordenador se abre directo; publicado pide una
-   contraseña.
-
-   HAY QUE SER CLARO CON LO QUE ESTO ES: la página se descarga entera en el
-   navegador de quien entra, así que esta comprobación se puede saltar leyendo
-   el código. Guardar el hash en vez del texto evita que la contraseña se lea de
-   un vistazo, y nada más. Sirve para que el editor no esté a la vista de
-   cualquiera, no para impedir que alguien decidido entre.
-
-   Que no proteja no es grave: el editor sólo escribe en el navegador de quien
-   lo abre y en carpetas que esa persona elige a mano. Nadie puede tocar desde
-   ahí este juego ni sus ilustraciones. Protección de verdad pide un servidor.
-
-   Para cambiar la contraseña, saca el hash de la que quieras y pégalo abajo:
-       printf 'la-que-sea' | shasum -a 256
-   ======================================================================== */
-
-const LLAVE_ESTUDIO = '6fd79214aee801974e7c3e71130970e12a1e24042c6c0046b5ea6c20a2195321';
-
-const EDITOR = 'estudio.html';
-
-/* En tu propia máquina no tiene sentido preguntar nada. */
-
-function enCasa(){
-  const h = location.hostname;
-  return h === 'localhost' || h === '127.0.0.1' || h === '' || h.endsWith('.local');
-}
-
-async function huella(txt){
-  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(txt));
-  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
-}
-
 let PARTIDA_N = 0;
 /* ==========================================================================
    LA CORTINILLA DEL VS

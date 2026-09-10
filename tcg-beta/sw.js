@@ -18,10 +18,13 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 232;
+const VERSION = 233;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
-const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'pitagoras-pruebas.js', 'pitagoras-combate.js', 'pitagoras-mesa.js', 'pitagoras-mundos.js', 'pitagoras-cine.js', 'pitagoras-laboratorio.js', 'pitagoras-fps.js', 'pitagoras-pixel.js', 'dado-fisico.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
+// Los reemplazos ya vistos sobreviven al cambio de build. Sólo contiene el
+// catálogo público y sus imágenes inmutables; nunca sesiones ni administración.
+const ARTE_PUBLICO='caoz-arte-publico-'+new URL(self.registration.scope).pathname+'-v1';
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'arte-remoto.js', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'pitagoras-pruebas.js', 'pitagoras-combate.js', 'pitagoras-mesa.js', 'pitagoras-mundos.js', 'pitagoras-cine.js', 'pitagoras-laboratorio.js', 'pitagoras-fps.js', 'pitagoras-pixel.js', 'dado-fisico.js', 'polish-aaa.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
                 'art/encuadres.json', 'art/logo.webp', 'art/pitagoras-abismo-v216.webp', 'art/esbirro-editor-v219.webp',
                 'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
 
@@ -68,6 +71,27 @@ self.addEventListener('fetch', ev => {
   const url = new URL(req.url);
   if(url.origin !== self.location.origin) return;           // relevos y demás: directos
   if(url.search.includes('test=')) return;                    // el arnés no pasa por la caché
+  const catalogoArte=/\/api\/arte\/catalogo$/.test(url.pathname);
+  const imagenArte=/\/api\/arte\/imagen\/[a-f0-9]{64}$/.test(url.pathname);
+  if(url.pathname.includes('/api/arte/')&&!catalogoArte&&!imagenArte)return;
+  if(catalogoArte||imagenArte){
+    if(req.headers.has('range'))return;
+    ev.respondWith((async()=>{
+      const c=await caches.open(ARTE_PUBLICO),clave=url.origin+url.pathname,guardada=await c.match(clave);
+      if(imagenArte&&guardada)return guardada;
+      const control=new AbortController(),plazo=setTimeout(()=>control.abort(),4000);
+      try{
+        const r=await fetch(req,{signal:control.signal});
+        if(r.ok){
+          const tipo=r.headers.get('content-type')||'';
+          if((catalogoArte&&tipo.includes('application/json'))||(imagenArte&&/^image\/(webp|png|jpeg)/.test(tipo)))await c.put(clave,r.clone()).catch(()=>{});
+          return r;
+        }
+        return guardada||r;
+      }catch(e){return guardada||new Response('',{status:504});}
+      finally{clearTimeout(plazo);}
+    })());return;
+  }
   // La sesión y los datos privados jamás se guardan en la PWA. Sólo los WAV
   // públicos con hash inmutable pueden reproducirse también sin conexión.
   const audioRemoto=/\/api\/sfx\/audio\/[a-f0-9]{64}$/.test(url.pathname);
