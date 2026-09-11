@@ -1455,9 +1455,44 @@ PRUEBAS.suite('encuadresVistas',async t=>{
       t.igual(guardada.vistas[plataforma+'_detalle'].z,90,pagina+': conserva las vistas para volver sin red.');
       t.check(!w.CAOZ_VISTAS.valido({x:50,y:50,z:49})&&w.CAOZ_VISTAS.valido({x:50,y:50,z:50}),pagina+': valida el límite de zoom.');
       t.igual(w.CAOZ_VISTAS.identificar(art),plataforma+'_detalle',pagina+': reconoce la superficie sin etiquetas del estudio.');
+      // Publicar desde una pantalla también debe corregir la ficha de la otra.
+      delete vistas[plataforma+'_detalle'];
+      vistas[(plataforma==='movil'?'desktop':'movil')+'_detalle']={x:32,y:41,z:90};
+      await w.CAOZ_ARTE.refrescar();
+      t.igual(art.style.getPropertyValue('--ey'),'41%',pagina+': hereda la misma superficie de la otra pantalla.');
+      if(plataforma==='movil'){
+        w.abrirFicha('augusto');
+        t.igual(d.querySelector('#inspectCard .art').style.getPropertyValue('--ey'),'41%','La pulsación larga real abre directamente con el ajuste publicado.');
+      }
+      vistas[plataforma+'_detalle']={x:21,y:29,z:85};await w.CAOZ_ARTE.refrescar();
+      t.igual(art.style.getPropertyValue('--ey'),'29%',pagina+': el ajuste propio prevalece sobre el heredado.');
       mano.remove();campo.remove();detalle.remove();
     }finally{w.fetch=fetchAntes;w.relojPara();f.remove();}
   }}finally{if(antes===null)localStorage.removeItem(clave);else localStorage.setItem(clave,antes);}
+});
+
+PRUEBAS.suite('cartasIlustradas',async t=>{
+  // Un panel flotante invisible no debe ocupar altura ni sacar el nombre
+  // del marco cuando la carta pasa de símbolo a ilustración.
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:1440px;height:1040px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=cartas-ilustradas-interno';document.body.append(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument;
+    try{
+      await w.cargarArte();w.newGame('fender','adreida');
+      const carta=w.unitEl(w.mkUnit('lucius',0));
+      carta.style.cssText='position:fixed;left:30px;top:30px;width:140px;height:194px;--cw:140px;--ch:194px;visibility:hidden';
+      d.body.append(carta);await new Promise(r=>w.requestAnimationFrame(r));
+      t.check(carta.classList.contains('conarte'),pagina+': prueba una carta con ilustración.');
+      for(const capa of carta.querySelectorAll(':scope > .cajon,:scope > .rar,:scope > .foil')){
+        const s=w.getComputedStyle(capa);
+        if(s.display!=='none')t.igual(s.position,'absolute',pagina+': '+capa.className+' flota sin alterar el cuerpo de la carta.');
+      }
+      const marco=carta.getBoundingClientRect(),nombre=carta.querySelector('.pieCarta .nm').getBoundingClientRect();
+      t.check(nombre.top>=marco.top&&nombre.bottom<=marco.bottom+1,pagina+': el nombre permanece dentro de la carta ilustrada.');
+      carta.remove();
+    }finally{w.relojPara();f.remove();}
+  }
 });
 
 PRUEBAS.suite('arteRemoto',async t=>{

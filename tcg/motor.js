@@ -302,7 +302,7 @@ C('adolfo',{n:'Adolfo y Remus',t:'personaje',c:2,a:2,h:2,tr:['Elfo','Discípulo'
    moveUnit(u,s,1-s); log('¡Adolfo y Remus se radicalizan y cambian de bando!','dmg'); } }});
 
 C('titaus',{n:'Titaus',t:'personaje',c:3,a:2,h:3,tr:['Elfa','Discípulo'],r:0,art:'📖',
- x:'<b>Inteligente — al entrar:</b> mira las 3 cartas superiores de tu mazo y pon una en tu mano. <b>Sirve a Tal:</b> si controlas un Dragón, +2/+2.',
+ x:'<b>Inteligente — al entrar:</b> mira las 3 cartas superiores de tu mazo y pon una en tu mano. <b>Sirve a Thal:</b> si controlas un Dragón, +2/+2.',
  enter:async(g,s,u)=>{ await dig(s,3); },
  aura:(g,s,u)=>{ if(P(s).field.some(o=>o.tribes.includes('Dragón'))){ u.aA+=2; u.aH+=2; } }});
 
@@ -315,7 +315,7 @@ C('discipulo',{n:'Discípulo de Rul',t:'personaje',c:1,a:1,h:2,tr:['Elfo','Disc�
  x:'<b>Fe ciega:</b> gana +1/+0 por cada otro Discípulo aliado.',
  aura:(g,s,u)=>{ const n=P(s).field.filter(o=>o!==u&&o.tribes.includes('Discípulo')).length; u.aA+=n; }});
 
-C('tal',{n:'Tal, el Dragón Negro',t:'personaje',c:10,a:9,h:9,tr:['Dragón'],r:2,art:'🐉',
+C('tal',{n:'Thal',t:'personaje',c:10,a:9,h:9,tr:['Dragón'],r:2,art:'🐉',
  x:'<b>Vuelo. Aliento de Ácido — al entrar:</b> 3 daño a todos los Personajes rivales. <b>Poseer (3 PD):</b> revive un rival muerto este turno como 2/2 en tu campo. <b>Ganador de la temporada:</b> puedes jugar el Pergamino sin Llaves.',
  keys:['vuelo'], scrollFree:true,
  enter:async(g,s,u)=>{ log('🐉 <b>Aliento de Ácido</b>: 3 daño a todo el campo rival.','dmg');
@@ -323,10 +323,10 @@ C('tal',{n:'Tal, el Dragón Negro',t:'personaje',c:10,a:9,h:9,tr:['Dragón'],r:2
  act:{cost:3,n:'Poseer',req:(g,s)=>g.diedThisTurn.some(d=>d.side===1-s),do:async(g,s,u)=>{
    const d=g.diedThisTurn.find(d=>d.side===1-s); if(!d) return;
    const idx=g.diedThisTurn.indexOf(d); g.diedThisTurn.splice(idx,1);
-   await summonToken(s,'tok_poseido',{msg:`Tal posee el cadáver de ${CARDS[d.id].n}.`}); }}});
+   await summonToken(s,'tok_poseido',{msg:`Thal posee el cadáver de ${CARDS[d.id].n}.`}); }}});
 
 C('rantiago',{n:'Rantiago, el Mirrey',t:'personaje',c:3,a:2,h:2,tr:['Dragón','Mirrey'],r:0,art:'🕶️',
- x:'<b>Rehén:</b> el Tal rival no puede atacar a tu Alma. <b>Fiesta de hongos — al entrar:</b> elige un Personaje y tira d20 — 1-10 <b>Aturdido</b>; 11-20 gana +2 ATQ permanentes.',
+ x:'<b>Rehén:</b> el Thal rival no puede atacar a tu Alma. <b>Fiesta de hongos — al entrar:</b> elige un Personaje y tira d20 — 1-10 <b>Aturdido</b>; 11-20 gana +2 ATQ permanentes.',
  hostage:true,
  enterTg:{k:'unidad',min:0,max:1,label:'invitado a la fiesta'},
  enter:async(g,s,u,ts)=>{ const t=ts&&ts[0]&&ts[0][0]; if(!t) return;
@@ -718,11 +718,11 @@ C('esporas',{n:'Esporas del Demonio',t:'trampa',c:2,r:0,art:'🦠',
    lo que promete —que tus muertos vuelvan un turno más—, que es justo el plan de
    Talesin. Medido: +1,3 a Talesin y ninguna trampa muerta en el juego. */
 
-C('talcadaver',{n:'Tal Habla por el Cadáver',t:'trampa',c:3,r:1,art:'🐉',
+C('talcadaver',{n:'Thal Habla por el Cadáver',t:'trampa',c:3,r:1,art:'🐉',
  x:'<b>Cuando un aliado muere:</b> vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.',
  on:'muerteAliada', can:(g,s,ev)=>P(s).field.length<5&&!ev.token,
  fire:async(g,s,ev)=>{ const u=mkUnit(ev.cardId,s); u.dmg=Math.max(0,statHp(u)-1); u.pA+=2; u.doomed=true;
-   P(s).field.push(u); recalc(); log(`Tal habla por el cadáver de ${u.card.n}.`); }});
+   P(s).field.push(u); recalc(); log(`Thal habla por el cadáver de ${u.card.n}.`); }});
 
 /* ---------------------- OBJETOS ---------------------- */
 
@@ -755,7 +755,7 @@ C('llavemago',{n:'Llave del Mago',t:'objeto',c:3,r:2,art:'🗝️',relic:true,ke
  x:'<b>Reliquia.</b> Cuenta como 1 <b>Llave del Domo</b>. Si un rival fuera a robarla, se destruye en su lugar.'});
 
 C('pergamino',{n:'Pergamino de Deseo Ilimitado',t:'objeto',c:7,r:2,art:'📜',relic:true,scroll:true,
- x:'<b>Reliquia.</b> Solo con <b>2+ Llaves</b> (o controlando a Tal). Al inicio de tu <b>segundo</b> turno con él en el campo, <b>ganas la partida</b>. Si lo pierdes, pierdes todas tus Llaves.',
+ x:'<b>Reliquia.</b> Solo con <b>2+ Llaves</b> (o controlando a Thal). Al inicio de tu <b>segundo</b> turno con él en el campo, <b>ganas la partida</b>. Si lo pierdes, pierdes todas tus Llaves.',
  req:(g,s)=>(keys(s)>=2||P(s).field.some(u=>u.card.id==='tal')) && !P(1-s).field.some(u=>u.card.blockScroll)});
 
 /* ---------------------- LUGARES ---------------------- */
@@ -775,10 +775,10 @@ C('puente',{n:'El Puente de Brick y Brock',t:'lugar',c:1,r:0,art:'🌉',
  x:'Ningún Personaje puede atacar al Alma salvo que su controlador tire d20 y saque 8+.',
  riddleBridge:true});
 
-C('montanas',{n:'Las Montañas de Tal',t:'lugar',c:3,r:1,art:'⛰️',
+C('montanas',{n:'Las Montañas de Thal',t:'lugar',c:3,r:1,art:'⛰️',
  x:'Los Dragones cuestan 2 PD menos. Al inicio de cada turno, el jugador activo tira d20: con 1-3, Aidman aparece en el campo rival.',
  dragonDiscount:true,
- onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Tal', null,
+ onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Thal', null,
      {necesita:'4 o más para que no pase nada', min:4,
       siOk:'No aparece nadie', siMal:'¡Aidman aparece en el campo rival!'});
    if(G!==g||g.over)return;
@@ -1032,8 +1032,8 @@ rafaela:{ n:'Los Doce Discípulos', d:'Enjambre · Fe · Aguante',
         ['petunia',1],['minus',1],['juangabriel',1],['taumaturgia',3],['bendicion',2],['leche',2],
         ['manosardientes',2],['saeta',3],['auxilio',1],['espiritus',2],['ceguera',1],['rulchete',1],
         ['destello',2],['esporas',1],['collar',1],['jabon',1],['antro',1]]},
-talesin:{ n:'Ascensión', d:'Sacrificio · Rampa · Tal',
-  plan:'Todo en este mazo quiere morir. Junta 5 Fichas de Gracia, asciende y baja a Tal en el turno 7.',
+talesin:{ n:'Ascensión', d:'Sacrificio · Rampa · Thal',
+  plan:'Todo en este mazo quiere morir. Junta 5 Fichas de Gracia, asciende y baja a Thal en el turno 7.',
   list:[['conserje',3],['matildus',3],['machete',1],['petunia',1],['eric',3],['bob',1],
         ['rantiago',1],['horton',1],['aidman',1],['edbor',1],['rayoabrasador',2],['proyectil',2],
         ['alientoacido',2],['disipar',2],['cuerda',1],['hongos',1],['esporas',2],['talcadaver',2],
@@ -1813,7 +1813,7 @@ async function endTurn(){
   });
   P(0).clouds=P(0).clouds.filter(c=>c.until>=G.turnNo);
   P(1).clouds=P(1).clouds.filter(c=>c.until>=G.turnNo);
-  // condenados (Tal Habla por el Cadáver)
+  // condenados (Thal Habla por el Cadáver)
   for(const side of [0,1]) for(const u of [...P(side).field])
     if(u.doomed && u.doomed<=G.turnNo){ log(`${u.card.n} vuelve a morir.`,'dmg'); await destroy(u,{silent:true}); }
   // Rulchete: fin de la polimorfia
@@ -2475,7 +2475,7 @@ function whyNot(s,id){
      motivo salía como «no hay objetivos válidos», que no dice qué falta. */
   if(c.t==='objeto'&&c.equip&&!P(s).field.some(u=>u.objs.length<(u.card.objSlots||1)))
     return 'No hay ningún Personaje tuyo con hueco para otro Objeto';
-  if(c.scroll) return 'Necesitas 2 Llaves del Domo (o controlar a Tal)';
+  if(c.scroll) return 'Necesitas 2 Llaves del Domo (o controlar a Thal)';
   if(c.req&&!c.req(G,s)) return 'Ahora mismo no se cumple lo que pide esta carta';
   if(c.tg){ for(const g of c.tg) if(g.min>0 && !targetPool(s,g,null,c).length)
     return `No hay ${g.label||'objetivos'} válidos para esta carta`; }
@@ -2600,7 +2600,7 @@ function porQueNoEsObjetivo(u, target){
         ? `<b>${n}</b> tiene <b>Provocar</b>: hay que atacarlo a él antes que al Alma`
         : `<b>${n}</b> tienen <b>Provocar</b>: hay que atacarlos antes que al Alma`;
     }
-    if(u.card.id==='tal') return 'Tal no puede atacar al Alma mientras el rival tenga un rehén';
+    if(u.card.id==='tal') return 'Thal no puede atacar al Alma mientras el rival tenga un rehén';
     return 'No puedes atacar al Alma ahora mismo';
   }
 
@@ -4039,11 +4039,11 @@ adreida:{
     una Canción.`,
   pierdes:[
     'Contra Trampas. <b>Risa de Tasha</b> y <b>Gema del Conserje</b> castigan atacar con cartas grandes: <b>Modificar las Reglas</b> limpia su Zona de Trampas antes de la gran embestida.',
-    'Contra <b>Talesyn</b>, por el <b>Aliento de Ácido</b> y por Tal. Talia Boss es tu mejor carta ahí: mátale el Pergamino antes de que llegue.',
+    'Contra <b>Talesyn</b>, por el <b>Aliento de Ácido</b> y por Thal. Talia Boss es tu mejor carta ahí: mátale el Pergamino antes de que llegue.',
     'Por olvidar tu segunda Habilidad: si no vas a atacar, <b>Maratón de K-dramas</b> te da una carta gratis. Es 0 PD.'
   ],
   vs:{mohamed:['Parejo','Sus rebotes te hacen perder tempo.'],fender:['Favorable','Provocar apaga su turno letal.'],
-      rafaela:['Favorable','Tus cuerpos pasan por encima de los Discípulos.'],talesin:['Difícil','Aliento de Ácido y Tal.'],gero:['Favorable','Provocar e Intimidante le rompen la corte antes de que la junte.']}
+      rafaela:['Favorable','Tus cuerpos pasan por encima de los Discípulos.'],talesin:['Difícil','Aliento de Ácido y Thal.'],gero:['Favorable','Provocar e Intimidante le rompen la corte antes de que la junte.']}
 },
 rafaela:{
   dif:2, lema:'Un enjambre que se cura solo y no se puede limpiar del todo.',
@@ -4066,7 +4066,7 @@ rafaela:{
   mano:`Quédate Discípulos y <b>Taumaturgia</b>. <b>Leche de Petunia</b> y <b>Auxilio</b>
     valen mucho más en el turno 5 que en el 1: no los busques de salida.`,
   pierdes:[
-    'Contra Dragones. <b>Adolfo y Remus</b> se cambian de bando si el rival controla uno: no los juegues si ves <b>Las Montañas de Tal</b> en la mesa.',
+    'Contra Dragones. <b>Adolfo y Remus</b> se cambian de bando si el rival controla uno: no los juegues si ves <b>Las Montañas de Thal</b> en la mesa.',
     'Por curar demasiado pronto. Las curaciones no acumulan: guárdalas hasta que haya daño real que quitar.',
     'Contra el <b>Pergamino</b>. Tu única respuesta es <b>Juan Gabriel</b>, que congela su contador. Si el rival junta Llaves, búscalo con Titaus ya.'
   ],
@@ -4079,22 +4079,22 @@ talesin:{
     +5 Alma y tus <b>Celestiales</b> ganan +2/+2 permanentes. Y lo que de verdad decide la
     partida: <b>a partir de ahí, cada Personaje que bajes nace Celestial y con +2/+2</b>.
     Ascender con el campo vacío no es un problema, es el momento de rellenarlo. Tu mazo no
-    protege a nadie — lo gasta. Y detrás viene <b>Tal</b> o el <b>Pergamino</b>.`,
+    protege a nadie — lo gasta. Y detrás viene <b>Thal</b> o el <b>Pergamino</b>.`,
   motor:['matildus','eric','tal','montanas','domo'],
   motorTxt:`<b>Matildus</b> explota en la cara de quien lo mata, <b>Eric</b> se sacrifica por
     otro, el <b>Conserje</b> deja Llaves, <b>Aidman</b> te da 2 PD al morir. Todo suma
-    Gracia. <b>Las Montañas de Tal</b> abaratan a los Dragones 2 PD: Tal deja de costar 10 y
+    Gracia. <b>Las Montañas de Thal</b> abaratan a los Dragones 2 PD: Thal deja de costar 10 y
     baja el turno 8, o antes con <b>Puntos Robados</b>.`,
   turnos:[
     ['1–3','Cosas baratas y sacrificables. No te importa perderlas: es el plan. <b>Puntos Robados</b> temprano para acelerar después.'],
     ['4–6','<b>Aliento de Ácido</b> limpia su mesa y, si mata a los tuyos también, mejor: más Gracia. <b>Rayo Abrasador</b> puede rematar a tus propios Personajes para llegar a cinco.'],
-    ['7+','Asciendes y bajas a <b>Tal</b> o el <b>Pergamino</b>. Con Tal en mesa el Pergamino <b>no necesita Llaves</b>, y llevas <b>El Domo</b> para que cada Llave cuente doble.']
+    ['7+','Asciendes y bajas a <b>Thal</b> o el <b>Pergamino</b>. Con Thal en mesa el Pergamino <b>no necesita Llaves</b>, y llevas <b>El Domo</b> para que cada Llave cuente doble.']
   ],
   combo:`<b>Petunia + Ascensión.</b> Petunia muere y vuelve como <b>Petunia Sagrada</b>, que es
     <i>Celestial</i>. Si asciendes después, se queda en <b>5/7 con Vuelo</b>. Y con
     <b>Luz de Kenya</b> puedes hacer Celestial a cualquier otra cosa antes de ascender para
     que se lleve el +2/+2.`,
-  mano:`Quédate <b>Matildus</b>, <b>Eric</b> y <b>Puntos Robados</b>. <b>Tal</b> en la mano
+  mano:`Quédate <b>Matildus</b>, <b>Eric</b> y <b>Puntos Robados</b>. <b>Thal</b> en la mano
     inicial es una carta muerta durante siete turnos: sólo consérvalo si también tienes
     <b>Las Montañas</b>.`,
   pierdes:[
@@ -4103,7 +4103,7 @@ talesin:{
     'Por bajar a <b>Lucy Fernando</b> sin un <b>Contrato</b>. Sin él no puede atacar: el <b>Contrato del Notario</b> boca abajo está en el mazo justo para eso.'
   ],
   vs:{mohamed:['Parejo','Carrera de Llaves.'],fender:['Difícil','Te mata antes de que arranques.'],
-      adreida:['Favorable','Aliento de Ácido y Tal la desbordan.'],rafaela:['Parejo','Sus Espíritus castigan tus sacrificios.'],gero:['Difícil','Te llena la mesa antes de que asciendas.']}
+      adreida:['Favorable','Aliento de Ácido y Thal la desbordan.'],rafaela:['Parejo','Sus Espíritus castigan tus sacrificios.'],gero:['Difícil','Te llena la mesa antes de que asciendas.']}
 },
 
 gero:{

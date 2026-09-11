@@ -1312,9 +1312,9 @@ body.tut-on .card.playable{
   background:linear-gradient(180deg, rgba(8,6,14,0) 38%, rgba(8,6,14,.55) 66%,
              rgba(8,6,14,.92) 100%) }
 .card.acomodo.conarte.sinvelo::before{ display:none }
-/* Todo lo demás, por encima del velo. Las palabras clave —Provocar, Al entrar—
-   se quedaban debajo y desaparecían de las cartas dibujadas. */
-.card.acomodo.conarte > *:not(.marcoDibujo){ position:relative; z-index:2 }
+/* Texto por encima del velo. Los paneles y adornos flotantes conservan su
+   posición absoluta: incluir el cajón invisible empujaba el nombre fuera. */
+.card.acomodo.conarte > :not(.marcoDibujo,.cajon,.rar,.foil){ position:relative; z-index:2 }
 /* la tarjeta de Líder usa el mismo montaje. Ocupa su hueco entero: el dibujo va
    en una caja absoluta y no aporta altura, así que sin esto la tarjeta se
    quedaba en la altura del nombre. */
@@ -2326,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=238"></script>
-<script src="final.js?b=238"></script>
+<script src="motor.js?b=242"></script>
+<script src="final.js?b=242"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:238, fecha:'2026-09-10'};
+const BUILD = {n:242, fecha:'2026-09-11'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
