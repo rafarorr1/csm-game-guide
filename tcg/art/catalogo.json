@@ -14,7 +14,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/editorcosecha.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "editorcorte",
@@ -29,7 +37,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/editorcorte.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "editorcuadro",
@@ -44,7 +60,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/editorcuadro.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "editorcarrera",
@@ -59,7 +83,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/editorcarrera.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "editororbita",
@@ -74,7 +106,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/editororbita.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "editorduelo",
@@ -89,7 +129,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/editorduelo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "augusto",
@@ -159,7 +207,15 @@
         "Rafaela",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/machete.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "petunia",
@@ -178,7 +234,15 @@
         "Rafaela",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/petunia.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "bob",
@@ -196,7 +260,15 @@
         "Gero",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/bob.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "brickbrock",
@@ -215,7 +287,15 @@
         "Adreida",
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/brickbrock.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "conserje",
@@ -233,7 +313,15 @@
         "Mohamed",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/conserje.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "ninolanza",
@@ -250,7 +338,15 @@
       "mazos": [
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/ninolanza.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "julia",
@@ -267,7 +363,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/julia.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "rey",
@@ -284,7 +388,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/rey.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "talia",
@@ -299,7 +411,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/talia.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "aldrick",
@@ -316,7 +436,15 @@
       "mazos": [
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/aldrick.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "bartolomeo",
@@ -335,7 +463,15 @@
         "Fender",
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/bartolomeo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "eric",
@@ -354,7 +490,15 @@
         "Adreida",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/eric.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "horton",
@@ -372,7 +516,15 @@
         "Adreida",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/horton.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "edbor",
@@ -389,7 +541,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/edbor.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "juangabriel",
@@ -407,7 +567,15 @@
         "Gero",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/juangabriel.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "minus",
@@ -426,7 +594,15 @@
         "Gero",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/minus.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "aidman",
@@ -444,7 +620,15 @@
         "Gero",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/aidman.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "adolfo",
@@ -462,7 +646,15 @@
         "Fender",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/adolfo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "titaus",
@@ -480,7 +672,15 @@
         "Fender",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/titaus.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "matildus",
@@ -499,7 +699,15 @@
         "Rafaela",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/matildus.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "discipulo",
@@ -517,7 +725,15 @@
         "Fender",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/discipulo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tal",
@@ -553,7 +769,15 @@
         "Gero",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/rantiago.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "trol",
@@ -570,7 +794,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/trol.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lucy",
@@ -588,7 +820,15 @@
         "Mohamed",
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/lucy.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "magodomo",
@@ -605,7 +845,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/magodomo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tok_petunia",
@@ -620,7 +868,15 @@
       "esLider": false,
       "ficha": true,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/tok_petunia.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tok_ilusion",
@@ -635,7 +891,15 @@
       "esLider": false,
       "ficha": true,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/tok_ilusion.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tok_poseido",
@@ -650,7 +914,15 @@
       "esLider": false,
       "ficha": true,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/tok_poseido.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tok_dragon",
@@ -665,7 +937,15 @@
       "esLider": false,
       "ficha": true,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/tok_dragon.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "rulchete",
@@ -682,7 +962,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/rulchete.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "cuerda",
@@ -699,7 +987,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/cuerda.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "copiajabon",
@@ -714,7 +1010,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/copiajabon.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "acertijo",
@@ -732,7 +1036,15 @@
         "Mohamed",
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/acertijo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "leche",
@@ -749,7 +1061,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/leche.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "campanafe",
@@ -764,7 +1084,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/campanafe.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "hongos",
@@ -781,7 +1109,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/hongos.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "alientoacido",
@@ -798,7 +1134,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/alientoacido.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "cantaberna",
@@ -815,7 +1159,15 @@
       "mazos": [
         "Fender"
       ],
-      "original": null
+      "original": {
+        "url": "art/cantaberna.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "balada",
@@ -832,7 +1184,15 @@
       "mazos": [
         "Fender"
       ],
-      "original": null
+      "original": {
+        "url": "art/balada.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "sangrefria",
@@ -849,7 +1209,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/sangrefria.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "bendicion",
@@ -866,7 +1234,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/bendicion.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "modificar",
@@ -883,7 +1259,15 @@
       "mazos": [
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/modificar.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "bolafuego",
@@ -900,7 +1284,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/bolafuego.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "manosardientes",
@@ -917,7 +1309,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/manosardientes.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "rayoabrasador",
@@ -934,7 +1334,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/rayoabrasador.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "saeta",
@@ -952,7 +1360,15 @@
         "Adreida",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/saeta.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "escarcha",
@@ -971,7 +1387,15 @@
         "Fender",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/escarcha.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "proyectil",
@@ -988,7 +1412,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/proyectil.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "nubedagas",
@@ -1006,7 +1438,15 @@
         "Mohamed",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/nubedagas.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "burla",
@@ -1023,7 +1463,15 @@
       "mazos": [
         "Fender"
       ],
-      "original": null
+      "original": {
+        "url": "art/burla.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "calentarmetal",
@@ -1038,7 +1486,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/calentarmetal.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "ceguera",
@@ -1055,7 +1511,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/ceguera.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "luzhadas",
@@ -1070,7 +1534,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/luzhadas.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "mensaje",
@@ -1087,7 +1559,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/mensaje.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "disipar",
@@ -1105,7 +1585,15 @@
         "Mohamed",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/disipar.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "contrahechizo",
@@ -1120,7 +1608,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/contrahechizo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "puas",
@@ -1135,7 +1631,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/puas.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "ilusion",
@@ -1152,7 +1656,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/ilusion.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "disfrazarse",
@@ -1167,7 +1679,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/disfrazarse.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "zancada",
@@ -1185,7 +1705,15 @@
         "Fender",
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/zancada.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "pasoatronador",
@@ -1202,7 +1730,15 @@
       "mazos": [
         "Fender"
       ],
-      "original": null
+      "original": {
+        "url": "art/pasoatronador.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "espiritus",
@@ -1219,7 +1755,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/espiritus.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "auxilio",
@@ -1237,7 +1781,15 @@
         "Adreida",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/auxilio.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "armadura",
@@ -1254,7 +1806,15 @@
       "mazos": [
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/armadura.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "armamagica",
@@ -1269,7 +1829,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/armamagica.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "palabracuracion",
@@ -1284,7 +1852,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/palabracuracion.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "taumaturgia",
@@ -1301,7 +1877,15 @@
       "mazos": [
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/taumaturgia.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tasha",
@@ -1319,7 +1903,15 @@
         "Mohamed",
         "Fender"
       ],
-      "original": null
+      "original": {
+        "url": "art/tasha.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "destello",
@@ -1338,7 +1930,15 @@
         "Adreida",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/destello.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "gemaconserje",
@@ -1353,7 +1953,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/gemaconserje.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "colapso",
@@ -1370,7 +1978,15 @@
       "mazos": [
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/colapso.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "notario",
@@ -1387,7 +2003,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/notario.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "peaje",
@@ -1405,7 +2029,15 @@
         "Mohamed",
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/peaje.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "esporas",
@@ -1424,7 +2056,15 @@
         "Rafaela",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/esporas.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "talcadaver",
@@ -1441,7 +2081,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/talcadaver.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "collar",
@@ -1459,7 +2107,15 @@
         "Adreida",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/collar.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "arco",
@@ -1474,7 +2130,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/arco.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "mazo",
@@ -1492,7 +2156,15 @@
         "Fender",
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/mazo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 55,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "sombrero",
@@ -1510,7 +2182,15 @@
         "Mohamed",
         "Fender"
       ],
-      "original": null
+      "original": {
+        "url": "art/sombrero.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "jabon",
@@ -1528,7 +2208,15 @@
         "Mohamed",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/jabon.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "puntosrobados",
@@ -1545,7 +2233,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/puntosrobados.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "llavemago",
@@ -1563,7 +2259,15 @@
         "Mohamed",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/llavemago.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "pergamino",
@@ -1581,7 +2285,15 @@
         "Mohamed",
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/pergamino.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tomsage",
@@ -1598,7 +2310,15 @@
       "mazos": [
         "Adreida"
       ],
-      "original": null
+      "original": {
+        "url": "art/tomsage.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "antro",
@@ -1616,7 +2336,15 @@
         "Fender",
         "Rafaela"
       ],
-      "original": null
+      "original": {
+        "url": "art/antro.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "puente",
@@ -1633,7 +2361,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/puente.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "montanas",
@@ -1650,7 +2386,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/montanas.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "domo",
@@ -1667,7 +2411,15 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/domo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tok_rulchete",
@@ -1682,7 +2434,15 @@
       "esLider": false,
       "ficha": true,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/tok_rulchete.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "gatobachatero",
@@ -1697,7 +2457,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/gatobachatero.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "fetichemino",
@@ -1712,7 +2480,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/fetichemino.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "brujula",
@@ -1729,7 +2505,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/brujula.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "viajehongos",
@@ -1744,7 +2528,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/viajehongos.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "humobob",
@@ -1759,7 +2551,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/humobob.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "propaganda",
@@ -1774,7 +2574,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/propaganda.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "ballesta",
@@ -1789,7 +2597,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/ballesta.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lanzallamas",
@@ -1804,7 +2620,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/lanzallamas.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lifestealer",
@@ -1819,7 +2643,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/lifestealer.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lecheslact",
@@ -1834,7 +2666,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/lecheslact.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "rulchetebajo",
@@ -1851,7 +2691,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/rulchetebajo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "esporashorton",
@@ -1866,7 +2714,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/esporashorton.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lentesmachete",
@@ -1881,7 +2737,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/lentesmachete.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "espadaluz",
@@ -1896,7 +2760,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/espadaluz.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "brazosagua",
@@ -1911,7 +2783,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/brazosagua.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "ipadkid",
@@ -1926,7 +2806,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/ipadkid.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "espadaboveda",
@@ -1941,7 +2829,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/espadaboveda.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "eclipse",
@@ -1956,7 +2852,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/eclipse.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "afterparty",
@@ -1971,7 +2875,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/afterparty.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "ciclope",
@@ -1988,7 +2900,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/ciclope.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "ladrillos",
@@ -2003,7 +2923,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/ladrillos.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lutorafaela",
@@ -2018,7 +2946,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/lutorafaela.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "tok_goblincamino",
@@ -2033,7 +2969,15 @@
       "esLider": false,
       "ficha": true,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/tok_goblincamino.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "can",
@@ -2050,7 +2994,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/can.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "spiderman",
@@ -2067,7 +3019,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/spiderman.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "hermanotrol",
@@ -2084,7 +3044,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/hermanotrol.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "rambo",
@@ -2101,7 +3069,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/rambo.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "coyote",
@@ -2118,7 +3094,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/coyote.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "correcaminos",
@@ -2135,7 +3119,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/correcaminos.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lanzallave",
@@ -2150,7 +3142,15 @@
       "esLider": false,
       "ficha": false,
       "mazos": [],
-      "original": null
+      "original": {
+        "url": "art/lanzallave.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lider_mohamed",
@@ -2167,7 +3167,15 @@
       "mazos": [
         "Mohamed"
       ],
-      "original": null
+      "original": {
+        "url": "art/lider_mohamed.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lider_fender",
@@ -2232,7 +3240,15 @@
       "mazos": [
         "Gero"
       ],
-      "original": null
+      "original": {
+        "url": "art/lider_gero.webp",
+        "encuadre": {
+          "x": 50,
+          "y": 30,
+          "z": 100
+        },
+        "placeholder": true
+      }
     },
     {
       "id": "lider_rafaela",
