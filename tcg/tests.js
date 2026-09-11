@@ -3711,11 +3711,11 @@ PRUEBAS.suite('regresiones', async t => {
       const vuelo=voladoDomo('Adreida'),canvas=$1('#moneda');
       t.check(canvas?.tagName==='CANVAS'&&canvas.width>0&&canvas.height>0,'El volado monta un lienzo de moneda con tamaño propio.');
       t.check(canvas.getAttribute('aria-label')==='Moneda: cara','La moneda en reposo identifica la cara que enseña.');
-      t.check(/Cara/.test($1('#ladoCara').textContent)&&/corona/i.test($1('#ladoCara').textContent)&&!!$1('#ladoCara svg'),'Cara permite elegir el sello de la corona.');
-      t.check(/Cruz/.test($1('#ladoCruz').textContent)&&/espadas/i.test($1('#ladoCruz').textContent)&&!!$1('#ladoCruz svg'),'Cruz permite elegir el sello de las espadas.');
+      t.igual($1('#ladoCara').textContent,'Cara','El botón de cara muestra sólo su nombre.');
+      t.igual($1('#ladoCruz').textContent,'Cruz','El botón de cruz muestra sólo su nombre.');
       $1('#ladoCara').click();await vuelo;
       t.check(canvas.getAttribute('aria-label')==='Moneda: cruz'&&canvas.dataset.monedaAsentado==='true','La moneda termina asentada con el sello físico que decidió el turno.');
-      t.nota('la corona y las espadas permanecen identificadas antes y después del lanzamiento');
+      t.nota('cara y cruz permanecen identificadas antes y después del lanzamiento');
     }finally{window.voladoSimular=simular;G.fast=rapido;}
   }
 
