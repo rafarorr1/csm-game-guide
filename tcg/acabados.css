@@ -30,10 +30,10 @@
 :is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.big,.cartaVista,.miniatura,.lrostro):is([data-acabado="foil"],[data-acabado="dorado"]):not(:is(.ready,.tgt,.selected,.sel,.usable,.enfrente,.ppSeleccionada)){
   border-color:var(--acabado-borde)!important;
 }
-/* Cinco perfiles de metal ocupan el marco existente: no desplazan la imagen,
-   los medallones ni los botones. El resplandor de combate sigue teniendo prioridad. */
+/* Un único borde dorado deja libre la ilustración. Los indicadores de combate
+   conservan sus contornos y el reflejo foil sigue sobre el arte. */
 :is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.big,.cartaVista)[data-acabado="dorado"]:not(:is(.ready,.tgt,.selected,.sel,.usable,.enfrente,.ppSeleccionada,.playable,.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras)){
-  box-shadow:inset 1px 1px 0 #fff7ce,inset -1px -1px 0 #815019,inset 0 0 0 3px #d9a344,inset 0 0 0 4px #ffed9c,inset 0 0 0 5px #80531d,0 5px 13px #0008!important;
+  box-shadow:0 5px 13px #0008!important;
 }
 /* Los originales siguen siendo legibles: el acabado no tiñe el texto ni añade
    una capa encima de sus paneles. Sólo cambian metal y pequeños perfiles. */
@@ -54,7 +54,7 @@
   background-image:var(--acabado-pelicula);mix-blend-mode:screen;opacity:.55;
 }
 [data-acabado="dorado"] .marcoDibujo::before,.miniatura[data-acabado="dorado"]::before{
-  box-shadow:inset 0 0 0 1px #fff1ad,inset 0 0 0 3px #b97c2a,inset 0 0 0 4px #f5d584;
+  box-shadow:none;
   mix-blend-mode:normal;opacity:1;
 }
 :is([data-acabado="foil"],[data-acabado="dorado"]) .marcoDibujo::after,
@@ -86,3 +86,9 @@
 :is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras)[data-acabado]{background-image:revert!important}
 :is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras) .marcoDibujo::before,
 :is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras) .marcoDibujo::after{content:none!important}
+
+/* El marco de la carta es el único perfil: no se dibuja otro alrededor del arte. */
+:is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.big,.cartaVista)[data-acabado="dorado"]{border-width:1.5px}
+[data-acabado="dorado"] .marcoDibujo{box-shadow:none!important}
+body.aaa-polish .card.acomodo[data-acabado="dorado"] .marcoDibujo{inset:0;border-radius:7px}
+body.aaa-polish .card.acomodo.sinarte[data-acabado="dorado"] .art{inset:0;border-radius:7px}
