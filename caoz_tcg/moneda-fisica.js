@@ -196,13 +196,20 @@
   const suma=(a,b)=>a.map((v,i)=>v+b[i]),resta=(a,b)=>a.map((v,i)=>v-b[i]),por=(a,k)=>a.map(v=>v*k);
   const punto=(a,b)=>a.reduce((n,v,i)=>n+v*b[i],0),cruz=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
   const unidad=a=>por(a,1/(Math.hypot(...a)||1)),limitar=(v,a,b)=>Math.max(a,Math.min(b,v));
-  const lienzos=new WeakMap(),sellos=[];let sesion=null;
+  const lienzos=new WeakMap(),poses=new WeakMap(),sellos=[];let sesion=null;
+  const retrato=new Image();let retratoListo=false;
+  // La textura se carga antes del volado. Si llega tarde, refresca también la
+  // moneda quieta sin reiniciar su trayectoria ni cambiar el resultado.
+  F.arteListo=new Promise(resolve=>{
+    retrato.onload=()=>{
+      retratoListo=true;sellos[0]=null;
+      document.querySelectorAll('canvas.moneda').forEach(canvas=>{const pose=poses.get(canvas);if(pose)pintar(canvas,pose);});
+      resolve(true);
+    };
+    retrato.onerror=()=>resolve(false);
+  });
+  retrato.src=new URL('art/moneda-machete-v244.webp',document.currentScript?.src||global.location.href).href;
   function circulo(c,r){c.beginPath();c.arc(0,0,r,0,TAU);}
-  function corona(c){
-    c.beginPath();c.moveTo(-100,40);c.lineTo(-119,-72);c.lineTo(-59,-24);c.lineTo(0,-109);c.lineTo(59,-24);c.lineTo(119,-72);c.lineTo(100,40);c.closePath();
-    c.moveTo(-102,60);c.lineTo(102,60);c.lineTo(96,83);c.lineTo(-96,83);c.closePath();
-    for(const [x,y]of [[-119,-84],[0,-123],[119,-84]]){c.moveTo(x+11,y);c.arc(x,y,11,0,TAU);}
-  }
   function espada(c,angulo){
     c.save();c.rotate(angulo);c.beginPath();c.moveTo(0,-140);c.lineTo(18,-112);c.lineTo(13,52);c.lineTo(47,57);c.lineTo(46,73);c.lineTo(12,68);c.lineTo(10,109);c.lineTo(19,118);c.lineTo(0,139);c.lineTo(-19,118);c.lineTo(-10,109);c.lineTo(-12,68);c.lineTo(-46,73);c.lineTo(-47,57);c.lineTo(-13,52);c.lineTo(-18,-112);c.closePath();
     grabar(c);c.beginPath();c.moveTo(0,-109);c.lineTo(0,45);c.strokeStyle='#fce4a0';c.lineWidth=3;c.stroke();c.restore();
@@ -221,8 +228,12 @@
     for(let i=0;i<64;i++){const a=i*TAU/64;c.beginPath();c.arc(Math.cos(a)*227,Math.sin(a)*227,2.3,0,TAU);c.fillStyle='#805114';c.fill();c.beginPath();c.arc(Math.cos(a)*227,Math.sin(a)*227-1.4,1.3,0,TAU);c.fillStyle='#ffebaa';c.fill();}
     // Guirnaldas de laurel alrededor del grabado, con silueta legible en móvil.
     for(const signo of [-1,1]){c.save();c.scale(signo,1);c.strokeStyle='#8e601e';c.lineWidth=3;c.beginPath();c.arc(0,-4,168,.15,1.36);c.stroke();for(let i=0;i<8;i++){const a=.22+i*.145,x=Math.cos(a)*166,y=Math.sin(a)*166-4;c.save();c.translate(x,y);c.rotate(a-.65);c.fillStyle='#997025';c.beginPath();c.ellipse(0,0,5,13,0,0,TAU);c.fill();c.strokeStyle='#f7d780';c.lineWidth=1.4;c.stroke();c.restore();}c.restore();}
-    if(lado===0){corona(c);grabar(c);c.beginPath();c.moveTo(-82,19);c.lineTo(82,19);c.strokeStyle='#f9dc8d';c.lineWidth=4;c.stroke();for(const x of [-59,0,59]){c.save();c.translate(x,52);c.rotate(Math.PI/4);c.fillStyle='#654014';c.fillRect(-5,-5,10,10);c.restore();}}
-    else{espada(c,-.64);espada(c,.64);}
+    if(lado===0&&retratoListo){
+      // El bronce se mezcla con el oro de la moneda: conserva el sombreado
+      // metálico y deja que el relieve siga la luz al girar.
+      c.save();c.globalCompositeOperation='multiply';c.drawImage(retrato,-196,-208,392,392);c.restore();
+    }
+    else if(lado===1){espada(c,-.64);espada(c,.64);}
     sellos[lado]=canvas;return canvas;
   }
   function ruta(c,ps){c.beginPath();ps.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.closePath();}
@@ -237,6 +248,7 @@
   }
   function pintar(canvas,pose){
     if(!canvas||!pose?.p||!pose?.q)return false;
+    poses.set(canvas,pose);
     const rect=canvas.getBoundingClientRect(),W=Math.max(1,rect.width||360),H=Math.max(1,rect.height||238),dpr=Math.min(2,global.devicePixelRatio||1),c=canvas.getContext('2d');if(!c)return false;
     if(canvas.width!==Math.round(W*dpr)||canvas.height!==Math.round(H*dpr)){canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);}
     c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
@@ -277,7 +289,7 @@
   }
   function terminar(s,completo){
     if(!s||s.fin)return;s.fin=true;clearTimeout(s.timer);clearInterval(s.vigia);global.cancelAnimationFrame(s.raf);document.removeEventListener('visibilitychange',s.oculta);
-    if(completo){pintar(s.canvas,s.ultimo);s.canvas.setAttribute('aria-label','Moneda detenida: '+(F.leer(s.ultimo.q).valor===0?'cara, la corona':'cruz, las espadas'));if(!document.hidden&&!s.silencio)global.CAOZ_AUDIO?.play('coin_land');}
+    if(completo){pintar(s.canvas,s.ultimo);s.canvas.setAttribute('aria-label','Moneda detenida: '+(F.leer(s.ultimo.q).valor===0?'cara, Machete':'cruz, las espadas'));if(!document.hidden&&!s.silencio)global.CAOZ_AUDIO?.play('coin_land');}
     lienzos.delete(s.canvas);if(sesion===s)sesion=null;s.resolve(completo);
   }
   function mostrar(canvas,tirada,op={}){

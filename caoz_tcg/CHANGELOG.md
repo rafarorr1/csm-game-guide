@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 244 · Machete en la moneda
+
+- La cara lleva un grabado en oro de Machete, basado en la referencia del usuario.
+  Conserva su sonrisa, orejas y gafas; las espadas siguen en la cruz.
+- Botones centrados con los nombres «Cara» y «Cruz», sin subtítulos ni iconos.
+- Retrato precargado y disponible sin conexión; la física, el resultado y la
+  sincronización del volado online se conservan.
+
 ### Sin numerar · build 243 · Volado físico
 
 - La moneda salta, gira, rebota y se asienta sobre la mesa. Su orientación

@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 243 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 244 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,13 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build244 graba la cara de Machete en el anverso de la moneda y simplifica los
+botones a «Cara» / «Cruz». El retrato art/moneda-machete-v244.webp mezcla su
+bronce con el oro de Canvas; se precarga y refresca la moneda quieta si llega tarde.
+Está en NUCLEO de sw.js y en las verificaciones remotas del publicador.
+El reverso de espadas, la física y el protocolo online conservan build243.
+Esta versión se publica sólo en beta; producción permanece242 y main intacta.
 
 Build243 sustituye el volado decorativo por moneda-fisica.js. Núcleo puro de
 cuerpo rígido y presentación Canvas; el resultado sale de la normal superior al
