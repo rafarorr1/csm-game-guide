@@ -20,8 +20,8 @@
   const encuadres=c=>CAOZ_VISTAS.limpiar(registro(c)?.vistas);
   const revision=(c,a=acabado)=>Number(registro(c,a)?.revision||0);
   const nombreEntorno=()=>'el estudio';
-  const estadoArte=c=>{const a=ganadora(c),p=registro(c,a);return p?.hash?'reemplazada':c.original?'original':'sin';};
-  const etiquetas={reemplazada:'Reemplazada',original:'Original',sin:'Sin imagen'};
+  const estadoArte=c=>{const a=ganadora(c),p=registro(c,a),propia=p?.hash||(a!=='normal'&&registro(c,'normal')?.hash);return propia?'reemplazada':c.original?.placeholder?'provisional':c.original?'original':'sin';};
+  const etiquetas={reemplazada:'Reemplazada',original:'Original',provisional:'Provisional',sin:'Sin imagen'};
   const estado=(mensaje,error=false)=>{$('estado').textContent=mensaje;$('estado').classList.toggle('error',error);};
   function urlSegura(ruta){if(!ruta)return null;try{const u=new URL(CAOZ_ESTUDIO.ruta(ruta),base);return u.origin===location.origin&&/^https?:$/.test(u.protocol)?u.href:null;}catch(e){return null;}}
   const urlVersion=(c,a=acabado)=>{const p=registro(c,a);return p?.hash?urlSegura('api/arte/imagen/'+encodeURIComponent(p.hash)):a!=='normal'?urlVersion(c,'normal'):urlSegura(c.original?.url);};
@@ -66,10 +66,10 @@
     $('vistasOpciones').replaceChildren();for(const k of opciones){const b=document.createElement('button');b.textContent=CAOZ_VISTAS.nombres[k];b.setAttribute('aria-pressed',String(superficie===k));b.onclick=()=>{superficie=k;vista();};$('vistasOpciones').append(b);}
     const key=claveVista(),mapa=pendiente?.vistas||encuadres(c),propio=!!mapa[key];
     $('encuadreTitulo').textContent=CAOZ_VISTAS.nombres[superficie]+' · '+(dispositivo==='movil'?'Móvil':'Escritorio');
-    $('vistaAyuda').textContent=(propio?'Encuadre independiente.':'Usa el encuadre base.')+' Puedes cambiar de vista sin perder los ajustes pendientes.';
+    $('vistaAyuda').textContent=(propio?'Encuadre independiente.':mapa[CAOZ_VISTAS.opuesta(key)]?'Comparte el encuadre de '+(dispositivo==='movil'?'Escritorio.':'Móvil.'):'Usa el encuadre base.')+' Puedes cambiar de vista sin perder los ajustes pendientes.';
     const frame=$('juegoVista'),pagina=dispositivo==='movil'?'movil.html':'index.html';
     if(frame.dataset.pagina!==pagina){vistaLista=false;frame.dataset.pagina=pagina;frame.src=pagina+'?estudioVista=1&escritorio=1';$('vistaEstado').textContent='Preparando vista real…';}
-    if(vistaLista)frame.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:c.id,acabado,url:ruta,encuadre:mapa[key]||baseEnc,vista:key},location.origin);
+    if(vistaLista)frame.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:c.id,acabado,url:ruta,encuadre:CAOZ_VISTAS.resolver(mapa,key,baseEnc),vista:key},location.origin);
   }
   for(const d of ['desktop','movil'])$('vista'+(d==='desktop'?'Desktop':'Movil')).onclick=()=>{dispositivo=d;vista();};
   addEventListener('message',e=>{
@@ -101,9 +101,9 @@
     $('imagen').hidden=!ruta;if(ruta){if($('imagen').src!==ruta)$('imagen').src=ruta;}else $('imagen').removeAttribute('src');
     for(const [id,valor] of [['coste',c.coste],['ataque',c.ataque],['vida',c.vida]]){$(id).hidden=c.esLider||valor==null;$(id).textContent=valor??'';}
     actualizarVistaJuego(c,ruta,e);
-    aplicarEncuadre(pendiente?.vistas?.[claveVista()]||(!pendiente?encuadres(c)[claveVista()]:null)||e);
+    aplicarEncuadre(CAOZ_VISTAS.resolver(pendiente?.vistas||encuadres(c),claveVista(),e));
     const heredada=acabado!=='normal'&&(nueva||p?.heredada);
-    $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':p?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):c.original?'Ilustración original'+(p?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
+    $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':p?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):c.original?(c.original.placeholder?'Ilustración provisional':'Ilustración original')+(p?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
     if(heredada&&!pendiente?.blob)$('origen').textContent+=' Usa ilustración Normal: si cambia su imagen, se actualizará también aquí.';
     $('borrador').hidden=!pendiente;
     if(pendiente){$('archivoNombre').textContent=pendiente.blob?pendiente.nombre+' · '+Math.round(pendiente.blob.size/1024)+' KB · WebP':pendiente.crear?'Crear '+acabados[acabado]+' de '+c.nombre:'Nuevo encuadre '+acabados[acabado]+' de '+c.nombre;

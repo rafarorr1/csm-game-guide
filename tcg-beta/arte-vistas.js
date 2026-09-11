@@ -5,6 +5,9 @@
   const claves=new Set(Object.keys(nombres).flatMap(k=>['desktop_'+k,'movil_'+k]));
   const valido=e=>!!e&&typeof e==='object'&&!Array.isArray(e)&&['x','y','z'].every(k=>typeof e[k]==='number'&&Number.isFinite(e[k]))&&e.x>=0&&e.x<=100&&e.y>=0&&e.y<=100&&e.z>=50&&e.z<=300;
   const limpiar=v=>Object.fromEntries(Object.entries(v||{}).filter(([k,e])=>claves.has(k)&&valido(e)).map(([k,e])=>[k,{x:e.x,y:e.y,z:e.z}]));
+  // Una vista sin ajuste propio comparte el de la otra pantalla antes de usar la base.
+  const opuesta=clave=>clave.replace(/^(desktop|movil)_/,p=>p==='desktop_'?'movil_':'desktop_');
+  const resolver=(mapa,clave,base)=>mapa?.[clave]||mapa?.[opuesta(clave)]||base;
   function identificar(nodo){
     const exp=nodo.closest('[data-vista-arte]')?.dataset.vistaArte;if(claves.has(exp))return exp;
     let vista='mano';
@@ -22,6 +25,6 @@
     else if(nodo.closest('.unit,#myField,#foeField'))vista='campo';
     return (document.getElementById('panelCerrar')?'movil_':'desktop_')+vista;
   }
-  window.CAOZ_VISTAS=Object.freeze({nombres,claves,valido,limpiar,identificar,
+  window.CAOZ_VISTAS=Object.freeze({nombres,claves,valido,limpiar,identificar,opuesta,resolver,
     disponibles:c=>(c.esLider?['seleccion','vs','victoria','hud','detalle','campana','ruta','honor']:['mano',...(c.tipo==='personaje'?['campo']:[]),'detalle','coleccion','descarte','revelada','memoria'])});
 })();
