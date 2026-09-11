@@ -385,26 +385,174 @@ PRUEBAS.suite('campana', async t => {
   }
 });
 
+// Dos tiros auténticos, uno por cara. Se buscan por semilla y se reutilizan
+// como trayectoria: cambiar Math.random no inventa el resultado del volado.
+function monedasDePrueba(F,t){
+  t.check(!!F&&typeof F.simular==='function','La moneda física debe estar disponible.');
+  const tiros=[];
+  for(let semilla=0;semilla<32&&(!tiros[0]||!tiros[1]);semilla++){
+    const tiro=F.simular(semilla);
+    if(tiro.asentado&&(tiro.valor===0||tiro.valor===1))tiros[tiro.valor]=tiro;
+  }
+  t.check(!!tiros[0]&&!!tiros[1],'La muestra fija debe producir cara y cruz por reposo físico.');
+  return tiros;
+}
+
 PRUEBAS.suite('azarYCriticos', async t => {
   let total=0;for(let i=0;i<10000;i++)total+=rnd(2);
-  t.check(total>4500&&total<5500,'La muestra del volado debe ser compatible con 50/50.');t.nota('10000 volados: '+total+' caras de un lado y '+(10000-total)+' del otro.');
+  t.check(total>4500&&total<5500,'El azar binario general debe ser compatible con 50/50.');
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=azar-interno';document.body.appendChild(f);await carga;
-    const w=f.contentWindow,d=f.contentDocument,azar=w.Math.random;
+    const w=f.contentWindow,d=f.contentDocument,azar=w.Math.random,simular=w.voladoSimular,preguntar=w.ask;
     try{
+      const tiros=monedasDePrueba(w.CAOZ_MONEDA,t);
+      t.igual(w.eval('G'),null,pagina+': el primer duelo comienza sin una partida anterior.');
+      Object.defineProperty(d,'hidden',{get:()=>true,configurable:true});
+      w.voladoSimular=()=>tiros[0];w.ask=async()=>0;
+      const primera=w.startMatch('fender','adreida',{sinCortinilla:true});
+      for(let i=0;i<40&&!d.querySelector('#ladoCara');i++)await sleep(25);
+      t.check(!!d.querySelector('#ladoCara'),pagina+': el primer duelo muestra la elección antes de crear G.');
+      d.querySelector('#ladoCara').click();await primera;
+      t.check(w.eval('!!G&&G.turnNo===1&&G.active===ME'),pagina+': el primer duelo crea la partida real y respeta la cara física ganadora.');
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
       w.newGame('fender','mohamed');w.eval('G.fast=true');
       for(const eleccion of [0,1])for(const moneda of [0,1]){
-        w.Math.random=()=>moneda?.9:.1;const tirada=w.voladoDomo('Rival');
+        let lanzamientos=0;w.voladoSimular=()=>{lanzamientos++;return tiros[moneda];};
+        w.Math.random=()=>moneda?.1:.9;const tirada=w.voladoDomo('Rival');
+        t.check(d.querySelector('#moneda')?.tagName==='CANVAS'&&lanzamientos===0,pagina+': la moneda espera la elección antes de simular.');
         d.querySelector(eleccion?'#ladoCruz':'#ladoCara').click();
+        d.querySelector(eleccion?'#ladoCara':'#ladoCruz').click();
         t.check(await tirada===(eleccion===moneda?0:1),pagina+': elección, resultado y primer turno deben coincidir.');
+        t.igual(lanzamientos,1,pagina+': pulsar los dos botones no produce una segunda tirada.');
         t.check(d.querySelector('#moneda').getAttribute('aria-label')==='Moneda: '+(moneda?'cruz':'cara'),pagina+': la animación debe terminar con el lado sorteado.');
+        t.check(d.querySelector('#moneda').dataset.monedaValor===String(moneda)&&d.querySelector('#moneda').dataset.monedaAsentado==='true',pagina+': el resultado visible conserva la cara asentada.');
       }
+      const esperando=w.voladoDomo('Rival');w.cerrarOv();
+      t.igual(await esperando,null,pagina+': cerrar antes de elegir cancela sin asignar primer turno.');
+      const anterior=w.eval('G'),botonAnterior=d.querySelector('#ladoCara'),inicio=w.startMatch('fender','adreida',{sinCortinilla:true});
+      for(let i=0;i<40&&(!d.querySelector('#ladoCara')||d.querySelector('#ladoCara')===botonAnterior||d.querySelector('#ladoCara').disabled);i++)await sleep(25);
+      t.check(!!d.querySelector('#ladoCara')&&d.querySelector('#ladoCara')!==botonAnterior&&!d.querySelector('#ladoCara').disabled,pagina+': la nueva partida espera la elección.');
+      w.cerrarOv();await inicio;
+      t.check(w.eval('G')===anterior&&d.querySelector('#menu').classList.contains('on'),pagina+': cancelar el volado vuelve al menú sin crear ni sortear una partida.');
       w.Math.random=azar;w.eval('G.fast=false');Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});
       const dado=w.rollDice(1,'Prueba',true,{ok:n=>n>=8,siOk:'Acierto',siMal:'No alcanza'});d.querySelector('#dbtn').click();await sleep(1700);
       t.check(d.querySelector('#dlabel').textContent==='¡CRÍTICO!',pagina+': un 1 debe decir CRÍTICO.');
       t.check(d.querySelector('#defecto').textContent.includes('No alcanza'),pagina+': el nuevo texto no debe alterar la regla del dado.');d.querySelector('#dbtn').click();await dado;
-    }finally{w.Math.random=azar;w.relojPara();f.remove();}
+    }finally{w.voladoSimular=simular;w.ask=preguntar;w.Math.random=azar;w.CAOZ_MONEDA?.cancelar();w.relojPara();f.remove();}
+  }
+});
+
+PRUEBAS.suite('monedaFisica', async t => {
+  const F=window.CAOZ_MONEDA,tiros=monedasDePrueba(F,t);
+  t.check(F.radio>0&&F.grosor>0&&F.grosor<F.radio,'La moneda tiene radio y grosor físicos.');
+  t.check(F.leer([0,0,0,1]).valor===0&&F.leer([1,0,0,0]).valor===1,'Cara y cruz corresponden a las dos normales opuestas.');
+  // Muestra corta dentro del navegador; el barrido de distribución y coste
+  // se hace aparte para no multiplicar cientos de simulaciones por suite.
+  for(const semilla of [0,1,2,3,11,47,137,9999]){
+    const entrada=semilla%2?{x:-1,z:1,fuerza:.15}:{x:1,z:-1,fuerza:1},r=F.simular(semilla,entrada);
+    t.check(r.asentado&&(r.valor===0||r.valor===1)&&r.alineacion>.999,'La moneda '+semilla+' reposa sobre una cara.');
+    t.check(r.duracion>0&&r.duracion<=20.1&&r.impactos>0,'El lanzamiento tiene vuelo, contacto y duración acotada.');
+    const ultimo=r.frames.at(-1),cara=F.leer(ultimo.q);
+    t.igual(cara.valor,r.valor,'El resultado se lee de la orientación final.');
+    t.check(r.frames.length>3&&r.frames[0].t===0&&Math.abs(ultimo.t-r.duracion)<.001,'La trayectoria cubre desde el lanzamiento hasta el reposo.');
+    for(const [i,f] of r.frames.entries()){
+      t.check(f.p.length===3&&f.q.length===4&&[...f.p,...f.q,f.t].every(Number.isFinite),'Los fotogramas sólo contienen posiciones y orientaciones finitas.');
+      t.check(Math.abs(Math.hypot(...f.q)-1)<.001,'La orientación de cada muestra permanece normalizada.');
+      if(i)t.check(f.t>r.frames[i-1].t,'La trayectoria avanza sin tiempos duplicados ni retrocesos.');
+      const normal=F.leer(f.q).normal,ny=Math.min(1,Math.abs(normal[1]));
+      const base=f.p[1]-F.radio*Math.sqrt(1-ny*ny)-F.grosor*.5*ny;
+      t.check(base>-.015,'El borde de la moneda no atraviesa la mesa.');
+    }
+    if(semilla<2)t.igual(JSON.stringify(F.simular(semilla,entrada).frames),JSON.stringify(r.frames),'Misma semilla y gesto reproducen la misma física.');
+    const paquete=F.empaquetar(r),red=F.desempaquetar(JSON.parse(JSON.stringify(paquete)));
+    t.check(red&&red.asentado&&red.valor===r.valor&&F.leer(red.frames.at(-1).q).valor===r.valor,'El paquete conserva cara y reposo después de pasar por JSON.');
+    t.check(Math.abs(red.duracion-r.duracion)<.002&&red.frames.at(-1).p.every((v,i)=>Math.abs(v-ultimo.p[i])<.002),'La cuantización conserva tiempo y posición del aterrizaje.');
+    const mensaje={t:'coin',partida:'anfitrion-prueba-1789161854281',resultado:r.valor,first:r.valor,eleccion:0,fisica:paquete,from:'host',sid:'anfitrion-prueba',seq:123456};
+    t.check(new TextEncoder().encode(JSON.stringify(mensaje)).length<=4096,'El lanzamiento completo cabe en el límite de mensajes del relevo HTTP.');
+    let indice=0;
+    for(const original of r.frames){
+      while(indice<red.frames.length-2&&red.frames[indice+1].t<original.t)indice++;
+      const a=red.frames[indice],b=red.frames[indice+1],k=Math.max(0,Math.min(1,(original.t-a.t)/(b.t-a.t)));
+      const p=a.p.map((v,i)=>v+(b.p[i]-v)*k),signo=a.q.reduce((s,v,i)=>s+v*b.q[i],0)<0?-1:1;
+      let q=a.q.map((v,i)=>v+(signo*b.q[i]-v)*k);const norma=Math.hypot(...q);q=q.map(v=>v/norma);
+      const distancia=Math.hypot(...p.map((v,i)=>v-original.p[i])),angulo=2*Math.acos(Math.min(1,Math.abs(q.reduce((s,v,i)=>s+v*original.q[i],0))));
+      t.check(distancia<=.010&&angulo<=.030,'La trayectoria comprimida conserva la caída y los giros dentro de la tolerancia visual.');
+    }
+  }
+  const distinto=F.simular(tiros[0].semilla,{x:1,z:1,fuerza:1});
+  t.check(JSON.stringify(distinto.frames)!==JSON.stringify(tiros[0].frames),'El impulso cambia la trayectoria física.');
+  const paquete=F.empaquetar(tiros[0]);
+  // Corrupciones del formato de red, no de la simulación: cada muestra v1
+  // ocupa 14 bytes (tiempo, posición y tres componentes de orientación).
+  const alterar=editar=>{
+    const bytes=Uint8Array.from(atob(paquete.trayectoria),c=>c.charCodeAt(0));
+    editar(new DataView(bytes.buffer),bytes.length);
+    return {...paquete,trayectoria:btoa(String.fromCharCode(...bytes))};
+  };
+  for(const [caso,datos] of [
+    ['ausente',null],['versión desconocida',{...paquete,version:99}],
+    ['base64 inválido',{...paquete,trayectoria:'%sin-trayectoria%'}],['truncado',{...paquete,trayectoria:paquete.trayectoria.slice(0,-8)}],
+    ['demasiado grande',{...paquete,trayectoria:'A'.repeat(100001)}],['cara adulterada',{...paquete,valor:1}],
+    ['sin reposo',{...paquete,asentado:false}],['duración falsa',{...paquete,duracion:paquete.duracion+1}],
+    ['tiempo repetido',alterar(v=>v.setUint16(14,v.getUint16(0)))],
+    ['orientación imposible',alterar((v,n)=>{for(let i=8;i<14;i+=2)v.setInt16(n-14+i,32767);})],
+    ['reposo en el aire',alterar((v,n)=>v.setInt16(n-10,1000))],
+    ['gesto inválido',{...paquete,impulso:{...paquete.impulso,fuerza:2}}]
+  ])t.igual(F.desempaquetar(datos),null,'Se rechaza el paquete '+caso+'.');
+  t.nota('Ocho lanzamientos físicos con impulsos distintos, ambas caras reales, determinismo y rechazo de paquetes incoherentes.');
+});
+
+PRUEBAS.suite('monedaOnlineFisica', async t => {
+  const tiros=monedasDePrueba(window.CAOZ_MONEDA,t);
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=moneda-red-interna';document.body.append(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,F=w.CAOZ_MONEDA,mostrar=F.mostrar,simular=F.simular;
+    try{
+      w.newGame('fender','adreida');w.eval('G.online=true;G.fast=true');
+      const n=w.eval('NET'),enviados=[],replays=[];
+      Object.assign(n,{on:true,guest:true,host:false,peer:true,vsListo:true,miNombre:'Invitado',suNombre:'Anfitrión'});
+      w.netSend=m=>enviados.push(JSON.parse(JSON.stringify(m)));
+      F.simular=()=>{throw Error('El invitado no puede volver a sortear la moneda.');};
+      F.mostrar=(canvas,r,opts)=>{replays.push(r);return mostrar(canvas,r,opts);};
+      for(const valor of [0,1]){
+        const r=tiros[valor],paquete=window.CAOZ_MONEDA.empaquetar(r),id=pagina+'-moneda-'+valor;
+        Object.assign(n,{partidaId:id,monedaRecibida:null,monedaTerminada:false});
+        const mensaje={t:'coin',partida:id,resultado:valor,eleccion:0,first:valor,fisica:paquete},antes=enviados.length,vistas=replays.length;
+        await w.onlineMonedaRecibe({...mensaje,partida:'otra-partida'});
+        await w.onlineMonedaRecibe({...mensaje,fisica:{...paquete,valor:1-valor}});
+        // La elección y first siguen siendo coherentes entre sí: sólo la
+        // orientación del paquete puede descubrir este resultado adulterado.
+        await w.onlineMonedaRecibe({...mensaje,resultado:1-valor,first:1-valor});
+        await w.onlineMonedaRecibe({...mensaje,first:1-valor});
+        for(const invalido of [-1,2,'0',null]){
+          await w.onlineMonedaRecibe({...mensaje,resultado:invalido});
+          await w.onlineMonedaRecibe({...mensaje,first:invalido});
+          await w.onlineMonedaRecibe({...mensaje,eleccion:invalido});
+        }
+        t.check(enviados.length===antes&&replays.length===vistas&&n.monedaRecibida===null,pagina+': un paquete ajeno o incoherente no se confirma ni consume la partida.');
+        const recibida=w.onlineMonedaRecibe(mensaje),duplicada=w.onlineMonedaRecibe(mensaje);await Promise.all([recibida,duplicada]);
+        t.igual(replays.length,vistas+1,pagina+': una retransmisión durante el vuelo no vuelve a dibujar la moneda.');
+        t.igual(enviados.slice(antes).filter(m=>m.t==='coinAck').length,1,pagina+': confirma una vez el lanzamiento terminado.');
+        const reproducida=replays.at(-1),decodificada=F.desempaquetar(paquete);
+        t.igual(JSON.stringify(reproducida.frames),JSON.stringify(decodificada.frames),pagina+': reproduce exactamente las muestras autoritativas.');
+        t.check(d.querySelector('#moneda')?.getAttribute('aria-label')==='Moneda: '+(valor?'cruz':'cara'),pagina+': el invitado muestra la cara física recibida.');
+        await w.onlineMonedaRecibe(mensaje);
+        t.check(replays.length===vistas+1&&enviados.filter(m=>m.t==='coinAck'&&m.partida===id).length===2,pagina+': un duplicado terminado sólo repite el acuse.');
+      }
+      Object.assign(n,{partidaId:'moneda-cancelada',monedaRecibida:null,monedaTerminada:false});
+      Object.defineProperty(d,'hidden',{get:()=>false,configurable:true});w.eval('G.fast=false');
+      const cancelada={t:'coin',partida:n.partidaId,resultado:0,eleccion:0,first:0,fisica:window.CAOZ_MONEDA.empaquetar(tiros[0])};
+      const enVuelo=w.onlineMonedaRecibe(cancelada);await sleep(40);w.cerrarOv();await enVuelo;
+      t.check(!enviados.some(m=>m.t==='coinAck'&&m.partida===cancelada.partida)&&n.monedaRecibida===null&&!n.monedaTerminada,pagina+': cancelar en vuelo no confirma ni consume el lanzamiento.');
+      w.eval('G.fast=true');await w.onlineMonedaRecibe(cancelada);
+      t.check(enviados.filter(m=>m.t==='coinAck'&&m.partida===cancelada.partida).length===1&&n.monedaTerminada,pagina+': una retransmisión después de cancelar vuelve a mostrar y confirmar la moneda.');
+      Object.assign(n,{partidaId:'moneda-clasica',monedaRecibida:null,monedaTerminada:false});
+      const vistas=replays.length;await w.onlineMonedaRecibe({t:'coin',partida:n.partidaId,resultado:1,first:0});
+      t.check(replays.length===vistas&&d.querySelector('#moneda')?.getAttribute('aria-label')==='Moneda: cruz',pagina+': un anfitrión anterior conserva su resultado estático sin inventar trayectoria.');
+      t.check(enviados.some(m=>m.t==='coinAck'&&m.partida==='moneda-clasica'),pagina+': el volado clásico también se confirma.');
+    }finally{F.simular=simular;F.mostrar=mostrar;F.cancelar();w.netSend=()=>{};w.eval('NET.on=false');w.relojPara();f.remove();}
   }
 });
 
@@ -2372,18 +2520,28 @@ PRUEBAS.suite('onlineFlujo', async t => {
       f.src=pagina+'?test=online-interno&b='+Date.now();const carga=new Promise(r=>f.onload=r);document.body.appendChild(f);marcos.push(f);await carga;
     }
     const [h,j]=marcos.map(f=>f.contentWindow), nh=h.eval('NET'),nj=j.eval('NET');
-    const mensajes=[];
+    const mensajes=[],monedas=[],reproducidas=[[],[]],tiro=monedasDePrueba(h.CAOZ_MONEDA,t)[1];let lanzamientos=0;
     for(const [w,n,host,nombre,sid] of [[h,nh,true,'Rafa <b>','hostPrueba'],[j,nj,false,'Amigo','guestPrueba']]){
       Object.assign(n,{on:true,host,guest:!host,peer:true,sid,miNombre:nombre,suNombre:host?'Amigo':'Rafa <b>',seq:0,seen:new Set(),chs:[{ok:true,close(){}}],hechas:new Set(),esperaAck:new Map(),ultimoRival:Date.now()});
       w.netStatus=()=>{};w.netTieneInternet=()=>true;
       w.ask=async()=>0;
     }
-    h.netSend=m=>{mensajes.push(m.t);queueMicrotask(()=>j.netRecv({...m,sid:nh.sid}));};
-    j.netSend=m=>{mensajes.push(m.t);queueMicrotask(()=>h.netRecv({...m,sid:nj.sid}));};
+    h.voladoSimular=()=>{lanzamientos++;return tiro;};
+    j.CAOZ_MONEDA.simular=()=>{throw Error('El invitado no puede generar otra trayectoria.');};
+    [h,j].forEach((w,i)=>{const mostrar=w.CAOZ_MONEDA.mostrar;w.CAOZ_MONEDA.mostrar=(canvas,r,op)=>{reproducidas[i].push(r);return mostrar(canvas,r,{...op,rapido:true});};});
+    h.netSend=m=>{mensajes.push(m.t);if(m.t==='coin')monedas.push(JSON.parse(JSON.stringify(m)));queueMicrotask(()=>j.netRecv(JSON.parse(JSON.stringify({...m,sid:nh.sid}))));};
+    j.netSend=m=>{mensajes.push(m.t);queueMicrotask(()=>h.netRecv(JSON.parse(JSON.stringify({...m,sid:nj.sid}))));};
     const inicio=h.netHostStart('fender','adreida');await sleep(100);
     t.check([...h.document.querySelectorAll('.vs .lname')].map(n=>n.textContent).join('|')==='Rafa <b>|Amigo','VS debe usar los nombres de jugadores como texto.');
+    for(let i=0;i<160&&!h.document.querySelector('#ladoCara');i++)await sleep(50);
+    t.check(!!h.document.querySelector('#ladoCara'),'El anfitrión elige en la moneda después del VS y del acuse del rival.');
+    h.document.querySelector('#ladoCara').click();
     await inicio;await sleep(400);
     t.check(mensajes.includes('coin')&&mensajes.includes('coinAck'),'El volado debe verse y confirmarse en los dos lados.');
+    const moneda=monedas[0],recibida=j.CAOZ_MONEDA.desempaquetar(moneda.fisica);
+    t.check(lanzamientos===1&&moneda.resultado===1&&moneda.first===1&&moneda.eleccion===0,'Una cruz física frente a la elección cara concede el primer turno al invitado.');
+    t.check(recibida&&reproducidas.every(lista=>JSON.stringify(lista[0].frames)===JSON.stringify(recibida.frames)),'El anfitrión y el invitado reproducen exactamente las mismas muestras autoritativas.');
+    t.igual(h.eval('G.active'),1,'El resultado físico debe asignar realmente el primer turno.');
     t.check(h.eval('G.active')===1-j.eval('G.active'),'El volado debe asignar el mismo turno en ambas perspectivas.');
     const partida=j.eval('G');await j.netRecv({...nh.welcome,sid:nh.sid});
     t.check(j.eval('G')===partida,'Una bienvenida repetida no debe reiniciar la partida.');
@@ -3381,10 +3539,12 @@ PRUEBAS.suite('regresiones', async t => {
      que es lo único que no puede fallar aquí. */
   {
     try{ Object.defineProperty(document,'hidden',{get:()=>false,configurable:true}); }catch(e){}
-    let empezasteTu = 0;
-    for (let i = 0; i < 6; i++){
+    const tiros=monedasDePrueba(window.CAOZ_MONEDA,t),simular=window.voladoSimular,mostrar=window.CAOZ_MONEDA.mostrar;
+    window.CAOZ_MONEDA.mostrar=(canvas,r,op)=>mostrar(canvas,r,{...op,rapido:true});
+    try{for (let i = 0; i < 4; i++){
+      const lado=Math.floor(i/2),eleccion=i%2;window.voladoSimular=()=>tiros[lado];G.fast=false;
       const gViejo = T.G;                        // para saber cuándo nace la nueva
-      // sin la cortinilla del VS: aquí se prueba el volado, y son 4 s por vuelta
+      // Sin cortinilla; el renderer termina la trayectoria real en modo rápido.
       startMatch('fender','adreida',{sinCortinilla:true});   // sin await: espera a que elijas
       /* Hay que esperar a un volado NUEVO, no al que quedó del anterior: al
          terminar, sus botones siguen en el panel deshabilitados hasta que otra
@@ -3393,7 +3553,7 @@ PRUEBAS.suite('regresiones', async t => {
       for (let k=0; k<80 && !($1('#ladoCara') && !$1('#ladoCara').disabled); k++) await sleep(50);
       t.check(!!$1('#ladoCara') && !$1('#ladoCara').disabled,
         'debería preguntarte cara o cruz al empezar');
-      (i % 2 ? $1('#ladoCruz') : $1('#ladoCara')).click();
+      (eleccion ? $1('#ladoCruz') : $1('#ladoCara')).click();
       /* El cartel se lee MIENTRAS está en pantalla. Antes se esperaba a que el
          overlay se cerrase y se leía después, pero ese overlay lo comparten
          todas las preguntas del juego: si al empezar el turno salía otra —la de
@@ -3409,12 +3569,13 @@ PRUEBAS.suite('regresiones', async t => {
          anterior, que ya estaba en juego — se leía el turno de la de antes. */
       for (let k=0; k<90 && (T.G===gViejo || T.G.turnNo<1); k++) await sleep(80);
       const empiezoYo = T.G.active === 0;
-      if (empiezoYo) empezasteTu++;
+      t.check(T.G!==gViejo&&T.G.turnNo>=1,'El volado debe abrir una partida nueva.');
+      t.igual(empiezoYo,lado===eleccion,'El lado físico y la elección determinan quién juega primero.');
       t.check(/empiezas tú/.test(dijo) === empiezoYo,
         `el volado dijo "${dijo}" pero empieza ${empiezoYo?'el jugador':'el rival'}`);
       await sleep(150);
-    }
-    t.nota(`volado: ganaste ${empezasteTu} de 6 (es una moneda, no tiene que salir 3)`);
+    }}finally{window.voladoSimular=simular;window.CAOZ_MONEDA.mostrar=mostrar;}
+    t.nota('volado: ambas caras físicas y ambas elecciones asignan correctamente el primer turno');
 
     // y se puede saltar, que es lo que usan estas pruebas
     await T.startMatch('fender','adreida',{volado:false,first:0});
@@ -3542,24 +3703,20 @@ PRUEBAS.suite('regresiones', async t => {
     t.nota('las cinco clases de carta se anuncian al jugarse');
   }
 
-  /* La moneda del volado enseña siempre los mismos dos iconos. */
+  /* Los sellos elegibles corresponden a la moneda que se dibuja en la mesa. */
   {
-    // sin cortinilla: aquí se prueba la moneda, y son 4 s de espera por delante
-    startMatch('mohamed','adreida',{sinCortinilla:true});
-    for (let i=0; i<80 && !$1('#moneda'); i++) await sleep(50);
-    t.check(!!$1('#moneda'), 'el volado debería haber montado su moneda');
-    const reposo = $1('#moneda') ? $1('#moneda').textContent : '';
-    const botones = $$('.volado .lados .btn').map(b=>b.textContent).join(' ');
-    t.check(['👑','⚔️'].includes(reposo),
-      `la moneda debería enseñar una de sus dos caras, no otro icono — enseña "${reposo}"`);
-    t.check(/👑/.test(botones) && /⚔️/.test(botones),
-      'los botones deberían llevar el icono de su cara');
-    $1('#ladoCara').click();
-    for (let i=0; i<60 && $1('#ov').classList.contains('on'); i++) await sleep(100);
-    const final = $1('#moneda') ? $1('#moneda').textContent : reposo;
-    t.check(['👑','⚔️'].includes(final),
-      `al terminar debería quedarse en una de las dos caras — quedó "${final}"`);
-    t.nota('la moneda usa los mismos dos iconos de principio a fin');
+    const simular=window.voladoSimular,rapido=G.fast;
+    try{
+      window.voladoSimular=()=>monedasDePrueba(window.CAOZ_MONEDA,t)[1];G.fast=true;
+      const vuelo=voladoDomo('Adreida'),canvas=$1('#moneda');
+      t.check(canvas?.tagName==='CANVAS'&&canvas.width>0&&canvas.height>0,'El volado monta un lienzo de moneda con tamaño propio.');
+      t.check(canvas.getAttribute('aria-label')==='Moneda: cara','La moneda en reposo identifica la cara que enseña.');
+      t.check(/Cara/.test($1('#ladoCara').textContent)&&/corona/i.test($1('#ladoCara').textContent)&&!!$1('#ladoCara svg'),'Cara permite elegir el sello de la corona.');
+      t.check(/Cruz/.test($1('#ladoCruz').textContent)&&/espadas/i.test($1('#ladoCruz').textContent)&&!!$1('#ladoCruz svg'),'Cruz permite elegir el sello de las espadas.');
+      $1('#ladoCara').click();await vuelo;
+      t.check(canvas.getAttribute('aria-label')==='Moneda: cruz'&&canvas.dataset.monedaAsentado==='true','La moneda termina asentada con el sello físico que decidió el turno.');
+      t.nota('la corona y las espadas permanecen identificadas antes y después del lanzamiento');
+    }finally{window.voladoSimular=simular;G.fast=rapido;}
   }
 
   /* El d20 dice qué hace falta y qué efecto ha tenido. Antes enseñaba un número

@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 242 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 243 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,21 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build243 sustituye el volado decorativo por moneda-fisica.js. Núcleo puro de
+cuerpo rígido y presentación Canvas; el resultado sale de la normal superior al
+reposar. final-core comparte elección/presentación en local, campaña y online.
+voladoSimular obtiene semillas nuevas y reintenta sólo si queda sin asentar.
+El host envía coin.fisica empaquetada; el invitado valida resultado, elección y
+trayectoria antes de marcar monedaRecibida y enviar coinAck. Los anfitriones
+anteriores sin física se muestran con su resultado estático. No duplicar sorteos.
+Cancelar la elección o la reproducción impide iniciar una partida con resultado
+nulo. El módulo está en final.js, sw.js y todas las listas de publicar.sh.
+Replay acotado para el relevo HTTP: hasta176 poses, 14 bytes por pose,
+error de interpolación <.01 de posición y .03 rad. Se validan formato,
+reposo y valor; el host dibuja las mismas muestras descomprimidas que el invitado.
+Las pruebas incluyen el primer duelo con G=null, cancelación y retransmisiones.
+Esta versión se prepara para beta; main y producción se conservan.
 
 Build242 añade 127 ilustraciones provisionales para las cartas sin arte previo (7,21 MB).
 Son originales nuevos en art/ y entradas con placeholder:true en encuadres.json;

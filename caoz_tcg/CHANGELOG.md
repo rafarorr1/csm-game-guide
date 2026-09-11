@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 243 · Volado físico
+
+- La moneda salta, gira, rebota y se asienta sobre la mesa. Su orientación
+  final decide cara o cruz y quién empieza; no se sortea un resultado aparte.
+- Moneda de oro con corona y espadas grabadas, canto estriado, sombras y audio
+  de lanzamiento y contacto. Presentación compartida en escritorio y móvil.
+- El anfitrión online envía la trayectoria completa y ambos jugadores ven
+  el mismo lanzamiento. Un mensaje repetido no vuelve a lanzar la moneda.
+- Las pantallas pequeñas conservan los controles dentro del visor. Cambiar de
+  partida cancela el volado anterior; ocultar la pestaña resuelve sin bloquear.
+- El nuevo módulo se incluye en la caché de la app y en la publicación beta.
+
 ### Sin numerar · build 242 · Ilustraciones provisionales
 
 - Cada carta sin diseño previo recibe una ilustración basada en su descripción,
