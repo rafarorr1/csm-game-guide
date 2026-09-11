@@ -2326,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=242"></script>
-<script src="final.js?b=242"></script>
+<script src="motor.js?b=243"></script>
+<script src="final.js?b=243"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:242, fecha:'2026-09-11'};
+const BUILD = {n:243, fecha:'2026-09-11'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -4323,7 +4323,8 @@ async function startMatch(a, b, opts={}){
   // una publicación, que es justo para lo que están.
   const first = conVolado ? await volado(opts.nombres?.[1]||LEADERS[b].n)
                           : (opts.first != null ? opts.first : null);
-  if(mia !== PARTIDA_N) return;      // arrancó otra mientras elegías: ésta ya no vale
+  if(mia!==PARTIDA_N)return;       // otra partida reemplazó este volado
+  if(conVolado&&first==null){showScreen('menu');return;} // cancelado sin sortear un turno
   await setupMatch(a,b,{...(first==null?{}:{first}),...(opts.campana?{campana:opts.campana}:{})});
 }
 
