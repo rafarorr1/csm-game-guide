@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 241 · Nombre de Thal
+
+- La carta se llama Thal, sin subtítulo. Se actualizan las referencias en
+  habilidades, registro, guías, cartas relacionadas y catálogo del estudio.
+- Conserva el identificador interno para mantener ilustraciones, acabados,
+  encuadres y partidas guardadas. Sin cambios de reglas ni estadísticas.
+
+
 ### Sin numerar · build 240 · Marco dorado sencillo
 
 - Un solo borde fino sustituye los perfiles dobles dorados. La ilustración de

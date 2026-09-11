@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 240 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 241 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,10 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build241 renombra la carta a Thal y las menciones visibles relacionadas.
+Conserva id tal y todos sus datos de arte y partidas. Catálogo regenerado.
+
 
 Build240 simplifica el marco dorado en acabados.css: un borde de1.5px, sin
 perfiles interiores en carta ni ilustración. Conserva reflejo e indicadores.

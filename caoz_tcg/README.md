@@ -514,7 +514,7 @@ El documento deja algunas cosas abiertas; así se resolvieron:
 - **Rulchete** revierte al final de tu siguiente turno conservando el daño en
   proporción.
 - **Campo lleno**: los efectos que ponen Personajes (fichas, robos de control,
-  Tal Habla por el Cadáver) simplemente no entran si ya hay 5.
+  Thal Habla por el Cadáver) simplemente no entran si ya hay 5.
 
 ## Datos de playtest
 
