@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 238 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 239 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,13 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build239 corrige la ficha móvil de Tal: los ajustes publicados sólo tenían claves
+ desktop_ y móvil volvía a la base y91. CAOZ_VISTAS.resolver comparte la misma
+superficie entre pantallas cuando falta una propia; el ajuste propio prevalece.
+El estudio muestra la herencia y los mismos valores que el juego. abrirFicha móvil
+usa el selector desde su primer dibujo. No se reescriben los encuadres del usuario.
+
 
 Build238 añade previsualizaciones reales por superficie al estudio y zoom50–300%.
 Las vistas son independientes por dispositivo y acabado; se publican con la misma

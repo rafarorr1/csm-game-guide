@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 239 · Compartir encuadres entre pantallas
+
+- La ficha ampliada móvil hereda el ajuste de escritorio si no tiene uno propio.
+  Antes mostraba la base antigua aunque el nuevo ajuste estuviera publicado.
+- El estudio muestra qué encuadre hereda y permite seguir ajustando cada pantalla
+  por separado. La pulsación larga abre con el encuadre correcto desde el inicio.
+
+
 ### Sin numerar · build 237 · Esperar la jugada completa en las pruebas
 
 - La prueba de clic en una carta espera hasta que termina su entrada al campo.

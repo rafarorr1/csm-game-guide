@@ -19,9 +19,10 @@ carta revelada y memoria. Los protagonistas incluyen selección, VS, fin de part
 barra de combate, ficha ampliada, campaña, ruta y retrato de logros.
 
 El zoom admite **50–300%**. Por debajo de100 la imagen se reduce dentro de su marco;
-el marco, las reglas y las cifras conservan su tamaño. «Usar encuadre base» retira
-sólo la excepción de la vista elegida. Las vistas sin excepción conservan el
-encuadre previo de esa versión, así que no se altera ningún diseño guardado.
+el marco, las reglas y las cifras conservan su tamaño. «Usar encuadre heredado» retira
+sólo la excepción de la vista elegida. Desde239, si falta un ajuste propio se usa
+la misma vista de la otra pantalla; si tampoco existe, se conserva la base de esa
+versión. El estudio muestra la herencia y no reescribe los diseños guardados.
 
 `vistas` acompaña a x/y/z como mapa opcional (p. ej. `movil_detalle`). Las tablas
 reciben una columna TEXT mediante migración aditiva. La misma revisión CAS protege

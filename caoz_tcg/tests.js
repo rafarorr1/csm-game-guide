@@ -1455,6 +1455,17 @@ PRUEBAS.suite('encuadresVistas',async t=>{
       t.igual(guardada.vistas[plataforma+'_detalle'].z,90,pagina+': conserva las vistas para volver sin red.');
       t.check(!w.CAOZ_VISTAS.valido({x:50,y:50,z:49})&&w.CAOZ_VISTAS.valido({x:50,y:50,z:50}),pagina+': valida el límite de zoom.');
       t.igual(w.CAOZ_VISTAS.identificar(art),plataforma+'_detalle',pagina+': reconoce la superficie sin etiquetas del estudio.');
+      // Publicar desde una pantalla también debe corregir la ficha de la otra.
+      delete vistas[plataforma+'_detalle'];
+      vistas[(plataforma==='movil'?'desktop':'movil')+'_detalle']={x:32,y:41,z:90};
+      await w.CAOZ_ARTE.refrescar();
+      t.igual(art.style.getPropertyValue('--ey'),'41%',pagina+': hereda la misma superficie de la otra pantalla.');
+      if(plataforma==='movil'){
+        w.abrirFicha('augusto');
+        t.igual(d.querySelector('#inspectCard .art').style.getPropertyValue('--ey'),'41%','La pulsación larga real abre directamente con el ajuste publicado.');
+      }
+      vistas[plataforma+'_detalle']={x:21,y:29,z:85};await w.CAOZ_ARTE.refrescar();
+      t.igual(art.style.getPropertyValue('--ey'),'29%',pagina+': el ajuste propio prevalece sobre el heredado.');
       mano.remove();campo.remove();detalle.remove();
     }finally{w.fetch=fetchAntes;w.relojPara();f.remove();}
   }}finally{if(antes===null)localStorage.removeItem(clave);else localStorage.setItem(clave,antes);}
