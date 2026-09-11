@@ -66,10 +66,10 @@
     $('vistasOpciones').replaceChildren();for(const k of opciones){const b=document.createElement('button');b.textContent=CAOZ_VISTAS.nombres[k];b.setAttribute('aria-pressed',String(superficie===k));b.onclick=()=>{superficie=k;vista();};$('vistasOpciones').append(b);}
     const key=claveVista(),mapa=pendiente?.vistas||encuadres(c),propio=!!mapa[key];
     $('encuadreTitulo').textContent=CAOZ_VISTAS.nombres[superficie]+' · '+(dispositivo==='movil'?'Móvil':'Escritorio');
-    $('vistaAyuda').textContent=(propio?'Encuadre independiente.':'Usa el encuadre base.')+' Puedes cambiar de vista sin perder los ajustes pendientes.';
+    $('vistaAyuda').textContent=(propio?'Encuadre independiente.':mapa[CAOZ_VISTAS.opuesta(key)]?'Comparte el encuadre de '+(dispositivo==='movil'?'Escritorio.':'Móvil.'):'Usa el encuadre base.')+' Puedes cambiar de vista sin perder los ajustes pendientes.';
     const frame=$('juegoVista'),pagina=dispositivo==='movil'?'movil.html':'index.html';
     if(frame.dataset.pagina!==pagina){vistaLista=false;frame.dataset.pagina=pagina;frame.src=pagina+'?estudioVista=1&escritorio=1';$('vistaEstado').textContent='Preparando vista real…';}
-    if(vistaLista)frame.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:c.id,acabado,url:ruta,encuadre:mapa[key]||baseEnc,vista:key},location.origin);
+    if(vistaLista)frame.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:c.id,acabado,url:ruta,encuadre:CAOZ_VISTAS.resolver(mapa,key,baseEnc),vista:key},location.origin);
   }
   for(const d of ['desktop','movil'])$('vista'+(d==='desktop'?'Desktop':'Movil')).onclick=()=>{dispositivo=d;vista();};
   addEventListener('message',e=>{
@@ -101,7 +101,7 @@
     $('imagen').hidden=!ruta;if(ruta){if($('imagen').src!==ruta)$('imagen').src=ruta;}else $('imagen').removeAttribute('src');
     for(const [id,valor] of [['coste',c.coste],['ataque',c.ataque],['vida',c.vida]]){$(id).hidden=c.esLider||valor==null;$(id).textContent=valor??'';}
     actualizarVistaJuego(c,ruta,e);
-    aplicarEncuadre(pendiente?.vistas?.[claveVista()]||(!pendiente?encuadres(c)[claveVista()]:null)||e);
+    aplicarEncuadre(CAOZ_VISTAS.resolver(pendiente?.vistas||encuadres(c),claveVista(),e));
     const heredada=acabado!=='normal'&&(nueva||p?.heredada);
     $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':p?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):c.original?'Ilustración original'+(p?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
     if(heredada&&!pendiente?.blob)$('origen').textContent+=' Usa ilustración Normal: si cambia su imagen, se actualizará también aquí.';

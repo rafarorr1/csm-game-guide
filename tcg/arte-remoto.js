@@ -68,7 +68,7 @@
     if(carta!==nodo)nodo.removeAttribute('data-acabado');
     const acabado=window.acabadoArte(id);if(carta.dataset.acabado!==acabado)carta.dataset.acabado=acabado;
   }
-  function encuadreVista(id,vista){if(muestra?.id===id)return muestra.url?muestra.encuadre:null;return remoto(id)?.vistas?.[vista]||encuadreDe(ARTE[id]);}
+  function encuadreVista(id,vista){if(muestra?.id===id)return muestra.url?muestra.encuadre:null;return CAOZ_VISTAS.resolver(remoto(id)?.vistas,vista,encuadreDe(ARTE[id]));}
   function variables(nodo,enc){
     for(const [prop,v]of Object.entries({'--ex':enc.x+'%','--ey':enc.y+'%','--ez':(enc.z/100).toFixed(3)}))nodo.style.setProperty(prop,v);
   }
