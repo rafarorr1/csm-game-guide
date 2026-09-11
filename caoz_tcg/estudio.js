@@ -20,8 +20,8 @@
   const encuadres=c=>CAOZ_VISTAS.limpiar(registro(c)?.vistas);
   const revision=(c,a=acabado)=>Number(registro(c,a)?.revision||0);
   const nombreEntorno=()=>'el estudio';
-  const estadoArte=c=>{const a=ganadora(c),p=registro(c,a);return p?.hash?'reemplazada':c.original?'original':'sin';};
-  const etiquetas={reemplazada:'Reemplazada',original:'Original',sin:'Sin imagen'};
+  const estadoArte=c=>{const a=ganadora(c),p=registro(c,a),propia=p?.hash||(a!=='normal'&&registro(c,'normal')?.hash);return propia?'reemplazada':c.original?.placeholder?'provisional':c.original?'original':'sin';};
+  const etiquetas={reemplazada:'Reemplazada',original:'Original',provisional:'Provisional',sin:'Sin imagen'};
   const estado=(mensaje,error=false)=>{$('estado').textContent=mensaje;$('estado').classList.toggle('error',error);};
   function urlSegura(ruta){if(!ruta)return null;try{const u=new URL(CAOZ_ESTUDIO.ruta(ruta),base);return u.origin===location.origin&&/^https?:$/.test(u.protocol)?u.href:null;}catch(e){return null;}}
   const urlVersion=(c,a=acabado)=>{const p=registro(c,a);return p?.hash?urlSegura('api/arte/imagen/'+encodeURIComponent(p.hash)):a!=='normal'?urlVersion(c,'normal'):urlSegura(c.original?.url);};
@@ -103,7 +103,7 @@
     actualizarVistaJuego(c,ruta,e);
     aplicarEncuadre(CAOZ_VISTAS.resolver(pendiente?.vistas||encuadres(c),claveVista(),e));
     const heredada=acabado!=='normal'&&(nueva||p?.heredada);
-    $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':p?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):c.original?'Ilustración original'+(p?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
+    $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':p?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):c.original?(c.original.placeholder?'Ilustración provisional':'Ilustración original')+(p?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
     if(heredada&&!pendiente?.blob)$('origen').textContent+=' Usa ilustración Normal: si cambia su imagen, se actualizará también aquí.';
     $('borrador').hidden=!pendiente;
     if(pendiente){$('archivoNombre').textContent=pendiente.blob?pendiente.nombre+' · '+Math.round(pendiente.blob.size/1024)+' KB · WebP':pendiente.crear?'Crear '+acabados[acabado]+' de '+c.nombre:'Nuevo encuadre '+acabados[acabado]+' de '+c.nombre;

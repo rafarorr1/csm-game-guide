@@ -13,7 +13,7 @@ function original(id){
   if(!Object.hasOwn(encuadres,id))return null;
   if(!existsSync(join(raiz,'art',id+'.webp')))throw Error('Falta la ilustración original de '+id);
   const v=encuadres[id],e=typeof v==='number'?{x:50,y:v,z:100}:{x:v.x??50,y:v.y??50,z:v.z??100};
-  return {url:'art/'+id+'.webp',encuadre:e};
+  return {url:'art/'+id+'.webp',encuadre:e,...(v?.placeholder===true?{placeholder:true}:{})};
 }
 const fichas=Object.entries(cartas).map(([id,c])=>({id,nombre:c.n,tipo:c.t,coste:c.c??null,ataque:c.a??null,vida:c.h??null,texto:texto(c.x),tribu:(c.tr||[]).join(' · '),simbolo:c.art||'✦',esLider:false,ficha:!!c.token,mazos:Object.entries(mazos).filter(([,d])=>d.list.some(([carta])=>carta===id)).map(([lid])=>lideres[lid].n),original:original(id)}));
 for(const [id,l] of Object.entries(lideres))fichas.push({id:'lider_'+id,nombre:l.n,tipo:'lider',coste:null,ataque:null,vida:null,texto:texto(l.pasiva)+'\n'+texto(l.hab),tribu:l.arch,simbolo:l.art||'✦',esLider:true,ficha:false,mazos:[l.n],original:original('lider_'+id)});

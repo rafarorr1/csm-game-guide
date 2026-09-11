@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 241 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 242 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,20 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build242 añade 127 ilustraciones provisionales para las cartas sin arte previo (7,21 MB).
+Son originales nuevos en art/ y entradas con placeholder:true en encuadres.json;
+el catálogo derivado conserva esa marca y el estudio ofrece filtro Provisionales.
+No se escriben borradores ni registros de arte de D1. Los diseños propios conservan
+prioridad, incluidos los acabados que heredan la imagen Normal. Se protegen Thal,
+Augusto, Lucius y los cuatro protagonistas que ya tenían ilustración original.
+Los WebP de hasta 512×768 se derivan de PNG de 1024×1536, sin recortar ni ampliar.
+El flujo de publicación copia y verifica el listado de encuadres como siempre.
+Corrige además la posición de cajón, rareza y foil en cartas ilustradas: la
+regla general conarte los hacía relativos y desplazaba el nombre fuera del marco.
+cartasIlustradas reproduce el fallo con CSS anterior y pasa en ambas pantallas.
+Sin cambios de motor, mazos, balance o reglas. Conservar main intacta.
+
 
 Build241 renombra la carta a Thal y las menciones visibles relacionadas.
 Conserva id tal y todos sus datos de arte y partidas. Catálogo regenerado.

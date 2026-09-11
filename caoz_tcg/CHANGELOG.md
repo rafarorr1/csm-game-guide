@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 242 · Ilustraciones provisionales
+
+- Cada carta sin diseño previo recibe una ilustración basada en su descripción,
+  incluidas las fichas, las cartas del Editor y los dos protagonistas pendientes.
+- El estudio identifica y filtra las Provisionales. Una ilustración propia
+  conserva prioridad, también cuando un acabado hereda la imagen de Normal.
+- En cartas ilustradas, el cajón de habilidades, la estrella y el reflejo
+  conservan su posición flotante. Antes desplazaban el nombre fuera del marco.
+- Se conservan los originales anteriores, Thal y todos los datos privados y
+  publicados del estudio. Las nuevas imágenes son WebP de hasta 512×768.
+  No cambian las reglas, las estadísticas, los mazos ni el balance.
+
 ### Sin numerar · build 241 · Nombre de Thal
 
 - La carta se llama Thal, sin subtítulo. Se actualizan las referencias en

@@ -20,5 +20,767 @@
   "x": 50,
   "y": 11,
   "z": 100
+ },
+ "acertijo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "adolfo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "afterparty": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "aidman": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "aldrick": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "alientoacido": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "antro": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "arco": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "armadura": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "armamagica": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "auxilio": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "balada": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "ballesta": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "bartolomeo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "bendicion": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "bob": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "bolafuego": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "brazosagua": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "brickbrock": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "brujula": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "burla": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "calentarmetal": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "campanafe": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "can": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "cantaberna": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "ceguera": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "ciclope": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "colapso": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "collar": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "conserje": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "contrahechizo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "copiajabon": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "correcaminos": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "coyote": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "cuerda": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "destello": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "discipulo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "disfrazarse": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "disipar": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "domo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "eclipse": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "edbor": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "editorcarrera": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "editorcorte": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "editorcosecha": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "editorcuadro": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "editorduelo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "editororbita": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "eric": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "escarcha": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "espadaboveda": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "espadaluz": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "espiritus": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "esporas": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "esporashorton": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "fetichemino": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "gatobachatero": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "gemaconserje": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "hermanotrol": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "hongos": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "horton": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "humobob": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "ilusion": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "ipadkid": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "jabon": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "juangabriel": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "julia": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "ladrillos": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lanzallamas": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lanzallave": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "leche": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lecheslact": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lentesmachete": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lider_gero": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lider_mohamed": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lifestealer": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "llavemago": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lucy": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "lutorafaela": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "luzhadas": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "machete": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "magodomo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "manosardientes": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "matildus": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "mazo": {
+  "x": 50,
+  "y": 55,
+  "z": 100,
+  "placeholder": true
+ },
+ "mensaje": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "minus": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "modificar": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "montanas": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "ninolanza": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "notario": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "nubedagas": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "palabracuracion": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "pasoatronador": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "peaje": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "pergamino": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "petunia": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "propaganda": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "proyectil": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "puas": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "puente": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "puntosrobados": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "rambo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "rantiago": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "rayoabrasador": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "rey": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "rulchete": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "rulchetebajo": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "saeta": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "sangrefria": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "sombrero": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "spiderman": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "talcadaver": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "talia": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tasha": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "taumaturgia": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "titaus": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tok_dragon": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tok_goblincamino": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tok_ilusion": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tok_petunia": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tok_poseido": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tok_rulchete": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "tomsage": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "trol": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "viajehongos": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
+ },
+ "zancada": {
+  "x": 50,
+  "y": 30,
+  "z": 100,
+  "placeholder": true
  }
 }

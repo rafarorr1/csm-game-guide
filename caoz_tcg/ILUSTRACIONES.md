@@ -32,6 +32,21 @@ esa versión. El consumidor guarda también el mapa público para abrir sin red.
 `arte-vistas.js` identifica superficies; `estudio-vista.js` funciona sólo dentro
 de un iframe de previsualización del mismo origen, sin iniciar partidas reales.
 
+## Ilustraciones provisionales · build 242
+
+Las cartas que aún no tenían diseño reciben una ilustración provisional, basada
+en su descripción y habilidad. Se guardan como originales nuevos en `art/`, con
+`placeholder:true` en su entrada de `encuadres.json`; el generador conserva esa
+marca en `catalogo.json`. El filtro **Provisionales** permite encontrarlas juntas.
+Una imagen propia, incluida la heredada desde Normal por un acabado, se muestra
+como Reemplazada. Los originales anteriores y los diseños privados o publicados
+del estudio se conservan. No se escriben ni se publican borradores de D1.
+
+Cada archivo del juego mide hasta 512×768 y conserva la proporción de su original.
+El encuadre es ajustable y no modifica la imagen. Los PNG de generación, los WebP
+y las descripciones utilizadas se entregan aparte en la galería descargable.
+Normal, Foil y Dorado continúan aplicándose con la misma prioridad y controles.
+
 ## Versiones y acabados
 
 Cada carta tiene tres versiones: **Normal**, **Foil** y **Foil dorado**. El
