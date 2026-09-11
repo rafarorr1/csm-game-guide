@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 244 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 245 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,15 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build245 reemplaza el dibujo plano de la moneda por dos superficies acuñadas,
+con Machete y las espadas en el mismo oro satinado (art/moneda-cara-v245.webp y
+art/moneda-cruz-v245.webp). Cuatro anillos forman un bisel visual dentro del cuerpo
+físico. Luz y reflejos dependen de la orientación; sombra proyectada con contacto
+según la altura mínima del cilindro. Cámara sigue menos al objeto, conservando
+el encuadre acotado. Ambos assets se precargan, cachean y verifican al publicar.
+Conservar primer IIFE físico, resultado, protocolo y botones de244. Sólo beta;
+producción242 y main permanecen intactas.
 
 Build244 graba la cara de Machete en el anverso de la moneda y simplifica los
 botones a «Cara» / «Cruz». El retrato art/moneda-machete-v244.webp mezcla su

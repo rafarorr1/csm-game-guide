@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 245 · Moneda acuñada
+
+- Machete y las espadas se forman en relieve sobre el mismo oro satinado,
+  con desgaste fino y detalles de acuñación; se sustituye el dibujo oscuro.
+- Bisel con volumen, reflejos suaves orientados a la luz y canto más discreto.
+- La sombra sigue el contorno y el contacto real; la cámara deja más estable
+  la mesa durante el lanzamiento. Misma física y sincronización del volado.
+- Ambas caras disponibles en la app sin conexión. Botones «Cara» y «Cruz».
+
 ### Sin numerar · build 244 · Machete en la moneda
 
 - La cara lleva un grabado en oro de Machete, basado en la referencia del usuario.

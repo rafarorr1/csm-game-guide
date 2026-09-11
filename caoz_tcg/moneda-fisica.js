@@ -192,48 +192,37 @@
 (function(global){
   'use strict';
   if(typeof document==='undefined'||!global.CAOZ_MONEDA)return;
-  const F=global.CAOZ_MONEDA, TAU=Math.PI*2, N=80;
+  const F=global.CAOZ_MONEDA, TAU=Math.PI*2, N=96;
   const suma=(a,b)=>a.map((v,i)=>v+b[i]),resta=(a,b)=>a.map((v,i)=>v-b[i]),por=(a,k)=>a.map(v=>v*k);
   const punto=(a,b)=>a.reduce((n,v,i)=>n+v*b[i],0),cruz=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
   const unidad=a=>por(a,1/(Math.hypot(...a)||1)),limitar=(v,a,b)=>Math.max(a,Math.min(b,v));
   const lienzos=new WeakMap(),poses=new WeakMap(),sellos=[];let sesion=null;
-  const retrato=new Image();let retratoListo=false;
-  // La textura se carga antes del volado. Si llega tarde, refresca también la
-  // moneda quieta sin reiniciar su trayectoria ni cambiar el resultado.
-  F.arteListo=new Promise(resolve=>{
-    retrato.onload=()=>{
-      retratoListo=true;sellos[0]=null;
+  const metales=[new Image(),new Image()],listos=[false,false];
+  const origen=document.currentScript?.src||global.location.href;
+  // Cada cara refresca su sello al llegar, también durante una espera quieta.
+  // La carga de arte nunca interviene en la física ni bloquea el lanzamiento.
+  F.arteListo=Promise.all(metales.map((img,lado)=>new Promise(resolve=>{
+    img.onload=()=>{
+      listos[lado]=true;sellos[lado]=null;
       document.querySelectorAll('canvas.moneda').forEach(canvas=>{const pose=poses.get(canvas);if(pose)pintar(canvas,pose);});
       resolve(true);
     };
-    retrato.onerror=()=>resolve(false);
-  });
-  retrato.src=new URL('art/moneda-machete-v244.webp',document.currentScript?.src||global.location.href).href;
+    img.onerror=()=>resolve(false);
+    img.src=new URL('art/moneda-'+(lado?'cruz':'cara')+'-v245.webp',origen).href;
+  }))).then(resultados=>resultados.every(Boolean));
   function circulo(c,r){c.beginPath();c.arc(0,0,r,0,TAU);}
-  function espada(c,angulo){
-    c.save();c.rotate(angulo);c.beginPath();c.moveTo(0,-140);c.lineTo(18,-112);c.lineTo(13,52);c.lineTo(47,57);c.lineTo(46,73);c.lineTo(12,68);c.lineTo(10,109);c.lineTo(19,118);c.lineTo(0,139);c.lineTo(-19,118);c.lineTo(-10,109);c.lineTo(-12,68);c.lineTo(-46,73);c.lineTo(-47,57);c.lineTo(-13,52);c.lineTo(-18,-112);c.closePath();
-    grabar(c);c.beginPath();c.moveTo(0,-109);c.lineTo(0,45);c.strokeStyle='#fce4a0';c.lineWidth=3;c.stroke();c.restore();
-  }
-  function grabar(c){
-    c.fillStyle='#6e420f';c.strokeStyle='#ffe7a3';c.lineWidth=5;c.lineJoin='round';c.shadowColor='#fff2b9';c.shadowOffsetY=3;c.shadowBlur=0;c.fill();c.stroke();c.shadowOffsetY=0;
-    c.save();c.clip();const g=c.createLinearGradient(-100,-120,100,120);g.addColorStop(0,'#71410e');g.addColorStop(.4,'#b88331');g.addColorStop(.52,'#e9be65');g.addColorStop(1,'#775019');c.fillStyle=g;c.fillRect(-180,-170,360,340);c.restore();
-  }
   function sello(lado){
     if(sellos[lado])return sellos[lado];
-    const canvas=document.createElement('canvas');canvas.width=canvas.height=512;const c=canvas.getContext('2d');c.translate(256,256);
-    const oro=c.createLinearGradient(-210,-230,200,240);oro.addColorStop(0,'#fff0b1');oro.addColorStop(.18,'#d9ad4f');oro.addColorStop(.38,'#f0ce75');oro.addColorStop(.58,'#b87b25');oro.addColorStop(.78,'#e7bc58');oro.addColorStop(1,'#fff0ac');c.fillStyle=oro;circulo(c,255);c.fill();
-    for(const [radio,ancho,color]of [[245,9,'#6e460f'],[237,5,'#fff0b0'],[218,3,'#835815'],[210,2,'#ffdf87'],[190,2,'#ad7c2d']]){circulo(c,radio);c.strokeStyle=color;c.lineWidth=ancho;c.stroke();}
-    // Grano tallado fijo: no introduce ruido ni parpadeo entre fotogramas.
-    c.save();circulo(c,233);c.clip();for(let i=0;i<140;i++){const y=-250+i*3.7;c.strokeStyle=i%3?'#70430a0b':'#fff4bf1a';c.lineWidth=.8;c.beginPath();c.moveTo(-255,y);c.bezierCurveTo(-90,y-2,70,y+2,255,y-1);c.stroke();}c.restore();
-    for(let i=0;i<64;i++){const a=i*TAU/64;c.beginPath();c.arc(Math.cos(a)*227,Math.sin(a)*227,2.3,0,TAU);c.fillStyle='#805114';c.fill();c.beginPath();c.arc(Math.cos(a)*227,Math.sin(a)*227-1.4,1.3,0,TAU);c.fillStyle='#ffebaa';c.fill();}
-    // Guirnaldas de laurel alrededor del grabado, con silueta legible en móvil.
-    for(const signo of [-1,1]){c.save();c.scale(signo,1);c.strokeStyle='#8e601e';c.lineWidth=3;c.beginPath();c.arc(0,-4,168,.15,1.36);c.stroke();for(let i=0;i<8;i++){const a=.22+i*.145,x=Math.cos(a)*166,y=Math.sin(a)*166-4;c.save();c.translate(x,y);c.rotate(a-.65);c.fillStyle='#997025';c.beginPath();c.ellipse(0,0,5,13,0,0,TAU);c.fill();c.strokeStyle='#f7d780';c.lineWidth=1.4;c.stroke();c.restore();}c.restore();}
-    if(lado===0&&retratoListo){
-      // El bronce se mezcla con el oro de la moneda: conserva el sombreado
-      // metálico y deja que el relieve siga la luz al girar.
-      c.save();c.globalCompositeOperation='multiply';c.drawImage(retrato,-196,-208,392,392);c.restore();
+    const canvas=document.createElement('canvas');canvas.width=canvas.height=512;
+    const c=canvas.getContext('2d');c.translate(256,256);
+    c.fillStyle='#b19762';circulo(c,256);c.fill();
+    if(listos[lado]){
+      // La geometría recorta el disco y modela su bisel. El pequeño margen UV
+      // excluye el fondo de la fotografía en todo el perímetro de ambas caras.
+      c.drawImage(metales[lado],-269,-264,538,538);
+    }else{
+      circulo(c,237);c.strokeStyle='#d5be89';c.lineWidth=3;c.stroke();
     }
-    else if(lado===1){espada(c,-.64);espada(c,.64);}
     sellos[lado]=canvas;return canvas;
   }
   function ruta(c,ps){c.beginPath();ps.forEach((p,i)=>i?c.lineTo(p.x,p.y):c.moveTo(p.x,p.y));c.closePath();}
@@ -253,12 +242,14 @@
     if(canvas.width!==Math.round(W*dpr)||canvas.height!==Math.round(H*dpr)){canvas.width=Math.round(W*dpr);canvas.height=Math.round(H*dpr);}
     c.setTransform(dpr,0,0,dpr,0,0);c.clearRect(0,0,W,H);
     const radio=Number(F.radio)||.5,grosor=Number(F.grosor)||.09,alto=Math.max(0,pose.p[1]-grosor/2);
-    const aim=[pose.p[0]*.88,alto*.68,pose.p[2]*.88],cam=suma(aim,[.25,7.7+alto*.8,5.4]),frente=unidad(resta(aim,cam)),derecha=unidad(cruz(frente,[0,1,0])),arriba=cruz(derecha,frente),f=Math.min(H*5.75,W*3.65);
+    const aim=[pose.p[0]*.38,alto*.55,pose.p[2]*.38],cam=suma(aim,[.25,7.7+alto*.8,5.4]),frente=unidad(resta(aim,cam)),derecha=unidad(cruz(frente,[0,1,0])),arriba=cruz(derecha,frente),f=Math.min(H*5.75,W*3.65);
     let escala=1,dx=0,dy=0;
     const cruda=v=>{const r=resta(v,cam),z=Math.max(.1,punto(r,frente));return{x:W/2+punto(r,derecha)*f/z,y:H*.60-punto(r,arriba)*f/z,z};};
     const proy=v=>{const p=cruda(v);return{x:W/2+(p.x-W/2)*escala+dx,y:H*.55+(p.y-H*.55)*escala+dy,z:p.z};};
     const puntoLocal=(x,y,z)=>suma(pose.p,F.girar([x,y,z],pose.q));
-    const anillos=[-1,1].map(signo=>Array.from({length:N},(_,i)=>puntoLocal(Math.cos(i*TAU/N)*radio,signo*grosor/2,Math.sin(i*TAU/N)*radio)));
+    // Cuatro anillos forman un bisel real; el canto deja de ser una banda plana.
+    const perfil=[{y:-grosor/2,r:radio*.968},{y:-grosor*.29,r:radio},{y:grosor*.29,r:radio},{y:grosor/2,r:radio*.968}];
+    const anillos=perfil.map(({y,r})=>Array.from({length:N},(_,i)=>puntoLocal(Math.cos(i*TAU/N)*r,y,Math.sin(i*TAU/N)*r)));
     // Encuadre acotado incluso si un lanzamiento llega al borde de la mesa.
     const limites=anillos.flat().map(cruda),minX=Math.min(...limites.map(p=>p.x)),maxX=Math.max(...limites.map(p=>p.x)),minY=Math.min(...limites.map(p=>p.y)),maxY=Math.max(...limites.map(p=>p.y)),m=Math.min(13,H*.05);
     escala=Math.min(1,(W-m*2)/(maxX-minX),(H-m*2)/(maxY-minY));
@@ -270,18 +261,46 @@
     for(let j=0;j<4;j++){const ps=Array.from({length:128},(_,i)=>proy([Math.cos(i*TAU/128)*(1.10+j*.075),0,Math.sin(i*TAU/128)*(1.10+j*.075)]));ruta(c,ps);c.strokeStyle=j===1?'#c6a16334':'#b18c4919';c.stroke();}
     for(let i=0;i<48;i++){const a=i*TAU/48,ps=[1.15,1.19+(i%4===0?.05:0)].map(r=>proy([Math.cos(a)*r,0,Math.sin(a)*r]));c.beginPath();c.moveTo(ps[0].x,ps[0].y);c.lineTo(ps[1].x,ps[1].y);c.strokeStyle='#d1ad672b';c.stroke();}
     for(let i=0;i<36;i++){const x=(i*83%353)/353*W,y=(i*61%227)/227*H;c.fillStyle='#d8bc9b08';c.fillRect(x,y,1,1);}c.restore();
-    const base=proy([pose.p[0],.001,pose.p[2]]),sx=proy([pose.p[0]+radio,.001,pose.p[2]]),sz=proy([pose.p[0],.001,pose.p[2]+radio]);
-    c.save();c.translate(base.x,base.y);c.transform(sx.x-base.x,sx.y-base.y,sz.x-base.x,sz.y-base.y,0,0);const sombra=c.createRadialGradient(0,0,.1,0,0,1.75+alto*.35);sombra.addColorStop(0,`rgba(0,0,0,${Math.max(.10,.66-alto*.18)})`);sombra.addColorStop(.55,'#00000025');sombra.addColorStop(1,'#00000000');c.fillStyle=sombra;circulo(c,2.5+alto*.35);c.fill();c.restore();
-    const luz=unidad([-.6,1,.65]),poligonos=[];
-    for(let i=0;i<N;i++){const j=(i+1)%N,n=F.girar([Math.cos((i+.5)*TAU/N),0,Math.sin((i+.5)*TAU/N)],pose.q),centro=por(suma(suma(anillos[0][i],anillos[0][j]),suma(anillos[1][i],anillos[1][j])),.25);if(punto(n,resta(cam,centro))<=0)continue;poligonos.push({p:[anillos[0][i],anillos[0][j],anillos[1][j],anillos[1][i]],z:proy(centro).z,n,i});}
-    for(const signo of [-1,1]){const n=F.girar([0,signo,0],pose.q),centro=puntoLocal(0,signo*grosor/2,0);if(punto(n,resta(cam,centro))>0)poligonos.push({p:anillos[signo>0?1:0],z:proy(centro).z,n,centro,signo});}
+    const base=proy([pose.p[0],.001,pose.p[2]]);
+    // Sombra anclada a la mesa: nítida bajo el borde en reposo, suave al volar.
+    // El contorno proyectado sigue la inclinación, no una elipse fija enorme.
+    const huella=anillos.flat().map(v=>proy([v[0]+Math.max(0,v[1])*.6,.002,v[2]+Math.max(0,v[1])*.65]));
+    const orden=huella.sort((a,b)=>a.x-b.x||a.y-b.y),giro=(a,b,d)=>(b.x-a.x)*(d.y-a.y)-(b.y-a.y)*(d.x-a.x),casco=[];
+    for(const v of orden){while(casco.length>1&&giro(casco[casco.length-2],casco[casco.length-1],v)<=0)casco.pop();casco.push(v);}
+    const mitad=casco.length+1;for(let i=orden.length-2;i>=0;i--){const v=orden[i];while(casco.length>=mitad&&giro(casco[casco.length-2],casco[casco.length-1],v)<=0)casco.pop();casco.push(v);}casco.pop();
+    const normalY=F.girar([0,1,0],pose.q)[1],alturaSuelo=Math.max(0,pose.p[1]-grosor/2*Math.abs(normalY)-radio*Math.sqrt(Math.max(0,1-normalY*normalY)));
+    const desenfoque=Math.min(15,1.3+alturaSuelo*6);
+    c.save();
+    if('filter' in c)c.filter='blur('+desenfoque+'px)';
+    else{c.shadowColor='#0008';c.shadowBlur=desenfoque*2;}
+    c.fillStyle='rgba(0,0,0,'+(.58/(1+alturaSuelo*.7))+')';ruta(c,casco);c.fill();c.restore();
+    const luz=unidad([-.6,1,-.65]),poligonos=[];
+    for(let banda=0;banda<perfil.length-1;banda++)for(let i=0;i<N;i++){
+      const j=(i+1)%N,a=(i+.5)*TAU/N,dy=perfil[banda+1].y-perfil[banda].y,dr=perfil[banda+1].r-perfil[banda].r;
+      const n=F.girar(unidad([Math.cos(a)*dy,-dr,Math.sin(a)*dy]),pose.q),centro=por(suma(suma(anillos[banda][i],anillos[banda][j]),suma(anillos[banda+1][i],anillos[banda+1][j])),.25);
+      if(punto(n,resta(cam,centro))<=0)continue;
+      poligonos.push({p:[anillos[banda][i],anillos[banda][j],anillos[banda+1][j],anillos[banda+1][i]],z:proy(centro).z,n,i,banda,centro});
+    }
+    for(const signo of [-1,1]){const n=F.girar([0,signo,0],pose.q),centro=puntoLocal(0,signo*grosor/2,0);if(punto(n,resta(cam,centro))>0)poligonos.push({p:anillos[signo>0?3:0],z:proy(centro).z,n,centro,signo});}
     poligonos.sort((a,b)=>b.z-a.z);
     for(const o of poligonos){const ps=o.p.map(proy),l=limitar(punto(o.n,luz),0,1);ruta(c,ps);
-      if(!o.signo){const brillo=o.i%2===0?.86:1.13;c.fillStyle=`rgb(${Math.round((100+l*139)*brillo)},${Math.round((61+l*121)*brillo)},${Math.round((19+l*63)*brillo)})`;c.fill();c.lineWidth=.45;c.strokeStyle='#f9d98336';c.stroke();continue;}
+      const vista=unidad(resta(cam,o.centro)),media=unidad(suma(luz,vista)),brillo=Math.pow(Math.max(0,punto(o.n,media)),22);
+      if(!o.signo){
+        // Estriado fino con variación discreta; los biseles reflejan la luz,
+        // pero ninguna arista lleva un contorno blanco permanente.
+        const estria=o.banda===1?1+.055*Math.cos(o.i*Math.PI):1,tono=(.28+l*.59+brillo*.43)*estria;
+        c.fillStyle=`rgb(${Math.min(255,Math.round(224*tono))},${Math.min(255,Math.round(194*tono))},${Math.min(255,Math.round(126*tono))})`;c.fill();c.strokeStyle=c.fillStyle;c.lineWidth=.4;c.stroke();continue;
+      }
       const centro=proy(o.centro);textura(c,sello(o.signo>0?0:1),ps,centro);
-      c.save();ruta(c,ps);c.clip();const sombraCara=c.createLinearGradient(centro.x-radio*150,centro.y-radio*150,centro.x+radio*150,centro.y+radio*150);sombraCara.addColorStop(0,`rgba(255,246,196,${.04+l*.14})`);sombraCara.addColorStop(.42,'#fff9dc00');sombraCara.addColorStop(1,`rgba(47,21,2,${.06+(1-l)*.32})`);c.fillStyle=sombraCara;c.fillRect(0,0,W,H);
-      const media=unidad(suma(luz,unidad(resta(cam,o.centro)))),especular=Math.pow(Math.max(0,punto(o.n,media)),12);if(especular>.03){const reflejo=c.createLinearGradient(centro.x-95,centro.y-80,centro.x+95,centro.y+70);reflejo.addColorStop(0,'#fff7c900');reflejo.addColorStop(.4,`rgba(255,247,208,${especular*.22})`);reflejo.addColorStop(.56,'#fff7c900');reflejo.addColorStop(1,'#fff7c900');c.fillStyle=reflejo;c.fillRect(0,0,W,H);}c.restore();ruta(c,ps);c.lineWidth=1.25;c.strokeStyle='#ffe8a69e';c.stroke();
+      c.save();ruta(c,ps);c.clip();
+      c.fillStyle='rgba(27,22,16,'+(.12+(1-l)*.40)+')';c.fillRect(0,0,W,H);
+      // Una caja de luz amplia se refleja según la normal y el punto de vista.
+      // Su intensidad cae de forma continua cuando la moneda gira de canto.
+      const plano=resta(media,por(o.n,punto(media,o.n))),reflejo=proy(suma(o.centro,por(plano,radio*1.6))),tam=Math.max(12,...ps.map(p=>Math.hypot(p.x-centro.x,p.y-centro.y)*1.6));
+      const luzMetal=c.createRadialGradient(reflejo.x,reflejo.y,0,reflejo.x,reflejo.y,tam);
+      luzMetal.addColorStop(0,'rgba(255,247,216,'+(.08+brillo*.28)+')');luzMetal.addColorStop(.5,'rgba(255,239,201,'+(brillo*.08)+')');luzMetal.addColorStop(1,'#fff0d000');c.fillStyle=luzMetal;c.fillRect(0,0,W,H);c.restore();
     }
+
     const s=lienzos.get(canvas),ahora=Number(pose.t)||0;
     if(s?.impacto!=null){const edad=ahora-s.impacto;if(edad>=0&&edad<.38){for(let i=0;i<9;i++){const a=i*2.4,r=edad*(36+i*4),x=base.x+Math.cos(a)*r,y=base.y+Math.sin(a)*r*.35-26*edad*(1-edad/.38);c.globalAlpha=(1-edad/.38)*.7;c.fillStyle=i%3?'#dcb55f':'#fff0b3';c.fillRect(x,y,1.5,1.5);}c.globalAlpha=1;}}
     const borde=c.createLinearGradient(0,0,W,H);borde.addColorStop(0,'#cfa4674d');borde.addColorStop(.5,'#55412d10');borde.addColorStop(1,'#cfa46738');c.lineWidth=1;c.strokeStyle=borde;c.strokeRect(.5,.5,W-1,H-1);
