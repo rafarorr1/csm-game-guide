@@ -382,32 +382,26 @@ async function cinematicaFinal(winner, why, acciones){
   return true;
 }
 
-/* Volado compartido: la elección y el resultado usan exactamente la misma moneda.
-   Sólo rnd decide el turno; la animación nunca altera el resultado. */
-async function voladoDomo(nombreRival){
+/* Volado compartido. La cara superior de un lanzamiento físico decide el turno.
+   El anfitrión transmite esa trayectoria; el invitado nunca sortea otra moneda. */
+let voladoActual=null;
+function voladoPreparar(nombreRival,opts={}){
+  voladoActual?.cancelar();
+  window.CAOZ_MONEDA?.cancelar();
   if(!document.getElementById('voladoDomoCss')){
     const estilo=document.createElement('style');estilo.id='voladoDomoCss';
     estilo.textContent=`
-#ovPanel:has(.volado-domo){width:min(540px,calc(100vw - 28px));max-width:540px;padding:0;overflow:auto;border:1px solid #9e80504d;border-radius:22px;background:#100d18;box-shadow:0 32px 100px #000c,0 0 70px #9d6b2015}
+#ovPanel:has(.volado-domo){width:min(600px,calc(100vw - 28px));max-width:600px;max-height:calc(var(--vh,1vh)*100 - 28px);padding:0;overflow:hidden;border:1px solid #9e80504d;border-radius:22px;background:#100d18;box-shadow:0 32px 100px #000c,0 0 70px #9d6b2015}
 .volado-domo{position:relative;isolation:isolate;text-align:center;padding:30px 28px 24px;color:#f4e5c5;background:radial-gradient(ellipse at 50% 38%,#48304466,transparent 61%),linear-gradient(150deg,#21192a,#100d18 70%);overflow:hidden}
 .volado-domo::before{content:'';position:absolute;inset:9px;border:1px solid #b99b5526;border-radius:15px;pointer-events:none;z-index:-1}
 .volado-domo .vd-kicker{font:600 10px/1.4 var(--sans,sans-serif);letter-spacing:.32em;text-transform:uppercase;color:#b79b68}
 .volado-domo h3{font:500 clamp(28px,6vw,38px)/1.2 var(--serif,serif);letter-spacing:.025em;margin:9px 0;color:#f6e7c6}
 .volado-domo .vd-intro{font:13px/1.5 var(--sans,sans-serif);color:#b9afc4;margin:0;max-width:330px;margin-inline:auto}
 .volado-domo .volado{padding:0;gap:0}
-.vd-stage{position:relative;display:grid;place-items:center;width:100%;height:238px;margin:4px 0 0;isolation:isolate}
-.vd-stage::before{content:'';position:absolute;width:204px;height:204px;border:1px solid #c9a75b24;border-radius:50%;box-shadow:0 0 0 20px #c9a75b08,0 0 0 21px #c9a75b14;z-index:-1}
-.vd-stage::after{content:'';position:absolute;bottom:20px;width:100px;height:12px;border-radius:50%;background:#0008;filter:blur(7px);z-index:-1}
-.volado-domo #moneda{position:relative;display:grid;place-items:center;width:144px;height:144px;border-radius:50%;font-size:0;color:#51341a;border:3px solid #e7c67a;background:radial-gradient(circle at 35% 22%,#fff0b3 0%,#d4a955 31%,#b68435 58%,#edce83 79%,#a77428 100%);box-shadow:inset 0 0 0 4px #674319,inset 0 0 0 6px #f5d78b,inset 0 0 0 10px #9a6b2e88,0 6px 0 #64401d,0 9px 0 #342215,0 18px 30px #0009;animation:vd-flotar 4s ease-in-out infinite}
-.volado-domo #moneda::before{content:'';position:absolute;inset:14px;border:1px dashed #65441d9c;border-radius:50%;pointer-events:none}
-.vd-icon{width:64px;height:64px;fill:none;stroke:currentColor;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round;filter:drop-shadow(0 1px 0 #fff0b088)}
-.vd-sr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
-.volado-domo #moneda.girando{animation:vd-lanzar 1.5s cubic-bezier(.3,.05,.2,1) both}
+.vd-stage{position:relative;width:100%;height:clamp(170px,32vh,290px);margin:18px 0;flex-shrink:1;min-height:110px;overflow:hidden;border-radius:15px;border:1px solid #ad8c514d;background:#131918;box-shadow:inset 0 0 30px #0009,0 8px 25px #0003}
+.volado-domo #moneda{display:block;width:100%;height:100%;border:0;border-radius:0;background:transparent;box-shadow:none;animation:none}
 .volado-domo .lados{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:100%;max-width:360px}
-.volado-domo .lados .btn{display:flex;align-items:center;justify-content:center;gap:12px;min-height:67px;padding:12px 18px;border:1px solid #b69a6555;border-radius:12px;background:linear-gradient(#342a3d,#211a2b);color:#e6d4af;box-shadow:inset 0 1px 0 #ffffff09;transition:background .18s,border-color .18s,box-shadow .18s;cursor:pointer}
-.volado-domo .lados .vd-icon{width:30px;height:30px;stroke-width:2.3;color:#c9a66b;filter:none}
-.volado-domo .vd-choice{text-align:left;font:600 16px/1.2 var(--serif,serif);letter-spacing:.025em}
-.volado-domo .vd-choice small{display:block;font:10px/1.5 var(--sans,sans-serif);letter-spacing:.1em;text-transform:uppercase;color:#9d90aa;margin-top:3px}
+.volado-domo .lados .btn{display:flex;align-items:center;justify-content:center;text-align:center;font:600 16px/1.2 var(--serif,serif);letter-spacing:.025em;min-height:67px;padding:12px 18px;border:1px solid #b69a6555;border-radius:12px;background:linear-gradient(#342a3d,#211a2b);color:#e6d4af;box-shadow:inset 0 1px 0 #ffffff09;transition:background .18s,border-color .18s,box-shadow .18s;cursor:pointer}
 .volado-domo .lados .btn:hover:not(:disabled),.volado-domo .lados .btn:focus-visible{border-color:#e4c47a;background:#463348;outline:2px solid #e4c47a;outline-offset:3px}
 .volado-domo .lados .btn[aria-pressed=true]{border-color:#e4c47a;background:linear-gradient(#514033,#30231f);box-shadow:0 0 22px #c7953520}
 .volado-domo .lados .btn:disabled{cursor:default;opacity:.4}
@@ -416,41 +410,74 @@ async function voladoDomo(nombreRival){
 .volado-domo .dice b{color:#f2d590;font-weight:600}
 .volado-domo .vd-result{display:block;margin-top:4px;font:500 23px/1.2 var(--serif,serif);color:#f7e8c7}
 .volado-domo .vd-foot{font:9px/1.5 var(--sans,sans-serif);letter-spacing:.22em;text-transform:uppercase;color:#786d87;border-top:1px solid #b69a651c;padding-top:15px;margin:0}
-@keyframes vd-flotar{50%{translate:0 -7px}}
-@keyframes vd-lanzar{0%{transform:translateY(0) scaleX(1) rotate(-8deg)}18%{transform:translateY(-32px) scaleX(.08) rotate(16deg)}35%{transform:translateY(-46px) scaleX(1) rotate(-12deg)}50%{transform:translateY(-40px) scaleX(.06) rotate(14deg)}65%{transform:translateY(-24px) scaleX(1) rotate(-9deg)}80%{transform:translateY(-10px) scaleX(.08) rotate(7deg)}92%{transform:translateY(3px) scaleX(1) rotate(-3deg)}100%{transform:translateY(0) scaleX(1) rotate(0)}}
-@media(max-height:640px){.volado-domo{padding:20px}.vd-stage{height:180px}.vd-stage::before{width:164px;height:164px}.volado-domo #moneda{width:118px;height:118px}.volado-domo .dice{margin-top:12px}.volado-domo .vd-foot{padding-top:10px}}
+@media(max-height:700px){.volado-domo{padding:18px}.volado-domo .vd-intro{font-size:12px}.vd-stage{height:clamp(120px,29vh,210px);margin:12px 0}.volado-domo .dice{margin-top:10px;min-height:46px}.volado-domo .vd-foot{padding-top:8px}.volado-domo .lados .btn{min-height:56px;padding:8px 12px}}
+@media(max-height:470px){.volado-domo{padding:10px 18px}.volado-domo h3{font-size:25px;margin:3px 0}.volado-domo .vd-kicker,.volado-domo .vd-intro,.volado-domo .vd-foot{display:none}.vd-stage{height:clamp(100px,33vh,145px);margin:8px 0}.volado-domo .dice{min-height:38px;margin-top:7px}.volado-domo .vd-result{font-size:19px}.volado-domo .lados .btn{min-height:46px;padding:6px 12px}}
 @media(prefers-reduced-motion:reduce){.volado-domo #moneda,.volado-domo #moneda.girando{animation:none}.volado-domo *{transition:none}}
 `;
     document.head.appendChild(estilo);
   }
-  const icono=lado=>`<span class="vd-sr">${lado==='cara'?'👑':'⚔️'}</span><svg class="vd-icon" viewBox="0 0 64 64" aria-hidden="true">${lado==='cara'?'<path d="M12 20l10 10 10-17 10 17 10-10-6 27H18z"/><path d="M18 40h28M20 51h24"/><circle cx="12" cy="17" r="2"/><circle cx="32" cy="10" r="2"/><circle cx="52" cy="17" r="2"/>':'<path d="M14 9l9 5 24 28-5 5-28-24zM9 47l11-11M12 44l-5 5 8 8 5-5M50 9l-9 5-24 28 5 5 28-24zM44 36l11 11M44 52l5 5 8-8-5-5"/>'}</svg>`;
   const p=document.getElementById('ovPanel');
-  p.innerHTML=`<section class="volado-domo" aria-labelledby="vd-title"><div class="vd-kicker">El ritual de apertura</div><h3 id="vd-title">Cara o cruz</h3><p class="vd-intro">Elige el sello de tu suerte.<br>Quien gane dará el primer paso en el Domo.</p><div class="volado"><div class="vd-stage"><div class="moneda" id="moneda" role="img" aria-label="Moneda: cara">${icono('cara')}</div></div><div class="lados"><button class="btn" id="ladoCara" aria-pressed="false">${icono('cara')}<span class="vd-choice">Cara<small>La corona</small></span></button><button class="btn" id="ladoCruz" aria-pressed="false">${icono('cruz')}<span class="vd-choice">Cruz<small>Las espadas</small></span></button></div><div class="dice" id="voladoTxt" role="status" aria-live="polite">La moneda espera tu elección.</div></div><p class="vd-foot">Dos sellos · Una oportunidad</p></section>`;
-  const panel=p.firstElementChild,moneda=p.querySelector('#moneda'),texto=p.querySelector('#voladoTxt');
-  openOv();
+  p.innerHTML=`<section class="volado-domo" aria-labelledby="vd-title"><div class="vd-kicker">El ritual de apertura</div><h3 id="vd-title">Cara o cruz</h3><p class="vd-intro">Elige un sello para lanzar la moneda.<br>La cara que quede arriba decide quién empieza.</p><div class="volado"><div class="vd-stage"><canvas class="moneda" id="moneda" role="img" aria-label="Moneda: cara">Moneda con Machete y espadas.</canvas></div><div class="lados"><button class="btn" id="ladoCara" aria-pressed="false">Cara</button><button class="btn" id="ladoCruz" aria-pressed="false">Cruz</button></div><div class="dice" id="voladoTxt" role="status" aria-live="polite">La moneda espera tu elección.</div></div><p class="vd-foot">La suerte cae sobre la mesa</p></section>`;
+  const panel=p.firstElementChild,canvas=p.querySelector('#moneda'),texto=p.querySelector('#voladoTxt');
+  const partida=typeof PARTIDA_N!=='undefined'?PARTIDA_N:null,pantalla=document.querySelector('.screen.on');
+  let resolver=null,vigia=null;
+  const ui={panel,canvas,texto,
+    vigente:()=>voladoActual===ui&&p.contains(panel)&&document.querySelector('.screen.on')===pantalla&&document.getElementById('ov').classList.contains('on')&&(partida===null||partida===PARTIDA_N)&&(!opts.vigente||opts.vigente()),
+    cancelar:()=>{clearInterval(vigia);resolver?.(null);resolver=null;if(voladoActual===ui){voladoActual=null;window.CAOZ_MONEDA?.cancelar();}},
+    cerrar:()=>{const visible=ui.vigente();ui.cancelar();if(visible)cerrarOv();}
+  };
+  voladoActual=ui;openOv();
+  window.CAOZ_MONEDA?.pintar(canvas,{p:[0,.0325,0],q:[0,0,0,1],t:0});
   const botones=[p.querySelector('#ladoCara'),p.querySelector('#ladoCruz')];
-  const eleccion=await new Promise(resolve=>{
-    botones.forEach((boton,i)=>boton.onclick=()=>{
-      botones.forEach(b=>b.disabled=true);boton.setAttribute('aria-pressed','true');
-      resolve(i===0?'cara':'cruz');
+  if(opts.elegir===false){
+    p.querySelector('.lados').hidden=true;p.querySelector('.lados').style.display='none';
+    p.querySelector('.vd-intro').textContent='La misma moneda, el mismo destino para los dos jugadores.';
+    ui.eleccion=Promise.resolve(null);texto.textContent='La moneda está en el aire…';
+  }else{
+    ui.eleccion=new Promise(resolve=>{
+      resolver=resolve;
+      botones.forEach((boton,i)=>boton.onclick=()=>{
+        if(!ui.vigente())return;
+        botones.forEach(b=>b.disabled=true);boton.setAttribute('aria-pressed','true');
+        clearInterval(vigia);resolver=null;resolve(i===0?'cara':'cruz');
+      });
+      vigia=setInterval(()=>{if(!ui.vigente())ui.cancelar();},100);
+      botones[0].focus({preventScroll:true});
     });
-    botones[0].focus({preventScroll:true});
-  });
-  texto.textContent='Elegiste '+eleccion.toUpperCase()+'. La moneda está en el aire…';
-  const salio=rnd(2)===0?'cara':'cruz';
-  const reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  moneda.classList.add('girando');window.CAOZ_AUDIO?.play('coin_flip');
-  let cara=true;
-  const alterna=reducido?null:setInterval(()=>{cara=!cara;moneda.innerHTML=icono(cara?'cara':'cruz');},180);
-  try{await nap(reducido?350:1500);}finally{if(alterna!==null)clearInterval(alterna);}
-  moneda.classList.remove('girando');window.CAOZ_AUDIO?.play('coin_land');moneda.style.animation='none';
-  moneda.innerHTML=icono(salio);moneda.setAttribute('aria-label','Moneda: '+salio);
-  const ganas=salio===eleccion;
-  texto.innerHTML=`Salió <b>${salio.toUpperCase()}</b><span class="vd-result"></span>`;
-  texto.querySelector('.vd-result').textContent=ganas?'empiezas tú':'empieza '+nombreRival;
-  await nap(1500);
-  if(p.contains(panel))cerrarOv();
-  return ganas?ME:FOE;
+  }
+  return ui;
+}
+function voladoSimular(){
+  const F=window.CAOZ_MONEDA;
+  if(!F)return null;
+  // Si una tirada queda de canto, se vuelve a lanzar: jamás se impone una cara.
+  for(let intento=0;intento<4;intento++){
+    const bytes=new Uint32Array(1);
+    if(globalThis.crypto?.getRandomValues)crypto.getRandomValues(bytes);else bytes[0]=Math.floor(Math.random()*4294967296);
+    const tirada=F.simular(bytes[0]);if(tirada.asentado)return tirada;
+  }
+  return null;
+}
+async function voladoPresentar(ui,tirada,nombre,ganas){
+  const rapido=!!(typeof G!=='undefined'&&G&&(G.fast||G.auto||G.silent));
+  const termino=await window.CAOZ_MONEDA.mostrar(ui.canvas,tirada,{vigente:ui.vigente,rapido});
+  if(!termino||!ui.vigente())return false;
+  const salio=tirada.valor===0?'cara':'cruz';
+  ui.canvas.setAttribute('aria-label','Moneda: '+salio);
+  ui.canvas.dataset.monedaValor=String(tirada.valor);ui.canvas.dataset.monedaAsentado=String(tirada.asentado);
+  ui.texto.innerHTML=`Salió <b>${salio.toUpperCase()}</b><span class="vd-result"></span>`;
+  ui.texto.querySelector('.vd-result').textContent=ganas===true?'empiezas tú':'empieza '+nombre;
+  await nap(1500);return ui.vigente();
+}
+async function voladoDomo(nombreRival){
+  const ui=voladoPreparar(nombreRival),eleccion=await ui.eleccion;
+  if(eleccion===null||!ui.vigente()){ui.cancelar();return null;}
+  ui.texto.textContent='Elegiste '+eleccion.toUpperCase()+'. La moneda está en el aire…';
+  const tirada=voladoSimular();
+  if(!tirada){ui.cerrar();toast('La moneda no pudo asentarse. Vuelve a iniciar el duelo.');return null;}
+  const ganas=(tirada.valor===0?'cara':'cruz')===eleccion;
+  if(!await voladoPresentar(ui,tirada,nombreRival,ganas)){ui.cancelar();return null;}
+  ui.cerrar();return ganas?ME:FOE;
 }
 
 /* Nube de Dagas: indicador del dueño y aviso previo, compartidos por ambas pantallas. */
@@ -530,11 +557,18 @@ async function iniciarOnlineHost(a,b){
     onlinePreparar(a,b);netSend({...NET.welcome});
     await cortinillaVS(a,b,{nombres:[NET.miNombre||'Anfitrión',NET.suNombre||'Invitado']});
     if(!await onlineEsperarAcuse(id,'rivalListo',NET.welcome))return;
-    const eleccion=await ask(ME,'Cara o cruz — elige tu lado',['Cara','Cruz']);
-    if(!NET.on||NET.partidaId!==id)return;
-    const resultado=rnd(2),first=resultado===eleccion?ME:FOE;
-    const moneda={t:'coin',partida:id,resultado,first};
-    netSend({...moneda});await onlineMostrarMoneda(resultado,first===ME?NET.miNombre:NET.suNombre);
+    const ui=voladoPreparar(NET.suNombre,{vigente:()=>NET.on&&NET.partidaId===id});
+    const eleccion=await ui.eleccion;
+    if(eleccion===null||!ui.vigente()){ui.cancelar();if(NET.on&&NET.partidaId===id)onlineEspera('El volado se canceló. Vuelve a entrar en la sala.',true);return;}
+    const tirada=voladoSimular();
+    if(!tirada){ui.cerrar();onlineEspera('La moneda no pudo asentarse. Vuelve a entrar en la sala.',true);return;}
+    const fisica=window.CAOZ_MONEDA.empaquetar(tirada),compartida=window.CAOZ_MONEDA.desempaquetar(fisica);
+    if(!compartida){ui.cerrar();onlineEspera('No se pudo preparar el volado compartido. Vuelve a entrar en la sala.',true);return;}
+    const resultado=tirada.valor,first=resultado===(eleccion==='cara'?0:1)?ME:FOE;
+    const moneda={t:'coin',partida:id,resultado,first,eleccion:eleccion==='cara'?0:1,fisica};
+    ui.texto.textContent='Elegiste '+eleccion.toUpperCase()+'. La moneda está en el aire…';
+    netSend({...moneda});
+    if(!await onlineMostrarMoneda(resultado,first===ME?NET.miNombre:NET.suNombre,compartida,ui)){if(NET.on&&NET.partidaId===id)onlineEspera('El volado se canceló. Vuelve a entrar en la sala.',true);return;}
     if(!await onlineEsperarAcuse(id,'monedaLista',moneda))return;
     cerrarOv();
     await setupMatch(a,b,{online:true,first});
@@ -551,27 +585,40 @@ async function iniciarOnlineGuest(m){
 }
 async function onlineMonedaRecibe(m){
   if(m.partida!==NET.partidaId||!NET.vsListo)return;
+  if(![0,1].includes(m.resultado)||![0,1].includes(m.first))return;
+  let tirada=null;
+  if(m.fisica!==undefined){
+    tirada=window.CAOZ_MONEDA?.desempaquetar(m.fisica);
+    if(!tirada||tirada.valor!==m.resultado)return;
+    if(m.eleccion!==undefined&&(![0,1].includes(m.eleccion)||m.first!==(m.resultado===m.eleccion?0:1)))return;
+  }
   if(NET.monedaRecibida===m.partida){if(NET.monedaTerminada)netSend({t:'coinAck',partida:m.partida});return;}
   NET.monedaRecibida=m.partida;NET.monedaTerminada=false;
-  await onlineMostrarMoneda(m.resultado,m.first===0?NET.suNombre:NET.miNombre);
+  if(!await onlineMostrarMoneda(m.resultado,m.first===0?NET.suNombre:NET.miNombre,tirada)){
+    // Cerrar la animación no consume el mensaje: una retransmisión válida
+    // debe poder mostrar el lanzamiento y completar el acuse.
+    if(NET.on&&NET.partidaId===m.partida)NET.monedaRecibida=null;
+    return;
+  }
   if(!NET.on||NET.partidaId!==m.partida)return;
   NET.monedaTerminada=true;cerrarOv();netSend({t:'coinAck',partida:m.partida});
 }
-async function onlineMostrarMoneda(resultado,nombre){
-  const panel=document.getElementById('ovPanel');panel.innerHTML='<div class="volado"><h3>Cara o cruz</h3><div class="onlineMoneda" aria-label="Moneda girando">✦</div><p class="onlineResultado">La moneda está en el aire…</p></div>';
-  openOv();const moneda=panel.querySelector('.onlineMoneda'),texto=panel.querySelector('.onlineResultado');
-  window.CAOZ_AUDIO?.play('coin_flip');await sleep(1400);window.CAOZ_AUDIO?.play('coin_land');moneda.classList.add('quieta');moneda.textContent=resultado===0?'☀':'☾';
-  moneda.setAttribute('aria-label',resultado===0?'Cara':'Cruz');
-  texto.textContent=(resultado===0?'Cara':'Cruz')+' — empieza '+(nombre||'tu rival');await sleep(1800);
-}
-{
-  const css=document.createElement('style');css.textContent=`
-  .onlineMoneda{width:110px;height:110px;display:grid;place-items:center;border:6px double #e5c37a;border-radius:50%;background:radial-gradient(circle at 35% 25%,#f9df9b,#bc8132 65%,#744719);color:#402009;font-size:55px;box-shadow:0 8px 28px #0008;animation:monedaOnline .3s linear infinite}
-  .onlineMoneda.quieta{animation:none}
-  .onlineResultado{text-align:center}
-  @keyframes monedaOnline{50%{scale:.15 1;rotate:12deg}}
-  @media(prefers-reduced-motion:reduce){.onlineMoneda{animation:none}}
-  `;document.head.appendChild(css);
+async function onlineMostrarMoneda(resultado,nombre,fisica,existente){
+  const id=NET.partidaId,ui=existente||voladoPreparar(nombre,{elegir:false,vigente:()=>NET.on&&NET.partidaId===id});
+  let termino=false;
+  if(fisica){
+    termino=await voladoPresentar(ui,fisica,nombre||'tu rival');
+  }else{
+    // Compatibilidad con anfitriones anteriores: se muestra su resultado sin
+    // inventar una segunda simulación que podría terminar en la cara opuesta.
+    window.CAOZ_MONEDA.pintar(ui.canvas,{p:[0,.0325,0],q:resultado===0?[0,0,0,1]:[1,0,0,0],t:0});
+    ui.canvas.setAttribute('aria-label','Moneda: '+(resultado===0?'cara':'cruz'));
+    ui.canvas.dataset.monedaValor=String(resultado);
+    ui.texto.textContent=(resultado===0?'Cara':'Cruz')+' — empieza '+(nombre||'tu rival');
+    await nap(1500);termino=ui.vigente();
+  }
+  if(!termino)ui.cancelar();
+  return termino;
 }
 function onlineAyudaInstalada(panel){
   if(!ONL.sala||navigator.standalone||matchMedia('(display-mode:standalone)').matches)return;
