@@ -1,5 +1,12 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 240 · Marco dorado sencillo
+
+- Un solo borde fino sustituye los perfiles dobles dorados. La ilustración de
+  mano y campo llega al borde interior, conservando el brillo foil y los
+  indicadores de combate. El estudio comparte el mismo diseño.
+
+
 ### Sin numerar · build 239 · Compartir encuadres entre pantallas
 
 - La ficha ampliada móvil hereda el ajuste de escritorio si no tiene uno propio.

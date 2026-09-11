@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-10 · build 239 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-10 · build 240 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,10 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build240 simplifica el marco dorado en acabados.css: un borde de1.5px, sin
+perfiles interiores en carta ni ilustración. Conserva reflejo e indicadores.
+
 
 Build239 corrige la ficha móvil de Tal: los ajustes publicados sólo tenían claves
  desktop_ y móvil volvía a la base y91. CAOZ_VISTAS.resolver comparte la misma
