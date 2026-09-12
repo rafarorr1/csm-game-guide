@@ -10,9 +10,13 @@ números) → el código.
 
 ---
 
-## Sobres 3D — Sello del Domo integrado para beta 251
+## Beta 251 — Sello del Domo publicado y verificado
 
-Rama `feature/sobres-apertura-3d`, desde `develop` (producción/beta 250).
+Integrado mediante PR #8 en `develop`; fuente `09dd57cd5ac56c8470635c5da179c8b4db007094`,
+etiqueta inmutable `build-251`. Artefactos `gh-pages:f61a261` y `beta:3bcaf3b`.
+Los 231 archivos del paquete coinciden con la fuente validada; árbol beta
+`6dd86ff979d80dab39bbd485d0d9b332ad7f690f`. Acceso público:
+https://beta.caoz-tcg.pages.dev/?b=251 y `/movil.html?b=251`.
 Revisión en https://aislados.caoz-tcg.pages.dev/sobres/ . El usuario eligió
 Sello del Domo. Se retira la fila inferior de cartas: cada toque revela una,
 la quinta espera indefinidamente un toque adicional antes de mostrar las cinco juntas,
@@ -37,7 +41,11 @@ incluidos seis tutoriales y banco de 2880 partidas sin errores. El recorrido
 real de Colección pasó en 320×568, 390×844 y 1440×900 sin scroll ni recursos
 fallidos. Se detectaron por sabotaje tanto el refresco tardío del arte como
 el bloqueo del toque móvil después de girar la funda.
-Publicar desde develop con `publicar.sh --beta --completo`.
+`publicar.sh --beta --completo` terminó con 81 suites verdes y verificó
+los archivos servidos en GitHub Pages y Cloudflare. El recorrido público
+con un navegador limpio pasó en 320×568, 390×844 y 1440×900: giro y toque
+inmediato, cinco cartas precargadas, espera de la quinta, resumen y regreso,
+sin errores JS ni recursos fallidos.
 Producción y main permanecen en build 250.
 
 ## Producción 250 — promoción autorizada y verificada (2026-09-12)
