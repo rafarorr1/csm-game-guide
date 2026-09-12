@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 246 · Botones de taberna
+
+- Campaña, Jugar contra el Domo, Online y Extras adoptan madera, bordes de
+  latón, remaches y la tipografía IM FELL English SC de la propuesta elegida.
+- Relieve al pasar el cursor y hundimiento al pulsar; foco visible y movimiento
+  reducido. La fuente se incluye bajo SIL OFL para funcionar también sin red.
+- Mismo orden, tamaños y retratos de Campaña. Esta primera integración sólo
+  cambia esos cuatro botones; conserva fondo, logo, menús secundarios y combate.
+
 ### Sin numerar · build 245 · Moneda acuñada
 
 - Machete y las espadas se forman en relieve sobre el mismo oro satinado,

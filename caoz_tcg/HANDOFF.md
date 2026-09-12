@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 245 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 246 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,14 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build246 adopta sólo los cuatro botones principales de Mesa de taberna, en
+polish-aaa.js compartido. Selectores explícitos por ID; veta y remaches mediante
+fondos para conservar los pseudos del barrido/fogonazo y los retratos de Campaña.
+Fuente IM FELL English SC incrustada con su licencia SIL OFL (Google Fonts),
+sin solicitudes externas ni nuevos archivos que cachear. Sin cambios de motor,
+fondos, distribución o botones secundarios. Producción245; preparar beta246,
+conservar main intacta.
 
 Build245 reemplaza el dibujo plano de la moneda por dos superficies acuñadas,
 con Machete y las espadas en el mismo oro satinado (art/moneda-cara-v245.webp y
