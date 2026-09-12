@@ -360,19 +360,21 @@ vez). Está en `.gitignore`.
 
 Todo esto existe porque el motor es un solo archivo donde todo se toca con todo:
 arreglar el tutorial rompía el fin de partida, arreglar la IA rompía el ataque.
-La regla de fondo es **no partir el archivo, poner la red debajo**.
+La regla de fondo es conservar las reglas y sus pruebas. La separación en módulos se hace
+gradualmente, por sección, usando componentes reales también en los prototipos.
 
-### Nunca directo en main
+### Una rama y una vista aislada por tarea
+
+`main` refleja producción; `develop` integra lo aprobado para beta. Desde la raíz:
 
 ```bash
-git checkout -b feat/lo-que-sea      # una rama por cosa
-# ... trabajas, commits pequeños ...
-./publicar.sh --solo-pruebas         # ¿sigue todo en verde?
-git checkout main && git merge feat/lo-que-sea
+python3 dev/nueva_rama.py ajustar-coleccion
 ```
 
-Main tiene que quedar siempre jugable. Si algo sale mal, `git checkout main`
-te devuelve a lo último que funcionaba.
+La herramienta crea un checkout separado desde `origin/develop`, sin mover tu trabajo
+actual. Se presenta primero la sección aislada; tras su aprobación se integra y valida
+la beta. Sólo una versión autorizada pasa a `main` y producción. Ver
+[`dev/README.md`](../dev/README.md) para los comandos y la transición inicial.
 
 ### Las pruebas
 
@@ -404,9 +406,9 @@ vez de mirar si la carta salió de la mano.
 ### Publicar
 
 ```bash
-./publicar.sh                 # pruebas rápidas y sube
-./publicar.sh --completo      # con los tutoriales (~2,5 min)
-./publicar.sh --beta          # a /tcg-beta/, para probar en el móvil
+./publicar.sh --solo-pruebas --completo  # cualquier rama; no publica
+./publicar.sh --beta --completo          # sólo develop; beta web y móvil
+./publicar.sh --produccion --completo    # sólo main; versión autorizada
 ```
 
 Corre las pruebas en el Chrome que ya tienes, sin ventana, y **si algo está en
@@ -415,7 +417,7 @@ la regla de `Animation.finished`, que no haya cambios sin commitear) para fallar
 en un segundo en vez de en cinco minutos, y al final verifica que la web sirve
 lo nuevo de verdad.
 
-Detalle que importa: sube **dos archivos por su nombre**, nunca `git add -A`.
+Detalle que importa: copia el paquete **por archivos enumerados**, nunca `git add -A`.
 En la rama `gh-pages` vive también la PWA de Warhammer, y un add general se la
 llevaría por delante.
 

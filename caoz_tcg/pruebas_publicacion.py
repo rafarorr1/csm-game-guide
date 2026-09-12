@@ -9,8 +9,184 @@ import tempfile
 import unittest
 import os
 import re
+import shutil
 from pathlib import Path
 from beta_cloudflare import publicar
+from verificar_release import ARCHIVOS_PUBLICADOS, archivos_publicables, verificar_release
+
+
+class PublicadorSeguro(unittest.TestCase):
+    def git(self, *args):
+        return subprocess.check_output(['git', '-C', str(self.repo), *args],
+                                       text=True, stderr=subprocess.PIPE).strip()
+
+    def setUp(self):
+        self.temporal = tempfile.TemporaryDirectory()
+        self.addCleanup(self.temporal.cleanup)
+        self.repo = Path(self.temporal.name) / 'fuente'
+        self.fuente = self.repo / 'caoz_tcg'
+        self.fuente.mkdir(parents=True)
+        self.destino = Path(self.temporal.name) / 'pages' / 'tcg'
+        for nombre in ARCHIVOS_PUBLICADOS:
+            archivo = self.fuente / nombre
+            archivo.parent.mkdir(parents=True, exist_ok=True)
+            archivo.write_text('archivo de prueba: ' + nombre)
+        (self.fuente / 'index.html').write_text('const BUILD = {n:249, fecha:"prueba"};')
+        for nombre in ['art/carta.webp', 'art/catalogo.json', 'audio/hover.wav']:
+            archivo = self.fuente / nombre
+            archivo.parent.mkdir(exist_ok=True)
+            archivo.write_bytes(b'contenido original')
+        # Se ejecuta el prefijo real: no hay una opción pública para saltarse
+        # las pruebas ni se arranca Chrome dentro de estas pruebas de guardas.
+        script = Path(__file__).with_name('publicar.sh').read_text()
+        prefijo = script[:script.index('paso "1/4')]
+        self.prefijo = self.fuente / 'publicar.sh'
+        self.prefijo.write_text(prefijo + '\nprintf "VALIDADO:%s\\n" "$DESTINO"\n')
+        self.git('init', '-q', '-b', 'main')
+        self.git('config', 'user.email', 'prueba@example.invalid')
+        self.git('config', 'user.name', 'Pruebas del Domo')
+        self.git('add', 'caoz_tcg')
+        self.git('commit', '-qm', 'Build249 con un solo commit')
+
+    def ejecutar(self, *args, entrada=None):
+        if entrada is None:
+            comando = ['bash', str(self.prefijo), *args]
+        else:
+            comando = ['bash', '-s', '--', *args]
+        return subprocess.run(comando, input=entrada, text=True, capture_output=True,
+                              cwd=self.fuente, timeout=10)
+
+    def copiar_release(self):
+        shutil.copytree(self.fuente, self.destino)
+
+    def test_exige_destino_explicito_y_rechaza_ambiguedad(self):
+        for args in [[], ['--visible'], ['--completo'], ['--beta', '--produccion'],
+                     ['--produccion', '--beta'], ['--solo-pruebas', '--beta', '--produccion']]:
+            with self.subTest(args=args):
+                resultado = self.ejecutar(*args)
+                self.assertEqual(resultado.returncode, 2, resultado.stdout + resultado.stderr)
+                self.assertNotIn('VALIDADO:', resultado.stdout)
+
+    def test_cada_destino_solo_desde_su_rama(self):
+        for rama in ['main', 'develop', 'feature/coleccion']:
+            if rama != 'main':
+                self.git('checkout', '-qb', rama)
+            for opcion, permitida in [('--produccion', 'main'), ('--beta', 'develop')]:
+                with self.subTest(rama=rama, opcion=opcion):
+                    resultado = self.ejecutar(opcion)
+                    self.assertEqual(resultado.returncode, 0 if rama == permitida else 1,
+                                     resultado.stdout + resultado.stderr)
+                    self.assertEqual('VALIDADO:' in resultado.stdout, rama == permitida)
+        self.git('checkout', '--detach', '-q')
+        for opcion in ['--beta', '--produccion']:
+            resultado = self.ejecutar(opcion)
+            self.assertEqual(resultado.returncode, 1)
+            self.assertIn('HEAD separado', resultado.stdout)
+
+    def test_solo_pruebas_admite_ramas_temporales_y_cambios_locales(self):
+        self.git('checkout', '-qb', 'feature/prueba')
+        (self.fuente / 'motor.js').write_text('cambio local sin commit')
+        for args in [['--solo-pruebas'], ['--solo-pruebas', '--visible'],
+                     ['--beta', '--solo-pruebas'], ['--solo-pruebas', '--produccion']]:
+            self.assertEqual(self.ejecutar(*args).returncode, 0, args)
+        self.git('checkout', 'main')
+        resultado = self.ejecutar('--produccion')
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn('sin guardar', resultado.stdout)
+
+    def test_revalida_commit_rama_y_archivos_despues_de_las_pruebas(self):
+        # Simula lo que puede cambiar durante Chrome sin ejecutar la copia.
+        prefijo = self.prefijo.read_text().split('printf "VALIDADO:', 1)[0]
+        for mutacion, esperado in [
+            ('git -C "$REPO" checkout -qb feature/durante-pruebas', 'Sólo se publica'),
+            ('git -C "$REPO" commit --allow-empty -qm "Otro commit"', 'commit cambió'),
+            ('echo cambio >> "$AQUI/motor.js"', 'sin guardar')]:
+            with self.subTest(mutacion=mutacion):
+                script = prefijo + '\n' + mutacion + '\ncomprobar_fuente_publicacion || exit 1\n'
+                # El prefijo determina AQUI con BASH_SOURCE: debe vivir junto
+                # al juego, ya guardado antes de iniciar las guardas.
+                self.prefijo.write_text(script)
+                self.git('add', 'caoz_tcg/publicar.sh')
+                self.git('commit', '-qm', 'Preparar simulación de concurrencia')
+                resultado = self.ejecutar('--produccion')
+                self.assertEqual(resultado.returncode, 1)
+                self.assertIn(esperado, resultado.stdout)
+                self.git('checkout', '--', 'caoz_tcg/motor.js')
+                self.git('checkout', '-q', 'main')
+        script = Path(__file__).with_name('publicar.sh').read_text()
+        self.assertGreaterEqual(script.count('comprobar_fuente_publicacion || exit 1'), 2)
+
+    def test_documentacion_y_merges_no_obligan_subir_build(self):
+        self.copiar_release()
+        (self.fuente / 'README.md').write_text('Nueva documentación')
+        (self.fuente / 'pruebas_locales.py').write_text('Prueba local no publicada')
+        self.git('add', 'caoz_tcg/README.md', 'caoz_tcg/pruebas_locales.py')
+        self.git('commit', '-qm', 'Documentar sin cambiar el juego')
+        self.git('checkout', '-qb', 'feature/documentacion')
+        (self.repo / 'flujo.md').write_text('Flujo de desarrollo')
+        self.git('add', 'flujo.md')
+        self.git('commit', '-qm', 'Documentación del flujo')
+        self.git('checkout', '-q', 'main')
+        self.git('merge', '--no-ff', '-qm', 'Integrar documentación', 'feature/documentacion')
+        self.assertNotEqual(self.git('rev-list', '--count', 'HEAD', '--', 'caoz_tcg/'), '249')
+        self.assertEqual(verificar_release(self.fuente, self.destino)['anterior'], 249)
+        script = Path(__file__).with_name('publicar.sh').read_text()
+        self.assertNotIn('git rev-list --count', script)
+
+    def test_version_monotona_e_inmutable_incluye_arte_audio_y_estudios(self):
+        self.copiar_release()
+        originales = {f: (self.destino / f).read_bytes() for f in archivos_publicables(self.fuente)}
+        for archivo in ['motor.js', 'movil.html', 'sw.js', 'tests.js', 'estudio.js',
+                        '_worker.js', 'art/carta.webp', 'art/catalogo.json', 'audio/hover.wav']:
+            with self.subTest(archivo=archivo):
+                (self.fuente / archivo).write_bytes(b'contenido distinto')
+                with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                    verificar_release(self.fuente, self.destino)
+                (self.fuente / archivo).write_bytes(originales[archivo])
+        (self.fuente / 'index.html').write_text('const BUILD = {n:248};')
+        with self.assertRaisesRegex(ValueError, 'retroceder'):
+            verificar_release(self.fuente, self.destino)
+        (self.fuente / 'index.html').write_text('const BUILD = {n:250};')
+        self.assertEqual(verificar_release(self.fuente, self.destino)['build'], 250)
+        for archivo, contenido in originales.items():
+            self.assertEqual((self.destino / archivo).read_bytes(), contenido,
+                             'Comprobar nunca debe modificar el destino: ' + archivo)
+
+    def test_misma_build_rechaza_assets_agregados_y_retirados(self):
+        self.copiar_release()
+        nuevo = self.fuente / 'art/nueva.webp'
+        nuevo.write_bytes('nueva ilustración'.encode())
+        with self.assertRaisesRegex(ValueError, 'otros bytes'):
+            verificar_release(self.fuente, self.destino)
+        nuevo.unlink()
+        (self.fuente / 'art/carta.webp').unlink()
+        with self.assertRaisesRegex(ValueError, 'otros bytes'):
+            verificar_release(self.fuente, self.destino)
+
+    def test_no_admite_build_invalida_o_destino_sin_identificar(self):
+        self.assertIsNone(verificar_release(self.fuente, self.destino)['anterior'])
+        for invalida in ['sin BUILD', 'const BUILD = {n:0};', 'const BUILD = {n:-1};',
+                         'const BUILD = {n:249.5};', 'const BUILD = {n:249+1};',
+                         'const BUILD = {n:249}; const BUILD = {n:250};']:
+            with self.subTest(invalida=invalida):
+                (self.fuente / 'index.html').write_text(invalida)
+                with self.assertRaises(ValueError):
+                    verificar_release(self.fuente, self.destino)
+        (self.fuente / 'index.html').write_text('const BUILD = {n:249};')
+        self.destino.mkdir(parents=True)
+        (self.destino / 'motor.js').write_text('destino incompleto')
+        with self.assertRaisesRegex(ValueError, 'no una build identificable'):
+            verificar_release(self.fuente, self.destino)
+        (self.destino / 'index.html').write_text('sin BUILD')
+        with self.assertRaisesRegex(ValueError, 'BUILD inválida'):
+            verificar_release(self.fuente, self.destino)
+
+    def test_paquete_incompleto_no_se_publica_ni_con_nueva_build(self):
+        self.copiar_release()
+        (self.fuente / 'index.html').write_text('const BUILD = {n:250};')
+        (self.fuente / 'final.js').unlink()
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos publicables: final.js'):
+            verificar_release(self.fuente, self.destino)
 
 
 class BetaCloudflare(unittest.TestCase):
@@ -103,6 +279,10 @@ class BetaCloudflare(unittest.TestCase):
             dependencias.update(re.findall(r'(?:src|href)="([^"?]+\.(?:js|css))(?:\?[^\"]*)?"',
                                            (fuente / panel).read_text()))
         for destino in ['tcg', 'tcg-beta']:
+            (self.repo / destino / 'index.html').write_text('const BUILD = {n:1};')
+        self.git('commit', '-qam', 'Destinos anteriores con build identificable')
+        self.git('push', '-q', 'origin', 'gh-pages')
+        for destino in ['tcg', 'tcg-beta']:
             with self.subTest(destino=destino):
                 otro = 'tcg-beta' if destino == 'tcg' else 'tcg'
                 intacto = self.git('rev-parse', 'HEAD:' + otro)
@@ -115,9 +295,62 @@ class BetaCloudflare(unittest.TestCase):
                                                           'show', 'HEAD:' + destino + '/' + archivo],
                                                          stderr=subprocess.PIPE)
                     self.assertEqual(publicado, (fuente / archivo).read_bytes(), archivo)
+                # La guarda debe cubrir exactamente todo lo que copia el
+                # publicador; añadir un módulo exige incluirlo en la guarda.
+                publicados = self.git('ls-tree', '-r', '--name-only', 'HEAD', '--', destino).splitlines()
+                self.assertEqual({f.removeprefix(destino + '/') for f in publicados},
+                                 set(archivos_publicables(fuente)))
+                self.assertEqual(verificar_release(fuente, self.repo / destino)['build'],
+                                 verificar_release(fuente, self.repo / destino)['anterior'])
                 self.assertEqual(self.git('status', '--porcelain'), '')
                 self.assertEqual(self.git('rev-parse', 'HEAD:' + otro), intacto)
                 self.assertEqual(self.git('show', 'HEAD:otra-app.txt'), 'otra aplicación')
+
+    def test_version_rechazada_no_llega_a_copiar_commit_ni_push(self):
+        fuente = Path(__file__).resolve().parent
+        script = (fuente / 'publicar.sh').read_text()
+        bloque = script[script.index('paso "3/4'):script.index('# CLOUDFLARE PAGES')]
+        (self.repo / 'tcg/index.html').write_text('const BUILD = {n:999999};')
+        self.git('commit', '-qam', 'Producción más reciente')
+        self.git('push', '-q', 'origin', 'gh-pages')
+        antes = self.git('rev-parse', 'HEAD')
+        remoto = self.git('ls-remote', 'origin', 'refs/heads/gh-pages')
+        resultado = subprocess.run(['bash'],
+            input='set -uo pipefail\npaso(){ :; }; gris(){ :; }; rojo(){ :; }\n' + bloque,
+            text=True, capture_output=True,
+            env={**os.environ, 'AQUI': str(fuente), 'REPO': str(self.repo),
+                 'PAGES': str(self.repo), 'DESTINO': 'tcg'})
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn('No se puede retroceder', resultado.stderr)
+        self.assertEqual(self.git('rev-parse', 'HEAD'), antes)
+        self.assertEqual(self.git('status', '--porcelain'), '')
+        self.assertEqual(self.git('ls-remote', 'origin', 'refs/heads/gh-pages'), remoto)
+
+    def test_no_arrastra_commits_pendientes_ni_usa_pages_desactualizado(self):
+        fuente = Path(__file__).resolve().parent
+        script = (fuente / 'publicar.sh').read_text()
+        bloque = script[script.index('paso "3/4'):script.index('# CLOUDFLARE PAGES')]
+        inicial = self.git('rev-parse', 'HEAD')
+        for estado in ['adelantado', 'atrasado']:
+            with self.subTest(estado=estado):
+                self.git('reset', '--hard', inicial)
+                (self.repo / 'tcg/index.html').write_text('Producción distinta, ' + estado)
+                self.git('commit', '-qam', 'Otra publicación')
+                if estado == 'atrasado':
+                    self.git('push', '-q', 'origin', 'gh-pages')
+                    self.git('reset', '--hard', inicial)
+                antes = self.git('rev-parse', 'HEAD')
+                remoto = self.git('ls-remote', 'origin', 'refs/heads/gh-pages')
+                resultado = subprocess.run(['bash'],
+                    input='set -uo pipefail\npaso(){ :; }; gris(){ :; }; rojo(){ echo "$*"; }\n' + bloque,
+                    text=True, capture_output=True,
+                    env={**os.environ, 'AQUI': str(fuente), 'REPO': str(self.repo),
+                         'PAGES': str(self.repo), 'DESTINO': 'tcg-beta'})
+                self.assertEqual(resultado.returncode, 1)
+                self.assertIn('gh-pages local no coincide', resultado.stdout)
+                self.assertEqual(self.git('rev-parse', 'HEAD'), antes)
+                self.assertEqual(self.git('status', '--porcelain'), '')
+                self.assertEqual(self.git('ls-remote', 'origin', 'refs/heads/gh-pages'), remoto)
 
 
 class ServidorPruebas(unittest.TestCase):
