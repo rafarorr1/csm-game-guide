@@ -5,11 +5,11 @@
   "fuentes": [
     {
       "archivo": "caoz_tcg/index.html",
-      "sha256": "612c7f9be3be75583cab1fb6340fac5764a1a77cda88ebd079c7d67a0443bd1d"
+      "sha256": "bbca8614deb67ecdc8abd828cbf9cdb72e4ce67ea4c29022395396f49fb23110"
     },
     {
       "archivo": "caoz_tcg/motor.js",
-      "sha256": "7dd40724cd994e1e0b4683d54ab62aa226acb671c2b43de8e0e70dbb6cf28389"
+      "sha256": "2a46b182396dd2f027b7c8242339c8cc25dc0db62928b61365192208dd8d375b"
     },
     {
       "archivo": "caoz_tcg/polish-aaa.js",
@@ -34,7 +34,7 @@
     },
     {
       "nombre": "tribeLine",
-      "linea": 2325,
+      "linea": 2346,
       "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
     },
     {

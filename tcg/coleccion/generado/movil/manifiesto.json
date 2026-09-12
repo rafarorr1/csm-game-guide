@@ -5,11 +5,11 @@
   "fuentes": [
     {
       "archivo": "caoz_tcg/movil.html",
-      "sha256": "8f5dfb21c5147d859c4b5386406c2a2e42cffd420c440b7f4935d41141a8f9bb"
+      "sha256": "a909620f2f15fff53fbcdb19b3682f44e15b1c57e078854f90e3ec8ff0b414df"
     },
     {
       "archivo": "caoz_tcg/motor.js",
-      "sha256": "7dd40724cd994e1e0b4683d54ab62aa226acb671c2b43de8e0e70dbb6cf28389"
+      "sha256": "2a46b182396dd2f027b7c8242339c8cc25dc0db62928b61365192208dd8d375b"
     },
     {
       "archivo": "caoz_tcg/polish-aaa.js",
@@ -34,7 +34,7 @@
     },
     {
       "nombre": "tribeLine",
-      "linea": 2325,
+      "linea": 2346,
       "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
     },
     {
@@ -54,12 +54,12 @@
     },
     {
       "nombre": "cardEl",
-      "linea": 1513,
+      "linea": 1518,
       "sha256": "c74105684fe1a357a99be0c5a61218f8b9af402f6042ad0ed7c1c0919af60eef"
     },
     {
       "nombre": "cartaDeLiderVS",
-      "linea": 1299,
+      "linea": 1304,
       "sha256": "3a8e33b98d0438dac8be34f5f82c2a668f9a44b5e11d2d131e0bc844432bb909"
     }
   ],

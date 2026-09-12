@@ -916,11 +916,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   border-bottom:1px solid rgba(255,255,255,.07)}
 #rail .bar .stat{justify-content:center;gap:4px;padding:3px 6px;font-size:11px}
 #rail .bar .stat i{font-size:16px}
-#rail .bar .stat.key{grid-column:1/-1}
+#rail .bar .stat.key,#rail .bar .stat.corte{grid-column:1/-1}
 /* El contador de cartas en mano sobra aquí: los dorsos del rival ya se ven
    arriba y tu mano la tienes delante. Quitarlo es lo que hace que las dos
    columnas quepan sin apretarse. */
-#rail .bar .stat:not(.alma):not(.pd):not(.key):not(.gr):not(.relic){display:none}
+#rail .bar .stat:not(.alma):not(.pd):not(.key):not(.gr):not(.relic):not(.corte){display:none}
 #rail .bar .spacer{display:none}
 #rail .bar .turnpill{grid-column:1/-1;text-align:center;font-size:11px;padding:3px 8px}
 #rail .bar .netchip{grid-column:1/-1;font-size:10.5px;justify-content:center}
