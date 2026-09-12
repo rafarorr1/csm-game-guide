@@ -52,12 +52,37 @@
     return limpios.sort((a,b)=>a.id.localeCompare(b.id));
   }
   function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify({originales,cartas}));}catch(e){}}
-  function recomponer(){
-    ARTE={...originales};for(const e of cartas)if(encValido(e))ARTE[e.id]={x:e.x,y:e.y,z:e.z};
-  }
   function remoto(id){return cartas.find(e=>e.id===id);}
-  window.urlArte=function(id){if(muestra?.id===id)return muestra.url||'art/'+id+'.webp';const e=remoto(id);return e?.hash?'api/arte/imagen/'+e.hash:'art/'+id+'.webp';};
-  window.acabadoArte=id=>muestra?.id===id?muestra.acabado:remoto(id)?.acabado||'normal';
+  function registroElegido(id,acabado){
+    const variantes=remoto(id)?.variantes||{},normal=variantes.normal;
+    const propio=variantes[acabado];
+    return propio?.activo&&encValido(propio)?propio:normal?.activo!==false?normal:null;
+  }
+  function acabadoElegido(id,nodo){
+    const forzado=nodo?.closest?.('[data-coleccion-acabado]')?.dataset.coleccionAcabado;
+    if(ACABADOS.includes(forzado))return forzado;
+    const lado=window.CAOZ_COLECCION_JUEGO?.acabado(id,nodo);
+    return ACABADOS.includes(lado)?lado:window.CAOZ_COLECCION?.elegido(id)||'normal';
+  }
+  // Las tres ediciones comparten reglas. Si no existe arte premium propio,
+  // conservan su acabado y heredan el dibujo Normal, nunca otro acabado premium.
+  function version(id,acabado='normal',vista){
+    if(!conocido(id))return null;
+    if(!ACABADOS.includes(acabado))acabado='normal';
+    const variantes=remoto(id)?.variantes||{},e=registroElegido(id,acabado);
+    const normal=variantes.normal?.activo!==false?variantes.normal:null;
+    const hash=e?.heredada?normal?.hash:e?.hash;
+    const base=encValido(e)?{x:e.x,y:e.y,z:e.z}:encuadreDe(originales[id]);
+    return {acabado,url:hash?'api/arte/imagen/'+hash:'art/'+id+'.webp',
+      encuadre:vista?CAOZ_VISTAS.resolver(e?.vistas,vista,base):base,
+      disenoPropio:!!(e&&e.acabado===acabado&&e.hash&&!e.heredada)};
+  }
+  function recomponer(){
+    ARTE={...originales};
+    for(const e of cartas){const r=registroElegido(e.id,acabadoElegido(e.id));if(encValido(r))ARTE[e.id]={x:r.x,y:r.y,z:r.z};}
+  }
+  window.urlArte=function(id,nodo){if(muestra?.id===id)return muestra.url||'art/'+id+'.webp';return version(id,acabadoElegido(id,nodo))?.url||'art/'+id+'.webp';};
+  window.acabadoArte=(id,nodo)=>muestra?.id===id?muestra.acabado:acabadoElegido(id,nodo);
   function acabar(nodo,id){
     if(!nodo)return;
     const propio=nodo.closest(EXCLUIR);
@@ -66,9 +91,9 @@
     if(nodo.classList.contains('lface'))carta=nodo.closest('.vscard,.lcard,.ltile,.campanaCarta')||nodo;
     else if(nodo.classList.contains('art'))carta=nodo.closest('.big')||nodo;
     if(carta!==nodo)nodo.removeAttribute('data-acabado');
-    const acabado=window.acabadoArte(id);if(carta.dataset.acabado!==acabado)carta.dataset.acabado=acabado;
+    const acabado=window.acabadoArte(id,nodo);if(carta.dataset.acabado!==acabado)carta.dataset.acabado=acabado;
   }
-  function encuadreVista(id,vista){if(muestra?.id===id)return muestra.url?muestra.encuadre:null;return CAOZ_VISTAS.resolver(remoto(id)?.vistas,vista,encuadreDe(ARTE[id]));}
+  function encuadreVista(id,vista,nodo){if(muestra?.id===id)return muestra.url?muestra.encuadre:null;return version(id,acabadoElegido(id,nodo),vista)?.encuadre||null;}
   function variables(nodo,enc){
     for(const [prop,v]of Object.entries({'--ex':enc.x+'%','--ey':enc.y+'%','--ez':(enc.z/100).toFixed(3)}))nodo.style.setProperty(prop,v);
   }
@@ -81,9 +106,9 @@
   function pintar(nodo){
     const id=nodo.dataset.arteId;acabar(nodo,id);
     if(nodo.closest(EXCLUIR))return;
-    const enc=encuadreVista(id,CAOZ_VISTAS.identificar(nodo));
+    const enc=encuadreVista(id,CAOZ_VISTAS.identificar(nodo),nodo);
     if(!enc){quitar(nodo);return;}
-    const url=window.urlArte(id);variables(nodo,enc);
+    const url=window.urlArte(id,nodo);variables(nodo,enc);
     if(nodo.classList.contains('lrostro')){
       let img=nodo.querySelector('img');if(!img){nodo.textContent='';img=document.createElement('img');img.alt='';nodo.appendChild(img);}
       if(img.getAttribute('src')!==url)img.src=url;
@@ -138,7 +163,7 @@
     if(enc&&img.getAttribute('src')!==base){img.src=base;variables(nodo,enc);img.parentElement?.style.setProperty('--url','url("'+base+'")');}
     else quitar(nodo);
   },true);
-  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:id=>{const e=remoto(id);return !!e&&(!!e.hash||encValido(e));}});
+  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,version,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:(id,nodo)=>{const e=registroElegido(id,acabadoElegido(id,nodo));return !!e&&(!!e.hash||encValido(e));}});
   // Una carta puede construirse fuera del DOM; al entrar ya conocemos su superficie.
   // Sólo se observan nodos añadidos: modificar el encuadre no dispara un bucle.
   const pendientes=new Set();let programado=false;
@@ -146,6 +171,7 @@
     for(const c of cambios)for(const n of c.addedNodes)if(n.nodeType===1){if(n.matches('[data-arte-id]'))pendientes.add(n);n.querySelectorAll('[data-arte-id]').forEach(x=>pendientes.add(x));}
     if(pendientes.size&&!programado){programado=true;queueMicrotask(()=>{programado=false;for(const n of pendientes)if(n.isConnected)pintar(n);pendientes.clear();});}
   }).observe(document.documentElement,{childList:true,subtree:true});
+  addEventListener('caoz:coleccion',()=>{recomponer();actualizar();});
   addEventListener('online',()=>void refrescar());
   document.addEventListener('visibilitychange',()=>{if(!document.hidden)void refrescar();});
   setInterval(()=>{if(!document.hidden)void refrescar();},60000);

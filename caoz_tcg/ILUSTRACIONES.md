@@ -45,12 +45,13 @@ del estudio se conservan. No se escriben ni se publican borradores de D1.
 Cada archivo del juego mide hasta 512×768 y conserva la proporción de su original.
 El encuadre es ajustable y no modifica la imagen. Los PNG de generación, los WebP
 y las descripciones utilizadas se entregan aparte en la galería descargable.
-Normal, Foil y Dorado continúan aplicándose con la misma prioridad y controles.
+Normal, Foil y Dorado conservan sus controles de diseño en el estudio.
 
 ## Versiones y acabados
 
 Cada carta tiene tres versiones: **Normal**, **Foil** y **Foil dorado**. El
-juego elige automáticamente Dorado → Foil → Normal. Esta elección es visual:
+jugador empieza con todas las normales y elige cada acabado desbloqueado desde
+Colección de cartas. Publicar arte premium no lo desbloquea ni lo equipa. Esta elección es visual:
 no cambia la rareza, el coste, las estadísticas ni las reglas. Las imágenes
 y encuadres anteriores se conservan como Normal.
 
@@ -59,10 +60,11 @@ esta ilustración» crea un acabado que reutiliza la imagen de Normal, incluido
 cualquier reemplazo posterior de esa imagen; su encuadre se guarda por separado.
 También se puede subir una ilustración propia para cada acabado. Si una carta
 todavía usa un símbolo, el acabado puede aplicarse sobre ese símbolo.
-El selector indica qué versión está en juego, cuáles están disponibles y
-cuáles no se han creado. Abrir una versión para verla no la publica.
+El selector del estudio indica qué diseños están disponibles y cuáles
+heredan la ilustración Normal. Abrir una versión para verla no la publica.
 
-Retirar Foil dorado deja disponible Foil o Normal; retirar Foil conserva Normal.
+Retirar un diseño premium conserva el acabado desbloqueado del jugador y
+muestra la ilustración Normal con ese acabado.
 Restaurar Normal devuelve el original del repositorio sin retirar las otras
 versiones. Se conservan las revisiones de los acabados retirados para rechazar
 guardados antiguos. Cambiar de carta o versión con una prueba pendiente pide
@@ -151,3 +153,27 @@ el usuario lo solicita. No se copian bases ni secretos entre entornos.
 encuadres, revisión concurrente, restauración, limpieza y aislamiento del sonido.
 La comprobación visual del panel debe incluir escritorio y móvil, recuperación
 de borrador, vista previa sin guardar, recarga en otra sesión y conflicto.
+
+## Colección del jugador (build247)
+
+`coleccion-modelo.js` guarda inventario, selección y sobres en localStorage.
+Normal está disponible para todas las cartas y protagonistas. Foil y Dorado se
+desbloquean por separado; abrir un sobre nunca cambia la selección equipada.
+Cada acabado usa sus imágenes y encuadres publicados, o hereda Normal si no
+tiene diseño propio. Las vistas del estudio fuerzan el acabado sin tocar el
+inventario. `coleccion-ui.js`/`coleccion.css` muestran las tres versiones y sobres.
+
+El progreso pertenece a este navegador o app, sin sincronización de cuentas.
+Beta, producción y pruebas tienen claves separadas; escritorio y móvil del
+mismo entorno comparten inventario. «Borrar todo tu progreso» también elimina
+sobres, acabados obtenidos y selecciones; Normal sigue disponible.
+
+Mientras se define la recompensa, sólo beta/local muestra «Sobre de prueba».
+Contiene tres diseños premium, favorece novedades y usa 80 % Foil / 20 % Dorado
+mientras ambos tienen novedades. Al abrir, una escritura guarda las tres cartas,
+el contador y el resultado pendiente. Recargar recupera ese resultado. No hay
+compras ni premios automáticos. Con todo desbloqueado no se consume el sobre.
+
+`coleccion-juego.js` comparte únicamente las selecciones cosméticas en
+join/welcome: el rival conserva sus acabados; la IA y clientes antiguos muestran
+Normal. No se modifica el motor, mazos, daño ni mensajes de estado.

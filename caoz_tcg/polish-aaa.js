@@ -280,7 +280,7 @@ body.aaa-polish .alcantarillaCartas .card{--cw:190px;--ch:264px;width:190px;heig
         monte.appendChild(canto);
       }
       // La copia conserva ilustración y encuadre, sin los eventos de una carta jugable.
-      monte.appendChild(cardEl(ultima,{}).cloneNode(true));pila.appendChild(monte);
+      monte.appendChild(cardEl(ultima,{ladoArte:side}).cloneNode(true));pila.appendChild(monte);
     }else{
       const vacia=document.createElement('span');vacia.className='alcantarillaVacia';vacia.textContent='○';vacia.setAttribute('aria-hidden','true');pila.appendChild(vacia);
     }

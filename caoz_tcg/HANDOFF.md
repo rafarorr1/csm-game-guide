@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 246 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 247 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,23 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build247: Colección local de acabados. coleccion-modelo.js guarda todas las
+Normales implícitas, desbloqueos Foil/Dorado, selección por ID, contador y sobre
+pendiente. coleccion-ui.js/coleccion.css reemplazan showGallery tras load con
+un diálogo paginado. Tres vistas simultáneas mediante data-coleccion-acabado;
+CAOZ_ARTE.version(id,acabado,vista) conserva encuadres por edición y hereda Normal
+si no existe diseño propio. El catálogo público conserva todas las variantes: no
+confundir su fila de mayor acabado con la elección personal. El estudio fuerza
+su preview independientemente.
+coleccion-juego.js transporta selecciones cosméticas sólo en join/welcome;
+data-lado-arte separa carta propia y rival. Cliente antiguo/IA usa Normal. Motor
+intacto. Sobres de prueba sólo beta/local; premios reales pendientes de diseño.
+Beta, producción y ?test tienen inventarios aislados; móvil/desktop comparten
+dentro del mismo origen. El borrado de progreso incluye la clave de colección.
+Nuevos módulos incluidos en loader, PWA y publicador. pruebas_coleccion.mjs
+cubre persistencia, apertura atómica y cosméticos online; suites de navegador
+comprueban selección/arte. Preparar sólo beta247; producción245, main intacta.
 
 Build246 adopta sólo los cuatro botones principales de Mesa de taberna, en
 polish-aaa.js compartido. Selectores explícitos por ID; veta y remaches mediante

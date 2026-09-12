@@ -83,7 +83,8 @@ class BetaCloudflare(unittest.TestCase):
         fuente = Path(__file__).resolve().parent
         script = (fuente / 'publicar.sh').read_text()
         bloque = script[script.index('paso "3/4'):script.index('# CLOUDFLARE PAGES')]
-        dependencias = {'estudio.html', 'sonidos.html'}
+        dependencias = {'estudio.html', 'sonidos.html', 'coleccion-modelo.js',
+                         'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css'}
         for panel in ['estudio.html', 'sonidos.html']:
             dependencias.update(re.findall(r'(?:src|href)="([^"?]+\.(?:js|css))(?:\?[^\"]*)?"',
                                            (fuente / panel).read_text()))

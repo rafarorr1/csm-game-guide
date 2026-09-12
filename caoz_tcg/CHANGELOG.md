@@ -1,5 +1,20 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 247 · Colección y sobres
+
+- Archivo de cartas con búsqueda, filtros por mazo/tipo y páginas que caben en
+  escritorio y teléfono. Cada carta muestra Normal, Foil y Dorado lado a lado.
+- Todas las normales disponibles de inicio. El jugador desbloquea y equipa
+  acabados por carta; publicar un diseño desde el estudio no cambia su elección.
+- Sobres de tres ediciones premium con revelación secuencial y guardado atómico,
+  recuperables tras cerrar o recargar. Botón de prueba exclusivo de beta; las
+  recompensas se definirán después. Obtener un acabado no lo equipa automáticamente.
+- Selecciones en mano, campo, fichas, líderes, VS, victoria y descartes. El online
+  intercambia sólo cosméticos en la bienvenida; la IA y clientes antiguos usan
+  Normal. Las reglas, estadísticas y mazos no cambian.
+- Los diseños conservan los encuadres del estudio. Sin arte premium propio se
+  hereda Normal y se mantiene el acabado. Borrar progreso reinicia la Colección.
+
 ### Sin numerar · build 246 · Botones de taberna
 
 - Campaña, Jugar contra el Domo, Online y Extras adoptan madera, bordes de

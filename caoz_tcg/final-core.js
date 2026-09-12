@@ -184,7 +184,7 @@ function borrarRecords(){ try{ localStorage.removeItem(RECORDS_CLAVE); }catch(e)
 function clavesProgresoLocal(){
   const pruebas=new URLSearchParams(location.search).has('test')?'.prueba':'';
   const logros='caoz.campana.logros.v1'+pruebas;
-  return [CAMPANA_CLAVE,CAMPANA_CLAVE+'.creador',logros,logros+'.simulados',RECORDS_CLAVE,'caoz_nombre'];
+  return [CAMPANA_CLAVE,CAMPANA_CLAVE+'.creador',logros,logros+'.simulados',RECORDS_CLAVE,'caoz_nombre',window.CAOZ_COLECCION?.clave].filter(Boolean);
 }
 function borrarProgresoLocal(){
   const claves=clavesProgresoLocal(),anteriores=new Map();
@@ -204,7 +204,7 @@ function confirmarBorradoProgreso(){
   if(!document.querySelector('#extras.on'))return;
   const panel=document.getElementById('ovPanel');
   panel.innerHTML='<h3 id="borrarProgresoTitulo">¿Borrar todo tu progreso?</h3>'+
-    '<p>Se eliminarán tu campaña, tu personaje, todos los logros de los mazos y del final secreto, tus récords y tu nombre guardado en este navegador o app.</p>'+
+    '<p>Se eliminarán tu campaña, tu personaje, todos los logros de los mazos y del final secreto, tus récords, los sobres y acabados desbloqueados de tu Colección y tu nombre guardado en este navegador o app.</p>'+
     '<p><b>No se puede deshacer.</b> Tus ajustes de sonido se conservarán.</p>';
   const aviso=el('p','');aviso.id='borrarProgresoError';aviso.setAttribute('role','alert');aviso.hidden=true;panel.appendChild(aviso);
   const opciones=el('div','opts');opciones.style.cssText='display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:18px';
@@ -305,7 +305,7 @@ async function cinematicaFinal(winner, why, acciones){
     b.style.setProperty('--del', (-Math.random() * 9) + 's');
     capa.appendChild(b);
   }
-  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):G.campana?.jefeSecreto&&s!==ME&&window.campanaCartaPitagoras?campanaCartaPitagoras(s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde');
+  const carta=s=>G.campana?.personaje&&s===ME?campanaCartaJugador(G.campana.personaje,P(s).leaderId,s===winner?'gana':'pierde'):G.campana?.jefeSecreto&&s!==ME&&window.campanaCartaPitagoras?campanaCartaPitagoras(s===winner?'gana':'pierde'):cartaDeLiderVS(P(s).leaderId,s===winner?'gana':'pierde',s);
   const pierde = carta(1-winner);
   const gana   = carta(winner);
   capa.appendChild(pierde); capa.appendChild(gana);
@@ -825,7 +825,7 @@ function campanaRuta(aviso=''){
       const ficha=campanaBoton('',()=>{if(i===p.etapa)campanaSeleccionar();else toast(LEADERS[r.lider].n+': encuentro superado');});ficha.className='campanaEncuentro';
       ficha.innerHTML=`<span class="lface">${LEADERS[r.lider].art}</span><b>${LEADERS[r.lider].n}</b><span class="campanaNumero">${i<p.etapa?'✓':i+1}</span>`;
       ficha.setAttribute('aria-label',LEADERS[r.lider].n+(i<p.etapa?', vencido':', ver combate · '+r.alma+' Alma'));
-      fila.dataset.campanaLider=r.lider;fila.appendChild(ficha);ilustrarLider(fila,r.lider);
+      fila.dataset.campanaLider=r.lider;window.CAOZ_COLECCION_JUEGO?.marcar(fila,FOE);fila.appendChild(ficha);ilustrarLider(fila,r.lider);
     }
     lista.appendChild(fila);
   });

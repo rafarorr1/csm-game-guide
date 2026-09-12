@@ -93,6 +93,8 @@ python3 "$AQUI/verificar_sonidos.py" || exit 1
 node "$AQUI/pruebas_sonidos.mjs" || exit 1
 node "$AQUI/pruebas_arte.mjs" || exit 1
 node "$AQUI/pruebas_estudio.mjs" || exit 1
+node "$AQUI/pruebas_coleccion.mjs" || exit 1
+for f in coleccion-modelo.js coleccion-juego.js coleccion-ui.js; do node --check "$AQUI/$f" || exit 1; done
 node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }
 # El service worker lleva la build en VERSION: es lo que le dice al teléfono
 # que hay una caché nueva. Sin subirlo, la app instalada se quedaría con la vieja.
@@ -115,7 +117,7 @@ gris "  sintaxis correcta"
 
 # Animation.finished cuelga el motor: puede no resolverse nunca aunque la
 # animación termine. Es una regla dura y se comprueba también aquí.
-if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js" "$AQUI/movil.html" "$AQUI/final.js" "$AQUI/final-core.js" "$AQUI/campana-mesa.js" "$AQUI/campana-personaje.js" "$AQUI/campana-deseo.js" "$AQUI/campana-pitagoras.js" "$AQUI/campana-secreto.js" "$AQUI/campana-honores.js" "$AQUI/pitagoras-pruebas.js" "$AQUI/pitagoras-mundos.js" "$AQUI/pitagoras-cine.js" "$AQUI/pitagoras-laboratorio.js" "$AQUI/pitagoras-fps.js" "$AQUI/pitagoras-pixel.js" "$AQUI/pitagoras-combate.js" "$AQUI/pitagoras-mesa.js" "$AQUI/dado-fisico.js" "$AQUI/moneda-fisica.js" "$AQUI/polish-aaa.js"; then
+if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.html" "$AQUI/motor.js" "$AQUI/movil.html" "$AQUI/final.js" "$AQUI/final-core.js" "$AQUI/campana-mesa.js" "$AQUI/campana-personaje.js" "$AQUI/campana-deseo.js" "$AQUI/campana-pitagoras.js" "$AQUI/campana-secreto.js" "$AQUI/campana-honores.js" "$AQUI/pitagoras-pruebas.js" "$AQUI/pitagoras-mundos.js" "$AQUI/pitagoras-cine.js" "$AQUI/pitagoras-laboratorio.js" "$AQUI/pitagoras-fps.js" "$AQUI/pitagoras-pixel.js" "$AQUI/pitagoras-combate.js" "$AQUI/pitagoras-mesa.js" "$AQUI/dado-fisico.js" "$AQUI/moneda-fisica.js" "$AQUI/polish-aaa.js" "$AQUI/coleccion-modelo.js" "$AQUI/coleccion-juego.js" "$AQUI/coleccion-ui.js"; then
   rojo 'index.html usa Animation.finished — encadena con sleep(), o el motor se cuelga'
   exit 1
 fi
@@ -226,7 +228,7 @@ RAMA="$(cd "$PAGES" && git branch --show-current)"
 
 [ -z "$(cd "$PAGES" && git status --porcelain)" ] || { rojo 'El worktree de publicación tiene cambios pendientes'; exit 1; }
 mkdir -p "$PAGES/$DESTINO/art" "$PAGES/$DESTINO/audio"
-for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js acabados.css _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
+for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js acabados.css coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
 cp "$AQUI"/audio/*.wav "$AQUI/audio/catalogo.json" "$PAGES/$DESTINO/audio/" || exit 1
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
@@ -283,7 +285,7 @@ cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
 git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/final-core.js" "$DESTINO/campana-mesa.js" "$DESTINO/campana-personaje.js" "$DESTINO/campana-deseo.js" "$DESTINO/campana-pitagoras.js" "$DESTINO/campana-secreto.js" "$DESTINO/campana-honores.js" "$DESTINO/pitagoras-pruebas.js" "$DESTINO/pitagoras-mundos.js" "$DESTINO/pitagoras-cine.js" "$DESTINO/pitagoras-laboratorio.js" "$DESTINO/pitagoras-fps.js" "$DESTINO/pitagoras-pixel.js" "$DESTINO/pitagoras-combate.js" "$DESTINO/pitagoras-mesa.js" "$DESTINO/dado-fisico.js" "$DESTINO/moneda-fisica.js" "$DESTINO/polish-aaa.js" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
-git add "$DESTINO/arte-vistas.js" "$DESTINO/estudio-vista.js" "$DESTINO/estudio.js" "$DESTINO/estudio.css" "$DESTINO/estudio-publicacion.js" "$DESTINO/estudio-publicacion.css" "$DESTINO/arte-remoto.js" "$DESTINO/acabados.css"
+git add "$DESTINO/arte-vistas.js" "$DESTINO/estudio-vista.js" "$DESTINO/estudio.js" "$DESTINO/estudio.css" "$DESTINO/estudio-publicacion.js" "$DESTINO/estudio-publicacion.css" "$DESTINO/arte-remoto.js" "$DESTINO/acabados.css" "$DESTINO/coleccion.css" "$DESTINO/coleccion-modelo.js" "$DESTINO/coleccion-juego.js" "$DESTINO/coleccion-ui.js"
 git add "$DESTINO/audio-domo.js" "$DESTINO/sonidos.html" "$DESTINO/sonidos.js" "$DESTINO/sonidos.css" "$DESTINO/_worker.js" "$DESTINO/_routes.json" "$DESTINO/audio"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
@@ -315,7 +317,7 @@ comprobar_cloudflare(){
   for j in $(seq 1 12); do
     sleep 10
     local ok=1
-    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
+    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js arte-remoto.js arte-vistas.js estudio.js estudio.html coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
       local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
       local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
       [ "$srv" = "$esp" ] || { ok=0; break; }
@@ -358,7 +360,7 @@ for i in $(seq 1 10); do
   SERVIDO_FINAL="$(curl -s "$URL_FINAL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
   if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ] && [ "$SERVIDO_FINAL" = "$ESPERADO_FINAL" ]; then
     verde "  GitHub Pages verificado byte a byte (index.html, motor.js, movil.html y final.js)"
-    for f in final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
+    for f in final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js arte-remoto.js arte-vistas.js estudio.js estudio.html coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
       curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/$f?cb=$(date +%s)" -o "/tmp/caoz-verificar-$(basename "$f")" || exit 1
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$(basename "$f")" || { rojo "$f no coincide con la versión local"; exit 1; }
     done
