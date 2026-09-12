@@ -9,8 +9,8 @@
   const modelo=()=>window.CAOZ_COLECCION;
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  let panel,contenido,barra,estado,volverFoco,origen,temporizadores=[],observador,frame=0,guardando=false;
-  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',pagina:0,tamano:8,carta:null,acabadoVista:'normal',regla:0,reveladas:0,muestraSobre:0,packId:null};
+  let panel,contenido,barra,estado,volverFoco,origen,temporizadores=[],observador,frame=0,guardando=false,restaurarLista=false,focoLista=null;
+  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,reveladas:0,muestraSobre:0,packId:null};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:l.n,t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,sub:typeof tribeLine==='function'?tribeLine(c):c.t};
@@ -32,9 +32,6 @@
     const v=window.visualViewport,alto=v?v.height:innerHeight;
     panel.style.setProperty('--coleccion-alto',alto+'px');panel.style.setProperty('--coleccion-top',(v?v.offsetTop:0)+'px');
     panel.classList.toggle('coleccionBaja',alto<650);panel.classList.toggle('coleccionTeclado',alto<430);
-    const ancho=panel.clientWidth;
-    const nuevo=ancho<550?(alto>=760&&ancho>=350?4:2):(ancho<820?2:ancho<1000?3:4);
-    if(nuevo!==s.tamano){const indice=s.pagina*s.tamano;s.tamano=nuevo;s.pagina=Math.floor(indice/nuevo);if(s.vista==='cartas')dibujarLista();}
     if(s.vista==='detalle')paginacionReglas();
     encajarCartas();
   }
@@ -44,7 +41,11 @@
     panel.querySelectorAll('.coleccionCarta,.coleccionReverso').forEach(n=>{
       if(!n.getClientRects().length)return;
       const p=n.parentElement,clase=p.classList;let alto=p.clientHeight,ancho=p.clientWidth;
-      if(clase.contains('coleccionVersion')&&movil){const caja=p.parentElement;alto=caja.clientHeight-118;ancho=caja.clientWidth-30;}
+      // Las filas de la lista crecen con el ancho de sus tres columnas. No
+      // dependemos de la altura visible: el resto se recorre con scroll.
+      const mini=clase.contains('coleccionMini');
+      if(mini){alto=280;ancho=206;n.style.zoom=Math.max(.1,(p.clientWidth-8)/200);}
+      else if(clase.contains('coleccionVersion')&&movil){const caja=p.parentElement;alto=caja.clientHeight-118;ancho=caja.clientWidth-30;}
       else{
         const estilos=getComputedStyle(p),gap=parseFloat(estilos.rowGap)||0;
         alto-=parseFloat(estilos.paddingTop)||0;alto-=parseFloat(estilos.paddingBottom)||0;
@@ -56,6 +57,11 @@
       // Sólo ajustamos texto al espacio; marco, orbes y composición son los del juego.
       const texto=n.querySelector('.pieCarta .txt');if(texto){texto.style.fontSize='';const max=h*.47;let tam=parseFloat(getComputedStyle(texto).fontSize);for(let i=0;i<8&&texto.scrollHeight>max&&tam>10;i++){tam=Math.max(10,tam*.93);texto.style.fontSize=tam+'px';}}
     });
+    if(restaurarLista&&s.vista==='cartas'){
+      const grid=contenido.querySelector('.coleccionRejilla');
+      if(grid){grid.scrollTop=s.desplazamiento;const tarjeta=[...grid.children].find(n=>n.dataset.carta===focoLista);tarjeta?.focus({preventScroll:true});}
+      restaurarLista=false;focoLista=null;
+    }
   }
   function programarAjuste(){cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{encajarCartas();if(s.vista==='detalle')paginacionReglas();});}
   function crearPanel(){
@@ -68,7 +74,7 @@
     panel.addEventListener('cancel',e=>{e.preventDefault();if(s.vista==='detalle')ir('cartas');else cerrar();});
     panel.addEventListener('close',limpiar);
     // El diálogo nativo atrapa el foco y deja inerte el juego que queda debajo.
-    panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();return;}if(e.target.matches('input,select,textarea'))return;if(s.vista==='cartas'&&['ArrowLeft','ArrowRight'].includes(e.key)){e.preventDefault();cambiarPagina(e.key==='ArrowLeft'?-1:1);}});
+    panel.addEventListener('keydown',e=>{if(e.key==='Escape')e.stopPropagation();});
     document.body.append(panel);
   }
   function abrir(){
@@ -95,7 +101,7 @@
     if(panel?.querySelector('.barridoModal,.coleccionInterior.menuEntra')&&typeof limpiarTransicionMenu==='function')limpiarTransicionMenu();
   }
   function cerrar(){
-    if(!panel?.open)return;panel.close();
+    if(!panel?.open)return;guardarPosicionLista();panel.close();
     if(origen?.isConnected&&typeof animarTransicionMenu==='function')animarTransicionMenu(origen);
     if(volverFoco?.isConnected)volverFoco.focus({preventScroll:true});
   }
@@ -109,7 +115,8 @@
     cartas.prepend(icono('libro'));sobres.prepend(icono('sobre'));sobres.append(crear('span','coleccionNumero',m.sobres()));
     cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',s.vista==='sobres'?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
   }
-  function ir(vista){limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
+  function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista)s.desplazamiento=contenido.querySelector('.coleccionRejilla')?.scrollTop||0;}
+  function ir(vista){guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
   function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;contenido.replaceChildren();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='canje')dibujarCanje();else dibujarSobres();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
@@ -119,27 +126,29 @@
   function dibujarGaleria(){
     const filtros=crear('div','coleccionFiltros'),buscar=crear('label','coleccionBuscar');buscar.append(icono('buscar'));
     const input=crear('input');input.type='search';input.placeholder='Buscar una carta…';input.setAttribute('aria-label','Buscar cartas por nombre');input.value=s.busqueda;input.autocomplete='off';
-    input.oninput=()=>{s.busqueda=input.value;s.pagina=0;dibujarLista();};buscar.append(input);filtros.append(buscar);
-    const selector=(nombre,opciones,valor,cambiar)=>{const label=crear('label','coleccionFiltro');label.append(crear('span','coleccionSr',nombre));const select=crear('select');select.setAttribute('aria-label',nombre);opciones.forEach(([v,n])=>{const op=crear('option','',n);op.value=v;select.append(op);});select.value=valor;select.onchange=()=>{cambiar(select.value);s.pagina=0;dibujarLista();};label.append(select);return label;};
+    input.oninput=()=>{s.busqueda=input.value;s.desplazamiento=0;dibujarLista();};buscar.append(input);filtros.append(buscar);
+    const selector=(nombre,opciones,valor,cambiar)=>{const label=crear('label','coleccionFiltro');label.append(crear('span','coleccionSr',nombre));const select=crear('select');select.setAttribute('aria-label',nombre);opciones.forEach(([v,n])=>{const op=crear('option','',n);op.value=v;select.append(op);});select.value=valor;select.onchange=()=>{cambiar(select.value);s.desplazamiento=0;dibujarLista();};label.append(select);return label;};
     filtros.append(selector('Filtrar por mazo',[['todos','Todos los mazos'],...Object.keys(LEADERS).map(id=>[id,LEADERS[id].n]),['cajon','El Cajón']],s.mazo,v=>s.mazo=v));
     filtros.append(selector('Filtrar por tipo',[['todos','Todos los tipos'],['protagonista','Protagonistas'],['personaje','Personajes'],['hechizo','Hechizos'],['trampa','Trampas'],['objeto','Objetos'],['lugar','Lugares']],s.tipo,v=>s.tipo=v));
-    contenido.append(filtros,crear('div','coleccionResumen'),crear('div','coleccionRejilla'),crear('nav','coleccionPaginas'));
-    contenido.querySelector('.coleccionPaginas').setAttribute('aria-label','Páginas de cartas');dibujarLista();
+    const grid=crear('div','coleccionRejilla');grid.setAttribute('role','region');grid.setAttribute('aria-label','Cartas de tu colección');grid.tabIndex=0;
+    grid.addEventListener('scroll',()=>{if(grid.isConnected&&!restaurarLista)s.desplazamiento=grid.scrollTop;},{passive:true});
+    const resumen=crear('div','coleccionResumen');resumen.setAttribute('role','status');
+    contenido.append(filtros,resumen,grid);dibujarLista();
   }
-  function cambiarPagina(paso){const n=Math.ceil(idsFiltrados().length/s.tamano);const pagina=Math.max(0,Math.min(n-1,s.pagina+paso));if(pagina===s.pagina)return;s.pagina=pagina;dibujarLista();sonido('ui_hover');}
   function dibujarLista(){
     const grid=contenido.querySelector('.coleccionRejilla');if(!grid)return;
-    const ids=idsFiltrados(),paginas=Math.max(1,Math.ceil(ids.length/s.tamano));s.pagina=Math.min(s.pagina,paginas-1);
+    const ids=idsFiltrados();restaurarLista=true;
+    if(grid.contains(document.activeElement))focoLista=document.activeElement.dataset.carta||null;
     contenido.querySelector('.coleccionResumen').textContent=ids.length+' cartas'+(s.busqueda?' encontradas':' en tu colección')+' · Elige una para cambiar su edición';
-    grid.replaceChildren();grid.dataset.cantidad=s.tamano;
-    ids.slice(s.pagina*s.tamano,(s.pagina+1)*s.tamano).forEach(id=>{
+    grid.replaceChildren();
+    ids.forEach(id=>{
       const c=dato(id),a=modelo().elegido(id),b=boton('',()=>verCarta(id),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Edición '+NOMBRES[a]+'. Ver tres versiones.');
       const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');
       const pie=crear('span','coleccionMiniPie');pie.append(crear('span','',NOMBRES[a]));const puntos=crear('span','coleccionPuntos');
       ACABADOS.forEach(v=>{const p=crear('i');p.dataset.edicion=v;p.classList.toggle('propia',modelo().tiene(id,v));p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+(modelo().tiene(id,v)?' desbloqueada':' bloqueada');puntos.append(p);});pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);
     });
-    if(!ids.length){const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.pagina=0;dibujar();}));grid.append(vacio);}
-    const nav=contenido.querySelector('.coleccionPaginas');nav.replaceChildren();const ant=boton('Anterior',()=>cambiarPagina(-1)),sig=boton('Siguiente',()=>cambiarPagina(1));ant.disabled=s.pagina===0;sig.disabled=s.pagina>=paginas-1;nav.append(ant,crear('span','',String(s.pagina+1).padStart(2,'0')+' / '+String(paginas).padStart(2,'0')),sig);programarAjuste();
+    if(!ids.length){const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.desplazamiento=0;dibujar();}));grid.append(vacio);}
+    programarAjuste();
   }
   function actualizarCarta(nodo){
     const soporte=nodo.matches('[data-arte-id]')?nodo:nodo.querySelector('[data-arte-id]');if(!soporte)return;

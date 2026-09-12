@@ -80,7 +80,7 @@ node dev/secciones/pruebas.mjs
 Comprueba extracción de funciones y sus fallos, datos reales, procedencia,
 aislamiento del almacenamiento, componentes servidos y bloqueos HTTP/CSP.
 Además, al cambiar Colección, revisar sus interacciones en el navegador: búsqueda,
-paginación, acabados, apertura de cinco cartas, reapertura del sobre pendiente y
+tres columnas, scroll del listado y regreso a su posición, acabados, apertura de cinco cartas, reapertura del sobre pendiente y
 navegación de regreso. Estas pruebas acotadas no sustituyen la integración final.
 
 ## Añadir otra sección
