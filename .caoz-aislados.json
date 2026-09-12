@@ -4,6 +4,10 @@
     "coleccion": {
       "fuente": "98bb1475fc563c5be2b748148b3b543014423612",
       "ruta": "tcg/coleccion"
+    },
+    "rey": {
+      "fuente": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf",
+      "ruta": "tcg/rey"
     }
   },
   "version": 1

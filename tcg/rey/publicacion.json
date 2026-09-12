@@ -1,0 +1,32 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "art/can.webp": "cd58021d227a850354a6a9ed19522671d26571b32114b4b2fac66feafddff84c",
+    "art/encuadres.json": "318093219a9ce849ce854e9ca3b576d92d9819cea2060b86bebe3e06af801e13",
+    "art/eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b",
+    "art/matildus.webp": "43970731f959f20fcd0a128b9b40c6703c4c1dda2d007aada6150a0ba0a86819",
+    "art/rey.webp": "a18041ee78195792a07bbc81d83b4dc6f7fcae6b2a4bf5949232f8e4c0e7b492",
+    "art/tok_goblincamino.webp": "fca8e4643b49172d27b34f47236147fa592b31c05d7730489e4efd0675fa67ce",
+    "catalogo-vacio.json": "ffa1a261b235d5e4c969a7e181376d4892f9605bca29a4a699350735c9539aec",
+    "generado/base.css": "bac57d51bb0ce089274c7e9a73dbd9b2764d71b141fc28fbcf5deb24d2faf3a7",
+    "generado/datos.js": "5514e0d5c391a29eecdf5edfba728c431f76b88a784e715557b079dcf3ec879b",
+    "generado/regla.js": "12df07de353a523a0f993f1ace9106dbf85689514274cabde98d25b3722791fc",
+    "generado/renderer.js": "dbaddd0cc79d709376556efb003a3be94000092f24b98b9d9e50aa590c4e0d8a",
+    "index.html": "60e1ed206c60e45d0690c6a2c076a654f345c4f2312b97f47a05e7ab5ddb983c",
+    "juego/acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
+    "juego/arte-remoto.js": "a44dd3d05c1b3a25a8964e5d96f394d97284311891eb8a4fa6a6e47c8e749ac9",
+    "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
+    "procedencia.json": "563c54581e8656b979e15fb0e6d56bea85e020d8ed862800d5560e104f13c9ce",
+    "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c",
+    "rey.css": "bf9bb70d692277316f9124d841d9124e10d93c0a1c28c3640674834d0d23670c",
+    "rey.js": "df5221318f3c1c01169d8d726e27bd574071e10f1e9d4bf071a9400a5215f5fd"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "fix/rey-corte-campana",
+    "sha": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf"
+  },
+  "seccion": "rey",
+  "version": 1
+}

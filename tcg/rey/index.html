@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>La corte de El Rey · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./generado/base.css">
+<link rel="stylesheet" href="./juego/acabados.css">
+<link rel="stylesheet" href="./rey.css">
+<script src="./memoria.js"></script>
+<script src="./red-estatica.js"></script>
+<script src="./generado/datos.js"></script>
+<script src="./generado/renderer.js"></script>
+<script src="./generado/regla.js"></script>
+<script src="./juego/arte-vistas.js"></script>
+<script src="./juego/arte-remoto.js"></script>
+<script src="./rey.js" defer></script>
+</head>
+<body class="aaa-polish reyAislado">
+<main class="reyPanel" aria-labelledby="reyTitulo">
+  <header class="reyCabecera"><div><p class="reyAntetitulo">UNA CORONA SE DEFIENDE</p><h1 id="reyTitulo">La corte de El Rey</h1></div><span class="reySello" aria-hidden="true">♛</span></header>
+  <p class="reyIntroduccion">Reúne la corte y sostenla durante dos inicios de turno propios. El rival tiene tiempo de romperla.</p>
+  <nav class="reyEscenarios" aria-label="Composición de la corte"><button type="button" data-escenario="goblins" aria-pressed="true">Can y sus Goblins</button><button type="button" data-escenario="aliados" aria-pressed="false">Tres aliados</button></nav>
+  <section class="reyEstado" role="status" aria-live="polite"><div class="reyEstadoLinea"><strong id="reyResultado">Preparando la corte…</strong><span id="reyTurno">Sin iniciar turno</span></div><div class="reyAvance" aria-label="Inicios de turno con la corte completa"><span data-paso="1">1 <i>La corte se reúne</i></span><span data-paso="2">2 <i>El Rey reclama la victoria</i></span></div><p id="reyExplicacion"></p></section>
+  <section class="reyMesa" aria-label="Personajes de tu corte" id="reyMesa"></section>
+  <div class="reyControles"><button type="button" id="reyIniciar">Iniciar mi turno <span aria-hidden="true">→</span></button><button type="button" id="reyReiniciar">Reiniciar</button></div>
+  <footer class="reyPie"><span>Prueba aislada · no cambia tu campaña</span><button type="button" id="reyVerRegla">Leer la habilidad</button></footer>
+</main>
+<dialog id="reyDetalle" aria-labelledby="reyDetalleTitulo"><div class="reyDetalleInterior"><h2 id="reyDetalleTitulo">Corte reunida</h2><p id="reyReglaTexto"></p><button type="button" id="reyCerrarDetalle">Volver a la mesa</button></div></dialog>
+</body>
+</html>
