@@ -380,7 +380,7 @@
       "coste": 7,
       "ataque": 3,
       "vida": 8,
-      "texto": "Corte reunida: al inicio de tu turno, si controlas otros 3 Personajes además de El Rey, ganas la partida.",
+      "texto": "Corte reunida: mantén a El Rey y otros 3 Personajes hasta el inicio de 2 turnos tuyos consecutivos para ganar. Si El Rey sale del campo o la corte baja de 4, el conteo se reinicia.",
       "tribu": "Humano · Noble",
       "simbolo": "👑",
       "esLider": false,
@@ -750,7 +750,14 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/tal.webp",
+        "encuadre": {
+          "x": 45,
+          "y": 91,
+          "z": 118
+        }
+      }
     },
     {
       "id": "rantiago",
