@@ -214,10 +214,77 @@ PRUEBAS.suite('cartas', async t => {
 });
 
 /* ===========================================================================
-   SUITE: cobertura — qué se ejercita de verdad en 100 partidas
-   Un test que pasa sin haber tocado media baraja no prueba gran cosa. Esto
-   mide qué cartas se juegan y qué Trampas saltan, y avisa de los agujeros.
+   SUITE: corteRey — la regla real y su aviso en ambas pantallas.
+   Las partidas viven en iframes nuevos y showEnd no guarda recompensas.
    ======================================================================== */
+PRUEBAS.suite('corteRey',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const marco=document.createElement('iframe');marco.style.cssText='position:fixed;left:-10000px;'+(pagina==='index.html'?'width:1440px;height:900px':'width:390px;height:844px');
+    const carga=new Promise(r=>marco.onload=r);marco.src=pagina+'?test=corte-rey-interno';document.body.appendChild(marco);await carga;
+    const w=marco.contentWindow,ia=w.aiTurn;
+    try{
+      w.showEnd=()=>{};w.roll=async()=>15;w.nap=async()=>{};w.netSend=()=>{};w.netAsk=async p=>p.fallback;
+      const preparar=(lado=0,fichas=false)=>{
+        w.newGame(lado?'fender':'gero',lado?'gero':'fender');w.aiTurn=async()=>{};
+        Object.assign(w.eval('NET'),{on:false,host:false,guest:false});
+        w.eval(`G.fast=true;G.auto=true;G.silent=true;G.turnNo=10;G.active=${lado};G.phase='principal';
+          P(0).hand=[];P(1).hand=[];P(0).pd=10;P(1).pd=10;P(0).pdMax=10;P(1).pdMax=10;
+          P(${lado}).field=${JSON.stringify(fichas?['rey','can','tok_goblincamino','tok_goblincamino']:['rey','bob','minus','juangabriel'])}.map(id=>mkUnit(id,${lado}));recalc();`);
+        w.showScreen('board');w.render();
+      };
+      const siguiente=async lado=>{await w.startTurn(1-lado);await w.startTurn(lado);};
+      for(const modo of ['local','online','campana','secreto'])for(const lado of [0,1]){
+        preparar(lado);const caso=pagina+' · '+modo+' · lado '+lado;
+        if(modo==='online')w.eval('G.online=true;NET.on=true;NET.host=true');
+        if(modo==='campana'||modo==='secreto')w.eval(`G.campana={id:'corte-regresion',etapa:6,alma:40,jefeSecreto:${modo==='secreto'}};P(1).alma=40`);
+        await w.startTurn(lado);
+        t.check(!w.eval('G.over'),caso+': Rey gana antes de los dos inicios propios.');
+        t.igual(w.eval(`P(${lado}).corte.turnos`),1,caso+': el primer inicio no se registró.');
+        for(let i=0;i<5;i++){w.recalc();w.render();}
+        t.igual(w.eval(`P(${lado}).corte.turnos`),1,caso+': render/recalc cuentan como turnos.');
+        w.eval('G.silent=false');w.render();w.eval('G.silent=true');
+        const corona=w.document.querySelector((lado?'#barFoe':'#barMe')+' .corte');
+        t.check(corona&&corona.textContent.includes('1/2'),caso+': no aparece la corona con el progreso en la barra.');
+        t.check(corona.getBoundingClientRect().width>0,caso+': la corona existe pero queda oculta.');
+        await w.startTurn(1-lado);t.check(!w.eval('G.over'),caso+': el inicio rival avanzó la corte.');
+        await w.startTurn(lado);t.check(w.eval(`G.over&&G.winner===${lado}`),caso+': conservar la corte dos inicios no gana.');
+      }
+      preparar(0,true);w.eval(`P(0).field.shift();P(0).hand=['rey'];recalc()`);await w.playFromHand(0,'rey');
+      t.check(!w.eval('G.over')&&w.eval('P(0).corte.turnos')===0,pagina+': jugar Rey regala un inicio.');
+      await w.startTurn(0);await siguiente(0);t.check(w.eval('G.over&&G.winner===0'),pagina+': las fichas de Can dejaron de contar.');
+
+      preparar();await w.startTurn(0);await w.destroy(w.eval(`P(0).field.find(u=>u.card.id==='bob')`));
+      w.eval(`P(0).field.push(mkUnit('bob',0));recalc()`);await siguiente(0);
+      t.check(!w.eval('G.over')&&w.eval('P(0).corte.turnos')===1,pagina+': reponer al cuarto aliado conserva el conteo anterior.');
+      w.eval(`P(0).field[0]=mkUnit('rey',0);recalc()`);await siguiente(0);
+      t.check(!w.eval('G.over')&&w.eval('P(0).corte.turnos')===1,pagina+': otro Rey hereda el progreso de la copia anterior.');
+
+      preparar(0,true);await w.startTurn(0);w.eval(`P(0).field.find(u=>u.card.token).infected=true`);await siguiente(0);
+      t.check(!w.eval('G.over')&&w.eval('P(0).field.length')===3&&w.eval('P(0).corte.turnos')===0,pagina+': una muerte por infección permite victoria falsa.');
+
+      for(const lado of [0,1]){
+        preparar(lado);await w.startTurn(lado);const corte=w.eval(`JSON.stringify(P(${lado}).corte)`),foto=w.netSnap();
+        preparar();w.eval('G.online=true;NET.on=true;NET.guest=true');
+        for(let i=0;i<3;i++)w.netApply(foto);
+        t.igual(w.eval(`JSON.stringify(P(${1-lado}).corte)`),corte,pagina+': la fotografía online pierde/duplica la corte al invertir los bandos.');
+        t.check(!w.eval('G.over'),pagina+': refrescar el invitado termina la partida.');
+      }
+
+      preparar();await w.startTurn(0);w.aiTurn=ia;
+      w.eval(`G.active=1;G.phase='combate';P(1).field=['eric','eric','eric'].map(id=>mkUnit(id,1));
+        P(1).field.forEach(u=>u.sick=false);P(1).hand=[];P(1).pd=0;P(1).leaderUsed=true;recalc()`);
+      await w.aiTurn();t.check(!w.eval('G.over')&&w.eval('P(0).corte.turnos')===0,pagina+': la IA ignora una defensa legal contra la corte.');
+      preparar();await w.startTurn(0);
+      w.eval(`P(0).field[0].dmg=4;const otraCopia=mkUnit('rey',0);otraCopia.possessed=true;otraCopia.dmg=7;P(0).field.push(otraCopia);
+        P(1).field=[mkUnit('machete',1)];P(1).field[0].pA=4;P(1).field[0].sick=false;G.active=1;G.phase='combate';recalc()`);
+      t.igual(w.eval('aiPickAttack(P(1).field[0]).uid'),w.eval('P(0).corte.rey'),pagina+': la IA prefiere un Rey poseído que no sostiene la corte.');
+      t.nota(pagina+': dos inicios, interrupciones, fichas, infección, campaña/Pitágoras, fotografía online y defensa real de la IA.');
+    }finally{w.relojPara();w.netSend=()=>{};w.netClose();marco.remove();}
+  }
+});
+
+/* Mide qué cartas se juegan y qué Trampas saltan en 100 partidas; avisa de los
+   agujeros que una tanda sin errores podría pasar por alto. */
 PRUEBAS.suite('cobertura', async t => {
   const jugadas = new Set(), trampas = new Set();
   const trampasTotales = Object.keys(T.CARDS).filter(id=>T.CARDS[id].t==='trampa');
@@ -3157,27 +3224,43 @@ PRUEBAS.suite('tipografia', async t => {
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=tipografia-interna';document.body.appendChild(f);await carga;
     const w=f.contentWindow,d=f.contentDocument;
     try{
-    w.showGallery();await sleep(200);
+    w.showGallery();await d.fonts.ready;await sleep(750);
     const panel=d.querySelector('#coleccionPanel');t.check(panel?.open,pagina+': la colección debe abrirse para revisar todos los títulos.');
     panel.querySelector('.coleccionPestanas button').click();
     const buscar=panel.querySelector('input[type="search"]');buscar.value='';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
     for(const select of panel.querySelectorAll('.coleccionFiltros select')){select.value='todos';select.dispatchEvent(new w.Event('change',{bubbles:true}));}
-    const visitadas=new Set(),cortados=[],descentrados=[];
-    for(let indice=0;indice<100;indice++){
-      await new Promise(r=>w.requestAnimationFrame(r));
-      const cartas=[...panel.querySelectorAll('.coleccionMini')];t.check(cartas.length>0,pagina+': cada página de colección debe mostrar cartas.');
-      for(const carta of cartas){
-        visitadas.add(carta.dataset.carta);
-        for(const nombre of carta.querySelectorAll('.nombreCarta,.coleccionMiniInfo>strong')){
-          if(nombre.scrollHeight>nombre.clientHeight+2||nombre.scrollWidth>nombre.clientWidth+2)cortados.push(nombre.textContent);
-          if(w.getComputedStyle(nombre).textAlign!=='center')descentrados.push(nombre.textContent);
-        }
+    const ajustar=()=>new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));
+    await ajustar();
+    const visitadas=new Set(),cortados=[],descentrados=[],cartas=[...panel.querySelectorAll('.coleccionMini')];
+    let grid=panel.querySelector('.coleccionRejilla');
+    t.check(!!grid&&!panel.querySelector('.coleccionPaginas'),pagina+': el catálogo debe recorrerse con scroll, sin páginas.');
+    for(const carta of cartas){
+      visitadas.add(carta.dataset.carta);
+      const nombres=carta.querySelectorAll('.nm,.lname,.nombreCarta,.coleccionMiniInfo>strong');
+      t.check(nombres.length>0,pagina+': falta el nombre real de '+carta.dataset.carta+'.');
+      for(const nombre of nombres){
+        if(nombre.scrollHeight>nombre.clientHeight+2||nombre.scrollWidth>nombre.clientWidth+2)cortados.push(nombre.textContent);
+        if(w.getComputedStyle(nombre).textAlign!=='center')descentrados.push(nombre.textContent);
       }
-      const siguiente=panel.querySelector('.coleccionPaginas button:last-child');if(siguiente.disabled)break;siguiente.click();
     }
-    t.check(visitadas.size>80&&visitadas.size===w.CAOZ_COLECCION.ids().length,pagina+': la paginación debe permitir revisar el catálogo completo, no sólo la primera página.');
+    t.check(visitadas.size>80&&visitadas.size===w.CAOZ_COLECCION.ids().length,pagina+': deben estar disponibles todas las cartas del catálogo.');
     t.check(!cortados.length,pagina+': nombres recortados: '+[...new Set(cortados)].join(', '));
     t.check(!descentrados.length,pagina+': los nombres deben estar centrados: '+[...new Set(descentrados)].join(', '));
+    const primeras=cartas.slice(0,6).map(n=>n.getBoundingClientRect());
+    t.check(primeras.length===6&&primeras[0].width>0&&primeras[0].left<primeras[1].left&&primeras[1].left<primeras[2].left&&Math.abs(primeras[0].top-primeras[2].top)<2&&Math.abs(primeras[3].left-primeras[0].left)<2&&primeras[3].top>=primeras[0].bottom-2,pagina+': deben verse exactamente tres cartas por fila.');
+    t.check(grid.scrollHeight>grid.clientHeight+20&&['auto','scroll'].includes(w.getComputedStyle(grid).overflowY),pagina+': el listado completo debe permitir scroll interno.');
+    t.check(grid.scrollWidth<=grid.clientWidth+2,pagina+': el listado no debe desbordarse horizontalmente.');
+    grid.scrollTop=grid.scrollHeight;await ajustar();
+    const limite=grid.getBoundingClientRect(),ultima=cartas[cartas.length-1].getBoundingClientRect();
+    t.check(ultima.top>=limite.top-2&&ultima.bottom<=limite.bottom+2,pagina+': la última carta no se puede alcanzar al final del scroll.');
+    const elegida=cartas[Math.floor(cartas.length/2)],pos=elegida.getBoundingClientRect();
+    grid.scrollTop+=pos.top-limite.top-(grid.clientHeight-pos.height)/2;await ajustar();
+    const desplazamiento=grid.scrollTop,id=elegida.dataset.carta;elegida.focus({preventScroll:true});elegida.click();await ajustar();
+    t.igual(panel.dataset.vista,'detalle',pagina+': abrir una carta a mitad de la lista debe mostrar sus versiones.');
+    panel.querySelector('.coleccionAtras').click();await ajustar();grid=panel.querySelector('.coleccionRejilla');
+    t.check(Math.abs(grid.scrollTop-desplazamiento)<=2,pagina+': volver de una carta pierde la posición de la lista.');
+    t.igual(d.activeElement?.dataset.carta,id,pagina+': volver del detalle debe recuperar el foco de la carta.');
+    t.nota(pagina+': '+visitadas.size+' nombres reales, tres columnas, última carta accesible y posición/foco restaurados.');
     }finally{d.querySelector('#coleccionPanel')?.close();w.relojPara();f.remove();}
   }
 });

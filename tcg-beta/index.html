@@ -941,11 +941,11 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
   border-bottom:1px solid rgba(255,255,255,.07)}
 #rail .bar .stat{justify-content:center;gap:4px;padding:3px 6px;font-size:11px}
 #rail .bar .stat i{font-size:16px}
-#rail .bar .stat.key{grid-column:1/-1}
+#rail .bar .stat.key,#rail .bar .stat.corte{grid-column:1/-1}
 /* El contador de cartas en mano sobra aquí: los dorsos del rival ya se ven
    arriba y tu mano la tienes delante. Quitarlo es lo que hace que las dos
    columnas quepan sin apretarse. */
-#rail .bar .stat:not(.alma):not(.pd):not(.key):not(.gr):not(.relic){display:none}
+#rail .bar .stat:not(.alma):not(.pd):not(.key):not(.gr):not(.relic):not(.corte){display:none}
 #rail .bar .spacer{display:none}
 #rail .bar .turnpill{grid-column:1/-1;text-align:center;font-size:11px;padding:3px 8px}
 #rail .bar .netchip{grid-column:1/-1;font-size:10.5px;justify-content:center}
@@ -2326,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=249"></script>
-<script src="final.js?b=249"></script>
+<script src="motor.js?b=250"></script>
+<script src="final.js?b=250"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:249, fecha:'2026-09-11'};
+const BUILD = {n:250, fecha:'2026-09-12'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
