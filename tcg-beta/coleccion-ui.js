@@ -9,8 +9,8 @@
   const modelo=()=>window.CAOZ_COLECCION;
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  let panel,contenido,barra,estado,volverFoco,origen,temporizadores=[],observador,frame=0,guardando=false,restaurarLista=false,focoLista=null;
-  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,reveladas:0,muestraSobre:0,packId:null};
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null;
+  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:l.n,t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,sub:typeof tribeLine==='function'?tribeLine(c):c.t};
@@ -25,8 +25,12 @@
   }
   function sonido(id){window.CAOZ_AUDIO?.play(id);}
   function mensaje(texto,error=false){if(!estado)return;estado.textContent=texto;estado.classList.toggle('error',error);}
-  function despues(fn,ms){const t=setTimeout(fn,ms);temporizadores.push(t);return t;}
-  function limpiarTiempos(){guardando=false;temporizadores.forEach(clearTimeout);temporizadores=[];cancelAnimationFrame(frame);}
+  function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);}
+  function destruirApertura(){
+    const anterior=aperturaSobre;aperturaSobre=null;
+    if(anterior){anterior.cancelada=true;anterior.componente?.destruir();}
+    panel?.classList.remove('coleccionAbriendoSobre');
+  }
   function medida(){
     if(!panel?.open)return;
     const v=window.visualViewport,alto=v?v.height:innerHeight;
@@ -38,7 +42,8 @@
   function encajarCartas(){
     if(!panel?.open)return;
     const movil=panel.clientWidth<550;
-    panel.querySelectorAll('.coleccionCarta,.coleccionReverso').forEach(n=>{
+    panel.querySelectorAll('.coleccionCarta').forEach(n=>{
+      if(n.closest('.sobresApertura'))return;
       if(!n.getClientRects().length)return;
       const p=n.parentElement,clase=p.classList;let alto=p.clientHeight,ancho=p.clientWidth;
       // Las filas de la lista crecen con el ancho de sus tres columnas. No
@@ -92,8 +97,10 @@
     if(typeof animarTransicionMenu==='function')animarTransicionMenu(panel.querySelector('.coleccionInterior'),panel);
     panel.querySelector('.coleccionCerrar').focus({preventScroll:true});
   }
-  function limpiar(){
-    limpiarTiempos();observador?.disconnect();observador=null;
+  function limpiar(evento){
+    // close se encola: no desmontar una Colección que ya se volvió a abrir.
+    if(evento?.type==='close'&&panel?.open)return;
+    destruirApertura();limpiarTiempos();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
     window.removeEventListener('caoz:coleccion',cambio);window.removeEventListener('caoz:arte',arteActualizado);window.removeEventListener('caoz:coleccion-error',falloGuardado);
     // El evento close llega después de comenzar el regreso. Limpiar sólo una
@@ -101,7 +108,7 @@
     if(panel?.querySelector('.barridoModal,.coleccionInterior.menuEntra')&&typeof limpiarTransicionMenu==='function')limpiarTransicionMenu();
   }
   function cerrar(){
-    if(!panel?.open)return;guardarPosicionLista();panel.close();
+    if(!panel?.open)return;guardarPosicionLista();limpiar();panel.close();
     if(origen?.isConnected&&typeof animarTransicionMenu==='function')animarTransicionMenu(origen);
     if(volverFoco?.isConnected)volverFoco.focus({preventScroll:true});
   }
@@ -117,7 +124,7 @@
   }
   function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista)s.desplazamiento=contenido.querySelector('.coleccionRejilla')?.scrollTop||0;}
   function ir(vista){guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
-  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;contenido.replaceChildren();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='canje')dibujarCanje();else dibujarSobres();}
+  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){dibujarSobres();return;}destruirApertura();contenido.replaceChildren();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else dibujarCanje();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
     const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
@@ -166,6 +173,16 @@
     n.dataset.vistaArte=(document.getElementById('panelCerrar')?'movil_':'desktop_')+'coleccion';
     n.removeAttribute('tabindex');n.setAttribute('aria-hidden','true');actualizarCarta(n);return n;
   }
+  function cartaSobre(item){
+    const n=carta(item.id,item.acabado);
+    // El componente mide sus cinco frentes. La rejilla y el detalle no deben
+    // redimensionarlos ni rehacerlos cuando cambian datos de la colección.
+    n.classList.remove('coleccionCarta');n.classList.add('coleccionCartaSobre');
+    // Congelar el arte resuelto: los refrescos globales no sustituyen imágenes
+    // después de su decodificación. El próximo sobre recoge el catálogo nuevo.
+    n.removeAttribute('data-arte-id');n.querySelectorAll('[data-arte-id]').forEach(soporte=>soporte.removeAttribute('data-arte-id'));
+    return n;
+  }
   function verCarta(id){s.carta=id;s.acabadoVista=modelo().elegido(id);s.regla=0;ir('detalle');sonido('ui_confirm');}
   function dibujarDetalle(){
     if(!s.carta){ir('cartas');return;}contenido.replaceChildren();panel.dataset.vista='detalle';
@@ -205,17 +222,22 @@
     if(paginas.length>1){const anterior=boton('‹',()=>{s.regla--;paginacionReglas();}),siguiente=boton('›',()=>{s.regla++;paginacionReglas();});anterior.disabled=s.regla===0;siguiente.disabled=s.regla===paginas.length-1;anterior.setAttribute('aria-label','Página anterior de habilidades');siguiente.setAttribute('aria-label','Página siguiente de habilidades');nav.append(anterior,crear('span','',(s.regla+1)+' / '+paginas.length),siguiente);}
   }
   function dibujarSobres(){
-    contenido.replaceChildren();panel.dataset.vista='sobres';const pack=modelo().pendiente();if(pack){dibujarRevelacion(pack);return;}
-    s.packId=null;s.reveladas=0;
+    panel.dataset.vista='sobres';const pack=modelo().pendiente(),firma=pack?JSON.stringify([pack.id,pack.cartas]):null;
+    // El modelo entrega copias del pendiente en cada evento. Su contenido, no
+    // la identidad del objeto, decide si hay que cambiar la escena montada.
+    if(pack&&aperturaSobre?.firma===firma&&aperturaSobre.host.parentElement===contenido)return;
+    destruirApertura();contenido.replaceChildren();if(pack){dibujarRevelacion(pack,firma);return;}
     const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','TESOROS POR DESCUBRIR'),crear('h3','','Ediciones del Domo'),crear('p','','Termina una campaña y recibe un sobre con 5 cartas Foil aleatorias.'));contenido.append(cab);
     const escena=crear('div','coleccionSobreEscena'),sobre=crear('div','coleccionSobre');sobre.setAttribute('aria-hidden','true');
     sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreLeyenda','5 CARTAS FOIL'));
     escena.append(crear('div','coleccionSobreAura'),sobre);contenido.append(escena);
     const acciones=crear('div','coleccionSobreAcciones'),n=modelo().sobres(),abrir=boton(n?'Abrir sobre':'Completa una campaña',()=>{
-      if(guardando)return;guardando=true;abrir.disabled=true;let p;
+      if(guardando)return;
+      if(!window.CAOZ_SOBRES?.crear){mensaje('La apertura no está disponible. Recarga la página para intentarlo otra vez.',true);return;}
+      guardando=true;abrir.disabled=true;let p;
       try{p=modelo().abrirSobre();}finally{guardando=false;}
       if(!p){abrir.disabled=false;mensaje('No se pudo abrir. Comprueba tus sobres o el espacio disponible para guardar.',true);return;}
-      s.packId=p.id;s.reveladas=0;s.muestraSobre=0;mensaje('');sonido('ui_confirm');dibujarSobres();actualizarCabecera();
+      mensaje('');sonido('ui_confirm');dibujarSobres();actualizarCabecera();
     },'coleccionAbrirSobre');abrir.disabled=!n;acciones.append(crear('p','coleccionSobreCuenta',n===1?'Tienes un sobre por abrir':'Tienes '+n+' sobres por abrir'),abrir);
     if(modelo().betaDisponible()){const beta=boton('Sobre de prueba · Beta',()=>{if(guardando)return;guardando=true;let ok;try{ok=modelo().darSobreBeta();}finally{guardando=false;}if(ok){dibujarSobres();actualizarCabecera();mensaje('Sobre de prueba añadido.');}else mensaje('No se pudo añadir el sobre. Inténtalo de nuevo.',true);},'coleccionBeta');acciones.append(beta);}
     contenido.append(acciones,crear('p','coleccionAviso','Las Doradas se obtienen con los códigos de las cartas físicas.'));
@@ -228,31 +250,42 @@
     const pronto=boton('Próximamente',()=>{},'coleccionAbrirSobre');pronto.disabled=true;caja.append(pronto,crear('p','coleccionCanjeNota','El canje todavía no está disponible. Ningún código se envía ni se guarda.'));
     contenido.append(caja,boton('Volver a mis cartas',()=>ir('cartas'),'coleccionCanjeVolver'));
   }
-  function dibujarRevelacion(pack){
-    if(s.packId!==pack.id){s.packId=pack.id;s.reveladas=0;s.muestraSobre=0;}
-    const total=pack.cartas.length,termino=s.reveladas>=total;
-    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','EL DOMO HA ELEGIDO'),crear('h3','',termino?'Tus nuevas ediciones':'Descubre tu sobre'),crear('p','',termino?'Ya están guardadas en tu colección.':'Toca cada carta para revelar lo que esconde.'));contenido.append(cab);
-    const fila=crear('div','coleccionRevelacion');fila.dataset.reveladas=s.reveladas;fila.dataset.total=total;
-    pack.cartas.forEach((item,i)=>{
-      const revelada=i<s.reveladas,b=boton('',()=>revelar(i,pack),'coleccionHallazgo');b.dataset.indice=i;b.classList.toggle('revelada',revelada);b.classList.toggle('actual',i===s.muestraSobre);b.disabled=i!==s.reveladas||termino;
-      if(revelada){b.append(carta(item.id,item.acabado));b.append(crear('strong','coleccionHallazgoNombre',dato(item.id).n),crear('span','coleccionHallazgoEdicion',NOMBRES[item.acabado]+' · '+(item.nueva?'Nueva':'Ya la tenías')));b.setAttribute('aria-label',dato(item.id).n+', '+NOMBRES[item.acabado]+', '+(item.nueva?'nueva':'ya la tenías'));}
-      else{const reverso=crear('span','coleccionReverso');reverso.append(icono('libro'),crear('span','','✦'),crear('b','','CAOZ'));b.append(reverso,crear('strong','coleccionHallazgoNombre',i===s.reveladas?'Revelar carta':'Por descubrir'),crear('span','coleccionHallazgoEdicion',(i+1)+' de '+total));b.setAttribute('aria-label','Revelar carta '+(i+1)+' de '+total);}
-      fila.append(b);
-    });contenido.append(fila);
-    const indice=crear('nav','coleccionIndiceSobre');indice.setAttribute('aria-label','Cartas del sobre');
-    pack.cartas.forEach((item,i)=>{const b=boton(String(i+1),()=>{s.muestraSobre=i;dibujarSobres();},'coleccionPuntoSobre');b.disabled=i>s.reveladas;b.classList.toggle('revelado',i<s.reveladas);b.setAttribute('aria-current',i===s.muestraSobre?'true':'false');b.setAttribute('aria-label',(i<s.reveladas?dato(item.id).n:'Carta '+(i+1))+' · '+(i+1)+' de '+total);indice.append(b);});contenido.append(indice);
-    const pie=crear('div','coleccionSobreAcciones');
-    if(termino){pie.append(boton('Ir a mis cartas',()=>{
-      guardando=true;let ok;try{ok=modelo().cerrarSobre();}finally{guardando=false;}
-      if(ok){s.packId=null;s.reveladas=0;ir('cartas');mensaje('Elige una carta para equipar su nueva edición.');}else mensaje('No se pudo cerrar el sobre. Tus cartas siguen guardadas.',true);
-    },'coleccionAbrirSobre'));}
-    else pie.append(boton('Revelar carta '+(s.reveladas+1),()=>revelar(s.reveladas,pack),'coleccionAbrirSobre'));
-    contenido.append(pie,crear('p','coleccionAviso',termino?'Puedes escoger el diseño de cada carta desde Mis cartas.':'El contenido del sobre ya está guardado, aunque cierres la colección.'));programarAjuste();
+  function cerrarPendiente(registro){
+    if(aperturaSobre!==registro||registro.cancelada||!panel.open||guardando)return false;
+    const pendiente=modelo().pendiente();
+    // Un cambio de otra pestaña no permite que una escena vieja cierre el
+    // siguiente sobre. Se muestra el pendiente vigente sin consumir ninguno.
+    if(pendiente&&pendiente.id!==registro.id){dibujarSobres();actualizarCabecera();return true;}
+    guardando=true;let ok=false;
+    try{ok=modelo().cerrarSobre();}catch(_){}finally{guardando=false;}
+    if(!ok){registro.errorCierre=true;mensaje('No se pudo guardar el cierre. Tus cartas siguen guardadas. Pulsa Reintentar.',true);return false;}
+    destruirApertura();ir('sobres');mensaje('Tus cartas ya están en la colección.');return true;
   }
-  function revelar(indice,pack){
-    if(guardando||indice!==s.reveladas)return;
-    guardando=true;s.muestraSobre=indice;s.reveladas++;sonido('ui_confirm');dibujarSobres();const n=contenido.querySelector('[data-indice="'+indice+'"]');n?.classList.add('coleccionRevela');
-    despues(()=>{guardando=false;if(!panel.open)return;contenido.querySelector('.coleccionSobreAcciones button')?.focus({preventScroll:true});},matchMedia('(prefers-reduced-motion:reduce)').matches?0:420);
+  function dibujarRevelacion(pack,firma){
+    const host=crear('div','coleccionAperturaSobre');host.dataset.packId=pack.id;host.dataset.total=pack.cartas.length;
+    host.setAttribute('aria-label','Apertura de '+pack.cartas.length+' cartas');contenido.append(host);panel.classList.add('coleccionAbriendoSobre');
+    const registro={id:pack.id,firma,host,componente:null,cancelada:false,errorCierre:false};aperturaSobre=registro;
+    const vigente=()=>aperturaSobre===registro&&!registro.cancelada&&panel.open&&s.vista==='sobres';
+    function montar(){
+      host.replaceChildren(crear('p','coleccionAperturaCargando','Preparando el sobre…'));
+      // Primero llegan los encuadres y el catálogo disponible. Después el
+      // componente crea los frentes reales y espera sus imágenes y decode().
+      Promise.resolve().then(()=>typeof cargarArte==='function'?cargarArte():null).then(()=>{
+        if(!vigente())return;
+        if(!window.CAOZ_SOBRES?.crear)throw Error('La apertura aún no está disponible.');
+        registro.componente=window.CAOZ_SOBRES.crear(host,{variante:'reliquia',logoUrl:'art/logo.webp',
+          cartas:pack.cartas.map(item=>({...item,nombre:dato(item.id).n})),crearCarta:cartaSobre,
+          onVolver:()=>cerrarPendiente(registro),onCambio:actual=>{
+            if(!vigente())return;host.dataset.fase=actual.fase;
+            if(actual.fase==='terminado'&&registro.errorCierre){const b=host.querySelector('.sobresAccion');if(b){b.textContent='Reintentar';b.classList.add('coleccionReintentarCierre');}}
+          }});
+      }).catch(()=>{
+        if(!vigente())return;
+        registro.componente?.destruir();registro.componente=null;
+        const error=crear('div','coleccionAperturaError');error.append(crear('p','','No se pudo preparar la apertura. El contenido del sobre sigue guardado.'),boton('Reintentar',montar,'coleccionReintentarApertura'));host.replaceChildren(error);
+      });
+    }
+    montar();
   }
   // La función es global porque los dos menús la invocan al pulsar Colección.
   window.abrirColeccion=abrir;

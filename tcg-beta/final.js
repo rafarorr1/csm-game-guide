@@ -16,6 +16,7 @@
   document.write('<script src="arte-vistas.js?b='+encodeURIComponent(b)+'"><\/script>');
   if(new URLSearchParams(location.search).has('estudioVista'))document.write('<script src="estudio-vista.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<link rel="stylesheet" href="coleccion.css?b='+encodeURIComponent(b)+'">');
+  document.write('<link rel="stylesheet" href="sobres-apertura.css?b='+encodeURIComponent(b)+'">');
   document.write('<script src="coleccion-modelo.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="arte-remoto.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="final-core.js?b='+encodeURIComponent(b)+'"><\/script>');
@@ -37,6 +38,8 @@
   document.write('<script src="moneda-fisica.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="polish-aaa.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="coleccion-juego.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="sobres-escena.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="sobres-apertura.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="coleccion-ui.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="audio-domo.js?b='+encodeURIComponent(b)+'"><\/script>');
 })();
