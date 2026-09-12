@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 252 en preparación (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 252 (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,7 @@ números) → el código.
 
 ---
 
-## Beta 252 — Colección aprobada para integración
+## Beta 252 — Colección publicada y verificada
 
 Rama `feature/coleccion-copias-ediciones`, desde `develop`/beta251. El usuario
 pidió copias por carta y dos series nuevas: Foil con grabados
@@ -19,9 +19,14 @@ azul/plata y Doradas con miniaturas de manuscrito iluminado. Se mantienen los
 publicadas). Son 134 Foil nuevas y 133 Doradas nuevas; Thal completa la serie
 Dorada con su arte final. Prompts, fuentes y hashes públicos quedan en
 `../dev/arte/ediciones-placeholder-v1.json`. El usuario aprobó la sección aislada
-y pidió publicarla en beta el 2026-09-12. Se prepara la build 252 en PR #9 hacia
-`develop`; producción permanece en 250. La publicación se registra después de
-validar el juego completo y los archivos servidos.
+y pidió publicarla en beta el 2026-09-12. Integrada mediante PR #9 en `develop`,
+fuente `ec698ed39dd80d1b09dc5e439316ffd964d450e6`, etiqueta `build-252`.
+Artefactos `gh-pages:d1a4de0` y `beta:4372e58`, árbol beta
+`9bbc7d6673c268cf248d01bec4f7e52e5bf3ebd0`. Los 499 archivos del paquete
+coinciden con la fuente; las 402 ilustraciones por edición se verificaron
+byte a byte en Cloudflare. Acceso: https://beta.caoz-tcg.pages.dev/?b=252
+y `/movil.html?b=252`. Producción permanece en 250; `main`, el árbol `/tcg`
+y la publicación aislada conservan sus referencias previas.
 
 Revisión del listado: debajo de cada carta quedan únicamente los marcadores
 de las ediciones poseídas (Normal, Foil y Dorada); no se dibujan las bloqueadas
@@ -52,9 +57,11 @@ existente. Restaurar vuelve al original local de esa edición. No se cambió D1.
 Pruebas acotadas: `pruebas_coleccion.mjs`, `pruebas_arte_ediciones.mjs`,
 `pruebas_originales_acabados.mjs`, `dev/secciones/pruebas_coleccion_copias.mjs`,
 `pruebas_coleccion_muestrario.mjs`, `pruebas_coleccion_protagonistas.mjs`
-y las guardas del exportador aislado. La integración ejecuta la batería completa
-del juego, incluidos tutoriales. El publicador del juego incluye las dos nuevas
-regresiones de arte. Los retratos de Protagonistas
+y las guardas del exportador aislado. Las 81 suites del juego completo pasaron,
+incluidos los seis tutoriales. El publicador incluye las dos nuevas regresiones
+de arte. `acabadosArte` comprueba originales premium retirados, herencia explícita
+y fallback Normal cuando falta original premium; dos sabotajes verifican estos
+contratos. Los retratos de Protagonistas
 llenan la carta de Colección; la corrección CSS está limitada a ese panel y
 conserva el formato de VS y los frentes de sobres. Las nuevas ilustraciones se
 cargan al verlas; no se añaden a la descarga inicial obligatoria del service worker.

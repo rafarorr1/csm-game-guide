@@ -16,6 +16,9 @@
 - El laboratorio permite recorrer ambas series con un inventario temporal,
   sin alterar progreso real. Integración autorizada de la revisión aislada
   en beta 252; producción permanece en 250.
+- Validación completa: 81 suites, incluidos los seis tutoriales. Los originales
+  premium y el fallback Normal se comprueban en ambas pantallas con sabotaje.
+  Las 402 ilustraciones por edición coinciden con los archivos servidos en beta.
 
 ### Sin numerar · build 251 · Sello del Domo en Colección · 2026-09-12
 
