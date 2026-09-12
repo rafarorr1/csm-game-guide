@@ -13,7 +13,9 @@ del respaldo.
 - Crear trabajos desde `origin/develop` con `python3 dev/nueva_rama.py nombre-del-cambio`.
 - Para una sección: vista aislada → revisión del usuario → integración y pruebas → beta.
   Producción requiere autorización para la versión. No repetir aprobaciones ya recibidas.
-- `gh-pages` y `beta` contienen archivos publicados; nunca desarrollar allí.
+- `gh-pages`, `beta` y `aislados` contienen archivos publicados; nunca desarrollar allí.
+- Las revisiones de secciones se publican desde GitHub a Cloudflare en la rama `aislados`.
+  Entregar su URL pública, sin enlaces ChatGPT/Sites ni login; 127.0.0.1 es sólo local.
 - La antigua `feature/aaa-combat-cards` queda conservada como historial, no como rama general.
 
 Comandos, transición inicial y pruebas en **`dev/README.md`**. No copiar el juego completo

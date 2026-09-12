@@ -74,7 +74,9 @@ El motor y las pantallas siguen siendo **scripts clásicos que comparten el ámb
 Cuando el usuario pida un cambio en una sección concreta, seguir este orden:
 
 1. Preparar una vista interactiva aislada de esa sección con el cambio solicitado
-   y presentarla con un acceso directo para revisarla. Usar el componente real y
+   y presentarla con un acceso directo de GitHub/Cloudflare para revisarla desde
+   el teléfono, sin login de ChatGPT. Usar `../dev/secciones/publicar.py`: rama
+   `aislados`, independiente de beta/producción. Usar el componente real y
    sólo los datos/dependencias necesarios; mantener separados el progreso y los
    datos de prueba. Conservar el resto del juego. No basta una propuesta en texto.
 2. Antes de presentarla, comprobar únicamente esa sección y sus interacciones

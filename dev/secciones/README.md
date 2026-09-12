@@ -28,8 +28,8 @@ las dependencias se derivan del código actual en cada solicitud.
 1. Trabajar en una rama temporal según el flujo del proyecto.
 2. Cambiar el componente real y recargar esta sección. No mantener una segunda
    versión de la interfaz aquí.
-3. Probar los estados relevantes, en escritorio y móvil, y presentar el enlace
-   local al usuario. Todavía no hace falta publicar otra versión completa.
+3. Probar los estados relevantes, en escritorio y móvil, y presentar la URL
+   de la rama `aislados` en Cloudflare. Todavía no se publica otra versión del juego.
 4. Tras aprobar la sección, integrar y ejecutar las guardas completas antes de beta.
 
 Cerrar el diálogo muestra los controles del laboratorio. Allí se puede cambiar
@@ -90,27 +90,53 @@ cargar sólo datos y ganchos necesarios y documentar cualquier dependencia omiti
 Añadir explícitamente las rutas necesarias al servidor y pruebas de aislamiento.
 No usar el HTML completo del juego oculto para suplir una dependencia ausente.
 
-## Revisión desde el teléfono
+## Revisión desde el teléfono: GitHub y Cloudflare
 
-La copia privada alojada está en https://caoz-coleccion-aislada.rafarorr1.chatgpt.site/ .
-Requiere la cuenta de ChatGPT propietaria. No modifica beta, producción ni el progreso
-real. Se elige móvil/escritorio automáticamente; también hay selector manual.
+Dirección estable: https://aislados.caoz-tcg.pages.dev/coleccion/ . Es pública,
+funciona sin sesión de ChatGPT y elige móvil/escritorio automáticamente.
+La rama `aislados` del mismo repositorio contiene sólo el paquete de revisión:
+`tcg/coleccion/`. Cloudflare publica esa rama como preview, usando el mismo
+proyecto `caoz-tcg` y salida `tcg` que la beta, con dirección independiente.
+No se modifica la rama `beta`, `gh-pages`, producción ni el progreso real.
 
-Para actualizar la copia desde la rama que se esté revisando:
+Desde la rama de la sección, con los cambios guardados en un commit:
 
 ```sh
-node dev/secciones/exportar.mjs /ruta/nueva/de/salida
-node dev/secciones/pruebas_exportacion.mjs
+python3 dev/secciones/publicar.py --solo-preparar --salida /ruta/nueva/de/salida
+python3 dev/secciones/publicar.py --publicar
 ```
 
-El exportador no sobrescribe carpetas existentes. Produce ambas presentaciones con los
-componentes reales, arte local público y sus hashes. Excluye motor, partida, estudios,
-backend, audio y service worker. El adaptador remoto conserva la sesión del sitio
-sólo para leer encuadres y el catálogo vacío del mismo origen; no contacta los estudios.
-Los dos sobres se preparan como fixtures en memoria, sin habilitar privilegios beta.
+El primer comando permite revisar el paquete sin subirlo. El segundo ejecuta las
+comprobaciones acotadas, exporta los componentes reales, registra su SHA de origen y
+hashes, y envía sólo `refs/heads/aislados`. Conserva otras secciones de la misma rama.
+Rechaza fuentes sucias, cambios de revisión durante la preparación, una rama destino
+ajena y publicaciones concurrentes. No usa `publicar.sh` ni ejecuta la batería del
+juego completo. La URL debe verificarse contra el paquete enviado antes de entregarla:
 
-Publicar ese paquete con Sites en el sitio ya registrado, conservando su acceso privado.
-Su registro y fuente alojada están en la carpeta de trabajo `caoz-coleccion-vista`;
-no registrar otro sitio para cada iteración. Mostrar la URL remota al usuario; un enlace
-127.0.0.1 no sirve desde otro dispositivo. La publicación de esta vista no es una
-publicación del juego y no requiere ejecutar la batería del juego completo.
+```sh
+python3 dev/secciones/publicar.py --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/que/imprimio/el/publicador
+```
+
+El exportador incluye ambas presentaciones, arte local público y datos temporales.
+Excluye motor, partida, estudios, backend, audio y service worker. El adaptador estático
+redirige sólo la petición del catálogo remoto a un JSON vacío local; no añade
+credenciales ni contacta los estudios. Los sobres son fixtures en memoria, sin
+habilitar privilegios beta en el dominio nuevo. El paquete incluye una página 404
+para no confundir recursos ausentes con el índice y cabeceras para evitar caché vieja.
+
+La configuración de Cloudflare debe conservar producción `gh-pages`, directorio `tcg`,
+y previews personalizados `beta` y `aislados`. Las ramas fuente no despliegan.
+No copiar la configuración de bases de datos ni los estudios a los archivos publicados.
+No agregar una sección nueva pasando cualquier directorio al publicador: registrar su
+exportador y comprobaciones explícitas antes de habilitarla.
+
+Comprobaciones adicionales del paquete y su publicación:
+
+```sh
+node dev/secciones/pruebas_exportacion.mjs
+python3 dev/secciones/pruebas_publicar.py
+```
+
+Las pruebas usan repositorios temporales y no publican en internet. La vista anterior
+alojada con Sites queda fuera del flujo vigente; las futuras revisiones de este juego
+usan GitHub/Cloudflare por instrucción del usuario.

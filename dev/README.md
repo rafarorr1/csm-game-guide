@@ -9,9 +9,10 @@
 | `feature/*`, `fix/*`, `chore/*` | Un cambio acotado por rama/worktree | No |
 | `gh-pages` | Paquete de producción en `tcg/` y espejo beta en `tcg-beta/` | GitHub Pages y Cloudflare producción |
 | `beta` | Copia de `tcg-beta/` como `tcg/`, para Cloudflare Preview | Cloudflare beta |
+| `aislados` | Secciones de prueba bajo `tcg/`, sin el juego completo | Cloudflare aislados |
 
 Cloudflare: producción desde `gh-pages`, salida `tcg`; previews automáticos sólo
-para la rama `beta`. No cambiar la fuente Cloudflare a `main` o `develop`.
+para las ramas `beta` y `aislados`. No cambiar la fuente Cloudflare a `main` o `develop`.
 GitHub Pages continúa desde `gh-pages:/`. Las bases de datos y los estudios no cambian.
 
 ## Punto de partida de la migración
@@ -52,13 +53,22 @@ Abrir la nueva carpeta y ejecutar:
 node dev/secciones/servidor.mjs
 ```
 
-Primera sección disponible: [Colección aislada por internet](https://caoz-coleccion-aislada.rafarorr1.chatgpt.site/).
+Primera sección disponible: [Colección aislada por internet](https://aislados.caoz-tcg.pages.dev/coleccion/).
 El enlace local 127.0.0.1 sólo funciona en el ordenador; para el teléfono entregar
-la copia alojada y conservar su acceso privado.
+la copia alojada en GitHub/Cloudflare, sin login. No usar enlaces de ChatGPT/Sites.
 Usa sus componentes, estilos y datos reales; no carga una partida ni escribe el
 progreso del jugador. Tiene escenarios de sobres/acabados y vista móvil/escritorio.
 Ver [sus límites y controles](secciones/README.md). Para otra sección, añadir una
 entrada con dependencias mínimas, no un iframe del juego completo.
+
+Para entregar una revisión de Colección desde su rama limpia:
+
+```sh
+python3 dev/secciones/publicar.py --publicar
+```
+
+Este publicador sólo ejecuta comprobaciones de la sección y actualiza `aislados`.
+No llama al publicador del juego ni mueve `main`, `beta` o `gh-pages`.
 
 Cambiar el componente real en la rama temporal, hacer las comprobaciones acotadas
 pertinentes y presentar el enlace. Esperar la aprobación de esa sección antes de

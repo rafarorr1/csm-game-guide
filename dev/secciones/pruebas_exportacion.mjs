@@ -26,9 +26,9 @@ try{
   await red.fetch('https://revision.example/art/encuadres.json',{credentials:'omit'});
   await red.fetch('https://otro.example/art/encuadres.json',{credentials:'omit'});
   assert.equal(peticiones[0].url,'https://revision.example/catalogo-vacio.json');
-  assert.equal(peticiones[0].opciones.credentials,'same-origin');assert.equal(peticiones[1].opciones.credentials,'same-origin');
+  assert.equal(peticiones[0].opciones.credentials,'omit');assert.equal(peticiones[1].opciones.credentials,'omit');
   assert.equal(peticiones[2].opciones.credentials,'omit');
-  console.log('✓ La lectura privada sólo adapta el catálogo y los encuadres del mismo origen.');
+  console.log('✓ La sección estática sólo redirige su catálogo vacío, sin añadir credenciales.');
   let reemplazo;
   for(const [movil,vista,archivo] of [[true,'','movil.html'],[false,'','escritorio.html'],[true,'desktop','escritorio.html']]){
     vm.runInNewContext(fs.readFileSync(path.join(destino,'abrir.js'),'utf8'),{URL,URLSearchParams,matchMedia:()=>({matches:movil}),location:{search:'?vista='+vista,href:'https://revision.example/',replace:u=>{reemplazo=u;}}});
