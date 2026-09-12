@@ -10,6 +10,9 @@ Desde la raíz del repositorio:
 node dev/secciones/servidor.mjs
 ```
 
+Estos enlaces locales sólo funcionan en el ordenador que ejecuta el servidor.
+Para revisar desde el teléfono, entregar siempre la dirección alojada descrita abajo.
+
 Abrir:
 
 - Escritorio: <http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=sobres>
@@ -86,3 +89,28 @@ Crear su entrada y adaptadores en esta carpeta. Reutilizar los componentes reale
 cargar sólo datos y ganchos necesarios y documentar cualquier dependencia omitida.
 Añadir explícitamente las rutas necesarias al servidor y pruebas de aislamiento.
 No usar el HTML completo del juego oculto para suplir una dependencia ausente.
+
+## Revisión desde el teléfono
+
+La copia privada alojada está en https://caoz-coleccion-aislada.cuddly-bowl-3242.chatgpt.site/ .
+Requiere la cuenta de ChatGPT propietaria. No modifica beta, producción ni el progreso
+real. Se elige móvil/escritorio automáticamente; también hay selector manual.
+
+Para actualizar la copia desde la rama que se esté revisando:
+
+```sh
+node dev/secciones/exportar.mjs /ruta/nueva/de/salida
+node dev/secciones/pruebas_exportacion.mjs
+```
+
+El exportador no sobrescribe carpetas existentes. Produce ambas presentaciones con los
+componentes reales, arte local público y sus hashes. Excluye motor, partida, estudios,
+backend, audio y service worker. El adaptador remoto conserva la sesión del sitio
+sólo para leer encuadres y el catálogo vacío del mismo origen; no contacta los estudios.
+Los dos sobres se preparan como fixtures en memoria, sin habilitar privilegios beta.
+
+Publicar ese paquete con Sites en el sitio ya registrado, conservando su acceso privado.
+Su registro y fuente alojada están en la carpeta de trabajo `caoz-coleccion-vista`;
+no registrar otro sitio para cada iteración. Mostrar la URL remota al usuario; un enlace
+127.0.0.1 no sirve desde otro dispositivo. La publicación de esta vista no es una
+publicación del juego y no requiere ejecutar la batería del juego completo.
