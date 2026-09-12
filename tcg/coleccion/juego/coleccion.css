@@ -1,0 +1,380 @@
+/* Colección de naipes con el panel violeta del juego y botones de taberna.
+   Los estilos permanecen dentro del diálogo, sin alterar el tablero. */
+#coleccionPanel{
+  --col-papel:#ebd7b2;--col-tinta:#f0dfc0;--col-suave:#b7a186;--col-laton:#a7834b;
+  --alto-util:calc(var(--coleccion-alto,100dvh) - max(10px,env(safe-area-inset-top)) - max(10px,env(safe-area-inset-bottom)));
+  position:fixed;inset:calc(var(--coleccion-top,0px) + max(10px,env(safe-area-inset-top))) 0 calc(100% - var(--coleccion-top,0px) - var(--coleccion-alto,100dvh) + max(10px,env(safe-area-inset-bottom)));
+  box-sizing:border-box;margin:auto;width:min(1120px,calc(100vw - 28px - env(safe-area-inset-left) - env(safe-area-inset-right)));height:min(840px,var(--alto-util));max-width:none;max-height:var(--alto-util);padding:6px;overflow:hidden;
+  color:var(--col-tinta);border:1px solid #c6a264;border-radius:7px;background:repeating-linear-gradient(4deg,#ffffff03 0 2px,#09050306 3px 6px),linear-gradient(110deg,#553b26,#211610 55%,#493322);
+  box-shadow:inset 0 0 0 3px #291e16,0 28px 90px #000d;font-family:var(--sans,system-ui,sans-serif);font-size:14px;font-variant:normal;line-height:1.4;text-align:left;zoom:1;overscroll-behavior:contain;color-scheme:dark;
+}
+#coleccionPanel::backdrop{background:#080609cf;backdrop-filter:blur(7px)}
+#coleccionPanel,#coleccionPanel *{box-sizing:border-box}
+#coleccionPanel :is(h2,h3,h4,p){margin:0}
+#coleccionPanel button,#coleccionPanel input,#coleccionPanel select{font:inherit}
+#coleccionPanel button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#coleccionPanel button:disabled{cursor:default}
+#coleccionPanel :is(button,input,select):focus-visible{outline:2px solid #ffe0a0;outline-offset:3px}
+#coleccionPanel svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round;flex:none}
+#coleccionPanel .coleccionInterior{height:100%;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:19px 23px 10px;border:1px solid #87613b;background:radial-gradient(ellipse at 45% 0,#70402625,transparent 65%),linear-gradient(100deg,#251e17,#191513 48%,#211b16);border-radius:2px;position:relative}
+#coleccionPanel .coleccionInterior:before,#coleccionPanel .coleccionInterior:after{content:'';position:absolute;width:9px;height:9px;z-index:1;border:1px solid #a07b43;border-radius:50%;background:radial-gradient(circle at 35% 28%,#eed79a,#946d31 40%,#332416 75%);top:8px;pointer-events:none}
+#coleccionPanel .coleccionInterior:before{left:8px}#coleccionPanel .coleccionInterior:after{right:8px}
+#coleccionPanel .coleccionCabecera{display:flex;align-items:center;gap:14px;flex:none;min-height:52px;margin-bottom:15px}
+#coleccionPanel .coleccionEmblema{display:grid;place-items:center;width:42px;height:47px;flex:none;color:#c6a46a;border:1px solid #8c693c;background:linear-gradient(#553b25,#2a2017);clip-path:polygon(0 0,100% 0,100% 80%,50% 100%,0 80%)}
+#coleccionPanel .coleccionEmblema svg{width:26px;height:26px;translate:0 -3px}
+#coleccionPanel .coleccionTitulos{min-width:0}
+#coleccionPanel .coleccionAntetitulo{display:block;color:#c4a572;font-size:10px;letter-spacing:2.8px;font-weight:600;line-height:1.4}
+#coleccionPanel h2{font-family:var(--serif,Georgia,serif);font-size:30px;font-weight:700;line-height:1.25;color:#f4dfb1;letter-spacing:.4px}
+#coleccionPanel .coleccionCerrar{margin-left:auto;display:grid;place-items:center;width:42px;height:42px;flex:none;border:1px solid #8a6b4670;border-radius:3px;background:#1c1610;color:#d4b98e;transition:background .18s ease}
+#coleccionPanel .coleccionCerrar:hover{background:#47321f}
+#coleccionPanel .coleccionPestanas{display:flex;gap:4px;flex:none;border-bottom:1px solid #8d683c77;margin-bottom:15px}
+#coleccionPanel .coleccionPestana{display:flex;align-items:center;justify-content:center;gap:10px;min-height:42px;min-width:156px;box-shadow:none;background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:#b39e82;padding:8px 20px;translate:none;scale:1;font-family:var(--serif,Georgia,serif);font-size:16px}
+#coleccionPanel .coleccionPestana[aria-current="page"]{color:#f3dba7;background:linear-gradient(transparent,#9d73371f);border-bottom-color:#cca45f}
+#coleccionPanel .coleccionNumero{min-width:24px;border:1px solid #9c75467a;border-radius:3px;padding:1px 5px;background:#140f0d;font:12px/1.5 var(--sans,system-ui)}
+#coleccionPanel .coleccionContenido{position:relative;flex:1;display:flex;flex-direction:column;min-height:0;gap:10px;overflow:hidden}
+#coleccionPanel .coleccionBoton{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:39px;border:1px solid #a3814a;border-radius:3px;color:#efdab3;padding:8px 18px;text-align:center;background:radial-gradient(circle at 35% 25%,#e8d095,#99743d 45%,#473218 75%,transparent 90%) left 7px center/4px 4px no-repeat,radial-gradient(circle at 35% 25%,#e8d095,#99743d 45%,#473218 75%,transparent 90%) right 7px center/4px 4px no-repeat,repeating-linear-gradient(3deg,transparent 0 4px,#00000015 5px 6px),linear-gradient(#60432b,#36271c);box-shadow:inset 0 1px 0 #c8a77840,inset 0 -2px 0 #130c0780,0 3px 0 #0e0b08;font-family:var(--serif,Georgia,serif);font-size:14px;font-weight:600;line-height:1.2;letter-spacing:.3px;transition:translate .16s ease,filter .16s ease,border-color .16s ease}
+#coleccionPanel .coleccionBoton:not(:disabled):hover{filter:brightness(1.17);border-color:#e6c27e;translate:0 -1px}
+#coleccionPanel .coleccionBoton:not(:disabled):active{translate:0 2px}
+#coleccionPanel .coleccionBoton:disabled{opacity:.4;filter:saturate(.4);box-shadow:inset 0 1px 0 #c8a77820,0 1px 0 #0e0b08}
+#coleccionPanel .coleccionFiltros{display:grid;grid-template-columns:minmax(140px,1fr) 190px 170px;gap:10px;flex:none}
+#coleccionPanel .coleccionBuscar{display:flex;align-items:center;gap:9px;background:#100d0b;border:1px solid #745737b0;border-radius:3px;padding:0 11px;min-width:0;color:#aa8b60}
+#coleccionPanel .coleccionBuscar input{min-width:0;width:100%;height:39px;padding:6px 0;background:none;border:0;color:#f3e0be;font-size:14px;outline-offset:0}
+#coleccionPanel input::placeholder{color:#a28d71;opacity:1}
+#coleccionPanel .coleccionFiltro{display:block;min-width:0}
+#coleccionPanel select{width:100%;height:41px;border:1px solid #745737b0;border-radius:3px;background:#211911;color:#e1cba4;padding:0 9px;font-size:13px;cursor:pointer}
+#coleccionPanel .coleccionResumen{color:#b09d85;font-size:12px;flex:none;line-height:1.4}
+#coleccionPanel .coleccionRejilla{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:16px 20px;flex:1;min-height:0;padding:8px 14px 10px;position:relative;background:repeating-linear-gradient(89deg,transparent 0 35px,#ffe6b602 36px 37px),radial-gradient(ellipse at center,#c2935630,transparent 85%),#1a1410;border:1px solid #74543166;border-radius:4px;box-shadow:inset 0 0 30px #0006}
+#coleccionPanel .coleccionRejilla[data-cantidad="8"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+#coleccionPanel .coleccionRejilla[data-cantidad="6"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+#coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+#coleccionPanel .coleccionMini{display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;gap:7px;min-width:0;min-height:0;position:relative;background:none;border:0;padding:0;box-shadow:none;color:var(--col-tinta);border-radius:4px;translate:none!important;filter:none!important}
+#coleccionPanel .coleccionMiniInfo{display:flex;flex-direction:column;gap:3px;width:100%;max-width:190px;min-width:0;text-align:center}
+#coleccionPanel .coleccionMiniInfo>strong{height:2.45em;display:flex;align-items:center;justify-content:center;font-family:var(--serif,Georgia,serif);font-size:13px;line-height:1.2;font-weight:600;color:#edd9b9}
+#coleccionPanel .coleccionMiniPie{display:flex;align-items:center;justify-content:center;gap:12px;font-size:10px;color:#b7a185;line-height:1.4}
+#coleccionPanel .coleccionPuntos{display:inline-flex;gap:4px}
+#coleccionPanel .coleccionPuntos i{display:block;width:7px;height:7px;border:1px solid #7e715d;background:#332b22;rotate:45deg}
+#coleccionPanel .coleccionPuntos i[data-edicion="foil"]{border-color:#aaa8c7}
+#coleccionPanel .coleccionPuntos i[data-edicion="dorado"]{border-color:#c3a162}
+#coleccionPanel .coleccionPuntos i.propia[data-edicion="normal"]{background:#bba685}
+#coleccionPanel .coleccionPuntos i.propia[data-edicion="foil"]{background:linear-gradient(#dcbdeb,#93d0c7)}
+#coleccionPanel .coleccionPuntos i.propia[data-edicion="dorado"]{background:#e0b65d}
+#coleccionPanel .coleccionPuntos i.elegida{box-shadow:0 0 0 2px #dcc7a138}
+/* La colección usa la carta del tablero, sin dibujar otra composición. */
+#coleccionPanel .coleccionCarta{position:relative;flex:none;margin:0;max-width:none;max-height:none;min-height:0;aspect-ratio:5/7;transform:none;rotate:none;scale:1;translate:none;transition:filter .18s ease;pointer-events:none}
+#coleccionPanel .coleccionCarta.card{overflow:visible;display:flex;flex-direction:column}
+#coleccionPanel .coleccionCarta.card.acomodo .pieCarta .txt{display:block;max-height:none;overflow:visible;-webkit-line-clamp:unset;white-space:normal}
+#coleccionPanel .coleccionCarta.card.acomodo .pieCarta .tribe{white-space:normal}
+#coleccionPanel .coleccionCarta.vscard{inset:auto;position:relative;border-radius:10px;background:#1a1325;overflow:hidden;animation:none}
+#coleccionPanel .coleccionCarta.vscard .lname{font-size:1.5em;line-height:1.2}
+#coleccionPanel .coleccionCarta.vscard .larch{font-size:.65em;line-height:1.3}
+#coleccionPanel .coleccionMini:hover .coleccionCarta{filter:brightness(1.09)}
+#coleccionPanel .coleccionPaginas{display:flex;align-items:center;justify-content:center;gap:25px;flex:none;padding:1px 0 4px}
+#coleccionPanel .coleccionPaginas>span{font-family:var(--serif,Georgia,serif);font-size:14px;color:#c1a985;font-variant-numeric:tabular-nums;white-space:nowrap}
+#coleccionPanel .coleccionPaginas button{min-width:100px;min-height:35px;padding:6px 15px;font-size:12px}
+#coleccionPanel .coleccionVacio{grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+#coleccionPanel .coleccionVacio svg{width:32px;height:32px;color:#a38559}
+#coleccionPanel .coleccionVacio h3{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:20px}
+#coleccionPanel .coleccionEstado{flex:none;min-height:20px;font-size:12px;line-height:20px;color:#d8c095;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#coleccionPanel .coleccionEstado.error{color:#ffb3a3}
+#coleccionPanel .coleccionPie{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;border-top:1px solid #80603866;min-height:34px;padding-top:5px}
+#coleccionPanel .coleccionTotales{font-size:11px;color:#b4a085}
+#coleccionPanel .coleccionVolver{font-family:var(--serif,Georgia,serif);color:#e4cc9e;font-size:13px;min-height:30px;border:0;background:none;padding:4px 0 4px 10px;flex:none;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#9e794990}
+#coleccionPanel .coleccionDetalleCabecera{position:relative;flex:none;text-align:center;padding:0 120px;min-height:53px}
+#coleccionPanel .coleccionDetalleCabecera h3{font-family:var(--serif,Georgia,serif);font-size:25px;line-height:1.2;text-wrap:balance;color:#edd6aa}
+#coleccionPanel .coleccionDetalleCabecera p{color:#b8a28a;font-size:12px;margin-top:4px}
+#coleccionPanel .coleccionAtras{position:absolute;left:0;top:0;font-size:12px;padding:7px 11px;min-height:34px;background:none;box-shadow:none;border:0}
+#coleccionPanel .coleccionAtras svg{width:15px;height:15px}
+#coleccionPanel .coleccionVersiones{flex:1;min-height:140px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;max-width:780px;width:100%;margin:0 auto;padding:8px 8px 6px;background:radial-gradient(ellipse at 50% 55%,#af865624,transparent 72%)}
+#coleccionPanel .coleccionVersion{display:flex;flex-direction:column;align-items:center;min-width:0;min-height:0;gap:8px;position:relative}
+#coleccionPanel .coleccionVersion h4{font-family:var(--serif,Georgia,serif);font-size:17px;font-weight:400;letter-spacing:1px;color:#e0c79f;flex:none}
+#coleccionPanel .coleccionVersion[data-edicion="foil"] h4{color:#c5d3e4}
+#coleccionPanel .coleccionVersion[data-edicion="dorado"] h4{color:#efd086}
+#coleccionPanel .coleccionVersion .coleccionCarta{height:auto;flex:1;min-height:0;max-height:300px}
+#coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline:2px solid #d8b273;outline-offset:4px}
+#coleccionPanel .coleccionEstadoEdicion{display:flex;align-items:center;gap:5px;font-size:11px;color:#b3a18a;min-height:18px;flex:none}
+#coleccionPanel .coleccionEstadoEdicion svg{width:13px;height:13px}
+#coleccionPanel .coleccionVersion.elegida .coleccionEstadoEdicion{color:#dbc68e}
+#coleccionPanel .coleccionUsar{width:100%;max-width:180px;flex:none;min-height:36px;padding:7px 12px;font-size:13px}
+#coleccionPanel .coleccionVersion.elegida .coleccionUsar:disabled{opacity:1;border-color:#857148;background:linear-gradient(#3c3324,#272319);color:#d8c296;box-shadow:none}
+#coleccionPanel .coleccionReglas{flex:none;max-width:850px;width:100%;margin:0 auto;padding:12px 17px 7px;border:1px solid #84613a77;border-radius:3px;background:linear-gradient(110deg,#3c2a1b66,#281d1470);position:relative}
+#coleccionPanel .coleccionReglasTitulo{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:#b69d7a;margin-bottom:7px}
+#coleccionPanel .coleccionReglasTitulo strong{font-family:var(--serif,Georgia,serif);font-size:15px;font-weight:500;color:#dfc398}
+#coleccionPanel .coleccionReglaTexto{height:4.6em;overflow:hidden;font-size:14px;line-height:1.52;color:#e7d9c2}
+#coleccionPanel .coleccionReglaPaginas{height:24px;display:flex;align-items:center;justify-content:flex-end;gap:9px;color:#b8a082;font-size:10px}
+#coleccionPanel .coleccionReglaPaginas:empty{height:0}
+#coleccionPanel .coleccionReglaPaginas .coleccionBoton{min-height:23px;width:28px;padding:0;font-family:system-ui;font-size:18px;line-height:1;border-color:#705332;background:#271c13;box-shadow:none}
+#coleccionPanel .coleccionAviso{text-align:center;font-size:11px;line-height:1.4;color:#b29c7d;flex:none;padding:3px 6px 1px}
+#coleccionPanel .coleccionSobreTitulo{flex:none;text-align:center;padding-top:4px}
+#coleccionPanel .coleccionSobreTitulo h3{font-family:var(--serif,Georgia,serif);font-size:31px;color:#efd6a3;line-height:1.3;margin-top:5px}
+#coleccionPanel .coleccionSobreTitulo p{font-size:13px;color:#b9a287;line-height:1.5;margin-top:5px}
+#coleccionPanel .coleccionSobreEscena{flex:1;min-height:100px;display:grid;place-items:center;position:relative;isolation:isolate}
+#coleccionPanel .coleccionSobreAura{position:absolute;width:390px;max-width:100%;height:100%;background:radial-gradient(ellipse,#bc914336,transparent 67%);filter:blur(3px);pointer-events:none}
+#coleccionPanel .coleccionSobre{height:90%;width:auto;max-height:330px;aspect-ratio:.68;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;isolation:isolate;border:1px solid #c3a369;border-radius:3px 3px 6px 6px;background:repeating-linear-gradient(92deg,#e2b65008 0 2px,transparent 3px 8px),linear-gradient(125deg,#654725,#2f251d 30%,#50371d 53%,#171310 80%);box-shadow:inset 0 0 0 7px #16120cd9,inset 0 0 0 8px #a6814666,0 16px 30px #000b;rotate:-5deg;animation:coleccionSobreFlota 6s ease-in-out infinite;color:#d6b473;overflow:hidden;container-type:inline-size}
+#coleccionPanel .coleccionSobre:before,#coleccionPanel .coleccionSobre:after{content:'';position:absolute;left:0;right:0;height:8%;border-top:1px solid #b99a5c66;border-bottom:1px solid #b99a5c66;background:repeating-linear-gradient(90deg,#daba6d35 0 1px,transparent 2px 4px),#251e16;z-index:-1}
+#coleccionPanel .coleccionSobre:before{top:0}#coleccionPanel .coleccionSobre:after{bottom:0}
+#coleccionPanel .coleccionSobreMarca{font:700 24cqw/1 var(--serif,Georgia,serif);letter-spacing:2px;text-shadow:0 1px 0 #fde0a073,0 4px 6px #0006}
+#coleccionPanel .coleccionSobreLinea{font:9cqw/1.3 var(--serif,Georgia,serif);letter-spacing:2px}
+#coleccionPanel .coleccionSobre>svg{width:26%;height:22%;margin-top:10%;stroke-width:.8;opacity:.7}
+#coleccionPanel .coleccionSobreSello{position:absolute;display:grid;place-items:center;bottom:19%;right:12%;width:26%;aspect-ratio:1;border-radius:50%;border:2px solid #8d3626;background:radial-gradient(circle at 32% 23%,#ae5439,#5f221b 60%,#32150f);box-shadow:0 2px 4px #000b,inset 0 0 0 3px #bc725433;font-size:15cqw;color:#e9b77b;rotate:15deg}
+#coleccionPanel .coleccionSobreLeyenda{position:absolute;bottom:11%;font-size:5cqw;letter-spacing:1.8px}
+#coleccionPanel .coleccionSobreAcciones{flex:none;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 0 6px}
+#coleccionPanel .coleccionSobreCuenta{font-size:13px;color:#c5aa80}
+#coleccionPanel .coleccionAbrirSobre{width:min(280px,100%);min-height:46px;font-size:17px}
+#coleccionPanel .coleccionBeta{background:none;border:1px dashed #8c765780;box-shadow:none;min-height:31px;padding:5px 13px;font-family:var(--sans,system-ui);font-size:11px;color:#baaa8e}
+#coleccionPanel .coleccionRevelacion{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));align-items:center;gap:24px;padding:16px 10px;flex:1;min-height:150px;width:100%;max-width:800px;margin:0 auto;background:radial-gradient(ellipse at center,#c99b482c,transparent 70%)}
+#coleccionPanel .coleccionHallazgo{height:100%;max-height:365px;display:flex;flex-direction:column;align-items:center;gap:9px;min-width:0;min-height:0;background:none;border:0;padding:0;box-shadow:none;color:#e8d3ae;filter:none!important;opacity:1!important;translate:none!important}
+#coleccionPanel .coleccionHallazgo :is(.coleccionCarta,.coleccionReverso){height:auto;flex:1;max-height:300px;min-height:0;aspect-ratio:2/3;width:auto;max-width:100%}
+#coleccionPanel .coleccionReverso{border:1px solid #ab8850;border-radius:5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10%;padding:10px;isolation:isolate;position:relative;background:repeating-linear-gradient(45deg,#cba0610b 0 1px,transparent 2px 8px),repeating-linear-gradient(-45deg,#cba0610b 0 1px,transparent 2px 8px),radial-gradient(#563b29,#211813);box-shadow:inset 0 0 0 5px #170f0ce0,inset 0 0 0 6px #a7834b6b,0 5px 15px #0008;color:#b59764}
+#coleccionPanel .coleccionReverso svg{width:42%;height:28%;stroke-width:.8}
+#coleccionPanel .coleccionReverso b{font-family:var(--serif,Georgia,serif);font-size:20px;font-weight:500;letter-spacing:3px}
+#coleccionPanel .coleccionReverso>span{font-size:24px}
+#coleccionPanel .coleccionHallazgo:not(:disabled) .coleccionReverso{outline:1px solid #e8c57a;outline-offset:4px;animation:coleccionInvita 2.2s ease-in-out infinite}
+#coleccionPanel .coleccionHallazgo:disabled:not(.revelada) .coleccionReverso{filter:brightness(.6)}
+#coleccionPanel .coleccionHallazgoNombre{font-family:var(--serif,Georgia,serif);font-size:16px;line-height:1.2;min-height:2.4em;display:flex;align-items:center;text-align:center;font-weight:500}
+#coleccionPanel .coleccionHallazgoEdicion{font-size:12px;color:#ccb187;line-height:1.5;min-height:1.5em;white-space:nowrap}
+#coleccionPanel .coleccionRevela .coleccionCarta{animation:coleccionRevela .42s cubic-bezier(.19,.78,.25,1) both}
+#coleccionPanel .coleccionSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#coleccionPanel .barridoModal{position:absolute;inset:0;z-index:50;pointer-events:none}
+#coleccionPanel .coleccionInterior.menuEntra{animation:entraPantalla .4s cubic-bezier(.2,.75,.3,1) both}
+@keyframes coleccionSobreFlota{0%,100%{translate:0 3px;rotate:-5deg}50%{translate:0 -5px;rotate:-3deg}}
+@keyframes coleccionInvita{0%,100%{filter:brightness(1);box-shadow:0 0 18px #d2aa4c15}50%{filter:brightness(1.25);box-shadow:0 0 28px #d2aa4c44}}
+@keyframes coleccionRevela{0%{scale:.04 .97;filter:brightness(2)}60%{scale:1.03 1.02;filter:brightness(1.2)}100%{scale:1;filter:brightness(1)}}
+@media(max-width:850px){
+  #coleccionPanel .coleccionInterior{padding:15px 17px 8px}
+  #coleccionPanel .coleccionFiltros{grid-template-columns:minmax(110px,1fr) 150px 145px}
+  #coleccionPanel .coleccionRejilla{gap:13px 14px}
+  #coleccionPanel .coleccionVersiones{gap:20px;max-width:680px}
+}
+@media(max-width:580px){
+  #coleccionPanel{width:calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));padding:4px;border-radius:6px;height:var(--alto-util)}
+  #coleccionPanel .coleccionInterior{padding:13px 10px 6px}
+  #coleccionPanel .coleccionCabecera{min-height:41px;gap:8px;margin-bottom:9px}
+  #coleccionPanel .coleccionEmblema{width:30px;height:36px}
+  #coleccionPanel .coleccionEmblema svg{width:19px;height:19px}
+  #coleccionPanel .coleccionCabecera .coleccionAntetitulo{font-size:8px;letter-spacing:1.7px}
+  #coleccionPanel h2{font-size:21px;letter-spacing:0}
+  #coleccionPanel .coleccionCerrar{width:34px;height:36px}
+  #coleccionPanel .coleccionCerrar svg{width:17px;height:17px}
+  #coleccionPanel .coleccionPestanas{gap:2px;margin-bottom:10px}
+  #coleccionPanel .coleccionPestana{flex:1;min-width:0;min-height:39px;padding:7px 12px;font-size:14px;gap:7px}
+  #coleccionPanel .coleccionPestana svg{width:16px;height:16px}
+  #coleccionPanel .coleccionContenido{gap:8px}
+  #coleccionPanel .coleccionFiltros{grid-template-columns:1fr 1fr;gap:7px}
+  #coleccionPanel .coleccionBuscar{grid-column:1/-1;height:37px}
+  #coleccionPanel .coleccionBuscar input{height:35px;font-size:16px}
+  #coleccionPanel select{height:36px;font-size:12px}
+  #coleccionPanel .coleccionResumen{font-size:10px;line-height:1.4;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #coleccionPanel .coleccionRejilla{padding:9px 7px;gap:12px 10px}
+  #coleccionPanel .coleccionMini{gap:5px}
+  #coleccionPanel .coleccionMiniInfo>strong{font-size:11px;line-height:1.18;height:3.54em}
+  #coleccionPanel .coleccionMiniPie{font-size:9px;gap:7px}
+  #coleccionPanel .coleccionPuntos{gap:3px}
+  #coleccionPanel .coleccionPuntos i{width:5px;height:5px}
+  #coleccionPanel .coleccionCarta{max-height:235px}
+  #coleccionPanel .coleccionPaginas{gap:15px;padding-bottom:2px}
+  #coleccionPanel .coleccionPaginas .coleccionBoton{min-width:79px;min-height:34px;font-size:11px;padding:5px 12px}
+  #coleccionPanel .coleccionPaginas>span{font-size:12px}
+  #coleccionPanel .coleccionEstado{font-size:10px;min-height:17px;line-height:17px}
+  #coleccionPanel .coleccionPie{min-height:28px;gap:6px;padding-top:3px}
+  #coleccionPanel .coleccionTotales{font-size:9px}
+  #coleccionPanel .coleccionVolver{font-size:11px;min-height:28px}
+  #coleccionPanel .coleccionDetalleCabecera{padding:0 0 0 44px;text-align:center;min-height:48px;display:flex;flex-direction:column;justify-content:center}
+  #coleccionPanel .coleccionDetalleCabecera h3{font-size:18px;line-height:1.15}
+  #coleccionPanel .coleccionDetalleCabecera p{font-size:10px;margin-top:3px}
+  #coleccionPanel .coleccionAtras{font-size:0;gap:0;width:35px;height:37px;min-height:37px;padding:5px;border:1px solid #8c693c70}
+  #coleccionPanel .coleccionAtras svg{width:18px;height:18px}
+  #coleccionPanel .coleccionVersiones{gap:11px;padding:5px 3px 3px;min-height:175px;max-height:345px}
+  #coleccionPanel .coleccionVersion{gap:6px}
+  #coleccionPanel .coleccionVersion h4{font-size:13px;letter-spacing:.3px}
+  #coleccionPanel .coleccionVersion .coleccionCarta{max-height:228px}
+  #coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline-width:1px;outline-offset:3px}
+  #coleccionPanel .coleccionEstadoEdicion{font-size:9px;gap:3px;min-height:15px;white-space:nowrap}
+  #coleccionPanel .coleccionEstadoEdicion svg{width:11px;height:11px}
+  #coleccionPanel .coleccionUsar{font-size:11px;min-height:34px;padding:5px 7px;letter-spacing:0;background-image:repeating-linear-gradient(3deg,transparent 0 4px,#00000015 5px 6px),linear-gradient(#60432b,#36271c)}
+  #coleccionPanel .coleccionReglas{padding:10px 11px 7px}
+  #coleccionPanel .coleccionReglasTitulo{font-size:10px;margin-bottom:5px;gap:6px}
+  #coleccionPanel .coleccionReglasTitulo strong{font-size:13px}
+  #coleccionPanel .coleccionReglaTexto{font-size:13px;line-height:1.5;height:7.5em}
+  #coleccionPanel .coleccionReglaPaginas{height:24px;font-size:10px}
+  #coleccionPanel .coleccionReglaPaginas:empty{height:0}
+  #coleccionPanel .coleccionAviso{font-size:10px;padding:1px 0}
+  #coleccionPanel .coleccionSobreTitulo h3{font-size:24px}
+  #coleccionPanel .coleccionSobreTitulo p{font-size:12px;max-width:290px;margin:5px auto 0}
+  #coleccionPanel .coleccionSobreTitulo .coleccionAntetitulo{font-size:9px;letter-spacing:2px}
+  #coleccionPanel .coleccionSobreAcciones{gap:10px}
+  #coleccionPanel .coleccionSobreCuenta{font-size:11px}
+  #coleccionPanel .coleccionAbrirSobre{min-height:43px;font-size:15px}
+  #coleccionPanel .coleccionRevelacion{gap:10px;padding:8px 3px;min-height:160px}
+  #coleccionPanel .coleccionHallazgo{max-height:310px;gap:9px}
+  #coleccionPanel .coleccionHallazgoNombre{font-size:11px}
+  #coleccionPanel .coleccionHallazgoEdicion{font-size:9px}
+  #coleccionPanel .coleccionReverso{padding:6px;box-shadow:inset 0 0 0 3px #170f0ce0,inset 0 0 0 4px #a7834b6b,0 5px 15px #0008}
+  #coleccionPanel .coleccionReverso b{font-size:14px;letter-spacing:1px}
+  #coleccionPanel .coleccionReverso>span{font-size:18px}
+}
+#coleccionPanel.coleccionBaja .coleccionInterior{padding-top:9px}
+#coleccionPanel.coleccionBaja .coleccionCabecera{min-height:33px;margin-bottom:5px}
+#coleccionPanel.coleccionBaja .coleccionCabecera .coleccionAntetitulo{display:none}
+#coleccionPanel.coleccionBaja .coleccionPestanas{margin-bottom:7px}
+#coleccionPanel.coleccionBaja .coleccionDetalleCabecera{min-height:36px}
+#coleccionPanel.coleccionBaja .coleccionReglaTexto{height:4.5em;font-size:12px}
+#coleccionPanel.coleccionBaja .coleccionVersiones{min-height:140px}
+#coleccionPanel.coleccionBaja .coleccionAviso{display:none}
+#coleccionPanel.coleccionBaja .coleccionSobreTitulo{padding:0}
+#coleccionPanel.coleccionBaja .coleccionSobreTitulo h3{font-size:22px;margin-top:0}
+#coleccionPanel.coleccionBaja .coleccionSobreTitulo>.coleccionAntetitulo{display:none}
+#coleccionPanel.coleccionBaja .coleccionSobreAcciones{gap:6px}
+#coleccionPanel.coleccionBaja .coleccionSobreCuenta{display:none}
+#coleccionPanel.coleccionTeclado .coleccionCabecera,#coleccionPanel.coleccionTeclado .coleccionResumen,#coleccionPanel.coleccionTeclado .coleccionEstado,#coleccionPanel.coleccionTeclado .coleccionPie{display:none}
+#coleccionPanel.coleccionTeclado .coleccionPestanas{margin-bottom:6px}
+#coleccionPanel.coleccionTeclado .coleccionRejilla{grid-template-rows:repeat(2,minmax(0,1fr));gap:6px}
+#coleccionPanel.coleccionTeclado .coleccionMiniInfo>strong{font-size:10px;height:2.2em}
+#coleccionPanel.coleccionTeclado .coleccionMiniPie{display:none}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel *,#coleccionPanel *:before,#coleccionPanel *:after{animation:none!important;transition:none!important}
+  #coleccionPanel .coleccionBoton:hover,#coleccionPanel .coleccionMini:hover .coleccionCarta{translate:none}
+}
+/* Las miniaturas conservan su proporción; el hueco libre no estira el papel. */
+#coleccionPanel .coleccionMini>.coleccionCarta{align-self:center}
+#coleccionPanel .coleccionVersion .coleccionCarta{margin:auto 0}
+#coleccionPanel .coleccionHallazgo .coleccionCarta,#coleccionPanel .coleccionHallazgo .coleccionReverso{margin:auto 0}
+#coleccionPanel .coleccionPestanas .coleccionPestana{background:none;box-shadow:none;border:0;border-bottom:2px solid transparent;border-radius:0;translate:none}
+#coleccionPanel .coleccionPestanas .coleccionPestana[aria-current="page"]{color:#f3dba7;background:linear-gradient(transparent,#9d73371f);border-bottom-color:#cca45f}
+@media(max-width:580px){
+  #coleccionPanel.coleccionBaja .coleccionResumen{display:none}
+  #coleccionPanel.coleccionBaja .coleccionContenido{gap:6px}
+  #coleccionPanel.coleccionBaja .coleccionRejilla{gap:8px;padding:7px}
+  #coleccionPanel.coleccionBaja .coleccionMiniInfo{gap:2px}
+  #coleccionPanel.coleccionBaja .coleccionMiniInfo>strong{font-size:11px;height:1.3em;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+  #coleccionPanel.coleccionBaja .coleccionMiniPie{font-size:9px;line-height:1.2}
+  #coleccionPanel.coleccionBaja .coleccionEstado:empty{min-height:5px;height:5px}
+  #coleccionPanel.coleccionBaja .coleccionReglas{padding-top:8px;padding-bottom:5px}
+  #coleccionPanel.coleccionBaja .coleccionVersiones{max-height:none}
+}
+@media(max-width:360px){
+  #coleccionPanel .coleccionEmblema{display:none}
+  #coleccionPanel h2{font-size:20px}
+  #coleccionPanel .coleccionCabecera{gap:5px}
+  #coleccionPanel .coleccionTotales{max-width:170px;line-height:1.25}
+}
+#coleccionPanel .coleccionHallazgo:disabled{box-shadow:none}
+/* Ediciones grandes: el formato del naipe original conserva su texto completo. */
+#coleccionPanel .coleccionRejilla{grid-template-rows:minmax(0,1fr);gap:22px;padding:17px 18px 12px}
+#coleccionPanel .coleccionRejilla[data-cantidad="1"]{grid-template-columns:minmax(0,1fr)}
+#coleccionPanel .coleccionRejilla[data-cantidad="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+#coleccionPanel .coleccionRejilla[data-cantidad="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+#coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+#coleccionPanel .coleccionMini{gap:12px;grid-template-rows:minmax(0,1fr) 20px}
+#coleccionPanel .coleccionMiniInfo{display:block;max-width:none}
+#coleccionPanel .coleccionMiniPie{font-family:var(--sans,system-ui);font-size:12px;gap:14px;line-height:20px}
+#coleccionPanel .coleccionPuntos{gap:5px}
+#coleccionPanel .coleccionPuntos i{width:8px;height:8px}
+#coleccionPanel .coleccionVersiones{max-width:970px;max-height:none;gap:24px;padding:8px 12px 12px;min-height:0}
+#coleccionPanel .coleccionVersion .coleccionCarta{max-height:none}
+#coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline:0;box-shadow:0 0 20px #d5ae5126}
+#coleccionPanel .coleccionElegirAcabado{min-height:34px;background:none;border:1px solid #80603d70;box-shadow:none;color:#d3bc99;font-size:14px;min-width:95px;padding:6px 10px}
+#coleccionPanel .coleccionElegirAcabado[aria-pressed="true"]{border-color:#d6b273;color:#f2dfb7;background:#a9823220}
+#coleccionPanel .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{color:#d2d4e8}
+#coleccionPanel .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{color:#edcc87}
+#coleccionPanel .coleccionReglas{display:none}
+#coleccionPanel .coleccionRevelacion{max-width:1050px;gap:20px;padding:20px 12px 8px;min-height:0}
+#coleccionPanel .coleccionRevelacion[data-total="5"]{grid-template-columns:repeat(5,minmax(0,1fr))}
+#coleccionPanel .coleccionRevelacion[data-total="3"]{grid-template-columns:repeat(3,minmax(0,1fr));max-width:880px}
+#coleccionPanel .coleccionHallazgo{max-height:none;gap:10px}
+#coleccionPanel .coleccionHallazgo :is(.coleccionCarta,.coleccionReverso){max-height:none}
+#coleccionPanel .coleccionHallazgoNombre{font-size:13px;min-height:2.4em}
+#coleccionPanel .coleccionHallazgoEdicion{font-size:11px}
+#coleccionPanel .coleccionIndiceSobre{display:none;align-items:center;justify-content:center;gap:9px;flex:none}
+#coleccionPanel .coleccionPuntoSobre{font-size:12px;padding:0;min-width:33px;min-height:32px;width:33px;box-shadow:none;background:#251b13;border-color:#80603d;color:#b5a18a}
+#coleccionPanel .coleccionPuntoSobre.revelado{background:linear-gradient(#343346,#1e202a);border-color:#a1a7bd;color:#e8e9f1}
+#coleccionPanel .coleccionPuntoSobre[aria-current="true"]{outline:1px solid #e8c684;outline-offset:3px}
+#coleccionPanel .coleccionCanje{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;max-width:450px;width:100%;margin:auto}
+#coleccionPanel .coleccionCanjeSello{width:84px;height:84px;display:grid;place-items:center;border:1px solid #bd9658;border-radius:50%;color:#edc983;background:radial-gradient(circle at 30% 23%,#795020,#302318 65%);box-shadow:inset 0 0 0 5px #36281c,inset 0 0 0 6px #b18d5133,0 10px 30px #0005}
+#coleccionPanel .coleccionCanjeSello svg{width:35px;height:35px}
+#coleccionPanel .coleccionCanje h3{font:700 32px/1.15 var(--serif,Georgia,serif);color:#efd6a5}
+#coleccionPanel .coleccionCanje>p{font-size:14px;line-height:1.6;color:#ccb393}
+#coleccionPanel .coleccionCanjeCodigo{display:flex;flex-direction:column;gap:7px;width:100%;max-width:310px;color:#c7af8c;font-size:12px;text-align:left}
+#coleccionPanel .coleccionCanjeCodigo input{width:100%;height:45px;font-size:16px;border:1px solid #86683e88;border-radius:3px;background:#100d0a;color:#9c8a6c;padding:8px 12px;opacity:1}
+#coleccionPanel .coleccionCanje .coleccionCanjeNota{font-size:11px;max-width:300px;color:#aa9579}
+#coleccionPanel .coleccionCanjeVolver{align-self:center;margin-bottom:12px;flex:none}
+@media(max-width:580px){
+  #coleccionPanel .coleccionPestana{font-size:12px;padding:7px 6px;gap:5px}
+  #coleccionPanel .coleccionPestana svg{width:14px;height:14px}
+  #coleccionPanel .coleccionNumero{min-width:19px;padding:0 4px;font-size:10px}
+  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{grid-template-rows:minmax(0,1fr);padding:14px 12px 8px}
+  #coleccionPanel .coleccionMini{gap:9px}
+  #coleccionPanel .coleccionMiniPie,#coleccionPanel.coleccionBaja .coleccionMiniPie{display:flex;font-size:11px}
+  #coleccionPanel .coleccionVersiones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:34px minmax(0,1fr) 18px 40px;gap:10px;padding:2px 4px 8px;min-height:0!important;max-height:none}
+  #coleccionPanel .coleccionVersion{display:contents}
+  #coleccionPanel .coleccionVersion .coleccionElegirAcabado{grid-row:1;min-width:0;width:100%;font-size:13px;padding:5px 4px}
+  #coleccionPanel .coleccionVersion[data-edicion="normal"] .coleccionElegirAcabado{grid-column:1}
+  #coleccionPanel .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{grid-column:2}
+  #coleccionPanel .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{grid-column:3}
+  #coleccionPanel .coleccionVersion:not(.vista) :is(.coleccionCarta,.coleccionEstadoEdicion,.coleccionUsar){display:none}
+  #coleccionPanel .coleccionVersion.vista .coleccionCarta{grid-column:1/-1;grid-row:2;justify-self:center;align-self:center;margin:0}
+  #coleccionPanel .coleccionVersion.vista .coleccionEstadoEdicion{grid-column:1/-1;grid-row:3;justify-self:center;align-self:center;font-size:11px}
+  #coleccionPanel .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:4;justify-self:center;align-self:center;width:100%;min-height:39px;max-width:230px;font-size:14px}
+  #coleccionPanel .coleccionRevelacion,#coleccionPanel .coleccionRevelacion[data-total="5"],#coleccionPanel .coleccionRevelacion[data-total="3"]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:0;padding:11px 20px 5px}
+  #coleccionPanel .coleccionHallazgo{gap:8px}
+  #coleccionPanel .coleccionHallazgo:not(.actual){display:none}
+  #coleccionPanel .coleccionHallazgoNombre{font-size:13px;min-height:1.25em;line-height:1.25;max-height:2.5em}
+  #coleccionPanel .coleccionHallazgoEdicion{font-size:11px}
+  #coleccionPanel .coleccionHallazgo .coleccionCarta{max-height:none}
+  #coleccionPanel .coleccionIndiceSobre{display:flex;margin:2px 0 6px}
+  #coleccionPanel .coleccionSobreTitulo h3{font-size:23px}
+  #coleccionPanel .coleccionSobreTitulo p{max-width:320px}
+  #coleccionPanel .coleccionCanje{gap:14px;padding:8px 10px}
+  #coleccionPanel .coleccionCanje h3{font-size:27px}
+  #coleccionPanel .coleccionCanje>p{font-size:13px}
+}
+#coleccionPanel.coleccionBaja .coleccionCanje{gap:9px}
+#coleccionPanel.coleccionBaja .coleccionCanjeSello{width:54px;height:54px}
+#coleccionPanel.coleccionBaja .coleccionCanjeSello svg{width:26px;height:26px}
+#coleccionPanel.coleccionBaja .coleccionCanje .coleccionAntetitulo{display:none}
+@media(max-width:580px){
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera .coleccionAntetitulo{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera{min-height:34px;margin-bottom:5px}
+  #coleccionPanel[data-vista="cartas"] .coleccionResumen{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionEstado:empty{height:5px;min-height:5px}
+  #coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:14px 17px;padding:12px 11px 8px}
+  #coleccionPanel .coleccionRejilla[data-cantidad="2"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:17px;padding:14px 11px 8px}
+  #coleccionPanel .coleccionMini{gap:8px}
+  #coleccionPanel .coleccionMiniPie{font-size:10px}
+}
+@media(max-width:580px){
+  #coleccionPanel .coleccionRejilla[data-cantidad="4"],#coleccionPanel .coleccionRejilla[data-cantidad="2"]{column-gap:12px;padding-left:7px;padding-right:7px}
+}
+/* El panel vuelve al violeta del juego. Sólo los botones adoptan la madera
+   de Taberna: sin cambiar el diseño original de las cartas ni añadir herrajes. */
+#coleccionPanel{--col-tinta:#e6def2;--col-suave:#b4a5ca;--col-laton:#8d6f21;border-color:var(--gold2,#8d6f21);border-radius:14px;background:linear-gradient(180deg,var(--panel2,#241a34),var(--panel,#1c1429));box-shadow:0 20px 60px #000b;padding:4px}
+#coleccionPanel .coleccionInterior{border:0;border-radius:10px;background:none;padding-top:17px}
+#coleccionPanel .coleccionInterior:before,#coleccionPanel .coleccionInterior:after{display:none}
+#coleccionPanel .coleccionEmblema,#coleccionPanel .coleccionCabecera .coleccionAntetitulo{display:none}
+#coleccionPanel .coleccionCabecera{min-height:41px;margin-bottom:11px}
+#coleccionPanel h2,#coleccionPanel .coleccionDetalleCabecera h3{color:var(--gold,#e6bb52)}
+#coleccionPanel .coleccionCerrar{background:#150f1f;border-color:#5c4872;border-radius:7px;color:#dfd0ed}
+#coleccionPanel .coleccionCerrar:hover{background:#30233f}
+#coleccionPanel .coleccionPestanas,#coleccionPanel .coleccionPie{border-color:#473357}
+#coleccionPanel .coleccionPestanas .coleccionPestana{color:#b4a5ca}
+#coleccionPanel .coleccionPestanas .coleccionPestana[aria-current="page"]{color:#ecd18e}
+#coleccionPanel .coleccionBuscar{background:#130e1d;border-color:#4d3a65;border-radius:6px;color:#b5a3cb}
+#coleccionPanel .coleccionBuscar input{color:#e4dcef}
+#coleccionPanel .coleccionBuscar input::placeholder{color:#a492bb}
+#coleccionPanel select{background:#1a1227;border-color:#4d3a65;border-radius:6px;color:#d5c7e7}
+#coleccionPanel .coleccionNumero{background:#150f1f;border-color:#625072;color:#e1d5ed}
+#coleccionPanel .coleccionResumen,#coleccionPanel .coleccionTotales,#coleccionPanel .coleccionAviso,#coleccionPanel .coleccionDetalleCabecera p{color:#afa0c2}
+#coleccionPanel .coleccionRejilla{background:none;border:0;box-shadow:none;border-radius:0}
+#coleccionPanel .coleccionMiniPie{color:#c6b7da}
+#coleccionPanel .coleccionVersiones{background:none}
+#coleccionPanel .coleccionElegirAcabado{background:#1a1424;border-color:#54405f;color:#c8bbd6}
+#coleccionPanel .coleccionElegirAcabado[aria-pressed="true"]{background:#352647;border-color:#c6a056}
+#coleccionPanel .coleccionCarta.card.acomodo.t-personaje .pieCarta{margin-bottom:1.15em}
+#coleccionPanel .coleccionEstado{color:#d7c48f}
+#coleccionPanel .coleccionEstado.error{color:#ffb3a3}
+#coleccionPanel .coleccionSobreTitulo h3,#coleccionPanel .coleccionCanje h3{color:#ecd18e}
+#coleccionPanel .coleccionSobreTitulo p,#coleccionPanel .coleccionCanje>p{color:#c0b1d3}
+@media(max-width:580px){
+  #coleccionPanel .coleccionInterior{padding-top:11px}
+  #coleccionPanel .coleccionCabecera{min-height:36px;margin-bottom:7px}
+  #coleccionPanel .coleccionRejilla[data-cantidad="4"],#coleccionPanel .coleccionRejilla[data-cantidad="2"]{column-gap:12px;padding-left:5px;padding-right:5px}
+}

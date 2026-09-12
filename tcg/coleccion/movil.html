@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Colección · sección aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./generado/movil/base.css">
+<link rel="stylesheet" href="./juego/acabados.css">
+<link rel="stylesheet" href="./juego/coleccion.css">
+<link rel="stylesheet" href="./aislado.css">
+<script src="./memoria.js"></script>
+<script src="./red-estatica.js"></script>
+<script src="./generado/movil/datos.js"></script>
+<script src="./generado/movil/renderer.js"></script>
+<script src="./juego/arte-vistas.js"></script>
+<script src="./juego/coleccion-modelo.js"></script>
+<script src="./juego/arte-remoto.js"></script>
+<script src="./juego/coleccion-ui.js"></script>
+<script src="./coleccion-dev.js" defer></script>
+</head>
+<body class="aaa-polish seccionAislada" data-vista="movil" data-exportada="1">
+<main id="seccionDev">
+  <span class="devEtiqueta">VISTA DE PRUEBA</span>
+  <h1>Colección de cartas</h1>
+  <p>La sección real del juego, con datos de prueba. Las acciones sólo afectan esta página: al recargar empiezas de nuevo.</p>
+  <form id="devEscenarios">
+    <label>Presentación<select name="vista"><option value="desktop">Escritorio</option><option value="movil">Móvil</option></select></label>
+    <label>Datos de prueba<select name="estado"><option value="nuevo">Jugador nuevo</option><option value="sobres">Dos sobres por abrir</option><option value="ediciones">Acabados desbloqueados</option><option value="legacy">Sobre anterior de tres cartas</option></select></label>
+    <button type="submit">Cargar escenario</button>
+  </form>
+  <button type="button" id="devAbrir">Abrir colección</button>
+  <p id="devEstado" role="status">Preparando los componentes de la sección…</p>
+  <details><summary>Qué se está probando</summary><p>Se cargan la interfaz, el inventario y el proveedor de arte reales. El renderer y los estilos de las cartas se derivan automáticamente del código actual. No se cargan el menú, la partida, la IA, el online, la campaña, el sonido ni el instalador del juego.</p><a href="./generado/movil/manifiesto.json" target="_blank" rel="noopener">Ver procedencia de los componentes</a></details>
+</main>
+</body>
+</html>

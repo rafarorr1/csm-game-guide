@@ -1,0 +1,73 @@
+{
+  "vista": "desktop",
+  "cartas": 128,
+  "protagonistas": 6,
+  "fuentes": [
+    {
+      "archivo": "caoz_tcg/index.html",
+      "sha256": "612c7f9be3be75583cab1fb6340fac5764a1a77cda88ebd079c7d67a0443bd1d"
+    },
+    {
+      "archivo": "caoz_tcg/motor.js",
+      "sha256": "7dd40724cd994e1e0b4683d54ab62aa226acb671c2b43de8e0e70dbb6cf28389"
+    },
+    {
+      "archivo": "caoz_tcg/polish-aaa.js",
+      "sha256": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
+    }
+  ],
+  "funciones": [
+    {
+      "nombre": "el",
+      "linea": 2460,
+      "sha256": "e56e76c380a0a7f1b7d517b91ad2eea03f769a558b78cb06b5a1e97aad08044d"
+    },
+    {
+      "nombre": "encuadreDe",
+      "linea": 59,
+      "sha256": "6eb3ca92621f110c7ca185d3906a0960201b13777379d0435daeb84363111af2"
+    },
+    {
+      "nombre": "cap",
+      "linea": 74,
+      "sha256": "533c56ca5718f281a5d244c43a50bc07c4fced4bdcc175bc8f2cfd1ce46fc9df"
+    },
+    {
+      "nombre": "tribeLine",
+      "linea": 2325,
+      "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
+    },
+    {
+      "nombre": "ponerDibujo",
+      "linea": 2421,
+      "sha256": "49d6176090e60831a263230fb4129228b20a69ca07776b487c0dfdd5962af638"
+    },
+    {
+      "nombre": "ilustrarLider",
+      "linea": 2441,
+      "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
+    },
+    {
+      "nombre": "ilustrar",
+      "linea": 2449,
+      "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
+    },
+    {
+      "nombre": "cardEl",
+      "linea": 2722,
+      "sha256": "7ea8cf09fc81f62ac4432445d5ba315d3de248acb3b0d84b1f8695e6327e087f"
+    },
+    {
+      "nombre": "cartaDeLiderVS",
+      "linea": 4274,
+      "sha256": "750f30852f38460396485784f49bc82a6e7e295264cd16ab6c46f2cfb1fd921d"
+    }
+  ],
+  "adaptadores": [
+    "attachInspect: sin inspector ajeno a la colección",
+    "pulsacionLarga: sin inspector ajeno a la colección",
+    "G: null; no existe partida"
+  ],
+  "almacenamiento": "sólo memoria de la página",
+  "red": "sólo recursos de este servidor local"
+}

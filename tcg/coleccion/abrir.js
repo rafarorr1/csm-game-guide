@@ -1,0 +1,1 @@
+'use strict';const p=new URLSearchParams(location.search);const v=p.get('vista');const movil=v==='movil'||(v!=='desktop'&&matchMedia('(max-width: 760px)').matches);const url=new URL(movil?'movil.html':'escritorio.html',location.href);url.searchParams.set('estado',p.get('estado')||'sobres');location.replace(url.href);

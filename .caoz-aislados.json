@@ -1,0 +1,10 @@
+{
+  "formato": "caoz.secciones.aisladas",
+  "secciones": {
+    "coleccion": {
+      "fuente": "932b5c512c9725db01b179848c36e3f7034b77ba",
+      "ruta": "tcg/coleccion"
+    }
+  },
+  "version": 1
+}
