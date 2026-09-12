@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 249 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · beta 249 (rama develop) · producción 245 (rama main) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -9,6 +9,31 @@ lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) �
 números) → el código.
 
 ---
+
+## Estructura aplicada con autorización del usuario — 2026-09-11
+
+`main` se alinea por avance directo con el código fuente de producción245 (`560357d`),
+que corresponde a `gh-pages:tcg`. `develop` parte de la beta249 (`1bb6352`) y añade sólo
+herramientas/documentación, sin cambiar los archivos servidos. Se conserva
+`feature/aaa-combat-cards` como historial. `gh-pages` y `beta` son ramas de publicación,
+no de trabajo. Cloudflare conserva producción desde `gh-pages`, salida `tcg`, y sus
+previews automáticos se limitan a `beta`. No se publica una nueva build con esta migración.
+
+Una tarea nueva usa `python3 dev/nueva_rama.py nombre-del-cambio` desde la raíz: crea
+rama y worktree separados desde `origin/develop`. La Colección tiene su primera vista
+real aislada en `dev/secciones/`; no carga el juego entero ni escribe progreso real.
+Ver `dev/README.md` para comandos, promoción y pruebas de estas herramientas.
+
+Para cambios de una sección, presentar primero esa vista interactiva y comprobar sólo
+lo modificado. Tras la aprobación del usuario, integrar en `develop`, ejecutar la
+validación completa y publicar beta. Producción es posterior, autorizada para esa versión.
+No repetir aprobaciones ya recibidas. Las entradas antiguas que dicen «main intacta» o
+«rama feature/aaa-combat-cards» describen entregas históricas; manda este flujo vigente.
+
+**Transición:** `main` conserva exactamente la fuente245, incluido su publicador antiguo.
+No usar ese script histórico para nuevas entregas. Las nuevas guardas entrarán en `main`
+al promover la primera beta autorizada desde `develop`. No copiar el publicador249 por
+separado a245: su lista de archivos incluye módulos que245 todavía no tiene.
 
 ## 1. Qué es y dónde está
 
@@ -558,8 +583,8 @@ serie de D&D «Caoz Con Todo» de Rafa. Dos jugadores entran al Domo con un Prot
 Líder y un mazo de 40 cartas; gana quien deja el Alma rival en 0, quien formula el Deseo con el
 Pergamino tras sobrevivir dos turnos, o quien reúne la corte con El Rey.
 
-- **Repo:** GitHub `rafarorr1/csm-game-guide`, carpeta `caoz_tcg/`, rama `main`. Es la única
-  carpeta versionada del repo (el resto está en `.gitignore` a propósito).
+- **Repo:** GitHub `rafarorr1/csm-game-guide`. Juego en `caoz_tcg/`, herramientas en `dev/`.
+  `main` conserva producción; `develop` integra beta; ramas temporales para cada tarea.
 - **Publicado en:** `https://juego.caozcontodo.com/` (Cloudflare Pages) y, de espejo,
   `https://rafarorr1.github.io/csm-game-guide/tcg/` (GitHub Pages). Los dos sirven la rama
   `gh-pages`, carpeta `tcg/`.
@@ -735,24 +760,25 @@ Enlace de invitación: `?sala=CÓDIGO` abre el vestíbulo del invitado ya en esa
 
 ## 7. Deploy: GitHub Pages + Cloudflare Pages
 
-- `./publicar.sh` (desde `caoz_tcg/`) es la única forma de publicar. Pasos: (1) sintaxis de
-  los cuatro scripts, la regla de `Animation.finished`, motor sin DOM, **builds coincidentes**
-  (`const BUILD` y `?b=` de `motor.js`/`final.js` en `index.html` y `movil.html`, `VERSION`
-  en `sw.js`, todos iguales a `git rev-list --count HEAD -- caoz_tcg/`), árbol limpio;
-  (2) arnés en Chrome sin ventana (`?test=1&rapido=1`; `--completo` añade los tutoriales) — la
-  página avisa por `POST /resultado` a `servidor_pruebas.py`; rojo = no se publica;
-  (3) copia **por nombre** de `index.html`, `motor.js`, `movil.html`, `final.js`, `sw.js`,
-  `manifest.webmanifest`, `tests.js`, `estudio.html`, `art/` a la rama `gh-pages` (worktree
-  en `../csm-game-guide-pages` o similar; el script lo resuelve) y push; (4) verificación
-  **byte a byte** de lo servido por GitHub Pages y, después, por Cloudflare
-  (`juego.caozcontodo.com` y `caoz-tcg.pages.dev`).
-- **Cloudflare Pages**: proyecto `caoz-tcg` en la cuenta de Rafa, conectado a este repo, rama
-  de producción `gh-pages`, sin build, directorio de salida `tcg`. Publica solo al recibir el
-  push. El dominio `juego.caozcontodo.com` es un CNAME en **GoDaddy** hacia
-  `caoz-tcg.pages.dev`. La raíz `caozcontodo.com` es la web de Rafa: **no tocar**.
-- Por qué dos: la operadora móvil de Rafa (y de su público) no enruta `*.github.io` en 5G.
-- Después de publicar: `git push origin main`. La app instalada se actualiza sola al abrirse
-  con red (HTML/JS «red primero»; la caché lleva la build en el nombre y borra las viejas).
+- Desde `caoz_tcg/`, usar `./publicar.sh --beta` en `develop` o
+  `./publicar.sh --produccion` en `main`. Sin destino no publica. `--solo-pruebas`
+  valida cualquier rama; `--completo` incluye tutoriales. Seguir primero la revisión
+  aislada y la aprobación descritas arriba.
+- Las builds de ambos HTML, sus scripts y el service worker deben coincidir. No se
+  calculan con el conteo de commits. `verificar_release.py` compara el paquete real con
+  el destino: prohíbe retroceder y reutilizar una build con bytes distintos.
+- El script valida el arnés y las guardas; antes de copiar comprueba nuevamente el mismo
+  commit/rama/árbol limpio y que el worktree de Pages coincida con su remoto. Sólo copia
+  archivos enumerados (incluidos arte, audio y estudios), preservando las otras apps.
+  Verifica byte a byte GitHub Pages y Cloudflare después del push.
+- **Cloudflare Pages:** proyecto `caoz-tcg`, producción desde `gh-pages`, directorio `tcg`.
+  Previews automáticos sólo desde `beta`, cuyo `tcg` es copia de `gh-pages:tcg-beta`.
+  Las ramas fuente `main`, `develop` y las temporales no despliegan.
+- `juego.caozcontodo.com` apunta a `caoz-tcg.pages.dev`. No tocar la raíz de GoDaddy.
+  Cloudflare es necesario porque algunas operadoras móviles no enrutan `*.github.io`.
+- La fuente se sube a la rama correspondiente antes de publicar. Publicar beta nunca
+  implica promover `main`. La app instalada actualiza HTML/JS por red y cambia de caché
+  al cambiar `VERSION`.
 
 ## 8. Pruebas: qué hay y cómo correrlas
 
@@ -792,7 +818,7 @@ Enlace de invitación: `?sala=CÓDIGO` abre el vestíbulo del invitado ya en esa
   anotarlo en `CHANGELOG.md` con número de versión. Ninguna carta de un mazo sin jugarse.
 - Publicar sólo con el arnés en verde y comprobación byte a byte; `git add` por nombre en
   `gh-pages` (ahí vive otra PWA).
-- Ramas por tarea; `main` siempre jugable.
+- Ramas por tarea desde `develop`; `main` refleja la producción autorizada.
 - iPhone instalado (iOS 26): vista de pantalla-menos-barra anclada arriba, 62 px negros abajo
   que no se pueden pintar; bloque opaco bajo la barra; el menú se centra con márgenes
   automáticos. Diagnóstico: pulsación larga sobre el número de build en el menú del teléfono.
@@ -841,15 +867,17 @@ Deuda técnica:
 
 ## 12. Cómo arrancar a trabajar (checklist)
 
-1. Clonar el repo y servir `caoz_tcg/` con cualquier servidor estático. Abrir `index.html`
-   (escritorio) y `movil.html` (teléfono; en escritorio se ve como un teléfono centrado).
-2. Leer `AGENTS.md`. Correr `index.html?test=1&rapido=1` y ver todo en verde (~2 min).
-3. Hacer el cambio en una rama. Si toca cartas/mazos/IA: `balance.html?auto` antes y después.
-4. Añadir regresión si es un bug; validarla por sabotaje.
-5. Subir la build en los cuatro sitios; escribir la entrada de `CHANGELOG.md` (con el porqué y
-   los números); commit en español.
-6. `./publicar.sh` desde `caoz_tcg/`; si termina en verde, `git push origin main`.
-7. Probar en el teléfono de Rafa (él): app instalada, cerrar del todo y abrir dos veces.
+1. Leer las guías vigentes y crear un trabajo desde `origin/develop` con
+   `python3 dev/nueva_rama.py nombre-del-cambio` (raíz del repo).
+2. Preparar la sección aislada con componentes reales y datos de prueba separados.
+3. Comprobar lo modificado y presentar el enlace. Esperar la aprobación de la sección.
+4. Integrar en `develop`; añadir la regresión relevante si corresponde. Si toca reglas,
+   cartas/mazos/IA, medir balance antes y después de la integración.
+5. Para nuevos bytes publicados: sincronizar build, documentar y hacer commit en español.
+6. Validar e integrar la beta con el flujo de `dev/README.md`; publicar `--beta` desde
+   `develop` y verificar lo servido. Producción exige autorización posterior y promoción
+   a `main` de la revisión aprobada, seguida de `--produccion`.
+7. Probar móvil y escritorio; verificar la actualización de la app instalada.
 
 Contacto/propietario: Rafa (rafarorr1). Decide él: qué cartas cambian, qué entra del Cajón,
 el arte, y cuándo se publica algo que cambia cómo se juega.

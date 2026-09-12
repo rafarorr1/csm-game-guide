@@ -13,7 +13,7 @@ resolve_doc_editor/out/
 *.pyc
 
 # ---------------------------------------------------------------------------
-# Proyectos que NO se versionan (decisión de 2026-08-28: sólo entra el TCG).
+# Otros proyectos que NO se versionan (el TCG y sus herramientas dev/ sí).
 # Ojo: lo que está aquí abajo no tiene respaldo ni historial. Si algún día
 # quieres subir alguno, basta con borrar su línea y hacer `git add`.
 # ---------------------------------------------------------------------------
@@ -30,3 +30,6 @@ resolve_doc_editor/
 resolve_waveform_sync/
 quoter/
 caoz_godot/
+
+# Las guías del flujo de desarrollo sí forman parte del repositorio.
+!dev/**/README.md

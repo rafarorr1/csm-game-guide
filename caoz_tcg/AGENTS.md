@@ -21,7 +21,8 @@ build, sin cuentas: archivos sueltos que funcionan con cualquier servidor estát
 | `motor.js` | **El motor.** Cartas (`C('id',{...})` con hooks async), Líderes, mazos (`DECKS`), reglas, flujo de turno, combate, Trampas, Hechizos Rápidos, la IA (`aiTurn`, `aiScore`, `aiTargets`, `aiPickAttack`), la red del online, las guías (`GUIAS`) y el guion del tutorial (`buildTut`, `TUT_MAZO`). **No toca el DOM**: habla con la pantalla llamando por nombre a `render`, `ask`, `pickCard`, `rollDice`, `log`, `toast`, `setPrompt`, `fx*`, `tutBeat`… |
 | `index.html` | La pantalla de escritorio: CSS + JS de la mesa apaisada (lienzo fijo 1500×1040 escalado con `zoom`), menús, carrete de Líderes, galería, guías, online, tutorial y efectos. Manda a los teléfonos a `movil.html` antes de cargar nada (`pointer:coarse` y lado corto < 700 px), salvo con `?escritorio=1`, `?test`, `?foto`, `?pantalla`, `?biblia`. |
 | `movil.html` | La pantalla del teléfono, de pie, hecha de cero sobre el mismo motor: texto a tamaño nativo, toque para seleccionar/jugar, pulsación larga (380 ms) para ver la carta, hojas inferiores para ficha y registro, app instalable. |
-| `final.js` | Piezas compartidas por las dos pantallas: la cinemática de fin de partida (con Revancha y Menú dentro) y los récords locales (`localStorage`). |
+| `final.js` | Cargador de módulos compartidos. `final-core.js` conserva la cinemática, menús y coordinación; campaña, sonido, acabados y Colección tienen módulos propios. |
+| `coleccion-modelo.js`, `coleccion-ui.js`, `coleccion-juego.js`, `coleccion.css` | Inventario/acabados, interfaz y conexión con el juego. Primera sección con entorno aislado en `../dev/secciones/`. |
 | `sw.js`, `manifest.webmanifest`, `art/icono-*.png` | La PWA: caché «red primero» para HTML/JS y «caché primero» para ilustraciones; iconos generados del logo. |
 | `tests.js` | El arnés. Se carga sólo con `?test=1` (`&rapido=1` salta los tutoriales). Suites: motor, cartas, cobertura, tutoriales, regresiones. |
 | `balance.html` | El banco de balance: 2880 partidas IA contra IA por tanda (`?auto`). |
@@ -29,7 +30,7 @@ build, sin cuentas: archivos sueltos que funcionan con cualquier servidor estát
 | `estudio.html/js/css`, `arte-remoto.js` | Estudio privado de ilustraciones, sesión compartida con sonidos y reemplazos persistentes en D1. Originales en `art/encuadres.json`; catálogo derivado en `art/catalogo.json`. Ver `ILUSTRACIONES.md`. |
 | `biblia.sh` / `biblia.py` | Genera «La Biblia del Domo» en PDF a partir de los datos del propio juego (`?biblia=1`). |
 
-Las tres partes son **scripts clásicos que comparten el ámbito global**. Reglas del corte:
+El motor y las pantallas siguen siendo **scripts clásicos que comparten el ámbito global**. Reglas del corte:
 
 - Al motor va lo que no toca el DOM ni ejecuta nada al cargar. `publicar.sh` rechaza un
   `motor.js` que contenga `document.`, `$(`, `innerHTML` o `.classList`.
@@ -68,6 +69,30 @@ Las tres partes son **scripts clásicos que comparten el ámbito global**. Regla
 
 ## Cómo se trabaja
 
+### Primero se revisa la sección aislada — instrucción del usuario, 2026-09-11
+
+Cuando el usuario pida un cambio en una sección concreta, seguir este orden:
+
+1. Preparar una vista interactiva aislada de esa sección con el cambio solicitado
+   y presentarla con un acceso directo para revisarla. Usar el componente real y
+   sólo los datos/dependencias necesarios; mantener separados el progreso y los
+   datos de prueba. Conservar el resto del juego. No basta una propuesta en texto.
+2. Antes de presentarla, comprobar únicamente esa sección y sus interacciones
+   relevantes, en móvil y escritorio cuando corresponda. No ejecutar todavía
+   la batería completa ni publicar una nueva versión del juego en beta.
+3. Esperar a que el usuario apruebe la sección. Entonces integrar el cambio al
+   juego, ejecutar las validaciones completas requeridas y publicar en beta
+   mediante el mecanismo existente, verificando lo servido.
+4. Producción es un paso posterior, con autorización del usuario para esa versión.
+
+Esta secuencia responde a una petición explícita del usuario para agilizar las
+iteraciones; prevalece sobre cualquier lectura del flujo general que obligue a
+probar o publicar todo antes de enseñar el cambio. No repetir una aprobación ya
+recibida para el mismo paso. Una instrucción posterior explícita puede cambiar
+el orden. La vista aislada no sustituye las pruebas de integración posteriores.
+
+### Validación e integración
+
 1. **Antes de tocar una carta o un mazo**: leer las cartas que sostienen ese mazo (Las
    Montañas abaratan Dragones, Tal deja jugar el Pergamino sin Llaves…). Después del cambio,
    `balance.html?auto` y comparar con el CHANGELOG: la variación normal entre tandas es de
@@ -78,23 +103,27 @@ Las tres partes son **scripts clásicos que comparten el ámbito global**. Regla
    (`resolveTargets`, `pickCard`, `ask`): parchear la global (`window.pickCard = async
    () => id`) o forzar `G.auto`. El motor llama a las globales por nombre, así que el parche
    funciona; `TCG.doAttack` es una copia que el motor no usa.
-3. **Build.** Cada publicación sube el número en cuatro sitios y `publicar.sh` exige que
-   coincidan con `git rev-list --count HEAD -- caoz_tcg/`: `const BUILD` y los `?b=` de
-   `motor.js` y `final.js` en `index.html` **y** en `movil.html`, y `const VERSION` en
-   `sw.js` (sin eso la app instalada no se entera de que hay versión nueva). Un commit en
-   `caoz_tcg/` sin subir la build deja `publicar.sh` en rojo.
-4. **Publicar = `./publicar.sh`** (desde `caoz_tcg/`). Comprueba sintaxis, la regla de
-   `Animation.finished`, el motor sin DOM, las builds, árbol limpio; corre el arnés en Chrome
-   sin ventana (`servidor_pruebas.py` recibe el resultado por `POST /resultado`); copia los
-   archivos por su nombre a la rama `gh-pages` (**nunca `git add -A`**: ahí vive también otra
-   PWA); y verifica byte a byte lo servido por GitHub Pages y por Cloudflare
-   (`juego.caozcontodo.com` y `caoz-tcg.pages.dev`). Cloudflare Pages está conectado a la rama
-   `gh-pages`, carpeta `tcg`, y publica solo. `--completo` añade los tutoriales; `--beta`
-   publica en `/tcg-beta/`. Después, `git push origin main`.
+3. **Build.** Identifica una versión del juego, no una cantidad de commits. Mantener iguales
+   `const BUILD`, los `?b=` de scripts en ambos HTML y `VERSION` en `sw.js`. Incrementar al
+   cambiar archivos que se publican; documentación, herramientas y merges sin cambios del
+   paquete no consumen build. `verificar_release.py` rechaza retrocesos y bytes diferentes
+   bajo una build ya publicada, incluyendo arte/audio y `tests.js`.
+4. **Publicar exige destino explícito**, desde `caoz_tcg/`: `./publicar.sh --beta` sólo en
+   `develop`; `./publicar.sh --produccion` sólo en `main`. `--solo-pruebas` funciona en
+   cualquier rama y permite cambios locales. `--completo` añade tutoriales. El publicador
+   verifica sintaxis, motor sin DOM, animaciones, builds y árbol del juego limpio; corre
+   el arnés en Chrome y vuelve a comprobar rama/commit/archivos antes de copiar por nombre
+   a `gh-pages` (**nunca `git add -A`** allí). Verifica byte a byte lo servido. `--beta`
+   conserva `/tcg/`, actualiza `/tcg-beta/` y el preview Cloudflare de la rama `beta`.
+   Producción usa `gh-pages:tcg`. Las ramas de código no disparan despliegues Cloudflare.
+   Integrar y subir la rama fuente correspondiente antes de publicar; no hacer push a
+   `main` como paso automático después de una beta. Flujo completo en `../dev/README.md`.
 5. Si el arnés no termina o da un rojo de efectos con el Mac cargado, no es el juego: correr
    `index.html?test=1&rapido=1` en una pestaña visible y comparar. Con el ordenador ocupado
    el Chrome sin ventana se estrangula (por eso van los `--disable-background-*` y 300 s).
-6. Ramas: `main` siempre jugable; una rama por cosa; merge cuando el arnés está en verde.
+6. Ramas: `main` refleja producción; `develop` integra beta. Una rama por tarea desde
+   `origin/develop`, con vista aislada aprobada antes de la integración. No usar la antigua
+   `feature/aaa-combat-cards` para nuevos cambios.
    Commits en español, con el porqué. Cada versión que cambia cómo se juega lleva número en
    `CHANGELOG.md` (v18 hoy); lo demás va «sin numerar».
 

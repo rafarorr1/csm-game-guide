@@ -7,12 +7,11 @@
 #  a la web y se descubría jugando.
 #
 #  Uso:
-#    ./publicar.sh                 pruebas rápidas (~15 s) y publica
-#    ./publicar.sh --visible       mismas guardas, con Chrome visible
-#    ./publicar.sh --completo      añade los 5 tutoriales (~5 min) y publica
-#    ./publicar.sh --solo-pruebas  sólo comprueba, no toca la web
-#    ./publicar.sh --beta          publica /tcg-beta/ y el preview de Cloudflare
-#                                  para móviles, sin cambiar producción
+#    ./publicar.sh --beta          desde develop: beta y preview Cloudflare
+#    ./publicar.sh --produccion    desde main: producción web y móvil
+#    ./publicar.sh --solo-pruebas  comprueba cualquier rama, no toca la web
+#    Añade --visible para ver Chrome o --completo para los cinco tutoriales.
+#    Publicar siempre exige elegir el destino; omitirlo no publica nada.
 #
 #  No necesita instalar nada: usa el Chrome que ya tienes y un servidor de
 #  Python de un solo uso (servidor_pruebas.py).
@@ -23,7 +22,7 @@ AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$AQUI/.." && pwd)"
 PAGES="${CAOZ_PAGES_DIR:-$HOME/Documents/AppW40k-pages}"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
-DESTINO="tcg"
+DESTINO=""
 SUITES="1&rapido=1"
 PUBLICAR=1
 MODO_NAVEGADOR=(--headless --disable-gpu)
@@ -32,16 +31,51 @@ for arg in "$@"; do
   case "$arg" in
     --completo)     SUITES="1" ;;
     --solo-pruebas) PUBLICAR=0 ;;
-    --beta)         DESTINO="tcg-beta" ;;
+    --beta|--produccion)
+      NUEVO_DESTINO="tcg"
+      [ "$arg" = "--beta" ] && NUEVO_DESTINO="tcg-beta"
+      if [ -n "$DESTINO" ] && [ "$DESTINO" != "$NUEVO_DESTINO" ]; then
+        echo 'Elige sólo un destino: --beta o --produccion.'; exit 2
+      fi
+      DESTINO="$NUEVO_DESTINO"
+      ;;
     --visible)      MODO_NAVEGADOR=(--new-window) ;;
     *) echo "opción desconocida: $arg"; exit 2 ;;
   esac
 done
+if [ "$PUBLICAR" -eq 1 ] && [ -z "$DESTINO" ]; then
+  echo 'Indica --beta (develop), --produccion (main) o --solo-pruebas.'; exit 2
+fi
 
 rojo(){ printf '\033[31m%s\033[0m\n' "$*"; }
 verde(){ printf '\033[32m%s\033[0m\n' "$*"; }
 gris(){ printf '\033[90m%s\033[0m\n' "$*"; }
 paso(){ printf '\n\033[1m-> %s\033[0m\n' "$*"; }
+
+# Las guardas se repiten después de Chrome: no se puede cambiar de rama,
+# commit ni archivos mientras se valida y terminar publicando otra versión.
+comprobar_fuente_publicacion(){
+  [ "$PUBLICAR" -eq 0 ] && return 0
+  local esperada="main" actual revision
+  [ "$DESTINO" = "tcg-beta" ] && esperada="develop"
+  actual="$(git -C "$REPO" branch --show-current)" || return 1
+  if [ "$actual" != "$esperada" ]; then
+    rojo "Sólo se publica /$DESTINO/ desde '$esperada'; estás en '${actual:-HEAD separado}'."
+    return 1
+  fi
+  revision="$(git -C "$REPO" rev-parse HEAD)" || return 1
+  if [ -n "${REVISION_VALIDADA:-}" ] && [ "$revision" != "$REVISION_VALIDADA" ]; then
+    rojo 'El commit cambió durante las pruebas. Vuelve a validar antes de publicar.'
+    return 1
+  fi
+  if [ -n "$(git -C "$REPO" status --porcelain -- caoz_tcg/)" ]; then
+    rojo 'Hay cambios del TCG sin guardar en git. Haz commit antes de publicar.'
+    git -C "$REPO" status --short -- caoz_tcg/
+    return 1
+  fi
+  REVISION_VALIDADA="$revision"
+}
+comprobar_fuente_publicacion || exit 1
 
 # ---------------------------------------------------------------------------
 paso "1/4 · Comprobaciones baratas"
@@ -123,26 +157,21 @@ if grep -qE '\.finished\s*\.then|await\s[^;]{0,60}\.finished\b' "$AQUI/index.htm
 fi
 gris "  sin Animation.finished"
 
-# El número de build tiene que corresponderse con el historial: si no, la
-# versión publicada dice una cosa y el commit del que salió es otro, y las notas
-# dejan de servir para nada.
-BUILD_EN_JUEGO="$(grep -o 'const BUILD = {n:[0-9]*' "$AQUI/index.html" | grep -o '[0-9]*$')"
-BUILD_ESPERADO=$(( $(cd "$REPO" && git rev-list --count HEAD -- caoz_tcg/) ))
-if [ "$BUILD_EN_JUEGO" != "$BUILD_ESPERADO" ]; then
-  rojo "El build del juego dice $BUILD_EN_JUEGO y el historial va por $BUILD_ESPERADO."
-  rojo "Actualiza 'const BUILD = {n:...}' en index.html antes de publicar."
-  exit 1
+# BUILD identifica una versión publicada, no el número de commits. Documentar
+# o fusionar ramas no cambia los bytes del juego y no exige otra build.
+# Las cuatro referencias siguen sincronizadas; antes de copiar se compara
+# también con el destino para impedir retrocesos o reutilizar una build distinta.
+case "$B_NUM" in
+  ''|*[!0-9]*) rojo 'BUILD debe ser un entero positivo'; exit 1 ;;
+esac
+[ "$B_NUM" -gt 0 ] || { rojo 'BUILD debe ser un entero positivo'; exit 1; }
+gris "  build $B_NUM sincronizada en escritorio, móvil y caché"
+if [ "$PUBLICAR" -eq 0 ]; then
+  gris '  sólo validación: se permiten cambios locales y cualquier rama'
+else
+  gris "  commit validado: $REVISION_VALIDADA"
 fi
-gris "  build $BUILD_EN_JUEGO al día"
-
-if [ -n "$(cd "$REPO" && git status --porcelain -- caoz_tcg/)" ]; then
-  rojo 'Tienes cambios del TCG sin guardar en git. Haz commit antes de publicar,'
-  rojo 'o lo que suba a la web no coincidirá con ninguna versión guardada.'
-  (cd "$REPO" && git status --short -- caoz_tcg/)
-  exit 1
-fi
-gris "  todo commiteado ($(cd "$REPO" && git rev-parse --short HEAD) en $(cd "$REPO" && git branch --show-current))"
-python3 "$AQUI/pruebas_publicacion.py" || { rojo 'Fallaron las guardas de publicación beta'; exit 1; }
+python3 "$AQUI/pruebas_publicacion.py" || { rojo 'Fallaron las guardas de publicación'; exit 1; }
 
 # ---------------------------------------------------------------------------
 paso "2/4 · Pruebas en Chrome"
@@ -221,12 +250,22 @@ if [ "$PUBLICAR" -eq 0 ]; then
   exit 0
 fi
 
+comprobar_fuente_publicacion || exit 1
+
 paso "3/4 · Publicando en /$DESTINO/"
 [ -d "$PAGES" ] || { rojo "No encuentro el worktree de publicación en $PAGES"; exit 1; }
 RAMA="$(cd "$PAGES" && git branch --show-current)"
 [ "$RAMA" = "gh-pages" ] || { rojo "$PAGES está en '$RAMA', debería estar en gh-pages"; exit 1; }
 
 [ -z "$(cd "$PAGES" && git status --porcelain)" ] || { rojo 'El worktree de publicación tiene cambios pendientes'; exit 1; }
+# Un commit local pendiente podría incluir cambios del otro destino. No se
+# arrastra al publicar ni se compara una build contra una copia desactualizada.
+REVISION_PAGES_REMOTA="$(git -C "$PAGES" ls-remote --exit-code origin refs/heads/gh-pages)" \
+  || { rojo 'No se pudo comprobar gh-pages en origin; no se publica'; exit 1; }
+[ "$(git -C "$PAGES" rev-parse HEAD)" = "${REVISION_PAGES_REMOTA%%[[:space:]]*}" ] \
+  || { rojo 'gh-pages local no coincide con origin/gh-pages. Sincroniza y revisa ambos destinos antes de publicar.'; exit 1; }
+# No modifica el worktree: cualquier versión inválida se rechaza antes de copiar.
+python3 "$AQUI/verificar_release.py" "$AQUI" "$PAGES/$DESTINO" || exit 1
 mkdir -p "$PAGES/$DESTINO/art" "$PAGES/$DESTINO/audio"
 for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js acabados.css coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js _worker.js _routes.json; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
 cp "$AQUI"/audio/*.wav "$AQUI/audio/catalogo.json" "$PAGES/$DESTINO/audio/" || exit 1
