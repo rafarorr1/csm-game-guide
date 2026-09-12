@@ -1,5 +1,24 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 249 · Cartas grandes y sobres de campaña
+
+- La Colección recupera las cartas completas del juego: ilustración, nombre,
+  habilidades y números en las esquinas. Páginas con cartas más grandes,
+  fondo clásico y botones de taberna conservados. En móvil, el detalle permite
+  comparar Normal, Foil y Dorada sin reducir la carta a tres miniaturas.
+- Cada campaña terminada concede un sobre de cinco Foil aleatorias. Si se abre
+  el final secreto, la recompensa llega al vencer al Editor. Repetir con el mismo
+  mazo vuelve a premiar; recargar o repetir un aviso de victoria no duplica sobres.
+- Cinco cartas distintas dentro del sobre; pueden estar ya en la colección.
+  Las Doradas quedan reservadas a códigos de las cartas físicas. Se prepara
+  la pantalla de canje, todavía sin activación ni códigos simulados.
+- Los sobres antiguos de tres cartas mantienen su contenido, incluidas las
+  Doradas ya obtenidas. Abrir sobres nunca equipa un acabado automáticamente.
+- Thal incorpora una copia local del arte Normal publicado para aparecer incluso
+  si falla la consulta al estudio. El catálogo remoto conserva prioridad; los
+  errores temporales de carga se reintentan de forma acotada. Buscar un nombre
+  exacto lo coloca primero, antes de coincidencias de subtipos como Thalas.
+
 ### Sin numerar · build 248 · Verificación del estudio único
 
 - La verificación beta respeta la redirección de estudio.html al estudio único.

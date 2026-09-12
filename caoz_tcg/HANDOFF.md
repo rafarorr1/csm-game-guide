@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 248 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 249 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,21 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build249: Colección recupera el render real de cartas y páginas grandes. En
+móvil el detalle cambia entre acabados conservando las tres vistas en DOM;
+los sobres muestran cinco Foil. Doradas sólo por futuros códigos físicos:
+pantalla de canje preparada, sin backend activado ni cuentas. Se conservan
+inventarios y pendientes legacy de tres cartas. Los sorteos nuevos no favorecen
+novedades y no incluyen Doradas; una edición recibida nunca se equipa sola.
+coleccion-modelo.concederSobreCampana(runId) guarda contador y recibo atómicos.
+final-core entrega al terminar Gero salvo secreto, que espera a Pitágoras;
+recupera premios tras recargar. sobresPendientes transporta recibos fallidos si
+se empieza otra campaña antes de poder guardar el inventario. Ensayos efímeros
+y laboratorio quedan excluidos.
+Thal tiene copia local de la Normal publicada como art/tal.webp para soportar
+fallos de la API; los diseños remotos posteriores siguen teniendo prioridad.
+Preparar sólo beta249. Producción245 y main permanecen intactas.
 
 Build248 corrige la comprobación de Cloudflare: estudio.html redirige al
 estudio único en producción y se valida por su flujo propio, no como HTML

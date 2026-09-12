@@ -93,15 +93,15 @@ caso('Llamadas inválidas, duplicados y copias no modifican el inventario',()=>{
   assert.equal(api.ids().length,5);
 });
 
-caso('Sobre atómico: tres novedades, doble clic y recarga conservan el mismo resultado',()=>{
+caso('Sobre atómico: cinco Foil, doble clic y recarga conservan el mismo resultado',()=>{
   const e=entorno(),{api}=e;
   api.darSobreBeta();api.darSobreBeta();
   const antes=e.escrituras(),sobre=api.abrirSobre();
-  assert.ok(sobre&&sobre.id);assert.equal(sobre.cartas.length,3);
+  assert.ok(sobre&&sobre.id);assert.equal(sobre.cartas.length,5);
   assert.equal(e.escrituras(),antes+1,'Apertura completa guardada en una única operación');
   assert.equal(api.sobres(),1);
-  assert.equal(new Set(sobre.cartas.map(c=>c.id+':'+c.acabado)).size,3);
-  for(const c of sobre.cartas){assert.ok(['foil','dorado'].includes(c.acabado));assert.equal(c.nueva,true);assert.equal(api.tiene(c.id,c.acabado),true);assert.equal(api.elegido(c.id),'normal');}
+  assert.equal(new Set(sobre.cartas.map(c=>c.id)).size,5);
+  for(const c of sobre.cartas){assert.equal(c.acabado,'foil');assert.equal(c.nueva,true);assert.equal(api.tiene(c.id,c.acabado),true);assert.equal(api.elegido(c.id),'normal');assert.equal(api.tiene(c.id,'dorado'),false);}
   assert.deepEqual(limpiar(api.abrirSobre()),limpiar(sobre));
   assert.equal(e.escrituras(),antes+1);assert.equal(api.sobres(),1);
   assert.deepEqual(limpiar(entorno({mapa:e.mapa}).api.pendiente()),limpiar(sobre));
@@ -109,17 +109,92 @@ caso('Sobre atómico: tres novedades, doble clic y recarga conservan el mismo re
   assert.notEqual(api.pendiente().cartas[0].acabado,'normal');
   assert.equal(api.cerrarSobre(),true);assert.equal(api.pendiente(),null);
   const segundo=api.abrirSobre();assert.ok(segundo);assert.notEqual(segundo.id,sobre.id);assert.equal(api.sobres(),0);
-  assert.equal(segundo.cartas.every(c=>c.nueva),true);
+  assert.equal(segundo.cartas.every(c=>c.acabado==='foil'&&!c.nueva),true,'Los cinco IDs pueden repetirse respecto al sobre anterior');
 });
 
-caso('Al completar la colección se conserva el sobre, sin nuevos sorteos ni gastos',()=>{
+caso('La colección Foil completa permite abrir sobres con repetidas y nunca concede Doradas',()=>{
   const {api}=entorno({cartas:{eric:{}},lideres:{}});
   api.darSobreBeta();const sobre=api.abrirSobre();
-  assert.equal(sobre.cartas.length,3);assert.equal(sobre.cartas.filter(c=>c.nueva).length,2);
-  assert.equal(api.tiene('eric','foil'),true);assert.equal(api.tiene('eric','dorado'),true);
+  assert.equal(sobre.cartas.length,5);assert.equal(sobre.cartas.filter(c=>c.nueva).length,1);
+  assert.equal(api.tiene('eric','foil'),true);assert.equal(api.tiene('eric','dorado'),false);
   api.cerrarSobre();api.darSobreBeta();
-  const antes=api.leer();assert.equal(api.abrirSobre(),null);assert.deepEqual(limpiar(api.leer()),limpiar(antes));
-  assert.equal(api.sobres(),1);
+  const segundo=api.abrirSobre();assert.ok(segundo);assert.equal(segundo.cartas.length,5);
+  assert.equal(segundo.cartas.every(c=>c.id==='eric'&&c.acabado==='foil'&&!c.nueva),true);
+  assert.equal(api.sobres(),0);
+});
+
+caso('El sorteo es independiente del inventario y no repite IDs dentro de un sobre',()=>{
+  const cartas=Object.fromEntries(Array.from({length:17},(_,i)=>['carta_'+i,{}]));
+  for(let semilla=1;semilla<=30;semilla++){
+    const nueva=entorno({cartas,lideres:{},semilla}),completa=entorno({cartas,lideres:{},semilla});
+    for(const id of completa.api.ids())completa.api.desbloquear(id,'foil');
+    nueva.api.darSobreBeta();completa.api.darSobreBeta();
+    const a=nueva.api.abrirSobre(),b=completa.api.abrirSobre();
+    assert.deepEqual(limpiar(a.cartas.map(c=>c.id)),limpiar(b.cartas.map(c=>c.id)),'No se sustituyen repetidas por novedades');
+    assert.equal(new Set(a.cartas.map(c=>c.id)).size,5);
+    assert.equal(a.cartas.every(c=>c.acabado==='foil'&&c.nueva),true);
+    assert.equal(b.cartas.every(c=>c.acabado==='foil'&&!c.nueva),true);
+    assert.equal(nueva.api.ids().some(id=>nueva.api.tiene(id,'dorado')),false);
+  }
+});
+
+caso('Cada campaña concede un sobre una sola vez, también después de recargar',()=>{
+  const e=entorno({url:'https://juego.caozcontodo.com/'}),{api}=e,run='mr90c20h-x83w52f';
+  assert.equal(api.betaDisponible(),false);assert.equal(api.darSobreBeta(),false);
+  const antes=e.escrituras();assert.equal(api.concederSobreCampana(run),true);
+  assert.equal(e.escrituras(),antes+1,'ID de campaña y sobre se guardan en una sola escritura');
+  assert.equal(api.sobres(),1);assert.deepEqual(limpiar(api.leer().campanasPremiadas),[run]);
+  assert.equal(api.concederSobreCampana(run),true);assert.equal(e.escrituras(),antes+1);assert.equal(api.sobres(),1);
+  const recarga=entorno({url:'https://juego.caozcontodo.com/movil.html',mapa:e.mapa}).api;
+  assert.equal(recarga.concederSobreCampana(run),true);assert.equal(recarga.sobres(),1);
+  const pack=recarga.abrirSobre();assert.equal(pack.cartas.length,5);assert.equal(pack.cartas.every(c=>c.acabado==='foil'),true);
+  assert.equal(recarga.concederSobreCampana(run),true);assert.equal(recarga.sobres(),0,'Volver a la victoria no regala el sobre ya abierto');
+  assert.equal(recarga.concederSobreCampana('mr90c20i-otro-run'),true);assert.equal(recarga.sobres(),1);
+  assert.deepEqual(limpiar(recarga.pendiente()),limpiar(pack),'Un nuevo premio no reemplaza el sobre que se está revelando');
+  assert.equal(recarga.ids().every(id=>recarga.elegido(id)==='normal'),true,'Las recompensas no equipan diseños');
+  assert.equal(e.eventos[0].detail.tipo,'sobre-campana');assert.equal(e.eventos[0].detail.runId,run);
+});
+
+caso('El premio de campaña resiste fallos de almacenamiento, IDs inválidos y el límite de sobres',()=>{
+  const e=entorno(),{api}=e;
+  for(const id of ['',null,42,{},'__proto__','constructor','<script>','a'.repeat(101)])assert.equal(api.concederSobreCampana(id),false);
+  assert.equal(e.escrituras(),0);
+  e.fallos.escritura=true;assert.equal(api.concederSobreCampana('run-valido'),false);
+  assert.equal(api.sobres(),0);assert.deepEqual(limpiar(api.leer().campanasPremiadas),[]);assert.equal(e.eventos.length,0);
+  e.fallos.escritura=false;assert.equal(api.concederSobreCampana('run-valido'),true);assert.equal(api.sobres(),1);
+  e.fallos.lectura=true;assert.equal(api.concederSobreCampana('run-nuevo'),false);
+  e.fallos.lectura=false;assert.equal(api.sobres(),1);assert.deepEqual(limpiar(api.leer().campanasPremiadas),['run-valido']);
+  const lleno=api.leer();lleno.sobres=100000;e.mapa.set(api.clave,JSON.stringify(lleno));
+  assert.equal(api.concederSobreCampana('run-sin-cupo'),false);assert.equal(api.leer().campanasPremiadas.includes('run-sin-cupo'),false);
+  assert.equal(api.concederSobreCampana('run-valido'),true,'Una campaña ya premiada sigue reconocida con el contador lleno');
+  assert.ok(api.abrirSobre());assert.equal(api.concederSobreCampana('run-sin-cupo'),true);assert.equal(api.sobres(),100000);
+  assert.equal(api.reiniciar(),true);assert.deepEqual(limpiar(api.leer().campanasPremiadas),[]);assert.equal(api.sobres(),0);
+});
+
+caso('Una colección anterior conserva inventario, selección y su sobre pendiente de tres cartas',()=>{
+  const e=entorno(),{api}=e;
+  const anterior={version:1,revision:12,desbloqueos:{eric:['foil'],tal:['dorado'],lider_fender:['foil']},selecciones:{tal:'dorado'},sobres:2,
+    pendiente:{id:'sobre_anterior',creado:1750000000000,cartas:[{id:'tal',acabado:'dorado',nueva:true},{id:'eric',acabado:'foil',nueva:false},{id:'lider_fender',acabado:'foil',nueva:true}]}};
+  e.mapa.set(api.clave,JSON.stringify(anterior));
+  const recarga=entorno({mapa:e.mapa});
+  assert.deepEqual(limpiar(recarga.api.pendiente()),anterior.pendiente);assert.equal(recarga.api.elegido('tal'),'dorado');
+  assert.deepEqual(limpiar(recarga.api.abrirSobre()),anterior.pendiente);assert.equal(recarga.escrituras(),0);assert.equal(recarga.api.sobres(),2);
+  assert.equal(recarga.api.concederSobreCampana('run-tras-migracion'),true);
+  assert.deepEqual(limpiar(recarga.api.pendiente()),anterior.pendiente);assert.equal(recarga.api.elegido('tal'),'dorado');
+  assert.equal(recarga.api.cerrarSobre(),true);const nuevo=recarga.api.abrirSobre();
+  assert.equal(nuevo.cartas.length,5);assert.equal(nuevo.cartas.every(c=>c.acabado==='foil'),true);
+  assert.equal(recarga.api.elegido('tal'),'dorado');assert.equal(recarga.api.tiene('tal','dorado'),true);
+});
+
+caso('El registro de campañas se sanea sin olvidar recompensas válidas antiguas',()=>{
+  const e=entorno(),{api}=e,estado=api.leer();
+  const antiguas=Array.from({length:10005},(_,i)=>'run-'+i);
+  estado.campanasPremiadas=[...antiguas,'run-0',null,{},'__proto__','constructor',''];
+  e.mapa.set(api.clave,JSON.stringify(estado));
+  assert.deepEqual(limpiar(api.leer().campanasPremiadas),antiguas);
+  assert.equal(api.concederSobreCampana('run-0'),true);assert.equal(api.sobres(),0);
+  assert.equal(api.concederSobreCampana('run-10004'),true);assert.equal(api.sobres(),0);
+  assert.equal(api.concederSobreCampana('run-nuevo'),true);assert.equal(api.leer().campanasPremiadas.length,antiguas.length+1);
 });
 
 caso('Fallos de cuota no conceden diseños, consumen sobres ni cierran revelaciones',()=>{
@@ -159,8 +234,11 @@ caso('Datos corruptos se sanean sin adoptar selecciones bloqueadas ni contaminar
 
 caso('Se rechazan sobres pendientes corruptos sin conceder su contenido',()=>{
   const e=entorno(),{api}=e;api.darSobreBeta();const pack=api.abrirSobre();
-  const guardarCon=cambio=>{const estado=limpiar(api.leer());estado.pendiente=limpiar(pack);cambio(estado);e.mapa.set(api.clave,JSON.stringify(estado));};
+  api.desbloquear(pack.cartas[0].id,'dorado');const original=limpiar(api.leer());
+  const guardarCon=cambio=>{const estado=limpiar(original);estado.pendiente=limpiar(pack);cambio(estado);e.mapa.set(api.clave,JSON.stringify(estado));};
   guardarCon(e=>{e.pendiente.cartas[0].acabado='normal';});assert.equal(api.pendiente(),null);
+  guardarCon(e=>{e.pendiente.cartas[0].acabado='dorado';});assert.equal(api.pendiente(),null,'Un sobre nuevo de cinco cartas no puede introducir Doradas, aunque se posean');
+  guardarCon(e=>{e.pendiente.cartas.pop();});assert.equal(api.pendiente(),null,'Sólo se aceptan los formatos de tres y cinco cartas');
   guardarCon(e=>{e.pendiente.cartas[1].id='__proto__';});assert.equal(api.pendiente(),null);
   guardarCon(e=>{delete e.desbloqueos[e.pendiente.cartas[0].id];});assert.equal(api.pendiente(),null);
 });
@@ -189,6 +267,70 @@ caso('Reinicio completo y eventos sólo después de una escritura exitosa',()=>{
   const numero=e.eventos.length;e.escuchas.storage({key:'otra.clave'});assert.equal(e.eventos.length,numero);
   e.escuchas.storage({key:api.clave});assert.equal(e.eventos.at(-1).detail.tipo,'externo');
   e.escuchas.storage({key:null});assert.equal(e.eventos.at(-1).detail.tipo,'externo');
+});
+
+// La cola vive en el progreso de campaña, pero entrega a través del modelo real.
+// Se ejecutan las funciones de producción aisladas de pantallas y animaciones.
+const codigoCampana=fs.readFileSync(new URL('./final-core.js',import.meta.url),'utf8');
+const inicioCampana=codigoCampana.indexOf('let campanaMemoria=null,campanaLanzando=false,campanaEnsayoGero=null;');
+const finCampana=codigoCampana.indexOf('function campanaDialogo(){',inicioCampana);
+assert.ok(inicioCampana>=0&&finCampana>inicioCampana);
+function entornoCampana(opciones={}){
+  const e=entorno(opciones),c=e.context,fallos={inventario:false};
+  const poner=c.localStorage.setItem;
+  c.localStorage.setItem=(clave,valor)=>{if(fallos.inventario&&clave===e.api.clave)throw Error('Inventario sin espacio');poner(clave,valor);};
+  Object.assign(c,{campanaPruebaDisponible:()=>e.api.betaDisponible(),campanaNormalizarPersonaje:p=>p,toast(){}});
+  vm.runInContext("const CAMPANA_CLAVE='caoz.campana.v1.prueba';const CAMPANA_RIVALES=Array(6).fill(null);"+codigoCampana.slice(inicioCampana,finCampana),c,{filename:'campana-premios-real.js'});
+  return {...e,fallosCampana:fallos,claveCampana:'caoz.campana.v1.prueba',guardar:c.campanaGuardar,leerCampana:c.campanaLeer,entregar:c.campanaEntregarSobre};
+}
+
+caso('Una campaña nueva conserva un premio fallido del recorrido anterior hasta recargar',()=>{
+  const e=entornoCampana(),{api}=e;
+  e.fallosCampana.inventario=true;
+  assert.equal(e.guardar({version:1,id:'primera-terminada',lider:'fender',etapa:6,deseo:{simulado:true}}),true);
+  assert.equal(api.sobres(),0);assert.deepEqual(limpiar(e.leerCampana().sobresPendientes),['primera-terminada']);
+  assert.equal(e.guardar({version:1,id:'segunda-en-curso',lider:'fender',etapa:0}),true);
+  const guardada=JSON.parse(e.mapa.get(e.claveCampana));
+  assert.equal(guardada.id,'segunda-en-curso');assert.deepEqual(guardada.sobresPendientes,['primera-terminada']);
+  assert.equal(api.sobres(),0);
+  const recarga=entornoCampana({mapa:e.mapa}),p=recarga.leerCampana();
+  assert.equal(p.etapa,0);assert.equal(recarga.entregar(p),true);assert.equal(recarga.api.sobres(),1);
+  assert.equal(p.sobresPendientes,undefined,'El recibo resuelto se limpia en memoria para el siguiente guardado');
+  assert.equal(recarga.entregar(recarga.leerCampana()),false);assert.equal(recarga.api.sobres(),1);
+  const otraRecarga=entornoCampana({mapa:e.mapa});
+  assert.equal(otraRecarga.entregar(otraRecarga.leerCampana()),true,'La cola durable anterior puede reintentarse con el recibo idempotente');
+  assert.equal(otraRecarga.api.sobres(),1);
+  assert.equal(otraRecarga.guardar(otraRecarga.leerCampana()),true);
+  assert.equal(JSON.parse(e.mapa.get(e.claveCampana)).sobresPendientes,undefined);
+});
+
+caso('Varias victorias sin espacio conservan todos sus recibos al empezar otra campaña',()=>{
+  const e=entornoCampana();e.fallosCampana.inventario=true;
+  e.guardar({version:1,id:'primera',lider:'fender',etapa:6});
+  e.guardar({version:1,id:'segunda',lider:'fender',etapa:6,secreto:'final'});
+  e.guardar({version:1,id:'tercera',lider:'fender',etapa:0,sobresPendientes:['primera','__proto__',{},'',null]});
+  assert.deepEqual(JSON.parse(e.mapa.get(e.claveCampana)).sobresPendientes,['primera','segunda']);
+  e.fallosCampana.inventario=false;assert.equal(e.entregar(e.leerCampana()),true);
+  assert.equal(e.api.sobres(),2);assert.deepEqual(limpiar(e.api.leer().campanasPremiadas),['primera','segunda']);
+  e.guardar({...limpiar(e.leerCampana()),etapa:6,secreto:'ascenso'});assert.equal(e.api.sobres(),2,'El Editor pendiente todavía no concede su propio sobre');
+  e.guardar({...limpiar(e.leerCampana()),secreto:'final'});assert.equal(e.api.sobres(),3);
+  e.guardar({...limpiar(e.leerCampana()),secreto:'completado'});assert.equal(e.api.sobres(),3);
+});
+
+caso('Ensayos y laboratorio no crean premios y tampoco borran una cola real guardada',()=>{
+  const e=entornoCampana();e.fallosCampana.inventario=true;
+  e.guardar({version:1,id:'recorrido-real',lider:'fender',etapa:6});
+  const real=e.mapa.get(e.claveCampana);
+  vm.runInContext("campanaEnsayoGero={version:1,id:'ensayo-en-memoria',lider:'fender',etapa:6,prueba:true};",e.context);
+  assert.equal(e.guardar(e.leerCampana()),true);assert.equal(e.entregar(e.leerCampana()),false);assert.equal(e.mapa.get(e.claveCampana),real);
+  assert.equal(e.entregar({version:1,id:'ensayo-laboratorio',lider:'fender',etapa:6,secreto:'final',pruebaEditor:true}),false);
+  e.guardar({version:1,id:'otro-recorrido-real',lider:'fender',etapa:0});
+  assert.deepEqual(JSON.parse(e.mapa.get(e.claveCampana)).sobresPendientes,['recorrido-real'],'Salir del ensayo preserva el premio del avance que estaba debajo');
+  e.fallosCampana.inventario=false;e.entregar(e.leerCampana());
+  assert.deepEqual(limpiar(e.api.leer().campanasPremiadas),['recorrido-real']);
+  const prod=entornoCampana({url:'https://juego.caozcontodo.com/'});
+  assert.equal(prod.entregar({version:1,id:'ensayo-beta',lider:'fender',etapa:6,prueba:true,sobresPendientes:['cola-beta']}),false);
+  assert.equal(prod.api.sobres(),0);
 });
 
 // Cosméticos online: ejecuta los despachadores reales sin abrir ningún relevo.

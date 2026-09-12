@@ -669,6 +669,22 @@ function campanaCrearNiebla(etapa,retirada=false){
   return niebla;
 }
 let campanaMemoria=null,campanaLanzando=false,campanaEnsayoGero=null;
+function campanaIdSobreValido(id){return typeof id==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(id)&&!['__proto__','constructor','prototype'].includes(id);}
+function campanaSobresPendientes(p){return Array.isArray(p?.sobresPendientes)?[...new Set(p.sobresPendientes.filter(campanaIdSobreValido))]:[];}
+function campanaPuedeRecibirSobre(p){
+  return !!p&&p.version===1&&campanaIdSobreValido(p.id)&&!!LEADERS[p.lider]&&Number.isInteger(p.etapa)&&p.etapa>=0&&p.etapa<=CAMPANA_RIVALES.length&&
+    p!==campanaEnsayoGero&&!p.pruebaEditor&&(!p.prueba||campanaPruebaDisponible());
+}
+function campanaEntregarSobre(p){
+  // Un recorrido termina en Gero, salvo que los seis sellos abran al Editor.
+  // El recibo vive junto al sobre: reanudar el final nunca duplica el premio.
+  if(!campanaPuedeRecibirSobre(p))return false;
+  const ids=campanaSobresPendientes(p);
+  if(p.etapa===CAMPANA_RIVALES.length&&(!p.secreto||['final','completado'].includes(p.secreto))&&!ids.includes(p.id))ids.push(p.id);
+  const pendientes=ids.filter(id=>window.CAOZ_COLECCION?.concederSobreCampana?.(id)!==true);
+  if(pendientes.length)p.sobresPendientes=pendientes;else delete p.sobresPendientes;
+  return ids.length>0&&!pendientes.length;
+}
 function campanaLeer(){
   let dato=campanaEnsayoGero||campanaMemoria;
   try{if(!dato)dato=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
@@ -685,9 +701,21 @@ function campanaLeer(){
 function campanaGuardar(dato){
   // Este recorrido temporal no reemplaza la campaña que el jugador guardó.
   if(campanaEnsayoGero&&dato?.id===campanaEnsayoGero.id){campanaEnsayoGero=dato;return true;}
+  // Si el inventario falló al terminar, la siguiente campaña transporta los
+  // recibos pendientes antes de sustituir el avance anterior. No bloquea jugar.
+  let anterior=campanaMemoria;
+  if(!anterior)try{anterior=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
+  const pendientes=campanaSobresPendientes(dato);
+  if(anterior?.id!==dato?.id&&campanaPuedeRecibirSobre(anterior)){
+    campanaEntregarSobre(anterior);
+    pendientes.push(...campanaSobresPendientes(anterior));
+  }
+  if(dato&&typeof dato==='object'){
+    if(pendientes.length)dato.sobresPendientes=[...new Set(pendientes)];else delete dato.sobresPendientes;
+  }
   campanaEnsayoGero=null;
   campanaMemoria=dato;
-  try{localStorage.setItem(CAMPANA_CLAVE,JSON.stringify(dato));return true;}
+  try{localStorage.setItem(CAMPANA_CLAVE,JSON.stringify(dato));campanaEntregarSobre(dato);return true;}
   catch(_){toast('No se pudo guardar en este navegador. Puedes continuar mientras no cierres el juego.');return false;}
 }
 function campanaDialogo(){
@@ -748,6 +776,7 @@ function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   campanaEnsayoGero=null;
   const progreso=campanaLeer();
+  campanaEntregarSobre(progreso);
   if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&(progreso.deseo||progreso.secreto==='completado')))campanaRuta();else campanaCrear();
   campanaAnimarEntrada();
 }
@@ -1136,7 +1165,12 @@ function campanaFinal(winner,why){
   `;document.head.appendChild(css);
 }
 
-addEventListener('load',()=>{if(new URLSearchParams(location.search).get('campana')==='1')abrirCampana();});
+addEventListener('load',()=>{
+  // También recupera el premio si la app se cerró entre guardar la victoria
+  // y guardar el inventario, o si antes no quedaba espacio disponible.
+  campanaEntregarSobre(campanaLeer());
+  if(new URLSearchParams(location.search).get('campana')==='1')abrirCampana();
+});
 
 /* Secreto del selector: ocho movimientos consecutivos, sólo al elegir al jugador.
    La descarga se añadirá aquí cuando exista el PDF; no se simula un enlace roto. */

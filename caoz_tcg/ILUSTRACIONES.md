@@ -154,7 +154,7 @@ encuadres, revisión concurrente, restauración, limpieza y aislamiento del soni
 La comprobación visual del panel debe incluir escritorio y móvil, recuperación
 de borrador, vista previa sin guardar, recarga en otra sesión y conflicto.
 
-## Colección del jugador (build247)
+## Colección del jugador (build249)
 
 `coleccion-modelo.js` guarda inventario, selección y sobres en localStorage.
 Normal está disponible para todas las cartas y protagonistas. Foil y Dorado se
@@ -168,11 +168,22 @@ Beta, producción y pruebas tienen claves separadas; escritorio y móvil del
 mismo entorno comparten inventario. «Borrar todo tu progreso» también elimina
 sobres, acabados obtenidos y selecciones; Normal sigue disponible.
 
-Mientras se define la recompensa, sólo beta/local muestra «Sobre de prueba».
-Contiene tres diseños premium, favorece novedades y usa 80 % Foil / 20 % Dorado
-mientras ambos tienen novedades. Al abrir, una escritura guarda las tres cartas,
-el contador y el resultado pendiente. Recargar recupera ese resultado. No hay
-compras ni premios automáticos. Con todo desbloqueado no se consume el sobre.
+Cada campaña completada concede un sobre mediante
+`CAOZ_COLECCION.concederSobreCampana(runId)`. Premio y recibo por recorrido se
+guardan juntos; las recargas reintentan sin duplicar. Gero termina el recorrido
+normal; cuando abre el secreto, se espera la victoria sobre Pitágoras. Si falla
+el inventario, sobresPendientes acompaña el siguiente recorrido hasta guardar
+la recompensa; empezar otra campaña no la pierde. Los
+ensayos efímeros fuera de campaña y el laboratorio no conceden premios.
+
+Cada sobre nuevo tiene cinco Foil aleatorias, sin repetir ID dentro del sobre
+si el catálogo tiene al menos cinco cartas. El inventario no altera el sorteo:
+pueden ser ediciones ya obtenidas. Una escritura guarda desbloqueos, contador y
+resultado pendiente. Los pendientes anteriores de tres cartas siguen válidos y
+no se sortean de nuevo. Beta/local conserva el botón para probar sobres.
+Las Doradas se reservan al futuro canje de códigos de cartas físicas; el panel
+lo explica y no simula validaciones ni desbloqueos. Las Doradas de pruebas
+anteriores se conservan. No hay cuentas ni sincronización entre dispositivos.
 
 `coleccion-juego.js` comparte únicamente las selecciones cosméticas en
 join/welcome: el rival conserva sus acabados; la IA y clientes antiguos muestran

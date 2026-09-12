@@ -1,5 +1,5 @@
-/* Un archivo de cartas sobre madera y pergamino. Todo queda encerrado en este
-   diálogo: ni el tablero, ni los otros menús heredan estos estilos. */
+/* Colección de naipes con el panel violeta del juego y botones de taberna.
+   Los estilos permanecen dentro del diálogo, sin alterar el tablero. */
 #coleccionPanel{
   --col-papel:#ebd7b2;--col-tinta:#f0dfc0;--col-suave:#b7a186;--col-laton:#a7834b;
   --alto-util:calc(var(--coleccion-alto,100dvh) - max(10px,env(safe-area-inset-top)) - max(10px,env(safe-area-inset-bottom)));
@@ -59,19 +59,15 @@
 #coleccionPanel .coleccionPuntos i.propia[data-edicion="foil"]{background:linear-gradient(#dcbdeb,#93d0c7)}
 #coleccionPanel .coleccionPuntos i.propia[data-edicion="dorado"]{background:#e0b65d}
 #coleccionPanel .coleccionPuntos i.elegida{box-shadow:0 0 0 2px #dcc7a138}
-#coleccionPanel .coleccionCarta{width:auto;height:100%;max-width:100%;aspect-ratio:2/3;position:relative;overflow:hidden;isolation:isolate;border:1px solid #b6a27c;border-radius:5px;background:#191511;box-shadow:0 4px 8px #0009;transition:translate .2s ease,filter .2s ease;container-type:inline-size;min-height:0;margin:0;padding:0}
-#coleccionPanel .coleccionMini:hover .coleccionCarta{translate:0 -3px;filter:brightness(1.09)}
-#coleccionPanel .coleccionCarta .marcoDibujo{position:absolute;inset:0;border-radius:3px;overflow:hidden;z-index:0;background:none}
-#coleccionPanel .coleccionCarta .dibujo{position:absolute;inset:0;display:block;width:100%;height:100%;object-fit:cover;object-position:var(--ex,50%) var(--ey,50%);transform:scale(var(--ez,1));transform-origin:var(--ex,50%) var(--ey,50%);max-width:none}
-#coleccionPanel .coleccionCarta .nombreCarta{position:absolute;z-index:2;bottom:21%;left:3%;right:3%;min-height:20%;padding:4px 2px;display:flex;align-items:center;justify-content:center;text-align:center;border:1px solid #b29a6890;border-radius:2px;background:linear-gradient(#2a1d19ed,#110e0df5);color:#f2dfb5;font-family:var(--serif,Georgia,serif);font-size:clamp(9px,10cqw,18px);font-weight:700;line-height:1.12;letter-spacing:.1px;text-wrap:balance}
-#coleccionPanel .coleccionCarta .coleccionTipoCarta{position:absolute;z-index:1;bottom:0;left:0;right:0;height:25%;padding:3% 12%;display:flex;align-items:center;justify-content:center;background:linear-gradient(#141013b0,#0d0b0ef5);color:#d3c6ba;text-align:center;font-size:clamp(6px,5.5cqw,10px);line-height:1.2;text-transform:uppercase}
-#coleccionPanel .coleccionCarta :is(.coleccionCoste,.coleccionAtaque,.coleccionVida){position:absolute;z-index:3;display:grid;place-items:center;width:23%;aspect-ratio:1;border:1px solid #e7cf8b;border-radius:50%;background:radial-gradient(circle at 30% 22%,#9170b3,#493063 60%,#281930);font-family:var(--serif,Georgia,serif);font-size:clamp(11px,14cqw,27px);font-weight:700;color:#fff0ca;line-height:1;box-shadow:0 2px 4px #0009}
-#coleccionPanel .coleccionCarta .coleccionCoste{top:2%;left:2%}
-#coleccionPanel .coleccionCarta .coleccionAtaque{bottom:1.5%;left:2%;background:radial-gradient(circle at 30% 22%,#bc8b34,#805012 65%,#442207)}
-#coleccionPanel .coleccionCarta .coleccionVida{bottom:1.5%;right:2%;background:radial-gradient(circle at 30% 22%,#bf5c61,#8d3036 65%,#47171c)}
-#coleccionPanel .coleccionSinArte{position:absolute;inset:0;display:grid;place-items:center;font-size:55px;background:radial-gradient(ellipse,#665036,#221710);padding-bottom:30%}
-#coleccionPanel .coleccionCarta.conarte .coleccionSinArte{display:none}
-#coleccionPanel .coleccionCarta:not(.conarte) .marcoDibujo{display:none}
+/* La colección usa la carta del tablero, sin dibujar otra composición. */
+#coleccionPanel .coleccionCarta{position:relative;flex:none;margin:0;max-width:none;max-height:none;min-height:0;aspect-ratio:5/7;transform:none;rotate:none;scale:1;translate:none;transition:filter .18s ease;pointer-events:none}
+#coleccionPanel .coleccionCarta.card{overflow:visible;display:flex;flex-direction:column}
+#coleccionPanel .coleccionCarta.card.acomodo .pieCarta .txt{display:block;max-height:none;overflow:visible;-webkit-line-clamp:unset;white-space:normal}
+#coleccionPanel .coleccionCarta.card.acomodo .pieCarta .tribe{white-space:normal}
+#coleccionPanel .coleccionCarta.vscard{inset:auto;position:relative;border-radius:10px;background:#1a1325;overflow:hidden;animation:none}
+#coleccionPanel .coleccionCarta.vscard .lname{font-size:1.5em;line-height:1.2}
+#coleccionPanel .coleccionCarta.vscard .larch{font-size:.65em;line-height:1.3}
+#coleccionPanel .coleccionMini:hover .coleccionCarta{filter:brightness(1.09)}
 #coleccionPanel .coleccionPaginas{display:flex;align-items:center;justify-content:center;gap:25px;flex:none;padding:1px 0 4px}
 #coleccionPanel .coleccionPaginas>span{font-family:var(--serif,Georgia,serif);font-size:14px;color:#c1a985;font-variant-numeric:tabular-nums;white-space:nowrap}
 #coleccionPanel .coleccionPaginas button{min-width:100px;min-height:35px;padding:6px 15px;font-size:12px}
@@ -262,3 +258,123 @@
   #coleccionPanel .coleccionTotales{max-width:170px;line-height:1.25}
 }
 #coleccionPanel .coleccionHallazgo:disabled{box-shadow:none}
+/* Ediciones grandes: el formato del naipe original conserva su texto completo. */
+#coleccionPanel .coleccionRejilla{grid-template-rows:minmax(0,1fr);gap:22px;padding:17px 18px 12px}
+#coleccionPanel .coleccionRejilla[data-cantidad="1"]{grid-template-columns:minmax(0,1fr)}
+#coleccionPanel .coleccionRejilla[data-cantidad="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+#coleccionPanel .coleccionRejilla[data-cantidad="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
+#coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
+#coleccionPanel .coleccionMini{gap:12px;grid-template-rows:minmax(0,1fr) 20px}
+#coleccionPanel .coleccionMiniInfo{display:block;max-width:none}
+#coleccionPanel .coleccionMiniPie{font-family:var(--sans,system-ui);font-size:12px;gap:14px;line-height:20px}
+#coleccionPanel .coleccionPuntos{gap:5px}
+#coleccionPanel .coleccionPuntos i{width:8px;height:8px}
+#coleccionPanel .coleccionVersiones{max-width:970px;max-height:none;gap:24px;padding:8px 12px 12px;min-height:0}
+#coleccionPanel .coleccionVersion .coleccionCarta{max-height:none}
+#coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline:0;box-shadow:0 0 20px #d5ae5126}
+#coleccionPanel .coleccionElegirAcabado{min-height:34px;background:none;border:1px solid #80603d70;box-shadow:none;color:#d3bc99;font-size:14px;min-width:95px;padding:6px 10px}
+#coleccionPanel .coleccionElegirAcabado[aria-pressed="true"]{border-color:#d6b273;color:#f2dfb7;background:#a9823220}
+#coleccionPanel .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{color:#d2d4e8}
+#coleccionPanel .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{color:#edcc87}
+#coleccionPanel .coleccionReglas{display:none}
+#coleccionPanel .coleccionRevelacion{max-width:1050px;gap:20px;padding:20px 12px 8px;min-height:0}
+#coleccionPanel .coleccionRevelacion[data-total="5"]{grid-template-columns:repeat(5,minmax(0,1fr))}
+#coleccionPanel .coleccionRevelacion[data-total="3"]{grid-template-columns:repeat(3,minmax(0,1fr));max-width:880px}
+#coleccionPanel .coleccionHallazgo{max-height:none;gap:10px}
+#coleccionPanel .coleccionHallazgo :is(.coleccionCarta,.coleccionReverso){max-height:none}
+#coleccionPanel .coleccionHallazgoNombre{font-size:13px;min-height:2.4em}
+#coleccionPanel .coleccionHallazgoEdicion{font-size:11px}
+#coleccionPanel .coleccionIndiceSobre{display:none;align-items:center;justify-content:center;gap:9px;flex:none}
+#coleccionPanel .coleccionPuntoSobre{font-size:12px;padding:0;min-width:33px;min-height:32px;width:33px;box-shadow:none;background:#251b13;border-color:#80603d;color:#b5a18a}
+#coleccionPanel .coleccionPuntoSobre.revelado{background:linear-gradient(#343346,#1e202a);border-color:#a1a7bd;color:#e8e9f1}
+#coleccionPanel .coleccionPuntoSobre[aria-current="true"]{outline:1px solid #e8c684;outline-offset:3px}
+#coleccionPanel .coleccionCanje{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;max-width:450px;width:100%;margin:auto}
+#coleccionPanel .coleccionCanjeSello{width:84px;height:84px;display:grid;place-items:center;border:1px solid #bd9658;border-radius:50%;color:#edc983;background:radial-gradient(circle at 30% 23%,#795020,#302318 65%);box-shadow:inset 0 0 0 5px #36281c,inset 0 0 0 6px #b18d5133,0 10px 30px #0005}
+#coleccionPanel .coleccionCanjeSello svg{width:35px;height:35px}
+#coleccionPanel .coleccionCanje h3{font:700 32px/1.15 var(--serif,Georgia,serif);color:#efd6a5}
+#coleccionPanel .coleccionCanje>p{font-size:14px;line-height:1.6;color:#ccb393}
+#coleccionPanel .coleccionCanjeCodigo{display:flex;flex-direction:column;gap:7px;width:100%;max-width:310px;color:#c7af8c;font-size:12px;text-align:left}
+#coleccionPanel .coleccionCanjeCodigo input{width:100%;height:45px;font-size:16px;border:1px solid #86683e88;border-radius:3px;background:#100d0a;color:#9c8a6c;padding:8px 12px;opacity:1}
+#coleccionPanel .coleccionCanje .coleccionCanjeNota{font-size:11px;max-width:300px;color:#aa9579}
+#coleccionPanel .coleccionCanjeVolver{align-self:center;margin-bottom:12px;flex:none}
+@media(max-width:580px){
+  #coleccionPanel .coleccionPestana{font-size:12px;padding:7px 6px;gap:5px}
+  #coleccionPanel .coleccionPestana svg{width:14px;height:14px}
+  #coleccionPanel .coleccionNumero{min-width:19px;padding:0 4px;font-size:10px}
+  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{grid-template-rows:minmax(0,1fr);padding:14px 12px 8px}
+  #coleccionPanel .coleccionMini{gap:9px}
+  #coleccionPanel .coleccionMiniPie,#coleccionPanel.coleccionBaja .coleccionMiniPie{display:flex;font-size:11px}
+  #coleccionPanel .coleccionVersiones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:34px minmax(0,1fr) 18px 40px;gap:10px;padding:2px 4px 8px;min-height:0!important;max-height:none}
+  #coleccionPanel .coleccionVersion{display:contents}
+  #coleccionPanel .coleccionVersion .coleccionElegirAcabado{grid-row:1;min-width:0;width:100%;font-size:13px;padding:5px 4px}
+  #coleccionPanel .coleccionVersion[data-edicion="normal"] .coleccionElegirAcabado{grid-column:1}
+  #coleccionPanel .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{grid-column:2}
+  #coleccionPanel .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{grid-column:3}
+  #coleccionPanel .coleccionVersion:not(.vista) :is(.coleccionCarta,.coleccionEstadoEdicion,.coleccionUsar){display:none}
+  #coleccionPanel .coleccionVersion.vista .coleccionCarta{grid-column:1/-1;grid-row:2;justify-self:center;align-self:center;margin:0}
+  #coleccionPanel .coleccionVersion.vista .coleccionEstadoEdicion{grid-column:1/-1;grid-row:3;justify-self:center;align-self:center;font-size:11px}
+  #coleccionPanel .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:4;justify-self:center;align-self:center;width:100%;min-height:39px;max-width:230px;font-size:14px}
+  #coleccionPanel .coleccionRevelacion,#coleccionPanel .coleccionRevelacion[data-total="5"],#coleccionPanel .coleccionRevelacion[data-total="3"]{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:0;padding:11px 20px 5px}
+  #coleccionPanel .coleccionHallazgo{gap:8px}
+  #coleccionPanel .coleccionHallazgo:not(.actual){display:none}
+  #coleccionPanel .coleccionHallazgoNombre{font-size:13px;min-height:1.25em;line-height:1.25;max-height:2.5em}
+  #coleccionPanel .coleccionHallazgoEdicion{font-size:11px}
+  #coleccionPanel .coleccionHallazgo .coleccionCarta{max-height:none}
+  #coleccionPanel .coleccionIndiceSobre{display:flex;margin:2px 0 6px}
+  #coleccionPanel .coleccionSobreTitulo h3{font-size:23px}
+  #coleccionPanel .coleccionSobreTitulo p{max-width:320px}
+  #coleccionPanel .coleccionCanje{gap:14px;padding:8px 10px}
+  #coleccionPanel .coleccionCanje h3{font-size:27px}
+  #coleccionPanel .coleccionCanje>p{font-size:13px}
+}
+#coleccionPanel.coleccionBaja .coleccionCanje{gap:9px}
+#coleccionPanel.coleccionBaja .coleccionCanjeSello{width:54px;height:54px}
+#coleccionPanel.coleccionBaja .coleccionCanjeSello svg{width:26px;height:26px}
+#coleccionPanel.coleccionBaja .coleccionCanje .coleccionAntetitulo{display:none}
+@media(max-width:580px){
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera .coleccionAntetitulo{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera{min-height:34px;margin-bottom:5px}
+  #coleccionPanel[data-vista="cartas"] .coleccionResumen{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionEstado:empty{height:5px;min-height:5px}
+  #coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:14px 17px;padding:12px 11px 8px}
+  #coleccionPanel .coleccionRejilla[data-cantidad="2"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:17px;padding:14px 11px 8px}
+  #coleccionPanel .coleccionMini{gap:8px}
+  #coleccionPanel .coleccionMiniPie{font-size:10px}
+}
+@media(max-width:580px){
+  #coleccionPanel .coleccionRejilla[data-cantidad="4"],#coleccionPanel .coleccionRejilla[data-cantidad="2"]{column-gap:12px;padding-left:7px;padding-right:7px}
+}
+/* El panel vuelve al violeta del juego. Sólo los botones adoptan la madera
+   de Taberna: sin cambiar el diseño original de las cartas ni añadir herrajes. */
+#coleccionPanel{--col-tinta:#e6def2;--col-suave:#b4a5ca;--col-laton:#8d6f21;border-color:var(--gold2,#8d6f21);border-radius:14px;background:linear-gradient(180deg,var(--panel2,#241a34),var(--panel,#1c1429));box-shadow:0 20px 60px #000b;padding:4px}
+#coleccionPanel .coleccionInterior{border:0;border-radius:10px;background:none;padding-top:17px}
+#coleccionPanel .coleccionInterior:before,#coleccionPanel .coleccionInterior:after{display:none}
+#coleccionPanel .coleccionEmblema,#coleccionPanel .coleccionCabecera .coleccionAntetitulo{display:none}
+#coleccionPanel .coleccionCabecera{min-height:41px;margin-bottom:11px}
+#coleccionPanel h2,#coleccionPanel .coleccionDetalleCabecera h3{color:var(--gold,#e6bb52)}
+#coleccionPanel .coleccionCerrar{background:#150f1f;border-color:#5c4872;border-radius:7px;color:#dfd0ed}
+#coleccionPanel .coleccionCerrar:hover{background:#30233f}
+#coleccionPanel .coleccionPestanas,#coleccionPanel .coleccionPie{border-color:#473357}
+#coleccionPanel .coleccionPestanas .coleccionPestana{color:#b4a5ca}
+#coleccionPanel .coleccionPestanas .coleccionPestana[aria-current="page"]{color:#ecd18e}
+#coleccionPanel .coleccionBuscar{background:#130e1d;border-color:#4d3a65;border-radius:6px;color:#b5a3cb}
+#coleccionPanel .coleccionBuscar input{color:#e4dcef}
+#coleccionPanel .coleccionBuscar input::placeholder{color:#a492bb}
+#coleccionPanel select{background:#1a1227;border-color:#4d3a65;border-radius:6px;color:#d5c7e7}
+#coleccionPanel .coleccionNumero{background:#150f1f;border-color:#625072;color:#e1d5ed}
+#coleccionPanel .coleccionResumen,#coleccionPanel .coleccionTotales,#coleccionPanel .coleccionAviso,#coleccionPanel .coleccionDetalleCabecera p{color:#afa0c2}
+#coleccionPanel .coleccionRejilla{background:none;border:0;box-shadow:none;border-radius:0}
+#coleccionPanel .coleccionMiniPie{color:#c6b7da}
+#coleccionPanel .coleccionVersiones{background:none}
+#coleccionPanel .coleccionElegirAcabado{background:#1a1424;border-color:#54405f;color:#c8bbd6}
+#coleccionPanel .coleccionElegirAcabado[aria-pressed="true"]{background:#352647;border-color:#c6a056}
+#coleccionPanel .coleccionCarta.card.acomodo.t-personaje .pieCarta{margin-bottom:1.15em}
+#coleccionPanel .coleccionEstado{color:#d7c48f}
+#coleccionPanel .coleccionEstado.error{color:#ffb3a3}
+#coleccionPanel .coleccionSobreTitulo h3,#coleccionPanel .coleccionCanje h3{color:#ecd18e}
+#coleccionPanel .coleccionSobreTitulo p,#coleccionPanel .coleccionCanje>p{color:#c0b1d3}
+@media(max-width:580px){
+  #coleccionPanel .coleccionInterior{padding-top:11px}
+  #coleccionPanel .coleccionCabecera{min-height:36px;margin-bottom:7px}
+  #coleccionPanel .coleccionRejilla[data-cantidad="4"],#coleccionPanel .coleccionRejilla[data-cantidad="2"]{column-gap:12px;padding-left:5px;padding-right:5px}
+}

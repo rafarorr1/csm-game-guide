@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {readFileSync} from 'node:fs';
 import {createHash,randomBytes} from 'node:crypto';
+import vm from 'node:vm';
 import worker from './_worker.js';
 
 function baseLocal(){
@@ -208,3 +209,70 @@ assert.equal((await llamar('catalogo')).status,200);
 assert.deepEqual(readFileSync(new URL('./art/lider_adreida.webp',import.meta.url)),webp,'el original permanece intacto');
 otra.sqlite.close();db.close();
 console.log('Backend de ilustraciones: acceso, imágenes, migración normal, prioridad dorado/foil, herencia, CAS por acabado, restauración, limpieza compartida y aislamiento SFX/entornos en verde.');
+
+// Thal sólo estaba en el servicio público: un 503 inicial lo dejaba sin dibujo.
+// La copia estática es exactamente la edición Normal publicada, sin acabados.
+const hashThal='67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d';
+const encThal={x:45,y:91,z:118},arteLocal=JSON.parse(readFileSync(new URL('./art/encuadres.json',import.meta.url)));
+assert.equal(hash(readFileSync(new URL('./art/tal.webp',import.meta.url))),hashThal);
+assert.deepEqual(arteLocal.tal,encThal);
+const talCatalogo=JSON.parse(catalogo).cartas.find(c=>c.id==='tal');
+assert.deepEqual(talCatalogo.original,{url:'art/tal.webp',encuadre:encThal});
+const fuenteCliente=readFileSync(new URL('./arte-remoto.js',import.meta.url),'utf8');
+const fuenteVistas=readFileSync(new URL('./arte-vistas.js',import.meta.url),'utf8');
+function clienteArte(estudio=false){
+  const temporizadores=new Map(),almacen=new Map(),estado={falla:true,pedidos:0,catalogo:{cartas:[]}};let numero=0;
+  const c={URL,URLSearchParams,AbortController,Event,
+    location:{href:'https://juego.example/index.html'+(estudio?'?estudioVista=1':''),search:estudio?'?estudioVista=1':'',protocol:'https:'},
+    document:{hidden:false,documentElement:{},querySelectorAll:()=>[],getElementById:()=>null,addEventListener(){}},
+    MutationObserver:class{observe(){}},
+    setTimeout(fn,ms){const id=++numero;temporizadores.set(id,{fn,ms});return id;},clearTimeout(id){temporizadores.delete(id);},
+    setInterval(){},addEventListener(){},dispatchEvent(){},
+    localStorage:{getItem:k=>almacen.get(k)||null,setItem:(k,v)=>almacen.set(k,v)},
+    CARDS:{tal:{}},LEADERS:{},ARTE:{},cargarArte(){},CAOZ_COLECCION:{elegido:()=> 'normal'},
+    encuadreDe:e=>typeof e==='number'?{x:50,y:e,z:100}:e?{x:e.x,y:e.y,z:e.z}:null,
+    fetch:async url=>{
+      if(String(url).endsWith('art/encuadres.json'))return {ok:true,json:async()=>({tal:arteLocal.tal})};
+      estado.pedidos++;return estado.falla?{ok:false}:{ok:true,json:async()=>estado.catalogo};
+    },
+  };
+  c.window=c;c.parent=estudio?{}:c;vm.createContext(c);
+  vm.runInContext(fuenteVistas,c);vm.runInContext(fuenteCliente,c);
+  return {c,estado,temporizadores,almacen,async reintentar(){
+    const pendiente=[...temporizadores].find(([,t])=>t.ms===1500||t.ms===3000);assert.ok(pendiente,'Queda un reintento breve programado');
+    temporizadores.delete(pendiente[0]);pendiente[1].fn();await c.CAOZ_ARTE.refrescar();
+  }};
+}
+const cliente=clienteArte();await cliente.c.cargarArte();await cliente.c.CAOZ_ARTE.refrescar();
+for(const acabado of ['normal','foil','dorado']){
+  const v=cliente.c.CAOZ_ARTE.version('tal',acabado,'movil_coleccion');
+  assert.equal(v.acabado,acabado);assert.equal(v.url,'art/tal.webp');assert.deepEqual(JSON.parse(JSON.stringify(v.encuadre)),encThal);
+}
+assert.equal(cliente.c.CAOZ_COLECCION.elegido('tal'),'normal');
+assert.deepEqual(Object.keys(cliente.c.ARTE),['tal'],'La instalación conserva el encuadre aunque el servicio falle');
+await cliente.reintentar();await cliente.reintentar();
+assert.equal(cliente.estado.pedidos,3,'Una caída sólo añade dos reintentos al pedido inicial');
+assert.equal(cliente.temporizadores.size,0,'Una caída sostenida no crea un bucle de peticiones');
+const reg=(acabado,h,x,vistas={})=>({id:'tal',acabado,revision:2,activo:true,heredada:false,hash:h,mime:'image/webp',x,y:30,z:110,vistas});
+const normalNuevo=reg('normal','a'.repeat(64),60,{movil_detalle:{x:11,y:22,z:90}}),foilNuevo=reg('foil','b'.repeat(64),31),oroNuevo=reg('dorado','c'.repeat(64),73);
+cliente.estado.catalogo={cartas:[{id:'tal',variantes:{normal:normalNuevo,foil:foilNuevo,dorado:oroNuevo}}]};cliente.estado.falla=false;
+await cliente.c.CAOZ_ARTE.refrescar();
+assert.equal(cliente.c.urlArte('tal'),'api/arte/imagen/'+normalNuevo.hash,'La publicación nueva tiene prioridad sobre la copia estática');
+assert.deepEqual(JSON.parse(JSON.stringify(cliente.c.CAOZ_ARTE.encuadre('tal','movil_detalle'))),{x:11,y:22,z:90},'Se respetan las vistas publicadas');
+for(const [acabado,registro]of [['foil',foilNuevo],['dorado',oroNuevo]]){
+  const forzada={closest:()=>({dataset:{coleccionAcabado:acabado}})};
+  assert.equal(cliente.c.urlArte('tal',forzada),'api/arte/imagen/'+registro.hash,'Cada preview conserva su imagen propia');
+  assert.equal(cliente.c.CAOZ_ARTE.encuadre('tal','desktop_coleccion',forzada).x,registro.x);
+}
+assert.equal(cliente.c.acabadoArte('tal'),'normal','Recuperar el catálogo no equipa un diseño premium');
+assert.equal(cliente.almacen.size,1,'Sólo se guarda el catálogo público, no el inventario');
+const recuperacion=clienteArte();await recuperacion.c.cargarArte();await recuperacion.c.CAOZ_ARTE.refrescar();
+recuperacion.estado.falla=false;recuperacion.estado.catalogo=cliente.estado.catalogo;await recuperacion.reintentar();
+assert.equal(recuperacion.c.urlArte('tal'),'api/arte/imagen/'+normalNuevo.hash,'El reintento automático recupera el arte publicado');
+assert.equal(recuperacion.temporizadores.size,0,'El éxito cancela los reintentos pendientes');
+const visor=clienteArte(true);await visor.c.cargarArte();
+visor.c.CAOZ_ARTE.previsualizar({id:'tal',acabado:'dorado',url:'blob:https://juego.example/borrador',encuadre:{x:14,y:16,z:180}});
+assert.equal(visor.c.urlArte('tal'),'blob:https://juego.example/borrador','El borrador aislado del estudio conserva su archivo');
+assert.equal(visor.c.acabadoArte('tal'),'dorado');assert.equal(visor.c.CAOZ_ARTE.encuadre('tal','desktop_detalle').z,180);
+assert.equal(visor.estado.pedidos,0,'El visor del estudio no consulta el catálogo público');
+console.log('Thal: copia Normal idéntica, fallback ante503, dos reintentos acotados, recuperación, prioridad de publicación, vistas y previews del estudio: OK');
