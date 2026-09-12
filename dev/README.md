@@ -52,7 +52,7 @@ Abrir la nueva carpeta y ejecutar:
 node dev/secciones/servidor.mjs
 ```
 
-Primera sección disponible: [Colección aislada por internet](https://caoz-coleccion-aislada.cuddly-bowl-3242.chatgpt.site/).
+Primera sección disponible: [Colección aislada por internet](https://caoz-coleccion-aislada.rafarorr1.chatgpt.site/).
 El enlace local 127.0.0.1 sólo funciona en el ordenador; para el teléfono entregar
 la copia alojada y conservar su acceso privado.
 Usa sus componentes, estilos y datos reales; no carga una partida ni escribe el

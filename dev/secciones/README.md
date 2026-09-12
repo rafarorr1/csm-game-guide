@@ -92,7 +92,7 @@ No usar el HTML completo del juego oculto para suplir una dependencia ausente.
 
 ## Revisión desde el teléfono
 
-La copia privada alojada está en https://caoz-coleccion-aislada.cuddly-bowl-3242.chatgpt.site/ .
+La copia privada alojada está en https://caoz-coleccion-aislada.rafarorr1.chatgpt.site/ .
 Requiere la cuenta de ChatGPT propietaria. No modifica beta, producción ni el progreso
 real. Se elige móvil/escritorio automáticamente; también hay selector manual.
 
