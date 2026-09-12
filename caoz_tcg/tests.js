@@ -1820,13 +1820,16 @@ PRUEBAS.suite('acabadosArte',async t=>{
       const retirada=acabado=>registro('augusto',acabado,null,{revision:2,activo:false,heredada:false,x:null,y:null,z:null});
       datos={cartas:[fila('augusto',normal,foil,retirada('dorado'))]};await w.CAOZ_ARTE.refrescar();
       t.igual(carta.dataset.acabado,'dorado',pagina+': retirar el diseño Dorado conserva el acabado elegido.');
-      t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': Dorado sin diseño propio hereda Normal, nunca la edición Foil.');
+      t.igual(carta.style.getPropertyValue('--ex'),'50%',pagina+': retirar el remoto Dorado recupera el encuadre original de esa edición.');
+      t.igual(w.urlArte('augusto'),'art/augusto-dorado-v1.webp',pagina+': el original Dorado precede a Normal y Foil remotos.');
       datos={cartas:[fila('augusto',normal,retirada('foil'),retirada('dorado'))]};await w.CAOZ_ARTE.refrescar();
       t.igual(carta.dataset.acabado,'dorado',pagina+': retirar los diseños premium no borra el acabado del inventario.');
-      t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': restaura el encuadre de Normal.');
+      t.igual(carta.style.getPropertyValue('--ex'),'50%',pagina+': retirar ambos remotos premium conserva el encuadre original Dorado.');
+      t.igual(w.urlArte('augusto'),'art/augusto-dorado-v1.webp',pagina+': retirar Foil no altera la ilustración Dorada elegida.');
       datos={cartas:[fila('augusto',normal,null,registro('augusto','dorado',null,{x:null,y:null,z:null}))]};await w.CAOZ_ARTE.refrescar();
       t.igual(carta.dataset.acabado,'dorado',pagina+': un registro premium sin encuadre conserva el acabado elegido.');
-      t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': un diseño premium inválido hereda el encuadre Normal válido.');
+      t.igual(carta.style.getPropertyValue('--ex'),'50%',pagina+': un remoto premium inválido conserva el encuadre original de su edición.');
+      t.igual(w.urlArte('augusto'),'art/augusto-dorado-v1.webp',pagina+': un remoto inválido no oculta el original Dorado.');
       t.igual(JSON.parse(w.localStorage.getItem(clave)).cartas.find(c=>c.id==='augusto').acabado,'normal',pagina+': la caché pública no presenta como disponible un diseño premium inválido.');
       // Esta carta no está en el DOM: se comprueba la selección de archivos sin
       // generar una descarga falsa. Las imágenes reales se verifican en la PWA.
@@ -1836,13 +1839,29 @@ PRUEBAS.suite('acabadosArte',async t=>{
       t.check(coleccion.desbloquear('tal','dorado')&&coleccion.seleccionar('tal','dorado'),pagina+': elige la ilustración Dorada de Thal.');
       t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashB,pagina+': Dorado puede utilizar su propia ilustración.');
       datos={cartas:[fila('tal',base,heredada)]};await w.CAOZ_ARTE.refrescar();
-      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashA,pagina+': Dorado retirado hereda la ilustración remota Normal.');
-      t.igual(w.eval('ARTE.tal.x'),10,pagina+': Dorado retirado hereda también el encuadre Normal.');
+      t.igual(w.urlArte('tal'),'art/tal-dorado-final-v1.webp',pagina+': retirar el remoto Dorado recupera la ilustración final protegida de Thal.');
+      t.igual(w.eval('JSON.stringify(ARTE.tal)'),JSON.stringify({x:45,y:91,z:118}),pagina+': Thal recupera exactamente su encuadre original Dorado.');
+      t.igual(JSON.stringify(w.CAOZ_ARTE.version('tal','dorado',pagina==='index.html'?'desktop_detalle':'movil_detalle').encuadre),JSON.stringify({x:45,y:41,z:118}),pagina+': el detalle de Thal conserva su vista Dorada, incluida la herencia entre pantallas.');
       t.check(coleccion.desbloquear('tal','foil')&&coleccion.seleccionar('tal','foil'),pagina+': Foil puede elegirse después sin alterar el inventario Dorado.');
       t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashA,pagina+': Foil elegido hereda la ilustración remota de Normal.');
       datos={cartas:[fila('tal',{...base,revision:2,hash:hashB},heredada)]};await w.CAOZ_ARTE.refrescar();
       t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashB,pagina+': cambiar Normal actualiza la herencia aunque Foil conserve su revisión.');
       t.igual(w.eval('ARTE.tal.x'),35,pagina+': cambiar la imagen heredada mantiene el encuadre de Foil.');
+      // Un ID temporal sin ilustración premium comprueba el fallback histórico
+      // aunque todo el catálogo real tenga ya originales Foil y Dorados. No se
+      // añade al DOM ni se descarga su archivo; el iframe aísla esta definición.
+      const sinOriginal='prueba_acabados_sin_original';
+      t.check(!w.eval('Object.hasOwn(CARDS,"'+sinOriginal+'")'),pagina+': la carta de fallback sólo existe en esta prueba.');
+      w.eval('CARDS.'+sinOriginal+'={...CARDS.augusto}');
+      const baseSin=registro(sinOriginal,'normal',13,{hash:hashA,mime:'image/webp'}),foilSin=registro(sinOriginal,'foil',31);
+      datos={cartas:[fila(sinOriginal,baseSin,foilSin)]};await w.CAOZ_ARTE.refrescar();
+      t.check(coleccion.desbloquear(sinOriginal,'dorado')&&coleccion.seleccionar(sinOriginal,'dorado'),pagina+': el acabado existe aunque no haya un original premium.');
+      t.igual(w.urlArte(sinOriginal),'api/arte/imagen/'+hashA,pagina+': sin original Dorado, conserva la ilustración Normal y nunca adopta Foil.');
+      t.igual(w.eval('ARTE.'+sinOriginal+'.x'),13,pagina+': sin original premium, conserva el encuadre Normal.');
+      datos={cartas:[fila(sinOriginal,baseSin,foilSin,registro(sinOriginal,'dorado',null,{activo:false,x:null,y:null,z:null}))]};await w.CAOZ_ARTE.refrescar();
+      t.igual(w.urlArte(sinOriginal),'api/arte/imagen/'+hashA,pagina+': retirar un remoto sin original premium también recupera Normal.');
+      t.igual(w.eval('ARTE.'+sinOriginal+'.x'),13,pagina+': retirar el remoto no hereda el encuadre de Foil.');
+      w.eval('delete CARDS.'+sinOriginal);
       t.check(coleccion.seleccionar('augusto','normal'),pagina+': puede volver voluntariamente a la edición Normal.');
       datos={cartas:[{id:'augusto',revision:3,hash:null,mime:null,x:null,y:null,z:null}]};await w.CAOZ_ARTE.refrescar();
       t.igual(carta.dataset.acabado,'normal',pagina+': el catálogo antiguo sigue siendo Normal.');
