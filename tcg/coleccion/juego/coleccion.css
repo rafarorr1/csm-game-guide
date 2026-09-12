@@ -329,7 +329,6 @@
 #coleccionPanel .coleccionRejilla:focus-visible{outline:1px solid #c6a056;outline-offset:-1px}
 #coleccionPanel .coleccionMini{align-self:start;scroll-margin-block:8px;gap:3px;grid-template-rows:auto auto}
 #coleccionPanel .coleccionMini .coleccionMiniPie{line-height:16px;min-height:16px;flex-wrap:wrap;column-gap:8px;row-gap:0}
-#coleccionPanel .coleccionCopias{flex:none;color:#f0dfb4;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 #coleccionPanel .coleccionMini>.coleccionCarta{max-height:none}
 #coleccionPanel .coleccionVacio{min-height:160px;padding:12px}
 @media(max-width:580px){
@@ -337,8 +336,8 @@
   #coleccionPanel[data-vista="cartas"] .coleccionInterior{padding-left:6px;padding-right:6px}
   #coleccionPanel .coleccionMini{gap:2px;grid-template-rows:auto auto}
   #coleccionPanel .coleccionMini .coleccionMiniPie{column-gap:4px;row-gap:0;font-size:9px;line-height:14px;min-height:14px}
-  #coleccionPanel .coleccionMini .coleccionPuntos{gap:3px}
-  #coleccionPanel .coleccionMini .coleccionPuntos i{width:5px;height:5px}
+  #coleccionPanel .coleccionMini .coleccionPuntos{gap:6px}
+  #coleccionPanel .coleccionMini .coleccionPuntos i{width:7px;height:7px}
 }
 
 /* La apertura conserva su propia medida y sus frentes durante toda la sesión. */

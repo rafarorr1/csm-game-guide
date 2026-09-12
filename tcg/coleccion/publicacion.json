@@ -433,20 +433,20 @@
     "juego/arte-remoto.js": "b90f5defcd9e8e9e5b06effe367b89c2be37d73384be6d87c2add3494e415423",
     "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "juego/coleccion-modelo.js": "47ec3d7c1b17d0dba0884b137c74de288eb9587622e5323f43644fbc75cb63eb",
-    "juego/coleccion-ui.js": "c092427043cce1f258a8b853126bb720d2208cb8993899644c0198d05ec15665",
-    "juego/coleccion.css": "0c395eabff0f647f42c2f5c678959034fd9c904dad7ea928ea35b568f34d5274",
+    "juego/coleccion-ui.js": "dd8a75a32d75f1a127aee6ab9deb0905e1189faf5b40e5ee87e52c4596fb0cb6",
+    "juego/coleccion.css": "538159abd7dc54498d5301edd4c81b48535ccff32300ecaeb6bb44844f093a66",
     "juego/sobres-apertura.css": "d04c4a81614042b7d1a1ec0c23b5baea87a509d2fd36878343a80eb72737a436",
     "juego/sobres-apertura.js": "ad2579c1cd1a5a77883d019115913f6ec6050f600f13e07fbb9d398dc0582d33",
     "juego/sobres-escena.js": "d6379afcc6553c2c64f11397bb41d206608c0d5cc107274587bd94e25f797aa9",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "movil.html": "dc2637c9922e5cbdcb9dfb2c895d3c9ea8a86dd45d29cfdb7f3caca215ad0b87",
-    "procedencia.json": "7ffb1adb64ca7159b9e9072c637ab1ed315f38a5d31422bdc310f260b7f10e11",
+    "procedencia.json": "74f36efdfed40eb3ad6658b99bb6938dcb19f37cdba687f8d76dd55977e5b6a4",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/coleccion-copias-ediciones",
-    "sha": "c01f4a0187ce8304a61805ef3607dddcdafaa7f5"
+    "sha": "8766c645af2d2b15a3b8c28181f56984e415b175"
   },
   "seccion": "coleccion",
   "version": 1
