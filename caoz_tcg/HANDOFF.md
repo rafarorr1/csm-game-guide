@@ -10,6 +10,20 @@ números) → el código.
 
 ---
 
+## Colección: tres columnas y scroll — revisión aislada pendiente
+
+`feature/coleccion-tres-columnas` cambia sólo el listado de la Colección real:
+tres cartas por fila en móvil/escritorio y scroll vertical interno, sin botones
+de páginas. Buscar o filtrar vuelve al inicio; abrir una carta y regresar conserva
+el desplazamiento y el foco. Las cartas mantienen su proporción y diseño, y los
+controles de acabados/sobres conservan su flujo. La lista ya no depende de cuántas
+filas caben en el alto del dispositivo.
+
+Revisión pública: https://aislados.caoz-tcg.pages.dev/coleccion/ . Se valida sólo la
+sección y el paquete aislado. Falta la aprobación visual del usuario antes de
+integrar en `develop` y ejecutar las pruebas del juego completo. No incrementa
+la build ni actualiza beta 249 o producción 245.
+
 ## Pruebas aisladas en GitHub/Cloudflare — instrucción vigente
 
 El usuario pidió que las revisiones funcionen como beta, sin enlaces ni login de
