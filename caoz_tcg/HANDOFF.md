@@ -21,6 +21,10 @@ sin superposición (3+2 en teléfono, una fila en escritorio). «Volver» llama
 Las cartas del sobre muestran ilustración y nombre, sin habilidades/tribu ni
 nombre duplicado afuera. El arte se contiene sin zoom para ver el original;
 este estilo está limitado a sobres y no cambia las cartas de combate.
+Los cinco frentes se crean al montar el sobre y esperan descarga y `decode()`
+antes de romper el sello. Los mismos nodos se reutilizan en cada revelación
+y en el resumen. Si una imagen falla, el sobre queda cerrado y permite
+reintentar; destruir la vista cancela las esperas pendientes.
 Los módulos `sobres-apertura.js/css` y `sobres-escena.js` todavía no están
 conectados a Colección en el juego. Esta revisión permite confirmar el cierre
 solicitado antes de integrar, validar y publicar beta. Usa cinco Foils locales,

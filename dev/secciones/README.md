@@ -178,6 +178,13 @@ Las cartas conservan nombre y marco, muestran el arte sin zoom y ocultan el
 panel de habilidades/tribu. No hay un nombre repetido debajo de la carta.
 El estilo se limita al componente de sobres.
 
+Los cinco frentes se construyen una vez en una reserva oculta al montar el
+sobre. La apertura espera la descarga y decodificación de todas sus imágenes;
+los volteos y el resumen mueven esos mismos nodos, sin crear nuevas imágenes.
+Una conexión lenta muestra «Cargando tus ilustraciones…» antes de abrir.
+Un fallo o espera de 20 segundos permite reintentar con el sobre cerrado.
+Destruir/reiniciar cancela los listeners y esperas, sin abrir otra instancia.
+
 El componente reutilizable `sobres-apertura.js/css` recibe las cartas y su
 renderer; `onVolver` entrega el control al menú que lo monta, una sola vez.
 `sobres-escena.js` dibuja malla/materiales en WebGL, con alternativa Canvas 2D
