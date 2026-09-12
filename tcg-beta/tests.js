@@ -1577,23 +1577,34 @@ PRUEBAS.suite('betaFinalGero',async t=>{
   }
 });
 
+// Cada iframe lleva ?test: jamás se escriben desbloqueos ni selecciones reales.
+function coleccionDePrueba(w,t,pagina){
+  const modelo=w.CAOZ_COLECCION;
+  t.check(!!modelo&&modelo.clave.endsWith('.prueba'),pagina+': el inventario usa una clave exclusiva de pruebas.');
+  const guardado=w.localStorage.getItem(modelo.clave);
+  t.check(modelo.reiniciar(),pagina+': prepara una colección Normal limpia.');
+  return {modelo,restaurar(){if(guardado===null)w.localStorage.removeItem(modelo.clave);else w.localStorage.setItem(modelo.clave,guardado);}};
+}
+
 PRUEBAS.suite('encuadresVistas',async t=>{
   const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,antes=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=encuadres-interno';document.body.append(f);await carga;
-    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,plataforma=pagina==='movil.html'?'movil':'desktop';
+    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,plataforma=pagina==='movil.html'?'movil':'desktop';let inventario;
     try{
+      inventario=coleccionDePrueba(w,t,pagina);
       await w.cargarArte();await w.CAOZ_ARTE.refrescar();w.newGame('fender','adreida');
       const vistas={[plataforma+'_detalle']:{x:17,y:23,z:90},[plataforma+'_campo']:{x:74,y:62,z:50}};
       const normal={id:'augusto',revision:1,hash:null,mime:null,x:50,y:50,z:120};
       const dorado={...normal,acabado:'dorado',activo:true,heredada:true,x:61,y:40,z:100,vistas};
       w.fetch=async (u,op)=>String(u).includes('/api/arte/catalogo')?new w.Response(JSON.stringify({cartas:[{...dorado,variantes:{normal,foil:null,dorado}}]})):fetchAntes(u,op);
       await w.CAOZ_ARTE.refrescar();
+      t.check(inventario.modelo.desbloquear('augusto','dorado')&&inventario.modelo.seleccionar('augusto','dorado'),pagina+': el encuadre premium corresponde a una edición desbloqueada y elegida.');
       const mano=w.cardEl('augusto'),campo=w.unitEl(w.mkUnit('augusto',0)),detalle=d.createElement('div');detalle.className='big';detalle.innerHTML='<div class="art" data-arte-id="augusto"></div>';
       d.body.append(mano,campo,detalle);await new Promise(r=>w.requestAnimationFrame(r));
       const art=detalle.querySelector('.art');
-      t.igual(mano.style.getPropertyValue('--ex'),'61%',pagina+': mano conserva la base del acabado ganador.');
+      t.igual(mano.style.getPropertyValue('--ex'),'61%',pagina+': mano conserva la base del acabado elegido.');
       t.igual(campo.style.getPropertyValue('--ex'),'74%',pagina+': campo usa su propio encuadre.');
       t.igual(campo.style.getPropertyValue('--ez'),'0.500',pagina+': campo permite reducir al 50%.');
       t.igual(art.style.getPropertyValue('--ex'),'17%',pagina+': la ficha horizontal no hereda el recorte de la mano.');
@@ -1615,7 +1626,7 @@ PRUEBAS.suite('encuadresVistas',async t=>{
       vistas[plataforma+'_detalle']={x:21,y:29,z:85};await w.CAOZ_ARTE.refrescar();
       t.igual(art.style.getPropertyValue('--ey'),'29%',pagina+': el ajuste propio prevalece sobre el heredado.');
       mano.remove();campo.remove();detalle.remove();
-    }finally{w.fetch=fetchAntes;w.relojPara();f.remove();}
+    }finally{inventario?.restaurar();w.fetch=fetchAntes;w.relojPara();f.remove();}
   }}finally{if(antes===null)localStorage.removeItem(clave);else localStorage.setItem(clave,antes);}
 });
 
@@ -1649,8 +1660,9 @@ PRUEBAS.suite('arteRemoto',async t=>{
     localStorage.removeItem(clave);
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=arte-remoto-interno';document.body.appendChild(f);await carga;
-    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,renderAntes=w.render;let datos={cartas:[]},caida=false;
+    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,renderAntes=w.render;let datos={cartas:[]},caida=false,inventario;
     try{
+      inventario=coleccionDePrueba(w,t,pagina);
       await w.cargarArte();await w.CAOZ_ARTE.refrescar();
       const original=w.eval('JSON.stringify(ARTE.augusto)'),liderOriginal=w.eval('JSON.stringify(ARTE.lider_fender)');
       w.fetch=async(url,op)=>{
@@ -1684,7 +1696,7 @@ PRUEBAS.suite('arteRemoto',async t=>{
       t.igual(w.eval('JSON.stringify(ARTE.lider_fender)'),liderOriginal,pagina+': restaurar devuelve también el retrato original.');
       caida=true;await w.CAOZ_ARTE.refrescar();
       t.igual(w.eval('JSON.stringify(ARTE.augusto)'),original,pagina+': un servicio caído no borra el arte disponible.');
-    }finally{w.fetch=fetchAntes;w.render=renderAntes;w.relojPara();f.remove();}
+    }finally{inventario?.restaurar();w.fetch=fetchAntes;w.render=renderAntes;w.relojPara();f.remove();}
   }}finally{if(guardado===null)localStorage.removeItem(clave);else localStorage.setItem(clave,guardado);}
 });
 
@@ -1694,8 +1706,9 @@ PRUEBAS.suite('acabadosArte',async t=>{
     localStorage.removeItem(clave);
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=acabados-interno';document.body.appendChild(f);await carga;
-    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,renderAntes=w.render;let datos={cartas:[]};
+    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,renderAntes=w.render;let datos={cartas:[]},inventario;
     try{
+      inventario=coleccionDePrueba(w,t,pagina);const coleccion=inventario.modelo;
       await w.cargarArte();await w.CAOZ_ARTE.refrescar();
       w.fetch=async(url,op)=>String(url).includes('/api/arte/catalogo')?new w.Response(JSON.stringify(datos),{headers:{'Content-Type':'application/json'}}):fetchAntes(url,op);
       const registro=(id,acabado,x,op={})=>({id,acabado,revision:1,activo:true,heredada:acabado!=='normal',hash:null,mime:null,x,y:24,z:135,...op});
@@ -1710,13 +1723,20 @@ PRUEBAS.suite('acabadosArte',async t=>{
       t.check(legendaria.querySelector('.rar')?.textContent==='★'&&w.getComputedStyle(legendaria.querySelector('.foil')).display==='none',pagina+': conserva la estrella de rareza sin añadir brillo automático.');
       const normal=registro('augusto','normal',11),foil=registro('augusto','foil',37),dorado=registro('augusto','dorado',69);
       datos={cartas:[fila('augusto',normal,foil),fila('lider_fender',null,registro('lider_fender','foil',41))]};await w.CAOZ_ARTE.refrescar();
+      t.igual(carta.dataset.acabado,'normal',pagina+': publicar Foil no desbloquea ni equipa el diseño.');
+      t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': Normal conserva su encuadre aunque exista Foil.');
+      for(const id of ['augusto','lider_fender'])t.check(coleccion.desbloquear(id,'foil')&&coleccion.seleccionar(id,'foil'),pagina+': permite elegir Foil ya obtenido.');
       t.igual(carta.dataset.acabado,'foil',pagina+': un acabado puede aplicarse a una carta común.');
       t.igual(carta.style.getPropertyValue('--ex'),'37%',pagina+': Foil conserva su encuadre propio.');
       t.igual(w.urlArte('augusto'),'art/augusto.webp',pagina+': Foil puede heredar el original estático.');
       t.igual(vs.dataset.acabado,'foil',pagina+': el VS existente recibe el acabado del protagonista.');
       datos={cartas:[fila('augusto',normal,foil,dorado),fila('lucius',null,null,registro('lucius','dorado',50)),fila('lider_fender',null,null,registro('lider_fender','dorado',42)),fila('lider_adreida',null,null,registro('lider_adreida','dorado',42))]};await w.CAOZ_ARTE.refrescar();
-      t.igual(carta.dataset.acabado,'dorado',pagina+': Dorado gana sobre Foil y Normal.');
-      t.igual(carta.style.getPropertyValue('--ex'),'69%',pagina+': el ganador aporta su encuadre.');
+      t.igual(carta.dataset.acabado,'foil',pagina+': publicar Dorado conserva la selección Foil.');
+      for(const id of ['augusto','lider_fender'])t.check(coleccion.desbloquear(id,'dorado'),pagina+': desbloquea Dorado.');
+      t.igual(carta.dataset.acabado,'foil',pagina+': recibir Dorado tampoco lo equipa automáticamente.');
+      for(const id of ['augusto','lider_fender','lider_adreida']){coleccion.desbloquear(id,'dorado');t.check(coleccion.seleccionar(id,'dorado'),pagina+': permite seleccionar Dorado obtenido.');}
+      t.igual(carta.dataset.acabado,'dorado',pagina+': Dorado se aplica por elección del jugador.');
+      t.igual(carta.style.getPropertyValue('--ex'),'69%',pagina+': la edición elegida aporta su encuadre.');
       t.igual(vs.dataset.acabado,'dorado',pagina+': también cambia el VS sin recrearlo.');
       t.check(w.eval('G')===g&&d.querySelector('#hand [data-arte-id="augusto"]')===carta&&carta.querySelector('.marcoDibujo')===marco,pagina+': conserva partida, carta y marco.');
       t.igual(animacion.playState,'running',pagina+': el acabado no cancela la animación en curso.');
@@ -1732,29 +1752,111 @@ PRUEBAS.suite('acabadosArte',async t=>{
       t.check(guardada.acabado==='dorado'&&guardada.variantes.foil.x===37,pagina+': conserva las variantes públicas y el ganador para abrir sin conexión.');
       const retirada=acabado=>registro('augusto',acabado,null,{revision:2,activo:false,heredada:false,x:null,y:null,z:null});
       datos={cartas:[fila('augusto',normal,foil,retirada('dorado'))]};await w.CAOZ_ARTE.refrescar();
-      t.igual(carta.dataset.acabado,'foil',pagina+': retirar Dorado vuelve a Foil.');
+      t.igual(carta.dataset.acabado,'dorado',pagina+': retirar el diseño Dorado conserva el acabado elegido.');
+      t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': Dorado sin diseño propio hereda Normal, nunca la edición Foil.');
       datos={cartas:[fila('augusto',normal,retirada('foil'),retirada('dorado'))]};await w.CAOZ_ARTE.refrescar();
-      t.igual(carta.dataset.acabado,'normal',pagina+': retirar ambos premium vuelve a Normal.');
+      t.igual(carta.dataset.acabado,'dorado',pagina+': retirar los diseños premium no borra el acabado del inventario.');
       t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': restaura el encuadre de Normal.');
       datos={cartas:[fila('augusto',normal,null,registro('augusto','dorado',null,{x:null,y:null,z:null}))]};await w.CAOZ_ARTE.refrescar();
-      t.igual(carta.dataset.acabado,'normal',pagina+': un registro premium sin encuadre no está disponible.');
+      t.igual(carta.dataset.acabado,'dorado',pagina+': un registro premium sin encuadre conserva el acabado elegido.');
+      t.igual(carta.style.getPropertyValue('--ex'),'11%',pagina+': un diseño premium inválido hereda el encuadre Normal válido.');
+      t.igual(JSON.parse(w.localStorage.getItem(clave)).cartas.find(c=>c.id==='augusto').acabado,'normal',pagina+': la caché pública no presenta como disponible un diseño premium inválido.');
       // Esta carta no está en el DOM: se comprueba la selección de archivos sin
       // generar una descarga falsa. Las imágenes reales se verifican en la PWA.
       const hashA='a'.repeat(64),hashB='b'.repeat(64),base=registro('tal','normal',10,{hash:hashA,mime:'image/webp'}),heredada=registro('tal','foil',35),propia=registro('tal','dorado',70,{hash:hashB,mime:'image/png',heredada:false});
       datos={cartas:[fila('tal',base,heredada,propia)]};await w.CAOZ_ARTE.refrescar();
+      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashA,pagina+': Thal empieza con su ilustración Normal aunque haya Dorado.');
+      t.check(coleccion.desbloquear('tal','dorado')&&coleccion.seleccionar('tal','dorado'),pagina+': elige la ilustración Dorada de Thal.');
       t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashB,pagina+': Dorado puede utilizar su propia ilustración.');
       datos={cartas:[fila('tal',base,heredada)]};await w.CAOZ_ARTE.refrescar();
-      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashA,pagina+': Foil hereda la ilustración remota de Normal.');
+      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashA,pagina+': Dorado retirado hereda la ilustración remota Normal.');
+      t.igual(w.eval('ARTE.tal.x'),10,pagina+': Dorado retirado hereda también el encuadre Normal.');
+      t.check(coleccion.desbloquear('tal','foil')&&coleccion.seleccionar('tal','foil'),pagina+': Foil puede elegirse después sin alterar el inventario Dorado.');
+      t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashA,pagina+': Foil elegido hereda la ilustración remota de Normal.');
       datos={cartas:[fila('tal',{...base,revision:2,hash:hashB},heredada)]};await w.CAOZ_ARTE.refrescar();
       t.igual(w.urlArte('tal'),'api/arte/imagen/'+hashB,pagina+': cambiar Normal actualiza la herencia aunque Foil conserve su revisión.');
       t.igual(w.eval('ARTE.tal.x'),35,pagina+': cambiar la imagen heredada mantiene el encuadre de Foil.');
+      t.check(coleccion.seleccionar('augusto','normal'),pagina+': puede volver voluntariamente a la edición Normal.');
       datos={cartas:[{id:'augusto',revision:3,hash:null,mime:null,x:null,y:null,z:null}]};await w.CAOZ_ARTE.refrescar();
       t.igual(carta.dataset.acabado,'normal',pagina+': el catálogo antiguo sigue siendo Normal.');
       t.igual(w.eval('JSON.stringify(ARTE.augusto)'),originales,pagina+': restaurar vuelve al encuadre original.');
       t.igual(w.getComputedStyle(carta.querySelector('.marcoDibujo'),'::after').content,'none',pagina+': Normal queda limpio después de retirar los acabados.');
       animacion.cancel();vs.remove();
-    }finally{w.fetch=fetchAntes;w.render=renderAntes;w.relojPara();f.remove();}
+    }finally{inventario?.restaurar();w.fetch=fetchAntes;w.render=renderAntes;w.relojPara();f.remove();}
   }}finally{if(guardado===null)localStorage.removeItem(clave);else localStorage.setItem(clave,guardado);}
+});
+
+PRUEBAS.suite('coleccion',async t=>{
+  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,cache=localStorage.getItem(clave);
+  try{for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=coleccion-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,fetchAntes=w.fetch,plataforma=pagina==='movil.html'?'movil':'desktop';let inventario;
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
+      t.check(m.ids().length>100&&m.ids().includes('lider_fender'),pagina+': el inventario incluye cartas y protagonistas.');
+      for(const id of m.ids())t.check(m.tiene(id,'normal')&&!m.tiene(id,'foil')&&!m.tiene(id,'dorado')&&m.elegido(id)==='normal',pagina+': cada entrada empieza con Normal disponible y premium bloqueado.');
+      await w.cargarArte();await w.CAOZ_ARTE.refrescar();
+      const ediciones={normal:{x:11,y:17,z:90},foil:{x:37,y:23,z:80},dorado:{x:69,y:41,z:70}};
+      const variantes=Object.fromEntries(Object.entries(ediciones).map(([acabado,e])=>[acabado,{id:'augusto',acabado,revision:1,activo:true,heredada:acabado!=='normal',hash:null,mime:null,...e,vistas:{[plataforma+'_coleccion']:e}}]));
+      w.fetch=async(url,op)=>String(url).includes('/api/arte/catalogo')?new w.Response(JSON.stringify({cartas:[{id:'augusto',variantes}]}),{headers:{'Content-Type':'application/json'}}):fetchAntes(url,op);
+      await w.CAOZ_ARTE.refrescar();
+      t.check(!!w.CAOZ_COLECCION_JUEGO&&typeof w.CAOZ_ARTE.version==='function',pagina+': se cargan el contexto de jugador y las vistas independientes.');
+      const sinSuperficie=w.CAOZ_ARTE.version('augusto','dorado');
+      t.igual(sinSuperficie.url,'art/augusto.webp',pagina+': consultar una versión sin superficie resuelve la ilustración.');
+      t.igual(JSON.stringify(sinSuperficie.encuadre),JSON.stringify(ediciones.dorado),pagina+': consultar una versión sin superficie devuelve la base sin intentar invertir una clave vacía.');
+      w.newGame('fender','mohamed');w.eval("G.phase='principal';G.active=ME;G.busy=false;G.resolving=false;P(ME).hand=['augusto'];P(ME).field=[mkUnit('augusto',ME)];P(FOE).field=[mkUnit('augusto',FOE)];recalc()");w.showScreen('board');w.render();w.relojPara();
+      const g=w.eval('G'),mano=d.querySelector('#hand [data-arte-id="augusto"]'),aliado=d.querySelector('#myField [data-arte-id="augusto"]'),rival=d.querySelector('#foeField [data-arte-id="augusto"]');
+      t.check(!!mano&&!!aliado&&!!rival,pagina+': compara la misma carta en ambos bandos.');
+      const marco=aliado.querySelector('.marcoDibujo'),estadisticas=w.eval('JSON.stringify([P(ME).field[0].atk,P(ME).field[0].maxHp,P(ME).field[0].dmg,P(ME).hand,P(FOE).field[0].atk])');
+      for(const nodo of [mano,aliado,rival])t.igual(nodo.dataset.acabado,'normal',pagina+': publicar las tres variantes mantiene Normal en el juego.');
+      t.check(!m.seleccionar('augusto','dorado'),pagina+': no permite equipar una edición bloqueada.');
+      t.check(m.desbloquear('augusto','dorado'),pagina+': concede el premio Dorado.');
+      t.igual(m.elegido('augusto'),'normal',pagina+': recibir un premio no cambia la edición elegida.');
+      t.igual(aliado.dataset.acabado,'normal',pagina+': recibir un premio tampoco cambia el nodo en combate.');
+      t.check(m.seleccionar('augusto','dorado'),pagina+': el jugador elige Dorado.');
+      t.igual(mano.dataset.acabado,'dorado',pagina+': la mano refleja la selección.');
+      t.igual(aliado.dataset.acabado,'dorado',pagina+': el campo propio refleja la selección.');
+      t.igual(rival.dataset.acabado,'normal',pagina+': el rival local no hereda el inventario del jugador.');
+      t.igual(aliado.style.getPropertyValue('--ex'),'69%',pagina+': el aliado usa el encuadre Dorado.');
+      t.igual(rival.style.getPropertyValue('--ex'),'11%',pagina+': el rival mantiene el encuadre Normal.');
+      t.check(w.eval('G')===g&&d.querySelector('#myField [data-arte-id="augusto"]')===aliado&&aliado.querySelector('.marcoDibujo')===marco,pagina+': cambiar la edición conserva partida, unidad y marco.');
+      t.igual(w.eval('JSON.stringify([P(ME).field[0].atk,P(ME).field[0].maxHp,P(ME).field[0].dmg,P(ME).hand,P(FOE).field[0].atk])'),estadisticas,pagina+': el acabado no altera cartas, daño ni estadísticas.');
+      for(const acabado of ['normal','foil','dorado']){
+        const vista=w.CAOZ_ARTE.version('augusto',acabado,plataforma+'_coleccion');
+        t.igual(vista.acabado,acabado,pagina+': una consulta explícita devuelve la edición solicitada.');
+        t.igual(JSON.stringify(vista.encuadre),JSON.stringify(ediciones[acabado]),pagina+': una consulta explícita conserva el encuadre de '+acabado+'.');
+      }
+      w.showGallery();const panel=d.querySelector('#coleccionPanel');t.check(panel?.open,pagina+': Colección abre el nuevo diálogo.');
+      const buscar=panel.querySelector('input[aria-label="Buscar cartas por nombre"]');buscar.value='Augusto';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
+      const entrada=panel.querySelector('.coleccionMini[data-carta="augusto"]');t.check(!!entrada,pagina+': la búsqueda encuentra Augusto.');entrada.click();
+      const revisarVersiones=()=>{
+        t.igual(panel.querySelectorAll('.coleccionVersion').length,3,pagina+': presenta Normal, Foil y Dorada juntas.');
+        for(const acabado of ['normal','foil','dorado']){
+          const n=panel.querySelector('.coleccionVersion[data-edicion="'+acabado+'"] .coleccionCarta'),e=ediciones[acabado];
+          t.check(!!n,pagina+': la vista '+acabado+' existe.');t.igual(n.dataset.coleccionAcabado,acabado,pagina+': cada vista mantiene su edición explícita.');
+          t.igual(n.dataset.acabado,acabado,pagina+': cada vista conserva su marco propio.');
+          t.igual(n.style.getPropertyValue('--ex'),e.x+'%',pagina+': cada vista conserva su posición X.');
+          t.igual(n.style.getPropertyValue('--ey'),e.y+'%',pagina+': cada vista conserva su posición Y.');
+          t.igual(Number(n.style.getPropertyValue('--ez')),e.z/100,pagina+': cada vista conserva su zoom.');
+        }
+      };
+      await new Promise(r=>w.requestAnimationFrame(r));revisarVersiones();
+      t.check(panel.querySelector('[data-edicion="foil"]').classList.contains('bloqueada'),pagina+': Foil sigue cerrado aunque su vista pueda inspeccionarse.');
+      t.check(panel.querySelector('[data-edicion="dorado"] .coleccionUsar').disabled,pagina+': Dorada indica que ya está en uso.');
+      t.check(m.desbloquear('augusto','foil'),pagina+': un premio actualiza el diálogo abierto.');
+      t.igual(m.elegido('augusto'),'dorado',pagina+': recibir Foil conserva la elección Dorada.');
+      const usar=panel.querySelector('[data-edicion="foil"] .coleccionUsar');t.check(!usar.disabled&&usar.textContent==='Usar',pagina+': la edición obtenida permite equiparse.');usar.click();
+      await new Promise(r=>w.requestAnimationFrame(r));revisarVersiones();
+      t.igual(m.elegido('augusto'),'foil',pagina+': Usar guarda la edición seleccionada desde la colección.');
+      t.igual(aliado.dataset.acabado,'foil',pagina+': la selección del diálogo actualiza el juego existente.');
+      t.igual(rival.dataset.acabado,'normal',pagina+': el cambio desde la colección tampoco altera al rival.');
+      t.igual(JSON.parse(w.localStorage.getItem(clave)).cartas.find(c=>c.id==='augusto').acabado,'dorado',pagina+': el catálogo público conserva su diseño mayor independientemente de la selección Foil.');
+      panel.querySelector('.coleccionCerrar').click();t.check(!panel.open,pagina+': cierra el diálogo sin cerrar la partida.');
+    }finally{
+      d.querySelector('#coleccionPanel')?.close();inventario?.restaurar();w.fetch=fetchAntes;w.relojPara();f.remove();
+    }
+  }}finally{if(cache===null)localStorage.removeItem(clave);else localStorage.setItem(clave,cache);}
 });
 
 PRUEBAS.suite('campanaRetratosBeta',async t=>{
@@ -2308,12 +2410,13 @@ PRUEBAS.suite('menusCentrados', async t => {
         await w.campanaSeleccionar();await sleep(280);comprobar('#campanaEncuentroPanel','encuentro');w.campanaLimpiarPreparacion(true);
         w.campanaCabecera(w.campanaDialogo(),'Reiniciar campaña','Confirmación');comprobar('#campanaPanel','mensaje');w.campanaCerrar();
         w.campanaGuardar({version:1,id:'centrado',lider:'fender',etapa:6});w.campanaRuta();comprobar('#campanaDeseo','deseo');w.campanaCerrarDeseo();
+        w.showGallery();comprobar('#coleccionPanel','colección de cartas');w.document.querySelector('#coleccionPanel .coleccionCerrar').click();
         // Las hojas móviles se anclan abajo deliberadamente; los menús desktop se centran.
-        if(pagina==='index.html')for(const abrir of ['showGallery','showRules','showRecords','showOnline','showTutorialPick']){
+        if(pagina==='index.html')for(const abrir of ['showRules','showRecords','showOnline','showTutorialPick']){
           w[abrir]();comprobar('#ovPanel',abrir);w.cerrarOv();
         }
       }
-    }finally{w.matchMedia=media;w.campanaCerrarDeseo();w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{w.document.querySelector('#coleccionPanel')?.close();w.matchMedia=media;w.campanaCerrarDeseo();w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
@@ -2843,7 +2946,7 @@ PRUEBAS.suite('borrarProgreso', async t => {
     const cargar=()=>new Promise(resolve=>f.addEventListener('load',resolve,{once:true}));
     const carga=cargar();f.src=pagina+'?test=borrado-interno';document.body.appendChild(f);await carga;
     let w=f.contentWindow,d=w.document;
-    const claves=['caoz.campana.v1.prueba','caoz.campana.v1.prueba.creador','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados','caoz_records_v1','caoz_nombre'],ajustes='caoz.sonido.v1',ajeno='prueba.datos.ajenos';
+    const claves=['caoz.campana.v1.prueba','caoz.campana.v1.prueba.creador','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados','caoz_records_v1','caoz_nombre',w.CAOZ_COLECCION.clave],ajustes='caoz.sonido.v1',ajeno='prueba.datos.ajenos';
     const guardar=[...claves,ajustes,ajeno],copia=new Map(guardar.map(k=>[k,localStorage.getItem(k)]));
     try{
       const campana={version:1,id:'borrado-de-prueba',lider:'adreida',etapa:3,personaje:{nombre:'Ariadna'}};
@@ -2852,6 +2955,7 @@ PRUEBAS.suite('borrarProgreso', async t => {
       localStorage.setItem(claves[2],JSON.stringify(logros));localStorage.setItem(claves[3],JSON.stringify(logros));
       localStorage.setItem(claves[4],JSON.stringify({lideres:{adreida:{ganadas:2,jugadas:3}},total:{ganadas:2,jugadas:3},online:{jugadas:0,ganadas:0}}));
       localStorage.setItem(claves[5],'Ariadna');localStorage.setItem(ajustes,'{"volumen":0.25,"silencio":true}');localStorage.setItem(ajeno,'conservar');
+      w.CAOZ_COLECCION.reiniciar();w.CAOZ_COLECCION.desbloquear('augusto','dorado');w.CAOZ_COLECCION.seleccionar('augusto','dorado');w.CAOZ_COLECCION.darSobreBeta();
       const datos=claves.map(k=>localStorage.getItem(k));
       w.campanaLeer();w.campanaLeerBorrador();w.CAMPANA_LOGROS.leer();w.showScreen('extras');
       d.querySelector('#mBorrarProgreso').click();
@@ -2870,6 +2974,7 @@ PRUEBAS.suite('borrarProgreso', async t => {
       const recarga=cargar();d.querySelector('#borrarProgresoConfirmar').click();await recarga;
       w=f.contentWindow;d=w.document;
       t.check(claves.every(k=>localStorage.getItem(k)===null),pagina+': borra campaña, creador, logros normales y beta, récords y nombre.');
+      t.check(w.CAOZ_COLECCION.elegido('augusto')==='normal'&&!w.CAOZ_COLECCION.tiene('augusto','dorado')&&w.CAOZ_COLECCION.sobres()===0,pagina+': reinicia acabados, selección y sobres; Normal sigue disponible.');
       t.check(w.campanaLeer()===null&&w.campanaLeerBorrador().personaje.nombre==='Viajero',pagina+': descarta también las copias en memoria.');
       t.check(w.CAMPANA_LOGROS.total()===0&&w.CAMPANA_LOGROS.total(true)===0&&!w.CAMPANA_LOGROS.ganador(),pagina+': no queda ningún sello ni final secreto.');
       t.check(d.querySelectorAll('#mCampana .campanaRetrato').length===6&&!d.querySelector('#mCampana .completado')&&!d.querySelector('#menu.campanaCoronado'),pagina+': vuelve al logo normal y seis retratos grises.');
@@ -2908,10 +3013,13 @@ PRUEBAS.suite('menusDorados', async t => {
         d.querySelector('#'+boton).click();comprobar('entrar en '+boton);
         const modal=d.querySelector('#ov.on');
         if(modal)t.check(!!modal.querySelector('.barridoModal')&&d.querySelector('#ovPanel').classList.contains('menuEntra'),pagina+': el barrido debe dibujarse delante de la ventana.');
-        const panel=boton==='mCampana'?d.querySelector('#campanaPanel'):d.querySelector('#ovPanel');
-        const cerrar=salida?d.querySelector(salida):[...panel.querySelectorAll('button')].find(b=>/^(Cerrar|Cancelar|Menú principal)$/.test(b.textContent.trim()));
+        const coleccion=boton==='mCards';
+        const panel=d.querySelector(coleccion?'#coleccionPanel':boton==='mCampana'?'#campanaPanel':'#ovPanel');
+        if(coleccion)t.check(panel.open&&panel.querySelector('.barridoModal.va')&&panel.querySelector('.coleccionInterior.menuEntra'),pagina+': Colección sitúa el barrido delante del diálogo nuevo.');
+        const cerrar=salida?d.querySelector(salida):coleccion?panel.querySelector('.coleccionCerrar'):[...panel.querySelectorAll('button')].find(b=>/^(Cerrar|Cancelar|Menú principal)$/.test(b.textContent.trim()));
         t.check(!!cerrar,pagina+': falta regreso de '+boton);cerrar.click();comprobar('volver de '+boton);
-        t.check(d.querySelector(extra?'#extras.on':'#menu.on')&&!d.querySelector('#ov.on')&&!d.querySelector('#campanaPanel[open]'),pagina+': '+boton+' no regresa a su menú.');
+        if(coleccion){await sleep(100);comprobar('volver de Colección después del evento close');}
+        t.check(d.querySelector(extra?'#extras.on':'#menu.on')&&!d.querySelector('#ov.on')&&!d.querySelector('#campanaPanel[open]')&&!d.querySelector('#coleccionPanel[open]'),pagina+': '+boton+' no regresa a su menú.');
         if(extra){d.querySelector('#extrasBack').click();comprobar('volver de Extras');}
         t.check(!!d.querySelector('#menu.on'),pagina+': falta regreso al menú principal.');
         regresoVisible();await sleep(130);regresoVisible();
@@ -2935,7 +3043,7 @@ PRUEBAS.suite('menusDorados', async t => {
       w.showScreen('menu');w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
       w.showOnline();t.check(!barridos().length&&!d.querySelector('.menuEntra,.screen.entra'),pagina+': movimiento reducido debe abrir sin animación.');
       w.cerrarOv();t.check(!barridos().length,pagina+': movimiento reducido debe regresar sin animación.');
-    }finally{w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{d.querySelector('#coleccionPanel')?.close();w.matchMedia=media;w.campanaCerrar();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
 
@@ -2977,14 +3085,34 @@ PRUEBAS.suite('banco', async t => {
 });
 
 PRUEBAS.suite('tipografia', async t => {
-  showGallery();await sleep(200);
-  try{
-    const nombres=[...document.querySelectorAll('#ov .gallery .card .nm')];
-    t.check(nombres.length>80,'La galería debe presentar el set base para revisar sus títulos.');
-    const cortados=nombres.filter(e=>e.scrollHeight>e.clientHeight+2||e.scrollWidth>e.clientWidth+2);
-    t.check(!cortados.length,'Nombres recortados: '+cortados.map(e=>e.textContent).join(', '));
-    t.check(nombres.every(e=>getComputedStyle(e).textAlign==='center'),'Los nombres deben estar centrados.');
-  }finally{document.querySelector('#ov').classList.remove('on');}
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;'+(pagina==='movil.html'?'width:390px;height:844px':'width:1440px;height:1040px');
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=tipografia-interna';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument;
+    try{
+    w.showGallery();await sleep(200);
+    const panel=d.querySelector('#coleccionPanel');t.check(panel?.open,pagina+': la colección debe abrirse para revisar todos los títulos.');
+    panel.querySelector('.coleccionPestanas button').click();
+    const buscar=panel.querySelector('input[type="search"]');buscar.value='';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
+    for(const select of panel.querySelectorAll('.coleccionFiltros select')){select.value='todos';select.dispatchEvent(new w.Event('change',{bubbles:true}));}
+    const visitadas=new Set(),cortados=[],descentrados=[];
+    for(let indice=0;indice<100;indice++){
+      await new Promise(r=>w.requestAnimationFrame(r));
+      const cartas=[...panel.querySelectorAll('.coleccionMini')];t.check(cartas.length>0,pagina+': cada página de colección debe mostrar cartas.');
+      for(const carta of cartas){
+        visitadas.add(carta.dataset.carta);
+        for(const nombre of carta.querySelectorAll('.nombreCarta,.coleccionMiniInfo>strong')){
+          if(nombre.scrollHeight>nombre.clientHeight+2||nombre.scrollWidth>nombre.clientWidth+2)cortados.push(nombre.textContent);
+          if(w.getComputedStyle(nombre).textAlign!=='center')descentrados.push(nombre.textContent);
+        }
+      }
+      const siguiente=panel.querySelector('.coleccionPaginas button:last-child');if(siguiente.disabled)break;siguiente.click();
+    }
+    t.check(visitadas.size>80&&visitadas.size===w.CAOZ_COLECCION.ids().length,pagina+': la paginación debe permitir revisar el catálogo completo, no sólo la primera página.');
+    t.check(!cortados.length,pagina+': nombres recortados: '+[...new Set(cortados)].join(', '));
+    t.check(!descentrados.length,pagina+': los nombres deben estar centrados: '+[...new Set(descentrados)].join(', '));
+    }finally{d.querySelector('#coleccionPanel')?.close();w.relojPara();f.remove();}
+  }
 });
 
 PRUEBAS.suite('auditoria', async t => {

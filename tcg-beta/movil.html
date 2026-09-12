@@ -902,8 +902,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=246"></script>
-<script src="final.js?b=246"></script>
+<script src="motor.js?b=247"></script>
+<script src="final.js?b=247"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -914,7 +914,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:246, fecha:'2026-09-11'};
+const BUILD = {n:247, fecha:'2026-09-11'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -955,7 +955,8 @@ function encajarTextos(raiz){
 
 /* ---------- ilustraciones ---------- */
 function ponerDibujo(nodo, url, enc){
-  enc=window.CAOZ_ARTE?.encuadre(nodo.dataset.arteId,CAOZ_VISTAS.identificar(nodo))||enc;
+  enc=window.CAOZ_ARTE?.encuadre(nodo.dataset.arteId,CAOZ_VISTAS.identificar(nodo),nodo)||enc;
+  if(nodo.dataset.arteId)url=urlArte(nodo.dataset.arteId,nodo);
   // Reutiliza el marco: una edición remota no debe duplicar ni rehacer cartas.
   const marcos=[...nodo.querySelectorAll(':scope > .marcoDibujo')];
   let caja=marcos.shift();marcos.forEach(n=>n.remove());
@@ -972,15 +973,15 @@ function ponerDibujo(nodo, url, enc){
 function ilustrarLider(d, lid){
   const cara=d.querySelector('.lface');if(!cara)return d;
   cara.dataset.arteId='lider_'+lid;CAOZ_ARTE.acabar(d,'lider_'+lid);
-  const enc=encuadreDe(ARTE['lider_'+lid]);if(!enc)return d;
-  cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid),enc);
+  const enc=CAOZ_ARTE.encuadre('lider_'+lid,CAOZ_VISTAS.identificar(cara),cara);if(!enc)return d;
+  cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid,cara),enc);
   return d;
 }
 function ilustrar(d, id){
   d.dataset.arteId=id;CAOZ_ARTE.acabar(d,id);
-  const enc=encuadreDe(ARTE[id]),hay=enc!=null;
+  const enc=CAOZ_ARTE.encuadre(id,CAOZ_VISTAS.identificar(d),d),hay=enc!=null;
   d.classList.add('acomodo');d.classList.toggle('conarte',hay);d.classList.toggle('sinarte',!hay);
-  if(hay)ponerDibujo(d,urlArte(id),enc);
+  if(hay)ponerDibujo(d,urlArte(id,d),enc);
   let pie=d.querySelector(':scope > .pieCarta');
   if(!pie){pie=document.createElement('div');pie.className='pieCarta';}
   for(const sel of ['.nm','.tribe','.txt','.stats']){const e=d.querySelector(sel);if(e&&!pie.contains(e))pie.appendChild(e);}
@@ -989,10 +990,11 @@ function ilustrar(d, id){
 }
 
 /* el retrato del Líder para la barra: la imagen si la hay, si no su emoji */
-function rostroLider(lid){
-  const enc=encuadreDe(ARTE['lider_'+lid]);
-  if(!enc) return `<div class="lrostro" data-arte-id="lider_${lid}" data-acabado="${acabadoArte('lider_'+lid)}">${LEADERS[lid].art}</div>`;
-  return `<div class="lrostro" data-arte-id="lider_${lid}" data-acabado="${acabadoArte('lider_'+lid)}" style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"><img alt="" src="${urlArte('lider_'+lid)}"></div>`;
+function rostroLider(lid,side){
+  const contexto=document.createElement('span');window.CAOZ_COLECCION_JUEGO?.marcar(contexto,side);
+  const enc=CAOZ_ARTE.encuadre('lider_'+lid,'movil_hud',contexto),lado=contexto.hasAttribute('data-lado-arte')?` data-lado-arte="${contexto.dataset.ladoArte}"`:'';
+  if(!enc) return `<div class="lrostro"${lado} data-arte-id="lider_${lid}" data-acabado="${acabadoArte('lider_'+lid,contexto)}">${LEADERS[lid].art}</div>`;
+  return `<div class="lrostro"${lado} data-arte-id="lider_${lid}" data-acabado="${acabadoArte('lider_'+lid,contexto)}" style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"><img alt="" src="${urlArte('lider_'+lid,contexto)}"></div>`;
 }
 
 /* ---------- el reparto del alto: las cartas crecen hasta llenar lo que hay ---------- */
@@ -1156,7 +1158,12 @@ function buildSelect(){
       d.onclick=()=>{ if(SEL_PASO==='yo') SELP=id; else SELF=id; buildSelect(); };
       lista.appendChild(d); });
   }
-  [...lista.children].forEach(d=>d.classList.toggle('sel', d.dataset.lid===elegido));
+  [...lista.children].forEach(d=>{
+    if(d.dataset.ladoArte!==String(mio?ME:FOE)){
+      window.CAOZ_COLECCION_JUEGO?.marcar(d,mio?ME:FOE);ilustrarLider(d,d.dataset.lid);
+    }
+    d.classList.toggle('sel', d.dataset.lid===elegido);
+  });
   const L=LEADERS[elegido], D=DECKS[elegido];
   $('#fichaLider').innerHTML=`<div class="fn">${L.n} <span>— ${L.ep}</span></div>
     <div class="fl">${L.pasiva}</div><div class="fl">${L.hab}</div>
@@ -1250,7 +1257,7 @@ function showGrave(){
   [ME,FOE].forEach(s=>{
     p.appendChild(el('div','',`<div style="color:var(--gold);margin:10px 0 4px;font-weight:700">${P(s).L.n} — ${P(s).grave.length} cartas</div>`));
     const g=el('div','gallery');
-    [...new Set(P(s).grave)].forEach(id=>{ const c=cardEl(id,{}); const n=P(s).grave.filter(x=>x===id).length;
+    [...new Set(P(s).grave)].forEach(id=>{ const c=cardEl(id,{ladoArte:s}); const n=P(s).grave.filter(x=>x===id).length;
       if(n>1) c.appendChild(el('div','copias','×'+n)); g.appendChild(c); });
     if(!P(s).grave.length) g.appendChild(el('div','',`<span style="color:var(--dim)">Vacío.</span>`));
     p.appendChild(g);
@@ -1289,15 +1296,16 @@ function pedirSalirAlMenu(){
 
 /* ---------- el volado, la cortinilla y el arranque ---------- */
 async function volado(nombreRival){ return voladoDomo(nombreRival); }
-function cartaDeLiderVS(lid, lado){
+function cartaDeLiderVS(lid, lado, ladoArte){
   const L=LEADERS[lid], D=DECKS[lid];
   const d=el('div','vscard '+lado,`<div class="lface">${L.art}</div><div class="lname">${L.n}</div><div class="larch">${D.d}</div>`);
+  window.CAOZ_COLECCION_JUEGO?.marcar(d,ladoArte);
   ilustrarLider(d,lid); return d;
 }
 async function cortinillaVS(a,b,opts={}){
   if(opts.silent||opts.fast||opts.auto||opts.volado===false||opts.sinCortinilla||document.hidden) return;
   const capa=el('div','vs'); capa.innerHTML='<div class="vsfondo"></div><div class="vschispas"></div>';
-  capa.appendChild(opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq')); capa.appendChild(opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der')); capa.appendChild(el('div','vssello','VS'));
+  capa.appendChild(opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq',ME)); capa.appendChild(opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der',FOE)); capa.appendChild(el('div','vssello','VS'));
   if(opts.nombres)capa.querySelectorAll('.lname').forEach((n,i)=>n.textContent=opts.nombres[i]);
   document.body.appendChild(capa);
   await nap(60); capa.classList.add('entra'); await nap(620); capa.classList.add('choque'); window.CAOZ_AUDIO?.play('vs'); await nap(2200);
@@ -1437,7 +1445,7 @@ function pickCard(s,ids,title,cancellable){
   return new Promise(res=>{
     const p=$('#ovPanel'); p.innerHTML=`<h3>${title}</h3><p>Toca una carta para elegirla; mantenla pulsada para leerla.</p>`;
     const box=el('div','gallery');
-    ids.forEach(id=>{ const c=cardEl(id,{}); c.onclick=()=>{ cerrarOv(); res(id); }; box.appendChild(c); });
+    ids.forEach(id=>{ const c=cardEl(id,{ladoArte:s}); c.onclick=()=>{ cerrarOv(); res(id); }; box.appendChild(c); });
     p.appendChild(box);
     if(cancellable){ const b=el('button','btn','Pasar'); b.style.marginTop='12px'; b.style.width='100%'; b.onclick=()=>{ cerrarOv(); res(null); }; p.appendChild(b); }
     openOv(); requestAnimationFrame(()=>encajarTextos(box));
@@ -1470,7 +1478,7 @@ async function revelarCarta(cardId, aMano, side){
     <div class="revela"><div id="revelaHueco"></div><div class="adonde ${aMano?'mano':'grave'}">
       ${aMano?'➜ '+(mio?'A TU MANO':'A SU MANO'):'➜ A LAS ALCANTARILLAS'}
       <small>${aMano?'Es un Objeto: quien mira se lo queda.':'No es un Objeto: se descarta y se pierde.'}</small></div></div>`;
-  const carta=cardEl(cardId,{}); $('#revelaHueco').appendChild(carta); openOv();
+  const carta=cardEl(cardId,{ladoArte:1-side}); $('#revelaHueco').appendChild(carta); openOv();
   if(mio){ await new Promise(ok=>{ const box=el('div','opts'); const b=el('button','btn gold','Continuar'); b.onclick=ok; box.appendChild(b); p.appendChild(box); }); }
   else await nap(2600);
   carta.animate([{transform:'scale(1)',opacity:1},{transform:`translateY(${aMano?'160px':'-40px'}) scale(.5)`,opacity:0}],{duration:520,easing:'cubic-bezier(.4,0,.7,1)'});
@@ -1504,6 +1512,7 @@ async function ofrecerManoNueva(s){
 /* ---------- cartas ---------- */
 function cardEl(id,opt={}){
   const c=CARDS[id], d=el('div','card t-'+c.t);
+  window.CAOZ_COLECCION_JUEGO?.marcar(d,opt.ladoArte??opt.side);
   const cost=opt.side!=null&&G ? costOf(id,opt.side) : c.c, disc=cost<c.c;
   d.innerHTML=`<div class="top"><div class="cost${disc?' rebajado':''}">${cost}</div><div class="nm">${c.n}</div></div>
     ${c.r===2?'<div class="rar">★</div><i class="foil" aria-hidden="true"></i>':''}
@@ -1511,17 +1520,18 @@ function cardEl(id,opt={}){
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
   d.dataset.card=id;
   ilustrar(d,id);
-  pulsacionLarga(d, ()=>abrirFicha(id,null));
+  pulsacionLarga(d, ()=>abrirFicha(id,null,{origen:d}));
   return d;
 }
 function unitEl(u){
   const d=el('div','card unit t-personaje'); d.dataset.uid=u.uid;
   unitFill(d,u);
-  pulsacionLarga(d, ()=>abrirFicha(u.card.id,u));
+  pulsacionLarga(d, ()=>abrirFicha(u.card.id,u,{origen:d}));
   return d;
 }
 function unitFill(d,u){
   const c=u.card, kw=[];
+  window.CAOZ_COLECCION_JUEGO?.marcar(d,u.side);
   u.keys.forEach(k=>{ const m={prisa:['Prisa','good'],provocar:['Provocar','pro'],vuelo:['Vuelo','vue'],sigilo:['Sigilo','sig'],
     arquero:['Arquero','vue'],regeneracion:['Regen','good'],sinhonor:['Sin honor','']}[k]; if(m) kw.push(`<span class="kw ${m[1]}">${m[0]}</span>`); });
   if(u.stunned>0) kw.push('<span class="kw bad">Aturdido</span>');
@@ -1541,13 +1551,14 @@ function unitFill(d,u){
 /* ---------- la ficha: la carta en grande, en una hoja ---------- */
 function abrirFicha(id,u,opts={}){
   const box=$('#inspectCard');
+  window.CAOZ_COLECCION_JUEGO?.ficha(box,opts.ladoArte??window.CAOZ_COLECCION_JUEGO?.lado(opts.origen)??u?.side,opts.origen);
   box.className='big t-'+(CARDS[id]?CARDS[id].t:'personaje');
   box.innerHTML=inspectHTML(id,u);
-  const art=box.querySelector('.art'), enc=CAOZ_ARTE.encuadre(id,'movil_detalle');
+  const art=box.querySelector('.art'), enc=CAOZ_ARTE.encuadre(id,'movil_detalle',box);
   if(art){art.dataset.arteId=id;CAOZ_ARTE.acabar(art,id);}
   if(art&&enc){ art.classList.add('conarte'); art.style.setProperty('--ex',enc.x+'%'); art.style.setProperty('--ey',enc.y+'%');
     art.style.setProperty('--ez',(enc.z/100).toFixed(3));
-    art.insertAdjacentHTML('afterbegin',`<div class="marcoDibujo"><img alt="" src="${urlArte(id)}"></div>`); }
+    art.insertAdjacentHTML('afterbegin',`<div class="marcoDibujo"><img alt="" src="${urlArte(id,art)}"></div>`); }
   if(u){
     const mods=modificadoresDe(u);
     if(mods) box.insertAdjacentHTML('beforeend',`<div class="mods">${mods}</div>`);
@@ -1564,11 +1575,12 @@ function abrirFicha(id,u,opts={}){
 }
 function fichaLider(side){
   const p=P(side), L=p.L, box=$('#inspectCard');
+  window.CAOZ_COLECCION_JUEGO?.ficha(box,side);
   box.className='big';
-  const enc=encuadreDe(ARTE['lider_'+p.leaderId]);
+  const enc=CAOZ_ARTE.encuadre('lider_'+p.leaderId,'movil_detalle',box);
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
     <div data-arte-id="lider_${p.leaderId}" class="art${enc?' conarte':''}"${enc?` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"`:''}>${
-      enc?`<div class="marcoDibujo"><img alt="" src="${urlArte('lider_'+p.leaderId)}"></div>`:''}${L.art}</div>
+      enc?`<div class="marcoDibujo"><img alt="" src="${urlArte('lider_'+p.leaderId,box)}"></div>`:''}${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:12px">${L.lore}</div>
     <div class="bigsep"></div><div class="txt">${L.pasiva}</div><div class="bigsep"></div><div class="txt">${L.hab}</div>
@@ -1601,7 +1613,7 @@ function manoTocada(d){
   d.classList.add('tocada');
   const id=d.dataset.card, c=CARDS[id], ok=!G.resolving&&canPlay(ME,id)&&tutCan('hand',id);
   pill.innerHTML=`<span><b>${c.n}</b> · ${costOf(id,ME)} PD</span>`;
-  const ver=el('button','btn sm','Ver'); ver.onclick=e=>{ e.stopPropagation(); abrirFicha(id,null,{jugar:ok}); };
+  const ver=el('button','btn sm','Ver'); ver.onclick=e=>{ e.stopPropagation(); abrirFicha(id,null,{jugar:ok,ladoArte:ME}); };
   pill.appendChild(ver);
   if(ok){ const b=el('button','btn sm gold','▶ Jugar'); b.onclick=e=>{ e.stopPropagation(); jugarDeLaMano(id); }; pill.appendChild(b); }
   else if(G.active===ME){ const w=el('span','porque'); w.textContent=whyNot(ME,id); pill.appendChild(w); }
@@ -1624,7 +1636,7 @@ function renderLeaders(){
     const usable=mine&&!TGT&&!G.resolving&&!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME&&!G.over&&(!L.habReq||L.habReq(G,side))&&tutCan('leader');
     const target=!mine&&((TGT&&isTargetable('face'))||(SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     host.innerHTML=`<div class="lider${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}" id="lead${side}">
-      ${rostroLider(p.leaderId)}
+      ${rostroLider(p.leaderId,side)}
       <div><div class="ln">${L.n}</div><div class="lh">${mine?L.habName+' · <b>'+(p.leaderUsed?'usada':L.habCost+' PD')+'</b>':L.ep}</div></div></div>`;
     const e=host.firstElementChild;
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
@@ -1694,13 +1706,13 @@ function render(){
   renderField($('#myField'),  P(ME).field,  true);
   const mt=$('#myTraps'); mt.innerHTML='';
   P(ME).traps.forEach(t=>{ const c=CARDS[t.id]; const d=el('div','trapback mine',c.art);
-    d.onclick=()=>abrirFicha(t.id,null); mt.appendChild(d); });
+    d.onclick=()=>abrirFicha(t.id,null,{ladoArte:ME}); mt.appendChild(d); });
   renderNubesDagas();
   const mid=$('#midRow'); mid.innerHTML='';
   if(G.place){ const c=CARDS[G.place.id];
     const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn">${c.n} <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
     if(TGT&&isTargetable(G.place)) d.classList.add('tgt');
-    d.onclick=()=>{ if(TGT){ pickTarget(G.place); return; } abrirFicha(G.place.id,null); };
+    d.onclick=()=>{ if(TGT){ pickTarget(G.place); return; } abrirFicha(G.place.id,null,{ladoArte:G.place.side}); };
     mid.appendChild(d);
   } else mid.appendChild(el('div','',`<span style="color:#4c4266;font-size:9px;letter-spacing:2px">— SIN LUGAR ACTIVO —</span>`));
   P(ME).relics.forEach(r=>{ const c=CARDS[r.id]; if(!c.relicAct) return;
@@ -2227,6 +2239,7 @@ function fxAterriza(u){
 }
 async function fxCartaEnEscena(nodo,side,color,etiqueta,quieta){
   if(!FXON()) return;
+  window.CAOZ_COLECCION_JUEGO?.marcar(nodo,side);
   const board=$('#field').getBoundingClientRect();
   const cx=board.left+board.width/2, cy=board.top+board.height/2;
   nodo.classList.add('fxcard'); nodo.style.left=(cx-60)+'px'; nodo.style.top=(cy-84)+'px';
@@ -2248,11 +2261,11 @@ async function fxCartaEnEscena(nodo,side,color,etiqueta,quieta){
 }
 async function fxSpell(cardId,side){
   const c=CARDS[cardId], color=(c.sub&&SUBCOLOR[c.sub[0]])||'#8a5cf0';
-  await fxCartaEnEscena(cardEl(cardId,{}),side,color,P(side).L.n+' lanza '+c.n,fxQuieta(side));
+  await fxCartaEnEscena(cardEl(cardId,{ladoArte:side}),side,color,P(side).L.n+' lanza '+c.n,fxQuieta(side));
 }
 async function fxHabilidad(side){
   if(!FXON()) return;
-  const L=P(side).L, nodo=el('div','lider'); nodo.innerHTML=rostroLider(P(side).leaderId)+`<div><div class="ln">${L.n}</div><div class="lh">${L.habName}</div></div>`;
+  const L=P(side).L, nodo=el('div','lider'); nodo.innerHTML=rostroLider(P(side).leaderId,side)+`<div><div class="ln">${L.n}</div><div class="lh">${L.habName}</div></div>`;
   nodo.style.padding='6px 12px 6px 6px';
   await fxCartaEnEscena(nodo,side,'var(--gold)','✨ '+L.habName+' — '+L.n,fxQuieta(side));
 }
