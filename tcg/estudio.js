@@ -82,10 +82,10 @@
     const enJuego=ganadora(c);
     for(const [a,suf] of [['normal','Normal'],['foil','Foil'],['dorado','Dorado']]){
       const boton=$('version'+suf);boton.setAttribute('aria-pressed',String(a===acabado));boton.classList.toggle('enJuego',a===enJuego);
-      $('estado'+suf).textContent=a===enJuego?'En la biblioteca':creada(c,a)?'Disponible':'No creada';
+      $('estado'+suf).textContent=creada(c,a)?'Diseño disponible':'Usa Normal';
       boton.setAttribute('aria-label',acabados[a]+': '+$('estado'+suf).textContent);
     }
-    $('versionEnJuego').textContent='En la biblioteca: '+acabados[enJuego]+'. Prioridad automática: Foil dorado → Foil → Normal.';
+    $('versionEnJuego').textContent='Cada jugador usa el acabado que desbloqueó y eligió en su Colección. Las tres versiones conservan sus propios ajustes.';
     const nueva=acabado!=='normal'&&!creada(c),imagenNormal=!!urlVersion(c,'normal');
     $('crearAcabado').hidden=!nueva;
     $('crearAcabadoTexto').textContent='Previsualiza '+acabados[acabado]+' con '+(imagenNormal?'la ilustración Normal':'el símbolo de la carta')+', o sube un diseño propio.';
@@ -107,8 +107,7 @@
     if(heredada&&!pendiente?.blob)$('origen').textContent+=' Usa ilustración Normal: si cambia su imagen, se actualizará también aquí.';
     $('borrador').hidden=!pendiente;
     if(pendiente){$('archivoNombre').textContent=pendiente.blob?pendiente.nombre+' · '+Math.round(pendiente.blob.size/1024)+' KB · WebP':pendiente.crear?'Crear '+acabados[acabado]+' de '+c.nombre:'Nuevo encuadre '+acabados[acabado]+' de '+c.nombre;
-      const esGanadora=acabado==='dorado'||acabado==='foil'&&!creada(c,'dorado')||acabado==='normal'&&ganadora(c)==='normal';
-      $('alcance').textContent='Se guardará sólo la versión '+acabados[acabado]+' en '+nombreEntorno()+'. '+(esGanadora?'Será la versión prioritaria cuando publiques la carta.':'El juego seguirá mostrando '+acabados[ganadora(c)]+', que tiene prioridad.')+' Las demás versiones se conservan.';}
+      $('alcance').textContent='Se guardará sólo la versión '+acabados[acabado]+' en '+nombreEntorno()+'. '+'Los jugadores que elijan este acabado recibirán su diseño publicado.'+' Las demás versiones se conservan.';}
     versiones();botones();
   }
   function detalle(){

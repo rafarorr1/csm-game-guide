@@ -2326,8 +2326,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=246"></script>
-<script src="final.js?b=246"></script>
+<script src="motor.js?b=247"></script>
+<script src="final.js?b=247"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2346,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:246, fecha:'2026-09-11'};
+const BUILD = {n:247, fecha:'2026-09-11'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2420,7 +2420,8 @@ function encajarTextos(raiz){
    valiendo: se leen como el centro horizontal y sin acercar. */
 
 function ponerDibujo(nodo, url, enc){
-  enc=window.CAOZ_ARTE?.encuadre(nodo.dataset.arteId,CAOZ_VISTAS.identificar(nodo))||enc;
+  enc=window.CAOZ_ARTE?.encuadre(nodo.dataset.arteId,CAOZ_VISTAS.identificar(nodo),nodo)||enc;
+  if(nodo.dataset.arteId)url=urlArte(nodo.dataset.arteId,nodo);
   // Reutiliza el marco: una edición remota no debe duplicar ni rehacer cartas.
   const marcos=[...nodo.querySelectorAll(':scope > .marcoDibujo')];
   let caja=marcos.shift();marcos.forEach(n=>n.remove());
@@ -2441,15 +2442,15 @@ function ponerDibujo(nodo, url, enc){
 function ilustrarLider(d, lid){
   const cara=d.querySelector('.lface');if(!cara)return d;
   cara.dataset.arteId='lider_'+lid;CAOZ_ARTE.acabar(d,'lider_'+lid);
-  const enc=encuadreDe(ARTE['lider_'+lid]);if(!enc)return d;
-  cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid),enc);
+  const enc=CAOZ_ARTE.encuadre('lider_'+lid,CAOZ_VISTAS.identificar(cara),cara);if(!enc)return d;
+  cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid,cara),enc);
   return d;
 }
 function ilustrar(d, id){
   d.dataset.arteId=id;CAOZ_ARTE.acabar(d,id);
-  const enc=encuadreDe(ARTE[id]),hay=enc!=null;
+  const enc=CAOZ_ARTE.encuadre(id,CAOZ_VISTAS.identificar(d),d),hay=enc!=null;
   d.classList.add('acomodo');d.classList.toggle('conarte',hay);d.classList.toggle('sinarte',!hay);
-  if(hay)ponerDibujo(d,urlArte(id),enc);
+  if(hay)ponerDibujo(d,urlArte(id,d),enc);
   let pie=d.querySelector(':scope > .pieCarta');
   if(!pie){pie=document.createElement('div');pie.className='pieCarta';}
   for(const sel of ['.nm','.tribe','.txt','.stats']){const e=d.querySelector(sel);if(e&&!pie.contains(e))pie.appendChild(e);}
@@ -2484,7 +2485,7 @@ async function revelarCarta(cardId, aMano, side){
           ? 'Es un Objeto: quien mira se lo queda.'
           : 'No es un Objeto: se descarta y se pierde.'}</small>
       </div></div>`;
-  const carta=cardEl(cardId,{});
+  const carta=cardEl(cardId,{ladoArte:1-side});
   carta.onmouseenter=null;
   $('#revelaHueco').appendChild(carta);
   openOv();
@@ -2695,7 +2696,7 @@ function pickCard(s,ids,title,cancellable){
     const p=$('#ovPanel');
     p.innerHTML=`<h3>${title}</h3>`;
     const box=el('div','gallery');
-    ids.forEach(id=>{ const c=cardEl(id,{});
+    ids.forEach(id=>{ const c=cardEl(id,{ladoArte:s});
       c.onclick=()=>{ cerrarOv(); res(id); }; box.appendChild(c); });
     p.appendChild(box);
     if(cancellable){ const b=el('button','btn','Pasar'); b.style.marginTop='12px';
@@ -2722,6 +2723,7 @@ function pickFrom(s,list,title){
 function cardEl(id,opt={}){
   const c=CARDS[id];
   const d=el('div','card t-'+c.t);
+  window.CAOZ_COLECCION_JUEGO?.marcar(d,opt.ladoArte??opt.side);
   const cost = opt.side!=null&&G ? costOf(id,opt.side) : c.c;
   const disc = cost<c.c;
   d.innerHTML=`
@@ -2751,6 +2753,7 @@ function unitEl(u){
 
 function unitFill(d,u){
   const c=u.card;
+  window.CAOZ_COLECCION_JUEGO?.marcar(d,u.side);
   const kw=[];
   u.keys.forEach(k=>{ const m={prisa:['Prisa','good'],provocar:['Provocar','pro'],vuelo:['Vuelo','vue'],
     sigilo:['Sigilo','sig'],arquero:['Arquero','vue'],regeneracion:['Regen','good'],sinhonor:['Sin honor','']}[k];
@@ -2782,11 +2785,12 @@ function unitFill(d,u){
 
 function showInspectLeader(d,side){
   const p=P(side), L=p.L, box=$('#inspectCard');
+  window.CAOZ_COLECCION_JUEGO?.ficha(box,side,d);
   box.className='big';
-  const encL = encuadreDe(ARTE['lider_' + p.leaderId]);
+  const encL = CAOZ_ARTE.encuadre('lider_'+p.leaderId,'desktop_detalle',box);
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
     <div data-arte-id="lider_${p.leaderId}" class="art${encL?' conarte':''}"${encL ? ` style="--ex:${encL.x}%;--ey:${encL.y}%;--ez:${(encL.z/100).toFixed(3)}"` : ''}>${
-      encL ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId)}"></div>` : ''}${L.art}</div>
+      encL ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId,box)}"></div>` : ''}${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
     <div class="bigsep"></div>
@@ -2810,10 +2814,11 @@ function placeInspect(d){
 
 function attachInspect(d,id,u){
   d.onmouseenter=e=>{ const box=$('#inspectCard');
+    window.CAOZ_COLECCION_JUEGO?.ficha(box,u?.side,d);
     box.className = 'big t-' + (CARDS[id] ? CARDS[id].t : 'personaje');
     box.innerHTML=inspectHTML(id,u);
-    const art=box.querySelector('.art'),enc=encuadreDe(ARTE[id]);
-    if(art){art.dataset.arteId=id;CAOZ_ARTE.acabar(art,id);if(enc){art.classList.add('conarte');ponerDibujo(art,urlArte(id),enc);}}
+    const art=box.querySelector('.art'),enc=CAOZ_ARTE.encuadre(id,'desktop_detalle',box);
+    if(art){art.dataset.arteId=id;CAOZ_ARTE.acabar(art,id);if(enc){art.classList.add('conarte');ponerDibujo(art,urlArte(id,art),enc);}}
     const box2=$('#inspect'); box2.classList.add('on');
     placeInspect(d);
   };
@@ -3250,6 +3255,7 @@ function fxAterriza(u){
 
 async function fxCartaEnEscena(nodo, side, color, etiqueta, quieta){
   if(!FXON()) return;
+  window.CAOZ_COLECCION_JUEGO?.marcar(nodo,side);
   const board=$('#field').getBoundingClientRect();
   const cx=board.left+board.width/2, cy=board.top+board.height/2;
   nodo.classList.add('fxcard');
@@ -3363,7 +3369,7 @@ async function fxSpell(cardId, side){
     const cx=board.left+board.width/2, cy=board.top+board.height/2;
     setTimeout(()=>fxEstallido(cx, cy, c.sub[0]), (fxQuieta(side)+420)*0.2);
   }
-  await fxCartaEnEscena(cardEl(cardId,{}), side, color,
+  await fxCartaEnEscena(cardEl(cardId,{ladoArte:side}), side, color,
     P(side).L.n+' lanza '+c.n, fxQuieta(side));
 }
 /* trampa: ahora se ve la CARTA, no sólo su nombre */
@@ -3372,7 +3378,7 @@ async function fxHabilidad(side){
   if(!FXON()) return;
   const L=P(side).L;
   const original=$('#lead'+(side===ME?0:1));
-  const nodo = original ? original.cloneNode(true) : cardEl('discipulo',{});
+  const nodo = original ? original.cloneNode(true) : cardEl('discipulo',{ladoArte:side});
   nodo.id=''; nodo.style.width='112px'; nodo.style.height='158px';
   await fxCartaEnEscena(nodo, side, 'var(--gold)',
     '✨ '+L.habName+' — '+L.n, fxQuieta(side));
@@ -3422,10 +3428,11 @@ function renderLeaders(){
     const usable = mine && !TGT && !G.resolving && !p.leaderUsed && p.pd>=L.habCost && G.active===ME && !G.over
                 && (!L.habReq||L.habReq(G,side)) && tutCan('leader');
     const target = !mine && ((TGT&&isTargetable('face')) || (SEL&&canAttack(SEL)&&legalTargets(SEL).face));
-    const enc = encuadreDe(ARTE['lider_' + p.leaderId]);
-    host.innerHTML=`<div data-arte-id="lider_${p.leaderId}" data-acabado="${acabadoArte('lider_'+p.leaderId)}" class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
+    window.CAOZ_COLECCION_JUEGO?.marcar(host,side);
+    const enc = CAOZ_ARTE.encuadre('lider_'+p.leaderId,'desktop_hud',host);
+    host.innerHTML=`<div data-lado-arte="${side}" data-arte-id="lider_${p.leaderId}" data-acabado="${acabadoArte('lider_'+p.leaderId,host)}" class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
       enc ? ` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"` : ''}>
-      ${enc ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId)}"></div>` : ''}
+      ${enc ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId,host)}"></div>` : ''}
       <div class="lcName">${L.n}</div>
       <div class="lcArt">${L.art}</div>
       <div class="lcEp">${L.ep}</div>
@@ -4018,6 +4025,9 @@ function buildSelect(){
     });
   }
   [...pista.children].forEach((d,i)=>{
+    if(d.dataset.ladoArte!==String(mio?ME:FOE)){
+      window.CAOZ_COLECCION_JUEGO?.marcar(d,mio?ME:FOE);ilustrarLider(d,d.dataset.lid);
+    }
     /* Distancia al frente, dando la vuelta.
        Con CINCO cartas el abanico salía solo: -2..+2, dos a cada lado.
        Con SEIS ya no: el reparto es -2..+3, tres cartas a un lado y dos al
@@ -4164,7 +4174,7 @@ function showGrave(){
   [ME,FOE].forEach(s=>{
     p.appendChild(el('div','',`<div style="color:var(--gold);margin:10px 0 4px;font-weight:700">${P(s).L.n} — ${P(s).grave.length} cartas</div>`));
     const g=el('div','gallery');
-    [...new Set(P(s).grave)].forEach(id=>{ const c=cardEl(id,{});
+    [...new Set(P(s).grave)].forEach(id=>{ const c=cardEl(id,{ladoArte:s});
       const n=P(s).grave.filter(x=>x===id).length;
       if(n>1) c.appendChild(el('div','rar',`×${n}`));
       g.appendChild(c); });
@@ -4262,12 +4272,13 @@ function panelFinal(winner,why){
    cambiaba los PD y la mano a media jugada. Costaba de ver porque sólo pasa si
    el reparto tardío coincide con lo siguiente que hagas. */
 
-function cartaDeLiderVS(lid, lado){
+function cartaDeLiderVS(lid, lado, ladoArte){
   const L=LEADERS[lid], D=DECKS[lid];
   const d=el('div','vscard '+lado, `
     <div class="lface">${L.art}</div>
     <div class="lname">${L.n}</div>
     <div class="larch">${D.d}</div>`);
+  window.CAOZ_COLECCION_JUEGO?.marcar(d,ladoArte);
   ilustrarLider(d, lid);
   return d;
 }
@@ -4283,7 +4294,7 @@ async function cortinillaVS(a, b, opts={}){
   if(document.hidden) return;
   const capa = el('div','vs');
   capa.innerHTML = '<div class="vsfondo"></div><div class="vschispas"></div>';
-  const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq'), der = opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der');
+  const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq',ME), der = opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der',FOE);
   if(opts.nombres){izq.querySelector('.lname').textContent=opts.nombres[0];der.querySelector('.lname').textContent=opts.nombres[1];}
   const sello = el('div','vssello','VS');
   capa.appendChild(izq); capa.appendChild(der); capa.appendChild(sello);
