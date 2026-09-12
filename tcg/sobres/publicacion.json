@@ -17,10 +17,10 @@
     "juego/arte-remoto.js": "a44dd3d05c1b3a25a8964e5d96f394d97284311891eb8a4fa6a6e47c8e749ac9",
     "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "juego/sobres-apertura.css": "d04c4a81614042b7d1a1ec0c23b5baea87a509d2fd36878343a80eb72737a436",
-    "juego/sobres-apertura.js": "e4fe1d913e8d0ef7367fefa2a177b41dcaed1e22edc601653dc47fbc92f92e92",
+    "juego/sobres-apertura.js": "9b651cf82b2fd889d5b4ac458c70cb5c47a5dbd6b3350831ecc346f883eb89d9",
     "juego/sobres-escena.js": "d6379afcc6553c2c64f11397bb41d206608c0d5cc107274587bd94e25f797aa9",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
-    "procedencia.json": "38dc772aec7a30f7113e152f1f33c8aa70501d6a8778996f1d72959fb3fe632f",
+    "procedencia.json": "da3133b75d9e97b3eea1ef518e317d532927388f6386f443635b648ece990da4",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c",
     "sobres.css": "ce0028839ddf202114514158c2f844e953de068ea1eb000d811f7a2156c5d081",
     "sobres.js": "b96f93439006fb6a768e1dda6058da470d266fd0ec8c562280a6e4e24f4203dd"
@@ -28,7 +28,7 @@
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/sobres-apertura-3d",
-    "sha": "9e665400911b6e6b961301bfe232e277131ebff9"
+    "sha": "b12646c8732a4a8bb6e3f912edb3992ae7b032a5"
   },
   "seccion": "sobres",
   "version": 1
