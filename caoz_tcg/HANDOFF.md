@@ -13,13 +13,19 @@ números) → el código.
 ## Colección para revisión aislada — copias y originales por acabado
 
 Rama `feature/coleccion-copias-ediciones`, desde `develop`/beta251. El usuario
-pidió cantidades debajo de cada carta y dos series nuevas: Foil con grabados
+pidió copias por carta y dos series nuevas: Foil con grabados
 azul/plata y Doradas con miniaturas de manuscrito iluminado. Se mantienen los
 134 originales Normales y la Dorada final de Thal (mismos bytes y cinco vistas
 publicadas). Son 134 Foil nuevas y 133 Doradas nuevas; Thal completa la serie
 Dorada con su arte final. Prompts, fuentes y hashes públicos quedan en
 `../dev/arte/ediciones-placeholder-v1.json`. Se presenta primero la Colección
 aislada; no integrar ni publicar otra beta o producción hasta su aprobación.
+
+Revisión del listado: debajo de cada carta quedan únicamente los marcadores
+de las ediciones poseídas (Normal, Foil y Dorada); no se dibujan las bloqueadas
+ni hay contador o texto de edición. El marcador equipado queda resaltado.
+Las cantidades y el cambio de edición siguen en el detalle. Obtener otra
+copia de un acabado existente no duplica su marcador.
 
 Revisión: https://aislados.caoz-tcg.pages.dev/coleccion/ . `estado=ediciones`
 muestra copias distintas (Eric 6, Thal 7 y Fender 7). Para recorrer una serie

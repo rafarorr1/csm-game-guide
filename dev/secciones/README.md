@@ -38,7 +38,10 @@ construye de nuevo esos datos temporales.
 
 ## Colección: copias y muestrario de ediciones
 
-El contador `×N` debajo de cada carta suma sus copias Normal, Foil y Dorada.
+Debajo de cada carta sólo aparecen los marcadores de las ediciones que posee
+el jugador, sin contador ni texto. Las ediciones bloqueadas no se dibujan;
+la equipada queda resaltada. Desbloquear una edición añade su marcador,
+pero recibir otra copia de la misma no añade otro.
 El detalle muestra la cantidad de cada edición por separado, incluida `0 copias`
 para una edición bloqueada. La ilustración del listado corresponde al acabado
 elegido; mirar otra versión en el detalle no la equipa. «Usar» cambia esa elección
@@ -157,7 +160,11 @@ node dev/secciones/pruebas_coleccion_muestrario.mjs
 node dev/secciones/pruebas_coleccion_protagonistas.mjs
 ```
 
-Comprueban los contadores, la selección visual, el aislamiento del muestrario,
+Después de publicar, `BASE_URL=https://aislados.caoz-tcg.pages.dev/coleccion/`
+permite repetir `pruebas_coleccion_copias.mjs` sobre el paquete servido,
+sin arrancar un servidor local ni tocar el progreso real.
+
+Comprueban los marcadores poseídos, las cantidades del detalle, la selección visual, el aislamiento del muestrario,
 los protagonistas y los originales por acabado. Las pruebas del estudio usan
 respuestas simuladas y no escriben en sus bases de datos. Revisar también en
 móvil y escritorio que el total no se recorte y que cada serie conserve su

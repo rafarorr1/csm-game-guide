@@ -150,12 +150,11 @@
     contenido.querySelector('.coleccionResumen').textContent=ids.length+' cartas'+(s.busqueda?' encontradas':' en tu colección')+' · Elige una para cambiar su edición';
     grid.replaceChildren();
     ids.forEach(id=>{
-      const c=dato(id),a=modelo().elegido(id),cantidad=modelo().cantidad(id),b=boton('',()=>verCarta(id),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. '+textoCopias(cantidad)+' en tu colección. Edición '+NOMBRES[a]+'. Ver tres versiones.');
+      const c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v)),b=boton('',()=>verCarta(id),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Ver tres versiones.');
       const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');
-      const pie=crear('span','coleccionMiniPie');pie.append(crear('span','',NOMBRES[a]));const puntos=crear('span','coleccionPuntos');
-      ACABADOS.forEach(v=>{const p=crear('i');p.dataset.edicion=v;p.classList.toggle('propia',modelo().tiene(id,v));p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+': '+textoCopias(modelo().cantidad(id,v));puntos.append(p);});
-      const copias=crear('span','coleccionCopias','×'+cantidad);copias.dataset.cantidad=cantidad;copias.title=textoCopias(cantidad)+' en tu colección';copias.setAttribute('aria-hidden','true');
-      pie.append(puntos,copias);info.append(pie);b.append(ficha,info);grid.append(b);
+      const pie=crear('span','coleccionMiniPie'),puntos=crear('span','coleccionPuntos');
+      propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
+      pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);
     });
     if(!ids.length){const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.desplazamiento=0;dibujar();}));grid.append(vacio);}
     programarAjuste();

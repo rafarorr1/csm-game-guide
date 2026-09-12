@@ -2,8 +2,9 @@
 
 ### Sin numerar · revisión aislada · Copias y arte por edición · 2026-09-12
 
-- La Colección muestra el total de copias debajo de cada carta y el desglose
-  de Normal, Foil y Dorada al abrirla. Equipar o reabrir un sobre pendiente
+- Debajo de cada carta aparecen sólo los marcadores de sus ediciones
+  desbloqueadas, con la edición en uso resaltada, sin contador ni etiqueta.
+  El desglose de copias Normal, Foil y Dorada sigue al abrirla. Equipar o reabrir un sobre pendiente
   no suma copias; cada nuevo premio sí, aunque esa edición ya estuviera poseída.
 - Se conservan todos los originales Normales. La serie Foil usa grabados de
   tinta azul y plata; la Dorada, pintura de manuscrito medieval iluminado.
