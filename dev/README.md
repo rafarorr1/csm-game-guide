@@ -52,7 +52,9 @@ Abrir la nueva carpeta y ejecutar:
 node dev/secciones/servidor.mjs
 ```
 
-Primera sección disponible: [Colección aislada](http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=sobres).
+Primera sección disponible: [Colección aislada por internet](https://caoz-coleccion-aislada.cuddly-bowl-3242.chatgpt.site/).
+El enlace local 127.0.0.1 sólo funciona en el ordenador; para el teléfono entregar
+la copia alojada y conservar su acceso privado.
 Usa sus componentes, estilos y datos reales; no carga una partida ni escribe el
 progreso del jugador. Tiene escenarios de sobres/acabados y vista móvil/escritorio.
 Ver [sus límites y controles](secciones/README.md). Para otra sección, añadir una
