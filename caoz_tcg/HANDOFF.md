@@ -17,7 +17,9 @@ tres cartas por fila en móvil/escritorio y scroll vertical interno, sin botones
 de páginas. Buscar o filtrar vuelve al inicio; abrir una carta y regresar conserva
 el desplazamiento y el foco. Las cartas mantienen su proporción y diseño, y los
 controles de acabados/sobres conservan su flujo. La lista ya no depende de cuántas
-filas caben en el alto del dispositivo.
+filas caben en el alto del dispositivo. La segunda revisión compacta la separación
+entre filas/columnas, los márgenes laterales del listado y la etiqueta de edición
+para aprovechar más pantalla sin cambiar la composición de las cartas.
 
 Revisión pública: https://aislados.caoz-tcg.pages.dev/coleccion/ . Se valida sólo la
 sección y el paquete aislado. Falta la aprobación visual del usuario antes de
