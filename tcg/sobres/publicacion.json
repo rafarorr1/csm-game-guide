@@ -1,0 +1,35 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "art/armadura.webp": "4ef30d6f9b41d6e6c99e2e6e2ed1c637b58727c65e8ac729810bdf9b66291f25",
+    "art/encuadres.json": "e145d42bf5355e194079deaf390236268cc034c5749076d36b470ca6c3ebe3c8",
+    "art/eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b",
+    "art/logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
+    "art/rey.webp": "a18041ee78195792a07bbc81d83b4dc6f7fcae6b2a4bf5949232f8e4c0e7b492",
+    "art/tal.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
+    "art/zancada.webp": "c3d6ddd4f63b0c04cb4eecfc91d94effe4734f5a65f7d6045603812fcf28eda0",
+    "catalogo-vacio.json": "ffa1a261b235d5e4c969a7e181376d4892f9605bca29a4a699350735c9539aec",
+    "generado/base.css": "bac57d51bb0ce089274c7e9a73dbd9b2764d71b141fc28fbcf5deb24d2faf3a7",
+    "generado/datos.js": "4fc53a62f81b2c0d8f0b46e6a65a642873c20adf16d20a7e0bbc29e508b9e951",
+    "generado/renderer.js": "dbaddd0cc79d709376556efb003a3be94000092f24b98b9d9e50aa590c4e0d8a",
+    "index.html": "93284a7ce820acb9b4d548c2cd161158516b1fc7a19ca45d4db53e33edd5f0aa",
+    "juego/acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
+    "juego/arte-remoto.js": "a44dd3d05c1b3a25a8964e5d96f394d97284311891eb8a4fa6a6e47c8e749ac9",
+    "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
+    "juego/sobres-apertura.css": "a6c19015d7d6771296693a52ea131a64bc5fae206f4459a4444f70cea0754647",
+    "juego/sobres-apertura.js": "445352e0a332cd418efa25a03608850f9acb7ac0b18342ebc6971d8a2fee8bfe",
+    "juego/sobres-escena.js": "d6379afcc6553c2c64f11397bb41d206608c0d5cc107274587bd94e25f797aa9",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
+    "procedencia.json": "9733a5fa04adee67f2233a70422b3f7a6614a04686aa78b06d46a807c62ba50e",
+    "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c",
+    "sobres.css": "319857748aa5bebff5cdb98c52bef96f788346f1234dffa793b8b73b72d0330f",
+    "sobres.js": "037f222ecb6a3da3144226cb9090eb632c094d454e81ef78d6e67d8983723fc6"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/sobres-apertura-3d",
+    "sha": "aa8ecc2aeb4227ea31bd4d37117798ed8070fcaf"
+  },
+  "seccion": "sobres",
+  "version": 1
+}

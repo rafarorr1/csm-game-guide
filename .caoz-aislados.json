@@ -8,6 +8,10 @@
     "rey": {
       "fuente": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf",
       "ruta": "tcg/rey"
+    },
+    "sobres": {
+      "fuente": "aa8ecc2aeb4227ea31bd4d37117798ed8070fcaf",
+      "ruta": "tcg/sobres"
     }
   },
   "version": 1

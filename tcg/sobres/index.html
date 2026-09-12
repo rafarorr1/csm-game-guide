@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Rompe el sello · Sobres de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./generado/base.css">
+<link rel="stylesheet" href="./juego/acabados.css">
+<link rel="stylesheet" href="./juego/sobres-apertura.css">
+<link rel="stylesheet" href="./sobres.css">
+<script src="./memoria.js"></script>
+<script src="./red-estatica.js"></script>
+<script src="./generado/datos.js"></script>
+<script src="./generado/renderer.js"></script>
+<script src="./juego/arte-vistas.js"></script>
+<script src="./juego/arte-remoto.js"></script>
+<script src="./juego/sobres-escena.js"></script>
+<script src="./juego/sobres-apertura.js"></script>
+<script src="./sobres.js" defer></script>
+</head>
+<body class="aaa-polish sobresLaboratorio">
+<main class="sobresSalon">
+  <header class="sobresCabecera"><p>CAOZ CON TODO <i></i> TESOROS DEL DOMO</p><h1>Rompe el sello.</h1><nav aria-label="Propuestas de apertura"><button type="button" data-propuesta="reliquia" aria-pressed="true"><span>01</span> Sello del Domo</button><button type="button" data-propuesta="arcano" aria-pressed="false"><span>02</span> Desgarro arcano</button></nav></header>
+  <div id="sobresMontaje" aria-label="Apertura de un sobre"><p class="sobresCargando" role="status">Preparando tu sobre…</p></div>
+  <footer class="sobresLaboratorioPie"><span>PRUEBA DE APERTURA · 5 CARTAS FOIL</span><button type="button" id="sobresReiniciar">Reiniciar ↺</button></footer>
+</main>
+</body>
+</html>
