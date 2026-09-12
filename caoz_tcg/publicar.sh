@@ -317,7 +317,10 @@ comprobar_cloudflare(){
   for j in $(seq 1 12); do
     sleep 10
     local ok=1
-    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js arte-remoto.js arte-vistas.js estudio.js estudio.html coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
+    # El HTML privado redirige al estudio único de producción. Sus dependencias
+    # públicas se verifican aquí y en verificar_arte_web.py; el HTML crudo sólo
+    # se compara en GitHub Pages, que no aplica esa redirección.
+    for f in index.html motor.js movil.html final.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js arte-remoto.js arte-vistas.js estudio.js coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
       local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
       local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
       [ "$srv" = "$esp" ] || { ok=0; break; }

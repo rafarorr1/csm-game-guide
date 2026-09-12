@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · build 247 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-11 · build 248 (rama feature/aaa-combat-cards) · v20 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -11,6 +11,11 @@ números) → el código.
 ---
 
 ## 1. Qué es y dónde está
+
+Build248 corrige la comprobación de Cloudflare: estudio.html redirige al
+estudio único en producción y se valida por su flujo propio, no como HTML
+estático de beta. Dependencias y código del juego siguen comparándose byte a
+byte. La Colección conserva build247. Preparar sólo beta248.
 
 Build247: Colección local de acabados. coleccion-modelo.js guarda todas las
 Normales implícitas, desbloqueos Foil/Dorado, selección por ID, contador y sobre

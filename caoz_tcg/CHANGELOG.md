@@ -1,5 +1,11 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 248 · Verificación del estudio único
+
+- La verificación beta respeta la redirección de estudio.html al estudio único.
+  El HTML estático sigue verificándose en GitHub; Cloudflare comprueba sus
+  dependencias públicas y todos los módulos de la Colección. Mismo juego que247.
+
 ### Sin numerar · build 247 · Colección y sobres
 
 - Archivo de cartas con búsqueda, filtros por mazo/tipo y páginas que caben en

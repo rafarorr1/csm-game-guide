@@ -77,6 +77,20 @@ class BetaCloudflare(unittest.TestCase):
         self.assertEqual(self.git('ls-remote', 'origin', 'refs/heads/beta').split()[0],
                          self.git('rev-parse', 'HEAD'))
 
+    def test_cloudflare_respeta_redireccion_del_estudio_unico(self):
+        # /estudio.html redirige a producción en beta. Comparar ese destino
+        # contra el HTML de beta produce un falso fallo con el juego publicado.
+        fuente = Path(__file__).resolve().parent
+        script = (fuente / 'publicar.sh').read_text()
+        cloudflare = script.split('comprobar_cloudflare(){', 1)[1].split('paso "4/4', 1)[0]
+        archivos = re.search(r'for f in ([^;]+); do', cloudflare).group(1).split()
+        self.assertNotIn('estudio.html', archivos)
+        for archivo in ['estudio.js', 'arte-remoto.js', 'coleccion-modelo.js',
+                        'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css']:
+            self.assertIn(archivo, archivos)
+        self.assertIn('verificar_arte_web.py', cloudflare)
+        self.assertIn('estudio.html', script.split('paso "4/4', 1)[1])
+
     def test_estudios_publican_sus_dependencias_en_ambos_destinos(self):
         # Ejecutar la copia y el commit reales contra el remoto local detecta
         # archivos copiados que nunca llegan a git (como ocurrió en build235).
