@@ -750,7 +750,14 @@
       "mazos": [
         "Talesyn"
       ],
-      "original": null
+      "original": {
+        "url": "art/tal.webp",
+        "encuadre": {
+          "x": 45,
+          "y": 91,
+          "z": 118
+        }
+      }
     },
     {
       "id": "rantiago",

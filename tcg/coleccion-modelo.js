@@ -1,12 +1,14 @@
 /* Colección local de diseños: las reglas y los mazos no cambian.
- * Las cartas normales son gratuitas; Foil y Dorado se desbloquean por separado.
- * El sobre de prueba contiene tres diseños premium. Mientras quedan novedades,
- * se elige Foil (80 %) o Dorado (20 %) entre los acabados aún no obtenidos; si
- * una categoría está completa se usa la otra. Sólo se repiten diseños cuando
- * quedan menos de tres novedades. Con la colección completa no se gasta sobre.
+ * Las cartas normales son gratuitas; cada campaña terminada concede un sobre.
+ * Cada sobre nuevo contiene cinco cartas Foil elegidas uniformemente. Pueden
+ * estar ya obtenidas: el inventario no altera el sorteo. No se repite una carta
+ * dentro del mismo sobre mientras haya IDs distintos disponibles en el catálogo.
+ * Dorado queda reservado al futuro canje de códigos físicos; no sale en sobres.
+ * Los sobres de tres cartas guardados antes de este cambio conservan su resultado.
  * Un único setItem guarda inventario, contador y sobre pendiente: una recarga
  * puede repetir la presentación, pero nunca vuelve a conceder el contenido.
- * No hay monedas, compras, recompensas automáticas ni sincronización de cuenta.
+ * La recompensa de campaña registra el ID de la partida junto al sobre concedido.
+ * No hay monedas, compras, canje simulado ni sincronización de cuenta.
  */
 (function(){
   'use strict';
@@ -39,7 +41,7 @@
     return 'caoz.coleccion.v1.'+(betaDisponible()?'beta':'produccion')+'.'+encodeURIComponent(partes.join('/')||'raiz')+prueba;
   }
   const clave=claveActual();
-  function vacio(){return {version:1,revision:0,desbloqueos:{},selecciones:{},sobres:0,pendiente:null};}
+  function vacio(){return {version:1,revision:0,desbloqueos:{},selecciones:{},sobres:0,pendiente:null,campanasPremiadas:[]};}
 
   function sanear(original){
     const estado=vacio();
@@ -47,6 +49,7 @@
     const conocidos=new Set(ids());
     estado.revision=entero(original.revision,Number.MAX_SAFE_INTEGER-1)?original.revision:0;
     estado.sobres=entero(original.sobres,maxSobres)?original.sobres:0;
+    if(Array.isArray(original.campanasPremiadas))estado.campanasPremiadas=[...new Set(original.campanasPremiadas.filter(idSeguro))];
     if(objeto(original.desbloqueos)){
       Object.keys(original.desbloqueos).forEach(id=>{
         if(!conocidos.has(id)||!Array.isArray(original.desbloqueos[id]))return;
@@ -62,9 +65,9 @@
     }
     const p=original.pendiente;
     if(objeto(p)&&typeof p.id==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(p.id)&&
-      entero(p.creado,Number.MAX_SAFE_INTEGER)&&Array.isArray(p.cartas)&&p.cartas.length===3&&
+      entero(p.creado,Number.MAX_SAFE_INTEGER)&&Array.isArray(p.cartas)&&[3,5].includes(p.cartas.length)&&
       p.cartas.every(c=>objeto(c)&&conocidos.has(c.id)&&premium.includes(c.acabado)&&
-        typeof c.nueva==='boolean'&&posee(estado,c.id,c.acabado))){
+        (p.cartas.length===3||c.acabado==='foil')&&typeof c.nueva==='boolean'&&posee(estado,c.id,c.acabado))){
       estado.pendiente={id:p.id,creado:p.creado,cartas:p.cartas.map(c=>({id:c.id,acabado:c.acabado,nueva:c.nueva}))};
     }
     return estado;
@@ -128,6 +131,16 @@
     estado.sobres++;
     return guardar(estado,'sobre-beta');
   }
+  function concederSobreCampana(runId){
+    if(!idSeguro(runId))return false;
+    const estado=cargar();
+    if(!estado)return false;
+    if(estado.campanasPremiadas.includes(runId))return true;
+    if(estado.sobres>=maxSobres)return false;
+    estado.sobres++;
+    estado.campanasPremiadas.push(runId);
+    return guardar(estado,'sobre-campana',{runId});
+  }
   function sobres(){return leer().sobres;}
   function pendiente(){const p=leer().pendiente;return p?copia(p):null;}
   function azar(){
@@ -142,20 +155,15 @@
     if(estado.pendiente)return copia(estado.pendiente);
     if(!estado.sobres)return null;
     const catalogo=ids();
-    const faltantes={foil:catalogo.filter(id=>!posee(estado,id,'foil')),dorado:catalogo.filter(id=>!posee(estado,id,'dorado'))};
-    if(!faltantes.foil.length&&!faltantes.dorado.length)return null;
-    const cartas=[];
-    for(let i=0;i<3;i++){
-      let acabado=azar()<.8?'foil':'dorado';
-      const hayNuevas=faltantes.foil.length+faltantes.dorado.length>0;
-      if(hayNuevas&&!faltantes[acabado].length)acabado=acabado==='foil'?'dorado':'foil';
-      const candidatos=hayNuevas?faltantes[acabado]:catalogo;
-      const id=candidatos[Math.floor(azar()*candidatos.length)];
+    if(!catalogo.length)return null;
+    const cartas=[],candidatos=catalogo.slice();
+    for(let i=0;i<5;i++){
+      if(!candidatos.length)candidatos.push(...catalogo);
+      const acabado='foil',indice=Math.floor(azar()*candidatos.length),id=candidatos.splice(indice,1)[0];
       const nueva=!posee(estado,id,acabado);
       if(nueva){
         if(!propio(estado.desbloqueos,id))estado.desbloqueos[id]=[];
         estado.desbloqueos[id].push(acabado);
-        faltantes[acabado].splice(faltantes[acabado].indexOf(id),1);
       }
       cartas.push({id,acabado,nueva});
     }
@@ -173,7 +181,7 @@
     estado.pendiente=null;
     return guardar(estado,'cerrar-sobre');
   }
-  window.CAOZ_COLECCION=Object.freeze({acabados,clave,ids,tiene,elegido,seleccionar,desbloquear,leer,reiniciar,betaDisponible,darSobreBeta,sobres,abrirSobre,pendiente,cerrarSobre});
+  window.CAOZ_COLECCION=Object.freeze({acabados,clave,ids,tiene,elegido,seleccionar,desbloquear,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,sobres,abrirSobre,pendiente,cerrarSobre});
   window.addEventListener('storage',event=>{
     if(event.key===clave||event.key===null)avisar('externo',leer());
   });
