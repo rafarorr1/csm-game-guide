@@ -140,3 +140,27 @@ python3 dev/secciones/pruebas_publicar.py
 Las pruebas usan repositorios temporales y no publican en internet. La vista anterior
 alojada con Sites queda fuera del flujo vigente; las futuras revisiones de este juego
 usan GitHub/Cloudflare por instrucción del usuario.
+
+## El Rey: corte defendible
+
+La revisión de la carta y su condición de victoria está en
+https://aislados.caoz-tcg.pages.dev/rey/ . Usa las cartas/render reales y extrae
+`avanceCorte` del motor; no carga una partida, IA, campaña ni progreso real en
+el navegador. Permite avanzar inicios de turno, retirar/reponer miembros de la
+corte y comprobar que el primer inicio no gana y una corte rota vuelve a cero.
+Las fichas de Can conservan su función. Las regresiones de motor y simulaciones
+acotadas se ejecutan en Node antes de presentar esta sección.
+
+Desde la rama de revisión, limpia y guardada:
+
+```sh
+node dev/secciones/pruebas_regresion_rey.mjs
+node dev/secciones/pruebas_regresion_rey.mjs --balance
+python3 dev/secciones/publicar.py --seccion rey --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion rey --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+El registro de secciones es explícito: `coleccion` (predeterminado) y `rey`.
+Cada publicación conserva íntegra la carpeta de la otra sección y rechaza
+cambiar las cabeceras comunes si afectara a la hermana. No usar esta vista como
+aprobación de integración ni publicar beta/producción sin revisión previa.

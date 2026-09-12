@@ -10,6 +10,24 @@ números) → el código.
 
 ---
 
+## El Rey: corte defendible — revisión aislada pendiente (2026-09-12)
+
+Rama `fix/rey-corte-campana`, separada de la Colección pendiente (PR #5).
+La condición anterior ganaba al siguiente inicio propio con Rey +3, incluidas
+fichas. La IA podía ignorar defensas legales y la victoria eludía el Alma extra
+de los jefes. La revisión mantiene las fichas y exige dos inicios propios con
+la corte completa; perder al Rey o bajar de cuatro reinicia el contador.
+`avanceCorte` es pura y alimenta tanto el motor como la demostración aislada.
+Se resuelven muertes/efectos de inicio antes del conteo. La IA prioriza ataques
+que rompan una corte en 1/2 sobre daño no letal al Alma. El progreso viaja en
+la fotografía online y se muestra como corona 1/2; no se transfieren contadores
+al volver a jugar otra copia del Rey.
+
+La prueba pública vive en `/rey/` de `aislados.caoz-tcg.pages.dev`, conservando
+la Colección publicada. Sólo se ejecutan regresiones y simulaciones acotadas;
+no se integra en develop ni se publica otra beta/producción hasta revisar.
+No se modifica el balance de Adreida sin una reproducción concreta.
+
 ## Pruebas aisladas en GitHub/Cloudflare — instrucción vigente
 
 El usuario pidió que las revisiones funcionen como beta, sin enlaces ni login de

@@ -1,0 +1,53 @@
+html:has(body.reyAislado){background:#0d0912;overflow:hidden}
+body.reyAislado{margin:0;padding:16px;box-sizing:border-box;width:100%;height:var(--rey-alto,100dvh);min-width:0;overflow:hidden;display:grid;place-items:center;background:radial-gradient(ellipse at 50% 0,#5d361d55,transparent 55%),radial-gradient(ellipse at 80% 100%,#41214d44,transparent 70%),#0d0912;color:#e8dfec;font-family:var(--sans,system-ui,sans-serif);zoom:1}
+.reyPanel{width:min(1160px,100%);height:100%;max-height:940px;min-height:0;box-sizing:border-box;padding:24px 28px 14px;display:flex;flex-direction:column;gap:12px;border:1px solid #907141;border-radius:20px;background:linear-gradient(145deg,#241b33ee,#151020f2);box-shadow:0 22px 90px #0008,inset 0 1px #ffdf8f22}
+.reyPanel *,.reyDetalleInterior *{box-sizing:border-box}
+.reyCabecera{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none}
+.reyAntetitulo{margin:0 0 4px;font-size:10px;letter-spacing:3px;color:#b29258}
+.reyCabecera h1{font:700 clamp(23px,3vw,36px)/1.1 var(--serif,Georgia,serif);color:#ebca76;margin:0}
+.reySello{font:52px/1 Georgia,serif;color:#d6b063;text-shadow:0 0 24px #c38b3855}
+.reyIntroduccion{margin:0;color:#c5b7d1;font-size:14px;line-height:1.4;max-width:760px}
+.reyPanel button,.reyDetalleInterior button{appearance:none;cursor:pointer;color:#f5e3c0;background:linear-gradient(#5b4029,#302318);border:1px solid #967140;border-radius:6px;padding:10px 16px;min-height:40px;font:600 13px/1.2 var(--sans,system-ui,sans-serif);box-shadow:inset 0 1px #fff2,0 2px 3px #0005;transition:filter .15s,scale .15s}
+.reyPanel button:hover,.reyDetalleInterior button:hover{filter:brightness(1.14)}
+.reyPanel button:active,.reyDetalleInterior button:active{scale:.98}
+.reyPanel button:disabled{cursor:default;filter:saturate(.25);opacity:.55}
+.reyPanel button:focus-visible,.reyDetalleInterior button:focus-visible{outline:2px solid #f2d16d;outline-offset:3px}
+.reyEscenarios{display:flex;gap:8px;flex:none}
+.reyEscenarios button{background:#17111f;border-color:#574361;color:#bdafca;min-height:34px;padding:8px 14px;font-size:12px;box-shadow:none}
+.reyEscenarios button[aria-pressed=true]{background:#453021;border-color:#ba914c;color:#eed299}
+.reyEstado{flex:none;padding:12px 16px;background:linear-gradient(105deg,#322438bb,#1b1527bb);border:1px solid #614c6680;border-radius:9px}
+.reyEstadoLinea{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:9px}
+#reyResultado{font:700 17px/1.2 var(--serif,Georgia,serif);color:#e5c983}
+#reyTurno{font-size:11px;color:#b9a9c8;white-space:nowrap}
+.reyAvance{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.reyAvance>span{display:flex;align-items:center;gap:8px;border-top:2px solid #5b4865;padding-top:7px;color:#8e7c9e;font-size:16px;font-weight:700}
+.reyAvance i{font-size:11px;font-weight:400;font-style:normal}
+.reyAvance .completo{color:#f4d075;border-color:#eac567;text-shadow:0 0 15px #e8b43b44}
+#reyExplicacion{color:#c8bbd1;font-size:12px;line-height:1.3;margin:9px 0 0;min-height:16px}
+.reyEstado.victoria{border-color:#d4af58;background:linear-gradient(100deg,#67502455,#372535bb)}
+.reyMesa{position:relative;min-height:0;flex:1;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:center;gap:16px;padding:18px 14px 12px;border-radius:12px;border:1px solid #83633844;background:repeating-linear-gradient(92deg,transparent 0 45px,#cea57905 46px 47px),radial-gradient(ellipse,#59392133,transparent 80%),#120e18;box-shadow:inset 0 0 80px #0007;isolation:isolate}
+.reyMesa::before{content:'✦';position:absolute;left:50%;top:50%;translate:-50% -50%;font:200px/1 Georgia,serif;color:#8d6f3310;z-index:-1}
+.reyPuesto{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;min-height:0;min-width:0;height:100%;position:relative}
+.reyCartaMarco{display:grid;place-items:center;width:100%;min-height:0}
+.reyPuesto .reyCarta{width:200px;height:280px;flex:none;font-size:16.2px;--cw:200px;--ch:280px;margin:0;pointer-events:none;transform:none!important;rotate:none!important;translate:none!important}
+body.reyAislado.aaa-polish .reyPuesto .reyCarta .pieCarta .txt{font-size:12px;line-height:1.12;display:block;-webkit-line-clamp:unset;max-height:none;overflow:visible}
+.reyPuesto .reyCarta .nm{font-size:17px}
+.reyRetirar{width:min(170px,90%);min-height:30px!important;padding:6px 10px!important;font-size:11px!important;background:#211726!important;border-color:#614b6b!important;color:#cebedb!important;box-shadow:none!important}
+.reyVacio{width:200px;height:280px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;border:1px dashed #765d87;border-radius:10px;color:#9f8aaf;background:#1c142450;font-size:12px;text-align:center;padding:20px}
+.reyVacio b{font:700 50px/1 var(--serif,Georgia,serif);color:#685674}
+.reyControles{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;flex:none}
+#reyIniciar{background:linear-gradient(#86612d,#4b331b);border-color:#c4a15c;font:700 17px/1.15 var(--serif,Georgia,serif);letter-spacing:.4px;min-height:46px}
+#reyIniciar span{margin-left:9px}
+.reyPie{display:flex;align-items:center;justify-content:space-between;gap:8px;flex:none;font-size:10px;color:#9b89ac}
+.reyPie #reyVerRegla{padding:0;min-height:22px;background:none;border:0;box-shadow:none;font-size:10px;text-decoration:underline;color:#d1bc8b}
+.reyPulso{animation:reyPulso .6s ease-out}
+@keyframes reyPulso{0%{box-shadow:0 0 0 #efd06b00}35%{box-shadow:0 0 30px #efd06b40}100%{box-shadow:0 0 0 #efd06b00}}
+#reyDetalle{box-sizing:border-box;width:min(490px,calc(100% - 30px));max-height:calc(var(--rey-alto,100dvh) - 40px);padding:0;border:1px solid #b58e4a;border-radius:15px;background:#21182e;color:#e0d4ea;box-shadow:0 20px 90px #000b;margin:auto}
+#reyDetalle::backdrop{background:#07040cd9;backdrop-filter:blur(6px)}
+.reyDetalleInterior{padding:24px;display:flex;flex-direction:column;gap:20px}
+.reyDetalleInterior h2{font:700 26px/1.15 var(--serif,Georgia,serif);color:#e9c66c;margin:0}
+#reyReglaTexto{font-size:16px;line-height:1.6;margin:0}
+#reyReglaTexto b{color:#e7c163}
+@media(max-width:650px){body.reyAislado{padding:8px}.reyPanel{padding:12px 12px 8px;border-radius:15px;gap:8px}.reyAntetitulo{font-size:8px;letter-spacing:2px}.reySello{font-size:38px}.reyIntroduccion{font-size:11px;line-height:1.3}.reyEscenarios{gap:6px}.reyEscenarios button{flex:1;font-size:11px;min-height:32px;padding:6px 4px}.reyEstado{padding:8px 10px}.reyEstadoLinea{margin-bottom:5px}#reyResultado{font-size:14px}#reyTurno{font-size:10px}.reyAvance>span{font-size:13px;gap:5px;padding-top:5px}.reyAvance i{font-size:9px}#reyExplicacion{font-size:10px;margin-top:6px;min-height:26px}.reyMesa{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:8px 14px;padding:10px 8px 8px}.reyPuesto{gap:5px}.reyRetirar{min-height:24px!important;font-size:10px!important;padding:4px 8px!important}.reyControles{gap:7px}#reyIniciar{font-size:15px;min-height:42px}.reyControles #reyReiniciar{font-size:11px;padding:8px 11px}.reyPie{font-size:8px}.reyPie #reyVerRegla{font-size:9px}}
+@media(max-height:680px) and (max-width:650px){.reyIntroduccion,.reyAntetitulo{display:none}.reyPanel{gap:6px;padding-top:9px}.reyCabecera h1{font-size:22px}.reySello{font-size:30px}.reyEstado{padding:6px 9px}.reyAvance i{font-size:8px}#reyExplicacion{min-height:0;margin-top:5px;font-size:9px}.reyMesa{padding:6px;gap:7px 16px}.reyControles button{min-height:34px!important}#reyIniciar{font-size:14px}.reyPie{font-size:8px}.reyRetirar{min-height:21px!important}}
+@media(prefers-reduced-motion:reduce){.reyPulso{animation:none}.reyPanel button,.reyDetalleInterior button{transition:none}}
