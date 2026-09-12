@@ -166,23 +166,24 @@ cambiar las cabeceras comunes si afectara a la hermana. No usar esta vista como
 aprobación de integración ni publicar beta/producción sin revisión previa.
 
 
-## Sobres: dos aperturas en 3D
+## Sobres: Sello del Domo
 
 Revisión independiente: https://aislados.caoz-tcg.pages.dev/sobres/ .
-`?propuesta=reliquia` elige **Sello del Domo**; `?propuesta=arcano`,
-**Desgarro arcano**. Ambas permiten girar la funda con ratón/dedo, romper
-la costura superior, deslizarla fuera de cuadro y descubrir cinco cartas,
-una por toque. Al terminar, las miniaturas inferiores permiten releerlas.
+El usuario eligió **Sello del Domo**. La funda mantiene su rotura superior
+que se enrolla y desciende fuera de cuadro. Durante las cinco revelaciones
+no se acumulan miniaturas. La quinta permanece 900 ms antes de reunir las
+cinco cartas sobre la mesa; «Volver» regresa al menú de sobres del laboratorio.
+La vista conjunta usa 3+2 en teléfono y cinco en una fila en escritorio ancho.
 
 El componente reutilizable `sobres-apertura.js/css` recibe las cartas y su
-renderer. `sobres-escena.js` dibuja la malla y sus materiales en WebGL, con
-alternativa Canvas 2D que conserva volumen y proyección. La primera costura
-se enrolla físicamente; la segunda se abre desde el centro en dos mitades.
-El laboratorio carga cinco cartas reales, su arte público y el renderer
-existente. No consume sobres, no desbloquea cartas ni ejecuta el motor.
+renderer; `onVolver` entrega el control al menú que lo monta, una sola vez.
+`sobres-escena.js` dibuja malla/materiales en WebGL, con alternativa Canvas 2D
+ante indisponibilidad o pérdida de contexto. El laboratorio carga cinco
+cartas reales, arte público y renderer existente. No consume sobres,
+no desbloquea cartas ni ejecuta el motor.
 
-Estos módulos **todavía no están conectados al juego**. No cambia la build: la
-propuesta escogida se integra en Colección sólo después de su revisión.
+Estos módulos **todavía no están conectados al juego**. No cambia la build:
+se revisa este ajuste del cierre antes de integrar la apertura a Colección.
 
 ```sh
 node dev/secciones/pruebas_sobres_exportacion.mjs
@@ -193,7 +194,8 @@ python3 dev/secciones/publicar.py --seccion sobres --publicar --salida /ruta/nue
 python3 dev/secciones/publicar.py --seccion sobres --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
-Antes de publicar, revisar ambas propuestas en 320×568, 390×844 y escritorio:
-arrastrar sin abrir, tocar para abrir, cinco revelaciones sin saltos por toques
-rápidos, reiniciar/cambiar propuesta durante la apertura, teclado, movimiento
-reducido y ausencia de scroll. Se comprueban errores y recursos fallidos.
+Antes de publicar, revisar en 320×568, 390×844 y escritorio: arrastrar sin
+abrir, cinco revelaciones sin saltos por toques rápidos, quinta carta individual
+antes del resumen, cinco cartas visibles sin superposición/scroll y regreso al
+menú una sola vez. Probar reinicio durante la apertura, teclado y movimiento
+reducido. Se comprueban errores y recursos fallidos.

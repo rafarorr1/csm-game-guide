@@ -10,15 +10,18 @@ números) → el código.
 
 ---
 
-## Sobres 3D — propuesta aislada, pendiente de revisión
+## Sobres 3D — Sello del Domo elegido; revisión del cierre
 
 Rama `feature/sobres-apertura-3d`, desde `develop` (producción/beta 250).
-Dos aperturas manipulables en https://aislados.caoz-tcg.pages.dev/sobres/ :
-Sello del Domo (`?propuesta=reliquia`) y Desgarro arcano (`?propuesta=arcano`).
-Los módulos nuevos `sobres-apertura.js/css` y `sobres-escena.js` no se cargan
-en el juego todavía. Reciben cartas reales por inyección y no consumen ni
-guardan inventario. La prueba usa cinco Foils locales; no publica beta ni
-producción. Flujo y comprobaciones en `../dev/secciones/README.md`.
+Revisión en https://aislados.caoz-tcg.pages.dev/sobres/ . El usuario eligió
+Sello del Domo. Se retira la fila inferior de cartas: cada toque revela una,
+la quinta permanece un momento y después se muestran las cinco juntas,
+sin superposición (3+2 en teléfono, una fila en escritorio). «Volver» llama
+`onVolver` una sola vez y el laboratorio regresa a su menú de sobres.
+Los módulos `sobres-apertura.js/css` y `sobres-escena.js` todavía no están
+conectados a Colección en el juego. Esta revisión permite confirmar el cierre
+solicitado antes de integrar, validar y publicar beta. Usa cinco Foils locales,
+sin consumir sobres ni guardar inventario. Detalles en `../dev/secciones/README.md`.
 
 ## Producción 250 — promoción autorizada y verificada (2026-09-12)
 

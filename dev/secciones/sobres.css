@@ -8,16 +8,20 @@ body.sobresLaboratorio{margin:0;padding:0;width:100%;max-width:none;height:var(-
 .sobresCabecera p{font-size:9px;letter-spacing:2.4px;color:#b7a489;margin:0 0 12px;display:flex;justify-content:center;align-items:center;gap:13px}
 .sobresCabecera p i{width:3px;height:3px;background:#bca47d;rotate:45deg}
 .sobresCabecera h1{font:normal clamp(28px,4.5vh,47px) Georgia,serif;letter-spacing:-1px;color:#f0e3c9;margin:0 0 18px;text-shadow:0 2px 25px #b5933840}
-.sobresCabecera nav{display:flex;align-items:center;justify-content:center;gap:8px}
-.sobresCabecera button{font:13px Georgia,serif;min-height:42px;padding:10px 16px;background:#171315;border:1px solid #53453788;border-radius:5px;color:#b3a38e;cursor:pointer;box-shadow:none;transition:background .2s,color .2s}
-.sobresCabecera button span{font:9px system-ui,sans-serif;margin-right:8px;color:#99866a}
-.sobresCabecera button[aria-pressed=true]{background:linear-gradient(#493125,#281c18);color:#f0dab5;border-color:#b08c54;box-shadow:inset 0 1px #f1d39622,0 3px 12px #0004}
-body[data-propuesta=arcano] .sobresCabecera button[aria-pressed=true]{background:linear-gradient(#363044,#211c29);border-color:#9689ba;color:#ded8f5}
 .sobresLaboratorio button:focus-visible{outline:2px solid #efcc89;outline-offset:4px}
 #sobresMontaje{min-height:0;height:100%;position:relative}
 .sobresCargando{position:absolute;top:45%;width:100%;text-align:center;color:#b4a38a}
 .sobresLaboratorioPie{display:flex;justify-content:space-between;align-items:center;color:#7b6d5d;padding-top:10px;gap:10px;z-index:8}
 .sobresLaboratorioPie span{font-size:8px;letter-spacing:1.7px}
 .sobresLaboratorioPie button{background:none;border:0;color:#b29d7e;min-height:36px;font:12px Georgia,serif;cursor:pointer;padding:4px 6px;box-shadow:none}
-@media(max-width:600px){.sobresSalon{padding:calc(18px + env(safe-area-inset-top)) 16px calc(4px + env(safe-area-inset-bottom))}.sobresCabecera p{font-size:7px;letter-spacing:2px;margin-bottom:10px}.sobresCabecera h1{margin-bottom:14px}.sobresCabecera button{padding:9px 11px;font-size:12px;min-height:40px}.sobresCabecera button span{margin-right:6px}.sobresLaboratorioPie span{font-size:6.5px;letter-spacing:1px}.sobresLaboratorioPie{padding-top:5px}}
-@media(max-height:670px){.sobresSalon{padding-top:calc(10px + env(safe-area-inset-top))}.sobresCabecera p{margin-bottom:6px}.sobresCabecera h1{font-size:27px;margin-bottom:10px}.sobresCabecera button{min-height:36px;padding:7px 10px}.sobresLaboratorioPie{padding-top:3px}.sobresLaboratorioPie button{min-height:30px}.sobresSalon:before,.sobresSalon:after{top:18px;bottom:18px}}
+@media(max-width:600px){.sobresSalon{padding:calc(18px + env(safe-area-inset-top)) 16px calc(4px + env(safe-area-inset-bottom))}.sobresCabecera p{font-size:7px;letter-spacing:2px;margin-bottom:10px}.sobresCabecera h1{margin-bottom:14px}.sobresLaboratorioPie span{font-size:6.5px;letter-spacing:1px}.sobresLaboratorioPie{padding-top:5px}}
+@media(max-height:670px){.sobresSalon{padding-top:calc(10px + env(safe-area-inset-top))}.sobresCabecera p{margin-bottom:6px}.sobresCabecera h1{font-size:27px;margin-bottom:10px}.sobresLaboratorioPie{padding-top:3px}.sobresLaboratorioPie button{min-height:30px}.sobresSalon:before,.sobresSalon:after{top:18px;bottom:18px}}
+
+.sobresElegido{display:block;font:9px system-ui,sans-serif;letter-spacing:3px;color:#bba17e;padding:2px 0 8px}
+.sobresMenu{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:14px;animation:sobresMenuEntrar .4s ease both}
+.sobresMenu img{width:min(75%,320px);max-height:36%;object-fit:contain;filter:drop-shadow(0 10px 30px #a2572233)}
+.sobresMenu h2{font:normal clamp(20px,3vh,30px) Georgia,serif;margin:12px 0 0;color:#e8d6b4}
+.sobresMenu p{font:13px system-ui,sans-serif;color:#b3a48d;margin:0 0 14px}
+.sobresMenu .sobresAccion{min-height:44px}
+@keyframes sobresMenuEntrar{from{opacity:0;translate:0 8px}to{opacity:1;translate:0 0}}
+@media(prefers-reduced-motion:reduce){.sobresMenu{animation:none}}
