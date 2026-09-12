@@ -10,7 +10,7 @@ números) → el código.
 
 ---
 
-## Colección: tres columnas y scroll — revisión aislada pendiente
+## Colección: tres columnas y scroll — aprobada para beta 250
 
 `feature/coleccion-tres-columnas` cambia sólo el listado de la Colección real:
 tres cartas por fila en móvil/escritorio y scroll vertical interno, sin botones
@@ -21,10 +21,28 @@ filas caben en el alto del dispositivo. La segunda revisión compacta la separac
 entre filas/columnas, los márgenes laterales del listado y la etiqueta de edición
 para aprovechar más pantalla sin cambiar la composición de las cartas.
 
-Revisión pública: https://aislados.caoz-tcg.pages.dev/coleccion/ . Se valida sólo la
-sección y el paquete aislado. Falta la aprobación visual del usuario antes de
-integrar en `develop` y ejecutar las pruebas del juego completo. No incrementa
-la build ni actualiza beta 249 o producción 245.
+Revisión pública: https://aislados.caoz-tcg.pages.dev/coleccion/ . El usuario
+autorizó el 2026-09-12 integrar todos los cambios nuevos y publicarlos en beta.
+Se integra junto a El Rey en build 250, con validación completa del juego.
+Producción 245 se conserva.
+
+## El Rey: corte defendible — aprobado para beta 250 (2026-09-12)
+
+Revisión en `fix/rey-corte-campana` (PR #6), integrada con la Colección (PR #5).
+La condición anterior ganaba al siguiente inicio propio con Rey +3, incluidas
+fichas. La IA podía ignorar defensas legales y la victoria eludía el Alma extra
+de los jefes. La revisión mantiene las fichas y exige dos inicios propios con
+la corte completa; perder al Rey o bajar de cuatro reinicia el contador.
+`avanceCorte` es pura y alimenta tanto el motor como la demostración aislada.
+Se resuelven muertes/efectos de inicio antes del conteo. La IA prioriza ataques
+que rompan una corte en 1/2 sobre daño no letal al Alma. El progreso viaja en
+la fotografía online y se muestra como corona 1/2; no se transfieren contadores
+al volver a jugar otra copia del Rey.
+
+La prueba pública vive en `/rey/` de `aislados.caoz-tcg.pages.dev`, conservando
+la Colección publicada. Las regresiones y simulaciones acotadas pasaron; el
+usuario autorizó ahora su integración y validación completa para beta 250.
+No se modifica el balance de Adreida sin una reproducción concreta.
 
 ## Pruebas aisladas en GitHub/Cloudflare — instrucción vigente
 

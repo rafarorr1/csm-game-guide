@@ -34,7 +34,15 @@ const datos={'index.html':'entrada','movil.html':'móvil','escritorio.html':'esc
  'componente.js':fs.readFileSync('componente.js'),'imagen con espacio.svg':'<svg/>'};
 for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs']:
+        (secciones / 'rey-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'El Rey: corte y campaña','procedencia.json':'{"seccion":"rey"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'rey.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
+''')
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -49,10 +57,10 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         self.git('push', '-q', 'origin', 'develop', 'main', 'beta', 'gh-pages')
         self.contador = 0
 
-    def preparar(self):
+    def preparar(self, seccion='coleccion'):
         self.contador += 1
         salida = self.base / f'salida-{self.contador}'
-        p.preparar(self.repo, salida)
+        p.preparar(self.repo, salida, seccion)
         return salida
 
     def referencias_protegidas(self):
@@ -186,6 +194,72 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         self.assertIn('Nueva Colección', self.git('show', f'{nuevo}:tcg/coleccion/componente.js'))
         self.assertFalse(p.publicar(self.repo, self.preparar())['nuevo'])
 
+    def test_rey_exportador_y_prueba_propios_sin_exigir_vistas_coleccion(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('rey')
+        self.assertEqual(llamadas, ['rey-exportar.mjs', 'pruebas_rey_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida)
+        self.assertEqual(set(registro['secciones']), {'rey'})
+        self.assertEqual(manifiesto['seccion'], 'rey')
+        self.assertIn('tcg/rey/index.html', contenido)
+        self.assertNotIn('tcg/rey/movil.html', contenido)
+        self.assertNotIn('tcg/rey/escritorio.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../rey', 'main', 'dados', '/tmp/rey']:
+            with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                self.preparar(desconocida)
+        # Una exportación válida por hashes sigue necesitando su procedencia.
+        (salida / 'tcg/rey/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/rey/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de rey: procedencia.json'):
+            p.validar_paquete(salida)
+
+    def test_publicar_rey_conserva_coleccion_y_ramas_del_juego(self):
+        primero = p.publicar(self.repo, self.preparar())['commit']
+        coleccion = self.git('rev-parse', f'{primero}:tcg/coleccion')
+        cabeceras = self.git('show', f'{primero}:tcg/_headers', binario=True)
+        protegido = self.referencias_protegidas()
+        salida_rey = self.preparar('rey')
+        segundo = p.publicar(self.repo, salida_rey)
+        self.assertTrue(segundo['nuevo'])
+        self.assertEqual(segundo['url'], p.URL + '/rey/')
+        self.assertEqual(self.git('rev-parse', segundo['commit'] + '^'), primero)
+        self.assertEqual(self.git('rev-parse', f"{segundo['commit']}:tcg/coleccion"), coleccion)
+        self.assertEqual(self.git('show', f"{segundo['commit']}:tcg/_headers", binario=True), cabeceras)
+        indice = self.git('show', f"{segundo['commit']}:tcg/index.html")
+        self.assertIn('href="./coleccion/"', indice)
+        self.assertIn('href="./rey/"', indice)
+        self.assertEqual(self.referencias_protegidas(), protegido)
+        self.assertEqual(self.git('status', '--porcelain'), '')
+        self.assertFalse(p.publicar(self.repo, salida_rey)['nuevo'])
+        # Actualizar Colección después tampoco toca la vista de El Rey.
+        rey = self.git('rev-parse', f"{segundo['commit']}:tcg/rey")
+        self.siguiente_fuente()
+        protegido = self.referencias_protegidas()
+        tercero = p.publicar(self.repo, self.preparar())['commit']
+        self.assertEqual(self.git('rev-parse', f'{tercero}:tcg/rey'), rey)
+        self.assertEqual(self.referencias_protegidas(), protegido)
+
+    def test_rey_no_cambia_cabeceras_de_coleccion_ya_publicada(self):
+        primero = p.publicar(self.repo, self.preparar())['commit']
+        exportador = self.repo / 'dev/secciones/rey-exportar.mjs'
+        exportador.write_text(exportador.read_text().replace('no-store', 'public, max-age=3600'))
+        self.git('commit', '-qam', 'Fixture Rey con política diferente')
+        salida = self.preparar('rey')
+        protegido = self.referencias_protegidas()
+        with self.assertRaisesRegex(ValueError, 'cabeceras compartidas'):
+            p.publicar(self.repo, salida)
+        self.assertEqual(p.revision_remota(self.repo), primero)
+        self.assertEqual(self.referencias_protegidas(), protegido)
+
     def test_no_toma_rama_ajena_o_marcador_invalido(self):
         salida = self.preparar()
         self.git('push', '-q', 'origin', 'HEAD:' + p.RAMA)
@@ -289,10 +363,29 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
 
     def test_modo_explicito_y_rama_destino_no_configurable(self):
         programa = Path(p.__file__)
-        for args in [[], ['--publicar', '--solo-preparar'], ['--publicar', '--rama', 'main']]:
+        for args in [[], ['--publicar', '--solo-preparar'], ['--publicar', '--rama', 'main'],
+                     ['--solo-preparar', '--seccion', '../rey'], ['--solo-preparar', '--seccion', 'dados']]:
             resultado = subprocess.run([sys.executable, str(programa), *args], capture_output=True, text=True)
             self.assertEqual(resultado.returncode, 2)
         self.assertIsNone(p.revision_remota(self.repo))
+
+    def test_verificar_rey_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('rey')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/rey/')
+        self.assertEqual(set(llamadas), {'rey/index.html', 'rey/procedencia.json', 'rey/publicacion.json', 'rey/rey.js'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otro Rey'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'rey')
 
 
 if __name__ == '__main__':

@@ -1,5 +1,21 @@
 # Registro de versiones — el TCG del Domo
 
+### En revisión aislada · El Rey y la defensa de la corte · 2026-09-12
+
+- Corte reunida requiere dos inicios de turno propios con El Rey y otros tres
+  Personajes en pie. Las fichas siguen contando. Si la corte baja de cuatro o
+  pierde al Rey, el progreso se reinicia, incluso si luego se repuebla la mesa.
+- Se resuelven los efectos y muertes de inicio antes de otorgar el avance;
+  aparece una advertencia 1/2 y el estado se comparte con el invitado online.
+- La IA trata la corte 1/2 como amenaza de derrota y busca romperla en combate
+  antes de pegar daño no letal al Alma. Conserva objetivos legales y remates.
+- Es una revisión de regla e IA, no una corrección de “ganar al bajar la carta”:
+  la regla anterior ganaba al turno siguiente y su guía recomendaba Can + Rey.
+  Prueba acotada antes de integrar; beta 249 y producción 245 se conservan.
+- Muestra emparejada de 144 partidas IA por versión: Gero gana 101 antes y 100
+  después; las victorias por corte bajan de 29 a 12. No sustituye la revisión
+  humana ni la tanda completa de balance posterior a aprobar esta sección.
+
 ### Sin numerar · build 249 · Cartas grandes y sobres de campaña
 
 - La Colección recupera las cartas completas del juego: ilustración, nombre,

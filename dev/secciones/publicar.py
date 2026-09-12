@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Prepara y publica la Colección aislada, sin modificar las ramas del juego."""
+"""Prepara y publica una sección aislada, sin modificar las ramas del juego."""
 import argparse
 import hashlib
 import html
@@ -17,6 +17,20 @@ RAMA = 'refs/heads/aislados'
 MARCADOR = '.caoz-aislados.json'
 FORMATO = 'caoz.secciones.aisladas'
 SECCION = 'coleccion'
+SECCIONES = {
+    'coleccion': {
+        'nombre': 'Colección',
+        'exportador': 'exportar.mjs',
+        'requeridos': {'index.html', 'movil.html', 'escritorio.html', 'procedencia.json', '_headers'},
+        'pruebas': ('pruebas.mjs', 'pruebas_exportacion.mjs'),
+    },
+    'rey': {
+        'nombre': 'El Rey',
+        'exportador': 'rey-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers'},
+        'pruebas': ('pruebas_rey_exportacion.mjs',),
+    },
+}
 URL = 'https://aislados.caoz-tcg.pages.dev'
 NO_ENCONTRADO = b'<!doctype html><html lang="es"><meta charset="utf-8"><title>No encontrado</title><body><h1>Esta ruta no existe</h1><a href="/">Volver a las secciones</a></body></html>\n'
 
@@ -34,6 +48,18 @@ def json_bytes(valor):
 
 def sha(contenido):
     return hashlib.sha256(contenido).hexdigest()
+
+
+def configuracion_seccion(seccion):
+    if not isinstance(seccion, str) or seccion not in SECCIONES:
+        raise ValueError('Sección no admitida: elige coleccion o rey.')
+    return SECCIONES[seccion]
+
+
+def comprobar_requeridos(contenido, seccion):
+    faltantes = configuracion_seccion(seccion)['requeridos'] - contenido.keys()
+    if faltantes:
+        raise ValueError(f'Faltan archivos requeridos de {seccion}: {", ".join(sorted(faltantes))}.')
 
 
 def comprobar_fuente(repo, esperado=None):
@@ -71,7 +97,8 @@ def landing(secciones):
         + enlaces + '</ul></main></body></html>\n').encode()
 
 
-def preparar(repo, salida):
+def preparar(repo, salida, seccion=SECCION):
+    config = configuracion_seccion(seccion)
     repo, salida = Path(repo).resolve(), Path(salida).resolve()
     fuente = comprobar_fuente(repo)
     for campo in git(repo, 'worktree', 'list', '--porcelain', '-z').split('\0'):
@@ -81,21 +108,20 @@ def preparar(repo, salida):
                 raise ValueError('La salida debe quedar fuera de todos los checkouts.')
     if salida.exists() and (not salida.is_dir() or any(salida.iterdir())):
         raise ValueError('La salida debe ser una carpeta nueva o vacía.')
-    seccion = salida / 'tcg' / SECCION
-    seccion.parent.mkdir(parents=True, exist_ok=True)
-    subprocess.run(['node', str(repo / 'dev/secciones/exportar.mjs'), str(seccion)],
+    carpeta_seccion = salida / 'tcg' / seccion
+    carpeta_seccion.parent.mkdir(parents=True, exist_ok=True)
+    subprocess.run(['node', str(repo / 'dev/secciones' / config['exportador']), str(carpeta_seccion)],
                    cwd=repo, check=True)
-    for prueba in ['pruebas.mjs', 'pruebas_exportacion.mjs']:
+    for prueba in config['pruebas']:
         subprocess.run(['node', str(repo / 'dev/secciones' / prueba)], cwd=repo, check=True)
     comprobar_fuente(repo, fuente)
-    contenido = archivos(seccion)
-    if not {'index.html', 'movil.html', 'escritorio.html', 'procedencia.json', '_headers'} <= contenido.keys():
-        raise ValueError('El exportador no generó las dos vistas y su procedencia.')
-    manifiesto = {'formato': FORMATO, 'version': 1, 'seccion': SECCION,
+    contenido = archivos(carpeta_seccion)
+    comprobar_requeridos(contenido, seccion)
+    manifiesto = {'formato': FORMATO, 'version': 1, 'seccion': seccion,
                   'fuente': fuente, 'archivos': {f: sha(b) for f, b in contenido.items()}}
-    (seccion / 'publicacion.json').write_bytes(json_bytes(manifiesto))
+    (carpeta_seccion / 'publicacion.json').write_bytes(json_bytes(manifiesto))
     registro = {'formato': FORMATO, 'version': 1, 'secciones': {
-        SECCION: {'ruta': f'tcg/{SECCION}', 'fuente': fuente['sha']}}}
+        seccion: {'ruta': f'tcg/{seccion}', 'fuente': fuente['sha']}}}
     (salida / MARCADOR).write_bytes(json_bytes(registro))
     (salida / 'tcg/index.html').write_bytes(landing(registro['secciones']))
     # Evita que Cloudflare responda con el índice ante archivos inexistentes.
@@ -104,7 +130,7 @@ def preparar(repo, salida):
     # La CSP común del exportador permite únicamente recursos del mismo origen.
     (salida / 'tcg/_headers').write_bytes(contenido['_headers'])
     comprobar_fuente(repo, fuente)
-    return {'salida': str(salida), 'fuente': fuente, 'archivos': len(contenido)}
+    return {'salida': str(salida), 'seccion': seccion, 'fuente': fuente, 'archivos': len(contenido)}
 
 
 def validar_registro(registro):
@@ -121,26 +147,34 @@ def validar_registro(registro):
     return registro
 
 
-def validar_paquete(salida):
+def validar_paquete(salida, seccion=None):
     salida = Path(salida)
     registro = validar_registro(json.loads((salida / MARCADOR).read_text()))
-    if set(registro['secciones']) != {SECCION}:
-        raise ValueError('El paquete nuevo debe contener únicamente la Colección.')
+    if len(registro['secciones']) != 1:
+        raise ValueError('El paquete nuevo debe contener únicamente una sección admitida.')
+    incluida = next(iter(registro['secciones']))
+    configuracion_seccion(incluida)
+    if seccion is not None:
+        configuracion_seccion(seccion)
+        if seccion != incluida:
+            raise ValueError('El paquete no corresponde a la sección elegida.')
+    seccion = incluida
     contenido = archivos(salida)
     permitidos = {MARCADOR, 'tcg/index.html', 'tcg/404.html', 'tcg/_headers'}
-    if any(f not in permitidos and not f.startswith(f'tcg/{SECCION}/') for f in contenido):
+    if any(f not in permitidos and not f.startswith(f'tcg/{seccion}/') for f in contenido):
         raise ValueError('El paquete contiene archivos fuera de la sección.')
-    manifiesto = json.loads(contenido[f'tcg/{SECCION}/publicacion.json'])
+    manifiesto = json.loads(contenido[f'tcg/{seccion}/publicacion.json'])
     fuente = manifiesto.get('fuente', {})
     if (manifiesto.get('formato') != FORMATO or manifiesto.get('version') != 1
-            or manifiesto.get('seccion') != SECCION
-            or fuente.get('sha') != registro['secciones'][SECCION]['fuente']):
+            or manifiesto.get('seccion') != seccion
+            or fuente.get('sha') != registro['secciones'][seccion]['fuente']):
         raise ValueError('El manifiesto de publicación es inválido.')
-    prefijo = f'tcg/{SECCION}/'
+    prefijo = f'tcg/{seccion}/'
     hashes = {f[len(prefijo):]: sha(b) for f, b in contenido.items()
               if f.startswith(prefijo) and f != prefijo + 'publicacion.json'}
     if hashes != manifiesto.get('archivos'):
         raise ValueError('El paquete cambió después de prepararlo; los hashes no coinciden.')
+    comprobar_requeridos(hashes, seccion)
     if contenido.get('tcg/_headers') != contenido.get(prefijo + '_headers'):
         raise ValueError('Las cabeceras deben coincidir con las del exportador.')
     if contenido.get('tcg/404.html') != NO_ENCONTRADO:
@@ -178,21 +212,26 @@ def registro_remoto(repo, revision):
     return registro
 
 
-def publicar(repo, salida):
+def publicar(repo, salida, seccion=None):
     repo, salida = Path(repo).resolve(), Path(salida)
-    registro, manifiesto, contenido = validar_paquete(salida)
+    registro, manifiesto, contenido = validar_paquete(salida, seccion)
+    seccion = manifiesto['seccion']
     comprobar_fuente(repo, manifiesto['fuente'])
     anterior = revision_remota(repo)
     if anterior:
         previo = registro_remoto(repo, anterior)
-        previo['secciones'][SECCION] = registro['secciones'][SECCION]
+        # Las cabeceras raíz afectan a todas las secciones. Una nueva revisión
+        # no puede cambiar la CSP/caché de las hermanas ya publicadas.
+        if set(previo['secciones']) - {seccion} and git(repo, 'show', f'{anterior}:tcg/_headers', binario=True) != contenido['tcg/_headers']:
+            raise ValueError('Las cabeceras compartidas cambiarían otras secciones; conserva su política.')
+        previo['secciones'][seccion] = registro['secciones'][seccion]
         registro = previo
     contenido[MARCADOR] = json_bytes(registro)
     contenido['tcg/index.html'] = landing(registro['secciones'])
     with tempfile.TemporaryDirectory(prefix='caoz-indice-aislados-') as temporal:
         entorno = {'GIT_INDEX_FILE': str(Path(temporal) / 'index')}
         git(repo, 'read-tree', anterior or '--empty', entorno=entorno)
-        viejos = git(repo, 'ls-files', '-z', '--', f'tcg/{SECCION}/', entorno=entorno)
+        viejos = git(repo, 'ls-files', '-z', '--', f'tcg/{seccion}/', entorno=entorno)
         if viejos:
             git(repo, 'update-index', '--force-remove', '-z', '--stdin',
                 entrada=viejos + ('\0' if not viejos.endswith('\0') else ''), entorno=entorno)
@@ -204,21 +243,22 @@ def publicar(repo, salida):
     if revision_remota(repo) != anterior:
         raise ValueError('Otra publicación cambió aislados; vuelve a preparar/publicar sobre su versión.')
     if anterior and git(repo, 'rev-parse', f'{anterior}^{{tree}}') == arbol:
-        return {'commit': anterior, 'nuevo': False, 'url': URL + '/coleccion/', 'verificado_web': False}
+        return {'commit': anterior, 'nuevo': False, 'url': URL + f'/{seccion}/', 'verificado_web': False}
     padres = ['-p', anterior] if anterior else []
     commit = git(repo, 'commit-tree', arbol, *padres, entrada=(
-        f"Publica Colección aislada de {manifiesto['fuente']['sha'][:12]}\n\n"
+        f"Publica {SECCIONES[seccion]['nombre']} aislada de {manifiesto['fuente']['sha'][:12]}\n\n"
         'Sólo revisión de sección; conserva las ramas y los despliegues del juego.\n'))
     comprobar_fuente(repo, manifiesto['fuente'])
     # Nuestro commit siempre desciende del anterior. La condición explícita
     # también protege la creación inicial si otro publicador se adelanta.
     git(repo, 'push', '--quiet', f'--force-with-lease={RAMA}:{anterior or ""}',
         'origin', f'{commit}:{RAMA}')
-    return {'commit': commit, 'nuevo': True, 'url': URL + '/coleccion/', 'verificado_web': False}
+    return {'commit': commit, 'nuevo': True, 'url': URL + f'/{seccion}/', 'verificado_web': False}
 
 
-def verificar_remoto(salida, url_base=URL):
-    _, _, contenido = validar_paquete(salida)
+def verificar_remoto(salida, url_base=URL, seccion=None):
+    _, manifiesto, contenido = validar_paquete(salida, seccion)
+    seccion = manifiesto['seccion']
     url = urlsplit(url_base)
     if url.scheme not in ('http', 'https') or not url.netloc or url.username or url.password or url.query or url.fragment:
         raise ValueError('Indica una URL HTTP(S) pública, sin credenciales, query ni fragmento.')
@@ -226,7 +266,7 @@ def verificar_remoto(salida, url_base=URL):
     # _headers configura Cloudflare y no se sirve como un asset público.
     # El marcador de Git queda fuera de tcg; tampoco es una URL del preview.
     for nombre, esperado in sorted(contenido.items()):
-        if not nombre.startswith(f'tcg/{SECCION}/') or PurePosixPath(nombre).name == '_headers':
+        if not nombre.startswith(f'tcg/{seccion}/') or PurePosixPath(nombre).name == '_headers':
             continue
         ruta = quote(nombre[len('tcg/'):], safe='/')
         direccion = url_base.rstrip('/') + '/' + ruta + '?revision=' + sha(esperado)[:16]
@@ -235,7 +275,7 @@ def verificar_remoto(salida, url_base=URL):
         if sha(recibido) != sha(esperado):
             raise ValueError(f'Cloudflare todavía sirve otros bytes: {nombre}.')
         revisados += 1
-    return {'verificado_web': True, 'archivos': revisados, 'url': url_base.rstrip('/') + '/coleccion/'}
+    return {'verificado_web': True, 'archivos': revisados, 'url': url_base.rstrip('/') + f'/{seccion}/'}
 
 
 def main():
@@ -244,6 +284,8 @@ def main():
     modos.add_argument('--solo-preparar', action='store_true')
     modos.add_argument('--publicar', action='store_true')
     modos.add_argument('--verificar', metavar='URL', help='Compara una salida ya preparada con Cloudflare.')
+    parser.add_argument('--seccion', choices=tuple(SECCIONES), default=SECCION,
+                        help='Sección aislada; por defecto, coleccion.')
     parser.add_argument('--salida', type=Path, help='Carpeta nueva/vacía fuera de los checkouts; necesaria para --verificar.')
     args = parser.parse_args()
     repo = Path(__file__).resolve().parents[2]
@@ -251,12 +293,12 @@ def main():
         if args.verificar:
             if args.salida is None:
                 raise ValueError('--verificar requiere --salida con un paquete ya preparado.')
-            resultado = verificar_remoto(args.salida, args.verificar)
+            resultado = verificar_remoto(args.salida, args.verificar, args.seccion)
         else:
             salida = args.salida or Path(tempfile.mkdtemp(prefix='caoz-seccion-preparada-'))
-            resultado = preparar(repo, salida)
+            resultado = preparar(repo, salida, args.seccion)
             if args.publicar:
-                resultado.update(publicar(repo, salida))
+                resultado.update(publicar(repo, salida, args.seccion))
         print(json.dumps(resultado, ensure_ascii=False, indent=2))
     except (ValueError, OSError, KeyError, TypeError, subprocess.CalledProcessError) as error:
         print(f'No se completó la publicación de la sección: {error}', file=sys.stderr)
