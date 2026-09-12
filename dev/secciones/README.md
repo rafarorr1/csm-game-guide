@@ -1,6 +1,6 @@
 # Secciones aisladas
 
-Este entorno abre **sólo la Colección real**. No monta el juego dentro de un iframe,
+Este entorno ofrece vistas acotadas de Colección, El Rey y apertura de sobres. No monta el juego dentro de un iframe,
 no crea una partida y no carga IA, online, campaña, sonido ni service worker.
 Los cambios hechos aquí no afectan el progreso del jugador.
 
@@ -160,7 +160,40 @@ python3 dev/secciones/publicar.py --seccion rey --publicar --salida /ruta/nueva
 python3 dev/secciones/publicar.py --seccion rey --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
-El registro de secciones es explícito: `coleccion` (predeterminado) y `rey`.
-Cada publicación conserva íntegra la carpeta de la otra sección y rechaza
+El registro de secciones es explícito: `coleccion` (predeterminado), `rey` y `sobres`.
+Cada publicación conserva íntegras las carpetas de las otras secciones y rechaza
 cambiar las cabeceras comunes si afectara a la hermana. No usar esta vista como
 aprobación de integración ni publicar beta/producción sin revisión previa.
+
+
+## Sobres: dos aperturas en 3D
+
+Revisión independiente: https://aislados.caoz-tcg.pages.dev/sobres/ .
+`?propuesta=reliquia` elige **Sello del Domo**; `?propuesta=arcano`,
+**Desgarro arcano**. Ambas permiten girar la funda con ratón/dedo, romper
+la costura superior, deslizarla fuera de cuadro y descubrir cinco cartas,
+una por toque. Al terminar, las miniaturas inferiores permiten releerlas.
+
+El componente reutilizable `sobres-apertura.js/css` recibe las cartas y su
+renderer. `sobres-escena.js` dibuja la malla y sus materiales en WebGL, con
+alternativa Canvas 2D que conserva volumen y proyección. La primera costura
+se enrolla físicamente; la segunda se abre desde el centro en dos mitades.
+El laboratorio carga cinco cartas reales, su arte público y el renderer
+existente. No consume sobres, no desbloquea cartas ni ejecuta el motor.
+
+Estos módulos **todavía no están conectados al juego**. No cambia la build: la
+propuesta escogida se integra en Colección sólo después de su revisión.
+
+```sh
+node dev/secciones/pruebas_sobres_exportacion.mjs
+node dev/secciones/pruebas_sobres_apertura.mjs
+python3 dev/secciones/pruebas_publicar.py
+node dev/secciones/sobres-exportar.mjs /ruta/nueva/para/revision-local
+python3 dev/secciones/publicar.py --seccion sobres --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion sobres --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+Antes de publicar, revisar ambas propuestas en 320×568, 390×844 y escritorio:
+arrastrar sin abrir, tocar para abrir, cinco revelaciones sin saltos por toques
+rápidos, reiniciar/cambiar propuesta durante la apertura, teclado, movimiento
+reducido y ausencia de scroll. Se comprueban errores y recursos fallidos.

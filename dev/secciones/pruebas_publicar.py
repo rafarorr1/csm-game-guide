@@ -42,7 +42,15 @@ const datos={'index.html':'El Rey: corte y campaña','procedencia.json':'{"secci
  'rey.js':fs.readFileSync('componente.js')};
 for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs']:
+        (secciones / 'sobres-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Apertura de cinco cartas','procedencia.json':'{"seccion":"sobres"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'sobres.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
+''')
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -260,6 +268,86 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         self.assertEqual(p.revision_remota(self.repo), primero)
         self.assertEqual(self.referencias_protegidas(), protegido)
 
+    def test_sobres_exportador_propio_y_registro_explicito(self):
+        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres'})
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('sobres')
+        self.assertEqual(llamadas, ['sobres-exportar.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'sobres')
+        self.assertEqual(set(registro['secciones']), {'sobres'})
+        self.assertEqual(manifiesto['seccion'], 'sobres')
+        self.assertIn('tcg/sobres/index.html', contenido)
+        self.assertNotIn('tcg/sobres/movil.html', contenido)
+        for desconocida in ['../sobres', 'sobres/../rey', 'main', 'dados', '/tmp/sobres', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'rey')
+        (salida / 'tcg/sobres/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/sobres/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de sobres: procedencia.json'):
+            p.validar_paquete(salida, 'sobres')
+
+    def test_tres_secciones_conservan_hermanas_byte_a_byte(self):
+        protegidas = self.referencias_protegidas()
+        ultimo = None
+        esperados = {}
+        for seccion in ['coleccion', 'rey', 'sobres']:
+            salida = self.preparar(seccion)
+            resultado = p.publicar(self.repo, salida, seccion)
+            revision = resultado['commit']
+            self.assertEqual(resultado['url'], p.URL + f'/{seccion}/')
+            if ultimo:
+                self.assertEqual(self.git('rev-parse', revision + '^'), ultimo)
+            for hermana, arbol in esperados.items():
+                self.assertEqual(self.git('rev-parse', f'{revision}:tcg/{hermana}'), arbol,
+                                 f'Publicar {seccion} conserva todos los bytes de {hermana}')
+            esperados[seccion] = self.git('rev-parse', f'{revision}:tcg/{seccion}')
+            self.assertEqual(self.referencias_protegidas(), protegidas)
+            ultimo = revision
+        cabeceras = self.git('show', f'{ultimo}:tcg/_headers', binario=True)
+        for seccion in ['sobres', 'coleccion', 'rey']:
+            (self.repo / 'componente.js').write_text(f'const revision = "Nueva {seccion}";')
+            self.git('commit', '-qam', f'Revisar {seccion}')
+            protegidas = self.referencias_protegidas()
+            salida = self.preparar(seccion)
+            revision = p.publicar(self.repo, salida, seccion)['commit']
+            for hermana, arbol in esperados.items():
+                if hermana != seccion:
+                    self.assertEqual(self.git('rev-parse', f'{revision}:tcg/{hermana}'), arbol,
+                                     f'Actualizar {seccion} conserva todos los bytes de {hermana}')
+            esperados[seccion] = self.git('rev-parse', f'{revision}:tcg/{seccion}')
+            self.assertEqual(self.git('show', f'{revision}:tcg/_headers', binario=True), cabeceras)
+            self.assertEqual(self.referencias_protegidas(), protegidas)
+            self.assertFalse(p.publicar(self.repo, salida, seccion)['nuevo'])
+            registro = json.loads(self.git('show', f'{revision}:{p.MARCADOR}'))
+            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres'})
+            indice = self.git('show', f'{revision}:tcg/index.html')
+            for hermana in esperados:
+                self.assertIn(f'href="./{hermana}/"', indice)
+        self.assertEqual(self.git('status', '--porcelain'), '')
+
+    def test_sobres_no_cambia_cabeceras_de_las_dos_secciones(self):
+        p.publicar(self.repo, self.preparar('coleccion'))
+        anterior = p.publicar(self.repo, self.preparar('rey'))['commit']
+        exportador = self.repo / 'dev/secciones/sobres-exportar.mjs'
+        exportador.write_text(exportador.read_text().replace('no-store', 'public, max-age=3600'))
+        self.git('commit', '-qam', 'Fixture Sobres con política distinta')
+        salida = self.preparar('sobres')
+        protegidas = self.referencias_protegidas()
+        with self.assertRaisesRegex(ValueError, 'cabeceras compartidas'):
+            p.publicar(self.repo, salida, 'sobres')
+        self.assertEqual(p.revision_remota(self.repo), anterior)
+        self.assertEqual(self.referencias_protegidas(), protegidas)
+
     def test_no_toma_rama_ajena_o_marcador_invalido(self):
         salida = self.preparar()
         self.git('push', '-q', 'origin', 'HEAD:' + p.RAMA)
@@ -386,6 +474,21 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         with patch.object(p.subprocess, 'check_output', return_value=b'otro Rey'):
             with self.assertRaisesRegex(ValueError, 'otros bytes'):
                 p.verificar_remoto(salida, 'https://revision.example', 'rey')
+
+    def test_verificar_sobres_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('sobres')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'sobres')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/sobres/')
+        self.assertEqual(set(llamadas), {'sobres/index.html', 'sobres/procedencia.json', 'sobres/publicacion.json', 'sobres/sobres.js'})
 
 
 if __name__ == '__main__':

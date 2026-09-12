@@ -10,6 +10,16 @@ números) → el código.
 
 ---
 
+## Sobres 3D — propuesta aislada, pendiente de revisión
+
+Rama `feature/sobres-apertura-3d`, desde `develop` (producción/beta 250).
+Dos aperturas manipulables en https://aislados.caoz-tcg.pages.dev/sobres/ :
+Sello del Domo (`?propuesta=reliquia`) y Desgarro arcano (`?propuesta=arcano`).
+Los módulos nuevos `sobres-apertura.js/css` y `sobres-escena.js` no se cargan
+en el juego todavía. Reciben cartas reales por inyección y no consumen ni
+guardan inventario. La prueba usa cinco Foils locales; no publica beta ni
+producción. Flujo y comprobaciones en `../dev/secciones/README.md`.
+
 ## Producción 250 — promoción autorizada y verificada (2026-09-12)
 
 El usuario autorizó promover la beta 250. PR #7 integrado por avance directo:

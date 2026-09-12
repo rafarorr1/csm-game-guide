@@ -1,0 +1,46 @@
+.sobresApertura{--sobre-oro:#dbc38c;--sobre-tinta:#eee4d1;--sobre-aura:157,97,38;position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(0,1fr) auto;width:100%;height:100%;color:var(--sobre-tinta);min-height:0}
+.sobresApertura[data-variante=arcano]{--sobre-oro:#b8bfe8;--sobre-aura:91,71,170}
+.sobresTeatro{position:relative;min-height:0;overflow:hidden;isolation:isolate}
+.sobresAura{position:absolute;inset:8% 0 0;background:radial-gradient(ellipse at 50% 47%,rgba(var(--sobre-aura),.19),transparent 58%);pointer-events:none}
+.sobresSuelo{position:absolute;width:80%;height:23%;left:10%;bottom:7%;border-radius:50%;border:1px solid #d3bb7625;box-shadow:0 0 0 10px #d3bb7603,inset 0 0 45px #d3bb7606;transform:perspective(550px) rotateX(63deg);background:repeating-conic-gradient(from 0deg,#ddc79113 0deg 1deg,transparent 1deg 15deg);opacity:.7;pointer-events:none}
+.sobresLienzo{position:absolute;inset:0;z-index:3;pointer-events:none}
+.sobresPila{position:absolute;z-index:2;opacity:0;pointer-events:none;transition:opacity .1s}
+.sobresPila.visible{opacity:1}
+.sobresReverso,.sobresFrente{position:absolute;width:100%;height:100%;left:0;top:0;border-radius:9px;transform-origin:center center}
+.sobresReverso{background:repeating-linear-gradient(45deg,#a9956820 0 1px,transparent 1px 6px),radial-gradient(ellipse at 50% 30%,#453344,#170f20 74%);border:2px solid #b6a17b;box-shadow:0 2px 1px #efe0b7,0 4px 1px #282021,0 12px 22px #0008;display:flex;align-items:center;justify-content:center;overflow:hidden}
+.sobresReverso:before{content:'';position:absolute;inset:7px;border:1px solid #cfb68599;border-radius:5px;background:linear-gradient(130deg,#e5c38518,transparent 40%,#cf9bca19)}
+.sobresOrnamento{position:absolute;width:70%;height:65%;border:1px solid #ddc89b88;border-radius:50%;box-shadow:0 0 0 5px #c1ad7c11,0 0 0 7px #c1ad7c33;transform:rotate(-25deg)}
+.sobresOrnamento:before,.sobresOrnamento:after{content:'';position:absolute;inset:12%;border:1px solid #ccb77c66;transform:rotate(45deg)}
+.sobresOrnamento:after{transform:rotate(-45deg)}
+.sobresMarca{width:87%;height:auto;position:relative;filter:sepia(.65) saturate(.65) drop-shadow(0 5px 8px #000);user-select:none}
+.sobresReversoPie{position:absolute;bottom:9%;font:10px Georgia,serif;letter-spacing:4px;color:#dac599}
+.sobresFrente{z-index:10;filter:drop-shadow(0 12px 16px #0008)}
+body.aaa-polish .sobresApertura .sobresCarta.card{position:relative;flex:none;width:200px;height:280px;--cw:200px;--ch:280px;font-size:16.2px;zoom:var(--sobre-escala,1);margin:0;transform:none!important;rotate:none!important;translate:none!important;pointer-events:none}
+body.aaa-polish .sobresApertura .sobresCarta.card .pieCarta .txt{font-size:12px;line-height:1.12;display:block;-webkit-line-clamp:unset;max-height:none;overflow:visible}
+body.aaa-polish .sobresApertura .sobresCarta.card .nm{font-size:17px}
+.sobresGesto{position:absolute;z-index:5;border:0!important;border-radius:20px;background:none!important;box-shadow:none!important;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transform:none!important;filter:none!important;color:transparent;padding:0}
+.sobresGesto.arrastrando{cursor:grabbing}
+.sobresGesto:focus-visible{outline:1px solid #e8c38b;outline-offset:6px}
+.sobresApertura[data-fase=pila] .sobresGesto{cursor:pointer}
+.sobresGesto[aria-disabled=true]{cursor:default}
+.sobresDestello{position:absolute;z-index:4;inset:10%;opacity:0;pointer-events:none;background:radial-gradient(ellipse,#ffffd950,rgba(var(--sobre-aura),.15) 30%,transparent 65%);mix-blend-mode:screen}
+.sobresIdentidad{position:absolute;z-index:4;left:8px;right:8px;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
+.sobresIdentidad.visible{opacity:1}
+.sobresIdentidad strong{display:block;font:clamp(14px,2vh,19px) Georgia,serif;font-weight:normal;color:#f2e6cc}
+.sobresIdentidad span{display:block;margin-top:5px;font:8px system-ui,sans-serif;letter-spacing:3px;color:var(--sobre-oro)}
+.sobresPie{position:relative;z-index:6;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px 6px;min-height:0}
+.sobresEstado{color:#b4aa9a;text-align:center;font:12px system-ui,sans-serif;letter-spacing:.4px;line-height:18px;margin:0}
+.sobresAccion{font:15px Georgia,serif;letter-spacing:1px;background:linear-gradient(#382c26,#201917);color:#eedbb6;border:1px solid #92734b;border-radius:5px;min-width:220px;min-height:44px;box-shadow:inset 0 1px #f7d89526,0 4px 0 #100c0a;cursor:pointer;padding:10px 24px;transition:filter .2s,scale .2s}
+.sobresAccion:hover:not([aria-disabled=true]){filter:brightness(1.22);scale:1.02}
+.sobresAccion[aria-disabled=true]{cursor:default;opacity:.55}
+.sobresBandeja{display:flex;align-items:center;justify-content:center;gap:10px;margin-top:4px;padding:6px 0 0}
+.sobresHallazgo{position:relative;width:45px;height:63px;border:1px solid #b9a38136;border-radius:4px;background:linear-gradient(#1b171b,#100e12);padding:0;overflow:visible;box-shadow:none;--sobre-escala:.225;cursor:pointer}
+.sobresHallazgo:disabled{cursor:default;opacity:1}
+.sobresHallazgo[aria-pressed=true]{outline:1px solid var(--sobre-oro);outline-offset:4px}
+.sobresHallazgo .sobresFrente{filter:none;pointer-events:none}
+.sobresNumero{font:12px Georgia,serif;color:#ad9b745c}
+.sobresHallazgo.descubierto .sobresFrente{animation:sobreHallazgo .35s ease both}
+@keyframes sobreHallazgo{from{opacity:0;translate:0 5px}to{opacity:1;translate:0 0}}
+@media(min-width:800px) and (min-height:700px){.sobresHallazgo{width:55px;height:77px;--sobre-escala:.275}.sobresBandeja{gap:16px}.sobresPie{gap:12px}.sobresEstado{font-size:13px}}
+@media(max-height:670px){.sobresPie{gap:5px;padding-bottom:0}.sobresHallazgo{width:32px;height:45px;--sobre-escala:.16}.sobresAccion{min-height:38px;padding:6px 18px;font-size:13px}.sobresEstado{font-size:10px;line-height:14px}.sobresIdentidad span{display:none}.sobresIdentidad strong{font-size:12px}.sobresBandeja{padding:3px 0 0;margin:0}}
+@media(prefers-reduced-motion:reduce){.sobresApertura *{animation:none!important;transition:none!important}}
