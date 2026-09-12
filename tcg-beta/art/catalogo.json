@@ -22,6 +22,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/editorcosecha.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/editorcosecha-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/editorcosecha-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -45,6 +76,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/editorcorte.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/editorcorte-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/editorcorte-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -68,6 +130,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/editorcuadro.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/editorcuadro-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/editorcuadro-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -91,6 +184,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/editorcarrera.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/editorcarrera-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/editorcarrera-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -114,6 +238,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/editororbita.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/editororbita-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/editororbita-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -137,6 +292,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/editorduelo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/editorduelo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/editorduelo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -161,6 +347,36 @@
           "y": 0,
           "z": 100
         }
+      },
+      "originales": {
+        "normal": {
+          "url": "art/augusto.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 0,
+            "z": 100
+          }
+        },
+        "foil": {
+          "url": "art/augusto-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/augusto-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -184,6 +400,36 @@
           "x": 50,
           "y": 50,
           "z": 100
+        }
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lucius.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 50,
+            "z": 100
+          }
+        },
+        "foil": {
+          "url": "art/lucius-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lucius-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
         }
       }
     },
@@ -215,6 +461,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/machete.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/machete-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/machete-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -242,6 +519,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/petunia.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/petunia-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/petunia-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -268,6 +576,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/bob.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/bob-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/bob-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -295,6 +634,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/brickbrock.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/brickbrock-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/brickbrock-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -321,6 +691,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/conserje.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/conserje-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/conserje-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -346,6 +747,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/ninolanza.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/ninolanza-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/ninolanza-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -371,6 +803,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/julia.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/julia-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/julia-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -396,6 +859,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/rey.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/rey-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/rey-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -419,6 +913,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/talia.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/talia-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/talia-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -444,6 +969,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/aldrick.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/aldrick-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/aldrick-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -471,6 +1027,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/bartolomeo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/bartolomeo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/bartolomeo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -498,6 +1085,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/eric.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/eric-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/eric-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -524,6 +1142,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/horton.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/horton-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/horton-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -549,6 +1198,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/edbor.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/edbor-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/edbor-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -575,6 +1255,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/juangabriel.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/juangabriel-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/juangabriel-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -602,6 +1313,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/minus.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/minus-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/minus-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -628,6 +1370,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/aidman.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/aidman-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/aidman-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -654,6 +1427,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/adolfo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/adolfo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/adolfo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -680,6 +1484,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/titaus.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/titaus-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/titaus-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -707,6 +1542,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/matildus.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/matildus-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/matildus-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -733,6 +1599,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/discipulo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/discipulo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/discipulo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -756,6 +1653,62 @@
           "x": 45,
           "y": 91,
           "z": 118
+        }
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tal.webp",
+          "encuadre": {
+            "x": 45,
+            "y": 91,
+            "z": 118
+          }
+        },
+        "foil": {
+          "url": "art/tal-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tal-dorado-final-v1.webp",
+          "encuadre": {
+            "x": 45,
+            "y": 91,
+            "z": 118
+          },
+          "vistas": {
+            "desktop_coleccion": {
+              "x": 45,
+              "y": 100,
+              "z": 135
+            },
+            "desktop_detalle": {
+              "x": 45,
+              "y": 41,
+              "z": 118
+            },
+            "desktop_mano": {
+              "x": 45,
+              "y": 100,
+              "z": 118
+            },
+            "desktop_memoria": {
+              "x": 45,
+              "y": 58,
+              "z": 118
+            },
+            "desktop_revelada": {
+              "x": 45,
+              "y": 100,
+              "z": 136
+            }
+          },
+          "estilo": "final"
         }
       }
     },
@@ -784,6 +1737,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/rantiago.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/rantiago-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/rantiago-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -809,6 +1793,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/trol.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/trol-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/trol-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -835,6 +1850,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lucy.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lucy-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lucy-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -860,6 +1906,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/magodomo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/magodomo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/magodomo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -883,6 +1960,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tok_petunia.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tok_petunia-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tok_petunia-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -906,6 +2014,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tok_ilusion.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tok_ilusion-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tok_ilusion-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -929,6 +2068,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tok_poseido.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tok_poseido-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tok_poseido-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -952,6 +2122,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tok_dragon.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tok_dragon-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tok_dragon-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -977,6 +2178,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/rulchete.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/rulchete-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/rulchete-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1002,6 +2234,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/cuerda.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/cuerda-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/cuerda-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1025,6 +2288,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/copiajabon.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/copiajabon-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/copiajabon-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1051,6 +2345,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/acertijo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/acertijo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/acertijo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1076,6 +2401,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/leche.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/leche-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/leche-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1099,6 +2455,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/campanafe.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/campanafe-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/campanafe-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1124,6 +2511,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/hongos.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/hongos-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/hongos-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1149,6 +2567,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/alientoacido.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/alientoacido-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/alientoacido-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1174,6 +2623,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/cantaberna.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/cantaberna-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/cantaberna-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1199,6 +2679,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/balada.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/balada-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/balada-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1224,6 +2735,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/sangrefria.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/sangrefria-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/sangrefria-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1249,6 +2791,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/bendicion.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/bendicion-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/bendicion-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1274,6 +2847,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/modificar.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/modificar-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/modificar-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1299,6 +2903,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/bolafuego.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/bolafuego-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/bolafuego-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1324,6 +2959,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/manosardientes.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/manosardientes-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/manosardientes-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1349,6 +3015,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/rayoabrasador.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/rayoabrasador-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/rayoabrasador-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1375,6 +3072,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/saeta.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/saeta-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/saeta-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1402,6 +3130,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/escarcha.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/escarcha-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/escarcha-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1427,6 +3186,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/proyectil.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/proyectil-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/proyectil-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1453,6 +3243,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/nubedagas.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/nubedagas-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/nubedagas-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1478,6 +3299,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/burla.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/burla-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/burla-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1501,6 +3353,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/calentarmetal.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/calentarmetal-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/calentarmetal-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1526,6 +3409,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/ceguera.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/ceguera-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/ceguera-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1549,6 +3463,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/luzhadas.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/luzhadas-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/luzhadas-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1574,6 +3519,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/mensaje.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/mensaje-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/mensaje-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1600,6 +3576,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/disipar.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/disipar-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/disipar-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1623,6 +3630,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/contrahechizo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/contrahechizo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/contrahechizo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1646,6 +3684,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/puas.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/puas-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/puas-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1671,6 +3740,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/ilusion.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/ilusion-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/ilusion-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1694,6 +3794,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/disfrazarse.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/disfrazarse-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/disfrazarse-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1720,6 +3851,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/zancada.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/zancada-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/zancada-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1745,6 +3907,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/pasoatronador.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/pasoatronador-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/pasoatronador-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1770,6 +3963,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/espiritus.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/espiritus-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/espiritus-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1796,6 +4020,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/auxilio.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/auxilio-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/auxilio-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1821,6 +4076,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/armadura.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/armadura-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/armadura-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1844,6 +4130,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/armamagica.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/armamagica-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/armamagica-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1867,6 +4184,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/palabracuracion.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/palabracuracion-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/palabracuracion-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1892,6 +4240,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/taumaturgia.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/taumaturgia-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/taumaturgia-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1918,6 +4297,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tasha.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tasha-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tasha-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1945,6 +4355,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/destello.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/destello-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/destello-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1968,6 +4409,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/gemaconserje.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/gemaconserje-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/gemaconserje-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -1993,6 +4465,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/colapso.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/colapso-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/colapso-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2018,6 +4521,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/notario.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/notario-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/notario-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2044,6 +4578,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/peaje.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/peaje-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/peaje-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2071,6 +4636,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/esporas.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/esporas-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/esporas-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2096,6 +4692,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/talcadaver.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/talcadaver-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/talcadaver-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2122,6 +4749,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/collar.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/collar-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/collar-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2145,6 +4803,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/arco.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/arco-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/arco-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2171,6 +4860,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/mazo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 55,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/mazo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/mazo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2197,6 +4917,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/sombrero.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/sombrero-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/sombrero-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2223,6 +4974,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/jabon.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/jabon-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/jabon-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2248,6 +5030,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/puntosrobados.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/puntosrobados-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/puntosrobados-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2274,6 +5087,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/llavemago.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/llavemago-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/llavemago-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2300,6 +5144,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/pergamino.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/pergamino-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/pergamino-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2325,6 +5200,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tomsage.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tomsage-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tomsage-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2351,6 +5257,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/antro.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/antro-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/antro-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2376,6 +5313,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/puente.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/puente-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/puente-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2401,6 +5369,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/montanas.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/montanas-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/montanas-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2426,6 +5425,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/domo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/domo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/domo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2449,6 +5479,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tok_rulchete.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tok_rulchete-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tok_rulchete-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2472,6 +5533,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/gatobachatero.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/gatobachatero-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/gatobachatero-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2495,6 +5587,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/fetichemino.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/fetichemino-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/fetichemino-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2520,6 +5643,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/brujula.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/brujula-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/brujula-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2543,6 +5697,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/viajehongos.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/viajehongos-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/viajehongos-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2566,6 +5751,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/humobob.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/humobob-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/humobob-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2589,6 +5805,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/propaganda.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/propaganda-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/propaganda-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2612,6 +5859,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/ballesta.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/ballesta-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/ballesta-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2635,6 +5913,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lanzallamas.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lanzallamas-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lanzallamas-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2658,6 +5967,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lifestealer.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lifestealer-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lifestealer-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2681,6 +6021,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lecheslact.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lecheslact-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lecheslact-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2706,6 +6077,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/rulchetebajo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/rulchetebajo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/rulchetebajo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2729,6 +6131,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/esporashorton.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/esporashorton-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/esporashorton-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2752,6 +6185,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lentesmachete.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lentesmachete-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lentesmachete-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2775,6 +6239,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/espadaluz.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/espadaluz-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/espadaluz-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2798,6 +6293,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/brazosagua.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/brazosagua-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/brazosagua-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2821,6 +6347,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/ipadkid.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/ipadkid-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/ipadkid-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2844,6 +6401,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/espadaboveda.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/espadaboveda-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/espadaboveda-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2867,6 +6455,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/eclipse.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/eclipse-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/eclipse-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2890,6 +6509,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/afterparty.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/afterparty-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/afterparty-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2915,6 +6565,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/ciclope.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/ciclope-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/ciclope-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2938,6 +6619,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/ladrillos.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/ladrillos-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/ladrillos-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2961,6 +6673,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lutorafaela.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lutorafaela-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lutorafaela-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -2984,6 +6727,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/tok_goblincamino.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/tok_goblincamino-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/tok_goblincamino-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3009,6 +6783,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/can.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/can-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/can-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3034,6 +6839,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/spiderman.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/spiderman-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/spiderman-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3059,6 +6895,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/hermanotrol.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/hermanotrol-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/hermanotrol-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3084,6 +6951,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/rambo.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/rambo-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/rambo-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3109,6 +7007,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/coyote.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/coyote-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/coyote-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3134,6 +7063,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/correcaminos.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/correcaminos-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/correcaminos-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3157,6 +7117,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lanzallave.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lanzallave-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lanzallave-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3182,6 +7173,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lider_mohamed.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lider_mohamed-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lider_mohamed-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3206,6 +7228,36 @@
           "y": 2,
           "z": 105
         }
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lider_fender.webp",
+          "encuadre": {
+            "x": 0,
+            "y": 2,
+            "z": 105
+          }
+        },
+        "foil": {
+          "url": "art/lider_fender-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lider_fender-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3229,6 +7281,36 @@
           "x": 50,
           "y": 5,
           "z": 106
+        }
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lider_adreida.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 5,
+            "z": 106
+          }
+        },
+        "foil": {
+          "url": "art/lider_adreida-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lider_adreida-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
         }
       }
     },
@@ -3255,6 +7337,37 @@
           "z": 100
         },
         "placeholder": true
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lider_gero.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true
+        },
+        "foil": {
+          "url": "art/lider_gero-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lider_gero-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3279,6 +7392,36 @@
           "y": 6,
           "z": 100
         }
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lider_rafaela.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 6,
+            "z": 100
+          }
+        },
+        "foil": {
+          "url": "art/lider_rafaela-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lider_rafaela-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
+        }
       }
     },
     {
@@ -3302,6 +7445,36 @@
           "x": 50,
           "y": 11,
           "z": 100
+        }
+      },
+      "originales": {
+        "normal": {
+          "url": "art/lider_talesin.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 11,
+            "z": 100
+          }
+        },
+        "foil": {
+          "url": "art/lider_talesin-foil-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "grabado"
+        },
+        "dorado": {
+          "url": "art/lider_talesin-dorado-v1.webp",
+          "encuadre": {
+            "x": 50,
+            "y": 30,
+            "z": 100
+          },
+          "placeholder": true,
+          "estilo": "manuscrito"
         }
       }
     }
