@@ -15,9 +15,12 @@ números) → el código.
 Rama `feature/sobres-apertura-3d`, desde `develop` (producción/beta 250).
 Revisión en https://aislados.caoz-tcg.pages.dev/sobres/ . El usuario eligió
 Sello del Domo. Se retira la fila inferior de cartas: cada toque revela una,
-la quinta permanece un momento y después se muestran las cinco juntas,
+la quinta espera indefinidamente un toque adicional antes de mostrar las cinco juntas,
 sin superposición (3+2 en teléfono, una fila en escritorio). «Volver» llama
 `onVolver` una sola vez y el laboratorio regresa a su menú de sobres.
+Las cartas del sobre muestran ilustración y nombre, sin habilidades/tribu ni
+nombre duplicado afuera. El arte se contiene sin zoom para ver el original;
+este estilo está limitado a sobres y no cambia las cartas de combate.
 Los módulos `sobres-apertura.js/css` y `sobres-escena.js` todavía no están
 conectados a Colección en el juego. Esta revisión permite confirmar el cierre
 solicitado antes de integrar, validar y publicar beta. Usa cinco Foils locales,

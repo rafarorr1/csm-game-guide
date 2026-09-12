@@ -16,18 +16,20 @@
 .sobresReversoPie{position:absolute;bottom:9%;font:10px Georgia,serif;letter-spacing:4px;color:#dac599}
 .sobresFrente{z-index:10;filter:drop-shadow(0 12px 16px #0008)}
 body.aaa-polish .sobresApertura .sobresCarta.card{position:relative;flex:none;width:200px;height:280px;--cw:200px;--ch:280px;font-size:16.2px;zoom:var(--sobre-escala,1);margin:0;transform:none!important;rotate:none!important;translate:none!important;pointer-events:none}
-body.aaa-polish .sobresApertura .sobresCarta.card .pieCarta .txt{font-size:12px;line-height:1.12;display:block;-webkit-line-clamp:unset;max-height:none;overflow:visible}
+/* Presentación de premio: arte y nombre, sin el panel de reglas del combate. */
+body.aaa-polish .sobresApertura .sobresCarta.card .pieCarta :is(.txt,.tribe){display:none!important}
+body.aaa-polish .sobresApertura .sobresCarta.card .pieCarta{margin:auto 0 17px;padding:0 .15em;background:none}
+body.aaa-polish .sobresApertura .sobresCarta.card.conarte::before{display:none}
+body.aaa-polish .sobresApertura .sobresCarta.card .dibujo{object-fit:contain;object-position:center;transform:none}
+body.aaa-polish .sobresApertura .sobresCarta.card.sinarte .art{padding-bottom:0}
+body.aaa-polish .sobresApertura .sobresCarta.card.sinarte .art::after{display:none}
 body.aaa-polish .sobresApertura .sobresCarta.card .nm{font-size:17px}
 .sobresGesto{position:absolute;z-index:5;border:0!important;border-radius:20px;background:none!important;box-shadow:none!important;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;transform:none!important;filter:none!important;color:transparent;padding:0}
 .sobresGesto.arrastrando{cursor:grabbing}
 .sobresGesto:focus-visible{outline:1px solid #e8c38b;outline-offset:6px}
-.sobresApertura[data-fase=pila] .sobresGesto{cursor:pointer}
+.sobresApertura:is([data-fase=pila],[data-fase=ultima]) .sobresGesto{cursor:pointer}
 .sobresGesto[aria-disabled=true]{cursor:default}
 .sobresDestello{position:absolute;z-index:4;inset:10%;opacity:0;pointer-events:none;background:radial-gradient(ellipse,#ffffd950,rgba(var(--sobre-aura),.15) 30%,transparent 65%);mix-blend-mode:screen}
-.sobresIdentidad{position:absolute;z-index:4;left:8px;right:8px;text-align:center;opacity:0;transition:opacity .25s;pointer-events:none}
-.sobresIdentidad.visible{opacity:1}
-.sobresIdentidad strong{display:block;font:clamp(14px,2vh,19px) Georgia,serif;font-weight:normal;color:#f2e6cc}
-.sobresIdentidad span{display:block;margin-top:5px;font:8px system-ui,sans-serif;letter-spacing:3px;color:var(--sobre-oro)}
 .sobresPie{position:relative;z-index:6;display:flex;flex-direction:column;align-items:center;gap:10px;padding:0 16px 6px;min-height:0}
 .sobresEstado{color:#b4aa9a;text-align:center;font:12px system-ui,sans-serif;letter-spacing:.4px;line-height:18px;margin:0}
 .sobresAccion{font:15px Georgia,serif;letter-spacing:1px;background:linear-gradient(#382c26,#201917);color:#eedbb6;border:1px solid #92734b;border-radius:5px;min-width:220px;min-height:44px;box-shadow:inset 0 1px #f7d89526,0 4px 0 #100c0a;cursor:pointer;padding:10px 24px;transition:filter .2s,scale .2s}
@@ -39,5 +41,5 @@ body.aaa-polish .sobresApertura .sobresCarta.card .nm{font-size:17px}
 .sobresPremio{position:absolute;transform-origin:center;isolation:isolate}
 .sobresPremio .sobresFrente{filter:drop-shadow(0 10px 14px #0009)}
 @media(min-width:800px) and (min-height:700px){.sobresPie{gap:12px}.sobresEstado{font-size:13px}}
-@media(max-height:670px){.sobresPie{gap:5px;padding-bottom:0}.sobresAccion{min-height:38px;padding:6px 18px;font-size:13px}.sobresEstado{font-size:10px;line-height:14px}.sobresIdentidad span{display:none}.sobresIdentidad strong{font-size:12px}}
+@media(max-height:670px){.sobresPie{gap:5px;padding-bottom:0}.sobresAccion{min-height:38px;padding:6px 18px;font-size:13px}.sobresEstado{font-size:10px;line-height:14px}}
 @media(prefers-reduced-motion:reduce){.sobresApertura *{animation:none!important;transition:none!important}}

@@ -40,7 +40,7 @@ function entorno(codigo,{cantidad=5,reducido=true}={}){
   documento.body=new Nodo('body');documento.append(documento.body);documento.activeElement=documento.body;
   const ventana={CAOZ_SOBRES_ESCENA:{crear:()=>({abrir:()=>Promise.resolve(),destruir(){},redimensionar(){},
     rectangulo:()=>({x:0,y:0,width:200,height:300}),orientar(){medidas.orientaciones++;}})}};
-  // El reloj controlado observa las pausas de la quinta carta sin esperas reales;
+  // El reloj controlado comprueba que la quinta no avanza por tiempo transcurrido;
   // reducido reproduce también promesas resueltas antes de destruir la vista.
   new vm.Script(codigo,{filename:'sobres-apertura.js'}).runInNewContext({window:ventana,document:documento,
     ResizeObserver:class{observe(){}disconnect(){}},matchMedia:()=>({matches:reducido}),performance:{now:()=>ahora},
@@ -74,13 +74,14 @@ function entorno(codigo,{cantidad=5,reducido=true}={}){
     assert.equal(componente.estado().fase,fase);
   }
   return {componente,gesto,puntero,tocar,medidas,presentes,avanzar,hasta,tareas,
+    visibilidad(oculta){documento.hidden=oculta;documento.emitir('visibilitychange');},
     async abrir(){tocar();await hasta('pila');}};
 }
 
 async function destruidoNoVuelve(codigo){
   const e=entorno(codigo,{cantidad:1});
   try{
-    await e.abrir();e.tocar();await e.hasta('terminado');
+    await e.abrir();e.tocar();await e.hasta('ultima');e.tocar();await e.hasta('terminado');
     e.componente.destruir();const antes={...e.medidas};e.componente.activar();await e.avanzar(2000);
     assert.deepEqual(e.medidas,antes,'Una referencia destruida no puede cambiar de fase ni pedir volver');
   }finally{e.componente.destruir();}
@@ -133,34 +134,43 @@ async function primerasCuatro(e){
   for(let i=0;i<4;i++){e.tocar();await e.hasta('pila');assert.equal(e.componente.estado().reveladas,i+1);}
 }
 
-async function resumenSoloQuinta(codigo){
-  const e=entorno(codigo,{reducido:false});
-  try{
-    await e.abrir();assert.equal(e.presentes('sobresBandeja').length,0,'Ya no existe una bandeja acumulada');
-    const resumen=e.presentes('sobresResumen')[0];assert.ok(resumen,'La vista dispone del resumen final');
-    for(let i=1;i<=4;i++){
-      e.tocar();await e.hasta('pila');
-      assert.equal(e.componente.estado().reveladas,i);assert.equal(e.medidas.cartas,i,'Cada descubrimiento sólo dibuja su carta individual');
-      assert.equal(resumen.hidden,true,'El resumen no se muestra antes de la quinta');
-      assert.equal(e.presentes('sobresPremio').length,0,'No se acumulan cartas del resumen mientras se descubren');
-    }
-    e.tocar();await e.hasta('reuniendo');assert.equal(e.componente.estado().reveladas,5);
-    assert.equal(e.medidas.cartas,5);assert.equal(resumen.hidden,true);
-    await e.avanzar(800);
-    assert.equal(e.componente.estado().fase,'reuniendo');assert.equal(resumen.hidden,true,'La quinta conserva su pausa individual');
-    await e.hasta('terminado');const premios=e.presentes('sobresPremio');
-    assert.equal(resumen.hidden,false);assert.equal(premios.length,5,'Se presentan las cinco cartas juntas');
-    assert.deepEqual(premios.map(p=>p.children[0].dataset.carta),Array.from({length:5},(_,i)=>'carta_'+i),'El resumen conserva las cinco cartas y su orden');
-    assert.equal(e.medidas.cartas,10,'Sólo se dibujan las cinco individuales y las cinco finales');
-    assert.equal(e.presentes('sobresPila')[0].hidden,true,'El bonche individual deja paso al resumen');
-    assert.equal(e.presentes('sobresAccion')[0].textContent,'Volver');assert.equal(e.medidas.vueltas,0,'Descubrir la quinta no cierra el resumen');
-  }finally{e.componente.destruir();}
+async function ultima(e){await primerasCuatro(e);e.tocar();await e.hasta('ultima');}
+
+async function resumenSoloOtroToque(codigo){
+  for(const {reducido,ocultaQuinta,entrada} of [{reducido:false,entrada:'toque'},{reducido:true,entrada:'boton'},{reducido:false,ocultaQuinta:true,entrada:'teclado'}]){
+    const e=entorno(codigo,{reducido});
+    try{
+      await e.abrir();assert.equal(e.presentes('sobresBandeja').length,0,'Ya no existe una bandeja acumulada');
+      const resumen=e.presentes('sobresResumen')[0];assert.ok(resumen,'La vista dispone del resumen final');
+      for(let i=1;i<=4;i++){
+        e.tocar();await e.hasta('pila');
+        assert.equal(e.componente.estado().reveladas,i);assert.equal(e.medidas.cartas,i,'Cada descubrimiento sólo dibuja su carta individual');
+        assert.equal(resumen.hidden,true,'El resumen no se muestra antes de la quinta');
+        assert.equal(e.presentes('sobresPremio').length,0,'No se acumulan cartas del resumen mientras se descubren');
+      }
+      e.tocar();if(ocultaQuinta)e.visibilidad(true);await e.hasta('ultima');assert.equal(e.componente.estado().reveladas,5);
+      assert.equal(e.medidas.cartas,5);assert.equal(resumen.hidden,true);assert.equal(e.tareas.size,0,'La quinta no programa un avance automático');
+      const antes={...e.medidas};
+      await e.avanzar(60000);e.visibilidad(true);await e.avanzar(60000);e.visibilidad(false);await e.avanzar(60000);
+      assert.equal(e.componente.estado().fase,'ultima','Esperar u ocultar la página no debe saltar la quinta carta, tampoco con movimiento reducido');
+      assert.equal(resumen.hidden,true);assert.equal(e.presentes('sobresPremio').length,0);assert.deepEqual(e.medidas,antes);
+      const activar=entrada==='toque'?()=>e.tocar():entrada==='boton'?()=>e.presentes('sobresAccion')[0].emitir('click',{detail:1}):()=>e.gesto.emitir('click',{detail:0});
+      for(let i=0;i<12;i++)activar();
+      await e.hasta('terminado');const premios=e.presentes('sobresPremio');
+      assert.equal(resumen.hidden,false);assert.equal(premios.length,5,'El siguiente toque presenta las cinco cartas juntas una sola vez');
+      assert.deepEqual(premios.map(p=>p.children[0].dataset.carta),Array.from({length:5},(_,i)=>'carta_'+i),'El resumen conserva las cinco cartas y su orden');
+      assert.equal(e.medidas.cartas,10,'Sólo se dibujan las cinco individuales y las cinco finales');
+      await e.avanzar(2000);assert.equal(e.medidas.cartas,10,'Los toques bloqueados no duplican el resumen');
+      assert.equal(e.presentes('sobresPila')[0].hidden,true,'El bonche individual deja paso al resumen');
+      assert.equal(e.presentes('sobresAccion')[0].textContent,'Volver');assert.equal(e.medidas.vueltas,0,'Entrar al resumen no lo cierra');
+    }finally{e.componente.destruir();}
+  }
 }
 
 async function volverUnaVez(codigo){
   const e=entorno(codigo,{reducido:false});
   try{
-    await primerasCuatro(e);e.tocar();await e.hasta('terminado');
+    await ultima(e);e.tocar();await e.hasta('terminado');
     const accion=e.presentes('sobresAccion')[0];
     for(let i=0;i<12;i++)accion.emitir('click',{detail:1});
     assert.equal(e.componente.estado().fase,'cerrando');assert.equal(e.medidas.vueltas,0,'Volver espera al cierre');
@@ -171,26 +181,26 @@ async function volverUnaVez(codigo){
 }
 
 async function cancelarDuranteResumen(codigo){
-  for(const tramo of ['pausa','pausa-resuelta','presentacion-resuelta','cierre-resuelto']){
-    const e=entorno(codigo,{reducido:tramo!=='pausa'});
+  for(const tramo of ['ultima','presentacion','presentacion-resuelta','cierre-resuelto']){
+    const e=entorno(codigo,{reducido:tramo!=='presentacion'});
     try{
-      await primerasCuatro(e);e.tocar();
-      if(tramo==='pausa')await e.hasta('reuniendo');
-      else if(tramo==='cierre-resuelto'){await e.hasta('terminado');e.componente.activar();}
-      else{
-        const preparada=()=>e.componente.estado().fase==='reuniendo'&&(tramo==='pausa-resuelta'||e.presentes('sobresPremio').length===5);
-        for(let i=0;!preparada()&&i<20;i++)await Promise.resolve();
-        assert.ok(preparada(),'La prueba debe detenerse dentro de '+tramo);
+      await ultima(e);
+      if(tramo!=='ultima'){
+        e.tocar();
+        if(tramo==='cierre-resuelto'){await e.hasta('terminado');e.componente.activar();}
+        else assert.equal(e.componente.estado().fase,'reuniendo','La prueba debe detenerse dentro de '+tramo);
       }
       e.componente.destruir();const antes={...e.medidas};await e.avanzar(5000);
+      e.componente.activar();await e.avanzar(2000);
       assert.deepEqual(e.medidas,antes,'Destruir durante '+tramo+' impide efectos tardíos del resumen');
       assert.equal(e.medidas.vueltas,0);assert.equal(e.tareas.size,0,'El resumen destruido no deja tareas pendientes');
     }finally{e.componente.destruir();}
   }
 }
 
-for(const prueba of [destruidoNoVuelve,destruirEntreContinuaciones,segundoDedoNoCancela,rafagaSinCola,resumenSoloQuinta,volverUnaVez,cancelarDuranteResumen])await prueba(fuente);
-console.log('✓ Cinco descubrimientos individuales, pausa de la quinta, resumen completo y Volver una sola vez.');
+for(const prueba of [destruidoNoVuelve,destruirEntreContinuaciones,segundoDedoNoCancela,rafagaSinCola,resumenSoloOtroToque,volverUnaVez,cancelarDuranteResumen])await prueba(fuente);
+console.log('✓ La quinta espera otro toque; tiempo, visibilidad y movimiento reducido no adelantan el resumen.');
+console.log('✓ El resumen contiene cinco cartas una sola vez y Volver se ejecuta una sola vez.');
 console.log('✓ Destrucción sin callbacks tardíos, segundo dedo independiente y toques sin cola.');
 
 if(process.argv.includes('--sabotaje')){
@@ -200,9 +210,10 @@ if(process.argv.includes('--sabotaje')){
     ['activar después de destruir',destruidoNoVuelve,reemplazar(reemplazar(fuente,'function activar(){if(muerto)return;','function activar(){'),"if(fase!=='terminado'||muerto)return;","if(fase!=='terminado')return;")],
     ['continuar un volteo destruido',destruirEntreContinuaciones,enFuncion(fuente,'async function voltear(){','function activar(){',s=>reemplazar(s,'})||muerto)return;','}))return;',3))],
     ['cancelación de otro dedo',segundoDedoNoCancela,reemplazar(fuente,"if(e&&typeof e.pointerId==='number'&&puntero&&e.pointerId!==puntero.id)return;",'')],
-    ['resumen antes de la quinta',resumenSoloQuinta,reemplazar(fuente,'if(reveladas===cartas.length)await reunir();','if(reveladas===cartas.length-1)await reunir();')],
+    ['resumen antes de la quinta',resumenSoloOtroToque,reemplazar(fuente,"cambiar(reveladas===cartas.length?'ultima':'pila');","cambiar(reveladas===cartas.length-1?'ultima':'pila');")],
+    ['avance automático tras la quinta',resumenSoloOtroToque,reemplazar(fuente,"cambiar(reveladas===cartas.length?'ultima':'pila');","cambiar(reveladas===cartas.length?'ultima':'pila');if(fase==='ultima')setTimeout(()=>reunir(),900);")],
     ['doble callback al volver',volverUnaVez,reemplazar(fuente,'opciones.onVolver?.();','opciones.onVolver?.();opciones.onVolver?.();')],
-    ['continuar un resumen destruido',cancelarDuranteResumen,enFuncion(fuente,'async function reunir(){','async function volver(){',s=>reemplazar(reemplazar(s,'animar(900,()=>{})||muerto','animar(900,()=>{})'),'})||muerto)return;','}))return;'))],
+    ['continuar un resumen destruido',cancelarDuranteResumen,enFuncion(fuente,'async function reunir(){','async function volver(){',s=>reemplazar(s,'})||muerto)return;','}))return;'))],
   ];
   for(const [nombre,prueba,codigo] of casos){new vm.Script(codigo);await assert.rejects(()=>prueba(codigo),{code:'ERR_ASSERTION'},'La regresión debe detectar: '+nombre);console.log('✓ Sabotaje detectado en memoria: '+nombre+'.');}
   assert.equal(fs.readFileSync(ruta,'utf8'),fuente,'El sabotaje nunca modifica el componente');
