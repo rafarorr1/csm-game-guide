@@ -18,11 +18,12 @@
     const reversos=[];
     function reverso(){const n=nodo('div','sobresReverso'),ornamento=nodo('i','sobresOrnamento'),marca=nodo('img','sobresMarca');marca.src=opciones.logoUrl;marca.alt='';marca.draggable=false;n.append(ornamento,marca,nodo('span','sobresReversoPie','EL DOMO'));return n;}
     cartas.forEach((c,i)=>{const n=reverso();n.dataset.indice=i;n.style.zIndex=cartas.length-i;n.style.left=(i*2)+'px';n.style.top=(i*2)+'px';n.style.rotate=((i%2?1:-1)*i*.6)+'deg';pila.append(n);reversos.push(n);});
-    escena.append(aura,suelo,pila,lienzo,brillo,etiqueta,gesto);
-    const pie=nodo('div','sobresPie'),estado=nodo('p','sobresEstado'),accion=nodo('button','sobresAccion'),bandeja=nodo('div','sobresBandeja');
-    estado.setAttribute('role','status');estado.setAttribute('aria-live','polite');accion.type='button';bandeja.setAttribute('aria-label','Cartas descubiertas');
-    const casillas=cartas.map((c,i)=>{const b=nodo('button','sobresHallazgo');b.type='button';b.disabled=true;b.setAttribute('aria-label','Carta '+(i+1)+' sin descubrir');b.append(nodo('span','sobresNumero',String(i+1).padStart(2,'0')));bandeja.append(b);b.onclick=()=>{if(fase==='terminado')mostrarHallazgo(i);};return b;});
-    pie.append(estado,accion,bandeja);raiz.append(escena,pie);host.replaceChildren(raiz);
+    const resumen=nodo('div','sobresResumen');resumen.hidden=true;resumen.setAttribute('role','list');resumen.setAttribute('aria-label','Todas las cartas del sobre');
+    const premios=[];
+    escena.append(aura,suelo,pila,lienzo,brillo,etiqueta,gesto,resumen);
+    const pie=nodo('div','sobresPie'),estado=nodo('p','sobresEstado'),accion=nodo('button','sobresAccion');
+    estado.setAttribute('role','status');estado.setAttribute('aria-live','polite');accion.type='button';
+    pie.append(estado,accion);raiz.append(escena,pie);host.replaceChildren(raiz);
     const render=window.CAOZ_SOBRES_ESCENA.crear(lienzo,{variante,logoUrl:opciones.logoUrl,reducirMovimiento:reducido,alRomper:()=>{if(!muerto)pila.classList.add('visible');}});
     function oir(n,t,f,opts){n.addEventListener(t,f,opts);limpiezas.push(()=>n.removeEventListener(t,f,opts));}
     function animar(ms,pintar){
@@ -35,8 +36,8 @@
         if(reducido||document.hidden){terminar();return;}pintar(0);raf=requestAnimationFrame(paso);temporizador=setTimeout(terminar,ms+100);
       });
     }
-    function cambiar(f){fase=f;raiz.dataset.fase=f;const bloqueado=f==='abriendo'||f==='volteando';accion.setAttribute('aria-disabled',String(bloqueado));gesto.setAttribute('aria-disabled',String(bloqueado||f==='terminado'));
-      const textos={sellado:['Arrastra para girar · Toca para abrir','Romper el sello'],abriendo:['Rompiendo el sello…','Abriendo…'],pila:[reveladas+' de '+cartas.length+' cartas descubiertas','Voltear una carta'],volteando:['Descubriendo una carta…','Revelando…'],terminado:['El sobre es tuyo · '+cartas.length+' cartas Foil','Volver a abrir']};
+    function cambiar(f){fase=f;raiz.dataset.fase=f;const bloqueado=['abriendo','volteando','reuniendo','cerrando'].includes(f);accion.setAttribute('aria-disabled',String(bloqueado));gesto.setAttribute('aria-disabled',String(bloqueado||f==='terminado'));gesto.tabIndex=['sellado','pila'].includes(f)?0:-1;
+      const textos={sellado:['Arrastra para girar · Toca para abrir','Romper el sello'],abriendo:['Rompiendo el sello…','Abriendo…'],pila:[reveladas+' de '+cartas.length+' cartas descubiertas','Voltear una carta'],volteando:['Descubriendo una carta…','Revelando…'],reuniendo:[cartas.length+' de '+cartas.length+' cartas descubiertas','Reuniendo tus cartas…'],terminado:['Tus '+cartas.length+' cartas Foil','Volver'],cerrando:['Tus '+cartas.length+' cartas Foil','Volviendo…']};
       estado.textContent=textos[f][0];accion.textContent=textos[f][1];gesto.setAttribute('aria-label',f==='sellado'?'Sobre cerrado. Arrastra para girar o pulsa para abrir.':'Voltear la siguiente carta del bonche.');
       opciones.onCambio?.({fase,reveladas,total:cartas.length,variante});
     }
@@ -45,11 +46,37 @@
       pila.style.width=w+'px';pila.style.height=h+'px';pila.style.left=(caja.x+(caja.width-w)/2)+'px';pila.style.top=(caja.y+(caja.height-h)/2)+'px';
       pila.style.setProperty('--sobre-escala',w/200);etiqueta.style.top=Math.min(escena.clientHeight-44,caja.y+(caja.height+h)/2+19)+'px';
       gesto.style.left=(caja.x-12)+'px';gesto.style.top=(caja.y-12)+'px';gesto.style.width=(caja.width+24)+'px';gesto.style.height=(caja.height+24)+'px';
+      medirResumen();
     }
     function frente(i){const c=opciones.crearCarta(cartas[i]);c.classList.add('sobresCarta');c.setAttribute('aria-hidden','true');const marco=nodo('div','sobresFrente');marco.dataset.carta=cartas[i].id;marco.append(c);return marco;}
     function nombrar(i){nombre.textContent=cartas[i].nombre||cartas[i].id;edicion.textContent='EDICIÓN FOIL';etiqueta.classList.add('visible');}
-    function guardar(i){const b=casillas[i],c=frente(i);b.replaceChildren(c);b.classList.add('descubierto');b.setAttribute('aria-label',cartas[i].nombre+' · Foil');}
-    function mostrarHallazgo(i){actual?.remove();actual=frente(i);pila.append(actual);nombrar(i);casillas.forEach((b,j)=>b.setAttribute('aria-pressed',String(i===j)));}
+    function medirResumen(){
+      if(!premios.length)return;
+      const ancho=escena.clientWidth,alto=escena.clientHeight;
+      const columnas=ancho>=700&&ancho>alto*1.15?5:3,filas=Math.ceil(cartas.length/columnas),hueco=ancho<380?10:16;
+      const w=Math.max(1,Math.min(220,(ancho-32-hueco*(columnas-1))/columnas,(alto-46-hueco*(filas-1))/(filas*1.4))),h=w*1.4;
+      const origenY=(alto-(filas*h+(filas-1)*hueco))/2;
+      premios.forEach((p,i)=>{const fila=Math.floor(i/columnas),enFila=Math.min(columnas,cartas.length-fila*columnas),x=(ancho-(enFila*w+(enFila-1)*hueco))/2+(i%columnas)*(w+hueco),y=origenY+fila*(h+hueco);
+        p.style.left=x+'px';p.style.top=y+'px';p.style.width=w+'px';p.style.height=h+'px';p.style.setProperty('--sobre-escala',w/200);
+      });
+    }
+    async function reunir(){
+      cambiar('reuniendo');
+      // La quinta carta conserva su momento individual antes de reunir el sobre.
+      if(!await animar(900,()=>{})||muerto)return;
+      const teniaFoco=document.activeElement===gesto;etiqueta.classList.remove('visible');gesto.hidden=true;
+      cartas.forEach((c,i)=>{const p=nodo('div','sobresPremio');p.setAttribute('role','listitem');p.setAttribute('aria-label',(c.nombre||c.id)+' · Foil');p.append(frente(i));premios.push(p);resumen.append(p);});
+      medirResumen();resumen.hidden=false;
+      if(!await animar(600,t=>{const e=1-Math.pow(1-t,3);pila.style.opacity=String(1-Math.min(1,t*3));premios.forEach((p,i)=>{const local=Math.max(0,Math.min(1,(t-i*.06)/.76)),avance=1-Math.pow(1-local,3);p.style.opacity=String(avance);p.style.transform='translateY('+((1-avance)*32)+'px) scale('+(.88+.12*avance)+')';});suelo.style.opacity=String(.7*(1-e));})||muerto)return;
+      actual?.remove();actual=null;pila.hidden=true;premios.forEach(p=>{p.style.transform='';p.style.opacity='';});cambiar('terminado');
+      // El botón conserva la navegación por teclado al desaparecer el bonche.
+      if(teniaFoco&&document.activeElement===document.body)accion.focus({preventScroll:true});
+    }
+    async function volver(){
+      if(fase!=='terminado'||muerto)return;cambiar('cerrando');
+      if(!await animar(240,t=>{raiz.style.opacity=String(1-t);})||muerto)return;
+      opciones.onVolver?.();
+    }
     async function abrir(){
       if(fase!=='sellado'||muerto)return;cambiar('abriendo');puntero=null;
       try{await render.abrir();if(muerto)return;pila.classList.add('visible');cambiar('pila');}
@@ -57,17 +84,17 @@
     }
     async function voltear(){
       if(fase!=='pila'||muerto)return;cambiar('volteando');etiqueta.classList.remove('visible');
-      if(actual){const saliente=actual,objetivo=casillas[reveladas-1].getBoundingClientRect(),origen=saliente.getBoundingClientRect(),dx=objetivo.x-origen.x,dy=objetivo.y-origen.y;
-        if(!await animar(260,t=>{const e=1-Math.pow(1-t,3);saliente.style.transform='translate('+dx*e+'px,'+dy*e+'px) scale('+(1-e*.8)+') rotate('+(-8*Math.sin(t*Math.PI))+'deg)';saliente.style.opacity=1-t;})||muerto)return;saliente.remove();actual=null;
+      if(actual){const saliente=actual;
+        if(!await animar(240,t=>{const e=1-Math.pow(1-t,3);saliente.style.transform='translateY('+(-24*e)+'px) scale('+(1-e*.06)+')';saliente.style.opacity=1-t;})||muerto)return;saliente.remove();actual=null;
       }
       const i=reveladas,dorso=reversos[i];dorso.style.rotate='0deg';
       if(!await animar(variante==='arcano'?230:190,t=>{dorso.style.transform='perspective(850px) translateY('+(-12*t)+'px) rotateY('+(t*90)+'deg)';})||muerto)return;
       dorso.remove();actual=frente(i);pila.append(actual);brillo.classList.add('encendido');
       if(!await animar(variante==='arcano'?480:360,t=>{const e=1-Math.pow(1-t,3);actual.style.transform='perspective(850px) translateY('+(-12*(1-e))+'px) rotateY('+(-90+90*e)+'deg) scale('+(1+Math.sin(t*Math.PI)*.055)+')';brillo.style.opacity=String(Math.sin(t*Math.PI)*.65);})||muerto)return;
-      brillo.classList.remove('encendido');brillo.style.opacity='';actual.style.transform='';reveladas++;guardar(i);nombrar(i);
-      if(reveladas===cartas.length){casillas.forEach(b=>b.disabled=false);casillas[i].setAttribute('aria-pressed','true');cambiar('terminado');}else cambiar('pila');
+      brillo.classList.remove('encendido');brillo.style.opacity='';actual.style.transform='';reveladas++;nombrar(i);
+      if(reveladas===cartas.length)await reunir();else cambiar('pila');
     }
-    function activar(){if(muerto)return;if(fase==='sellado')abrir();else if(fase==='pila')voltear();else if(fase==='terminado')opciones.onRepetir?.();}
+    function activar(){if(muerto)return;if(fase==='sellado')abrir();else if(fase==='pila')voltear();else if(fase==='terminado')volver();}
     oir(accion,'click',activar);
     oir(gesto,'click',e=>{if(e.detail===0&&fase!=='terminado')activar();});
     oir(gesto,'pointerdown',e=>{if((e.pointerType==='mouse'&&e.button!==0)||puntero||!['sellado','pila'].includes(fase))return;puntero={id:e.pointerId,x:e.clientX,y:e.clientY,yaw,pitch,movido:false};gesto.setPointerCapture?.(e.pointerId);gesto.classList.add('arrastrando');});

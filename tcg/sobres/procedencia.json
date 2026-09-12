@@ -11,8 +11,8 @@
     "zancada"
   ],
   "componentes": {
-    "sobres-apertura.js": "445352e0a332cd418efa25a03608850f9acb7ac0b18342ebc6971d8a2fee8bfe",
-    "sobres-apertura.css": "a6c19015d7d6771296693a52ea131a64bc5fae206f4459a4444f70cea0754647",
+    "sobres-apertura.js": "8bc454d61f843d0dc0aa6caf0d41473b4c34ec184d77f477274aa9808c75db90",
+    "sobres-apertura.css": "d0515e61530cb23d9a5bdedb61fd369a8c2dd3620ea8527bf5466f15b67d3dc2",
     "sobres-escena.js": "d6379afcc6553c2c64f11397bb41d206608c0d5cc107274587bd94e25f797aa9",
     "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "arte-remoto.js": "a44dd3d05c1b3a25a8964e5d96f394d97284311891eb8a4fa6a6e47c8e749ac9",
@@ -27,8 +27,8 @@
     "logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe"
   },
   "entorno": {
-    "sobres.js": "037f222ecb6a3da3144226cb9090eb632c094d454e81ef78d6e67d8983723fc6",
-    "sobres.css": "319857748aa5bebff5cdb98c52bef96f788346f1234dffa793b8b73b72d0330f",
+    "sobres.js": "b96f93439006fb6a768e1dda6058da470d266fd0ec8c562280a6e4e24f4203dd",
+    "sobres.css": "ce0028839ddf202114514158c2f844e953de068ea1eb000d811f7a2156c5d081",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
@@ -106,7 +106,7 @@
     "red": "sólo recursos de este servidor local"
   },
   "derivados": {
-    "index.html": "93284a7ce820acb9b4d548c2cd161158516b1fc7a19ca45d4db53e33edd5f0aa",
+    "index.html": "ec0c19be9e0a455fbd70c92f7ac5f14053ecf6a592ae44e65c20752d9ae357ca",
     "generado/datos.js": "4fc53a62f81b2c0d8f0b46e6a65a642873c20adf16d20a7e0bbc29e508b9e951",
     "generado/renderer.js": "dbaddd0cc79d709376556efb003a3be94000092f24b98b9d9e50aa590c4e0d8a",
     "generado/base.css": "bac57d51bb0ce089274c7e9a73dbd9b2764d71b141fc28fbcf5deb24d2faf3a7",
