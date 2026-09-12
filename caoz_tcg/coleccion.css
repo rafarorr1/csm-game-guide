@@ -61,9 +61,12 @@
 #coleccionPanel .coleccionCarta.card{overflow:visible;display:flex;flex-direction:column}
 #coleccionPanel .coleccionCarta.card.acomodo .pieCarta .txt{display:block;max-height:none;overflow:visible;-webkit-line-clamp:unset;white-space:normal}
 #coleccionPanel .coleccionCarta.card.acomodo .pieCarta .tribe{white-space:normal}
-#coleccionPanel .coleccionCarta.vscard{inset:auto;position:relative;border-radius:10px;background:#1a1325;overflow:hidden;animation:none}
-#coleccionPanel .coleccionCarta.vscard .lname{font-size:1.5em;line-height:1.2}
-#coleccionPanel .coleccionCarta.vscard .larch{font-size:.65em;line-height:1.3}
+/* El retrato ocupa el naipe entero; el nombre y el arquetipo se leen al pie.
+   Sólo Colección: la tarjeta de VS y los frentes de sobres conservan su formato. */
+#coleccionPanel .coleccionCarta.vscard{inset:auto;position:relative;display:flex;flex-direction:column;justify-content:flex-end;border-radius:10px;background:#1a1325;overflow:hidden;animation:none}
+#coleccionPanel .coleccionCarta.vscard .lface{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0}
+#coleccionPanel .coleccionCarta.vscard .lname{position:relative;inset:auto;z-index:3;margin:0;padding:.16em .25em .08em;text-align:center;font:700 1.5em/1.2 var(--serif,Georgia,serif);font-variant:small-caps;color:var(--acabado-tinta,#fdf6e6);background:#17101ee8}
+#coleccionPanel .coleccionCarta.vscard .larch{position:relative;inset:auto;z-index:3;display:block;margin:0;padding:0 .65em .7em;text-align:center;font:700 .65em/1.3 var(--sans,system-ui,sans-serif);letter-spacing:.07em;text-transform:uppercase;color:#d6c8e4;background:#17101ee8}
 #coleccionPanel .coleccionMini:hover .coleccionCarta{filter:brightness(1.09)}
 #coleccionPanel .coleccionVacio{grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
 #coleccionPanel .coleccionVacio svg{width:32px;height:32px;color:#a38559}
@@ -87,6 +90,8 @@
 #coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline:2px solid #d8b273;outline-offset:4px}
 #coleccionPanel .coleccionEstadoEdicion{display:flex;align-items:center;gap:5px;font-size:11px;color:#b3a18a;min-height:18px;flex:none}
 #coleccionPanel .coleccionEstadoEdicion svg{width:13px;height:13px}
+#coleccionPanel .coleccionCantidadEdicion{font-weight:700;font-variant-numeric:tabular-nums;color:#eadfbf}
+#coleccionPanel .coleccionCantidadSeparador{opacity:.55;margin:0 2px}
 #coleccionPanel .coleccionVersion.elegida .coleccionEstadoEdicion{color:#dbc68e}
 #coleccionPanel .coleccionUsar{width:100%;max-width:180px;flex:none;min-height:36px;padding:7px 12px;font-size:13px}
 #coleccionPanel .coleccionVersion.elegida .coleccionUsar:disabled{opacity:1;border-color:#857148;background:linear-gradient(#3c3324,#272319);color:#d8c296;box-shadow:none}
@@ -322,15 +327,16 @@
    búsqueda, filtros y salida siempre disponibles, incluso con teclado móvil. */
 #coleccionPanel .coleccionRejilla{scroll-padding-block:8px;gap:10px;padding:10px 6px}
 #coleccionPanel .coleccionRejilla:focus-visible{outline:1px solid #c6a056;outline-offset:-1px}
-#coleccionPanel .coleccionMini{align-self:start;scroll-margin-block:8px;gap:3px;grid-template-rows:auto 16px}
-#coleccionPanel .coleccionMini .coleccionMiniPie{line-height:16px}
+#coleccionPanel .coleccionMini{align-self:start;scroll-margin-block:8px;gap:3px;grid-template-rows:auto auto}
+#coleccionPanel .coleccionMini .coleccionMiniPie{line-height:16px;min-height:16px;flex-wrap:wrap;column-gap:8px;row-gap:0}
+#coleccionPanel .coleccionCopias{flex:none;color:#f0dfb4;font-weight:700;font-variant-numeric:tabular-nums;white-space:nowrap}
 #coleccionPanel .coleccionMini>.coleccionCarta{max-height:none}
 #coleccionPanel .coleccionVacio{min-height:160px;padding:12px}
 @media(max-width:580px){
   #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{column-gap:4px;row-gap:6px;padding:8px 0;scrollbar-gutter:auto}
   #coleccionPanel[data-vista="cartas"] .coleccionInterior{padding-left:6px;padding-right:6px}
-  #coleccionPanel .coleccionMini{gap:2px;grid-template-rows:auto 14px}
-  #coleccionPanel .coleccionMini .coleccionMiniPie{gap:5px;font-size:9px;line-height:14px}
+  #coleccionPanel .coleccionMini{gap:2px;grid-template-rows:auto auto}
+  #coleccionPanel .coleccionMini .coleccionMiniPie{column-gap:4px;row-gap:0;font-size:9px;line-height:14px;min-height:14px}
   #coleccionPanel .coleccionMini .coleccionPuntos{gap:3px}
   #coleccionPanel .coleccionMini .coleccionPuntos i{width:5px;height:5px}
 }

@@ -215,7 +215,7 @@ console.log('Backend de ilustraciones: acceso, imágenes, migración normal, pri
 const hashThal='67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d';
 const encThal={x:45,y:91,z:118},arteLocal=JSON.parse(readFileSync(new URL('./art/encuadres.json',import.meta.url)));
 assert.equal(hash(readFileSync(new URL('./art/tal.webp',import.meta.url))),hashThal);
-assert.deepEqual(arteLocal.tal,encThal);
+assert.deepEqual({x:arteLocal.tal.x,y:arteLocal.tal.y,z:arteLocal.tal.z},encThal);
 const talCatalogo=JSON.parse(catalogo).cartas.find(c=>c.id==='tal');
 assert.deepEqual(talCatalogo.original,{url:'art/tal.webp',encuadre:encThal});
 const fuenteCliente=readFileSync(new URL('./arte-remoto.js',import.meta.url),'utf8');
@@ -246,7 +246,9 @@ function clienteArte(estudio=false){
 const cliente=clienteArte();await cliente.c.cargarArte();await cliente.c.CAOZ_ARTE.refrescar();
 for(const acabado of ['normal','foil','dorado']){
   const v=cliente.c.CAOZ_ARTE.version('tal',acabado,'movil_coleccion');
-  assert.equal(v.acabado,acabado);assert.equal(v.url,'art/tal.webp');assert.deepEqual(JSON.parse(JSON.stringify(v.encuadre)),encThal);
+  const local=arteLocal.tal.variantes?.[acabado],base=local?{x:local.x,y:local.y,z:local.z}:encThal;
+  const enc=cliente.c.CAOZ_VISTAS.resolver(local?.vistas,'movil_coleccion',base);
+  assert.equal(v.acabado,acabado);assert.equal(v.url,local?.url||'art/tal.webp');assert.deepEqual(JSON.parse(JSON.stringify(v.encuadre)),JSON.parse(JSON.stringify(enc)));
 }
 assert.equal(cliente.c.CAOZ_COLECCION.elegido('tal'),'normal');
 assert.deepEqual(Object.keys(cliente.c.ARTE),['tal'],'La instalación conserva el encuadre aunque el servicio falle');

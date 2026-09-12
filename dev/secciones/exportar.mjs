@@ -35,7 +35,7 @@ export function exportar(destino){
   escribir('api/arte/catalogo',JSON.stringify({cartas:[]}));
   escribir('catalogo-vacio.json',JSON.stringify({cartas:[]}));
   escribir('index.html','<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="'+csp+'"><title>Colección · Caoz</title><script src="./abrir.js" defer></script><body><p>Abriendo la colección…</p><a href="./movil.html?estado=sobres">Abrir en móvil</a> · <a href="./escritorio.html?estado=sobres">Abrir en escritorio</a></body></html>');
-  escribir('abrir.js',`'use strict';const p=new URLSearchParams(location.search);const v=p.get('vista');const movil=v==='movil'||(v!=='desktop'&&matchMedia('(max-width: 760px)').matches);const url=new URL(movil?'movil.html':'escritorio.html',location.href);url.searchParams.set('estado',p.get('estado')||'sobres');location.replace(url.href);\n`);
+  escribir('abrir.js',`'use strict';const p=new URLSearchParams(location.search);const v=p.get('vista');const movil=v==='movil'||(v!=='desktop'&&matchMedia('(max-width: 760px)').matches);const url=new URL(movil?'movil.html':'escritorio.html',location.href);url.searchParams.set('estado',p.get('estado')||'sobres');if(p.has('acabado'))url.searchParams.set('acabado',p.get('acabado'));if(p.has('carta'))url.searchParams.set('carta',p.get('carta'));location.replace(url.href);\n`);
   escribir('procedencia.json',JSON.stringify(procedencia,null,2));
   escribir('_headers','/*\n  Cache-Control: no-store\n  X-Content-Type-Options: nosniff\n  Content-Security-Policy: '+csp+'\n');
   return procedencia;

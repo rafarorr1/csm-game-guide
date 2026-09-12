@@ -10,6 +10,47 @@ números) → el código.
 
 ---
 
+## Colección para revisión aislada — copias y originales por acabado
+
+Rama `feature/coleccion-copias-ediciones`, desde `develop`/beta251. El usuario
+pidió cantidades debajo de cada carta y dos series nuevas: Foil con grabados
+azul/plata y Doradas con miniaturas de manuscrito iluminado. Se mantienen los
+134 originales Normales y la Dorada final de Thal (mismos bytes y cinco vistas
+publicadas). Son 134 Foil nuevas y 133 Doradas nuevas; Thal completa la serie
+Dorada con su arte final. Prompts, fuentes y hashes públicos quedan en
+`../dev/arte/ediciones-placeholder-v1.json`. Se presenta primero la Colección
+aislada; no integrar ni publicar otra beta o producción hasta su aprobación.
+
+Revisión: https://aislados.caoz-tcg.pages.dev/coleccion/ . `estado=ediciones`
+muestra copias distintas (Eric 6, Thal 7 y Fender 7). Para recorrer una serie
+completa, usar `estado=muestrario&acabado=foil` o `acabado=dorado`; todas las
+ediciones tienen una copia temporal. `carta=tal` abre su detalle. El laboratorio
+no lee ni escribe progreso real y no expone el estudio ni la partida completa.
+
+`cantidad(id, acabado?)` cuenta una edición o el total. `otorgarCopia` suma;
+`desbloquear` conserva su semántica idempotente. Una Normal inicial por ID;
+los premium antiguos sin contadores migran a una copia por edición poseída,
+pues nunca se guardó el historial de duplicados. Abrir un sobre concede copias
+y guarda el pendiente atómicamente; reabrir y equipar no vuelven a concederlas.
+
+`art/encuadres.json` admite `variantes.foil/dorado` con URL local versionada,
+encuadre, vistas opcionales y metadatos de placeholder. Un reemplazo exacto del
+estudio o su herencia explícita prevalece; después va el original de esa edición
+y, si falta, Normal. El catálogo derivado expone `originales` sin cambiar
+`original`. El primer ajuste de un original premium en el estudio envía sus
+mismos bytes como PUT: un PATCH sin imagen haría heredar Normal en el backend
+existente. Restaurar vuelve al original local de esa edición. No se cambió D1.
+
+Pruebas acotadas: `pruebas_coleccion.mjs`, `pruebas_arte_ediciones.mjs`,
+`pruebas_originales_acabados.mjs`, `dev/secciones/pruebas_coleccion_copias.mjs`,
+`pruebas_coleccion_muestrario.mjs`, `pruebas_coleccion_protagonistas.mjs`
+y las guardas del exportador aislado. La batería del juego queda para después
+de aprobar la sección. El publicador del juego ya incluye las dos nuevas
+regresiones de arte para esa futura integración. Los retratos de Protagonistas
+llenan la carta de Colección; la corrección CSS está limitada a ese panel y
+conserva el formato de VS y los frentes de sobres. Las nuevas ilustraciones se
+cargan al verlas; no se añaden a la descarga inicial obligatoria del service worker.
+
 ## Beta 251 — Sello del Domo publicado y verificado
 
 Integrado mediante PR #8 en `develop`; fuente `09dd57cd5ac56c8470635c5da179c8b4db007094`,
