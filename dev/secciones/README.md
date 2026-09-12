@@ -192,8 +192,11 @@ ante indisponibilidad o pérdida de contexto. El laboratorio carga cinco
 cartas reales, arte público y renderer existente. No consume sobres,
 no desbloquea cartas ni ejecuta el motor.
 
-Estos módulos **todavía no están conectados al juego**. No cambia la build:
-se revisa este ajuste del cierre antes de integrar la apertura a Colección.
+El usuario aprobó la integración para beta 251. Colección utiliza estos mismos
+módulos con los premios reales de `coleccion-modelo.js`; la vista aislada
+conserva los datos temporales. El adaptador destruye la escena al salir y
+retoma el contenido pendiente sin gastar otro sobre. Si `onVolver` devuelve
+`false` porque no pudo guardar, el resumen permanece disponible para reintentar.
 
 ```sh
 node dev/secciones/pruebas_sobres_exportacion.mjs

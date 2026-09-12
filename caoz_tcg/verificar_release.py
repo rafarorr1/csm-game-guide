@@ -16,7 +16,7 @@ pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aa
 sw.js manifest.webmanifest tests.js estudio.html audio-domo.js sonidos.html
 sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js
 estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js acabados.css
-coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js _worker.js
+coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-apertura.css _worker.js
 _routes.json audio/catalogo.json
 """.split())
 

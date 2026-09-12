@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {generar,juego,hash} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
-const componentes=['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','coleccion.css','acabados.css'];
+const componentes=['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css'];
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 export function exportar(destino){
   destino=path.resolve(destino);

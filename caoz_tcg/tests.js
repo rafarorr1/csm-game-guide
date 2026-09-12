@@ -1928,6 +1928,161 @@ PRUEBAS.suite('coleccion',async t=>{
   }}finally{if(cache===null)localStorage.removeItem(clave);else localStorage.setItem(clave,cache);}
 });
 
+PRUEBAS.suite('coleccionSobres',async t=>{
+  // Inventario, diálogo, cartas y controlador reales. Sólo la funda 3D se
+  // detiene manualmente: así comprobamos cierres durante una apertura sin
+  // esperar la cinemática ni depender de WebGL en los iframes del arnés.
+  for(const [pagina,ancho,alto] of [['index.html',1440,1040],['movil.html',390,844]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=coleccion-sobres-interno';document.body.append(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,escenaAntes=w.CAOZ_SOBRES_ESCENA,media=w.matchMedia;
+    const decodeAntes=w.HTMLImageElement.prototype.decode,azarAntes=w.crypto.getRandomValues,guardarAntes=w.Storage.prototype.setItem,urlAntes=w.urlArte;
+    const escenas=[],decodificadas=new Set(),liberarImagenes=[];let inventario,bloquearArte=true;
+    const drenar=async()=>{for(let i=0;i<14;i++)await Promise.resolve();};
+    const esperar=async(condicion,mensaje)=>{const inicio=Date.now();while(!condicion()&&Date.now()-inicio<8000)await sleep(10);t.check(condicion(),pagina+': '+mensaje);};
+    const raiz=()=>d.querySelector('.sobresApertura'),accion=()=>d.querySelector('.sobresAccion');
+    const panel=()=>d.querySelector('#coleccionPanel');
+    const pulsar=async()=>{t.check(!!accion(),pagina+': la acción del sobre existe.');accion().click();await drenar();};
+    const escogerPremios=()=>{
+      // Conserva abrirSobre y el guardado atómico; fija únicamente la fuente
+      // de azar para que todas las ilustraciones del caso sean reproducibles.
+      const candidatos=w.CAOZ_COLECCION.ids().slice(),premios=['tal','rey','eric','armadura','zancada'];let tirada=0;
+      w.crypto.getRandomValues=arr=>{const id=premios[tirada++],i=candidatos.indexOf(id);arr[0]=i>=0?Math.floor((i+.5)/candidatos.length*4294967296):123456;if(i>=0)candidatos.splice(i,1);return arr;};
+    };
+    const nuevaDesdeMenu=async()=>{
+      const pestaña=[...panel().querySelectorAll('.coleccionPestana')].find(b=>/^Sobres/.test(b.textContent));
+      t.check(!!pestaña,pagina+': hay acceso a Sobres desde Colección.');pestaña.click();
+      const abrir=panel().querySelector('.coleccionAbrirSobre');t.check(abrir&&!abrir.disabled,pagina+': el premio habilita Abrir sobre.');abrir.click();await drenar();
+      await esperar(()=>!!raiz(),'abrir un premio monta el componente real dentro de Colección.');return raiz();
+    };
+    const terminarFunda=async()=>{
+      await pulsar();const e=escenas.at(-1);
+      await esperar(()=>e.abiertas===1,'el arte listo permite comenzar la rotura.');e.soltar();await drenar();
+      t.igual(raiz().dataset.fase,'pila',pagina+': retirar la funda deja el bonche boca abajo.');
+    };
+    const revelarTodas=async(cantidad)=>{
+      const frentes=[...raiz().querySelectorAll('.sobresFrente')];
+      t.igual(frentes.length,cantidad,pagina+': prepara una sola carta real por premio.');
+      for(let i=0;i<cantidad;i++){
+        await pulsar();
+        t.igual(raiz().querySelectorAll('.sobresReverso').length,cantidad-i-1,pagina+': cada toque retira un solo reverso.');
+        const visible=raiz().querySelector('.sobresPila > .sobresFrente');
+        t.check(visible===frentes[i],pagina+': el volteo reutiliza la carta '+(i+1)+' ya preparada.');
+        t.igual(raiz().dataset.fase,i===cantidad-1?'ultima':'pila',pagina+': la última carta conserva su turno de lectura.');
+        t.check(raiz().querySelector('.sobresResumen').hidden,pagina+': todavía no sustituye la carta visible por el resumen.');
+      }
+      await pulsar();
+      t.igual(raiz().dataset.fase,'terminado',pagina+': un toque adicional reúne las cartas.');
+      t.igual(raiz().querySelectorAll('.sobresResumen .sobresPremio').length,cantidad,pagina+': el resumen contiene todos los premios.');
+      t.check(frentes.every(n=>raiz().querySelector('.sobresResumen').contains(n)),pagina+': el resumen conserva los mismos nodos e ilustraciones.');
+      t.igual(accion().textContent,'Volver',pagina+': el resumen ofrece una salida explícita.');
+    };
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
+      t.check(typeof w.CAOZ_SOBRES?.crear==='function'&&typeof escenaAntes?.crear==='function',pagina+': la carga normal del juego incluye los módulos de sobres.');
+      w.relojPara();await w.cargarArte();
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:true,addEventListener(){},removeEventListener(){}}:media.call(w,q);
+      w.HTMLImageElement.prototype.decode=function(){
+        const imagen=this,original=()=>Promise.resolve(decodeAntes?.call(imagen)).then(()=>{decodificadas.add(imagen);});
+        return bloquearArte&&imagen.closest('.sobresReserva')?new Promise((resolve,reject)=>liberarImagenes.push(()=>original().then(resolve,reject))):original();
+      };
+      w.CAOZ_SOBRES_ESCENA={crear(host,op){
+        const e={host,abiertas:0,destruida:0,giros:0,terminar:null,orientar(){this.giros++;},redimensionar(){},rectangulo(){return{x:20,y:20,width:200,height:300};},
+          abrir(){this.abiertas++;this.arteListo=[...host.closest('.sobresApertura').querySelectorAll('.sobresFrente img')].every(img=>img.complete&&img.naturalWidth>0&&decodificadas.has(img));return new Promise(r=>{this.terminar=r;});},
+          soltar(){op.alRomper?.();const r=this.terminar;this.terminar=null;r?.();},
+          destruir(){this.destruida++;const r=this.terminar;this.terminar=null;r?.();}};
+        escenas.push(e);return e;
+      }};
+
+      t.check(m.concederSobreCampana('regresion-sobre-uno')&&m.concederSobreCampana('regresion-sobre-uno'),pagina+': la campaña concede su premio de forma idempotente.');
+      t.igual(m.sobres(),1,pagina+': repetir el recibo de campaña conserva un solo sobre.');
+      escogerPremios();w.showGallery();const primera=await nuevaDesdeMenu(),pack=m.pendiente(),contenido=JSON.stringify(pack);
+      t.check(pack?.cartas.length===5&&pack.cartas.every(c=>c.acabado==='foil'&&m.tiene(c.id,c.acabado)),pagina+': consume un sobre y guarda sus cinco Foil antes de presentarlas.');
+      t.igual(m.sobres(),0,pagina+': abrir desde Colección consume exactamente un sobre.');
+      t.check(pack.cartas.every(c=>m.elegido(c.id)==='normal'),pagina+': recibir premios conserva las ediciones equipadas.');
+      t.igual(primera.querySelectorAll('.sobresReverso').length,5,pagina+': el sobre nuevo contiene cinco reversos.');
+      const gesto=primera.querySelector('.sobresGesto'),capturar=gesto.setPointerCapture;
+      const puntero=(n,tipo,id,x,y)=>n.dispatchEvent(new w.PointerEvent(tipo,{bubbles:true,cancelable:true,pointerType:'touch',pointerId:id,isPrimary:true,button:0,buttons:tipo==='pointerup'?0:1,clientX:x,clientY:y}));
+      const clic=n=>n.dispatchEvent(new w.MouseEvent('click',{bubbles:true,cancelable:true,detail:1}));
+      try{
+        // Los PointerEvent sintetizados no tienen una captura nativa activa.
+        // Sólo se sustituye esa llamada; los eventos recorren los listeners
+        // del componente y los del documento, incluida la guardia móvil.
+        gesto.setPointerCapture=()=>{};
+        puntero(gesto,'pointerdown',41,120,120);puntero(gesto,'pointermove',41,170,150);puntero(gesto,'pointerup',41,170,150);clic(gesto);
+        t.check(escenas[0].giros>0&&raiz().dataset.fase==='sellado'&&escenas[0].abiertas===0,pagina+': arrastrar gira el sobre sin abrirlo.');
+        // Es otro toque inmediato, sin esperar los 500 ms de la supresión de
+        // clics del tablero: esa guardia no debe consumir acciones del sobre.
+        const romper=accion();puntero(romper,'pointerdown',42,150,470);puntero(romper,'pointerup',42,150,470);clic(romper);
+        t.igual(raiz().dataset.fase,'preparando',pagina+': tocar Romper sello inmediatamente después de arrastrar comienza la preparación.');
+      }finally{gesto.setPointerCapture=capturar;}
+      await esperar(()=>liberarImagenes.length>0,'espera a decodificar las ilustraciones reales.');
+      t.igual(raiz().dataset.fase,'preparando',pagina+': la rotura espera mientras el arte no puede pintarse.');
+      t.igual(escenas[0].abiertas,0,pagina+': no rompe la funda antes de tener el arte listo.');
+      t.check(m.seleccionar(pack.cartas[0].id,'foil'),pagina+': un cambio de colección puede llegar durante la preparación.');
+      t.check(raiz()===primera&&escenas.length===1,pagina+': ese evento conserva la instancia y las descargas del mismo pending.');
+      bloquearArte=false;liberarImagenes.splice(0).forEach(f=>f());
+      await esperar(()=>escenas[0].abiertas===1,'continúa al terminar la decodificación.');
+      t.check(escenas[0].arteListo,pagina+': todas las imágenes están cargadas y decodificadas al empezar la apertura.');
+      escenas[0].soltar();await drenar();
+      const imagenes=[...raiz().querySelectorAll('.sobresFrente img')],fuentes=imagenes.map(n=>n.getAttribute('src')),mutaciones=[];
+      const vigilarArte=new w.MutationObserver(cambios=>mutaciones.push(...cambios));vigilarArte.observe(primera,{subtree:true,attributes:true,attributeFilter:['src']});
+      try{
+        // La actualización y su observer son reales. Simulamos una publicación
+        // que cambia la URL para que incluso un cambio y restauración de src
+        // dentro del mismo turno sea detectado antes del siguiente volteo.
+        w.urlArte=(id,n)=>id==='tal'?'art/rey.webp':urlAntes(id,n);w.CAOZ_ARTE.actualizar();w.urlArte=urlAntes;await drenar();
+        t.check(raiz()===primera&&imagenes.every((n,i)=>n.isConnected&&n.getAttribute('src')===fuentes[i])&&!mutaciones.length,pagina+': refrescar el arte no reconstruye ni cambia las imágenes ya decodificadas del sobre.');
+      }finally{w.urlArte=urlAntes;vigilarArte.disconnect();}
+      await revelarTodas(5);
+      t.igual(JSON.stringify(m.pendiente()),contenido,pagina+': descubrir la quinta y reunirlas no borra el recibo pendiente.');
+      await pulsar();
+      t.check(!m.pendiente()&&!raiz()&&panel().open,pagina+': Volver cierra el pending y regresa a Colección.');
+      t.check(m.sobres()===0&&pack.cartas.every(c=>m.tiene(c.id,c.acabado)),pagina+': volver conserva premios y contador.');
+      t.igual(escenas[0].destruida,1,pagina+': Volver libera una sola vez la escena.');
+
+      t.check(m.concederSobreCampana('regresion-sobre-dos'),pagina+': concede otro recorrido independiente.');escogerPremios();await nuevaDesdeMenu();
+      const persistido=JSON.stringify(m.pendiente());await pulsar();const interrumpida=escenas.at(-1);
+      await esperar(()=>interrumpida.abiertas===1,'el segundo sobre alcanza la apertura.');
+      const retirada=raiz();panel().querySelector('.coleccionCerrar').click();
+      t.check(!panel().open&&!retirada.isConnected&&interrumpida.destruida===1,pagina+': cerrar Colección destruye inmediatamente la apertura activa.');
+      t.igual(JSON.stringify(m.pendiente()),persistido,pagina+': cerrar durante la rotura conserva exactamente sus premios.');
+      w.showGallery();await esperar(()=>!!raiz(),'reabrir monta el mismo pending después de preparar su arte.');const reabierta=raiz();interrumpida.soltar();await drenar();
+      t.check(reabierta&&raiz()===reabierta&&reabierta.isConnected&&escenas.at(-1).destruida===0,pagina+': un close o callback tardío no desmonta la reapertura.');
+      t.igual(JSON.stringify(m.pendiente()),persistido,pagina+': reabrir recupera el mismo pending.');t.igual(m.sobres(),0,pagina+': la recuperación no consume otro sobre.');
+      await terminarFunda();await revelarTodas(5);
+      // El modelo real devuelve false cuando setItem falla: la salida sigue
+      // disponible y las recompensas no se pierden ni vuelven a sortearse.
+      w.Storage.prototype.setItem=function(k,v){if(k===m.clave&&JSON.parse(v).pendiente===null)throw new Error('Cuota de prueba agotada');return guardarAntes.call(this,k,v);};
+      await pulsar();
+      t.check(panel().open&&m.pendiente()&&m.sobres()===0,pagina+': un fallo al cerrar conserva el recibo y el contador.');
+      const reintentar=panel().querySelector('.coleccionReintentarCierre');
+      t.check(reintentar&&!reintentar.disabled,pagina+': el fallo de guardado ofrece Reintentar sin volver a revelar las cartas.');
+      w.Storage.prototype.setItem=guardarAntes;reintentar.click();await drenar();
+      t.check(!m.pendiente()&&!raiz()&&panel().open,pagina+': reintentar completa el mismo cierre después de recuperar el almacenamiento.');
+
+      panel().querySelector('.coleccionCerrar').click();await drenar();
+      const antiguas=[{id:'tal',acabado:'foil',nueva:false},{id:'lider_fender',acabado:'dorado',nueva:true},{id:'armadura',acabado:'dorado',nueva:true}];
+      antiguas.forEach(c=>t.check(m.desbloquear(c.id,c.acabado),pagina+': prepara el premio de una edición anterior.'));
+      m.concederSobreCampana('reserva-legado-uno');m.concederSobreCampana('reserva-legado-dos');
+      const legado=m.leer();legado.pendiente={id:'sobre-legado-tres',creado:1,cartas:antiguas};w.localStorage.setItem(m.clave,JSON.stringify(legado));
+      w.showGallery();await esperar(()=>!!raiz(),'monta el pending legado.');t.check(m.pendiente()?.cartas.length===3&&raiz(),pagina+': reconoce y abre un pending legado de tres cartas.');
+      t.igual(raiz().querySelectorAll('.sobresReverso').length,3,pagina+': el legado prepara sólo tres reversos.');
+      for(const c of antiguas){const frente=raiz().querySelector('.sobresFrente[data-carta="'+c.id+'"] .sobresCarta');t.check(frente?.dataset.acabado===c.acabado,pagina+': conserva la edición real del premio '+c.id+'.');}
+      await terminarFunda();await revelarTodas(3);
+      t.check(!/^Tus 3 cartas Foil$/.test(raiz().querySelector('.sobresEstado').textContent),pagina+': no anuncia como Foil las Doradas del legado.');
+      t.check([...raiz().querySelectorAll('.sobresPremio')].some(n=>/Dorada|Dorado/.test(n.getAttribute('aria-label'))),pagina+': el resumen anuncia la edición Dorada original.');
+      await pulsar();t.check(!m.pendiente()&&m.sobres()===2&&antiguas.every(c=>m.tiene(c.id,c.acabado)),pagina+': cerrar el legado conserva sus premios y los dos sobres sin abrir.');
+      t.check(escenas.every(e=>e.destruida===1),pagina+': todas las escenas utilizadas se destruyen una sola vez.');
+      t.nota(pagina+': premio real, arte decodificado, cinco volteos, toque final, recuperación de cierre y legado de tres cartas.');
+    }finally{
+      bloquearArte=false;liberarImagenes.splice(0).forEach(f=>f());w.Storage.prototype.setItem=guardarAntes;
+      d.querySelector('#coleccionPanel .coleccionCerrar')?.click();w.HTMLImageElement.prototype.decode=decodeAntes;w.crypto.getRandomValues=azarAntes;w.matchMedia=media;w.CAOZ_SOBRES_ESCENA=escenaAntes;w.urlArte=urlAntes;
+      inventario?.restaurar();w.relojPara();f.remove();
+    }
+  }
+});
+
 PRUEBAS.suite('campanaRetratosBeta',async t=>{
   const claves=['caoz.campana.v1.prueba','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
   const previos=claves.map(k=>localStorage.getItem(k));

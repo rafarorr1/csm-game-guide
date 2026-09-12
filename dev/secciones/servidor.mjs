@@ -7,7 +7,7 @@ import {generar,juego,vistas} from './fuentes.mjs';
 const carpeta=path.dirname(fileURLToPath(import.meta.url));
 const prefijo='/dev/secciones/';
 const publicos=new Set(['coleccion.html','memoria.js','coleccion-dev.js','aislado.css']);
-const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','coleccion.css','acabados.css']);
+const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css']);
 const mime={'.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 function enviar(res,estado,cuerpo,tipo){res.writeHead(estado,{'Content-Type':tipo,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':csp});res.end(cuerpo);}

@@ -1,5 +1,25 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 251 · Sello del Domo en Colección · 2026-09-12
+
+- El sobre se puede girar con el dedo o el ratón; el sello se rompe y la
+  envoltura sale por abajo para dejar el bonche de cartas boca abajo.
+- Cada toque revela una carta. La quinta espera otro toque antes de presentar
+  todas juntas; «Volver» regresa a los sobres de Colección.
+- Las cartas muestran ilustración y nombre sin habilidades ni nombres
+  repetidos. Los cinco frentes esperan descarga y decodificación antes de
+  abrir el sello, y se reutilizan hasta el resumen sin recargar imágenes.
+- El giro táctil no bloquea un toque inmediato en «Romper el sello».
+  El arte del premio queda fijo frente a actualizaciones del catálogo.
+- Se conserva el contenido pendiente al salir o recargar. Los sobres antiguos
+  de tres cartas mantienen sus ediciones, incluidos protagonistas y Doradas.
+  Si una imagen o el guardado falla, hay un reintento sin consumir otro sobre.
+- Escena WebGL con alternativa Canvas2D, movimiento reducido y limpieza al
+  abandonar la vista. Premios, equipamiento y reglas de combate conservados.
+- Validación completa verde, con seis tutoriales y 2880 partidas sin errores;
+  comprobación visual del recorrido real en móvil pequeño, móvil y escritorio.
+- Integración autorizada de la revisión aislada en beta; producción sigue en 250.
+
 ### v21 · build 250 · Colección continua y corte defendible · 2026-09-12
 
 - Colección con tres cartas por fila, scroll vertical y separación compacta;

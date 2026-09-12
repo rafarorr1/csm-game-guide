@@ -7,7 +7,7 @@ const ruta=new URL('../../caoz_tcg/sobres-apertura.js',import.meta.url);
 const fuente=fs.readFileSync(ruta,'utf8');
 const microtareas=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 
-function entorno(codigo,{cantidad=5,reducido=true,imagenes=null}={}){
+function entorno(codigo,{cantidad=5,reducido=true,imagenes=null,rechazarVuelta=false}={}){
   const nodos=[],ilustraciones=[],medidas={cartas:0,vueltas:0,orientaciones:0,retirados:0,movidos:0,cambios:0,aperturas:0,decodes:0};
   let ahora=0,siguienteTarea=0;
   const tareas=new Map(),programar=(fn,ms=0,raf=false)=>{const id=++siguienteTarea;tareas.set(id,{fn,cuando:ahora+ms,raf});return id;};
@@ -61,7 +61,7 @@ function entorno(codigo,{cantidad=5,reducido=true,imagenes=null}={}){
       }
       return carta;
     },
-    onCambio:()=>medidas.cambios++,onVolver:()=>medidas.vueltas++});
+    onCambio:()=>medidas.cambios++,onVolver:()=>{medidas.vueltas++;return rechazarVuelta&&medidas.vueltas===1?false:undefined;}});
   const gesto=nodos.find(n=>n.className==='sobresGesto');
   const puntero=(id,x=0)=>({pointerType:'touch',pointerId:id,clientX:x,clientY:0});
   const tocar=(id=1)=>{gesto.emitir('pointerdown',puntero(id));gesto.emitir('pointerup',puntero(id));gesto.emitir('click',{detail:1});};
@@ -185,6 +185,21 @@ async function resumenSoloOtroToque(codigo){
   }
 }
 
+async function reintentarCierre(codigo){
+  const e=entorno(codigo,{cantidad:1,rechazarVuelta:true});
+  try{
+    await e.abrir();e.tocar();await e.hasta('ultima');e.tocar();await e.hasta('terminado');
+    const frentes=e.presentes('sobresFrente');
+    e.componente.activar();await microtareas();
+    assert.equal(e.medidas.vueltas,1);assert.equal(e.componente.estado().fase,'terminado','Rechazar el guardado debe dejar reintentar el cierre');
+    assert.equal(e.presentes('sobresApertura')[0].style.opacity,'','El resumen vuelve a ser visible');
+    assert.deepEqual(e.presentes('sobresFrente'),frentes,'Reintentar no vuelve a crear los premios');
+    e.componente.activar();await microtareas();
+    assert.equal(e.medidas.vueltas,2);assert.equal(e.componente.estado().fase,'cerrando');
+    e.componente.activar();await microtareas();assert.equal(e.medidas.vueltas,2);
+  }finally{e.componente.destruir();}
+}
+
 async function volverUnaVez(codigo){
   const e=entorno(codigo,{reducido:false});
   try{
@@ -298,16 +313,20 @@ console.log('✓ La quinta espera otro toque; tiempo, visibilidad y movimiento r
 console.log('✓ El resumen contiene cinco cartas una sola vez y Volver se ejecuta una sola vez.');
 console.log('✓ Destrucción sin callbacks tardíos, segundo dedo independiente y toques sin cola.');
 
+await reintentarCierre(fuente);
+console.log('✓ Un guardado rechazado restaura el resumen y permite reintentar sin recrear las cartas.');
+
 if(process.argv.includes('--sabotaje')){
   function reemplazar(texto,buscar,cambio,cantidad=1){assert.equal(texto.split(buscar).length-1,cantidad,'El sabotaje debe encontrar la corrección exacta');return texto.replaceAll(buscar,cambio);}
   function enFuncion(texto,inicio,fin,mutacion){const a=texto.indexOf(inicio),b=texto.indexOf(fin,a);assert.ok(a>=0&&b>a,'El sabotaje debe delimitar la función correcta');return texto.slice(0,a)+mutacion(texto.slice(a,b))+texto.slice(b);}
   const casos=[
+    ['ocultar el resumen al fallar el guardado',reintentarCierre,reemplazar(fuente,"if(opciones.onVolver?.()===false&&!muerto){raiz.style.opacity='';cambiar('terminado');}",'opciones.onVolver?.();')],
     ['activar después de destruir',destruidoNoVuelve,reemplazar(reemplazar(fuente,'function activar(){if(muerto)return;','function activar(){'),"if(fase!=='terminado'||muerto)return;","if(fase!=='terminado')return;")],
     ['continuar un volteo destruido',destruirEntreContinuaciones,enFuncion(fuente,'async function voltear(){','function activar(){',s=>reemplazar(s,'})||muerto)return;','}))return;',3))],
     ['cancelación de otro dedo',segundoDedoNoCancela,reemplazar(fuente,"if(e&&typeof e.pointerId==='number'&&puntero&&e.pointerId!==puntero.id)return;",'')],
     ['resumen antes de la quinta',resumenSoloOtroToque,reemplazar(fuente,"cambiar(reveladas===cartas.length?'ultima':'pila');","cambiar(reveladas===cartas.length-1?'ultima':'pila');")],
     ['avance automático tras la quinta',resumenSoloOtroToque,reemplazar(fuente,"cambiar(reveladas===cartas.length?'ultima':'pila');","cambiar(reveladas===cartas.length?'ultima':'pila');if(fase==='ultima')setTimeout(()=>reunir(),900);")],
-    ['doble callback al volver',volverUnaVez,reemplazar(fuente,'opciones.onVolver?.();','opciones.onVolver?.();opciones.onVolver?.();')],
+    ['doble callback al volver',volverUnaVez,reemplazar(fuente,'if(opciones.onVolver?.()===false','opciones.onVolver?.();if(opciones.onVolver?.()===false')],
     ['continuar un resumen destruido',cancelarDuranteResumen,enFuncion(fuente,'async function reunir(){','async function volver(){',s=>reemplazar(s,'})||muerto)return;','}))return;'))],
     ['abrir sin esperar el arte',esperarCargaYDecode,reemplazar(fuente,'const lista=await prepararArte(reintentar);','const lista=true;')],
     ['omitir decode de imágenes completas',esperarCargaYDecode,reemplazar(fuente,"if(typeof img.decode==='function')await img.decode();",'')],

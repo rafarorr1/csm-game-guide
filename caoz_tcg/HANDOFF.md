@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 250 (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 251 (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,7 @@ números) → el código.
 
 ---
 
-## Sobres 3D — Sello del Domo elegido; revisión del cierre
+## Sobres 3D — Sello del Domo integrado para beta 251
 
 Rama `feature/sobres-apertura-3d`, desde `develop` (producción/beta 250).
 Revisión en https://aislados.caoz-tcg.pages.dev/sobres/ . El usuario eligió
@@ -25,10 +25,20 @@ Los cinco frentes se crean al montar el sobre y esperan descarga y `decode()`
 antes de romper el sello. Los mismos nodos se reutilizan en cada revelación
 y en el resumen. Si una imagen falla, el sobre queda cerrado y permite
 reintentar; destruir la vista cancela las esperas pendientes.
-Los módulos `sobres-apertura.js/css` y `sobres-escena.js` todavía no están
-conectados a Colección en el juego. Esta revisión permite confirmar el cierre
-solicitado antes de integrar, validar y publicar beta. Usa cinco Foils locales,
-sin consumir sobres ni guardar inventario. Detalles en `../dev/secciones/README.md`.
+El usuario aprobó integrar y publicar beta el 2026-09-12. Los módulos
+`sobres-apertura.js/css` y `sobres-escena.js` se conectan a Colección con
+las cartas del sobre pendiente real. El modelo conserva premios e inventario;
+cerrar la vista a mitad no gasta otro sobre ni cambia las cartas. «Volver»
+cierra el pendiente; un fallo de guardado conserva el resumen para reintentar.
+La revisión aislada mantiene su memoria temporal. Detalles en `../dev/secciones/README.md`.
+La build 251 incluye los tres archivos en el cargador, PWA y paquete verificado.
+Validación completa verde con `publicar.sh --solo-pruebas --completo`,
+incluidos seis tutoriales y banco de 2880 partidas sin errores. El recorrido
+real de Colección pasó en 320×568, 390×844 y 1440×900 sin scroll ni recursos
+fallidos. Se detectaron por sabotaje tanto el refresco tardío del arte como
+el bloqueo del toque móvil después de girar la funda.
+Publicar desde develop con `publicar.sh --beta --completo`.
+Producción y main permanecen en build 250.
 
 ## Producción 250 — promoción autorizada y verificada (2026-09-12)
 
