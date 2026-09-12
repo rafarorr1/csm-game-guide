@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 251 (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 252 en preparación (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,7 @@ números) → el código.
 
 ---
 
-## Colección para revisión aislada — copias y originales por acabado
+## Beta 252 — Colección aprobada para integración
 
 Rama `feature/coleccion-copias-ediciones`, desde `develop`/beta251. El usuario
 pidió copias por carta y dos series nuevas: Foil con grabados
@@ -18,8 +18,10 @@ azul/plata y Doradas con miniaturas de manuscrito iluminado. Se mantienen los
 134 originales Normales y la Dorada final de Thal (mismos bytes y cinco vistas
 publicadas). Son 134 Foil nuevas y 133 Doradas nuevas; Thal completa la serie
 Dorada con su arte final. Prompts, fuentes y hashes públicos quedan en
-`../dev/arte/ediciones-placeholder-v1.json`. Se presenta primero la Colección
-aislada; no integrar ni publicar otra beta o producción hasta su aprobación.
+`../dev/arte/ediciones-placeholder-v1.json`. El usuario aprobó la sección aislada
+y pidió publicarla en beta el 2026-09-12. Se prepara la build 252 en PR #9 hacia
+`develop`; producción permanece en 250. La publicación se registra después de
+validar el juego completo y los archivos servidos.
 
 Revisión del listado: debajo de cada carta quedan únicamente los marcadores
 de las ediciones poseídas (Normal, Foil y Dorada); no se dibujan las bloqueadas
@@ -50,9 +52,9 @@ existente. Restaurar vuelve al original local de esa edición. No se cambió D1.
 Pruebas acotadas: `pruebas_coleccion.mjs`, `pruebas_arte_ediciones.mjs`,
 `pruebas_originales_acabados.mjs`, `dev/secciones/pruebas_coleccion_copias.mjs`,
 `pruebas_coleccion_muestrario.mjs`, `pruebas_coleccion_protagonistas.mjs`
-y las guardas del exportador aislado. La batería del juego queda para después
-de aprobar la sección. El publicador del juego ya incluye las dos nuevas
-regresiones de arte para esa futura integración. Los retratos de Protagonistas
+y las guardas del exportador aislado. La integración ejecuta la batería completa
+del juego, incluidos tutoriales. El publicador del juego incluye las dos nuevas
+regresiones de arte. Los retratos de Protagonistas
 llenan la carta de Colección; la corrección CSS está limitada a ese panel y
 conserva el formato de VS y los frentes de sobres. Las nuevas ilustraciones se
 cargan al verlas; no se añaden a la descarga inicial obligatoria del service worker.

@@ -1,6 +1,6 @@
 # Registro de versiones — el TCG del Domo
 
-### Sin numerar · revisión aislada · Copias y arte por edición · 2026-09-12
+### Sin numerar · build 252 · Ediciones desbloqueadas y arte Foil y Dorado · 2026-09-12
 
 - Debajo de cada carta aparecen sólo los marcadores de sus ediciones
   desbloqueadas, con la edición en uso resaltada, sin contador ni etiqueta.
@@ -14,8 +14,8 @@
 - Los inventarios anteriores parten de una copia por edición desbloqueada:
   el historial de duplicados no se guardaba. Los nuevos duplicados sí se cuentan.
 - El laboratorio permite recorrer ambas series con un inventario temporal,
-  sin alterar progreso real. Esta revisión no cambia la build ni publica beta
-  o producción; la integración queda pendiente de aprobar la sección.
+  sin alterar progreso real. Integración autorizada de la revisión aislada
+  en beta 252; producción permanece en 250.
 
 ### Sin numerar · build 251 · Sello del Domo en Colección · 2026-09-12
 
