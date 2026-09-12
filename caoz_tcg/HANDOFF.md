@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-11 · beta 249 (rama develop) · producción 245 (rama main) · v20 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 250 (rama develop) · producción 245 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -9,6 +9,15 @@ lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) �
 números) → el código.
 
 ---
+
+## Beta 250 — integración autorizada el 2026-09-12
+
+Se integran los PR #5 (Colección) y #6 (El Rey). Validación completa verde,
+incluidos seis tutoriales, campaña/Pitágoras, online, regresiones y banco de
+2880 partidas sin errores ni cartas sin jugar. También se comprueban móvil y
+escritorio por la ruta real Menú → Extras → Colección, Thal, detalle y regreso.
+El catálogo del estudio contiene la descripción actualizada de El Rey.
+Se publica sólo beta mediante publicar.sh; producción 245 permanece intacta.
 
 ## Colección: tres columnas y scroll — aprobada para beta 250
 

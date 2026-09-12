@@ -3224,27 +3224,43 @@ PRUEBAS.suite('tipografia', async t => {
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=tipografia-interna';document.body.appendChild(f);await carga;
     const w=f.contentWindow,d=f.contentDocument;
     try{
-    w.showGallery();await sleep(200);
+    w.showGallery();await d.fonts.ready;await sleep(750);
     const panel=d.querySelector('#coleccionPanel');t.check(panel?.open,pagina+': la colección debe abrirse para revisar todos los títulos.');
     panel.querySelector('.coleccionPestanas button').click();
     const buscar=panel.querySelector('input[type="search"]');buscar.value='';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
     for(const select of panel.querySelectorAll('.coleccionFiltros select')){select.value='todos';select.dispatchEvent(new w.Event('change',{bubbles:true}));}
-    const visitadas=new Set(),cortados=[],descentrados=[];
-    for(let indice=0;indice<100;indice++){
-      await new Promise(r=>w.requestAnimationFrame(r));
-      const cartas=[...panel.querySelectorAll('.coleccionMini')];t.check(cartas.length>0,pagina+': cada página de colección debe mostrar cartas.');
-      for(const carta of cartas){
-        visitadas.add(carta.dataset.carta);
-        for(const nombre of carta.querySelectorAll('.nombreCarta,.coleccionMiniInfo>strong')){
-          if(nombre.scrollHeight>nombre.clientHeight+2||nombre.scrollWidth>nombre.clientWidth+2)cortados.push(nombre.textContent);
-          if(w.getComputedStyle(nombre).textAlign!=='center')descentrados.push(nombre.textContent);
-        }
+    const ajustar=()=>new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));
+    await ajustar();
+    const visitadas=new Set(),cortados=[],descentrados=[],cartas=[...panel.querySelectorAll('.coleccionMini')];
+    let grid=panel.querySelector('.coleccionRejilla');
+    t.check(!!grid&&!panel.querySelector('.coleccionPaginas'),pagina+': el catálogo debe recorrerse con scroll, sin páginas.');
+    for(const carta of cartas){
+      visitadas.add(carta.dataset.carta);
+      const nombres=carta.querySelectorAll('.nm,.lname,.nombreCarta,.coleccionMiniInfo>strong');
+      t.check(nombres.length>0,pagina+': falta el nombre real de '+carta.dataset.carta+'.');
+      for(const nombre of nombres){
+        if(nombre.scrollHeight>nombre.clientHeight+2||nombre.scrollWidth>nombre.clientWidth+2)cortados.push(nombre.textContent);
+        if(w.getComputedStyle(nombre).textAlign!=='center')descentrados.push(nombre.textContent);
       }
-      const siguiente=panel.querySelector('.coleccionPaginas button:last-child');if(siguiente.disabled)break;siguiente.click();
     }
-    t.check(visitadas.size>80&&visitadas.size===w.CAOZ_COLECCION.ids().length,pagina+': la paginación debe permitir revisar el catálogo completo, no sólo la primera página.');
+    t.check(visitadas.size>80&&visitadas.size===w.CAOZ_COLECCION.ids().length,pagina+': deben estar disponibles todas las cartas del catálogo.');
     t.check(!cortados.length,pagina+': nombres recortados: '+[...new Set(cortados)].join(', '));
     t.check(!descentrados.length,pagina+': los nombres deben estar centrados: '+[...new Set(descentrados)].join(', '));
+    const primeras=cartas.slice(0,6).map(n=>n.getBoundingClientRect());
+    t.check(primeras.length===6&&primeras[0].width>0&&primeras[0].left<primeras[1].left&&primeras[1].left<primeras[2].left&&Math.abs(primeras[0].top-primeras[2].top)<2&&Math.abs(primeras[3].left-primeras[0].left)<2&&primeras[3].top>=primeras[0].bottom-2,pagina+': deben verse exactamente tres cartas por fila.');
+    t.check(grid.scrollHeight>grid.clientHeight+20&&['auto','scroll'].includes(w.getComputedStyle(grid).overflowY),pagina+': el listado completo debe permitir scroll interno.');
+    t.check(grid.scrollWidth<=grid.clientWidth+2,pagina+': el listado no debe desbordarse horizontalmente.');
+    grid.scrollTop=grid.scrollHeight;await ajustar();
+    const limite=grid.getBoundingClientRect(),ultima=cartas[cartas.length-1].getBoundingClientRect();
+    t.check(ultima.top>=limite.top-2&&ultima.bottom<=limite.bottom+2,pagina+': la última carta no se puede alcanzar al final del scroll.');
+    const elegida=cartas[Math.floor(cartas.length/2)],pos=elegida.getBoundingClientRect();
+    grid.scrollTop+=pos.top-limite.top-(grid.clientHeight-pos.height)/2;await ajustar();
+    const desplazamiento=grid.scrollTop,id=elegida.dataset.carta;elegida.focus({preventScroll:true});elegida.click();await ajustar();
+    t.igual(panel.dataset.vista,'detalle',pagina+': abrir una carta a mitad de la lista debe mostrar sus versiones.');
+    panel.querySelector('.coleccionAtras').click();await ajustar();grid=panel.querySelector('.coleccionRejilla');
+    t.check(Math.abs(grid.scrollTop-desplazamiento)<=2,pagina+': volver de una carta pierde la posición de la lista.');
+    t.igual(d.activeElement?.dataset.carta,id,pagina+': volver del detalle debe recuperar el foco de la carta.');
+    t.nota(pagina+': '+visitadas.size+' nombres reales, tres columnas, última carta accesible y posición/foco restaurados.');
     }finally{d.querySelector('#coleccionPanel')?.close();w.relojPara();f.remove();}
   }
 });
