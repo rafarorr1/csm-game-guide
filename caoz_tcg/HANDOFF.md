@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 250 (rama develop) · producción 245 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 250 (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,6 +10,20 @@ números) → el código.
 
 ---
 
+## Producción 250 — promoción autorizada y verificada (2026-09-12)
+
+El usuario autorizó promover la beta 250. PR #7 integrado por avance directo:
+fuente `c55b6b9dd27efaa03dd972414121cec8a95ff622`, etiqueta inmutable `build-250`.
+Publicado con `publicar.sh --produccion --completo`; arnés completo verde,
+incluidos seis tutoriales y banco de 2880 partidas sin errores ni atascos.
+Artefacto `gh-pages:35dbad6e956aa6cb46240da6e49fa34b1d01eea4`.
+Los 228 archivos de `tcg/` coinciden exactamente con `tcg-beta/` y la beta
+aprobada (árbol `ef89d9dee2697f22e790565e0c4e5d1f7bdd4b15`). Verificados byte
+a byte en GitHub Pages y https://juego.caozcontodo.com/, incluidas web y móvil,
+catálogo, originales y los 37 sonidos. Se conservan las ramas beta y aislados;
+no se transfieren bases de datos, borradores ni secretos de los estudios.
+Las notas de producción245 más abajo describen etapas anteriores a esta promoción.
+
 ## Beta 250 — integración autorizada el 2026-09-12
 
 Se integran los PR #5 (Colección) y #6 (El Rey). Validación completa verde,
@@ -17,7 +31,8 @@ incluidos seis tutoriales, campaña/Pitágoras, online, regresiones y banco de
 2880 partidas sin errores ni cartas sin jugar. También se comprueban móvil y
 escritorio por la ruta real Menú → Extras → Colección, Thal, detalle y regreso.
 El catálogo del estudio contiene la descripción actualizada de El Rey.
-Se publica sólo beta mediante publicar.sh; producción 245 permanece intacta.
+Primero se publicó sólo beta; después se autorizó y verificó su promoción a
+producción 250, como queda registrado arriba.
 
 ## Colección: tres columnas y scroll — aprobada para beta 250
 
@@ -84,10 +99,9 @@ validación completa y publicar beta. Producción es posterior, autorizada para 
 No repetir aprobaciones ya recibidas. Las entradas antiguas que dicen «main intacta» o
 «rama feature/aaa-combat-cards» describen entregas históricas; manda este flujo vigente.
 
-**Transición:** `main` conserva exactamente la fuente245, incluido su publicador antiguo.
-No usar ese script histórico para nuevas entregas. Las nuevas guardas entrarán en `main`
-al promover la primera beta autorizada desde `develop`. No copiar el publicador249 por
-separado a245: su lista de archivos incluye módulos que245 todavía no tiene.
+**Transición concluida:** la promoción de build250 incorporó en `main` las guardas
+actuales de publicación. Usar ese publicador completo; no recuperar ni copiar
+por separado el script histórico de245.
 
 ## 1. Qué es y dónde está
 

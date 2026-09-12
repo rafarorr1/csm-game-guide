@@ -24,10 +24,10 @@ historia. `develop` parte de249 y recibe sólo esta estructura, herramientas y g
 Se guardan etiquetas `build-245` y `build-249` sobre esas fuentes publicadas.
 La rama antigua `feature/aaa-combat-cards` queda conservada; no iniciar trabajo allí.
 
-`main` conserva exactamente la fuente245, incluido el publicador antiguo. No usar
-ese script histórico para nuevas entregas. La primera promoción autorizada desde
-`develop` incorporará las guardas actuales con su inventario correcto. No copiar
-el publicador249 aislado sobre245: incluye módulos que esa versión no tiene.
+La primera promoción autorizada desde `develop` se completó el 2026-09-12:
+`main` incorpora la build250 aprobada (`build-250`, fuente `c55b6b9`) y las guardas
+actuales del publicador. Producción y beta sirven el mismo paquete250. No usar
+el script histórico de245 ni copiarlo por separado entre versiones.
 
 ## 1. Crear un trabajo
 

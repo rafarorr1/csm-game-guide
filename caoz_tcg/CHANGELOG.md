@@ -13,8 +13,8 @@
   antes de pegar daño no letal al Alma. Conserva objetivos legales y remates.
 - Es una revisión de regla e IA, no una corrección de “ganar al bajar la carta”:
   la regla anterior ganaba al turno siguiente y su guía recomendaba Can + Rey.
-  Se integra con autorización del usuario para revisión en beta 250;
-  producción 245 se conserva.
+  Integrada con autorización para beta 250 y promovida después a producción
+  con el mismo paquete aprobado mediante PR #7, sin incrementar build.
 - Muestra emparejada de 144 partidas IA por versión: Gero gana 101 antes y 100
   después; las victorias por corte bajan de 29 a 12. No sustituye la revisión humana.
 - Validación completa verde: seis tutoriales, regresiones, campaña/online,
