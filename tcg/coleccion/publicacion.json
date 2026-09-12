@@ -165,17 +165,17 @@
     "juego/arte-remoto.js": "a44dd3d05c1b3a25a8964e5d96f394d97284311891eb8a4fa6a6e47c8e749ac9",
     "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "juego/coleccion-modelo.js": "abf6c12ebd3664c8c5fb2c2a08c42d20d03eab99e5d5b8a11b32418e593d32bf",
-    "juego/coleccion-ui.js": "5bd4b03f3db64595cc9f508df0ef66ec7d1962b873f7cc2706e44579d7600249",
-    "juego/coleccion.css": "ce867c1b20c8933aeee6ac4c632d0be919987aa4dc4b2134abc19aa381f4717d",
+    "juego/coleccion-ui.js": "df044fc45158aafff65af1543ceb9a9f301623c379a3d5362d073fa0f227de9b",
+    "juego/coleccion.css": "4f15e9a7b4d59cedb0ee73d3f956e19423f9ade9ff521c8d547c877d4436dbc9",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "movil.html": "6a7e65f3039c47e934aed15f81d4f27dd119fc22cf23951864342994353585d1",
-    "procedencia.json": "bb3aec8a8080004347ff8e41ff192da83dbdcfe8f829dcdc24b10d01cc5ac76d",
+    "procedencia.json": "d0a8a3aeb10d505f8ffee24a0054db957870a873c1b2b61547c7438d3f9e6c72",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
-    "rama": "fix/aislados-github-cloudflare",
-    "sha": "932b5c512c9725db01b179848c36e3f7034b77ba"
+    "rama": "feature/coleccion-tres-columnas",
+    "sha": "19344e140ef27664badbfff261eb484ce50d8620"
   },
   "seccion": "coleccion",
   "version": 1
