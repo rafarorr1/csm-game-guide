@@ -240,17 +240,28 @@ C('julia',{n:'Julia',t:'personaje',c:1,a:0,h:1,tr:['Humano'],r:0,art:'🕯️',
  spellProof:true,
  die:async(g,s,u)=>{ P(s).pd++; log('🕯️ Julia se pierde otra vez: +1 PD.','good'); render(); }});
 
-/* El Rey no gana por daño: gana por reunir la corte. Es la segunda ruta
-   alternativa del juego después del Pergamino, y la única que se gana
-   juntando gente en vez de destruirla.
-   El número es tres y no cuatro por una medición, no por gusto: con «El Rey y
-   la mesa llena» la corte se reunió CERO veces en 951 turnos con él vivo. La
-   mesa sí se llena —Gero llega a cinco en el 12 % de sus turnos—, pero El Rey
-   cuesta 7 PD y para cuando cae ya se han intercambiado cuerpos. Con tres, la
-   ruta vive. */
-
+/* La corte necesita mantenerse hasta dos inicios de turno propios. Una sola
+   comprobación dejaba a Can cerrar el duelo con sus fichas antes de que la IA
+   tratara la corte como amenaza. Las fichas siguen contando: se conserva la
+   identidad del mazo, con una ventana adicional para desmontar la corte. */
 C('rey',{n:'El Rey',t:'personaje',c:7,a:3,h:8,tr:['Humano','Noble'],r:2,art:'👑',
- x:'<b>Corte reunida:</b> al inicio de tu turno, si controlas otros <b>3 Personajes</b> además de El Rey, <b>ganas la partida</b>.'});
+ x:'<b>Corte reunida:</b> mantén a El Rey y otros <b>3 Personajes</b> hasta el inicio de <b>2 turnos tuyos consecutivos</b> para ganar. Si El Rey sale del campo o la corte baja de 4, el conteo se reinicia.'});
+
+/* Transición pura compartida con la prueba aislada. Recalcular o recibir la
+   misma fotografía online nunca cuenta otro turno. El progreso pertenece al
+   mismo Rey, no a cualquier copia que entre después. */
+function avanceCorte(campo, anterior=null, inicioTurno=null){
+  const vivos=campo.filter(u=>u.alive),reyes=vivos.filter(u=>u.card.id==='rey'&&!u.possessed);
+  const rey=reyes.find(u=>u.uid===anterior?.rey)||reyes[0];
+  if(!rey||vivos.length<4)return {rey:rey?.uid??null,turnos:0,ultimoTurno:null};
+  const misma=rey.uid===anterior?.rey;
+  let turnos=misma?Math.max(0,Math.min(2,Number(anterior.turnos)||0)):0;
+  let ultimoTurno=misma&&Number.isSafeInteger(anterior.ultimoTurno)?anterior.ultimoTurno:null;
+  if(Number.isSafeInteger(inicioTurno)&&(ultimoTurno===null||inicioTurno>ultimoTurno)){
+    turnos=Math.min(2,turnos+1);ultimoTurno=inicioTurno;
+  }
+  return {rey:rey.uid,turnos,ultimoTurno};
+}
 
 C('talia',{n:'Talia Boss',t:'personaje',c:5,a:5,h:4,tr:['Humana','Paladín','Casa Boss'],r:2,art:'👑',
  x:'<b>Cazamagos:</b> +3 ATQ al atacar a un Mago o Dragón. <b>Detener el juego:</b> el rival no puede jugar el Pergamino.',
@@ -1021,7 +1032,7 @@ adreida:{ n:'De Frente', d:'Midrange · Paladines · Provocar',
   plan:'Juega en curva cuerpos de 4+ ATQ que con Intimidante ganan Provocar, y fuerza intercambios favorables.',
   list:[['machete',3],['bartolomeo',3],['augusto',3],['eric',1],['brickbrock',1],['lucius',1],['horton',1],['aldrick',1],['auxilio',3],['armadura',3],['zancada',3],['saeta',3],['modificar',1],['destello',2],['colapso',2],['esporas',1],['collar',3],['tomsage',1],['ninolanza',3],['mazo',1]]},
 gero:{ n:'La Mesa del DM', d:'Caos · Tiradas · NPCs',
-  plan:'Llena la mesa de NPCs y aguanta: con El Rey y otros tres en pie, la campaña termina.',
+  plan:'Protege a El Rey y tres aliados hasta dos inicios de turno propios consecutivos para reunir la corte y ganar el duelo.',
   list:[['brickbrock',3],['minus',3],['aidman',3],['can',3],['rambo',3],['correcaminos',2],
         ['coyote',2],['spiderman',2],['bob',2],['rantiago',2],['hermanotrol',2],['machete',2],
         ['lucy',1],['juangabriel',1],['rey',1],
@@ -1060,7 +1071,7 @@ function newPlayer(side, leaderId){
     deck:shuffle(buildDeck(leaderId)), hand:[], field:[], traps:[], grave:[], relics:[],
     alma:20, pd:0, pdMax:0, banked:0, llaves:0, pdTax:0, pdBonus:0,
     leaderUsed:false, attacked:false, petuniaUsed:false, gracia:0, ascended:false,
-    scrollTurns:0, limbo:[], clouds:[], spirits:0, fairy:false, kdrama:false,
+    scrollTurns:0, corte:null, limbo:[], clouds:[], spirits:0, fairy:false, kdrama:false,
     manoRehecha:false };
 }
 
@@ -1161,6 +1172,7 @@ function recalc(){
     if(P(u.side).leaderId==='adreida' && u.atk>=INTIMIDANTE_MIN) k.add('provocar');
     u.keys=k;
   });
+  for(const p of G.pl)p.corte=avanceCorte(p.field,p.corte);
 }
 
 function grant(u,g){ // ¿algún objeto le da esta propiedad?
@@ -1259,6 +1271,8 @@ async function killUnit(u, opt={}){
   await fxDeath(u);                       // se anima mientras sigue en el campo
   const idx=P(s).field.indexOf(u); if(idx>=0) P(s).field.splice(idx,1);
   u.alive=false;
+  // La muerte rompe la corte antes de que una Trampa o un Al morir la repueble.
+  P(s).corte=avanceCorte(P(s).field,P(s).corte);
   G.diedThisTurn.push({id:u.card.id, side:s});
   log(`💀 <b>${u.card.n}</b> va a las Alcantarillas.`,'dmg');
   if(G.tutorial){ render(); await tutBeat('muerte',{u,side:s}); }
@@ -1701,12 +1715,6 @@ async function startTurn(s){
   log(`<b>— Turno ${Math.ceil(G.turnNo/2)} de ${p.L.n} —</b> (${p.pd}/${p.pdMax} PD)`,'sys');
 
 
-  /* EL REY — corte reunida. Se mira aquí, con el campo ya asentado. */
-  if(!G.over && p.field.some(u=>u.alive && u.card.id==='rey')
-     && p.field.filter(u=>u.alive).length>=4){
-    endGame(s, `${p.L.n} reúne la corte al completo: la campaña termina aquí.`);
-    return;
-  }
   render();
   netFx('banner',{side:(s===FOE?0:1)});
   await fxBanner(s);
@@ -1751,6 +1759,19 @@ async function startTurn(s){
   // Calentar Metal
   for(const u of [...p.field]) if(u.alive && u.hotMetal){ u.hotMetal=false;
     log(`El metal de ${u.card.n} sigue ardiendo.`,'dmg'); await dmgU(u,2,{fire:true,src:'hechizo'}); }
+  // Resolver muertes y cambios de bando antes de contar la corte del turno.
+  if(G!==partida||G.over)return;
+  await checkDeaths();
+  if(G!==partida||G.over)return;
+  p.corte=avanceCorte(p.field,p.corte,G.turnNo);
+  if(p.corte.turnos>=2){
+    endGame(s,`${p.L.n} mantiene la corte durante dos turnos y gana el duelo.`);return;
+  }
+  if(p.corte.turnos===1){
+    log(`👑 <b>Corte reunida: 1/2.</b> ${p.L.n} ganará al inicio de su próximo turno si conserva a El Rey y tres aliados. Rompe la corte para reiniciar el conteo.`,'sys');
+    render();fxNotice('👑 Corte reunida · 1/2 — rompe la corte antes del próximo turno','var(--gold)');
+    await nap(900);if(G!==partida||G.over)return;
+  }
   // Pergamino de Deseo Ilimitado
   const scroll=p.relics.find(r=>CARDS[r.id].scroll);
   if(scroll){
@@ -2452,6 +2473,7 @@ function barHTML(s){
     <div class="stat alma" title="Alma">❤️ <i>${Math.max(0,p.alma)}</i></div>
     <div class="stat pd" title="Puntos">🔷 <i>${p.pd}/${p.pdMax}</i></div>
     <div class="stat key" title="Llaves del Domo">🗝️ <i>${keys(s)}</i></div>
+    ${p.corte?.turnos===1?'<div class="stat corte" title="Corte reunida: 1 de 2. Rompe la corte antes del próximo turno." aria-label="Corte reunida: 1 de 2">👑 <i>1/2</i></div>':''}
     ${p.leaderId==='talesin'&&!p.ascended?`<div class="stat gr" title="Fichas de Gracia">✨ <i>${p.gracia}/5</i></div>`:''}
     ${p.relics.length?p.relics.map(r=>`<div class="stat relic" title="${CARDS[r.id].n}" data-relic="${r.id}">${CARDS[r.id].art} <i>${CARDS[r.id].scroll?p.scrollTurns+'/2':(r.counters||0)}</i></div>`).join(''):''}
     <div class="spacer"></div>
@@ -2744,13 +2766,21 @@ function aiScore(id,s){
 
 function aiPickAttack(u){
   const lt=legalTargets(u);
-  const foeAlma=P(1-u.side).alma;
+  const rival=P(1-u.side),foeAlma=rival.alma;
+  const corte=avanceCorte(rival.field,rival.corte),amenaza=corte.turnos===1;
+  const miembros=rival.field.filter(t=>t.alive).length;
   const cands=lt.units.filter(t=>t.alive).map(t=>{
     const rem=t.maxHp-t.dmg, myRem=u.maxHp-u.dmg;
     const kills=u.atk>=rem, dies=t.atk>=myRem;
     let sc=(kills? 14+t.card.c*3 : Math.min(u.atk,rem)*1.5) - (dies? 10+u.card.c*3 : 0);
     if(t.keys.has('provocar')) sc+=3;
     if(t.card.id==='tal'||t.card.r===2) sc+=4;
+    // Evitar perder por corte tiene prioridad sobre daño no letal al Alma.
+    // Con cinco cuerpos puede hacer falta quitar dos; se reevalúa tras cada golpe.
+    if(amenaza){
+      if(kills)sc+=(t.uid===corte.rey||miembros===4)?200:80;
+      else if(t.uid===corte.rey||miembros===4)sc+=Math.max(0,40-rem*2);
+    }
     return {t,sc};
   }).sort((a,b)=>b.sc-a.sc);
   const faceSc = lt.face ? (u.atk>=foeAlma ? 999 : u.atk*2.2) : -999;
@@ -3653,7 +3683,7 @@ function netSnap(){
     pA:u.pA,pH:u.pH,tA:u.tA,tH:u.tH,nA:u.nA,nH:u.nH,nU:u.nUntil,au:u.actUsed});
   const lado=(s,propio)=>{ const p=P(s); return {
     L:p.leaderId,alma:p.alma,pd:p.pd,pdMax:p.pdMax,llaves:p.llaves,gracia:p.gracia,
-    asc:p.ascended,scroll:p.scrollTurns,used:p.leaderUsed,
+    asc:p.ascended,scroll:p.scrollTurns,corte:p.corte?{...p.corte}:null,used:p.leaderUsed,
     hand: propio? p.hand.slice() : p.hand.map(()=>null),
     deck: p.deck.map(()=>null), deckN:p.deck.length,
     grave:p.grave.slice(),
@@ -3689,7 +3719,7 @@ function netApply(s){
     const p=G.pl[idx];
     p.leaderId=d.L; p.L=LEADERS[d.L];
     p.alma=d.alma; p.pd=d.pd; p.pdMax=d.pdMax; p.llaves=d.llaves;
-    p.gracia=d.gracia; p.ascended=d.asc; p.scrollTurns=d.scroll; p.leaderUsed=d.used;
+    p.gracia=d.gracia; p.ascended=d.asc; p.scrollTurns=d.scroll; p.corte=d.corte?{...d.corte}:null; p.leaderUsed=d.used;
     p.hand=d.hand.slice(); p.deck=d.deck.slice(); p.grave=d.grave.slice();
     p.traps=d.traps.slice(); p.relics=d.relics.slice();p.clouds=(d.clouds||[]).map(c=>({...c}));
     p.field=d.field.map(x=>{ const u=mkUnit(x.c,lado); u.uid=x.uid; u.owner=lado;
@@ -4110,19 +4140,19 @@ gero:{
   dif:3, lema:'Tú no llevas un héroe: llevas la mesa entera.',
   ganas:`Los demás Protagonistas entraron al Domo. Tú lo <b>narras</b>. Tu mazo no son
     compañeros: son los <b>NPC</b> que repartes, y ganan por acumulación — cuantos más haya
-    en pie, más cerca estás de bajar a <b>El Rey</b> y cerrar la campaña sin pegar un golpe.`,
+    en pie, más cerca estás de proteger a <b>El Rey</b> durante dos inicios de turno y ganar el duelo por la corte.`,
   motor:['can','rambo','correcaminos','coyote','rey'],
   motorTxt:`Cuerpos baratos que llegan de dos en dos. <b>Can</b> entra con <b>dos Goblins</b>
     de regalo, así que él solo llena media mesa. <b>Rambo</b> cuesta 1 y pega 3 el turno que
     entra. <b>El Correcaminos</b> corre más si <b>El Coyote</b> anda por ahí — aunque sea del
-    rival. Y todo eso existe para un momento: <b>El Rey</b> con otros tres en pie.`,
+    rival. La corte requiere a <b>El Rey</b> y otros tres en pie hasta dos inicios de turno propios consecutivos.`,
   turnos:[
     ['1–3','Cuerpos, cuerpos y cuerpos. <b>Machete</b>, <b>El Correcaminos</b>, <b>Rambo</b> si quieres tres de daño gratis. No mires el Alma del rival todavía: mira cuántos NPC tienes de pie al empezar tu turno.'],
     ['4–6','<b>Can</b> es tu mejor turno: entra él y entran dos Goblins con Provocar, que además te protegen a los demás. <b>Juguetes para el Cíclope</b> boca abajo cancela el ataque que venga a romperte la mesa y te deja dos Ilusiones más.'],
-    ['7+','Con la mesa a cuatro, baja a <b>El Rey</b>. Sólo tienes que llegar vivo al inicio de tu siguiente turno con él y otros tres. El rival lo sabe y va a matar algo: por eso guardas <b>Peaje del Puente</b> y las Trampas para ese turno exacto.']
+    ['7+','Con la mesa a cuatro, baja a <b>El Rey</b>. El primer inicio de turno con él y otros tres marca 1/2; necesitas conservar la corte hasta el siguiente para ganar. Si baja de cuatro o pierdes al Rey, vuelves a cero. Guarda <b>Peaje del Puente</b> y las Trampas para defenderla.']
   ],
   combo:`<b>Can + El Rey.</b> Can pone tres cuerpos con una sola carta, así que la corte se
-    reúne en un turno en vez de en tres. Si te falta uno, <b>Rulchete de Bajo Presupuesto</b>
+    reúne rápido, pero todavía debe sobrevivir hasta dos inicios de turno propios. Si te falta uno, <b>Rulchete de Bajo Presupuesto</b>
     invoca un 0/6 con Provocar por 3 PD: no pega, pero cuenta — y aguanta.`,
   mano:`Quédate lo barato. <b>Machete</b>, <b>El Correcaminos</b> y <b>Brújula</b> valen más
     que <b>El Rey</b> de salida: él es un ladrillo de 7 PD hasta el turno 7, y sin mesa que

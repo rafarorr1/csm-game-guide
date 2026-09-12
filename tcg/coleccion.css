@@ -43,10 +43,7 @@
 #coleccionPanel .coleccionFiltro{display:block;min-width:0}
 #coleccionPanel select{width:100%;height:41px;border:1px solid #745737b0;border-radius:3px;background:#211911;color:#e1cba4;padding:0 9px;font-size:13px;cursor:pointer}
 #coleccionPanel .coleccionResumen{color:#b09d85;font-size:12px;flex:none;line-height:1.4}
-#coleccionPanel .coleccionRejilla{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:16px 20px;flex:1;min-height:0;padding:8px 14px 10px;position:relative;background:repeating-linear-gradient(89deg,transparent 0 35px,#ffe6b602 36px 37px),radial-gradient(ellipse at center,#c2935630,transparent 85%),#1a1410;border:1px solid #74543166;border-radius:4px;box-shadow:inset 0 0 30px #0006}
-#coleccionPanel .coleccionRejilla[data-cantidad="8"]{grid-template-columns:repeat(4,minmax(0,1fr))}
-#coleccionPanel .coleccionRejilla[data-cantidad="6"]{grid-template-columns:repeat(3,minmax(0,1fr))}
-#coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(2,minmax(0,1fr))}
+#coleccionPanel .coleccionRejilla{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8d7443 #181020;scrollbar-gutter:stable;gap:16px 20px;flex:1;min-height:0;padding:8px 14px 10px;position:relative;background:repeating-linear-gradient(89deg,transparent 0 35px,#ffe6b602 36px 37px),radial-gradient(ellipse at center,#c2935630,transparent 85%),#1a1410;border:1px solid #74543166;border-radius:4px;box-shadow:inset 0 0 30px #0006}
 #coleccionPanel .coleccionMini{display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;gap:7px;min-width:0;min-height:0;position:relative;background:none;border:0;padding:0;box-shadow:none;color:var(--col-tinta);border-radius:4px;translate:none!important;filter:none!important}
 #coleccionPanel .coleccionMiniInfo{display:flex;flex-direction:column;gap:3px;width:100%;max-width:190px;min-width:0;text-align:center}
 #coleccionPanel .coleccionMiniInfo>strong{height:2.45em;display:flex;align-items:center;justify-content:center;font-family:var(--serif,Georgia,serif);font-size:13px;line-height:1.2;font-weight:600;color:#edd9b9}
@@ -68,9 +65,6 @@
 #coleccionPanel .coleccionCarta.vscard .lname{font-size:1.5em;line-height:1.2}
 #coleccionPanel .coleccionCarta.vscard .larch{font-size:.65em;line-height:1.3}
 #coleccionPanel .coleccionMini:hover .coleccionCarta{filter:brightness(1.09)}
-#coleccionPanel .coleccionPaginas{display:flex;align-items:center;justify-content:center;gap:25px;flex:none;padding:1px 0 4px}
-#coleccionPanel .coleccionPaginas>span{font-family:var(--serif,Georgia,serif);font-size:14px;color:#c1a985;font-variant-numeric:tabular-nums;white-space:nowrap}
-#coleccionPanel .coleccionPaginas button{min-width:100px;min-height:35px;padding:6px 15px;font-size:12px}
 #coleccionPanel .coleccionVacio{grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
 #coleccionPanel .coleccionVacio svg{width:32px;height:32px;color:#a38559}
 #coleccionPanel .coleccionVacio h3{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:20px}
@@ -171,9 +165,6 @@
   #coleccionPanel .coleccionPuntos{gap:3px}
   #coleccionPanel .coleccionPuntos i{width:5px;height:5px}
   #coleccionPanel .coleccionCarta{max-height:235px}
-  #coleccionPanel .coleccionPaginas{gap:15px;padding-bottom:2px}
-  #coleccionPanel .coleccionPaginas .coleccionBoton{min-width:79px;min-height:34px;font-size:11px;padding:5px 12px}
-  #coleccionPanel .coleccionPaginas>span{font-size:12px}
   #coleccionPanel .coleccionEstado{font-size:10px;min-height:17px;line-height:17px}
   #coleccionPanel .coleccionPie{min-height:28px;gap:6px;padding-top:3px}
   #coleccionPanel .coleccionTotales{font-size:9px}
@@ -227,7 +218,7 @@
 #coleccionPanel.coleccionBaja .coleccionSobreCuenta{display:none}
 #coleccionPanel.coleccionTeclado .coleccionCabecera,#coleccionPanel.coleccionTeclado .coleccionResumen,#coleccionPanel.coleccionTeclado .coleccionEstado,#coleccionPanel.coleccionTeclado .coleccionPie{display:none}
 #coleccionPanel.coleccionTeclado .coleccionPestanas{margin-bottom:6px}
-#coleccionPanel.coleccionTeclado .coleccionRejilla{grid-template-rows:repeat(2,minmax(0,1fr));gap:6px}
+#coleccionPanel.coleccionTeclado .coleccionRejilla{gap:6px}
 #coleccionPanel.coleccionTeclado .coleccionMiniInfo>strong{font-size:10px;height:2.2em}
 #coleccionPanel.coleccionTeclado .coleccionMiniPie{display:none}
 @media(prefers-reduced-motion:reduce){
@@ -259,12 +250,8 @@
 }
 #coleccionPanel .coleccionHallazgo:disabled{box-shadow:none}
 /* Ediciones grandes: el formato del naipe original conserva su texto completo. */
-#coleccionPanel .coleccionRejilla{grid-template-rows:minmax(0,1fr);gap:22px;padding:17px 18px 12px}
-#coleccionPanel .coleccionRejilla[data-cantidad="1"]{grid-template-columns:minmax(0,1fr)}
-#coleccionPanel .coleccionRejilla[data-cantidad="2"]{grid-template-columns:repeat(2,minmax(0,1fr))}
-#coleccionPanel .coleccionRejilla[data-cantidad="3"]{grid-template-columns:repeat(3,minmax(0,1fr))}
-#coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(4,minmax(0,1fr))}
-#coleccionPanel .coleccionMini{gap:12px;grid-template-rows:minmax(0,1fr) 20px}
+#coleccionPanel .coleccionRejilla{gap:22px;padding:17px 18px 12px}
+#coleccionPanel .coleccionMini{gap:12px;grid-template-rows:auto 20px}
 #coleccionPanel .coleccionMiniInfo{display:block;max-width:none}
 #coleccionPanel .coleccionMiniPie{font-family:var(--sans,system-ui);font-size:12px;gap:14px;line-height:20px}
 #coleccionPanel .coleccionPuntos{gap:5px}
@@ -301,7 +288,7 @@
   #coleccionPanel .coleccionPestana{font-size:12px;padding:7px 6px;gap:5px}
   #coleccionPanel .coleccionPestana svg{width:14px;height:14px}
   #coleccionPanel .coleccionNumero{min-width:19px;padding:0 4px;font-size:10px}
-  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{grid-template-rows:minmax(0,1fr);padding:14px 12px 8px}
+  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{padding:14px 12px 8px}
   #coleccionPanel .coleccionMini{gap:9px}
   #coleccionPanel .coleccionMiniPie,#coleccionPanel.coleccionBaja .coleccionMiniPie{display:flex;font-size:11px}
   #coleccionPanel .coleccionVersiones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:34px minmax(0,1fr) 18px 40px;gap:10px;padding:2px 4px 8px;min-height:0!important;max-height:none}
@@ -336,13 +323,8 @@
   #coleccionPanel[data-vista="cartas"] .coleccionCabecera{min-height:34px;margin-bottom:5px}
   #coleccionPanel[data-vista="cartas"] .coleccionResumen{display:none}
   #coleccionPanel[data-vista="cartas"] .coleccionEstado:empty{height:5px;min-height:5px}
-  #coleccionPanel .coleccionRejilla[data-cantidad="4"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:14px 17px;padding:12px 11px 8px}
-  #coleccionPanel .coleccionRejilla[data-cantidad="2"]{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:minmax(0,1fr);gap:17px;padding:14px 11px 8px}
   #coleccionPanel .coleccionMini{gap:8px}
   #coleccionPanel .coleccionMiniPie{font-size:10px}
-}
-@media(max-width:580px){
-  #coleccionPanel .coleccionRejilla[data-cantidad="4"],#coleccionPanel .coleccionRejilla[data-cantidad="2"]{column-gap:12px;padding-left:7px;padding-right:7px}
 }
 /* El panel vuelve al violeta del juego. Sólo los botones adoptan la madera
    de Taberna: sin cambiar el diseño original de las cartas ni añadir herrajes. */
@@ -376,5 +358,20 @@
 @media(max-width:580px){
   #coleccionPanel .coleccionInterior{padding-top:11px}
   #coleccionPanel .coleccionCabecera{min-height:36px;margin-bottom:7px}
-  #coleccionPanel .coleccionRejilla[data-cantidad="4"],#coleccionPanel .coleccionRejilla[data-cantidad="2"]{column-gap:12px;padding-left:5px;padding-right:5px}
+}
+/* Tres columnas continuas. El scroll queda dentro del listado para mantener
+   búsqueda, filtros y salida siempre disponibles, incluso con teclado móvil. */
+#coleccionPanel .coleccionRejilla{scroll-padding-block:8px;gap:10px;padding:10px 6px}
+#coleccionPanel .coleccionRejilla:focus-visible{outline:1px solid #c6a056;outline-offset:-1px}
+#coleccionPanel .coleccionMini{align-self:start;scroll-margin-block:8px;gap:3px;grid-template-rows:auto 16px}
+#coleccionPanel .coleccionMini .coleccionMiniPie{line-height:16px}
+#coleccionPanel .coleccionMini>.coleccionCarta{max-height:none}
+#coleccionPanel .coleccionVacio{min-height:160px;padding:12px}
+@media(max-width:580px){
+  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{column-gap:4px;row-gap:6px;padding:8px 0;scrollbar-gutter:auto}
+  #coleccionPanel[data-vista="cartas"] .coleccionInterior{padding-left:6px;padding-right:6px}
+  #coleccionPanel .coleccionMini{gap:2px;grid-template-rows:auto 14px}
+  #coleccionPanel .coleccionMini .coleccionMiniPie{gap:5px;font-size:9px;line-height:14px}
+  #coleccionPanel .coleccionMini .coleccionPuntos{gap:3px}
+  #coleccionPanel .coleccionMini .coleccionPuntos i{width:5px;height:5px}
 }
