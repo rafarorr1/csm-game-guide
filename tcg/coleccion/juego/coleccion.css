@@ -361,15 +361,17 @@
 }
 /* Tres columnas continuas. El scroll queda dentro del listado para mantener
    búsqueda, filtros y salida siempre disponibles, incluso con teclado móvil. */
-#coleccionPanel .coleccionRejilla{scroll-padding-block:12px}
+#coleccionPanel .coleccionRejilla{scroll-padding-block:8px;gap:10px;padding:10px 6px}
 #coleccionPanel .coleccionRejilla:focus-visible{outline:1px solid #c6a056;outline-offset:-1px}
-#coleccionPanel .coleccionMini{align-self:start;scroll-margin-block:12px}
+#coleccionPanel .coleccionMini{align-self:start;scroll-margin-block:8px;gap:3px;grid-template-rows:auto 16px}
+#coleccionPanel .coleccionMini .coleccionMiniPie{line-height:16px}
 #coleccionPanel .coleccionMini>.coleccionCarta{max-height:none}
 #coleccionPanel .coleccionVacio{min-height:160px;padding:12px}
 @media(max-width:580px){
-  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{column-gap:8px;row-gap:16px;padding:10px 2px 12px;scrollbar-gutter:auto}
-  #coleccionPanel .coleccionMini{gap:6px}
-  #coleccionPanel .coleccionMiniPie{gap:6px;font-size:9px}
+  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{column-gap:4px;row-gap:6px;padding:8px 0;scrollbar-gutter:auto}
+  #coleccionPanel[data-vista="cartas"] .coleccionInterior{padding-left:6px;padding-right:6px}
+  #coleccionPanel .coleccionMini{gap:2px;grid-template-rows:auto 14px}
+  #coleccionPanel .coleccionMini .coleccionMiniPie{gap:5px;font-size:9px;line-height:14px}
   #coleccionPanel .coleccionMini .coleccionPuntos{gap:3px}
   #coleccionPanel .coleccionMini .coleccionPuntos i{width:5px;height:5px}
 }
