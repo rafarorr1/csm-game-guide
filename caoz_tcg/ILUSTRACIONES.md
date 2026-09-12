@@ -156,6 +156,30 @@ de borrador, vista previa sin guardar, recarga en otra sesión y conflicto.
 
 ## Colección del jugador (build249)
 
+### Originales de Foil y Dorado — revisión aislada posterior a beta251
+
+Cada entrada de `art/encuadres.json` conserva su encuadre Normal y puede añadir
+`variantes.foil` y `variantes.dorado`: `url`, `x`, `y`, `z`, `vistas` opcionales,
+`placeholder` y `estilo`. Los archivos son `art/<id>-<acabado>-v1.webp`; Thal
+conserva `art/tal-dorado-final-v1.webp`. No se modifica la ilustración Normal.
+El catálogo generado añade `originales.normal/foil/dorado`; `original` sigue
+siendo Normal para los consumidores anteriores.
+
+La prioridad por edición es: reemplazo exacto activo del estudio (incluida
+herencia explícita), original local de esa edición, Normal. Elegir Foil no
+adopta automáticamente Dorado. El estudio muestra el original de cada edición
+y sus vistas; el primer ajuste de un premium local copia sus mismos bytes a
+la biblioteca, evitando que el backend lo interprete como herencia de Normal.
+Restaurar retira el reemplazo y devuelve su original premium. La biblioteca
+privada sólo cambia al pulsar Guardar; estos assets no escriben en ella.
+
+Las cantidades se guardan junto a los desbloqueos bajo la misma clave de
+inventario. `cantidad(id)` devuelve el total y `cantidad(id, acabado)` la
+edición. Las Normales iniciales cuentan una. Cada carta de un sobre suma otra
+copia, incluso repetida; reabrir, equipar o desbloquear de nuevo no suma.
+El inventario anterior sólo registraba propiedad: cada premium poseído migra
+a una copia, sin reconstruir duplicados históricos que no se almacenaron.
+
 `coleccion-modelo.js` guarda inventario, selección y sobres en localStorage.
 Normal está disponible para todas las cartas y protagonistas. Foil y Dorado se
 desbloquean por separado; abrir un sobre nunca cambia la selección equipada.

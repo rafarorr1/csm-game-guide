@@ -14,17 +14,19 @@
   const normalizar=e=>({x:limitar(e?.x??50,0,100,50),y:limitar(typeof e==='number'?e:e?.y??50,0,100,50),z:limitar(e?.z??100,50,300,100)});
   // Las filas antiguas representan Normal; cada versión nueva tiene su propia revisión.
   const registro=(c,a=acabado)=>{const fila=privados.get(c.id);return fila?.variantes?fila.variantes[a]||null:a==='normal'?fila||null:null;};
-  const creada=(c,a=acabado)=>a==='normal'||!!(registro(c,a)&&registro(c,a).activo!==false&&(registro(c,a).activo===true||registro(c,a).hash||registro(c,a).x!=null));
+  const registroActivo=(c,a=acabado)=>{const p=registro(c,a);return p&&p.activo!==false&&(a==='normal'||p.activo===true||p.hash||p.x!=null)?p:null;};
+  const original=(c,a=acabado)=>c.originales?.[a]||(a==='normal'?c.original:null);
+  const creada=(c,a=acabado)=>a==='normal'||!!original(c,a)||!!registroActivo(c,a);
   const ganadora=c=>['dorado','foil','normal'].find(a=>creada(c,a));
-  const encuadre=(c,a=acabado)=>{const p=registro(c,a);return normalizar(p?.x!=null?{x:p.x,y:p.y,z:p.z}:a!=='normal'?encuadre(c,'normal'):c.original?.encuadre);};
-  const encuadres=c=>CAOZ_VISTAS.limpiar(registro(c)?.vistas);
+  const encuadre=(c,a=acabado)=>{const p=registroActivo(c,a);return normalizar(p?.x!=null?{x:p.x,y:p.y,z:p.z}:a!=='normal'&&p?.heredada?encuadre(c,'normal'):original(c,a)?.encuadre||(a!=='normal'?encuadre(c,'normal'):null));};
+  const encuadres=c=>{const p=registroActivo(c);return CAOZ_VISTAS.limpiar(p?p.vistas:original(c)?.vistas);};
   const revision=(c,a=acabado)=>Number(registro(c,a)?.revision||0);
   const nombreEntorno=()=>'el estudio';
-  const estadoArte=c=>{const a=ganadora(c),p=registro(c,a),propia=p?.hash||(a!=='normal'&&registro(c,'normal')?.hash);return propia?'reemplazada':c.original?.placeholder?'provisional':c.original?'original':'sin';};
+  const estadoArte=c=>{const a=ganadora(c),p=registroActivo(c,a),hereda=a!=='normal'&&(p?.heredada||!original(c,a)&&!p?.hash),local=original(c,hereda?'normal':a),propia=p?.hash||(hereda&&registroActivo(c,'normal')?.hash);return propia?'reemplazada':local?.placeholder?'provisional':local?'original':'sin';};
   const etiquetas={reemplazada:'Reemplazada',original:'Original',provisional:'Provisional',sin:'Sin imagen'};
   const estado=(mensaje,error=false)=>{$('estado').textContent=mensaje;$('estado').classList.toggle('error',error);};
   function urlSegura(ruta){if(!ruta)return null;try{const u=new URL(CAOZ_ESTUDIO.ruta(ruta),base);return u.origin===location.origin&&/^https?:$/.test(u.protocol)?u.href:null;}catch(e){return null;}}
-  const urlVersion=(c,a=acabado)=>{const p=registro(c,a);return p?.hash?urlSegura('api/arte/imagen/'+encodeURIComponent(p.hash)):a!=='normal'?urlVersion(c,'normal'):urlSegura(c.original?.url);};
+  const urlVersion=(c,a=acabado)=>{const p=registroActivo(c,a);return a!=='normal'&&p?.heredada?urlVersion(c,'normal'):p?.hash?urlSegura('api/arte/imagen/'+encodeURIComponent(p.hash)):urlSegura(original(c,a)?.url)||(a!=='normal'?urlVersion(c,'normal'):null);};
   const urlActual=c=>urlVersion(c,ganadora(c));
   async function pedir(ruta,op={}){
     // También evita las cachés de las versiones antiguas de la app instalada.
@@ -52,7 +54,7 @@
     $('archivo').disabled=ocupado||conflicto;$('recuperar').disabled=ocupado||conflicto;
     $('usarIlustracion').disabled=ocupado||conflicto||!c||acabado==='normal'||creada(c);
     $('guardar').disabled=ocupado||!pendiente||conflicto||!autenticado;
-    $('restaurar').disabled=ocupado||conflicto||!p||(acabado==='normal'?!p.hash&&p.x==null:!creada(c));
+    $('restaurar').disabled=ocupado||conflicto||!p||(acabado==='normal'?!p.hash&&p.x==null:!registroActivo(c));
     $('conflicto').hidden=!conflicto;$('estudio').setAttribute('aria-busy',String(ocupado));
   }
   function bloquear(valor){ocupado=valor;botones();}
@@ -102,8 +104,8 @@
     for(const [id,valor] of [['coste',c.coste],['ataque',c.ataque],['vida',c.vida]]){$(id).hidden=c.esLider||valor==null;$(id).textContent=valor??'';}
     actualizarVistaJuego(c,ruta,e);
     aplicarEncuadre(CAOZ_VISTAS.resolver(pendiente?.vistas||encuadres(c),claveVista(),e));
-    const heredada=acabado!=='normal'&&(nueva||p?.heredada);
-    $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':p?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):c.original?(c.original.placeholder?'Ilustración provisional':'Ilustración original')+(p?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
+    const heredada=acabado!=='normal'&&(nueva||registroActivo(c)?.heredada),local=original(c,heredada?'normal':acabado);
+    $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':registroActivo(c)?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):local?(local.placeholder?'Ilustración provisional':'Ilustración original')+(registroActivo(c)?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
     if(heredada&&!pendiente?.blob)$('origen').textContent+=' Usa ilustración Normal: si cambia su imagen, se actualizará también aquí.';
     $('borrador').hidden=!pendiente;
     if(pendiente){$('archivoNombre').textContent=pendiente.blob?pendiente.nombre+' · '+Math.round(pendiente.blob.size/1024)+' KB · WebP':pendiente.crear?'Crear '+acabados[acabado]+' de '+c.nombre:'Nuevo encuadre '+acabados[acabado]+' de '+c.nombre;
@@ -115,15 +117,15 @@
     $('grupo').textContent=textoTipo(c.tipo).toLocaleUpperCase('es')+' / '+c.id;$('nombre').textContent=c.nombre;
     $('mazos').textContent=c.mazos?.length?'Mazos: '+c.mazos.join(' · '):'Fuera de los seis mazos principales';
     $('reglasCompletas').textContent=c.texto||'Esta carta no tiene texto de reglas.';
-    const p=registro(c),u=urlVersion(c),original=urlSegura(c.original?.url);
+    const p=registro(c),u=urlVersion(c),local=original(c),urlOriginal=urlSegura(local?.url);
     $('enlace').textContent=acabado!=='normal'&&!creada(c)?'Abrir imagen de base ↗':'Abrir imagen '+acabados[acabado]+' ↗';
     $('enlace').hidden=!u;if(u)$('enlace').href=u;else $('enlace').removeAttribute('href');
-    $('original').hidden=!original;if(original)$('original').href=original;else $('original').removeAttribute('href');
+    $('original').hidden=!urlOriginal;if(urlOriginal)$('original').href=urlOriginal;else $('original').removeAttribute('href');
     $('revision').textContent=acabados[acabado]+' · Revisión '+revision(c);
     const fecha=p?.actualizado&&new Date(p.actualizado);
     $('modificado').textContent=fecha&&!Number.isNaN(fecha.getTime())?(acabado!=='normal'&&!creada(c)?'Versión eliminada el ':'Guardado el ')+fecha.toLocaleString('es-MX'):'Los cambios se guardan en el estudio y están disponibles desde cualquier dispositivo.';
     $('guardar').textContent='Guardar '+acabados[acabado]+' en '+nombreEntorno();
-    $('restaurar').textContent=acabado==='normal'?'Restaurar Normal original':'Eliminar '+acabados[acabado];vista();
+    $('restaurar').textContent=acabado==='normal'||local?'Restaurar '+acabados[acabado]+' original':'Eliminar '+acabados[acabado];vista();
   }
   function lista(){
     const q=$('buscar').value.toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g,''),f=$('filtroArte').value;
@@ -195,28 +197,49 @@
     catch(e){fallo(e);}finally{$('archivo').value='';bloquear(false);}
   }
   $('archivo').onchange=()=>{const archivo=$('archivo').files[0];if(archivo)preparar(archivo,archivo.name);};
+  async function copiarOriginal(c,version){
+    const ruta=original(c,version)?.url,esperada='art/'+c.id+'-'+version+'-v1.webp';
+    if(!/^[a-zA-Z0-9_-]+$/.test(c.id)||!['foil','dorado'].includes(version)||(ruta!==esperada&&!(c.id==='tal'&&version==='dorado'&&ruta==='art/tal-dorado-final-v1.webp')))throw Error('La ruta del original no es válida. Actualiza la biblioteca.');
+    const url=urlSegura(ruta);if(!url)throw Error('No se pudo localizar el original de esta edición.');
+    const controlador=new AbortController(),temporizador=setTimeout(()=>controlador.abort(),20000);
+    try{
+      const r=await fetch(url,{credentials:'same-origin',cache:'no-store',signal:controlador.signal});
+      if(!r.ok)throw Error('No se pudo cargar el original. Revisa tu conexión antes de guardar.');
+      const blob=await r.blob();
+      if(blob.type!=='image/webp'||blob.size<16||blob.size>1500000)throw Error('El original no es un WebP válido para guardar. Actualiza la biblioteca.');
+      return blob;
+    }finally{clearTimeout(temporizador);}
+  }
   async function guardar(method){
     if(ocupado||conflicto||!autenticado)return;const c=actual(),version=acabado;if(!c||method!=='DELETE'&&(!pendiente||pendiente.id!==c.id||pendiente.acabado!==version))return;
     const r=method==='DELETE'?revision(c,version):pendiente.revision;let body,headers={'If-Match':String(r)};
     if(method==='PUT'){body=pendiente.blob;headers={...headers,'Content-Type':'image/webp','X-Arte-Nombre':encodeURIComponent(pendiente.nombre),'X-Arte-Encuadre':JSON.stringify({...pendiente.encuadre,vistas:pendiente.vistas||encuadres(c)})};}
     if(method==='PATCH'){body=JSON.stringify({...pendiente.encuadre,vistas:pendiente.vistas||encuadres(c)});headers['Content-Type']='application/json';}
-    bloquear(true);estado('Guardando '+acabados[version]+' en '+nombreEntorno()+'…');
+    bloquear(true);estado('Guardando '+acabados[version]+' en '+nombreEntorno()+'…');let enviada=false;
     try{
+      const p=registroActivo(c,version);
+      if(method==='PATCH'&&version!=='normal'&&original(c,version)&&!p?.hash&&!p?.heredada){
+        // El servidor antiguo interpreta PATCH sin imagen como herencia de
+        // Normal. Un PUT de los mismos bytes conserva el original premium.
+        body=await copiarOriginal(c,version);method='PUT';
+        headers={...headers,'Content-Type':'image/webp','X-Arte-Nombre':encodeURIComponent(c.nombre+' · '+acabados[version]+' original local'),'X-Arte-Encuadre':JSON.stringify({...pendiente.encuadre,vistas:pendiente.vistas||encuadres(c)})};
+      }
+      enviada=true;
       const resultado=await pedir('api/arte/carta/'+encodeURIComponent(c.id)+'/'+version,{method,headers,body});
       const fila=resultado.carta,modificada=fila?.variantes?.[version]||resultado.variante||resultado;
       if(modificada.id!==c.id||!Number.isInteger(Number(modificada.revision)))throw Error('No se pudo confirmar la revisión guardada. Actualiza la biblioteca antes de continuar.');
       if(fila?.variantes)privados.set(c.id,fila);else{const anterior=privados.get(c.id)||{id:c.id};privados.set(c.id,{...anterior,variantes:{normal:registro(c,'normal'),foil:registro(c,'foil'),dorado:registro(c,'dorado'),[version]:modificada}});}
-      descartar();lista();detalle();estado((method==='DELETE'?(version==='normal'?'Normal original restaurada':'Versión '+acabados[version]+' eliminada'):acabados[version]+' guardado')+' en '+nombreEntorno()+'. Publica los cambios cuando quieras llevarlos al juego.');await CAOZ_ESTUDIO.actualizar();
-    }catch(e){if(!e.status){conflicto=true;$('conflicto').querySelector('strong').textContent='No pudimos confirmar el guardado.';$('conflicto').querySelector('p').textContent='Actualiza la revisión para comprobar qué llegó al estudio antes de hacer otro cambio.';botones();}fallo(e);}finally{bloquear(false);}
+      descartar();lista();detalle();estado((method==='DELETE'?(version==='normal'||original(c,version)?acabados[version]+' original restaurada':'Versión '+acabados[version]+' eliminada'):acabados[version]+' guardado')+' en '+nombreEntorno()+'. Publica los cambios cuando quieras llevarlos al juego.');await CAOZ_ESTUDIO.actualizar();
+    }catch(e){if(!e.status&&enviada){conflicto=true;$('conflicto').querySelector('strong').textContent='No pudimos confirmar el guardado.';$('conflicto').querySelector('p').textContent='Actualiza la revisión para comprobar qué llegó al estudio antes de hacer otro cambio.';botones();}fallo(e);}finally{bloquear(false);}
   }
   $('guardar').onclick=()=>guardar(pendiente?.blob?'PUT':'PATCH');
   $('restaurar').onclick=async()=>{
     if(ocupado||conflicto)return;const c=actual();if(!c)return;
-    const esNormal=acabado==='normal',enJuego=esNormal?ganadora(c):['dorado','foil','normal'].find(a=>a!==acabado&&creada(c,a));
-    const titulo=esNormal?'Restaurar Normal de '+c.nombre:'Eliminar '+acabados[acabado]+' de '+c.nombre;
-    const destinoNormal=c.original?'su imagen y encuadre originales':'el símbolo de esta carta';
-    const mensaje=(esNormal?'Se restaurará sólo la versión Normal a '+destinoNormal+'.':'Se eliminará sólo la versión '+acabados[acabado]+'.')+' En la biblioteca: '+acabados[enJuego]+'. Las demás versiones se conservan.'+(pendiente?' También se descartará tu vista previa.':'');
-    if(await confirmar(titulo,mensaje,esNormal?'Restaurar Normal':'Eliminar esta versión'))await guardar('DELETE');
+    const local=original(c),restaura=acabado==='normal'||!!local,enJuego=restaura?ganadora(c):['dorado','foil','normal'].find(a=>a!==acabado&&creada(c,a));
+    const titulo=(restaura?'Restaurar ':'Eliminar ')+acabados[acabado]+' de '+c.nombre;
+    const destino=local?'su imagen y encuadre originales':'el símbolo de esta carta';
+    const mensaje=(restaura?'Se restaurará sólo la versión '+acabados[acabado]+' a '+destino+'.':'Se eliminará sólo la versión '+acabados[acabado]+'.')+' En la biblioteca: '+acabados[enJuego]+'. Las demás versiones se conservan.'+(pendiente?' También se descartará tu vista previa.':'');
+    if(await confirmar(titulo,mensaje,restaura?'Restaurar '+acabados[acabado]:'Eliminar esta versión'))await guardar('DELETE');
   };
   for(const [a,suf] of [['normal','Normal'],['foil','Foil'],['dorado','Dorado']])$('version'+suf).onclick=async()=>{
     if(ocupado||acabado===a||!await puedeDescartar())return;descartar();acabado=a;detalle();

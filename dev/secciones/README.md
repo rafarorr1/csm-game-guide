@@ -33,10 +33,75 @@ las dependencias se derivan del código actual en cada solicitud.
 4. Tras aprobar la sección, integrar y ejecutar las guardas completas antes de beta.
 
 Cerrar el diálogo muestra los controles del laboratorio. Allí se puede cambiar
-entre **jugador nuevo**, **dos sobres**, **acabados desbloqueados** y **sobre
-anterior de tres cartas**. Cada recarga construye de nuevo esos datos temporales.
-Las Doradas del escenario «Acabados desbloqueados» son fixtures de desarrollo;
-no implementan ni simulan un canje de códigos.
+la presentación, los datos de prueba y la serie del muestrario. Cada recarga
+construye de nuevo esos datos temporales.
+
+## Colección: copias y muestrario de ediciones
+
+Debajo de cada carta sólo aparecen los marcadores de las ediciones que posee
+el jugador, sin contador ni texto. Las ediciones bloqueadas no se dibujan;
+la equipada queda resaltada. Desbloquear una edición añade su marcador,
+pero recibir otra copia de la misma no añade otro.
+El detalle muestra la cantidad de cada edición por separado, incluida `0 copias`
+para una edición bloqueada. La ilustración del listado corresponde al acabado
+elegido; mirar otra versión en el detalle no la equipa. «Usar» cambia esa elección
+sin aumentar cantidades. El pie de Colección sigue contando cartas Normales y
+ediciones especiales distintas, no el total de copias.
+
+| Escenario (`estado`) | Datos temporales |
+|---|---|
+| `nuevo` | Una copia Normal por ID, ninguna premium y ningún sobre. |
+| `sobres` | El mismo inventario inicial y dos sobres por abrir. Es el escenario predeterminado. |
+| `ediciones` | Copias repetidas de Eric, Thal y el protagonista `lider_fender`, con las cantidades de la tabla siguiente. Thal comienza usando Dorada. |
+| `muestrario` | Una copia de cada acabado para todos los IDs. `acabado=normal`, `foil` o `dorado` equipa esa serie en toda la rejilla; por defecto usa Normal. |
+| `legacy` | Un sobre pendiente anterior de tres cartas, ya concedidas, con Foil, Dorada y un protagonista. Reabrirlo conserva ese resultado. |
+
+Cantidades conocidas del fixture `ediciones`:
+
+| ID | Normal | Foil | Dorada | Total debajo de la carta |
+|---|---:|---:|---:|---:|
+| `eric` | 1 | 3 | 2 | 6 |
+| `tal` | 1 | 5 | 1 | 7 |
+| `lider_fender` | 1 | 2 | 4 | 7 |
+
+El resto conserva una Normal y cero premium. Los dos fixtures conceden sus
+copias mediante `otorgarCopia` del modelo real. Las Doradas sirven para revisar
+la interfaz y las ilustraciones; no implementan ni simulan un canje de códigos.
+El muestrario permite recorrer también las cartas fuera de los mazos y los
+protagonistas, conservando la búsqueda y los filtros de Colección.
+
+Ejemplos locales:
+
+- Cantidades en móvil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=ediciones>
+- Serie Foil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=muestrario&acabado=foil>
+- Thal Dorada en detalle: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=muestrario&acabado=dorado&carta=tal>
+
+Los parámetros `estado`, `acabado` y `carta` también se aceptan en la entrada
+alojada `/coleccion/`, que elige móvil o escritorio y los conserva. El parámetro
+opcional `carta` abre directamente un ID conocido desde esa entrada, el HTML
+del laboratorio o las páginas exportadas `movil.html` y `escritorio.html`.
+
+Cada acabado tiene su original local y su encuadre. La disponibilidad de una
+ilustración premium no concede esa edición al inventario real. El laboratorio
+sólo consulta esos originales públicos: permite revisar las series sin traer
+reemplazos ni ajustes privados del estudio.
+
+### Cantidades y límites de migración
+
+`cantidad(id)` devuelve el total; `cantidad(id, acabado)` devuelve una edición.
+Normal empieza con una copia implícita. `otorgarCopia` suma una copia explícita;
+`desbloquear` es idempotente y no suma si la edición ya estaba desbloqueada.
+Cada nuevo sobre suma todas sus copias y guarda el contenido pendiente en la
+misma escritura. Si el guardado falla, no se descuenta el sobre ni se conceden
+copias. Reabrir su presentación o cambiar el acabado elegido no vuelve a sumar.
+
+Se conserva la clave y el formato de progreso v1. Los datos antiguos sin
+contadores se interpretan como una Normal por ID y al menos una copia por cada
+premium ya desbloqueado. No se puede recuperar cuántos duplicados se obtuvieron
+antes: ese historial nunca se guardó. El pendiente legado de tres cartas se
+conserva como premio ya concedido; no sirve para reconstruir ni aumentar ese
+historial. La migración se incorpora al siguiente guardado correcto. Estos
+contadores siguen siendo locales, sin sincronización entre dispositivos.
 
 ## Procedencia y límites
 
@@ -82,6 +147,28 @@ aislamiento del almacenamiento, componentes servidos y bloqueos HTTP/CSP.
 Además, al cambiar Colección, revisar sus interacciones en el navegador: búsqueda,
 tres columnas, scroll del listado y regreso a su posición, acabados, apertura de cinco cartas, reapertura del sobre pendiente y
 navegación de regreso. Estas pruebas acotadas no sustituyen la integración final.
+
+Para cambios en cantidades o en las series del muestrario, usar las regresiones
+específicas de esa sección:
+
+```sh
+node caoz_tcg/pruebas_coleccion.mjs
+node caoz_tcg/pruebas_arte_ediciones.mjs
+node caoz_tcg/pruebas_originales_acabados.mjs
+node dev/secciones/pruebas_coleccion_copias.mjs
+node dev/secciones/pruebas_coleccion_muestrario.mjs
+node dev/secciones/pruebas_coleccion_protagonistas.mjs
+```
+
+Después de publicar, `BASE_URL=https://aislados.caoz-tcg.pages.dev/coleccion/`
+permite repetir `pruebas_coleccion_copias.mjs` sobre el paquete servido,
+sin arrancar un servidor local ni tocar el progreso real.
+
+Comprueban los marcadores poseídos, las cantidades del detalle, la selección visual, el aislamiento del muestrario,
+los protagonistas y los originales por acabado. Las pruebas del estudio usan
+respuestas simuladas y no escriben en sus bases de datos. Revisar también en
+móvil y escritorio que el total no se recorte y que cada serie conserve su
+imagen y encuadre al abrir el detalle y regresar al listado.
 
 ## Añadir otra sección
 

@@ -126,6 +126,8 @@ node --check "$AQUI/_worker.js" || exit 1
 python3 "$AQUI/verificar_sonidos.py" || exit 1
 node "$AQUI/pruebas_sonidos.mjs" || exit 1
 node "$AQUI/pruebas_arte.mjs" || exit 1
+node "$AQUI/pruebas_arte_ediciones.mjs" || exit 1
+node "$AQUI/pruebas_originales_acabados.mjs" || exit 1
 node "$AQUI/pruebas_estudio.mjs" || exit 1
 node "$AQUI/pruebas_coleccion.mjs" || exit 1
 node "$REPO/dev/secciones/pruebas_sobres_apertura.mjs" --sabotaje || exit 1

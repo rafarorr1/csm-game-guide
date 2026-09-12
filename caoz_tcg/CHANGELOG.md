@@ -1,5 +1,22 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 252 · Ediciones desbloqueadas y arte Foil y Dorado · 2026-09-12
+
+- Debajo de cada carta aparecen sólo los marcadores de sus ediciones
+  desbloqueadas, con la edición en uso resaltada, sin contador ni etiqueta.
+  El desglose de copias Normal, Foil y Dorada sigue al abrirla. Equipar o reabrir un sobre pendiente
+  no suma copias; cada nuevo premio sí, aunque esa edición ya estuviera poseída.
+- Se conservan todos los originales Normales. La serie Foil usa grabados de
+  tinta azul y plata; la Dorada, pintura de manuscrito medieval iluminado.
+  Thal mantiene su ilustración Dorada final y los cinco encuadres publicados.
+- Cada edición tiene un original independiente en el catálogo del estudio.
+  Los reemplazos publicados y la herencia explícita conservan prioridad.
+- Los inventarios anteriores parten de una copia por edición desbloqueada:
+  el historial de duplicados no se guardaba. Los nuevos duplicados sí se cuentan.
+- El laboratorio permite recorrer ambas series con un inventario temporal,
+  sin alterar progreso real. Integración autorizada de la revisión aislada
+  en beta 252; producción permanece en 250.
+
 ### Sin numerar · build 251 · Sello del Domo en Colección · 2026-09-12
 
 - El sobre se puede girar con el dedo o el ratón; el sello se rompe y la
