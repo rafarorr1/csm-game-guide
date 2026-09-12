@@ -10,7 +10,7 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   let panel,contenido,barra,estado,volverFoco,origen,temporizadores=[],observador,frame=0,guardando=false;
-  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',pagina:0,tamano:8,carta:null,regla:0,reveladas:0,packId:null};
+  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',pagina:0,tamano:8,carta:null,acabadoVista:'normal',regla:0,reveladas:0,muestraSobre:0,packId:null};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:l.n,t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,sub:typeof tribeLine==='function'?tribeLine(c):c.t};
@@ -33,21 +33,28 @@
     panel.style.setProperty('--coleccion-alto',alto+'px');panel.style.setProperty('--coleccion-top',(v?v.offsetTop:0)+'px');
     panel.classList.toggle('coleccionBaja',alto<650);panel.classList.toggle('coleccionTeclado',alto<430);
     const ancho=panel.clientWidth;
-    const nuevo=ancho<550?(alto<530||ancho<365?4:6):(ancho<820?8:10);
+    const nuevo=ancho<550?(alto>=760&&ancho>=350?4:2):(ancho<820?2:ancho<1000?3:4);
     if(nuevo!==s.tamano){const indice=s.pagina*s.tamano;s.tamano=nuevo;s.pagina=Math.floor(indice/nuevo);if(s.vista==='cartas')dibujarLista();}
     if(s.vista==='detalle')paginacionReglas();
     encajarCartas();
   }
   function encajarCartas(){
     if(!panel?.open)return;
+    const movil=panel.clientWidth<550;
     panel.querySelectorAll('.coleccionCarta,.coleccionReverso').forEach(n=>{
+      if(!n.getClientRects().length)return;
       const p=n.parentElement,clase=p.classList;let alto=p.clientHeight,ancho=p.clientWidth;
-      const estilos=getComputedStyle(p),gap=parseFloat(estilos.rowGap)||0;
-      alto-=parseFloat(estilos.paddingTop)||0;alto-=parseFloat(estilos.paddingBottom)||0;
-      const otros=[...p.children].filter(h=>h!==n);
-      otros.forEach(h=>alto-=h.getBoundingClientRect().height);alto-=otros.length*gap;
-      if(clase.contains('coleccionVersion')||clase.contains('coleccionHallazgo'))alto=Math.min(alto,300);
-      const h=Math.max(24,Math.min(alto,ancho*1.5));n.style.height=h+'px';n.style.width=(h/1.5)+'px';n.style.flex='0 0 auto';
+      if(clase.contains('coleccionVersion')&&movil){const caja=p.parentElement;alto=caja.clientHeight-118;ancho=caja.clientWidth-30;}
+      else{
+        const estilos=getComputedStyle(p),gap=parseFloat(estilos.rowGap)||0;
+        alto-=parseFloat(estilos.paddingTop)||0;alto-=parseFloat(estilos.paddingBottom)||0;
+        const otros=[...p.children].filter(h=>h!==n);otros.forEach(h=>alto-=h.getBoundingClientRect().height);alto-=otros.length*gap;
+      }
+      alto=Math.min(alto,movil?470:480);ancho-=6;
+      const h=Math.max(28,Math.min(alto,ancho*1.4)),w=h/1.4;
+      n.style.height=h+'px';n.style.width=w+'px';n.style.flex='0 0 auto';n.style.setProperty('--cw',w+'px');n.style.setProperty('--ch',h+'px');n.style.fontSize=(w*.081)+'px';
+      // Sólo ajustamos texto al espacio; marco, orbes y composición son los del juego.
+      const texto=n.querySelector('.pieCarta .txt');if(texto){texto.style.fontSize='';const max=h*.47;let tam=parseFloat(getComputedStyle(texto).fontSize);for(let i=0;i<8&&texto.scrollHeight>max&&tam>10;i++){tam=Math.max(10,tam*.93);texto.style.fontSize=tam+'px';}}
     });
   }
   function programarAjuste(){cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{encajarCartas();if(s.vista==='detalle')paginacionReglas();});}
@@ -93,20 +100,21 @@
     if(volverFoco?.isConnected)volverFoco.focus({preventScroll:true});
   }
   function falloGuardado(){mensaje('No se pudo guardar. Libera espacio en el navegador e inténtalo otra vez.',true);}
-  function cambio(){if(!panel?.open||guardando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else dibujarSobres();}
+  function cambio(){if(!panel?.open||guardando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else dibujarSobres();}
   function arteActualizado(){if(!panel?.open)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
   function actualizarCabecera(){
     const m=modelo(),ids=m.ids(),premium=ids.reduce((n,id)=>n+(m.tiene(id,'foil')?1:0)+(m.tiene(id,'dorado')?1:0),0);
     panel.querySelector('.coleccionTotales').textContent=ids.length+' normales · '+premium+' ediciones especiales';
-    barra.replaceChildren();const cartas=boton('Mis cartas',()=>ir('cartas'),'coleccionPestana'),sobres=boton('Sobres',()=>ir('sobres'),'coleccionPestana');
+    barra.replaceChildren();const cartas=boton('Mis cartas',()=>ir('cartas'),'coleccionPestana'),sobres=boton('Sobres',()=>ir('sobres'),'coleccionPestana'),canje=boton('Canjear',()=>ir('canje'),'coleccionPestana');
     cartas.prepend(icono('libro'));sobres.prepend(icono('sobre'));sobres.append(crear('span','coleccionNumero',m.sobres()));
-    cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',s.vista==='sobres'?'page':'false');barra.append(cartas,sobres);
+    cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',s.vista==='sobres'?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
   }
   function ir(vista){limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
-  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;contenido.replaceChildren();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else dibujarSobres();}
+  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;contenido.replaceChildren();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='canje')dibujarCanje();else dibujarSobres();}
   function idsFiltrados(){
-    const q=normalizar(s.busqueda),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
-    return modelo().ids().filter(id=>{const c=dato(id);return (!q||normalizar(c.n+' '+c.sub).includes(q))&&(s.tipo==='todos'||c.t===s.tipo)&&(!enMazo||enMazo.has(id))&&(s.mazo!=='cajon'||c.set==='cajon');}).sort((a,b)=>{const x=dato(a),y=dato(b);return Number(y.t==='protagonista')-Number(x.t==='protagonista')||(Number(x.c)||0)-(Number(y.c)||0)||x.n.localeCompare(y.n,'es');});
+    const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
+    const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
+    return modelo().ids().filter(id=>{const c=dato(id);return (!q||normalizar(c.n+' '+c.sub).includes(q))&&(s.tipo==='todos'||c.t===s.tipo)&&(!enMazo||enMazo.has(id))&&(s.mazo!=='cajon'||c.set==='cajon');}).sort((a,b)=>{const x=dato(a),y=dato(b);return relevancia(a)-relevancia(b)||Number(y.t==='protagonista')-Number(x.t==='protagonista')||(Number(x.c)||0)-(Number(y.c)||0)||x.n.localeCompare(y.n,'es');});
   }
   function dibujarGaleria(){
     const filtros=crear('div','coleccionFiltros'),buscar=crear('label','coleccionBuscar');buscar.append(icono('buscar'));
@@ -126,7 +134,7 @@
     grid.replaceChildren();grid.dataset.cantidad=s.tamano;
     ids.slice(s.pagina*s.tamano,(s.pagina+1)*s.tamano).forEach(id=>{
       const c=dato(id),a=modelo().elegido(id),b=boton('',()=>verCarta(id),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Edición '+NOMBRES[a]+'. Ver tres versiones.');
-      const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');info.append(crear('strong','',c.n));
+      const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');
       const pie=crear('span','coleccionMiniPie');pie.append(crear('span','',NOMBRES[a]));const puntos=crear('span','coleccionPuntos');
       ACABADOS.forEach(v=>{const p=crear('i');p.dataset.edicion=v;p.classList.toggle('propia',modelo().tiene(id,v));p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+(modelo().tiene(id,v)?' desbloqueada':' bloqueada');puntos.append(p);});pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);
     });
@@ -134,38 +142,37 @@
     const nav=contenido.querySelector('.coleccionPaginas');nav.replaceChildren();const ant=boton('Anterior',()=>cambiarPagina(-1)),sig=boton('Siguiente',()=>cambiarPagina(1));ant.disabled=s.pagina===0;sig.disabled=s.pagina>=paginas-1;nav.append(ant,crear('span','',String(s.pagina+1).padStart(2,'0')+' / '+String(paginas).padStart(2,'0')),sig);programarAjuste();
   }
   function actualizarCarta(nodo){
-    const id=nodo.dataset.arteId,a=nodo.dataset.coleccionAcabado,vista=nodo.dataset.vistaArte;
-    const v=window.CAOZ_ARTE?.version?.(id,a,vista),enc=v?.encuadre||encuadreDe(ARTE[id]),url=v?.url||(typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp');
+    const soporte=nodo.matches('[data-arte-id]')?nodo:nodo.querySelector('[data-arte-id]');if(!soporte)return;
+    const id=soporte.dataset.arteId,a=nodo.dataset.coleccionAcabado,vista=nodo.dataset.vistaArte;
+    const v=window.CAOZ_ARTE?.version?.(id,a,vista),enc=v?v.encuadre:encuadreDe(ARTE[id]),url=v?.url||(typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp');
     nodo.dataset.acabado=a;
-    let marco=nodo.querySelector('.marcoDibujo');if(!marco){marco=crear('div','marcoDibujo');nodo.prepend(marco);}let img=marco.querySelector('img');if(!img){img=crear('img','dibujo');img.alt='';marco.append(img);}
-    if(enc&&url){nodo.classList.add('conarte');nodo.style.setProperty('--ex',enc.x+'%');nodo.style.setProperty('--ey',enc.y+'%');nodo.style.setProperty('--ez',String(enc.z/100));if(img.getAttribute('src')!==url)img.src=url;}
-    else{nodo.classList.remove('conarte');img.removeAttribute('src');}
+    if(enc&&url){soporte.classList.add('conarte');soporte.classList.remove('sinarte');ponerDibujo(soporte,url,enc);}
+    else{soporte.classList.remove('conarte');if(soporte.classList.contains('card'))soporte.classList.add('sinarte');soporte.querySelectorAll(':scope > .marcoDibujo').forEach(n=>n.remove());}
   }
   function carta(id,acabado){
-    const c=dato(id),n=crear('article','cartaVista coleccionCarta');n.dataset.arteId=id;n.dataset.coleccionAcabado=acabado;n.dataset.acabado=acabado;
-    n.dataset.vistaArte=(document.getElementById('panelCerrar')?'movil_':'desktop_')+'coleccion';n.setAttribute('aria-hidden','true');
-    const marco=crear('div','marcoDibujo'),img=crear('img','dibujo');img.alt='';img.decoding='async';marco.append(img);
-    const fallback=crear('div','coleccionSinArte',c.art||'✦');const nombre=crear('div','nombreCarta',c.n),tipo=crear('div','coleccionTipoCarta',limpiarTexto(c.sub));
-    n.append(marco,fallback,crear('span','coleccionCoste',c.c),nombre,tipo);
-    if(c.t==='personaje'){n.append(crear('span','coleccionAtaque',c.a),crear('span','coleccionVida',c.h));}
-    actualizarCarta(n);return n;
+    // Se usa la misma carta del tablero, conservando sus ilustraciones, reglas,
+    // marco y medallones. Clonar evita activar acciones de combate al explorar.
+    const original=id.startsWith('lider_')?cartaDeLiderVS(id.slice(6),''):cardEl(id,{}),n=original.cloneNode(true);
+    n.classList.add('coleccionCarta');n.dataset.coleccionAcabado=acabado;n.dataset.acabado=acabado;
+    n.dataset.vistaArte=(document.getElementById('panelCerrar')?'movil_':'desktop_')+'coleccion';
+    n.removeAttribute('tabindex');n.setAttribute('aria-hidden','true');actualizarCarta(n);return n;
   }
-  function verCarta(id){s.carta=id;s.regla=0;ir('detalle');sonido('ui_confirm');}
+  function verCarta(id){s.carta=id;s.acabadoVista=modelo().elegido(id);s.regla=0;ir('detalle');sonido('ui_confirm');}
   function dibujarDetalle(){
     if(!s.carta){ir('cartas');return;}contenido.replaceChildren();panel.dataset.vista='detalle';
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));
     cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));contenido.append(cab);
     const versiones=crear('div','coleccionVersiones');
     ACABADOS.forEach(a=>{
-      const tiene=modelo().tiene(s.carta,a),elegida=modelo().elegido(s.carta)===a,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);
-      const etiqueta=crear('h4','',NOMBRES[a]);slot.append(etiqueta,carta(s.carta,a));
-      const estadoEd=crear('span','coleccionEstadoEdicion',elegida?'En uso':tiene?'Desbloqueada':'En sobres');estadoEd.prepend(icono(elegida?'check':tiene?'libro':'candado'));slot.append(estadoEd);
-      const b=boton(elegida?'En uso':tiene?'Usar':'Ver sobres',()=>{
-        if(!tiene){ir('sobres');return;}
+      const tiene=modelo().tiene(s.carta,a),elegida=modelo().elegido(s.carta)===a,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
+      const etiqueta=boton(NOMBRES[a],()=>{s.acabadoVista=a;dibujarDetalle();},'coleccionElegirAcabado');etiqueta.setAttribute('aria-pressed',s.acabadoVista===a?'true':'false');slot.append(etiqueta,carta(s.carta,a));
+      const estadoEd=crear('span','coleccionEstadoEdicion',elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Carta física':'En sobres');estadoEd.prepend(icono(elegida?'check':tiene?'libro':'candado'));slot.append(estadoEd);
+      const b=boton(elegida?'En uso':tiene?'Usar':a==='dorado'?'Canjear código':'Ver sobres',()=>{
+        if(!tiene){ir(a==='dorado'?'canje':'sobres');return;}
         guardando=true;let ok=false;try{ok=modelo().seleccionar(s.carta,a);}finally{guardando=false;}
         if(ok){dibujarDetalle();actualizarCabecera();mensaje(c.n+' · '+NOMBRES[a]+' equipada.');sonido('ui_confirm');const activo=contenido.querySelector('[data-edicion="'+a+'"] button');activo?.focus({preventScroll:true});}
         else mensaje('No se pudo guardar la selección. Inténtalo de nuevo.',true);
-      },'coleccionUsar');b.disabled=elegida;b.setAttribute('aria-label',elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:'Desbloquear '+NOMBRES[a]+' en sobres');slot.append(b);versiones.append(slot);
+      },'coleccionUsar');b.disabled=elegida;b.setAttribute('aria-label',elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Canjear el código de una carta física':'Desbloquear Foil en sobres');slot.append(b);versiones.append(slot);
     });
     contenido.append(versiones);
     const reglas=crear('section','coleccionReglas');reglas.setAttribute('aria-label','Información de la carta');
@@ -176,7 +183,7 @@
     programarAjuste();
   }
   function paginacionReglas(){
-    if(s.vista!=='detalle')return;const texto=contenido.querySelector('.coleccionReglaTexto'),nav=contenido.querySelector('.coleccionReglaPaginas');if(!texto||!s.carta)return;
+    if(s.vista!=='detalle')return;const texto=contenido.querySelector('.coleccionReglaTexto'),nav=contenido.querySelector('.coleccionReglaPaginas');if(!texto||!s.carta||!texto.getClientRects().length)return;
     const palabras=(limpiarTexto(dato(s.carta).x)||'Esta carta no tiene habilidades adicionales.').split(' '),paginas=[];
     let desde=0;texto.textContent='';
     // Páginas medidas en el espacio real: las reglas no necesitan una hoja que
@@ -191,31 +198,40 @@
   function dibujarSobres(){
     contenido.replaceChildren();panel.dataset.vista='sobres';const pack=modelo().pendiente();if(pack){dibujarRevelacion(pack);return;}
     s.packId=null;s.reveladas=0;
-    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','TESOROS POR DESCUBRIR'),crear('h3','','Ediciones del Domo'),crear('p','','Cada sobre guarda tres cartas Foil o Doradas.'));contenido.append(cab);
+    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','TESOROS POR DESCUBRIR'),crear('h3','','Ediciones del Domo'),crear('p','','Termina una campaña y recibe un sobre con 5 cartas Foil aleatorias.'));contenido.append(cab);
     const escena=crear('div','coleccionSobreEscena'),sobre=crear('div','coleccionSobre');sobre.setAttribute('aria-hidden','true');
-    sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreLeyenda','EDICIONES DEL DOMO'));
+    sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreLeyenda','5 CARTAS FOIL'));
     escena.append(crear('div','coleccionSobreAura'),sobre);contenido.append(escena);
-    const completa=modelo().ids().every(id=>modelo().tiene(id,'foil')&&modelo().tiene(id,'dorado'));
-    const acciones=crear('div','coleccionSobreAcciones'),n=modelo().sobres(),abrir=boton(completa?'Colección completa':n?'Abrir sobre':'No tienes sobres',()=>{
+    const acciones=crear('div','coleccionSobreAcciones'),n=modelo().sobres(),abrir=boton(n?'Abrir sobre':'Completa una campaña',()=>{
       if(guardando)return;guardando=true;abrir.disabled=true;let p;
       try{p=modelo().abrirSobre();}finally{guardando=false;}
       if(!p){abrir.disabled=false;mensaje('No se pudo abrir. Comprueba tus sobres o el espacio disponible para guardar.',true);return;}
-      s.packId=p.id;s.reveladas=0;mensaje('');sonido('ui_confirm');dibujarSobres();actualizarCabecera();
-    },'coleccionAbrirSobre');abrir.disabled=!n||completa;acciones.append(crear('p','coleccionSobreCuenta',n===1?'Tienes un sobre por abrir':'Tienes '+n+' sobres por abrir'),abrir);
+      s.packId=p.id;s.reveladas=0;s.muestraSobre=0;mensaje('');sonido('ui_confirm');dibujarSobres();actualizarCabecera();
+    },'coleccionAbrirSobre');abrir.disabled=!n;acciones.append(crear('p','coleccionSobreCuenta',n===1?'Tienes un sobre por abrir':'Tienes '+n+' sobres por abrir'),abrir);
     if(modelo().betaDisponible()){const beta=boton('Sobre de prueba · Beta',()=>{if(guardando)return;guardando=true;let ok;try{ok=modelo().darSobreBeta();}finally{guardando=false;}if(ok){dibujarSobres();actualizarCabecera();mensaje('Sobre de prueba añadido.');}else mensaje('No se pudo añadir el sobre. Inténtalo de nuevo.',true);},'coleccionBeta');acciones.append(beta);}
-    contenido.append(acciones,crear('p','coleccionAviso','Las ediciones son cosméticas: no cambian el poder de tus cartas.'));
+    contenido.append(acciones,crear('p','coleccionAviso','Las Doradas se obtienen con los códigos de las cartas físicas.'));
+  }
+  function dibujarCanje(){
+    contenido.replaceChildren();panel.dataset.vista='canje';
+    const caja=crear('section','coleccionCanje'),sello=crear('div','coleccionCanjeSello');sello.append(icono('candado'));
+    caja.append(sello,crear('span','coleccionAntetitulo','DE TU CARTA A TU COLECCIÓN'),crear('h3','','Cartas doradas'),crear('p','','Los códigos de las cartas físicas se podrán canjear aquí.'));
+    const label=crear('label','coleccionCanjeCodigo','Código de tu carta física'),input=crear('input');input.type='text';input.placeholder='Próximamente';input.disabled=true;label.append(input);caja.append(label);
+    const pronto=boton('Próximamente',()=>{},'coleccionAbrirSobre');pronto.disabled=true;caja.append(pronto,crear('p','coleccionCanjeNota','El canje todavía no está disponible. Ningún código se envía ni se guarda.'));
+    contenido.append(caja,boton('Volver a mis cartas',()=>ir('cartas'),'coleccionCanjeVolver'));
   }
   function dibujarRevelacion(pack){
-    if(s.packId!==pack.id){s.packId=pack.id;s.reveladas=0;}
+    if(s.packId!==pack.id){s.packId=pack.id;s.reveladas=0;s.muestraSobre=0;}
     const total=pack.cartas.length,termino=s.reveladas>=total;
     const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','EL DOMO HA ELEGIDO'),crear('h3','',termino?'Tus nuevas ediciones':'Descubre tu sobre'),crear('p','',termino?'Ya están guardadas en tu colección.':'Toca cada carta para revelar lo que esconde.'));contenido.append(cab);
-    const fila=crear('div','coleccionRevelacion');fila.dataset.reveladas=s.reveladas;
+    const fila=crear('div','coleccionRevelacion');fila.dataset.reveladas=s.reveladas;fila.dataset.total=total;
     pack.cartas.forEach((item,i)=>{
-      const revelada=i<s.reveladas,b=boton('',()=>revelar(i,pack),'coleccionHallazgo');b.dataset.indice=i;b.classList.toggle('revelada',revelada);b.disabled=i!==s.reveladas||termino;
+      const revelada=i<s.reveladas,b=boton('',()=>revelar(i,pack),'coleccionHallazgo');b.dataset.indice=i;b.classList.toggle('revelada',revelada);b.classList.toggle('actual',i===s.muestraSobre);b.disabled=i!==s.reveladas||termino;
       if(revelada){b.append(carta(item.id,item.acabado));b.append(crear('strong','coleccionHallazgoNombre',dato(item.id).n),crear('span','coleccionHallazgoEdicion',NOMBRES[item.acabado]+' · '+(item.nueva?'Nueva':'Ya la tenías')));b.setAttribute('aria-label',dato(item.id).n+', '+NOMBRES[item.acabado]+', '+(item.nueva?'nueva':'ya la tenías'));}
       else{const reverso=crear('span','coleccionReverso');reverso.append(icono('libro'),crear('span','','✦'),crear('b','','CAOZ'));b.append(reverso,crear('strong','coleccionHallazgoNombre',i===s.reveladas?'Revelar carta':'Por descubrir'),crear('span','coleccionHallazgoEdicion',(i+1)+' de '+total));b.setAttribute('aria-label','Revelar carta '+(i+1)+' de '+total);}
       fila.append(b);
     });contenido.append(fila);
+    const indice=crear('nav','coleccionIndiceSobre');indice.setAttribute('aria-label','Cartas del sobre');
+    pack.cartas.forEach((item,i)=>{const b=boton(String(i+1),()=>{s.muestraSobre=i;dibujarSobres();},'coleccionPuntoSobre');b.disabled=i>s.reveladas;b.classList.toggle('revelado',i<s.reveladas);b.setAttribute('aria-current',i===s.muestraSobre?'true':'false');b.setAttribute('aria-label',(i<s.reveladas?dato(item.id).n:'Carta '+(i+1))+' · '+(i+1)+' de '+total);indice.append(b);});contenido.append(indice);
     const pie=crear('div','coleccionSobreAcciones');
     if(termino){pie.append(boton('Ir a mis cartas',()=>{
       guardando=true;let ok;try{ok=modelo().cerrarSobre();}finally{guardando=false;}
@@ -226,7 +242,7 @@
   }
   function revelar(indice,pack){
     if(guardando||indice!==s.reveladas)return;
-    guardando=true;s.reveladas++;sonido('ui_confirm');dibujarSobres();const n=contenido.querySelector('[data-indice="'+indice+'"]');n?.classList.add('coleccionRevela');
+    guardando=true;s.muestraSobre=indice;s.reveladas++;sonido('ui_confirm');dibujarSobres();const n=contenido.querySelector('[data-indice="'+indice+'"]');n?.classList.add('coleccionRevela');
     despues(()=>{guardando=false;if(!panel.open)return;contenido.querySelector('.coleccionSobreAcciones button')?.focus({preventScroll:true});},matchMedia('(prefers-reduced-motion:reduce)').matches?0:420);
   }
   // La función es global porque los dos menús la invocan al pulsar Colección.

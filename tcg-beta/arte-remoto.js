@@ -7,6 +7,7 @@
   const EXCLUIR='.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras';
   let muestra=null;
   let originales={},cartas=[],carga=null,peticion=null,firma='',hayFallos=false;
+  let reintento=null,intentos=0;
   const conocido=id=>typeof id==='string'&&(Object.hasOwn(CARDS,id)||(id.startsWith('lider_')&&Object.hasOwn(LEADERS,id.slice(6))));
   const encValido=e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.z)&&e.x>=0&&e.x<=100&&e.y>=0&&e.y<=100&&e.z>=50&&e.z<=300;
   function limpiarOriginales(datos){
@@ -126,13 +127,20 @@
     try{const r=await fetch(url,{cache:'no-store',credentials:'omit',signal:c.signal});if(!r.ok)return null;return await r.json();}
     catch(e){return null;}finally{clearTimeout(t);}
   }
+  function reintentarCatalogo(){
+    // Un fallo breve al entrar no debe dejar el arte remoto esperando un minuto.
+    // Dos intentos por caída; después sigue el sondeo habitual, sin bucle rápido.
+    if(reintento!==null||intentos>=2||document.hidden)return;
+    reintento=setTimeout(()=>{reintento=null;intentos++;if(!document.hidden)void refrescar();},1500*(intentos+1));
+  }
   function refrescar(){
     if(new URLSearchParams(location.search).has('estudioVista'))return Promise.resolve(false);
     if(location.protocol==='file:')return Promise.resolve(false);
     if(peticion)return peticion;
     peticion=(async()=>{
       const nuevos=limpiarCatalogo(await pedir(new URL('api/arte/catalogo',BASE).href,4500));
-      if(!nuevos)return false;
+      if(!nuevos){reintentarCatalogo();return false;}
+      clearTimeout(reintento);reintento=null;intentos=0;
       const nuevaFirma=JSON.stringify(nuevos);
       if(nuevaFirma===firma){if(hayFallos){hayFallos=false;actualizar();}return false;}
       cartas=nuevos;firma=nuevaFirma;recomponer();guardar();actualizar();return true;

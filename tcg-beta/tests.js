@@ -1828,7 +1828,9 @@ PRUEBAS.suite('coleccion',async t=>{
         t.igual(JSON.stringify(vista.encuadre),JSON.stringify(ediciones[acabado]),pagina+': una consulta explícita conserva el encuadre de '+acabado+'.');
       }
       w.showGallery();const panel=d.querySelector('#coleccionPanel');t.check(panel?.open,pagina+': Colección abre el nuevo diálogo.');
-      const buscar=panel.querySelector('input[aria-label="Buscar cartas por nombre"]');buscar.value='Augusto';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
+      const buscar=panel.querySelector('input[aria-label="Buscar cartas por nombre"]');buscar.value='Thal';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
+      t.igual(panel.querySelector('.coleccionMini')?.dataset.carta,'tal',pagina+': buscar Thal coloca el nombre exacto antes que coincidencias parciales o subtipos.');
+      buscar.value='Augusto';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
       const entrada=panel.querySelector('.coleccionMini[data-carta="augusto"]');t.check(!!entrada,pagina+': la búsqueda encuentra Augusto.');entrada.click();
       const revisarVersiones=()=>{
         t.igual(panel.querySelectorAll('.coleccionVersion').length,3,pagina+': presenta Normal, Foil y Dorada juntas.');
@@ -1887,6 +1889,71 @@ PRUEBAS.suite('campanaRetratosBeta',async t=>{
       t.check(!color('adreida')&&color('talesin'),pagina+': fuera de beta sólo se muestran logros normales.');
       t.igual(localStorage.getItem(claves[1]),reales,pagina+': leer el progreso no escribe logros.');
     }finally{w.campanaCerrar();w.relojPara();f.remove();}
+  }}finally{claves.forEach((k,i)=>{if(previos[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,previos[i]);});}
+});
+
+PRUEBAS.suite('campanaSobres',async t=>{
+  const claves=['caoz.campana.v1.prueba','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
+  const previos=claves.map(k=>localStorage.getItem(k));
+  try{for(const pagina of ['index.html','movil.html']){
+    claves.forEach(k=>localStorage.removeItem(k));
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const cargar=async()=>{const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=sobres-campana-interno&recarga='+Date.now();if(!f.isConnected)document.body.append(f);await carga;};
+    await cargar();let w=f.contentWindow,inventario;
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);let m=inventario.modelo;
+      w.cinematicaFinal=async()=>true;
+      const duelo=(id,etapa,ganador,extra={})=>{
+        w.campanaGuardar({version:1,id,lider:'fender',etapa,...extra});w.newGame('fender',etapa===5?'gero':'mohamed');
+        w.eval('G.over=true;G.campana='+JSON.stringify({id,etapa}));w.campanaFinal(ganador,'Prueba de recompensa');
+      };
+      for(let etapa=0;etapa<5;etapa++)duelo('recorrido-1',etapa,0);
+      t.igual(m.sobres(),0,pagina+': los rivales intermedios no dan sobres.');
+      duelo('recorrido-1',5,1);t.igual(m.sobres(),0,pagina+': perder contra Gero no da sobres.');
+      duelo('recorrido-1',5,0);t.igual(m.sobres(),1,pagina+': completar la campaña concede un sobre.');
+      w.campanaFinal(0,'Victoria repetida');w.campanaGuardar(w.campanaLeer());
+      t.igual(m.sobres(),1,pagina+': duplicar la victoria o guardar de nuevo no repite el premio.');
+      await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;w.cinematicaFinal=async()=>true;
+      t.igual(m.sobres(),1,pagina+': recargar el final conserva exactamente un sobre.');
+      duelo('recorrido-2',5,0);t.igual(m.sobres(),2,pagina+': repetir campaña con el mismo mazo da otro sobre.');
+      const pack=m.abrirSobre();t.check(pack?.cartas.length===5&&pack.cartas.every(c=>c.acabado==='foil'),pagina+': el premio contiene cinco Foil y ninguna Dorada.');
+      t.check(pack.cartas.every(c=>m.tiene(c.id,'foil')&&!m.tiene(c.id,'dorado')&&m.elegido(c.id)==='normal'),pagina+': desbloquea Foil sin cambiar la edición equipada.');
+      m.cerrarSobre();
+      // El sexto sello abre otra pelea: no adelanta el premio ni concede dos.
+      w.campanaMarcarGero=p=>{p.secreto='ascenso';};
+      duelo('recorrido-editor',5,0);t.igual(m.sobres(),1,pagina+': el ascenso interrumpido espera al Editor.');
+      const editor=ganador=>{w.campanaGuardar({...w.campanaLeer(),secreto:'combate'});w.newGame('fender','adreida');w.eval("G.over=true;G.campana={id:'recorrido-editor',etapa:6,jefeSecreto:true}");return w.campanaFinalSecreto(ganador,'Final secreto');};
+      w.PITAGORAS_MESA.disolver=async()=>false;
+      await editor(1);t.igual(m.sobres(),1,pagina+': perder con el Editor no concede el premio.');
+      await editor(0);t.igual(m.sobres(),2,pagina+': vencer al Editor termina la campaña y concede un sobre.');
+      w.campanaGuardar({...w.campanaLeer(),secreto:'completado'});t.igual(m.sobres(),2,pagina+': el epílogo no da otro sobre.');
+      // Un ensayo efímero fuera de campaña no puede fabricar recompensas.
+      w.eval("campanaEnsayoGero={version:1,id:'ensayo-aislado',lider:'fender',etapa:6,prueba:true}");
+      t.check(!w.campanaEntregarSobre(w.campanaLeer()),pagina+': el ensayo aislado no premia.');
+      w.eval('campanaEnsayoGero=null');
+      w.campanaGuardar({version:1,id:'laboratorio-aislado',lider:'fender',etapa:6,secreto:'final',prueba:true,pruebaEditor:true});
+      t.igual(m.sobres(),2,pagina+': el laboratorio no da premios.');
+      w.campanaGuardar({version:1,id:'recorrido-beta',lider:'fender',etapa:6,prueba:true});
+      t.igual(m.sobres(),3,pagina+': completar el recorrido con el botón beta permite probar el premio.');
+      // Si falla únicamente el inventario, la victoria queda guardada y al
+      // recargar se recupera el sobre sin repetir el combate ni la recompensa.
+      const set=w.Storage.prototype.setItem;
+      w.Storage.prototype.setItem=function(k,v){if(k===m.clave)throw new w.DOMException('Sin espacio','QuotaExceededError');return set.call(this,k,v);};
+      w.campanaGuardar({version:1,id:'premio-pendiente',lider:'fender',etapa:6});
+      t.igual(m.sobres(),3,pagina+': no finge haber guardado un premio fallido.');w.Storage.prototype.setItem=set;
+      await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;
+      t.igual(m.sobres(),4,pagina+': recupera el premio pendiente tras recargar.');
+      w.campanaEntregarSobre(w.campanaLeer());t.igual(m.sobres(),4,pagina+': reintentar no vuelve a concederlo.');
+      const setNuevo=w.Storage.prototype.setItem;
+      w.Storage.prototype.setItem=function(k,v){if(k===m.clave)throw new w.DOMException('Sin espacio','QuotaExceededError');return setNuevo.call(this,k,v);};
+      w.campanaGuardar({version:1,id:'premio-anterior',lider:'fender',etapa:6});
+      w.campanaGuardar({version:1,id:'nueva-con-pendiente',lider:'adreida',etapa:0});
+      t.check(w.campanaLeer().sobresPendientes?.includes('premio-anterior'),pagina+': empezar otra campaña conserva la recompensa que no pudo guardarse.');
+      w.Storage.prototype.setItem=setNuevo;
+      await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;
+      t.igual(m.sobres(),5,pagina+': recupera el sobre anterior sin volver a terminar la campaña.');
+      t.check(w.campanaLeer().id==='nueva-con-pendiente'&&w.campanaLeer().etapa===0,pagina+': recuperar el premio no altera el recorrido nuevo.');
+    }finally{w.campanaCerrar();w.relojPara();inventario?.restaurar();f.remove();}
   }}finally{claves.forEach((k,i)=>{if(previos[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,previos[i]);});}
 });
 
