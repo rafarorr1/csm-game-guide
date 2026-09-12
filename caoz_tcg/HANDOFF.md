@@ -10,6 +10,17 @@ números) → el código.
 
 ---
 
+## Pruebas aisladas en GitHub/Cloudflare — instrucción vigente
+
+El usuario pidió que las revisiones funcionen como beta, sin enlaces ni login de
+ChatGPT. Usar la rama de artefactos `aislados`, independiente de `beta` y `gh-pages`.
+Cloudflare permite ahora previews sólo de `beta` y `aislados`; producción conserva
+`gh-pages:tcg`. La Colección se aloja bajo `/coleccion/` en ese preview. Las vistas
+usan componentes reales y datos en memoria, sin partida, backend ni progreso real.
+`dev/secciones/publicar.py` prepara/verifica/envía únicamente esa rama. Las guías
+de `dev/` explican el flujo. No usar Sites para futuras revisiones de este juego.
+Esta migración no incrementa la build ni publica una versión nueva del juego.
+
 ## Estructura aplicada con autorización del usuario — 2026-09-11
 
 `main` se alinea por avance directo con el código fuente de producción245 (`560357d`),
@@ -17,7 +28,7 @@ que corresponde a `gh-pages:tcg`. `develop` parte de la beta249 (`1bb6352`) y a�
 herramientas/documentación, sin cambiar los archivos servidos. Se conserva
 `feature/aaa-combat-cards` como historial. `gh-pages` y `beta` son ramas de publicación,
 no de trabajo. Cloudflare conserva producción desde `gh-pages`, salida `tcg`, y sus
-previews automáticos se limitan a `beta`. No se publica una nueva build con esta migración.
+previews automáticos se limitaban a `beta` (ahora también `aislados`, ver arriba). No se publica una nueva build con esta migración.
 
 Una tarea nueva usa `python3 dev/nueva_rama.py nombre-del-cambio` desde la raíz: crea
 rama y worktree separados desde `origin/develop`. La Colección tiene su primera vista
