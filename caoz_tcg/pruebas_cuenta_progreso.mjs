@@ -11,8 +11,9 @@ const mutantes={
   guardia:['if(cambioExterno||marca()!==esperado||ajeno){','if(false){'],
   alias:['const origen=vinculo?.cuentaId?canonica:aliases.find(k=>leer(k)!==null)||actual;','const origen=aliases.find(k=>leer(k)!==null)||actual;'],
   lease:["if(diario.autor&&diario.autor!==autor&&Number.isFinite(diario.iniciada)&&reloj()-diario.iniciada<5000)throw fallo('PROGRESO_OCUPADO');",''],
+  borrador:['campanaBorrador=null;','void 0;'],
 };
-if(process.env.CAOZ_SABOTAJE_PROGRESO){const [antes,despues]=mutantes[process.env.CAOZ_SABOTAJE_PROGRESO];assert.ok(texto.includes(antes));texto=texto.replace(antes,despues);}
+if(process.env.CAOZ_SABOTAJE_PROGRESO&&process.env.CAOZ_SABOTAJE_PROGRESO!=='borrador'){const [antes,despues]=mutantes[process.env.CAOZ_SABOTAJE_PROGRESO];assert.ok(texto.includes(antes));texto=texto.replace(antes,despues);}
 const A='11111111-1111-4111-8111-111111111111',B='22222222-2222-4222-8222-222222222222';
 const plano=v=>JSON.parse(JSON.stringify(v));
 class Almacen {
@@ -60,6 +61,24 @@ await prueba('Un login en móvil ya cargado cambia la clave viva de la colecció
 await prueba('Salir en móvil devuelve la clave del invitado para que sus siguientes cartas sobrevivan a recargar',()=>{const e=entorno({ruta:'/movil'});e.ctx.CARDS={tal:{}};e.ctx.LEADERS={};vm.runInContext(fs.readFileSync(new URL('./coleccion-modelo.js',import.meta.url),'utf8'),e.ctx);e.p.aplicar(ejemplo(),{cuentaId:A,revision:1});e.p.desvincular();assert.equal(e.ctx.CAOZ_COLECCION.clave,'caoz.coleccion.v1.produccion.movil');assert.equal(e.ctx.CAOZ_COLECCION.otorgarCopia('tal','foil'),true);assert.equal(e.p.capturar().datos.coleccion.cantidades.tal.foil,1);const otra=entorno({ruta:'/movil',storage:e.storage});assert.equal(otra.p.capturar().datos.coleccion.cantidades.tal.foil,1);});
 await prueba('Una pestaña antigua no puede escribir campaña ni inventario después de cambiar de cuenta',()=>{const e=entorno();e.p.aplicar(ejemplo(),{cuentaId:A,revision:1});e.p.instalarGuardia();let avisos=0;e.eventos.addEventListener('caoz:cuenta-cambio-externo',()=>avisos++);const storageB=new Almacen();storageB.m=e.storage.m;const b=entorno({storage:storageB});b.p.aplicar(ejemplo(),{cuentaId:B,revision:1});assert.throws(()=>e.storage.setItem('caoz.campana.v1','{}'),{codigo:'CUENTA_CAMBIADA'});assert.throws(()=>e.storage.removeItem('caoz.coleccion.v1.produccion.raiz'),{codigo:'CUENTA_CAMBIADA'});e.storage.setItem('caoz.sonido.v1','preferencia');assert.equal(avisos,1);assert.equal(b.p.capturar().datos.coleccion.sobres,4);e.p.destruir();b.p.destruir();});
 await prueba('La guardia permite importaciones propias y los autosaves de la misma sesión',()=>{const e=entorno();e.p.instalarGuardia();e.p.aplicar(ejemplo(),{cuentaId:A,revision:1});e.storage.setItem('caoz_nombre','Ari 2');assert.equal(e.p.capturar().datos.nombre,'Ari 2');e.p.confirmar(e.p.capturar(),{cuentaId:A,revision:2});e.storage.setItem('caoz_nombre','Ari 3');assert.equal(e.p.capturar().datos.nombre,'Ari 3');e.p.desvincular();e.storage.setItem('caoz_nombre','Invitado');assert.equal(e.p.capturar().datos.nombre,'Invitado');e.p.destruir();});
+await prueba('Cambiar A→B y cerrar sesión invalida la miniatura en memoria sin borrar el borrador importado',()=>{
+  const e=entorno(),personaje=fs.readFileSync(new URL('./campana-personaje.js',import.meta.url),'utf8'),final=fs.readFileSync(new URL('./final-core.js',import.meta.url),'utf8');
+  const lectura=personaje.slice(0,personaje.indexOf('/* Malla de resina'));
+  let refresco=final.slice(final.indexOf('function cuentaRecargarProgreso(){'),final.indexOf('function clavesProgresoLocal(){'));
+  if(process.env.CAOZ_SABOTAJE_PROGRESO==='borrador'){const [antes,despues]=mutantes.borrador;assert.ok(refresco.includes(antes));refresco=refresco.replace(antes,despues);}
+  e.ctx.LEADERS={mohamed:{n:'Mohamed'},fender:{n:'Fender'}};
+  let enMenu=true;e.ctx.document={querySelector:s=>s==='#extras.on,#menu.on'?enMenu:!enMenu};
+  vm.runInContext("const CAMPANA_CLAVE='caoz.campana.v1';let campanaMemoria=null,campanaEnsayoGero=null,RECORD_ULTIMO=null;"+lectura+refresco,e.ctx);
+  e.eventos.addEventListener('caoz:cuenta-importada',()=>e.ctx.cuentaRecargarProgreso());
+  const a=ejemplo();a.datos.borrador={personaje:{nombre:'Personaje A',color:'verde',equipo:'libro'},lider:'fender'};
+  e.p.aplicar(a,{cuentaId:A,revision:1});assert.equal(e.ctx.campanaLeerBorrador().personaje.nombre,'Personaje A');
+  const b=ejemplo();b.datos.borrador={personaje:{nombre:'Personaje B',color:'azul',equipo:'baston'},lider:'mohamed'};
+  e.p.aplicar(b,{cuentaId:B,revision:1});const antes=e.storage.getItem('caoz.campana.v1.creador');
+  assert.equal(e.ctx.campanaLeerBorrador().personaje.nombre,'Personaje B');assert.equal(e.ctx.campanaLeerBorrador().personaje.color,'azul');assert.equal(e.ctx.campanaLeerBorrador().lider,'mohamed');
+  assert.equal(e.storage.getItem('caoz.campana.v1.creador'),antes);e.ctx.campanaGuardarBorrador();assert.equal(JSON.parse(e.storage.getItem('caoz.campana.v1.creador')).personaje.nombre,'Personaje B');
+  enMenu=false;const vivo=e.ctx.campanaLeerBorrador();assert.equal(e.ctx.cuentaRecargarProgreso(),false);assert.equal(vm.runInContext('campanaBorrador',e.ctx),vivo);
+  enMenu=true;e.p.desvincular();assert.equal(e.ctx.campanaLeerBorrador().personaje.nombre,'Viajero');e.ctx.campanaGuardarBorrador();assert.equal(JSON.parse(e.storage.getItem('caoz.campana.v1.creador')).personaje.nombre,'Viajero');e.p.destruir();
+});
 console.log(`${total} pruebas del adaptador de progreso aprobadas.`);
 if(process.argv.includes('--sabotaje')&&!process.env.CAOZ_SABOTAJE_PROGRESO){
   for(const nombre of Object.keys(mutantes)){const r=spawnSync(process.execPath,[fileURLToPath(import.meta.url)],{env:{...process.env,CAOZ_SABOTAJE_PROGRESO:nombre},encoding:'utf8'});
