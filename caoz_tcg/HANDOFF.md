@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-13 · beta 257 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-13 · beta 258 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,10 +10,21 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — colección aprobada para beta 258
+## Trabajo vigente — colección publicada y verificada en beta 258
 
-El usuario aprobó llevar el desenfoque de ediciones bloqueadas a beta. La fuente
-vive en `feature/coleccion-bloqueadas`; revisión aislada aprobada:
+El usuario aprobó llevar el desenfoque de ediciones bloqueadas a beta. El
+[PR 21](https://github.com/rafarorr1/csm-game-guide/pull/21) quedó integrado en
+`develop:9389de95dc7a23bfeb8334a9623524859364ab8c`.
+
+`./publicar.sh --solo-pruebas --completo` y después `./publicar.sh --beta --completo`
+terminaron con código de salida 0 y **84 suites verdes**, incluidos los seis
+tutoriales, Colección, canjes y sobres. Artefactos: `gh-pages:ee04b47` (sólo
+`tcg-beta`) y `beta:362b30f`. El publicador comparó los bytes de escritorio y móvil,
+módulos, caché, arte y sonido servidos por GitHub Pages y Cloudflare.
+
+Acceso jugable: https://beta.caoz-tcg.pages.dev/?b=258 .
+Acceso móvil directo: https://beta.caoz-tcg.pages.dev/movil.html?b=258 .
+La revisión aislada aprobada se conserva en
 https://aislados.caoz-tcg.pages.dev/coleccion/?estado=nuevo&carta=tal .
 
 El selector de `coleccion.css` usa la clase existente `.bloqueada`, calculada
@@ -21,11 +32,10 @@ con el desbloqueo permanente del inventario. Una Foil con cero copias después
 de un canje sigue nítida. Los botones y etiquetas externas quedan legibles;
 las cartas de combate y apertura de sobres no coinciden con ese selector.
 
-Build 258 sincronizada en ambas pantallas y la PWA. La validación previa con
-`./publicar.sh --solo-pruebas --completo` terminó con 84 suites verdes y cero fallos.
-PR de integración: https://github.com/rafarorr1/csm-game-guide/pull/21 .
-Pendientes en este registro: integración en `develop`, publicación beta y bytes.
-No hay autorización de producción para 258: `main` y producción conservan 257.
+**Producción conserva 257.** Se comprobó que `main` sigue en `b7e634c` y que el
+árbol `gh-pages:tcg` permanece en `350bdef5421199e083e96369b5a02fb7e15984bd`.
+No hay autorización de producción para 258. Este cierre sólo documenta la beta;
+no cambia archivos del paquete ni requiere una nueva build o publicación.
 
 ## Registro anterior — cuentas publicadas y verificadas en beta y producción 257
 
