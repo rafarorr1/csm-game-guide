@@ -9,6 +9,10 @@
   correspondiente si caducan. El401 no borra progreso, vínculo, cola ni respaldos.
 - Casos de servicio/modelo y recorrido real de ambos HTML cubren primer acceso,
   invitado y caducidad. El sabotaje de la detección anónima reproduce el fallo.
+- El correo tolera espacios y saltos exteriores al pegar clave/remitente en el
+  panel, conservando la validación estricta del contenido y usando los valores
+  normalizados al enviar. Pruebas sin correo real y cuatro sabotajes cubren el
+  cambio; aún no se atribuye a éste la resolución del HTTP503 observado en beta.
 - Se reserva256 porque255 ya fue publicada en beta; no se sustituyen los bytes
   de esa versión. Este cambio todavía no acredita publicación de256.
 
