@@ -13,6 +13,14 @@ for(const f of ['caoz_tcg/cuenta-modelo.js','dev/secciones/cuenta-demo.js']){
   const alterado=codigo.replace("copiaNube=null;copiaLocal=null;requiereAislar=false;poner({sesion:null,nube:null,local:null,pantalla:'inicio'","copiaNube=null;poner({sesion:null,nube:null,pantalla:'inicio'");
   assert.notEqual(alterado,codigo,'Se retiró la limpieza del snapshot al cerrar sesión');codigo=alterado;
  }
+ if(f.endsWith('cuenta-modelo.js')&&process.argv.includes('--sabotaje-acceso')){
+  const alterado=codigo.replace('&&(!obligatoria||vinculoConfirmado)','');
+  assert.notEqual(alterado,codigo,'Se retiró la exigencia del vínculo local antes de jugar');codigo=alterado;
+ }
+ if(f.endsWith('cuenta-modelo.js')&&process.argv.includes('--sabotaje-offline')){
+  const alterado=codigo.replace("sinConexion:!!r.sinConexion,guardado:r.sinConexion?'sinConexion':r.guardado==='pendiente'?'pendiente':'guardado'","sinConexion:false,guardado:'guardado'");
+  assert.notEqual(alterado,codigo,'Se retiró la conservación del estado offline al restaurar');codigo=alterado;
+ }
  vm.runInContext(codigo,contexto,{filename:f});
 }
 const plano=v=>JSON.parse(JSON.stringify(v));
@@ -20,10 +28,10 @@ const local={personaje:'Ari',mazo:'Fender',rivales:4,foils:12,doradas:1,sobres:3
 const nube={personaje:'Lyra',mazo:'Rafaela',rivales:2,foils:8,doradas:2,sobres:5,snapshot:{pendiente:null,gastados:['canje-2'],recibos:['victoria-2']}};
 let total=0;
 async function prueba(nombre,fn){await fn();total++;console.log('✓ '+nombre);}
-function montar({progresoLocal=local,progresoNube=null,esperar=async()=>{}}={}){
+function montar({progresoLocal=local,progresoNube=null,esperar=async()=>{},obligatoria=false}={}){
   let ahora=1000000,buzon=null;const reloj=()=>ahora;
   const servicio=contexto.CAOZ_CUENTA_DEMO.crear({reloj,esperar,progresoNube,alCodigo:r=>buzon=r});
-  const modelo=contexto.CAOZ_CUENTA_MODELO.crear({reloj,servicio,progresoLocal});
+  const modelo=contexto.CAOZ_CUENTA_MODELO.crear({reloj,servicio,progresoLocal,obligatoria});
   return {modelo,servicio,codigo:()=>buzon.codigo,avanzar:ms=>ahora+=ms,
     async pedir(){assert(await modelo.solicitar({correo:'viajero@ejemplo.com',nombre:'Ari',intencion:'crear'}));},
     async entrar(){await this.pedir();assert(await modelo.verificar(this.codigo()));}};
@@ -98,5 +106,49 @@ await prueba('Consultar al invitado no lo devuelve al formulario ni oculta una c
  let vencida=false;const m=contexto.CAOZ_CUENTA_MODELO.crear({servicio:{sesion:async()=>{if(vencida)throw {codigo:'SESION'};return {sesion:null,progreso:null,revision:0};}},progresoLocal:local});
  m.invitado();assert(await m.restaurar());assert.equal(m.ver().pantalla,'invitado');assert.equal(m.ver().error,'');vencida=true;
  assert.equal(await m.restaurar(),false);assert.equal(m.ver().intencion,'entrar');assert.match(m.ver().error,/sesión terminó/);assert.equal(m.ver().local.sobres,3);m.destruir();
+});
+await prueba('Acceso obligatorio no permite invitado ni salida antes del correo y del vínculo',async()=>{
+ const f=montar({obligatoria:true});assert.equal(f.modelo.ver().obligatoria,true);assert.equal(f.modelo.ver().acceso,false);assert.equal(f.modelo.ver().puedeSalir,false);
+ assert.equal(f.modelo.invitado(),false);await f.pedir();assert.equal(f.modelo.ver().puedeSalir,false);await f.modelo.verificar(f.codigo());
+ assert.equal(f.modelo.ver().pantalla,'vincular');assert.equal(f.modelo.ver().acceso,false);assert.equal(f.modelo.ver().puedeSalir,false);
+ assert(await f.modelo.resolverProgreso('local'));assert.equal(f.modelo.ver().acceso,true);assert.equal(f.modelo.ver().puedeSalir,true);f.modelo.destruir();
+});
+await prueba('Un perfil vacío espera la escritura del vínculo local para abrir el Domo',async()=>{
+ const f=montar({obligatoria:true,progresoLocal:null});await f.entrar();assert.equal(f.modelo.ver().pantalla,'perfil');assert.equal(f.modelo.ver().acceso,false);
+ f.modelo.actualizarGuardado({guardado:'pendiente',error:{codigo:'ALMACENAMIENTO'}});assert.equal(f.modelo.ver().acceso,false);assert.equal(f.modelo.ver().puedeSalir,false);
+ let n=0;f.modelo.suscribir(()=>n++);assert(f.modelo.confirmarVinculoLocal());assert.equal(f.modelo.ver().acceso,true);assert.equal(f.modelo.datosSesion().vinculado,true);
+ const avisos=n;assert(f.modelo.confirmarVinculoLocal());assert.equal(n,avisos,'Confirmar el mismo vínculo es idempotente');f.modelo.destruir();
+});
+await prueba('Una sesión offline vinculada permite jugar sin inventar guardado en la nube',async()=>{
+ const r={sesion:{id:'A',nombre:'Ari'},progreso:nube,revision:2,vinculado:true,sinConexion:true};
+ const m=contexto.CAOZ_CUENTA_MODELO.crear({obligatoria:true,servicio:{sesion:async()=>r},progresoLocal:local,sesionVinculada:d=>d.vinculado===true});
+ await m.restaurar();assert.equal(m.ver().pantalla,'perfil');assert.equal(m.ver().acceso,true);assert.equal(m.ver().sinConexion,true);assert.equal(m.ver().guardado,'sinConexion');
+ assert.equal(m.ver().local.sobres,3);assert.equal(m.ver().nube.sobres,5);assert.equal(m.datosSesion().sinConexion,true);
+ m.actualizarGuardado({guardado:'pendiente'});assert.equal(m.ver().sinConexion,true);assert.equal(m.ver().acceso,true);
+ m.actualizarGuardado({guardado:'guardado',progreso:local,revision:3});assert.equal(m.ver().sinConexion,false);assert.equal(m.ver().guardado,'guardado');assert.equal(m.ver().nube.sobres,3);m.destruir();
+});
+await prueba('Restaurar con red conserva pendiente si hay cambios locales sin acuse',async()=>{
+ const r={sesion:{id:'A',nombre:'Ari'},progreso:nube,revision:2,vinculado:true,guardado:'pendiente'};
+ const m=contexto.CAOZ_CUENTA_MODELO.crear({obligatoria:true,servicio:{sesion:async()=>r},progresoLocal:local,sesionVinculada:d=>d.vinculado===true});
+ await m.restaurar();assert.equal(m.ver().acceso,true);assert.equal(m.ver().guardado,'pendiente');assert.equal(m.ver().sinConexion,false);m.destruir();
+});
+await prueba('Offline sin vínculo o con otra cuenta nunca libera el acceso',async()=>{
+ for(const r of [{sesion:{id:'A'},sinConexion:true},{sesion:{id:'B'},sinConexion:true,vinculado:true,requiereAislar:true}]){
+  const m=contexto.CAOZ_CUENTA_MODELO.crear({obligatoria:true,servicio:{sesion:async()=>r},sesionVinculada:d=>d.vinculado===true});
+  assert.equal(await m.restaurar(),false);assert.equal(m.ver().sesion,null);assert.equal(m.ver().acceso,false);assert.equal(m.ver().puedeSalir,false);assert.match(m.ver().error,/primera vez/);m.destruir();
+ }
+});
+await prueba('Conflicto de sincronización vuelve a bloquear hasta elegir el progreso',async()=>{
+ const f=montar({obligatoria:true});await f.entrar();await f.modelo.resolverProgreso('local');assert.equal(f.modelo.ver().acceso,true);
+ f.modelo.actualizarLocal(local);f.modelo.actualizarGuardado({guardado:'conflicto',conflicto:{progreso:nube,revision:1}});
+ assert.equal(f.modelo.ver().acceso,false);assert.equal(f.modelo.ver().puedeSalir,false);assert(await f.modelo.resolverProgreso('nube'));assert.equal(f.modelo.ver().acceso,true);f.modelo.destruir();
+});
+await prueba('Cerrar o caducar la sesión devuelve al acceso obligatorio',async()=>{
+ const f=montar({obligatoria:true});await f.entrar();await f.modelo.resolverProgreso('local');assert(await f.modelo.cerrarSesion());assert.equal(f.modelo.ver().acceso,false);assert.equal(f.modelo.ver().puedeSalir,false);assert.equal(f.modelo.invitado(),false);
+ f.avanzar(60000);await f.entrar();assert(f.modelo.confirmarVinculoLocal());assert.equal(f.modelo.ver().acceso,true);f.modelo.actualizarGuardado({guardado:'sesion'});assert.equal(f.modelo.ver().acceso,false);assert.equal(f.modelo.ver().puedeSalir,false);f.modelo.destruir();
+});
+await prueba('Servicio no disponible no invita a saltar un acceso obligatorio',async()=>{
+ const m=contexto.CAOZ_CUENTA_MODELO.crear({obligatoria:true,servicio:{solicitarCodigo:async()=>{throw {codigo:'NO_DISPONIBLE'};}}});
+ assert.equal(await m.solicitar({correo:'a@ejemplo.com',nombre:'Ari'}),false);assert.match(m.ver().error,/no está disponible/);assert.doesNotMatch(m.ver().error,/sin cuenta|seguir jugando/);assert.equal(m.ver().puedeSalir,false);m.destruir();
 });
 console.log(total+' pruebas del flujo aislado de cuentas en verde. Sin correo ni guardado reales.');

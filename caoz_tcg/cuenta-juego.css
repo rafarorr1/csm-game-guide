@@ -8,6 +8,8 @@
 .cuentaUI .cuentaDatos{font-size:11px;color:#ad9db9}
 #extras #mCuenta{overflow-wrap:anywhere}
 #extras #mCuenta[data-guardado=pendiente],#extras #mCuenta[data-guardado=sinConexion]{border-color:#c59a53}
+.cuentaEstadoMenu{margin:5px 0 0;text-align:center;color:#cbb79c;font:11px/1.4 var(--sans,sans-serif);overflow-wrap:anywhere}
+.cuentaEstadoMenu[data-guardado=sinConexion],.cuentaEstadoMenu[data-guardado=pendiente]{color:#e0bc70}
 @media(max-height:650px){#extras{gap:8px;padding:16px}#extras h2{font-size:29px}.extrasOpciones{gap:8px;margin:3px 0}.extrasOpciones .btn{min-height:48px;padding:9px}#extras #mBorrarProgreso{margin-top:0}}
 
 .cuentaBloqueada{text-align:center}.cuentaBloqueada .cuentaDescripcion{margin-block:12px 20px}

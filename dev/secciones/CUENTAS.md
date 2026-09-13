@@ -1,10 +1,130 @@
-# Cuentas de jugadores — propuesta aislada
+# Cuentas de jugadores — acceso obligatorio y progreso offline
 
-**Registro histórico:** esta propuesta fue aprobada el 2026-09-13. La integración
-de build 255 está en preparación; su servidor, configuración y estado de conexión
-vigentes se documentan en [`../cuentas/README.md`](../cuentas/README.md) y
-`caoz_tcg/HANDOFF.md`. El resto de este documento describe la revisión aislada
-anterior; sus limitaciones y pendientes no sustituyen el estado actual.
+## Revisión vigente — 2026-09-13
+
+Rama `feature/acceso-correo-offline`, desde `origin/develop` / build 258.
+El acceso con correo y código pasa a ser necesario para jugar. La app instalada
+puede continuar sin conexión después de verificar y vincular la cuenta en ese
+dispositivo; el avance pendiente se sincroniza cuando vuelve internet.
+
+**Beta conserva 258 y producción 257.** Las cuentas reales ya funcionan desde
+257. Esta revisión sigue el orden sección aislada → aprobación → integración y
+validación para beta → producción autorizada. BUILD 258 sólo identifica la base;
+el próximo número se asignará al integrar. No se atribuye a este cambio una
+publicación o validación completa por haber preparado el laboratorio.
+
+La ruta de revisión existente es
+`https://aislados.caoz-tcg.pages.dev/cuenta/`. Registrar en `caoz_tcg/HANDOFF.md`
+el commit, artefacto y verificación cuando estos bytes estén publicados.
+La configuración real se documenta en [`../cuentas/README.md`](../cuentas/README.md).
+
+## Recorrido que se puede revisar
+
+1. Crear o abrir una cuenta con correo y código de seis números. El buzón
+   muestra un **código de prueba**; «Usar código» lo rellena, sin confirmar solo.
+2. Vincular el avance local o recuperar el de la cuenta. Si hay dos copias,
+   elegir una; no se suman. El menú permanece bloqueado hasta completar el acceso.
+3. «Entrar al Domo» abre un menú de revisión, sin cargar una batalla. «Simular
+   victoria» modifica los récords del snapshot real en el almacenamiento temporal.
+4. Activar «Sin conexión» y sumar victorias. El contador del dispositivo aumenta
+   mientras el de la cuenta mantiene lo último confirmado.
+5. «Recargar app» reconstruye los módulos conservando la misma memoria y la
+   cola. La cuenta previamente vinculada puede continuar sin volver a pedir código.
+6. Recuperar la conexión: la cola se sincroniza y ambos contadores coinciden.
+
+El banner dice «Datos ficticios». No se usan cuentas, correos, cookies ni
+almacenamiento persistente reales. Una recarga real del navegador, cambiar
+escenario o «Reiniciar prueba» empieza otra demostración. El botón «Recargar app»
+es el que conserva los datos temporales y permite comprobar el arranque offline.
+
+Escenarios: `?estado=vacio` (predeterminado) empieza sin progreso; `nuevo`
+contiene un avance local; `entrar` recupera una cuenta de ejemplo y `conflicto`
+presenta dos avances. Una primera entrada offline no permite jugar.
+
+## Componentes reales y aislamiento
+
+| Archivo | Responsabilidad |
+|---|---|
+| `cuenta-modelo.js` | Estados y decisiones de correo, verificación, vínculo, conflicto y acceso obligatorio. |
+| `cuenta-ui.js`, `cuenta.css` | Formulario y perfil compartidos entre móvil, escritorio y laboratorio. |
+| `cuenta-progreso.js` | Captura íntegra del progreso, vínculo y copias locales por propietario. |
+| `cuenta-servicio.js` | API inyectable, recibo local de identidad y cola persistente con revisión/operación. |
+| `cuenta-acceso.js` | Coordinación de identidad, vínculo confirmado, acceso y sincronización; escucha los cambios de conexión. |
+| `cuenta-demo.js` | `crearTransporte()` imita únicamente HTTP en memoria y `crearMemoria()` ofrece almacenamiento temporal. `crear()` se conserva para las pruebas de modelo anteriores. |
+| `cuenta-lab.js/css`, `cuenta.html` | Montaje, datos de ejemplo, menú de revisión y controles de simulación. |
+| `cuenta-exportar.mjs` | Lista cerrada de componentes, procedencia y hashes, manteniendo la CSP común. |
+
+`CAOZ_CUENTA_ACCESO.crear({progreso,servicio,storage,eventos,onImportar,puedeVincular})`
+devuelve `modelo`, `estado()`, `puedeJugar()`, `iniciar()`,
+`activarVinculo()`, `guardar()`, `suscribir()` y `destruir()`.
+El laboratorio inyecta un Map tipo Storage, un EventTarget y el transporte
+temporal. No distribuye `cuenta-juego.js`, motor, campaña, online ni service worker.
+El juego monta su diálogo como hijo de `document.body`, fuera del lienzo escalado.
+
+## Contrato de continuidad
+
+La primera entrada en cada almacenamiento de navegador o app necesita internet.
+El recibo local de acceso guarda únicamente identidad pública
+`{id,nombre,correo}` y entorno. No es un token ni autoriza solicitudes al servidor.
+No contiene cookies, códigos ni una respuesta cacheada de `/api/cuenta/sesion`.
+Reabrir offline exige que recibo, vínculo y base local coincidan.
+
+La API continúa autenticando con su cookie privada y permanece fuera de la
+caché PWA. Una caducidad o revocación confirmada requiere nuevo acceso; un
+fallo de red conserva el avance. El cambio de cuenta preserva las copias de
+su propietario y no incorpora automáticamente el progreso de otro jugador.
+
+Los snapshots mantienen campaña, miniatura, sellos, colección, sobres, recibos,
+récords y nombre. La cola se guarda antes de tocar la red y conserva operación
+y contenido al repetir un envío. Resolver un conflicto elige una copia completa,
+sin sumar cartas ni contadores y sin volver a sortear sobres. No reanuda un
+combate a mitad de turno. Los deseos continúan fuera del guardado remoto.
+El esquema real y sus límites están en `dev/cuentas/README.md`.
+
+## Comprobación y publicación de la sección
+
+Desde la raíz, comprobar únicamente el alcance afectado:
+
+```sh
+node dev/secciones/pruebas_cuenta_modelo.mjs
+node dev/secciones/pruebas_cuenta_acceso.mjs
+node dev/secciones/pruebas_cuenta_entradas.mjs --sabotaje
+node dev/secciones/pruebas_cuenta_exportacion.mjs
+node dev/secciones/pruebas_cuenta_ui.mjs --capturas /tmp/caoz-cuenta-revision
+node caoz_tcg/pruebas_cuenta_progreso.mjs
+node caoz_tcg/pruebas_cuenta_servicio.mjs
+node dev/cuentas/pruebas_cache.mjs
+```
+
+El recorrido UI comprueba escritorio, 390×844 y 320×568: código y vínculo,
+entrada bloqueada, conflicto, victoria, cola offline, recarga y reconexión,
+foco, geometría y ausencia de accesos al progreso/red reales. Acepta
+`PLAYWRIGHT_MODULE` y `BASE_URL`; el modo `--sabotaje` conserva la regresión
+de navegación entre pestañas. Las pruebas de entradas extraen las guardias
+reales sin iniciar una partida ni el motor.
+
+El servidor de secciones ofrece
+`http://127.0.0.1:8878/dev/secciones/cuenta.html`. Para revisión desde teléfono,
+usar el publicador existente desde una fuente limpia y guardada en Git:
+
+```sh
+python3 dev/secciones/publicar.py --seccion cuenta --publicar --salida /tmp/caoz-cuenta-publicacion
+python3 dev/secciones/publicar.py --seccion cuenta --verificar https://aislados.caoz-tcg.pages.dev --salida /tmp/caoz-cuenta-publicacion
+```
+
+La carpeta debe ser nueva o vacía, fuera de los checkouts. Sólo cambia
+`cuenta/` en `aislados`; conserva las otras secciones y las ramas publicadas
+del juego. El laboratorio no sustituye la validación completa que corresponderá
+después de que el usuario apruebe la integración a beta.
+
+---
+
+<details>
+<summary>Registro histórico: primera propuesta de cuentas, aprobada e integrada en 257</summary>
+
+Lo que sigue conserva la propuesta inicial y sus limitaciones de entonces.
+Las referencias a build 254/255, invitado y backend pendiente son históricas;
+la configuración y el flujo vigentes se describen arriba y en HANDOFF.
 
 El usuario eligió **correo y código de acceso**. Esta primera revisión se
 desarrolla en `feature/cuentas-jugadores`, desde `develop` / build 254.
@@ -184,5 +304,7 @@ artefacto `4821e928e4c1aa3b137b4ffd499b038921af521b`. Diez archivos públicos
 verificados byte a byte. Las otras tres secciones, sus cabeceras compartidas y
 las referencias de las ramas del juego se conservaron.
 La página pública pasó los51 casos de interfaz (17 por tamaño), sin excepciones,
-peticiones fallidas ni accesos al progreso real. La propuesta sigue pendiente de
-revisión del usuario antes de integrar correo y guardado reales.
+peticiones fallidas ni accesos al progreso real. La propuesta seguía pendiente de
+revisión del usuario antes de integrar correo y guardado reales en ese momento.
+
+</details>

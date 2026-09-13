@@ -1,5 +1,22 @@
 # Registro de versiones — el TCG del Domo
 
+### En revisión aislada · Acceso por correo y progreso offline · 2026-09-13
+
+- El jugador debe verificar su correo y vincular o recuperar su progreso antes
+  de entrar. Domo, campaña, tutorial, online e invitaciones usan la misma
+  comprobación, incluidos los arranques automáticos.
+- La app previamente verificada puede abrir sin internet usando su vínculo y
+  un recibo local de identidad, sin guardar tokens ni respuestas de la API.
+  El avance se conserva localmente y la cola reintenta al recuperar conexión.
+- Un acuse perdido conserva operación y contenido; los conflictos requieren
+  elegir el progreso completo y nunca suman cartas. Las copias pendientes se
+  conservan por cuenta y entorno. No se reanuda un combate a mitad de turno.
+- La sección de cuentas permite probarlo con los módulos reales y datos sólo
+  en memoria: código de prueba, victorias simuladas, desconexión y recarga.
+- Rama `feature/acceso-correo-offline`. Beta 258 y producción 257 se conservan.
+  BUILD 258 es la base; la siguiente build se asignará tras aprobar e integrar.
+  Esta entrada no acredita publicación ni validación completa de la revisión.
+
 ### Sin numerar · build 258 · Ediciones bloqueadas desenfocadas · 2026-09-13
 
 - La Colección deja entrever con desenfoque las ediciones Foil y Dorada que el

@@ -20,6 +20,7 @@
     let borrador={correo:texto(estado.correo),nombre:texto(estado.nombre),codigo:''};
     let ultimoCodigo='',cancelarSuscripcion=()=>{},enfoquePendiente=null,seleccionPendiente=null;
     const panel=nodo('section','cuentaUI');panel.setAttribute('aria-labelledby',prefijo+'titulo');
+    const puedeSalir=()=>estado.puedeSalir!==false&&!estado.ocupado;
     const cabecera=nodo('header','cuentaCabecera'),simbolo=emblema(),antetitulo=nodo('p','cuentaAntetitulo','TU HISTORIA EN EL DOMO');
     const titulo=nodo('h1','cuentaTitulo');titulo.id=prefijo+'titulo';titulo.tabIndex=-1;
     const descripcion=nodo('p','cuentaDescripcion');descripcion.id=prefijo+'descripcion';
@@ -28,7 +29,7 @@
     const aviso=nodo('p','cuentaAviso');aviso.setAttribute('role','status');
     mensajes.append(error,aviso);cabecera.append(simbolo,antetitulo,titulo,descripcion);panel.append(cabecera,contenido,mensajes);
     if(typeof onSalir==='function'){
-      const cerrar=nodo('button','cuentaCerrar','×');cerrar.type='button';cerrar.setAttribute('aria-label','Volver al juego');cerrar.dataset.foco='cerrar';cerrar.onclick=()=>{if(!estado.ocupado)onSalir();};panel.appendChild(cerrar);
+      const cerrar=nodo('button','cuentaCerrar','×');cerrar.type='button';cerrar.setAttribute('aria-label','Volver al juego');cerrar.dataset.foco='cerrar';cerrar.onclick=()=>{if(puedeSalir())onSalir();};panel.appendChild(cerrar);
     }
     raiz.appendChild(panel);
     function boton(etiqueta,fn,clase='',foco){
@@ -67,9 +68,13 @@
       r.appendChild(dl);if(datos?.fecha)r.appendChild(nodo('p','cuentaFecha',fecha(datos.fecha)));return r;
     }
     function acciones(...botones){const d=nodo('div','cuentaAcciones');d.append(...botones.filter(Boolean));return d;}
-    function regresar(){return typeof onSalir==='function'?boton('Volver al juego',onSalir,'cuentaBotonSecundario','volver'):null;}
+    function regresar(){
+      if(typeof onSalir!=='function'||estado.puedeSalir===false)return null;
+      const etiqueta=estado.obligatoria?(estado.sinConexion?'Continuar sin conexión':'Entrar al Domo'):'Volver al juego';
+      return boton(etiqueta,()=>{if(puedeSalir())onSalir();},estado.obligatoria?'':'cuentaBotonSecundario','volver');
+    }
     function pantallaInicio(){
-      titulo.textContent='Que tu historia permanezca';descripcion.textContent='Guarda tu campaña y tu colección para continuar en otro dispositivo.';
+      titulo.textContent=estado.obligatoria?'Entra al Domo':'Que tu historia permanezca';descripcion.textContent=estado.obligatoria?'Tu aventura empieza con tu correo.':'Guarda tu campaña y tu colección para continuar en otro dispositivo.';
       const tabs=nodo('div','cuentaPestanas');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Acceso a tu cuenta');
       const activa=estado.intencion==='crear'?'crear':'entrar';
       for(const [id,etiqueta]of [['crear','Crear cuenta'],['entrar','Entrar']]){
@@ -80,11 +85,12 @@
       const f=nodo('form','cuentaFormulario');f.id=prefijo+'formulario';f.setAttribute('role','tabpanel');f.setAttribute('aria-labelledby',prefijo+'tab-'+activa);
       if(activa==='crear')f.appendChild(campo({etiqueta:'Nombre del jugador',nombre:'nombre',autocomplete:'nickname',maximo:40,minimo:2}).l);
       const correo=campo({etiqueta:'Correo electrónico',nombre:'correo',tipo:'email',autocomplete:'email',maximo:254});correo.i.inputMode='email';correo.i.autocapitalize='none';correo.i.placeholder='tu@correo.com';f.appendChild(correo.l);
-      f.appendChild(nodo('p','cuentaAyuda','Te enviaremos un código de acceso. No necesitas contraseña.'));
-      f.appendChild(nodo('p','cuentaAyuda cuentaDatos','Tu cuenta guarda tu correo, tu nombre de jugador y tu progreso: campaña, colección, sobres y récords.'));
+      f.appendChild(nodo('p','cuentaAyuda',estado.obligatoria?'Te enviaremos un código. Sin contraseña.':'Te enviaremos un código de acceso. No necesitas contraseña.'));
+      f.appendChild(nodo('p','cuentaAyuda cuentaDatos',estado.obligatoria?'Guardamos tu correo, nombre y progreso: campaña, cartas, sobres y récords.':'Tu cuenta guarda tu correo, tu nombre de jugador y tu progreso: campaña, colección, sobres y récords.'));
       const enviar=boton(estado.ocupado?'Preparando tu código…':'Enviar código',()=>{},'','enviar');enviar.type='submit';enviar.onclick=null;
       f.onsubmit=e=>{e.preventDefault();if(f.reportValidity())void accion(()=>modelo.solicitar({correo:borrador.correo.trim(),nombre:activa==='crear'?borrador.nombre.trim():'',intencion:activa}));};
-      f.appendChild(acciones(enviar,boton('Seguir sin cuenta',()=>modelo.invitado(),'cuentaBotonSecundario','invitado')));contenido.append(tabs,f);
+      if(estado.obligatoria)f.appendChild(nodo('p','cuentaAyuda cuentaAccesoOffline','Primer acceso con internet; después, juega sin conexión en la app. Tu avance se sincroniza al reconectar.'));
+      f.appendChild(acciones(enviar,estado.obligatoria?null:boton('Seguir sin cuenta',()=>modelo.invitado(),'cuentaBotonSecundario','invitado')));contenido.append(tabs,f);
     }
     function pantallaCodigo(){
       titulo.textContent='Abre las puertas del Domo';descripcion.textContent='Escribe el código que enviamos a';
@@ -129,12 +135,12 @@
     }
     function pantallaPerfil(){
       titulo.textContent=texto(estado.sesion?.nombre)||texto(estado.nombre)||'Tu cuenta';descripcion.textContent=texto(estado.sesion?.correo)||texto(estado.correo);descripcion.classList.add('cuentaCorreoDestino');
-      const tipo=estado.guardado==='sinConexion'?'sinConexion':estado.guardado==='pendiente'?'pendiente':'guardado';
+      const tipo=estado.sinConexion||estado.guardado==='sinConexion'?'sinConexion':estado.guardado==='pendiente'?'pendiente':'guardado';
       const estadoGuardado=nodo('div','cuentaGuardado');estadoGuardado.dataset.estado=tipo;estadoGuardado.setAttribute('role','status');
-      estadoGuardado.append(nodo('span','cuentaLuz'),nodo('span','',tipo==='sinConexion'?'Sin conexión':tipo==='pendiente'?'Cambios por guardar':'Guardado en tu cuenta'));contenido.appendChild(estadoGuardado);
+      estadoGuardado.append(nodo('span','cuentaLuz'),nodo('span','',tipo==='sinConexion'?'Guardado en este dispositivo':tipo==='pendiente'?'Pendiente de sincronizar':estado.nube?'Guardado en tu cuenta':'Conectado'));contenido.appendChild(estadoGuardado);
       contenido.appendChild(resumen(estado.local||estado.nube,'TU PROGRESO'));
-      if(tipo!=='guardado')contenido.appendChild(nodo('p','cuentaAyuda',tipo==='sinConexion'?'Puedes seguir jugando. Los cambios de este dispositivo se guardarán en tu cuenta al volver la conexión.':'Tu progreso sigue en este dispositivo mientras termina de guardarse en tu cuenta.'));
-      contenido.appendChild(acciones(tipo!=='guardado'&&typeof onGuardar==='function'?boton('Guardar ahora',onGuardar,'','guardar'):null,regresar(),boton('Cerrar sesión',()=>modelo.cerrarSesion(),'cuentaEnlace','cerrar-sesion')));
+      if(tipo!=='guardado')contenido.appendChild(nodo('p','cuentaAyuda',tipo==='sinConexion'?'Sin conexión. Puedes seguir jugando con tu avance local. La sincronización se reintentará al volver internet.':'Puedes seguir jugando. Tu avance permanece en este dispositivo hasta que la cuenta confirme el guardado.'));
+      contenido.appendChild(acciones(regresar(),tipo==='pendiente'&&typeof onGuardar==='function'?boton('Sincronizar ahora',onGuardar,'cuentaBotonSecundario','guardar'):null,boton('Cerrar sesión',()=>modelo.cerrarSesion(),'cuentaEnlace','cerrar-sesion')));
     }
     function pantallaInvitado(){
       titulo.textContent='La aventura sigue';descripcion.textContent='Puedes jugar sin cuenta. Tu progreso se guarda en este dispositivo.';
@@ -158,10 +164,10 @@
       const pantalla=estado.pantalla||'inicio',clave=pantalla+':'+(estado.intencion||'entrar'),cambio=clave!==claveAnterior;
       if(cambio){errorLocal='';if(pantalla==='inicio'){borrador.correo=texto(estado.correo)||borrador.correo;borrador.nombre=texto(estado.nombre)||borrador.nombre;}if(pantalla!==pantallaAnterior){eleccion='';confirmarLocal=false;}}
       const idCodigo=texto(estado.correo)+':'+String(estado.desafio?.vence||'');if(pantalla==='codigo'&&idCodigo!==ultimoCodigo){borrador.codigo='';ultimoCodigo=idCodigo;}
-      panel.dataset.pantalla=pantalla;panel.dataset.ocupado=String(!!estado.ocupado);panel.setAttribute('aria-busy',String(!!estado.ocupado));descripcion.classList.remove('cuentaCorreoDestino');
+      panel.dataset.pantalla=pantalla;panel.dataset.obligatoria=String(!!estado.obligatoria);panel.dataset.ocupado=String(!!estado.ocupado);panel.setAttribute('aria-busy',String(!!estado.ocupado));descripcion.classList.remove('cuentaCorreoDestino');
       const desplazamiento=contenido.scrollTop;contenido.replaceChildren();
       const vistas={inicio:pantallaInicio,codigo:pantallaCodigo,vincular:pantallaVincular,recuperar:pantallaRecuperar,conflicto:pantallaConflicto,perfil:pantallaPerfil,invitado:pantallaInvitado};
-      (vistas[pantalla]||pantallaInicio)();pintarMensajes();panel.querySelector('.cuentaCerrar')?.toggleAttribute('disabled',!!estado.ocupado);
+      (vistas[pantalla]||pantallaInicio)();pintarMensajes();const cerrar=panel.querySelector('.cuentaCerrar');if(cerrar){cerrar.hidden=estado.puedeSalir===false;cerrar.disabled=!puedeSalir();}
       if(!cambio&&enfoquePendiente){const destino=panel.querySelector('[data-foco="'+enfoquePendiente+'"]');if(destino&&!destino.disabled){destino.focus({preventScroll:true});if(seleccionPendiente&&destino.setSelectionRange)try{destino.setSelectionRange(...seleccionPendiente);}catch(_){}}contenido.scrollTop=desplazamiento;}
       else if(cambio){
         enfoquePendiente=null;seleccionPendiente=null;contenido.scrollTop=0;
@@ -174,7 +180,7 @@
       if(!vivo)return;const visor=window.visualViewport,alto=visor?.height||window.innerHeight,top=raiz.getBoundingClientRect().top-(visor?.offsetTop||0);
       panel.style.setProperty('--cuenta-viewport-alto',alto+'px');raiz.style.setProperty('--cuenta-alto-disponible',Math.max(120,alto-Math.max(0,top))+'px');
     }
-    function tecla(e){if(e.key==='Escape'&&!estado.ocupado){if(confirmarLocal){e.preventDefault();confirmarLocal=false;pintar(estado);}else if(typeof onSalir==='function'){e.preventDefault();onSalir();}}}
+    function tecla(e){if(e.key==='Escape'){if(estado.puedeSalir===false)e.preventDefault();if(estado.ocupado)return;if(confirmarLocal){e.preventDefault();confirmarLocal=false;pintar(estado);}else if(typeof onSalir==='function'&&puedeSalir()){e.preventDefault();onSalir();}}}
     panel.addEventListener('keydown',tecla);window.addEventListener('resize',ajustar);window.visualViewport?.addEventListener('resize',ajustar);window.visualViewport?.addEventListener('scroll',ajustar);ajustar();
     const medidas=typeof ResizeObserver==='function'?new ResizeObserver(ajustar):null;medidas?.observe(raiz);
     cancelarSuscripcion=modelo.suscribir(pintar)||(()=>{});const reloj=setInterval(actualizarReloj,1000);

@@ -8,7 +8,7 @@ const juego=path.resolve(aqui,'../../caoz_tcg');
 const hash=b=>createHash('sha256').update(b).digest('hex');
 // Mismos bytes que las otras secciones: el publicador conserva una CSP común.
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
-export const componentesCuenta=Object.freeze(['cuenta-modelo.js','cuenta-ui.js','cuenta.css']);
+export const componentesCuenta=Object.freeze(['cuenta-progreso.js','cuenta-servicio.js','cuenta-modelo.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css']);
 export const entornoCuenta=Object.freeze(['cuenta-lab.css','cuenta-lab.js','cuenta-demo.js']);
 export const imagenesCuenta=Object.freeze(['logo.webp']);
 export function exportar(destino){

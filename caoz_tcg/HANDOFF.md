@@ -10,7 +10,46 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — colección publicada y verificada en beta 258
+## Trabajo vigente — acceso obligatorio y continuidad offline en revisión aislada
+
+Rama `feature/acceso-correo-offline`, desde `origin/develop` / build 258.
+El usuario pidió entrar con correo para jugar y conservar el avance de la app
+instalada sin conexión, sincronizándolo al recuperar internet. La revisión usa
+el flujo real de cuentas en el laboratorio de `dev/secciones/`; no contiene
+partidas ni correos, usuarios o progreso reales.
+
+- El acceso requiere correo y código, seguido de la vinculación o recuperación
+  del progreso. Domo, campaña, tutorial, online e invitaciones esperan a resolver
+  la identidad; los atajos de arranque tampoco deben abrir una partida antes.
+- `cuenta-acceso.js` coordina el modelo y la cola tanto en el juego como en la
+  sección aislada. `cuenta-juego.js` mantiene el diálogo fuera del lienzo escalado.
+- La primera entrada en cada almacenamiento del navegador/app necesita internet.
+  Después puede reabrirse offline con el recibo local de identidad verificada y
+  el vínculo de esa misma cuenta y entorno. El recibo contiene identificador,
+  nombre y correo, nunca cookies, códigos ni tokens de autenticación.
+- El progreso y las operaciones pendientes permanecen en el dispositivo.
+  Reconectar reintenta la misma operación; no vuelve a conceder premios. Una
+  revisión diferente exige elegir una copia completa, sin sumar inventarios.
+  Caducidad o cambio de cuenta conserva las copias pendientes de su propietario.
+- No se guarda el estado de un combate a mitad de turno. La API de cuentas
+  continúa excluida de la caché PWA y los deseos no se envían al servidor.
+
+La ruta pública de revisión existente es
+https://aislados.caoz-tcg.pages.dev/cuenta/ . Esta entrada **no acredita todavía
+la publicación de estos nuevos bytes**. El laboratorio permite verificar un
+código de prueba, simular victorias, cortar la conexión y «Recargar app»
+conservando el mismo almacenamiento temporal. La recarga real de la página
+reinicia la demostración y nunca consulta el progreso del jugador.
+
+Validación acotada: `pruebas_cuenta_modelo.mjs`, `pruebas_cuenta_acceso.mjs`,
+`pruebas_cuenta_entradas.mjs` (también sabotaje), exportación, UI y las pruebas
+de progreso/servicio y exclusión de caché pertinentes. No se atribuye a esta
+revisión una validación completa ni un despliegue de beta/producción.
+**Beta conserva 258 y producción 257.** BUILD 258 identifica sólo la base de
+esta rama; la siguiente build se asigna al integrar, después de aprobar la
+sección aislada. No volver a publicar bytes cambiados bajo el número 258.
+
+## Registro anterior — colección publicada y verificada en beta 258
 
 El usuario aprobó llevar el desenfoque de ediciones bloqueadas a beta. El
 [PR 21](https://github.com/rafarorr1/csm-game-guide/pull/21) quedó integrado en

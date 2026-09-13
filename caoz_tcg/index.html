@@ -3846,6 +3846,7 @@ function tutEnd(){
 /* turno guionizado del rival */
 
 function showTutorialPick(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>showTutorialPick()))return;
   const p=$('#ovPanel');
   p.innerHTML=`<h3>🎓 ¿Con qué mazo quieres aprender?</h3>
     <p>El tutorial usa <b>las cartas de ese Protagonista</b> y termina enseñándote su estrategia.
@@ -3869,6 +3870,7 @@ function showTutorialPick(){
 }
 
 async function startTutorial(lid){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>startTutorial(lid)))return;
   tutEnd();                           // limpieza por si había uno a medias
   // y por si venías del cartel de victoria de la partida anterior
   cerrarOv(); clearPrompt(); SEL=null; TGT=null;
@@ -3898,6 +3900,7 @@ async function startTutorial(lid){
    entre menú, selector y guías NO se toca: sigue exactamente donde estaba. */
 
 function showScreen(id){
+  if(id==='select'&&!window.CAOZ_CUENTA_JUEGO?.requerir(()=>showScreen(id)))return;
   if(id!=='board'){campanaCancelarInterferencia();window.PITAGORAS_MESA?.cancelar();}
   const antes=$('.screen.on'),pantalla=$('#'+id),esMenu=pantalla.classList.contains('portada');
   if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
@@ -4313,6 +4316,7 @@ async function cortinillaVS(a, b, opts={}){
 }
 
 async function startMatch(a, b, opts={}){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>startMatch(a,b,opts)))return;
   campanaCancelarInterferencia();
   const mia = ++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null;
@@ -4475,10 +4479,11 @@ function netGuestStart(m){return iniciarOnlineGuest(m);}
    se ejecuta dos veces. */
 
 function showOnline(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>showOnline()))return;
   ONL={lider:null,nombre:nombreGuardado(),sala:ONL.sala||null};
   const p=$('#ovPanel');
   p.innerHTML=`<h3>👥 Jugar con un amigo</h3>
-    <p>Sin cuentas ni instalaciones: uno crea la sala y le pasa el código al otro
+    <p>Uno crea la sala y le pasa el código al otro
        (por WhatsApp, en voz alta, como quieras).</p>
     <p style="font-size:11.5px;color:#7a6d96;line-height:1.5">
        Va por un relevo público gratuito, así que el código es la única llave de la sala.
@@ -4501,6 +4506,7 @@ function showOnline(){
    recorta al recibirlo y se pinta con textContent, nunca como HTML—. */
 
 function onlPickNombre(asHost){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>onlPickNombre(asHost)))return;
   const p=$('#ovPanel');
   p.innerHTML=`<h3>${asHost?'Crear sala':'Unirse'} — ¿cómo te llamas?</h3>
     <p>Así te verá tu rival en el chat y en los avisos de la partida.</p>`;
@@ -4549,6 +4555,7 @@ function onlPickLeader(asHost){
 }
 
 async function onlHost(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>onlHost()))return;
   const code=netCode();
   const p=$('#ovPanel');
   p.innerHTML=`<h3>Sala creada</h3>
@@ -4583,6 +4590,7 @@ async function compartirEnlace(enlace){
   toast(enlace);
 }
 function onlJoinCode(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>onlJoinCode()))return;
   const p=$('#ovPanel');
   p.innerHTML=`<h3>Unirse a una sala</h3><p>Pega el código o el enlace que te pasó tu amigo.</p>
     <input id="joinCode" class="codeinput" maxlength="300" placeholder="Código o enlace de invitación" autocomplete="off">
@@ -4591,6 +4599,7 @@ function onlJoinCode(){
   const box=el('div','opts');
   const go=el('button','btn gold','Entrar →');
   go.onclick=async()=>{
+    if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>go.click()))return;
     const c=codigoInvitacion($('#joinCode').value);
     if(c.length!==5){ netStatus('El código son 5 caracteres','warn'); return; }
     go.disabled=true; netStatus('conectando…','');
@@ -4679,7 +4688,7 @@ $('#extrasBack').onclick=()=>{showScreen('menu');$('#mExtras').focus({preventScr
 $('#mTut').onclick=()=>showTutorialPick();
 $('#mOnline').onclick=()=>showOnline();
 $('#mCampana').onclick=abrirCampana;
-$('#mPlay').onclick=()=>{ SELP=null; SELF=null; SEL_PASO='yo'; buildSelect(); showScreen('select'); };
+$('#mPlay').onclick=()=>{ if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>$('#mPlay').click()))return; SELP=null; SELF=null; SEL_PASO='yo'; buildSelect(); showScreen('select'); };
 $('#mGuides').onclick=()=>showGuides();
 /* El chat: Enviar, o Intro. El formulario evita que la página se recargue. */
 $('#chatform').onsubmit=e=>{ e.preventDefault(); chatMio(); };
@@ -4911,7 +4920,7 @@ if(new URLSearchParams(location.search).has('test')){
    Protagonista y se entra solo en esa sala. El parámetro se quita de la
    dirección para que una recarga no vuelva a intentar entrar. */
 { const q=new URLSearchParams(location.search), sala=(q.get('sala')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
-  if(sala.length>=4){ ONL.sala=sala; history.replaceState(null,'',location.pathname); setTimeout(()=>{if(!ONL.nombre)ONL.nombre=nombreGuardado();onlPickNombre(false);},300); } }
+  if(sala.length>=4)cuentaAbrirInvitacion(sala); }
 if(new URLSearchParams(location.search).has('pantalla')){
   addEventListener('load',()=>setTimeout(()=>{
     const q=new URLSearchParams(location.search), p=q.get('pantalla');
