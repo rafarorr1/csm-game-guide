@@ -13,6 +13,9 @@
   panel, conservando la validación estricta del contenido y usando los valores
   normalizados al enviar. Pruebas sin correo real y cuatro sabotajes cubren el
   cambio; aún no se atribuye a éste la resolución del HTTP503 observado en beta.
+- Las solicitudes de correo identifican a Caoz en `User-Agent`, cabecera exigida
+  por Resend. La prueba comprueba el valor exacto y falla si se omite o cambia;
+  este ajuste posterior a la tanda completa aún requiere validación al publicar.
 - Se reserva256 porque255 ya fue publicada en beta; no se sustituyen los bytes
   de esa versión. Este cambio todavía no acredita publicación de256.
 
