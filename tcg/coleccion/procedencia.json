@@ -9,7 +9,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/index.html",
-          "sha256": "c612ba5c634c62461928891c8275a1675ae480ac8745b8a3d9f5be2ca7c23029"
+          "sha256": "83b515d7fc38b0a84f497d1c04411b9a1de4f9eb5b1412b11efc12d53e30f7b9"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -23,7 +23,7 @@
       "funciones": [
         {
           "nombre": "el",
-          "linea": 2460,
+          "linea": 2461,
           "sha256": "e56e76c380a0a7f1b7d517b91ad2eea03f769a558b78cb06b5a1e97aad08044d"
         },
         {
@@ -43,27 +43,27 @@
         },
         {
           "nombre": "ponerDibujo",
-          "linea": 2421,
+          "linea": 2422,
           "sha256": "49d6176090e60831a263230fb4129228b20a69ca07776b487c0dfdd5962af638"
         },
         {
           "nombre": "ilustrarLider",
-          "linea": 2441,
+          "linea": 2442,
           "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
         },
         {
           "nombre": "ilustrar",
-          "linea": 2449,
+          "linea": 2450,
           "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
         },
         {
           "nombre": "cardEl",
-          "linea": 2722,
+          "linea": 2723,
           "sha256": "7ea8cf09fc81f62ac4432445d5ba315d3de248acb3b0d84b1f8695e6327e087f"
         },
         {
           "nombre": "cartaDeLiderVS",
-          "linea": 4274,
+          "linea": 4276,
           "sha256": "750f30852f38460396485784f49bc82a6e7e295264cd16ab6c46f2cfb1fd921d"
         }
       ],
@@ -82,7 +82,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/movil.html",
-          "sha256": "26355d6b83064e941c7b4575f268c8cdeebe704467c74c56a524454eb29e7a51"
+          "sha256": "e74533a2ad97afa3bc0fdc998a9a99fd3b0585f3fc3ff6ef2c58278bf208e8ea"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -96,7 +96,7 @@
       "funciones": [
         {
           "nombre": "el",
-          "linea": 916,
+          "linea": 917,
           "sha256": "3c8ca96388bf1aac79b1e93135c384fc5183d3938838461fe9468e653d67b646"
         },
         {
@@ -116,27 +116,27 @@
         },
         {
           "nombre": "ponerDibujo",
-          "linea": 957,
+          "linea": 958,
           "sha256": "5cdaec988b45b80d27d4067083681a20088cafc8b4bf681739cee705eb253ce0"
         },
         {
           "nombre": "ilustrarLider",
-          "linea": 972,
+          "linea": 973,
           "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
         },
         {
           "nombre": "ilustrar",
-          "linea": 980,
+          "linea": 981,
           "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
         },
         {
           "nombre": "cardEl",
-          "linea": 1518,
+          "linea": 1520,
           "sha256": "c74105684fe1a357a99be0c5a61218f8b9af402f6042ad0ed7c1c0919af60eef"
         },
         {
           "nombre": "cartaDeLiderVS",
-          "linea": 1304,
+          "linea": 1306,
           "sha256": "3a8e33b98d0438dac8be34f5f82c2a668f9a44b5e11d2d131e0bc844432bb909"
         }
       ],
@@ -151,13 +151,13 @@
   },
   "componentes": {
     "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
-    "coleccion-modelo.js": "70188298bef3c189c8b9f5c5c339bc45ff3f6074d2577f49e7c3c90e02e060a4",
+    "coleccion-modelo.js": "757b4afc3a6a6141a49e3c3d3ad5a2c8ef8669f5272f8a69ec1358f181213f14",
     "arte-remoto.js": "b90f5defcd9e8e9e5b06effe367b89c2be37d73384be6d87c2add3494e415423",
-    "coleccion-ui.js": "b319f4e6eb09379211cb6c0051291a6d79e320779efb2baf0b19eaa669906089",
+    "coleccion-ui.js": "371bdfe5296e6b0a78a8f91355809c713ab0e3ade0ca97eaea45f7847abd3386",
     "sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
     "sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
     "sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
-    "coleccion.css": "2493772c947520ed7fa585bbf1794ef06dd4bdb7ae7e59c23918ff2cf5582397",
+    "coleccion.css": "8226af4e5fc46dfe2415af51a46ae20885120b5b1d9be1b90c03bf1e6025dcaf",
     "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
   },
   "arte": {

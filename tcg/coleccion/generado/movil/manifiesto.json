@@ -5,7 +5,7 @@
   "fuentes": [
     {
       "archivo": "caoz_tcg/movil.html",
-      "sha256": "26355d6b83064e941c7b4575f268c8cdeebe704467c74c56a524454eb29e7a51"
+      "sha256": "e74533a2ad97afa3bc0fdc998a9a99fd3b0585f3fc3ff6ef2c58278bf208e8ea"
     },
     {
       "archivo": "caoz_tcg/motor.js",
@@ -19,7 +19,7 @@
   "funciones": [
     {
       "nombre": "el",
-      "linea": 916,
+      "linea": 917,
       "sha256": "3c8ca96388bf1aac79b1e93135c384fc5183d3938838461fe9468e653d67b646"
     },
     {
@@ -39,27 +39,27 @@
     },
     {
       "nombre": "ponerDibujo",
-      "linea": 957,
+      "linea": 958,
       "sha256": "5cdaec988b45b80d27d4067083681a20088cafc8b4bf681739cee705eb253ce0"
     },
     {
       "nombre": "ilustrarLider",
-      "linea": 972,
+      "linea": 973,
       "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
     },
     {
       "nombre": "ilustrar",
-      "linea": 980,
+      "linea": 981,
       "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
     },
     {
       "nombre": "cardEl",
-      "linea": 1518,
+      "linea": 1520,
       "sha256": "c74105684fe1a357a99be0c5a61218f8b9af402f6042ad0ed7c1c0919af60eef"
     },
     {
       "nombre": "cartaDeLiderVS",
-      "linea": 1304,
+      "linea": 1306,
       "sha256": "3a8e33b98d0438dac8be34f5f82c2a668f9a44b5e11d2d131e0bc844432bb909"
     }
   ],
