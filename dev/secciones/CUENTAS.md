@@ -172,3 +172,11 @@ accesos al almacenamiento real. El sabotaje local confirma que retirar la
 restauración de foco vuelve a romper las flechas de las pestañas. La publicación
 añade sólo `cuenta/` a la rama
 `aislados`, preservando los árboles de Colección, El Rey y Sobres.
+
+Publicación de esta propuesta: fuente `ab30e3e1513ba78577c43c8f69145dbe2e3b9a89`,
+artefacto `4821e928e4c1aa3b137b4ffd499b038921af521b`. Diez archivos públicos
+verificados byte a byte. Las otras tres secciones, sus cabeceras compartidas y
+las referencias de las ramas del juego se conservaron.
+La página pública pasó los51 casos de interfaz (17 por tamaño), sin excepciones,
+peticiones fallidas ni accesos al progreso real. La propuesta sigue pendiente de
+revisión del usuario antes de integrar correo y guardado reales.

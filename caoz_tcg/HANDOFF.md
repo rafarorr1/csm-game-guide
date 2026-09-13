@@ -40,6 +40,17 @@ La producción254 ya fue publicada antes de esta tarea: `main:504e5ff`,
 son registros históricos y pueden describir estados previos de validación.
 El PR13 de cierre documental sigue separado; esta tarea no autoriza su merge.
 
+La sección se publicó desde `ab30e3e1513ba78577c43c8f69145dbe2e3b9a89` en
+`aislados:4821e928e4c1aa3b137b4ffd499b038921af521b`:
+https://aislados.caoz-tcg.pages.dev/cuenta/
+Los diez archivos públicos coinciden byte a byte. Los árboles de Colección,
+El Rey y Sobres y las cabeceras compartidas siguen idénticos. `main`, `develop`,
+`beta` y `gh-pages` conservaron sus referencias. El publicador tiene22 casos
+verdes; la regresión de foco de pestañas pasa con el arreglo y falla sin él.
+La URL pública pasó51/51 comprobaciones,17 por cada tamaño, sin errores
+JavaScript, peticiones fallidas ni accesos al progreso real. La entrega queda
+lista para revisión del usuario; no integrar a beta hasta que apruebe el flujo.
+
 ## Registro anterior — promoción del build 254
 
 El usuario aprobó la sección y pidió publicar todos los cambios en producción.
