@@ -103,6 +103,32 @@ async function comprobarInvitacion(sabotaje=false){
 }
 await prueba('La invitación espera el correo sin borrar sala, otros parámetros ni fragmento',()=>comprobarInvitacion());
 await prueba('Sin módulo de cuentas la invitación tampoco se consume',async()=>{const f=invitacion({ausente:true});f.c.cuentaAbrirInvitacion('ABCDE');await f.tareas.shift()();assert.equal(f.reemplazos.length,0);assert.equal(f.aperturas.length,0);});
+async function comprobarFoto(sabotaje=false){
+ const fuente=fuentes['index.html'],original=desde(fuente,fuente.indexOf('async function fotoPreparar('),'preparación de foto');
+ for(const ausente of [true,false]){
+  let autorizado=false,continuar=null,jugadores=null,lecturas=0,creadas=0,calculos=0,pintados=0;
+  const partidas=[],temporizadores=[],clases=[];
+  const c=vm.createContext({window:ausente?{}:{CAOZ_CUENTA_JUEGO:{requerir(fn){continuar=fn;return autorizado;}}},
+   URLSearchParams,location:{search:'?foto=fender,adreida&mesa=matildus,machete:1&mano=sombrero&gastada=1&equipar=1'},ME:0,FOE:1,
+   async startMatch(...args){partidas.push(args);if(autorizado)jugadores=[{field:[],hand:['anterior']},{field:[],hand:[]}];},
+   P(side){lecturas++;if(!jugadores)throw Error('Partida aún no iniciada');return jugadores[side];},
+   mkUnit(id,side){creadas++;return {id,side,sick:true};},recalc(){calculos++;},render(){pintados++;},
+   setTimeout(fn,ms){temporizadores.push({fn,ms});},
+   document:{body:{classList:{add:n=>clases.push(n)}}}});
+  vm.runInContext(sabotaje?retirarGuardia(original):original,c);await c.fotoPreparar();
+  assert.equal(partidas.length,0,'La foto no intenta iniciar antes del acceso');
+  assert.equal(lecturas,0,'La mesa no consulta jugadores antes del acceso');assert.equal(creadas,0);
+  assert.equal(pintados,0);assert.equal(temporizadores.length,0);assert.deepEqual(clases,[]);
+  if(ausente)continue;
+  assert.equal(typeof continuar,'function');autorizado=true;await continuar();
+  assert.deepEqual(JSON.parse(JSON.stringify(partidas)),[['fender','adreida',{volado:false}]],'Conserva la partida solicitada en la foto');
+  assert.deepEqual(jugadores.map(p=>p.field.map(u=>[u.id,u.side,u.sick])),[[['matildus',0,false]],[['machete',1,false]]]);
+  assert.deepEqual(jugadores[0].hand,['sombrero']);assert.equal(calculos,1);assert.equal(pintados,2);
+  assert.deepEqual(temporizadores.map(t=>t.ms),[650,700],'Los ajustes posteriores se programan sólo después de iniciar');
+  assert.deepEqual(clases,['foto-lista']);
+ }
+}
+await prueba('La foto de escritorio espera acceso antes de preparar mesa, mano y ajustes',()=>comprobarFoto());
 await prueba('La guardia pública existe antes del DOM sin iniciar el servicio ni permitir jugar',async()=>{
  const listeners=[];const c=vm.createContext({URLSearchParams,location:{search:''},document:{readyState:'loading',addEventListener:(...v)=>listeners.push(v)}});c.window=c;
  vm.runInContext(fuentes['cuenta-juego.js'],c);assert(c.CAOZ_CUENTA_JUEGO);assert.equal(c.CAOZ_CUENTA_JUEGO.puedeJugar(),false);assert.equal(c.CAOZ_CUENTA_JUEGO.requerir(()=>assert.fail('No debe continuar')),false);assert.equal(c.CAOZ_CUENTA_JUEGO.cerrar(),false);assert.equal(listeners[0][0],'DOMContentLoaded');
@@ -164,5 +190,6 @@ if(process.argv.includes('--sabotaje')){
  await prueba('Sabotaje detectado: invitación consumida antes del correo',async()=>{await assert.rejects(()=>comprobarInvitacion(true),/invitación permanece/);});
  await prueba('Sabotaje detectado: premio entregado al visitante desconocido',()=>{assert.throws(()=>premios(true),/Cargar no concede premios/);});
  await prueba('Sabotaje detectado: la mesa abierta impide reautenticar',async()=>{await assert.rejects(()=>mesaAbierta(true),/sin quedar atrapado/);});
+ await prueba('Sabotaje detectado: la foto consulta jugadores antes del acceso',async()=>{await assert.rejects(()=>comprobarFoto(true),/Partida aún no iniciada/);});
 }
 console.log(total+' comprobaciones acotadas de entradas reales en verde. Sin iniciar partidas ni servicios.');

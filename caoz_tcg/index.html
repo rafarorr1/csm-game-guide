@@ -2327,8 +2327,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=258"></script>
-<script src="final.js?b=258"></script>
+<script src="motor.js?b=259"></script>
+<script src="final.js?b=259"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2347,7 +2347,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:258, fecha:'2026-09-13'};
+const BUILD = {n:259, fecha:'2026-09-13'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -4978,7 +4978,10 @@ if(new URLSearchParams(location.search).has('pantalla')){
 }
 
 if(new URLSearchParams(location.search).has('foto')){
-  addEventListener('load',()=>setTimeout(async()=>{
+  addEventListener('load',()=>setTimeout(async function fotoPreparar(){
+    // Se reanuda la preparación entera: startMatch puede esperar al login
+    // y todavía no existirían jugadores para colocar la mesa o la mano.
+    if(!window.CAOZ_CUENTA_JUEGO?.requerir(fotoPreparar))return;
     const q=new URLSearchParams(location.search);
     const [a,b]=(q.get('foto')||'mohamed,adreida').split(',');
     await startMatch(a,b,{volado:false});

@@ -1,5 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
+### Build 259 · Acceso por correo y continuidad offline · 2026-09-13
+
+- Integra la sección aprobada: acceso con correo y código antes de jugar,
+  presentado en un pop up de cristal con el logo sobre el menú principal.
+- Una cuenta verificada y vinculada puede volver a entrar sin conexión.
+  El progreso pendiente se conserva y sincroniza al reconectar, sin duplicar
+  premios ni mezclar automáticamente los inventarios de cuentas/dispositivos.
+- Una sesión caducada o un conflicto pide resolver el acceso antes de continuar.
+  Las invitaciones esperan la cuenta sin perder el código de la sala.
+- La actualización se destina a beta; producción conserva la build 257.
+
 ### Sin numerar · Revisión aislada · Acceso sobre el menú · 2026-09-13
 
 - El acceso se presenta como un pop up de cristal translúcido sobre el menú

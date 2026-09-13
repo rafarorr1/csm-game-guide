@@ -12,6 +12,12 @@ números) → el código.
 
 ## Trabajo vigente — acceso obligatorio y continuidad offline en revisión aislada
 
+El usuario aprobó integrar y publicar en beta el 2026-09-13. Se prepara build259
+en `feature/acceso-correo-offline`, con publicación desde `develop` después de
+validar la integración completa. Producción257 queda fuera de esta autorización.
+Los registros siguientes describen la revisión aislada aprobada; se actualizará
+el encabezado al verificar la beta servida.
+
 Nueva revisión: acceso como panel de cristal translúcido sobre la portada.
 `cuenta.css` aplica desenfoque local, reflejos y controles con contraste; el fondo
 del diálogo conserva visible el menú. La vista aislada reutiliza la presentación
