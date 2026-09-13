@@ -22,12 +22,13 @@
     const panel=nodo('section','cuentaUI');panel.setAttribute('aria-labelledby',prefijo+'titulo');
     const puedeSalir=()=>estado.puedeSalir!==false&&!estado.ocupado;
     const cabecera=nodo('header','cuentaCabecera'),simbolo=emblema(),antetitulo=nodo('p','cuentaAntetitulo','TU HISTORIA EN EL DOMO');
+    const logo=nodo('img','cuentaLogo');logo.src='art/logo.webp';logo.alt='Caoz Con Todo';logo.width=1600;logo.height=900;logo.draggable=false;
     const titulo=nodo('h1','cuentaTitulo');titulo.id=prefijo+'titulo';titulo.tabIndex=-1;
     const descripcion=nodo('p','cuentaDescripcion');descripcion.id=prefijo+'descripcion';
     const contenido=nodo('div','cuentaContenido'),mensajes=nodo('div','cuentaMensajes');
     const error=nodo('p','cuentaError');error.id=prefijo+'error';error.setAttribute('role','alert');
     const aviso=nodo('p','cuentaAviso');aviso.setAttribute('role','status');
-    mensajes.append(error,aviso);cabecera.append(simbolo,antetitulo,titulo,descripcion);panel.append(cabecera,contenido,mensajes);
+    mensajes.append(error,aviso);cabecera.append(logo,simbolo,antetitulo,titulo,descripcion);panel.append(cabecera,contenido,mensajes);
     if(typeof onSalir==='function'){
       const cerrar=nodo('button','cuentaCerrar','×');cerrar.type='button';cerrar.setAttribute('aria-label','Volver al juego');cerrar.dataset.foco='cerrar';cerrar.onclick=()=>{if(puedeSalir())onSalir();};panel.appendChild(cerrar);
     }
@@ -74,7 +75,7 @@
       return boton(etiqueta,()=>{if(puedeSalir())onSalir();},estado.obligatoria?'':'cuentaBotonSecundario','volver');
     }
     function pantallaInicio(){
-      titulo.textContent=estado.obligatoria?'Entra al Domo':'Que tu historia permanezca';descripcion.textContent=estado.obligatoria?'Tu aventura empieza con tu correo.':'Guarda tu campaña y tu colección para continuar en otro dispositivo.';
+      titulo.textContent='Acceso a Caoz Con Todo';descripcion.textContent='';
       const tabs=nodo('div','cuentaPestanas');tabs.setAttribute('role','tablist');tabs.setAttribute('aria-label','Acceso a tu cuenta');
       const activa=estado.intencion==='crear'?'crear':'entrar';
       for(const [id,etiqueta]of [['crear','Crear cuenta'],['entrar','Entrar']]){
@@ -165,6 +166,7 @@
       if(cambio){errorLocal='';if(pantalla==='inicio'){borrador.correo=texto(estado.correo)||borrador.correo;borrador.nombre=texto(estado.nombre)||borrador.nombre;}if(pantalla!==pantallaAnterior){eleccion='';confirmarLocal=false;}}
       const idCodigo=texto(estado.correo)+':'+String(estado.desafio?.vence||'');if(pantalla==='codigo'&&idCodigo!==ultimoCodigo){borrador.codigo='';ultimoCodigo=idCodigo;}
       panel.dataset.pantalla=pantalla;panel.dataset.obligatoria=String(!!estado.obligatoria);panel.dataset.ocupado=String(!!estado.ocupado);panel.setAttribute('aria-busy',String(!!estado.ocupado));descripcion.classList.remove('cuentaCorreoDestino');
+      logo.hidden=pantalla!=='inicio';simbolo.hidden=antetitulo.hidden=descripcion.hidden=pantalla==='inicio';titulo.classList.toggle('cuentaSoloLectores',pantalla==='inicio');
       const desplazamiento=contenido.scrollTop;contenido.replaceChildren();
       const vistas={inicio:pantallaInicio,codigo:pantallaCodigo,vincular:pantallaVincular,recuperar:pantallaRecuperar,conflicto:pantallaConflicto,perfil:pantallaPerfil,invitado:pantallaInvitado};
       (vistas[pantalla]||pantallaInicio)();pintarMensajes();const cerrar=panel.querySelector('.cuentaCerrar');if(cerrar){cerrar.hidden=estado.puedeSalir===false;cerrar.disabled=!puedeSalir();}

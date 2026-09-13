@@ -10,14 +10,14 @@
     "juego/cuenta-modelo.js": "f5ac89543ca03b7f2f97a623f7c277802d64fe40b8f345c223fa7c566c879db6",
     "juego/cuenta-progreso.js": "56fa185fa4738423e87b4261f26e8db37691bcb06c5d07dbf394136655aaf11d",
     "juego/cuenta-servicio.js": "a1c430a1310459902ccb372fec11b67864cbe1730315396e125e771e8ab0ab94",
-    "juego/cuenta-ui.js": "141b3bc6fabbda78ddc57f001ae413ed4eb0c39c0768b96f3eb1779e3ac6976c",
-    "juego/cuenta.css": "65cb28bc20ecf654582b427f9cb2274b4d13334dacf7fdf59342e8ea42ba66aa",
-    "procedencia.json": "a0e38c1a85d6b9cc757ff2849b64f47044a43ea07e9ba7b31efd5a291cf48730"
+    "juego/cuenta-ui.js": "d98bd169cb7042d3d55604483cbd85e252c4f22da4b21da8ffe7b8c2ae470495",
+    "juego/cuenta.css": "6939578f9e1e85fc83f4104c8eb946d69b0ffff8c3b3b73799f97f6a8ac3f1ee",
+    "procedencia.json": "36e6b784712c3d9118f22bc3149c109ffcce4ad4a72d9373489f24897d98b3fb"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/acceso-correo-offline",
-    "sha": "40363d22618a8304a6934ae89ca2498801c935b4"
+    "sha": "e42054460dc490b630193ba84d0085ddba04727f"
   },
   "seccion": "cuenta",
   "version": 1
