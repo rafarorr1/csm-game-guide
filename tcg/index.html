@@ -2202,6 +2202,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
   <div class="marcaSub">EL DOMO · EXTRAS</div>
   <h2 id="extrasTitle">Extras</h2>
   <div class="extrasOpciones">
+    <button class="btn" id="mCuenta" aria-haspopup="dialog">Mi cuenta</button>
     <button class="btn" id="mTut">Tutorial</button>
     <button class="btn" id="mGuides">Guías de estrategia</button>
     <button class="btn" id="mCards">Colección de cartas</button>
@@ -2326,8 +2327,8 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=254"></script>
-<script src="final.js?b=254"></script>
+<script src="motor.js?b=257"></script>
+<script src="final.js?b=257"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2346,7 +2347,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:254, fecha:'2026-09-12'};
+const BUILD = {n:257, fecha:'2026-09-13'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3906,6 +3907,7 @@ function showScreen(id){
   if(id!=='board'){document.body.classList.remove('peligro','remate');}
   // El tablero entra con su propio VS; las pantallas de menú comparten el oro.
   if(esMenu&&antes!==pantalla)animarTransicionMenu(pantalla);
+  window.dispatchEvent(new CustomEvent('caoz:pantalla',{detail:{id}}));
 }
 
 /* EL FOIL SIGUE AL CURSOR.

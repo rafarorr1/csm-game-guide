@@ -3392,6 +3392,32 @@ PRUEBAS.suite('borrarProgreso', async t => {
   }
 });
 
+PRUEBAS.suite('cuentaBorrador', async t => {
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=cuenta-borrador-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,clave=w.eval('CAMPANA_CLAVE')+'.creador',anterior=localStorage.getItem(clave);
+    try{
+      w.showScreen('extras');w.eval('campanaBorrador=null');
+      localStorage.setItem(clave,JSON.stringify({personaje:{nombre:'Personaje A',color:'verde',equipo:'libro'},lider:'fender'}));
+      t.check(w.campanaLeerBorrador().personaje.nombre==='Personaje A',pagina+': prepara la miniatura de la primera cuenta en memoria.');
+      const b=JSON.stringify({personaje:{nombre:'Personaje B',color:'azul',equipo:'baston'},lider:'mohamed'});
+      localStorage.setItem(clave,b);t.check(w.cuentaRecargarProgreso(),pagina+': refresca una importación confirmada desde Extras.');
+      t.check(localStorage.getItem(clave)===b,pagina+': invalidar la memoria no elimina el borrador recién importado.');
+      const borrador=w.campanaLeerBorrador();
+      t.check(borrador.personaje.nombre==='Personaje B'&&borrador.personaje.color==='azul'&&borrador.personaje.equipo==='baston'&&borrador.lider==='mohamed',pagina+': la cuenta B recupera su nombre, miniatura y mazo; no hereda los de A.');
+      w.campanaCrear();t.check(d.querySelector('#creadorNombre').value==='Personaje B',pagina+': el creador visible corresponde a B.');
+      w.campanaCerrar();w.showScreen('extras');w.campanaGuardarBorrador();
+      t.check(JSON.parse(localStorage.getItem(clave)).personaje.nombre==='Personaje B',pagina+': editar no vuelve a persistir al personaje A.');
+      const vivo=w.campanaLeerBorrador();d.getElementById('board').classList.add('on');
+      t.check(!w.cuentaRecargarProgreso()&&w.eval('campanaBorrador')===vivo,pagina+': un refresco durante batalla no cambia la memoria activa.');
+      d.getElementById('board').classList.remove('on');localStorage.removeItem(clave);w.cuentaRecargarProgreso();
+      w.campanaCrear();t.check(d.querySelector('#creadorNombre').value==='Viajero',pagina+': tras salir de la cuenta el invitado empieza con su propio personaje.');
+      w.campanaCerrar();
+    }finally{f.remove();if(anterior===null)localStorage.removeItem(clave);else localStorage.setItem(clave,anterior);}
+  }
+});
+
 PRUEBAS.suite('menusDorados', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
