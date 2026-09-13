@@ -88,6 +88,9 @@
 #coleccionPanel .coleccionVersion[data-edicion="dorado"] h4{color:#efd086}
 #coleccionPanel .coleccionVersion .coleccionCarta{height:auto;flex:1;min-height:0;max-height:300px}
 #coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline:2px solid #d8b273;outline-offset:4px}
+/* Una edición sin desbloquear sólo deja entrever el naipe. Las etiquetas,
+   cantidades y acciones permanecen nítidas fuera de la carta. */
+#coleccionPanel .coleccionVersion.bloqueada .coleccionCarta{filter:blur(clamp(3px,calc(var(--cw,200px) / 40),7px)) saturate(.55) brightness(.72)}
 #coleccionPanel .coleccionEstadoEdicion{display:flex;align-items:center;gap:5px;font-size:11px;color:#b3a18a;min-height:18px;flex:none}
 #coleccionPanel .coleccionEstadoEdicion svg{width:13px;height:13px}
 #coleccionPanel .coleccionCantidadEdicion{font-weight:700;font-variant-numeric:tabular-nums;color:#eadfbf}
