@@ -364,7 +364,7 @@
 #coleccionPanel .coleccionPrepararSobre .coleccionSobreEscena{min-height:0}
 #coleccionPanel .coleccionElegirGrupo{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:10px 7px;display:flex;flex-direction:column;justify-content:flex-start;justify-content:safe center;gap:13px}
 #coleccionPanel .coleccionElegirGrupo h4{font:700 19px Georgia,serif;color:#ecd18e}
-#coleccionPanel .coleccionGrupos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;flex:none}
+#coleccionPanel .coleccionGrupos{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;flex:none}
 #coleccionPanel .coleccionGrupo{min-width:0;min-height:66px;flex-direction:column;gap:6px;padding:10px;background:linear-gradient(130deg,#30223f,#1d1528);border-color:#594166;border-radius:6px;box-shadow:none;font-family:var(--sans,system-ui);letter-spacing:0}
 #coleccionPanel .coleccionGrupo strong{font:700 15px/1.15 Georgia,serif;color:#ddd0e8}
 #coleccionPanel .coleccionGrupo span{font-size:10px;font-weight:400;color:#b8a7c9}

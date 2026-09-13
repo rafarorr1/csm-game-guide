@@ -63,6 +63,7 @@
       abrirColeccion();
       const carta=parametros.get('carta');
       if(carta&&m.ids().includes(carta))document.querySelector('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]')?.click();
+      else if(parametros.get('pestana')==='sobres')document.querySelector('#coleccionPanel .coleccionPestana:nth-child(2)')?.click();
     });
   }
   if(document.readyState==='complete')preparar();else addEventListener('load',preparar,{once:true});

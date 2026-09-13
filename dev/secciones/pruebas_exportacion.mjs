@@ -32,10 +32,11 @@ try{
   console.log('✓ La sección estática sólo redirige su catálogo vacío, sin añadir credenciales.');
   let reemplazo;
   for(const [movil,vista,archivo] of [[true,'','movil.html'],[false,'','escritorio.html'],[true,'desktop','escritorio.html']]){
-    vm.runInNewContext(fs.readFileSync(path.join(destino,'abrir.js'),'utf8'),{URL,URLSearchParams,matchMedia:()=>({matches:movil}),location:{search:'?vista='+vista+'&estado=muestrario&acabado=dorado&carta=tal',href:'https://revision.example/',replace:u=>{reemplazo=u;}}});
+    vm.runInNewContext(fs.readFileSync(path.join(destino,'abrir.js'),'utf8'),{URL,URLSearchParams,matchMedia:()=>({matches:movil}),location:{search:'?vista='+vista+'&estado=muestrario&acabado=dorado&carta=tal&pestana=sobres',href:'https://revision.example/',replace:u=>{reemplazo=u;}}});
     assert.equal(new URL(reemplazo).pathname,'/'+archivo);
     assert.equal(new URL(reemplazo).searchParams.get('estado'),'muestrario');assert.equal(new URL(reemplazo).searchParams.get('acabado'),'dorado');
     assert.equal(new URL(reemplazo).searchParams.get('carta'),'tal','La entrada pública conserva la carta cuyo detalle se quiere revisar');
+    assert.equal(new URL(reemplazo).searchParams.get('pestana'),'sobres','La revisión conserva la entrada directa a sobres');
   }
   console.log('✓ El enlace elige móvil/escritorio y conserva la serie y el detalle de la carta.');
   async function entorno(search){
@@ -54,10 +55,10 @@ try{
   const t=await entorno('?estado=sobres'),{contexto,form}=t;
   assert.equal(contexto.CAOZ_COLECCION.betaDisponible(),false);
   assert.equal(contexto.CAOZ_COLECCION.sobres(),2);assert.equal(t.aperturas,1);assert.equal(form.elements.acabado.disabled,true);
-  const sobre=contexto.CAOZ_COLECCION.abrirSobre();assert.equal(sobre.cartas.length,5);assert.ok(sobre.cartas.every(c=>c.acabado==='foil'));
+  const sobre=contexto.CAOZ_COLECCION.abrirSobre();assert.equal(sobre.cartas.length,5);assert.ok(sobre.cartas.slice(0,3).every(c=>c.acabado==='normal'));assert.equal(sobre.cartas[3].acabado,'foil');assert.ok(['normal','foil'].includes(sobre.cartas[4].acabado));
   form.elements.vista.value='desktop';t.submit();
   assert.equal(new URL(contexto.location.href).pathname,'/escritorio.html');
-  console.log('✓ En un dominio remoto hay dos sobres, cinco Foil y cambio de presentación, con memoria temporal.');
+  console.log('✓ En un dominio remoto hay dos sobres, cinco cartas mixtas y cambio de presentación, con memoria temporal.');
   for(const acabado of ['normal','foil','dorado']){
     const t=await entorno('?estado=muestrario&acabado='+acabado),m=t.contexto.CAOZ_COLECCION;
     assert.ok(m.ids().every(id=>m.elegido(id)===acabado&&['normal','foil','dorado'].every(a=>m.cantidad(id,a)===1)),'Una copia de cada edición y la serie seleccionada para todo el muestrario');

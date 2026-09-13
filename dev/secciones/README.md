@@ -38,6 +38,12 @@ construye de nuevo esos datos temporales.
 
 ## Colección: copias y muestrario de ediciones
 
+La revisión de sobres reúne tres colecciones: Trucos del Domo (48 cartas),
+Juramentos del Domo (46) y Caos y Dragones (48). Entre las tres se conserva el
+catálogo completo de 134 cartas. `?estado=sobres&pestana=sobres` abre directamente
+la elección con dos sobres temporales, también desde `/coleccion/` publicado.
+Se mantienen las cinco cartas por sobre: tres Normales, una Foil y quinta 50/50.
+
 Debajo de cada carta sólo aparecen los marcadores de las ediciones que posee
 el jugador, sin contador ni texto. Las ediciones bloqueadas no se dibujan;
 la equipada queda resaltada. Desbloquear una edición añade su marcador,

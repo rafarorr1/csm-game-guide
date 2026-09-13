@@ -6,9 +6,10 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {crearServidor} from './servidor.mjs';
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
-const servidor=crearServidor();
-await new Promise((resolve,reject)=>{servidor.once('error',reject);servidor.listen(0,'127.0.0.1',resolve);});
-const base='http://127.0.0.1:'+servidor.address().port+'/dev/secciones/coleccion.html';
+const servidor=process.env.BASE_URL?null:crearServidor();
+if(servidor)await new Promise((resolve,reject)=>{servidor.once('error',reject);servidor.listen(0,'127.0.0.1',resolve);});
+const base=process.env.BASE_URL||'http://127.0.0.1:'+servidor.address().port+'/dev/secciones/coleccion.html';
+const urlPara=parametros=>{const url=new URL(base);for(const [k,v]of Object.entries(parametros))url.searchParams.set(k,v);return url.href;};
 const i=process.argv.indexOf('--capturas'),capturas=i<0?null:path.resolve(process.argv[i+1]);if(capturas)fs.mkdirSync(capturas,{recursive:true});
 let navegador;
 async function dentro(pagina,selector){
@@ -22,7 +23,7 @@ try{
     const memoria=fs.readFileSync(new URL('./memoria.js',import.meta.url),'utf8').replace('setItem:(k,v)=>{','setItem:(k,v)=>{if(window.CAOZ_QA_FALLO_GUARDADO)throw Error("Sin espacio de prueba");');
     await pagina.route('**/memoria.js',route=>route.fulfill({contentType:'text/javascript',body:memoria}));
     try{
-      await pagina.goto(base+'?vista='+vista+'&estado=canjes&carta=tal');await pagina.locator('.coleccionVersion[data-edicion="normal"] .coleccionMejorar').waitFor();
+      await pagina.goto(urlPara({vista,estado:'canjes',carta:'tal'}));await pagina.locator('.coleccionVersion[data-edicion="normal"] .coleccionMejorar').waitFor();
       await dentro(pagina,'.coleccionMejorar,.coleccionUsar,.coleccionMejoraProgreso');
       assert.equal(await pagina.locator('[data-edicion="normal"] [data-canjeables]').getAttribute('data-canjeables'),'5');
       assert.equal(await pagina.locator('[data-edicion="normal"] .coleccionCantidadEdicion').textContent(),'6 copias');
@@ -49,11 +50,11 @@ try{
       await pagina.locator('.coleccionCanjeListo[data-carta="eric"]').click();
       assert.ok(await pagina.locator('.coleccionVersion[data-edicion="foil"]').getAttribute('class').then(c=>c.includes('vista')),'La lista de mejoras dirige al acabado con copias suficientes');
       await pagina.getByRole('button',{name:'Sobres',exact:false}).first().click();
-      assert.equal(await pagina.locator('.coleccionGrupo').count(),6);
-      if(await pagina.locator('.coleccionGrupoCompacto select').isVisible())await pagina.locator('.coleccionGrupoCompacto select').selectOption('talesin');else await pagina.locator('.coleccionGrupo[data-grupo="talesin"]').click();
-      assert.equal(await pagina.locator('.coleccionGrupo[aria-pressed="true"]').getAttribute('data-grupo'),'talesin');
+      assert.equal(await pagina.locator('.coleccionGrupo').count(),3);
+      if(await pagina.locator('.coleccionGrupoCompacto select').isVisible())await pagina.locator('.coleccionGrupoCompacto select').selectOption('caos');else await pagina.locator('.coleccionGrupo[data-grupo="caos"]').click();
+      assert.equal(await pagina.locator('.coleccionGrupo[aria-pressed="true"]').getAttribute('data-grupo'),'caos');
       await pagina.locator('.coleccionVerContenido').click();assert.ok(await pagina.locator('#coleccionContenidoGrupo').isVisible());
-      assert.equal(await pagina.locator('#coleccionContenidoGrupo>span').count(),24);
+      assert.equal(await pagina.locator('#coleccionContenidoGrupo>span').count(),48);
       assert.ok(await pagina.locator('.coleccionElegirGrupo').evaluate(n=>{n.scrollTop=0;const primero=n.firstElementChild.getBoundingClientRect(),r=n.getBoundingClientRect();return primero.top>=r.top;}),'El inicio de los grupos no se recorta al expandir contenido');
       await pagina.locator('#coleccionContenidoGrupo>span').last().scrollIntoViewIfNeeded();
       await dentro(pagina,'#coleccionContenidoGrupo>span:last-child');
@@ -65,7 +66,7 @@ try{
       assert.ok((await pagina.locator('.coleccionTasas').textContent()).includes('50% Normal · 50% Foil'));
       assert.ok(await pagina.locator('.coleccionAbrirSobre').isDisabled(),'Sin sobres el botón no gasta nada');
       await pagina.evaluate(()=>CAOZ_COLECCION.concederSobreDomo('qa_domo'));
-      assert.equal(await pagina.locator('.coleccionGrupo[aria-pressed="true"]').getAttribute('data-grupo'),'talesin','El premio conserva el grupo seleccionado');
+      assert.equal(await pagina.locator('.coleccionGrupo[aria-pressed="true"]').getAttribute('data-grupo'),'caos','El premio conserva el grupo seleccionado');
       await dentro(pagina,'.coleccionAbrirSobre,.coleccionSobreCuenta');
       await pagina.locator('.coleccionTasas').scrollIntoViewIfNeeded();
       await dentro(pagina,'.coleccionTasas');
@@ -78,9 +79,9 @@ try{
       await pagina.evaluate(()=>window.CAOZ_QA_FALLO_GUARDADO=false);
       await pagina.locator('.coleccionAbrirSobre').click();await pagina.locator('.sobresApertura[data-fase="sellado"]').waitFor();
       const pendiente=await pagina.evaluate(()=>CAOZ_COLECCION.pendiente());
-      assert.equal(pendiente.grupo,'talesin');assert.equal(pendiente.cartas.length,5);assert.equal(pendiente.cartas.filter(c=>c.acabado==='dorado').length,0);
+      assert.equal(pendiente.grupo,'caos');assert.equal(pendiente.cartas.length,5);assert.equal(pendiente.cartas.filter(c=>c.acabado==='dorado').length,0);
       assert.ok([1,2].includes(pendiente.cartas.filter(c=>c.acabado==='foil').length));
-      assert.ok(await pagina.evaluate(()=>{const m=CAOZ_COLECCION,g=m.grupos().find(g=>g.id==='talesin');return m.pendiente().cartas.every(c=>g.ids.includes(c.id));}));
+      assert.ok(await pagina.evaluate(()=>{const m=CAOZ_COLECCION,g=m.grupos().find(g=>g.id==='caos');return m.pendiente().cartas.every(c=>g.ids.includes(c.id));}));
       await pagina.locator('.coleccionCerrar').click();await pagina.getByRole('button',{name:'Abrir colección',exact:true}).click();
       await pagina.locator('.sobresApertura[data-fase="sellado"]').waitFor();assert.deepEqual(await pagina.evaluate(()=>CAOZ_COLECCION.pendiente()),pendiente,'Cerrar y regresar conserva cartas y grupo');
       await pagina.locator('.sobresAccion').click();await pagina.locator('.sobresApertura[data-fase="pila"]').waitFor();
@@ -88,8 +89,14 @@ try{
       await pagina.locator('.sobresAccion').click();await pagina.locator('.sobresApertura[data-fase="terminado"]').waitFor();
       await pagina.locator('.sobresAccion').click();await pagina.locator('.coleccionGrupo').first().waitFor({state:'attached'});
       assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.sobres()),0);assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.pendiente()),null);
+      await pagina.goto(urlPara({vista,estado:'sobres',pestana:'sobres'}));
+      await pagina.locator('#coleccionPanel[data-vista="sobres"]').waitFor();
+      assert.equal(await pagina.locator('.coleccionGrupo').count(),3,'El enlace de revisión abre directamente las tres colecciones');
+      assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.sobres()),2,'Los sobres de la revisión sólo existen en memoria');
+      await dentro(pagina,'.coleccionAbrirSobre');
+      if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-tres-colecciones.png')});
       assert.deepEqual(errores,[]);
       console.log('✓ '+vista+' '+width+'×'+height+': canjes encadenados, desbloqueo permanente, marcadores, grupos, contenido, mezcla y apertura recuperable');
     }finally{await contexto.close();}
   }
-}finally{await navegador?.close();await new Promise(resolve=>servidor.close(resolve));}
+}finally{await navegador?.close();if(servidor)await new Promise(resolve=>servidor.close(resolve));}

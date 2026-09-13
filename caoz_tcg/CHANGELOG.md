@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### En revisión aislada · Tres colecciones para sobres · 2026-09-12
+
+- Las seis opciones se reúnen en Trucos del Domo (48 cartas), Juramentos del
+  Domo (46) y Caos y Dragones (48), con tres botones completos. Cubren las 134
+  cartas actuales; las afinidades y las cartas compartidas se conservan.
+- Los sobres anteriores conservan sus cartas aunque pertenezcan a uno de los
+  seis grupos retirados. No cambian recompensas, mezcla de acabados ni canjes.
+- Revisión de la sección únicamente: beta253 y producción250 permanecen vigentes.
+
 ### v22 · build 253 · Sobres por victorias y mejora de cartas · 2026-09-12
 
 - Completar una campaña concede tres sobres; ganar una partida normal contra

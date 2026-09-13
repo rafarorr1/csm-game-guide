@@ -29,27 +29,29 @@
     const protagonistas=typeof LEADERS!=='undefined'&&objeto(LEADERS)?Object.keys(LEADERS).filter(idSeguro).map(id=>'lider_'+id):[];
     return [...new Set(cartas.concat(protagonistas).filter(idSeguro))];
   }
-  // Listas estables: 134 cartas alcanzables, 24 por grupo, diez compartidas.
-  // La afinidad sirve para coleccionar; no cambia la pertenencia a los mazos.
+  // Tres colecciones: Mohamed/Fender, Adreida/Rafaela y Gero/Talesyn.
+  // Conservan las afinidades y las 134 cartas; deduplicar evita dar más
+  // probabilidad a una carta presente en ambas colecciones anteriores.
   const gruposBase=[
-    ['mohamed','Secretos de Mohamed','lider_mohamed conserje machete brickbrock trol lucy magodomo ilusion tok_ilusion mensaje sangrefria acertijo disipar peaje notario sombrero jabon llavemago pergamino puente bolafuego nubedagas disfrazarse copiajabon'],
-    ['fender','Gira de Fender','lider_fender petunia bartolomeo eric cantaberna burla balada zancada pasoatronador tasha mazo antro escarcha calentarmetal palabracuracion luzhadas puas gatobachatero humobob afterparty propaganda minus rantiago bob'],
-    ['adreida','Guardia de Adreida','lider_adreida augusto lucius ninolanza talia aldrick horton modificar auxilio armadura saeta destello colapso collar tomsage armamagica ballesta lifestealer esporashorton espadaboveda ladrillos fetichemino brazosagua lanzallave'],
-    ['gero','Caos de Gero','lider_gero rey aidman juangabriel brujula rulchetebajo ciclope can spiderman hermanotrol rambo coyote correcaminos editorcosecha editorcorte editorcuadro editorcarrera editororbita editorduelo tok_goblincamino ipadkid lentesmachete eclipse viajehongos'],
-    ['rafaela','Fe de Rafaela','lider_rafaela julia adolfo titaus matildus discipulo tok_petunia rulchete leche bendicion manosardientes ceguera espiritus taumaturgia arco tok_rulchete campanafe lecheslact espadaluz lutorafaela petunia juangabriel saeta collar'],
-    ['talesin','Ascensión de Talesyn','lider_talesin edbor tal tok_poseido tok_dragon cuerda hongos alientoacido rayoabrasador proyectil contrahechizo gemaconserje esporas talcadaver puntosrobados montanas domo lanzallamas conserje eric rantiago horton pergamino llavemago'],
+    ['trucos','Trucos del Domo','lider_mohamed conserje machete brickbrock trol lucy magodomo ilusion tok_ilusion mensaje sangrefria acertijo disipar peaje notario sombrero jabon llavemago pergamino puente bolafuego nubedagas disfrazarse copiajabon lider_fender petunia bartolomeo eric cantaberna burla balada zancada pasoatronador tasha mazo antro escarcha calentarmetal palabracuracion luzhadas puas gatobachatero humobob afterparty propaganda minus rantiago bob'],
+    ['juramentos','Juramentos del Domo','lider_adreida augusto lucius ninolanza talia aldrick horton modificar auxilio armadura saeta destello colapso collar tomsage armamagica ballesta lifestealer esporashorton espadaboveda ladrillos fetichemino brazosagua lanzallave lider_rafaela julia adolfo titaus matildus discipulo tok_petunia rulchete leche bendicion manosardientes ceguera espiritus taumaturgia arco tok_rulchete campanafe lecheslact espadaluz lutorafaela petunia juangabriel'],
+    ['caos','Caos y Dragones','lider_gero rey aidman juangabriel brujula rulchetebajo ciclope can spiderman hermanotrol rambo coyote correcaminos editorcosecha editorcorte editorcuadro editorcarrera editororbita editorduelo tok_goblincamino ipadkid lentesmachete eclipse viajehongos lider_talesin edbor tal tok_poseido tok_dragon cuerda hongos alientoacido rayoabrasador proyectil contrahechizo gemaconserje esporas talcadaver puntosrobados montanas domo lanzallamas conserje eric rantiago horton pergamino llavemago'],
   ];
   function grupos(){
     const catalogo=ids(),conocidos=new Set(catalogo),cubiertos=new Set();
     const lista=gruposBase.map(([id,nombre,texto])=>{
-      const cartas=texto.split(' ').filter(c=>conocidos.has(c));
+      const cartas=[...new Set(texto.split(' '))].filter(c=>conocidos.has(c));
       cartas.forEach(c=>cubiertos.add(c));
       return {id,nombre,ids:cartas};
-    }).filter(g=>g.ids.length);
-    // Una carta futura no queda inaccesible si todavía no tiene grupo curado.
+    });
+    // Las cartas futuras siguen alcanzables sin crear una cuarta colección.
+    // Orden por ID y desempate por orden de grupos: mismo catálogo, mismo reparto.
     const extras=catalogo.filter(id=>!cubiertos.has(id)).sort();
-    for(let i=0;i<extras.length;i+=24)lista.push({id:'archivo_'+(i/24+1),nombre:'Archivo del Domo '+(i/24+1),ids:extras.slice(i,i+24)});
-    return lista;
+    for(const id of extras){
+      const menor=lista.reduce((a,b)=>a.ids.length<=b.ids.length?a:b);
+      menor.ids.push(id);
+    }
+    return lista.filter(g=>g.ids.length);
   }
   function betaDisponible(){
     const host=String(location.hostname||'').toLowerCase();

@@ -21,9 +21,10 @@ sobres y canjear copias. Las Normales iniciales están disponibles siempre.
 Ganar una partida contra el Domo entrega un sobre y completar una campaña
 entrega tres; sus encuentros intermedios no entregan sobres adicionales.
 
-Cada sobre permite elegir una colección temática de 24 cartas. Contiene
+Cada sobre permite elegir una de tres colecciones temáticas. Contiene
 cinco cartas distintas de ese grupo: tres Normales, una Foil y una quinta
-con 50% de probabilidad de cada acabado. Las seis colecciones cubren el
+con 50% de probabilidad de cada acabado. Trucos del Domo (48 cartas), Juramentos
+del Domo (46) y Caos y Dragones (48) cubren el
 catálogo completo; el contenido se puede consultar antes de abrir.
 
 Cinco copias Normales obtenidas de la misma carta se canjean por una Foil;

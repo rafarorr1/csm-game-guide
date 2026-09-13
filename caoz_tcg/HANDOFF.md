@@ -10,6 +10,28 @@ números) → el código.
 
 ---
 
+## Revisión aislada — tres colecciones para sobres
+
+Rama `feature/sobres-tres-colecciones`, desde `develop`/beta253. Se reducen
+las seis colecciones a tres uniendo los pares anteriores: Trucos del Domo
+(Mohamed y Fender, 48 cartas), Juramentos del Domo (Adreida y Rafaela, 46)
+y Caos y Dragones (Gero y Talesyn, 48). Cubren los 134 IDs, con ocho
+apariciones compartidas entre grupos y sin repetidos dentro del mismo grupo.
+No cambian los mazos, recompensas, canjes, probabilidades de acabado ni
+resultados de sobres pendientes. Las cartas futuras se incorporan al grupo
+menos numeroso de forma determinista, sin crear una cuarta colección.
+
+Se presentan tres botones apilados; las pantallas bajas conservan el selector
+compacto. `pestana=sobres` en el laboratorio y su entrada pública dirige a la
+elección con dos sobres temporales (`estado=sobres`). La prueba de exportación
+se actualizó al contenido mixto aprobado en beta253; antes aún esperaba cinco
+Foil. Sólo se valida y publica esta sección para revisión. La beta sigue en
+253 y producción en 250; la integración posterior necesitará una build nueva.
+Validación acotada: 38 pruebas del modelo y siete sabotajes; 13 comprobaciones
+del entorno aislado y exportación en verde. Canjes, contenido del grupo,
+apertura recuperable de cinco cartas y entrada directa a Sobres pasaron en
+1440×900, 390×844 y 320×568. No se ejecutó la batería del juego completo.
+
 ## Beta 253 — recompensas y canjes publicados y verificados
 
 Rama `feature/recompensas-canjes-sobres`, desde `develop`/252. El usuario
