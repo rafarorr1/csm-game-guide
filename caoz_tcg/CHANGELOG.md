@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 258 · Ediciones bloqueadas desenfocadas · 2026-09-13
+
+- La Colección deja entrever con desenfoque las ediciones Foil y Dorada que el
+  jugador todavía no ha conseguido, en móvil y escritorio. Las etiquetas y
+  acciones externas a la carta permanecen legibles.
+- El acabado se muestra nítido al desbloquearse y sigue así aunque se gasten
+  todas sus copias en un canje. Se respeta el desbloqueo permanente existente.
+- Revisión aislada aprobada para integrar y publicar en beta. Sólo cambia la
+  presentación de las ediciones bloqueadas; combate y apertura conservan sus cartas.
+
 ### Sin numerar · build 257 · Correo compatible con Cloudflare · 2026-09-13
 
 - La solicitud de código llegaba a D1, pero Cloudflare lanzaba un error antes de

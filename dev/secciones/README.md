@@ -65,6 +65,14 @@ Debajo de cada carta sólo aparecen los marcadores de las ediciones que posee
 el jugador, sin contador ni texto. Las ediciones bloqueadas no se dibujan;
 la equipada queda resaltada. Desbloquear una edición añade su marcador,
 pero recibir otra copia de la misma no añade otro.
+Las ediciones aún bloqueadas se ven desenfocadas en el detalle, tanto en las
+columnas de escritorio como al cambiar de pestaña en móvil. El nombre y las
+acciones siguen legibles. Se usa el desbloqueo permanente del inventario: una
+edición conseguida conserva su imagen nítida aunque se gasten sus copias en un
+canje. La disponibilidad de ilustraciones en el estudio no la desbloquea.
+Revisión directa: `/coleccion/?estado=nuevo&carta=tal` (Normal propia, Foil y
+Dorada pendientes). Revisión aprobada para beta 258; producción conserva build 257.
+
 El detalle muestra la cantidad de cada edición por separado, incluida `0 copias`
 para una edición bloqueada. La ilustración del listado corresponde al acabado
 elegido; mirar otra versión en el detalle no la equipa. «Usar» cambia esa elección
