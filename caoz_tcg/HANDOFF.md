@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 253 (rama develop) · producción 250 (rama main) · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 254 · producción 254 · propuesta de cuentas en rama aislada · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,37 @@ números) → el código.
 
 ---
 
-## Promoción autorizada — build 254 en validación
+## Trabajo vigente — cuenta por correo y código, sin integrar
+
+El usuario pidió cuentas para conservar el progreso y eligió **correo + código
+de acceso**. Rama `feature/cuentas-jugadores`, desde `develop:8e3af1b` / build254.
+La primera entrega sigue su preferencia de revisar una sección pública aislada
+antes de integrar y ejecutar las guardas del juego. No se cambia la build ni se
+carga ningún componente nuevo en `index.html` o `movil.html`.
+
+`cuenta-modelo.js`, `cuenta-ui.js` y `cuenta.css` son componentes reutilizables.
+El laboratorio de `dev/secciones/cuenta*` inyecta un servicio sólo de memoria:
+registro, seis dígitos, reenvío/caducidad, invitado, perfil, vínculo y elección
+entre avances distintos. El código aparece en un buzón de prueba. No se envían
+correos, no se crean usuarios reales y no se toca el almacenamiento del jugador.
+La vista incluye un banner permanente que explica esa limitación.
+
+El modelo conserva el snapshot completo, realiza respaldos antes de sustituir
+el activo y reutiliza el ID de operación al reintentar una respuesta perdida.
+No suma inventarios ni confunde el resumen de la interfaz con el progreso que
+debe guardarse. Hay 21 pruebas del modelo y comprobaciones de exportación y
+aislamiento. Los recorridos de navegador se revisaron a1420×900,390×844 y320×568.
+Se corrigió la pérdida de foco de las pestañas al usar flechas consecutivas.
+Los detalles del contrato, claves locales y backend pendiente están en
+`../dev/secciones/CUENTAS.md`. No reutilizar el acceso administrativo de estudios
+para jugadores; correo real, servidor de cuentas y migración siguen pendientes.
+
+La producción254 ya fue publicada antes de esta tarea: `main:504e5ff`,
+`gh-pages:8bf63ca`, `beta:bc94d29`. Las secciones anteriores de este documento
+son registros históricos y pueden describir estados previos de validación.
+El PR13 de cierre documental sigue separado; esta tarea no autoriza su merge.
+
+## Registro anterior — promoción del build 254
 
 El usuario aprobó la sección y pidió publicar todos los cambios en producción.
 Se prepara254 desde `feature/sobres-tres-colecciones`, integrando la revisión
