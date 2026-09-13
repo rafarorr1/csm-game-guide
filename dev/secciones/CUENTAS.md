@@ -1,5 +1,11 @@
 # Cuentas de jugadores — propuesta aislada
 
+**Registro histórico:** esta propuesta fue aprobada el 2026-09-13. La integración
+de build 255 está en preparación; su servidor, configuración y estado de conexión
+vigentes se documentan en [`../cuentas/README.md`](../cuentas/README.md) y
+`caoz_tcg/HANDOFF.md`. El resto de este documento describe la revisión aislada
+anterior; sus limitaciones y pendientes no sustituyen el estado actual.
+
 El usuario eligió **correo y código de acceso**. Esta primera revisión se
 desarrolla en `feature/cuentas-jugadores`, desde `develop` / build 254.
 Sigue el flujo acordado: sección aislada → revisión → integración en beta →

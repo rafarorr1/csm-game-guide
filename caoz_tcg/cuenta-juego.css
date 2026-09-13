@@ -1,0 +1,13 @@
+/* Diálogo en coordenadas del visor: el zoom del tablero no escala la cuenta. */
+.cuentaJuego{position:fixed;inset:0;box-sizing:border-box;margin:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;border:0;background:transparent;color:#f4e5c7;overflow:hidden;overscroll-behavior:none}
+.cuentaJuego::backdrop{background:#09050ee8;backdrop-filter:blur(7px)}
+.cuentaJuego[open]{display:flex;align-items:center;justify-content:center}
+.cuentaJuegoRaiz{box-sizing:border-box;width:100%;height:100%;min-width:0;min-height:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));isolation:isolate}
+.cuentaJuego .barridoModal{position:fixed;inset:0;z-index:2;pointer-events:none}
+.cuentaJuego .cuentaUI{zoom:1;transform:none}
+.cuentaUI .cuentaDatos{font-size:11px;color:#ad9db9}
+#extras #mCuenta{overflow-wrap:anywhere}
+#extras #mCuenta[data-guardado=pendiente],#extras #mCuenta[data-guardado=sinConexion]{border-color:#c59a53}
+@media(max-height:650px){#extras{gap:8px;padding:16px}#extras h2{font-size:29px}.extrasOpciones{gap:8px;margin:3px 0}.extrasOpciones .btn{min-height:48px;padding:9px}#extras #mBorrarProgreso{margin-top:0}}
+
+.cuentaBloqueada{text-align:center}.cuentaBloqueada .cuentaDescripcion{margin-block:12px 20px}

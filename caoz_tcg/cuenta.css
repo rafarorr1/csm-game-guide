@@ -19,3 +19,22 @@
 .cuentaAnfitrion>.cuentaUI{max-height:100%}.cuentaUI .cuentaEntrada:read-only{opacity:.6}
 .cuentaUI .cuentaBoton.cuentaPestana{min-height:44px;padding:8px 10px;border:1px solid transparent;border-radius:7px;background:none;box-shadow:none;color:#baadc7;font-size:16px;font-weight:500;letter-spacing:0;translate:none;filter:none}.cuentaUI .cuentaBoton.cuentaPestana[aria-selected=true]{background:linear-gradient(#5b402a,#35251b);border-color:#b493605e;box-shadow:inset 0 1px #e4c68e26,0 2px 5px #0005;color:#f1d8a8}.cuentaUI .cuentaBoton.cuentaPestana:not(:disabled):hover{border-color:#b493605e;translate:none;filter:brightness(1.12)}
 .cuentaUI .cuentaDescripcion{margin-inline:auto}.cuentaUI .cuentaContenido{scrollbar-gutter:stable both-edges}
+
+/* Los campos y la acción principal quedan a la vista en teléfonos pequeños;
+   al abrir el teclado el contenido mantiene su desplazamiento accesible. */
+@media(max-width:520px) and (max-height:650px){
+ .cuentaUI[data-pantalla=inicio]{gap:10px;padding:18px 15px 14px}
+ .cuentaUI[data-pantalla=inicio] .cuentaEmblema,.cuentaUI[data-pantalla=inicio] .cuentaAntetitulo{display:none}
+ .cuentaUI[data-pantalla=inicio] .cuentaCabecera{padding-inline:24px}
+ .cuentaUI[data-pantalla=inicio] .cuentaTitulo{font-size:24px}
+ .cuentaUI[data-pantalla=inicio] .cuentaDescripcion{font-size:11px;line-height:1.4;margin-top:6px}
+ .cuentaUI[data-pantalla=inicio] .cuentaFormulario{gap:8px}
+ .cuentaUI[data-pantalla=inicio] .cuentaCampo{gap:5px}
+ .cuentaUI[data-pantalla=inicio] .cuentaEntrada{min-height:44px;padding:9px 11px}
+ .cuentaUI[data-pantalla=inicio] .cuentaEtiqueta{font-size:12px}
+ .cuentaUI[data-pantalla=inicio] .cuentaPestana{font-size:13px!important;white-space:nowrap;padding-inline:5px!important}
+ .cuentaUI[data-pantalla=inicio] .cuentaAyuda{font-size:10px;line-height:1.35}
+ .cuentaUI[data-pantalla=inicio] .cuentaBoton{font-size:15px;min-height:44px;padding-block:9px}
+ .cuentaUI[data-pantalla=inicio] .cuentaContenido{gap:10px}
+ .cuentaUI[data-pantalla=inicio] .cuentaAcciones{gap:7px}
+}

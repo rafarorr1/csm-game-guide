@@ -1,5 +1,22 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 255 en preparación · Cuentas y progreso guardado · 2026-09-13
+
+- Propuesta aislada aprobada y publicación autorizada: Extras → Mi cuenta,
+  registro y acceso con correo/código, perfil y modo invitado en ambas pantallas.
+- Captura conjunta de campaña, miniatura, sellos, colección, sobres, recibos y
+  récords; vinculación con respaldo y elección de progreso cuando existen dos
+  copias. Las cartas de un sobre ya abierto no se vuelven a sortear ni premiar.
+- Cola local persistente y guardado por revisión/operación; reintentar un acuse
+  perdido no duplica inventario. Corregidos el alias móvil que podía reponer
+  cartas gastadas y la copia de una cuenta que quedaba al iniciar otra.
+- Sesiones privadas, códigos caducables, límites de intentos/envíos y base D1
+  independiente por entorno. La API no se cachea y no guarda textos de deseos.
+  El juego como invitado sigue disponible sin servicio de cuentas.
+- Servidor y correo preparados; bases migradas, conexión Pages y DNS de correo
+  pendientes. Validación completa iniciada. **255 aún no publicada: beta y
+  producción continúan en 254.** Esta entrada no acredita correo real operativo.
+
 ### v22 · build 254 · Premios elegibles y biblioteca de sobres · 2026-09-12
 
 - Revisión aislada aprobada: elegir un sobre al ganar contra el Domo y tres al

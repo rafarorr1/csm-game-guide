@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 254 · producción 254 · propuesta de cuentas en rama aislada · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-13 · beta 254 · producción 254 · build 255 en preparación, sin publicar · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,55 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — cuenta por correo y código, sin integrar
+## Trabajo vigente — build 255: cuentas aprobadas, infraestructura pendiente
+
+El usuario aprobó la propuesta aislada de cuentas y pidió aplicarla a producción.
+El trabajo continúa en `feature/cuentas-jugadores`, desde build 254. La autorización
+de integración y publicación ya existe; no volver a solicitarla para el mismo
+paquete. Build 255 está sincronizada en las dos pantallas y la PWA, pero **todavía
+no se ha publicado**. `main`, beta y producción conservan la versión 254.
+
+Extras → Mi cuenta usa correo y código de seis dígitos, con posibilidad de seguir
+como invitado. El componente se monta fuera del lienzo escalado. El adaptador
+reúne campaña, miniatura, sellos, colección, recibos de premios, récords y nombre
+online; conserva los sobres abiertos exactamente como fueron sorteados. Hay
+cola de autoguardado con acuse, respaldo previo, revisión por servidor y elección
+explícita entre avances distintos. Las API de sesión quedan fuera de la caché PWA.
+
+El servidor real está implementado en `cuenta-servidor.js`, con OTP limitado,
+cookie privada revocable, transacciones D1 e idempotencia; `cuenta-correo.js`
+envía por Resend cuando está configurado. La API falla cerrada si faltan sus
+enlaces o secretos. Nunca usa `cuenta-demo.js`, la clave administrativa ni `SFX_DB`.
+Los textos `campana.deseo` y `campana.borradorDeseo` siguen locales y se excluyen
+de las copias remotas. Guardar progreso no constituye validación antitrampa de
+victorias, inventario o canjes. Contrato, límites y retención en `../dev/cuentas/README.md`.
+
+Infraestructura verificada hasta este punto: dos bases D1 privadas, beta y
+producción, con las seis tablas de `dev/cuentas/migracion.sql` aplicadas y
+comprobadas. **Los enlaces de Pages y variables/secretos todavía están pendientes**.
+Resend está registrado y se dio de alta `cuentas.caozcontodo.com`; su DNS sigue
+pendiente. No se crearon ni incorporaron claves API/secretos en el repositorio.
+La configuración en el navegador y el envío real de prueba esperan confirmación
+puntual del usuario. GoDaddy ya está abierto con sesión; los tres registros del
+subdominio están preparados en el formulario y todavía no se han guardado.
+No confundir la creación de las bases o del dominio con un correo operativo.
+
+La revisión encontró y corrigió el inventario antiguo de `/movil` después de
+un canje, la copia local de una cuenta que permanecía al entrar en otra y el
+reintento de cerrar sesión si falla el almacenamiento después de revocarla.
+Se añadió vinculación de intención a la cookie mediante `X-Caoz-Cuenta`, guardas
+del propietario del progreso y del diario entre pestañas, y regresiones con
+sabotaje. Se verificaron 23 casos del servidor SQLite y cinco sabotajes, además
+de las pruebas acotadas de progreso, sincronización, correo y modelo.
+
+Se inició `publicar.sh --solo-pruebas --completo`: las guardas previas de
+publicación, cuentas, caché y colección pasaron; el arnés completo en Chrome
+seguía en ejecución al registrar este estado. No darlo por aprobado hasta leer
+su resultado. Faltan comprobar el servicio conectado, el flujo de correo real
+autorizado, la versión beta servida y finalmente producción byte a byte mediante
+el publicador existente. El PR 13 documental previo permanece separado.
+
+## Registro de la propuesta aislada — aprobada el 2026-09-13
 
 El usuario pidió cuentas para conservar el progreso y eligió **correo + código
 de acceso**. Rama `feature/cuentas-jugadores`, desde `develop:8e3af1b` / build254.
@@ -48,8 +96,8 @@ El Rey y Sobres y las cabeceras compartidas siguen idénticos. `main`, `develop`
 `beta` y `gh-pages` conservaron sus referencias. El publicador tiene22 casos
 verdes; la regresión de foco de pestañas pasa con el arreglo y falla sin él.
 La URL pública pasó51/51 comprobaciones,17 por cada tamaño, sin errores
-JavaScript, peticiones fallidas ni accesos al progreso real. La entrega queda
-lista para revisión del usuario; no integrar a beta hasta que apruebe el flujo.
+JavaScript, peticiones fallidas ni accesos al progreso real. Esta fase fue
+aprobada posteriormente; la integración vigente se describe al principio.
 
 ## Registro anterior — promoción del build 254
 

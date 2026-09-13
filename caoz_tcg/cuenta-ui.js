@@ -12,7 +12,7 @@
     for(const d of ['M9 12c6-2 10-1 15 3 5-4 9-5 15-3v23c-6-2-10-1-15 3-5-4-9-5-15-3Z','M24 15v23M14 19l5 2M14 25l5 2M29 21l5-2M29 27l5-2','M24 3v5M21.5 5.5h5']){const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',d);svg.appendChild(p);}
     n.appendChild(svg);return n;
   }
-  function montar({raiz,modelo,onSalir}={}){
+  function montar({raiz,modelo,onSalir,onGuardar}={}){
     if(!raiz||typeof raiz.appendChild!=='function'||!modelo||typeof modelo.ver!=='function'||typeof modelo.suscribir!=='function')throw Error('La cuenta necesita un contenedor y un modelo.');
     const prefijo='cuenta-'+(++montajes)+'-',anterior=document.activeElement,teniaClase=raiz.classList.contains('cuentaAnfitrion');
     const altoAnterior=raiz.style.getPropertyValue('--cuenta-alto-disponible');raiz.classList.add('cuentaAnfitrion');
@@ -59,12 +59,12 @@
     function resumen(datos,etiqueta){
       const r=nodo('article','cuentaResumen');r.appendChild(nodo('p','cuentaResumenEtiqueta',etiqueta));
       r.appendChild(nodo('h2','cuentaPersonaje',texto(datos?.personaje)||'Tu aventura'));
-      r.appendChild(nodo('p','cuentaMazo',datos?.mazo?'Mazo de '+texto(datos.mazo):'Tu colección te espera'));
+      r.appendChild(nodo('p','cuentaMazo',datos?.mazo&&datos.mazo!=='Sin elegir'?'Mazo de '+texto(datos.mazo):'Mazo por elegir'));
       const dl=nodo('dl','cuentaCifras');
       for(const [nombre,valor]of [['Rivales',numero(datos?.rivales)+' / '+(numero(datos?.etapas)||6)],['Foil',numero(datos?.foils)],['Doradas',numero(datos?.doradas)],['Sobres',numero(datos?.sobres)]]){
         const c=nodo('div');c.append(nodo('dt','',nombre),nodo('dd','',String(valor)));dl.appendChild(c);
       }
-      r.append(dl,nodo('p','cuentaFecha',fecha(datos?.fecha)));return r;
+      r.appendChild(dl);if(datos?.fecha)r.appendChild(nodo('p','cuentaFecha',fecha(datos.fecha)));return r;
     }
     function acciones(...botones){const d=nodo('div','cuentaAcciones');d.append(...botones.filter(Boolean));return d;}
     function regresar(){return typeof onSalir==='function'?boton('Volver al juego',onSalir,'cuentaBotonSecundario','volver'):null;}
@@ -81,6 +81,7 @@
       if(activa==='crear')f.appendChild(campo({etiqueta:'Nombre del jugador',nombre:'nombre',autocomplete:'nickname',maximo:40,minimo:2}).l);
       const correo=campo({etiqueta:'Correo electrónico',nombre:'correo',tipo:'email',autocomplete:'email',maximo:254});correo.i.inputMode='email';correo.i.autocapitalize='none';correo.i.placeholder='tu@correo.com';f.appendChild(correo.l);
       f.appendChild(nodo('p','cuentaAyuda','Te enviaremos un código de acceso. No necesitas contraseña.'));
+      f.appendChild(nodo('p','cuentaAyuda cuentaDatos','Tu cuenta guarda tu correo, tu nombre de jugador y tu progreso: campaña, colección, sobres y récords.'));
       const enviar=boton(estado.ocupado?'Preparando tu código…':'Enviar código',()=>{},'','enviar');enviar.type='submit';enviar.onclick=null;
       f.onsubmit=e=>{e.preventDefault();if(f.reportValidity())void accion(()=>modelo.solicitar({correo:borrador.correo.trim(),nombre:activa==='crear'?borrador.nombre.trim():'',intencion:activa}));};
       f.appendChild(acciones(enviar,boton('Seguir sin cuenta',()=>modelo.invitado(),'cuentaBotonSecundario','invitado')));contenido.append(tabs,f);
@@ -100,6 +101,10 @@
     function pantallaVincular(){
       titulo.textContent='Tu historia, a salvo';descripcion.textContent='Encontramos progreso en este dispositivo. Guárdalo en tu cuenta para llevarlo contigo.';
       contenido.append(resumen(estado.local,'EN ESTE DISPOSITIVO'),nodo('p','cuentaAyuda','Tus cartas, sobres y avance de campaña se conservarán juntos.'),acciones(boton(estado.ocupado?'Guardando tu aventura…':'Guardar mi progreso',()=>modelo.resolverProgreso('local'),'','vincular'),regresar()));
+    }
+    function pantallaRecuperar(){
+      titulo.textContent='Tu aventura te espera';descripcion.textContent='Encontramos tu progreso en la cuenta. Recupéralo para continuar en este dispositivo.';
+      contenido.append(resumen(estado.nube,'EN TU CUENTA'),acciones(boton(estado.ocupado?'Recuperando…':'Recuperar mi progreso',()=>modelo.resolverProgreso('nube'),'','recuperar'),regresar()));
     }
     function pantallaConflicto(){
       titulo.textContent='Elige la historia que continúa';descripcion.textContent='Hay un progreso diferente en cada lugar. Elige cuál quieres usar; conservaremos una copia del otro.';
@@ -129,7 +134,7 @@
       estadoGuardado.append(nodo('span','cuentaLuz'),nodo('span','',tipo==='sinConexion'?'Sin conexión':tipo==='pendiente'?'Cambios por guardar':'Guardado en tu cuenta'));contenido.appendChild(estadoGuardado);
       contenido.appendChild(resumen(estado.local||estado.nube,'TU PROGRESO'));
       if(tipo!=='guardado')contenido.appendChild(nodo('p','cuentaAyuda',tipo==='sinConexion'?'Puedes seguir jugando. Los cambios de este dispositivo se guardarán en tu cuenta al volver la conexión.':'Tu progreso sigue en este dispositivo mientras termina de guardarse en tu cuenta.'));
-      contenido.appendChild(acciones(regresar(),boton('Cerrar sesión',()=>modelo.cerrarSesion(),'cuentaEnlace','cerrar-sesion')));
+      contenido.appendChild(acciones(tipo!=='guardado'&&typeof onGuardar==='function'?boton('Guardar ahora',onGuardar,'','guardar'):null,regresar(),boton('Cerrar sesión',()=>modelo.cerrarSesion(),'cuentaEnlace','cerrar-sesion')));
     }
     function pantallaInvitado(){
       titulo.textContent='La aventura sigue';descripcion.textContent='Puedes jugar sin cuenta. Tu progreso se guarda en este dispositivo.';
@@ -155,7 +160,7 @@
       const idCodigo=texto(estado.correo)+':'+String(estado.desafio?.vence||'');if(pantalla==='codigo'&&idCodigo!==ultimoCodigo){borrador.codigo='';ultimoCodigo=idCodigo;}
       panel.dataset.pantalla=pantalla;panel.dataset.ocupado=String(!!estado.ocupado);panel.setAttribute('aria-busy',String(!!estado.ocupado));descripcion.classList.remove('cuentaCorreoDestino');
       const desplazamiento=contenido.scrollTop;contenido.replaceChildren();
-      const vistas={inicio:pantallaInicio,codigo:pantallaCodigo,vincular:pantallaVincular,conflicto:pantallaConflicto,perfil:pantallaPerfil,invitado:pantallaInvitado};
+      const vistas={inicio:pantallaInicio,codigo:pantallaCodigo,vincular:pantallaVincular,recuperar:pantallaRecuperar,conflicto:pantallaConflicto,perfil:pantallaPerfil,invitado:pantallaInvitado};
       (vistas[pantalla]||pantallaInicio)();pintarMensajes();panel.querySelector('.cuentaCerrar')?.toggleAttribute('disabled',!!estado.ocupado);
       if(!cambio&&enfoquePendiente){const destino=panel.querySelector('[data-foco="'+enfoquePendiente+'"]');if(destino&&!destino.disabled){destino.focus({preventScroll:true});if(seleccionPendiente&&destino.setSelectionRange)try{destino.setSelectionRange(...seleccionPendiente);}catch(_){}}contenido.scrollTop=desplazamiento;}
       else if(cambio){
