@@ -151,13 +151,13 @@
   },
   "componentes": {
     "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
-    "coleccion-modelo.js": "d1707d34f52264d02ff519a7df9696beee538121b820b64bd4e7c415482787ba",
+    "coleccion-modelo.js": "70188298bef3c189c8b9f5c5c339bc45ff3f6074d2577f49e7c3c90e02e060a4",
     "arte-remoto.js": "b90f5defcd9e8e9e5b06effe367b89c2be37d73384be6d87c2add3494e415423",
-    "coleccion-ui.js": "cff6b10d05f68d818b9289d96447238f08f7dcea574424ecb2f43d54e785a193",
-    "sobres-escena.js": "d6379afcc6553c2c64f11397bb41d206608c0d5cc107274587bd94e25f797aa9",
-    "sobres-apertura.js": "ad2579c1cd1a5a77883d019115913f6ec6050f600f13e07fbb9d398dc0582d33",
-    "sobres-apertura.css": "d04c4a81614042b7d1a1ec0c23b5baea87a509d2fd36878343a80eb72737a436",
-    "coleccion.css": "aefa94f5d5fe68264dce7742e8b466bc56169a2de707c53d2558c23d10386dad",
+    "coleccion-ui.js": "b319f4e6eb09379211cb6c0051291a6d79e320779efb2baf0b19eaa669906089",
+    "sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
+    "sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
+    "sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
+    "coleccion.css": "2493772c947520ed7fa585bbf1794ef06dd4bdb7ae7e59c23918ff2cf5582397",
     "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
   },
   "arte": {

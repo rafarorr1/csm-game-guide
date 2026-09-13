@@ -4,14 +4,16 @@
 (function(){
   const ACABADOS=['normal','foil','dorado'];
   const NOMBRES={normal:'Normal',foil:'Foil',dorado:'Dorada'};
+  const vistasSobres=new Set();
+  const COLORES_SOBRES={trucos:'#3b82c4',juramentos:'#298a69',caos:'#b34152'};
   const $=s=>document.querySelector(s);
   const crear=(tag,clase,texto)=>{const n=document.createElement(tag);if(clase)n.className=clase;if(texto!=null)n.textContent=texto;return n;};
   const modelo=()=>window.CAOZ_COLECCION;
   const textoCopias=n=>n+' '+(n===1?'copia':'copias');
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null;
-  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false};
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,conservarFondo=false,alCerrarRecompensa=null;
+  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:l.n,t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,sub:typeof tribeLine==='function'?tribeLine(c):c.t};
@@ -25,7 +27,7 @@
     const b=crear('button','coleccionBoton '+clase,texto);b.type='button';b.addEventListener('click',accion);return b;
   }
   function sonido(id){window.CAOZ_AUDIO?.play(id);}
-  function mensaje(texto,error=false){if(!estado)return;estado.textContent=texto;estado.classList.toggle('error',error);}
+  function mensaje(texto,error=false){if(!estado)return;estado.textContent=texto;estado.classList.toggle('error',error);carruselSobres?.medir();if(s.vista==='recompensa')medirRecompensa();}
   function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);}
   function destruirApertura(){
     const anterior=aperturaSobre;aperturaSobre=null;
@@ -38,7 +40,7 @@
     panel.style.setProperty('--coleccion-alto',alto+'px');panel.style.setProperty('--coleccion-top',(v?v.offsetTop:0)+'px');
     panel.classList.toggle('coleccionBaja',alto<650);panel.classList.toggle('coleccionTeclado',alto<430);
     if(s.vista==='detalle')paginacionReglas();
-    encajarCartas();
+    encajarCartas();carruselSobres?.medir();if(s.vista==='recompensa')medirRecompensa();
   }
   function encajarCartas(){
     if(!panel?.open)return;
@@ -83,25 +85,27 @@
     panel.addEventListener('keydown',e=>{if(e.key==='Escape')e.stopPropagation();});
     document.body.append(panel);
   }
-  function abrir(){
+  function abrir(opciones={}){
     if(!modelo())return;
     crearPanel();if(panel.open)return;
     volverFoco=document.activeElement;origen=document.querySelector('.screen.on');
-    s.vista=modelo().pendiente()?'sobres':'cartas';s.carta=null;
-    if(typeof cerrarOv==='function'&&$('#ov.on'))cerrarOv();
+    conservarFondo=!!opciones.conservarFondo;alCerrarRecompensa=typeof opciones.onCerrar==='function'?opciones.onCerrar:null;
+    s.mostrarPendiente=!!modelo().pendiente();s.vista=s.mostrarPendiente?'sobres':'cartas';s.carta=null;
+    if(!conservarFondo&&typeof cerrarOv==='function'&&$('#ov.on'))cerrarOv();
     panel.showModal();
     panel.querySelector('.coleccionVolver').textContent=origen?.id==='extras'?'Volver a Extras':'Volver';
     window.addEventListener('resize',medida);window.visualViewport?.addEventListener('resize',medida);window.visualViewport?.addEventListener('scroll',medida);
     window.addEventListener('caoz:coleccion',cambio);window.addEventListener('caoz:arte',arteActualizado);window.addEventListener('caoz:coleccion-error',falloGuardado);
     medida();dibujar();
-    observador=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(medida);});observador.observe(panel);
+    observador=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(medida);});observador.observe(panel);observador.observe(contenido);
     if(typeof animarTransicionMenu==='function')animarTransicionMenu(panel.querySelector('.coleccionInterior'),panel);
     panel.querySelector('.coleccionCerrar').focus({preventScroll:true});
   }
   function limpiar(evento){
     // close se encola: no desmontar una Colección que ya se volvió a abrir.
     if(evento?.type==='close'&&panel?.open)return;
-    destruirApertura();limpiarTiempos();observador?.disconnect();observador=null;
+    if(evento?.type==='close'){const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();}
+    destruirApertura();destruirCarrusel();destruirVistasSobres();limpiarTiempos();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
     window.removeEventListener('caoz:coleccion',cambio);window.removeEventListener('caoz:arte',arteActualizado);window.removeEventListener('caoz:coleccion-error',falloGuardado);
     // El evento close llega después de comenzar el regreso. Limpiar sólo una
@@ -110,22 +114,23 @@
   }
   function cerrar(){
     if(!panel?.open)return;guardarPosicionLista();limpiar();panel.close();
-    if(origen?.isConnected&&typeof animarTransicionMenu==='function')animarTransicionMenu(origen);
+    if(!conservarFondo&&origen?.isConnected&&typeof animarTransicionMenu==='function')animarTransicionMenu(origen);
     if(volverFoco?.isConnected)volverFoco.focus({preventScroll:true});
+    const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();
   }
   function falloGuardado(){mensaje('No se pudo guardar. Libera espacio en el navegador e inténtalo otra vez.',true);}
-  function cambio(){if(!panel?.open||guardando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else dibujarSobres();}
+  function cambio(){if(!panel?.open||guardando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='recompensa')dibujarRecompensa();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
   function arteActualizado(){if(!panel?.open)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
   function actualizarCabecera(){
     const m=modelo(),ids=m.ids(),premium=ids.reduce((n,id)=>n+(m.tiene(id,'foil')?1:0)+(m.tiene(id,'dorado')?1:0),0);
     panel.querySelector('.coleccionTotales').textContent=ids.length+' normales · '+premium+' ediciones especiales';
     barra.replaceChildren();const cartas=boton('Mis cartas',()=>ir('cartas'),'coleccionPestana'),sobres=boton('Sobres',()=>ir('sobres'),'coleccionPestana'),canje=boton('Canjear',()=>ir('canje'),'coleccionPestana');
     cartas.prepend(icono('libro'));sobres.prepend(icono('sobre'));sobres.append(crear('span','coleccionNumero',m.sobres()));
-    cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',s.vista==='sobres'?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
+    cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
   }
   function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista)s.desplazamiento=contenido.querySelector('.coleccionRejilla')?.scrollTop||0;}
   function ir(vista){guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
-  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){dibujarSobres();return;}destruirApertura();contenido.replaceChildren();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else dibujarCanje();}
+  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){dibujarSobres();return;}destruirApertura();destruirCarrusel();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')dibujarRecompensa();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
     const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
@@ -187,7 +192,7 @@
   }
   function verCarta(id){s.carta=id;s.acabadoVista=modelo().elegido(id);s.regla=0;ir('detalle');sonido('ui_confirm');}
   function dibujarDetalle(){
-    if(!s.carta){ir('cartas');return;}contenido.replaceChildren();panel.dataset.vista='detalle';
+    if(!s.carta){ir('cartas');return;}vaciarContenido();panel.dataset.vista='detalle';
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));
     cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));contenido.append(cab);
     const versiones=crear('div','coleccionVersiones');
@@ -248,42 +253,147 @@
     s.regla=Math.min(s.regla,paginas.length-1);texto.textContent=paginas[s.regla];nav.replaceChildren();
     if(paginas.length>1){const anterior=boton('‹',()=>{s.regla--;paginacionReglas();}),siguiente=boton('›',()=>{s.regla++;paginacionReglas();});anterior.disabled=s.regla===0;siguiente.disabled=s.regla===paginas.length-1;anterior.setAttribute('aria-label','Página anterior de habilidades');siguiente.setAttribute('aria-label','Página siguiente de habilidades');nav.append(anterior,crear('span','',(s.regla+1)+' / '+paginas.length),siguiente);}
   }
+  function destruirVistasSobres(){for(const vista of vistasSobres)vista.destruir();vistasSobres.clear();}
+  function vaciarContenido(){destruirVistasSobres();contenido.replaceChildren();}
+  function destruirCarrusel(){carruselSobres?.destruir();carruselSobres=null;}
+  function colorSobre(nodo,grupo){nodo.dataset.grupo=grupo;nodo.style.setProperty('--sobre-color',COLORES_SOBRES[grupo]||'#947640');}
+  function envoltura(grupo){
+    const sobre=crear('div','coleccionSobre coleccionSobreColor');colorSobre(sobre,grupo.id);sobre.setAttribute('aria-hidden','true');
+    sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreColeccion',grupo.nombre),crear('span','coleccionSobreLeyenda','5 CARTAS'));
+    // La misma textura de la apertura, sin montar una escena 3D por cada sobre.
+    // El papel CSS queda como respaldo si el módulo aún no está disponible.
+    if(window.CAOZ_SOBRES_ESCENA?.previsualizar){
+      const host=crear('div','coleccionSobreReal');sobre.append(host);
+      try{const vista=window.CAOZ_SOBRES_ESCENA.previsualizar(host,{grupo:grupo.id,logoUrl:'art/logo.webp'});if(vista?.destruir){vistasSobres.add(vista);sobre.classList.add('conSobreReal');}else host.remove();}
+      catch(_){host.remove();}
+    }
+    return sobre;
+  }
+  function abrirRecompensaSobres(opciones={}){
+    if(!modelo())return false;const {origen:tipo,referencia,onCerrar}=opciones;
+    const premio=modelo().recompensasPendientes().find(p=>(!tipo||p.origen===tipo)&&(!referencia||p.referencia===referencia));
+    if(!panel?.open)abrir({conservarFondo:true,onCerrar});else{conservarFondo=true;if(typeof onCerrar==='function')alCerrarRecompensa=onCerrar;}
+    if(premio){if(s.recompensaId!==premio.id)s.eleccion=[];s.recompensaId=premio.id;ir('recompensa');}
+    else{s.mostrarPendiente=false;ir('sobres');}
+  }
+  function elegirPendiente(premio){
+    if(!premio)return;if(s.recompensaId!==premio.id)s.eleccion=[];s.recompensaId=premio.id;ir('recompensa');
+  }
+  function verContenidoSobre(id,volver){s.grupoSobre=id;s.volverContenido=volver;ir('contenidoSobre');}
+  function tasasSobre(){
+    const tasas=crear('div','coleccionTasas');tasas.append(crear('strong','','3 Normales + 1 Foil garantizadas'),crear('p','','Quinta carta: 50% Normal · 50% Foil.'),crear('p','','Todas las cartas del grupo tienen la misma probabilidad. Sin cartas iguales en un sobre. Doradas: por canje, no salen en sobres.'));return tasas;
+  }
+  function dibujarContenidoSobre(){
+    destruirCarrusel();destruirApertura();vaciarContenido();panel.dataset.vista='contenidoSobre';
+    const grupo=modelo().grupos().find(g=>g.id===s.grupoSobre);if(!grupo){ir('sobres');return;}
+    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('h3','',grupo.nombre),crear('p','',grupo.ids.length+' cartas posibles'));contenido.append(cab);
+    const lista=crear('div','coleccionContenidoGrupo coleccionContenidoCompleto');lista.id='coleccionContenidoGrupo';lista.setAttribute('role','region');lista.setAttribute('aria-label','Contenido de '+grupo.nombre);lista.tabIndex=0;
+    grupo.ids.forEach(id=>lista.append(crear('span','',dato(id).n)));contenido.append(lista,tasasSobre(),boton('Volver a los sobres',()=>ir(s.volverContenido),'coleccionVolverSobres'));
+  }
+  function medirRecompensa(){
+    const opciones=contenido?.querySelector('.coleccionRecompensaOpciones');if(!opciones)return;
+    const movil=panel.clientWidth<580,bajo=panel.classList.contains('coleccionBaja'),reserva=movil?(bajo?120:145):177;
+    const ancho=Math.max(35,Math.min(170,(opciones.clientWidth-(movil?24:90))/3-18,(opciones.clientHeight-reserva)*.68));
+    opciones.style.setProperty('--premio-ancho',ancho+'px');
+  }
+  function dibujarRecompensa(){
+    destruirCarrusel();destruirApertura();vaciarContenido();panel.dataset.vista='recompensa';
+    const premio=modelo().recompensasPendientes().find(p=>p.id===s.recompensaId);if(!premio){s.eleccion=[];ir('sobres');return;}
+    const cantidad=Math.min(3,premio.cantidad),grupos=modelo().grupos();s.eleccion=s.eleccion.filter(id=>grupos.some(g=>g.id===id)).slice(0,cantidad);
+    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo',premio.origen==='campana'?'CAMPAÑA COMPLETADA':premio.origen==='domo'?'VICTORIA EN EL DOMO':'RECOMPENSA PENDIENTE'),crear('h3','',cantidad===1?'Elige tu sobre':'Elige tus '+cantidad+' sobres'),crear('p','',premio.cantidad>3?'Elige esta tanda de 3. Quedan '+premio.cantidad+' sobres por asignar.':'Puedes repetir colección. Guárdalos y ábrelos cuando quieras.'));contenido.append(cab);
+    const opciones=crear('div','coleccionRecompensaOpciones');opciones.setAttribute('role','group');opciones.setAttribute('aria-label','Tipos de sobre para tu recompensa');
+    const acciones=[],actualizar=()=>{
+      const total=s.eleccion.length;cuenta.textContent=total+' de '+cantidad+' elegidos';cuenta.dataset.elegidos=total;
+      confirmar.disabled=total!==cantidad;seleccion.replaceChildren();
+      for(let i=0;i<cantidad;i++){const id=s.eleccion[i],g=grupos.find(g=>g.id===id),marca=crear('i','coleccionEleccionMarca');marca.setAttribute('aria-label',g?g.nombre:'Sin elegir');if(id)colorSobre(marca,id);seleccion.append(marca);}
+      for(const a of acciones){const n=s.eleccion.filter(id=>id===a.id).length;a.n.textContent=n;a.n.dataset.cantidad=n;a.menos.disabled=n===0;a.mas.disabled=total>=cantidad;a.elegir.disabled=total>=cantidad;a.caja.classList.toggle('seleccionada',n>0);}
+    };
+    const ajustar=(id,delta)=>{if(guardando)return;const indice=s.eleccion.lastIndexOf(id);if(delta<0&&indice>=0)s.eleccion.splice(indice,1);else if(delta>0&&s.eleccion.length<cantidad)s.eleccion.push(id);actualizar();};
+    grupos.forEach(g=>{
+      const caja=crear('section','coleccionRecompensaGrupo');colorSobre(caja,g.id);
+      const elegir=boton('',()=>ajustar(g.id,1),'coleccionRecompensaElegir');elegir.setAttribute('aria-label','Elegir sobre '+g.nombre);elegir.append(envoltura(g));
+      const titulo=crear('h4','',g.nombre),control=crear('div','coleccionRecompensaCantidad'),menos=boton('−',()=>ajustar(g.id,-1),'coleccionRecompensaMenos'),mas=boton('+',()=>ajustar(g.id,1),'coleccionRecompensaMas'),n=crear('output','','0');
+      menos.setAttribute('aria-label','Quitar sobre '+g.nombre);mas.setAttribute('aria-label','Añadir sobre '+g.nombre);n.setAttribute('aria-label','Sobres elegidos de '+g.nombre);control.append(menos,n,mas);
+      const ver=boton(g.ids.length+' cartas',()=>verContenidoSobre(g.id,'recompensa'),'coleccionRecompensaContenido');ver.setAttribute('aria-label','Ver contenido de '+g.nombre);
+      caja.append(elegir,titulo,control,ver);opciones.append(caja);acciones.push({id:g.id,caja,elegir,menos,mas,n});
+    });
+    const pie=crear('div','coleccionRecompensaPie'),seleccion=crear('div','coleccionEleccionMarcas'),cuenta=crear('p','coleccionEleccionCuenta');cuenta.setAttribute('role','status');cuenta.setAttribute('aria-live','polite');
+    const confirmar=boton(cantidad===1?'Guardar sobre':'Guardar sobres',()=>{
+      if(guardando||s.eleccion.length!==cantidad)return;guardando=true;confirmar.disabled=true;let ok=false;
+      try{ok=modelo().elegirSobres(premio.id,s.eleccion.slice());}catch(_){}finally{guardando=false;}
+      if(!ok){if(!modelo().recompensasPendientes().some(p=>p.id===premio.id)){s.eleccion=[];ir('sobres');mensaje('Esta recompensa ya se guardó.');return;}actualizar();mensaje('No se pudo guardar tu elección. La recompensa sigue disponible; inténtalo de nuevo.',true);return;}
+      s.grupoSobre=s.eleccion[0];s.eleccion=[];s.mostrarPendiente=false;ir('sobres');mensaje(cantidad===1?'Sobre guardado.':'Sobres guardados.');sonido('ui_confirm');
+    },'coleccionGuardarSobres');
+    pie.append(seleccion,cuenta,confirmar,boton('Elegir después',()=>ir('sobres'),'coleccionElegirDespues'));contenido.append(opciones,pie);actualizar();medirRecompensa();
+  }
   function dibujarSobres(){
-    panel.dataset.vista='sobres';const pack=modelo().pendiente(),firma=pack?JSON.stringify([pack.id,pack.cartas]):null;
-    // El modelo entrega copias del pendiente en cada evento. Su contenido, no
-    // la identidad del objeto, decide si hay que cambiar la escena montada.
-    if(pack&&aperturaSobre?.firma===firma&&aperturaSobre.host.parentElement===contenido)return;
-    destruirApertura();contenido.replaceChildren();if(pack){dibujarRevelacion(pack,firma);return;}
-    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','TESOROS POR DESCUBRIR'),crear('h3','','Sobres del Domo'),crear('p','','Gana 3 sobres al completar una campaña o 1 al vencer al Domo.'));contenido.append(cab);
-    const grupos=modelo().grupos();if(!grupos.some(g=>g.id===s.grupoSobre))s.grupoSobre=grupos[0]?.id||'';
-    const grupo=grupos.find(g=>g.id===s.grupoSobre),cuerpo=crear('div','coleccionPrepararSobre');
-    const escena=crear('div','coleccionSobreEscena'),sobre=crear('div','coleccionSobre');sobre.setAttribute('aria-hidden','true');
-    sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreLeyenda','5 CARTAS'));
-    escena.append(crear('div','coleccionSobreAura'),sobre);cuerpo.append(escena);
-    const eleccion=crear('section','coleccionElegirGrupo');eleccion.setAttribute('aria-label','Elige la colección del sobre');
-    eleccion.append(crear('h4','','Elige tu colección'));
-    const opciones=crear('div','coleccionGrupos');opciones.setAttribute('role','group');opciones.setAttribute('aria-label','Colecciones temáticas');
-    grupos.forEach(g=>{const b=boton('',()=>{s.grupoSobre=g.id;s.verContenidoSobre=false;dibujarSobres();contenido.querySelector('[data-grupo="'+g.id+'"]')?.focus({preventScroll:true});},'coleccionGrupo');b.dataset.grupo=g.id;b.setAttribute('aria-pressed',g.id===s.grupoSobre?'true':'false');b.append(crear('strong','',g.nombre),crear('span','',g.ids.length+' cartas posibles'));opciones.append(b);});
-    eleccion.append(opciones);
-    const compacto=crear('label','coleccionGrupoCompacto'),selector=crear('select');compacto.append(crear('span','coleccionSr','Colección del sobre'));selector.setAttribute('aria-label','Colección del sobre');
-    grupos.forEach(g=>{const op=crear('option','',g.nombre);op.value=g.id;selector.append(op);});selector.value=s.grupoSobre;selector.onchange=()=>{s.grupoSobre=selector.value;s.verContenidoSobre=false;dibujarSobres();contenido.querySelector('.coleccionGrupoCompacto select')?.focus({preventScroll:true});};compacto.append(selector);eleccion.append(compacto);
-    const ver=boton(s.verContenidoSobre?'Ocultar contenido':'Ver las '+(grupo?.ids.length||0)+' cartas posibles',()=>{s.verContenidoSobre=!s.verContenidoSobre;dibujarSobres();contenido.querySelector('.coleccionVerContenido')?.focus({preventScroll:true});},'coleccionVerContenido');ver.setAttribute('aria-expanded',String(s.verContenidoSobre));ver.setAttribute('aria-controls','coleccionContenidoGrupo');eleccion.append(ver);
-    const lista=crear('div','coleccionContenidoGrupo');lista.id='coleccionContenidoGrupo';lista.hidden=!s.verContenidoSobre;lista.setAttribute('role','region');lista.setAttribute('aria-label','Contenido de '+(grupo?.nombre||'la colección'));lista.tabIndex=0;
-    grupo?.ids.forEach(id=>lista.append(crear('span','',dato(id).n)));eleccion.append(lista);
-    const tasas=crear('div','coleccionTasas');tasas.append(crear('strong','','3 Normales + 1 Foil garantizadas'),crear('p','','Quinta carta: 50% Normal · 50% Foil.'),crear('p','','Todas las cartas del grupo tienen la misma probabilidad. Sin cartas iguales en un sobre. Doradas: por canje, no salen en sobres.'));eleccion.append(tasas);cuerpo.append(eleccion);contenido.append(cuerpo);
-    const acciones=crear('div','coleccionSobreAcciones'),n=modelo().sobres(),abrir=boton(n?'Abrir sobre':'No tienes sobres',()=>{
-      if(guardando)return;
-      if(!window.CAOZ_SOBRES?.crear){mensaje('La apertura no está disponible. Recarga la página para intentarlo otra vez.',true);return;}
-      guardando=true;abrir.disabled=true;let p;
-      try{p=modelo().abrirSobre(s.grupoSobre);}catch(_){}finally{guardando=false;}
-      if(!p){abrir.disabled=false;mensaje('No se pudo abrir. Comprueba tus sobres o el espacio disponible para guardar.',true);return;}
-      mensaje('');sonido('ui_confirm');dibujarSobres();actualizarCabecera();
-    },'coleccionAbrirSobre');abrir.disabled=!n||!grupo;acciones.append(crear('p','coleccionSobreCuenta',n===1?'Tienes un sobre por abrir':'Tienes '+n+' sobres por abrir'),abrir);
-    if(modelo().betaDisponible()){const beta=boton('Sobre de prueba · Beta',()=>{if(guardando)return;guardando=true;let ok;try{ok=modelo().darSobreBeta();}finally{guardando=false;}if(ok){dibujarSobres();actualizarCabecera();mensaje('Sobre de prueba añadido.');}else mensaje('No se pudo añadir el sobre. Inténtalo de nuevo.',true);},'coleccionBeta');acciones.append(beta);}
-    contenido.append(acciones);
+    panel.dataset.vista='sobres';const pack=modelo().pendiente(),firma=pack?JSON.stringify([pack.id,pack.grupo,pack.cartas]):null;
+    if(pack&&s.mostrarPendiente&&aperturaSobre?.firma===firma&&aperturaSobre.host.parentElement===contenido)return;
+    destruirCarrusel();destruirApertura();vaciarContenido();
+    if(pack&&s.mostrarPendiente){dibujarRevelacion(pack,firma);return;}
+    const grupos=modelo().grupos(),inventario=modelo().inventarioSobres().filter(p=>p.cantidad>0&&grupos.some(g=>g.id===p.grupo)),recompensas=modelo().recompensasPendientes();
+    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','TU TESORO DEL DOMO'),crear('h3','','Mis sobres'),crear('p','','Desliza para elegir cuál abrir.'));contenido.append(cab);
+    if(recompensas.length){const numero=recompensas.reduce((n,p)=>n+p.cantidad,0),aviso=crear('div','coleccionSobresPorElegir');aviso.append(crear('span','',numero===1?'Tienes 1 sobre por elegir':'Tienes '+numero+' sobres por elegir'),boton('Elegir',()=>elegirPendiente(recompensas[0]),'coleccionElegirPendientes'));contenido.append(aviso);}
+    if(pack){const reanudar=boton('Continuar el sobre abierto',()=>{s.mostrarPendiente=true;dibujarSobres();},'coleccionReanudarSobre');contenido.append(reanudar);}
+    if(!inventario.some(p=>p.grupo===s.grupoSobre))s.grupoSobre=inventario[0]?.grupo||'';
+    const acciones=crear('div','coleccionSobreAcciones'),abrir=boton('Abrir sobre',()=>{
+      if(guardando)return;if(!window.CAOZ_SOBRES?.crear){mensaje('La apertura no está disponible. Recarga la página para intentarlo otra vez.',true);return;}
+      if(modelo().pendiente()){s.mostrarPendiente=true;dibujarSobres();return;}
+      guardando=true;abrir.disabled=true;let p;try{p=modelo().abrirSobre(s.grupoSobre);}catch(_){}finally{guardando=false;}
+      if(!p){dibujarSobres();mensaje('No se pudo abrir. El sobre sigue guardado; inténtalo de nuevo.',true);return;}
+      s.mostrarPendiente=true;mensaje('');sonido('ui_confirm');dibujarSobres();actualizarCabecera();
+    },'coleccionAbrirSobre');abrir.disabled=!inventario.length;acciones.append(abrir);
+    if(inventario.length){
+      const escena=crear('div','coleccionBibliotecaSobres'),ventana=crear('div','coleccionCarreteVentana'),carrete=crear('div','coleccionCarruselSobres');carrete.setAttribute('role','region');carrete.setAttribute('aria-label','Tus sobres guardados');carrete.tabIndex=0;
+      const botones=inventario.map(item=>{const g=grupos.find(g=>g.id===item.grupo),b=boton('',()=>centrar(item.grupo),'coleccionSobreGuardado');colorSobre(b,item.grupo);b.setAttribute('aria-label',g.nombre+'. '+item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados'));b.append(envoltura(g),crear('span','coleccionSobreExistencias','×'+item.cantidad));carrete.append(b);return b;});
+      ventana.append(carrete);const navegacion=crear('div','coleccionCarreteNavegacion'),anterior=boton('‹',()=>mover(-1),'coleccionSobreAnterior'),siguiente=boton('›',()=>mover(1),'coleccionSobreSiguiente'),rotulo=crear('div','coleccionSobreSeleccion'),nombre=crear('h4'),cantidad=crear('p');anterior.setAttribute('aria-label','Sobre anterior');siguiente.setAttribute('aria-label','Sobre siguiente');rotulo.setAttribute('aria-live','polite');rotulo.append(nombre,cantidad);navegacion.append(anterior,rotulo,siguiente);escena.append(ventana,navegacion,crear('p','coleccionDeslizarPista','Desliza · Arrastra · Usa las flechas'));contenido.append(escena);
+      const ver=boton('Ver contenido',()=>verContenidoSobre(s.grupoSobre,'sobres'),'coleccionVerContenido');acciones.prepend(ver);
+      let arrastre=null,omitirClick=false,raf=0,anchoAnterior=0,altoAnterior=0,destino=null,finDesplazamiento=0;
+      const indice=()=>Math.max(0,inventario.findIndex(p=>p.grupo===s.grupoSobre));
+      function seleccionar(i){const item=inventario[i],g=grupos.find(g=>g.id===item.grupo);s.grupoSobre=item.grupo;botones.forEach((b,j)=>{b.setAttribute('aria-pressed',String(j===i));b.classList.toggle('seleccionado',j===i);});carrete.dataset.grupo=item.grupo;nombre.textContent=g.nombre;cantidad.textContent=item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados');anterior.disabled=i===0;siguiente.disabled=i===inventario.length-1;}
+      function objetivo(i){return botones[i].offsetLeft-carrete.clientWidth/2+botones[i].offsetWidth/2;}
+      function cercano(){const centro=carrete.scrollLeft+carrete.clientWidth/2;let mejor=0;botones.forEach((b,i)=>{if(Math.abs(b.offsetLeft+b.offsetWidth/2-centro)<Math.abs(botones[mejor].offsetLeft+botones[mejor].offsetWidth/2-centro))mejor=i;});return mejor;}
+      function terminarDesplazamiento(){clearTimeout(finDesplazamiento);finDesplazamiento=0;destino=null;carrete.dataset.desplazando='false';carrete.setAttribute('aria-busy','false');abrir.disabled=false;}
+      function centrar(id,suave=true){
+        const i=Math.max(0,inventario.findIndex(p=>p.grupo===id)),left=objetivo(i),animar=suave&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&Math.abs(carrete.scrollLeft-left)>1.5;
+        clearTimeout(finDesplazamiento);seleccionar(i);destino=i;carrete.dataset.desplazando=String(animar);carrete.setAttribute('aria-busy',String(animar));abrir.disabled=animar;
+        // La elección es el destino explícito. Los puntos intermedios de un
+        // scroll suave no pueden cambiar el tipo del sobre que se va a abrir.
+        carrete.scrollTo({left,behavior:animar?'smooth':'instant'});
+        if(!animar){terminarDesplazamiento();return;}
+        // Si el navegador interrumpe la animación sin llegar ni emitir scrollend,
+        // completar el mismo destino evita dejar Abrir bloqueado indefinidamente.
+        finDesplazamiento=setTimeout(()=>{if(destino===null||!carrete.isConnected)return;const ultimo=destino;carrete.scrollTo({left:objetivo(ultimo),behavior:'instant'});seleccionar(ultimo);terminarDesplazamiento();},800);
+      }
+      function mover(delta){centrar(inventario[Math.max(0,Math.min(inventario.length-1,indice()+delta))].grupo);}
+      function medir(){if(!carrete.isConnected)return;const ancho=ventana.clientWidth,alto=ventana.clientHeight;if(ancho===anchoAnterior&&alto===altoAnterior)return;anchoAnterior=ancho;altoAnterior=alto;ventana.style.setProperty('--sobre-ancho',Math.max(40,Math.min(250,ancho*.62,(alto-24)*.68))+'px');centrar(s.grupoSobre,false);}
+      function seguirDesplazamiento(){
+        if(!carrete.isConnected)return;
+        if(destino!==null){seleccionar(destino);if(Math.abs(carrete.scrollLeft-objetivo(destino))<=1.5)terminarDesplazamiento();}
+        else seleccionar(cercano());
+      }
+      function interrumpirDesplazamiento(){
+        if(destino===null)return;terminarDesplazamiento();carrete.scrollTo({left:carrete.scrollLeft,behavior:'instant'});seleccionar(cercano());
+      }
+      carrete.addEventListener('scroll',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(seguirDesplazamiento);},{passive:true});
+      carrete.addEventListener('scrollend',seguirDesplazamiento);
+      carrete.addEventListener('wheel',interrumpirDesplazamiento,{passive:true});
+      carrete.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();if(e.key==='Home')centrar(inventario[0].grupo);else if(e.key==='End')centrar(inventario.at(-1).grupo);else mover(e.key==='ArrowRight'?1:-1);});
+      carrete.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;interrumpirDesplazamiento();if(e.pointerType!=='mouse')return;omitirClick=false;arrastre={id:e.pointerId,x:e.clientX,inicio:carrete.scrollLeft,movido:false};});
+      carrete.addEventListener('pointermove',e=>{if(!arrastre||arrastre.id!==e.pointerId)return;const dx=e.clientX-arrastre.x;if(!arrastre.movido&&Math.abs(dx)>7){arrastre.movido=true;carrete.setPointerCapture(e.pointerId);carrete.classList.add('arrastrando');}if(arrastre.movido){e.preventDefault();carrete.scrollLeft=arrastre.inicio-dx;}});
+      const soltar=e=>{if(!arrastre||arrastre.id!==e.pointerId)return;const movido=arrastre.movido;arrastre=null;carrete.classList.remove('arrastrando');if(carrete.hasPointerCapture(e.pointerId))carrete.releasePointerCapture(e.pointerId);if(movido){omitirClick=true;centrar(inventario[cercano()].grupo);}};
+      carrete.addEventListener('pointerup',soltar);carrete.addEventListener('pointercancel',soltar);carrete.addEventListener('lostpointercapture',e=>{if(arrastre?.id===e.pointerId)soltar(e);});
+      carrete.addEventListener('click',e=>{if(omitirClick){e.preventDefault();e.stopImmediatePropagation();omitirClick=false;}},true);
+      carruselSobres={medir,destruir:()=>{cancelAnimationFrame(raf);clearTimeout(finDesplazamiento);destino=null;arrastre=null;}};
+      seleccionar(indice());contenido.append(acciones);medir();
+    }else{
+      const vacio=crear('div','coleccionSobresVacios'),sello=crear('div','coleccionSobresVaciosSello');sello.append(icono('sobre'));vacio.append(sello,crear('h4','','Tu tesoro empieza aquí'),crear('p','',recompensas.length?'Elige las colecciones de tus recompensas para guardar tus primeros sobres.':'Gana una partida contra el Domo para conseguir 1 sobre, o completa la campaña para ganar 3.'));contenido.append(vacio,acciones);
+    }
+    if(modelo().betaDisponible()){const beta=boton('Sobre de prueba · Beta',()=>{if(guardando)return;guardando=true;let ok;try{ok=modelo().darSobreBeta();}finally{guardando=false;}if(ok){dibujarSobres();actualizarCabecera();mensaje('Recompensa de prueba añadida. Elige su colección.');}else mensaje('No se pudo añadir el sobre. Inténtalo de nuevo.',true);},'coleccionBeta');acciones.append(beta);}
+    carruselSobres?.medir();
   }
   function dibujarCanje(){
-    contenido.replaceChildren();panel.dataset.vista='canje';
+    vaciarContenido();panel.dataset.vista='canje';
     const caja=crear('section','coleccionTaller');caja.append(crear('h3','','Mejora tus cartas'),crear('p','coleccionTallerRegla','5 Normales → 1 Foil · 5 Foils → 1 Dorada'),crear('p','coleccionTallerNota','Siempre de la misma carta. Los diseños desbloqueados se conservan; tu Normal inicial no se gasta.'));
     const listas=crear('div','coleccionCanjesListos');listas.setAttribute('role','region');listas.setAttribute('aria-label','Cartas con copias listas para mejorar');listas.tabIndex=0;
     for(const id of modelo().ids())for(const acabado of ['normal','foil']){
@@ -318,7 +428,7 @@
       Promise.resolve().then(()=>typeof cargarArte==='function'?cargarArte():null).then(()=>{
         if(!vigente())return;
         if(!window.CAOZ_SOBRES?.crear)throw Error('La apertura aún no está disponible.');
-        registro.componente=window.CAOZ_SOBRES.crear(host,{variante:'reliquia',logoUrl:'art/logo.webp',
+        registro.componente=window.CAOZ_SOBRES.crear(host,{variante:'reliquia',logoUrl:'art/logo.webp',grupo:pack.grupo,
           cartas:pack.cartas.map(item=>({...item,nombre:dato(item.id).n})),crearCarta:cartaSobre,
           onVolver:()=>cerrarPendiente(registro),onCambio:actual=>{
             if(!vigente())return;host.dataset.fase=actual.fase;
@@ -334,6 +444,7 @@
   }
   // La función es global porque los dos menús la invocan al pulsar Colección.
   window.abrirColeccion=abrir;
+  window.abrirRecompensaSobres=abrirRecompensaSobres;
   const instalar=()=>{window.showGallery=abrir;if(new URLSearchParams(location.search).get('coleccion')==='1')abrir();};
   if(document.readyState==='complete')instalar();else addEventListener('load',instalar,{once:true});
 })();
