@@ -1,5 +1,21 @@
 # Registro de versiones — el TCG del Domo
 
+### En revisión aislada · Elegir premios y guardar sobres · 2026-09-12
+
+- Al ganar contra el Domo se elige un sobre; al completar campaña se eligen
+  tres, con colecciones repetidas o combinadas. Confirmar los guarda sellados.
+- Colección → Sobres presenta los tipos poseídos y sus cantidades en un
+  carrusel deslizable con dedo, ratón, flechas y teclado. Cada apertura consume
+  sólo un sobre del tipo seleccionado y conserva la animación Sello del Domo.
+- Trucos del Domo es azul; Juramentos del Domo, verde; Caos y Dragones, rojo.
+  La biblioteca y la apertura comparten el diseño impreso de la envoltura.
+- Los sobres sin tipo anteriores se recuperan como elecciones pendientes,
+  en tandas de hasta tres. Los ya abiertos conservan cartas y grupo.
+- Elegir no concede cartas ni vuelve a sortear el resultado. Un fallo de
+  guardado deja disponible el premio o el sobre para reintentar.
+- Conexión con victoria y epílogos preparada en la rama para la integración
+  posterior. Esta revisión pública sólo ejecuta la sección de Colección.
+
 ### En revisión aislada · Tres colecciones para sobres · 2026-09-12
 
 - Las seis opciones se reúnen en Trucos del Domo (48 cartas), Juramentos del

@@ -1,5 +1,8 @@
 .sobresApertura{--sobre-oro:#dbc38c;--sobre-tinta:#eee4d1;--sobre-aura:157,97,38;position:relative;isolation:isolate;display:grid;grid-template-rows:minmax(0,1fr) auto;width:100%;height:100%;color:var(--sobre-tinta);min-height:0}
 .sobresApertura[data-variante=arcano]{--sobre-oro:#b8bfe8;--sobre-aura:91,71,170}
+.sobresApertura[data-grupo=trucos]{--sobre-oro:#b8d9f1;--sobre-aura:59,130,196}
+.sobresApertura[data-grupo=juramentos]{--sobre-oro:#c5dfb6;--sobre-aura:41,138,105}
+.sobresApertura[data-grupo=caos]{--sobre-oro:#e5bf8b;--sobre-aura:179,65,82}
 .sobresTeatro{position:relative;min-height:0;overflow:hidden;isolation:isolate}
 .sobresAura{position:absolute;inset:8% 0 0;background:radial-gradient(ellipse at 50% 47%,rgba(var(--sobre-aura),.19),transparent 58%);pointer-events:none}
 .sobresSuelo{position:absolute;width:80%;height:23%;left:10%;bottom:7%;border-radius:50%;border:1px solid #d3bb7625;box-shadow:0 0 0 10px #d3bb7603,inset 0 0 45px #d3bb7606;transform:perspective(550px) rotateX(63deg);background:repeating-conic-gradient(from 0deg,#ddc79113 0deg 1deg,transparent 1deg 15deg);opacity:.7;pointer-events:none}

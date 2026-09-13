@@ -10,6 +10,49 @@ números) → el código.
 
 ---
 
+## Revisión aislada — elegir el premio y guardar sus sobres
+
+Continuación en `feature/sobres-tres-colecciones`, sin integrar todavía a
+`develop`. Al ganar contra el Domo el jugador elige un sobre; una campaña
+completa permite elegir tres, incluso del mismo grupo. Confirmar guarda tipos
+sellados. Colección → Sobres permite deslizar el carrusel de tipos poseídos y
+sus cantidades; la apertura consume sólo el elegido. Trucos azul, Juramentos
+verde y Caos rojo comparten su impresión entre biblioteca y escena 3D.
+
+El modelo mantiene la clave y versión1, añadiendo `sobresVersion:2`,
+`sobresGuardados` y `recompensasPorElegir`. `sobres()` cuenta sellados más
+pendientes de elegir. `recompensasPendientes()` devuelve recibos defensivos;
+`elegirSobres(id,[grupos])` exige1/3 según premio y no consume RNG ni concede
+cartas. `inventarioSobres()` enumera tipos con saldo positivo. `abrirSobre`
+sólo consume tipos guardados; sin argumento usa el primero, nunca convierte
+pendientes de elegir. El legado sin tipo se conserva en tandas de hasta tres;
+los pendientes ya abiertos de tres/cinco cartas no se modifican. La lectura
+migra en memoria y la próxima escritura correcta conserva todo junto.
+
+`abrirRecompensaSobres({origen,referencia,onCerrar})` ofrece el premio recibido
+encima de la victoria y permite volver a ella. El CTA y sus alternativas se
+prepararon en `final-core.js`; los epílogos de deseo y Editor ofrecen premios
+pendientes después de sus fundidos existentes. Conservan recibos y guardas
+contra partidas distintas, doble clic, online y recompensas ya elegidas.
+Esta conexión tiene pruebas acotadas; su geometría dentro de la victoria real
+queda para la integración aprobada, no se ha ejecutado la batería completa.
+
+Escenarios públicos: `estado=premio-campana`, `estado=premio-domo`,
+`estado=legado-sobres` y `estado=sobres&pestana=sobres`. Son premios temporales
+sin partida ni progreso persistente. El último ahora incluye tres sellados,
+uno de cada tipo; reemplaza el selector de la revisión anterior.
+
+Validación acotada: 47 pruebas del modelo y 12 sabotajes, 26 casos de conexión
+con victorias y epílogos, y pruebas de apertura/precarga con 14 sabotajes.
+Canjes y recorrido de premios→guardado→carrusel→apertura recuperable pasan en
+1440×900, 390×844 y 320×568, incluyendo consulta de contenido y fallos de
+escritura al elegir y al abrir. También se probó movimiento normal: selección
+a60ms, teclado, resize y apertura durante desplazamiento. Se corrigió una
+carrera que podía volver a seleccionar el tipo anterior; Abrir espera a que
+llegue el destino, que se conserva al redimensionar. Las pruebas del entorno/
+exportación siguen verdes. Publicación y comprobación remota se registran al finalizar.
+Beta253 y producción250 siguen vigentes; la integración requerirá build nueva.
+
 ## Revisión aislada — tres colecciones para sobres
 
 Rama `feature/sobres-tres-colecciones`, desde `develop`/beta253. Se reducen

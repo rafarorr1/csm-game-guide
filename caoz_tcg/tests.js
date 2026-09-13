@@ -2009,7 +2009,22 @@ PRUEBAS.suite('coleccionSobres',async t=>{
     const nuevaDesdeMenu=async()=>{
       const pestaña=[...panel().querySelectorAll('.coleccionPestana')].find(b=>/^Sobres/.test(b.textContent));
       t.check(!!pestaña,pagina+': hay acceso a Sobres desde Colección.');pestaña.click();
-      const abrir=panel().querySelector('.coleccionAbrirSobre');t.check(abrir&&!abrir.disabled,pagina+': el premio habilita Abrir sobre.');abrir.click();await drenar();
+      const modelo=w.CAOZ_COLECCION,eleccion=panel().querySelector('.coleccionElegirPendientes');
+      if(eleccion){
+        const recompensa=modelo.recompensasPendientes()[0],antes=JSON.stringify(modelo.leer().cantidades),total=modelo.sobres();
+        t.check(!!recompensa,pagina+': el aviso corresponde a una recompensa por elegir.');eleccion.click();
+        t.igual(panel().dataset.vista,'recompensa',pagina+': antes de abrir se eligen los tipos ganados.');
+        const guardar=panel().querySelector('.coleccionGuardarSobres'),grupos=[...panel().querySelectorAll('.coleccionRecompensaGrupo')];
+        t.check(guardar.disabled&&grupos.length===3,pagina+': ofrece tres colecciones y exige completar la elección.');
+        const cantidad=Math.min(3,recompensa.cantidad);
+        for(let i=0;i<cantidad;i++)grupos[i%grupos.length].querySelector('.coleccionRecompensaMas').click();
+        t.check(!guardar.disabled,pagina+': elegir todos los sobres habilita guardarlos.');guardar.click();await drenar();
+        t.igual(panel().dataset.vista,'sobres',pagina+': guardar vuelve a la biblioteca, sin abrir automáticamente.');
+        t.igual(JSON.stringify(modelo.leer().cantidades),antes,pagina+': elegir colecciones no concede cartas.');
+        t.igual(modelo.sobres(),total,pagina+': asignar tipos conserva el total de sobres.');
+        t.check(!modelo.pendiente()&&modelo.inventarioSobres().length>0,pagina+': los sobres quedan sellados en el inventario.');
+      }
+      const abrir=panel().querySelector('.coleccionAbrirSobre');t.check(abrir&&!abrir.disabled,pagina+': los sobres ya elegidos habilitan Abrir sobre.');abrir.click();await drenar();
       await esperar(()=>!!raiz(),'abrir un premio monta el componente real dentro de Colección.');return raiz();
     };
     const terminarFunda=async()=>{
@@ -2053,6 +2068,7 @@ PRUEBAS.suite('coleccionSobres',async t=>{
 
       t.check(m.concederSobreCampana('regresion-sobre-uno')&&m.concederSobreCampana('regresion-sobre-uno'),pagina+': la campaña concede su premio de forma idempotente.');
       t.igual(m.sobres(),3,pagina+': repetir el recibo de campaña conserva sus tres sobres.');
+      t.check(m.recompensasPendientes().length===1&&m.recompensasPendientes()[0].cantidad===3&&!m.inventarioSobres().length,pagina+': una victoria guarda una elección pendiente de tres, sin asignar tipos.');
       escogerPremios();w.showGallery();const primera=await nuevaDesdeMenu(),pack=m.pendiente(),contenido=JSON.stringify(pack);
       t.check(pack?.cartas.length===5&&pack.cartas.every(c=>['normal','foil'].includes(c.acabado)&&m.tiene(c.id,c.acabado))&&[1,2].includes(pack.cartas.filter(c=>c.acabado==='foil').length),pagina+': consume un sobre y guarda sus cinco cartas mixtas antes de presentarlas.');
       t.igual(m.sobres(),2,pagina+': abrir desde Colección consume exactamente un sobre.');
@@ -2122,6 +2138,7 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       const antiguas=[{id:'tal',acabado:'foil',nueva:false},{id:'lider_fender',acabado:'dorado',nueva:true},{id:'armadura',acabado:'dorado',nueva:true}];
       antiguas.forEach(c=>t.check(m.desbloquear(c.id,c.acabado),pagina+': prepara el premio de una edición anterior.'));
       m.concederSobreCampana('reserva-legado-uno');m.concederSobreCampana('reserva-legado-dos');
+      const eleccionesLegado=JSON.stringify(m.recompensasPendientes()),inventarioLegado=JSON.stringify(m.inventarioSobres());
       const legado=m.leer();legado.pendiente={id:'sobre-legado-tres',creado:1,cartas:antiguas};w.localStorage.setItem(m.clave,JSON.stringify(legado));
       w.showGallery();await esperar(()=>!!raiz(),'monta el pending legado.');t.check(m.pendiente()?.cartas.length===3&&raiz(),pagina+': reconoce y abre un pending legado de tres cartas.');
       t.igual(raiz().querySelectorAll('.sobresReverso').length,3,pagina+': el legado prepara sólo tres reversos.');
@@ -2129,7 +2146,9 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       await terminarFunda();await revelarTodas(3);
       t.check(!/^Tus 3 cartas Foil$/.test(raiz().querySelector('.sobresEstado').textContent),pagina+': no anuncia como Foil las Doradas del legado.');
       t.check([...raiz().querySelectorAll('.sobresPremio')].some(n=>/Dorada|Dorado/.test(n.getAttribute('aria-label'))),pagina+': el resumen anuncia la edición Dorada original.');
-      await pulsar();t.check(!m.pendiente()&&m.sobres()===10&&antiguas.every(c=>m.tiene(c.id,c.acabado)),pagina+': cerrar el legado conserva sus premios y los diez sobres sin abrir.');
+      await pulsar();t.check(!m.pendiente()&&m.sobres()===10&&antiguas.every(c=>m.tiene(c.id,c.acabado)),pagina+': cerrar el legado conserva sus premios y el total de diez sobres.');
+      t.igual(JSON.stringify(m.recompensasPendientes()),eleccionesLegado,pagina+': cerrar el legado conserva las elecciones nuevas sin asignarlas.');
+      t.igual(JSON.stringify(m.inventarioSobres()),inventarioLegado,pagina+': cerrar el legado tampoco consume sobres sellados por tipo.');
       t.check(escenas.every(e=>e.destruida===1),pagina+': todas las escenas utilizadas se destruyen una sola vez.');
       t.nota(pagina+': premio real, arte decodificado, cinco volteos, toque final, recuperación de cierre y legado de tres cartas.');
     }finally{
@@ -2195,7 +2214,13 @@ PRUEBAS.suite('campanaSobres',async t=>{
       await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;w.cinematicaFinal=async()=>true;
       t.igual(m.sobres(),3,pagina+': recargar el final conserva exactamente tres sobres.');
       duelo('recorrido-2',5,0);t.igual(m.sobres(),6,pagina+': repetir campaña con el mismo mazo da otros tres sobres.');
-      const pack=m.abrirSobre();t.check(pack?.cartas.length===5&&pack.cartas.every(c=>['normal','foil'].includes(c.acabado))&&[1,2].includes(pack.cartas.filter(c=>c.acabado==='foil').length),pagina+': el premio contiene cinco cartas con una o dos Foil y ninguna Dorada.');
+      t.check(m.recompensasPendientes().length===2&&!m.inventarioSobres().length,pagina+': cada campaña conserva su elección independiente.');
+      t.igual(m.abrirSobre(),null,pagina+': no abre ni asigna tipos sin una elección previa.');
+      const recompensa=m.recompensasPendientes().find(p=>p.origen==='campana'&&p.referencia==='recorrido-2'),grupo=m.grupos()[0].id,antesDeElegir=JSON.stringify(m.leer().cantidades);
+      t.check(!!recompensa&&m.elegirSobres(recompensa.id,[grupo,grupo,grupo]),pagina+': permite guardar tres sobres de la misma colección.');
+      t.igual(JSON.stringify(m.leer().cantidades),antesDeElegir,pagina+': elegir los sobres no concede sus cartas.');
+      t.check(m.recompensasPendientes().length===1&&m.inventarioSobres().find(p=>p.grupo===grupo)?.cantidad===3,pagina+': la otra campaña sigue por elegir y ésta queda sellada.');
+      const pack=m.abrirSobre(grupo);t.check(pack?.cartas.length===5&&pack.cartas.every(c=>['normal','foil'].includes(c.acabado))&&[1,2].includes(pack.cartas.filter(c=>c.acabado==='foil').length),pagina+': el premio contiene cinco cartas con una o dos Foil y ninguna Dorada.');
       t.check(pack.cartas.every(c=>m.tiene(c.id,c.acabado)&&!m.tiene(c.id,'dorado')&&m.elegido(c.id)==='normal'),pagina+': concede copias sin cambiar la edición equipada.');
       m.cerrarSobre();
       // El sexto sello abre otra pelea: no adelanta el premio ni concede dos.
@@ -3302,6 +3327,10 @@ PRUEBAS.suite('borrarProgreso', async t => {
       localStorage.setItem(claves[4],JSON.stringify({lideres:{adreida:{ganadas:2,jugadas:3}},total:{ganadas:2,jugadas:3},online:{jugadas:0,ganadas:0}}));
       localStorage.setItem(claves[5],'Ariadna');localStorage.setItem(ajustes,'{"volumen":0.25,"silencio":true}');localStorage.setItem(ajeno,'conservar');
       w.CAOZ_COLECCION.reiniciar();w.CAOZ_COLECCION.desbloquear('augusto','dorado');w.CAOZ_COLECCION.seleccionar('augusto','dorado');w.CAOZ_COLECCION.darSobreBeta();
+      const premio=w.CAOZ_COLECCION.recompensasPendientes()[0];
+      t.check(w.CAOZ_COLECCION.elegirSobres(premio.id,[w.CAOZ_COLECCION.grupos()[0].id]),pagina+': prepara un sobre sellado por tipo para borrar.');
+      w.CAOZ_COLECCION.darSobreBeta();
+      t.check(w.CAOZ_COLECCION.recompensasPendientes().length===1&&w.CAOZ_COLECCION.inventarioSobres().length===1,pagina+': conserva tanto elección pendiente como inventario sellado antes de borrar.');
       const datos=claves.map(k=>localStorage.getItem(k));
       w.campanaLeer();w.campanaLeerBorrador();w.CAMPANA_LOGROS.leer();w.showScreen('extras');
       d.querySelector('#mBorrarProgreso').click();
@@ -3321,6 +3350,7 @@ PRUEBAS.suite('borrarProgreso', async t => {
       w=f.contentWindow;d=w.document;
       t.check(claves.every(k=>localStorage.getItem(k)===null),pagina+': borra campaña, creador, logros normales y beta, récords y nombre.');
       t.check(w.CAOZ_COLECCION.elegido('augusto')==='normal'&&!w.CAOZ_COLECCION.tiene('augusto','dorado')&&w.CAOZ_COLECCION.sobres()===0,pagina+': reinicia acabados, selección y sobres; Normal sigue disponible.');
+      t.check(!w.CAOZ_COLECCION.recompensasPendientes().length&&!w.CAOZ_COLECCION.inventarioSobres().length,pagina+': borra tanto elecciones pendientes como sobres sellados por tipo.');
       t.check(w.campanaLeer()===null&&w.campanaLeerBorrador().personaje.nombre==='Viajero',pagina+': descarta también las copias en memoria.');
       t.check(w.CAMPANA_LOGROS.total()===0&&w.CAMPANA_LOGROS.total(true)===0&&!w.CAMPANA_LOGROS.ganador(),pagina+': no queda ningún sello ni final secreto.');
       t.check(d.querySelectorAll('#mCampana .campanaRetrato').length===6&&!d.querySelector('#mCampana .completado')&&!d.querySelector('#menu.campanaCoronado'),pagina+': vuelve al logo normal y seis retratos grises.');

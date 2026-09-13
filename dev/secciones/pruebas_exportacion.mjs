@@ -54,11 +54,13 @@ try{
   }
   const t=await entorno('?estado=sobres'),{contexto,form}=t;
   assert.equal(contexto.CAOZ_COLECCION.betaDisponible(),false);
-  assert.equal(contexto.CAOZ_COLECCION.sobres(),2);assert.equal(t.aperturas,1);assert.equal(form.elements.acabado.disabled,true);
-  const sobre=contexto.CAOZ_COLECCION.abrirSobre();assert.equal(sobre.cartas.length,5);assert.ok(sobre.cartas.slice(0,3).every(c=>c.acabado==='normal'));assert.equal(sobre.cartas[3].acabado,'foil');assert.ok(['normal','foil'].includes(sobre.cartas[4].acabado));
+  assert.equal(contexto.CAOZ_COLECCION.sobres(),3);assert.equal(t.aperturas,1);assert.equal(form.elements.acabado.disabled,true);
+  assert.equal(contexto.CAOZ_COLECCION.recompensasPendientes().length,0);
+  assert.equal(contexto.CAOZ_COLECCION.inventarioSobres().length,3);
+  const sobre=contexto.CAOZ_COLECCION.abrirSobre('trucos');assert.equal(sobre.cartas.length,5);assert.ok(sobre.cartas.slice(0,3).every(c=>c.acabado==='normal'));assert.equal(sobre.cartas[3].acabado,'foil');assert.ok(['normal','foil'].includes(sobre.cartas[4].acabado));
   form.elements.vista.value='desktop';t.submit();
   assert.equal(new URL(contexto.location.href).pathname,'/escritorio.html');
-  console.log('✓ En un dominio remoto hay dos sobres, cinco cartas mixtas y cambio de presentación, con memoria temporal.');
+  console.log('✓ En un dominio remoto hay tres sobres elegidos, cinco cartas mixtas y cambio de presentación, con memoria temporal.');
   for(const acabado of ['normal','foil','dorado']){
     const t=await entorno('?estado=muestrario&acabado='+acabado),m=t.contexto.CAOZ_COLECCION;
     assert.ok(m.ids().every(id=>m.elegido(id)===acabado&&['normal','foil','dorado'].every(a=>m.cantidad(id,a)===1)),'Una copia de cada edición y la serie seleccionada para todo el muestrario');

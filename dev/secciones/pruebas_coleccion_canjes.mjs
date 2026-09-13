@@ -1,4 +1,4 @@
-/* Recorrido de sobres temáticos y mejoras sobre los componentes reales.
+/* Recorrido de mejoras sobre los componentes reales. Sobres: pruebas_sobres_elegidos.mjs.
    El laboratorio mantiene el progreso en memoria y no publica ni juega. */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -49,54 +49,8 @@ try{
       await pagina.getByRole('button',{name:'Canjear',exact:true}).click();
       await pagina.locator('.coleccionCanjeListo[data-carta="eric"]').click();
       assert.ok(await pagina.locator('.coleccionVersion[data-edicion="foil"]').getAttribute('class').then(c=>c.includes('vista')),'La lista de mejoras dirige al acabado con copias suficientes');
-      await pagina.getByRole('button',{name:'Sobres',exact:false}).first().click();
-      assert.equal(await pagina.locator('.coleccionGrupo').count(),3);
-      if(await pagina.locator('.coleccionGrupoCompacto select').isVisible())await pagina.locator('.coleccionGrupoCompacto select').selectOption('caos');else await pagina.locator('.coleccionGrupo[data-grupo="caos"]').click();
-      assert.equal(await pagina.locator('.coleccionGrupo[aria-pressed="true"]').getAttribute('data-grupo'),'caos');
-      await pagina.locator('.coleccionVerContenido').click();assert.ok(await pagina.locator('#coleccionContenidoGrupo').isVisible());
-      assert.equal(await pagina.locator('#coleccionContenidoGrupo>span').count(),48);
-      assert.ok(await pagina.locator('.coleccionElegirGrupo').evaluate(n=>{n.scrollTop=0;const primero=n.firstElementChild.getBoundingClientRect(),r=n.getBoundingClientRect();return primero.top>=r.top;}),'El inicio de los grupos no se recorta al expandir contenido');
-      await pagina.locator('#coleccionContenidoGrupo>span').last().scrollIntoViewIfNeeded();
-      await dentro(pagina,'#coleccionContenidoGrupo>span:last-child');
-      await pagina.locator('#coleccionContenidoGrupo>span').first().scrollIntoViewIfNeeded();
-      await dentro(pagina,'#coleccionContenidoGrupo>span:first-child');
-      if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-contenido.png')});
-      assert.ok((await pagina.locator('#coleccionContenidoGrupo').textContent()).includes('Thal'));
-      await pagina.locator('.coleccionVerContenido').click();
-      assert.ok((await pagina.locator('.coleccionTasas').textContent()).includes('50% Normal · 50% Foil'));
-      assert.ok(await pagina.locator('.coleccionAbrirSobre').isDisabled(),'Sin sobres el botón no gasta nada');
-      await pagina.evaluate(()=>CAOZ_COLECCION.concederSobreDomo('qa_domo'));
-      assert.equal(await pagina.locator('.coleccionGrupo[aria-pressed="true"]').getAttribute('data-grupo'),'caos','El premio conserva el grupo seleccionado');
-      await dentro(pagina,'.coleccionAbrirSobre,.coleccionSobreCuenta');
-      await pagina.locator('.coleccionTasas').scrollIntoViewIfNeeded();
-      await dentro(pagina,'.coleccionTasas');
-      if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-sobres.png')});
-      await pagina.evaluate(()=>window.CAOZ_QA_FALLO_GUARDADO=true);
-      await pagina.locator('.coleccionAbrirSobre').click();
-      assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.sobres()),1,'No se gasta el sobre si falla el guardado');
-      assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.pendiente()),null);
-      assert.ok(await pagina.locator('.coleccionAbrirSobre').isEnabled());
-      await pagina.evaluate(()=>window.CAOZ_QA_FALLO_GUARDADO=false);
-      await pagina.locator('.coleccionAbrirSobre').click();await pagina.locator('.sobresApertura[data-fase="sellado"]').waitFor();
-      const pendiente=await pagina.evaluate(()=>CAOZ_COLECCION.pendiente());
-      assert.equal(pendiente.grupo,'caos');assert.equal(pendiente.cartas.length,5);assert.equal(pendiente.cartas.filter(c=>c.acabado==='dorado').length,0);
-      assert.ok([1,2].includes(pendiente.cartas.filter(c=>c.acabado==='foil').length));
-      assert.ok(await pagina.evaluate(()=>{const m=CAOZ_COLECCION,g=m.grupos().find(g=>g.id==='caos');return m.pendiente().cartas.every(c=>g.ids.includes(c.id));}));
-      await pagina.locator('.coleccionCerrar').click();await pagina.getByRole('button',{name:'Abrir colección',exact:true}).click();
-      await pagina.locator('.sobresApertura[data-fase="sellado"]').waitFor();assert.deepEqual(await pagina.evaluate(()=>CAOZ_COLECCION.pendiente()),pendiente,'Cerrar y regresar conserva cartas y grupo');
-      await pagina.locator('.sobresAccion').click();await pagina.locator('.sobresApertura[data-fase="pila"]').waitFor();
-      for(let j=0;j<5;j++){await pagina.locator('.sobresAccion').click();await pagina.locator('.sobresApertura[data-fase="'+(j===4?'ultima':'pila')+'"]').waitFor();}
-      await pagina.locator('.sobresAccion').click();await pagina.locator('.sobresApertura[data-fase="terminado"]').waitFor();
-      await pagina.locator('.sobresAccion').click();await pagina.locator('.coleccionGrupo').first().waitFor({state:'attached'});
-      assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.sobres()),0);assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.pendiente()),null);
-      await pagina.goto(urlPara({vista,estado:'sobres',pestana:'sobres'}));
-      await pagina.locator('#coleccionPanel[data-vista="sobres"]').waitFor();
-      assert.equal(await pagina.locator('.coleccionGrupo').count(),3,'El enlace de revisión abre directamente las tres colecciones');
-      assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.sobres()),2,'Los sobres de la revisión sólo existen en memoria');
-      await dentro(pagina,'.coleccionAbrirSobre');
-      if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-tres-colecciones.png')});
       assert.deepEqual(errores,[]);
-      console.log('✓ '+vista+' '+width+'×'+height+': canjes encadenados, desbloqueo permanente, marcadores, grupos, contenido, mezcla y apertura recuperable');
+      console.log('✓ '+vista+' '+width+'×'+height+': canjes encadenados, fallo de guardado recuperable, desbloqueo permanente y marcadores');
     }finally{await contexto.close();}
   }
 }finally{await navegador?.close();if(servidor)await new Promise(resolve=>servidor.close(resolve));}

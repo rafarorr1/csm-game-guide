@@ -7,7 +7,7 @@ const ruta=new URL('../../caoz_tcg/sobres-apertura.js',import.meta.url);
 const fuente=fs.readFileSync(ruta,'utf8');
 const microtareas=async()=>{for(let i=0;i<12;i++)await Promise.resolve();};
 
-function entorno(codigo,{cantidad=5,reducido=true,imagenes=null,rechazarVuelta=false}={}){
+function entorno(codigo,{cantidad=5,reducido=true,imagenes=null,rechazarVuelta=false,grupo=null}={}){
   const nodos=[],ilustraciones=[],medidas={cartas:0,vueltas:0,orientaciones:0,retirados:0,movidos:0,cambios:0,aperturas:0,decodes:0};
   let ahora=0,siguienteTarea=0;
   const tareas=new Map(),programar=(fn,ms=0,raf=false)=>{const id=++siguienteTarea;tareas.set(id,{fn,cuando:ahora+ms,raf});return id;};
@@ -39,15 +39,15 @@ function entorno(codigo,{cantidad=5,reducido=true,imagenes=null,rechazarVuelta=f
   }
   const documento=new Nodo('document');documento.createElement=tag=>new Nodo(tag);documento.hidden=false;
   documento.body=new Nodo('body');documento.append(documento.body);documento.activeElement=documento.body;
-  const ventana={CAOZ_SOBRES_ESCENA:{crear:()=>({abrir:()=>{medidas.aperturas++;return Promise.resolve();},destruir(){},redimensionar(){},
-    rectangulo:()=>({x:0,y:0,width:200,height:300}),orientar(){medidas.orientaciones++;}})}};
+  const ventana={CAOZ_SOBRES_ESCENA:{crear:(_,opciones)=>{medidas.grupo=opciones.grupo;return ({abrir:()=>{medidas.aperturas++;return Promise.resolve();},destruir(){},redimensionar(){},
+    rectangulo:()=>({x:0,y:0,width:200,height:300}),orientar(){medidas.orientaciones++;}});}}};
   // El reloj controlado comprueba que la quinta no avanza por tiempo transcurrido;
   // reducido reproduce también promesas resueltas antes de destruir la vista.
   new vm.Script(codigo,{filename:'sobres-apertura.js'}).runInNewContext({window:ventana,document:documento,
     ResizeObserver:class{observe(){}disconnect(){}},matchMedia:()=>({matches:reducido}),performance:{now:()=>ahora},
     requestAnimationFrame:fn=>programar(fn,16,true),cancelAnimationFrame:id=>tareas.delete(id),setTimeout:programar,clearTimeout:id=>tareas.delete(id)});
   const host=new Nodo('main');documento.body.append(host);
-  const componente=ventana.CAOZ_SOBRES.crear(host,{reducirMovimiento:reducido,
+  const componente=ventana.CAOZ_SOBRES.crear(host,{reducirMovimiento:reducido,grupo,
     cartas:Array.from({length:cantidad},(_,i)=>({id:'carta_'+i,nombre:'Carta '+i})),
     crearCarta:c=>{
       medidas.cartas++;const carta=new Nodo('article');
@@ -316,10 +316,21 @@ console.log('✓ Destrucción sin callbacks tardíos, segundo dedo independiente
 await reintentarCierre(fuente);
 console.log('✓ Un guardado rechazado restaura el resumen y permite reintentar sin recrear las cartas.');
 
+
+async function conservarColor(codigo){
+  for(const [grupo,esperado]of [['trucos','trucos'],['juramentos','juramentos'],['caos','caos'],['talesin','caos'],['mohamed','trucos'],['rafaela','juramentos'],['__proto__',null]]){
+    const e=entorno(codigo,{grupo});
+    try{assert.equal(e.medidas.grupo,esperado,'La envoltura recibe la colección del sobre guardado');assert.equal(e.presentes('sobresApertura')[0].dataset.grupo,esperado||undefined);await e.abrir();assert.equal(e.medidas.grupo,esperado,'Abrir conserva el color');}finally{e.componente.destruir();}
+  }
+}
+await conservarColor(fuente);
+console.log('✓ Cada colección conserva su envoltura al abrir; también los pendientes de grupos anteriores.');
+
 if(process.argv.includes('--sabotaje')){
   function reemplazar(texto,buscar,cambio,cantidad=1){assert.equal(texto.split(buscar).length-1,cantidad,'El sabotaje debe encontrar la corrección exacta');return texto.replaceAll(buscar,cambio);}
   function enFuncion(texto,inicio,fin,mutacion){const a=texto.indexOf(inicio),b=texto.indexOf(fin,a);assert.ok(a>=0&&b>a,'El sabotaje debe delimitar la función correcta');return texto.slice(0,a)+mutacion(texto.slice(a,b))+texto.slice(b);}
   const casos=[
+    ['perder la colección al abrir',conservarColor,reemplazar(fuente,'{variante,grupo,logoUrl:','{variante,logoUrl:')],
     ['ocultar el resumen al fallar el guardado',reintentarCierre,reemplazar(fuente,"if(opciones.onVolver?.()===false&&!muerto){raiz.style.opacity='';cambiar('terminado');}",'opciones.onVolver?.();')],
     ['activar después de destruir',destruidoNoVuelve,reemplazar(reemplazar(fuente,'function activar(){if(muerto)return;','function activar(){'),"if(fase!=='terminado'||muerto)return;","if(fase!=='terminado')return;")],
     ['continuar un volteo destruido',destruirEntreContinuaciones,enFuncion(fuente,'async function voltear(){','function activar(){',s=>reemplazar(s,'})||muerto)return;','}))return;',3))],

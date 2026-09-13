@@ -14,6 +14,9 @@
     let fase='sellado',reveladas=0,muerto=false,actual=null,yaw=0,pitch=0,puntero=null,caja=null;
     const tareas=new Set(),cargas=new Set(),limpiezas=[];let preparacion=null;
     const raiz=nodo('section','sobresApertura');raiz.dataset.variante=variante;
+    const grupos={trucos:'trucos',juramentos:'juramentos',caos:'caos',mohamed:'trucos',fender:'trucos',adreida:'juramentos',rafaela:'juramentos',gero:'caos',talesin:'caos'};
+    const grupo=Object.prototype.hasOwnProperty.call(grupos,opciones.grupo)?grupos[opciones.grupo]:null;
+    if(grupo)raiz.dataset.grupo=grupo;
     const escena=nodo('div','sobresTeatro'),aura=nodo('div','sobresAura'),suelo=nodo('div','sobresSuelo');
     const pila=nodo('div','sobresPila'),lienzo=nodo('div','sobresLienzo'),brillo=nodo('div','sobresDestello');
     const gesto=nodo('button','sobresGesto');gesto.type='button';
@@ -26,7 +29,7 @@
     const pie=nodo('div','sobresPie'),estado=nodo('p','sobresEstado'),accion=nodo('button','sobresAccion');
     estado.setAttribute('role','status');estado.setAttribute('aria-live','polite');accion.type='button';
     pie.append(estado,accion);raiz.append(escena,pie,reserva);host.replaceChildren(raiz);
-    const render=window.CAOZ_SOBRES_ESCENA.crear(lienzo,{variante,logoUrl:opciones.logoUrl,reducirMovimiento:reducido,alRomper:()=>{if(!muerto)pila.classList.add('visible');}});
+    const render=window.CAOZ_SOBRES_ESCENA.crear(lienzo,{variante,grupo,logoUrl:opciones.logoUrl,reducirMovimiento:reducido,alRomper:()=>{if(!muerto)pila.classList.add('visible');}});
     function oir(n,t,f,opts){n.addEventListener(t,f,opts);limpiezas.push(()=>n.removeEventListener(t,f,opts));}
     function esperarImagen(img,reintentar){
       img.loading='eager';img.decoding='async';
