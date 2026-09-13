@@ -1,5 +1,57 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 257 · Correo compatible con Cloudflare · 2026-09-13
+
+- La solicitud de código llegaba a D1, pero Cloudflare lanzaba un error antes de
+  contactar con Resend: su runtime no implementa `redirect:'error'`. Se comprobó
+  con workerd y la misma fecha de compatibilidad del despliegue.
+- El transporte usa `redirect:'manual'` y conserva el rechazo de respuestas sin
+  éxito. Un 302 no se sigue, de modo que la clave y el código nunca se reenvían
+  a la dirección de una redirección. No cambian las credenciales ni las reglas
+  de sesión, códigos y progreso.
+- Al importar otra cuenta o cerrar sesión se invalida el borrador de miniatura
+  en memoria, sin borrar el personaje importado. El creador deja de mostrar el
+  nombre y aspecto de la cuenta anterior. Regresión A → B → invitado, en ambas
+  pantallas y con sabotaje.
+- Se incorpora regresión del transporte y se comprueba por sabotaje. El estado
+  de entrega real y publicación se registra en `HANDOFF.md`.
+
+### Sin numerar · build 256 en preparación · Primer acceso a cuentas · 2026-09-13
+
+- En la beta255, abrir Mi cuenta sin haber iniciado sesión interpretaba el
+  HTTP401 anónimo como una sesión vencida. Ahora se abre sin aviso de error y
+  conserva la pestaña elegida; seguir como invitado tampoco cambia de pantalla.
+- Una sesión conocida o un progreso ya vinculado siguen mostrando el aviso
+  correspondiente si caducan. El401 no borra progreso, vínculo, cola ni respaldos.
+- Casos de servicio/modelo y recorrido real de ambos HTML cubren primer acceso,
+  invitado y caducidad. El sabotaje de la detección anónima reproduce el fallo.
+- El correo tolera espacios y saltos exteriores al pegar clave/remitente en el
+  panel, conservando la validación estricta del contenido y usando los valores
+  normalizados al enviar. Pruebas sin correo real y cuatro sabotajes cubren el
+  cambio; aún no se atribuye a éste la resolución del HTTP503 observado en beta.
+- Las solicitudes de correo identifican a Caoz en `User-Agent`, cabecera exigida
+  por Resend. La prueba comprueba el valor exacto y falla si se omite o cambia;
+  este ajuste posterior a la tanda completa aún requiere validación al publicar.
+- Se reserva256 porque255 ya fue publicada en beta; no se sustituyen los bytes
+  de esa versión. Este cambio todavía no acredita publicación de256.
+
+### Sin numerar · build 255 en preparación · Cuentas y progreso guardado · 2026-09-13
+
+- Propuesta aislada aprobada y publicación autorizada: Extras → Mi cuenta,
+  registro y acceso con correo/código, perfil y modo invitado en ambas pantallas.
+- Captura conjunta de campaña, miniatura, sellos, colección, sobres, recibos y
+  récords; vinculación con respaldo y elección de progreso cuando existen dos
+  copias. Las cartas de un sobre ya abierto no se vuelven a sortear ni premiar.
+- Cola local persistente y guardado por revisión/operación; reintentar un acuse
+  perdido no duplica inventario. Corregidos el alias móvil que podía reponer
+  cartas gastadas y la copia de una cuenta que quedaba al iniciar otra.
+- Sesiones privadas, códigos caducables, límites de intentos/envíos y base D1
+  independiente por entorno. La API no se cachea y no guarda textos de deseos.
+  El juego como invitado sigue disponible sin servicio de cuentas.
+- Servidor y correo preparados; bases migradas, conexión Pages y DNS de correo
+  pendientes. Validación completa: 83 suites verdes y cero fallos. **255 aún no publicada: beta y
+  producción continúan en 254.** Esta entrada no acredita correo real operativo.
+
 ### v22 · build 254 · Premios elegibles y biblioteca de sobres · 2026-09-12
 
 - Revisión aislada aprobada: elegir un sobre al ganar contra el Domo y tres al

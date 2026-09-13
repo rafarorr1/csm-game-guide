@@ -50,7 +50,15 @@ const datos={'index.html':'Apertura de cinco cartas','procedencia.json':'{"secci
  'sobres.js':fs.readFileSync('componente.js')};
 for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs']:
+        (secciones / 'cuenta-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Tu cuenta del Domo','procedencia.json':'{"seccion":"cuenta"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'cuenta-demo.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
+''')
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_exportacion.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -269,7 +277,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         self.assertEqual(self.referencias_protegidas(), protegido)
 
     def test_sobres_exportador_propio_y_registro_explicito(self):
-        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres'})
+        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta'})
         original_run = subprocess.run
         llamadas = []
         def registrar(args, **opciones):
@@ -296,11 +304,38 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de sobres: procedencia.json'):
             p.validar_paquete(salida, 'sobres')
 
-    def test_tres_secciones_conservan_hermanas_byte_a_byte(self):
+    def test_cuenta_usa_exportador_y_pruebas_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('cuenta')
+        self.assertEqual(llamadas, ['cuenta-exportar.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'cuenta')
+        self.assertEqual(set(registro['secciones']), {'cuenta'})
+        self.assertEqual(manifiesto['seccion'], 'cuenta')
+        self.assertIn('tcg/cuenta/index.html', contenido)
+        self.assertNotIn('tcg/cuenta/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../cuenta', 'cuenta/../rey', 'main', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida: elige coleccion, rey, sobres, cuenta'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/cuenta/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/cuenta/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de cuenta: procedencia.json'):
+            p.validar_paquete(salida, 'cuenta')
+
+    def test_cuatro_secciones_conservan_hermanas_byte_a_byte(self):
         protegidas = self.referencias_protegidas()
         ultimo = None
         esperados = {}
-        for seccion in ['coleccion', 'rey', 'sobres']:
+        for seccion in ['coleccion', 'rey', 'sobres', 'cuenta']:
             salida = self.preparar(seccion)
             resultado = p.publicar(self.repo, salida, seccion)
             revision = resultado['commit']
@@ -314,7 +349,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             self.assertEqual(self.referencias_protegidas(), protegidas)
             ultimo = revision
         cabeceras = self.git('show', f'{ultimo}:tcg/_headers', binario=True)
-        for seccion in ['sobres', 'coleccion', 'rey']:
+        for seccion in ['cuenta', 'sobres', 'coleccion', 'rey']:
             (self.repo / 'componente.js').write_text(f'const revision = "Nueva {seccion}";')
             self.git('commit', '-qam', f'Revisar {seccion}')
             protegidas = self.referencias_protegidas()
@@ -329,7 +364,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             self.assertEqual(self.referencias_protegidas(), protegidas)
             self.assertFalse(p.publicar(self.repo, salida, seccion)['nuevo'])
             registro = json.loads(self.git('show', f'{revision}:{p.MARCADOR}'))
-            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres'})
+            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres', 'cuenta'})
             indice = self.git('show', f'{revision}:tcg/index.html')
             for hermana in esperados:
                 self.assertIn(f'href="./{hermana}/"', indice)
@@ -489,6 +524,24 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         self.assertTrue(resultado['verificado_web'])
         self.assertEqual(resultado['url'], 'https://revision.example/sobres/')
         self.assertEqual(set(llamadas), {'sobres/index.html', 'sobres/procedencia.json', 'sobres/publicacion.json', 'sobres/sobres.js'})
+
+    def test_verificar_cuenta_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('cuenta')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'cuenta')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/cuenta/')
+        self.assertEqual(set(llamadas), {'cuenta/index.html', 'cuenta/procedencia.json', 'cuenta/publicacion.json', 'cuenta/cuenta-demo.js'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otra cuenta'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'cuenta')
 
 
 if __name__ == '__main__':

@@ -194,12 +194,24 @@ function borrarRecords(){ try{ localStorage.removeItem(RECORDS_CLAVE); }catch(e)
 /* Borrado explícito desde Extras. Sólo progreso: no cachés, arte ni ajustes.
    Recargar después del borrado descarta también campañas, sellos y escenas
    retenidos en memoria. Nunca se borra al abrir o cancelar la confirmación. */
+/* Una importación confirmada renueva sólo los caches de los menús. Nunca se
+   llama para el guardado ordinario ni durante una batalla o escena de campaña. */
+function cuentaRecargarProgreso(){
+  if(!document.querySelector('#extras.on,#menu.on')||document.querySelector('#board.on,#campanaPanel[open]'))return false;
+  campanaMemoria=null;campanaEnsayoGero=null;RECORD_ULTIMO=null;
+  // Invalidar sólo la copia en memoria: borrar la clave aquí eliminaría el
+  // personaje que acabamos de importar de la cuenta nueva.
+  campanaBorrador=null;
+  window.CAOZ_COLECCION_JUEGO?.limpiarPremiosDomo?.();
+  window.campanaActualizarHonores?.();return true;
+}
 function clavesProgresoLocal(){
   const pruebas=new URLSearchParams(location.search).has('test')?'.prueba':'';
   const logros='caoz.campana.logros.v1'+pruebas;
   return [CAMPANA_CLAVE,CAMPANA_CLAVE+'.creador',logros,logros+'.simulados',RECORDS_CLAVE,'caoz_nombre',window.CAOZ_COLECCION?.clave,window.CAOZ_COLECCION_JUEGO?.clavePremiosDomo?.()].filter(Boolean);
 }
 function borrarProgresoLocal(){
+  const cuenta=window.CAOZ_CUENTA_JUEGO?.reiniciarLocal?.();if(cuenta!==undefined&&cuenta!==null)return cuenta;
   const claves=clavesProgresoLocal(),anteriores=new Map();
   try{
     // Leer todo primero: si el navegador bloquea el almacenamiento, no empezar.
@@ -219,16 +231,23 @@ function confirmarBorradoProgreso(){
   const panel=document.getElementById('ovPanel');
   panel.innerHTML='<h3 id="borrarProgresoTitulo">¿Borrar todo tu progreso?</h3>'+
     '<p>Se eliminarán tu campaña, tu personaje, todos los logros de los mazos y del final secreto, tus récords, los sobres y acabados desbloqueados de tu Colección y tu nombre guardado en este navegador o app.</p>'+
-    '<p><b>No se puede deshacer.</b> Tus ajustes de sonido se conservarán.</p>';
+    (window.CAOZ_CUENTA_JUEGO?.vinculada()?'<p>También se reemplazará el progreso guardado en tu cuenta por una aventura nueva. Tu cuenta y tu correo se conservarán.</p>':'')+
+    '<p><b>No se puede deshacer desde el juego.</b> Tus ajustes de sonido se conservarán.</p>';
   const aviso=el('p','');aviso.id='borrarProgresoError';aviso.setAttribute('role','alert');aviso.hidden=true;panel.appendChild(aviso);
   const opciones=el('div','opts');opciones.style.cssText='display:flex;flex-wrap:wrap;justify-content:center;gap:12px;margin-top:18px';
   const cancelar=el('button','btn','Cancelar');cancelar.id='borrarProgresoCancelar';
   cancelar.onclick=()=>{cerrarOv();document.getElementById('mBorrarProgreso').focus({preventScroll:true});};
   const borrar=el('button','btn','Sí, borrar todo');borrar.id='borrarProgresoConfirmar';
   borrar.style.cssText='background:linear-gradient(135deg,#6d2929,#351313);color:#ffe1d8;border-color:#b36958';
-  borrar.onclick=()=>{
-    if(borrar.disabled)return;borrar.disabled=true;
+  borrar.onclick=async()=>{
+    if(borrar.disabled)return;borrar.disabled=true;aviso.hidden=true;
+    if(window.CAOZ_CUENTA_JUEGO?.vinculada()&&!await window.CAOZ_CUENTA_JUEGO.antesDeBorrar()){
+      aviso.hidden=false;aviso.textContent='Primero entra a Mi cuenta y guarda o resuelve el progreso pendiente. Todavía no borramos nada.';borrar.disabled=false;return;
+    }
     if(borrarProgresoLocal()){
+      if(window.CAOZ_CUENTA_JUEGO?.vinculada()&&!await window.CAOZ_CUENTA_JUEGO.despuesDeBorrar()){
+        aviso.hidden=false;aviso.textContent='El borrado quedó pendiente de guardar en tu cuenta. Revisa Mi cuenta y la conexión antes de continuar.';borrar.disabled=false;return;
+      }
       // La misma URL conserva la versión beta/móvil y empieza sin datos vivos.
       location.reload();
     }else{

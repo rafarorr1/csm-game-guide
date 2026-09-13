@@ -1,6 +1,6 @@
 # Secciones aisladas
 
-Este entorno ofrece vistas acotadas de Colección, El Rey y apertura de sobres. No monta el juego dentro de un iframe,
+Este entorno ofrece vistas acotadas de Colección, El Rey, apertura de sobres y Cuenta. No monta el juego dentro de un iframe,
 no crea una partida y no carga IA, online, campaña, sonido ni service worker.
 Los cambios hechos aquí no afectan el progreso del jugador.
 
@@ -35,6 +35,19 @@ las dependencias se derivan del código actual en cada solicitud.
 Cerrar el diálogo muestra los controles del laboratorio. Allí se puede cambiar
 la presentación, los datos de prueba y la serie del muestrario. Cada recarga
 construye de nuevo esos datos temporales.
+
+## Cuenta por correo y código
+
+[Revisar la propuesta de cuenta](https://aislados.caoz-tcg.pages.dev/cuenta/).
+El código se muestra en el buzón de prueba. Todo vive en memoria: no se envían
+correos, no se crean cuentas reales y no se lee ni modifica el avance del jugador.
+«Escenarios» permite probar cuenta nueva, vinculación, acceso, dos avances y
+desconexión. Cada recarga reinicia los datos de ejemplo.
+
+Local: <http://127.0.0.1:8878/dev/secciones/cuenta.html>. Las pruebas acotadas son
+`pruebas_cuenta_modelo.mjs`, `pruebas_cuenta_exportacion.mjs` y
+`pruebas_cuenta_ui.mjs`. El publicador
+acepta `--seccion cuenta`. [Contrato y plan de integración](CUENTAS.md).
 
 ## Colección: copias y muestrario de ediciones
 
