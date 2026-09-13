@@ -87,10 +87,8 @@
       if(activa==='crear')f.appendChild(campo({etiqueta:'Nombre del jugador',nombre:'nombre',autocomplete:'nickname',maximo:40,minimo:2}).l);
       const correo=campo({etiqueta:'Correo electrónico',nombre:'correo',tipo:'email',autocomplete:'email',maximo:254});correo.i.inputMode='email';correo.i.autocapitalize='none';correo.i.placeholder='tu@correo.com';f.appendChild(correo.l);
       f.appendChild(nodo('p','cuentaAyuda',estado.obligatoria?'Te enviaremos un código. Sin contraseña.':'Te enviaremos un código de acceso. No necesitas contraseña.'));
-      f.appendChild(nodo('p','cuentaAyuda cuentaDatos',estado.obligatoria?'Guardamos tu correo, nombre y progreso: campaña, cartas, sobres y récords.':'Tu cuenta guarda tu correo, tu nombre de jugador y tu progreso: campaña, colección, sobres y récords.'));
       const enviar=boton(estado.ocupado?'Preparando tu código…':'Enviar código',()=>{},'','enviar');enviar.type='submit';enviar.onclick=null;
       f.onsubmit=e=>{e.preventDefault();if(f.reportValidity())void accion(()=>modelo.solicitar({correo:borrador.correo.trim(),nombre:activa==='crear'?borrador.nombre.trim():'',intencion:activa}));};
-      if(estado.obligatoria)f.appendChild(nodo('p','cuentaAyuda cuentaAccesoOffline','Primer acceso con internet; después, juega sin conexión en la app. Tu avance se sincroniza al reconectar.'));
       f.appendChild(acciones(enviar,estado.obligatoria?null:boton('Seguir sin cuenta',()=>modelo.invitado(),'cuentaBotonSecundario','invitado')));contenido.append(tabs,f);
     }
     function pantallaCodigo(){
