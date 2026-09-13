@@ -1,6 +1,6 @@
 # Secciones aisladas
 
-Este entorno abre **sólo la Colección real**. No monta el juego dentro de un iframe,
+Este entorno ofrece vistas acotadas de Colección, El Rey y apertura de sobres. No monta el juego dentro de un iframe,
 no crea una partida y no carga IA, online, campaña, sonido ni service worker.
 Los cambios hechos aquí no afectan el progreso del jugador.
 
@@ -33,10 +33,91 @@ las dependencias se derivan del código actual en cada solicitud.
 4. Tras aprobar la sección, integrar y ejecutar las guardas completas antes de beta.
 
 Cerrar el diálogo muestra los controles del laboratorio. Allí se puede cambiar
-entre **jugador nuevo**, **dos sobres**, **acabados desbloqueados** y **sobre
-anterior de tres cartas**. Cada recarga construye de nuevo esos datos temporales.
-Las Doradas del escenario «Acabados desbloqueados» son fixtures de desarrollo;
-no implementan ni simulan un canje de códigos.
+la presentación, los datos de prueba y la serie del muestrario. Cada recarga
+construye de nuevo esos datos temporales.
+
+## Colección: copias y muestrario de ediciones
+
+La revisión de sobres reúne tres colecciones: Trucos del Domo (48 cartas),
+Juramentos del Domo (46) y Caos y Dragones (48). Entre las tres se conserva el
+catálogo completo de 134 cartas. `?estado=sobres&pestana=sobres` abre directamente
+el carrusel con tres sobres sellados (uno de cada tipo), también desde
+`/coleccion/` publicado. `estado=premio-domo` permite elegir uno y
+`estado=premio-campana` permite combinar tres. Guardarlos no concede cartas.
+Trucos es azul, Juramentos verde y Caos rojo. La biblioteca conserva ese color
+al abrir la envoltura 3D y permite deslizar con dedo/ratón o usar flechas/teclado.
+Se mantienen las cinco cartas por sobre: tres Normales, una Foil y quinta 50/50.
+
+Debajo de cada carta sólo aparecen los marcadores de las ediciones que posee
+el jugador, sin contador ni texto. Las ediciones bloqueadas no se dibujan;
+la equipada queda resaltada. Desbloquear una edición añade su marcador,
+pero recibir otra copia de la misma no añade otro.
+El detalle muestra la cantidad de cada edición por separado, incluida `0 copias`
+para una edición bloqueada. La ilustración del listado corresponde al acabado
+elegido; mirar otra versión en el detalle no la equipa. «Usar» cambia esa elección
+sin aumentar cantidades. El pie de Colección sigue contando cartas Normales y
+ediciones especiales distintas, no el total de copias.
+
+| Escenario (`estado`) | Datos temporales |
+|---|---|
+| `nuevo` | Una copia Normal por ID, ninguna premium y ningún sobre. |
+| `sobres` | Inventario inicial y tres sobres sellados, uno de cada colección. Predeterminado. |
+| `premio-domo` | Victoria preparada: elegir un sobre y guardarlo. |
+| `premio-campana` | Campaña terminada: elegir tres sobres, iguales o combinados. |
+| `legado-sobres` | Cinco sobres antiguos sin tipo: elegir tres y luego dos, sin perder saldo. |
+| `canjes` | Cinco Normales ganadas de Thal y cuatro Foil, para probar mejoras encadenadas. |
+| `ediciones` | Copias repetidas de Eric, Thal y el protagonista `lider_fender`, con las cantidades de la tabla siguiente. Thal comienza usando Dorada. |
+| `muestrario` | Una copia de cada acabado para todos los IDs. `acabado=normal`, `foil` o `dorado` equipa esa serie en toda la rejilla; por defecto usa Normal. |
+| `legacy` | Un sobre pendiente anterior de tres cartas, ya concedidas, con Foil, Dorada y un protagonista. Reabrirlo conserva ese resultado. |
+
+Cantidades conocidas del fixture `ediciones`:
+
+| ID | Normal | Foil | Dorada | Total debajo de la carta |
+|---|---:|---:|---:|---:|
+| `eric` | 1 | 3 | 2 | 6 |
+| `tal` | 1 | 5 | 1 | 7 |
+| `lider_fender` | 1 | 2 | 4 | 7 |
+
+El resto conserva una Normal y cero premium. Los dos fixtures conceden sus
+copias mediante `otorgarCopia` del modelo real. Las Doradas sirven para revisar
+la interfaz y las ilustraciones; no implementan ni simulan un canje de códigos.
+El muestrario permite recorrer también las cartas fuera de los mazos y los
+protagonistas, conservando la búsqueda y los filtros de Colección.
+
+Ejemplos locales:
+
+- Cantidades en móvil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=ediciones>
+- Serie Foil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=muestrario&acabado=foil>
+- Thal Dorada en detalle: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=muestrario&acabado=dorado&carta=tal>
+
+Los parámetros `estado`, `acabado` y `carta` también se aceptan en la entrada
+alojada `/coleccion/`, que elige móvil o escritorio y los conserva. El parámetro
+opcional `carta` abre directamente un ID conocido desde esa entrada, el HTML
+del laboratorio o las páginas exportadas `movil.html` y `escritorio.html`.
+
+Cada acabado tiene su original local y su encuadre. La disponibilidad de una
+ilustración premium no concede esa edición al inventario real. El laboratorio
+sólo consulta esos originales públicos: permite revisar las series sin traer
+reemplazos ni ajustes privados del estudio.
+
+### Cantidades y límites de migración
+
+`cantidad(id)` devuelve el total; `cantidad(id, acabado)` devuelve una edición.
+Normal empieza con una copia implícita. `otorgarCopia` suma una copia explícita;
+`desbloquear` es idempotente y no suma si la edición ya estaba desbloqueada.
+Elegir un premio guarda sus tipos, sin conceder cartas ni consumir azar. Los
+sobres antiguos sin tipo pasan a elecciones pendientes; cada tanda contiene
+hasta tres. Abrir descuenta uno del tipo seleccionado, suma todas sus copias y
+guarda el contenido pendiente en la misma escritura. Si el guardado falla, no se descuenta el sobre ni se conceden
+copias. Reabrir su presentación o cambiar el acabado elegido no vuelve a sumar.
+
+Se conserva la clave y el formato de progreso v1. Los datos antiguos sin
+contadores se interpretan como una Normal por ID y al menos una copia por cada
+premium ya desbloqueado. No se puede recuperar cuántos duplicados se obtuvieron
+antes: ese historial nunca se guardó. El pendiente legado de tres cartas se
+conserva como premio ya concedido; no sirve para reconstruir ni aumentar ese
+historial. La migración se incorpora al siguiente guardado correcto. Estos
+contadores siguen siendo locales, sin sincronización entre dispositivos.
 
 ## Procedencia y límites
 
@@ -82,6 +163,48 @@ aislamiento del almacenamiento, componentes servidos y bloqueos HTTP/CSP.
 Además, al cambiar Colección, revisar sus interacciones en el navegador: búsqueda,
 tres columnas, scroll del listado y regreso a su posición, acabados, apertura de cinco cartas, reapertura del sobre pendiente y
 navegación de regreso. Estas pruebas acotadas no sustituyen la integración final.
+
+Para cambios en cantidades o en las series del muestrario, usar las regresiones
+específicas de esa sección:
+
+```sh
+node caoz_tcg/pruebas_coleccion.mjs
+node caoz_tcg/pruebas_arte_ediciones.mjs
+node caoz_tcg/pruebas_originales_acabados.mjs
+node dev/secciones/pruebas_coleccion_copias.mjs
+node dev/secciones/pruebas_coleccion_muestrario.mjs
+node dev/secciones/pruebas_coleccion_protagonistas.mjs
+```
+
+Después de publicar, `BASE_URL=https://aislados.caoz-tcg.pages.dev/coleccion/`
+permite repetir `pruebas_coleccion_copias.mjs` sobre el paquete servido,
+sin arrancar un servidor local ni tocar el progreso real.
+
+Comprueban los marcadores poseídos, las cantidades del detalle, la selección visual, el aislamiento del muestrario,
+los protagonistas y los originales por acabado. Las pruebas del estudio usan
+respuestas simuladas y no escriben en sus bases de datos. Revisar también en
+móvil y escritorio que el total no se recorte y que cada serie conserve su
+imagen y encuadre al abrir el detalle y regresar al listado.
+
+### Elección de recompensas y biblioteca de sobres
+
+```sh
+node caoz_tcg/pruebas_coleccion.mjs --sabotaje
+node caoz_tcg/pruebas_recompensas_domo.mjs
+node dev/secciones/pruebas_sobres_apertura.mjs --sabotaje
+node dev/secciones/pruebas_coleccion_canjes.mjs
+node dev/secciones/pruebas_sobres_elegidos.mjs
+```
+
+Los dos últimos usan Playwright instalado (opcional `PLAYWRIGHT_MODULE`) y
+navegadores temporales, en 1440×900, 390×844 y 320×568. Aceptan `BASE_URL` para
+repetirlos sobre `/coleccion/` publicado y `--capturas /ruta` para guardar
+capturas fuera del worktree. La prueba de sobres recorre elección 1/3,
+repetidos, fallo de escritura y reintento, arrastre de ratón y swipe táctil,
+navegación por teclado, tipo consumido, color, reapertura y legado. La de
+canjes mantiene la regresión de cantidades, desbloqueos permanentes y marcadores.
+La prueba VM de recompensas prepara la conexión con las victorias reales y los
+epílogos; su aspecto en el juego completo se revisará tras aprobar la sección.
 
 ## Añadir otra sección
 
@@ -160,7 +283,55 @@ python3 dev/secciones/publicar.py --seccion rey --publicar --salida /ruta/nueva
 python3 dev/secciones/publicar.py --seccion rey --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
-El registro de secciones es explícito: `coleccion` (predeterminado) y `rey`.
-Cada publicación conserva íntegra la carpeta de la otra sección y rechaza
+El registro de secciones es explícito: `coleccion` (predeterminado), `rey` y `sobres`.
+Cada publicación conserva íntegras las carpetas de las otras secciones y rechaza
 cambiar las cabeceras comunes si afectara a la hermana. No usar esta vista como
 aprobación de integración ni publicar beta/producción sin revisión previa.
+
+
+## Sobres: Sello del Domo
+
+Revisión independiente: https://aislados.caoz-tcg.pages.dev/sobres/ .
+El usuario eligió **Sello del Domo**. La funda mantiene su rotura superior
+que se enrolla y desciende fuera de cuadro. Durante las cinco revelaciones
+no se acumulan miniaturas. La quinta permanece hasta un toque adicional o
+«Ver todas las cartas», incluso con movimiento reducido o pestaña oculta; «Volver» regresa al menú de sobres del laboratorio.
+La vista conjunta usa 3+2 en teléfono y cinco en una fila en escritorio ancho.
+Las cartas conservan nombre y marco, muestran el arte sin zoom y ocultan el
+panel de habilidades/tribu. No hay un nombre repetido debajo de la carta.
+El estilo se limita al componente de sobres.
+
+Los cinco frentes se construyen una vez en una reserva oculta al montar el
+sobre. La apertura espera la descarga y decodificación de todas sus imágenes;
+los volteos y el resumen mueven esos mismos nodos, sin crear nuevas imágenes.
+Una conexión lenta muestra «Cargando tus ilustraciones…» antes de abrir.
+Un fallo o espera de 20 segundos permite reintentar con el sobre cerrado.
+Destruir/reiniciar cancela los listeners y esperas, sin abrir otra instancia.
+
+El componente reutilizable `sobres-apertura.js/css` recibe las cartas y su
+renderer; `onVolver` entrega el control al menú que lo monta, una sola vez.
+`sobres-escena.js` dibuja malla/materiales en WebGL, con alternativa Canvas 2D
+ante indisponibilidad o pérdida de contexto. El laboratorio carga cinco
+cartas reales, arte público y renderer existente. No consume sobres,
+no desbloquea cartas ni ejecuta el motor.
+
+El usuario aprobó la integración para beta 251. Colección utiliza estos mismos
+módulos con los premios reales de `coleccion-modelo.js`; la vista aislada
+conserva los datos temporales. El adaptador destruye la escena al salir y
+retoma el contenido pendiente sin gastar otro sobre. Si `onVolver` devuelve
+`false` porque no pudo guardar, el resumen permanece disponible para reintentar.
+
+```sh
+node dev/secciones/pruebas_sobres_exportacion.mjs
+node dev/secciones/pruebas_sobres_apertura.mjs
+python3 dev/secciones/pruebas_publicar.py
+node dev/secciones/sobres-exportar.mjs /ruta/nueva/para/revision-local
+python3 dev/secciones/publicar.py --seccion sobres --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion sobres --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+Antes de publicar, revisar en 320×568, 390×844 y escritorio: arrastrar sin
+abrir, cinco revelaciones sin saltos por toques rápidos, quinta carta esperando un toque
+explícito antes del resumen, cinco cartas visibles sin superposición/scroll y regreso al
+menú una sola vez. Probar reinicio durante la apertura, teclado y movimiento
+reducido. Se comprueban errores y recursos fallidos.

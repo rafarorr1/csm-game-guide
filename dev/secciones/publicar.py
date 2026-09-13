@@ -30,6 +30,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers'},
         'pruebas': ('pruebas_rey_exportacion.mjs',),
     },
+    'sobres': {
+        'nombre': 'Apertura de sobres',
+        'exportador': 'sobres-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers'},
+        'pruebas': ('pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs'),
+    },
 }
 URL = 'https://aislados.caoz-tcg.pages.dev'
 NO_ENCONTRADO = b'<!doctype html><html lang="es"><meta charset="utf-8"><title>No encontrado</title><body><h1>Esta ruta no existe</h1><a href="/">Volver a las secciones</a></body></html>\n'
@@ -52,7 +58,7 @@ def sha(contenido):
 
 def configuracion_seccion(seccion):
     if not isinstance(seccion, str) or seccion not in SECCIONES:
-        raise ValueError('Sección no admitida: elige coleccion o rey.')
+        raise ValueError('Sección no admitida: elige coleccion, rey o sobres.')
     return SECCIONES[seccion]
 
 

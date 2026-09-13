@@ -262,7 +262,8 @@ class BetaCloudflare(unittest.TestCase):
         archivos = re.search(r'for f in ([^;]+); do', cloudflare).group(1).split()
         self.assertNotIn('estudio.html', archivos)
         for archivo in ['estudio.js', 'arte-remoto.js', 'coleccion-modelo.js',
-                        'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css']:
+                        'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css', 'sobres-escena.js',
+                        'sobres-apertura.js', 'sobres-apertura.css']:
             self.assertIn(archivo, archivos)
         self.assertIn('verificar_arte_web.py', cloudflare)
         self.assertIn('estudio.html', script.split('paso "4/4', 1)[1])
@@ -274,7 +275,8 @@ class BetaCloudflare(unittest.TestCase):
         script = (fuente / 'publicar.sh').read_text()
         bloque = script[script.index('paso "3/4'):script.index('# CLOUDFLARE PAGES')]
         dependencias = {'estudio.html', 'sonidos.html', 'coleccion-modelo.js',
-                         'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css'}
+                         'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css', 'sobres-escena.js',
+                         'sobres-apertura.js', 'sobres-apertura.css'}
         for panel in ['estudio.html', 'sonidos.html']:
             dependencias.update(re.findall(r'(?:src|href)="([^"?]+\.(?:js|css))(?:\?[^\"]*)?"',
                                            (fuente / panel).read_text()))

@@ -102,7 +102,7 @@
       // para revelarlo sin un corte al retirar el diálogo.
       esperar(e,3000,()=>{d.dataset.fase='fundido';esperar(e,1000,()=>{
         showScreen('menu');limpiarTransicionMenu();e.mensaje.remove();
-        d.dataset.fase='menu';esperar(e,3000,limpiar);
+        d.dataset.fase='menu';esperar(e,3000,()=>{limpiar();window.campanaElegirPremioAlVolver?.(e.id,e.partida);});
       });});
     });
   }
@@ -111,7 +111,7 @@
     if(escena)return;
     const d=document.createElement('dialog');d.id='campanaDeseo';d.setAttribute('aria-labelledby','deseoTitulo');d.dataset.fase='formulario';
     d.innerHTML='<form class="deseoFormulario"><div class="deseoSello">EL DOMO TE ESCUCHA</div><h1 id="deseoTitulo">Venciste a todos los héroes.<br>Pide un deseo</h1><label for="deseoTexto">Tu deseo</label><textarea id="deseoTexto" maxlength="500" required placeholder="Escribe lo que deseas…"></textarea><p class="deseoPrivacidad">Prueba beta · envío simulado</p><p class="deseoEstado" role="status"></p><button class="btn gold" type="submit">Pedir deseo</button></form>';
-    const e={d,form:d.querySelector('form'),timers:[],raf:0,cancelado:false};escena=e;
+    const e={d,id:p.id,partida:G,form:d.querySelector('form'),timers:[],raf:0,cancelado:false};escena=e;
     const texto=d.querySelector('textarea'),boton=d.querySelector('button'),estado=d.querySelector('.deseoEstado');
     texto.value=p.deseo?.deseo||p.borradorDeseo||'';texto.readOnly=!!p.deseo;
     texto.addEventListener('input',()=>{p.borradorDeseo=texto.value;campanaGuardar(p);});

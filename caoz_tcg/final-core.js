@@ -157,6 +157,19 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
   opacity:0;translate:0 16px;pointer-events:none;transition:opacity .5s, translate .5s}
 .fin.botones .finbtns{opacity:1;translate:0 0;pointer-events:auto}
 .fin .finbtns .btn{font-size:16px;padding:13px 24px;min-width:150px;text-align:center}
+.coleccionElegirPremio{display:block;box-sizing:border-box;max-width:100%;min-height:44px;margin:10px auto;padding:9px 18px;border:1px solid #caa967b3;border-radius:12px;background:linear-gradient(135deg,#473320,#21170f);box-shadow:inset 0 1px #fff2d526,0 3px 14px #0005;color:#f5dcab;font:700 13px/1.3 var(--sans,sans-serif);letter-spacing:.3px;text-align:center;cursor:pointer;touch-action:manipulation}
+.coleccionElegirPremio:hover:not(:disabled){background:linear-gradient(135deg,#6a4c2d,#312013);border-color:#f0d08a}
+.coleccionElegirPremio:focus-visible{outline:2px solid #ffe6a5;outline-offset:3px}
+.coleccionElegirPremio:disabled{cursor:default;opacity:.65}
+.fin .coleccionElegirPremio{opacity:0;pointer-events:none;transition:opacity .3s}
+.fin.botones .coleccionElegirPremio{opacity:1;pointer-events:auto}
+@media(max-height:650px){.fin .coleccionElegirPremio{margin-top:6px;padding:8px 12px;font-size:11px}}
+/* En teléfonos bajos las dos salidas comparten una fila: apilarlas ocupa el
+   espacio del premio y deja Elegir sin recibir toques aunque se vea detrás. */
+@media(max-width:600px) and (max-height:650px){
+  .fin .finbtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+  .fin .finbtns .btn{min-width:0;min-height:44px;font-size:12px;line-height:1.25;padding:8px 10px}
+}
 .fin.botones{cursor:default}
 @media (prefers-reduced-motion: reduce){ .fin .finluz, .fin .brasa{animation:none} }
 `;
@@ -184,7 +197,7 @@ function borrarRecords(){ try{ localStorage.removeItem(RECORDS_CLAVE); }catch(e)
 function clavesProgresoLocal(){
   const pruebas=new URLSearchParams(location.search).has('test')?'.prueba':'';
   const logros='caoz.campana.logros.v1'+pruebas;
-  return [CAMPANA_CLAVE,CAMPANA_CLAVE+'.creador',logros,logros+'.simulados',RECORDS_CLAVE,'caoz_nombre',window.CAOZ_COLECCION?.clave].filter(Boolean);
+  return [CAMPANA_CLAVE,CAMPANA_CLAVE+'.creador',logros,logros+'.simulados',RECORDS_CLAVE,'caoz_nombre',window.CAOZ_COLECCION?.clave,window.CAOZ_COLECCION_JUEGO?.clavePremiosDomo?.()].filter(Boolean);
 }
 function borrarProgresoLocal(){
   const claves=clavesProgresoLocal(),anteriores=new Map();
@@ -193,6 +206,7 @@ function borrarProgresoLocal(){
     for(const clave of claves)anteriores.set(clave,localStorage.getItem(clave));
     for(const clave of claves)localStorage.removeItem(clave);
     if(claves.some(clave=>localStorage.getItem(clave)!==null))throw Error('Borrado incompleto');
+    window.CAOZ_COLECCION_JUEGO?.limpiarPremiosDomo?.();
     return true;
   }catch(_){
     // Si falla a mitad, intentar conservar el progreso anterior.
@@ -318,6 +332,8 @@ async function cinematicaFinal(winner, why, acciones){
     const nombre=s=>s===ME?campanaNormalizarPersonaje(G.campana.personaje).nombre:P(s).L.n;
     capa.querySelector('.sello>i').textContent='Turnos: '+Math.ceil(G.turnNo/2)+' · '+nombre(winner)+' ❤️ '+alma(winner)+' · '+nombre(1-winner)+' ❤️ '+alma(1-winner);
   }
+  const premio=crearBotonPremioFinal(G,winner,{esperar:true});
+  if(premio)capa.querySelector('.sello').appendChild(premio);
   if(!gano)capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
   /* Los botones viven aquí, no en un cartel aparte: la cinemática se queda
@@ -373,6 +389,7 @@ async function cinematicaFinal(winner, why, acciones){
   await espera(1500);
   if(!vive()){ capa.remove(); document.body.classList.remove('fin-on'); return true; }   // empezó otra partida: ya no pinta nada
   capa.classList.add('va', 'luz', 'entra', 'sello-on', 'botones');   // por si se saltó a medias
+  premio?.habilitarPremio();
   capa.onclick = null;
   // y se espera a la decisión; si mientras tanto empieza otra partida, se retira
   const vigia = setInterval(() => { if(!vive()){ clearInterval(vigia); capa.remove(); document.body.classList.remove('fin-on'); elige(null); } }, 400);
@@ -671,16 +688,88 @@ function campanaCrearNiebla(etapa,retirada=false){
 let campanaMemoria=null,campanaLanzando=false,campanaEnsayoGero=null;
 function campanaIdSobreValido(id){return typeof id==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(id)&&!['__proto__','constructor','prototype'].includes(id);}
 function campanaSobresPendientes(p){return Array.isArray(p?.sobresPendientes)?[...new Set(p.sobresPendientes.filter(campanaIdSobreValido))]:[];}
-function campanaPuedeRecibirSobre(p){
+function recompensaDeVictoria(g,winner){
+  if(!g?.over||winner!==ME)return null;
+  const domo=window.CAOZ_COLECCION_JUEGO?.recompensaFinal?.(g,winner);if(domo)return domo;
+  const p=typeof campanaLeer==='function'?campanaLeer():null;
+  if(winner!==ME||!g?.campana||p?.id!==g.campana.id||p.etapa!==CAMPANA_RIVALES.length||
+    !campanaPuedeRecibirSobre(p)||(p.secreto&&!['final','completado'].includes(p.secreto)))return null;
+  return {origen:'campana',referencia:p.id,cantidad:3,
+    guardado:!!window.CAOZ_COLECCION?.leer()?.campanasPremiadas?.includes(p.id)};
+}
+function frasePremioFinal(g,winner){
+  const premio=recompensaDeVictoria(g,winner);if(!premio)return '';
+  const n=premio.cantidad;
+  if(!premio.guardado)return n===1?'1 sobre ganado · Pendiente de guardar':'3 sobres ganados · Pendientes de guardar';
+  const pendiente=window.CAOZ_COLECCION?.recompensasPendientes?.().some(p=>p.origen===premio.origen&&p.referencia===premio.referencia);
+  return 'Ganaste '+n+(n===1?' sobre':' sobres')+' · '+(pendiente?'Elige '+(n===1?'su colección':'sus colecciones'):'Guardado'+(n===1?'':'s')+' en Colección');
+}
+/* Entrada voluntaria desde la victoria. La elección vive en un diálogo nativo
+   encima del final: cerrarlo devuelve a Revancha/Continuar, nunca al menú.
+   Sólo lee o reintenta el recibo existente; no crea otro premio ni abre cartas. */
+function crearBotonPremioFinal(g,winner,{esperar=false}={}){
+  const premio=recompensaDeVictoria(g,winner);if(!premio)return null;
+  const boton=el('button','coleccionPremioFinal coleccionElegirPremio');
+  boton.type='button';boton.dataset.recompensaVictoria=premio.origen;
+  let abriendo=false;
+  const actualizar=()=>{
+    const actual=recompensaDeVictoria(g,winner);
+    boton.disabled=esperar||abriendo||G!==g||!actual;
+    if(!actual)return;
+    const pendiente=window.CAOZ_COLECCION?.recompensasPendientes?.().some(p=>p.origen===actual.origen&&p.referencia===actual.referencia);
+    const eleccion=actual.cantidad===1?'Elegir mi sobre':'Elegir mis 3 sobres';
+    boton.textContent=actual.guardado?(pendiente?eleccion:'Ver mis sobres'):'Guardar mi recompensa';
+    boton.setAttribute('aria-label',frasePremioFinal(g,winner)+'. '+boton.textContent);
+  };
+  boton.actualizarPremio=actualizar;
+  boton.habilitarPremio=()=>{esperar=false;actualizar();};
+  boton.onclick=async e=>{
+    e?.stopPropagation();
+    if(esperar||abriendo||G!==g||!boton.isConnected)return;
+    abriendo=true;actualizar();let abierta=false;
+    try{
+      if(premio.origen==='domo')window.CAOZ_COLECCION_JUEGO?.reintentarPremio?.(g,winner);
+      else campanaEntregarSobre(campanaLeer());
+      const actual=recompensaDeVictoria(g,winner);
+      if(!actual?.guardado){toast('Tu recompensa sigue pendiente de guardar. Inténtalo de nuevo.');return;}
+      if(typeof window.abrirRecompensaSobres!=='function'){toast('La colección aún está cargando. Inténtalo de nuevo.');return;}
+      // El callback sólo refresca el botón: no modifica la continuación elegida.
+      abierta=window.abrirRecompensaSobres({origen:actual.origen,referencia:actual.referencia,onCerrar:()=>{abriendo=false;if(boton.isConnected)actualizar();}})!==false;
+    }catch(_){toast('No se pudo abrir tu recompensa. Tus sobres siguen guardados.');}
+    finally{if(!abierta)abriendo=false;actualizar();}
+  };
+  actualizar();return boton;
+}
+addEventListener('caoz:coleccion',()=>{
+  document.querySelectorAll('[data-recompensa-victoria]').forEach(b=>b.actualizarPremio?.());
+});
+// El epílogo puede acabar sin haber elegido en Victoria. Se ofrece sólo al
+// quedar libre el menú de ese mismo recorrido, después del último fundido.
+function campanaElegirPremioAlVolver(id,partida){
+  const p=campanaLeer();
+  if(G!==partida||p?.id!==id||p.etapa!==CAMPANA_RIVALES.length||!campanaPuedeRecibirSobre(p)||
+    (p.secreto?p.secreto!=='completado':!p.deseo)||(typeof NET!=='undefined'&&NET.on)||
+    !document.querySelector('#menu.on')||document.querySelector('dialog[open],#ov.on')||
+    typeof window.abrirRecompensaSobres!=='function')return false;
+  campanaEntregarSobre(p);
+  const pendiente=window.CAOZ_COLECCION?.recompensasPendientes?.().some(r=>r.origen==='campana'&&r.referencia===id);
+  if(!pendiente)return false;
+  try{return window.abrirRecompensaSobres({origen:'campana',referencia:id})!==false;}
+  catch(_){return false;} // El premio sigue accesible desde Colección.
+}
+function campanaPuedeRecibirSobre(p,soloRecuperar=false){
   return !!p&&p.version===1&&campanaIdSobreValido(p.id)&&!!LEADERS[p.lider]&&Number.isInteger(p.etapa)&&p.etapa>=0&&p.etapa<=CAMPANA_RIVALES.length&&
-    p!==campanaEnsayoGero&&!p.pruebaEditor&&(!p.prueba||campanaPruebaDisponible());
+    p!==campanaEnsayoGero&&!p.pruebaEditor&&(!p.sinPremios||soloRecuperar)&&(!p.prueba||campanaPruebaDisponible());
 }
 function campanaEntregarSobre(p){
   // Un recorrido termina en Gero, salvo que los seis sellos abran al Editor.
   // El recibo vive junto al sobre: reanudar el final nunca duplica el premio.
-  if(!campanaPuedeRecibirSobre(p))return false;
-  const ids=campanaSobresPendientes(p);
-  if(p.etapa===CAMPANA_RIVALES.length&&(!p.secreto||['final','completado'].includes(p.secreto))&&!ids.includes(p.id))ids.push(p.id);
+  if(!campanaPuedeRecibirSobre(p,true))return false;
+  const ids=campanaSobresPendientes(p),puedeRecibir=campanaPuedeRecibirSobre(p);
+  // Un ensayo puede transportar recibos de un recorrido anterior real.
+  // Recuperarlos no autoriza el premio del ensayo que los conserva.
+  if(!puedeRecibir&&!ids.length)return false;
+  if(puedeRecibir&&p.etapa===CAMPANA_RIVALES.length&&(!p.secreto||['final','completado'].includes(p.secreto))&&!ids.includes(p.id))ids.push(p.id);
   const pendientes=ids.filter(id=>window.CAOZ_COLECCION?.concederSobreCampana?.(id)!==true);
   if(pendientes.length)p.sobresPendientes=pendientes;else delete p.sobresPendientes;
   return ids.length>0&&!pendientes.length;
@@ -699,6 +788,8 @@ function campanaLeer(){
   return dato;
 }
 function campanaGuardar(dato){
+  // Una simulación no se convierte en victoria real por recargar después.
+  if(dato&&typeof G!=='undefined'&&G?.campana?.id===dato.id&&(G.fast||G.silent||G.auto||G.online||G.tutorial))dato.sinPremios=true;
   // Este recorrido temporal no reemplaza la campaña que el jugador guardó.
   if(campanaEnsayoGero&&dato?.id===campanaEnsayoGero.id){campanaEnsayoGero=dato;return true;}
   // Si el inventario falló al terminar, la siguiente campaña transporta los
@@ -706,7 +797,7 @@ function campanaGuardar(dato){
   let anterior=campanaMemoria;
   if(!anterior)try{anterior=JSON.parse(localStorage.getItem(CAMPANA_CLAVE));}catch(_){}
   const pendientes=campanaSobresPendientes(dato);
-  if(anterior?.id!==dato?.id&&campanaPuedeRecibirSobre(anterior)){
+  if(anterior?.id!==dato?.id&&campanaPuedeRecibirSobre(anterior,true)){
     campanaEntregarSobre(anterior);
     pendientes.push(...campanaSobresPendientes(anterior));
   }
@@ -1034,6 +1125,7 @@ function campanaFinal(winner,why){
     if(hecho||G!==g)return;
     if(acciones.continuarAutomaticamente){acciones.revancha();return;}
     const d=campanaDialogo();campanaCabecera(d,winner===ME?(p.etapa===6?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',why||'');
+    const premio=crearBotonPremioFinal(g,winner);if(premio)d.append(premio);
     d.append(campanaAcciones(campanaBoton(winner===ME?'Volver a la mesa':'Reintentar combate',acciones.revancha,true),campanaBoton('Menú principal',acciones.menu)));
   });
 }

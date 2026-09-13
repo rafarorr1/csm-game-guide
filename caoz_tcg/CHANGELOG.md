@@ -1,5 +1,106 @@
 # Registro de versiones — el TCG del Domo
 
+### v22 · build 254 · Premios elegibles y biblioteca de sobres · 2026-09-12
+
+- Revisión aislada aprobada: elegir un sobre al ganar contra el Domo y tres al
+  completar campaña, iguales o combinados; guardarlos sellados para abrir después.
+- Tres colecciones cubren todo el catálogo: Trucos del Domo (azul), Juramentos
+  del Domo (verde) y Caos y Dragones (rojo). Carrusel con dedo, ratón y teclado.
+- Biblioteca y apertura Sello del Domo comparten su envoltura. La apertura
+  espera a que el carrusel termine para consumir siempre el tipo seleccionado.
+- Recuperación de sobres antiguos sin colección, resultados ya abiertos y
+  fallos de guardado. Elegir un tipo no concede ni vuelve a sortear cartas.
+- Producción autorizada junto con todo lo aprobado de beta251–253: apertura3D,
+  originales por acabado, marcadores, copias, premios1/3 y canjes cinco a uno.
+  No cambian reglas de combate, mazos, online, bancos de sonido ni estudios.
+
+### En revisión aislada · Elegir premios y guardar sobres · 2026-09-12
+
+- Al ganar contra el Domo se elige un sobre; al completar campaña se eligen
+  tres, con colecciones repetidas o combinadas. Confirmar los guarda sellados.
+- Colección → Sobres presenta los tipos poseídos y sus cantidades en un
+  carrusel deslizable con dedo, ratón, flechas y teclado. Cada apertura consume
+  sólo un sobre del tipo seleccionado y conserva la animación Sello del Domo.
+- Trucos del Domo es azul; Juramentos del Domo, verde; Caos y Dragones, rojo.
+  La biblioteca y la apertura comparten el diseño impreso de la envoltura.
+- Los sobres sin tipo anteriores se recuperan como elecciones pendientes,
+  en tandas de hasta tres. Los ya abiertos conservan cartas y grupo.
+- Elegir no concede cartas ni vuelve a sortear el resultado. Un fallo de
+  guardado deja disponible el premio o el sobre para reintentar.
+- Conexión con victoria y epílogos preparada en la rama para la integración
+  posterior. Esta revisión pública sólo ejecuta la sección de Colección.
+
+### En revisión aislada · Tres colecciones para sobres · 2026-09-12
+
+- Las seis opciones se reúnen en Trucos del Domo (48 cartas), Juramentos del
+  Domo (46) y Caos y Dragones (48), con tres botones completos. Cubren las 134
+  cartas actuales; las afinidades y las cartas compartidas se conservan.
+- Los sobres anteriores conservan sus cartas aunque pertenezcan a uno de los
+  seis grupos retirados. No cambian recompensas, mezcla de acabados ni canjes.
+- Revisión de la sección únicamente: beta253 y producción250 permanecen vigentes.
+
+### v22 · build 253 · Sobres por victorias y mejora de cartas · 2026-09-12
+
+- Completar una campaña concede tres sobres; ganar una partida normal contra
+  el Domo concede uno. Las batallas intermedias de campaña, derrotas, online,
+  tutoriales y simulaciones no suman premios del Domo. Cada victoria conserva
+  su recibo para impedir premios duplicados al recargar o reabrir el final.
+- Antes de abrir se elige una de seis colecciones temáticas de 24 cartas.
+  Entre todas cubren las 134 cartas actuales, con diez apariciones compartidas.
+  Cada sobre sortea cinco IDs diferentes con la misma probabilidad dentro del
+  grupo: tres Normales, una Foil y una quinta 50% Normal / 50% Foil. Doradas 0%.
+- En el detalle de la carta se pueden canjear cinco copias Normales ganadas
+  por una Foil de esa misma carta, o cinco Foil por una Dorada. El canje guarda
+  consumo y premio juntos; los diseños ya desbloqueados siguen disponibles
+  aunque se gasten sus copias. La Normal inicial nunca se consume.
+- La sección de canjes reúne las cartas que ya tienen cinco copias disponibles.
+  El listado conserva tres columnas y sólo sus marcadores de ediciones, sin
+  contadores debajo. Los códigos físicos siguen anunciados como próximos.
+- Se conservan inventarios, selecciones, sobres cerrados y el contenido de los
+  sobres antiguos ya abiertos. Los recibos anteriores no se vuelven a premiar.
+  El usuario autorizó desarrollar e integrar directamente esta mecánica en beta;
+  producción permanece en build 250.
+
+### Sin numerar · build 252 · Ediciones desbloqueadas y arte Foil y Dorado · 2026-09-12
+
+- Debajo de cada carta aparecen sólo los marcadores de sus ediciones
+  desbloqueadas, con la edición en uso resaltada, sin contador ni etiqueta.
+  El desglose de copias Normal, Foil y Dorada sigue al abrirla. Equipar o reabrir un sobre pendiente
+  no suma copias; cada nuevo premio sí, aunque esa edición ya estuviera poseída.
+- Se conservan todos los originales Normales. La serie Foil usa grabados de
+  tinta azul y plata; la Dorada, pintura de manuscrito medieval iluminado.
+  Thal mantiene su ilustración Dorada final y los cinco encuadres publicados.
+- Cada edición tiene un original independiente en el catálogo del estudio.
+  Los reemplazos publicados y la herencia explícita conservan prioridad.
+- Los inventarios anteriores parten de una copia por edición desbloqueada:
+  el historial de duplicados no se guardaba. Los nuevos duplicados sí se cuentan.
+- El laboratorio permite recorrer ambas series con un inventario temporal,
+  sin alterar progreso real. Integración autorizada de la revisión aislada
+  en beta 252; producción permanece en 250.
+- Validación completa: 81 suites, incluidos los seis tutoriales. Los originales
+  premium y el fallback Normal se comprueban en ambas pantallas con sabotaje.
+  Las 402 ilustraciones por edición coinciden con los archivos servidos en beta.
+
+### Sin numerar · build 251 · Sello del Domo en Colección · 2026-09-12
+
+- El sobre se puede girar con el dedo o el ratón; el sello se rompe y la
+  envoltura sale por abajo para dejar el bonche de cartas boca abajo.
+- Cada toque revela una carta. La quinta espera otro toque antes de presentar
+  todas juntas; «Volver» regresa a los sobres de Colección.
+- Las cartas muestran ilustración y nombre sin habilidades ni nombres
+  repetidos. Los cinco frentes esperan descarga y decodificación antes de
+  abrir el sello, y se reutilizan hasta el resumen sin recargar imágenes.
+- El giro táctil no bloquea un toque inmediato en «Romper el sello».
+  El arte del premio queda fijo frente a actualizaciones del catálogo.
+- Se conserva el contenido pendiente al salir o recargar. Los sobres antiguos
+  de tres cartas mantienen sus ediciones, incluidos protagonistas y Doradas.
+  Si una imagen o el guardado falla, hay un reintento sin consumir otro sobre.
+- Escena WebGL con alternativa Canvas2D, movimiento reducido y limpieza al
+  abandonar la vista. Premios, equipamiento y reglas de combate conservados.
+- Validación completa verde, con seis tutoriales y 2880 partidas sin errores;
+  comprobación visual del recorrido real en móvil pequeño, móvil y escritorio.
+- Integración autorizada de la revisión aislada en beta; producción sigue en 250.
+
 ### v21 · build 250 · Colección continua y corte defendible · 2026-09-12
 
 - Colección con tres cartas por fila, scroll vertical y separación compacta;

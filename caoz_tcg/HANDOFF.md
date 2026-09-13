@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 250 (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 253 (rama develop) · producción 250 (rama main) · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -9,6 +9,279 @@ lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) �
 números) → el código.
 
 ---
+
+## Promoción autorizada — build 254 en validación
+
+El usuario aprobó la sección y pidió publicar todos los cambios en producción.
+Se prepara254 desde `feature/sobres-tres-colecciones`, integrando la revisión
+pública `aislados:4eaafd9bcee3` y lo ya aprobado en beta251–253. No requiere
+otra confirmación para publicar beta ni para promover exactamente ese paquete
+a producción. Flujo: PR hacia develop, validación completa, beta, PR de release
+hacia main y `publicar.sh --produccion --completo` con verificación pública.
+
+Incluye elección1/3, tres colecciones, biblioteca de sobres por color, apertura
+Sello del Domo, nuevos originales premium, marcadores, copias y canjes. Motor,
+mazos, banco de audio y backend de estudios permanecen iguales a producción250.
+La build y caché se sincronizan a254 en ambas pantallas. Los resultados de
+integración y referencias finales se registrarán al completar la promoción.
+Durante la revisión real se detectó que en320×568 Revancha tapaba Elegir sobre.
+Las salidas ahora comparten una fila en teléfonos bajos, conservando44px de
+alto y la palabra Victoria centrada. `victoriaCentrada` comprueba separación
+entre premio/salidas con texto y récord en ambos HTML a320/390/1440; el mismo
+caso falla al retirar la corrección CSS y pasa con ella.
+La revisión durante Victoria encontró un scroll nativo que llegaba después del
+fallback800ms y cambiaba verde por rojo. La elección explícita se conserva al
+terminar; los eventos residuales se recentran hasta un gesto real. La regresión
+`coleccionCarruselDestino` simula ese compositor tardío y comprueba el tipo que
+se consume, con inventario real, en ambas pantallas.
+Ambas regresiones pasan y fallan al retirar sus arreglos. El recorrido real de
+victoria Domo y campaña pasa en1440×900,390×844 y320×568, con animación normal,
+revancha, mesa, ascensión, deseo, recarga y recuperación exacta del sobre verde.
+No hubo excepciones JavaScript ni solicitudes fallidas. La prueba aislada de
+premios/carrusel también pasa en esos tres tamaños, con gestos y teclado.
+
+## Revisión aislada — elegir el premio y guardar sus sobres
+
+Continuación en `feature/sobres-tres-colecciones`, sin integrar todavía a
+`develop`. Al ganar contra el Domo el jugador elige un sobre; una campaña
+completa permite elegir tres, incluso del mismo grupo. Confirmar guarda tipos
+sellados. Colección → Sobres permite deslizar el carrusel de tipos poseídos y
+sus cantidades; la apertura consume sólo el elegido. Trucos azul, Juramentos
+verde y Caos rojo comparten su impresión entre biblioteca y escena 3D.
+
+El modelo mantiene la clave y versión1, añadiendo `sobresVersion:2`,
+`sobresGuardados` y `recompensasPorElegir`. `sobres()` cuenta sellados más
+pendientes de elegir. `recompensasPendientes()` devuelve recibos defensivos;
+`elegirSobres(id,[grupos])` exige1/3 según premio y no consume RNG ni concede
+cartas. `inventarioSobres()` enumera tipos con saldo positivo. `abrirSobre`
+sólo consume tipos guardados; sin argumento usa el primero, nunca convierte
+pendientes de elegir. El legado sin tipo se conserva en tandas de hasta tres;
+los pendientes ya abiertos de tres/cinco cartas no se modifican. La lectura
+migra en memoria y la próxima escritura correcta conserva todo junto.
+
+`abrirRecompensaSobres({origen,referencia,onCerrar})` ofrece el premio recibido
+encima de la victoria y permite volver a ella. El CTA y sus alternativas se
+prepararon en `final-core.js`; los epílogos de deseo y Editor ofrecen premios
+pendientes después de sus fundidos existentes. Conservan recibos y guardas
+contra partidas distintas, doble clic, online y recompensas ya elegidas.
+Esta conexión tiene pruebas acotadas; su geometría dentro de la victoria real
+queda para la integración aprobada, no se ha ejecutado la batería completa.
+
+Escenarios públicos: `estado=premio-campana`, `estado=premio-domo`,
+`estado=legado-sobres` y `estado=sobres&pestana=sobres`. Son premios temporales
+sin partida ni progreso persistente. El último ahora incluye tres sellados,
+uno de cada tipo; reemplaza el selector de la revisión anterior.
+
+Validación acotada: 47 pruebas del modelo y 12 sabotajes, 26 casos de conexión
+con victorias y epílogos, y pruebas de apertura/precarga con 14 sabotajes.
+Canjes y recorrido de premios→guardado→carrusel→apertura recuperable pasan en
+1440×900, 390×844 y 320×568, incluyendo consulta de contenido y fallos de
+escritura al elegir y al abrir. También se probó movimiento normal: selección
+a 60 ms, teclado, resize y apertura durante desplazamiento. Se corrigió una
+carrera que podía volver a seleccionar el tipo anterior; Abrir espera a que
+llegue el destino, que se conserva al redimensionar. Las pruebas del entorno/
+exportación siguen verdes.
+Publicada desde `755628af33f6ef0ca99f33e19a5f0dfcc8c89a21` en
+`aislados:4eaafd9bcee3078e6407100621f0d5d67b2feef0`. Los 442 archivos
+públicos coinciden byte a byte. El recorrido completo de esta sección pasó
+también en la URL pública con los tres tamaños, sin errores JavaScript;
+incluye movimiento normal, apertura rápida y resize. Las secciones aisladas
+El Rey y propuestas de sobres conservan sus árboles. `develop`, `main`,
+`beta` y `gh-pages` mantienen sus referencias previas.
+Revisar elección de tres:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=premio-campana
+O un premio del Domo:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=premio-domo
+Biblioteca con uno de cada color:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=sobres&pestana=sobres
+Beta253 y producción250 siguen vigentes; la integración requerirá build nueva.
+
+## Revisión aislada — tres colecciones para sobres
+
+Rama `feature/sobres-tres-colecciones`, desde `develop`/beta253. Se reducen
+las seis colecciones a tres uniendo los pares anteriores: Trucos del Domo
+(Mohamed y Fender, 48 cartas), Juramentos del Domo (Adreida y Rafaela, 46)
+y Caos y Dragones (Gero y Talesyn, 48). Cubren los 134 IDs, con ocho
+apariciones compartidas entre grupos y sin repetidos dentro del mismo grupo.
+No cambian los mazos, recompensas, canjes, probabilidades de acabado ni
+resultados de sobres pendientes. Las cartas futuras se incorporan al grupo
+menos numeroso de forma determinista, sin crear una cuarta colección.
+
+Se presentan tres botones apilados; las pantallas bajas conservan el selector
+compacto. `pestana=sobres` en el laboratorio y su entrada pública dirige a la
+elección con dos sobres temporales (`estado=sobres`). La prueba de exportación
+se actualizó al contenido mixto aprobado en beta253; antes aún esperaba cinco
+Foil. Sólo se valida y publica esta sección para revisión. La beta sigue en
+253 y producción en 250; la integración posterior necesitará una build nueva.
+Validación acotada: 38 pruebas del modelo y siete sabotajes; 13 comprobaciones
+del entorno aislado y exportación en verde. Canjes, contenido del grupo,
+apertura recuperable de cinco cartas y entrada directa a Sobres pasaron en
+1440×900, 390×844 y 320×568. No se ejecutó la batería del juego completo.
+Publicada en `aislados:7eb0b65997f4` desde `517ae8cb35cc`, con 442 archivos
+verificados byte a byte. El mismo recorrido pasó en la dirección pública,
+sin errores JavaScript. Revisión directa:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=sobres&pestana=sobres
+`develop`, `beta`, `gh-pages` y `main` conservan sus referencias previas.
+
+## Beta 253 — recompensas y canjes publicados y verificados
+
+Rama `feature/recompensas-canjes-sobres`, desde `develop`/252. El usuario
+autorizó desarrollar e integrar directamente la mecánica en beta. No requiere
+otro paso de aprobación aislada para esta entrega; producción permanece en 250.
+
+Integrada mediante PR #10 hacia `develop`, fuente
+`2e96e0fcdf7aa005c108083e27dec3753b1e9dad`, etiqueta inmutable `build-253`.
+Publicada con `publicar.sh --beta --completo`: 82 suites en verde, incluidos
+los seis tutoriales y 2.880 partidas del banco. Artefactos `gh-pages:517b8b7`
+y `beta:b03cef8`, árbol beta `bc262379d665d1756d1b97868f925433de70310c`.
+Los 499 archivos del paquete coinciden con la fuente. Cloudflare y GitHub
+Pages verificaron byte a byte el juego, los 37 sonidos y las ilustraciones.
+Acceso: https://beta.caoz-tcg.pages.dev/?b=253 y `/movil.html?b=253`;
+`?b=253&coleccion=1` abre directamente la Colección.
+`main` conserva `fffe945`, `/tcg` conserva el árbol
+`ef89d9dee2697f22e790565e0c4e5d1f7bdd4b15` y `aislados` sigue en `d1e597c`.
+El recorrido remoto pasó en 1440×900, 390×844 y 320×568: canjes, recarga,
+cinco revelaciones y avisos de premios 1/3, sin errores JavaScript. Se usaron
+perfiles efímeros y victorias preparadas para probar la recompensa; no datos
+de jugadores. Chrome móvil también activó `caoz-cache-/-253` y volvió a cargar
+con el service worker controlando la página. Esto no sustituye Safari nativo.
+Incidencia ajena a esta mecánica: `/api/sfx/catalogo` agotó el timeout durante
+el smoke y no respondió en una lectura independiente de 25 s. `audio-domo.js`
+no cambió: conserva el banco local o último válido al fallar la consulta.
+No hubo errores JavaScript ni peticiones fallidas de cartas; no describir la
+revisión como una red sin errores. Investigar la latencia del catálogo aparte.
+
+Una campaña completa concede tres sobres mediante su recibo existente; una
+victoria en «Jugar contra el Domo» concede uno con un recibo independiente.
+`coleccion-juego.js` registra sólo el flujo real `startMatch` → `setupMatch`
+y conserva una identidad por partida fuera del estado online. `endGame` y
+`showEnd` entregan el premio una vez. La cola `.domo-pendientes` permite
+recuperar una victoria cuando falla el guardado; borrado de progreso elimina
+también la cola y su memoria. Derrotas, online, tutoriales, arranques directos,
+simulaciones y encuentros intermedios de campaña quedan excluidos. La campaña
+secreta espera al Editor; los botones beta conservan su alcance previo.
+
+`grupos()` contiene seis colecciones temáticas estables de 24 IDs; cubren los
+134 actuales con diez apariciones compartidas. Son grupos de colección, no
+listas de mazos. La interfaz pasa el grupo a `abrirSobre(grupoId)` y muestra
+su contenido antes de gastar: tres Normales, una Foil y quinta 50/50. Doradas
+no salen directamente. El pendiente `formato:2` conserva mezcla y grupo;
+los pendientes antiguos de tres/cinco cartas se mantienen sin volver a sortear.
+La llamada sin grupo conserva compatibilidad con consumidores anteriores.
+
+`canjeables(id,acabado)` excluye la Normal inicial. `canjear(id,acabado)` consume
+cinco copias iguales y suma una de la edición siguiente en la misma escritura.
+Los desbloqueos y la selección son permanentes; un Foil consumido hasta cero
+sigue disponible para jugar y su contador cero no vuelve a migrar a uno.
+El estado conserva versión/clave e inventarios anteriores. Los recibos antiguos
+no se vuelven a premiar. No cambia el motor, el arte ni las bases de datos.
+
+La sección Canjear reúne mejoras listas; el detalle muestra saldo y acción.
+Se conservan tres columnas y sólo marcadores en la galería. En 320×568 la
+elección temática utiliza un selector compacto. Se corrigió el primer fotograma
+del retrato al cambiar de edición midiendo el detalle antes de pintarlo.
+
+Validación previa: `publicar.sh --solo-pruebas --completo` verde; 36 pruebas de
+modelo, 18 de recompensas del Domo, cinco sabotajes del modelo y dos de recibos/
+eligibilidad. Tres ensayos de navegador (canjes, copias y protagonistas) pasan
+en 1440×900, 390×844 y 320×568. El recorrido del juego completo también comprueba
+recompensas 1/3, aviso en victoria, canjes y cero Foil tras recarga, elección de
+grupo y cinco revelaciones. La nueva suite `coleccionCanjes` vive en el arnés;
+`coleccionSobres` y `campanaSobres` comprueban los contratos nuevos y el legado.
+
+## Beta 252 — Colección publicada y verificada
+
+Rama `feature/coleccion-copias-ediciones`, desde `develop`/beta251. El usuario
+pidió copias por carta y dos series nuevas: Foil con grabados
+azul/plata y Doradas con miniaturas de manuscrito iluminado. Se mantienen los
+134 originales Normales y la Dorada final de Thal (mismos bytes y cinco vistas
+publicadas). Son 134 Foil nuevas y 133 Doradas nuevas; Thal completa la serie
+Dorada con su arte final. Prompts, fuentes y hashes públicos quedan en
+`../dev/arte/ediciones-placeholder-v1.json`. El usuario aprobó la sección aislada
+y pidió publicarla en beta el 2026-09-12. Integrada mediante PR #9 en `develop`,
+fuente `ec698ed39dd80d1b09dc5e439316ffd964d450e6`, etiqueta `build-252`.
+Artefactos `gh-pages:d1a4de0` y `beta:4372e58`, árbol beta
+`9bbc7d6673c268cf248d01bec4f7e52e5bf3ebd0`. Los 499 archivos del paquete
+coinciden con la fuente; las 402 ilustraciones por edición se verificaron
+byte a byte en Cloudflare. Acceso: https://beta.caoz-tcg.pages.dev/?b=252
+y `/movil.html?b=252`. Producción permanece en 250; `main`, el árbol `/tcg`
+y la publicación aislada conservan sus referencias previas.
+
+Revisión del listado: debajo de cada carta quedan únicamente los marcadores
+de las ediciones poseídas (Normal, Foil y Dorada); no se dibujan las bloqueadas
+ni hay contador o texto de edición. El marcador equipado queda resaltado.
+Las cantidades y el cambio de edición siguen en el detalle. Obtener otra
+copia de un acabado existente no duplica su marcador.
+
+Revisión: https://aislados.caoz-tcg.pages.dev/coleccion/ . `estado=ediciones`
+muestra copias distintas (Eric 6, Thal 7 y Fender 7). Para recorrer una serie
+completa, usar `estado=muestrario&acabado=foil` o `acabado=dorado`; todas las
+ediciones tienen una copia temporal. `carta=tal` abre su detalle. El laboratorio
+no lee ni escribe progreso real y no expone el estudio ni la partida completa.
+
+`cantidad(id, acabado?)` cuenta una edición o el total. `otorgarCopia` suma;
+`desbloquear` conserva su semántica idempotente. Una Normal inicial por ID;
+los premium antiguos sin contadores migran a una copia por edición poseída,
+pues nunca se guardó el historial de duplicados. Abrir un sobre concede copias
+y guarda el pendiente atómicamente; reabrir y equipar no vuelven a concederlas.
+
+`art/encuadres.json` admite `variantes.foil/dorado` con URL local versionada,
+encuadre, vistas opcionales y metadatos de placeholder. Un reemplazo exacto del
+estudio o su herencia explícita prevalece; después va el original de esa edición
+y, si falta, Normal. El catálogo derivado expone `originales` sin cambiar
+`original`. El primer ajuste de un original premium en el estudio envía sus
+mismos bytes como PUT: un PATCH sin imagen haría heredar Normal en el backend
+existente. Restaurar vuelve al original local de esa edición. No se cambió D1.
+
+Pruebas acotadas: `pruebas_coleccion.mjs`, `pruebas_arte_ediciones.mjs`,
+`pruebas_originales_acabados.mjs`, `dev/secciones/pruebas_coleccion_copias.mjs`,
+`pruebas_coleccion_muestrario.mjs`, `pruebas_coleccion_protagonistas.mjs`
+y las guardas del exportador aislado. Las 81 suites del juego completo pasaron,
+incluidos los seis tutoriales. El publicador incluye las dos nuevas regresiones
+de arte. `acabadosArte` comprueba originales premium retirados, herencia explícita
+y fallback Normal cuando falta original premium; dos sabotajes verifican estos
+contratos. Los retratos de Protagonistas
+llenan la carta de Colección; la corrección CSS está limitada a ese panel y
+conserva el formato de VS y los frentes de sobres. Las nuevas ilustraciones se
+cargan al verlas; no se añaden a la descarga inicial obligatoria del service worker.
+
+## Beta 251 — Sello del Domo publicado y verificado
+
+Integrado mediante PR #8 en `develop`; fuente `09dd57cd5ac56c8470635c5da179c8b4db007094`,
+etiqueta inmutable `build-251`. Artefactos `gh-pages:f61a261` y `beta:3bcaf3b`.
+Los 231 archivos del paquete coinciden con la fuente validada; árbol beta
+`6dd86ff979d80dab39bbd485d0d9b332ad7f690f`. Acceso público:
+https://beta.caoz-tcg.pages.dev/?b=251 y `/movil.html?b=251`.
+Revisión en https://aislados.caoz-tcg.pages.dev/sobres/ . El usuario eligió
+Sello del Domo. Se retira la fila inferior de cartas: cada toque revela una,
+la quinta espera indefinidamente un toque adicional antes de mostrar las cinco juntas,
+sin superposición (3+2 en teléfono, una fila en escritorio). «Volver» llama
+`onVolver` una sola vez y el laboratorio regresa a su menú de sobres.
+Las cartas del sobre muestran ilustración y nombre, sin habilidades/tribu ni
+nombre duplicado afuera. El arte se contiene sin zoom para ver el original;
+este estilo está limitado a sobres y no cambia las cartas de combate.
+Los cinco frentes se crean al montar el sobre y esperan descarga y `decode()`
+antes de romper el sello. Los mismos nodos se reutilizan en cada revelación
+y en el resumen. Si una imagen falla, el sobre queda cerrado y permite
+reintentar; destruir la vista cancela las esperas pendientes.
+El usuario aprobó integrar y publicar beta el 2026-09-12. Los módulos
+`sobres-apertura.js/css` y `sobres-escena.js` se conectan a Colección con
+las cartas del sobre pendiente real. El modelo conserva premios e inventario;
+cerrar la vista a mitad no gasta otro sobre ni cambia las cartas. «Volver»
+cierra el pendiente; un fallo de guardado conserva el resumen para reintentar.
+La revisión aislada mantiene su memoria temporal. Detalles en `../dev/secciones/README.md`.
+La build 251 incluye los tres archivos en el cargador, PWA y paquete verificado.
+Validación completa verde con `publicar.sh --solo-pruebas --completo`,
+incluidos seis tutoriales y banco de 2880 partidas sin errores. El recorrido
+real de Colección pasó en 320×568, 390×844 y 1440×900 sin scroll ni recursos
+fallidos. Se detectaron por sabotaje tanto el refresco tardío del arte como
+el bloqueo del toque móvil después de girar la funda.
+`publicar.sh --beta --completo` terminó con 81 suites verdes y verificó
+los archivos servidos en GitHub Pages y Cloudflare. El recorrido público
+con un navegador limpio pasó en 320×568, 390×844 y 1440×900: giro y toque
+inmediato, cinco cartas precargadas, espera de la quinta, resumen y regreso,
+sin errores JS ni recursos fallidos.
+Producción y main permanecen en build 250.
 
 ## Producción 250 — promoción autorizada y verificada (2026-09-12)
 

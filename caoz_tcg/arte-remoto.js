@@ -12,7 +12,17 @@
   const encValido=e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.z)&&e.x>=0&&e.x<=100&&e.y>=0&&e.y<=100&&e.z>=50&&e.z<=300;
   function limpiarOriginales(datos){
     const limpios={};if(!datos||typeof datos!=='object'||Array.isArray(datos))return limpios;
-    for(const [id,e]of Object.entries(datos))if(conocido(id)&&((typeof e==='number'&&Number.isFinite(e)&&e>=0&&e<=100)||encValido(e)))limpios[id]=e;
+    for(const [id,e]of Object.entries(datos))if(conocido(id)&&((typeof e==='number'&&Number.isFinite(e)&&e>=0&&e<=100)||encValido(e))){
+      if(typeof e==='number'){limpios[id]=e;continue;}
+      const variantes={};
+      for(const a of ['foil','dorado']){const v=e.variantes?.[a];
+        // Los originales son assets públicos de esta carta, nunca URLs remotas
+        // ni rutas provenientes del catálogo privado o del almacenamiento.
+        if(encValido(v)&&["art/"+id+'-'+a+'-v1.webp',"art/"+id+'-'+a+'-final-v1.webp'].includes(v.url))
+          variantes[a]={url:v.url,x:v.x,y:v.y,z:v.z,placeholder:v.placeholder===true,estilo:String(v.estilo||'').slice(0,80),vistas:CAOZ_VISTAS.limpiar(v.vistas)};
+      }
+      limpios[id]={x:e.x,y:e.y,z:e.z,...(e.placeholder===true?{placeholder:true}:{}),...(Object.keys(variantes).length?{variantes}:{})};
+    }
     return limpios;
   }
   const ACABADOS=['normal','foil','dorado'];
@@ -65,12 +75,17 @@
     const lado=window.CAOZ_COLECCION_JUEGO?.acabado(id,nodo);
     return ACABADOS.includes(lado)?lado:window.CAOZ_COLECCION?.elegido(id)||'normal';
   }
-  // Las tres ediciones comparten reglas. Si no existe arte premium propio,
-  // conservan su acabado y heredan el dibujo Normal, nunca otro acabado premium.
+  // Las tres ediciones comparten reglas. Un diseño del estudio o su herencia
+  // explícita tienen prioridad; después se usa el original de esa edición.
   function version(id,acabado='normal',vista){
     if(!conocido(id))return null;
     if(!ACABADOS.includes(acabado))acabado='normal';
     const variantes=remoto(id)?.variantes||{},e=registroElegido(id,acabado);
+    const propio=variantes[acabado],local=originales[id]?.variantes?.[acabado];
+    if(local&&!(propio?.activo&&encValido(propio))){
+      const base={x:local.x,y:local.y,z:local.z};
+      return {acabado,url:local.url,encuadre:vista?CAOZ_VISTAS.resolver(local.vistas,vista,base):base,disenoPropio:true,placeholder:local.placeholder,estilo:local.estilo};
+    }
     const normal=variantes.normal?.activo!==false?variantes.normal:null;
     const hash=e?.heredada?normal?.hash:e?.hash;
     const base=encValido(e)?{x:e.x,y:e.y,z:e.z}:encuadreDe(originales[id]);
@@ -80,7 +95,9 @@
   }
   function recomponer(){
     ARTE={...originales};
-    for(const e of cartas){const r=registroElegido(e.id,acabadoElegido(e.id));if(encValido(r))ARTE[e.id]={x:r.x,y:r.y,z:r.z};}
+    for(const id of new Set([...Object.keys(originales),...cartas.map(e=>e.id)])){
+      const r=version(id,acabadoElegido(id));if(r?.encuadre)ARTE[id]=r.encuadre;
+    }
   }
   window.urlArte=function(id,nodo){if(muestra?.id===id)return muestra.url||'art/'+id+'.webp';return version(id,acabadoElegido(id,nodo))?.url||'art/'+id+'.webp';};
   window.acabadoArte=(id,nodo)=>muestra?.id===id?muestra.acabado:acabadoElegido(id,nodo);
@@ -171,7 +188,7 @@
     if(enc&&img.getAttribute('src')!==base){img.src=base;variables(nodo,enc);img.parentElement?.style.setProperty('--url','url("'+base+'")');}
     else quitar(nodo);
   },true);
-  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,version,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:(id,nodo)=>{const e=registroElegido(id,acabadoElegido(id,nodo));return !!e&&(!!e.hash||encValido(e));}});
+  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,version,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:(id,nodo)=>{const a=acabadoElegido(id,nodo),e=registroElegido(id,a);return !!originales[id]?.variantes?.[a]||!!e&&(!!e.hash||encValido(e));}});
   // Una carta puede construirse fuera del DOM; al entrar ya conocemos su superficie.
   // Sólo se observan nodos añadidos: modificar el encuadre no dispara un bucle.
   const pendientes=new Set();let programado=false;
