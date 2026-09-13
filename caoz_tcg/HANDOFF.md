@@ -51,12 +51,25 @@ del propietario del progreso y del diario entre pestañas, y regresiones con
 sabotaje. Se verificaron 23 casos del servidor SQLite y cinco sabotajes, además
 de las pruebas acotadas de progreso, sincronización, correo y modelo.
 
-Se inició `publicar.sh --solo-pruebas --completo`: las guardas previas de
-publicación, cuentas, caché y colección pasaron; el arnés completo en Chrome
-seguía en ejecución al registrar este estado. No darlo por aprobado hasta leer
-su resultado. Faltan comprobar el servicio conectado, el flujo de correo real
-autorizado, la versión beta servida y finalmente producción byte a byte mediante
-el publicador existente. El PR 13 documental previo permanece separado.
+`publicar.sh --solo-pruebas --completo` terminó con **83 suites verdes y cero
+fallos**, además de las guardas y pruebas de cuentas previas. La primera tanda
+señaló una espera innecesaria en Borrar progreso para invitados: corregida,
+probada en ambos HTML y validada por sabotaje antes de repetir la tanda completa.
+Los flujos de cuenta también pasaron en 1420×900, 390×844 y 320×568.
+
+La integración está respaldada en el PR draft 14 hacia `develop`:
+https://github.com/rafarorr1/csm-game-guide/pull/14 . Todavía faltan los enlaces y
+secretos de Pages, los DNS de correo y la comprobación real de entrega y guardado.
+En Chrome quedaron preparados el vínculo `CUENTAS_DB` de producción y los tres
+registros nuevos de GoDaddy, sin pulsar Guardar. Resend sigue sin claves API:
+crear una clave de envío limitada a `cuentas.caozcontodo.com` cuando el dominio
+esté verificado. No activar una clave de acceso completo o para todos los dominios.
+La confirmación puntual de estos accesos está pendiente en la conversación;
+no confundirla con la autorización de publicación que el usuario ya otorgó.
+
+Después: comprobar el servicio conectado y correo real, integrar a `develop`,
+validar/publicar beta servida, y promover/publicar producción con las guardas del
+proyecto. El PR 13 documental previo permanece separado.
 
 ## Registro de la propuesta aislada — aprobada el 2026-09-13
 

@@ -23,7 +23,7 @@ de los enlaces y el envío de prueba esperan confirmación puntual del usuario;
 el acceso a GoDaddy también requiere completar su login.
 
 Build 255 está en preparación en `feature/cuentas-jugadores`, con pruebas
-completas iniciadas. `main`, beta y producción conservan build 254.
+completas aprobadas: 83 suites verdes y cero fallos. `main`, beta y producción conservan build 254.
 Este estado no acredita una publicación ni un envío de correo real. Actualizar
 el registro al verificar ambos servicios y el juego servido.
 

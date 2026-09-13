@@ -14,7 +14,7 @@
   independiente por entorno. La API no se cachea y no guarda textos de deseos.
   El juego como invitado sigue disponible sin servicio de cuentas.
 - Servidor y correo preparados; bases migradas, conexión Pages y DNS de correo
-  pendientes. Validación completa iniciada. **255 aún no publicada: beta y
+  pendientes. Validación completa: 83 suites verdes y cero fallos. **255 aún no publicada: beta y
   producción continúan en 254.** Esta entrada no acredita correo real operativo.
 
 ### v22 · build 254 · Premios elegibles y biblioteca de sobres · 2026-09-12
