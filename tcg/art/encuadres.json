@@ -2,790 +2,3237 @@
  "tal": {
   "x": 45,
   "y": 91,
-  "z": 118
+  "z": 118,
+  "variantes": {
+   "dorado": {
+    "x": 45,
+    "y": 91,
+    "z": 118,
+    "vistas": {
+     "desktop_coleccion": {
+      "x": 45,
+      "y": 100,
+      "z": 135
+     },
+     "desktop_detalle": {
+      "x": 45,
+      "y": 41,
+      "z": 118
+     },
+     "desktop_mano": {
+      "x": 45,
+      "y": 100,
+      "z": 118
+     },
+     "desktop_memoria": {
+      "x": 45,
+      "y": 58,
+      "z": 118
+     },
+     "desktop_revelada": {
+      "x": 45,
+      "y": 100,
+      "z": 136
+     }
+    },
+    "url": "art/tal-dorado-final-v1.webp",
+    "placeholder": false,
+    "estilo": "final"
+   },
+   "foil": {
+    "url": "art/tal-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
- "augusto": 0,
- "lucius": 50,
+ "augusto": {
+  "x": 50,
+  "y": 0,
+  "z": 100,
+  "variantes": {
+   "dorado": {
+    "url": "art/augusto-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/augusto-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
+ },
+ "lucius": {
+  "x": 50,
+  "y": 50,
+  "z": 100,
+  "variantes": {
+   "dorado": {
+    "url": "art/lucius-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lucius-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
+ },
  "lider_adreida": {
   "x": 50,
   "y": 5,
-  "z": 106
+  "z": 106,
+  "variantes": {
+   "foil": {
+    "url": "art/lider_adreida-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/lider_adreida-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "lider_fender": {
   "x": 0,
   "y": 2,
-  "z": 105
+  "z": 105,
+  "variantes": {
+   "dorado": {
+    "url": "art/lider_fender-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lider_fender-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lider_rafaela": {
   "x": 50,
   "y": 6,
-  "z": 100
+  "z": 100,
+  "variantes": {
+   "dorado": {
+    "url": "art/lider_rafaela-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lider_rafaela-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lider_talesin": {
   "x": 50,
   "y": 11,
-  "z": 100
+  "z": 100,
+  "variantes": {
+   "dorado": {
+    "url": "art/lider_talesin-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lider_talesin-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "acertijo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/acertijo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/acertijo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "adolfo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/adolfo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/adolfo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "afterparty": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/afterparty-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/afterparty-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "aidman": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/aidman-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/aidman-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "aldrick": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/aldrick-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/aldrick-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "alientoacido": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/alientoacido-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/alientoacido-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "antro": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/antro-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/antro-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "arco": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/arco-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/arco-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "armadura": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/armadura-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/armadura-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "armamagica": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/armamagica-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/armamagica-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "auxilio": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/auxilio-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/auxilio-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "balada": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/balada-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/balada-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "ballesta": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/ballesta-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/ballesta-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "bartolomeo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/bartolomeo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/bartolomeo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "bendicion": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/bendicion-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/bendicion-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "bob": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/bob-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/bob-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "bolafuego": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/bolafuego-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/bolafuego-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "brazosagua": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/brazosagua-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/brazosagua-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "brickbrock": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/brickbrock-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/brickbrock-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "brujula": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/brujula-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/brujula-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "burla": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/burla-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/burla-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "calentarmetal": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/calentarmetal-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/calentarmetal-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "campanafe": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/campanafe-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/campanafe-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "can": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/can-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/can-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "cantaberna": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/cantaberna-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/cantaberna-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "ceguera": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/ceguera-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/ceguera-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "ciclope": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/ciclope-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/ciclope-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "colapso": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/colapso-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/colapso-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "collar": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/collar-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/collar-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "conserje": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/conserje-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/conserje-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "contrahechizo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/contrahechizo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/contrahechizo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "copiajabon": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/copiajabon-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/copiajabon-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "correcaminos": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/correcaminos-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/correcaminos-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "coyote": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/coyote-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/coyote-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "cuerda": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/cuerda-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/cuerda-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "destello": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/destello-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/destello-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "discipulo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/discipulo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/discipulo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "disfrazarse": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/disfrazarse-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/disfrazarse-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "disipar": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/disipar-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/disipar-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "domo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/domo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/domo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "eclipse": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/eclipse-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/eclipse-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "edbor": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/edbor-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/edbor-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "editorcarrera": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/editorcarrera-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/editorcarrera-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "editorcorte": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/editorcorte-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/editorcorte-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "editorcosecha": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/editorcosecha-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/editorcosecha-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "editorcuadro": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/editorcuadro-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/editorcuadro-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "editorduelo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/editorduelo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/editorduelo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "editororbita": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/editororbita-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/editororbita-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "eric": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/eric-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/eric-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "escarcha": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/escarcha-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/escarcha-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "espadaboveda": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/espadaboveda-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/espadaboveda-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "espadaluz": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/espadaluz-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/espadaluz-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "espiritus": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/espiritus-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/espiritus-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "esporas": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/esporas-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/esporas-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "esporashorton": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/esporashorton-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/esporashorton-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "fetichemino": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/fetichemino-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/fetichemino-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "gatobachatero": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/gatobachatero-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/gatobachatero-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "gemaconserje": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/gemaconserje-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/gemaconserje-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "hermanotrol": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/hermanotrol-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/hermanotrol-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "hongos": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/hongos-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/hongos-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "horton": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/horton-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/horton-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "humobob": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/humobob-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/humobob-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "ilusion": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/ilusion-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/ilusion-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "ipadkid": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/ipadkid-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/ipadkid-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "jabon": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/jabon-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/jabon-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "juangabriel": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/juangabriel-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/juangabriel-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "julia": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/julia-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/julia-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "ladrillos": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/ladrillos-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/ladrillos-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lanzallamas": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/lanzallamas-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lanzallamas-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lanzallave": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/lanzallave-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/lanzallave-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "leche": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/leche-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/leche-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lecheslact": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/lecheslact-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lecheslact-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lentesmachete": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/lentesmachete-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lentesmachete-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lider_gero": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "foil": {
+    "url": "art/lider_gero-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   },
+   "dorado": {
+    "url": "art/lider_gero-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   }
+  }
  },
  "lider_mohamed": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/lider_mohamed-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lider_mohamed-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lifestealer": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/lifestealer-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lifestealer-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "llavemago": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/llavemago-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/llavemago-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lucy": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/lucy-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lucy-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "lutorafaela": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/lutorafaela-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/lutorafaela-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "luzhadas": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/luzhadas-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/luzhadas-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "machete": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/machete-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/machete-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "magodomo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/magodomo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/magodomo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "manosardientes": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/manosardientes-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/manosardientes-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "matildus": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/matildus-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/matildus-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "mazo": {
   "x": 50,
   "y": 55,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/mazo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/mazo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "mensaje": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/mensaje-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/mensaje-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "minus": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/minus-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/minus-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "modificar": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/modificar-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/modificar-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "montanas": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/montanas-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/montanas-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "ninolanza": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/ninolanza-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/ninolanza-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "notario": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/notario-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/notario-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "nubedagas": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/nubedagas-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/nubedagas-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "palabracuracion": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/palabracuracion-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/palabracuracion-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "pasoatronador": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/pasoatronador-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/pasoatronador-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "peaje": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/peaje-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/peaje-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "pergamino": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/pergamino-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/pergamino-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "petunia": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/petunia-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/petunia-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "propaganda": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/propaganda-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/propaganda-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "proyectil": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/proyectil-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/proyectil-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "puas": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/puas-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/puas-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "puente": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/puente-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/puente-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "puntosrobados": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/puntosrobados-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/puntosrobados-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "rambo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/rambo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/rambo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "rantiago": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/rantiago-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/rantiago-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "rayoabrasador": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/rayoabrasador-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/rayoabrasador-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "rey": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/rey-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/rey-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "rulchete": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/rulchete-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/rulchete-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "rulchetebajo": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/rulchetebajo-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/rulchetebajo-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "saeta": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/saeta-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/saeta-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "sangrefria": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/sangrefria-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/sangrefria-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "sombrero": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/sombrero-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/sombrero-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "spiderman": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/spiderman-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/spiderman-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "talcadaver": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/talcadaver-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/talcadaver-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "talia": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/talia-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/talia-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tasha": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tasha-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tasha-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "taumaturgia": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/taumaturgia-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/taumaturgia-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "titaus": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/titaus-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/titaus-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tok_dragon": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tok_dragon-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tok_dragon-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tok_goblincamino": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tok_goblincamino-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tok_goblincamino-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tok_ilusion": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tok_ilusion-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tok_ilusion-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tok_petunia": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tok_petunia-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tok_petunia-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tok_poseido": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tok_poseido-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tok_poseido-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tok_rulchete": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tok_rulchete-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tok_rulchete-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "tomsage": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/tomsage-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/tomsage-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "trol": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/trol-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/trol-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "viajehongos": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/viajehongos-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/viajehongos-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  },
  "zancada": {
   "x": 50,
   "y": 30,
   "z": 100,
-  "placeholder": true
+  "placeholder": true,
+  "variantes": {
+   "dorado": {
+    "url": "art/zancada-dorado-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "manuscrito"
+   },
+   "foil": {
+    "url": "art/zancada-foil-v1.webp",
+    "x": 50,
+    "y": 30,
+    "z": 100,
+    "placeholder": true,
+    "estilo": "grabado"
+   }
+  }
  }
 }

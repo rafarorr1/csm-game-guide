@@ -80,7 +80,7 @@
     const p=guardarFase(e,'completado');if(!p)return;
     showScreen('menu');limpiarTransicionMenu();
     // El nombre ganador ya está pintado bajo una cobertura negra que se retira.
-    fase(e,'menu');esperar(e,900,limpiar);
+    fase(e,'menu');esperar(e,900,()=>{limpiar();window.campanaElegirPremioAlVolver?.(e.id,e.partida);});
   }
   function final(e){
     const p=guardarFase(e,'final');if(!p)return;fase(e,'final');
@@ -99,7 +99,7 @@
     // La primera pintura del final conserva la mesa debajo del fundido.
     // Establecerlo después de showModal provocaba un corte negro de un cuadro.
     if(p.secreto==='final')d.dataset.fase='final';
-    const e={d,id:p.id,timers:[],cancelado:false,visual:null,lanzando:false};escena=e;
+    const e={d,id:p.id,partida:G,timers:[],cancelado:false,visual:null,lanzando:false};escena=e;
     d.addEventListener('cancel',ev=>{ev.preventDefault();if(['revelacion','trono'].includes(d.dataset.fase))campanaVolverAlMenu();});
     d.addEventListener('close',()=>{if(!d.open&&escena===e)limpiar();});document.body.appendChild(d);d.showModal();
     if(p.secreto==='final')final(e);else if(['trono','combate'].includes(p.secreto))prepararTrono(e);else revelar(e,opciones.origen);
