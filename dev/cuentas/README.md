@@ -1,23 +1,23 @@
 # Cuentas por correo y guardado de jugadores
 
-La primera integración de cuentas fue aprobada y publicada en 257. La nueva
-revisión de acceso obligatorio y continuidad offline se prepara por separado
-en `feature/acceso-correo-offline`. Esta carpeta contiene la migración y pruebas
+La primera integración de cuentas fue aprobada y publicada en 257. El acceso
+obligatorio y la continuidad offline se integraron en beta 259 mediante el PR 23.
+Esta carpeta contiene la migración y pruebas
 del servidor. La demostración de `dev/secciones/cuenta-demo.js` permanece
 separada: **nunca se publica como autenticación del juego**.
 
 ## Estado vigente — 2026-09-13
 
-Beta sirve **258** y producción **257**, con cuentas reales operativas y bases
-independientes. La revisión nueva se presenta primero en
+Beta sirve **259** y producción **257**, con cuentas reales operativas y bases
+independientes. La revisión aprobada permanece en
 `https://aislados.caoz-tcg.pages.dev/cuenta/`, usando componentes reales con
-transporte y almacenamiento temporales. La sección está publicada y sus 13 archivos
-servidos están verificados; referencias y pruebas en `caoz_tcg/HANDOFF.md`.
-Todavía no se ha integrado este cambio en beta ni ejecutado la batería completa.
-BUILD 258 es sólo la base de la rama; asignar la siguiente build al integrar
-después de aprobar la sección, sin sustituir bytes de una versión publicada.
+transporte y almacenamiento temporales; sus 15 archivos están verificados.
+La integración pasó las 84 suites del juego tanto antes de fusionar como durante
+la publicación. También pasó el flujo integrado de cuentas y la recarga con
+SW 259 real, totalmente offline, conservando la cola y sin duplicar al reconectar.
+Referencias y límites de estas pruebas en `caoz_tcg/HANDOFF.md`.
 
-El acceso propuesto exige correo y código antes de jugar. La primera entrada
+El acceso en beta exige correo y código antes de jugar. La primera entrada
 necesita internet. Después de verificar y vincular el progreso, un recibo local
 con `{id,nombre,correo}` y entorno permite reconocer esa cuenta al abrir la app
 sin red. No contiene tokens, cookies, OTP ni una respuesta cacheada de la API.
