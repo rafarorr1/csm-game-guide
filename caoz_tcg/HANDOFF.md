@@ -10,6 +10,21 @@ números) → el código.
 
 ---
 
+## Promoción autorizada — build 254 en validación
+
+El usuario aprobó la sección y pidió publicar todos los cambios en producción.
+Se prepara254 desde `feature/sobres-tres-colecciones`, integrando la revisión
+pública `aislados:4eaafd9bcee3` y lo ya aprobado en beta251–253. No requiere
+otra confirmación para publicar beta ni para promover exactamente ese paquete
+a producción. Flujo: PR hacia develop, validación completa, beta, PR de release
+hacia main y `publicar.sh --produccion --completo` con verificación pública.
+
+Incluye elección1/3, tres colecciones, biblioteca de sobres por color, apertura
+Sello del Domo, nuevos originales premium, marcadores, copias y canjes. Motor,
+mazos, banco de audio y backend de estudios permanecen iguales a producción250.
+La build y caché se sincronizan a254 en ambas pantallas. Los resultados de
+integración y referencias finales se registrarán al completar la promoción.
+
 ## Revisión aislada — elegir el premio y guardar sus sobres
 
 Continuación en `feature/sobres-tres-colecciones`, sin integrar todavía a

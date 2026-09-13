@@ -1,5 +1,19 @@
 # Registro de versiones — el TCG del Domo
 
+### v22 · build 254 · Premios elegibles y biblioteca de sobres · 2026-09-12
+
+- Revisión aislada aprobada: elegir un sobre al ganar contra el Domo y tres al
+  completar campaña, iguales o combinados; guardarlos sellados para abrir después.
+- Tres colecciones cubren todo el catálogo: Trucos del Domo (azul), Juramentos
+  del Domo (verde) y Caos y Dragones (rojo). Carrusel con dedo, ratón y teclado.
+- Biblioteca y apertura Sello del Domo comparten su envoltura. La apertura
+  espera a que el carrusel termine para consumir siempre el tipo seleccionado.
+- Recuperación de sobres antiguos sin colección, resultados ya abiertos y
+  fallos de guardado. Elegir un tipo no concede ni vuelve a sortear cartas.
+- Producción autorizada junto con todo lo aprobado de beta251–253: apertura3D,
+  originales por acabado, marcadores, copias, premios1/3 y canjes cinco a uno.
+  No cambian reglas de combate, mazos, online, bancos de sonido ni estudios.
+
 ### En revisión aislada · Elegir premios y guardar sobres · 2026-09-12
 
 - Al ganar contra el Domo se elige un sobre; al completar campaña se eligen
