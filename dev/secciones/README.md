@@ -71,7 +71,7 @@ acciones siguen legibles. Se usa el desbloqueo permanente del inventario: una
 edición conseguida conserva su imagen nítida aunque se gasten sus copias en un
 canje. La disponibilidad de ilustraciones en el estudio no la desbloquea.
 Revisión directa: `/coleccion/?estado=nuevo&carta=tal` (Normal propia, Foil y
-Dorada pendientes). Beta y producción conservan build 257 hasta aprobarla.
+Dorada pendientes). Revisión aprobada para beta 258; producción conserva build 257.
 
 El detalle muestra la cantidad de cada edición por separado, incluida `0 copias`
 para una edición bloqueada. La ilustración del listado corresponde al acabado

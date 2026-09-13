@@ -10,7 +10,22 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — cuentas publicadas y verificadas en beta y producción 257
+## Trabajo vigente — colección aprobada para beta 258
+
+El usuario aprobó llevar el desenfoque de ediciones bloqueadas a beta. La fuente
+vive en `feature/coleccion-bloqueadas`; revisión aislada aprobada:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=nuevo&carta=tal .
+
+El selector de `coleccion.css` usa la clase existente `.bloqueada`, calculada
+con el desbloqueo permanente del inventario. Una Foil con cero copias después
+de un canje sigue nítida. Los botones y etiquetas externas quedan legibles;
+las cartas de combate y apertura de sobres no coinciden con ese selector.
+
+Build 258 sincronizada en ambas pantallas y la PWA. Pendientes en este registro:
+pruebas completas, PR hacia `develop`, publicación beta y comprobación de bytes.
+No hay autorización de producción para 258: `main` y producción conservan 257.
+
+## Registro anterior — cuentas publicadas y verificadas en beta y producción 257
 
 El usuario autorizó integrar cuentas y publicarlas en producción. El
 [PR 17](https://github.com/rafarorr1/csm-game-guide/pull/17) se integró en
