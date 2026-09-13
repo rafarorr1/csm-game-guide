@@ -47,10 +47,23 @@ con victorias y epílogos, y pruebas de apertura/precarga con 14 sabotajes.
 Canjes y recorrido de premios→guardado→carrusel→apertura recuperable pasan en
 1440×900, 390×844 y 320×568, incluyendo consulta de contenido y fallos de
 escritura al elegir y al abrir. También se probó movimiento normal: selección
-a60ms, teclado, resize y apertura durante desplazamiento. Se corrigió una
+a 60 ms, teclado, resize y apertura durante desplazamiento. Se corrigió una
 carrera que podía volver a seleccionar el tipo anterior; Abrir espera a que
 llegue el destino, que se conserva al redimensionar. Las pruebas del entorno/
-exportación siguen verdes. Publicación y comprobación remota se registran al finalizar.
+exportación siguen verdes.
+Publicada desde `755628af33f6ef0ca99f33e19a5f0dfcc8c89a21` en
+`aislados:4eaafd9bcee3078e6407100621f0d5d67b2feef0`. Los 442 archivos
+públicos coinciden byte a byte. El recorrido completo de esta sección pasó
+también en la URL pública con los tres tamaños, sin errores JavaScript;
+incluye movimiento normal, apertura rápida y resize. Las secciones aisladas
+El Rey y propuestas de sobres conservan sus árboles. `develop`, `main`,
+`beta` y `gh-pages` mantienen sus referencias previas.
+Revisar elección de tres:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=premio-campana
+O un premio del Domo:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=premio-domo
+Biblioteca con uno de cada color:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=sobres&pestana=sobres
 Beta253 y producción250 siguen vigentes; la integración requerirá build nueva.
 
 ## Revisión aislada — tres colecciones para sobres
