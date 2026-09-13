@@ -26,8 +26,14 @@ La rama antigua `feature/aaa-combat-cards` queda conservada; no iniciar trabajo 
 
 La primera promoción autorizada desde `develop` se completó el 2026-09-12:
 `main` incorpora la build250 aprobada (`build-250`, fuente `c55b6b9`) y las guardas
-actuales del publicador. Producción y beta sirven el mismo paquete250. No usar
+actuales del publicador. Producción y beta sirvieron el mismo paquete250. No usar
 el script histórico de245 ni copiarlo por separado entre versiones.
+
+La promoción254 integra las revisiones aprobadas de sobres y colección, junto
+con beta251–253: PR#11 hacia develop, etiqueta `build-254` sobre `8e3af1b`,
+verificación pública beta y PR#12 hacia main (`504e5ff`). Producción y beta
+comparten el paquete254. Las83 suites se ejecutaron completas antes de integrar
+y en cada publicación. La rama `aislados` permanece independiente e intacta.
 
 ## 1. Crear un trabajo
 

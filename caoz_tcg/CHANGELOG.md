@@ -12,7 +12,11 @@
   fallos de guardado. Elegir un tipo no concede ni vuelve a sortear cartas.
 - Producción autorizada junto con todo lo aprobado de beta251–253: apertura3D,
   originales por acabado, marcadores, copias, premios1/3 y canjes cinco a uno.
-  No cambian reglas de combate, mazos, online, bancos de sonido ni estudios.
+  No cambian reglas de combate, mazos, online, bancos de sonido ni backend y
+  bibliotecas guardadas de los estudios; sí se integra su interfaz de ediciones.
+- La revisión integrada corrigió las salidas de victoria que tapaban el premio
+  en teléfonos bajos y el scroll tardío que podía cambiar el sobre seleccionado.
+  Ambas regresiones fallan al retirar su arreglo y pasan con él.
 
 ### En revisión aislada · Elegir premios y guardar sobres · 2026-09-12
 
