@@ -1,6 +1,7 @@
 /* Estudios privados de SFX e ilustraciones para Cloudflare Pages.
    SFX_DB es una base D1 propia del entorno; las claves sólo viven en secretos.
    Nunca se autoriza una escritura con una contraseña incluida en JavaScript. */
+import {manejarCuenta} from './cuenta-servidor.js';
 const enc=new TextEncoder(),MAXIMO=1600044,COOKIE='__Host-caoz-sfx';
 const volumenBase={"ui_hover":0.17,"ui_confirm":0.42,"ui_back":0.34,"menu_gold":0.52,"card_draw":0.4,"card_play":0.68,"attack_wind":0.65,"attack_hit":0.84,"counter":0.55,"lethal":0.86,"shield":0.59,"heal":0.56,"buff":0.54,"spell_fire":0.73,"spell_frost":0.57,"spell_lightning":0.73,"spell_arcane":0.61,"spell_shadow":0.59,"spell_bard":0.61,"spell_holy":0.62,"dice_roll":0.62,"dice_land":0.6,"coin_flip":0.62,"coin_land":0.62,"vs":0.77,"turn":0.43,"table_hop":0.55,"table_hit":0.72,"fog_reveal":0.36,"victory":0.68,"defeat":0.64,"ascension":0.63,"wish_fire":0.76,"wish_granted":0.61,"leader_hit":0.82,"card_hover":0.22,"victory_slam":0.8};
 const ids=new Set(Object.keys(volumenBase));
@@ -408,6 +409,7 @@ async function apiEstudio(req,env){
 export default {
   async fetch(req,env){
     const url=new URL(req.url),ruta=url.pathname,esArte=ruta.startsWith('/api/arte/');
+    if(ruta==='/api/cuenta'||ruta.startsWith('/api/cuenta/'))return manejarCuenta(req,env);
     if(env.ESTUDIO_UNICO==='1'){
       if(/^\/(estudio|sonidos)(\.html)?\/?$/.test(ruta)&&url.origin!==URL_ESTUDIO)return Response.redirect(URL_ESTUDIO+'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),302);
       if((esArte||ruta.startsWith('/api/sfx/'))&&!['GET','HEAD'].includes(req.method)&&ruta!=='/api/sfx/sesion')return json({error:'Guarda y publica desde el estudio único.',estudio:URL_ESTUDIO},409);

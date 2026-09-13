@@ -9,9 +9,12 @@ fuera: arquitectura, flujo de turno, datos, IA, online, deploy, pruebas, deuda y
 ## Qué es
 
 Un TCG jugable en el navegador, ambientado en la serie de D&D «Caoz Con Todo». Dos jugadores
-entran al Domo con un Protagonista como Líder y un mazo de 40 cartas. Sin dependencias, sin
-build, sin cuentas: archivos sueltos que funcionan con cualquier servidor estático (o
-`python3 -m http.server 8745 --directory caoz_tcg`). Dirección oficial:
+entran al Domo con un Protagonista como Líder y un mazo de 40 cartas. El juego de invitado
+no requiere cuenta, dependencias ni compilación: sus archivos funcionan con cualquier
+servidor estático (o `python3 -m http.server 8745 --directory caoz_tcg`). La cuenta opcional
+por correo y el guardado remoto, integrados en la preparación de build 255, requieren el
+Worker, D1 y el proveedor de correo configurados; no funcionan como servicio real en un
+servidor estático. Consultar el estado de conexión y publicación en `HANDOFF.md`. Dirección oficial:
 **https://juego.caozcontodo.com/** (Cloudflare Pages); espejo en GitHub Pages.
 
 ## Arquitectura: un motor, dos pantallas
@@ -23,6 +26,9 @@ build, sin cuentas: archivos sueltos que funcionan con cualquier servidor estát
 | `movil.html` | La pantalla del teléfono, de pie, hecha de cero sobre el mismo motor: texto a tamaño nativo, toque para seleccionar/jugar, pulsación larga (380 ms) para ver la carta, hojas inferiores para ficha y registro, app instalable. |
 | `final.js` | Cargador de módulos compartidos. `final-core.js` conserva la cinemática, menús y coordinación; campaña, sonido, acabados y Colección tienen módulos propios. |
 | `coleccion-modelo.js`, `coleccion-ui.js`, `coleccion-juego.js`, `coleccion.css` | Inventario/acabados, interfaz y conexión con el juego. Primera sección con entorno aislado en `../dev/secciones/`. |
+| `cuenta-modelo.js`, `cuenta-ui.js`, `cuenta.css`, `cuenta-juego.js/css` | Cuenta opcional desde Extras, flujo compartido y montaje fuera del lienzo escalado. La demostración aislada no se distribuye con el juego. |
+| `cuenta-progreso.js`, `cuenta-servicio.js` | Captura completa de progreso, respaldo local, vinculación, conflictos y cola de autoguardado por cuenta/entorno. No sumar inventarios ni volver a conceder sobres al restaurar. |
+| `cuenta-servidor.js`, `cuenta-correo.js` | Módulos del Worker para OTP, sesiones, D1 y correo Resend. Configuración y migración en `../dev/cuentas/README.md`; secretos sólo en el servidor. |
 | `sw.js`, `manifest.webmanifest`, `art/icono-*.png` | La PWA: caché «red primero» para HTML/JS y «caché primero» para ilustraciones; iconos generados del logo. |
 | `tests.js` | El arnés. Se carga sólo con `?test=1` (`&rapido=1` salta los tutoriales). Suites: motor, cartas, cobertura, tutoriales, regresiones. |
 | `balance.html` | El banco de balance: 2880 partidas IA contra IA por tanda (`?auto`). |
@@ -153,6 +159,10 @@ el orden. La vista aislada no sustituye las pruebas de integración posteriores.
 - Tocar `caozcontodo.com` raíz en GoDaddy (es la web de Rafa); el juego es el subdominio
   `juego`, CNAME a `caoz-tcg.pages.dev`.
 - Meter dependencias, bundlers o TypeScript. El juego tiene que seguir abriéndose con doble clic.
+- Publicar el servicio de demostración como cuentas reales, compartir la base/clave de estudios
+  con jugadores, cachear `/api/cuenta/*`, incluir secretos en el paquete o guardar los textos
+  del deseo. Conservar identidad, revisión y operación en cada guardado; nunca fusionar
+  inventarios de distintos dispositivos o cuentas automáticamente.
 - Hacer benchmarks contra los relevos públicos del online (ntfy bloquea la IP).
 - Dar por publicado algo sin la comprobación byte a byte: GitHub Pages sirve la versión vieja
   durante varios intentos.

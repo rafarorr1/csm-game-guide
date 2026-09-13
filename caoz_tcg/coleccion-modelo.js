@@ -65,9 +65,16 @@
     if(indice>=0)partes.length=indice+1;
     else if(partes.length&&(/\.[a-z0-9]+$/i.test(partes[partes.length-1])||['estudio','sonidos'].includes(partes[partes.length-1])))partes.pop();
     const prueba=new URLSearchParams(location.search||'').has('test')?'.prueba':'';
+    // Una cuenta comparte el inventario en raíz y la ruta móvil limpia. El
+    // invitado anterior conserva su clave hasta elegir qué progreso vincular.
+    if(!prueba&&indice<0&&partes.length===1&&partes[0]==='movil'){
+      try{const v=JSON.parse(localStorage.getItem('caoz.cuenta.v1.'+(betaDisponible()?'beta':'produccion')+'.raiz.vinculo'));
+        if(typeof v?.cuentaId==='string')partes.length=0;}catch(_){}
+    }
     return 'caoz.coleccion.v1.'+(betaDisponible()?'beta':'produccion')+'.'+encodeURIComponent(partes.join('/')||'raiz')+prueba;
   }
-  const clave=claveActual();
+  let clave=claveActual();
+  function usarClaveDeCuenta(){const nueva=claveActual();if(nueva!==clave){clave=nueva;avisar('cuenta',leer());}return clave;}
   function vacio(){return {version:1,revision:0,desbloqueos:{},cantidades:{},selecciones:{},sobres:0,sobresVersion:2,sobresGuardados:{},recompensasPorElegir:[],pendiente:null,campanasPremiadas:[],domosPremiados:[]};}
   function idRecompensa(estado,origen){
     const base='premio_'+origen+'_'+(estado.revision+1).toString(36),usados=new Set(estado.recompensasPorElegir.map(r=>r.id));
@@ -343,7 +350,7 @@
     estado.pendiente=null;
     return guardar(estado,'cerrar-sobre');
   }
-  window.CAOZ_COLECCION=Object.freeze({acabados,clave,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,sobres,recompensasPendientes,elegirSobres,inventarioSobres,abrirSobre,pendiente,cerrarSobre});
+  window.CAOZ_COLECCION=Object.freeze({acabados,get clave(){return clave;},usarClaveDeCuenta,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,sobres,recompensasPendientes,elegirSobres,inventarioSobres,abrirSobre,pendiente,cerrarSobre});
   window.addEventListener('storage',event=>{
     if(event.key===clave||event.key===null)avisar('externo',leer());
   });
