@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-13 · beta 256 · producción 254 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-13 · beta 257 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,92 +10,102 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — beta 256; corrección del correo en Workers en preparación
+## Trabajo vigente — cuentas publicadas y verificadas en beta y producción 257
 
-El usuario autorizó integrar cuentas y publicarlas en producción. Esa autorización
-sigue vigente para completar este trabajo; no hay que volver a pedirla para el
-mismo paquete. La autorización no convierte el correo en operativo: todavía se
-debe comprobar la entrega real del código, el acceso y el guardado antes de
-promover el juego. El PR 13 documental previo permanece separado y sin autorización
-de merge por esta tarea.
+El usuario autorizó integrar cuentas y publicarlas en producción. El
+[PR 17](https://github.com/rafarorr1/csm-game-guide/pull/17) se integró en
+`develop:8e3eb7d`. **La beta 257 está publicada y pasó las 84 suites completas**,
+con cero fallos. Los bytes de los artefactos `gh-pages:a5953a6` y `beta:64255c6`
+se verificaron en los servicios publicados.
 
-El [PR 15](https://github.com/rafarorr1/csm-game-guide/pull/15), rama
-`fix/cuentas-primer-acceso`, se integró en `develop:a00f251`. **La beta 256 ya está
-publicada.** El publicador terminó con código de salida 0 y **83 suites completas
-verdes**, incluidos tutoriales y regresiones. Los artefactos son
-`gh-pages:e35a1f5` y `beta:de14d24`; sus bytes publicados se verificaron en GitHub
-y Cloudflare. `main` y producción siguen en build 254, sin cambios por esta
-publicación de beta.
+La comprobación real de cuentas en beta terminó con código de salida 0 y confirmó:
 
-La comprobación de interfaz en la beta 256 real confirmó que Extras → Mi cuenta
-abre **Crear cuenta** para un visitante nuevo, sin el aviso falso de sesión
-vencida por el primer `401`. Las sesiones conocidas que vencieron conservan el
-aviso y sus datos. La build incluye la normalización de espacios exteriores de
-clave y remitente, con validación estricta del contenido, y la identificación
-User-Agent de la aplicación requerida por Resend.
+- Dos correos con estado **Delivered** en Resend y acceso mediante sus códigos,
+  creando dos sesiones independientes.
+- Guardado de un progreso mínimo de prueba y recuperación exacta desde la segunda
+  sesión. Repetir la misma operación no incrementó de nuevo la revisión.
+- Cerrar la sesión A dejó válida la sesión B. Tras cerrar B, consultar esa sesión
+  devolvió `401`, como corresponde.
 
-La configuración de envío ya fue actualizada por el usuario: creó una nueva
-clave de Resend con **Sending access limitado a `cuentas.caozcontodo.com`** y la
-guardó como `CUENTAS_RESEND_KEY` cifrada en Pages Preview y Production. También
-limitó los permisos de la clave anterior. **Ya no queda pendiente volver a pegar
-la clave ni aprobar su reducción de permisos.** `CUENTAS_SECRET` no se modificó.
-No registrar valores secretos o destinatarios de prueba en archivos, Git, URLs
-ni conversación.
+La prueba usó archivos temporales de cookies que se eliminaron al terminar; no
+modificó el progreso del navegador del jugador. No registrar destinatarios,
+códigos OTP, cookies ni secretos en Git o en la documentación. Estas comprobaciones
+acreditan correo, acceso, guardado y revocación reales en **beta**.
 
-Se reintentó correctamente el despliegue de `beta:de14d24`, build 256, en
-Cloudflare; referencia del despliegue: `96460b15`. Este reintento tomó la nueva
-configuración sin cambiar la build publicada. La consulta anónima
-`GET /api/cuenta/sesion` conserva el `401` esperado. La nueva solicitud real de
-código todavía devolvió **`503 NO_DISPONIBLE`**, pero ahora D1 registra **1 desafío:
-0 entregados y 1 no entregado**. Resend sigue mostrando 0 solicitudes. Este
-resultado distingue el fallo actual de transporte del fallo anterior a D1;
-no confirma entrega de correo, inicio de sesión ni guardado real de progreso.
+El [PR 18](https://github.com/rafarorr1/csm-game-guide/pull/18) de publicación,
+autorizado por el usuario, se integró en `main:e5410e0`. **Producción 257 ya está
+publicada y verificada.** `publicar.sh --produccion --completo` terminó con código
+de salida 0 y **84 de 84 suites verdes**. Artefacto: `gh-pages:3fbab98`; se
+compararon los bytes de escritorio y móvil en GitHub Pages `/tcg` y en
+https://juego.caozcontodo.com/.
 
-La causa se reprodujo en **workerd 2026-09-11**, con fecha de compatibilidad
-**2026-09-05**: `fetch` no admite `redirect: 'error'` y lanza una excepción antes
-de acceder a la red. El transporte de `cuenta-correo.js` prepara la corrección
-en `fix/correo-workers`, **build 257 aún sin publicar**: usar `redirect: 'manual'`
-y rechazar cualquier respuesta con `ok` falso, incluidas las redirecciones,
-sin reenviar credenciales a otra dirección. Las regresiones del transporte y la
-validación de publicación deben cubrir ese comportamiento en Workers.
+La prueba real de producción también terminó con código de salida 0: dos correos
+Delivered, sus códigos y dos sesiones independientes; guardado mínimo de prueba
+en revisión 1; repetición idempotente sin nueva revisión y recuperación exacta.
+Cerrar A conservó B, y cerrar B dejó su consulta en `401`. Se eliminaron los
+archivos temporales de cookies y no se tocó el progreso del navegador del jugador.
+La interfaz de escritorio sirvió BUILD 257 y Extras → Mi cuenta abrió Crear
+cuenta sin aviso falso de `401`. También se comprobó la interfaz móvil servida
+en `/movil?b=257`: BUILD 257 → Extras → Mi cuenta → Crear cuenta, con los campos
+de nombre y correo y sin aviso falso de sesión vencida.
 
-La infraestructura conserva dos bases D1 privadas, una por entorno, con seis
-tablas migradas y sus enlaces `CUENTAS_DB`. El dominio de envío
-`cuentas.caozcontodo.com` está verificado. `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`
-están presentes como secretos cifrados en Pages Preview y Production, además
-del entorno y remitente configurados.
+**Beta y producción 257 tienen cuentas operativas con bases independientes.**
+El PR 13 documental anterior permanece separado y fuera de esta publicación.
+Este cierre sólo actualiza documentación: no requiere volver a publicar el juego.
 
-El envío real sigue pendiente de comprobar. Corresponde validar y publicar 257
-en beta, repetir la solicitud, comprobar recepción y acceso, verificar el guardado
-y completar la publicación autorizada a producción con las guardas del proyecto.
-Las pruebas con transporte simulado no sustituyen la entrega real. Hasta que
-se complete esa publicación, **beta sigue en 256 y producción en 254**.
+### Correcciones que integra 257
 
-### Antecedentes de beta 255 y preparación de 256
+El envío usa `redirect: 'manual'`, compatible con Workers, y rechaza cualquier
+respuesta con `ok` falso. No sigue redirecciones ni reenvía a ellas la clave o
+el código. El fallo anterior se reprodujo en workerd 2026-09-11, con fecha de
+compatibilidad 2026-09-05: `redirect: 'error'` lanzaba antes de contactar con Resend.
+Las regresiones del transporte comprueban el rechazo de redirecciones y se
+validaron por sabotaje.
+
+Al importar otra cuenta o cerrar sesión se invalida `campanaBorrador`, la copia
+de la miniatura que permanece en memoria. El creador vuelve a leer el personaje
+de la cuenta actual y deja de mostrar el nombre o aspecto anterior, **sin borrar
+el borrador persistido que se acaba de importar**. La regresión A → B → invitado
+cubre ambas pantallas y también fue comprobada por sabotaje.
+
+### Configuración vigente
+
+Existen dos bases D1 privadas, una por entorno, con seis tablas migradas y sus
+enlaces `CUENTAS_DB`. El dominio `cuentas.caozcontodo.com` está verificado. El
+usuario creó y guardó una nueva `CUENTAS_RESEND_KEY` cifrada con Sending access
+limitado a ese dominio tanto en Preview como en Production, y también limitó
+los permisos de la clave anterior. `CUENTAS_SECRET` permanece intacto y cifrado
+en ambos entornos. No quedan pendientes de pegado de clave o aprobación de
+permisos. Los usuarios, sesiones y progreso de beta y producción son independientes.
+
+### Antecedentes — integración y diagnóstico de 255 y 256
 
 El [PR 14](https://github.com/rafarorr1/csm-game-guide/pull/14) se integró en
 `develop:a84f7a1`. La beta 255 pasó 83 suites y se publicó con artefactos
-`gh-pages:32885f2` y `beta:68141f4`. Su primera solicitud real de correo devolvió
-`503` antes del desafío: ambos recuentos D1 fueron 0 y Resend mostró 0 solicitudes.
-El usuario había confirmado copiar la clave completa. La consulta anónima de
-sesión devolvió `401` y verificar un UUID inexistente devolvió `400`, lo que
-confirmó el recorrido de HMAC y D1, sin acreditar el envío de correo.
+`gh-pages:32885f2` y `beta:68141f4`. La solicitud inicial de correo devolvía `503`
+antes del desafío: ambos recuentos D1 eran 0 y Resend mostraba 0 solicitudes.
+La consulta anónima de sesión devolvía `401` y verificar un UUID inexistente
+respondía `400`, confirmando HMAC y D1, sin acreditar entonces el envío.
 
-La referencia inicial del PR 15, `02a35b1`, corrigió el primer acceso anónimo y
-la normalización exterior de la configuración, con 83 suites verdes. Después
-se añadió la cabecera User-Agent y su regresión de transporte. El publicador
-volvió a validar el código integrado antes de publicar 256; no se sustituyeron
-los bytes de la beta 255, que permanece como publicación inmutable.
+El [PR 15](https://github.com/rafarorr1/csm-game-guide/pull/15) se integró en
+`develop:a00f251`. Su referencia inicial `02a35b1` pasó 83 suites, y el publicador
+volvió a validar el código integrado después del ajuste User-Agent. La beta 256
+se publicó con `gh-pages:e35a1f5` y `beta:de14d24`, con 83 suites verdes y bytes
+verificados en GitHub y Cloudflare, conservando la inmutabilidad de 255.
 
-### Antecedente — diagnóstico inicial de beta 256
+La interfaz real de 256 confirmó que Extras → Mi cuenta abre Crear cuenta para
+un visitante nuevo, sin interpretar el primer `401` como una sesión vencida.
+Las sesiones conocidas conservan el aviso y sus datos al caducar. La build
+incluyó la normalización de espacios exteriores de clave y remitente, sin
+relajar su validación, y la identificación User-Agent requerida por Resend.
 
-Antes de renovar la clave, la comprobación independiente con `curl` devolvió
-`503` antes de crear desafíos: el recuento D1 era 0 y no se crearon códigos OTP,
-sesiones ni progreso. Se prepararon los campos de Preview y Production para
-que el usuario volviera a guardar la clave. La revisión automática había dejado
-pendiente reducir sus permisos. Ambos pendientes de configuración ya fueron
-resueltos por el usuario, como recoge el estado vigente; el fallo actual sí
-alcanza a crear un desafío y se reproduce en el transporte de Workers.
+Antes de renovar la clave, la comprobación independiente con `curl` todavía
+respondía `503` con recuento D1 0. El usuario resolvió el pegado de la clave y la
+limitación de permisos. Se reintentó `beta:de14d24` en el despliegue `96460b15`:
+entonces D1 pasó a registrar 1 desafío, 0 entregados y 1 no entregado, mientras
+Resend seguía sin solicitudes. Ese diagnóstico permitió reproducir el fallo de
+Workers corregido en 257. **Son estados históricos ya superados por la prueba
+real de beta descrita arriba.**
 
 ## Registro anterior — preparación de la build 255
 
