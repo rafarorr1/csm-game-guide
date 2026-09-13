@@ -3,21 +3,23 @@
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
     "art/logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
     "cuenta-demo.js": "8a5ef539ed28045041f05e24f2366707ad2df332c8bc71fc65a342ae2bd722c6",
-    "cuenta-lab.css": "3befbb4cec364605489315ff5eea0f9bd473c9625f7c0e3b1c5ed25280699d9f",
+    "cuenta-fondo-real.css": "1fb136eea346b89a03fc906f6d06f87eed8872cfd45eea35eaa6b338dbf69f28",
+    "cuenta-fondo.css": "b0c09d70b515f8a86703ae7caf35203d2f23b7fcb5c9e2093c4634f57c08458d",
+    "cuenta-lab.css": "406212cd49c2ee41db124bb95183dcfb46bbc7e518fa74f371cfbb0abac8985f",
     "cuenta-lab.js": "90d03c1f92c346aea1f6d10832daa88a4367948b8e1774a01ad2d5f95a07749c",
-    "index.html": "1d3ae7266aea0e2784737d03fd18d71a611f62efd97016896bf9e6af853c5947",
+    "index.html": "285e9c43149289cf86f67a222aa0751a11a8bb1faa8c121cc1ed9e3639476670",
     "juego/cuenta-acceso.js": "9d395e96b8f13255a0adbf91b5eac74203425ccca5c08135fa84e2988273cf7f",
     "juego/cuenta-modelo.js": "f5ac89543ca03b7f2f97a623f7c277802d64fe40b8f345c223fa7c566c879db6",
     "juego/cuenta-progreso.js": "56fa185fa4738423e87b4261f26e8db37691bcb06c5d07dbf394136655aaf11d",
     "juego/cuenta-servicio.js": "a1c430a1310459902ccb372fec11b67864cbe1730315396e125e771e8ab0ab94",
     "juego/cuenta-ui.js": "d98bd169cb7042d3d55604483cbd85e252c4f22da4b21da8ffe7b8c2ae470495",
-    "juego/cuenta.css": "6939578f9e1e85fc83f4104c8eb946d69b0ffff8c3b3b73799f97f6a8ac3f1ee",
-    "procedencia.json": "36e6b784712c3d9118f22bc3149c109ffcce4ad4a72d9373489f24897d98b3fb"
+    "juego/cuenta.css": "d5746027bb2126c50b53c64da084f1fb3cae439ece4765ca64aa98bd0c2e49c4",
+    "procedencia.json": "3bb9f472c2077a627de81dc6381ef07b75b1ea031a1f9eb56a3ca6a493a3946a"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/acceso-correo-offline",
-    "sha": "e42054460dc490b630193ba84d0085ddba04727f"
+    "sha": "6d68a1f579d8bb196ed32deed183f366360644be"
   },
   "seccion": "cuenta",
   "version": 1

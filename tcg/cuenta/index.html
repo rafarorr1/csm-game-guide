@@ -8,6 +8,8 @@
   <title>Acceso y juego sin conexión · Vista de prueba</title>
   <link rel="stylesheet" href="./juego/cuenta.css">
   <link rel="stylesheet" href="./cuenta-lab.css">
+  <link rel="stylesheet" href="./cuenta-fondo-real.css">
+  <link rel="stylesheet" href="./cuenta-fondo.css">
   <script defer src="./juego/cuenta-modelo.js"></script>
   <script defer src="./juego/cuenta-progreso.js"></script>
   <script defer src="./juego/cuenta-servicio.js"></script>
@@ -17,6 +19,22 @@
   <script defer src="./cuenta-lab.js"></script>
 </head>
 <body>
+  <div id="cuentaFondo" aria-hidden="true" inert><div id="cuentaFondoEscena" class="cuentaFondo-on"><div class="cuentaFondo-ambiente"><i></i><i></i><i></i></div><div class="cuentaFondo-disco"></div><div class="cuentaFondo-disco cuentaFondo-dos"></div><div class="cuentaFondo-brasas"><i style="--b:2px;left:0%;--dx:-70px;--alto:480px;--dur:9s;--esp:-0s"></i><i style="--b:3px;left:47%;--dx:-51px;--alto:503px;--dur:10s;--esp:-1s"></i><i style="--b:4px;left:94%;--dx:-32px;--alto:526px;--dur:11s;--esp:-2s"></i><i style="--b:5px;left:40%;--dx:-13px;--alto:549px;--dur:12s;--esp:-3s"></i><i style="--b:2px;left:87%;--dx:6px;--alto:572px;--dur:13s;--esp:-4s"></i><i style="--b:3px;left:33%;--dx:25px;--alto:595px;--dur:14s;--esp:-5s"></i><i style="--b:4px;left:80%;--dx:44px;--alto:618px;--dur:15s;--esp:-6s"></i><i style="--b:5px;left:26%;--dx:63px;--alto:641px;--dur:16s;--esp:-7s"></i><i style="--b:2px;left:73%;--dx:-58px;--alto:664px;--dur:17s;--esp:-8s"></i><i style="--b:3px;left:19%;--dx:-39px;--alto:687px;--dur:18s;--esp:-9s"></i><i style="--b:4px;left:66%;--dx:-20px;--alto:710px;--dur:9s;--esp:-10s"></i><i style="--b:5px;left:12%;--dx:-1px;--alto:733px;--dur:10s;--esp:-11s"></i><i style="--b:2px;left:59%;--dx:18px;--alto:756px;--dur:11s;--esp:-12s"></i><i style="--b:3px;left:5%;--dx:37px;--alto:779px;--dur:12s;--esp:-13s"></i><i style="--b:4px;left:52%;--dx:56px;--alto:802px;--dur:13s;--esp:-14s"></i><i style="--b:5px;left:99%;--dx:-65px;--alto:825px;--dur:14s;--esp:-15s"></i><i style="--b:2px;left:45%;--dx:-46px;--alto:848px;--dur:15s;--esp:-16s"></i><i style="--b:3px;left:92%;--dx:-27px;--alto:871px;--dur:16s;--esp:-17s"></i><i style="--b:4px;left:38%;--dx:-8px;--alto:894px;--dur:17s;--esp:-0s"></i><i style="--b:5px;left:85%;--dx:11px;--alto:917px;--dur:18s;--esp:-1s"></i><i style="--b:2px;left:31%;--dx:30px;--alto:940px;--dur:9s;--esp:-2s"></i><i style="--b:3px;left:78%;--dx:49px;--alto:963px;--dur:10s;--esp:-3s"></i></div></div><div class="cuentaFondo-screen cuentaFondo-on cuentaFondo-portada" id="cuentaFondoMenu">
+  <div class="cuentaFondo-marcaWrap">
+    <img class="cuentaFondo-marca" id="cuentaFondoLogo" src="art/logo.webp" alt="Caoz Con Todo">
+    <div class="cuentaFondo-marcaTexto" id="cuentaFondoTexto" hidden>Caoz Con Todo</div>
+  </div>
+  
+  <div class="cuentaFondo-marcaSub">EL JUEGO DE CARTAS</div>
+  <div class="cuentaFondo-filete" aria-hidden="true"></div>
+  <div class="cuentaFondo-sub">Dos jugadores entran al Domo. Cada uno lleva a un Protagonista como Líder y un mazo de 40 cartas.
+    Gana quien reclame el alma del rival… o el Deseo.</div>
+  <div class="cuentaFondo-menucol">
+    <button type="button" tabindex="-1" class="cuentaFondo-btn cuentaFondo-campana" id="cuentaFondoCampana" aria-label="Campaña"><span class="cuentaFondo-campanaEtiqueta">Campaña</span></button>
+    <button type="button" tabindex="-1" class="cuentaFondo-btn" id="cuentaFondoDomo">Jugar contra el Domo</button>
+    <button type="button" tabindex="-1" class="cuentaFondo-btn cuentaFondo-online" id="cuentaFondoOnline">Online</button>
+    <button type="button" tabindex="-1" class="cuentaFondo-btn cuentaFondo-extras" id="cuentaFondoExtras">Extras <span aria-hidden="true">›</span></button>
+  </div></div></div>
   <aside class="cuentaLaboratorio" aria-label="Controles de la vista de prueba">
     <div class="cuentaLabLinea"><span class="cuentaLabMarca">VISTA DE PRUEBA</span><span>Datos ficticios</span>
       <button id="cuentaLabAjustes" aria-expanded="false" aria-controls="cuentaLabOpciones">Escenarios</button></div>

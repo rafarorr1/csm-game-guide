@@ -10,20 +10,35 @@
     "cuenta-modelo.js": "f5ac89543ca03b7f2f97a623f7c277802d64fe40b8f345c223fa7c566c879db6",
     "cuenta-acceso.js": "9d395e96b8f13255a0adbf91b5eac74203425ccca5c08135fa84e2988273cf7f",
     "cuenta-ui.js": "d98bd169cb7042d3d55604483cbd85e252c4f22da4b21da8ffe7b8c2ae470495",
-    "cuenta.css": "6939578f9e1e85fc83f4104c8eb946d69b0ffff8c3b3b73799f97f6a8ac3f1ee"
+    "cuenta.css": "d5746027bb2126c50b53c64da084f1fb3cae439ece4765ca64aa98bd0c2e49c4"
   },
   "entorno": {
-    "cuenta-lab.css": "3befbb4cec364605489315ff5eea0f9bd473c9625f7c0e3b1c5ed25280699d9f",
+    "cuenta-lab.css": "406212cd49c2ee41db124bb95183dcfb46bbc7e518fa74f371cfbb0abac8985f",
     "cuenta-lab.js": "90d03c1f92c346aea1f6d10832daa88a4367948b8e1774a01ad2d5f95a07749c",
-    "cuenta-demo.js": "8a5ef539ed28045041f05e24f2366707ad2df332c8bc71fc65a342ae2bd722c6"
+    "cuenta-demo.js": "8a5ef539ed28045041f05e24f2366707ad2df332c8bc71fc65a342ae2bd722c6",
+    "cuenta-fondo.css": "b0c09d70b515f8a86703ae7caf35203d2f23b7fcb5c9e2093c4634f57c08458d"
   },
   "arte": {
     "logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe"
   },
+  "fondo": {
+    "fuentes": {
+      "caoz_tcg/index.html": "35f4f3e69b40a65d1927cd5a078df038c32ddd844d8d68174f5d20484f2bc3f5",
+      "caoz_tcg/movil.html": "fb34863d93aecaa078ea1dfb62ed586fd1f7bb730d8b4c0b3865f0767b9eb8aa",
+      "caoz_tcg/polish-aaa.js": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
+    },
+    "adaptador": "d462f4cf48acddd9d61be26fc42c6de7e609a0b4898f073d99afa9d046f87720",
+    "html": "43e679e8aaa9f5a05a6178e0817cf743b621478b4d3aaa5e19cce95c804da8e8",
+    "css": "1fb136eea346b89a03fc906f6d06f87eed8872cfd45eea35eaa6b338dbf69f28",
+    "interacciones": false,
+    "partida": false,
+    "almacenamiento": false
+  },
   "fuentes": {
-    "cuenta.html": "160f44099f155bda304ab7ebf35c90270f9816a89c1d7d10a292cac0d99ef857"
+    "cuenta.html": "0a209e9c9a8d7c002b1689a26a25e3a33004c71af28069f1eb3f4ffb5997a04e"
   },
   "derivados": {
-    "index.html": "1d3ae7266aea0e2784737d03fd18d71a611f62efd97016896bf9e6af853c5947"
+    "index.html": "285e9c43149289cf86f67a222aa0751a11a8bb1faa8c121cc1ed9e3639476670",
+    "cuenta-fondo-real.css": "1fb136eea346b89a03fc906f6d06f87eed8872cfd45eea35eaa6b338dbf69f28"
   }
 }
