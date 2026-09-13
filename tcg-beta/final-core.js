@@ -199,6 +199,9 @@ function borrarRecords(){ try{ localStorage.removeItem(RECORDS_CLAVE); }catch(e)
 function cuentaRecargarProgreso(){
   if(!document.querySelector('#extras.on,#menu.on')||document.querySelector('#board.on,#campanaPanel[open]'))return false;
   campanaMemoria=null;campanaEnsayoGero=null;RECORD_ULTIMO=null;
+  // Invalidar sólo la copia en memoria: borrar la clave aquí eliminaría el
+  // personaje que acabamos de importar de la cuenta nueva.
+  campanaBorrador=null;
   window.CAOZ_COLECCION_JUEGO?.limpiarPremiosDomo?.();
   window.campanaActualizarHonores?.();return true;
 }
