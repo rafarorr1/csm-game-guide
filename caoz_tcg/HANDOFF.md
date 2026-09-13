@@ -17,6 +17,9 @@ Revisión visual solicitada: la cabecera inicial se sustituye por el logo oficia
 los pasos de código, recuperación y perfil conservan sus instrucciones. El título
 accesible permanece para lectores de pantalla y foco con teclado. Este ajuste
 continúa en la misma sección aislada, antes de integrar en beta.
+Comprobado en 1420×900, 390×844 y 320×568: logo cargado y centrado, cabecera
+anterior oculta y botón de envío completamente visible. Se verificaron también
+el foco entre pestañas y las instrucciones al pasar al código.
 
 Rama `feature/acceso-correo-offline`, desde `origin/develop` / build 258.
 El usuario pidió entrar con correo para jugar y conservar el avance de la app
@@ -41,8 +44,8 @@ partidas ni correos, usuarios o progreso reales.
   continúa excluida de la caché PWA y los deseos no se envían al servidor.
 
 La revisión está publicada y verificada en
-https://aislados.caoz-tcg.pages.dev/cuenta/ . Fuente `40363d22618a8304a6934ae89ca2498801c935b4`,
-artefacto `aislados:045b7b610b41569b3b6538a3e38f349c5ada2ca5`.
+https://aislados.caoz-tcg.pages.dev/cuenta/ . Fuente `e42054460dc490b630193ba84d0085ddba04727f`,
+artefacto `aislados:d921a566770b88c282107d1580f86f91534856a2`.
 El publicador y la comprobación de los 13 archivos servidos terminaron con salida 0.
 El laboratorio permite verificar un
 código de prueba, simular victorias, cortar la conexión y «Recargar app»
@@ -52,7 +55,8 @@ reinicia la demostración y nunca consulta el progreso del jugador.
 Validación acotada en verde: 37 casos de modelo, 9 del coordinador, 34 de entradas,
 28 de progreso y 43 de servicio, con sabotajes de las regresiones; exportación,
 aislamiento en tiempo de ejecución y exclusión de caché. El recorrido visual
-pasó 60 comprobaciones entre escritorio, 390×844 y 320×568. Las tres pruebas
+inicial pasó 60 comprobaciones entre escritorio, 390×844 y 320×568; el ajuste
+del logo se comprobó de forma focalizada como se indica arriba. Las tres pruebas
 pertinentes del publicador confirmaron que conserva las otras secciones.
 Se compararon las ramas remotas después: sólo cambió `aislados`; `main`,
 `develop`, `beta` y `gh-pages` conservaron sus referencias anteriores. No se atribuye a esta
