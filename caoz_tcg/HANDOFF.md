@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 252 (rama develop) · producción 250 (rama main) · v21 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 253 (rama develop) · producción 250 (rama main) · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,11 +10,28 @@ números) → el código.
 
 ---
 
-## Build 253 — recompensas y canjes aprobados para beta
+## Beta 253 — recompensas y canjes publicados y verificados
 
 Rama `feature/recompensas-canjes-sobres`, desde `develop`/252. El usuario
 autorizó desarrollar e integrar directamente la mecánica en beta. No requiere
 otro paso de aprobación aislada para esta entrega; producción permanece en 250.
+
+Integrada mediante PR #10 hacia `develop`, fuente
+`2e96e0fcdf7aa005c108083e27dec3753b1e9dad`, etiqueta inmutable `build-253`.
+Publicada con `publicar.sh --beta --completo`: 82 suites en verde, incluidos
+los seis tutoriales y 2.880 partidas del banco. Artefactos `gh-pages:517b8b7`
+y `beta:b03cef8`, árbol beta `bc262379d665d1756d1b97868f925433de70310c`.
+Los 499 archivos del paquete coinciden con la fuente. Cloudflare y GitHub
+Pages verificaron byte a byte el juego, los 37 sonidos y las ilustraciones.
+Acceso: https://beta.caoz-tcg.pages.dev/?b=253 y `/movil.html?b=253`;
+`?b=253&coleccion=1` abre directamente la Colección.
+`main` conserva `fffe945`, `/tcg` conserva el árbol
+`ef89d9dee2697f22e790565e0c4e5d1f7bdd4b15` y `aislados` sigue en `d1e597c`.
+El recorrido remoto pasó en 1440×900, 390×844 y 320×568: canjes, recarga,
+cinco revelaciones y avisos de premios 1/3, sin errores JavaScript. Se usaron
+perfiles efímeros y victorias preparadas para probar la recompensa; no datos
+de jugadores. Chrome móvil también activó `caoz-cache-/-253` y volvió a cargar
+con el service worker controlando la página. Esto no sustituye Safari nativo.
 
 Una campaña completa concede tres sobres mediante su recibo existente; una
 victoria en «Jugar contra el Domo» concede uno con un recibo independiente.
