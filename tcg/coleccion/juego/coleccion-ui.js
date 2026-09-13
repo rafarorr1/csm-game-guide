@@ -11,7 +11,7 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null;
-  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0};
+  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:l.n,t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,sub:typeof tribeLine==='function'?tribeLine(c):c.t};
@@ -51,7 +51,7 @@
       // dependemos de la altura visible: el resto se recorre con scroll.
       const mini=clase.contains('coleccionMini');
       if(mini){alto=280;ancho=206;n.style.zoom=Math.max(.1,(p.clientWidth-8)/200);}
-      else if(clase.contains('coleccionVersion')&&movil){const caja=p.parentElement;alto=caja.clientHeight-118;ancho=caja.clientWidth-30;}
+      else if(clase.contains('coleccionVersion')&&movil){const caja=p.parentElement;const filas=getComputedStyle(caja).gridTemplateRows.split(' ').map(Number.parseFloat);alto=filas[1]||caja.clientHeight-214;ancho=caja.clientWidth-30;}
       else{
         const estilos=getComputedStyle(p),gap=parseFloat(estilos.rowGap)||0;
         alto-=parseFloat(estilos.paddingTop)||0;alto-=parseFloat(estilos.paddingBottom)||0;
@@ -196,13 +196,13 @@
       const etiqueta=boton(NOMBRES[a],()=>{s.acabadoVista=a;dibujarDetalle();},'coleccionElegirAcabado');etiqueta.setAttribute('aria-pressed',s.acabadoVista===a?'true':'false');etiqueta.setAttribute('aria-label',NOMBRES[a]+'. '+textoCopias(cantidad)+'.');slot.append(etiqueta,carta(s.carta,a));
       const estadoEd=crear('span','coleccionEstadoEdicion'),copias=crear('span','coleccionCantidadEdicion',textoCopias(cantidad));copias.dataset.cantidad=cantidad;
       const separador=crear('span','coleccionCantidadSeparador','·');separador.setAttribute('aria-hidden','true');
-      estadoEd.append(copias,separador,icono(elegida?'check':tiene?'libro':'candado'),crear('span','',elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Carta física':'En sobres'));slot.append(estadoEd);
-      const b=boton(elegida?'En uso':tiene?'Usar':a==='dorado'?'Canjear código':'Ver sobres',()=>{
+      estadoEd.append(copias,separador,icono(elegida?'check':tiene?'libro':'candado'),crear('span','',elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Por canje':'En sobres o canje'));slot.append(estadoEd);
+      const b=boton(elegida?'En uso':tiene?'Usar':a==='dorado'?'Ver cómo mejorar':'Ver sobres',()=>{
         if(!tiene){ir(a==='dorado'?'canje':'sobres');return;}
         guardando=true;let ok=false;try{ok=modelo().seleccionar(s.carta,a);}finally{guardando=false;}
         if(ok){dibujarDetalle();actualizarCabecera();mensaje(c.n+' · '+NOMBRES[a]+' equipada.');sonido('ui_confirm');const activo=contenido.querySelector('[data-edicion="'+a+'"] button');activo?.focus({preventScroll:true});}
         else mensaje('No se pudo guardar la selección. Inténtalo de nuevo.',true);
-      },'coleccionUsar');b.disabled=elegida;b.setAttribute('aria-label',elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Canjear el código de una carta física':'Desbloquear Foil en sobres');slot.append(b);versiones.append(slot);
+      },'coleccionUsar');b.disabled=elegida;b.setAttribute('aria-label',elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Ver cómo conseguir una Dorada':'Desbloquear Foil en sobres o por canje');slot.append(b,mejoraDeCarta(s.carta,a));versiones.append(slot);
     });
     contenido.append(versiones);
     const reglas=crear('section','coleccionReglas');reglas.setAttribute('aria-label','Información de la carta');
@@ -210,7 +210,30 @@
     const stats=c.t==='personaje'?'Coste '+c.c+' · Ataque '+c.a+' · Vida '+c.h:c.t==='protagonista'?'Protagonista':'Coste '+c.c;linea.append(crear('span','',stats));
     reglas.append(linea,crear('p','coleccionReglaTexto'),crear('div','coleccionReglaPaginas'));contenido.append(reglas);
     contenido.append(crear('p','coleccionAviso','Las tres ediciones tienen las mismas habilidades. Tu elección se usa en todas tus partidas.'));
-    programarAjuste();
+    // Medir en este mismo render evita un fotograma con el retrato del tamaño
+    // anterior encima del contador al alternar ediciones en teléfonos bajos.
+    encajarCartas();programarAjuste();
+  }
+  function mejoraDeCarta(id,acabado){
+    const caja=crear('div','coleccionMejora');caja.dataset.origen=acabado;
+    if(acabado==='dorado'){
+      caja.append(crear('p','','La edición más alta. Conservas su diseño para siempre.'),boton('Códigos de cartas físicas',()=>ir('canje'),'coleccionCodigoEnlace'));
+      return caja;
+    }
+    const siguiente=acabado==='normal'?'foil':'dorado',copias=modelo().canjeables(id,acabado),n=NOMBRES[siguiente];
+    const progreso=crear('div','coleccionMejoraProgreso'),cuenta=crear('strong','',copias+' / 5');cuenta.dataset.canjeables=copias;
+    progreso.append(crear('span','',NOMBRES[acabado]+' → '+n),cuenta);
+    const barra=crear('progress');barra.max=5;barra.value=Math.min(5,copias);barra.setAttribute('aria-label',copias+' de 5 copias '+NOMBRES[acabado]+' para mejorar '+dato(id).n);
+    const accion=boton('Canjear 5 por 1 '+n,()=>{
+      if(guardando)return;guardando=true;accion.disabled=true;let ok=false;
+      try{ok=modelo().canjear(id,acabado);}catch(_){}finally{guardando=false;}
+      dibujarDetalle();actualizarCabecera();
+      if(ok){mensaje(dato(id).n+' · '+n+' conseguida. Conservas todas las ediciones desbloqueadas.');sonido('ui_confirm');contenido.querySelector('[data-edicion="'+siguiente+'"]')?.classList.add('coleccionRecienMejorada');}
+      else mensaje(modelo().canjeables(id,acabado)<5?'Necesitas 5 copias ganadas de esta misma carta.':'No se pudo guardar el canje. Tus copias no se han gastado; inténtalo de nuevo.',true);
+      contenido.querySelector('[data-edicion="'+acabado+'"] .coleccionElegirAcabado')?.focus({preventScroll:true});
+    },'coleccionMejorar');accion.disabled=copias<5;accion.setAttribute('aria-label','Canjear 5 copias '+NOMBRES[acabado]+' de '+dato(id).n+' por 1 '+n);
+    caja.append(progreso,barra,accion,crear('p','',acabado==='normal'?'Copias ganadas. Tu Normal inicial se conserva.':'Gastas las copias; el diseño sigue desbloqueado.'));
+    return caja;
   }
   function paginacionReglas(){
     if(s.vista!=='detalle')return;const texto=contenido.querySelector('.coleccionReglaTexto'),nav=contenido.querySelector('.coleccionReglaPaginas');if(!texto||!s.carta||!texto.getClientRects().length)return;
@@ -231,28 +254,46 @@
     // la identidad del objeto, decide si hay que cambiar la escena montada.
     if(pack&&aperturaSobre?.firma===firma&&aperturaSobre.host.parentElement===contenido)return;
     destruirApertura();contenido.replaceChildren();if(pack){dibujarRevelacion(pack,firma);return;}
-    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','TESOROS POR DESCUBRIR'),crear('h3','','Ediciones del Domo'),crear('p','','Termina una campaña y recibe un sobre con 5 cartas Foil aleatorias.'));contenido.append(cab);
+    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo','TESOROS POR DESCUBRIR'),crear('h3','','Sobres del Domo'),crear('p','','Gana 3 sobres al completar una campaña o 1 al vencer al Domo.'));contenido.append(cab);
+    const grupos=modelo().grupos();if(!grupos.some(g=>g.id===s.grupoSobre))s.grupoSobre=grupos[0]?.id||'';
+    const grupo=grupos.find(g=>g.id===s.grupoSobre),cuerpo=crear('div','coleccionPrepararSobre');
     const escena=crear('div','coleccionSobreEscena'),sobre=crear('div','coleccionSobre');sobre.setAttribute('aria-hidden','true');
-    sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreLeyenda','5 CARTAS FOIL'));
-    escena.append(crear('div','coleccionSobreAura'),sobre);contenido.append(escena);
-    const acciones=crear('div','coleccionSobreAcciones'),n=modelo().sobres(),abrir=boton(n?'Abrir sobre':'Completa una campaña',()=>{
+    sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreLeyenda','5 CARTAS'));
+    escena.append(crear('div','coleccionSobreAura'),sobre);cuerpo.append(escena);
+    const eleccion=crear('section','coleccionElegirGrupo');eleccion.setAttribute('aria-label','Elige la colección del sobre');
+    eleccion.append(crear('h4','','Elige tu colección'));
+    const opciones=crear('div','coleccionGrupos');opciones.setAttribute('role','group');opciones.setAttribute('aria-label','Colecciones temáticas');
+    grupos.forEach(g=>{const b=boton('',()=>{s.grupoSobre=g.id;s.verContenidoSobre=false;dibujarSobres();contenido.querySelector('[data-grupo="'+g.id+'"]')?.focus({preventScroll:true});},'coleccionGrupo');b.dataset.grupo=g.id;b.setAttribute('aria-pressed',g.id===s.grupoSobre?'true':'false');b.append(crear('strong','',g.nombre),crear('span','',g.ids.length+' cartas posibles'));opciones.append(b);});
+    eleccion.append(opciones);
+    const compacto=crear('label','coleccionGrupoCompacto'),selector=crear('select');compacto.append(crear('span','coleccionSr','Colección del sobre'));selector.setAttribute('aria-label','Colección del sobre');
+    grupos.forEach(g=>{const op=crear('option','',g.nombre);op.value=g.id;selector.append(op);});selector.value=s.grupoSobre;selector.onchange=()=>{s.grupoSobre=selector.value;s.verContenidoSobre=false;dibujarSobres();contenido.querySelector('.coleccionGrupoCompacto select')?.focus({preventScroll:true});};compacto.append(selector);eleccion.append(compacto);
+    const ver=boton(s.verContenidoSobre?'Ocultar contenido':'Ver las '+(grupo?.ids.length||0)+' cartas posibles',()=>{s.verContenidoSobre=!s.verContenidoSobre;dibujarSobres();contenido.querySelector('.coleccionVerContenido')?.focus({preventScroll:true});},'coleccionVerContenido');ver.setAttribute('aria-expanded',String(s.verContenidoSobre));ver.setAttribute('aria-controls','coleccionContenidoGrupo');eleccion.append(ver);
+    const lista=crear('div','coleccionContenidoGrupo');lista.id='coleccionContenidoGrupo';lista.hidden=!s.verContenidoSobre;lista.setAttribute('role','region');lista.setAttribute('aria-label','Contenido de '+(grupo?.nombre||'la colección'));lista.tabIndex=0;
+    grupo?.ids.forEach(id=>lista.append(crear('span','',dato(id).n)));eleccion.append(lista);
+    const tasas=crear('div','coleccionTasas');tasas.append(crear('strong','','3 Normales + 1 Foil garantizadas'),crear('p','','Quinta carta: 50% Normal · 50% Foil.'),crear('p','','Todas las cartas del grupo tienen la misma probabilidad. Sin cartas iguales en un sobre. Doradas: por canje, no salen en sobres.'));eleccion.append(tasas);cuerpo.append(eleccion);contenido.append(cuerpo);
+    const acciones=crear('div','coleccionSobreAcciones'),n=modelo().sobres(),abrir=boton(n?'Abrir sobre':'No tienes sobres',()=>{
       if(guardando)return;
       if(!window.CAOZ_SOBRES?.crear){mensaje('La apertura no está disponible. Recarga la página para intentarlo otra vez.',true);return;}
       guardando=true;abrir.disabled=true;let p;
-      try{p=modelo().abrirSobre();}finally{guardando=false;}
+      try{p=modelo().abrirSobre(s.grupoSobre);}catch(_){}finally{guardando=false;}
       if(!p){abrir.disabled=false;mensaje('No se pudo abrir. Comprueba tus sobres o el espacio disponible para guardar.',true);return;}
       mensaje('');sonido('ui_confirm');dibujarSobres();actualizarCabecera();
-    },'coleccionAbrirSobre');abrir.disabled=!n;acciones.append(crear('p','coleccionSobreCuenta',n===1?'Tienes un sobre por abrir':'Tienes '+n+' sobres por abrir'),abrir);
+    },'coleccionAbrirSobre');abrir.disabled=!n||!grupo;acciones.append(crear('p','coleccionSobreCuenta',n===1?'Tienes un sobre por abrir':'Tienes '+n+' sobres por abrir'),abrir);
     if(modelo().betaDisponible()){const beta=boton('Sobre de prueba · Beta',()=>{if(guardando)return;guardando=true;let ok;try{ok=modelo().darSobreBeta();}finally{guardando=false;}if(ok){dibujarSobres();actualizarCabecera();mensaje('Sobre de prueba añadido.');}else mensaje('No se pudo añadir el sobre. Inténtalo de nuevo.',true);},'coleccionBeta');acciones.append(beta);}
-    contenido.append(acciones,crear('p','coleccionAviso','Las Doradas se obtienen con los códigos de las cartas físicas.'));
+    contenido.append(acciones);
   }
   function dibujarCanje(){
     contenido.replaceChildren();panel.dataset.vista='canje';
-    const caja=crear('section','coleccionCanje'),sello=crear('div','coleccionCanjeSello');sello.append(icono('candado'));
-    caja.append(sello,crear('span','coleccionAntetitulo','DE TU CARTA A TU COLECCIÓN'),crear('h3','','Cartas doradas'),crear('p','','Los códigos de las cartas físicas se podrán canjear aquí.'));
-    const label=crear('label','coleccionCanjeCodigo','Código de tu carta física'),input=crear('input');input.type='text';input.placeholder='Próximamente';input.disabled=true;label.append(input);caja.append(label);
-    const pronto=boton('Próximamente',()=>{},'coleccionAbrirSobre');pronto.disabled=true;caja.append(pronto,crear('p','coleccionCanjeNota','El canje todavía no está disponible. Ningún código se envía ni se guarda.'));
-    contenido.append(caja,boton('Volver a mis cartas',()=>ir('cartas'),'coleccionCanjeVolver'));
+    const caja=crear('section','coleccionTaller');caja.append(crear('h3','','Mejora tus cartas'),crear('p','coleccionTallerRegla','5 Normales → 1 Foil · 5 Foils → 1 Dorada'),crear('p','coleccionTallerNota','Siempre de la misma carta. Los diseños desbloqueados se conservan; tu Normal inicial no se gasta.'));
+    const listas=crear('div','coleccionCanjesListos');listas.setAttribute('role','region');listas.setAttribute('aria-label','Cartas con copias listas para mejorar');listas.tabIndex=0;
+    for(const id of modelo().ids())for(const acabado of ['normal','foil']){
+      const n=modelo().canjeables(id,acabado);if(n<5)continue;
+      const b=boton('',()=>{verCarta(id);s.acabadoVista=acabado;dibujarDetalle();},'coleccionCanjeListo');b.dataset.carta=id;b.dataset.origen=acabado;b.append(crear('strong','',dato(id).n),crear('span','',NOMBRES[acabado]+' → '+NOMBRES[acabado==='normal'?'foil':'dorado']+' · '+n+' copias'));listas.append(b);
+    }
+    if(!listas.children.length)listas.append(crear('p','','Aún no reúnes 5 copias iguales. Abre sobres o revisa tu progreso en cada carta.'));
+    caja.append(listas,boton('Elegir una carta',()=>ir('cartas'),'coleccionElegirParaCanje'));
+    const fisicas=crear('details','coleccionCanjeFisico');fisicas.append(crear('summary','','Códigos de cartas físicas'));
+    const label=crear('label','coleccionCanjeCodigo','Código de tu carta física'),input=crear('input');input.type='text';input.placeholder='Próximamente';input.disabled=true;label.append(input);fisicas.append(label,crear('p','','Próximamente. Ningún código se envía ni se guarda.'));caja.append(fisicas);contenido.append(caja);
   }
   function cerrarPendiente(registro){
     if(aperturaSobre!==registro||registro.cancelada||!panel.open||guardando)return false;
