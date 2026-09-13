@@ -35,13 +35,22 @@ victorias, inventario o canjes. Contrato, límites y retención en `../dev/cuent
 
 Infraestructura verificada hasta este punto: dos bases D1 privadas, beta y
 producción, con las seis tablas de `dev/cuentas/migracion.sql` aplicadas y
-comprobadas. **Los enlaces de Pages y variables/secretos todavía están pendientes**.
-Resend está registrado y se dio de alta `cuentas.caozcontodo.com`; su DNS sigue
-pendiente. No se crearon ni incorporaron claves API/secretos en el repositorio.
-La configuración en el navegador y el envío real de prueba esperan confirmación
-puntual del usuario. GoDaddy ya está abierto con sesión; los tres registros del
-subdominio están preparados en el formulario y todavía no se han guardado.
-No confundir la creación de las bases o del dominio con un correo operativo.
+comprobadas. Los enlaces `CUENTAS_DB` de Pages ya están guardados: Preview usa
+la base beta y Production usa producción. En ambos entornos están guardadas
+`CUENTAS_ENTORNO` (`beta`/`produccion`, respectivamente) y
+`CUENTAS_REMITENTE=acceso@cuentas.caozcontodo.com`.
+
+Los tres registros nuevos de GoDaddy se guardaron y verificaron. Resend mostró
+`cuentas.caozcontodo.com` como **verified el 2026-09-13**;
+identificador del dominio: `e7084484-caac-4bbb-89ba-c0cdeb3b39f2`.
+**Todavía faltan `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET` como secretos cifrados
+en ambos entornos.** No se ha creado la clave API. El formulario de Resend está
+preparado con permiso Sending access limitado a ese dominio; los formularios
+vacíos de secretos de Cloudflare se preparan para que el usuario introduzca las
+credenciales nuevas, como exige el flujo de seguridad del navegador.
+No pedir ni guardar esos valores en el chat o en Git. El dominio verificado y
+los enlaces guardados todavía no acreditan un envío de correo real ni cuentas
+operativas: faltan secretos, despliegue y comprobación integral.
 
 La revisión encontró y corrigió el inventario antiguo de `/movil` después de
 un canje, la copia local de una cuenta que permanecía al entrar en otra y el
@@ -58,14 +67,13 @@ probada en ambos HTML y validada por sabotaje antes de repetir la tanda completa
 Los flujos de cuenta también pasaron en 1420×900, 390×844 y 320×568.
 
 La integración está respaldada en el PR draft 14 hacia `develop`:
-https://github.com/rafarorr1/csm-game-guide/pull/14 . Todavía faltan los enlaces y
-secretos de Pages, los DNS de correo y la comprobación real de entrega y guardado.
-En Chrome quedaron preparados el vínculo `CUENTAS_DB` de producción y los tres
-registros nuevos de GoDaddy, sin pulsar Guardar. Resend sigue sin claves API:
-crear una clave de envío limitada a `cuentas.caozcontodo.com` cuando el dominio
-esté verificado. No activar una clave de acceso completo o para todos los dominios.
-La confirmación puntual de estos accesos está pendiente en la conversación;
-no confundirla con la autorización de publicación que el usuario ya otorgó.
+https://github.com/rafarorr1/csm-game-guide/pull/14 , código validado en
+`31f01857ece19ac11e9f4d45cec01dbd6df240f4`, con las 83 suites completas verdes.
+Todavía faltan los dos secretos por entorno y la comprobación real de entrega
+y guardado. No activar una clave de Resend de acceso completo o para todos los
+dominios. La introducción de credenciales por el usuario es el paso pendiente
+del navegador; no equivale a volver a pedir la autorización de publicación,
+que ya existe. No hubo merge ni despliegue: beta y producción siguen en 254.
 
 Después: comprobar el servicio conectado y correo real, integrar a `develop`,
 validar/publicar beta servida, y promover/publicar producción con las guardas del

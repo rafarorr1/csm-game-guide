@@ -11,19 +11,27 @@ Se crearon dos bases D1 independientes y privadas, inicialmente vacías:
 
 | Entorno | Identificador D1 | Estado de esta preparación |
 |---|---|---|
-| Beta | `f1ce1e07-289d-483d-b881-4456adfefe91` | Seis tablas migradas y verificadas. |
-| Producción | `abdce7af-3693-4707-a4f4-a3e14276183e` | Seis tablas migradas y verificadas. |
+| Beta | `f1ce1e07-289d-483d-b881-4456adfefe91` | Seis tablas migradas y verificadas; enlace `CUENTAS_DB` guardado en Pages Preview. |
+| Producción | `abdce7af-3693-4707-a4f4-a3e14276183e` | Seis tablas migradas y verificadas; enlace `CUENTAS_DB` guardado en Pages Production. |
 
-Al escribir este registro todavía **no estaban enlazadas al proyecto Pages**
-y no se habían configurado sus variables o secretos. Resend está registrado
-y el dominio `cuentas.caozcontodo.com` fue dado de alta con identificador
-`e7084484-caac-4bbb-89ba-c0cdeb3b39f2`; la verificación DNS está pendiente.
-No se han creado claves API ni guardado secretos en el repositorio. La conexión
-de los enlaces y el envío de prueba esperan confirmación puntual del usuario;
-el acceso a GoDaddy también requiere completar su login.
+Los tres registros nuevos de GoDaddy ya se guardaron y comprobaron. Resend
+mostró el dominio `cuentas.caozcontodo.com`, identificador
+`e7084484-caac-4bbb-89ba-c0cdeb3b39f2`, como **verified el 2026-09-13**. En ambos entornos de Pages están guardadas `CUENTAS_ENTORNO`
+(`beta` en Preview y `produccion` en Production) y
+`CUENTAS_REMITENTE=acceso@cuentas.caozcontodo.com`.
 
-Build 255 está en preparación en `feature/cuentas-jugadores`, con pruebas
-completas aprobadas: 83 suites verdes y cero fallos. `main`, beta y producción conservan build 254.
+**Pendientes:** `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`, ambas como secretos
+cifrados en Preview y Production. No se ha creado la clave API de Resend; su
+formulario está preparado con Sending access limitado a `cuentas.caozcontodo.com`.
+Se preparan formularios vacíos de Cloudflare para que el usuario introduzca las
+credenciales nuevas, conforme al flujo de seguridad del navegador. Los valores
+no se solicitan en el chat ni se incorporan a Git. Tampoco se ha hecho el envío
+de prueba: verificar el dominio no significa que el juego ya pueda enviar códigos.
+
+Build 255 está en preparación en `feature/cuentas-jugadores`, PR draft 14,
+código validado en `31f01857ece19ac11e9f4d45cec01dbd6df240f4`, con pruebas completas aprobadas:
+83 suites verdes y cero fallos. No hubo merge ni despliegue; `main`, beta y
+producción conservan build 254.
 Este estado no acredita una publicación ni un envío de correo real. Actualizar
 el registro al verificar ambos servicios y el juego servido.
 
