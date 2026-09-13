@@ -9,6 +9,10 @@
   éxito. Un 302 no se sigue, de modo que la clave y el código nunca se reenvían
   a la dirección de una redirección. No cambian las credenciales ni las reglas
   de sesión, códigos y progreso.
+- Al importar otra cuenta o cerrar sesión se invalida el borrador de miniatura
+  en memoria, sin borrar el personaje importado. El creador deja de mostrar el
+  nombre y aspecto de la cuenta anterior. Regresión A → B → invitado, en ambas
+  pantallas y con sabotaje.
 - Se incorpora regresión del transporte y se comprueba por sabotaje. El estado
   de entrega real y publicación se registra en `HANDOFF.md`.
 
