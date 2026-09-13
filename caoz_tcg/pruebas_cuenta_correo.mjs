@@ -7,6 +7,7 @@ assert.equal(correoConfigurado({}),false);assert.equal(correoConfigurado(env),tr
 let llamadas=0;
 const enviar=crearEnviadorCuenta({fetch:async(url,opciones)=>{
  llamadas++;assert.equal(url,'https://api.resend.com/emails');assert.equal(opciones.redirect,'error');assert.equal(opciones.headers.Authorization,'Bearer '+env.CUENTAS_RESEND_KEY);
+ assert.equal(opciones.headers['User-Agent'],'CaozTCG-Cuentas/1.0 (+https://juego.caozcontodo.com)');
  const j=JSON.parse(opciones.body);assert.equal(j.from,'Caoz Con Todo <'+env.CUENTAS_REMITENTE+'>');assert.deepEqual(j.to,[datos.correo]);assert.match(j.text,/012345/);assert.equal(j.html,undefined);
  assert.ok(!JSON.stringify(j).includes('privado')&&!JSON.stringify(j).includes('script'));
  return Response.json({id:'envio-prueba'});
@@ -41,4 +42,4 @@ for(const responder of [()=>new Response('clave secreta del proveedor',{status:4
  await assert.rejects(()=>crearEnviadorCuenta({fetch:async()=>responder()})(env,datos),e=>e.status===503&&e.message==='No se pudo enviar el código de acceso.');
 }
 await assert.rejects(()=>crearEnviadorCuenta({plazo:5,fetch:(_u,o)=>new Promise((resolve,reject)=>o.signal.addEventListener('abort',()=>reject(Error('Tiempo agotado'))))})(env,datos),/No se pudo enviar/);
-console.log('Correo de cuentas: configuración con espacios exteriores, token/remitente exactos, rechazo de claves inválidas, contenido mínimo, errores opacos y timeout en verde. Sin correos reales.');
+console.log('Correo de cuentas: configuración con espacios exteriores, token/remitente y User-Agent exactos, rechazo de claves inválidas, contenido mínimo, errores opacos y timeout en verde. Sin correos reales.');

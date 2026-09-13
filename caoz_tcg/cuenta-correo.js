@@ -1,5 +1,7 @@
 /* Correo transaccional del servidor. Las credenciales nunca llegan al navegador. */
 const endpoint='https://api.resend.com/emails';
+// Identificación del cliente exigida por la API de Resend, sin datos del jugador.
+const agente='CaozTCG-Cuentas/1.0 (+https://juego.caozcontodo.com)';
 const correoValido=v=>typeof v==='string'&&v.length<=254&&/^[^\s<>@]+@[^\s<>@]+\.[^\s<>@]+$/.test(v);
 const fallo=()=>Object.assign(new Error('No se pudo enviar el código de acceso.'),{codigo:'CORREO',status:503});
 function configuracionCorreo(env){
@@ -22,7 +24,7 @@ export function crearEnviadorCuenta({fetch:pedir=globalThis.fetch,plazo=8000}={}
       subject:'Tu código de acceso al Domo',
       text:'Tu código de acceso a Caoz Con Todo es:\n\n'+datos.codigo+'\n\nCaduca en 5 minutos y sólo puede utilizarse una vez.\n\nSi no solicitaste este código, puedes ignorar este correo. No lo compartas con nadie.'};
     try{
-      const r=await pedir(endpoint,{method:'POST',redirect:'error',headers:{Authorization:'Bearer '+configuracion.clave,'Content-Type':'application/json'},body:JSON.stringify(cuerpo),signal:control.signal});
+      const r=await pedir(endpoint,{method:'POST',redirect:'error',headers:{Authorization:'Bearer '+configuracion.clave,'Content-Type':'application/json','User-Agent':agente},body:JSON.stringify(cuerpo),signal:control.signal});
       if(!r.ok)throw fallo();
       const respuesta=await r.json();if(typeof respuesta.id!=='string'||!respuesta.id)throw fallo();
       // La API del jugador recibe sólo confirmación; ni el código ni el ID del proveedor.
