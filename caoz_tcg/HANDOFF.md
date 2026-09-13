@@ -34,16 +34,22 @@ partidas ni correos, usuarios o progreso reales.
 - No se guarda el estado de un combate a mitad de turno. La API de cuentas
   continúa excluida de la caché PWA y los deseos no se envían al servidor.
 
-La ruta pública de revisión existente es
-https://aislados.caoz-tcg.pages.dev/cuenta/ . Esta entrada **no acredita todavía
-la publicación de estos nuevos bytes**. El laboratorio permite verificar un
+La revisión está publicada y verificada en
+https://aislados.caoz-tcg.pages.dev/cuenta/ . Fuente `40363d22618a8304a6934ae89ca2498801c935b4`,
+artefacto `aislados:045b7b610b41569b3b6538a3e38f349c5ada2ca5`.
+El publicador y la comprobación de los 13 archivos servidos terminaron con salida 0.
+El laboratorio permite verificar un
 código de prueba, simular victorias, cortar la conexión y «Recargar app»
 conservando el mismo almacenamiento temporal. La recarga real de la página
 reinicia la demostración y nunca consulta el progreso del jugador.
 
-Validación acotada: `pruebas_cuenta_modelo.mjs`, `pruebas_cuenta_acceso.mjs`,
-`pruebas_cuenta_entradas.mjs` (también sabotaje), exportación, UI y las pruebas
-de progreso/servicio y exclusión de caché pertinentes. No se atribuye a esta
+Validación acotada en verde: 37 casos de modelo, 9 del coordinador, 34 de entradas,
+28 de progreso y 43 de servicio, con sabotajes de las regresiones; exportación,
+aislamiento en tiempo de ejecución y exclusión de caché. El recorrido visual
+pasó 60 comprobaciones entre escritorio, 390×844 y 320×568. Las tres pruebas
+pertinentes del publicador confirmaron que conserva las otras secciones.
+Se compararon las ramas remotas después: sólo cambió `aislados`; `main`,
+`develop`, `beta` y `gh-pages` conservaron sus referencias anteriores. No se atribuye a esta
 revisión una validación completa ni un despliegue de beta/producción.
 **Beta conserva 258 y producción 257.** BUILD 258 identifica sólo la base de
 esta rama; la siguiente build se asigna al integrar, después de aprobar la

@@ -40,8 +40,8 @@ construye de nuevo esos datos temporales.
 
 La revisión de `feature/acceso-correo-offline` usa la
 [ruta pública existente de cuentas](https://aislados.caoz-tcg.pages.dev/cuenta/);
-su publicación y verificación de bytes se registran en `caoz_tcg/HANDOFF.md`.
-Este texto no acredita todavía el despliegue de los cambios nuevos.
+su publicación y verificación de los 13 archivos se registran en `caoz_tcg/HANDOFF.md`.
+Está lista para revisión; el recorrido móvil/escritorio pasó 60 comprobaciones.
 Beta conserva 258 y producción 257. La siguiente build se asignará al integrar
 después de aprobar la sección.
 

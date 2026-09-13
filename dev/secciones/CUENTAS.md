@@ -10,12 +10,12 @@ dispositivo; el avance pendiente se sincroniza cuando vuelve internet.
 **Beta conserva 258 y producción 257.** Las cuentas reales ya funcionan desde
 257. Esta revisión sigue el orden sección aislada → aprobación → integración y
 validación para beta → producción autorizada. BUILD 258 sólo identifica la base;
-el próximo número se asignará al integrar. No se atribuye a este cambio una
-publicación o validación completa por haber preparado el laboratorio.
+el próximo número se asignará al integrar. La revisión aislada no sustituye la
+validación completa ni constituye una publicación del juego en beta.
 
 La ruta de revisión existente es
-`https://aislados.caoz-tcg.pages.dev/cuenta/`. Registrar en `caoz_tcg/HANDOFF.md`
-el commit, artefacto y verificación cuando estos bytes estén publicados.
+`https://aislados.caoz-tcg.pages.dev/cuenta/`. Sus 13 archivos ya están publicados
+y verificados; commit, artefacto y comprobaciones figuran en `caoz_tcg/HANDOFF.md`.
 La configuración real se documenta en [`../cuentas/README.md`](../cuentas/README.md).
 
 ## Recorrido que se puede revisar

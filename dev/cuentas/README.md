@@ -11,8 +11,9 @@ separada: **nunca se publica como autenticación del juego**.
 Beta sirve **258** y producción **257**, con cuentas reales operativas y bases
 independientes. La revisión nueva se presenta primero en
 `https://aislados.caoz-tcg.pages.dev/cuenta/`, usando componentes reales con
-transporte y almacenamiento temporales. Esta documentación todavía no acredita
-su publicación, validación completa ni integración en beta.
+transporte y almacenamiento temporales. La sección está publicada y sus 13 archivos
+servidos están verificados; referencias y pruebas en `caoz_tcg/HANDOFF.md`.
+Todavía no se ha integrado este cambio en beta ni ejecutado la batería completa.
 BUILD 258 es sólo la base de la rama; asignar la siguiente build al integrar
 después de aprobar la sección, sin sustituir bytes de una versión publicada.
 
