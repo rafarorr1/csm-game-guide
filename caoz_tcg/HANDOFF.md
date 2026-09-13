@@ -45,8 +45,9 @@ en revisión 1; repetición idempotente sin nueva revisión y recuperación exac
 Cerrar A conservó B, y cerrar B dejó su consulta en `401`. Se eliminaron los
 archivos temporales de cookies y no se tocó el progreso del navegador del jugador.
 La interfaz de escritorio sirvió BUILD 257 y Extras → Mi cuenta abrió Crear
-cuenta sin aviso falso de `401`. Los bytes móviles están verificados; la revisión
-visual móvil se registra por separado cuando termine.
+cuenta sin aviso falso de `401`. También se comprobó la interfaz móvil servida
+en `/movil?b=257`: BUILD 257 → Extras → Mi cuenta → Crear cuenta, con los campos
+de nombre y correo y sin aviso falso de sesión vencida.
 
 **Beta y producción 257 tienen cuentas operativas con bases independientes.**
 El PR 13 documental anterior permanece separado y fuera de esta publicación.

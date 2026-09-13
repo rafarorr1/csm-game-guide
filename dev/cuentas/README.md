@@ -33,8 +33,9 @@ revisión 1, repetición sin nueva revisión y recuperación exacta. Cerrar A ma
 B válida; cerrar B hizo que su consulta devolviera `401`. Se borraron los archivos
 temporales de cookies sin modificar el progreso del navegador del jugador.
 La UI de escritorio mostró BUILD 257 y Crear cuenta desde Extras → Mi cuenta
-sin aviso falso de sesión vencida. Los bytes de móvil también están verificados;
-su revisión visual se registra por separado al terminar.
+sin aviso falso de sesión vencida. La interfaz móvil publicada en `/movil?b=257`
+también mostró BUILD 257, Extras → Mi cuenta → Crear cuenta y los campos de
+nombre y correo, sin error de sesión.
 
 Los dos entornos están operativos y conservan sus bases independientes. El
 PR 13 documental anterior sigue separado. Este cierre documental no requiere
