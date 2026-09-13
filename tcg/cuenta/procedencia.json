@@ -1,0 +1,26 @@
+{
+  "seccion": "cuenta",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "progresoReal": false,
+  "correoReal": false,
+  "componentes": {
+    "cuenta-modelo.js": "30cf54da72adae0b8c34edeae7487acb2b39532c25e472a501992725ac526089",
+    "cuenta-ui.js": "70c91018c1e67fb1ec4927d5185649f3a6fcc8c7c3b13f28376c9810ff9003a8",
+    "cuenta.css": "a7bab48c9c96987b89ac28934a0d5cf0755da5ea6ed1605d7834ba20a91fea1d"
+  },
+  "entorno": {
+    "cuenta-lab.css": "afcf76ffa741a8412508dd3e576d57ed6d5ffc7e1bc7b9c5a24e093335f987bd",
+    "cuenta-lab.js": "fbdf8e5fc8fc07ea2dbcf704f8ab9f7e8cd212a3bf16e900148f2002f0bc81f3",
+    "cuenta-demo.js": "b1860321869da3d29199321e984678cff35762ba92887535537fd34cbb47d6c0"
+  },
+  "arte": {
+    "logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe"
+  },
+  "fuentes": {
+    "cuenta.html": "34db2e90b32b747032e4a2161ff098f8d60c802c210b91e23024b25507e378ec"
+  },
+  "derivados": {
+    "index.html": "836ed123d0340e66070bb920b7fc5d9813eb68aad254124e95f7c08a840a7113"
+  }
+}

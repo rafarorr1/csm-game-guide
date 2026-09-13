@@ -1,0 +1,20 @@
+/* Controles de revisión fuera del componente de cuenta. */
+html,body{margin:0;min-height:100%;background:#0e0b13;color:#f5eedf;font-family:system-ui,sans-serif}
+body{height:100dvh;overflow:hidden;--alto-laboratorio:42px}
+[hidden]{display:none!important}
+.cuentaLaboratorio{box-sizing:border-box;position:relative;z-index:20;background:#191522;border-bottom:1px solid #d9b96a38;padding:8px max(12px,env(safe-area-inset-left));font-size:11px;line-height:1.35;color:#c3bbcc}
+.cuentaLabLinea{display:flex;align-items:center;justify-content:center;gap:9px;flex-wrap:wrap}
+.cuentaLabMarca{font-size:9px;letter-spacing:.13em;color:#ecd593;font-weight:700}
+.cuentaLaboratorio button,.cuentaLaboratorio select,#cuentaLabSalida button{font:inherit;color:#f3e4bf;border:1px solid #b5a07966;border-radius:5px;background:#2a2234;padding:7px 10px;cursor:pointer}
+.cuentaLaboratorio button:focus-visible,.cuentaLaboratorio select:focus-visible{outline:2px solid #f2cf78;outline-offset:2px}
+#cuentaLabOpciones{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;padding:10px 0 4px}
+#cuentaLabOpciones label{display:flex;align-items:center;gap:7px}
+#cuentaLabOpciones input{width:20px;height:20px;accent-color:#c59d53}
+#cuentaLabBuzon{display:flex;align-items:center;justify-content:center;gap:15px;padding-top:7px;color:#dacdaf}
+#cuentaLabCodigo{font-size:16px;letter-spacing:.18em;color:#ffe2a0}
+#cuentaRaiz{height:calc(100dvh - var(--alto-laboratorio));overflow:hidden}
+#cuentaLabSalida{position:fixed;inset:var(--alto-laboratorio) 0 0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:radial-gradient(ellipse at center,#2a1d29,#0e0b13);gap:18px}
+#cuentaLabSalida p{font:30px Georgia,serif;color:#edd092;margin:0}
+#cuentaLabSalida button{min-height:48px;font-size:16px;padding:10px 24px}
+#cuentaLabSalida small{color:#b5aabd;font-size:12px}
+@media(max-width:430px){.cuentaLaboratorio{padding:5px 8px;font-size:10px}.cuentaLabLinea{gap:6px}.cuentaLabMarca{font-size:8px}.cuentaLaboratorio button{padding:6px 8px}#cuentaLabOpciones{gap:8px}#cuentaLabBuzon{padding-top:5px}}

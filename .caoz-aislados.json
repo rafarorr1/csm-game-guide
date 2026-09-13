@@ -5,6 +5,10 @@
       "fuente": "755628af33f6ef0ca99f33e19a5f0dfcc8c89a21",
       "ruta": "tcg/coleccion"
     },
+    "cuenta": {
+      "fuente": "ab30e3e1513ba78577c43c8f69145dbe2e3b9a89",
+      "ruta": "tcg/cuenta"
+    },
     "rey": {
       "fuente": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf",
       "ruta": "tcg/rey"
