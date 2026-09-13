@@ -5,26 +5,38 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
   <meta name="color-scheme" content="dark">
-  <title>Tu cuenta del Domo · Vista de prueba</title>
+  <title>Acceso y juego sin conexión · Vista de prueba</title>
   <link rel="stylesheet" href="./juego/cuenta.css">
   <link rel="stylesheet" href="./cuenta-lab.css">
   <script defer src="./juego/cuenta-modelo.js"></script>
+  <script defer src="./juego/cuenta-progreso.js"></script>
+  <script defer src="./juego/cuenta-servicio.js"></script>
+  <script defer src="./juego/cuenta-acceso.js"></script>
   <script defer src="./cuenta-demo.js"></script>
   <script defer src="./juego/cuenta-ui.js"></script>
   <script defer src="./cuenta-lab.js"></script>
 </head>
 <body>
   <aside class="cuentaLaboratorio" aria-label="Controles de la vista de prueba">
-    <div class="cuentaLabLinea"><span class="cuentaLabMarca">VISTA DE PRUEBA</span><span>Sin correos ni progreso reales.</span>
+    <div class="cuentaLabLinea"><span class="cuentaLabMarca">VISTA DE PRUEBA</span><span>Datos ficticios</span>
       <button id="cuentaLabAjustes" aria-expanded="false" aria-controls="cuentaLabOpciones">Escenarios</button></div>
     <div id="cuentaLabOpciones" hidden>
       <label>Probar <select id="cuentaLabEscenario"><option value="nuevo">Vincular mi progreso</option><option value="vacio">Jugador nuevo</option><option value="entrar">Entrar a mi cuenta</option><option value="conflicto">Dos progresos distintos</option></select></label>
-      <label><input id="cuentaLabConexion" type="checkbox"> Simular sin conexión</label>
       <button id="cuentaLabReiniciar">Reiniciar prueba</button>
     </div>
+    <div class="cuentaLabControles"><label><input id="cuentaLabConexion" type="checkbox"> Sin conexión</label><button id="cuentaLabRecargar">Recargar app</button></div>
     <div id="cuentaLabBuzon" hidden role="status"><span>Código de prueba: <strong id="cuentaLabCodigo"></strong></span><button id="cuentaLabUsar">Usar código</button></div>
   </aside>
   <main id="cuentaRaiz"></main>
-  <div id="cuentaLabSalida" hidden><p>Has vuelto al menú.</p><button id="cuentaLabVolver">Volver a la cuenta</button><small>Este recorrido sólo es una demostración.</small></div>
+  <section id="cuentaLabSalida" hidden aria-labelledby="cuentaLabMenuTitulo">
+    <div class="cuentaLabMenu">
+      <span class="cuentaLabSello">EL DOMO</span><h1 id="cuentaLabMenuTitulo">Tu aventura continúa</h1>
+      <p id="cuentaLabJugador"></p><p id="cuentaLabEstado" role="status"></p>
+      <div class="cuentaLabContadores"><div><strong id="cuentaLabLocal">0</strong><span>Victorias en la app</span></div><div><strong id="cuentaLabNube">0</strong><span>Guardadas en la cuenta</span></div></div>
+      <button id="cuentaLabVictoria">Simular victoria</button><button id="cuentaLabVolver">Mi cuenta</button>
+      <p class="cuentaLabPasos">Activa «Sin conexión», suma victorias y pulsa «Recargar app». Al recuperar internet, el avance se sincroniza.</p>
+      <small>Menú de prueba. No inicia una batalla ni modifica tu juego.</small>
+    </div>
+  </section>
 </body>
 </html>

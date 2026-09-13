@@ -17,4 +17,20 @@ body{height:100dvh;overflow:hidden;--alto-laboratorio:42px}
 #cuentaLabSalida p{font:30px Georgia,serif;color:#edd092;margin:0}
 #cuentaLabSalida button{min-height:48px;font-size:16px;padding:10px 24px}
 #cuentaLabSalida small{color:#b5aabd;font-size:12px}
+.cuentaLabControles{display:flex;align-items:center;justify-content:center;gap:16px;margin-top:7px}
+.cuentaLabControles label{display:flex;align-items:center;gap:6px}.cuentaLabControles input{width:18px;height:18px;accent-color:#c59d53}
+#cuentaLabSalida{padding:16px;box-sizing:border-box;overflow:auto;background:radial-gradient(ellipse at 50% 20%,#52372866,transparent 65%),#110d16}
+.cuentaLabMenu{box-sizing:border-box;width:min(100%,450px);padding:28px;border:1px solid #b3956059;border-radius:20px;background:linear-gradient(145deg,#2d2130,#17111f);box-shadow:0 20px 80px #0007;text-align:center}
+.cuentaLabSello{font-size:10px;font-weight:700;letter-spacing:.3em;color:#c9a975}
+.cuentaLabMenu h1{font:700 clamp(26px,6vw,36px)/1.15 Georgia,serif;color:#f1d59c;margin:12px 0}
+#cuentaLabSalida #cuentaLabJugador{font:14px/1.4 system-ui,sans-serif;color:#c6bacd}
+#cuentaLabSalida #cuentaLabEstado{font:12px/1.45 system-ui,sans-serif;color:#afc7ac;margin:12px 0 20px}
+#cuentaLabEstado[data-guardado=sinConexion],#cuentaLabEstado[data-guardado=pendiente]{color:#edc27c!important}
+.cuentaLabContadores{display:grid;grid-template-columns:1fr 1fr;margin:18px 0 22px;border-block:1px solid #c1a47930;padding:16px 0}
+.cuentaLabContadores strong{display:block;font:38px/1 Georgia,serif;color:#f5d699}.cuentaLabContadores span{display:block;margin-top:7px;font-size:11px;color:#bdaec7}
+#cuentaLabSalida button{display:block;width:100%;margin-top:10px;border-radius:10px;background:linear-gradient(115deg,#50211e,#642925,#341918);border-color:#b3845480;font-weight:600}
+#cuentaLabSalida #cuentaLabVolver{background:#ffffff06;color:#cebdd3;border-color:#bca3bd38}
+#cuentaLabSalida .cuentaLabPasos{font:12px/1.55 system-ui,sans-serif;margin:20px 0 15px;color:#cabbd2}
+#cuentaLabSalida small{display:block;font-size:10px;line-height:1.4;color:#96879f}
+@media(max-height:680px){.cuentaLabMenu{padding:18px}.cuentaLabMenu h1{font-size:26px;margin:8px 0}.cuentaLabContadores{margin:10px 0;padding:10px 0}.cuentaLabContadores strong{font-size:30px}#cuentaLabSalida .cuentaLabPasos{margin:12px 0}#cuentaLabSalida #cuentaLabEstado{margin:8px 0}#cuentaLabSalida button{min-height:42px;padding:8px 12px}}
 @media(max-width:430px){.cuentaLaboratorio{padding:5px 8px;font-size:10px}.cuentaLabLinea{gap:6px}.cuentaLabMarca{font-size:8px}.cuentaLaboratorio button{padding:6px 8px}#cuentaLabOpciones{gap:8px}#cuentaLabBuzon{padding-top:5px}}

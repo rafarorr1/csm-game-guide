@@ -2,19 +2,22 @@
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
     "art/logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
-    "cuenta-demo.js": "b1860321869da3d29199321e984678cff35762ba92887535537fd34cbb47d6c0",
-    "cuenta-lab.css": "afcf76ffa741a8412508dd3e576d57ed6d5ffc7e1bc7b9c5a24e093335f987bd",
-    "cuenta-lab.js": "fbdf8e5fc8fc07ea2dbcf704f8ab9f7e8cd212a3bf16e900148f2002f0bc81f3",
-    "index.html": "836ed123d0340e66070bb920b7fc5d9813eb68aad254124e95f7c08a840a7113",
-    "juego/cuenta-modelo.js": "30cf54da72adae0b8c34edeae7487acb2b39532c25e472a501992725ac526089",
-    "juego/cuenta-ui.js": "70c91018c1e67fb1ec4927d5185649f3a6fcc8c7c3b13f28376c9810ff9003a8",
-    "juego/cuenta.css": "a7bab48c9c96987b89ac28934a0d5cf0755da5ea6ed1605d7834ba20a91fea1d",
-    "procedencia.json": "edc5f378dc68cd6a2e654b22da3911bb8afed3fe84939f88fc7f7ac0e5b41c01"
+    "cuenta-demo.js": "8a5ef539ed28045041f05e24f2366707ad2df332c8bc71fc65a342ae2bd722c6",
+    "cuenta-lab.css": "3befbb4cec364605489315ff5eea0f9bd473c9625f7c0e3b1c5ed25280699d9f",
+    "cuenta-lab.js": "90d03c1f92c346aea1f6d10832daa88a4367948b8e1774a01ad2d5f95a07749c",
+    "index.html": "1d3ae7266aea0e2784737d03fd18d71a611f62efd97016896bf9e6af853c5947",
+    "juego/cuenta-acceso.js": "9d395e96b8f13255a0adbf91b5eac74203425ccca5c08135fa84e2988273cf7f",
+    "juego/cuenta-modelo.js": "f5ac89543ca03b7f2f97a623f7c277802d64fe40b8f345c223fa7c566c879db6",
+    "juego/cuenta-progreso.js": "56fa185fa4738423e87b4261f26e8db37691bcb06c5d07dbf394136655aaf11d",
+    "juego/cuenta-servicio.js": "a1c430a1310459902ccb372fec11b67864cbe1730315396e125e771e8ab0ab94",
+    "juego/cuenta-ui.js": "141b3bc6fabbda78ddc57f001ae413ed4eb0c39c0768b96f3eb1779e3ac6976c",
+    "juego/cuenta.css": "65cb28bc20ecf654582b427f9cb2274b4d13334dacf7fdf59342e8ea42ba66aa",
+    "procedencia.json": "a0e38c1a85d6b9cc757ff2849b64f47044a43ea07e9ba7b31efd5a291cf48730"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
-    "rama": "feature/cuentas-jugadores",
-    "sha": "ab30e3e1513ba78577c43c8f69145dbe2e3b9a89"
+    "rama": "feature/acceso-correo-offline",
+    "sha": "40363d22618a8304a6934ae89ca2498801c935b4"
   },
   "seccion": "cuenta",
   "version": 1

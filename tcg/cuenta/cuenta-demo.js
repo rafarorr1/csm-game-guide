@@ -49,5 +49,50 @@
       cambiarNube(progreso){const c=cuenta();c.progreso=copia(progreso);c.revision++;},
       inspeccionar(){return {cuentas:copia([...cuentas.values()]),respaldos:copia(respaldos),operaciones:operaciones.size,sesion:sesionPublica()};}});
   }
-  global.CAOZ_CUENTA_DEMO=Object.freeze({crear});
+  /* Habla el mismo contrato HTTP que el servicio real, pero nunca sale de esta
+     memoria. La sesión simulada sobrevive a «Recargar app», no a cerrar la vista. */
+  function crearTransporte(opciones={}){
+    const demo=crear(opciones),identidades=new Map();let conectado=true;
+    const identidad=s=>{
+      if(!s)return null;
+      if(!identidades.has(s.correo))identidades.set(s.correo,global.crypto.randomUUID());
+      return {...s,id:identidades.get(s.correo)};
+    };
+    const enriquecer=r=>({...r,...(Object.hasOwn(r,'sesion')?{sesion:identidad(r.sesion)}:{})});
+    async function transportar(url,opcionesPeticion={}){
+      if(!conectado||opcionesPeticion.signal?.aborted)throw new TypeError('Red de prueba desconectada');
+      const ruta=new URL(url,'https://laboratorio.invalid').pathname;
+      if(!/^\/api\/cuenta\/(sesion|codigo|verificar|progreso|salir)$/.test(ruta))throw Error('Ruta fuera del transporte de prueba');
+      const nombre=ruta.split('/').pop(),datos=opcionesPeticion.body?JSON.parse(opcionesPeticion.body):null;
+      const respuesta=(r,estado=200)=>new Response(JSON.stringify(r),{status:estado,headers:{'Content-Type':'application/json','Cache-Control':'no-store'}});
+      try{
+        let resultado;
+        if(nombre==='sesion'){
+          const actual=demo.inspeccionar(),sesion=identidad(actual.sesion);
+          if(!sesion)throw fallo('SESION');
+          const c=actual.cuentas.find(c=>c.correo===sesion.correo);
+          resultado={sesion,progreso:c.progreso,revision:c.revision};
+        }else if(nombre==='codigo')resultado=await demo.solicitarCodigo(datos);
+        else if(nombre==='verificar')resultado=await demo.verificarCodigo(datos);
+        else{
+          const sesion=identidad(demo.inspeccionar().sesion),cabeceras=new Headers(opcionesPeticion.headers);
+          if(!sesion||cabeceras.get('X-Caoz-Cuenta')!==sesion.id)throw fallo('SESION');
+          if(nombre==='progreso')resultado=await demo.vincularProgreso(datos);
+          else{await demo.cerrarSesion();resultado={ok:true};}
+        }
+        return respuesta(enriquecer(resultado));
+      }catch(e){
+        if(e.codigo==='SIN_CONEXION')throw new TypeError('Red de prueba desconectada');
+        return respuesta({codigo:e.codigo||'SERVIDOR',...(e.codigo==='CONFLICTO'?{progreso:e.progreso,revision:e.revision}:{})},e.codigo==='SESION'?401:e.codigo==='CONFLICTO'?409:400);
+      }
+    }
+    return Object.freeze({fetch:transportar,conexion(v){conectado=Boolean(v);demo.conexion(conectado);},
+      inspeccionar:()=>({...demo.inspeccionar(),conectado}),cambiarNube:demo.cambiarNube,perderProximaRespuesta:demo.perderProximaRespuesta});
+  }
+  function crearMemoria(){
+    const mapa=new Map();
+    return Object.freeze({getItem:k=>mapa.get(String(k))??null,setItem:(k,v)=>{mapa.set(String(k),String(v));},
+      removeItem:k=>{mapa.delete(String(k));},clear:()=>mapa.clear(),key:i=>[...mapa.keys()][i]??null,get length(){return mapa.size;}});
+  }
+  global.CAOZ_CUENTA_DEMO=Object.freeze({crear,crearTransporte,crearMemoria});
 })(globalThis);
