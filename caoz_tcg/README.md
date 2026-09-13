@@ -5,10 +5,9 @@ pantallas (`index.html` para escritorio, `movil.html` para el teléfono), más `
 (piezas compartidas) y la app instalable (`sw.js`, `manifest.webmanifest`).
 Si vienes de fuera, empieza por **`HANDOFF.md`** y **`AGENTS.md`**.
 
-La rama `feature/acceso-correo-offline` prepara la revisión aislada de **acceso
-obligatorio y continuidad sin conexión**. Beta sirve 258 y producción 257;
-sus cuentas ya funcionan mediante Worker, D1 y Resend. Esta revisión aún no
-se atribuye a esos despliegues ni consume otra build hasta aprobarla e integrar.
+Beta 259 integra **acceso obligatorio y continuidad sin conexión**, después de
+aprobar la sección aislada. Producción conserva 257. Las cuentas funcionan
+mediante Worker, D1 y Resend; referencias y comprobaciones en `HANDOFF.md`.
 El servidor estático permite inspeccionar recursos y ejecutar pruebas; el
 primer acceso por correo necesita la API configurada:
 
@@ -21,9 +20,9 @@ el botón: el número que queda arriba determina el efecto de la tirada.
 
 También está registrado en `.claude/launch.json` como `caoz-tcg`.
 
-## Cuenta y progreso — revisión aislada actual
+## Cuenta y progreso — beta 259
 
-La revisión solicita correo y un código de seis dígitos antes de jugar, sin
+La beta solicita correo y un código de seis dígitos antes de jugar, sin
 contraseña ni opción de invitado. Extras → Mi cuenta permite volver al perfil.
 La cuenta conserva campaña, miniatura, sellos de protagonistas, colección,
 sobres y récords para recuperarlos en otro dispositivo.
@@ -44,10 +43,9 @@ Se guarda el correo verificado, nombre e identificador del jugador, además del
 progreso y datos necesarios de sesión. No hay contraseñas. La configuración
 real, los datos almacenados y sus límites se describen en
 [`dev/cuentas/README.md`](../dev/cuentas/README.md).
-La infraestructura real de cuentas está operativa desde 257. El cambio de
-acceso obligatorio se revisa primero en la sección aislada de cuentas, con
-transporte y almacenamiento temporales; el estado de publicación vigente
-está en `HANDOFF.md`.
+La infraestructura real de cuentas está operativa desde 257. El acceso obligatorio
+aprobado se publica en beta 259; su revisión aislada permanece disponible con
+transporte y almacenamiento temporales. El estado vigente está en `HANDOFF.md`.
 
 ## Colección, sobres y mejoras
 

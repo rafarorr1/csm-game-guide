@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-13 · beta 258 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-13 · beta 259 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,13 +10,40 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — acceso obligatorio y continuidad offline en revisión aislada
+## Estado vigente — acceso obligatorio publicado en beta 259
 
-El usuario aprobó integrar y publicar en beta el 2026-09-13. Se prepara build259
-en `feature/acceso-correo-offline`, con publicación desde `develop` después de
-validar la integración completa. Producción257 queda fuera de esta autorización.
-Los registros siguientes describen la revisión aislada aprobada; se actualizará
-el encabezado al verificar la beta servida.
+El usuario aprobó llevar la revisión a beta. El [PR 23](https://github.com/rafarorr1/csm-game-guide/pull/23)
+quedó integrado en `develop:b1c493803d2acb16f59ec30a4698bad09e625b0d`.
+`./publicar.sh --solo-pruebas --completo` y después `./publicar.sh --beta --completo`
+terminaron con salida 0 y **84 suites correctas** en cada tanda, incluidos los
+seis tutoriales. Se corrigió la preparación de `?foto` para esperar el acceso
+antes de consultar jugadores, con regresión y sabotaje; las pruebas de premios
+representan ahora explícitamente a un jugador verificado.
+
+Artefactos: `gh-pages:05a28bcce4fdbea8a1c7092cae549d1405045fcd` y
+`beta:a93dd3ac67df92c672f45e048c3e6a8035a6632c`. El publicador comparó byte a byte
+web, móvil, módulos, caché, arte y sonido en GitHub Pages y Cloudflare.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=259
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=259
+
+La prueba integrada de cuentas pasó en escritorio, móvil 390×844 y 320×568:
+acceso automático, vínculo, Domo, reapertura offline, cambio de cuenta, conflictos,
+borrado y aislamiento entre pestañas. La prueba adicional de PWA usó SW259 real
+en Chrome temporal: con toda la red desconectada recargó desde caché, conservó
+identidad, avance y operación pendiente, y sincronizó una sola vez al reconectar.
+No se cacheó ninguna API de cuentas. Estas pruebas usan cuentas ficticias locales;
+no equivalen a una comprobación en Safari físico. La entrada pública de beta se
+comprobó también en dos contextos nuevos, escritorio y móvil: build 259, pop up
+correcto, sin scroll ni errores JavaScript; la API anónima real devolvió el 401
+esperado. No se enviaron correos ni escrituras durante esa comprobación.
+
+**Producción permanece en 257.** `main` conserva `b7e634c2152bf17d9e548f19477279ae40b3e6b7`
+y el árbol `gh-pages:tcg` conserva `350bdef5421199e083e96369b5a02fb7e15984bd`.
+Una promoción posterior requiere autorización para esta versión, sin incluir
+cambios nuevos ni incrementar la build si el paquete es idéntico.
+
+## Registro anterior — revisión aislada de acceso aprobada
 
 Nueva revisión: acceso como panel de cristal translúcido sobre la portada.
 `cuenta.css` aplica desenfoque local, reflejos y controles con contraste; el fondo
