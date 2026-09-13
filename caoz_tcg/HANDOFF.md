@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-12 · beta 253 (rama develop) · producción 250 (rama main) · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-12 · beta 254 (rama develop) · producción 254 (rama main) · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,7 @@ números) → el código.
 
 ---
 
-## Promoción autorizada — build 254 en validación
+## Promoción autorizada — build 254
 
 El usuario aprobó la sección y pidió publicar todos los cambios en producción.
 Se prepara254 desde `feature/sobres-tres-colecciones`, integrando la revisión
@@ -39,6 +39,40 @@ victoria Domo y campaña pasa en1440×900,390×844 y320×568, con animación nor
 revancha, mesa, ascensión, deseo, recarga y recuperación exacta del sobre verde.
 No hubo excepciones JavaScript ni solicitudes fallidas. La prueba aislada de
 premios/carrusel también pasa en esos tres tamaños, con gestos y teclado.
+
+PR#11 integrado en `develop:8e3af1bff5e7d75c30438aa3740f53eb0dbf7cab`,
+etiqueta inmutable `build-254`. Validación completa y publicación beta repitieron
+las83 suites verdes: seis tutoriales sin rescates,432 partidas del motor y
+banco de2880;47 casos del modelo,26 de recompensas y guardas con sabotajes.
+Beta publicada: `gh-pages:af8fd15458cfa2d5204768b5f02dddb61416ae8f`,
+`beta:bc94d291278b0924ced259f0789e5a7e6a9c57da`. Las499 piezas del paquete
+y497 URLs públicas coinciden byte a byte, incluidas todas las ediciones premium.
+Recorrido real público verde en1440×900,390×844 y320×568, sin excepciones JS
+ni solicitudes fallidas. Los cuatro catálogos guardados de arte/audio en beta
+y producción conservan sus huellas. PR#12 promueve exactamente ese paquete a
+`main:504e5ff0752977a67102e374de3c9d3bf6e19a26`. La publicación de producción
+repitió las83 suites verdes y subió `gh-pages:8bf63cad7326b73b996175ec5807a85aff2f05a5`.
+Los árboles `tcg` y `tcg-beta` son idénticos:
+`804791f3d080ad4669e83f64c8c9aa528c358c29`. GitHub Pages y Cloudflare pasan
+la comparación del publicador; la auditoría independiente confirma499 archivos
+del paquete y497 URLs públicas (53.390.058 bytes), incluidos los originales premium.
+Los catálogos de los estudios conservan sus cuatro huellas previas.
+La PWA se actualiza desde250 en un perfil temporal: conserva ThalDorado elegido,
+dos sobres sin tipo, los recibos y el pendiente exacto de cinco Foil. Permite
+elegir los dos sobres y reabrir offline con254, mismo inventario y módulos de
+apertura disponibles; caché250 ausente al reabrir. Verificado en Chrome, no en
+un iPhone físico. Recorrido público de producción completo en1440×900,390×844
+y320×568: premios1/3, biblioteca, apertura verde, revancha, mesa, ascensión,
+deseo, menú y recuperación exacta tras recargar. Cero excepciones JavaScript
+y solicitudes fallidas; botones temporales ausentes. Servidor local cerrado.
+
+Entradas públicas verificadas:
+https://juego.caozcontodo.com/?b=254
+https://juego.caozcontodo.com/movil.html?b=254
+La rama `aislados` conserva `4eaafd9bcee3078e6407100621f0d5d67b2feef0`.
+
+Las siguientes secciones son el registro histórico de las revisiones aisladas
+anteriores a esta integración; sus referencias y URLs permanecen disponibles.
 
 ## Revisión aislada — elegir el premio y guardar sus sobres
 
