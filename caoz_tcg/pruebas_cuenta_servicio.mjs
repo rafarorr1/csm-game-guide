@@ -6,6 +6,7 @@ import {spawnSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 let fuentes=['cuenta-progreso.js','cuenta-servicio.js'].map(p=>fs.readFileSync(new URL(p,import.meta.url),'utf8')).join('\n');
 const mutantes={
+  visitante:["if(e.codigo==='SESION'&&!actual&&!progreso.vinculado())return","if(false)return"],
   salida:['salidaPendiente=id;','salidaPendiente=null;'],
   reintento:['const enviado=copia(c.pendiente),r=await servicio.guardarRemoto(enviado);','const enviado=copia(c.pendiente);enviado.operacion=global.crypto.randomUUID();const r=await servicio.guardarRemoto(enviado);'],
   propietario:["...(['progreso','salir'].includes(ruta)&&actual?{'X-Caoz-Cuenta':actual.id}:{})",'...{}'],
@@ -26,6 +27,7 @@ function servidor(){
     const datos=op.body?JSON.parse(op.body):null,ruta=url.split('?')[0].split('/').at(-1);s.llamadas.push({url,op:{...op,signal:undefined},datos});
     if(s.offline)throw TypeError('Sin red');
     if(ruta==='codigo')return responder(200,{id:webcrypto.randomUUID(),vence:Date.now()+300000,reenvioEn:Date.now()+60000});
+    if(ruta==='sesion'&&!s.usuario)return responder(401,{codigo:'SESION'});
     if(ruta==='sesion'||ruta==='verificar')return responder(200,{sesion:s.usuario,progreso:s.usuario?s.progreso:null,revision:s.usuario?s.revision:0});
     if(!s.usuario||op.headers['X-Caoz-Cuenta']!==s.usuario.id)return responder(401,{codigo:'SESION'});
     if(ruta==='salir'){s.usuario=null;return responder(200,{ok:true});}
@@ -74,6 +76,11 @@ await prueba('Una respuesta tardía después de pausar no cambia el progreso de 
 await prueba('Salir reintenta el archivo local tras revocar la cookie sin otra petición autenticada',async c=>{await vincular(c);cambiar(c,3);let una=true;c.storage.fallar=k=>k.includes('.archivo.')&&una&&(una=false,true);await assert.rejects(c.servicio.cerrarSesion(),{codigo:'ALMACENAMIENTO'});assert.equal(c.s.usuario,null);assert.equal(c.p.vinculado().cuentaId,A);await c.servicio.cerrarSesion();assert.equal(c.p.vinculado(),null);assert.equal(c.p.capturar(),null);assert.equal(c.p.archivo(A).snapshot.datos.coleccion.sobres,3);assert.equal(c.s.llamadas.filter(x=>x.url.includes('/salir?')).length,1);});
 await prueba('Las URLs evitan también la caché de una PWA254 que aún no actualizó su SW',async c=>{await vincular(c);cambiar(c,2);await c.sync.guardar();assert.ok(c.s.llamadas.every(x=>new URL(x.url,'https://juego.caozcontodo.com').search.includes('test=')));});
 await prueba('Ni el deseo ni un respaldo con texto privado llegan siquiera a la red',async c=>{await c.servicio.sesion();const p=ejemplo();p.datos.campana.deseo={texto:'Privado'};const antes=c.s.llamadas.length;await assert.rejects(c.servicio.guardarRemoto({origen:'local',operacion:webcrypto.randomUUID(),revision:1,progreso:ejemplo(),respaldoLocal:p}),{codigo:'PROGRESO_PRIVADO'});assert.equal(c.s.llamadas.length,antes);});
+await prueba('Un visitante sin cuenta recibe estado anónimo del401 sin escribir datos',async c=>{c.s.usuario=null;const antes=[...c.storage.m],r=await c.servicio.sesion();assert.equal(r.sesion,null);assert.equal(r.vinculado,false);assert.equal(c.servicio.identidad(),null);assert.deepEqual([...c.storage.m],antes);});
+await prueba('El401 del invitado conserva íntegro su progreso sin crear un vínculo',async c=>{c.s.usuario=null;c.storage.setItem('caoz_nombre','Invitado');c.storage.setItem('caoz.campana.v1',JSON.stringify(ejemplo(4).datos.campana));const antes=[...c.storage.m],r=await c.servicio.sesion();assert.equal(r.sesion,null);assert.deepEqual([...c.storage.m],antes);assert.equal(c.p.vinculado(),null);assert.equal(c.p.capturar().datos.campana.etapa,4);});
+await prueba('La sesión conocida que caduca sigue rechazando401 sin tocar el avance',async c=>{await c.servicio.sesion();c.storage.setItem('caoz_nombre','Ari');c.s.usuario=null;const antes=[...c.storage.m];await assert.rejects(c.servicio.sesion(),{codigo:'SESION'});assert.deepEqual([...c.storage.m],antes);});
+await prueba('Tras recargar, un vínculo previo conserva el aviso de caducidad y los datos',async c=>{c.p.aplicar(ejemplo(4),{cuentaId:A,revision:3});c.s.usuario=null;const antes=[...c.storage.m];await assert.rejects(c.servicio.sesion(),{codigo:'SESION'});assert.deepEqual([...c.storage.m],antes);assert.equal(c.p.vinculado().cuentaId,A);});
+await prueba('Una caída de red al consultar al invitado sigue siendo un error de conexión',async c=>{c.s.usuario=null;c.s.offline=true;await assert.rejects(c.servicio.sesion(),{codigo:'SIN_CONEXION'});assert.equal(c.p.vinculado(),null);});
 console.log(`${total} pruebas del servicio y la sincronización aprobadas.`);
 if(process.argv.includes('--sabotaje')&&!process.env.CAOZ_SABOTAJE_SERVICIO){
   for(const nombre of Object.keys(mutantes)){const r=spawnSync(process.execPath,[fileURLToPath(import.meta.url)],{env:{...process.env,CAOZ_SABOTAJE_SERVICIO:nombre},encoding:'utf8'});

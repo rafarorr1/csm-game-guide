@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 256 en preparación · Primer acceso a cuentas · 2026-09-13
+
+- En la beta255, abrir Mi cuenta sin haber iniciado sesión interpretaba el
+  HTTP401 anónimo como una sesión vencida. Ahora se abre sin aviso de error y
+  conserva la pestaña elegida; seguir como invitado tampoco cambia de pantalla.
+- Una sesión conocida o un progreso ya vinculado siguen mostrando el aviso
+  correspondiente si caducan. El401 no borra progreso, vínculo, cola ni respaldos.
+- Casos de servicio/modelo y recorrido real de ambos HTML cubren primer acceso,
+  invitado y caducidad. El sabotaje de la detección anónima reproduce el fallo.
+- Se reserva256 porque255 ya fue publicada en beta; no se sustituyen los bytes
+  de esa versión. Este cambio todavía no acredita publicación de256.
+
 ### Sin numerar · build 255 en preparación · Cuentas y progreso guardado · 2026-09-13
 
 - Propuesta aislada aprobada y publicación autorizada: Extras → Mi cuenta,

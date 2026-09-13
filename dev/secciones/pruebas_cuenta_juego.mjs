@@ -47,7 +47,7 @@ try{
   await pagina.route('**/api/cuenta/**',async route=>{
    if(sinConexion){await route.abort('internetdisconnected');return;}
    const nombre=new URL(route.request().url()).pathname.split('/').pop(),d=route.request().postDataJSON();let cuerpo;
-   if(nombre==='sesion')cuerpo={sesion,progreso:nube,revision};
+   if(nombre==='sesion'){if(!sesion){await route.fulfill({status:401,json:{codigo:'SESION'}});return;}cuerpo={sesion,progreso:nube,revision};}
    else if(nombre==='codigo')cuerpo={id:'codigo-prueba',vence:Date.now()+300000,reenvioEn:Date.now()+60000};
    else if(nombre==='verificar'){sesion=identidad;cuerpo={sesion,progreso:nube,revision};}
    else if(nombre==='progreso'){if(d.revision!==revision){await route.fulfill({status:409,json:{codigo:'CONFLICTO',progreso:nube,revision}});return;}nube=d.progreso;revision++;guardados++;cuerpo={progreso:nube,revision};}
@@ -58,6 +58,9 @@ try{
   await pagina.addInitScript(()=>{if(!localStorage.getItem('__cuenta_qa_iniciada')){localStorage.setItem('caoz_nombre','Ari');localStorage.setItem('__cuenta_qa_iniciada','1');}});
   await pagina.goto(base+'/'+tamano.pagina);
   await pagina.locator('#mExtras').click();await pagina.locator('#mCuenta').click();
+  await pagina.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO?.estado()?.ocupado===false);
+  assert.equal(await pagina.evaluate(()=>window.CAOZ_CUENTA_JUEGO.estado().error),'','El primer401 no se presenta como sesión vencida');
+  assert.equal(await pagina.locator('[data-foco="tab-crear"]').getAttribute('aria-selected'),'true');
   await pagina.locator('[data-foco="tab-crear"]').click();
   await pagina.locator('[name="nombre"]').fill('Ari');await pagina.locator('[name="correo"]').fill('cuenta@ejemplo.com');
   await pagina.screenshot({path:path.join(capturas,tamano.nombre+'-registro.png')});

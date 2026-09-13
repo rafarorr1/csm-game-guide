@@ -89,4 +89,14 @@ await prueba('Cerrar sesión elimina el snapshot actualizado en memoria antes de
  await f.modelo.solicitar({correo:'b@ejemplo.com',nombre:'Beto',intencion:'crear'});await f.modelo.verificar(f.codigo());
  assert.equal(f.modelo.ver().pantalla,'perfil');assert.equal(f.modelo.ver().local,null);assert.equal(f.modelo.ver().nube,null);
 });
+await prueba('La visita anónima conserva Crear cuenta sin mostrar caducidad ni borrar el avance',async()=>{
+ const m=contexto.CAOZ_CUENTA_MODELO.crear({servicio:{sesion:async()=>({sesion:null,progreso:null,revision:0})},progresoLocal:local});
+ assert(await m.restaurar());assert.equal(m.ver().intencion,'crear');assert.equal(m.ver().error,'');assert.equal(m.ver().local.sobres,3);
+ m.preparar('entrar');assert(await m.restaurar());assert.equal(m.ver().intencion,'entrar');m.destruir();
+});
+await prueba('Consultar al invitado no lo devuelve al formulario ni oculta una caducidad real',async()=>{
+ let vencida=false;const m=contexto.CAOZ_CUENTA_MODELO.crear({servicio:{sesion:async()=>{if(vencida)throw {codigo:'SESION'};return {sesion:null,progreso:null,revision:0};}},progresoLocal:local});
+ m.invitado();assert(await m.restaurar());assert.equal(m.ver().pantalla,'invitado');assert.equal(m.ver().error,'');vencida=true;
+ assert.equal(await m.restaurar(),false);assert.equal(m.ver().intencion,'entrar');assert.match(m.ver().error,/sesión terminó/);assert.equal(m.ver().local.sobres,3);m.destruir();
+});
 console.log(total+' pruebas del flujo aislado de cuentas en verde. Sin correo ni guardado reales.');
