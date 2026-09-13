@@ -54,9 +54,13 @@ partidas ni correos, usuarios o progreso reales.
   continúa excluida de la caché PWA y los deseos no se envían al servidor.
 
 La revisión está publicada y verificada en
-https://aislados.caoz-tcg.pages.dev/cuenta/ . Fuente `e42054460dc490b630193ba84d0085ddba04727f`,
-artefacto `aislados:d921a566770b88c282107d1580f86f91534856a2`.
-El publicador y la comprobación de los 13 archivos servidos terminaron con salida 0.
+https://aislados.caoz-tcg.pages.dev/cuenta/ . Fuente `6d68a1f579d8bb196ed32deed183f366360644be`,
+artefacto `aislados:6b4c2863ea79346a4c159f4a5cec6143eebc8ec8`.
+El publicador y la comprobación de los 15 archivos servidos terminaron con salida 0.
+La presentación del menú se extrae de los HTML y estilos reales, con sus botones
+inertes y hashes de procedencia. El paquete no añade el motor del juego. La última
+limpieza de estilos conservó idénticas geometrías y efecto de cristal en los tres
+tamaños revisados; la prueba de acceso y código también volvió a pasar.
 El laboratorio permite verificar un
 código de prueba, simular victorias, cortar la conexión y «Recargar app»
 conservando el mismo almacenamiento temporal. La recarga real de la página
