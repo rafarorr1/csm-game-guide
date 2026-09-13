@@ -11,19 +11,27 @@ import {crearServidor} from './servidor.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url)),juego=path.resolve(aqui,'../../caoz_tcg');
 const hash=b=>createHash('sha256').update(b).digest('hex');
 const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-cuenta-'));
-const fuentes=[path.join(aqui,'cuenta.html'),...entornoCuenta.map(f=>path.join(aqui,f)),
+const fuentes=[path.join(aqui,'cuenta.html'),path.join(aqui,'cuenta-fondo.mjs'),...entornoCuenta.map(f=>path.join(aqui,f)),
   ...componentesCuenta.map(f=>path.join(juego,f)),...imagenesCuenta.map(f=>path.join(juego,'art',f)),
-  ...['index.html','movil.html','motor.js','final.js','final-core.js','sw.js','coleccion-modelo.js'].map(f=>path.join(juego,f))];
+  ...['index.html','movil.html','polish-aaa.js','motor.js','final.js','final-core.js','sw.js','coleccion-modelo.js'].map(f=>path.join(juego,f))];
 const firmas=()=>Object.fromEntries(fuentes.map(f=>[f,hash(fs.readFileSync(f))]));
 const antes=firmas();let servidor;
 try{
   const destino=path.join(temporal,'cuenta'),p=exportar(destino),archivo=f=>fs.readFileSync(path.join(destino,f));
-  const esperados=['index.html','_headers','procedencia.json','art/logo.webp','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js',
+  const esperados=['index.html','_headers','procedencia.json','art/logo.webp','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css','cuenta-fondo-real.css',
     ...componentesCuenta.map(f=>'juego/'+f)].sort();
   const archivos=fs.readdirSync(destino,{recursive:true}).filter(f=>fs.statSync(path.join(destino,f)).isFile()).sort();
   assert.deepEqual(archivos,esperados,'La cuenta sólo incluye sus componentes declarados; no copia motor, SW ni otras secciones');
   const html=archivo('index.html').toString();
-  assert.ok(!/__CSP__|<iframe|<base\b/i.test(html),'Sin marcadores pendientes ni documentos externos');
+  assert.ok(!/__CSP__|__CUENTA_FONDO__|<iframe|<base\b/i.test(html),'Sin marcadores pendientes ni documentos externos');
+  assert.ok(html.includes('<div id="cuentaFondo" aria-hidden="true" inert>'),'El fondo es inerte y queda fuera de la navegación accesible');
+  for(const id of ['cuentaFondoCampana','cuentaFondoDomo','cuentaFondoOnline','cuentaFondoExtras'])
+    assert.ok(new RegExp('<button[^>]*tabindex="-1"[^>]*id="'+id+'"').test(html),'Botón real sólo presentacional: '+id);
+  assert.ok(html.includes('id="cuentaFondoLogo"'),'La marca se toma del menú real');
+  const fondoCSS=archivo('cuenta-fondo-real.css').toString();
+  assert.ok(!/\.(?:cartaFondo|vscard|lface|lcard|barajaFondo)\b|#(?:field|board|mat|select)\b/.test(fondoCSS),'Sin estilos de cartas, selector o tablero ajenos al fondo');
+  for(const nombre of ['gira','respiraLogo','brasa','respira','flota1','flota2','flota3'])
+    assert.equal((fondoCSS.match(new RegExp('@keyframes '+nombre+'\\s*\\{','g'))||[]).length,1,'Animación extraída una sola vez: '+nombre);
   function local(valor,desde){
     if(valor.startsWith('#')||valor.startsWith('data:'))return;
     assert.ok(!/^(?:[a-z]+:|\/)/i.test(valor),'Recurso local relativo: '+valor);
@@ -47,6 +55,10 @@ try{
   for(const [f,firma] of Object.entries(p.arte)){assert.equal(hash(archivo('art/'+f)),firma);assert.equal(hash(fs.readFileSync(path.join(juego,'art',f))),firma);}
   for(const [f,firma] of Object.entries(p.fuentes))assert.equal(hash(fs.readFileSync(path.join(aqui,f))),firma);
   for(const [f,firma] of Object.entries(p.derivados))assert.equal(hash(archivo(f)),firma);
+  for(const [f,firma] of Object.entries(p.fondo.fuentes))assert.equal(hash(fs.readFileSync(path.resolve(aqui,'../..',f))),firma);
+  assert.equal(p.fondo.adaptador,hash(fs.readFileSync(path.join(aqui,'cuenta-fondo.mjs'))));
+  assert.equal(p.fondo.css,hash(archivo('cuenta-fondo-real.css')));
+  for(const clave of ['interacciones','partida','almacenamiento'])assert.equal(p.fondo[clave],false,'Fondo sin '+clave);
   const meta=html.match(/http-equiv="Content-Security-Policy" content="([^"]+)"/i);assert.ok(meta,'CSP en la entrada estática');
   // Se comparan las constantes existentes sin exportar/ejecutar otra sección ni su motor.
   for(const f of ['exportar.mjs','rey-exportar.mjs','sobres-exportar.mjs','servidor.mjs']){

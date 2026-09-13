@@ -12,6 +12,16 @@ números) → el código.
 
 ## Trabajo vigente — acceso obligatorio y continuidad offline en revisión aislada
 
+Nueva revisión: acceso como panel de cristal translúcido sobre la portada.
+`cuenta.css` aplica desenfoque local, reflejos y controles con contraste; el fondo
+del diálogo conserva visible el menú. La vista aislada reutiliza la presentación
+del menú como fondo inerte, sin cargar partidas ni tocar datos reales. El logo
+aprobado permanece en la cabecera. Se publica sólo la sección de cuentas.
+Revisado en 1420×900, 390×844 y 320×568: menú reconocible detrás del panel,
+formulario legible, centrado y envío visible; foco e instrucciones de código
+conservados. Se incluye alternativa opaca si no hay desenfoque o se pide reducir
+transparencias. Los estilos no cambian la autenticación ni la sincronización.
+
 Revisión visual solicitada: la cabecera inicial se sustituye por el logo oficial
 `art/logo.webp`. Se retiran de esa vista el libro, antetítulo y frases de bienvenida;
 los pasos de código, recuperación y perfil conservan sus instrucciones. El título

@@ -1,0 +1,16 @@
+/* Acomoda la portada real como fondo inerte, sin heredar el lienzo de combate. */
+#cuentaFondo{position:fixed;inset:var(--alto-laboratorio,72px) 0 0;z-index:0;overflow:hidden;pointer-events:none;isolation:isolate;contain:paint;color:#f4ddbc;font:14px/1.4 var(--sans);user-select:none}
+#cuentaFondo *{box-sizing:border-box}
+#cuentaFondoMenu{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;align-items:center;overflow:hidden;padding:24px 18px;gap:0}
+#cuentaFondoMenu>.cuentaFondo-marcaWrap{margin-top:0;width:min(76vw,470px);flex:0 1 auto}
+#cuentaFondoMenu .cuentaFondo-marca{width:100%;max-height:28vh}
+#cuentaFondoMenu .cuentaFondo-marcaSub{font-size:11px;letter-spacing:5px;margin-top:4px}
+#cuentaFondoMenu .cuentaFondo-sub{font-size:13px;max-width:450px;text-wrap:balance;line-height:1.65;margin:5px 0 12px}
+#cuentaFondoMenu .cuentaFondo-menucol{width:min(84vw,460px);margin-top:10px;gap:10px;flex-shrink:0}
+#cuentaFondoMenu .cuentaFondo-btn{cursor:default}
+#cuentaFondoEscena .cuentaFondo-disco{top:43%;width:min(135vw,1010px)}
+#cuentaFondoEscena .cuentaFondo-disco.cuentaFondo-dos{width:min(108vw,760px)}
+#cuentaFondoEscena::after{width:min(1280px,125vw);height:110%;opacity:.72}
+@media(max-width:600px){#cuentaFondoMenu{padding:12px}#cuentaFondoMenu>.cuentaFondo-marcaWrap{width:88vw}#cuentaFondoMenu .cuentaFondo-marca{max-height:27vh}#cuentaFondoMenu .cuentaFondo-sub{max-width:330px;font-size:12px;margin-bottom:6px}#cuentaFondoMenu .cuentaFondo-menucol{width:94%;gap:9px}}
+@media(max-height:660px){#cuentaFondoMenu .cuentaFondo-sub{display:none}#cuentaFondoMenu .cuentaFondo-marca{max-height:25vh}#cuentaFondoMenu .cuentaFondo-menucol{margin-top:5px;gap:8px}#cuentaFondoMenu .cuentaFondo-btn{min-height:44px;padding:9px}#cuentaFondoMenu .cuentaFondo-marcaSub{font-size:9px;letter-spacing:3px}}
+@media(prefers-reduced-motion:reduce){#cuentaFondo *,#cuentaFondo *::before{animation:none!important}#cuentaFondo .cuentaFondo-brasas i{opacity:.45}}

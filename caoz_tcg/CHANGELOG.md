@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · Revisión aislada · Acceso sobre el menú · 2026-09-13
+
+- El acceso se presenta como un pop up de cristal translúcido sobre el menú
+  principal, con desenfoque suave y reflejos en sus bordes.
+- El fondo rojo y la portada se distinguen detrás. Los campos, las acciones
+  y el estado seleccionado conservan contraste. Se incluye presentación opaca
+  cuando el dispositivo solicita reducir transparencia o no admite desenfoque.
+- Continúa la revisión aislada previa a beta; no cambian las reglas de acceso
+  por correo ni la sincronización del progreso.
+
 ### Sin numerar · Revisión aislada · Logo en el acceso · 2026-09-13
 
 - El formulario inicial muestra el logo oficial de Caoz Con Todo en lugar del

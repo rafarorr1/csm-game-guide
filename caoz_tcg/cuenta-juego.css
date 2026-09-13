@@ -1,6 +1,6 @@
 /* Diálogo en coordenadas del visor: el zoom del tablero no escala la cuenta. */
 .cuentaJuego{position:fixed;inset:0;box-sizing:border-box;margin:0;width:100%;height:100%;max-width:none;max-height:none;padding:0;border:0;background:transparent;color:#f4e5c7;overflow:hidden;overscroll-behavior:none}
-.cuentaJuego::backdrop{background:#09050ee8;backdrop-filter:blur(7px)}
+.cuentaJuego::backdrop{background:#06080d38}
 .cuentaJuego[open]{display:flex;align-items:center;justify-content:center}
 .cuentaJuegoRaiz{box-sizing:border-box;width:100%;height:100%;min-width:0;min-height:0;padding:max(12px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(12px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));isolation:isolate}
 .cuentaJuego .barridoModal{position:fixed;inset:0;z-index:2;pointer-events:none}
