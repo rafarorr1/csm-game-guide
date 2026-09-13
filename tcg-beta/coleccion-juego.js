@@ -64,6 +64,109 @@
     }
     return datos;
   }
+  /* Sólo una partida abierta por el flujo del Domo puede ganar un sobre.
+     La identidad vive fuera del estado online y el recibo se guarda antes de
+     retirar la victoria pendiente: recargar o repetir showEnd no vuelve a premiar. */
+  let partidasDomo=new WeakMap();
+  const premiosEnMemoria=new Set();
+  let solicitudDomo=null,reintentando=false;
+  const clavePremiosDomo=()=>window.CAOZ_COLECCION?.clave+'.domo-pendientes';
+  const idPremioValido=id=>typeof id==='string'&&/^domo_[a-zA-Z0-9_-]{1,90}$/.test(id);
+  function contextoDePrueba(){
+    const q=new URLSearchParams(location.search||'');
+    return ['test','foto','pantalla','biblia','auto','rapido','estudioVista','laboratorio'].some(k=>q.has(k));
+  }
+  function modoSinPremio(g){
+    return !g||g.tutorial||g.fast||g.silent||g.auto||g.online||g.guest||g.campana||
+      (typeof NET!=='undefined'&&NET.on)||(typeof TUT!=='undefined'&&TUT.on);
+  }
+  function leerPremiosDomo(){
+    try{
+      const lista=JSON.parse(localStorage.getItem(clavePremiosDomo()));
+      return Array.isArray(lista)?lista.filter(idPremioValido):[];
+    }catch(_){return null;}
+  }
+  function guardarPremiosDomo(ids){
+    try{
+      if(ids.length)localStorage.setItem(clavePremiosDomo(),JSON.stringify(ids));
+      else localStorage.removeItem(clavePremiosDomo());
+      return true;
+    }catch(_){return false;}
+  }
+  function recuperarPremiosDomo(){
+    if(reintentando||contextoDePrueba()||!window.CAOZ_COLECCION?.concederSobreDomo)return;
+    reintentando=true;
+    try{
+      const guardados=leerPremiosDomo();
+      // No sobrescribir una cola que esta vez no pudimos leer.
+      if(guardados===null)return;
+      const ids=[...new Set([...guardados,...premiosEnMemoria])];
+      if(!ids.length)return;
+      // Si el inventario falla, queda una segunda escritura recuperable. Si
+      // todo el almacenamiento está bloqueado, conservamos los IDs en memoria.
+      guardarPremiosDomo(ids);
+      for(const id of ids){
+        if(window.CAOZ_COLECCION.concederSobreDomo(id)===true)premiosEnMemoria.delete(id);
+        else premiosEnMemoria.add(id);
+      }
+      guardarPremiosDomo([...premiosEnMemoria]);
+    }finally{reintentando=false;}
+  }
+  function limpiarPremiosDomo(){partidasDomo=new WeakMap();premiosEnMemoria.clear();solicitudDomo=null;}
+  function nuevoIdDomo(){
+    try{const a=new Uint32Array(4);crypto.getRandomValues(a);return 'domo_'+Array.from(a,n=>n.toString(36)).join('_');}
+    catch(_){return 'domo_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2)+'_'+Math.random().toString(36).slice(2);}
+  }
+  function entregarPremioDomo(g,winner){
+    const partida=g&&partidasDomo.get(g);
+    if(!partida||modoSinPremio(g)||contextoDePrueba()||!g.over||g.winner!==ME||winner!==ME)return;
+    if(!partida.ganada){partida.ganada=true;premiosEnMemoria.add(partida.id);}
+    recuperarPremiosDomo();
+  }
+  function premioFinal(g,winner){
+    if(winner!==ME)return '';
+    const partida=g&&partidasDomo.get(g);
+    if(!partida?.ganada)return '';
+    return premiosEnMemoria.has(partida.id)?'1 sobre ganado · Pendiente de guardar':'Ganaste 1 sobre · Ábrelo en Colección';
+  }
+  function instalarPremios(){
+    if(typeof startMatch!=='function'||typeof setupMatch!=='function'||typeof endGame!=='function')return;
+    const empezar=startMatch,preparar=setupMatch,terminar=endGame,mostrar=showEnd,panel=panelFinal;
+    startMatch=async function(a,b,opts={}){
+      const solicitud={a,b,numero:PARTIDA_N+1,valida:!contextoDePrueba()&&!modoSinPremio(opts)&&opts.volado!==false&&!opts.prueba&&!opts.sinCortinilla};
+      solicitudDomo=solicitud;
+      try{return await empezar.apply(this,arguments);}
+      finally{if(solicitudDomo===solicitud)solicitudDomo=null;}
+    };
+    setupMatch=function(a,b,opts={}){
+      const solicitud=solicitudDomo;
+      const valida=solicitud?.valida&&solicitud.numero===PARTIDA_N&&solicitud.a===a&&solicitud.b===b&&!modoSinPremio(opts);
+      solicitudDomo=null;
+      // setupMatch crea G sincrónicamente antes de esperar el primer reparto.
+      const resultado=preparar.apply(this,arguments);
+      if(valida&&!modoSinPremio(G))partidasDomo.set(G,{id:nuevoIdDomo(),ganada:false});
+      return resultado;
+    };
+    endGame=function(winner){
+      const g=G,resultado=terminar.apply(this,arguments);
+      if(G===g)entregarPremioDomo(g,winner);
+      return resultado;
+    };
+    showEnd=function(winner){entregarPremioDomo(G,winner);return mostrar.apply(this,arguments);};
+    panelFinal=function(winner){
+      const resultado=panel.apply(this,arguments),texto=premioFinal(G,winner),contenedor=document.getElementById('ovPanel');
+      if(texto&&contenedor&&!contenedor.querySelector('.coleccionPremioFinal')){
+        const aviso=document.createElement('p');aviso.className='coleccionPremioFinal';aviso.textContent=texto;
+        contenedor.insertBefore(aviso,contenedor.querySelector('.opts'));
+      }
+      return resultado;
+    };
+    recuperarPremiosDomo();
+    addEventListener('pageshow',recuperarPremiosDomo);
+    addEventListener('focus',recuperarPremiosDomo);
+    addEventListener('storage',e=>{if(e.key===clavePremiosDomo())recuperarPremiosDomo();});
+    addEventListener('caoz:coleccion',e=>{if(e.detail?.tipo!=='reinicio')recuperarPremiosDomo();else{limpiarPremiosDomo();guardarPremiosDomo([]);}});
+  }
   function instalar(){
     if(typeof netSend!=='function'||typeof netRecv!=='function')return;
     const enviar=netSend,recibir=netRecv,cerrar=netClose;
@@ -86,7 +189,8 @@
     };
     netClose=function(){limpiar();return cerrar.apply(this,arguments);};
   }
-  window.CAOZ_COLECCION_JUEGO=Object.freeze({acabado,lado,marcar,ficha});
-  if(document.readyState==='complete')instalar();
-  else addEventListener('load',instalar,{once:true});
+  window.CAOZ_COLECCION_JUEGO=Object.freeze({acabado,lado,marcar,ficha,premioFinal,clavePremiosDomo,limpiarPremiosDomo});
+  const iniciar=()=>{instalar();instalarPremios();};
+  if(document.readyState==='complete')iniciar();
+  else addEventListener('load',iniciar,{once:true});
 })();
