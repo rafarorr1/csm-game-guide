@@ -7,11 +7,24 @@ separada: **nunca se publica como autenticación del juego**.
 
 ## Estado de la conexión — 2026-09-13
 
-El [PR 14](https://github.com/rafarorr1/csm-game-guide/pull/14) ya se integró en
-`develop:a84f7a1`. La beta 255 está publicada y verificada, con las 83 suites
-completas aprobadas; sus artefactos son `gh-pages:32885f2` y `beta:68141f4`.
-`main` y producción siguen en build 254. La autorización del usuario para completar
-la publicación en producción permanece vigente. El PR 13 documental es independiente.
+**La beta 256 está publicada.** El [PR 15](https://github.com/rafarorr1/csm-game-guide/pull/15)
+se integró en `develop:a00f251`; el publicador terminó con código de salida 0 y
+83 suites completas verdes. Artefactos: `gh-pages:e35a1f5` y `beta:de14d24`, con
+bytes verificados en GitHub y Cloudflare. `main` y producción siguen en build 254.
+La autorización del usuario para completar la publicación en producción permanece
+vigente. El PR 13 documental es independiente.
+
+En la interfaz real de beta 256, Extras → Mi cuenta abre Crear cuenta para un
+visitante nuevo sin el aviso falso de sesión vencida. Las sesiones conocidas o
+con vínculo previo siguen avisando si caducan y conservan sus datos. También se
+incluyen la normalización de espacios exteriores de clave y remitente y la
+identificación User-Agent requerida por Resend, ambas con validación de transporte.
+
+La comprobación HTTP independiente con `curl`, fuera del navegador, confirmó
+el `401` esperado al consultar sesión sin cookie. Solicitar el código todavía
+responde **`503 NO_DISPONIBLE` antes de crear el desafío en D1**. El contador
+permanece en 0: no se crearon códigos OTP, sesiones ni progreso. **No se ha
+confirmado la entrega real de correo ni el funcionamiento de las cuentas.**
 
 Las bases de jugadores son privadas y están separadas por entorno:
 
@@ -24,38 +37,39 @@ Los registros DNS nuevos están guardados y comprobados. Resend mostró
 `cuentas.caozcontodo.com`, identificador
 `e7084484-caac-4bbb-89ba-c0cdeb3b39f2`, como **verified el 2026-09-13**.
 Pages Preview y Production tienen `CUENTAS_ENTORNO`, el remitente del dominio
-y **ambos secretos cifrados: `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`**. El usuario
-confirmó que copió la clave completa. No reproducir los valores en este documento,
-el repositorio ni la conversación.
+y **ambos secretos cifrados: `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`**. Su presencia
+no acredita que el contenido guardado permita el envío.
 
-La comprobación real de beta 255 todavía **no acredita correo ni cuentas
-operativas**: solicitar el código devolvió `503 NO_DISPONIBLE` antes de crear
-el desafío en D1. El recuento del diagnóstico fue 0 en ambas bases y Resend
-mostró 0 solicitudes. Consultar sesión sin cookie devolvió el `401` esperado;
-verificar un UUID inexistente devolvió `400`, confirmando el recorrido de HMAC
-y D1. Estas respuestas no demuestran una entrega de correo.
-
-El [PR 15](https://github.com/rafarorr1/csm-game-guide/pull/15), rama
-`fix/cuentas-primer-acceso`, referencia `02a35b1`, prepara build 256. Corrige el
-aviso de sesión vencida que veía un visitante nuevo al recibir el primer `401`
-y normaliza únicamente los espacios exteriores de clave/remitente, conservando
-la validación del contenido. Las cuentas con sesión conocida o vínculo previo
-siguen avisando si caducan y conservan sus datos. La validación completa de `02a35b1` terminó con 83 suites verdes y cero fallos.
-Se añadió después la identificación User-Agent requerida por Resend, cubierta
-por regresión de transporte; el publicador validará de nuevo el código integrado.
-No se ha confirmado que estos ajustes resuelvan el envío real.
-255 es una publicación inmutable y no se reemplaza con bytes de la corrección.
+Se prepararon en Chrome campos vacíos para reemplazar `CUENTAS_RESEND_KEY` en
+Preview y Production. Se pidió al usuario volver a pegar y guardar la clave
+completa con prefijo `re_`; **sigue pendiente**. No modificar `CUENTAS_SECRET`
+ni reproducir valores secretos o destinatarios de prueba en este documento,
+el repositorio o la conversación. Después de guardar la clave falta comprobar
+la solicitud, recepción y uso de un código real, y el guardado del progreso,
+antes de completar la publicación autorizada en producción.
 
 La reducción de la clave de Resend desde Full access a Sending access limitado
-al dominio está pendiente de aprobación específica tras la revisión automática.
-No reintentar esa modificación de permisos por otra vía. La autorización de
-producción del juego sigue siendo válida y no debe volver a solicitarse por
-ese motivo; faltan completar las comprobaciones técnicas y de correo real.
+al dominio está pendiente de aprobación específica tras la revisión automática;
+la pregunta ya está planteada. No reintentar esa modificación ni hacerla por otra
+vía. La autorización de producción del juego sigue siendo válida y no debe volver
+a solicitarse por ese motivo.
+
+### Antecedentes
+
+El [PR 14](https://github.com/rafarorr1/csm-game-guide/pull/14) se integró en
+`develop:a84f7a1`. La beta 255 pasó 83 suites y se publicó con artefactos
+`gh-pages:32885f2` y `beta:68141f4`. Su primera solicitud real devolvió `503`, con
+0 desafíos en ambas bases D1 y 0 solicitudes en Resend; la consulta anónima de
+sesión devolvió `401` y verificar un UUID inexistente devolvió `400`, comprobando
+el recorrido de HMAC y D1. El usuario había confirmado copiar la clave completa.
+La referencia inicial `02a35b1` del PR 15 pasó 83 suites antes del ajuste User-Agent;
+el publicador volvió a validar el código integrado y publicó una build nueva,
+256, conservando la inmutabilidad de 255.
 
 Los registros históricos de preparación e infraestructura permanecen en
-`../../caoz_tcg/HANDOFF.md`. Actualizar este estado después de la validación,
-publicación y comprobación real de cada servicio; las pruebas con correo
-simulado no sustituyen la entrega a un destinatario autorizado.
+`../../caoz_tcg/HANDOFF.md`. Actualizar este estado después de cada comprobación
+real; las pruebas con correo simulado no sustituyen la entrega a un destinatario
+autorizado.
 
 ## Configuración privada del Worker
 
