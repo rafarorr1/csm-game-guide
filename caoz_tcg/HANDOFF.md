@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-13 · beta 254 · producción 254 · build 255 en preparación, sin publicar · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-13 · beta 255 · producción 254 · build 256 preparada para beta · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,73 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — build 255: cuentas aprobadas, infraestructura pendiente
+## Trabajo vigente — beta 255 publicada; corrección 256 preparada para beta
+
+El usuario autorizó integrar cuentas y publicarlas en producción. Esa autorización
+sigue vigente para completar este trabajo; no hay que volver a pedirla para el
+mismo paquete. La autorización no convierte el correo en operativo: todavía se
+debe comprobar la entrega real del código, el acceso y el guardado antes de
+promover el juego. El PR 13 documental previo permanece separado y sin autorización
+de merge por esta tarea.
+
+El [PR 14](https://github.com/rafarorr1/csm-game-guide/pull/14) ya se integró en
+`develop:a84f7a1`. La beta 255 se publicó y verificó después de pasar las
+**83 suites completas**, incluidos tutoriales y regresiones. Referencias de los
+artefactos: `gh-pages:32885f2` y `beta:68141f4`. `main` y el despliegue de producción
+siguen en la versión 254; esta publicación de beta no los modificó.
+
+La infraestructura de cuentas conserva dos bases D1 privadas, una por entorno,
+con sus migraciones y enlaces `CUENTAS_DB`. El dominio de envío
+`cuentas.caozcontodo.com` está verificado. Ahora **`CUENTAS_RESEND_KEY` y
+`CUENTAS_SECRET` están presentes como secretos cifrados tanto en Pages Preview
+como en Production**, además del entorno y remitente configurados. No registrar
+sus valores en archivos, Git, URLs ni conversación. El usuario confirmó que
+copió la clave completa.
+
+La primera solicitud real de correo en beta 255 respondió `503 NO_DISPONIBLE`
+**antes de crear el desafío en D1**. El diagnóstico del desafío devolvió recuento
+0 en ambas bases y Resend mostró 0 solicitudes. No hay una entrega real de código
+confirmada ni cuentas operativas acreditadas todavía. No confundir la presencia
+de secretos o las pruebas con transporte simulado con una comprobación de envío.
+`GET /api/cuenta/sesion` sin cookie respondió el `401` esperado; verificar un UUID
+inexistente respondió `400`, lo que confirma el recorrido de HMAC y D1 en ese
+servicio desplegado. Esto no confirma el proveedor de correo.
+
+El [PR 15](https://github.com/rafarorr1/csm-game-guide/pull/15), rama
+`fix/cuentas-primer-acceso`, tiene como referencia en este registro
+`02a35b1`. Prepara build 256 y corrige el primer acceso y el envío:
+
+- Un visitante sin sesión previa ni vínculo local ya no interpreta el primer
+  `401` como una sesión caducada. Conserva Crear cuenta, la pestaña elegida y el
+  modo invitado. Las sesiones conocidas que vencieron siguen mostrando el aviso,
+  sin borrar progreso, vínculo, cola ni respaldos.
+- El correo elimina espacios o saltos de línea exteriores de clave y remitente
+  antes de validarlos; mantiene la validación estricta de su contenido. Esto
+  aborda una posible causa del `503`, pero aún no acredita resolver el envío real.
+- La petición de correo identifica la aplicación con User-Agent, requerido por
+  la API de Resend. No contiene datos de jugadores ni credenciales.
+
+La validación completa de `02a35b1` terminó con **83 suites verdes y cero fallos**.
+Después se añadió la cabecera User-Agent que exige Resend, con identificación
+propia del juego y regresión del transporte. El publicador volverá a ejecutar
+la validación completa del commit integrado antes de desplegar la beta. No sustituir los bytes
+de la beta 255: se reservó una build nueva por la guarda de inmutabilidad. Después
+corresponde completar la validación, integrar/publicar 256 en beta, comprobar el
+servicio real y promover el paquete autorizado a producción con las guardas del
+proyecto. Registrar los resultados efectivos al finalizar cada paso.
+
+La reducción del permiso de la clave de Resend, de Full access a Sending access
+limitado al dominio, quedó detenida por la revisión automática y espera una
+aprobación específica. **No reintentar ese cambio de permisos ni hacerlo por otra
+vía mientras siga pendiente.** Esta limitación es distinta de la autorización de
+publicación del juego, que ya existe.
+
+## Registro anterior — preparación de la build 255
+
+El apartado siguiente conserva el estado histórico anterior al merge y a la
+publicación de beta 255. Sus pendientes de secretos, merge y despliegue fueron
+actualizados por el registro vigente de arriba; no describen el estado actual.
+
 
 El usuario aprobó la propuesta aislada de cuentas y pidió aplicarla a producción.
 El trabajo continúa en `feature/cuentas-jugadores`, desde build 254. La autorización

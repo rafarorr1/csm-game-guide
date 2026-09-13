@@ -7,33 +7,55 @@ separada: **nunca se publica como autenticación del juego**.
 
 ## Estado de la conexión — 2026-09-13
 
-Se crearon dos bases D1 independientes y privadas, inicialmente vacías:
+El [PR 14](https://github.com/rafarorr1/csm-game-guide/pull/14) ya se integró en
+`develop:a84f7a1`. La beta 255 está publicada y verificada, con las 83 suites
+completas aprobadas; sus artefactos son `gh-pages:32885f2` y `beta:68141f4`.
+`main` y producción siguen en build 254. La autorización del usuario para completar
+la publicación en producción permanece vigente. El PR 13 documental es independiente.
 
-| Entorno | Identificador D1 | Estado de esta preparación |
+Las bases de jugadores son privadas y están separadas por entorno:
+
+| Entorno | Identificador D1 | Estado verificado |
 |---|---|---|
-| Beta | `f1ce1e07-289d-483d-b881-4456adfefe91` | Seis tablas migradas y verificadas; enlace `CUENTAS_DB` guardado en Pages Preview. |
-| Producción | `abdce7af-3693-4707-a4f4-a3e14276183e` | Seis tablas migradas y verificadas; enlace `CUENTAS_DB` guardado en Pages Production. |
+| Beta | `f1ce1e07-289d-483d-b881-4456adfefe91` | Seis tablas migradas; enlace `CUENTAS_DB` guardado en Pages Preview. |
+| Producción | `abdce7af-3693-4707-a4f4-a3e14276183e` | Seis tablas migradas; enlace `CUENTAS_DB` guardado en Pages Production. |
 
-Los tres registros nuevos de GoDaddy ya se guardaron y comprobaron. Resend
-mostró el dominio `cuentas.caozcontodo.com`, identificador
-`e7084484-caac-4bbb-89ba-c0cdeb3b39f2`, como **verified el 2026-09-13**. En ambos entornos de Pages están guardadas `CUENTAS_ENTORNO`
-(`beta` en Preview y `produccion` en Production) y
-`CUENTAS_REMITENTE=acceso@cuentas.caozcontodo.com`.
+Los registros DNS nuevos están guardados y comprobados. Resend mostró
+`cuentas.caozcontodo.com`, identificador
+`e7084484-caac-4bbb-89ba-c0cdeb3b39f2`, como **verified el 2026-09-13**.
+Pages Preview y Production tienen `CUENTAS_ENTORNO`, el remitente del dominio
+y **ambos secretos cifrados: `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`**. El usuario
+confirmó que copió la clave completa. No reproducir los valores en este documento,
+el repositorio ni la conversación.
 
-**Pendientes:** `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`, ambas como secretos
-cifrados en Preview y Production. No se ha creado la clave API de Resend; su
-formulario está preparado con Sending access limitado a `cuentas.caozcontodo.com`.
-Se preparan formularios vacíos de Cloudflare para que el usuario introduzca las
-credenciales nuevas, conforme al flujo de seguridad del navegador. Los valores
-no se solicitan en el chat ni se incorporan a Git. Tampoco se ha hecho el envío
-de prueba: verificar el dominio no significa que el juego ya pueda enviar códigos.
+La comprobación real de beta 255 todavía **no acredita correo ni cuentas
+operativas**: solicitar el código devolvió `503 NO_DISPONIBLE` antes de crear
+el desafío en D1. El recuento del diagnóstico fue 0 en ambas bases y Resend
+mostró 0 solicitudes. Consultar sesión sin cookie devolvió el `401` esperado;
+verificar un UUID inexistente devolvió `400`, confirmando el recorrido de HMAC
+y D1. Estas respuestas no demuestran una entrega de correo.
 
-Build 255 está en preparación en `feature/cuentas-jugadores`, PR draft 14,
-código validado en `31f01857ece19ac11e9f4d45cec01dbd6df240f4`, con pruebas completas aprobadas:
-83 suites verdes y cero fallos. No hubo merge ni despliegue; `main`, beta y
-producción conservan build 254.
-Este estado no acredita una publicación ni un envío de correo real. Actualizar
-el registro al verificar ambos servicios y el juego servido.
+El [PR 15](https://github.com/rafarorr1/csm-game-guide/pull/15), rama
+`fix/cuentas-primer-acceso`, referencia `02a35b1`, prepara build 256. Corrige el
+aviso de sesión vencida que veía un visitante nuevo al recibir el primer `401`
+y normaliza únicamente los espacios exteriores de clave/remitente, conservando
+la validación del contenido. Las cuentas con sesión conocida o vínculo previo
+siguen avisando si caducan y conservan sus datos. La validación completa de `02a35b1` terminó con 83 suites verdes y cero fallos.
+Se añadió después la identificación User-Agent requerida por Resend, cubierta
+por regresión de transporte; el publicador validará de nuevo el código integrado.
+No se ha confirmado que estos ajustes resuelvan el envío real.
+255 es una publicación inmutable y no se reemplaza con bytes de la corrección.
+
+La reducción de la clave de Resend desde Full access a Sending access limitado
+al dominio está pendiente de aprobación específica tras la revisión automática.
+No reintentar esa modificación de permisos por otra vía. La autorización de
+producción del juego sigue siendo válida y no debe volver a solicitarse por
+ese motivo; faltan completar las comprobaciones técnicas y de correo real.
+
+Los registros históricos de preparación e infraestructura permanecen en
+`../../caoz_tcg/HANDOFF.md`. Actualizar este estado después de la validación,
+publicación y comprobación real de cada servicio; las pruebas con correo
+simulado no sustituyen la entrega a un destinatario autorizado.
 
 ## Configuración privada del Worker
 
