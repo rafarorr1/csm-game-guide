@@ -21,8 +21,10 @@ con el desbloqueo permanente del inventario. Una Foil con cero copias después
 de un canje sigue nítida. Los botones y etiquetas externas quedan legibles;
 las cartas de combate y apertura de sobres no coinciden con ese selector.
 
-Build 258 sincronizada en ambas pantallas y la PWA. Pendientes en este registro:
-pruebas completas, PR hacia `develop`, publicación beta y comprobación de bytes.
+Build 258 sincronizada en ambas pantallas y la PWA. La validación previa con
+`./publicar.sh --solo-pruebas --completo` terminó con 84 suites verdes y cero fallos.
+PR de integración: https://github.com/rafarorr1/csm-game-guide/pull/21 .
+Pendientes en este registro: integración en `develop`, publicación beta y bytes.
 No hay autorización de producción para 258: `main` y producción conservan 257.
 
 ## Registro anterior — cuentas publicadas y verificadas en beta y producción 257
