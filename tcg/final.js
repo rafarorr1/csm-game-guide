@@ -41,5 +41,12 @@
   document.write('<script src="sobres-escena.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="sobres-apertura.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="coleccion-ui.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<link rel="stylesheet" href="cuenta.css?b='+encodeURIComponent(b)+'">');
+  document.write('<link rel="stylesheet" href="cuenta-juego.css?b='+encodeURIComponent(b)+'">');
+  document.write('<script src="cuenta-modelo.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="cuenta-progreso.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="cuenta-servicio.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="cuenta-ui.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="cuenta-juego.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="audio-domo.js?b='+encodeURIComponent(b)+'"><\/script>');
 })();
