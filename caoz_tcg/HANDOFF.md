@@ -32,6 +32,11 @@ cinco revelaciones y avisos de premios 1/3, sin errores JavaScript. Se usaron
 perfiles efímeros y victorias preparadas para probar la recompensa; no datos
 de jugadores. Chrome móvil también activó `caoz-cache-/-253` y volvió a cargar
 con el service worker controlando la página. Esto no sustituye Safari nativo.
+Incidencia ajena a esta mecánica: `/api/sfx/catalogo` agotó el timeout durante
+el smoke y no respondió en una lectura independiente de 25 s. `audio-domo.js`
+no cambió: conserva el banco local o último válido al fallar la consulta.
+No hubo errores JavaScript ni peticiones fallidas de cartas; no describir la
+revisión como una red sin errores. Investigar la latencia del catálogo aparte.
 
 Una campaña completa concede tres sobres mediante su recibo existente; una
 victoria en «Jugar contra el Domo» concede uno con un recibo independiente.
