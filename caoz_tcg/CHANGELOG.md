@@ -1,5 +1,27 @@
 # Registro de versiones — el TCG del Domo
 
+### v22 · build 253 · Sobres por victorias y mejora de cartas · 2026-09-12
+
+- Completar una campaña concede tres sobres; ganar una partida normal contra
+  el Domo concede uno. Las batallas intermedias de campaña, derrotas, online,
+  tutoriales y simulaciones no suman premios del Domo. Cada victoria conserva
+  su recibo para impedir premios duplicados al recargar o reabrir el final.
+- Antes de abrir se elige una de seis colecciones temáticas de 24 cartas.
+  Entre todas cubren las 134 cartas actuales, con diez apariciones compartidas.
+  Cada sobre sortea cinco IDs diferentes con la misma probabilidad dentro del
+  grupo: tres Normales, una Foil y una quinta 50% Normal / 50% Foil. Doradas 0%.
+- En el detalle de la carta se pueden canjear cinco copias Normales ganadas
+  por una Foil de esa misma carta, o cinco Foil por una Dorada. El canje guarda
+  consumo y premio juntos; los diseños ya desbloqueados siguen disponibles
+  aunque se gasten sus copias. La Normal inicial nunca se consume.
+- La sección de canjes reúne las cartas que ya tienen cinco copias disponibles.
+  El listado conserva tres columnas y sólo sus marcadores de ediciones, sin
+  contadores debajo. Los códigos físicos siguen anunciados como próximos.
+- Se conservan inventarios, selecciones, sobres cerrados y el contenido de los
+  sobres antiguos ya abiertos. Los recibos anteriores no se vuelven a premiar.
+  El usuario autorizó desarrollar e integrar directamente esta mecánica en beta;
+  producción permanece en build 250.
+
 ### Sin numerar · build 252 · Ediciones desbloqueadas y arte Foil y Dorado · 2026-09-12
 
 - Debajo de cada carta aparecen sólo los marcadores de sus ediciones

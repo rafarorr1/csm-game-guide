@@ -130,6 +130,7 @@ node "$AQUI/pruebas_arte_ediciones.mjs" || exit 1
 node "$AQUI/pruebas_originales_acabados.mjs" || exit 1
 node "$AQUI/pruebas_estudio.mjs" || exit 1
 node "$AQUI/pruebas_coleccion.mjs" || exit 1
+node "$AQUI/pruebas_recompensas_domo.mjs" || exit 1
 node "$REPO/dev/secciones/pruebas_sobres_apertura.mjs" --sabotaje || exit 1
 for f in coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js; do node --check "$AQUI/$f" || exit 1; done
 node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }

@@ -1,7 +1,7 @@
 'use strict';
 (function(){
   const parametros=new URLSearchParams(location.search),estado=parametros.get('estado')||'sobres';
-  const estados=['nuevo','sobres','ediciones','muestrario','legacy'];
+  const estados=['nuevo','sobres','ediciones','muestrario','legacy','canjes'];
   const acabado=['normal','foil','dorado'].includes(parametros.get('acabado'))?parametros.get('acabado'):'normal';
   function preparar(){
     const m=window.CAOZ_COLECCION;
@@ -14,7 +14,7 @@
     if(estado==='sobres'){
       // Fixtures en memoria: funcionan también en una URL de revisión remota.
       // No se habilita la concesión beta del juego en nuevos dominios.
-      m.concederSobreCampana('aislado_sobre_1');m.concederSobreCampana('aislado_sobre_2');
+      m.concederSobreDomo('aislado_sobre_1');m.concederSobreDomo('aislado_sobre_2');
     }
     if(estado==='ediciones'){
       // El mismo modelo suma las copias de esta muestra. Son cantidades
@@ -24,6 +24,11 @@
         for(const [acabado,cantidad]of Object.entries(ediciones))for(let i=0;i<cantidad;i++)m.otorgarCopia(id,acabado);
       }
       if(m.ids().includes('tal'))m.seleccionar('tal','dorado');
+    }
+    if(estado==='canjes'){
+      for(let i=0;i<5;i++)m.otorgarCopia('tal','normal');
+      for(let i=0;i<4;i++)m.otorgarCopia('tal','foil');
+      for(let i=0;i<5;i++)m.otorgarCopia('eric','foil');
     }
     if(estado==='muestrario'){
       // Una copia por edición permite recorrer la serie completa en la grilla.
