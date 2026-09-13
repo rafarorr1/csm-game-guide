@@ -17,6 +17,8 @@ Nueva revisión: acceso como panel de cristal translúcido sobre la portada.
 del diálogo conserva visible el menú. La vista aislada reutiliza la presentación
 del menú como fondo inerte, sin cargar partidas ni tocar datos reales. El logo
 aprobado permanece en la cabecera. Se publica sólo la sección de cuentas.
+Por petición del usuario se retiran los párrafos de datos guardados y primer
+acceso sin conexión; el formulario conserva la ayuda sobre el código por correo.
 Revisado en 1420×900, 390×844 y 320×568: menú reconocible detrás del panel,
 formulario legible, centrado y envío visible; foco e instrucciones de código
 conservados. Se incluye alternativa opaca si no hay desenfoque o se pide reducir

@@ -4,6 +4,8 @@
 
 - El acceso se presenta como un pop up de cristal translúcido sobre el menú
   principal, con desenfoque suave y reflejos en sus bordes.
+- Se retiran del formulario los dos avisos de datos guardados y primer acceso
+  sin conexión; permanece la ayuda para recibir el código por correo.
 - El fondo rojo y la portada se distinguen detrás. Los campos, las acciones
   y el estado seleccionado conservan contraste. Se incluye presentación opaca
   cuando el dispositivo solicita reducir transparencia o no admite desenfoque.
