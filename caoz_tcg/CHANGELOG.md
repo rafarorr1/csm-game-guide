@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · build 257 · Correo compatible con Cloudflare · 2026-09-13
+
+- La solicitud de código llegaba a D1, pero Cloudflare lanzaba un error antes de
+  contactar con Resend: su runtime no implementa `redirect:'error'`. Se comprobó
+  con workerd y la misma fecha de compatibilidad del despliegue.
+- El transporte usa `redirect:'manual'` y conserva el rechazo de respuestas sin
+  éxito. Un 302 no se sigue, de modo que la clave y el código nunca se reenvían
+  a la dirección de una redirección. No cambian las credenciales ni las reglas
+  de sesión, códigos y progreso.
+- Se incorpora regresión del transporte y se comprueba por sabotaje. El estado
+  de entrega real y publicación se registra en `HANDOFF.md`.
+
 ### Sin numerar · build 256 en preparación · Primer acceso a cuentas · 2026-09-13
 
 - En la beta255, abrir Mi cuenta sin haber iniciado sesión interpretaba el

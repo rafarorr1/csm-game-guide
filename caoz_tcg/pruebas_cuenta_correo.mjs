@@ -6,7 +6,7 @@ const datos={correo:'jugador@ejemplo.invalid',codigo:'012345',vence:Date.now()+3
 assert.equal(correoConfigurado({}),false);assert.equal(correoConfigurado(env),true);
 let llamadas=0;
 const enviar=crearEnviadorCuenta({fetch:async(url,opciones)=>{
- llamadas++;assert.equal(url,'https://api.resend.com/emails');assert.equal(opciones.redirect,'error');assert.equal(opciones.headers.Authorization,'Bearer '+env.CUENTAS_RESEND_KEY);
+ llamadas++;assert.equal(url,'https://api.resend.com/emails');assert.equal(opciones.redirect,'manual');assert.equal(opciones.headers.Authorization,'Bearer '+env.CUENTAS_RESEND_KEY);
  assert.equal(opciones.headers['User-Agent'],'CaozTCG-Cuentas/1.0 (+https://juego.caozcontodo.com)');
  const j=JSON.parse(opciones.body);assert.equal(j.from,'Caoz Con Todo <'+env.CUENTAS_REMITENTE+'>');assert.deepEqual(j.to,[datos.correo]);assert.match(j.text,/012345/);assert.equal(j.html,undefined);
  assert.ok(!JSON.stringify(j).includes('privado')&&!JSON.stringify(j).includes('script'));
@@ -38,8 +38,17 @@ for(const remitente of ['', ' \n', 'Caoz <'+env.CUENTAS_REMITENTE+'>',
  await assert.rejects(()=>enviar(invalido,datos),/No se pudo enviar/);
 }
 assert.equal(llamadas,2); // Las configuraciones inválidas no llegan al proveedor.
+// Un cuerpo con id no convierte una redirección en una entrega válida.
+for(const status of [301,302,303,307,308]){
+ let intentos=0;
+ await assert.rejects(()=>crearEnviadorCuenta({fetch:async(url,opciones)=>{
+  intentos++;assert.equal(url,'https://api.resend.com/emails');assert.equal(opciones.redirect,'manual');
+  return Response.json({id:'no-es-una-entrega'},{status,headers:{Location:'https://otro.ejemplo.invalid/captura'}});
+ }})(env,datos),e=>e.status===503&&e.message==='No se pudo enviar el código de acceso.');
+ assert.equal(intentos,1); // No reintentar ni consultar el destino de Location.
+}
 for(const responder of [()=>new Response('clave secreta del proveedor',{status:429}),()=>Response.json({}),()=>{throw Error('fallo con token privado');}]){
  await assert.rejects(()=>crearEnviadorCuenta({fetch:async()=>responder()})(env,datos),e=>e.status===503&&e.message==='No se pudo enviar el código de acceso.');
 }
 await assert.rejects(()=>crearEnviadorCuenta({plazo:5,fetch:(_u,o)=>new Promise((resolve,reject)=>o.signal.addEventListener('abort',()=>reject(Error('Tiempo agotado'))))})(env,datos),/No se pudo enviar/);
-console.log('Correo de cuentas: configuración con espacios exteriores, token/remitente y User-Agent exactos, rechazo de claves inválidas, contenido mínimo, errores opacos y timeout en verde. Sin correos reales.');
+console.log('Correo de cuentas: configuración con espacios exteriores, token/remitente y User-Agent exactos, redirecciones 3xx rechazadas sin seguirlas, claves inválidas, contenido mínimo, errores opacos y timeout en verde. Sin correos reales.');

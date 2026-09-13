@@ -24,7 +24,9 @@ export function crearEnviadorCuenta({fetch:pedir=globalThis.fetch,plazo=8000}={}
       subject:'Tu código de acceso al Domo',
       text:'Tu código de acceso a Caoz Con Todo es:\n\n'+datos.codigo+'\n\nCaduca en 5 minutos y sólo puede utilizarse una vez.\n\nSi no solicitaste este código, puedes ignorar este correo. No lo compartas con nadie.'};
     try{
-      const r=await pedir(endpoint,{method:'POST',redirect:'error',headers:{Authorization:'Bearer '+configuracion.clave,'Content-Type':'application/json','User-Agent':agente},body:JSON.stringify(cuerpo),signal:control.signal});
+      // Workers sólo admite follow/manual. Rechazar 3xx con !ok evita reenviar
+      // la clave y el código a un destino distinto del proveedor.
+      const r=await pedir(endpoint,{method:'POST',redirect:'manual',headers:{Authorization:'Bearer '+configuracion.clave,'Content-Type':'application/json','User-Agent':agente},body:JSON.stringify(cuerpo),signal:control.signal});
       if(!r.ok)throw fallo();
       const respuesta=await r.json();if(typeof respuesta.id!=='string'||!respuesta.id)throw fallo();
       // La API del jugador recibe sólo confirmación; ni el código ni el ID del proveedor.

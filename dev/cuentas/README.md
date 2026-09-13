@@ -20,11 +20,28 @@ con vínculo previo siguen avisando si caducan y conservan sus datos. También s
 incluyen la normalización de espacios exteriores de clave y remitente y la
 identificación User-Agent requerida por Resend, ambas con validación de transporte.
 
-La comprobación HTTP independiente con `curl`, fuera del navegador, confirmó
-el `401` esperado al consultar sesión sin cookie. Solicitar el código todavía
-responde **`503 NO_DISPONIBLE` antes de crear el desafío en D1**. El contador
-permanece en 0: no se crearon códigos OTP, sesiones ni progreso. **No se ha
-confirmado la entrega real de correo ni el funcionamiento de las cuentas.**
+El usuario creó una nueva clave de Resend con **Sending access limitado al
+dominio `cuentas.caozcontodo.com`** y la guardó cifrada como `CUENTAS_RESEND_KEY`
+en Preview y Production. También limitó la clave anterior. No queda pendiente
+volver a pegar la clave ni aprobar la reducción de sus permisos. `CUENTAS_SECRET`
+permanece intacto. No registrar valores secretos o destinatarios de prueba.
+
+Se reintentó con éxito `beta:de14d24`, build 256, en el despliegue Cloudflare
+`96460b15`, para recoger la nueva configuración. La consulta anónima de sesión
+mantiene el `401` esperado. La nueva solicitud real de código sigue respondiendo
+**`503 NO_DISPONIBLE`**, aunque ahora D1 registra **1 desafío, 0 entregados y
+1 no entregado**; Resend muestra 0 solicitudes. No se ha confirmado recepción
+de correo, acceso ni guardado real del progreso.
+
+El fallo se reprodujo en **workerd 2026-09-11**, con compatibilidad **2026-09-05**:
+`redirect: 'error'` no está soportado y lanza antes de acceder a la red. La rama
+`fix/correo-workers` prepara **build 257**, todavía sin publicar, usando
+`redirect: 'manual'` y rechazando toda respuesta con `ok` falso, incluidas las
+redirecciones. Así se evita seguir otra dirección o reenviarle credenciales.
+Falta completar la validación, publicar 257 en beta y comprobar la solicitud,
+recepción y uso de un código real y el guardado del progreso antes de completar
+la publicación autorizada a producción. **Beta continúa en 256 y producción
+en 254.**
 
 Las bases de jugadores son privadas y están separadas por entorno:
 
@@ -40,20 +57,6 @@ Pages Preview y Production tienen `CUENTAS_ENTORNO`, el remitente del dominio
 y **ambos secretos cifrados: `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`**. Su presencia
 no acredita que el contenido guardado permita el envío.
 
-Se prepararon en Chrome campos vacíos para reemplazar `CUENTAS_RESEND_KEY` en
-Preview y Production. Se pidió al usuario volver a pegar y guardar la clave
-completa con prefijo `re_`; **sigue pendiente**. No modificar `CUENTAS_SECRET`
-ni reproducir valores secretos o destinatarios de prueba en este documento,
-el repositorio o la conversación. Después de guardar la clave falta comprobar
-la solicitud, recepción y uso de un código real, y el guardado del progreso,
-antes de completar la publicación autorizada en producción.
-
-La reducción de la clave de Resend desde Full access a Sending access limitado
-al dominio está pendiente de aprobación específica tras la revisión automática;
-la pregunta ya está planteada. No reintentar esa modificación ni hacerla por otra
-vía. La autorización de producción del juego sigue siendo válida y no debe volver
-a solicitarse por ese motivo.
-
 ### Antecedentes
 
 El [PR 14](https://github.com/rafarorr1/csm-game-guide/pull/14) se integró en
@@ -65,6 +68,12 @@ el recorrido de HMAC y D1. El usuario había confirmado copiar la clave completa
 La referencia inicial `02a35b1` del PR 15 pasó 83 suites antes del ajuste User-Agent;
 el publicador volvió a validar el código integrado y publicó una build nueva,
 256, conservando la inmutabilidad de 255.
+
+La comprobación inicial de beta 256, antes de renovar la clave, devolvió `503`
+con recuento D1 0. La nueva clave y la limitación de permisos ya fueron guardadas
+por el usuario; las antiguas solicitudes de pegado y aprobación están resueltas.
+El fallo actual crea un desafío no entregado y corresponde al transporte de
+Workers, según la reproducción descrita arriba.
 
 Los registros históricos de preparación e infraestructura permanecen en
 `../../caoz_tcg/HANDOFF.md`. Actualizar este estado después de cada comprobación
@@ -222,6 +231,18 @@ límites, cookie, cambio de identidad entre pestañas, conflictos, recibos,
 rollback ante fallo SQL, privacidad de deseos y almacenamiento acotado. Cinco
 sabotajes retiran protecciones para comprobar que sus regresiones fallan.
 Las pruebas de correo interceptan el transporte; no envían mensajes reales.
+
+La regresión de Cloudflare se reproduce además con workerd oficial instalado
+fuera del proyecto (comprobado con `2026-09-11`). No instala dependencias ni
+permite tráfico externo: el proveedor y las redirecciones son Workers locales.
+
+```sh
+WORKERD_BIN=/ruta/al/binario/workerd node dev/cuentas/pruebas_correo_workerd.mjs --sabotaje
+```
+
+Sus nueve casos prueban el módulo de envío real con compatibilidad `2026-09-05`.
+Rechaza 301/302/303/307/308 sin consultar el destino alternativo; los sabotajes
+`error` y `follow` detectan, respectivamente, el envío roto y la redirección.
 
 Antes de publicar deben pasar también las guardas completas del proyecto y
 las pruebas de navegador móvil/escritorio, PWA y cambio entre cuentas. Verificar

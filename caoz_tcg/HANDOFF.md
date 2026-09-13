@@ -10,7 +10,7 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — beta 256 publicada; envío real de correo pendiente
+## Trabajo vigente — beta 256; corrección del correo en Workers en preparación
 
 El usuario autorizó integrar cuentas y publicarlas en producción. Esa autorización
 sigue vigente para completar este trabajo; no hay que volver a pedirla para el
@@ -34,34 +34,42 @@ aviso y sus datos. La build incluye la normalización de espacios exteriores de
 clave y remitente, con validación estricta del contenido, y la identificación
 User-Agent de la aplicación requerida por Resend.
 
-La comprobación HTTP independiente con `curl`, fuera del navegador, confirmó
-que `GET /api/cuenta/sesion` sin cookie devuelve el `401` esperado. Sin embargo,
-solicitar el código en beta 256 sigue devolviendo **`503 NO_DISPONIBLE` antes de
-crear el desafío en D1**: el contador permanece en 0 y no se crearon códigos OTP,
-sesiones ni progreso. **El envío real de correo y las cuentas todavía no están
-operativos de forma verificada.** Las pruebas con transporte simulado no acreditan
-una entrega real.
+La configuración de envío ya fue actualizada por el usuario: creó una nueva
+clave de Resend con **Sending access limitado a `cuentas.caozcontodo.com`** y la
+guardó como `CUENTAS_RESEND_KEY` cifrada en Pages Preview y Production. También
+limitó los permisos de la clave anterior. **Ya no queda pendiente volver a pegar
+la clave ni aprobar su reducción de permisos.** `CUENTAS_SECRET` no se modificó.
+No registrar valores secretos o destinatarios de prueba en archivos, Git, URLs
+ni conversación.
+
+Se reintentó correctamente el despliegue de `beta:de14d24`, build 256, en
+Cloudflare; referencia del despliegue: `96460b15`. Este reintento tomó la nueva
+configuración sin cambiar la build publicada. La consulta anónima
+`GET /api/cuenta/sesion` conserva el `401` esperado. La nueva solicitud real de
+código todavía devolvió **`503 NO_DISPONIBLE`**, pero ahora D1 registra **1 desafío:
+0 entregados y 1 no entregado**. Resend sigue mostrando 0 solicitudes. Este
+resultado distingue el fallo actual de transporte del fallo anterior a D1;
+no confirma entrega de correo, inicio de sesión ni guardado real de progreso.
+
+La causa se reprodujo en **workerd 2026-09-11**, con fecha de compatibilidad
+**2026-09-05**: `fetch` no admite `redirect: 'error'` y lanza una excepción antes
+de acceder a la red. El transporte de `cuenta-correo.js` prepara la corrección
+en `fix/correo-workers`, **build 257 aún sin publicar**: usar `redirect: 'manual'`
+y rechazar cualquier respuesta con `ok` falso, incluidas las redirecciones,
+sin reenviar credenciales a otra dirección. Las regresiones del transporte y la
+validación de publicación deben cubrir ese comportamiento en Workers.
 
 La infraestructura conserva dos bases D1 privadas, una por entorno, con seis
 tablas migradas y sus enlaces `CUENTAS_DB`. El dominio de envío
 `cuentas.caozcontodo.com` está verificado. `CUENTAS_RESEND_KEY` y `CUENTAS_SECRET`
 están presentes como secretos cifrados en Pages Preview y Production, además
-del entorno y remitente configurados. Su presencia no confirma que el contenido
-guardado permita enviar correo.
+del entorno y remitente configurados.
 
-Se prepararon en Chrome los campos vacíos para reemplazar `CUENTAS_RESEND_KEY`
-en Preview y Production. Se pidió al usuario volver a pegar y guardar la clave
-completa de Resend, con prefijo `re_`; **esa acción sigue pendiente**. No tocar
-`CUENTAS_SECRET` ni registrar valores secretos o destinatarios de prueba en
-archivos, Git, URLs o conversación. Después de guardar la clave corresponde
-repetir la solicitud real, comprobar recepción y acceso, verificar el guardado
+El envío real sigue pendiente de comprobar. Corresponde validar y publicar 257
+en beta, repetir la solicitud, comprobar recepción y acceso, verificar el guardado
 y completar la publicación autorizada a producción con las guardas del proyecto.
-
-La reducción del permiso de la clave de Resend, de Full access a Sending access
-limitado al dominio, quedó detenida por la revisión automática y espera una
-aprobación específica, ya solicitada. **No reintentar ese cambio de permisos ni
-hacerlo por otra vía mientras siga pendiente.** Esta limitación es distinta de
-la autorización de publicación del juego, que ya existe.
+Las pruebas con transporte simulado no sustituyen la entrega real. Hasta que
+se complete esa publicación, **beta sigue en 256 y producción en 254**.
 
 ### Antecedentes de beta 255 y preparación de 256
 
@@ -78,6 +86,16 @@ la normalización exterior de la configuración, con 83 suites verdes. Después
 se añadió la cabecera User-Agent y su regresión de transporte. El publicador
 volvió a validar el código integrado antes de publicar 256; no se sustituyeron
 los bytes de la beta 255, que permanece como publicación inmutable.
+
+### Antecedente — diagnóstico inicial de beta 256
+
+Antes de renovar la clave, la comprobación independiente con `curl` devolvió
+`503` antes de crear desafíos: el recuento D1 era 0 y no se crearon códigos OTP,
+sesiones ni progreso. Se prepararon los campos de Preview y Production para
+que el usuario volviera a guardar la clave. La revisión automática había dejado
+pendiente reducir sus permisos. Ambos pendientes de configuración ya fueron
+resueltos por el usuario, como recoge el estado vigente; el fallo actual sí
+alcanza a crear un desafío y se reproduce en el transporte de Workers.
 
 ## Registro anterior — preparación de la build 255
 
