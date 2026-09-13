@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### Sin numerar · Revisión aislada · Logo en el acceso · 2026-09-13
+
+- El formulario inicial muestra el logo oficial de Caoz Con Todo en lugar del
+  emblema y los textos de bienvenida. Se conserva el formulario, la navegación
+  por teclado y las instrucciones de los pasos siguientes.
+- Ajuste sólo en la revisión aislada de cuentas; beta y producción conservan
+  sus versiones hasta aprobar la integración.
+
 ### En revisión aislada · Acceso por correo y progreso offline · 2026-09-13
 
 - El jugador debe verificar su correo y vincular o recuperar su progreso antes

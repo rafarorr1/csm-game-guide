@@ -12,6 +12,12 @@ números) → el código.
 
 ## Trabajo vigente — acceso obligatorio y continuidad offline en revisión aislada
 
+Revisión visual solicitada: la cabecera inicial se sustituye por el logo oficial
+`art/logo.webp`. Se retiran de esa vista el libro, antetítulo y frases de bienvenida;
+los pasos de código, recuperación y perfil conservan sus instrucciones. El título
+accesible permanece para lectores de pantalla y foco con teclado. Este ajuste
+continúa en la misma sección aislada, antes de integrar en beta.
+
 Rama `feature/acceso-correo-offline`, desde `origin/develop` / build 258.
 El usuario pidió entrar con correo para jugar y conservar el avance de la app
 instalada sin conexión, sincronizándolo al recuperar internet. La revisión usa
