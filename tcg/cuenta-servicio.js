@@ -42,7 +42,16 @@
       return {...copia(r),vinculado,...(ajena?{requiereAislar:true,localDisponible:null}:
         {localDisponible:archivado?.snapshot||progreso.capturar()})};
     }
-    async function sesion(){return comprobarSesion(await pedir('sesion'));}
+    async function sesion(){
+      try{return comprobarSesion(await pedir('sesion'));}
+      catch(e){
+        // La API también responde 401 a quien nunca tuvo cuenta. Sólo es
+        // caducidad si conocíamos una sesión o hay progreso vinculado aquí.
+        // No se borra ni importa nada al reconocer a un visitante anónimo.
+        if(e.codigo==='SESION'&&!actual&&!progreso.vinculado())return {sesion:null,progreso:null,revision:0,vinculado:false};
+        throw e;
+      }
+    }
     async function verificarCodigo(datos){return comprobarSesion(await pedir('verificar',datos));}
     async function guardarRemoto(datos){
       if(!actual)throw fallo('SESION');const id=actual.id;

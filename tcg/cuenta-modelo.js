@@ -46,7 +46,7 @@
       return ejecutar(async vigente=>{
         const r=await servicio.sesion();if(!vigente())return;
         if(r?.sesion)recibirSesion(r);
-        else{revision=0;copiaNube=null;subida=null;poner({sesion:null,nube:null,pantalla:'inicio',intencion:'entrar',guardado:'guardado'});}
+        else{revision=0;copiaNube=null;subida=null;poner({sesion:null,nube:null,pantalla:estado.pantalla==='invitado'?'invitado':'inicio',guardado:'guardado'});}
       });
     }
     function confirmarVinculoLocal(){if(!estado.sesion||destruido)return false;requiereAislar=false;return true;}
