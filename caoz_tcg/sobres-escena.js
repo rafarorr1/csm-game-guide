@@ -15,6 +15,15 @@
     reliquia: { oscuro: '#220b12', medio: '#53212f', claro: '#803542', oro: '#d9b373', luz: '#fff0bd', tinta: '#eed4a0', detalle: '#bc8551' },
     arcano: { oscuro: '#080c13', medio: '#161b28', claro: '#2b2a40', oro: '#a6bace', luz: '#e0edff', tinta: '#d8dce7', detalle: '#788ba9' }
   };
+  // El color identifica la colección del sobre, nunca el acabado de las cartas.
+  const colecciones = {
+    trucos: { nombre: 'TRUCOS DEL DOMO', oscuro: '#071829', medio: '#184777', claro: '#3b82c4', oro: '#b8d9f1', luz: '#e4f4ff', tinta: '#e0edfa', detalle: '#7baacb' },
+    juramentos: { nombre: 'JURAMENTOS DEL DOMO', oscuro: '#061f19', medio: '#155540', claro: '#298a69', oro: '#c5dfb6', luz: '#efffde', tinta: '#e7f1d5', detalle: '#88b493' },
+    caos: { nombre: 'CAOS Y DRAGONES', oscuro: '#260912', medio: '#6e2235', claro: '#b34152', oro: '#e5bf8b', luz: '#fff0d4', tinta: '#f5d9bd', detalle: '#c9817c' }
+  };
+  const gruposAnteriores = { mohamed: 'trucos', fender: 'trucos', adreida: 'juramentos', rafaela: 'juramentos', gero: 'caos', talesin: 'caos' };
+  const grupoValido = id => Object.prototype.hasOwnProperty.call(colecciones,id)?id:
+    Object.prototype.hasOwnProperty.call(gruposAnteriores,id)?gruposAnteriores[id]:null;
 
   function lienzo(w, h) {
     const c = document.createElement('canvas'); c.width = w; c.height = h; return c;
@@ -55,8 +64,8 @@
   }
 
   // Dos caras en un atlas; el segundo atlas indica qué tinta es metal reflectante.
-  function material(variante, logo) {
-    const arcano = variante === 'arcano', p = paletas[variante];
+  function material(variante, logo, grupo) {
+    const arcano = variante === 'arcano', p = colecciones[grupo] || paletas[variante];
     const w = 512, h = 768, atlas = lienzo(w * 2, h), metal = lienzo(w * 2, h);
     const g = atlas.getContext('2d'), m = metal.getContext('2d');
     let semilla = arcano ? 93 : 47;
@@ -101,7 +110,10 @@
         g.strokeStyle = '#ffedc336'; g.lineWidth = .6; g.beginPath(); g.moveTo(x, 44); g.lineTo(x, h - 44); g.stroke();
       }
       const tinta = g.createLinearGradient(40, 100, w - 40, h - 100);
-      if (arcano) {
+      if (grupo) {
+        tinta.addColorStop(0, p.detalle); tinta.addColorStop(.32, p.luz);
+        tinta.addColorStop(.57, p.oro); tinta.addColorStop(.78, p.tinta); tinta.addColorStop(1, p.detalle);
+      } else if (arcano) {
         tinta.addColorStop(0, '#98b8b6'); tinta.addColorStop(.28, '#bfa2c8');
         tinta.addColorStop(.48, '#e1ded9'); tinta.addColorStop(.7, '#7993b9'); tinta.addColorStop(1, '#afa0c5');
       } else {
@@ -152,7 +164,7 @@
             c.beginPath(); c.moveTo(w / 2 + s * 83, 480); c.lineTo(w / 2 + s * 159, 480); c.stroke();
             rombo(c, w / 2 + s * 173, 480, 4);
           }
-          letras(c, arcano ? 'ARCANO' : 'RELIQUIA', w / 2, 605, arcano ? 10 : 7.2, '27px Georgia,serif', color);
+          letras(c, p.nombre || (arcano ? 'ARCANO' : 'RELIQUIA'), w / 2, 605, grupo ? 2 : arcano ? 10 : 7.2, grupo ? '22px Georgia,serif' : '27px Georgia,serif', color);
           letras(c, 'C I N C O   C A R T A S', w / 2, 642, .5, '10px Arial,sans-serif', color);
           letras(c, 'EDICIÓN DEL DOMO', w / 2, 673, 2.8, '9px Arial,sans-serif', color);
         } else {
@@ -161,7 +173,7 @@
           letras(c, 'CINCO CARTAS · INFINITAS HISTORIAS', w / 2, 496, 1.05, '9px Arial,sans-serif', color);
           c.lineWidth = .7; c.beginPath(); c.moveTo(96, 529); c.lineTo(w - 96, 529); c.stroke();
           letras(c, 'CAOZCONTODO.COM', w / 2, 646, 2.9, '10px Arial,sans-serif', color);
-          letras(c, arcano ? 'ARCANO / 01' : 'RELIQUIA / 01', w / 2, 671, 2.4, '9px Arial,sans-serif', color);
+          letras(c, p.nombre || (arcano ? 'ARCANO / 01' : 'RELIQUIA / 01'), w / 2, 671, 2.4, '9px Arial,sans-serif', color);
         }
       });
       if (lado) {
@@ -322,14 +334,16 @@
   function crear(contenedor, opciones = {}) {
     if (!contenedor || !contenedor.appendChild) throw new TypeError('El sobre necesita un contenedor.');
     const variante = opciones.variante === 'arcano' ? 'arcano' : 'reliquia', arcano = variante === 'arcano';
+    const grupo = grupoValido(opciones.grupo);
     const consulta = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
     const reducir = () => opciones.reducirMovimiento === true || !!(consulta && consulta.matches);
-    let canvas = lienzo(1, 1), mat = material(variante, null), pintor;
+    let canvas = lienzo(1, 1), mat = material(variante, null, grupo), pintor;
     try { pintor = pintorGL(canvas, mat); } catch (_) { pintor = null; }
     if (!pintor) { canvas = lienzo(1, 1); pintor = pintorCanvas(canvas, mat); }
     if (!pintor) throw new Error('Este navegador no puede dibujar el sobre.');
     function prepararCanvas(c) {
       c.className = 'sobresEscenaLienzo'; c.setAttribute('aria-hidden', 'true');
+      if(grupo)c.dataset.grupo=grupo;
       c.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;';
     }
     prepararCanvas(canvas);
@@ -339,7 +353,7 @@
     let apertura = null, resolver = null, abierto = false, vista = 'cerrado';
     const tiempoApertura = arcano ? 1540 : 1720;
     const logo = new Image();
-    logo.onload = () => { if (!vivo) return; mat = material(variante, logo); pintor.actualizar(mat); solicitar(); };
+    logo.onload = () => { if (!vivo) return; mat = material(variante, logo, grupo); pintor.actualizar(mat); solicitar(); };
     logo.onerror = () => {}; logo.src = opciones.logoUrl || 'art/logo.webp';
 
     function rectangulo() { return { x: (ancho - packW) / 2, y: (alto - packH) / 2, width: packW, height: packH }; }
@@ -544,5 +558,27 @@
       }
     };
   }
-  window.CAOZ_SOBRES_ESCENA = Object.freeze({ crear });
+  // La biblioteca usa la misma impresión que el objeto 3D. Sólo pinta al
+  // montar y al cargar el logo: no abre contextos WebGL ni anima fuera de uso.
+  function previsualizar(contenedor, opciones = {}) {
+    if (!contenedor || !contenedor.appendChild) throw new TypeError('El sobre necesita un contenedor.');
+    const variante = opciones.variante === 'arcano' ? 'arcano' : 'reliquia';
+    const grupo = grupoValido(opciones.grupo), canvas = lienzo(512, 768), g = canvas.getContext('2d');
+    if (!g) throw new Error('Este navegador no puede dibujar el sobre.');
+    canvas.className = 'sobresVistaLienzo'; canvas.setAttribute('aria-hidden', 'true');
+    if (grupo) canvas.dataset.grupo = grupo;
+    canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;';
+    let vivo = true;
+    function pintar(logo) {
+      if (!vivo) return;
+      const mat = material(variante, logo, grupo);
+      g.drawImage(mat.atlas, 0, 0, 512, 768, 0, 0, 512, 768);
+    }
+    pintar(null); contenedor.appendChild(canvas);
+    const logo = new Image();
+    logo.onload = () => pintar(logo); logo.onerror = () => {};
+    logo.src = opciones.logoUrl || 'art/logo.webp';
+    return { destruir() { vivo = false; logo.onload = null; logo.onerror = null; canvas.remove(); } };
+  }
+  window.CAOZ_SOBRES_ESCENA = Object.freeze({ crear, previsualizar });
 })();

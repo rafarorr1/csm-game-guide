@@ -10,6 +10,119 @@ números) → el código.
 
 ---
 
+## Promoción autorizada — build 254 en validación
+
+El usuario aprobó la sección y pidió publicar todos los cambios en producción.
+Se prepara254 desde `feature/sobres-tres-colecciones`, integrando la revisión
+pública `aislados:4eaafd9bcee3` y lo ya aprobado en beta251–253. No requiere
+otra confirmación para publicar beta ni para promover exactamente ese paquete
+a producción. Flujo: PR hacia develop, validación completa, beta, PR de release
+hacia main y `publicar.sh --produccion --completo` con verificación pública.
+
+Incluye elección1/3, tres colecciones, biblioteca de sobres por color, apertura
+Sello del Domo, nuevos originales premium, marcadores, copias y canjes. Motor,
+mazos, banco de audio y backend de estudios permanecen iguales a producción250.
+La build y caché se sincronizan a254 en ambas pantallas. Los resultados de
+integración y referencias finales se registrarán al completar la promoción.
+Durante la revisión real se detectó que en320×568 Revancha tapaba Elegir sobre.
+Las salidas ahora comparten una fila en teléfonos bajos, conservando44px de
+alto y la palabra Victoria centrada. `victoriaCentrada` comprueba separación
+entre premio/salidas con texto y récord en ambos HTML a320/390/1440; el mismo
+caso falla al retirar la corrección CSS y pasa con ella.
+La revisión durante Victoria encontró un scroll nativo que llegaba después del
+fallback800ms y cambiaba verde por rojo. La elección explícita se conserva al
+terminar; los eventos residuales se recentran hasta un gesto real. La regresión
+`coleccionCarruselDestino` simula ese compositor tardío y comprueba el tipo que
+se consume, con inventario real, en ambas pantallas.
+Ambas regresiones pasan y fallan al retirar sus arreglos. El recorrido real de
+victoria Domo y campaña pasa en1440×900,390×844 y320×568, con animación normal,
+revancha, mesa, ascensión, deseo, recarga y recuperación exacta del sobre verde.
+No hubo excepciones JavaScript ni solicitudes fallidas. La prueba aislada de
+premios/carrusel también pasa en esos tres tamaños, con gestos y teclado.
+
+## Revisión aislada — elegir el premio y guardar sus sobres
+
+Continuación en `feature/sobres-tres-colecciones`, sin integrar todavía a
+`develop`. Al ganar contra el Domo el jugador elige un sobre; una campaña
+completa permite elegir tres, incluso del mismo grupo. Confirmar guarda tipos
+sellados. Colección → Sobres permite deslizar el carrusel de tipos poseídos y
+sus cantidades; la apertura consume sólo el elegido. Trucos azul, Juramentos
+verde y Caos rojo comparten su impresión entre biblioteca y escena 3D.
+
+El modelo mantiene la clave y versión1, añadiendo `sobresVersion:2`,
+`sobresGuardados` y `recompensasPorElegir`. `sobres()` cuenta sellados más
+pendientes de elegir. `recompensasPendientes()` devuelve recibos defensivos;
+`elegirSobres(id,[grupos])` exige1/3 según premio y no consume RNG ni concede
+cartas. `inventarioSobres()` enumera tipos con saldo positivo. `abrirSobre`
+sólo consume tipos guardados; sin argumento usa el primero, nunca convierte
+pendientes de elegir. El legado sin tipo se conserva en tandas de hasta tres;
+los pendientes ya abiertos de tres/cinco cartas no se modifican. La lectura
+migra en memoria y la próxima escritura correcta conserva todo junto.
+
+`abrirRecompensaSobres({origen,referencia,onCerrar})` ofrece el premio recibido
+encima de la victoria y permite volver a ella. El CTA y sus alternativas se
+prepararon en `final-core.js`; los epílogos de deseo y Editor ofrecen premios
+pendientes después de sus fundidos existentes. Conservan recibos y guardas
+contra partidas distintas, doble clic, online y recompensas ya elegidas.
+Esta conexión tiene pruebas acotadas; su geometría dentro de la victoria real
+queda para la integración aprobada, no se ha ejecutado la batería completa.
+
+Escenarios públicos: `estado=premio-campana`, `estado=premio-domo`,
+`estado=legado-sobres` y `estado=sobres&pestana=sobres`. Son premios temporales
+sin partida ni progreso persistente. El último ahora incluye tres sellados,
+uno de cada tipo; reemplaza el selector de la revisión anterior.
+
+Validación acotada: 47 pruebas del modelo y 12 sabotajes, 26 casos de conexión
+con victorias y epílogos, y pruebas de apertura/precarga con 14 sabotajes.
+Canjes y recorrido de premios→guardado→carrusel→apertura recuperable pasan en
+1440×900, 390×844 y 320×568, incluyendo consulta de contenido y fallos de
+escritura al elegir y al abrir. También se probó movimiento normal: selección
+a 60 ms, teclado, resize y apertura durante desplazamiento. Se corrigió una
+carrera que podía volver a seleccionar el tipo anterior; Abrir espera a que
+llegue el destino, que se conserva al redimensionar. Las pruebas del entorno/
+exportación siguen verdes.
+Publicada desde `755628af33f6ef0ca99f33e19a5f0dfcc8c89a21` en
+`aislados:4eaafd9bcee3078e6407100621f0d5d67b2feef0`. Los 442 archivos
+públicos coinciden byte a byte. El recorrido completo de esta sección pasó
+también en la URL pública con los tres tamaños, sin errores JavaScript;
+incluye movimiento normal, apertura rápida y resize. Las secciones aisladas
+El Rey y propuestas de sobres conservan sus árboles. `develop`, `main`,
+`beta` y `gh-pages` mantienen sus referencias previas.
+Revisar elección de tres:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=premio-campana
+O un premio del Domo:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=premio-domo
+Biblioteca con uno de cada color:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=sobres&pestana=sobres
+Beta253 y producción250 siguen vigentes; la integración requerirá build nueva.
+
+## Revisión aislada — tres colecciones para sobres
+
+Rama `feature/sobres-tres-colecciones`, desde `develop`/beta253. Se reducen
+las seis colecciones a tres uniendo los pares anteriores: Trucos del Domo
+(Mohamed y Fender, 48 cartas), Juramentos del Domo (Adreida y Rafaela, 46)
+y Caos y Dragones (Gero y Talesyn, 48). Cubren los 134 IDs, con ocho
+apariciones compartidas entre grupos y sin repetidos dentro del mismo grupo.
+No cambian los mazos, recompensas, canjes, probabilidades de acabado ni
+resultados de sobres pendientes. Las cartas futuras se incorporan al grupo
+menos numeroso de forma determinista, sin crear una cuarta colección.
+
+Se presentan tres botones apilados; las pantallas bajas conservan el selector
+compacto. `pestana=sobres` en el laboratorio y su entrada pública dirige a la
+elección con dos sobres temporales (`estado=sobres`). La prueba de exportación
+se actualizó al contenido mixto aprobado en beta253; antes aún esperaba cinco
+Foil. Sólo se valida y publica esta sección para revisión. La beta sigue en
+253 y producción en 250; la integración posterior necesitará una build nueva.
+Validación acotada: 38 pruebas del modelo y siete sabotajes; 13 comprobaciones
+del entorno aislado y exportación en verde. Canjes, contenido del grupo,
+apertura recuperable de cinco cartas y entrada directa a Sobres pasaron en
+1440×900, 390×844 y 320×568. No se ejecutó la batería del juego completo.
+Publicada en `aislados:7eb0b65997f4` desde `517ae8cb35cc`, con 442 archivos
+verificados byte a byte. El mismo recorrido pasó en la dirección pública,
+sin errores JavaScript. Revisión directa:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=sobres&pestana=sobres
+`develop`, `beta`, `gh-pages` y `main` conservan sus referencias previas.
+
 ## Beta 253 — recompensas y canjes publicados y verificados
 
 Rama `feature/recompensas-canjes-sobres`, desde `develop`/252. El usuario

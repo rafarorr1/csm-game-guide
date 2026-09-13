@@ -1,7 +1,7 @@
 'use strict';
 (function(){
   const parametros=new URLSearchParams(location.search),estado=parametros.get('estado')||'sobres';
-  const estados=['nuevo','sobres','ediciones','muestrario','legacy','canjes'];
+  const estados=['nuevo','sobres','premio-domo','premio-campana','legado-sobres','ediciones','muestrario','legacy','canjes'];
   const acabado=['normal','foil','dorado'].includes(parametros.get('acabado'))?parametros.get('acabado'):'normal';
   function preparar(){
     const m=window.CAOZ_COLECCION;
@@ -14,8 +14,15 @@
     if(estado==='sobres'){
       // Fixtures en memoria: funcionan también en una URL de revisión remota.
       // No se habilita la concesión beta del juego en nuevos dominios.
-      m.concederSobreDomo('aislado_sobre_1');m.concederSobreDomo('aislado_sobre_2');
+      for(const grupo of ['trucos','juramentos','caos']){
+        const referencia='aislado_sobre_'+grupo;m.concederSobreDomo(referencia);
+        const premio=m.recompensasPendientes().find(p=>p.referencia===referencia);
+        if(!premio||!m.elegirSobres(premio.id,[grupo]))throw Error('No se pudo preparar el sobre de '+grupo);
+      }
     }
+    if(estado==='premio-domo')m.concederSobreDomo('aislado_victoria_domo');
+    if(estado==='premio-campana')m.concederSobreCampana('aislado_victoria_campana');
+    if(estado==='legado-sobres')localStorage.setItem(m.clave,JSON.stringify({version:1,revision:1,sobres:5}));
     if(estado==='ediciones'){
       // El mismo modelo suma las copias de esta muestra. Son cantidades
       // conocidas, visibles en total y por edición, que se pierden al recargar.
@@ -60,9 +67,14 @@
     // El proveedor real carga exclusivamente los archivos locales; el servidor
     // responde un catálogo remoto vacío, sin contactar los estudios publicados.
     cargarArte().catch(()=>{}).finally(()=>{
+      if(['premio-domo','premio-campana','legado-sobres'].includes(estado)){
+        if(typeof abrirRecompensaSobres!=='function')throw Error('La elección de recompensas no está disponible.');
+        abrirRecompensaSobres();return;
+      }
       abrirColeccion();
       const carta=parametros.get('carta');
       if(carta&&m.ids().includes(carta))document.querySelector('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]')?.click();
+      else if(parametros.get('pestana')==='sobres')document.querySelector('#coleccionPanel .coleccionPestana:nth-child(2)')?.click();
     });
   }
   if(document.readyState==='complete')preparar();else addEventListener('load',preparar,{once:true});

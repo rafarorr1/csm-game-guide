@@ -1,5 +1,44 @@
 # Registro de versiones — el TCG del Domo
 
+### v22 · build 254 · Premios elegibles y biblioteca de sobres · 2026-09-12
+
+- Revisión aislada aprobada: elegir un sobre al ganar contra el Domo y tres al
+  completar campaña, iguales o combinados; guardarlos sellados para abrir después.
+- Tres colecciones cubren todo el catálogo: Trucos del Domo (azul), Juramentos
+  del Domo (verde) y Caos y Dragones (rojo). Carrusel con dedo, ratón y teclado.
+- Biblioteca y apertura Sello del Domo comparten su envoltura. La apertura
+  espera a que el carrusel termine para consumir siempre el tipo seleccionado.
+- Recuperación de sobres antiguos sin colección, resultados ya abiertos y
+  fallos de guardado. Elegir un tipo no concede ni vuelve a sortear cartas.
+- Producción autorizada junto con todo lo aprobado de beta251–253: apertura3D,
+  originales por acabado, marcadores, copias, premios1/3 y canjes cinco a uno.
+  No cambian reglas de combate, mazos, online, bancos de sonido ni estudios.
+
+### En revisión aislada · Elegir premios y guardar sobres · 2026-09-12
+
+- Al ganar contra el Domo se elige un sobre; al completar campaña se eligen
+  tres, con colecciones repetidas o combinadas. Confirmar los guarda sellados.
+- Colección → Sobres presenta los tipos poseídos y sus cantidades en un
+  carrusel deslizable con dedo, ratón, flechas y teclado. Cada apertura consume
+  sólo un sobre del tipo seleccionado y conserva la animación Sello del Domo.
+- Trucos del Domo es azul; Juramentos del Domo, verde; Caos y Dragones, rojo.
+  La biblioteca y la apertura comparten el diseño impreso de la envoltura.
+- Los sobres sin tipo anteriores se recuperan como elecciones pendientes,
+  en tandas de hasta tres. Los ya abiertos conservan cartas y grupo.
+- Elegir no concede cartas ni vuelve a sortear el resultado. Un fallo de
+  guardado deja disponible el premio o el sobre para reintentar.
+- Conexión con victoria y epílogos preparada en la rama para la integración
+  posterior. Esta revisión pública sólo ejecuta la sección de Colección.
+
+### En revisión aislada · Tres colecciones para sobres · 2026-09-12
+
+- Las seis opciones se reúnen en Trucos del Domo (48 cartas), Juramentos del
+  Domo (46) y Caos y Dragones (48), con tres botones completos. Cubren las 134
+  cartas actuales; las afinidades y las cartas compartidas se conservan.
+- Los sobres anteriores conservan sus cartas aunque pertenezcan a uno de los
+  seis grupos retirados. No cambian recompensas, mezcla de acabados ni canjes.
+- Revisión de la sección únicamente: beta253 y producción250 permanecen vigentes.
+
 ### v22 · build 253 · Sobres por victorias y mejora de cartas · 2026-09-12
 
 - Completar una campaña concede tres sobres; ganar una partida normal contra

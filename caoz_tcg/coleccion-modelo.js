@@ -1,5 +1,6 @@
 /* Colección local: las reglas y los mazos no cambian.
  * Una campaña terminada concede tres sobres; ganar contra el Domo concede uno.
+ * Al ganar se eligen sus tipos; los sobres elegidos quedan sellados hasta abrir.
  * Cada sobre nuevo: tres Normales, una Foil y la quinta Normal/Foil al 50 %.
  * El grupo elegido limita el sorteo uniforme; no hay IDs repetidos dentro del
  * sobre si el grupo contiene al menos cinco cartas. Doradas sólo por canje/código.
@@ -29,27 +30,29 @@
     const protagonistas=typeof LEADERS!=='undefined'&&objeto(LEADERS)?Object.keys(LEADERS).filter(idSeguro).map(id=>'lider_'+id):[];
     return [...new Set(cartas.concat(protagonistas).filter(idSeguro))];
   }
-  // Listas estables: 134 cartas alcanzables, 24 por grupo, diez compartidas.
-  // La afinidad sirve para coleccionar; no cambia la pertenencia a los mazos.
+  // Tres colecciones: Mohamed/Fender, Adreida/Rafaela y Gero/Talesyn.
+  // Conservan las afinidades y las 134 cartas; deduplicar evita dar más
+  // probabilidad a una carta presente en ambas colecciones anteriores.
   const gruposBase=[
-    ['mohamed','Secretos de Mohamed','lider_mohamed conserje machete brickbrock trol lucy magodomo ilusion tok_ilusion mensaje sangrefria acertijo disipar peaje notario sombrero jabon llavemago pergamino puente bolafuego nubedagas disfrazarse copiajabon'],
-    ['fender','Gira de Fender','lider_fender petunia bartolomeo eric cantaberna burla balada zancada pasoatronador tasha mazo antro escarcha calentarmetal palabracuracion luzhadas puas gatobachatero humobob afterparty propaganda minus rantiago bob'],
-    ['adreida','Guardia de Adreida','lider_adreida augusto lucius ninolanza talia aldrick horton modificar auxilio armadura saeta destello colapso collar tomsage armamagica ballesta lifestealer esporashorton espadaboveda ladrillos fetichemino brazosagua lanzallave'],
-    ['gero','Caos de Gero','lider_gero rey aidman juangabriel brujula rulchetebajo ciclope can spiderman hermanotrol rambo coyote correcaminos editorcosecha editorcorte editorcuadro editorcarrera editororbita editorduelo tok_goblincamino ipadkid lentesmachete eclipse viajehongos'],
-    ['rafaela','Fe de Rafaela','lider_rafaela julia adolfo titaus matildus discipulo tok_petunia rulchete leche bendicion manosardientes ceguera espiritus taumaturgia arco tok_rulchete campanafe lecheslact espadaluz lutorafaela petunia juangabriel saeta collar'],
-    ['talesin','Ascensión de Talesyn','lider_talesin edbor tal tok_poseido tok_dragon cuerda hongos alientoacido rayoabrasador proyectil contrahechizo gemaconserje esporas talcadaver puntosrobados montanas domo lanzallamas conserje eric rantiago horton pergamino llavemago'],
+    ['trucos','Trucos del Domo','lider_mohamed conserje machete brickbrock trol lucy magodomo ilusion tok_ilusion mensaje sangrefria acertijo disipar peaje notario sombrero jabon llavemago pergamino puente bolafuego nubedagas disfrazarse copiajabon lider_fender petunia bartolomeo eric cantaberna burla balada zancada pasoatronador tasha mazo antro escarcha calentarmetal palabracuracion luzhadas puas gatobachatero humobob afterparty propaganda minus rantiago bob'],
+    ['juramentos','Juramentos del Domo','lider_adreida augusto lucius ninolanza talia aldrick horton modificar auxilio armadura saeta destello colapso collar tomsage armamagica ballesta lifestealer esporashorton espadaboveda ladrillos fetichemino brazosagua lanzallave lider_rafaela julia adolfo titaus matildus discipulo tok_petunia rulchete leche bendicion manosardientes ceguera espiritus taumaturgia arco tok_rulchete campanafe lecheslact espadaluz lutorafaela petunia juangabriel'],
+    ['caos','Caos y Dragones','lider_gero rey aidman juangabriel brujula rulchetebajo ciclope can spiderman hermanotrol rambo coyote correcaminos editorcosecha editorcorte editorcuadro editorcarrera editororbita editorduelo tok_goblincamino ipadkid lentesmachete eclipse viajehongos lider_talesin edbor tal tok_poseido tok_dragon cuerda hongos alientoacido rayoabrasador proyectil contrahechizo gemaconserje esporas talcadaver puntosrobados montanas domo lanzallamas conserje eric rantiago horton pergamino llavemago'],
   ];
   function grupos(){
     const catalogo=ids(),conocidos=new Set(catalogo),cubiertos=new Set();
     const lista=gruposBase.map(([id,nombre,texto])=>{
-      const cartas=texto.split(' ').filter(c=>conocidos.has(c));
+      const cartas=[...new Set(texto.split(' '))].filter(c=>conocidos.has(c));
       cartas.forEach(c=>cubiertos.add(c));
       return {id,nombre,ids:cartas};
-    }).filter(g=>g.ids.length);
-    // Una carta futura no queda inaccesible si todavía no tiene grupo curado.
+    });
+    // Las cartas futuras siguen alcanzables sin crear una cuarta colección.
+    // Orden por ID y desempate por orden de grupos: mismo catálogo, mismo reparto.
     const extras=catalogo.filter(id=>!cubiertos.has(id)).sort();
-    for(let i=0;i<extras.length;i+=24)lista.push({id:'archivo_'+(i/24+1),nombre:'Archivo del Domo '+(i/24+1),ids:extras.slice(i,i+24)});
-    return lista;
+    for(const id of extras){
+      const menor=lista.reduce((a,b)=>a.ids.length<=b.ids.length?a:b);
+      menor.ids.push(id);
+    }
+    return lista.filter(g=>g.ids.length);
   }
   function betaDisponible(){
     const host=String(location.hostname||'').toLowerCase();
@@ -65,17 +68,54 @@
     return 'caoz.coleccion.v1.'+(betaDisponible()?'beta':'produccion')+'.'+encodeURIComponent(partes.join('/')||'raiz')+prueba;
   }
   const clave=claveActual();
-  function vacio(){return {version:1,revision:0,desbloqueos:{},cantidades:{},selecciones:{},sobres:0,pendiente:null,campanasPremiadas:[],domosPremiados:[]};}
+  function vacio(){return {version:1,revision:0,desbloqueos:{},cantidades:{},selecciones:{},sobres:0,sobresVersion:2,sobresGuardados:{},recompensasPorElegir:[],pendiente:null,campanasPremiadas:[],domosPremiados:[]};}
+  function idRecompensa(estado,origen){
+    const base='premio_'+origen+'_'+(estado.revision+1).toString(36),usados=new Set(estado.recompensasPorElegir.map(r=>r.id));
+    let id=base,n=0;while(usados.has(id))id=base+'_'+(++n).toString(36);
+    return id;
+  }
+  function sanearSobres(estado,original){
+    const totalAnterior=entero(original.sobres,maxSobres)?original.sobres:0;
+    let asignados=0;
+    if(original.sobresVersion===2){
+      if(objeto(original.sobresGuardados))for(const [grupo] of gruposBase){
+        const n=propio(original.sobresGuardados,grupo)?original.sobresGuardados[grupo]:0;
+        if(entero(n,maxSobres)&&n>0&&asignados+n<=maxSobres){estado.sobresGuardados[grupo]=n;asignados+=n;}
+      }
+      const vistos=new Set(),referencias=new Set();
+      if(Array.isArray(original.recompensasPorElegir))for(const r of original.recompensasPorElegir){
+        if(!objeto(r)||!idSeguro(r.id)||vistos.has(r.id)||!idSeguro(r.referencia)||
+          !['domo','campana','beta','legado'].includes(r.origen)||!entero(r.cantidad,maxSobres)||r.cantidad<1)continue;
+        const valido=r.origen==='legado'||r.origen==='campana'&&r.cantidad===3&&estado.campanasPremiadas.includes(r.referencia)||
+          r.origen==='domo'&&r.cantidad===1&&estado.domosPremiados.includes(r.referencia)||r.origen==='beta'&&r.cantidad===1;
+        const recibo=r.origen+':'+r.referencia;
+        if(!valido||referencias.has(recibo)||asignados+r.cantidad>maxSobres)continue;
+        estado.recompensasPorElegir.push({id:r.id,origen:r.origen,referencia:r.referencia,cantidad:r.cantidad});
+        vistos.add(r.id);referencias.add(recibo);asignados+=r.cantidad;
+      }
+    }
+    // El contador anterior no decía de qué colección eran. No se sortean ni se
+    // gastan: su saldo sin representar se conserva como una elección de legado.
+    // También preserva un saldo válido si una estructura parcial perdió campos.
+    if(totalAnterior>asignados){
+      const resto=totalAnterior-asignados,legado=estado.recompensasPorElegir.find(r=>r.origen==='legado');
+      if(legado)legado.cantidad+=resto;
+      else estado.recompensasPorElegir.push({id:idRecompensa(estado,'legado'),origen:'legado',referencia:'sobres_anteriores',cantidad:resto});
+      asignados=totalAnterior;
+    }
+    estado.sobres=asignados;
+  }
+
 
   function sanear(original){
     const estado=vacio();
     if(!objeto(original)||original.version!==1)return estado;
     const conocidos=new Set(ids());
     estado.revision=entero(original.revision,Number.MAX_SAFE_INTEGER-1)?original.revision:0;
-    estado.sobres=entero(original.sobres,maxSobres)?original.sobres:0;
     for(const registro of ['campanasPremiadas','domosPremiados']){
       if(Array.isArray(original[registro]))estado[registro]=[...new Set(original[registro].filter(idSeguro))];
     }
+    sanearSobres(estado,original);
     if(objeto(original.desbloqueos)){
       Object.keys(original.desbloqueos).forEach(id=>{
         if(!conocidos.has(id)||!Array.isArray(original.desbloqueos[id]))return;
@@ -220,8 +260,9 @@
     const estado=cargar();
     if(!estado)return false;
     if(estado.sobres>=maxSobres)return false;
-    estado.sobres++;
-    return guardar(estado,'sobre-beta');
+    const id=idRecompensa(estado,'beta'),recompensa={id,origen:'beta',referencia:id,cantidad:1};
+    estado.recompensasPorElegir.push(recompensa);estado.sobres++;
+    return guardar(estado,'sobre-beta',{recompensa:copia(recompensa)});
   }
   function concederPremio(id,registro,numero,tipo,extra){
     if(!idSeguro(id))return false;
@@ -229,9 +270,11 @@
     if(!estado)return false;
     if(estado[registro].includes(id))return true;
     if(estado.sobres>maxSobres-numero)return false;
-    estado.sobres+=numero;
+    const origen=registro==='campanasPremiadas'?'campana':'domo';
+    const recompensa={id:idRecompensa(estado,origen),origen,referencia:id,cantidad:numero};
+    estado.sobres+=numero;estado.recompensasPorElegir.push(recompensa);
     estado[registro].push(id);
-    return guardar(estado,tipo,Object.assign({sobres:numero},extra));
+    return guardar(estado,tipo,Object.assign({sobres:numero,recompensa:copia(recompensa)},extra));
   }
   function concederSobreCampana(runId){
     return concederPremio(runId,'campanasPremiadas',3,'sobre-campana',{runId});
@@ -240,6 +283,24 @@
     return concederPremio(partidaId,'domosPremiados',1,'sobre-domo',{partidaId});
   }
   function sobres(){return leer().sobres;}
+  function recompensasPendientes(){return copia(leer().recompensasPorElegir);}
+  function inventarioSobres(){
+    const estado=leer();
+    return gruposBase.map(([grupo])=>({grupo,cantidad:estado.sobresGuardados[grupo]||0})).filter(r=>r.cantidad>0);
+  }
+  function elegirSobres(recompensaId,elecciones){
+    if(!idSeguro(recompensaId)||!Array.isArray(elecciones))return false;
+    const estado=cargar();if(!estado)return false;
+    const indice=estado.recompensasPorElegir.findIndex(r=>r.id===recompensaId);if(indice<0)return false;
+    const recompensa=estado.recompensasPorElegir[indice],n=recompensa.origen==='legado'?Math.min(3,recompensa.cantidad):recompensa.cantidad;
+    const disponibles=new Set(grupos().map(g=>g.id));
+    if(elecciones.length!==n||!Array.from(elecciones).every(id=>typeof id==='string'&&disponibles.has(id)))return false;
+    for(const grupo of elecciones)estado.sobresGuardados[grupo]=(estado.sobresGuardados[grupo]||0)+1;
+    recompensa.cantidad-=n;
+    if(!recompensa.cantidad)estado.recompensasPorElegir.splice(indice,1);
+    return guardar(estado,'elegir-sobres',{recompensaId,origen:recompensa.origen,referencia:recompensa.referencia,grupos:elecciones.slice()});
+  }
+
   function pendiente(){const p=leer().pendiente;return p?copia(p):null;}
   function azar(){
     try{
@@ -252,11 +313,11 @@
     if(!estado)return null;
     if(estado.pendiente)return copia(estado.pendiente);
     if(!estado.sobres)return null;
-    // La llamada antigua sin argumento mantiene el catálogo completo. La UI
-    // nueva siempre pasa un grupo, validado antes de consumir nada.
-    const grupo=grupoId===undefined?null:grupos().find(g=>g.id===grupoId);
-    if(grupoId!==undefined&&!grupo)return null;
-    const catalogo=grupo?grupo.ids:ids();
+    // Sólo se abre un sobre ya elegido. La llamada antigua sin argumento
+    // toma el primer tipo propio; jamás convierte una recompensa sin asignar.
+    const lista=grupos(),grupo=grupoId===undefined?lista.find(g=>(estado.sobresGuardados[g.id]||0)>0):lista.find(g=>g.id===grupoId);
+    if(!grupo||!(estado.sobresGuardados[grupo.id]>0))return null;
+    const catalogo=grupo.ids;
     if(!catalogo.length)return null;
     const cartas=[],candidatos=catalogo.slice();
     for(let i=0;i<5;i++){
@@ -268,8 +329,9 @@
       cartas.push({id,acabado,nueva});
     }
     const creado=Date.now();
-    const sobre={id:'sobre_'+creado.toString(36)+'_'+(estado.revision+1).toString(36)+'_'+Math.floor(azar()*4294967296).toString(36),creado,cartas,formato:2,grupo:grupo?grupo.id:null};
-    estado.sobres--;
+    const sobre={id:'sobre_'+creado.toString(36)+'_'+(estado.revision+1).toString(36)+'_'+Math.floor(azar()*4294967296).toString(36),creado,cartas,formato:2,grupo:grupo.id};
+    estado.sobres--;estado.sobresGuardados[grupo.id]--;
+    if(!estado.sobresGuardados[grupo.id])delete estado.sobresGuardados[grupo.id];
     estado.pendiente=sobre;
     if(!guardar(estado,'abrir-sobre',{sobre:copia(sobre)}))return null;
     return copia(sobre);
@@ -281,7 +343,7 @@
     estado.pendiente=null;
     return guardar(estado,'cerrar-sobre');
   }
-  window.CAOZ_COLECCION=Object.freeze({acabados,clave,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,sobres,abrirSobre,pendiente,cerrarSobre});
+  window.CAOZ_COLECCION=Object.freeze({acabados,clave,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,sobres,recompensasPendientes,elegirSobres,inventarioSobres,abrirSobre,pendiente,cerrarSobre});
   window.addEventListener('storage',event=>{
     if(event.key===clave||event.key===null)avisar('externo',leer());
   });

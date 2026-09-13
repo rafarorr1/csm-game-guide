@@ -123,11 +123,17 @@
     if(!partida.ganada){partida.ganada=true;premiosEnMemoria.add(partida.id);}
     recuperarPremiosDomo();
   }
-  function premioFinal(g,winner){
-    if(winner!==ME)return '';
+  function recompensaFinal(g,winner){
+    if(winner!==ME||modoSinPremio(g)||contextoDePrueba())return null;
     const partida=g&&partidasDomo.get(g);
-    if(!partida?.ganada)return '';
-    return premiosEnMemoria.has(partida.id)?'1 sobre ganado · Pendiente de guardar':'Ganaste 1 sobre · Ábrelo en Colección';
+    if(!partida?.ganada)return null;
+    return {origen:'domo',referencia:partida.id,cantidad:1,guardado:!premiosEnMemoria.has(partida.id)};
+  }
+  function premioFinal(g,winner){
+    const premio=recompensaFinal(g,winner);if(!premio)return '';
+    if(!premio.guardado)return '1 sobre ganado · Pendiente de guardar';
+    const pendiente=window.CAOZ_COLECCION?.recompensasPendientes?.().some(p=>p.origen===premio.origen&&p.referencia===premio.referencia);
+    return pendiente?'Ganaste 1 sobre · Elige su colección':'Ganaste 1 sobre · Guardado en Colección';
   }
   function instalarPremios(){
     if(typeof startMatch!=='function'||typeof setupMatch!=='function'||typeof endGame!=='function')return;
@@ -156,8 +162,8 @@
     panelFinal=function(winner){
       const resultado=panel.apply(this,arguments),texto=premioFinal(G,winner),contenedor=document.getElementById('ovPanel');
       if(texto&&contenedor&&!contenedor.querySelector('.coleccionPremioFinal')){
-        const aviso=document.createElement('p');aviso.className='coleccionPremioFinal';aviso.textContent=texto;
-        contenedor.insertBefore(aviso,contenedor.querySelector('.opts'));
+        const aviso=window.crearBotonPremioFinal?.(G,winner);
+        if(aviso)contenedor.insertBefore(aviso,contenedor.querySelector('.opts'));
       }
       return resultado;
     };
@@ -189,7 +195,7 @@
     };
     netClose=function(){limpiar();return cerrar.apply(this,arguments);};
   }
-  window.CAOZ_COLECCION_JUEGO=Object.freeze({acabado,lado,marcar,ficha,premioFinal,clavePremiosDomo,limpiarPremiosDomo});
+  window.CAOZ_COLECCION_JUEGO=Object.freeze({acabado,lado,marcar,ficha,premioFinal,recompensaFinal,reintentarPremio:entregarPremioDomo,clavePremiosDomo,limpiarPremiosDomo});
   const iniciar=()=>{instalar();instalarPremios();};
   if(document.readyState==='complete')iniciar();
   else addEventListener('load',iniciar,{once:true});
