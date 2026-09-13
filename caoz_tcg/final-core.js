@@ -164,6 +164,12 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
 .fin .coleccionElegirPremio{opacity:0;pointer-events:none;transition:opacity .3s}
 .fin.botones .coleccionElegirPremio{opacity:1;pointer-events:auto}
 @media(max-height:650px){.fin .coleccionElegirPremio{margin-top:6px;padding:8px 12px;font-size:11px}}
+/* En teléfonos bajos las dos salidas comparten una fila: apilarlas ocupa el
+   espacio del premio y deja Elegir sin recibir toques aunque se vea detrás. */
+@media(max-width:600px) and (max-height:650px){
+  .fin .finbtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+  .fin .finbtns .btn{min-width:0;min-height:44px;font-size:12px;line-height:1.25;padding:8px 10px}
+}
 .fin.botones{cursor:default}
 @media (prefers-reduced-motion: reduce){ .fin .finluz, .fin .brasa{animation:none} }
 `;

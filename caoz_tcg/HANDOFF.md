@@ -24,6 +24,21 @@ Sello del Domo, nuevos originales premium, marcadores, copias y canjes. Motor,
 mazos, banco de audio y backend de estudios permanecen iguales a producción250.
 La build y caché se sincronizan a254 en ambas pantallas. Los resultados de
 integración y referencias finales se registrarán al completar la promoción.
+Durante la revisión real se detectó que en320×568 Revancha tapaba Elegir sobre.
+Las salidas ahora comparten una fila en teléfonos bajos, conservando44px de
+alto y la palabra Victoria centrada. `victoriaCentrada` comprueba separación
+entre premio/salidas con texto y récord en ambos HTML a320/390/1440; el mismo
+caso falla al retirar la corrección CSS y pasa con ella.
+La revisión durante Victoria encontró un scroll nativo que llegaba después del
+fallback800ms y cambiaba verde por rojo. La elección explícita se conserva al
+terminar; los eventos residuales se recentran hasta un gesto real. La regresión
+`coleccionCarruselDestino` simula ese compositor tardío y comprueba el tipo que
+se consume, con inventario real, en ambas pantallas.
+Ambas regresiones pasan y fallan al retirar sus arreglos. El recorrido real de
+victoria Domo y campaña pasa en1440×900,390×844 y320×568, con animación normal,
+revancha, mesa, ascensión, deseo, recarga y recuperación exacta del sobre verde.
+No hubo excepciones JavaScript ni solicitudes fallidas. La prueba aislada de
+premios/carrusel también pasa en esos tres tamaños, con gestos y teclado.
 
 ## Revisión aislada — elegir el premio y guardar sus sobres
 

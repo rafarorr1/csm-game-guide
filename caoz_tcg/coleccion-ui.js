@@ -353,7 +353,7 @@
       function seleccionar(i){const item=inventario[i],g=grupos.find(g=>g.id===item.grupo);s.grupoSobre=item.grupo;botones.forEach((b,j)=>{b.setAttribute('aria-pressed',String(j===i));b.classList.toggle('seleccionado',j===i);});carrete.dataset.grupo=item.grupo;nombre.textContent=g.nombre;cantidad.textContent=item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados');anterior.disabled=i===0;siguiente.disabled=i===inventario.length-1;}
       function objetivo(i){return botones[i].offsetLeft-carrete.clientWidth/2+botones[i].offsetWidth/2;}
       function cercano(){const centro=carrete.scrollLeft+carrete.clientWidth/2;let mejor=0;botones.forEach((b,i)=>{if(Math.abs(b.offsetLeft+b.offsetWidth/2-centro)<Math.abs(botones[mejor].offsetLeft+botones[mejor].offsetWidth/2-centro))mejor=i;});return mejor;}
-      function terminarDesplazamiento(){clearTimeout(finDesplazamiento);finDesplazamiento=0;destino=null;carrete.dataset.desplazando='false';carrete.setAttribute('aria-busy','false');abrir.disabled=false;}
+      function terminarDesplazamiento(){clearTimeout(finDesplazamiento);finDesplazamiento=0;carrete.dataset.desplazando='false';carrete.setAttribute('aria-busy','false');abrir.disabled=false;}
       function centrar(id,suave=true){
         const i=Math.max(0,inventario.findIndex(p=>p.grupo===id)),left=objetivo(i),animar=suave&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&Math.abs(carrete.scrollLeft-left)>1.5;
         clearTimeout(finDesplazamiento);seleccionar(i);destino=i;carrete.dataset.desplazando=String(animar);carrete.setAttribute('aria-busy',String(animar));abrir.disabled=animar;
@@ -369,16 +369,24 @@
       function medir(){if(!carrete.isConnected)return;const ancho=ventana.clientWidth,alto=ventana.clientHeight;if(ancho===anchoAnterior&&alto===altoAnterior)return;anchoAnterior=ancho;altoAnterior=alto;ventana.style.setProperty('--sobre-ancho',Math.max(40,Math.min(250,ancho*.62,(alto-24)*.68))+'px');centrar(s.grupoSobre,false);}
       function seguirDesplazamiento(){
         if(!carrete.isConnected)return;
-        if(destino!==null){seleccionar(destino);if(Math.abs(carrete.scrollLeft-objetivo(destino))<=1.5)terminarDesplazamiento();}
+        if(destino!==null){
+          seleccionar(destino);const left=objetivo(destino);
+          if(Math.abs(carrete.scrollLeft-left)<=1.5)terminarDesplazamiento();
+          // Un compositor que se reactiva tarde puede entregar otro scroll
+          // después del fallback. Conservar la elección explícita impide que
+          // ese evento elija o consuma otro tipo sin una acción del jugador.
+          else if(carrete.dataset.desplazando!=='true')carrete.scrollTo({left,behavior:'instant'});
+        }
         else seleccionar(cercano());
       }
       function interrumpirDesplazamiento(){
-        if(destino===null)return;terminarDesplazamiento();carrete.scrollTo({left:carrete.scrollLeft,behavior:'instant'});seleccionar(cercano());
+        if(destino===null)return;destino=null;terminarDesplazamiento();carrete.scrollTo({left:carrete.scrollLeft,behavior:'instant'});seleccionar(cercano());
       }
       carrete.addEventListener('scroll',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(seguirDesplazamiento);},{passive:true});
       carrete.addEventListener('scrollend',seguirDesplazamiento);
       carrete.addEventListener('wheel',interrumpirDesplazamiento,{passive:true});
       carrete.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();if(e.key==='Home')centrar(inventario[0].grupo);else if(e.key==='End')centrar(inventario.at(-1).grupo);else mover(e.key==='ArrowRight'?1:-1);});
+      carrete.addEventListener('focusin',e=>{const i=botones.indexOf(e.target);if(i>=0&&!arrastre)centrar(inventario[i].grupo);});
       carrete.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;interrumpirDesplazamiento();if(e.pointerType!=='mouse')return;omitirClick=false;arrastre={id:e.pointerId,x:e.clientX,inicio:carrete.scrollLeft,movido:false};});
       carrete.addEventListener('pointermove',e=>{if(!arrastre||arrastre.id!==e.pointerId)return;const dx=e.clientX-arrastre.x;if(!arrastre.movido&&Math.abs(dx)>7){arrastre.movido=true;carrete.setPointerCapture(e.pointerId);carrete.classList.add('arrastrando');}if(arrastre.movido){e.preventDefault();carrete.scrollLeft=arrastre.inicio-dx;}});
       const soltar=e=>{if(!arrastre||arrastre.id!==e.pointerId)return;const movido=arrastre.movido;arrastre=null;carrete.classList.remove('arrastrando');if(carrete.hasPointerCapture(e.pointerId))carrete.releasePointerCapture(e.pointerId);if(movido){omitirClick=true;centrar(inventario[cercano()].grupo);}};

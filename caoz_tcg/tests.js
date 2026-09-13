@@ -2190,6 +2190,31 @@ PRUEBAS.suite('campanaRetratosBeta',async t=>{
   }}finally{claves.forEach((k,i)=>{if(previos[i]===null)localStorage.removeItem(k);else localStorage.setItem(k,previos[i]);});}
 });
 
+PRUEBAS.suite('coleccionCarruselDestino',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:320px;height:568px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=coleccion-carrusel-interno';document.body.append(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,media=w.matchMedia;let inventario,carrete,scrollAntes,tardio;
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
+      m.concederSobreCampana('carrusel-tardio');const premio=m.recompensasPendientes()[0];
+      t.check(m.elegirSobres(premio.id,['trucos','juramentos','caos']),pagina+': prepara un sobre de cada tipo.');
+      w.matchMedia=q=>q.includes('prefers-reduced-motion')?{matches:false,addEventListener(){},removeEventListener(){}}:media.call(w,q);
+      w.showGallery();d.querySelectorAll('.coleccionPestana')[1].click();await sleep(60);
+      carrete=d.querySelector('.coleccionCarruselSobres');carrete.dispatchEvent(new w.KeyboardEvent('keydown',{key:'Home',bubbles:true}));
+      scrollAntes=carrete.scrollTo;
+      // Simula un compositor ocupado: el movimiento suave llega después del
+      // fallback, con una posición vieja. Nunca debe elegir otra colección.
+      carrete.scrollTo=function(op){if(op?.behavior==='smooth'){tardio=w.setTimeout(()=>scrollAntes.call(this,{left:op.left*2,behavior:'instant'}),1100);return;}return scrollAntes.apply(this,arguments);};
+      d.querySelector('.coleccionSobreSiguiente').click();await sleep(1350);
+      t.igual(carrete.dataset.grupo,'juramentos',pagina+': el scroll tardío no reemplaza la elección verde por la roja.');
+      const abrir=d.querySelector('.coleccionAbrirSobre');t.check(!abrir.disabled,pagina+': el fallback deja disponible el sobre elegido.');abrir.click();
+      t.igual(m.pendiente()?.grupo,'juramentos',pagina+': abrir consume exactamente el tipo seleccionado.');
+      t.igual(JSON.stringify(m.inventarioSobres()),JSON.stringify([{grupo:'trucos',cantidad:1},{grupo:'caos',cantidad:1}]),pagina+': los otros sobres permanecen sellados.');
+    }finally{w.clearTimeout(tardio);if(carrete&&scrollAntes)carrete.scrollTo=scrollAntes;w.matchMedia=media;d.querySelector('.coleccionCerrar')?.click();inventario?.restaurar();w.relojPara();f.remove();}
+  }
+});
+
 PRUEBAS.suite('campanaSobres',async t=>{
   const claves=['caoz.campana.v1.prueba','caoz.campana.logros.v1.prueba','caoz.campana.logros.v1.prueba.simulados'];
   const previos=claves.map(k=>localStorage.getItem(k));
@@ -2346,8 +2371,8 @@ PRUEBAS.suite('victoriaCentrada', async t => {
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=final-centrado-interno';document.body.appendChild(f);await carga;
     const w=f.contentWindow;
     try{
-      const estilo=w.document.createElement('style');estilo.textContent=w.eval('FIN_CSS')+' .fin .sello{animation:none!important}';w.document.head.appendChild(estilo);
-      const fin=w.document.createElement('div');fin.className='fin sello-on';fin.innerHTML='<div class="sello"><b>VICTORIA</b><small>Victoria de prueba</small><i>Turnos: 7 · Fender 17 · Mohamed 0</i></div>';w.document.body.appendChild(fin);
+      const estilo=w.document.createElement('style');estilo.textContent=w.eval('FIN_CSS')+' .fin .sello{animation:none!important} .fin .finbtns{transition:none!important}';w.document.head.appendChild(estilo);
+      const fin=w.document.createElement('div');fin.className='fin sello-on botones';fin.innerHTML='<div class="sello"><b>VICTORIA</b><small>El Mago del Domo reclama el alma de Mohamed.</small><i>Turnos: 7 · Mohamed ❤️ 20 · Fender ❤️ 0</i><i class="racha">Primera de una racha con Mohamed</i><button class="coleccionPremioFinal coleccionElegirPremio">Elegir mis 3 sobres</button></div><div class="finbtns"><button class="btn gold">Volver a la mesa</button><button class="btn">← Menú principal</button></div>';w.document.body.appendChild(fin);
       await w.document.fonts.ready;
       for(const [ancho,alto] of [[320,568],[390,844],[1440,900]]){
         f.style.width=ancho+'px';f.style.height=alto+'px';await sleep(30);
@@ -2357,6 +2382,9 @@ PRUEBAS.suite('victoriaCentrada', async t => {
         const rango=w.document.createRange();rango.selectNodeContents(palabra);const texto=rango.getBoundingClientRect();
         t.check(texto.left>=pantalla.left+12&&texto.right<=pantalla.right-12,pagina+': el texto se sale del visor a '+ancho);
         t.check(w.getComputedStyle(palabra).transform==='none',pagina+': título sin inclinación.');
+        const premio=fin.querySelector('.coleccionElegirPremio').getBoundingClientRect(),salidas=fin.querySelector('.finbtns').getBoundingClientRect();
+        t.check(premio.bottom+8<=salidas.top,pagina+': las salidas no tapan el premio, incluso con récord y texto en dos líneas a '+ancho);
+        for(const boton of fin.querySelectorAll('button')){const r=boton.getBoundingClientRect();t.check(r.height>=44&&r.left>=pantalla.left&&r.right<=pantalla.right&&r.bottom<=pantalla.bottom,pagina+': todas las acciones caben completas y admiten un toque a '+ancho);}
       }
       t.check(w.eval("CARDS.pasoatronador.n")==='Thunder step',pagina+': nombre actualizado de Thunder step.');
     }finally{f.remove();}
