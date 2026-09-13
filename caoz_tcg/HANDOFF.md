@@ -31,6 +31,11 @@ Validación acotada: 38 pruebas del modelo y siete sabotajes; 13 comprobaciones
 del entorno aislado y exportación en verde. Canjes, contenido del grupo,
 apertura recuperable de cinco cartas y entrada directa a Sobres pasaron en
 1440×900, 390×844 y 320×568. No se ejecutó la batería del juego completo.
+Publicada en `aislados:7eb0b65997f4` desde `517ae8cb35cc`, con 442 archivos
+verificados byte a byte. El mismo recorrido pasó en la dirección pública,
+sin errores JavaScript. Revisión directa:
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=sobres&pestana=sobres
+`develop`, `beta`, `gh-pages` y `main` conservan sus referencias previas.
 
 ## Beta 253 — recompensas y canjes publicados y verificados
 
