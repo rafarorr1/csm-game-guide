@@ -33,7 +33,7 @@ for(const ruta of ['sesion','codigo','verificar','progreso','salir'])for(const m
  assert.equal(legado.capturada,false,metodo+' '+ruta+' evita también la PWA254');assert.equal(legado.guardadas,0);
 }
 console.log('✓ GET y POST de cuentas evitan CacheStorage en el SW nuevo y en la PWA254');
-for(const archivo of ['cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-ui.js','cuenta-juego.js','cuenta.css','cuenta-juego.css'])assert(nuevo.nucleo.includes(archivo),archivo+' queda disponible sin red');
+for(const archivo of ['cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-ui.js','cuenta-acceso.js','cuenta-juego.js','cuenta.css','cuenta-juego.css'])assert(nuevo.nucleo.includes(archivo),archivo+' queda disponible sin red');
 for(const archivo of ['cuenta-servidor.js','cuenta-correo.js','cuenta-demo.js'])assert(!nuevo.nucleo.includes(archivo),archivo+' nunca se precarga en el navegador');
 console.log('✓ La PWA precarga sólo los componentes del cliente');
 // Sabotaje: retirar la exclusión vuelve observable la filtración de la API.

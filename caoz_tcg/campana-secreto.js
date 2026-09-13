@@ -106,6 +106,7 @@
   };
   function opciones(p){return {nombres:[campanaNombre(p),'Pitágoras'],campana:{id:p.id,etapa:6,alma:40,personaje:p.personaje,jefeSecreto:true,prueba:!!p.prueba,pruebaEditor:!!p.pruebaEditor}};}
   async function combatir(e){
+    if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>abrirCampana()))return;
     const p=campanaLeer();if(!p||p.etapa!==6||!['trono','combate'].includes(p.secreto)||campanaLanzando||e&&!vigente(e))return;
     if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
     campanaLanzando=true;p.secreto='combate';campanaGuardar(p);campanaCerrar();cerrarCinematica();

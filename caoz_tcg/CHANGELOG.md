@@ -1,5 +1,53 @@
 # Registro de versiones — el TCG del Domo
 
+### Build 259 · Acceso por correo y continuidad offline · 2026-09-13
+
+- Integra la sección aprobada: acceso con correo y código antes de jugar,
+  presentado en un pop up de cristal con el logo sobre el menú principal.
+- Una cuenta verificada y vinculada puede volver a entrar sin conexión.
+  El progreso pendiente se conserva y sincroniza al reconectar, sin duplicar
+  premios ni mezclar automáticamente los inventarios de cuentas/dispositivos.
+- Una sesión caducada o un conflicto pide resolver el acceso antes de continuar.
+  Las invitaciones esperan la cuenta sin perder el código de la sala.
+- La actualización se destina a beta; producción conserva la build 257.
+
+### Sin numerar · Revisión aislada · Acceso sobre el menú · 2026-09-13
+
+- El acceso se presenta como un pop up de cristal translúcido sobre el menú
+  principal, con desenfoque suave y reflejos en sus bordes.
+- Se retiran del formulario los dos avisos de datos guardados y primer acceso
+  sin conexión; permanece la ayuda para recibir el código por correo.
+- El fondo rojo y la portada se distinguen detrás. Los campos, las acciones
+  y el estado seleccionado conservan contraste. Se incluye presentación opaca
+  cuando el dispositivo solicita reducir transparencia o no admite desenfoque.
+- Continúa la revisión aislada previa a beta; no cambian las reglas de acceso
+  por correo ni la sincronización del progreso.
+
+### Sin numerar · Revisión aislada · Logo en el acceso · 2026-09-13
+
+- El formulario inicial muestra el logo oficial de Caoz Con Todo en lugar del
+  emblema y los textos de bienvenida. Se conserva el formulario, la navegación
+  por teclado y las instrucciones de los pasos siguientes.
+- Ajuste sólo en la revisión aislada de cuentas; beta y producción conservan
+  sus versiones hasta aprobar la integración.
+
+### En revisión aislada · Acceso por correo y progreso offline · 2026-09-13
+
+- El jugador debe verificar su correo y vincular o recuperar su progreso antes
+  de entrar. Domo, campaña, tutorial, online e invitaciones usan la misma
+  comprobación, incluidos los arranques automáticos.
+- La app previamente verificada puede abrir sin internet usando su vínculo y
+  un recibo local de identidad, sin guardar tokens ni respuestas de la API.
+  El avance se conserva localmente y la cola reintenta al recuperar conexión.
+- Un acuse perdido conserva operación y contenido; los conflictos requieren
+  elegir el progreso completo y nunca suman cartas. Las copias pendientes se
+  conservan por cuenta y entorno. No se reanuda un combate a mitad de turno.
+- La sección de cuentas permite probarlo con los módulos reales y datos sólo
+  en memoria: código de prueba, victorias simuladas, desconexión y recarga.
+- Rama `feature/acceso-correo-offline`. Beta 258 y producción 257 se conservan.
+  BUILD 258 es la base; la siguiente build se asignará tras aprobar e integrar.
+  Esta entrada no acredita publicación ni validación completa de la revisión.
+
 ### Sin numerar · build 258 · Ediciones bloqueadas desenfocadas · 2026-09-13
 
 - La Colección deja entrever con desenfoque las ediciones Foil y Dorada que el

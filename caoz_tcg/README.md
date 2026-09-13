@@ -1,14 +1,16 @@
 # Caoz Con Todo — El Juego de Cartas del Domo
 
-Simulador jugable del TCG. Sin dependencias, sin build: un motor (`motor.js`) y dos
+Simulador jugable del TCG. Sin dependencias ni compilación: un motor (`motor.js`) y dos
 pantallas (`index.html` para escritorio, `movil.html` para el teléfono), más `final.js`
-(piezas compartidas) y la app instalable (`sw.js`, `manifest.webmanifest`). Ábrelo y ya.
+(piezas compartidas) y la app instalable (`sw.js`, `manifest.webmanifest`).
 Si vienes de fuera, empieza por **`HANDOFF.md`** y **`AGENTS.md`**.
 
-La rama prepara **build 255 con cuentas opcionales**. Beta y producción siguen
-en 254 mientras se completa la conexión y validación. El juego como invitado
-funciona con el servidor estático de abajo; correo y guardado remoto requieren
-el Worker, D1 y Resend configurados.
+La rama `feature/acceso-correo-offline` prepara la revisión aislada de **acceso
+obligatorio y continuidad sin conexión**. Beta sirve 258 y producción 257;
+sus cuentas ya funcionan mediante Worker, D1 y Resend. Esta revisión aún no
+se atribuye a esos despliegues ni consume otra build hasta aprobarla e integrar.
+El servidor estático permite inspeccionar recursos y ejecutar pruebas; el
+primer acceso por correo necesita la API configurada:
 
 ```bash
 python3 -m http.server 8745 --directory caoz_tcg
@@ -19,13 +21,18 @@ el botón: el número que queda arriba determina el efecto de la tirada.
 
 También está registrado en `.claude/launch.json` como `caoz-tcg`.
 
-## Cuenta y progreso — integración en preparación
+## Cuenta y progreso — revisión aislada actual
 
-Extras → Mi cuenta permite registrarse o entrar mediante correo y un código de
-seis dígitos, sin contraseña. La cuenta conserva campaña, miniatura, sellos de
-protagonistas, colección, sobres y récords para recuperarlos en otro dispositivo.
-El juego permite seguir como invitado; ese progreso permanece en el navegador
-hasta que se vincule explícitamente.
+La revisión solicita correo y un código de seis dígitos antes de jugar, sin
+contraseña ni opción de invitado. Extras → Mi cuenta permite volver al perfil.
+La cuenta conserva campaña, miniatura, sellos de protagonistas, colección,
+sobres y récords para recuperarlos en otro dispositivo.
+
+El primer acceso en cada navegador o app requiere internet. Tras verificar y
+vincular la cuenta, la app instalada puede reabrirse sin conexión con el avance
+local. Un recibo de identidad de esa cuenta y entorno permite reconocerla:
+contiene identificador, nombre y correo, sin códigos, cookies ni tokens.
+El avance pendiente permanece en el dispositivo y se sincroniza al reconectar.
 
 Si existen avances distintos en el dispositivo y la cuenta, se elige cuál
 continuar y se conservan respaldos. No se suman cartas ni sobres de ambas copias.
@@ -37,8 +44,10 @@ Se guarda el correo verificado, nombre e identificador del jugador, además del
 progreso y datos necesarios de sesión. No hay contraseñas. La configuración
 real, los datos almacenados y sus límites se describen en
 [`dev/cuentas/README.md`](../dev/cuentas/README.md).
-La cuenta aún no está operativa en producción: la infraestructura y la
-validación de build 255 están en preparación, según `HANDOFF.md`.
+La infraestructura real de cuentas está operativa desde 257. El cambio de
+acceso obligatorio se revisa primero en la sección aislada de cuentas, con
+transporte y almacenamiento temporales; el estado de publicación vigente
+está en `HANDOFF.md`.
 
 ## Colección, sobres y mejoras
 
@@ -74,7 +83,7 @@ no salen de los sobres; el acceso mediante códigos físicos sigue pendiente.
 | **🎓 Tutorial** | Partida guiada de 34 pasos narrada por el DM Gero, **con el mazo que tú elijas**, pensada para alguien que **nunca ha jugado un TCG**. Avanza al ritmo del jugador y —lo importante— **pausa la partida durante el turno del rival** para explicar cada jugada suya: qué carta bajó y por qué, de dónde sale el Provocar, qué pasa en un combate, por qué salta tu Trampa. Al terminar, la partida sigue siendo real: la juegas hasta ganar. |
 | **⚔️ Partida contra el Domo** | Los 6 Protagonistas con sus 6 mazos preconstruidos de 40 cartas, contra una IA que juega curva, quita, buffs, trampas, habilidades activadas y respuestas rápidas. |
 | **Campaña** | Crea tu miniatura, elige un mazo y vence a seis rivales hasta Gero. Cada mazo con el que lo venzas recibe una marca permanente en este navegador. Al reunir las seis, el Domo guarda una última sorpresa. |
-| **👥 Jugar con un amigo (online)** | Uno crea la sala y recibe un **código de 5 caracteres**; el otro lo escribe y a jugar. No exige cuenta ni instalación; usa los relevos públicos del juego. |
+| **👥 Jugar con un amigo (online)** | Tras acceder con su cuenta, uno crea la sala y recibe un **código de 5 caracteres**; el otro lo escribe para unirse. Requiere conexión y usa los relevos públicos del juego; no exige instalar la app. |
 | **📖 Guías de estrategia** | Una guía por Protagonista escrita sobre su lista real: cómo ganas, el motor, plan por turnos, la jugada estrella, mulligan, cómo pierdes, enfrentamientos y el mazo entero. Con la dificultad y el winrate medido en las partidas de prueba. |
 | **🃏 Ver todas las cartas** | Galería filtrable por tipo con el texto completo de las 84 cartas. |
 | **📜 Reglas completas** | Referencia de reglas, también accesible en mitad de la partida. |

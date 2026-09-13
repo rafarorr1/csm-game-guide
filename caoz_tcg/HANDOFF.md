@@ -10,7 +10,87 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — colección publicada y verificada en beta 258
+## Trabajo vigente — acceso obligatorio y continuidad offline en revisión aislada
+
+El usuario aprobó integrar y publicar en beta el 2026-09-13. Se prepara build259
+en `feature/acceso-correo-offline`, con publicación desde `develop` después de
+validar la integración completa. Producción257 queda fuera de esta autorización.
+Los registros siguientes describen la revisión aislada aprobada; se actualizará
+el encabezado al verificar la beta servida.
+
+Nueva revisión: acceso como panel de cristal translúcido sobre la portada.
+`cuenta.css` aplica desenfoque local, reflejos y controles con contraste; el fondo
+del diálogo conserva visible el menú. La vista aislada reutiliza la presentación
+del menú como fondo inerte, sin cargar partidas ni tocar datos reales. El logo
+aprobado permanece en la cabecera. Se publica sólo la sección de cuentas.
+Por petición del usuario se retiran los párrafos de datos guardados y primer
+acceso sin conexión; el formulario conserva la ayuda sobre el código por correo.
+Revisado en 1420×900, 390×844 y 320×568: menú reconocible detrás del panel,
+formulario legible, centrado y envío visible; foco e instrucciones de código
+conservados. Se incluye alternativa opaca si no hay desenfoque o se pide reducir
+transparencias. Los estilos no cambian la autenticación ni la sincronización.
+
+Revisión visual solicitada: la cabecera inicial se sustituye por el logo oficial
+`art/logo.webp`. Se retiran de esa vista el libro, antetítulo y frases de bienvenida;
+los pasos de código, recuperación y perfil conservan sus instrucciones. El título
+accesible permanece para lectores de pantalla y foco con teclado. Este ajuste
+continúa en la misma sección aislada, antes de integrar en beta.
+Comprobado en 1420×900, 390×844 y 320×568: logo cargado y centrado, cabecera
+anterior oculta y botón de envío completamente visible. Se verificaron también
+el foco entre pestañas y las instrucciones al pasar al código.
+
+Rama `feature/acceso-correo-offline`, desde `origin/develop` / build 258.
+El usuario pidió entrar con correo para jugar y conservar el avance de la app
+instalada sin conexión, sincronizándolo al recuperar internet. La revisión usa
+el flujo real de cuentas en el laboratorio de `dev/secciones/`; no contiene
+partidas ni correos, usuarios o progreso reales.
+
+- El acceso requiere correo y código, seguido de la vinculación o recuperación
+  del progreso. Domo, campaña, tutorial, online e invitaciones esperan a resolver
+  la identidad; los atajos de arranque tampoco deben abrir una partida antes.
+- `cuenta-acceso.js` coordina el modelo y la cola tanto en el juego como en la
+  sección aislada. `cuenta-juego.js` mantiene el diálogo fuera del lienzo escalado.
+- La primera entrada en cada almacenamiento del navegador/app necesita internet.
+  Después puede reabrirse offline con el recibo local de identidad verificada y
+  el vínculo de esa misma cuenta y entorno. El recibo contiene identificador,
+  nombre y correo, nunca cookies, códigos ni tokens de autenticación.
+- El progreso y las operaciones pendientes permanecen en el dispositivo.
+  Reconectar reintenta la misma operación; no vuelve a conceder premios. Una
+  revisión diferente exige elegir una copia completa, sin sumar inventarios.
+  Caducidad o cambio de cuenta conserva las copias pendientes de su propietario.
+- No se guarda el estado de un combate a mitad de turno. La API de cuentas
+  continúa excluida de la caché PWA y los deseos no se envían al servidor.
+
+La revisión está publicada y verificada en
+https://aislados.caoz-tcg.pages.dev/cuenta/ . Fuente `bd5decc2ddb4b7c48dde9463f0ef588d4db41162`,
+artefacto `aislados:8a82f72ad2a1244c8899313431f6bb132276d640`.
+El publicador y la comprobación de los 15 archivos servidos terminaron con salida 0.
+La presentación del menú se extrae de los HTML y estilos reales, con sus botones
+inertes y hashes de procedencia. El paquete no añade el motor del juego. La última
+limpieza de estilos conservó idénticas geometrías y efecto de cristal en los tres
+tamaños revisados; la prueba de acceso y código también volvió a pasar.
+Al retirar los dos avisos, la revisión focalizada confirmó que el panel reduce
+su altura sin huecos, conserva el centrado y muestra completa la acción de envío
+en escritorio, 390×844 y 320×568.
+El laboratorio permite verificar un
+código de prueba, simular victorias, cortar la conexión y «Recargar app»
+conservando el mismo almacenamiento temporal. La recarga real de la página
+reinicia la demostración y nunca consulta el progreso del jugador.
+
+Validación acotada en verde: 37 casos de modelo, 9 del coordinador, 34 de entradas,
+28 de progreso y 43 de servicio, con sabotajes de las regresiones; exportación,
+aislamiento en tiempo de ejecución y exclusión de caché. El recorrido visual
+inicial pasó 60 comprobaciones entre escritorio, 390×844 y 320×568; el ajuste
+del logo se comprobó de forma focalizada como se indica arriba. Las tres pruebas
+pertinentes del publicador confirmaron que conserva las otras secciones.
+Se compararon las ramas remotas después: sólo cambió `aislados`; `main`,
+`develop`, `beta` y `gh-pages` conservaron sus referencias anteriores. No se atribuye a esta
+revisión una validación completa ni un despliegue de beta/producción.
+**Beta conserva 258 y producción 257.** BUILD 258 identifica sólo la base de
+esta rama; la siguiente build se asigna al integrar, después de aprobar la
+sección aislada. No volver a publicar bytes cambiados bajo el número 258.
+
+## Registro anterior — colección publicada y verificada en beta 258
 
 El usuario aprobó llevar el desenfoque de ediciones bloqueadas a beta. El
 [PR 21](https://github.com/rafarorr1/csm-game-guide/pull/21) quedó integrado en

@@ -40,11 +40,15 @@ try{
   console.log(sabotaje?'✓ Sabotaje detectado: esperar sin cuenta rompe el rollback inmediato':'✓ borrarProgreso: ambas pantallas conservan confirmación, rollback, reintento y recarga');
   await pagina.close();
  }else for(const tamano of [{nombre:'desktop',width:1420,height:900,pagina:'index.html?escritorio=1'},{nombre:'movil390',width:390,height:844,pagina:'movil.html'},{nombre:'movil320',width:320,height:568,pagina:'movil.html'}]){
-  const contexto=await navegador.newContext({viewport:tamano,reducedMotion:'reduce',serviceWorkers:'block'});
+  const contexto=await navegador.newContext({viewport:tamano,reducedMotion:'reduce',serviceWorkers:'block',isMobile:tamano.nombre!=='desktop',hasTouch:tamano.nombre!=='desktop'});
   const pagina=await contexto.newPage();const errores=[];pagina.on('pageerror',e=>errores.push(e.message));
   let sesion=null,nube=null,revision=0,guardados=0,sinConexion=false;
   let identidad={id:'00000000-0000-4000-8000-000000000001',nombre:'Ari',correo:'cuenta@ejemplo.com'};
-  await pagina.route('**/api/cuenta/**',async route=>{
+  await contexto.route('**/*',async route=>{
+   const url=new URL(route.request().url());
+   if(url.origin!==base){await route.abort('blockedbyclient');return;}
+   if(url.pathname==='/api/arte/catalogo'){await route.fulfill({json:{cartas:[]}});return;}
+   if(!url.pathname.startsWith('/api/cuenta/')){await route.continue();return;}
    if(sinConexion){await route.abort('internetdisconnected');return;}
    const nombre=new URL(route.request().url()).pathname.split('/').pop(),d=route.request().postDataJSON();let cuerpo;
    if(nombre==='sesion'){if(!sesion){await route.fulfill({status:401,json:{codigo:'SESION'}});return;}cuerpo={sesion,progreso:nube,revision};}
@@ -56,10 +60,16 @@ try{
    await route.fulfill({json:cuerpo});
   });
   await pagina.addInitScript(()=>{if(!localStorage.getItem('__cuenta_qa_iniciada')){localStorage.setItem('caoz_nombre','Ari');localStorage.setItem('__cuenta_qa_iniciada','1');}});
+  if(tamano.nombre==='movil390')await pagina.addInitScript(()=>Object.defineProperty(navigator,'standalone',{configurable:true,get:()=>true}));
   await pagina.goto(base+'/'+tamano.pagina);
-  await pagina.locator('#mExtras').click();await pagina.locator('#mCuenta').click();
+  await pagina.locator('#cuentaJuego[open] .cuentaUI[data-pantalla="inicio"]').waitFor();
   await pagina.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO?.estado()?.ocupado===false);
   assert.equal(await pagina.evaluate(()=>window.CAOZ_CUENTA_JUEGO.estado().error),'','El primer401 no se presenta como sesión vencida');
+  assert.equal(await pagina.evaluate(()=>window.CAOZ_CUENTA_JUEGO.puedeJugar()),false,'No se permite jugar antes del acceso');
+  await pagina.keyboard.press('Escape');
+  assert.equal(await pagina.locator('#cuentaJuego[open]').count(),1,'Escape no permite saltar el acceso obligatorio');
+  assert.equal(await pagina.locator('.cuentaDatos,.cuentaAccesoOffline').count(),0,'Los dos avisos retirados no reaparecen en el juego');
+  await pagina.waitForFunction(()=>document.querySelector('.cuentaLogo')?.naturalWidth>0);
   assert.equal(await pagina.locator('[data-foco="tab-crear"]').getAttribute('aria-selected'),'true');
   await pagina.locator('[data-foco="tab-crear"]').click();
   await pagina.locator('[name="nombre"]').fill('Ari');await pagina.locator('[name="correo"]').fill('cuenta@ejemplo.com');
@@ -68,9 +78,16 @@ try{
   assert(Math.abs(geometria.x+geometria.width/2-geometria.vw/2)<2,'Cuenta centrada horizontalmente');
   assert(geometria.y>=0&&geometria.y+geometria.height<=geometria.vh+1,'Cuenta dentro del visor');
   assert.equal(await pagina.evaluate(()=>document.documentElement.scrollWidth>innerWidth),false,'Sin scroll horizontal');
+  assert.equal(await pagina.evaluate(()=>document.documentElement.scrollHeight>innerHeight),false,'Sin scroll vertical inicial');
+  assert(await pagina.locator('[data-foco="enviar"]').evaluate(n=>n.getBoundingClientRect().bottom<=n.closest('.cuentaContenido').getBoundingClientRect().bottom+1),'Enviar código está dentro del contenido visible');
   await pagina.locator('[data-foco="enviar"]').click();await pagina.locator('[name="codigo"]').fill('123456');await pagina.locator('[data-foco="confirmar-codigo"]').click();
   await pagina.locator('[data-foco="vincular"]').click();await pagina.locator('.cuentaUI[data-pantalla="perfil"]').waitFor();
+  await pagina.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO.puedeJugar());
   assert.equal(nube.datos.nombre,'Ari');assert.equal(guardados,1);
+  await pagina.locator('[data-foco="volver"]').click();
+  await pagina.locator('#mPlay').click();await pagina.locator('#select.on').waitFor();
+  await pagina.locator('#selBack').click();await pagina.locator('#menu.on').waitFor();
+  await pagina.locator('#mExtras').click();await pagina.locator('#mCuenta').click();
   await pagina.evaluate(()=>localStorage.setItem('caoz_nombre','Ari nueva'));
   await pagina.waitForTimeout(1700);
   await pagina.evaluate(()=>window.CAOZ_CUENTA_JUEGO.guardar());
@@ -79,6 +96,16 @@ try{
   sinConexion=true;await pagina.evaluate(()=>localStorage.setItem('caoz_nombre','Ari sin conexión'));
   await pagina.evaluate(()=>window.CAOZ_CUENTA_JUEGO.guardar());
   await pagina.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO.estado().guardado==='sinConexion');
+  const guardadosAntesDeReabrir=guardados;
+  await pagina.reload();
+  await pagina.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO?.puedeJugar()&&window.CAOZ_CUENTA_JUEGO.estado().sinConexion);
+  await pagina.locator('#cuentaJuego').waitFor({state:'detached'});
+  assert.equal(await pagina.evaluate(()=>localStorage.getItem('caoz_nombre')),'Ari sin conexión','Reabrir sin red conserva la cola del dispositivo');
+  assert.equal(guardados,guardadosAntesDeReabrir,'Reabrir sin red no afirma guardar en la nube');
+  await pagina.locator('#mPlay').click();await pagina.locator('#select.on').waitFor();
+  await pagina.locator('#selBack').click();await pagina.locator('#menu.on').waitFor();
+  await pagina.locator('#mExtras').click();await pagina.locator('#mCuenta').click();
+  await pagina.screenshot({path:path.join(capturas,tamano.nombre+'-offline.png')});
   await pagina.locator('[data-foco="cerrar-sesion"]').click();
   assert.equal(await pagina.locator('.cuentaUI').getAttribute('data-pantalla'),'perfil','No sale ni borra antes de guardar');
   assert.equal(await pagina.evaluate(()=>localStorage.getItem('caoz_nombre')),'Ari sin conexión');
@@ -135,7 +162,7 @@ try{
   assert.equal(await otra.evaluate(()=>localStorage.getItem('caoz_nombre')),'Otro jugador protegido');
   await pagina.keyboard.press('Escape');assert.equal(await pagina.locator('#cuentaCambioExterno[open]').count(),1,'No permite seguir jugando con el propietario anterior');
   await otra.close();
-  assert.deepEqual(errores,[]);await contexto.close();console.log('✓ '+tamano.nombre+': acceso, vínculo, guardado, cierre, recuperación, borrado, aislamiento entre cuentas/pestañas y geometría');
+  assert.deepEqual(errores,[]);await contexto.close();console.log('✓ '+tamano.nombre+': acceso obligatorio, vínculo, entrada al Domo, reapertura sin red, guardado, cierre, recuperación, borrado, aislamiento entre cuentas/pestañas y geometría');
  }
  console.log('Capturas: '+capturas);
 }finally{await navegador?.close();await new Promise(r=>servidor.close(r));}

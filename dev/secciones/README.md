@@ -36,17 +36,38 @@ Cerrar el diálogo muestra los controles del laboratorio. Allí se puede cambiar
 la presentación, los datos de prueba y la serie del muestrario. Cada recarga
 construye de nuevo esos datos temporales.
 
-## Cuenta por correo y código
+## Cuenta: acceso obligatorio y continuidad offline
 
-[Revisar la propuesta de cuenta](https://aislados.caoz-tcg.pages.dev/cuenta/).
-El código se muestra en el buzón de prueba. Todo vive en memoria: no se envían
-correos, no se crean cuentas reales y no se lee ni modifica el avance del jugador.
-«Escenarios» permite probar cuenta nueva, vinculación, acceso, dos avances y
-desconexión. Cada recarga reinicia los datos de ejemplo.
+La revisión de `feature/acceso-correo-offline` usa la
+[ruta pública existente de cuentas](https://aislados.caoz-tcg.pages.dev/cuenta/);
+su publicación y verificación de los 13 archivos se registran en `caoz_tcg/HANDOFF.md`.
+Está lista para revisión; el recorrido móvil/escritorio pasó 60 comprobaciones.
+Beta conserva 258 y producción 257. La siguiente build se asignará al integrar
+después de aprobar la sección.
+
+Se entra con correo y código de prueba; ya no hay salida como invitado. El
+coordinador, modelo, interfaz, adaptador de progreso y sincronizador son los
+del juego. Sólo se inyectan un transporte y un almacenamiento en memoria:
+no se envían correos, no se crean cuentas reales y no se consulta el avance
+del jugador. El buzón visible permite rellenar el código sin confirmarlo solo.
+
+Tras entrar, «Simular victoria» aumenta el contador local y se compara con el
+de la cuenta de prueba. Activa «Sin conexión», suma victorias y pulsa
+«Recargar app»: reconstruye los componentes conservando esa misma memoria.
+Al reconectar, la cola sincroniza el avance pendiente. Una primera entrada
+sin red permanece bloqueada; una cuenta ya verificada y vinculada puede
+continuar offline. No se simula reanudar una batalla.
+
+«Escenarios» permite probar cuenta nueva (`estado=vacio`, predeterminado),
+progreso local (`nuevo`), recuperación (`entrar`) y dos avances (`conflicto`).
+La recarga real del navegador o «Reiniciar prueba» reinicia la demostración;
+«Recargar app» conserva sus datos temporales para probar el cierre offline.
 
 Local: <http://127.0.0.1:8878/dev/secciones/cuenta.html>. Las pruebas acotadas son
-`pruebas_cuenta_modelo.mjs`, `pruebas_cuenta_exportacion.mjs` y
-`pruebas_cuenta_ui.mjs`. El publicador
+`pruebas_cuenta_modelo.mjs`, `pruebas_cuenta_acceso.mjs`,
+`pruebas_cuenta_entradas.mjs`, `pruebas_cuenta_exportacion.mjs` y
+`pruebas_cuenta_ui.mjs`. Las de servicio/progreso y caché cubren la persistencia
+y exclusión de la API. El publicador
 acepta `--seccion cuenta`. [Contrato y plan de integración](CUENTAS.md).
 
 ## Colección: copias y muestrario de ediciones

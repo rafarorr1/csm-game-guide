@@ -47,6 +47,7 @@
   document.write('<script src="cuenta-progreso.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="cuenta-servicio.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="cuenta-ui.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="cuenta-acceso.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="cuenta-juego.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="audio-domo.js?b='+encodeURIComponent(b)+'"><\/script>');
 })();
