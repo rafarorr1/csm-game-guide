@@ -238,11 +238,11 @@ function confirmarBorradoProgreso(){
   borrar.style.cssText='background:linear-gradient(135deg,#6d2929,#351313);color:#ffe1d8;border-color:#b36958';
   borrar.onclick=async()=>{
     if(borrar.disabled)return;borrar.disabled=true;aviso.hidden=true;
-    if(window.CAOZ_CUENTA_JUEGO&&!await window.CAOZ_CUENTA_JUEGO.antesDeBorrar()){
+    if(window.CAOZ_CUENTA_JUEGO?.vinculada()&&!await window.CAOZ_CUENTA_JUEGO.antesDeBorrar()){
       aviso.hidden=false;aviso.textContent='Primero entra a Mi cuenta y guarda o resuelve el progreso pendiente. Todavía no borramos nada.';borrar.disabled=false;return;
     }
     if(borrarProgresoLocal()){
-      if(window.CAOZ_CUENTA_JUEGO&&!await window.CAOZ_CUENTA_JUEGO.despuesDeBorrar()){
+      if(window.CAOZ_CUENTA_JUEGO?.vinculada()&&!await window.CAOZ_CUENTA_JUEGO.despuesDeBorrar()){
         aviso.hidden=false;aviso.textContent='El borrado quedó pendiente de guardar en tu cuenta. Revisa Mi cuenta y la conexión antes de continuar.';borrar.disabled=false;return;
       }
       // La misma URL conserva la versión beta/móvil y empieza sin datos vivos.

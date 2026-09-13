@@ -25,7 +25,21 @@ const base='http://127.0.0.1:'+servidor.address().port;
 let navegador;
 try{
  navegador=await chromium.launch({channel:'chrome',headless:true,args:['--disable-background-timer-throttling','--disable-renderer-backgrounding']});
- for(const tamano of [{nombre:'desktop',width:1420,height:900,pagina:'index.html?escritorio=1'},{nombre:'movil390',width:390,height:844,pagina:'movil.html'},{nombre:'movil320',width:320,height:568,pagina:'movil.html'}]){
+ if(process.argv.includes('--borrado-local')){
+  const pagina=await navegador.newPage({viewport:{width:1420,height:900},reducedMotion:'reduce'});
+  const sabotaje=process.argv.includes('--sabotaje');
+  if(sabotaje)await pagina.route('**/final-core.js*',async route=>{
+   const codigo=fs.readFileSync(path.join(raiz,'final-core.js'),'utf8').replaceAll('if(window.CAOZ_CUENTA_JUEGO?.vinculada()&&!await','if(window.CAOZ_CUENTA_JUEGO&&!await');
+   await route.fulfill({contentType:'text/javascript',body:codigo});
+  });
+  await pagina.goto(base+'/index.html?test=borrarProgreso&escritorio=1');
+  await pagina.waitForFunction(()=>window.PRUEBAS?.terminado,{},{timeout:60000});
+  const resultado=await pagina.evaluate(()=>window.PRUEBAS.resultado);
+  assert.equal(resultado.mal,sabotaje?1:0,JSON.stringify(resultado));
+  if(sabotaje)assert.match(resultado.suites[0].error,/fallo de almacenamiento visible y permite reintentar/);
+  console.log(sabotaje?'✓ Sabotaje detectado: esperar sin cuenta rompe el rollback inmediato':'✓ borrarProgreso: ambas pantallas conservan confirmación, rollback, reintento y recarga');
+  await pagina.close();
+ }else for(const tamano of [{nombre:'desktop',width:1420,height:900,pagina:'index.html?escritorio=1'},{nombre:'movil390',width:390,height:844,pagina:'movil.html'},{nombre:'movil320',width:320,height:568,pagina:'movil.html'}]){
   const contexto=await navegador.newContext({viewport:tamano,reducedMotion:'reduce',serviceWorkers:'block'});
   const pagina=await contexto.newPage();const errores=[];pagina.on('pageerror',e=>errores.push(e.message));
   let sesion=null,nube=null,revision=0,guardados=0,sinConexion=false;
