@@ -3,8 +3,28 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
+import {spawnSync} from 'node:child_process';
+import {fileURLToPath} from 'node:url';
 
-const codigo=fs.readFileSync(new URL('./coleccion-modelo.js',import.meta.url),'utf8');
+const codigoFuente=fs.readFileSync(new URL('./coleccion-modelo.js',import.meta.url),'utf8');
+const sabotajes=[
+  ['consumo',"estado.cantidades[id][acabado]=cantidadEn(estado,id,acabado)-5;","estado.cantidades[id][acabado]=cantidadEn(estado,id,acabado);"],
+  ['normal-inicial',"-(acabado==='normal'?1:0)","-0"],
+  ['cero-premium',"const minimo=acabado==='normal'?1:0;","const minimo=1;"],
+  ['premio-campana',"'campanasPremiadas',3,'sobre-campana'","'campanasPremiadas',1,'sobre-campana'"],
+  ['mezcla',"azar()<.5?'normal':'foil'","azar()<.8?'normal':'foil'"],
+];
+if(process.argv.includes('--sabotaje')){
+  for(const [nombre,antes] of sabotajes){
+    assert.ok(codigoFuente.includes(antes),'Existe el punto de sabotaje '+nombre);
+    const r=spawnSync(process.execPath,[fileURLToPath(import.meta.url)],{encoding:'utf8',env:{...process.env,CAOZ_PRUEBA_COLECCION_SABOTAJE:nombre}});
+    assert.equal(r.status,1,'La regresión detecta '+nombre);assert.match(r.stderr,/AssertionError/);
+    console.log('✓ Sabotaje detectado: '+nombre);
+  }
+  process.exit(0);
+}
+const sabotaje=sabotajes.find(([nombre])=>nombre===process.env.CAOZ_PRUEBA_COLECCION_SABOTAJE);
+const codigo=sabotaje?codigoFuente.replace(sabotaje[1],sabotaje[2]):codigoFuente;
 const limpiar=v=>JSON.parse(JSON.stringify(v));
 let comprobaciones=0;
 function caso(nombre,fn){fn();comprobaciones++;console.log('✓ '+nombre);}
@@ -117,38 +137,48 @@ caso('Sólo otorgar una copia o recibir una carta aumenta cantidades; equipar y 
   const guardado=JSON.parse(e.mapa.get(api.clave));assert.equal(guardado.version,1);assert.deepEqual(guardado.desbloqueos.tal,['foil','dorado']);
 });
 
-caso('Sobre atómico: cinco Foil, doble clic y recarga conservan el mismo resultado',()=>{
+function verificarSobre(sobre){
+  assert.ok(sobre&&sobre.id);assert.equal(sobre.formato,2);assert.equal(sobre.cartas.length,5);
+  assert.deepEqual(limpiar(sobre.cartas.slice(0,3).map(c=>c.acabado)),['normal','normal','normal']);
+  assert.equal(sobre.cartas[3].acabado,'foil');assert.ok(['normal','foil'].includes(sobre.cartas[4].acabado));
+  assert.equal(sobre.cartas.some(c=>c.acabado==='dorado'),false);
+}
+function cuentas(sobre,id,acabado){return sobre.cartas.filter(c=>c.id===id&&c.acabado===acabado).length;}
+
+caso('Sobre mixto atómico: doble clic y recarga conservan cartas, grupo y copias',()=>{
   const e=entorno(),{api}=e;
   api.darSobreBeta();api.darSobreBeta();
-  const antes=e.escrituras(),sobre=api.abrirSobre();
-  assert.ok(sobre&&sobre.id);assert.equal(sobre.cartas.length,5);
-  assert.equal(e.escrituras(),antes+1,'Apertura completa guardada en una única operación');
-  assert.equal(api.sobres(),1);
-  assert.equal(new Set(sobre.cartas.map(c=>c.id)).size,5);
-  for(const c of sobre.cartas){assert.equal(c.acabado,'foil');assert.equal(c.nueva,true);assert.equal(api.tiene(c.id,c.acabado),true);assert.equal(api.elegido(c.id),'normal');assert.equal(api.tiene(c.id,'dorado'),false);assert.equal(api.cantidad(c.id,'foil'),1);assert.equal(api.cantidad(c.id),2);}
-  assert.deepEqual(limpiar(api.abrirSobre()),limpiar(sobre));
+  const antes=e.escrituras(),sobre=api.abrirSobre();verificarSobre(sobre);
   assert.equal(e.escrituras(),antes+1);assert.equal(api.sobres(),1);
-  assert.deepEqual(limpiar(entorno({mapa:e.mapa}).api.pendiente()),limpiar(sobre));
-  const copia=api.pendiente();copia.cartas[0].acabado='normal';
-  assert.notEqual(api.pendiente().cartas[0].acabado,'normal');
+  assert.equal(new Set(sobre.cartas.map(c=>c.id)).size,5);
+  for(const c of sobre.cartas){
+    assert.equal(c.nueva,c.acabado==='foil');assert.equal(api.tiene(c.id,c.acabado),true);
+    assert.equal(api.elegido(c.id),'normal');assert.equal(api.tiene(c.id,'dorado'),false);
+    assert.equal(api.cantidad(c.id,c.acabado),c.acabado==='normal'?2:1);assert.equal(api.cantidad(c.id),2);
+  }
+  const inventario=limpiar(api.leer());
+  assert.deepEqual(limpiar(api.abrirSobre()),limpiar(sobre));
+  assert.deepEqual(limpiar(api.abrirSobre('grupo-invalido')),limpiar(sobre),'Un pendiente no se sustituye al cambiar la selección');
+  assert.equal(e.escrituras(),antes+1);assert.deepEqual(limpiar(api.leer()),inventario);
+  const recarga=entorno({mapa:e.mapa}).api;
+  assert.deepEqual(limpiar(recarga.pendiente()),limpiar(sobre));assert.deepEqual(limpiar(recarga.leer()),inventario);
+  const copia=api.pendiente();copia.cartas[0].acabado='dorado';assert.equal(api.pendiente().cartas[0].acabado,'normal');
   assert.equal(api.cerrarSobre(),true);assert.equal(api.pendiente(),null);
-  const segundo=api.abrirSobre();assert.ok(segundo);assert.notEqual(segundo.id,sobre.id);assert.equal(api.sobres(),0);
-  assert.equal(segundo.cartas.every(c=>c.acabado==='foil'&&!c.nueva),true,'Los cinco IDs pueden repetirse respecto al sobre anterior');
-  for(const c of segundo.cartas){assert.equal(api.cantidad(c.id,'foil'),2);assert.equal(api.cantidad(c.id,'normal'),1);assert.equal(api.cantidad(c.id),3);}
+  const segundo=api.abrirSobre();verificarSobre(segundo);assert.notEqual(segundo.id,sobre.id);assert.equal(api.sobres(),0);
+  for(const id of api.ids()){
+    assert.equal(api.cantidad(id),3);
+    for(const acabado of ['normal','foil'])assert.equal(api.cantidad(id,acabado),(acabado==='normal'?1:0)+cuentas(sobre,id,acabado)+cuentas(segundo,id,acabado));
+  }
 });
 
-caso('La colección Foil completa permite abrir sobres con repetidas y nunca concede Doradas',()=>{
+caso('Catálogo pequeño: cada posición suma su copia y premium completa permite repetidas',()=>{
   const {api}=entorno({cartas:{eric:{}},lideres:{}});
-  api.darSobreBeta();const sobre=api.abrirSobre();
-  assert.equal(sobre.cartas.length,5);assert.equal(sobre.cartas.filter(c=>c.nueva).length,1);
-  assert.equal(api.tiene('eric','foil'),true);assert.equal(api.tiene('eric','dorado'),false);
-  assert.equal(api.cantidad('eric','foil'),5,'Cada posición del sobre concede su copia, incluso si el catálogo sólo tiene un ID');
-  assert.equal(api.cantidad('eric'),6);
-  api.cerrarSobre();api.darSobreBeta();
-  const segundo=api.abrirSobre();assert.ok(segundo);assert.equal(segundo.cartas.length,5);
-  assert.equal(segundo.cartas.every(c=>c.id==='eric'&&c.acabado==='foil'&&!c.nueva),true);
-  assert.equal(api.sobres(),0);
-  assert.equal(api.cantidad('eric','foil'),10);assert.equal(api.cantidad('eric'),11);
+  api.darSobreBeta();const sobre=api.abrirSobre();verificarSobre(sobre);
+  assert.equal(sobre.cartas.filter(c=>c.nueva).length,1);assert.equal(api.tiene('eric','dorado'),false);
+  assert.equal(api.cantidad('eric','foil'),cuentas(sobre,'eric','foil'));assert.equal(api.cantidad('eric'),6);
+  api.cerrarSobre();api.darSobreBeta();const segundo=api.abrirSobre();verificarSobre(segundo);
+  assert.equal(segundo.cartas.every(c=>c.id==='eric'&&!c.nueva),true);assert.equal(api.sobres(),0);
+  assert.equal(api.cantidad('eric','foil'),cuentas(sobre,'eric','foil')+cuentas(segundo,'eric','foil'));assert.equal(api.cantidad('eric'),11);
 });
 
 caso('El sorteo es independiente del inventario y no repite IDs dentro de un sobre',()=>{
@@ -156,108 +186,170 @@ caso('El sorteo es independiente del inventario y no repite IDs dentro de un sob
   for(let semilla=1;semilla<=30;semilla++){
     const nueva=entorno({cartas,lideres:{},semilla}),completa=entorno({cartas,lideres:{},semilla});
     for(const id of completa.api.ids())completa.api.desbloquear(id,'foil');
-    nueva.api.darSobreBeta();completa.api.darSobreBeta();
-    const a=nueva.api.abrirSobre(),b=completa.api.abrirSobre();
-    assert.deepEqual(limpiar(a.cartas.map(c=>c.id)),limpiar(b.cartas.map(c=>c.id)),'No se sustituyen repetidas por novedades');
+    nueva.api.darSobreBeta();completa.api.darSobreBeta();const a=nueva.api.abrirSobre(),b=completa.api.abrirSobre();
+    verificarSobre(a);verificarSobre(b);
+    assert.deepEqual(limpiar(a.cartas.map(c=>[c.id,c.acabado])),limpiar(b.cartas.map(c=>[c.id,c.acabado])));
     assert.equal(new Set(a.cartas.map(c=>c.id)).size,5);
-    assert.equal(a.cartas.every(c=>c.acabado==='foil'&&c.nueva),true);
-    assert.equal(b.cartas.every(c=>c.acabado==='foil'&&!c.nueva),true);
-    assert.equal(nueva.api.ids().some(id=>nueva.api.tiene(id,'dorado')),false);
+    assert.equal(a.cartas.every(c=>c.nueva===(c.acabado==='foil')),true);
+    assert.equal(b.cartas.every(c=>!c.nueva),true);
   }
 });
 
-caso('Cada campaña concede un sobre una sola vez, también después de recargar',()=>{
+caso('Una campaña concede tres sobres una sola vez; Domo concede uno con recibos independientes',()=>{
   const e=entorno({url:'https://juego.caozcontodo.com/'}),{api}=e,run='mr90c20h-x83w52f';
   assert.equal(api.betaDisponible(),false);assert.equal(api.darSobreBeta(),false);
-  const antes=e.escrituras();assert.equal(api.concederSobreCampana(run),true);
-  assert.equal(e.escrituras(),antes+1,'ID de campaña y sobre se guardan en una sola escritura');
-  assert.equal(api.sobres(),1);assert.deepEqual(limpiar(api.leer().campanasPremiadas),[run]);
-  assert.equal(api.concederSobreCampana(run),true);assert.equal(e.escrituras(),antes+1);assert.equal(api.sobres(),1);
-  const recarga=entorno({url:'https://juego.caozcontodo.com/movil.html',mapa:e.mapa}).api;
-  assert.equal(recarga.concederSobreCampana(run),true);assert.equal(recarga.sobres(),1);
-  const pack=recarga.abrirSobre();assert.equal(pack.cartas.length,5);assert.equal(pack.cartas.every(c=>c.acabado==='foil'),true);
-  const cantidades=limpiar(recarga.leer().cantidades);
-  assert.equal(recarga.concederSobreCampana(run),true);assert.equal(recarga.sobres(),0,'Volver a la victoria no regala el sobre ya abierto');
-  assert.deepEqual(limpiar(recarga.leer().cantidades),cantidades,'Reconocer el premio otra vez no añade copias');
-  assert.equal(recarga.concederSobreCampana('mr90c20i-otro-run'),true);assert.equal(recarga.sobres(),1);
-  assert.deepEqual(limpiar(recarga.pendiente()),limpiar(pack),'Un nuevo premio no reemplaza el sobre que se está revelando');
-  assert.deepEqual(limpiar(recarga.leer().cantidades),cantidades,'Conceder un sobre todavía cerrado no concede sus cartas');
-  assert.equal(recarga.ids().every(id=>recarga.elegido(id)==='normal'),true,'Las recompensas no equipan diseños');
-  assert.equal(e.eventos[0].detail.tipo,'sobre-campana');assert.equal(e.eventos[0].detail.runId,run);
+  const antes=e.escrituras();assert.equal(api.concederSobreCampana(run),true);assert.equal(e.escrituras(),antes+1);
+  assert.equal(api.sobres(),3);assert.deepEqual(limpiar(api.leer().campanasPremiadas),[run]);
+  assert.equal(api.concederSobreCampana(run),true);assert.equal(e.escrituras(),antes+1);
+  const recargada=entorno({url:'https://juego.caozcontodo.com/movil.html',mapa:e.mapa}),recarga=recargada.api;
+  assert.equal(recarga.concederSobreCampana(run),true);assert.equal(recarga.sobres(),3);
+  const pack=recarga.abrirSobre();verificarSobre(pack);const cantidades=limpiar(recarga.leer().cantidades);
+  assert.equal(recarga.concederSobreCampana(run),true);assert.equal(recarga.sobres(),2);
+  assert.equal(recarga.concederSobreCampana('otro-run'),true);assert.equal(recarga.sobres(),5);
+  assert.equal(recarga.concederSobreDomo(run),true);assert.equal(recarga.sobres(),6,'Los orígenes tienen recibos separados');
+  const escritas=recargada.escrituras();assert.equal(recarga.concederSobreDomo(run),true);assert.equal(recargada.escrituras(),escritas);
+  assert.equal(api.concederSobreDomo(run),true);assert.equal(api.sobres(),6);
+  assert.deepEqual(limpiar(recarga.leer().domosPremiados),[run]);
+  assert.deepEqual(limpiar(recarga.pendiente()),limpiar(pack));assert.deepEqual(limpiar(recarga.leer().cantidades),cantidades);
+  assert.equal(recarga.ids().every(id=>recarga.elegido(id)==='normal'),true);
+  assert.equal(e.eventos[0].detail.tipo,'sobre-campana');assert.equal(e.eventos[0].detail.sobres,3);
+  const evento=recargada.eventos.find(e=>e.detail.tipo==='sobre-domo');assert.equal(evento.detail.partidaId,run);assert.equal(evento.detail.sobres,1);
 });
 
-caso('El premio de campaña resiste fallos de almacenamiento, IDs inválidos y el límite de sobres',()=>{
-  const e=entorno(),{api}=e;
-  for(const id of ['',null,42,{},'__proto__','constructor','<script>','a'.repeat(101)])assert.equal(api.concederSobreCampana(id),false);
-  assert.equal(e.escrituras(),0);
-  e.fallos.escritura=true;assert.equal(api.concederSobreCampana('run-valido'),false);
-  assert.equal(api.sobres(),0);assert.deepEqual(limpiar(api.leer().campanasPremiadas),[]);assert.equal(e.eventos.length,0);
-  e.fallos.escritura=false;assert.equal(api.concederSobreCampana('run-valido'),true);assert.equal(api.sobres(),1);
-  e.fallos.lectura=true;assert.equal(api.concederSobreCampana('run-nuevo'),false);
-  e.fallos.lectura=false;assert.equal(api.sobres(),1);assert.deepEqual(limpiar(api.leer().campanasPremiadas),['run-valido']);
-  const lleno=api.leer();lleno.sobres=100000;e.mapa.set(api.clave,JSON.stringify(lleno));
-  assert.equal(api.concederSobreCampana('run-sin-cupo'),false);assert.equal(api.leer().campanasPremiadas.includes('run-sin-cupo'),false);
-  assert.equal(api.concederSobreCampana('run-valido'),true,'Una campaña ya premiada sigue reconocida con el contador lleno');
-  assert.ok(api.abrirSobre());assert.equal(api.concederSobreCampana('run-sin-cupo'),true);assert.equal(api.sobres(),100000);
-  assert.equal(api.reiniciar(),true);assert.deepEqual(limpiar(api.leer().campanasPremiadas),[]);assert.equal(api.sobres(),0);
+caso('Ambos premios resisten fallos, IDs inválidos y capacidad sin conceder lotes parciales',()=>{
+  for(const [metodo,registro,n] of [['concederSobreCampana','campanasPremiadas',3],['concederSobreDomo','domosPremiados',1]]){
+    const e=entorno(),{api}=e;
+    for(const id of ['',null,42,{},'__proto__','constructor','<script>','a'.repeat(101)])assert.equal(api[metodo](id),false);
+    assert.equal(e.escrituras(),0);e.fallos.escritura=true;assert.equal(api[metodo]('run-valido'),false);
+    assert.equal(api.sobres(),0);assert.deepEqual(limpiar(api.leer()[registro]),[]);assert.equal(e.eventos.length,0);
+    e.fallos.escritura=false;assert.equal(api[metodo]('run-valido'),true);assert.equal(api.sobres(),n);
+    e.fallos.lectura=true;assert.equal(api[metodo]('run-nuevo'),false);e.fallos.lectura=false;
+    assert.equal(api.sobres(),n);assert.deepEqual(limpiar(api.leer()[registro]),['run-valido']);
+    const lleno=api.leer();lleno.sobres=100000-n+1;e.mapa.set(api.clave,JSON.stringify(lleno));
+    assert.equal(api[metodo]('run-sin-cupo'),false);assert.equal(api.leer()[registro].includes('run-sin-cupo'),false);
+    assert.equal(api[metodo]('run-valido'),true);
+    lleno.sobres=100000-n;e.mapa.set(api.clave,JSON.stringify(lleno));
+    assert.equal(api[metodo]('run-sin-cupo'),true);assert.equal(api.sobres(),100000);
+    assert.equal(api.reiniciar(),true);assert.deepEqual(limpiar(api.leer()[registro]),[]);assert.equal(api.sobres(),0);
+  }
 });
 
-caso('Una colección anterior conserva inventario, selección y su sobre pendiente de tres cartas',()=>{
-  const e=entorno(),{api}=e;
-  const anterior={version:1,revision:12,desbloqueos:{eric:['foil'],tal:['dorado'],lider_fender:['foil']},selecciones:{tal:'dorado'},sobres:2,
-    pendiente:{id:'sobre_anterior',creado:1750000000000,cartas:[{id:'tal',acabado:'dorado',nueva:true},{id:'eric',acabado:'foil',nueva:false},{id:'lider_fender',acabado:'foil',nueva:true}]}};
-  e.mapa.set(api.clave,JSON.stringify(anterior));
-  const recarga=entorno({mapa:e.mapa});
-  assert.deepEqual(limpiar(recarga.api.pendiente()),anterior.pendiente);assert.equal(recarga.api.elegido('tal'),'dorado');
-  assert.deepEqual(limpiar(recarga.api.abrirSobre()),anterior.pendiente);assert.equal(recarga.escrituras(),0);assert.equal(recarga.api.sobres(),2);
-  for(const c of anterior.pendiente.cartas){assert.equal(recarga.api.cantidad(c.id,c.acabado),1);assert.equal(recarga.api.cantidad(c.id),2);}
-  assert.equal(recarga.api.concederSobreCampana('run-tras-migracion'),true);
-  assert.deepEqual(limpiar(recarga.api.pendiente()),anterior.pendiente);assert.equal(recarga.api.elegido('tal'),'dorado');
-  assert.deepEqual(JSON.parse(e.mapa.get(api.clave)).cantidades,{eric:{foil:1},tal:{dorado:1},lider_fender:{foil:1}},'La siguiente escritura migra sólo los acabados conocidos; nueva:false no inventa duplicados');
-  assert.equal(recarga.api.cerrarSobre(),true);const nuevo=recarga.api.abrirSobre();
-  assert.equal(nuevo.cartas.length,5);assert.equal(nuevo.cartas.every(c=>c.acabado==='foil'),true);
-  assert.equal(recarga.api.elegido('tal'),'dorado');assert.equal(recarga.api.tiene('tal','dorado'),true);
-  assert.equal(recarga.api.cantidad('eric','foil'),2);assert.equal(recarga.api.cantidad('tal','dorado'),1);assert.equal(recarga.api.cantidad('tal','foil'),1);
+caso('Colección antigua conserva inventario, selección y pendientes de tres y cinco Foil sin reroll',()=>{
+  for(const numero of [3,5]){
+    const e=entorno(),{api}=e;
+    const anteriores=numero===3?[{id:'tal',acabado:'dorado',nueva:true},{id:'eric',acabado:'foil',nueva:false},{id:'lider_fender',acabado:'foil',nueva:true}]:limpiar(api.ids()).map(id=>({id,acabado:'foil',nueva:true}));
+    const anterior={version:1,revision:12,desbloqueos:Object.fromEntries(anteriores.map(c=>[c.id,[c.acabado]])),selecciones:{[anteriores[0].id]:anteriores[0].acabado},sobres:2,
+      pendiente:{id:'sobre_anterior',creado:1750000000000,cartas:anteriores}};
+    e.mapa.set(api.clave,JSON.stringify(anterior));const recarga=entorno({mapa:e.mapa});
+    assert.deepEqual(limpiar(recarga.api.abrirSobre('talesin')),anterior.pendiente);assert.equal(recarga.escrituras(),0);assert.equal(recarga.api.sobres(),2);
+    for(const c of anteriores){assert.equal(recarga.api.cantidad(c.id,c.acabado),1);assert.equal(recarga.api.cantidad(c.id),2);}
+    assert.equal(recarga.api.concederSobreCampana('run-tras-migracion'),true);assert.equal(recarga.api.sobres(),5);
+    assert.deepEqual(limpiar(recarga.api.pendiente()),anterior.pendiente);
+    assert.equal(recarga.api.elegido(anteriores[0].id),anteriores[0].acabado);
+    assert.equal(recarga.api.cerrarSobre(),true);const nuevo=recarga.api.abrirSobre();verificarSobre(nuevo);
+    assert.equal(recarga.api.elegido(anteriores[0].id),anteriores[0].acabado);
+    for(const c of anteriores)assert.equal(recarga.api.cantidad(c.id,c.acabado),1+cuentas(nuevo,c.id,c.acabado));
+  }
 });
 
-caso('Un pendiente antiguo con cartas repetidas migra a una copia conocida y reabrir nunca vuelve a otorgarlas',()=>{
+caso('Pendiente antiguo con repetidas migra a una copia conocida sin inventar duplicados',()=>{
   const e=entorno({cartas:{eric:{}},lideres:{}}),{api}=e;
   const antiguo={version:1,desbloqueos:{eric:['foil']},sobres:1,
     pendiente:{id:'repetidas_antiguas',creado:1,cartas:Array.from({length:5},(_,i)=>({id:'eric',acabado:'foil',nueva:i===0}))}};
   e.mapa.set(api.clave,JSON.stringify(antiguo));
   for(let i=0;i<3;i++){assert.deepEqual(limpiar(api.abrirSobre()),antiguo.pendiente);assert.equal(api.cantidad('eric','foil'),1);}
   assert.equal(e.escrituras(),0);assert.equal(e.mapa.get(api.clave),JSON.stringify(antiguo));
-  api.cerrarSobre();assert.equal(api.cantidad('eric','foil'),1);api.abrirSobre();assert.equal(api.cantidad('eric','foil'),6);
+  api.cerrarSobre();assert.equal(api.cantidad('eric','foil'),1);const nuevo=api.abrirSobre();
+  const copias=1+cuentas(nuevo,'eric','foil');assert.equal(api.cantidad('eric','foil'),copias);
   const recarga=entorno({mapa:e.mapa,cartas:{eric:{}},lideres:{}});
-  assert.deepEqual(limpiar(recarga.api.abrirSobre()),limpiar(api.pendiente()));assert.equal(recarga.api.cantidad('eric','foil'),6);assert.equal(recarga.escrituras(),0);
+  assert.deepEqual(limpiar(recarga.api.abrirSobre()),limpiar(api.pendiente()));assert.equal(recarga.api.cantidad('eric','foil'),copias);assert.equal(recarga.escrituras(),0);
 });
 
-caso('Una escritura fallida conserva todas las copias y el pendiente; reintentar concede exactamente una apertura',()=>{
+caso('Una escritura fallida conserva todas las copias; reintentar concede exactamente una apertura',()=>{
   const e=entorno({cartas:{eric:{}},lideres:{}}),{api}=e;
-  api.otorgarCopia('eric','foil');api.darSobreBeta();
-  const original=e.mapa.get(api.clave),eventos=e.eventos.length;
+  api.otorgarCopia('eric','foil');api.darSobreBeta();const original=e.mapa.get(api.clave),eventos=e.eventos.length;
   e.fallos.escritura=true;
   assert.equal(api.otorgarCopia('eric','foil'),false);assert.equal(api.otorgarCopia('eric','dorado'),false);assert.equal(api.abrirSobre(),null);
   assert.equal(e.mapa.get(api.clave),original);assert.equal(e.eventos.length,eventos);assert.equal(api.cantidad('eric','foil'),1);assert.equal(api.cantidad('eric','dorado'),0);assert.equal(api.sobres(),1);
-  e.fallos.escritura=false;
-  const escritas=e.escrituras(),pack=api.abrirSobre();assert.equal(e.escrituras(),escritas+1);assert.equal(api.cantidad('eric','foil'),6);assert.equal(api.sobres(),0);
-  e.fallos.escritura=true;assert.equal(api.cerrarSobre(),false);assert.deepEqual(limpiar(api.abrirSobre()),limpiar(pack));assert.equal(api.cantidad('eric','foil'),6);
+  e.fallos.escritura=false;const escritas=e.escrituras(),pack=api.abrirSobre(),copias=1+cuentas(pack,'eric','foil');
+  assert.equal(e.escrituras(),escritas+1);assert.equal(api.cantidad('eric','foil'),copias);assert.equal(api.sobres(),0);
+  e.fallos.escritura=true;assert.equal(api.cerrarSobre(),false);assert.deepEqual(limpiar(api.abrirSobre()),limpiar(pack));assert.equal(api.cantidad('eric','foil'),copias);
   e.fallos.lectura=true;assert.equal(api.otorgarCopia('eric','foil'),false);assert.equal(e.escrituras(),escritas+1);
-  e.fallos.lectura=false;e.fallos.escritura=false;assert.equal(api.cerrarSobre(),true);assert.equal(api.cantidad('eric','foil'),6);
+  e.fallos.lectura=false;e.fallos.escritura=false;assert.equal(api.cerrarSobre(),true);assert.equal(api.cantidad('eric','foil'),copias);
   assert.equal(api.reiniciar(),true);assert.equal(api.cantidad('eric'),1);assert.equal(api.cantidad('eric','foil'),0);
 });
 
-caso('Los contadores corruptos no conceden ediciones y el límite numérico no permite una apertura parcial',()=>{
+caso('Contadores corruptos no conceden ediciones y el límite impide aperturas parciales',()=>{
   const e=entorno({cartas:{eric:{}},lideres:{}}),{api}=e;
-  for(const numero of [-1,0,1.5,'9',null,Number.MAX_SAFE_INTEGER]){
+  for(const numero of [-1,1.5,'9',null,Number.MAX_SAFE_INTEGER]){
     e.mapa.set(api.clave,JSON.stringify({version:1,desbloqueos:{eric:['foil']},cantidades:{eric:{normal:numero,foil:numero,dorado:50},inexistente:{foil:20}}}));
     assert.equal(api.cantidad('eric'),2);assert.equal(api.cantidad('eric','foil'),1);assert.equal(api.cantidad('eric','dorado'),0);assert.equal(api.tiene('eric','dorado'),false);assert.equal(api.cantidad('inexistente'),0);
   }
   const maximo=Math.floor(Number.MAX_SAFE_INTEGER/3);
-  e.mapa.set(api.clave,JSON.stringify({version:1,sobres:1,desbloqueos:{eric:['foil']},cantidades:{eric:{foil:maximo-2}}}));
-  const original=e.mapa.get(api.clave);
-  assert.equal(api.abrirSobre(),null,'No conceder las primeras cartas si una posterior excede el contador');assert.equal(e.mapa.get(api.clave),original);assert.equal(e.escrituras(),0);
-  assert.equal(api.otorgarCopia('eric','foil'),true);assert.equal(api.otorgarCopia('eric','foil'),true);assert.equal(api.otorgarCopia('eric','foil'),false);assert.equal(api.cantidad('eric','foil'),maximo);
+  e.mapa.set(api.clave,JSON.stringify({version:1,sobres:1,desbloqueos:{eric:['foil']},cantidades:{eric:{normal:maximo-2,foil:maximo-1}}}));
+  const original=e.mapa.get(api.clave);assert.equal(api.abrirSobre(),null);assert.equal(e.mapa.get(api.clave),original);assert.equal(e.escrituras(),0);
+  assert.equal(api.otorgarCopia('eric','foil'),true);assert.equal(api.otorgarCopia('eric','foil'),false);assert.equal(api.cantidad('eric','foil'),maximo);
+});
+
+caso('Canjear cinco iguales conserva Normal inicial, desbloqueos y selección sin equipar automáticamente',()=>{
+  const e=entorno(),{api}=e;
+  assert.equal(api.canjeables('tal','normal'),0);assert.equal(api.canjear('tal','normal'),false);
+  for(let i=0;i<4;i++)api.otorgarCopia('tal','normal');
+  assert.equal(api.cantidad('tal','normal'),5);assert.equal(api.canjeables('tal','normal'),4);assert.equal(api.canjear('tal','normal'),false,'La copia inicial no participa');
+  api.otorgarCopia('eric','normal');assert.equal(api.canjear('tal','normal'),false,'No mezcla IDs');
+  api.otorgarCopia('tal','normal');const antes=e.escrituras();assert.equal(api.canjear('tal','normal'),true);
+  assert.equal(e.escrituras(),antes+1);assert.equal(api.cantidad('tal','normal'),1);assert.equal(api.cantidad('tal','foil'),1);
+  assert.equal(api.cantidad('eric','normal'),2);assert.equal(api.elegido('tal'),'normal');assert.equal(api.canjear('tal','normal'),false);
+  api.seleccionar('tal','foil');for(let i=0;i<4;i++)api.otorgarCopia('tal','foil');
+  assert.equal(api.canjeables('tal','foil'),5);assert.equal(api.canjear('tal','foil'),true);
+  assert.equal(api.cantidad('tal','foil'),0);assert.equal(api.cantidad('tal','dorado'),1);
+  assert.equal(api.tiene('tal','foil'),true);assert.equal(api.tiene('tal','dorado'),true);assert.equal(api.elegido('tal'),'foil');
+  assert.equal(api.canjear('tal','foil'),false,'Doble clic no vuelve a gastar cinco');
+  const recarga=entorno({mapa:e.mapa}).api;
+  assert.equal(recarga.cantidad('tal','foil'),0);assert.equal(recarga.canjeables('tal','foil'),0);assert.equal(recarga.elegido('tal'),'foil');
+  assert.equal(recarga.desbloquear('tal','foil'),true);assert.equal(recarga.cantidad('tal','foil'),0,'Desbloquear no remigra el cero');
+  assert.equal(recarga.seleccionar('tal','dorado'),true);assert.equal(recarga.seleccionar('tal','foil'),true);
+  recarga.otorgarCopia('tal','foil');assert.equal(api.cantidad('tal','foil'),1,'Nueva copia después del canje suma desde cero');
+  assert.equal(api.canjeables('tal','dorado'),0);assert.equal(api.canjear('tal','dorado'),false);
+});
+
+caso('Veinticinco Normales obtenidas llegan a una Dorada y cuatro Foil más cinco Normales también',()=>{
+  for(const mixto of [false,true]){
+    const {api}=entorno();
+    for(let i=0;i<(mixto?5:25);i++)api.otorgarCopia('tal','normal');
+    if(mixto)for(let i=0;i<4;i++)api.otorgarCopia('tal','foil');
+    for(let i=0;i<(mixto?1:5);i++)assert.equal(api.canjear('tal','normal'),true);
+    assert.equal(api.cantidad('tal','normal'),1);assert.equal(api.cantidad('tal','foil'),5);
+    assert.equal(api.canjear('tal','foil'),true);assert.equal(api.cantidad('tal','foil'),0);assert.equal(api.cantidad('tal','dorado'),1);
+    assert.equal(api.elegido('tal'),'normal');assert.equal(api.tiene('tal','foil'),true);
+  }
+});
+
+caso('Canje valida carta, origen, saldo y almacenamiento sin consumir parcialmente ni avisar éxito',()=>{
+  const e=entorno(),{api}=e;
+  for(const id of ['',null,{},'__proto__','constructor','no-existe']){
+    assert.equal(api.canjear(id,'normal'),false);assert.equal(api.canjeables(id,'normal'),0);
+  }
+  for(const a of [undefined,null,{},'Normal','oro','dorado']){assert.equal(api.canjear('tal',a),false);assert.equal(api.canjeables('tal',a),0);}
+  assert.equal(e.escrituras(),0);
+  for(let i=0;i<5;i++)api.otorgarCopia('tal','normal');const original=e.mapa.get(api.clave),eventos=e.eventos.length;
+  e.fallos.escritura=true;assert.equal(api.canjear('tal','normal'),false);assert.equal(e.mapa.get(api.clave),original);assert.equal(e.eventos.length,eventos);
+  e.fallos.escritura=false;e.fallos.lectura=true;assert.equal(api.canjear('tal','normal'),false);assert.equal(e.mapa.get(api.clave),original);
+  e.fallos.lectura=false;assert.equal(api.canjear('tal','normal'),true);assert.equal(e.eventos.at(-1).detail.tipo,'canje');
+  const lleno=api.leer();lleno.desbloqueos.tal=['foil','dorado'];lleno.cantidades.tal={foil:5,dorado:Math.floor(Number.MAX_SAFE_INTEGER/3)};
+  e.mapa.set(api.clave,JSON.stringify(lleno));const bytes=e.mapa.get(api.clave);
+  assert.equal(api.canjear('tal','foil'),false);assert.equal(e.mapa.get(api.clave),bytes);
+});
+
+caso('Los ceros premium explícitos sobreviven migración; los contadores antiguos reales se conservan',()=>{
+  const e=entorno(),{api}=e;
+  e.mapa.set(api.clave,JSON.stringify({version:1,desbloqueos:{tal:['foil','dorado'],eric:['foil']},selecciones:{tal:'foil'},
+    cantidades:{tal:{normal:14,foil:0,dorado:3},eric:{foil:8}}}));
+  assert.equal(api.cantidad('tal','normal'),14);assert.equal(api.canjeables('tal','normal'),13);
+  assert.equal(api.cantidad('tal','foil'),0);assert.equal(api.tiene('tal','foil'),true);assert.equal(api.elegido('tal'),'foil');
+  assert.equal(api.cantidad('tal','dorado'),3);assert.equal(api.cantidad('eric','foil'),8);
+  api.darSobreBeta();const recarga=entorno({mapa:e.mapa}).api;
+  assert.equal(recarga.cantidad('tal','foil'),0);assert.equal(recarga.cantidad('eric','foil'),8);assert.equal(recarga.canjeables('tal','normal'),13);
 });
 
 caso('El registro de campañas se sanea sin olvidar recompensas válidas antiguas',()=>{
@@ -310,11 +402,55 @@ caso('Se rechazan sobres pendientes corruptos sin conceder su contenido',()=>{
   const e=entorno(),{api}=e;api.darSobreBeta();const pack=api.abrirSobre();
   api.desbloquear(pack.cartas[0].id,'dorado');const original=limpiar(api.leer());
   const guardarCon=cambio=>{const estado=limpiar(original);estado.pendiente=limpiar(pack);cambio(estado);e.mapa.set(api.clave,JSON.stringify(estado));};
-  guardarCon(e=>{e.pendiente.cartas[0].acabado='normal';});assert.equal(api.pendiente(),null);
+  guardarCon(e=>{e.pendiente.cartas[3].acabado='normal';});assert.equal(api.pendiente(),null);
   guardarCon(e=>{e.pendiente.cartas[0].acabado='dorado';});assert.equal(api.pendiente(),null,'Un sobre nuevo de cinco cartas no puede introducir Doradas, aunque se posean');
   guardarCon(e=>{e.pendiente.cartas.pop();});assert.equal(api.pendiente(),null,'Sólo se aceptan los formatos de tres y cinco cartas');
   guardarCon(e=>{e.pendiente.cartas[1].id='__proto__';});assert.equal(api.pendiente(),null);
-  guardarCon(e=>{delete e.desbloqueos[e.pendiente.cartas[0].id];});assert.equal(api.pendiente(),null);
+  guardarCon(e=>{delete e.desbloqueos[e.pendiente.cartas[3].id];});assert.equal(api.pendiente(),null);
+});
+
+caso('Los seis grupos estables cubren las 134 cartas reales, con 24 IDs distintos cada uno',()=>{
+  const c=vm.createContext({Math,Date,TextEncoder,TextDecoder,setTimeout,clearTimeout,URLSearchParams,location:{protocol:'http:',search:''}});
+  vm.runInContext(fs.readFileSync(new URL('./motor.js',import.meta.url),'utf8'),c);
+  const datos=JSON.parse(vm.runInContext('JSON.stringify({cartas:CARDS,lideres:LEADERS})',c));
+  const e=entorno(datos),{api}=e,lista=api.grupos(),catalogo=api.ids();
+  assert.equal(catalogo.length,134);assert.equal(lista.length,6);assert.equal(new Set(lista.map(g=>g.id)).size,6);
+  assert.deepEqual(limpiar(lista.map(g=>g.id)),['mohamed','fender','adreida','gero','rafaela','talesin']);
+  for(const grupo of lista){
+    assert.equal(grupo.ids.length,24);assert.equal(new Set(grupo.ids).size,24);assert.ok(grupo.ids.includes('lider_'+grupo.id));
+    assert.equal(grupo.ids.every(id=>catalogo.includes(id)),true);
+    api.darSobreBeta();const pack=api.abrirSobre(grupo.id);verificarSobre(pack);assert.equal(pack.grupo,grupo.id);
+    assert.equal(pack.cartas.every(c=>grupo.ids.includes(c.id)),true);assert.equal(new Set(pack.cartas.map(c=>c.id)).size,5);
+    assert.deepEqual(limpiar(api.abrirSobre(lista.find(g=>g.id!==grupo.id).id)),limpiar(pack),'Cambiar grupo no altera un pendiente');api.cerrarSobre();
+  }
+  const cubiertos=[...new Set(lista.flatMap(g=>g.ids))].sort();assert.deepEqual(cubiertos,limpiar(catalogo).sort());
+  assert.equal(lista.find(g=>g.id==='talesin').ids.includes('tal'),true);
+  const guardado=limpiar(lista);lista[0].ids.length=0;lista[1].nombre='Mutado';assert.deepEqual(limpiar(api.grupos()),guardado);
+  api.darSobreBeta();const antes=e.mapa.get(api.clave),escritas=e.escrituras();
+  for(const id of ['',null,{},'__proto__','constructor','grupo-ausente'])assert.equal(api.abrirSobre(id),null);
+  assert.equal(e.mapa.get(api.clave),antes);assert.equal(e.escrituras(),escritas);assert.equal(api.sobres(),1);
+  const reciente=entorno({cartas:{...datos.cartas,carta_futura:{}},lideres:datos.lideres}).api;
+  assert.equal(reciente.grupos().some(g=>g.ids.includes('carta_futura')),true,'Toda carta nueva queda alcanzable hasta curar su grupo');
+});
+
+caso('La quinta carta se reparte al 50 % y el conjunto converge a 70 % Normal y 30 % Foil',()=>{
+  const cartas=Object.fromEntries(Array.from({length:24},(_,i)=>['carta_'+i,{}]));
+  const e=entorno({cartas,lideres:{},semilla:253134}),{api}=e;
+  e.mapa.set(api.clave,JSON.stringify({...limpiar(api.leer()),sobres:5000}));
+  let normales=0,foils=0,quintaFoil=0;
+  for(let i=0;i<5000;i++){
+    const pack=api.abrirSobre('archivo_1');verificarSobre(pack);
+    assert.equal(new Set(pack.cartas.map(c=>c.id)).size,5);
+    normales+=pack.cartas.filter(c=>c.acabado==='normal').length;
+    foils+=pack.cartas.filter(c=>c.acabado==='foil').length;
+    if(pack.cartas[4].acabado==='foil')quintaFoil++;
+    api.cerrarSobre();
+  }
+  assert.ok(quintaFoil>2350&&quintaFoil<2650,'La quinta permanece entre47 % y53 % en5000 sobres sembrados');
+  assert.ok(normales/25000>.694&&normales/25000<.706);assert.ok(foils/25000>.294&&foils/25000<.306);
+  assert.equal(api.sobres(),0);assert.equal(api.ids().some(id=>api.tiene(id,'dorado')),false);
+  assert.equal(api.ids().reduce((n,id)=>n+api.cantidad(id,'normal')-1,0),normales);
+  assert.equal(api.ids().reduce((n,id)=>n+api.cantidad(id,'foil'),0),foils);
 });
 
 caso('Regalos beta separados de producción, rutas y pruebas en un mismo origen',()=>{
@@ -368,12 +504,12 @@ caso('Una campaña nueva conserva un premio fallido del recorrido anterior hasta
   assert.equal(guardada.id,'segunda-en-curso');assert.deepEqual(guardada.sobresPendientes,['primera-terminada']);
   assert.equal(api.sobres(),0);
   const recarga=entornoCampana({mapa:e.mapa}),p=recarga.leerCampana();
-  assert.equal(p.etapa,0);assert.equal(recarga.entregar(p),true);assert.equal(recarga.api.sobres(),1);
+  assert.equal(p.etapa,0);assert.equal(recarga.entregar(p),true);assert.equal(recarga.api.sobres(),3);
   assert.equal(p.sobresPendientes,undefined,'El recibo resuelto se limpia en memoria para el siguiente guardado');
-  assert.equal(recarga.entregar(recarga.leerCampana()),false);assert.equal(recarga.api.sobres(),1);
+  assert.equal(recarga.entregar(recarga.leerCampana()),false);assert.equal(recarga.api.sobres(),3);
   const otraRecarga=entornoCampana({mapa:e.mapa});
   assert.equal(otraRecarga.entregar(otraRecarga.leerCampana()),true,'La cola durable anterior puede reintentarse con el recibo idempotente');
-  assert.equal(otraRecarga.api.sobres(),1);
+  assert.equal(otraRecarga.api.sobres(),3);
   assert.equal(otraRecarga.guardar(otraRecarga.leerCampana()),true);
   assert.equal(JSON.parse(e.mapa.get(e.claveCampana)).sobresPendientes,undefined);
 });
@@ -385,10 +521,10 @@ caso('Varias victorias sin espacio conservan todos sus recibos al empezar otra c
   e.guardar({version:1,id:'tercera',lider:'fender',etapa:0,sobresPendientes:['primera','__proto__',{},'',null]});
   assert.deepEqual(JSON.parse(e.mapa.get(e.claveCampana)).sobresPendientes,['primera','segunda']);
   e.fallosCampana.inventario=false;assert.equal(e.entregar(e.leerCampana()),true);
-  assert.equal(e.api.sobres(),2);assert.deepEqual(limpiar(e.api.leer().campanasPremiadas),['primera','segunda']);
-  e.guardar({...limpiar(e.leerCampana()),etapa:6,secreto:'ascenso'});assert.equal(e.api.sobres(),2,'El Editor pendiente todavía no concede su propio sobre');
-  e.guardar({...limpiar(e.leerCampana()),secreto:'final'});assert.equal(e.api.sobres(),3);
-  e.guardar({...limpiar(e.leerCampana()),secreto:'completado'});assert.equal(e.api.sobres(),3);
+  assert.equal(e.api.sobres(),6);assert.deepEqual(limpiar(e.api.leer().campanasPremiadas),['primera','segunda']);
+  e.guardar({...limpiar(e.leerCampana()),etapa:6,secreto:'ascenso'});assert.equal(e.api.sobres(),6,'El Editor pendiente todavía no concede su propio sobre');
+  e.guardar({...limpiar(e.leerCampana()),secreto:'final'});assert.equal(e.api.sobres(),9);
+  e.guardar({...limpiar(e.leerCampana()),secreto:'completado'});assert.equal(e.api.sobres(),9);
 });
 
 caso('Ensayos y laboratorio no crean premios y tampoco borran una cola real guardada',()=>{

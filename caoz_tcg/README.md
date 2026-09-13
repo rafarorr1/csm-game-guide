@@ -14,6 +14,24 @@ el botón: el número que queda arriba determina el efecto de la tirada.
 
 También está registrado en `.claude/launch.json` como `caoz-tcg`.
 
+## Colección, sobres y mejoras
+
+Desde Extras → Colección puedes elegir el acabado de cada carta, abrir tus
+sobres y canjear copias. Las Normales iniciales están disponibles siempre.
+Ganar una partida contra el Domo entrega un sobre y completar una campaña
+entrega tres; sus encuentros intermedios no entregan sobres adicionales.
+
+Cada sobre permite elegir una colección temática de 24 cartas. Contiene
+cinco cartas distintas de ese grupo: tres Normales, una Foil y una quinta
+con 50% de probabilidad de cada acabado. Las seis colecciones cubren el
+catálogo completo; el contenido se puede consultar antes de abrir.
+
+Cinco copias Normales obtenidas de la misma carta se canjean por una Foil;
+cinco Foil de la misma carta, por una Dorada. La Normal inicial no se consume.
+Los diseños desbloqueados permanecen disponibles aunque gastes sus copias.
+La elección del acabado usado en partida sigue siendo manual. Las Doradas
+no salen de los sobres; el acceso mediante códigos físicos sigue pendiente.
+
 ## Qué hay dentro
 
 | Modo | Qué es |

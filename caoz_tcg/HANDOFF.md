@@ -10,6 +10,50 @@ números) → el código.
 
 ---
 
+## Build 253 — recompensas y canjes aprobados para beta
+
+Rama `feature/recompensas-canjes-sobres`, desde `develop`/252. El usuario
+autorizó desarrollar e integrar directamente la mecánica en beta. No requiere
+otro paso de aprobación aislada para esta entrega; producción permanece en 250.
+
+Una campaña completa concede tres sobres mediante su recibo existente; una
+victoria en «Jugar contra el Domo» concede uno con un recibo independiente.
+`coleccion-juego.js` registra sólo el flujo real `startMatch` → `setupMatch`
+y conserva una identidad por partida fuera del estado online. `endGame` y
+`showEnd` entregan el premio una vez. La cola `.domo-pendientes` permite
+recuperar una victoria cuando falla el guardado; borrado de progreso elimina
+también la cola y su memoria. Derrotas, online, tutoriales, arranques directos,
+simulaciones y encuentros intermedios de campaña quedan excluidos. La campaña
+secreta espera al Editor; los botones beta conservan su alcance previo.
+
+`grupos()` contiene seis colecciones temáticas estables de 24 IDs; cubren los
+134 actuales con diez apariciones compartidas. Son grupos de colección, no
+listas de mazos. La interfaz pasa el grupo a `abrirSobre(grupoId)` y muestra
+su contenido antes de gastar: tres Normales, una Foil y quinta 50/50. Doradas
+no salen directamente. El pendiente `formato:2` conserva mezcla y grupo;
+los pendientes antiguos de tres/cinco cartas se mantienen sin volver a sortear.
+La llamada sin grupo conserva compatibilidad con consumidores anteriores.
+
+`canjeables(id,acabado)` excluye la Normal inicial. `canjear(id,acabado)` consume
+cinco copias iguales y suma una de la edición siguiente en la misma escritura.
+Los desbloqueos y la selección son permanentes; un Foil consumido hasta cero
+sigue disponible para jugar y su contador cero no vuelve a migrar a uno.
+El estado conserva versión/clave e inventarios anteriores. Los recibos antiguos
+no se vuelven a premiar. No cambia el motor, el arte ni las bases de datos.
+
+La sección Canjear reúne mejoras listas; el detalle muestra saldo y acción.
+Se conservan tres columnas y sólo marcadores en la galería. En 320×568 la
+elección temática utiliza un selector compacto. Se corrigió el primer fotograma
+del retrato al cambiar de edición midiendo el detalle antes de pintarlo.
+
+Validación previa: `publicar.sh --solo-pruebas --completo` verde; 36 pruebas de
+modelo, 18 de recompensas del Domo, cinco sabotajes del modelo y dos de recibos/
+eligibilidad. Tres ensayos de navegador (canjes, copias y protagonistas) pasan
+en 1440×900, 390×844 y 320×568. El recorrido del juego completo también comprueba
+recompensas 1/3, aviso en victoria, canjes y cero Foil tras recarga, elección de
+grupo y cinco revelaciones. La nueva suite `coleccionCanjes` vive en el arnés;
+`coleccionSobres` y `campanaSobres` comprueban los contratos nuevos y el legado.
+
 ## Beta 252 — Colección publicada y verificada
 
 Rama `feature/coleccion-copias-ediciones`, desde `develop`/beta251. El usuario
