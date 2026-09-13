@@ -364,7 +364,7 @@
 #coleccionPanel .coleccionPrepararSobre .coleccionSobreEscena{min-height:0}
 #coleccionPanel .coleccionElegirGrupo{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:10px 7px;display:flex;flex-direction:column;justify-content:flex-start;justify-content:safe center;gap:13px}
 #coleccionPanel .coleccionElegirGrupo h4{font:700 19px Georgia,serif;color:#ecd18e}
-#coleccionPanel .coleccionGrupos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px;flex:none}
+#coleccionPanel .coleccionGrupos{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;flex:none}
 #coleccionPanel .coleccionGrupo{min-width:0;min-height:66px;flex-direction:column;gap:6px;padding:10px;background:linear-gradient(130deg,#30223f,#1d1528);border-color:#594166;border-radius:6px;box-shadow:none;font-family:var(--sans,system-ui);letter-spacing:0}
 #coleccionPanel .coleccionGrupo strong{font:700 15px/1.15 Georgia,serif;color:#ddd0e8}
 #coleccionPanel .coleccionGrupo span{font-size:10px;font-weight:400;color:#b8a7c9}
@@ -454,3 +454,121 @@
   #coleccionPanel .coleccionElegirGrupo{justify-content:flex-start}
   #coleccionPanel .coleccionTasas p:last-child{line-height:1.3}
 }
+
+/* La colección del sobre se decide al recibirlo. La biblioteca sólo recorre
+   sobres sellados propios; los colores identifican grupos, nunca rarezas. */
+#coleccionPanel :is(.coleccionRecompensaGrupo,.coleccionSobreGuardado){--sobre-color:#947640}
+#coleccionPanel .coleccionSobreColor{--sobre-color:#947640;background:repeating-linear-gradient(92deg,#ffffff0c 0 1px,transparent 2px 7px),radial-gradient(ellipse at 30% 10%,color-mix(in srgb,var(--sobre-color) 92%,white),transparent 63%),linear-gradient(125deg,color-mix(in srgb,var(--sobre-color) 85%,#10121c),#0b101c 72%);border-color:color-mix(in srgb,var(--sobre-color) 55%,#e8d4a5);color:#f0dfb8;box-shadow:inset 0 0 0 6px #12121baa,inset 0 0 0 7px #dec89360,0 16px 28px #0009;animation:none;rotate:-3deg;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--sobre-color) 27%,transparent));pointer-events:none}
+#coleccionPanel .coleccionSobreColor .coleccionSobreSello{background:radial-gradient(circle at 30% 25%,#bb7945,#692e24 64%,#301414);border-color:#b87643;color:#f6d392;bottom:23%;right:11%;box-shadow:0 3px 6px #000b,inset 0 0 0 3px #d8a46a40}
+#coleccionPanel .coleccionSobreColor>svg{opacity:.5;width:23%;height:19%;margin-top:0}
+#coleccionPanel .coleccionSobreColeccion{position:absolute;left:10%;right:10%;bottom:12%;text-align:center;font:700 8cqw/1.1 Georgia,serif;text-wrap:balance;letter-spacing:.3px;text-shadow:0 2px 3px #000}
+#coleccionPanel .coleccionSobreColor .coleccionSobreLeyenda{font-size:4cqw;bottom:6.5%;letter-spacing:1px}
+#coleccionPanel .coleccionSobreColor .coleccionSobreMarca{font-size:24cqw}
+#coleccionPanel .coleccionSobreColor .coleccionSobreLinea{font-size:8cqw}
+#coleccionPanel .coleccionRecompensaOpciones{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:center;width:min(780px,100%);margin:auto}
+#coleccionPanel .coleccionRecompensaGrupo{min-height:0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 7px;border:1px solid transparent;border-radius:12px;max-height:100%;background:radial-gradient(ellipse at 50% 43%,color-mix(in srgb,var(--sobre-color) 12%,transparent),transparent 75%)}
+#coleccionPanel .coleccionRecompensaGrupo.seleccionada{border-color:color-mix(in srgb,var(--sobre-color) 70%,transparent);background:radial-gradient(ellipse at 50% 43%,color-mix(in srgb,var(--sobre-color) 23%,transparent),transparent 90%)}
+#coleccionPanel .coleccionRecompensaElegir{width:100%;min-height:0;flex:1;display:grid;place-items:center;padding:12px 10px 9px;background:none;border:0;box-shadow:none;filter:none;translate:none!important}
+#coleccionPanel .coleccionRecompensaElegir:disabled{opacity:1;filter:none;box-shadow:none}
+#coleccionPanel .coleccionRecompensaElegir .coleccionSobre{width:min(170px,100%);height:auto;max-height:none;aspect-ratio:.68;transition:scale .18s ease,rotate .18s ease;flex:none}
+#coleccionPanel .coleccionRecompensaElegir:not(:disabled):hover .coleccionSobre{scale:1.035;rotate:0deg}
+#coleccionPanel .coleccionRecompensaGrupo h4{font:700 17px/1.2 Georgia,serif;color:#eadac0;text-align:center;min-height:2.4em;display:grid;align-content:center;text-wrap:balance}
+#coleccionPanel .coleccionRecompensaCantidad{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;flex:none}
+#coleccionPanel .coleccionRecompensaCantidad .coleccionBoton{width:36px;min-height:34px;padding:2px;font:22px/1 system-ui;letter-spacing:0;background:linear-gradient(#352743,#201829);border-color:#69516e;border-radius:5px;box-shadow:none}
+#coleccionPanel .coleccionRecompensaCantidad output{min-width:16px;font-size:18px;font-weight:700;color:#f0dfb8;text-align:center;font-variant-numeric:tabular-nums}
+#coleccionPanel .coleccionRecompensaContenido{min-height:30px;padding:3px;background:none;border:0;box-shadow:none;font:11px var(--sans,system-ui);color:#c8b5db;text-decoration:underline;text-underline-offset:4px}
+#coleccionPanel .coleccionRecompensaPie{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:5px}
+#coleccionPanel .coleccionEleccionMarcas{display:flex;justify-content:center;gap:8px;min-height:13px}
+#coleccionPanel .coleccionEleccionMarca{display:block;width:21px;height:8px;border-radius:4px;border:1px solid #82758a70;background:#100b18}
+#coleccionPanel .coleccionEleccionMarca[data-grupo]{background:var(--sobre-color);border-color:color-mix(in srgb,var(--sobre-color) 65%,white);box-shadow:0 0 10px color-mix(in srgb,var(--sobre-color) 50%,transparent)}
+#coleccionPanel .coleccionEleccionCuenta{font:13px var(--sans,system-ui);color:#d0bfdd}
+#coleccionPanel .coleccionGuardarSobres{min-height:45px;width:min(300px,100%);font-size:17px}
+#coleccionPanel .coleccionElegirDespues{min-height:30px;padding:3px 10px;background:none;border:0;box-shadow:none;color:#cbb5d9;font-size:12px;text-decoration:underline;text-underline-offset:4px}
+#coleccionPanel .coleccionSobresPorElegir{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 12px;border:1px solid #88714365;border-radius:7px;background:linear-gradient(90deg,#64492824,#604c192b);font-size:12px;color:#e4c996;width:min(600px,100%);align-self:center}
+#coleccionPanel .coleccionElegirPendientes{min-height:31px;padding:5px 15px;font-size:13px}
+#coleccionPanel .coleccionReanudarSobre{flex:none;align-self:center;min-height:34px;padding:6px 15px;font-size:12px}
+#coleccionPanel .coleccionBibliotecaSobres{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;width:min(900px,100%);margin:0 auto}
+#coleccionPanel .coleccionCarreteVentana{--sobre-ancho:180px;flex:1;min-height:0;position:relative;width:100%;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 68%,#9d854114,transparent 65%)}
+#coleccionPanel .coleccionCarruselSobres{position:absolute;inset:0;display:flex;align-items:center;gap:32px;padding:10px calc(50% - var(--sobre-ancho)/2);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x;cursor:grab;scroll-behavior:auto;-webkit-tap-highlight-color:transparent;user-select:none}
+#coleccionPanel .coleccionCarruselSobres::-webkit-scrollbar{display:none}
+#coleccionPanel .coleccionCarruselSobres.arrastrando{cursor:grabbing;scroll-snap-type:none}
+#coleccionPanel .coleccionSobreGuardado{scroll-snap-align:center;scroll-snap-stop:always;width:var(--sobre-ancho);flex:0 0 var(--sobre-ancho);min-height:0;padding:6px 0 0;display:flex;flex-direction:column;align-items:center;gap:14px;border:0;background:none;box-shadow:none;filter:none!important;translate:none!important;opacity:.48;scale:.84;transition:opacity .22s ease,scale .22s ease;touch-action:pan-x}
+#coleccionPanel .coleccionSobreGuardado.seleccionado{opacity:1;scale:1}
+#coleccionPanel .coleccionSobreGuardado .coleccionSobre{width:calc(100% - 12px);height:auto;max-height:none;aspect-ratio:.68;rotate:0deg;margin:0}
+#coleccionPanel .coleccionSobreExistencias{font:700 13px var(--sans,system-ui);color:#f1e2c2;background:#120f1c;border:1px solid color-mix(in srgb,var(--sobre-color) 65%,#aaa);border-radius:20px;padding:4px 15px;min-width:50px;text-align:center;letter-spacing:.2px}
+#coleccionPanel .coleccionCarreteNavegacion{flex:none;display:flex;align-items:center;justify-content:center;gap:26px;padding-top:9px}
+#coleccionPanel .coleccionCarreteNavegacion .coleccionBoton{width:41px;min-height:41px;padding:3px;font-size:30px;background:#21182e;border-color:#6b516f;border-radius:50%;box-shadow:none}
+#coleccionPanel .coleccionSobreSeleccion{width:240px;text-align:center;min-width:0}
+#coleccionPanel .coleccionSobreSeleccion h4{font:700 22px/1.2 Georgia,serif;color:#e8d3a4;text-wrap:balance}
+#coleccionPanel .coleccionSobreSeleccion p{font-size:12px;color:#bbaacb;margin-top:5px}
+#coleccionPanel .coleccionDeslizarPista{flex:none;padding:8px 0 1px;font-size:10px;text-align:center;color:#9a86ae;letter-spacing:.4px}
+#coleccionPanel .coleccionSobresVacios{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;text-align:center;padding:10px 20px;color:#c3b0d1}
+#coleccionPanel .coleccionSobresVacios h4{font:700 23px/1.2 Georgia,serif;color:#e5cea0}
+#coleccionPanel .coleccionSobresVacios p{font-size:13px;line-height:1.5;max-width:380px}
+#coleccionPanel .coleccionSobresVaciosSello{display:grid;place-items:center;width:75px;height:85px;color:#bb9c5b;border:1px solid #93723e80;border-radius:8px;background:radial-gradient(#79563240,#261b2c);rotate:-8deg}
+#coleccionPanel .coleccionSobresVaciosSello svg{width:36px;height:36px}
+#coleccionPanel .coleccionContenidoCompleto{flex:1;min-height:0;max-height:none;align-content:start;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px 20px;padding:20px;font-size:13px}
+#coleccionPanel .coleccionVolverSobres{flex:none;align-self:center;min-width:220px}
+#coleccionPanel:is([data-vista="recompensa"],[data-vista="sobres"]) .coleccionEstado{white-space:normal;line-height:1.25}
+#coleccionPanel:is([data-vista="recompensa"],[data-vista="sobres"]) .coleccionEstado:empty{min-height:3px;height:3px}
+@media(max-width:580px){
+  #coleccionPanel .coleccionRecompensaOpciones{gap:6px;width:100%;align-items:center}
+  #coleccionPanel .coleccionRecompensaGrupo{padding:5px 3px;gap:7px;border-radius:8px}
+  #coleccionPanel .coleccionRecompensaElegir{padding:9px 5px 6px}
+  #coleccionPanel .coleccionRecompensaGrupo h4{font-size:13px;min-height:2.4em}
+  #coleccionPanel .coleccionRecompensaCantidad{gap:7px}
+  #coleccionPanel .coleccionRecompensaCantidad .coleccionBoton{width:29px;min-height:32px;font-size:20px}
+  #coleccionPanel .coleccionRecompensaCantidad output{font-size:16px;min-width:12px}
+  #coleccionPanel .coleccionRecompensaContenido{font-size:10px;min-height:27px;padding:2px}
+  #coleccionPanel .coleccionRecompensaPie{gap:7px}
+  #coleccionPanel .coleccionGuardarSobres{min-height:42px;font-size:15px}
+  #coleccionPanel .coleccionSobresPorElegir{font-size:11px;padding:6px 8px;gap:9px}
+  #coleccionPanel .coleccionElegirPendientes{min-height:30px;font-size:12px;padding:4px 11px}
+  #coleccionPanel .coleccionCarruselSobres{gap:24px}
+  #coleccionPanel .coleccionCarreteNavegacion{gap:12px;padding-top:5px}
+  #coleccionPanel .coleccionCarreteNavegacion .coleccionBoton{width:33px;min-height:33px;font-size:25px}
+  #coleccionPanel .coleccionSobreSeleccion{width:190px}
+  #coleccionPanel .coleccionSobreSeleccion h4{font-size:18px}
+  #coleccionPanel .coleccionSobreSeleccion p{font-size:11px;margin-top:3px}
+  #coleccionPanel .coleccionDeslizarPista{font-size:9px;padding-top:7px}
+  #coleccionPanel .coleccionSobreGuardado{gap:11px}
+  #coleccionPanel .coleccionSobreExistencias{font-size:11px;padding:3px 13px}
+  #coleccionPanel .coleccionContenidoCompleto{grid-template-columns:repeat(2,minmax(0,1fr));font-size:11px;padding:12px;gap:12px}
+  #coleccionPanel .coleccionSobresVacios{gap:11px;padding:5px 10px}
+  #coleccionPanel .coleccionSobresVacios h4{font-size:20px}
+  #coleccionPanel .coleccionSobresVacios p{font-size:12px}
+}
+@media(max-width:580px) and (max-height:650px){
+  #coleccionPanel .coleccionRecompensaGrupo{gap:4px;padding:3px 1px}
+  #coleccionPanel .coleccionRecompensaElegir{padding:6px 4px 4px}
+  #coleccionPanel .coleccionRecompensaGrupo h4{font-size:11px}
+  #coleccionPanel .coleccionRecompensaCantidad{gap:3px}
+  #coleccionPanel .coleccionRecompensaCantidad .coleccionBoton{width:26px;min-height:28px;font-size:18px}
+  #coleccionPanel .coleccionRecompensaContenido{font-size:9px;min-height:25px}
+  #coleccionPanel .coleccionRecompensaPie{gap:5px;padding-top:0}
+  #coleccionPanel .coleccionEleccionCuenta{font-size:11px}
+  #coleccionPanel .coleccionGuardarSobres{min-height:36px;font-size:14px}
+  #coleccionPanel .coleccionElegirDespues{min-height:26px;font-size:11px}
+  #coleccionPanel .coleccionSobreTitulo p{font-size:11px;line-height:1.35}
+  #coleccionPanel .coleccionSobreSeleccion h4{font-size:16px}
+  #coleccionPanel .coleccionSobreSeleccion p{font-size:10px}
+  #coleccionPanel .coleccionSobresPorElegir{padding:4px 7px}
+  #coleccionPanel .coleccionDeslizarPista{padding-top:4px}
+  #coleccionPanel .coleccionReanudarSobre{min-height:28px;padding:4px 9px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){#coleccionPanel .coleccionSobreGuardado,#coleccionPanel .coleccionRecompensaElegir .coleccionSobre{transition:none}}
+#coleccionPanel .coleccionRecompensaElegir{flex:none}
+#coleccionPanel .coleccionRecompensaElegir .coleccionSobre{width:var(--premio-ancho,100px);height:calc(var(--premio-ancho,100px)/.68);max-width:none;flex:none}
+#coleccionPanel .coleccionSobreGuardado{position:relative;gap:0;padding:5px 0}
+#coleccionPanel .coleccionSobreExistencias{position:absolute;right:0;top:2px;z-index:3;box-shadow:0 3px 8px #0007}
+@media(max-width:580px) and (max-height:650px){
+  #coleccionPanel .coleccionDeslizarPista{display:none}
+  #coleccionPanel[data-vista="sobres"] .coleccionSobreAcciones{gap:4px}
+  #coleccionPanel[data-vista="sobres"] .coleccionVerContenido{min-height:26px}
+  #coleccionPanel[data-vista="sobres"] .coleccionBeta{min-height:26px;font-size:10px}
+  #coleccionPanel[data-vista="sobres"] .coleccionAbrirSobre{min-height:37px}
+}
+/* La funda real comparte logo, herrajes y sello con la apertura 3D. */
+#coleccionPanel .coleccionSobreReal{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;border-radius:inherit}
+#coleccionPanel .coleccionSobreColor.conSobreReal{background:none;border:0;box-shadow:0 12px 24px #0008}
+#coleccionPanel .coleccionSobreColor.conSobreReal::before,#coleccionPanel .coleccionSobreColor.conSobreReal::after,#coleccionPanel .coleccionSobreColor.conSobreReal>:not(.coleccionSobreReal){visibility:hidden}
