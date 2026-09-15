@@ -1,6 +1,10 @@
 {
   "formato": "caoz.secciones.aisladas",
   "secciones": {
+    "asedio": {
+      "fuente": "00e51b3c24640ab33346f398e68616157e651158",
+      "ruta": "tcg/asedio"
+    },
     "coleccion": {
       "fuente": "c3fb3212efdab69150573c81ba7a11f860518c7b",
       "ruta": "tcg/coleccion"

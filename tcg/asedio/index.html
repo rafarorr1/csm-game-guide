@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>El Asedio de Thal · Tutorial jugable</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./asedio.css">
+<script src="./memoria.js"></script>
+<script src="./red-estatica.js"></script>
+<script src="./juego/asedio-datos.js"></script>
+<script src="./juego/asedio-motor.js"></script>
+<script src="./asedio.js" defer></script>
+</head>
+<body class="asedioAislado">
+<main class="asedioApp" aria-labelledby="asedioTitulo">
+  <header class="asedioCabecera">
+    <div>
+      <p class="asedioKicker">MODO DOMO · PRUEBA AISLADA</p>
+      <h1 id="asedioTitulo">El Asedio de Thal</h1>
+      <p class="asedioSubtitulo">Tutorial jugable · 5 protagonistas contra un jugador Thal</p>
+    </div>
+    <div class="asedioAccionesGlobales">
+      <button type="button" id="asedioReiniciar">Reiniciar tutorial</button>
+      <span class="asedioHumano" title="Thal lo controla una persona">♟ Thal es humano</span>
+    </div>
+  </header>
+
+  <section class="asedioTutorial" id="asedioTutorial" aria-live="polite" aria-labelledby="tutorialPasoTitulo">
+    <div class="asedioProgreso"><span id="asedioCapitulo">MONTAJE</span><span id="asedioProgresoTexto">Paso 1</span></div>
+    <h2 id="tutorialPasoTitulo">Preparando el tutorial…</h2>
+    <p id="asedioInstruccion">El motor está preparando el primer paso.</p>
+    <div class="asedioTutorialPie">
+      <p id="asedioPista">Sólo se habilita la acción que corresponde a este paso.</p>
+      <button type="button" id="asedioContinuar" hidden>Continuar <span aria-hidden="true">→</span></button>
+    </div>
+  </section>
+
+  <section class="asedioTablero" aria-label="Tablero de la partida">
+    <section class="asedioThal" aria-labelledby="thalTitulo">
+      <div class="asedioSeccionTitular">
+        <div><p>JUGADOR JEFE</p><h2 id="thalTitulo">Thal</h2></div>
+        <span id="asedioFase" class="asedioFase">FASE I</span>
+      </div>
+      <div id="asedioThalEstado"></div>
+      <div class="asedioZona">
+        <div class="asedioEtiqueta"><span>RASTRO DE THAL</span><small>La primera carta se resuelve</small></div>
+        <div id="asedioRastro" class="asedioRastro" aria-label="Rastro de Thal"></div>
+      </div>
+      <div class="asedioZonasThal">
+        <div class="asedioZona">
+          <div class="asedioEtiqueta"><span>ESBIRROS</span><small id="asedioEsbirrosContador"></small></div>
+          <div id="asedioEsbirros" class="asedioUnidades" aria-label="Esbirros de Thal"></div>
+        </div>
+        <div class="asedioZona">
+          <div class="asedioEtiqueta"><span>MANO DE THAL</span><small>El jefe elige sus respuestas</small></div>
+          <div id="asedioManoThal" class="asedioMano" aria-label="Mano de Thal"></div>
+        </div>
+      </div>
+      <div class="asedioControlThal">
+        <button type="button" id="asedioReflejo">Usar Reflejo del Domo</button>
+        <button type="button" id="asedioCerrarRonda">Cerrar ronda</button>
+      </div>
+    </section>
+
+    <section class="asedioHeroes" aria-labelledby="heroesTitulo">
+      <div class="asedioSeccionTitular">
+        <div><p>EQUIPO DE PROTAGONISTAS</p><h2 id="heroesTitulo">Cada uno puede Asaltar a Thal</h2></div>
+        <span id="asedioRonda" class="asedioRonda">RONDA 1</span>
+      </div>
+      <div id="asedioHeroesMesa" class="asedioHeroesMesa" aria-label="Los cinco protagonistas y sus manos"></div>
+    </section>
+  </section>
+
+  <section class="asedioInferior" aria-label="Estado y herramientas de diseño">
+    <section class="asedioRegistro" aria-labelledby="asedioRegistroTitulo">
+      <div class="asedioPanelTitulo"><div><p>TRAZA DEL MOTOR</p><h2 id="asedioRegistroTitulo">Lo que ya ocurrió</h2></div><span id="asedioResultado" class="asedioResultado"></span></div>
+      <ol id="asedioLog" class="asedioLog" aria-live="polite"></ol>
+    </section>
+
+    <aside class="asedioBalance" aria-labelledby="asedioBalanceTitulo">
+      <div class="asedioPanelTitulo"><div><p>LABORATORIO LOCAL</p><h2 id="asedioBalanceTitulo">Balance del guion</h2></div><span aria-hidden="true">⚗</span></div>
+      <p>El valor se pasa al motor como perfil de partida; no altera las cartas ni guarda nada.</p>
+      <form id="asedioBalanceForm" novalidate>
+        <label for="asedioVidaThal">Vida inicial de Thal</label>
+        <div class="asedioCampoNumero"><input id="asedioVidaThal" name="vidaThal" type="number" min="1" max="120" step="1" value="36" inputmode="numeric"><span>vida</span></div>
+        <fieldset class="asedioAsaltos"><legend>Asalto base de protagonistas</legend><div id="asedioAsaltos" class="asedioAsaltosCampos"></div></fieldset>
+        <p class="asedioNotaBalance">Los cambios se entregan al motor como un perfil local. Las cartas, el guion y el archivo de datos original no se alteran.</p>
+        <div class="asedioBotonesBalance"><button type="submit">Aplicar y reiniciar</button><button type="button" id="asedioReproducir">Reproducir guion</button></div>
+      </form>
+      <div id="asedioMetricas" class="asedioMetricas" aria-live="polite">Reproduce el guion para medir daño, fases y participación.</div>
+    </aside>
+  </section>
+</main>
+</body>
+</html>
