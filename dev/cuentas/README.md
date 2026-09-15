@@ -1,13 +1,45 @@
 # Cuentas por correo y guardado de jugadores
 
-La propuesta aislada de cuentas fue aprobada por el usuario, quien autorizó
-integrarla y publicarla en producción. Esta carpeta contiene la migración y
-pruebas del servidor. La demostración de `dev/secciones/cuenta-demo.js` sigue
+La primera integración de cuentas fue aprobada y publicada en 257. El acceso
+obligatorio y la continuidad offline se integraron en beta 259 mediante el PR 23.
+Esta carpeta contiene la migración y pruebas
+del servidor. La demostración de `dev/secciones/cuenta-demo.js` permanece
 separada: **nunca se publica como autenticación del juego**.
 
-## Estado de la conexión — 2026-09-13
+## Estado vigente — 2026-09-13
 
-**Las cuentas están publicadas y verificadas en beta y producción 257.** El
+Beta sirve **259** y producción **257**, con cuentas reales operativas y bases
+independientes. La revisión aprobada permanece en
+`https://aislados.caoz-tcg.pages.dev/cuenta/`, usando componentes reales con
+transporte y almacenamiento temporales; sus 15 archivos están verificados.
+La integración pasó las 84 suites del juego tanto antes de fusionar como durante
+la publicación. También pasó el flujo integrado de cuentas y la recarga con
+SW 259 real, totalmente offline, conservando la cola y sin duplicar al reconectar.
+Referencias y límites de estas pruebas en `caoz_tcg/HANDOFF.md`.
+
+El acceso en beta exige correo y código antes de jugar. La primera entrada
+necesita internet. Después de verificar y vincular el progreso, un recibo local
+con `{id,nombre,correo}` y entorno permite reconocer esa cuenta al abrir la app
+sin red. No contiene tokens, cookies, OTP ni una respuesta cacheada de la API.
+Sólo se admite si coincide con el vínculo y la base local del mismo propietario.
+Una caducidad o revocación confirmada requiere volver a entrar y conserva el
+progreso pendiente; no se convierte un fallo de red en una sesión nueva.
+
+La cola persiste por cuenta y entorno antes de enviar. Los eventos de conexión
+reanudan la sincronización y mantienen operación y contenido al repetir un acuse
+perdido. Si cambió la revisión remota, se elige una copia completa: no se suman
+inventarios ni se vuelven a conceder sobres. El cambio entre cuentas conserva
+copias de su propietario; no permite entregar el progreso de A a B.
+Se guarda el avance persistido, **no un combate a mitad de turno**.
+`/api/cuenta/*` continúa fuera de la caché PWA.
+
+Ver recorrido y pruebas acotadas en
+[`dev/secciones/CUENTAS.md`](../secciones/CUENTAS.md). Esta revisión no cambia
+las claves de acceso de estudios, el proveedor de correo ni la infraestructura.
+
+## Registro anterior — correo y cuentas verificados en 257
+
+**Las cuentas se publicaron y verificaron en beta y producción 257.** El
 [PR 17](https://github.com/rafarorr1/csm-game-guide/pull/17) se integró en
 `develop:8e3eb7d`. La publicación pasó las **84 suites completas, sin fallos**;
 los artefactos `gh-pages:a5953a6` y `beta:64255c6` tienen sus bytes publicados
@@ -236,6 +268,8 @@ node dev/cuentas/pruebas_servidor.mjs --sabotaje
 node caoz_tcg/pruebas_cuenta_correo.mjs
 node caoz_tcg/pruebas_cuenta_progreso.mjs
 node caoz_tcg/pruebas_cuenta_servicio.mjs
+node dev/secciones/pruebas_cuenta_acceso.mjs
+node dev/secciones/pruebas_cuenta_entradas.mjs --sabotaje
 ```
 
 El servidor se prueba contra SQLite real mediante el contrato de D1, con correo
@@ -257,7 +291,12 @@ Sus nueve casos prueban el módulo de envío real con compatibilidad `2026-09-05
 Rechaza 301/302/303/307/308 sin consultar el destino alternativo; los sabotajes
 `error` y `follow` detectan, respectivamente, el envío roto y la redirección.
 
-Antes de publicar deben pasar también las guardas completas del proyecto y
+En la revisión de acceso primero se comprueban sólo la sección y sus guardias:
+modelo, coordinación, entradas, cola/servicio, exclusión de caché, exportación
+y recorrido móvil/escritorio. No ejecutar la batería del juego ni publicar
+beta antes de aprobar la vista aislada.
+
+Antes de publicar el juego aprobado deben pasar también las guardas completas del proyecto y
 las pruebas de navegador móvil/escritorio, PWA y cambio entre cuentas. Verificar
 el flujo real de código, guardado y restauración con un destinatario de prueba
 autorizado después de configurar el proveedor. No publicar una API que devuelve

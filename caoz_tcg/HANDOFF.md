@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-13 · beta 257 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-13 · beta 259 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,141 @@ números) → el código.
 
 ---
 
-## Trabajo vigente — cuentas publicadas y verificadas en beta y producción 257
+## Estado vigente — acceso obligatorio publicado en beta 259
+
+El usuario aprobó llevar la revisión a beta. El [PR 23](https://github.com/rafarorr1/csm-game-guide/pull/23)
+quedó integrado en `develop:b1c493803d2acb16f59ec30a4698bad09e625b0d`.
+`./publicar.sh --solo-pruebas --completo` y después `./publicar.sh --beta --completo`
+terminaron con salida 0 y **84 suites correctas** en cada tanda, incluidos los
+seis tutoriales. Se corrigió la preparación de `?foto` para esperar el acceso
+antes de consultar jugadores, con regresión y sabotaje; las pruebas de premios
+representan ahora explícitamente a un jugador verificado.
+
+Artefactos: `gh-pages:05a28bcce4fdbea8a1c7092cae549d1405045fcd` y
+`beta:a93dd3ac67df92c672f45e048c3e6a8035a6632c`. El publicador comparó byte a byte
+web, móvil, módulos, caché, arte y sonido en GitHub Pages y Cloudflare.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=259
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=259
+
+La prueba integrada de cuentas pasó en escritorio, móvil 390×844 y 320×568:
+acceso automático, vínculo, Domo, reapertura offline, cambio de cuenta, conflictos,
+borrado y aislamiento entre pestañas. La prueba adicional de PWA usó SW259 real
+en Chrome temporal: con toda la red desconectada recargó desde caché, conservó
+identidad, avance y operación pendiente, y sincronizó una sola vez al reconectar.
+No se cacheó ninguna API de cuentas. Estas pruebas usan cuentas ficticias locales;
+no equivalen a una comprobación en Safari físico. La entrada pública de beta se
+comprobó también en dos contextos nuevos, escritorio y móvil: build 259, pop up
+correcto, sin scroll ni errores JavaScript; la API anónima real devolvió el 401
+esperado. No se enviaron correos ni escrituras durante esa comprobación.
+
+**Producción permanece en 257.** `main` conserva `b7e634c2152bf17d9e548f19477279ae40b3e6b7`
+y el árbol `gh-pages:tcg` conserva `350bdef5421199e083e96369b5a02fb7e15984bd`.
+Una promoción posterior requiere autorización para esta versión, sin incluir
+cambios nuevos ni incrementar la build si el paquete es idéntico.
+
+## Registro anterior — revisión aislada de acceso aprobada
+
+Nueva revisión: acceso como panel de cristal translúcido sobre la portada.
+`cuenta.css` aplica desenfoque local, reflejos y controles con contraste; el fondo
+del diálogo conserva visible el menú. La vista aislada reutiliza la presentación
+del menú como fondo inerte, sin cargar partidas ni tocar datos reales. El logo
+aprobado permanece en la cabecera. Se publica sólo la sección de cuentas.
+Por petición del usuario se retiran los párrafos de datos guardados y primer
+acceso sin conexión; el formulario conserva la ayuda sobre el código por correo.
+Revisado en 1420×900, 390×844 y 320×568: menú reconocible detrás del panel,
+formulario legible, centrado y envío visible; foco e instrucciones de código
+conservados. Se incluye alternativa opaca si no hay desenfoque o se pide reducir
+transparencias. Los estilos no cambian la autenticación ni la sincronización.
+
+Revisión visual solicitada: la cabecera inicial se sustituye por el logo oficial
+`art/logo.webp`. Se retiran de esa vista el libro, antetítulo y frases de bienvenida;
+los pasos de código, recuperación y perfil conservan sus instrucciones. El título
+accesible permanece para lectores de pantalla y foco con teclado. Este ajuste
+continúa en la misma sección aislada, antes de integrar en beta.
+Comprobado en 1420×900, 390×844 y 320×568: logo cargado y centrado, cabecera
+anterior oculta y botón de envío completamente visible. Se verificaron también
+el foco entre pestañas y las instrucciones al pasar al código.
+
+Rama `feature/acceso-correo-offline`, desde `origin/develop` / build 258.
+El usuario pidió entrar con correo para jugar y conservar el avance de la app
+instalada sin conexión, sincronizándolo al recuperar internet. La revisión usa
+el flujo real de cuentas en el laboratorio de `dev/secciones/`; no contiene
+partidas ni correos, usuarios o progreso reales.
+
+- El acceso requiere correo y código, seguido de la vinculación o recuperación
+  del progreso. Domo, campaña, tutorial, online e invitaciones esperan a resolver
+  la identidad; los atajos de arranque tampoco deben abrir una partida antes.
+- `cuenta-acceso.js` coordina el modelo y la cola tanto en el juego como en la
+  sección aislada. `cuenta-juego.js` mantiene el diálogo fuera del lienzo escalado.
+- La primera entrada en cada almacenamiento del navegador/app necesita internet.
+  Después puede reabrirse offline con el recibo local de identidad verificada y
+  el vínculo de esa misma cuenta y entorno. El recibo contiene identificador,
+  nombre y correo, nunca cookies, códigos ni tokens de autenticación.
+- El progreso y las operaciones pendientes permanecen en el dispositivo.
+  Reconectar reintenta la misma operación; no vuelve a conceder premios. Una
+  revisión diferente exige elegir una copia completa, sin sumar inventarios.
+  Caducidad o cambio de cuenta conserva las copias pendientes de su propietario.
+- No se guarda el estado de un combate a mitad de turno. La API de cuentas
+  continúa excluida de la caché PWA y los deseos no se envían al servidor.
+
+La revisión está publicada y verificada en
+https://aislados.caoz-tcg.pages.dev/cuenta/ . Fuente `bd5decc2ddb4b7c48dde9463f0ef588d4db41162`,
+artefacto `aislados:8a82f72ad2a1244c8899313431f6bb132276d640`.
+El publicador y la comprobación de los 15 archivos servidos terminaron con salida 0.
+La presentación del menú se extrae de los HTML y estilos reales, con sus botones
+inertes y hashes de procedencia. El paquete no añade el motor del juego. La última
+limpieza de estilos conservó idénticas geometrías y efecto de cristal en los tres
+tamaños revisados; la prueba de acceso y código también volvió a pasar.
+Al retirar los dos avisos, la revisión focalizada confirmó que el panel reduce
+su altura sin huecos, conserva el centrado y muestra completa la acción de envío
+en escritorio, 390×844 y 320×568.
+El laboratorio permite verificar un
+código de prueba, simular victorias, cortar la conexión y «Recargar app»
+conservando el mismo almacenamiento temporal. La recarga real de la página
+reinicia la demostración y nunca consulta el progreso del jugador.
+
+Validación acotada en verde: 37 casos de modelo, 9 del coordinador, 34 de entradas,
+28 de progreso y 43 de servicio, con sabotajes de las regresiones; exportación,
+aislamiento en tiempo de ejecución y exclusión de caché. El recorrido visual
+inicial pasó 60 comprobaciones entre escritorio, 390×844 y 320×568; el ajuste
+del logo se comprobó de forma focalizada como se indica arriba. Las tres pruebas
+pertinentes del publicador confirmaron que conserva las otras secciones.
+Se compararon las ramas remotas después: sólo cambió `aislados`; `main`,
+`develop`, `beta` y `gh-pages` conservaron sus referencias anteriores. No se atribuye a esta
+revisión una validación completa ni un despliegue de beta/producción.
+**Beta conserva 258 y producción 257.** BUILD 258 identifica sólo la base de
+esta rama; la siguiente build se asigna al integrar, después de aprobar la
+sección aislada. No volver a publicar bytes cambiados bajo el número 258.
+
+## Registro anterior — colección publicada y verificada en beta 258
+
+El usuario aprobó llevar el desenfoque de ediciones bloqueadas a beta. El
+[PR 21](https://github.com/rafarorr1/csm-game-guide/pull/21) quedó integrado en
+`develop:9389de95dc7a23bfeb8334a9623524859364ab8c`.
+
+`./publicar.sh --solo-pruebas --completo` y después `./publicar.sh --beta --completo`
+terminaron con código de salida 0 y **84 suites verdes**, incluidos los seis
+tutoriales, Colección, canjes y sobres. Artefactos: `gh-pages:ee04b47` (sólo
+`tcg-beta`) y `beta:362b30f`. El publicador comparó los bytes de escritorio y móvil,
+módulos, caché, arte y sonido servidos por GitHub Pages y Cloudflare.
+
+Acceso jugable: https://beta.caoz-tcg.pages.dev/?b=258 .
+Acceso móvil directo: https://beta.caoz-tcg.pages.dev/movil.html?b=258 .
+La revisión aislada aprobada se conserva en
+https://aislados.caoz-tcg.pages.dev/coleccion/?estado=nuevo&carta=tal .
+
+El selector de `coleccion.css` usa la clase existente `.bloqueada`, calculada
+con el desbloqueo permanente del inventario. Una Foil con cero copias después
+de un canje sigue nítida. Los botones y etiquetas externas quedan legibles;
+las cartas de combate y apertura de sobres no coinciden con ese selector.
+
+**Producción conserva 257.** Se comprobó que `main` sigue en `b7e634c` y que el
+árbol `gh-pages:tcg` permanece en `350bdef5421199e083e96369b5a02fb7e15984bd`.
+No hay autorización de producción para 258. Este cierre sólo documenta la beta;
+no cambia archivos del paquete ni requiere una nueva build o publicación.
+
+## Registro anterior — cuentas publicadas y verificadas en beta y producción 257
 
 El usuario autorizó integrar cuentas y publicarlas en producción. El
 [PR 17](https://github.com/rafarorr1/csm-game-guide/pull/17) se integró en

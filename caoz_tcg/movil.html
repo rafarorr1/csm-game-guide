@@ -903,8 +903,8 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=257"></script>
-<script src="final.js?b=257"></script>
+<script src="motor.js?b=259"></script>
+<script src="final.js?b=259"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -915,7 +915,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:257, fecha:'2026-09-13'};
+const BUILD = {n:259, fecha:'2026-09-13'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1096,6 +1096,7 @@ function pulsacionLarga(nodo, fn){
 }
 /* ---------- pantallas ---------- */
 function showScreen(id){
+  if(id==='select'&&!window.CAOZ_CUENTA_JUEGO?.requerir(()=>showScreen(id)))return;
   if(id!=='board'){campanaCancelarInterferencia();window.PITAGORAS_MESA?.cancelar();}
   const antes=$('.screen.on'),pantalla=$('#'+id),esMenu=pantalla.classList.contains('portada');
   if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
@@ -1319,6 +1320,7 @@ async function cortinillaVS(a,b,opts={}){
   capa.classList.add('sale'); await nap(760); capa.remove();
 }
 async function startMatch(a,b,opts={}){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>startMatch(a,b,opts)))return;
   campanaCancelarInterferencia();
   const mia=++PARTIDA_N;
   tutEnd(); clearPrompt(); SEL=null; TGT=null; cerrarHojas();
@@ -1883,6 +1885,7 @@ function tutPasivaLista(){
   return k<0||TUT.i>=k;
 }
 function showTutorialPick(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>showTutorialPick()))return;
   const p=$('#ovPanel');
   p.innerHTML=`<h3>🎓 ¿Con qué mazo quieres aprender?</h3><p>El tutorial usa las cartas de ese Protagonista y termina enseñándote su estrategia. Si es tu primera partida, Fender es el más directo.</p>`;
   const list=el('div','leaders');
@@ -1899,6 +1902,7 @@ function showTutorialPick(){
   openOv();
 }
 async function startTutorial(lid){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>startTutorial(lid)))return;
   tutEnd(); cerrarOv(); clearPrompt(); SEL=null; TGT=null;
   lid=lid&&TUT_MAZO[lid]?lid:'fender';
   TUT.lider=lid; TUT_STEPS=buildTut(lid);
@@ -1978,9 +1982,10 @@ const NETDIARIO={
 function netHostStart(a,b){return iniciarOnlineHost(a,b);}
 function netGuestStart(m){return iniciarOnlineGuest(m);}
 function showOnline(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>showOnline()))return;
   ONL={lider:null,nombre:nombreGuardado(),sala:ONL.sala||null};
   const p=$('#ovPanel');
-  p.innerHTML=`<h3>👥 Jugar con un amigo</h3><p>Sin cuentas: uno crea la sala y le pasa el código al otro.</p>
+  p.innerHTML=`<h3>👥 Jugar con un amigo</h3><p>Crea una sala y comparte el código con tu amigo.</p>
     <p style="font-size:11.5px;color:#7a6d96">Va por un relevo público gratuito: el código es la única llave de la sala. La partida la lleva el teléfono del anfitrión, así que jugad con alguien de confianza.</p>`;
   const box=el('div','opts');
   const b1=el('button','btn gold','🎲 &nbsp;Crear sala — yo invito'), b2=el('button','btn','🔑 &nbsp;Unirme con un código'), b3=el('button','btn sm','Cancelar');
@@ -1988,6 +1993,7 @@ function showOnline(){
   box.appendChild(b1); box.appendChild(b2); box.appendChild(b3); p.appendChild(box); openOv();
 }
 function onlPickNombre(asHost){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>onlPickNombre(asHost)))return;
   const p=$('#ovPanel');
   p.innerHTML=`<h3>${asHost?'Crear sala':'Unirse'} — ¿cómo te llamas?</h3><p>Así te verá tu rival en el chat y en los avisos.</p>`;
   onlineAyudaInstalada(p);
@@ -2017,6 +2023,7 @@ function onlPickLeader(asHost){
   row.appendChild(go); row.appendChild(back); p.appendChild(row); openOv();
 }
 async function onlHost(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>onlHost()))return;
   const code=netCode(), p=$('#ovPanel');
   p.innerHTML=`<h3>Sala creada</h3><p>Pásale este código a tu amigo. En cuanto lo escriba, empezamos.</p>
     <div class="roomcode" id="roomCode">${code}</div><p class="netstatus" id="netStatus">conectando…</p><p class="netdiag" id="netDiag"></p>
@@ -2041,6 +2048,7 @@ async function compartirEnlace(enlace){
   toast(enlace);
 }
 function onlJoinCode(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>onlJoinCode()))return;
   const p=$('#ovPanel');
   p.innerHTML=`<h3>Unirse a una sala</h3><p>Pega el código o el enlace que te pasó tu amigo.</p>
     <input id="joinCode" class="codeinput" maxlength="300" placeholder="Código o enlace de invitación" autocomplete="off" autocapitalize="characters">
@@ -2048,6 +2056,7 @@ function onlJoinCode(){
   const box=el('div','opts');
   const go=el('button','btn gold','Entrar →');
   go.onclick=async()=>{
+    if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>go.click()))return;
     const c=codigoInvitacion($('#joinCode').value);
     if(c.length!==5){ netStatus('El código son 5 caracteres','warn'); return; }
     go.disabled=true; netStatus('conectando…','');
@@ -2303,7 +2312,7 @@ $('#mExtras').onclick=()=>{showScreen('extras');$('#extrasBack').focus({preventS
 $('#extrasBack').onclick=()=>{showScreen('menu');$('#mExtras').focus({preventScroll:true});};
 $('#mTut').onclick=()=>showTutorialPick();
 $('#mOnline').onclick=()=>showOnline();
-$('#mPlay').onclick=()=>{ SELP=null; SELF=null; SEL_PASO='yo'; buildSelect(); showScreen('select'); };
+$('#mPlay').onclick=()=>{ if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>$('#mPlay').click()))return; SELP=null; SELF=null; SEL_PASO='yo'; buildSelect(); showScreen('select'); };
 $('#mGuides').onclick=()=>showGuides();
 $('#mCards').onclick=()=>showGallery();
 $('#mRules').onclick=()=>showRules(false);
@@ -2354,7 +2363,7 @@ cargarArte().then(()=>ilustrarFondo());
 /* ?foto=lider,rival y ?pantalla=… son atajos de revisión, como en escritorio */
 { const q=new URLSearchParams(location.search);
   const sala=(q.get('sala')||'').toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
-  if(sala.length>=4){ ONL.sala=sala; history.replaceState(null,'',location.pathname); setTimeout(()=>{if(!ONL.nombre)ONL.nombre=nombreGuardado();onlPickNombre(false);},300); }
+  if(sala.length>=4)cuentaAbrirInvitacion(sala);
   if(q.has('pantalla')){ const p=q.get('pantalla');
     if(p==='select'){ SELP='mohamed'; SELF='adreida'; SEL_PASO='yo'; buildSelect(); showScreen('select'); }
     else if(p==='guide') showGuides(); else showScreen(p); }

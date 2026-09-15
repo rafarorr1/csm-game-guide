@@ -27,6 +27,9 @@ function entorno(pagina,opciones={}){
     $:()=>({innerHTML:''}),clearPrompt(){},cerrarHojas(){},campanaCancelarInterferencia(){},
     tutEnd(){vm.runInContext('TUT.on=false',contexto);},showScreen(){},
     cortinillaVS:async()=>{},volado:async()=>0,showEnd(){},panelFinal(){},
+    // Estas partidas representan un jugador ya verificado y vinculado.
+    // Las entradas sin permiso se prueban en pruebas_cuenta_entradas.mjs.
+    CAOZ_CUENTA_JUEGO:{requerir:()=>true,puedeJugar:()=>true},
   };
   contexto.window=contexto;vm.createContext(contexto);
   vm.runInContext(motor,contexto,{filename:'motor.js'});

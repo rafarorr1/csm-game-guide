@@ -40,7 +40,8 @@ SECCIONES = {
         'nombre': 'Tu cuenta del Domo',
         'exportador': 'cuenta-exportar.mjs',
         'requeridos': {'index.html', 'procedencia.json', '_headers'},
-        'pruebas': ('pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_exportacion.mjs'),
+        'pruebas': ('pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs',
+                    'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs'),
     },
 }
 URL = 'https://aislados.caoz-tcg.pages.dev'

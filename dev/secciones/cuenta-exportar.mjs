@@ -3,13 +3,14 @@ import fs from 'node:fs';
 import path from 'node:path';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
+import {generarFondoCuenta} from './cuenta-fondo.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
 const juego=path.resolve(aqui,'../../caoz_tcg');
 const hash=b=>createHash('sha256').update(b).digest('hex');
 // Mismos bytes que las otras secciones: el publicador conserva una CSP común.
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
-export const componentesCuenta=Object.freeze(['cuenta-modelo.js','cuenta-ui.js','cuenta.css']);
-export const entornoCuenta=Object.freeze(['cuenta-lab.css','cuenta-lab.js','cuenta-demo.js']);
+export const componentesCuenta=Object.freeze(['cuenta-progreso.js','cuenta-servicio.js','cuenta-modelo.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css']);
+export const entornoCuenta=Object.freeze(['cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
 export const imagenesCuenta=Object.freeze(['logo.webp']);
 export function exportar(destino){
   destino=path.resolve(destino);
@@ -19,13 +20,13 @@ export function exportar(destino){
     if(!fs.lstatSync(archivo).isFile())throw Error('La fuente debe ser un archivo normal: '+f);
     return fs.readFileSync(archivo);
   };
-  const fuenteHTML=leer(aqui,'cuenta.html'),html=fuenteHTML.toString().replaceAll('__CSP__',csp);
-  const paquete=new Map([['index.html',html]]),componentes={},entorno={},arte={};
+  const fondo=generarFondoCuenta(),fuenteHTML=leer(aqui,'cuenta.html'),html=fuenteHTML.toString().replaceAll('__CSP__',csp).replace('__CUENTA_FONDO__',fondo.html);
+  const paquete=new Map([['index.html',html],['cuenta-fondo-real.css',fondo.css]]),componentes={},entorno={},arte={};
   for(const f of componentesCuenta){const b=leer(juego,f);paquete.set('juego/'+f,b);componentes[f]=hash(b);}
   for(const f of entornoCuenta){const b=leer(aqui,f);paquete.set(f,b);entorno[f]=hash(b);}
   for(const f of imagenesCuenta){const b=leer(path.join(juego,'art'),f);paquete.set('art/'+f,b);arte[f]=hash(b);}
   const procedencia={seccion:'cuenta',almacenamiento:'memoria temporal',partida:false,progresoReal:false,correoReal:false,
-    componentes,entorno,arte,fuentes:{'cuenta.html':hash(fuenteHTML)},derivados:{'index.html':hash(html)}};
+    componentes,entorno,arte,fondo:fondo.procedencia,fuentes:{'cuenta.html':hash(fuenteHTML)},derivados:{'index.html':hash(html),'cuenta-fondo-real.css':hash(fondo.css)}};
   paquete.set('procedencia.json',JSON.stringify(procedencia,null,2));
   paquete.set('_headers','/*\n  Cache-Control: no-store\n  X-Content-Type-Options: nosniff\n  Content-Security-Policy: '+csp+'\n');
   // Se leen todas las fuentes antes de escribir: una dependencia ausente no deja un sitio parcial.

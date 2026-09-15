@@ -12,6 +12,7 @@ const mutantes={
   alias:['const origen=vinculo?.cuentaId?canonica:aliases.find(k=>leer(k)!==null)||actual;','const origen=aliases.find(k=>leer(k)!==null)||actual;'],
   lease:["if(diario.autor&&diario.autor!==autor&&Number.isFinite(diario.iniciada)&&reloj()-diario.iniciada<5000)throw fallo('PROGRESO_OCUPADO');",''],
   borrador:['campanaBorrador=null;','void 0;'],
+  archivoPropietario:['if(vinculo&&vinculo.cuentaId!==cuentaId)archivar(vinculo);','void vinculo;'],
 };
 if(process.env.CAOZ_SABOTAJE_PROGRESO&&process.env.CAOZ_SABOTAJE_PROGRESO!=='borrador'){const [antes,despues]=mutantes[process.env.CAOZ_SABOTAJE_PROGRESO];assert.ok(texto.includes(antes));texto=texto.replace(antes,despues);}
 const A='11111111-1111-4111-8111-111111111111',B='22222222-2222-4222-8222-222222222222';
@@ -49,6 +50,29 @@ await prueba('Sin espacio para el respaldo no modifica el progreso existente',()
 await prueba('Un fallo a mitad de importación restaura todo el inventario anterior',()=>{const {p,storage}=entorno();const anterior=ejemplo();anterior.datos.campana.etapa=2;anterior.datos.coleccion.sobres=9;poblar(storage,anterior);storage.fallarEn=storage.escrituras+5;assert.throws(()=>p.aplicar(ejemplo(),{cuentaId:A,revision:3}),{codigo:'ALMACENAMIENTO'});assert.deepEqual(plano(p.capturar()),anterior);assert.equal(p.vinculado(),null);});
 await prueba('Si también falla la reversión, la siguiente carga recupera el diario íntegro',()=>{const {p,storage}=entorno();const anterior=ejemplo();anterior.datos.campana.etapa=1;poblar(storage,anterior);storage.fallarEn=storage.escrituras+5;storage.persistente=true;assert.throws(()=>p.aplicar(ejemplo(),{cuentaId:A,revision:3}));assert.ok([...storage.m.keys()].some(k=>k.endsWith('.transaccion')));storage.fallarEn=0;storage.persistente=false;assert.throws(()=>entorno({storage}),{codigo:'PROGRESO_OCUPADO'});const otra=entorno({storage,reloj:()=>Date.now()+6000}).p;assert.deepEqual(plano(otra.capturar()),anterior);assert.equal(otra.vinculado(),null);});
 await prueba('Cerrar cuenta archiva su copia y evita regalarla al próximo usuario',()=>{const {p}=entorno();p.aplicar(ejemplo(),{cuentaId:A,revision:3});p.desvincular();assert.equal(p.capturar(),null);assert.equal(p.vinculado(),null);assert.deepEqual(plano(p.archivo(A).snapshot),ejemplo());assert.equal(p.archivo(B),null);});
+await prueba('Cambiar de propietario archiva el último snapshot y conserva su cola sin modificarla',()=>{
+  const {p,storage}=entorno();p.aplicar(ejemplo(),{cuentaId:A,revision:3});
+  const ultimo=ejemplo();ultimo.datos.records.partidas=15;poblar(storage,ultimo);
+  const cola=JSON.stringify({operacion:'pendiente-original'});storage.setItem(p.claveCola(A),cola);
+  const nuevo=ejemplo();nuevo.datos.nombre='Beto';p.aplicar(nuevo,{cuentaId:B,revision:1});
+  assert.ok(p.archivo(A));assert.deepEqual(plano(p.archivo(A).snapshot),ultimo);
+  assert.equal(p.archivo(A).vinculo.revision,3);assert.equal(storage.getItem(p.claveCola(A)),cola);
+  assert.deepEqual(plano(p.capturar()),nuevo);assert.equal(p.archivo(B),null);
+});
+await prueba('No sustituye A por B si no puede escribir primero el archivo de A',()=>{
+  const {p,storage}=entorno();p.aplicar(ejemplo(),{cuentaId:A,revision:3});const antes=[...storage.m];
+  storage.fallarEn=storage.escrituras+1;
+  assert.throws(()=>p.aplicar(ejemplo(),{cuentaId:B,revision:1}),{codigo:'ALMACENAMIENTO'});
+  assert.deepEqual([...storage.m],antes);assert.equal(p.vinculado().cuentaId,A);
+});
+await prueba('Un cambio de cuenta interrumpido restaura A y conserva su archivo antes de reintentar B',()=>{
+  const {p,storage}=entorno();p.aplicar(ejemplo(),{cuentaId:A,revision:3});const original=plano(p.capturar());
+  const nuevo=ejemplo();nuevo.datos.nombre='Beto';storage.fallarEn=storage.escrituras+6;
+  assert.throws(()=>p.aplicar(nuevo,{cuentaId:B,revision:1}),{codigo:'ALMACENAMIENTO'});
+  assert.deepEqual(plano(p.capturar()),original);assert.equal(p.vinculado().cuentaId,A);
+  assert.deepEqual(plano(p.archivo(A).snapshot),original);
+  p.aplicar(nuevo,{cuentaId:B,revision:1});assert.deepEqual(plano(p.capturar()),nuevo);
+});
 await prueba('Un deseo local sólo se conserva al restaurar la misma campaña y cuenta',()=>{const {p,storage}=entorno();p.aplicar(ejemplo(),{cuentaId:A,revision:3});const c=JSON.parse(storage.getItem('caoz.campana.v1'));c.borradorDeseo='Sólo Ari';storage.setItem('caoz.campana.v1',JSON.stringify(c));p.aplicar(ejemplo(),{cuentaId:A,revision:4});assert.equal(JSON.parse(storage.getItem('caoz.campana.v1')).borradorDeseo,'Sólo Ari');p.aplicar(ejemplo(),{cuentaId:B,revision:1});assert.equal(JSON.parse(storage.getItem('caoz.campana.v1')).borradorDeseo,undefined);});
 await prueba('El observador detecta cambios y errores sin sustituirlos por un reset',()=>{const {p,storage}=entorno();const eventos=[];const salir=p.observar((s,e)=>eventos.push([plano(s),e]));poblar(storage);p.revisar();assert.deepEqual(eventos[0][0],ejemplo());storage.bloqueado=true;p.revisar();assert.equal(eventos[1][1].codigo,'ALMACENAMIENTO');storage.bloqueado=false;salir();p.destruir();});
 await prueba('Las vistas devueltas no mutan inventario ni respaldos',()=>{const {p}=entorno();p.aplicar(ejemplo(),{cuentaId:A,revision:1});const c=p.capturar();c.datos.coleccion.sobres=900;const v=p.vinculado();v.base.datos.coleccion.sobres=999;assert.equal(p.capturar().datos.coleccion.sobres,4);assert.equal(p.vinculado().base.datos.coleccion.sobres,4);});

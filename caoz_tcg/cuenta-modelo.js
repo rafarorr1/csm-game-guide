@@ -12,13 +12,19 @@
     CADUCADO:'Este código caducó. Pide uno nuevo.',CODIGO_INVALIDO:'Ese código no coincide. Revísalo e inténtalo otra vez.',
     INTENTOS:'Se agotaron los intentos de este código. Pide uno nuevo.',ESPERA:'Espera un minuto desde el último envío antes de pedir otro código.',
     ALMACENAMIENTO:'No pudimos guardar en este dispositivo. Conservamos la copia en tu cuenta; libera espacio e inténtalo de nuevo.',NO_DISPONIBLE:'El acceso por correo no está disponible en este momento. Puedes seguir jugando sin cuenta.',SESION:'Tu sesión terminó. Vuelve a entrar para guardar tu progreso.',CONFLICTO:'Tu cuenta tiene un progreso más reciente. Revisa cuál quieres continuar.'};
-  function crear({servicio,progresoLocal=null,reloj=Date.now,resumir=resumen,sesionVinculada=()=>false,confirmarRecuperacion=false}={}){
+  function crear({servicio,progresoLocal=null,reloj=Date.now,resumir=resumen,sesionVinculada=()=>false,confirmarRecuperacion=false,obligatoria=false}={}){
     if(!servicio)throw Error('Falta el servicio de cuentas.');
     let estado={pantalla:'inicio',intencion:'crear',ocupado:false,error:'',aviso:'',correo:'',nombre:'',desafio:null,
-      sesion:null,local:resumir(progresoLocal),nube:null,guardado:'guardado'};
-    let revision=0,destruido=false,generacion=0,subida=null,copiaLocal=copia(progresoLocal),copiaNube=null,requiereAislar=false;
+      sesion:null,local:resumir(progresoLocal),nube:null,guardado:'guardado',sinConexion:false};
+    let revision=0,destruido=false,generacion=0,subida=null,copiaLocal=copia(progresoLocal),copiaNube=null,requiereAislar=false,vinculoConfirmado=false;
     const suscriptores=new Set();
-    const ver=()=>copia(estado);
+    const ver=()=>{const acceso=!!estado.sesion&&estado.pantalla==='perfil'&&!requiereAislar&&(!obligatoria||vinculoConfirmado);return copia({...estado,obligatoria:!!obligatoria,acceso,puedeSalir:!obligatoria||acceso});};
+    function mensajeError(codigo){
+      if(obligatoria&&codigo==='NO_DISPONIBLE')return 'El acceso por correo no está disponible en este momento. Inténtalo de nuevo en unos minutos.';
+      if(obligatoria&&codigo==='ALMACENAMIENTO')return 'No pudimos guardar en este dispositivo. Libera espacio y vuelve a intentarlo antes de cerrar el juego.';
+      if(obligatoria&&codigo==='SIN_CONEXION'&&!estado.sesion)return 'Conéctate a internet para entrar con tu correo por primera vez en este dispositivo. Después podrás jugar sin conexión en la app instalada.';
+      return mensajes[codigo]||'No se pudo completar. Tu progreso no se ha eliminado; inténtalo de nuevo.';
+    }
     const avisar=()=>{if(!destruido)for(const fn of suscriptores)fn(ver());};
     const poner=campos=>{Object.assign(estado,campos);avisar();};
     const libre=()=>!destruido&&!estado.ocupado;
@@ -27,9 +33,9 @@
       try{await fn(()=>!destruido&&turno===generacion);return !destruido&&turno===generacion;}
       catch(e){if(!destruido&&turno===generacion){
         if(e.codigo==='CONFLICTO'){revision=e.revision;copiaNube=copia(e.progreso);estado.nube=resumir(e.progreso);estado.pantalla='conflicto';subida=null;}
-        if(e.codigo==='SESION'){estado.sesion=null;estado.desafio=null;estado.pantalla='inicio';estado.intencion='entrar';subida=null;}
-        if(e.codigo==='SIN_CONEXION')estado.guardado='sinConexion';
-        poner({error:mensajes[e.codigo]||'No se pudo completar. Tu progreso no se ha eliminado; inténtalo de nuevo.'});
+        if(e.codigo==='SESION'){estado.sesion=null;estado.desafio=null;estado.pantalla='inicio';estado.intencion='entrar';subida=null;vinculoConfirmado=false;}
+        if(e.codigo==='SIN_CONEXION'){estado.guardado='sinConexion';estado.sinConexion=true;}
+        poner({error:mensajeError(e.codigo)});
       }return false;}
       finally{if(!destruido&&turno===generacion)poner({ocupado:false});}
     }
@@ -37,19 +43,26 @@
       revision=Number(r.revision)||0;subida=null;copiaNube=copia(r.progreso);requiereAislar=!!r.requiereAislar;
       if(Object.prototype.hasOwnProperty.call(r,'localDisponible')){copiaLocal=copia(r.localDisponible);estado.local=resumir(copiaLocal);}
       const nube=resumir(r.progreso),vinculada=!!sesionVinculada(r);
+      vinculoConfirmado=vinculada&&!requiereAislar;
+      // Sin red sólo sirve una identidad que ya se vinculó en este dispositivo.
+      // Un nombre o un perfil vacío nunca sustituyen la verificación por correo.
+      if(obligatoria&&r.sinConexion&&!vinculoConfirmado){
+        poner({sesion:null,desafio:null,pantalla:'inicio',intencion:'entrar'});
+        throw Object.assign(Error('SIN_CONEXION'),{codigo:'SIN_CONEXION'});
+      }
       const pantalla=vinculada?'perfil':estado.local?(nube?'conflicto':'vincular'):
         nube&&confirmarRecuperacion?'recuperar':'perfil';
-      poner({sesion:copia(r.sesion),desafio:null,nube,pantalla,guardado:'guardado'});
+      poner({sesion:copia(r.sesion),desafio:null,nube,pantalla,sinConexion:!!r.sinConexion,guardado:r.sinConexion?'sinConexion':r.guardado==='pendiente'?'pendiente':'guardado'});
     }
     function restaurar(){
       if(!libre()||typeof servicio.sesion!=='function'||!['inicio','perfil','invitado'].includes(estado.pantalla))return Promise.resolve(false);
       return ejecutar(async vigente=>{
         const r=await servicio.sesion();if(!vigente())return;
         if(r?.sesion)recibirSesion(r);
-        else{revision=0;copiaNube=null;subida=null;poner({sesion:null,nube:null,pantalla:estado.pantalla==='invitado'?'invitado':'inicio',guardado:'guardado'});}
+        else{revision=0;copiaNube=null;subida=null;vinculoConfirmado=false;poner({sesion:null,nube:null,pantalla:estado.pantalla==='invitado'?'invitado':'inicio',guardado:'guardado',sinConexion:false});}
       });
     }
-    function confirmarVinculoLocal(){if(!estado.sesion||destruido)return false;requiereAislar=false;return true;}
+    function confirmarVinculoLocal(){if(!estado.sesion||destruido)return false;if(vinculoConfirmado&&!requiereAislar)return true;requiereAislar=false;vinculoConfirmado=true;avisar();return true;}
     function actualizarLocal(progreso){
       if(!libre()||subida||requiereAislar&&estado.sesion)return false;copiaLocal=copia(progreso);poner({local:resumir(progreso)});return true;
     }
@@ -60,12 +73,13 @@
         poner({pantalla:'conflicto',nube:resumir(copiaNube),guardado:'pendiente',error:mensajes.CONFLICTO});return true;
       }
       if(valor.guardado==='sesion'){
+        vinculoConfirmado=false;
         poner({sesion:null,nube:null,desafio:null,pantalla:'inicio',intencion:'entrar',error:mensajes.SESION});return true;
       }
       if(['guardado','pendiente','sinConexion'].includes(valor.guardado)){
         if(valor.progreso!==undefined)copiaNube=copia(valor.progreso);
         if(Number.isInteger(valor.revision))revision=valor.revision;
-        poner({guardado:valor.guardado,nube:resumir(copiaNube),error:valor.error?mensajes[valor.error.codigo]||'No se pudo guardar todavía. Tu progreso sigue en este dispositivo.':''});return true;
+        poner({guardado:valor.guardado,sinConexion:valor.guardado==='sinConexion'||valor.guardado==='pendiente'&&estado.sinConexion,nube:resumir(copiaNube),error:valor.error?mensajeError(valor.error.codigo):''});return true;
       }
       return false;
     }
@@ -108,17 +122,17 @@
       const solicitud=copia(subida);
       return ejecutar(async vigente=>{
         const r=await servicio.vincularProgreso(solicitud);if(!vigente())return;
-        revision=r.revision;subida=null;copiaNube=copia(r.progreso);copiaLocal=null;requiereAislar=false;
-        poner({nube:resumir(r.progreso),local:null,pantalla:'perfil',guardado:'guardado',aviso:'Tu progreso está guardado en tu cuenta.'});
+        revision=r.revision;subida=null;copiaNube=copia(r.progreso);copiaLocal=null;requiereAislar=false;vinculoConfirmado=true;
+        poner({nube:resumir(r.progreso),local:null,pantalla:'perfil',guardado:'guardado',sinConexion:false,aviso:'Tu progreso está guardado en tu cuenta.'});
       });
     }
     function cerrarSesion(){
       if(!libre()||!estado.sesion)return Promise.resolve(false);
-      return ejecutar(async vigente=>{await servicio.cerrarSesion();if(vigente()){revision=0;subida=null;copiaNube=null;copiaLocal=null;requiereAislar=false;poner({sesion:null,nube:null,local:null,pantalla:'inicio',intencion:'entrar',correo:'',nombre:'',desafio:null,guardado:'guardado',aviso:'Sesión cerrada. Tu progreso sigue en tu cuenta.'});}});
+      return ejecutar(async vigente=>{await servicio.cerrarSesion();if(vigente()){revision=0;subida=null;copiaNube=null;copiaLocal=null;requiereAislar=false;poner({sesion:null,nube:null,local:null,pantalla:'inicio',intencion:'entrar',correo:'',nombre:'',desafio:null,guardado:'guardado',sinConexion:false,aviso:'Sesión cerrada. Tu progreso sigue en tu cuenta.'});vinculoConfirmado=false;}});
     }
-    function invitado(){if(!libre()||estado.sesion)return false;poner({pantalla:'invitado',desafio:null,error:'',aviso:''});return true;}
+    function invitado(){if(obligatoria||!libre()||estado.sesion)return false;poner({pantalla:'invitado',desafio:null,error:'',aviso:''});return true;}
     return Object.freeze({ver,preparar,solicitar,verificar,reenviar,cambiarCorreo,resolverProgreso,cerrarSesion,invitado,restaurar,actualizarLocal,actualizarGuardado,confirmarVinculoLocal,
-      datosSesion(){return copia({sesion:estado.sesion,progreso:copiaNube,revision,requiereAislar});},
+      datosSesion(){return copia({sesion:estado.sesion,progreso:copiaNube,revision,requiereAislar,vinculado:vinculoConfirmado,sinConexion:estado.sinConexion});},
       suscribir(fn){if(typeof fn!=='function'||destruido)return()=>{};suscriptores.add(fn);fn(ver());return()=>suscriptores.delete(fn);},
       destruir(){destruido=true;generacion++;suscriptores.clear();}});
   }

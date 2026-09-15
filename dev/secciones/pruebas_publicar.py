@@ -58,7 +58,7 @@ const datos={'index.html':'Tu cuenta del Domo','procedencia.json':'{"seccion":"c
  'cuenta-demo.js':fs.readFileSync('componente.js')};
 for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_exportacion.mjs']:
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -313,7 +313,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             return original_run(args, **opciones)
         with patch.object(p.subprocess, 'run', side_effect=registrar):
             salida = self.preparar('cuenta')
-        self.assertEqual(llamadas, ['cuenta-exportar.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_exportacion.mjs'])
+        self.assertEqual(llamadas, ['cuenta-exportar.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs'])
         registro, manifiesto, contenido = p.validar_paquete(salida, 'cuenta')
         self.assertEqual(set(registro['secciones']), {'cuenta'})
         self.assertEqual(manifiesto['seccion'], 'cuenta')

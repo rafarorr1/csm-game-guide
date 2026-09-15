@@ -1,5 +1,10 @@
-/* La cuenta usa el violeta del Domo y sus botones de madera y latón.
+/* Acceso en cristal translúcido con acentos cálidos del Domo.
    Todo queda dentro del componente, sin tocar el tablero ni otros menús. */
+.cuentaLogo{display:block;width:min(300px,100%);height:auto;max-height:168px;object-fit:contain;margin-inline:auto;filter:drop-shadow(0 8px 18px #0006)}
+@media(max-width:520px){.cuentaLogo{max-height:136px}}
+@media(max-height:690px){.cuentaLogo{max-height:110px}}
+@media(max-width:520px) and (max-height:650px){.cuentaLogo{max-height:58px}}
+@media(max-height:430px){.cuentaLogo{max-height:50px}}
 .cuentaAnfitrion{box-sizing:border-box;display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;max-height:var(--cuenta-alto-disponible,100dvh);padding:12px;overflow:hidden}
 .cuentaUI{--cuenta-tinta:#f4e5c7;--cuenta-suave:#c0b2cc;--cuenta-laton:#b18a4e;position:relative;display:flex;flex-direction:column;gap:20px;box-sizing:border-box;width:min(550px,100%);max-height:calc(var(--cuenta-viewport-alto,100dvh) - 30px);min-height:0;margin:auto;padding:30px 34px 25px;color:var(--cuenta-tinta);border:1px solid #b595607d;border-radius:22px;background:radial-gradient(ellipse at 50% -12%,#6f4e9260,transparent 58%),linear-gradient(155deg,#291d3d,#171023 72%,#21162f);box-shadow:inset 0 0 0 4px #120c2080,inset 0 1px #edd69a4a,0 25px 80px #0009,0 0 90px #67458c17;font:15px/1.45 var(--sans,system-ui,sans-serif);text-align:left;color-scheme:dark;overflow:hidden;isolation:isolate;animation:cuentaEntrar .34s ease both}
 .cuentaUI,.cuentaUI *{box-sizing:border-box}.cuentaUI :is(h1,h2,p,dl,dd){margin:0}.cuentaUI :is(button,input){font:inherit}.cuentaUI button{touch-action:manipulation;-webkit-tap-highlight-color:transparent;cursor:pointer}.cuentaUI button:disabled{cursor:default}.cuentaUI :is(button,input):focus-visible{outline:2px solid #ffe2a4;outline-offset:3px}.cuentaUI button:focus:not(:focus-visible),.cuentaUI h1:focus{outline:none}.cuentaUI [hidden]{display:none!important}
@@ -19,6 +24,7 @@
 .cuentaAnfitrion>.cuentaUI{max-height:100%}.cuentaUI .cuentaEntrada:read-only{opacity:.6}
 .cuentaUI .cuentaBoton.cuentaPestana{min-height:44px;padding:8px 10px;border:1px solid transparent;border-radius:7px;background:none;box-shadow:none;color:#baadc7;font-size:16px;font-weight:500;letter-spacing:0;translate:none;filter:none}.cuentaUI .cuentaBoton.cuentaPestana[aria-selected=true]{background:linear-gradient(#5b402a,#35251b);border-color:#b493605e;box-shadow:inset 0 1px #e4c68e26,0 2px 5px #0005;color:#f1d8a8}.cuentaUI .cuentaBoton.cuentaPestana:not(:disabled):hover{border-color:#b493605e;translate:none;filter:brightness(1.12)}
 .cuentaUI .cuentaDescripcion{margin-inline:auto}.cuentaUI .cuentaContenido{scrollbar-gutter:stable both-edges}
+.cuentaUI .cuentaGuardado{text-align:center}.cuentaUI .cuentaLuz{flex-shrink:0}.cuentaUI .cuentaCerrar[hidden]{display:none}
 
 /* Los campos y la acción principal quedan a la vista en teléfonos pequeños;
    al abrir el teclado el contenido mantiene su desplazamiento accesible. */
@@ -37,4 +43,27 @@
  .cuentaUI[data-pantalla=inicio] .cuentaBoton{font-size:15px;min-height:44px;padding-block:9px}
  .cuentaUI[data-pantalla=inicio] .cuentaContenido{gap:10px}
  .cuentaUI[data-pantalla=inicio] .cuentaAcciones{gap:7px}
+ .cuentaUI[data-obligatoria=true][data-pantalla=inicio]{padding:14px 13px 12px;gap:8px}
+ .cuentaUI[data-obligatoria=true][data-pantalla=inicio] .cuentaCabecera{padding-inline:0}
+ .cuentaUI[data-obligatoria=true][data-pantalla=inicio] .cuentaDescripcion{margin-top:4px}
+ .cuentaUI[data-obligatoria=true][data-pantalla=inicio] .cuentaFormulario{gap:6px}
 }
+
+/* Cristal sobre la portada: conserva los colores del menú detrás del panel,
+   con reflejos en los bordes y contraste suficiente en los controles. */
+.cuentaUI{width:min(500px,100%);border-color:#f3e9ff5c;border-radius:28px;background:linear-gradient(135deg,#f1e8ff24,transparent 42%,#c2d7ff0d),#17131e61;-webkit-backdrop-filter:blur(12px) saturate(150%);backdrop-filter:blur(12px) saturate(150%);box-shadow:inset 0 1px 0 #fff7,inset 1px 0 0 #fff2,inset 0 -1px 0 #ffffff24,0 24px 70px #0007,0 4px 16px #0004}
+.cuentaUI:before{content:'';position:absolute;inset:1px;z-index:-1;border-radius:inherit;pointer-events:none;background:radial-gradient(ellipse at 0 0,#fff2,transparent 50%),linear-gradient(118deg,#ffffff0b,transparent 35% 75%,#ffffff09)}
+.cuentaUI .cuentaDescripcion,.cuentaUI .cuentaAyuda{color:#e0d6e4;text-shadow:0 1px 3px #0008}
+.cuentaUI .cuentaEntrada{background:#0e0d193d;border-color:#e6d9ef42;box-shadow:inset 0 1px 4px #0003,0 1px #ffffff0a;color:#fff5e6}
+.cuentaUI .cuentaEntrada:focus{background:#15122170;border-color:#efd59caa;box-shadow:0 0 0 3px #ffeac614}
+.cuentaUI .cuentaPestanas{background:#17112038;border-color:#e7dce72e;border-radius:14px}
+.cuentaUI .cuentaBoton.cuentaPestana{border-radius:10px;color:#e0d5e3}
+.cuentaUI .cuentaBoton.cuentaPestana[aria-selected=true]{background:linear-gradient(145deg,#fff3,#ffffff0a);border-color:#fff4;box-shadow:inset 0 1px #fff3,0 2px 7px #0002;color:#fff0d4}
+.cuentaUI .cuentaBoton:not(:is(.cuentaPestana,.cuentaEnlace,.cuentaBotonSecundario)){border-radius:13px;background:linear-gradient(135deg,#d6ad6370,#81633770);border-color:#f2d2989c;box-shadow:inset 0 1px #ffeedc66,inset 0 -1px #ffffff17,0 5px 14px #0003;color:#fff1d5;text-shadow:0 1px 3px #36220799}
+.cuentaUI .cuentaBoton.cuentaBotonSecundario{border-radius:13px;background:linear-gradient(135deg,#ffffff14,#ffffff05);border-color:#ffffff38;box-shadow:inset 0 1px #ffffff29,0 3px 9px #0002;color:#e6dce6;text-shadow:0 1px 3px #0006}
+.cuentaUI .cuentaResumen,.cuentaUI .cuentaOpcion{background:#17122030;border-color:#eadcef30}
+.cuentaUI .cuentaOpcion[data-elegida=true]{border-color:#f0d393b3;background:#e2c58326}
+.cuentaUI .cuentaCerrar{background:#ffffff0b;border:1px solid #ffffff17;color:#fff0db}
+.cuentaUI .cuentaCerrar:hover{background:#ffffff21}
+@supports not ((backdrop-filter:blur(1px)) or (-webkit-backdrop-filter:blur(1px))){.cuentaUI{background:linear-gradient(135deg,#413744e8,#1d1825ed)}}
+@media(prefers-reduced-transparency:reduce){.cuentaUI{background:#241e2af5;-webkit-backdrop-filter:none;backdrop-filter:none}}

@@ -4,10 +4,11 @@ import path from 'node:path';
 import http from 'node:http';
 import {fileURLToPath} from 'node:url';
 import {generar,juego,vistas} from './fuentes.mjs';
+import {generarFondoCuenta} from './cuenta-fondo.mjs';
 const carpeta=path.dirname(fileURLToPath(import.meta.url));
 const prefijo='/dev/secciones/';
-const publicos=new Set(['coleccion.html','memoria.js','coleccion-dev.js','aislado.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js']);
-const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','cuenta-modelo.js','cuenta-ui.js','cuenta.css']);
+const publicos=new Set(['coleccion.html','memoria.js','coleccion-dev.js','aislado.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
+const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css']);
 const mime={'.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 function enviar(res,estado,cuerpo,tipo){res.writeHead(estado,{'Content-Type':tipo,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':csp});res.end(cuerpo);}
@@ -24,7 +25,8 @@ export function crearServidor(){return http.createServer((req,res)=>{
     if(!url.pathname.startsWith(prefijo))return enviar(res,404,'No disponible','text/plain');
     const recurso=decodeURIComponent(url.pathname.slice(prefijo.length)),vista=Object.hasOwn(vistas,url.searchParams.get('vista'))?url.searchParams.get('vista'):'desktop';
     if(recurso==='coleccion.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__VISTA__',vista),mime['.html']);
-    if(recurso==='cuenta.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp),mime['.html']);
+    if(recurso==='cuenta.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replace('__CUENTA_FONDO__',generarFondoCuenta().html),mime['.html']);
+    if(recurso==='cuenta-fondo-real.css')return enviar(res,200,generarFondoCuenta().css,mime['.css']);
     if(recurso==='generado/datos.js')return enviar(res,200,generar(vista).datosJS,mime['.js']);
     if(recurso==='generado/renderer.js')return enviar(res,200,generar(vista).renderJS,mime['.js']);
     if(recurso==='generado/base.css')return enviar(res,200,generar(vista).css,mime['.css']);

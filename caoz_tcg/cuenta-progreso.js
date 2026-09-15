@@ -105,6 +105,10 @@
         const destinos=k==='coleccion'?aliases:k==='premiosDomo'?aliases.map(a=>a+'.domo-pendientes'):[claves[k]];
         for(const llave of destinos)despues[llave]=valor;}
       despues[claveVinculo]=JSON.stringify({cuentaId,revision,huella:huella(s),base:s,instancia:global.crypto.randomUUID()});
+      // Cambiar de propietario conserva el último avance de quien sale,
+      // incluso si acabó un duelo después de caducar y aún no pudo encolarlo.
+      // El archivo se confirma antes de sustituir datos; la cola queda intacta.
+      if(vinculo&&vinculo.cuentaId!==cuentaId)archivar(vinculo);
       transaccion(despues,'vincular');global.CAOZ_COLECCION?.usarClaveDeCuenta?.();return copia(s);
     }
     function vincularVacio({cuentaId,revision}={}){if(capturar()!==null)throw fallo('PROGRESO_EXISTENTE');return aplicar(vacio(entorno),{cuentaId,revision,permitirVacio:true});}
@@ -114,11 +118,14 @@
       const s=validar(snapshot,entorno);if(!Number.isSafeInteger(revision)||revision<previo.revision)throw fallo('CONFLICTO');
       escribir(claveVinculo,JSON.stringify({cuentaId,revision,huella:huella(s),base:s,instancia:previo.instancia||'legado'}));
     }
+    function archivar(v){
+      const s=capturar();escribir(pref+'archivo.'+v.cuentaId,JSON.stringify({snapshot:s,vinculo:v,fecha:reloj()}));
+    }
     function desvincular(){
       const v=vinculado();if(!v)return false;
       // La copia archivada pertenece a esa cuenta; el invitado comienza vacío.
       // El progreso que se importó no vuelve a regalarse a otra cuenta al salir.
-      const s=capturar();escribir(pref+'archivo.'+v.cuentaId,JSON.stringify({snapshot:s,vinculo:v,fecha:reloj()}));
+      archivar(v);
       transaccion(Object.fromEntries(todas.map(k=>[k,null])),'cerrar-sesion');global.CAOZ_COLECCION?.usarClaveDeCuenta?.();return true;
     }
     function archivo(cuentaId){if(!uuid(cuentaId))throw fallo('SESION');const d=json(pref+'archivo.'+cuentaId);if(!d)return null;
