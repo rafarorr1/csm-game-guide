@@ -9,7 +9,8 @@
   premios ni mezclar automáticamente los inventarios de cuentas/dispositivos.
 - Una sesión caducada o un conflicto pide resolver el acceso antes de continuar.
   Las invitaciones esperan la cuenta sin perder el código de la sala.
-- La actualización se destina a beta; producción conserva la build 257.
+- Publicada y verificada en producción con los mismos bytes aprobados en beta;
+  no cambia Worker, correo, esquema D1, cartas, balance, arte ni audio.
 
 ### Sin numerar · Revisión aislada · Acceso sobre el menú · 2026-09-13
 

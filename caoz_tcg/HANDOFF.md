@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-13 · beta 259 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-14 · beta 259 · producción 259 · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,38 +10,35 @@ números) → el código.
 
 ---
 
-## Estado vigente — acceso obligatorio publicado en beta 259
+## Estado vigente — acceso obligatorio publicado y verificado en producción 259
 
-El usuario aprobó llevar la revisión a beta. El [PR 23](https://github.com/rafarorr1/csm-game-guide/pull/23)
-quedó integrado en `develop:b1c493803d2acb16f59ec30a4698bad09e625b0d`.
-`./publicar.sh --solo-pruebas --completo` y después `./publicar.sh --beta --completo`
-terminaron con salida 0 y **84 suites correctas** en cada tanda, incluidos los
-seis tutoriales. Se corrigió la preparación de `?foto` para esperar el acceso
-antes de consultar jugadores, con regresión y sabotaje; las pruebas de premios
-representan ahora explícitamente a un jugador verificado.
+La beta 259 aprobada quedó integrada en producción mediante el
+[PR 25](https://github.com/rafarorr1/csm-game-guide/pull/25), autorizado por Rafa.
+Su fuente quedó fijada en `0cfbd71a8b80a84fc549c8905169dc0a0ef7a7c9`; el merge de
+producción es `main:a8bc49b5f6d19dea749363343f927b3ceaab6f3f` y su árbol
+`caoz_tcg` coincide exactamente con esa fuente aprobada. No se incrementó la build
+ni se incluyeron cambios posteriores, de Worker, correo, D1, cartas, balance, arte
+o audio.
 
-Artefactos: `gh-pages:05a28bcce4fdbea8a1c7092cae549d1405045fcd` y
-`beta:a93dd3ac67df92c672f45e048c3e6a8035a6632c`. El publicador comparó byte a byte
-web, móvil, módulos, caché, arte y sonido en GitHub Pages y Cloudflare.
+`CAOZ_PAGES_DIR=…/csm-game-guide-pages ./publicar.sh --produccion --completo`
+terminó con salida 0 y **84 suites correctas**, incluidos los seis tutoriales. El
+artefacto de producción es `gh-pages:3fd7750a50f2c000c3a93db19e05e71fce113215`.
+El publicador comparó byte a byte escritorio, móvil, módulos, caché, arte y sonido
+en GitHub Pages y Cloudflare.
 
-- Web: https://beta.caoz-tcg.pages.dev/?b=259
-- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=259
+- Web: https://juego.caozcontodo.com/?b=259
+- Móvil: https://juego.caozcontodo.com/movil.html?b=259
 
-La prueba integrada de cuentas pasó en escritorio, móvil 390×844 y 320×568:
-acceso automático, vínculo, Domo, reapertura offline, cambio de cuenta, conflictos,
-borrado y aislamiento entre pestañas. La prueba adicional de PWA usó SW259 real
-en Chrome temporal: con toda la red desconectada recargó desde caché, conservó
-identidad, avance y operación pendiente, y sincronizó una sola vez al reconectar.
-No se cacheó ninguna API de cuentas. Estas pruebas usan cuentas ficticias locales;
-no equivalen a una comprobación en Safari físico. La entrada pública de beta se
-comprobó también en dos contextos nuevos, escritorio y móvil: build 259, pop up
-correcto, sin scroll ni errores JavaScript; la API anónima real devolvió el 401
-esperado. No se enviaron correos ni escrituras durante esa comprobación.
+La comprobación pública posterior pasó en contextos nuevos de escritorio 1420×900,
+móvil 390×844 y móvil 320×568. En los tres casos sirvió BUILD 259, abrió el acceso
+con el logo centrado, no hubo scroll, errores JavaScript ni solicitudes fallidas;
+la sesión anónima respondió el `401` esperado con `no-store, private`. El smoke
+bloqueó toda petición que no fuera GET/HEAD, por lo que no envió correos ni escribió
+cuentas o progreso. Las pruebas integradas de cuenta y PWA conservan sus cuentas
+ficticias locales; Safari físico sigue fuera de ese alcance.
 
-**Producción permanece en 257.** `main` conserva `b7e634c2152bf17d9e548f19477279ae40b3e6b7`
-y el árbol `gh-pages:tcg` conserva `350bdef5421199e083e96369b5a02fb7e15984bd`.
-Una promoción posterior requiere autorización para esta versión, sin incluir
-cambios nuevos ni incrementar la build si el paquete es idéntico.
+**Beta y producción sirven ahora la build 259.** La rama `beta` conserva el espejo
+validado y el PR 13 documental histórico permanece fuera de esta promoción.
 
 ## Registro anterior — revisión aislada de acceso aprobada
 
