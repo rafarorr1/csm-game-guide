@@ -585,6 +585,7 @@ async function onlineEsperarAcuse(id,campo,mensaje){
   onlineEspera('No llegó la respuesta de tu rival. Volved a entrar con el código de sala.',true);return false;
 }
 async function iniciarOnlineHost(a,b){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>iniciarOnlineHost(a,b)))return;
   if(NET.iniciando)return;
   const id=NET.sid+'-'+Date.now();NET.partidaId=id;NET.iniciando=true;
   NET.rivalListo=false;NET.monedaLista=false;
@@ -611,6 +612,7 @@ async function iniciarOnlineHost(a,b){
   }finally{if(NET.partidaId===id)NET.iniciando=false;}
 }
 async function iniciarOnlineGuest(m){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>iniciarOnlineGuest(m)))return;
   const id=m.partida||m.sid;
   if(NET.partidaId===id){if(NET.vsListo)netSend({t:'ready',partida:id});return;}
   NET.partidaId=id;NET.vsListo=false;NET.monedaRecibida=null;
@@ -883,6 +885,7 @@ function campanaCabecera(d,titulo,sub){
   d.querySelector('h2').textContent=titulo;d.querySelector('p').textContent=sub;
 }
 function abrirCampana(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>abrirCampana()))return;
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   campanaEnsayoGero=null;
   const progreso=campanaLeer();
@@ -1041,6 +1044,7 @@ function campanaSaltarHTML(peon,etapa){
   return{promesa,cancelar:()=>terminar(false)};
 }
 async function campanaSeleccionar(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>abrirCampana()))return;
   const p=campanaLeer(),panel=document.getElementById('campanaPanel');
   if(!p||p.mesaPendiente!=null||p.etapa>=6||!panel||!panel.open||panel.dataset.vista!=='mapa'||campanaPreparando||campanaLanzando)return;
   if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
@@ -1059,6 +1063,7 @@ function campanaPruebaDisponible(){
   return ['localhost','127.0.0.1','beta.caoz-tcg.pages.dev'].includes(location.hostname)||location.hostname==='rafarorr1.github.io'&&location.pathname.startsWith('/csm-game-guide/tcg-beta/');
 }
 function campanaVencerPrueba(e){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>abrirCampana()))return;
   const p=campanaLeer();
   if(!campanaPruebaDisponible()||campanaPreparando!==e||!e.dialogo?.open||!p||p.id!==e.id||p.etapa!==e.etapa||p.mesaPendiente!=null||NET.on)return;
   const rival=CAMPANA_RIVALES[p.etapa];
@@ -1109,6 +1114,7 @@ function campanaAcercarMapa(etapa){
   });
 }
 async function campanaCombatir(){
+  if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>campanaCombatir()))return;
   const p=campanaLeer();if(!p||p.etapa>=6||campanaLanzando)return;
   if(NET.on){toast('Sal de la sala online antes de comenzar la campaña.');return;}
   campanaLanzando=true;
@@ -1279,7 +1285,7 @@ function campanaFinal(winner,why){
 addEventListener('load',()=>{
   // También recupera el premio si la app se cerró entre guardar la victoria
   // y guardar el inventario, o si antes no quedaba espacio disponible.
-  campanaEntregarSobre(campanaLeer());
+  if(window.CAOZ_CUENTA_JUEGO?.puedeJugar())campanaEntregarSobre(campanaLeer());
   if(new URLSearchParams(location.search).get('campana')==='1')abrirCampana();
 });
 
@@ -1351,3 +1357,17 @@ addEventListener('DOMContentLoaded',()=>{
   pista.style.touchAction='pan-y';
   new MutationObserver(()=>{if(!selector.classList.contains('on')||SEL_PASO!=='yo')reiniciar();}).observe(selector,{attributes:true,attributeFilter:['class'],subtree:true,childList:true});
 });
+
+// La recuperación de premios espera a conocer al propietario del dispositivo.
+addEventListener('caoz:cuenta-lista',()=>campanaEntregarSobre(campanaLeer()));
+function cuentaAbrirInvitacion(sala){
+  ONL.sala=sala;
+  const continuar=()=>{
+    if(!window.CAOZ_CUENTA_JUEGO?.requerir(continuar))return;
+    const url=new URL(location.href);url.searchParams.delete('sala');
+    history.replaceState(null,'',url.pathname+url.search+url.hash);
+    if(!ONL.nombre)ONL.nombre=nombreGuardado();
+    onlPickNombre(false);
+  };
+  setTimeout(continuar,300);
+}

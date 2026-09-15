@@ -8,25 +8,64 @@
   const numero=v=>Number.isSafeInteger(v)&&v>=0;
   function crear({progreso,fetch:peticion=global.fetch?.bind(global),storage=global.localStorage,tiempoLimite=15000}={}){
     if(!progreso||!peticion)throw Error('Falta el adaptador de progreso.');
-    let actual=null,revision=0,salidaPendiente=null;
+    let actual=null,revision=0,salidaPendiente=null,sinConexion=false,accesoRevocado=false,generacionAcceso=0;
+    const claveAcceso=id=>progreso.claveCola(id).replace('.cola.','.acceso.');
+    const identidadValida=v=>uuid(v?.id)&&typeof v.nombre==='string'&&typeof v.correo==='string';
+    function borrarAcceso(id){
+      if(!id)return;
+      try{const clave=claveAcceso(id);storage.removeItem(clave);if(storage.getItem(clave)!==null)throw Error();}
+      catch(_){throw fallo('ALMACENAMIENTO');}
+    }
+    function revocarAcceso(id=actual?.id||progreso.vinculado()?.cuentaId){
+      // Una petición antigua de A puede terminar después del acceso de B.
+      // Revocar A no invalida una identidad nueva ya confirmada.
+      if(id&&actual&&actual.id!==id){borrarAcceso(id);return;}
+      generacionAcceso++;accesoRevocado=true;sinConexion=false;
+      if(!id||actual?.id===id){actual=null;revision=0;}
+      borrarAcceso(id);
+    }
+    function recordarAcceso(sesion){
+      // Recibo local de identidad pública verificada. No contiene cookie,
+      // código, credencial ni una copia de la respuesta de /api/cuenta/sesion.
+      const cuenta={id:sesion.id,nombre:sesion.nombre,correo:sesion.correo};
+      const texto=JSON.stringify({version:1,entorno:progreso.entorno,cuenta});
+      try{const clave=claveAcceso(cuenta.id);storage.setItem(clave,texto);if(storage.getItem(clave)!==texto)throw Error();}
+      catch(_){throw fallo('ALMACENAMIENTO');}
+      accesoRevocado=false;return cuenta;
+    }
+    function sesionLocal(){
+      if(accesoRevocado||salidaPendiente)return null;
+      const v=progreso.vinculado();if(!v)return null;
+      let r;try{r=JSON.parse(storage.getItem(claveAcceso(v.cuentaId))||'null');}catch(_){throw fallo('ALMACENAMIENTO');}
+      if(!r||r.version!==1||r.entorno!==progreso.entorno||!identidadValida(r.cuenta)||r.cuenta.id!==v.cuentaId)return null;
+      const base=global.CAOZ_CUENTA_PROGRESO.validar(v.base,progreso.entorno);
+      if(v.huella!==global.CAOZ_CUENTA_PROGRESO.huella(base))throw fallo('PROGRESO_DANADO');
+      actual=copia(r.cuenta);revision=v.revision;sinConexion=true;
+      return {sesion:copia(actual),progreso:base,revision,vinculado:true,localDisponible:progreso.capturar(),sinConexion:true,guardado:'sinConexion'};
+    }
     async function pedir(ruta,datos){
-      const abortar=new global.AbortController(),limite=global.setTimeout(()=>abortar.abort(),tiempoLimite);let respuesta;
+      const abortar=new global.AbortController(),limite=global.setTimeout(()=>abortar.abort(),tiempoLimite),idPeticion=actual?.id||progreso.vinculado()?.cuentaId;let respuesta;
       // SW254 ya excluía las URLs con test=. Conservamos ese bypass al
       // actualizar una PWA antigua, antes de que tome control el nuevo SW.
       try{respuesta=await peticion('/api/cuenta/'+ruta+'?test=cuenta',{method:datos===undefined?'GET':'POST',credentials:'same-origin',cache:'no-store',
         headers:{Accept:'application/json',...(datos===undefined?{}:{'Content-Type':'application/json'}),
           ...(['progreso','salir'].includes(ruta)&&actual?{'X-Caoz-Cuenta':actual.id}:{})},
         ...(datos===undefined?{}:{body:JSON.stringify(datos)}),signal:abortar.signal});}
-      catch(_){throw fallo('SIN_CONEXION');}finally{global.clearTimeout(limite);}
+      catch(_){sinConexion=true;throw fallo('SIN_CONEXION');}finally{global.clearTimeout(limite);}
+      // Un401 confirmado revoca también el acceso local, incluso si la
+      // respuesta no trae JSON. Una avería del servidor no concede acceso.
+      if(respuesta.status===401){revocarAcceso(idPeticion);throw fallo('SESION');}
       let r;try{r=await respuesta.json();}catch(_){throw fallo('SERVIDOR');}
       if(!respuesta.ok){const extras={};if(r?.codigo==='CONFLICTO'&&numero(r.revision))Object.assign(extras,{revision:r.revision,progreso:copia(r.progreso)});
         throw fallo(typeof r?.codigo==='string'?r.codigo:respuesta.status===401?'SESION':'SERVIDOR',extras);}
       return r;
     }
     function comprobarSesion(r){
-      if(!r||!numero(r.revision)||r.sesion!==null&&(!uuid(r.sesion?.id)||typeof r.sesion?.nombre!=='string'||typeof r.sesion?.correo!=='string'))throw fallo('SERVIDOR');
+      if(!r||!numero(r.revision)||r.sesion!==null&&!identidadValida(r.sesion))throw fallo('SERVIDOR');
       if(r.progreso!==null)global.CAOZ_CUENTA_PROGRESO.validar(r.progreso,progreso.entorno);
-      actual=copia(r.sesion);revision=r.revision;const vinculo=progreso.vinculado();
+      const vinculo=progreso.vinculado(),previa=actual?.id||vinculo?.cuentaId;
+      if(previa&&previa!==r.sesion?.id){generacionAcceso++;borrarAcceso(previa);}
+      actual=r.sesion?recordarAcceso(r.sesion):null;revision=r.revision;sinConexion=false;
       const base=r.progreso||global.CAOZ_CUENTA_PROGRESO.vacio(progreso.entorno);
       let vinculado=!!actual&&vinculo?.cuentaId===actual.id&&vinculo.revision===revision&&vinculo.huella===global.CAOZ_CUENTA_PROGRESO.huella(base);
       if(!vinculado&&actual&&vinculo?.cuentaId===actual.id){
@@ -38,21 +77,37 @@
           global.CAOZ_CUENTA_PROGRESO.huella(base)===global.CAOZ_CUENTA_PROGRESO.huella(p.progreso))vinculado=true;
       }
       const ajena=!!vinculo&&vinculo.cuentaId!==actual?.id;
-      const archivado=actual&&!vinculo&&!progreso.capturar()?progreso.archivo(actual.id):null;
-      return {...copia(r),vinculado,...(ajena?{requiereAislar:true,localDisponible:null}:
-        {localDisponible:archivado?.snapshot||progreso.capturar()})};
+      // Sólo se ofrece el archivo del correo recién verificado. El avance que
+      // esté abierto a nombre de otra cuenta nunca aparece como suyo.
+      const archivado=actual&&(ajena||!vinculo&&!progreso.capturar())?progreso.archivo(actual.id):null;
+      const localDisponible=archivado?.snapshot||(ajena?null:progreso.capturar());let pendiente=false;
+      if(vinculado){
+        let cola;try{cola=JSON.parse(storage.getItem(progreso.claveCola(actual.id))||'null');}catch(_){throw fallo('ALMACENAMIENTO');}
+        pendiente=!!cola?.pendiente||global.CAOZ_CUENTA_PROGRESO.huella(localDisponible||global.CAOZ_CUENTA_PROGRESO.vacio(progreso.entorno))!==vinculo.huella;
+      }
+      return {...copia(r),sesion:copia(actual),sinConexion:false,guardado:pendiente?'pendiente':'guardado',vinculado,localDisponible,...(ajena?{requiereAislar:true}:{})};
     }
     async function sesion(){
-      try{return comprobarSesion(await pedir('sesion'));}
+      const conocida=!!actual||!!progreso.vinculado(),turno=generacionAcceso;
+      try{const r=await pedir('sesion');if(turno!==generacionAcceso)throw fallo('SESION');return comprobarSesion(r);}
       catch(e){
+        if(e.codigo==='SIN_CONEXION'){
+          if(turno!==generacionAcceso)throw fallo('SESION');
+          const local=sesionLocal();if(local)return local;
+        }
         // La API también responde 401 a quien nunca tuvo cuenta. Sólo es
         // caducidad si conocíamos una sesión o hay progreso vinculado aquí.
         // No se borra ni importa nada al reconocer a un visitante anónimo.
-        if(e.codigo==='SESION'&&!actual&&!progreso.vinculado())return {sesion:null,progreso:null,revision:0,vinculado:false};
+        if(e.codigo==='SESION'&&!conocida)return {sesion:null,progreso:null,revision:0,vinculado:false,sinConexion:false};
         throw e;
       }
     }
-    async function verificarCodigo(datos){return comprobarSesion(await pedir('verificar',datos));}
+    async function verificarCodigo(datos){
+      // Una consulta anterior no puede revivir A después de entrar con B o
+      // restaurar el recibo que acabamos de revocar al cerrar sesión.
+      const turno=++generacionAcceso,r=await pedir('verificar',datos);
+      if(turno!==generacionAcceso)throw fallo('SESION');return comprobarSesion(r);
+    }
     async function guardarRemoto(datos){
       if(!actual)throw fallo('SESION');const id=actual.id;
       if(!datos||!uuid(datos.operacion)||!numero(datos.revision)||!['local','nube'].includes(datos.origen))throw fallo('PROGRESO_INVALIDO');
@@ -61,7 +116,7 @@
       const r=await pedir('progreso',datos);if(actual?.id!==id)throw fallo('SESION');
       if(!numero(r?.revision)||r.revision<datos.revision)throw fallo('SERVIDOR');
       if(r.progreso===null)r.progreso=global.CAOZ_CUENTA_PROGRESO.vacio(progreso.entorno);
-      global.CAOZ_CUENTA_PROGRESO.validar(r.progreso,progreso.entorno);revision=r.revision;return copia(r);
+      global.CAOZ_CUENTA_PROGRESO.validar(r.progreso,progreso.entorno);revision=r.revision;sinConexion=false;return copia(r);
     }
     async function vincularProgreso(datos){
       if(!actual)throw fallo('SESION');const id=actual.id;
@@ -74,13 +129,14 @@
     }
     async function cerrarSesion(){
       if(!salidaPendiente){if(!actual)throw fallo('SESION');const id=actual.id;await pedir('salir',{});salidaPendiente=id;}
+      revocarAcceso(salidaPendiente);
       // El servidor puede haber revocado la cookie aunque Safari no permita
       // archivar todavía. Reintentar sólo completa la parte local ya autorizada.
       if(progreso.vinculado()?.cuentaId===salidaPendiente)progreso.desvincular();
       if(actual?.id===salidaPendiente){actual=null;revision=0;}salidaPendiente=null;
     }
     return Object.freeze({sesion,obtenerSesion:sesion,solicitarCodigo:datos=>pedir('codigo',datos),verificarCodigo,vincularProgreso,cerrarSesion,
-      guardarRemoto,identidad:()=>copia(actual),revision:()=>revision});
+      guardarRemoto,identidad:()=>copia(actual),revision:()=>revision,sinConexion:()=>sinConexion});
   }
   function sincronizador({servicio,progreso,storage=global.localStorage,eventos=global,retraso=750,reintento=15000}={}){
     if(!servicio||!progreso)throw Error('Faltan las cuentas para sincronizar.');
@@ -119,7 +175,7 @@
       if(detenido||!cuenta||conflicto)return false;
       let c;try{c=encolar();}catch(e){tratar(e);return false;}
       if(ocupado)return false;
-      if(!c.pendiente){avisar({guardado:'guardado',error:null});return true;}
+      if(!c.pendiente){avisar({guardado:servicio.sinConexion?.()?'sinConexion':'guardado',error:null});return true;}
       ocupado=true;const turno=generacion,id=cuenta.id;avisar({guardado:'pendiente',error:null});
       try{
         // La solicitud se escribió antes de tocar la red. Tras cerrar Safari
@@ -157,7 +213,7 @@
     function vincular(r){
       desvincular();if(detenido||!r?.sesion)return false;
       const v=progreso.vinculado();if(v?.cuentaId!==r.sesion.id||servicio.identidad()?.id!==r.sesion.id)return false;
-      cuenta=copia(r.sesion);avisar({sesion:cuenta,revision:v.revision,progreso:copia(v.base),conflicto:null,error:null});
+      cuenta=copia(r.sesion);avisar({sesion:cuenta,revision:v.revision,progreso:copia(v.base),guardado:r.sinConexion?'sinConexion':r.guardado==='pendiente'?'pendiente':'guardado',conflicto:null,error:null});
       desobservar=progreso.observar(alCambio);
       for(const e of ['online','focus','pageshow'])eventos.addEventListener?.(e,alVolver);
       // Capturar y dejar pendiente no equivale a autorizar un primer vínculo:
