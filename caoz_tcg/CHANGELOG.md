@@ -1,6 +1,6 @@
 # Registro de versiones — el TCG del Domo
 
-### Build 261 · Epílogo de Gero y El último puente · 2026-09-16
+### v23 · Build 261 · Epílogo de Gero y El último puente · 2026-09-16
 
 - Tras vencer a Gero, la campaña pide el deseo, pasa por el fuego y el
   mensaje de deseo concedido, funde a negro y abre la selección completa de

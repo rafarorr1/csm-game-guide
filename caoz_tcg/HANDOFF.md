@@ -1,12 +1,42 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-15 · beta 260 · producción 259 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-16 · beta 261 · producción 259 · v23 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
 lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) → `README.md`
 (cómo se juega y cómo está montado, largo) → `CHANGELOG.md` (el porqué de cada cambio, con
 números) → el código.
+
+---
+
+## Estado vigente — Gero y Pitágoras publicados en beta 261
+
+El usuario aprobó llevar juntos a beta el epílogo de Gero y el ajuste de
+Pitágoras. `develop:e94ff18f19e7842b5f5f35de9d4353cdb15c4c5f` contiene la
+build 261, incluida la actualización derivada de `art/catalogo.json` para las
+cartas del Editor.
+
+Al vencer a Gero, la campaña ahora recorre deseo → fuego → deseo concedido →
+fundido a negro → selector a pantalla completa de tres sobres → fundido al
+menú. La selección se confirma una vez y no ofrece deshacer. El último puente
+sube velocidad y cadencia antes, usa cercos de sello y columnas con una salida
+alcanzable, y no crea oleadas que no puedan cruzar antes del cierre. Pitágoras
+conserva Ritual de 2 PD, una Pesadilla por turno y sus prioridades revisadas.
+
+`./publicar.sh --solo-pruebas --completo` y
+`./publicar.sh --beta --completo` terminaron en verde, incluidos los seis
+tutoriales, campaña, epílogo y minijuegos. El publicador verificó byte a byte
+escritorio, móvil, módulos, caché, arte y 37 sonidos en ambos destinos.
+
+Artefactos: `gh-pages:1a34ee663c7010645d3614bbc224db0624de99c3` y
+`beta:7dea19be6c9ba5e404d765a432a624132e99fd15`.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=261
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=261
+
+Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
+continúa en build 259. Una promoción posterior requiere autorización expresa.
 
 ---
 
