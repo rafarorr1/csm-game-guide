@@ -13,6 +13,10 @@
       "fuente": "bd5decc2ddb4b7c48dde9463f0ef588d4db41162",
       "ruta": "tcg/cuenta"
     },
+    "interacciones": {
+      "fuente": "c568529b736bbba9b5507f992446c3d5cb06c135",
+      "ruta": "tcg/interacciones"
+    },
     "rey": {
       "fuente": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf",
       "ruta": "tcg/rey"

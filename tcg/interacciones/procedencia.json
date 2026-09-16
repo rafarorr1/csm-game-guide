@@ -1,0 +1,117 @@
+{
+  "seccion": "interacciones",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "audio": "host visual sin reproducción ni catálogo",
+  "cartas": [
+    "discipulo",
+    "machete",
+    "destello",
+    "aldrick",
+    "esporas",
+    "bartolomeo"
+  ],
+  "lideres": [
+    "adreida"
+  ],
+  "componentes": {
+    "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
+    "arte-remoto.js": "b90f5defcd9e8e9e5b06effe367b89c2be37d73384be6d87c2add3494e415423",
+    "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
+  },
+  "arte": {
+    "discipulo.webp": "5e0995f6a7d159c24649d3811a318bcc19061b6dbb4140b757d5e073c5afa5e8",
+    "machete.webp": "ea3443061e49e5046b965d6389bf10d730a8ec8cc94420e16bf42fe021641eb6",
+    "destello.webp": "c0c22fe41f3f1a31385aa8d93615b4ecd136b1275fb0c4383d020f626dcaaa47",
+    "aldrick.webp": "f57c278b91790d44753495cea6549cad12e52e4b41ff36e229637948fb25a75f",
+    "esporas.webp": "feaa14d79796f598b5e4fe07752cdd9bf6af0ebbbcaca766e9c83351ac15fe60",
+    "bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
+    "lider_adreida.webp": "9d7a2303f2dc3dd20863eaa651ca8bc394f76b70c247226149e8e9a388274ecf"
+  },
+  "entorno": {
+    "interacciones.js": "eb98518385c623355e1fd9538af5b73e6f1703d1396729daf45dd90e4a903131",
+    "interacciones.css": "ecedbbc95bfd08d51f34b87fdc5838d76d005462ce29b3d2a5f57c144ebd15ba",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
+    "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
+  },
+  "renderer": {
+    "vista": "desktop",
+    "cartas": 128,
+    "protagonistas": 6,
+    "fuentes": [
+      {
+        "archivo": "caoz_tcg/index.html",
+        "sha256": "c2fde54ad5994ce878c875b10fecfc55033602d90154b46e38de62cc5f3042b1"
+      },
+      {
+        "archivo": "caoz_tcg/motor.js",
+        "sha256": "8d508219cf4c5db28da68594e0265e488775dcb42a6a3bd264e127c5de4142ec"
+      },
+      {
+        "archivo": "caoz_tcg/polish-aaa.js",
+        "sha256": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
+      }
+    ],
+    "funciones": [
+      {
+        "nombre": "el",
+        "linea": 2471,
+        "sha256": "e56e76c380a0a7f1b7d517b91ad2eea03f769a558b78cb06b5a1e97aad08044d"
+      },
+      {
+        "nombre": "encuadreDe",
+        "linea": 59,
+        "sha256": "6eb3ca92621f110c7ca185d3906a0960201b13777379d0435daeb84363111af2"
+      },
+      {
+        "nombre": "cap",
+        "linea": 74,
+        "sha256": "533c56ca5718f281a5d244c43a50bc07c4fced4bdcc175bc8f2cfd1ce46fc9df"
+      },
+      {
+        "nombre": "tribeLine",
+        "linea": 2364,
+        "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
+      },
+      {
+        "nombre": "ponerDibujo",
+        "linea": 2432,
+        "sha256": "49d6176090e60831a263230fb4129228b20a69ca07776b487c0dfdd5962af638"
+      },
+      {
+        "nombre": "ilustrarLider",
+        "linea": 2452,
+        "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
+      },
+      {
+        "nombre": "ilustrar",
+        "linea": 2460,
+        "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
+      },
+      {
+        "nombre": "cardEl",
+        "linea": 2736,
+        "sha256": "7ea8cf09fc81f62ac4432445d5ba315d3de248acb3b0d84b1f8695e6327e087f"
+      },
+      {
+        "nombre": "cartaDeLiderVS",
+        "linea": 4281,
+        "sha256": "750f30852f38460396485784f49bc82a6e7e295264cd16ab6c46f2cfb1fd921d"
+      }
+    ],
+    "adaptadores": [
+      "attachInspect: sin inspector ajeno a la colección",
+      "pulsacionLarga: sin inspector ajeno a la colección",
+      "G: null; no existe partida"
+    ],
+    "almacenamiento": "sólo memoria de la página",
+    "red": "sólo recursos de este servidor local"
+  },
+  "derivados": {
+    "index.html": "9ffc0050b6fa84215e5b9758c77f30767d0b7cb1c952fbbd376ecfd315065d56",
+    "generado/datos.js": "07ad2af575537e41b342e9a40cf560a4162c8f33231b62020ae71ba3b562d46b",
+    "generado/renderer.js": "bc0fd1144188f393715d689b5567146748312f18797661f1b5f12e9968b99a78",
+    "generado/base.css": "2ff8f1778627d18a6d774554230a937fc87e29452cb80684ab8d46c04bd796dd",
+    "art/encuadres.json": "82b5039bc0cd5fab857485170f663efdda8c5ae68b184e96e40366bffd15241e"
+  }
+}

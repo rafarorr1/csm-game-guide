@@ -1,0 +1,33 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "art/aldrick.webp": "f57c278b91790d44753495cea6549cad12e52e4b41ff36e229637948fb25a75f",
+    "art/bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
+    "art/destello.webp": "c0c22fe41f3f1a31385aa8d93615b4ecd136b1275fb0c4383d020f626dcaaa47",
+    "art/discipulo.webp": "5e0995f6a7d159c24649d3811a318bcc19061b6dbb4140b757d5e073c5afa5e8",
+    "art/encuadres.json": "82b5039bc0cd5fab857485170f663efdda8c5ae68b184e96e40366bffd15241e",
+    "art/esporas.webp": "feaa14d79796f598b5e4fe07752cdd9bf6af0ebbbcaca766e9c83351ac15fe60",
+    "art/lider_adreida.webp": "9d7a2303f2dc3dd20863eaa651ca8bc394f76b70c247226149e8e9a388274ecf",
+    "art/machete.webp": "ea3443061e49e5046b965d6389bf10d730a8ec8cc94420e16bf42fe021641eb6",
+    "catalogo-vacio.json": "ffa1a261b235d5e4c969a7e181376d4892f9605bca29a4a699350735c9539aec",
+    "generado/base.css": "2ff8f1778627d18a6d774554230a937fc87e29452cb80684ab8d46c04bd796dd",
+    "generado/datos.js": "07ad2af575537e41b342e9a40cf560a4162c8f33231b62020ae71ba3b562d46b",
+    "generado/renderer.js": "bc0fd1144188f393715d689b5567146748312f18797661f1b5f12e9968b99a78",
+    "index.html": "9ffc0050b6fa84215e5b9758c77f30767d0b7cb1c952fbbd376ecfd315065d56",
+    "interacciones.css": "ecedbbc95bfd08d51f34b87fdc5838d76d005462ce29b3d2a5f57c144ebd15ba",
+    "interacciones.js": "eb98518385c623355e1fd9538af5b73e6f1703d1396729daf45dd90e4a903131",
+    "juego/acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
+    "juego/arte-remoto.js": "b90f5defcd9e8e9e5b06effe367b89c2be37d73384be6d87c2add3494e415423",
+    "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
+    "procedencia.json": "78077682b0cb87022660708faab7aa178f914e433d4b3dc2872da03b6db22a26",
+    "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "fix/interacciones-cartas",
+    "sha": "c568529b736bbba9b5507f992446c3d5cb06c135"
+  },
+  "seccion": "interacciones",
+  "version": 1
+}

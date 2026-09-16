@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Interacciones de cartas · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./generado/base.css">
+<link rel="stylesheet" href="./juego/acabados.css">
+<link rel="stylesheet" href="./interacciones.css">
+<script src="./memoria.js"></script>
+<script src="./red-estatica.js"></script>
+<script src="./generado/datos.js"></script>
+<script src="./generado/renderer.js"></script>
+<script src="./juego/arte-vistas.js"></script>
+<script src="./juego/arte-remoto.js"></script>
+<script src="./interacciones.js" defer></script>
+</head>
+<body class="aaa-polish interaccionesAislada">
+<main class="interaccionesShell" aria-labelledby="interaccionesTitulo">
+  <header class="interaccionesCabecera">
+    <div>
+      <p class="interaccionesEtiqueta">REVISIÓN AISLADA · MESA DE ESCRITORIO</p>
+      <h1 id="interaccionesTitulo">Interacciones de cartas</h1>
+      <p>Esta mesa temporal no abre una partida ni modifica tu progreso. Prueba el abanico, el descarte, la habilidad de Adreida y el volumen dentro de Extras.</p>
+    </div>
+    <button type="button" class="btn sm" id="restaurarMano">Restaurar mano</button>
+  </header>
+
+  <div class="interaccionesColumnas">
+    <section class="mesaRevision" aria-labelledby="mesaRevisionTitulo">
+      <div class="mesaRevisionCabecera">
+        <div>
+          <p class="interaccionesEtiqueta">ESTADO DE PRUEBA</p>
+          <h2 id="mesaRevisionTitulo">Adreida · 2/4 PD · campo vacío</h2>
+        </div>
+        <button type="button" class="btn" id="abrirDescarte">Probar descarte</button>
+      </div>
+
+      <section class="habilidadRevision" aria-labelledby="habilidadTitulo">
+        <div id="adreidaCarta" data-vista-arte="desktop_vs" aria-label="Adreida, tu Protagonista"></div>
+        <div class="habilidadCuerpo">
+          <p class="interaccionesEtiqueta">HABILIDAD DE LÍDER</p>
+          <h3 id="habilidadTitulo">Golpe Directo <span>2 PD</span></h3>
+          <p>Un aliado gana +2 ATQ y no recibe daño de contraataque este turno.</p>
+          <div class="pdDisponible" aria-label="Puntos de Domo disponibles"><b>✦ 2</b><span>PD disponibles</span></div>
+          <div class="campoVacio" aria-label="No hay Personajes aliados en el campo"><span aria-hidden="true">+</span><b>Sin Personajes aliados</b><small>Golpe Directo necesita un objetivo en tu campo.</small></div>
+          <button type="button" class="btn gold" id="usarGolpe">Usar Golpe Directo</button>
+          <p id="resultadoGolpe" class="resultadoRegla" role="status" aria-live="polite">La validación revisa primero si existe un aliado objetivo.</p>
+        </div>
+      </section>
+
+      <section class="manoRevision" aria-labelledby="manoRevisionTitulo">
+        <div class="manoRevisionTitulo"><div><p class="interaccionesEtiqueta">HITBOX ESTABLE</p><h3 id="manoRevisionTitulo">Pasa el cursor por una carta</h3></div><p id="notaMano" role="status">La ranura recibe el cursor; la carta visual no cambia el objetivo del mouse.</p></div>
+        <div id="hand" aria-label="Mano de prueba"></div>
+      </section>
+    </section>
+
+    <aside id="extras" class="extrasRevision" aria-labelledby="extrasTitulo">
+      <p class="interaccionesEtiqueta">MENÚ</p>
+      <h2 id="extrasTitulo">Extras</h2>
+      <p>El control de audio vive aquí, fuera de la mesa y del registro.</p>
+      <section id="audioExtras" aria-labelledby="audioExtrasTitulo">
+        <div><p class="interaccionesEtiqueta">SONIDO</p><h3 id="audioExtrasTitulo">Volumen de efectos</h3></div>
+        <div class="audioControles">
+          <button type="button" id="audioSilencio" aria-pressed="false" title="Activar o silenciar los efectos de sonido">♪ Sonido</button>
+          <label for="audioVolumen"><span class="visualmenteOculto">Volumen de efectos de sonido</span><input id="audioVolumen" type="range" min="0" max="100" value="70"></label>
+        </div>
+        <p id="audioEstado" role="status">Volumen: 70 %</p>
+      </section>
+      <div class="extrasLista" aria-hidden="true"><span>Mi cuenta</span><span>Tutorial</span><span>Colección de cartas</span></div>
+      <p class="extrasNota">La demostración conserva el control real de interfaz, pero no descarga ni reproduce sonido.</p>
+    </aside>
+  </div>
+</main>
+
+<dialog id="discardDialog" aria-labelledby="discardTitulo">
+  <section class="discardPanel">
+    <header><div><p class="interaccionesEtiqueta">LÍMITE DE MANO</p><h2 id="discardTitulo">Descarta una carta</h2><p>Elige una carta. Al pasar el cursor, la vista se amplía dentro del espacio reservado del selector.</p></div><button type="button" class="btn sm" id="cerrarDescarte">Cerrar</button></header>
+    <div class="gallery selectorCartas" id="discardGallery" aria-label="Cartas disponibles para descartar"></div>
+    <p class="selectorPie" id="resultadoDescarte" role="status" aria-live="polite">La escala máxima es 1.05; el cuadro no cambia de tamaño.</p>
+  </section>
+</dialog>
+</body>
+</html>
