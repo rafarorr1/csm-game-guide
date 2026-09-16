@@ -1,0 +1,19 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "generado/datos.js": "ac72aea07550621c9ca04e9fb5f961d0a5c95ad6625082ad95de7fb32c5aec73",
+    "index.html": "b5287ffa5e3709efe211fd472d03a143f525c810a3a9d7c0832507b4011ae7e0",
+    "juego/mulligan-ui.css": "7d9ef63c168cc36845f25013e1256feada121f25596b7c0fea4800d28d47c925",
+    "juego/mulligan-ui.js": "4a8c38808ce96afc7ee9f77f37dd79cb05f7807e53a1dd2287e4048a58eeff0f",
+    "mulligan.css": "e0bf64e064a1d97895066f0336f37ce8c787c2bde85107cd5ed84c5e026fbd0c",
+    "mulligan.js": "3b843d03a8c3154adac7c3f7a6e3c73261ae740cc6d6baafcb6616726035b7b0",
+    "procedencia.json": "a939542029bd58283e944f68f6881462dee116b61a220b0a5f0d6a7fa245c2d6"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/mulligan-inicial",
+    "sha": "577caa449da80043913ede17abe1bc2cfd738716"
+  },
+  "seccion": "mulligan",
+  "version": 1
+}
