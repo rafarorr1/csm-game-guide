@@ -1,12 +1,38 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-16 · beta 261 · producción 259 · v23 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-16 · beta 262 · producción 259 · v24 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
 lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) → `README.md`
 (cómo se juega y cómo está montado, largo) → `CHANGELOG.md` (el porqué de cada cambio, con
 números) → el código.
+
+---
+
+## Estado vigente — creador inmersivo de héroe publicado en beta 262
+
+El usuario aprobó llevar a beta el creador inmersivo de héroe. `develop:ba38021fd5282f4f5874c883c7118cbdaf7a9eb1` contiene la build 262.
+
+El héroe permite elegir presentación, estatura, complexión, rostro, ojos,
+marcas, peinado, vestimenta, accesorio y equipo, además de preajustes y giro
+de la miniatura. El detalle se adapta a cada contexto: alto en el creador y
+retratos, medio en escenas y bajo sobre la mesa. Es una elección narrativa;
+no modifica mazos, cartas ni habilidades.
+
+`./publicar.sh --solo-pruebas --completo` y después
+`./publicar.sh --beta --completo` terminaron en verde. Se verificaron motor,
+seis tutoriales, campaña, creador, minijuegos, online, regresiones, caché,
+arte, catálogo, estudio y 37 sonidos.
+
+Artefactos: `gh-pages:0bc2002c97ef4d24cd69ffbc0c240b9459e12ce7` y
+`beta:f0c1060c045b0c501bd8d10ff43288299a7fe488`.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=262
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=262
+
+Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
+continúa en build 259. Una promoción posterior requiere autorización expresa.
 
 ---
 
