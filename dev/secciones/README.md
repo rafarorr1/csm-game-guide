@@ -20,6 +20,7 @@ Abrir:
 - Interacciones de cartas: <http://127.0.0.1:8878/dev/secciones/interacciones.html>
 - Epílogo de Gero: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>
 - Pitágoras: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>
+- Creador de héroe: <http://127.0.0.1:8878/dev/secciones/heroe.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -469,3 +470,21 @@ abrir, cinco revelaciones sin saltos por toques rápidos, quinta carta esperando
 explícito antes del resumen, cinco cartas visibles sin superposición/scroll y regreso al
 menú una sola vez. Probar reinicio durante la apertura, teclado y movimiento
 reducido. Se comprueban errores y recursos fallidos.
+
+## Héroe: forjado en el Domo
+
+La revisión `/heroe/` carga el mismo `campana-personaje.js` de campaña:
+normalización, malla, retratos, previsualización, pestañas y controles. El host
+aporta sólo el diálogo y botones mínimos para revisar identidad, silueta,
+rostro, atuendo, equipo, predefinidos y giro manual. No monta campaña, motor,
+mazos, IA, audio, red ni progreso real; `memoria.js` sustituye el almacenamiento
+antes de cargar el componente.
+
+Local: <http://127.0.0.1:8878/dev/secciones/heroe.html>. Al publicar:
+<https://aislados.caoz-tcg.pages.dev/heroe/>.
+
+```sh
+node dev/secciones/pruebas_heroe_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion heroe --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion heroe --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```

@@ -1143,7 +1143,7 @@ function campanaRuta(aviso=''){
   const peon=document.createElement('div');peon.className='campanaPeon';peon.setAttribute('role','img');peon.setAttribute('aria-label','Tu ficha: '+campanaNombre(p));
   peon.innerHTML=`<span class="campanaPeonCuerpo"><span>${LEADERS[p.lider].art}</span></span><span class="campanaPeonBase"></span><span class="campanaTu" aria-hidden="true">TÚ</span>`;
   peon.querySelector('.campanaTu').textContent=campanaNombre(p);
-  if(p.personaje){const color=CAMPANA_ASPECTO.color[p.personaje.color][1];peon.querySelector('.campanaPeonCuerpo').style.background=color;peon.querySelector('.campanaPeonCuerpo>span').textContent=p.personaje.equipo==='baston'?'✦':p.personaje.equipo==='libro'?'📖':'⚔';}
+  if(p.personaje){const color=CAMPANA_ASPECTO.color[p.personaje.color][1],iconos={espada:'⚔',lanza:'⚚',dagas:'†',baston:'✦',libro:'📖',arco:'➹',hacha:'⛏'},icono=iconos[p.personaje.equipo]||'⚔';peon.querySelector('.campanaPeonCuerpo').style.background=color;peon.querySelector('.campanaPeonCuerpo>span').textContent=icono;peon.dataset.equipo=p.personaje.equipo;}
   const destino=victoria!==null||p.enEncuentro&&p.etapa<6?campanaPosicionEncuentro(p.etapa):campanaPosicionFicha(p.etapa),origen=campanaPasoAnterior===null?destino:campanaPosicionEncuentro(campanaPasoAnterior);
   peon.style.left=destino[0]+'%';peon.style.top=destino[1]+'%';peon.dataset.etapa=p.etapa;
   tablero.append(lista,peon);

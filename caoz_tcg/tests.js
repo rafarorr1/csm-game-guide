@@ -2986,40 +2986,100 @@ PRUEBAS.suite('campanaCreador', async t => {
     let w=f.contentWindow;
     const reducir=()=>{const media=w.matchMedia;w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);};reducir();
     const tocar=s=>{const b=w.document.querySelector(s);t.check(!!b,pagina+': falta '+s);b.click();};
+    const elegido=(s,mensaje)=>t.check(w.document.querySelector(s)?.getAttribute('aria-pressed')==='true',pagina+': '+mensaje);
     const ajustar=async(a,h)=>{f.style.width=a+'px';f.style.height=h+'px';await sleep(60);};
     const cabe=()=>{
-      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect(),pie=d.querySelector('.campanaAcciones').getBoundingClientRect();
+      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect(),pie=d.querySelector('.campanaAcciones').getBoundingClientRect(),pestañas=d.querySelector('.creadorTabs'),rp=pestañas?.getBoundingClientRect(),opciones=d.querySelector('.creadorOpciones'),ro=opciones?.getBoundingClientRect(),opcionesVisibles=!!(ro&&ro.width&&ro.height);
       t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el creador exige scroll en '+w.innerWidth+'×'+w.innerHeight);
       t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2&&Math.abs(r.top+r.height/2-w.innerHeight/2)<2,pagina+': creador descentrado');
-      d.querySelectorAll('input,button,fieldset,.creadorVista').forEach(n=>{const b=n.getBoundingClientRect();if(!b.width||!b.height)return;t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+(n.title||n.textContent||n.id));if(n.closest('.creadorCuerpo')&&b.left<pie.right&&b.right>pie.left)t.check(b.bottom<=pie.top+1,pagina+': los controles se enciman al botón Continuar en '+w.innerWidth+'×'+w.innerHeight);});
+      t.check(pie.top>=r.top&&pie.bottom<=r.bottom+1&&pie.left>=r.left&&pie.right<=r.right+1,pagina+': las acciones del creador se recortan.');
+      if(opcionesVisibles){
+        const estilo=w.getComputedStyle(opciones);
+        t.check(ro.top>=r.top&&ro.bottom<=r.bottom+1&&ro.left>=r.left&&ro.right<=r.right+1,pagina+': el panel de opciones sale del creador.');
+        t.check(/auto|scroll/.test(estilo.overflowY),pagina+': las opciones extensas no tienen desplazamiento interno.');
+        t.check(opciones.scrollWidth<=opciones.clientWidth+1,pagina+': las opciones crean desplazamiento horizontal.');
+      }
+      d.querySelectorAll('input,button,.creadorVista,.creadorTabs,.creadorAtajos,.creadorResumen,.creadorOpciones').forEach(n=>{
+        const b=n.getBoundingClientRect();if(!b.width||!b.height)return;
+        if(n!==pestañas&&n.closest('.creadorTabs')){
+          if(b.right>rp.left+1&&b.left<rp.right-1)t.check(b.top>=rp.top-1&&b.bottom<=rp.bottom+1,pagina+': una pestaña visible sale de su carril: '+(n.title||n.textContent||n.id));
+          return;
+        }
+        if(n.closest('.creadorOpciones')){
+          if(!opcionesVisibles)return;
+          t.check(b.left>=ro.left-1&&b.right<=ro.right+1,pagina+': una opción se corta lateralmente: '+(n.title||n.textContent||n.id));
+          if(b.top>=ro.top-1&&b.bottom<=ro.bottom+1){
+            t.check(b.bottom<=pie.top+1,pagina+': una opción visible se enciman al botón Continuar en '+w.innerWidth+'×'+w.innerHeight);
+          }
+          return;
+        }
+        t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+(n.title||n.textContent||n.id));
+        if(n.closest('.creadorCuerpo')&&b.left<pie.right&&b.right>pie.left)t.check(b.bottom<=pie.top+1,pagina+': los controles se enciman al botón Continuar en '+w.innerWidth+'×'+w.innerHeight);
+      });
     };
     try{
       w.eval('campanaMemoria=null');w.localStorage.removeItem('caoz.campana.v1.prueba');w.campanaLimpiarBorrador();
       for(const [a,h] of [[1920,1080],[390,664],[320,568],[320,480],[844,390],[568,320]]){
-        await ajustar(a,h);w.campanaCrear();await sleep(30);for(const k of ['figura','colores','equipo']){tocar('[data-categoria="'+k+'"]');cabe();}
+        await ajustar(a,h);w.campanaCrear();await sleep(30);
+        const tabs=[...w.document.querySelectorAll('.creadorTabs [data-categoria]')];
+        t.igual(tabs.map(b=>b.dataset.categoria).join(','),'identidad,silueta,rostro,atuendo,equipo',pagina+': faltan áreas de personalización del héroe.');
+        const campos={identidad:'genero',silueta:'figura',rostro:'rostro',atuendo:'atuendo',equipo:'equipo'};
+        for(const [k,campo] of Object.entries(campos)){
+          tocar('[data-categoria="'+k+'"]');
+          const opciones=w.document.querySelector('.creadorOpciones');
+          t.check(opciones.dataset.grupo===k&&w.document.querySelectorAll('.creadorTabs [aria-pressed="true"]').length===1&&!!opciones.querySelector('[data-campo="'+campo+'"]'),pagina+': '+k+' no muestra sólo sus controles propios.');
+          cabe();
+        }
       }
+      await ajustar(320,480);w.campanaCrear();
+      const pestañas=w.document.querySelector('.creadorTabs');
+      t.check(/auto|scroll/.test(w.getComputedStyle(pestañas).overflowX)&&pestañas.scrollWidth>pestañas.clientWidth+1,pagina+': las cinco pestañas no se desplazan en móvil estrecho.');
+      pestañas.scrollLeft=pestañas.scrollWidth;t.check(pestañas.scrollLeft>0,pagina+': no se puede recorrer la pestaña de equipo en móvil estrecho.');
+      tocar('[data-categoria="rostro"]');const opcionesRostro=w.document.querySelector('.creadorOpciones');
+      t.check(opcionesRostro.scrollHeight>opcionesRostro.clientHeight+1,pagina+': el rostro detallado no conserva su desplazamiento interno en móvil bajo.');
+      opcionesRostro.scrollTop=opcionesRostro.scrollHeight;t.check(opcionesRostro.scrollTop>0,pagina+': no se puede recorrer las opciones faciales extensas.');cabe();opcionesRostro.scrollTop=0;
       await ajustar(390,844);w.campanaCrear();
       const input=w.document.querySelector('#creadorNombre');input.value='<Rafa>';input.dispatchEvent(new w.Event('input'));
-      input.focus();await ajustar(390,350);w.campanaTecladoCreador();t.check(w.document.querySelector('#campanaPanel').classList.contains('creadorTeclado'),pagina+': falta espacio para escribir con teclado');cabe();input.blur();await ajustar(390,844);w.campanaTecladoCreador();
-      tocar('[data-valor="guardian"]');tocar('[data-valor="sombrero"]');tocar('[data-categoria="colores"]');
-      const antes=w.document.querySelector('.creadorLienzo').toDataURL();tocar('[data-campo="color"][data-valor="azul"]');t.check(antes!==w.document.querySelector('.creadorLienzo').toDataURL(),pagina+': cambiar la capa no redibuja la miniatura');
-      tocar('[data-campo="piel"][data-valor="ebano"]');tocar('[data-categoria="equipo"]');tocar('[data-valor="libro"]');
+      input.focus();await ajustar(390,350);w.campanaTecladoCreador();t.check(w.document.querySelector('#campanaPanel').classList.contains('creadorTeclado'),pagina+': falta espacio para escribir con teclado');
+      const nombreVisible=input.getBoundingClientRect();t.check(nombreVisible.width>0&&nombreVisible.height>0,pagina+': el teclado oculta el nombre que se está editando.');cabe();input.blur();await ajustar(390,844);w.campanaTecladoCreador();
+      tocar('[data-categoria="identidad"]');tocar('[data-preset="Oráculo"]');
+      elegido('[data-campo="genero"][data-valor="no_binario"]','un arquetipo no configura la identidad.');
+      tocar('[data-campo="genero"][data-valor="femenino"]');elegido('[data-campo="genero"][data-valor="femenino"]','no se puede cambiar la presentación del héroe.');
+      tocar('[data-campo="genero"][data-valor="no_binario"]');
+      tocar('[data-categoria="silueta"]');tocar('[data-campo="figura"][data-valor="guardian"]');elegido('[data-campo="figura"][data-valor="guardian"]','no se puede elegir el arquetipo Guardián.');
+      tocar('[data-campo="estatura"][data-valor="alta"]');elegido('[data-campo="estatura"][data-valor="alta"]','no se puede elegir la estatura alta.');
+      tocar('[data-campo="cuerpo"][data-valor="robusto"]');elegido('[data-campo="cuerpo"][data-valor="robusto"]','no se puede elegir la complexión robusta.');
+      tocar('[data-categoria="rostro"]');tocar('[data-campo="rostro"][data-valor="angular"]');elegido('[data-campo="rostro"][data-valor="angular"]','no se puede elegir el rostro angular.');
+      tocar('[data-campo="piel"][data-valor="ebano"]');elegido('[data-campo="piel"][data-valor="ebano"]','no se puede elegir la piel Ébano.');
+      tocar('[data-campo="ojos"][data-valor="violeta"]');elegido('[data-campo="ojos"][data-valor="violeta"]','no se puede elegir el iris violeta.');
+      tocar('[data-campo="rasgo"][data-valor="runas"]');elegido('[data-campo="rasgo"][data-valor="runas"]','no se puede elegir las marcas arcanas.');
+      tocar('[data-campo="peinado"][data-valor="trenzas"]');elegido('[data-campo="peinado"][data-valor="trenzas"]','no se puede elegir las trenzas.');
+      tocar('[data-campo="cabello"][data-valor="plata"]');elegido('[data-campo="cabello"][data-valor="plata"]','no se puede elegir el cabello plata.');
+      tocar('[data-categoria="atuendo"]');const antes=w.document.querySelector('.creadorLienzo').toDataURL();tocar('[data-campo="atuendo"][data-valor="arcano"]');elegido('[data-campo="atuendo"][data-valor="arcano"]','no se puede elegir el ropaje arcano.');
+      tocar('[data-campo="color"][data-valor="azul"]');elegido('[data-campo="color"][data-valor="azul"]','no se puede elegir la paleta zafiro.');
+      tocar('[data-campo="accesorio"][data-valor="amuleto"]');t.check(antes!==w.document.querySelector('.creadorLienzo').toDataURL(),pagina+': cambiar el atuendo no redibuja la miniatura');
+      tocar('[data-categoria="equipo"]');tocar('[data-campo="equipo"][data-valor="arco"]');elegido('[data-campo="equipo"][data-valor="arco"]','no se puede elegir el arco de explorador.');
+      const camposPerfil=['genero','figura','estatura','cuerpo','rostro','piel','ojos','rasgo','peinado','cabello','atuendo','color','accesorio','equipo'];
+      const valoresPerfil=['no_binario','guardian','alta','robusto','angular','ebano','violeta','runas','trenzas','plata','arcano','azul','amuleto','arco'];
       const vista=w.document.querySelector('.creadorLienzo');tocar('[data-creador-continuar]');t.check(!vista.isConnected,pagina+': el creador no libera su visor');
       tocar('[aria-label="Protagonista siguiente"]');const esperado=w.campanaLeerBorrador().personaje;
+      const faltanPerfil=camposPerfil.filter((campo,i)=>esperado[campo]!==valoresPerfil[i]).map(campo=>campo+'='+esperado[campo]);
+      t.check(!faltanPerfil.length,pagina+': el creador no conserva una apariencia detallada completa ('+faltanPerfil.join(', ')+').');
       [...w.document.querySelectorAll('.campanaAcciones button')].find(n=>n.textContent==='Editar miniatura').click();t.check(w.document.querySelector('#creadorNombre').value==='<Rafa>'&&w.campanaLeerBorrador().lider==='fender',pagina+': volver a editar pierde el personaje o mazo');
       tocar('[data-creador-continuar]');t.check(w.document.querySelector('.campanaCarta.enfrente').dataset.campanaLider==='fender',pagina+': el carrusel olvida el mazo');
       tocar('.campanaConfirmar');let p=w.campanaLeer();t.check(p.lider==='fender'&&JSON.stringify(p.personaje)===JSON.stringify(esperado),pagina+': confirmar cambia la apariencia o el mazo');
       t.check(w.document.querySelector('.campanaSub').textContent.includes('<Rafa>')&&!w.document.querySelector('rafa'),pagina+': el nombre debe tratarse como texto');
       w.campanaCerrar();await cargar();w=f.contentWindow;reducir();w.abrirCampana();p=w.campanaLeer();
       t.check(JSON.stringify(p.personaje)===JSON.stringify(esperado)&&w.document.querySelector('#campanaPanel').dataset.vista==='mapa',pagina+': recargar no conserva el personaje');
-      const lienzo=w.document.querySelector('.campanaLienzo3d');t.check(JSON.parse(lienzo.dataset.personaje).equipo==='libro',pagina+': la mesa no usa la miniatura propia');
+      const lienzo=w.document.querySelector('.campanaLienzo3d');t.check(JSON.parse(lienzo.dataset.personaje).equipo==='arco'&&JSON.parse(lienzo.dataset.personaje).rasgo==='runas',pagina+': la mesa no usa la miniatura propia');
       await w.campanaSeleccionar();t.check(w.document.querySelector('.campanaCombatiente b').textContent==='<Rafa>',pagina+': el encuentro pierde el nombre');w.campanaLimpiarPreparacion(true);
       let inicio;w.startMatch=async(a,b,op)=>{inicio={a,b,op};w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana));};await w.campanaCombatir();
       t.check(inicio.a==='fender'&&inicio.op.nombres[0]==='<Rafa>'&&w.eval('P(0).leaderId')==='fender'&&w.eval('P(0).deck.length')===40,pagina+': la campaña no inicia con el mazo elegido');
       let acciones;w.cinematicaFinal=async(_a,_b,op)=>{acciones=op;return true;};w.campanaFinal(0,'Prueba de avance');t.check(w.campanaLeer().etapa===1&&w.campanaLeer().personaje.color==='azul',pagina+': una victoria pierde la apariencia');
       acciones.revancha();await sleep(20);t.check(JSON.parse(w.document.querySelector('.campanaLienzo3d').dataset.personaje).nombre==='<Rafa>',pagina+': volver a la mesa cambia la miniatura');
       w.campanaCerrar();w.campanaGuardar({version:1,id:'anterior',lider:'adreida',etapa:3});w.abrirCampana();t.check(w.campanaLeer().etapa===3&&!w.campanaLeer().personaje,pagina+': una campaña anterior debe poder continuar');
-      const normal=w.campanaNormalizarPersonaje({nombre:'x'.repeat(100),color:'url(evil)',equipo:'inventado'});t.check(normal.nombre.length===24&&normal.color==='vino'&&normal.equipo==='espada',pagina+': los datos guardados requieren valores válidos');
+      const normal=w.campanaNormalizarPersonaje({nombre:'x'.repeat(100),genero:'ajeno',estatura:'gigante',cuerpo:'fluido',rostro:'ajeno',ojos:'url(evil)',rasgo:'ajeno',atuendo:'ajeno',accesorio:'ajeno',color:'url(evil)',equipo:'inventado'});
+      t.check(normal.nombre.length===24&&normal.genero==='sin_etiqueta'&&normal.estatura==='media'&&normal.cuerpo==='atletico'&&normal.rostro==='ovalado'&&normal.ojos==='avellana'&&normal.rasgo==='ninguno'&&normal.atuendo==='ruta'&&normal.accesorio==='medallon'&&normal.color==='vino'&&normal.equipo==='espada',pagina+': los datos guardados requieren valores válidos');
     }finally{w.campanaCerrar();w.campanaLimpiarBorrador();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
@@ -3046,10 +3106,13 @@ PRUEBAS.suite('campanaMiniatura', async t => {
         const carta=d.querySelector(selector),foto=carta?.querySelector('img');
         t.check(foto&&foto.offsetWidth>=carta.clientWidth-2&&foto.offsetHeight>=carta.clientHeight-2,pagina+': el retrato no llena '+selector);
       };
-      const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',figura:'mago',peinado:'capucha',equipo:'libro',color:'azul'});
+      const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',genero:'no_binario',figura:'mago',estatura:'alta',cuerpo:'robusto',rostro:'angular',ojos:'violeta',rasgo:'runas',peinado:'trenzas',piel:'ebano',cabello:'plata',atuendo:'arcano',equipo:'arco',color:'azul',accesorio:'amuleto'});
       const retrato=w.campanaRetrato(personaje);
       t.check(retrato===w.campanaRetrato({...personaje,nombre:'Otro nombre'}),pagina+': se debe reutilizar la foto mientras no cambie la apariencia');
       t.check(retrato!==w.campanaRetrato({...personaje,equipo:'espada'}),pagina+': cambiar equipo no cambia el retrato');
+      t.check(retrato!==w.campanaRetrato({...personaje,genero:'femenino'})&&retrato!==w.campanaRetrato({...personaje,rasgo:'cicatriz'})&&retrato!==w.campanaRetrato({...personaje,estatura:'baja'}),pagina+': el retrato ignora presentación, rasgos o estatura.');
+      const alto=w.campanaGeometriaPersonaje(personaje,'alto'),medio=w.campanaGeometriaPersonaje(personaje,'medio'),bajo=w.campanaGeometriaPersonaje(personaje,'bajo');
+      t.check(alto.length>medio.length&&medio.length>bajo.length&&bajo.length>0,pagina+': el detalle de la miniatura no escala entre creador, cinemática y mesa.');
       w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
       w.campanaGuardar({version:1,id:'miniatura',lider:'fender',personaje,etapa:1,enEncuentro:true});w.campanaRuta();
       t.check(d.querySelector('.campanaTu').textContent==='<Ariadna>'&&!d.querySelector('ariadna'),pagina+': el nombre de la ficha se interpreta como HTML o sigue diciendo TÚ');
