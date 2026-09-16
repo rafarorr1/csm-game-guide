@@ -7,8 +7,8 @@
     "epilogo-gero.css": "a84b291b9857c6df1cd3897bf4fe8ef3aa2b8f9a9d506e8a7351d51e3fdbd117",
     "epilogo-gero.js": "e0cdaad7991864cba57b9f82bcc2968a905c310d9a26e766284cbdf24716e080",
     "generado/base.css": "2ff8f1778627d18a6d774554230a937fc87e29452cb80684ab8d46c04bd796dd",
-    "generado/datos.js": "0521566285ee5981ad780002e2c2373039cff1d879e806865f401178dd079e24",
-    "generado/manifiesto.json": "a54400ce81d9460599c476484e17c6a67fc7e2f858f9045b578e1e034593eddd",
+    "generado/datos.js": "3c27b1c7a2d8337ca8fc334f60cf8f24df820fcc17b686c697330d5bb9f09b74",
+    "generado/manifiesto.json": "98ab9a01cfdf8bfe816f7cc77b23d98c933bd323ec42b6425beb32548dd0f137",
     "generado/renderer.js": "bc0fd1144188f393715d689b5567146748312f18797661f1b5f12e9968b99a78",
     "index.html": "35117f6f141f83623198cd3e9a194274a284e160e9b441f4e94c117d98ff9120",
     "juego/acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
@@ -16,19 +16,19 @@
     "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "juego/campana-deseo.js": "bf96865dd19437bb24f87f31cc452c4843d6c787bb6cdf087bc9c67b095939fa",
     "juego/coleccion-modelo.js": "7f72c8a40bed034e04a369c7fa76576dc23ae5386dd3af22c1220de0aafa30c8",
-    "juego/coleccion-ui.js": "f2baf19e05dc7effca93d9e5f63fec7c1a155eff492ad79c196c3f251d451e6a",
-    "juego/coleccion.css": "1a6cdb3839409126611c956ee00123a06034aed114db33bca60aa7006e461a8b",
+    "juego/coleccion-ui.js": "3e83edf36fa71ed26019e6dd4a66357125bc8f2a337b091a9e55c75dd163899b",
+    "juego/coleccion.css": "636ade0b987da71669c769fa2b47b58d818299c4f88e404a9d4cae80b92c0804",
     "juego/sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
     "juego/sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
     "juego/sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
-    "procedencia.json": "745d512507b1d4f55d60b7712c3035e375f7b99184d533074c2bedca785913b7",
+    "procedencia.json": "6c768780e5a304d8c99fc14c187f3e84b166448058722b34161d8381607f387a",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/campana-sobres-gero",
-    "sha": "908ef6a0d49b3a8de4139584efd3e32f1a70059b"
+    "sha": "ebe638e1d507c902dd2889b96de1b32260cb7455"
   },
   "seccion": "epilogo-gero",
   "version": 1

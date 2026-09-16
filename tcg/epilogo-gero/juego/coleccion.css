@@ -588,7 +588,8 @@
 }
 #coleccionPanel.coleccionFinalCampana .coleccionInterior::before,#coleccionPanel.coleccionFinalCampana .coleccionInterior::after,#coleccionPanel.coleccionFinalCampana :is(.coleccionCabecera,.coleccionPestanas,.coleccionEstado,.coleccionPie){display:none!important}
 #coleccionPanel.coleccionFinalCampana .coleccionContenido{display:block;flex:1;min-height:0;height:100%;overflow:hidden}
-#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{position:relative;isolation:isolate;width:min(1140px,100%);height:100%;margin:0 auto;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto auto auto;align-items:center;justify-items:center;gap:clamp(7px,1.25vh,15px);overflow:hidden;text-align:center}
+@keyframes coleccionFinalCampanaEntrada{from{opacity:0;filter:brightness(.7)}to{opacity:1;filter:none}}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{position:relative;isolation:isolate;width:min(1140px,100%);height:100%;margin:0 auto;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto auto auto;align-items:center;justify-items:center;gap:clamp(7px,1.25vh,15px);overflow:hidden;text-align:center;animation:coleccionFinalCampanaEntrada .46s cubic-bezier(.2,.78,.2,1) both}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera{max-width:650px;text-wrap:balance}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera .coleccionAntetitulo{color:#e0a957;font-size:11px;letter-spacing:3.5px;text-shadow:0 0 16px #d58b3e55}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera h3{margin-top:4px;font:700 clamp(30px,4.1vw,50px)/1.06 var(--serif,Georgia,serif);color:#f5e4c0;text-shadow:0 3px 20px #000}
@@ -617,7 +618,6 @@
 #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones{display:flex;align-items:center;justify-content:center;gap:15px;min-height:47px}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-width:min(280px,65vw);min-height:47px;font-size:17px}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones [hidden]{display:none!important}
-#coleccionPanel.coleccionFinalCampana .coleccionFinalDeshacer{min-width:auto!important;min-height:35px!important;padding:5px 3px!important;border:0!important;background:none!important;box-shadow:none!important;color:#c7b3ca;font:12px var(--sans,system-ui)!important;text-decoration:underline;text-underline-offset:4px}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalGuardar{border-color:#d6aa5b;background:radial-gradient(circle at 35% 25%,#f7dc9f,#bc7b36 43%,#5c3318 77%)}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalAviso{min-height:1.4em;max-width:500px;color:#ffb6a5;font-size:12px;line-height:1.35}
 #coleccionPanel.coleccionFinalCampana .coleccionFinalFundido{position:fixed;inset:0;width:100vw;height:100dvh;z-index:10;background:#000;opacity:0;pointer-events:none;transition:opacity .46s ease}
@@ -645,7 +645,6 @@
   #coleccionPanel.coleccionFinalCampana .coleccionFinalMarca{width:25px;height:8px}
   #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones{gap:9px;min-height:42px}
   #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-width:min(235px,61vw);min-height:42px;font-size:15px}
-  #coleccionPanel.coleccionFinalCampana .coleccionFinalDeshacer{font-size:11px!important}
 }
 @media(max-height:650px){
   #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{gap:5px}
@@ -659,4 +658,5 @@
 }
 @media(prefers-reduced-motion:reduce){
   #coleccionPanel.coleccionFinalCampana :is(.coleccionFinalSobre,.coleccionFinalMarca,.coleccionFinalFundido){transition:none}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{animation:none}
 }

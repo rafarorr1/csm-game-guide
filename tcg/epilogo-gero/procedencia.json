@@ -23,8 +23,8 @@
     "sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
     "sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
     "sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
-    "coleccion-ui.js": "f2baf19e05dc7effca93d9e5f63fec7c1a155eff492ad79c196c3f251d451e6a",
-    "coleccion.css": "1a6cdb3839409126611c956ee00123a06034aed114db33bca60aa7006e461a8b",
+    "coleccion-ui.js": "3e83edf36fa71ed26019e6dd4a66357125bc8f2a337b091a9e55c75dd163899b",
+    "coleccion.css": "636ade0b987da71669c769fa2b47b58d818299c4f88e404a9d4cae80b92c0804",
     "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
     "campana-deseo.js": "bf96865dd19437bb24f87f31cc452c4843d6c787bb6cdf087bc9c67b095939fa"
   },
@@ -49,7 +49,7 @@
       },
       {
         "archivo": "caoz_tcg/motor.js",
-        "sha256": "8d508219cf4c5db28da68594e0265e488775dcb42a6a3bd264e127c5de4142ec"
+        "sha256": "ac7139801e681e176c4bd9644f99949102d65fcaceaeb109fb31823f8797da3a"
       },
       {
         "archivo": "caoz_tcg/polish-aaa.js",
@@ -74,7 +74,7 @@
       },
       {
         "nombre": "tribeLine",
-        "linea": 2364,
+        "linea": 2380,
         "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
       },
       {
@@ -113,7 +113,7 @@
   },
   "derivados": {
     "index.html": "35117f6f141f83623198cd3e9a194274a284e160e9b441f4e94c117d98ff9120",
-    "generado/datos.js": "0521566285ee5981ad780002e2c2373039cff1d879e806865f401178dd079e24",
+    "generado/datos.js": "3c27b1c7a2d8337ca8fc334f60cf8f24df820fcc17b686c697330d5bb9f09b74",
     "generado/renderer.js": "bc0fd1144188f393715d689b5567146748312f18797661f1b5f12e9968b99a78",
     "generado/base.css": "2ff8f1778627d18a6d774554230a937fc87e29452cb80684ab8d46c04bd796dd"
   }

@@ -9,7 +9,7 @@
     },
     {
       "archivo": "caoz_tcg/motor.js",
-      "sha256": "8d508219cf4c5db28da68594e0265e488775dcb42a6a3bd264e127c5de4142ec"
+      "sha256": "ac7139801e681e176c4bd9644f99949102d65fcaceaeb109fb31823f8797da3a"
     },
     {
       "archivo": "caoz_tcg/polish-aaa.js",
@@ -34,7 +34,7 @@
     },
     {
       "nombre": "tribeLine",
-      "linea": 2364,
+      "linea": 2380,
       "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
     },
     {
