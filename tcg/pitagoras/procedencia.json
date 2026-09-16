@@ -1,0 +1,171 @@
+{
+  "seccion": "pitagoras",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "progresoReal": false,
+  "proposito": "Revisar El último puente y la conducta/ciclo de las seis cartas del Editor sin montar un combate completo.",
+  "puente": {
+    "archivo": "caoz_tcg/pitagoras-mundos.js",
+    "funcion": "carrera",
+    "linea": 56,
+    "sha256": "d5a340de99011c993d722faecfb5c4ae71179c237e91503f870eedbed5c4d7a0"
+  },
+  "conducta": {
+    "ritual": {
+      "funcion": "startTurn",
+      "linea": 1690,
+      "sha256": "e271361cb0a2eb59f7a68d16e7ded01566cfe1ac53bc1dfe5612abab6be63bfc"
+    },
+    "pesadilla": {
+      "reglaLinea": 179,
+      "marcado": {
+        "funcion": "playFromHand",
+        "linea": 1876,
+        "sha256": "3a23db212e93ffa6857438ba3e568c9c3a94871e745961b8ceb2ff338a6ea380"
+      }
+    },
+    "prioridad": {
+      "funcion": "aiScore",
+      "linea": 2746,
+      "sha256": "df22399df679ab528129cdad2320c0b790b1720779e21cefda845f0338495ecb"
+    }
+  },
+  "cartas": [
+    "editorcosecha",
+    "editorcorte",
+    "editorcuadro",
+    "editorcarrera",
+    "editororbita",
+    "editorduelo"
+  ],
+  "componentes": {
+    "pitagoras-pruebas.js": "8b9a585e77ac268669dbe80a01ac863d7017f3209f6b3a3e2ec463349c21a206",
+    "pitagoras-mundos.js": "b6de42f88200df3de9ab4b9e4856e537495e52638368eebc63d1d66f4c24583e",
+    "pitagoras-cine.js": "a2a7cf22ff3cb3e556e183f0f9bdd7a072e9185f1abac242ee33c4cae6cd09d1",
+    "pitagoras-pixel.js": "b4b9eebbc892571af81181e62b039949048659a36e183c5c336c8c85fb2ea6d2"
+  },
+  "recursos": {
+    "art/esbirro-editor-v219.webp": "87fab064c69e6e34dcdd9ecc9f0b78b4ed693d18066877f685cfea830ade66c3"
+  },
+  "entorno": {
+    "pitagoras.js": "2fac63228a24ccbc54981b924bf4fae2b852d211913245743b0dbfa785cc165b",
+    "pitagoras.css": "e966b9e6d3eb0204c0340cf5fdfbc91755ce025fded32f1d44098b97d29b9c68",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae"
+  },
+  "fixture": {
+    "version": 2,
+    "puente": {
+      "tipo": "carrera",
+      "duracion": 20,
+      "semilla": 16461829,
+      "nombre": "Talesyn",
+      "personaje": {
+        "nombre": "Talesyn"
+      }
+    },
+    "cartas": [
+      "editorcosecha",
+      "editorcorte",
+      "editorcuadro",
+      "editorcarrera",
+      "editororbita",
+      "editorduelo"
+    ],
+    "conducta": {
+      "ritual": {
+        "pdInicial": 2,
+        "pisoAntesDeCurva": 1,
+        "incrementoPorTurno": 1,
+        "tope": 10,
+        "bloqueaBonoSegundo": true,
+        "bonoSegundoJugador": 1
+      },
+      "pesadilla": {
+        "unaPorTurno": true,
+        "marca": "editorPesadillaTurno",
+        "contador": "turnNo",
+        "marcaAntesDePrueba": true
+      },
+      "prioridad": {
+        "respaldo": 40,
+        "penalizacionPorPDFaltante": 100,
+        "cartas": [
+          {
+            "id": "editorcosecha",
+            "base": 45,
+            "bonos": []
+          },
+          {
+            "id": "editorcorte",
+            "base": 53,
+            "bonos": [
+              {
+                "id": "editorcorte",
+                "condicion": "foe.field.filter(u=>u.alive).length>=2",
+                "valor": 5
+              }
+            ]
+          },
+          {
+            "id": "editorcuadro",
+            "base": 48,
+            "bonos": []
+          },
+          {
+            "id": "editorcarrera",
+            "base": 58,
+            "bonos": [
+              {
+                "id": "editorcarrera",
+                "condicion": "p.field.length===0",
+                "valor": 12
+              }
+            ]
+          },
+          {
+            "id": "editororbita",
+            "base": 50,
+            "bonos": []
+          },
+          {
+            "id": "editorduelo",
+            "base": 42,
+            "bonos": [
+              {
+                "id": "editorduelo",
+                "condicion": "p.field.length>=3",
+                "valor": 6
+              }
+            ]
+          }
+        ]
+      },
+      "procedencia": {
+        "ritual": {
+          "funcion": "startTurn",
+          "linea": 1690,
+          "sha256": "e271361cb0a2eb59f7a68d16e7ded01566cfe1ac53bc1dfe5612abab6be63bfc"
+        },
+        "pesadilla": {
+          "reglaLinea": 179,
+          "marcado": {
+            "funcion": "playFromHand",
+            "linea": 1876,
+            "sha256": "3a23db212e93ffa6857438ba3e568c9c3a94871e745961b8ceb2ff338a6ea380"
+          }
+        },
+        "prioridad": {
+          "funcion": "aiScore",
+          "linea": 2746,
+          "sha256": "df22399df679ab528129cdad2320c0b790b1720779e21cefda845f0338495ecb"
+        }
+      }
+    }
+  },
+  "derivados": {
+    "index.html": "c39076f2a2ac47eee356c6cea8878535b176476615cbe58a3e7ddf09f6e70496",
+    "generado/datos.js": "cffe5d26b91469aa3ee40382d3aed0e0025e18abfeefc8e55c258424542a4e5c"
+  }
+}

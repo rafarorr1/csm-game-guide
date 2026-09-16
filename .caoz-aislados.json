@@ -21,6 +21,10 @@
       "fuente": "c568529b736bbba9b5507f992446c3d5cb06c135",
       "ruta": "tcg/interacciones"
     },
+    "pitagoras": {
+      "fuente": "ebe638e1d507c902dd2889b96de1b32260cb7455",
+      "ruta": "tcg/pitagoras"
+    },
     "rey": {
       "fuente": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf",
       "ruta": "tcg/rey"
