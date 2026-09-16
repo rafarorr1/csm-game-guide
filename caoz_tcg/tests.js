@@ -4568,6 +4568,76 @@ PRUEBAS.suite('regresiones', async t => {
     T.G.active = 0;
     t.nota('los Hechizos Rápidos pasan por los mismos efectos que cualquier Hechizo (Inspiración)');
   }
+
+  /* ADREIDA, EL SELECTOR Y LA MANO — tres fallos de interacción que se veían
+     sólo al apuntar con el ratón. La regla vive en el motor; la pantalla se
+     limita a presentarla, y la mano conserva una ranura fija aunque la carta
+     visible se haga grande. */
+  {
+    const razon='Golpe Directo requiere un Personaje aliado en tu campo.';
+    window.tutEnd();
+    clearPrompt();SEL=null;TGT=null;NET.guest=false;
+    T.newGame('adreida','fender');
+    const p=T.P(0);
+    T.G.active=0;T.G.phase='principal';T.G.over=false;T.G.resolving=false;T.G.tutorial=null;
+    p.pd=2;p.leaderUsed=false;p.field=[];
+    t.igual(T.whyNotLeader(0),razon,
+      'Adreida con 2 PD y sin Personajes debe explicar que le falta un aliado');
+    t.check(!T.canUseLeader(0),'Golpe Directo no debe quedar disponible sin un aliado');
+    document.querySelector('#toast').replaceChildren();T.render();
+    document.querySelector('#lead0').click();
+    t.check(document.querySelector('#toast').lastElementChild?.textContent===razon,
+      'el clic del Líder debe mostrar el requisito, no que faltan 2 PD');
+    t.check(p.pd===2&&!p.leaderUsed,
+      'una Habilidad bloqueada no puede gastar sus 2 PD ni marcarse como usada');
+
+    T.newGame('fender','adreida');
+    const rival=T.P(1);
+    T.G.active=1;T.G.phase='principal';T.G.over=false;rival.pd=2;rival.leaderUsed=false;rival.field=[];
+    const remoto=await window.netDoAct({k:'leader'});
+    t.check(!remoto.ok&&remoto.why===razon,
+      'la partida online debe devolver el mismo requisito de Golpe Directo');
+
+    T.newGame('adreida','fender');
+    T.G.active=0;T.G.phase='principal';T.G.over=false;T.G.resolving=false;
+    const ids=['discipulo','titaus','matildus','machete','taumaturgia','auxilio','armadura','horton','lucius'];
+    T.P(0).hand=[...ids];T.P(0).pd=10;T.render();
+    const ranuras=[...document.querySelectorAll('#hand > .handSlot')];
+    t.check(ranuras.length===ids.length&&ranuras.every(r=>r.querySelector('.card')),
+      'cada carta de la mano debe vivir dentro de una ranura de hitbox estable');
+    const primera=ranuras[0],segunda=ranuras[1],carta=primera.querySelector('.card');
+    primera.dispatchEvent(new MouseEvent('pointerover',{bubbles:true}));
+    t.check(primera.classList.contains('is-hover')&&getComputedStyle(carta).pointerEvents==='none',
+      'la ranura, no la carta ampliada, debe recibir el ratón');
+    segunda.dispatchEvent(new MouseEvent('pointerover',{bubbles:true}));
+    t.check(!primera.classList.contains('is-hover')&&segunda.classList.contains('is-hover'),
+      'al cambiar de ranura sólo cambia una carta activa, sin alternar entre vecinas');
+    document.querySelector('#hand').dispatchEvent(new Event('pointerleave'));
+    t.check(!segunda.classList.contains('is-hover'),'al salir de la mano debe apagarse su único hover activo');
+
+    const elegir=window.pickCard(0,ids,'Descarta una carta');
+    const selector=document.querySelector('#ovPanel .gallery.selectorCartas');
+    t.check(selector?.children.length===ids.length&&getComputedStyle(selector).display==='grid',
+      'el descarte debe usar una cuadrícula reservada, no la galería que crece');
+    const elegible=selector.querySelector('.card');
+    elegible.dispatchEvent(new Event('mouseenter'));
+    t.check(elegible.onmouseenter===null&&!document.querySelector('#inspect').classList.contains('on'),
+      'el selector de descarte no debe abrir un inspector flotante al pasar el ratón');
+    elegible.click();
+    t.igual(await elegir,ids[0],'el selector estable debe seguir resolviendo el descarte');
+
+    await sleep(20);
+    t.check(document.querySelectorAll('#audioExtras .audioControles').length===1
+      &&!document.querySelector('#menuFoot .audioControles')&&!document.querySelector('#panel .audioControles'),
+      'el control de sonido debe montarse una sola vez dentro de Extras');
+    const [movil,audio,escritorio]=await Promise.all(['movil.html','audio-domo.js','index.html'].map(x=>fetch(x).then(r=>r.text())));
+    t.check(/id="audioExtras"/.test(movil)&&/whyNotLeader\(ME\)/.test(movil)
+      &&/getElementById\('audioExtras'\)/.test(audio),
+      'móvil y el módulo de audio deben usar el mismo host y la misma razón de Líder');
+    t.check(/const ranura=\$\('#hand'\)\.children\[\+q\.get\('hover'\)\|\|0\];\s*const c=ranura\?\.querySelector\('\.card'\);/.test(escritorio),
+      'la captura de mano debe ampliar la carta interna y no volver a escalar su hitbox');
+    t.nota('Adreida explica su requisito; mano, descarte y sonido conservan un espacio estable');
+  }
 });
 
 /* ===========================================================================

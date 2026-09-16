@@ -43,6 +43,12 @@ SECCIONES = {
         'pruebas': ('pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs',
                     'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs'),
     },
+    'interacciones': {
+        'nombre': 'Interacciones de cartas',
+        'exportador': 'interacciones-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers'},
+        'pruebas': ('pruebas_interacciones_exportacion.mjs',),
+    },
 }
 URL = 'https://aislados.caoz-tcg.pages.dev'
 NO_ENCONTRADO = b'<!doctype html><html lang="es"><meta charset="utf-8"><title>No encontrado</title><body><h1>Esta ruta no existe</h1><a href="/">Volver a las secciones</a></body></html>\n'

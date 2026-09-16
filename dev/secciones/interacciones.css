@@ -1,0 +1,74 @@
+/* La visual deriva de las cartas de escritorio; estas reglas sólo montan la
+   revisión y fijan las dos superficies que se corrigen. */
+html{height:auto;min-height:100%;overflow:auto;background:#0d0a13}
+body.interaccionesAislada{min-height:100%;height:auto;overflow:auto;padding:clamp(14px,3vw,38px);background:radial-gradient(ellipse 70% 48% at 50% -4%,#4b346633,transparent 70%),#0d0a13;color:var(--ink);user-select:auto}
+body.interaccionesAislada::after{z-index:0}
+.interaccionesAislada *{box-sizing:border-box}
+.interaccionesShell{position:relative;z-index:1;width:min(1440px,100%);margin:auto;display:flex;flex-direction:column;gap:18px}
+.interaccionesCabecera{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;padding:0 8px}
+.interaccionesCabecera>div{max-width:790px}
+.interaccionesEtiqueta{margin:0 0 5px;color:#b8a3cc;font:700 9px/1.25 var(--sans);letter-spacing:2.2px;text-transform:uppercase}
+.interaccionesCabecera h1{margin:0;color:#f0d796;font:700 clamp(29px,4vw,48px)/1.04 var(--serif);letter-spacing:.4px}
+.interaccionesCabecera p:not(.interaccionesEtiqueta){margin:9px 0 0;color:#bcb0cf;line-height:1.5}
+.interaccionesColumnas{display:grid;grid-template-columns:minmax(0,1fr) minmax(250px,310px);gap:16px;align-items:start}
+.mesaRevision,.extrasRevision{background:linear-gradient(180deg,#211833eF,#110c1df2);border:1px solid #4b3b66;border-radius:18px;box-shadow:0 20px 55px #0008,inset 0 1px #ffffff0c}
+.mesaRevision{padding:clamp(14px,2.1vw,26px);overflow:visible}
+.mesaRevisionCabecera{display:flex;justify-content:space-between;align-items:center;gap:14px;padding-bottom:15px;border-bottom:1px solid #ffffff12}
+.mesaRevisionCabecera h2,.extrasRevision h2{margin:0;color:#e7c475;font:700 22px/1.2 var(--serif)}
+.habilidadRevision{display:grid;grid-template-columns:190px minmax(0,1fr);gap:19px;padding:19px 0 22px;align-items:stretch}
+#adreidaCarta{display:grid;place-items:center;min-height:255px}
+#adreidaCarta .vscard{position:relative;width:174px;min-height:245px;overflow:hidden;border:2px solid var(--gold2);border-radius:14px;background:linear-gradient(178deg,#2c2143,#140e22);box-shadow:0 16px 32px #0008}
+#adreidaCarta .lface{height:178px;font-size:65px;position:relative}
+#adreidaCarta .lname{top:150px;text-align:center;font-size:18px;padding:4px 8px 5px;background:linear-gradient(90deg,transparent,rgba(8,5,14,.94) 14%,rgba(8,5,14,.94) 86%,transparent)}
+#adreidaCarta .larch{text-align:center;padding:25px 10px 12px;color:#bdb0d4;font-size:9px}
+.habilidadCuerpo{padding:2px 4px 0;display:flex;flex-direction:column;align-items:flex-start}
+.habilidadCuerpo h3{margin:0;color:#f4e2b4;font:700 22px/1.2 var(--serif)}
+.habilidadCuerpo h3 span{display:inline-block;margin-left:7px;padding:2px 7px;border:1px solid #5277ad;border-radius:99px;color:#a7d1ff;background:#15233a;font:700 11px/1 var(--sans);vertical-align:middle}
+.habilidadCuerpo>p:not(.interaccionesEtiqueta):not(.resultadoRegla){margin:6px 0 10px;color:#c8bcde;line-height:1.45}
+.pdDisponible{display:flex;align-items:center;gap:8px;margin:0 0 10px;padding:6px 10px;border:1px solid #285d96;border-radius:9px;background:linear-gradient(180deg,#1b2942,#121d30);color:#bcdcff;font-size:12px}
+.pdDisponible b{color:#5db2ff;font:800 18px/1 var(--serif)}
+.campoVacio{width:100%;display:grid;grid-template-columns:30px 1fr;column-gap:9px;align-items:center;margin:2px 0 13px;padding:9px 11px;border:1px dashed #765d88;border-radius:10px;background:#100b1b88;color:#d3c6e2}
+.campoVacio span{grid-row:1/3;display:grid;place-items:center;width:26px;height:26px;border-radius:8px;color:#9a80ac;background:#281b39;font-size:18px}
+.campoVacio b{font-size:12px}.campoVacio small{color:#9f91b6;font-size:11px}
+.resultadoRegla{min-height:21px;margin:10px 0 0;color:#b9adc9;font-size:12px;line-height:1.4}
+.resultadoRegla.error{color:#ffaaa2}.resultadoRegla.ok{color:#9de1b6}
+.manoRevision{position:relative;border-top:1px solid #ffffff12;padding-top:15px;min-height:300px;overflow:visible}
+.manoRevisionTitulo{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+.manoRevisionTitulo h3{margin:0;color:#ebdbb8;font:700 17px/1.2 var(--serif)}
+.manoRevisionTitulo>p{max-width:310px;margin:0;color:#a99bbb;font-size:11px;line-height:1.42;text-align:right}
+/* `.handSlot` se queda inmóvil: sólo la carta que contiene se transforma.
+   La carta no captura el puntero y ninguna vecina se desplaza; por eso su
+   crecimiento no puede alternar el objetivo entre cartas superpuestas. */
+.interaccionesAislada #hand{--n:6;position:relative;z-index:2;display:flex;justify-content:center;align-items:flex-start;gap:6px;min-height:calc(var(--chm) + 76px);padding:34px 20px 34px;overflow:visible;perspective:1100px}
+.interaccionesAislada #hand .handSlot{position:relative;display:block;flex:0 0 var(--cwm);width:var(--cwm);height:var(--chm);margin-inline:calc(-1 * var(--solape-js, 0px));isolation:isolate;cursor:pointer;outline:none;z-index:var(--slot-z,1)}
+.interaccionesAislada #hand .handSlot>.card{position:absolute;inset:0;width:var(--cwm);height:var(--chm);margin:0;pointer-events:none;transform-origin:50% 240%;transform:rotateX(10deg) rotate(calc((var(--i,0) - (var(--n) - 1) / 2) * 2.9deg)) translateY(calc((var(--i,0) - (var(--n) - 1) / 2) * (var(--i,0) - (var(--n) - 1) / 2) * 2.2px));transition:transform .22s cubic-bezier(.22,.61,.36,1),box-shadow .2s,border-color .15s}
+.interaccionesAislada #hand .handSlot.is-hover{z-index:60}
+.interaccionesAislada #hand .handSlot.is-hover>.card{--tx:calc((var(--mx,.5) - .5) * 16deg);--ty:calc((var(--my,.5) - .5) * -12deg);transform-origin:50% 100%;transform:rotateX(var(--ty)) rotateY(var(--tx)) rotate(0deg) translateY(-14px) scale(1.7);box-shadow:0 34px 64px #000d,0 0 0 1px var(--tipo-cl,var(--gold)),0 0 46px #0009}
+.interaccionesAislada #hand .handSlot:focus-visible>.card{box-shadow:0 0 0 2px var(--gold),0 0 22px #e6bb5270}
+.extrasRevision{padding:22px;position:sticky;top:16px}
+.extrasRevision h2{font-size:30px}.extrasRevision>p:not(.interaccionesEtiqueta){margin:7px 0 16px;color:#bfb0cb;line-height:1.45;font-size:13px}
+#audioExtras{display:flex;flex-direction:column;gap:11px;padding:15px 14px;border:1px solid #655237;border-radius:12px;background:linear-gradient(180deg,#231b2c,#15101f);box-shadow:inset 0 1px #fff1}
+#audioExtras h3{margin:0;color:#ead6a3;font:700 18px/1.2 var(--serif)}
+#audioExtras .audioControles{display:flex;align-items:center;gap:7px;margin:0}
+#audioExtras .audioControles button{font:inherit;font-size:11px;color:#ddca9b;background:#18121c;border:1px solid #655237;border-radius:6px;padding:6px 8px;cursor:pointer;min-height:30px;white-space:nowrap}
+#audioExtras input{width:100%;height:27px;accent-color:#d5b56c}
+#audioExtras label{flex:1;display:flex}
+#audioExtras p:last-child{margin:0;color:#aaa0bc;font-size:11px}
+.extrasLista{display:grid;gap:7px;margin:16px 0 14px}.extrasLista span{padding:10px 11px;border:1px solid #453458;border-radius:8px;color:#897d9d;background:#120d1c;font-size:12px}
+.extrasNota{padding-top:12px;border-top:1px solid #ffffff0d;color:#8f849f!important;font-size:11px!important}
+.visualmenteOculto{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+/* Selector de descarte: la escala se limita a 1.05 y cada celda reserva el
+   aire necesario. La transformación no refluye el diálogo ni crea barras. */
+#discardDialog{width:min(760px,calc(100vw - 24px));max-height:calc(100dvh - 24px);margin:auto;padding:0;overflow:visible;border:1px solid var(--gold2);border-radius:16px;color:var(--ink);background:linear-gradient(180deg,#241a34,#160f24);box-shadow:0 24px 70px #000d}
+#discardDialog::backdrop{background:#06040ad9;backdrop-filter:blur(3px)}
+.discardPanel{padding:clamp(14px,2.5vw,22px);overflow:visible}
+.discardPanel>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:7px}.discardPanel h2{margin:0;color:var(--gold);font:700 23px/1.2 var(--serif)}.discardPanel header p:not(.interaccionesEtiqueta){max-width:560px;margin:5px 0 0;color:#b7aac8;font-size:12px;line-height:1.45}
+.gallery.selectorCartas{--selector-w:126px;display:grid;grid-template-columns:repeat(auto-fit,minmax(var(--selector-w),1fr));align-items:start;justify-items:center;gap:14px;padding:13px 11px 15px;overflow:visible}
+.gallery.selectorCartas .card{width:var(--selector-w);height:calc(var(--selector-w) * 1.397);margin:0;transform:none;transform-origin:50% 50%;transition:transform .18s cubic-bezier(.22,.61,.36,1),box-shadow .18s}
+.gallery.selectorCartas .card:hover{transform:translateY(-3px) scale(1.05);z-index:2;box-shadow:0 20px 35px #000c,0 0 0 1px var(--tipo-cl,var(--gold))}
+.gallery.selectorCartas .card:hover .txt{display:block;overflow:hidden}
+.selectorPie{min-height:18px;margin:0;color:#a99bbb;font-size:11px;text-align:center}
+@media(max-width:920px){.interaccionesColumnas{grid-template-columns:1fr}.extrasRevision{position:static;display:grid;grid-template-columns:1fr minmax(250px,1fr);gap:12px;align-items:start}.extrasRevision>p:first-of-type,.extrasRevision>h2{grid-column:1/-1}.extrasRevision .extrasLista{margin:0}.extrasRevision .extrasNota{margin:0!important}.habilidadRevision{grid-template-columns:170px minmax(0,1fr)}}
+@media(max-width:620px){body.interaccionesAislada{padding:12px}.interaccionesCabecera{align-items:flex-start;flex-direction:column}.mesaRevision{padding:14px}.mesaRevisionCabecera,.manoRevisionTitulo{align-items:flex-start;flex-direction:column}.manoRevisionTitulo>p{text-align:left}.habilidadRevision{grid-template-columns:1fr}.habilidadCuerpo{padding:0}.habilidadRevision #adreidaCarta{display:none}.interaccionesAislada #hand{--solape-js:31px;justify-content:flex-start;padding-inline:8px;min-height:270px}.interaccionesAislada #hand .handSlot{flex-basis:var(--cwm);margin-inline:-31px}.interaccionesAislada #hand .handSlot:first-child{margin-left:0}.interaccionesAislada #hand .handSlot.is-hover>.card{transform:rotateX(0deg) rotateY(0deg) translateY(-9px) scale(1.28)}.extrasRevision{display:block}.extrasRevision .extrasLista{margin:16px 0 14px}.gallery.selectorCartas{--selector-w:112px;gap:10px;padding:12px 7px}.discardPanel>header{flex-direction:column}.discardPanel>header .btn{align-self:flex-end;margin-top:-39px}}
+@media(max-height:650px){.gallery.selectorCartas{--selector-w:92px;gap:8px;padding-block:8px}.discardPanel{padding:12px}.discardPanel h2{font-size:19px}.discardPanel header p:not(.interaccionesEtiqueta){font-size:10px}.gallery.selectorCartas .card{height:calc(var(--selector-w) * 1.397)}}
+@media(prefers-reduced-motion:reduce){.interaccionesAislada #hand .handSlot>.card,.gallery.selectorCartas .card{transition:none}}

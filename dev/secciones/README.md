@@ -1,6 +1,6 @@
 # Secciones aisladas
 
-Este entorno ofrece vistas acotadas de Colección, El Rey, apertura de sobres y Cuenta. No monta el juego dentro de un iframe,
+Este entorno ofrece vistas acotadas de Colección, El Rey, apertura de sobres, Cuenta e interacciones de cartas. No monta el juego dentro de un iframe,
 no crea una partida y no carga IA, online, campaña, sonido ni service worker.
 Los cambios hechos aquí no afectan el progreso del jugador.
 
@@ -17,6 +17,7 @@ Abrir:
 
 - Escritorio: <http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=sobres>
 - Móvil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=sobres>
+- Interacciones de cartas: <http://127.0.0.1:8878/dev/secciones/interacciones.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -35,6 +36,27 @@ las dependencias se derivan del código actual en cada solicitud.
 Cerrar el diálogo muestra los controles del laboratorio. Allí se puede cambiar
 la presentación, los datos de prueba y la serie del muestrario. Cada recarga
 construye de nuevo esos datos temporales.
+
+## Interacciones de cartas
+
+La revisión de interacciones está en `/interacciones/`. Es una mesa de escritorio
+reducida, con seis cartas reales de mano y Adreida con exactamente 2 PD y ningún
+Personaje aliado. La ranura estable (`.handSlot`) recibe el cursor y la carta
+visual no, sin mover ninguna vecina, para revisar que el crecimiento no alterna
+el hover entre cartas superpuestas. El botón «Probar descarte» abre el selector con
+`.gallery.selectorCartas`: su escala máxima es 1.05 y el espacio de cada celda
+queda reservado, incluso en una ventana baja. «Usar Golpe Directo» explica el
+requisito de objetivo antes de hablar de PD. El volumen aparece dentro de
+`#audioExtras`, que es hijo de Extras; no se reproduce ni descarga audio en la
+vista aislada.
+
+La sección deriva el renderer y CSS de escritorio, seis datos de carta y los
+originales locales de arte. No carga `motor.js`, una partida, el audio ni el
+progreso. Su comprobación concreta es:
+
+```sh
+node dev/secciones/pruebas_interacciones_exportacion.mjs
+```
 
 ## Cuenta: acceso obligatorio y continuidad offline
 

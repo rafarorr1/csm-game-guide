@@ -839,6 +839,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
     <button class="btn" id="mRules">Reglas</button>
     <button class="btn" id="mRecords">Tus récords</button>
   </div>
+  <div id="audioExtras" aria-label="Ajustes de sonido"></div>
   <button class="btn" id="mBorrarProgreso" aria-haspopup="dialog">Borrar mi progreso</button>
   <button class="btn" id="extrasBack">← Menú principal</button>
 </div>
@@ -1453,7 +1454,7 @@ function pickCard(s,ids,title,cancellable){
   if(s!==ME||G.auto) return Promise.resolve(cancellable?null:ids[0]);
   return new Promise(res=>{
     const p=$('#ovPanel'); p.innerHTML=`<h3>${title}</h3><p>Toca una carta para elegirla; mantenla pulsada para leerla.</p>`;
-    const box=el('div','gallery');
+    const box=el('div','gallery selectorCartas');
     ids.forEach(id=>{ const c=cardEl(id,{ladoArte:s}); c.onclick=()=>{ cerrarOv(); res(id); }; box.appendChild(c); });
     p.appendChild(box);
     if(cancellable){ const b=el('button','btn','Pasar'); b.style.marginTop='12px'; b.style.width='100%'; b.onclick=()=>{ cerrarOv(); res(null); }; p.appendChild(b); }
@@ -1642,7 +1643,7 @@ function renderLeaders(){
   [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
     const p=P(side), L=p.L, mine=side===ME;
-    const usable=mine&&!TGT&&!G.resolving&&!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME&&!G.over&&(!L.habReq||L.habReq(G,side))&&tutCan('leader');
+    const usable=mine&&!TGT&&!G.resolving&&canUseLeader(side)&&tutCan('leader');
     const target=!mine&&((TGT&&isTargetable('face'))||(SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     host.innerHTML=`<div class="lider${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}" id="lead${side}">
       ${rostroLider(p.leaderId,side)}
@@ -1657,7 +1658,7 @@ function renderLeaders(){
       if(G.resolving) return;
       if(!tutCan('leader')){ tutNope(); return; }
       if(usable){ if(NET.guest){ gIntent('leader'); return; } useLeader(ME); }
-      else if(G.active===ME&&!p.leaderUsed&&p.pd<L.habCost) toast(`Necesitas ${L.habCost} PD`);
+      else if(G.active===ME) toast(whyNotLeader(ME));
       else fichaLider(side);
     };
     pulsacionLarga(e, ()=>fichaLider(side));
