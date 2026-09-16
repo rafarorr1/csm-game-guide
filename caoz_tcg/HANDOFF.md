@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-13 · beta 259 · producción 257 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-15 · beta 260 · producción 259 · v22 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,31 @@ números) → el código.
 
 ---
 
-## Estado vigente — acceso obligatorio publicado en beta 259
+## Estado vigente — interacciones publicadas en beta 260
+
+El usuario aprobó llevar únicamente cuatro correcciones de interacción a beta.
+El PR 26 quedó integrado en develop en el commit
+8e0af8969167b20baad1af685052047593b29093. Las pruebas completas y la
+publicación beta terminaron con salida 0, incluidos los seis tutoriales.
+
+La mano usa zonas de puntero estables; el selector de descarte ya no cambia el
+tamaño del pop-up al hacer hover; Golpe Directo de Adreida explica que requiere
+un Personaje aliado cuando no hay uno en el campo y no consume PD; y el volumen
+vive dentro de Extras en escritorio y móvil. No se integró la propuesta visual
+inspirada en Anno.
+
+Artefactos: gh-pages:156cb8c98ad368ff7c8fabfe0a884f6a9edfe366 y
+beta:2e256acf372023ce7ee45fbb5e82943c987500f4. El publicador comparó byte a
+byte web, móvil, módulos, caché, arte y sonido en GitHub Pages y Cloudflare.
+
+Web: https://beta.caoz-tcg.pages.dev/?b=260
+Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=260
+
+Producción no se modificó. main conserva
+783abe230bd5a1e81ae5a1e788175c0084951fb6 y sigue sirviendo build 259. Una
+promoción posterior requiere autorización expresa para esta misma build.
+
+## Registro anterior — acceso obligatorio publicado en beta 259
 
 El usuario aprobó llevar la revisión a beta. El [PR 23](https://github.com/rafarorr1/csm-game-guide/pull/23)
 quedó integrado en `develop:b1c493803d2acb16f59ec30a4698bad09e625b0d`.
