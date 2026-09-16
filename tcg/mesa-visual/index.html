@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Mesa de combate · revisión aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./mesa-visual.css">
+<script src="./mesa-visual.js" defer></script>
+</head>
+<body class="mesaVisual">
+  <main class="mesaRevision" aria-labelledby="mesaTitulo">
+    <header class="revisionBar">
+      <div>
+        <p>REVISIÓN AISLADA · MESA MÓVIL</p>
+        <h1 id="mesaTitulo">Mesa de combate</h1>
+      </div>
+      <button class="restaurarDemo" id="restaurarDemo" type="button">Restaurar</button>
+    </header>
+
+    <section class="arena" aria-describedby="mesaNota" aria-label="Mesa de combate vertical: propuesta visual de una partida de Caoz">
+      <div class="marco" aria-hidden="true"></div>
+      <div class="luz luzSuperior" aria-hidden="true"></div>
+      <div class="luz luzInferior" aria-hidden="true"></div>
+
+      <section class="territorio territorioRival" aria-labelledby="rivalNombre">
+        <header class="jugadorCabecera">
+          <div class="retrato retratoRival" aria-hidden="true"><span>TH</span></div>
+          <div>
+            <p>OPONENTE · EL DOMO</p>
+            <h2 id="rivalNombre">Thal</h2>
+          </div>
+          <span class="turnoPunto" aria-label="Es el turno de Thal"></span>
+        </header>
+
+        <div class="alma almaRival" aria-label="Thal tiene 26 Almas">
+          <span>ALMA</span>
+          <strong id="almaRival">26</strong>
+          <small>RESISTENCIA DEL DOMO</small>
+        </div>
+
+        <div class="acciones accionesRival" aria-label="Lectura de las opciones del rival">
+          <button type="button" class="accion accionHabilidad" data-side="rival" data-action="habilidad" aria-pressed="false">
+            <span class="simbolo" aria-hidden="true">✦</span><span>HABILIDAD</span>
+          </button>
+          <button type="button" class="accion accionDefensa" data-side="rival" data-action="defensa" aria-pressed="false">
+            <span class="simbolo" aria-hidden="true">⬡</span><span>DEFENSA</span>
+          </button>
+          <button type="button" class="accion accionAtaque" data-side="rival" data-action="ataque" aria-pressed="false">
+            <span class="simbolo" aria-hidden="true">ϟ</span><span>ATAQUE</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="ejeCentral" aria-label="Estado del turno">
+        <div class="ejeOrnamento" aria-hidden="true"></div>
+        <div class="placaTurno">
+          <span class="placaTitulo">TURNO 4 · FASE DE BATALLA</span>
+          <button class="reloj" id="relojDemo" type="button" aria-pressed="false" aria-label="Pausar el temporizador de demostración">
+            <span aria-hidden="true">◷</span> <strong id="relojTexto">00:48</strong>
+          </button>
+          <span class="partida">DUELO 2 <i aria-hidden="true"></i><i aria-hidden="true"></i><i aria-hidden="true"></i></span>
+        </div>
+      </section>
+
+      <aside class="diamantePd" aria-label="Poder del duelo">
+        <span>PD</span>
+        <strong id="pdTexto">3</strong>
+        <small>/4</small>
+      </aside>
+
+      <section class="territorio territorioHeroe" aria-labelledby="heroeNombre">
+        <header class="jugadorCabecera jugadorHeroe">
+          <div class="retrato retratoHeroe" aria-hidden="true"><span>RA</span></div>
+          <div>
+            <p>PROTAGONISTA · ALIANZA</p>
+            <h2 id="heroeNombre">Rafaela</h2>
+          </div>
+          <span class="recursoCabecera" aria-label="Tres de cuatro puntos de duelo">3 <b>/4 PD</b></span>
+        </header>
+
+        <div class="alma almaHeroe" aria-label="Rafaela tiene 18 Almas">
+          <span>ALMA</span>
+          <strong id="almaHeroe">18</strong>
+          <small>FUERZA DE LA ALIANZA</small>
+        </div>
+
+        <div class="acciones accionesHeroe" aria-label="Acciones de Rafaela. Atajo A para ataque, D para defensa y H para habilidad.">
+          <button type="button" class="accion accionAtaque" data-side="heroe" data-action="ataque" aria-pressed="false">
+            <span class="simbolo" aria-hidden="true">ϟ</span><span>ATAQUE</span><kbd>A</kbd>
+          </button>
+          <button type="button" class="accion accionDefensa" data-side="heroe" data-action="defensa" aria-pressed="false">
+            <span class="simbolo" aria-hidden="true">⬡</span><span>DEFENSA</span><kbd>D</kbd>
+          </button>
+          <button type="button" class="accion accionHabilidad" data-side="heroe" data-action="habilidad" aria-pressed="false">
+            <span class="simbolo" aria-hidden="true">✦</span><span>HABILIDAD</span><kbd>H</kbd>
+          </button>
+        </div>
+
+        <section class="mano" aria-label="Mano de Rafaela: cinco cartas disponibles">
+          <p class="manoEtiqueta"><span></span> TU MANO <span></span></p>
+          <div class="cartas" id="cartasDemo">
+            <button class="carta carta1" type="button" aria-label="Inspeccionar Discípulo del Umbral">
+              <small>PERSONAJE · 1</small><strong>DISCÍPULO</strong><i aria-hidden="true">✢</i><em>2 / 3</em>
+            </button>
+            <button class="carta carta2" type="button" aria-label="Inspeccionar Destello de Guerra">
+              <small>EVENTO · 2</small><strong>DESTELLO</strong><i aria-hidden="true">⌁</i><em>RÁPIDO</em>
+            </button>
+            <button class="carta carta3" type="button" aria-label="Inspeccionar Machete de Glep">
+              <small>EQUIPO · 1</small><strong>MACHETE</strong><i aria-hidden="true">╱</i><em>+2 ATQ</em>
+            </button>
+            <button class="carta carta4" type="button" aria-label="Inspeccionar Esporas del Demonio">
+              <small>EVENTO · 3</small><strong>ESPORAS</strong><i aria-hidden="true">❋</i><em>EFECTO</em>
+            </button>
+            <button class="carta carta5" type="button" aria-label="Inspeccionar Aldrick Boss">
+              <small>PERSONAJE · 4</small><strong>ALDRICK</strong><i aria-hidden="true">♜</i><em>5 / 5</em>
+            </button>
+          </div>
+        </section>
+      </section>
+
+      <p class="lecturaEstado" id="lecturaEstado" aria-live="polite">Visualiza una acción para evaluar su prioridad dentro de la mesa.</p>
+    </section>
+
+    <footer class="notaRevision" id="mesaNota">
+      <strong>Prototipo visual, sin partida.</strong> La interacción sólo demuestra jerarquía, foco y atajos; no usa motor, IA, red ni progreso.
+    </footer>
+  </main>
+</body>
+</html>

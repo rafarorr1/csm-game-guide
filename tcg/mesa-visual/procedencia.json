@@ -1,0 +1,17 @@
+{
+  "seccion": "mesa-visual",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "progresoReal": false,
+  "proposito": "Revisar una dirección visual móvil para la mesa: Domo esmeralda, protagonistas borgoña, Alma monumental y controles de combate.",
+  "recursos": {
+    "mesa-visual.js": "fed61986cccd7205cf20a4e2196fb9608ee56d4ad9e21aa00801d50907cd4874",
+    "mesa-visual.css": "52ac4e59ee78a275daf7e283729f05a1f58bf92b63c9acd4485cc97e6f64cf0b"
+  },
+  "fuente": {
+    "html": "e8f05011f873eb138fc19bddbb62416d5845a2e249657682e61811e0b1af8b3b",
+    "interaccion": "controles demostrativos locales; no ejecutan reglas del TCG"
+  }
+}

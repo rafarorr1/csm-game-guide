@@ -1,0 +1,16 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "index.html": "e8f05011f873eb138fc19bddbb62416d5845a2e249657682e61811e0b1af8b3b",
+    "mesa-visual.css": "52ac4e59ee78a275daf7e283729f05a1f58bf92b63c9acd4485cc97e6f64cf0b",
+    "mesa-visual.js": "fed61986cccd7205cf20a4e2196fb9608ee56d4ad9e21aa00801d50907cd4874",
+    "procedencia.json": "3ac1b7df25cdc4ea46780600a6ed370122675c7f9c9ccb6ddc335efd23e60811"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/mulligan-inicial",
+    "sha": "0e2f3302ffc97538a177dac86f1de479de311b96"
+  },
+  "seccion": "mesa-visual",
+  "version": 1
+}
