@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Héroe del Domo · revisión aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./heroe.css">
+<script src="./memoria.js" defer></script>
+<script src="./generado/datos.js" defer></script>
+<script src="./heroe-host.js" defer></script>
+<script src="./juego/campana-personaje.js" defer></script>
+<script src="./heroe.js" defer></script>
+</head>
+<body class="heroeAislado">
+<main id="heroeLaboratorio">
+  <header class="heroeAviso">
+    <div><p>REVISIÓN AISLADA · CREADOR DE HÉROE</p><strong>Forja tu miniatura</strong></div>
+    <button type="button" id="heroeReiniciar">Reiniciar muestra</button>
+  </header>
+  <div id="heroeHost"></div>
+  <p id="heroeEstado" role="status" aria-live="polite">Apariencia temporal: no hay partida, IA, red ni progreso del jugador.</p>
+</main>
+</body>
+</html>

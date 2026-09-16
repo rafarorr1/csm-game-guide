@@ -1,0 +1,34 @@
+{
+  "seccion": "heroe",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "progresoReal": false,
+  "proposito": "Revisar el creador real de héroe: identidad, silueta, rostro, atuendo, equipo y giro manual.",
+  "componentes": {
+    "campana-personaje.js": "3f6736241a3798e4e2cd15dafaa382afeb1fe2038c58fc0db1799c4f081db2fd"
+  },
+  "entorno": {
+    "heroe.css": "91f96e9a4cc912a1e33fcfb4154638fc2cec56aaa34c13c989142f0c2430fec4",
+    "heroe-host.js": "1a22a3fb9a37f0070883d04938d36ff83ad9edefaef5cf26e29e34de57c78203",
+    "heroe.js": "2da6359c89a2b2e9e814158bacd8b16b2f84f82e6ee2a9417b565fa6f92a78f6",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae"
+  },
+  "fixture": {
+    "lideres": [
+      "mohamed",
+      "fender",
+      "adreida",
+      "gero",
+      "rafaela",
+      "talesin"
+    ],
+    "fuenteMotor": "ac7139801e681e176c4bd9644f99949102d65fcaceaeb109fb31823f8797da3a"
+  },
+  "derivados": {
+    "plantillaHeroe": "53d49d92f0a03ff86506d5cdc98285b1d8506601bc17fce926a1a662a8b339cc",
+    "index.html": "98916fb8d5a600f8c2668e8ee5b2fa619ce099b1be0adf3f2b23395fcf71266f",
+    "generado/datos.js": "31d36a96372eeeff74d3e9c11ee9a66f96ab3430bf2061c7b3aa6f290a309781"
+  }
+}

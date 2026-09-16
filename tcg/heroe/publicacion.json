@@ -1,0 +1,20 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "generado/datos.js": "31d36a96372eeeff74d3e9c11ee9a66f96ab3430bf2061c7b3aa6f290a309781",
+    "heroe-host.js": "1a22a3fb9a37f0070883d04938d36ff83ad9edefaef5cf26e29e34de57c78203",
+    "heroe.css": "91f96e9a4cc912a1e33fcfb4154638fc2cec56aaa34c13c989142f0c2430fec4",
+    "heroe.js": "2da6359c89a2b2e9e814158bacd8b16b2f84f82e6ee2a9417b565fa6f92a78f6",
+    "index.html": "98916fb8d5a600f8c2668e8ee5b2fa619ce099b1be0adf3f2b23395fcf71266f",
+    "juego/campana-personaje.js": "3f6736241a3798e4e2cd15dafaa382afeb1fe2038c58fc0db1799c4f081db2fd",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
+    "procedencia.json": "a8dbdfebb7c2fbf2395aa3fe54293ab5cbcea2a77d16bfce263390c56fbc5b67"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/hero-inmersivo",
+    "sha": "54682d432ce1498b2d802b8597cca1a4cc3c8cfd"
+  },
+  "seccion": "heroe",
+  "version": 1
+}
