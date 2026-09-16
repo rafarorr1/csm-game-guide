@@ -170,10 +170,13 @@ const C = (id,o)=>{ o.id=id; CARDS[id]=o; return o; };
 // siguen las mismas reglas que cualquier Personaje. No forman parte de los
 // seis mazos ni de la colección del jugador.
 const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro','editorcarrera','editororbita','editorduelo'];
-for(const [id,n,tipo,art,a,h] of [['editorcosecha','La cosecha','isometrico','☠',2,3],['editorcorte','El corte final','laseres','✧',3,2],['editorcuadro','Fuera de cuadro','fps','◈',3,2],['editorcarrera','El último puente','carrera','⌁',2,4],['editororbita','Órbita muerta','orbital','✦',2,3],['editorduelo','La memoria del Editor','duelo','▣',2,4]]){
+for(const [id,n,tipo,art,a,h,editorPrioridad] of [['editorcosecha','La cosecha','isometrico','☠',2,4,45],['editorcorte','El corte final','laseres','✧',3,3,53],['editorcuadro','Fuera de cuadro','fps','◈',3,3,48],['editorcarrera','El último puente','carrera','⌁',3,5,58],['editororbita','Órbita muerta','orbital','✦',3,4,50],['editorduelo','La memoria del Editor','duelo','▣',3,4,42]]){
   C(id,{n,t:'personaje',c:2,a,h,tr:['Pesadilla'],r:0,set:'editor',art,editorJuego:tipo,
-    x:'<b>Al jugar:</b> '+(tipo==='duelo'?'memoria · 20 segundos · 3 vidas. Cada pareja acertada quita 1 Alma a Pitágoras. Cada fallo consume 1 vida de la prueba; al tercer fallo pierdes 5 Alma. ':'prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. ')+'<b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
-    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on});
+    editorPrioridad,
+    x:'<b>Al jugar:</b> '+(tipo==='duelo'?'memoria · 20 segundos · 3 vidas. Cada pareja acertada quita 1 Alma a Pitágoras. Cada fallo consume 1 vida de la prueba; al tercer fallo pierdes 5 Alma. ':'prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. ')+(tipo==='carrera'?'El puente acelera pronto y su recta final combina columnas con sellos. ':'')+'<b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
+    // Una prueba a la vez conserva la presión del Editor legible: con 4+ PD
+    // la IA no encadena dos minijuegos en el mismo turno.
+    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on&&g.campana.editorPesadillaTurno!==g.turnNo});
 }
 
 
@@ -1700,10 +1703,19 @@ async function startTurn(s){
     return true;
   });
 
-  // Fase de Puntos
+  // Fase de Puntos. El Editor no deja un turno vacío de cortesía: su ritual
+  // eleva sólo su primera reserva a 2 PD y después vuelve a la curva normal.
+  let ritualInicial=false;
+  if(G.campana?.jefeSecreto&&s===FOE&&!G.campana.editorRitual){
+    p.pdMax=Math.max(1,p.pdMax);G.campana.editorRitual=true;
+    ritualInicial=true;
+    log('▣ <b>Ritual del Editor</b>: Pitágoras prepara <b>2 PD</b> desde el inicio.','sys');
+  }
   p.pdMax=Math.min(10,p.pdMax+1);
   let pd=Math.max(0,p.pdMax-(p.pdTax||0))+p.banked+(p.pdBonus||0);
-  if(G.turnNo===2 && s===G.second) pd+=1;
+  // El segundo jugador recibe normalmente un PD extra en su primera vuelta,
+  // pero el Ritual ya define de forma explícita los 2 PD iniciales del Editor.
+  if(G.turnNo===2 && s===G.second&&!ritualInicial) pd+=1;
   p.pd=pd; p.banked=0; p.pdTax=0; p.pdBonus=0;
 
   p.field.forEach(u=>{
@@ -1877,6 +1889,10 @@ async function playFromHand(s, id, forcedTargets){
   }
   P(s).pd-=cost;
   P(s).hand.splice(P(s).hand.indexOf(id),1);
+  // La restricción sólo pertenece al jefe final. Se fija al pagar la carta,
+  // antes de abrir la prueba, para que la IA no pueda encadenar otra cuando
+  // vuelva de un minijuego ni si la presentación se cancela.
+  if(c.editorJuego&&s===FOE&&partida.campana?.jefeSecreto)partida.campana.editorPesadillaTurno=partida.turnNo;
   /* De una Trampa no se dice cuál es: va boca abajo. Esta línea anunciaba toda
      carta jugada con su nombre y no era privada, así que en línea le cantaba al
      rival la Trampa que acababas de poner. Era la fuga que quedaba. */
@@ -2731,7 +2747,16 @@ function aiTargets(s, groups, self, card){
 function aiScore(id,s){
   const c=CARDS[id], p=P(s), foe=P(1-s);
   const cost=costOf(id,s);
-  if(c.editorJuego)return 24;
+  if(c.editorJuego){
+    // Pitágoras abre con el puente y reserva los retos más lentos para cuando
+    // su mesa ya puede castigar el error. No recibe cartas ni reglas nuevas:
+    // sólo usa mejor las seis Pesadillas que ya tiene.
+    let v=c.editorPrioridad||40;
+    if(c.id==='editorcarrera'&&p.field.length===0)v+=12;
+    if(c.id==='editorcorte'&&foe.field.filter(u=>u.alive).length>=2)v+=5;
+    if(c.id==='editorduelo'&&p.field.length>=3)v+=6;
+    return v-Math.max(0,cost-p.pd)*100;
+  }
   let v=0;
   switch(c.t){
     case 'personaje':

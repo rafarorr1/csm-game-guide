@@ -157,6 +157,7 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
   opacity:0;translate:0 16px;pointer-events:none;transition:opacity .5s, translate .5s}
 .fin.botones .finbtns{opacity:1;translate:0 0;pointer-events:auto}
 .fin .finbtns .btn{font-size:16px;padding:13px 24px;min-width:150px;text-align:center}
+.fin .finbtns.solo{justify-content:center}
 .coleccionElegirPremio{display:block;box-sizing:border-box;max-width:100%;min-height:44px;margin:10px auto;padding:9px 18px;border:1px solid #caa967b3;border-radius:12px;background:linear-gradient(135deg,#473320,#21170f);box-shadow:inset 0 1px #fff2d526,0 3px 14px #0005;color:#f5dcab;font:700 13px/1.3 var(--sans,sans-serif);letter-spacing:.3px;text-align:center;cursor:pointer;touch-action:manipulation}
 .coleccionElegirPremio:hover:not(:disabled){background:linear-gradient(135deg,#6a4c2d,#312013);border-color:#f0d08a}
 .coleccionElegirPremio:focus-visible{outline:2px solid #ffe6a5;outline-offset:3px}
@@ -168,6 +169,7 @@ body.fin-on #app{filter:saturate(.35) brightness(.55);transition:filter 1s}
    espacio del premio y deja Elegir sin recibir toques aunque se vea detrás. */
 @media(max-width:600px) and (max-height:650px){
   .fin .finbtns{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 16px)}
+  .fin .finbtns.solo{grid-template-columns:minmax(170px,260px)}
   .fin .finbtns .btn{min-width:0;min-height:44px;font-size:12px;line-height:1.25;padding:8px 10px}
 }
 .fin.botones{cursor:default}
@@ -351,7 +353,9 @@ async function cinematicaFinal(winner, why, acciones){
     const nombre=s=>s===ME?campanaNormalizarPersonaje(G.campana.personaje).nombre:P(s).L.n;
     capa.querySelector('.sello>i').textContent='Turnos: '+Math.ceil(G.turnNo/2)+' · '+nombre(winner)+' ❤️ '+alma(winner)+' · '+nombre(1-winner)+' ❤️ '+alma(1-winner);
   }
-  const premio=crearBotonPremioFinal(G,winner,{esperar:true});
+  // El final ordinario de Gero continúa al deseo: allí se entrega el premio.
+  // Domo y los demás finales conservan su CTA en esta misma pantalla.
+  const premio=acciones?.ocultarPremio?null:crearBotonPremioFinal(G,winner,{esperar:true});
   if(premio)capa.querySelector('.sello').appendChild(premio);
   if(!gano)capa.appendChild(el('div', 'toca', 'TOCA PARA SALTAR'));
 
@@ -374,10 +378,16 @@ async function cinematicaFinal(winner, why, acciones){
     return true;
   };
   const bRev = el('button', 'btn gold', acciones?.textoPrincipal || '↺ Revancha');
-  const bMenu = el('button', 'btn', '← Menú principal');
   bRev.onclick = e => { e.stopPropagation(); cerrar('revancha').then(ok => ok && acciones && acciones.revancha && acciones.revancha()); };
-  bMenu.onclick = e => { e.stopPropagation(); cerrar('menu').then(ok => ok && acciones && acciones.menu && acciones.menu()); };
-  btns.appendChild(bRev); btns.appendChild(bMenu);
+  btns.appendChild(bRev);
+  if(acciones?.sinMenu){
+    // En el epílogo de Gero el menú sólo llega desde la confirmación de sobres.
+    btns.classList.add('solo');
+  }else{
+    const bMenu = el('button', 'btn', '← Menú principal');
+    bMenu.onclick = e => { e.stopPropagation(); cerrar('menu').then(ok => ok && acciones && acciones.menu && acciones.menu()); };
+    btns.appendChild(bMenu);
+  }
   capa.appendChild(btns);
 
   // un toque salta la animación y trae los botones ya
@@ -709,12 +719,88 @@ function campanaCrearNiebla(etapa,retirada=false){
 let campanaMemoria=null,campanaLanzando=false,campanaEnsayoGero=null;
 function campanaIdSobreValido(id){return typeof id==='string'&&/^[a-zA-Z0-9_-]{1,100}$/.test(id)&&!['__proto__','constructor','prototype'].includes(id);}
 function campanaSobresPendientes(p){return Array.isArray(p?.sobresPendientes)?[...new Set(p.sobresPendientes.filter(campanaIdSobreValido))]:[];}
+/* El recorrido normal acaba con Gero y pasa por el deseo. Los ensayos y el
+   sexto sello no entran aquí: conservan su ascenso o su premio histórico. */
+function campanaEsFinalOrdinario(p){
+  return !!p&&p.etapa===CAMPANA_RIVALES.length&&!p.secreto&&!p.prueba&&!p.pruebaEditor&&!p.sinPremios;
+}
+/* Las versiones anteriores marcaban una campaña como premiada al crear el
+   recibo, pero no registraban la elección de sus tres grupos. Sólo usamos esta
+   lectura para migrar estados SIN el marcador nuevo: en un epílogo actual, una
+   ausencia temporal del recibo siempre debe conservarse para recuperación. */
+function campanaPremioLegadoYaResuelto(id){
+  if(!campanaIdSobreValido(id))return false;
+  try{
+    const coleccion=window.CAOZ_COLECCION,estado=coleccion?.leer?.(),pendientes=coleccion?.recompensasPendientes?.();
+    return Array.isArray(estado?.campanasPremiadas)&&estado.campanasPremiadas.includes(id)&&Array.isArray(pendientes)&&
+      !pendientes.some(r=>r?.origen==='campana'&&r.referencia===id);
+  }catch(_){return false;}
+}
+/* Antes del epílogo actual podían quedar tres formas del final normal de
+   Gero: tras el golpe (mesaPendiente=5), tras «Completar campaña» o con el
+   deseo ya enviado. Todas son el mismo recorrido ordinario, nunca un secreto
+   ni un ensayo. El deseo ya enviado puede retomar directamente sus sobres. */
+function campanaMigrarEpilogoGero(p){
+  if(!campanaEsFinalOrdinario(p)||p.deseoFinalGero===true)return false;
+  // Si una versión anterior ya entregó y consumió sus sobres, no la atrapamos
+  // en el selector nuevo. El creador de campaña queda disponible como antes.
+  if(campanaPremioLegadoYaResuelto(p.id))return false;
+  p.deseoFinalGero=true;
+  if(p.deseo){p.recompensaFinalLista=true;p.epilogoGeroMigrado=true;}
+  return true;
+}
+function campanaEsVictoriaOrdinariaDeGero(g,p){
+  return typeof G!=='undefined'&&G===g&&!!g?.campana&&!g.campana.jefeSecreto&&!g.campana.prueba&&
+    g.campana.etapa===CAMPANA_RIVALES.length-1&&p?.id===g.campana.id&&
+    campanaEsFinalOrdinario(p)&&p.deseoFinalGero===true&&
+    p.mesaPendiente===CAMPANA_RIVALES.length-1&&!p.deseo;
+}
+/* Limpia el último sello sin redibujar el mapa. También sirve al reanudar una
+   campaña cerrada en la Victoria, donde ya no existe la partida original. */
+function campanaPasarAlDeseo(p,partida=null){
+  const id=p?.id;
+  if(!campanaEsFinalOrdinario(p)||p.deseoFinalGero!==true||p.mesaPendiente!==CAMPANA_RIVALES.length-1||p.deseo||
+    (partida&&(!campanaEsVictoriaOrdinariaDeGero(partida,p)||G!==partida))||
+    typeof window.campanaAbrirDeseo!=='function')return false;
+  // La marca sigue viva durante el deseo: si se recarga antes del fundido,
+  // permite retomar este epílogo sin confundirlo con el ascenso antiguo.
+  delete p.mesaPendiente;p.enEncuentro=false;campanaGuardar(p);
+  const actual=campanaLeer();
+  if(!campanaEsFinalOrdinario(actual)||actual.id!==id||actual.mesaPendiente!=null||
+    actual.deseoFinalGero!==true||(partida&&G!==partida))return false;
+  try{window.campanaAbrirDeseo();return true;}catch(_){return false;}
+}
+function campanaEnfocarMenu(){
+  requestAnimationFrame(()=>{
+    const destino=document.querySelector('#menu.on #mCampana:not([disabled]),#menu.on #mPlay:not([disabled]),#menu.on button:not([disabled])');
+    destino?.focus({preventScroll:true});
+  });
+}
+/* El modelo de Colección sella la elección en la misma escritura atómica que
+   retira el recibo. Si la campaña no alcanzó a borrar su salvoconducto (por
+   ejemplo, al recargar entre ambas operaciones), podemos terminar sin volver
+   a pedir el deseo ni fabricar otros sobres. */
+function campanaSobresFinalElegidos(id){
+  try{return window.CAOZ_COLECCION?.campanaElegida?.(id)===true;}catch(_){return false;}
+}
+function campanaTerminarEpilogoGero(p,{conservarMarcador=false}={}){
+  if(!conservarMarcador){
+    delete p.deseoFinalGero;delete p.recompensaFinalLista;delete p.epilogoGeroMigrado;campanaGuardar(p,{sinEntregar:true});
+  }
+  // Colección cierra su diálogo justo después del callback. El foco se agenda
+  // para ese siguiente cuadro, nunca sobre el tablero oculto que lo abrió.
+  campanaCerrar();showScreen('menu');limpiarTransicionMenu();campanaEnfocarMenu();return true;
+}
 function recompensaDeVictoria(g,winner){
   if(!g?.over||winner!==ME)return null;
   const domo=window.CAOZ_COLECCION_JUEGO?.recompensaFinal?.(g,winner);if(domo)return domo;
   const p=typeof campanaLeer==='function'?campanaLeer():null;
+  const finalSecreto=['final','completado'].includes(p?.secreto);
+  // Antes de concederlo, el recorrido normal debe haber llegado al fundido
+  // posterior al deseo. Las pruebas beta conservan su comportamiento aislado.
+  const finalOrdinario=!p?.secreto&&(p?.prueba===true||!!p?.deseo&&p.recompensaFinalLista===true);
   if(winner!==ME||!g?.campana||p?.id!==g.campana.id||p.etapa!==CAMPANA_RIVALES.length||
-    !campanaPuedeRecibirSobre(p)||(p.secreto&&!['final','completado'].includes(p.secreto)))return null;
+    !campanaPuedeRecibirSobre(p)||!(finalSecreto||finalOrdinario))return null;
   return {origen:'campana',referencia:p.id,cantidad:3,
     guardado:!!window.CAOZ_COLECCION?.leer()?.campanasPremiadas?.includes(p.id)};
 }
@@ -778,6 +864,58 @@ function campanaElegirPremioAlVolver(id,partida){
   try{return window.abrirRecompensaSobres({origen:'campana',referencia:id})!==false;}
   catch(_){return false;} // El premio sigue accesible desde Colección.
 }
+/* Puente entre el deseo y la selección a pantalla completa. La marca se
+   persiste antes de tocar el inventario: si la interfaz no puede abrirse, la
+   recuperación posterior encuentra el mismo recibo, sin conceder otros tres. */
+window.campanaAbrirSobresFinal=function(id,partida){
+  let p=campanaLeer();
+  const baseProgreso=actual=>actual?.id===id&&actual?.deseo&&actual.deseoFinalGero===true&&
+    campanaEsFinalOrdinario(actual)&&!(typeof NET!=='undefined'&&NET.on);
+  const partidaActiva=actual=>baseProgreso(actual)&&typeof G!=='undefined'&&G===partida&&
+    partida?.over===true&&partida.campanaResuelta===true&&
+    partida?.campana?.id===id&&partida.campana.etapa===CAMPANA_RIVALES.length-1&&
+    !partida.campana.jefeSecreto&&!partida.campana.prueba;
+  // Una recarga puede ocurrir entre «Deseo concedido» y el selector. Se admite
+  // sólo el recibo marcado y sin otra partida viva; nunca una campaña ajena.
+  const recuperable=actual=>baseProgreso(actual)&&(typeof G==='undefined'||!G||(!G.campana&&G.over===true));
+  const baseVigente=actual=>partidaActiva(actual)||recuperable(actual);
+  if(!baseVigente(p))return false;
+  // Una migración puede haberse escrito mientras Colección aún cargaba. Al
+  // verla después, el premio viejo ya resuelto debe finalizar, no abrir una
+  // recuperación perpetua de un recibo que dejó de existir correctamente.
+  if(p.epilogoGeroMigrado===true&&campanaPremioLegadoYaResuelto(id))return campanaTerminarEpilogoGero(p);
+  if(campanaSobresFinalElegidos(id))return campanaTerminarEpilogoGero(p);
+  if(p.recompensaFinalLista!==true){
+    // La marca se escribe sólo después de comprobar la identidad de partida.
+    p.recompensaFinalLista=true;campanaGuardar(p,{sinEntregar:true});p=campanaLeer();
+  }
+  const vigente=actual=>baseVigente(actual)&&actual.recompensaFinalLista===true;
+  if(!vigente(p))return false;
+  if(!campanaEntregarSobre(p)){
+    // campanaEntregarSobre deja el recibo en sobresPendientes si el inventario
+    // aún no está listo; guardarlo permite reintentarlo tras recargar.
+    campanaGuardar(p,{sinEntregar:true});return false;
+  }
+  const pendiente=window.CAOZ_COLECCION?.recompensasPendientes?.().some(r=>r.origen==='campana'&&r.referencia===id);
+  if(!pendiente||typeof window.abrirRecompensaSobres!=='function')return false;
+  let confirmado=false;
+  const onConfirmar=datos=>{
+    const actual=campanaLeer();
+    if(confirmado||!vigente(actual))return false;
+    // Una salida de recuperación no prueba que los sobres se hayan elegido.
+    // Conservamos el marcador para reintentarla (o detectar después el sello
+    // atómico de Colección) en vez de hacer que tres sobres desaparezcan.
+    if(datos?.interrumpida)return campanaTerminarEpilogoGero(actual,{conservarMarcador:true});
+    confirmado=true;
+    // La terna ya fue persistida por Colección. Ya no hace falta conservar el
+    // salvoconducto de recuperación de este epílogo.
+    // La selección controla su fundido final; éste es el único camino normal
+    // que descubre el menú después de elegir los tres sobres.
+    return campanaTerminarEpilogoGero(actual);
+  };
+  try{return window.abrirRecompensaSobres({origen:'campana',referencia:id,finalCampana:true,onConfirmar})!==false;}
+  catch(_){return false;}
+};
 function campanaPuedeRecibirSobre(p,soloRecuperar=false){
   return !!p&&p.version===1&&campanaIdSobreValido(p.id)&&!!LEADERS[p.lider]&&Number.isInteger(p.etapa)&&p.etapa>=0&&p.etapa<=CAMPANA_RIVALES.length&&
     p!==campanaEnsayoGero&&!p.pruebaEditor&&(!p.sinPremios||soloRecuperar)&&(!p.prueba||campanaPruebaDisponible());
@@ -790,7 +928,12 @@ function campanaEntregarSobre(p){
   // Un ensayo puede transportar recibos de un recorrido anterior real.
   // Recuperarlos no autoriza el premio del ensayo que los conserva.
   if(!puedeRecibir&&!ids.length)return false;
-  if(puedeRecibir&&p.etapa===CAMPANA_RIVALES.length&&(!p.secreto||['final','completado'].includes(p.secreto))&&!ids.includes(p.id))ids.push(p.id);
+  const finalSecreto=['final','completado'].includes(p.secreto);
+  // El deseo no abre sobres hasta llegar al primer negro. Así la animación no
+  // puede saltarse la selección ni adelantar el recibo; los ensayos siguen
+  // siendo una ruta beta independiente y los secretos terminan como antes.
+  const finalOrdinario=!p.secreto&&(p.prueba===true||!!p.deseo&&p.recompensaFinalLista===true);
+  if(puedeRecibir&&p.etapa===CAMPANA_RIVALES.length&&(finalSecreto||finalOrdinario)&&!ids.includes(p.id))ids.push(p.id);
   const pendientes=ids.filter(id=>window.CAOZ_COLECCION?.concederSobreCampana?.(id)!==true);
   if(pendientes.length)p.sobresPendientes=pendientes;else delete p.sobresPendientes;
   return ids.length>0&&!pendientes.length;
@@ -803,12 +946,16 @@ function campanaLeer(){
   if(dato.personaje)dato.personaje=campanaNormalizarPersonaje(dato.personaje);
   if(dato.prueba!==true)delete dato.prueba;
   if(dato.etapa!==6||!['ascenso','revelacion','reto','esporas','trono','combate','final','completado'].includes(dato.secreto))delete dato.secreto;
+  if(dato.deseoFinalGero!==true||dato.etapa!==6||dato.secreto||dato.prueba||dato.pruebaEditor||dato.sinPremios||
+    (dato.mesaPendiente!=null&&dato.mesaPendiente!==CAMPANA_RIVALES.length-1))delete dato.deseoFinalGero;
+  if(dato.recompensaFinalLista!==true||dato.etapa!==6||dato.secreto||!dato.deseo)delete dato.recompensaFinalLista;
+  if(dato.epilogoGeroMigrado!==true||dato.deseoFinalGero!==true||dato.recompensaFinalLista!==true||!dato.deseo)delete dato.epilogoGeroMigrado;
   // También la primera lectura tras recargar es el avance vivo. Las escenas
   // comprueban su identidad para cancelar sólo al empezar otra campaña.
   if(!campanaEnsayoGero)campanaMemoria=dato;
   return dato;
 }
-function campanaGuardar(dato){
+function campanaGuardar(dato,{sinEntregar=false}={}){
   // Una simulación no se convierte en victoria real por recargar después.
   if(dato&&typeof G!=='undefined'&&G?.campana?.id===dato.id&&(G.fast||G.silent||G.auto||G.online||G.tutorial))dato.sinPremios=true;
   // Este recorrido temporal no reemplaza la campaña que el jugador guardó.
@@ -827,7 +974,7 @@ function campanaGuardar(dato){
   }
   campanaEnsayoGero=null;
   campanaMemoria=dato;
-  try{localStorage.setItem(CAMPANA_CLAVE,JSON.stringify(dato));campanaEntregarSobre(dato);return true;}
+  try{localStorage.setItem(CAMPANA_CLAVE,JSON.stringify(dato));if(!sinEntregar)campanaEntregarSobre(dato);return true;}
   catch(_){toast('No se pudo guardar en este navegador. Puedes continuar mientras no cierres el juego.');return false;}
 }
 function campanaDialogo(){
@@ -889,8 +1036,10 @@ function abrirCampana(){
   const d=document.getElementById('campanaPanel');if(d&&d.open)return;
   campanaEnsayoGero=null;
   const progreso=campanaLeer();
+  if(campanaMigrarEpilogoGero(progreso))campanaGuardar(progreso,{sinEntregar:true});
   campanaEntregarSobre(progreso);
-  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&(progreso.deseo||progreso.secreto==='completado')))campanaRuta();else campanaCrear();
+  const epilogoPendiente=progreso?.deseoFinalGero===true;
+  if(progreso&&!(progreso.etapa===CAMPANA_RIVALES.length&&((progreso.deseo&&!epilogoPendiente)||progreso.secreto==='completado')))campanaRuta();else campanaCrear();
   campanaAnimarEntrada();
 }
 function campanaElegir(){
@@ -935,6 +1084,26 @@ function campanaElegir(){
 }
 function campanaRuta(aviso=''){
   const progreso=campanaLeer();if(!progreso){campanaCrear();return;}
+  // También se llega aquí desde pruebas, enlaces internos y una recarga. La
+  // migración cubre la Victoria, «Completar campaña» y el deseo ya escrito.
+  if(campanaMigrarEpilogoGero(progreso))campanaGuardar(progreso,{sinEntregar:true});
+  // Ruta directa de una versión anterior que ya consumió sus sobres: igual
+  // que al abrir Campaña, ofrece crear la siguiente sin reconstruir la cima.
+  if(campanaEsFinalOrdinario(progreso)&&progreso.deseoFinalGero!==true&&campanaPremioLegadoYaResuelto(progreso.id)){campanaCrear();return;}
+  // Si se recarga entre el primer negro y la selección, no se vuelve a pedir
+  // el deseo ni se reconstruye el mapa: el recibo marcado retoma exactamente
+  // el selector final. La función rechaza por sí sola una partida ajena.
+  if(campanaEsFinalOrdinario(progreso)&&progreso.deseoFinalGero===true&&progreso.deseo&&progreso.recompensaFinalLista===true){
+    if(typeof window.campanaAbrirSobresFinal==='function'&&window.campanaAbrirSobresFinal(progreso.id,typeof G!=='undefined'?G:null))return;
+    // Si el recibo no está disponible todavía, no volvemos a mostrar el
+    // formulario ya contestado: el diálogo de recuperación ofrece reintento
+    // y menú sin borrar el derecho a esos tres sobres.
+    if(window.campanaRecuperarSobresFinal?.()===true)return;
+  }
+  // Si la app se cerró justo en Victoria, retomar no debe reconstruir el mapa
+  // ni exigir el antiguo botón «Completar campaña» antes de pedir el deseo.
+  if(campanaEsFinalOrdinario(progreso)&&progreso.deseoFinalGero===true&&progreso.mesaPendiente===CAMPANA_RIVALES.length-1&&
+    typeof window.campanaAbrirDeseo==='function'&&campanaPasarAlDeseo(progreso))return;
   if(progreso.etapa===6&&progreso.secreto&&progreso.secreto!=='ascenso'&&typeof campanaAbrirSecreto==='function'){campanaAbrirSecreto();return;}
   const victoria=Number.isInteger(progreso.mesaPendiente)?progreso.mesaPendiente:null;
   const p=victoria===null?progreso:{...progreso,etapa:victoria};
@@ -1138,16 +1307,22 @@ function campanaFinal(winner,why){
     p.mesaPendiente=p.etapa;p.etapa++;p.enEncuentro=false;
     if(p.etapa===6&&typeof campanaMarcarGero==='function')campanaMarcarGero(p);
     if(ensayoFinal&&p.etapa===6)p.secreto='ascenso';
+    // Sólo una victoria real y ordinaria de Gero abre el deseo desde Victoria.
+    // La misma posición se usa por ensayos y por el sexto sello del Editor.
+    if(p.etapa===6&&campanaEsFinalOrdinario(p))p.deseoFinalGero=true;
     campanaGuardar(p);
   }
+  const finalOrdinarioGero=winner===ME&&campanaEsVictoriaOrdinariaDeGero(g,p);
   let mesaPreparada=false;
-  const acciones={textoPrincipal:winner===ME?'Volver a la mesa':'↺ Revancha',
+  const acciones={textoPrincipal:finalOrdinarioGero?'Continuar':winner===ME?'Volver a la mesa':'↺ Revancha',
     continuarAutomaticamente:ensayoFinal&&winner===ME,
-    prepararRevancha:winner===ME?()=>{if(G!==g)return;campanaRuta();mesaPreparada=true;return document.getElementById('campanaPanel');}:null,
-    revancha:()=>{if(G!==g)return;if(winner===ME){if(!mesaPreparada)campanaRuta();}else campanaCombatir();},
-    menu:()=>{if(G===g)campanaVolverAlMenu();}};
+    ocultarPremio:finalOrdinarioGero,sinMenu:finalOrdinarioGero,
+    prepararRevancha:finalOrdinarioGero?null:winner===ME?()=>{if(G!==g)return;campanaRuta();mesaPreparada=true;return document.getElementById('campanaPanel');}:null,
+    revancha:()=>{if(G!==g)return;if(finalOrdinarioGero){campanaPasarAlDeseo(campanaLeer(),g);return;}if(winner===ME){if(!mesaPreparada)campanaRuta();}else campanaCombatir();},
+    menu:finalOrdinarioGero?null:()=>{if(G===g)campanaVolverAlMenu();}};
   cinematicaFinal(winner,why,acciones).then(hecho=>{
     if(hecho||G!==g)return;
+    if(finalOrdinarioGero){acciones.revancha();return;}
     if(acciones.continuarAutomaticamente){acciones.revancha();return;}
     const d=campanaDialogo();campanaCabecera(d,winner===ME?(p.etapa===6?'¡Campaña completada!':'¡Rival vencido!'):'El ascenso continúa',why||'');
     const premio=crearBotonPremioFinal(g,winner);if(premio)d.append(premio);

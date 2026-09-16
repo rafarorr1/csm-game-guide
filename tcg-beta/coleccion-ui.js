@@ -12,7 +12,7 @@
   const textoCopias=n=>n+' '+(n===1?'copia':'copias');
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
-  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,conservarFondo=false,alCerrarRecompensa=null;
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:l.n,t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
@@ -29,6 +29,28 @@
   function sonido(id){window.CAOZ_AUDIO?.play(id);}
   function mensaje(texto,error=false){if(!estado)return;estado.textContent=texto;estado.classList.toggle('error',error);carruselSobres?.medir();if(s.vista==='recompensa')medirRecompensa();}
   function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);}
+  function esFinalCampana(){return !!finalCampana?.activa;}
+  function aplicarModoFinalCampana(activo){
+    if(!panel)return;
+    panel.classList.toggle('coleccionFinalCampana',activo);
+    panel.classList.remove('coleccionFinalCampanaFundiendo');
+    if(activo){panel.dataset.epilogoSobres='campana';panel.dataset.epilogoFase='elegir';panel.setAttribute('aria-labelledby','coleccionFinalCampanaTitulo');}
+    else{delete panel.dataset.epilogoSobres;delete panel.dataset.epilogoFase;panel.setAttribute('aria-labelledby','coleccionTitulo');}
+    // Aunque el CSS los oculta, sacamos las salidas del orden de foco mientras
+    // la recompensa final está abierta. No hay una ruta de "elegir después".
+    for(const selector of ['.coleccionCerrar','.coleccionVolver']){
+      const control=panel.querySelector(selector);if(!control)continue;
+      if(activo){control.tabIndex=-1;control.setAttribute('aria-hidden','true');}
+      else{control.removeAttribute('tabindex');control.removeAttribute('aria-hidden');}
+    }
+  }
+  function limpiarFinalCampana(){
+    const final=finalCampana;if(!final)return;
+    if(final.frame)cancelAnimationFrame(final.frame);
+    if(final.foco)cancelAnimationFrame(final.foco);
+    if(final.temporizador)clearTimeout(final.temporizador);
+    finalCampana=null;aplicarModoFinalCampana(false);
+  }
   function destruirApertura(){
     const anterior=aperturaSobre;aperturaSobre=null;
     if(anterior){anterior.cancelada=true;anterior.componente?.destruir();}
@@ -79,15 +101,19 @@
     panel.querySelector('.coleccionEmblema').append(icono('libro'));panel.querySelector('.coleccionCerrar').append(icono('cerrar'));
     contenido=panel.querySelector('.coleccionContenido');barra=panel.querySelector('.coleccionPestanas');estado=panel.querySelector('.coleccionEstado');
     panel.querySelector('.coleccionCerrar').onclick=cerrar;panel.querySelector('.coleccionVolver').onclick=cerrar;
-    panel.addEventListener('cancel',e=>{e.preventDefault();if(s.vista==='detalle')ir('cartas');else cerrar();});
+    panel.addEventListener('cancel',e=>{e.preventDefault();if(esFinalCampana())return;if(s.vista==='detalle')ir('cartas');else cerrar();});
     panel.addEventListener('close',limpiar);
+    // Un clic sobre el velo de un diálogo nativo no debe encontrar una salida
+    // implícita durante el epílogo, incluso si cambia esa conducta del navegador.
+    panel.addEventListener('click',e=>{if(esFinalCampana()&&e.target===panel){e.preventDefault();e.stopPropagation();}});
     // El diálogo nativo atrapa el foco y deja inerte el juego que queda debajo.
-    panel.addEventListener('keydown',e=>{if(e.key==='Escape')e.stopPropagation();});
+    panel.addEventListener('keydown',e=>{if(e.key==='Escape'){e.stopPropagation();if(esFinalCampana())e.preventDefault();}});
     document.body.append(panel);
   }
   function abrir(opciones={}){
     if(!modelo())return;
     crearPanel();if(panel.open)return;
+    aplicarModoFinalCampana(!!opciones.finalCampana);
     volverFoco=document.activeElement;origen=document.querySelector('.screen.on');
     conservarFondo=!!opciones.conservarFondo;alCerrarRecompensa=typeof opciones.onCerrar==='function'?opciones.onCerrar:null;
     s.mostrarPendiente=!!modelo().pendiente();s.vista=s.mostrarPendiente?'sobres':'cartas';s.carta=null;
@@ -99,27 +125,29 @@
     medida();dibujar();
     observador=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(medida);});observador.observe(panel);observador.observe(contenido);
     if(typeof animarTransicionMenu==='function')animarTransicionMenu(panel.querySelector('.coleccionInterior'),panel);
-    panel.querySelector('.coleccionCerrar').focus({preventScroll:true});
+    if(!opciones.finalCampana)panel.querySelector('.coleccionCerrar')?.focus({preventScroll:true});
   }
   function limpiar(evento){
     // close se encola: no desmontar una Colección que ya se volvió a abrir.
     if(evento?.type==='close'&&panel?.open)return;
     if(evento?.type==='close'){const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();}
-    destruirApertura();destruirCarrusel();destruirVistasSobres();limpiarTiempos();observador?.disconnect();observador=null;
+    destruirApertura();destruirCarrusel();destruirVistasSobres();limpiarTiempos();limpiarFinalCampana();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
     window.removeEventListener('caoz:coleccion',cambio);window.removeEventListener('caoz:arte',arteActualizado);window.removeEventListener('caoz:coleccion-error',falloGuardado);
     // El evento close llega después de comenzar el regreso. Limpiar sólo una
     // transición de este diálogo, nunca el nuevo barrido del menú de destino.
     if(panel?.querySelector('.barridoModal,.coleccionInterior.menuEntra')&&typeof limpiarTransicionMenu==='function')limpiarTransicionMenu();
   }
-  function cerrar(){
-    if(!panel?.open)return;guardarPosicionLista();limpiar();panel.close();
+  function cerrar({restaurarFoco=true}={}){
+    if(!panel?.open||(esFinalCampana()&&!finalCampana.terminando))return false;
+    guardarPosicionLista();limpiar();panel.close();
     if(!conservarFondo&&origen?.isConnected&&typeof animarTransicionMenu==='function')animarTransicionMenu(origen);
-    if(volverFoco?.isConnected)volverFoco.focus({preventScroll:true});
+    if(restaurarFoco&&volverFoco?.isConnected)volverFoco.focus({preventScroll:true});
     const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();
+    return true;
   }
   function falloGuardado(){mensaje('No se pudo guardar. Libera espacio en el navegador e inténtalo otra vez.',true);}
-  function cambio(){if(!panel?.open||guardando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='recompensa')dibujarRecompensa();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
+  function cambio(){if(!panel?.open||guardando||finalCampana?.confirmando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
   function arteActualizado(){if(!panel?.open)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
   function actualizarCabecera(){
     const m=modelo(),ids=m.ids(),premium=ids.reduce((n,id)=>n+(m.tiene(id,'foil')?1:0)+(m.tiene(id,'dorado')?1:0),0);
@@ -129,8 +157,8 @@
     cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
   }
   function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista)s.desplazamiento=contenido.querySelector('.coleccionRejilla')?.scrollTop||0;}
-  function ir(vista){guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
-  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){dibujarSobres();return;}destruirApertura();destruirCarrusel();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')dibujarRecompensa();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
+  function ir(vista){if(esFinalCampana()&&vista!=='recompensa')return;guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
+  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){dibujarSobres();return;}destruirApertura();destruirCarrusel();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
     const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
@@ -270,11 +298,27 @@
     return sobre;
   }
   function abrirRecompensaSobres(opciones={}){
-    if(!modelo())return false;const {origen:tipo,referencia,onCerrar}=opciones;
+    if(!modelo())return false;
+    const {origen:tipo,referencia,onCerrar,onConfirmar}=opciones,solicitaFinal=opciones.finalCampana===true;
+    if(solicitaFinal&&tipo!=='campana')return false;
     const premio=modelo().recompensasPendientes().find(p=>(!tipo||p.origen===tipo)&&(!referencia||p.referencia===referencia));
+    if(solicitaFinal){
+      // El final sólo representa el recibo de tres sobres de esta campaña.
+      // No abrimos una pantalla imposible si otro dispositivo ya lo resolvió.
+      if(!premio||premio.cantidad!==3)return false;
+      if(esFinalCampana())return finalCampana.premioId===premio.id;
+      finalCampana={activa:true,premioId:premio.id,referencia:premio.referencia,indice:0,confirmando:false,terminando:false,notificado:false,frame:0,foco:0,temporizador:0,onConfirmar:typeof onConfirmar==='function'?onConfirmar:null};
+      alCerrarRecompensa=null;conservarFondo=true;s.eleccion=[];s.recompensaId=premio.id;
+      if(!panel?.open)abrir({conservarFondo:true,finalCampana:true});else aplicarModoFinalCampana(true);
+      ir('recompensa');return true;
+    }
+    // Ninguna acción secundaria puede reemplazar la decisión obligatoria del
+    // epílogo mientras el jugador elige los tres sobres.
+    if(esFinalCampana())return false;
     if(!panel?.open)abrir({conservarFondo:true,onCerrar});else{conservarFondo=true;if(typeof onCerrar==='function')alCerrarRecompensa=onCerrar;}
     if(premio){if(s.recompensaId!==premio.id)s.eleccion=[];s.recompensaId=premio.id;ir('recompensa');}
     else{s.mostrarPendiente=false;ir('sobres');}
+    return true;
   }
   function elegirPendiente(premio){
     if(!premio)return;if(s.recompensaId!==premio.id)s.eleccion=[];s.recompensaId=premio.id;ir('recompensa');
@@ -295,6 +339,174 @@
     const movil=panel.clientWidth<580,bajo=panel.classList.contains('coleccionBaja'),reserva=movil?(bajo?120:145):177;
     const ancho=Math.max(35,Math.min(170,(opciones.clientWidth-(movil?24:90))/3-18,(opciones.clientHeight-reserva)*.68));
     opciones.style.setProperty('--premio-ancho',ancho+'px');
+  }
+  /* El final de campaña no reutiliza las tres columnas de la recompensa
+     ordinaria: la elección se vive como un último paso de la historia. Los tres
+     grupos siguen siendo los componentes reales de Sobre, no ilustraciones de
+     reemplazo, y sólo se escriben juntos al confirmar la terna completa. */
+  function dibujarRecompensaFinalCampana(){
+    const final=finalCampana;
+    if(!final?.activa){dibujarRecompensa();return;}
+    destruirCarrusel();destruirApertura();vaciarContenido();panel.dataset.vista='recompensa';aplicarModoFinalCampana(true);
+    const premio=modelo().recompensasPendientes().find(p=>p.id===final.premioId),grupos=modelo().grupos();
+    if(!premio||premio.cantidad!==3){
+      panel.dataset.epilogoFase='indisponible';
+      const error=crear('section','coleccionFinalCampanaError'),volver=boton('Volver al menú',()=>abandonarFinalCampana(final),'coleccionFinalSalir'),titulo=crear('h3','','La recompensa ya no está disponible');titulo.id='coleccionFinalCampanaTitulo';
+      error.append(titulo,crear('p','','No se guardó ningún sobre en esta pantalla. Puedes volver al menú sin quedar atrapado aquí.'),volver);contenido.append(error);
+      final.foco=requestAnimationFrame(()=>{final.foco=0;if(finalCampana===final&&panel?.open)volver.focus({preventScroll:true});});return;
+    }
+    s.eleccion=s.eleccion.filter(id=>grupos.some(g=>g.id===id)).slice(0,3);
+    const escena=crear('section','coleccionFinalCampanaEscena');escena.setAttribute('aria-label','Elección final de sobres');
+    const cabecera=crear('header','coleccionFinalCampanaCabecera'),titulo=crear('h3','','Elige tus tres sobres');titulo.id='coleccionFinalCampanaTitulo';cabecera.append(crear('span','coleccionAntetitulo','DESEO CONCEDIDO'),titulo,crear('p','','Desliza cada sobre hasta el centro y confirma tu elección. Cada elección queda fijada; puedes repetir colección.'));
+    const progreso=crear('div','coleccionFinalCampanaProgreso');progreso.setAttribute('role','status');progreso.setAttribute('aria-live','polite');
+    const textoProgreso=crear('strong','coleccionFinalCampanaProgresoTexto'),barraProgreso=crear('progress','coleccionFinalCampanaBarra');barraProgreso.max=3;barraProgreso.value=s.eleccion.length;progreso.append(textoProgreso,barraProgreso);
+    const ventana=crear('div','coleccionFinalCarruselVentana'),carrete=crear('div','coleccionFinalCarrusel');carrete.dataset.epilogoCarrusel='';carrete.tabIndex=0;carrete.setAttribute('role','listbox');carrete.setAttribute('aria-label','Colecciones de sobres. Usa flechas o desliza para elegir.');
+    const tarjetas=grupos.map((grupo,i)=>{
+      const tarjeta=boton('',()=>{if(i===final.indice)elegirActual();else centrar(i);},'coleccionFinalSobre');tarjeta.id='coleccionFinalSobre_'+grupo.id;tarjeta.dataset.epilogoSobre=grupo.id;tarjeta.setAttribute('role','option');tarjeta.setAttribute('aria-label','Sobre '+grupo.nombre);colorSobre(tarjeta,grupo.id);tarjeta.append(envoltura(grupo),crear('strong','coleccionFinalSobreNombre',grupo.nombre));carrete.append(tarjeta);return tarjeta;
+    });
+    ventana.append(carrete);
+    const navegacion=crear('div','coleccionFinalNavegacion'),anterior=boton('‹',()=>mover(-1),'coleccionFinalAnterior'),actual=crear('div','coleccionFinalActual'),siguiente=boton('›',()=>mover(1),'coleccionFinalSiguiente');anterior.setAttribute('aria-label','Colección anterior');siguiente.setAttribute('aria-label','Colección siguiente');navegacion.append(anterior,actual,siguiente);
+    const marcas=crear('div','coleccionFinalMarcas');marcas.setAttribute('aria-label','Sobres elegidos');
+    const acciones=crear('div','coleccionFinalAcciones'),elegir=boton('',elegirActual,'coleccionFinalElegir'),guardar=boton('Guardar mis 3 sobres',guardarEleccion,'coleccionFinalGuardar');elegir.dataset.epilogoElegir='';guardar.dataset.epilogoConfirmar='';guardar.disabled=true;acciones.append(elegir,guardar);
+    const aviso=crear('p','coleccionFinalAviso');aviso.setAttribute('role','alert');
+    const fundido=crear('div','coleccionFinalFundido');fundido.setAttribute('aria-hidden','true');
+    escena.append(cabecera,progreso,ventana,navegacion,marcas,acciones,aviso,fundido);contenido.append(escena);
+    let indice=Math.max(0,Math.min(grupos.length-1,Number.isInteger(final.indice)?final.indice:0)),arrastre=null,omitirClick=false,raf=0,anchoAnterior=0,altoAnterior=0,destino=null,finDesplazamiento=0;
+    function etiquetaActual(){return grupos[indice];}
+    function seleccionar(i){
+      indice=Math.max(0,Math.min(grupos.length-1,i));final.indice=indice;
+      const grupo=etiquetaActual();actual.textContent=grupo.nombre;actual.style.setProperty('--sobre-color',COLORES_SOBRES[grupo.id]||'#947640');
+      tarjetas.forEach((tarjeta,n)=>{const activa=n===indice;tarjeta.classList.toggle('seleccionado',activa);tarjeta.setAttribute('aria-selected',String(activa));});
+      carrete.setAttribute('aria-activedescendant',tarjetas[indice].id);actualizar();
+    }
+    function objetivo(i){const tarjeta=tarjetas[i];return tarjeta.offsetLeft-carrete.clientWidth/2+tarjeta.offsetWidth/2;}
+    function centrar(i,suave=true){
+      const siguiente=Math.max(0,Math.min(grupos.length-1,i));if(!carrete.clientWidth){seleccionar(siguiente);return;}
+      const left=objetivo(siguiente),animar=suave&&!matchMedia('(prefers-reduced-motion:reduce)').matches&&Math.abs(carrete.scrollLeft-left)>1.5;
+      clearTimeout(finDesplazamiento);seleccionar(siguiente);destino=siguiente;carrete.dataset.desplazando=String(animar);carrete.setAttribute('aria-busy',String(animar));actualizar();
+      // Igual que el carrusel de Sobres ordinario, el destino explícito sigue
+      // siendo la colección activa durante un scroll suave: los puntos medios
+      // no pueden cambiar qué sobre va a elegirse.
+      carrete.scrollTo({left,behavior:animar?'smooth':'auto'});
+      if(!animar){terminarDesplazamiento();return;}
+      finDesplazamiento=setTimeout(()=>{
+        if(destino===null||!carrete.isConnected)return;
+        const ultimo=destino;carrete.scrollTo({left:objetivo(ultimo),behavior:'auto'});seleccionar(ultimo);terminarDesplazamiento();
+      },800);
+    }
+    function cercano(){
+      const centro=carrete.scrollLeft+carrete.clientWidth/2;let mejor=0;
+      tarjetas.forEach((tarjeta,i)=>{if(Math.abs(tarjeta.offsetLeft+tarjeta.offsetWidth/2-centro)<Math.abs(tarjetas[mejor].offsetLeft+tarjetas[mejor].offsetWidth/2-centro))mejor=i;});return mejor;
+    }
+    function mover(delta){centrar(indice+delta);}
+    function actualizar(){
+      const elegidos=s.eleccion.length,grupo=etiquetaActual();barraProgreso.value=elegidos;
+      if(!final.confirmando)panel.dataset.epilogoFase=elegidos===3?'confirmar':'elegir';
+      textoProgreso.textContent=elegidos===3?'3 de 3 sobres elegidos':'Sobre '+(elegidos+1)+' de 3';
+      marcas.replaceChildren();for(let i=0;i<3;i++){const id=s.eleccion[i],marca=crear('i','coleccionFinalMarca');marca.setAttribute('aria-label',id?(grupos.find(g=>g.id===id)?.nombre||'Sobre elegido'):'Sobre pendiente');if(id)colorSobre(marca,id);marcas.append(marca);}
+      const bloqueada=final.confirmando,desplazando=carrete.dataset.desplazando==='true';elegir.hidden=elegidos===3;elegir.disabled=bloqueada||elegidos===3||desplazando;elegir.textContent='Elegir '+grupo.nombre;guardar.hidden=elegidos!==3;guardar.disabled=bloqueada||elegidos!==3||desplazando;
+      anterior.disabled=indice===0||bloqueada||desplazando;siguiente.disabled=indice===grupos.length-1||bloqueada||desplazando;
+      tarjetas.forEach(tarjeta=>tarjeta.disabled=bloqueada||desplazando);
+    }
+    function elegirActual(){
+      if(final.confirmando||carrete.dataset.desplazando==='true'||s.eleccion.length>=3)return;
+      s.eleccion.push(etiquetaActual().id);aviso.textContent='';actualizar();sonido('ui_confirm');
+    }
+    function guardarEleccion(){
+      if(final.confirmando||guardando||s.eleccion.length!==3)return;
+      final.confirmando=true;panel.dataset.epilogoFase='guardando';guardando=true;guardar.disabled=true;let ok=false;
+      // elegirSobres valida la terna y persiste una sola transición del modelo:
+      // no se concede nada hasta que los tres tipos están presentes.
+      try{ok=modelo().elegirSobres(premio.id,s.eleccion.slice());}catch(_){}finally{guardando=false;}
+      if(!ok){final.confirmando=false;actualizar();aviso.textContent='No se pudo guardar tu elección. Los tres sobres siguen pendientes; inténtalo de nuevo.';return;}
+      final.sobres=s.eleccion.slice();sonido('ui_confirm');fundirFinalCampana(final,premio);
+    }
+    function terminarDesplazamiento(){clearTimeout(finDesplazamiento);finDesplazamiento=0;destino=null;carrete.dataset.desplazando='false';carrete.setAttribute('aria-busy','false');actualizar();}
+    function seguirDesplazamiento(){
+      raf=0;if(!carrete.isConnected||final.confirmando)return;
+      if(destino!==null){
+        seleccionar(destino);const left=objetivo(destino);
+        if(Math.abs(carrete.scrollLeft-left)<=1.5)terminarDesplazamiento();
+        else if(carrete.dataset.desplazando!=='true')carrete.scrollTo({left,behavior:'auto'});
+      }else seleccionar(cercano());
+    }
+    function medir(){
+      if(!ventana.isConnected)return;const ancho=ventana.clientWidth,alto=ventana.clientHeight;if(ancho===anchoAnterior&&alto===altoAnterior)return;
+      anchoAnterior=ancho;altoAnterior=alto;ventana.style.setProperty('--final-sobre-ancho',Math.max(150,Math.min(390,ancho*.62,(alto-20)*.68))+'px');centrar(indice,false);
+    }
+    function soltar(e){
+      if(!arrastre||arrastre.id!==e.pointerId)return;const movido=arrastre.movido;arrastre=null;carrete.classList.remove('arrastrando');
+      if(carrete.hasPointerCapture(e.pointerId))carrete.releasePointerCapture(e.pointerId);
+      if(movido){omitirClick=true;centrar(cercano());}
+    }
+    carrete.addEventListener('scroll',()=>{if(raf)cancelAnimationFrame(raf);raf=requestAnimationFrame(seguirDesplazamiento);},{passive:true});
+    carrete.addEventListener('scrollend',seguirDesplazamiento);
+    function interrumpirDesplazamiento(){
+      if(destino===null)return;
+      destino=null;terminarDesplazamiento();carrete.scrollTo({left:carrete.scrollLeft,behavior:'auto'});seleccionar(cercano());
+    }
+    carrete.addEventListener('wheel',interrumpirDesplazamiento,{passive:true});
+    carrete.addEventListener('keydown',e=>{
+      if(['ArrowLeft','ArrowRight','Home','End'].includes(e.key)){e.preventDefault();if(carrete.dataset.desplazando==='true')return;if(e.key==='Home')centrar(0);else if(e.key==='End')centrar(grupos.length-1);else mover(e.key==='ArrowRight'?1:-1);}
+      else if((e.key==='Enter'||e.key===' ')&&!final.confirmando){e.preventDefault();elegirActual();}
+    });
+    carrete.addEventListener('focusin',e=>{const i=tarjetas.indexOf(e.target);if(i>=0&&!arrastre)centrar(i);});
+    // En táctil el navegador aporta el gesto horizontal nativo y su snap; para
+    // ratón y lápiz añadimos el arrastre sin convertir un clic en dos elecciones.
+    carrete.addEventListener('pointerdown',e=>{
+      if(final.confirmando)return;interrumpirDesplazamiento();if(e.pointerType==='touch'||(e.pointerType==='mouse'&&e.button!==0))return;
+      omitirClick=false;arrastre={id:e.pointerId,x:e.clientX,inicio:carrete.scrollLeft,movido:false};
+    });
+    carrete.addEventListener('pointermove',e=>{
+      if(!arrastre||arrastre.id!==e.pointerId)return;const dx=e.clientX-arrastre.x;
+      if(!arrastre.movido&&Math.abs(dx)>7){arrastre.movido=true;carrete.setPointerCapture(e.pointerId);carrete.classList.add('arrastrando');}
+      if(arrastre.movido){e.preventDefault();carrete.scrollLeft=arrastre.inicio-dx;}
+    });
+    carrete.addEventListener('pointerup',soltar);carrete.addEventListener('pointercancel',soltar);carrete.addEventListener('lostpointercapture',soltar);
+    carrete.addEventListener('click',e=>{if(omitirClick){e.preventDefault();e.stopImmediatePropagation();omitirClick=false;}},true);
+    carruselSobres={medir,destruir:()=>{if(raf)cancelAnimationFrame(raf);clearTimeout(finDesplazamiento);destino=null;arrastre=null;}};
+    seleccionar(indice);medir();
+    // abrir() todavía mostraba la colección previa cuando quiso enfocar. Este
+    // frame ocurre ya con el carrete real montado y habilita flechas de inmediato.
+    final.foco=requestAnimationFrame(()=>{final.foco=0;if(finalCampana===final&&panel?.open&&!final.confirmando)carrete.focus({preventScroll:true});});
+  }
+  function fundirFinalCampana(final,premio){
+    if(finalCampana!==final||final.notificado||!panel?.open)return;
+    // El negro cubre incluso el diálogo: la campaña recibe el control sólo
+    // después de que el jugador ya no pueda ver ni modificar la selección.
+    panel.dataset.epilogoFase='fundido';panel.classList.add('coleccionFinalCampanaFundiendo');
+    final.frame=requestAnimationFrame(()=>{
+      final.frame=0;if(finalCampana!==final||final.notificado)return;
+      const espera=matchMedia('(prefers-reduced-motion:reduce)').matches?0:460;
+      final.temporizador=setTimeout(()=>concluirFinalCampana(final,premio),espera);
+    });
+  }
+  function concluirFinalCampana(final,premio){
+    if(finalCampana!==final||final.notificado)return;
+    final.temporizador=0;final.notificado=true;final.terminando=true;
+    const sobres=Object.freeze((final.sobres||[]).slice()),datos=Object.freeze({premioId:premio.id,origen:'campana',referencia:premio.referencia,sobres,grupos:sobres}),continuar=final.onConfirmar;
+    // El callback corre todavía bajo el negro. Si la campaña devuelve una
+    // promesa, conserva esa cobertura hasta que el menú ya esté preparado.
+    const cerrarAlTerminar=()=>cerrar({restaurarFoco:false});
+    try{
+      const resultado=continuar?.(datos);
+      if(resultado&&typeof resultado.then==='function')Promise.resolve(resultado).catch(error=>console.error('No se pudo continuar tras elegir los sobres de campaña.',error)).finally(cerrarAlTerminar);
+      else cerrarAlTerminar();
+    }catch(error){console.error('No se pudo continuar tras elegir los sobres de campaña.',error);cerrarAlTerminar();}
+  }
+  function abandonarFinalCampana(final){
+    if(finalCampana!==final||final.notificado)return;
+    // Un cambio externo de inventario no debe convertir el selector obligatorio
+    // en una prisión. La campaña decide el regreso bajo la misma cobertura que
+    // usa al confirmar; esta salida sólo existe para la recuperación de error.
+    final.notificado=true;final.terminando=true;
+    const vacio=Object.freeze([]),datos=Object.freeze({premioId:final.premioId,origen:'campana',referencia:final.referencia,sobres:vacio,grupos:vacio,interrumpida:true}),continuar=final.onConfirmar;
+    const cerrarAlTerminar=()=>cerrar({restaurarFoco:false});
+    try{
+      const resultado=continuar?.(datos);
+      if(resultado&&typeof resultado.then==='function')Promise.resolve(resultado).catch(error=>console.error('No se pudo salir del selector final.',error)).finally(cerrarAlTerminar);
+      else cerrarAlTerminar();
+    }catch(error){console.error('No se pudo salir del selector final.',error);cerrarAlTerminar();}
   }
   function dibujarRecompensa(){
     destruirCarrusel();destruirApertura();vaciarContenido();panel.dataset.vista='recompensa';
