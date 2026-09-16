@@ -116,6 +116,7 @@ adreida:{ n:'Adreida', ep:'La Guerrera Semiorca', art:'⚔️', arch:'Midrange �
         d:'Si no atacaste este turno, roba 1 carta en tu Fase Final.'},
   lore:'Guerrera semiorca. Intimida y prefiere resolver las cosas peleando. Ama los K-dramas.',
   habReq:(g,s)=>P(s).field.length>0,
+  habReqMsg:'Golpe Directo requiere un Personaje aliado en tu campo.',
   hab_do:async(g,s,ts)=>{ const u=ts[0][0]; u.tA+=2; u.noCounter=true;
     log(`<b>Golpe Directo</b>: ${u.card.n} +2 ATQ y sin contraataque.`); }},
 gero:{ n:'Gero', ep:'El Dungeon Master', art:'🎲', arch:'Caos · Tiradas · NPCs',
@@ -2011,10 +2012,27 @@ async function pruebaDelEditor(s,id,partida=G){
 
 /* ---------- habilidad de líder ---------- */
 
+/* La disponibilidad y su explicación nacen de la misma regla. Las pantallas no
+   deben adivinar por qué una Habilidad está apagada: además de evitar mensajes
+   contradictorios, esto deja que cada Líder declare su propio requisito al
+   diseñarlo. */
+function whyNotLeader(s){
+  if(!G||G.over) return 'La partida ha terminado';
+  const p=P(s), L=p?.L;
+  if(!p||!L) return 'La partida ha terminado';
+  if(G.active!==s) return 'No es tu turno';
+  if(p.leaderUsed) return 'Ya usaste tu Habilidad de Líder este turno';
+  if(p.pd<L.habCost) return `Necesitas ${L.habCost} PD`;
+  if(L.habReq&&!L.habReq(G,s)) return L.habReqMsg||'No hay objetivos válidos';
+  return '';
+}
+
+function canUseLeader(s){ return !whyNotLeader(s); }
+
 async function useLeader(s){
   const p=P(s), L=p.L;
-  if(p.leaderUsed||p.pd<L.habCost||G.active!==s||G.over) return false;
-  if(L.habReq&&!L.habReq(G,s)) { toast('No hay objetivos válidos'); return false; }
+  const motivo=whyNotLeader(s);
+  if(motivo){ toast(motivo); return false; }
   let ts=null;
   if(L.habTg){ const tg=Array.isArray(L.habTg)?L.habTg:[L.habTg];
     ts=await resolveTargets(s,{tg},null); if(ts===null) return false; }
@@ -3896,11 +3914,9 @@ async function netDoAct(m){
     await endTurn(); return {ok:true};
   }
   if(m.k==='leader'){
-    const p=P(s), L=p.L;
-    if(p.leaderUsed) return {ok:false, why:'Ya usaste tu Habilidad de Líder este turno'};
-    if(p.pd<L.habCost) return {ok:false, why:`Tu Habilidad cuesta ${L.habCost} PD y tienes ${p.pd}`};
-    if(G.active!==s) return {ok:false, why:'No es tu turno'};
-    return {ok: await useLeader(s), why:'No hay objetivos para tu Habilidad'};
+    const motivo=whyNotLeader(s);
+    if(motivo) return {ok:false, why:motivo};
+    return {ok: await useLeader(s), why:'No se pudo usar tu Habilidad'};
   }
   if(m.k==='act'){
     const u=mio(m.uid);
