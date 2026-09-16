@@ -32,8 +32,8 @@
     }return mosaicos;
   }
   function paleta(s){
-    if(s.pixelPaleta)return s.pixelPaleta;let color={tela:'#88444e',piel:'#cf9973',pelo:'#3d2a28'};
-    try{const p=global.campanaNormalizarPersonaje(s.op?.personaje);color={tela:CAMPANA_ASPECTO.color[p.color][1],piel:CAMPANA_ASPECTO.piel[p.piel][1],pelo:CAMPANA_ASPECTO.cabello[p.cabello][1]};}catch(_){}
+    if(s.pixelPaleta)return s.pixelPaleta;let color={tela:'#88444e',piel:'#cf9973',pelo:'#3d2a28',iris:P.azul,equipo:'espada',peinado:'corto',rasgo:'ninguno'};
+    try{const p=global.campanaNormalizarPersonaje(s.op?.personaje);color={tela:CAMPANA_ASPECTO.color[p.color][1],piel:CAMPANA_ASPECTO.piel[p.piel][1],pelo:CAMPANA_ASPECTO.cabello[p.cabello][1],iris:CAMPANA_ASPECTO.ojos[p.ojos][1],equipo:p.equipo,peinado:p.peinado,rasgo:p.rasgo};}catch(_){}
     s.pixelPaleta=color;return color;
   }
   function crearCenital(color,enemigo){
@@ -54,8 +54,8 @@
         figura(c,[[11,16],[25,16],[25,23],[27+paso,32],[21,33],[18,29],[13,33],[9+paso,31],[11,23]],color.tela);
         linea(c,12,19,11+paso,30,'#cfb483');linea(c,24,20,25+paso,31,'#ad8568');linea(c,18,20,18+paso,28,'#201b2d');
         b(7,12+paso,7,9,P.negro);b(23,12-paso,7,9,P.negro);b(8,13+paso,5,5,'#738282');b(24,13-paso,5,5,'#738282');b(9,13+paso,3,1,'#c0b89a');b(24,13-paso,3,1,'#c0b89a');b(8,19+paso,4,4,color.piel);b(25,19-paso,4,4,color.piel);
-        b(12,5,12,13,P.negro);b(13,7,10,9,color.piel);b(14,5,8,3,color.pelo);b(12,8,11,5,color.pelo);b(14,6,6,2,'#9d775655');b(15,15,6,2,color.piel);
-        b(27,2,2,19,P.negro);b(27,3,1,16,P.oro);b(25,1,6,5,P.negro);b(26,1,4,4,P.azul);b(27,1,2,2,P.hielo);b(27,7,3,1,P.hueso);
+        b(12,5,12,13,P.negro);b(13,7,10,9,color.piel);b(14,5,8,3,color.pelo);b(12,8,11,5,color.pelo);b(14,6,6,2,'#9d775655');b(15,15,6,2,color.piel);if(color.peinado==='yelmo'){b(12,5,12,5,'#9aa8ae');b(13,5,10,1,P.oro);}if(color.rasgo==='runas')b(17,12,2,2,P.azul);
+        if(color.equipo==='libro'){b(26,13,6,7,P.negro);b(27,14,4,5,P.hueso);linea(c,29,15,29,18,P.oro);}else if(color.equipo==='arco'){linea(c,26,3,31,19,P.oro);linea(c,31,3,26,19,P.hueso);}else if(color.equipo==='dagas'){linea(c,26,5,30,17,P.hielo,1);linea(c,30,5,26,17,P.hielo,1);}else if(color.equipo==='lanza'){linea(c,28,1,28,20,P.oro,2);figura(c,[[28,0],[26,4],[30,4]],P.hielo);}else if(color.equipo==='hacha'){linea(c,28,3,28,20,P.oro,2);figura(c,[[28,3],[32,5],[32,9],[28,10]],P.hielo);}else{b(27,2,2,19,P.negro);b(27,3,1,16,P.oro);b(25,1,6,5,P.negro);b(26,1,4,4,color.equipo==='baston'?P.azul:P.hielo);b(27,1,2,2,P.hielo);b(27,7,3,1,P.hueso);}
       }atlas.push(normalizar(n));
     }return atlas;
   }
@@ -66,7 +66,7 @@
       b(3,17-paso,6,15,P.negro);b(24,17+paso,6,15,P.negro);b(4,19-paso,3,9,'#778583');b(26,19+paso,3,9,'#778583');b(4,28-paso,4,4,color.piel);b(25,28+paso,4,4,color.piel);
       figura(c,[[8,14],[24,14],[25,24],[28+paso,39],[21,40],[16,37],[10,40],[4+paso,38],[7,25]],P.negro);figura(c,[[9,16],[23,16],[23,25],[25+paso,36],[20,38],[16,34],[11,38],[7+paso,36],[9,25]],color.tela);
       linea(c,10,19,9+paso,34,P.oro);linea(c,22,19,23+paso,34,'#a98463');linea(c,16,21,16+paso,33,'#281e30');b(10,14,12,3,'#d3bd8a');b(8,4,16,12,P.negro);b(9,6,14,8,color.piel);b(10,3,12,3,color.pelo);b(8,5,15,7,color.pelo);b(10,5,8,2,'#8f725655');b(11,13,10,2,'#473b3b');
-      atlas.push(normalizar(n));
+      if(color.equipo==='arco'){linea(c,25,8,30,27,P.oro);linea(c,30,8,25,27,P.hueso);}else if(color.equipo==='libro'){b(25,21,6,7,P.hueso);linea(c,28,22,28,27,P.oro);}else if(color.equipo==='lanza'){linea(c,27,5,27,29,P.oro,2);figura(c,[[27,4],[25,8],[29,8]],P.hielo);}else if(color.equipo==='dagas'){linea(c,25,16,29,29,P.hielo);linea(c,30,16,26,29,P.hielo);}else if(color.equipo==='hacha'){linea(c,27,8,27,30,P.oro,2);figura(c,[[27,8],[31,10],[31,14],[27,15]],P.hielo);}else{linea(c,27,5,27,30,color.equipo==='baston'?P.oro:P.hielo,2);}atlas.push(normalizar(n));
     }return atlas;
   }
   function sprite(s,c,x,y,tam,enemigo=false,a=-Math.PI/2,tiempo=0,cenital=true){

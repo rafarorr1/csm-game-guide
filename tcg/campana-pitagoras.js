@@ -100,7 +100,7 @@
     const c=document.createElement('canvas');c.className='pitMiniatura';c.setAttribute('role','img');c.setAttribute('aria-label','Tu miniatura, en la oscuridad');host.appendChild(c);
     if(typeof campanaGeometriaPersonaje!=='function'||typeof campanaPintarRetrato!=='function'){const img=document.createElement('img');img.alt='Tu protagonista';img.src=typeof campanaRetrato==='function'?campanaRetrato(personaje):'data:image/svg+xml,'+encodeURIComponent('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 340"><ellipse cx="120" cy="305" rx="75" ry="14" fill="#171a1a"/><circle cx="120" cy="96" r="35" fill="#73786d"/><path d="M79 135Q120 114 161 135L181 292H59Z" fill="#363d3c"/></svg>');img.className='pitMiniatura';c.replaceWith(img);return;}
     const ctx=c.getContext('2d');if(!ctx)return;
-    const caras=campanaGeometriaPersonaje(personaje);function pintar(){if(!e.activa)return;const w=host.clientWidth,h=host.clientHeight,dpr=Math.min(devicePixelRatio||1,2);if(!w||!h)return;c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);campanaPintarRetrato(ctx,caras,w,h,-.2);}
+    const caras=campanaGeometriaPersonaje(personaje,'medio');function pintar(){if(!e.activa)return;const w=host.clientWidth,h=host.clientHeight,dpr=Math.min(devicePixelRatio||1,2);if(!w||!h)return;c.width=Math.round(w*dpr);c.height=Math.round(h*dpr);ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);campanaPintarRetrato(ctx,caras,w,h,-.2);}
     const ro=new ResizeObserver(pintar);ro.observe(host);e.limpiezas.push(()=>ro.disconnect());pintar();
   }
   window.montarFinalPitagoras=function(host,{personaje,nombre,onTerminar}={}){
