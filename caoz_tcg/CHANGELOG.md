@@ -1,5 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
+### v24 · Build 262 · Creador inmersivo de héroe · 2026-09-16
+
+- El creador del héroe suma presentación, estatura, complexión, rostro, ojos,
+  marcas, peinado, vestimenta, accesorio y equipo; conserva los preajustes y
+  permite girar la miniatura para inspeccionarla.
+- El modelo usa más geometría donde importa: detalle alto en el creador y los
+  retratos, medio en escenas y bajo sobre la mesa. La apariencia es narrativa
+  y no altera el mazo, las cartas ni las habilidades.
+- La elección se conserva entre pantallas y se refleja de forma coherente en
+  campaña, Pitágoras, final, escritorio y móvil.
+
 ### v23 · Build 261 · Epílogo de Gero y El último puente · 2026-09-16
 
 - Tras vencer a Gero, la campaña pide el deseo, pasa por el fuego y el
