@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### Build 260 · Interacciones de cartas y Golpe Directo · 2026-09-15
+
+- La mano conserva una ranura de cursor fija: ampliar la ilustración no alterna
+  el hover entre cartas superpuestas ni desplaza a las vecinas.
+- El selector de descarte reserva una cuadrícula estable y limita la ampliación;
+  sus cartas ya no abren un inspector flotante que deforme el diálogo.
+- Golpe Directo de Adreida explica que necesita un Personaje aliado antes de
+  hablar de sus 2 PD, con la misma razón en escritorio, móvil y partidas online.
+- El volumen de efectos se mueve a Extras, fuera de la mesa y del registro.
+
 ### Build 259 · Acceso por correo y continuidad offline · 2026-09-13
 
 - Integra la sección aprobada: acceso con correo y código antes de jugar,
