@@ -1,5 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
+### Build 261 · Epílogo de Gero y El último puente · 2026-09-16
+
+- Tras vencer a Gero, la campaña pide el deseo, pasa por el fuego y el
+  mensaje de deseo concedido, funde a negro y abre la selección completa de
+  tres sobres. La elección se confirma una sola vez, sin opción de deshacer,
+  antes de regresar al menú.
+- El último puente acelera antes y con más fuerza: la recta final añade cercos
+  de sello y columnas, manteniendo siempre un carril actual o contiguo como
+  salida posible. Las oleadas que ya no alcanzarían al jugador no se generan.
+- El ciclo de Pitágoras conserva su Ritual inicial de 2 PD y una sola
+  Pesadilla por turno; sus prioridades y cartas mantienen presión sin bloquear
+  una respuesta válida en el minijuego.
+
 ### Build 260 · Interacciones de cartas y Golpe Directo · 2026-09-15
 
 - La mano conserva una ranura de cursor fija: ampliar la ilustración no alterna
