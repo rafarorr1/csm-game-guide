@@ -9,8 +9,8 @@
   "puente": {
     "archivo": "caoz_tcg/pitagoras-mundos.js",
     "funcion": "carrera",
-    "linea": 56,
-    "sha256": "d5a340de99011c993d722faecfb5c4ae71179c237e91503f870eedbed5c4d7a0"
+    "linea": 66,
+    "sha256": "af9ca1cb6e4adc7e47af1e6ae07ef4ae7eeb3fcbcd28f4b4636e5888ae34cd13"
   },
   "conducta": {
     "ritual": {
@@ -42,7 +42,7 @@
   ],
   "componentes": {
     "pitagoras-pruebas.js": "8b9a585e77ac268669dbe80a01ac863d7017f3209f6b3a3e2ec463349c21a206",
-    "pitagoras-mundos.js": "b6de42f88200df3de9ab4b9e4856e537495e52638368eebc63d1d66f4c24583e",
+    "pitagoras-mundos.js": "0d2961f36d5e727e69423b088c24d319db9f2bbeffc5aca72b85badf302e3ad3",
     "pitagoras-cine.js": "a2a7cf22ff3cb3e556e183f0f9bdd7a072e9185f1abac242ee33c4cae6cd09d1",
     "pitagoras-pixel.js": "b4b9eebbc892571af81181e62b039949048659a36e183c5c336c8c85fb2ea6d2"
   },

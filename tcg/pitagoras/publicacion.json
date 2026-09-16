@@ -2,22 +2,22 @@
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
     "generado/datos.js": "cffe5d26b91469aa3ee40382d3aed0e0025e18abfeefc8e55c258424542a4e5c",
-    "generado/manifiesto.json": "c1fc37e27c4bc6fc2e5d480770016fc5242eb656a8b32c93baaf33ee6b79c18d",
+    "generado/manifiesto.json": "8ae252b2ee59fdaa7712ec98f8683041853aa3600d20916d84f4ee5542bae0aa",
     "index.html": "c39076f2a2ac47eee356c6cea8878535b176476615cbe58a3e7ddf09f6e70496",
     "juego/art/esbirro-editor-v219.webp": "87fab064c69e6e34dcdd9ecc9f0b78b4ed693d18066877f685cfea830ade66c3",
     "juego/pitagoras-cine.js": "a2a7cf22ff3cb3e556e183f0f9bdd7a072e9185f1abac242ee33c4cae6cd09d1",
-    "juego/pitagoras-mundos.js": "b6de42f88200df3de9ab4b9e4856e537495e52638368eebc63d1d66f4c24583e",
+    "juego/pitagoras-mundos.js": "0d2961f36d5e727e69423b088c24d319db9f2bbeffc5aca72b85badf302e3ad3",
     "juego/pitagoras-pixel.js": "b4b9eebbc892571af81181e62b039949048659a36e183c5c336c8c85fb2ea6d2",
     "juego/pitagoras-pruebas.js": "8b9a585e77ac268669dbe80a01ac863d7017f3209f6b3a3e2ec463349c21a206",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "pitagoras.css": "e966b9e6d3eb0204c0340cf5fdfbc91755ce025fded32f1d44098b97d29b9c68",
     "pitagoras.js": "2fac63228a24ccbc54981b924bf4fae2b852d211913245743b0dbfa785cc165b",
-    "procedencia.json": "684ec366ce1fc352a4d53d44254d72d18f6a9406fd294249c414b839e727e286"
+    "procedencia.json": "5bb617a74f0a9ba1d6316ac617616480a99d2b14b4c565c90d8f8ebe0ec9a1af"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/campana-sobres-gero",
-    "sha": "ebe638e1d507c902dd2889b96de1b32260cb7455"
+    "sha": "d45399456abc09f44ea7cccbdcdec43d0e5b1787"
   },
   "seccion": "pitagoras",
   "version": 1
