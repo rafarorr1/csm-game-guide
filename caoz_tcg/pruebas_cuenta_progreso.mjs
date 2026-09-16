@@ -29,8 +29,8 @@ function entorno({storage=new Almacen(),ruta='/movil.html',host='juego.caozconto
   vm.runInContext(texto,ctx);const api=ctx.CAOZ_CUENTA_PROGRESO,p=api.crear({storage,ruta,hostname:host,eventos,intervalo:0,reloj});return {api,p,storage,eventos,ctx};
 }
 function ejemplo(){return {formato:'caoz.progreso',version:1,entorno:'produccion',datos:{
-  campana:{version:1,id:'campana_unica',lider:'fender',etapa:5,personaje:{nombre:'Ari',color:'verde'},mesaPendiente:4,sobresPendientes:['antes']},
-  borrador:{personaje:{nombre:'Ari',equipo:'libro'},lider:'fender'},logros:{version:1,mazos:{adreida:{nombre:'Nombre histórico',fecha:100}},ganador:null},
+  campana:{version:1,id:'campana_unica',lider:'fender',etapa:5,personaje:{version:1,nombre:'Ari',genero:'femenino',figura:'explorador',estatura:'alta',cuerpo:'esbelto',rostro:'ovalado',ojos:'jade',rasgo:'pecas',peinado:'trenzas',piel:'cobre',cabello:'dorado',atuendo:'ruta',color:'verde',accesorio:'medallon',equipo:'arco'},mesaPendiente:4,sobresPendientes:['antes']},
+  borrador:{personaje:{version:1,nombre:'Ari',genero:'no_binario',figura:'mago',estatura:'media',cuerpo:'atletico',rostro:'redondo',ojos:'violeta',rasgo:'runas',peinado:'largo',piel:'elfica',cabello:'plata',atuendo:'arcano',color:'violeta',accesorio:'amuleto',equipo:'baston'},lider:'fender'},logros:{version:1,mazos:{adreida:{nombre:'Nombre histórico',fecha:100}},ganador:null},
   coleccion:{version:1,revision:13,cantidades:{tal:{normal:1,foil:0,dorado:1}},desbloqueos:{tal:['foil','dorado']},selecciones:{tal:'dorado'},sobres:4,sobresVersion:2,sobresGuardados:{trucos:2},recompensasPorElegir:[{id:'premio',cantidad:2}],campanasPremiadas:['campana1'],domosPremiados:['domo1'],pendiente:{id:'ya_sorteado',cartas:[{id:'tal',acabado:'foil',nueva:false},{id:'rey',acabado:'normal',nueva:false},{id:'machete',acabado:'normal',nueva:true},{id:'armadura',acabado:'foil',nueva:true},{id:'eric',acabado:'normal',nueva:false}]}},
   premiosDomo:['domo_sin_acuse'],records:{lideres:{fender:{ganadas:4}},partidas:9},nombre:'Ari Online'}};}
 function poblar(s,snapshot=ejemplo(),clave='caoz.coleccion.v1.produccion.raiz'){
@@ -94,12 +94,14 @@ await prueba('Cambiar A→B y cerrar sesión invalida la miniatura en memoria si
   let enMenu=true;e.ctx.document={querySelector:s=>s==='#extras.on,#menu.on'?enMenu:!enMenu};
   vm.runInContext("const CAMPANA_CLAVE='caoz.campana.v1';let campanaMemoria=null,campanaEnsayoGero=null,RECORD_ULTIMO=null;"+lectura+refresco,e.ctx);
   e.eventos.addEventListener('caoz:cuenta-importada',()=>e.ctx.cuentaRecargarProgreso());
-  const a=ejemplo();a.datos.borrador={personaje:{nombre:'Personaje A',color:'verde',equipo:'libro'},lider:'fender'};
+  const a=ejemplo();a.datos.borrador={personaje:{version:1,nombre:'Personaje A',genero:'femenino',figura:'explorador',estatura:'baja',cuerpo:'esbelto',rostro:'ovalado',ojos:'cielo',rasgo:'pecas',peinado:'trenzas',piel:'cobre',cabello:'rojo',atuendo:'ruta',color:'verde',accesorio:'medallon',equipo:'arco'},lider:'fender'};
   e.p.aplicar(a,{cuentaId:A,revision:1});assert.equal(e.ctx.campanaLeerBorrador().personaje.nombre,'Personaje A');
-  const b=ejemplo();b.datos.borrador={personaje:{nombre:'Personaje B',color:'azul',equipo:'baston'},lider:'mohamed'};
+  const b=ejemplo();b.datos.borrador={personaje:{version:1,nombre:'Personaje B',genero:'no_binario',figura:'ceremonial',estatura:'alta',cuerpo:'robusto',rostro:'ancho',ojos:'plata',rasgo:'pintura',peinado:'diadema',piel:'ebano',cabello:'plata',atuendo:'ceremonial',color:'azul',accesorio:'broche',equipo:'hacha'},lider:'mohamed'};
   e.p.aplicar(b,{cuentaId:B,revision:1});const antes=e.storage.getItem('caoz.campana.v1.creador');
-  assert.equal(e.ctx.campanaLeerBorrador().personaje.nombre,'Personaje B');assert.equal(e.ctx.campanaLeerBorrador().personaje.color,'azul');assert.equal(e.ctx.campanaLeerBorrador().lider,'mohamed');
-  assert.equal(e.storage.getItem('caoz.campana.v1.creador'),antes);e.ctx.campanaGuardarBorrador();assert.equal(JSON.parse(e.storage.getItem('caoz.campana.v1.creador')).personaje.nombre,'Personaje B');
+  const recuperado=e.ctx.campanaLeerBorrador();
+  assert.equal(recuperado.personaje.nombre,'Personaje B');assert.equal(recuperado.personaje.color,'azul');assert.equal(recuperado.lider,'mohamed');
+  assert.deepEqual(plano(recuperado.personaje),plano(b.datos.borrador.personaje));assert.equal(e.storage.getItem('caoz.campana.v1.creador'),antes);
+  e.ctx.campanaGuardarBorrador();assert.deepEqual(plano(JSON.parse(e.storage.getItem('caoz.campana.v1.creador')).personaje),plano(b.datos.borrador.personaje));
   enMenu=false;const vivo=e.ctx.campanaLeerBorrador();assert.equal(e.ctx.cuentaRecargarProgreso(),false);assert.equal(vm.runInContext('campanaBorrador',e.ctx),vivo);
   enMenu=true;e.p.desvincular();assert.equal(e.ctx.campanaLeerBorrador().personaje.nombre,'Viajero');e.ctx.campanaGuardarBorrador();assert.equal(JSON.parse(e.storage.getItem('caoz.campana.v1.creador')).personaje.nombre,'Viajero');e.p.destruir();
 });
