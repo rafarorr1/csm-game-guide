@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Epílogo de Gero · revisión aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./generado/base.css">
+<link rel="stylesheet" href="./juego/acabados.css">
+<link rel="stylesheet" href="./juego/coleccion.css">
+<link rel="stylesheet" href="./juego/sobres-apertura.css">
+<link rel="stylesheet" href="./epilogo-gero.css">
+<script src="./memoria.js"></script>
+<script src="./red-estatica.js"></script>
+<script src="./generado/datos.js"></script>
+<script src="./generado/renderer.js"></script>
+<script src="./juego/arte-vistas.js"></script>
+<script src="./juego/coleccion-modelo.js"></script>
+<script src="./juego/arte-remoto.js"></script>
+<script src="./juego/sobres-escena.js"></script>
+<script src="./juego/sobres-apertura.js"></script>
+<script src="./juego/coleccion-ui.js"></script>
+<script src="./juego/campana-deseo.js"></script>
+<script src="./epilogo-gero.js" defer></script>
+</head>
+<body class="aaa-polish epilogoGero" data-fase="inicio">
+<main id="epilogoGeroLaboratorio" class="screen on">
+  <div class="epilogoGeroBruma" aria-hidden="true"></div>
+  <section class="epilogoGeroInicio" aria-labelledby="epilogoGeroTitulo">
+    <img src="./art/logo.webp" alt="Caoz Con Todo" class="epilogoGeroLogo">
+    <p class="epilogoGeroSello">REVISIÓN AISLADA · FINAL DE CAMPAÑA</p>
+    <h1 id="epilogoGeroTitulo">Gero ha sido vencido.</h1>
+    <p class="epilogoGeroIntro">Aquí se revisa el recorrido final completo. En el juego, empieza automáticamente después de la victoria; este botón sólo sustituye el combate que el laboratorio no carga.</p>
+    <ol class="epilogoGeroRuta" aria-label="Secuencia que se revisa">
+      <li>Victoria</li><li>Deseo</li><li>Fuego</li><li>Concedido</li><li>Sobres</li><li>Menú</li>
+    </ol>
+    <button type="button" id="epilogoGeroIniciar" class="epilogoGeroAccion">Iniciar la revisión del epílogo</button>
+    <p id="epilogoGeroEstado" role="status" aria-live="polite">Datos reales de Colección en memoria temporal. No hay partida, IA, online ni avance del jugador.</p>
+    <details class="epilogoGeroDetalles">
+      <summary>Qué se está revisando</summary>
+      <p>El formulario, el fuego y «Deseo concedido» proceden de <code>campana-deseo.js</code>. La selección usa el modelo, la interfaz, los sobres y los estilos reales de Colección. Al confirmar tres sobres, un último fundido lleva al menú de este laboratorio.</p>
+      <a href="./generado/manifiesto.json" target="_blank" rel="noopener">Ver manifiesto de datos</a>
+    </details>
+  </section>
+  <section class="epilogoGeroMenu" aria-live="polite" aria-labelledby="epilogoGeroMenuTitulo">
+    <p class="epilogoGeroSello">DESEO CONCEDIDO</p>
+    <h2 id="epilogoGeroMenuTitulo">Menú principal</h2>
+    <p>Tus tres sobres quedaron elegidos en esta memoria temporal.</p>
+    <button type="button" id="epilogoGeroReiniciar" class="epilogoGeroAccion">Revisar el epílogo otra vez</button>
+  </section>
+</main>
+<div id="epilogoGeroFundido" aria-hidden="true"></div>
+</body>
+</html>

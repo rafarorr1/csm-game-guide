@@ -13,6 +13,10 @@
       "fuente": "bd5decc2ddb4b7c48dde9463f0ef588d4db41162",
       "ruta": "tcg/cuenta"
     },
+    "epilogo-gero": {
+      "fuente": "908ef6a0d49b3a8de4139584efd3e32f1a70059b",
+      "ruta": "tcg/epilogo-gero"
+    },
     "interacciones": {
       "fuente": "c568529b736bbba9b5507f992446c3d5cb06c135",
       "ruta": "tcg/interacciones"

@@ -1,0 +1,120 @@
+{
+  "seccion": "epilogo-gero",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "progresoReal": false,
+  "flujo": [
+    "Victoria contra Gero",
+    "Formulario de deseo",
+    "Fuego",
+    "Deseo concedido",
+    "Fundido a negro",
+    "Selector de tres sobres",
+    "Fundido a negro",
+    "Menú de laboratorio"
+  ],
+  "contratoSelector": "abrirRecompensaSobres({origen,referencia,finalCampana:true,onConfirmar})",
+  "componentes": {
+    "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
+    "coleccion-modelo.js": "7f72c8a40bed034e04a369c7fa76576dc23ae5386dd3af22c1220de0aafa30c8",
+    "arte-remoto.js": "b90f5defcd9e8e9e5b06effe367b89c2be37d73384be6d87c2add3494e415423",
+    "sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
+    "sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
+    "sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
+    "coleccion-ui.js": "f2baf19e05dc7effca93d9e5f63fec7c1a155eff492ad79c196c3f251d451e6a",
+    "coleccion.css": "1a6cdb3839409126611c956ee00123a06034aed114db33bca60aa7006e461a8b",
+    "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
+    "campana-deseo.js": "bf96865dd19437bb24f87f31cc452c4843d6c787bb6cdf087bc9c67b095939fa"
+  },
+  "arte": {
+    "logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
+    "encuadres.json": "1b5c7975f3257afd28153763f751e02ecf9a99dbfb75429097642d9bcbe61557"
+  },
+  "entorno": {
+    "epilogo-gero.js": "e0cdaad7991864cba57b9f82bcc2968a905c310d9a26e766284cbdf24716e080",
+    "epilogo-gero.css": "a84b291b9857c6df1cd3897bf4fe8ef3aa2b8f9a9d506e8a7351d51e3fdbd117",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
+    "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
+  },
+  "renderer": {
+    "vista": "desktop",
+    "cartas": 128,
+    "protagonistas": 6,
+    "fuentes": [
+      {
+        "archivo": "caoz_tcg/index.html",
+        "sha256": "e0f2cf7d7d58d1b9759bd3afe1a746a68e8d6e66b4dc55c3638e9a04827090e8"
+      },
+      {
+        "archivo": "caoz_tcg/motor.js",
+        "sha256": "8d508219cf4c5db28da68594e0265e488775dcb42a6a3bd264e127c5de4142ec"
+      },
+      {
+        "archivo": "caoz_tcg/polish-aaa.js",
+        "sha256": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
+      }
+    ],
+    "funciones": [
+      {
+        "nombre": "el",
+        "linea": 2471,
+        "sha256": "e56e76c380a0a7f1b7d517b91ad2eea03f769a558b78cb06b5a1e97aad08044d"
+      },
+      {
+        "nombre": "encuadreDe",
+        "linea": 59,
+        "sha256": "6eb3ca92621f110c7ca185d3906a0960201b13777379d0435daeb84363111af2"
+      },
+      {
+        "nombre": "cap",
+        "linea": 74,
+        "sha256": "533c56ca5718f281a5d244c43a50bc07c4fced4bdcc175bc8f2cfd1ce46fc9df"
+      },
+      {
+        "nombre": "tribeLine",
+        "linea": 2364,
+        "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
+      },
+      {
+        "nombre": "ponerDibujo",
+        "linea": 2432,
+        "sha256": "49d6176090e60831a263230fb4129228b20a69ca07776b487c0dfdd5962af638"
+      },
+      {
+        "nombre": "ilustrarLider",
+        "linea": 2452,
+        "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
+      },
+      {
+        "nombre": "ilustrar",
+        "linea": 2460,
+        "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
+      },
+      {
+        "nombre": "cardEl",
+        "linea": 2736,
+        "sha256": "7ea8cf09fc81f62ac4432445d5ba315d3de248acb3b0d84b1f8695e6327e087f"
+      },
+      {
+        "nombre": "cartaDeLiderVS",
+        "linea": 4281,
+        "sha256": "750f30852f38460396485784f49bc82a6e7e295264cd16ab6c46f2cfb1fd921d"
+      }
+    ],
+    "adaptadores": [
+      "attachInspect: sin inspector ajeno a la colección",
+      "pulsacionLarga: sin inspector ajeno a la colección",
+      "G: null; no existe partida"
+    ],
+    "almacenamiento": "sólo memoria de la página",
+    "red": "sólo recursos de este servidor local"
+  },
+  "derivados": {
+    "index.html": "35117f6f141f83623198cd3e9a194274a284e160e9b441f4e94c117d98ff9120",
+    "generado/datos.js": "0521566285ee5981ad780002e2c2373039cff1d879e806865f401178dd079e24",
+    "generado/renderer.js": "bc0fd1144188f393715d689b5567146748312f18797661f1b5f12e9968b99a78",
+    "generado/base.css": "2ff8f1778627d18a6d774554230a937fc87e29452cb80684ab8d46c04bd796dd"
+  }
+}
