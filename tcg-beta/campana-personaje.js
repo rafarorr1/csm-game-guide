@@ -2,16 +2,24 @@
    la misma geometría en el creador, en la mesa y durante el ascenso final. */
 'use strict';
 const CAMPANA_ASPECTO={
-  figura:{viajero:'Viajero',guardian:'Guardián',mago:'Mago'},
-  peinado:{corto:'Corto',largo:'Largo',capucha:'Capucha',sombrero:'Sombrero'},
+  genero:{femenino:'Femenina',masculino:'Masculina',no_binario:'No binaria',sin_etiqueta:'Sin etiqueta'},
+  figura:{viajero:'Viajero',guardian:'Guardián',mago:'Místico',explorador:'Explorador',ceremonial:'Centinela ceremonial'},
+  estatura:{baja:'Baja',media:'Media',alta:'Alta'},
+  cuerpo:{esbelto:'Esbelto',atletico:'Atlético',robusto:'Robusto'},
+  rostro:{ovalado:'Ovalado',angular:'Angular',redondo:'Redondo',ancho:'Ancho'},
+  ojos:{avellana:['Avellana','#594737'],jade:['Jade','#3d7669'],cielo:['Cielo','#4f8dac'],violeta:['Violeta','#735aa1'],plata:['Plata','#aab7c6']},
+  rasgo:{ninguno:'Sin rasgo',pecas:'Pecas',cicatriz:'Cicatriz',runas:'Marcas arcanas',pintura:'Pintura ritual'},
+  peinado:{corto:'Corto',largo:'Largo',rizado:'Rizado',trenzas:'Trenzas',rapado:'Rapado',capucha:'Capucha',sombrero:'Sombrero',yelmo:'Yelmo',diadema:'Diadema'},
   piel:{marfil:['Marfil','#e9c6a3'],arena:['Arena','#c68e62'],cobre:['Cobre','#97613f'],ebano:['Ébano','#5b382b'],elfica:['Élfica','#ad9cc6']},
   cabello:{oscuro:['Obsidiana','#292331'],castano:['Castaño','#69402c'],dorado:['Dorado','#d6ac57'],plata:['Plata','#d8dbe0'],rojo:['Carmesí','#913935']},
+  atuendo:{ruta:'Túnica de ruta',ligero:'Armadura ligera',arcano:'Ropaje arcano',ceremonial:'Capa ceremonial'},
   color:{vino:['Vino','#963e4b'],azul:['Zafiro','#3b6d9d'],verde:['Bosque','#4d7653'],violeta:['Amatista','#78539b'],marfil:['Marfil','#c7b991'],noche:['Medianoche','#34384e']},
-  equipo:{espada:'Espada y escudo',baston:'Bastón arcano',libro:'Grimorio'}
+  accesorio:{ninguno:'Sin adorno',medallon:'Medallón',broche:'Broche del Domo',amuleto:'Amuleto'},
+  equipo:{espada:'Espada y escudo',lanza:'Lanza y broquel',dagas:'Dagas gemelas',baston:'Bastón arcano',libro:'Grimorio',arco:'Arco de explorador',hacha:'Hacha ceremonial'}
 };
 function campanaNormalizarPersonaje(d={}){
   if(!d||typeof d!=='object')d={};
-  const base={version:1,nombre:'Viajero',figura:'viajero',peinado:'corto',piel:'arena',cabello:'oscuro',color:'vino',equipo:'espada'};
+  const base={version:1,nombre:'Viajero',genero:'sin_etiqueta',figura:'viajero',estatura:'media',cuerpo:'atletico',rostro:'ovalado',ojos:'avellana',rasgo:'ninguno',peinado:'corto',piel:'arena',cabello:'oscuro',atuendo:'ruta',color:'vino',accesorio:'medallon',equipo:'espada'};
   if(typeof d.nombre==='string'&&d.nombre.trim())base.nombre=d.nombre.replace(/[\u0000-\u001f\u007f]/g,'').trim().slice(0,24)||base.nombre;
   for(const k of Object.keys(CAMPANA_ASPECTO))if(Object.hasOwn(CAMPANA_ASPECTO[k],d[k]))base[k]=d[k];
   return base;
@@ -28,13 +36,17 @@ function campanaLimpiarBorrador(){campanaBorrador=null;try{localStorage.removeIt
 
 /* Malla de resina con normales suaves. Las piezas tienen volumen y el visor
    resuelve la profundidad por píxel: una cara lejana nunca tapa otra cercana. */
-function campanaGeometriaPersonaje(dato){
+function campanaGeometriaPersonaje(dato,detalle='alto'){
   const p=campanaNormalizarPersonaje(dato),caras=[],TAU=Math.PI*2;
-  const piel=CAMPANA_ASPECTO.piel[p.piel][1],pelo=CAMPANA_ASPECTO.cabello[p.cabello][1],tela=CAMPANA_ASPECTO.color[p.color][1],oro='#d5b56d',metal='#aebecf',cuero='#352a2d';
+  const piel=CAMPANA_ASPECTO.piel[p.piel][1],pelo=CAMPANA_ASPECTO.cabello[p.cabello][1],tela=CAMPANA_ASPECTO.color[p.color][1],iris=CAMPANA_ASPECTO.ojos[p.ojos][1],oro='#d5b56d',metal='#aebecf',cuero='#352a2d';
+  const calidad=detalle==='bajo'?.56:detalle==='medio'?.78:1,pasos=(n,min)=>Math.max(min,Math.round(n*calidad));
+  const forma={esbelto:{ancho:.91,pecho:.94,cintura:.86},atletico:{ancho:1,pecho:1,cintura:1},robusto:{ancho:1.1,pecho:1.11,cintura:1.16}}[p.cuerpo];
+  const presencia={femenino:{hombro:.95,mandibula:.91},masculino:{hombro:1.05,mandibula:1.08},no_binario:{hombro:1,mandibula:1},sin_etiqueta:{hombro:1,mandibula:1}}[p.genero];
   const normal=v=>{const l=Math.hypot(...v)||1;return v.map(x=>x/l);};
   const cruz=(a,b)=>[a[1]*b[2]-a[2]*b[1],a[2]*b[0]-a[0]*b[2],a[0]*b[1]-a[1]*b[0]];
   const cara=(v,color,nv)=>caras.push({v,color,nv});
-  function superficie(fn,color,n=28,m=12){
+  function superficie(fn,color,n=28,m=12,fijo=false){
+    if(!fijo){n=pasos(n,6);m=pasos(m,m===1?1:3);}
     const filas=Array.from({length:m+1},(_,j)=>Array.from({length:n+1},(_,i)=>fn(i/n,j/m)));
     for(let j=0;j<m;j++)for(let i=0;i<n;i++){
       const q=[filas[j][i],filas[j][i+1],filas[j+1][i+1],filas[j+1][i]];
@@ -47,8 +59,9 @@ function campanaGeometriaPersonaje(dato){
     superficie((u,v)=>{const a=u*TAU,b=desde+(hasta-desde)*v,c=Math.cos(b),s=Math.sin(b);return{v:[x+rx*c*Math.cos(a),y+ry*s,z+rz*c*Math.sin(a)],n:normal([c*Math.cos(a)/rx,s/ry,c*Math.sin(a)/rz])};},color,Math.max(rx,ry,rz)<.025?8:Math.max(rx,ry,rz)<.095?12:24,Math.max(rx,ry,rz)<.025?4:Math.max(rx,ry,rz)<.095?6:14);
   }
   function perfil(filas,color,n=32){
-    superficie((u,v)=>{const j=Math.min(filas.length-2,Math.floor(v*(filas.length-1))),t=v*(filas.length-1)-j,a=filas[j],b=filas[j+1],q=a.map((x,k)=>x+(b[k]-x)*t),ang=u*TAU,c=Math.cos(ang),s=Math.sin(ang),h=b[1]-a[1]||1;return{v:[q[0]+q[3]*c,q[1],q[2]+q[4]*s],n:normal([c/q[3],-((b[3]-a[3])*c*c/q[3]+(b[4]-a[4])*s*s/q[4])/h,s/q[4]])};},color,n,filas.length-1);
-    for(const q of [filas[0],filas[filas.length-1]])cara(Array.from({length:n},(_,i)=>[q[0]+q[3]*Math.cos(i*TAU/n),q[1],q[2]+q[4]*Math.sin(i*TAU/n)]),color);
+    const lados=pasos(n,8);
+    superficie((u,v)=>{const j=Math.min(filas.length-2,Math.floor(v*(filas.length-1))),t=v*(filas.length-1)-j,a=filas[j],b=filas[j+1],q=a.map((x,k)=>x+(b[k]-x)*t),ang=u*TAU,c=Math.cos(ang),s=Math.sin(ang),h=b[1]-a[1]||1;return{v:[q[0]+q[3]*c,q[1],q[2]+q[4]*s],n:normal([c/q[3],-((b[3]-a[3])*c*c/q[3]+(b[4]-a[4])*s*s/q[4])/h,s/q[4]])};},color,lados,filas.length-1,true);
+    for(const q of [filas[0],filas[filas.length-1]])cara(Array.from({length:lados},(_,i)=>[q[0]+q[3]*Math.cos(i*TAU/lados),q[1],q[2]+q[4]*Math.sin(i*TAU/lados)]),color);
   }
   const anillo=(y,r,h,c,rz=r)=>perfil([[0,y,0,r,rz],[0,y+h,0,r,rz]],c);
   function vara(a,b,r,color,r2=r){
@@ -65,60 +78,108 @@ function campanaGeometriaPersonaje(dato){
     vara([s*.145,.45,-.025],[s*.115,.68,0],.074,'#645749');
     vara([s*.145-.05,.44,.058],[s*.145+.05,.44,.058],.013,oro);
   }
-  perfil([[0,.51,0,p.figura==='mago'?.32:.27,.225],[0,.59,0,.27,.20],[0,.76,0,.23,.175],[0,.96,0,.27,.185],[0,1.10,0,.27,.175],[0,1.17,0,.16,.13]],tela);
+  const faldon=(p.figura==='mago'||p.atuendo==='arcano') ? .32 : (p.figura==='explorador'||p.atuendo==='ligero') ? .245 : .27;
+  perfil([[0,.51,0,faldon,.225],[0,.59,0,.27,.20],[0,.76,0,.23,.175],[0,.96,0,.27,.185],[0,1.10,0,.27,.175],[0,1.17,0,.16,.13]],tela);
   // La capa rodea la espalda; su borde ondulado conserva separación del cuerpo.
   superficie((u,v)=>{const a=(u-.5)*2.9,y=.43+v*.73,r=.43-v*.17,pliegue=Math.cos(u*TAU*5)*.024*(1-v),z=-(r+pliegue)*Math.cos(a)-.06;return{v:[(r+pliegue)*Math.sin(a),y+Math.cos(u*TAU*5)*.025*(1-v),z],n:normal([Math.sin(a),.23,-Math.cos(a)])};},tela,40,12);
   for(const s of [-1,1])vara([s*.43,.43,-.105],[s*.26,1.15,-.1],.016,oro);
-  if(p.figura==='guardian'){
+  const armadura=p.figura==='guardian'||p.atuendo==='ligero';
+  if(armadura){
     esfera(0,.99,.026,.256,.205,.20,metal);
     esfera(0,1.02,.22,.048,.061,.022,oro);
     for(const s of [-1,1])esfera(s*.275,1.06,0,.15,.11,.185,metal);
   }else{
     for(const s of [-1,1])vara([s*.08,1.16,.10],[s*.14,.84,.162],.018,oro);
-    esfera(0,1.145,.15,.038,.038,.02,'#e8cd84');
+    if(p.accesorio==='medallon')esfera(0,1.145,.15,.038,.038,.02,'#e8cd84');
+  }
+  if(p.figura==='explorador'){
+    perfil([[0,.78,-.18,.245,.08],[0,1.10,-.18,.19,.065]],cuero,22);
+    for(const s of [-1,1])vara([s*.22,.76,.18],[s*.11,1.13,.14],.019,cuero);
+  }
+  if(p.figura==='ceremonial'||p.atuendo==='ceremonial'){
+    for(const s of [-1,1])vara([s*.26,1.12,-.12],[s*.39,.55,-.16],.023,oro);
+    for(let i=0;i<5;i++)esfera((i-2)*.085,.72,-.24,.021,.033,.018,oro);
+  }
+  if(p.atuendo==='arcano'){
+    for(const s of [-1,1])for(let i=0;i<3;i++)esfera(s*(.12+i*.055),.92-i*.095,.205,.018,.018,.012,'#9bd7d6');
+    vara([-.19,.965,.202],[.19,.965,.202],.009,oro);
   }
   anillo(.73,.242,.055,cuero,.19);esfera(0,.757,.194,.047,.035,.018,oro);
-  const manos=p.equipo==='libro'?[[-.31,.85,.36],[.31,.85,.36]]:[[-.345,.77,.18],[.37,.81,.15]];
+  const manos=p.equipo==='libro'?[[-.31,.85,.36],[.31,.85,.36]]:p.equipo==='arco'?[[-.27,.94,.30],[.31,.78,.24]]:[[-.345,.77,.18],[.37,.81,.15]];
   for(const [i,s] of [-1,1].entries()){
     const codo=[s*.335,.87,.045],mano=manos[i];
-    esfera(s*.265,1.075,0,.105,.10,.115,p.figura==='guardian'?metal:tela);
+    esfera(s*.265,1.075,0,.105,.10,.115,armadura?metal:tela);
     vara([s*.27,1.06,.015],codo,.081,tela,.067);
-    vara(codo,mano,.068,p.figura==='guardian'?metal:tela,.052);
+    vara(codo,mano,.068,armadura?metal:tela,.052);
     esfera(...mano,.066,.066,.062,piel);
     for(let j=0;j<3;j++)vara([mano[0]-.035+j*.026,mano[1]-.024,mano[2]+.052],[mano[0]-.035+j*.026,mano[1]+.025,mano[2]+.052],.009,piel);
   }
+  if(p.accesorio==='broche'){
+    esfera(-.165,1.075,.187,.045,.045,.018,oro);vara([-.19,1.075,.199],[-.14,1.075,.199],.006,'#f0deb0');
+  }else if(p.accesorio==='amuleto'){
+    for(const s of [-1,1])vara([s*.115,1.09,.19],[s*.04,1.00,.22],.009,oro);
+    esfera(0,.985,.227,.038,.053,.018,'#91dbdc');
+  }
   // Cabeza y rostro: cráneo suave, orejas, cejas, ojos y boca tallados.
+  const faccion={ovalado:{x:1,y:1,mandibula:1},angular:{x:.96,y:1.03,mandibula:1.1},redondo:{x:1.08,y:.94,mandibula:.93},ancho:{x:1.16,y:.97,mandibula:1.04}}[p.rostro];
+  const cabezaX=.235*faccion.x,frenteY=.283*faccion.y,mandibula=.205*faccion.mandibula*presencia.mandibula;
   vara([0,1.12,0],[0,1.28,.012],.082,piel);
-  esfera(0,1.43,.015,.235,.283,.218,piel);
+  esfera(0,1.43,.015,cabezaX,frenteY,.218,piel);
+  esfera(0,1.335,.042,mandibula,.105,.18,piel);
   for(const s of [-1,1]){
-    esfera(s*.228,1.425,.012,.047,.084,.045,piel);
+    esfera(s*(cabezaX-.008),1.425,.012,.047,.084,.045,piel);
     esfera(s*.079,1.463,.211,.047,.034,.015,'#ede6d6');
-    esfera(s*.079,1.464,.226,.025,.028,.009,'#39434a');
+    esfera(s*.079,1.464,.226,.025,.028,.009,iris);
     esfera(s*.077,1.465,.234,.014,.020,.005,'#12171e');
     esfera(s*.07,1.475,.239,.006,.007,.003,'#fff3d9');
     vara([s*.04,1.511,.214],[s*.121,1.513,.193],.012,pelo);
+    // Párpado y pómulo: detalle legible incluso desde la miniatura de carta.
+    vara([s*.038,1.447,.222],[s*.118,1.444,.208],.005,'#a8735c');
+    esfera(s*.106,1.405,.214,.037,.026,.011,piel);
   }
   esfera(0,1.394,.228,.034,.053,.038,piel);
   vara([-.049,1.32,.211],[.049,1.32,.211],.008,'#895b54');
+  if(p.rasgo==='pecas')for(const s of [-1,1])for(let i=0;i<3;i++)esfera(s*(.085+i*.02),1.395-i*.017,.231,.006,.006,.003,'#754a3a');
+  else if(p.rasgo==='cicatriz'){vara([-.105,1.51,.236],[-.072,1.37,.243],.009,'#b57667');vara([-.098,1.45,.242],[-.062,1.47,.242],.006,'#b57667');}
+  else if(p.rasgo==='runas')for(const s of [-1,1]){vara([s*.12,1.40,.237],[s*.16,1.33,.238],.006,'#91dbdc');vara([s*.16,1.33,.238],[s*.10,1.29,.237],.006,'#91dbdc');}
+  else if(p.rasgo==='pintura')for(const s of [-1,1])vara([s*.14,1.50,.237],[s*.12,1.34,.242],.011,tela);
   // Casquete abierto: nunca atraviesa el rostro como la antigua esfera de pelo.
-  if(p.peinado!=='capucha'){
-    esfera(0,1.46,-.003,.242,.27,.229,pelo,.28,Math.PI/2);
-    for(let i=0;i<7;i++){const x=-.175+i*.055;esfera(x,1.637-Math.abs(x)*.24,.126,.062,.065,.052,pelo);}
+  if(!['capucha','yelmo'].includes(p.peinado)){
+    if(p.peinado!=='rapado'){
+      esfera(0,1.46,-.003,.242,.27,.229,pelo,.28,Math.PI/2);
+      for(let i=0;i<7;i++){const x=-.175+i*.055;esfera(x,1.637-Math.abs(x)*.24,.126,.062,.065,.052,pelo);}
+    }else esfera(0,1.59,-.01,.226,.12,.214,pelo,.28,Math.PI/2);
     if(p.peinado==='largo')for(const s of [-1,1]){
       esfera(s*.21,1.39,-.06,.078,.25,.14,pelo);
       for(let i=0;i<3;i++)vara([s*(.175+i*.024),1.53,-.13],[s*(.17+i*.028),1.16,-.12],.022,pelo);
     }
+    if(p.peinado==='rizado')for(let i=0;i<13;i++){
+      const a=-.94+i*.157,x=Math.sin(a)*.205,y=1.60+Math.cos(a)*.075;
+      esfera(x,y,.135,.058,.061,.052,pelo);
+    }
+    if(p.peinado==='trenzas')for(const s of [-1,1])for(let i=0;i<6;i++)esfera(s*(.205+(i%2)*.012),1.47-i*.062,-.07,.034,.040,.039,pelo);
   }else{
-    superficie((u,v)=>{const a=1.05+u*(TAU-2.1),b=-.6+v*2.16,c=Math.cos(b);return{v:[.29*c*Math.sin(a),1.43+.34*Math.sin(b),.03+.28*c*Math.cos(a)],n:normal([c*Math.sin(a),Math.sin(b),c*Math.cos(a)])};},tela,32,18);
-    esfera(0,1.46,-.003,.238,.266,.226,pelo,.60,Math.PI/2);
-    for(const s of [-1,1])for(let j=0;j<12;j++){
-      const borde=b=>[s*.29*Math.cos(b)*Math.sin(1.05),1.43+.34*Math.sin(b),.03+.28*Math.cos(b)*Math.cos(1.05)];
-      vara(borde(-.6+j*2.16/12),borde(-.6+(j+1)*2.16/12),.01,oro);
+    if(p.peinado==='capucha'){
+      superficie((u,v)=>{const a=1.05+u*(TAU-2.1),b=-.6+v*2.16,c=Math.cos(b);return{v:[.29*c*Math.sin(a),1.43+.34*Math.sin(b),.03+.28*c*Math.cos(a)],n:normal([c*Math.sin(a),Math.sin(b),c*Math.cos(a)])};},tela,32,18);
+      esfera(0,1.46,-.003,.238,.266,.226,pelo,.60,Math.PI/2);
+      for(const s of [-1,1])for(let j=0;j<12;j++){
+        const borde=b=>[s*.29*Math.cos(b)*Math.sin(1.05),1.43+.34*Math.sin(b),.03+.28*Math.cos(b)*Math.cos(1.05)];
+        vara(borde(-.6+j*2.16/12),borde(-.6+(j+1)*2.16/12),.01,oro);
+      }
+    }else{
+      esfera(0,1.51,-.01,.255,.31,.245,metal,.18,Math.PI/2);
+      perfil([[0,1.50,.205,.24,.022],[0,1.57,.205,.22,.022]],oro,28);
+      vara([0,1.78,-.02],[0,1.94,-.02],.018,tela);
     }
   }
   if(p.peinado==='sombrero'){
     perfil([[0,1.65,0,.36,.30],[0,1.676,0,.37,.31],[0,1.69,0,.245,.215],[.025,1.86,0,.16,.15],[.065,2.05,0,.055,.06],[.12,2.13,.035,.009,.009]],tela);
     perfil([[0,1.70,0,.242,.21],[.01,1.755,0,.218,.195]],oro);
+  }
+  if(p.peinado==='diadema'){
+    const aro=[];for(let i=0;i<=10;i++){const a=Math.PI*.14+i*Math.PI*.72/10;aro.push([Math.cos(a)*.235,1.51+Math.sin(a)*.155,.224]);}
+    for(let i=0;i<aro.length-1;i++)vara(aro[i],aro[i+1],.011,oro);
+    esfera(0,1.652,.233,.03,.045,.016,'#91dbdc');
   }
   if(p.equipo==='espada'){
     vara([.37,.70,.15],[.37,.93,.15],.035,cuero);vara([.25,.925,.15],[.49,.925,.15],.025,oro);
@@ -128,12 +189,36 @@ function campanaGeometriaPersonaje(dato){
     const borde=[[-.18,1.08],[-.57,1.08],[-.58,.74],[-.37,.51],[-.17,.74]],centro=[-.375,.85,.32];
     borde.forEach((a,i)=>{const b=borde[(i+1)%borde.length];cara([[a[0],a[1],.235],[b[0],b[1],.235],centro],tela);vara([a[0],a[1],.24],[b[0],b[1],.24],.018,oro);});
     vara([-.375,.69,.326],[-.375,1.02,.287],.015,oro);vara([-.485,.86,.29],[-.26,.86,.29],.015,oro);
+  }else if(p.equipo==='lanza'){
+    vara([.37,.30,.15],[.37,1.72,.15],.024,'#64452f');
+    const punta=[[.37,1.92,.15],[.305,1.70,.15],[.37,1.68,.205],[.435,1.70,.15],[.37,1.68,.095]];
+    [[0,1,2],[0,2,3],[0,3,4],[0,4,1]].forEach(ids=>cara(ids.map(i=>punta[i]),metal));
+    esfera(-.385,.86,.28,.18,.18,.045,tela);
+    const aro=[];for(let i=0;i<10;i++){const a=i*TAU/10;aro.push([-.385+Math.cos(a)*.178,.86+Math.sin(a)*.178,.327]);}
+    for(let i=0;i<aro.length;i++)vara(aro[i],aro[(i+1)%aro.length],.011,oro);
+  }else if(p.equipo==='dagas'){
+    for(const s of [-1,1]){
+      vara([s*.34,.69,.18],[s*.34,.93,.18],.026,cuero);vara([s*.22,.92,.18],[s*.46,.92,.18],.017,oro);
+      const hoja=[[s*.305,.945,.18],[s*.34,.945,.205],[s*.375,.945,.18],[s*.34,.945,.155],[s*.34,1.31,.18]];
+      [[0,1,4],[1,2,4],[2,3,4],[3,0,4]].forEach(ids=>cara(ids.map(i=>hoja[i]),metal));
+    }
   }else if(p.equipo==='baston'){
     vara([.385,.25,.145],[.385,1.76,.145],.025,'#64452f');
     for(const y of [.68,.74,1.56,1.63])esfera(.385,y,.145,.041,.018,.041,oro);
     esfera(.385,1.795,.145,.10,.145,.10,'#91dbdc');
     for(const s of [-1,1])vara([.385,1.65,.145],[.385+s*.105,1.81,.145],.018,oro);
-  }else{
+  }else if(p.equipo==='arco'){
+    const arco=[];for(let i=0;i<=12;i++){const t=i/12,y=.55+t*1.18,x=.385+Math.sin(t*Math.PI)*.19;arco.push([x,y,.15]);}
+    for(let i=0;i<arco.length-1;i++)vara(arco[i],arco[i+1],.016,'#64452f');
+    vara(arco[0],arco[arco.length-1],.006,'#e8d9ad');
+    vara([.385,.74,.16],[.385,1.56,.16],.008,'#d4c48d');
+    const flecha=[[.385,1.67,.16],[.35,1.57,.16],[.42,1.57,.19],[.42,1.57,.13]];cara(flecha,metal);
+  }else if(p.equipo==='hacha'){
+    vara([.37,.34,.15],[.37,1.48,.15],.029,'#64452f');
+    const filo=[[.37,1.42,.15],[.37,1.70,.15],[.61,1.63,.15],[.67,1.49,.15],[.57,1.35,.15]];
+    cara(filo,metal);cara(filo.map(v=>[v[0],v[1],v[2]+.052]),metal);for(let i=0;i<filo.length;i++)cara([filo[i],filo[(i+1)%filo.length],filo[(i+1)%filo.length].map((x,j)=>x+(j===2?.052:0)),filo[i].map((x,j)=>x+(j===2?.052:0))],oro);
+    vara([.23,1.47,.15],[.51,1.47,.15],.018,oro);
+  }else if(p.equipo==='libro'){
     const pagina=(s,y=0)=>[[0,.89+y,.24],[s*.40,1.005+y,.24],[s*.40,.885+y,.65],[0,.77+y,.65]];
     for(const s of [-1,1]){
       const a=pagina(s,-.034),b=pagina(s,0);cara(a,cuero);cara(b,'#f3dfb0');a.forEach((v,i)=>cara([v,a[(i+1)%4],b[(i+1)%4],b[i]],oro));
@@ -145,7 +230,20 @@ function campanaGeometriaPersonaje(dato){
     vara([0,.89,.24],[0,.77,.65],.012,'#b8904c');
     vara([.04,.80,.61],[.04,.69,.72],.016,tela);
   }
-  return caras;
+  // La base no cambia: la estatura y complexión deforman sólo la figura y su equipo.
+  const alto={baja:.9,media:1,alta:1.12}[p.estatura],profundo=forma.ancho>.99?1.05:.96;
+  const anchoEn=y=>{
+    if(y<.51)return forma.ancho;
+    if(y<.79)return forma.cintura;
+    if(y<1.18)return forma.pecho*presencia.hombro;
+    return forma.ancho*(.98+(presencia.mandibula-1)*.24);
+  };
+  const deformar=v=>{
+    if(v[1]<=.223)return v.slice();const ancho=anchoEn(v[1]);
+    return[v[0]*ancho,.215+(v[1]-.215)*alto,v[2]*profundo];
+  };
+  const normalDeformada=n=>normal([n[0]/forma.ancho,n[1]/alto,n[2]/profundo]);
+  return caras.map(c=>({...c,v:c.v.map(deformar),nv:c.nv?.map(normalDeformada)}));
 }
 
 /* Un solo contexto reutilizado para creador, mesa y retratos. Sin dependencias.
@@ -203,8 +301,11 @@ function campanaPintarMalla(destino,caras,proyectar,ancho,alto){
 }
 
 function campanaPintarRetrato(ctx,caras,w,h,giro=-.28){
-  const co=Math.cos(giro),si=Math.sin(giro),esc=Math.min(w/1.65,h/2.38);
-  const girar=v=>[v[0]*co+v[2]*si,v[1],v[2]*co-v[0]*si];
+  const co=Math.cos(giro),si=Math.sin(giro),girar=v=>[v[0]*co+v[2]*si,v[1],v[2]*co-v[0]*si];
+  // Conserva el encuadre clásico y sólo se aleja para no cortar una figura alta
+  // o un tocado alto; el giro influye también en el borde visible superior.
+  let techo=2.13;for(const c of caras)for(const v of c.v){const z=v[2]*co-v[0]*si;techo=Math.max(techo,v[1]-z*.26);}
+  const esc=Math.min(w/1.65,h/2.38,h*.895/techo);
   const malla=caras.map(c=>({...c,v:c.v.map(girar),nv:c.nv?.map(girar)}));
   campanaPintarMalla(ctx,malla,v=>({x:w/2+v[0]*esc,y:h*.91-v[1]*esc+v[2]*.26*esc,d:8-v[2]-v[1]*.26}),w,h);
 }
@@ -250,20 +351,24 @@ function campanaVestirFicha(nodo,side){
 }
 
 function campanaPrevisualizar(contenedor,dato){
-  const canvas=document.createElement('canvas');canvas.className='creadorLienzo';canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Vista previa de tu miniatura');contenedor.appendChild(canvas);
+  const canvas=document.createElement('canvas');canvas.className='creadorLienzo';canvas.setAttribute('role','img');canvas.setAttribute('aria-label','Vista previa de tu miniatura. Arrastra para girarla.');canvas.style.touchAction='none';contenedor.appendChild(canvas);
   const ctx=canvas.getContext('2d');if(!ctx)return {actualizar(){},destruir(){canvas.remove();}};
-  let caras=campanaGeometriaPersonaje(dato),raf=0,vivo=true,ultimo=0;
+  let caras=campanaGeometriaPersonaje(dato,'alto'),raf=0,vivo=true,ultimo=0,giroBase=-.28,arrastre=null;
   function pintar(t=0){
     const w=contenedor.clientWidth,h=contenedor.clientHeight;if(!w||!h)return;
     const dpr=Math.min(devicePixelRatio||1,2);if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);}
     ctx.setTransform(dpr,0,0,dpr,0,0);ctx.clearRect(0,0,w,h);
-    const giro=matchMedia('(prefers-reduced-motion:reduce)').matches?-.28:-.28+Math.sin(t*.00045)*.18;
+    const giro=giroBase+(matchMedia('(prefers-reduced-motion:reduce)').matches?0:Math.sin(t*.00045)*.18);
     campanaPintarRetrato(ctx,caras,w,h,giro);
   }
+  const bajar=e=>{arrastre={id:e.pointerId,x:e.clientX};canvas.setPointerCapture?.(e.pointerId);};
+  const mover=e=>{if(!arrastre||arrastre.id!==e.pointerId)return;giroBase+=(e.clientX-arrastre.x)*.012;arrastre.x=e.clientX;pintar(performance.now());};
+  const soltar=e=>{if(!arrastre||arrastre.id!==e.pointerId)return;canvas.releasePointerCapture?.(e.pointerId);arrastre=null;};
+  canvas.addEventListener('pointerdown',bajar);canvas.addEventListener('pointermove',mover);canvas.addEventListener('pointerup',soltar);canvas.addEventListener('pointercancel',soltar);
   const observador=new ResizeObserver(()=>pintar(performance.now()));observador.observe(contenedor);
   function cuadro(t){if(!vivo)return;if(!document.hidden&&t-ultimo>50&&!matchMedia('(prefers-reduced-motion:reduce)').matches){ultimo=t;pintar(t);}raf=requestAnimationFrame(cuadro);}
   pintar();raf=requestAnimationFrame(cuadro);
-  return {actualizar(p){caras=campanaGeometriaPersonaje(p);pintar(performance.now());},destruir(){vivo=false;cancelAnimationFrame(raf);observador.disconnect();canvas.remove();}};
+  return {actualizar(p){caras=campanaGeometriaPersonaje(p,'alto');pintar(performance.now());},girar(delta){giroBase+=delta;pintar(performance.now());},reiniciar(){giroBase=-.28;pintar(performance.now());},destruir(){vivo=false;cancelAnimationFrame(raf);observador.disconnect();canvas.removeEventListener('pointerdown',bajar);canvas.removeEventListener('pointermove',mover);canvas.removeEventListener('pointerup',soltar);canvas.removeEventListener('pointercancel',soltar);canvas.remove();}};
 }
 
 function campanaCrear(){
@@ -275,24 +380,56 @@ function campanaCrear(){
   const controles=document.createElement('div');controles.className='creadorControles';
   const etiqueta=document.createElement('label');etiqueta.className='creadorNombre';etiqueta.textContent='NOMBRE DE TU HÉROE';
   const nombre=document.createElement('input');nombre.id='creadorNombre';nombre.maxLength=24;nombre.value=p.nombre;nombre.autocomplete='off';nombre.spellcheck=false;etiqueta.appendChild(nombre);
-  const guardar=()=>{campanaGuardarBorrador();if(campanaVistaPersonaje)campanaVistaPersonaje.actualizar(p);};
+  const resumen=document.createElement('p');resumen.className='creadorResumen';resumen.setAttribute('aria-live','polite');
+  const actualizarResumen=()=>{resumen.textContent=[CAMPANA_ASPECTO.figura[p.figura],CAMPANA_ASPECTO.estatura[p.estatura],CAMPANA_ASPECTO.cuerpo[p.cuerpo],CAMPANA_ASPECTO.equipo[p.equipo]].join(' · ')+' · Sólo apariencia: no cambia tu mazo ni tus habilidades.';};
+  const guardar=()=>{campanaGuardarBorrador();actualizarResumen();if(campanaVistaPersonaje)campanaVistaPersonaje.actualizar(p);};
   nombre.addEventListener('input',()=>{p.nombre=nombre.value;campanaGuardarBorrador();nombre.setCustomValidity('');});
   nombre.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();nombre.blur();}});
   const tabs=document.createElement('nav');tabs.className='creadorTabs';tabs.setAttribute('aria-label','Personalizar miniatura');
   const opciones=document.createElement('div');opciones.className='creadorOpciones';
+  const categorias=[
+    ['identidad','Identidad',[['genero','Género / presentación']]],
+    ['silueta','Silueta',[['figura','Arquetipo'],['estatura','Estatura'],['cuerpo','Complexión']]],
+    ['rostro','Rostro',[['rostro','Forma del rostro'],['piel','Piel'],['ojos','Iris'],['rasgo','Rasgo'],['peinado','Peinado o tocado'],['cabello','Color de cabello']]],
+    ['atuendo','Atuendo',[['atuendo','Vestuario'],['color','Paleta'],['accesorio','Adorno']]],
+    ['equipo','Equipo',[['equipo','Equipo principal']]]
+  ];
+  const predefinidos=[
+    ['Guardia del Domo',{genero:'femenino',figura:'guardian',estatura:'media',cuerpo:'atletico',rostro:'angular',ojos:'jade',rasgo:'cicatriz',peinado:'yelmo',atuendo:'ligero',color:'azul',accesorio:'broche',equipo:'lanza'}],
+    ['Explorador',{genero:'masculino',figura:'explorador',estatura:'alta',cuerpo:'esbelto',rostro:'ovalado',ojos:'avellana',rasgo:'pecas',peinado:'trenzas',atuendo:'ruta',color:'verde',accesorio:'medallon',equipo:'arco'}],
+    ['Oráculo',{genero:'no_binario',figura:'mago',estatura:'media',cuerpo:'atletico',rostro:'redondo',ojos:'violeta',rasgo:'runas',peinado:'largo',atuendo:'arcano',color:'violeta',accesorio:'amuleto',equipo:'baston'}],
+    ['Centinela',{genero:'sin_etiqueta',figura:'ceremonial',estatura:'alta',cuerpo:'robusto',rostro:'ancho',ojos:'plata',rasgo:'pintura',peinado:'diadema',atuendo:'ceremonial',color:'vino',accesorio:'broche',equipo:'hacha'}]
+  ];
+  const crearGrupo=(campo,titulo)=>{
+    const grupo=document.createElement('fieldset'),leyenda=document.createElement('legend');leyenda.textContent=titulo;grupo.appendChild(leyenda);
+    const elegir=(valor,boton)=>{p[campo]=valor;guardar();grupo.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===boton)));};
+    for(const [valor,def] of Object.entries(CAMPANA_ASPECTO[campo])){
+      const muestra=Array.isArray(def),texto=muestra?def[0]:def,b=campanaBoton(texto,()=>elegir(valor,b));b.className=muestra?'creadorMuestra':'creadorOpcion';b.dataset.campo=campo;b.dataset.valor=valor;b.setAttribute('aria-label',titulo+': '+texto);b.title=texto;b.setAttribute('aria-pressed',String(p[campo]===valor));if(muestra)b.style.setProperty('--muestra',def[1]);grupo.appendChild(b);
+    }
+    grupo.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;const botones=[...grupo.querySelectorAll('button')],actual=Math.max(0,botones.indexOf(document.activeElement)),paso=['ArrowLeft','ArrowUp'].includes(e.key)?-1:1,siguiente=botones[(actual+paso+botones.length)%botones.length];e.preventDefault();siguiente.click();siguiente.focus();});
+    return grupo;
+  };
   function categoria(k){
     opciones.dataset.grupo=k;
     tabs.querySelectorAll('button').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.categoria===k)));opciones.replaceChildren();
-    const grupos=k==='figura'?[['figura','Figura'],['peinado','Peinado']]:k==='colores'?[['piel','Piel'],['cabello','Cabello'],['color','Capa']]:[['equipo','Equipo']];
-    for(const [campo,titulo] of grupos){const grupo=document.createElement('fieldset'),leyenda=document.createElement('legend');leyenda.textContent=titulo;grupo.appendChild(leyenda);
-      for(const [valor,def] of Object.entries(CAMPANA_ASPECTO[campo])){const color=Array.isArray(def),b=campanaBoton(color?'':def,()=>{p[campo]=valor;guardar();grupo.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));});b.className=color?'creadorColor':'creadorOpcion';b.dataset.campo=campo;b.dataset.valor=valor;b.setAttribute('aria-label',titulo+': '+(color?def[0]:def));b.title=color?def[0]:def;b.setAttribute('aria-pressed',String(p[campo]===valor));if(color)b.style.setProperty('--muestra',def[1]);grupo.appendChild(b);}
-      opciones.appendChild(grupo);
+    const definicion=categorias.find(([id])=>id===k);
+    if(k==='identidad'){
+      const grupoNombre=document.createElement('fieldset'),leyenda=document.createElement('legend');leyenda.textContent='Nombre';grupoNombre.append(leyenda,etiqueta);opciones.appendChild(grupoNombre);
+      const arquetipos=document.createElement('fieldset'),titulo=document.createElement('legend');titulo.textContent='Voces del Domo';arquetipos.appendChild(titulo);
+      for(const [texto,aspecto] of predefinidos){const b=campanaBoton(texto,()=>{Object.assign(p,aspecto);guardar();categoria(k);});b.className='creadorOpcion creadorPreset';b.dataset.preset=texto;arquetipos.appendChild(b);}opciones.appendChild(arquetipos);
     }
+    for(const [campo,titulo] of definicion[2])opciones.appendChild(crearGrupo(campo,titulo));
   }
-  for(const [id,titulo] of [['figura','Figura'],['colores','Colores'],['equipo','Equipo']]){const b=campanaBoton(titulo,()=>categoria(id));b.dataset.categoria=id;tabs.appendChild(b);}
-  controles.append(etiqueta,tabs,opciones);cuerpo.append(vista,controles);
+  for(const [id,titulo] of categorias){const b=campanaBoton(titulo,()=>categoria(id));b.dataset.categoria=id;tabs.appendChild(b);}
+  const atajos=document.createElement('div');atajos.className='creadorAtajos';
+  const aleatorio=campanaBoton('Aspecto aleatorio',()=>{for(const campo of Object.keys(CAMPANA_ASPECTO)){const valores=Object.keys(CAMPANA_ASPECTO[campo]);p[campo]=valores[Math.floor(Math.random()*valores.length)];}guardar();categoria(tabs.querySelector('[aria-pressed="true"]')?.dataset.categoria||'identidad');});aleatorio.className='creadorAleatorio';atajos.appendChild(aleatorio);
+  const herramientas=document.createElement('div');herramientas.className='creadorHerramientas';
+  const giroIzq=campanaBoton('↶',()=>campanaVistaPersonaje?.girar(-.36));giroIzq.className='creadorGiro';giroIzq.setAttribute('aria-label','Girar miniatura a la izquierda');
+  const reiniciar=campanaBoton('Vista frontal',()=>campanaVistaPersonaje?.reiniciar());reiniciar.className='creadorGiro creadorReiniciar';
+  const giroDer=campanaBoton('↷',()=>campanaVistaPersonaje?.girar(.36));giroDer.className='creadorGiro';giroDer.setAttribute('aria-label','Girar miniatura a la derecha');herramientas.append(giroIzq,reiniciar,giroDer);vista.appendChild(herramientas);
+  controles.append(tabs,atajos,resumen,opciones);cuerpo.append(vista,controles);
   const siguiente=campanaBoton('Continuar · Elegir mazo',()=>{if(!nombre.value.trim()){nombre.setCustomValidity('Dale un nombre a tu héroe.');nombre.reportValidity();return;}borrador.personaje=campanaNormalizarPersonaje(p);campanaGuardarBorrador();campanaElegir();campanaAnimarEntrada();},true);siguiente.dataset.creadorContinuar='1';
-  d.append(cuerpo,campanaAcciones(siguiente,campanaBoton('Menú principal',campanaVolverAlMenu)));categoria('figura');campanaVistaPersonaje=campanaPrevisualizar(vista,p);
+  d.append(cuerpo,campanaAcciones(siguiente,campanaBoton('Menú principal',campanaVolverAlMenu)));categoria('identidad');actualizarResumen();campanaVistaPersonaje=campanaPrevisualizar(vista,p);
 }
 
 {
@@ -340,8 +477,33 @@ function campanaCrear(){
   @media(max-width:650px) and (max-height:650px) and (max-aspect-ratio:6/5){#campanaPanel[data-vista="creador"] .campanaSub{display:none}.creadorCuerpo{grid-template-rows:minmax(76px,1fr) auto}.creadorOpciones{min-height:108px}.creadorOpciones[data-grupo="colores"] fieldset{display:block;height:32px}.creadorOpciones[data-grupo="colores"] legend{float:left;width:44px;line-height:30px;margin:0}.creadorColor{margin-right:5px}#campanaPanel[data-vista="creador"] .campanaAcciones>.btn{grid-column:auto;font-size:12px;line-height:1.2}.creadorMarca{font-size:6px;top:6px}}
   @media(min-aspect-ratio:6/5) and (max-height:420px){#campanaPanel[data-vista="creador"] .campanaSub{display:none}#campanaPanel[data-vista="creador"] h2{font-size:20px}#campanaPanel[data-vista="creador"] .campanaAcciones>.btn{grid-column:auto;font-size:12px;line-height:1.2}.creadorControles{justify-content:flex-start}.creadorNombre{flex-direction:row;align-items:center;gap:8px;font-size:8px;letter-spacing:.8px}.creadorNombre input{width:65%;height:28px;flex:1}.creadorOpciones{min-height:88px}.creadorOpciones fieldset{display:block;min-height:26px;margin-bottom:4px}.creadorOpciones legend{float:left;width:38px;line-height:24px;margin:0}.creadorOpcion{min-height:26px;font-size:10px;padding:4px 5px;margin:0 4px 3px 0}.creadorColor{margin-right:6px}}
   #campanaPanel[data-vista="creador"].creadorTeclado{display:flex}
-  #campanaPanel.creadorTeclado .creadorVista,#campanaPanel.creadorTeclado .creadorTabs,#campanaPanel.creadorTeclado .creadorOpciones{display:none}
+  /* Al abrir el teclado, el campo Nombre sigue dentro del grupo Identidad: se
+     mantiene ese primer grupo visible y se oculta el resto, no el contenedor. */
+  #campanaPanel.creadorTeclado .creadorVista,#campanaPanel.creadorTeclado .creadorTabs,#campanaPanel.creadorTeclado .creadorAtajos,#campanaPanel.creadorTeclado .creadorResumen{display:none}
   #campanaPanel.creadorTeclado .creadorCuerpo{display:flex;flex-direction:column;justify-content:center}
+  #campanaPanel.creadorTeclado .creadorControles,#campanaPanel.creadorTeclado .creadorOpciones{display:flex;flex:1 1 auto;min-height:0}
+  #campanaPanel.creadorTeclado .creadorOpciones{display:block;overflow:auto}
+  #campanaPanel.creadorTeclado .creadorOpciones fieldset:not(:first-child){display:none}
+  /* El inventario de aspectos puede crecer sin hacer que el diálogo se desborde:
+     sólo el panel de opciones se desplaza y las acciones siguen siempre visibles. */
+  .creadorCuerpo{grid-template-columns:minmax(250px,.92fr) minmax(310px,1.12fr)}
+  .creadorVista{min-height:0}.creadorLienzo{z-index:1}.creadorMarca{z-index:2;pointer-events:none}.creadorOrbita{z-index:0;pointer-events:none}
+  .creadorHerramientas{position:absolute;z-index:2;right:10px;bottom:10px;display:flex;gap:5px;align-items:center}
+  .creadorGiro{min-height:36px!important;padding:5px 9px!important;border:1px solid #c8a96888;border-radius:6px;background:#161216d9;color:#f7db9d;font:700 14px var(--sans);cursor:pointer}.creadorReiniciar{font-size:10px!important;letter-spacing:.3px}
+  .creadorControles{min-height:0;justify-content:stretch;gap:10px}.creadorTabs{flex:0 0 auto;overflow-x:auto;padding-bottom:2px;scrollbar-color:#c29c5a #171218}.creadorTabs .btn{min-height:40px;white-space:nowrap}
+  .creadorAtajos{display:flex;align-items:center;justify-content:space-between;gap:8px}.creadorAleatorio{min-height:38px;padding:6px 10px;border:1px dashed #cba96f99;border-radius:7px;background:#2b2130;color:#f6d99b;font:700 11px var(--sans);cursor:pointer}
+  .creadorResumen{flex:0 0 auto;margin:0;color:#baa98e;font:11px/1.35 var(--sans)}
+  .creadorOpciones{flex:1 1 auto;min-height:0;overflow:auto;overscroll-behavior:contain;padding:2px 7px 8px 1px;scrollbar-color:#b38c50 #171218}
+  .creadorOpciones fieldset{margin:0 0 13px;padding:0;border:0;display:flex;flex-wrap:wrap;gap:7px}.creadorOpciones legend{width:100%;margin-bottom:5px;color:#d4c19e;font:700 10px var(--sans);letter-spacing:.5px}
+  .creadorOpcion,.creadorMuestra{box-sizing:border-box;min-height:42px;padding:7px 10px;border:1px solid #b397634d;border-radius:7px;background:#161114;color:#e0cfb3;font:12px/1.1 var(--sans);cursor:pointer}
+  .creadorMuestra{position:relative;min-width:88px;padding-left:31px;background:linear-gradient(90deg,var(--muestra) 0 22px,#161114 22px)}
+  .creadorMuestra::before{content:'';position:absolute;left:7px;top:50%;width:13px;height:13px;translate:0 -50%;border:1px solid #fff8;border-radius:50%;background:var(--muestra);box-shadow:0 0 0 1px #0008}
+  .creadorOpcion[aria-pressed="true"],.creadorMuestra[aria-pressed="true"]{border-color:#ecc989;box-shadow:inset 0 0 0 1px #ecc989;color:#ffe4ac;background-color:#51402a}.creadorMuestra[aria-pressed="true"]::after{content:'✓';position:absolute;left:8px;top:50%;translate:0 -50%;color:#fff;text-shadow:0 1px 3px #000;font:700 13px var(--sans)}
+  .creadorPreset{font-family:var(--serif);background:linear-gradient(140deg,#372832,#171114)}
+  @media(max-width:650px){.creadorCuerpo{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(130px,1fr) minmax(0,1fr);gap:10px}.creadorControles{min-width:0}.creadorTabs{min-width:0;max-width:100%;margin-right:-2px;scrollbar-width:none}.creadorTabs::-webkit-scrollbar{display:none}.creadorTabs .btn{flex:0 0 auto;min-height:40px}.creadorControles{gap:8px}.creadorOpciones{padding-bottom:5px}.creadorResumen{font-size:10px}.creadorMuestra{min-width:82px}.creadorHerramientas{right:7px;bottom:7px}}
+  @media(max-height:650px){.creadorControles{min-height:0;gap:6px}.creadorTabs .btn{min-height:38px}.creadorOpcion,.creadorMuestra{min-height:40px;font-size:11px}.creadorOpciones{min-height:0}.creadorResumen{font-size:9px}.creadorAleatorio{min-height:34px}.creadorHerramientas{bottom:5px}}
+  @media(min-aspect-ratio:6/5) and (max-height:650px){.creadorControles{justify-content:stretch;min-height:0}.creadorTabs .btn{min-height:34px}.creadorOpcion,.creadorMuestra{min-height:38px}.creadorResumen{display:none}.creadorOpciones{min-height:0}.creadorAtajos{min-height:28px}}
+  @media(max-width:650px) and (max-height:650px) and (max-aspect-ratio:6/5){.creadorCuerpo{grid-template-rows:minmax(82px,1fr) minmax(0,1fr)}.creadorResumen{display:none}.creadorOpcion,.creadorMuestra{min-height:40px}.creadorOpciones fieldset{margin-bottom:9px}.creadorNombre input{height:40px}.creadorHerramientas{display:none}}
   @media(prefers-reduced-motion:reduce){.creadorControles button{transition:none}}
   `;document.head.appendChild(css);
 }
