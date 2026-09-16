@@ -6,10 +6,12 @@ import {fileURLToPath} from 'node:url';
 import {generar,juego,vistas} from './fuentes.mjs';
 import {generarFondoCuenta} from './cuenta-fondo.mjs';
 import {derivarEpilogoGero} from './epilogo-gero-exportar.mjs';
+import {derivarPitagoras,recursosPitagoras} from './pitagoras-exportar.mjs';
 const carpeta=path.dirname(fileURLToPath(import.meta.url));
 const prefijo='/dev/secciones/';
-const publicos=new Set(['coleccion.html','interacciones.html','epilogo-gero.html','memoria.js','red-estatica.js','coleccion-dev.js','aislado.css','interacciones.js','interacciones.css','epilogo-gero.js','epilogo-gero.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
-const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','campana-deseo.js','cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css']);
+const publicos=new Set(['coleccion.html','interacciones.html','epilogo-gero.html','pitagoras.html','memoria.js','red-estatica.js','coleccion-dev.js','aislado.css','interacciones.js','interacciones.css','epilogo-gero.js','epilogo-gero.css','pitagoras.js','pitagoras.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
+const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','campana-deseo.js','cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css','pitagoras-pruebas.js','pitagoras-mundos.js','pitagoras-cine.js','pitagoras-pixel.js']);
+const recursosPitagorasLocales=new Set(recursosPitagoras);
 const mime={'.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 function enviar(res,estado,cuerpo,tipo){res.writeHead(estado,{'Content-Type':tipo,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':csp});res.end(cuerpo);}
@@ -28,6 +30,7 @@ export function crearServidor(){return http.createServer((req,res)=>{
     if(recurso==='coleccion.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__VISTA__',vista),mime['.html']);
     if(recurso==='interacciones.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp),mime['.html']);
     if(recurso==='epilogo-gero.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__','./generado/epilogo-gero'),mime['.html']);
+    if(recurso==='pitagoras.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__','./generado/pitagoras'),mime['.html']);
     if(recurso==='cuenta.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replace('__CUENTA_FONDO__',generarFondoCuenta().html),mime['.html']);
     if(recurso==='cuenta-fondo-real.css')return enviar(res,200,generarFondoCuenta().css,mime['.css']);
     if(recurso==='generado/datos.js')return enviar(res,200,generar(vista).datosJS,mime['.js']);
@@ -38,8 +41,11 @@ export function crearServidor(){return http.createServer((req,res)=>{
     if(recurso==='generado/epilogo-gero/renderer.js')return enviar(res,200,derivarEpilogoGero().renderJS,mime['.js']);
     if(recurso==='generado/epilogo-gero/base.css')return enviar(res,200,derivarEpilogoGero().css,mime['.css']);
     if(recurso==='generado/epilogo-gero/manifiesto.json')return enviar(res,200,JSON.stringify(derivarEpilogoGero().metadatos,null,2),mime['.json']);
+    if(recurso==='generado/pitagoras/datos.js')return enviar(res,200,derivarPitagoras().datosJS,mime['.js']);
+    if(recurso==='generado/pitagoras/manifiesto.json')return enviar(res,200,JSON.stringify(derivarPitagoras().metadatos,null,2),mime['.json']);
     if(publicos.has(recurso))return archivo(res,recurso,carpeta);
     if(recurso.startsWith('juego/')&&componentes.has(recurso.slice(6)))return archivo(res,recurso.slice(6),juego);
+    if(recurso.startsWith('juego/art/')&&recursosPitagorasLocales.has(recurso.slice(6)))return archivo(res,recurso.slice(6),juego);
     if(recurso==='api/arte/catalogo')return enviar(res,200,JSON.stringify({cartas:[]}),mime['.json']);
     if(recurso.startsWith('art/')&&/^[a-zA-Z0-9_./-]+\.(webp|png|jpg|jpeg|svg|json)$/i.test(recurso)&&!recurso.includes('..'))return archivo(res,recurso.slice(4),path.join(juego,'art'));
     return enviar(res,404,'Recurso ajeno a esta sección.','text/plain; charset=utf-8');
@@ -49,5 +55,5 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   const i=process.argv.indexOf('--puerto'),puerto=i>=0?Number(process.argv[i+1]):8878;
   if(!Number.isInteger(puerto)||puerto<1024||puerto>65535)throw Error('Usa --puerto con un número entre 1024 y 65535.');
   const servidor=crearServidor();servidor.on('error',e=>{console.error(e.message);process.exitCode=1;});
-  servidor.listen(puerto,'127.0.0.1',()=>console.log(`Colección aislada: http://127.0.0.1:${puerto}${prefijo}coleccion.html?estado=sobres\nEpílogo de Gero: http://127.0.0.1:${puerto}${prefijo}epilogo-gero.html\nDatos temporales en memoria; Ctrl+C para cerrar.`));
+  servidor.listen(puerto,'127.0.0.1',()=>console.log(`Colección aislada: http://127.0.0.1:${puerto}${prefijo}coleccion.html?estado=sobres\nEpílogo de Gero: http://127.0.0.1:${puerto}${prefijo}epilogo-gero.html\nPitágoras: http://127.0.0.1:${puerto}${prefijo}pitagoras.html\nDatos temporales en memoria; Ctrl+C para cerrar.`));
 }

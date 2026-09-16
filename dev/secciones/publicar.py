@@ -55,6 +55,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers'},
         'pruebas': ('pruebas_epilogo_gero_exportacion.mjs',),
     },
+    'pitagoras': {
+        'nombre': 'Pitágoras',
+        'exportador': 'pitagoras-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/art/esbirro-editor-v219.webp'},
+        'pruebas': ('pruebas_pitagoras_exportacion.mjs',),
+    },
 }
 URL = 'https://aislados.caoz-tcg.pages.dev'
 NO_ENCONTRADO = b'<!doctype html><html lang="es"><meta charset="utf-8"><title>No encontrado</title><body><h1>Esta ruta no existe</h1><a href="/">Volver a las secciones</a></body></html>\n'

@@ -357,7 +357,7 @@
     }
     s.eleccion=s.eleccion.filter(id=>grupos.some(g=>g.id===id)).slice(0,3);
     const escena=crear('section','coleccionFinalCampanaEscena');escena.setAttribute('aria-label','Elección final de sobres');
-    const cabecera=crear('header','coleccionFinalCampanaCabecera'),titulo=crear('h3','','Elige tus tres sobres');titulo.id='coleccionFinalCampanaTitulo';cabecera.append(crear('span','coleccionAntetitulo','DESEO CONCEDIDO'),titulo,crear('p','','Desliza cada sobre hasta el centro y confirma tu elección. Puedes repetir colección.'));
+    const cabecera=crear('header','coleccionFinalCampanaCabecera'),titulo=crear('h3','','Elige tus tres sobres');titulo.id='coleccionFinalCampanaTitulo';cabecera.append(crear('span','coleccionAntetitulo','DESEO CONCEDIDO'),titulo,crear('p','','Desliza cada sobre hasta el centro y confirma tu elección. Cada elección queda fijada; puedes repetir colección.'));
     const progreso=crear('div','coleccionFinalCampanaProgreso');progreso.setAttribute('role','status');progreso.setAttribute('aria-live','polite');
     const textoProgreso=crear('strong','coleccionFinalCampanaProgresoTexto'),barraProgreso=crear('progress','coleccionFinalCampanaBarra');barraProgreso.max=3;barraProgreso.value=s.eleccion.length;progreso.append(textoProgreso,barraProgreso);
     const ventana=crear('div','coleccionFinalCarruselVentana'),carrete=crear('div','coleccionFinalCarrusel');carrete.dataset.epilogoCarrusel='';carrete.tabIndex=0;carrete.setAttribute('role','listbox');carrete.setAttribute('aria-label','Colecciones de sobres. Usa flechas o desliza para elegir.');
@@ -367,7 +367,7 @@
     ventana.append(carrete);
     const navegacion=crear('div','coleccionFinalNavegacion'),anterior=boton('‹',()=>mover(-1),'coleccionFinalAnterior'),actual=crear('div','coleccionFinalActual'),siguiente=boton('›',()=>mover(1),'coleccionFinalSiguiente');anterior.setAttribute('aria-label','Colección anterior');siguiente.setAttribute('aria-label','Colección siguiente');navegacion.append(anterior,actual,siguiente);
     const marcas=crear('div','coleccionFinalMarcas');marcas.setAttribute('aria-label','Sobres elegidos');
-    const acciones=crear('div','coleccionFinalAcciones'),deshacer=boton('Deshacer último',deshacerUltimo,'coleccionFinalDeshacer'),elegir=boton('',elegirActual,'coleccionFinalElegir'),guardar=boton('Guardar mis 3 sobres',guardarEleccion,'coleccionFinalGuardar');elegir.dataset.epilogoElegir='';guardar.dataset.epilogoConfirmar='';guardar.disabled=true;acciones.append(deshacer,elegir,guardar);
+    const acciones=crear('div','coleccionFinalAcciones'),elegir=boton('',elegirActual,'coleccionFinalElegir'),guardar=boton('Guardar mis 3 sobres',guardarEleccion,'coleccionFinalGuardar');elegir.dataset.epilogoElegir='';guardar.dataset.epilogoConfirmar='';guardar.disabled=true;acciones.append(elegir,guardar);
     const aviso=crear('p','coleccionFinalAviso');aviso.setAttribute('role','alert');
     const fundido=crear('div','coleccionFinalFundido');fundido.setAttribute('aria-hidden','true');
     escena.append(cabecera,progreso,ventana,navegacion,marcas,acciones,aviso,fundido);contenido.append(escena);
@@ -404,17 +404,13 @@
       if(!final.confirmando)panel.dataset.epilogoFase=elegidos===3?'confirmar':'elegir';
       textoProgreso.textContent=elegidos===3?'3 de 3 sobres elegidos':'Sobre '+(elegidos+1)+' de 3';
       marcas.replaceChildren();for(let i=0;i<3;i++){const id=s.eleccion[i],marca=crear('i','coleccionFinalMarca');marca.setAttribute('aria-label',id?(grupos.find(g=>g.id===id)?.nombre||'Sobre elegido'):'Sobre pendiente');if(id)colorSobre(marca,id);marcas.append(marca);}
-      const bloqueada=final.confirmando,desplazando=carrete.dataset.desplazando==='true';deshacer.disabled=bloqueada||!elegidos;elegir.hidden=elegidos===3;elegir.disabled=bloqueada||elegidos===3||desplazando;elegir.textContent='Elegir '+grupo.nombre;guardar.hidden=elegidos!==3;guardar.disabled=bloqueada||elegidos!==3||desplazando;
+      const bloqueada=final.confirmando,desplazando=carrete.dataset.desplazando==='true';elegir.hidden=elegidos===3;elegir.disabled=bloqueada||elegidos===3||desplazando;elegir.textContent='Elegir '+grupo.nombre;guardar.hidden=elegidos!==3;guardar.disabled=bloqueada||elegidos!==3||desplazando;
       anterior.disabled=indice===0||bloqueada||desplazando;siguiente.disabled=indice===grupos.length-1||bloqueada||desplazando;
       tarjetas.forEach(tarjeta=>tarjeta.disabled=bloqueada||desplazando);
     }
     function elegirActual(){
       if(final.confirmando||carrete.dataset.desplazando==='true'||s.eleccion.length>=3)return;
       s.eleccion.push(etiquetaActual().id);aviso.textContent='';actualizar();sonido('ui_confirm');
-    }
-    function deshacerUltimo(){
-      if(final.confirmando||!s.eleccion.length)return;
-      s.eleccion.pop();aviso.textContent='';actualizar();
     }
     function guardarEleccion(){
       if(final.confirmando||guardando||s.eleccion.length!==3)return;

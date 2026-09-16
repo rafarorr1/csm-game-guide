@@ -19,6 +19,7 @@ Abrir:
 - Móvil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=sobres>
 - Interacciones de cartas: <http://127.0.0.1:8878/dev/secciones/interacciones.html>
 - Epílogo de Gero: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>
+- Pitágoras: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -96,6 +97,35 @@ Al publicar la revisión: <https://aislados.caoz-tcg.pages.dev/epilogo-gero/>.
 node dev/secciones/pruebas_epilogo_gero_exportacion.mjs
 python3 dev/secciones/publicar.py --seccion epilogo-gero --publicar --salida /ruta/nueva
 python3 dev/secciones/publicar.py --seccion epilogo-gero --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+## Pitágoras: presión del jefe final
+
+La revisión está en `/pitagoras/`. Abre el minijuego real de **El último
+puente** mediante `pitagoras-pruebas.js`, `pitagoras-mundos.js`,
+`pitagoras-cine.js` y `pitagoras-pixel.js`; no monta el motor, una campaña, IA,
+sonido, red ni datos del jugador. El fixture sólo aporta una semilla temporal,
+Talesyn como viajero y las seis cartas actuales del Editor, derivadas del
+catálogo del motor al exportar.
+
+La página sirve para revisar que el puente escale pronto, mantenga lectura de
+carril/salto y que las cartas del ciclo del jefe tengan la presencia esperada.
+También publica una lectura estática y verificable del Ritual inicial (2 PD,
+incluida su excepción de segundo jugador), el bloqueo de una Pesadilla por
+turno y las prioridades/bonos de las seis Pesadillas. Esos datos se extraen de
+`motor.js` durante la exportación; el adaptador no ejecuta la IA ni implementa
+otra versión de las reglas. Se puede cambiar la semilla para recorrer otra
+secuencia sin escribir ningún dato. El arte que carga `pitagoras-pruebas.js`
+se exporta en `juego/art/esbirro-editor-v219.webp`, con sus bytes y hash de
+procedencia verificados.
+
+Local: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>. Al publicar la
+revisión: <https://aislados.caoz-tcg.pages.dev/pitagoras/>.
+
+```sh
+node dev/secciones/pruebas_pitagoras_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion pitagoras --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion pitagoras --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
 ## Cuenta: acceso obligatorio y continuidad offline

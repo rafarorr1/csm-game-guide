@@ -35,7 +35,10 @@ try{
   assert.ok(js.includes("origen:'campana',referencia:id"),'La recompensa se identifica por campaña y recorrido');
   assert.ok(js.includes('campanaAbrirDeseo')&&js.includes('campanaAbrirSobresFinal'),'La escena enlaza deseo y recompensa sin el combate completo');
   assert.ok(js.includes('deseoFinalGero:true'),'El adaptador identifica su victoria como el epílogo real y no toma la salida histórica.');
-  assert.ok(archivo('juego/coleccion.css').toString().includes('.coleccionFinalCarrusel')&&archivo('juego/coleccion.css').toString().includes('scroll-snap-type:x mandatory'),'Los tres sobres reales se revisan en un carrete desplazable');
+  const selectorJS=archivo('juego/coleccion-ui.js').toString(),selectorCSS=archivo('juego/coleccion.css').toString();
+  assert.ok(selectorCSS.includes('.coleccionFinalCarrusel')&&selectorCSS.includes('scroll-snap-type:x mandatory'),'Los tres sobres reales se revisan en un carrete desplazable');
+  assert.ok(selectorCSS.includes('@keyframes coleccionFinalCampanaEntrada')&&selectorCSS.includes('animation:coleccionFinalCampanaEntrada'),'El selector final aparece desde negro con su propio fundido.');
+  assert.ok(!selectorJS.includes('coleccionFinalDeshacer')&&!selectorJS.includes('deshacerUltimo'),'La selección final no permite deshacer una elección fijada.');
   assert.ok(archivo('juego/campana-deseo.js').toString().includes("dataset.fase='fundido'")&&css.includes('fundido-final'),'La secuencia conserva ambos fundidos a negro');
   assert.ok(memoria.includes('new Map()')&&memoria.includes("Object.defineProperty(window,'localStorage'")&&!/\b(?:fetch|indexedDB|document\.cookie)\b/.test(memoria),'La interfaz de almacenamiento es sólo un Map temporal, no almacenamiento persistente');
   assert.ok(red.includes("catalogo-vacio.json")&&!/(?:https?:)?\/\/[^/]/i.test(red),'El catálogo de arte se resuelve como archivo local, sin destino externo');

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Pitágoras · revisión aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./pitagoras.css">
+<script src="./memoria.js"></script>
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/pitagoras-pruebas.js"></script>
+<script src="./juego/pitagoras-mundos.js"></script>
+<script src="./juego/pitagoras-cine.js"></script>
+<script src="./juego/pitagoras-pixel.js"></script>
+<script src="./pitagoras.js" defer></script>
+</head>
+<body class="pitagorasAislado">
+<main class="pitagorasPanel" aria-labelledby="pitagorasTitulo">
+  <header class="pitagorasCabecera">
+    <p class="pitagorasSello">REVISIÓN AISLADA · JEFE FINAL</p>
+    <h1 id="pitagorasTitulo">El Editor espera en el puente.</h1>
+    <p>Esta vista abre el minijuego real de <strong>El último puente</strong> con un fixture temporal. También muestra una lectura estática de la conducta del jefe. No crea una partida, no ejecuta la IA y no consulta el avance del jugador.</p>
+  </header>
+
+  <section class="pitagorasAccion" aria-labelledby="pitagorasPuenteTitulo">
+    <div>
+      <p class="pitagorasSello">PRUEBA IV</p>
+      <h2 id="pitagorasPuenteTitulo">El último puente</h2>
+      <p>Muévete entre tres carriles y salta los sellos. La presión debe crecer pronto, pero cada oleada tiene que leerse y dejar una respuesta posible.</p>
+    </div>
+    <div class="pitagorasControles">
+      <label for="pitagorasSemilla">Semilla de recorrido</label>
+      <div class="pitagorasSemilla"><input id="pitagorasSemilla" inputmode="numeric" type="number" min="1" step="1"><button type="button" id="pitagorasCambiarSemilla">Otra semilla</button></div>
+      <button type="button" id="pitagorasIniciar" class="pitagorasIniciar">Probar El último puente <span aria-hidden="true">→</span></button>
+      <p id="pitagorasEstado" role="status" aria-live="polite">Preparando el recorrido real con una semilla fija.</p>
+    </div>
+  </section>
+
+  <section class="pitagorasRevision" aria-labelledby="pitagorasRevisionTitulo">
+    <div>
+      <p class="pitagorasSello">FOCO DE ESTA PASADA</p>
+      <h2 id="pitagorasRevisionTitulo">Qué revisar</h2>
+      <ol>
+        <li>La apertura enseña los controles antes de exigir precisión.</li>
+        <li>La velocidad y la cadencia suben claramente antes del tramo final.</li>
+        <li>Las combinaciones siguen siendo legibles: carril seguro, salto o ambos.</li>
+        <li>El ciclo del jefe presiona desde su ritual, sin encadenar Pesadillas en el mismo turno.</li>
+      </ol>
+    </div>
+    <div class="pitagorasNota">
+      <strong>Nota de alcance</strong>
+      <p>El puente, sus colisiones, los controles y el render provienen de los módulos del juego. Este tablero sólo presenta el escenario y las cartas para evaluar el balance; no replica ni sustituye sus reglas.</p>
+      <a href="./procedencia.json" target="_blank" rel="noopener">Ver procedencia de esta revisión</a>
+    </div>
+  </section>
+
+  <section class="pitagorasConducta" aria-labelledby="pitagorasConductaTitulo">
+    <div class="pitagorasConductaCabecera">
+      <div><p class="pitagorasSello">LECTURA DEL MOTOR · SIN EJECUTAR IA</p><h2 id="pitagorasConductaTitulo">La presión que ordena el Editor</h2></div>
+      <p>Esta ficha se deriva de la fuente actual al exportar. Expone el ritual, el límite de Pesadilla y los bonos de prioridad; no intenta jugar una carta ni montar un combate.</p>
+    </div>
+    <div id="pitagorasConductaDatos" class="pitagorasConductaDatos" aria-live="polite"></div>
+  </section>
+
+  <section class="pitagorasCartas" aria-labelledby="pitagorasCartasTitulo">
+    <div class="pitagorasCartasCabecera"><div><p class="pitagorasSello">CICLO DEL JEFE</p><h2 id="pitagorasCartasTitulo">Las cartas de Pitágoras</h2></div><p>Coste y estadísticas derivados del catálogo actual. La revisión decide el ritmo, la prioridad y la presión que deben producir en conjunto.</p></div>
+    <div id="pitagorasListaCartas" class="pitagorasListaCartas" aria-live="polite"></div>
+  </section>
+
+  <footer class="pitagorasPie">Fixture temporal · sin campaña, red, sonido, IA ni datos del jugador</footer>
+</main>
+</body>
+</html>
