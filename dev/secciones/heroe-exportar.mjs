@@ -4,7 +4,9 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {datosDesdeMotor,juego,leer,hash} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
-const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
+/* La cabecera se publica en la raíz compartida de todas las revisiones: debe
+   coincidir byte a byte con la política ya vigente para no alterarlas. */
+const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 export const componentesHeroe=Object.freeze(['campana-personaje.js']);
 export const entornoHeroe=Object.freeze(['heroe.css','heroe-host.js','heroe.js','memoria.js']);
 export function derivarHeroe(){

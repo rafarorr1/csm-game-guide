@@ -10,11 +10,14 @@ const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-heroe-'));
 try{
   const destino=path.join(temporal,'heroe'),procedencia=exportar(destino),archivo=f=>fs.readFileSync(path.join(destino,f));
   const html=archivo('index.html').toString(),host=archivo('heroe-host.js').toString(),adaptador=archivo('heroe.js').toString(),memoria=archivo('memoria.js').toString(),datos=archivo('generado/datos.js').toString();
+  const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
   const esperados=['index.html','_headers','procedencia.json','memoria.js','heroe.css','heroe-host.js','heroe.js','generado/datos.js',...componentesHeroe.map(f=>'juego/'+f)].sort();
   const archivos=fs.readdirSync(destino,{recursive:true}).filter(f=>fs.statSync(path.join(destino,f)).isFile()).sort();
   assert.deepEqual(archivos,esperados,'La revisión sólo publica el creador y sus adaptadores declarados');
   for(const m of html.matchAll(/(?:src|href)="\.\/([^"?#]+)(?:[?#][^"]*)?"/g))assert.ok(fs.existsSync(path.join(destino,m[1])),m[1]);
   assert.ok(!/__CSP__|<iframe/i.test(html),'No quedan marcadores ni se incrusta el juego');
+  assert.ok(html.includes('Content-Security-Policy" content="'+csp+'"'),'La entrada conserva la CSP compartida de las revisiones.');
+  assert.equal(archivo('_headers').toString(),'/*\n  Cache-Control: no-store\n  X-Content-Type-Options: nosniff\n  Content-Security-Policy: '+csp+'\n','Las cabeceras del héroe no alteran la política compartida.');
   assert.ok(html.indexOf('memoria.js')<html.indexOf('generado/datos.js')&&html.indexOf('generado/datos.js')<html.indexOf('heroe-host.js')&&html.indexOf('heroe-host.js')<html.indexOf('juego/campana-personaje.js'),'La memoria y el fixture se instalan antes del creador real');
   for(const prohibido of ['motor.js','final.js','final-core.js','campana-mesa.js','audio-domo.js','sw.js','manifest.webmanifest','_worker.js'])assert.ok(!fs.existsSync(path.join(destino,prohibido)),prohibido+' no pertenece a la sección');
   assert.ok(!/\b(?:CARDS|DECKS|newGame|aiTurn|NET|WebSocket|fetch)\b/.test(datos),'El fixture no incluye combate ni red');
