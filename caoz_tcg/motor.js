@@ -1076,7 +1076,10 @@ function newPlayer(side, leaderId){
     alma:20, pd:0, pdMax:0, banked:0, llaves:0, pdTax:0, pdBonus:0,
     leaderUsed:false, attacked:false, petuniaUsed:false, gracia:0, ascended:false,
     scrollTurns:0, corte:null, limbo:[], clouds:[], spirits:0, fairy:false, kdrama:false,
-    manoRehecha:false };
+    // La primera mano se puede ajustar una vez, antes de que cualquiera robe
+    // su carta normal. Se guarda por jugador, no por número de turno: así no
+    // se reabre al segundo jugador ni por una partida que cambie de estado.
+    mulliganPendiente:true, mulliganUsado:false };
 }
 
 function newGame(myLeader, foeLeader, opts={}){
@@ -1640,6 +1643,7 @@ async function aiFast(side,ctx,cands){
 
 async function setupMatch(myLeader, foeLeader, opts={}){
   newGame(myLeader, foeLeader, opts);
+  const partida=G;
   G.fast=!!opts.fast; G.auto=!!opts.auto; G.silent=!!opts.silent;
   G.online=!!opts.online; G.logSent=0; G.fxq=[];
   // Los modificadores del prototipo sólo existen dentro de su propia partida.
@@ -1649,43 +1653,140 @@ async function setupMatch(myLeader, foeLeader, opts={}){
   log(`<b>${P(first).L.n}</b> gana la tirada de inicio y empieza.`,'sys');
   for(const s of [0,1]){ await drawSilent(s,5); }
   await drawSilent(G.second,1); // el segundo roba 1 extra
-  G.turnNo=0; G.active=1-first;
+  /* La primera mano se decide ANTES de que empiece el turno de nadie. Hacerlo
+     al entrar en startTurn daba al segundo jugador información de una vuelta
+     completa (y de un robo) antes de decidir. Se resuelve de uno en uno para
+     que cada dueño vea sólo su propia mano; el anfitrión conserva la autoridad
+     cuando el segundo es el invitado. */
+  G.turnNo=0; G.active=1-first; G.phase='mulligan';
+  render();
+  for(const s of [first,G.second]){
+    G.active=s;
+    await resolverMulliganInicial(s);
+    if(G!==partida||G.over)return;
+    cerrarMulliganInicial(s);                    // sin mazo/tutoría también caduca aquí
+  }
+  if(G!==partida||G.over)return;
+  G.active=1-first; G.phase='inicio';
   render();
   await startTurn(first);
 }
 
 async function drawSilent(s,n){ for(let i=0;i<n;i++){ if(P(s).deck.length) P(s).hand.push(P(s).deck.shift()); } }
 
-/* ============ MANO NUEVA ============
-   Si en tu primer turno no puedes jugar absolutamente nada, puedes devolver la
-   mano al mazo, barajarlo y robar otra del mismo tamaño.
+/* ============ MULLIGAN INICIAL ============
+   Antes de la primera carta de robo, cada jugador puede cambiar hasta DOS
+   cartas de su mano inicial. No es una mano nueva completa: las restantes se
+   conservan exactamente como estaban. Primero salen N cartas del mazo; sólo
+   después las N elegidas vuelven y se baraja. Así nunca puede volver de golpe
+   la misma copia que acabas de cambiar.
 
-   Por qué existe: con 1 PD el primer turno, una mano sin nada de Costo 1 no es
-   una mano difícil, es un turno perdido de regalo, y eso lo decide el barajado
-   antes de que juegues. Esto no da ventaja —sólo se ofrece cuando ya no podías
-   hacer nada—, sólo quita partidas decididas por el reparto.
+   La selección se identifica por ÍNDICE, no por id: dos copias de Discípulo
+   siguen siendo dos cartas elegibles distintas. Estas funciones no tocan la
+   pantalla para que la mesa, el móvil, la IA y el anfitrión compartan la misma
+   regla y la validación del anfitrión sea la definitiva. */
 
-   Condiciones, todas a la vez: es tu primer turno, no la has usado todavía, y
-   ninguna carta de tu mano es jugable ahora mismo (coste, sitio en el campo y
-   objetivos incluidos: canPlay ya lo mira todo). Una sola vez por jugador, y la
-   segunda mano es la que hay, salga como salga. Vale para los dos lados; la CPU
-   la toma siempre que le toca. */
-
-function puedeRehacerMano(s){
-  const p = P(s);
-  if(p.manoRehecha || G.tutorial || G.over) return false;
-  if(G.turnNo > 2) return false;                 // turno 1 y 2 son los primeros
-  if(!p.hand.length || !p.deck.length) return false;
-  return !p.hand.some(id => canPlay(s, id));     // de verdad no puedes nada
+function jugadorMulligan(s){
+  return G&&Number.isInteger(s)&&G.pl&&G.pl[s] ? G.pl[s] : null;
 }
 
-/* La mano, carta a carta desde el mazo. No cambia nada del estado: es
-   únicamente para poder mirar lo que tienes antes de decidir. */
+function limiteMulligan(s){
+  const p=jugadorMulligan(s);
+  return p ? Math.max(0,Math.min(2,p.hand.length,p.deck.length)) : 0;
+}
 
-async function repartirALaVista(s){
-  const n = P(s).hand.length;
-  for(let i = 0; i < n; i++){ fxDraw(s); await nap(FXON() ? 110 : 0); }
-  await nap(FXON() ? 620 : 0);                   // que aterrice la última
+function puedeMulligan(s){
+  const p=jugadorMulligan(s);
+  return !!(p&&!G.tutorial&&!G.over&&G.active===s&&p.mulliganPendiente&&!p.mulliganUsado&&limiteMulligan(s)>0);
+}
+
+/* Acepta sólo índices enteros, existentes y no repetidos. El anfitrión aplica
+   esta misma limpieza a la respuesta que llega por red; no se confía en que la
+   interfaz del invitado haya respetado el límite. */
+function normalizarSeleccionMulligan(s,indices){
+  const p=jugadorMulligan(s),tope=limiteMulligan(s);
+  if(!p||!tope||!Array.isArray(indices))return [];
+  const vistos=new Set(),salida=[];
+  for(const i of indices){
+    if(!Number.isInteger(i)||i<0||i>=p.hand.length||vistos.has(i))continue;
+    vistos.add(i);salida.push(i);
+    if(salida.length>=tope)break;
+  }
+  return salida.sort((a,b)=>a-b);
+}
+
+function cerrarMulliganInicial(s){
+  const p=jugadorMulligan(s);
+  if(!p)return;
+  p.mulliganPendiente=false;
+  p.mulliganUsado=true;
+}
+
+function aplicarMulligan(s,indices){
+  if(!puedeMulligan(s))return {ok:false,cambios:0,indices:[],robadas:[],devueltas:[]};
+  const p=P(s),elegidos=normalizarSeleccionMulligan(s,indices),antes=p.hand.slice();
+  const elegidas=new Set(elegidos);
+  const devueltas=elegidos.map(i=>antes[i]);
+
+  // El orden no es accidental: robamos mientras las descartadas aún no están
+  // en el mazo, y sólo luego las regresamos y barajamos.
+  const robadas=p.deck.splice(0,elegidos.length);
+  p.hand=antes.filter((_,i)=>!elegidas.has(i)).concat(robadas);
+  if(devueltas.length)p.deck=shuffle(p.deck.concat(devueltas));
+  cerrarMulliganInicial(s);
+
+  if(devueltas.length)log(`<b>${p.L.n}</b> cambia ${devueltas.length} ${devueltas.length===1?'carta':'cartas'} de su mano inicial.`,'sys');
+  else log(`<b>${p.L.n}</b> conserva su mano inicial.`,'sys');
+  return {ok:true,cambios:devueltas.length,indices:elegidos,robadas,devueltas};
+}
+
+/* La IA no conoce cartas futuras: sólo aparta hasta dos ladrillos de salida.
+   Prefiere conservar Personajes baratos, que son la única forma fiable de
+   convertir el primer PD en mesa, y ordena por índice para no depender de una
+   elección aleatoria. */
+function valorMulliganIA(id,s){
+  const c=CARDS[id];
+  if(!c)return -999;
+  const coste=costOf(id,s);
+  let valor;
+  if(c.t==='personaje'){
+    valor=70-coste*9+(c.a||0)+(c.h||0)*.5;
+    if(coste<=1)valor+=22;
+    else if(coste===2)valor+=10;
+  }else if(c.t==='hechizo')valor=20-coste*11-(c.fast?5:0);
+  else if(c.t==='trampa')valor=16-coste*10;
+  else if(c.t==='objeto')valor=(c.keyRelic?22:10)-coste*10;
+  else if(c.t==='lugar')valor=12-coste*9;
+  else valor=0;
+  if(c.id==='tal'||c.scroll)valor-=45;
+  return valor;
+}
+
+function seleccionMulliganIA(s){
+  if(!puedeMulligan(s))return [];
+  return P(s).hand.map((id,i)=>({i,valor:valorMulliganIA(id,s)}))
+    .filter(x=>x.valor<28)
+    .sort((a,b)=>a.valor-b.valor||a.i-b.i)
+    .slice(0,limiteMulligan(s)).map(x=>x.i);
+}
+
+async function resolverMulliganInicial(s){
+  if(!puedeMulligan(s))return {ok:false,cambios:0,indices:[],robadas:[],devueltas:[]};
+  const partida=G,p=P(s),limite=limiteMulligan(s);
+  let seleccion=[];
+  if(G.auto||(s===FOE&&!G.online)){
+    seleccion=seleccionMulliganIA(s);
+  }else if(G.online&&NET.host&&s===FOE){
+    // Sólo viaja la mano del invitado hacia su propia pantalla. La respuesta
+    // son índices sin confianza: aplicarMulligan la normaliza en el anfitrión.
+    seleccion=await netAsk({kind:'mulligan',cards:p.hand.slice(),limit:limite,fallback:[]});
+  }else if(typeof elegirMulliganInicial==='function'){
+    try{ seleccion=await elegirMulliganInicial(s,{cartas:p.hand.slice(),limite}); }
+    catch(_){ seleccion=[]; }
+  }
+  if(G!==partida||G.over||G.active!==s||!puedeMulligan(s))
+    return {ok:false,cancelada:true,cambios:0,indices:[],robadas:[],devueltas:[]};
+  return aplicarMulligan(s,seleccion);
 }
 
 async function startTurn(s){
@@ -1802,7 +1903,6 @@ async function startTurn(s){
   G.phase='principal';
   render();
   relojArranca();                                 // 1:30 para jugar tu turno
-  await ofrecerManoNueva(s);                      // sólo si no puedes hacer nada
   if(G.over) return;
   if(G.tutorial){ tutCheck(); await tutBeat('turno',{side:s}); }
   // El turno del rival se encadena con el siguiente, y esa cadena sigue viva
@@ -3430,10 +3530,11 @@ const RULES_HTML=`
 <li><b>Zona de Lugar</b> — 1 Lugar activo; el más reciente reemplaza al anterior.</li>
 <li><b>Las Alcantarillas</b> — el descarte.</li>
 <li><b>Mano</b> — límite de 8 al final de tu turno.</li></ul>
-<h4>Mano nueva</h4>
-<p>Si en tu <b>primer turno</b> no puedes jugar <b>ninguna</b> carta de tu mano, el juego te
-ofrece devolverla entera al mazo, barajarlo y robar otras tantas. <b>Una sola vez</b> por
-partida, y la segunda mano es la que hay. Vale igual para tu rival.</p>
+<h4>Mulligan inicial</h4>
+<p>Antes de que empiece el primer turno, cada jugador puede cambiar <b>hasta 2 cartas</b>
+de su mano inicial. Roba exactamente el mismo número de cartas <b>antes</b> de devolver las
+elegidas al mazo y barajarlo; así una carta cambiada no puede volver de inmediato. Puedes
+conservar la mano completa. Es una sola oportunidad por partida y no se usa en el tutorial.</p>
 <h4>Estructura del turno</h4>
 <ol style="margin-left:18px">
 <li><b>Fase de Puntos</b> — +1 PD máximo y rellenas. Se aplican los efectos "al inicio de tu turno".</li>
@@ -3973,6 +4074,18 @@ async function netGuestPrompt(m){
   const responder=v=>netSend({t:'reply', id:m.id, v});
   if(m.kind==='ask'){
     const i=await ask(ME,m.title,m.options); responder(i);
+  } else if(m.kind==='mulligan'){
+    // El anfitrión manda la mano privada del invitado sólo para este diálogo.
+    // La respuesta son índices; no mutamos el estado local, porque el anfitrión
+    // es quien roba, devuelve, baraja y publica la fotografía resultante.
+    const cartas=Array.isArray(m.cards)?m.cards.slice():[];
+    const limite=Math.max(0,Math.min(2,Number.isInteger(m.limit)?m.limit:2,cartas.length));
+    let seleccion=[];
+    if(typeof elegirMulliganInicial==='function'){
+      try{ seleccion=await elegirMulliganInicial(ME,{cartas,limite}); }
+      catch(_){ seleccion=[]; }
+    }
+    responder(Array.isArray(seleccion)?seleccion:[]);
   } else if(m.kind==='pick'){
     const c=await pickCard(ME,m.ids,m.title,m.cancellable); responder(c);
   } else if(m.kind==='from'){

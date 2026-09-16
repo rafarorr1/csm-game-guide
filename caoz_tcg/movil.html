@@ -797,6 +797,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
+<link rel="stylesheet" href="mulligan-ui.css?b=262">
 </head>
 <body>
 <div id="app"><div id="tel">
@@ -906,6 +907,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 
 <script src="motor.js?b=262"></script>
 <script src="final.js?b=262"></script>
+<script src="mulligan-ui.js?b=262"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -1494,31 +1496,6 @@ async function revelarCarta(cardId, aMano, side){
   carta.animate([{transform:'scale(1)',opacity:1},{transform:`translateY(${aMano?'160px':'-40px'}) scale(.5)`,opacity:0}],{duration:520,easing:'cubic-bezier(.4,0,.7,1)'});
   await nap(540); cerrarOv();
 }
-async function ofrecerManoNueva(s){
-  if(!puedeRehacerMano(s)) return;
-  const miPartida=PARTIDA_N, miG=G;
-  const vive=()=>miPartida===PARTIDA_N&&miG===G&&!G.over&&G.active===s;
-  const p=P(s);
-  if(!G.silent&&!G.auto){
-    const ov=$('#ov');
-    for(let k=0;k<40&&ov&&ov.classList.contains('on');k++){ await nap(100); if(!vive()) return; }
-    if(!vive()||!puedeRehacerMano(s)) return;
-    if(s===ME) await repartirALaVista(s);
-    if(!vive()) return;
-  }
-  const cuantas=p.hand.length;
-  const sí=0===await ask(s,`No puedes jugar ninguna de tus ${cuantas} cartas. ¿Devolverlas al mazo y robar otras ${cuantas}?`,
-    ['Sí, mano nueva','No, me la quedo'],()=>0,{suave:true,mirandoMano:true});
-  if(!vive()) return;
-  p.manoRehecha=true;
-  if(!sí){ log(`<b>${p.L.n}</b> se queda con su mano.`,'sys'); return; }
-  p.deck=shuffle(p.deck.concat(p.hand)); p.hand=[];
-  await drawSilent(s,cuantas);
-  log(`<b>${p.L.n}</b> devuelve su mano al mazo y roba ${cuantas} cartas nuevas.`,'sys');
-  render();
-  if(s===ME&&!G.silent){ fxNotice('🔄 Mano nueva','var(--gold)'); await repartirALaVista(s); }
-}
-
 /* ---------- cartas ---------- */
 function cardEl(id,opt={}){
   const c=CARDS[id], d=el('div','card t-'+c.t);

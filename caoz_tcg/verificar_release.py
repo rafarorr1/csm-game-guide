@@ -8,7 +8,7 @@ from pathlib import Path
 # de documentación, pruebas locales y herramientas no cambian una release.
 # La prueba de empaquetado compara esta lista con lo que realmente se copia.
 ARCHIVOS_PUBLICADOS = tuple("""
-index.html motor.js movil.html final.js final-core.js
+index.html motor.js movil.html final.js final-core.js mulligan-ui.js mulligan-ui.css
 campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js
 campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js
 pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js

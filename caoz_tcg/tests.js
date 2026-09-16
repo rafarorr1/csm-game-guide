@@ -706,18 +706,25 @@ PRUEBAS.suite('d20OnlineFisico', async t => {
   }
 });
 
-PRUEBAS.suite('manoNuevaTurno',async t=>{
+PRUEBAS.suite('mulliganInicialTurno',async t=>{
   for(const pagina of ['index.html','movil.html']){
-    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=mano-turno-interna';document.body.appendChild(f);await carga;
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=mulligan-turno-interna';document.body.appendChild(f);await carga;
     const w=f.contentWindow;
     try{
-      w.newGame('fender','adreida');w.eval("G.phase='principal';G.turnNo=1;G.active=0;P(0).hand=['tal'];P(0).pd=1;");w.cerrarOv();
-      let terminarReparto,preguntas=0;w.repartirALaVista=()=>new Promise(r=>terminarReparto=r);w.ask=async()=>{preguntas++;return 1;};
-      const oferta=w.ofrecerManoNueva(0);t.check(!!terminarReparto,pagina+': la oferta espera a mostrar las cartas');
-      w.eval('G.active=1;G.turnNo=2');terminarReparto();await oferta;
-      t.check(preguntas===0&&!w.eval('P(0).manoRehecha'),pagina+': pasar de turno durante el reparto cancela la pregunta antigua sin gastar el cambio de mano');
-      w.eval('G.active=0;G.turnNo=1');const vigente=w.ofrecerManoNueva(0);terminarReparto();await vigente;
-      t.check(preguntas===1&&w.eval('P(0).manoRehecha'),pagina+': la oferta del turno vigente sigue funcionando');
+      w.newGame('fender','adreida');w.eval("G.phase='mulligan';G.active=0;P(0).hand=['tal','rey'];P(0).deck=['discipulo','matildus','bob'];");
+      const elegirAnterior=w.elegirMulliganInicial;
+      let responder;
+      w.elegirMulliganInicial=()=>new Promise(r=>{responder=r;});
+      const atrasado=w.resolverMulliganInicial(0);t.check(!!responder,pagina+': el motor pide la selección de la mano inicial');
+      w.eval('G.active=1');responder([0]);const cancelado=await atrasado;
+      t.check(cancelado.cancelada&&!w.eval('P(0).mulliganUsado'),pagina+': una selección de una mesa ya sustituida no gasta el mulligan');
+      w.eval('G.active=0');
+      let responderVigente;
+      w.elegirMulliganInicial=()=>new Promise(r=>{responderVigente=r;});
+      const vigente=w.resolverMulliganInicial(0);t.check(!!responderVigente,pagina+': la mano vigente sigue pidiendo su selección');
+      responderVigente([1]);await vigente;
+      t.check(w.eval('P(0).mulliganUsado&&!P(0).mulliganPendiente'),pagina+': una selección vigente se aplica una vez y cierra la oportunidad');
+      w.elegirMulliganInicial=elegirAnterior;
     }finally{f.remove();}
   }
 });
@@ -4556,44 +4563,97 @@ PRUEBAS.suite('regresiones', async t => {
       'log() perdió el parámetro priv y el online volvería a filtrar tus robos');
   }
 
-  /* MANO NUEVA — la regla que rehace una mano muerta en el primer turno.
-     Lo que no puede pasar nunca: que se pierdan o aparezcan cartas al
-     rebarajar, que se ofrezca cuando sí puedes jugar, o que se pueda repetir. */
+  /* MULLIGAN INICIAL — ya no se rehace una mano entera ni depende de poder
+     jugar una carta. Cada lado puede cambiar como máximo dos índices de su
+     mano inicial, roba antes de devolverlos, y la oportunidad se cierra. */
   {
-    await T.setupMatch('mohamed','adreida',{fast:true, auto:true, silent:true, first:0});
-    const p = T.P(0);
+    T.newGame('talesin','adreida');
+    const p=T.P(0);
+    T.G.active=0;T.G.phase='mulligan';
+    p.hand=['tal','rey','machete','conserje'];
+    p.deck=['discipulo','matildus','bob'];
+    const total=p.hand.length+p.deck.length;
 
-    // 1) con una mano impagable la ofrece
-    const caras = Object.keys(T.CARDS).filter(id => T.CARDS[id].c >= 4 && !T.CARDS[id].token && !T.CARDS[id].editorJuego).slice(0,5);
-    p.hand = caras.slice();
-    p.manoRehecha = false;
-    T.G.turnNo = 1; T.G.active = 0; T.G.phase = 'principal';
-    t.check(window.puedeRehacerMano(0), 'con una mano que no puede jugar nada debería ofrecerla');
+    t.check(window.puedeMulligan(0),'la mano inicial debería poder usar su mulligan aunque tenga cartas jugables');
+    t.igual(JSON.stringify(window.normalizarSeleccionMulligan(0,[3,1,1,-1,99,0])),JSON.stringify([1,3]),
+      'sólo pasan dos índices existentes y distintos');
 
-    // 2) rebarajar no pierde ni inventa cartas
-    const total = p.hand.length + p.deck.length;
-    const vieja = p.hand.slice();
-    await window.ofrecerManoNueva(0);
-    t.check(p.hand.length === vieja.length,
-      `la mano nueva trae ${p.hand.length} cartas y la vieja tenía ${vieja.length}`);
-    t.check(p.hand.length + p.deck.length === total,
-      `rebarajar cambió el total de cartas: ${p.hand.length + p.deck.length} en vez de ${total}`);
+    const resultado=window.aplicarMulligan(0,[3,1,1,99]);
+    t.igual(resultado.cambios,2,'dos índices válidos cambian dos cartas');
+    t.igual(JSON.stringify(p.hand),JSON.stringify(['tal','machete','discipulo','matildus']),
+      'conserva las cartas no elegidas y roba antes de devolver las otras');
+    t.check(p.deck.includes('rey')&&p.deck.includes('conserje'),
+      'las cartas elegidas regresan al mazo sólo después del robo');
+    t.check(!p.deck.includes('discipulo')&&!p.deck.includes('matildus'),
+      'las cartas robadas no pueden reaparecer en el mismo mulligan');
+    t.igual(p.hand.length+p.deck.length,total,'el mulligan no crea ni pierde cartas');
+    t.check(p.mulliganUsado&&!p.mulliganPendiente&&!window.puedeMulligan(0),
+      'la oportunidad se cierra después de usarla');
 
-    // 3) una sola vez
-    t.check(p.manoRehecha === true, 'debería quedar marcada como usada');
-    p.hand = caras.slice();                       // otra mano muerta
-    t.check(!window.puedeRehacerMano(0), 'no puede ofrecerse dos veces en la misma partida');
+    T.newGame('fender','adreida');
+    const conserva=T.P(0);T.G.active=0;T.G.phase='mulligan';
+    conserva.hand=['machete','conserje'];conserva.deck=['bob','rey'];
+    const antesMano=conserva.hand.slice(),antesMazo=conserva.deck.slice();
+    window.aplicarMulligan(0,[]);
+    t.igual(JSON.stringify(conserva.hand),JSON.stringify(antesMano),'conservar la mano no altera sus cartas');
+    t.igual(JSON.stringify(conserva.deck),JSON.stringify(antesMazo),'conservar la mano tampoco baraja el mazo');
+    t.check(conserva.mulliganUsado,'conservar la mano consume la única oportunidad');
 
-    // 4) no se ofrece si sí puedes jugar algo
-    const otro = T.P(1);
-    otro.manoRehecha = false;
-    const barato = Object.keys(T.CARDS).find(id => T.CARDS[id].c <= 1 && !T.CARDS[id].token
-                                                && T.CARDS[id].t === 'personaje');
-    otro.hand = [barato];
-    T.G.active = 1; otro.pd = 5;
-    t.check(!window.puedeRehacerMano(1), 'no debe ofrecerse teniendo una carta jugable');
+    T.newGame('fender','adreida',{tutorial:true});
+    T.G.active=0;T.P(0).hand=['machete'];T.P(0).deck=['bob'];
+    t.check(!window.puedeMulligan(0),'el tutorial queda excluido del mulligan inicial');
 
-    t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
+    T.newGame('talesin','adreida');
+    const ia=T.P(0);T.G.active=0;T.G.phase='mulligan';
+    ia.hand=['tal','rey','machete','conserje'];ia.deck=['bob','discipulo','matildus'];
+    t.igual(JSON.stringify(window.seleccionMulliganIA(0)),JSON.stringify([0,1]),
+      'la IA aparta de forma determinista los dos ladrillos y conserva la curva barata');
+
+    // La decisión local llega con 5 cartas (no con el robo del turno) y ambas
+    // oportunidades están cerradas antes de arrancar el primer turno.
+    const elegirAnterior=window.elegirMulliganInicial;
+    let vista=null;
+    try{
+      window.elegirMulliganInicial=async(s,opciones)=>{
+        vista={s,cartas:opciones.cartas.slice(),limite:opciones.limite,turno:T.G.turnNo};
+        return [];
+      };
+      await T.setupMatch('fender','adreida',{fast:true,silent:true,first:0});
+      t.check(vista&&vista.s===0&&vista.cartas.length===5&&vista.limite===2&&vista.turno===0,
+        'la interfaz recibe la mano inicial antes del primer robo normal');
+      t.check(T.P(0).mulliganUsado&&T.P(1).mulliganUsado&&T.G.turnNo===1,
+        'los dos mulligans se resuelven antes de comenzar el primer turno');
+    }finally{
+      if(elegirAnterior===undefined)delete window.elegirMulliganInicial;
+      else window.elegirMulliganInicial=elegirAnterior;
+      relojPara();
+    }
+
+    // En línea el invitado devuelve índices sin autoridad. El anfitrión manda
+    // sólo su mano privada, limita la solicitud a dos y limpia una respuesta
+    // malformada antes de mover una sola carta.
+    T.newGame('fender','adreida');
+    const remoto=T.P(1);T.G.active=1;T.G.phase='mulligan';T.G.online=true;
+    remoto.hand=['tal','rey','machete','conserje'];remoto.deck=['discipulo','matildus','bob'];
+    const net=window.eval('NET'),estadoNet={on:net.on,host:net.host,guest:net.guest};
+    const pedirAnterior=window.netAsk;
+    let pedido=null;
+    try{
+      Object.assign(net,{on:true,host:true,guest:false});
+      window.netAsk=async datos=>{pedido=datos;return [3,3,-1,99,1];};
+      const remotoResultado=await window.resolverMulliganInicial(1);
+      t.check(pedido&&pedido.kind==='mulligan'&&pedido.limit===2&&pedido.fallback.length===0,
+        'el anfitrión pide al invitado un mulligan limitado y con una salida segura');
+      t.igual(JSON.stringify(pedido.cards),JSON.stringify(['tal','rey','machete','conserje']),
+        'la pregunta remota contiene únicamente la mano de su dueño');
+      t.igual(JSON.stringify(remotoResultado.indices),JSON.stringify([1,3]),
+        'el anfitrión valida índices duplicados o fuera de rango antes de aplicarlos');
+    }finally{
+      Object.assign(net,estadoNet);
+      window.netAsk=pedirAnterior;
+    }
+
+    t.nota('mulligan inicial: hasta dos índices, robo antes de devolver, IA determinista y anfitrión autoritativo');
   }
 
   /* EL CARTEL DE TURNO VA ANTES QUE EL DADO DE GERO.

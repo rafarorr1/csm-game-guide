@@ -67,6 +67,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/campana-personaje.js'},
         'pruebas': ('pruebas_heroe_exportacion.mjs',),
     },
+    'mulligan': {
+        'nombre': 'Mulligan inicial',
+        'exportador': 'mulligan-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/mulligan-ui.js', 'juego/mulligan-ui.css'},
+        'pruebas': ('pruebas_mulligan_exportacion.mjs',),
+    },
 }
 URL = 'https://aislados.caoz-tcg.pages.dev'
 NO_ENCONTRADO = b'<!doctype html><html lang="es"><meta charset="utf-8"><title>No encontrado</title><body><h1>Esta ruta no existe</h1><a href="/">Volver a las secciones</a></body></html>\n'

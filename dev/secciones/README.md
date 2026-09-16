@@ -21,6 +21,7 @@ Abrir:
 - Epílogo de Gero: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>
 - Pitágoras: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>
 - Creador de héroe: <http://127.0.0.1:8878/dev/secciones/heroe.html>
+- Mulligan inicial: <http://127.0.0.1:8878/dev/secciones/mulligan.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -59,6 +60,30 @@ progreso. Su comprobación concreta es:
 
 ```sh
 node dev/secciones/pruebas_interacciones_exportacion.mjs
+```
+
+## Mulligan inicial
+
+La revisión está en `/mulligan/`. Muestra el mismo selector compartido que usa
+la mesa: se conservan las cartas no elegidas y se pueden señalar cero, una o
+dos por índice, incluidas copias repetidas. La descripción explica la regla
+completa: primero se roban los reemplazos y sólo entonces las cartas elegidas
+regresan y se barajan, por lo que una misma copia no puede volver de inmediato.
+
+No hay partida, mazo real, IA, red, sonido ni progreso del jugador. La página
+mantiene una mano y un mazo de demostración exclusivamente en memoria para
+probar conservar, cambiar una, cambiar dos, restablecer la muestra, cerrar con
+Escape y tocar el velo. El núcleo del selector se copia desde
+`caoz_tcg/mulligan-ui.js` y `caoz_tcg/mulligan-ui.css`; no mantiene una segunda
+implementación de la interacción.
+
+Local: <http://127.0.0.1:8878/dev/secciones/mulligan.html>. Al publicar la
+revisión: <https://aislados.caoz-tcg.pages.dev/mulligan/>.
+
+```sh
+node dev/secciones/pruebas_mulligan_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion mulligan --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion mulligan --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
 ## Epílogo de Gero: deseo y tres sobres
