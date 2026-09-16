@@ -18,6 +18,7 @@ Abrir:
 - Escritorio: <http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=sobres>
 - Móvil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=sobres>
 - Interacciones de cartas: <http://127.0.0.1:8878/dev/secciones/interacciones.html>
+- Epílogo de Gero: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -56,6 +57,45 @@ progreso. Su comprobación concreta es:
 
 ```sh
 node dev/secciones/pruebas_interacciones_exportacion.mjs
+```
+
+## Epílogo de Gero: deseo y tres sobres
+
+La revisión está en `/epilogo-gero/` y comienza con un único control de
+laboratorio que sustituye el combate que esta página no carga. Tras pulsarlo,
+la secuencia que se revisa es exactamente: victoria contra Gero → formulario de
+deseo → fuego → «Deseo concedido» → fundido a negro → selección de tres sobres
+a pantalla completa → fundido a negro → menú de laboratorio. En el juego el
+primer paso no muestra ese control: se inicia automáticamente al terminar la
+victoria.
+
+El formulario y la cinemática se cargan desde `campana-deseo.js`. La recompensa
+usa `coleccion-modelo.js`, `coleccion-ui.js`, `coleccion.css` y los sobres reales:
+las tres colecciones se recorren con un carrete horizontal y se eligen con los
+controles reales del componente. Los datos de cartas, Protagonistas y renderer
+se derivan del motor en Node; el navegador no recibe `motor.js`, una partida,
+IA, online, sonido, service worker ni el avance del jugador. `memoria.js`
+intercepta todo el almacenamiento antes de cargar los componentes.
+
+El adaptador llama al contrato que debe conservar la integración:
+
+```js
+abrirRecompensaSobres({origen:'campana', referencia:id, finalCampana:true, onConfirmar})
+```
+
+`campana-deseo.js` entrega el fundido a `campanaAbrirSobresFinal`, el mismo
+puente que usa la integración de campaña; éste concede la recompensa efímera y
+llama a la API anterior. `onConfirmar` realiza el fundido final sólo después de
+guardar los tres sobres. No se concede ni guarda nada fuera de esta memoria
+temporal.
+
+Local: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>.
+Al publicar la revisión: <https://aislados.caoz-tcg.pages.dev/epilogo-gero/>.
+
+```sh
+node dev/secciones/pruebas_epilogo_gero_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion epilogo-gero --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion epilogo-gero --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
 ## Cuenta: acceso obligatorio y continuidad offline

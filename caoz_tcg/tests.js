@@ -2230,15 +2230,35 @@ PRUEBAS.suite('campanaSobres',async t=>{
         w.campanaGuardar({version:1,id,lider:'fender',etapa,...extra});w.newGame('fender',etapa===5?'gero':'mohamed');
         w.eval('G.over=true;G.campana='+JSON.stringify({id,etapa}));w.campanaFinal(ganador,'Prueba de recompensa');
       };
+      // En el recorrido ordinario, los tres sobres no nacen en la Victoria:
+      // quedan detrás de Deseo concedido y su primer fundido a negro. Este
+      // puente reproduce sólo la persistencia de ese último paso; la UI y el
+      // fundido completo se prueban en campanaEpilogoSobres/campanaDeseo.
+      const concederTrasDeseo=id=>{
+        const p=w.campanaLeer();
+        t.check(p?.id===id&&p.etapa===6&&p.deseoFinalGero===true,pagina+': la victoria ordinaria de Gero queda marcada para el deseo.');
+        p.deseo={deseo:'Prueba local',simulado:true};p.recompensaFinalLista=true;
+        t.check(w.campanaGuardar(p,{sinEntregar:true}),pagina+': el deseo y su recibo se guardan antes de tocar la colección.');
+        t.check(w.campanaEntregarSobre(w.campanaLeer()),pagina+': el primer negro concede una sola recompensa pendiente.');
+      };
+      const dejarPendiente=id=>{
+        const p={version:1,id,lider:'fender',etapa:6,deseo:{deseo:'Prueba local',simulado:true},recompensaFinalLista:true};
+        w.campanaGuardar(p,{sinEntregar:true});w.campanaEntregarSobre(p);
+        // campanaEntregarSobre anota el recibo fallido en el mismo progreso;
+        // lo persistimos como hace el puente real tras un fallo de inventario.
+        w.campanaGuardar(p,{sinEntregar:true});return p;
+      };
       for(let etapa=0;etapa<5;etapa++)duelo('recorrido-1',etapa,0);
       t.igual(m.sobres(),0,pagina+': los rivales intermedios no dan sobres.');
       duelo('recorrido-1',5,1);t.igual(m.sobres(),0,pagina+': perder contra Gero no da sobres.');
-      duelo('recorrido-1',5,0);t.igual(m.sobres(),3,pagina+': completar la campaña concede tres sobres.');
+      duelo('recorrido-1',5,0);t.igual(m.sobres(),0,pagina+': la Victoria no adelanta sobres antes del deseo.');
+      concederTrasDeseo('recorrido-1');t.igual(m.sobres(),3,pagina+': el primer negro posterior al deseo concede tres sobres.');
       w.campanaFinal(0,'Victoria repetida');w.campanaGuardar(w.campanaLeer());
       t.igual(m.sobres(),3,pagina+': duplicar la victoria o guardar de nuevo no repite el premio.');
       await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;w.cinematicaFinal=async()=>true;
       t.igual(m.sobres(),3,pagina+': recargar el final conserva exactamente tres sobres.');
-      duelo('recorrido-2',5,0);t.igual(m.sobres(),6,pagina+': repetir campaña con el mismo mazo da otros tres sobres.');
+      duelo('recorrido-2',5,0);t.igual(m.sobres(),3,pagina+': una segunda victoria tampoco entrega antes del deseo.');
+      concederTrasDeseo('recorrido-2');t.igual(m.sobres(),6,pagina+': repetir campaña con el mismo mazo da otros tres sobres después del deseo.');
       t.check(m.recompensasPendientes().length===2&&!m.inventarioSobres().length,pagina+': cada campaña conserva su elección independiente.');
       t.igual(m.abrirSobre(),null,pagina+': no abre ni asigna tipos sin una elección previa.');
       const recompensa=m.recompensasPendientes().find(p=>p.origen==='campana'&&p.referencia==='recorrido-2'),grupo=m.grupos()[0].id,antesDeElegir=JSON.stringify(m.leer().cantidades);
@@ -2268,14 +2288,14 @@ PRUEBAS.suite('campanaSobres',async t=>{
       // recargar se recupera el sobre sin repetir el combate ni la recompensa.
       const set=w.Storage.prototype.setItem;
       w.Storage.prototype.setItem=function(k,v){if(k===m.clave)throw new w.DOMException('Sin espacio','QuotaExceededError');return set.call(this,k,v);};
-      w.campanaGuardar({version:1,id:'premio-pendiente',lider:'fender',etapa:6});
+      dejarPendiente('premio-pendiente');
       t.igual(m.sobres(),11,pagina+': no finge haber guardado un premio fallido.');w.Storage.prototype.setItem=set;
       await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;
       t.igual(m.sobres(),14,pagina+': recupera los tres sobres pendientes tras recargar.');
       w.campanaEntregarSobre(w.campanaLeer());t.igual(m.sobres(),14,pagina+': reintentar no vuelve a concederlos.');
       const setNuevo=w.Storage.prototype.setItem;
       w.Storage.prototype.setItem=function(k,v){if(k===m.clave)throw new w.DOMException('Sin espacio','QuotaExceededError');return setNuevo.call(this,k,v);};
-      w.campanaGuardar({version:1,id:'premio-anterior',lider:'fender',etapa:6});
+      dejarPendiente('premio-anterior');
       w.campanaGuardar({version:1,id:'nueva-con-pendiente',lider:'adreida',etapa:0});
       t.check(w.campanaLeer().sobresPendientes?.includes('premio-anterior'),pagina+': empezar otra campaña conserva la recompensa que no pudo guardarse.');
       w.Storage.prototype.setItem=setNuevo;
@@ -2460,7 +2480,7 @@ PRUEBAS.suite('campanaAscenso', async t => {
       w.crearMesaCampana=(c,op)=>{const mesa=crear(c,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
       w.setTimeout=(fn,ms,...args)=>{if(ms===5000||ms===1000){const k=++id;timers.set(k,{fn:()=>fn(...args),ms});return k;}return poner(fn,ms,...args);};
       w.clearTimeout=k=>{if(timers.has(k))timers.delete(k);else quitar(k);};
-      const vencer=()=>{w.campanaGuardar({version:1,id:'ascenso',lider:'fender',etapa:6,mesaPendiente:5});w.campanaRuta();};
+      const vencer=()=>{w.campanaGuardar({version:1,id:'ascenso',lider:'fender',etapa:6,mesaPendiente:5,prueba:true});w.campanaRuta();};
       vencer();await sleep(50);
       const luz=d.getElementById('campanaAscenso'),mesa=w.eval('campanaMesaEscena');
       t.check(luz?.open&&luz.dataset.fase==='rayo'&&!d.querySelector('#campanaDeseo'),pagina+': el derribo de Gero inicia automáticamente el rayo antes del deseo.');
@@ -2483,11 +2503,63 @@ PRUEBAS.suite('campanaAscenso', async t => {
   }
 });
 
+PRUEBAS.suite('campanaEpilogoSobres', async t => {
+  for(const [pagina,ancho,alto] of [['index.html',1280,800],['movil.html',390,664]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=epilogo-sobres-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;let inventario;
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true,addEventListener(){},removeEventListener(){}}:media.call(w,q);
+      w.newGame('fender','gero');w.showScreen('board');
+      const referencia='epilogo-'+(pagina==='index.html'?'desktop':'movil');
+      t.check(m.concederSobreCampana(referencia),pagina+': prepara el recibo de tres sobres de campaña.');
+      let confirmaciones=0,recibido=null;
+      t.check(w.abrirRecompensaSobres({origen:'campana',referencia,finalCampana:true,onConfirmar:datos=>{confirmaciones++;recibido=datos;w.showScreen('menu');}})===true,pagina+': la campaña debe abrir el selector final.');
+      const panel=d.querySelector('#coleccionPanel[data-epilogo-sobres="campana"]'),carrusel=panel?.querySelector('[data-epilogo-carrusel]');
+      t.check(panel?.open&&panel.dataset.epilogoFase==='elegir',pagina+': la selección final abre en su propia fase.');
+      t.check(panel.getAttribute('aria-labelledby')==='coleccionFinalCampanaTitulo'&&!!d.getElementById('coleccionFinalCampanaTitulo'),pagina+': el selector final conserva un título accesible que permanece visible.');
+      const caja=panel.getBoundingClientRect();
+      t.check(caja.left<=1&&caja.top<=1&&caja.right>=ancho-1&&caja.bottom>=alto-1,pagina+': el selector final debe cubrir todo el visor.');
+      t.check(!d.querySelector('.coleccionElegirDespues')&&!d.querySelector('#menu.on'),pagina+': el epílogo no permite posponer ni deja ver el menú.');
+      panel.querySelector('.coleccionCerrar').click();panel.dispatchEvent(new w.Event('cancel',{cancelable:true}));
+      t.check(panel.open,pagina+': Escape y el cierre ordinario no abandonan los sobres finales.');
+      t.check(carrusel&&carrusel.scrollWidth>carrusel.clientWidth,pagina+': los sobres finales se eligen con un carrusel horizontal real.');
+      const antes=carrusel.getAttribute('aria-activedescendant');
+      carrusel.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));await sleep(30);
+      t.check(carrusel.getAttribute('aria-activedescendant')!==antes,pagina+': flecha derecha debe desplazar la colección activa.');
+      const elegir=panel.querySelector('[data-epilogo-elegir]');
+      elegir.click();elegir.click();elegir.click();
+      t.check(panel.dataset.epilogoFase==='confirmar'&&panel.querySelectorAll('.coleccionFinalMarca[data-grupo]').length===3,pagina+': el carrusel conserva exactamente las tres elecciones, incluso repetidas.');
+      t.check(m.recompensasPendientes().length===1&&!m.inventarioSobres().length,pagina+': elegir visualmente no concede cartas ni consume sobres.');
+      const guardar=panel.querySelector('[data-epilogo-confirmar]');guardar.click();guardar.click();await sleep(80);
+      t.check(confirmaciones===1&&recibido?.sobres?.length===3,pagina+': guardar confirma una sola vez los tres sobres.');
+      t.check(!panel.open&&d.querySelector('#menu.on'),pagina+': sólo después del segundo fundido vuelve al menú.');
+      t.check(!m.recompensasPendientes().length&&m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0)===3&&!m.pendiente(),pagina+': confirma tres sobres sellados sin abrir ni conceder cartas.');
+      // Si Colección no responde al reanudar, Escape no puede dejar un diálogo
+      // cerrado retenido: conserva el derecho y permite abrir recuperación otra vez.
+      const abrirPuente=w.campanaAbrirSobresFinal;
+      w.campanaGuardar({version:1,id:'epilogo-recuperable-'+pagina,lider:'fender',etapa:6,deseo:{simulado:true},deseoFinalGero:true,recompensaFinalLista:true},{sinEntregar:true});
+      w.eval('G=null;campanaMemoria=null;');w.campanaAbrirSobresFinal=()=>false;w.campanaRuta();await sleep(0);
+      const recuperacion=d.getElementById('campanaDeseo');
+      t.check(recuperacion?.open&&recuperacion.dataset.fase==='recuperacion',pagina+': una reanudación sin Colección ofrece recuperación, no el deseo otra vez.');
+      recuperacion.querySelector('.deseoRecuperacion .gold').click();await sleep(0);
+      t.check(recuperacion.open&&recuperacion.dataset.fase==='recuperacion',pagina+': si el selector vuelve a fallar, el cierre anterior no borra el diálogo de reintento.');
+      recuperacion.dispatchEvent(new w.Event('cancel',{cancelable:true}));await sleep(0);
+      t.check(!d.querySelector('#campanaDeseo')&&w.campanaLeer().deseoFinalGero===true&&w.campanaLeer().recompensaFinalLista===true,pagina+': Escape conserva la recuperación y no deja una escena cerrada.');
+      t.check(w.campanaRecuperarSobresFinal()===true&&d.querySelector('#campanaDeseo')?.open,pagina+': después de Escape puede volver a abrirse la recuperación.');
+      w.campanaCerrarDeseo();w.campanaAbrirSobresFinal=abrirPuente;
+    }finally{
+      w.matchMedia=media;d.querySelector('#coleccionPanel')?.close();inventario?.restaurar();w.localStorage.removeItem('caoz.campana.v1.prueba');w.relojPara();f.remove();
+    }
+  }
+});
+
 PRUEBAS.suite('campanaDeseo', async t => {
   for(const [pagina,ancho,alto] of [['index.html',1280,800],['movil.html',390,664]]){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=deseo-interno';document.body.appendChild(f);await carga;
-    const w=f.contentWindow,d=w.document,clave='caoz.deseos.v1.prueba',peticiones=[];
+    const w=f.contentWindow,d=w.document,clave='caoz.deseos.v1.prueba',peticiones=[];let inventario;
     const ponerTimer=w.setTimeout,quitarTimer=w.clearTimeout,fetchOriginal=w.fetch.bind(w);let ahora=0,id=0,pendientes=new Map();
     const avanzar=async ms=>{
       const hasta=ahora+ms;
@@ -2498,6 +2570,7 @@ PRUEBAS.suite('campanaDeseo', async t => {
       ahora=hasta;await sleep(0);
     };
     try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
       w.localStorage.removeItem(clave);
       w.fetch=async(url,op)=>{
         const pedido=url instanceof w.Request?url:null,destino=new URL(pedido?.url||url,w.location.href),ruta=destino.pathname;
@@ -2512,7 +2585,12 @@ PRUEBAS.suite('campanaDeseo', async t => {
       t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo sólo se ofrece al vencer a todos los rivales.');
       w.campanaGuardar({...w.campanaLeer(),etapa:6,mesaPendiente:5});w.campanaAbrirDeseo();
       t.check(!d.querySelector('#campanaDeseo'),pagina+': debe terminar el derribo de Gero antes del deseo.');
-      const progreso={...w.campanaLeer()};delete progreso.mesaPendiente;w.campanaGuardar(progreso);w.campanaRuta();
+      // Arranca el mismo puente que usa la Victoria ordinaria: Gero deja su
+      // marca, «Continuar» limpia el último sello y sólo entonces se muestra
+      // el formulario. Así el segundo fundido puede abrir los sobres reales.
+      const progreso={...w.campanaLeer(),deseoFinalGero:true};w.campanaGuardar(progreso);
+      w.newGame('fender','gero');w.showScreen('board');w.eval("G.over=true;G.campana={id:'deseo-prueba',etapa:5};G.campanaResuelta=true;");
+      t.check(w.campanaPasarAlDeseo(w.campanaLeer(),w.eval('G'))===true,pagina+': Continuar tras Gero debe llevar directamente al deseo.');
       const panel=d.getElementById('campanaDeseo'),form=panel?.querySelector('form'),texto=panel?.querySelector('textarea'),boton=panel?.querySelector('button');
       t.check(panel?.open&&panel.dataset.fase==='formulario',pagina+': completar la campaña abre el formulario de deseo.');
       t.check(panel.querySelector('h1').innerText.replace(/\s+/g,' ').trim()==='Venciste a todos los héroes. Pide un deseo'&&boton.textContent==='Pedir deseo',pagina+': mensaje y acción final exactos.');
@@ -2540,13 +2618,15 @@ PRUEBAS.suite('campanaDeseo', async t => {
       await avanzar(2000);t.check(panel.dataset.fase==='concedido'&&!panel.querySelector('canvas')&&panel.textContent==='Deseo concedido',pagina+': al disiparse el fuego sólo queda el mensaje.');
       await avanzar(2999);t.check(panel.dataset.fase==='concedido',pagina+': el mensaje permanece tres segundos completos.');
       await avanzar(1);t.check(panel.dataset.fase==='fundido',pagina+': después de tres segundos debe fundirse a negro.');
-      await avanzar(1000);t.check(panel.dataset.fase==='menu'&&d.querySelector('#menu.on')&&!panel.querySelector('.deseoConcedido'),pagina+': el menú debe estar montado bajo el negro después de desaparecer el mensaje.');
-      const revelado=panel.getAnimations().find(a=>a.animationName==='deseoRevelarMenu');t.check(!!revelado,pagina+': el menú debe revelarse mediante un fundido.');
-      revelado.pause();revelado.currentTime=1500;
-      const opacidad=Number(w.getComputedStyle(panel).opacity);
-      t.check(opacidad>0&&opacidad<1&&w.getComputedStyle(panel,'::backdrop').backgroundColor==='rgba(0, 0, 0, 0)',pagina+': a mitad del revelado debe verse el menú a través del negro, sin un fondo modal opaco. '+JSON.stringify({opacidad,fondo:w.getComputedStyle(panel,'::backdrop').backgroundColor,animacion:revelado.animationName||revelado.transitionProperty}));
-      await avanzar(2999);t.check(panel.isConnected&&panel.dataset.fase==='menu',pagina+': se aprovechan los tres segundos para revelar el menú.');
-      await avanzar(1);t.check(!d.querySelector('#campanaDeseo')&&d.querySelector('#menu.on'),pagina+': el menú queda disponible al terminar su fundido.');
+      await avanzar(1000);await sleep(40);
+      const selector=d.querySelector('#coleccionPanel[data-epilogo-sobres="campana"]'),carrusel=selector?.querySelector('[data-epilogo-carrusel]');
+      t.check(!d.querySelector('#campanaDeseo')&&selector?.open&&selector.dataset.epilogoFase==='elegir'&&!d.querySelector('#menu.on'),pagina+': el primer negro abre el selector final, nunca el menú.');
+      const cuadroSelector=selector.getBoundingClientRect();
+      t.check(cuadroSelector.left<=1&&cuadroSelector.top<=1&&cuadroSelector.right>=ancho-1&&cuadroSelector.bottom>=alto-1&&carrusel?.scrollWidth>carrusel?.clientWidth,pagina+': la selección de sobres ocupa la pantalla y usa un scroll horizontal real.');
+      const elegirSobre=selector.querySelector('[data-epilogo-elegir]');elegirSobre.click();elegirSobre.click();elegirSobre.click();
+      t.check(selector.dataset.epilogoFase==='confirmar'&&m.recompensasPendientes().length===1&&!m.inventarioSobres().length,pagina+': elegir tres sobres no consume la recompensa antes de confirmarla.');
+      selector.querySelector('[data-epilogo-confirmar]').click();await sleep(40);await avanzar(460);await sleep(0);
+      t.check(!selector.open&&d.querySelector('#menu.on')&&m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0)===3,pagina+': el segundo negro sólo descubre el menú tras guardar los tres sobres.');
       w.eval('campanaMemoria=null');w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='creador'&&!d.querySelector('#campanaDeseo'),pagina+': después del deseo, Campaña empieza creando un personaje nuevo.');
       d.querySelector('[data-creador-continuar]').click();
       d.querySelector('.campanaConfirmar').click();t.check(w.campanaLeer().etapa===0&&!w.campanaLeer().deseo&&w.campanaLeer().id!=='deseo-prueba',pagina+': elegir Protagonista crea una campaña nueva sin el progreso ni el deseo anteriores.');
@@ -2557,7 +2637,40 @@ PRUEBAS.suite('campanaDeseo', async t => {
       const segundo=d.getElementById('campanaDeseo');segundo.querySelector('textarea').value='Que el Domo prospere';segundo.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await sleep(0);
       await avanzar(900);
       t.check(segundo.dataset.fase==='fuego'&&peticiones.length===0&&!w.localStorage.getItem(clave),pagina+': otra campaña permite repetir el final simulado sin registros remotos.');
-    }finally{w.campanaCerrarDeseo();w.setTimeout=ponerTimer;w.clearTimeout=quitarTimer;w.campanaCerrar();w.relojPara();w.localStorage.removeItem(clave);w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{w.campanaCerrarDeseo();w.setTimeout=ponerTimer;w.clearTimeout=quitarTimer;w.campanaCerrar();w.relojPara();inventario?.restaurar();w.localStorage.removeItem(clave);w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+// El atajo beta que vence el recorrido completo mantiene su recompensa
+// histórica: no puede caer por accidente en el selector obligatorio de Gero.
+PRUEBAS.suite('campanaDeseoPruebaBeta',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=deseo-beta-interno';document.body.append(f);await carga;
+    let w=f.contentWindow,d=w.document,inventario,abrirOriginal;const aperturas=[];const poner=w.setTimeout,quitar=w.clearTimeout,media=w.matchMedia;let ahora=0,siguiente=0;const timers=new Map();
+    const recorrido='beta-deseo-'+pagina.replace(/\.html$/,'');
+    const avanzar=async ms=>{
+      const hasta=ahora+ms;
+      for(let limite=0;limite<40;limite++){
+        const proximo=[...timers.values()].filter(x=>x.cuando<=hasta).sort((a,b)=>a.cuando-b.cuando)[0];if(!proximo)break;
+        ahora=proximo.cuando;timers.delete(proximo.id);proximo.fn();await sleep(0);
+      }
+      ahora=hasta;await sleep(0);
+    };
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
+      w.matchMedia=()=>({matches:true,addEventListener(){},removeEventListener(){}});
+      w.setTimeout=(fn,ms=0,...args)=>{const id=++siguiente;timers.set(id,{id,cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return id;};w.clearTimeout=id=>timers.delete(id);
+      // El puente beta debe pedir el selector ordinario, no el selector final.
+      // Lo espiamos para aislar la transición de la animación de Colección.
+      abrirOriginal=w.abrirRecompensaSobres;w.abrirRecompensaSobres=opciones=>{aperturas.push(opciones);return true;};
+      w.campanaGuardar({version:1,id:recorrido,lider:'fender',etapa:6,prueba:true});w.newGame('fender','gero');w.showScreen('board');w.eval("G.over=true;G.campana={id:'"+recorrido+"',etapa:5,prueba:true};G.campanaResuelta=true;");
+      w.campanaAbrirDeseo();const deseo=d.querySelector('#campanaDeseo');deseo.querySelector('textarea').value='Probar los sobres beta';deseo.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+      await avanzar(900+500+3000+1000);
+      t.check(d.querySelector('#menu.on')&&!d.querySelector('#coleccionPanel.coleccionFinalCampana'),pagina+': el deseo beta vuelve al menú, no al selector obligatorio.');
+      await avanzar(3000);
+      const opciones=aperturas[0];
+      t.check(aperturas.length===1&&opciones?.origen==='campana'&&opciones.finalCampana!==true&&m.recompensasPendientes().length===1&&m.sobres()===3,pagina+': el recorrido beta conserva su selector ordinario y sus tres sobres.');
+    }finally{w.campanaCerrarDeseo();d.querySelector('#coleccionPanel')?.close();if(abrirOriginal)w.abrirRecompensaSobres=abrirOriginal;w.matchMedia=media;w.setTimeout=poner;w.clearTimeout=quitar;inventario?.restaurar();w.localStorage.removeItem('caoz.campana.v1.prueba');w.relojPara();f.remove();}
   }
 });
 

@@ -5,10 +5,11 @@ import http from 'node:http';
 import {fileURLToPath} from 'node:url';
 import {generar,juego,vistas} from './fuentes.mjs';
 import {generarFondoCuenta} from './cuenta-fondo.mjs';
+import {derivarEpilogoGero} from './epilogo-gero-exportar.mjs';
 const carpeta=path.dirname(fileURLToPath(import.meta.url));
 const prefijo='/dev/secciones/';
-const publicos=new Set(['coleccion.html','interacciones.html','memoria.js','coleccion-dev.js','aislado.css','interacciones.js','interacciones.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
-const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css']);
+const publicos=new Set(['coleccion.html','interacciones.html','epilogo-gero.html','memoria.js','red-estatica.js','coleccion-dev.js','aislado.css','interacciones.js','interacciones.css','epilogo-gero.js','epilogo-gero.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
+const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','campana-deseo.js','cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css']);
 const mime={'.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 function enviar(res,estado,cuerpo,tipo){res.writeHead(estado,{'Content-Type':tipo,'Cache-Control':'no-store','X-Content-Type-Options':'nosniff','Content-Security-Policy':csp});res.end(cuerpo);}
@@ -26,12 +27,17 @@ export function crearServidor(){return http.createServer((req,res)=>{
     const recurso=decodeURIComponent(url.pathname.slice(prefijo.length)),vista=Object.hasOwn(vistas,url.searchParams.get('vista'))?url.searchParams.get('vista'):'desktop';
     if(recurso==='coleccion.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__VISTA__',vista),mime['.html']);
     if(recurso==='interacciones.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp),mime['.html']);
+    if(recurso==='epilogo-gero.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__','./generado/epilogo-gero'),mime['.html']);
     if(recurso==='cuenta.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replace('__CUENTA_FONDO__',generarFondoCuenta().html),mime['.html']);
     if(recurso==='cuenta-fondo-real.css')return enviar(res,200,generarFondoCuenta().css,mime['.css']);
     if(recurso==='generado/datos.js')return enviar(res,200,generar(vista).datosJS,mime['.js']);
     if(recurso==='generado/renderer.js')return enviar(res,200,generar(vista).renderJS,mime['.js']);
     if(recurso==='generado/base.css')return enviar(res,200,generar(vista).css,mime['.css']);
     if(recurso==='generado/manifiesto.json')return enviar(res,200,JSON.stringify(generar(vista).metadatos,null,2),mime['.json']);
+    if(recurso==='generado/epilogo-gero/datos.js')return enviar(res,200,derivarEpilogoGero().datosJS,mime['.js']);
+    if(recurso==='generado/epilogo-gero/renderer.js')return enviar(res,200,derivarEpilogoGero().renderJS,mime['.js']);
+    if(recurso==='generado/epilogo-gero/base.css')return enviar(res,200,derivarEpilogoGero().css,mime['.css']);
+    if(recurso==='generado/epilogo-gero/manifiesto.json')return enviar(res,200,JSON.stringify(derivarEpilogoGero().metadatos,null,2),mime['.json']);
     if(publicos.has(recurso))return archivo(res,recurso,carpeta);
     if(recurso.startsWith('juego/')&&componentes.has(recurso.slice(6)))return archivo(res,recurso.slice(6),juego);
     if(recurso==='api/arte/catalogo')return enviar(res,200,JSON.stringify({cartas:[]}),mime['.json']);
@@ -43,5 +49,5 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   const i=process.argv.indexOf('--puerto'),puerto=i>=0?Number(process.argv[i+1]):8878;
   if(!Number.isInteger(puerto)||puerto<1024||puerto>65535)throw Error('Usa --puerto con un número entre 1024 y 65535.');
   const servidor=crearServidor();servidor.on('error',e=>{console.error(e.message);process.exitCode=1;});
-  servidor.listen(puerto,'127.0.0.1',()=>console.log(`Colección aislada: http://127.0.0.1:${puerto}${prefijo}coleccion.html?estado=sobres\nMóvil: http://127.0.0.1:${puerto}${prefijo}coleccion.html?vista=movil&estado=sobres\nDatos temporales en memoria; Ctrl+C para cerrar.`));
+  servidor.listen(puerto,'127.0.0.1',()=>console.log(`Colección aislada: http://127.0.0.1:${puerto}${prefijo}coleccion.html?estado=sobres\nEpílogo de Gero: http://127.0.0.1:${puerto}${prefijo}epilogo-gero.html\nDatos temporales en memoria; Ctrl+C para cerrar.`));
 }

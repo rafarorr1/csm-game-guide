@@ -1,0 +1,24 @@
+html{min-height:100%;background:#050307}
+body.epilogoGero{margin:0;min-height:100dvh;overflow:hidden;background:#050307;color:#f3e4c6;font-family:var(--sans,system-ui,sans-serif)}
+.epilogoGero *{box-sizing:border-box}
+#epilogoGeroLaboratorio{position:relative;isolation:isolate;min-height:100dvh;display:grid;place-items:center;overflow:hidden;background:radial-gradient(ellipse at 50% 18%,#4a2115 0,transparent 42%),radial-gradient(ellipse at 10% 100%,#241637 0,transparent 46%),#08050a}
+.epilogoGeroBruma{position:absolute;inset:-20%;z-index:-1;opacity:.62;background:repeating-radial-gradient(ellipse at 45% 55%,#d7722922 0 2px,transparent 3px 72px),radial-gradient(ellipse at 50% 100%,#c24e1e20,transparent 52%);filter:blur(7px);animation:epilogoBruma 12s ease-in-out infinite alternate}
+@keyframes epilogoBruma{to{scale:1.12;translate:2% -3%;opacity:.82}}
+.epilogoGeroInicio,.epilogoGeroMenu{width:min(650px,calc(100vw - 38px));padding:clamp(25px,5vw,56px);text-align:center;border:1px solid #b18a4c88;border-radius:10px;background:linear-gradient(135deg,#1f1020e8,#100b14df);box-shadow:0 26px 80px #000b,inset 0 0 0 4px #fff1c508;backdrop-filter:blur(5px)}
+.epilogoGeroLogo{display:block;width:min(250px,62vw);height:auto;max-height:80px;object-fit:contain;margin:0 auto 23px;filter:drop-shadow(0 8px 16px #0009)}
+.epilogoGeroSello{margin:0 0 13px;color:#d7b671;font:700 10px/1.3 var(--sans,system-ui);letter-spacing:3.4px}
+.epilogoGeroInicio h1,.epilogoGeroMenu h2{margin:0;color:#f8e7c3;font:normal clamp(31px,6vw,52px)/1.08 var(--serif,Georgia,serif);text-wrap:balance;text-shadow:0 3px 22px #cf6c2860}
+.epilogoGeroIntro{margin:19px auto 23px;max-width:515px;color:#d3c0a8;font-size:15px;line-height:1.55}
+.epilogoGeroRuta{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:7px 17px;margin:0 0 29px;padding:0;list-style:none;color:#d8bc7e;font:700 9px/1.2 var(--sans,system-ui);letter-spacing:1.45px}
+.epilogoGeroRuta li{display:flex;align-items:center;gap:17px}.epilogoGeroRuta li:not(:last-child)::after{content:'✦';color:#8c5d35;font-size:9px}
+.epilogoGeroAccion{min-height:48px;border:1px solid #e4c374;border-radius:4px;padding:12px 25px;background:linear-gradient(#7b4d29,#362016);box-shadow:inset 0 1px #ffe9b455,0 4px #120a06;color:#fff0cf;cursor:pointer;font:700 16px/1.2 var(--serif,Georgia,serif);letter-spacing:.25px}.epilogoGeroAccion:hover{filter:brightness(1.15);translate:0 -1px}.epilogoGeroAccion:active{translate:0 2px}.epilogoGeroAccion:focus-visible{outline:2px solid #fff1bd;outline-offset:4px}
+#epilogoGeroEstado{min-height:36px;margin:20px auto 0;max-width:480px;color:#bcae9a;font-size:12px;line-height:1.45}
+.epilogoGeroDetalles{margin-top:18px;color:#aa9b90;text-align:left;font-size:12px;line-height:1.5}.epilogoGeroDetalles summary{cursor:pointer;color:#d7bb84;text-align:center}.epilogoGeroDetalles p{margin:11px 0 7px}.epilogoGeroDetalles a{color:#e8cb8f}
+.epilogoGeroMenu{display:none}.epilogoGeroMenu p:not(.epilogoGeroSello){margin:18px auto 27px;color:#cfbca2;font-size:15px}
+#epilogoGeroFundido{position:fixed;inset:0;z-index:490;pointer-events:none;opacity:0;background:#000;transition:opacity .8s ease}
+body.epilogoGero[data-fase="fundido-deseo"] #epilogoGeroFundido,body.epilogoGero[data-fase="fundido-final"] #epilogoGeroFundido{opacity:1}
+body.epilogoGero[data-fase="menu"] #epilogoGeroFundido{opacity:0}body.epilogoGero[data-fase="menu"] .epilogoGeroInicio{display:none}body.epilogoGero[data-fase="menu"] .epilogoGeroMenu{display:block;animation:epilogoMenu .65s ease both}@keyframes epilogoMenu{from{opacity:0;translate:0 12px}to{opacity:1;translate:0 0}}
+/* El segundo fundido queda bajo el selector real de Colección. Esa interfaz
+   aporta su propio modo de campaña, pantalla completa y carrete horizontal. */
+@media(max-width:580px){.epilogoGeroInicio,.epilogoGeroMenu{width:calc(100vw - 26px);padding:27px 20px}.epilogoGeroIntro{font-size:13px}.epilogoGeroRuta{gap:5px 11px;font-size:8px}.epilogoGeroRuta li{gap:11px}}
+@media(prefers-reduced-motion:reduce){.epilogoGeroBruma,.epilogoGeroMenu{animation:none!important}#epilogoGeroFundido{transition:none!important}}

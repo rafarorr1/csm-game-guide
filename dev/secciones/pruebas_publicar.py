@@ -66,7 +66,15 @@ const datos={'index.html':'Interacciones de cartas','procedencia.json':'{"seccio
  'interacciones.js':fs.readFileSync('componente.js')};
 for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs', 'pruebas_interacciones_exportacion.mjs']:
+        (secciones / 'epilogo-gero-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Epílogo de Gero','procedencia.json':'{"seccion":"epilogo-gero"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'epilogo-gero.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
+''')
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs', 'pruebas_interacciones_exportacion.mjs', 'pruebas_epilogo_gero_exportacion.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -285,7 +293,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         self.assertEqual(self.referencias_protegidas(), protegido)
 
     def test_sobres_exportador_propio_y_registro_explicito(self):
-        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones'})
+        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero'})
         original_run = subprocess.run
         llamadas = []
         def registrar(args, **opciones):
@@ -331,7 +339,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             p.validar_paquete(salida, 'coleccion')
         for desconocida in ['../cuenta', 'cuenta/../rey', 'main', '', None]:
             with self.subTest(seccion=desconocida):
-                with self.assertRaisesRegex(ValueError, 'Sección no admitida: elige coleccion, rey, sobres, cuenta, interacciones'):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
                     self.preparar(desconocida)
         (salida / 'tcg/cuenta/procedencia.json').unlink()
         del manifiesto['archivos']['procedencia.json']
@@ -366,11 +374,38 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de interacciones: procedencia.json'):
             p.validar_paquete(salida, 'interacciones')
 
-    def test_cinco_secciones_conservan_hermanas_byte_a_byte(self):
+    def test_epilogo_gero_usa_exportador_y_prueba_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('epilogo-gero')
+        self.assertEqual(llamadas, ['epilogo-gero-exportar.mjs', 'pruebas_epilogo_gero_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'epilogo-gero')
+        self.assertEqual(set(registro['secciones']), {'epilogo-gero'})
+        self.assertEqual(manifiesto['seccion'], 'epilogo-gero')
+        self.assertIn('tcg/epilogo-gero/index.html', contenido)
+        self.assertNotIn('tcg/epilogo-gero/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../epilogo-gero', 'epilogo-gero/../rey', 'main', 'dados', '/tmp/epilogo-gero', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/epilogo-gero/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/epilogo-gero/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de epilogo-gero: procedencia.json'):
+            p.validar_paquete(salida, 'epilogo-gero')
+
+    def test_seis_secciones_conservan_hermanas_byte_a_byte(self):
         protegidas = self.referencias_protegidas()
         ultimo = None
         esperados = {}
-        for seccion in ['coleccion', 'rey', 'sobres', 'cuenta', 'interacciones']:
+        for seccion in ['coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero']:
             salida = self.preparar(seccion)
             resultado = p.publicar(self.repo, salida, seccion)
             revision = resultado['commit']
@@ -384,7 +419,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             self.assertEqual(self.referencias_protegidas(), protegidas)
             ultimo = revision
         cabeceras = self.git('show', f'{ultimo}:tcg/_headers', binario=True)
-        for seccion in ['interacciones', 'cuenta', 'sobres', 'coleccion', 'rey']:
+        for seccion in ['epilogo-gero', 'interacciones', 'cuenta', 'sobres', 'coleccion', 'rey']:
             (self.repo / 'componente.js').write_text(f'const revision = "Nueva {seccion}";')
             self.git('commit', '-qam', f'Revisar {seccion}')
             protegidas = self.referencias_protegidas()
@@ -399,7 +434,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             self.assertEqual(self.referencias_protegidas(), protegidas)
             self.assertFalse(p.publicar(self.repo, salida, seccion)['nuevo'])
             registro = json.loads(self.git('show', f'{revision}:{p.MARCADOR}'))
-            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones'})
+            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero'})
             indice = self.git('show', f'{revision}:tcg/index.html')
             for hermana in esperados:
                 self.assertIn(f'href="./{hermana}/"', indice)
@@ -595,6 +630,24 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         with patch.object(p.subprocess, 'check_output', return_value=b'otras interacciones'):
             with self.assertRaisesRegex(ValueError, 'otros bytes'):
                 p.verificar_remoto(salida, 'https://revision.example', 'interacciones')
+
+    def test_verificar_epilogo_gero_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('epilogo-gero')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'epilogo-gero')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/epilogo-gero/')
+        self.assertEqual(set(llamadas), {'epilogo-gero/index.html', 'epilogo-gero/procedencia.json', 'epilogo-gero/publicacion.json', 'epilogo-gero/epilogo-gero.js'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otro epilogo'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'epilogo-gero')
 
 
 if __name__ == '__main__':

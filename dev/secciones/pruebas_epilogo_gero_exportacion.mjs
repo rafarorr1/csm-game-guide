@@ -1,0 +1,47 @@
+/* Procedencia y límites de la revisión aislada del epílogo de Gero. */
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import vm from 'node:vm';
+import {exportar,derivarEpilogoGero,componentesEpilogoGero,imagenesEpilogoGero} from './epilogo-gero-exportar.mjs';
+import {generar,juego,hash} from './fuentes.mjs';
+const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-epilogo-gero-'));
+try{
+  const destino=path.join(temporal,'epilogo-gero'),procedencia=exportar(destino),archivo=f=>fs.readFileSync(path.join(destino,f));
+  const html=archivo('index.html').toString(),js=archivo('epilogo-gero.js').toString(),css=archivo('epilogo-gero.css').toString(),datos=archivo('generado/datos.js').toString(),memoria=archivo('memoria.js').toString(),red=archivo('red-estatica.js').toString();
+  const esperados=['index.html','_headers','procedencia.json','catalogo-vacio.json','memoria.js','red-estatica.js','epilogo-gero.js','epilogo-gero.css','generado/datos.js','generado/renderer.js','generado/base.css','generado/manifiesto.json','art/encuadres.json',...componentesEpilogoGero.map(f=>'juego/'+f),...imagenesEpilogoGero.map(f=>'art/'+f)].sort();
+  const archivos=fs.readdirSync(destino,{recursive:true}).filter(f=>fs.statSync(path.join(destino,f)).isFile()).sort();
+  assert.deepEqual(archivos,esperados,'El epílogo sólo publica las dependencias declaradas');
+  for(const m of html.matchAll(/(?:src|href)="\.\/([^"?#]+)(?:[?#][^"]*)?"/g))assert.ok(fs.existsSync(path.join(destino,m[1])),m[1]);
+  assert.ok(!/__CSP__|__GENERADO__|<iframe/i.test(html),'No quedan marcadores ni se incrusta el juego');
+  assert.ok(!/(?:src|href)=["'](?:https?:)?\/\//i.test(html),'La entrada no carga recursos remotos');
+  assert.ok(html.indexOf('memoria.js')<html.indexOf('generado/datos.js'),'La memoria efímera se instala antes de los componentes');
+  assert.ok(html.indexOf('memoria.js')<html.indexOf('juego/arte-remoto.js'),'La memoria efímera se instala antes del arte real');
+  for(const prohibido of ['motor.js','final.js','final-core.js','audio-domo.js','sw.js','manifest.webmanifest','_worker.js'])assert.ok(!fs.existsSync(path.join(destino,prohibido)),prohibido+' no pertenece a la sección');
+  const contexto=vm.createContext({});new vm.Script(datos).runInContext(contexto);
+  assert.equal(vm.runInContext('G.aislada',contexto),true,'G sólo identifica una escena aislada');
+  for(const nombre of ['newGame','aiTurn','NET','campanaRuta'])assert.equal(vm.runInContext('typeof '+nombre,contexto),'undefined',nombre+' no acompaña la revisión');
+  assert.equal(vm.runInContext('LEADERS.gero.n',contexto),'Gero','Se conserva el catálogo real de Gero');
+  assert.equal(vm.runInContext('LEADERS.talesin.n',contexto),'Talesyn','Se conserva el catálogo real de Talesyn');
+  assert.equal(vm.runInContext('JSON.stringify(G)',contexto),'{"aislada":true,"campana":{"id":"aislado_epilogo_gero"}}','G no representa una partida real');
+  const derivado=derivarEpilogoGero();assert.equal(archivo('generado/datos.js').toString(),derivado.datosJS);assert.equal(archivo('generado/renderer.js').toString(),generar('desktop').renderJS);assert.equal(archivo('generado/base.css').toString(),generar('desktop').css);
+  for(const [f,firma] of Object.entries(procedencia.componentes))assert.equal(hash(archivo('juego/'+f)),firma,f+' conserva la fuente real');
+  for(const [f,firma] of Object.entries(procedencia.entorno))assert.equal(hash(archivo(f)),firma,f+' conserva el adaptador revisado');
+  for(const [f,firma] of Object.entries(procedencia.arte))assert.equal(hash(archivo('art/'+f)),firma,f+' conserva arte público local');
+  assert.equal(archivo('juego/campana-deseo.js').toString(),fs.readFileSync(path.join(juego,'campana-deseo.js'),'utf8'),'El deseo procede del módulo real');
+  assert.equal(archivo('juego/coleccion-ui.js').toString(),fs.readFileSync(path.join(juego,'coleccion-ui.js'),'utf8'),'El selector procede de la interfaz real');
+  assert.ok(js.includes("finalCampana:true,onConfirmar:terminar"),'El recorrido exige el contrato de selector final');
+  assert.ok(js.includes("origen:'campana',referencia:id"),'La recompensa se identifica por campaña y recorrido');
+  assert.ok(js.includes('campanaAbrirDeseo')&&js.includes('campanaAbrirSobresFinal'),'La escena enlaza deseo y recompensa sin el combate completo');
+  assert.ok(js.includes('deseoFinalGero:true'),'El adaptador identifica su victoria como el epílogo real y no toma la salida histórica.');
+  assert.ok(archivo('juego/coleccion.css').toString().includes('.coleccionFinalCarrusel')&&archivo('juego/coleccion.css').toString().includes('scroll-snap-type:x mandatory'),'Los tres sobres reales se revisan en un carrete desplazable');
+  assert.ok(archivo('juego/campana-deseo.js').toString().includes("dataset.fase='fundido'")&&css.includes('fundido-final'),'La secuencia conserva ambos fundidos a negro');
+  assert.ok(memoria.includes('new Map()')&&memoria.includes("Object.defineProperty(window,'localStorage'")&&!/\b(?:fetch|indexedDB|document\.cookie)\b/.test(memoria),'La interfaz de almacenamiento es sólo un Map temporal, no almacenamiento persistente');
+  assert.ok(red.includes("catalogo-vacio.json")&&!/(?:https?:)?\/\/[^/]/i.test(red),'El catálogo de arte se resuelve como archivo local, sin destino externo');
+  assert.ok(!/\b(?:newGame|aiTurn|NET|WebSocket|EventSource|fetch|localStorage|sessionStorage)\b/.test(js),'El adaptador del epílogo no monta partida, IA, red ni almacenamiento propio');
+  assert.deepEqual(JSON.parse(archivo('catalogo-vacio.json')),{cartas:[]});assert.equal(procedencia.partida,false);assert.equal(procedencia.ia,false);assert.equal(procedencia.online,false);assert.equal(procedencia.progresoReal,false);
+  assert.throws(()=>exportar(destino),/vacío/);
+  const segundo=path.join(temporal,'segundo');exportar(segundo);for(const f of archivos)assert.deepEqual(archivo(f),fs.readFileSync(path.join(segundo,f)),'Exportación determinista: '+f);
+  console.log('✓ Epílogo de Gero: deseo y Colección reales, tres sobres en carrete, fundidos y memoria aislada comprobados.');
+}finally{fs.rmSync(temporal,{recursive:true,force:true});}

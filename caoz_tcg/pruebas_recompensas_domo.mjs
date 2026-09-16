@@ -12,6 +12,12 @@ function funcion(codigo,nombre){
   const fin=codigo.indexOf('\n}',inicio);assert.ok(fin>inicio);
   return codigo.slice(inicio,fin+2);
 }
+function asignacion(codigo,nombre){
+  const inicio=codigo.indexOf('window.'+nombre+'=function');
+  assert.ok(inicio>=0,nombre+' debe existir');
+  const fin=codigo.indexOf('\n};',inicio);assert.ok(fin>inicio);
+  return codigo.slice(inicio,fin+3);
+}
 function entorno(pagina,opciones={}){
   const mapa=opciones.mapa||new Map(),fallos={inventario:false,cola:false,lecturaCola:false},escuchas=new Map();
   let semilla=812,temporizadores=[];
@@ -24,6 +30,7 @@ function entorno(pagina,opciones={}){
     dispatchEvent(e){for(const fn of escuchas.get(e.type)||[])fn(e);},
     document:{readyState:'complete',getElementById:()=>null,querySelector:()=>null},
     setTimeout(fn){temporizadores.push(fn);return temporizadores.length;},clearTimeout(){},
+    requestAnimationFrame(fn){fn();return 0;},cancelAnimationFrame(){},
     $:()=>({innerHTML:''}),clearPrompt(){},cerrarHojas(){},campanaCancelarInterferencia(){},
     tutEnd(){vm.runInContext('TUT.on=false',contexto);},showScreen(){},
     cortinillaVS:async()=>{},volado:async()=>0,showEnd(){},panelFinal(){},
@@ -68,6 +75,17 @@ function conectarEleccion(e,progreso=null){
     pulsar(b){return b.onclick({stopPropagation(){}});},
   };
 }
+function conectarEpilogoGero(e,progreso){
+  const aperturas=[],transiciones=[];
+  e.c.abrirRecompensaSobres=opciones=>{aperturas.push(opciones);return true;};
+  e.c.campanaCerrar=()=>transiciones.push('cerrar-campana');
+  e.c.showScreen=pantalla=>transiciones.push('pantalla:'+pantalla);
+  e.c.limpiarTransicionMenu=()=>transiciones.push('limpiar-transicion');
+  e.evaluar("const CAMPANA_RIVALES=Array(6).fill({});const CAMPANA_CLAVE='caoz.campana.v1';let campanaMemoria=null,campanaEnsayoGero=null;campanaPruebaDisponible=()=>true;");
+  e.evaluar(['campanaIdSobreValido','campanaSobresPendientes','campanaEsFinalOrdinario','campanaPremioLegadoYaResuelto','campanaEnfocarMenu','campanaSobresFinalElegidos','campanaTerminarEpilogoGero','campanaPuedeRecibirSobre','campanaEntregarSobre','campanaLeer','campanaGuardar','recompensaDeVictoria','frasePremioFinal','crearBotonPremioFinal'].map(n=>funcion(final,n)).join('\n')+'\n'+asignacion(final,'campanaAbrirSobresFinal'));
+  e.evaluar('campanaMemoria='+JSON.stringify(progreso)+';');
+  return {aperturas,transiciones,leer:()=>e.c.campanaLeer()};
+}
 let total=0;
 async function caso(nombre,fn){await fn();total++;console.log('✓ '+nombre);}
 for(const pagina of ['index.html','movil.html']){
@@ -108,20 +126,41 @@ for(const pagina of ['index.html','movil.html']){
     e.fallos.inventario=false;await ui.pulsar(boton);assert.equal(ui.aperturas.length,1);assert.equal(e.m.recompensasPendientes().length,1);ui.cerrar();
     e.c.abrirRecompensaSobres=undefined;await ui.pulsar(boton);assert.equal(boton.disabled,false);assert.equal(e.m.sobres(),1);
   });
-  await caso(pagina+': campaña elige tres y el epílogo respeta menú, recorrido y decisión previa',async()=>{
-    const e=entorno(pagina),p={version:1,id:'campana-final',lider:'fender',etapa:6,deseo:{simulado:true}};
-    e.c.newGame('fender','gero');e.evaluar("G.over=true;G.campana={id:'campana-final',etapa:5};");e.m.concederSobreCampana(p.id);
-    const ui=conectarEleccion(e,p),g=e.evaluar('G'),b=ui.crear();assert.equal(b.textContent,'Elegir mis 3 sobres');
-    await ui.pulsar(b);assert.equal(ui.aperturas[0].origen,'campana');assert.equal(ui.aperturas[0].referencia,p.id);ui.cerrar();
-    ui.menu(false);assert.equal(e.c.campanaElegirPremioAlVolver(p.id,g),false);ui.menu(true);
-    ui.dialogo(true);assert.equal(e.c.campanaElegirPremioAlVolver(p.id,g),false);ui.dialogo(false);
-    assert.equal(e.c.campanaElegirPremioAlVolver('otro',g),false);assert.equal(e.c.campanaElegirPremioAlVolver(p.id,{}),false);
-    p.secreto='final';assert.equal(e.c.campanaElegirPremioAlVolver(p.id,g),false,'El Editor aún muestra el epílogo');
-    p.secreto='completado';assert.equal(e.c.campanaElegirPremioAlVolver(p.id,g),true);ui.cerrar();
+  await caso(pagina+': Gero espera el deseo y sólo el puente abre los tres sobres',async()=>{
+    const e=entorno(pagina),p={version:1,id:'campana-final',lider:'fender',etapa:6,mesaPendiente:5,deseoFinalGero:true};
+    e.c.newGame('fender','gero');e.evaluar("G.over=true;G.campanaResuelta=true;G.campana={id:'campana-final',etapa:5};");
+    const g=e.evaluar('G'),epilogo=conectarEpilogoGero(e,p);
+    // La Victoria no puede adelantar ni el recibo ni el CTA: falta el deseo.
+    assert.equal(e.c.recompensaDeVictoria(g,0),null);assert.equal(e.c.crearBotonPremioFinal(g,0),null);
+    assert.equal(e.c.campanaEntregarSobre(epilogo.leer()),false);assert.equal(e.m.sobres(),0);
+    assert.equal(e.c.campanaAbrirSobresFinal(p.id,g),false);assert.equal(epilogo.aperturas.length,0);
+    // Tras «Deseo concedido» y el primer fundido, sólo la partida victoriosa
+    // puede crear el recibo y montar el selector final de pantalla completa.
+    e.evaluar("const avance=campanaLeer();delete avance.mesaPendiente;avance.deseo={simulado:true};campanaGuardar(avance,{sinEntregar:true});");
+    assert.equal(e.c.recompensaDeVictoria(g,0),null,'El deseo por sí solo no repone el CTA de Victoria');
+    assert.equal(e.c.campanaAbrirSobresFinal('otro',g),false);assert.equal(e.c.campanaAbrirSobresFinal(p.id,{}),false);
+    assert.equal(e.c.campanaAbrirSobresFinal(p.id,g),true);assert.equal(epilogo.aperturas.length,1);
+    const apertura=epilogo.aperturas[0];assert.equal(apertura.origen,'campana');assert.equal(apertura.referencia,p.id);assert.equal(apertura.finalCampana,true);
+    assert.equal(typeof apertura.onConfirmar,'function');assert.equal(e.m.sobres(),3);assert.equal(epilogo.transiciones.length,0);
+    assert.equal(e.c.campanaAbrirSobresFinal(p.id,g),true,'Reabrir consulta el mismo recibo sin duplicarlo');assert.equal(e.m.sobres(),3);
     const premio=e.m.recompensasPendientes()[0],grupos=e.m.grupos();assert.equal(e.m.elegirSobres(premio.id,[grupos[0].id,grupos[1].id,grupos[1].id]),true);
-    assert.equal(e.m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0),3);assert.equal(e.c.campanaElegirPremioAlVolver(p.id,g),false,'Elegido en Victoria no se vuelve a abrir');
-    p.pruebaEditor=true;assert.equal(ui.crear(),null);delete p.pruebaEditor;p.etapa=4;assert.equal(ui.crear(),null);
-    p.etapa=6;p.secreto='ascenso';assert.equal(ui.crear(),null,'Gero no concede antes del Editor');
+    assert.equal(apertura.onConfirmar(),true);assert.equal(apertura.onConfirmar(),false,'Confirmar dos veces no navega ni concede de nuevo');
+    assert.deepEqual(epilogo.transiciones,['cerrar-campana','pantalla:menu','limpiar-transicion']);
+    assert.equal(epilogo.leer().deseoFinalGero,undefined);assert.equal(e.m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0),3);
+  });
+  await caso(pagina+': una victoria histórica ya cobrada no reabre el deseo ni sus sobres',async()=>{
+    const e=entorno(pagina);
+    e.evaluar("const CAMPANA_RIVALES=Array(6).fill({});let campanaEnsayoGero=null;");
+    e.evaluar(['campanaIdSobreValido','campanaEsFinalOrdinario','campanaPremioLegadoYaResuelto','campanaMigrarEpilogoGero'].map(n=>funcion(final,n)).join('\n'));
+    const elegir=id=>{assert.equal(e.m.concederSobreCampana(id),true);const premio=e.m.recompensasPendientes().find(r=>r.referencia===id);assert.equal(e.m.elegirSobres(premio.id,['trucos','caos','caos']),true);};
+    elegir('legado-con-deseo');
+    const conDeseo={version:1,id:'legado-con-deseo',lider:'fender',etapa:6,deseo:{simulado:true}};
+    assert.equal(e.c.campanaMigrarEpilogoGero(conDeseo),false);assert.equal(conDeseo.deseoFinalGero,undefined);
+    elegir('legado-victoria');
+    const trasVictoria={version:1,id:'legado-victoria',lider:'fender',etapa:6,mesaPendiente:5};
+    assert.equal(e.c.campanaMigrarEpilogoGero(trasVictoria),false);assert.equal(trasVictoria.deseoFinalGero,undefined);
+    const pendiente={version:1,id:'legado-pendiente',lider:'fender',etapa:6,deseo:{simulado:true}};
+    assert.equal(e.c.campanaMigrarEpilogoGero(pendiente),true);assert.equal(pendiente.deseoFinalGero,true);assert.equal(pendiente.recompensaFinalLista,true);
   });
   await caso(pagina+': derrota, online, tutorial, pruebas y arranques directos sin premio',async()=>{
     for(const opts of [{fast:true},{silent:true},{auto:true},{tutorial:true},{online:true},{campana:{id:'campana',etapa:0,alma:20}},{volado:false},{prueba:true},{sinCortinilla:true}]){
@@ -179,12 +218,14 @@ for(const pagina of ['index.html','movil.html']){
       const recargado=JSON.parse(e.mapa.get('caoz.campana.v1'));assert.equal(e.c.campanaEntregarSobre(recargado),false);assert.equal(e.m.sobres(),0);
     }
   });
-  await caso(pagina+': un ensayo transporta premios anteriores sin apropiarse de uno nuevo',async()=>{
+  await caso(pagina+': un ensayo transporta un recibo del epílogo sin apropiarse de uno nuevo',async()=>{
     const e=entorno(pagina);
     e.evaluar("const CAMPANA_CLAVE='caoz.campana.v1';const CAMPANA_RIVALES=Array(6).fill({});let campanaMemoria=null,campanaEnsayoGero=null;campanaPruebaDisponible=()=>true;toast=()=>{};");
     e.evaluar(['campanaIdSobreValido','campanaSobresPendientes','campanaPuedeRecibirSobre','campanaEntregarSobre','campanaGuardar'].map(n=>funcion(final,n)).join('\n'));
     e.c.CAOZ_COLECCION={...e.m,concederSobreCampana:()=>false};
-    e.c.campanaGuardar({version:1,id:'real-anterior',lider:'fender',etapa:6});
+    // Es un recibo ya autorizado tras el primer negro del deseo; la Victoria
+    // ordinaria previa no debe inventar este pendiente al llegar a etapa 6.
+    e.c.campanaGuardar({version:1,id:'real-anterior',lider:'fender',etapa:6,deseo:{simulado:true},deseoFinalGero:true,recompensaFinalLista:true});
     e.c.newGame('fender','mohamed');e.evaluar("G.campana={id:'ensayo-intermedio'};G.auto=true");
     const ensayo={version:1,id:'ensayo-intermedio',lider:'fender',etapa:6};e.c.campanaGuardar(ensayo);
     assert.equal(ensayo.sinPremios,true);assert.deepEqual([...ensayo.sobresPendientes],['real-anterior']);
