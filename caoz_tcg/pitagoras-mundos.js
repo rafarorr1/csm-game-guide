@@ -21,7 +21,7 @@
   M.crear=function(op={}){
     if(!NUEVOS[op.tipo])return crearBase(op);
     const s=crearBase({...op,tipo:'laseres'});s.tipo=op.tipo;s.jugador={x:0,y:s.tipo==='orbital'?4:0,a:-Math.PI/2,r:s.tipo==='orbital'?.2:.28};
-    Object.assign(s,{salto:0,saltoV:0,obstaculos:[],siguiente:.65,oleada:0,distancia:0,velocidad:10,carril:0,carrilVisual:0,carrilDesde:0,carrilCambio:0,direccionCarril:0,escudo:0,estela:[],ataques:[],parada:0,recargaParada:0,paradas:0,combo:0,juicio:0,juicioTexto:'',ultimoMovimiento:{x:0,y:-1}});
+    Object.assign(s,{salto:0,saltoV:0,obstaculos:[],siguiente:.65,oleada:0,oleadasPuenteCruzadas:0,amenazasPuenteCruzadas:0,ondasPuenteCruzadas:{},distancia:0,velocidad:10,carril:0,carrilVisual:0,carrilDesde:0,carrilCambio:0,direccionCarril:0,escudo:0,estela:[],ataques:[],parada:0,recargaParada:0,paradas:0,combo:0,juicio:0,juicioTexto:'',ultimoMovimiento:{x:0,y:-1}});
     if(s.tipo==='duelo'){Object.assign(s,{rondaMemoria:0,parejas:0,fallosMemoria:0,elegirAnterior:null,objetivoParejas:Number.isInteger(op.objetivoParejas)&&op.objetivoParejas>0?op.objetivoParejas:null});nuevaMemoria(s);}return s;
   };
   function agregarPuente(s,onda,tipo,carril,patron){s.obstaculos.push({id:++s.id,z:27,carril,tipo,paso:false,onda,patron});}
@@ -33,7 +33,7 @@
     return opciones[Math.floor(azar(s)*opciones.length)];
   }
   function oleadaPuente(s){
-    const onda=s.oleada++,t=s.t,progreso=limite(t/s.duracion,0,1),fase=t<5?0:t<10?1:t<14?2:3;
+    const onda=s.oleada++,t=s.t,progreso=limite(t/s.duracion,0,1),fase=t<3.5?0:t<7?1:t<11?2:3;
     if(fase===0){
       const sello=onda%4===3;agregarPuente(s,onda,sello?'sello':'columna',sello?0:Math.floor(azar(s)*3)-1,sello?'sello':'columna');
     }else if(fase===1){
@@ -45,13 +45,23 @@
       // La segunda mitad ya alterna una salida lateral con un salto leído.
       if(onda%2===0){const seguro=carrilSeguro(s);for(const carril of [-1,0,1])if(carril!==seguro)agregarPuente(s,onda,'columna',carril,'muro');}
       else agregarPuente(s,onda,'sello',0,'sello');
-    }else if(onda%2===0){
-      // Un asalto pide ambos gestos, pero conserva una salida a un toque.
+    }else if(onda%3===0){
+      // El cerco tiene una única salida, siempre en el carril actual o uno
+      // vecino. Obliga a leer cambio y salto, nunca a cruzar dos carriles.
+      const seguro=carrilSeguro(s);agregarPuente(s,onda,'sello',0,'cerco');for(const carril of [-1,0,1])if(carril!==seguro)agregarPuente(s,onda,'columna',carril,'cerco');
+    }else if(onda%3===1){
+      // Un asalto pide ambos gestos, pero conserva dos salidas laterales.
       agregarPuente(s,onda,'sello',0,'asalto');agregarPuente(s,onda,'columna',s.carril,'asalto');
     }else {const seguro=carrilSeguro(s);for(const carril of [-1,0,1])if(carril!==seguro)agregarPuente(s,onda,'columna',carril,'muro');}
-    // Deja siempre más de dos tercios de segundo antes del siguiente aviso;
-    // la presión nace de encadenar decisiones, no de ocultar una reacción.
-    s.siguiente+=1.20-.46*progreso;
+    // La cadencia baja desde 1.04 hasta .64 segundos: se siente como una
+    // persecución creciente, pero cada grupo sigue entrando con aviso visible.
+    s.siguiente+=1.04-.40*progreso;
+  }
+  function puedeCruzarPuente(s){
+    // No mostramos una amenaza decorativa al cerrar la prueba: calculamos su
+    // avance con la aceleración real y sólo nace si puede cruzar la línea.
+    const restante=Math.max(0,s.duracion-s.t),aceleracion=14.5/s.duracion;
+    return s.velocidad*restante+aceleracion*restante*restante*.5>=26.3;
   }
   function carrera(s,e,dt){
     const p=s.jugador,direccion=Math.abs(Number(e.mx)||0)>.45?Math.sign(e.mx):0;
@@ -60,11 +70,11 @@
     if(direccion&&direccion!==s.direccionCarril){const nuevo=limite(s.carril+direccion,-1,1);if(nuevo!==s.carril){s.carrilDesde=s.carrilVisual;s.carril=nuevo;s.carrilCambio=.18;s.eventos.push('impulso');}}
     s.direccionCarril=direccion;p.x=s.carril;p.y=0;s.carrilCambio=Math.max(0,s.carrilCambio-dt);
     const giro=1-s.carrilCambio/.18;s.carrilVisual=mezcla(s.carrilDesde,s.carril,giro*giro*(3-2*giro));
-    const progreso=limite(s.t/s.duracion,0,1);s.velocidad=10+11*progreso;s.distancia+=s.velocidad*dt;
+    const progreso=limite(s.t/s.duracion,0,1);s.velocidad=10.5+14.5*progreso;s.distancia+=s.velocidad*dt;
     if(e.accion&&!s.pulsado&&s.salto<=0){s.saltoV=5.7;s.eventos.push('impulso');}
     s.saltoV-=13.8*dt;s.salto=Math.max(0,s.salto+s.saltoV*dt);if(!s.salto)s.saltoV=0;
-    if(s.t>=s.siguiente)oleadaPuente(s);
-    for(const o of s.obstaculos){o.z-=s.velocidad*dt;if(!o.paso&&o.z<=.7){o.paso=true;if((o.tipo==='sello'||s.carril===o.carril)&&(o.tipo==='columna'||s.salto<.6))M.herir(s);else{s.muertes++;s.eventos.push('acierto');}}}
+    if(s.t>=s.siguiente){if(puedeCruzarPuente(s))oleadaPuente(s);else s.siguiente=Infinity;}
+    for(const o of s.obstaculos){o.z-=s.velocidad*dt;if(!o.paso&&o.z<=.7){o.paso=true;s.amenazasPuenteCruzadas++;if(!s.ondasPuenteCruzadas[o.onda]){s.ondasPuenteCruzadas[o.onda]=true;s.oleadasPuenteCruzadas++;}if((o.tipo==='sello'||s.carril===o.carril)&&(o.tipo==='columna'||s.salto<.6))M.herir(s);else{s.muertes++;s.eventos.push('acierto');}}}
     s.obstaculos=s.obstaculos.filter(o=>o.z>-5);
   }
 
@@ -132,7 +142,9 @@
       const lote=vivas.filter(o=>o.onda===primera.onda||Math.abs(o.z-primera.z)<.35),bloqueados=new Set(lote.filter(o=>o.tipo==='columna').map(o=>o.carril));
       const seguros=[-1,0,1].filter(carril=>!bloqueados.has(carril));
       if(seguros.length)destino=seguros.sort((a,b)=>Math.abs(a-s.carril)-Math.abs(b-s.carril))[0];
-      accion=lote.some(o=>o.tipo==='sello')&&primera.z<.7+s.velocidad*.30&&primera.z>.7&&s.salto===0;
+      // Con lectura cada 240 ms, iniciar a medio segundo evita que un sello
+      // rápido llegue durante el ascenso o el aterrizaje del salto.
+      accion=lote.some(o=>o.tipo==='sello')&&primera.z<.7+s.velocidad*.52&&primera.z>.7&&s.salto===0;
     }
     const direccion=Math.sign(destino-s.carril);return{mx:direccion===s.direccionCarril?0:direccion,my:0,accion};
   };
