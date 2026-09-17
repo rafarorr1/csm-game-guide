@@ -22,6 +22,7 @@ Abrir:
 - Pitágoras: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>
 - Creador de héroe: <http://127.0.0.1:8878/dev/secciones/heroe.html>
 - Mulligan inicial: <http://127.0.0.1:8878/dev/secciones/mulligan.html>
+- Invitaciones de sala: <http://127.0.0.1:8878/dev/secciones/invitaciones.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -84,6 +85,32 @@ revisión: <https://aislados.caoz-tcg.pages.dev/mulligan/>.
 node dev/secciones/pruebas_mulligan_exportacion.mjs
 python3 dev/secciones/publicar.py --seccion mulligan --publicar --salida /ruta/nueva
 python3 dev/secciones/publicar.py --seccion mulligan --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+## Invitaciones de sala
+
+La revisión está en `/invitaciones/`. Presenta las dos rutas de una misma sala:
+«Compartir código — tiene la app» genera únicamente el código y la instrucción
+para abrir **Con amigos → Unirme con un código**; «Compartir enlace — navegador»
+genera una URL de la misma edición con `sala`. El selector Producción/Beta hace
+visible que la beta no intenta enviar a la instalación de producción.
+
+«Simular apertura del enlace» abre el puente que verá quien llegue al navegador:
+puede copiar el código para usar la app instalada o seguir con la entrada en el
+navegador. La captura directa de una PWA queda en manos del sistema operativo y
+del navegador; el puente conserva la invitación cuando esa captura no ocurre.
+
+El navegador recibe una copia byte a byte de
+`caoz_tcg/invitaciones-compartidas.js`, que es la única fuente de normalización,
+texto y URL. No hay sala real, acceso, relevos, cuenta ni progreso persistente.
+
+Local: <http://127.0.0.1:8878/dev/secciones/invitaciones.html>. Al publicar la
+revisión: <https://aislados.caoz-tcg.pages.dev/invitaciones/>.
+
+```sh
+node dev/secciones/pruebas_invitaciones_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion invitaciones --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion invitaciones --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
 ## Epílogo de Gero: deseo y tres sobres

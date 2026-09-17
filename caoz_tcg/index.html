@@ -4522,15 +4522,17 @@ async function onlHost(){
     <p style="font-size:11.5px;color:#7a6d96">El código es la única llave de la sala:
        cualquiera que lo tenga puede entrar y ver la partida. No lo publiques.</p>`;
   const box=el('div','opts');
-  /* El enlace abre el juego ya dentro de la sala: en el teléfono se comparte
-     por WhatsApp y el otro sólo pone su nombre y elige Protagonista. */
+  /* El código sirve para la app instalada; el enlace queda como ruta explícita
+     para navegador, sin mezclar orígenes entre producción y beta. */
   const enlace=enlaceDeSala(code);
-  const sh=el('button','btn gold', navigator.share ? '🔗 Compartir enlace' : '🔗 Copiar enlace');
+  const app=el('button','btn gold','📱 Compartir código — tiene la app');
+  app.onclick=()=>compartirCodigoSala(code);
+  const sh=el('button','btn','🔗 Compartir enlace — navegador');
   sh.onclick=()=>compartirEnlace(enlace);
   const cp=el('button','btn','📋 Copiar código');
   cp.onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(code); toast('Código copiado'); };
   const cancel=el('button','btn sm','Cancelar'); cancel.onclick=()=>{ netSend({t:'bye'}); netClose(); cerrarOv(); };
-  box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box);
+  box.appendChild(app); box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box);
   openOv();
   await netConnect(code,true);
   netStatus('esperando a tu amigo…','warn');
@@ -4538,8 +4540,22 @@ async function onlHost(){
   if(NET.joinPend){ const l=NET.joinPend; NET.joinPend=null; NET.onjoin(l); }
 }
 
-/* la dirección de la sala: la del juego, sin el nombre de archivo, con ?sala= */
-function enlaceDeSala(code){return location.origin+location.pathname.replace(/[^/]*$/,'')+'?sala='+encodeURIComponent(code)+'&b='+BUILD.n;}
+/* La dirección conserva la edición actual: una sala beta nunca manda al
+   invitado a producción. El código no lleva URL para poder abrir una PWA. */
+function enlaceDeSala(code){
+  const crear=window.CAOZ_INVITACIONES?.enlace;
+  return typeof crear==='function' ? crear(code,location.href,BUILD.n) : location.origin+location.pathname.replace(/[^/]*$/,'')+'?sala='+encodeURIComponent(code)+'&b='+BUILD.n;
+}
+function textoCodigoSala(code){
+  const crear=window.CAOZ_INVITACIONES?.mensajeCodigo;
+  return typeof crear==='function' ? crear(code,location.href) : `Código de sala: ${code}. Abre Con amigos → Unirme con un código.`;
+}
+async function compartirCodigoSala(code){
+  const texto=textoCodigoSala(code);
+  if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas',text:texto}); return; }catch(e){ if(e&&e.name==='AbortError')return; } }
+  if(navigator.clipboard){ try{ await navigator.clipboard.writeText(texto);toast('Código e instrucciones copiados');return; }catch(e){} }
+  toast(texto);
+}
 async function compartirEnlace(enlace){
   if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas', text:'Entra a mi sala del Domo:', url:enlace}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
   if(navigator.clipboard){ try{ await navigator.clipboard.writeText(enlace); toast('Enlace copiado'); return; }catch(e){} }

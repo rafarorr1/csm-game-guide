@@ -137,11 +137,13 @@ gero:{ n:'Gero', ep:'El Dungeon Master', art:'🎲', arch:'Caos · Tiradas · NP
   }},
 rafaela:{ n:'Rafaela', ep:'Devota de Rul', art:'✨', arch:'Enjambre · Fe · Curación',
   pasiva:'<b>Rebaño de Rul:</b> cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.',
-  hab:'<b>Estornudo de Rul (2 PD):</b> 1 daño a un Personaje y cura 1 PV a otro.',
+  hab:'<b>Estornudo de Rul (2 PD):</b> 1 daño a un Personaje rival y cura 1 PV a un aliado.',
   habCost:2, habName:'Estornudo de Rul',
-  habTg:[{k:'unidad',min:1,max:1,label:'objetivo del estornudo'},{k:'unidad',min:0,max:1,label:'aliado a curar'}],
+  habTg:[{k:'unidadEnemiga',min:1,max:1,label:'objetivo rival del estornudo',ai:'rematar'},
+    {k:'unidadAliada',min:0,max:1,label:'aliado herido a curar',ai:'curar'}],
   lore:'Clériga elfa de Rul, un dragón que estornuda fuego. Busca a sus doce discípulos perdidos.',
-  habReq:(g,s)=>P(0).field.length+P(1).field.length>0,
+  habReq:(g,s)=>P(1-s).field.some(u=>u.alive),
+  habReqMsg:'Estornudo de Rul requiere un Personaje rival en el campo.',
   hab_do:async(g,s,ts)=>{ log('<b>Estornudo de Rul</b>: ¡achús!');
     if(ts[0][0]) await dmgU(ts[0][0],1,{src:'leader'});
     if(ts[1]&&ts[1][0]&&ts[1][0].alive) healU(ts[1][0],1); }},
@@ -2825,13 +2827,26 @@ function aiTargets(s, groups, self, card){
       let cand=pool.filter(x=>g.rep||!picked.includes(x));
       if(!cand.length) break;
       let best;
-      if(g.k==='objetivoEnemigo'){
+      const valor=x=>(x&&x.id&&CARDS[x.id])?CARDS[x.id].c*3:((x?.atk||0)*2+(x?.maxHp||0));
+      if(g.ai==='curar'){
+        // Una curación opcional no debe consumir su objetivo en alguien sano,
+        // ni puede cruzar al lado rival. Se prioriza la herida más grande.
+        cand=cand.filter(x=>x&&x.alive&&x.dmg>0);
+        if(!cand.length)break;
+        best=cand.slice().sort((a,b)=>(b.dmg-a.dmg)||valor(b)-valor(a))[0];
+      } else if(g.ai==='rematar'){
+        // El estornudo vale más si termina una amenaza que si sólo raspa a la
+        // carta más cara. Para el resto conserva el desempate por valor.
+        best=cand.slice().sort((a,b)=>{
+          const mataA=(a.maxHp-a.dmg)<=1,mataB=(b.maxHp-b.dmg)<=1;
+          return (mataB-mataA)||valor(b)-valor(a);
+        })[0];
+      } else if(g.k==='objetivoEnemigo'){
         const units=cand.filter(x=>x!=='face'&&x.alive);
         const weak=units.sort((a,b)=>(a.maxHp-a.dmg)-(b.maxHp-b.dmg))[0];
         best = (weak && (weak.maxHp-weak.dmg)<=1) ? weak : (cand.includes('face')?'face':(weak||cand[0]));
       } else if(enemyish){
-        const val=x=>(x&&x.id&&CARDS[x.id])?CARDS[x.id].c*3:(x.atk*2+x.maxHp);
-        best = cand.slice().sort((a,b)=>val(b)-val(a))[0];
+        best = cand.slice().sort((a,b)=>valor(b)-valor(a))[0];
       } else {
         const beneficial = !['modificar','edbor','magodomo','hongos'].includes(id);
         best = cand.slice().sort((a,b)=> beneficial ? (b.atk+b.maxHp)-(a.atk+a.maxHp) : (a.atk+a.maxHp)-(b.atk+b.maxHp))[0];

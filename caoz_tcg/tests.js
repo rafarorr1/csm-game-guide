@@ -4921,6 +4921,57 @@ PRUEBAS.suite('regresiones', async t => {
       'la captura de mano debe ampliar la carta interna y no volver a escalar su hitbox');
     t.nota('Adreida explica su requisito; mano, descarte y sonido conservan un espacio estable');
   }
+
+  /* RAFAELA — el primer objetivo del Estornudo es rival y el segundo sólo
+     puede ser un aliado herido. Antes la IA escogía al mismo Discípulo fuerte
+     para ambas partes y se hacía daño para curárselo enseguida. */
+  {
+    T.newGame('fender','rafaela');
+    const rival=T.mkUnit('discipulo',0),aliado=T.mkUnit('titaus',1);
+    aliado.dmg=2;T.P(0).field=[rival];T.P(1).field=[aliado];T.recalc();
+    T.G.active=1;T.G.over=false;T.G.fast=true;T.G.auto=true;
+    T.P(1).pd=2;T.P(1).leaderUsed=false;
+    const grupos=T.LEADERS.rafaela.habTg;
+    t.igual(grupos[0].k,'unidadEnemiga','el daño de Rafaela debe pedir un Personaje rival');
+    t.igual(grupos[1].k,'unidadAliada','la curación de Rafaela debe pedir un aliado');
+    t.check(grupos[1].ai==='curar','la IA debe saber que el segundo objetivo es una curación');
+    const usado=await T.useLeader(1);
+    t.check(usado&&rival.dmg===1,
+      'la IA de Rafaela debe hacer 1 daño al Personaje rival, no a su propia unidad');
+    t.check(aliado.dmg===1,
+      'la IA de Rafaela debe curar 1 PV a su aliado herido después del estornudo');
+    t.check(T.P(1).pd===0&&T.P(1).leaderUsed,
+      'Estornudo de Rul sólo cobra y se marca usado al resolver ambos objetivos válidos');
+
+    T.newGame('fender','rafaela');T.G.active=1;T.P(1).pd=2;
+    t.igual(T.whyNotLeader(1),'Estornudo de Rul requiere un Personaje rival en el campo.',
+      'sin rival, Rafaela debe explicar que no hay objetivo de daño válido');
+    t.nota('Rafaela daña al rival y cura únicamente un aliado que realmente esté herido');
+  }
+
+  /* INVITACIONES — compartir el código no debe llevar una URL que Safari abra
+     fuera de la PWA; si un enlace sí llega al navegador, ofrece el puente antes
+     del acceso y conserva el código visible. */
+  {
+    const inv=window.CAOZ_INVITACIONES;
+    t.check(!!inv,'el parser compartido de invitaciones debe cargarse antes del coordinador online');
+    const prod='https://juego.caozcontodo.com/?b=264',beta='https://beta.caoz-tcg.pages.dev/?b=264';
+    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=264'), 'AB1C2',
+      'un enlace de sala debe volver al mismo código de cinco caracteres');
+    t.check(inv.mensajeCodigo('AB1C2',prod).includes('AB1C2')&&!inv.mensajeCodigo('AB1C2',prod).includes('?sala='),
+      'el mensaje para una app instalada debe contener código, no un enlace web');
+    const enlaceBeta=new URL(inv.enlace('AB1C2',beta,264));
+    t.check(enlaceBeta.origin==='https://beta.caoz-tcg.pages.dev'&&enlaceBeta.searchParams.get('sala')==='AB1C2',
+      'un enlace de beta debe conservar su propio origen y su código');
+    let continuar=0;
+    mostrarPuenteInvitacion('AB1C2',()=>{continuar++;});
+    const panel=document.querySelector('#ovPanel');
+    t.check(panel.textContent.includes('AB1C2')&&[...panel.querySelectorAll('button')].some(b=>/Tengo la app instalada/.test(b.textContent)),
+      'un enlace abierto en navegador debe explicar la salida hacia la app instalada antes del login');
+    [...panel.querySelectorAll('button')].find(b=>/Jugar en este navegador/.test(b.textContent)).click();
+    t.igual(continuar,1,'la alternativa de navegador debe continuar exactamente una vez');
+    t.nota('las invitaciones separan el código para la app del enlace para navegador');
+  }
 });
 
 /* ===========================================================================

@@ -9,10 +9,11 @@ import {derivarEpilogoGero} from './epilogo-gero-exportar.mjs';
 import {derivarPitagoras,recursosPitagoras} from './pitagoras-exportar.mjs';
 import {derivarHeroe} from './heroe-exportar.mjs';
 import {derivarMulligan} from './mulligan-exportar.mjs';
+import {derivarInvitaciones} from './invitaciones-exportar.mjs';
 const carpeta=path.dirname(fileURLToPath(import.meta.url));
 const prefijo='/dev/secciones/';
-const publicos=new Set(['coleccion.html','interacciones.html','epilogo-gero.html','pitagoras.html','heroe.html','mulligan.html','memoria.js','red-estatica.js','coleccion-dev.js','aislado.css','interacciones.js','interacciones.css','epilogo-gero.js','epilogo-gero.css','pitagoras.js','pitagoras.css','heroe.css','heroe-host.js','heroe.js','mulligan.js','mulligan.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
-const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','campana-deseo.js','campana-personaje.js','cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css','pitagoras-pruebas.js','pitagoras-mundos.js','pitagoras-cine.js','pitagoras-pixel.js','mulligan-ui.js','mulligan-ui.css']);
+const publicos=new Set(['coleccion.html','interacciones.html','epilogo-gero.html','pitagoras.html','heroe.html','mulligan.html','invitaciones.html','memoria.js','red-estatica.js','coleccion-dev.js','aislado.css','interacciones.js','interacciones.css','epilogo-gero.js','epilogo-gero.css','pitagoras.js','pitagoras.css','heroe.css','heroe-host.js','heroe.js','mulligan.js','mulligan.css','invitaciones.js','invitaciones.css','cuenta-lab.css','cuenta-lab.js','cuenta-demo.js','cuenta-fondo.css']);
+const componentes=new Set(['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css','campana-deseo.js','campana-personaje.js','cuenta-modelo.js','cuenta-progreso.js','cuenta-servicio.js','cuenta-acceso.js','cuenta-ui.js','cuenta.css','pitagoras-pruebas.js','pitagoras-mundos.js','pitagoras-cine.js','pitagoras-pixel.js','mulligan-ui.js','mulligan-ui.css','invitaciones-compartidas.js']);
 const recursosPitagorasLocales=new Set(recursosPitagoras);
 const mime={'.js':'text/javascript; charset=utf-8','.mjs':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.html':'text/html; charset=utf-8','.json':'application/json; charset=utf-8','.webp':'image/webp','.png':'image/png','.jpg':'image/jpeg','.jpeg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon'};
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
@@ -35,6 +36,7 @@ export function crearServidor(){return http.createServer((req,res)=>{
     if(recurso==='pitagoras.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__','./generado/pitagoras'),mime['.html']);
     if(recurso==='heroe.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__','./generado/heroe'),mime['.html']);
     if(recurso==='mulligan.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__','./generado/mulligan'),mime['.html']);
+    if(recurso==='invitaciones.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__','./generado/invitaciones'),mime['.html']);
     if(recurso==='cuenta.html')return enviar(res,200,fs.readFileSync(path.join(carpeta,recurso),'utf8').replaceAll('__CSP__',csp).replace('__CUENTA_FONDO__',generarFondoCuenta().html),mime['.html']);
     if(recurso==='cuenta-fondo-real.css')return enviar(res,200,generarFondoCuenta().css,mime['.css']);
     if(recurso==='generado/datos.js')return enviar(res,200,generar(vista).datosJS,mime['.js']);
@@ -49,6 +51,7 @@ export function crearServidor(){return http.createServer((req,res)=>{
     if(recurso==='generado/pitagoras/manifiesto.json')return enviar(res,200,JSON.stringify(derivarPitagoras().metadatos,null,2),mime['.json']);
     if(recurso==='generado/heroe/datos.js')return enviar(res,200,derivarHeroe().datosJS,mime['.js']);
     if(recurso==='generado/mulligan/datos.js')return enviar(res,200,derivarMulligan().datosJS,mime['.js']);
+    if(recurso==='generado/invitaciones/datos.js')return enviar(res,200,derivarInvitaciones().datosJS,mime['.js']);
     if(publicos.has(recurso))return archivo(res,recurso,carpeta);
     if(recurso.startsWith('juego/')&&componentes.has(recurso.slice(6)))return archivo(res,recurso.slice(6),juego);
     if(recurso.startsWith('juego/art/')&&recursosPitagorasLocales.has(recurso.slice(6)))return archivo(res,recurso.slice(6),juego);
@@ -61,5 +64,5 @@ if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.ur
   const i=process.argv.indexOf('--puerto'),puerto=i>=0?Number(process.argv[i+1]):8878;
   if(!Number.isInteger(puerto)||puerto<1024||puerto>65535)throw Error('Usa --puerto con un número entre 1024 y 65535.');
   const servidor=crearServidor();servidor.on('error',e=>{console.error(e.message);process.exitCode=1;});
-  servidor.listen(puerto,'127.0.0.1',()=>console.log(`Colección aislada: http://127.0.0.1:${puerto}${prefijo}coleccion.html?estado=sobres\nEpílogo de Gero: http://127.0.0.1:${puerto}${prefijo}epilogo-gero.html\nPitágoras: http://127.0.0.1:${puerto}${prefijo}pitagoras.html\nCreador de héroe: http://127.0.0.1:${puerto}${prefijo}heroe.html\nMulligan inicial: http://127.0.0.1:${puerto}${prefijo}mulligan.html\nDatos temporales en memoria; Ctrl+C para cerrar.`));
+  servidor.listen(puerto,'127.0.0.1',()=>console.log(`Colección aislada: http://127.0.0.1:${puerto}${prefijo}coleccion.html?estado=sobres\nEpílogo de Gero: http://127.0.0.1:${puerto}${prefijo}epilogo-gero.html\nPitágoras: http://127.0.0.1:${puerto}${prefijo}pitagoras.html\nCreador de héroe: http://127.0.0.1:${puerto}${prefijo}heroe.html\nMulligan inicial: http://127.0.0.1:${puerto}${prefijo}mulligan.html\nInvitaciones de sala: http://127.0.0.1:${puerto}${prefijo}invitaciones.html\nDatos temporales en memoria; Ctrl+C para cerrar.`));
 }
