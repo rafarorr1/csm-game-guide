@@ -35,15 +35,25 @@ function extraerFuncion(codigo,nombre){
 /* No se crea G ni se llama aiScore: este lector sólo comprueba la forma de
    las reglas del motor y publica el resultado de esa lectura para revisarlo. */
 function derivarConductaEditor(motor,cartas){
-  const turno=extraerFuncion(motor,'startTurn'),jugar=extraerFuncion(motor,'playFromHand'),ia=extraerFuncion(motor,'aiScore');
+  const turno=extraerFuncion(motor,'startTurn'),jugar=extraerFuncion(motor,'playFromHand'),ia=extraerFuncion(motor,'aiScore'),puedeJugar=extraerFuncion(motor,'canPlay'),capacidad=extraerFuncion(motor,'limiteCampoPersonajes'),reservado=extraerFuncion(motor,'campoEditorReservado'),entrada=extraerFuncion(motor,'puedeEntrarCampo'),repetida=extraerFuncion(motor,'pesadillaRepetidaEnMesa');
+  const declaracionEditor=extraerDeclaracion(motor,'CARTAS_EDITOR','const');
+  const idsEditor=new vm.Script(declaracionEditor.texto+'\nCARTAS_EDITOR;',{filename:'cartas-editor.js'}).runInNewContext({},{timeout:1000});
+  if(!Array.isArray(idsEditor)||idsEditor.length!==cartasPitagoras.length||idsEditor.some((id,i)=>id!==cartasPitagoras[i]))throw Error('CARTAS_EDITOR dejó de representar exactamente las seis Pesadillas de esta revisión.');
   const ritual=exigir(/if\(G\.campana\?\.jefeSecreto&&s===FOE&&!G\.campana\.editorRitual\)\{\s*p\.pdMax=Math\.max\((\d+),p\.pdMax\);G\.campana\.editorRitual=true;[\s\S]*?\}\s*p\.pdMax=Math\.min\((\d+),p\.pdMax\+(\d+)\);/.exec(turno.texto),'el Ritual del Editor');
   const banderaInicial=exigir(/let\s+([A-Za-z_$][\w$]*)=false;/.exec(turno.texto),'la bandera de la reserva inicial');
   const bonoSegundo=exigir(/if\(G\.turnNo===2\s*&&\s*s===G\.second&&!([A-Za-z_$][\w$]*)\)\s*pd\+=(\d+);/.exec(turno.texto),'la excepción de segundo jugador del Ritual');
   if(banderaInicial[1]!==bonoSegundo[1]||!turno.texto.includes(banderaInicial[1]+'=true;'))throw Error('El Ritual no suprime de forma verificable el bono inicial de segundo jugador.');
-  const limite=exigir(/req:\(g,s\)=>!!g\.campana\?\.jefeSecreto&&s===FOE&&!g\.online&&!g\.guest&&!NET\.on&&g\.campana\.([A-Za-z_$][\w$]*)!==g\.([A-Za-z_$][\w$]*)\}/.exec(motor),'el límite de Pesadilla por turno');
+  const limite=exigir(/req:\(g,s\)=>!!g\.campana\?\.jefeSecreto&&s===FOE&&!g\.online&&!g\.guest&&!NET\.on&&g\.campana\.([A-Za-z_$][\w$]*)!==g\.([A-Za-z_$][\w$]*)&&\s*!pesadillaRepetidaEnMesa\(s,id\)\}/.exec(motor),'los límites de turno y copia de Pesadilla');
   const marca=exigir(/if\(c\.editorJuego&&s===FOE&&partida\.campana\?\.jefeSecreto\)partida\.campana\.([A-Za-z_$][\w$]*)=partida\.([A-Za-z_$][\w$]*);/.exec(jugar.texto),'el marcado de Pesadilla al jugar');
   const antesDePrueba=marca.index<jugar.texto.indexOf('await pruebaDelEditor(s,id,partida)');
   if(limite[1]!==marca[1]||limite[2]!==marca[2]||!antesDePrueba)throw Error('La restricción de Pesadilla no coincide con su marcado antes de la prueba.');
+  const limiteMesa=exigir(/return\s+c\?\.editorJuego&&s===FOE&&G\.campana\?\.jefeSecreto\s*\?\s*CARTAS_EDITOR\.length\s*:\s*(\d+)\s*;/.exec(capacidad.texto),'la capacidad especial de la mesa del Editor');
+  const reservaExclusiva=exigir(/return\s+s===FOE&&G\.campana\?\.jefeSecreto&&!c\?\.editorJuego\s*;/.exec(reservado.texto),'la reserva del campo para Pesadillas');
+  const entradaReservada=exigir(/return\s+!campoEditorReservado\(s,id\)&&P\(s\)\.field\.length<limiteCampoPersonajes\(s,id\)\s*;/.exec(entrada.texto),'la entrada reservada de Personajes');
+  const copiaViva=exigir(/return\s+!!\(\s*c\?\.editorJuego&&s===FOE&&G\.campana\?\.jefeSecreto&&P\(s\)\.field\.some\(u=>u\.alive&&u\.card\.id===id\)\s*\)\s*;/.exec(repetida.texto),'el bloqueo de una copia viva de Pesadilla');
+  const bloqueoEnJuego=exigir(/if\(pesadillaRepetidaEnMesa\(s,id\)\)\s*return false;/.exec(puedeJugar.texto),'el bloqueo de la Pesadilla repetida al jugar');
+  const capacidadEnJuego=exigir(/if\(c\.t==='personaje'&&!puedeEntrarCampo\(s,id\)\)\s*return false;/.exec(puedeJugar.texto),'la capacidad especial al jugar una Pesadilla');
+  if(!limiteMesa||!reservaExclusiva||!entradaReservada||!copiaViva||!bloqueoEnJuego||!capacidadEnJuego)throw Error('La mesa única del Editor no se puede verificar.');
   const base=exigir(/let v=c\.editorPrioridad\|\|(\d+);/.exec(ia.texto),'la prioridad base del Editor');
   const penalizacion=exigir(/return v-Math\.max\(0,cost-p\.pd\)\*(\d+);/.exec(ia.texto),'la penalización de PD del Editor');
   const bonos=[...ia.texto.matchAll(/if\(c\.id==='([^']+)'&&([\s\S]*?)\)v\+=(-?\d+);/g)].map(coincidencia=>({id:coincidencia[1],condicion:coincidencia[2].trim(),valor:Number(coincidencia[3])}));
@@ -52,11 +62,11 @@ function derivarConductaEditor(motor,cartas){
   if(prioridad.some(item=>!Number.isFinite(item.base)))throw Error('Una Pesadilla no tiene editorPrioridad en el catálogo actual.');
   return {
     ritual:{pdInicial:Number(ritual[1])+Number(ritual[3]),pisoAntesDeCurva:Number(ritual[1]),incrementoPorTurno:Number(ritual[3]),tope:Number(ritual[2]),bloqueaBonoSegundo:true,bonoSegundoJugador:Number(bonoSegundo[2])},
-    pesadilla:{unaPorTurno:true,marca:limite[1],contador:limite[2],marcaAntesDePrueba:antesDePrueba},
+    pesadilla:{unaPorTurno:true,marca:limite[1],contador:limite[2],marcaAntesDePrueba:antesDePrueba,copiasActivasPorCarta:1,capacidadMesa:idsEditor.length,totalDistintas:idsEditor.length,capacidadNormal:Number(limiteMesa[1]),reservaExclusiva:true},
     prioridad:{respaldo:Number(base[1]),penalizacionPorPDFaltante:Number(penalizacion[1]),cartas:prioridad},
     procedencia:{
       ritual:{funcion:turno.nombre,linea:turno.linea,sha256:turno.sha256},
-      pesadilla:{reglaLinea:lineaDe(motor,limite.index),marcado:{funcion:jugar.nombre,linea:jugar.linea,sha256:jugar.sha256}},
+      pesadilla:{reglaLinea:lineaDe(motor,limite.index),marcado:{funcion:jugar.nombre,linea:jugar.linea,sha256:jugar.sha256},capacidad:{funcion:capacidad.nombre,linea:capacidad.linea,sha256:capacidad.sha256},reserva:{funcion:reservado.nombre,linea:reservado.linea,sha256:reservado.sha256},entrada:{funcion:entrada.nombre,linea:entrada.linea,sha256:entrada.sha256},repetida:{funcion:repetida.nombre,linea:repetida.linea,sha256:repetida.sha256},validacion:{funcion:puedeJugar.nombre,linea:puedeJugar.linea,sha256:puedeJugar.sha256}},
       prioridad:{funcion:ia.nombre,linea:ia.linea,sha256:ia.sha256}
     }
   };

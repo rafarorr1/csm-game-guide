@@ -177,8 +177,10 @@ for(const [id,n,tipo,art,a,h,editorPrioridad] of [['editorcosecha','La cosecha',
     editorPrioridad,
     x:'<b>Al jugar:</b> '+(tipo==='duelo'?'memoria · 20 segundos · 3 vidas. Cada pareja acertada quita 1 Alma a Pitágoras. Cada fallo consume 1 vida de la prueba; al tercer fallo pierdes 5 Alma. ':'prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. ')+(tipo==='carrera'?'El puente acelera pronto y su recta final combina columnas con sellos. ':'')+'<b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
     // Una prueba a la vez conserva la presión del Editor legible: con 4+ PD
-    // la IA no encadena dos minijuegos en el mismo turno.
-    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on&&g.campana.editorPesadillaTurno!==g.turnNo});
+    // la IA no encadena dos minijuegos en el mismo turno. Tampoco baja una
+    // copia mientras esa Pesadilla siga viva: cada hueco del jefe representa
+    // un minijuego distinto, no una repetición del mismo reto.
+    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on&&g.campana.editorPesadillaTurno!==g.turnNo&&!pesadillaRepetidaEnMesa(s,id)});
 }
 
 
@@ -737,8 +739,8 @@ C('esporas',{n:'Esporas del Demonio',t:'trampa',c:2,r:0,art:'🦠',
 
 C('talcadaver',{n:'Thal Habla por el Cadáver',t:'trampa',c:3,r:1,art:'🐉',
  x:'<b>Cuando un aliado muere:</b> vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.',
- on:'muerteAliada', can:(g,s,ev)=>P(s).field.length<5&&!ev.token,
- fire:async(g,s,ev)=>{ const u=mkUnit(ev.cardId,s); u.dmg=Math.max(0,statHp(u)-1); u.pA+=2; u.doomed=true;
+ on:'muerteAliada', can:(g,s,ev)=>puedeEntrarCampo(s,ev.cardId)&&!ev.token,
+ fire:async(g,s,ev)=>{ if(!puedeEntrarCampo(s,ev.cardId))return; const u=mkUnit(ev.cardId,s); u.dmg=Math.max(0,statHp(u)-1); u.pA+=2; u.doomed=true;
    P(s).field.push(u); recalc(); log(`Thal habla por el cadáver de ${u.card.n}.`); }});
 
 /* ---------------------- OBJETOS ---------------------- */
@@ -795,12 +797,12 @@ C('puente',{n:'El Puente de Brick y Brock',t:'lugar',c:1,r:0,art:'🌉',
 C('montanas',{n:'Las Montañas de Thal',t:'lugar',c:3,r:1,art:'⛰️',
  x:'Los Dragones cuestan 2 PD menos. Al inicio de cada turno, el jugador activo tira d20: con 1-3, Aidman aparece en el campo rival.',
  dragonDiscount:true,
- onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Thal', null,
+ onAnyStart:async(g,s)=>{ const rival=1-s,reservado=campoEditorReservado(rival,'aidman');const r=await roll('Las Montañas de Thal', null,
      {necesita:'4 o más para que no pase nada', min:4,
-      siOk:'No aparece nadie', siMal:'¡Aidman aparece en el campo rival!'});
+      siOk:'No aparece nadie', siMal:reservado?'El campo del Editor rechaza a Aidman.':'¡Aidman aparece en el campo rival!'});
    if(G!==g||g.over)return;
-   if(r<=3 && P(1-s).field.length<5 && !P(1-s).field.some(u=>u.card.id==='aidman')){
-     const u=mkUnit('aidman',1-s); P(1-s).field.push(u); recalc();
+   if(r<=3 && puedeEntrarCampo(rival,'aidman') && !P(rival).field.some(u=>u.card.id==='aidman')){
+     const u=mkUnit('aidman',rival); P(rival).field.push(u); recalc();
      log('¡Aidman aparece en el campo rival buscando trabajo!','sys'); } }});
 
 C('domo',{n:'El Domo',t:'lugar',c:4,r:1,art:'🔴',
@@ -1350,8 +1352,8 @@ function bounce(u){
 }
 
 function moveUnit(u, from, to){
+  if(!puedeEntrarCampo(to,u.card.id)) return false;
   const i=P(from).field.indexOf(u); if(i>=0) P(from).field.splice(i,1);
-  if(P(to).field.length>=5){ P(from).field.splice(Math.max(0,i),0,u); return false; }
   u.side=to; u.stolen=(u.owner!==to); u.sick=true; P(to).field.push(u); recalc(); return true;
 }
 
@@ -1415,7 +1417,9 @@ async function discardChoose(s,n=1){
 }
 
 async function summonToken(s,tokenId,opt={}){
-  if(P(s).field.length>=5){ log('El campo está lleno; la ficha no entra.','sys'); return null; }
+  if(!puedeEntrarCampo(s,tokenId)){
+    log(campoEditorReservado(s,tokenId)?'El campo del Editor está reservado para sus Pesadillas.':'El campo está lleno; la ficha no entra.','sys'); return null;
+  }
   const u=mkUnit(tokenId,s); P(s).field.push(u); recalc();
   if(opt.msg) log(opt.msg);
   await cloudCheck(u);
@@ -1801,7 +1805,7 @@ async function startTurn(s){
 
   // Cuerda Dimensional: regresan
   p.limbo = p.limbo.filter(x=>{
-    if(x.ret<=G.turnNo && p.field.length<5){ x.u.dmg=Math.max(0,x.u.dmg-2); x.u.sick=false;
+    if(x.ret<=G.turnNo && puedeEntrarCampo(s,x.u.card.id)){ x.u.dmg=Math.max(0,x.u.dmg-2); x.u.sick=false;
       p.field.push(x.u); log(`${x.u.card.n} baja de la cuerda (+2 PV).`,'heal'); return false; }
     return true;
   });
@@ -1963,12 +1967,32 @@ async function endTurn(){
   await startTurn(1-s);
 }
 
+/* El duelo final reserva su campo rival para las seis Pesadillas distintas del
+   Editor. Así una ficha, conversión o Aidman no puede robarle a Pitágoras el
+   hueco de un minijuego. Todo lo demás conserva el límite normal de cinco. */
+function limiteCampoPersonajes(s,id){
+  const c=CARDS[id];
+  return c?.editorJuego&&s===FOE&&G.campana?.jefeSecreto ? CARTAS_EDITOR.length : 5;
+}
+function campoEditorReservado(s,id){
+  const c=CARDS[id];
+  return s===FOE&&G.campana?.jefeSecreto&&!c?.editorJuego;
+}
+function puedeEntrarCampo(s,id){
+  return !campoEditorReservado(s,id)&&P(s).field.length<limiteCampoPersonajes(s,id);
+}
+function pesadillaRepetidaEnMesa(s,id){
+  const c=CARDS[id];
+  return !!(c?.editorJuego&&s===FOE&&G.campana?.jefeSecreto&&P(s).field.some(u=>u.alive&&u.card.id===id));
+}
+
 function canPlay(s,id){
   const c=CARDS[id];
   if(G.active!==s||G.over) return false;
   if(G.phase!=='principal'&&G.phase!=='combate') return false;
   if(costOf(id,s)>P(s).pd) return false;
-  if(c.t==='personaje'&&P(s).field.length>=5) return false;
+  if(pesadillaRepetidaEnMesa(s,id)) return false;
+  if(c.t==='personaje'&&!puedeEntrarCampo(s,id)) return false;
   if(c.t==='trampa'&&P(s).traps.length>=3) return false;
   if(c.t==='objeto'&&c.equip&&!P(s).field.some(u=>u.objs.length<(u.card.objSlots||1))) return false;
   if(c.req&&!c.req(G,s)) return false;
@@ -2627,7 +2651,10 @@ function whyNot(s,id){
   if(G.active!==s) return 'No es tu turno';
   if(G.phase!=='principal'&&G.phase!=='combate') return 'Todavía no es la fase de jugar cartas';
   if(costOf(id,s)>P(s).pd) return `Cuesta ${costOf(id,s)} PD y tienes ${P(s).pd}`;
-  if(c.t==='personaje'&&P(s).field.length>=5) return 'Tu campo está lleno: caben 5 Personajes';
+  if(pesadillaRepetidaEnMesa(s,id)) return 'Pitágoras ya tiene esta Pesadilla en mesa';
+  if(c.t==='personaje'&&campoEditorReservado(s,id)) return 'El campo del Editor está reservado para sus Pesadillas';
+  if(c.t==='personaje'&&!puedeEntrarCampo(s,id))
+    return limiteCampoPersonajes(s,id)===CARTAS_EDITOR.length ? 'La mesa del Editor ya tiene sus 6 Pesadillas' : 'Tu campo está lleno: caben 5 Personajes';
   if(c.t==='trampa'&&P(s).traps.length>=3) return 'Tu zona de Trampas está llena: caben 3';
   /* Faltaba: un Objeto de equipo necesita a alguien con hueco. Sin esto el
      motivo salía como «no hay objetivos válidos», que no dice qué falta. */

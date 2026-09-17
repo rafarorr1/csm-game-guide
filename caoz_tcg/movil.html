@@ -304,6 +304,12 @@ html.app #board{padding-top:calc(var(--arriba) + 32px)}
 /* Se reserva también el espacio de las cifras y del indicador de ataque. */
 .row{display:flex;justify-content:center;align-items:center;gap:5px;min-height:calc(var(--ch) + 14px);flex:1;padding:9px 2px 5px}
 .row.traps{min-height:30px;gap:5px;padding:1px}
+/* Sólo la sexta Pesadilla del jefe final compacta la fila rival. El campo del
+   jugador y todas las mesas normales conservan cinco huecos y su tamaño táctil. */
+#foeField.seisPesadillas{gap:3px}
+#foeField.seisPesadillas>.card.unit{
+  width:calc((100% - 31px)/6);height:auto;aspect-ratio:5/7;
+}
 .pilas{display:flex;gap:4px;flex:0 0 auto}
 #efectos{display:flex;gap:6px;margin-right:4px} #efectos[hidden]{display:none}
 .midrow{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;flex:0 0 auto;padding:2px 6px;
@@ -1642,6 +1648,8 @@ function renderLeaders(){
   });
 }
 function renderField(host, list, mine){
+  const seisPesadillas=!!(!mine&&G.campana?.jefeSecreto&&list.length===CARTAS_EDITOR.length&&list.every(u=>u.alive&&u.card.editorJuego));
+  host.classList.toggle('seisPesadillas',seisPesadillas);
   const seen=new Set();
   list.forEach((u,i)=>{
     seen.add(String(u.uid));

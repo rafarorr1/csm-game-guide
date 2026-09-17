@@ -28,6 +28,11 @@ try{
   assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.unaPorTurno',contexto),true,'La revisión expone una sola Pesadilla por turno');
   assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.marca',contexto),'editorPesadillaTurno','La marca de la Pesadilla procede de su requisito real');
   assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.marcaAntesDePrueba',contexto),true,'La Pesadilla se bloquea antes de abrir su prueba');
+  assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.copiasActivasPorCarta',contexto),1,'Cada Pesadilla admite sólo una copia viva en la mesa del Editor');
+  assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.capacidadMesa',contexto),cartasPitagoras.length,'La mesa especial tiene un hueco por cada minijuego del Editor');
+  assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.totalDistintas',contexto),cartasPitagoras.length,'La revisión conserva los seis retos distintos del ciclo');
+  assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.capacidadNormal',contexto),5,'La excepción del Editor no altera el límite normal de Personajes');
+  assert.equal(vm.runInContext('PITAGORAS_REVISION.conducta.pesadilla.reservaExclusiva',contexto),true,'El campo rival secreto se reserva para que ningún intruso quite un minijuego al Editor');
   assert.deepEqual(JSON.parse(vm.runInContext('JSON.stringify(PITAGORAS_REVISION.conducta.prioridad.cartas)',contexto)),[
     {id:'editorcosecha',base:45,bonos:[]},
     {id:'editorcorte',base:53,bonos:[{id:'editorcorte',condicion:'foe.field.filter(u=>u.alive).length>=2',valor:5}]},
@@ -51,7 +56,13 @@ try{
   assert.equal(rutaArte,'/pitagoras/juego/art/esbirro-editor-v219.webp','El arte se resuelve junto al módulo que lo solicita');
   assert.ok(fs.existsSync(path.join(destino,rutaArte.replace('/pitagoras/',''))),'La ruta relativa de la prueba tiene su arte exportado');
   const derivado=derivarPitagoras();assert.equal(archivo('generado/datos.js').toString(),derivado.datosJS);assert.deepEqual(procedencia.conducta,derivado.conducta.procedencia,'La procedencia registra las reglas leídas del jefe');assert.equal(procedencia.puente.sha256,derivado.regla.sha256,'La procedencia registra la función real del puente');
-  assert.ok(adaptador.includes('PITAGORAS_PRUEBAS')&&adaptador.includes('api.iniciar({...puente,')&&adaptador.includes('dibujarConducta'),'El adaptador abre el minijuego real y presenta la lectura derivada');
+  assert.equal(procedencia.conducta.pesadilla.capacidad.funcion,'limiteCampoPersonajes','La capacidad especial procede del ayudante real del motor');
+  assert.equal(procedencia.conducta.pesadilla.repetida.funcion,'pesadillaRepetidaEnMesa','El bloqueo de copia procede del ayudante real del motor');
+  assert.equal(procedencia.conducta.pesadilla.reserva.funcion,'campoEditorReservado','La reserva contra fichas o conversiones procede del ayudante real del motor');
+  assert.equal(procedencia.conducta.pesadilla.entrada.funcion,'puedeEntrarCampo','La validación de entrada respeta la reserva del Editor');
+  assert.equal(procedencia.conducta.pesadilla.validacion.funcion,'canPlay','La mesa única se valida antes de jugar la Pesadilla');
+  assert.match(html,/ni otro Personaje puede invadir sus plazas/,'La revisión explica que ningún intruso desplaza un minijuego');
+  assert.ok(adaptador.includes('PITAGORAS_PRUEBAS')&&adaptador.includes('api.iniciar({...puente,')&&adaptador.includes('dibujarConducta')&&adaptador.includes('Seis retos, sin copias')&&adaptador.includes('fichas, conversiones o Aidman'),'El adaptador abre el minijuego real y presenta la lectura derivada de la mesa reservada');
   assert.ok(!/\b(?:newGame|aiTurn|aiScore|NET|WebSocket|EventSource|fetch|localStorage|sessionStorage)\b/.test(adaptador),'El adaptador no monta juego, IA, red ni almacenamiento propio');
   const memoria=archivo('memoria.js').toString();assert.ok(memoria.includes('new Map()')&&!/\b(?:fetch|indexedDB|document\.cookie)\b/.test(memoria),'La memoria de la sección es temporal');
   assert.equal(procedencia.partida,false);assert.equal(procedencia.ia,false);assert.equal(procedencia.online,false);assert.equal(procedencia.progresoReal,false);

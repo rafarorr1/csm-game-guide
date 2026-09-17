@@ -17,10 +17,11 @@
       const ficha=crear('article','pitagorasCarta');ficha.dataset.carta=id;
       const prueba=crear('p','pitagorasCartaPrueba','PRUEBA · '+(nombres[carta.editorJuego]||carta.editorJuego||'EDITOR'));
       const titulo=crear('h3','',carta.n||id);
+      const limite=revision.conducta?.pesadilla?.copiasActivasPorCarta===1?crear('p','pitagorasCartaLimite','1 COPIA ACTIVA · HUECO RESERVADO'):null;
       const datos=crear('dl','pitagorasDatos');
       for(const [etiqueta,valor] of [['Coste',carta.c],['ATQ',carta.a],['PV',carta.h]]){const grupo=crear('div');grupo.append(crear('dt','',etiqueta),crear('dd','',String(valor??'—')));datos.append(grupo);}
       const descripcion=crear('p','pitagorasCartaTexto',texto(carta.x)||'Prueba del Editor.');
-      ficha.append(prueba,titulo,datos,descripcion);lista.append(ficha);
+      ficha.append(prueba,titulo);if(limite)ficha.append(limite);ficha.append(datos,descripcion);lista.append(ficha);
     }
   }
   function fuente(etiqueta,dato){
@@ -33,6 +34,9 @@
   }
   function metrica(etiqueta,valor){
     const bloque=crear('div','pitagorasMetrica');bloque.append(crear('span','',etiqueta),crear('strong','',String(valor)));return bloque;
+  }
+  function metricas(...pares){
+    const bloque=crear('div','pitagorasMetricas');for(const [etiqueta,valor] of pares)bloque.append(metrica(etiqueta,valor));return bloque;
   }
   function dibujarConducta(){
     if(!conducta||!revision?.conducta)return;
@@ -50,6 +54,11 @@
     detalle.append(document.createTextNode('Compara '),crear('code','',pesadilla.marca),document.createTextNode(' con '),crear('code','',pesadilla.contador),document.createTextNode(pesadilla.marcaAntesDePrueba?' y fija la marca antes de abrir la prueba.':' después de abrir la prueba.'));
     limite.append(detalle,fuente('Marcado',datos.procedencia.pesadilla.marcado));
 
+    const variedad=fichaConducta('MESA ÚNICA','Seis retos, sin copias');variedad.classList.add('pitagorasReglaAmplia');
+    variedad.append(metricas(['Huecos del Editor',pesadilla.capacidadMesa],['Copias vivas por reto',pesadilla.copiasActivasPorCarta],['Campo rival',pesadilla.reservaExclusiva?'Sólo Pesadillas':'—']));
+    variedad.append(crear('p','pitagorasReglaTexto','Puede alojar hasta '+pesadilla.capacidadMesa+' Pesadillas distintas: una copia viva de cada reto. Una segunda copia de la misma carta se bloquea mientras la original siga en mesa. Además, el campo rival del combate secreto se reserva para ellas: fichas, conversiones o Aidman no pueden ocupar un hueco y dejar fuera alguno de los '+pesadilla.totalDistintas+' minijuegos.'));
+    variedad.append(fuente('Capacidad',datos.procedencia.pesadilla.capacidad),fuente('Reserva',datos.procedencia.pesadilla.reserva),fuente('Bloqueo',datos.procedencia.pesadilla.repetida));
+
     const orden=fichaConducta('LECTURA ESTÁTICA','Prioridad de las Pesadillas');orden.classList.add('pitagorasReglaAmplia');
     const resumen=crear('p','pitagorasReglaTexto','Respaldo si una carta no declara prioridad: '+prioridad.respaldo+'. Penalización: −'+prioridad.penalizacionPorPDFaltante+' por cada PD faltante.');
     const listaPrioridades=crear('ul','pitagorasPrioridades');
@@ -66,7 +75,7 @@
       listaPrioridades.append(fila);
     }
     orden.append(resumen,listaPrioridades,fuente('Fuente',datos.procedencia.prioridad));
-    conducta.append(inicio,limite,orden);
+    conducta.append(inicio,limite,variedad,orden);
   }
   function nuevaSemilla(){
     const bytes=new Uint32Array(1);if(globalThis.crypto?.getRandomValues)crypto.getRandomValues(bytes);else bytes[0]=Math.floor(Math.random()*0x7fffffff);

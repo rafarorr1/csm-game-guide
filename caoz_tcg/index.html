@@ -867,6 +867,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .fieldwrap>.row{min-width:0;max-width:100%;overflow:visible;
   padding:6px;justify-content:center}
 .fieldwrap>.row::-webkit-scrollbar{display:none}
+/* El jefe final es la excepción visible: seis Pesadillas distintas ocupan seis
+   huecos compactos, sin cambiar los cinco de una mesa normal. */
+.fieldwrap:not(.seisPesadillas) .slots i:nth-child(6){display:none}
+.fieldwrap.seisPesadillas .slots{gap:6px}
+.fieldwrap.seisPesadillas .slots i,
+#foeField.seisPesadillas>.card.unit{
+  width:min(var(--cw),calc((100% - 48px)/6));height:auto;aspect-ratio:5/7;
+}
+.fieldwrap.seisPesadillas>.row{gap:6px}
 .leaderslot{flex:0 0 auto}
 .leadercard{width:var(--lw);border-radius:11px;padding:5px 4px 6px;cursor:pointer;position:relative;
   display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;transition:.15s;
@@ -2281,7 +2290,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
         <div class="row traps" id="foeTraps"></div></div>
       <div class="zone fz"><span class="zlabel">CAMPO RIVAL</span>
         <div class="leaderslot" id="leaderFoe"></div>
-        <div class="fieldwrap"><div class="slots"><i data-l="L1"></i><i data-l="L2"></i><i data-l="L3"></i><i data-l="L4"></i><i data-l="L5"></i></div>
+        <div class="fieldwrap"><div class="slots"><i data-l="L1"></i><i data-l="L2"></i><i data-l="L3"></i><i data-l="L4"></i><i data-l="L5"></i><i data-l="L6"></i></div>
           <div class="row" id="foeField"></div></div></div>
       <div class="midrow" id="midRow"></div>
       <div class="zone fz"><span class="zlabel">TU CAMPO</span>
@@ -3442,6 +3451,9 @@ function renderPiles(){
 }
 
 function renderField(host, list, mine){
+  const seisPesadillas=!!(!mine&&G.campana?.jefeSecreto&&list.length===CARTAS_EDITOR.length&&list.every(u=>u.alive&&u.card.editorJuego));
+  host.classList.toggle('seisPesadillas',seisPesadillas);
+  host.closest('.fieldwrap')?.classList.toggle('seisPesadillas',seisPesadillas);
   const seen=new Set();
   list.forEach((u,i)=>{
     seen.add(String(u.uid));

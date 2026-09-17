@@ -748,6 +748,12 @@ PRUEBAS.suite('editorCartas',async t=>{
       w.eval("G.active=1;G.phase='principal';G.turnNo=7;G.campana={jefeSecreto:true};P(1).field=[];P(1).pd=4;P(1).hand=['editorcarrera','editorcorte']");
       t.check(await w.playFromHand(1,'editorcarrera')&&!w.canPlay(1,'editorcorte'),pagina+': una Pesadilla fijada bloquea otra prueba del Editor durante el mismo turno.');
       w.eval('G.turnNo=8');t.check(w.canPlay(1,'editorcorte'),pagina+': la siguiente vuelta vuelve a permitir una Pesadilla del Editor.');
+      w.eval("G.active=1;G.phase='principal';G.turnNo=12;G.campana={jefeSecreto:true};P(1).field=[mkUnit('editorcarrera',1)];P(1).pd=4;P(1).hand=['editorcarrera','editorcorte']");
+      t.check(!w.canPlay(1,'editorcarrera')&&w.whyNot(1,'editorcarrera')==='Pitágoras ya tiene esta Pesadilla en mesa'&&w.canPlay(1,'editorcorte'),pagina+': una copia viva bloquea sólo su propio minijuego y deja disponible otro distinto.');
+      w.eval("G.active=1;G.phase='principal';G.turnNo=13;G.campana={jefeSecreto:true};P(1).field=CARTAS_EDITOR.slice(0,4).map(id=>mkUnit(id,1));P(1).pd=20;P(1).hand=['editororbita'];G.place={id:'montanas',side:0}");
+      const tirar=w.roll;w.roll=async()=>1;
+      try{await w.eval('CARDS.montanas.onAnyStart(G,0)');}finally{w.roll=tirar;}
+      t.check(!w.eval("P(1).field.some(u=>u.card.id==='aidman')")&&w.canPlay(1,'editororbita')&&!w.canPlay(1,'aidman')&&w.whyNot(1,'aidman')==='El campo del Editor está reservado para sus Pesadillas',pagina+': Las Montañas no ocupan un hueco del Editor y las seis Pesadillas conservan su reserva.');
       await w.setupMatch('fender','adreida',{first:0});t.check(w.eval('[...P(1).hand,...P(1).deck].every(id=>!CARDS[id].editorJuego)'),pagina+': partida normal conserva Adreida');
       t.igual(w.eval('JSON.stringify(DECKS)'),originales,pagina+': los seis mazos no cambian');
       w.eval("P(0).hand=['editorcosecha'];P(0).pd=10");t.check(!w.canPlay(0,'editorcosecha'),pagina+': carta exclusiva del jefe');
@@ -1349,10 +1355,15 @@ PRUEBAS.suite('pitagorasIntegracion',async t=>{
       const vida=guardian.dmg;await w.doAttack(pesadilla,guardian);t.check(guardian.dmg>vida||!guardian.alive,pagina+': la pesadilla también pelea contra cartas');
       arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');const devuelta=w.eval('P(1)').field[0];w.bounce(devuelta);
       t.check(!devuelta.alive&&w.eval("P(1).hand.includes('editorcosecha')&&P(1).field.length===0"),pagina+': devolver a la mano no desvanece una ficha');
-      // El límite de cinco evita apilar seis cuerpos y tampoco cobra una
-      // prueba ni PD si la última carta no tiene espacio para entrar.
-      arena();inmediato({sobrevivio:true});for(const [i,id] of ids.slice(0,5).entries()){w.eval('P(1)').hand=[id];w.eval('P(1)').pd=20;w.eval('G.turnNo='+String(10+i));await w.playFromHand(1,id);}w.eval('P(1)').hand=[ids[5]];const pd=w.eval('P(1).pd');
-      t.check(!w.canPlay(1,ids[5])&&!await w.playFromHand(1,ids[5])&&w.eval('P(1).field.length')===5&&w.eval('P(1).pd')===pd&&eventos.length===5,pagina+': campo lleno no paga ni abre una sexta prueba');
+      // El jefe reserva seis plazas para sus seis minijuegos, pero ninguna
+      // puede repetir una Pesadilla que siga en mesa. Las demás mesas se
+      // quedan en cinco; ésta es una excepción exclusiva del combate secreto.
+      arena();inmediato({sobrevivio:true});w.eval('P(0).alma=P(1).alma=40');for(const [i,id] of ids.entries()){w.eval('P(1)').hand=[id];w.eval('P(1)').pd=20;w.eval('G.turnNo='+String(10+i));t.check(await w.playFromHand(1,id),pagina+': abre la Pesadilla única '+id);}
+      t.check(w.eval('P(1).field.length===6&&new Set(P(1).field.map(u=>u.card.id)).size===6')&&eventos.length===6&&new Set(eventos.map(e=>e.id)).size===6,pagina+': las seis Pesadillas distintas caben y presentan los seis minijuegos.');
+      w.eval("G.turnNo=20;P(1).pd=20;P(1).hand=['editorcarrera']");const pd=w.eval('P(1).pd');
+      t.check(!w.canPlay(1,'editorcarrera')&&!await w.playFromHand(1,'editorcarrera')&&w.whyNot(1,'editorcarrera')==='Pitágoras ya tiene esta Pesadilla en mesa'&&w.eval('P(1).field.length')===6&&w.eval('P(1).pd')===pd&&eventos.length===6,pagina+': una séptima carta repetida no cobra ni vuelve a abrir su minijuego.');
+      const carrera=w.eval("P(1).field.find(u=>u.card.id==='editorcarrera')");await w.destroy(carrera);w.eval("G.turnNo=21;P(1).pd=20;P(1).hand=['editorcarrera']");
+      t.check(w.canPlay(1,'editorcarrera')&&await w.playFromHand(1,'editorcarrera')&&w.eval("P(1).field.length===6&&P(1).field.filter(u=>u.card.id==='editorcarrera').length===1")&&eventos.length===7,pagina+': si la Pesadilla sale de la mesa, una copia nueva puede volver a entrar.');
       arena();inmediato({sobrevivio:false,cancelado:false});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.check(w.eval('P(0).alma===18&&P(1).alma===20&&P(1).field.length===1'),pagina+': fallar conserva la carta y quita sólo 2 al jugador');
       arena();inmediato({cancelado:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.igual(w.eval('P(0).alma+P(1).alma'),40,pagina+': cancelar no inflige daño');
       arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha'];P(1).pd=0");t.check(!await w.playFromHand(1,'editorcosecha')&&!eventos.length,pagina+': sin PD no hay minijuego');
@@ -3485,7 +3496,7 @@ PRUEBAS.suite('terrenoMovil', async t => {
           t.check(lado==='foeField'?caja.bottom<=medio.top-1:caja.top>=medio.bottom+1,etiqueta+': una carta o su indicador invade el terreno ('+lado+').');
           t.check(caja.top>=campo.top&&caja.bottom<=campo.bottom,etiqueta+': las cartas deben caber en el campo.');
         }
-        t.check(r.left>=campo.left&&r.right<=campo.right,etiqueta+': cinco cartas deben caber a lo ancho.');
+        t.check(r.left>=campo.left&&r.right<=campo.right,etiqueta+': las cartas deben caber a lo ancho.');
       }
       t.check(rect('#myTraps').bottom<=campo.bottom+.5,etiqueta+': las trampas no deben invadir la barra del jugador ('+rect('#myTraps').bottom+' > '+campo.bottom+').');
       t.check(rect('#controls').bottom<=rect('#board').bottom+.5,etiqueta+': los controles deben quedar dentro de la pantalla.');
@@ -3502,11 +3513,28 @@ PRUEBAS.suite('terrenoMovil', async t => {
       }
       w.eval("G.place={id:'puente',side:0};P(0).relics=[{id:'puntosrobados',counters:2}];");w.render();await sleep(40);
       comprobar(`${ancho}×${alto}, Puente y Reliquia`);
+      w.eval("G.campana={jefeSecreto:true};P(1).field=CARTAS_EDITOR.map(id=>{const u=mkUnit(id,1);u.sick=false;return u;});P(0).field=[];P(0).relics=[];G.place=null;");w.render();await sleep(40);
+      comprobar(`${ancho}×${alto}, seis Pesadillas`);
+      t.check(d.querySelectorAll('#foeField .card').length===6&&d.querySelector('#foeField').classList.contains('seisPesadillas'),`${ancho}×${alto}: la sexta Pesadilla usa la fila compacta exclusiva del jefe.`);
       d.querySelector('#hand .card').click();await sleep(40);
       comprobar(`${ancho}×${alto}, carta seleccionada en mano`);w.manoTocada(null);
+      w.eval("G.campana=undefined;P(1).field=[];G.place={id:'puente',side:0};");w.render();await sleep(20);
       d.querySelector('.placecard').click();
       t.check(d.querySelector('#inspect.on')?.textContent.includes('El Puente de Brick y Brock'),'El terreno debe seguir abriendo su ficha.');w.cerrarHojas();
     }
+  }finally{f.contentWindow.relojPara();f.remove();}
+});
+
+PRUEBAS.suite('mesaPitagorasSeis',async t=>{
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:1440px;height:900px;border:0';
+  const carga=new Promise(r=>f.onload=r);f.src='index.html?test=mesa-pitagoras-seis';document.body.appendChild(f);
+  try{
+    await carga;const w=f.contentWindow,d=f.contentDocument;
+    w.newGame('fender','adreida');w.eval("G.fast=true;G.campana={id:'seis-pesadillas',etapa:6,jefeSecreto:true};P(1).field=CARTAS_EDITOR.map(id=>{const u=mkUnit(id,1);u.sick=false;return u;});P(0).field=[];");w.showScreen('board');w.render();await sleep(60);
+    const campo=d.querySelector('#foeField').getBoundingClientRect(),cartas=[...d.querySelectorAll('#foeField>.card')],huecos=[...d.querySelector('#foeField').closest('.fieldwrap').querySelectorAll('.slots i')];
+    t.check(cartas.length===6&&d.querySelector('#foeField').classList.contains('seisPesadillas')&&d.querySelector('#foeField').closest('.fieldwrap').classList.contains('seisPesadillas'),'Escritorio: el jefe reconoce la mesa exclusiva de seis Pesadillas.');
+    t.check(cartas.every(c=>{const r=c.getBoundingClientRect();return r.left>=campo.left&&r.right<=campo.right&&r.top>=campo.top&&r.bottom<=campo.bottom;}),'Escritorio: las seis Pesadillas compactas caben íntegramente en el campo rival.');
+    t.check(huecos.length===6&&huecos.every(h=>w.getComputedStyle(h).display!=='none'),'Escritorio: la sexta ranura aparece sólo para el ciclo completo del Editor.');
   }finally{f.contentWindow.relojPara();f.remove();}
 });
 
