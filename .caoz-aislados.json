@@ -25,6 +25,10 @@
       "fuente": "c568529b736bbba9b5507f992446c3d5cb06c135",
       "ruta": "tcg/interacciones"
     },
+    "mesa-real": {
+      "fuente": "076814c8361405a587746e8c342c02b8729174a8",
+      "ruta": "tcg/mesa-real"
+    },
     "mesa-visual": {
       "fuente": "0e2f3302ffc97538a177dac86f1de479de311b96",
       "ruta": "tcg/mesa-visual"

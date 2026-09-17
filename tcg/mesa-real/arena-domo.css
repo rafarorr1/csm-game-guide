@@ -1,0 +1,250 @@
+/* ===========================================================================
+   ARENA DEL DOMO — piel visual opt-in
+
+   Se activa exclusivamente con ?arena=domo. No añade botones ni altera el
+   motor: barras, cartas, campo, mano y controles son los elementos que ya
+   renderiza una partida real. La dirección visual separa el Domo esmeralda
+   del rival y las brasas carmesí del protagonista.
+   ======================================================================== */
+
+html.arena-domo{
+  --arena-teal:#0d756a;
+  --arena-teal-deep:#031f20;
+  --arena-teal-glow:#41d7b3;
+  --arena-ember:#b83e3f;
+  --arena-ember-deep:#2a080d;
+  --arena-ember-glow:#ff9359;
+  --arena-ivory:#fff4dd;
+  --arena-gold:#e7b74d;
+}
+
+html.arena-domo body{
+  background:
+    radial-gradient(ellipse 74% 34% at 50% 0%,rgba(50,202,165,.17),transparent 64%),
+    radial-gradient(ellipse 74% 38% at 50% 100%,rgba(224,64,70,.18),transparent 66%),
+    #090a11;
+}
+
+/* ================================ MÓVIL ================================= */
+@media (max-width:700px){
+  html.arena-domo #board{
+    gap:5px;
+    background:linear-gradient(180deg,rgba(6,35,35,.95) 0%,rgba(5,31,31,.94) 43%,rgba(45,9,14,.94) 58%,rgba(22,5,9,.98) 100%);
+  }
+  html.arena-domo #board::before{
+    content:"";position:absolute;inset:0;pointer-events:none;z-index:0;opacity:.56;
+    background:
+      radial-gradient(ellipse 106% 25% at 50% 0%,rgba(118,255,211,.16),transparent 68%),
+      radial-gradient(ellipse 110% 28% at 50% 100%,rgba(255,123,75,.14),transparent 70%),
+      repeating-radial-gradient(ellipse 85% 24% at 50% 10%,rgba(128,255,218,.035) 0 1px,transparent 1px 22px),
+      repeating-radial-gradient(ellipse 85% 24% at 50% 92%,rgba(255,166,115,.032) 0 1px,transparent 1px 24px);
+  }
+  html.arena-domo #board > *{position:relative;z-index:1}
+
+  /* Los retratos y valores continúan siendo los de barHTML(). Alma se vuelve
+     el ancla de cada bando sin duplicar ni falsear la cifra del motor. */
+  html.arena-domo #barFoeWrap,
+  html.arena-domo #barMeWrap{
+    position:relative;min-height:74px;padding:7px 80px 7px 50px;overflow:visible;
+    border-radius:14px;border:1px solid rgba(231,183,77,.45);
+    box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 7px 18px rgba(0,0,0,.25);
+  }
+  html.arena-domo #barFoeWrap{
+    background:linear-gradient(115deg,rgba(9,71,65,.96),rgba(2,28,30,.90));
+    border-color:rgba(65,215,179,.55);
+  }
+  html.arena-domo #barMeWrap{
+    background:linear-gradient(65deg,rgba(37,7,12,.94),rgba(120,31,40,.88));
+    border-color:rgba(255,147,89,.48);
+  }
+  html.arena-domo #barFoeWrap::after,
+  html.arena-domo #barMeWrap::after{
+    content:"";position:absolute;inset:5px;pointer-events:none;border:1px solid rgba(255,244,221,.12);border-radius:10px;
+  }
+  html.arena-domo #barFoeWrap .leaderslot,
+  html.arena-domo #barMeWrap .leaderslot{
+    position:absolute;left:6px;top:50%;z-index:3;transform:translateY(-50%);
+  }
+  html.arena-domo #barFoeWrap .leadercard,
+  html.arena-domo #barMeWrap .leadercard{
+    width:38px;min-height:54px;padding:2px;border-width:1px;border-radius:10px;
+    box-shadow:0 4px 12px rgba(0,0,0,.45),0 0 0 1px rgba(231,183,77,.18);
+  }
+  html.arena-domo #barFoeWrap .leadercard .lcName,
+  html.arena-domo #barMeWrap .leadercard .lcName,
+  html.arena-domo #barFoeWrap .leadercard .lcText,
+  html.arena-domo #barMeWrap .leadercard .lcText{display:none}
+  html.arena-domo #barFoeWrap .leadercard .lcArt,
+  html.arena-domo #barMeWrap .leadercard .lcArt{font-size:20px;margin:auto}
+
+  html.arena-domo #barFoe,
+  html.arena-domo #barMe{display:flex;align-items:center;gap:3px;min-height:58px;position:static}
+  html.arena-domo #barFoe .who,
+  html.arena-domo #barMe .who{display:flex;flex:1 1 100%;min-width:0;order:-2}
+  html.arena-domo #barFoe .who > div,
+  html.arena-domo #barMe .who > div{
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%;
+    font-size:10px!important;letter-spacing:1.2px;text-transform:uppercase;color:var(--arena-ivory)!important;
+  }
+  html.arena-domo #barFoe .stat,
+  html.arena-domo #barMe .stat{
+    background:rgba(7,11,16,.56);border-color:rgba(255,244,221,.22);padding:2px 5px;
+    font-size:9px;box-shadow:inset 0 1px 0 rgba(255,255,255,.10),0 2px 5px rgba(0,0,0,.25);
+  }
+  html.arena-domo #barFoe .stat i,
+  html.arena-domo #barMe .stat i{font-size:12px;color:var(--arena-ivory)}
+  html.arena-domo #barFoe .stat.alma,
+  html.arena-domo #barMe .stat.alma{
+    position:absolute;right:8px;top:50%;z-index:4;width:64px;height:64px;padding:0;
+    transform:translateY(-50%);display:grid;place-items:center;border-radius:50%;
+    color:transparent;font-size:0;border:2px solid var(--arena-gold);
+    background:radial-gradient(circle at 34% 26%,rgba(255,255,255,.27),transparent 26%),rgba(7,11,16,.84);
+    box-shadow:0 0 0 3px rgba(7,11,16,.55),0 0 22px rgba(231,183,77,.35),inset 0 0 18px rgba(0,0,0,.45);
+  }
+  html.arena-domo #barFoe .stat.alma i,
+  html.arena-domo #barMe .stat.alma i{
+    color:var(--arena-ivory);font:900 34px/.9 var(--serif);letter-spacing:-2px;text-shadow:0 3px 8px #000;
+  }
+  html.arena-domo #barFoe .stat.alma::after,
+  html.arena-domo #barMe .stat.alma::after{
+    content:"ALMA";position:absolute;bottom:6px;left:0;right:0;text-align:center;color:var(--arena-gold);
+    font:800 6px/1 var(--sans);letter-spacing:1px;text-shadow:0 1px 2px #000;
+  }
+  html.arena-domo #barFoe .stat.pd,
+  html.arena-domo #barMe .stat.pd{border-color:rgba(51,158,255,.62)}
+  html.arena-domo #barFoe .stat.key,
+  html.arena-domo #barMe .stat.key{border-color:rgba(231,183,77,.58)}
+  html.arena-domo #barFoe .spacer,
+  html.arena-domo #barMe .spacer,
+  html.arena-domo #barFoe .stat[title="Cartas en mano"],
+  html.arena-domo #barMe .stat[title="Cartas en mano"]{display:none}
+
+  /* El campo conserva sus cinco zonas y sus click targets. Sólo recibe luz,
+     ornamentación y una frontera de color entre ambos ejércitos. */
+  html.arena-domo #field{
+    border:1px solid rgba(231,183,77,.32);border-radius:17px;overflow:hidden;
+    background:linear-gradient(180deg,rgba(9,75,67,.90) 0%,rgba(3,30,31,.95) 46.7%,rgba(35,9,15,.96) 53.3%,rgba(120,27,38,.89) 100%);
+    box-shadow:inset 0 0 48px rgba(0,0,0,.45),0 8px 20px rgba(0,0,0,.30);
+  }
+  html.arena-domo #field::before{
+    content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.72;
+    background:
+      radial-gradient(ellipse 95% 40% at 50% 11%,rgba(88,244,195,.15),transparent 66%),
+      radial-gradient(ellipse 95% 40% at 50% 90%,rgba(255,107,76,.14),transparent 66%),
+      repeating-radial-gradient(ellipse 100% 36% at 50% 1%,rgba(255,255,255,.034) 0 1px,transparent 1px 18px),
+      repeating-radial-gradient(ellipse 100% 36% at 50% 100%,rgba(255,255,255,.025) 0 1px,transparent 1px 20px);
+  }
+  html.arena-domo #field > .zona,
+  html.arena-domo #field > #midRow{position:relative;z-index:1}
+  html.arena-domo #field > .zona:nth-child(1),
+  html.arena-domo #field > .zona:nth-child(2){border-bottom:1px solid rgba(73,227,186,.12)}
+  html.arena-domo #field > .zona:nth-child(4),
+  html.arena-domo #field > .zona:nth-child(5){border-top:1px solid rgba(255,147,89,.10)}
+  html.arena-domo #field .zona .row{filter:drop-shadow(0 6px 9px rgba(0,0,0,.38))}
+  html.arena-domo #field .zona .row::before{
+    content:"";position:absolute;left:10%;right:10%;height:1px;bottom:3px;pointer-events:none;
+    background:linear-gradient(90deg,transparent,rgba(231,183,77,.42),transparent);
+  }
+  html.arena-domo #midRow{
+    z-index:5;min-height:39px;margin:0 12px;padding:6px 12px;border:1px solid var(--arena-gold);border-radius:12px;
+    background:linear-gradient(180deg,rgba(45,35,26,.98),rgba(17,13,19,.98));
+    box-shadow:0 0 0 3px rgba(6,10,14,.45),0 5px 14px rgba(0,0,0,.38),inset 0 1px 0 rgba(255,244,221,.18);
+  }
+  html.arena-domo #midRow::before{
+    content:"UMBRAL DEL DOMO";color:var(--arena-gold);font:800 7px/1 var(--sans);letter-spacing:1.55px;white-space:nowrap;
+  }
+  html.arena-domo #midRow > *{position:relative;z-index:1}
+  html.arena-domo #midRow > div:not(.placecard){margin-left:4px}
+  html.arena-domo #midRow span[style*="SIN LUGAR"]{font-size:0!important}
+
+  /* La mano mantiene su construcción y sus hitboxes estables; sólo cambia el
+     suelo que la recibe. Esto evita reintroducir el salto de hover ya resuelto. */
+  html.arena-domo #handzone{
+    border-top:1px solid rgba(255,148,91,.25);
+    background:
+      radial-gradient(ellipse 72% 60% at 50% 0%,rgba(235,85,65,.20),transparent 68%),
+      radial-gradient(ellipse 90% 100% at 50% 100%,rgba(5,2,6,.78),transparent 76%),
+      linear-gradient(180deg,rgba(72,13,22,.94),rgba(20,5,10,.98));
+  }
+  html.arena-domo #handzone::before{background:linear-gradient(180deg,rgba(14,6,11,0),rgba(36,5,10,.60))}
+  html.arena-domo #handzone::after{background:radial-gradient(ellipse 64% 72% at 50% 46%,rgba(255,157,99,.16),transparent 74%)}
+  html.arena-domo #hand .card{filter:drop-shadow(0 8px 12px rgba(0,0,0,.45))}
+  html.arena-domo #hand .handSlot.is-hover .card,
+  html.arena-domo #hand .handSlot .card.finge-hover{filter:none}
+  html.arena-domo #jugarPill{border-color:var(--arena-gold);background:rgba(31,7,12,.97)}
+
+  /* Son controles reales generados por renderControls(). Se da jerarquía a lo
+     que ya hacen, sin inventar acciones ni atajos de maqueta. */
+  html.arena-domo #controls{justify-content:center;gap:6px;padding:2px 5px 0}
+  html.arena-domo #controls .btn{
+    border-color:rgba(231,183,77,.42);background:linear-gradient(180deg,#243f57,#102235);color:#f4f5ff;
+    box-shadow:0 3px 0 rgba(4,8,14,.7),0 5px 11px rgba(0,0,0,.36),inset 0 1px 0 rgba(255,255,255,.14);
+  }
+  html.arena-domo #controls .btn.gold{
+    border-color:#ffb166;background:linear-gradient(180deg,#f47729,#a73418);color:#fff7e9;
+    box-shadow:0 3px 0 #54170f,0 0 15px rgba(255,112,41,.27),inset 0 1px 0 rgba(255,239,186,.35);
+  }
+  html.arena-domo #controls .btn:not(.gold):first-child{
+    border-color:#cf83ff;background:linear-gradient(180deg,#893fd4,#4a176f);
+  }
+  html.arena-domo #controls #reloj{order:-1;border:1px solid rgba(231,183,77,.55);border-radius:12px;
+    padding:4px 7px;background:rgba(10,11,16,.66);color:var(--arena-ivory)}
+  html.arena-domo .turnpill{border-color:var(--arena-gold);background:rgba(17,14,18,.85);color:var(--arena-ivory)}
+}
+
+/* ============================== ESCRITORIO =============================== */
+@media (min-width:701px){
+  html.arena-domo #mesa{
+    background:
+      radial-gradient(ellipse 82% 50% at 50% 8%,rgba(59,216,176,.12),transparent 64%),
+      radial-gradient(ellipse 76% 42% at 50% 96%,rgba(243,82,78,.12),transparent 66%),
+      #08090f;
+  }
+  html.arena-domo #field{padding-left:12px}
+  html.arena-domo #mat{background:linear-gradient(180deg,rgba(4,50,47,.95) 0%,rgba(4,28,30,.98) 46%,rgba(44,8,14,.97) 54%,rgba(99,21,31,.93) 100%)}
+  html.arena-domo #mat::before{
+    border-color:rgba(231,183,77,.46);
+    background:
+      radial-gradient(ellipse 84% 34% at 50% 4%,rgba(75,238,190,.18),transparent 68%),
+      radial-gradient(ellipse 84% 35% at 50% 96%,rgba(255,117,75,.16),transparent 68%),
+      repeating-radial-gradient(ellipse 100% 36% at 50% 0%,rgba(255,255,255,.025) 0 1px,transparent 1px 20px),
+      linear-gradient(180deg,#0a5a52 0%,#062c2d 46%,#35090f 54%,#79202b 100%);
+    box-shadow:inset 0 0 94px rgba(0,0,0,.5),0 12px 32px rgba(0,0,0,.46);
+  }
+  html.arena-domo #mat::after{border-color:rgba(231,183,77,.30)}
+  html.arena-domo #mat .zone:nth-of-type(1),
+  html.arena-domo #mat .zone:nth-of-type(2){border-bottom:1px solid rgba(65,215,179,.14)}
+  html.arena-domo #mat .zone:nth-of-type(3),
+  html.arena-domo #mat .zone:nth-of-type(4){border-top:1px solid rgba(255,147,89,.10)}
+  html.arena-domo #mat .zlabel{color:rgba(255,244,221,.44)}
+  html.arena-domo #mat .midrow{
+    min-height:40px;margin:2px 42px;padding:6px 13px;border:1px solid var(--arena-gold);border-radius:12px;
+    background:linear-gradient(180deg,rgba(48,36,25,.96),rgba(14,11,16,.96));
+    box-shadow:0 0 0 3px rgba(4,8,12,.38),0 5px 16px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.15);
+  }
+  html.arena-domo #mat .midrow::before{content:"UMBRAL DEL DOMO";color:var(--arena-gold);font:800 8px/1 var(--sans);letter-spacing:1.8px}
+  html.arena-domo #mat .midrow span[style*="SIN LUGAR"]{font-size:0!important}
+  html.arena-domo #foehandzone .bar,
+  html.arena-domo #handzone{
+    border-color:rgba(231,183,77,.26);
+    background:
+      radial-gradient(ellipse 72% 100% at 50% 0%,rgba(236,78,68,.16),transparent 70%),
+      linear-gradient(180deg,rgba(72,12,22,.88),rgba(15,5,9,.98));
+  }
+  html.arena-domo #foehandzone .bar{background:linear-gradient(180deg,rgba(9,77,69,.8),rgba(2,25,27,.90))}
+  html.arena-domo .bar{
+    border-color:rgba(231,183,77,.34);
+    background:linear-gradient(180deg,rgba(22,25,29,.94),rgba(8,11,15,.93));
+  }
+  html.arena-domo .bar .stat.alma{
+    border-color:var(--arena-gold);background:rgba(9,12,17,.86);box-shadow:0 0 18px rgba(231,183,77,.25);
+  }
+  html.arena-domo .bar .stat.alma i{font-size:27px;color:var(--arena-ivory)}
+  html.arena-domo #controls .btn.gold{border-color:#ffb166;background:linear-gradient(180deg,#f47729,#a73418);color:#fff7e9}
+  html.arena-domo #controls .btn:not(.gold):first-child{border-color:#cf83ff;background:linear-gradient(180deg,#893fd4,#4a176f)}
+  html.arena-domo #jugarPill{border-color:var(--arena-gold);background:rgba(31,7,12,.97)}
+}
+
+@media (prefers-reduced-motion:reduce){
+  html.arena-domo .turnpill{animation:none}
+}
