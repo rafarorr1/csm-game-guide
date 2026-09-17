@@ -569,9 +569,42 @@ async function confirmarNubeDagas(id){
 /* Inicio online con acuse: una bienvenida repetida nunca reparte otra vez. */
 function netTieneInternet(){return navigator.onLine!==false;}
 function codigoInvitacion(valor){
+  const normalizar=window.CAOZ_INVITACIONES?.codigo;
+  if(typeof normalizar==='function')return normalizar(valor,location.href);
   let texto=String(valor||'').trim();
   if(texto.includes('://')){try{texto=new URL(texto).searchParams.get('sala')||'';}catch(_){return '';}}
   return texto.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,5);
+}
+function invitacionEnApp(){
+  const detector=window.CAOZ_INVITACIONES?.enApp;
+  return typeof detector==='function' ? detector() : (navigator.standalone===true||!!window.matchMedia?.('(display-mode:standalone)').matches);
+}
+async function copiarCodigoInvitacion(sala){
+  if(!navigator.clipboard?.writeText)return false;
+  try{await navigator.clipboard.writeText(sala);return true;}catch(_){return false;}
+}
+let puenteInvitacionMostrado=false;
+function mostrarPuenteInvitacion(sala,continuar){
+  const codigo=codigoInvitacion(sala),panel=document.getElementById('ovPanel');
+  if(codigo.length!==5||!panel||typeof openOv!=='function'){continuar();return;}
+  puenteInvitacionMostrado=true;panel.innerHTML='';
+  const titulo=document.createElement('h3');titulo.textContent='Te invitaron a una sala';
+  const texto=document.createElement('p');texto.textContent='El enlace se abrió en el navegador. Si ya tienes Caoz TCG instalada, entra con este código sin iniciar sesión aquí.';
+  const clave=document.createElement('div');clave.className='roomcode';clave.textContent=codigo;
+  const ayuda=document.createElement('p');ayuda.className='netstatus';ayuda.textContent='La app y el navegador pueden ser ventanas distintas.';
+  const opciones=document.createElement('div');opciones.className='opts';
+  const app=document.createElement('button');app.className='btn gold';app.textContent='📱 Tengo la app instalada';
+  app.onclick=async()=>{
+    const copiado=await copiarCodigoInvitacion(codigo);
+    ayuda.textContent=copiado
+      ? 'Código copiado. Abre Caoz TCG → Con amigos → Unirme con un código y pégalo allí.'
+      : 'Abre Caoz TCG → Con amigos → Unirme con un código y escribe el código de arriba.';
+  };
+  let avanzando=false;
+  const navegador=document.createElement('button');navegador.className='btn';navegador.textContent='🌐 Jugar en este navegador';
+  navegador.onclick=()=>{if(avanzando)return;avanzando=true;cerrarOv();continuar();};
+  const cerrar=document.createElement('button');cerrar.className='btn sm';cerrar.textContent='Cerrar';cerrar.onclick=()=>{cerrarOv();showScreen('menu');};
+  opciones.append(app,navegador,cerrar);panel.append(titulo,texto,clave,ayuda,opciones);openOv();
 }
 function onlineEspera(texto,volver=false){
   const panel=document.getElementById('ovPanel');panel.innerHTML='';
@@ -669,10 +702,10 @@ async function onlineMostrarMoneda(resultado,nombre,fisica,existente){
   return termino;
 }
 function onlineAyudaInstalada(panel){
-  if(!ONL.sala||navigator.standalone||matchMedia('(display-mode:standalone)').matches)return;
+  if(!ONL.sala||invitacionEnApp()||puenteInvitacionMostrado)return;
   const texto=document.createElement('p');texto.textContent='Puedes jugar aquí. Si prefieres tu app instalada, copia el código y abre Con amigos → Unirme desde su icono.';
   const boton=document.createElement('button');boton.className='btn sm';boton.textContent='Copiar código para la app: '+ONL.sala;
-  boton.onclick=async()=>{try{await navigator.clipboard.writeText(ONL.sala);toast('Código copiado');}catch(_){toast('Código de sala: '+ONL.sala);}};
+  boton.onclick=async()=>{const copiado=await copiarCodigoInvitacion(ONL.sala);toast(copiado?'Código copiado':'Código de sala: '+ONL.sala);};
   panel.append(texto,boton);
 }
 
@@ -1535,8 +1568,11 @@ addEventListener('DOMContentLoaded',()=>{
 
 // La recuperación de premios espera a conocer al propietario del dispositivo.
 addEventListener('caoz:cuenta-lista',()=>campanaEntregarSobre(campanaLeer()));
+let invitacionAbierta='';
 function cuentaAbrirInvitacion(sala){
-  ONL.sala=sala;
+  const codigo=codigoInvitacion(sala);
+  if(codigo.length!==5||invitacionAbierta===codigo)return;
+  invitacionAbierta=codigo;ONL.sala=codigo;
   const continuar=()=>{
     if(!window.CAOZ_CUENTA_JUEGO?.requerir(continuar))return;
     const url=new URL(location.href);url.searchParams.delete('sala');
@@ -1544,5 +1580,14 @@ function cuentaAbrirInvitacion(sala){
     if(!ONL.nombre)ONL.nombre=nombreGuardado();
     onlPickNombre(false);
   };
-  setTimeout(continuar,300);
+  setTimeout(()=>{
+    if(invitacionEnApp()||new URLSearchParams(location.search).has('test'))continuar();
+    else mostrarPuenteInvitacion(codigo,continuar);
+  },300);
+}
+if(window.launchQueue?.setConsumer){
+  window.launchQueue.setConsumer(params=>{
+    const sala=codigoInvitacion(params?.targetURL||'');
+    if(sala)cuentaAbrirInvitacion(sala);
+  });
 }

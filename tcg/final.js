@@ -19,6 +19,9 @@
   document.write('<link rel="stylesheet" href="sobres-apertura.css?b='+encodeURIComponent(b)+'">');
   document.write('<script src="coleccion-modelo.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="arte-remoto.js?b='+encodeURIComponent(b)+'"><\/script>');
+  // Las invitaciones se cargan antes del coordinador: las dos mesas comparten
+  // el mismo parser y la misma ruta de regreso a una app instalada.
+  document.write('<script src="invitaciones-compartidas.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="final-core.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-personaje.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<script src="campana-deseo.js?b='+encodeURIComponent(b)+'"><\/script>');

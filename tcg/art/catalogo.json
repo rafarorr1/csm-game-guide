@@ -7377,7 +7377,7 @@
       "coste": null,
       "ataque": null,
       "vida": null,
-      "texto": "Rebaño de Rul: cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.\nEstornudo de Rul (2 PD): 1 daño a un Personaje y cura 1 PV a otro.",
+      "texto": "Rebaño de Rul: cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.\nEstornudo de Rul (2 PD): 1 daño a un Personaje rival y cura 1 PV a un aliado.",
       "tribu": "Enjambre · Fe · Curación",
       "simbolo": "✨",
       "esLider": true,

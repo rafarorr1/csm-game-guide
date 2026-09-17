@@ -867,6 +867,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .fieldwrap>.row{min-width:0;max-width:100%;overflow:visible;
   padding:6px;justify-content:center}
 .fieldwrap>.row::-webkit-scrollbar{display:none}
+/* El jefe final es la excepción visible: seis Pesadillas distintas ocupan seis
+   huecos compactos, sin cambiar los cinco de una mesa normal. */
+.fieldwrap:not(.seisPesadillas) .slots i:nth-child(6){display:none}
+.fieldwrap.seisPesadillas .slots{gap:6px}
+.fieldwrap.seisPesadillas .slots i,
+#foeField.seisPesadillas>.card.unit{
+  width:min(var(--cw),calc((100% - 48px)/6));height:auto;aspect-ratio:5/7;
+}
+.fieldwrap.seisPesadillas>.row{gap:6px}
 .leaderslot{flex:0 0 auto}
 .leadercard{width:var(--lw);border-radius:11px;padding:5px 4px 6px;cursor:pointer;position:relative;
   display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;transition:.15s;
@@ -2173,7 +2182,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=263">
+<link rel="stylesheet" href="mulligan-ui.css?b=264">
 </head>
 <body>
 <div id="app"><div id="lienzo">
@@ -2281,7 +2290,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
         <div class="row traps" id="foeTraps"></div></div>
       <div class="zone fz"><span class="zlabel">CAMPO RIVAL</span>
         <div class="leaderslot" id="leaderFoe"></div>
-        <div class="fieldwrap"><div class="slots"><i data-l="L1"></i><i data-l="L2"></i><i data-l="L3"></i><i data-l="L4"></i><i data-l="L5"></i></div>
+        <div class="fieldwrap"><div class="slots"><i data-l="L1"></i><i data-l="L2"></i><i data-l="L3"></i><i data-l="L4"></i><i data-l="L5"></i><i data-l="L6"></i></div>
           <div class="row" id="foeField"></div></div></div>
       <div class="midrow" id="midRow"></div>
       <div class="zone fz"><span class="zlabel">TU CAMPO</span>
@@ -2338,9 +2347,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=263"></script>
-<script src="final.js?b=263"></script>
-<script src="mulligan-ui.js?b=263"></script>
+<script src="motor.js?b=264"></script>
+<script src="final.js?b=264"></script>
+<script src="mulligan-ui.js?b=264"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2359,7 +2368,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:263, fecha:'2026-09-16'};
+const BUILD = {n:264, fecha:'2026-09-16'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3442,6 +3451,9 @@ function renderPiles(){
 }
 
 function renderField(host, list, mine){
+  const seisPesadillas=!!(!mine&&G.campana?.jefeSecreto&&list.length===CARTAS_EDITOR.length&&list.every(u=>u.alive&&u.card.editorJuego));
+  host.classList.toggle('seisPesadillas',seisPesadillas);
+  host.closest('.fieldwrap')?.classList.toggle('seisPesadillas',seisPesadillas);
   const seen=new Set();
   list.forEach((u,i)=>{
     seen.add(String(u.uid));
@@ -4522,15 +4534,17 @@ async function onlHost(){
     <p style="font-size:11.5px;color:#7a6d96">El código es la única llave de la sala:
        cualquiera que lo tenga puede entrar y ver la partida. No lo publiques.</p>`;
   const box=el('div','opts');
-  /* El enlace abre el juego ya dentro de la sala: en el teléfono se comparte
-     por WhatsApp y el otro sólo pone su nombre y elige Protagonista. */
+  /* El código sirve para la app instalada; el enlace queda como ruta explícita
+     para navegador, sin mezclar orígenes entre producción y beta. */
   const enlace=enlaceDeSala(code);
-  const sh=el('button','btn gold', navigator.share ? '🔗 Compartir enlace' : '🔗 Copiar enlace');
+  const app=el('button','btn gold','📱 Compartir código — tiene la app');
+  app.onclick=()=>compartirCodigoSala(code);
+  const sh=el('button','btn','🔗 Compartir enlace — navegador');
   sh.onclick=()=>compartirEnlace(enlace);
   const cp=el('button','btn','📋 Copiar código');
   cp.onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(code); toast('Código copiado'); };
   const cancel=el('button','btn sm','Cancelar'); cancel.onclick=()=>{ netSend({t:'bye'}); netClose(); cerrarOv(); };
-  box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box);
+  box.appendChild(app); box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box);
   openOv();
   await netConnect(code,true);
   netStatus('esperando a tu amigo…','warn');
@@ -4538,8 +4552,22 @@ async function onlHost(){
   if(NET.joinPend){ const l=NET.joinPend; NET.joinPend=null; NET.onjoin(l); }
 }
 
-/* la dirección de la sala: la del juego, sin el nombre de archivo, con ?sala= */
-function enlaceDeSala(code){return location.origin+location.pathname.replace(/[^/]*$/,'')+'?sala='+encodeURIComponent(code)+'&b='+BUILD.n;}
+/* La dirección conserva la edición actual: una sala beta nunca manda al
+   invitado a producción. El código no lleva URL para poder abrir una PWA. */
+function enlaceDeSala(code){
+  const crear=window.CAOZ_INVITACIONES?.enlace;
+  return typeof crear==='function' ? crear(code,location.href,BUILD.n) : location.origin+location.pathname.replace(/[^/]*$/,'')+'?sala='+encodeURIComponent(code)+'&b='+BUILD.n;
+}
+function textoCodigoSala(code){
+  const crear=window.CAOZ_INVITACIONES?.mensajeCodigo;
+  return typeof crear==='function' ? crear(code,location.href) : `Código de sala: ${code}. Abre Con amigos → Unirme con un código.`;
+}
+async function compartirCodigoSala(code){
+  const texto=textoCodigoSala(code);
+  if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas',text:texto}); return; }catch(e){ if(e&&e.name==='AbortError')return; } }
+  if(navigator.clipboard){ try{ await navigator.clipboard.writeText(texto);toast('Código e instrucciones copiados');return; }catch(e){} }
+  toast(texto);
+}
 async function compartirEnlace(enlace){
   if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas', text:'Entra a mi sala del Domo:', url:enlace}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
   if(navigator.clipboard){ try{ await navigator.clipboard.writeText(enlace); toast('Enlace copiado'); return; }catch(e){} }
