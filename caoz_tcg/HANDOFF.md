@@ -1,12 +1,33 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-16 · beta 264 · producción 259 · v26 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-17 · beta 264 · producción 264 · v26 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
 lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) → `README.md`
 (cómo se juega y cómo está montado, largo) → `CHANGELOG.md` (el porqué de cada cambio, con
 números) → el código.
+
+---
+
+## Estado vigente — build 264 publicada en producción
+
+El usuario autorizó promover la beta 264. La fuente de producción es
+`main:832c66ea612ea0bb73e3728d12aa4de3464c42c3`; el único commit posterior
+en `develop` a la build era documentación, por lo que el paquete publicado
+permanece idéntico al que se revisó en beta.
+
+`./publicar.sh --produccion --completo` terminó en verde: comprobaciones
+estáticas, cuentas, seis tutoriales, campaña, online, minijuegos, móvil,
+audio, colección, balance de 2,880 partidas y regresiones. GitHub Pages y
+Cloudflare sirven `index.html`, `motor.js`, `movil.html` y `final.js` con los
+mismos hashes que la fuente de producción.
+
+Artefacto: `gh-pages:855974820a864b1fe609bd6e677a62cff60ecbe9` (`tcg/`).
+La beta se conserva en `beta:21d3915faf554dc84928f0cbc8a820c7ee91bf1c`.
+
+- Web: https://juego.caozcontodo.com/?b=264
+- Móvil: https://juego.caozcontodo.com/movil.html?b=264
 
 ---
 
@@ -34,8 +55,8 @@ Artefactos: `gh-pages:7362f6f00ca49197734092ed75287bab8153183f` y
 - Web: https://beta.caoz-tcg.pages.dev/?b=264
 - Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=264
 
-Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
-continúa en build 259. Una promoción posterior requiere autorización expresa.
+Antes de la promoción descrita arriba, producción conservaba
+`main:783abe230bd5a1e81ae5a1e788175c0084951fb6` en build 259.
 
 ---
 
