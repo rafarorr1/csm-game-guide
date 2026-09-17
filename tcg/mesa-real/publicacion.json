@@ -480,8 +480,11 @@
     "estudio-vista.js": "06a373a3a2eaa51ff575b1207d86ea5a8a41a4d7d610de7ce8a46b1bf2987e50",
     "final-core.js": "47f9de0c646ae443bdb2d42498142d1076bc24a01695e97652a0ad9f2242d332",
     "final.js": "2d819a6f997f88c04fa8465c602e0be49f466f88f531575f633323d5525fe8b8",
-    "index.html": "697367354f36c846d9bdc3a272dddd28bb81b0c8edbd4986f5bea0b7d17b0800",
+    "index.html": "8f4a22f89148b9246e9587c4fe8e8f809744a7d0170de3599c4f25a422645e0d",
     "manifest.webmanifest": "4ae03f595159dc0e20e84bb372a0249402b9b6e5c73643ddbef5e1a389e016ca",
+    "mesa-real-arena.js": "fa125a2213dc801d9f66a7d48e38b2f9ff40d1c22f72c512a6392e90d878418d",
+    "mesa-real-bootstrap.js": "7914cd3f2ef5ba14842951e56ce8c998a82fb0ba90d6aab36c627b4ea4aae91d",
+    "mesa-real-pantalla.js": "4c3edfa00118499a2fa9d3dee6db21687405a1599c56fefde6c2753e331a5a92",
     "moneda-fisica.js": "709e826e1fd2eb2e40b48335ecbea39695fb2160bf9d9560d47ad3a6ee046f14",
     "motor.js": "dcac86feb009c93092619a3d1d7cdcd4934bf3aade491e52627e3d67afce7906",
     "mulligan-ui.css": "7d9ef63c168cc36845f25013e1256feada121f25596b7c0fea4800d28d47c925",
@@ -495,7 +498,7 @@
     "pitagoras-pixel.js": "768074cc1ece82648f684fba20d3b064ed8aa0c89d47ef7590cd68f8cff935dd",
     "pitagoras-pruebas.js": "463ea603edec0afaddd3660d6660d73759526a2ac4eccade904c6dbbfe2a9c10",
     "polish-aaa.js": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d",
-    "procedencia.json": "bc0c8e2c7ba91dbcff0076857ae070bc7c8c54358f2ba7dfbb22be2372539c65",
+    "procedencia.json": "9e1ccf1ef5256a4691e81bf7a03926e40c2056a17a048f4801ddb8b4dee493db",
     "sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
     "sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
     "sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea"
@@ -503,7 +506,7 @@
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/mulligan-inicial",
-    "sha": "076814c8361405a587746e8c342c02b8729174a8"
+    "sha": "d374e40ffa6c8403e247239bb171255504a4524e"
   },
   "seccion": "mesa-real",
   "version": 1

@@ -54,7 +54,10 @@
     "cuenta-ui.js": "d1fd86ab88c75055634f52706bedccdbb85cb50c5fb10179a202b8b02e6624cf",
     "cuenta-acceso.js": "9d395e96b8f13255a0adbf91b5eac74203425ccca5c08135fa84e2988273cf7f",
     "cuenta-juego.js": "c80a3efc34d5b130ebb0571634a45fd0df24a35857edb4a3004a749832b089e0",
-    "audio-domo.js": "affaa332217709e6dba9de254c899bb666f7d478d7fd41f6552f2cf2dca14ff7"
+    "audio-domo.js": "affaa332217709e6dba9de254c899bb666f7d478d7fd41f6552f2cf2dca14ff7",
+    "mesa-real-arena.js": "fa125a2213dc801d9f66a7d48e38b2f9ff40d1c22f72c512a6392e90d878418d",
+    "mesa-real-pantalla.js": "4c3edfa00118499a2fa9d3dee6db21687405a1599c56fefde6c2753e331a5a92",
+    "mesa-real-bootstrap.js": "7914cd3f2ef5ba14842951e56ce8c998a82fb0ba90d6aab36c627b4ea4aae91d"
   },
   "fuente": {
     "movilHtml": "a8e7b7a024e1346bea26681f01ab8c4b9f993b2f0c6c3cc38e683659ed8d1af2",

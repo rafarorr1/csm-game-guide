@@ -1,0 +1,1 @@
+if(new URLSearchParams(location.search).get('arena')==='domo')document.documentElement.classList.add('arena-domo');
