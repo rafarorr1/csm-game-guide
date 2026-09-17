@@ -1,5 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
+### v26 · Build 264 · Sala y ciclo de Pitágoras · 2026-09-16
+
+- Los enlaces de sala abiertos en un navegador ahora ofrecen continuar en la
+  app instalada mediante el mismo código; desde la app se comparte el código
+  de forma directa. La sala y sus parámetros se conservan hasta resolver el
+  acceso requerido.
+- La IA de Rafaela ya distingue entre rematar al rival y curar a su aliado más
+  herido; su habilidad no puede dañar y curar al mismo objetivo por error.
+- Pitágoras reserva seis plazas para sus seis Pesadillas: una copia viva de
+  cada reto, sin repetidos, fichas, conversiones ni Aidman ocupando el lugar
+  de un minijuego. La excepción sólo existe en su combate secreto; el resto
+  de los campos conserva el límite de cinco Personajes.
+
 ### v25 · Build 263 · Mulligan inicial · 2026-09-16
 
 - La primera mano ya no se puede reemplazar por completo. Cada jugador puede
