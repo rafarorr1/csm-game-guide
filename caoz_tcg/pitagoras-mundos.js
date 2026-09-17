@@ -11,7 +11,7 @@
   const MEMORIA_CARTAS=Object.freeze(['lucius','eric','matildus','machete','petunia','bob','conserje','aidman','tal','rantiago']);
   API.cartasMemoria=MEMORIA_CARTAS;
   const NUEVOS={
-    carrera:{nombre:'El último puente',numero:'IV',sub:'El mundo se derrumba detrás de ti.',texto:'Corre 20 segundos por el puente del Editor. Cambia de carril y salta los sellos que atraviesan el camino.',control:'Flechas: saltar entre tres carriles. Derecha: saltar. El puente acelera a medida que avanzas.',teclado:'A/D o flechas: carriles · Espacio: saltar.',accion:'SALTAR',glifo:'↑',ayuda:'Salta los sellos. Evita las columnas.',instruccion:'Que nada te detenga.',movimiento:'TRES CARRILES'},
+    carrera:{nombre:'El último puente',numero:'IV',sub:'El mundo se derrumba detrás de ti.',texto:'Corre 20 segundos por el puente del Editor. Cambia de carril y salta los sellos que atraviesan el camino.',control:'Flechas: cambia entre tres carriles. Saltar: Espacio. El puente acelera pronto; al final mezcla columnas y sellos.',teclado:'A/D o flechas: carriles · Espacio: saltar.',accion:'SALTAR',glifo:'↑',ayuda:'Salta los sellos. Busca el carril libre entre las columnas.',instruccion:'Que nada te detenga.',movimiento:'TRES CARRILES'},
     orbital:{nombre:'Órbita muerta',numero:'V',sub:'Hasta las estrellas quieren borrarte.',texto:'Sobrevive 20 segundos a las descargas de una estrella muerta. Esquiva los proyectiles y usa el escudo para atravesar el peligro.',control:'Izquierda: moverte. Derecha: escudo fugaz; se recarga después de usarlo.',teclado:'WASD o flechas: moverte · Espacio: escudo de impulso.',accion:'ESCUDO',glifo:'◇',ayuda:'El escudo te protege un instante.',instruccion:'Baila entre las estrellas.',movimiento:'NAVEGAR'},
     duelo:{nombre:'La memoria del Editor',numero:'VI',sub:'Recuerda lo que intenta borrarte.',texto:'Memoriza las cartas durante un segundo y medio y elige las dos iguales. Cada pareja quita 1 Alma a Pitágoras. Cada fallo consume una vida de la prueba: al tercer fallo pierdes 5 Alma. Tienes 20 segundos.',control:'Observa las cartas y toca las dos que son iguales cuando se volteen. Cada ronda exige recordar más.',teclado:'Haz clic o usa Tab y Enter. También puedes elegir con las teclas 1–7.',accion:'RECORDAR',glifo:'◇',ayuda:'Cada pareja quita 1 Alma a Pitágoras.',instruccion:'Observa. Recuerda. Elige.',movimiento:'MEMORIA'}
   };
@@ -21,9 +21,48 @@
   M.crear=function(op={}){
     if(!NUEVOS[op.tipo])return crearBase(op);
     const s=crearBase({...op,tipo:'laseres'});s.tipo=op.tipo;s.jugador={x:0,y:s.tipo==='orbital'?4:0,a:-Math.PI/2,r:s.tipo==='orbital'?.2:.28};
-    Object.assign(s,{salto:0,saltoV:0,obstaculos:[],siguiente:.65,oleada:0,distancia:0,velocidad:9.5,carril:0,carrilVisual:0,carrilDesde:0,carrilCambio:0,direccionCarril:0,escudo:0,estela:[],ataques:[],parada:0,recargaParada:0,paradas:0,combo:0,juicio:0,juicioTexto:'',ultimoMovimiento:{x:0,y:-1}});
+    Object.assign(s,{salto:0,saltoV:0,obstaculos:[],siguiente:.65,oleada:0,oleadasPuenteCruzadas:0,amenazasPuenteCruzadas:0,ondasPuenteCruzadas:{},distancia:0,velocidad:10,carril:0,carrilVisual:0,carrilDesde:0,carrilCambio:0,direccionCarril:0,escudo:0,estela:[],ataques:[],parada:0,recargaParada:0,paradas:0,combo:0,juicio:0,juicioTexto:'',ultimoMovimiento:{x:0,y:-1}});
     if(s.tipo==='duelo'){Object.assign(s,{rondaMemoria:0,parejas:0,fallosMemoria:0,elegirAnterior:null,objetivoParejas:Number.isInteger(op.objetivoParejas)&&op.objetivoParejas>0?op.objetivoParejas:null});nuevaMemoria(s);}return s;
   };
+  function agregarPuente(s,onda,tipo,carril,patron){s.obstaculos.push({id:++s.id,z:27,carril,tipo,paso:false,onda,patron});}
+  function carrilSeguro(s){
+    // Los bloqueos dobles nunca exigen cruzar dos carriles: el hueco queda en
+    // el carril actual o en uno contiguo, para que el reto mida lectura y no
+    // una combinación imposible de controles.
+    const opciones=[s.carril];if(s.carril>-1)opciones.push(s.carril-1);if(s.carril<1)opciones.push(s.carril+1);
+    return opciones[Math.floor(azar(s)*opciones.length)];
+  }
+  function oleadaPuente(s){
+    const onda=s.oleada++,t=s.t,progreso=limite(t/s.duracion,0,1),fase=t<3.5?0:t<7?1:t<11?2:3;
+    if(fase===0){
+      const sello=onda%4===3;agregarPuente(s,onda,sello?'sello':'columna',sello?0:Math.floor(azar(s)*3)-1,sello?'sello':'columna');
+    }else if(fase===1){
+      // A los cinco segundos aparecen muros con una salida visible. Alternan
+      // con sellos simples para enseñar el ritmo antes de apretar de verdad.
+      if(onda%3===0){const seguro=carrilSeguro(s);for(const carril of [-1,0,1])if(carril!==seguro)agregarPuente(s,onda,'columna',carril,'muro');}
+      else {const sello=onda%3===1;agregarPuente(s,onda,sello?'sello':'columna',sello?0:Math.floor(azar(s)*3)-1,sello?'sello':'columna');}
+    }else if(fase===2){
+      // La segunda mitad ya alterna una salida lateral con un salto leído.
+      if(onda%2===0){const seguro=carrilSeguro(s);for(const carril of [-1,0,1])if(carril!==seguro)agregarPuente(s,onda,'columna',carril,'muro');}
+      else agregarPuente(s,onda,'sello',0,'sello');
+    }else if(onda%3===0){
+      // El cerco tiene una única salida, siempre en el carril actual o uno
+      // vecino. Obliga a leer cambio y salto, nunca a cruzar dos carriles.
+      const seguro=carrilSeguro(s);agregarPuente(s,onda,'sello',0,'cerco');for(const carril of [-1,0,1])if(carril!==seguro)agregarPuente(s,onda,'columna',carril,'cerco');
+    }else if(onda%3===1){
+      // Un asalto pide ambos gestos, pero conserva dos salidas laterales.
+      agregarPuente(s,onda,'sello',0,'asalto');agregarPuente(s,onda,'columna',s.carril,'asalto');
+    }else {const seguro=carrilSeguro(s);for(const carril of [-1,0,1])if(carril!==seguro)agregarPuente(s,onda,'columna',carril,'muro');}
+    // La cadencia baja desde 1.04 hasta .64 segundos: se siente como una
+    // persecución creciente, pero cada grupo sigue entrando con aviso visible.
+    s.siguiente+=1.04-.40*progreso;
+  }
+  function puedeCruzarPuente(s){
+    // No mostramos una amenaza decorativa al cerrar la prueba: calculamos su
+    // avance con la aceleración real y sólo nace si puede cruzar la línea.
+    const restante=Math.max(0,s.duracion-s.t),aceleracion=14.5/s.duracion;
+    return s.velocidad*restante+aceleracion*restante*restante*.5>=26.3;
+  }
   function carrera(s,e,dt){
     const p=s.jugador,direccion=Math.abs(Number(e.mx)||0)>.45?Math.sign(e.mx):0;
     // Cada pulsación ocupa exactamente un carril. Mantener una flecha o la
@@ -31,16 +70,11 @@
     if(direccion&&direccion!==s.direccionCarril){const nuevo=limite(s.carril+direccion,-1,1);if(nuevo!==s.carril){s.carrilDesde=s.carrilVisual;s.carril=nuevo;s.carrilCambio=.18;s.eventos.push('impulso');}}
     s.direccionCarril=direccion;p.x=s.carril;p.y=0;s.carrilCambio=Math.max(0,s.carrilCambio-dt);
     const giro=1-s.carrilCambio/.18;s.carrilVisual=mezcla(s.carrilDesde,s.carril,giro*giro*(3-2*giro));
-    s.velocidad=9.5+7*limite(s.t/s.duracion,0,1);s.distancia+=s.velocidad*dt;
+    const progreso=limite(s.t/s.duracion,0,1);s.velocidad=10.5+14.5*progreso;s.distancia+=s.velocidad*dt;
     if(e.accion&&!s.pulsado&&s.salto<=0){s.saltoV=5.7;s.eventos.push('impulso');}
     s.saltoV-=13.8*dt;s.salto=Math.max(0,s.salto+s.saltoV*dt);if(!s.salto)s.saltoV=0;
-    if(s.t>=s.siguiente){
-      const onda=s.oleada++,sello=onda%3===0,carril=sello?0:Math.floor(azar(s)*3)-1;
-      // Una amenaza por oleada: siempre quedan dos carriles para una columna,
-      // y el salto (.82 s) termina antes del siguiente peligro (>= .95 s).
-      s.obstaculos.push({id:++s.id,z:27,carril,tipo:sello?'sello':'columna',paso:false});s.siguiente+=1.45-.5*limite(s.t/s.duracion,0,1);
-    }
-    for(const o of s.obstaculos){o.z-=s.velocidad*dt;if(!o.paso&&o.z<=.7){o.paso=true;if((o.tipo==='sello'||s.carril===o.carril)&&(o.tipo==='columna'||s.salto<.6))M.herir(s);else{s.muertes++;s.eventos.push('acierto');}}}
+    if(s.t>=s.siguiente){if(puedeCruzarPuente(s))oleadaPuente(s);else s.siguiente=Infinity;}
+    for(const o of s.obstaculos){o.z-=s.velocidad*dt;if(!o.paso&&o.z<=.7){o.paso=true;s.amenazasPuenteCruzadas++;if(!s.ondasPuenteCruzadas[o.onda]){s.ondasPuenteCruzadas[o.onda]=true;s.oleadasPuenteCruzadas++;}if((o.tipo==='sello'||s.carril===o.carril)&&(o.tipo==='columna'||s.salto<.6))M.herir(s);else{s.muertes++;s.eventos.push('acierto');}}}
     s.obstaculos=s.obstaculos.filter(o=>o.z>-5);
   }
 
@@ -101,8 +135,17 @@
   // mismas entradas humanas y jamás alteran vida, tiempo, obstáculos ni azar.
   API.guiasPrueba=API.guiasPrueba||{};
   API.guiasPrueba.carrera=function(s){
-    const o=s.obstaculos.filter(o=>!o.paso).sort((a,b)=>a.z-b.z)[0];let destino=s.carril,accion=false;
-    if(o){if(o.tipo==='columna'&&o.carril===s.carril)destino=o.carril===0?-1:0;else if(o.tipo==='sello')accion=o.z<.7+s.velocidad*.30&&o.z>.7&&s.salto===0;}
+    const vivas=s.obstaculos.filter(o=>!o.paso).sort((a,b)=>a.z-b.z);const primera=vivas[0];let destino=s.carril,accion=false;
+    if(primera){
+      // Las piezas del mismo asalto comparten onda. Elegimos el carril que no
+      // contiene columna y dejamos que el sello se resuelva con un salto.
+      const lote=vivas.filter(o=>o.onda===primera.onda||Math.abs(o.z-primera.z)<.35),bloqueados=new Set(lote.filter(o=>o.tipo==='columna').map(o=>o.carril));
+      const seguros=[-1,0,1].filter(carril=>!bloqueados.has(carril));
+      if(seguros.length)destino=seguros.sort((a,b)=>Math.abs(a-s.carril)-Math.abs(b-s.carril))[0];
+      // Con lectura cada 240 ms, iniciar a medio segundo evita que un sello
+      // rápido llegue durante el ascenso o el aterrizaje del salto.
+      accion=lote.some(o=>o.tipo==='sello')&&primera.z<.7+s.velocidad*.52&&primera.z>.7&&s.salto===0;
+    }
     const direccion=Math.sign(destino-s.carril);return{mx:direccion===s.direccionCarril?0:direccion,my:0,accion};
   };
   API.guiasPrueba.duelo=function(s,mem={}){

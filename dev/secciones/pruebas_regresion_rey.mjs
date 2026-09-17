@@ -33,9 +33,13 @@ function crear(codigo=fuente,semilla=1){
   vm.createContext(contexto);vm.runInContext(codigo,contexto,{filename:'motor.js'});
   for(const nombre of new Set([...codigo.matchAll(/\b(fx[A-Z]\w*)\s*\(/g)].map(m=>m[1])))contexto[nombre]=()=>{};
   contexto.netAsk=async pregunta=>pregunta.fallback;contexto.netSend=()=>{};
-  // Se conservan las decisiones automáticas que emplea la pantalla real.
+  // Se conserva la decisión automática que emplea la pantalla real. El
+  // mulligan inicial vive ahora en el motor y la interfaz sólo devuelve índices.
   vm.runInContext(pantalla.slice(pantalla.indexOf('function ask('),pantalla.indexOf('function cardEl(')),contexto);
-  vm.runInContext(pantalla.slice(pantalla.indexOf('async function ofrecerManoNueva('),pantalla.indexOf('function log(')),contexto);
+  contexto.elegirMulliganInicial=async()=>[];
+  // El bloque heredado de mano nueva también incluía endGame por accidente.
+  // Lo cargamos explícitamente para que esta regresión siga probando la corte.
+  vm.runInContext(pantalla.slice(pantalla.indexOf('function endGame('),pantalla.indexOf('function log(')),contexto);
   vm.runInContext(`log=(txt,cls,priv)=>{if(G)G.log.push({txt,cls,priv:!!priv});};`,contexto);
   return {w:contexto,run:codigo=>vm.runInContext(codigo,contexto),json:codigo=>JSON.parse(vm.runInContext('JSON.stringify('+codigo+')',contexto))};
 }

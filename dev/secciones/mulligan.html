@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Mulligan inicial · revisión aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/mulligan-ui.css">
+<link rel="stylesheet" href="./mulligan.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/mulligan-ui.js"></script>
+<script src="./mulligan.js" defer></script>
+</head>
+<body class="mulliganAislado">
+<main class="mulliganLab" aria-labelledby="mulliganLabTitulo">
+  <header class="mulliganLabCabecera">
+    <div>
+      <p class="mulliganLabEtiqueta">REVISIÓN AISLADA · PRIMERA MANO</p>
+      <h1 id="mulliganLabTitulo">Ajusta tu mano antes del duelo</h1>
+      <p>Elige hasta dos cartas. Robas la misma cantidad y sólo después las devuelves al mazo.</p>
+    </div>
+    <button type="button" class="btn" id="mulliganRestaurar">Restaurar muestra</button>
+  </header>
+
+  <section class="mulliganMesa" aria-labelledby="mulliganMesaTitulo">
+    <div class="mulliganEstado">
+      <div><span>ANTES DEL PRIMER TURNO</span><strong>5 cartas · 2 cambios disponibles</strong></div>
+      <p>La decisión existe aunque tu mano ya tenga una carta jugable. El tutorial no la recibe.</p>
+    </div>
+    <div class="mulliganRegla" aria-label="Regla del mulligan"><b>1.</b> Elige 0, 1 o 2 cartas <i>→</i> <b>2.</b> Roba la misma cantidad <i>→</i> <b>3.</b> Devuélvelas y baraja</div>
+    <div class="mulliganManoTitulo"><div><p class="mulliganLabEtiqueta">MANO DE DEMOSTRACIÓN</p><h2 id="mulliganMesaTitulo">Tu mano inicial</h2></div><button type="button" class="btn gold" id="mulliganAbrir">Elegir cartas</button></div>
+    <div class="mulliganMano" id="mulliganMano" aria-label="Mano inicial de demostración"></div>
+    <p class="mulliganResultado" id="mulliganResultado" role="status" aria-live="polite">Abre el selector para conservar la mano o cambiar una o dos cartas.</p>
+  </section>
+
+  <aside class="mulliganNotas" aria-label="Límites de la revisión">
+    <strong>Esta vista es temporal.</strong> No inicia una partida, no usa IA ni red y no escribe progreso. El selector, sus hitboxes, teclado y cierre son el componente que usa la mesa.
+  </aside>
+</main>
+<div class="ov" id="ov"><div class="panel" id="ovPanel"></div></div>
+</body>
+</html>

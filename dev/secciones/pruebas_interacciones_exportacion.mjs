@@ -1,0 +1,41 @@
+/* Procedencia, aislamiento y contratos visibles de la revisión de interacciones. */
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import vm from 'node:vm';
+import {exportar,cartasInteracciones,lideresInteracciones,componentesInteracciones,imagenesInteracciones} from './interacciones-exportar.mjs';
+import {datosDesdeMotor,generar,leer,juego,hash} from './fuentes.mjs';
+const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-interacciones-'));
+try{
+  const destino=path.join(temporal,'interacciones'),procedencia=exportar(destino),archivo=f=>fs.readFileSync(path.join(destino,f));
+  const html=archivo('index.html').toString(),css=archivo('interacciones.css').toString(),js=archivo('interacciones.js').toString(),datos=archivo('generado/datos.js').toString();
+  const esperados=['index.html','_headers','procedencia.json','catalogo-vacio.json','memoria.js','red-estatica.js','interacciones.js','interacciones.css','generado/datos.js','generado/renderer.js','generado/base.css','art/encuadres.json',...componentesInteracciones.map(f=>'juego/'+f),...imagenesInteracciones.map(f=>'art/'+f)].sort();
+  const archivos=fs.readdirSync(destino,{recursive:true}).filter(f=>fs.statSync(path.join(destino,f)).isFile()).sort();
+  assert.deepEqual(archivos,esperados,'La revisión sólo publica sus dependencias declaradas');
+  for(const m of html.matchAll(/(?:src|href)="\.\/([^"?#]+)(?:[?#][^"]*)?"/g))assert.ok(fs.existsSync(path.join(destino,m[1])),m[1]);
+  assert.ok(!/__CSP__|<iframe/i.test(html),'Sin marcadores ni juego embebido');assert.ok(!/(?:src|href)=["'](?:https?:)?\/\//i.test(html),'Sin recursos remotos');
+  assert.ok(html.indexOf('memoria.js')<html.indexOf('generado/datos.js'),'La memoria temporal se instala antes de los componentes');
+  for(const prohibido of ['motor.js','final.js','audio-domo.js','sw.js','manifest.webmanifest','_worker.js'])assert.ok(!fs.existsSync(path.join(destino,prohibido)),prohibido+' no acompaña la sección');
+  const contexto=vm.createContext({});new vm.Script(datos).runInContext(contexto);
+  const cards=JSON.parse(vm.runInContext('JSON.stringify(CARDS)',contexto)),leaders=JSON.parse(vm.runInContext('JSON.stringify(LEADERS)',contexto)),origen=datosDesdeMotor(leer('motor.js'));
+  assert.deepEqual(Object.keys(cards),cartasInteracciones);assert.deepEqual(Object.keys(leaders),lideresInteracciones);assert.deepEqual(Object.keys(JSON.parse(vm.runInContext('JSON.stringify(DECKS)',contexto))),lideresInteracciones);
+  for(const id of cartasInteracciones)assert.deepEqual(cards[id],origen.CARDS[id],id+' conserva datos reales');
+  assert.deepEqual(leaders.adreida,origen.LEADERS.adreida,'Adreida conserva su requisito y mensaje reales');assert.equal(leaders.adreida.habReqMsg,'Golpe Directo requiere un Personaje aliado en tu campo.');
+  for(const nombre of ['newGame','aiTurn','pickCard','CAOZ_AUDIO'])assert.equal(vm.runInContext('typeof '+nombre,contexto),'undefined',nombre+' no pertenece a la revisión');assert.equal(vm.runInContext('G',contexto),null);
+  assert.equal(archivo('generado/renderer.js').toString(),generar('desktop').renderJS);assert.equal(archivo('generado/base.css').toString(),generar('desktop').css);
+  for(const [f,firma] of Object.entries(procedencia.componentes))assert.equal(hash(archivo('juego/'+f)),firma,f+' conserva fuente exacta');
+  for(const [f,firma] of Object.entries(procedencia.entorno))assert.equal(hash(archivo(f)),firma,f+' conserva fuente exacta');
+  for(const [f,firma] of Object.entries(procedencia.arte))assert.equal(hash(archivo('art/'+f)),firma,f+' conserva arte local');
+  assert.ok(css.includes('.handSlot')&&css.includes('pointer-events:none')&&css.includes('.handSlot.is-hover'),'La mano usa una ranura estable y no el hover de la carta');
+  assert.ok(!css.includes('--sep')&&!js.includes('separacion('),'La mano estable no desplaza cartas vecinas');
+  assert.ok(!js.includes("'pointerover'")&&!js.includes('"pointerover"'),'La revisión no vuelve a delegar pointerover entre hijos de una carta');
+  assert.ok(css.includes('.gallery.selectorCartas')&&css.includes('scale(1.05)'),'El selector de descarte limita el crecimiento');
+  assert.ok(html.indexOf('id="extras"')<html.indexOf('id="audioExtras"'),'El host de sonido está dentro de Extras');
+  assert.ok(js.includes("const MENSAJE_GOLPE='Golpe Directo requiere un Personaje aliado en tu campo.'"),'El requisito visible coincide literalmente con el motor');
+  assert.ok(js.indexOf('if(!aliados)')<js.indexOf('if(pd<LEADERS.adreida.habCost)'),'Golpe Directo valida objetivo antes que PD');
+  assert.deepEqual(JSON.parse(archivo('catalogo-vacio.json')),{cartas:[]});assert.equal(procedencia.partida,false);
+  assert.throws(()=>exportar(destino),/vacío/);
+  const segundo=path.join(temporal,'segundo');exportar(segundo);for(const f of archivos)assert.deepEqual(archivo(f),fs.readFileSync(path.join(segundo,f)),'Exportación determinista: '+f);
+  console.log('✓ Interacciones: renderer real, memoria temporal, hitbox estable, selector acotado y regla de Adreida comprobados.');
+}finally{fs.rmSync(temporal,{recursive:true,force:true});}

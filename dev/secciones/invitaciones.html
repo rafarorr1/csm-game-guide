@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Invitaciones de sala · revisión aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./invitaciones.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/invitaciones-compartidas.js"></script>
+<script src="./invitaciones.js" defer></script>
+</head>
+<body class="invitacionesAislado">
+<main class="invitacionesLab" aria-labelledby="invitacionesTitulo">
+  <header class="invitacionesCabecera">
+    <div>
+      <p class="invitacionesEtiqueta">REVISIÓN AISLADA · SALAS DEL DOMO</p>
+      <h1 id="invitacionesTitulo">Invita sin sacar a nadie de su partida</h1>
+      <p>La invitación distingue a quien ya tiene la app de quien desea jugar desde el navegador.</p>
+    </div>
+    <label class="invitacionesEntorno" for="invitacionesEdicion"><span>EDICIÓN DE LA MUESTRA</span><select id="invitacionesEdicion"><option value="produccion">Producción</option><option value="beta">Beta</option></select></label>
+  </header>
+
+  <section class="invitacionesRegla" aria-label="Cómo se conserva cada destino">
+    <strong>El origen se conserva.</strong><span>Un código no arrastra una URL; un enlace de beta no intenta abrir la instalación de producción.</span>
+  </section>
+
+  <section class="invitacionesFlujo" aria-label="Dos rutas para invitar a una sala">
+    <article class="invitacionesOrigen">
+      <p class="invitacionesEtiqueta">ANFITRIÓN · SALA ABIERTA</p>
+      <h2>RUL42</h2>
+      <p class="invitacionesSubtexto">Una misma sala, dos maneras de compartirla.</p>
+      <div class="invitacionesOpciones">
+        <section class="invitacionesOpcion">
+          <div class="invitacionesIcono app" aria-hidden="true">⌘</div>
+          <div><h3>Ya tiene la app</h3><p>Envía sólo el código y la ruta interna para unirse.</p></div>
+          <button type="button" class="btn gold" id="invitacionesCompartirCodigo">Compartir código — tiene la app</button>
+        </section>
+        <section class="invitacionesOpcion">
+          <div class="invitacionesIcono web" aria-hidden="true">↗</div>
+          <div><h3>Va a jugar en navegador</h3><p>Envía un enlace de la misma edición y sala.</p></div>
+          <button type="button" class="btn" id="invitacionesCompartirEnlace">Compartir enlace — navegador</button>
+        </section>
+      </div>
+    </article>
+
+    <aside class="invitacionesLlegada" aria-labelledby="invitacionesLlegadaTitulo">
+      <p class="invitacionesEtiqueta">LLEGADA EN NAVEGADOR</p>
+      <h2 id="invitacionesLlegadaTitulo">Si el sistema no abre la app</h2>
+      <p>El enlace muestra un puente antes del acceso: permite copiar el código para la app o seguir en este navegador.</p>
+      <button type="button" class="btn" id="invitacionesMostrarPuente">Simular apertura del enlace</button>
+      <p class="invitacionesNota">La captura directa queda en manos del sistema y de la PWA instalada. Este puente evita perder la invitación cuando el navegador es quien recibe el enlace.</p>
+    </aside>
+  </section>
+
+  <section class="invitacionesResultado" aria-live="polite" aria-atomic="true">
+    <div>
+      <p class="invitacionesEtiqueta">VISTA PREVIA DE LO QUE SE COMPARTE</p>
+      <h2 id="invitacionesResultadoTitulo">Elige una ruta de invitación</h2>
+      <p id="invitacionesResultadoDescripcion">La muestra usará el código RUL42 y la edición seleccionada.</p>
+    </div>
+    <pre id="invitacionesResultadoValor" aria-label="Contenido de la invitación">RUL42</pre>
+  </section>
+
+  <aside class="invitacionesLimites" aria-label="Límites de la revisión">
+    <strong>Esta vista es temporal.</strong> No crea una sala, no solicita cuenta, no se conecta a relevos y no guarda progreso. Las frases, el código y el enlace se derivan del mismo módulo compartido que recibirá el juego.
+  </aside>
+</main>
+
+<div class="invitacionesVelo" id="invitacionesVelo" hidden>
+  <section class="invitacionesPuente" role="dialog" aria-modal="true" aria-labelledby="invitacionesPuenteTitulo" aria-describedby="invitacionesPuenteDescripcion">
+    <button type="button" class="invitacionesCerrar" id="invitacionesCerrarPuente" aria-label="Cerrar puente de invitación">×</button>
+    <p class="invitacionesEtiqueta">ENLACE ABIERTO EN NAVEGADOR</p>
+    <h2 id="invitacionesPuenteTitulo">¿Ya tienes <span id="invitacionesPuenteEdicion">Caoz TCG</span> instalada?</h2>
+    <p id="invitacionesPuenteDescripcion">No necesitas iniciar sesión aquí para conservar tu invitación.</p>
+    <div class="invitacionesCodigoPuente" id="invitacionesCodigoPuente">RUL42</div>
+    <p class="invitacionesInstruccion">En la app: <b>Con amigos</b> → <b>Unirme con un código</b>.</p>
+    <div class="invitacionesAccionesPuente">
+      <button type="button" class="btn gold" id="invitacionesTengoApp">Tengo la app instalada</button>
+      <button type="button" class="btn" id="invitacionesSeguirNavegador">Jugar en este navegador</button>
+    </div>
+    <p class="invitacionesFeedback" id="invitacionesFeedback" role="status" aria-live="polite"></p>
+  </section>
+</div>
+</body>
+</html>

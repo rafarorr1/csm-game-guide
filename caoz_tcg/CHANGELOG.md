@@ -1,5 +1,63 @@
 # Registro de versiones — el TCG del Domo
 
+### v26 · Build 264 · Sala y ciclo de Pitágoras · 2026-09-16
+
+- Los enlaces de sala abiertos en un navegador ahora ofrecen continuar en la
+  app instalada mediante el mismo código; desde la app se comparte el código
+  de forma directa. La sala y sus parámetros se conservan hasta resolver el
+  acceso requerido.
+- La IA de Rafaela ya distingue entre rematar al rival y curar a su aliado más
+  herido; su habilidad no puede dañar y curar al mismo objetivo por error.
+- Pitágoras reserva seis plazas para sus seis Pesadillas: una copia viva de
+  cada reto, sin repetidos, fichas, conversiones ni Aidman ocupando el lugar
+  de un minijuego. La excepción sólo existe en su combate secreto; el resto
+  de los campos conserva el límite de cinco Personajes.
+
+### v25 · Build 263 · Mulligan inicial · 2026-09-16
+
+- La primera mano ya no se puede reemplazar por completo. Cada jugador puede
+  seleccionar hasta dos cartas, roba exactamente el mismo número de reemplazos
+  y sólo después devuelve las seleccionadas al mazo.
+- El selector es explícito y estable en escritorio y móvil: conservar la mano
+  sigue siendo válido, las cartas elegidas se distinguen sin abrir el inspector
+  y no se altera el tamaño del diálogo.
+- El motor aplica la misma regla a la IA y a partidas online; el anfitrión
+  conserva la validación de la selección y el robo.
+
+### v24 · Build 262 · Creador inmersivo de héroe · 2026-09-16
+
+- El creador del héroe suma presentación, estatura, complexión, rostro, ojos,
+  marcas, peinado, vestimenta, accesorio y equipo; conserva los preajustes y
+  permite girar la miniatura para inspeccionarla.
+- El modelo usa más geometría donde importa: detalle alto en el creador y los
+  retratos, medio en escenas y bajo sobre la mesa. La apariencia es narrativa
+  y no altera el mazo, las cartas ni las habilidades.
+- La elección se conserva entre pantallas y se refleja de forma coherente en
+  campaña, Pitágoras, final, escritorio y móvil.
+
+### v23 · Build 261 · Epílogo de Gero y El último puente · 2026-09-16
+
+- Tras vencer a Gero, la campaña pide el deseo, pasa por el fuego y el
+  mensaje de deseo concedido, funde a negro y abre la selección completa de
+  tres sobres. La elección se confirma una sola vez, sin opción de deshacer,
+  antes de regresar al menú.
+- El último puente acelera antes y con más fuerza: la recta final añade cercos
+  de sello y columnas, manteniendo siempre un carril actual o contiguo como
+  salida posible. Las oleadas que ya no alcanzarían al jugador no se generan.
+- El ciclo de Pitágoras conserva su Ritual inicial de 2 PD y una sola
+  Pesadilla por turno; sus prioridades y cartas mantienen presión sin bloquear
+  una respuesta válida en el minijuego.
+
+### Build 260 · Interacciones de cartas y Golpe Directo · 2026-09-15
+
+- La mano conserva una ranura de cursor fija: ampliar la ilustración no alterna
+  el hover entre cartas superpuestas ni desplaza a las vecinas.
+- El selector de descarte reserva una cuadrícula estable y limita la ampliación;
+  sus cartas ya no abren un inspector flotante que deforme el diálogo.
+- Golpe Directo de Adreida explica que necesita un Personaje aliado antes de
+  hablar de sus 2 PD, con la misma razón en escritorio, móvil y partidas online.
+- El volumen de efectos se mueve a Extras, fuera de la mesa y del registro.
+
 ### Build 259 · Acceso por correo y continuidad offline · 2026-09-13
 
 - Integra la sección aprobada: acceso con correo y código antes de jugar,

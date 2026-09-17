@@ -174,6 +174,7 @@ caso('Domo y campaña crean elecciones 1/3; elegir tipos repetidos guarda sobres
   for(const grupo of ['trucos','juramentos','caos',undefined])assert.equal(api.abrirSobre(grupo),null,'No se abre ni asigna una recompensa sin elegir');
   assert.deepEqual(limpiar(api.leer().cantidades),cartas);assert.equal(api.pendiente(),null);
   const antes=e.escrituras();assert.equal(api.elegirSobres(pendientes[1].id,['caos','trucos','caos']),true);assert.equal(e.escrituras(),antes+1);
+  assert.equal(api.campanaElegida('campana-elegir'),true,'La terna final queda sellada en la misma escritura que consume el recibo.');
   assert.equal(api.sobres(),4);assert.deepEqual(limpiar(api.inventarioSobres()),[{grupo:'trucos',cantidad:1},{grupo:'caos',cantidad:2}]);
   assert.equal(api.recompensasPendientes().length,1);assert.deepEqual(limpiar(api.leer().cantidades),cartas);
   assert.equal(api.ids().every(id=>api.elegido(id)==='normal'),true);assert.equal(api.pendiente(),null,'Guardar no inicia la apertura');
@@ -185,7 +186,19 @@ caso('Domo y campaña crean elecciones 1/3; elegir tipos repetidos guarda sobres
   assert.equal(e.mapa.get(api.clave),bytes);assert.equal(e.escrituras(),escritas);
   const recarga=entorno({...catalogoDelMotor(),mapa:e.mapa}).api;
   assert.deepEqual(limpiar(recarga.inventarioSobres()),limpiar(api.inventarioSobres()));assert.deepEqual(limpiar(recarga.recompensasPendientes()),[]);
+  assert.equal(recarga.campanaElegida('campana-elegir'),true,'El sello de la terna sobrevive una recarga antes del callback de campaña.');
   assert.equal(recarga.sobres(),4);assert.equal(recarga.concederSobreCampana('campana-elegir'),true);assert.equal(recarga.sobres(),4);
+});
+
+caso('El sello de campaña sólo es válido después de consumir su recibo real',()=>{
+  const e=entorno(catalogoDelMotor()),{api}=e;
+  assert.equal(api.concederSobreCampana('sello-pendiente'),true);
+  const pendiente=JSON.parse(e.mapa.get(api.clave));pendiente.campanasElegidas=['sello-pendiente','forjado'];e.mapa.set(api.clave,JSON.stringify(pendiente));
+  const durante=entorno({...catalogoDelMotor(),mapa:e.mapa}).api;
+  assert.equal(durante.campanaElegida('sello-pendiente'),false,'Un recibo pendiente no puede fingir que ya se eligió.');
+  const corrupto=JSON.parse(e.mapa.get(api.clave));corrupto.recompensasPorElegir=[];corrupto.sobres=0;corrupto.campanasPremiadas=[];corrupto.campanasElegidas=['forjado'];e.mapa.set(api.clave,JSON.stringify(corrupto));
+  const limpio=entorno({...catalogoDelMotor(),mapa:e.mapa}).api;
+  assert.equal(limpio.campanaElegida('forjado'),false,'Sin una campaña premiada el sello corrupto se descarta.');
 });
 
 caso('Abrir consume sólo un sobre elegido de ese tipo y conserva pendientes por asignar y otros tipos',()=>{
@@ -697,7 +710,7 @@ function entornoCampana(opciones={}){
 caso('Una campaña nueva conserva un premio fallido del recorrido anterior hasta recargar',()=>{
   const e=entornoCampana(),{api}=e;
   e.fallosCampana.inventario=true;
-  assert.equal(e.guardar({version:1,id:'primera-terminada',lider:'fender',etapa:6,deseo:{simulado:true}}),true);
+  assert.equal(e.guardar({version:1,id:'primera-terminada',lider:'fender',etapa:6,deseo:{simulado:true},deseoFinalGero:true,recompensaFinalLista:true}),true);
   assert.equal(api.sobres(),0);assert.deepEqual(limpiar(e.leerCampana().sobresPendientes),['primera-terminada']);
   assert.equal(e.guardar({version:1,id:'segunda-en-curso',lider:'fender',etapa:0}),true);
   const guardada=JSON.parse(e.mapa.get(e.claveCampana));
@@ -716,7 +729,7 @@ caso('Una campaña nueva conserva un premio fallido del recorrido anterior hasta
 
 caso('Varias victorias sin espacio conservan todos sus recibos al empezar otra campaña',()=>{
   const e=entornoCampana();e.fallosCampana.inventario=true;
-  e.guardar({version:1,id:'primera',lider:'fender',etapa:6});
+  e.guardar({version:1,id:'primera',lider:'fender',etapa:6,deseo:{simulado:true},deseoFinalGero:true,recompensaFinalLista:true});
   e.guardar({version:1,id:'segunda',lider:'fender',etapa:6,secreto:'final'});
   e.guardar({version:1,id:'tercera',lider:'fender',etapa:0,sobresPendientes:['primera','__proto__',{},'',null]});
   assert.deepEqual(JSON.parse(e.mapa.get(e.claveCampana)).sobresPendientes,['primera','segunda']);
@@ -729,7 +742,7 @@ caso('Varias victorias sin espacio conservan todos sus recibos al empezar otra c
 
 caso('Ensayos y laboratorio no crean premios y tampoco borran una cola real guardada',()=>{
   const e=entornoCampana();e.fallosCampana.inventario=true;
-  e.guardar({version:1,id:'recorrido-real',lider:'fender',etapa:6});
+  e.guardar({version:1,id:'recorrido-real',lider:'fender',etapa:6,deseo:{simulado:true},deseoFinalGero:true,recompensaFinalLista:true});
   const real=e.mapa.get(e.claveCampana);
   vm.runInContext("campanaEnsayoGero={version:1,id:'ensayo-en-memoria',lider:'fender',etapa:6,prueba:true};",e.context);
   assert.equal(e.guardar(e.leerCampana()),true);assert.equal(e.entregar(e.leerCampana()),false);assert.equal(e.mapa.get(e.claveCampana),real);

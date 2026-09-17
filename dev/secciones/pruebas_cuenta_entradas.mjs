@@ -91,9 +91,14 @@ for(const archivo of ['index.html','movil.html']){
 function invitacion({sabotaje=false,ausente=false}={}){
  let autorizado=false,pendiente=null,lecturas=0;const tareas=[],reemplazos=[],aperturas=[];
  const href='https://juego.caozcontodo.com/movil.html?sala=ABCDE&b=258#mesa';
- const c=vm.createContext({window:ausente?{}:{CAOZ_CUENTA_JUEGO:{requerir(fn){pendiente=fn;return autorizado;}}},URL,location:{href},ONL:{nombre:'',sala:null},
+ const ventana={CAOZ_INVITACIONES:{enApp:()=>true}};
+ if(!ausente)ventana.CAOZ_CUENTA_JUEGO={requerir(fn){pendiente=fn;return autorizado;}};
+ const c=vm.createContext({window:ventana,URL,location:{href},ONL:{nombre:'',sala:null},invitacionAbierta:'',
   setTimeout:fn=>tareas.push(fn),history:{replaceState(_a,_b,url){reemplazos.push(url);}},nombreGuardado:()=>{lecturas++;return 'Ari';},onlPickNombre:v=>aperturas.push(v)});
- const original=funcion(fuentes['final-core.js'],'cuentaAbrirInvitacion');vm.runInContext(sabotaje?retirarGuardia(original):original,c);
+ const codigo=funcion(fuentes['final-core.js'],'codigoInvitacion');
+ const enApp=funcion(fuentes['final-core.js'],'invitacionEnApp');
+ const original=funcion(fuentes['final-core.js'],'cuentaAbrirInvitacion');
+ vm.runInContext(codigo+'\n'+enApp+'\n'+(sabotaje?retirarGuardia(original):original),c);
  return {c,tareas,reemplazos,aperturas,ver:()=>({pendiente,lecturas}),permitir:()=>{autorizado=true;}};
 }
 async function comprobarInvitacion(sabotaje=false){

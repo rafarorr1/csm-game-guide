@@ -116,6 +116,7 @@ adreida:{ n:'Adreida', ep:'La Guerrera Semiorca', art:'⚔️', arch:'Midrange �
         d:'Si no atacaste este turno, roba 1 carta en tu Fase Final.'},
   lore:'Guerrera semiorca. Intimida y prefiere resolver las cosas peleando. Ama los K-dramas.',
   habReq:(g,s)=>P(s).field.length>0,
+  habReqMsg:'Golpe Directo requiere un Personaje aliado en tu campo.',
   hab_do:async(g,s,ts)=>{ const u=ts[0][0]; u.tA+=2; u.noCounter=true;
     log(`<b>Golpe Directo</b>: ${u.card.n} +2 ATQ y sin contraataque.`); }},
 gero:{ n:'Gero', ep:'El Dungeon Master', art:'🎲', arch:'Caos · Tiradas · NPCs',
@@ -136,11 +137,13 @@ gero:{ n:'Gero', ep:'El Dungeon Master', art:'🎲', arch:'Caos · Tiradas · NP
   }},
 rafaela:{ n:'Rafaela', ep:'Devota de Rul', art:'✨', arch:'Enjambre · Fe · Curación',
   pasiva:'<b>Rebaño de Rul:</b> cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.',
-  hab:'<b>Estornudo de Rul (2 PD):</b> 1 daño a un Personaje y cura 1 PV a otro.',
+  hab:'<b>Estornudo de Rul (2 PD):</b> 1 daño a un Personaje rival y cura 1 PV a un aliado.',
   habCost:2, habName:'Estornudo de Rul',
-  habTg:[{k:'unidad',min:1,max:1,label:'objetivo del estornudo'},{k:'unidad',min:0,max:1,label:'aliado a curar'}],
+  habTg:[{k:'unidadEnemiga',min:1,max:1,label:'objetivo rival del estornudo',ai:'rematar'},
+    {k:'unidadAliada',min:0,max:1,label:'aliado herido a curar',ai:'curar'}],
   lore:'Clériga elfa de Rul, un dragón que estornuda fuego. Busca a sus doce discípulos perdidos.',
-  habReq:(g,s)=>P(0).field.length+P(1).field.length>0,
+  habReq:(g,s)=>P(1-s).field.some(u=>u.alive),
+  habReqMsg:'Estornudo de Rul requiere un Personaje rival en el campo.',
   hab_do:async(g,s,ts)=>{ log('<b>Estornudo de Rul</b>: ¡achús!');
     if(ts[0][0]) await dmgU(ts[0][0],1,{src:'leader'});
     if(ts[1]&&ts[1][0]&&ts[1][0].alive) healU(ts[1][0],1); }},
@@ -169,10 +172,15 @@ const C = (id,o)=>{ o.id=id; CARDS[id]=o; return o; };
 // siguen las mismas reglas que cualquier Personaje. No forman parte de los
 // seis mazos ni de la colección del jugador.
 const CARTAS_EDITOR=['editorcosecha','editorcorte','editorcuadro','editorcarrera','editororbita','editorduelo'];
-for(const [id,n,tipo,art,a,h] of [['editorcosecha','La cosecha','isometrico','☠',2,3],['editorcorte','El corte final','laseres','✧',3,2],['editorcuadro','Fuera de cuadro','fps','◈',3,2],['editorcarrera','El último puente','carrera','⌁',2,4],['editororbita','Órbita muerta','orbital','✦',2,3],['editorduelo','La memoria del Editor','duelo','▣',2,4]]){
+for(const [id,n,tipo,art,a,h,editorPrioridad] of [['editorcosecha','La cosecha','isometrico','☠',2,4,45],['editorcorte','El corte final','laseres','✧',3,3,53],['editorcuadro','Fuera de cuadro','fps','◈',3,3,48],['editorcarrera','El último puente','carrera','⌁',3,5,58],['editororbita','Órbita muerta','orbital','✦',3,4,50],['editorduelo','La memoria del Editor','duelo','▣',3,4,42]]){
   C(id,{n,t:'personaje',c:2,a,h,tr:['Pesadilla'],r:0,set:'editor',art,editorJuego:tipo,
-    x:'<b>Al jugar:</b> '+(tipo==='duelo'?'memoria · 20 segundos · 3 vidas. Cada pareja acertada quita 1 Alma a Pitágoras. Cada fallo consume 1 vida de la prueba; al tercer fallo pierdes 5 Alma. ':'prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. ')+'<b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
-    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on});
+    editorPrioridad,
+    x:'<b>Al jugar:</b> '+(tipo==='duelo'?'memoria · 20 segundos · 3 vidas. Cada pareja acertada quita 1 Alma a Pitágoras. Cada fallo consume 1 vida de la prueba; al tercer fallo pierdes 5 Alma. ':'prueba del Editor · 20 segundos · 3 vidas. Supera la prueba: Pitágoras pierde 2 Alma. Si caes: pierdes 2 Alma. ')+(tipo==='carrera'?'El puente acelera pronto y su recta final combina columnas con sellos. ':'')+'<b>Después permanece en la mesa y puede atacar desde el siguiente turno.</b>',
+    // Una prueba a la vez conserva la presión del Editor legible: con 4+ PD
+    // la IA no encadena dos minijuegos en el mismo turno. Tampoco baja una
+    // copia mientras esa Pesadilla siga viva: cada hueco del jefe representa
+    // un minijuego distinto, no una repetición del mismo reto.
+    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on&&g.campana.editorPesadillaTurno!==g.turnNo&&!pesadillaRepetidaEnMesa(s,id)});
 }
 
 
@@ -731,8 +739,8 @@ C('esporas',{n:'Esporas del Demonio',t:'trampa',c:2,r:0,art:'🦠',
 
 C('talcadaver',{n:'Thal Habla por el Cadáver',t:'trampa',c:3,r:1,art:'🐉',
  x:'<b>Cuando un aliado muere:</b> vuelve al campo con 1 PV y +2 ATQ hasta el final del turno rival. Después muere de nuevo.',
- on:'muerteAliada', can:(g,s,ev)=>P(s).field.length<5&&!ev.token,
- fire:async(g,s,ev)=>{ const u=mkUnit(ev.cardId,s); u.dmg=Math.max(0,statHp(u)-1); u.pA+=2; u.doomed=true;
+ on:'muerteAliada', can:(g,s,ev)=>puedeEntrarCampo(s,ev.cardId)&&!ev.token,
+ fire:async(g,s,ev)=>{ if(!puedeEntrarCampo(s,ev.cardId))return; const u=mkUnit(ev.cardId,s); u.dmg=Math.max(0,statHp(u)-1); u.pA+=2; u.doomed=true;
    P(s).field.push(u); recalc(); log(`Thal habla por el cadáver de ${u.card.n}.`); }});
 
 /* ---------------------- OBJETOS ---------------------- */
@@ -789,12 +797,12 @@ C('puente',{n:'El Puente de Brick y Brock',t:'lugar',c:1,r:0,art:'🌉',
 C('montanas',{n:'Las Montañas de Thal',t:'lugar',c:3,r:1,art:'⛰️',
  x:'Los Dragones cuestan 2 PD menos. Al inicio de cada turno, el jugador activo tira d20: con 1-3, Aidman aparece en el campo rival.',
  dragonDiscount:true,
- onAnyStart:async(g,s)=>{ const r=await roll('Las Montañas de Thal', null,
+ onAnyStart:async(g,s)=>{ const rival=1-s,reservado=campoEditorReservado(rival,'aidman');const r=await roll('Las Montañas de Thal', null,
      {necesita:'4 o más para que no pase nada', min:4,
-      siOk:'No aparece nadie', siMal:'¡Aidman aparece en el campo rival!'});
+      siOk:'No aparece nadie', siMal:reservado?'El campo del Editor rechaza a Aidman.':'¡Aidman aparece en el campo rival!'});
    if(G!==g||g.over)return;
-   if(r<=3 && P(1-s).field.length<5 && !P(1-s).field.some(u=>u.card.id==='aidman')){
-     const u=mkUnit('aidman',1-s); P(1-s).field.push(u); recalc();
+   if(r<=3 && puedeEntrarCampo(rival,'aidman') && !P(rival).field.some(u=>u.card.id==='aidman')){
+     const u=mkUnit('aidman',rival); P(rival).field.push(u); recalc();
      log('¡Aidman aparece en el campo rival buscando trabajo!','sys'); } }});
 
 C('domo',{n:'El Domo',t:'lugar',c:4,r:1,art:'🔴',
@@ -1072,7 +1080,10 @@ function newPlayer(side, leaderId){
     alma:20, pd:0, pdMax:0, banked:0, llaves:0, pdTax:0, pdBonus:0,
     leaderUsed:false, attacked:false, petuniaUsed:false, gracia:0, ascended:false,
     scrollTurns:0, corte:null, limbo:[], clouds:[], spirits:0, fairy:false, kdrama:false,
-    manoRehecha:false };
+    // La primera mano se puede ajustar una vez, antes de que cualquiera robe
+    // su carta normal. Se guarda por jugador, no por número de turno: así no
+    // se reabre al segundo jugador ni por una partida que cambie de estado.
+    mulliganPendiente:true, mulliganUsado:false };
 }
 
 function newGame(myLeader, foeLeader, opts={}){
@@ -1341,8 +1352,8 @@ function bounce(u){
 }
 
 function moveUnit(u, from, to){
+  if(!puedeEntrarCampo(to,u.card.id)) return false;
   const i=P(from).field.indexOf(u); if(i>=0) P(from).field.splice(i,1);
-  if(P(to).field.length>=5){ P(from).field.splice(Math.max(0,i),0,u); return false; }
   u.side=to; u.stolen=(u.owner!==to); u.sick=true; P(to).field.push(u); recalc(); return true;
 }
 
@@ -1406,7 +1417,9 @@ async function discardChoose(s,n=1){
 }
 
 async function summonToken(s,tokenId,opt={}){
-  if(P(s).field.length>=5){ log('El campo está lleno; la ficha no entra.','sys'); return null; }
+  if(!puedeEntrarCampo(s,tokenId)){
+    log(campoEditorReservado(s,tokenId)?'El campo del Editor está reservado para sus Pesadillas.':'El campo está lleno; la ficha no entra.','sys'); return null;
+  }
   const u=mkUnit(tokenId,s); P(s).field.push(u); recalc();
   if(opt.msg) log(opt.msg);
   await cloudCheck(u);
@@ -1636,6 +1649,7 @@ async function aiFast(side,ctx,cands){
 
 async function setupMatch(myLeader, foeLeader, opts={}){
   newGame(myLeader, foeLeader, opts);
+  const partida=G;
   G.fast=!!opts.fast; G.auto=!!opts.auto; G.silent=!!opts.silent;
   G.online=!!opts.online; G.logSent=0; G.fxq=[];
   // Los modificadores del prototipo sólo existen dentro de su propia partida.
@@ -1645,43 +1659,140 @@ async function setupMatch(myLeader, foeLeader, opts={}){
   log(`<b>${P(first).L.n}</b> gana la tirada de inicio y empieza.`,'sys');
   for(const s of [0,1]){ await drawSilent(s,5); }
   await drawSilent(G.second,1); // el segundo roba 1 extra
-  G.turnNo=0; G.active=1-first;
+  /* La primera mano se decide ANTES de que empiece el turno de nadie. Hacerlo
+     al entrar en startTurn daba al segundo jugador información de una vuelta
+     completa (y de un robo) antes de decidir. Se resuelve de uno en uno para
+     que cada dueño vea sólo su propia mano; el anfitrión conserva la autoridad
+     cuando el segundo es el invitado. */
+  G.turnNo=0; G.active=1-first; G.phase='mulligan';
+  render();
+  for(const s of [first,G.second]){
+    G.active=s;
+    await resolverMulliganInicial(s);
+    if(G!==partida||G.over)return;
+    cerrarMulliganInicial(s);                    // sin mazo/tutoría también caduca aquí
+  }
+  if(G!==partida||G.over)return;
+  G.active=1-first; G.phase='inicio';
   render();
   await startTurn(first);
 }
 
 async function drawSilent(s,n){ for(let i=0;i<n;i++){ if(P(s).deck.length) P(s).hand.push(P(s).deck.shift()); } }
 
-/* ============ MANO NUEVA ============
-   Si en tu primer turno no puedes jugar absolutamente nada, puedes devolver la
-   mano al mazo, barajarlo y robar otra del mismo tamaño.
+/* ============ MULLIGAN INICIAL ============
+   Antes de la primera carta de robo, cada jugador puede cambiar hasta DOS
+   cartas de su mano inicial. No es una mano nueva completa: las restantes se
+   conservan exactamente como estaban. Primero salen N cartas del mazo; sólo
+   después las N elegidas vuelven y se baraja. Así nunca puede volver de golpe
+   la misma copia que acabas de cambiar.
 
-   Por qué existe: con 1 PD el primer turno, una mano sin nada de Costo 1 no es
-   una mano difícil, es un turno perdido de regalo, y eso lo decide el barajado
-   antes de que juegues. Esto no da ventaja —sólo se ofrece cuando ya no podías
-   hacer nada—, sólo quita partidas decididas por el reparto.
+   La selección se identifica por ÍNDICE, no por id: dos copias de Discípulo
+   siguen siendo dos cartas elegibles distintas. Estas funciones no tocan la
+   pantalla para que la mesa, el móvil, la IA y el anfitrión compartan la misma
+   regla y la validación del anfitrión sea la definitiva. */
 
-   Condiciones, todas a la vez: es tu primer turno, no la has usado todavía, y
-   ninguna carta de tu mano es jugable ahora mismo (coste, sitio en el campo y
-   objetivos incluidos: canPlay ya lo mira todo). Una sola vez por jugador, y la
-   segunda mano es la que hay, salga como salga. Vale para los dos lados; la CPU
-   la toma siempre que le toca. */
-
-function puedeRehacerMano(s){
-  const p = P(s);
-  if(p.manoRehecha || G.tutorial || G.over) return false;
-  if(G.turnNo > 2) return false;                 // turno 1 y 2 son los primeros
-  if(!p.hand.length || !p.deck.length) return false;
-  return !p.hand.some(id => canPlay(s, id));     // de verdad no puedes nada
+function jugadorMulligan(s){
+  return G&&Number.isInteger(s)&&G.pl&&G.pl[s] ? G.pl[s] : null;
 }
 
-/* La mano, carta a carta desde el mazo. No cambia nada del estado: es
-   únicamente para poder mirar lo que tienes antes de decidir. */
+function limiteMulligan(s){
+  const p=jugadorMulligan(s);
+  return p ? Math.max(0,Math.min(2,p.hand.length,p.deck.length)) : 0;
+}
 
-async function repartirALaVista(s){
-  const n = P(s).hand.length;
-  for(let i = 0; i < n; i++){ fxDraw(s); await nap(FXON() ? 110 : 0); }
-  await nap(FXON() ? 620 : 0);                   // que aterrice la última
+function puedeMulligan(s){
+  const p=jugadorMulligan(s);
+  return !!(p&&!G.tutorial&&!G.over&&G.active===s&&p.mulliganPendiente&&!p.mulliganUsado&&limiteMulligan(s)>0);
+}
+
+/* Acepta sólo índices enteros, existentes y no repetidos. El anfitrión aplica
+   esta misma limpieza a la respuesta que llega por red; no se confía en que la
+   interfaz del invitado haya respetado el límite. */
+function normalizarSeleccionMulligan(s,indices){
+  const p=jugadorMulligan(s),tope=limiteMulligan(s);
+  if(!p||!tope||!Array.isArray(indices))return [];
+  const vistos=new Set(),salida=[];
+  for(const i of indices){
+    if(!Number.isInteger(i)||i<0||i>=p.hand.length||vistos.has(i))continue;
+    vistos.add(i);salida.push(i);
+    if(salida.length>=tope)break;
+  }
+  return salida.sort((a,b)=>a-b);
+}
+
+function cerrarMulliganInicial(s){
+  const p=jugadorMulligan(s);
+  if(!p)return;
+  p.mulliganPendiente=false;
+  p.mulliganUsado=true;
+}
+
+function aplicarMulligan(s,indices){
+  if(!puedeMulligan(s))return {ok:false,cambios:0,indices:[],robadas:[],devueltas:[]};
+  const p=P(s),elegidos=normalizarSeleccionMulligan(s,indices),antes=p.hand.slice();
+  const elegidas=new Set(elegidos);
+  const devueltas=elegidos.map(i=>antes[i]);
+
+  // El orden no es accidental: robamos mientras las descartadas aún no están
+  // en el mazo, y sólo luego las regresamos y barajamos.
+  const robadas=p.deck.splice(0,elegidos.length);
+  p.hand=antes.filter((_,i)=>!elegidas.has(i)).concat(robadas);
+  if(devueltas.length)p.deck=shuffle(p.deck.concat(devueltas));
+  cerrarMulliganInicial(s);
+
+  if(devueltas.length)log(`<b>${p.L.n}</b> cambia ${devueltas.length} ${devueltas.length===1?'carta':'cartas'} de su mano inicial.`,'sys');
+  else log(`<b>${p.L.n}</b> conserva su mano inicial.`,'sys');
+  return {ok:true,cambios:devueltas.length,indices:elegidos,robadas,devueltas};
+}
+
+/* La IA no conoce cartas futuras: sólo aparta hasta dos ladrillos de salida.
+   Prefiere conservar Personajes baratos, que son la única forma fiable de
+   convertir el primer PD en mesa, y ordena por índice para no depender de una
+   elección aleatoria. */
+function valorMulliganIA(id,s){
+  const c=CARDS[id];
+  if(!c)return -999;
+  const coste=costOf(id,s);
+  let valor;
+  if(c.t==='personaje'){
+    valor=70-coste*9+(c.a||0)+(c.h||0)*.5;
+    if(coste<=1)valor+=22;
+    else if(coste===2)valor+=10;
+  }else if(c.t==='hechizo')valor=20-coste*11-(c.fast?5:0);
+  else if(c.t==='trampa')valor=16-coste*10;
+  else if(c.t==='objeto')valor=(c.keyRelic?22:10)-coste*10;
+  else if(c.t==='lugar')valor=12-coste*9;
+  else valor=0;
+  if(c.id==='tal'||c.scroll)valor-=45;
+  return valor;
+}
+
+function seleccionMulliganIA(s){
+  if(!puedeMulligan(s))return [];
+  return P(s).hand.map((id,i)=>({i,valor:valorMulliganIA(id,s)}))
+    .filter(x=>x.valor<28)
+    .sort((a,b)=>a.valor-b.valor||a.i-b.i)
+    .slice(0,limiteMulligan(s)).map(x=>x.i);
+}
+
+async function resolverMulliganInicial(s){
+  if(!puedeMulligan(s))return {ok:false,cambios:0,indices:[],robadas:[],devueltas:[]};
+  const partida=G,p=P(s),limite=limiteMulligan(s);
+  let seleccion=[];
+  if(G.auto||(s===FOE&&!G.online)){
+    seleccion=seleccionMulliganIA(s);
+  }else if(G.online&&NET.host&&s===FOE){
+    // Sólo viaja la mano del invitado hacia su propia pantalla. La respuesta
+    // son índices sin confianza: aplicarMulligan la normaliza en el anfitrión.
+    seleccion=await netAsk({kind:'mulligan',cards:p.hand.slice(),limit:limite,fallback:[]});
+  }else if(typeof elegirMulliganInicial==='function'){
+    try{ seleccion=await elegirMulliganInicial(s,{cartas:p.hand.slice(),limite}); }
+    catch(_){ seleccion=[]; }
+  }
+  if(G!==partida||G.over||G.active!==s||!puedeMulligan(s))
+    return {ok:false,cancelada:true,cambios:0,indices:[],robadas:[],devueltas:[]};
+  return aplicarMulligan(s,seleccion);
 }
 
 async function startTurn(s){
@@ -1694,15 +1805,24 @@ async function startTurn(s){
 
   // Cuerda Dimensional: regresan
   p.limbo = p.limbo.filter(x=>{
-    if(x.ret<=G.turnNo && p.field.length<5){ x.u.dmg=Math.max(0,x.u.dmg-2); x.u.sick=false;
+    if(x.ret<=G.turnNo && puedeEntrarCampo(s,x.u.card.id)){ x.u.dmg=Math.max(0,x.u.dmg-2); x.u.sick=false;
       p.field.push(x.u); log(`${x.u.card.n} baja de la cuerda (+2 PV).`,'heal'); return false; }
     return true;
   });
 
-  // Fase de Puntos
+  // Fase de Puntos. El Editor no deja un turno vacío de cortesía: su ritual
+  // eleva sólo su primera reserva a 2 PD y después vuelve a la curva normal.
+  let ritualInicial=false;
+  if(G.campana?.jefeSecreto&&s===FOE&&!G.campana.editorRitual){
+    p.pdMax=Math.max(1,p.pdMax);G.campana.editorRitual=true;
+    ritualInicial=true;
+    log('▣ <b>Ritual del Editor</b>: Pitágoras prepara <b>2 PD</b> desde el inicio.','sys');
+  }
   p.pdMax=Math.min(10,p.pdMax+1);
   let pd=Math.max(0,p.pdMax-(p.pdTax||0))+p.banked+(p.pdBonus||0);
-  if(G.turnNo===2 && s===G.second) pd+=1;
+  // El segundo jugador recibe normalmente un PD extra en su primera vuelta,
+  // pero el Ritual ya define de forma explícita los 2 PD iniciales del Editor.
+  if(G.turnNo===2 && s===G.second&&!ritualInicial) pd+=1;
   p.pd=pd; p.banked=0; p.pdTax=0; p.pdBonus=0;
 
   p.field.forEach(u=>{
@@ -1789,7 +1909,6 @@ async function startTurn(s){
   G.phase='principal';
   render();
   relojArranca();                                 // 1:30 para jugar tu turno
-  await ofrecerManoNueva(s);                      // sólo si no puedes hacer nada
   if(G.over) return;
   if(G.tutorial){ tutCheck(); await tutBeat('turno',{side:s}); }
   // El turno del rival se encadena con el siguiente, y esa cadena sigue viva
@@ -1848,12 +1967,32 @@ async function endTurn(){
   await startTurn(1-s);
 }
 
+/* El duelo final reserva su campo rival para las seis Pesadillas distintas del
+   Editor. Así una ficha, conversión o Aidman no puede robarle a Pitágoras el
+   hueco de un minijuego. Todo lo demás conserva el límite normal de cinco. */
+function limiteCampoPersonajes(s,id){
+  const c=CARDS[id];
+  return c?.editorJuego&&s===FOE&&G.campana?.jefeSecreto ? CARTAS_EDITOR.length : 5;
+}
+function campoEditorReservado(s,id){
+  const c=CARDS[id];
+  return s===FOE&&G.campana?.jefeSecreto&&!c?.editorJuego;
+}
+function puedeEntrarCampo(s,id){
+  return !campoEditorReservado(s,id)&&P(s).field.length<limiteCampoPersonajes(s,id);
+}
+function pesadillaRepetidaEnMesa(s,id){
+  const c=CARDS[id];
+  return !!(c?.editorJuego&&s===FOE&&G.campana?.jefeSecreto&&P(s).field.some(u=>u.alive&&u.card.id===id));
+}
+
 function canPlay(s,id){
   const c=CARDS[id];
   if(G.active!==s||G.over) return false;
   if(G.phase!=='principal'&&G.phase!=='combate') return false;
   if(costOf(id,s)>P(s).pd) return false;
-  if(c.t==='personaje'&&P(s).field.length>=5) return false;
+  if(pesadillaRepetidaEnMesa(s,id)) return false;
+  if(c.t==='personaje'&&!puedeEntrarCampo(s,id)) return false;
   if(c.t==='trampa'&&P(s).traps.length>=3) return false;
   if(c.t==='objeto'&&c.equip&&!P(s).field.some(u=>u.objs.length<(u.card.objSlots||1))) return false;
   if(c.req&&!c.req(G,s)) return false;
@@ -1876,6 +2015,10 @@ async function playFromHand(s, id, forcedTargets){
   }
   P(s).pd-=cost;
   P(s).hand.splice(P(s).hand.indexOf(id),1);
+  // La restricción sólo pertenece al jefe final. Se fija al pagar la carta,
+  // antes de abrir la prueba, para que la IA no pueda encadenar otra cuando
+  // vuelva de un minijuego ni si la presentación se cancela.
+  if(c.editorJuego&&s===FOE&&partida.campana?.jefeSecreto)partida.campana.editorPesadillaTurno=partida.turnNo;
   /* De una Trampa no se dice cuál es: va boca abajo. Esta línea anunciaba toda
      carta jugada con su nombre y no era privada, así que en línea le cantaba al
      rival la Trampa que acababas de poner. Era la fuga que quedaba. */
@@ -2011,10 +2154,27 @@ async function pruebaDelEditor(s,id,partida=G){
 
 /* ---------- habilidad de líder ---------- */
 
+/* La disponibilidad y su explicación nacen de la misma regla. Las pantallas no
+   deben adivinar por qué una Habilidad está apagada: además de evitar mensajes
+   contradictorios, esto deja que cada Líder declare su propio requisito al
+   diseñarlo. */
+function whyNotLeader(s){
+  if(!G||G.over) return 'La partida ha terminado';
+  const p=P(s), L=p?.L;
+  if(!p||!L) return 'La partida ha terminado';
+  if(G.active!==s) return 'No es tu turno';
+  if(p.leaderUsed) return 'Ya usaste tu Habilidad de Líder este turno';
+  if(p.pd<L.habCost) return `Necesitas ${L.habCost} PD`;
+  if(L.habReq&&!L.habReq(G,s)) return L.habReqMsg||'No hay objetivos válidos';
+  return '';
+}
+
+function canUseLeader(s){ return !whyNotLeader(s); }
+
 async function useLeader(s){
   const p=P(s), L=p.L;
-  if(p.leaderUsed||p.pd<L.habCost||G.active!==s||G.over) return false;
-  if(L.habReq&&!L.habReq(G,s)) { toast('No hay objetivos válidos'); return false; }
+  const motivo=whyNotLeader(s);
+  if(motivo){ toast(motivo); return false; }
   let ts=null;
   if(L.habTg){ const tg=Array.isArray(L.habTg)?L.habTg:[L.habTg];
     ts=await resolveTargets(s,{tg},null); if(ts===null) return false; }
@@ -2491,7 +2651,10 @@ function whyNot(s,id){
   if(G.active!==s) return 'No es tu turno';
   if(G.phase!=='principal'&&G.phase!=='combate') return 'Todavía no es la fase de jugar cartas';
   if(costOf(id,s)>P(s).pd) return `Cuesta ${costOf(id,s)} PD y tienes ${P(s).pd}`;
-  if(c.t==='personaje'&&P(s).field.length>=5) return 'Tu campo está lleno: caben 5 Personajes';
+  if(pesadillaRepetidaEnMesa(s,id)) return 'Pitágoras ya tiene esta Pesadilla en mesa';
+  if(c.t==='personaje'&&campoEditorReservado(s,id)) return 'El campo del Editor está reservado para sus Pesadillas';
+  if(c.t==='personaje'&&!puedeEntrarCampo(s,id))
+    return limiteCampoPersonajes(s,id)===CARTAS_EDITOR.length ? 'La mesa del Editor ya tiene sus 6 Pesadillas' : 'Tu campo está lleno: caben 5 Personajes';
   if(c.t==='trampa'&&P(s).traps.length>=3) return 'Tu zona de Trampas está llena: caben 3';
   /* Faltaba: un Objeto de equipo necesita a alguien con hueco. Sin esto el
      motivo salía como «no hay objetivos válidos», que no dice qué falta. */
@@ -2691,13 +2854,26 @@ function aiTargets(s, groups, self, card){
       let cand=pool.filter(x=>g.rep||!picked.includes(x));
       if(!cand.length) break;
       let best;
-      if(g.k==='objetivoEnemigo'){
+      const valor=x=>(x&&x.id&&CARDS[x.id])?CARDS[x.id].c*3:((x?.atk||0)*2+(x?.maxHp||0));
+      if(g.ai==='curar'){
+        // Una curación opcional no debe consumir su objetivo en alguien sano,
+        // ni puede cruzar al lado rival. Se prioriza la herida más grande.
+        cand=cand.filter(x=>x&&x.alive&&x.dmg>0);
+        if(!cand.length)break;
+        best=cand.slice().sort((a,b)=>(b.dmg-a.dmg)||valor(b)-valor(a))[0];
+      } else if(g.ai==='rematar'){
+        // El estornudo vale más si termina una amenaza que si sólo raspa a la
+        // carta más cara. Para el resto conserva el desempate por valor.
+        best=cand.slice().sort((a,b)=>{
+          const mataA=(a.maxHp-a.dmg)<=1,mataB=(b.maxHp-b.dmg)<=1;
+          return (mataB-mataA)||valor(b)-valor(a);
+        })[0];
+      } else if(g.k==='objetivoEnemigo'){
         const units=cand.filter(x=>x!=='face'&&x.alive);
         const weak=units.sort((a,b)=>(a.maxHp-a.dmg)-(b.maxHp-b.dmg))[0];
         best = (weak && (weak.maxHp-weak.dmg)<=1) ? weak : (cand.includes('face')?'face':(weak||cand[0]));
       } else if(enemyish){
-        const val=x=>(x&&x.id&&CARDS[x.id])?CARDS[x.id].c*3:(x.atk*2+x.maxHp);
-        best = cand.slice().sort((a,b)=>val(b)-val(a))[0];
+        best = cand.slice().sort((a,b)=>valor(b)-valor(a))[0];
       } else {
         const beneficial = !['modificar','edbor','magodomo','hongos'].includes(id);
         best = cand.slice().sort((a,b)=> beneficial ? (b.atk+b.maxHp)-(a.atk+a.maxHp) : (a.atk+a.maxHp)-(b.atk+b.maxHp))[0];
@@ -2713,7 +2889,16 @@ function aiTargets(s, groups, self, card){
 function aiScore(id,s){
   const c=CARDS[id], p=P(s), foe=P(1-s);
   const cost=costOf(id,s);
-  if(c.editorJuego)return 24;
+  if(c.editorJuego){
+    // Pitágoras abre con el puente y reserva los retos más lentos para cuando
+    // su mesa ya puede castigar el error. No recibe cartas ni reglas nuevas:
+    // sólo usa mejor las seis Pesadillas que ya tiene.
+    let v=c.editorPrioridad||40;
+    if(c.id==='editorcarrera'&&p.field.length===0)v+=12;
+    if(c.id==='editorcorte'&&foe.field.filter(u=>u.alive).length>=2)v+=5;
+    if(c.id==='editorduelo'&&p.field.length>=3)v+=6;
+    return v-Math.max(0,cost-p.pd)*100;
+  }
   let v=0;
   switch(c.t){
     case 'personaje':
@@ -3387,10 +3572,11 @@ const RULES_HTML=`
 <li><b>Zona de Lugar</b> — 1 Lugar activo; el más reciente reemplaza al anterior.</li>
 <li><b>Las Alcantarillas</b> — el descarte.</li>
 <li><b>Mano</b> — límite de 8 al final de tu turno.</li></ul>
-<h4>Mano nueva</h4>
-<p>Si en tu <b>primer turno</b> no puedes jugar <b>ninguna</b> carta de tu mano, el juego te
-ofrece devolverla entera al mazo, barajarlo y robar otras tantas. <b>Una sola vez</b> por
-partida, y la segunda mano es la que hay. Vale igual para tu rival.</p>
+<h4>Mulligan inicial</h4>
+<p>Antes de que empiece el primer turno, cada jugador puede cambiar <b>hasta 2 cartas</b>
+de su mano inicial. Roba exactamente el mismo número de cartas <b>antes</b> de devolver las
+elegidas al mazo y barajarlo; así una carta cambiada no puede volver de inmediato. Puedes
+conservar la mano completa. Es una sola oportunidad por partida y no se usa en el tutorial.</p>
 <h4>Estructura del turno</h4>
 <ol style="margin-left:18px">
 <li><b>Fase de Puntos</b> — +1 PD máximo y rellenas. Se aplican los efectos "al inicio de tu turno".</li>
@@ -3896,11 +4082,9 @@ async function netDoAct(m){
     await endTurn(); return {ok:true};
   }
   if(m.k==='leader'){
-    const p=P(s), L=p.L;
-    if(p.leaderUsed) return {ok:false, why:'Ya usaste tu Habilidad de Líder este turno'};
-    if(p.pd<L.habCost) return {ok:false, why:`Tu Habilidad cuesta ${L.habCost} PD y tienes ${p.pd}`};
-    if(G.active!==s) return {ok:false, why:'No es tu turno'};
-    return {ok: await useLeader(s), why:'No hay objetivos para tu Habilidad'};
+    const motivo=whyNotLeader(s);
+    if(motivo) return {ok:false, why:motivo};
+    return {ok: await useLeader(s), why:'No se pudo usar tu Habilidad'};
   }
   if(m.k==='act'){
     const u=mio(m.uid);
@@ -3932,6 +4116,18 @@ async function netGuestPrompt(m){
   const responder=v=>netSend({t:'reply', id:m.id, v});
   if(m.kind==='ask'){
     const i=await ask(ME,m.title,m.options); responder(i);
+  } else if(m.kind==='mulligan'){
+    // El anfitrión manda la mano privada del invitado sólo para este diálogo.
+    // La respuesta son índices; no mutamos el estado local, porque el anfitrión
+    // es quien roba, devuelve, baraja y publica la fotografía resultante.
+    const cartas=Array.isArray(m.cards)?m.cards.slice():[];
+    const limite=Math.max(0,Math.min(2,Number.isInteger(m.limit)?m.limit:2,cartas.length));
+    let seleccion=[];
+    if(typeof elegirMulliganInicial==='function'){
+      try{ seleccion=await elegirMulliganInicial(ME,{cartas,limite}); }
+      catch(_){ seleccion=[]; }
+    }
+    responder(Array.isArray(seleccion)?seleccion:[]);
   } else if(m.kind==='pick'){
     const c=await pickCard(ME,m.ids,m.title,m.cancellable); responder(c);
   } else if(m.kind==='from'){

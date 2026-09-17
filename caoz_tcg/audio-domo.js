@@ -130,17 +130,21 @@
     document.addEventListener('pointermove',e=>{if(e.pointerType==='mouse')intensidadMouse(e);},{passive:true});
     window.addEventListener('blur',()=>{movimiento=null;velocidad=0;});
     document.addEventListener('pointerout',e=>{if(e.pointerType==='mouse'&&!e.relatedTarget){movimiento=null;velocidad=0;}});
+    const cartaDeMano=e=>{
+      const ranura=e.target.closest?.('#hand > .handSlot');
+      return ranura?.querySelector('.card')||e.target.closest?.('#hand .card');
+    };
     document.addEventListener('pointerover',e=>{
       if(e.pointerType!=='mouse')return;
-      const carta=e.target.closest('#hand .card');
+      const carta=cartaDeMano(e);
       if(carta){if(!carta.contains(e.relatedTarget))play('card_hover',{intensidad:intensidadMouse(e)});return;}
       const b=e.target.closest('button');if(b&&!b.disabled&&!b.contains(e.relatedTarget))play('ui_hover');
     });
-    document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&e.target.closest('#hand .card'))play('card_hover');});
+    document.addEventListener('pointerdown',e=>{if(e.pointerType==='touch'&&cartaDeMano(e))play('card_hover');});
     document.addEventListener('focusin',e=>{if(e.target.matches('#hand .card'))play('card_hover');});
     document.addEventListener('click',e=>{const b=e.target.closest('button');if(b&&!b.disabled&&!b.closest('.audioControles'))play(/volver|regresar|menú|cancelar/i.test(b.textContent)?'ui_back':'ui_confirm');},true);
-    for(const padre of [document.getElementById('buildMenu')?.parentElement,document.getElementById('buildPanel')?.parentElement]){
-      if(!padre)continue;
+    const padre=document.getElementById('audioExtras');
+    if(padre&&!padre.querySelector('.audioControles')){
       const box=document.createElement('span');box.className='audioControles';
       const b=document.createElement('button');b.type='button';b.title='Activar o silenciar los efectos de sonido';
       const rango=document.createElement('input');rango.type='range';rango.min='0';rango.max='100';rango.setAttribute('aria-label','Volumen de efectos de sonido');
@@ -148,7 +152,7 @@
       b.onclick=()=>{desbloquear();configurar({silencio:!ajustes.silencio,volumen:ajustes.volumen||.7});};
       rango.oninput=()=>configurar({volumen:Number(rango.value)/100,silencio:false});pintar();window.addEventListener('caoz:audioajustes',pintar);box.append(b,rango);padre.appendChild(box);
     }
-    const css=document.createElement('style');css.textContent='.audioControles{display:inline-flex;align-items:center;gap:5px;margin-left:8px;vertical-align:middle}.audioControles button{font:inherit;font-size:11px;color:#ddca9b;background:#18121c;border:1px solid #655237;border-radius:6px;padding:5px 7px;cursor:pointer;min-height:28px}.audioControles input{width:55px;height:24px;accent-color:#d5b56c}.audioControles button:focus-visible{outline:2px solid #f5ce7d}@media(max-width:420px){.audioControles input{width:42px}.audioControles{margin-left:3px}.audioControles button{font-size:10px;padding:4px}}';document.head.appendChild(css);
+    const css=document.createElement('style');css.textContent='#audioExtras .audioControles{display:flex;align-items:center;justify-content:center;gap:8px;width:min(100%,260px);padding:7px 10px;border:1px solid #655237;border-radius:9px;background:#18121c}.audioControles button{font:inherit;font-size:11px;color:#ddca9b;background:#18121c;border:1px solid #655237;border-radius:6px;padding:5px 7px;cursor:pointer;min-height:28px}.audioControles input{width:82px;height:24px;accent-color:#d5b56c}.audioControles button:focus-visible{outline:2px solid #f5ce7d}@media(max-width:420px){#audioExtras .audioControles{width:min(100%,235px)}.audioControles input{width:66px}.audioControles button{font-size:10px;padding:4px}}';document.head.appendChild(css);
     actualizar();
   }
   document.addEventListener('pointerdown',desbloquear,{capture:true});

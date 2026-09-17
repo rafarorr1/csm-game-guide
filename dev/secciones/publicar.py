@@ -43,6 +43,42 @@ SECCIONES = {
         'pruebas': ('pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs',
                     'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs'),
     },
+    'interacciones': {
+        'nombre': 'Interacciones de cartas',
+        'exportador': 'interacciones-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers'},
+        'pruebas': ('pruebas_interacciones_exportacion.mjs',),
+    },
+    'epilogo-gero': {
+        'nombre': 'Epílogo de Gero',
+        'exportador': 'epilogo-gero-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers'},
+        'pruebas': ('pruebas_epilogo_gero_exportacion.mjs',),
+    },
+    'pitagoras': {
+        'nombre': 'Pitágoras',
+        'exportador': 'pitagoras-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/art/esbirro-editor-v219.webp'},
+        'pruebas': ('pruebas_pitagoras_exportacion.mjs',),
+    },
+    'heroe': {
+        'nombre': 'Creador de héroe',
+        'exportador': 'heroe-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/campana-personaje.js'},
+        'pruebas': ('pruebas_heroe_exportacion.mjs',),
+    },
+    'mulligan': {
+        'nombre': 'Mulligan inicial',
+        'exportador': 'mulligan-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/mulligan-ui.js', 'juego/mulligan-ui.css'},
+        'pruebas': ('pruebas_mulligan_exportacion.mjs',),
+    },
+    'invitaciones': {
+        'nombre': 'Invitaciones de sala',
+        'exportador': 'invitaciones-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/invitaciones-compartidas.js'},
+        'pruebas': ('pruebas_invitaciones_exportacion.mjs',),
+    },
 }
 URL = 'https://aislados.caoz-tcg.pages.dev'
 NO_ENCONTRADO = b'<!doctype html><html lang="es"><meta charset="utf-8"><title>No encontrado</title><body><h1>Esta ruta no existe</h1><a href="/">Volver a las secciones</a></body></html>\n'

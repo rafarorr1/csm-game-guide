@@ -2,13 +2,93 @@
 'use strict';
 (function(){
   let escena=null;
-  function limpiar(){if(!escena)return;escena.cancelado=true;cancelAnimationFrame(escena.raf);escena.timers.forEach(clearTimeout);escena.d.close();escena.d.remove();escena=null;}
+  function limpiar(){
+    if(!escena)return;
+    const e=escena;escena=null;e.cancelado=true;cancelAnimationFrame(e.raf);e.timers.forEach(clearTimeout);
+    if(e.d.open)e.d.close();e.d.remove();
+  }
   window.campanaCerrarDeseo=limpiar;
   function esperar(e,ms,fn){const id=setTimeout(()=>{if(!e.cancelado)fn();},ms);e.timers.push(id);}
   let ascenso=null;
   window.campanaCancelarAscenso=function(){
     if(!ascenso)return;const e=ascenso;ascenso=null;e.cancelado=true;cancelAnimationFrame(e.raf);e.timers.forEach(clearTimeout);
     if(e.mesa?.activa)e.mesa.elevar(0);if(e.animacion)e.animacion.cancel();e.d.close();e.d.remove();
+  };
+  function deseoVigente(e){
+    const p=campanaLeer(),partida=typeof G==='undefined'?null:G;return escena===e&&!e.cancelado&&partida===e.partida&&p?.id===e.id;
+  }
+  /* Si la Colección todavía no está disponible, el deseo no se pierde ni se
+     salta al menú: el recibo ya quedó guardado y este botón reintenta abrirlo. */
+  function recuperarSobres(e){
+    if(!deseoVigente(e)){limpiar();return;}
+    const d=e.d;d.dataset.fase='recuperacion';d.replaceChildren();
+    const caja=document.createElement('section');caja.className='deseoRecuperacion';
+    const titulo=document.createElement('h1');titulo.textContent='Tu selección sigue pendiente';
+    const texto=document.createElement('p');texto.textContent='No pudimos retomar los sobres todavía. El deseo y el derecho a la recompensa siguen guardados. Puedes volver al menú y reintentar la Campaña cuando la colección esté disponible.';
+    const boton=document.createElement('button');boton.type='button';boton.className='btn gold';boton.textContent='Reintentar selección';
+    boton.onclick=()=>{if(boton.disabled||!deseoVigente(e))return;boton.disabled=true;abrirSobresFinal(e);};
+    const menu=document.createElement('button');menu.type='button';menu.className='btn';menu.textContent='Volver al menú';
+    menu.onclick=()=>{
+      if(!deseoVigente(e)){limpiar();return;}
+      limpiar();
+      if(typeof window.campanaVolverAlMenu==='function'){window.campanaVolverAlMenu();return;}
+      if(typeof window.campanaCerrar==='function')window.campanaCerrar();
+      if(typeof window.showScreen==='function')window.showScreen('menu');
+    };
+    const acciones=document.createElement('div');acciones.className='deseoRecuperacionAcciones';acciones.append(boton,menu);
+    caja.append(titulo,texto,acciones);d.appendChild(caja);
+    if(!d.open)try{d.showModal();}catch(_){limpiar();return;}
+    boton.focus({preventScroll:true});
+  }
+  function abrirSobresFinal(e){
+    if(!deseoVigente(e)){limpiar();return;}
+    // La cobertura ya es negra. Cerrarla y abrir el selector en el mismo turno
+    // evita que dos diálogos modales compitan y no deja ver el tablero debajo.
+    if(e.d.open){
+      // El diálogo de recuperación limpia su estado al cerrarse desde fuera,
+      // pero aquí sólo cedemos temporalmente la capa modal al selector.
+      e.cerrandoParaSobres=true;e.d.close();e.cerrandoParaSobres=false;
+    }
+    let abierta=false;
+    try{abierta=window.campanaAbrirSobresFinal?.(e.id,e.partida)===true;}catch(_){}
+    if(abierta){limpiar();return;}
+    recuperarSobres(e);
+  }
+  function terminarDeseoHistorico(e){
+    // Los ensayos beta y las rutas especiales conservan el desenlace que ya
+    // tenían: muestran el menú bajo negro y ofrecen el recibo normal después.
+    // Sólo la campaña ordinaria de Gero usa el selector obligatorio aquí.
+    showScreen('menu');limpiarTransicionMenu();e.mensaje?.remove();e.d.dataset.fase='menu';esperar(e,3000,()=>{limpiar();window.campanaElegirPremioAlVolver?.(e.id,e.partida);});
+  }
+  // Al volver tras una recarga no repetimos el formulario ya enviado. Esta
+  // puerta reconstruye sólo la pantalla de recuperación; el puente del motor
+  // decide si puede abrir el selector o si conviene conservar el recibo.
+  window.campanaRecuperarSobresFinal=function(){
+    const p=campanaLeer();
+    if(escena||!p||p.etapa!==6||p.mesaPendiente!=null||p.deseoFinalGero!==true||!p.deseo||p.recompensaFinalLista!==true)return false;
+    if(typeof window.campanaCerrar==='function')window.campanaCerrar();
+    if(typeof window.cerrarCinematica==='function')window.cerrarCinematica();
+    const d=document.createElement('dialog');d.id='campanaDeseo';d.setAttribute('aria-label','Recuperar la selección final de sobres');
+    const e={d,id:p.id,partida:typeof G==='undefined'?null:G,form:null,timers:[],raf:0,cancelado:false};escena=e;
+    const volverAlMenu=()=>{
+      if(escena!==e)return;
+      limpiar();
+      if(typeof window.campanaVolverAlMenu==='function'){window.campanaVolverAlMenu();return;}
+      if(typeof window.campanaCerrar==='function')window.campanaCerrar();
+      if(typeof window.showScreen==='function')window.showScreen('menu');
+    };
+    // La recuperación no puede quedar con una escena cerrada en memoria: Escape
+    // conserva el marcador y vuelve de forma controlada al menú.
+    d.addEventListener('cancel',evento=>{evento.preventDefault();volverAlMenu();});
+    d.addEventListener('close',()=>{
+      // close puede llegar después de que el fallo del selector haya vuelto a
+      // abrir este mismo diálogo. En ese caso no es un cierre real de la
+      // recuperación: conservar la escena deja disponible «Reintentar».
+      if(e.cerrandoParaSobres||d.open)return;
+      if(escena!==e)return;
+      escena=null;e.cancelado=true;cancelAnimationFrame(e.raf);e.timers.forEach(clearTimeout);d.remove();
+    });
+    document.body.appendChild(d);recuperarSobres(e);return d.open;
   };
   window.campanaAscenderAlDeseo=function(){
     const p=campanaLeer(),panel=document.getElementById('campanaPanel');
@@ -98,16 +178,18 @@
     esperar(e,reducido?250:1000,()=>{e.form.remove();e.mensaje=document.createElement('h1');e.mensaje.className='deseoConcedido';e.mensaje.textContent='Deseo concedido';d.appendChild(e.mensaje);});
     esperar(e,duracion,()=>{
       cancelAnimationFrame(e.raf);c.remove();d.dataset.fase='concedido';window.CAOZ_AUDIO?.play('wish_granted');
-      // El menú se prepara bajo el negro; esos tres segundos se aprovechan
-      // para revelarlo sin un corte al retirar el diálogo.
+      // Después de que el texto ha respirado tres segundos, el primer negro
+      // entrega el control a los sobres sólo en la campaña ordinaria de Gero.
+      // Los ensayos y secretos mantienen su CTA/recompensa beta histórica.
       esperar(e,3000,()=>{d.dataset.fase='fundido';esperar(e,1000,()=>{
-        showScreen('menu');limpiarTransicionMenu();e.mensaje.remove();
-        d.dataset.fase='menu';esperar(e,3000,()=>{limpiar();window.campanaElegirPremioAlVolver?.(e.id,e.partida);});
+        const p=campanaLeer(),epilogoOrdinario=p?.id===e.id&&p.deseoFinalGero===true&&!p.prueba&&!p.pruebaEditor&&!p.secreto&&!p.sinPremios;
+        if(epilogoOrdinario)abrirSobresFinal(e);else terminarDeseoHistorico(e);
       });});
     });
   }
   window.campanaAbrirDeseo=function(){
     const p=campanaLeer();if(!p||p.etapa!==6||p.mesaPendiente!=null)return;
+    if(p.deseoFinalGero===true&&p.deseo&&p.recompensaFinalLista===true){window.campanaRecuperarSobresFinal?.();return;}
     if(escena)return;
     const d=document.createElement('dialog');d.id='campanaDeseo';d.setAttribute('aria-labelledby','deseoTitulo');d.dataset.fase='formulario';
     d.innerHTML='<form class="deseoFormulario"><div class="deseoSello">EL DOMO TE ESCUCHA</div><h1 id="deseoTitulo">Venciste a todos los héroes.<br>Pide un deseo</h1><label for="deseoTexto">Tu deseo</label><textarea id="deseoTexto" maxlength="500" required placeholder="Escribe lo que deseas…"></textarea><p class="deseoPrivacidad">Prueba beta · envío simulado</p><p class="deseoEstado" role="status"></p><button class="btn gold" type="submit">Pedir deseo</button></form>';
@@ -152,6 +234,8 @@
   .deseoConcedido{position:relative;z-index:1;text-shadow:0 0 30px #d17b27;transition:opacity 1s}
   #campanaDeseo[data-fase="concedido"]{background:#0b0503}
   #campanaDeseo[data-fase="fundido"]{background:#000;transition:background 1s}#campanaDeseo[data-fase="fundido"] .deseoConcedido{opacity:0}
+  #campanaDeseo[data-fase="recuperacion"]{background:#000}#campanaDeseo[data-fase="recuperacion"]{display:grid;place-items:center}
+  .deseoRecuperacion{width:min(460px,100%);display:grid;gap:16px;text-align:center}.deseoRecuperacion h1{margin:0}.deseoRecuperacion p{margin:0;color:#cdbba1;font:15px/1.5 var(--sans,sans-serif)}.deseoRecuperacionAcciones{display:flex;flex-wrap:wrap;justify-content:center;gap:10px}.deseoRecuperacion .btn{min-height:48px}
   #campanaDeseo[data-fase="menu"]{background:#000;transition:none;animation:deseoRevelarMenu 3s cubic-bezier(.4,0,.2,1) both}#campanaDeseo[data-fase="menu"]::backdrop{background:transparent}
   @keyframes deseoRevelarMenu{from{opacity:1}to{opacity:0}}
   @media(prefers-reduced-motion:reduce){.ascensoCono,.ascensoNucleo,.ascensoHalo{animation:none}.ascensoResplandor{animation-name:resplandorAscensoSuave}@keyframes resplandorAscensoSuave{from{scale:1;opacity:0}to{scale:1;opacity:1}}}

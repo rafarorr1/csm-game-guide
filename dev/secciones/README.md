@@ -1,6 +1,6 @@
 # Secciones aisladas
 
-Este entorno ofrece vistas acotadas de Colección, El Rey, apertura de sobres y Cuenta. No monta el juego dentro de un iframe,
+Este entorno ofrece vistas acotadas de Colección, El Rey, apertura de sobres, Cuenta e interacciones de cartas. No monta el juego dentro de un iframe,
 no crea una partida y no carga IA, online, campaña, sonido ni service worker.
 Los cambios hechos aquí no afectan el progreso del jugador.
 
@@ -17,6 +17,12 @@ Abrir:
 
 - Escritorio: <http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=sobres>
 - Móvil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=sobres>
+- Interacciones de cartas: <http://127.0.0.1:8878/dev/secciones/interacciones.html>
+- Epílogo de Gero: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>
+- Pitágoras: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>
+- Creador de héroe: <http://127.0.0.1:8878/dev/secciones/heroe.html>
+- Mulligan inicial: <http://127.0.0.1:8878/dev/secciones/mulligan.html>
+- Invitaciones de sala: <http://127.0.0.1:8878/dev/secciones/invitaciones.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -35,6 +41,145 @@ las dependencias se derivan del código actual en cada solicitud.
 Cerrar el diálogo muestra los controles del laboratorio. Allí se puede cambiar
 la presentación, los datos de prueba y la serie del muestrario. Cada recarga
 construye de nuevo esos datos temporales.
+
+## Interacciones de cartas
+
+La revisión de interacciones está en `/interacciones/`. Es una mesa de escritorio
+reducida, con seis cartas reales de mano y Adreida con exactamente 2 PD y ningún
+Personaje aliado. La ranura estable (`.handSlot`) recibe el cursor y la carta
+visual no, sin mover ninguna vecina, para revisar que el crecimiento no alterna
+el hover entre cartas superpuestas. El botón «Probar descarte» abre el selector con
+`.gallery.selectorCartas`: su escala máxima es 1.05 y el espacio de cada celda
+queda reservado, incluso en una ventana baja. «Usar Golpe Directo» explica el
+requisito de objetivo antes de hablar de PD. El volumen aparece dentro de
+`#audioExtras`, que es hijo de Extras; no se reproduce ni descarga audio en la
+vista aislada.
+
+La sección deriva el renderer y CSS de escritorio, seis datos de carta y los
+originales locales de arte. No carga `motor.js`, una partida, el audio ni el
+progreso. Su comprobación concreta es:
+
+```sh
+node dev/secciones/pruebas_interacciones_exportacion.mjs
+```
+
+## Mulligan inicial
+
+La revisión está en `/mulligan/`. Muestra el mismo selector compartido que usa
+la mesa: se conservan las cartas no elegidas y se pueden señalar cero, una o
+dos por índice, incluidas copias repetidas. La descripción explica la regla
+completa: primero se roban los reemplazos y sólo entonces las cartas elegidas
+regresan y se barajan, por lo que una misma copia no puede volver de inmediato.
+
+No hay partida, mazo real, IA, red, sonido ni progreso del jugador. La página
+mantiene una mano y un mazo de demostración exclusivamente en memoria para
+probar conservar, cambiar una, cambiar dos, restablecer la muestra, cerrar con
+Escape y tocar el velo. El núcleo del selector se copia desde
+`caoz_tcg/mulligan-ui.js` y `caoz_tcg/mulligan-ui.css`; no mantiene una segunda
+implementación de la interacción.
+
+Local: <http://127.0.0.1:8878/dev/secciones/mulligan.html>. Al publicar la
+revisión: <https://aislados.caoz-tcg.pages.dev/mulligan/>.
+
+```sh
+node dev/secciones/pruebas_mulligan_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion mulligan --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion mulligan --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+## Invitaciones de sala
+
+La revisión está en `/invitaciones/`. Presenta las dos rutas de una misma sala:
+«Compartir código — tiene la app» genera únicamente el código y la instrucción
+para abrir **Con amigos → Unirme con un código**; «Compartir enlace — navegador»
+genera una URL de la misma edición con `sala`. El selector Producción/Beta hace
+visible que la beta no intenta enviar a la instalación de producción.
+
+«Simular apertura del enlace» abre el puente que verá quien llegue al navegador:
+puede copiar el código para usar la app instalada o seguir con la entrada en el
+navegador. La captura directa de una PWA queda en manos del sistema operativo y
+del navegador; el puente conserva la invitación cuando esa captura no ocurre.
+
+El navegador recibe una copia byte a byte de
+`caoz_tcg/invitaciones-compartidas.js`, que es la única fuente de normalización,
+texto y URL. No hay sala real, acceso, relevos, cuenta ni progreso persistente.
+
+Local: <http://127.0.0.1:8878/dev/secciones/invitaciones.html>. Al publicar la
+revisión: <https://aislados.caoz-tcg.pages.dev/invitaciones/>.
+
+```sh
+node dev/secciones/pruebas_invitaciones_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion invitaciones --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion invitaciones --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+## Epílogo de Gero: deseo y tres sobres
+
+La revisión está en `/epilogo-gero/` y comienza con un único control de
+laboratorio que sustituye el combate que esta página no carga. Tras pulsarlo,
+la secuencia que se revisa es exactamente: victoria contra Gero → formulario de
+deseo → fuego → «Deseo concedido» → fundido a negro → selección de tres sobres
+a pantalla completa → fundido a negro → menú de laboratorio. En el juego el
+primer paso no muestra ese control: se inicia automáticamente al terminar la
+victoria.
+
+El formulario y la cinemática se cargan desde `campana-deseo.js`. La recompensa
+usa `coleccion-modelo.js`, `coleccion-ui.js`, `coleccion.css` y los sobres reales:
+las tres colecciones se recorren con un carrete horizontal y se eligen con los
+controles reales del componente. Los datos de cartas, Protagonistas y renderer
+se derivan del motor en Node; el navegador no recibe `motor.js`, una partida,
+IA, online, sonido, service worker ni el avance del jugador. `memoria.js`
+intercepta todo el almacenamiento antes de cargar los componentes.
+
+El adaptador llama al contrato que debe conservar la integración:
+
+```js
+abrirRecompensaSobres({origen:'campana', referencia:id, finalCampana:true, onConfirmar})
+```
+
+`campana-deseo.js` entrega el fundido a `campanaAbrirSobresFinal`, el mismo
+puente que usa la integración de campaña; éste concede la recompensa efímera y
+llama a la API anterior. `onConfirmar` realiza el fundido final sólo después de
+guardar los tres sobres. No se concede ni guarda nada fuera de esta memoria
+temporal.
+
+Local: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>.
+Al publicar la revisión: <https://aislados.caoz-tcg.pages.dev/epilogo-gero/>.
+
+```sh
+node dev/secciones/pruebas_epilogo_gero_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion epilogo-gero --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion epilogo-gero --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+## Pitágoras: presión del jefe final
+
+La revisión está en `/pitagoras/`. Abre el minijuego real de **El último
+puente** mediante `pitagoras-pruebas.js`, `pitagoras-mundos.js`,
+`pitagoras-cine.js` y `pitagoras-pixel.js`; no monta el motor, una campaña, IA,
+sonido, red ni datos del jugador. El fixture sólo aporta una semilla temporal,
+Talesyn como viajero y las seis cartas actuales del Editor, derivadas del
+catálogo del motor al exportar.
+
+La página sirve para revisar que el puente escale pronto, mantenga lectura de
+carril/salto y que las cartas del ciclo del jefe tengan la presencia esperada.
+También publica una lectura estática y verificable del Ritual inicial (2 PD,
+incluida su excepción de segundo jugador), el bloqueo de una Pesadilla por
+turno y las prioridades/bonos de las seis Pesadillas. Esos datos se extraen de
+`motor.js` durante la exportación; el adaptador no ejecuta la IA ni implementa
+otra versión de las reglas. Se puede cambiar la semilla para recorrer otra
+secuencia sin escribir ningún dato. El arte que carga `pitagoras-pruebas.js`
+se exporta en `juego/art/esbirro-editor-v219.webp`, con sus bytes y hash de
+procedencia verificados.
+
+Local: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>. Al publicar la
+revisión: <https://aislados.caoz-tcg.pages.dev/pitagoras/>.
+
+```sh
+node dev/secciones/pruebas_pitagoras_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion pitagoras --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion pitagoras --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
 
 ## Cuenta: acceso obligatorio y continuidad offline
 
@@ -377,3 +522,21 @@ abrir, cinco revelaciones sin saltos por toques rápidos, quinta carta esperando
 explícito antes del resumen, cinco cartas visibles sin superposición/scroll y regreso al
 menú una sola vez. Probar reinicio durante la apertura, teclado y movimiento
 reducido. Se comprueban errores y recursos fallidos.
+
+## Héroe: forjado en el Domo
+
+La revisión `/heroe/` carga el mismo `campana-personaje.js` de campaña:
+normalización, malla, retratos, previsualización, pestañas y controles. El host
+aporta sólo el diálogo y botones mínimos para revisar identidad, silueta,
+rostro, atuendo, equipo, predefinidos y giro manual. No monta campaña, motor,
+mazos, IA, audio, red ni progreso real; `memoria.js` sustituye el almacenamiento
+antes de cargar el componente.
+
+Local: <http://127.0.0.1:8878/dev/secciones/heroe.html>. Al publicar:
+<https://aislados.caoz-tcg.pages.dev/heroe/>.
+
+```sh
+node dev/secciones/pruebas_heroe_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion heroe --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion heroe --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```

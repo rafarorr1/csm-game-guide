@@ -575,3 +575,88 @@
 #coleccionPanel .coleccionSobreReal{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;border-radius:inherit}
 #coleccionPanel .coleccionSobreColor.conSobreReal{background:none;border:0;box-shadow:0 12px 24px #0008}
 #coleccionPanel .coleccionSobreColor.conSobreReal::before,#coleccionPanel .coleccionSobreColor.conSobreReal::after,#coleccionPanel .coleccionSobreColor.conSobreReal>:not(.coleccionSobreReal){visibility:hidden}
+
+/* Epílogo de campaña: no es una pestaña de Colección, sino el último plano
+   antes de volver al menú. El diálogo ocupa el visor real y sólo deja activo
+   el carrusel; las salidas ordinarias quedan fuera de foco y de la escena. */
+#coleccionPanel.coleccionFinalCampana{
+  position:fixed;inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;height:var(--coleccion-alto,100dvh);max-width:none;max-height:none;margin:0;padding:0;overflow:hidden;border:0;border-radius:0;background:#030205;box-shadow:none;
+}
+#coleccionPanel.coleccionFinalCampana::backdrop{background:#000;backdrop-filter:none}
+#coleccionPanel.coleccionFinalCampana .coleccionInterior{
+  padding:max(24px,env(safe-area-inset-top)) max(26px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(26px,env(safe-area-inset-left));border:0;border-radius:0;background:radial-gradient(ellipse at 50% 32%,#5d42292e,transparent 48%),radial-gradient(ellipse at 50% 100%,#351f3f42,transparent 57%),linear-gradient(180deg,#100c16,#050409 74%,#020203);
+}
+#coleccionPanel.coleccionFinalCampana .coleccionInterior::before,#coleccionPanel.coleccionFinalCampana .coleccionInterior::after,#coleccionPanel.coleccionFinalCampana :is(.coleccionCabecera,.coleccionPestanas,.coleccionEstado,.coleccionPie){display:none!important}
+#coleccionPanel.coleccionFinalCampana .coleccionContenido{display:block;flex:1;min-height:0;height:100%;overflow:hidden}
+@keyframes coleccionFinalCampanaEntrada{from{opacity:0;filter:brightness(.7)}to{opacity:1;filter:none}}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{position:relative;isolation:isolate;width:min(1140px,100%);height:100%;margin:0 auto;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto auto auto;align-items:center;justify-items:center;gap:clamp(7px,1.25vh,15px);overflow:hidden;text-align:center;animation:coleccionFinalCampanaEntrada .46s cubic-bezier(.2,.78,.2,1) both}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera{max-width:650px;text-wrap:balance}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera .coleccionAntetitulo{color:#e0a957;font-size:11px;letter-spacing:3.5px;text-shadow:0 0 16px #d58b3e55}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera h3{margin-top:4px;font:700 clamp(30px,4.1vw,50px)/1.06 var(--serif,Georgia,serif);color:#f5e4c0;text-shadow:0 3px 20px #000}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera p{max-width:500px;margin:8px auto 0;color:#cfbca9;font-size:14px;line-height:1.45}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgreso{display:flex;align-items:center;justify-content:center;gap:13px;min-height:26px;color:#efd8a9;font-size:14px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgresoTexto{min-width:132px;text-align:right;font-variant-numeric:tabular-nums}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra{width:min(250px,35vw);height:8px;overflow:hidden;border:1px solid #a77d427a;border-radius:8px;background:#160f1b;color:#d39a47;accent-color:#d39a47}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra::-webkit-progress-bar{background:#160f1b}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra::-webkit-progress-value{background:linear-gradient(90deg,#9b6234,#efd187);box-shadow:0 0 10px #e4a84c80}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarruselVentana{--final-sobre-ancho:300px;position:relative;align-self:stretch;justify-self:stretch;min-height:0;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 58%,#b5773128,transparent 59%)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel{position:absolute;inset:0;display:flex;align-items:center;gap:clamp(28px,5vw,76px);overflow-x:auto;overflow-y:hidden;padding:12px calc(50% - var(--final-sobre-ancho)/2);scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x;cursor:grab;scroll-behavior:auto;-webkit-tap-highlight-color:transparent;user-select:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel::-webkit-scrollbar{display:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel:focus-visible{outline:0}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel:focus-visible .coleccionFinalSobre.seleccionado{outline:2px solid #e2b86c;outline-offset:5px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel.arrastrando{cursor:grabbing;scroll-snap-type:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobre{width:var(--final-sobre-ancho);flex:0 0 var(--final-sobre-ancho);min-height:0;display:flex;flex-direction:column;align-items:center;gap:13px;padding:10px 8px;border:1px solid transparent;border-radius:16px;background:radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--sobre-color) 13%,transparent),transparent 68%);box-shadow:none;filter:saturate(.65) brightness(.72);opacity:.44;scale:.76;translate:none!important;scroll-snap-align:center;scroll-snap-stop:always;transition:opacity .22s ease,scale .22s ease,filter .22s ease,border-color .22s ease,background .22s ease}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobre.seleccionado{border-color:color-mix(in srgb,var(--sobre-color) 66%,#edc77e);background:radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--sobre-color) 33%,transparent),transparent 70%);filter:none;opacity:1;scale:1}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobre .coleccionSobre{width:100%;height:auto;max-height:none;aspect-ratio:.68;margin:0;rotate:0deg;animation:none;filter:drop-shadow(0 18px 20px #0009)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobreNombre{font:700 18px/1.15 var(--serif,Georgia,serif);color:#f0dfbd;text-shadow:0 2px 5px #000}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion{display:grid;grid-template-columns:48px minmax(150px,260px) 48px;align-items:center;justify-content:center;gap:18px;min-height:48px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion .coleccionBoton{width:48px;min-height:48px;padding:0;border-radius:50%;font:34px/1 var(--serif,Georgia,serif);background:#1d1525;border-color:#805d47;box-shadow:inset 0 0 0 1px #e6c57b1f,0 3px 0 #070509}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalActual{min-width:0;color:var(--sobre-color,#e5cc9a);font:700 21px/1.2 var(--serif,Georgia,serif);text-wrap:balance;text-shadow:0 2px 7px #000}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalMarcas{display:flex;align-items:center;justify-content:center;gap:11px;min-height:16px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalMarca{display:block;width:30px;height:9px;border:1px solid #8e7b8659;border-radius:9px;background:#100c15;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalMarca[data-grupo]{background:var(--sobre-color);border-color:color-mix(in srgb,var(--sobre-color) 72%,white);box-shadow:0 0 13px color-mix(in srgb,var(--sobre-color) 62%,transparent)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones{display:flex;align-items:center;justify-content:center;gap:15px;min-height:47px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-width:min(280px,65vw);min-height:47px;font-size:17px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones [hidden]{display:none!important}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalGuardar{border-color:#d6aa5b;background:radial-gradient(circle at 35% 25%,#f7dc9f,#bc7b36 43%,#5c3318 77%)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAviso{min-height:1.4em;max-width:500px;color:#ffb6a5;font-size:12px;line-height:1.35}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalFundido{position:fixed;inset:0;width:100vw;height:100dvh;z-index:10;background:#000;opacity:0;pointer-events:none;transition:opacity .46s ease}
+#coleccionPanel.coleccionFinalCampana.coleccionFinalCampanaFundiendo .coleccionFinalFundido{opacity:1;pointer-events:auto}
+#coleccionPanel.coleccionFinalCampana.coleccionFinalCampanaFundiendo .coleccionFinalCampanaEscena>*:not(.coleccionFinalFundido){pointer-events:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaError{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center;color:#e7d4bd}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaError h3{font:700 30px/1.15 var(--serif,Georgia,serif)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaError p{max-width:420px;color:#c5b4a4}
+@media(max-width:580px){
+  #coleccionPanel.coleccionFinalCampana .coleccionInterior{padding:max(16px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(13px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{gap:8px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera .coleccionAntetitulo{font-size:9px;letter-spacing:2.6px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera h3{font-size:clamp(27px,9vw,38px)}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera p{max-width:330px;margin-top:5px;font-size:12px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgreso{gap:8px;font-size:12px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgresoTexto{min-width:105px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra{width:min(170px,43vw);height:7px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel{gap:31px;padding-top:4px;padding-bottom:4px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalSobre{gap:9px;padding:7px 5px;border-radius:11px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalSobreNombre{font-size:15px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion{grid-template-columns:40px minmax(130px,190px) 40px;gap:11px;min-height:40px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion .coleccionBoton{width:40px;min-height:40px;font-size:29px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalActual{font-size:18px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalMarcas{gap:8px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalMarca{width:25px;height:8px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones{gap:9px;min-height:42px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-width:min(235px,61vw);min-height:42px;font-size:15px}
+}
+@media(max-height:650px){
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{gap:5px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera p{display:none}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera h3{font-size:29px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgreso{min-height:20px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion{min-height:34px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion .coleccionBoton{width:35px;min-height:35px;font-size:25px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-height:38px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAviso{min-height:0;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel.coleccionFinalCampana :is(.coleccionFinalSobre,.coleccionFinalMarca,.coleccionFinalFundido){transition:none}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{animation:none}
+}

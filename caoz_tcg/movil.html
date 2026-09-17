@@ -304,6 +304,12 @@ html.app #board{padding-top:calc(var(--arriba) + 32px)}
 /* Se reserva también el espacio de las cifras y del indicador de ataque. */
 .row{display:flex;justify-content:center;align-items:center;gap:5px;min-height:calc(var(--ch) + 14px);flex:1;padding:9px 2px 5px}
 .row.traps{min-height:30px;gap:5px;padding:1px}
+/* Sólo la sexta Pesadilla del jefe final compacta la fila rival. El campo del
+   jugador y todas las mesas normales conservan cinco huecos y su tamaño táctil. */
+#foeField.seisPesadillas{gap:3px}
+#foeField.seisPesadillas>.card.unit{
+  width:calc((100% - 31px)/6);height:auto;aspect-ratio:5/7;
+}
 .pilas{display:flex;gap:4px;flex:0 0 auto}
 #efectos{display:flex;gap:6px;margin-right:4px} #efectos[hidden]{display:none}
 .midrow{display:flex;align-items:center;justify-content:center;gap:8px;min-height:30px;flex:0 0 auto;padding:2px 6px;
@@ -797,6 +803,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
+<link rel="stylesheet" href="mulligan-ui.css?b=264">
 </head>
 <body>
 <div id="app"><div id="tel">
@@ -839,6 +846,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
     <button class="btn" id="mRules">Reglas</button>
     <button class="btn" id="mRecords">Tus récords</button>
   </div>
+  <div id="audioExtras" aria-label="Ajustes de sonido"></div>
   <button class="btn" id="mBorrarProgreso" aria-haspopup="dialog">Borrar mi progreso</button>
   <button class="btn" id="extrasBack">← Menú principal</button>
 </div>
@@ -903,8 +911,9 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=259"></script>
-<script src="final.js?b=259"></script>
+<script src="motor.js?b=264"></script>
+<script src="final.js?b=264"></script>
+<script src="mulligan-ui.js?b=264"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -915,7 +924,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:259, fecha:'2026-09-13'};
+const BUILD = {n:264, fecha:'2026-09-16'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -1453,7 +1462,7 @@ function pickCard(s,ids,title,cancellable){
   if(s!==ME||G.auto) return Promise.resolve(cancellable?null:ids[0]);
   return new Promise(res=>{
     const p=$('#ovPanel'); p.innerHTML=`<h3>${title}</h3><p>Toca una carta para elegirla; mantenla pulsada para leerla.</p>`;
-    const box=el('div','gallery');
+    const box=el('div','gallery selectorCartas');
     ids.forEach(id=>{ const c=cardEl(id,{ladoArte:s}); c.onclick=()=>{ cerrarOv(); res(id); }; box.appendChild(c); });
     p.appendChild(box);
     if(cancellable){ const b=el('button','btn','Pasar'); b.style.marginTop='12px'; b.style.width='100%'; b.onclick=()=>{ cerrarOv(); res(null); }; p.appendChild(b); }
@@ -1493,31 +1502,6 @@ async function revelarCarta(cardId, aMano, side){
   carta.animate([{transform:'scale(1)',opacity:1},{transform:`translateY(${aMano?'160px':'-40px'}) scale(.5)`,opacity:0}],{duration:520,easing:'cubic-bezier(.4,0,.7,1)'});
   await nap(540); cerrarOv();
 }
-async function ofrecerManoNueva(s){
-  if(!puedeRehacerMano(s)) return;
-  const miPartida=PARTIDA_N, miG=G;
-  const vive=()=>miPartida===PARTIDA_N&&miG===G&&!G.over&&G.active===s;
-  const p=P(s);
-  if(!G.silent&&!G.auto){
-    const ov=$('#ov');
-    for(let k=0;k<40&&ov&&ov.classList.contains('on');k++){ await nap(100); if(!vive()) return; }
-    if(!vive()||!puedeRehacerMano(s)) return;
-    if(s===ME) await repartirALaVista(s);
-    if(!vive()) return;
-  }
-  const cuantas=p.hand.length;
-  const sí=0===await ask(s,`No puedes jugar ninguna de tus ${cuantas} cartas. ¿Devolverlas al mazo y robar otras ${cuantas}?`,
-    ['Sí, mano nueva','No, me la quedo'],()=>0,{suave:true,mirandoMano:true});
-  if(!vive()) return;
-  p.manoRehecha=true;
-  if(!sí){ log(`<b>${p.L.n}</b> se queda con su mano.`,'sys'); return; }
-  p.deck=shuffle(p.deck.concat(p.hand)); p.hand=[];
-  await drawSilent(s,cuantas);
-  log(`<b>${p.L.n}</b> devuelve su mano al mazo y roba ${cuantas} cartas nuevas.`,'sys');
-  render();
-  if(s===ME&&!G.silent){ fxNotice('🔄 Mano nueva','var(--gold)'); await repartirALaVista(s); }
-}
-
 /* ---------- cartas ---------- */
 function cardEl(id,opt={}){
   const c=CARDS[id], d=el('div','card t-'+c.t);
@@ -1642,7 +1626,7 @@ function renderLeaders(){
   [[FOE,'#leaderFoe'],[ME,'#leaderMe']].forEach(([side,sel])=>{
     const host=$(sel); if(!host) return;
     const p=P(side), L=p.L, mine=side===ME;
-    const usable=mine&&!TGT&&!G.resolving&&!p.leaderUsed&&p.pd>=L.habCost&&G.active===ME&&!G.over&&(!L.habReq||L.habReq(G,side))&&tutCan('leader');
+    const usable=mine&&!TGT&&!G.resolving&&canUseLeader(side)&&tutCan('leader');
     const target=!mine&&((TGT&&isTargetable('face'))||(SEL&&canAttack(SEL)&&legalTargets(SEL).face));
     host.innerHTML=`<div class="lider${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}" id="lead${side}">
       ${rostroLider(p.leaderId,side)}
@@ -1657,13 +1641,15 @@ function renderLeaders(){
       if(G.resolving) return;
       if(!tutCan('leader')){ tutNope(); return; }
       if(usable){ if(NET.guest){ gIntent('leader'); return; } useLeader(ME); }
-      else if(G.active===ME&&!p.leaderUsed&&p.pd<L.habCost) toast(`Necesitas ${L.habCost} PD`);
+      else if(G.active===ME) toast(whyNotLeader(ME));
       else fichaLider(side);
     };
     pulsacionLarga(e, ()=>fichaLider(side));
   });
 }
 function renderField(host, list, mine){
+  const seisPesadillas=!!(!mine&&G.campana?.jefeSecreto&&list.length===CARTAS_EDITOR.length&&list.every(u=>u.alive&&u.card.editorJuego));
+  host.classList.toggle('seisPesadillas',seisPesadillas);
   const seen=new Set();
   list.forEach((u,i)=>{
     seen.add(String(u.uid));
@@ -2030,18 +2016,34 @@ async function onlHost(){
     <p style="font-size:11.5px;color:#7a6d96">Cualquiera con el código puede entrar. No lo publiques.</p>`;
   const box=el('div','opts');
   const enlace=enlaceDeSala(code);
-  const sh=el('button','btn gold', navigator.share ? '🔗 Compartir enlace' : '🔗 Copiar enlace');
+  const app=el('button','btn gold','📱 Compartir código — tiene la app');
+  app.onclick=()=>compartirCodigoSala(code);
+  const sh=el('button','btn','🔗 Compartir enlace — navegador');
   sh.onclick=()=>compartirEnlace(enlace);
   const cp=el('button','btn','📋 Copiar código'); cp.onclick=()=>{ navigator.clipboard&&navigator.clipboard.writeText(code); toast('Código copiado'); };
   const cancel=el('button','btn sm','Cancelar'); cancel.onclick=()=>{ netSend({t:'bye'}); netClose(); cerrarOv(); };
-  box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box); openOv();
+  box.appendChild(app); box.appendChild(sh); box.appendChild(cp); box.appendChild(cancel); p.appendChild(box); openOv();
   await netConnect(code,true);
   netStatus('esperando a tu amigo…','warn');
   NET.onjoin=(suLider)=>{ cerrarOv(); netHostStart(ONL.lider,suLider); };
   if(NET.joinPend){ const l=NET.joinPend; NET.joinPend=null; NET.onjoin(l); }
 }
-/* la dirección de la sala: la del juego, sin el nombre de archivo, con ?sala= */
-function enlaceDeSala(code){return location.origin+location.pathname.replace(/[^/]*$/,'')+'?sala='+encodeURIComponent(code)+'&b='+BUILD.n;}
+/* El código es la ruta para una app instalada; el enlace sólo invita al
+   navegador y mantiene la edición actual (producción o beta). */
+function enlaceDeSala(code){
+  const crear=window.CAOZ_INVITACIONES?.enlace;
+  return typeof crear==='function' ? crear(code,location.href,BUILD.n) : location.origin+location.pathname.replace(/[^/]*$/,'')+'?sala='+encodeURIComponent(code)+'&b='+BUILD.n;
+}
+function textoCodigoSala(code){
+  const crear=window.CAOZ_INVITACIONES?.mensajeCodigo;
+  return typeof crear==='function' ? crear(code,location.href) : `Código de sala: ${code}. Abre Con amigos → Unirme con un código.`;
+}
+async function compartirCodigoSala(code){
+  const texto=textoCodigoSala(code);
+  if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas',text:texto}); return; }catch(e){ if(e&&e.name==='AbortError')return; } }
+  if(navigator.clipboard){ try{ await navigator.clipboard.writeText(texto);toast('Código e instrucciones copiados');return; }catch(e){} }
+  toast(texto);
+}
 async function compartirEnlace(enlace){
   if(navigator.share){ try{ await navigator.share({title:'Caoz Con Todo — El Juego de Cartas', text:'Entra a mi sala del Domo:', url:enlace}); return; }catch(e){ if(e && e.name==='AbortError') return; } }
   if(navigator.clipboard){ try{ await navigator.clipboard.writeText(enlace); toast('Enlace copiado'); return; }catch(e){} }

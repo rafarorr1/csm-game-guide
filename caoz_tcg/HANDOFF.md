@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-14 · beta 259 · producción 259 · v22 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-16 · beta 264 · producción 259 · v26 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,144 @@ números) → el código.
 
 ---
 
-## Estado vigente — acceso obligatorio publicado y verificado en producción 259
+## Estado vigente — invitaciones, Rafaela y Pitágoras publicados en beta 264
+
+El usuario autorizó llevar estas correcciones a beta. `develop:6d1c0496a5cbf4cfbf13183d030693dedb90cd6e`
+contiene la build 264.
+
+Las invitaciones separan el enlace de navegador del código que debe recibir la
+app instalada, sin perder la sala ni sus parámetros al pedir acceso. Rafaela
+ahora daña al rival y sólo cura un aliado propio que esté herido. Pitágoras
+reserva seis huecos de Pesadilla únicos: no puede repetir una Pesadilla en la
+mesa mientras siga activa, ni permitir que fichas u otras transformaciones
+ocupen esos huecos; al salir, esa Pesadilla puede volver a jugarse.
+
+No se incluyeron los cambios estéticos descartados por el usuario. La suite
+completa terminó en verde: estáticas, seis tutoriales, campaña, online,
+minijuegos, móvil, audio, balance de 2,880 partidas y regresiones. GitHub Pages
+y Cloudflare fueron comparados contra `index.html`, `motor.js`, `movil.html` y
+`final.js` de la build publicada.
+
+Artefactos: `gh-pages:7362f6f00ca49197734092ed75287bab8153183f` y
+`beta:21d3915faf554dc84928f0cbc8a820c7ee91bf1c`.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=264
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=264
+
+Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
+continúa en build 259. Una promoción posterior requiere autorización expresa.
+
+---
+
+## Estado vigente — mulligan inicial publicado en beta 263
+
+El usuario descartó los cambios estéticos del Domo y aprobó publicar sólo la
+mecánica. `develop:a76c8f32533462c54576e1900355503154649c22` contiene la build
+263.
+
+La primera mano permite seleccionar hasta dos cartas para devolver: se roba el
+mismo número de reemplazos y sólo entonces se regresan las seleccionadas al
+mazo. El flujo está integrado en escritorio, móvil, IA determinista y la
+validación autoritativa del anfitrión online. No se incluyeron archivos ni
+estilos de la revisión visual/Arena del Domo.
+
+`./publicar.sh --beta --completo` terminó en verde: comprobaciones estáticas,
+Chrome, seis tutoriales, campaña, online, regresiones, caché, arte, catálogo,
+estudio y 37 sonidos. GitHub Pages y Cloudflare compararon los archivos
+publicados byte a byte.
+
+Artefactos: `gh-pages:eb2396b5e1e3eb2de1be725cd2764ff079912e9c` y
+`beta:2a66e8ebf58afebba740f0a02212e38d446c9b8d`.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=263
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=263
+
+Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
+continúa en build 259. Una promoción posterior requiere autorización expresa.
+
+---
+
+## Estado vigente — creador inmersivo de héroe publicado en beta 262
+
+El usuario aprobó llevar a beta el creador inmersivo de héroe. `develop:ba38021fd5282f4f5874c883c7118cbdaf7a9eb1` contiene la build 262.
+
+El héroe permite elegir presentación, estatura, complexión, rostro, ojos,
+marcas, peinado, vestimenta, accesorio y equipo, además de preajustes y giro
+de la miniatura. El detalle se adapta a cada contexto: alto en el creador y
+retratos, medio en escenas y bajo sobre la mesa. Es una elección narrativa;
+no modifica mazos, cartas ni habilidades.
+
+`./publicar.sh --solo-pruebas --completo` y después
+`./publicar.sh --beta --completo` terminaron en verde. Se verificaron motor,
+seis tutoriales, campaña, creador, minijuegos, online, regresiones, caché,
+arte, catálogo, estudio y 37 sonidos.
+
+Artefactos: `gh-pages:0bc2002c97ef4d24cd69ffbc0c240b9459e12ce7` y
+`beta:f0c1060c045b0c501bd8d10ff43288299a7fe488`.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=262
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=262
+
+Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
+continúa en build 259. Una promoción posterior requiere autorización expresa.
+
+---
+
+## Estado vigente — Gero y Pitágoras publicados en beta 261
+
+El usuario aprobó llevar juntos a beta el epílogo de Gero y el ajuste de
+Pitágoras. `develop:e94ff18f19e7842b5f5f35de9d4353cdb15c4c5f` contiene la
+build 261, incluida la actualización derivada de `art/catalogo.json` para las
+cartas del Editor.
+
+Al vencer a Gero, la campaña ahora recorre deseo → fuego → deseo concedido →
+fundido a negro → selector a pantalla completa de tres sobres → fundido al
+menú. La selección se confirma una vez y no ofrece deshacer. El último puente
+sube velocidad y cadencia antes, usa cercos de sello y columnas con una salida
+alcanzable, y no crea oleadas que no puedan cruzar antes del cierre. Pitágoras
+conserva Ritual de 2 PD, una Pesadilla por turno y sus prioridades revisadas.
+
+`./publicar.sh --solo-pruebas --completo` y
+`./publicar.sh --beta --completo` terminaron en verde, incluidos los seis
+tutoriales, campaña, epílogo y minijuegos. El publicador verificó byte a byte
+escritorio, móvil, módulos, caché, arte y 37 sonidos en ambos destinos.
+
+Artefactos: `gh-pages:1a34ee663c7010645d3614bbc224db0624de99c3` y
+`beta:7dea19be6c9ba5e404d765a432a624132e99fd15`.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=261
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=261
+
+Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
+continúa en build 259. Una promoción posterior requiere autorización expresa.
+
+---
+
+## Estado vigente — interacciones publicadas en beta 260
+
+El usuario aprobó llevar únicamente cuatro correcciones de interacción a beta.
+El PR 26 quedó integrado en develop en el commit
+8e0af8969167b20baad1af685052047593b29093. Las pruebas completas y la
+publicación beta terminaron con salida 0, incluidos los seis tutoriales.
+
+La mano usa zonas de puntero estables; el selector de descarte ya no cambia el
+tamaño del pop-up al hacer hover; Golpe Directo de Adreida explica que requiere
+un Personaje aliado cuando no hay uno en el campo y no consume PD; y el volumen
+vive dentro de Extras en escritorio y móvil. No se integró la propuesta visual
+inspirada en Anno.
+
+Artefactos: gh-pages:156cb8c98ad368ff7c8fabfe0a884f6a9edfe366 y
+beta:2e256acf372023ce7ee45fbb5e82943c987500f4. El publicador comparó byte a
+byte web, móvil, módulos, caché, arte y sonido en GitHub Pages y Cloudflare.
+
+Web: https://beta.caoz-tcg.pages.dev/?b=260
+Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=260
+
+Producción no se modificó. main conserva
+783abe230bd5a1e81ae5a1e788175c0084951fb6 y sigue sirviendo build 259. Una
+promoción posterior requiere autorización expresa para esta misma build.
+
+## Registro anterior — acceso obligatorio publicado en beta 259
 
 La beta 259 aprobada quedó integrada en producción mediante el
 [PR 25](https://github.com/rafarorr1/csm-game-guide/pull/25), autorizado por Rafa.

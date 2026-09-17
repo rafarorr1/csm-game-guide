@@ -706,18 +706,25 @@ PRUEBAS.suite('d20OnlineFisico', async t => {
   }
 });
 
-PRUEBAS.suite('manoNuevaTurno',async t=>{
+PRUEBAS.suite('mulliganInicialTurno',async t=>{
   for(const pagina of ['index.html','movil.html']){
-    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=mano-turno-interna';document.body.appendChild(f);await carga;
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=mulligan-turno-interna';document.body.appendChild(f);await carga;
     const w=f.contentWindow;
     try{
-      w.newGame('fender','adreida');w.eval("G.phase='principal';G.turnNo=1;G.active=0;P(0).hand=['tal'];P(0).pd=1;");w.cerrarOv();
-      let terminarReparto,preguntas=0;w.repartirALaVista=()=>new Promise(r=>terminarReparto=r);w.ask=async()=>{preguntas++;return 1;};
-      const oferta=w.ofrecerManoNueva(0);t.check(!!terminarReparto,pagina+': la oferta espera a mostrar las cartas');
-      w.eval('G.active=1;G.turnNo=2');terminarReparto();await oferta;
-      t.check(preguntas===0&&!w.eval('P(0).manoRehecha'),pagina+': pasar de turno durante el reparto cancela la pregunta antigua sin gastar el cambio de mano');
-      w.eval('G.active=0;G.turnNo=1');const vigente=w.ofrecerManoNueva(0);terminarReparto();await vigente;
-      t.check(preguntas===1&&w.eval('P(0).manoRehecha'),pagina+': la oferta del turno vigente sigue funcionando');
+      w.newGame('fender','adreida');w.eval("G.phase='mulligan';G.active=0;P(0).hand=['tal','rey'];P(0).deck=['discipulo','matildus','bob'];");
+      const elegirAnterior=w.elegirMulliganInicial;
+      let responder;
+      w.elegirMulliganInicial=()=>new Promise(r=>{responder=r;});
+      const atrasado=w.resolverMulliganInicial(0);t.check(!!responder,pagina+': el motor pide la selección de la mano inicial');
+      w.eval('G.active=1');responder([0]);const cancelado=await atrasado;
+      t.check(cancelado.cancelada&&!w.eval('P(0).mulliganUsado'),pagina+': una selección de una mesa ya sustituida no gasta el mulligan');
+      w.eval('G.active=0');
+      let responderVigente;
+      w.elegirMulliganInicial=()=>new Promise(r=>{responderVigente=r;});
+      const vigente=w.resolverMulliganInicial(0);t.check(!!responderVigente,pagina+': la mano vigente sigue pidiendo su selección');
+      responderVigente([1]);await vigente;
+      t.check(w.eval('P(0).mulliganUsado&&!P(0).mulliganPendiente'),pagina+': una selección vigente se aplica una vez y cierra la oportunidad');
+      w.elegirMulliganInicial=elegirAnterior;
     }finally{f.remove();}
   }
 });
@@ -732,8 +739,21 @@ PRUEBAS.suite('editorCartas',async t=>{
       const tipos=[];w.PITAGORAS_PRUEBAS.iniciar=async op=>{tipos.push(op);return{sobrevivio:true,cancelado:false,...(op.tipo==='duelo'?{parejas:2,fallosMemoria:0,vidas:3}:{})};};
       await w.setupMatch('fender','adreida',{first:0,campana:{id:'mazo-editor',jefeSecreto:true,alma:40}});
       const ids=w.eval('CARTAS_EDITOR.slice()');t.check(w.eval('[...P(1).deck,...P(1).hand].length===40 && [...P(1).deck,...P(1).hand].every(id=>CARDS[id].editorJuego)'),pagina+': mazo propio antes de repartir');
-      for(const id of ids){w.eval("G.active=1;P(1).field=[];P(1).pd=6;P(1).hand=['"+id+"']");const alma=w.eval('P(1).alma');t.check(await w.playFromHand(1,id),pagina+': juega '+id);t.igual(w.eval('P(1).pd'),4,pagina+': paga sus 2 PD');t.igual(w.eval('P(1).alma'),alma-2,pagina+': una sola aplicación del resultado');t.check(w.eval('P(1).field').some(u=>u.card.id===id&&u.alive&&u.sick)&&!w.eval('P(1).grave').includes(id),pagina+': la pesadilla queda en mesa con cansancio y no se descarta');}
+      const perfil=JSON.parse(w.eval("JSON.stringify(CARTAS_EDITOR.map(id=>({id,a:CARDS[id].a,h:CARDS[id].h,p:CARDS[id].editorPrioridad})))"));
+      t.check(JSON.stringify(perfil)===JSON.stringify([{id:'editorcosecha',a:2,h:4,p:45},{id:'editorcorte',a:3,h:3,p:53},{id:'editorcuadro',a:3,h:3,p:48},{id:'editorcarrera',a:3,h:5,p:58},{id:'editororbita',a:3,h:4,p:50},{id:'editorduelo',a:3,h:4,p:42}]),pagina+': cada Pesadilla tiene cuerpo propio y una prioridad de IA explícita.');
+      w.eval("G.phase='principal';G.active=1;P(1).pd=2;P(1).field=[];P(0).field=[];G.campana={jefeSecreto:true}");
+      t.check(w.eval("aiScore('editorcarrera',1)>Math.max(...CARTAS_EDITOR.filter(id=>id!=='editorcarrera').map(id=>aiScore(id,1)))"),pagina+': la IA reconoce El último puente como su apertura de presión.');
+      for(const id of ids){w.eval("G.active=1;P(1).field=[];P(1).pd=6;P(1).hand=['"+id+"'];G.campana.editorPesadillaTurno=null");const alma=w.eval('P(1).alma');t.check(await w.playFromHand(1,id),pagina+': juega '+id);t.igual(w.eval('P(1).pd'),4,pagina+': paga sus 2 PD');t.igual(w.eval('P(1).alma'),alma-2,pagina+': una sola aplicación del resultado');t.check(w.eval('P(1).field').some(u=>u.card.id===id&&u.alive&&u.sick)&&!w.eval('P(1).grave').includes(id),pagina+': la pesadilla queda en mesa con cansancio y no se descarta');}
       t.check(tipos.map(o=>o.tipo).join(',')==='isometrico,laseres,fps,carrera,orbital,duelo'&&tipos.every(o=>o.cinematica===true)&&genericas===0,pagina+': cada carta llama a su juego sin otra presentación genérica');
+      w.eval("G.active=1;G.phase='principal';G.turnNo=7;G.campana={jefeSecreto:true};P(1).field=[];P(1).pd=4;P(1).hand=['editorcarrera','editorcorte']");
+      t.check(await w.playFromHand(1,'editorcarrera')&&!w.canPlay(1,'editorcorte'),pagina+': una Pesadilla fijada bloquea otra prueba del Editor durante el mismo turno.');
+      w.eval('G.turnNo=8');t.check(w.canPlay(1,'editorcorte'),pagina+': la siguiente vuelta vuelve a permitir una Pesadilla del Editor.');
+      w.eval("G.active=1;G.phase='principal';G.turnNo=12;G.campana={jefeSecreto:true};P(1).field=[mkUnit('editorcarrera',1)];P(1).pd=4;P(1).hand=['editorcarrera','editorcorte']");
+      t.check(!w.canPlay(1,'editorcarrera')&&w.whyNot(1,'editorcarrera')==='Pitágoras ya tiene esta Pesadilla en mesa'&&w.canPlay(1,'editorcorte'),pagina+': una copia viva bloquea sólo su propio minijuego y deja disponible otro distinto.');
+      w.eval("G.active=1;G.phase='principal';G.turnNo=13;G.campana={jefeSecreto:true};P(1).field=CARTAS_EDITOR.slice(0,4).map(id=>mkUnit(id,1));P(1).pd=20;P(1).hand=['editororbita'];G.place={id:'montanas',side:0}");
+      const tirar=w.roll;w.roll=async()=>1;
+      try{await w.eval('CARDS.montanas.onAnyStart(G,0)');}finally{w.roll=tirar;}
+      t.check(!w.eval("P(1).field.some(u=>u.card.id==='aidman')")&&w.canPlay(1,'editororbita')&&!w.canPlay(1,'aidman')&&w.whyNot(1,'aidman')==='El campo del Editor está reservado para sus Pesadillas',pagina+': Las Montañas no ocupan un hueco del Editor y las seis Pesadillas conservan su reserva.');
       await w.setupMatch('fender','adreida',{first:0});t.check(w.eval('[...P(1).hand,...P(1).deck].every(id=>!CARDS[id].editorJuego)'),pagina+': partida normal conserva Adreida');
       t.igual(w.eval('JSON.stringify(DECKS)'),originales,pagina+': los seis mazos no cambian');
       w.eval("P(0).hand=['editorcosecha'];P(0).pd=10");t.check(!w.canPlay(0,'editorcosecha'),pagina+': carta exclusiva del jefe');
@@ -985,7 +1005,23 @@ PRUEBAS.suite('pitagorasCarrilesMemoria',async t=>{
   const API=window.PITAGORAS_PRUEBAS,M=API.modelo;
   const s=M.crear({tipo:'carrera'});s.siguiente=Infinity;M.paso(s,{mx:-1},.3);t.check(s.carril===-1&&s.jugador.x===-1,'Puente: una dirección termina en el carril izquierdo, nunca entre carriles');M.paso(s,{mx:1},.3);t.check(s.carril===0&&s.jugador.x===0,'Puente: cambiar de dirección avanza exactamente un carril');M.paso(s,{mx:1},1);t.check(s.carril===0,'Puente: mantener el mando no desliza ni cruza un segundo carril');M.paso(s,{mx:0},.02);M.paso(s,{mx:1},.3);t.check(s.carril===1&&s.jugador.x===1,'Puente: soltar y volver a pulsar habilita el siguiente salto de carril');M.paso(s,{},.02);M.paso(s,{mx:1},.3);t.check(s.carril===1,'Puente: el carril derecho es un límite firme');
   const centro=M.crear({tipo:'carrera'});centro.siguiente=Infinity;M.paso(centro,{mx:.3},.5);t.igual(centro.carril,0,'Puente: la zona muerta evita cambios por ruido del mando');
-  const temprano=M.crear({tipo:'carrera'}),tarde=M.crear({tipo:'carrera'});temprano.invulnerable=tarde.invulnerable=60;M.paso(temprano,{},1);M.paso(tarde,{},16);t.check(tarde.velocidad>temprano.velocidad+3,'Puente: la velocidad aumenta durante el trayecto');t.check((tarde.siguiente-tarde.t)<1.46&&tarde.oleada>Math.floor(tarde.t/1.45),'Puente: los obstáculos aparecen con mayor frecuencia en la segunda mitad');
+  const temprano=M.crear({tipo:'carrera'}),tarde=M.crear({tipo:'carrera'});temprano.invulnerable=tarde.invulnerable=60;M.paso(temprano,{},1);M.paso(tarde,{},16);t.check(tarde.velocidad>temprano.velocidad+10.5,'Puente: la velocidad gana más de diez puntos antes de los últimos segundos');t.check((tarde.siguiente-tarde.t)<.75&&tarde.oleada>=18,'Puente: la segunda mitad encadena decisiones con una frecuencia claramente mayor');
+  const intervalo=tiempo=>{const puente=M.crear({tipo:'carrera'});puente.t=tiempo;puente.siguiente=tiempo;M.paso(puente,{},1/60);return puente.siguiente-puente.t;};
+  t.check(intervalo(17)<.70&&intervalo(17)<intervalo(2)-.27,'Puente: la cadencia final baja a menos de siete décimas sin quitar el aviso visual.');
+  const intensidad=M.crear({tipo:'carrera',semilla:9});intensidad.invulnerable=60;M.paso(intensidad,{},20);t.check(intensidad.oleadasPuenteCruzadas===intensidad.oleada&&intensidad.oleada>=22&&intensidad.amenazasPuenteCruzadas>=40,'Puente: al menos veintidós oleadas y cuarenta amenazas alcanzan de verdad el puente antes del cierre.');
+  const patron=(tiempo,onda,carril=0)=>{const puente=M.crear({tipo:'carrera',semilla:9});puente.t=tiempo;puente.siguiente=tiempo;puente.oleada=onda;puente.carril=carril;M.paso(puente,{},1/60);return puente.obstaculos;};
+  const muro=patron(5,3),cerco=patron(17,6,1),asalto=patron(17,7),carriles=[-1,0,1];
+  t.check(muro.length===2&&muro.every(o=>o.tipo==='columna'&&o.patron==='muro')&&carriles.filter(c=>!muro.some(o=>o.carril===c)).length===1,'Puente: los primeros muros bloquean dos carriles y siempre dibujan una salida.');
+  const salidaCerco=carriles.filter(c=>!cerco.some(o=>o.tipo==='columna'&&o.carril===c));t.check(cerco.length===3&&cerco.some(o=>o.tipo==='sello')&&cerco.filter(o=>o.tipo==='columna'&&o.patron==='cerco').length===2&&salidaCerco.length===1&&salidaCerco[0]>=0,'Puente: el cerco final exige salto y un cambio alcanzable, pero deja exactamente un carril libre.');
+  t.check(asalto.length===2&&asalto.some(o=>o.tipo==='sello')&&asalto.some(o=>o.tipo==='columna')&&asalto.every(o=>o.patron==='asalto')&&carriles.some(c=>!asalto.some(o=>o.tipo==='columna'&&o.carril===c)),'Puente: la recta final combina salto y cambio de carril sin cerrar los tres carriles.');
+  const golpeCerco=M.crear({tipo:'carrera'});golpeCerco.siguiente=Infinity;golpeCerco.obstaculos=cerco.map(o=>({...o,z:.8,paso:false}));M.paso(golpeCerco,{},.02);t.check(golpeCerco.vidas===2&&golpeCerco.oleadasPuenteCruzadas===1,'Puente: un grupo de tres piezas cobra como máximo una vida.');
+  let reacciones=0,vidasReaccion=3;
+  for(let semilla=1;semilla<=16;semilla++){
+    const puente=M.crear({tipo:'carrera',semilla}),memoriaReaccion={};let espera=0,entrada={};
+    for(let n=0;n<1200&&!puente.terminado;n++){espera+=1/60;if(espera>=.24){entrada=API.guiasPrueba.carrera(puente,memoriaReaccion);espera=0;}M.paso(puente,entrada,1/60);}
+    if(puente.sobrevivio)reacciones++;vidasReaccion=Math.min(vidasReaccion,puente.vidas);
+  }
+  t.check(reacciones===16&&vidasReaccion>=1,'Puente: un controlador que lee y decide cada 240 ms sobrevive con entradas normales, aunque deja poco margen en la recta final.');
   const pareja=s=>s.cartasMemoria.map((v,i)=>i).filter(i=>s.cartasMemoria.indexOf(s.cartasMemoria[i])!==s.cartasMemoria.lastIndexOf(s.cartasMemoria[i]));
   const memoria=M.crear({tipo:'duelo',semilla:17});t.check(memoria.faseMemoria==='mostrar'&&memoria.cartasMemoria.length===5&&pareja(memoria).length===2,'Memoria: presenta cinco cartas con exactamente una pareja');
   t.check(memoria.cartasMemoria.every(id=>typeof id==='string'&&API.cartasMemoria.includes(id)&&T.CARDS[id]),'Memoria: la pareja y sus distractores son cartas reales del catálogo del juego');t.check(Math.abs(memoria.reveladoMemoria-1.5)<1e-8,'Memoria: la primera exposición dura 1.5 segundos');
@@ -1280,6 +1316,23 @@ PRUEBAS.suite('pitagorasIntegracion',async t=>{
       const inmediato=resultado=>{w.campanaInterferenciaPitagoras=async(side,id,g)=>{eventos.push({side,id,g});return resultado;};};
       const diferir=()=>{const pendientes=[];w.campanaInterferenciaPitagoras=(side,id,g)=>new Promise(resolve=>{eventos.push({side,id,g});pendientes.push(resolve);});return pendientes;};
       const ids=w.eval('CARTAS_EDITOR.slice()');
+      // El jefe no entrega un turno vacío al inicio: conserva la curva normal
+      // después de esta reserva inicial y el refuerzo sólo existe en campaña.
+      w.newGame('fender','adreida');w.eval("G.campana={id:'ritual-editor',etapa:6,jefeSecreto:true};G.second=0;G.turnNo=0;P(1).pdMax=0");w.aiTurn=async()=>{};
+      await w.startTurn(1);t.check(w.eval('P(1).pdMax===2&&P(1).pd===2&&G.campana.editorRitual'),pagina+': Ritual del Editor abre la primera vuelta de Pitágoras con 2 PD.');w.relojPara();w.aiTurn=turnoIA;
+      w.newGame('fender','adreida');w.eval("G.campana={id:'ritual-editor-segundo',etapa:6,jefeSecreto:true};G.second=1;G.turnNo=1;P(1).pdMax=0");w.aiTurn=async()=>{};
+      await w.startTurn(1);t.check(w.eval('P(1).pdMax===2&&P(1).pd===2&&G.campana.editorRitual'),pagina+': el Ritual conserva exactamente 2 PD aunque Pitágoras haya salido segundo.');w.relojPara();w.aiTurn=turnoIA;
+      // Si la mano inicial trae las seis Pesadillas, el bot debe presentar el
+      // puente primero, no depender del orden de la mano para su presión.
+      arena();inmediato({sobrevivio:true,cancelado:false});w.eval("P(1).pd=2;P(1).hand=CARTAS_EDITOR.slice(0,5);P(1).field=[];P(0).field=[];P(1).leaderUsed=true;G.phase='principal';G.active=1");
+      const terminarApertura=w.endTurn;w.endTurn=async()=>{};await w.aiTurn();w.endTurn=terminarApertura;
+      t.check(w.eval("P(1).field.length===1&&P(1).field[0].card.id==='editorcarrera'"),pagina+': la IA abre con El último puente cuando tiene 2 PD.');
+      // Con PD extra sigue habiendo una sola prueba por turno: aumentar la
+      // economía debe endurecer su mesa, no convertir un turno en una cadena
+      // imposible de minijuegos.
+      arena();inmediato({sobrevivio:true,cancelado:false});w.eval("P(1).pd=4;P(1).hand=['editorcarrera','editorcorte'];P(1).field=[];P(0).field=[];P(1).leaderUsed=true;G.phase='principal';G.active=1;G.turnNo=7");
+      w.endTurn=async()=>{};await w.aiTurn();w.endTurn=terminarApertura;
+      t.check(w.eval("P(1).field.length===1&&P(1).field[0].card.id==='editorcarrera'&&P(1).pd===2"),pagina+': con 4 PD la IA presenta una sola Pesadilla y conserva el resto para su siguiente vuelta.');
       // Las seis cartas son cuerpos del TCG, no hechizos de un solo uso.
       // Se prueba el turno real que quita cansancio antes del ataque real.
       for(const id of ids){
@@ -1302,10 +1355,15 @@ PRUEBAS.suite('pitagorasIntegracion',async t=>{
       const vida=guardian.dmg;await w.doAttack(pesadilla,guardian);t.check(guardian.dmg>vida||!guardian.alive,pagina+': la pesadilla también pelea contra cartas');
       arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');const devuelta=w.eval('P(1)').field[0];w.bounce(devuelta);
       t.check(!devuelta.alive&&w.eval("P(1).hand.includes('editorcosecha')&&P(1).field.length===0"),pagina+': devolver a la mano no desvanece una ficha');
-      // El límite de cinco evita apilar seis cuerpos y tampoco cobra una
-      // prueba ni PD si la última carta no tiene espacio para entrar.
-      arena();inmediato({sobrevivio:true});for(const id of ids.slice(0,5)){w.eval('P(1)').hand=[id];await w.playFromHand(1,id);}w.eval('P(1)').hand=[ids[5]];const pd=w.eval('P(1).pd');
-      t.check(!w.canPlay(1,ids[5])&&!await w.playFromHand(1,ids[5])&&w.eval('P(1).field.length')===5&&w.eval('P(1).pd')===pd&&eventos.length===5,pagina+': campo lleno no paga ni abre una sexta prueba');
+      // El jefe reserva seis plazas para sus seis minijuegos, pero ninguna
+      // puede repetir una Pesadilla que siga en mesa. Las demás mesas se
+      // quedan en cinco; ésta es una excepción exclusiva del combate secreto.
+      arena();inmediato({sobrevivio:true});w.eval('P(0).alma=P(1).alma=40');for(const [i,id] of ids.entries()){w.eval('P(1)').hand=[id];w.eval('P(1)').pd=20;w.eval('G.turnNo='+String(10+i));t.check(await w.playFromHand(1,id),pagina+': abre la Pesadilla única '+id);}
+      t.check(w.eval('P(1).field.length===6&&new Set(P(1).field.map(u=>u.card.id)).size===6')&&eventos.length===6&&new Set(eventos.map(e=>e.id)).size===6,pagina+': las seis Pesadillas distintas caben y presentan los seis minijuegos.');
+      w.eval("G.turnNo=20;P(1).pd=20;P(1).hand=['editorcarrera']");const pd=w.eval('P(1).pd');
+      t.check(!w.canPlay(1,'editorcarrera')&&!await w.playFromHand(1,'editorcarrera')&&w.whyNot(1,'editorcarrera')==='Pitágoras ya tiene esta Pesadilla en mesa'&&w.eval('P(1).field.length')===6&&w.eval('P(1).pd')===pd&&eventos.length===6,pagina+': una séptima carta repetida no cobra ni vuelve a abrir su minijuego.');
+      const carrera=w.eval("P(1).field.find(u=>u.card.id==='editorcarrera')");await w.destroy(carrera);w.eval("G.turnNo=21;P(1).pd=20;P(1).hand=['editorcarrera']");
+      t.check(w.canPlay(1,'editorcarrera')&&await w.playFromHand(1,'editorcarrera')&&w.eval("P(1).field.length===6&&P(1).field.filter(u=>u.card.id==='editorcarrera').length===1")&&eventos.length===7,pagina+': si la Pesadilla sale de la mesa, una copia nueva puede volver a entrar.');
       arena();inmediato({sobrevivio:false,cancelado:false});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.check(w.eval('P(0).alma===18&&P(1).alma===20&&P(1).field.length===1'),pagina+': fallar conserva la carta y quita sólo 2 al jugador');
       arena();inmediato({cancelado:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');t.igual(w.eval('P(0).alma+P(1).alma'),40,pagina+': cancelar no inflige daño');
       arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha'];P(1).pd=0");t.check(!await w.playFromHand(1,'editorcosecha')&&!eventos.length,pagina+': sin PD no hay minijuego');
@@ -1320,14 +1378,19 @@ PRUEBAS.suite('pitagorasIntegracion',async t=>{
         const side=caso==='jugador'?0:1;w.eval('P('+side+')').hand=['editorcosecha'];await w.playFromHand(side,'editorcosecha');
         t.check(!eventos.length&&w.eval('P(0).alma+P(1).alma')===40,pagina+': no modifica '+caso);w.eval('NET.on=false');
       }
-      // Dos cartas reales de la IA esperan cada prueba antes de continuar;
-      // ninguna puede atacar en el mismo turno en que acaba de entrar.
+      // Dos Pesadillas reales de la IA esperan su prueba, pero el jefe deja la
+      // segunda para su siguiente turno: presión alta sin dos minijuegos
+      // consecutivos en una sola vuelta.
       arena();const pendientes=diferir();w.eval("P(1).hand=['editorcosecha','editorcorte']");let termino=false,cedio=false;w.endTurn=async()=>{cedio=true;};
       const turno=w.aiTurn().then(()=>{termino=true;});await hasta(()=>eventos.length===1,'la primera carta abre la interrupción');await sleep(20);
       t.check(!termino&&!cedio&&w.eval('G.busy&&P(1).hand.length===1&&P(1).field.length===1'),pagina+': la IA espera con la carta ya en mesa');
-      pendientes[0]({sobrevivio:true});await hasta(()=>eventos.length===2,'la IA sólo juega la segunda al resolver la primera');
-      t.check(!termino&&!cedio,pagina+': la segunda prueba también bloquea el turno');pendientes[1]({sobrevivio:false});await turno;
-      t.check(cedio&&w.eval('P(0).alma===18&&P(1).alma===18&&P(1).field.length===2&&P(1).field.every(u=>u.sick&&!u.attacked)'),pagina+': un resultado por carta y ningún ataque prematuro');
+      pendientes[0]({sobrevivio:true});await turno;
+      t.check(termino&&cedio&&w.eval('P(0).alma===20&&P(1).alma===18&&P(1).field.length===1&&P(1).hand.length===1'),pagina+': la segunda Pesadilla espera otra vuelta tras resolver la primera.');
+      termino=false;cedio=false;w.eval('G.turnNo+=1;G.phase="principal";P(1).pd=20;P(1).field.forEach(u=>u.sick=true)');
+      const segundo=w.aiTurn().then(()=>{termino=true;});await hasta(()=>eventos.length===2,'la segunda carta abre su prueba en la siguiente vuelta');
+      t.check(!termino&&!cedio&&w.eval('G.busy&&P(1).field.length===2&&P(1).hand.length===0'),pagina+': la segunda prueba vuelve a bloquear únicamente su propio turno.');
+      pendientes[1]({sobrevivio:false});await segundo;
+      t.check(termino&&cedio&&w.eval('P(0).alma===18&&P(1).alma===18&&P(1).field.length===2&&P(1).field.every(u=>u.sick&&!u.attacked)'),pagina+': un resultado por Pesadilla y ningún ataque prematuro.');
       w.eval('P(1).field.forEach(u=>u.sick=false);P(1).hand=[];G.phase="principal"');await w.aiTurn();w.endTurn=finTurno;
       t.check(w.eval('P(0).alma')===13&&eventos.length===2,pagina+': la IA reutiliza los dos cuerpos para atacar sin repetir pruebas');
       // Llegar a cero entra al final de campaña. El resultado de una prueba
@@ -2230,15 +2293,35 @@ PRUEBAS.suite('campanaSobres',async t=>{
         w.campanaGuardar({version:1,id,lider:'fender',etapa,...extra});w.newGame('fender',etapa===5?'gero':'mohamed');
         w.eval('G.over=true;G.campana='+JSON.stringify({id,etapa}));w.campanaFinal(ganador,'Prueba de recompensa');
       };
+      // En el recorrido ordinario, los tres sobres no nacen en la Victoria:
+      // quedan detrás de Deseo concedido y su primer fundido a negro. Este
+      // puente reproduce sólo la persistencia de ese último paso; la UI y el
+      // fundido completo se prueban en campanaEpilogoSobres/campanaDeseo.
+      const concederTrasDeseo=id=>{
+        const p=w.campanaLeer();
+        t.check(p?.id===id&&p.etapa===6&&p.deseoFinalGero===true,pagina+': la victoria ordinaria de Gero queda marcada para el deseo.');
+        p.deseo={deseo:'Prueba local',simulado:true};p.recompensaFinalLista=true;
+        t.check(w.campanaGuardar(p,{sinEntregar:true}),pagina+': el deseo y su recibo se guardan antes de tocar la colección.');
+        t.check(w.campanaEntregarSobre(w.campanaLeer()),pagina+': el primer negro concede una sola recompensa pendiente.');
+      };
+      const dejarPendiente=id=>{
+        const p={version:1,id,lider:'fender',etapa:6,deseo:{deseo:'Prueba local',simulado:true},recompensaFinalLista:true};
+        w.campanaGuardar(p,{sinEntregar:true});w.campanaEntregarSobre(p);
+        // campanaEntregarSobre anota el recibo fallido en el mismo progreso;
+        // lo persistimos como hace el puente real tras un fallo de inventario.
+        w.campanaGuardar(p,{sinEntregar:true});return p;
+      };
       for(let etapa=0;etapa<5;etapa++)duelo('recorrido-1',etapa,0);
       t.igual(m.sobres(),0,pagina+': los rivales intermedios no dan sobres.');
       duelo('recorrido-1',5,1);t.igual(m.sobres(),0,pagina+': perder contra Gero no da sobres.');
-      duelo('recorrido-1',5,0);t.igual(m.sobres(),3,pagina+': completar la campaña concede tres sobres.');
+      duelo('recorrido-1',5,0);t.igual(m.sobres(),0,pagina+': la Victoria no adelanta sobres antes del deseo.');
+      concederTrasDeseo('recorrido-1');t.igual(m.sobres(),3,pagina+': el primer negro posterior al deseo concede tres sobres.');
       w.campanaFinal(0,'Victoria repetida');w.campanaGuardar(w.campanaLeer());
       t.igual(m.sobres(),3,pagina+': duplicar la victoria o guardar de nuevo no repite el premio.');
       await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;w.cinematicaFinal=async()=>true;
       t.igual(m.sobres(),3,pagina+': recargar el final conserva exactamente tres sobres.');
-      duelo('recorrido-2',5,0);t.igual(m.sobres(),6,pagina+': repetir campaña con el mismo mazo da otros tres sobres.');
+      duelo('recorrido-2',5,0);t.igual(m.sobres(),3,pagina+': una segunda victoria tampoco entrega antes del deseo.');
+      concederTrasDeseo('recorrido-2');t.igual(m.sobres(),6,pagina+': repetir campaña con el mismo mazo da otros tres sobres después del deseo.');
       t.check(m.recompensasPendientes().length===2&&!m.inventarioSobres().length,pagina+': cada campaña conserva su elección independiente.');
       t.igual(m.abrirSobre(),null,pagina+': no abre ni asigna tipos sin una elección previa.');
       const recompensa=m.recompensasPendientes().find(p=>p.origen==='campana'&&p.referencia==='recorrido-2'),grupo=m.grupos()[0].id,antesDeElegir=JSON.stringify(m.leer().cantidades);
@@ -2268,14 +2351,14 @@ PRUEBAS.suite('campanaSobres',async t=>{
       // recargar se recupera el sobre sin repetir el combate ni la recompensa.
       const set=w.Storage.prototype.setItem;
       w.Storage.prototype.setItem=function(k,v){if(k===m.clave)throw new w.DOMException('Sin espacio','QuotaExceededError');return set.call(this,k,v);};
-      w.campanaGuardar({version:1,id:'premio-pendiente',lider:'fender',etapa:6});
+      dejarPendiente('premio-pendiente');
       t.igual(m.sobres(),11,pagina+': no finge haber guardado un premio fallido.');w.Storage.prototype.setItem=set;
       await cargar();w=f.contentWindow;m=w.CAOZ_COLECCION;
       t.igual(m.sobres(),14,pagina+': recupera los tres sobres pendientes tras recargar.');
       w.campanaEntregarSobre(w.campanaLeer());t.igual(m.sobres(),14,pagina+': reintentar no vuelve a concederlos.');
       const setNuevo=w.Storage.prototype.setItem;
       w.Storage.prototype.setItem=function(k,v){if(k===m.clave)throw new w.DOMException('Sin espacio','QuotaExceededError');return setNuevo.call(this,k,v);};
-      w.campanaGuardar({version:1,id:'premio-anterior',lider:'fender',etapa:6});
+      dejarPendiente('premio-anterior');
       w.campanaGuardar({version:1,id:'nueva-con-pendiente',lider:'adreida',etapa:0});
       t.check(w.campanaLeer().sobresPendientes?.includes('premio-anterior'),pagina+': empezar otra campaña conserva la recompensa que no pudo guardarse.');
       w.Storage.prototype.setItem=setNuevo;
@@ -2460,7 +2543,7 @@ PRUEBAS.suite('campanaAscenso', async t => {
       w.crearMesaCampana=(c,op)=>{const mesa=crear(c,op);mesa.golpear=()=>Promise.resolve(true);return mesa;};
       w.setTimeout=(fn,ms,...args)=>{if(ms===5000||ms===1000){const k=++id;timers.set(k,{fn:()=>fn(...args),ms});return k;}return poner(fn,ms,...args);};
       w.clearTimeout=k=>{if(timers.has(k))timers.delete(k);else quitar(k);};
-      const vencer=()=>{w.campanaGuardar({version:1,id:'ascenso',lider:'fender',etapa:6,mesaPendiente:5});w.campanaRuta();};
+      const vencer=()=>{w.campanaGuardar({version:1,id:'ascenso',lider:'fender',etapa:6,mesaPendiente:5,prueba:true});w.campanaRuta();};
       vencer();await sleep(50);
       const luz=d.getElementById('campanaAscenso'),mesa=w.eval('campanaMesaEscena');
       t.check(luz?.open&&luz.dataset.fase==='rayo'&&!d.querySelector('#campanaDeseo'),pagina+': el derribo de Gero inicia automáticamente el rayo antes del deseo.');
@@ -2483,11 +2566,65 @@ PRUEBAS.suite('campanaAscenso', async t => {
   }
 });
 
+PRUEBAS.suite('campanaEpilogoSobres', async t => {
+  for(const [pagina,ancho,alto] of [['index.html',1280,800],['movil.html',390,664]]){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
+    const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=epilogo-sobres-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=w.document,media=w.matchMedia;let inventario;
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
+      w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true,addEventListener(){},removeEventListener(){}}:media.call(w,q);
+      w.newGame('fender','gero');w.showScreen('board');
+      const referencia='epilogo-'+(pagina==='index.html'?'desktop':'movil');
+      t.check(m.concederSobreCampana(referencia),pagina+': prepara el recibo de tres sobres de campaña.');
+      let confirmaciones=0,recibido=null;
+      t.check(w.abrirRecompensaSobres({origen:'campana',referencia,finalCampana:true,onConfirmar:datos=>{confirmaciones++;recibido=datos;w.showScreen('menu');}})===true,pagina+': la campaña debe abrir el selector final.');
+      const panel=d.querySelector('#coleccionPanel[data-epilogo-sobres="campana"]'),carrusel=panel?.querySelector('[data-epilogo-carrusel]'),escena=panel?.querySelector('.coleccionFinalCampanaEscena');
+      t.check(panel?.open&&panel.dataset.epilogoFase==='elegir',pagina+': la selección final abre en su propia fase.');
+      t.check(!panel.querySelector('.coleccionFinalDeshacer'),pagina+': una elección final no ofrece deshacer un sobre ya fijado.');
+      t.check(!!escena&&w.getComputedStyle(escena).animationName==='coleccionFinalCampanaEntrada',pagina+': los sobres y sus controles entran con un fundido desde el negro.');
+      t.check(panel.getAttribute('aria-labelledby')==='coleccionFinalCampanaTitulo'&&!!d.getElementById('coleccionFinalCampanaTitulo'),pagina+': el selector final conserva un título accesible que permanece visible.');
+      const caja=panel.getBoundingClientRect();
+      t.check(caja.left<=1&&caja.top<=1&&caja.right>=ancho-1&&caja.bottom>=alto-1,pagina+': el selector final debe cubrir todo el visor.');
+      t.check(!d.querySelector('.coleccionElegirDespues')&&!d.querySelector('#menu.on'),pagina+': el epílogo no permite posponer ni deja ver el menú.');
+      panel.querySelector('.coleccionCerrar').click();panel.dispatchEvent(new w.Event('cancel',{cancelable:true}));
+      t.check(panel.open,pagina+': Escape y el cierre ordinario no abandonan los sobres finales.');
+      t.check(carrusel&&carrusel.scrollWidth>carrusel.clientWidth,pagina+': los sobres finales se eligen con un carrusel horizontal real.');
+      const antes=carrusel.getAttribute('aria-activedescendant');
+      carrusel.dispatchEvent(new w.KeyboardEvent('keydown',{key:'ArrowRight',bubbles:true,cancelable:true}));await sleep(30);
+      t.check(carrusel.getAttribute('aria-activedescendant')!==antes,pagina+': flecha derecha debe desplazar la colección activa.');
+      const elegir=panel.querySelector('[data-epilogo-elegir]');
+      elegir.click();elegir.click();elegir.click();
+      t.check(panel.dataset.epilogoFase==='confirmar'&&panel.querySelectorAll('.coleccionFinalMarca[data-grupo]').length===3,pagina+': el carrusel conserva exactamente las tres elecciones, incluso repetidas.');
+      t.check(m.recompensasPendientes().length===1&&!m.inventarioSobres().length,pagina+': elegir visualmente no concede cartas ni consume sobres.');
+      const guardar=panel.querySelector('[data-epilogo-confirmar]');guardar.click();guardar.click();await sleep(80);
+      t.check(confirmaciones===1&&recibido?.sobres?.length===3,pagina+': guardar confirma una sola vez los tres sobres.');
+      t.check(!panel.open&&d.querySelector('#menu.on'),pagina+': sólo después del segundo fundido vuelve al menú.');
+      t.check(!m.recompensasPendientes().length&&m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0)===3&&!m.pendiente(),pagina+': confirma tres sobres sellados sin abrir ni conceder cartas.');
+      // Si Colección no responde al reanudar, Escape no puede dejar un diálogo
+      // cerrado retenido: conserva el derecho y permite abrir recuperación otra vez.
+      const abrirPuente=w.campanaAbrirSobresFinal;
+      w.campanaGuardar({version:1,id:'epilogo-recuperable-'+pagina,lider:'fender',etapa:6,deseo:{simulado:true},deseoFinalGero:true,recompensaFinalLista:true},{sinEntregar:true});
+      w.eval('G=null;campanaMemoria=null;');w.campanaAbrirSobresFinal=()=>false;w.campanaRuta();await sleep(0);
+      const recuperacion=d.getElementById('campanaDeseo');
+      t.check(recuperacion?.open&&recuperacion.dataset.fase==='recuperacion',pagina+': una reanudación sin Colección ofrece recuperación, no el deseo otra vez.');
+      recuperacion.querySelector('.deseoRecuperacion .gold').click();await sleep(0);
+      t.check(recuperacion.open&&recuperacion.dataset.fase==='recuperacion',pagina+': si el selector vuelve a fallar, el cierre anterior no borra el diálogo de reintento.');
+      recuperacion.dispatchEvent(new w.Event('cancel',{cancelable:true}));await sleep(0);
+      t.check(!d.querySelector('#campanaDeseo')&&w.campanaLeer().deseoFinalGero===true&&w.campanaLeer().recompensaFinalLista===true,pagina+': Escape conserva la recuperación y no deja una escena cerrada.');
+      t.check(w.campanaRecuperarSobresFinal()===true&&d.querySelector('#campanaDeseo')?.open,pagina+': después de Escape puede volver a abrirse la recuperación.');
+      w.campanaCerrarDeseo();w.campanaAbrirSobresFinal=abrirPuente;
+    }finally{
+      w.matchMedia=media;d.querySelector('#coleccionPanel')?.close();inventario?.restaurar();w.localStorage.removeItem('caoz.campana.v1.prueba');w.relojPara();f.remove();
+    }
+  }
+});
+
 PRUEBAS.suite('campanaDeseo', async t => {
   for(const [pagina,ancho,alto] of [['index.html',1280,800],['movil.html',390,664]]){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;border:0;width:'+ancho+'px;height:'+alto+'px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=deseo-interno';document.body.appendChild(f);await carga;
-    const w=f.contentWindow,d=w.document,clave='caoz.deseos.v1.prueba',peticiones=[];
+    const w=f.contentWindow,d=w.document,clave='caoz.deseos.v1.prueba',peticiones=[];let inventario;
     const ponerTimer=w.setTimeout,quitarTimer=w.clearTimeout,fetchOriginal=w.fetch.bind(w);let ahora=0,id=0,pendientes=new Map();
     const avanzar=async ms=>{
       const hasta=ahora+ms;
@@ -2498,6 +2635,7 @@ PRUEBAS.suite('campanaDeseo', async t => {
       ahora=hasta;await sleep(0);
     };
     try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
       w.localStorage.removeItem(clave);
       w.fetch=async(url,op)=>{
         const pedido=url instanceof w.Request?url:null,destino=new URL(pedido?.url||url,w.location.href),ruta=destino.pathname;
@@ -2512,7 +2650,12 @@ PRUEBAS.suite('campanaDeseo', async t => {
       t.check(!d.querySelector('#campanaDeseo'),pagina+': el deseo sólo se ofrece al vencer a todos los rivales.');
       w.campanaGuardar({...w.campanaLeer(),etapa:6,mesaPendiente:5});w.campanaAbrirDeseo();
       t.check(!d.querySelector('#campanaDeseo'),pagina+': debe terminar el derribo de Gero antes del deseo.');
-      const progreso={...w.campanaLeer()};delete progreso.mesaPendiente;w.campanaGuardar(progreso);w.campanaRuta();
+      // Arranca el mismo puente que usa la Victoria ordinaria: Gero deja su
+      // marca, «Continuar» limpia el último sello y sólo entonces se muestra
+      // el formulario. Así el segundo fundido puede abrir los sobres reales.
+      const progreso={...w.campanaLeer(),deseoFinalGero:true};w.campanaGuardar(progreso);
+      w.newGame('fender','gero');w.showScreen('board');w.eval("G.over=true;G.campana={id:'deseo-prueba',etapa:5};G.campanaResuelta=true;");
+      t.check(w.campanaPasarAlDeseo(w.campanaLeer(),w.eval('G'))===true,pagina+': Continuar tras Gero debe llevar directamente al deseo.');
       const panel=d.getElementById('campanaDeseo'),form=panel?.querySelector('form'),texto=panel?.querySelector('textarea'),boton=panel?.querySelector('button');
       t.check(panel?.open&&panel.dataset.fase==='formulario',pagina+': completar la campaña abre el formulario de deseo.');
       t.check(panel.querySelector('h1').innerText.replace(/\s+/g,' ').trim()==='Venciste a todos los héroes. Pide un deseo'&&boton.textContent==='Pedir deseo',pagina+': mensaje y acción final exactos.');
@@ -2540,13 +2683,15 @@ PRUEBAS.suite('campanaDeseo', async t => {
       await avanzar(2000);t.check(panel.dataset.fase==='concedido'&&!panel.querySelector('canvas')&&panel.textContent==='Deseo concedido',pagina+': al disiparse el fuego sólo queda el mensaje.');
       await avanzar(2999);t.check(panel.dataset.fase==='concedido',pagina+': el mensaje permanece tres segundos completos.');
       await avanzar(1);t.check(panel.dataset.fase==='fundido',pagina+': después de tres segundos debe fundirse a negro.');
-      await avanzar(1000);t.check(panel.dataset.fase==='menu'&&d.querySelector('#menu.on')&&!panel.querySelector('.deseoConcedido'),pagina+': el menú debe estar montado bajo el negro después de desaparecer el mensaje.');
-      const revelado=panel.getAnimations().find(a=>a.animationName==='deseoRevelarMenu');t.check(!!revelado,pagina+': el menú debe revelarse mediante un fundido.');
-      revelado.pause();revelado.currentTime=1500;
-      const opacidad=Number(w.getComputedStyle(panel).opacity);
-      t.check(opacidad>0&&opacidad<1&&w.getComputedStyle(panel,'::backdrop').backgroundColor==='rgba(0, 0, 0, 0)',pagina+': a mitad del revelado debe verse el menú a través del negro, sin un fondo modal opaco. '+JSON.stringify({opacidad,fondo:w.getComputedStyle(panel,'::backdrop').backgroundColor,animacion:revelado.animationName||revelado.transitionProperty}));
-      await avanzar(2999);t.check(panel.isConnected&&panel.dataset.fase==='menu',pagina+': se aprovechan los tres segundos para revelar el menú.');
-      await avanzar(1);t.check(!d.querySelector('#campanaDeseo')&&d.querySelector('#menu.on'),pagina+': el menú queda disponible al terminar su fundido.');
+      await avanzar(1000);await sleep(40);
+      const selector=d.querySelector('#coleccionPanel[data-epilogo-sobres="campana"]'),carrusel=selector?.querySelector('[data-epilogo-carrusel]');
+      t.check(!d.querySelector('#campanaDeseo')&&selector?.open&&selector.dataset.epilogoFase==='elegir'&&!d.querySelector('#menu.on'),pagina+': el primer negro abre el selector final, nunca el menú.');
+      const cuadroSelector=selector.getBoundingClientRect();
+      t.check(cuadroSelector.left<=1&&cuadroSelector.top<=1&&cuadroSelector.right>=ancho-1&&cuadroSelector.bottom>=alto-1&&carrusel?.scrollWidth>carrusel?.clientWidth,pagina+': la selección de sobres ocupa la pantalla y usa un scroll horizontal real.');
+      const elegirSobre=selector.querySelector('[data-epilogo-elegir]');elegirSobre.click();elegirSobre.click();elegirSobre.click();
+      t.check(selector.dataset.epilogoFase==='confirmar'&&m.recompensasPendientes().length===1&&!m.inventarioSobres().length,pagina+': elegir tres sobres no consume la recompensa antes de confirmarla.');
+      selector.querySelector('[data-epilogo-confirmar]').click();await sleep(40);await avanzar(460);await sleep(0);
+      t.check(!selector.open&&d.querySelector('#menu.on')&&m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0)===3,pagina+': el segundo negro sólo descubre el menú tras guardar los tres sobres.');
       w.eval('campanaMemoria=null');w.abrirCampana();t.check(d.querySelector('#campanaPanel')?.dataset.vista==='creador'&&!d.querySelector('#campanaDeseo'),pagina+': después del deseo, Campaña empieza creando un personaje nuevo.');
       d.querySelector('[data-creador-continuar]').click();
       d.querySelector('.campanaConfirmar').click();t.check(w.campanaLeer().etapa===0&&!w.campanaLeer().deseo&&w.campanaLeer().id!=='deseo-prueba',pagina+': elegir Protagonista crea una campaña nueva sin el progreso ni el deseo anteriores.');
@@ -2557,7 +2702,40 @@ PRUEBAS.suite('campanaDeseo', async t => {
       const segundo=d.getElementById('campanaDeseo');segundo.querySelector('textarea').value='Que el Domo prospere';segundo.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));await sleep(0);
       await avanzar(900);
       t.check(segundo.dataset.fase==='fuego'&&peticiones.length===0&&!w.localStorage.getItem(clave),pagina+': otra campaña permite repetir el final simulado sin registros remotos.');
-    }finally{w.campanaCerrarDeseo();w.setTimeout=ponerTimer;w.clearTimeout=quitarTimer;w.campanaCerrar();w.relojPara();w.localStorage.removeItem(clave);w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+    }finally{w.campanaCerrarDeseo();w.setTimeout=ponerTimer;w.clearTimeout=quitarTimer;w.campanaCerrar();w.relojPara();inventario?.restaurar();w.localStorage.removeItem(clave);w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
+  }
+});
+
+// El atajo beta que vence el recorrido completo mantiene su recompensa
+// histórica: no puede caer por accidente en el selector obligatorio de Gero.
+PRUEBAS.suite('campanaDeseoPruebaBeta',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:664px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=deseo-beta-interno';document.body.append(f);await carga;
+    let w=f.contentWindow,d=w.document,inventario,abrirOriginal;const aperturas=[];const poner=w.setTimeout,quitar=w.clearTimeout,media=w.matchMedia;let ahora=0,siguiente=0;const timers=new Map();
+    const recorrido='beta-deseo-'+pagina.replace(/\.html$/,'');
+    const avanzar=async ms=>{
+      const hasta=ahora+ms;
+      for(let limite=0;limite<40;limite++){
+        const proximo=[...timers.values()].filter(x=>x.cuando<=hasta).sort((a,b)=>a.cuando-b.cuando)[0];if(!proximo)break;
+        ahora=proximo.cuando;timers.delete(proximo.id);proximo.fn();await sleep(0);
+      }
+      ahora=hasta;await sleep(0);
+    };
+    try{
+      inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
+      w.matchMedia=()=>({matches:true,addEventListener(){},removeEventListener(){}});
+      w.setTimeout=(fn,ms=0,...args)=>{const id=++siguiente;timers.set(id,{id,cuando:ahora+Math.max(0,Number(ms)||0),fn:()=>fn(...args)});return id;};w.clearTimeout=id=>timers.delete(id);
+      // El puente beta debe pedir el selector ordinario, no el selector final.
+      // Lo espiamos para aislar la transición de la animación de Colección.
+      abrirOriginal=w.abrirRecompensaSobres;w.abrirRecompensaSobres=opciones=>{aperturas.push(opciones);return true;};
+      w.campanaGuardar({version:1,id:recorrido,lider:'fender',etapa:6,prueba:true});w.newGame('fender','gero');w.showScreen('board');w.eval("G.over=true;G.campana={id:'"+recorrido+"',etapa:5,prueba:true};G.campanaResuelta=true;");
+      w.campanaAbrirDeseo();const deseo=d.querySelector('#campanaDeseo');deseo.querySelector('textarea').value='Probar los sobres beta';deseo.querySelector('form').dispatchEvent(new w.Event('submit',{bubbles:true,cancelable:true}));
+      await avanzar(900+500+3000+1000);
+      t.check(d.querySelector('#menu.on')&&!d.querySelector('#coleccionPanel.coleccionFinalCampana'),pagina+': el deseo beta vuelve al menú, no al selector obligatorio.');
+      await avanzar(3000);
+      const opciones=aperturas[0];
+      t.check(aperturas.length===1&&opciones?.origen==='campana'&&opciones.finalCampana!==true&&m.recompensasPendientes().length===1&&m.sobres()===3,pagina+': el recorrido beta conserva su selector ordinario y sus tres sobres.');
+    }finally{w.campanaCerrarDeseo();d.querySelector('#coleccionPanel')?.close();if(abrirOriginal)w.abrirRecompensaSobres=abrirOriginal;w.matchMedia=media;w.setTimeout=poner;w.clearTimeout=quitar;inventario?.restaurar();w.localStorage.removeItem('caoz.campana.v1.prueba');w.relojPara();f.remove();}
   }
 });
 
@@ -2826,40 +3004,100 @@ PRUEBAS.suite('campanaCreador', async t => {
     let w=f.contentWindow;
     const reducir=()=>{const media=w.matchMedia;w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);};reducir();
     const tocar=s=>{const b=w.document.querySelector(s);t.check(!!b,pagina+': falta '+s);b.click();};
+    const elegido=(s,mensaje)=>t.check(w.document.querySelector(s)?.getAttribute('aria-pressed')==='true',pagina+': '+mensaje);
     const ajustar=async(a,h)=>{f.style.width=a+'px';f.style.height=h+'px';await sleep(60);};
     const cabe=()=>{
-      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect(),pie=d.querySelector('.campanaAcciones').getBoundingClientRect();
+      const d=w.document.querySelector('#campanaPanel'),r=d.getBoundingClientRect(),pie=d.querySelector('.campanaAcciones').getBoundingClientRect(),pestañas=d.querySelector('.creadorTabs'),rp=pestañas?.getBoundingClientRect(),opciones=d.querySelector('.creadorOpciones'),ro=opciones?.getBoundingClientRect(),opcionesVisibles=!!(ro&&ro.width&&ro.height);
       t.check(d.scrollHeight<=d.clientHeight+1&&d.scrollWidth<=d.clientWidth+1,pagina+': el creador exige scroll en '+w.innerWidth+'×'+w.innerHeight);
       t.check(Math.abs(r.left+r.width/2-w.innerWidth/2)<2&&Math.abs(r.top+r.height/2-w.innerHeight/2)<2,pagina+': creador descentrado');
-      d.querySelectorAll('input,button,fieldset,.creadorVista').forEach(n=>{const b=n.getBoundingClientRect();if(!b.width||!b.height)return;t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+(n.title||n.textContent||n.id));if(n.closest('.creadorCuerpo')&&b.left<pie.right&&b.right>pie.left)t.check(b.bottom<=pie.top+1,pagina+': los controles se enciman al botón Continuar en '+w.innerWidth+'×'+w.innerHeight);});
+      t.check(pie.top>=r.top&&pie.bottom<=r.bottom+1&&pie.left>=r.left&&pie.right<=r.right+1,pagina+': las acciones del creador se recortan.');
+      if(opcionesVisibles){
+        const estilo=w.getComputedStyle(opciones);
+        t.check(ro.top>=r.top&&ro.bottom<=r.bottom+1&&ro.left>=r.left&&ro.right<=r.right+1,pagina+': el panel de opciones sale del creador.');
+        t.check(/auto|scroll/.test(estilo.overflowY),pagina+': las opciones extensas no tienen desplazamiento interno.');
+        t.check(opciones.scrollWidth<=opciones.clientWidth+1,pagina+': las opciones crean desplazamiento horizontal.');
+      }
+      d.querySelectorAll('input,button,.creadorVista,.creadorTabs,.creadorAtajos,.creadorResumen,.creadorOpciones').forEach(n=>{
+        const b=n.getBoundingClientRect();if(!b.width||!b.height)return;
+        if(n!==pestañas&&n.closest('.creadorTabs')){
+          if(b.right>rp.left+1&&b.left<rp.right-1)t.check(b.top>=rp.top-1&&b.bottom<=rp.bottom+1,pagina+': una pestaña visible sale de su carril: '+(n.title||n.textContent||n.id));
+          return;
+        }
+        if(n.closest('.creadorOpciones')){
+          if(!opcionesVisibles)return;
+          t.check(b.left>=ro.left-1&&b.right<=ro.right+1,pagina+': una opción se corta lateralmente: '+(n.title||n.textContent||n.id));
+          if(b.top>=ro.top-1&&b.bottom<=ro.bottom+1){
+            t.check(b.bottom<=pie.top+1,pagina+': una opción visible se enciman al botón Continuar en '+w.innerWidth+'×'+w.innerHeight);
+          }
+          return;
+        }
+        t.check(b.top>=r.top&&b.bottom<=r.bottom+1&&b.left>=r.left&&b.right<=r.right+1,pagina+': se recorta '+(n.title||n.textContent||n.id));
+        if(n.closest('.creadorCuerpo')&&b.left<pie.right&&b.right>pie.left)t.check(b.bottom<=pie.top+1,pagina+': los controles se enciman al botón Continuar en '+w.innerWidth+'×'+w.innerHeight);
+      });
     };
     try{
       w.eval('campanaMemoria=null');w.localStorage.removeItem('caoz.campana.v1.prueba');w.campanaLimpiarBorrador();
       for(const [a,h] of [[1920,1080],[390,664],[320,568],[320,480],[844,390],[568,320]]){
-        await ajustar(a,h);w.campanaCrear();await sleep(30);for(const k of ['figura','colores','equipo']){tocar('[data-categoria="'+k+'"]');cabe();}
+        await ajustar(a,h);w.campanaCrear();await sleep(30);
+        const tabs=[...w.document.querySelectorAll('.creadorTabs [data-categoria]')];
+        t.igual(tabs.map(b=>b.dataset.categoria).join(','),'identidad,silueta,rostro,atuendo,equipo',pagina+': faltan áreas de personalización del héroe.');
+        const campos={identidad:'genero',silueta:'figura',rostro:'rostro',atuendo:'atuendo',equipo:'equipo'};
+        for(const [k,campo] of Object.entries(campos)){
+          tocar('[data-categoria="'+k+'"]');
+          const opciones=w.document.querySelector('.creadorOpciones');
+          t.check(opciones.dataset.grupo===k&&w.document.querySelectorAll('.creadorTabs [aria-pressed="true"]').length===1&&!!opciones.querySelector('[data-campo="'+campo+'"]'),pagina+': '+k+' no muestra sólo sus controles propios.');
+          cabe();
+        }
       }
+      await ajustar(320,480);w.campanaCrear();
+      const pestañas=w.document.querySelector('.creadorTabs');
+      t.check(/auto|scroll/.test(w.getComputedStyle(pestañas).overflowX)&&pestañas.scrollWidth>pestañas.clientWidth+1,pagina+': las cinco pestañas no se desplazan en móvil estrecho.');
+      pestañas.scrollLeft=pestañas.scrollWidth;t.check(pestañas.scrollLeft>0,pagina+': no se puede recorrer la pestaña de equipo en móvil estrecho.');
+      tocar('[data-categoria="rostro"]');const opcionesRostro=w.document.querySelector('.creadorOpciones');
+      t.check(opcionesRostro.scrollHeight>opcionesRostro.clientHeight+1,pagina+': el rostro detallado no conserva su desplazamiento interno en móvil bajo.');
+      opcionesRostro.scrollTop=opcionesRostro.scrollHeight;t.check(opcionesRostro.scrollTop>0,pagina+': no se puede recorrer las opciones faciales extensas.');cabe();opcionesRostro.scrollTop=0;
       await ajustar(390,844);w.campanaCrear();
       const input=w.document.querySelector('#creadorNombre');input.value='<Rafa>';input.dispatchEvent(new w.Event('input'));
-      input.focus();await ajustar(390,350);w.campanaTecladoCreador();t.check(w.document.querySelector('#campanaPanel').classList.contains('creadorTeclado'),pagina+': falta espacio para escribir con teclado');cabe();input.blur();await ajustar(390,844);w.campanaTecladoCreador();
-      tocar('[data-valor="guardian"]');tocar('[data-valor="sombrero"]');tocar('[data-categoria="colores"]');
-      const antes=w.document.querySelector('.creadorLienzo').toDataURL();tocar('[data-campo="color"][data-valor="azul"]');t.check(antes!==w.document.querySelector('.creadorLienzo').toDataURL(),pagina+': cambiar la capa no redibuja la miniatura');
-      tocar('[data-campo="piel"][data-valor="ebano"]');tocar('[data-categoria="equipo"]');tocar('[data-valor="libro"]');
+      input.focus();await ajustar(390,350);w.campanaTecladoCreador();t.check(w.document.querySelector('#campanaPanel').classList.contains('creadorTeclado'),pagina+': falta espacio para escribir con teclado');
+      const nombreVisible=input.getBoundingClientRect();t.check(nombreVisible.width>0&&nombreVisible.height>0,pagina+': el teclado oculta el nombre que se está editando.');cabe();input.blur();await ajustar(390,844);w.campanaTecladoCreador();
+      tocar('[data-categoria="identidad"]');tocar('[data-preset="Oráculo"]');
+      elegido('[data-campo="genero"][data-valor="no_binario"]','un arquetipo no configura la identidad.');
+      tocar('[data-campo="genero"][data-valor="femenino"]');elegido('[data-campo="genero"][data-valor="femenino"]','no se puede cambiar la presentación del héroe.');
+      tocar('[data-campo="genero"][data-valor="no_binario"]');
+      tocar('[data-categoria="silueta"]');tocar('[data-campo="figura"][data-valor="guardian"]');elegido('[data-campo="figura"][data-valor="guardian"]','no se puede elegir el arquetipo Guardián.');
+      tocar('[data-campo="estatura"][data-valor="alta"]');elegido('[data-campo="estatura"][data-valor="alta"]','no se puede elegir la estatura alta.');
+      tocar('[data-campo="cuerpo"][data-valor="robusto"]');elegido('[data-campo="cuerpo"][data-valor="robusto"]','no se puede elegir la complexión robusta.');
+      tocar('[data-categoria="rostro"]');tocar('[data-campo="rostro"][data-valor="angular"]');elegido('[data-campo="rostro"][data-valor="angular"]','no se puede elegir el rostro angular.');
+      tocar('[data-campo="piel"][data-valor="ebano"]');elegido('[data-campo="piel"][data-valor="ebano"]','no se puede elegir la piel Ébano.');
+      tocar('[data-campo="ojos"][data-valor="violeta"]');elegido('[data-campo="ojos"][data-valor="violeta"]','no se puede elegir el iris violeta.');
+      tocar('[data-campo="rasgo"][data-valor="runas"]');elegido('[data-campo="rasgo"][data-valor="runas"]','no se puede elegir las marcas arcanas.');
+      tocar('[data-campo="peinado"][data-valor="trenzas"]');elegido('[data-campo="peinado"][data-valor="trenzas"]','no se puede elegir las trenzas.');
+      tocar('[data-campo="cabello"][data-valor="plata"]');elegido('[data-campo="cabello"][data-valor="plata"]','no se puede elegir el cabello plata.');
+      tocar('[data-categoria="atuendo"]');const antes=w.document.querySelector('.creadorLienzo').toDataURL();tocar('[data-campo="atuendo"][data-valor="arcano"]');elegido('[data-campo="atuendo"][data-valor="arcano"]','no se puede elegir el ropaje arcano.');
+      tocar('[data-campo="color"][data-valor="azul"]');elegido('[data-campo="color"][data-valor="azul"]','no se puede elegir la paleta zafiro.');
+      tocar('[data-campo="accesorio"][data-valor="amuleto"]');t.check(antes!==w.document.querySelector('.creadorLienzo').toDataURL(),pagina+': cambiar el atuendo no redibuja la miniatura');
+      tocar('[data-categoria="equipo"]');tocar('[data-campo="equipo"][data-valor="arco"]');elegido('[data-campo="equipo"][data-valor="arco"]','no se puede elegir el arco de explorador.');
+      const camposPerfil=['genero','figura','estatura','cuerpo','rostro','piel','ojos','rasgo','peinado','cabello','atuendo','color','accesorio','equipo'];
+      const valoresPerfil=['no_binario','guardian','alta','robusto','angular','ebano','violeta','runas','trenzas','plata','arcano','azul','amuleto','arco'];
       const vista=w.document.querySelector('.creadorLienzo');tocar('[data-creador-continuar]');t.check(!vista.isConnected,pagina+': el creador no libera su visor');
       tocar('[aria-label="Protagonista siguiente"]');const esperado=w.campanaLeerBorrador().personaje;
+      const faltanPerfil=camposPerfil.filter((campo,i)=>esperado[campo]!==valoresPerfil[i]).map(campo=>campo+'='+esperado[campo]);
+      t.check(!faltanPerfil.length,pagina+': el creador no conserva una apariencia detallada completa ('+faltanPerfil.join(', ')+').');
       [...w.document.querySelectorAll('.campanaAcciones button')].find(n=>n.textContent==='Editar miniatura').click();t.check(w.document.querySelector('#creadorNombre').value==='<Rafa>'&&w.campanaLeerBorrador().lider==='fender',pagina+': volver a editar pierde el personaje o mazo');
       tocar('[data-creador-continuar]');t.check(w.document.querySelector('.campanaCarta.enfrente').dataset.campanaLider==='fender',pagina+': el carrusel olvida el mazo');
       tocar('.campanaConfirmar');let p=w.campanaLeer();t.check(p.lider==='fender'&&JSON.stringify(p.personaje)===JSON.stringify(esperado),pagina+': confirmar cambia la apariencia o el mazo');
       t.check(w.document.querySelector('.campanaSub').textContent.includes('<Rafa>')&&!w.document.querySelector('rafa'),pagina+': el nombre debe tratarse como texto');
       w.campanaCerrar();await cargar();w=f.contentWindow;reducir();w.abrirCampana();p=w.campanaLeer();
       t.check(JSON.stringify(p.personaje)===JSON.stringify(esperado)&&w.document.querySelector('#campanaPanel').dataset.vista==='mapa',pagina+': recargar no conserva el personaje');
-      const lienzo=w.document.querySelector('.campanaLienzo3d');t.check(JSON.parse(lienzo.dataset.personaje).equipo==='libro',pagina+': la mesa no usa la miniatura propia');
+      const lienzo=w.document.querySelector('.campanaLienzo3d');t.check(JSON.parse(lienzo.dataset.personaje).equipo==='arco'&&JSON.parse(lienzo.dataset.personaje).rasgo==='runas',pagina+': la mesa no usa la miniatura propia');
       await w.campanaSeleccionar();t.check(w.document.querySelector('.campanaCombatiente b').textContent==='<Rafa>',pagina+': el encuentro pierde el nombre');w.campanaLimpiarPreparacion(true);
       let inicio;w.startMatch=async(a,b,op)=>{inicio={a,b,op};w.newGame(a,b);w.eval('G.campana='+JSON.stringify(op.campana));};await w.campanaCombatir();
       t.check(inicio.a==='fender'&&inicio.op.nombres[0]==='<Rafa>'&&w.eval('P(0).leaderId')==='fender'&&w.eval('P(0).deck.length')===40,pagina+': la campaña no inicia con el mazo elegido');
       let acciones;w.cinematicaFinal=async(_a,_b,op)=>{acciones=op;return true;};w.campanaFinal(0,'Prueba de avance');t.check(w.campanaLeer().etapa===1&&w.campanaLeer().personaje.color==='azul',pagina+': una victoria pierde la apariencia');
       acciones.revancha();await sleep(20);t.check(JSON.parse(w.document.querySelector('.campanaLienzo3d').dataset.personaje).nombre==='<Rafa>',pagina+': volver a la mesa cambia la miniatura');
       w.campanaCerrar();w.campanaGuardar({version:1,id:'anterior',lider:'adreida',etapa:3});w.abrirCampana();t.check(w.campanaLeer().etapa===3&&!w.campanaLeer().personaje,pagina+': una campaña anterior debe poder continuar');
-      const normal=w.campanaNormalizarPersonaje({nombre:'x'.repeat(100),color:'url(evil)',equipo:'inventado'});t.check(normal.nombre.length===24&&normal.color==='vino'&&normal.equipo==='espada',pagina+': los datos guardados requieren valores válidos');
+      const normal=w.campanaNormalizarPersonaje({nombre:'x'.repeat(100),genero:'ajeno',estatura:'gigante',cuerpo:'fluido',rostro:'ajeno',ojos:'url(evil)',rasgo:'ajeno',atuendo:'ajeno',accesorio:'ajeno',color:'url(evil)',equipo:'inventado'});
+      t.check(normal.nombre.length===24&&normal.genero==='sin_etiqueta'&&normal.estatura==='media'&&normal.cuerpo==='atletico'&&normal.rostro==='ovalado'&&normal.ojos==='avellana'&&normal.rasgo==='ninguno'&&normal.atuendo==='ruta'&&normal.accesorio==='medallon'&&normal.color==='vino'&&normal.equipo==='espada',pagina+': los datos guardados requieren valores válidos');
     }finally{w.campanaCerrar();w.campanaLimpiarBorrador();w.localStorage.removeItem('caoz.campana.v1.prueba');f.remove();}
   }
 });
@@ -2886,10 +3124,13 @@ PRUEBAS.suite('campanaMiniatura', async t => {
         const carta=d.querySelector(selector),foto=carta?.querySelector('img');
         t.check(foto&&foto.offsetWidth>=carta.clientWidth-2&&foto.offsetHeight>=carta.clientHeight-2,pagina+': el retrato no llena '+selector);
       };
-      const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',figura:'mago',peinado:'capucha',equipo:'libro',color:'azul'});
+      const personaje=w.campanaNormalizarPersonaje({nombre:'<Ariadna>',genero:'no_binario',figura:'mago',estatura:'alta',cuerpo:'robusto',rostro:'angular',ojos:'violeta',rasgo:'runas',peinado:'trenzas',piel:'ebano',cabello:'plata',atuendo:'arcano',equipo:'arco',color:'azul',accesorio:'amuleto'});
       const retrato=w.campanaRetrato(personaje);
       t.check(retrato===w.campanaRetrato({...personaje,nombre:'Otro nombre'}),pagina+': se debe reutilizar la foto mientras no cambie la apariencia');
       t.check(retrato!==w.campanaRetrato({...personaje,equipo:'espada'}),pagina+': cambiar equipo no cambia el retrato');
+      t.check(retrato!==w.campanaRetrato({...personaje,genero:'femenino'})&&retrato!==w.campanaRetrato({...personaje,rasgo:'cicatriz'})&&retrato!==w.campanaRetrato({...personaje,estatura:'baja'}),pagina+': el retrato ignora presentación, rasgos o estatura.');
+      const alto=w.campanaGeometriaPersonaje(personaje,'alto'),medio=w.campanaGeometriaPersonaje(personaje,'medio'),bajo=w.campanaGeometriaPersonaje(personaje,'bajo');
+      t.check(alto.length>medio.length&&medio.length>bajo.length&&bajo.length>0,pagina+': el detalle de la miniatura no escala entre creador, cinemática y mesa.');
       w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true}:media.call(w,q);
       w.campanaGuardar({version:1,id:'miniatura',lider:'fender',personaje,etapa:1,enEncuentro:true});w.campanaRuta();
       t.check(d.querySelector('.campanaTu').textContent==='<Ariadna>'&&!d.querySelector('ariadna'),pagina+': el nombre de la ficha se interpreta como HTML o sigue diciendo TÚ');
@@ -3255,7 +3496,7 @@ PRUEBAS.suite('terrenoMovil', async t => {
           t.check(lado==='foeField'?caja.bottom<=medio.top-1:caja.top>=medio.bottom+1,etiqueta+': una carta o su indicador invade el terreno ('+lado+').');
           t.check(caja.top>=campo.top&&caja.bottom<=campo.bottom,etiqueta+': las cartas deben caber en el campo.');
         }
-        t.check(r.left>=campo.left&&r.right<=campo.right,etiqueta+': cinco cartas deben caber a lo ancho.');
+        t.check(r.left>=campo.left&&r.right<=campo.right,etiqueta+': las cartas deben caber a lo ancho.');
       }
       t.check(rect('#myTraps').bottom<=campo.bottom+.5,etiqueta+': las trampas no deben invadir la barra del jugador ('+rect('#myTraps').bottom+' > '+campo.bottom+').');
       t.check(rect('#controls').bottom<=rect('#board').bottom+.5,etiqueta+': los controles deben quedar dentro de la pantalla.');
@@ -3272,11 +3513,28 @@ PRUEBAS.suite('terrenoMovil', async t => {
       }
       w.eval("G.place={id:'puente',side:0};P(0).relics=[{id:'puntosrobados',counters:2}];");w.render();await sleep(40);
       comprobar(`${ancho}×${alto}, Puente y Reliquia`);
+      w.eval("G.campana={jefeSecreto:true};P(1).field=CARTAS_EDITOR.map(id=>{const u=mkUnit(id,1);u.sick=false;return u;});P(0).field=[];P(0).relics=[];G.place=null;");w.render();await sleep(40);
+      comprobar(`${ancho}×${alto}, seis Pesadillas`);
+      t.check(d.querySelectorAll('#foeField .card').length===6&&d.querySelector('#foeField').classList.contains('seisPesadillas'),`${ancho}×${alto}: la sexta Pesadilla usa la fila compacta exclusiva del jefe.`);
       d.querySelector('#hand .card').click();await sleep(40);
       comprobar(`${ancho}×${alto}, carta seleccionada en mano`);w.manoTocada(null);
+      w.eval("G.campana=undefined;P(1).field=[];G.place={id:'puente',side:0};");w.render();await sleep(20);
       d.querySelector('.placecard').click();
       t.check(d.querySelector('#inspect.on')?.textContent.includes('El Puente de Brick y Brock'),'El terreno debe seguir abriendo su ficha.');w.cerrarHojas();
     }
+  }finally{f.contentWindow.relojPara();f.remove();}
+});
+
+PRUEBAS.suite('mesaPitagorasSeis',async t=>{
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:1440px;height:900px;border:0';
+  const carga=new Promise(r=>f.onload=r);f.src='index.html?test=mesa-pitagoras-seis';document.body.appendChild(f);
+  try{
+    await carga;const w=f.contentWindow,d=f.contentDocument;
+    w.newGame('fender','adreida');w.eval("G.fast=true;G.campana={id:'seis-pesadillas',etapa:6,jefeSecreto:true};P(1).field=CARTAS_EDITOR.map(id=>{const u=mkUnit(id,1);u.sick=false;return u;});P(0).field=[];");w.showScreen('board');w.render();await sleep(60);
+    const campo=d.querySelector('#foeField').getBoundingClientRect(),cartas=[...d.querySelectorAll('#foeField>.card')],huecos=[...d.querySelector('#foeField').closest('.fieldwrap').querySelectorAll('.slots i')];
+    t.check(cartas.length===6&&d.querySelector('#foeField').classList.contains('seisPesadillas')&&d.querySelector('#foeField').closest('.fieldwrap').classList.contains('seisPesadillas'),'Escritorio: el jefe reconoce la mesa exclusiva de seis Pesadillas.');
+    t.check(cartas.every(c=>{const r=c.getBoundingClientRect();return r.left>=campo.left&&r.right<=campo.right&&r.top>=campo.top&&r.bottom<=campo.bottom;}),'Escritorio: las seis Pesadillas compactas caben íntegramente en el campo rival.');
+    t.check(huecos.length===6&&huecos.every(h=>w.getComputedStyle(h).display!=='none'),'Escritorio: la sexta ranura aparece sólo para el ciclo completo del Editor.');
   }finally{f.contentWindow.relojPara();f.remove();}
 });
 
@@ -4333,44 +4591,97 @@ PRUEBAS.suite('regresiones', async t => {
       'log() perdió el parámetro priv y el online volvería a filtrar tus robos');
   }
 
-  /* MANO NUEVA — la regla que rehace una mano muerta en el primer turno.
-     Lo que no puede pasar nunca: que se pierdan o aparezcan cartas al
-     rebarajar, que se ofrezca cuando sí puedes jugar, o que se pueda repetir. */
+  /* MULLIGAN INICIAL — ya no se rehace una mano entera ni depende de poder
+     jugar una carta. Cada lado puede cambiar como máximo dos índices de su
+     mano inicial, roba antes de devolverlos, y la oportunidad se cierra. */
   {
-    await T.setupMatch('mohamed','adreida',{fast:true, auto:true, silent:true, first:0});
-    const p = T.P(0);
+    T.newGame('talesin','adreida');
+    const p=T.P(0);
+    T.G.active=0;T.G.phase='mulligan';
+    p.hand=['tal','rey','machete','conserje'];
+    p.deck=['discipulo','matildus','bob'];
+    const total=p.hand.length+p.deck.length;
 
-    // 1) con una mano impagable la ofrece
-    const caras = Object.keys(T.CARDS).filter(id => T.CARDS[id].c >= 4 && !T.CARDS[id].token && !T.CARDS[id].editorJuego).slice(0,5);
-    p.hand = caras.slice();
-    p.manoRehecha = false;
-    T.G.turnNo = 1; T.G.active = 0; T.G.phase = 'principal';
-    t.check(window.puedeRehacerMano(0), 'con una mano que no puede jugar nada debería ofrecerla');
+    t.check(window.puedeMulligan(0),'la mano inicial debería poder usar su mulligan aunque tenga cartas jugables');
+    t.igual(JSON.stringify(window.normalizarSeleccionMulligan(0,[3,1,1,-1,99,0])),JSON.stringify([1,3]),
+      'sólo pasan dos índices existentes y distintos');
 
-    // 2) rebarajar no pierde ni inventa cartas
-    const total = p.hand.length + p.deck.length;
-    const vieja = p.hand.slice();
-    await window.ofrecerManoNueva(0);
-    t.check(p.hand.length === vieja.length,
-      `la mano nueva trae ${p.hand.length} cartas y la vieja tenía ${vieja.length}`);
-    t.check(p.hand.length + p.deck.length === total,
-      `rebarajar cambió el total de cartas: ${p.hand.length + p.deck.length} en vez de ${total}`);
+    const resultado=window.aplicarMulligan(0,[3,1,1,99]);
+    t.igual(resultado.cambios,2,'dos índices válidos cambian dos cartas');
+    t.igual(JSON.stringify(p.hand),JSON.stringify(['tal','machete','discipulo','matildus']),
+      'conserva las cartas no elegidas y roba antes de devolver las otras');
+    t.check(p.deck.includes('rey')&&p.deck.includes('conserje'),
+      'las cartas elegidas regresan al mazo sólo después del robo');
+    t.check(!p.deck.includes('discipulo')&&!p.deck.includes('matildus'),
+      'las cartas robadas no pueden reaparecer en el mismo mulligan');
+    t.igual(p.hand.length+p.deck.length,total,'el mulligan no crea ni pierde cartas');
+    t.check(p.mulliganUsado&&!p.mulliganPendiente&&!window.puedeMulligan(0),
+      'la oportunidad se cierra después de usarla');
 
-    // 3) una sola vez
-    t.check(p.manoRehecha === true, 'debería quedar marcada como usada');
-    p.hand = caras.slice();                       // otra mano muerta
-    t.check(!window.puedeRehacerMano(0), 'no puede ofrecerse dos veces en la misma partida');
+    T.newGame('fender','adreida');
+    const conserva=T.P(0);T.G.active=0;T.G.phase='mulligan';
+    conserva.hand=['machete','conserje'];conserva.deck=['bob','rey'];
+    const antesMano=conserva.hand.slice(),antesMazo=conserva.deck.slice();
+    window.aplicarMulligan(0,[]);
+    t.igual(JSON.stringify(conserva.hand),JSON.stringify(antesMano),'conservar la mano no altera sus cartas');
+    t.igual(JSON.stringify(conserva.deck),JSON.stringify(antesMazo),'conservar la mano tampoco baraja el mazo');
+    t.check(conserva.mulliganUsado,'conservar la mano consume la única oportunidad');
 
-    // 4) no se ofrece si sí puedes jugar algo
-    const otro = T.P(1);
-    otro.manoRehecha = false;
-    const barato = Object.keys(T.CARDS).find(id => T.CARDS[id].c <= 1 && !T.CARDS[id].token
-                                                && T.CARDS[id].t === 'personaje');
-    otro.hand = [barato];
-    T.G.active = 1; otro.pd = 5;
-    t.check(!window.puedeRehacerMano(1), 'no debe ofrecerse teniendo una carta jugable');
+    T.newGame('fender','adreida',{tutorial:true});
+    T.G.active=0;T.P(0).hand=['machete'];T.P(0).deck=['bob'];
+    t.check(!window.puedeMulligan(0),'el tutorial queda excluido del mulligan inicial');
 
-    t.nota('mano nueva: sólo con la mano muerta, una vez, y sin perder cartas');
+    T.newGame('talesin','adreida');
+    const ia=T.P(0);T.G.active=0;T.G.phase='mulligan';
+    ia.hand=['tal','rey','machete','conserje'];ia.deck=['bob','discipulo','matildus'];
+    t.igual(JSON.stringify(window.seleccionMulliganIA(0)),JSON.stringify([0,1]),
+      'la IA aparta de forma determinista los dos ladrillos y conserva la curva barata');
+
+    // La decisión local llega con 5 cartas (no con el robo del turno) y ambas
+    // oportunidades están cerradas antes de arrancar el primer turno.
+    const elegirAnterior=window.elegirMulliganInicial;
+    let vista=null;
+    try{
+      window.elegirMulliganInicial=async(s,opciones)=>{
+        vista={s,cartas:opciones.cartas.slice(),limite:opciones.limite,turno:T.G.turnNo};
+        return [];
+      };
+      await T.setupMatch('fender','adreida',{fast:true,silent:true,first:0});
+      t.check(vista&&vista.s===0&&vista.cartas.length===5&&vista.limite===2&&vista.turno===0,
+        'la interfaz recibe la mano inicial antes del primer robo normal');
+      t.check(T.P(0).mulliganUsado&&T.P(1).mulliganUsado&&T.G.turnNo===1,
+        'los dos mulligans se resuelven antes de comenzar el primer turno');
+    }finally{
+      if(elegirAnterior===undefined)delete window.elegirMulliganInicial;
+      else window.elegirMulliganInicial=elegirAnterior;
+      relojPara();
+    }
+
+    // En línea el invitado devuelve índices sin autoridad. El anfitrión manda
+    // sólo su mano privada, limita la solicitud a dos y limpia una respuesta
+    // malformada antes de mover una sola carta.
+    T.newGame('fender','adreida');
+    const remoto=T.P(1);T.G.active=1;T.G.phase='mulligan';T.G.online=true;
+    remoto.hand=['tal','rey','machete','conserje'];remoto.deck=['discipulo','matildus','bob'];
+    const net=window.eval('NET'),estadoNet={on:net.on,host:net.host,guest:net.guest};
+    const pedirAnterior=window.netAsk;
+    let pedido=null;
+    try{
+      Object.assign(net,{on:true,host:true,guest:false});
+      window.netAsk=async datos=>{pedido=datos;return [3,3,-1,99,1];};
+      const remotoResultado=await window.resolverMulliganInicial(1);
+      t.check(pedido&&pedido.kind==='mulligan'&&pedido.limit===2&&pedido.fallback.length===0,
+        'el anfitrión pide al invitado un mulligan limitado y con una salida segura');
+      t.igual(JSON.stringify(pedido.cards),JSON.stringify(['tal','rey','machete','conserje']),
+        'la pregunta remota contiene únicamente la mano de su dueño');
+      t.igual(JSON.stringify(remotoResultado.indices),JSON.stringify([1,3]),
+        'el anfitrión valida índices duplicados o fuera de rango antes de aplicarlos');
+    }finally{
+      Object.assign(net,estadoNet);
+      window.netAsk=pedirAnterior;
+    }
+
+    t.nota('mulligan inicial: hasta dos índices, robo antes de devolver, IA determinista y anfitrión autoritativo');
   }
 
   /* EL CARTEL DE TURNO VA ANTES QUE EL DADO DE GERO.
@@ -4567,6 +4878,127 @@ PRUEBAS.suite('regresiones', async t => {
       'el Rápido tiene que acabar en las Alcantarillas y fuera de la mano');
     T.G.active = 0;
     t.nota('los Hechizos Rápidos pasan por los mismos efectos que cualquier Hechizo (Inspiración)');
+  }
+
+  /* ADREIDA, EL SELECTOR Y LA MANO — tres fallos de interacción que se veían
+     sólo al apuntar con el ratón. La regla vive en el motor; la pantalla se
+     limita a presentarla, y la mano conserva una ranura fija aunque la carta
+     visible se haga grande. */
+  {
+    const razon='Golpe Directo requiere un Personaje aliado en tu campo.';
+    window.tutEnd();
+    clearPrompt();SEL=null;TGT=null;NET.guest=false;
+    T.newGame('adreida','fender');
+    const p=T.P(0);
+    T.G.active=0;T.G.phase='principal';T.G.over=false;T.G.resolving=false;T.G.tutorial=null;
+    p.pd=2;p.leaderUsed=false;p.field=[];
+    t.igual(T.whyNotLeader(0),razon,
+      'Adreida con 2 PD y sin Personajes debe explicar que le falta un aliado');
+    t.check(!T.canUseLeader(0),'Golpe Directo no debe quedar disponible sin un aliado');
+    document.querySelector('#toast').replaceChildren();T.render();
+    document.querySelector('#lead0').click();
+    t.check(document.querySelector('#toast').lastElementChild?.textContent===razon,
+      'el clic del Líder debe mostrar el requisito, no que faltan 2 PD');
+    t.check(p.pd===2&&!p.leaderUsed,
+      'una Habilidad bloqueada no puede gastar sus 2 PD ni marcarse como usada');
+
+    T.newGame('fender','adreida');
+    const rival=T.P(1);
+    T.G.active=1;T.G.phase='principal';T.G.over=false;rival.pd=2;rival.leaderUsed=false;rival.field=[];
+    const remoto=await window.netDoAct({k:'leader'});
+    t.check(!remoto.ok&&remoto.why===razon,
+      'la partida online debe devolver el mismo requisito de Golpe Directo');
+
+    T.newGame('adreida','fender');
+    T.G.active=0;T.G.phase='principal';T.G.over=false;T.G.resolving=false;
+    const ids=['discipulo','titaus','matildus','machete','taumaturgia','auxilio','armadura','horton','lucius'];
+    T.P(0).hand=[...ids];T.P(0).pd=10;T.render();
+    const ranuras=[...document.querySelectorAll('#hand > .handSlot')];
+    t.check(ranuras.length===ids.length&&ranuras.every(r=>r.querySelector('.card')),
+      'cada carta de la mano debe vivir dentro de una ranura de hitbox estable');
+    const primera=ranuras[0],segunda=ranuras[1],carta=primera.querySelector('.card');
+    primera.dispatchEvent(new MouseEvent('pointerover',{bubbles:true}));
+    t.check(primera.classList.contains('is-hover')&&getComputedStyle(carta).pointerEvents==='none',
+      'la ranura, no la carta ampliada, debe recibir el ratón');
+    segunda.dispatchEvent(new MouseEvent('pointerover',{bubbles:true}));
+    t.check(!primera.classList.contains('is-hover')&&segunda.classList.contains('is-hover'),
+      'al cambiar de ranura sólo cambia una carta activa, sin alternar entre vecinas');
+    document.querySelector('#hand').dispatchEvent(new Event('pointerleave'));
+    t.check(!segunda.classList.contains('is-hover'),'al salir de la mano debe apagarse su único hover activo');
+
+    const elegir=window.pickCard(0,ids,'Descarta una carta');
+    const selector=document.querySelector('#ovPanel .gallery.selectorCartas');
+    t.check(selector?.children.length===ids.length&&getComputedStyle(selector).display==='grid',
+      'el descarte debe usar una cuadrícula reservada, no la galería que crece');
+    const elegible=selector.querySelector('.card');
+    elegible.dispatchEvent(new Event('mouseenter'));
+    t.check(elegible.onmouseenter===null&&!document.querySelector('#inspect').classList.contains('on'),
+      'el selector de descarte no debe abrir un inspector flotante al pasar el ratón');
+    elegible.click();
+    t.igual(await elegir,ids[0],'el selector estable debe seguir resolviendo el descarte');
+
+    await sleep(20);
+    t.check(document.querySelectorAll('#audioExtras .audioControles').length===1
+      &&!document.querySelector('#menuFoot .audioControles')&&!document.querySelector('#panel .audioControles'),
+      'el control de sonido debe montarse una sola vez dentro de Extras');
+    const [movil,audio,escritorio]=await Promise.all(['movil.html','audio-domo.js','index.html'].map(x=>fetch(x).then(r=>r.text())));
+    t.check(/id="audioExtras"/.test(movil)&&/whyNotLeader\(ME\)/.test(movil)
+      &&/getElementById\('audioExtras'\)/.test(audio),
+      'móvil y el módulo de audio deben usar el mismo host y la misma razón de Líder');
+    t.check(/const ranura=\$\('#hand'\)\.children\[\+q\.get\('hover'\)\|\|0\];\s*const c=ranura\?\.querySelector\('\.card'\);/.test(escritorio),
+      'la captura de mano debe ampliar la carta interna y no volver a escalar su hitbox');
+    t.nota('Adreida explica su requisito; mano, descarte y sonido conservan un espacio estable');
+  }
+
+  /* RAFAELA — el primer objetivo del Estornudo es rival y el segundo sólo
+     puede ser un aliado herido. Antes la IA escogía al mismo Discípulo fuerte
+     para ambas partes y se hacía daño para curárselo enseguida. */
+  {
+    T.newGame('fender','rafaela');
+    const rival=T.mkUnit('discipulo',0),aliado=T.mkUnit('titaus',1);
+    aliado.dmg=2;T.P(0).field=[rival];T.P(1).field=[aliado];T.recalc();
+    T.G.active=1;T.G.over=false;T.G.fast=true;T.G.auto=true;
+    T.P(1).pd=2;T.P(1).leaderUsed=false;
+    const grupos=T.LEADERS.rafaela.habTg;
+    t.igual(grupos[0].k,'unidadEnemiga','el daño de Rafaela debe pedir un Personaje rival');
+    t.igual(grupos[1].k,'unidadAliada','la curación de Rafaela debe pedir un aliado');
+    t.check(grupos[1].ai==='curar','la IA debe saber que el segundo objetivo es una curación');
+    const usado=await T.useLeader(1);
+    t.check(usado&&rival.dmg===1,
+      'la IA de Rafaela debe hacer 1 daño al Personaje rival, no a su propia unidad');
+    t.check(aliado.dmg===1,
+      'la IA de Rafaela debe curar 1 PV a su aliado herido después del estornudo');
+    t.check(T.P(1).pd===0&&T.P(1).leaderUsed,
+      'Estornudo de Rul sólo cobra y se marca usado al resolver ambos objetivos válidos');
+
+    T.newGame('fender','rafaela');T.G.active=1;T.P(1).pd=2;
+    t.igual(T.whyNotLeader(1),'Estornudo de Rul requiere un Personaje rival en el campo.',
+      'sin rival, Rafaela debe explicar que no hay objetivo de daño válido');
+    t.nota('Rafaela daña al rival y cura únicamente un aliado que realmente esté herido');
+  }
+
+  /* INVITACIONES — compartir el código no debe llevar una URL que Safari abra
+     fuera de la PWA; si un enlace sí llega al navegador, ofrece el puente antes
+     del acceso y conserva el código visible. */
+  {
+    const inv=window.CAOZ_INVITACIONES;
+    t.check(!!inv,'el parser compartido de invitaciones debe cargarse antes del coordinador online');
+    const prod='https://juego.caozcontodo.com/?b=264',beta='https://beta.caoz-tcg.pages.dev/?b=264';
+    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=264'), 'AB1C2',
+      'un enlace de sala debe volver al mismo código de cinco caracteres');
+    t.check(inv.mensajeCodigo('AB1C2',prod).includes('AB1C2')&&!inv.mensajeCodigo('AB1C2',prod).includes('?sala='),
+      'el mensaje para una app instalada debe contener código, no un enlace web');
+    const enlaceBeta=new URL(inv.enlace('AB1C2',beta,264));
+    t.check(enlaceBeta.origin==='https://beta.caoz-tcg.pages.dev'&&enlaceBeta.searchParams.get('sala')==='AB1C2',
+      'un enlace de beta debe conservar su propio origen y su código');
+    let continuar=0;
+    mostrarPuenteInvitacion('AB1C2',()=>{continuar++;});
+    const panel=document.querySelector('#ovPanel');
+    t.check(panel.textContent.includes('AB1C2')&&[...panel.querySelectorAll('button')].some(b=>/Tengo la app instalada/.test(b.textContent)),
+      'un enlace abierto en navegador debe explicar la salida hacia la app instalada antes del login');
+    [...panel.querySelectorAll('button')].find(b=>/Jugar en este navegador/.test(b.textContent)).click();
+    t.igual(continuar,1,'la alternativa de navegador debe continuar exactamente una vez');
+    t.nota('las invitaciones separan el código para la app del enlace para navegador');
   }
 });
 

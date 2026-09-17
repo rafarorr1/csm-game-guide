@@ -58,7 +58,55 @@ const datos={'index.html':'Tu cuenta del Domo','procedencia.json':'{"seccion":"c
  'cuenta-demo.js':fs.readFileSync('componente.js')};
 for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs']:
+        (secciones / 'interacciones-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Interacciones de cartas','procedencia.json':'{"seccion":"interacciones"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'interacciones.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
+''')
+        (secciones / 'epilogo-gero-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Epílogo de Gero','procedencia.json':'{"seccion":"epilogo-gero"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'epilogo-gero.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b);
+''')
+        (secciones / 'pitagoras-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Pitágoras: El último puente','procedencia.json':'{"seccion":"pitagoras"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'pitagoras.js':fs.readFileSync('componente.js'),'juego/art/esbirro-editor-v219.webp':Buffer.from('arte-editor-real')};
+for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.mkdirSync(path.dirname(archivo),{recursive:true});fs.writeFileSync(archivo,b);}
+''')
+        (secciones / 'heroe-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Creador de héroe','procedencia.json':'{"seccion":"heroe"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'juego/campana-personaje.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.mkdirSync(path.dirname(archivo),{recursive:true});fs.writeFileSync(archivo,b);}
+''')
+        (secciones / 'mulligan-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Mulligan inicial','procedencia.json':'{"seccion":"mulligan"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'juego/mulligan-ui.js':fs.readFileSync('componente.js'),'juego/mulligan-ui.css':'selector'};
+for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.mkdirSync(path.dirname(archivo),{recursive:true});fs.writeFileSync(archivo,b);}
+''')
+        (secciones / 'invitaciones-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Invitaciones de sala','procedencia.json':'{"seccion":"invitaciones"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'juego/invitaciones-compartidas.js':fs.readFileSync('componente.js')};
+for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.mkdirSync(path.dirname(archivo),{recursive:true});fs.writeFileSync(archivo,b);}
+''')
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs', 'pruebas_interacciones_exportacion.mjs', 'pruebas_epilogo_gero_exportacion.mjs', 'pruebas_pitagoras_exportacion.mjs', 'pruebas_heroe_exportacion.mjs', 'pruebas_mulligan_exportacion.mjs', 'pruebas_invitaciones_exportacion.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -277,7 +325,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         self.assertEqual(self.referencias_protegidas(), protegido)
 
     def test_sobres_exportador_propio_y_registro_explicito(self):
-        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta'})
+        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones'})
         original_run = subprocess.run
         llamadas = []
         def registrar(args, **opciones):
@@ -323,7 +371,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             p.validar_paquete(salida, 'coleccion')
         for desconocida in ['../cuenta', 'cuenta/../rey', 'main', '', None]:
             with self.subTest(seccion=desconocida):
-                with self.assertRaisesRegex(ValueError, 'Sección no admitida: elige coleccion, rey, sobres, cuenta'):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
                     self.preparar(desconocida)
         (salida / 'tcg/cuenta/procedencia.json').unlink()
         del manifiesto['archivos']['procedencia.json']
@@ -331,11 +379,177 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de cuenta: procedencia.json'):
             p.validar_paquete(salida, 'cuenta')
 
-    def test_cuatro_secciones_conservan_hermanas_byte_a_byte(self):
+    def test_interacciones_usa_exportador_y_prueba_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('interacciones')
+        self.assertEqual(llamadas, ['interacciones-exportar.mjs', 'pruebas_interacciones_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'interacciones')
+        self.assertEqual(set(registro['secciones']), {'interacciones'})
+        self.assertEqual(manifiesto['seccion'], 'interacciones')
+        self.assertIn('tcg/interacciones/index.html', contenido)
+        self.assertNotIn('tcg/interacciones/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../interacciones', 'interacciones/../rey', 'main', 'dados', '/tmp/interacciones', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/interacciones/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/interacciones/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de interacciones: procedencia.json'):
+            p.validar_paquete(salida, 'interacciones')
+
+    def test_epilogo_gero_usa_exportador_y_prueba_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('epilogo-gero')
+        self.assertEqual(llamadas, ['epilogo-gero-exportar.mjs', 'pruebas_epilogo_gero_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'epilogo-gero')
+        self.assertEqual(set(registro['secciones']), {'epilogo-gero'})
+        self.assertEqual(manifiesto['seccion'], 'epilogo-gero')
+        self.assertIn('tcg/epilogo-gero/index.html', contenido)
+        self.assertNotIn('tcg/epilogo-gero/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../epilogo-gero', 'epilogo-gero/../rey', 'main', 'dados', '/tmp/epilogo-gero', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/epilogo-gero/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/epilogo-gero/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de epilogo-gero: procedencia.json'):
+            p.validar_paquete(salida, 'epilogo-gero')
+
+    def test_pitagoras_usa_exportador_y_prueba_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('pitagoras')
+        self.assertEqual(llamadas, ['pitagoras-exportar.mjs', 'pruebas_pitagoras_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'pitagoras')
+        self.assertEqual(set(registro['secciones']), {'pitagoras'})
+        self.assertEqual(manifiesto['seccion'], 'pitagoras')
+        self.assertIn('tcg/pitagoras/index.html', contenido)
+        self.assertIn('tcg/pitagoras/juego/art/esbirro-editor-v219.webp', contenido)
+        self.assertNotIn('tcg/pitagoras/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../pitagoras', 'pitagoras/../rey', 'main', 'dados', '/tmp/pitagoras', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/pitagoras/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/pitagoras/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de pitagoras: procedencia.json'):
+            p.validar_paquete(salida, 'pitagoras')
+
+    def test_heroe_usa_exportador_y_prueba_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('heroe')
+        self.assertEqual(llamadas, ['heroe-exportar.mjs', 'pruebas_heroe_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'heroe')
+        self.assertEqual(set(registro['secciones']), {'heroe'})
+        self.assertEqual(manifiesto['seccion'], 'heroe')
+        self.assertIn('tcg/heroe/index.html', contenido)
+        self.assertIn('tcg/heroe/juego/campana-personaje.js', contenido)
+        self.assertNotIn('tcg/heroe/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../heroe', 'heroe/../rey', 'main', 'dados', '/tmp/heroe', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/heroe/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/heroe/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de heroe: procedencia.json'):
+            p.validar_paquete(salida, 'heroe')
+
+    def test_mulligan_usa_exportador_y_prueba_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('mulligan')
+        self.assertEqual(llamadas, ['mulligan-exportar.mjs', 'pruebas_mulligan_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'mulligan')
+        self.assertEqual(set(registro['secciones']), {'mulligan'})
+        self.assertEqual(manifiesto['seccion'], 'mulligan')
+        self.assertIn('tcg/mulligan/index.html', contenido)
+        self.assertIn('tcg/mulligan/juego/mulligan-ui.js', contenido)
+        self.assertNotIn('tcg/mulligan/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../mulligan', 'mulligan/../rey', 'main', 'dados', '/tmp/mulligan', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/mulligan/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/mulligan/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de mulligan: procedencia.json'):
+            p.validar_paquete(salida, 'mulligan')
+
+    def test_invitaciones_usa_exportador_y_prueba_propios(self):
+        original_run = subprocess.run
+        llamadas = []
+        def registrar(args, **opciones):
+            if args[0] == 'node':
+                llamadas.append(Path(args[1]).name)
+            return original_run(args, **opciones)
+        with patch.object(p.subprocess, 'run', side_effect=registrar):
+            salida = self.preparar('invitaciones')
+        self.assertEqual(llamadas, ['invitaciones-exportar.mjs', 'pruebas_invitaciones_exportacion.mjs'])
+        registro, manifiesto, contenido = p.validar_paquete(salida, 'invitaciones')
+        self.assertEqual(set(registro['secciones']), {'invitaciones'})
+        self.assertEqual(manifiesto['seccion'], 'invitaciones')
+        self.assertIn('tcg/invitaciones/index.html', contenido)
+        self.assertIn('tcg/invitaciones/juego/invitaciones-compartidas.js', contenido)
+        self.assertNotIn('tcg/invitaciones/movil.html', contenido)
+        with self.assertRaisesRegex(ValueError, 'sección elegida'):
+            p.validar_paquete(salida, 'coleccion')
+        for desconocida in ['../invitaciones', 'invitaciones/../rey', 'main', 'dados', '/tmp/invitaciones', '', None]:
+            with self.subTest(seccion=desconocida):
+                with self.assertRaisesRegex(ValueError, 'Sección no admitida'):
+                    self.preparar(desconocida)
+        (salida / 'tcg/invitaciones/procedencia.json').unlink()
+        del manifiesto['archivos']['procedencia.json']
+        (salida / 'tcg/invitaciones/publicacion.json').write_bytes(p.json_bytes(manifiesto))
+        with self.assertRaisesRegex(ValueError, 'Faltan archivos requeridos de invitaciones: procedencia.json'):
+            p.validar_paquete(salida, 'invitaciones')
+
+    def test_diez_secciones_conservan_hermanas_byte_a_byte(self):
         protegidas = self.referencias_protegidas()
         ultimo = None
         esperados = {}
-        for seccion in ['coleccion', 'rey', 'sobres', 'cuenta']:
+        for seccion in ['coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones']:
             salida = self.preparar(seccion)
             resultado = p.publicar(self.repo, salida, seccion)
             revision = resultado['commit']
@@ -349,7 +563,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             self.assertEqual(self.referencias_protegidas(), protegidas)
             ultimo = revision
         cabeceras = self.git('show', f'{ultimo}:tcg/_headers', binario=True)
-        for seccion in ['cuenta', 'sobres', 'coleccion', 'rey']:
+        for seccion in ['invitaciones', 'mulligan', 'heroe', 'pitagoras', 'epilogo-gero', 'interacciones', 'cuenta', 'sobres', 'coleccion', 'rey']:
             (self.repo / 'componente.js').write_text(f'const revision = "Nueva {seccion}";')
             self.git('commit', '-qam', f'Revisar {seccion}')
             protegidas = self.referencias_protegidas()
@@ -364,7 +578,7 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
             self.assertEqual(self.referencias_protegidas(), protegidas)
             self.assertFalse(p.publicar(self.repo, salida, seccion)['nuevo'])
             registro = json.loads(self.git('show', f'{revision}:{p.MARCADOR}'))
-            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres', 'cuenta'})
+            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones'})
             indice = self.git('show', f'{revision}:tcg/index.html')
             for hermana in esperados:
                 self.assertIn(f'href="./{hermana}/"', indice)
@@ -542,6 +756,96 @@ for(const [n,b] of Object.entries(datos))fs.writeFileSync(path.join(destino,n),b
         with patch.object(p.subprocess, 'check_output', return_value=b'otra cuenta'):
             with self.assertRaisesRegex(ValueError, 'otros bytes'):
                 p.verificar_remoto(salida, 'https://revision.example', 'cuenta')
+
+    def test_verificar_interacciones_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('interacciones')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'interacciones')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/interacciones/')
+        self.assertEqual(set(llamadas), {'interacciones/index.html', 'interacciones/procedencia.json', 'interacciones/publicacion.json', 'interacciones/interacciones.js'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otras interacciones'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'interacciones')
+
+    def test_verificar_epilogo_gero_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('epilogo-gero')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'epilogo-gero')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/epilogo-gero/')
+        self.assertEqual(set(llamadas), {'epilogo-gero/index.html', 'epilogo-gero/procedencia.json', 'epilogo-gero/publicacion.json', 'epilogo-gero/epilogo-gero.js'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otro epilogo'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'epilogo-gero')
+
+    def test_verificar_pitagoras_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('pitagoras')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'pitagoras')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/pitagoras/')
+        self.assertEqual(set(llamadas), {'pitagoras/index.html', 'pitagoras/procedencia.json', 'pitagoras/publicacion.json', 'pitagoras/pitagoras.js', 'pitagoras/juego/art/esbirro-editor-v219.webp'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otro Pitagoras'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'pitagoras')
+
+    def test_verificar_heroe_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('heroe')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'heroe')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/heroe/')
+        self.assertEqual(set(llamadas), {'heroe/index.html', 'heroe/procedencia.json', 'heroe/publicacion.json', 'heroe/juego/campana-personaje.js'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otro heroe'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'heroe')
+
+    def test_verificar_invitaciones_solo_compara_su_paquete_y_url(self):
+        salida = self.preparar('invitaciones')
+        contenido = p.archivos(salida / 'tcg')
+        llamadas = []
+        def curl(args, **opciones):
+            self.assertEqual(args[:3], ['curl', '--disable', '-fsSL'])
+            ruta = unquote(urlsplit(args[-1]).path).lstrip('/')
+            llamadas.append(ruta)
+            return contenido[ruta]
+        with patch.object(p.subprocess, 'check_output', side_effect=curl):
+            resultado = p.verificar_remoto(salida, 'https://revision.example', 'invitaciones')
+        self.assertTrue(resultado['verificado_web'])
+        self.assertEqual(resultado['url'], 'https://revision.example/invitaciones/')
+        self.assertEqual(set(llamadas), {'invitaciones/index.html', 'invitaciones/procedencia.json', 'invitaciones/publicacion.json', 'invitaciones/juego/invitaciones-compartidas.js'})
+        with patch.object(p.subprocess, 'check_output', return_value=b'otras invitaciones'):
+            with self.assertRaisesRegex(ValueError, 'otros bytes'):
+                p.verificar_remoto(salida, 'https://revision.example', 'invitaciones')
 
 
 if __name__ == '__main__':
