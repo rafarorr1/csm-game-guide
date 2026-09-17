@@ -797,7 +797,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=262">
+<link rel="stylesheet" href="mulligan-ui.css?b=263">
 </head>
 <body>
 <div id="app"><div id="tel">
@@ -905,9 +905,9 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
   <div class="tutfoot"><span class="tutwait" id="tutWait"></span><button class="btn gold sm" id="tutNext">Entendido →</button></div>
 </div></div>
 
-<script src="motor.js?b=262"></script>
-<script src="final.js?b=262"></script>
-<script src="mulligan-ui.js?b=262"></script>
+<script src="motor.js?b=263"></script>
+<script src="final.js?b=263"></script>
+<script src="mulligan-ui.js?b=263"></script>
 <script>
 'use strict';
 /* ==========================================================================
@@ -918,7 +918,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 const $  = s => document.querySelector(s);
 const $$ = s => [...document.querySelectorAll(s)];
 const el = (t,c,h)=>{const e=document.createElement(t); if(c)e.className=c; if(h!=null)e.innerHTML=h; return e;};
-const BUILD = {n:262, fecha:'2026-09-16'};
+const BUILD = {n:263, fecha:'2026-09-16'};
 const nap = ms => ((G&&G.fast)||document.hidden) ? Promise.resolve() : sleep(ms);
 const FXON = ()=> G && !G.fast && !G.silent && !document.hidden;
 const FX_SUAVE = ()=> matchMedia('(prefers-reduced-motion: reduce)').matches;

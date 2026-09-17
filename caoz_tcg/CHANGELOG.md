@@ -1,5 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
+### v25 · Build 263 · Mulligan inicial · 2026-09-16
+
+- La primera mano ya no se puede reemplazar por completo. Cada jugador puede
+  seleccionar hasta dos cartas, roba exactamente el mismo número de reemplazos
+  y sólo después devuelve las seleccionadas al mazo.
+- El selector es explícito y estable en escritorio y móvil: conservar la mano
+  sigue siendo válido, las cartas elegidas se distinguen sin abrir el inspector
+  y no se altera el tamaño del diálogo.
+- El motor aplica la misma regla a la IA y a partidas online; el anfitrión
+  conserva la validación de la selección y el robo.
+
 ### v24 · Build 262 · Creador inmersivo de héroe · 2026-09-16
 
 - El creador del héroe suma presentación, estatura, complexión, rostro, ojos,
