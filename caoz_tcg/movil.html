@@ -1171,7 +1171,7 @@ function buildSelect(){
         <div><div class="lname">${L.n}</div><div class="larch">${D.d}</div>
           <div class="lhab">${L.habName} · <b>${L.habCost} PD</b> · ${estrellas(GUIAS[id].dif)}</div></div>
         <div class="lmarca">✦</div>`);
-      d.dataset.lid=id; ilustrarLider(d,id);
+      d.dataset.lid=id; window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+id,L.n); ilustrarLider(d,id);
       d.onclick=()=>{ if(SEL_PASO==='yo') SELP=id; else SELF=id; buildSelect(); };
       lista.appendChild(d); });
   }
@@ -1317,6 +1317,7 @@ function cartaDeLiderVS(lid, lado, ladoArte){
   const L=LEADERS[lid], D=DECKS[lid];
   const d=el('div','vscard '+lado,`<div class="lface">${L.art}</div><div class="lname">${L.n}</div><div class="larch">${D.d}</div>`);
   window.CAOZ_COLECCION_JUEGO?.marcar(d,ladoArte);
+  window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+lid,L.n);
   ilustrarLider(d,lid); return d;
 }
 async function cortinillaVS(a,b,opts={}){
@@ -1511,6 +1512,7 @@ function cardEl(id,opt={}){
     ${c.r===2?'<div class="rar">★</div><i class="foil" aria-hidden="true"></i>':''}
     <div class="art">${c.art}</div><div class="tribe">${tribeLine(c)}</div><div class="txt">${c.x||''}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
+  window.marcarNombreCarta(d.querySelector('.nm'),id,c.n);
   d.dataset.card=id;
   ilustrar(d,id);
   pulsacionLarga(d, ()=>abrirFicha(id,null,{origen:d}));
@@ -1538,6 +1540,7 @@ function unitFill(d,u){
     <div class="keys">${kw.join('')}${nombresDeHabilidad(c.id).map(n=>`<span class="kw hab">${n}</span>`).join('')}</div>
     ${u.objs.length?`<div class="eq">${u.objs.map(o=>`<span>${CARDS[o]?CARDS[o].art:'✨'}</span>`).join('')}</div>`:''}
     <div class="stats"><span class="atk">${u.atk}</span><span class="hp">${hp}</span></div>`;
+  window.marcarNombreCarta(d.querySelector('.nm'),c.id,c.n);
   ilustrar(d,c.id);
 }
 
@@ -1547,6 +1550,7 @@ function abrirFicha(id,u,opts={}){
   window.CAOZ_COLECCION_JUEGO?.ficha(box,opts.ladoArte??window.CAOZ_COLECCION_JUEGO?.lado(opts.origen)??u?.side,opts.origen);
   box.className='big t-'+(CARDS[id]?CARDS[id].t:'personaje');
   box.innerHTML=inspectHTML(id,u);
+  window.marcarNombreCarta(box.querySelector('.nm'),id,CARDS[id].n);
   const art=box.querySelector('.art'), enc=CAOZ_ARTE.encuadre(id,'movil_detalle',box);
   if(art){art.dataset.arteId=id;CAOZ_ARTE.acabar(art,id);}
   if(art&&enc){ art.classList.add('conarte'); art.style.setProperty('--ex',enc.x+'%'); art.style.setProperty('--ey',enc.y+'%');
@@ -1579,6 +1583,7 @@ function fichaLider(side){
     <div class="bigsep"></div><div class="txt">${L.pasiva}</div><div class="bigsep"></div><div class="txt">${L.hab}</div>
     ${L.hab2?`<div class="txt">${'<b>'+L.hab2.n+':</b> '+L.hab2.d}</div>`:''}
     <div class="bigsep"></div><div class="bigrow">❤️ Alma ${Math.max(0,p.alma)} · 🔷 ${p.pd}/${p.pdMax} · 🗝️ ${keys(side)}</div>`;
+  window.marcarNombreCarta(box.querySelector('.nm'),'lider_'+p.leaderId,L.n);
   const btns=$('#inspectBtns'); btns.innerHTML='';
   const c=el('button','btn','Cerrar'); c.onclick=cerrarHojas; btns.appendChild(c);
   campanaVestirFicha(box,side);if(side===FOE&&G.campana?.jefeSecreto)campanaVestirPitagoras(box);CAOZ_ARTE.acabar(box,'lider_'+p.leaderId);
@@ -1606,6 +1611,7 @@ function manoTocada(d){
   d.classList.add('tocada');
   const id=d.dataset.card, c=CARDS[id], ok=!G.resolving&&canPlay(ME,id)&&tutCan('hand',id);
   pill.innerHTML=`<span><b>${c.n}</b> · ${costOf(id,ME)} PD</span>`;
+  window.marcarNombreCarta(pill.querySelector('b'),id,c.n);
   const ver=el('button','btn sm','Ver'); ver.onclick=e=>{ e.stopPropagation(); abrirFicha(id,null,{jugar:ok,ladoArte:ME}); };
   pill.appendChild(ver);
   if(ok){ const b=el('button','btn sm gold','▶ Jugar'); b.onclick=e=>{ e.stopPropagation(); jugarDeLaMano(id); }; pill.appendChild(b); }
@@ -1632,6 +1638,7 @@ function renderLeaders(){
       ${rostroLider(p.leaderId,side)}
       <div><div class="ln">${L.n}</div><div class="lh">${mine?L.habName+' · <b>'+(p.leaderUsed?'usada':L.habCost+' PD')+'</b>':L.ep}</div></div></div>`;
     const e=host.firstElementChild;
+    window.marcarNombreCarta(e.querySelector('.ln'),'lider_'+p.leaderId,L.n);
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
     if(!mine&&G.campana?.jefeSecreto)campanaVestirPitagoras(e);
     if(e.matches('.liderJugador,.identidadPitagoras'))CAOZ_ARTE.acabar(e,'lider_'+p.leaderId);
@@ -1705,7 +1712,8 @@ function render(){
   renderNubesDagas();
   const mid=$('#midRow'); mid.innerHTML='';
   if(G.place){ const c=CARDS[G.place.id];
-    const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn">${c.n} <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
+    const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn"><span class="nombreLugar">${c.n}</span> <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
+    window.marcarNombreCarta(d.querySelector('.nombreLugar'),c.id,c.n);
     if(TGT&&isTargetable(G.place)) d.classList.add('tgt');
     d.onclick=()=>{ if(TGT){ pickTarget(G.place); return; } abrirFicha(G.place.id,null,{ladoArte:G.place.side}); };
     mid.appendChild(d);
@@ -1879,6 +1887,7 @@ function showTutorialPick(){
     const L=LEADERS[id], D=DECKS[id], g=GUIAS[id];
     const d=el('div','ltile',`<div class="lface">${L.art}</div><div><div class="lname">${L.n}</div><div class="larch">${D.d}</div>
       <div class="lhab">${estrellas(g.dif)} · ${g.lema}</div></div>`);
+    window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+id,L.n);
     ilustrarLider(d,id);
     d.onclick=()=>{ cerrarOv(); $('#log').innerHTML=''; startTutorial(id); };
     list.appendChild(d);
@@ -1998,6 +2007,7 @@ function onlPickLeader(asHost){
   Object.keys(LEADERS).forEach(id=>{ const L=LEADERS[id], D=DECKS[id];
     const d=el('div','ltile',`<div class="lface">${L.art}</div><div><div class="lname">${L.n}</div><div class="larch">${D.d}</div>
       <div class="lhab">${L.habName} · <b>${L.habCost} PD</b></div></div><div class="lmarca">✦</div>`);
+    window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+id,L.n);
     ilustrarLider(d,id);
     d.onclick=()=>{ ONL.lider=id; [...list.children].forEach(c=>c.classList.remove('sel')); d.classList.add('sel'); $('#onlGo').disabled=false; };
     list.appendChild(d); });
@@ -2284,6 +2294,7 @@ async function fxSpell(cardId,side){
 async function fxHabilidad(side){
   if(!FXON()) return;
   const L=P(side).L, nodo=el('div','lider'); nodo.innerHTML=rostroLider(P(side).leaderId,side)+`<div><div class="ln">${L.n}</div><div class="lh">${L.habName}</div></div>`;
+  window.marcarNombreCarta(nodo.querySelector('.ln'),'lider_'+P(side).leaderId,L.n);
   nodo.style.padding='6px 12px 6px 6px';
   await fxCartaEnEscena(nodo,side,'var(--gold)','✨ '+L.habName+' — '+L.n,fxQuieta(side));
 }

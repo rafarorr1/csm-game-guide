@@ -23,6 +23,7 @@ Abrir:
 - Creador de héroe: <http://127.0.0.1:8878/dev/secciones/heroe.html>
 - Mulligan inicial: <http://127.0.0.1:8878/dev/secciones/mulligan.html>
 - Invitaciones de sala: <http://127.0.0.1:8878/dev/secciones/invitaciones.html>
+- Estudio de nombres: <http://127.0.0.1:8878/dev/secciones/estudio-nombres.html>
 
 El servidor escucha exclusivamente en `127.0.0.1`. Para elegir otro puerto,
 usar `--puerto 8880`. No necesita instalar paquetes ni credenciales. Cerrarlo con
@@ -85,6 +86,29 @@ revisión: <https://aislados.caoz-tcg.pages.dev/mulligan/>.
 node dev/secciones/pruebas_mulligan_exportacion.mjs
 python3 dev/secciones/publicar.py --seccion mulligan --publicar --salida /ruta/nueva
 python3 dev/secciones/publicar.py --seccion mulligan --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
+## Estudio de nombres de cartas
+
+La revisión está en `/estudio-nombres/`. Muestra cinco cartas reales derivadas
+del catálogo actual y deja cambiar únicamente su título visible. El editor usa
+`caoz_tcg/nombres-cartas.js` byte a byte: normaliza espacios, aplica el límite
+vigente y rechaza caracteres que no pueden mostrarse con seguridad. Los IDs,
+estadísticas, reglas, mazos y nombres canónicos del motor no se modifican.
+
+«Guardar borrador» conserva el cambio sólo en un `Map` de memoria de la página;
+«Restaurar original» elimina ese borrador. Los tres indicadores explican el
+recorrido previsto (local → pendiente de beta → producción), pero son una
+simulación explícita: no hay acceso, petición HTTP, publicación ni progreso del
+jugador. Al recargar se pierde la muestra temporal.
+
+Local: <http://127.0.0.1:8878/dev/secciones/estudio-nombres.html>. Al publicar
+la revisión: <https://aislados.caoz-tcg.pages.dev/estudio-nombres/>.
+
+```sh
+node dev/secciones/pruebas_estudio_nombres_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion estudio-nombres --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion estudio-nombres --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
 ## Invitaciones de sala

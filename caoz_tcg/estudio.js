@@ -7,8 +7,24 @@
   const acabados={normal:'Normal',foil:'Foil',dorado:'Foil dorado'};
   let dispositivo='desktop',superficie='mano',vistaLista=false;
   const claveVista=()=>dispositivo+'_'+superficie;
-  let cartas=[],privados=new Map(),seleccion='',acabado='normal',tipo='',entorno='',pendiente=null,conflicto=false,ocupado=false,autenticado=false;
+  let cartas=[],privados=new Map(),titulos=new Map(),seleccion='',acabado='normal',tipo='',entorno='',pendiente=null,tituloPendiente=null,conflicto=false,ocupado=false,autenticado=false;
   const actual=()=>cartas.find(c=>c.id===seleccion);
+  const tituloRegistrado=c=>titulos.get(c.id)?.titulo||null;
+  const nombreVisible=c=>tituloRegistrado(c)||c.nombre;
+  const nombreBorrador=c=>tituloPendiente?.id===c.id?tituloPendiente.valor:nombreVisible(c);
+  function validarNombre(valor){
+    const compartido=globalThis.CAOZ_NOMBRES_CARTAS?.validar;
+    if(typeof compartido==='function')return compartido(valor);
+    const limpio=String(valor||'').normalize('NFC').replace(/\s+/gu,' ').trim();
+    if(!limpio||[...limpio].length>70||/[\u0000-\u001f\u007f<>]/u.test(limpio))throw Error('Escribe un nombre válido de hasta 70 caracteres.');
+    return limpio;
+  }
+  function tituloParaGuardar(c){const titulo=validarNombre(nombreBorrador(c));return titulo===c.nombre?null:titulo;}
+  function nombreEnEdicion(c){try{return tituloPendiente?.id===c.id?validarNombre(tituloPendiente.valor):nombreVisible(c);}catch(_){return nombreVisible(c);}}
+  function tieneNombrePendiente(c=actual()){
+    if(!c||tituloPendiente?.id!==c.id)return false;
+    try{return tituloParaGuardar(c)!==(titulos.get(c.id)?.titulo??null);}catch(_){return true;}
+  }
   const textoTipo=t=>tipos[t]||String(t||'Carta').replace(/^./,s=>s.toUpperCase());
   const limitar=(valor,min,max,defecto)=>Number.isFinite(Number(valor))?Math.round(Math.max(min,Math.min(max,Number(valor)))):defecto;
   const normalizar=e=>({x:limitar(e?.x??50,0,100,50),y:limitar(typeof e==='number'?e:e?.y??50,0,100,50),z:limitar(e?.z??100,50,300,100)});
@@ -44,17 +60,29 @@
     $('confirmacionTitulo').textContent=titulo;$('confirmacionTexto').textContent=mensaje;$('confirmacionAceptar').textContent=accion;d.returnValue='';
     return new Promise(resolve=>{d.addEventListener('close',()=>resolve(d.returnValue==='aceptar'),{once:true});d.showModal();$('confirmacionCancelar').focus();});
   }
-  async function puedeDescartar(){return !pendiente||await confirmar('Tienes una prueba sin guardar','Si continúas, se descartarán la imagen o el encuadre de esta vista previa. La ilustración publicada y los archivos del editor anterior se conservan.');}
+  const hayCambiosPendientes=()=>!!pendiente||tieneNombrePendiente();
+  async function puedeDescartar(){
+    if(!hayCambiosPendientes())return true;
+    const tieneArte=!!pendiente,tieneNombre=tieneNombrePendiente();
+    const cambios=[tieneArte?'la imagen o el encuadre':'',tieneNombre?'el nombre visible':''].filter(Boolean).join(' y ');
+    return confirmar('Tienes cambios sin guardar','Si continúas, se descartarán '+cambios+'. La carta publicada, sus reglas y los archivos del editor anterior se conservan.');
+  }
   function descartar(limpiarConflicto=true){if(pendiente?.url)URL.revokeObjectURL(pendiente.url);pendiente=null;if(limpiarConflicto)conflicto=false;$('archivo').value='';}
+  function descartarTitulo(){tituloPendiente=null;const c=actual();if(c)$('editarNombre').value=nombreVisible(c);}
+  function descartarTodo(limpiarConflicto=true){descartar(limpiarConflicto);descartarTitulo();}
   function botones(){
     $('entrar').disabled=ocupado;
-    const c=actual(),hayImagen=!!(pendiente?.url||(c&&urlVersion(c))),p=c&&registro(c);
+    const c=actual(),hayImagen=!!(pendiente?.url||(c&&urlVersion(c))),p=c&&registro(c);let nombreValido=false;
+    try{if(c){tituloParaGuardar(c);nombreValido=true;}}catch(_){}
     for(const id of ['archivo','recargar','salir','recuperar','descartar','restaurar','actualizarRevision','versionNormal','versionFoil','versionDorado'])$(id).disabled=ocupado;
     for(const id of ['encX','encY','encZ','centrar','heredarVista'])$(id).disabled=ocupado||!hayImagen||conflicto;
     $('archivo').disabled=ocupado||conflicto;$('recuperar').disabled=ocupado||conflicto;
     $('usarIlustracion').disabled=ocupado||conflicto||!c||acabado==='normal'||creada(c);
     $('guardar').disabled=ocupado||!pendiente||conflicto||!autenticado;
     $('restaurar').disabled=ocupado||conflicto||!p||(acabado==='normal'?!p.hash&&p.x==null:!registroActivo(c));
+    $('editarNombre').disabled=ocupado||conflicto||!c;
+    $('guardarNombre').disabled=ocupado||conflicto||!autenticado||!tieneNombrePendiente(c)||!nombreValido;
+    $('restaurarNombre').disabled=ocupado||conflicto||!c||!tituloRegistrado(c);
     $('conflicto').hidden=!conflicto;$('estudio').setAttribute('aria-busy',String(ocupado));
   }
   function bloquear(valor){ocupado=valor;botones();}
@@ -71,7 +99,7 @@
     $('vistaAyuda').textContent=(propio?'Encuadre independiente.':mapa[CAOZ_VISTAS.opuesta(key)]?'Comparte el encuadre de '+(dispositivo==='movil'?'Escritorio.':'Móvil.'):'Usa el encuadre base.')+' Puedes cambiar de vista sin perder los ajustes pendientes.';
     const frame=$('juegoVista'),pagina=dispositivo==='movil'?'movil.html':'index.html';
     if(frame.dataset.pagina!==pagina){vistaLista=false;frame.dataset.pagina=pagina;frame.src=pagina+'?estudioVista=1&escritorio=1';$('vistaEstado').textContent='Preparando vista real…';}
-    if(vistaLista)frame.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:c.id,acabado,url:ruta,encuadre:CAOZ_VISTAS.resolver(mapa,key,baseEnc),vista:key},location.origin);
+    if(vistaLista)frame.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:c.id,acabado,url:ruta,titulo:nombreEnEdicion(c),encuadre:CAOZ_VISTAS.resolver(mapa,key,baseEnc),vista:key},location.origin);
   }
   for(const d of ['desktop','movil'])$('vista'+(d==='desktop'?'Desktop':'Movil')).onclick=()=>{dispositivo=d;vista();};
   addEventListener('message',e=>{
@@ -97,8 +125,9 @@
   function vista(){
     const c=actual();if(!c)return;
     const p=registro(c),ruta=pendiente?.url||urlVersion(c),e=pendiente?.encuadre||encuadre(c),nueva=acabado!=='normal'&&!creada(c);
-    $('vista').dataset.acabado=acabado;$('vista').classList.toggle('lider',!!c.esLider);$('vista').setAttribute('aria-label','Vista previa de '+c.nombre+' · '+acabados[acabado]+(pendiente?', con cambios sin guardar':nueva?', versión sin crear':''));
-    $('nombreCarta').textContent=c.nombre;$('tribuCarta').textContent=c.tribu||(c.esLider?'Protagonista':textoTipo(c.tipo));
+    const nombre=nombreEnEdicion(c);
+    $('vista').dataset.acabado=acabado;$('vista').classList.toggle('lider',!!c.esLider);$('vista').setAttribute('aria-label','Vista previa de '+nombre+' · '+acabados[acabado]+(pendiente?', con cambios sin guardar':nueva?', versión sin crear':''));
+    $('nombreCarta').textContent=nombre;$('tribuCarta').textContent=c.tribu||(c.esLider?'Protagonista':textoTipo(c.tipo));
     $('textoCarta').textContent=c.texto||'';$('textoCarta').hidden=!c.texto;$('simbolo').textContent=c.simbolo||'✦';$('simbolo').hidden=!!ruta;
     $('imagen').hidden=!ruta;if(ruta){if($('imagen').src!==ruta)$('imagen').src=ruta;}else $('imagen').removeAttribute('src');
     for(const [id,valor] of [['coste',c.coste],['ataque',c.ataque],['vida',c.vida]]){$(id).hidden=c.esLider||valor==null;$(id).textContent=valor??'';}
@@ -108,13 +137,16 @@
     $('origen').textContent=pendiente?(pendiente.blob?'Vista previa del diseño '+acabados[acabado]+' · Sin guardar.':pendiente.crear?'Vista previa de '+acabados[acabado]+' · Se creará al guardar.':'Vista previa del encuadre '+acabados[acabado]+' · Sin guardar.'):(nueva?'Versión '+acabados[acabado]+' no creada.':heredada?'Encuadre independiente.':registroActivo(c)?.hash?'Diseño '+acabados[acabado]+': '+(p.nombre||c.nombre):local?(local.placeholder?'Ilustración provisional':'Ilustración original')+(registroActivo(c)?.x!=null?' · Encuadre ajustado':''):'Esta carta todavía usa su símbolo. Añade una ilustración para darle vida.');
     if(heredada&&!pendiente?.blob)$('origen').textContent+=' Usa ilustración Normal: si cambia su imagen, se actualizará también aquí.';
     $('borrador').hidden=!pendiente;
-    if(pendiente){$('archivoNombre').textContent=pendiente.blob?pendiente.nombre+' · '+Math.round(pendiente.blob.size/1024)+' KB · WebP':pendiente.crear?'Crear '+acabados[acabado]+' de '+c.nombre:'Nuevo encuadre '+acabados[acabado]+' de '+c.nombre;
+    if(pendiente){$('archivoNombre').textContent=pendiente.blob?pendiente.nombre+' · '+Math.round(pendiente.blob.size/1024)+' KB · WebP':pendiente.crear?'Crear '+acabados[acabado]+' de '+nombre:'Nuevo encuadre '+acabados[acabado]+' de '+nombre;
       $('alcance').textContent='Se guardará sólo la versión '+acabados[acabado]+' en '+nombreEntorno()+'. '+'Los jugadores que elijan este acabado recibirán su diseño publicado.'+' Las demás versiones se conservan.';}
     versiones();botones();
   }
   function detalle(){
     const c=actual();if(!c)return;
-    $('grupo').textContent=textoTipo(c.tipo).toLocaleUpperCase('es')+' / '+c.id;$('nombre').textContent=c.nombre;
+    const nombre=nombreVisible(c);$('grupo').textContent=textoTipo(c.tipo).toLocaleUpperCase('es')+' / '+c.id;$('nombre').textContent=nombre;
+    if(tituloPendiente?.id!==c.id)$('editarNombre').value=nombre;
+    const pendienteNombre=tieneNombrePendiente(c),titulo=tituloRegistrado(c);
+    $('estadoNombre').textContent=pendienteNombre?'Nombre modificado sin guardar.':'El nombre '+(titulo?'personalizado':'original')+' se guarda como borrador del Estudio. Los IDs, reglas y mazos no cambian.';
     $('mazos').textContent=c.mazos?.length?'Mazos: '+c.mazos.join(' · '):'Fuera de los seis mazos principales';
     $('reglasCompletas').textContent=c.texto||'Esta carta no tiene texto de reglas.';
     const p=registro(c),u=urlVersion(c),local=original(c),urlOriginal=urlSegura(local?.url);
@@ -129,14 +161,14 @@
   }
   function lista(){
     const q=$('buscar').value.toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g,''),f=$('filtroArte').value;
-    const filtradas=cartas.filter(c=>(!tipo||c.tipo===tipo)&&(!f||estadoArte(c)===f)&&[c.nombre,c.id,c.tipo,c.tribu,...c.mazos||[]].join(' ').toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(q));
+    const filtradas=cartas.filter(c=>(!tipo||c.tipo===tipo)&&(!f||estadoArte(c)===f)&&[nombreVisible(c),c.nombre,c.id,c.tipo,c.tribu,...c.mazos||[]].join(' ').toLocaleLowerCase('es').normalize('NFD').replace(/[\u0300-\u036f]/g,'').includes(q));
     $('lista').replaceChildren();$('cantidad').textContent=filtradas.length+(filtradas.length===1?' carta':' cartas');
     for(const c of filtradas){
       const b=document.createElement('button');b.className='cartaFila'+(c.id===seleccion?' elegida':'');b.dataset.id=c.id;b.setAttribute('aria-pressed',String(c.id===seleccion));
       const mini=document.createElement('span');mini.className='miniatura';mini.dataset.acabado=ganadora(c);mini.setAttribute('aria-hidden','true');const u=urlActual(c);
       if(u){const img=document.createElement('img');img.src=u;img.loading='lazy';img.alt='';const e=encuadre(c,ganadora(c));img.style.objectPosition=e.x+'% '+e.y+'%';img.style.transform='scale('+e.z/100+')';img.style.transformOrigin=e.x+'% '+e.y+'%';img.onerror=()=>{mini.replaceChildren(document.createTextNode(c.simbolo||'✦'));};mini.append(img);}else mini.textContent=c.simbolo||'✦';
-      const textos=document.createElement('span'),n=document.createElement('strong'),m=document.createElement('small'),flecha=document.createElement('span');n.textContent=c.nombre;m.textContent=acabados[ganadora(c)]+' · '+etiquetas[estadoArte(c)];textos.append(n,m);flecha.className='flecha';flecha.textContent='›';flecha.setAttribute('aria-hidden','true');b.append(mini,textos,flecha);
-      b.onclick=async()=>{if(ocupado||seleccion===c.id)return;if(!await puedeDescartar())return;descartar();seleccion=c.id;acabado=ganadora(c);lista();detalle();if(innerWidth<=600){document.querySelector('.detalle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});$('nombre').focus({preventScroll:true});}};
+      const textos=document.createElement('span'),n=document.createElement('strong'),m=document.createElement('small'),flecha=document.createElement('span');n.textContent=nombreVisible(c);m.textContent=acabados[ganadora(c)]+' · '+etiquetas[estadoArte(c)];textos.append(n,m);flecha.className='flecha';flecha.textContent='›';flecha.setAttribute('aria-hidden','true');b.append(mini,textos,flecha);
+      b.onclick=async()=>{if(ocupado||seleccion===c.id)return;if(!await puedeDescartar())return;descartarTodo();seleccion=c.id;acabado=ganadora(c);lista();detalle();if(innerWidth<=600){document.querySelector('.detalle').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});$('nombre').focus({preventScroll:true});}};
       $('lista').append(b);
     }
     if(!filtradas.length){const p=document.createElement('p');p.className='nota';p.textContent='No hay cartas con estos filtros. Prueba con otro nombre o tipo.';$('lista').append(p);}
@@ -146,24 +178,53 @@
   }
   async function cargar(){
     const [catalogo,datos]=await Promise.all([pedir('art/catalogo.json'),pedir('api/arte/privado')]);
-    if(!Array.isArray(catalogo.cartas)||!catalogo.cartas.length||!Array.isArray(datos.cartas)||!['beta','produccion'].includes(datos.entorno))throw Error('El estudio recibió una biblioteca incompleta. Vuelve a actualizar.');
-    cartas=catalogo.cartas;privados=new Map(datos.cartas.map(c=>[c.id,c]));entorno=datos.entorno;autenticado=true;
+    if(!Array.isArray(catalogo.cartas)||!catalogo.cartas.length||!Array.isArray(datos.cartas)||!Array.isArray(datos.titulos)||!['beta','produccion'].includes(datos.entorno))throw Error('El estudio recibió una biblioteca incompleta. Vuelve a actualizar.');
+    cartas=catalogo.cartas;privados=new Map(datos.cartas.map(c=>[c.id,c]));titulos=new Map(datos.titulos.map(c=>[c.id,c]));entorno=datos.entorno;autenticado=true;
     if(!actual()){seleccion=cartas.find(c=>c.id==='lider_fender')?.id||cartas.find(c=>c.original)?.id||cartas[0].id;acabado=ganadora(actual());}
     if(pendiente&&pendiente.revision!==revision(actual(),pendiente.acabado))conflicto=true;
     $('acceso').hidden=true;$('estudio').hidden=false;$('salir').hidden=false;$('entorno').textContent='ESTUDIO ÚNICO';
     $('cuenta').textContent=cartas.length+' cartas · Guardado en la nube';grupos();lista();detalle();
-    await CAOZ_ESTUDIO.conectar({tipo:'arte',estado,bloquear,recargar:cargar,pendiente:()=>ocupado||!!pendiente,nombre:id=>cartas.find(c=>c.id===id)?.nombre||id});
-    estado(conflicto?'Hay una versión nueva de esta carta. Actualiza la revisión antes de volver a editar.':pendiente?'Sesión recuperada. Tu vista previa sigue sin publicar.':'Estudio conectado. Elige una carta para revisar o reemplazar su ilustración.');
+    await CAOZ_ESTUDIO.conectar({tipo:'arte',estado,bloquear,recargar:cargar,pendiente:()=>ocupado||hayCambiosPendientes(),nombre:id=>{const c=cartas.find(c=>c.id===id);return c?nombreVisible(c):id;}});
+    estado(conflicto?'Hay una versión nueva de esta carta. Actualiza la revisión antes de volver a editar.':hayCambiosPendientes()?'Sesión recuperada. Tus cambios siguen sin publicar.':'Estudio conectado. Elige una carta para revisar o reemplazar su ilustración.');
   }
   function fallo(e){
-    if(e.status===401){autenticado=false;$('estudio').hidden=true;$('acceso').hidden=false;$('salir').hidden=true;if($('locales').open)$('locales').close();estado(pendiente?'La sesión venció. Entra de nuevo: tu vista previa sigue aquí, sin publicar.':'Introduce la clave del estudio de sonidos para continuar.');$('clave').focus();}
+    if(e.status===401){autenticado=false;$('estudio').hidden=true;$('acceso').hidden=false;$('salir').hidden=true;if($('locales').open)$('locales').close();estado(hayCambiosPendientes()?'La sesión venció. Entra de nuevo: tus cambios siguen aquí, sin publicar.':'Introduce la clave del estudio de sonidos para continuar.');$('clave').focus();}
     else{if(e.status===409){conflicto=true;$('conflicto').querySelector('strong').textContent='La carta cambió en otra sesión.';$('conflicto').querySelector('p').textContent='Actualiza la revisión para ver la versión guardada. Tu borrador no se publicará encima del cambio nuevo.';botones();}estado(e.status===409?'La carta cambió en otra sesión. Actualiza la revisión para continuar sin sobrescribir ese cambio.':e.message,true);}
   }
-  async function refrescar(){if(ocupado||!await puedeDescartar())return;descartar();bloquear(true);estado('Actualizando la biblioteca…');try{await cargar();}catch(e){fallo(e);}finally{bloquear(false);}}
+  async function refrescar(){if(ocupado||!await puedeDescartar())return;descartarTodo();bloquear(true);estado('Actualizando la biblioteca…');try{await cargar();}catch(e){fallo(e);}finally{bloquear(false);}}
   $('login').onsubmit=async e=>{e.preventDefault();if(ocupado)return;bloquear(true);try{await pedir('api/sfx/sesion',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({clave:$('clave').value})});$('clave').value='';await cargar();}catch(e){fallo(e);}finally{bloquear(false);}};
-  $('salir').onclick=async()=>{if(ocupado||!await puedeDescartar())return;bloquear(true);try{await pedir('api/sfx/sesion',{method:'DELETE'});descartar();privados.clear();fallo(Object.assign(Error('Sesión cerrada.'),{status:401}));estado('Sesión cerrada. Los cambios guardados siguen en el estudio.');}catch(e){fallo(e);}finally{bloquear(false);}};
+  $('salir').onclick=async()=>{if(ocupado||!await puedeDescartar())return;bloquear(true);try{await pedir('api/sfx/sesion',{method:'DELETE'});descartarTodo();privados.clear();titulos.clear();fallo(Object.assign(Error('Sesión cerrada.'),{status:401}));estado('Sesión cerrada. Los cambios guardados siguen en el estudio.');}catch(e){fallo(e);}finally{bloquear(false);}};
   $('recargar').onclick=refrescar;$('actualizarRevision').onclick=refrescar;$('buscar').oninput=lista;$('filtroArte').onchange=lista;
   $('verBiblioteca').onclick=()=>document.querySelector('.banco').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion:reduce)').matches?'instant':'smooth'});
+  function refrescarEditorNombre(){
+    const c=actual();if(!c)return;
+    const pendienteNombre=tieneNombrePendiente(c);let error='';try{tituloParaGuardar(c);}catch(e){error=e.message;}
+    $('nombre').textContent=nombreEnEdicion(c);
+    $('estadoNombre').textContent=error?'El nombre aún no se puede guardar: '+error:pendienteNombre?'Nombre modificado sin guardar.':'El nombre '+(tituloRegistrado(c)?'personalizado':'original')+' se guarda como borrador del Estudio. Los IDs, reglas y mazos no cambian.';
+    vista();
+  }
+  $('editarNombre').oninput=()=>{
+    const c=actual();if(!c||ocupado||conflicto)return;
+    tituloPendiente={id:c.id,valor:$('editarNombre').value};if(!tieneNombrePendiente(c))tituloPendiente=null;
+    refrescarEditorNombre();
+  };
+  async function guardarNombre(){
+    if(ocupado||conflicto||!autenticado)return;const c=actual();if(!c||!tieneNombrePendiente(c))return;
+    let titulo;try{titulo=tituloParaGuardar(c);}catch(e){fallo(e);botones();return;}
+    const previo=titulos.get(c.id)||{revision:0};if(!Number.isInteger(Number(previo.revision))){fallo(Error('Recarga el catálogo antes de guardar el nombre.'));return;}
+    bloquear(true);estado('Guardando el nombre de '+nombreEnEdicion(c)+' en '+nombreEntorno()+'…');let enviada=false;
+    try{
+      enviada=true;const resultado=await pedir('api/arte/titulo/'+encodeURIComponent(c.id),{method:'PATCH',headers:{'If-Match':String(previo.revision),'Content-Type':'application/json'},body:JSON.stringify({titulo})});
+      const fila=resultado.nombre;if(!fila||fila.id!==c.id||!Number.isInteger(Number(fila.revision)))throw Error('No se pudo confirmar el nombre guardado. Actualiza la biblioteca antes de continuar.');
+      titulos.set(c.id,fila);tituloPendiente=null;lista();detalle();estado('Nombre guardado en '+nombreEntorno()+'. Publica los cambios cuando quieras llevarlo al juego.');await CAOZ_ESTUDIO.actualizar();
+    }catch(e){if(!e.status&&enviada){conflicto=true;$('conflicto').querySelector('strong').textContent='No pudimos confirmar el nombre guardado.';$('conflicto').querySelector('p').textContent='Actualiza la revisión para comprobar qué llegó al estudio antes de hacer otro cambio.';botones();}fallo(e);}finally{bloquear(false);}
+  }
+  $('guardarNombre').onclick=()=>{void guardarNombre();};
+  $('restaurarNombre').onclick=async()=>{
+    if(ocupado||conflicto)return;const c=actual();if(!c||!tituloRegistrado(c))return;
+    if(!await confirmar('Restaurar nombre original','Se volverá a mostrar «'+c.nombre+'». El ID, las reglas, los mazos y las ilustraciones no cambian.','Restaurar nombre'))return;
+    tituloPendiente={id:c.id,valor:c.nombre};$('editarNombre').value=c.nombre;await guardarNombre();
+  };
   function iniciarEncuadres(){pendiente||={id:seleccion,acabado,crear:acabado!=='normal'&&!creada(actual()),revision:revision(actual()),encuadre:encuadre(actual()),vistas:encuadres(actual())};pendiente.vistas||=encuadres(actual());}
   function editarEncuadre(){
     if(ocupado||conflicto||!actual())return;
@@ -175,7 +236,7 @@
   for(const id of ['encX','encY','encZ'])$(id).oninput=editarEncuadre;
   $('heredarVista').onclick=()=>{if(ocupado||conflicto)return;iniciarEncuadres();delete pendiente.vistas[claveVista()];vista();};
   $('centrar').onclick=()=>{aplicarEncuadre({x:50,y:50,z:100});editarEncuadre();};
-  $('descartar').onclick=async()=>{if(ocupado||!await puedeDescartar())return;descartar(false);detalle();estado(conflicto?'Vista previa descartada. Actualiza la revisión para continuar.':'Vista previa descartada. La ilustración publicada sigue igual.');};
+  $('descartar').onclick=async()=>{if(ocupado||!await puedeDescartar())return;descartarTodo(false);detalle();estado(conflicto?'Cambios descartados. Actualiza la revisión para continuar.':'Cambios descartados. La carta publicada sigue igual.');};
   $('imagen').onerror=()=>{if($('imagen').hidden)return;$('imagen').hidden=true;$('simbolo').hidden=false;estado('No se pudo cargar esta imagen. Actualiza o revisa tu conexión antes de guardar.',true);};
   async function convertir(archivo){
     if(!(archivo instanceof Blob)||archivo.size<16||archivo.size>20000000||!['image/jpeg','image/png','image/webp'].includes(archivo.type))throw Error('Selecciona una imagen JPEG, PNG o WebP de hasta 20 MB.');
@@ -193,7 +254,7 @@
   async function preparar(archivo,nombre,enc=null){
     if(ocupado||conflicto)return;if(!await puedeDescartar()){$('archivo').value='';return;}
     bloquear(true);estado('Preparando la ilustración para la vista previa…');
-    try{const preparada=await convertir(archivo);descartar();pendiente={id:seleccion,acabado,crear:acabado!=='normal'&&!creada(actual()),revision:revision(actual()),...preparada,url:URL.createObjectURL(preparada.blob),nombre:Array.from(String(nombre||'Ilustración')).slice(0,150).join(''),encuadre:normalizar(enc),vistas:encuadres(actual())};vista();estado('La vista previa está lista. Ajusta el encuadre y guarda cuando te guste.');}
+    try{const preparada=await convertir(archivo);descartarTodo();pendiente={id:seleccion,acabado,crear:acabado!=='normal'&&!creada(actual()),revision:revision(actual()),...preparada,url:URL.createObjectURL(preparada.blob),nombre:Array.from(String(nombre||'Ilustración')).slice(0,150).join(''),encuadre:normalizar(enc),vistas:encuadres(actual())};vista();estado('La vista previa está lista. Ajusta el encuadre y guarda cuando te guste.');}
     catch(e){fallo(e);}finally{$('archivo').value='';bloquear(false);}
   }
   $('archivo').onchange=()=>{const archivo=$('archivo').files[0];if(archivo)preparar(archivo,archivo.name);};
@@ -222,7 +283,7 @@
         // El servidor antiguo interpreta PATCH sin imagen como herencia de
         // Normal. Un PUT de los mismos bytes conserva el original premium.
         body=await copiarOriginal(c,version);method='PUT';
-        headers={...headers,'Content-Type':'image/webp','X-Arte-Nombre':encodeURIComponent(c.nombre+' · '+acabados[version]+' original local'),'X-Arte-Encuadre':JSON.stringify({...pendiente.encuadre,vistas:pendiente.vistas||encuadres(c)})};
+        headers={...headers,'Content-Type':'image/webp','X-Arte-Nombre':encodeURIComponent(nombreVisible(c)+' · '+acabados[version]+' original local'),'X-Arte-Encuadre':JSON.stringify({...pendiente.encuadre,vistas:pendiente.vistas||encuadres(c)})};
       }
       enviada=true;
       const resultado=await pedir('api/arte/carta/'+encodeURIComponent(c.id)+'/'+version,{method,headers,body});
@@ -236,17 +297,17 @@
   $('restaurar').onclick=async()=>{
     if(ocupado||conflicto)return;const c=actual();if(!c)return;
     const local=original(c),restaura=acabado==='normal'||!!local,enJuego=restaura?ganadora(c):['dorado','foil','normal'].find(a=>a!==acabado&&creada(c,a));
-    const titulo=(restaura?'Restaurar ':'Eliminar ')+acabados[acabado]+' de '+c.nombre;
+    const titulo=(restaura?'Restaurar ':'Eliminar ')+acabados[acabado]+' de '+nombreVisible(c);
     const destino=local?'su imagen y encuadre originales':'el símbolo de esta carta';
     const mensaje=(restaura?'Se restaurará sólo la versión '+acabados[acabado]+' a '+destino+'.':'Se eliminará sólo la versión '+acabados[acabado]+'.')+' En la biblioteca: '+acabados[enJuego]+'. Las demás versiones se conservan.'+(pendiente?' También se descartará tu vista previa.':'');
     if(await confirmar(titulo,mensaje,restaura?'Restaurar '+acabados[acabado]:'Eliminar esta versión'))await guardar('DELETE');
   };
   for(const [a,suf] of [['normal','Normal'],['foil','Foil'],['dorado','Dorado']])$('version'+suf).onclick=async()=>{
-    if(ocupado||acabado===a||!await puedeDescartar())return;descartar();acabado=a;detalle();
+    if(ocupado||acabado===a||!await puedeDescartar())return;descartarTodo();acabado=a;detalle();
   };
   $('usarIlustracion').onclick=async()=>{
     const c=actual();if(ocupado||conflicto||!c||acabado==='normal'||creada(c)||!await puedeDescartar())return;
-    descartar();pendiente={id:c.id,acabado,crear:true,revision:revision(c),encuadre:encuadre(c,'normal'),vistas:CAOZ_VISTAS.limpiar(registro(c,'normal')?.vistas)};vista();estado('Vista previa '+acabados[acabado]+' lista. Guarda para crear esta versión.');
+    descartarTodo();pendiente={id:c.id,acabado,crear:true,revision:revision(c),encuadre:encuadre(c,'normal'),vistas:CAOZ_VISTAS.limpiar(registro(c,'normal')?.vistas)};vista();estado('Vista previa '+acabados[acabado]+' lista. Guarda para crear esta versión.');
   };
   async function leerLocales(){
     if(!window.indexedDB)throw Error('Este navegador no permite recuperar los borradores locales.');
@@ -256,13 +317,13 @@
   }
   $('recuperar').onclick=async()=>{
     if(ocupado)return;bloquear(true);estado('Buscando los borradores del editor anterior en este navegador…');
-    try{const locales=await leerLocales();$('listaLocales').replaceChildren();for(const reg of locales){const c=cartas.find(c=>c.id===reg.id),fila=document.createElement('div'),n=document.createElement('span'),b=document.createElement('button');fila.className='localFila';n.textContent=(c?.nombre||reg.id)+' · '+Math.round(reg.blob.size/1024)+' KB';b.textContent=c?'Previsualizar':'Carta no disponible';b.disabled=!c;b.onclick=async()=>{$('locales').close();if(!await puedeDescartar())return;descartar();seleccion=c.id;acabado='normal';lista();detalle();await preparar(reg.blob,c.nombre+' · borrador local',reg.encuadre);document.querySelector('.detalle').scrollIntoView({behavior:'instant'});};fila.append(n,b);$('listaLocales').append(fila);}
+    try{const locales=await leerLocales();$('listaLocales').replaceChildren();for(const reg of locales){const c=cartas.find(c=>c.id===reg.id),fila=document.createElement('div'),n=document.createElement('span'),b=document.createElement('button');fila.className='localFila';n.textContent=(c?nombreVisible(c):reg.id)+' · '+Math.round(reg.blob.size/1024)+' KB';b.textContent=c?'Previsualizar':'Carta no disponible';b.disabled=!c;b.onclick=async()=>{$('locales').close();if(!await puedeDescartar())return;descartarTodo();seleccion=c.id;acabado='normal';lista();detalle();await preparar(reg.blob,nombreVisible(c)+' · borrador local',reg.encuadre);document.querySelector('.detalle').scrollIntoView({behavior:'instant'});};fila.append(n,b);$('listaLocales').append(fila);}
       if(!locales.length){const p=document.createElement('p');p.className='nota';p.textContent='No encontramos borradores aquí. Los del editor anterior sólo están disponibles en el mismo navegador y dirección donde los guardaste.';$('listaLocales').append(p);}
       $('locales').showModal();estado(locales.length?'Elige un borrador para previsualizarlo. Los archivos locales se conservan.':'No hay borradores del editor anterior en este navegador.');
     }catch(e){fallo(e);}finally{bloquear(false);}
   };
   $('cerrarLocales').onclick=()=>$('locales').close();
-  document.querySelectorAll('header a').forEach(a=>a.addEventListener('click',async e=>{if(!pendiente||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();if(await puedeDescartar()){descartar();location.href=a.href;}}));
-  window.addEventListener('beforeunload',e=>{if(pendiente){e.preventDefault();e.returnValue='';}});
+  document.querySelectorAll('header a').forEach(a=>a.addEventListener('click',async e=>{if(!hayCambiosPendientes()||e.metaKey||e.ctrlKey||e.shiftKey||e.altKey)return;e.preventDefault();if(await puedeDescartar()){descartarTodo();location.href=a.href;}}));
+  window.addEventListener('beforeunload',e=>{if(hayCambiosPendientes()){e.preventDefault();e.returnValue='';}});
   bloquear(true);cargar().catch(fallo).finally(()=>bloquear(false));
 })();

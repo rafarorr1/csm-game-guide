@@ -38,12 +38,31 @@ const jpg=Buffer.from('/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQND
 assert.equal((await llamar('privado','GET',undefined,{}, {ASSETS:env.ASSETS})).status,503);
 assert.equal((await llamar('privado')).status,401);
 assert.equal((await llamar('carta/augusto','PUT',webp,put(0))).status,401);
-assert.deepEqual((await (await llamar('catalogo')).json()).cartas,[]);
+const catalogoVacio=await (await llamar('catalogo')).json();assert.deepEqual(catalogoVacio.cartas,[]);assert.deepEqual(catalogoVacio.titulos,[]);
 const sesion=await llamar('/api/sfx/sesion','POST',JSON.stringify({clave}));assert.equal(sesion.status,200);
 cookie=sesion.headers.get('set-cookie').split(';')[0];
 assert.equal((await llamar('privado','GET',undefined,{Cookie:cookie+'x'})).status,401);
 assert.equal((await (await llamar('privado')).json()).entorno,'beta');
 assert.equal((await llamar('privado')).headers.get('cache-control'),'no-store');
+// Los nombres viven aparte de imágenes: sólo PATCH con CAS puede crearlos o restaurarlos.
+assert.equal((await llamar('titulo/augusto','PATCH',JSON.stringify({titulo:'Sin sesión'}),{'If-Match':'0',Cookie:''})).status,401);
+assert.equal((await llamar('titulo/augusto','GET')).status,405);
+assert.equal((await llamar('titulo/desconocida','PATCH',JSON.stringify({titulo:'No existe'}),{'If-Match':'0'})).status,404);
+assert.equal((await llamar('titulo/augusto','PATCH',JSON.stringify({titulo:'Falta revisión'}))).status,428);
+assert.equal((await llamar('titulo/augusto','PATCH',JSON.stringify({titulo:'Revisión inválida'}),{'If-Match':'-1'})).status,428);
+for(const cuerpoTitulo of [null,[],{}, {titulo:''}, {titulo:3}, {titulo:'Nombre',extra:true}]){
+  assert.equal((await llamar('titulo/augusto','PATCH',JSON.stringify(cuerpoTitulo),{'If-Match':'0'})).status,400);
+}
+let tituloRespuesta=await llamar('titulo/augusto','PATCH',JSON.stringify({titulo:'  Nombre   de   prueba  '}),{'If-Match':'0'});assert.equal(tituloRespuesta.status,200);let tituloGuardado=await tituloRespuesta.json();
+assert.equal(tituloGuardado.nombre.id,'augusto');assert.equal(tituloGuardado.nombre.titulo,'Nombre de prueba');assert.equal(tituloGuardado.nombre.revision,1);assert.equal(typeof tituloGuardado.nombre.actualizado,'string');
+let titulosPublicos=(await (await llamar('catalogo','GET',undefined,{Cookie:''})).json()).titulos;assert.deepEqual(titulosPublicos,[{id:'augusto',revision:1,titulo:'Nombre de prueba'}]);assert.deepEqual(Object.keys(titulosPublicos[0]).sort(),['id','revision','titulo']);
+let titulosPrivados=(await (await llamar('privado')).json()).titulos;assert.equal(titulosPrivados[0].titulo,'Nombre de prueba');assert.equal(typeof titulosPrivados[0].actualizado,'string');
+tituloRespuesta=await llamar('titulo/augusto','PATCH',JSON.stringify({titulo:null}),{'If-Match':'1'});assert.equal(tituloRespuesta.status,200);tituloGuardado=await tituloRespuesta.json();assert.equal(tituloGuardado.nombre.titulo,null);assert.equal(tituloGuardado.nombre.revision,2);
+assert.deepEqual((await (await llamar('catalogo','GET',undefined,{Cookie:''})).json()).titulos,[],'El catálogo público omite el tombstone del título');
+titulosPrivados=(await (await llamar('privado')).json()).titulos;assert.equal(titulosPrivados[0].id,'augusto');assert.equal(titulosPrivados[0].titulo,null);assert.equal(titulosPrivados[0].revision,2,'El catálogo privado conserva el tombstone y su revisión');
+assert.equal((await llamar('titulo/augusto','PATCH',JSON.stringify({titulo:'Escritura antigua'}),{'If-Match':'1'})).status,409);
+tituloRespuesta=await llamar('titulo/augusto','PATCH',JSON.stringify({titulo:'Nombre restaurado'}),{'If-Match':'2'});assert.equal(tituloRespuesta.status,200);assert.equal((await tituloRespuesta.json()).nombre.revision,3);
+const columnasTitulos=db.prepare('PRAGMA table_info(titulos_cartas)').all().map(c=>c.name);for(const columna of ['id','revision','titulo','actualizado'])assert(columnasTitulos.includes(columna),'La migración conserva '+columna+' en titulos_cartas');
 assert.equal((await llamar('carta/augusto','PUT',webp,{...put(0),Origin:'https://otro.invalid'})).status,403);
 assert.equal((await llamar('carta/augusto','DELETE',undefined,{'If-Match':'0',Origin:'null'})).status,403);
 assert.equal((await llamar('carta/desconocida','PUT',webp,put(0))).status,404);
