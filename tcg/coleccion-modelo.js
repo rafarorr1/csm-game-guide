@@ -75,7 +75,7 @@
   }
   let clave=claveActual();
   function usarClaveDeCuenta(){const nueva=claveActual();if(nueva!==clave){clave=nueva;avisar('cuenta',leer());}return clave;}
-  function vacio(){return {version:1,revision:0,desbloqueos:{},cantidades:{},selecciones:{},sobres:0,sobresVersion:2,sobresGuardados:{},recompensasPorElegir:[],pendiente:null,campanasPremiadas:[],domosPremiados:[]};}
+  function vacio(){return {version:1,revision:0,desbloqueos:{},cantidades:{},selecciones:{},sobres:0,sobresVersion:2,sobresGuardados:{},recompensasPorElegir:[],pendiente:null,campanasPremiadas:[],campanasElegidas:[],domosPremiados:[]};}
   function idRecompensa(estado,origen){
     const base='premio_'+origen+'_'+(estado.revision+1).toString(36),usados=new Set(estado.recompensasPorElegir.map(r=>r.id));
     let id=base,n=0;while(usados.has(id))id=base+'_'+(++n).toString(36);
@@ -119,10 +119,15 @@
     if(!objeto(original)||original.version!==1)return estado;
     const conocidos=new Set(ids());
     estado.revision=entero(original.revision,Number.MAX_SAFE_INTEGER-1)?original.revision:0;
-    for(const registro of ['campanasPremiadas','domosPremiados']){
+    for(const registro of ['campanasPremiadas','campanasElegidas','domosPremiados']){
       if(Array.isArray(original[registro]))estado[registro]=[...new Set(original[registro].filter(idSeguro))];
     }
     sanearSobres(estado,original);
+    // El sello se escribe en la misma transacción que asigna los tres sobres.
+    // Sólo es válido si ese recorrido fue premiado y ya no conserva recibo
+    // pendiente; así un dato corrupto nunca adelanta el epílogo de campaña.
+    estado.campanasElegidas=estado.campanasElegidas.filter(id=>estado.campanasPremiadas.includes(id)&&
+      !estado.recompensasPorElegir.some(r=>r.origen==='campana'&&r.referencia===id));
     if(objeto(original.desbloqueos)){
       Object.keys(original.desbloqueos).forEach(id=>{
         if(!conocidos.has(id)||!Array.isArray(original.desbloqueos[id]))return;
@@ -291,6 +296,11 @@
   }
   function sobres(){return leer().sobres;}
   function recompensasPendientes(){return copia(leer().recompensasPorElegir);}
+  // El deseo usa este sello sólo para recuperarse tras una recarga donde la
+  // elección sí se guardó pero el avance de Campaña no alcanzó a limpiarse.
+  // No concede ni abre cartas; confirma únicamente la transición atómica de
+  // elegir los tres tipos de sobre.
+  function campanaElegida(runId){return idSeguro(runId)&&leer().campanasElegidas.includes(runId);}
   function inventarioSobres(){
     const estado=leer();
     return gruposBase.map(([grupo])=>({grupo,cantidad:estado.sobresGuardados[grupo]||0})).filter(r=>r.cantidad>0);
@@ -302,9 +312,11 @@
     const recompensa=estado.recompensasPorElegir[indice],n=recompensa.origen==='legado'?Math.min(3,recompensa.cantidad):recompensa.cantidad;
     const disponibles=new Set(grupos().map(g=>g.id));
     if(elecciones.length!==n||!Array.from(elecciones).every(id=>typeof id==='string'&&disponibles.has(id)))return false;
+    const eleccionFinalCampana=recompensa.origen==='campana'&&recompensa.cantidad===3&&n===3;
     for(const grupo of elecciones)estado.sobresGuardados[grupo]=(estado.sobresGuardados[grupo]||0)+1;
     recompensa.cantidad-=n;
     if(!recompensa.cantidad)estado.recompensasPorElegir.splice(indice,1);
+    if(eleccionFinalCampana&&!estado.campanasElegidas.includes(recompensa.referencia))estado.campanasElegidas.push(recompensa.referencia);
     return guardar(estado,'elegir-sobres',{recompensaId,origen:recompensa.origen,referencia:recompensa.referencia,grupos:elecciones.slice()});
   }
 
@@ -350,7 +362,7 @@
     estado.pendiente=null;
     return guardar(estado,'cerrar-sobre');
   }
-  window.CAOZ_COLECCION=Object.freeze({acabados,get clave(){return clave;},usarClaveDeCuenta,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,sobres,recompensasPendientes,elegirSobres,inventarioSobres,abrirSobre,pendiente,cerrarSobre});
+  window.CAOZ_COLECCION=Object.freeze({acabados,get clave(){return clave;},usarClaveDeCuenta,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,sobres,recompensasPendientes,campanaElegida,elegirSobres,inventarioSobres,abrirSobre,pendiente,cerrarSobre});
   window.addEventListener('storage',event=>{
     if(event.key===clave||event.key===null)avisar('externo',leer());
   });

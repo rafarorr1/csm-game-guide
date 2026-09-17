@@ -65,7 +65,8 @@ function campanaPoseGolpe(ms){
   }
   let materiales=null;
   window.crearMesaCampana=function(contenedor,op){
-    const personalizada=op.personaje?campanaGeometriaPersonaje(op.personaje):null;
+    // La mesa anima la figura con frecuencia: conserva su silueta y equipo en LOD bajo.
+    const personalizada=op.personaje?campanaGeometriaPersonaje(op.personaje,'bajo'):null;
     const canvas=document.createElement('canvas');canvas.className='campanaLienzo3d';canvas.setAttribute('aria-hidden','true');
     let ctx=canvas.getContext('2d',{alpha:false});if(!ctx)return null;
     const bruma=document.createElement('canvas'),brumaCtx=bruma.getContext('2d');if(!brumaCtx)return null;
