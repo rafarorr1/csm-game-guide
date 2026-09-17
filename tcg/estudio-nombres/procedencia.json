@@ -1,0 +1,33 @@
+{
+  "seccion": "estudio-nombres",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "red": false,
+  "progresoReal": false,
+  "proposito": "Revisar cinco títulos reales del catálogo con el validador compartido, sin publicar ni alterar los nombres canónicos.",
+  "componente": {
+    "archivo": "caoz_tcg/nombres-cartas.js",
+    "sha256": "884b38a11d94aa86edce184cf542c81ee7525cf5f3d08d4d2c6dfbd5fe8fa43c"
+  },
+  "entorno": {
+    "estudio-nombres.css": "b68e4dab6f936182cc1739f182c2b86306e67bc3151a8cf67324f449479c3644",
+    "estudio-nombres.js": "a1a345c070bb82365c940f8a8373d4844f243326b302c74512ea321da657e69e"
+  },
+  "fixture": {
+    "cartas": [
+      "augusto",
+      "machete",
+      "destello",
+      "discipulo",
+      "pergamino"
+    ],
+    "fuenteMotor": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076"
+  },
+  "derivados": {
+    "plantilla": "ce6b1800c6ce9beadbb6066a37b9a4c04859ee9573e698241e3f9b193e2f01e8",
+    "index.html": "faaf7e6c50fe9278d3dda0703aed54ec0aa48ea4b0720f738091c470a4963901",
+    "generado/datos.js": "4c385cc8451295849da8e399361f1e17408da10a6897b6b688a4374719b3eede"
+  }
+}

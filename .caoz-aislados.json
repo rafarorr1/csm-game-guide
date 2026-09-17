@@ -17,6 +17,10 @@
       "fuente": "ebe638e1d507c902dd2889b96de1b32260cb7455",
       "ruta": "tcg/epilogo-gero"
     },
+    "estudio-nombres": {
+      "fuente": "3d37fa7b56f79202641520bd3930e06ca5c9a9aa",
+      "ruta": "tcg/estudio-nombres"
+    },
     "heroe": {
       "fuente": "54682d432ce1498b2d802b8597cca1a4cc3c8cfd",
       "ruta": "tcg/heroe"

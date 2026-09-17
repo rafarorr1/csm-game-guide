@@ -1,0 +1,18 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "estudio-nombres.css": "b68e4dab6f936182cc1739f182c2b86306e67bc3151a8cf67324f449479c3644",
+    "estudio-nombres.js": "a1a345c070bb82365c940f8a8373d4844f243326b302c74512ea321da657e69e",
+    "generado/datos.js": "4c385cc8451295849da8e399361f1e17408da10a6897b6b688a4374719b3eede",
+    "index.html": "faaf7e6c50fe9278d3dda0703aed54ec0aa48ea4b0720f738091c470a4963901",
+    "juego/nombres-cartas.js": "884b38a11d94aa86edce184cf542c81ee7525cf5f3d08d4d2c6dfbd5fe8fa43c",
+    "procedencia.json": "bd11a14f1125d0961040cd8325811268393b0903f209cb91f75a2dbebcf9b42a"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/editar-nombres-estudio",
+    "sha": "3d37fa7b56f79202641520bd3930e06ca5c9a9aa"
+  },
+  "seccion": "estudio-nombres",
+  "version": 1
+}
