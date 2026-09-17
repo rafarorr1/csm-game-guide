@@ -1,12 +1,40 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-16 · beta 262 · producción 259 · v24 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-16 · beta 263 · producción 259 · v25 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
 lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) → `README.md`
 (cómo se juega y cómo está montado, largo) → `CHANGELOG.md` (el porqué de cada cambio, con
 números) → el código.
+
+---
+
+## Estado vigente — mulligan inicial publicado en beta 263
+
+El usuario descartó los cambios estéticos del Domo y aprobó publicar sólo la
+mecánica. `develop:a76c8f32533462c54576e1900355503154649c22` contiene la build
+263.
+
+La primera mano permite seleccionar hasta dos cartas para devolver: se roba el
+mismo número de reemplazos y sólo entonces se regresan las seleccionadas al
+mazo. El flujo está integrado en escritorio, móvil, IA determinista y la
+validación autoritativa del anfitrión online. No se incluyeron archivos ni
+estilos de la revisión visual/Arena del Domo.
+
+`./publicar.sh --beta --completo` terminó en verde: comprobaciones estáticas,
+Chrome, seis tutoriales, campaña, online, regresiones, caché, arte, catálogo,
+estudio y 37 sonidos. GitHub Pages y Cloudflare compararon los archivos
+publicados byte a byte.
+
+Artefactos: `gh-pages:eb2396b5e1e3eb2de1be725cd2764ff079912e9c` y
+`beta:2a66e8ebf58afebba740f0a02212e38d446c9b8d`.
+
+- Web: https://beta.caoz-tcg.pages.dev/?b=263
+- Móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=263
+
+Producción no se modificó: `main:783abe230bd5a1e81ae5a1e788175c0084951fb6`
+continúa en build 259. Una promoción posterior requiere autorización expresa.
 
 ---
 
