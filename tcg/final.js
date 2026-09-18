@@ -9,12 +9,24 @@
    ========================================================================== */
 'use strict';
 (function(){
+  // Un nombre de Estudio es contenido de presentación, no una modificación de
+  // CARDS/LEADERS. Este marcador permite que cada vista escriba el título con
+  // textContent y que arte-remoto lo refresque cuando llega el catálogo.
+  window.marcarNombreCarta=function(nodo,id,base){
+    const original=String(base??id);
+    if(!nodo)return original;
+    const sufijo=nodo.dataset.nombreSufijo??(nodo.textContent.startsWith(original)?nodo.textContent.slice(original.length):'');
+    nodo.dataset.nombreId=id;nodo.dataset.nombreBase=original;nodo.dataset.nombreSufijo=sufijo;
+    if(typeof window.ponerNombreCarta==='function')return window.ponerNombreCarta(nodo,id,original);
+    nodo.textContent=original+sufijo;return nodo.textContent;
+  };
   const src=(document.currentScript&&document.currentScript.src)||'';
   let b='166';
   try{ b=new URL(src,location.href).searchParams.get('b')||b; }catch(e){}
   document.write('<link rel="stylesheet" href="acabados.css?b='+encodeURIComponent(b)+'">');
   document.write('<script src="arte-vistas.js?b='+encodeURIComponent(b)+'"><\/script>');
   if(new URLSearchParams(location.search).has('estudioVista'))document.write('<script src="estudio-vista.js?b='+encodeURIComponent(b)+'"><\/script>');
+  document.write('<script src="nombres-cartas.js?b='+encodeURIComponent(b)+'"><\/script>');
   document.write('<link rel="stylesheet" href="coleccion.css?b='+encodeURIComponent(b)+'">');
   document.write('<link rel="stylesheet" href="sobres-apertura.css?b='+encodeURIComponent(b)+'">');
   document.write('<script src="coleccion-modelo.js?b='+encodeURIComponent(b)+'"><\/script>');

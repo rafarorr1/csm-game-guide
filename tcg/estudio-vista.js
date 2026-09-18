@@ -5,6 +5,22 @@
   if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;
   let escenario;
   const movil=()=>!!document.getElementById('panelCerrar');
+  // El padre puede enseñar un borrador antes de guardarlo. Nunca se usa como
+  // HTML: el visor conserva las reglas y sólo reemplaza el texto del marcador.
+  function tituloSeguro(valor,defecto){
+    if(typeof valor!=='string')return defecto;
+    const legible=globalThis.CAOZ_NOMBRES_CARTAS?.legible;
+    if(typeof legible==='function')return legible(valor)||defecto;
+    const titulo=valor.normalize('NFC').replace(/\s+/gu,' ').trim();
+    return titulo&&[...titulo].length<=70&&!/[\u0000-\u001f\u007f<>]/u.test(titulo)?titulo:defecto;
+  }
+  function mostrarTitulo(carta,titulo){
+    carta?.querySelectorAll?.('.nm,.lname').forEach(nodo=>{
+      const sufijo=nodo.textContent.endsWith(' ★')?' ★':'';
+      nodo.dataset.nombreEstudio='';
+      nodo.textContent=titulo+sufijo;
+    });
+  }
   function ajustar(){
     if(!escenario?.firstElementChild)return;
     escenario.style.transform='none';const r=escenario.getBoundingClientRect();
@@ -15,6 +31,7 @@
   function pintar(d){
     const tipo=d.vista.replace(/^(desktop|movil)_/,''),lid=d.id.startsWith('lider_')?d.id.slice(6):null;
     if(!(lid?LEADERS[lid]:CARDS[d.id])||!CAOZ_VISTAS.claves.has(d.vista)||!CAOZ_VISTAS.valido(d.encuadre)||!['normal','foil','dorado'].includes(d.acabado))return;
+    const titulo=tituloSeguro(d.titulo,lid?LEADERS[lid].n:CARDS[d.id].n);
     if(d.url){try{const u=new URL(d.url,location.href);if(u.origin!==location.origin||!['http:','https:','blob:'].includes(u.protocol))return;}catch(e){return;}}
     if(!G)newGame('fender','adreida');
     CAOZ_ARTE.previsualizar(d);escenario.replaceChildren();escenario.className='';escenario.dataset.vistaArte=d.vista;
@@ -48,6 +65,7 @@
       if(tipo==='descarte'){if(movil())escenario.className='pilas';contexto.className='alcantarillaPila';contexto.innerHTML='<span class="alcantarillaCartas"></span>';contexto.firstChild.append(carta);}else contexto.append(carta);
       escenario.append(contexto);
     }
+    mostrarTitulo(carta,titulo);
     escenario.querySelectorAll('[data-arte-id]').forEach(n=>{n.dataset.vistaArte=d.vista;CAOZ_ARTE.acabar(n,d.id);if(d.url){n.style.setProperty('--ex',d.encuadre.x+'%');n.style.setProperty('--ey',d.encuadre.y+'%');n.style.setProperty('--ez',d.encuadre.z/100);}});
     if(typeof encajarTextos==='function')encajarTextos(escenario);
     requestAnimationFrame(ajustar);escenario.querySelectorAll('img').forEach(img=>img.addEventListener('load',ajustar,{once:true}));

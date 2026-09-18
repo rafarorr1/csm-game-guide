@@ -2,6 +2,7 @@
    SFX_DB es una base D1 propia del entorno; las claves sólo viven en secretos.
    Nunca se autoriza una escritura con una contraseña incluida en JavaScript. */
 import {manejarCuenta} from './cuenta-servidor.js';
+import './nombres-cartas.js';
 const enc=new TextEncoder(),MAXIMO=1600044,COOKIE='__Host-caoz-sfx';
 const volumenBase={"ui_hover":0.17,"ui_confirm":0.42,"ui_back":0.34,"menu_gold":0.52,"card_draw":0.4,"card_play":0.68,"attack_wind":0.65,"attack_hit":0.84,"counter":0.55,"lethal":0.86,"shield":0.59,"heal":0.56,"buff":0.54,"spell_fire":0.73,"spell_frost":0.57,"spell_lightning":0.73,"spell_arcane":0.61,"spell_shadow":0.59,"spell_bard":0.61,"spell_holy":0.62,"dice_roll":0.62,"dice_land":0.6,"coin_flip":0.62,"coin_land":0.62,"vs":0.77,"turn":0.43,"table_hop":0.55,"table_hit":0.72,"fog_reveal":0.36,"victory":0.68,"defeat":0.64,"ascension":0.63,"wish_fire":0.76,"wish_granted":0.61,"leader_hit":0.82,"card_hover":0.22,"victory_slam":0.8};
 const ids=new Set(Object.keys(volumenBase));
@@ -102,7 +103,7 @@ async function api(req,env){
 }
 // Las ilustraciones comparten el acceso del estudio, pero no sus tablas ni archivos.
 // D1 limita cada BLOB/fila a 2 MB; 1.5 MB deja margen para metadatos.
-const MAXIMO_ARTE=1500000,ACABADOS_ARTE=['normal','foil','dorado'],preparacionesArte=new WeakMap(),catalogosArte=new WeakMap();
+const MAXIMO_ARTE=1500000,ACABADOS_ARTE=['normal','foil','dorado'],preparacionesArte=new WeakMap(),preparacionesTitulos=new WeakMap(),catalogosArte=new WeakMap();
 const falloArte=(mensaje,status=400)=>{throw Object.assign(Error(mensaje),{status});};
 const VISTAS_ARTE=new Set(['revelada','ruta','mano','campo','detalle','coleccion','descarte','memoria','seleccion','vs','victoria','hud','campana','honor'].flatMap(v=>['desktop_'+v,'movil_'+v]));
 function encuadreArte(datos,esVista=false){
@@ -199,6 +200,10 @@ async function prepararArte(db){
   }).catch(e=>{preparacionesArte.delete(db);throw e;}));
   return preparacionesArte.get(db);
 }
+async function prepararTitulos(db){
+  if(!preparacionesTitulos.has(db))preparacionesTitulos.set(db,db.prepare('CREATE TABLE IF NOT EXISTS titulos_cartas (id TEXT PRIMARY KEY, revision INTEGER NOT NULL DEFAULT 0, titulo TEXT, actualizado TEXT)').run().catch(e=>{preparacionesTitulos.delete(db);throw e;}));
+  return preparacionesTitulos.get(db);
+}
 async function idsArte(req,env){
   if(!catalogosArte.has(env.ASSETS))catalogosArte.set(env.ASSETS,(async()=>{
     const respuesta=await env.ASSETS.fetch(new Request(new URL('/art/catalogo.json',req.url)));
@@ -212,6 +217,14 @@ async function idsArte(req,env){
 }
 function arteVacio(id,acabado='normal'){
   return {id,acabado,activo:acabado==='normal'?1:0,revision:0,hash:null,anterior:null,nombre:null,mime:null,ancho:null,alto:null,x:null,y:null,z:null,vistas:null,actualizado:null};
+}
+async function filasTitulos(db,privado,id=null){
+  await prepararTitulos(db);
+  const condicion=id?' WHERE id=?':privado?'':' WHERE titulo IS NOT NULL';
+  let consulta=db.prepare('SELECT id,revision,titulo,actualizado FROM titulos_cartas'+condicion+' ORDER BY id');
+  if(id)consulta=consulta.bind(id);
+  const {results}=await consulta.all();
+  return results.map(r=>privado?r:{id:r.id,revision:r.revision,titulo:r.titulo});
 }
 function registroArte(registro,normal,privado){
   const activo=registro.acabado==='normal'||!!registro.activo;
@@ -241,9 +254,9 @@ async function apiArte(req,env){
   const u=new URL(req.url),ruta=u.pathname.slice('/api/arte/'.length),db=env.SFX_DB;
   if(!db||!env.SFX_ADMIN_HASH||!env.SFX_SESSION_KEY)return json({error:'El estudio privado está pendiente de conectar con Cloudflare.'},503);
   if(!['GET','HEAD'].includes(req.method)&&req.headers.get('origin')!==u.origin)return json({error:'Origen no autorizado.'},403);
-  await prepararArte(db);
+  await Promise.all([prepararArte(db),prepararTitulos(db)]);
   if(req.method==='GET'&&ruta==='catalogo'){
-    return json({cartas:await filasArte(db,false)});
+    const [cartas,titulos]=await Promise.all([filasArte(db,false),filasTitulos(db,false)]);return json({cartas,titulos});
   }
   if(['GET','HEAD'].includes(req.method)&&/^imagen\/[a-f0-9]{64}$/.test(ruta)){
     const hash=ruta.slice(7),fila=await db.prepare('SELECT contenido,mime FROM imagenes WHERE hash=?').bind(hash).first();
@@ -254,7 +267,21 @@ async function apiArte(req,env){
   }
   if(!await autenticado(req,env))return json({error:'Inicia sesión para administrar las ilustraciones.'},401);
   if(req.method==='GET'&&ruta==='privado'){
-    return json({cartas:await filasArte(db,true),entorno:env.CF_PAGES_BRANCH==='gh-pages'?'produccion':'beta'});
+    const [cartas,titulos]=await Promise.all([filasArte(db,true),filasTitulos(db,true)]);return json({cartas,titulos,entorno:env.CF_PAGES_BRANCH==='gh-pages'?'produccion':'beta'});
+  }
+  if(ruta.startsWith('titulo/')){
+    const id=ruta.slice(7);if(!/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,79}$/.test(id)||(await idsArte(req,env)).has(id)===false)return json({error:'Carta desconocida.'},404);
+    if(req.method!=='PATCH')return json({error:'Método no permitido.'},405);
+    const rev=req.headers.get('if-match');if(!/^\d{1,9}$/.test(rev||''))return json({error:'Recarga el catálogo antes de guardar.'},428);
+    let datos;try{datos=JSON.parse(new TextDecoder().decode(await cuerpo(req,600)));}catch(_){falloArte('El cambio de nombre no es válido.');}
+    if(!datos||typeof datos!=='object'||Array.isArray(datos)||Object.keys(datos).length!==1||!Object.hasOwn(datos,'titulo'))falloArte('El cambio de nombre no es válido.');
+    let titulo;try{titulo=globalThis.CAOZ_NOMBRES_CARTAS.validar(datos.titulo,{permitirNulo:true});}catch(e){falloArte(e.message);}
+    await db.prepare('INSERT OR IGNORE INTO titulos_cartas(id) VALUES (?)').bind(id).run();
+    const actual=await db.prepare('SELECT id,revision,titulo,actualizado FROM titulos_cartas WHERE id=?').bind(id).first();
+    if(actual.revision!==Number(rev))return json({error:'Esta carta cambió en otra ventana. Recarga y revisa el nuevo nombre.'},409);
+    const actualizado=new Date().toISOString(),cambio=await db.prepare('UPDATE titulos_cartas SET titulo=?,revision=revision+1,actualizado=? WHERE id=? AND revision=?').bind(titulo,actualizado,id,Number(rev)).run();
+    if(cambio.meta.changes!==1)return json({error:'Otra sesión guardó primero. Recarga el estudio.'},409);
+    const [nombre]=await filasTitulos(db,true,id);return json({ok:true,nombre});
   }
   if(ruta.startsWith('carta/')){
     const partes=ruta.slice(6).split('/'),id=partes[0],acabado=partes[1]||'normal';
@@ -302,16 +329,16 @@ async function apiArte(req,env){
 }
 // Biblioteca única privada. Los borradores viven en tablas propias de producción;
 // publicar copia una instantánea a un destino, sin compartir claves ni catálogos vivos.
-const tablasEstudio=['sonidos','audios','accesos','ilustraciones','ilustraciones_acabados','imagenes'];
+const tablasEstudio=['sonidos','audios','accesos','ilustraciones','ilustraciones_acabados','titulos_cartas','imagenes'];
 const basesEstudio=new WeakMap(),iniciosEstudio=new WeakMap(),controlesEstudio=new WeakMap();
 const URL_ESTUDIO='https://juego.caozcontodo.com';
 function baseEstudio(db){
-  if(!basesEstudio.has(db))basesEstudio.set(db,{prepare(sql){return db.prepare(sql.replace(/\b(sonidos|audios|accesos|ilustraciones_acabados|ilustraciones|imagenes)\b/g,t=>t+'_estudio'));},batch:cmds=>db.batch(cmds)});
+  if(!basesEstudio.has(db))basesEstudio.set(db,{prepare(sql){return db.prepare(sql.replace(/\b(sonidos|audios|accesos|titulos_cartas|ilustraciones_acabados|ilustraciones|imagenes)\b/g,t=>t+'_estudio'));},batch:cmds=>db.batch(cmds)});
   return basesEstudio.get(db);
 }
 async function iniciarEstudio(db){
   if(!iniciosEstudio.has(db))iniciosEstudio.set(db,(async()=>{
-    const borrador=baseEstudio(db);await preparar(db);await prepararArte(db);await preparar(borrador);await prepararArte(borrador);
+    const borrador=baseEstudio(db);await preparar(db);await prepararArte(db);await prepararTitulos(db);await preparar(borrador);await prepararArte(borrador);await prepararTitulos(borrador);
     await db.prepare('CREATE TABLE IF NOT EXISTS estudio_inicio (id TEXT PRIMARY KEY)').run();
     // La marca forma parte de la misma transacción: dos primeros accesos no
     // vuelven a importar originales encima de una edición recién guardada.
@@ -326,13 +353,19 @@ async function controlEstudio(db){
 }
 const camposSonido=['id','hash','nombre','duracion','volumen'];
 const camposImagen=['id','acabado','activo','hash','nombre','mime','ancho','alto','x','y','z','vistas'];
+const camposTitulo=['id','titulo'];
 async function leerEstudio(db,tipo){
   if(tipo==='sfx'){await preparar(db);return (await db.prepare('SELECT * FROM sonidos ORDER BY id').all()).results;}
-  await prepararArte(db);
-  return (await db.prepare("SELECT id,'normal' AS acabado,1 AS activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado FROM ilustraciones UNION ALL SELECT id,acabado,activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado FROM ilustraciones_acabados ORDER BY id,acabado").all()).results;
+  await Promise.all([prepararArte(db),prepararTitulos(db)]);
+  const [imagenes,titulos]=await Promise.all([
+    db.prepare("SELECT id,'normal' AS acabado,1 AS activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado FROM ilustraciones UNION ALL SELECT id,acabado,activo,revision,hash,anterior,nombre,mime,ancho,alto,x,y,z,vistas,actualizado FROM ilustraciones_acabados ORDER BY id,acabado").all(),
+    db.prepare('SELECT id,revision,titulo,actualizado FROM titulos_cartas ORDER BY id').all()
+  ]);
+  return [...imagenes.results.map(r=>({...r,clase:'imagen'})),...titulos.results.map(r=>({...r,clase:'titulo'}))];
 }
-const claveFila=r=>r.id+'/'+(r.acabado||'');
+const claveFila=r=>r.clase==='titulo'?'titulo/'+r.id:r.id+'/'+(r.acabado||'');
 function contenidoEstudio(r,tipo){
+  if(tipo==='arte'&&r.clase==='titulo')return {id:r.id,titulo:r.titulo??null};
   const vacio=tipo==='sfx'?{id:r.id,hash:null,nombre:null,duracion:null,volumen:volumenBase[r.id]}:{...arteVacio(r.id,r.acabado),activo:r.acabado==='normal'?1:0};
   return Object.fromEntries((tipo==='sfx'?camposSonido:camposImagen).filter(k=>k!=='nombre').map(k=>[k,r[k]??vacio[k]??null]));
 }
@@ -341,11 +374,11 @@ async function planEstudio(env,tipo,destino){
   if(!db)falloArte('No se pudo conectar con '+(destino==='beta'?'beta':'producción')+'. Los cambios siguen guardados.',503);
   const fuente=await leerEstudio(baseEstudio(env.SFX_DB),tipo),publicado=await leerEstudio(db,tipo);await controlEstudio(db);
   const revision=(await db.prepare('SELECT revision FROM estudio_lotes WHERE tipo=?').bind(tipo).first())?.revision||0;
-  const actuales=new Map(publicado.map(r=>[claveFila(r),r])),idsFuente=new Set(fuente.map(r=>r.id));
+  const actuales=new Map(publicado.map(r=>[claveFila(r),r])),idsFuente=new Set(fuente.filter(r=>r.clase!=='titulo').map(r=>r.id));
   const candidatas=[...fuente];
   // Retirar un acabado del borrador también lo retira al publicar esa carta.
-  for(const r of publicado)if(idsFuente.has(r.id)&&!fuente.some(f=>claveFila(f)===claveFila(r)))candidatas.push({...arteVacio(r.id,r.acabado)});
-  const cambios=candidatas.filter(r=>JSON.stringify(contenidoEstudio(r,tipo))!==JSON.stringify(contenidoEstudio(actuales.get(claveFila(r))||{id:r.id,acabado:r.acabado},tipo)));
+  for(const r of publicado)if(r.clase!=='titulo'&&idsFuente.has(r.id)&&!fuente.some(f=>claveFila(f)===claveFila(r)))candidatas.push({...arteVacio(r.id,r.acabado),clase:'imagen'});
+  const cambios=candidatas.filter(r=>JSON.stringify(contenidoEstudio(r,tipo))!==JSON.stringify(contenidoEstudio(actuales.get(claveFila(r))||(r.clase==='titulo'?{id:r.id,clase:'titulo',titulo:null}:{id:r.id,clase:'imagen',acabado:r.acabado}),tipo)));
   const huella=await sha(JSON.stringify({tipo,destino,revision,fuente,publicado}));
   return {db,fuente,publicado,cambios,huella,revision,ids:[...new Set(cambios.map(r=>r.id))]};
 }
@@ -378,13 +411,15 @@ async function publicarEstudio(req,env,tipo,destino){
   }
   if(faltan.length>6)return json({ok:true,preparando:true,faltan:faltan.length-6});
   const fecha=new Date().toISOString(),actuales=new Map(p.publicado.map(r=>[claveFila(r),r]));
-  const filas=p.cambios.map(r=>({...r,anterior:actuales.get(claveFila(r))?.hash||actuales.get(claveFila(r))?.anterior||null,revision:1,actualizado:fecha}));
+  const filas=p.cambios.map(r=>r.clase==='titulo'?{...r,revision:1,actualizado:fecha}:{...r,anterior:actuales.get(claveFila(r))?.hash||actuales.get(claveFila(r))?.anterior||null,revision:1,actualizado:fecha});
   const comandos=[p.db.prepare('INSERT INTO estudio_guardia(valor) VALUES (CASE WHEN COALESCE((SELECT revision FROM estudio_lotes WHERE tipo=?),0)=? THEN 1 ELSE 0 END)').bind(tipo,p.revision)];
   if(tipo==='sfx')comandos.push(upsertEstudio(p.db,'sonidos',filas,[...camposSonido,'anterior','revision','actualizado']));
   else{
     const campos=['id','hash','anterior','nombre','mime','ancho','alto','x','y','z','vistas','revision','actualizado'];
-    comandos.push(upsertEstudio(p.db,'ilustraciones',filas.filter(r=>r.acabado==='normal'),campos));
-    comandos.push(upsertEstudio(p.db,'ilustraciones_acabados',filas.filter(r=>r.acabado!=='normal'),[...campos,'acabado','activo']));
+    const imagenes=filas.filter(r=>r.clase!=='titulo');
+    comandos.push(upsertEstudio(p.db,'ilustraciones',imagenes.filter(r=>r.acabado==='normal'),campos));
+    comandos.push(upsertEstudio(p.db,'ilustraciones_acabados',imagenes.filter(r=>r.acabado!=='normal'),[...campos,'acabado','activo']));
+    comandos.push(upsertEstudio(p.db,'titulos_cartas',filas.filter(r=>r.clase==='titulo'),[...camposTitulo,'revision','actualizado']));
   }
   comandos.push(p.db.prepare('INSERT INTO estudio_lotes(tipo,revision,huella,actualizado) VALUES (?,1,?,?) ON CONFLICT(tipo) DO UPDATE SET revision=revision+1,huella=excluded.huella,actualizado=excluded.actualizado').bind(tipo,p.huella,fecha),p.db.prepare('DELETE FROM estudio_guardia'));
   try{await p.db.batch(comandos);}catch(e){if(String(e.message).includes('CHECK constraint'))return json({error:'Otra sesión publicó primero. Actualiza para revisar el resultado.'},409);throw e;}
@@ -400,7 +435,7 @@ async function apiEstudio(req,env){
   await iniciarEstudio(env.SFX_DB);const [,tipo,ruta]=m;
   if(ruta==='estado'&&req.method==='GET')return json(await estadoEstudio(env,tipo));
   if(/^publicar\/(beta|produccion)$/.test(ruta)&&req.method==='POST')return publicarEstudio(req,env,tipo,ruta.split('/')[1]);
-  if(!/^(privado|imagen\/[a-f0-9]{64}|audio\/[a-f0-9]{64}|carta\/[a-zA-Z0-9_-]+\/(normal|foil|dorado)|sonido\/[a-z_]+)$/.test(ruta))return json({error:'Ruta no encontrada.'},404);
+  if(!/^(privado|imagen\/[a-f0-9]{64}|audio\/[a-f0-9]{64}|carta\/[a-zA-Z0-9_-]+\/(normal|foil|dorado)|titulo\/[a-zA-Z0-9_-]+|sonido\/[a-z_]+)$/.test(ruta))return json({error:'Ruta no encontrada.'},404);
   const url=new URL(req.url);url.pathname='/api/'+tipo+'/'+ruta;
   const respuesta=await (tipo==='arte'?apiArte:api)(new Request(url,req),{...env,SFX_DB:baseEstudio(env.SFX_DB)});
   const segura=new Response(respuesta.body,respuesta);segura.headers.set('Cache-Control','no-store');return segura;
