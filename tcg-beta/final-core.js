@@ -1085,7 +1085,7 @@ function campanaElegir(){
   const cartas=ids.map((id,i)=>{
     const L=LEADERS[id],D=DECKS[id],c=campanaBoton('',()=>elegir(i));c.className='campanaCarta';
     c.innerHTML=`<span class="lface">${L.art}</span><b class="lname">${L.n}</b><span class="larch">${D.d}</span><span class="lhab">${L.habName} · ${L.habCost} PD</span>`;
-    c.dataset.campanaLider=id;c.setAttribute('aria-label',L.n);ilustrarLider(c,id);pista.appendChild(c);return c;
+    c.dataset.campanaLider=id;window.marcarNombreCarta(c.querySelector('.lname'),'lider_'+id,L.n);c.setAttribute('aria-label',window.CAOZ_ARTE?.nombre?.('lider_'+id,L.n)||L.n);ilustrarLider(c,id);pista.appendChild(c);return c;
   });
   function elegir(i){
     centro=(i+ids.length)%ids.length;
@@ -1167,7 +1167,8 @@ function campanaRuta(aviso=''){
       fila.setAttribute('aria-label','Encuentro '+(i+1)+': rival desconocido');
     }else{
       const ficha=campanaBoton('',()=>{if(i===p.etapa)campanaSeleccionar();else toast(LEADERS[r.lider].n+': encuentro superado');});ficha.className='campanaEncuentro';
-      ficha.innerHTML=`<span class="lface">${LEADERS[r.lider].art}</span><b>${LEADERS[r.lider].n}</b><span class="campanaNumero">${i<p.etapa?'✓':i+1}</span>`;
+      ficha.innerHTML=`<span class="lface">${LEADERS[r.lider].art}</span><b class="lname">${LEADERS[r.lider].n}</b><span class="campanaNumero">${i<p.etapa?'✓':i+1}</span>`;
+      window.marcarNombreCarta(ficha.querySelector('.lname'),'lider_'+r.lider,LEADERS[r.lider].n);
       ficha.setAttribute('aria-label',LEADERS[r.lider].n+(i<p.etapa?', vencido':', ver combate · '+r.alma+' Alma'));
       fila.dataset.campanaLider=r.lider;window.CAOZ_COLECCION_JUEGO?.marcar(fila,FOE);fila.appendChild(ficha);ilustrarLider(fila,r.lider);
     }

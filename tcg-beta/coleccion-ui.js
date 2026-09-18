@@ -12,11 +12,12 @@
   const textoCopias=n=>n+' '+(n===1?'copia':'copias');
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
   let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres'};
   function dato(id){
-    if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:l.n,t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
-    const c=CARDS[id];return {...c,id,sub:typeof tribeLine==='function'?tribeLine(c):c.t};
+    if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
+    const c=CARDS[id];return {...c,id,n:nombreVisible(id,c.n),sub:typeof tribeLine==='function'?tribeLine(c):c.t};
   }
   function icono(tipo){
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
@@ -121,7 +122,7 @@
     panel.showModal();
     panel.querySelector('.coleccionVolver').textContent=origen?.id==='extras'?'Volver a Extras':'Volver';
     window.addEventListener('resize',medida);window.visualViewport?.addEventListener('resize',medida);window.visualViewport?.addEventListener('scroll',medida);
-    window.addEventListener('caoz:coleccion',cambio);window.addEventListener('caoz:arte',arteActualizado);window.addEventListener('caoz:coleccion-error',falloGuardado);
+    window.addEventListener('caoz:coleccion',cambio);window.addEventListener('caoz:arte',arteActualizado);window.addEventListener('caoz:nombres',nombresActualizados);window.addEventListener('caoz:coleccion-error',falloGuardado);
     medida();dibujar();
     observador=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(medida);});observador.observe(panel);observador.observe(contenido);
     if(typeof animarTransicionMenu==='function')animarTransicionMenu(panel.querySelector('.coleccionInterior'),panel);
@@ -133,7 +134,7 @@
     if(evento?.type==='close'){const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();}
     destruirApertura();destruirCarrusel();destruirVistasSobres();limpiarTiempos();limpiarFinalCampana();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
-    window.removeEventListener('caoz:coleccion',cambio);window.removeEventListener('caoz:arte',arteActualizado);window.removeEventListener('caoz:coleccion-error',falloGuardado);
+    window.removeEventListener('caoz:coleccion',cambio);window.removeEventListener('caoz:arte',arteActualizado);window.removeEventListener('caoz:nombres',nombresActualizados);window.removeEventListener('caoz:coleccion-error',falloGuardado);
     // El evento close llega después de comenzar el regreso. Limpiar sólo una
     // transición de este diálogo, nunca el nuevo barrido del menú de destino.
     if(panel?.querySelector('.barridoModal,.coleccionInterior.menuEntra')&&typeof limpiarTransicionMenu==='function')limpiarTransicionMenu();
@@ -149,6 +150,12 @@
   function falloGuardado(){mensaje('No se pudo guardar. Libera espacio en el navegador e inténtalo otra vez.',true);}
   function cambio(){if(!panel?.open||guardando||finalCampana?.confirmando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
   function arteActualizado(){if(!panel?.open)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
+  function nombresActualizados(){
+    if(!panel?.open)return;
+    if(s.vista==='detalle')dibujarDetalle();
+    else if(s.vista==='cartas')dibujarLista();
+    else if(s.vista==='contenidoSobre')dibujarContenidoSobre();
+  }
   function actualizarCabecera(){
     const m=modelo(),ids=m.ids(),premium=ids.reduce((n,id)=>n+(m.tiene(id,'foil')?1:0)+(m.tiene(id,'dorado')?1:0),0);
     panel.querySelector('.coleccionTotales').textContent=ids.length+' normales · '+premium+' ediciones especiales';
