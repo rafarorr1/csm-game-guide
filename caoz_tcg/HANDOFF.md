@@ -1,12 +1,42 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-16 · beta 264 · producción 259 · v26 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-17 · beta y producción 265 · v27 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
 lectura sugerido: este archivo → `AGENTS.md` (las reglas de trabajo, cortas) → `README.md`
 (cómo se juega y cómo está montado, largo) → `CHANGELOG.md` (el porqué de cada cambio, con
 números) → el código.
+
+---
+
+## Estado vigente — nombres visibles del Estudio publicados en producción y beta 265
+
+El perfil de cada carta en el Estudio real ahora incluye el campo **Nombre
+visible**. El editor valida el título, permite guardar el borrador privado,
+descartar un cambio sin guardar y restaurar el original mediante un tombstone.
+Al usar los botones existentes de publicación del Estudio, el título pasa al
+catálogo público de ese destino. Nunca cambia el ID de carta, sus reglas, IA,
+mazos, colección ni progreso.
+
+Los títulos se aplican sólo a las superficies de carta y líder. La cortinilla
+online conserva siempre los nombres de jugadores como texto seguro, aunque el
+líder tenga un título personalizado. La caché pública de arte pasó a v2 para
+incluir títulos sin reutilizar una forma anterior.
+
+`main:9800861` publicó producción y `develop:44105b0` publicó beta. La
+validación completa de producción cubrió los seis tutoriales y regresiones; el
+publicador aumentó sólo el margen de la tanda completa a 15 minutos porque las
+pruebas sí terminan, pero juntas rozan los diez minutos en este equipo. La
+tanda rápida de beta también terminó en verde.
+
+Artefactos: `gh-pages:4365ded` en `/tcg/` y `gh-pages:26c8f09` en
+`/tcg-beta/`. Producción y beta se comprobaron byte a byte contra
+`index.html`, `motor.js`, `movil.html`, `estudio.html` y `nombres-cartas.js`.
+
+- Producción / Estudio: https://juego.caozcontodo.com/estudio
+- Beta: https://beta.caoz-tcg.pages.dev/?b=265
+- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=265
 
 ---
 
