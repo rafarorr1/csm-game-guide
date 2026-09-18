@@ -1324,7 +1324,13 @@ async function cortinillaVS(a,b,opts={}){
   if(opts.silent||opts.fast||opts.auto||opts.volado===false||opts.sinCortinilla||document.hidden) return;
   const capa=el('div','vs'); capa.innerHTML='<div class="vsfondo"></div><div class="vschispas"></div>';
   capa.appendChild(opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq',ME)); capa.appendChild(opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der',FOE)); capa.appendChild(el('div','vssello','VS'));
-  if(opts.nombres)capa.querySelectorAll('.lname').forEach((n,i)=>n.textContent=opts.nombres[i]);
+  // En línea, estos son nombres de jugadores, no títulos de Líder. Quitamos
+  // el marcador del Estudio antes de escribirlos para que el catálogo remoto
+  // nunca los reemplace después de abrir la cortinilla.
+  if(opts.nombres)capa.querySelectorAll('.lname').forEach((n,i)=>{
+    n.removeAttribute('data-nombre-id');n.removeAttribute('data-nombre-base');n.removeAttribute('data-nombre-sufijo');
+    n.textContent=String(opts.nombres[i]??'');
+  });
   document.body.appendChild(capa);
   await nap(60); capa.classList.add('entra'); await nap(620); capa.classList.add('choque'); window.CAOZ_AUDIO?.play('vs'); await nap(2200);
   capa.classList.add('sale'); await nap(760); capa.remove();

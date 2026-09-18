@@ -210,7 +210,10 @@ trap limpiar EXIT
 sleep 1
 
 if [ "$SUITES" = "1" ]; then
-  gris "  corriendo TODO, incluidos los tutoriales (~5 min)"; ESPERA=600
+  # La tanda rápida puede ocupar cinco minutos en un equipo cargado y los seis
+  # tutoriales otros cuatro y medio. Se deja margen para ambas sin recortar
+  # cobertura; la página avisa por POST y termina antes en una máquina libre.
+  gris "  corriendo TODO, incluidos los tutoriales (hasta 15 min)"; ESPERA=900
 else
   # 300 y no 180 (ni 120): las regresiones solas tardan ~110 s, y con el
   # ordenador ocupado —el escritorio remoto, el navegador del panel— se

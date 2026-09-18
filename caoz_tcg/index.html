@@ -4278,7 +4278,15 @@ async function cortinillaVS(a, b, opts={}){
   const capa = el('div','vs');
   capa.innerHTML = '<div class="vsfondo"></div><div class="vschispas"></div>';
   const izq = opts.campana?.personaje?campanaCartaJugador(opts.campana.personaje,a,'izq'):cartaDeLiderVS(a,'izq',ME), der = opts.campana?.jefeSecreto?campanaCartaPitagoras('der'):cartaDeLiderVS(b,'der',FOE);
-  if(opts.nombres){izq.querySelector('.lname').textContent=opts.nombres[0];der.querySelector('.lname').textContent=opts.nombres[1];}
+  // En línea, estos son nombres de jugadores, no títulos de Líder. Quitamos
+  // el marcador del Estudio antes de escribirlos: si no, el refresco asíncrono
+  // del catálogo sustituye "Rafa" por el nombre de la carta unos milisegundos
+  // después de abrir la cortinilla.
+  if(opts.nombres) [[izq,opts.nombres[0]],[der,opts.nombres[1]]].forEach(([c,nombre])=>{
+    const n=c.querySelector('.lname');
+    n.removeAttribute('data-nombre-id');n.removeAttribute('data-nombre-base');n.removeAttribute('data-nombre-sufijo');
+    n.textContent=String(nombre??'');
+  });
   const sello = el('div','vssello','VS');
   capa.appendChild(izq); capa.appendChild(der); capa.appendChild(sello);
   document.body.appendChild(capa);
