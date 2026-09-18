@@ -56,7 +56,7 @@ class Nodo{
   showModal(){this.open=true;}
   close(){this.open=false;this.eventos.close?.();}
 }
-function entorno(c=carta,registros={},version='foil'){
+function entorno(c=carta,registros={},version='foil',nombres=[]){
   const nodos=new Map(),peticiones=[],respuestas=[],fallos={imagen:false};
   const nodo=id=>{if(!nodos.has(id))nodos.set(id,new Nodo());return nodos.get(id);};
   const context={console,URL,URLSearchParams,Blob,Response,AbortController,setTimeout,clearTimeout,innerWidth:1000,location:new URL('https://juego.caozcontodo.com/estudio.html'),
@@ -71,9 +71,9 @@ function entorno(c=carta,registros={},version='foil'){
   context.window=context;vm.createContext(context);vm.runInContext(codigoVistas,context);
   const inicio='  bloquear(true);cargar().catch(fallo).finally(()=>bloquear(false));';
   assert.ok(codigoEstudio.includes(inicio));
-  const puente=`window.prueba={configurar(c,registros,a){cartas=[c];privados=new Map([[c.id,{id:c.id,variantes:registros}]]);seleccion=c.id;acabado=a;autenticado=true;descartar();detalle();},estado(){const c=actual();return {url:urlVersion(c),encuadre:encuadre(c),creada:creada(c),arte:estadoArte(c),vistas:encuadres(c),conflicto,pendiente:!!pendiente};},guardar,subir(blob){descartar();pendiente={id:seleccion,acabado,revision:revision(actual()),blob,nombre:'Nuevo diseño.webp',encuadre:encuadre(actual()),vistas:encuadres(actual())};vista();},seleccionar(a){descartar();acabado=a;detalle();}};`;
+  const puente=`window.prueba={configurar(c,registros,a,nombres=[]){cartas=[c];privados=new Map([[c.id,{id:c.id,variantes:registros}]]);titulos=new Map(nombres.map(n=>[n.id,n]));seleccion=c.id;acabado=a;autenticado=true;descartar();detalle();},estado(){const c=actual();return {url:urlVersion(c),encuadre:encuadre(c),creada:creada(c),arte:estadoArte(c),vistas:encuadres(c),conflicto,pendiente:!!pendiente};},guardar,subir(blob){descartar();pendiente={id:seleccion,acabado,revision:revision(actual()),blob,nombre:'Nuevo diseño.webp',encuadre:encuadre(actual()),vistas:encuadres(actual())};vista();},seleccionar(a){descartar();acabado=a;detalle();}};`;
   vm.runInContext(codigoEstudio.replace(inicio,puente),context,{filename:'estudio.js'});
-  const api=context.prueba;api.configurar(copiar(c),copiar(registros),version);
+  const api=context.prueba;api.configurar(copiar(c),copiar(registros),version,copiar(nombres));
   const editar=()=>{nodo('encX').value=20;nodo('encY').value=30;nodo('encZ').value=120;nodo('encX').oninput();};
   const respuesta=(a,revision=1,extra={})=>respuestas.push({body:{id:c.id,acabado:a,activo:true,heredada:false,revision,hash:'snapshot',x:41,y:29,z:105,vistas:{desktop_mano:{x:20,y:30,z:120}},...extra}});
   return {api,nodo,peticiones,respuestas,fallos,editar,respuesta};
@@ -148,6 +148,21 @@ await caso('Un original fallido o una ruta inválida no envía escrituras y cons
 
 await caso('Una revisión en conflicto conserva el borrador sin sobreescribir la respuesta privada',async()=>{
   const e=entorno();e.editar();e.respuestas.push({status:409,body:{error:'Revisión nueva'}});await e.nodo('guardar').onclick();assert.equal(e.api.estado().pendiente,true);assert.equal(e.api.estado().conflicto,true);assert.equal(e.nodo('guardar').disabled,true);assert.equal(e.api.estado().url,'https://juego.caozcontodo.com/'+foil.url);
+});
+
+await caso('El perfil descarta un nombre sin guardar y anuncia los errores antes de tocar el Estudio',()=>{
+  const e=entorno(),campo=e.nodo('editarNombre'),accion=e.nodo('restaurarNombre');
+  campo.value='<Thal>';campo.oninput();assert.equal(campo.atributos['aria-invalid'],'true');assert.equal(e.nodo('guardarNombre').disabled,true);
+  campo.value='Thal Renombrado';campo.oninput();assert.equal(campo.atributos['aria-invalid'],'false');assert.equal(e.nodo('guardarNombre').disabled,false);assert.equal(accion.textContent,'Descartar cambio');assert.equal(accion.disabled,false);
+  accion.onclick();assert.equal(campo.value,'Thal');assert.equal(e.nodo('guardarNombre').disabled,true);assert.equal(accion.textContent,'Restaurar original');assert.equal(accion.disabled,true);
+});
+
+await caso('El perfil restaura un nombre publicado con el tombstone y conserva el ID',async()=>{
+  const e=entorno(carta,{},'foil',[{id:'tal',titulo:'Thal Renombrado',revision:1}]),accion=e.nodo('restaurarNombre');
+  assert.equal(e.nodo('nombre').textContent,'Thal Renombrado');assert.equal(accion.textContent,'Restaurar original');assert.equal(accion.disabled,false);
+  const restaurando=accion.onclick();assert.match(e.nodo('confirmacionTitulo').textContent,/Restaurar nombre original/);
+  e.respuestas.push({body:{ok:true,nombre:{id:'tal',titulo:null,revision:2,actualizado:'2026-09-17T00:00:00.000Z'}}});e.nodo('confirmacion').returnValue='aceptar';e.nodo('confirmacion').close();await restaurando;
+  const envio=e.peticiones.at(-1);assert.match(envio.url,/api\/estudio\/arte\/titulo\/tal/);assert.equal(envio.method,'PATCH');assert.equal(envio.headers['If-Match'],'1');assert.deepEqual(JSON.parse(envio.body),{titulo:null});assert.equal(e.nodo('nombre').textContent,'Thal');
 });
 
 console.log('\nOriginales por acabado: '+comprobaciones+' pruebas aprobadas.');

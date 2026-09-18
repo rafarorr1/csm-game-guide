@@ -82,7 +82,10 @@
     $('restaurar').disabled=ocupado||conflicto||!p||(acabado==='normal'?!p.hash&&p.x==null:!registroActivo(c));
     $('editarNombre').disabled=ocupado||conflicto||!c;
     $('guardarNombre').disabled=ocupado||conflicto||!autenticado||!tieneNombrePendiente(c)||!nombreValido;
-    $('restaurarNombre').disabled=ocupado||conflicto||!c||!tituloRegistrado(c);
+    const descartarNombre=tieneNombrePendiente(c),restaurarNombre=!!tituloRegistrado(c),accionNombre=$('restaurarNombre');
+    accionNombre.disabled=ocupado||conflicto||!c||(!descartarNombre&&!restaurarNombre);
+    accionNombre.textContent=descartarNombre?'Descartar cambio':'Restaurar original';
+    accionNombre.setAttribute('aria-label',descartarNombre?'Descartar cambio de nombre':'Restaurar nombre original');
     $('conflicto').hidden=!conflicto;$('estudio').setAttribute('aria-busy',String(ocupado));
   }
   function bloquear(valor){ocupado=valor;botones();}
@@ -146,6 +149,7 @@
     const nombre=nombreVisible(c);$('grupo').textContent=textoTipo(c.tipo).toLocaleUpperCase('es')+' / '+c.id;$('nombre').textContent=nombre;
     if(tituloPendiente?.id!==c.id)$('editarNombre').value=nombre;
     const pendienteNombre=tieneNombrePendiente(c),titulo=tituloRegistrado(c);
+    $('editarNombre').setAttribute('aria-invalid','false');
     $('estadoNombre').textContent=pendienteNombre?'Nombre modificado sin guardar.':'El nombre '+(titulo?'personalizado':'original')+' se guarda como borrador del Estudio. Los IDs, reglas y mazos no cambian.';
     $('mazos').textContent=c.mazos?.length?'Mazos: '+c.mazos.join(' · '):'Fuera de los seis mazos principales';
     $('reglasCompletas').textContent=c.texto||'Esta carta no tiene texto de reglas.';
@@ -201,6 +205,7 @@
     const pendienteNombre=tieneNombrePendiente(c);let error='';try{tituloParaGuardar(c);}catch(e){error=e.message;}
     $('nombre').textContent=nombreEnEdicion(c);
     $('estadoNombre').textContent=error?'El nombre aún no se puede guardar: '+error:pendienteNombre?'Nombre modificado sin guardar.':'El nombre '+(tituloRegistrado(c)?'personalizado':'original')+' se guarda como borrador del Estudio. Los IDs, reglas y mazos no cambian.';
+    $('editarNombre').setAttribute('aria-invalid',String(!!error));
     vista();
   }
   $('editarNombre').oninput=()=>{
@@ -221,7 +226,11 @@
   }
   $('guardarNombre').onclick=()=>{void guardarNombre();};
   $('restaurarNombre').onclick=async()=>{
-    if(ocupado||conflicto)return;const c=actual();if(!c||!tituloRegistrado(c))return;
+    if(ocupado||conflicto)return;const c=actual();if(!c)return;
+    if(tieneNombrePendiente(c)){
+      descartarTitulo();refrescarEditorNombre();estado('Cambio de nombre descartado.');return;
+    }
+    if(!tituloRegistrado(c))return;
     if(!await confirmar('Restaurar nombre original','Se volverá a mostrar «'+c.nombre+'». El ID, las reglas, los mazos y las ilustraciones no cambian.','Restaurar nombre'))return;
     tituloPendiente={id:c.id,valor:c.nombre};$('editarNombre').value=c.nombre;await guardarNombre();
   };
