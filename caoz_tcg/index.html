@@ -2182,7 +2182,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=264">
+<link rel="stylesheet" href="mulligan-ui.css?b=265">
 </head>
 <body>
 <div id="app"><div id="lienzo">
@@ -2347,9 +2347,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=264"></script>
-<script src="final.js?b=264"></script>
-<script src="mulligan-ui.js?b=264"></script>
+<script src="motor.js?b=265"></script>
+<script src="final.js?b=265"></script>
+<script src="mulligan-ui.js?b=265"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2368,7 +2368,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:264, fecha:'2026-09-16'};
+const BUILD = {n:265, fecha:'2026-09-17'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2711,6 +2711,7 @@ function cardEl(id,opt={}){
     <div class="tribe">${tribeLine(c)}</div>
     <div class="txt">${c.x||''}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
+  window.marcarNombreCarta(d.querySelector('.nm'),id,c.n);
   d.dataset.card=id;
   ilustrar(d, id);
   attachInspect(d,id);
@@ -2753,6 +2754,7 @@ function unitFill(d,u){
       <div class="mods">${modificadoresDe(u)}</div>${
       (u.side===ME && !canAttack(u))
         ? `<div class="porque">✕ ${porQueNoAtaca(u)}</div>` : ''}</div>`;
+  window.marcarNombreCarta(d.querySelector('.nm'),c.id,c.n);
   // Sin panel flotante: en el tablero lo cuenta el cajón, y salían los dos a la
   // vez —el cajón junto a la carta y una copia gigante al lado—. El panel sigue
   // vivo en la galería y en las guías, donde no hay cajón.
@@ -2777,6 +2779,7 @@ function showInspectLeader(d,side){
     ${L.hab2?`<div class="txt" style="margin-top:5px">${'<b>'+L.hab2.n+':</b> '+L.hab2.d}</div>`:''}
     <div class="bigsep"></div>
     <div class="bigrow">❤️ Alma <b>${Math.max(0,p.alma)}</b> · 🔷 <b>${p.pd}/${p.pdMax}</b> · 🗝️ <b>${keys(side)}</b></div>`;
+  window.marcarNombreCarta(box.querySelector('.nm'),'lider_'+p.leaderId,L.n);
   campanaVestirFicha(box,side);if(side===FOE&&G.campana?.jefeSecreto)campanaVestirPitagoras(box);CAOZ_ARTE.acabar(box,'lider_'+p.leaderId);placeInspect(d);
 }
 
@@ -2794,6 +2797,7 @@ function attachInspect(d,id,u){
     window.CAOZ_COLECCION_JUEGO?.ficha(box,u?.side,d);
     box.className = 'big t-' + (CARDS[id] ? CARDS[id].t : 'personaje');
     box.innerHTML=inspectHTML(id,u);
+    window.marcarNombreCarta(box.querySelector('.nm'),id,CARDS[id].n);
     const art=box.querySelector('.art'),enc=CAOZ_ARTE.encuadre(id,'desktop_detalle',box);
     if(art){art.dataset.arteId=id;CAOZ_ARTE.acabar(art,id);if(enc){art.classList.add('conarte');ponerDibujo(art,urlArte(id,art),enc);}}
     const box2=$('#inspect'); box2.classList.add('on');
@@ -3416,6 +3420,7 @@ function renderLeaders(){
       <div class="lcHab">${L.habName}<span>${p.leaderUsed&&mine?'usada':L.habCost+' PD'}</span></div>
     </div>`;
     const e=host.firstElementChild;
+    window.marcarNombreCarta(e.querySelector('.lcName'),'lider_'+p.leaderId,L.n);
     if(mine&&G.campana?.personaje)campanaVestirLider(e,G.campana.personaje,p.leaderId);
     if(!mine&&G.campana?.jefeSecreto)campanaVestirPitagoras(e);
     if(e.matches('.liderJugador,.identidadPitagoras'))CAOZ_ARTE.acabar(e,'lider_'+p.leaderId);
@@ -3541,6 +3546,7 @@ function render(){
   P(ME).traps.forEach(t=>{ const c=CARDS[t.id];
     const d=el('div','trapback mine',`${c.art}
       <div class="cajon trampa"><b>${c.n}</b><br>${c.x}</div>`);
+    window.marcarNombreCarta(d.querySelector('.cajon b'),c.id,c.n);
     mt.appendChild(d); });
   /* Lo que sigue activo aunque no esté en el campo. La Nube de Dagas dura tres
      turnos y no se veía en ninguna parte: sabías que la jugaste y luego ya no,
@@ -3548,7 +3554,8 @@ function render(){
   renderNubesDagas();
   const mid=$('#midRow'); mid.innerHTML='';
   if(G.place){ const c=CARDS[G.place.id];
-    const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn">${c.n} <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
+    const d=el('div','placecard',`<span class="pi">${c.art}</span><div><div class="pn"><span class="nombreLugar">${c.n}</span> <span style="color:var(--dim);font-weight:400">(${P(G.place.side).L.n})</span></div><div class="pt">${c.x}</div></div>`);
+    window.marcarNombreCarta(d.querySelector('.nombreLugar'),c.id,c.n);
     if(TGT&&isTargetable(G.place)) d.classList.add('tgt');
     mid.appendChild(d);
   } else mid.appendChild(el('div','',`<span style="color:#4c4266;font-size:11px;letter-spacing:2px">— SIN LUGAR ACTIVO —</span>`));
@@ -3833,6 +3840,7 @@ function showTutorialPick(){
     const d=el('div','lcard',`<div class="lface">${L.art}</div><div class="lname">${L.n}</div>
       <div class="larch">${D.d}</div>
       <div class="ltxt"><b>“${D.n}”</b><br>${'★'.repeat(g.dif)+'☆'.repeat(3-g.dif)} · ${g.lema}</div>`);
+    window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+id,L.n);
     ilustrarLider(d, id);
     d.onclick=()=>{ cerrarOv(); $('#log').innerHTML=''; startTutorial(id); };
     list.appendChild(d);
@@ -3993,6 +4001,7 @@ function buildSelect(){
         <div class="lhab">${L.habName} · <b>${L.habCost} PD</b></div>`);
       d.dataset.lid = id;
       d.onclick=()=>{ if(SEL_PASO==='yo') SELP=id; else SELF=id; buildSelect(); };
+      window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+id,L.n);
       ilustrarLider(d, id);
       pista.appendChild(d);
     });
@@ -4252,6 +4261,7 @@ function cartaDeLiderVS(lid, lado, ladoArte){
     <div class="lname">${L.n}</div>
     <div class="larch">${D.d}</div>`);
   window.CAOZ_COLECCION_JUEGO?.marcar(d,ladoArte);
+  window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+lid,L.n);
   ilustrarLider(d, lid);
   return d;
 }
@@ -4508,6 +4518,7 @@ function onlPickLeader(asHost){
     const L=LEADERS[id], D=DECKS[id];
     const d=el('div','lcard',`<div class="lface">${L.art}</div><div class="lname">${L.n}</div>
       <div class="larch">${D.d}</div><div class="ltxt">${L.pasiva}</div>`);
+    window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+id,L.n);
     ilustrarLider(d, id);
     d.onclick=()=>{ ONL.lider=id; [...list.children].forEach(c=>c.classList.remove('sel'));
       d.classList.add('sel'); $('#onlGo').disabled=false; };
@@ -4981,6 +4992,7 @@ if(new URLSearchParams(location.search).has('foto')){
       const id=q.get('ver'); const box=$('#inspectCard');
       box.className='big t-'+(CARDS[id]?CARDS[id].t:'personaje');
       box.innerHTML=inspectHTML(id,null);
+      window.marcarNombreCarta(box.querySelector('.nm'),id,CARDS[id].n);
       const b2=$('#inspect'); b2.classList.add('on');
       b2.style.left='1120px'; b2.style.top='120px';
     }, 1400);

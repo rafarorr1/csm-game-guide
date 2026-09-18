@@ -5,7 +5,7 @@ from urllib.parse import urlparse
 raiz = Path(__file__).resolve().parent
 base = sys.argv[1].rstrip('/') + '/'
 catalogo = json.loads((raiz / 'art/catalogo.json').read_text())
-archivos = ['estudio.html', 'estudio.js', 'estudio-publicacion.js', 'estudio-publicacion.css', 'estudio.css', 'arte-remoto.js', 'arte-vistas.js', 'estudio-vista.js', 'acabados.css', 'art/catalogo.json']
+archivos = ['estudio.html', 'estudio.js', 'estudio-publicacion.js', 'estudio-publicacion.css', 'estudio.css', 'arte-remoto.js', 'arte-vistas.js', 'estudio-vista.js', 'nombres-cartas.js', 'acabados.css', 'art/catalogo.json']
 archivos += [c['original']['url'] for c in catalogo['cartas'] if c['original']]
 def verificar(archivo):
     # El HTML privado de beta pertenece al estudio único: verificar su destino,

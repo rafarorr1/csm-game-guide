@@ -79,6 +79,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/invitaciones-compartidas.js'},
         'pruebas': ('pruebas_invitaciones_exportacion.mjs',),
     },
+    'estudio-nombres': {
+        'nombre': 'Estudio de nombres',
+        'exportador': 'estudio-nombres-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/nombres-cartas.js'},
+        'pruebas': ('pruebas_estudio_nombres_exportacion.mjs',),
+    },
 }
 URL = 'https://aislados.caoz-tcg.pages.dev'
 NO_ENCONTRADO = b'<!doctype html><html lang="es"><meta charset="utf-8"><title>No encontrado</title><body><h1>Esta ruta no existe</h1><a href="/">Volver a las secciones</a></body></html>\n'

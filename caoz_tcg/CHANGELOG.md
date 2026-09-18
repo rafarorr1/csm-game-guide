@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### v27 · Build 265 · Nombres en el Estudio · 2026-09-17
+
+- Cada perfil del Estudio de cartas permite editar su nombre visible, guardarlo
+  como borrador privado y restaurar el original. Un cambio todavía sin guardar
+  se puede descartar desde el propio perfil.
+- El nombre es presentación: conserva el ID, reglas, mazos, IA, progreso y
+  registros canónicos. El Estudio publica los títulos por separado a beta o
+  producción con la misma revisión y protección contra conflictos del arte.
+- Las caras de las cartas, fichas, líderes y Colección reciben el título
+  publicado en escritorio y móvil; el nombre se escribe como texto seguro y
+  no modifica los datos de combate.
+
 ### v26 · Build 264 · Sala y ciclo de Pitágoras · 2026-09-16
 
 - Los enlaces de sala abiertos en un navegador ahora ofrecen continuar en la

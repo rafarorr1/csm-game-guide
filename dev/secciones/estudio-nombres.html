@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Estudio de nombres · revisión aislada de Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./estudio-nombres.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/nombres-cartas.js"></script>
+<script src="./estudio-nombres.js" defer></script>
+</head>
+<body class="estudioNombresAislado">
+<main class="estudioNombresLab" aria-labelledby="estudioNombresTitulo">
+  <header class="estudioNombresCabecera">
+    <div>
+      <p class="estudioNombresEtiqueta">REVISIÓN AISLADA · CATÁLOGO</p>
+      <h1 id="estudioNombresTitulo">Nombres con una segunda oportunidad</h1>
+      <p>Revisa títulos visibles sin tocar los IDs, las reglas ni la partida. Cada cambio queda como borrador local de esta página.</p>
+    </div>
+    <aside class="estudioNombresLimiteCabecera" aria-label="Límite de la revisión">
+      <strong>Sin publicación automática</strong>
+      <span>Beta y producción se muestran sólo como el siguiente paso.</span>
+    </aside>
+  </header>
+
+  <section class="estudioNombresFlujo" aria-label="Flujo de un cambio de nombre">
+    <strong>1. Edita</strong><span>→</span><strong>2. Guarda el borrador</strong><span>→</span><strong>3. Revisa antes de beta</strong><span>→</span><strong>4. Producción conserva el original</strong>
+  </section>
+
+  <section class="estudioNombresPanel" aria-label="Editor de nombres de cartas">
+    <nav class="estudioNombresLista" aria-label="Cartas de muestra">
+      <div class="estudioNombresListaCabecera">
+        <div><p class="estudioNombresEtiqueta">MUESTRA DEL CATÁLOGO</p><h2>5 cartas reales</h2></div>
+        <span id="estudioNombresCantidad" class="estudioNombresContador">0 borradores</span>
+      </div>
+      <div id="estudioNombresCartas" class="estudioNombresCartas" role="list"></div>
+    </nav>
+
+    <section class="estudioNombresEditor" aria-labelledby="estudioNombresEditorTitulo">
+      <div class="estudioNombresFicha" id="estudioNombresFicha" aria-live="polite"></div>
+      <div class="estudioNombresEdicion">
+        <div class="estudioNombresEdicionCabecera">
+          <div><p class="estudioNombresEtiqueta">TÍTULO VISIBLE</p><h2 id="estudioNombresEditorTitulo">Edita el nombre</h2></div>
+          <span id="estudioNombresRegla" class="estudioNombresRegla"></span>
+        </div>
+        <label class="estudioNombresCampo" for="estudioNombresTituloInput">
+          <span>Nombre para esta carta</span>
+          <input id="estudioNombresTituloInput" type="text" autocomplete="off" spellcheck="true">
+        </label>
+        <p id="estudioNombresValidacion" class="estudioNombresValidacion" role="status" aria-live="polite"></p>
+        <div class="estudioNombresAcciones">
+          <button type="button" class="btn gold" id="estudioNombresGuardar">Guardar borrador</button>
+          <button type="button" class="btn" id="estudioNombresRestaurar">Restaurar original</button>
+        </div>
+        <p id="estudioNombresMensaje" class="estudioNombresMensaje" role="status" aria-live="polite"></p>
+      </div>
+    </section>
+  </section>
+
+  <section class="estudioNombresPendientes" aria-labelledby="estudioNombresPendientesTitulo">
+    <div>
+      <p class="estudioNombresEtiqueta">ESTADO DE ESTA MUESTRA</p>
+      <h2 id="estudioNombresPendientesTitulo">Pendientes simulados</h2>
+    </div>
+    <article class="estudioNombresPaso local"><span aria-hidden="true">✎</span><div><strong>Borrador local</strong><p id="estudioNombresLocalEstado">No hay cambios guardados.</p></div></article>
+    <article class="estudioNombresPaso beta"><span aria-hidden="true">β</span><div><strong>Beta</strong><p id="estudioNombresBetaEstado">Sin cambios pendientes de revisión.</p></div></article>
+    <article class="estudioNombresPaso produccion"><span aria-hidden="true">◆</span><div><strong>Producción</strong><p id="estudioNombresProduccionEstado">Conserva todos los nombres originales.</p></div></article>
+  </section>
+
+  <aside class="estudioNombresNota" aria-label="Límites de la revisión">
+    <strong>Esta página no publica nada.</strong> No inicia sesión, no consulta red, no cambia cartas del juego ni guarda progreso. Recargarla descarta todos los borradores de la muestra.
+  </aside>
+</main>
+</body>
+</html>

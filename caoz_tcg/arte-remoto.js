@@ -1,15 +1,20 @@
-/* Ilustraciones públicas del estudio. La mesa cambia sólo imágenes y encuadres:
-   nunca se vuelve a renderizar una partida ni se interrumpen sus animaciones. */
+/* Ilustraciones y títulos públicos del estudio. Sólo cambian la presentación:
+   nunca se alteran IDs, reglas, IA, red ni el estado de una partida. */
 'use strict';
 (function(){
-  const BASE=new URL('.',location.href),CLAVE='caoz_arte_publico_v1:'+BASE.pathname;
+  const BASE=new URL('.',location.href),CLAVE='caoz_arte_publico_v2:'+BASE.pathname;
   const HASH=/^[a-f0-9]{64}$/,MIME=new Set(['image/webp','image/png','image/jpeg']);
   const EXCLUIR='.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras';
   let muestra=null;
-  let originales={},cartas=[],carga=null,peticion=null,firma='',hayFallos=false;
+  let originales={},cartas=[],titulos=new Map(),carga=null,peticion=null,firma='',hayFallos=false;
   let reintento=null,intentos=0;
   const conocido=id=>typeof id==='string'&&(Object.hasOwn(CARDS,id)||(id.startsWith('lider_')&&Object.hasOwn(LEADERS,id.slice(6))));
   const encValido=e=>e&&Number.isFinite(e.x)&&Number.isFinite(e.y)&&Number.isFinite(e.z)&&e.x>=0&&e.x<=100&&e.y>=0&&e.y<=100&&e.z>=50&&e.z<=300;
+  function tituloLegible(valor){
+    const compartido=globalThis.CAOZ_NOMBRES_CARTAS?.legible;if(typeof compartido==='function')return compartido(valor);
+    if(typeof valor!=='string')return null;const limpio=valor.normalize('NFC').replace(/\s+/gu,' ').trim();
+    return limpio&&[...limpio].length<=70&&!/[\u0000-\u001f\u007f<>]/u.test(limpio)?limpio:null;
+  }
   function limpiarOriginales(datos){
     const limpios={};if(!datos||typeof datos!=='object'||Array.isArray(datos))return limpios;
     for(const [id,e]of Object.entries(datos))if(conocido(id)&&((typeof e==='number'&&Number.isFinite(e)&&e>=0&&e<=100)||encValido(e))){
@@ -43,9 +48,25 @@
     const mime=elegida.heredada?normal?.mime||null:elegida.mime;
     return {...elegida,id,acabado,hash,mime,variantes};
   }
+  function limpiarTitulos(lista){
+    if(lista==null)return new Map();
+    if(!Array.isArray(lista)||lista.length>1000)return null;
+    const limpios=new Map();
+    for(const e of lista){
+      if(!e||typeof e.id!=='string'||!Number.isInteger(e.revision)||e.revision<0)return null;
+      // Una fila antigua o retirada no debe congelar el catálogo público de
+      // las demás cartas; es la misma tolerancia que usamos con las imágenes.
+      if(!conocido(e.id))continue;
+      if(limpios.has(e.id))return null;
+      const titulo=tituloLegible(e.titulo);if(!titulo)return null;
+      limpios.set(e.id,{id:e.id,titulo,revision:e.revision});
+    }
+    return limpios;
+  }
   function limpiarCatalogo(datos){
     if(!datos||!Array.isArray(datos.cartas)||datos.cartas.length>1000)return null;
-    const limpios=[],vistos=new Set();
+    const limpios=[],vistos=new Set(),nuevosTitulos=limpiarTitulos(datos.titulos);
+    if(!nuevosTitulos)return null;
     for(const e of datos.cartas){
       if(!e||typeof e.id!=='string')return null;
       // Una fila de una carta retirada no impide actualizar las demás.
@@ -60,10 +81,20 @@
         limpios.push(elegirVariantes(e.id,{normal,foil:null,dorado:null}));
       }
     }
-    return limpios.sort((a,b)=>a.id.localeCompare(b.id));
+    return {cartas:limpios.sort((a,b)=>a.id.localeCompare(b.id)),titulos:nuevosTitulos};
   }
-  function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify({originales,cartas}));}catch(e){}}
+  const firmaCatalogo=()=>JSON.stringify({cartas,titulos:[...titulos.values()]});
+  function guardar(){try{localStorage.setItem(CLAVE,JSON.stringify({originales,cartas,titulos:[...titulos.values()]}));}catch(e){}}
   function remoto(id){return cartas.find(e=>e.id===id);}
+  function nombre(id,base){return titulos.get(id)?.titulo||String(base??id);}
+  function ponerNombre(nodo,id,base){
+    if(!nodo)return String(base??id);
+    const original=String(base??id),sufijo=nodo.dataset.nombreSufijo||'';
+    nodo.dataset.nombreId=id;nodo.dataset.nombreBase=original;nodo.textContent=nombre(id,original)+sufijo;return nodo.textContent;
+  }
+  function actualizarNombres(raiz=document){
+    raiz.querySelectorAll?.('[data-nombre-id]').forEach(n=>ponerNombre(n,n.dataset.nombreId,n.dataset.nombreBase||n.textContent));
+  }
   function registroElegido(id,acabado){
     const variantes=remoto(id)?.variantes||{},normal=variantes.normal;
     const propio=variantes[acabado];
@@ -139,6 +170,11 @@
     document.querySelectorAll('[data-arte-id]').forEach(pintar);
     window.dispatchEvent(new Event('caoz:arte'));
   }
+  function avisarTitulos(ids){
+    actualizarNombres();
+    const evento=typeof CustomEvent==='function'?new CustomEvent('caoz:nombres',{detail:{ids}}):new Event('caoz:nombres');
+    window.dispatchEvent(evento);
+  }
   async function pedir(url,ms){
     const c=new AbortController(),t=setTimeout(()=>c.abort(),ms);
     try{const r=await fetch(url,{cache:'no-store',credentials:'omit',signal:c.signal});if(!r.ok)return null;return await r.json();}
@@ -155,18 +191,19 @@
     if(location.protocol==='file:')return Promise.resolve(false);
     if(peticion)return peticion;
     peticion=(async()=>{
-      const nuevos=limpiarCatalogo(await pedir(new URL('api/arte/catalogo',BASE).href,4500));
-      if(!nuevos){reintentarCatalogo();return false;}
+      const catalogo=limpiarCatalogo(await pedir(new URL('api/arte/catalogo',BASE).href,4500));
+      if(!catalogo){reintentarCatalogo();return false;}
       clearTimeout(reintento);reintento=null;intentos=0;
-      const nuevaFirma=JSON.stringify(nuevos);
+      const nuevaFirma=JSON.stringify({cartas:catalogo.cartas,titulos:[...catalogo.titulos.values()]});
       if(nuevaFirma===firma){if(hayFallos){hayFallos=false;actualizar();}return false;}
-      cartas=nuevos;firma=nuevaFirma;recomponer();guardar();actualizar();return true;
+      const ids=[...new Set([...titulos.keys(),...catalogo.titulos.keys()])].filter(id=>titulos.get(id)?.titulo!==catalogo.titulos.get(id)?.titulo);
+      cartas=catalogo.cartas;titulos=catalogo.titulos;firma=nuevaFirma;recomponer();guardar();actualizar();if(ids.length)avisarTitulos(ids);return true;
     })().finally(()=>{peticion=null;});return peticion;
   }
   // Se usa primero lo conocido: ni un servicio caído ni una sesión privada
   // forman parte del arranque del juego. Sólo se conserva información pública.
-  try{const previo=JSON.parse(localStorage.getItem(CLAVE)||'null');if(previo){originales=limpiarOriginales(previo.originales);cartas=limpiarCatalogo(previo)||[];}}catch(e){}
-  firma=JSON.stringify(cartas);recomponer();
+  try{const previo=JSON.parse(localStorage.getItem(CLAVE)||'null');if(previo){originales=limpiarOriginales(previo.originales);const catalogo=limpiarCatalogo(previo);if(catalogo){cartas=catalogo.cartas;titulos=catalogo.titulos;}}}catch(e){}
+  firma=firmaCatalogo();recomponer();
   cargarArte=function(){
     if(carga)return carga;
     carga=(async()=>{
@@ -188,13 +225,16 @@
     if(enc&&img.getAttribute('src')!==base){img.src=base;variables(nodo,enc);img.parentElement?.style.setProperty('--url','url("'+base+'")');}
     else quitar(nodo);
   },true);
-  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,version,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:(id,nodo)=>{const a=acabadoElegido(id,nodo),e=registroElegido(id,a);return !!originales[id]?.variantes?.[a]||!!e&&(!!e.hash||encValido(e));}});
+  window.nombreCarta=(id,base)=>nombre(id,base);
+  window.nombreLider=(id,base)=>nombre('lider_'+id,base);
+  window.ponerNombreCarta=ponerNombre;
+  window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,version,nombre,ponerNombre,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:(id,nodo)=>{const a=acabadoElegido(id,nodo),e=registroElegido(id,a);return !!originales[id]?.variantes?.[a]||!!e&&(!!e.hash||encValido(e));}});
   // Una carta puede construirse fuera del DOM; al entrar ya conocemos su superficie.
   // Sólo se observan nodos añadidos: modificar el encuadre no dispara un bucle.
-  const pendientes=new Set();let programado=false;
+  const pendientes=new Set(),pendientesNombres=new Set();let programado=false;
   new MutationObserver(cambios=>{
-    for(const c of cambios)for(const n of c.addedNodes)if(n.nodeType===1){if(n.matches('[data-arte-id]'))pendientes.add(n);n.querySelectorAll('[data-arte-id]').forEach(x=>pendientes.add(x));}
-    if(pendientes.size&&!programado){programado=true;queueMicrotask(()=>{programado=false;for(const n of pendientes)if(n.isConnected)pintar(n);pendientes.clear();});}
+    for(const c of cambios)for(const n of c.addedNodes)if(n.nodeType===1){if(n.matches('[data-arte-id]'))pendientes.add(n);n.querySelectorAll('[data-arte-id]').forEach(x=>pendientes.add(x));if(n.matches('[data-nombre-id]'))pendientesNombres.add(n);n.querySelectorAll('[data-nombre-id]').forEach(x=>pendientesNombres.add(x));}
+    if((pendientes.size||pendientesNombres.size)&&!programado){programado=true;queueMicrotask(()=>{programado=false;for(const n of pendientes)if(n.isConnected)pintar(n);pendientes.clear();for(const n of pendientesNombres)if(n.isConnected)ponerNombre(n,n.dataset.nombreId,n.dataset.nombreBase||n.textContent);pendientesNombres.clear();});}
   }).observe(document.documentElement,{childList:true,subtree:true});
   addEventListener('caoz:coleccion',()=>{recomponer();actualizar();});
   addEventListener('online',()=>void refrescar());
