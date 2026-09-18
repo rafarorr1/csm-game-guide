@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-17 · beta 264 · producción 264 · v26 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-17 · beta y producción 265 · v27 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,24 +10,45 @@ números) → el código.
 
 ---
 
-## Estado vigente — build 264 publicada en producción
+## Estado vigente — nombres visibles del Estudio publicados en producción y beta 265
 
-El usuario autorizó promover la beta 264. La fuente de producción es
-`main:832c66ea612ea0bb73e3728d12aa4de3464c42c3`; el único commit posterior
-en `develop` a la build era documentación, por lo que el paquete publicado
-permanece idéntico al que se revisó en beta.
+El perfil de cada carta en el Estudio real ahora incluye el campo **Nombre
+visible**. El editor valida el título, permite guardar el borrador privado,
+descartar un cambio sin guardar y restaurar el original mediante un tombstone.
+Al usar los botones existentes de publicación del Estudio, el título pasa al
+catálogo público de ese destino. Nunca cambia el ID de carta, sus reglas, IA,
+mazos, colección ni progreso.
 
-`./publicar.sh --produccion --completo` terminó en verde: comprobaciones
-estáticas, cuentas, seis tutoriales, campaña, online, minijuegos, móvil,
-audio, colección, balance de 2,880 partidas y regresiones. GitHub Pages y
-Cloudflare sirven `index.html`, `motor.js`, `movil.html` y `final.js` con los
-mismos hashes que la fuente de producción.
+Los títulos se aplican sólo a las superficies de carta y líder. La cortinilla
+online conserva siempre los nombres de jugadores como texto seguro, aunque el
+líder tenga un título personalizado. La caché pública de arte pasó a v2 para
+incluir títulos sin reutilizar una forma anterior.
 
-Artefacto: `gh-pages:855974820a864b1fe609bd6e677a62cff60ecbe9` (`tcg/`).
-La beta se conserva en `beta:21d3915faf554dc84928f0cbc8a820c7ee91bf1c`.
+`main:9800861` publicó producción y `develop:44105b0` publicó beta. La
+validación completa de producción cubrió los seis tutoriales y regresiones; el
+publicador aumentó sólo el margen de la tanda completa a 15 minutos porque las
+pruebas sí terminan, pero juntas rozan los diez minutos en este equipo. La
+tanda rápida de beta también terminó en verde.
 
-- Web: https://juego.caozcontodo.com/?b=264
-- Móvil: https://juego.caozcontodo.com/movil.html?b=264
+Artefactos: `gh-pages:4365ded` en `/tcg/` y `gh-pages:26c8f09` en
+`/tcg-beta/`. Producción y beta se comprobaron byte a byte contra
+`index.html`, `motor.js`, `movil.html`, `estudio.html` y `nombres-cartas.js`.
+
+- Producción / Estudio: https://juego.caozcontodo.com/estudio
+- Beta: https://beta.caoz-tcg.pages.dev/?b=265
+- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=265
+
+---
+
+## Registro — build 264 publicada en producción
+
+El usuario autorizó promover la beta 264. La fuente de producción fue
+`main:832c66ea612ea0bb73e3728d12aa4de3464c42c3`; el paquete publicado se
+verificó con comprobaciones estáticas, cuentas, seis tutoriales, campaña,
+online, minijuegos, móvil, audio, colección, balance y regresiones.
+
+Artefacto histórico: `gh-pages:855974820a864b1fe609bd6e677a62cff60ecbe9`
+en `/tcg/`. Posteriormente fue reemplazado por la build 265 de arriba.
 
 ---
 
