@@ -8,7 +8,7 @@ const fuente=readFileSync(new URL('./arte-remoto.js',import.meta.url),'utf8');
 const vistas=readFileSync(new URL('./arte-vistas.js',import.meta.url),'utf8');
 const copiar=v=>JSON.parse(JSON.stringify(v));
 const enc=(x,y,z)=>({x,y,z});
-const CLAVE='caoz_arte_publico_v1:/juego/';
+const CLAVE='caoz_arte_publico_v2:/juego/';
 const originales={
   tal:{...enc(45,91,118),variantes:{
     foil:{url:'art/tal-foil-v1.webp',...enc(32,41,125),placeholder:true,estilo:'Luz prismática',vistas:{movil_detalle:enc(23,34,90),desktop_mano:enc(62,49,130)}},

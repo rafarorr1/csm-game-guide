@@ -1717,7 +1717,7 @@ function coleccionDePrueba(w,t,pagina){
 }
 
 PRUEBAS.suite('encuadresVistas',async t=>{
-  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,antes=localStorage.getItem(clave);
+  const clave='caoz_arte_publico_v2:'+new URL('.',location.href).pathname,antes=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=encuadres-interno';document.body.append(f);await carga;
@@ -1785,7 +1785,7 @@ PRUEBAS.suite('cartasIlustradas',async t=>{
 });
 
 PRUEBAS.suite('arteRemoto',async t=>{
-  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
+  const clave='caoz_arte_publico_v2:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){
     localStorage.removeItem(clave);
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -1831,7 +1831,7 @@ PRUEBAS.suite('arteRemoto',async t=>{
 });
 
 PRUEBAS.suite('acabadosArte',async t=>{
-  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
+  const clave='caoz_arte_publico_v2:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){
     localStorage.removeItem(clave);
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
@@ -1936,7 +1936,7 @@ PRUEBAS.suite('acabadosArte',async t=>{
 });
 
 PRUEBAS.suite('coleccion',async t=>{
-  const clave='caoz_arte_publico_v1:'+new URL('.',location.href).pathname,cache=localStorage.getItem(clave);
+  const clave='caoz_arte_publico_v2:'+new URL('.',location.href).pathname,cache=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=coleccion-interno';document.body.appendChild(f);await carga;
