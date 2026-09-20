@@ -1784,6 +1784,37 @@ PRUEBAS.suite('cartasIlustradas',async t=>{
   }
 });
 
+PRUEBAS.suite('tituloVisorEstudio',async t=>{
+  // El visor recibe el nombre privado desde su padre. cardEl añade el marcador
+  // del catálogo antes de que el visor lo sustituya; al insertarse, el
+  // observador público lo intenta refrescar en un microtask. El borrador debe
+  // seguir ganando aunque todavía no se haya publicado.
+  const clave='caoz_arte_publico_v2:'+new URL('.',location.href).pathname,anterior=localStorage.getItem(clave);
+  localStorage.removeItem(clave);
+  const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
+  let resolver,rechazar;
+  const listo=new Promise((resolve,reject)=>{resolver=resolve;rechazar=reject;});
+  const escuchar=e=>{
+    if(e.source!==f.contentWindow||e.origin!==location.origin||e.data?.tipo!=='caoz:vista-lista')return;
+    removeEventListener('message',escuchar);resolver();
+  };
+  addEventListener('message',escuchar);
+  const limite=setTimeout(()=>{removeEventListener('message',escuchar);rechazar(Error('El visor aislado no avisó que estaba listo.'));},5000);
+  f.src='index.html?estudioVista=1&escritorio=1';document.body.append(f);
+  try{
+    await listo;clearTimeout(limite);
+    f.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:'machete',acabado:'normal',url:null,titulo:'Machete de prueba',encuadre:{x:50,y:50,z:100},vista:'desktop_mano'},location.origin);
+    await sleep(30);
+    const nombre=f.contentDocument.querySelector('#muestraEstudio .nm');
+    t.check(!!nombre,'El visor crea la carta solicitada.');
+    t.igual(nombre.textContent,'Machete de prueba','El nombre que manda el Estudio sobrevive al refresco asíncrono del catálogo.');
+    t.check(!nombre.hasAttribute('data-nombre-id'),'El visor retira el marcador público antes de que pueda sobrescribir su borrador.');
+  }finally{
+    clearTimeout(limite);removeEventListener('message',escuchar);f.remove();
+    if(anterior===null)localStorage.removeItem(clave);else localStorage.setItem(clave,anterior);
+  }
+});
+
 PRUEBAS.suite('arteRemoto',async t=>{
   const clave='caoz_arte_publico_v2:'+new URL('.',location.href).pathname,guardado=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){
@@ -4983,12 +5014,12 @@ PRUEBAS.suite('regresiones', async t => {
   {
     const inv=window.CAOZ_INVITACIONES;
     t.check(!!inv,'el parser compartido de invitaciones debe cargarse antes del coordinador online');
-    const prod='https://juego.caozcontodo.com/?b=266',beta='https://beta.caoz-tcg.pages.dev/?b=266';
-    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=266'), 'AB1C2',
+    const prod='https://juego.caozcontodo.com/?b=267',beta='https://beta.caoz-tcg.pages.dev/?b=267';
+    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=267'), 'AB1C2',
       'un enlace de sala debe volver al mismo código de cinco caracteres');
     t.check(inv.mensajeCodigo('AB1C2',prod).includes('AB1C2')&&!inv.mensajeCodigo('AB1C2',prod).includes('?sala='),
       'el mensaje para una app instalada debe contener código, no un enlace web');
-    const enlaceBeta=new URL(inv.enlace('AB1C2',beta,266));
+    const enlaceBeta=new URL(inv.enlace('AB1C2',beta,267));
     t.check(enlaceBeta.origin==='https://beta.caoz-tcg.pages.dev'&&enlaceBeta.searchParams.get('sala')==='AB1C2',
       'un enlace de beta debe conservar su propio origen y su código');
     let continuar=0;
