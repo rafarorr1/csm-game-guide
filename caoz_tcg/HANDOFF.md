@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-20 · beta y producción 266 · v28 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-20 · beta y producción 267 · v29 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,39 @@ números) → el código.
 
 ---
 
-## Estado vigente — acceso anónimo del Estudio corregido en producción y beta 266
+## Estado vigente — visor de nombres del Estudio corregido en producción y beta 267
+
+El visor real que acompaña el perfil de una carta en el Estudio ahora conserva
+el nombre visible que recibe del editor, tanto si ya se publicó como si todavía
+es un borrador. Ya no restaura una fracción después el título canónico de la
+carta al terminar de cargar su catálogo público.
+
+Machete fue la regresión concreta: el catálogo ya contenía **Machete**, pero el
+visor acababa reponiendo **Machete (Glip)** desde un marcador interno del
+constructor de cartas. La vista elimina ese marcador al pintar su título
+propio. No cambia IDs, reglas, mazos, IA, colección, progreso ni los nombres
+que muestra el juego fuera de esa previsualización.
+
+Una prueba abre el iframe real, le envía un título de borrador, espera el
+refresco asíncrono del catálogo y exige que el título persista sin el marcador
+público.
+
+`main:23fb057` publicó producción y `develop:662e008` publicó beta. Las
+validaciones completas incluyeron pruebas estáticas, Chrome, los seis
+tutoriales, campaña, online, minijuegos, móvil, audio, balance y regresiones.
+
+Artefactos: `gh-pages:6223d33` en `/tcg/`, `gh-pages:8d42d66` en
+`/tcg-beta/` y beta Cloudflare `ac5ec51`. Producción y beta se comprobaron
+byte a byte contra los archivos públicos, Estudio, catálogo, originales y 37
+sonidos.
+
+- Producción / Estudio: https://juego.caozcontodo.com/estudio
+- Beta: https://beta.caoz-tcg.pages.dev/?b=267
+- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=267
+
+---
+
+## Registro anterior — acceso anónimo del Estudio corregido en producción y beta 266
 
 El arranque anónimo del Estudio ya no se interrumpe mientras todavía no hay
 una carta seleccionada. Cuando la sesión privada responde que falta iniciar
