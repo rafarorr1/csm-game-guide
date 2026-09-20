@@ -17,7 +17,15 @@
   function mostrarTitulo(carta,titulo){
     carta?.querySelectorAll?.('.nm,.lname').forEach(nodo=>{
       const sufijo=nodo.textContent.endsWith(' ★')?' ★':'';
-      nodo.dataset.nombreEstudio='';
+      // cardEl/inspectHTML marcan el nombre para que el catálogo público lo
+      // pueda refrescar. La carta ya entró al DOM antes de llegar aquí: su
+      // MutationObserver se ejecutaría al siguiente microtask y volvería a
+      // escribir el nombre canónico sobre el borrador que envió el Estudio.
+      // Esta vista pertenece al padre, así que su título (incluso sin guardar)
+      // tiene prioridad y no debe volver a participar en ese refresco público.
+      nodo.removeAttribute('data-nombre-id');
+      nodo.removeAttribute('data-nombre-base');
+      nodo.removeAttribute('data-nombre-sufijo');
       nodo.textContent=titulo+sufijo;
     });
   }
