@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-17 · beta y producción 265 · v27 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-20 · beta y producción 266 · v28 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,34 @@ números) → el código.
 
 ---
 
-## Estado vigente — nombres visibles del Estudio publicados en producción y beta 265
+## Estado vigente — acceso anónimo del Estudio corregido en producción y beta 266
+
+El arranque anónimo del Estudio ya no se interrumpe mientras todavía no hay
+una carta seleccionada. Cuando la sesión privada responde que falta iniciar
+sesión, el formulario vuelve a mostrar la clave y habilita el botón **Entrar**;
+no se queda en «Conectando con el estudio…».
+
+La corrección protege la lectura transitoria del perfil sin carta seleccionada.
+No cambia cartas, nombres publicados, reglas, mazos, IA ni datos del usuario.
+Una regresión ejecuta el inicio real con catálogo y respuesta 401: comprueba el
+campo, el botón y el mensaje de acceso, y falla si se retira esa protección.
+
+`main:ae53e2d` publicó producción y `develop:279da0a` publicó beta. Las
+validaciones completas incluyeron las pruebas estáticas, Chrome, los seis
+tutoriales, campaña, online, minijuegos, móvil, audio, balance y regresiones.
+
+Artefactos: `gh-pages:15d51d8` en `/tcg/`, `gh-pages:07bc070` en
+`/tcg-beta/` y beta Cloudflare `266d90f`. Producción y beta se comprobaron
+byte a byte contra los archivos públicos, Estudio, catálogo, originales y 37
+sonidos.
+
+- Producción / Estudio: https://juego.caozcontodo.com/estudio
+- Beta: https://beta.caoz-tcg.pages.dev/?b=266
+- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=266
+
+---
+
+## Registro anterior — nombres visibles del Estudio publicados en producción y beta 265
 
 El perfil de cada carta en el Estudio real ahora incluye el campo **Nombre
 visible**. El editor valida el título, permite guardar el borrador privado,
