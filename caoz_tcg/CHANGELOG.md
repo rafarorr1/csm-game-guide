@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### v28 · Build 266 · Acceso al Estudio · 2026-09-20
+
+- El Estudio de cartas ya completa el arranque anónimo antes de que exista una
+  carta seleccionada. Así el formulario de contraseña vuelve a quedar activo
+  cuando la sesión privada responde que falta iniciar sesión.
+- Una regresión ejecuta el inicio real con catálogo y respuesta 401 simulados;
+  comprueba el campo, el botón y el mensaje de acceso, y falla si se retira la
+  guardia que protege ese estado transitorio.
+
 ### v27 · Build 265 · Nombres en el Estudio · 2026-09-17
 
 - Cada perfil del Estudio de cartas permite editar su nombre visible, guardarlo

@@ -79,6 +79,38 @@ function entorno(c=carta,registros={},version='foil',nombres=[]){
   return {api,nodo,peticiones,respuestas,fallos,editar,respuesta};
 }
 
+/* El arranque real no usa el puente de entorno(): antes de tener una carta
+   bloquea el formulario mientras consulta la sesión. Esta ruta reproduce el
+   401 anónimo para impedir que un lector de perfil vuelva a romper el login. */
+function arranqueAnonimo(codigo=codigoEstudio){
+  const nodos=new Map(),peticiones=[];
+  const nodo=id=>{if(!nodos.has(id))nodos.set(id,new Nodo());return nodos.get(id);};
+  nodo('estudio').hidden=true;nodo('salir').hidden=true;
+  const context={console,URL,URLSearchParams,Blob,Response,AbortController,setTimeout,clearTimeout,innerWidth:1000,location:new URL('https://juego.caozcontodo.com/estudio.html'),
+    document:{getElementById:nodo,createElement:()=>new Nodo(),querySelector:()=>new Nodo(),querySelectorAll:()=>[]},addEventListener(){},matchMedia:()=>({matches:true}),
+    CAOZ_ESTUDIO:{ruta:r=>r.replace(/api\/(arte|sfx)\//,'api/estudio/$1/'),actualizar:async()=>{}},
+    fetch:async(url,op={})=>{
+      const u=new URL(url);peticiones.push({url:u.pathname,...op});
+      if(u.pathname==='/art/catalogo.json')return new Response(JSON.stringify({cartas:[carta]}),{headers:{'Content-Type':'application/json'}});
+      if(u.pathname==='/api/estudio/arte/privado')return new Response(JSON.stringify({error:'Inicia sesión en el estudio.'}),{status:401,headers:{'Content-Type':'application/json'}});
+      throw Error('Ruta inesperada durante el arranque: '+u.pathname);
+    }};
+  context.window=context;vm.createContext(context);vm.runInContext(codigoVistas,context);vm.runInContext(codigo,context,{filename:'estudio.js'});
+  return {nodo,peticiones};
+}
+const esperarArranque=()=>new Promise(resolve=>setTimeout(resolve,0));
+
+await caso('El acceso anónimo termina de cargar aunque todavía no haya una carta seleccionada',async()=>{
+  const e=arranqueAnonimo();await esperarArranque();
+  assert.equal(e.nodo('acceso').hidden,false);assert.equal(e.nodo('estudio').hidden,true);
+  assert.equal(e.nodo('entrar').disabled,false);assert.equal(e.nodo('clave').disabled,false);
+  assert.match(e.nodo('estado').textContent,/Introduce la clave del estudio de sonidos/);
+  assert.deepEqual(e.peticiones.map(p=>p.url).sort(),['/api/estudio/arte/privado','/art/catalogo.json']);
+  const saboteado=codigoEstudio.replace('const tituloRegistrado=c=>c?titulos.get(c.id)?.titulo||null:null;','const tituloRegistrado=c=>titulos.get(c.id)?.titulo||null;');
+  assert.notEqual(saboteado,codigoEstudio,'El sabotaje debe retirar la guardia del arranque');
+  assert.throws(()=>arranqueAnonimo(saboteado),/Cannot read properties of undefined/);
+});
+
 await caso('Los premium locales están creados y conservan arte y encuadres aunque exista Normal remoto',()=>{
   const e=entorno(carta,{normal:{hash:'normal_remoto',x:8,y:9,z:140,revision:2}});
   assert.equal(e.api.estado().creada,true);assert.equal(e.api.estado().url,'https://juego.caozcontodo.com/'+foil.url);assert.deepEqual(copiar(e.api.estado().encuadre),foil.encuadre);

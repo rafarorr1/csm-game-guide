@@ -9,7 +9,10 @@
   const claveVista=()=>dispositivo+'_'+superficie;
   let cartas=[],privados=new Map(),titulos=new Map(),seleccion='',acabado='normal',tipo='',entorno='',pendiente=null,tituloPendiente=null,conflicto=false,ocupado=false,autenticado=false;
   const actual=()=>cartas.find(c=>c.id===seleccion);
-  const tituloRegistrado=c=>titulos.get(c.id)?.titulo||null;
+  // Antes de cargar el catálogo todavía no hay una carta seleccionada. El
+  // arranque también llama a botones() para bloquear el formulario durante
+  // esa consulta, así que este lector debe tolerar ese estado transitorio.
+  const tituloRegistrado=c=>c?titulos.get(c.id)?.titulo||null:null;
   const nombreVisible=c=>tituloRegistrado(c)||c.nombre;
   const nombreBorrador=c=>tituloPendiente?.id===c.id?tituloPendiente.valor:nombreVisible(c);
   function validarNombre(valor){
