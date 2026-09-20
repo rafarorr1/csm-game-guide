@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### v29 · Build 267 · Visor de nombres · 2026-09-20
+
+- El visor real dentro del Estudio conserva el nombre visible que se está
+  editando, guardado o no publicado, en vez de restaurar una fracción después
+  el título canónico de la carta.
+- Una prueba abre el visor aislado, envía un nombre de borrador y verifica que
+  el refresco asíncrono del catálogo no lo sobrescriba.
+
 ### v28 · Build 266 · Acceso al Estudio · 2026-09-20
 
 - El Estudio de cartas ya completa el arranque anónimo antes de que exista una
