@@ -1,0 +1,17 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "index.html": "c41e4372726ee563adf04777a44494d4fab86115342b62f22dd6f060431f1395",
+    "portal-preview.js": "ccafb0cc4855e90f6e9748a3d89019eb817e4bf5d2b5983659976dd1402598a5",
+    "portal.css": "c44e4e173840592da4b8aa6be2345b012ee1e7b640113f8bb35d699ff594164a",
+    "portal.js": "8477818e8d01c0d3ad270218acae94cf02782d900cf73261c49bf590b9f398d6",
+    "procedencia.json": "eecf49950261f764c01ce2954868fa22e81c507c49f81e6fcfca81df03eb4854"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/portal-de-acceso",
+    "sha": "034503171f665f7e7caa2275af847032dd89bfc5"
+  },
+  "seccion": "portal",
+  "version": 1
+}

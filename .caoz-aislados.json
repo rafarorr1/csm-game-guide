@@ -45,6 +45,10 @@
       "fuente": "d45399456abc09f44ea7cccbdcdec43d0e5b1787",
       "ruta": "tcg/pitagoras"
     },
+    "portal": {
+      "fuente": "034503171f665f7e7caa2275af847032dd89bfc5",
+      "ruta": "tcg/portal"
+    },
     "rey": {
       "fuente": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf",
       "ruta": "tcg/rey"

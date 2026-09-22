@@ -1,0 +1,33 @@
+{
+  "seccion": "portal",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "progresoReal": false,
+  "proposito": "Revisar la puerta de acceso y las cinco rutas del portal sin abrir el juego, Beta, estudios ni servicios reales.",
+  "componentes": {
+    "portal.html": {
+      "archivo": "caoz_tcg/portal.html",
+      "sha256": "1bb945f26f02f8364068f9a94217415aaddf02fe72e5265110d2ee382728aae6"
+    },
+    "portal.css": {
+      "archivo": "caoz_tcg/portal.css",
+      "sha256": "c44e4e173840592da4b8aa6be2345b012ee1e7b640113f8bb35d699ff594164a"
+    },
+    "portal.js": {
+      "archivo": "caoz_tcg/portal.js",
+      "sha256": "8477818e8d01c0d3ad270218acae94cf02782d900cf73261c49bf590b9f398d6"
+    }
+  },
+  "entorno": {
+    "portal-preview.js": "ccafb0cc4855e90f6e9748a3d89019eb817e4bf5d2b5983659976dd1402598a5"
+  },
+  "rutas": [
+    "Producción",
+    "Beta",
+    "Estudio de Cartas",
+    "Estudio de Sonidos",
+    "Juego Físico"
+  ]
+}
