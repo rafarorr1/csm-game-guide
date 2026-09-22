@@ -114,7 +114,15 @@ const datos={'index.html':'Estudio de nombres','procedencia.json':'{"seccion":"e
  'juego/nombres-cartas.js':fs.readFileSync('componente.js')};
 for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.mkdirSync(path.dirname(archivo),{recursive:true});fs.writeFileSync(archivo,b);}
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs', 'pruebas_interacciones_exportacion.mjs', 'pruebas_epilogo_gero_exportacion.mjs', 'pruebas_pitagoras_exportacion.mjs', 'pruebas_heroe_exportacion.mjs', 'pruebas_mulligan_exportacion.mjs', 'pruebas_invitaciones_exportacion.mjs', 'pruebas_estudio_nombres_exportacion.mjs']:
+        (secciones / 'portal-exportar.mjs').write_text('''
+import fs from 'node:fs'; import path from 'node:path';
+const destino=process.argv[2]; fs.mkdirSync(destino,{recursive:true});
+const datos={'index.html':'Portal del Domo','procedencia.json':'{"seccion":"portal"}',
+ '_headers':"/*\\n  Cache-Control: no-store\\n  Content-Security-Policy: default-src 'self'\\n",
+ 'portal.css':'portal','portal.js':fs.readFileSync('componente.js'),'portal-preview.js':'vista temporal'};
+for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.mkdirSync(path.dirname(archivo),{recursive:true});fs.writeFileSync(archivo,b);}
+''')
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs', 'pruebas_interacciones_exportacion.mjs', 'pruebas_epilogo_gero_exportacion.mjs', 'pruebas_pitagoras_exportacion.mjs', 'pruebas_heroe_exportacion.mjs', 'pruebas_mulligan_exportacion.mjs', 'pruebas_invitaciones_exportacion.mjs', 'pruebas_estudio_nombres_exportacion.mjs', 'pruebas_portal_exportacion.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -333,7 +341,7 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
         self.assertEqual(self.referencias_protegidas(), protegido)
 
     def test_sobres_exportador_propio_y_registro_explicito(self):
-        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres'})
+        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal'})
         original_run = subprocess.run
         llamadas = []
         def registrar(args, **opciones):
@@ -585,7 +593,7 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
         protegidas = self.referencias_protegidas()
         ultimo = None
         esperados = {}
-        for seccion in ['coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres']:
+        for seccion in ['coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal']:
             salida = self.preparar(seccion)
             resultado = p.publicar(self.repo, salida, seccion)
             revision = resultado['commit']
@@ -599,7 +607,7 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
             self.assertEqual(self.referencias_protegidas(), protegidas)
             ultimo = revision
         cabeceras = self.git('show', f'{ultimo}:tcg/_headers', binario=True)
-        for seccion in ['estudio-nombres', 'invitaciones', 'mulligan', 'heroe', 'pitagoras', 'epilogo-gero', 'interacciones', 'cuenta', 'sobres', 'coleccion', 'rey']:
+        for seccion in ['portal', 'estudio-nombres', 'invitaciones', 'mulligan', 'heroe', 'pitagoras', 'epilogo-gero', 'interacciones', 'cuenta', 'sobres', 'coleccion', 'rey']:
             (self.repo / 'componente.js').write_text(f'const revision = "Nueva {seccion}";')
             self.git('commit', '-qam', f'Revisar {seccion}')
             protegidas = self.referencias_protegidas()
@@ -614,7 +622,7 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
             self.assertEqual(self.referencias_protegidas(), protegidas)
             self.assertFalse(p.publicar(self.repo, salida, seccion)['nuevo'])
             registro = json.loads(self.git('show', f'{revision}:{p.MARCADOR}'))
-            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres'})
+            self.assertEqual(set(registro['secciones']), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal'})
             indice = self.git('show', f'{revision}:tcg/index.html')
             for hermana in esperados:
                 self.assertIn(f'href="./{hermana}/"', indice)

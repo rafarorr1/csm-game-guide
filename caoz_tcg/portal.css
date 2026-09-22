@@ -1,0 +1,80 @@
+:root{
+  --portal-bg:#0d0a13;
+  --portal-bg-deep:#07050b;
+  --portal-panel:rgba(27,20,40,.92);
+  --portal-panel-strong:#22182f;
+  --portal-line:rgba(212,181,91,.45);
+  --portal-gold:#e6bb52;
+  --portal-gold-soft:#ffd77c;
+  --portal-ink:#f3edf9;
+  --portal-muted:#b5a8c7;
+  --portal-purple:#925ff0;
+  --portal-red:#e45b56;
+  --portal-blue:#539df5;
+  --portal-green:#3dad79;
+  --portal-serif:"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --portal-sans:"Trebuchet MS",system-ui,sans-serif;
+}
+
+*{box-sizing:border-box}
+html,body{min-height:100%;margin:0}
+body{font:16px/1.45 var(--portal-sans);color:var(--portal-ink);background:var(--portal-bg)}
+button,input{font:inherit}
+button{cursor:pointer}
+
+.portalDomo{
+  min-height:100vh;
+  display:grid;
+  place-items:center;
+  overflow-x:hidden;
+  background:
+    radial-gradient(ellipse 78% 46% at 50% -8%,rgba(132,92,215,.33),transparent 65%),
+    radial-gradient(ellipse 65% 44% at 100% 100%,rgba(192,105,55,.13),transparent 68%),
+    radial-gradient(ellipse 55% 52% at 0 86%,rgba(74,57,155,.18),transparent 68%),
+    linear-gradient(165deg,#191126 0%,var(--portal-bg) 48%,var(--portal-bg-deep) 100%);
+}
+.portalDomo::before,.portalDomo::after{content:"";position:fixed;inset:0;pointer-events:none}
+.portalDomo::before{opacity:.45;background-image:radial-gradient(circle at 18% 22%,rgba(255,255,255,.38) 0 1px,transparent 1.6px),radial-gradient(circle at 79% 38%,rgba(255,255,255,.28) 0 1px,transparent 1.5px),radial-gradient(circle at 43% 73%,rgba(255,255,255,.20) 0 1px,transparent 1.5px);background-size:190px 170px,240px 210px,300px 230px}
+.portalDomo::after{background:radial-gradient(ellipse 76% 67% at 50% 44%,transparent 40%,rgba(3,2,7,.58) 100%)}
+
+.portalMarco{width:min(1040px,calc(100% - 36px));position:relative;z-index:1;padding:42px 0}
+.portalAcceso,.portalMenu{border:1px solid var(--portal-line);border-radius:24px;background:linear-gradient(145deg,rgba(37,26,52,.96),rgba(18,13,29,.96));box-shadow:0 28px 80px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.09);position:relative;overflow:hidden}
+.portalAcceso::before,.portalMenu::before{content:"";position:absolute;inset:9px;border:1px solid rgba(230,187,82,.16);border-radius:18px;pointer-events:none}
+
+.portalAcceso{max-width:520px;margin:auto;padding:54px clamp(26px,7vw,66px) 42px;text-align:center}
+.portalSobrelinea{margin:0;color:var(--portal-gold);font-size:.7rem;font-weight:700;letter-spacing:.33em}
+.portalSello{width:92px;height:92px;border:1px solid var(--portal-gold);border-radius:50%;display:grid;place-items:center;margin:24px auto 19px;color:var(--portal-gold);background:radial-gradient(circle,rgba(177,118,254,.25),transparent 66%);box-shadow:0 0 0 8px rgba(230,187,82,.06),0 0 38px rgba(174,115,255,.18)}
+.portalSello span{font-size:2.4rem;text-shadow:0 0 20px currentColor}
+.portalAcceso h1,.portalMenu h1{font:clamp(2rem,6vw,3.3rem)/1.06 var(--portal-serif);letter-spacing:.02em;margin:0;color:#fff7df}
+.portalIntro{color:var(--portal-muted);margin:15px auto 29px;max-width:390px}
+.portalAcceso form{text-align:left}
+.portalAcceso label{display:block;margin:0 0 8px;color:var(--portal-gold-soft);font-weight:700;font-size:.86rem}
+.portalEntrada{display:flex;gap:8px}
+.portalEntrada input{min-width:0;flex:1;border:1px solid rgba(190,163,224,.4);border-radius:11px;background:rgba(5,3,10,.56);color:#fff;padding:13px 14px;outline:none;transition:border-color .16s,box-shadow .16s}
+.portalEntrada input::placeholder{color:#8d819c}
+.portalEntrada input:focus{border-color:var(--portal-gold);box-shadow:0 0 0 3px rgba(230,187,82,.16)}
+.portalEntrada button,.portalSalir{border:1px solid var(--portal-gold);border-radius:10px;background:linear-gradient(180deg,#e7bd56,#a87920);color:#201405;padding:11px 17px;font-weight:800;box-shadow:0 3px 0 rgba(0,0,0,.34);transition:transform .15s,filter .15s}
+.portalEntrada button:hover,.portalSalir:hover{transform:translateY(-1px);filter:brightness(1.08)}
+.portalEntrada button:disabled{opacity:.62;cursor:wait;transform:none}
+.portalAyuda{font-size:.76rem;color:#9689a8;margin:10px 1px 0}
+.portalEstado{min-height:1.45em;margin:19px 0 0;color:var(--portal-gold-soft);font-size:.88rem}
+.portalEstado.portalError{color:#ff9b94}
+
+.portalMenu{padding:clamp(30px,5vw,58px)}
+.portalCabecera{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:0 0 27px;border-bottom:1px solid rgba(208,181,246,.15)}
+.portalSalir{font-size:.82rem;flex:none;padding:9px 12px;background:rgba(42,31,57,.85);border-color:rgba(222,188,104,.68);color:var(--portal-gold-soft)}
+.portalBienvenida{font:clamp(1rem,2.3vw,1.18rem)/1.45 var(--portal-serif);color:#ddd1ec;margin:26px 0 21px}
+.portalRutas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.portalRuta{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:14px;min-height:110px;text-decoration:none;color:inherit;padding:18px;border:1px solid rgba(185,161,215,.26);border-radius:16px;background:linear-gradient(135deg,rgba(50,37,67,.9),rgba(26,18,39,.9));box-shadow:inset 0 1px rgba(255,255,255,.06),0 8px 18px rgba(0,0,0,.14);transition:transform .16s,border-color .16s,background .16s,box-shadow .16s}
+.portalRuta:hover,.portalRuta:focus-visible{outline:none;transform:translateY(-3px);border-color:var(--portal-gold);background:linear-gradient(135deg,rgba(66,47,91,.96),rgba(32,21,48,.96));box-shadow:0 14px 25px rgba(0,0,0,.25),0 0 0 3px rgba(230,187,82,.12)}
+.portalRutaProduccion{grid-column:span 2;background:linear-gradient(135deg,rgba(68,48,92,.96),rgba(26,18,40,.96))}
+.portalIcono{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:rgba(146,95,240,.18);border:1px solid rgba(169,128,247,.47);color:#d7bfff;font-size:1.35rem}
+.portalRutaBeta .portalIcono{background:rgba(83,157,245,.15);border-color:rgba(110,172,255,.55);color:#acd1ff}.portalRutaCartas .portalIcono{background:rgba(230,187,82,.13);border-color:rgba(246,210,108,.6);color:#ffdc7f}.portalRutaSonidos .portalIcono{background:rgba(228,91,86,.12);border-color:rgba(255,148,143,.54);color:#ffb2aa}.portalRutaFisico .portalIcono{background:rgba(61,173,121,.15);border-color:rgba(107,213,161,.55);color:#a6e5c1}
+.portalTexto{display:grid;gap:4px}.portalTexto strong{font:1.2rem/1.1 var(--portal-serif);color:#fff8e7}.portalTexto small{font-size:.8rem;color:var(--portal-muted)}
+.portalFlecha{font-size:1.4rem;color:var(--portal-gold);transition:transform .16s}.portalRuta:hover .portalFlecha{transform:translateX(3px)}
+.portalPie{margin:22px 0 0;color:#a89abb;font-size:.82rem;text-align:center;min-height:1.4em}
+
+@media(max-width:640px){
+  .portalMarco{width:min(100% - 24px,520px);padding:18px 0}.portalAcceso{padding:42px 22px 31px;border-radius:19px}.portalMenu{padding:28px 18px;border-radius:19px}.portalCabecera{padding-bottom:20px;gap:12px}.portalCabecera h1{font-size:2.1rem}.portalRutas{grid-template-columns:1fr}.portalRutaProduccion{grid-column:auto}.portalRuta{min-height:92px;padding:15px}.portalEntrada{display:grid;grid-template-columns:1fr}.portalEntrada button{min-height:45px}.portalSalir{font-size:.72rem;padding:8px 9px}.portalSobrelinea{letter-spacing:.25em;font-size:.64rem}}
+
+@media(prefers-reduced-motion:reduce){.portalRuta,.portalEntrada input,.portalEntrada button,.portalSalir,.portalFlecha{transition:none}}

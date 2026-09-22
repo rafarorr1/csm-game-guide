@@ -111,6 +111,29 @@ python3 dev/secciones/publicar.py --seccion estudio-nombres --publicar --salida 
 python3 dev/secciones/publicar.py --seccion estudio-nombres --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
+## Portal del Domo
+
+La revisión está en `/portal/`. Reutiliza `caoz_tcg/portal.html`, `portal.css`
+y `portal.js`, pero inyecta un transporte exclusivamente en memoria para poder
+probar la entrada sin hablar con el Worker, guardar una sesión, abrir Beta o
+salir del laboratorio. La clave de la revisión sólo existe en
+`portal-preview.js`; el componente real sólo conoce el contrato
+`/api/portal/sesion` que resolverá el Worker al integrarse.
+
+Las cinco puertas representan Producción, Beta, Estudio de Cartas, Estudio de
+Sonidos y Juego Físico. En esta vista no abren sus destinos reales: cada una
+deja una confirmación visible para que la revisión no salga del entorno
+aislado ni escriba datos.
+
+Local: <http://127.0.0.1:8878/dev/secciones/portal.html>. Al publicar la
+revisión: <https://aislados.caoz-tcg.pages.dev/portal/>.
+
+```sh
+node dev/secciones/pruebas_portal_exportacion.mjs
+python3 dev/secciones/publicar.py --seccion portal --publicar --salida /ruta/nueva
+python3 dev/secciones/publicar.py --seccion portal --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
+```
+
 ## Invitaciones de sala
 
 La revisión está en `/invitaciones/`. Presenta las dos rutas de una misma sala:
