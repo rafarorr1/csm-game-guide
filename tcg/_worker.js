@@ -483,6 +483,11 @@ async function recursoPortal(req,env,ruta,html=false){
   if(html)segura.headers.set('Content-Security-Policy',"default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; img-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'");
   return segura;
 }
+async function recursoProduccion(req,env,ruta){
+  // ASSETS entrega el index del juego en /. Pedir index.html deja que Pages
+  // lo canonice a la raíz pública, que es el Portal y no la mesa protegida.
+  const {req:pedido}=peticionConRuta(req,ruta);return env.ASSETS.fetch(pedido);
+}
 function retiroSwRaiz(){
   // Borra exclusivamente las cachés que pertenecían al antiguo scope raíz; las
   // nuevas de /produccion/ comparten el prefijo, pero no este formato exacto.
@@ -535,7 +540,7 @@ async function puertaPortal(req,env,url){
   if(!await portalAutenticado(req,env))return {respuesta:accesoPortalRequerido(req,url)};
   if(ruta==='/produccion')return {respuesta:redireccionPortal(url,'/produccion/',true)};
   if(/^\/produccion\/(estudio|sonidos)(\.html)?\/?$/.test(ruta))return {respuesta:redireccionPortal(url,'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),true)};
-  if(ruta==='/produccion/'||ruta==='/produccion/index.html')return peticionConRuta(req,'/index.html');
+  if(ruta==='/produccion/'||ruta==='/produccion/index.html')return {respuesta:await recursoProduccion(req,env,'/')};
   if(ruta.startsWith('/produccion/'))return peticionConRuta(req,ruta.slice('/produccion'.length));
   if(ruta==='/index.html')return {respuesta:redireccionPortal(url,'/produccion/',true)};
   if(ruta==='/movil.html')return {respuesta:redireccionPortal(url,'/produccion/movil.html',true)};
