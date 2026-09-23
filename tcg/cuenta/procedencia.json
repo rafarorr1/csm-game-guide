@@ -8,7 +8,7 @@
     "cuenta-progreso.js": "56fa185fa4738423e87b4261f26e8db37691bcb06c5d07dbf394136655aaf11d",
     "cuenta-servicio.js": "a1c430a1310459902ccb372fec11b67864cbe1730315396e125e771e8ab0ab94",
     "cuenta-modelo.js": "f5ac89543ca03b7f2f97a623f7c277802d64fe40b8f345c223fa7c566c879db6",
-    "cuenta-acceso.js": "9d395e96b8f13255a0adbf91b5eac74203425ccca5c08135fa84e2988273cf7f",
+    "cuenta-acceso.js": "13403cb0ba4f91ce1a47b73a6e90254aa4e6dfa22c3f52060610c7b67cd84a7a",
     "cuenta-ui.js": "d1fd86ab88c75055634f52706bedccdbb85cb50c5fb10179a202b8b02e6624cf",
     "cuenta.css": "999becc404345a1d7f01c5ec5641885a320ab9cc627bda078c2b42d5e61e3bf8"
   },
@@ -23,8 +23,8 @@
   },
   "fondo": {
     "fuentes": {
-      "caoz_tcg/index.html": "35f4f3e69b40a65d1927cd5a078df038c32ddd844d8d68174f5d20484f2bc3f5",
-      "caoz_tcg/movil.html": "fb34863d93aecaa078ea1dfb62ed586fd1f7bb730d8b4c0b3865f0767b9eb8aa",
+      "caoz_tcg/index.html": "ef17e1118e28c2d1a48aeab2572b64da0d3d6f0dfdc8018dcaf94c59dad5b3d4",
+      "caoz_tcg/movil.html": "734a4299583d91fcad7c4dddca04e680fac026b0db4f8aece1808104c030d2eb",
       "caoz_tcg/polish-aaa.js": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
     },
     "adaptador": "d462f4cf48acddd9d61be26fc42c6de7e609a0b4898f073d99afa9d046f87720",

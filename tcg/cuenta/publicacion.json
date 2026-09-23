@@ -8,18 +8,18 @@
     "cuenta-lab.css": "406212cd49c2ee41db124bb95183dcfb46bbc7e518fa74f371cfbb0abac8985f",
     "cuenta-lab.js": "90d03c1f92c346aea1f6d10832daa88a4367948b8e1774a01ad2d5f95a07749c",
     "index.html": "285e9c43149289cf86f67a222aa0751a11a8bb1faa8c121cc1ed9e3639476670",
-    "juego/cuenta-acceso.js": "9d395e96b8f13255a0adbf91b5eac74203425ccca5c08135fa84e2988273cf7f",
+    "juego/cuenta-acceso.js": "13403cb0ba4f91ce1a47b73a6e90254aa4e6dfa22c3f52060610c7b67cd84a7a",
     "juego/cuenta-modelo.js": "f5ac89543ca03b7f2f97a623f7c277802d64fe40b8f345c223fa7c566c879db6",
     "juego/cuenta-progreso.js": "56fa185fa4738423e87b4261f26e8db37691bcb06c5d07dbf394136655aaf11d",
     "juego/cuenta-servicio.js": "a1c430a1310459902ccb372fec11b67864cbe1730315396e125e771e8ab0ab94",
     "juego/cuenta-ui.js": "d1fd86ab88c75055634f52706bedccdbb85cb50c5fb10179a202b8b02e6624cf",
     "juego/cuenta.css": "999becc404345a1d7f01c5ec5641885a320ab9cc627bda078c2b42d5e61e3bf8",
-    "procedencia.json": "2aa5476077d29c23719427fa4eaa43a5aec9fdbef4d84472e3b1aa7736ff9b7f"
+    "procedencia.json": "5a6e0b03bc1992cdf116361f7044575a362db4f9b7b2220be712f1df76bc791d"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
-    "rama": "feature/acceso-correo-offline",
-    "sha": "bd5decc2ddb4b7c48dde9463f0ef588d4db41162"
+    "rama": "fix/bucle-recuperacion-cuenta",
+    "sha": "69861e7f4547b54fa6225dfc366e0eb9ca145e85"
   },
   "seccion": "cuenta",
   "version": 1
