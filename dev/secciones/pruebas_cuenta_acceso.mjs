@@ -10,9 +10,10 @@ const fuentes=['cuenta-progreso.js','cuenta-servicio.js','cuenta-modelo.js','cue
 const mutantes={
   cierreConflicto:["if(s.guardado==='conflicto')throw Object.assign(Error('CONFLICTO'),{codigo:'CONFLICTO',...s.conflicto});",'void s;'],
   cierreCaducado:["if(s.guardado==='sesion')throw Object.assign(Error('SESION'),{codigo:'SESION'});",'void s;'],
-  vinculoEscrito:["return !bloqueado&&!destruido&&s.acceso===true&&\n        identidad===s.sesion?.id&&progreso.vinculado()?.cuentaId===identidad&&servicio.identidad()?.id===identidad;", "return !bloqueado&&!destruido&&!!s.sesion&&s.pantalla==='perfil';"]
+  vinculoEscrito:["return !bloqueado&&!destruido&&s.acceso===true&&\n        identidad===s.sesion?.id&&progreso.vinculado()?.cuentaId===identidad&&servicio.identidad()?.id===identidad;", "return !bloqueado&&!destruido&&!!s.sesion&&s.pantalla==='perfil';"],
+  recuperacionPendiente:['return !destruido&&!bloqueado&&!iniciando&&!s.ocupado&&!s.sesion;','return !destruido&&!bloqueado&&!iniciando&&!s.ocupado;']
 };
-function crear(){
+function crear({nubeInicial=false}={}){
   const contexto=vm.createContext({crypto:webcrypto,TextEncoder,AbortController,Headers,Response,URL,Event,EventTarget,CustomEvent,setTimeout,clearTimeout,setInterval,clearInterval});
   for(const f of fuentes){
     let texto=fs.readFileSync(new URL('../../caoz_tcg/'+f,import.meta.url),'utf8');
@@ -26,7 +27,8 @@ function crear(){
   const memoria=contexto.CAOZ_CUENTA_DEMO.crearMemoria(),storage={
     getItem:k=>memoria.getItem(k),removeItem:k=>memoria.removeItem(k),setItem(k,v){if(fallar&&k.endsWith('.vinculo'))throw Error('Cuota');memoria.setItem(k,v);}
   };
-  const t=contexto.CAOZ_CUENTA_DEMO.crearTransporte({demora:0,reloj:()=>ahora,alCodigo:r=>codigo=r.codigo});
+  const t=contexto.CAOZ_CUENTA_DEMO.crearTransporte({demora:0,reloj:()=>ahora,alCodigo:r=>codigo=r.codigo,
+    progresoNube:nubeInicial?contexto.CAOZ_CUENTA_PROGRESO.vacio('beta'):null});
   const eventos=new EventTarget();
   const p=contexto.CAOZ_CUENTA_PROGRESO.crear({storage,entorno:'beta',ruta:'/',eventos,intervalo:0});
   const s=contexto.CAOZ_CUENTA_SERVICIO.crear({storage,progreso:p,fetch:(url,op)=>rechazar?Promise.resolve(new Response(JSON.stringify({codigo:'SESION'}),{status:401})):t.fetch(url,op)});
@@ -40,7 +42,7 @@ function crear(){
   };
 }
 let total=0;
-async function prueba(nombre,fn){const c=crear();try{await c.a.iniciar();await fn(c);console.log('✓ '+nombre);total++;}finally{c.cerrar();}}
+async function prueba(nombre,fn,opciones){const c=crear(opciones);try{await c.a.iniciar();await fn(c);console.log('✓ '+nombre);total++;}finally{c.cerrar();}}
 await prueba('Verificar el correo no abre el juego si todavía no se permite escribir el vínculo',async c=>{
   c.permisoVinculo(false);await c.entrar();assert.equal(c.a.puedeJugar(),false);assert.equal(c.p.vinculado(),null);
   c.permisoVinculo(true);c.a.activarVinculo();assert.equal(c.a.puedeJugar(),true);assert.equal(c.p.vinculado().cuentaId,c.a.estado().sesion.id);
@@ -100,6 +102,18 @@ await prueba('Perder la conexión sin una cola pendiente mantiene acceso y muest
   for(let i=0;i<30&&!c.a.estado().sinConexion;i++)await new Promise(r=>setTimeout(r,0));
   assert.equal(c.a.estado().guardado,'sinConexion');assert.equal(c.a.puedeJugar(),true);
 });
+await prueba('Una recuperación pendiente no se reinicia al volver a la app',async c=>{
+  await c.entrar('viajero@ejemplo.com','Ari');
+  assert.equal(c.a.estado().pantalla,'recuperar');assert.equal(c.a.puedeJugar(),false);
+  let avisos=0;const soltar=c.a.suscribir(()=>avisos++),antes=avisos;
+  for(const tipo of ['focus','pageshow','online','offline']){
+    c.eventos.dispatchEvent(new Event(tipo));
+    for(let i=0;i<3;i++)await Promise.resolve();
+    assert.equal(avisos,antes,`El evento ${tipo} no debe reiniciar la recuperación pendiente`);
+    assert.equal(c.a.estado().pantalla,'recuperar');
+  }
+  soltar();
+},{nubeInicial:true});
 console.log(`${total} pruebas del coordinador de acceso aprobadas.`);
 if(process.argv.includes('--sabotaje')&&!process.env.CAOZ_SABOTAJE_ACCESO){
   for(const nombre of Object.keys(mutantes)){

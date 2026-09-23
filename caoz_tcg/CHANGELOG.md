@@ -1,5 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
+### v34 · Build 272 · Arranque y recuperación resistentes · 2026-09-23
+
+- Una PWA anterior ya no puede dejar el juego a medio cargar: los recursos de
+  arranque atraviesan de forma controlada el Service Worker heredado, mientras
+  que el Service Worker nuevo conserva su respaldo sin conexión y corta una
+  petición de red que se queda abierta.
+- Volver a la pestaña, recuperar la conexión o abrir de nuevo la app ya no
+  reinicia una recuperación, vínculo o conflicto que espera una elección del
+  jugador. El acceso conserva la cuenta y muestra una sola decisión pendiente.
+- Las regresiones simulan la cuenta remota pendiente y todos esos eventos del
+  navegador; también comprueban el rescate de la PWA antigua, el respaldo
+  offline y que las pruebas reales siguen fuera de caché.
+
 ### v33 · Build 271 · Mesa protegida tras el Portal · 2026-09-22
 
 - La ruta interna de Producción entrega ahora el índice del juego directamente

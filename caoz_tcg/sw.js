@@ -18,7 +18,7 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 271;
+const VERSION = 272;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
 // Los reemplazos ya vistos sobreviven al cambio de build. Sólo contiene el
@@ -61,6 +61,14 @@ self.addEventListener('activate', ev => {
 });
 
 const esArte = url => /\/art\/.+\.(webp|png|jpg)$/.test(url.pathname);
+// Nunca dejar una petición de arranque a merced de una red que se queda
+// abierta: las PWA viejas no tenían límite aquí y podían congelar la carga
+// para siempre. La copia de caché se sigue usando como respaldo.
+async function redConLimite(req,ms=5000){
+  const control=new AbortController(),plazo=setTimeout(()=>control.abort(),ms);
+  try{return await fetch(req,{signal:control.signal});}
+  finally{clearTimeout(plazo);}
+}
 // Un HTML precargado puede venir de una redirección de Cloudflare. Al navegar
 // sin red Chrome no acepta esa marca: conservar sus bytes y cabeceras la elimina.
 const sinRedireccion = r => r.redirected ? new Response(r.body,{status:r.status,statusText:r.statusText,headers:r.headers}) : r;
@@ -70,7 +78,10 @@ self.addEventListener('fetch', ev => {
   if(req.method !== 'GET') return;
   const url = new URL(req.url);
   if(url.origin !== self.location.origin) return;           // relevos y demás: directos
-  if(url.search.includes('test=')) return;                    // el arnés no pasa por la caché
+  // Las pruebas reales no pasan por la caché. test=arranque es distinto:
+  // lo llevan sólo los recursos nuevos para atravesar SW antiguos que sí
+  // omiten cualquier test=, pero este SW debe atenderlos normalmente.
+  if(url.searchParams.has('test')&&url.searchParams.get('test')!=='arranque') return;
   if(/\/api\/cuenta(?:\/|$)/.test(url.pathname))return;      // sesiones y progreso siempre privados, nunca caché
   if(url.pathname.includes('/api/estudio/'))return;          // borradores privados
   const catalogoArte=/\/api\/arte\/catalogo$/.test(url.pathname);
@@ -81,9 +92,8 @@ self.addEventListener('fetch', ev => {
     ev.respondWith((async()=>{
       const c=await caches.open(ARTE_PUBLICO),clave=url.origin+url.pathname,guardada=await c.match(clave);
       if(imagenArte&&guardada)return guardada;
-      const control=new AbortController(),plazo=setTimeout(()=>control.abort(),4000);
       try{
-        const r=await fetch(req,{signal:control.signal});
+        const r=await redConLimite(req,4000);
         if(r.ok){
           const tipo=r.headers.get('content-type')||'';
           if((catalogoArte&&tipo.includes('application/json'))||(imagenArte&&/^image\/(webp|png|jpeg)/.test(tipo)))await c.put(clave,r.clone()).catch(()=>{});
@@ -91,7 +101,6 @@ self.addEventListener('fetch', ev => {
         }
         return guardada||r;
       }catch(e){return guardada||new Response('',{status:504});}
-      finally{clearTimeout(plazo);}
     })());return;
   }
   // La sesión y los datos privados jamás se guardan en la PWA. Sólo los WAV
@@ -119,7 +128,7 @@ self.addEventListener('fetch', ev => {
   ev.respondWith((async () => {
     const c = await caches.open(CACHE);
     try{
-      const r = await fetch(req);
+      const r = await redConLimite(req);
       // se guarda sin la parte de la interrogación: un solo motor.js, no uno
       // por cada ?b= o ?cb= con el que se haya pedido
       if(r.ok) c.put(url.origin + url.pathname, r.clone());

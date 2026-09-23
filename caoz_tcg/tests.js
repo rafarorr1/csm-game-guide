@@ -2837,14 +2837,68 @@ PRUEBAS.suite('campanaEntrada', async t => {
 });
 
 PRUEBAS.suite('pwaSinConexion', async t => {
-  const codigo=await (await fetch('sw.js?test=pwa-interna')).text();
+  const [codigo,final,escritorio,movil]=await Promise.all([
+    fetch('sw.js?test=pwa-interna').then(r=>r.text()),
+    fetch('final.js?test=pwa-arranque').then(r=>r.text()),
+    fetch('index.html?test=pwa-arranque').then(r=>r.text()),
+    fetch('movil.html?test=pwa-arranque').then(r=>r.text())
+  ]);
+  /* Una PWA vieja puede quedarse esperando uno de los JS antes de que la
+     pantalla llegue a registrar el worker nuevo. El sufijo de rescate hace
+     que esa PWA antigua deje pasar el arranque, pero la PWA nueva sí lo
+     atiende y conserva su respaldo offline. No usar location.search: eso
+     activaría por accidente el arnés de pruebas. */
+  const escapar=texto=>texto.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+  for(const [pagina,html] of [['index.html',escritorio],['movil.html',movil]]){
+    for(const archivo of ['mulligan-ui.css','motor.js','final.js','mulligan-ui.js']){
+      const etiqueta=new RegExp('(?:src|href)=["\\\']'+escapar(archivo)+'\\?b=\\d+&(?:amp;)?test=arranque["\\\']');
+      t.check(etiqueta.test(html),pagina+': '+archivo+' debe llevar el query de rescate de la PWA antigua.');
+    }
+    t.check(/serviceWorker\.register\(\s*['"]sw\.js\?b=\d+&(?:amp;)?test=arranque['"]\s*\)/.test(html),pagina+': el worker nuevo debe registrarse con el query de rescate.');
+  }
+  // final.js genera sus dependencias durante el parseo. Se ejecuta con un
+  // documento mínimo para comprobar la URL resultante, no sólo el texto del
+  // cargador: así una refactorización de su helper sigue protegida.
+  {
+    const escritas=[];
+    new Function('window','document','location','URL','URLSearchParams',final)(
+      {},
+      {currentScript:{src:'https://domo.invalid/final.js?b=777&test=arranque'},write:etiqueta=>escritas.push(etiqueta)},
+      {href:'https://domo.invalid/',search:''},URL,URLSearchParams
+    );
+    t.check(escritas.length>20,'final.js debe seguir cargando sus dependencias compartidas.');
+    for(const etiqueta of escritas)t.check(/(?:src|href)="[^"]+\?b=777&test=arranque"/.test(etiqueta),'final.js debe propagar el query de rescate a cada dependencia.');
+  }
   for(const ruta of ['/','/tcg-beta/']){
     const scope='https://domo.invalid'+ruta,eventos={},guardados=new Map();
-    for(const [archivo,texto] of [['index.html','escritorio'],['movil.html','telefono'],['campana-mesa.js','mesa']])guardados.set(new URL(archivo,scope).href,texto);
+    for(const [archivo,texto] of [['index.html','escritorio'],['movil.html','telefono'],['campana-mesa.js','mesa'],['motor.js','motor de rescate']])guardados.set(new URL(archivo,scope).href,texto);
     const cache={async match(p,op={}){const u=new URL(p.url||p,scope);if(op.ignoreSearch)u.search='';if(!guardados.has(u.href))return;const r=new Response(guardados.get(u.href),{headers:{'Content-Type':u.pathname.endsWith('.html')?'text/html':'text/javascript'}});if(u.pathname.endsWith('.html'))Object.defineProperty(r,'redirected',{value:true});return r;}};
     const entorno={registration:{scope},location:{origin:'https://domo.invalid'},addEventListener:(nombre,fn)=>eventos[nombre]=fn};
-    // Ejecutar el worker real con red caída y una caché que sólo tiene el precaché.
-    new Function('self','caches','fetch',codigo)(entorno,{open:async()=>cache},async()=>{throw Error('Sin conexión de prueba');});
+    // La petición de red se queda abierta como en la PWA que originó el fallo.
+    // El temporizador simulado aborta enseguida: así se prueba el límite sin
+    // esperar cinco segundos por cada scope ni dejar el arnés colgado.
+    class ControlPrueba{
+      constructor(){this.signal={aborted:false,addEventListener:(tipo,fn)=>{this.alAbort=tipo==='abort'?fn:null;}};}
+      abort(){this.signal.aborted=true;this.alAbort?.();}
+    }
+    const redAtascada=(_peticion,{signal}={})=>new Promise((_,rechazar)=>{
+      if(signal?.aborted){rechazar(Error('Red atascada de prueba'));return;}
+      signal?.addEventListener('abort',()=>rechazar(Error('Red atascada de prueba')),{once:true});
+    });
+    const relojInstantaneo=fn=>{fn();return 1;};
+    // Ejecutar el worker real con la red atascada y sólo el precaché disponible.
+    new Function('self','caches','fetch','AbortController','setTimeout','clearTimeout',codigo)(
+      entorno,{open:async()=>cache},redAtascada,ControlPrueba,relojInstantaneo,()=>{});
+    // test=arranque no es una prueba: es el salvoconducto que una PWA anterior
+    // no intercepta. El worker actual debe responderlo y recuperar su copia.
+    let rescate;eventos.fetch({request:new Request(new URL('motor.js?b=777&test=arranque',scope)),respondWith:p=>rescate=Promise.resolve(p)});
+    t.check(!!rescate,ruta+': test=arranque no puede quedar sin respuesta del worker.');
+    const motorRescatado=await Promise.race([rescate,sleep(60).then(()=>null)]);
+    t.check(!!motorRescatado&&motorRescatado.status===200&&await motorRescatado.text()==='motor de rescate',ruta+': test=arranque debe cortar una red atascada y recuperar el respaldo offline.');
+    // Las pruebas reales sí deben viajar directas a la red, para no leer una
+    // versión cacheada del arnés ni esconder una regresión.
+    let prueba;eventos.fetch({request:new Request(new URL('motor.js?test=1',scope)),respondWith:p=>prueba=Promise.resolve(p)});
+    t.check(!prueba,ruta+': test=1 debe seguir fuera de la caché del worker.');
     for(const [pagina,texto] of [['movil?b=192&campana=1','telefono'],['index?b=192','escritorio'],['?campana=1','escritorio'],['campana-mesa.js?b=192','mesa']]){
       let respuesta;eventos.fetch({request:new Request(new URL(pagina,scope)),respondWith:p=>respuesta=p});
       const r=await respuesta;t.check(r.status===200&&await r.text()===texto,ruta+pagina+': la ruta de Cloudflare debe encontrar su archivo guardado sin conexión.');
@@ -5014,8 +5068,8 @@ PRUEBAS.suite('regresiones', async t => {
   {
     const inv=window.CAOZ_INVITACIONES;
     t.check(!!inv,'el parser compartido de invitaciones debe cargarse antes del coordinador online');
-    const prod='https://juego.caozcontodo.com/?b=271',beta='https://beta.caoz-tcg.pages.dev/?b=271';
-    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=271'), 'AB1C2',
+    const prod='https://juego.caozcontodo.com/?b=272',beta='https://beta.caoz-tcg.pages.dev/?b=272';
+    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=272'), 'AB1C2',
       'un enlace de sala debe volver al mismo código de cinco caracteres');
     t.check(inv.mensajeCodigo('AB1C2',prod).includes('AB1C2')&&!inv.mensajeCodigo('AB1C2',prod).includes('?sala='),
       'el mensaje para una app instalada debe contener código, no un enlace web');
