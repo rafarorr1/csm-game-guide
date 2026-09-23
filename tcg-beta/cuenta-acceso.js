@@ -64,16 +64,29 @@
       if(['conflicto','sesion'].includes(s.guardado))detener();
       avisar();
     });
-    async function iniciar(){
-      if(iniciando||destruido||bloqueado)return false;iniciando=true;
+    // Mientras la cuenta ya tenga una sesión, el modelo puede estar esperando
+    // una decisión explícita para recuperar, vincular o resolver un conflicto.
+    // Ningún evento del navegador debe reiniciar ese flujo ni volver a pintar
+    // la misma pantalla.
+    function necesitaRestaurar(){
+      const s=modelo.ver();
+      return !destruido&&!bloqueado&&!iniciando&&!s.ocupado&&!s.sesion;
+    }
+    async function iniciar({automatico=false}={}){
+      if(iniciando||destruido||bloqueado||(automatico&&!necesitaRestaurar()))return false;iniciando=true;
       try{modelo.actualizarLocal(progreso.capturar());await modelo.restaurar();recibir(modelo.ver());return puedeJugar();}
       finally{iniciando=false;}
     }
-    const volver=()=>{if(!identidad)void iniciar();};
-    const sinRed=()=>{if(!modelo.ver().ocupado)void iniciar();};
+    const volver=()=>{if(necesitaRestaurar())void iniciar({automatico:true});};
+    const sinRed=()=>{
+      if(necesitaRestaurar())void iniciar({automatico:true});
+      // Una cuenta ya vinculada sí puede reflejar que se perdió la red, pero
+      // esa comprobación de sincronización no reabre una decisión pendiente.
+      else if(identidad)void sincronizador.verificar();
+    };
     for(const e of ['online','focus','pageshow'])eventos.addEventListener?.(e,volver);
     eventos.addEventListener?.('offline',sinRed);
-    return Object.freeze({modelo,estado,puedeJugar,iniciar,guardar,
+    return Object.freeze({modelo,estado,puedeJugar,necesitaRestaurar,iniciar,guardar,
       activarVinculo(){recibir(modelo.ver());},
       bloquear(){bloqueado=true;detener();avisar();},
       suscribir(fn){if(typeof fn!=='function'||destruido)return()=>{};oyentes.add(fn);fn(estado());return()=>oyentes.delete(fn);},

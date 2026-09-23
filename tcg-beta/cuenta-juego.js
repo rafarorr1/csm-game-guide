@@ -60,8 +60,8 @@
     }finally{montando=false;}
   }
   async function restaurar(){
-    if(restaurando||!acceso||pruebas()||bloqueado)return false;restaurando=true;
-    try{const ok=await acceso.iniciar();if(ok){cerrar();notificar();}else abrir();return ok;}
+    if(restaurando||!acceso?.necesitaRestaurar?.()||pruebas()||bloqueado)return false;restaurando=true;
+    try{const ok=await acceso.iniciar({automatico:true});if(ok){cerrar();notificar();}else abrir();return ok;}
     finally{restaurando=false;}
   }
   function bloquearOtraPestana(){
