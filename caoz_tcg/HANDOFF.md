@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-22 · beta 268 y producción 267 · v30 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-22 · preparación de build 269 · v31 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,21 @@ números) → el código.
 
 ---
 
-## Estado vigente — Portal del Domo y juego físico publicados en beta 268
+## Estado vigente — build 269 preparada para validar el acceso del Portal
+
+La build 269 corrige una guarda de interfaz encontrada antes de promocionar la
+build 268: una respuesta de sesión correcta pero no autenticada mantenía las
+rutas protegidas cerradas, pero podía llegar a mostrar el menú. Ahora sólo
+`autenticado: true` permite abrirlo; la regresión reproduce exactamente esa
+respuesta y exige que el formulario continúe visible.
+
+Por consistencia de caché, 269 es una nueva build que debe pasar por Beta antes
+de producción. No modifica cartas, reglas, mazos, IA, colección, progreso ni
+el kit físico.
+
+---
+
+## Registro anterior — Portal del Domo y juego físico publicados en beta 268
 
 La build 268 integra el **Portal del Domo** y el kit Print-and-Play. El portal
 es la nueva portada de `juego.caozcontodo.com`: tras validar una sesión firmada

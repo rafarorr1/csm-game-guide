@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v31 · Build 269 · Acceso validado antes del Portal · 2026-09-22
+
+- El Portal del Domo ahora abre sus opciones únicamente cuando el servidor
+  confirma una sesión autenticada. Una respuesta válida sin sesión mantiene el
+  formulario de contraseña visible; el contenido protegido no aparece ni un
+  instante antes de validar el acceso.
+- Se añade una regresión de interfaz que simula la respuesta `200` sin sesión
+  y exige el formulario, no el menú. La corrección afecta al Portal y no cambia
+  cartas, reglas, mazos, IA, colección ni progreso.
+
 ### v30 · Build 268 · Portal del Domo y juego físico · 2026-09-22
 
 - La entrada oficial se prepara como **Portal del Domo**: la sesión se valida
