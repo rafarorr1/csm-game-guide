@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import {DatabaseSync} from 'node:sqlite';
 import {createHash,randomBytes} from 'node:crypto';
 import {readFileSync} from 'node:fs';
+import {runInNewContext} from 'node:vm';
 import worker from './_worker.js';
 
 function base(){
@@ -26,6 +27,22 @@ const env={
   ASSETS:{async fetch(req){const url=new URL(req.url);rutas.push(url.pathname+url.search);return new Response(archivos.get(url.pathname)||'Estático '+url.pathname,{status:archivos.has(url.pathname)?200:404});}}
 };
 const origen='https://juego.caozcontodo.com';let cookie='';
+
+// Un 200 de la sesión sólo indica que el Worker contestó: aún debe revisar el
+// campo autenticado. Esta regresión arranca la interfaz en el estado inverso
+// para comprobar que no muestra las puertas antes de recibir una sesión válida.
+const nodo=({hidden=false}={})=>({hidden,textContent:'',value:'',disabled:false,classList:{toggle(){}},addEventListener(){},focus(){}});
+const nodos={portalAcceso:nodo({hidden:true}),portalMenu:nodo(),portalFormulario:nodo(),portalClave:nodo(),portalEnviar:nodo(),portalEstado:nodo(),portalSalir:nodo(),portalMenuEstado:nodo()};
+runInNewContext(readFileSync(new URL('./portal.js',import.meta.url),'utf8'),{
+  window:{},document:{getElementById:id=>nodos[id],addEventListener(){}},
+  fetch:async()=>({ok:true,json:async()=>({autenticado:false})}),
+  URL,URLSearchParams,location:{origin:origen,search:'',hash:'',replace(){}},console
+});
+await new Promise(resolve=>setTimeout(resolve,0));
+assert.equal(nodos.portalAcceso.hidden,false,'Un 200 sin sesión mantiene visible la contraseña.');
+assert.equal(nodos.portalMenu.hidden,true,'Un 200 {autenticado:false} no muestra las puertas del portal.');
+assert.match(nodos.portalEstado.textContent,/contraseña/i);
+
 const pedir=(ruta,metodo='GET',cuerpo,headers={},entorno=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookie,...headers},body:cuerpo}),entorno);
 
 assert.deepEqual(JSON.parse(readFileSync(new URL('./_routes.json',import.meta.url),'utf8')).include,['/*'],'El Worker recibe también la raíz y los assets del juego.');
