@@ -33,8 +33,9 @@
   async function consultar(){
     try{
       const r=await fetch(API,{credentials:'same-origin',headers:{Accept:'application/json'}});
-      if(r.ok){mostrarMenu();return;}
-      mostrarAcceso('Escribe la contraseña para entrar.');
+      const datos=await respuesta(r);
+      if(r.ok&&datos.autenticado===true){mostrarMenu();return;}
+      mostrarAcceso(datos.error||'Escribe la contraseña para entrar.',!r.ok);
     }catch(_){mostrarAcceso('No se pudo comprobar el acceso. Intenta de nuevo.',true);}
   }
   formulario.addEventListener('submit',async e=>{
