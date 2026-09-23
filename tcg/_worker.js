@@ -446,7 +446,9 @@ async function apiEstudio(req,env){
 // Si falta alguno, el dominio oficial permanece cerrado y explica qué falta;
 // nunca vuelve por accidente al juego abierto.
 const HOST_PORTAL='juego.caozcontodo.com',DURACION_PORTAL=28800000,INTENTOS_PORTAL=8,VENTANA_PORTAL=900000;
-const RECURSOS_PORTAL=new Set(['/portal.html','/portal.css','/portal.js','/art/icono-192.png']);
+// Pages normaliza portal.html a /portal. El Portal debe servir ambas rutas
+// públicas, pero la raíz carga la canónica para no propagar ese 308.
+const RECURSOS_PORTAL=new Set(['/portal','/portal.html','/portal.css','/portal.js','/art/icono-192.png']);
 const preparacionesPortal=new WeakMap();
 function configuracionPortal(env){
   const hash=typeof env.PORTAL_PASSWORD_HASH==='string'?env.PORTAL_PASSWORD_HASH.trim().toLowerCase():'',clave=typeof env.PORTAL_SESSION_KEY==='string'?env.PORTAL_SESSION_KEY:'';
@@ -528,7 +530,7 @@ async function puertaPortal(req,env,url){
   // Las invitaciones antiguas llegaban a la raíz. Se conserva el código en
   // una ruta interna, que la interfaz valida antes de abrir tras el acceso.
   if(ruta==='/'&&url.searchParams.has('sala')&&!url.searchParams.has('siguiente'))return {respuesta:accesoPortalRequerido(req,url)};
-  if(ruta==='/')return {respuesta:await recursoPortal(req,env,'/portal.html',true)};
+  if(ruta==='/'||ruta==='/portal'||ruta==='/portal.html')return {respuesta:await recursoPortal(req,env,'/portal',true)};
   if(RECURSOS_PORTAL.has(ruta))return {respuesta:await recursoPortal(req,env,ruta,ruta==='/portal.html')};
   if(!await portalAutenticado(req,env))return {respuesta:accesoPortalRequerido(req,url)};
   if(ruta==='/produccion')return {respuesta:redireccionPortal(url,'/produccion/',true)};
