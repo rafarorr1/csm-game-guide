@@ -438,17 +438,17 @@
     "juego/sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
     "juego/sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
     "juego/sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
-    "juego/visor-3d.css": "a0b3d3a1fc2710101f46308eea016edee2279386a3da2101b11ae392c4fabaa2",
-    "juego/visor-3d.js": "a883d00f7472149d58ac0856d167537a0d8c7115ecc4c4eb9f745f47e3aa9e1d",
+    "juego/visor-3d.css": "b889e454f9e98a1cc0fc4374254479d48b00e9f2ee346e7fbde93dc2009f7e52",
+    "juego/visor-3d.js": "c9dcc312dd8986a2094dfd62c880444a1cd40279da6b116873bbfbac05603c4f",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "movil.html": "9e65a606cca18c4121bc298f122e0f8d70e1c5f34ebb3cfcf48cb31515fe25c8",
-    "procedencia.json": "0a597b8dc3a1d3ace82d75334b4ff709036d072240517b1d3dd7837b4fb4cb4f",
+    "procedencia.json": "e047b42aaefe3e0179ee3761e69cc83ea4963bec5e6e659fdabdf2ee31e110b6",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "01c7cd12d10002a1d44566383d3cf9d795a1ad2e"
+    "sha": "3ca4be2905ec43cb30cdfd9e44bad593f5b506db"
   },
   "seccion": "coleccion",
   "version": 1
