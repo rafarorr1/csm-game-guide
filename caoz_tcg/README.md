@@ -5,9 +5,9 @@ pantallas (`index.html` para escritorio, `movil.html` para el teléfono), más `
 (piezas compartidas) y la app instalable (`sw.js`, `manifest.webmanifest`).
 Si vienes de fuera, empieza por **`HANDOFF.md`** y **`AGENTS.md`**.
 
-Beta 259 integra **acceso obligatorio y continuidad sin conexión**, después de
-aprobar la sección aislada. Producción conserva 257. Las cuentas funcionan
-mediante Worker, D1 y Resend; referencias y comprobaciones en `HANDOFF.md`.
+La build 259 integra **acceso obligatorio y continuidad sin conexión**, después de
+aprobar la sección aislada; está publicada y verificada en producción. Las cuentas
+funcionan mediante Worker, D1 y Resend; referencias y comprobaciones en `HANDOFF.md`.
 El servidor estático permite inspeccionar recursos y ejecutar pruebas; el
 primer acceso por correo necesita la API configurada:
 
@@ -20,7 +20,7 @@ el botón: el número que queda arriba determina el efecto de la tirada.
 
 También está registrado en `.claude/launch.json` como `caoz-tcg`.
 
-## Cuenta y progreso — beta 259
+## Cuenta y progreso — producción 259
 
 La beta solicita correo y un código de seis dígitos antes de jugar, sin
 contraseña ni opción de invitado. Extras → Mi cuenta permite volver al perfil.
@@ -44,8 +44,8 @@ progreso y datos necesarios de sesión. No hay contraseñas. La configuración
 real, los datos almacenados y sus límites se describen en
 [`dev/cuentas/README.md`](../dev/cuentas/README.md).
 La infraestructura real de cuentas está operativa desde 257. El acceso obligatorio
-aprobado se publica en beta 259; su revisión aislada permanece disponible con
-transporte y almacenamiento temporales. El estado vigente está en `HANDOFF.md`.
+aprobado está publicado en producción 259; su revisión aislada permanece disponible
+con transporte y almacenamiento temporales. El estado vigente está en `HANDOFF.md`.
 
 ## Colección, sobres y mejoras
 
