@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<!-- __PORTAL_CSP__ -->
+<title>Portal del Domo · Caoz Con Todo</title>
+<meta name="theme-color" content="#0d0a13">
+<link rel="icon" type="image/png" href="art/icono-192.png">
+<link rel="stylesheet" href="portal.css">
+<!-- __PORTAL_PREVIEW__ -->
+<script src="portal.js" defer></script>
+</head>
+<body class="portalDomo">
+<main class="portalMarco" aria-labelledby="portalTitulo">
+  <section class="portalAcceso" id="portalAcceso" aria-labelledby="portalTitulo">
+    <p class="portalSobrelinea">CAOZ CON TODO · EL DOMO</p>
+    <div class="portalSello" aria-hidden="true"><span>✦</span></div>
+    <h1 id="portalTitulo">Portal del Domo</h1>
+    <p class="portalIntro">Elige una puerta para jugar, probar, editar o llevar el duelo a la mesa.</p>
+    <form id="portalFormulario" novalidate>
+      <label for="portalClave">Contraseña de acceso</label>
+      <div class="portalEntrada">
+        <input id="portalClave" name="clave" type="password" autocomplete="current-password" required spellcheck="false" placeholder="Escribe la contraseña">
+        <button id="portalEnviar" type="submit">Entrar</button>
+      </div>
+      <p class="portalAyuda">La sesión queda abierta sólo en este navegador.</p>
+    </form>
+    <p class="portalEstado" id="portalEstado" role="status" aria-live="polite">Comprobando acceso…</p>
+  </section>
+
+  <section class="portalMenu" id="portalMenu" hidden aria-labelledby="portalMenuTitulo">
+    <header class="portalCabecera">
+      <div>
+        <p class="portalSobrelinea">CAOZ CON TODO · EL DOMO</p>
+        <h1 id="portalMenuTitulo">¿A dónde entramos?</h1>
+      </div>
+      <button class="portalSalir" type="button" id="portalSalir">Cerrar portal</button>
+    </header>
+
+    <p class="portalBienvenida">Todo el proyecto, en un solo punto de entrada.</p>
+    <nav class="portalRutas" aria-label="Secciones del proyecto">
+      <a class="portalRuta portalRutaProduccion" href="/produccion/" data-destino="Producción">
+        <span class="portalIcono" aria-hidden="true">♜</span>
+        <span class="portalTexto"><strong>Producción</strong><small>La versión estable del juego.</small></span>
+        <span class="portalFlecha" aria-hidden="true">→</span>
+      </a>
+      <a class="portalRuta portalRutaBeta" href="https://beta.caoz-tcg.pages.dev/" data-destino="Beta">
+        <span class="portalIcono" aria-hidden="true">✧</span>
+        <span class="portalTexto"><strong>Beta</strong><small>Prueba los cambios antes de publicarlos.</small></span>
+        <span class="portalFlecha" aria-hidden="true">→</span>
+      </a>
+      <a class="portalRuta portalRutaCartas" href="/estudio" data-destino="Estudio de Cartas">
+        <span class="portalIcono" aria-hidden="true">▣</span>
+        <span class="portalTexto"><strong>Estudio de Cartas</strong><small>Ilustraciones, encuadres y nombres.</small></span>
+        <span class="portalFlecha" aria-hidden="true">→</span>
+      </a>
+      <a class="portalRuta portalRutaSonidos" href="/sonidos" data-destino="Estudio de Sonidos">
+        <span class="portalIcono" aria-hidden="true">♩</span>
+        <span class="portalTexto"><strong>Estudio de Sonidos</strong><small>Biblioteca y mezcla de efectos.</small></span>
+        <span class="portalFlecha" aria-hidden="true">→</span>
+      </a>
+      <a class="portalRuta portalRutaFisico" href="/fisico/" data-destino="Juego Físico">
+        <span class="portalIcono" aria-hidden="true">✦</span>
+        <span class="portalTexto"><strong>Juego Físico</strong><small>Kit Print-and-Play para jugar en mesa.</small></span>
+        <span class="portalFlecha" aria-hidden="true">→</span>
+      </a>
+    </nav>
+    <p class="portalPie" id="portalMenuEstado" role="status" aria-live="polite">Elige una puerta del Domo.</p>
+  </section>
+</main>
+</body>
+</html>

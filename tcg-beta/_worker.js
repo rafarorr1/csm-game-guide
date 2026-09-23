@@ -3,7 +3,7 @@
    Nunca se autoriza una escritura con una contraseña incluida en JavaScript. */
 import {manejarCuenta} from './cuenta-servidor.js';
 import './nombres-cartas.js';
-const enc=new TextEncoder(),MAXIMO=1600044,COOKIE='__Host-caoz-sfx';
+const enc=new TextEncoder(),MAXIMO=1600044,COOKIE='__Host-caoz-sfx',COOKIE_PORTAL='__Host-caoz-portal';
 const volumenBase={"ui_hover":0.17,"ui_confirm":0.42,"ui_back":0.34,"menu_gold":0.52,"card_draw":0.4,"card_play":0.68,"attack_wind":0.65,"attack_hit":0.84,"counter":0.55,"lethal":0.86,"shield":0.59,"heal":0.56,"buff":0.54,"spell_fire":0.73,"spell_frost":0.57,"spell_lightning":0.73,"spell_arcane":0.61,"spell_shadow":0.59,"spell_bard":0.61,"spell_holy":0.62,"dice_roll":0.62,"dice_land":0.6,"coin_flip":0.62,"coin_land":0.62,"vs":0.77,"turn":0.43,"table_hop":0.55,"table_hit":0.72,"fog_reveal":0.36,"victory":0.68,"defeat":0.64,"ascension":0.63,"wish_fire":0.76,"wish_granted":0.61,"leader_hit":0.82,"card_hover":0.22,"victory_slam":0.8};
 const ids=new Set(Object.keys(volumenBase));
 const json=(v,status=200,cab={})=>new Response(JSON.stringify(v),{status,headers:{'Content-Type':'application/json; charset=utf-8','Cache-Control':'no-store','X-Content-Type-Options':'nosniff',...cab}});
@@ -441,16 +441,122 @@ async function apiEstudio(req,env){
   const segura=new Response(respuesta.body,respuesta);segura.headers.set('Cache-Control','no-store');return segura;
 }
 
+// El Portal del Domo vive sólo en el dominio oficial. La clave nunca llega al
+// paquete: Cloudflare entrega su SHA-256 y la llave de firma como secretos.
+// Si falta alguno, el dominio oficial permanece cerrado y explica qué falta;
+// nunca vuelve por accidente al juego abierto.
+const HOST_PORTAL='juego.caozcontodo.com',DURACION_PORTAL=28800000,INTENTOS_PORTAL=8,VENTANA_PORTAL=900000;
+const RECURSOS_PORTAL=new Set(['/portal.html','/portal.css','/portal.js','/art/icono-192.png']);
+const preparacionesPortal=new WeakMap();
+function configuracionPortal(env){
+  const hash=typeof env.PORTAL_PASSWORD_HASH==='string'?env.PORTAL_PASSWORD_HASH.trim().toLowerCase():'',clave=typeof env.PORTAL_SESSION_KEY==='string'?env.PORTAL_SESSION_KEY:'';
+  return /^[a-f0-9]{64}$/.test(hash)&&clave.length>=32?{hash,clave}:null;
+}
+function portalActivo(url,env){return url.hostname.toLowerCase()===HOST_PORTAL;}
+function valorCookie(req,nombre){return (req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(nombre+'='))?.slice(nombre.length+1)||'';}
+async function portalAutenticado(req,env){
+  const config=configuracionPortal(env),valor=valorCookie(req,COOKIE_PORTAL);if(!config)return false;
+  const [vence,azar,firma]=valor.split('.');
+  if(!/^\d{13}$/.test(vence||'')||!/^[a-f0-9]{32}$/.test(azar||'')||Number(vence)<Date.now()||Number(vence)>Date.now()+DURACION_PORTAL+1000)return false;
+  return igual(firma,await hmac(config.clave,vence+'.'+azar));
+}
+async function prepararPortal(db){
+  if(!preparacionesPortal.has(db))preparacionesPortal.set(db,db.prepare('CREATE TABLE IF NOT EXISTS portal_accesos (ip TEXT PRIMARY KEY, n INTEGER NOT NULL, vence INTEGER NOT NULL)').run().catch(e=>{preparacionesPortal.delete(db);throw e;}));
+  return preparacionesPortal.get(db);
+}
+async function intentoPortal(req,env,clave){
+  if(!env.SFX_DB)return 0;
+  const db=env.SFX_DB,ahora=Date.now(),ip=await sha((req.headers.get('cf-connecting-ip')||'local')+clave);await prepararPortal(db);
+  return (await db.prepare('INSERT INTO portal_accesos(ip,n,vence) VALUES (?,1,?) ON CONFLICT(ip) DO UPDATE SET n=CASE WHEN vence<? THEN 1 ELSE n+1 END, vence=CASE WHEN vence<? THEN excluded.vence ELSE vence END RETURNING n').bind(ip,ahora+VENTANA_PORTAL,ahora,ahora).first())?.n||0;
+}
+function cookiePortal(valor,maxAge){return COOKIE_PORTAL+'='+valor+'; Secure; HttpOnly; SameSite=Strict; Path=/; Max-Age='+maxAge;}
+function peticionConRuta(req,ruta){const url=new URL(req.url);url.pathname=ruta;return {req:new Request(url,req),url};}
+function redireccionPortal(url,ruta,conservarConsulta=false){
+  const destino=new URL(ruta,url);if(conservarConsulta)destino.search=url.search;
+  return new Response(null,{status:302,headers:{Location:destino.href,'Cache-Control':'no-store'}});
+}
+async function recursoPortal(req,env,ruta,html=false){
+  const {req:pedido}=peticionConRuta(req,ruta),respuesta=await env.ASSETS.fetch(pedido),segura=new Response(respuesta.body,respuesta);
+  segura.headers.set('Cache-Control','no-store');segura.headers.set('X-Content-Type-Options','nosniff');
+  if(html)segura.headers.set('Content-Security-Policy',"default-src 'self'; base-uri 'none'; form-action 'self'; frame-ancestors 'none'; img-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'");
+  return segura;
+}
+function retiroSwRaiz(){
+  // Borra exclusivamente las cachés que pertenecían al antiguo scope raíz; las
+  // nuevas de /produccion/ comparten el prefijo, pero no este formato exacto.
+  const codigo="'use strict';self.addEventListener('install',e=>e.waitUntil(self.skipWaiting()));self.addEventListener('activate',e=>e.waitUntil((async()=>{const viejas=(await caches.keys()).filter(k=>/^caoz-cache-\\/-\\d+$/.test(k)||/^caoz-arte-publico-\\/-v\\d+$/.test(k));await Promise.all(viejas.map(k=>caches.delete(k)));await self.clients.claim();const clientes=await self.clients.matchAll({type:'window',includeUncontrolled:true});await self.registration.unregister();await Promise.all(clientes.map(c=>c.navigate(c.url).catch(()=>{})));})()));";
+  return new Response(codigo,{headers:{'Content-Type':'application/javascript; charset=utf-8','Cache-Control':'no-store, max-age=0','Service-Worker-Allowed':'/','X-Content-Type-Options':'nosniff'}});
+}
+async function apiPortal(req,env){
+  const url=new URL(req.url),config=configuracionPortal(env);
+  if(!['GET','HEAD'].includes(req.method)&&req.headers.get('origin')!==url.origin)return json({error:'Origen no autorizado.'},403);
+  if(req.method==='DELETE')return json({ok:true},200,{'Set-Cookie':cookiePortal('',0)});
+  if(req.method==='GET'||req.method==='HEAD'){
+    if(!config)return json({error:'El portal está pendiente de configurar sus secretos.'},503);
+    return json({autenticado:await portalAutenticado(req,env)});
+  }
+  if(req.method!=='POST')return json({error:'Método no permitido.'},405,{'Allow':'GET, HEAD, POST, DELETE'});
+  if(!config)return json({error:'El portal está pendiente de configurar sus secretos.'},503);
+  let datos;try{datos=JSON.parse(new TextDecoder().decode(await cuerpo(req,600)));}catch(e){return json({error:e.status?e.message:'La solicitud no es válida.'},e.status||400);}
+  if(!datos||Array.isArray(datos)||Object.keys(datos).length!==1||typeof datos.clave!=='string')return json({error:'La solicitud no es válida.'},400);
+  const intentos=await intentoPortal(req,env,config.clave);if(intentos>INTENTOS_PORTAL)return json({error:'Demasiados intentos. Espera 15 minutos.'},429,{'Retry-After':'900'});
+  if(!igual(await sha(datos.clave),config.hash))return json({error:'La clave no es correcta.'},401);
+  const ahora=Date.now(),texto=String(ahora+DURACION_PORTAL)+'.'+hex(crypto.getRandomValues(new Uint8Array(16))),sesion=texto+'.'+await hmac(config.clave,texto);
+  if(env.SFX_DB){const ip=await sha((req.headers.get('cf-connecting-ip')||'local')+config.clave);await env.SFX_DB.prepare('DELETE FROM portal_accesos WHERE ip=? OR vence<?').bind(ip,ahora).run();}
+  return json({ok:true},200,{'Set-Cookie':cookiePortal(sesion,DURACION_PORTAL/1000)});
+}
+function siguientePortal(url){
+  let ruta='';
+  if(url.pathname==='/produccion')ruta='/produccion/';
+  else if(url.pathname.startsWith('/produccion/'))ruta=url.pathname;
+  else if(url.pathname==='/index.html')ruta='/produccion/';
+  else if(url.pathname==='/movil.html')ruta='/produccion/movil.html';
+  else if(url.pathname==='/'&&url.searchParams.has('sala')&&!url.searchParams.has('siguiente'))ruta='/produccion/';
+  return ruta?ruta+url.search:'';
+}
+function accesoPortalRequerido(req,url){
+  if(url.pathname.startsWith('/api/')||!['GET','HEAD'].includes(req.method))return json({error:'Inicia sesión en el Portal del Domo.'},401);
+  const siguiente=siguientePortal(url);if(siguiente){const destino=new URL('/',url);destino.searchParams.set('siguiente',siguiente);return redireccionPortal(url,destino);}
+  return redireccionPortal(url,'/');
+}
+async function puertaPortal(req,env,url){
+  const ruta=url.pathname;
+  if(ruta==='/api/portal/sesion'){
+    try{return {respuesta:await apiPortal(req,env)};}catch(e){return {respuesta:json({error:e.status?e.message:'No se pudo abrir el portal. Intenta de nuevo.'},e.status||503)};}
+  }
+  if(ruta==='/sw.js')return {respuesta:retiroSwRaiz()};
+  // Las invitaciones antiguas llegaban a la raíz. Se conserva el código en
+  // una ruta interna, que la interfaz valida antes de abrir tras el acceso.
+  if(ruta==='/'&&url.searchParams.has('sala')&&!url.searchParams.has('siguiente'))return {respuesta:accesoPortalRequerido(req,url)};
+  if(ruta==='/')return {respuesta:await recursoPortal(req,env,'/portal.html',true)};
+  if(RECURSOS_PORTAL.has(ruta))return {respuesta:await recursoPortal(req,env,ruta,ruta==='/portal.html')};
+  if(!await portalAutenticado(req,env))return {respuesta:accesoPortalRequerido(req,url)};
+  if(ruta==='/produccion')return {respuesta:redireccionPortal(url,'/produccion/',true)};
+  if(/^\/produccion\/(estudio|sonidos)(\.html)?\/?$/.test(ruta))return {respuesta:redireccionPortal(url,'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),true)};
+  if(ruta==='/produccion/'||ruta==='/produccion/index.html')return peticionConRuta(req,'/index.html');
+  if(ruta.startsWith('/produccion/'))return peticionConRuta(req,ruta.slice('/produccion'.length));
+  if(ruta==='/index.html')return {respuesta:redireccionPortal(url,'/produccion/',true)};
+  if(ruta==='/movil.html')return {respuesta:redireccionPortal(url,'/produccion/movil.html',true)};
+  if(ruta==='/fisico')return {respuesta:redireccionPortal(url,'/fisico/',true)};
+  if(ruta==='/fisico/')return peticionConRuta(req,'/fisico/index.html');
+  return {req,url};
+}
+
 export default {
   async fetch(req,env){
-    const url=new URL(req.url),ruta=url.pathname,esArte=ruta.startsWith('/api/arte/');
-    if(ruta==='/api/cuenta'||ruta.startsWith('/api/cuenta/'))return manejarCuenta(req,env);
+    let url=new URL(req.url),pedido=req;
+    if(portalActivo(url,env)){
+      const puerta=await puertaPortal(pedido,env,url);if(puerta.respuesta)return puerta.respuesta;
+      pedido=puerta.req;url=puerta.url;
+    }
+    const ruta=url.pathname,esArte=ruta.startsWith('/api/arte/');
+    if(ruta==='/api/cuenta'||ruta.startsWith('/api/cuenta/'))return manejarCuenta(pedido,env);
     if(env.ESTUDIO_UNICO==='1'){
       if(/^\/(estudio|sonidos)(\.html)?\/?$/.test(ruta)&&url.origin!==URL_ESTUDIO)return Response.redirect(URL_ESTUDIO+'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),302);
       if((esArte||ruta.startsWith('/api/sfx/'))&&!['GET','HEAD'].includes(req.method)&&ruta!=='/api/sfx/sesion')return json({error:'Guarda y publica desde el estudio único.',estudio:URL_ESTUDIO},409);
     }
-    if(ruta.startsWith('/api/estudio/')){try{return await apiEstudio(req,env);}catch(e){return json({error:e.status?e.message:'No se pudo completar la operación. Los cambios guardados se conservan.'},e.status||503);}}
-    if(!esArte&&!ruta.startsWith('/api/sfx/'))return env.ASSETS.fetch(req);
-    try{return await (esArte?apiArte(req,env):api(req,env));}catch(e){return json({error:e.status?e.message:e instanceof SyntaxError?'Solicitud no válida.':e.message?.startsWith('D1_')?'No se pudo guardar. Intenta de nuevo.':e.message||'No se pudo completar la solicitud.'},e.status||400);}
+    if(ruta.startsWith('/api/estudio/')){try{return await apiEstudio(pedido,env);}catch(e){return json({error:e.status?e.message:'No se pudo completar la operación. Los cambios guardados se conservan.'},e.status||503);}}
+    if(!esArte&&!ruta.startsWith('/api/sfx/'))return env.ASSETS.fetch(pedido);
+    try{return await (esArte?apiArte(pedido,env):api(pedido,env));}catch(e){return json({error:e.status?e.message:e instanceof SyntaxError?'Solicitud no válida.':e.message?.startsWith('D1_')?'No se pudo guardar. Intenta de nuevo.':e.message||'No se pudo completar la solicitud.'},e.status||400);}
   }
 };
