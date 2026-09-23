@@ -268,7 +268,7 @@ class BetaCloudflare(unittest.TestCase):
         self.assertIn('verificar_arte_web.py', cloudflare)
         self.assertIn('estudio.html', script.split('paso "4/4', 1)[1])
 
-    def test_estudios_publican_sus_dependencias_en_ambos_destinos(self):
+    def test_portal_estudios_y_kit_fisico_publican_sus_dependencias_en_ambos_destinos(self):
         # Ejecutar la copia y el commit reales contra el remoto local detecta
         # archivos copiados que nunca llegan a git (como ocurrió en build235).
         fuente = Path(__file__).resolve().parent
@@ -276,7 +276,9 @@ class BetaCloudflare(unittest.TestCase):
         bloque = script[script.index('paso "3/4'):script.index('# CLOUDFLARE PAGES')]
         dependencias = {'estudio.html', 'sonidos.html', 'coleccion-modelo.js',
                          'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css', 'sobres-escena.js',
-                         'sobres-apertura.js', 'sobres-apertura.css'}
+                         'sobres-apertura.js', 'sobres-apertura.css', 'portal.html', 'portal.css', 'portal.js',
+                         'fisico/index.html',
+                         'fisico/fisico.css', 'fisico/Caoz-PnP-Duelo-del-Pergamino.zip'}
         for panel in ['estudio.html', 'sonidos.html']:
             dependencias.update(re.findall(r'(?:src|href)="([^"?]+\.(?:js|css))(?:\?[^\"]*)?"',
                                            (fuente / panel).read_text()))

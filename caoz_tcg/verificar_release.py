@@ -18,6 +18,8 @@ sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js
 estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js nombres-cartas.js acabados.css
 coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-apertura.css _worker.js
 _routes.json cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js audio/catalogo.json
+portal.html portal.css portal.js
+fisico/index.html fisico/fisico.css fisico/Caoz-PnP-Duelo-del-Pergamino.zip
 """.split())
 
 

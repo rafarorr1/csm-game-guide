@@ -2,6 +2,8 @@ node_modules/
 .claude/
 .DS_Store
 *.zip
+# El kit físico se descarga desde el portal; es una entrega del juego, no una salida temporal.
+!caoz_tcg/fisico/Caoz-PnP-Duelo-del-Pergamino.zip
 
 # El PDF de la biblia se regenera con biblia.sh; no se versiona el binario.
 caoz_tcg/La-Biblia-del-Domo.pdf
