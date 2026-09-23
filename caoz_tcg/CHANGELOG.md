@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### v32 · Build 270 · Portal canónico sin bucle · 2026-09-22
+
+- El Portal usa ahora su ruta canónica `/portal`, que es la forma que
+  Cloudflare Pages entrega sin redirigir. La raíz conserva el Portal público
+  y ya no puede encadenar `/ → /portal → /`.
+- La prueba del Worker y la verificación de publicación cubren la ruta
+  canónica y la histórica. Producción sólo se da por publicada si la portada,
+  la sesión y el juego protegido se comprueban con esa ruta real.
+
 ### v31 · Build 269 · Acceso validado antes del Portal · 2026-09-22
 
 - El Portal del Domo ahora abre sus opciones únicamente cuando el servidor

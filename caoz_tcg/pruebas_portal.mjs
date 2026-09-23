@@ -19,7 +19,7 @@ function base(){
 }
 const sha=v=>createHash('sha256').update(v).digest('hex'),clave=randomBytes(24).toString('hex'),baseD1=base(),rutas=[];
 const archivos=new Map([
-  ['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/art/icono-192.png','icono'],
+  ['/portal','<main>Portal del Domo</main>'],['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/art/icono-192.png','icono'],
   ['/index.html','Producción'],['/movil.html','Móvil'],['/sw.js','Juego PWA'],['/estudio','Estudio de Cartas'],['/sonidos','Estudio de Sonidos'],['/fisico/index.html','Juego Físico']
 ]);
 const env={
@@ -46,7 +46,9 @@ assert.match(nodos.portalEstado.textContent,/contraseña/i);
 const pedir=(ruta,metodo='GET',cuerpo,headers={},entorno=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookie,...headers},body:cuerpo}),entorno);
 
 assert.deepEqual(JSON.parse(readFileSync(new URL('./_routes.json',import.meta.url),'utf8')).include,['/*'],'El Worker recibe también la raíz y los assets del juego.');
-let respuesta=await pedir('/');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/);assert.match(respuesta.headers.get('content-security-policy'),/frame-ancestors 'none'/);
+let respuesta=await pedir('/');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/);assert.match(respuesta.headers.get('content-security-policy'),/frame-ancestors 'none'/);assert.equal(rutas.at(-1),'/portal','La raíz usa el documento canónico y no el .html que Pages redirige.');
+respuesta=await pedir('/portal');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/,'La ruta canónica del Portal no puede volver a la raíz.');
+respuesta=await pedir('/portal.html');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/,'La ruta histórica del Portal se normaliza sin una puerta privada.');
 assert.equal((await pedir('/portal.css')).status,200);
 assert.equal((await pedir('/produccion/')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
 assert.equal((await pedir('/index.html')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');

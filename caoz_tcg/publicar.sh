@@ -493,12 +493,16 @@ comprobar_redireccion_privada(){
   printf '%s\n' "$cabeceras" | grep -Eqi '^location: https://juego[.]caozcontodo[.]com/[?]siguiente=%2Fproduccion%2F' || return 1
 }
 comprobar_portal_publico(){
-  local marca="$1" f esp srv cabeceras estado
+  local marca="$1" f remoto esp srv cabeceras estado
   # La entrada es pública para que el formulario pueda abrirse, pero debe ser
   # exactamente el Portal, con CSP, y no una copia residual del juego antiguo.
   for f in portal.html portal.css portal.js; do
+    remoto="$f"
+    # Cloudflare Pages responde con 308 a portal.html; /portal es el documento
+    # canónico que la raíz del Worker debe servir sin una redirección circular.
+    [ "$f" = 'portal.html' ] && remoto='portal'
     esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
-    srv="$(curl -fsS --max-time 25 "$CF_URL/${f}?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
+    srv="$(curl -fsS --max-time 25 "$CF_URL/${remoto}?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
     [ "$srv" = "$esp" ] || return 1
   done
   cabeceras="$(cabecera_portal "$CF_URL/?cb=$marca")" || return 1
