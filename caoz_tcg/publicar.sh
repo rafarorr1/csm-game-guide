@@ -76,18 +76,18 @@ comprobar_fuente_publicacion(){
   REVISION_VALIDADA="$revision"
 }
 
-# El juego queda detrás del Portal sólo en el dominio de Producción. Para no
-# convertir el publicador en otro lugar que conozca la contraseña, éste acepta
-# exclusivamente un *archivo temporal de cookies* con una sesión ya abierta.
-# Nunca se copia al paquete, ni se imprime, ni se manda a git. Si no se puede
-# comprobar la zona privada, tampoco se publica.
+# El juego queda detrás del Portal sólo en el dominio de Producción. La primera
+# vez que se publica todavía no hay una página desde la que crear una cookie:
+# se preautoriza una clave efímera, pero la sesión se abre sólo cuando
+# Cloudflare ya sirve el Portal nuevo. Nunca se copia una clave ni una cookie
+# al paquete, se imprime, ni se manda a git.
 PORTAL_COOKIE_JAR=""
-preparar_sesion_verificacion_portal(){
-  [ "$PUBLICAR" -eq 1 ] && [ "$DESTINO" = "tcg" ] || return 0
-  local archivo="${CAOZ_PORTAL_COOKIE_JAR:-}" permisos="" ultimos=""
+PORTAL_COOKIE_TEMPORAL=0
+PORTAL_CLAVE_VERIFICACION=""
+validar_jar_portal(){
+  local archivo="$1" permisos="" ultimos=""
   if [ -z "$archivo" ] || [ ! -f "$archivo" ] || [ ! -r "$archivo" ]; then
-    rojo 'Producción requiere CAOZ_PORTAL_COOKIE_JAR: un archivo temporal con una sesión ya iniciada del Portal.'
-    rojo 'No se publica sin poder comprobar los archivos protegidos.'
+    rojo 'El archivo temporal de sesión del Portal no existe o no se puede leer.'
     return 1
   fi
   # curl guarda cookies HttpOnly como #HttpOnly_dominio; no se muestra nunca
@@ -110,7 +110,25 @@ preparar_sesion_verificacion_portal(){
       fi
       ;;
   esac
-  PORTAL_COOKIE_JAR="$archivo"
+}
+preparar_sesion_verificacion_portal(){
+  [ "$PUBLICAR" -eq 1 ] && [ "$DESTINO" = "tcg" ] || return 0
+  local archivo="${CAOZ_PORTAL_COOKIE_JAR:-}"
+  if [ -n "$archivo" ]; then
+    validar_jar_portal "$archivo" || return 1
+    PORTAL_COOKIE_JAR="$archivo"
+    export CAOZ_PORTAL_COOKIE_JAR="$archivo"
+    return 0
+  fi
+  if [ -z "${CAOZ_PORTAL_CLAVE_VERIFICACION:-}" ]; then
+    rojo 'Producción requiere CAOZ_PORTAL_CLAVE_VERIFICACION para abrir una sesión temporal de verificación.'
+    rojo 'También acepta CAOZ_PORTAL_COOKIE_JAR con una sesión temporal ya iniciada.'
+    return 1
+  fi
+  # No se deja la clave exportada mientras corren Chrome y las pruebas. Sólo
+  # se entrega a Node en el instante de convertirla a JSON para el POST.
+  PORTAL_CLAVE_VERIFICACION="$CAOZ_PORTAL_CLAVE_VERIFICACION"
+  unset CAOZ_PORTAL_CLAVE_VERIFICACION
 }
 comprobar_fuente_publicacion || exit 1
 preparar_sesion_verificacion_portal || exit 1
@@ -246,7 +264,18 @@ SERVIDOR=$!
 disown "$SERVIDOR" 2>/dev/null   # para que bash no anuncie su muerte al final
 PERFIL="$(mktemp -d)"
 NAVEGADOR=""
-limpiar(){ kill "$SERVIDOR" 2>/dev/null; [ -n "$NAVEGADOR" ] && kill "$NAVEGADOR" 2>/dev/null; rm -rf "$PERFIL" 2>/dev/null; true; }
+limpiar_sesion_verificacion_portal(){
+  # Sólo eliminamos el jar que creó este proceso; una sesión externa sigue
+  # siendo responsabilidad de quien la proporcionó.
+  if [ "$PORTAL_COOKIE_TEMPORAL" = "1" ] && [ -n "$PORTAL_COOKIE_JAR" ]; then
+    rm -f -- "$PORTAL_COOKIE_JAR" 2>/dev/null
+  fi
+  PORTAL_COOKIE_JAR=""
+  PORTAL_COOKIE_TEMPORAL=0
+  PORTAL_CLAVE_VERIFICACION=""
+  unset CAOZ_PORTAL_COOKIE_JAR CAOZ_PORTAL_CLAVE_VERIFICACION
+}
+limpiar(){ limpiar_sesion_verificacion_portal; kill "$SERVIDOR" 2>/dev/null; [ -n "$NAVEGADOR" ] && kill "$NAVEGADOR" 2>/dev/null; rm -rf "$PERFIL" 2>/dev/null; true; }
 trap limpiar EXIT
 sleep 1
 
@@ -425,6 +454,38 @@ curl_portal(){
 cabecera_portal(){
   curl -sS --max-time 25 -D - -o /dev/null "$@"
 }
+crear_sesion_verificacion_portal(){
+  # Se llama sólo DESPUÉS de que el Portal nuevo ya contestó. Así la primera
+  # publicación puede verificarse sin desplegar antes una versión a medias.
+  [ "$DESTINO" = "tcg" ] || return 0
+  if [ -n "$PORTAL_COOKIE_JAR" ]; then
+    validar_jar_portal "$PORTAL_COOKIE_JAR" || return 1
+    export CAOZ_PORTAL_COOKIE_JAR="$PORTAL_COOKIE_JAR"
+    return 0
+  fi
+  if [ -z "$PORTAL_CLAVE_VERIFICACION" ]; then
+    rojo 'No hay una clave efímera para abrir la sesión de verificación del Portal.'
+    return 1
+  fi
+  local jar respuesta
+  jar="$(mktemp "${TMPDIR:-/tmp}/caoz-portal-verificacion.XXXXXXXX")" || return 1
+  chmod 600 "$jar" || { rm -f -- "$jar"; return 1; }
+  # La clave viaja por stdin y se convierte a JSON dentro de la tubería: nunca
+  # aparece en argumentos, salida, archivos del proyecto ni historial de git.
+  respuesta="$(printf '%s' "$PORTAL_CLAVE_VERIFICACION" | python3 -c 'import json,sys; print(json.dumps({"clave":sys.stdin.read()},separators=(",",":")))' | curl -fsS --max-time 25 --cookie-jar "$jar" -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary @- "$CF_URL/api/portal/sesion")" || {
+    PORTAL_CLAVE_VERIFICACION=""; rm -f -- "$jar"; return 1;
+  }
+  PORTAL_CLAVE_VERIFICACION=""
+  if [ "$respuesta" != '{"ok":true}' ]; then
+    rm -f -- "$jar"; return 1
+  fi
+  if ! validar_jar_portal "$jar"; then
+    rm -f -- "$jar"; return 1
+  fi
+  PORTAL_COOKIE_JAR="$jar"
+  PORTAL_COOKIE_TEMPORAL=1
+  export CAOZ_PORTAL_COOKIE_JAR="$jar"
+}
 comprobar_redireccion_privada(){
   local ruta="$1" marca="$2" cabeceras
   cabeceras="$(cabecera_portal "$CF_URL$ruta?cb=$marca")" || return 1
@@ -463,8 +524,12 @@ comprobar_cloudflare(){
     sleep 10
     local ok=1 prefijo="" marca="$(date +%s)"
     if [ "$DESTINO" = "tcg" ]; then
-      comprobar_portal_publico "$marca" || { ok=0; }
-      comprobar_sesion_portal "$marca" || { ok=0; }
+      if comprobar_portal_publico "$marca"; then
+        crear_sesion_verificacion_portal || { ok=0; }
+        [ "$ok" = "1" ] && comprobar_sesion_portal "$marca" || ok=0
+      else
+        ok=0
+      fi
       prefijo="/produccion"
     fi
     # El HTML privado redirige al estudio único de producción. Sus dependencias
