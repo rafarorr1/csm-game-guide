@@ -13,8 +13,8 @@ entran al Domo con un Protagonista como Líder y un mazo de 40 cartas. Sus archi
 requieren dependencias ni compilación y pueden inspeccionarse con un servidor estático
 (o `python3 -m http.server 8745 --directory caoz_tcg`). El acceso por correo y el
 guardado remoto requieren Worker, D1 y correo configurados, operativos desde 257.
-Beta 259 incluye acceso obligatorio y reapertura offline después de verificar y
-vincular la cuenta; producción conserva 257. La revisión se integró por el PR 23.
+La build 259 incluye acceso obligatorio y reapertura offline después de verificar y
+vincular la cuenta; está publicada y verificada en producción por el PR 25.
 La primera verificación no funciona como servicio real en un servidor estático.
 Consultar el estado de conexión y publicación en `HANDOFF.md`. Dirección oficial:
 **https://juego.caozcontodo.com/** (Cloudflare Pages); espejo en GitHub Pages.
