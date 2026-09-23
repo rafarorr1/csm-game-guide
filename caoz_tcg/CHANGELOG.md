@@ -1,5 +1,20 @@
 # Registro de versiones — el TCG del Domo
 
+### v30 · Build 268 · Portal del Domo y juego físico · 2026-09-22
+
+- La entrada oficial se prepara como **Portal del Domo**: la sesión se valida
+  en el servidor, sin guardar la contraseña en los archivos del juego. Desde
+  ahí se accede a Producción, Beta, los dos estudios y el Juego Físico.
+- Producción queda bajo `/produccion/`, por lo que las invitaciones antiguas
+  conservan su sala al pasar por el portal; el acceso directo al Estudio y a
+  Sonidos sigue siendo una ruta canónica del mismo sitio.
+- El portal cierra la caché raíz de una PWA anterior para evitar que una app
+  instalada conserve una entrada abierta. Una regresión cubre sesión firmada,
+  cierre, rutas protegidas, invitaciones y configuración incompleta.
+- Se incorpora el kit Print-and-Play descargable con la guía, reversos y la
+  página de Juego Físico. No cambia las reglas, cartas, mazos ni progreso del
+  TCG digital.
+
 ### v29 · Build 267 · Visor de nombres · 2026-09-20
 
 - El visor real dentro del Estudio conserva el nombre visible que se está

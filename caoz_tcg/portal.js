@@ -6,9 +6,29 @@
   const acceso=$('portalAcceso'),menu=$('portalMenu'),formulario=$('portalFormulario'),clave=$('portalClave'),enviar=$('portalEnviar'),estado=$('portalEstado'),salir=$('portalSalir'),estadoMenu=$('portalMenuEstado');
   if(!acceso||!menu||!formulario||!clave||!enviar||!estado||!salir||!estadoMenu)return;
 
+  // Una invitación y los atajos antiguos seguían llegando a la raíz. Al pedir
+  // acceso se conserva el destino, pero nunca se acepta una redirección ajena.
+  function destinoSeguro(valor){
+    if(typeof valor!=='string'||!valor||valor.length>4096)return '';
+    try{
+      const u=new URL(valor,location.origin),rutas=['/estudio','/estudio.html','/sonidos','/sonidos.html'];
+      if(u.origin!==location.origin)return '';
+      if(u.pathname==='/produccion')return '/produccion/'+u.search+u.hash;
+      if(u.pathname.startsWith('/produccion/')||u.pathname.startsWith('/fisico/')||rutas.includes(u.pathname))return u.pathname+u.search+u.hash;
+    }catch(_){}
+    return '';
+  }
+  const parametros=new URLSearchParams(location.search),siguiente=destinoSeguro(parametros.get('siguiente'))||(()=>{
+    parametros.delete('siguiente');const resto=parametros.toString();
+    return resto?'/produccion/?'+resto+location.hash:'';
+  })();
+
   const texto=(n,error=false)=>{estado.textContent=n;estado.classList.toggle('portalError',!!error);};
   const mostrarAcceso=(mensaje='',error=false)=>{menu.hidden=true;acceso.hidden=false;texto(mensaje,error);if(!mensaje)setTimeout(()=>clave.focus(),0);};
-  const mostrarMenu=()=>{acceso.hidden=true;menu.hidden=false;estadoMenu.textContent='Elige una puerta del Domo.';};
+  const mostrarMenu=()=>{
+    if(siguiente){location.replace(siguiente);return;}
+    acceso.hidden=true;menu.hidden=false;estadoMenu.textContent='Elige una puerta del Domo.';
+  };
   async function respuesta(r){try{return await r.json();}catch(_){return {};}}
   async function consultar(){
     try{

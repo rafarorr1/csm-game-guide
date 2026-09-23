@@ -1,0 +1,69 @@
+/* El Portal del Domo se prueba contra un D1 local: nunca usa la clave real ni Cloudflare. */
+import assert from 'node:assert/strict';
+import {DatabaseSync} from 'node:sqlite';
+import {createHash,randomBytes} from 'node:crypto';
+import {readFileSync} from 'node:fs';
+import worker from './_worker.js';
+
+function base(){
+  const db=new DatabaseSync(':memory:');
+  class Consulta{
+    constructor(sql){this.sql=sql;this.args=[];}
+    bind(...args){this.args=args;return this;}
+    async first(){return db.prepare(this.sql).get(...this.args)||null;}
+    async all(){return {results:db.prepare(this.sql).all(...this.args)};}
+    async run(){const r=db.prepare(this.sql).run(...this.args);return {meta:{changes:r.changes}};}
+  }
+  return {db,binding:{prepare:sql=>new Consulta(sql)}};
+}
+const sha=v=>createHash('sha256').update(v).digest('hex'),clave=randomBytes(24).toString('hex'),baseD1=base(),rutas=[];
+const archivos=new Map([
+  ['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/art/icono-192.png','icono'],
+  ['/index.html','Producción'],['/movil.html','Móvil'],['/sw.js','Juego PWA'],['/estudio','Estudio de Cartas'],['/sonidos','Estudio de Sonidos'],['/fisico/index.html','Juego Físico']
+]);
+const env={
+  PORTAL_PASSWORD_HASH:sha(clave),PORTAL_SESSION_KEY:randomBytes(32).toString('hex'),SFX_DB:baseD1.binding,ESTUDIO_UNICO:'1',CF_PAGES_BRANCH:'gh-pages',
+  ASSETS:{async fetch(req){const url=new URL(req.url);rutas.push(url.pathname+url.search);return new Response(archivos.get(url.pathname)||'Estático '+url.pathname,{status:archivos.has(url.pathname)?200:404});}}
+};
+const origen='https://juego.caozcontodo.com';let cookie='';
+const pedir=(ruta,metodo='GET',cuerpo,headers={},entorno=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookie,...headers},body:cuerpo}),entorno);
+
+assert.deepEqual(JSON.parse(readFileSync(new URL('./_routes.json',import.meta.url),'utf8')).include,['/*'],'El Worker recibe también la raíz y los assets del juego.');
+let respuesta=await pedir('/');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/);assert.match(respuesta.headers.get('content-security-policy'),/frame-ancestors 'none'/);
+assert.equal((await pedir('/portal.css')).status,200);
+assert.equal((await pedir('/produccion/')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
+assert.equal((await pedir('/index.html')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
+assert.equal((await pedir('/?sala=AB12')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F%3Fsala%3DAB12','Una invitación antigua llega al juego tras el portal.');
+assert.equal((await pedir('/api/arte/catalogo')).status,401,'Las API públicas tampoco saltan la puerta.');
+respuesta=await pedir('/api/portal/sesion');assert.equal(respuesta.status,200);assert.deepEqual(await respuesta.json(),{autenticado:false});
+assert.equal((await pedir('/api/portal/sesion','POST',JSON.stringify({clave}),{Origin:'https://otro.invalid'})).status,403);
+assert.equal((await pedir('/api/portal/sesion','POST','[]')).status,400);
+assert.equal((await pedir('/api/portal/sesion','POST',JSON.stringify({clave:clave+'x'}))).status,401);
+respuesta=await pedir('/api/portal/sesion','POST',JSON.stringify({clave}));assert.equal(respuesta.status,200);assert.deepEqual(await respuesta.json(),{ok:true});
+cookie=respuesta.headers.get('set-cookie').split(';')[0];const atributos=respuesta.headers.get('set-cookie');
+for(const atributo of ['__Host-caoz-portal=','Secure','HttpOnly','SameSite=Strict','Path=/','Max-Age=28800'])assert.match(atributos,new RegExp(atributo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
+assert.deepEqual(await (await pedir('/api/portal/sesion')).json(),{autenticado:true});
+assert.deepEqual(await (await pedir('/api/portal/sesion','GET',undefined,{Cookie:cookie+'x'})).json(),{autenticado:false},'Una firma alterada no abre el portal.');
+
+respuesta=await pedir('/produccion/');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Producción');assert.equal(rutas.at(-1),'/index.html');
+respuesta=await pedir('/produccion/movil.html?escritorio=1');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Móvil');assert.equal(rutas.at(-1),'/movil.html?escritorio=1');
+respuesta=await pedir('/produccion/sw.js');assert.equal(await respuesta.text(),'Juego PWA');assert.equal(rutas.at(-1),'/sw.js','El SW del juego se mantiene bajo /produccion/.');
+assert.equal((await pedir('/produccion?b=9')).headers.get('location'),origen+'/produccion/?b=9');
+assert.equal((await pedir('/index.html?b=9')).headers.get('location'),origen+'/produccion/?b=9');
+assert.equal((await pedir('/movil.html?b=9')).headers.get('location'),origen+'/produccion/movil.html?b=9');
+assert.equal((await pedir('/produccion/estudio.html?carta=tal')).headers.get('location'),origen+'/estudio?carta=tal');
+assert.equal((await pedir('/produccion/sonidos?seleccion=turn')).headers.get('location'),origen+'/sonidos?seleccion=turn');
+assert.equal(await (await pedir('/estudio')).text(),'Estudio de Cartas','El estudio sigue disponible tras abrir el portal.');
+assert.equal(await (await pedir('/sonidos')).text(),'Estudio de Sonidos','El estudio de sonidos sigue disponible tras abrir el portal.');
+assert.equal(await (await pedir('/fisico/')).text(),'Juego Físico');assert.equal(rutas.at(-1),'/fisico/index.html');
+respuesta=await pedir('/sw.js');assert.match(await respuesta.text(),/registration\.unregister/);assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('service-worker-allowed'),/^\/$/);
+
+respuesta=await pedir('/api/portal/sesion','DELETE');assert.equal(respuesta.status,200);assert.match(respuesta.headers.get('set-cookie'),/Max-Age=0/);cookie='';
+assert.equal((await pedir('/sonidos')).headers.get('location'),origen+'/');
+const incompleto={...env,PORTAL_SESSION_KEY:'demasiado-corta'};
+assert.equal((await pedir('/api/portal/sesion','GET',undefined,{},incompleto)).status,503,'Una configuración parcial falla cerrada.');
+for(let i=0;i<=8;i++)respuesta=await pedir('/api/portal/sesion','POST',JSON.stringify({clave:clave+'z'}),{'CF-Connecting-IP':'203.0.113.50'});
+assert.equal(respuesta.status,429,'El noveno intento de la misma ventana se detiene.');
+assert.equal(await (await worker.fetch(new Request('https://beta.caoz-tcg.pages.dev/'),env)).text(),'Estático /','La beta no hereda el bloqueo del dominio oficial.');
+baseD1.db.close();
+console.log('Portal: sesión firmada, rutas protegidas, producción virtual, estudios y retiro seguro del SW raíz en verde.');

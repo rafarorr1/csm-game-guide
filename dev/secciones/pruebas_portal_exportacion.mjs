@@ -24,6 +24,8 @@ try{
   assert.doesNotMatch(js,/CLAVE_PRUEBA|CLAVE_REAL/,'El componente real no conserva una clave fija');
   assert.ok(js.includes("'/api/portal/sesion'")&&js.includes("method:'POST'")&&js.includes("method:'DELETE'"),'El componente real sólo usa el contrato de sesión del Worker');
   assert.ok(!/\b(?:localStorage|sessionStorage|indexedDB)\b/.test(js),'La pantalla no guarda una clave ni una sesión en el navegador');
+  assert.match(js,/function destinoSeguro\(valor\)/,'Una invitación pendiente se valida antes de reanudarla');
+  assert.match(js,/u\.origin!==location\.origin/,'El portal rechaza redirecciones fuera del proyecto');
   assert.doesNotMatch(preview,/CLAVE_PRUEBA|CLAVE_REAL/,'La revisión aislada no publica una clave fija');
   assert.ok(preview.includes('CAOZ_PORTAL_PREVIEW'),'La revisión aislada conserva su transporte temporal');
   assert.match(preview,/datos\.clave\.trim\(\)/,'La revisión aislada admite una clave de demostración sin conservar una real');

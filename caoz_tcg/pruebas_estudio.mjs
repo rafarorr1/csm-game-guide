@@ -9,13 +9,15 @@ function base(){
  class Q{constructor(sql){this.sql=sql;this.args=[];}bind(...a){this.args=a.map(x=>x instanceof ArrayBuffer?new Uint8Array(x):x);return this;}async all(){return {results:db.prepare(this.sql).all(...this.args)};}async first(){return db.prepare(this.sql).get(...this.args)||null;}async run(){const r=db.prepare(this.sql).run(...this.args);return {meta:{changes:r.changes}};}}
  return {db,romperLote(){fallar=true;},binding:{prepare:s=>new Q(s),batch(cmds){const r=cola.then(async()=>{db.exec('BEGIN');try{const resultados=[];for(const c of cmds){resultados.push(await c.run());if(fallar&&c.sql.startsWith('INSERT INTO sonidos (')){fallar=false;throw Error('Fallo simulado a mitad del lote');}}db.exec('COMMIT');return resultados;}catch(e){db.exec('ROLLBACK');throw e;}});cola=r.catch(()=>{});return r;}}};
 }
-const prod=base(),beta=base(),sha=x=>createHash('sha256').update(x).digest('hex'),clave=randomBytes(24).toString('hex');
-const env={SFX_DB:prod.binding,SFX_BETA_DB:beta.binding,SFX_ADMIN_HASH:sha(clave),SFX_SESSION_KEY:randomBytes(32).toString('hex'),CF_PAGES_BRANCH:'gh-pages',ASSETS:{fetch:req=>new Response(readFileSync(new URL(new URL(req.url).pathname.slice(1)==='art/catalogo.json'?'./art/catalogo.json':'./sonidos.html',import.meta.url)))}};
+const prod=base(),beta=base(),sha=x=>createHash('sha256').update(x).digest('hex'),clave=randomBytes(24).toString('hex'),clavePortal=randomBytes(24).toString('hex');
+const env={SFX_DB:prod.binding,SFX_BETA_DB:beta.binding,SFX_ADMIN_HASH:sha(clave),SFX_SESSION_KEY:randomBytes(32).toString('hex'),PORTAL_PASSWORD_HASH:sha(clavePortal),PORTAL_SESSION_KEY:randomBytes(32).toString('hex'),CF_PAGES_BRANCH:'gh-pages',ASSETS:{fetch:req=>new Response(readFileSync(new URL(new URL(req.url).pathname.slice(1)==='art/catalogo.json'?'./art/catalogo.json':'./sonidos.html',import.meta.url)))}};
 const eb={...env,SFX_DB:beta.binding,SFX_BETA_DB:undefined,SFX_SESSION_KEY:randomBytes(32).toString('hex'),CF_PAGES_BRANCH:'beta'};
-const origen='https://juego.caozcontodo.com';let cookie='';
-const req=(ruta,metodo='GET',body,headers={},e=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookie,...headers},body}),e);
+const origen='https://juego.caozcontodo.com';let cookie='',cookiePortal='';
+const cookies=()=>[cookiePortal,cookie].filter(Boolean).join('; ');
+const req=(ruta,metodo='GET',body,headers={},e=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookies(),...headers},body}),e);
 async function dato(...args){const r=await req(...args);assert.equal(r.status,200,JSON.stringify(await r.clone().json()));return r.json();}
-let r=await req('/api/sfx/sesion','POST',JSON.stringify({clave}));cookie=r.headers.get('set-cookie').split(';')[0];
+let r=await req('/api/portal/sesion','POST',JSON.stringify({clave:clavePortal}));cookiePortal=r.headers.get('set-cookie').split(';')[0];
+r=await req('/api/sfx/sesion','POST',JSON.stringify({clave}));cookie=r.headers.get('set-cookie').split(';')[0];
 const wav=readFileSync(new URL('./audio/dice_roll.wav',import.meta.url)),arte=readFileSync(new URL('./art/lider_adreida.webp',import.meta.url));
 const put={"If-Match":'0','Content-Type':'image/webp','X-Arte-Encuadre':'{"x":45,"y":91,"z":118}'};
 await dato('/api/sfx/sonido/attack_hit','PUT',wav,{'If-Match':'0'});await dato('/api/arte/carta/tal/normal','PUT',arte,put);

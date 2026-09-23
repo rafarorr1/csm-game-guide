@@ -142,6 +142,7 @@ node "$AQUI/pruebas_arte.mjs" || exit 1
 node "$AQUI/pruebas_arte_ediciones.mjs" || exit 1
 node "$AQUI/pruebas_originales_acabados.mjs" || exit 1
 node "$AQUI/pruebas_estudio.mjs" || exit 1
+node "$AQUI/pruebas_portal.mjs" || exit 1
 python3 "$AQUI/pruebas_fisico.py" || exit 1
 node "$AQUI/pruebas_coleccion.mjs" || exit 1
 node "$AQUI/pruebas_recompensas_domo.mjs" || exit 1
