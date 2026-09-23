@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-22 · preparación de build 269 · v31 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-22 · beta 269 y producción 267 · v31 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,7 @@ números) → el código.
 
 ---
 
-## Estado vigente — build 269 preparada para validar el acceso del Portal
+## Estado vigente — build 269 validada en beta antes de Producción
 
 La build 269 corrige una guarda de interfaz encontrada antes de promocionar la
 build 268: una respuesta de sesión correcta pero no autenticada mantenía las
@@ -18,9 +18,20 @@ rutas protegidas cerradas, pero podía llegar a mostrar el menú. Ahora sólo
 `autenticado: true` permite abrirlo; la regresión reproduce exactamente esa
 respuesta y exige que el formulario continúe visible.
 
-Por consistencia de caché, 269 es una nueva build que debe pasar por Beta antes
-de producción. No modifica cartas, reglas, mazos, IA, colección, progreso ni
-el kit físico.
+Por consistencia de caché, 269 se publicó como una nueva build. La batería
+completa terminó en verde y GitHub Pages y Cloudflare Beta se comprobaron byte
+a byte: juego de escritorio y móvil, Portal, estudios, catálogo, 37 sonidos,
+originales, ilustraciones y kit físico. No modifica cartas, reglas, mazos, IA,
+colección, progreso ni el kit físico.
+
+Artefactos: `gh-pages:deec608` en `/tcg-beta/` y Cloudflare beta `5545f83`.
+Producción sigue en build 267 hasta completar su publicación, con los secretos
+`PORTAL_PASSWORD_HASH` y `PORTAL_SESSION_KEY` configurados exclusivamente en
+Cloudflare.
+
+- Beta: https://beta.caoz-tcg.pages.dev/?b=269
+- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=269
+- Beta / Juego Físico: https://beta.caoz-tcg.pages.dev/fisico/
 
 ---
 
