@@ -44,7 +44,7 @@ try{
   const pagina=await contexto.newPage();const errores=[];pagina.on('pageerror',e=>errores.push(e.message));
   let sesion=null,nube=null,revision=0,guardados=0,sinConexion=false;
   let identidad={id:'00000000-0000-4000-8000-000000000001',nombre:'Ari',correo:'cuenta@ejemplo.com'};
-  await contexto.route('**/*',async route=>{
+  const rutaCuenta=async route=>{
    const url=new URL(route.request().url());
    if(url.origin!==base){await route.abort('blockedbyclient');return;}
    if(url.pathname==='/api/arte/catalogo'){await route.fulfill({json:{cartas:[]}});return;}
@@ -58,7 +58,8 @@ try{
    else if(nombre==='salir'){sesion=null;cuerpo={ok:true};}
    else throw Error('Ruta de cuenta inesperada');
    await route.fulfill({json:cuerpo});
-  });
+  };
+  await contexto.route('**/*',rutaCuenta);
   await pagina.addInitScript(()=>{if(!localStorage.getItem('__cuenta_qa_iniciada')){localStorage.setItem('caoz_nombre','Ari');localStorage.setItem('__cuenta_qa_iniciada','1');}});
   if(tamano.nombre==='movil390')await pagina.addInitScript(()=>Object.defineProperty(navigator,'standalone',{configurable:true,get:()=>true}));
   await pagina.goto(base+'/'+tamano.pagina);
@@ -84,6 +85,26 @@ try{
   await pagina.locator('[data-foco="vincular"]').click();await pagina.locator('.cuentaUI[data-pantalla="perfil"]').waitFor();
   await pagina.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO.puedeJugar());
   assert.equal(nube.datos.nombre,'Ari');assert.equal(guardados,1);
+  // Una segunda instalación recibe la sesión y la nube, pero todavía debe
+  // esperar que el jugador confirme recuperarla. El evento online no puede
+  // reintentar esa restauración ni repintar el diálogo en un bucle.
+  const recuperacion=await navegador.newContext({viewport:tamano,reducedMotion:'reduce',serviceWorkers:'block',isMobile:tamano.nombre!=='desktop',hasTouch:tamano.nombre!=='desktop'});
+  const paginaRecuperacion=await recuperacion.newPage();const erroresRecuperacion=[];paginaRecuperacion.on('pageerror',e=>erroresRecuperacion.push(e.message));
+  await recuperacion.route('**/*',rutaCuenta);
+  await paginaRecuperacion.goto(base+'/'+tamano.pagina);
+  await paginaRecuperacion.locator('#cuentaJuego[open] .cuentaUI[data-pantalla="recuperar"]').waitFor();
+  await paginaRecuperacion.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO?.estado()?.ocupado===false);
+  await paginaRecuperacion.waitForTimeout(50);
+  const alVolver=await paginaRecuperacion.evaluate(async()=>{
+    const contenido=document.querySelector('#cuentaJuego .cuentaContenido');let cambios=0;
+    const observar=new MutationObserver(registros=>{cambios+=registros.length;});observar.observe(contenido,{childList:true,subtree:true});
+    window.dispatchEvent(new Event('online'));
+    await new Promise(resolve=>setTimeout(resolve,80));observar.disconnect();
+    return {cambios,pantalla:window.CAOZ_CUENTA_JUEGO.estado().pantalla};
+  });
+  assert.equal(alVolver.cambios,0,'Volver online no repinta una recuperación pendiente');
+  assert.equal(alVolver.pantalla,'recuperar','Volver online conserva la elección de recuperación');
+  assert.deepEqual(erroresRecuperacion,[]);await recuperacion.close();
   await pagina.locator('[data-foco="volver"]').click();
   await pagina.locator('#mPlay').click();await pagina.locator('#select.on').waitFor();
   await pagina.locator('#selBack').click();await pagina.locator('#menu.on').waitFor();
