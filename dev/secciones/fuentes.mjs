@@ -24,6 +24,19 @@ export function extraerDeclaracion(codigo,nombre,tipo='function'){
   }
   throw Error(`La declaración ${nombre} no termina o tiene sintaxis inválida.`);
 }
+// Asignaciones globales de los scripts compartidos (window.x=function…), que
+// no son declaraciones de nivel superior. Se delimitan igual, con el compilador.
+export function extraerAsignacion(codigo,objetivo){
+  if(!/^window\.[A-Za-z_$][\w$]*$/.test(objetivo))throw Error('Asignación inválida');
+  const marca=objetivo+'=function',inicio=codigo.indexOf(marca);
+  if(inicio<0||codigo.indexOf(marca,inicio+1)>=0)throw Error(`Se esperaba una asignación única de ${objetivo}.`);
+  for(let fin=inicio;fin<codigo.length;fin++){
+    if(codigo[fin]!==';')continue;
+    const texto=codigo.slice(inicio,fin+1);
+    try{new vm.Script(texto,{filename:objetivo+'.js'});return {nombre:objetivo,texto,linea:codigo.slice(0,inicio).split('\n').length,sha256:hash(texto)};}catch(e){if(!(e instanceof SyntaxError))throw e;}
+  }
+  throw Error(`La asignación ${objetivo} no termina o tiene sintaxis inválida.`);
+}
 export function datosDesdeMotor(codigo){
   // El motor declara sus cartas, pero aquí no dispone de DOM, red, temporizadores,
   // almacenamiento ni APIs de sistema. No se inicia ninguna partida.
@@ -35,12 +48,14 @@ export function datosDesdeMotor(codigo){
 }
 export function generar(vista='desktop'){
   if(!Object.hasOwn(vistas,vista))throw Error('Vista desconocida');
-  const archivos={html:leer(vistas[vista]),motor:leer('motor.js'),polish:leer('polish-aaa.js')};
-  const firma=hash(archivos.html+archivos.motor+archivos.polish);
+  const archivos={html:leer(vistas[vista]),motor:leer('motor.js'),polish:leer('polish-aaa.js'),final:leer('final.js')};
+  const firma=hash(archivos.html+archivos.motor+archivos.polish+archivos.final);
   if(cache.get(vista)?.firma===firma)return cache.get(vista).resultado;
   const datos=datosDesdeMotor(archivos.motor);
   const funciones=['ponerDibujo','ilustrarLider','ilustrar','cardEl','cartaDeLiderVS'].map(n=>extraerDeclaracion(archivos.html,n));
-  const auxiliares=[extraerDeclaracion(archivos.html,'el','const'),extraerDeclaracion(archivos.motor,'encuadreDe'),extraerDeclaracion(archivos.motor,'cap','const'),extraerDeclaracion(archivos.motor,'tribeLine')];
+  const auxiliares=[extraerDeclaracion(archivos.html,'el','const'),extraerDeclaracion(archivos.motor,'encuadreDe'),extraerDeclaracion(archivos.motor,'cap','const'),extraerDeclaracion(archivos.motor,'tribeLine'),
+    // cardEl y cartaDeLiderVS escriben el título con este marcador de final.js.
+    extraerAsignacion(archivos.final,'window.marcarNombreCarta')];
   const cssHTML=[...archivos.html.matchAll(/<style\b[^>]*>([\s\S]*?)<\/style>/gi)].map(m=>m[1]).join('\n');
   if(!cssHTML.includes('.card'))throw Error('No se encontró el CSS de cartas de la pantalla.');
   const cssDeclaracion=extraerDeclaracion(archivos.polish,'AAA_CSS','const');
@@ -51,7 +66,7 @@ export function generar(vista='desktop'){
   // Estos ganchos sólo añadirían listeners que Colección elimina al clonar la
   // carta. Se omiten explícitamente; no se simula ninguna acción de combate.
   const adaptadores='\nfunction attachInspect(){}\nfunction pulsacionLarga(){}\nfunction cargarArte(){throw Error("El proveedor real de arte aún no está cargado");}\n';
-  const resultado={datosJS,renderJS:renderJS+adaptadores,css:cssHTML+'\n/* AAA_CSS real */\n'+cssPolish,metadatos:{vista,cartas:Object.keys(datos.CARDS).length,protagonistas:Object.keys(datos.LEADERS).length,fuentes:[{archivo:'caoz_tcg/'+vistas[vista],sha256:hash(archivos.html)},{archivo:'caoz_tcg/motor.js',sha256:hash(archivos.motor)},{archivo:'caoz_tcg/polish-aaa.js',sha256:hash(archivos.polish)}],funciones:[...auxiliares,...funciones].map(({nombre,linea,sha256})=>({nombre,linea,sha256})),adaptadores:['attachInspect: sin inspector ajeno a la colección','pulsacionLarga: sin inspector ajeno a la colección','G: null; no existe partida'],almacenamiento:'sólo memoria de la página',red:'sólo recursos de este servidor local'}};
+  const resultado={datosJS,renderJS:renderJS+adaptadores,css:cssHTML+'\n/* AAA_CSS real */\n'+cssPolish,metadatos:{vista,cartas:Object.keys(datos.CARDS).length,protagonistas:Object.keys(datos.LEADERS).length,fuentes:[{archivo:'caoz_tcg/'+vistas[vista],sha256:hash(archivos.html)},{archivo:'caoz_tcg/motor.js',sha256:hash(archivos.motor)},{archivo:'caoz_tcg/polish-aaa.js',sha256:hash(archivos.polish)},{archivo:'caoz_tcg/final.js',sha256:hash(archivos.final)}],funciones:[...auxiliares,...funciones].map(({nombre,linea,sha256})=>({nombre,linea,sha256})),adaptadores:['attachInspect: sin inspector ajeno a la colección','pulsacionLarga: sin inspector ajeno a la colección','G: null; no existe partida'],almacenamiento:'sólo memoria de la página',red:'sólo recursos de este servidor local'}};
   new vm.Script(datosJS+'\n'+resultado.renderJS);
   cache.set(vista,{firma,resultado});return resultado;
 }
