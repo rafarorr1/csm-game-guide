@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### v33 · Build 271 · Mesa protegida tras el Portal · 2026-09-22
+
+- La ruta interna de Producción entrega ahora el índice del juego directamente
+  desde Assets. Cloudflare ya no puede canonizar `index.html` hacia la raíz
+  pública y devolver el Portal otra vez después de iniciar sesión.
+- La regresión abre tanto `/produccion/` como `/produccion/index.html` y exige
+  que ambos reciban la mesa protegida, no una redirección a la portada.
+
 ### v32 · Build 270 · Portal canónico sin bucle · 2026-09-22
 
 - El Portal usa ahora su ruta canónica `/portal`, que es la forma que

@@ -5014,8 +5014,8 @@ PRUEBAS.suite('regresiones', async t => {
   {
     const inv=window.CAOZ_INVITACIONES;
     t.check(!!inv,'el parser compartido de invitaciones debe cargarse antes del coordinador online');
-    const prod='https://juego.caozcontodo.com/?b=270',beta='https://beta.caoz-tcg.pages.dev/?b=270';
-    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=270'), 'AB1C2',
+    const prod='https://juego.caozcontodo.com/?b=271',beta='https://beta.caoz-tcg.pages.dev/?b=271';
+    t.igual(inv.codigo('https://juego.caozcontodo.com/?sala=a-b1c2&b=271'), 'AB1C2',
       'un enlace de sala debe volver al mismo código de cinco caracteres');
     t.check(inv.mensajeCodigo('AB1C2',prod).includes('AB1C2')&&!inv.mensajeCodigo('AB1C2',prod).includes('?sala='),
       'el mensaje para una app instalada debe contener código, no un enlace web');
