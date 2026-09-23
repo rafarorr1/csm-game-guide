@@ -267,6 +267,9 @@ class BetaCloudflare(unittest.TestCase):
             self.assertIn(archivo, archivos)
         self.assertIn('verificar_arte_web.py', cloudflare)
         self.assertIn('estudio.html', script.split('paso "4/4', 1)[1])
+        audio = (fuente / 'verificar_audio_web.py').read_text()
+        self.assertIn("archivo == 'sonidos.html' and urlparse(base).hostname == 'beta.caoz-tcg.pages.dev'", audio)
+        self.assertIn('302 https://juego.caozcontodo.com/sonidos', audio)
 
     def test_portal_estudios_y_kit_fisico_publican_sus_dependencias_en_ambos_destinos(self):
         # Ejecutar la copia y el commit reales contra el remoto local detecta
