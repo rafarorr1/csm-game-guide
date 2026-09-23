@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-22 · beta 269 y producción 267 · v31 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-22 · beta y producción 271 · v33 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,28 +10,35 @@ números) → el código.
 
 ---
 
-## Estado vigente — build 269 validada en beta antes de Producción
+## Estado vigente — Portal del Domo y mesa protegida publicados en producción, build 271
 
-La build 269 corrige una guarda de interfaz encontrada antes de promocionar la
-build 268: una respuesta de sesión correcta pero no autenticada mantenía las
-rutas protegidas cerradas, pero podía llegar a mostrar el menú. Ahora sólo
-`autenticado: true` permite abrirlo; la regresión reproduce exactamente esa
-respuesta y exige que el formulario continúe visible.
+Las builds 270 y 271 cierran la integración final entre el Portal y el juego.
+Cloudflare normaliza la ruta histórica del Portal a `/portal`; la 270 reconoce
+esa ruta canónica sin formar un bucle. La 271 hace que, después de iniciar
+sesión, `/produccion/` y `/produccion/index.html` sirvan directamente la mesa
+estática protegida sin volver a atravesar el Portal. Sin sesión, esas rutas
+siguen regresando a la portada con su destino conservado.
 
-Por consistencia de caché, 269 se publicó como una nueva build. La batería
-completa terminó en verde y GitHub Pages y Cloudflare Beta se comprobaron byte
-a byte: juego de escritorio y móvil, Portal, estudios, catálogo, 37 sonidos,
-originales, ilustraciones y kit físico. No modifica cartas, reglas, mazos, IA,
-colección, progreso ni el kit físico.
+El verificador de publicación también conserva su sesión temporal durante una
+propagación lenta y presenta el origen esperado al abrirla. La sesión sólo se
+usa para comparar el despliegue protegido y se elimina al finalizar; no guarda
+credenciales de jugadores.
 
-Artefactos: `gh-pages:deec608` en `/tcg-beta/` y Cloudflare beta `5545f83`.
-Producción sigue en build 267 hasta completar su publicación, con los secretos
-`PORTAL_PASSWORD_HASH` y `PORTAL_SESSION_KEY` configurados exclusivamente en
-Cloudflare.
+La batería completa terminó en verde y GitHub Pages y Cloudflare se comprobaron
+byte a byte: juego de escritorio y móvil, Portal, sesión, mesa protegida,
+estudios, catálogo, 37 sonidos, originales, ilustraciones y kit físico. La
+build 271 no cambia cartas, reglas, mazos, IA, colección, progreso ni el kit
+físico.
 
-- Beta: https://beta.caoz-tcg.pages.dev/?b=269
-- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=269
-- Beta / Juego Físico: https://beta.caoz-tcg.pages.dev/fisico/
+`main:2650b68` publicó Producción y `develop:45c211a` es la Beta aprobada.
+Artefacto público final: `gh-pages:acd1d21`; la carpeta `/tcg-beta/` quedó en
+la misma build 271.
+
+- Producción / Portal: https://juego.caozcontodo.com/
+- Producción / juego, tras el Portal: https://juego.caozcontodo.com/produccion/
+- Producción / Estudio: https://juego.caozcontodo.com/estudio
+- Beta: https://beta.caoz-tcg.pages.dev/?b=271
+- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=271
 
 ---
 
