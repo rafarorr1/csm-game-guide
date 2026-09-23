@@ -75,7 +75,45 @@ comprobar_fuente_publicacion(){
   fi
   REVISION_VALIDADA="$revision"
 }
+
+# El juego queda detrás del Portal sólo en el dominio de Producción. Para no
+# convertir el publicador en otro lugar que conozca la contraseña, éste acepta
+# exclusivamente un *archivo temporal de cookies* con una sesión ya abierta.
+# Nunca se copia al paquete, ni se imprime, ni se manda a git. Si no se puede
+# comprobar la zona privada, tampoco se publica.
+PORTAL_COOKIE_JAR=""
+preparar_sesion_verificacion_portal(){
+  [ "$PUBLICAR" -eq 1 ] && [ "$DESTINO" = "tcg" ] || return 0
+  local archivo="${CAOZ_PORTAL_COOKIE_JAR:-}" permisos="" ultimos=""
+  if [ -z "$archivo" ] || [ ! -f "$archivo" ] || [ ! -r "$archivo" ]; then
+    rojo 'Producción requiere CAOZ_PORTAL_COOKIE_JAR: un archivo temporal con una sesión ya iniciada del Portal.'
+    rojo 'No se publica sin poder comprobar los archivos protegidos.'
+    return 1
+  fi
+  # curl guarda cookies HttpOnly como #HttpOnly_dominio; no se muestra nunca
+  # el contenido, sólo se confirma que corresponde al host y cookie correctos.
+  if ! grep -Eq '^(#HttpOnly_)?juego[.]caozcontodo[.]com[[:space:]].*__Host-caoz-portal[[:space:]]' "$archivo" 2>/dev/null; then
+    rojo 'La sesión temporal no corresponde al Portal de Producción.'
+    return 1
+  fi
+  permisos="$(stat -f '%Lp' "$archivo" 2>/dev/null || stat -c '%a' "$archivo" 2>/dev/null || true)"
+  case "$permisos" in
+    *[!0-7]*|'')
+      rojo 'No se pudieron comprobar los permisos del archivo temporal de sesión.'
+      return 1
+      ;;
+    *)
+      ultimos="${permisos#${permisos%??}}"
+      if [ "$ultimos" != "00" ]; then
+        rojo 'El archivo temporal de sesión no puede ser legible por grupo ni por otros usuarios.'
+        return 1
+      fi
+      ;;
+  esac
+  PORTAL_COOKIE_JAR="$archivo"
+}
 comprobar_fuente_publicacion || exit 1
+preparar_sesion_verificacion_portal || exit 1
 
 # ---------------------------------------------------------------------------
 paso "1/4 · Comprobaciones baratas"
@@ -379,23 +417,78 @@ fi
 # La dirección oficial es el subdominio de Rafa (CNAME en GoDaddy hacia
 # caoz-tcg.pages.dev); pages.dev sigue respondiendo con lo mismo.
 CF_URL="https://juego.caozcontodo.com"
+curl_portal(){
+  # PORTAL_COOKIE_JAR siempre es una ruta, no el valor de la cookie. Evita que
+  # una sesión de verificación termine en el historial, la salida o el paquete.
+  curl -fsSL --max-time 25 --cookie "$PORTAL_COOKIE_JAR" "$@"
+}
+cabecera_portal(){
+  curl -sS --max-time 25 -D - -o /dev/null "$@"
+}
+comprobar_redireccion_privada(){
+  local ruta="$1" marca="$2" cabeceras
+  cabeceras="$(cabecera_portal "$CF_URL$ruta?cb=$marca")" || return 1
+  printf '%s\n' "$cabeceras" | grep -Eq '^HTTP/[0-9.]+ 302' || return 1
+  printf '%s\n' "$cabeceras" | grep -Eqi '^location: https://juego[.]caozcontodo[.]com/[?]siguiente=%2Fproduccion%2F' || return 1
+}
+comprobar_portal_publico(){
+  local marca="$1" f esp srv cabeceras estado
+  # La entrada es pública para que el formulario pueda abrirse, pero debe ser
+  # exactamente el Portal, con CSP, y no una copia residual del juego antiguo.
+  for f in portal.html portal.css portal.js; do
+    esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
+    srv="$(curl -fsS --max-time 25 "$CF_URL/${f}?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
+    [ "$srv" = "$esp" ] || return 1
+  done
+  cabeceras="$(cabecera_portal "$CF_URL/?cb=$marca")" || return 1
+  printf '%s\n' "$cabeceras" | grep -Eq '^HTTP/[0-9.]+ 200' || return 1
+  printf '%s\n' "$cabeceras" | grep -Eqi '^content-security-policy:.*frame-ancestors' || return 1
+  printf '%s\n' "$cabeceras" | grep -Eqi '^cache-control:.*no-store' || return 1
+  estado="$(curl -fsS --max-time 25 -H 'Accept: application/json' "$CF_URL/api/portal/sesion?cb=$marca")" || return 1
+  [ "$estado" = '{"autenticado":false}' ] || return 1
+  comprobar_redireccion_privada '/index.html' "$marca" || return 1
+  comprobar_redireccion_privada '/produccion/index.html' "$marca" || return 1
+  # El antiguo PWA de raíz no puede conservar una ruta abierta al juego: el
+  # worker de retiro se desregistra antes de que un cliente vuelva a cargar.
+  curl -fsS --max-time 25 "$CF_URL/sw.js?cb=$marca" | grep -Fq 'self.registration.unregister' || return 1
+}
+comprobar_sesion_portal(){
+  local marca="$1" estado
+  estado="$(curl_portal -H 'Accept: application/json' "$CF_URL/api/portal/sesion?cb=$marca")" || return 1
+  [ "$estado" = '{"autenticado":true}' ]
+}
 comprobar_cloudflare(){
   gris "  esperando a Cloudflare Pages ($CF_URL, también caoz-tcg.pages.dev)"
   for j in $(seq 1 12); do
     sleep 10
-    local ok=1
+    local ok=1 prefijo="" marca="$(date +%s)"
+    if [ "$DESTINO" = "tcg" ]; then
+      comprobar_portal_publico "$marca" || { ok=0; }
+      comprobar_sesion_portal "$marca" || { ok=0; }
+      prefijo="/produccion"
+    fi
     # El HTML privado redirige al estudio único de producción. Sus dependencias
     # públicas se verifican aquí y en verificar_arte_web.py; el HTML crudo sólo
     # se compara en GitHub Pages, que no aplica esa redirección.
     for f in index.html motor.js movil.html final.js invitaciones-compartidas.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js mulligan-ui.js mulligan-ui.css arte-remoto.js arte-vistas.js nombres-cartas.js estudio.js coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-apertura.css cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js sw.js manifest.webmanifest art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
       local esp; esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
-      local srv; srv="$(curl -sL "$CF_URL/$f?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
+      local srv
+      if [ "$DESTINO" = "tcg" ]; then
+        srv="$(curl_portal "$CF_URL$prefijo/$f?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || { ok=0; break; }
+      else
+        srv="$(curl -sL "$CF_URL/$f?cb=$marca" | shasum -a 256 | cut -d" " -f1)"
+      fi
       [ "$srv" = "$esp" ] || { ok=0; break; }
     done
     if [ "$ok" = "1" ]; then
-      python3 "$AQUI/verificar_audio_web.py" "$CF_URL" || return 1
-      python3 "$AQUI/verificar_arte_web.py" "$CF_URL" || return 1
-      verde "  publicado y verificado byte a byte en Cloudflare: $CF_URL/"
+      local base_verificada="$CF_URL$prefijo"
+      python3 "$AQUI/verificar_audio_web.py" "$base_verificada" || return 1
+      python3 "$AQUI/verificar_arte_web.py" "$base_verificada" || return 1
+      if [ "$DESTINO" = "tcg" ]; then
+        verde "  Portal público, sesión y juego protegido verificados byte a byte en Cloudflare: $CF_URL/"
+      else
+        verde "  publicado y verificado byte a byte en Cloudflare: $CF_URL/"
+      fi
       gris "  si en tu navegador sigues viendo lo de antes, es su caché: recarga forzada"
       return 0
     fi

@@ -27,6 +27,9 @@ class PublicadorSeguro(unittest.TestCase):
         self.fuente = self.repo / 'caoz_tcg'
         self.fuente.mkdir(parents=True)
         self.destino = Path(self.temporal.name) / 'pages' / 'tcg'
+        self.cookie_jar = Path(self.temporal.name) / 'sesion-portal.txt'
+        self.cookie_jar.write_text('# Netscape HTTP Cookie File\n#HttpOnly_juego.caozcontodo.com\tFALSE\t/\tTRUE\t0\t__Host-caoz-portal\tsesion-de-prueba\n')
+        self.cookie_jar.chmod(0o600)
         for nombre in ARCHIVOS_PUBLICADOS:
             archivo = self.fuente / nombre
             archivo.parent.mkdir(parents=True, exist_ok=True)
@@ -48,13 +51,18 @@ class PublicadorSeguro(unittest.TestCase):
         self.git('add', 'caoz_tcg')
         self.git('commit', '-qm', 'Build249 con un solo commit')
 
-    def ejecutar(self, *args, entrada=None):
+    def ejecutar(self, *args, entrada=None, con_sesion=True):
         if entrada is None:
             comando = ['bash', str(self.prefijo), *args]
         else:
             comando = ['bash', '-s', '--', *args]
+        entorno = dict(os.environ)
+        if con_sesion:
+            entorno['CAOZ_PORTAL_COOKIE_JAR'] = str(self.cookie_jar)
+        else:
+            entorno.pop('CAOZ_PORTAL_COOKIE_JAR', None)
         return subprocess.run(comando, input=entrada, text=True, capture_output=True,
-                              cwd=self.fuente, timeout=10)
+                              cwd=self.fuente, timeout=10, env=entorno)
 
     def copiar_release(self):
         shutil.copytree(self.fuente, self.destino)
@@ -93,6 +101,18 @@ class PublicadorSeguro(unittest.TestCase):
         resultado = self.ejecutar('--produccion')
         self.assertEqual(resultado.returncode, 1)
         self.assertIn('sin guardar', resultado.stdout)
+
+    def test_produccion_exige_una_sesion_temporal_privada_para_verificar_el_portal(self):
+        # No se enseña ni se guarda la cookie: el publicador sólo recibe la
+        # ruta de un jar temporal ya creado por una sesión del navegador.
+        resultado = self.ejecutar('--produccion', con_sesion=False)
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn('CAOZ_PORTAL_COOKIE_JAR', resultado.stdout)
+        self.assertNotIn('sesion-de-prueba', resultado.stdout + resultado.stderr)
+        self.cookie_jar.chmod(0o644)
+        resultado = self.ejecutar('--produccion')
+        self.assertEqual(resultado.returncode, 1)
+        self.assertIn('no puede ser legible', resultado.stdout)
 
     def test_revalida_commit_rama_y_archivos_despues_de_las_pruebas(self):
         # Simula lo que puede cambiar durante Chrome sin ejecutar la copia.
@@ -270,6 +290,20 @@ class BetaCloudflare(unittest.TestCase):
         audio = (fuente / 'verificar_audio_web.py').read_text()
         self.assertIn("archivo == 'sonidos.html' and urlparse(base).hostname == 'beta.caoz-tcg.pages.dev'", audio)
         self.assertIn('302 https://juego.caozcontodo.com/sonidos', audio)
+
+    def test_produccion_verifica_el_portal_publico_y_su_zona_interna(self):
+        fuente = Path(__file__).resolve().parent
+        script = (fuente / 'publicar.sh').read_text()
+        cloudflare = script.split('comprobar_cloudflare(){', 1)[1].split('paso "4/4', 1)[0]
+        self.assertIn('comprobar_portal_publico', cloudflare)
+        self.assertIn('comprobar_sesion_portal', cloudflare)
+        self.assertIn('prefijo="/produccion"', cloudflare)
+        self.assertIn('curl_portal "$CF_URL$prefijo/$f?cb=$marca"', cloudflare)
+        self.assertIn('self.registration.unregister', script)
+        for nombre in ['verificar_audio_web.py', 'verificar_arte_web.py']:
+            verificador = (fuente / nombre).read_text()
+            self.assertIn('CAOZ_PORTAL_COOKIE_JAR', verificador)
+            self.assertIn("'--cookie'", verificador)
 
     def test_portal_estudios_y_kit_fisico_publican_sus_dependencias_en_ambos_destinos(self):
         # Ejecutar la copia y el commit reales contra el remoto local detecta
