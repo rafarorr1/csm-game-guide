@@ -5,21 +5,25 @@
   "fuentes": [
     {
       "archivo": "caoz_tcg/movil.html",
-      "sha256": "e74533a2ad97afa3bc0fdc998a9a99fd3b0585f3fc3ff6ef2c58278bf208e8ea"
+      "sha256": "734a4299583d91fcad7c4dddca04e680fac026b0db4f8aece1808104c030d2eb"
     },
     {
       "archivo": "caoz_tcg/motor.js",
-      "sha256": "2a46b182396dd2f027b7c8242339c8cc25dc0db62928b61365192208dd8d375b"
+      "sha256": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076"
     },
     {
       "archivo": "caoz_tcg/polish-aaa.js",
       "sha256": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
+    },
+    {
+      "archivo": "caoz_tcg/final.js",
+      "sha256": "131890249d00d833410b25bcd242423e735630e784115b428601a21463dd2bbe"
     }
   ],
   "funciones": [
     {
       "nombre": "el",
-      "linea": 917,
+      "linea": 936,
       "sha256": "3c8ca96388bf1aac79b1e93135c384fc5183d3938838461fe9468e653d67b646"
     },
     {
@@ -34,33 +38,38 @@
     },
     {
       "nombre": "tribeLine",
-      "linea": 2346,
+      "linea": 2506,
       "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
     },
     {
+      "nombre": "window.marcarNombreCarta",
+      "linea": 15,
+      "sha256": "bfdd50dc17f27e640152562e6678797cbb83604dc39eee9a3a7fc23ca3c7cc38"
+    },
+    {
       "nombre": "ponerDibujo",
-      "linea": 958,
+      "linea": 977,
       "sha256": "5cdaec988b45b80d27d4067083681a20088cafc8b4bf681739cee705eb253ce0"
     },
     {
       "nombre": "ilustrarLider",
-      "linea": 973,
+      "linea": 992,
       "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
     },
     {
       "nombre": "ilustrar",
-      "linea": 981,
+      "linea": 1000,
       "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
     },
     {
       "nombre": "cardEl",
-      "linea": 1520,
-      "sha256": "c74105684fe1a357a99be0c5a61218f8b9af402f6042ad0ed7c1c0919af60eef"
+      "linea": 1523,
+      "sha256": "c9fd0ca1f5888836ef84be8c4d286d911829299cabe013d23e4aa4aa1512d148"
     },
     {
       "nombre": "cartaDeLiderVS",
-      "linea": 1306,
-      "sha256": "3a8e33b98d0438dac8be34f5f82c2a668f9a44b5e11d2d131e0bc844432bb909"
+      "linea": 1326,
+      "sha256": "1e5541f69501d422b5b3f2cfaa1e47d93638791d1de24f422673ec93f963dad9"
     }
   ],
   "adaptadores": [

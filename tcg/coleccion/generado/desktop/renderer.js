@@ -15,6 +15,15 @@ const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 // tribeLine · SHA256 093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2
 
 function tribeLine(c){ return (c.tr&&c.tr.length? c.tr.join(' · ') : (c.t==='hechizo'&&c.sub? c.sub.map(x=>SUBNAME[x]).join(' · '): cap(c.t))); }
+// window.marcarNombreCarta · SHA256 bfdd50dc17f27e640152562e6678797cbb83604dc39eee9a3a7fc23ca3c7cc38
+window.marcarNombreCarta=function(nodo,id,base){
+    const original=String(base??id);
+    if(!nodo)return original;
+    const sufijo=nodo.dataset.nombreSufijo??(nodo.textContent.startsWith(original)?nodo.textContent.slice(original.length):'');
+    nodo.dataset.nombreId=id;nodo.dataset.nombreBase=original;nodo.dataset.nombreSufijo=sufijo;
+    if(typeof window.ponerNombreCarta==='function')return window.ponerNombreCarta(nodo,id,original);
+    nodo.textContent=original+sufijo;return nodo.textContent;
+  };
 // ponerDibujo · SHA256 49d6176090e60831a263230fb4129228b20a69ca07776b487c0dfdd5962af638
 
 function ponerDibujo(nodo, url, enc){
@@ -53,7 +62,7 @@ function ilustrar(d, id){
   if(pie.children.length&&!pie.parentNode)d.appendChild(pie);
   return d;
 }
-// cardEl · SHA256 7ea8cf09fc81f62ac4432445d5ba315d3de248acb3b0d84b1f8695e6327e087f
+// cardEl · SHA256 2a8067454495085e9b65bbbe090926d6353ea44087d8e7c55ab29032d8b2f4e2
 
 function cardEl(id,opt={}){
   const c=CARDS[id];
@@ -69,12 +78,13 @@ function cardEl(id,opt={}){
     <div class="tribe">${tribeLine(c)}</div>
     <div class="txt">${c.x||''}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
+  window.marcarNombreCarta(d.querySelector('.nm'),id,c.n);
   d.dataset.card=id;
   ilustrar(d, id);
   attachInspect(d,id);
   return d;
 }
-// cartaDeLiderVS · SHA256 750f30852f38460396485784f49bc82a6e7e295264cd16ab6c46f2cfb1fd921d
+// cartaDeLiderVS · SHA256 7b1950587efeed16883f4ffa413c605e39fe4d1c838e4ecf2cdec4704c9552f2
 
 function cartaDeLiderVS(lid, lado, ladoArte){
   const L=LEADERS[lid], D=DECKS[lid];
@@ -83,6 +93,7 @@ function cartaDeLiderVS(lid, lado, ladoArte){
     <div class="lname">${L.n}</div>
     <div class="larch">${D.d}</div>`);
   window.CAOZ_COLECCION_JUEGO?.marcar(d,ladoArte);
+  window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+lid,L.n);
   ilustrarLider(d, lid);
   return d;
 }

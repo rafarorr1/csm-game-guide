@@ -842,6 +842,15 @@ button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .fieldwrap>.row{min-width:0;max-width:100%;overflow:visible;
   padding:6px;justify-content:center}
 .fieldwrap>.row::-webkit-scrollbar{display:none}
+/* El jefe final es la excepción visible: seis Pesadillas distintas ocupan seis
+   huecos compactos, sin cambiar los cinco de una mesa normal. */
+.fieldwrap:not(.seisPesadillas) .slots i:nth-child(6){display:none}
+.fieldwrap.seisPesadillas .slots{gap:6px}
+.fieldwrap.seisPesadillas .slots i,
+#foeField.seisPesadillas>.card.unit{
+  width:min(var(--cw),calc((100% - 48px)/6));height:auto;aspect-ratio:5/7;
+}
+.fieldwrap.seisPesadillas>.row{gap:6px}
 .leaderslot{flex:0 0 auto}
 .leadercard{width:var(--lw);border-radius:11px;padding:5px 4px 6px;cursor:pointer;position:relative;
   display:flex;flex-direction:column;align-items:center;gap:1px;text-align:center;transition:.15s;
@@ -1558,20 +1567,21 @@ body.tut-on .card.playable{
   /* el punto de fuga por debajo y por delante: las cartas se echan hacia atrás
      por arriba, como cuando las tienes en la mano y las miras desde encima */
   perspective:1100px;perspective-origin:50% 150%}
-#hand .card{
+#hand .handSlot{
   width:var(--cwm);height:var(--chm);
+  position:relative;flex:0 0 auto;cursor:pointer;
   --mitad:calc((var(--n) - 1) / 2);
   --desde:calc(var(--i, 0) - var(--mitad));       /* cuánto se aparta del centro */
+  /* La ranura es la zona estable del ratón. La carta visual puede salirse de
+     ella al crecer, pero no roba el cursor de la vecina ni hace oscilar el
+     hover en los solapes. */
+  --solape:var(--solape-js, max(0px, (var(--n) - 8) * 13px));
+  margin-inline:calc(-1 * var(--solape));
+}
+#hand .handSlot .card{
+  width:var(--cwm);height:var(--chm);pointer-events:none;
   transform-origin:50% 240%;
-  /* LAS VECINAS SE APARTAN.
-     --sep lo pone el JS al pasar por encima de una carta: +1/−1 para las de al
-     lado, menos para las siguientes, 0 para el resto. Aquí se convierte en un
-     desplazamiento a lo largo de la mano que crece con el solape: cuanto más
-     llena va, más sitio hay que hacer para que la ampliada no tape a nadie.
-     Va ANTES de las rotaciones para que el desplazamiento sea lateral y no
-     siga el giro de la carta. */
-  --sep:0;
-  transform:translateX(calc(var(--sep) * (40px + var(--solape, 0px) * .8)))
+  transform:
             rotateX(10deg)
             rotate(calc(var(--desde) * 2.9deg))
             translateY(calc(var(--desde) * var(--desde) * 2.2px));
@@ -1586,7 +1596,6 @@ body.tut-on .card.playable{
    de abajo es sólo el respaldo para cuando no hay medida (mano oculta). Con un
    umbral fijo en 8 cartas, ocho de 150 px ya no cabían y las de los extremos se
    salían de la zona — y el giro del abanico las empuja aún más hacia fuera. */
-#hand .card{--solape:var(--solape-js, max(0px, (var(--n) - 8) * 13px));margin-inline:calc(-1 * var(--solape))}
 /* al pasar por encima se endereza, sube y crece: hasta que la sueltas conviene
    verla entera y sin torcer */
 /* AL PASAR POR ENCIMA, LA CARTA CRECE
@@ -1594,8 +1603,8 @@ body.tut-on .card.playable{
    Ahora la carta se endereza —también la inclinación— y crece 1,7 veces hasta
    el tamaño al que se lee cómoda, sin moverse de su hueco en la mano. Crece
    desde su base, así que sube sobre el tablero y no se hunde por abajo. */
-#hand .card{transform-origin:50% 240%}
-#hand .card:hover, #hand .card.finge-hover{
+#hand .handSlot.is-hover{z-index:60}
+#hand .handSlot.is-hover .card, #hand .handSlot .card.finge-hover{
   transform-origin:50% 100%;
   /* la ampliada se inclina con el cursor: mismas variables que el foil. La
      transición se acorta SÓLO aquí: como la dicta el estado destino, entrar es
@@ -1603,15 +1612,15 @@ body.tut-on .card.playable{
   --tx:calc((var(--mx, .5) - .5) * 16deg);
   --ty:calc((var(--my, .5) - .5) * -12deg);
   transition-duration:.16s;
-  transform:rotateX(var(--ty)) rotateY(var(--tx)) rotate(0deg) translateY(-14px) scale(1.7);z-index:60;
+  transform:rotateX(var(--ty)) rotateY(var(--tx)) rotate(0deg) translateY(-14px) scale(1.7);
   box-shadow:0 34px 64px rgba(0,0,0,.9), 0 0 0 1px var(--tipo-cl,var(--gold)),
              0 0 46px rgba(0,0,0,.6)}
-#hand .card.unplayable:hover, #hand .card.unplayable.finge-hover,
-#hand .card.locked:hover, #hand .card.locked.finge-hover{
+#hand .handSlot.is-hover .card.unplayable, #hand .handSlot .card.unplayable.finge-hover,
+#hand .handSlot.is-hover .card.locked, #hand .handSlot .card.locked.finge-hover{
   opacity:1;filter:none}
 /* a ese tamaño el texto ya cabe entero: no hace falta recortarlo */
-#hand .card:hover .txt, #hand .card.finge-hover .txt{overflow:visible}
-#hand .card:hover .nm, #hand .card.finge-hover .nm{-webkit-line-clamp:3}
+#hand .handSlot.is-hover .card .txt, #hand .handSlot .card.finge-hover .txt{overflow:visible}
+#hand .handSlot.is-hover .card .nm, #hand .handSlot .card.finge-hover .nm{-webkit-line-clamp:3}
 /* la elegida se queda fuera del abanico para que se vea cuál es */
 #hand .card.selected{transform-origin:50% 100%;
   transform:rotateX(0deg) rotate(0deg) translateY(-16px) scale(1.28);z-index:50}
@@ -2096,6 +2105,14 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
   box-shadow:0 26px 52px rgba(0,0,0,.9), 0 0 0 1px var(--tipo-cl,var(--gold))}
 /* a ese tamaño el texto cabe entero */
 .gallery .card:hover .txt{display:block;overflow:visible}
+/* Elegir o descartar es una acción, no una vitrina: reservar una cuadrícula
+   estable evita que la carta ampliada cambie el alto útil del diálogo. */
+.gallery.selectorCartas{display:grid;grid-template-columns:repeat(auto-fit,var(--cw));gap:18px 14px;
+  justify-content:center;align-items:start;padding:7px 12px 18px}
+.gallery.selectorCartas .card{margin:0 auto}
+.gallery.selectorCartas .card:hover{transform:translateY(-4px) scale(1.05);z-index:2;
+  box-shadow:0 16px 30px rgba(0,0,0,.75),0 0 0 1px var(--tipo-cl,var(--gold))}
+.gallery.selectorCartas .card:hover .txt{display:block;overflow:hidden}
 /* cuántas copias lleva el mazo que estás mirando */
 .copias{position:absolute;top:5px;right:6px;z-index:6;
   background:linear-gradient(180deg,#6b5320,#3d2f13);color:#ffe6a8;
@@ -2135,6 +2152,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 .extrasOpciones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(100%,480px);margin:8px 0}
 .extrasOpciones .btn{min-height:62px;padding:12px;font-size:14px;line-height:1.35}
 .extrasOpciones>.btn:last-child:nth-child(odd){grid-column:1/-1}
+#audioExtras{display:flex;justify-content:center;width:min(100%,480px);min-height:40px}
 #extras #mBorrarProgreso{margin-top:4px;min-height:44px;padding:10px 18px;font-size:13px;color:#eab2a7;border-color:#a2544d80;background:#351918bb}
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
