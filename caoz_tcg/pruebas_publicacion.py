@@ -312,6 +312,9 @@ class BetaCloudflare(unittest.TestCase):
         self.assertIn('CAOZ_PORTAL_CLAVE_VERIFICACION', script)
         self.assertIn('mktemp', script)
         self.assertIn('PORTAL_COOKIE_TEMPORAL', script)
+        self.assertIn('-H "Origin: $CF_URL"', script)
+        self.assertIn('PORTAL_COOKIE_TEMPORAL=1\n  PORTAL_CLAVE_VERIFICACION=""', script)
+        self.assertNotIn('PORTAL_CLAVE_VERIFICACION=""; rm -f -- "$jar"', script)
         for nombre in ['verificar_audio_web.py', 'verificar_arte_web.py']:
             verificador = (fuente / nombre).read_text()
             self.assertIn('CAOZ_PORTAL_COOKIE_JAR', verificador)

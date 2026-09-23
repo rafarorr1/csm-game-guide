@@ -472,10 +472,11 @@ crear_sesion_verificacion_portal(){
   chmod 600 "$jar" || { rm -f -- "$jar"; return 1; }
   # La clave viaja por stdin y se convierte a JSON dentro de la tubería: nunca
   # aparece en argumentos, salida, archivos del proyecto ni historial de git.
-  respuesta="$(printf '%s' "$PORTAL_CLAVE_VERIFICACION" | python3 -c 'import json,sys; print(json.dumps({"clave":sys.stdin.read()},separators=(",",":")))' | curl -fsS --max-time 25 --cookie-jar "$jar" -H 'Content-Type: application/json' -H 'Accept: application/json' --data-binary @- "$CF_URL/api/portal/sesion")" || {
-    PORTAL_CLAVE_VERIFICACION=""; rm -f -- "$jar"; return 1;
+  respuesta="$(printf '%s' "$PORTAL_CLAVE_VERIFICACION" | python3 -c 'import json,sys; print(json.dumps({"clave":sys.stdin.read()},separators=(",",":")))' | curl -fsS --max-time 25 --cookie-jar "$jar" -H 'Content-Type: application/json' -H 'Accept: application/json' -H "Origin: $CF_URL" --data-binary @- "$CF_URL/api/portal/sesion")" || {
+    # La clave sigue sólo en esta shell (no exportada) para que un despliegue
+    # que aún se propaga pueda reintentar la misma sesión temporal.
+    rm -f -- "$jar"; return 1;
   }
-  PORTAL_CLAVE_VERIFICACION=""
   if [ "$respuesta" != '{"ok":true}' ]; then
     rm -f -- "$jar"; return 1
   fi
@@ -484,6 +485,7 @@ crear_sesion_verificacion_portal(){
   fi
   PORTAL_COOKIE_JAR="$jar"
   PORTAL_COOKIE_TEMPORAL=1
+  PORTAL_CLAVE_VERIFICACION=""
   export CAOZ_PORTAL_COOKIE_JAR="$jar"
 }
 comprobar_redireccion_privada(){
