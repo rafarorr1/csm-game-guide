@@ -1,0 +1,79 @@
+/* Visor 3D de la Colección (visor-3d.js). Cada capa repite la misma cadena de
+   transformaciones con su propia perspectiva: sin preserve-3d, el canto sale de
+   láminas a distinta profundidad y las caras se ocultan con backface-visibility. */
+.visor3d{--w:300px;--h:420px;--p:1200px;--radio:12px;--rx:0rad;--ry:0rad;--rz:0rad;--y:0px;--s:1;--gx:72%;--gy:26%;--fx:50%;--fy:50%;--inclina:0;--pila:1;
+  --canto:#5d4c35;--canto-luz:#a88f63;--halo:#5a3d1c;--holo:0;--destellos:.2;
+  position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;overflow:hidden;
+  background:#07050c;color:#efe6d6;font-family:var(--sans,system-ui,sans-serif);flex-direction:column;
+  padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
+.visor3d[open]{display:flex}
+.visor3d::backdrop{background:#000d}
+.visor3dMotas,.visor3dHalo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.visor3dHalo{background:radial-gradient(ellipse 70% 55% at 50% 46%,color-mix(in srgb,var(--halo) 75%,transparent),transparent 70%),radial-gradient(ellipse 120% 90% at 50% 40%,#1a1226,#07050c 75%)}
+.visor3dMotas{z-index:1}
+
+.visor3dCabecera{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px 6px}
+.visor3dTitulos{min-width:0}
+.visor3dAntetitulo{display:block;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--canto-luz)}
+.visor3dTitulo{margin:2px 0 0;font:400 clamp(20px,4.6vw,28px)/1.15 var(--serif,Georgia,serif);color:#f3dfb4;text-wrap:balance}
+.visor3dCerrar{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid #ffffff26;background:#ffffff0f;color:#efe6d6;cursor:pointer}
+.visor3dCerrar svg,.visor3dVoltear svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.visor3dCerrar:hover{background:#ffffff1f}
+
+.visor3dEscena{position:relative;z-index:2;flex:1;min-height:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+.visor3dEscena.arrastrando{cursor:grabbing}
+.visor3dCuerpo{position:absolute;inset:0}
+.visor3dSuelo{position:absolute;left:50%;top:calc(50% + var(--h) / 2 + 14px);width:calc(var(--w) * 1.5);height:calc(var(--w) * .28);translate:-50% -50%;border-radius:50%;
+  background:radial-gradient(closest-side,#000a,#0000),radial-gradient(closest-side,color-mix(in srgb,var(--canto-luz) 30%,transparent),transparent);pointer-events:none}
+
+.visor3dCapa{position:absolute;left:50%;top:50%;width:var(--w);height:var(--h);margin:calc(var(--h) / -2) 0 0 calc(var(--w) / -2);border-radius:var(--radio);
+  transform:perspective(var(--p)) translateY(var(--y)) scale(var(--s)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) translateZ(var(--z,0px)) translate(var(--dx,0px),var(--dy,0px)) rotate(var(--giro-pila,0deg));
+  will-change:transform}
+.visor3dCanto{background:linear-gradient(90deg,var(--canto),var(--canto-luz) 45%,var(--canto) 55%,color-mix(in srgb,var(--canto) 70%,#000))}
+.visor3dPila{opacity:var(--pila);box-shadow:0 10px 26px #0009;border:1px solid #9669f55c;
+  background:linear-gradient(180deg,#ffffff14,transparent 42%),repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),linear-gradient(165deg,#33224f,#1b1230)}
+.visor3dCara{backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.visor3dFrente{filter:drop-shadow(0 18px 30px #000a)}
+.visor3dDorso{transform:perspective(var(--p)) translateY(var(--y)) scale(var(--s)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) rotateY(180deg) translateZ(var(--z,0px));
+  display:grid;place-items:center;overflow:hidden;border:2px solid var(--canto-luz);box-shadow:0 18px 30px #000a,inset 0 0 0 6px #0006,inset 0 0 0 7px color-mix(in srgb,var(--canto-luz) 55%,transparent);
+  background:radial-gradient(circle at 50% 46%,#5b3d8c66,transparent 58%),linear-gradient(180deg,#ffffff14,transparent 42%),repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),linear-gradient(165deg,#33224f,#1b1230)}
+.visor3dSello{position:absolute;left:50%;top:50%;width:78%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;border:1px solid #c69eff57;box-shadow:inset 0 0 0 10px #c69eff12,0 0 30px #9669f533}
+.visor3dLogo{position:relative;width:88%;height:auto;filter:drop-shadow(0 6px 14px #000c)}
+
+/* La ficha de Colección fuera de su diálogo: mismas reglas que coleccion.css
+   aplica dentro de #coleccionPanel, para que el visor la muestre igual. */
+.visor3d .coleccionCarta{position:relative;flex:none;margin:0;max-width:none;max-height:none;min-height:0;aspect-ratio:5/7;transform:none;rotate:none;scale:1;translate:none;transition:filter .18s ease;pointer-events:none}
+.visor3d .coleccionCarta.card{overflow:visible;display:flex;flex-direction:column}
+.visor3d .coleccionCarta.card.acomodo .pieCarta .txt{display:block;max-height:none;overflow:visible;-webkit-line-clamp:unset;white-space:normal}
+.visor3d .coleccionCarta.card.acomodo .pieCarta .tribe{white-space:normal}
+.visor3d .coleccionCarta.vscard{inset:auto;position:relative;display:flex;flex-direction:column;justify-content:flex-end;border-radius:10px;background:#1a1325;overflow:hidden;animation:none}
+.visor3d .coleccionCarta.vscard .lface{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0}
+.visor3d .coleccionCarta.vscard .lname{position:relative;inset:auto;z-index:3;margin:0;padding:.16em .25em .08em;text-align:center;font:700 1.5em/1.2 var(--serif,Georgia,serif);font-variant:small-caps;color:var(--acabado-tinta,#fdf6e6);background:#17101ee8}
+.visor3d .coleccionCarta.vscard .larch{position:relative;inset:auto;z-index:3;display:block;margin:0;padding:0 .65em .7em;text-align:center;font:700 .65em/1.3 var(--sans,system-ui,sans-serif);letter-spacing:.07em;text-transform:uppercase;color:#d6c8e4;background:#17101ee8}
+/* La carta real ocupa la cara completa; se neutralizan los desplazamientos
+   que tiene en la mesa y en la rejilla. */
+.visor3dFrente .visor3dCarta{position:absolute;inset:0;margin:0;transform:none;rotate:none;scale:1;translate:none;pointer-events:none;animation:none}
+.visor3dFrente>i{position:absolute;inset:0;border-radius:var(--radio);pointer-events:none;z-index:6}
+.visor3dFoil{display:none;background:repeating-linear-gradient(115deg,#ff6f9a 0%,#ffcf6a 6%,#8dffb0 12%,#6fd2ff 18%,#c08bff 24%,#ff6f9a 30%);background-size:320% 320%;background-position:var(--fx) var(--fy);
+  mix-blend-mode:color-dodge;opacity:calc(var(--holo) * (.3 + var(--inclina) * .7));
+  -webkit-mask-image:radial-gradient(circle at var(--gx) var(--gy),#000 0%,#0009 40%,#0003 80%);mask-image:radial-gradient(circle at var(--gx) var(--gy),#000 0%,#0009 40%,#0003 80%)}
+.visor3d:is([data-acabado="foil"],[data-acabado="dorado"]) .visor3dFoil{display:block}
+.visor3d[data-acabado="dorado"] .visor3dFoil{background-image:repeating-linear-gradient(115deg,#ffcf6a 0%,#fff2b8 7%,#e0a13c 14%,#ffe08a 21%,#f6b8ff 26%,#ffcf6a 32%)}
+.visor3dDestellos{background-size:180px 180px;background-position:calc(var(--fx) * .4) calc(var(--fy) * .4);mix-blend-mode:color-dodge;opacity:calc(var(--destellos) * var(--inclina))}
+.visor3dBrillo{background:radial-gradient(circle at var(--gx) var(--gy),#ffffff6b 0%,#ffffff1f 24%,#0000 52%,#0000002e 100%);mix-blend-mode:soft-light}
+.visor3dBrillo::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at var(--gx) var(--gy),#ffffff38 0%,#ffffff00 32%);mix-blend-mode:screen}
+
+.visor3dPie{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 16px 16px}
+.visor3dEdiciones{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.visor3dEdicion{min-width:88px;min-height:40px;padding:6px 14px;border-radius:10px;border:1px solid #ffffff26;background:#ffffff0d;color:#e6ddcf;font:400 15px/1.1 var(--serif,Georgia,serif);letter-spacing:.5px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:2px}
+.visor3dEdicion[aria-pressed="true"]{border-color:var(--canto-luz);background:color-mix(in srgb,var(--canto-luz) 16%,#0000);color:#fff4d8}
+.visor3dEdicion:disabled{opacity:.45;cursor:not-allowed}
+.visor3dCandado{font:600 9px/1 var(--sans,system-ui,sans-serif);letter-spacing:1px;text-transform:uppercase;color:#b4a5ca}
+.visor3dCopias{margin:0;font-size:13px;color:var(--canto-luz);min-height:1.2em;font-variant-numeric:tabular-nums}
+.visor3dAcciones{display:flex;gap:8px}
+.visor3dVoltear{display:inline-flex;align-items:center;gap:8px;min-height:40px;padding:0 18px;border-radius:10px;border:1px solid #d8b27380;background:linear-gradient(#3c3324,#272319);color:#f1dcae;font:400 15px var(--serif,Georgia,serif);cursor:pointer}
+.visor3dVoltear:hover{filter:brightness(1.12)}
+.visor3d button:focus-visible{outline:2px solid #f3d59a;outline-offset:2px}
+.visor3dAyuda{margin:0;font-size:11px;color:#9d93ad;letter-spacing:.3px}
+@media (max-height:620px){.visor3dAyuda{display:none}.visor3dCabecera{padding-top:10px}}
+@media (hover:none){.visor3dEscena{cursor:default}}

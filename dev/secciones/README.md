@@ -334,6 +334,24 @@ ilustración premium no concede esa edición al inventario real. El laboratorio
 sólo consulta esos originales públicos: permite revisar las series sin traer
 reemplazos ni ajustes privados del estudio.
 
+### Visor 3D de una carta
+
+En el detalle, tocar una edición desbloqueada (o enfocarla y pulsar Intro) abre
+`visor-3d.js` en un diálogo propio, encima de Colección. Muestra la misma ficha
+clonada con canto, reflejo que sigue al puntero, película foil y destellos en
+Foil/Dorada, y el dorso con `art/logo.webp`. Se gira arrastrando, se voltea con
+doble toque, doble clic, `F` o «Voltear», y desde ahí se cambia entre ediciones
+desbloqueadas; las bloqueadas no se abren. Sin WebGL ni dependencias: cada capa
+repite su propia perspectiva, sin `preserve-3d`. Sólo dibuja; no equipa ni
+cambia cantidades. Con movimiento reducido no hay giro de entrada ni motas.
+
+Revisión directa: `/coleccion/?estado=ediciones&carta=tal` y tocar la Dorada.
+
+```sh
+node dev/secciones/pruebas_coleccion_visor3d.mjs
+node dev/secciones/pruebas_coleccion_visor3d.mjs --sabotaje
+```
+
 ### Cantidades y límites de migración
 
 `cantidad(id)` devuelve el total; `cantidad(id, acabado)` devuelve una edición.
@@ -408,6 +426,7 @@ node caoz_tcg/pruebas_originales_acabados.mjs
 node dev/secciones/pruebas_coleccion_copias.mjs
 node dev/secciones/pruebas_coleccion_muestrario.mjs
 node dev/secciones/pruebas_coleccion_protagonistas.mjs
+node dev/secciones/pruebas_coleccion_visor3d.mjs
 ```
 
 Después de publicar, `BASE_URL=https://aislados.caoz-tcg.pages.dev/coleccion/`

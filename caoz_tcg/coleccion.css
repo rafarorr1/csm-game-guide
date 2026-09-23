@@ -91,6 +91,9 @@
 /* Una edición sin desbloquear sólo deja entrever el naipe. Las etiquetas,
    cantidades y acciones permanecen nítidas fuera de la carta. */
 #coleccionPanel .coleccionVersion.bloqueada .coleccionCarta{filter:blur(clamp(3px,calc(var(--cw,200px) / 40),7px)) saturate(.55) brightness(.72)}
+/* Una edición desbloqueada se abre en el visor 3D al tocarla. */
+#coleccionPanel .coleccionVersion .coleccionCarta.coleccionVer3D{pointer-events:auto;cursor:zoom-in}
+#coleccionPanel .coleccionVersion .coleccionCarta.coleccionVer3D:focus-visible{outline:2px solid #f3d59a;outline-offset:4px}
 #coleccionPanel .coleccionEstadoEdicion{display:flex;align-items:center;gap:5px;font-size:11px;color:#b3a18a;min-height:18px;flex:none}
 #coleccionPanel .coleccionEstadoEdicion svg{width:13px;height:13px}
 #coleccionPanel .coleccionCantidadEdicion{font-weight:700;font-variant-numeric:tabular-nums;color:#eadfbf}
