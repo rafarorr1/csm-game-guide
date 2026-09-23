@@ -51,7 +51,7 @@ class PublicadorSeguro(unittest.TestCase):
         self.git('add', 'caoz_tcg')
         self.git('commit', '-qm', 'Build249 con un solo commit')
 
-    def ejecutar(self, *args, entrada=None, con_sesion=True):
+    def ejecutar(self, *args, entrada=None, con_sesion=True, con_clave=False):
         if entrada is None:
             comando = ['bash', str(self.prefijo), *args]
         else:
@@ -61,6 +61,10 @@ class PublicadorSeguro(unittest.TestCase):
             entorno['CAOZ_PORTAL_COOKIE_JAR'] = str(self.cookie_jar)
         else:
             entorno.pop('CAOZ_PORTAL_COOKIE_JAR', None)
+        if con_clave:
+            entorno['CAOZ_PORTAL_CLAVE_VERIFICACION'] = 'clave-de-prueba'
+        else:
+            entorno.pop('CAOZ_PORTAL_CLAVE_VERIFICACION', None)
         return subprocess.run(comando, input=entrada, text=True, capture_output=True,
                               cwd=self.fuente, timeout=10, env=entorno)
 
@@ -102,13 +106,17 @@ class PublicadorSeguro(unittest.TestCase):
         self.assertEqual(resultado.returncode, 1)
         self.assertIn('sin guardar', resultado.stdout)
 
-    def test_produccion_exige_una_sesion_temporal_privada_para_verificar_el_portal(self):
-        # No se enseña ni se guarda la cookie: el publicador sólo recibe la
-        # ruta de un jar temporal ya creado por una sesión del navegador.
+    def test_produccion_exige_una_credencial_temporal_para_verificar_el_portal(self):
+        # La primera publicación no puede tener todavía un jar: el Portal sólo
+        # existe después del despliegue. Acepta una clave efímera, sin imprimirla
+        # ni guardarla, o un jar externo 0600 de una sesión ya abierta.
         resultado = self.ejecutar('--produccion', con_sesion=False)
         self.assertEqual(resultado.returncode, 1)
-        self.assertIn('CAOZ_PORTAL_COOKIE_JAR', resultado.stdout)
+        self.assertIn('CAOZ_PORTAL_CLAVE_VERIFICACION', resultado.stdout)
         self.assertNotIn('sesion-de-prueba', resultado.stdout + resultado.stderr)
+        resultado = self.ejecutar('--produccion', con_sesion=False, con_clave=True)
+        self.assertEqual(resultado.returncode, 0, resultado.stdout + resultado.stderr)
+        self.assertNotIn('clave-de-prueba', resultado.stdout + resultado.stderr)
         self.cookie_jar.chmod(0o644)
         resultado = self.ejecutar('--produccion')
         self.assertEqual(resultado.returncode, 1)
@@ -296,10 +304,14 @@ class BetaCloudflare(unittest.TestCase):
         script = (fuente / 'publicar.sh').read_text()
         cloudflare = script.split('comprobar_cloudflare(){', 1)[1].split('paso "4/4', 1)[0]
         self.assertIn('comprobar_portal_publico', cloudflare)
+        self.assertIn('crear_sesion_verificacion_portal', cloudflare)
         self.assertIn('comprobar_sesion_portal', cloudflare)
         self.assertIn('prefijo="/produccion"', cloudflare)
         self.assertIn('curl_portal "$CF_URL$prefijo/$f?cb=$marca"', cloudflare)
         self.assertIn('self.registration.unregister', script)
+        self.assertIn('CAOZ_PORTAL_CLAVE_VERIFICACION', script)
+        self.assertIn('mktemp', script)
+        self.assertIn('PORTAL_COOKIE_TEMPORAL', script)
         for nombre in ['verificar_audio_web.py', 'verificar_arte_web.py']:
             verificador = (fuente / nombre).read_text()
             self.assertIn('CAOZ_PORTAL_COOKIE_JAR', verificador)
