@@ -1,6 +1,6 @@
 # HANDOFF — para el agente (o la persona) que continúe el desarrollo
 
-Fecha: 2026-09-20 · beta y producción 267 · v29 · dirección: https://juego.caozcontodo.com/
+Fecha: 2026-09-22 · beta 268 y producción 267 · v30 · dirección: https://juego.caozcontodo.com/
 
 Este documento está escrito para que otro asistente pueda seguir desde aquí sin haber visto
 nada antes. Es la puerta de entrada; los detalles están en los archivos que se citan. Orden de
@@ -10,7 +10,53 @@ números) → el código.
 
 ---
 
-## Estado vigente — visor de nombres del Estudio corregido en producción y beta 267
+## Estado vigente — Portal del Domo y juego físico publicados en beta 268
+
+La build 268 integra el **Portal del Domo** y el kit Print-and-Play. El portal
+es la nueva portada de `juego.caozcontodo.com`: tras validar una sesión firmada
+en el servidor, presenta Producción, Beta, Estudio de Cartas, Estudio de Sonidos
+y Juego Físico. La contraseña no existe en HTML, JavaScript, pruebas ni Git;
+Cloudflare debe conservar únicamente su hash y una llave de firma como secretos.
+
+Producción queda internamente en `/produccion/`. Las rutas antiguas de escritorio,
+móvil e invitación vuelven allí después del acceso, conservando la sala y sus
+parámetros. Estudio y Sonidos permanecen en sus rutas canónicas. El service
+worker raíz anterior se retira de forma deliberada para que una app instalada
+no pueda conservar la entrada abierta; el juego vuelve a registrar su PWA bajo
+`/produccion/`.
+
+El kit físico está en `/fisico/`, con la página de reglas y el ZIP de Duelo del
+Pergamino y reversos. No modifica reglas, cartas, mazos, IA ni progreso digital.
+
+La puerta sólo se activa en el host oficial exacto, de modo que la Beta conserva
+su raíz de juego habitual para revisar la build y no expone una configuración de
+acceso de producción. La sección visual se revisó previamente en aislados; la
+regresión del Worker cubre acceso, firma, cierre, rutas protegidas, invitaciones,
+PWA y configuración incompleta. Una verificación adicional impide que una
+redirección correcta de Sonidos al Estudio único provoque un falso fallo de
+publicación.
+
+`develop:9fcdc5d` contiene el paquete de la build 268 y
+`develop:b38f829` la guarda posterior del verificador. Las validaciones completas
+terminaron en verde: pruebas estáticas, cuentas, estudios, portal, kit físico,
+Chrome, los seis tutoriales, campaña, minijuegos, online, móvil, audio, banco y
+regresiones. GitHub Pages y Cloudflare se compararon byte a byte; los archivos
+del portal, la página física, el ZIP, catálogo, originales y 37 sonidos también
+quedaron comprobados.
+
+Artefactos: `gh-pages:187458e` en `/tcg-beta/` y beta Cloudflare `83fd233`.
+Producción permanece en build 267 (`main:aacbd14`, árbol `gh-pages:tcg` sin
+alterar). Una promoción posterior necesita autorización para esta versión y,
+antes de ella, configurar los secretos `PORTAL_PASSWORD_HASH` y
+`PORTAL_SESSION_KEY` en Cloudflare.
+
+- Beta: https://beta.caoz-tcg.pages.dev/?b=268
+- Beta móvil: https://beta.caoz-tcg.pages.dev/movil.html?b=268
+- Beta / Juego Físico: https://beta.caoz-tcg.pages.dev/fisico/
+
+---
+
+## Registro anterior — visor de nombres del Estudio corregido en producción y beta 267
 
 El visor real que acompaña el perfil de una carta en el Estudio ahora conserva
 el nombre visible que recibe del editor, tanto si ya se publicó como si todavía
