@@ -339,7 +339,9 @@ reemplazos ni ajustes privados del estudio.
 En el detalle, tocar una edición desbloqueada (o enfocarla y pulsar Intro) abre
 `visor-3d.js` en un diálogo propio, encima de Colección. Muestra la misma ficha
 clonada con canto, reflejo que sigue al puntero, película foil y destellos en
-Foil/Dorada, y el dorso con `art/logo.webp`. Se gira arrastrando, se voltea con
+Foil/Dorada, y el dorso con `art/logo.webp`. Debajo gira un anillo rúnico y
+alrededor suben partículas de luz del color de la edición, con una ráfaga de
+chispas al abrir, voltear o cambiar de edición. Se gira arrastrando, se voltea con
 doble toque, doble clic, `F` o «Voltear», y desde ahí se cambia entre ediciones
 desbloqueadas; las bloqueadas no se abren. Sin WebGL ni dependencias: cada capa
 repite su propia perspectiva, sin `preserve-3d`. Sólo dibuja; no equipa ni

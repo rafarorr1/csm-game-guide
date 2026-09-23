@@ -8,7 +8,8 @@
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 .visor3d[open]{display:flex}
 .visor3d::backdrop{background:#000d}
-.visor3dMotas,.visor3dHalo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.visor3dMotas,.visor3dHalo,.visor3dChispas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.visor3dChispas{z-index:4}
 .visor3dHalo{background:radial-gradient(ellipse 70% 55% at 50% 46%,color-mix(in srgb,var(--halo) 75%,transparent),transparent 70%),radial-gradient(ellipse 120% 90% at 50% 40%,#1a1226,#07050c 75%)}
 .visor3dMotas{z-index:1}
 
@@ -23,6 +24,14 @@
 .visor3dEscena{position:relative;z-index:2;flex:1;min-height:0;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
 .visor3dEscena.arrastrando{cursor:grabbing}
 .visor3dCuerpo{position:absolute;inset:0}
+/* Pedestal: anillo rúnico tumbado bajo la carta. La máscara es la textura del
+   anillo; el color lo pone la edición. Los hijos giran dentro de su plano. */
+.visor3dPedestal{position:absolute;left:50%;top:calc(50% + var(--h) / 2 + 6px);width:calc(var(--w) * 1.7);aspect-ratio:1;pointer-events:none;
+  transform:translate(-50%,-50%) perspective(700px) rotateX(74deg)}
+.visor3dAnillo{position:absolute;inset:0;rotate:var(--anillo-giro,0rad);opacity:var(--anillo-brillo,.5);mix-blend-mode:screen;
+  background:radial-gradient(circle,color-mix(in srgb,var(--anillo,#e39a4c) 55%,#fff) 0%,var(--anillo,#e39a4c) 55%,color-mix(in srgb,var(--anillo,#e39a4c) 70%,#000) 100%);
+  -webkit-mask:var(--anillo-mascara) center/contain no-repeat;mask:var(--anillo-mascara) center/contain no-repeat;filter:drop-shadow(0 0 6px var(--anillo,#e39a4c))}
+.visor3dAnilloInterior{inset:22%;rotate:calc(var(--anillo-giro,0rad) * -1.6);opacity:calc(var(--anillo-brillo,.5) * .7)}
 .visor3dSuelo{position:absolute;left:50%;top:calc(50% + var(--h) / 2 + 14px);width:calc(var(--w) * 1.5);height:calc(var(--w) * .28);translate:-50% -50%;border-radius:50%;
   background:radial-gradient(closest-side,#000a,#0000),radial-gradient(closest-side,color-mix(in srgb,var(--canto-luz) 30%,transparent),transparent);pointer-events:none}
 
