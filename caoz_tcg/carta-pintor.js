@@ -187,8 +187,8 @@
   }
 
   // Máscara holo: R = foil, G = destellos, B = patrón grabado.
-  function pintarMascara(d,acabado){
-    const [cv,g]=plantilla(1),full=acabado==='dorado',B=L.cuerpo;
+  function pintarMascara(d,acabado,k=1){
+    const [cv,g]=plantilla(k),full=acabado==='dorado',B=L.cuerpo;
     g.fillStyle='#000';g.fillRect(0,0,TW,TH);
     rr(g,L.marco.x,L.marco.y,L.marco.w,L.marco.h,L.marco.r);g.fillStyle='rgb(210,150,0)';g.fill();
     if(full){
@@ -270,10 +270,11 @@
   }
 
   // Texturas completas para el visor 3D.
-  function texturas({id,acabado='normal',nombre,arte}){
-    const d=datos(id,nombre);
-    const color=pintarColor(d,acabado,arte),altura=pintarAltura(d,acabado,arte);
-    return {color,normal:normales(altura,6,.02,hash(id+acabado)),orm:pintarORM(d,acabado),mascara:pintarMascara(d,acabado)};
+  // Con ancho, a menor resolución (la apertura de sobres carga cinco a la vez).
+  function texturas({id,acabado='normal',nombre,arte,ancho}){
+    const d=datos(id,nombre),k=ancho?Math.min(1,ancho/TW):1;
+    const color=pintarColor(d,acabado,arte,k),altura=pintarAltura(d,acabado,arte,k);
+    return {color,normal:normales(altura,6*k,.02,hash(id+acabado)),orm:pintarORM(d,acabado,k),mascara:pintarMascara(d,acabado,k)};
   }
   // Carta de Colección: el color con el relieve iluminado por una luz fija
   // arriba a la izquierda, brillo en el metal y la laca, a la resolución pedida.

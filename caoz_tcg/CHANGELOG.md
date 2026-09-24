@@ -1,5 +1,22 @@
 # Registro de versiones — el TCG del Domo
 
+### v37 · Build 275 · Sobres con el diseño del visor · 2026-09-24
+
+- Los sobres se pintan como las cartas: la ilustración de portada de cada
+  colección bajo el foil, logo y textos en relieve, sellos metálicos
+  engarzados, tipografía Cinzel y película holográfica. La luz es la del visor
+  3D: reflejos de estudio, laca y un brillo que sigue al giro; en reposo el
+  sobre flota y se mece.
+- Al abrirlo, las cinco cartas salen del sobre como cartas 3D del visor, boca
+  abajo con el dorso del logo. Cada volteo las levanta y gira con su grosor,
+  relieve, metal y holo, con chispas del color de su edición (más en las
+  legendarias) y motas de la colección alrededor.
+- En Colección la apertura ocupa toda la pantalla, como el detalle. Sin WebGL
+  la apertura sigue con sus cartas planas; con movimiento reducido, sin
+  animaciones.
+- Las cartas de la partida que esperan ocultas se repintan a su tamaño al
+  aparecer.
+
 ### v36 · Build 274 · Las cartas pintadas llegan a la partida · 2026-09-24
 
 - La mano, la mesa, las cartas reveladas y la ficha ampliada usan el diseño de

@@ -22,7 +22,7 @@ SECCIONES = {
         'nombre': 'Colección',
         'exportador': 'exportar.mjs',
         'requeridos': {'index.html', 'movil.html', 'escritorio.html', 'procedencia.json', '_headers'},
-        'pruebas': ('pruebas.mjs', 'pruebas_exportacion.mjs'),
+        'pruebas': ('pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_sobres_revelacion.mjs'),
     },
     'rey': {
         'nombre': 'El Rey',

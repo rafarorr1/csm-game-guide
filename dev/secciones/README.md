@@ -628,6 +628,22 @@ python3 dev/secciones/publicar.py --seccion sobres --publicar --salida /ruta/nue
 python3 dev/secciones/publicar.py --seccion sobres --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
 
+### El sobre y su bonche con el diseño del visor (build 275)
+
+La funda se pinta como las cartas: color, material (metal y rugosidad) y altura
+del relieve en tres lienzos por cara, con la ilustración de portada de cada
+colección (`magodomo`, `discipulo`, `tal`), el logo y los textos en relieve y
+Cinzel. El shader usa la misma luz que la carta del visor (estudio procedural,
+luz que sigue el giro, laca y película holográfica) y el sobre se mece en reposo.
+Con WebGL, pintor y `carta-diseno.js`, `sobres-revelacion.js` saca las cinco
+cartas del sobre como cartas del visor 3D (`visor-3d-gl.js`, una ranura por
+carta): bonche boca abajo con el dorso del logo, volteo con grosor, relieve,
+metal y holo de su edición, chispas del color de la edición y motas de la
+colección. El DOM sigue llevando las fases, la cuenta y el resumen; sin el
+módulo o sin WebGL, la apertura usa sus cartas planas. En Colección la apertura
+ocupa la pantalla completa, como el detalle. `pruebas_sobres_revelacion.mjs`
+recorre los dos caminos y el movimiento reducido.
+
 Antes de publicar, revisar en 320×568, 390×844 y escritorio: arrastrar sin
 abrir, cinco revelaciones sin saltos por toques rápidos, quinta carta esperando un toque
 explícito antes del resumen, cinco cartas visibles sin superposición/scroll y regreso al

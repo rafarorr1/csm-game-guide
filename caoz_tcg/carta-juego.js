@@ -37,6 +37,7 @@
 
   function vestir(carta,id){
     if(!pintor()||!CARDS[id])return carta;
+    ids.set(carta,id);
     let img=carta.querySelector(':scope > .cjCara');
     if(!img){img=document.createElement('img');img.className='cjCara';img.alt='';img.draggable=false;carta.appendChild(img);}
     marcarCifras(carta,id);
@@ -65,11 +66,16 @@
   }
 
   const revisar=new Map();let fotograma=0;
+  // Una carta oculta (sin tamaño) se revisa cuando aparece, para pintarla a su
+  // tamaño real: p. ej. los frentes de un sobre, que esperan fuera de la vista.
+  const ids=new WeakMap(),idDe=c=>ids.get(c);
+  const medidor=typeof ResizeObserver==='function'?new ResizeObserver(es=>{for(const e of es)if(e.contentRect.width>0){medidor.unobserve(e.target);if(CARDS[idDe(e.target)])revisarPronto(e.target,idDe(e.target));}}):null;
   function revisarPronto(carta,id){
     revisar.set(carta,id);if(fotograma)return;
     fotograma=requestAnimationFrame(()=>{fotograma=0;const lista=[...revisar];revisar.clear();
       for(const [c,id]of lista){
         if(!c.isConnected)continue;
+        if(!c.getBoundingClientRect().width&&!c.classList.contains('cjFicha')){medidor?.observe(c);}
         const k=clave(c,id);c.dataset.pielClave=k;
         const h=hechas.get(k),w=anchoPara(c);
         if(h&&h.ancho>=w){poner(c,h);continue;}
