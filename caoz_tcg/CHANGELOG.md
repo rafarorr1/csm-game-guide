@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### v38 · Build 276 · Dorada en full art también en el Estudio · 2026-09-24
+
+- Toda carta Dorada se ve en full art: la ilustración ocupa la carta, con el
+  nombre arriba y las reglas en una caja translúcida, como la carta del
+  ejercicio. Ya lo era en la mano, la mesa, la Colección, el visor 3D y los
+  sobres; ahora también en la herramienta de cartas (Estudio).
+- En el Estudio, «Ficha ampliada» enseña la carta pintada de su edición y
+  «Colección» la carta real de la Colección, con el nombre que se está
+  editando. Así el encuadre de la Dorada se ajusta sobre el full art.
+- En Foil y Dorada ya no aparece un segundo nombre sobre la carta de la
+  Colección: la capa de texto del nombre sigue invisible.
+
 ### v37 · Build 275 · Sobres con el diseño del visor · 2026-09-24
 
 - Los sobres se pintan como las cartas: la ilustración de portada de cada

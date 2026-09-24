@@ -1809,6 +1809,17 @@ PRUEBAS.suite('tituloVisorEstudio',async t=>{
     t.check(!!nombre,'El visor crea la carta solicitada.');
     t.igual(nombre.textContent,'Machete de prueba','El nombre que manda el Estudio sobrevive al refresco asíncrono del catálogo.');
     t.check(!nombre.hasAttribute('data-nombre-id'),'El visor retira el marcador público antes de que pueda sobrescribir su borrador.');
+    // Dorada en full art en todas las vistas: la ficha lleva la carta pintada y
+    // la Colección, la carta real de la Colección (no la del tablero).
+    const mandar=(vista,acabado)=>f.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:'machete',acabado,url:'art/machete.webp',titulo:'Machete de prueba',encuadre:{x:50,y:50,z:100},vista},location.origin);
+    mandar('desktop_detalle','dorado');await sleep(60);
+    const ficha=f.contentDocument.querySelector('#muestraEstudio .big > .cjFicha');
+    t.check(!!ficha&&ficha.closest('.big').dataset.acabado==='dorado','La ficha ampliada del Estudio lleva la carta pintada de su edición.');
+    t.igual(ficha?.querySelector('.nm')?.textContent,'Machete de prueba','La ficha pinta el nombre en edición.');
+    mandar('desktop_coleccion','dorado');await sleep(60);
+    const col=f.contentDocument.querySelector('#muestraEstudio .cdCarta');
+    t.check(!!col&&col.classList.contains('cdFullArt')&&col.dataset.acabado==='dorado','La vista de Colección del Estudio usa la carta de la Colección, full art en Dorada.');
+    t.igual(col?.querySelector('.cdNombre')?.textContent,'Machete de prueba','La carta de Colección del Estudio muestra el nombre en edición.');
   }finally{
     clearTimeout(limite);removeEventListener('message',escuchar);f.remove();
     if(anterior===null)localStorage.removeItem(clave);else localStorage.setItem(clave,anterior);
