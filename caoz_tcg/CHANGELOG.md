@@ -1,5 +1,19 @@
 # Registro de versiones — el TCG del Domo
 
+### v41 · Build 279 · Tema del visor en todo el juego · 2026-09-24
+
+- Títulos, nombres, botones y cifras en Cinzel; el texto que se lee (reglas,
+  registro, chat, avisos, menús) en Cormorant, un poco mayor para que se lea
+  bien y con cifras alineadas.
+- Paneles y ventanas de cristal oscuro con filo de oro, títulos con una regla
+  dorada que se desvanece; botones de cristal con filo metálico y el dorado de
+  metal pulido.
+- En combate, los números de daño y curación son gemas como las de la carta;
+  los avisos, cápsulas con rombos; «Tu turno», letras de metal entre reglas
+  doradas; los mensajes breves, del mismo cristal.
+- Las tipografías se piden al arrancar y los sobres de la biblioteca repintan su
+  portada en un rato libre, para que ningún panel cambie de medida al tocarlo.
+
 ### v40 · Build 278 · Epílogo verificado sin carreras · 2026-09-24
 
 - La comprobación del epílogo espera la confirmación real del segundo fundido,
