@@ -14,6 +14,15 @@ const cap = s => s.charAt(0).toUpperCase()+s.slice(1);
 // tribeLine · SHA256 093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2
 
 function tribeLine(c){ return (c.tr&&c.tr.length? c.tr.join(' · ') : (c.t==='hechizo'&&c.sub? c.sub.map(x=>SUBNAME[x]).join(' · '): cap(c.t))); }
+// window.marcarNombreCarta · SHA256 bfdd50dc17f27e640152562e6678797cbb83604dc39eee9a3a7fc23ca3c7cc38
+window.marcarNombreCarta=function(nodo,id,base){
+    const original=String(base??id);
+    if(!nodo)return original;
+    const sufijo=nodo.dataset.nombreSufijo??(nodo.textContent.startsWith(original)?nodo.textContent.slice(original.length):'');
+    nodo.dataset.nombreId=id;nodo.dataset.nombreBase=original;nodo.dataset.nombreSufijo=sufijo;
+    if(typeof window.ponerNombreCarta==='function')return window.ponerNombreCarta(nodo,id,original);
+    nodo.textContent=original+sufijo;return nodo.textContent;
+  };
 // ponerDibujo · SHA256 5cdaec988b45b80d27d4067083681a20088cafc8b4bf681739cee705eb253ce0
 function ponerDibujo(nodo, url, enc){
   enc=window.CAOZ_ARTE?.encuadre(nodo.dataset.arteId,CAOZ_VISTAS.identificar(nodo),nodo)||enc;
@@ -39,7 +48,7 @@ function ilustrarLider(d, lid){
   cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid,cara),enc);
   return d;
 }
-// ilustrar · SHA256 86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551
+// ilustrar · SHA256 0e9e4f2910daf86e65b6f5f63ec0eb529fc727ecaf4bb6753c9f472799c728b4
 function ilustrar(d, id){
   d.dataset.arteId=id;CAOZ_ARTE.acabar(d,id);
   const enc=CAOZ_ARTE.encuadre(id,CAOZ_VISTAS.identificar(d),d),hay=enc!=null;
@@ -49,9 +58,11 @@ function ilustrar(d, id){
   if(!pie){pie=document.createElement('div');pie.className='pieCarta';}
   for(const sel of ['.nm','.tribe','.txt','.stats']){const e=d.querySelector(sel);if(e&&!pie.contains(e))pie.appendChild(e);}
   if(pie.children.length&&!pie.parentNode)d.appendChild(pie);
+  // La cara pintada de la Colección, con coste, ataque y vida vivos encima.
+  window.CAOZ_CARTA_JUEGO?.vestir(d,id);
   return d;
 }
-// cardEl · SHA256 c74105684fe1a357a99be0c5a61218f8b9af402f6042ad0ed7c1c0919af60eef
+// cardEl · SHA256 c9fd0ca1f5888836ef84be8c4d286d911829299cabe013d23e4aa4aa1512d148
 function cardEl(id,opt={}){
   const c=CARDS[id], d=el('div','card t-'+c.t);
   window.CAOZ_COLECCION_JUEGO?.marcar(d,opt.ladoArte??opt.side);
@@ -60,16 +71,18 @@ function cardEl(id,opt={}){
     ${c.r===2?'<div class="rar">★</div><i class="foil" aria-hidden="true"></i>':''}
     <div class="art">${c.art}</div><div class="tribe">${tribeLine(c)}</div><div class="txt">${c.x||''}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
+  window.marcarNombreCarta(d.querySelector('.nm'),id,c.n);
   d.dataset.card=id;
   ilustrar(d,id);
   pulsacionLarga(d, ()=>abrirFicha(id,null,{origen:d}));
   return d;
 }
-// cartaDeLiderVS · SHA256 3a8e33b98d0438dac8be34f5f82c2a668f9a44b5e11d2d131e0bc844432bb909
+// cartaDeLiderVS · SHA256 1e5541f69501d422b5b3f2cfaa1e47d93638791d1de24f422673ec93f963dad9
 function cartaDeLiderVS(lid, lado, ladoArte){
   const L=LEADERS[lid], D=DECKS[lid];
   const d=el('div','vscard '+lado,`<div class="lface">${L.art}</div><div class="lname">${L.n}</div><div class="larch">${D.d}</div>`);
   window.CAOZ_COLECCION_JUEGO?.marcar(d,ladoArte);
+  window.marcarNombreCarta(d.querySelector('.lname'),'lider_'+lid,L.n);
   ilustrarLider(d,lid); return d;
 }
 function attachInspect(){}
