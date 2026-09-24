@@ -436,8 +436,8 @@
     "juego/carta-diseno.js": "8f9d13108163efab0de759829d6e200ccb64dee15c9fa518bce6409100cc4848",
     "juego/carta-pintor.js": "4afba432e7937fc54eeeb08a4d10ceec349b8a537034d23a9792feecb6848069",
     "juego/coleccion-modelo.js": "7f72c8a40bed034e04a369c7fa76576dc23ae5386dd3af22c1220de0aafa30c8",
-    "juego/coleccion-ui.js": "a4b3b18714dcb93832a83abcfeafa5f02885d0f4f29511410843c379c4010951",
-    "juego/coleccion.css": "4fd225e0298ad83c69da51f913b1595764a787433acf1ef5ae6dce873065d51b",
+    "juego/coleccion-ui.js": "4911aebcc46211c4c3842947b13610aba558c4d3f0b66aa54d28b195560238ee",
+    "juego/coleccion.css": "fddaa8ca94f95c8bd53c45205ec2639e03f0529e1dd465f28d7c0eb95b295d81",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
@@ -445,17 +445,17 @@
     "juego/sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
     "juego/sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
     "juego/visor-3d-gl.js": "a4e20f4e2f663891fb8eed39a05a9a52fcd6e30c8178917697311e0391cf9887",
-    "juego/visor-3d.css": "aaf7bd4f7f0c1a1e75226cf2152580c48068c0e6db875c3f33b9ce3a09a23d96",
-    "juego/visor-3d.js": "0c9cf44e3b80d326589d6798a0e873c967a55b6e879f9f850ca32223010d614f",
+    "juego/visor-3d.css": "bd1fdec8c3648ae66c4e83ba2585b245617deae06296f48aa5851f4d231b3509",
+    "juego/visor-3d.js": "dd4302570b286488ded810ce412b83e41309be64fcfd7d3f257054a5ab490bb6",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "movil.html": "74a3cebbb7c0a15c46154653d0bb306afcc8b4833e3a911986c535c3869a0089",
-    "procedencia.json": "d4cfe3f5275dbe10a3df18b9dacb5932504268046a18030cf9b8e160a2064452",
+    "procedencia.json": "fbd9e35c5b3adcec198db0584dd754297ce6e38e2b1f3db6e98cb25274670e5f",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "081ddb9c7862e95ba662ed5e6e8a4c481d1c87d0"
+    "sha": "cad56810a7cc1a258908b6aff3be5e2a63d0b5ff"
   },
   "seccion": "coleccion",
   "version": 1

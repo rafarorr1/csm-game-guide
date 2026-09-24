@@ -171,10 +171,10 @@
     "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "coleccion-modelo.js": "7f72c8a40bed034e04a369c7fa76576dc23ae5386dd3af22c1220de0aafa30c8",
     "arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
-    "coleccion-ui.js": "a4b3b18714dcb93832a83abcfeafa5f02885d0f4f29511410843c379c4010951",
-    "visor-3d.js": "0c9cf44e3b80d326589d6798a0e873c967a55b6e879f9f850ca32223010d614f",
+    "coleccion-ui.js": "4911aebcc46211c4c3842947b13610aba558c4d3f0b66aa54d28b195560238ee",
+    "visor-3d.js": "dd4302570b286488ded810ce412b83e41309be64fcfd7d3f257054a5ab490bb6",
     "visor-3d-gl.js": "a4e20f4e2f663891fb8eed39a05a9a52fcd6e30c8178917697311e0391cf9887",
-    "visor-3d.css": "aaf7bd4f7f0c1a1e75226cf2152580c48068c0e6db875c3f33b9ce3a09a23d96",
+    "visor-3d.css": "bd1fdec8c3648ae66c4e83ba2585b245617deae06296f48aa5851f4d231b3509",
     "carta-pintor.js": "4afba432e7937fc54eeeb08a4d10ceec349b8a537034d23a9792feecb6848069",
     "carta-diseno.js": "8f9d13108163efab0de759829d6e200ccb64dee15c9fa518bce6409100cc4848",
     "carta-diseno.css": "d3466c3cb801fe559ac38b13d7d5b455cb64bee8242735cf1fc06dbaaa060266",
@@ -184,7 +184,7 @@
     "sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
     "sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
     "sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
-    "coleccion.css": "4fd225e0298ad83c69da51f913b1595764a787433acf1ef5ae6dce873065d51b",
+    "coleccion.css": "fddaa8ca94f95c8bd53c45205ec2639e03f0529e1dd465f28d7c0eb95b295d81",
     "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
   },
   "arte": {
