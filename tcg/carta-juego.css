@@ -1,0 +1,75 @@
+/* Cartas de la partida con la cara pintada (carta-juego.js). La carta de siempre
+   sigue debajo, completa: hasta que su cara está lista (data-piel="lista") se ve
+   igual que antes. Con la cara lista, lo impreso se vuelve transparente —sigue
+   ahí para leerse, buscarse y medirse— y sólo quedan a la vista el coste, el
+   ataque y la vida, centrados en las gemas pintadas, más las chapas de
+   habilidades y los objetos equipados. Las posiciones salen de la plantilla del
+   pintor (1024×1434): coste en (902,108), ATQ en (146,1316), VIDA en (878,1316). */
+:is(.card,.cjFicha)>.cjCara{position:absolute!important;inset:0;z-index:2!important;width:100%;height:100%;display:block;
+  opacity:0;pointer-events:none;border-radius:inherit;user-select:none;-webkit-user-select:none}
+:is(.card,.cjFicha)[data-piel="lista"]{container-type:inline-size;border-radius:4.8%/3.43%!important;border-color:transparent!important;background-color:#07060a}
+:is(.card,.cjFicha)[data-piel="lista"]>.cjCara{opacity:1}
+/* El metal de las gemas, el mismo del marco pintado de cada edición. */
+:is(.card,.cjFicha){--cj-metal:linear-gradient(135deg,#f3d6b5,#8a6030 40%,#e7bb55 65%,#4f3108)}
+:is(.card,.cjFicha)[data-acabado="foil"]{--cj-metal:linear-gradient(135deg,#ffffff,#7f8ea3 40%,#e3ecf8 65%,#262f3b)}
+:is(.card,.cjFicha)[data-acabado="dorado"]{--cj-metal:linear-gradient(135deg,#fff4c4,#b8862b 40%,#f7d774 65%,#4f3108)}
+
+/* Lo que la cara ya lleva pintado. */
+.card[data-piel="lista"] :is(.art,.rar,.foil){visibility:hidden!important}
+.card[data-piel="lista"]:not(.gastada)::before{display:none!important}
+:is(.card,.cjFicha)[data-piel="lista"] :is(.nm,.tribe,.txt){color:transparent!important;text-shadow:none!important;background:none!important;border-color:transparent!important;-webkit-text-fill-color:transparent}
+:is(.card,.cjFicha)[data-piel="lista"] :is(.nm,.tribe,.txt) *{color:transparent!important;text-shadow:none!important}
+.card[data-piel="lista"] .pieCarta{background:none!important}
+.card[data-piel="lista"] :is(.top,.pieCarta,.stats){position:static!important}
+/* El dibujo lo lleva la cara; su marco se queda encima sólo para el reflejo de
+   Foil y Dorada (acabados.css), que así recorre la carta entera. */
+.card[data-piel="lista"]>.marcoDibujo{z-index:3!important;border-radius:inherit;box-shadow:none!important}
+.card[data-piel="lista"]>.marcoDibujo>img,.card[data-piel="lista"]>.marcoDibujo::before{visibility:hidden}
+
+/* Las cifras vivas, sobre sus gemas. */
+:is(.card,.cjFicha)[data-piel="lista"] :is(.cost,.atk,.hp){position:absolute!important;z-index:4!important;margin:0!important;padding:0!important;
+  box-sizing:border-box;width:12.4cqi!important;height:12.4cqi!important;min-width:0!important;display:grid;place-items:center;border-radius:50%;
+  background:none!important;border:0!important;box-shadow:none!important;transform:translate(-50%,-50%);
+  font:900 7.6cqi/1 'Cinzel Domo','Cinzel',Georgia,serif!important;letter-spacing:0;color:#fff!important;
+  -webkit-text-stroke:.55cqi rgba(0,0,0,.62);paint-order:stroke fill;
+  text-shadow:0 .3cqi .6cqi #000,0 0 1.8cqi var(--cj-luz)!important;animation:none}
+:is(.card,.cjFicha)[data-piel="lista"] .cost{left:88.09%!important;top:7.53%!important;--cj-luz:#7a4fd0;--cj-gema:#7a4fd0}
+:is(.card,.cjFicha)[data-piel="lista"] .atk{left:14.26%!important;top:91.77%!important;--cj-luz:#c8801f;--cj-gema:#c8801f}
+:is(.card,.cjFicha)[data-piel="lista"] .hp{left:85.74%!important;top:91.77%!important;--cj-luz:#b8263c;--cj-gema:#b8263c}
+:is(.card,.cjFicha)[data-piel="lista"] :is(.cost.rebajado,.cjSube){color:#9dffc0!important;--cj-luz:#2fd07a}
+:is(.card,.cjFicha)[data-piel="lista"] .cjBaja{color:#ffb0a8!important;--cj-luz:#ff3b30}
+.card[data-piel="lista"] .cost.rebajado::after{bottom:-.4em;color:#9dffc0}
+
+/* Chapas de habilidades al pie de la ilustración y objetos equipados a la izquierda. */
+.card[data-piel="lista"] .keys{position:absolute!important;left:7%;right:7%;top:47%;z-index:4!important;margin:0;display:flex;flex-wrap:wrap;justify-content:center;gap:2px}
+.card[data-piel="lista"] .eq{left:6%;right:auto;top:14%;z-index:4}
+
+/* En la mano y en la mesa la carta mide entre 66 y 150 px: las gemas pintadas
+   no dan para leer una cifra de un vistazo. Crecen y llevan su propia gema,
+   con el mismo metal y el mismo color, encima de la pintada. */
+@container (max-width:200px){
+  :is(.card,.cjFicha)[data-piel="lista"] :is(.cost,.atk,.hp){width:max(21cqi,17px)!important;height:max(21cqi,17px)!important;
+    font-size:max(12cqi,10px)!important;-webkit-text-stroke:0;
+    background:radial-gradient(circle at 35% 30%,color-mix(in srgb,var(--cj-gema) 45%,#fff),var(--cj-gema) 48%,color-mix(in srgb,var(--cj-gema) 45%,#000)) padding-box,
+      var(--cj-metal) border-box!important;
+    border:max(1.8cqi,1.4px) solid transparent!important;box-shadow:0 1px 3px #000c!important;text-shadow:0 1px 2px #000!important}
+  :is(.card,.cjFicha)[data-piel="lista"] .cost{top:8.5%!important;left:87%!important}
+  :is(.card,.cjFicha)[data-piel="lista"] :is(.atk,.hp){top:91%!important}
+  :is(.card,.cjFicha)[data-piel="lista"] .atk{left:14%!important}
+  :is(.card,.cjFicha)[data-piel="lista"] .hp{left:86%!important}
+  .card[data-piel="lista"] .keys{top:42%!important}
+}
+
+/* La ficha ampliada: la carta pintada entera arriba; debajo, lo que no cabe en
+   una carta (chapas, objetos, base y ahora). */
+.cjFicha{position:relative;width:100%;aspect-ratio:5/7;overflow:hidden;border-radius:4.8%/3.43%;margin:0 0 10px}
+.cjFicha:not([data-piel="lista"]){display:none}
+.cjFicha>.marcoDibujo,.cjFicha>.nm{visibility:hidden}
+.big[data-piel-ficha="lista"]{padding:8px!important;height:auto!important}
+.big[data-piel-ficha="lista"]>:is(.cjImpreso,.foil){display:none!important}
+.cjFicha .stats{position:static!important}
+
+/* El dorso pintado, con el logo, en la mano del rival. */
+.dorso{background:var(--cj-dorso,none) center/100% 100% no-repeat,linear-gradient(180deg,rgba(255,255,255,.08),transparent 42%),repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),linear-gradient(165deg,#33224f,#1b1230)}
+:root[style*="--cj-dorso"] .dorso{border-color:transparent;border-radius:4.8%/3.43%}
+:root[style*="--cj-dorso"] .dorso::after{display:none}

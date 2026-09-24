@@ -355,6 +355,10 @@ PRUEBAS.suite('integracion', async t => {
 
 PRUEBAS.suite('visual', async t => {
   const carta=cardEl('eric');
+  // Esta suite mide la plantilla clásica; cartaPintada mide aparte la cara
+  // pintada. Si una suite anterior ya dejó la cara en caché, cardEl puede
+  // activarla de forma síncrona y cambiar la gema del coste de esquina.
+  carta.removeAttribute('data-piel');
   carta.style.cssText='position:fixed;left:40px;top:40px;width:180px;height:252px';
   document.body.appendChild(carta);
   try{
@@ -1809,6 +1813,17 @@ PRUEBAS.suite('tituloVisorEstudio',async t=>{
     t.check(!!nombre,'El visor crea la carta solicitada.');
     t.igual(nombre.textContent,'Machete de prueba','El nombre que manda el Estudio sobrevive al refresco asíncrono del catálogo.');
     t.check(!nombre.hasAttribute('data-nombre-id'),'El visor retira el marcador público antes de que pueda sobrescribir su borrador.');
+    // Dorada en full art en todas las vistas: la ficha lleva la carta pintada y
+    // la Colección, la carta real de la Colección (no la del tablero).
+    const mandar=(vista,acabado)=>f.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:'machete',acabado,url:'art/machete.webp',titulo:'Machete de prueba',encuadre:{x:50,y:50,z:100},vista},location.origin);
+    mandar('desktop_detalle','dorado');await sleep(60);
+    const ficha=f.contentDocument.querySelector('#muestraEstudio .big > .cjFicha');
+    t.check(!!ficha&&ficha.closest('.big').dataset.acabado==='dorado','La ficha ampliada del Estudio lleva la carta pintada de su edición.');
+    t.igual(ficha?.querySelector('.nm')?.textContent,'Machete de prueba','La ficha pinta el nombre en edición.');
+    mandar('desktop_coleccion','dorado');await sleep(60);
+    const col=f.contentDocument.querySelector('#muestraEstudio .cdCarta');
+    t.check(!!col&&col.classList.contains('cdFullArt')&&col.dataset.acabado==='dorado','La vista de Colección del Estudio usa la carta de la Colección, full art en Dorada.');
+    t.igual(col?.querySelector('.cdNombre')?.textContent,'Machete de prueba','La carta de Colección del Estudio muestra el nombre en edición.');
   }finally{
     clearTimeout(limite);removeEventListener('message',escuchar);f.remove();
     if(anterior===null)localStorage.removeItem(clave);else localStorage.setItem(clave,anterior);
@@ -2024,6 +2039,22 @@ PRUEBAS.suite('coleccion',async t=>{
         }
       };
       await new Promise(r=>w.requestAnimationFrame(r));revisarVersiones();
+      if(m.betaDisponible()){
+        const antesDemo=JSON.stringify(m.leer()),guardadoDemo=w.localStorage.getItem(m.clave),equipadaDemo=m.elegido('augusto'),controlDemo=()=>panel.querySelector('.coleccionDemoCambiar');
+        t.check(!!controlDemo(),pagina+': Beta ofrece el control temporal de estados en el detalle.');
+        controlDemo().click();await new Promise(r=>w.requestAnimationFrame(r));
+        t.igual(controlDemo().dataset.demoEdiciones,'bloqueadas',pagina+': la primera vista de prueba bloquea las tres ediciones.');
+        t.check([...panel.querySelectorAll('.coleccionVersion')].every(n=>n.classList.contains('bloqueada')),pagina+': la prueba bloqueada vela incluso la edición Normal.');
+        t.check([...panel.querySelectorAll('.coleccionUsar')].every(n=>n.disabled),pagina+': la vista bloqueada no deja equipar ni navegar.');
+        controlDemo().click();await new Promise(r=>w.requestAnimationFrame(r));
+        t.igual(controlDemo().dataset.demoEdiciones,'desbloqueadas',pagina+': la segunda vista de prueba desbloquea las tres ediciones.');
+        t.check([...panel.querySelectorAll('.coleccionVersion')].every(n=>!n.classList.contains('bloqueada')),pagina+': la prueba desbloqueada revela todas las ediciones.');
+        controlDemo().click();await new Promise(r=>w.requestAnimationFrame(r));
+        t.igual(controlDemo().dataset.demoEdiciones,'real',pagina+': la tercera pulsación recupera el inventario real.');
+        t.igual(JSON.stringify(m.leer()),antesDemo,pagina+': alternar la vista Beta no cambia el inventario.');
+        t.igual(w.localStorage.getItem(m.clave),guardadoDemo,pagina+': alternar la vista Beta no escribe en almacenamiento.');
+        t.igual(m.elegido('augusto'),equipadaDemo,pagina+': alternar la vista Beta no cambia la edición equipada.');
+      }
       t.check(panel.querySelector('[data-edicion="foil"]').classList.contains('bloqueada'),pagina+': Foil sigue cerrado aunque su vista pueda inspeccionarse.');
       t.check(panel.querySelector('[data-edicion="dorado"] .coleccionUsar').disabled,pagina+': Dorada indica que ya está en uso.');
       t.check(m.desbloquear('augusto','foil'),pagina+': un premio actualiza el diálogo abierto.');
@@ -2628,7 +2659,15 @@ PRUEBAS.suite('campanaEpilogoSobres', async t => {
       elegir.click();elegir.click();elegir.click();
       t.check(panel.dataset.epilogoFase==='confirmar'&&panel.querySelectorAll('.coleccionFinalMarca[data-grupo]').length===3,pagina+': el carrusel conserva exactamente las tres elecciones, incluso repetidas.');
       t.check(m.recompensasPendientes().length===1&&!m.inventarioSobres().length,pagina+': elegir visualmente no concede cartas ni consume sobres.');
-      const guardar=panel.querySelector('[data-epilogo-confirmar]');guardar.click();guardar.click();await sleep(80);
+      // El callback termina detrás de un cuadro de animación para que el negro
+      // cubra la salida. En un iframe fuera de pantalla ese cuadro puede llegar
+      // después de 80 ms: esperar su resultado real conserva la prueba del
+      // doble toque sin convertir una variación del navegador en un rojo.
+      const esperarConfirmacion=async()=>{
+        const hasta=Date.now()+2000;
+        while(!(confirmaciones===1&&recibido?.sobres?.length===3&&!panel.open&&!!d.querySelector('#menu.on'))&&Date.now()<hasta)await sleep(20);
+      };
+      const guardar=panel.querySelector('[data-epilogo-confirmar]');guardar.click();guardar.click();await esperarConfirmacion();
       t.check(confirmaciones===1&&recibido?.sobres?.length===3,pagina+': guardar confirma una sola vez los tres sobres.');
       t.check(!panel.open&&d.querySelector('#menu.on'),pagina+': sólo después del segundo fundido vuelve al menú.');
       t.check(!m.recompensasPendientes().length&&m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0)===3&&!m.pendiente(),pagina+': confirma tres sobres sellados sin abrir ni conceder cartas.');
@@ -4289,6 +4328,11 @@ PRUEBAS.suite('regresiones', async t => {
       const d = cardEl(id);   // tests.js corre dentro del juego: es su propia función
       d.style.cssText = 'position:fixed;left:-9999px';
       document.body.appendChild(d);
+      // Con la cara pintada (carta-juego.js) el tipo va en el cuerpo pintado; el
+      // borde y el coste de color son los de la carta mientras se pinta, y siguen
+      // siendo el contrato: se miden sin la cara.
+      if (d.dataset.piel === 'lista') t.check(!!d.querySelector(':scope > .cjCara') && d.classList.contains('t-'+tipo), `${tipo}: la cara pintada no lleva su tipo`);
+      delete d.dataset.piel;
       const cs = getComputedStyle(d);
       const borde = cs.borderTopColor;
       const coste = getComputedStyle(d.querySelector('.cost')).backgroundImage;
@@ -5202,6 +5246,53 @@ PRUEBAS.correr = async function(filtro){
 
   return res;
 };
+
+/* ===========================================================================
+   SUITE: cartaPintada — las cartas de la partida llevan la cara de la
+   Colección (carta-juego.js). La carta del juego sigue entera por dentro; las
+   cifras vivas quedan centradas en sus gemas, cambian sin repintar la cara y un
+   refresco del tablero no la hace parpadear.
+   ======================================================================== */
+PRUEBAS.suite('cartaPintada',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const marco=document.createElement('iframe');marco.style.cssText='position:fixed;left:-10000px;'+(pagina==='index.html'?'width:1440px;height:900px':'width:390px;height:844px');
+    const carga=new Promise(r=>marco.onload=r);marco.src=pagina+'?test=carta-pintada-interna';document.body.appendChild(marco);await carga;
+    const w=marco.contentWindow,d=marco.contentDocument;
+    const lista=async(n,ms=15000)=>{const t0=performance.now();while(n.dataset.piel!=='lista'&&performance.now()-t0<ms)await new Promise(r=>w.requestAnimationFrame(r));return n.dataset.piel==='lista';};
+    try{
+      t.check(!!w.CAOZ_CARTA_JUEGO,pagina+': falta carta-juego.js.');
+      w.showEnd=()=>{};w.nap=async()=>{};w.netSend=()=>{};
+      w.newGame('fender','gero');w.aiTurn=async()=>{};
+      Object.assign(w.eval('NET'),{on:false,host:false,guest:false});
+      // Con G.silent el tablero no se pinta: aquí se quiere ver.
+      w.eval(`G.fast=true;G.auto=true;G.silent=false;G.active=0;G.phase='principal';
+        P(0).hand=['bolafuego','tal'];P(0).field=[mkUnit('tal',0)];P(1).field=[];recalc();`);
+      w.showScreen('board');w.render();
+      const unidad=()=>d.querySelector('#myField .card.unit');
+      const mano=d.querySelector('#hand .card[data-card="bolafuego"]');
+      t.check(!!mano&&!!unidad(),pagina+': faltan las cartas de la mesa.');
+      t.check(await lista(mano)&&await lista(unidad()),pagina+': la cara pintada no llega a ponerse.');
+      for(const carta of [mano,unidad()]){
+        const cara=carta.querySelector(':scope > .cjCara'),r=carta.getBoundingClientRect(),rc=cara.getBoundingClientRect();
+        t.check(cara.naturalWidth>0&&Math.abs(rc.width-r.width)<3&&Math.abs(rc.height-r.height)<3,pagina+': la cara no cubre la carta.');
+        t.check(!!carta.querySelector('.nm')&&w.getComputedStyle(carta.querySelector('.nm')).color==='rgba(0, 0, 0, 0)',pagina+': el nombre impreso debe seguir en la carta, transparente.');
+        // La mano va en abanico (girada): se mide sin transformaciones. La cifra
+        // se centra con translate(-50%,-50%), así que su esquina es su centro.
+        const coste=carta.querySelector('.cost'),cx=coste.offsetLeft/carta.clientWidth,cy=coste.offsetTop/carta.clientHeight;
+        t.check(coste.offsetParent===carta&&Math.abs(cx-.88)<.03&&Math.abs(cy-.08)<.03,pagina+': el coste no cae sobre su gema ('+cx.toFixed(2)+','+cy.toFixed(2)+').');
+        t.check(w.getComputedStyle(carta.querySelector('.cost')).color!=='rgba(0, 0, 0, 0)',pagina+': el coste debe verse.');
+      }
+      const u=w.eval('P(0).field[0]'),atq=u.atk,cara=unidad().querySelector('.cjCara').getAttribute('src');
+      u.dmg=2;u.atk=atq+3;w.render();
+      const hp=unidad().querySelector('.hp'),atk=unidad().querySelector('.atk');
+      t.igual(+atk.textContent,atq+3,pagina+': el ataque vivo no se actualizó.');
+      t.check(atk.classList.contains('cjSube')&&hp.classList.contains('cjBaja'),pagina+': una mejora o una herida no se distinguen.');
+      t.check(unidad().dataset.piel==='lista'&&unidad().querySelector('.cjCara').getAttribute('src')===cara,pagina+': refrescar el tablero repintó o apagó la cara.');
+      t.check(w.getComputedStyle(unidad().querySelector('.cjCara')).opacity==='1',pagina+': la cara parpadea tras el refresco.');
+    }finally{marco.remove();}
+  }
+});
+
 
 /* Arranque automático cuando se entra por ?test=... */
 if(new URLSearchParams(location.search).has('test')){

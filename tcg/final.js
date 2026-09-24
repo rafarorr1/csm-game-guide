@@ -36,6 +36,9 @@
   guion('nombres-cartas.js');
   estilo('coleccion.css');
   estilo('sobres-apertura.css');
+  estilo('carta-diseno.css');
+  estilo('carta-juego.css');
+  estilo('visor-3d.css');
   guion('coleccion-modelo.js');
   guion('arte-remoto.js');
   // Las invitaciones se cargan antes del coordinador: las dos mesas comparten
@@ -62,6 +65,12 @@
   guion('coleccion-juego.js');
   guion('sobres-escena.js');
   guion('sobres-apertura.js');
+  guion('sobres-revelacion.js');
+  guion('carta-pintor.js');
+  guion('carta-diseno.js');
+  guion('carta-juego.js');
+  guion('visor-3d-gl.js');
+  guion('visor-3d.js');
   guion('coleccion-ui.js');
   estilo('cuenta.css');
   estilo('cuenta-juego.css');

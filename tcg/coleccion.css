@@ -123,6 +123,9 @@
 #coleccionPanel .coleccionSobreCuenta{font-size:13px;color:#c5aa80}
 #coleccionPanel .coleccionAbrirSobre{width:min(280px,100%);min-height:46px;font-size:17px}
 #coleccionPanel .coleccionBeta{background:none;border:1px dashed #8c765780;box-shadow:none;min-height:31px;padding:5px 13px;font-family:var(--sans,system-ui);font-size:11px;color:#baaa8e}
+#coleccionPanel .coleccionDemoEdiciones{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;padding-top:4px;text-align:center}
+#coleccionPanel .coleccionDemoEdiciones .coleccionBeta{min-width:205px}
+#coleccionPanel .coleccionDemoNota{margin:0;color:#a9987f;font-size:10px;line-height:1.35}
 #coleccionPanel .coleccionSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #coleccionPanel .barridoModal{position:absolute;inset:0;z-index:50;pointer-events:none}
 #coleccionPanel .coleccionInterior.menuEntra{animation:entraPantalla .4s cubic-bezier(.2,.75,.3,1) both}
@@ -660,3 +663,57 @@
   #coleccionPanel.coleccionFinalCampana :is(.coleccionFinalSobre,.coleccionFinalMarca,.coleccionFinalFundido){transition:none}
   #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{animation:none}
 }
+
+/* Detalle: la carta en 3D a pantalla completa, como el visor. El panel pierde
+   su marco, pestañas y pie; la escena llena todo y los controles de la edición
+   flotan en cristal a la derecha (abajo en el teléfono). Las fichas de cada
+   edición siguen en el DOM, ocultas: la escena 3D es la única carta visible. */
+#coleccionPanel[data-vista="detalle"]:has(.coleccionDetalle3D.con3D){inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior::before,#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior::after{display:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) :is(.coleccionPestanas,.coleccionPie,.coleccionTitulos,.coleccionEmblema){display:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionCabecera{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;margin:0;padding:0;min-height:0;border:0;background:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionEstado{position:absolute;left:0;right:0;bottom:12px;z-index:7;text-align:center;pointer-events:none}
+#coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{position:absolute;left:0;right:360px;bottom:16px;z-index:5;margin:0;text-align:center;color:#cbbfd9b3;pointer-events:none}
+#coleccionPanel .coleccionDetalle3D.con3D~.coleccionDetalleCabecera,#coleccionPanel .coleccionDetalleCabecera:has(~.con3D){position:absolute;top:max(14px,env(safe-area-inset-top));left:0;right:360px;z-index:6;padding:0 72px;pointer-events:none;text-shadow:0 2px 12px #000}
+#coleccionPanel .coleccionDetalleCabecera:has(~.con3D) .coleccionAtras{pointer-events:auto}
+#coleccionPanel .coleccionDetalleCabecera:has(~.con3D) h3{font-size:30px}
+#coleccionPanel .coleccionDetalle3D{flex:1;min-height:0;width:100%;max-width:1040px;margin:0 auto;display:flex;flex-direction:column}
+#coleccionPanel .coleccionDetalle3D.con3D{position:absolute;inset:0;display:block;max-width:none;margin:0;padding:0}
+#coleccionPanel .coleccionEscena3D{position:absolute;inset:0;min-height:0}
+#coleccionPanel .coleccionEscena3D .visor3dIncrustado{--reserva-der:360px;border-radius:0}
+/* La carta de la escena mide lo que decide el visor, no los topes de las fichas del panel. */
+#coleccionPanel .visor3dFrente .coleccionCarta{max-height:none;max-width:none;min-height:0}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{position:absolute;right:28px;top:50%;translate:0 -50%;z-index:5;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;align-content:center;gap:14px 8px;width:310px;max-width:none;max-height:calc(100% - 40px);min-height:0!important;margin:0;padding:20px 16px;overflow:auto;
+  border:1px solid #ffffff1c;border-radius:16px;background:#0e0a16a6;-webkit-backdrop-filter:blur(14px) saturate(130%);backdrop-filter:blur(14px) saturate(130%);box-shadow:0 24px 60px #0009}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion{display:contents}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionCarta{display:none!important}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionElegirAcabado{grid-row:1;min-width:0;width:100%}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="normal"] .coleccionElegirAcabado{grid-column:1}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{grid-column:2}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{grid-column:3}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion:not(.vista) :is(.coleccionEstadoEdicion,.coleccionUsar,.coleccionMejora){display:none}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionEstadoEdicion{grid-column:1/-1;grid-row:2;justify-self:center;align-self:center;font-size:13px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:3;justify-self:center;width:100%;min-height:44px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionMejora{grid-column:1/-1;grid-row:4;justify-self:center;width:100%;height:auto;min-height:0}
+@media(max-width:760px){
+  #coleccionPanel .coleccionEscena3D{inset:0 0 var(--controles-alto,250px) 0}
+  #coleccionPanel .coleccionEscena3D .visor3dIncrustado{--reserva-der:0px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{left:10px;right:10px;top:auto;bottom:max(10px,env(safe-area-inset-bottom));translate:none;width:auto;gap:8px 6px;padding:12px 12px 10px}
+  #coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{display:none}
+  #coleccionPanel .coleccionDetalleCabecera:has(~.con3D){right:0;padding:0 56px}
+  #coleccionPanel .coleccionDetalleCabecera:has(~.con3D) h3{font-size:20px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{min-height:39px}
+}
+
+/* Apertura de sobres a pantalla completa, como el detalle: sin marco, pestañas
+   ni pie; el sobre, el bonche en 3D y sus chispas llenan la pantalla. */
+#coleccionPanel.coleccionAbriendoSobre{inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel.coleccionAbriendoSobre .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel.coleccionAbriendoSobre .coleccionInterior::before,#coleccionPanel.coleccionAbriendoSobre .coleccionInterior::after{display:none}
+#coleccionPanel.coleccionAbriendoSobre :is(.coleccionPestanas,.coleccionPie,.coleccionTitulos,.coleccionEmblema){display:none}
+#coleccionPanel.coleccionAbriendoSobre .coleccionCabecera{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:9;margin:0;padding:0;min-height:0;border:0;background:none}
+#coleccionPanel.coleccionAbriendoSobre .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+#coleccionPanel.coleccionAbriendoSobre .coleccionAperturaSobre{border-radius:0;background:#06040b}
+#coleccionPanel.coleccionAbriendoSobre .coleccionEstado:not(:empty){position:absolute;left:0;right:0;top:16px;z-index:8;text-align:center}
