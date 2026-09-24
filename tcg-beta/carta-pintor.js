@@ -56,11 +56,11 @@
     return cy;
   }
   function ajustarFuente(g,texto,peso,tam,fam,max){do{g.font=`${peso} ${tam}px ${fam}`;tam-=2;}while(g.measureText(texto).width>max&&tam>18);}
-  function datos(id,nombre){
+  function datos(id,nombre,cifras=true){
     const c=CARDS[id];if(!c)throw Error('Carta desconocida: '+id);
     const d=document.createElement('div');d.innerHTML=typeof tribeLine==='function'?tribeLine(c):'';
     const tipo=d.textContent.replace(/\s+/g,' ').trim()||({personaje:'Personaje',hechizo:'Hechizo',trampa:'Trampa',objeto:'Objeto',lugar:'Lugar'}[c.t]||c.t);
-    return {c,id,nombre:nombre||c.n,tipo,stats:c.t==='personaje'};
+    return {c,id,nombre:nombre||c.n,tipo,stats:c.t==='personaje',cifras};
   }
 
   // Ilustración con el encuadre del proveedor: object-fit cover, posición y zoom.
@@ -101,6 +101,7 @@
     const d=g.createRadialGradient(cx-r*.35,cy-r*.4,r*.05,cx,cy,r);d.addColorStop(0,tono(color,.6));d.addColorStop(.45,color);d.addColorStop(1,tono(color,-.65));
     g.fillStyle=d;g.beginPath();g.arc(cx,cy,r,0,TAU);g.fill();
     g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.ellipse(cx-r*.25,cy-r*.5,r*.5,r*.22,-.3,0,TAU);g.fill();
+    if(cifra==null){g.restore();return;}
     g.textAlign='center';g.textBaseline='middle';
     const tam=etiqueta?r*1.0:r*1.25,y=cy+(etiqueta?-r*.12:r*.04);
     g.font=`900 ${tam}px ${TITULO}`;g.lineWidth=8;g.strokeStyle='rgba(0,0,0,.65)';g.strokeText(cifra,cx,y);
@@ -160,7 +161,7 @@
     const ng=g.createLinearGradient(0,L.nombre.y+20,0,L.nombre.y+L.nombre.h-20);ng.addColorStop(0,'#fffaf0');ng.addColorStop(1,tono(P[1],-.05));
     g.shadowColor='rgba(0,0,0,.9)';g.shadowBlur=full?14:8;g.shadowOffsetY=3;g.fillStyle=ng;g.fillText(d.nombre,L.nombre.x+32,L.nombre.y+L.nombre.h/2+3);g.restore();
     if(full)regla(L.nombre.y+L.nombre.h+4,L.nombre.x+10,L.coste.cx-L.coste.r-16);
-    gema(g,L.coste.cx,L.coste.cy,L.coste.r,P,COSTE,String(c.c));
+    gema(g,L.coste.cx,L.coste.cy,L.coste.r,P,COSTE,d.cifras?String(c.c):null);
     // Tipo
     const T=full?(d.stats?FULL.texto:FULL.textoSinStats):(d.stats?L.texto:L.textoSinStats),ty=full?FULL.tipoY:L.tipo.y+L.tipo.h/2+2;
     if(!full)placa(g,L.tipo,P,cuerpo);
@@ -180,7 +181,7 @@
       const tv=g.createRadialGradient(T.x+T.w/2,T.y+T.h/2,T.h*.3,T.x+T.w/2,T.y+T.h/2,T.w*.7);tv.addColorStop(0,'rgba(0,0,0,0)');tv.addColorStop(1,'rgba(70,40,10,.25)');g.fillStyle=tv;g.fillRect(T.x,T.y,T.w,T.h);g.restore();
       reglasEnCaja(g,partes,T,'#1d140b','#6b1d0a');
     }
-    if(d.stats){gema(g,L.atq.cx,L.atq.cy,L.atq.r,P,ATQ,String(c.a),'ATQ');gema(g,L.vida.cx,L.vida.cy,L.vida.r,P,VIDA,String(c.h),'VIDA');}
+    if(d.stats){gema(g,L.atq.cx,L.atq.cy,L.atq.r,P,ATQ,d.cifras?String(c.a):null,'ATQ');gema(g,L.vida.cx,L.vida.cy,L.vida.r,P,VIDA,d.cifras?String(c.h):null,'VIDA');}
     pie(g,d,acabado,d.stats?1330:1352,full);
     return cv;
   }
@@ -276,8 +277,10 @@
   }
   // Carta de Colección: el color con el relieve iluminado por una luz fija
   // arriba a la izquierda, brillo en el metal y la laca, a la resolución pedida.
-  function hornear({id,acabado='normal',nombre,arte,ancho=360}){
-    const d=datos(id,nombre);
+  // Sin cifras, las gemas salen vacías: en la partida el coste, el ataque y la
+  // vida cambian, y los pone encima la propia carta (carta-juego.js).
+  function hornear({id,acabado='normal',nombre,arte,ancho=360,cifras=true}){
+    const d=datos(id,nombre,cifras);
     const k=Math.min(1,ancho/TW),color=pintarColor(d,acabado,arte,k),w=color.width,h=color.height;
     const n=normales(pintarAltura(d,acabado,arte,k),6*k*1.6,.01,hash(id)),orm=pintarORM(d,acabado,k);
     const g=color.getContext('2d'),c=g.getImageData(0,0,w,h),N=n.getContext('2d').getImageData(0,0,w,h).data,O=orm.getContext('2d').getImageData(0,0,w,h).data,p=c.data;
