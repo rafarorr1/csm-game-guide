@@ -13,8 +13,10 @@
 .cdCarta[data-acabado="foil"]{background:linear-gradient(135deg,#262f3b,#e3ecf8 30%,#36414f 60%,#b9c6d8)}
 .cdCarta::before{content:"";position:absolute;inset:2.7% 3.8%;border-radius:3%;background:#1a1220}
 .cdCarta>.marcoDibujo{opacity:0}
-/* El nombre como texto, transparente sobre el pintado: se lee y se busca, no se ve. */
-.cdCarta>.cdNombre{position:absolute;left:7%;right:20%;top:4.3%;z-index:2;color:transparent;text-align:center;font:700 5.2cqi/1.25 'Cinzel Domo',Georgia,serif;overflow-wrap:anywhere;pointer-events:none;user-select:text;-webkit-user-select:text}
+/* El nombre como texto, transparente sobre el pintado: se lee y se busca, no se ve.
+   acabados.css tiñe .nombreCarta en Foil y Dorada: estos selectores le ganan. */
+[data-acabado] .cdCarta>.cdNombre.nombreCarta,.cdCarta[data-acabado]>.cdNombre.nombreCarta,.cdCarta>.cdNombre.nombreCarta{color:transparent!important;background:none!important;border-color:transparent!important;text-shadow:none!important}
+.cdCarta>.cdNombre{position:absolute;left:7%;right:20%;top:4.3%;z-index:2;text-align:center;font:700 5.2cqi/1.25 'Cinzel Domo',Georgia,serif;overflow-wrap:anywhere;pointer-events:none;user-select:text;-webkit-user-select:text}
 .cdCarta>.cdLienzo{position:absolute;inset:0;z-index:1;width:100%;height:100%;display:block;opacity:0;transition:opacity .25s ease}
 .cdCarta.cdLista>.cdLienzo{opacity:1}
 /* Reflejo que recorre las ediciones Foil y Dorada en la Colección. */
