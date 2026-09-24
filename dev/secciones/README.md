@@ -80,8 +80,9 @@ La revisión está en `/fuego/`, con tres animaciones de `caoz_tcg/fx-aliento.js
   del frente: a mitad del quemado ha ardido la mitad.
 
 Llamas, chorro y quemado van en WebGL con ruido fbm; brasas, onda, burbujas y
-ceniza en Canvas 2D. «Cámara lenta» lo reproduce a 0,35×. Aún no está
-conectado al combate.
+ceniza en Canvas 2D. «Cámara lenta» lo reproduce a 0,35×. Las animaciones de
+Thal aún no están conectadas al combate. `quemar(host,{objetivo,color})` sí:
+es la muerte de Machete en la partida (build 278).
 
 ```bash
 node dev/secciones/pruebas_fuego.mjs

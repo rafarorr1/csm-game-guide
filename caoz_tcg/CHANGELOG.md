@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### v45 · Build 283 · Machete arde al morir · 2026-09-24
+
+- Cuando Machete muere, su carta no viaja a las Alcantarillas: se incendia
+  desde abajo, se deshace en ceniza y la partida continúa al consumirse la
+  carta. Si el efecto no puede dibujarse, conserva la muerte habitual.
+- La secuencia usa el mismo efecto en escritorio y móvil, queda precargada por
+  la aplicación y cuenta con una regresión en ambas pantallas.
+
 ### v44 · Build 282 · Fundido limpio de la portada · 2026-09-24
 
 - La portada de arranque ahora apaga el logo contra negro antes de revelar el
