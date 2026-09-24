@@ -65,16 +65,23 @@ progreso. Su comprobación concreta es:
 node dev/secciones/pruebas_interacciones_exportacion.mjs
 ```
 
-## Aliento de fuego (prueba de animación)
+## Aliento de fuego (pruebas de animación de Thal)
 
-La revisión está en `/fuego/`. Thal se envuelve en fuego verde, lo escupe sobre
-la carta rival y la carta arde desde el impacto hasta la ceniza. El efecto es
-`caoz_tcg/fx-aliento.js` (`CAOZ_FX_ALIENTO.reproducir(host,{atacante,objetivo,
-imagenObjetivo,color,velocidad})`): llamas, chorro y quemado en WebGL con ruido
-fbm; brasas, salpicaduras y ceniza en Canvas 2D. La ceniza nace de puntos de la
-carta ordenados por cuándo los alcanza el frente, y el umbral del quemado sale
-de sus cuantiles: a mitad del quemado ha ardido la mitad. «Cámara lenta» lo
-reproduce a 0,35×. Aún no está conectado al combate.
+La revisión está en `/fuego/`, con tres animaciones de `caoz_tcg/fx-aliento.js`:
+
+- `entrada(host,{carta,afectados:[{nodo,dano}]})`: sin fuego. La carta brilla en
+  verde, lanza una onda de ácido por la mesa y cada afectada destella en verde,
+  tiembla, burbujea y muestra su daño al recibirla.
+- `ataque(host,{atacante,objetivo,letal:false,dano})`: el fuego verde del
+  ataque; el objetivo encaja el golpe (brillo, llamas breves, marcas de quemado
+  que se apagan, su daño) y sigue en pie.
+- `ataque(host,{atacante,objetivo,imagenObjetivo,letal:true})`: el objetivo arde
+  desde el impacto hasta la ceniza. El umbral del quemado sale de los cuantiles
+  del frente: a mitad del quemado ha ardido la mitad.
+
+Llamas, chorro y quemado van en WebGL con ruido fbm; brasas, onda, burbujas y
+ceniza en Canvas 2D. «Cámara lenta» lo reproduce a 0,35×. Aún no está
+conectado al combate.
 
 ```bash
 node dev/secciones/pruebas_fuego.mjs
