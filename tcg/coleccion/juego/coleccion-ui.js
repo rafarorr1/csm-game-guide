@@ -232,7 +232,7 @@
   // El visor 3D sólo dibuja: recibe la carta real y los datos de sus ediciones.
   function verEn3D(acabado){
     const id=s.carta;if(!id||!window.CAOZ_VISOR3D)return;
-    window.CAOZ_VISOR3D.abrir({titulo:dato(id).n,inicial:acabado,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),
+    window.CAOZ_VISOR3D.abrir({id,titulo:dato(id).n,inicial:acabado,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),
       ediciones:ACABADOS.map(a=>({id:a,tiene:modelo().tiene(id,a),cantidad:modelo().cantidad(id,a)})),
       alCerrar:()=>contenido?.querySelector('[data-edicion="'+acabado+'"] .coleccionVer3D')?.focus({preventScroll:true})});
     sonido('ui_confirm');

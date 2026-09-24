@@ -75,11 +75,32 @@
     const dlg=nodo('dialog','visor3d');dlg.setAttribute('aria-label',(o.titulo||'Carta')+' en 3D');
     dlg.innerHTML='<canvas class="visor3dMotas" aria-hidden="true"></canvas><div class="visor3dHalo" aria-hidden="true"></div>'+
       '<header class="visor3dCabecera"><div class="visor3dTitulos"><span class="visor3dAntetitulo"></span><h2 class="visor3dTitulo"></h2></div><button type="button" class="visor3dCerrar" aria-label="Cerrar el visor 3D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>'+
-      '<div class="visor3dEscena"><div class="visor3dPedestal" aria-hidden="true"><i class="visor3dAnillo"></i><i class="visor3dAnillo visor3dAnilloInterior"></i></div><div class="visor3dSuelo" aria-hidden="true"></div><div class="visor3dCuerpo"></div></div><canvas class="visor3dChispas" aria-hidden="true"></canvas>'+
+      '<div class="visor3dEscena"><div class="visor3dPedestal" aria-hidden="true"><i class="visor3dAnillo"></i><i class="visor3dAnillo visor3dAnilloInterior"></i></div><div class="visor3dSuelo" aria-hidden="true"></div><div class="visor3dCuerpo"></div><canvas class="visor3dGL" aria-hidden="true"></canvas></div><canvas class="visor3dChispas" aria-hidden="true"></canvas>'+
       '<footer class="visor3dPie"><div class="visor3dEdiciones" role="group" aria-label="Edición"></div><p class="visor3dCopias" role="status"></p><div class="visor3dAcciones"><button type="button" class="visor3dVoltear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg>Voltear</button></div><p class="visor3dAyuda">Arrastra para girar · doble toque para voltear</p></footer>';
     const $=s=>dlg.querySelector(s);
     const escena=$('.visor3dEscena'),cuerpo=$('.visor3dCuerpo'),motas=$('.visor3dMotas'),chispas=$('.visor3dChispas');
     dlg.style.setProperty('--anillo-mascara',texturaAnillo());
+    // La carta con luz real (visor-3d-gl.js) cuando hay WebGL; si no, las capas CSS.
+    const lienzoGL=$('.visor3dGL');let gl3d=null;
+    try{gl3d=window.CAOZ_VISOR3D_GL?.crear(lienzoGL)||null;}catch(_){gl3d=null;}
+    let turnoGL=0,copias=0;
+    const logoGL=new Image();logoGL.decoding='async';logoGL.src=o.logoUrl||'art/logo.webp';
+    async function prepararGL(){
+      const pintor=window.CAOZ_CARTA_PINTOR,diseno=window.CAOZ_CARTA_DISENO;
+      // Sólo las cartas del motor se pintan; los Protagonistas siguen en CSS.
+      if(!gl3d||!pintor||!diseno||!o.id||!carta||typeof CARDS==='undefined'||!CARDS[o.id])return;
+      const turno=++turnoGL,ed=edicion,fuente=carta;
+      try{
+        await pintor.fuentes();const arte=diseno.arteDe(fuente);await diseno.cargada(arte.img);
+        if(!logoGL.complete)await diseno.cargada(logoGL);
+        if(turno!==turnoGL||!vivo)return;
+        const tex=pintor.texturas({id:o.id,acabado:ed,nombre:fuente.querySelector('.cdNombreTexto')?.textContent,arte:{...arte,img:arte.img&&arte.img.naturalWidth?arte.img:null}});
+        if(turno!==turnoGL||!vivo)return;
+        gl3d.cargarFrente(tex,ed,(TONOS[ed]||TONOS.normal).cantoLuz);
+        if(!gl3d.dorsoListo){gl3d.cargarDorso(pintor.dorso(logoGL.naturalWidth?logoGL:null));gl3d.dorsoListo=true;}
+        dlg.classList.add('visor3dConGL');
+      }catch(error){console.warn('Visor 3D: se usan las capas CSS.',error);dlg.classList.remove('visor3dConGL');}
+    }
     $('.visor3dTitulo').textContent=o.titulo||'';
     escena.setAttribute('role','img');escena.setAttribute('aria-label',(o.titulo||'Carta')+'. Arrastra para girarla.');
 
@@ -103,7 +124,8 @@
       const e=ediciones.find(e=>e.id===edicion)||{cantidad:0};
       $('.visor3dAntetitulo').textContent='Edición '+NOMBRES[edicion];
       $('.visor3dCopias').textContent=e.cantidad>0?textoCopias(e.cantidad)+' en tu colección':'Desbloqueada';
-      pila.forEach((p,i)=>{p.hidden=i>=Math.min(MAX_PILA,Math.max(0,(e.cantidad||0)-1));});
+      copias=e.cantidad||0;pila.forEach((p,i)=>{p.hidden=i>=Math.min(MAX_PILA,Math.max(0,copias-1));});
+      prepararGL();
       botones.forEach(b=>{const activo=b.dataset.edicion===edicion;b.setAttribute('aria-pressed',String(activo));});
       medir();
     }
@@ -128,6 +150,7 @@
       carta.style.width=ancho+'px';carta.style.height=alto+'px';carta.style.setProperty('--cw',ancho+'px');carta.style.setProperty('--ch',alto+'px');carta.style.fontSize=(ancho*.081)+'px';
       const texto=carta.querySelector('.pieCarta .txt');
       if(texto){texto.style.fontSize='';const max=alto*.47;let tam=parseFloat(getComputedStyle(texto).fontSize);for(let i=0;i<8&&texto.scrollHeight>max&&tam>10;i++){tam=Math.max(10,tam*.93);texto.style.fontSize=tam+'px';}}
+      if(gl3d){const r=escena.getBoundingClientRect();gl3d.medir(r.width,r.height,Math.min(devicePixelRatio||1,2),alto);}
       const radio=getComputedStyle(carta).borderRadius;dlg.style.setProperty('--radio',radio&&radio!=='0px'?radio:(ancho*.05)+'px');
       for(const c of [motas,chispas]){c.width=Math.round(W*Math.min(devicePixelRatio||1,2));c.height=Math.round(H*Math.min(devicePixelRatio||1,2));}
     }
@@ -223,6 +246,7 @@
       s.setProperty('--fx',(50+frenteY*160)+'%');s.setProperty('--fy',(50+rx*160)+'%');
       s.setProperty('--inclina',inclina.toFixed(3));
       s.setProperty('--pila',Math.cos(frenteY)>0?1:0);
+      if(gl3d?.listo())gl3d.dibujar({rx,ry,rz:Math.sin(reloj*.7)*.012*reposo,y:flota,s:e.escala*(1+e.pulso*.03),tiempo:reloj,luzX:e.inclX,luzY:e.inclY,pulso:e.pulso,pila:Math.min(MAX_PILA,Math.max(0,copias-1))});
       // El anillo del pedestal gira despacio y se enciende con cada impulso.
       dlg.style.setProperty('--anillo-giro',(reloj*.12*reposo)+'rad');
       dlg.style.setProperty('--anillo-brillo',(.5+Math.sin(reloj*2)*.07*reposo+e.pulso*.45).toFixed(3));
@@ -235,7 +259,7 @@
 
     function cerrar(){if(dlg.open)dlg.close();}
     dlg.addEventListener('close',()=>{
-      vivo=false;cancelAnimationFrame(raf);document.removeEventListener('visibilitychange',reanudar);
+      vivo=false;cancelAnimationFrame(raf);gl3d?.destruir();document.removeEventListener('visibilitychange',reanudar);
       removeEventListener('resize',alMedir);window.visualViewport?.removeEventListener('resize',alMedir);
       dlg.remove();if(actual?.dlg===dlg)actual=null;o.alCerrar?.();
     });
