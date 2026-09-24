@@ -14,7 +14,7 @@
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
   let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null;
-  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres'};
+  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,n:nombreVisible(id,c.n),sub:typeof tribeLine==='function'?tribeLine(c):c.t};
@@ -117,7 +117,7 @@
     aplicarModoFinalCampana(!!opciones.finalCampana);
     volverFoco=document.activeElement;origen=document.querySelector('.screen.on');
     conservarFondo=!!opciones.conservarFondo;alCerrarRecompensa=typeof opciones.onCerrar==='function'?opciones.onCerrar:null;
-    s.mostrarPendiente=!!modelo().pendiente();s.vista=s.mostrarPendiente?'sobres':'cartas';s.carta=null;
+    s.mostrarPendiente=!!modelo().pendiente();s.vista=s.mostrarPendiente?'sobres':'cartas';s.carta=null;s.demoEdiciones='real';
     if(!conservarFondo&&typeof cerrarOv==='function'&&$('#ov.on'))cerrarOv();
     panel.showModal();
     panel.querySelector('.coleccionVolver').textContent=origen?.id==='extras'?'Volver a Extras':'Volver';
@@ -229,11 +229,26 @@
     n.removeAttribute('data-arte-id');n.querySelectorAll('[data-arte-id]').forEach(soporte=>soporte.removeAttribute('data-arte-id'));
     return n;
   }
-  function verCarta(id){s.carta=id;s.acabadoVista=modelo().elegido(id);s.regla=0;ir('detalle');sonido('ui_confirm');}
+  // La demostración de Beta nunca pasa por el modelo: sólo sustituye lo que
+  // dibuja esta ficha. Así no concede, equipa ni guarda una edición por error.
+  function estadoEdicionVisible(id,acabado){
+    const m=modelo(),real={tiene:m.tiene(id,acabado),cantidad:m.cantidad(id,acabado),elegida:m.elegido(id)===acabado};
+    if(!m.betaDisponible()||s.demoEdiciones==='real')return real;
+    if(s.demoEdiciones==='bloqueadas')return {tiene:false,cantidad:0,elegida:false,demostracion:true};
+    return {tiene:true,cantidad:1,elegida:acabado==='normal',demostracion:true};
+  }
+  function controlDemoEdiciones(){
+    if(!modelo().betaDisponible())return null;
+    const siguiente={real:'bloqueadas',bloqueadas:'desbloqueadas',desbloqueadas:'real'},texto={real:'Beta · Simular bloqueadas',bloqueadas:'Beta · Simular desbloqueadas',desbloqueadas:'Beta · Usar estado real'},nota={real:'Vista temporal: no cambia tu colección.',bloqueadas:'Vista temporal: ninguna edición se guarda como bloqueada.',desbloqueadas:'Vista temporal: ninguna edición se guarda como desbloqueada.'};
+    const caja=crear('div','coleccionDemoEdiciones'),accion=boton(texto[s.demoEdiciones],()=>{s.demoEdiciones=siguiente[s.demoEdiciones];dibujarDetalle();mensaje(nota[s.demoEdiciones]);},'coleccionBeta coleccionDemoCambiar');
+    accion.dataset.demoEdiciones=s.demoEdiciones;accion.setAttribute('aria-label',texto[s.demoEdiciones]+'. '+nota[s.demoEdiciones]);
+    caja.append(accion,crear('p','coleccionDemoNota',nota[s.demoEdiciones]));return caja;
+  }
+  function verCarta(id){s.carta=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');}
   // El detalle es la carta en 3D (visor-3d.js incrustado): una escena por carta
   // que sólo cambia de edición o de copias al redibujar, sin rehacer su WebGL.
   let escena3D=null;
-  const edicionesDe=id=>ACABADOS.map(a=>({id:a,tiene:modelo().tiene(id,a),cantidad:modelo().cantidad(id,a)}));
+  const edicionesDe=id=>ACABADOS.map(a=>({id:a,...estadoEdicionVisible(id,a)}));
   function soltarEscena3D(){escena3D?.destruir();escena3D=null;}
   function dibujarDetalle(){
     if(!s.carta){ir('cartas');return;}vaciarContenido();panel.dataset.vista='detalle';
@@ -241,18 +256,22 @@
     cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));contenido.append(cab);
     const versiones=crear('div','coleccionVersiones');
     ACABADOS.forEach(a=>{
-      const tiene=modelo().tiene(s.carta,a),cantidad=modelo().cantidad(s.carta,a),elegida=modelo().elegido(s.carta)===a,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
+      const visible=estadoEdicionVisible(s.carta,a),{tiene,cantidad,elegida}=visible,demostracion=!!visible.demostracion,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
       const etiqueta=boton(NOMBRES[a],()=>{s.acabadoVista=a;dibujarDetalle();},'coleccionElegirAcabado');etiqueta.setAttribute('aria-pressed',s.acabadoVista===a?'true':'false');etiqueta.setAttribute('aria-label',NOMBRES[a]+'. '+textoCopias(cantidad)+'.');slot.append(etiqueta,carta(s.carta,a));
       const estadoEd=crear('span','coleccionEstadoEdicion'),copias=crear('span','coleccionCantidadEdicion',textoCopias(cantidad));copias.dataset.cantidad=cantidad;
       const separador=crear('span','coleccionCantidadSeparador','·');separador.setAttribute('aria-hidden','true');
-      estadoEd.append(copias,separador,icono(elegida?'check':tiene?'libro':'candado'),crear('span','',elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Por canje':'En sobres o canje'));slot.append(estadoEd);
-      const b=boton(elegida?'En uso':tiene?'Usar':a==='dorado'?'Ver cómo mejorar':'Ver sobres',()=>{
+      const estadoTexto=demostracion?(s.demoEdiciones==='bloqueadas'?'Bloqueada · prueba':'Desbloqueada · prueba'):elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Por canje':'En sobres o canje';
+      estadoEd.append(copias,separador,icono(demostracion?(tiene?'libro':'candado'):elegida?'check':tiene?'libro':'candado'),crear('span','',estadoTexto));slot.append(estadoEd);
+      const textoAccion=demostracion?(s.demoEdiciones==='bloqueadas'?'Bloqueada · prueba':'Desbloqueada · prueba'):elegida?'En uso':tiene?'Usar':a==='dorado'?'Ver cómo mejorar':'Ver sobres';
+      const b=boton(textoAccion,()=>{
+        if(demostracion)return;
         if(!tiene){ir(a==='dorado'?'canje':'sobres');return;}
         guardando=true;let ok=false;try{ok=modelo().seleccionar(s.carta,a);}finally{guardando=false;}
         if(ok){dibujarDetalle();actualizarCabecera();mensaje(c.n+' · '+NOMBRES[a]+' equipada.');sonido('ui_confirm');const activo=contenido.querySelector('[data-edicion="'+a+'"] button');activo?.focus({preventScroll:true});}
         else mensaje('No se pudo guardar la selección. Inténtalo de nuevo.',true);
-      },'coleccionUsar');b.disabled=elegida;b.setAttribute('aria-label',elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Ver cómo conseguir una Dorada':'Desbloquear Foil en sobres o por canje');slot.append(b,mejoraDeCarta(s.carta,a));versiones.append(slot);
+      },'coleccionUsar');b.disabled=demostracion||elegida;b.setAttribute('aria-label',demostracion?textoAccion+'. Vista temporal.':elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Ver cómo conseguir una Dorada':'Desbloquear Foil en sobres o por canje');slot.append(b);if(!demostracion)slot.append(mejoraDeCarta(s.carta,a));versiones.append(slot);
     });
+    const demo=controlDemoEdiciones();if(demo)versiones.append(demo);
     const zona=crear('div','coleccionDetalle3D');
     if(window.CAOZ_VISOR3D?.montar){
       zona.classList.add('con3D');const escenario=crear('div','coleccionEscena3D');
