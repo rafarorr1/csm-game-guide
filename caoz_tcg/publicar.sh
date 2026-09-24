@@ -172,6 +172,7 @@ node --check "$AQUI/pitagoras-mesa.js" || exit 1
 node --check "$AQUI/dado-fisico.js" || exit 1
 node --check "$AQUI/moneda-fisica.js" || exit 1
 node --check "$AQUI/polish-aaa.js" || exit 1
+node --check "$AQUI/fx-aliento.js" || exit 1
 node --check "$AQUI/audio-domo.js" || exit 1
 node --check "$AQUI/sonidos.js" || exit 1
 node --check "$AQUI/estudio.js" || exit 1
@@ -203,7 +204,7 @@ python3 "$AQUI/pruebas_fisico.py" || exit 1
 node "$AQUI/pruebas_coleccion.mjs" || exit 1
 node "$AQUI/pruebas_recompensas_domo.mjs" || exit 1
 node "$REPO/dev/secciones/pruebas_sobres_apertura.mjs" --sabotaje || exit 1
-for f in coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js; do node --check "$AQUI/$f" || exit 1; done
+for f in coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js fx-aliento.js; do node --check "$AQUI/$f" || exit 1; done
 node --check "$AQUI/sw.js" || { rojo 'sw.js tiene un error de sintaxis'; exit 1; }
 # El service worker lleva la build en VERSION: es lo que le dice al teléfono
 # que hay una caché nueva. Sin subirlo, la app instalada se quedaría con la vieja.
@@ -383,6 +384,7 @@ cp "$AQUI/pitagoras-mesa.js" "$PAGES/$DESTINO/pitagoras-mesa.js"
 cp "$AQUI/dado-fisico.js" "$PAGES/$DESTINO/dado-fisico.js"
 cp "$AQUI/moneda-fisica.js" "$PAGES/$DESTINO/moneda-fisica.js"
 cp "$AQUI/polish-aaa.js" "$PAGES/$DESTINO/polish-aaa.js"
+cp "$AQUI/fx-aliento.js" "$PAGES/$DESTINO/fx-aliento.js"
 cp "$AQUI/sw.js"        "$PAGES/$DESTINO/sw.js"
 cp "$AQUI/manifest.webmanifest" "$PAGES/$DESTINO/manifest.webmanifest"
 cp "$AQUI"/art/icono-*.png "$PAGES/$DESTINO/art/"
@@ -416,6 +418,7 @@ cd "$PAGES" || exit 1
 # OJO: sólo estos dos archivos, nunca `git add -A`. En esta misma rama vive la
 # PWA de Warhammer y un add general se llevaría por delante lo que no toca.
 git add "$DESTINO/index.html" "$DESTINO/motor.js" "$DESTINO/movil.html" "$DESTINO/final.js" "$DESTINO/invitaciones-compartidas.js" "$DESTINO/final-core.js" "$DESTINO/campana-mesa.js" "$DESTINO/campana-personaje.js" "$DESTINO/campana-deseo.js" "$DESTINO/campana-pitagoras.js" "$DESTINO/campana-secreto.js" "$DESTINO/campana-honores.js" "$DESTINO/pitagoras-pruebas.js" "$DESTINO/pitagoras-mundos.js" "$DESTINO/pitagoras-cine.js" "$DESTINO/pitagoras-laboratorio.js" "$DESTINO/pitagoras-fps.js" "$DESTINO/pitagoras-pixel.js" "$DESTINO/pitagoras-combate.js" "$DESTINO/pitagoras-mesa.js" "$DESTINO/dado-fisico.js" "$DESTINO/moneda-fisica.js" "$DESTINO/polish-aaa.js" "$DESTINO/mulligan-ui.js" "$DESTINO/mulligan-ui.css" "$DESTINO/sw.js" "$DESTINO/manifest.webmanifest" "$DESTINO"/art/icono-*.png "$DESTINO/tests.js" "$DESTINO/estudio.html"
+git add "$DESTINO/fx-aliento.js"
 git add "$DESTINO/arte-vistas.js" "$DESTINO/estudio-vista.js" "$DESTINO/estudio.js" "$DESTINO/estudio.css" "$DESTINO/estudio-publicacion.js" "$DESTINO/estudio-publicacion.css" "$DESTINO/arte-remoto.js" "$DESTINO/nombres-cartas.js" "$DESTINO/acabados.css" "$DESTINO/coleccion.css" "$DESTINO/coleccion-modelo.js" "$DESTINO/coleccion-juego.js" "$DESTINO/coleccion-ui.js" "$DESTINO/sobres-escena.js" "$DESTINO/sobres-apertura.js" "$DESTINO/sobres-revelacion.js" "$DESTINO/sobres-apertura.css" "$DESTINO/carta-pintor.js" "$DESTINO/carta-diseno.js" "$DESTINO/carta-juego.js" "$DESTINO/visor-3d-gl.js" "$DESTINO/visor-3d.js" "$DESTINO/carta-diseno.css" "$DESTINO/carta-juego.css" "$DESTINO/tema-domo.css" "$DESTINO/visor-3d.css" "$DESTINO/fuentes"
 git add "$DESTINO/cuenta-modelo.js" "$DESTINO/cuenta-progreso.js" "$DESTINO/cuenta-servicio.js" "$DESTINO/cuenta-ui.js" "$DESTINO/cuenta-acceso.js" "$DESTINO/cuenta-juego.js" "$DESTINO/cuenta.css" "$DESTINO/cuenta-juego.css" "$DESTINO/cuenta-servidor.js" "$DESTINO/cuenta-correo.js"
 git add "$DESTINO/audio-domo.js" "$DESTINO/sonidos.html" "$DESTINO/sonidos.js" "$DESTINO/sonidos.css" "$DESTINO/_worker.js" "$DESTINO/_routes.json" "$DESTINO/audio"
@@ -552,6 +555,16 @@ comprobar_cloudflare(){
       [ "$srv" = "$esp" ] || { ok=0; break; }
     done
     if [ "$ok" = "1" ]; then
+      local esp_fx srv_fx
+      esp_fx="$(shasum -a 256 "$AQUI/fx-aliento.js" | cut -d" " -f1)"
+      if [ "$DESTINO" = "tcg" ]; then
+        srv_fx="$(curl_portal "$CF_URL$prefijo/fx-aliento.js?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || ok=0
+      else
+        srv_fx="$(curl -sL "$CF_URL/fx-aliento.js?cb=$marca" | shasum -a 256 | cut -d" " -f1)"
+      fi
+      [ "$srv_fx" = "$esp_fx" ] || ok=0
+    fi
+    if [ "$ok" = "1" ]; then
       local base_verificada="$CF_URL$prefijo"
       python3 "$AQUI/verificar_audio_web.py" "$base_verificada" || return 1
       python3 "$AQUI/verificar_arte_web.py" "$base_verificada" || return 1
@@ -598,6 +611,8 @@ for i in $(seq 1 10); do
       curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/$f?cb=$(date +%s)" -o "/tmp/caoz-verificar-$(basename "$f")" || exit 1
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$(basename "$f")" || { rojo "$f no coincide con la versión local"; exit 1; }
     done
+    curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/fx-aliento.js?cb=$(date +%s)" -o /tmp/caoz-verificar-fx-aliento.js || exit 1
+    cmp -s "$AQUI/fx-aliento.js" /tmp/caoz-verificar-fx-aliento.js || { rojo "fx-aliento.js no coincide con la versión local"; exit 1; }
     python3 "$AQUI/verificar_audio_web.py" "https://rafarorr1.github.io/csm-game-guide/$DESTINO" || exit 1
     python3 "$AQUI/verificar_arte_web.py" "https://rafarorr1.github.io/csm-game-guide/$DESTINO" || exit 1
     if [ "$DESTINO" = "tcg-beta" ]; then

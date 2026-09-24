@@ -65,6 +65,29 @@ progreso. Su comprobación concreta es:
 node dev/secciones/pruebas_interacciones_exportacion.mjs
 ```
 
+## Aliento de fuego (pruebas de animación de Thal)
+
+La revisión está en `/fuego/`, con tres animaciones de `caoz_tcg/fx-aliento.js`:
+
+- `entrada(host,{carta,afectados:[{nodo,dano}]})`: sin fuego. La carta brilla en
+  verde, lanza una onda de ácido por la mesa y cada afectada destella en verde,
+  tiembla, burbujea y muestra su daño al recibirla.
+- `ataque(host,{atacante,objetivo,letal:false,dano})`: el fuego verde del
+  ataque; el objetivo encaja el golpe (brillo, llamas breves, marcas de quemado
+  que se apagan, su daño) y sigue en pie.
+- `ataque(host,{atacante,objetivo,imagenObjetivo,letal:true})`: el objetivo arde
+  desde el impacto hasta la ceniza. El umbral del quemado sale de los cuantiles
+  del frente: a mitad del quemado ha ardido la mitad.
+
+Llamas, chorro y quemado van en WebGL con ruido fbm; brasas, onda, burbujas y
+ceniza en Canvas 2D. «Cámara lenta» lo reproduce a 0,35×. Aún no está
+conectado al combate.
+
+```bash
+node dev/secciones/pruebas_fuego.mjs
+python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego
+```
+
 ## Cartas de la partida
 
 La revisión está en `/cartas/` (escritorio) y `/cartas/movil.html` (teléfono).

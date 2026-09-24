@@ -122,7 +122,7 @@ const datos={'index.html':'Portal del Domo','procedencia.json':'{"seccion":"port
  'portal.css':'portal','portal.js':fs.readFileSync('componente.js'),'portal-preview.js':'vista temporal'};
 for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.mkdirSync(path.dirname(archivo),{recursive:true});fs.writeFileSync(archivo,b);}
 ''')
-        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs', 'pruebas_interacciones_exportacion.mjs', 'pruebas_epilogo_gero_exportacion.mjs', 'pruebas_pitagoras_exportacion.mjs', 'pruebas_heroe_exportacion.mjs', 'pruebas_mulligan_exportacion.mjs', 'pruebas_invitaciones_exportacion.mjs', 'pruebas_estudio_nombres_exportacion.mjs', 'pruebas_portal_exportacion.mjs', 'pruebas_sobres_revelacion.mjs', 'pruebas_cartas.mjs']:
+        for nombre in ['pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_rey_exportacion.mjs', 'pruebas_sobres_exportacion.mjs', 'pruebas_sobres_apertura.mjs', 'pruebas_cuenta_modelo.mjs', 'pruebas_cuenta_acceso.mjs', 'pruebas_cuenta_entradas.mjs', 'pruebas_cuenta_exportacion.mjs', 'pruebas_interacciones_exportacion.mjs', 'pruebas_epilogo_gero_exportacion.mjs', 'pruebas_pitagoras_exportacion.mjs', 'pruebas_heroe_exportacion.mjs', 'pruebas_mulligan_exportacion.mjs', 'pruebas_invitaciones_exportacion.mjs', 'pruebas_estudio_nombres_exportacion.mjs', 'pruebas_portal_exportacion.mjs', 'pruebas_sobres_revelacion.mjs', 'pruebas_cartas.mjs', 'pruebas_fuego.mjs']:
             (secciones / nombre).write_text("import assert from 'node:assert/strict'; assert.equal(2+2,4);\n")
         self.git('init', '-q', '-b', 'develop')
         self.git('config', 'user.name', 'Pruebas de secciones')
@@ -341,7 +341,7 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
         self.assertEqual(self.referencias_protegidas(), protegido)
 
     def test_sobres_exportador_propio_y_registro_explicito(self):
-        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal', 'cartas'})
+        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal', 'cartas', 'fuego'})
         original_run = subprocess.run
         llamadas = []
         def registrar(args, **opciones):

@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### v42 · Build 280 · Aliento de Thal en la mesa · 2026-09-24
+
+- Cuando Thal entra y sobrevive a la Nube de Dagas, su Aliento de Ácido abre
+  con una onda verde por todos los Personajes rivales. El motor sigue decidiendo
+  el daño, por lo que una respuesta que salve a una carta nunca anuncia un daño
+  falso.
+- Al atacar a un Personaje, Thal reúne fuego verde y lo exhala: si el golpe se
+  confirma no letal, la carta queda chamuscada y en pie; si se confirma letal,
+  se vuelve ceniza en vez de viajar como carta fantasma a las Alcantarillas.
+- La secuencia viaja también a la partida en línea, tiene salida Canvas cuando
+  WebGL o el arte no están disponibles y conserva el golpe habitual como plan B.
+
 ### v41 · Build 279 · Tema del visor en todo el juego · 2026-09-24
 
 - Títulos, nombres, botones y cifras en Cinzel; el texto que se lee (reglas,
