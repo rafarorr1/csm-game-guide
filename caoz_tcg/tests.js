@@ -2659,7 +2659,15 @@ PRUEBAS.suite('campanaEpilogoSobres', async t => {
       elegir.click();elegir.click();elegir.click();
       t.check(panel.dataset.epilogoFase==='confirmar'&&panel.querySelectorAll('.coleccionFinalMarca[data-grupo]').length===3,pagina+': el carrusel conserva exactamente las tres elecciones, incluso repetidas.');
       t.check(m.recompensasPendientes().length===1&&!m.inventarioSobres().length,pagina+': elegir visualmente no concede cartas ni consume sobres.');
-      const guardar=panel.querySelector('[data-epilogo-confirmar]');guardar.click();guardar.click();await sleep(80);
+      // El callback termina detrás de un cuadro de animación para que el negro
+      // cubra la salida. En un iframe fuera de pantalla ese cuadro puede llegar
+      // después de 80 ms: esperar su resultado real conserva la prueba del
+      // doble toque sin convertir una variación del navegador en un rojo.
+      const esperarConfirmacion=async()=>{
+        const hasta=Date.now()+2000;
+        while(!(confirmaciones===1&&recibido?.sobres?.length===3&&!panel.open&&!!d.querySelector('#menu.on'))&&Date.now()<hasta)await sleep(20);
+      };
+      const guardar=panel.querySelector('[data-epilogo-confirmar]');guardar.click();guardar.click();await esperarConfirmacion();
       t.check(confirmaciones===1&&recibido?.sobres?.length===3,pagina+': guardar confirma una sola vez los tres sobres.');
       t.check(!panel.open&&d.querySelector('#menu.on'),pagina+': sólo después del segundo fundido vuelve al menú.');
       t.check(!m.recompensasPendientes().length&&m.inventarioSobres().reduce((n,s)=>n+s.cantidad,0)===3&&!m.pendiente(),pagina+': confirma tres sobres sellados sin abrir ni conceder cartas.');
