@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v43 · Build 281 · Portada de arranque de Caoz · 2026-09-24
+
+- Al abrir el juego, el menú ya no se asoma a medio cargar: aparece sólo el
+  logo de Caoz sobre fondo oscuro mientras se prepara la partida.
+- Cuando el acabado completo está listo, el logo se desvanece y el menú entra
+  con su animación habitual. Las cuentas, invitaciones y campañas conservan
+  exactamente el mismo arranque interno.
+- Las rutas de pruebas y capturas siguen entrando de forma directa, y quienes
+  prefieren menos movimiento ven la transición de forma inmediata.
+
 ### v42 · Build 280 · Aliento de Thal en la mesa · 2026-09-24
 
 - Cuando Thal entra y sobrevive a la Nube de Dagas, su Aliento de Ácido abre

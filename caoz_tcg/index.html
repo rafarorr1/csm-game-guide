@@ -20,7 +20,7 @@
   var q=new URLSearchParams(location.search);
   if(!('serviceWorker' in navigator)||q.has('test')||q.has('estudioVista')
      ||!(location.protocol==='https:'||location.hostname==='localhost'))return;
-  navigator.serviceWorker.register('sw.js?b=280&test=arranque').catch(function(){});
+  navigator.serviceWorker.register('sw.js?b=281&test=arranque').catch(function(){});
 })();
 </script>
 <!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
@@ -32,6 +32,16 @@
   if(q.has('escritorio')||q.has('test')||q.has('biblia')||q.has('foto')||q.has('pantalla')) return;
   var tactil=matchMedia('(pointer:coarse)').matches, corto=Math.min(screen.width,screen.height)<700;
   if(tactil&&corto) location.replace('movil.html'+location.search);
+})();
+</script>
+<!-- La portada de arranque se activa antes de que el cuerpo pueda pintar el
+     menú. Las rutas de pruebas y capturas conservan su acceso directo. -->
+<script>
+(function(){
+  var q=new URLSearchParams(location.search);
+  if(q.has('test')||q.has('foto')||q.has('pantalla')||q.has('biblia')||q.has('estudioVista'))return;
+  document.documentElement.classList.add('arrancando');
+  window.CAOZ_ARRANQUE_INICIO=Date.now();
 })();
 </script>
 <style>
@@ -80,6 +90,23 @@ body::after{
   content:"";position:fixed;inset:0;pointer-events:none;z-index:5;
   background:radial-gradient(ellipse 78% 70% at 50% 46%, transparent 40%, rgba(4,2,8,.62) 100%);
 }
+/* La primera imagen nunca es el menú a medio montar. El juego se prepara
+   detrás de esta cubierta y, cuando ya llegó el acabado completo, aparece con
+   la entrada habitual de sus pantallas. */
+html.arrancando #app,html.arrancando dialog[open]{visibility:hidden}
+#arranqueCaoz{display:none;position:fixed;inset:0;z-index:10001;place-items:center;
+  overflow:hidden;background:
+    radial-gradient(ellipse 52% 38% at 50% 46%,rgba(187,115,44,.18),transparent 68%),
+    linear-gradient(180deg,#120d12 0%,#09070b 100%);
+  opacity:0;visibility:hidden;transition:opacity .56s cubic-bezier(.3,.72,.35,1),visibility 0s linear .56s}
+html.arrancando #arranqueCaoz,html.arranqueCaozSaliendo #arranqueCaoz{display:grid}
+html.arrancando #arranqueCaoz{opacity:1;visibility:visible}
+html.arranqueCaozSaliendo #arranqueCaoz{opacity:0;visibility:hidden;pointer-events:none}
+.arranqueCaozLogo{display:block;width:min(500px,70vw);max-width:82vw;height:auto;object-fit:contain;
+  filter:drop-shadow(0 16px 42px rgba(0,0,0,.78)) drop-shadow(0 0 24px rgba(255,160,62,.17))}
+.arranqueCaozTexto{font:900 clamp(32px,7vw,70px)/1 var(--serif);font-variant:small-caps;letter-spacing:2px;color:#f7d488;
+  text-shadow:0 7px 22px #000}
+@media(prefers-reduced-motion:reduce){#arranqueCaoz{transition:none}}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .btn{
   background:linear-gradient(180deg,#2e2244,#1a1228);
@@ -2193,9 +2220,13 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=280&test=arranque">
+<link rel="stylesheet" href="mulligan-ui.css?b=281&test=arranque">
 </head>
 <body>
+<div id="arranqueCaoz" role="status" aria-label="Cargando Caoz Con Todo">
+  <img class="arranqueCaozLogo" src="art/logo.webp" alt="" fetchpriority="high" onerror="this.hidden=true;this.nextElementSibling.hidden=false">
+  <span class="arranqueCaozTexto" hidden>Caoz Con Todo</span>
+</div>
 <div id="app"><div id="lienzo">
 
 <!-- EL FONDO DE LOS MENÚS, UNO SOLO PARA LAS TRES PANTALLAS.
@@ -2358,9 +2389,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=280&test=arranque"></script>
-<script src="final.js?b=280&test=arranque"></script>
-<script src="mulligan-ui.js?b=280&test=arranque"></script>
+<script src="motor.js?b=281&test=arranque"></script>
+<script src="final.js?b=281&test=arranque"></script>
+<script src="mulligan-ui.js?b=281&test=arranque"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2379,7 +2410,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:280, fecha:'2026-09-24'};
+const BUILD = {n:281, fecha:'2026-09-24'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -5225,8 +5256,30 @@ if(new URLSearchParams(location.search).has('biblia')){
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
    && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
-  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=280&test=arranque').catch(()=>{}); });
+  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=281&test=arranque').catch(()=>{}); });
 }
+/* El menú ya existe desde el HTML para que la cuenta, las invitaciones y la
+   campaña puedan inicializarse normalmente. Sólo se ocultó su presentación
+   hasta que `load` dejó instalado el acabado visual completo. */
+(function(){
+  const html=document.documentElement;
+  if(!html.classList.contains('arrancando'))return;
+  const terminar=()=>{
+    if(!html.classList.contains('arrancando'))return;
+    const portada=document.getElementById('arranqueCaoz'),menu=document.getElementById('menu');
+    const reducir=matchMedia('(prefers-reduced-motion:reduce)').matches;
+    if(reducir){html.classList.remove('arrancando');portada?.remove();return;}
+    menu?.classList.add('entra');
+    html.classList.remove('arrancando');html.classList.add('arranqueCaozSaliendo');
+    setTimeout(()=>{portada?.remove();html.classList.remove('arranqueCaozSaliendo');menu?.classList.remove('entra');},640);
+  };
+  window.cerrarArranqueCaoz=terminar;
+  addEventListener('load',()=>{
+    const inicio=Number(window.CAOZ_ARRANQUE_INICIO)||Date.now();
+    const espera=Math.max(0,520-(Date.now()-inicio));
+    setTimeout(()=>requestAnimationFrame(()=>requestAnimationFrame(terminar)),espera);
+  },{once:true});
+})();
 </script>
 </body>
 </html>
