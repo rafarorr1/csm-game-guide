@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v36 · Build 274 · Detalle de Colección a pantalla completa · 2026-09-24
+
+- El detalle 3D de una carta ocupa ahora toda la escena: elimina el marco que
+  reducía el visor y deja que la nebulosa, el anillo rúnico y las partículas
+  rodeen la carta. Las pestañas, copias, Usar y el canje viven en un panel de
+  cristal flotante a la derecha, o abajo en teléfono.
+- Al cambiar a una edición bloqueada, el lienzo WebGL deja de mostrar la carta
+  anterior; con movimiento reducido tampoco gira la carta. El visor reserva el
+  espacio de sus controles y ya no aplasta retratos de Protagonistas en móvil.
+
 ### v35 · Build 273 · Cartas pintadas y visor 3D en la Colección · 2026-09-24
 
 - Las cartas de la Colección se pintan con un diseño propio: Normal y Foil con
