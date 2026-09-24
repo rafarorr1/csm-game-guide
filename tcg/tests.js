@@ -3005,6 +3005,7 @@ PRUEBAS.suite('portadaArranque', async t => {
     t.check(/id=["']arranqueCaoz["'][\s\S]*?art\/logo\.webp/.test(html),pagina+': la portada inicial debe mostrar el logo de Caoz.');
     t.check(/html\.arrancando #app,html\.arrancando dialog\[open\]\{visibility:hidden\}/.test(html),pagina+': el menú y los diálogos no pueden asomarse durante la carga.');
     t.check(/addEventListener\(['"]load['"]/.test(html)&&/menu\?\.classList\.add\(['"]entra['"]\)/.test(html),pagina+': el menú debe revelarse después de load con su entrada.');
+    t.check(/html\.arranqueCaozSaliendo #arranqueCaoz > \*\{opacity:0/.test(html),pagina+': el logo temporal debe apagarse antes de revelar el menú.');
     t.check(/prefers-reduced-motion:reduce/.test(html),pagina+': el arranque debe respetar menos movimiento.');
     t.check(/class=["']screen on portada["'] id=["']menu["']/.test(html),pagina+': el menú debe conservar su estado interno inicial.');
   }

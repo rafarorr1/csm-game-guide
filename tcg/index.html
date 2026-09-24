@@ -20,7 +20,7 @@
   var q=new URLSearchParams(location.search);
   if(!('serviceWorker' in navigator)||q.has('test')||q.has('estudioVista')
      ||!(location.protocol==='https:'||location.hostname==='localhost'))return;
-  navigator.serviceWorker.register('sw.js?b=281&test=arranque').catch(function(){});
+  navigator.serviceWorker.register('sw.js?b=282&test=arranque').catch(function(){});
 })();
 </script>
 <!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
@@ -98,15 +98,17 @@ html.arrancando #app,html.arrancando dialog[open]{visibility:hidden}
   overflow:hidden;background:
     radial-gradient(ellipse 52% 38% at 50% 46%,rgba(187,115,44,.18),transparent 68%),
     linear-gradient(180deg,#120d12 0%,#09070b 100%);
-  opacity:0;visibility:hidden;transition:opacity .56s cubic-bezier(.3,.72,.35,1),visibility 0s linear .56s}
+  opacity:1;visibility:hidden}
 html.arrancando #arranqueCaoz,html.arranqueCaozSaliendo #arranqueCaoz{display:grid}
 html.arrancando #arranqueCaoz{opacity:1;visibility:visible}
-html.arranqueCaozSaliendo #arranqueCaoz{opacity:0;visibility:hidden;pointer-events:none}
+html.arranqueCaozSaliendo #arranqueCaoz{opacity:1;visibility:visible;pointer-events:none}
+#arranqueCaoz > *{transition:opacity .38s ease,transform .38s cubic-bezier(.3,.72,.35,1)}
+html.arranqueCaozSaliendo #arranqueCaoz > *{opacity:0;transform:scale(.965)}
 .arranqueCaozLogo{display:block;width:min(500px,70vw);max-width:82vw;height:auto;object-fit:contain;
   filter:drop-shadow(0 16px 42px rgba(0,0,0,.78)) drop-shadow(0 0 24px rgba(255,160,62,.17))}
 .arranqueCaozTexto{font:900 clamp(32px,7vw,70px)/1 var(--serif);font-variant:small-caps;letter-spacing:2px;color:#f7d488;
   text-shadow:0 7px 22px #000}
-@media(prefers-reduced-motion:reduce){#arranqueCaoz{transition:none}}
+@media(prefers-reduced-motion:reduce){#arranqueCaoz > *{transition:none}}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer}
 .btn{
   background:linear-gradient(180deg,#2e2244,#1a1228);
@@ -2220,7 +2222,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=281&test=arranque">
+<link rel="stylesheet" href="mulligan-ui.css?b=282&test=arranque">
 </head>
 <body>
 <div id="arranqueCaoz" role="status" aria-label="Cargando Caoz Con Todo">
@@ -2389,9 +2391,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=281&test=arranque"></script>
-<script src="final.js?b=281&test=arranque"></script>
-<script src="mulligan-ui.js?b=281&test=arranque"></script>
+<script src="motor.js?b=282&test=arranque"></script>
+<script src="final.js?b=282&test=arranque"></script>
+<script src="mulligan-ui.js?b=282&test=arranque"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2410,7 +2412,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:281, fecha:'2026-09-24'};
+const BUILD = {n:282, fecha:'2026-09-24'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -5256,7 +5258,7 @@ if(new URLSearchParams(location.search).has('biblia')){
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
    && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
-  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=281&test=arranque').catch(()=>{}); });
+  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=282&test=arranque').catch(()=>{}); });
 }
 /* El menú ya existe desde el HTML para que la cuenta, las invitaciones y la
    campaña puedan inicializarse normalmente. Sólo se ocultó su presentación
@@ -5269,9 +5271,14 @@ if('serviceWorker' in navigator && (location.protocol==='https:' || location.hos
     const portada=document.getElementById('arranqueCaoz'),menu=document.getElementById('menu');
     const reducir=matchMedia('(prefers-reduced-motion:reduce)').matches;
     if(reducir){html.classList.remove('arrancando');portada?.remove();return;}
-    menu?.classList.add('entra');
-    html.classList.remove('arrancando');html.classList.add('arranqueCaozSaliendo');
-    setTimeout(()=>{portada?.remove();html.classList.remove('arranqueCaozSaliendo');menu?.classList.remove('entra');},640);
+    /* El logo se apaga contra su propio fondo. Sólo entonces se revela la
+       portada: así nunca se cruzan dos logos durante el fundido. */
+    html.classList.add('arranqueCaozSaliendo');
+    setTimeout(()=>{
+      menu?.classList.add('entra');portada?.remove();
+      html.classList.remove('arrancando','arranqueCaozSaliendo');
+      setTimeout(()=>menu?.classList.remove('entra'),700);
+    },420);
   };
   window.cerrarArranqueCaoz=terminar;
   addEventListener('load',()=>{
