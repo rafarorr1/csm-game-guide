@@ -355,6 +355,10 @@ PRUEBAS.suite('integracion', async t => {
 
 PRUEBAS.suite('visual', async t => {
   const carta=cardEl('eric');
+  // Esta suite mide la plantilla clásica; cartaPintada mide aparte la cara
+  // pintada. Si una suite anterior ya dejó la cara en caché, cardEl puede
+  // activarla de forma síncrona y cambiar la gema del coste de esquina.
+  carta.removeAttribute('data-piel');
   carta.style.cssText='position:fixed;left:40px;top:40px;width:180px;height:252px';
   document.body.appendChild(carta);
   try{
