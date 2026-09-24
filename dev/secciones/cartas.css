@@ -1,0 +1,34 @@
+/* Montaje de la revisión. Las cartas usan el CSS real de cada pantalla
+   (generado/base.css) y carta-juego.css; esto sólo las coloca. */
+html{height:auto;min-height:100%;overflow:auto;background:#0d0a13}
+body.cartasAislada{position:static;inset:auto;min-height:100%;height:auto;overflow:auto;padding:clamp(12px,3vw,38px);background:radial-gradient(ellipse 70% 48% at 50% -4%,#4b346633,transparent 70%),#0d0a13;color:var(--ink,#eee);user-select:auto;zoom:1}
+body.cartasAislada::after{z-index:0}
+.cartasAislada *{box-sizing:border-box}
+.cartasShell{position:relative;z-index:1;width:min(1320px,100%);margin:auto;display:flex;flex-direction:column;gap:16px}
+.cartasCabecera{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;padding:0 6px;flex-wrap:wrap}
+.cartasCabecera>div{max-width:760px}
+.cartasEtiqueta{margin:0 0 5px;color:#b8a3cc;font:700 9px/1.25 system-ui,sans-serif;letter-spacing:2.2px;text-transform:uppercase}
+.cartasCabecera h1{margin:0;color:#f0d796;font:700 clamp(28px,4vw,46px)/1.04 'Cinzel Domo',Georgia,serif}
+.cartasCabecera p:not(.cartasEtiqueta){margin:9px 0 0;color:#bcb0cf;line-height:1.5}
+.cartasCabecera .btn{text-decoration:none}
+[data-vista="desktop"] .soloMovil,[data-vista="movil"] .soloDesktop{display:none}
+.cartasBloque{background:linear-gradient(180deg,#211833ef,#110c1df2);border:1px solid #4b3b66;border-radius:18px;box-shadow:0 20px 55px #0008,inset 0 1px #ffffff0c;padding:clamp(12px,2vw,24px);min-width:0}
+.cartasTitulo{display:flex;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:14px}
+.cartasTitulo>div,.cartasTitulo p{flex-basis:100%}
+.cartasTitulo h2{margin:0;color:#e7c475;font:700 21px/1.2 'Cinzel Domo',Georgia,serif;flex:1}
+.cartasColumnas{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,340px);gap:16px;align-items:start}
+.filaCartas{display:flex;flex-wrap:wrap;gap:clamp(10px,1.6vw,20px);align-items:flex-start;justify-content:center;padding:10px 4px 6px}
+.cartaHueco{margin:0;display:flex;flex-direction:column;align-items:center;gap:8px}
+.cartaHueco figcaption{color:#c8bcde;font:600 12px/1.2 system-ui,sans-serif;text-align:center}
+.filaCartas.mano .card{width:var(--cwm);height:var(--chm)}
+/* La mesa se ve como en el tablero: el cajón de habilidades no aplica aquí. */
+.filaCartas .card.unit .cajon{display:none}
+.filaCartas .card:hover{transform:translateY(-6px) scale(1.04)}
+.filaDorsos{display:flex;justify-content:center;padding:6px 0 18px;--cwd:clamp(56px,8vw,112px);--chd:calc(var(--cwd) * 1.4)}
+.filaDorsos .dorso{margin-inline:2px}
+#fichaHueco{display:flex;justify-content:center}
+#fichaHueco .big{position:relative;width:min(286px,100%);max-width:100%;margin:0 auto;border-radius:14px}
+.cartasError{margin:0 0 12px;padding:10px 14px;border:1px solid #b44;border-radius:10px;background:#3a1216;color:#ffd9d9}
+@media (max-width:760px){.cartasColumnas{grid-template-columns:1fr}}
+/* El teléfono no tiene mano rival en fila: el dorso toma aquí su tamaño. */
+.filaDorsos .dorso{width:var(--cwd);height:var(--chd);position:relative;flex:0 0 auto}

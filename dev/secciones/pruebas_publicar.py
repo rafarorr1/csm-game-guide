@@ -341,7 +341,7 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
         self.assertEqual(self.referencias_protegidas(), protegido)
 
     def test_sobres_exportador_propio_y_registro_explicito(self):
-        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal'})
+        self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal', 'cartas'})
         original_run = subprocess.run
         llamadas = []
         def registrar(args, **opciones):

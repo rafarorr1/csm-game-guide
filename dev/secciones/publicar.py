@@ -85,6 +85,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/nombres-cartas.js'},
         'pruebas': ('pruebas_estudio_nombres_exportacion.mjs',),
     },
+    'cartas': {
+        'nombre': 'Cartas de la partida',
+        'exportador': 'cartas-exportar.mjs',
+        'requeridos': {'index.html', 'movil.html', 'procedencia.json', '_headers', 'juego/carta-juego.js', 'juego/carta-juego.css'},
+        'pruebas': ('pruebas_cartas.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',
