@@ -9,7 +9,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/index.html",
-          "sha256": "db83a35bac053317335270014865a13709f6cc3d430cf6e13c0d7d9c4ecbdfb9"
+          "sha256": "47f512dd4b83b42fcc8c08835e86c5b371f2309e6c907ccb6556ad5e55db85ce"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -21,13 +21,13 @@
         },
         {
           "archivo": "caoz_tcg/final.js",
-          "sha256": "86afa7e4295b2ecb8a2731e3a7ed6b58125cd357522698c52b4fa83089696adc"
+          "sha256": "6ce8a533f34e7821536294d8aae2862a5757bab1a5e6e6af30aecc45095e3750"
         }
       ],
       "funciones": [
         {
           "nombre": "el",
-          "linea": 2493,
+          "linea": 2495,
           "sha256": "e56e76c380a0a7f1b7d517b91ad2eea03f769a558b78cb06b5a1e97aad08044d"
         },
         {
@@ -63,16 +63,16 @@
         {
           "nombre": "ilustrar",
           "linea": 2482,
-          "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
+          "sha256": "0e9e4f2910daf86e65b6f5f63ec0eb529fc727ecaf4bb6753c9f472799c728b4"
         },
         {
           "nombre": "cardEl",
-          "linea": 2710,
+          "linea": 2712,
           "sha256": "2a8067454495085e9b65bbbe090926d6353ea44087d8e7c55ab29032d8b2f4e2"
         },
         {
           "nombre": "cartaDeLiderVS",
-          "linea": 4267,
+          "linea": 4270,
           "sha256": "7b1950587efeed16883f4ffa413c605e39fe4d1c838e4ecf2cdec4704c9552f2"
         }
       ],
@@ -91,7 +91,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/movil.html",
-          "sha256": "dd31365a35ad5cb917d02e93e71435fef7a80d9742f00b95f62f9793f5295cdc"
+          "sha256": "f5f73bc2194e039d25323c14cc7b5c74a2b23140023498cce4f2f6698a523c7e"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -103,7 +103,7 @@
         },
         {
           "archivo": "caoz_tcg/final.js",
-          "sha256": "86afa7e4295b2ecb8a2731e3a7ed6b58125cd357522698c52b4fa83089696adc"
+          "sha256": "6ce8a533f34e7821536294d8aae2862a5757bab1a5e6e6af30aecc45095e3750"
         }
       ],
       "funciones": [
@@ -145,16 +145,16 @@
         {
           "nombre": "ilustrar",
           "linea": 1000,
-          "sha256": "86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551"
+          "sha256": "0e9e4f2910daf86e65b6f5f63ec0eb529fc727ecaf4bb6753c9f472799c728b4"
         },
         {
           "nombre": "cardEl",
-          "linea": 1523,
+          "linea": 1525,
           "sha256": "c9fd0ca1f5888836ef84be8c4d286d911829299cabe013d23e4aa4aa1512d148"
         },
         {
           "nombre": "cartaDeLiderVS",
-          "linea": 1326,
+          "linea": 1328,
           "sha256": "1e5541f69501d422b5b3f2cfaa1e47d93638791d1de24f422673ec93f963dad9"
         }
       ],
@@ -171,20 +171,21 @@
     "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "coleccion-modelo.js": "7f72c8a40bed034e04a369c7fa76576dc23ae5386dd3af22c1220de0aafa30c8",
     "arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
-    "coleccion-ui.js": "38b9d724af74b4d625af9dea9ee1bfd026e005769c43982a96393bc614d50959",
+    "coleccion-ui.js": "aefd5071b54ffd7b09836c08e165b023379042754a0e61bd24928a780ecd2f84",
     "visor-3d.js": "01a26338f9b89c101936f79fedbd48fc8819552c0bf3cb4a5075b7ced938c35b",
-    "visor-3d-gl.js": "a4e20f4e2f663891fb8eed39a05a9a52fcd6e30c8178917697311e0391cf9887",
+    "visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
     "visor-3d.css": "cb89776c660a63e698cda384480ea5a3fdeb92191fa8b6f1f6416fbfa76bd7aa",
-    "carta-pintor.js": "4afba432e7937fc54eeeb08a4d10ceec349b8a537034d23a9792feecb6848069",
-    "carta-diseno.js": "8f9d13108163efab0de759829d6e200ccb64dee15c9fa518bce6409100cc4848",
+    "carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "carta-diseno.js": "0b3327ee89de1c5539e81d45da4eecb30f9dad48f689a231238e3b68be3b7b36",
     "carta-diseno.css": "d3466c3cb801fe559ac38b13d7d5b455cb64bee8242735cf1fc06dbaaa060266",
     "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
-    "sobres-escena.js": "74b110713785be4ed8191def563e29815ab8a12b591d24d019803723a95b66ea",
-    "sobres-apertura.js": "c9a23891f20893734290e946b2ec5df7b58a5436d6040f71e67fd3863ccaa9cf",
-    "sobres-apertura.css": "11233bbf1c91b5d4239d71609fd9110e6590d513c49cd1035bea277735fb7c47",
-    "coleccion.css": "66272bb611a8ca617c2d66778e30a2fb7bda797738a6fd610b259ef17dbce926",
+    "sobres-escena.js": "2834f1e8abeb30e0b67d0c6dbe7c7057160dc92ef5f45ff2742bc4fe2f386292",
+    "sobres-apertura.js": "031a9e88ba2e140aee63ec075f1acb7174335d6a2a0a605fbafe0f1d3dfddc7b",
+    "sobres-revelacion.js": "0409659d3b519531ffbae3b3d62e37ad8c258c7afa7f48c0bad1510dd0b6152c",
+    "sobres-apertura.css": "12d234191ead3690e54b1dbc596a62266d7bc98173c3c9e3801de8fabfcbdc3f",
+    "coleccion.css": "ac44f9a537db39f065123af7946dc357f64d958ad2ff2953aaa499759ae9d050",
     "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
   },
   "arte": {

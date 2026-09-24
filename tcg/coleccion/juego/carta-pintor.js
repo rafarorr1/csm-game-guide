@@ -56,11 +56,20 @@
     return cy;
   }
   function ajustarFuente(g,texto,peso,tam,fam,max){do{g.font=`${peso} ${tam}px ${fam}`;tam-=2;}while(g.measureText(texto).width>max&&tam>18);}
-  function datos(id,nombre){
+  // Los Protagonistas (lider_*) se pintan como una carta full art: su retrato,
+  // su nombre y título, y su pasiva en la caja de reglas. Sin cifras de combate.
+  function datosLider(id,nombre){
+    const L=typeof LEADERS!=='undefined'?LEADERS[id.slice(6)]:null;if(!L)throw Error('Carta desconocida: '+id);
+    const c={n:L.n,t:'personaje',c:'★',x:L.pasiva||L.lore||'',r:2,art:L.art};
+    return {c,id,nombre:nombre||L.n,tipo:[L.ep,'Protagonista'].filter(Boolean).join(' · '),stats:false,cifras:true,lider:true};
+  }
+  const esFull=(d,acabado)=>acabado==='dorado'||!!d.lider;
+  function datos(id,nombre,cifras=true){
+    if(typeof id==='string'&&id.startsWith('lider_'))return datosLider(id,nombre);
     const c=CARDS[id];if(!c)throw Error('Carta desconocida: '+id);
     const d=document.createElement('div');d.innerHTML=typeof tribeLine==='function'?tribeLine(c):'';
     const tipo=d.textContent.replace(/\s+/g,' ').trim()||({personaje:'Personaje',hechizo:'Hechizo',trampa:'Trampa',objeto:'Objeto',lugar:'Lugar'}[c.t]||c.t);
-    return {c,id,nombre:nombre||c.n,tipo,stats:c.t==='personaje'};
+    return {c,id,nombre:nombre||c.n,tipo,stats:c.t==='personaje',cifras};
   }
 
   // Ilustración con el encuadre del proveedor: object-fit cover, posición y zoom.
@@ -101,6 +110,7 @@
     const d=g.createRadialGradient(cx-r*.35,cy-r*.4,r*.05,cx,cy,r);d.addColorStop(0,tono(color,.6));d.addColorStop(.45,color);d.addColorStop(1,tono(color,-.65));
     g.fillStyle=d;g.beginPath();g.arc(cx,cy,r,0,TAU);g.fill();
     g.fillStyle='rgba(255,255,255,.35)';g.beginPath();g.ellipse(cx-r*.25,cy-r*.5,r*.5,r*.22,-.3,0,TAU);g.fill();
+    if(cifra==null){g.restore();return;}
     g.textAlign='center';g.textBaseline='middle';
     const tam=etiqueta?r*1.0:r*1.25,y=cy+(etiqueta?-r*.12:r*.04);
     g.font=`900 ${tam}px ${TITULO}`;g.lineWidth=8;g.strokeStyle='rgba(0,0,0,.65)';g.strokeText(cifra,cx,y);
@@ -128,7 +138,7 @@
   }
 
   function pintarColor(d,acabado,arte,k=1){
-    const {c}=d,P=METALES[acabado]||METALES.normal,cuerpo=CUERPOS[c.t]||CUERPOS.personaje,rnd=azar(hash(d.id)),full=acabado==='dorado';
+    const {c}=d,P=METALES[acabado]||METALES.normal,cuerpo=CUERPOS[c.t]||CUERPOS.personaje,rnd=azar(hash(d.id)),full=esFull(d,acabado);
     const [cv,g]=plantilla(k);
     g.fillStyle='#07060a';g.fillRect(0,0,TW,TH);
     rr(g,L.marco.x,L.marco.y,L.marco.w,L.marco.h,L.marco.r);g.fillStyle=metal(g,P,0,0,TW,TH);g.fill();
@@ -160,7 +170,7 @@
     const ng=g.createLinearGradient(0,L.nombre.y+20,0,L.nombre.y+L.nombre.h-20);ng.addColorStop(0,'#fffaf0');ng.addColorStop(1,tono(P[1],-.05));
     g.shadowColor='rgba(0,0,0,.9)';g.shadowBlur=full?14:8;g.shadowOffsetY=3;g.fillStyle=ng;g.fillText(d.nombre,L.nombre.x+32,L.nombre.y+L.nombre.h/2+3);g.restore();
     if(full)regla(L.nombre.y+L.nombre.h+4,L.nombre.x+10,L.coste.cx-L.coste.r-16);
-    gema(g,L.coste.cx,L.coste.cy,L.coste.r,P,COSTE,String(c.c));
+    gema(g,L.coste.cx,L.coste.cy,L.coste.r,P,COSTE,d.cifras?String(c.c):null);
     // Tipo
     const T=full?(d.stats?FULL.texto:FULL.textoSinStats):(d.stats?L.texto:L.textoSinStats),ty=full?FULL.tipoY:L.tipo.y+L.tipo.h/2+2;
     if(!full)placa(g,L.tipo,P,cuerpo);
@@ -180,14 +190,14 @@
       const tv=g.createRadialGradient(T.x+T.w/2,T.y+T.h/2,T.h*.3,T.x+T.w/2,T.y+T.h/2,T.w*.7);tv.addColorStop(0,'rgba(0,0,0,0)');tv.addColorStop(1,'rgba(70,40,10,.25)');g.fillStyle=tv;g.fillRect(T.x,T.y,T.w,T.h);g.restore();
       reglasEnCaja(g,partes,T,'#1d140b','#6b1d0a');
     }
-    if(d.stats){gema(g,L.atq.cx,L.atq.cy,L.atq.r,P,ATQ,String(c.a),'ATQ');gema(g,L.vida.cx,L.vida.cy,L.vida.r,P,VIDA,String(c.h),'VIDA');}
+    if(d.stats){gema(g,L.atq.cx,L.atq.cy,L.atq.r,P,ATQ,d.cifras?String(c.a):null,'ATQ');gema(g,L.vida.cx,L.vida.cy,L.vida.r,P,VIDA,d.cifras?String(c.h):null,'VIDA');}
     pie(g,d,acabado,d.stats?1330:1352,full);
     return cv;
   }
 
   // Máscara holo: R = foil, G = destellos, B = patrón grabado.
-  function pintarMascara(d,acabado){
-    const [cv,g]=plantilla(1),full=acabado==='dorado',B=L.cuerpo;
+  function pintarMascara(d,acabado,k=1){
+    const [cv,g]=plantilla(k),full=esFull(d,acabado),B=L.cuerpo;
     g.fillStyle='#000';g.fillRect(0,0,TW,TH);
     rr(g,L.marco.x,L.marco.y,L.marco.w,L.marco.h,L.marco.r);g.fillStyle='rgb(210,150,0)';g.fill();
     if(full){
@@ -208,7 +218,7 @@
   function gemas(d){return d.stats?[L.coste,L.atq,L.vida]:[L.coste];}
   // ORM: G = rugosidad, B = metalicidad.
   function pintarORM(d,acabado,k=1){
-    const [cv,g]=plantilla(k),full=acabado==='dorado',B=L.cuerpo;
+    const [cv,g]=plantilla(k),full=esFull(d,acabado),B=L.cuerpo;
     const orm=(r,m)=>`rgb(255,${Math.round(r*255)},${Math.round(m*255)})`,ORO=orm(.26,1);
     g.fillStyle=orm(.6,0);g.fillRect(0,0,TW,TH);
     rr(g,L.marco.x,L.marco.y,L.marco.w,L.marco.h,L.marco.r);g.fillStyle=ORO;g.fill();
@@ -226,7 +236,7 @@
   }
   // Altura: marco y placas en relieve, nombre grabado, pergamino con lino.
   function pintarAltura(d,acabado,arte,k=1){
-    const [cv,g]=plantilla(k),full=acabado==='dorado',B=L.cuerpo,gris=v=>`rgb(${v},${v},${v})`;
+    const [cv,g]=plantilla(k),full=esFull(d,acabado),B=L.cuerpo,gris=v=>`rgb(${v},${v},${v})`;
     g.fillStyle=gris(60);g.fillRect(0,0,TW,TH);
     const bisel=(r,alto,bajo)=>{rr(g,r.x,r.y,r.w,r.h,r.r);g.fillStyle=gris(alto);g.fill();g.save();g.clip();g.filter='blur(6px)';g.lineWidth=14;g.strokeStyle=gris(bajo);rr(g,r.x,r.y,r.w,r.h,r.r);g.stroke();g.restore();g.filter='none';};
     bisel(L.marco,200,150);
@@ -269,15 +279,18 @@
   }
 
   // Texturas completas para el visor 3D.
-  function texturas({id,acabado='normal',nombre,arte}){
-    const d=datos(id,nombre);
-    const color=pintarColor(d,acabado,arte),altura=pintarAltura(d,acabado,arte);
-    return {color,normal:normales(altura,6,.02,hash(id+acabado)),orm:pintarORM(d,acabado),mascara:pintarMascara(d,acabado)};
+  // Con ancho, a menor resolución (la apertura de sobres carga cinco a la vez).
+  function texturas({id,acabado='normal',nombre,arte,ancho}){
+    const d=datos(id,nombre),k=ancho?Math.min(1,ancho/TW):1;
+    const color=pintarColor(d,acabado,arte,k),altura=pintarAltura(d,acabado,arte,k);
+    return {color,normal:normales(altura,6*k,.02,hash(id+acabado)),orm:pintarORM(d,acabado,k),mascara:pintarMascara(d,acabado,k)};
   }
   // Carta de Colección: el color con el relieve iluminado por una luz fija
   // arriba a la izquierda, brillo en el metal y la laca, a la resolución pedida.
-  function hornear({id,acabado='normal',nombre,arte,ancho=360}){
-    const d=datos(id,nombre);
+  // Sin cifras, las gemas salen vacías: en la partida el coste, el ataque y la
+  // vida cambian, y los pone encima la propia carta (carta-juego.js).
+  function hornear({id,acabado='normal',nombre,arte,ancho=360,cifras=true}){
+    const d=datos(id,nombre,cifras);
     const k=Math.min(1,ancho/TW),color=pintarColor(d,acabado,arte,k),w=color.width,h=color.height;
     const n=normales(pintarAltura(d,acabado,arte,k),6*k*1.6,.01,hash(id)),orm=pintarORM(d,acabado,k);
     const g=color.getContext('2d'),c=g.getImageData(0,0,w,h),N=n.getContext('2d').getImageData(0,0,w,h).data,O=orm.getContext('2d').getImageData(0,0,w,h).data,p=c.data;

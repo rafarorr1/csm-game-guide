@@ -50,7 +50,7 @@ function ilustrarLider(d, lid){
   cara.classList.add('conarte');ponerDibujo(cara,urlArte('lider_'+lid,cara),enc);
   return d;
 }
-// ilustrar · SHA256 86f3808a6c136c18fbab487ee83cc8af54291eceaac2f2a31e694c15e1937551
+// ilustrar · SHA256 0e9e4f2910daf86e65b6f5f63ec0eb529fc727ecaf4bb6753c9f472799c728b4
 function ilustrar(d, id){
   d.dataset.arteId=id;CAOZ_ARTE.acabar(d,id);
   const enc=CAOZ_ARTE.encuadre(id,CAOZ_VISTAS.identificar(d),d),hay=enc!=null;
@@ -60,6 +60,8 @@ function ilustrar(d, id){
   if(!pie){pie=document.createElement('div');pie.className='pieCarta';}
   for(const sel of ['.nm','.tribe','.txt','.stats']){const e=d.querySelector(sel);if(e&&!pie.contains(e))pie.appendChild(e);}
   if(pie.children.length&&!pie.parentNode)d.appendChild(pie);
+  // La cara pintada de la Colección, con coste, ataque y vida vivos encima.
+  window.CAOZ_CARTA_JUEGO?.vestir(d,id);
   return d;
 }
 // cardEl · SHA256 2a8067454495085e9b65bbbe090926d6353ea44087d8e7c55ab29032d8b2f4e2
