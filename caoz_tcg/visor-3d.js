@@ -15,9 +15,9 @@
   // Color del canto, del halo y de las motas por edición; el de la carta lo
   // sigue poniendo acabados.css con data-acabado.
   const TONOS={
-    normal:{canto:'#5d4c35',cantoLuz:'#a88f63',halo:'#5a3d1c',mota:'#f1c27a',anillo:'#e39a4c',holo:0,destellos:.22},
-    foil:{canto:'#7f8ca0',cantoLuz:'#e3ecf7',halo:'#2c4468',mota:'#9fd0ff',anillo:'#7fb6ff',holo:.34,destellos:.5},
-    dorado:{canto:'#9a6f22',cantoLuz:'#ffe7a3',halo:'#6d4a10',mota:'#ffd27a',anillo:'#ffbf4a',holo:.26,destellos:.55},
+    normal:{canto:'#5d4c35',cantoLuz:'#a88f63',halo:'#5a3490',mota:'#f1c27a',anillo:'#e39a4c',holo:0,destellos:.22},
+    foil:{canto:'#7f8ca0',cantoLuz:'#e3ecf7',halo:'#2a4f9c',mota:'#9fd0ff',anillo:'#7fb6ff',holo:.34,destellos:.5},
+    dorado:{canto:'#9a6f22',cantoLuz:'#ffe7a3',halo:'#8a5a16',mota:'#ffd27a',anillo:'#ffbf4a',holo:.26,destellos:.55},
   };
   const LAMINAS=7,GROSOR=7,MAX_PILA=4;
   const textoCopias=n=>n+' '+(n===1?'copia':'copias');
@@ -149,18 +149,18 @@
       const b=nodo('button','visor3dEdicion',NOMBRES[e.id]);b.type='button';b.dataset.edicion=e.id;b.disabled=!e.tiene;
       b.setAttribute('aria-label',NOMBRES[e.id]+(e.tiene?'. '+textoCopias(e.cantidad||0)+'.':'. Bloqueada.'));
       if(!e.tiene)b.append(nodo('span','visor3dCandado','Bloqueada'));
-      b.addEventListener('click',()=>{if(edicion===e.id)return;edicion=e.id;ponerCarta();impulso(PI*2);rafaga(70,1);o.sonar?.('ui_confirm');});
+      b.addEventListener('click',()=>{if(edicion===e.id)return;edicion=e.id;ponerCarta();impulso(reducir()?0:PI*2);rafaga(70,1);o.sonar?.('ui_confirm');});
       $('.visor3dEdiciones').append(b);return b;
     });
 
     // Tamaño: la carta llena el espacio entre cabecera y pie, sin salirse.
     let ancho=0,alto=0;
     function medir(){
-      const v=window.visualViewport,R=dlg.getBoundingClientRect(),W=incrustado?R.width:v?v.width:innerWidth,H=incrustado?R.height:v?v.height:innerHeight;
+      const v=window.visualViewport,R=(incrustado?escena:dlg).getBoundingClientRect(),W=incrustado?R.width:v?v.width:innerWidth,H=incrustado?R.height:v?v.height:innerHeight;
       if(!W||!H)return;
       const arriba=incrustado?0:$('.visor3dCabecera').getBoundingClientRect().height,abajo=incrustado?0:$('.visor3dPie').getBoundingClientRect().height;
       // Incrustado deja a los lados sitio para los botones flotantes.
-      alto=Math.max(120,Math.min(H-arriba-abajo-(incrustado?56:48),(W-(incrustado?120:76))*1.4,640));ancho=alto/1.4;
+      alto=Math.max(120,Math.min(H-arriba-abajo-(incrustado?Math.max(56,H*.2):48),(W-(incrustado?120:76))*1.4,incrustado?760:640));ancho=alto/1.4;
       dlg.style.setProperty('--w',ancho+'px');dlg.style.setProperty('--h',alto+'px');
       dlg.style.setProperty('--p',Math.max(900,alto*2.6)+'px');
       if(!carta)return;
@@ -170,7 +170,7 @@
       if(texto){texto.style.fontSize='';const max=alto*.47;let tam=parseFloat(getComputedStyle(texto).fontSize);for(let i=0;i<8&&texto.scrollHeight>max&&tam>10;i++){tam=Math.max(10,tam*.93);texto.style.fontSize=tam+'px';}}
       if(gl3d){const r=escena.getBoundingClientRect();gl3d.medir(r.width,r.height,Math.min(devicePixelRatio||1,2),alto);}
       const radio=getComputedStyle(carta).borderRadius;dlg.style.setProperty('--radio',radio&&radio!=='0px'?radio:(ancho*.05)+'px');
-      for(const c of [motas,chispas]){c.width=Math.round(W*Math.min(devicePixelRatio||1,2));c.height=Math.round(H*Math.min(devicePixelRatio||1,2));}
+      const T=dlg.getBoundingClientRect();for(const c of [motas,chispas]){c.width=Math.round((incrustado?T.width:W)*Math.min(devicePixelRatio||1,2));c.height=Math.round((incrustado?T.height:H)*Math.min(devicePixelRatio||1,2));}
     }
 
     // Giro: inercia al soltar y encaje en la cara o el dorso más cercanos.
@@ -267,7 +267,7 @@
       s.setProperty('--fx',(50+frenteY*160)+'%');s.setProperty('--fy',(50+rx*160)+'%');
       s.setProperty('--inclina',inclina.toFixed(3));
       s.setProperty('--pila',Math.cos(frenteY)>0?1:0);
-      if(gl3d?.listo())gl3d.dibujar({rx,ry,rz:Math.sin(reloj*.7)*.012*reposo,y:flota,s:e.escala*(1+e.pulso*.03),tiempo:reloj,luzX:e.inclX,luzY:e.inclY,pulso:e.pulso,pila:Math.min(MAX_PILA,Math.max(0,copias-1))});
+      if(gl3d?.listo()&&dlg.classList.contains('visor3dConGL'))gl3d.dibujar({rx,ry,rz:Math.sin(reloj*.7)*.012*reposo,y:flota,s:e.escala*(1+e.pulso*.03),tiempo:reloj,luzX:e.inclX,luzY:e.inclY,pulso:e.pulso,pila:Math.min(MAX_PILA,Math.max(0,copias-1))});
       // El anillo del pedestal gira despacio y se enciende con cada impulso.
       dlg.style.setProperty('--anillo-giro',(reloj*.12*reposo)+'rad');
       dlg.style.setProperty('--anillo-brillo',(.5+Math.sin(reloj*2)*.07*reposo+e.pulso*.45).toFixed(3));
@@ -292,7 +292,7 @@
       function actualizar(nuevo={}){
         if(nuevo.ediciones)ediciones=nuevo.ediciones.filter(e=>NOMBRES[e.id]);
         const antes=copias,destino=nuevo.edicion&&NOMBRES[nuevo.edicion]?nuevo.edicion:edicion;
-        if(destino!==edicion){edicion=destino;ponerCarta();impulso(PI*2);rafaga(70,1);return;}
+        if(destino!==edicion){edicion=destino;ponerCarta();impulso(reducir()?0:PI*2);rafaga(70,1);return;}
         const e=ediciones.find(x=>x.id===edicion)||{};
         if((e.cantidad||0)!==antes||dlg.classList.contains('visor3dBloqueada')===!!e.tiene){ponerCarta();if((e.cantidad||0)>antes)rafaga(50,.9);}
       }

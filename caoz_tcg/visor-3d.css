@@ -10,7 +10,10 @@
 .visor3d::backdrop{background:#000d}
 .visor3dMotas,.visor3dHalo,.visor3dChispas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
 .visor3dChispas{z-index:4}
-.visor3dHalo{background:radial-gradient(ellipse 70% 55% at 50% 46%,color-mix(in srgb,var(--halo) 75%,transparent),transparent 70%),radial-gradient(ellipse 120% 90% at 50% 40%,#1a1226,#07050c 75%)}
+.visor3dHalo{background:
+  radial-gradient(ellipse 55% 48% at calc(50% - var(--reserva-der,0px) / 2) 44%,color-mix(in srgb,var(--halo) 85%,#fff 8%),transparent 72%),
+  radial-gradient(ellipse 90% 70% at calc(50% - var(--reserva-der,0px) / 2) 40%,color-mix(in srgb,var(--halo) 55%,#120a22),transparent 78%),
+  radial-gradient(ellipse 130% 100% at 50% 45%,#150d24,#06040b 80%)}
 .visor3dMotas{z-index:1}
 
 .visor3dCabecera{position:relative;z-index:3;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 20px 6px}
@@ -91,12 +94,15 @@
    medida y respaldo, invisibles. */
 .visor3dGL{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 .visor3d.visor3dConGL .visor3dCapa{visibility:hidden}
+/* Sin la carta actual en WebGL (cargando, bloqueada o sin soporte) el lienzo no
+   puede quedarse mostrando la anterior. */
+.visor3d:not(.visor3dConGL) .visor3dGL{visibility:hidden}
 
 /* Incrustado en el detalle de Colección: la misma escena dentro de un marco,
    sin cabecera ni pie. Voltear y pantalla completa flotan en una esquina. */
 .visor3d.visor3dIncrustado{position:relative;inset:auto;display:flex;width:100%;height:100%;padding:0;border-radius:12px;background:#07050c;overflow:hidden}
 .visor3dIncrustado .visor3dHalo{border-radius:inherit}
-.visor3dControles{position:absolute;right:10px;top:50%;translate:0 -50%;z-index:5;display:flex;flex-direction:column;gap:8px}
+.visor3dControles{position:absolute;right:calc(var(--reserva-der,0px) + 10px);top:50%;translate:0 -50%;z-index:5;display:flex;flex-direction:column;gap:8px}
 .visor3dControles button{width:40px;height:40px;display:grid;place-items:center;border-radius:11px;border:1px solid #ffffff2e;background:#0d0a14b3;color:#f1dcae;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
 .visor3dControles button:hover{background:#221a2ecc}
 .visor3dControles svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
@@ -104,4 +110,8 @@
 .visor3dCandadoEscena{display:none}
 /* Edición bloqueada: la carta se ve velada, como en la Colección, y se avisa. */
 .visor3dBloqueada .visor3dFrente .visor3dCarta{filter:blur(6px) saturate(.5) brightness(.65)}
-.visor3dBloqueada .visor3dCandadoEscena{display:block;position:absolute;left:50%;top:50%;z-index:5;translate:-50% -50%;padding:8px 14px;border-radius:999px;background:#0d0a14d9;border:1px solid #ffffff2e;color:#e8dcc4;font:600 12px/1 var(--sans,system-ui,sans-serif);letter-spacing:1.5px;text-transform:uppercase;pointer-events:none}
+.visor3dBloqueada .visor3dCandadoEscena{display:block;position:absolute;left:calc(50% - var(--reserva-der,0px) / 2);top:50%;z-index:5;translate:-50% -50%;padding:8px 14px;border-radius:999px;background:#0d0a14d9;border:1px solid #ffffff2e;color:#e8dcc4;font:600 12px/1 var(--sans,system-ui,sans-serif);letter-spacing:1.5px;white-space:nowrap;text-transform:uppercase;pointer-events:none}
+/* La escena puede dejar a su derecha el sitio de otra interfaz (los controles
+   del detalle de Colección): la carta, el pedestal y el halo se centran en el
+   resto, mientras las partículas siguen llenando todo. */
+.visor3dIncrustado .visor3dEscena{margin-right:var(--reserva-der,0px)}

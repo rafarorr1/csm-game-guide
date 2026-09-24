@@ -355,8 +355,11 @@ tablero y la mano no cambian todavía.
 
 ### Detalle en 3D de una carta
 
-Tocar una carta de la rejilla abre su detalle, que es la carta en 3D:
-`visor-3d.js` montado dentro de Colección (`CAOZ_VISOR3D.montar`). Con WebGL,
+Tocar una carta de la rejilla abre su detalle, que es la carta en 3D a
+pantalla completa: el panel pierde marco, pestañas y pie, y `visor-3d.js`
+montado dentro de Colección (`CAOZ_VISOR3D.montar`) llena todo sobre una
+nebulosa del color de la edición. Los controles flotan en cristal a la derecha
+(abajo en el teléfono) y la escena les reserva sitio (`--reserva-der`). Con WebGL,
 `visor-3d-gl.js` la dibuja con las cuatro texturas del pintor: grosor real,
 relieve, metal y laca que reflejan un estudio procedural, una luz lateral que
 sigue al puntero y holo con destellos según el ángulo; sin WebGL o con un

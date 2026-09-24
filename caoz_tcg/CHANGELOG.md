@@ -7,11 +7,12 @@
   gemas de ATQ/VIDA con la cifra centrada; la Dorada en full art. Tienen
   relieve, textura del metal y del papel, y la luz sobre el relieve ya aplicada.
   Cada edición conserva su ilustración, su encuadre y sus nombres de Estudio.
-- El detalle de una carta es ahora la carta en 3D: WebGL propio (sin
+- El detalle de una carta es ahora la carta en 3D a pantalla completa, sin
+  el marco del panel, sobre una nebulosa del color de la edición: WebGL propio (sin
   dependencias) con grosor, relieve, metal y laca que reflejan la luz, holo y
   destellos según el ángulo, dorso con el logo, anillo rúnico y partículas.
-  Junto a ella, las pestañas Normal/Foil/Dorada cambian la edición de la misma
-  escena, con sus copias, Usar y el canje; una edición bloqueada se ve velada.
+  En un panel de cristal (abajo en el teléfono), las pestañas Normal/Foil/Dorada
+  cambian la edición de la misma escena, con sus copias, Usar y el canje; una edición bloqueada se ve velada.
   Un botón la amplía a pantalla completa. Sin WebGL, la escena usa capas CSS.
 - Cinzel y Cormorant Garamond (OFL) viajan con el juego en `fuentes/`: sigue
   funcionando sin conexión. Los Protagonistas, el tablero y la mano no cambian.

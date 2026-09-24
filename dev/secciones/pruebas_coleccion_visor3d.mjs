@@ -64,10 +64,10 @@ try{
       for(const a of ['normal','foil','dorado']){
         await pagina.locator('[data-edicion="'+a+'"] .coleccionElegirAcabado').click();
         await pagina.waitForFunction(a=>document.querySelector('.visor3dIncrustado')?.dataset.acabado===a,a,{timeout:4000});
-        const estado=await pagina.evaluate(([r,c,a])=>({misma:document.querySelector('.visor3dIncrustado')===r,bloqueada:r.classList.contains('visor3dBloqueada'),gl:r.classList.contains('visor3dConGL'),tiene:CAOZ_COLECCION.tiene(c,a)}),[raiz,carta,a]);
+        const estado=await pagina.evaluate(([r,c,a])=>({misma:document.querySelector('.visor3dIncrustado')===r,bloqueada:r.classList.contains('visor3dBloqueada'),gl:r.classList.contains('visor3dConGL'),lienzoVisible:getComputedStyle(r.querySelector('.visor3dGL')).visibility==='visible',tiene:CAOZ_COLECCION.tiene(c,a)}),[raiz,carta,a]);
         assert.ok(estado.misma,'Cambiar de edición conserva la escena y su WebGL');
         assert.equal(estado.bloqueada,!estado.tiene,'Una edición bloqueada se ve velada');
-        if(!estado.tiene)assert.ok(!estado.gl,'Una edición bloqueada nunca se dibuja nítida en WebGL');
+        if(!estado.tiene)assert.ok(!estado.gl&&!estado.lienzoVisible,'Una edición bloqueada nunca se ve nítida: ni se dibuja en WebGL ni queda a la vista la edición anterior');
       }
       await pagina.locator('[data-edicion="'+inicial+'"] .coleccionElegirAcabado').click();
       await pagina.locator('.visor3dIncrustado .visor3dVoltear').click();

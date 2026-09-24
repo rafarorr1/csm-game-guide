@@ -661,14 +661,29 @@
   #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{animation:none}
 }
 
-/* Detalle: la carta en 3D (visor-3d.js incrustado) junto a las ediciones. Las
-   pestañas eligen la edición que se ve; debajo quedan sus copias, Usar y el
-   canje. Las fichas de cada edición siguen en el DOM, ocultas: la escena 3D
-   es la única carta visible. */
+/* Detalle: la carta en 3D a pantalla completa, como el visor. El panel pierde
+   su marco, pestañas y pie; la escena llena todo y los controles de la edición
+   flotan en cristal a la derecha (abajo en el teléfono). Las fichas de cada
+   edición siguen en el DOM, ocultas: la escena 3D es la única carta visible. */
+#coleccionPanel[data-vista="detalle"]:has(.coleccionDetalle3D.con3D){inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior::before,#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior::after{display:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) :is(.coleccionPestanas,.coleccionPie,.coleccionTitulos,.coleccionEmblema){display:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionCabecera{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;margin:0;padding:0;min-height:0;border:0;background:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionEstado{position:absolute;left:0;right:0;bottom:12px;z-index:7;text-align:center;pointer-events:none}
+#coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{position:absolute;left:0;right:360px;bottom:16px;z-index:5;margin:0;text-align:center;color:#cbbfd9b3;pointer-events:none}
+#coleccionPanel .coleccionDetalle3D.con3D~.coleccionDetalleCabecera,#coleccionPanel .coleccionDetalleCabecera:has(~.con3D){position:absolute;top:max(14px,env(safe-area-inset-top));left:0;right:360px;z-index:6;padding:0 72px;pointer-events:none;text-shadow:0 2px 12px #000}
+#coleccionPanel .coleccionDetalleCabecera:has(~.con3D) .coleccionAtras{pointer-events:auto}
+#coleccionPanel .coleccionDetalleCabecera:has(~.con3D) h3{font-size:30px}
 #coleccionPanel .coleccionDetalle3D{flex:1;min-height:0;width:100%;max-width:1040px;margin:0 auto;display:flex;flex-direction:column}
-#coleccionPanel .coleccionDetalle3D.con3D{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:20px;padding:6px 8px 4px}
-#coleccionPanel .coleccionEscena3D{position:relative;min-height:300px}
-#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;align-content:center;gap:14px 10px;width:100%;max-width:none;max-height:none;min-height:0!important;margin:0;padding:8px 4px;background:none}
+#coleccionPanel .coleccionDetalle3D.con3D{position:absolute;inset:0;display:block;max-width:none;margin:0;padding:0}
+#coleccionPanel .coleccionEscena3D{position:absolute;inset:0;min-height:0}
+#coleccionPanel .coleccionEscena3D .visor3dIncrustado{--reserva-der:360px;border-radius:0}
+/* La carta de la escena mide lo que decide el visor, no los topes de las fichas del panel. */
+#coleccionPanel .visor3dFrente .coleccionCarta{max-height:none;max-width:none;min-height:0}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{position:absolute;right:28px;top:50%;translate:0 -50%;z-index:5;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;align-content:center;gap:14px 8px;width:310px;max-width:none;max-height:calc(100% - 40px);min-height:0!important;margin:0;padding:20px 16px;overflow:auto;
+  border:1px solid #ffffff1c;border-radius:16px;background:#0e0a16a6;-webkit-backdrop-filter:blur(14px) saturate(130%);backdrop-filter:blur(14px) saturate(130%);box-shadow:0 24px 60px #0009}
 #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion{display:contents}
 #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionCarta{display:none!important}
 #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionElegirAcabado{grid-row:1;min-width:0;width:100%}
@@ -677,18 +692,14 @@
 #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{grid-column:3}
 #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion:not(.vista) :is(.coleccionEstadoEdicion,.coleccionUsar,.coleccionMejora){display:none}
 #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionEstadoEdicion{grid-column:1/-1;grid-row:2;justify-self:center;align-self:center;font-size:13px}
-#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:3;justify-self:center;width:100%;max-width:300px;min-height:44px}
-#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionMejora{grid-column:1/-1;grid-row:4;justify-self:center;width:100%;max-width:300px;height:auto;min-height:0}
-@media(max-width:580px){
-  #coleccionPanel .coleccionDetalle3D.con3D{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(150px,1fr) auto;gap:8px;padding:2px}
-  #coleccionPanel .coleccionEscena3D{min-height:150px}
-  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{gap:8px;padding:2px}
-  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{min-height:39px}
-}
-/* Teléfonos bajos: la escena cede alto para que Usar y el canje quepan enteros. */
-@media(max-width:580px) and (max-height:650px){
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:3;justify-self:center;width:100%;min-height:44px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionMejora{grid-column:1/-1;grid-row:4;justify-self:center;width:100%;height:auto;min-height:0}
+@media(max-width:760px){
+  #coleccionPanel .coleccionEscena3D{inset:0 0 var(--controles-alto,250px) 0}
+  #coleccionPanel .coleccionEscena3D .visor3dIncrustado{--reserva-der:0px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{left:10px;right:10px;top:auto;bottom:max(10px,env(safe-area-inset-bottom));translate:none;width:auto;gap:8px 6px;padding:12px 12px 10px}
   #coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{display:none}
-  #coleccionPanel .coleccionDetalle3D.con3D{grid-template-rows:minmax(120px,1fr) auto}
-  #coleccionPanel .coleccionEscena3D{min-height:120px}
-  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{gap:6px}
+  #coleccionPanel .coleccionDetalleCabecera:has(~.con3D){right:0;padding:0 56px}
+  #coleccionPanel .coleccionDetalleCabecera:has(~.con3D) h3{font-size:20px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{min-height:39px}
 }
