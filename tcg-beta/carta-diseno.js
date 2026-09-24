@@ -52,6 +52,9 @@
     if(visibles&&!carta.dataset.pintada)visibles.observe(carta);else encolar(carta);
   }
 
+  // Pintar ya, sin esperar a que se vea: la apertura de sobres la necesita
+  // lista antes de mostrarla.
+  function pintarYa(carta){visibles?.unobserve(carta);return pintar(carta).catch(()=>{});}
   function crear(id,acabado){
     const c=CARDS[id];if(!c)throw Error('Carta desconocida: '+id);
     const carta=nodo('div','cdCarta t-'+c.t+(acabado==='dorado'?' cdFullArt':' cdClasica'));carta.dataset.card=id;
@@ -68,5 +71,5 @@
     carta.addEventListener('load',repintar,true);
     return carta;
   }
-  window.CAOZ_CARTA_DISENO=Object.freeze({crear,arteDe,cargada});
+  window.CAOZ_CARTA_DISENO=Object.freeze({crear,arteDe,cargada,pintarYa});
 })();

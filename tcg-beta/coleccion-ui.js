@@ -319,7 +319,7 @@
     // El papel CSS queda como respaldo si el módulo aún no está disponible.
     if(window.CAOZ_SOBRES_ESCENA?.previsualizar){
       const host=crear('div','coleccionSobreReal');sobre.append(host);
-      try{const vista=window.CAOZ_SOBRES_ESCENA.previsualizar(host,{grupo:grupo.id,logoUrl:'art/logo.webp'});if(vista?.destruir){vistasSobres.add(vista);sobre.classList.add('conSobreReal');}else host.remove();}
+      try{const vista=window.CAOZ_SOBRES_ESCENA.previsualizar(host,{grupo:grupo.id,logoUrl:'art/logo.webp',arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp'});if(vista?.destruir){vistasSobres.add(vista);sobre.classList.add('conSobreReal');}else host.remove();}
       catch(_){host.remove();}
     }
     return sobre;
@@ -677,6 +677,7 @@
         if(!window.CAOZ_SOBRES?.crear)throw Error('La apertura aún no está disponible.');
         registro.componente=window.CAOZ_SOBRES.crear(host,{variante:'reliquia',logoUrl:'art/logo.webp',grupo:pack.grupo,
           cartas:pack.cartas.map(item=>({...item,nombre:dato(item.id).n})),crearCarta:cartaSobre,
+          prepararCarta:n=>window.CAOZ_CARTA_DISENO?.pintarYa?.(n),arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp',
           onVolver:()=>cerrarPendiente(registro),onCambio:actual=>{
             if(!vigente())return;host.dataset.fase=actual.fase;
             if(actual.fase==='terminado'&&registro.errorCierre){const b=host.querySelector('.sobresAccion');if(b){b.textContent='Reintentar';b.classList.add('coleccionReintentarCierre');}}
