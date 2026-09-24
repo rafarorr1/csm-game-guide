@@ -1,5 +1,11 @@
 # Registro de versiones — el TCG del Domo
 
+### v44 · Build 282 · Fundido limpio de la portada · 2026-09-24
+
+- La portada de arranque ahora apaga el logo contra negro antes de revelar el
+  menú. Ya no se cruzan el logo temporal y el logo de la portada durante el
+  fundido.
+
 ### v43 · Build 281 · Portada de arranque de Caoz · 2026-09-24
 
 - Al abrir el juego, el menú ya no se asoma a medio cargar: aparece sólo el
