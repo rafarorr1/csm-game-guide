@@ -40,8 +40,15 @@ try{
       await ficha.waitFor({timeout:4000});
       const acabado=await ficha.getAttribute('data-coleccion-acabado');
       assert.match(await ficha.getAttribute('aria-label'),/en 3D$/,'La carta anuncia que abre el visor');
+      // La carta de Colección se pinta con el diseño del visor (relieve horneado).
+      // Los Protagonistas conservan su retrato y no se pintan.
+      const pintada=await ficha.evaluate(n=>n.classList.contains('cdCarta'));
+      if(pintada)await pagina.waitForFunction(n=>n.classList.contains('cdLista')&&n.querySelector('canvas.cdLienzo').width>=260,await ficha.elementHandle(),{timeout:20000});
       await ficha.click();
       const visor=pagina.locator('dialog.visor3d[open]');await visor.waitFor();
+      // Con WebGL, la carta del visor la dibuja visor-3d-gl.js con sus texturas.
+      const hayGL=await pagina.evaluate(()=>{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'));});
+      if(hayGL&&pintada)await pagina.waitForFunction(()=>document.querySelector('dialog.visor3d')?.classList.contains('visor3dConGL'),null,{timeout:30000});
       const abierto=await pagina.evaluate(()=>{
         const d=document.querySelector('dialog.visor3d'),frente=d.querySelector('.visor3dFrente .visor3dCarta'),r=frente.getBoundingClientRect(),dorso=d.querySelector('.visor3dDorso');
         return {acabado:d.dataset.acabado,cartaReal:frente.classList.contains('coleccionCarta')&&!!frente.querySelector('.marcoDibujo, .lface'),
@@ -69,7 +76,7 @@ try{
       const foco=await pagina.evaluate(()=>document.activeElement?.classList.contains('coleccionVer3D')&&document.querySelector('#coleccionPanel').open);
       assert.ok(foco,'Al cerrar vuelve a la Colección con el foco en la carta');
       assert.deepEqual(errores,[],'Sin errores de página');
-      console.log('✓ '+vista+' '+width+'×'+height+': abre la carta real, dorso con logo, voltea, cambia de edición y devuelve el foco');
+      console.log('✓ '+vista+' '+width+'×'+height+': '+(pintada?'carta pintada, '+(hayGL?'visor WebGL':'visor CSS'):'retrato de Protagonista')+', abre la carta real, dorso con logo, voltea, cambia de edición y devuelve el foco');
     }finally{await contexto.close();}
   }
 }catch(error){

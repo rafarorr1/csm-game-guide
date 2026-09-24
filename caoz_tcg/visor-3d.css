@@ -86,3 +86,8 @@
 .visor3dAyuda{margin:0;font-size:11px;color:#9d93ad;letter-spacing:.3px}
 @media (max-height:620px){.visor3dAyuda{display:none}.visor3dCabecera{padding-top:10px}}
 @media (hover:none){.visor3dEscena{cursor:default}}
+
+/* Con WebGL la carta la dibuja visor-3d-gl.js; las capas CSS quedan como
+   medida y respaldo, invisibles. */
+.visor3dGL{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
+.visor3d.visor3dConGL .visor3dCapa{visibility:hidden}

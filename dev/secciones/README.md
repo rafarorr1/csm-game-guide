@@ -336,23 +336,28 @@ reemplazos ni ajustes privados del estudio.
 
 ### Diseño de carta de Colección
 
-Las cartas de Colección (rejilla, detalle, sobres y visor 3D) se dibujan con
-`carta-diseno.js`/`.css` a partir de `CARDS`: Normal y Foil con el diseño
-clásico (ilustración enmarcada, placas de nombre y tipo, gema de coste,
-pergamino de reglas y gemas de ATQ/VIDA) y la Dorada en full art, con el texto
-sobre paneles translúcidos. La ilustración la sigue colocando el proveedor de
-arte en `.cdArte[data-arte-id]`, con el encuadre de cada edición y los reflejos
-de `acabados.css`. Las medidas dependen del ancho de la carta (`cqi`), así que
-no necesitan que nadie fije su tamaño de letra. Los Protagonistas conservan su
-retrato. Tipografías Cinzel y Cormorant Garamond alojadas en `caoz_tcg/fuentes/`
-(licencia OFL), sin pedir nada a otros servidores. El tablero y la mano no
-cambian todavía.
+Las cartas de Colección se pintan en canvas con `carta-pintor.js`, a partir de
+`CARDS`: Normal y Foil con el diseño clásico (ilustración enmarcada, placas
+metálicas de nombre y tipo, gema de coste, pergamino de reglas, gemas de
+ATQ/VIDA con la cifra centrada) y la Dorada en full art. El pintor produce color,
+relieve (altura → normal map), rugosidad/metal y máscara holográfica.
+`carta-diseno.js` usa el color con el relieve ya iluminado (horneado) en la
+rejilla, el detalle y los sobres, y sólo pinta las cartas cercanas a la
+pantalla, de una en una. El proveedor de arte sigue colocando la ilustración de
+cada edición en `.cdArte[data-arte-id]` (invisible); el pintor lee de ahí la
+imagen y su encuadre, y repinta si cambian. Tipografías Cinzel y Cormorant
+Garamond en `caoz_tcg/fuentes/` (OFL); las cifras de reglas usan Cinzel porque
+Cormorant sólo trae cifras antiguas. Los Protagonistas conservan su retrato y el
+tablero y la mano no cambian todavía.
 
 ### Visor 3D de una carta
 
 En el detalle, tocar una edición desbloqueada (o enfocarla y pulsar Intro) abre
-`visor-3d.js` en un diálogo propio, encima de Colección. Muestra la misma ficha
-clonada con canto, reflejo que sigue al puntero, película foil y destellos en
+`visor-3d.js` en un diálogo propio, encima de Colección. Con WebGL, la carta la dibuja
+`visor-3d-gl.js` con las cuatro texturas del pintor: grosor real, relieve,
+metal y laca que reflejan un estudio procedural, una luz que sigue al puntero
+desde un costado y holo con destellos según el ángulo. Sin WebGL (o con un
+Protagonista) muestra la ficha con canto, reflejo, película foil y destellos en
 Foil/Dorada, y el dorso con `art/logo.webp`. Debajo gira un anillo rúnico y
 alrededor suben partículas de luz del color de la edición, con una ráfaga de
 chispas al abrir, voltear o cambiar de edición. Se gira arrastrando, se voltea con
