@@ -65,6 +65,22 @@ progreso. Su comprobación concreta es:
 node dev/secciones/pruebas_interacciones_exportacion.mjs
 ```
 
+## Aliento de fuego (prueba de animación)
+
+La revisión está en `/fuego/`. Thal se envuelve en fuego verde, lo escupe sobre
+la carta rival y la carta arde desde el impacto hasta la ceniza. El efecto es
+`caoz_tcg/fx-aliento.js` (`CAOZ_FX_ALIENTO.reproducir(host,{atacante,objetivo,
+imagenObjetivo,color,velocidad})`): llamas, chorro y quemado en WebGL con ruido
+fbm; brasas, salpicaduras y ceniza en Canvas 2D. La ceniza nace de puntos de la
+carta ordenados por cuándo los alcanza el frente, y el umbral del quemado sale
+de sus cuantiles: a mitad del quemado ha ardido la mitad. «Cámara lenta» lo
+reproduce a 0,35×. Aún no está conectado al combate.
+
+```bash
+node dev/secciones/pruebas_fuego.mjs
+python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego
+```
+
 ## Cartas de la partida
 
 La revisión está en `/cartas/` (escritorio) y `/cartas/movil.html` (teléfono).
