@@ -4289,6 +4289,11 @@ PRUEBAS.suite('regresiones', async t => {
       const d = cardEl(id);   // tests.js corre dentro del juego: es su propia función
       d.style.cssText = 'position:fixed;left:-9999px';
       document.body.appendChild(d);
+      // Con la cara pintada (carta-juego.js) el tipo va en el cuerpo pintado; el
+      // borde y el coste de color son los de la carta mientras se pinta, y siguen
+      // siendo el contrato: se miden sin la cara.
+      if (d.dataset.piel === 'lista') t.check(!!d.querySelector(':scope > .cjCara') && d.classList.contains('t-'+tipo), `${tipo}: la cara pintada no lleva su tipo`);
+      delete d.dataset.piel;
       const cs = getComputedStyle(d);
       const borde = cs.borderTopColor;
       const coste = getComputedStyle(d.querySelector('.cost')).backgroundImage;

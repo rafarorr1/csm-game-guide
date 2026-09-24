@@ -129,12 +129,16 @@ void main(){
       return t;
     }
     const liberar=o=>{if(o)for(const t of Object.values(o))if(t)gl.deleteTexture(t);};
-    let frente=null,dorso=null,edicion='normal',canto=[.7,.55,.3],w=1,h=1,altoCarta=400;
+    // Frentes por ranura: el visor usa la 0; la apertura de sobres, una por carta.
+    const frentes=[];let frente=null,dorso=null,edicion='normal',canto=[.7,.55,.3],w=1,h=1,altoCarta=400;
+    const colorLineal=c=>{const n=parseInt(c.slice(1),16);return [(n>>16&255)/255,(n>>8&255)/255,(n&255)/255].map(v=>Math.pow(v,2.2));};
 
-    function cargarFrente(tex,ed,colorCanto){
-      liberar(frente);edicion=ed;frente={color:textura(tex.color),normal:textura(tex.normal),orm:textura(tex.orm),mascara:textura(tex.mascara)};
-      if(colorCanto){const n=parseInt(colorCanto.slice(1),16);canto=[(n>>16&255)/255,(n>>8&255)/255,(n&255)/255].map(v=>Math.pow(v,2.2));}
+    function cargarFrente(tex,ed,colorCanto,ranura=0){
+      const previo=frentes[ranura];if(previo)liberar(previo.tex);
+      frentes[ranura]={tex:{color:textura(tex.color),normal:textura(tex.normal),orm:textura(tex.orm),mascara:textura(tex.mascara)},edicion:ed,canto:colorCanto?colorLineal(colorCanto):canto};
+      if(ranura===0)elegir(0);
     }
+    function elegir(ranura){const f=frentes[ranura];if(!f)return false;frente=f.tex;edicion=f.edicion;canto=f.canto;return true;}
     function cargarDorso(tex){liberar(dorso);dorso={color:textura(tex.color),normal:textura(tex.normal)};}
     function medir(anchoPx,altoPx,dpr,cartaPx){w=anchoPx;h=altoPx;altoCarta=cartaPx;canvas.width=Math.round(anchoPx*dpr);canvas.height=Math.round(altoPx*dpr);}
     function atributos(buf){
@@ -164,8 +168,7 @@ void main(){
       atributos(bufs.frente);gl.drawArrays(gl.TRIANGLES,0,bufs.frente.n);
     }
     // e: {rx,ry,rz,y,s,tiempo,luzX,luzY,pulso,pila}. Ángulos como en el CSS del visor.
-    function dibujar(e){
-      if(!frente||!dorso)return false;
+    function preparar(e){
       gl.viewport(0,0,canvas.width,canvas.height);gl.clearColor(0,0,0,0);gl.clear(gl.COLOR_BUFFER_BIT|gl.DEPTH_BUFFER_BIT);
       gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.useProgram(prog);
       // Cámara a la distancia en que la carta mide lo mismo que en el CSS.
@@ -176,6 +179,10 @@ void main(){
       gl.uniform3fv(u.uLuzDir,[-.35,.55,.75]);gl.uniform3fv(u.uLuzCol,[.95,.9,.84]);
       gl.uniform3fv(u.uPuntoPos,[1.7+e.luzX*2.2,1.7-e.luzY*1.8,2.6]);gl.uniform3fv(u.uPuntoCol,[2.2+e.pulso*4,2.+e.pulso*4,1.75+e.pulso*3]);
       gl.uniform1f(u.uTiempo,e.tiempo);gl.uniform1f(u.uPulso,e.pulso);
+    }
+    function dibujar(e){
+      if(!elegir(0)||!dorso)return false;
+      preparar(e);
       const px=ALTO/altoCarta;
       const base=mat.mult(mat.mult(mat.mult(mat.mult(mat.mover(0,-e.y*px,0),mat.escala(e.s)),mat.rx(-e.rx)),mat.ry(e.ry)),mat.rz(-e.rz));
       for(let i=Math.min(4,e.pila||0);i>=1;i--){
@@ -185,8 +192,21 @@ void main(){
       carta(base,true);
       return true;
     }
-    function destruir(){liberar(frente);liberar(dorso);for(const b of Object.values(bufs))gl.deleteBuffer(b.b);gl.deleteProgram(prog);gl.getExtension('WEBGL_lose_context')?.loseContext();}
-    return {cargarFrente,cargarDorso,medir,dibujar,destruir,listo:()=>!!(frente&&dorso)};
+    // Varias cartas en la misma luz: [{ranura,x,y,z,rx,ry,rz,s}], x/y en píxeles
+    // desde el centro (y hacia abajo), z en unidades de carta hacia la cámara.
+    function dibujarVarias(e,lista){
+      if(!dorso)return false;
+      preparar(e);
+      const px=ALTO/altoCarta;
+      for(const c of [...lista].sort((a,b)=>(a.z||0)-(b.z||0))){
+        if(!elegir(c.ranura||0))continue;
+        const m=mat.mult(mat.mult(mat.mult(mat.mult(mat.mover((c.x||0)*px,-(c.y||0)*px,c.z||0),mat.escala(c.s??1)),mat.rx(-(c.rx||0))),mat.ry(c.ry||0)),mat.rz(-(c.rz||0)));
+        carta(m,true);
+      }
+      return true;
+    }
+    function destruir(){for(const f of frentes)if(f)liberar(f.tex);liberar(dorso);for(const b of Object.values(bufs))gl.deleteBuffer(b.b);gl.deleteProgram(prog);gl.getExtension('WEBGL_lose_context')?.loseContext();}
+    return {cargarFrente,cargarDorso,medir,dibujar,dibujarVarias,destruir,listo:()=>!!(frentes[0]&&dorso)};
   }
   window.CAOZ_VISOR3D_GL=Object.freeze({crear});
 })();
