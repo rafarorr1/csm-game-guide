@@ -110,11 +110,94 @@ void main(){
   function sprite(color,tam=64){const c=document.createElement('canvas');c.width=c.height=tam;const g=c.getContext('2d'),m=tam/2,d=g.createRadialGradient(m,m,0,m,m,m);
     d.addColorStop(0,'rgba(255,255,255,1)');d.addColorStop(.25,color);d.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=d;g.fillRect(0,0,tam,tam);return c;}
 
-  /* reproducir(host,{atacante,objetivo,imagenObjetivo,color,velocidad,reducir})
+  // Cifra de daño flotante, como las gemas de la carta (tema-domo.css).
+  let estiloPuesto=false;
+  function ponerEstilo(){
+    if(estiloPuesto)return;estiloPuesto=true;const st=document.createElement('style');
+    st.textContent=".fxAlientoDano{position:absolute;z-index:23;transform:translate(-50%,-50%);pointer-events:none;font:900 clamp(22px,4.2vw,40px)/1 'Cinzel Domo','Cinzel',Georgia,serif;color:#9dff8a;padding:.12em .42em .16em;border-radius:999px;border:3px solid transparent;"
+      +"background:radial-gradient(circle at 50% 30%,#1e4a22,#060a07 72%) padding-box,linear-gradient(135deg,#f4ffe8,#6fe86a 35%,#1d6a22 65%,#d8ffc9) border-box;-webkit-text-stroke:2px rgba(0,0,0,.6);paint-order:stroke fill;"
+      +"text-shadow:0 0 16px #6fff6a,0 2px 0 #000;box-shadow:0 0 26px rgba(111,255,106,.5),0 10px 24px rgba(0,0,0,.9)}";
+    document.head.append(st);
+  }
+  function mostrarDano(host,x,y,texto,vel){
+    ponerEstilo();const d=document.createElement('div');d.className='fxAlientoDano';d.setAttribute('aria-hidden','true');d.textContent=texto;d.style.left=x+'px';d.style.top=y+'px';host.append(d);
+    const ms=1300/vel;d.animate?.([{opacity:0,transform:'translate(-50%,-50%) scale(.4)'},{opacity:1,transform:'translate(-50%,-80%) scale(1.25)',offset:.18},{opacity:1,transform:'translate(-50%,-110%) scale(1)',offset:.7},{opacity:0,transform:'translate(-50%,-150%) scale(.95)'}],{duration:ms,easing:'ease-out',fill:'forwards'});
+    setTimeout(()=>d.remove(),ms+60);
+  }
+  // Halo hueco: rodea la carta sin lavarla de color.
+  function aro(color,tam=256){const c=document.createElement('canvas');c.width=c.height=tam;const g=c.getContext('2d'),m=tam/2,d=g.createRadialGradient(m,m,m*.42,m,m,m);
+    d.addColorStop(0,'rgba(0,0,0,0)');d.addColorStop(.35,color);d.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=d;g.fillRect(0,0,tam,tam);return c;}
+  const rgb=(c,a=1)=>'rgba('+c.map(v=>Math.round(v*255)).join(',')+','+a+')';
+
+  /* ENTRADA · entrada(host,{carta,afectados:[{nodo,dano}],velocidad,reducir})
+     Sin fuego: la carta que entra brilla en verde, lanza una onda de ácido por
+     la mesa y cada afectada destella en verde al recibirla, con su daño. */
+  function entrada(host,o){
+    const vel=o.velocidad||1,pal=PALETAS.verde,consulta=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
+    const reducir=o.reducir??!!consulta?.matches,carta=o.carta,afectados=(o.afectados||[]).filter(a=>a?.nodo);
+    const lienzo=document.createElement('canvas');lienzo.className='fxAlientoCapa';lienzo.setAttribute('aria-hidden','true');lienzo.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:21';host.append(lienzo);
+    const g=lienzo.getContext('2d'),mota=sprite(pal.chispa),halo=aro(rgb(pal.llama));
+    const hr=host.getBoundingClientRect(),W=hr.width,H=hr.height,dpr=Math.min(devicePixelRatio||1,2);lienzo.width=Math.round(W*dpr);lienzo.height=Math.round(H*dpr);
+    const rel=n=>{const a=n.getBoundingClientRect(),h=host.getBoundingClientRect();return {x:a.left-h.left,y:a.top-h.top,w:a.width,h:a.height};};
+    const C=rel(carta),cc=[C.x+C.w/2,C.y+C.h/2];
+    const lejos=Math.max(1,...afectados.map(a=>{const r=rel(a.nodo);return Math.hypot(r.x+r.w/2-cc[0],r.y+r.h/2-cc[1]);}));
+    const golpes=afectados.map(a=>{const r=rel(a.nodo),d=Math.hypot(r.x+r.w/2-cc[0],r.y+r.h/2-cc[1]);return {...a,r,t:.8+.55*d/lejos,hecho:false};});
+    for(const n of [carta,...afectados.map(a=>a.nodo)])n.style.transition='none';
+    const motas=[],burbujas=[];
+    return new Promise(resolve=>{
+      let t0=0,raf=0,antes=0,fin=false;
+      const limpiar=()=>{for(const n of [carta,...afectados.map(a=>a.nodo)]){n.style.transform='';n.style.filter='';}};
+      const terminar=()=>{if(fin)return;fin=true;cancelAnimationFrame(raf);clearTimeout(seguro);limpiar();lienzo.remove();resolve();};
+      const seguro=typeof o.reloj==='function'?0:setTimeout(terminar,3200/vel+1500);
+      if(reducir||document.hidden){for(const a of golpes)if(a.dano!=null)mostrarDano(host,a.r.x+a.r.w/2,a.r.y+a.r.h*.45,'-'+a.dano,4);setTimeout(terminar,300);return;}
+      function cuadro(ahora){
+        raf=0;if(fin)return;if(!t0)t0=ahora;
+        const dt=Math.min(.05,antes?(ahora-antes)/1000:0)*(typeof o.reloj==='function'?.35:vel);antes=ahora;
+        const tt=typeof o.reloj==='function'?o.reloj():(ahora-t0)/1000*vel;
+        // La carta que entra: se enciende, late y suelta la onda.
+        const brillo=suave(entre(tt,0,.45))*(1-suave(entre(tt,1.7,2.4))),latido=.75+.25*Math.sin(tt*9);
+        carta.style.transform=`translateY(${-brillo*C.h*.04}px) scale(${1+brillo*.05})`;
+        carta.style.filter=`drop-shadow(0 0 ${6+brillo*30*latido}px ${rgb(pal.llama,.3+brillo*.6)}) brightness(${1+brillo*.18}) saturate(${1+brillo*.25})`;
+        g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);g.globalCompositeOperation='lighter';
+        // Resplandor detrás del brillo y motas que suben.
+        if(brillo>0){g.globalAlpha=brillo*.6*latido;g.drawImage(halo,cc[0]-C.w*1.25,cc[1]-C.h*1.05,C.w*2.5,C.h*2.1);}
+        if(brillo>.2&&Math.random()<brillo)for(let i=0;i<2;i++)motas.push({x:C.x+Math.random()*C.w,y:C.y+C.h*(.3+Math.random()*.7),vx:(Math.random()-.5)*20,vy:-40-Math.random()*70,t:0,vida:.9+Math.random()*.7,r:2+Math.random()*3});
+        // La onda de ácido: un anillo que cruza la mesa hasta la última afectada.
+        const onda=entre(tt,.7,.7+.65);
+        if(onda>0&&onda<1){const r=onda*(lejos+C.h*.6),a=(1-onda)*.9;
+          g.globalAlpha=a;g.lineWidth=10+onda*26;const gr=g.createRadialGradient(cc[0],cc[1],Math.max(0,r-30),cc[0],cc[1],r+18);
+          gr.addColorStop(0,'rgba(60,255,90,0)');gr.addColorStop(.6,'rgba(150,255,140,.9)');gr.addColorStop(1,'rgba(60,255,90,0)');
+          g.strokeStyle=gr;g.beginPath();g.ellipse(cc[0],cc[1],r,r*.82,0,0,TAU);g.stroke();}
+        // Cada afectada destella en verde, tiembla y burbujea de ácido.
+        for(const a of golpes){
+          const k=entre(tt,a.t,a.t+1),pulso=k>0&&k<1?Math.sin(Math.PI*Math.min(1,k*2.2))*(1-k*.5):0;
+          const tiembla=k>0&&k<.25?Math.sin(k*120)*4*(1-k*4):0;
+          a.nodo.style.transform=`translate(${tiembla}px,${tiembla*.3}px)`;
+          a.nodo.style.filter=pulso>0?`drop-shadow(0 0 ${pulso*28}px ${rgb(pal.llama,.9)}) brightness(${1+pulso*.45}) sepia(${pulso*.35}) hue-rotate(${pulso*60}deg) saturate(${1+pulso*.8})`:'';
+          if(!a.hecho&&tt>=a.t){a.hecho=true;if(a.dano!=null)mostrarDano(host,a.r.x+a.r.w/2,a.r.y+a.r.h*.45,'-'+a.dano,vel);
+            for(let i=0;i<26;i++)burbujas.push({x:a.r.x+a.r.w*(.1+Math.random()*.8),y:a.r.y+a.r.h*(.25+Math.random()*.7),vx:(Math.random()-.5)*16,vy:-20-Math.random()*50,t:-Math.random()*.4,vida:.6+Math.random()*.6,r:(2+Math.random()*5)*a.r.w/180});}
+          if(pulso>0){g.globalAlpha=pulso*.7;g.drawImage(halo,a.r.x-a.r.w*.75,a.r.y-a.r.h*.55,a.r.w*2.5,a.r.h*2.1);}
+        }
+        for(let i=motas.length-1;i>=0;i--){const m=motas[i];m.t+=dt;if(m.t>=m.vida){motas.splice(i,1);continue;}m.x+=m.vx*dt;m.y+=m.vy*dt;g.globalAlpha=(1-m.t/m.vida)*.9;g.drawImage(mota,m.x-m.r*2,m.y-m.r*2,m.r*4,m.r*4);}
+        g.globalCompositeOperation='source-over';
+        for(let i=burbujas.length-1;i>=0;i--){const b=burbujas[i];b.t+=dt;if(b.t<0)continue;if(b.t>=b.vida){burbujas.splice(i,1);continue;}
+          b.x+=b.vx*dt;b.y+=b.vy*dt;const k=b.t/b.vida,r=b.r*(1+k*.6);g.globalAlpha=(1-k)*.85;
+          g.strokeStyle='rgba(170,255,150,.95)';g.lineWidth=1.2;g.fillStyle='rgba(60,200,70,.25)';g.beginPath();g.arc(b.x,b.y,r,0,TAU);g.fill();g.stroke();
+          g.fillStyle='rgba(255,255,255,.8)';g.beginPath();g.arc(b.x-r*.35,b.y-r*.35,r*.25,0,TAU);g.fill();}
+        g.globalAlpha=1;
+        if(tt>=2.8&&!motas.length&&!burbujas.length){terminar();return;}
+        raf=requestAnimationFrame(cuadro);
+      }
+      raf=requestAnimationFrame(cuadro);
+    });
+  }
+
+  /* ATAQUE · ataque(host,{atacante,objetivo,imagenObjetivo,letal,dano,color,velocidad,reducir})
      atacante/objetivo: nodos (la carta visible). imagenObjetivo: imagen o
      canvas con la cara del objetivo, para quemarla en WebGL. Devuelve una
      promesa que se cumple al terminar; el objetivo queda oculto (es ceniza). */
-  function reproducir(host,o){
+  function ataque(host,o){
+    const letal=o.letal!==false;
     const pal=PALETAS[o.color]||PALETAS.verde,vel=o.velocidad||1;
     const consulta=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
     const reducir=o.reducir??!!consulta?.matches;
@@ -132,18 +215,22 @@ void main(){
     // Punto del impacto en la carta objetivo (uv) y boca del atacante.
     const impacto=[.5,.62];
     const particulas=[],ceniza=[];
+    // Marcas del golpe cuando no mata: alrededor del impacto.
+    const marcas=Array.from({length:6},(_,i)=>({u:impacto[0]+(Math.random()-.5)*.5,v:impacto[1]+(Math.random()-.5)*.35,r:.07+Math.random()*.1}));
     // Puntos de la carta ordenados por cuándo los alcanza el frente.
     const puntos=Array.from({length:1600},()=>{const u=Math.random(),v=Math.random();return {u,v,f:frente(u,v,impacto[0],impacto[1])};}).sort((a,b)=>a.f-b.f);
     // El umbral sale de los cuantiles del frente: a mitad del quemado, arde la mitad.
     const umbralDe=q=>q<=0?-1:q>=1?9:puntos[Math.min(puntos.length-1,Math.floor(q*puntos.length))].f;
-    const DUR=4400/vel;
+    const TOTAL=letal?4.4:3.1,DUR=TOTAL*1000/vel;
     atq.style.transition='none';obj.style.transition='none';
     return new Promise(resolve=>{
-      let t0=0,raf=0,antes=0,fin=false,emitido=0,cenizaHecha=0;
+      let t0=0,raf=0,antes=0,fin=false,emitido=0,cenizaHecha=0,danoPuesto=false;
       const terminar=()=>{if(fin)return;fin=true;cancelAnimationFrame(raf);clearTimeout(seguro);
-        atq.style.transform='';atq.style.filter='';obj.style.visibility='hidden';obj.dataset.fxCeniza='';
+        atq.style.transform='';atq.style.filter='';obj.style.filter='';obj.style.transform='';
+        if(letal){obj.style.visibility='hidden';obj.dataset.fxCeniza='';}else obj.style.visibility='';
         gl?.destruir();lienzoGL.remove();lienzo2D.remove();resolve();};
       const seguro=typeof o.reloj==='function'?0:setTimeout(terminar,DUR+1500);
+      if((reducir||document.hidden)&&!letal){const r=rel(obj);if(o.dano!=null)mostrarDano(host,r.x+r.w/2,r.y+r.h*.45,'-'+o.dano,4);setTimeout(terminar,300);return;}
       if(reducir||document.hidden){
         // Sin animación: el objetivo se apaga y desaparece.
         obj.animate?.([{opacity:1,filter:'none'},{opacity:0,filter:'grayscale(1) brightness(.3)'}],{duration:260,fill:'forwards'});
@@ -153,11 +240,13 @@ void main(){
         raf=0;if(fin)return;if(!t0)t0=ahora;
         const dt=Math.min(.05,antes?(ahora-antes)/1000:0)*(typeof o.reloj==='function'?.35:vel);antes=ahora;
         // o.reloj (sólo revisión) fija el instante; si no, corre con el tiempo real.
-        const tt=typeof o.reloj==='function'?o.reloj():(ahora-t0)/1000*vel,t=tt/4.4;
+        const tt=typeof o.reloj==='function'?o.reloj():(ahora-t0)/1000*vel,t=tt/TOTAL;
         // Fases (segundos): carga 0–1.0; aliento 0.95–1.9; quemado 1.4–3.4; ceniza hasta 4.4.
         const carga=suave(entre(tt,0,.7))*(1-suave(entre(tt,1.9,2.4)));
         const soplando=tt>.95&&tt<1.9;
-        const quema=entre(tt,1.4,3.5);
+        const quema=letal?entre(tt,1.4,3.5):0;
+        // Sin muerte: el golpe enciende al objetivo, lo quema por encima y se apaga.
+        const encaja=letal?0:suave(entre(tt,1.1,1.3))*(1-suave(entre(tt,1.95,2.7)));
         // El atacante se levanta, arde y se inclina hacia el objetivo al soplar.
         const ca=[baseA.x+baseA.w/2,baseA.y+baseA.h/2],co=[baseO.x+baseO.w/2,baseO.y+baseO.h/2];
         const ang=Math.atan2(co[1]-ca[1],co[0]-ca[0]),lean=Math.sin(Math.PI*entre(tt,.8,1.9))*.5;
@@ -166,8 +255,10 @@ void main(){
         atq.style.transform=`translate(${dx+temblor}px,${dy-carga*baseA.h*.05}px) scale(${1+carga*.06})`;
         atq.style.filter=`drop-shadow(0 0 ${8+carga*26}px rgba(${pal.llama.map(v=>Math.round(v*255)).join(',')},${.25+carga*.55})) brightness(${1+carga*.12})`;
         // El objetivo se estremece con el impacto.
-        const golpe=soplando?Math.sin(tt*70)*2.2*entre(tt,1.15,1.3):0;
+        const golpe=soplando?Math.sin(tt*70)*(letal?2.2:3.2)*entre(tt,1.15,1.3):0;
         obj.style.transform=`translate(${golpe}px,${golpe*.4}px)`;
+        if(!letal)obj.style.filter=encaja>0?`drop-shadow(0 0 ${encaja*26}px ${rgb(pal.llama,.85)}) brightness(${1+encaja*.3}) sepia(${encaja*.3}) hue-rotate(${encaja*55}deg)`:'';
+        if(!letal&&!danoPuesto&&tt>=1.2){danoPuesto=true;const r=rel(obj);if(o.dano!=null)mostrarDano(host,r.x+r.w/2,r.y+r.h*.45,'-'+o.dano,vel);}
         const A=rel(atq),O=rel(obj);
         const boca=[A.x+A.w*.5+Math.cos(ang)*A.h*.18,A.y+A.h*.36+Math.sin(ang)*A.h*.18],destino=[O.x+O.w*impacto[0],O.y+O.h*impacto[1]];
         const avance=salida(entre(tt,.95,1.2)),soplo=suave(entre(tt,.95,1.05))*(1-suave(entre(tt,1.75,1.95)));
@@ -177,7 +268,7 @@ void main(){
           if(quema>0){obj.style.visibility='hidden';gl.quemar(O,umbralDe(quema),impacto,1-quema);}
           gl.llamas(A,carga);
           gl.chorro(boca,destino,avance,soplo,[A.w*.09,A.w*.5]);
-          gl.llamas(O,Math.sin(Math.PI*acotar(quema*1.15))*.9+suave(entre(tt,1.2,1.4))*(1-quema)*.4);
+          gl.llamas(O,letal?Math.sin(Math.PI*acotar(quema*1.15))*.9+suave(entre(tt,1.2,1.4))*(1-quema)*.4:encaja*.7);
         }else if(quema>0){obj.style.opacity=String(1-quema);}
         // 2D: brasas del atacante, chorro de fuego, ceniza.
         g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
@@ -196,6 +287,12 @@ void main(){
             ceniza.push({x:O.x+q.u*O.w,y:O.y+q.v*O.h,vx:(Math.random()-.5)*50,vy:-15-Math.random()*60,rot:Math.random()*TAU,vr:(Math.random()-.5)*7,vida:1.3+Math.random()*1.5,t:0,l:(2.5+Math.random()*5)*escala,gris:30+Math.random()*70,brasa:Math.random()<.22});
           }
         }
+        // Sin muerte: marcas de quemado verde sobre la carta que se van apagando.
+        if(!letal&&tt>1.2){const k=1-suave(entre(tt,1.8,3.0));if(k>0){
+          for(const m of marcas){const cx=O.x+m.u*O.w,cy=O.y+m.v*O.h,r=m.r*O.w;
+            g.globalCompositeOperation='source-over';g.globalAlpha=k*.55;const d=g.createRadialGradient(cx,cy,0,cx,cy,r);d.addColorStop(0,'rgba(12,14,10,.95)');d.addColorStop(.6,'rgba(20,30,16,.6)');d.addColorStop(1,'rgba(20,30,16,0)');g.fillStyle=d;g.beginPath();g.arc(cx,cy,r,0,TAU);g.fill();
+            g.globalCompositeOperation='lighter';g.globalAlpha=k*k*.7;const e=g.createRadialGradient(cx,cy,r*.45,cx,cy,r*1.05);e.addColorStop(0,'rgba(80,255,90,0)');e.addColorStop(.75,rgb(pal.llama,.9));e.addColorStop(1,'rgba(80,255,90,0)');g.fillStyle=e;g.beginPath();g.arc(cx,cy,r*1.05,0,TAU);g.fill();}}
+          g.globalAlpha=1;}
         g.globalCompositeOperation='source-over';
         for(let i=ceniza.length-1;i>=0;i--){const c=ceniza[i];c.t+=dt;if(c.t>=c.vida){ceniza.splice(i,1);continue;}
           c.vx+=(Math.sin(c.t*3+c.rot)*18)*dt;c.vy-=12*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.rot+=c.vr*dt;
@@ -223,5 +320,6 @@ void main(){
       raf=requestAnimationFrame(cuadro);
     });
   }
-  window.CAOZ_FX_ALIENTO=Object.freeze({reproducir,frente});
+  // reproducir: el ataque letal de la primera prueba.
+  window.CAOZ_FX_ALIENTO=Object.freeze({entrada,ataque,reproducir:(h,o)=>ataque(h,{...o,letal:true}),frente});
 })();

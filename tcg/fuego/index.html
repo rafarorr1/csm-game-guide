@@ -17,21 +17,23 @@
 <main class="fuegoShell" aria-labelledby="fuegoTitulo">
   <header class="fuegoCabecera">
     <p class="fuegoEtiqueta">PRUEBA DE ANIMACIÓN · SIN PARTIDA</p>
-    <h1 id="fuegoTitulo">Aliento de fuego verde</h1>
-    <p>Thal se envuelve en fuego verde, lo escupe sobre la carta rival y la carta arde desde el impacto hasta volverse ceniza.</p>
+    <h1 id="fuegoTitulo">Thal · Aliento de Ácido</h1>
+    <p><b>Entrada:</b> Thal brilla en verde y su onda de ácido hace brillar a las cartas que reciben daño. <b>Ataque:</b> se envuelve en fuego verde y lo escupe; si el golpe no mata, el rival encaja el golpe y sigue en pie; si lo mata, arde hasta volverse ceniza.</p>
   </header>
   <section id="mesaFuego" class="mesaFuego" aria-label="Mesa de prueba">
-    <div class="filaFuego"><figure class="cartaFuego" id="objetivo" aria-label="Carta rival"></figure></div>
+    <div class="filaFuego"><figure class="cartaFuego" id="rival-rey" aria-label="El Rey"></figure><figure class="cartaFuego" id="rival-bartolomeo" aria-label="Bartolomeo"></figure><figure class="cartaFuego" id="rival-eric" aria-label="Eric"></figure></div>
     <div class="lineaMesa" aria-hidden="true"></div>
     <div class="filaFuego"><figure class="cartaFuego" id="atacante" aria-label="Thal"></figure></div>
   </section>
   <div class="fuegoControles">
-    <button type="button" class="fuegoBoton oro" id="atacar">Atacar con Thal</button>
+    <button type="button" class="fuegoBoton oro" id="entrar">Entra Thal</button>
+    <button type="button" class="fuegoBoton oro" id="golpear">Ataque que no mata · El Rey</button>
+    <button type="button" class="fuegoBoton oro" id="matar">Ataque letal · Bartolomeo</button>
     <button type="button" class="fuegoBoton" id="reiniciar">Reiniciar</button>
     <label class="fuegoOpcion"><input type="checkbox" id="lento"> Cámara lenta</label>
-    <label class="fuegoOpcion">Rival <select id="rival"><option value="bartolomeo">Bartolomeo</option><option value="eric">Eric</option></select></label>
   </div>
   <p id="fuegoEstado" class="fuegoEstado" role="status" aria-live="polite">Preparando las cartas…</p>
+  <p class="fuegoNota">El Rey tiene 8 de vida y Thal 9 de ATQ: en la partida sólo aguanta el golpe con la vida mejorada. Aquí se muestra así para ver la animación.</p>
 </main>
 </body>
 </html>
