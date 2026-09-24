@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Cartas de la partida · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./generado/desktop/base.css">
+<link rel="stylesheet" href="./juego/acabados.css">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./juego/carta-juego.css">
+<link rel="stylesheet" href="./cartas.css">
+<script src="./memoria.js"></script>
+<script src="./red-estatica.js"></script>
+<script src="./generado/desktop/datos.js"></script>
+<script src="./generado/desktop/renderer.js"></script>
+<script src="./juego/arte-vistas.js"></script>
+<script src="./juego/arte-remoto.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/carta-juego.js"></script>
+<script src="./cartas.js" defer></script>
+</head>
+<body class="aaa-polish cartasAislada" data-vista="desktop">
+<main class="cartasShell" aria-labelledby="cartasTitulo">
+  <header class="cartasCabecera">
+    <div>
+      <p class="cartasEtiqueta">REVISIÓN AISLADA · <span class="soloDesktop">ESCRITORIO</span><span class="soloMovil">TELÉFONO</span></p>
+      <h1 id="cartasTitulo">Cartas de la partida</h1>
+      <p>El diseño de la Colección en la mano, la mesa y la ficha. Las cartas salen del renderer real del juego; el coste, el ataque y la vida siguen vivos encima de sus gemas, y cambian sin repintar la carta.</p>
+    </div>
+    <a class="btn" id="otraVista" href="./movil.html"><span class="soloDesktop">Ver en teléfono</span><span class="soloMovil">Ver en escritorio</span></a>
+  </header>
+
+  <section class="cartasBloque" aria-labelledby="rivalTitulo">
+    <div class="cartasTitulo"><p class="cartasEtiqueta">RIVAL</p><h2 id="rivalTitulo">Su mano y su mesa</h2></div>
+    <div id="manoRival" class="filaDorsos" aria-label="Mano del rival, boca abajo"></div>
+    <div id="mesaRival" class="filaCartas mesa" data-vista-arte="desktop_campo" aria-label="Mesa del rival"></div>
+  </section>
+
+  <section class="cartasBloque" aria-labelledby="mesaTitulo">
+    <div class="cartasTitulo"><p class="cartasEtiqueta">TU MESA</p><h2 id="mesaTitulo">Cifras vivas</h2>
+      <button type="button" class="btn sm" id="combate">Simular un golpe</button></div>
+    <div id="mesaPropia" class="filaCartas mesa" data-vista-arte="desktop_campo" aria-label="Tu mesa"></div>
+  </section>
+
+  <section class="cartasBloque" aria-labelledby="manoTitulo">
+    <div class="cartasTitulo"><p class="cartasEtiqueta">TU MANO</p><h2 id="manoTitulo">Los cinco tipos</h2></div>
+    <div id="mano" class="filaCartas mano" data-vista-arte="desktop_mano" aria-label="Tu mano"></div>
+  </section>
+
+  <div class="cartasColumnas">
+    <section class="cartasBloque" aria-labelledby="edicionesTitulo">
+      <div class="cartasTitulo"><p class="cartasEtiqueta">EDICIONES</p><h2 id="edicionesTitulo">Normal, Foil y Dorada</h2></div>
+      <div id="ediciones" class="filaCartas mano" data-vista-arte="desktop_mano"></div>
+    </section>
+    <section class="cartasBloque" aria-labelledby="fichaTitulo">
+      <div class="cartasTitulo"><p class="cartasEtiqueta">FICHA AMPLIADA</p><h2 id="fichaTitulo">Para leerla entera</h2></div>
+      <div id="fichaHueco" data-vista-arte="desktop_detalle"><div id="inspectCard" class="big"></div></div>
+    </section>
+  </div>
+</main>
+</body>
+</html>

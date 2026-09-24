@@ -5,6 +5,10 @@
       "fuente": "00e51b3c24640ab33346f398e68616157e651158",
       "ruta": "tcg/asedio"
     },
+    "cartas": {
+      "fuente": "58017071a5df689f22d7d19b8ac6695f758dc369",
+      "ruta": "tcg/cartas"
+    },
     "coleccion": {
       "fuente": "3b2aa99f6dfd2b6697779656423aeeb346229cfb",
       "ruta": "tcg/coleccion"

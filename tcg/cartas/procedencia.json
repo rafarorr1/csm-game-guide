@@ -1,0 +1,266 @@
+{
+  "seccion": "cartas",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "proposito": "Revisar las cartas de la partida con la cara pintada de la Colección: mano, mesa con cifras vivas, ediciones, ficha ampliada y dorso.",
+  "cartas": [
+    "magodomo",
+    "lucius",
+    "bolafuego",
+    "esporas",
+    "espadaluz",
+    "domo",
+    "tal",
+    "aldrick",
+    "machete",
+    "petunia",
+    "bartolomeo",
+    "discipulo"
+  ],
+  "componentes": {
+    "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
+    "arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
+    "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
+    "carta-pintor.js": "1e1c1ae8dfc074018c246c5837c73505cf0847c9c3fd4227c9ea67b7e8271b52",
+    "carta-juego.js": "d1762fa4f96be51e043469e02238c1bffca6af620ea825917be77982c9e6f4a0",
+    "carta-juego.css": "af031caf35231ec55ac1fb1720bb7a5cc380bc52811c1668dffea83b2a19858a",
+    "carta-diseno.css": "d3466c3cb801fe559ac38b13d7d5b455cb64bee8242735cf1fc06dbaaa060266",
+    "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f"
+  },
+  "arte": {
+    "magodomo.webp": "b823cd04dc13a98a355db8e9fbedce31e8185baa945d65f03238ab343dd885a6",
+    "lucius.webp": "6ad3a0c8a579cb3d0d27be9bd8030ab937c0fed877d15086ac43c57bf039b821",
+    "bolafuego.webp": "0864c8819adbbbcfbdbd0b1c93f7a7ad23a7919ce6489ef55d49f4b9a2720aff",
+    "esporas.webp": "feaa14d79796f598b5e4fe07752cdd9bf6af0ebbbcaca766e9c83351ac15fe60",
+    "espadaluz.webp": "063afbfa2248976ac97e5d4a927be43a08b4eff3f32760fbb87c57891ec47165",
+    "domo.webp": "33ca8221ceb26f25fcab1227c13c60c05f486f1ec17e830076daf1f293b0d3f6",
+    "tal.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
+    "aldrick.webp": "f57c278b91790d44753495cea6549cad12e52e4b41ff36e229637948fb25a75f",
+    "machete.webp": "ea3443061e49e5046b965d6389bf10d730a8ec8cc94420e16bf42fe021641eb6",
+    "petunia.webp": "c9912ce6d558bede0c134464171d2c7977b66e94945214f678323f76af15ecc4",
+    "bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
+    "discipulo.webp": "5e0995f6a7d159c24649d3811a318bcc19061b6dbb4140b757d5e073c5afa5e8",
+    "logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe"
+  },
+  "entorno": {
+    "cartas.js": "2fc7af6950249f26b67df22ec8c78a85fdcb083176d564dde719e27fd846b446",
+    "cartas.css": "755e5fb51636074cd06f8451842cfd52bbfeba7549ce927ec36526e21aa43960",
+    "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
+    "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
+  },
+  "renderer": {
+    "desktop": {
+      "vista": "desktop",
+      "cartas": [
+        "magodomo",
+        "lucius",
+        "bolafuego",
+        "esporas",
+        "espadaluz",
+        "domo",
+        "tal",
+        "aldrick",
+        "machete",
+        "petunia",
+        "bartolomeo",
+        "discipulo"
+      ],
+      "protagonistas": 6,
+      "fuentes": [
+        {
+          "archivo": "caoz_tcg/index.html",
+          "sha256": "98c7b36b8a95f194b4e520e7a0000cc46c2c08234474260d95d2e6c3b07ababc"
+        },
+        {
+          "archivo": "caoz_tcg/motor.js",
+          "sha256": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076"
+        },
+        {
+          "archivo": "caoz_tcg/polish-aaa.js",
+          "sha256": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
+        },
+        {
+          "archivo": "caoz_tcg/final.js",
+          "sha256": "2780fc9ac0aa153e15bb0a1b237827d413db4e958bab885d605e0bcd3c858f38"
+        }
+      ],
+      "funciones": [
+        {
+          "nombre": "el",
+          "linea": 2495,
+          "sha256": "e56e76c380a0a7f1b7d517b91ad2eea03f769a558b78cb06b5a1e97aad08044d"
+        },
+        {
+          "nombre": "encuadreDe",
+          "linea": 59,
+          "sha256": "6eb3ca92621f110c7ca185d3906a0960201b13777379d0435daeb84363111af2"
+        },
+        {
+          "nombre": "cap",
+          "linea": 74,
+          "sha256": "533c56ca5718f281a5d244c43a50bc07c4fced4bdcc175bc8f2cfd1ce46fc9df"
+        },
+        {
+          "nombre": "tribeLine",
+          "linea": 2506,
+          "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
+        },
+        {
+          "nombre": "window.marcarNombreCarta",
+          "linea": 15,
+          "sha256": "bfdd50dc17f27e640152562e6678797cbb83604dc39eee9a3a7fc23ca3c7cc38"
+        },
+        {
+          "nombre": "ponerDibujo",
+          "linea": 2454,
+          "sha256": "49d6176090e60831a263230fb4129228b20a69ca07776b487c0dfdd5962af638"
+        },
+        {
+          "nombre": "ilustrarLider",
+          "linea": 2474,
+          "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
+        },
+        {
+          "nombre": "ilustrar",
+          "linea": 2482,
+          "sha256": "0e9e4f2910daf86e65b6f5f63ec0eb529fc727ecaf4bb6753c9f472799c728b4"
+        },
+        {
+          "nombre": "cardEl",
+          "linea": 2712,
+          "sha256": "2a8067454495085e9b65bbbe090926d6353ea44087d8e7c55ab29032d8b2f4e2"
+        },
+        {
+          "nombre": "cartaDeLiderVS",
+          "linea": 4270,
+          "sha256": "7b1950587efeed16883f4ffa413c605e39fe4d1c838e4ecf2cdec4704c9552f2"
+        }
+      ],
+      "adaptadores": [
+        "attachInspect: sin inspector ajeno a la colección",
+        "pulsacionLarga: sin inspector ajeno a la colección",
+        "G: null; no existe partida"
+      ],
+      "almacenamiento": "sólo memoria de la página",
+      "red": "sólo recursos de este servidor local",
+      "ficha": {
+        "nombre": "inspectHTML",
+        "archivo": "caoz_tcg/motor.js",
+        "sha256": "b00fd0e18737f1118256f747b398d8706dfca356f7994c8ff28b95fbd8af1dff"
+      }
+    },
+    "movil": {
+      "vista": "movil",
+      "cartas": [
+        "magodomo",
+        "lucius",
+        "bolafuego",
+        "esporas",
+        "espadaluz",
+        "domo",
+        "tal",
+        "aldrick",
+        "machete",
+        "petunia",
+        "bartolomeo",
+        "discipulo"
+      ],
+      "protagonistas": 6,
+      "fuentes": [
+        {
+          "archivo": "caoz_tcg/movil.html",
+          "sha256": "9859d828efaafc41fa991579253c92aa53601b39c0a4b85567c752d90d80e579"
+        },
+        {
+          "archivo": "caoz_tcg/motor.js",
+          "sha256": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076"
+        },
+        {
+          "archivo": "caoz_tcg/polish-aaa.js",
+          "sha256": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d"
+        },
+        {
+          "archivo": "caoz_tcg/final.js",
+          "sha256": "2780fc9ac0aa153e15bb0a1b237827d413db4e958bab885d605e0bcd3c858f38"
+        }
+      ],
+      "funciones": [
+        {
+          "nombre": "el",
+          "linea": 936,
+          "sha256": "3c8ca96388bf1aac79b1e93135c384fc5183d3938838461fe9468e653d67b646"
+        },
+        {
+          "nombre": "encuadreDe",
+          "linea": 59,
+          "sha256": "6eb3ca92621f110c7ca185d3906a0960201b13777379d0435daeb84363111af2"
+        },
+        {
+          "nombre": "cap",
+          "linea": 74,
+          "sha256": "533c56ca5718f281a5d244c43a50bc07c4fced4bdcc175bc8f2cfd1ce46fc9df"
+        },
+        {
+          "nombre": "tribeLine",
+          "linea": 2506,
+          "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
+        },
+        {
+          "nombre": "window.marcarNombreCarta",
+          "linea": 15,
+          "sha256": "bfdd50dc17f27e640152562e6678797cbb83604dc39eee9a3a7fc23ca3c7cc38"
+        },
+        {
+          "nombre": "ponerDibujo",
+          "linea": 977,
+          "sha256": "5cdaec988b45b80d27d4067083681a20088cafc8b4bf681739cee705eb253ce0"
+        },
+        {
+          "nombre": "ilustrarLider",
+          "linea": 992,
+          "sha256": "a68c8b11a8bfc7989f91ac813f767d4a7a8137f600eec10fbd69ddadda1669aa"
+        },
+        {
+          "nombre": "ilustrar",
+          "linea": 1000,
+          "sha256": "0e9e4f2910daf86e65b6f5f63ec0eb529fc727ecaf4bb6753c9f472799c728b4"
+        },
+        {
+          "nombre": "cardEl",
+          "linea": 1525,
+          "sha256": "c9fd0ca1f5888836ef84be8c4d286d911829299cabe013d23e4aa4aa1512d148"
+        },
+        {
+          "nombre": "cartaDeLiderVS",
+          "linea": 1328,
+          "sha256": "1e5541f69501d422b5b3f2cfaa1e47d93638791d1de24f422673ec93f963dad9"
+        }
+      ],
+      "adaptadores": [
+        "attachInspect: sin inspector ajeno a la colección",
+        "pulsacionLarga: sin inspector ajeno a la colección",
+        "G: null; no existe partida"
+      ],
+      "almacenamiento": "sólo memoria de la página",
+      "red": "sólo recursos de este servidor local",
+      "ficha": {
+        "nombre": "inspectHTML",
+        "archivo": "caoz_tcg/motor.js",
+        "sha256": "b00fd0e18737f1118256f747b398d8706dfca356f7994c8ff28b95fbd8af1dff"
+      }
+    }
+  },
+  "derivados": {
+    "index.html": "05a09071bb28a9533b6459d9eb190dcc3469113371172e6e53b2bb65c21a517e",
+    "generado/desktop/datos.js": "767467053ecbd1b6dc9852047200c7853bf4773dce84c819a43ba013da984968",
+    "generado/desktop/renderer.js": "d2e3c3032e6d68b728f298c904a7571533c7adf8e03e56f1bb830df304ce678b",
+    "generado/desktop/base.css": "8c25aa2cddb017ccb0cfa84da135bf28cb7038bc547e18e683f5cc1a83fa5404",
+    "movil.html": "79ecb1340b19d1fc1c0349b8fc15573ce14066ee59d263d870075a6d41265549",
+    "generado/movil/datos.js": "767467053ecbd1b6dc9852047200c7853bf4773dce84c819a43ba013da984968",
+    "generado/movil/renderer.js": "2673ac3c34c28010c5b38e66579debe17f38bc0961a90721c2407abe9e4416fb",
+    "generado/movil/base.css": "436e304209d9bc9659ad745f21ab6c2401bf6a66a5ce49d7996b76e0112ed956",
+    "art/encuadres.json": "36e596abfbd0887bd445bf5d585b73fdbfe45787006d8a1de6f3dd569c091df7"
+  }
+}
