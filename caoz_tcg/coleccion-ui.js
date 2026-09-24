@@ -208,9 +208,12 @@
     else{soporte.classList.remove('conarte');if(soporte.classList.contains('card'))soporte.classList.add('sinarte');soporte.querySelectorAll(':scope > .marcoDibujo').forEach(n=>n.remove());}
   }
   function carta(id,acabado){
-    // Se usa la misma carta del tablero, conservando sus ilustraciones, reglas,
-    // marco y medallones. Clonar evita activar acciones de combate al explorar.
-    const original=id.startsWith('lider_')?cartaDeLiderVS(id.slice(6),''):cardEl(id,{}),n=original.cloneNode(true);
+    // Las cartas usan el diseño de Colección (carta-diseno.js) con los datos y
+    // las ilustraciones del juego; sin ese módulo, la carta del tablero clonada
+    // (clonar evita activar acciones de combate). Los Protagonistas conservan
+    // su retrato.
+    const diseno=!id.startsWith('lider_')&&window.CAOZ_CARTA_DISENO;
+    const n=diseno?diseno.crear(id,acabado):(id.startsWith('lider_')?cartaDeLiderVS(id.slice(6),''):cardEl(id,{})).cloneNode(true);
     n.classList.add('coleccionCarta');n.dataset.coleccionAcabado=acabado;n.dataset.acabado=acabado;
     n.dataset.vistaArte=(document.getElementById('panelCerrar')?'movil_':'desktop_')+'coleccion';
     n.removeAttribute('tabindex');n.setAttribute('aria-hidden','true');actualizarCarta(n);return n;

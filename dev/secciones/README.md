@@ -334,6 +334,20 @@ ilustración premium no concede esa edición al inventario real. El laboratorio
 sólo consulta esos originales públicos: permite revisar las series sin traer
 reemplazos ni ajustes privados del estudio.
 
+### Diseño de carta de Colección
+
+Las cartas de Colección (rejilla, detalle, sobres y visor 3D) se dibujan con
+`carta-diseno.js`/`.css` a partir de `CARDS`: Normal y Foil con el diseño
+clásico (ilustración enmarcada, placas de nombre y tipo, gema de coste,
+pergamino de reglas y gemas de ATQ/VIDA) y la Dorada en full art, con el texto
+sobre paneles translúcidos. La ilustración la sigue colocando el proveedor de
+arte en `.cdArte[data-arte-id]`, con el encuadre de cada edición y los reflejos
+de `acabados.css`. Las medidas dependen del ancho de la carta (`cqi`), así que
+no necesitan que nadie fije su tamaño de letra. Los Protagonistas conservan su
+retrato. Tipografías Cinzel y Cormorant Garamond alojadas en `caoz_tcg/fuentes/`
+(licencia OFL), sin pedir nada a otros servidores. El tablero y la mano no
+cambian todavía.
+
 ### Visor 3D de una carta
 
 En el detalle, tocar una edición desbloqueada (o enfocarla y pulsar Intro) abre
