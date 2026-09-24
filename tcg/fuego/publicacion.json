@@ -3,24 +3,25 @@
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
     "art/bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
     "art/eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b",
+    "art/machete.webp": "ea3443061e49e5046b965d6389bf10d730a8ec8cc94420e16bf42fe021641eb6",
     "art/rey.webp": "a18041ee78195792a07bbc81d83b4dc6f7fcae6b2a4bf5949232f8e4c0e7b492",
     "art/tal.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
     "fuego.css": "249b0320c1193e842c4a6495e28c76a75b6efb6d495c8ace44e42d4cc6daa5d0",
-    "fuego.js": "6f9468135f911595beb449452514315e05e575deb0dc6df23645804454e96c56",
-    "generado/datos.js": "f02ec0cebcdafa9a3beb06933396585a5a1562c35bd3942e48a54d26815a2104",
-    "index.html": "b7853bda211017db5adff6b22f129e8b0b3213ae18d6600c80373f2b3dfc39f6",
+    "fuego.js": "96691fa7e09447efbe43f93570d26a9b12256ed3e3b6397676a813bff590e797",
+    "generado/datos.js": "c33cfc6e15e38e4335e410e6f711d5e41400e23d6da60c0503ccd26786184f63",
+    "index.html": "98f9fa43ae4dacefd955d6ead468686d20adf800d5716070a4598cf8ed5ff2c8",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "juego/fx-aliento.js": "5704eed6dfeb7663786c0f8b575d2faaef5fdd459d159cbd87bfaab003676700",
-    "procedencia.json": "ceaea1737944dc393288cac8228325d568209882e9a0a8e1ebd824be75f9d77f"
+    "procedencia.json": "1022226d3ed0b2ceed2fc19fb8cdb3b29d5300900966b84d44e40b21efa5c339"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "84a7e79d90cb22949bfd1673b2ca57121235206f"
+    "sha": "e099909eb31e25c0969e4a92d782e84bc685db5b"
   },
   "seccion": "fuego",
   "version": 1

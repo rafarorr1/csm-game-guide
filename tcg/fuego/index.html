@@ -18,17 +18,18 @@
   <header class="fuegoCabecera">
     <p class="fuegoEtiqueta">PRUEBA DE ANIMACIÓN · SIN PARTIDA</p>
     <h1 id="fuegoTitulo">Thal · Aliento de Ácido</h1>
-    <p><b>Entrada:</b> Thal brilla en verde y su onda de ácido hace brillar a las cartas que reciben daño. <b>Ataque:</b> se envuelve en fuego verde y lo escupe; si el golpe no mata, el rival encaja el golpe y sigue en pie; si lo mata, arde hasta volverse ceniza.</p>
+    <p><b>Entrada:</b> Thal brilla en verde y su onda de ácido hace brillar a las cartas que reciben daño. <b>Ataque:</b> se envuelve en fuego verde y lo escupe; si el golpe no mata, el rival encaja el golpe y sigue en pie; si lo mata, arde hasta volverse ceniza. <b>Machete:</b> al morir, su carta se incendia y se vuelve ceniza, igual que en la partida.</p>
   </header>
   <section id="mesaFuego" class="mesaFuego" aria-label="Mesa de prueba">
     <div class="filaFuego"><figure class="cartaFuego" id="rival-rey" aria-label="El Rey"></figure><figure class="cartaFuego" id="rival-bartolomeo" aria-label="Bartolomeo"></figure><figure class="cartaFuego" id="rival-eric" aria-label="Eric"></figure></div>
     <div class="lineaMesa" aria-hidden="true"></div>
-    <div class="filaFuego"><figure class="cartaFuego" id="atacante" aria-label="Thal"></figure></div>
+    <div class="filaFuego"><figure class="cartaFuego" id="atacante" aria-label="Thal"></figure><figure class="cartaFuego" id="aliado-machete" aria-label="Machete"></figure></div>
   </section>
   <div class="fuegoControles">
     <button type="button" class="fuegoBoton oro" id="entrar">Entra Thal</button>
     <button type="button" class="fuegoBoton oro" id="golpear">Ataque que no mata · El Rey</button>
     <button type="button" class="fuegoBoton oro" id="matar">Ataque letal · Bartolomeo</button>
+    <button type="button" class="fuegoBoton oro" id="morirMachete">Muere Machete</button>
     <button type="button" class="fuegoBoton" id="reiniciar">Reiniciar</button>
     <label class="fuegoOpcion"><input type="checkbox" id="lento"> Cámara lenta</label>
   </div>

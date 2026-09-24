@@ -2,9 +2,10 @@
   "seccion": "fuego",
   "partida": false,
   "almacenamiento": "ninguno",
-  "proposito": "Pruebas de animación de Thal: entrada con brillo verde y onda de ácido sobre las afectadas; ataque con fuego verde que no mata; ataque letal que quema la carta hasta la ceniza.",
+  "proposito": "Pruebas de animación de Thal: entrada con brillo verde y onda de ácido sobre las afectadas; ataque con fuego verde que no mata; ataque letal que quema la carta hasta la ceniza; y la muerte de Machete, que arde hasta la ceniza como en la partida.",
   "cartas": [
     "tal",
+    "machete",
     "rey",
     "bartolomeo",
     "eric"
@@ -19,16 +20,17 @@
   },
   "arte": {
     "tal.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
+    "machete.webp": "ea3443061e49e5046b965d6389bf10d730a8ec8cc94420e16bf42fe021641eb6",
     "rey.webp": "a18041ee78195792a07bbc81d83b4dc6f7fcae6b2a4bf5949232f8e4c0e7b492",
     "bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
     "eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b"
   },
   "entorno": {
-    "fuego.js": "6f9468135f911595beb449452514315e05e575deb0dc6df23645804454e96c56",
+    "fuego.js": "96691fa7e09447efbe43f93570d26a9b12256ed3e3b6397676a813bff590e797",
     "fuego.css": "249b0320c1193e842c4a6495e28c76a75b6efb6d495c8ace44e42d4cc6daa5d0"
   },
   "derivados": {
-    "index.html": "b7853bda211017db5adff6b22f129e8b0b3213ae18d6600c80373f2b3dfc39f6",
-    "generado/datos.js": "f02ec0cebcdafa9a3beb06933396585a5a1562c35bd3942e48a54d26815a2104"
+    "index.html": "98f9fa43ae4dacefd955d6ead468686d20adf800d5716070a4598cf8ed5ff2c8",
+    "generado/datos.js": "c33cfc6e15e38e4335e410e6f711d5e41400e23d6da60c0503ccd26786184f63"
   }
 }
