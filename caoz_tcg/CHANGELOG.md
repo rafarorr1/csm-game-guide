@@ -1,5 +1,11 @@
 # Registro de versiones — el TCG del Domo
 
+### v40 · Build 278 · Epílogo verificado sin carreras · 2026-09-24
+
+- La comprobación del epílogo espera la confirmación real del segundo fundido,
+  en lugar de asumir que un cuadro de animación termina en 80 ms. Sigue
+  verificando que varios toques guarden una sola terna de tres sobres.
+
 ### v39 · Build 277 · Estudio Dorado y estados de Colección en Beta · 2026-09-24
 
 - En el Estudio, toda carta Dorada se ve en full art: «Ficha ampliada» usa la
