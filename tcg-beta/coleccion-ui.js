@@ -69,7 +69,7 @@
     if(!panel?.open)return;
     const movil=panel.clientWidth<550;
     panel.querySelectorAll('.coleccionCarta').forEach(n=>{
-      if(n.closest('.sobresApertura'))return;
+      if(n.closest('.sobresApertura,.visor3d'))return;
       if(!n.getClientRects().length)return;
       const p=n.parentElement,clase=p.classList;let alto=p.clientHeight,ancho=p.clientWidth;
       // Las filas de la lista crecen con el ancho de sus tres columnas. No
@@ -131,6 +131,7 @@
   function limpiar(evento){
     // close se encola: no desmontar una Colección que ya se volvió a abrir.
     if(evento?.type==='close'&&panel?.open)return;
+    soltarEscena3D();
     if(evento?.type==='close'){const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();}
     destruirApertura();destruirCarrusel();destruirVistasSobres();limpiarTiempos();limpiarFinalCampana();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
@@ -164,7 +165,7 @@
     cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
   }
   function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista)s.desplazamiento=contenido.querySelector('.coleccionRejilla')?.scrollTop||0;}
-  function ir(vista){if(esFinalCampana()&&vista!=='recompensa')return;guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
+  function ir(vista){if(esFinalCampana()&&vista!=='recompensa')return;if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
   function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){dibujarSobres();return;}destruirApertura();destruirCarrusel();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
@@ -208,9 +209,12 @@
     else{soporte.classList.remove('conarte');if(soporte.classList.contains('card'))soporte.classList.add('sinarte');soporte.querySelectorAll(':scope > .marcoDibujo').forEach(n=>n.remove());}
   }
   function carta(id,acabado){
-    // Se usa la misma carta del tablero, conservando sus ilustraciones, reglas,
-    // marco y medallones. Clonar evita activar acciones de combate al explorar.
-    const original=id.startsWith('lider_')?cartaDeLiderVS(id.slice(6),''):cardEl(id,{}),n=original.cloneNode(true);
+    // Las cartas usan el diseño de Colección (carta-diseno.js) con los datos y
+    // las ilustraciones del juego; sin ese módulo, la carta del tablero clonada
+    // (clonar evita activar acciones de combate). Los Protagonistas conservan
+    // su retrato.
+    const diseno=!id.startsWith('lider_')&&window.CAOZ_CARTA_DISENO;
+    const n=diseno?diseno.crear(id,acabado):(id.startsWith('lider_')?cartaDeLiderVS(id.slice(6),''):cardEl(id,{})).cloneNode(true);
     n.classList.add('coleccionCarta');n.dataset.coleccionAcabado=acabado;n.dataset.acabado=acabado;
     n.dataset.vistaArte=(document.getElementById('panelCerrar')?'movil_':'desktop_')+'coleccion';
     n.removeAttribute('tabindex');n.setAttribute('aria-hidden','true');actualizarCarta(n);return n;
@@ -226,6 +230,11 @@
     return n;
   }
   function verCarta(id){s.carta=id;s.acabadoVista=modelo().elegido(id);s.regla=0;ir('detalle');sonido('ui_confirm');}
+  // El detalle es la carta en 3D (visor-3d.js incrustado): una escena por carta
+  // que sólo cambia de edición o de copias al redibujar, sin rehacer su WebGL.
+  let escena3D=null;
+  const edicionesDe=id=>ACABADOS.map(a=>({id:a,tiene:modelo().tiene(id,a),cantidad:modelo().cantidad(id,a)}));
+  function soltarEscena3D(){escena3D?.destruir();escena3D=null;}
   function dibujarDetalle(){
     if(!s.carta){ir('cartas');return;}vaciarContenido();panel.dataset.vista='detalle';
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));
@@ -244,7 +253,15 @@
         else mensaje('No se pudo guardar la selección. Inténtalo de nuevo.',true);
       },'coleccionUsar');b.disabled=elegida;b.setAttribute('aria-label',elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Ver cómo conseguir una Dorada':'Desbloquear Foil en sobres o por canje');slot.append(b,mejoraDeCarta(s.carta,a));versiones.append(slot);
     });
-    contenido.append(versiones);
+    const zona=crear('div','coleccionDetalle3D');
+    if(window.CAOZ_VISOR3D?.montar){
+      zona.classList.add('con3D');const escenario=crear('div','coleccionEscena3D');
+      if(escena3D&&escena3D.id!==s.carta)soltarEscena3D();
+      if(escena3D)escenario.append(escena3D.raiz);
+      zona.append(escenario,versiones);contenido.append(zona);
+      if(escena3D)escena3D.actualizar({ediciones:edicionesDe(s.carta),edicion:s.acabadoVista});
+      else escena3D=window.CAOZ_VISOR3D.montar(escenario,{id:s.carta,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(s.carta,a),ediciones:edicionesDe(s.carta)});
+    }else{zona.append(versiones);contenido.append(zona);}
     const reglas=crear('section','coleccionReglas');reglas.setAttribute('aria-label','Información de la carta');
     const linea=crear('div','coleccionReglasTitulo');linea.append(crear('strong','','Habilidades'));
     const stats=c.t==='personaje'?'Coste '+c.c+' · Ataque '+c.a+' · Vida '+c.h:c.t==='protagonista'?'Protagonista':'Coste '+c.c;linea.append(crear('span','',stats));
