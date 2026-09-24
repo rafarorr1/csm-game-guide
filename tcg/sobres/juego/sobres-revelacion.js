@@ -59,7 +59,8 @@
         const ancho=Math.min(W,H)<560?512:704;
         for(const [i,c]of o.cartas.entries()){
           await new Promise(r=>requestAnimationFrame(()=>r()));if(!vivo)return false;
-          const nodo=c.nodo,arte=nodo?diseno.arteDe(nodo):{img:null};await diseno.cargada(arte.img);
+          // Un Protagonista lleva su retrato en .lface; una carta, en la propia carta.
+          const nodo=String(c.id).startsWith('lider_')?(c.nodo?.querySelector('.lface.conarte')||c.nodo):c.nodo,arte=nodo?diseno.arteDe(nodo):{img:null};await diseno.cargada(arte.img);
           const tex=pintor.texturas({id:c.id,acabado:c.acabado||'normal',nombre:c.nombre,arte:{...arte,img:arte.img&&arte.img.naturalWidth?arte.img:null},ancho});
           gl.cargarFrente(tex,c.acabado||'normal',(TONOS[c.acabado]||TONOS.normal).canto,i);
         }
@@ -146,7 +147,7 @@
       },
       // Descubre la carta i: la anterior sale por un lado y ésta se levanta y gira.
       async voltear(i){
-        const c=o.cartas[i]||{},tono=TONOS[c.acabado]||TONOS.normal,rara=typeof CARDS!=='undefined'&&CARDS[c.id]?.r===2;
+        const c=o.cartas[i]||{},tono=TONOS[c.acabado]||TONOS.normal,rara=String(c.id).startsWith('lider_')||typeof CARDS!=='undefined'&&CARDS[c.id]?.r===2;
         const previa=poses[i-1],p=poses[i],z0=p.z;if(!p)return;
         const lado=i%2?-1:1,sale=previa?{x:previa.x,y:previa.y,rz:previa.rz,s:previa.s}:null;
         let estallo=false;

@@ -21,17 +21,17 @@
     "juego/carta-diseno.js": "0b3327ee89de1c5539e81d45da4eecb30f9dad48f689a231238e3b68be3b7b36",
     "juego/carta-juego.css": "af031caf35231ec55ac1fb1720bb7a5cc380bc52811c1668dffea83b2a19858a",
     "juego/carta-juego.js": "bf5491da85b153bbb7c5c7ec4d5c7cc31d66df7a5816505c3f0ca01684781603",
-    "juego/carta-pintor.js": "4f281583e307ce639023956eb6360ddc506cdfc4ff9d99890939eb47429dbd04",
+    "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "juego/sobres-apertura.css": "12d234191ead3690e54b1dbc596a62266d7bc98173c3c9e3801de8fabfcbdc3f",
     "juego/sobres-apertura.js": "031a9e88ba2e140aee63ec075f1acb7174335d6a2a0a605fbafe0f1d3dfddc7b",
     "juego/sobres-escena.js": "2834f1e8abeb30e0b67d0c6dbe7c7057160dc92ef5f45ff2742bc4fe2f386292",
-    "juego/sobres-revelacion.js": "69e8b0a03d086d3e62177f882c65d457ec829f1a01fc8e8f2c67e809e0ecc0d2",
+    "juego/sobres-revelacion.js": "0409659d3b519531ffbae3b3d62e37ad8c258c7afa7f48c0bad1510dd0b6152c",
     "juego/visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
-    "procedencia.json": "6e2e3e097e5d4cdadcdde354a0230e0ed831087899f1ed975136d5b0ea181c37",
+    "procedencia.json": "61ec09fac2462713982f63216ed7c6d4576b74f46fb32be3953024ecd836bb1a",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c",
     "sobres.css": "ce0028839ddf202114514158c2f844e953de068ea1eb000d811f7a2156c5d081",
     "sobres.js": "b96f93439006fb6a768e1dda6058da470d266fd0ec8c562280a6e4e24f4203dd"
@@ -39,7 +39,7 @@
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "be191842e3ee039987104b90554b5897f1f0d2a9"
+    "sha": "cca6f477989027167e4caf5c39b72a1dcbc9a36a"
   },
   "seccion": "sobres",
   "version": 1
