@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v40 · Build 278 · Machete arde al morir · 2026-09-24
+
+- Cuando Machete muere, su carta no va volando a las Alcantarillas: se prende
+  desde abajo, arde con fuego y se deshace en ceniza que sube y se dispersa.
+  La partida sigue en cuanto la carta se consume (unos 1,8 s); la ceniza
+  termina de flotar sola. Sin WebGL, o si su cara pintada aún no está lista,
+  muere como siempre.
+- `fx-aliento.js` entra en el juego (sólo se usa aquí por ahora) y la suite
+  `muerteMachete` lo comprueba en las dos pantallas.
+
 ### v39 · Build 277 · El tema del visor en todo el juego · 2026-09-24
 
 - Títulos, nombres, botones y cifras en Cinzel; el texto que se lee (reglas,

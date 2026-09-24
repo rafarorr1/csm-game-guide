@@ -70,6 +70,7 @@
   guion('sobres-escena.js');
   guion('sobres-apertura.js');
   guion('sobres-revelacion.js');
+  guion('fx-aliento.js');
   guion('carta-pintor.js');
   guion('carta-diseno.js');
   guion('carta-juego.js');

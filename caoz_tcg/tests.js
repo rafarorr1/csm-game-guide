@@ -5270,6 +5270,42 @@ PRUEBAS.suite('cartaPintada',async t=>{
 });
 
 
+/* ===========================================================================
+   SUITE: muerteMachete — Machete no va volando a las Alcantarillas: su carta
+   arde hasta la ceniza (fx-aliento.js). Sólo él; si el efecto no puede
+   dibujarse, la muerte de siempre. En las dos pantallas.
+   ======================================================================== */
+PRUEBAS.suite('muerteMachete',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const marco=document.createElement('iframe');marco.style.cssText='position:fixed;left:-10000px;'+(pagina==='index.html'?'width:1440px;height:900px':'width:390px;height:844px');
+    const carga=new Promise(r=>marco.onload=r);marco.src=pagina+'?test=muerte-machete-interna';document.body.appendChild(marco);await carga;
+    const w=marco.contentWindow,d=marco.contentDocument;
+    try{
+      t.check(typeof w.CAOZ_FX_ALIENTO?.quemar==='function',pagina+': falta fx-aliento.js en el juego.');
+      w.showEnd=()=>{};w.netSend=()=>{};w.newGame('fender','gero');w.aiTurn=async()=>{};
+      Object.assign(w.eval('NET'),{on:false,host:false,guest:false});
+      w.eval(`G.fast=false;G.auto=true;G.silent=false;G.active=0;G.phase='principal';P(0).field=[];P(1).field=[mkUnit('machete',1),mkUnit('bartolomeo',1)];recalc();`);
+      w.showScreen('board');w.render();
+      const quemadas=[],original=w.CAOZ_FX_ALIENTO.quemar;
+      let respuesta=null;
+      w.CAOZ_FX_ALIENTO=Object.freeze({...w.CAOZ_FX_ALIENTO,quemar:(h,o)=>{quemadas.push(o.objetivo?.dataset.uid);return respuesta!==null?Promise.resolve(respuesta):original(h,o);}});
+      const unidad=id=>w.eval(`P(1).field.find(u=>u.card.id==='${id}')`);
+      const t0=performance.now();while(w.fxEl(unidad('machete'))?.dataset.piel!=='lista'&&performance.now()-t0<15000)await new Promise(r=>w.requestAnimationFrame(r));
+      // Otra carta: la muerte de siempre, sin fuego.
+      await w.destroy(unidad('bartolomeo'));
+      t.igual(quemadas.length,0,pagina+': sólo Machete arde al morir.');
+      const m=unidad('machete'),uid=String(m.uid);
+      await w.destroy(m);
+      t.check(quemadas.length===1&&quemadas[0]===uid,pagina+': la muerte de Machete debe pasar por el incendio.');
+      t.check(!w.eval(`P(1).field.some(u=>u.card.id==='machete')`),pagina+': Machete sale del campo tras arder.');
+      // Si el efecto no puede dibujarse (false), la muerte de siempre sigue.
+      respuesta=false;w.eval(`P(1).field=[mkUnit('machete',1)];recalc();`);w.render();
+      await w.destroy(unidad('machete'));
+      t.check(!w.eval(`P(1).field.some(u=>u.card.id==='machete')`)&&quemadas.length===2,pagina+': sin incendio, Machete muere igual.');
+    }finally{marco.remove();}
+  }
+});
+
 /* Arranque automático cuando se entra por ?test=... */
 if(new URLSearchParams(location.search).has('test')){
   window.addEventListener('load', ()=>setTimeout(()=>PRUEBAS.correr(), 300));
