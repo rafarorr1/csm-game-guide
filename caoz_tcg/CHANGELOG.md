@@ -1,5 +1,22 @@
 # Registro de versiones — el TCG del Domo
 
+### v35 · Build 273 · Cartas pintadas y visor 3D en la Colección · 2026-09-24
+
+- Las cartas de la Colección se pintan con un diseño propio: Normal y Foil con
+  ilustración enmarcada, placas metálicas, gema de coste, pergamino de reglas y
+  gemas de ATQ/VIDA con la cifra centrada; la Dorada en full art. Tienen
+  relieve, textura del metal y del papel, y la luz sobre el relieve ya aplicada.
+  Cada edición conserva su ilustración, su encuadre y sus nombres de Estudio.
+- Tocar una edición desbloqueada en el detalle abre el visor 3D: la carta en
+  WebGL propio (sin dependencias) con grosor, relieve, metal y laca que
+  reflejan la luz, holo y destellos según el ángulo, dorso con el logo, anillo
+  rúnico y partículas. Sin WebGL, el visor usa capas CSS. Sólo muestra: no
+  equipa ni cambia cantidades.
+- Cinzel y Cormorant Garamond (OFL) viajan con el juego en `fuentes/`: sigue
+  funcionando sin conexión. Los Protagonistas, el tablero y la mano no cambian.
+- La sección aislada de Colección vuelve a mostrar la rejilla: el renderer
+  derivado incluye `marcarNombreCarta` de `final.js`.
+
 ### v34 · Build 272 · Arranque y recuperación resistentes · 2026-09-23
 
 - Una PWA anterior ya no puede dejar el juego a medio cargar: los recursos de

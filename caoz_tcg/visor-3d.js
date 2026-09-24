@@ -94,7 +94,7 @@
         await pintor.fuentes();const arte=diseno.arteDe(fuente);await diseno.cargada(arte.img);
         if(!logoGL.complete)await diseno.cargada(logoGL);
         if(turno!==turnoGL||!vivo)return;
-        const tex=pintor.texturas({id:o.id,acabado:ed,nombre:fuente.querySelector('.cdNombreTexto')?.textContent,arte:{...arte,img:arte.img&&arte.img.naturalWidth?arte.img:null}});
+        const tex=pintor.texturas({id:o.id,acabado:ed,nombre:fuente.querySelector('.cdNombre')?.textContent,arte:{...arte,img:arte.img&&arte.img.naturalWidth?arte.img:null}});
         if(turno!==turnoGL||!vivo)return;
         gl3d.cargarFrente(tex,ed,(TONOS[ed]||TONOS.normal).cantoLuz);
         if(!gl3d.dorsoListo){gl3d.cargarDorso(pintor.dorso(logoGL.naturalWidth?logoGL:null));gl3d.dorsoListo=true;}

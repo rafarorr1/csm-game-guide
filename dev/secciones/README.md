@@ -344,8 +344,11 @@ relieve (altura → normal map), rugosidad/metal y máscara holográfica.
 `carta-diseno.js` usa el color con el relieve ya iluminado (horneado) en la
 rejilla, el detalle y los sobres, y sólo pinta las cartas cercanas a la
 pantalla, de una en una. El proveedor de arte sigue colocando la ilustración de
-cada edición en `.cdArte[data-arte-id]` (invisible); el pintor lee de ahí la
-imagen y su encuadre, y repinta si cambian. Tipografías Cinzel y Cormorant
+cada edición en la propia carta (`[data-arte-id]`, `--ex/--ey/--ez` y un
+`.marcoDibujo` invisible); el pintor lee de ahí la imagen y su encuadre, y
+repinta si cambian. El nombre queda además como texto `.nombreCarta`
+transparente sobre el pintado. Las revisiones se agrupan en un fotograma: ningún
+temporizador por carta. Tipografías Cinzel y Cormorant
 Garamond en `caoz_tcg/fuentes/` (OFL); las cifras de reglas usan Cinzel porque
 Cormorant sólo trae cifras antiguas. Los Protagonistas conservan su retrato y el
 tablero y la mano no cambian todavía.
