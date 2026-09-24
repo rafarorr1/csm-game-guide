@@ -91,3 +91,17 @@
    medida y respaldo, invisibles. */
 .visor3dGL{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 .visor3d.visor3dConGL .visor3dCapa{visibility:hidden}
+
+/* Incrustado en el detalle de Colección: la misma escena dentro de un marco,
+   sin cabecera ni pie. Voltear y pantalla completa flotan en una esquina. */
+.visor3d.visor3dIncrustado{position:relative;inset:auto;display:flex;width:100%;height:100%;padding:0;border-radius:12px;background:#07050c;overflow:hidden}
+.visor3dIncrustado .visor3dHalo{border-radius:inherit}
+.visor3dControles{position:absolute;right:10px;top:50%;translate:0 -50%;z-index:5;display:flex;flex-direction:column;gap:8px}
+.visor3dControles button{width:40px;height:40px;display:grid;place-items:center;border-radius:11px;border:1px solid #ffffff2e;background:#0d0a14b3;color:#f1dcae;cursor:pointer;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)}
+.visor3dControles button:hover{background:#221a2ecc}
+.visor3dControles svg{width:19px;height:19px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.visor3dControles button[hidden]{display:none}
+.visor3dCandadoEscena{display:none}
+/* Edición bloqueada: la carta se ve velada, como en la Colección, y se avisa. */
+.visor3dBloqueada .visor3dFrente .visor3dCarta{filter:blur(6px) saturate(.5) brightness(.65)}
+.visor3dBloqueada .visor3dCandadoEscena{display:block;position:absolute;left:50%;top:50%;z-index:5;translate:-50% -50%;padding:8px 14px;border-radius:999px;background:#0d0a14d9;border:1px solid #ffffff2e;color:#e8dcc4;font:600 12px/1 var(--sans,system-ui,sans-serif);letter-spacing:1.5px;text-transform:uppercase;pointer-events:none}

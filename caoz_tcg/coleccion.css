@@ -91,9 +91,6 @@
 /* Una edición sin desbloquear sólo deja entrever el naipe. Las etiquetas,
    cantidades y acciones permanecen nítidas fuera de la carta. */
 #coleccionPanel .coleccionVersion.bloqueada .coleccionCarta{filter:blur(clamp(3px,calc(var(--cw,200px) / 40),7px)) saturate(.55) brightness(.72)}
-/* Una edición desbloqueada se abre en el visor 3D al tocarla. */
-#coleccionPanel .coleccionVersion .coleccionCarta.coleccionVer3D{pointer-events:auto;cursor:zoom-in}
-#coleccionPanel .coleccionVersion .coleccionCarta.coleccionVer3D:focus-visible{outline:2px solid #f3d59a;outline-offset:4px}
 #coleccionPanel .coleccionEstadoEdicion{display:flex;align-items:center;gap:5px;font-size:11px;color:#b3a18a;min-height:18px;flex:none}
 #coleccionPanel .coleccionEstadoEdicion svg{width:13px;height:13px}
 #coleccionPanel .coleccionCantidadEdicion{font-weight:700;font-variant-numeric:tabular-nums;color:#eadfbf}
@@ -662,4 +659,36 @@
 @media(prefers-reduced-motion:reduce){
   #coleccionPanel.coleccionFinalCampana :is(.coleccionFinalSobre,.coleccionFinalMarca,.coleccionFinalFundido){transition:none}
   #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{animation:none}
+}
+
+/* Detalle: la carta en 3D (visor-3d.js incrustado) junto a las ediciones. Las
+   pestañas eligen la edición que se ve; debajo quedan sus copias, Usar y el
+   canje. Las fichas de cada edición siguen en el DOM, ocultas: la escena 3D
+   es la única carta visible. */
+#coleccionPanel .coleccionDetalle3D{flex:1;min-height:0;width:100%;max-width:1040px;margin:0 auto;display:flex;flex-direction:column}
+#coleccionPanel .coleccionDetalle3D.con3D{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(250px,1fr);gap:20px;padding:6px 8px 4px}
+#coleccionPanel .coleccionEscena3D{position:relative;min-height:300px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;align-content:center;gap:14px 10px;width:100%;max-width:none;max-height:none;min-height:0!important;margin:0;padding:8px 4px;background:none}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion{display:contents}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionCarta{display:none!important}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionElegirAcabado{grid-row:1;min-width:0;width:100%}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="normal"] .coleccionElegirAcabado{grid-column:1}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{grid-column:2}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{grid-column:3}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion:not(.vista) :is(.coleccionEstadoEdicion,.coleccionUsar,.coleccionMejora){display:none}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionEstadoEdicion{grid-column:1/-1;grid-row:2;justify-self:center;align-self:center;font-size:13px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:3;justify-self:center;width:100%;max-width:300px;min-height:44px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionMejora{grid-column:1/-1;grid-row:4;justify-self:center;width:100%;max-width:300px;height:auto;min-height:0}
+@media(max-width:580px){
+  #coleccionPanel .coleccionDetalle3D.con3D{grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(150px,1fr) auto;gap:8px;padding:2px}
+  #coleccionPanel .coleccionEscena3D{min-height:150px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{gap:8px;padding:2px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{min-height:39px}
+}
+/* Teléfonos bajos: la escena cede alto para que Usar y el canje quepan enteros. */
+@media(max-width:580px) and (max-height:650px){
+  #coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{display:none}
+  #coleccionPanel .coleccionDetalle3D.con3D{grid-template-rows:minmax(120px,1fr) auto}
+  #coleccionPanel .coleccionEscena3D{min-height:120px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{gap:6px}
 }

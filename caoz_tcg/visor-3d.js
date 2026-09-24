@@ -68,15 +68,27 @@
     g.fillStyle=d;g.fillRect(0,0,64,64);sprites.set(color,c);return c;
   }
 
+  // Diálogo a pantalla completa, con cabecera, ediciones y botón de voltear.
   function abrir(o){
     if(actual)actual.cerrar();
-    const ediciones=(o.ediciones||[]).filter(e=>NOMBRES[e.id]);
-    let edicion=ediciones.some(e=>e.id===o.inicial&&e.tiene)?o.inicial:(ediciones.find(e=>e.tiene)||{id:'normal'}).id;
-    const dlg=nodo('dialog','visor3d');dlg.setAttribute('aria-label',(o.titulo||'Carta')+' en 3D');
-    dlg.innerHTML='<canvas class="visor3dMotas" aria-hidden="true"></canvas><div class="visor3dHalo" aria-hidden="true"></div>'+
+    return construir(o,null);
+  }
+  // Escena incrustada en otra interfaz (el detalle de Colección): sin cabecera
+  // ni pie; quien la monta decide la edición con actualizar().
+  function montar(contenedor,o){return construir(o,contenedor);}
+
+  function construir(o,contenedor){
+    const incrustado=!!contenedor;
+    let ediciones=(o.ediciones||[]).filter(e=>NOMBRES[e.id]);
+    // Incrustado muestra la edición que pide quien lo monta, aunque esté bloqueada.
+    let edicion=ediciones.some(e=>e.id===o.inicial&&(e.tiene||contenedor))?o.inicial:(ediciones.find(e=>e.tiene)||{id:'normal'}).id;
+    const dlg=nodo(incrustado?'div':'dialog','visor3d'+(incrustado?' visor3dIncrustado':''));dlg.setAttribute(incrustado?'data-titulo':'aria-label',(o.titulo||'Carta')+' en 3D');
+    const controles='<div class="visor3dControles"><button type="button" class="visor3dVoltear" aria-label="Voltear la carta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg></button><button type="button" class="visor3dAmpliar" aria-label="Ver a pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div><span class="visor3dCandadoEscena">Edición bloqueada</span>';
+    dlg.innerHTML='<canvas class="visor3dMotas" aria-hidden="true"></canvas><div class="visor3dHalo" aria-hidden="true"></div>'+(incrustado?
+      '<div class="visor3dEscena"><div class="visor3dPedestal" aria-hidden="true"><i class="visor3dAnillo"></i><i class="visor3dAnillo visor3dAnilloInterior"></i></div><div class="visor3dSuelo" aria-hidden="true"></div><div class="visor3dCuerpo"></div><canvas class="visor3dGL" aria-hidden="true"></canvas></div><canvas class="visor3dChispas" aria-hidden="true"></canvas>'+controles:
       '<header class="visor3dCabecera"><div class="visor3dTitulos"><span class="visor3dAntetitulo"></span><h2 class="visor3dTitulo"></h2></div><button type="button" class="visor3dCerrar" aria-label="Cerrar el visor 3D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>'+
       '<div class="visor3dEscena"><div class="visor3dPedestal" aria-hidden="true"><i class="visor3dAnillo"></i><i class="visor3dAnillo visor3dAnilloInterior"></i></div><div class="visor3dSuelo" aria-hidden="true"></div><div class="visor3dCuerpo"></div><canvas class="visor3dGL" aria-hidden="true"></canvas></div><canvas class="visor3dChispas" aria-hidden="true"></canvas>'+
-      '<footer class="visor3dPie"><div class="visor3dEdiciones" role="group" aria-label="Edición"></div><p class="visor3dCopias" role="status"></p><div class="visor3dAcciones"><button type="button" class="visor3dVoltear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg>Voltear</button></div><p class="visor3dAyuda">Arrastra para girar · doble toque para voltear</p></footer>';
+      '<footer class="visor3dPie"><div class="visor3dEdiciones" role="group" aria-label="Edición"></div><p class="visor3dCopias" role="status"></p><div class="visor3dAcciones"><button type="button" class="visor3dVoltear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg>Voltear</button></div><p class="visor3dAyuda">Arrastra para girar · doble toque para voltear</p></footer>');
     const $=s=>dlg.querySelector(s);
     const escena=$('.visor3dEscena'),cuerpo=$('.visor3dCuerpo'),motas=$('.visor3dMotas'),chispas=$('.visor3dChispas');
     dlg.style.setProperty('--anillo-mascara',texturaAnillo());
@@ -89,6 +101,8 @@
       const pintor=window.CAOZ_CARTA_PINTOR,diseno=window.CAOZ_CARTA_DISENO;
       // Sólo las cartas del motor se pintan; los Protagonistas siguen en CSS.
       if(!gl3d||!pintor||!diseno||!o.id||!carta||typeof CARDS==='undefined'||!CARDS[o.id])return;
+      // Una edición bloqueada se ve velada en CSS, nunca nítida en WebGL.
+      if(!(ediciones.find(x=>x.id===edicion)?.tiene)){turnoGL++;dlg.classList.remove('visor3dConGL');return;}
       const turno=++turnoGL,ed=edicion,fuente=carta;
       try{
         await pintor.fuentes();const arte=diseno.arteDe(fuente);await diseno.cargada(arte.img);
@@ -101,7 +115,7 @@
         dlg.classList.add('visor3dConGL');
       }catch(error){console.warn('Visor 3D: se usan las capas CSS.',error);dlg.classList.remove('visor3dConGL');}
     }
-    $('.visor3dTitulo').textContent=o.titulo||'';
+    if(!incrustado)$('.visor3dTitulo').textContent=o.titulo||'';
     escena.setAttribute('role','img');escena.setAttribute('aria-label',(o.titulo||'Carta')+'. Arrastra para girarla.');
 
     // Capas: pila de copias (detrás), láminas del canto, dorso y frente.
@@ -122,14 +136,16 @@
       dlg.style.setProperty('--canto',t.canto);dlg.style.setProperty('--canto-luz',t.cantoLuz);dlg.style.setProperty('--halo',t.halo);
       dlg.style.setProperty('--holo',t.holo);dlg.style.setProperty('--destellos',t.destellos);dlg.style.setProperty('--anillo',t.anillo);
       const e=ediciones.find(e=>e.id===edicion)||{cantidad:0};
-      $('.visor3dAntetitulo').textContent='Edición '+NOMBRES[edicion];
-      $('.visor3dCopias').textContent=e.cantidad>0?textoCopias(e.cantidad)+' en tu colección':'Desbloqueada';
+      dlg.classList.toggle('visor3dBloqueada',!e.tiene);
+      const ampliar=$('.visor3dAmpliar');if(ampliar)ampliar.hidden=!e.tiene;
+      if(!incrustado){$('.visor3dAntetitulo').textContent='Edición '+NOMBRES[edicion];
+        $('.visor3dCopias').textContent=e.cantidad>0?textoCopias(e.cantidad)+' en tu colección':'Desbloqueada';}
       copias=e.cantidad||0;pila.forEach((p,i)=>{p.hidden=i>=Math.min(MAX_PILA,Math.max(0,copias-1));});
       prepararGL();
       botones.forEach(b=>{const activo=b.dataset.edicion===edicion;b.setAttribute('aria-pressed',String(activo));});
       medir();
     }
-    const botones=ediciones.map(e=>{
+    const botones=incrustado?[]:ediciones.map(e=>{
       const b=nodo('button','visor3dEdicion',NOMBRES[e.id]);b.type='button';b.dataset.edicion=e.id;b.disabled=!e.tiene;
       b.setAttribute('aria-label',NOMBRES[e.id]+(e.tiene?'. '+textoCopias(e.cantidad||0)+'.':'. Bloqueada.'));
       if(!e.tiene)b.append(nodo('span','visor3dCandado','Bloqueada'));
@@ -140,9 +156,11 @@
     // Tamaño: la carta llena el espacio entre cabecera y pie, sin salirse.
     let ancho=0,alto=0;
     function medir(){
-      const v=window.visualViewport,W=v?v.width:innerWidth,H=v?v.height:innerHeight;
-      const arriba=$('.visor3dCabecera').getBoundingClientRect().height,abajo=$('.visor3dPie').getBoundingClientRect().height;
-      alto=Math.max(160,Math.min(H-arriba-abajo-48,(W-76)*1.4,640));ancho=alto/1.4;
+      const v=window.visualViewport,R=dlg.getBoundingClientRect(),W=incrustado?R.width:v?v.width:innerWidth,H=incrustado?R.height:v?v.height:innerHeight;
+      if(!W||!H)return;
+      const arriba=incrustado?0:$('.visor3dCabecera').getBoundingClientRect().height,abajo=incrustado?0:$('.visor3dPie').getBoundingClientRect().height;
+      // Incrustado deja a los lados sitio para los botones flotantes.
+      alto=Math.max(120,Math.min(H-arriba-abajo-(incrustado?56:48),(W-(incrustado?120:76))*1.4,640));ancho=alto/1.4;
       dlg.style.setProperty('--w',ancho+'px');dlg.style.setProperty('--h',alto+'px');
       dlg.style.setProperty('--p',Math.max(900,alto*2.6)+'px');
       if(!carta)return;
@@ -157,7 +175,9 @@
 
     // Giro: inercia al soltar y encaje en la cara o el dorso más cercanos.
     const e={giro:reducir()?0:-PI*2,vel:0,encaje:0,forzado:!reducir(),arrastrando:false,x:0,y:0,t:0,inclX:0,inclY:0,objX:0,objY:0,arrastreX:0,pulso:0,escala:reducir()?1:.86};
-    function impulso(delta){e.encaje=Math.round(e.giro/PI)*PI+delta;e.forzado=true;e.vel=0;e.pulso=1;}
+    // Un impulso durante otro giro se suma a su destino, no al ángulo a medio camino:
+    // voltear mientras la carta aún gira por un cambio de edición sí llega al dorso.
+    function impulso(delta){e.encaje=(e.forzado?e.encaje:Math.round(e.giro/PI)*PI)+delta;e.forzado=true;e.vel=0;e.pulso=1;}
     function voltear(){impulso(PI);rafaga(26,.6);o.sonar?.('ui_confirm');}
     let ultimoToque=0,movido=0;
     escena.addEventListener('pointerdown',ev=>{
@@ -180,7 +200,8 @@
     escena.addEventListener('pointerleave',ev=>{if(ev.pointerType==='mouse'){e.objX=0;e.objY=0;}});
     escena.addEventListener('dblclick',voltear);
     $('.visor3dVoltear').addEventListener('click',voltear);
-    $('.visor3dCerrar').addEventListener('click',()=>dlg.close());
+    $('.visor3dAmpliar')?.addEventListener('click',()=>abrir({...o,inicial:edicion,ediciones}));
+    $('.visor3dCerrar')?.addEventListener('click',()=>dlg.close());
     dlg.addEventListener('keydown',ev=>{if((ev.key==='f'||ev.key==='F')&&!ev.target.closest('button')){ev.preventDefault();voltear();}});
 
     // Partículas de luz que suben y titilan detrás de la carta, con profundidad
@@ -190,7 +211,7 @@
     const vivas=[];
     function rafaga(n,fuerza){
       if(reducir())return;
-      const r=escena.getBoundingClientRect(),k=chispas.width/innerWidth,cx=(r.left+r.width/2)*k,cy=(r.top+r.height/2)*k;
+      const r=escena.getBoundingClientRect(),R=dlg.getBoundingClientRect(),k=chispas.width/(R.width||innerWidth),cx=(r.left-R.left+r.width/2)*k,cy=(r.top-R.top+r.height/2)*k;
       for(let i=0;i<n;i++){
         const a=Math.random()*PI*2,v=(120+Math.random()*260)*fuerza*k;
         vivas.push({x:cx+(Math.random()-.5)*ancho*k*.8,y:cy+(Math.random()-.5)*alto*k*.8,vx:Math.cos(a)*v,vy:Math.sin(a)*v*.8-60*k,vida:.7+Math.random()*.6,t:0,r:(2+Math.random()*3.5)*k});
@@ -198,10 +219,10 @@
       if(vivas.length>260)vivas.splice(0,vivas.length-260);
     }
     function dibujarMotas(t,dt){
-      const g=motas.getContext('2d'),W=motas.width,H=motas.height,k=W/innerWidth;g.clearRect(0,0,W,H);
+      const R=dlg.getBoundingClientRect(),g=motas.getContext('2d'),W=motas.width,H=motas.height,k=W/(R.width||innerWidth);g.clearRect(0,0,W,H);
       const q=chispas.getContext('2d');q.clearRect(0,0,chispas.width,chispas.height);
       if(reducir())return;
-      const luz=sprite((TONOS[edicion]||TONOS.normal).mota),cantidad=Math.round(acotar(innerWidth*innerHeight/9000,50,puntos.length));
+      const luz=sprite((TONOS[edicion]||TONOS.normal).mota),cantidad=Math.round(acotar((R.width||innerWidth)*(R.height||innerHeight)/9000,incrustado?30:50,puntos.length));
       g.globalCompositeOperation='lighter';
       for(let i=0;i<cantidad;i++){
         const p=puntos[i],y=((p.y-t*p.v*p.z)%1+1)%1,x=p.x+Math.sin(t*.4+p.f)*.02*p.z;
@@ -257,12 +278,28 @@
     document.addEventListener('visibilitychange',reanudar);
     const alMedir=()=>medir();addEventListener('resize',alMedir);window.visualViewport?.addEventListener('resize',alMedir);
 
+    let observador=null;
+    function liberar(){
+      if(!vivo)return;vivo=false;cancelAnimationFrame(raf);gl3d?.destruir();document.removeEventListener('visibilitychange',reanudar);
+      removeEventListener('resize',alMedir);window.visualViewport?.removeEventListener('resize',alMedir);observador?.disconnect();
+      dlg.remove();
+    }
+    if(incrustado){
+      contenedor.append(dlg);ponerCarta();
+      if(typeof ResizeObserver==='function'){observador=new ResizeObserver(()=>medir());observador.observe(dlg);}
+      medir();reanudar();rafaga(70,1);
+      // Cambiar de edición o de copias sin rehacer la escena ni el WebGL.
+      function actualizar(nuevo={}){
+        if(nuevo.ediciones)ediciones=nuevo.ediciones.filter(e=>NOMBRES[e.id]);
+        const antes=copias,destino=nuevo.edicion&&NOMBRES[nuevo.edicion]?nuevo.edicion:edicion;
+        if(destino!==edicion){edicion=destino;ponerCarta();impulso(PI*2);rafaga(70,1);return;}
+        const e=ediciones.find(x=>x.id===edicion)||{};
+        if((e.cantidad||0)!==antes||dlg.classList.contains('visor3dBloqueada')===!!e.tiene){ponerCarta();if((e.cantidad||0)>antes)rafaga(50,.9);}
+      }
+      return {raiz:dlg,id:o.id,actualizar,voltear,destruir:liberar,medir};
+    }
     function cerrar(){if(dlg.open)dlg.close();}
-    dlg.addEventListener('close',()=>{
-      vivo=false;cancelAnimationFrame(raf);gl3d?.destruir();document.removeEventListener('visibilitychange',reanudar);
-      removeEventListener('resize',alMedir);window.visualViewport?.removeEventListener('resize',alMedir);
-      dlg.remove();if(actual?.dlg===dlg)actual=null;o.alCerrar?.();
-    });
+    dlg.addEventListener('close',()=>{liberar();if(actual?.dlg===dlg)actual=null;o.alCerrar?.();});
     document.body.append(dlg);
     ponerCarta();
     dlg.showModal();
@@ -272,5 +309,5 @@
     return actual;
   }
 
-  window.CAOZ_VISOR3D=Object.freeze({abrir,cerrar:()=>actual?.cerrar()});
+  window.CAOZ_VISOR3D=Object.freeze({abrir,montar,cerrar:()=>actual?.cerrar()});
 })();

@@ -353,23 +353,24 @@ Garamond en `caoz_tcg/fuentes/` (OFL); las cifras de reglas usan Cinzel porque
 Cormorant sólo trae cifras antiguas. Los Protagonistas conservan su retrato y el
 tablero y la mano no cambian todavía.
 
-### Visor 3D de una carta
+### Detalle en 3D de una carta
 
-En el detalle, tocar una edición desbloqueada (o enfocarla y pulsar Intro) abre
-`visor-3d.js` en un diálogo propio, encima de Colección. Con WebGL, la carta la dibuja
-`visor-3d-gl.js` con las cuatro texturas del pintor: grosor real, relieve,
-metal y laca que reflejan un estudio procedural, una luz que sigue al puntero
-desde un costado y holo con destellos según el ángulo. Sin WebGL (o con un
-Protagonista) muestra la ficha con canto, reflejo, película foil y destellos en
-Foil/Dorada, y el dorso con `art/logo.webp`. Debajo gira un anillo rúnico y
-alrededor suben partículas de luz del color de la edición, con una ráfaga de
-chispas al abrir, voltear o cambiar de edición. Se gira arrastrando, se voltea con
-doble toque, doble clic, `F` o «Voltear», y desde ahí se cambia entre ediciones
-desbloqueadas; las bloqueadas no se abren. Sin WebGL ni dependencias: cada capa
-repite su propia perspectiva, sin `preserve-3d`. Sólo dibuja; no equipa ni
-cambia cantidades. Con movimiento reducido no hay giro de entrada ni motas.
+Tocar una carta de la rejilla abre su detalle, que es la carta en 3D:
+`visor-3d.js` montado dentro de Colección (`CAOZ_VISOR3D.montar`). Con WebGL,
+`visor-3d-gl.js` la dibuja con las cuatro texturas del pintor: grosor real,
+relieve, metal y laca que reflejan un estudio procedural, una luz lateral que
+sigue al puntero y holo con destellos según el ángulo; sin WebGL o con un
+Protagonista, capas CSS sin `preserve-3d`. Debajo gira un anillo rúnico y suben
+partículas del color de la edición.
 
-Revisión directa: `/coleccion/?estado=ediciones&carta=tal` y tocar la Dorada.
+Las pestañas Normal/Foil/Dorada cambian la edición de la misma escena (no se
+rehace el WebGL) y debajo quedan su cantidad, Usar y el canje: los mismos
+controles `.coleccionVersion` de antes, con sus fichas ocultas. Una edición
+bloqueada se ve velada y nunca nítida en WebGL. Voltear y pantalla completa
+(el visor como diálogo) flotan junto a la carta; volver a la rejilla libera la
+escena.
+
+Revisión directa: `/coleccion/?estado=ediciones&carta=tal`.
 
 ```sh
 node dev/secciones/pruebas_coleccion_visor3d.mjs

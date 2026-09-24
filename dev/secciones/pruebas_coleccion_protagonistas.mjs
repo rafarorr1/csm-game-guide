@@ -15,13 +15,14 @@ if(capturas)fs.mkdirSync(capturas,{recursive:true});
 async function comprobarCarta(carta){
   const g=await carta.evaluate(n=>{
     const r=n.getBoundingClientRect(),cara=n.querySelector('.lface').getBoundingClientRect(),marco=n.querySelector('.marcoDibujo').getBoundingClientRect(),img=n.querySelector('img'),imagen=img.getBoundingClientRect(),nombre=n.querySelector('.lname'),arquetipo=n.querySelector('.larch');
-    const lista=n.closest('.coleccionMini'),pie=lista?lista.querySelector('.coleccionPuntos'):n.parentElement.querySelector('.coleccionCantidadEdicion'),p=pie.getBoundingClientRect();
+    // En el detalle la carta es la de la escena 3D; su cantidad está en los controles de la edición vista.
+    const lista=n.closest('.coleccionMini'),escena=n.closest('.visor3d'),pie=lista?lista.querySelector('.coleccionPuntos'):escena?document.querySelector('#coleccionPanel .coleccionVersion.vista .coleccionCantidadEdicion'):n.parentElement.querySelector('.coleccionCantidadEdicion'),p=pie.getBoundingClientRect();
     const marcadores=lista?[...pie.querySelectorAll('i')]:[];
     const igual=b=>['top','left','right','bottom'].every(k=>Math.abs(r[k]-b[k])<2);
     const visible=e=>{const b=e.getBoundingClientRect(),css=getComputedStyle(e);return b.width>0&&b.height>0&&b.left>=r.left-1&&b.right<=r.right+1&&b.top>=r.top-1&&b.bottom<=r.bottom+1&&css.display!=='none'&&css.visibility==='visible'&&css.opacity==='1'&&e.textContent.trim().length>0&&e.scrollWidth<=e.clientWidth+1;};
     return {llena:igual(cara)&&igual(marco),cubre:imagen.left<=r.left+2&&imagen.top<=r.top+2&&imagen.right>=r.right-2&&imagen.bottom>=r.bottom-2,
       nombre:visible(nombre),arquetipo:visible(arquetipo),alPie:nombre.getBoundingClientRect().top>r.top+r.height*.6,
-      lista:!!lista,cantidad:pie.textContent,pieVisible:p.width>0&&p.height>0&&p.top>=r.bottom-1&&p.bottom<=innerHeight&&p.left>=0&&p.right<=innerWidth,cargada:img.complete&&img.naturalWidth>0,
+      lista:!!lista,cantidad:pie.textContent,pieVisible:p.width>0&&p.height>0&&(escena||p.top>=r.bottom-1)&&p.bottom<=innerHeight&&p.left>=0&&p.right<=innerWidth,cargada:img.complete&&img.naturalWidth>0,
       marcadores:!lista||(marcadores.map(p=>p.dataset.edicion).join(',')===['normal','foil','dorado'].filter(a=>CAOZ_COLECCION.tiene(lista.dataset.carta,a)).join(',')&&marcadores.filter(p=>p.classList.contains('elegida')).map(p=>p.dataset.edicion).join(',')===CAOZ_COLECCION.elegido(lista.dataset.carta)&&marcadores.every(p=>{const b=p.getBoundingClientRect(),s=getComputedStyle(p);return p.classList.contains('propia')&&b.width>0&&b.height>0&&s.display!=='none'&&s.visibility==='visible'&&Number(s.opacity)>0;})&&!lista.querySelector('.coleccionCopias')&&lista.querySelector('.coleccionMiniInfo').textContent.trim()==='')};
   });
   assert.ok(g.llena&&g.cubre&&g.cargada,'El retrato y su marco llenan los límites de la carta');
@@ -49,7 +50,8 @@ try{
         await pagina.locator('.coleccionMini[data-carta="lider_fender"]').click();
         for(const a of ['normal','foil','dorado']){
           await pagina.locator('[data-edicion="'+a+'"] .coleccionElegirAcabado').click();
-          const carta=pagina.locator('[data-edicion="'+a+'"] .coleccionCarta');await carta.locator('img').evaluate(img=>img.decode());
+          await pagina.waitForFunction(a=>document.querySelector('.visor3dIncrustado')?.dataset.acabado===a,a);
+          const carta=pagina.locator('.visor3dIncrustado .visor3dFrente .coleccionCarta');await carta.locator('img').evaluate(img=>img.decode());
           await comprobarCarta(carta);
         }
         if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-'+acabado+'-detalle.png')});

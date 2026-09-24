@@ -1,6 +1,8 @@
-/* Visor 3D de la Colección, sólo en la sección aislada: tocar una edición
-   desbloqueada abre la carta real en 3D, se voltea al dorso, cambia de edición
-   y al cerrar devuelve el foco. Las ediciones bloqueadas no se abren.
+/* Detalle de Colección con la carta en 3D, sólo en la sección aislada: tocar
+   una carta de la rejilla abre su escena 3D con la ficha real; las pestañas
+   cambian la edición sin rehacer la escena; una edición bloqueada se ve velada
+   y sin WebGL; voltear gira media vuelta; pantalla completa abre el diálogo y
+   al cerrarlo se vuelve al detalle; regresar a la rejilla libera la escena.
    Usa Playwright instalado en el entorno (PLAYWRIGHT_MODULE opcional). */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -18,12 +20,12 @@ const urlPara=parametros=>{const url=new URL(base);for(const [k,v]of Object.entr
 const capturas=process.argv.includes('--capturas')?path.resolve(process.argv[process.argv.indexOf('--capturas')+1]):null;
 if(capturas)fs.mkdirSync(capturas,{recursive:true});
 
-// El juego prohíbe preserve-3d: las capas del visor llevan su propia perspectiva.
+// El juego prohíbe preserve-3d y esperar a Animation.finished.
 const css=fs.readFileSync(path.join(juego,'visor-3d.css'),'utf8'),js=fs.readFileSync(path.join(juego,'visor-3d.js'),'utf8');
 assert.ok(!/preserve-3d/.test(css.replace(/\/\*[\s\S]*?\*\//g,''))&&!/preserve-3d['"]/.test(js),'El visor no usa preserve-3d');
 assert.ok(!/\.finished\b/.test(js),'El visor no espera a Animation.finished');
 
-const giro=pagina=>pagina.evaluate(()=>parseFloat(getComputedStyle(document.querySelector('.visor3dCuerpo')).getPropertyValue('--ry')));
+const giro=pagina=>pagina.evaluate(()=>parseFloat(getComputedStyle(document.querySelector('.visor3dIncrustado .visor3dCuerpo')).getPropertyValue('--ry')));
 let navegador;
 try{
   navegador=await chromium.launch({channel:'chrome',headless:true});
@@ -32,55 +34,61 @@ try{
     pagina.on('pageerror',e=>errores.push(e.message));
     if(sabotaje)await contexto.addInitScript(()=>{Object.defineProperty(window,'CAOZ_VISOR3D',{configurable:true,get:()=>undefined,set:()=>{}});});
     try{
-      await pagina.goto(urlPara({vista,estado:'ediciones',carta}));
-      await pagina.locator('#coleccionPanel[open] .coleccionVersion').first().waitFor();
-      const bloqueadas=await pagina.evaluate(()=>[...document.querySelectorAll('#coleccionPanel .coleccionVersion.bloqueada .coleccionCarta')].every(n=>!n.classList.contains('coleccionVer3D')));
-      assert.ok(bloqueadas,'Una edición bloqueada no se abre en 3D');
-      const ficha=pagina.locator('#coleccionPanel .coleccionVer3D:visible').first();
-      await ficha.waitFor({timeout:4000});
-      const acabado=await ficha.getAttribute('data-coleccion-acabado');
-      assert.match(await ficha.getAttribute('aria-label'),/en 3D$/,'La carta anuncia que abre el visor');
-      // La carta de Colección se pinta con el diseño del visor (relieve horneado).
-      // Los Protagonistas conservan su retrato y no se pintan.
-      const pintada=await ficha.evaluate(n=>n.classList.contains('cdCarta'));
-      if(pintada)await pagina.waitForFunction(n=>n.classList.contains('cdLista')&&n.querySelector('canvas.cdLienzo').width>=260,await ficha.elementHandle(),{timeout:20000});
-      await ficha.click();
-      const visor=pagina.locator('dialog.visor3d[open]');await visor.waitFor();
-      // Con WebGL, la carta del visor la dibuja visor-3d-gl.js con sus texturas.
+      await pagina.goto(urlPara({vista,estado:'ediciones'}));
+      const mini=pagina.locator('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]');await mini.waitFor();await mini.scrollIntoViewIfNeeded();
+      // La rejilla muestra la carta pintada (los Protagonistas conservan su retrato).
+      const pintada=await mini.evaluate(n=>!!n.querySelector('.cdCarta'));
+      if(pintada)await pagina.waitForFunction(n=>n.querySelector('.cdCarta')?.classList.contains('cdLista'),await mini.elementHandle(),{timeout:20000});
+      await mini.click();
+      const escena=pagina.locator('#coleccionPanel .coleccionEscena3D .visor3dIncrustado');await escena.waitFor({timeout:4000});
       const hayGL=await pagina.evaluate(()=>{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'));});
-      if(hayGL&&pintada)await pagina.waitForFunction(()=>document.querySelector('dialog.visor3d')?.classList.contains('visor3dConGL'),null,{timeout:30000});
-      const abierto=await pagina.evaluate(()=>{
-        const d=document.querySelector('dialog.visor3d'),frente=d.querySelector('.visor3dFrente .visor3dCarta'),r=frente.getBoundingClientRect(),dorso=d.querySelector('.visor3dDorso');
-        return {acabado:d.dataset.acabado,cartaReal:frente.classList.contains('coleccionCarta')&&!!frente.querySelector('.marcoDibujo, .lface'),
-          dentro:r.left>=0&&r.right<=innerWidth&&r.top>=0&&r.bottom<=innerHeight&&r.width>60,
-          logo:dorso.querySelector('img.visor3dLogo')?.getAttribute('src'),caras:getComputedStyle(dorso).backfaceVisibility,
-          cantos:d.querySelectorAll('.visor3dCanto').length,desborde:document.documentElement.scrollWidth>innerWidth};
+      if(hayGL&&pintada)await pagina.waitForFunction(()=>document.querySelector('.visor3dIncrustado')?.classList.contains('visor3dConGL'),null,{timeout:30000});
+      const abierta=await pagina.evaluate(()=>{
+        const v=document.querySelector('.visor3dIncrustado'),frente=v.querySelector('.visor3dFrente .visor3dCarta'),r=frente.getBoundingClientRect(),e=v.getBoundingClientRect();
+        const fichas=[...document.querySelectorAll('#coleccionPanel .coleccionVersion .coleccionCarta')].filter(n=>n.getClientRects().length);
+        return {acabado:v.dataset.acabado,elegido:CAOZ_COLECCION.elegido(frente.dataset.card||frente.closest('[data-carta]')?.dataset.carta||''),cartaReal:frente.classList.contains('coleccionCarta')&&!!frente.querySelector('.marcoDibujo, .lface'),
+          dentro:r.left>=e.left-1&&r.right<=e.right+1&&r.top>=e.top-1&&r.bottom<=e.bottom+1&&r.width>60,fichasVisibles:fichas.length,versiones:document.querySelectorAll('#coleccionPanel .coleccionVersion').length,
+          desborde:document.documentElement.scrollWidth>innerWidth,logo:v.querySelector('.visor3dDorso img.visor3dLogo')?.getAttribute('src')};
       });
-      assert.equal(abierto.acabado,acabado,'Abre la edición que se tocó');
-      assert.ok(abierto.cartaReal,'El frente es la ficha real de la Colección');
-      assert.ok(abierto.dentro&&!abierto.desborde,'La carta cabe en la pantalla');
-      assert.ok(abierto.logo?.endsWith('art/logo.webp')&&abierto.caras==='hidden'&&abierto.cantos>1,'Dorso con el logo y canto');
-      if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-visor.png')});
+      assert.ok(abierta.cartaReal,'La escena muestra la ficha real de la Colección');
+      assert.ok(abierta.dentro&&!abierta.desborde,'La carta cabe en su escena');
+      assert.equal(abierta.fichasVisibles,0,'La escena 3D es la única carta visible del detalle');
+      assert.equal(abierta.versiones,3,'Los controles de las tres ediciones siguen presentes');
+      assert.ok(abierta.logo?.endsWith('art/logo.webp'),'El dorso lleva el logo');
+      const inicial=await pagina.evaluate(c=>CAOZ_COLECCION.elegido(c),carta);
+      assert.equal(abierta.acabado,inicial,'Abre la edición en uso');
+      if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-detalle3d.png')});
 
-      await visor.getByRole('button',{name:'Voltear'}).click();
-      await pagina.waitForFunction(()=>Math.abs(Math.abs(parseFloat(getComputedStyle(document.querySelector('.visor3dCuerpo')).getPropertyValue('--ry')))-Math.PI)<.25,null,{timeout:5000});
-      assert.ok(Math.abs(Math.abs(await giro(pagina))-Math.PI)<.25,'Voltear gira media vuelta hasta el dorso');
-
-      const otra=visor.locator('.visor3dEdicion:not([disabled]):not([aria-pressed="true"])').first();
-      if(await otra.count()){
-        const destino=await otra.getAttribute('data-edicion');await otra.click();
-        assert.equal(await pagina.locator('dialog.visor3d').getAttribute('data-acabado'),destino,'Cambia de edición dentro del visor');
+      // Las pestañas cambian la edición de la misma escena.
+      const raiz=await escena.elementHandle();
+      for(const a of ['normal','foil','dorado']){
+        await pagina.locator('[data-edicion="'+a+'"] .coleccionElegirAcabado').click();
+        await pagina.waitForFunction(a=>document.querySelector('.visor3dIncrustado')?.dataset.acabado===a,a,{timeout:4000});
+        const estado=await pagina.evaluate(([r,c,a])=>({misma:document.querySelector('.visor3dIncrustado')===r,bloqueada:r.classList.contains('visor3dBloqueada'),gl:r.classList.contains('visor3dConGL'),tiene:CAOZ_COLECCION.tiene(c,a)}),[raiz,carta,a]);
+        assert.ok(estado.misma,'Cambiar de edición conserva la escena y su WebGL');
+        assert.equal(estado.bloqueada,!estado.tiene,'Una edición bloqueada se ve velada');
+        if(!estado.tiene)assert.ok(!estado.gl,'Una edición bloqueada nunca se dibuja nítida en WebGL');
       }
+      await pagina.locator('[data-edicion="'+inicial+'"] .coleccionElegirAcabado').click();
+      await pagina.locator('.visor3dIncrustado .visor3dVoltear').click();
+      // El ángulo se acumula (cambiar de edición da una vuelta): se compara normalizado.
+      await pagina.waitForFunction(()=>{const r=parseFloat(getComputedStyle(document.querySelector('.visor3dIncrustado .visor3dCuerpo')).getPropertyValue('--ry'));return Math.abs(Math.abs(Math.atan2(Math.sin(r),Math.cos(r)))-Math.PI)<.25;},null,{timeout:8000});
+      const r=await giro(pagina);assert.ok(Math.abs(Math.abs(Math.atan2(Math.sin(r),Math.cos(r)))-Math.PI)<.25,'Voltear muestra el dorso');
+
+      // Pantalla completa abre el diálogo; al cerrarlo sigue el detalle.
+      await pagina.locator('.visor3dIncrustado .visor3dAmpliar').click();
+      await pagina.locator('dialog.visor3d[open]').waitFor();
       await pagina.keyboard.press('Escape');
-      await pagina.waitForFunction(()=>!document.querySelector('dialog.visor3d'));
-      const foco=await pagina.evaluate(()=>document.activeElement?.classList.contains('coleccionVer3D')&&document.querySelector('#coleccionPanel').open);
-      assert.ok(foco,'Al cerrar vuelve a la Colección con el foco en la carta');
+      await pagina.waitForFunction(()=>!document.querySelector('dialog.visor3d')&&document.querySelector('#coleccionPanel').open&&document.querySelector('.visor3dIncrustado'));
+      // Volver a la rejilla libera la escena.
+      await pagina.locator('.coleccionAtras').click();
+      await pagina.waitForFunction(()=>!document.querySelector('.visor3dIncrustado'));
       assert.deepEqual(errores,[],'Sin errores de página');
-      console.log('✓ '+vista+' '+width+'×'+height+': '+(pintada?'carta pintada, '+(hayGL?'visor WebGL':'visor CSS'):'retrato de Protagonista')+', abre la carta real, dorso con logo, voltea, cambia de edición y devuelve el foco');
+      console.log('✓ '+vista+' '+width+'×'+height+': '+(pintada?'carta pintada, '+(hayGL?'escena WebGL':'escena CSS'):'retrato de Protagonista')+', detalle 3D, ediciones en la misma escena, bloqueada velada, voltea, pantalla completa y libera la escena');
     }finally{await contexto.close();}
   }
 }catch(error){
-  if(sabotaje){console.log('✓ Sabotaje detectado: sin el visor la carta no se abre en 3D');process.exitCode=0;}
+  if(sabotaje){console.log('✓ Sabotaje detectado: sin el visor el detalle no muestra la carta en 3D');process.exitCode=0;}
   else throw error;
 }finally{await navegador?.close();servidor?.close();}
 if(sabotaje&&process.exitCode!==0){console.error('✗ El sabotaje no se detectó');process.exitCode=1;}
