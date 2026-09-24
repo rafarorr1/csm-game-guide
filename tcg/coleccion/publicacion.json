@@ -422,17 +422,17 @@
     "escritorio.html": "aa29d783c03e194e3bd2c7a9b159b968509b048a402c510f4be8626321dc3b43",
     "generado/desktop/base.css": "8c25aa2cddb017ccb0cfa84da135bf28cb7038bc547e18e683f5cc1a83fa5404",
     "generado/desktop/datos.js": "11436f42110dadf786ad925b67e42989eaa840db35b80f827342518fd4cf748d",
-    "generado/desktop/manifiesto.json": "d1f87b2f9f2333a6ba4459f60caef2ed47ed219d5059cd1b440784299d55ed18",
+    "generado/desktop/manifiesto.json": "7f79ddcbc50644af9cf45e45ecc5b839d904fa5bd4c670763913b9a03dd1115e",
     "generado/desktop/renderer.js": "225a01dd637ae51539ff9549a3f06f2d96e7ff0f096f71390daced1401ae96cc",
     "generado/movil/base.css": "436e304209d9bc9659ad745f21ab6c2401bf6a66a5ce49d7996b76e0112ed956",
     "generado/movil/datos.js": "11436f42110dadf786ad925b67e42989eaa840db35b80f827342518fd4cf748d",
-    "generado/movil/manifiesto.json": "51afd119bf51cca8d4b25b6b332ef777e5b264220ddb90098831eb4b60972e63",
+    "generado/movil/manifiesto.json": "fbc5ec0bbf527594f37e4069e1055f04cc651ee8714180978c1f8f91fc770075",
     "generado/movil/renderer.js": "77848d91d4c737b3fa6072824a5f676d66f8ef4365d437945fab00e60364ef00",
     "index.html": "d0e9db5549037f4bcec865f862ff54482c3722d059d79ad5b35c6e1970f77d5f",
     "juego/acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9",
     "juego/arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
     "juego/arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
-    "juego/carta-diseno.css": "d3466c3cb801fe559ac38b13d7d5b455cb64bee8242735cf1fc06dbaaa060266",
+    "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-diseno.js": "0b3327ee89de1c5539e81d45da4eecb30f9dad48f689a231238e3b68be3b7b36",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/coleccion-modelo.js": "7f72c8a40bed034e04a369c7fa76576dc23ae5386dd3af22c1220de0aafa30c8",
@@ -450,13 +450,13 @@
     "juego/visor-3d.js": "01a26338f9b89c101936f79fedbd48fc8819552c0bf3cb4a5075b7ced938c35b",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "movil.html": "2a40d85ab96e291f44989895638f5051d209aacc18c64a019de537edbde8fa45",
-    "procedencia.json": "901b4b5a1ce325d5a0344a3379958a1a5d4fd898cf23e8e3a9e73b0a721c7656",
+    "procedencia.json": "8b76738cd0247d7105f0ef707974165aa1186ed087601d29768e55c052c60ae2",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "cca6f477989027167e4caf5c39b72a1dcbc9a36a"
+    "sha": "0fb6e0139930f0f0e51f20ec6a5de19365ff1fea"
   },
   "seccion": "coleccion",
   "version": 1

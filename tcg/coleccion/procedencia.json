@@ -9,7 +9,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/index.html",
-          "sha256": "47f512dd4b83b42fcc8c08835e86c5b371f2309e6c907ccb6556ad5e55db85ce"
+          "sha256": "b3a27c2e97581687e5fc4cb1daa9c18bf42731e2d3c8d541037af2c84419c6c2"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -91,7 +91,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/movil.html",
-          "sha256": "f5f73bc2194e039d25323c14cc7b5c74a2b23140023498cce4f2f6698a523c7e"
+          "sha256": "c6df627a97d9795ecd384e9b944d72af485270c845fa0dc272ed33143629f6cf"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -177,7 +177,7 @@
     "visor-3d.css": "cb89776c660a63e698cda384480ea5a3fdeb92191fa8b6f1f6416fbfa76bd7aa",
     "carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "carta-diseno.js": "0b3327ee89de1c5539e81d45da4eecb30f9dad48f689a231238e3b68be3b7b36",
-    "carta-diseno.css": "d3466c3cb801fe559ac38b13d7d5b455cb64bee8242735cf1fc06dbaaa060266",
+    "carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
