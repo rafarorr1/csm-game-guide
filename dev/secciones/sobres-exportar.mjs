@@ -7,8 +7,9 @@ import {generar,datosDesdeMotor,leer,juego,hash} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 export const cartasSobres=Object.freeze(['tal','rey','eric','armadura','zancada']);
-export const componentesSobres=Object.freeze(['sobres-apertura.js','sobres-apertura.css','sobres-escena.js','arte-vistas.js','arte-remoto.js','acabados.css']);
-export const imagenesSobres=Object.freeze([...cartasSobres.map(id=>id+'.webp'),'logo.webp']);
+// Con el pintor y el renderer 3D de la carta: el sobre y su bonche se ven como en el juego.
+export const componentesSobres=Object.freeze(['sobres-apertura.js','sobres-apertura.css','sobres-escena.js','sobres-revelacion.js','visor-3d-gl.js','carta-pintor.js','carta-diseno.js','carta-diseno.css','carta-juego.js','carta-juego.css','fuentes/cinzel.woff2','fuentes/cormorant-garamond.woff2','fuentes/cormorant-garamond-italica.woff2','arte-vistas.js','arte-remoto.js','acabados.css']);
+export const imagenesSobres=Object.freeze([...cartasSobres.map(id=>id+'.webp'),'magodomo.webp','logo.webp']);
 export function exportar(destino){
   destino=path.resolve(destino);
   if(fs.existsSync(destino)&&(!fs.statSync(destino).isDirectory()||fs.readdirSync(destino).length))throw Error('El destino debe estar vacío; no se sobrescribe otro sitio.');

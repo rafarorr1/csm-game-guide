@@ -1,5 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
+### v38 · Build 276 · Sobres pintados y apertura 3D · 2026-09-24
+
+- Los sobres incorporan portada ilustrada, foil, relieve, sellos metálicos y
+  luz del visor. Al abrirlos, las cinco cartas salen como un bonche 3D con el
+  dorso del logo; cada volteo revela relieve, metal, holo y chispas según su
+  edición. Sin WebGL conservan la apertura plana y con movimiento reducido no
+  se animan.
+- Los Protagonistas también se pintan en full art dentro del bonche: ya no
+  caen al diseño plano, y la revelación espera correctamente el resumen de
+  las cinco cartas.
+
 ### v37 · Build 275 · Cartas pintadas durante la partida · 2026-09-24
 
 - La mano, la mesa, las cartas reveladas y la ficha ampliada usan el diseño de

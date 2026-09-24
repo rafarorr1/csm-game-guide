@@ -4,7 +4,7 @@ import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {generar,juego,hash} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
-const componentes=['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','visor-3d.js','visor-3d-gl.js','visor-3d.css','carta-pintor.js','carta-diseno.js','carta-diseno.css','fuentes/cinzel.woff2','fuentes/cormorant-garamond.woff2','fuentes/cormorant-garamond-italica.woff2','sobres-escena.js','sobres-apertura.js','sobres-apertura.css','coleccion.css','acabados.css'];
+const componentes=['arte-vistas.js','coleccion-modelo.js','arte-remoto.js','coleccion-ui.js','visor-3d.js','visor-3d-gl.js','visor-3d.css','carta-pintor.js','carta-diseno.js','carta-diseno.css','fuentes/cinzel.woff2','fuentes/cormorant-garamond.woff2','fuentes/cormorant-garamond-italica.woff2','sobres-escena.js','sobres-apertura.js','sobres-revelacion.js','sobres-apertura.css','coleccion.css','acabados.css'];
 const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 export function exportar(destino){
   destino=path.resolve(destino);

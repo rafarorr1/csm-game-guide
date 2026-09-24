@@ -46,3 +46,12 @@ body.aaa-polish .sobresApertura .sobresCarta.card .nm{font-size:17px}
 @media(min-width:800px) and (min-height:700px){.sobresPie{gap:12px}.sobresEstado{font-size:13px}}
 @media(max-height:670px){.sobresPie{gap:5px;padding-bottom:0}.sobresAccion{min-height:38px;padding:6px 18px;font-size:13px}.sobresEstado{font-size:10px;line-height:14px}}
 @media(prefers-reduced-motion:reduce){.sobresApertura *{animation:none!important;transition:none!important}}
+/* Atmósfera del visor: nebulosa del color de la colección detrás del sobre y
+   del bonche; con el bonche en 3D (sobres-revelacion.js) las capas DOM de la
+   pila quedan sólo para la cuenta y la accesibilidad. */
+.sobresAura{inset:0;background:radial-gradient(ellipse 42% 38% at 50% 46%,rgba(var(--sobre-aura),.34),transparent 70%),radial-gradient(ellipse 70% 55% at 32% 30%,rgba(var(--sobre-aura),.12),transparent 72%),radial-gradient(ellipse 60% 50% at 72% 70%,rgba(var(--sobre-aura),.1),transparent 70%);animation:sobresNebulosa 14s ease-in-out infinite alternate}
+@keyframes sobresNebulosa{from{transform:scale(1) rotate(0deg);opacity:.85}to{transform:scale(1.08) rotate(3deg);opacity:1}}
+.sobresApertura.sobres3D .sobresPila{visibility:hidden}
+.sobresApertura .sobresCartas3D{opacity:0;transition:opacity .3s ease}
+.sobresApertura[data-fase=terminado] .sobresCartas3D{opacity:0!important}
+.sobresApertura .sobresAccion{font-family:'Cinzel Domo',Georgia,serif;font-weight:700;letter-spacing:1.5px}
