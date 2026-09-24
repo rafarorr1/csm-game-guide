@@ -66,6 +66,7 @@
   guion('dado-fisico.js');
   guion('moneda-fisica.js');
   guion('polish-aaa.js');
+  guion('fx-aliento.js');
   guion('coleccion-juego.js');
   guion('sobres-escena.js');
   guion('sobres-apertura.js');

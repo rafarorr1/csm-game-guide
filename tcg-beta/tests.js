@@ -339,11 +339,13 @@ PRUEBAS.suite('tutoriales', async t => {
    rompa y se arregle, el caso se queda escrito aquí.
    ======================================================================== */
 PRUEBAS.suite('integracion', async t => {
-  // El cargador y el modo sin conexión necesitan las dos piezas compartidas.
+  // El cargador y el modo sin conexión necesitan las piezas compartidas.
   {
     t.check(!!window.CAOZ_AAA, 'la capa AAA debe instalarse al cargar ambas piezas');
+    t.check(typeof window.CAOZ_FX_ALIENTO?.entrada==='function'&&typeof window.CAOZ_FX_ALIENTO?.ataque==='function',
+      'el módulo visual de Thal debe cargar sus dos efectos');
     const sw = await (await fetch('sw.js')).text();
-    for(const archivo of ['final-core.js','polish-aaa.js']){
+    for(const archivo of ['final-core.js','polish-aaa.js','fx-aliento.js']){
       const respuesta=await fetch(archivo);
       t.check(respuesta.ok && (await respuesta.text()).includes('use strict'), archivo+' debe estar publicado');
       t.check(sw.includes("'"+archivo+"'"), archivo+' debe estar en la caché inicial');
@@ -351,6 +353,50 @@ PRUEBAS.suite('integracion', async t => {
   }
 
 
+});
+
+/* ===========================================================================
+   SUITE: alientoThal — el dragón cambia la coreografía, no las reglas.
+   La capa se suplanta para medir qué pide el motor sin depender del navegador.
+   ======================================================================== */
+PRUEBAS.suite('alientoThal',async t=>{
+  const viejo={entrada:window.fxThalEntrada,ataque:window.fxThalAtaque,hit:window.fxHit,lunge:window.fxLunge,muerte:window.fxDeath};
+  try{
+    const entradas=[],ataques=[];let golpes=0,lances=0,muertes=0;
+    window.fxThalEntrada=async(atacante,afectados)=>{entradas.push({atacante,afectados});return true;};
+    window.fxThalAtaque=async(atacante,objetivo,dano,opt)=>{ataques.push({atacante,objetivo,dano,opt});return true;};
+    window.fxHit=async()=>{golpes++;}; window.fxLunge=async()=>{lances++;}; window.fxDeath=async()=>{muertes++;};
+
+    T.newGame('talesin','fender');T.fast(true);
+    const thal=T.mkUnit('tal',0),uno=T.mkUnit('discipulo',1),dos=T.mkUnit('bartolomeo',1);
+    uno.pH=10;dos.pH=10;thal.sick=false;
+    T.P(0).field=[thal];T.P(1).field=[uno,dos];T.P(0).pd=10;
+    T.G.active=0;T.G.phase='combate';T.G.resolving=false;T.recalc();T.render();
+    await T.CARDS.tal.enter(T.G,0,thal);
+    t.igual(entradas.length,1,'Thal debe abrir una sola onda de ácido');
+    t.igual(entradas[0].afectados.length,2,'la onda debe cubrir a cada rival vivo');
+    t.check(uno.dmg===3&&dos.dmg===3,'el Aliento de Ácido debe conservar sus 3 daños reales');
+    t.igual(golpes,2,'cada daño de entrada conserva su resolución y cifra normal');
+
+    uno.pH=20;uno.dmg=0;thal.sick=false;thal.attacked=false;
+    T.P(1).field=[uno];T.G.active=0;T.G.phase='combate';T.G.resolving=false;T.recalc();T.render();
+    await T.doAttack(thal,uno);
+    t.igual(ataques.length,1,'el ataque de Thal debe pedir su propio aliento');
+    t.check(ataques[0].atacante===thal&&ataques[0].objetivo===uno&&ataques[0].dano===thal.atk,
+      'el aliento debe usar el atacante, el objetivo y el daño reales');
+    t.check(!ataques[0].opt.letal,'un objetivo que sobrevive debe quedar chamuscado, no en ceniza');
+    t.igual(lances,0,'Thal no debe usar la embestida genérica contra Personajes');
+
+    const ceniza=T.mkUnit('discipulo',1);thal.sick=false;thal.attacked=false;
+    T.P(1).field=[ceniza];T.G.active=0;T.G.phase='combate';T.G.resolving=false;T.recalc();T.render();
+    await T.doAttack(thal,ceniza);
+    t.check(ataques[1]?.opt.letal===true,'un golpe confirmado letal debe encender la ceniza');
+    t.check(!ceniza.alive&&!T.P(1).field.includes(ceniza),'la muerte sigue yendo a las Alcantarillas');
+    t.igual(muertes,0,'la ceniza no debe resucitar como fantasma de muerte genérico');
+  }finally{
+    window.fxThalEntrada=viejo.entrada;window.fxThalAtaque=viejo.ataque;
+    window.fxHit=viejo.hit;window.fxLunge=viejo.lunge;window.fxDeath=viejo.muerte;
+  }
 });
 
 PRUEBAS.suite('visual', async t => {
