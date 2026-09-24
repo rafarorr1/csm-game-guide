@@ -41,12 +41,12 @@ try{
     try{
       await pagina.goto(url);
       await pagina.waitForFunction(()=>/Listo/.test(document.getElementById('fuegoEstado').textContent),null,{timeout:30000});
-      const cartas=await pagina.evaluate(()=>['atacante','rival-rey','rival-bartolomeo','rival-eric'].map(id=>document.querySelector('#'+id+' canvas')?.width||0));
-      assert.ok(cartas.every(w=>w>300),caso+': las cuatro cartas están pintadas');
+      const cartas=await pagina.evaluate(()=>['atacante','aliado-machete','rival-rey','rival-bartolomeo','rival-eric'].map(id=>document.querySelector('#'+id+' canvas')?.width||0));
+      assert.ok(cartas.every(w=>w>300),caso+': las cinco cartas están pintadas');
       const listo=()=>pagina.waitForFunction(()=>!document.getElementById('entrar').disabled&&!/…/.test(document.getElementById('fuegoEstado').textContent),null,{timeout:30000});
       const estado=()=>pagina.evaluate(()=>({capas:document.querySelectorAll('canvas.fxAlientoCapa').length,cifras:document.querySelectorAll('.fxAlientoDano').length,
         visibles:['rival-rey','rival-bartolomeo','rival-eric'].filter(id=>{const n=document.getElementById(id);return n.style.visibility!=='hidden'&&n.dataset.fxCeniza===undefined;}),
-        estilos:['atacante','rival-rey','rival-bartolomeo','rival-eric'].map(id=>document.getElementById(id).style.transform+document.getElementById(id).style.filter).join('')}));
+        estilos:['atacante','aliado-machete','rival-rey','rival-bartolomeo','rival-eric'].map(id=>document.getElementById(id).style.transform+document.getElementById(id).style.filter).join('')}));
       // Entrada: sin fuego; las tres afectadas reciben su cifra y siguen en la mesa.
       let cifras=0;await pagina.exposeFunction('contarCifra',()=>{cifras++;});
       await pagina.evaluate(()=>new MutationObserver(ms=>{for(const m of ms)for(const n of m.addedNodes)if(n.classList?.contains('fxAlientoDano'))window.contarCifra();}).observe(document.getElementById('mesaFuego'),{childList:true}));
@@ -74,10 +74,17 @@ try{
       e=await pagina.evaluate(()=>{const o=document.getElementById('rival-bartolomeo');return {oculto:o.style.visibility==='hidden'||getComputedStyle(o).opacity==='0',ceniza:o.dataset.fxCeniza!==undefined,capas:document.querySelectorAll('canvas.fxAlientoCapa').length,atacante:document.getElementById('atacante').style.transform};});
       assert.ok(e.oculto&&e.ceniza,caso+': el ataque letal deja al objetivo hecho ceniza');
       assert.ok(e.capas===0&&e.atacante==='',caso+': los lienzos se liberan y Thal vuelve a su sitio');
+      // Muerte de Machete: la misma llamada que hace la partida.
+      await pagina.click('#reiniciar');await listo();
+      await pagina.click('#morirMachete');
+      if(movimiento!=='reduce')await pagina.waitForFunction(()=>document.querySelectorAll('canvas.fxAlientoCapa').length===2,null,{timeout:5000});
+      await pagina.waitForFunction(()=>/Machete ardió/.test(document.getElementById('fuegoEstado').textContent),null,{timeout:30000});
+      assert.equal(await pagina.evaluate(()=>document.getElementById('aliado-machete').style.visibility),'hidden',caso+': Machete queda hecho ceniza');
+      await pagina.waitForFunction(()=>!document.querySelector('canvas.fxAlientoCapa'),null,{timeout:10000});
       await pagina.click('#reiniciar');
       await pagina.waitForFunction(()=>{const o=document.getElementById('rival-bartolomeo');return o.style.visibility!=='hidden'&&o.dataset.fxCeniza===undefined;},null,{timeout:10000});
       assert.deepEqual(errores,[],caso+': sin errores de página');
-      console.log('✓ '+caso+': entrada con brillo y daño en las tres, golpe que no mata, ataque letal hasta la ceniza, y se reinicia');
+      console.log('✓ '+caso+': entrada, golpe que no mata, ataque letal, muerte de Machete hasta la ceniza, y se reinicia');
     }finally{await contexto.close();}
   }
 }finally{await navegador?.close();servidor.close();}

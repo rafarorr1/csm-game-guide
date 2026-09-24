@@ -82,7 +82,8 @@ La revisión está en `/fuego/`, con tres animaciones de `caoz_tcg/fx-aliento.js
 Llamas, chorro y quemado van en WebGL con ruido fbm; brasas, onda, burbujas y
 ceniza en Canvas 2D. «Cámara lenta» lo reproduce a 0,35×. Las animaciones de
 Thal aún no están conectadas al combate. `quemar(host,{objetivo,color})` sí:
-es la muerte de Machete en la partida (build 278).
+es la muerte de Machete en la partida (build 278), y en la sección se revisa con
+«Muere Machete», con la misma llamada.
 
 ```bash
 node dev/secciones/pruebas_fuego.mjs
