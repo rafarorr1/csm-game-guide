@@ -16,8 +16,8 @@
   // sigue poniendo acabados.css con data-acabado.
   const TONOS={
     normal:{canto:'#5d4c35',cantoLuz:'#a88f63',halo:'#5a3d1c',mota:'#f1c27a',anillo:'#e39a4c',holo:0,destellos:.22},
-    foil:{canto:'#7f8ca0',cantoLuz:'#e3ecf7',halo:'#2c4468',mota:'#9fd0ff',anillo:'#7fb6ff',holo:.34,destellos:.8},
-    dorado:{canto:'#9a6f22',cantoLuz:'#ffe7a3',halo:'#6d4a10',mota:'#ffd27a',anillo:'#ffbf4a',holo:.26,destellos:.9},
+    foil:{canto:'#7f8ca0',cantoLuz:'#e3ecf7',halo:'#2c4468',mota:'#9fd0ff',anillo:'#7fb6ff',holo:.34,destellos:.5},
+    dorado:{canto:'#9a6f22',cantoLuz:'#ffe7a3',halo:'#6d4a10',mota:'#ffd27a',anillo:'#ffbf4a',holo:.26,destellos:.55},
   };
   const LAMINAS=7,GROSOR=7,MAX_PILA=4;
   const textoCopias=n=>n+' '+(n===1?'copia':'copias');
