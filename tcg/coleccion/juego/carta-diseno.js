@@ -1,8 +1,10 @@
 /* Carta de la Colección con el diseño pintado (carta-pintor.js): relieve,
    texturas, gemas y tipografías del visor 3D, con la luz ya horneada. El
-   proveedor de arte sigue colocando la ilustración de cada edición en
-   .cdArte[data-arte-id] (invisible); el pintor lee de ahí la imagen y su
-   encuadre, y repinta cuando cambian. Se pinta sólo cerca de la pantalla y de
+   proveedor de arte sigue colocando la ilustración de cada edición en la
+   propia carta ([data-arte-id], con --ex/--ey/--ez y .marcoDibujo invisible);
+   el pintor lee de ahí la imagen y su encuadre, y repinta cuando cambian. El
+   nombre también existe como texto (.nombreCarta, transparente sobre el
+   pintado) para lectores de pantalla, búsqueda y las comprobaciones de títulos. Se pinta sólo cerca de la pantalla y de
    una en una, para no trabar la rejilla. Los Protagonistas no pasan por aquí. */
 'use strict';
 (function(){
@@ -12,14 +14,14 @@
 
   // Lo que el proveedor de arte dejó en la carta: imagen resuelta y encuadre.
   function arteDe(carta){
-    const soporte=carta.querySelector('.cdArte'),img=soporte?.querySelector('img.dibujo');
-    if(!img||!soporte.classList.contains('conarte'))return {img:null};
-    const v=n=>parseFloat(soporte.style.getPropertyValue(n));
+    const img=carta.querySelector(':scope > .marcoDibujo img.dibujo');
+    if(!img||!carta.classList.contains('conarte'))return {img:null};
+    const v=n=>parseFloat(carta.style.getPropertyValue(n));
     return {img,enc:{x:isNaN(v('--ex'))?50:v('--ex'),y:isNaN(v('--ey'))?50:v('--ey'),z:isNaN(v('--ez'))?100:v('--ez')*100}};
   }
   function cargada(img){
     if(!img||img.complete)return Promise.resolve();
-    return new Promise(r=>{const fin=()=>{img.removeEventListener('load',fin);img.removeEventListener('error',fin);r();};img.addEventListener('load',fin);img.addEventListener('error',fin);setTimeout(fin,6000);});
+    return new Promise(r=>{const fin=()=>{img.removeEventListener('load',fin);img.removeEventListener('error',fin);r();};img.addEventListener('load',fin);img.addEventListener('error',fin);});
   }
   function encolar(carta){if(pendientes.has(carta))return;pendientes.add(carta);cola.push(carta);if(!trabajando)siguiente();}
   function siguiente(){
@@ -31,9 +33,19 @@
     const pintor=window.CAOZ_CARTA_PINTOR;if(!pintor)return;
     await pintor.fuentes();const arte=arteDe(carta);await cargada(arte.img);
     const ancho=Math.round(Math.min(pintor.ancho,Math.max(260,(carta.clientWidth||300)*Math.min(devicePixelRatio||1,2)*1.15)));
-    const hecho=pintor.hornear({id:carta.dataset.card,acabado:carta.dataset.acabado||'normal',nombre:carta.querySelector('.cdNombreTexto')?.textContent,arte:{...arte,img:arte.img&&arte.img.naturalWidth?arte.img:null},ancho});
+    const hecho=pintor.hornear({id:carta.dataset.card,acabado:carta.dataset.acabado||'normal',nombre:carta.querySelector('.cdNombre')?.textContent,arte:{...arte,img:arte.img&&arte.img.naturalWidth?arte.img:null},ancho});
     const lienzo=carta.querySelector('.cdLienzo');lienzo.width=hecho.width;lienzo.height=hecho.height;lienzo.getContext('2d').drawImage(hecho,0,0);
-    carta.dataset.pintada=String(hecho.width);carta.classList.add('cdLista');
+    carta.dataset.pintada=String(hecho.width);carta.dataset.firma=firma(carta);carta.classList.add('cdLista');
+  }
+  // Lo que cambia el dibujo: ilustración, encuadre, edición y nombre.
+  function firma(carta){const a=arteDe(carta);return [a.img?.getAttribute('src')||'',a.enc?.x,a.enc?.y,a.enc?.z,carta.dataset.acabado,carta.querySelector('.cdNombre')?.textContent].join('|');}
+  // Una sola revisión por fotograma para todas las cartas que cambiaron: sin
+  // un temporizador por carta, aunque la rejilla tenga más de cien.
+  const revisar=new Set();let fotograma=0;
+  function pedirRevision(carta){
+    revisar.add(carta);if(fotograma)return;
+    fotograma=requestAnimationFrame(()=>{fotograma=0;const lista=[...revisar];revisar.clear();
+      for(const c of lista){const p=Number(c.dataset.pintada)||0,chica=p&&c.clientWidth*Math.min(devicePixelRatio||1,2)>p*1.3;if(!p||chica||c.dataset.firma!==firma(c))programar(c);}});
   }
   function programar(carta){
     if(!carta.isConnected)return;
@@ -43,18 +55,17 @@
   function crear(id,acabado){
     const c=CARDS[id];if(!c)throw Error('Carta desconocida: '+id);
     const carta=nodo('div','cdCarta t-'+c.t+(acabado==='dorado'?' cdFullArt':' cdClasica'));carta.dataset.card=id;
-    const arte=nodo('div','cdArte');arte.dataset.arteId=id;
-    const nombre=nodo('span','cdNombreTexto');
+    carta.dataset.arteId=id;
+    const nombre=nodo('span','nombreCarta cdNombre');
     if(typeof window.marcarNombreCarta==='function')window.marcarNombreCarta(nombre,id,c.n);else nombre.textContent=c.n;
-    carta.append(arte,nombre,nodo('canvas','cdLienzo'));
+    carta.append(nodo('canvas','cdLienzo'),nombre);
     // Repintar cuando el proveedor cambia la ilustración, la edición o el nombre,
     // o cuando la carta crece mucho más de lo que se pintó (rejilla → detalle).
-    let espera=0;const repintar=()=>{clearTimeout(espera);espera=setTimeout(()=>programar(carta),40);};
+    const repintar=()=>pedirRevision(carta);
     const vigia=new MutationObserver(repintar);
-    vigia.observe(arte,{subtree:true,childList:true,attributes:true,attributeFilter:['src','style','class']});
-    vigia.observe(nombre,{subtree:true,childList:true,characterData:true});
-    if(typeof ResizeObserver==='function')new ResizeObserver(()=>{const p=Number(carta.dataset.pintada)||0;if(!p||carta.clientWidth*Math.min(devicePixelRatio||1,2)>p*1.3)repintar();}).observe(carta);
-    arte.addEventListener('load',repintar,true);
+    vigia.observe(carta,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['src','style']});
+    if(typeof ResizeObserver==='function')new ResizeObserver(repintar).observe(carta);
+    carta.addEventListener('load',repintar,true);
     return carta;
   }
   window.CAOZ_CARTA_DISENO=Object.freeze({crear,arteDe,cargada});

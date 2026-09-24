@@ -5,7 +5,7 @@
   "fuentes": [
     {
       "archivo": "caoz_tcg/index.html",
-      "sha256": "ef17e1118e28c2d1a48aeab2572b64da0d3d6f0dfdc8018dcaf94c59dad5b3d4"
+      "sha256": "db83a35bac053317335270014865a13709f6cc3d430cf6e13c0d7d9c4ecbdfb9"
     },
     {
       "archivo": "caoz_tcg/motor.js",
@@ -17,7 +17,7 @@
     },
     {
       "archivo": "caoz_tcg/final.js",
-      "sha256": "131890249d00d833410b25bcd242423e735630e784115b428601a21463dd2bbe"
+      "sha256": "86afa7e4295b2ecb8a2731e3a7ed6b58125cd357522698c52b4fa83089696adc"
     }
   ],
   "funciones": [

@@ -9,7 +9,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/index.html",
-          "sha256": "ef17e1118e28c2d1a48aeab2572b64da0d3d6f0dfdc8018dcaf94c59dad5b3d4"
+          "sha256": "db83a35bac053317335270014865a13709f6cc3d430cf6e13c0d7d9c4ecbdfb9"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -21,7 +21,7 @@
         },
         {
           "archivo": "caoz_tcg/final.js",
-          "sha256": "131890249d00d833410b25bcd242423e735630e784115b428601a21463dd2bbe"
+          "sha256": "86afa7e4295b2ecb8a2731e3a7ed6b58125cd357522698c52b4fa83089696adc"
         }
       ],
       "funciones": [
@@ -91,7 +91,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/movil.html",
-          "sha256": "734a4299583d91fcad7c4dddca04e680fac026b0db4f8aece1808104c030d2eb"
+          "sha256": "dd31365a35ad5cb917d02e93e71435fef7a80d9742f00b95f62f9793f5295cdc"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -103,7 +103,7 @@
         },
         {
           "archivo": "caoz_tcg/final.js",
-          "sha256": "131890249d00d833410b25bcd242423e735630e784115b428601a21463dd2bbe"
+          "sha256": "86afa7e4295b2ecb8a2731e3a7ed6b58125cd357522698c52b4fa83089696adc"
         }
       ],
       "funciones": [
@@ -172,12 +172,12 @@
     "coleccion-modelo.js": "7f72c8a40bed034e04a369c7fa76576dc23ae5386dd3af22c1220de0aafa30c8",
     "arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
     "coleccion-ui.js": "a4b3b18714dcb93832a83abcfeafa5f02885d0f4f29511410843c379c4010951",
-    "visor-3d.js": "037330498dbed7c03be0d37ff43def31a1546beaa3ac6a4805d8be9be917e7b3",
+    "visor-3d.js": "0c9cf44e3b80d326589d6798a0e873c967a55b6e879f9f850ca32223010d614f",
     "visor-3d-gl.js": "a4e20f4e2f663891fb8eed39a05a9a52fcd6e30c8178917697311e0391cf9887",
     "visor-3d.css": "aaf7bd4f7f0c1a1e75226cf2152580c48068c0e6db875c3f33b9ce3a09a23d96",
     "carta-pintor.js": "4afba432e7937fc54eeeb08a4d10ceec349b8a537034d23a9792feecb6848069",
-    "carta-diseno.js": "186b3892abed45531d1be285e8c94bdfdbbf27aac3dec51b7ecb18e478efbc5d",
-    "carta-diseno.css": "36e68d9bee6015453b4c9d0c3b9123c53e5f4ed206b775ee8c9ed286467f5a12",
+    "carta-diseno.js": "8f9d13108163efab0de759829d6e200ccb64dee15c9fa518bce6409100cc4848",
+    "carta-diseno.css": "d3466c3cb801fe559ac38b13d7d5b455cb64bee8242735cf1fc06dbaaa060266",
     "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
