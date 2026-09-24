@@ -1,0 +1,32 @@
+{
+  "seccion": "fuego",
+  "partida": false,
+  "almacenamiento": "ninguno",
+  "proposito": "Prueba de animación: Thal se envuelve en fuego verde, lo escupe sobre la carta rival y la quema hasta la ceniza.",
+  "cartas": [
+    "tal",
+    "bartolomeo",
+    "eric"
+  ],
+  "componentes": {
+    "carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "fx-aliento.js": "81b4b51e4b662b41874a715b401c54986f54559c3c799f9b08409ab241d3b357",
+    "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f"
+  },
+  "arte": {
+    "tal.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
+    "bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
+    "eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b"
+  },
+  "entorno": {
+    "fuego.js": "4b934b6840e47afe2ca13819b95d91ee280f1944f1791d2a97e7d3701759f3fd",
+    "fuego.css": "5e937a2cdbe0513d1b2ae80fe2ff9422dfaee5484375e8be4f53f0a12596b4f0"
+  },
+  "derivados": {
+    "index.html": "7afd952d9b1ac2f8e95d4680768eb37c8b2c8982556cdcc444002d203e86970a",
+    "generado/datos.js": "f0f6d3ef2a5f5abdd50a9893df526a3f383c845e50fede07fa13d1eb4ef3ce73"
+  }
+}

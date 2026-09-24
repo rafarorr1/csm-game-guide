@@ -25,6 +25,10 @@
       "fuente": "cc67476f8ae22a7827f5376489bb4cad2ef3dfa7",
       "ruta": "tcg/estudio-nombres"
     },
+    "fuego": {
+      "fuente": "f9162c334f19b2b2e81f9ef8c51e2d499993c3a2",
+      "ruta": "tcg/fuego"
+    },
     "heroe": {
       "fuente": "54682d432ce1498b2d802b8597cca1a4cc3c8cfd",
       "ruta": "tcg/heroe"
