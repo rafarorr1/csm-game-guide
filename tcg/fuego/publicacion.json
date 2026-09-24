@@ -14,13 +14,13 @@
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "juego/fx-aliento.js": "41cfc4b9bdd6bff86ffec0af7f7db479666e48bb9332fad81e09978e8f6bb10b",
-    "procedencia.json": "f2511950b39b0e55895ff9c24fc6e600731cf3fb434a51b880ee3e5757452dfe"
+    "juego/fx-aliento.js": "5704eed6dfeb7663786c0f8b575d2faaef5fdd459d159cbd87bfaab003676700",
+    "procedencia.json": "ceaea1737944dc393288cac8228325d568209882e9a0a8e1ebd824be75f9d77f"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "1a39ab5680c9a867d890fd149c6cf1a04eb12092"
+    "sha": "84a7e79d90cb22949bfd1673b2ca57121235206f"
   },
   "seccion": "fuego",
   "version": 1
