@@ -261,6 +261,9 @@
       zona.append(escenario,versiones);contenido.append(zona);
       if(escena3D)escena3D.actualizar({ediciones:edicionesDe(s.carta),edicion:s.acabadoVista});
       else escena3D=window.CAOZ_VISOR3D.montar(escenario,{id:s.carta,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(s.carta,a),ediciones:edicionesDe(s.carta)});
+      // En el teléfono la escena ocupa lo que dejan libre los controles de abajo.
+      const medirControles=()=>{zona.style.setProperty('--controles-alto',Math.ceil(versiones.getBoundingClientRect().height+20)+'px');escena3D?.medir();};
+      medirControles();requestAnimationFrame(medirControles);
     }else{zona.append(versiones);contenido.append(zona);}
     const reglas=crear('section','coleccionReglas');reglas.setAttribute('aria-label','Información de la carta');
     const linea=crear('div','coleccionReglasTitulo');linea.append(crear('strong','','Habilidades'));
