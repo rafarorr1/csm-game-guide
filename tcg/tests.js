@@ -2996,6 +2996,20 @@ PRUEBAS.suite('pwaSinConexion', async t => {
   }
 });
 
+/* La portada de arranque es visual, pero no puede volver a dejar asomarse el
+   menú viejo antes del acabado ni congelar las rutas de captura del arnés. */
+PRUEBAS.suite('portadaArranque', async t => {
+  const paginas=await Promise.all(['index.html','movil.html'].map(async pagina=>[pagina,await fetch(pagina+'?test=portada-arranque').then(r=>r.text())]));
+  for(const [pagina,html] of paginas){
+    t.check(/classList\.add\(['"]arrancando['"]\)/.test(html),pagina+': debe marcar el arranque antes de pintar el cuerpo.');
+    t.check(/id=["']arranqueCaoz["'][\s\S]*?art\/logo\.webp/.test(html),pagina+': la portada inicial debe mostrar el logo de Caoz.');
+    t.check(/html\.arrancando #app,html\.arrancando dialog\[open\]\{visibility:hidden\}/.test(html),pagina+': el menú y los diálogos no pueden asomarse durante la carga.');
+    t.check(/addEventListener\(['"]load['"]/.test(html)&&/menu\?\.classList\.add\(['"]entra['"]\)/.test(html),pagina+': el menú debe revelarse después de load con su entrada.');
+    t.check(/prefers-reduced-motion:reduce/.test(html),pagina+': el arranque debe respetar menos movimiento.');
+    t.check(/class=["']screen on portada["'] id=["']menu["']/.test(html),pagina+': el menú debe conservar su estado interno inicial.');
+  }
+});
+
 PRUEBAS.suite('campanaMesa', async t => {
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';
