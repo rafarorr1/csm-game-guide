@@ -2634,6 +2634,8 @@ PRUEBAS.suite('campanaEpilogoSobres', async t => {
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=epilogo-sobres-interno';document.body.appendChild(f);await carga;
     const w=f.contentWindow,d=w.document,media=w.matchMedia;let inventario;
     try{
+      // Con las tipografías ya aplicadas: al llegar reacomodan el carrusel.
+      await d.fonts?.ready;
       inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
       w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true,addEventListener(){},removeEventListener(){}}:media.call(w,q);
       w.newGame('fender','gero');w.showScreen('board');
