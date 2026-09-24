@@ -23,6 +23,7 @@ try{
   for(const [vista,width,height,modo,movimiento]of casos){
     const contexto=await navegador.newContext({viewport:{width,height},reducedMotion:movimiento,hasTouch:vista==='movil'}),pagina=await contexto.newPage(),errores=[];
     pagina.on('pageerror',e=>errores.push(e.message));
+    pagina.on('console',m=>{if(m.type()==='warning'&&/Sobres/.test(m.text()))errores.push(m.text());});
     if(modo==='plano')await contexto.addInitScript(()=>{Object.defineProperty(window,'CAOZ_SOBRES_REVELACION',{configurable:true,get:()=>undefined,set:()=>{}});});
     const caso=vista+' '+width+'×'+height+' · '+modo+(movimiento==='reduce'?' · movimiento reducido':'');
     const fase=()=>pagina.evaluate(()=>document.querySelector('.sobresApertura')?.dataset.fase);
@@ -41,12 +42,12 @@ try{
       assert.equal(escena.lienzo&&escena.motas,modo==='3d',caso+': lienzos de cartas y motas');
       await pagina.locator('.sobresAccion').click({noWaitAfter:true});
       await esperarFase('pila');
-      if(modo==='3d')assert.equal(await pagina.evaluate(()=>getComputedStyle(document.querySelector('.sobresCartas3D')).opacity),'1',caso+': el bonche aparece al abrir');
+      if(modo==='3d')assert.equal(await pagina.evaluate(()=>{const c=document.querySelector('.sobresCartas3D');return c?getComputedStyle(c).opacity:'sin lienzo';}),'1',caso+': el bonche aparece al abrir ('+errores.join(' · ')+')');
       for(let i=0;i<5;i++){await pagina.locator('.sobresAccion').click({noWaitAfter:true});await esperarFase('pila','ultima');}
       const descubiertas=await pagina.evaluate(()=>document.querySelector('.sobresEstado').textContent);
       assert.match(descubiertas,/5 de 5/,caso+': se descubren las cinco');
       await pagina.locator('.sobresAccion').click({noWaitAfter:true});await esperarFase('terminado');
-      await pagina.waitForFunction(()=>[...document.querySelectorAll('.sobresPremio')].every(p=>p.querySelector('.cdCarta')?.classList.contains('cdLista')),null,{timeout:30000});
+      await pagina.waitForFunction(()=>[...document.querySelectorAll('.sobresPremio')].every(p=>{const c=p.querySelector('.cdCarta');return !c||c.classList.contains('cdLista');}),null,{timeout:30000});
       const fin=await pagina.evaluate(()=>({premios:document.querySelectorAll('.sobresPremio').length,visibles:[...document.querySelectorAll('.sobresPremio')].filter(p=>p.getBoundingClientRect().width>40).length,
         bonche:document.querySelector('.sobresCartas3D')?getComputedStyle(document.querySelector('.sobresCartas3D')).opacity:'0'}));
       assert.ok(fin.premios===5&&fin.visibles===5,caso+': el resumen muestra las cinco cartas pintadas');
