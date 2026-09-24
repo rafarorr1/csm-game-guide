@@ -1809,6 +1809,17 @@ PRUEBAS.suite('tituloVisorEstudio',async t=>{
     t.check(!!nombre,'El visor crea la carta solicitada.');
     t.igual(nombre.textContent,'Machete de prueba','El nombre que manda el Estudio sobrevive al refresco asíncrono del catálogo.');
     t.check(!nombre.hasAttribute('data-nombre-id'),'El visor retira el marcador público antes de que pueda sobrescribir su borrador.');
+    // Dorada en full art en todas las vistas: la ficha lleva la carta pintada y
+    // la Colección, la carta real de la Colección (no la del tablero).
+    const mandar=(vista,acabado)=>f.contentWindow.postMessage({tipo:'caoz:estudio-vista',id:'machete',acabado,url:'art/machete.webp',titulo:'Machete de prueba',encuadre:{x:50,y:50,z:100},vista},location.origin);
+    mandar('desktop_detalle','dorado');await sleep(60);
+    const ficha=f.contentDocument.querySelector('#muestraEstudio .big > .cjFicha');
+    t.check(!!ficha&&ficha.closest('.big').dataset.acabado==='dorado','La ficha ampliada del Estudio lleva la carta pintada de su edición.');
+    t.igual(ficha?.querySelector('.nm')?.textContent,'Machete de prueba','La ficha pinta el nombre en edición.');
+    mandar('desktop_coleccion','dorado');await sleep(60);
+    const col=f.contentDocument.querySelector('#muestraEstudio .cdCarta');
+    t.check(!!col&&col.classList.contains('cdFullArt')&&col.dataset.acabado==='dorado','La vista de Colección del Estudio usa la carta de la Colección, full art en Dorada.');
+    t.igual(col?.querySelector('.cdNombre')?.textContent,'Machete de prueba','La carta de Colección del Estudio muestra el nombre en edición.');
   }finally{
     clearTimeout(limite);removeEventListener('message',escuchar);f.remove();
     if(anterior===null)localStorage.removeItem(clave);else localStorage.setItem(clave,anterior);
@@ -2024,6 +2035,22 @@ PRUEBAS.suite('coleccion',async t=>{
         }
       };
       await new Promise(r=>w.requestAnimationFrame(r));revisarVersiones();
+      if(m.betaDisponible()){
+        const antesDemo=JSON.stringify(m.leer()),guardadoDemo=w.localStorage.getItem(m.clave),equipadaDemo=m.elegido('augusto'),controlDemo=()=>panel.querySelector('.coleccionDemoCambiar');
+        t.check(!!controlDemo(),pagina+': Beta ofrece el control temporal de estados en el detalle.');
+        controlDemo().click();await new Promise(r=>w.requestAnimationFrame(r));
+        t.igual(controlDemo().dataset.demoEdiciones,'bloqueadas',pagina+': la primera vista de prueba bloquea las tres ediciones.');
+        t.check([...panel.querySelectorAll('.coleccionVersion')].every(n=>n.classList.contains('bloqueada')),pagina+': la prueba bloqueada vela incluso la edición Normal.');
+        t.check([...panel.querySelectorAll('.coleccionUsar')].every(n=>n.disabled),pagina+': la vista bloqueada no deja equipar ni navegar.');
+        controlDemo().click();await new Promise(r=>w.requestAnimationFrame(r));
+        t.igual(controlDemo().dataset.demoEdiciones,'desbloqueadas',pagina+': la segunda vista de prueba desbloquea las tres ediciones.');
+        t.check([...panel.querySelectorAll('.coleccionVersion')].every(n=>!n.classList.contains('bloqueada')),pagina+': la prueba desbloqueada revela todas las ediciones.');
+        controlDemo().click();await new Promise(r=>w.requestAnimationFrame(r));
+        t.igual(controlDemo().dataset.demoEdiciones,'real',pagina+': la tercera pulsación recupera el inventario real.');
+        t.igual(JSON.stringify(m.leer()),antesDemo,pagina+': alternar la vista Beta no cambia el inventario.');
+        t.igual(w.localStorage.getItem(m.clave),guardadoDemo,pagina+': alternar la vista Beta no escribe en almacenamiento.');
+        t.igual(m.elegido('augusto'),equipadaDemo,pagina+': alternar la vista Beta no cambia la edición equipada.');
+      }
       t.check(panel.querySelector('[data-edicion="foil"]').classList.contains('bloqueada'),pagina+': Foil sigue cerrado aunque su vista pueda inspeccionarse.');
       t.check(panel.querySelector('[data-edicion="dorado"] .coleccionUsar').disabled,pagina+': Dorada indica que ya está en uso.');
       t.check(m.desbloquear('augusto','foil'),pagina+': un premio actualiza el diálogo abierto.');

@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### v39 · Build 277 · Estudio Dorado y estados de Colección en Beta · 2026-09-24
+
+- En el Estudio, toda carta Dorada se ve en full art: «Ficha ampliada» usa la
+  carta pintada de su edición y «Colección» la carta real con el nombre que se
+  está editando. Foil y Dorada ya no duplican el nombre sobre esa carta.
+- Beta incorpora una vista de prueba temporal dentro del detalle de Colección:
+  permite recorrer el estado real, todas las cartas bloqueadas y todas
+  desbloqueadas, sin alterar la colección, la carta equipada ni el progreso.
+
 ### v38 · Build 276 · Sobres pintados y apertura 3D · 2026-09-24
 
 - Los sobres incorporan portada ilustrada, foil, relieve, sellos metálicos y

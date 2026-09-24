@@ -15,7 +15,7 @@
     return titulo&&[...titulo].length<=70&&!/[\u0000-\u001f\u007f<>]/u.test(titulo)?titulo:defecto;
   }
   function mostrarTitulo(carta,titulo){
-    carta?.querySelectorAll?.('.nm,.lname').forEach(nodo=>{
+    carta?.querySelectorAll?.('.nm,.lname,.cdNombre').forEach(nodo=>{
       const sufijo=nodo.textContent.endsWith(' ★')?' ★':'';
       // cardEl/inspectHTML marcan el nombre para que el catálogo público lo
       // pueda refrescar. La carta ya entró al DOM antes de llegar aquí: su
@@ -64,7 +64,11 @@
     }else if(tipo==='memoria'&&window.PITAGORAS_PRUEBAS?.vistaMemoria){
       carta=PITAGORAS_PRUEBAS.vistaMemoria(d.id);escenario.className='pitPrueba';escenario.append(carta);
     }else{
-      carta=tipo==='campo'?unitEl(mkUnit(d.id,ME)):cardEl(d.id,{});
+      // La Colección real usa la carta pintada de carta-diseno.js (full art en
+      // Dorada), no la carta del tablero: se enseña la misma.
+      const diseno=tipo==='coleccion'&&window.CAOZ_CARTA_DISENO;
+      if(diseno){carta=diseno.crear(d.id,d.acabado);carta.dataset.acabado=d.acabado;carta.dataset.coleccionAcabado=d.acabado;carta.style.width='220px';if(d.url){carta.classList.add('conarte');ponerDibujo(carta,d.url,d.encuadre);}}
+      else carta=tipo==='campo'?unitEl(mkUnit(d.id,ME)):cardEl(d.id,{});
       const contexto=document.createElement('div');contexto.dataset.vistaArte=d.vista;
       if(tipo==='mano'){contexto.id='hand';contexto.style.cssText='position:relative;width:auto;height:auto;min-height:0;padding:10px;overflow:visible;display:flex;';}
       if(tipo==='campo'){contexto.className='row';contexto.style.cssText='width:auto;min-height:0;padding:10px';}
@@ -74,6 +78,9 @@
       escenario.append(contexto);
     }
     mostrarTitulo(carta,titulo);
+    // La ficha ampliada lleva la carta pintada, como en la partida; después
+    // del título, para que pinte el nombre en edición.
+    if(tipo==='detalle'&&!lid)window.CAOZ_CARTA_JUEGO?.vestirFicha(carta,d.id);
     escenario.querySelectorAll('[data-arte-id]').forEach(n=>{n.dataset.vistaArte=d.vista;CAOZ_ARTE.acabar(n,d.id);if(d.url){n.style.setProperty('--ex',d.encuadre.x+'%');n.style.setProperty('--ey',d.encuadre.y+'%');n.style.setProperty('--ez',d.encuadre.z/100);}});
     if(typeof encajarTextos==='function')encajarTextos(escenario);
     requestAnimationFrame(ajustar);escenario.querySelectorAll('img').forEach(img=>img.addEventListener('load',ajustar,{once:true}));

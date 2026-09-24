@@ -123,6 +123,9 @@
 #coleccionPanel .coleccionSobreCuenta{font-size:13px;color:#c5aa80}
 #coleccionPanel .coleccionAbrirSobre{width:min(280px,100%);min-height:46px;font-size:17px}
 #coleccionPanel .coleccionBeta{background:none;border:1px dashed #8c765780;box-shadow:none;min-height:31px;padding:5px 13px;font-family:var(--sans,system-ui);font-size:11px;color:#baaa8e}
+#coleccionPanel .coleccionDemoEdiciones{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;padding-top:4px;text-align:center}
+#coleccionPanel .coleccionDemoEdiciones .coleccionBeta{min-width:205px}
+#coleccionPanel .coleccionDemoNota{margin:0;color:#a9987f;font-size:10px;line-height:1.35}
 #coleccionPanel .coleccionSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #coleccionPanel .barridoModal{position:absolute;inset:0;z-index:50;pointer-events:none}
 #coleccionPanel .coleccionInterior.menuEntra{animation:entraPantalla .4s cubic-bezier(.2,.75,.3,1) both}
