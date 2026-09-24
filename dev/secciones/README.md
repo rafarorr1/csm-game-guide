@@ -18,6 +18,7 @@ Abrir:
 - Escritorio: <http://127.0.0.1:8878/dev/secciones/coleccion.html?estado=sobres>
 - Móvil: <http://127.0.0.1:8878/dev/secciones/coleccion.html?vista=movil&estado=sobres>
 - Interacciones de cartas: <http://127.0.0.1:8878/dev/secciones/interacciones.html>
+- Cartas de la partida: <http://127.0.0.1:8878/dev/secciones/cartas.html> (`?vista=movil` para el teléfono)
 - Epílogo de Gero: <http://127.0.0.1:8878/dev/secciones/epilogo-gero.html>
 - Pitágoras: <http://127.0.0.1:8878/dev/secciones/pitagoras.html>
 - Creador de héroe: <http://127.0.0.1:8878/dev/secciones/heroe.html>
@@ -62,6 +63,22 @@ progreso. Su comprobación concreta es:
 
 ```sh
 node dev/secciones/pruebas_interacciones_exportacion.mjs
+```
+
+## Cartas de la partida
+
+La revisión está en `/cartas/` (escritorio) y `/cartas/movil.html` (teléfono).
+Muestra la mano del rival con el dorso pintado, su mesa y la tuya, tu mano con
+los cinco tipos de carta, las tres ediciones y la ficha ampliada. Las cartas
+salen del renderer real de cada pantalla (`cardEl`, `ilustrar`) y la ficha de
+`inspectHTML` del motor; `carta-juego.js` les pone la cara del pintor sin cifras
+y deja coste, ATQ y VIDA vivos sobre sus gemas. La mesa se simula con cartas
+reales marcadas como unidad: sus cifras cambian como las reescribe el render
+(mejorada, herida, ya atacó, Foil) y «Simular un golpe» las cambia sin repintar.
+
+```bash
+node dev/secciones/pruebas_cartas.mjs
+python3 dev/secciones/publicar.py --publicar --seccion cartas --salida /tmp/caoz-cartas
 ```
 
 ## Mulligan inicial

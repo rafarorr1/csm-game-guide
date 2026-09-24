@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### v37 · Build 275 · Cartas pintadas durante la partida · 2026-09-24
+
+- La mano, la mesa, las cartas reveladas y la ficha ampliada usan el diseño de
+  la Colección: marco metálico, ilustración enmarcada, pergamino de reglas y
+  gemas, con el relieve iluminado. Foil y Dorada conservan su metal y reflejo.
+- El coste, ataque y vida siguen vivos sobre las gemas; una rebaja, mejora o
+  herida se lee sin repintar la carta. El dorso de la mano rival usa el logo
+  del visor. Las caras se reutilizan por carta, edición, arte y encuadre.
+
 ### v36 · Build 274 · Detalle de Colección a pantalla completa · 2026-09-24
 
 - El detalle 3D de una carta ocupa ahora toda la escena: elimina el marco que

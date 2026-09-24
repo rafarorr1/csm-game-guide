@@ -17,7 +17,7 @@ sw.js manifest.webmanifest tests.js estudio.html audio-domo.js sonidos.html
 sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js
 estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js nombres-cartas.js acabados.css
 coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-apertura.css _worker.js
-carta-pintor.js carta-diseno.js visor-3d-gl.js visor-3d.js carta-diseno.css visor-3d.css fuentes/cinzel.woff2 fuentes/cormorant-garamond.woff2 fuentes/cormorant-garamond-italica.woff2 fuentes/OFL-Cinzel.txt fuentes/OFL-CormorantGaramond.txt
+carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js carta-diseno.css carta-juego.css visor-3d.css fuentes/cinzel.woff2 fuentes/cormorant-garamond.woff2 fuentes/cormorant-garamond-italica.woff2 fuentes/OFL-Cinzel.txt fuentes/OFL-CormorantGaramond.txt
 _routes.json cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js audio/catalogo.json
 portal.html portal.css portal.js
 fisico/index.html fisico/fisico.css fisico/Caoz-PnP-Duelo-del-Pergamino.zip

@@ -5203,6 +5203,53 @@ PRUEBAS.correr = async function(filtro){
   return res;
 };
 
+/* ===========================================================================
+   SUITE: cartaPintada — las cartas de la partida llevan la cara de la
+   Colección (carta-juego.js). La carta del juego sigue entera por dentro; las
+   cifras vivas quedan centradas en sus gemas, cambian sin repintar la cara y un
+   refresco del tablero no la hace parpadear.
+   ======================================================================== */
+PRUEBAS.suite('cartaPintada',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const marco=document.createElement('iframe');marco.style.cssText='position:fixed;left:-10000px;'+(pagina==='index.html'?'width:1440px;height:900px':'width:390px;height:844px');
+    const carga=new Promise(r=>marco.onload=r);marco.src=pagina+'?test=carta-pintada-interna';document.body.appendChild(marco);await carga;
+    const w=marco.contentWindow,d=marco.contentDocument;
+    const lista=async(n,ms=15000)=>{const t0=performance.now();while(n.dataset.piel!=='lista'&&performance.now()-t0<ms)await new Promise(r=>w.requestAnimationFrame(r));return n.dataset.piel==='lista';};
+    try{
+      t.check(!!w.CAOZ_CARTA_JUEGO,pagina+': falta carta-juego.js.');
+      w.showEnd=()=>{};w.nap=async()=>{};w.netSend=()=>{};
+      w.newGame('fender','gero');w.aiTurn=async()=>{};
+      Object.assign(w.eval('NET'),{on:false,host:false,guest:false});
+      // Con G.silent el tablero no se pinta: aquí se quiere ver.
+      w.eval(`G.fast=true;G.auto=true;G.silent=false;G.active=0;G.phase='principal';
+        P(0).hand=['bolafuego','tal'];P(0).field=[mkUnit('tal',0)];P(1).field=[];recalc();`);
+      w.showScreen('board');w.render();
+      const unidad=()=>d.querySelector('#myField .card.unit');
+      const mano=d.querySelector('#hand .card[data-card="bolafuego"]');
+      t.check(!!mano&&!!unidad(),pagina+': faltan las cartas de la mesa.');
+      t.check(await lista(mano)&&await lista(unidad()),pagina+': la cara pintada no llega a ponerse.');
+      for(const carta of [mano,unidad()]){
+        const cara=carta.querySelector(':scope > .cjCara'),r=carta.getBoundingClientRect(),rc=cara.getBoundingClientRect();
+        t.check(cara.naturalWidth>0&&Math.abs(rc.width-r.width)<3&&Math.abs(rc.height-r.height)<3,pagina+': la cara no cubre la carta.');
+        t.check(!!carta.querySelector('.nm')&&w.getComputedStyle(carta.querySelector('.nm')).color==='rgba(0, 0, 0, 0)',pagina+': el nombre impreso debe seguir en la carta, transparente.');
+        // La mano va en abanico (girada): se mide sin transformaciones. La cifra
+        // se centra con translate(-50%,-50%), así que su esquina es su centro.
+        const coste=carta.querySelector('.cost'),cx=coste.offsetLeft/carta.clientWidth,cy=coste.offsetTop/carta.clientHeight;
+        t.check(coste.offsetParent===carta&&Math.abs(cx-.88)<.03&&Math.abs(cy-.08)<.03,pagina+': el coste no cae sobre su gema ('+cx.toFixed(2)+','+cy.toFixed(2)+').');
+        t.check(w.getComputedStyle(carta.querySelector('.cost')).color!=='rgba(0, 0, 0, 0)',pagina+': el coste debe verse.');
+      }
+      const u=w.eval('P(0).field[0]'),atq=u.atk,cara=unidad().querySelector('.cjCara').getAttribute('src');
+      u.dmg=2;u.atk=atq+3;w.render();
+      const hp=unidad().querySelector('.hp'),atk=unidad().querySelector('.atk');
+      t.igual(+atk.textContent,atq+3,pagina+': el ataque vivo no se actualizó.');
+      t.check(atk.classList.contains('cjSube')&&hp.classList.contains('cjBaja'),pagina+': una mejora o una herida no se distinguen.');
+      t.check(unidad().dataset.piel==='lista'&&unidad().querySelector('.cjCara').getAttribute('src')===cara,pagina+': refrescar el tablero repintó o apagó la cara.');
+      t.check(w.getComputedStyle(unidad().querySelector('.cjCara')).opacity==='1',pagina+': la cara parpadea tras el refresco.');
+    }finally{marco.remove();}
+  }
+});
+
+
 /* Arranque automático cuando se entra por ?test=... */
 if(new URLSearchParams(location.search).has('test')){
   window.addEventListener('load', ()=>setTimeout(()=>PRUEBAS.correr(), 300));
