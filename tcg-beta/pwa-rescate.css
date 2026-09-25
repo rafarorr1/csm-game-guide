@@ -1,0 +1,5 @@
+:root{color-scheme:dark;background:#0d0a13;color:#f3dfc2;font-family:Georgia,serif}
+body{min-height:100vh;margin:0;display:grid;place-items:center;background:radial-gradient(ellipse 52% 38% at 50% 46%,rgba(187,115,44,.18),transparent 68%),linear-gradient(180deg,#120d12,#09070b)}
+main{display:grid;justify-items:center;gap:22px;padding:30px;text-align:center}
+img{width:min(420px,74vw);height:auto;filter:drop-shadow(0 16px 42px rgba(0,0,0,.78))}
+p{margin:0;font-size:clamp(17px,2.6vw,22px);letter-spacing:.04em}

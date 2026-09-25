@@ -446,21 +446,26 @@ async function apiEstudio(req,env){
 // Si falta alguno, el dominio oficial permanece cerrado y explica qué falta;
 // nunca vuelve por accidente al juego abierto.
 const HOST_PORTAL='juego.caozcontodo.com',DURACION_PORTAL=28800000,INTENTOS_PORTAL=8,VENTANA_PORTAL=900000;
-// Pages normaliza portal.html a /portal. El Portal debe servir ambas rutas
-// públicas, pero la raíz carga la canónica para no propagar ese 308.
-const RECURSOS_PORTAL=new Set(['/portal','/portal.html','/portal.css','/portal.js','/art/icono-192.png']);
+// La portada y el formulario de Develop son públicos: la contraseña se envía
+// sólo al endpoint de sesión. Las herramientas que abre Develop quedan más
+// abajo, detrás de esa misma sesión. Pages normaliza portal.html a /portal,
+// así que el Worker siempre pide la ruta canónica para evitar ese 308.
+const RECURSOS_PORTAL=new Set(['/portal.css','/portal.js','/pwa-rescate.css','/pwa-rescate.js','/art/icono-192.png']);
 const preparacionesPortal=new WeakMap();
 function configuracionPortal(env){
   const hash=typeof env.PORTAL_PASSWORD_HASH==='string'?env.PORTAL_PASSWORD_HASH.trim().toLowerCase():'',clave=typeof env.PORTAL_SESSION_KEY==='string'?env.PORTAL_SESSION_KEY:'';
   return /^[a-f0-9]{64}$/.test(hash)&&clave.length>=32?{hash,clave}:null;
 }
+// La huella de la contraseña participa en la firma. Al cambiar la clave del
+// Portal, todas las sesiones emitidas con la anterior dejan de abrir rutas.
+function llaveSesionPortal(config){return config.clave+'|'+config.hash;}
 function portalActivo(url,env){return url.hostname.toLowerCase()===HOST_PORTAL;}
 function valorCookie(req,nombre){return (req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(nombre+'='))?.slice(nombre.length+1)||'';}
 async function portalAutenticado(req,env){
   const config=configuracionPortal(env),valor=valorCookie(req,COOKIE_PORTAL);if(!config)return false;
   const [vence,azar,firma]=valor.split('.');
   if(!/^\d{13}$/.test(vence||'')||!/^[a-f0-9]{32}$/.test(azar||'')||Number(vence)<Date.now()||Number(vence)>Date.now()+DURACION_PORTAL+1000)return false;
-  return igual(firma,await hmac(config.clave,vence+'.'+azar));
+  return igual(firma,await hmac(llaveSesionPortal(config),vence+'.'+azar));
 }
 async function prepararPortal(db){
   if(!preparacionesPortal.has(db))preparacionesPortal.set(db,db.prepare('CREATE TABLE IF NOT EXISTS portal_accesos (ip TEXT PRIMARY KEY, n INTEGER NOT NULL, vence INTEGER NOT NULL)').run().catch(e=>{preparacionesPortal.delete(db);throw e;}));
@@ -476,6 +481,14 @@ function peticionConRuta(req,ruta){const url=new URL(req.url);url.pathname=ruta;
 function redireccionPortal(url,ruta,conservarConsulta=false){
   const destino=new URL(ruta,url);if(conservarConsulta)destino.search=url.search;
   return new Response(null,{status:302,headers:{Location:destino.href,'Cache-Control':'no-store'}});
+}
+function recursoJuegoPublico(req,ruta){
+  // Las cuentas de jugadores tienen su propio control de sesión. El catálogo,
+  // arte y audio son lecturas que la mesa necesita aun antes de crear cuenta;
+  // nunca se abre por aquí un borrador ni una escritura del estudio.
+  if(ruta==='/api/cuenta'||ruta.startsWith('/api/cuenta/'))return true;
+  if(!['GET','HEAD'].includes(req.method))return false;
+  return /^\/api\/arte\/(?:catalogo|imagen\/[a-f0-9]{64})$/.test(ruta)||/^\/api\/sfx\/(?:catalogo|audio\/[a-f0-9]{64})$/.test(ruta);
 }
 async function recursoPortal(req,env,ruta,html=false){
   const {req:pedido}=peticionConRuta(req,ruta),respuesta=await env.ASSETS.fetch(pedido),segura=new Response(respuesta.body,respuesta);
@@ -508,14 +521,29 @@ async function apiPortal(req,env){
   if(!datos||Array.isArray(datos)||Object.keys(datos).length!==1||typeof datos.clave!=='string')return json({error:'La solicitud no es válida.'},400);
   const intentos=await intentoPortal(req,env,config.clave);if(intentos>INTENTOS_PORTAL)return json({error:'Demasiados intentos. Espera 15 minutos.'},429,{'Retry-After':'900'});
   if(!igual(await sha(datos.clave),config.hash))return json({error:'La clave no es correcta.'},401);
-  const ahora=Date.now(),texto=String(ahora+DURACION_PORTAL)+'.'+hex(crypto.getRandomValues(new Uint8Array(16))),sesion=texto+'.'+await hmac(config.clave,texto);
+  const ahora=Date.now(),texto=String(ahora+DURACION_PORTAL)+'.'+hex(crypto.getRandomValues(new Uint8Array(16))),sesion=texto+'.'+await hmac(llaveSesionPortal(config),texto);
   if(env.SFX_DB){const ip=await sha((req.headers.get('cf-connecting-ip')||'local')+config.clave);await env.SFX_DB.prepare('DELETE FROM portal_accesos WHERE ip=? OR vence<?').bind(ip,ahora).run();}
   return json({ok:true},200,{'Set-Cookie':cookiePortal(sesion,DURACION_PORTAL/1000)});
 }
+function destinoPuenteProduccion(valor,origen){
+  try{
+    const destino=new URL(typeof valor==='string'&&valor?valor:'/produccion/',origen);
+    if(destino.origin!==origen)return '/produccion/';
+    const ruta=destino.pathname==='/produccion'?'/produccion/':destino.pathname;
+    if(!['/produccion/','/produccion/index.html','/produccion/movil.html'].includes(ruta))return '/produccion/';
+    return ruta+destino.search+destino.hash;
+  }catch(_){return '/produccion/';}
+}
 function siguientePortal(url){
   let ruta='';
+  // Si el rescate llega con una sesión caducada, no debe olvidar que el
+  // jugador iba a Producción. El valor se vuelve a validar aquí, antes de
+  // escribirlo en el enlace de regreso al Portal.
+  if(url.pathname==='/abrir-produccion'||url.pathname==='/abrir-produccion/')return destinoPuenteProduccion(url.searchParams.get('siguiente'),url.origin);
   if(url.pathname==='/produccion')ruta='/produccion/';
   else if(url.pathname.startsWith('/produccion/'))ruta=url.pathname;
+  else if(/^\/(estudio|sonidos)(?:\.html)?\/?$/.test(url.pathname))ruta=url.pathname;
+  else if(url.pathname==='/fisico'||url.pathname.startsWith('/fisico/'))ruta=url.pathname==='/fisico'?'/fisico/':url.pathname;
   else if(url.pathname==='/index.html')ruta='/produccion/';
   else if(url.pathname==='/movil.html')ruta='/produccion/movil.html';
   else if(url.pathname==='/'&&url.searchParams.has('sala')&&!url.searchParams.has('siguiente'))ruta='/produccion/';
@@ -523,8 +551,8 @@ function siguientePortal(url){
 }
 function accesoPortalRequerido(req,url){
   if(url.pathname.startsWith('/api/')||!['GET','HEAD'].includes(req.method))return json({error:'Inicia sesión en el Portal del Domo.'},401);
-  const siguiente=siguientePortal(url);if(siguiente){const destino=new URL('/',url);destino.searchParams.set('siguiente',siguiente);return redireccionPortal(url,destino);}
-  return redireccionPortal(url,'/');
+  const destino=new URL('/develop',url),siguiente=siguientePortal(url);if(siguiente)destino.searchParams.set('siguiente',siguiente);
+  return redireccionPortal(url,destino);
 }
 async function puertaPortal(req,env,url){
   const ruta=url.pathname;
@@ -532,18 +560,36 @@ async function puertaPortal(req,env,url){
     try{return {respuesta:await apiPortal(req,env)};}catch(e){return {respuesta:json({error:e.status?e.message:'No se pudo abrir el portal. Intenta de nuevo.'},e.status||503)};}
   }
   if(ruta==='/sw.js')return {respuesta:retiroSwRaiz()};
-  // Las invitaciones antiguas llegaban a la raíz. Se conserva el código en
-  // una ruta interna, que la interfaz valida antes de abrir tras el acceso.
-  if(ruta==='/'&&url.searchParams.has('sala')&&!url.searchParams.has('siguiente'))return {respuesta:accesoPortalRequerido(req,url)};
-  if(ruta==='/'||ruta==='/portal'||ruta==='/portal.html')return {respuesta:await recursoPortal(req,env,'/portal',true)};
+  // Las invitaciones antiguas llegaban a la raíz. Ahora el juego es público,
+  // así que conservan su sala y entran por su alias estable sin pedir la clave
+  // administrativa. Un siguiente viejo, en cambio, sigue llevando a Develop.
+  if(ruta==='/'&&url.searchParams.has('sala')&&!url.searchParams.has('siguiente'))return {respuesta:redireccionPortal(url,'/juego',true)};
+  if(ruta==='/'&&url.searchParams.has('siguiente'))return {respuesta:redireccionPortal(url,'/develop',true)};
+  if(ruta==='/'||ruta==='/inicio'||ruta==='/inicio.html')return {respuesta:await recursoPortal(req,env,'/portal',true)};
+  if(ruta==='/develop/')return {respuesta:redireccionPortal(url,'/develop')};
+  if(ruta==='/develop')return {respuesta:await recursoPortal(req,env,'/portal',true)};
+  if(ruta==='/portal'||ruta==='/portal.html')return {respuesta:redireccionPortal(url,'/develop',true)};
   if(RECURSOS_PORTAL.has(ruta))return {respuesta:await recursoPortal(req,env,ruta,ruta==='/portal.html')};
-  if(!await portalAutenticado(req,env))return {respuesta:accesoPortalRequerido(req,url)};
+  // La reparación es pública porque sirve al jugador que llega desde una PWA
+  // antigua. Pages normaliza pwa-rescate.html a /pwa-rescate con un 308; se
+  // entrega la canónica desde el Worker para que no haya ese salto intermedio.
+  if(['/abrir-produccion','/abrir-produccion/','/pwa-rescate','/pwa-rescate.html'].includes(ruta))return {respuesta:await recursoPortal(req,env,'/pwa-rescate',true)};
+  if(ruta==='/juego'||ruta==='/juego/')return {respuesta:redireccionPortal(url,'/produccion/',true)};
   if(ruta==='/produccion')return {respuesta:redireccionPortal(url,'/produccion/',true)};
-  if(/^\/produccion\/(estudio|sonidos)(\.html)?\/?$/.test(ruta))return {respuesta:redireccionPortal(url,'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),true)};
+  const herramientaHereda=/^\/produccion\/(estudio|sonidos|fisico)(?:\.html)?(?:\/.*)?$/.exec(ruta);
+  if(herramientaHereda)return {respuesta:redireccionPortal(url,'/'+(herramientaHereda[1]==='fisico'?'fisico/':herramientaHereda[1]),true)};
   if(ruta==='/produccion/'||ruta==='/produccion/index.html')return {respuesta:await recursoProduccion(req,env,'/')};
-  if(ruta.startsWith('/produccion/'))return peticionConRuta(req,ruta.slice('/produccion'.length));
+  if(ruta.startsWith('/produccion/')){
+    const interna=ruta.slice('/produccion'.length);
+    // Los endpoints de desarrollo no pueden esconderse bajo el prefijo público
+    // del juego. Los recursos estáticos y APIs de lectura siguen libres.
+    if(interna.startsWith('/api/')&&!recursoJuegoPublico(req,interna)&&!await portalAutenticado(req,env))return {respuesta:json({error:'Inicia sesión en el Portal del Domo.'},401)};
+    return peticionConRuta(req,interna);
+  }
   if(ruta==='/index.html')return {respuesta:redireccionPortal(url,'/produccion/',true)};
   if(ruta==='/movil.html')return {respuesta:redireccionPortal(url,'/produccion/movil.html',true)};
+  if(recursoJuegoPublico(req,ruta))return {req,url};
+  if(!await portalAutenticado(req,env))return {respuesta:accesoPortalRequerido(req,url)};
   if(ruta==='/fisico')return {respuesta:redireccionPortal(url,'/fisico/',true)};
   if(ruta==='/fisico/')return peticionConRuta(req,'/fisico/index.html');
   return {req,url};
