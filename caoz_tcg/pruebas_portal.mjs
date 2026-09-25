@@ -19,7 +19,7 @@ function base(){
 }
 const sha=v=>createHash('sha256').update(v).digest('hex'),clave=randomBytes(24).toString('hex'),baseD1=base(),rutas=[];
 const archivos=new Map([
-  ['/portal','<main>Portal del Domo</main>'],['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/art/icono-192.png','icono'],
+  ['/portal','<main>Portal del Domo</main>'],['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/pwa-rescate.html','Rescate PWA'],['/pwa-rescate.css','body{}'],['/pwa-rescate.js','window.rescate=true'],['/art/icono-192.png','icono'],
   ['/','Producción'],['/index.html','Producción'],['/movil.html','Móvil'],['/sw.js','Juego PWA'],['/estudio','Estudio de Cartas'],['/sonidos','Estudio de Sonidos'],['/fisico/index.html','Juego Físico']
 ]);
 const env={
@@ -56,6 +56,42 @@ function interfazPortal({respuestas=[],search='',registros=[],cachesIniciales=[]
     return escucha({preventDefault(){}});
   }};
 }
+
+// La puerta de rescate se prueba sin un navegador real: conserva destinos
+// permitidos, limpia sólo las dos PWA históricas y el tiempo límite evita que
+// una API bloqueada deje la pantalla a medias para siempre.
+function ejecutarRescate({search='',registros=[],cachesIniciales=[],pendiente=false}={}){
+  const destinos=[],borrados=[],desregistros=[],relojes=[];
+  const location={origin:origen,search,replace:destino=>destinos.push(destino)};
+  runInNewContext(readFileSync(new URL('./pwa-rescate.js',import.meta.url),'utf8'),{
+    URL,URLSearchParams,location,console,
+    navigator:{serviceWorker:{getRegistrations:()=>pendiente?new Promise(()=>{}):Promise.resolve(registros)}},
+    caches:{keys:async()=>cachesIniciales,delete:async nombre=>(borrados.push(nombre),true)},
+    setTimeout:fn=>(relojes.push(fn),relojes.length),clearTimeout(){}
+  });
+  return {destinos,borrados,desregistros,relojes};
+}
+
+let rescate;
+const scopes=[origen+'/',origen+'/produccion/',origen+'/otra/'];
+rescate=ejecutarRescate({
+  search:'?siguiente='+encodeURIComponent('/produccion/movil.html?sala=AB12#mesa'),
+  registros:scopes.map(scope=>({scope,unregister:async()=>{rescate.desregistros.push(scope);return true;}})),
+  cachesIniciales:['caoz-cache-/-267','caoz-cache-/produccion/-287','caoz-arte-publico-/-v1','caoz-arte-publico-/produccion/-v1','otra-app']
+});
+await pausaPortal();await pausaPortal();
+assert.deepEqual(rescate.destinos,['/produccion/movil.html?sala=AB12#mesa'],'El rescate conserva una sala móvil válida.');
+assert.deepEqual(rescate.desregistros.sort(),scopes.slice(0,2).sort(),'El rescate sólo retira los scopes históricos del juego.');
+assert.deepEqual(rescate.borrados.sort(),['caoz-cache-/-267','caoz-cache-/produccion/-287','caoz-arte-publico-/-v1','caoz-arte-publico-/produccion/-v1'].sort(),'El rescate no borra cachés de otros productos.');
+for(const malo of ['https://evil.invalid/','/estudio','//evil.invalid']){
+  rescate=ejecutarRescate({search:'?siguiente='+encodeURIComponent(malo)});
+  await pausaPortal();await pausaPortal();
+  assert.deepEqual(rescate.destinos,['/produccion/'],'El rescate rechaza un destino ajeno o no jugable.');
+}
+rescate=ejecutarRescate({pendiente:true});await pausaPortal();
+assert.deepEqual(rescate.destinos,[],'El límite no se adelanta mientras la API PWA aún responde.');
+rescate.relojes[0]();rescate.relojes[0]();
+assert.deepEqual(rescate.destinos,['/produccion/'],'El límite abre Producción una vez si la API PWA queda pendiente.');
 
 let vista=interfazPortal({respuestas:[{ok:true,datos:{autenticado:false}}]});
 await pausaPortal();
@@ -107,7 +143,17 @@ vista=interfazPortal({
   respuestas:[{ok:true,datos:{autenticado:false}},{ok:true,datos:{ok:true}},{ok:true,datos:{autenticado:true}}]
 });
 await pausaPortal();vista.nodos.portalClave.value='clave-de-prueba';await vista.enviar();
-assert.deepEqual(vista.destinos,['/produccion/'],'Una cookie confirmada sí abre el destino solicitado.');
+assert.deepEqual(vista.destinos,['/abrir-produccion?siguiente=%2Fproduccion%2F'],'Una cookie confirmada entra por la puerta que puede limpiar una PWA antigua.');
+
+vista=interfazPortal({
+  search:'?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12',
+  respuestas:[{ok:true,datos:{autenticado:true}}]
+});
+await pausaPortal();
+assert.deepEqual(vista.destinos,['/abrir-produccion?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12'],'La puerta conserva la ruta móvil y su sala.');
+vista=interfazPortal({search:'?siguiente=%2Ffisico%2F',respuestas:[{ok:true,datos:{autenticado:true}}]});
+await pausaPortal();
+assert.deepEqual(vista.destinos,['/fisico/'],'El rescate no intercepta las otras puertas del Portal.');
 
 const pedir=(ruta,metodo='GET',cuerpo,headers={},entorno=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookie,...headers},body:cuerpo}),entorno);
 
@@ -118,6 +164,7 @@ respuesta=await pedir('/portal.html');assert.equal(respuesta.status,200);assert.
 assert.equal((await pedir('/portal.css')).status,200);
 assert.equal((await pedir('/produccion/')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
 assert.equal((await pedir('/index.html')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
+assert.equal((await pedir('/abrir-produccion?siguiente=%2Fproduccion%2F')).headers.get('location'),origen+'/','La puerta de rescate tampoco abre el juego sin sesión.');
 assert.equal((await pedir('/?sala=AB12')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F%3Fsala%3DAB12','Una invitación antigua llega al juego tras el portal.');
 assert.equal((await pedir('/api/arte/catalogo')).status,401,'Las API públicas tampoco saltan la puerta.');
 respuesta=await pedir('/api/portal/sesion');assert.equal(respuesta.status,200);assert.deepEqual(await respuesta.json(),{autenticado:false});
@@ -135,6 +182,12 @@ respuesta=await pedir('/produccion/');assert.equal(respuesta.status,200);assert.
 respuesta=await pedir('/produccion/index.html');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Producción');assert.equal(rutas.at(-1),'/','El índice explícito no se canoniza fuera de Producción.');
 respuesta=await pedir('/produccion/movil.html?escritorio=1');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Móvil');assert.equal(rutas.at(-1),'/movil.html?escritorio=1');
 respuesta=await pedir('/produccion/sw.js');assert.equal(await respuesta.text(),'Juego PWA');assert.equal(rutas.at(-1),'/sw.js','El SW del juego se mantiene bajo /produccion/.');
+respuesta=await pedir('/abrir-produccion?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12');
+assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA');
+assert.equal(rutas.at(-1),'/pwa-rescate.html?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12','La puerta sirve el puente nuevo sin perder el destino.');
+assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('content-security-policy'),/script-src 'self'/);
+respuesta=await pedir('/abrir-produccion/');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','Ambas grafías de la puerta reparan la PWA.');
+respuesta=await pedir('/pwa-rescate.js');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'window.rescate=true');assert.match(respuesta.headers.get('cache-control'),/no-store/);
 assert.equal((await pedir('/produccion?b=9')).headers.get('location'),origen+'/produccion/?b=9');
 assert.equal((await pedir('/index.html?b=9')).headers.get('location'),origen+'/produccion/?b=9');
 assert.equal((await pedir('/movil.html?b=9')).headers.get('location'),origen+'/produccion/movil.html?b=9');

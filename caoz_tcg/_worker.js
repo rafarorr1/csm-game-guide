@@ -448,7 +448,7 @@ async function apiEstudio(req,env){
 const HOST_PORTAL='juego.caozcontodo.com',DURACION_PORTAL=28800000,INTENTOS_PORTAL=8,VENTANA_PORTAL=900000;
 // Pages normaliza portal.html a /portal. El Portal debe servir ambas rutas
 // públicas, pero la raíz carga la canónica para no propagar ese 308.
-const RECURSOS_PORTAL=new Set(['/portal','/portal.html','/portal.css','/portal.js','/art/icono-192.png']);
+const RECURSOS_PORTAL=new Set(['/portal','/portal.html','/portal.css','/portal.js','/pwa-rescate.css','/pwa-rescate.js','/art/icono-192.png']);
 const preparacionesPortal=new WeakMap();
 function configuracionPortal(env){
   const hash=typeof env.PORTAL_PASSWORD_HASH==='string'?env.PORTAL_PASSWORD_HASH.trim().toLowerCase():'',clave=typeof env.PORTAL_SESSION_KEY==='string'?env.PORTAL_SESSION_KEY:'';
@@ -541,6 +541,10 @@ async function puertaPortal(req,env,url){
   if(ruta==='/'||ruta==='/portal'||ruta==='/portal.html')return {respuesta:await recursoPortal(req,env,'/portal',true)};
   if(RECURSOS_PORTAL.has(ruta))return {respuesta:await recursoPortal(req,env,ruta,ruta==='/portal.html')};
   if(!await portalAutenticado(req,env))return {respuesta:accesoPortalRequerido(req,url)};
+  // Esta ruta no estaba en la caché de la PWA raíz ni en la primera PWA bajo
+  // /produccion/. Su página externa limpia sólo esas dos instalaciones y luego
+  // vuelve a la mesa solicitada, incluso si el acceso llegó desde un marcador.
+  if(ruta==='/abrir-produccion'||ruta==='/abrir-produccion/')return {respuesta:await recursoPortal(req,env,'/pwa-rescate.html',true)};
   if(ruta==='/produccion')return {respuesta:redireccionPortal(url,'/produccion/',true)};
   if(/^\/produccion\/(estudio|sonidos)(\.html)?\/?$/.test(ruta))return {respuesta:redireccionPortal(url,'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),true)};
   if(ruta==='/produccion/'||ruta==='/produccion/index.html')return {respuesta:await recursoProduccion(req,env,'/')};

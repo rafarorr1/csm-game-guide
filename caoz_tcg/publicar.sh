@@ -178,6 +178,7 @@ node --check "$AQUI/sonidos.js" || exit 1
 node --check "$AQUI/estudio.js" || exit 1
 node --check "$AQUI/estudio-publicacion.js" || exit 1
 node --check "$AQUI/portal.js" || exit 1
+node --check "$AQUI/pwa-rescate.js" || exit 1
 node --check "$AQUI/arte-vistas.js" || exit 1
 node --check "$AQUI/estudio-vista.js" || exit 1
 node --check "$AQUI/arte-remoto.js" || exit 1
@@ -360,7 +361,7 @@ REVISION_PAGES_REMOTA="$(git -C "$PAGES" ls-remote --exit-code origin refs/heads
 # No modifica el worktree: cualquier versión inválida se rechaza antes de copiar.
 python3 "$AQUI/verificar_release.py" "$AQUI" "$PAGES/$DESTINO" || exit 1
 mkdir -p "$PAGES/$DESTINO/art" "$PAGES/$DESTINO/audio" "$PAGES/$DESTINO/fisico" "$PAGES/$DESTINO/fuentes"
-for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js nombres-cartas.js acabados.css mulligan-ui.js mulligan-ui.css invitaciones-compartidas.js coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js fx-aliento.js sobres-apertura.css carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js carta-diseno.css carta-juego.css tema-domo.css visor-3d.css fuentes/cinzel.woff2 fuentes/cormorant-garamond.woff2 fuentes/cormorant-garamond-italica.woff2 fuentes/OFL-Cinzel.txt fuentes/OFL-CormorantGaramond.txt cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js _worker.js _routes.json portal.html portal.css portal.js fisico/index.html fisico/fisico.css fisico/Caoz-PnP-Duelo-del-Pergamino.zip; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
+for f in audio-domo.js sonidos.html sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js nombres-cartas.js acabados.css mulligan-ui.js mulligan-ui.css invitaciones-compartidas.js coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js fx-aliento.js sobres-apertura.css carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js carta-diseno.css carta-juego.css tema-domo.css visor-3d.css fuentes/cinzel.woff2 fuentes/cormorant-garamond.woff2 fuentes/cormorant-garamond-italica.woff2 fuentes/OFL-Cinzel.txt fuentes/OFL-CormorantGaramond.txt cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js _worker.js _routes.json portal.html portal.css portal.js pwa-rescate.html pwa-rescate.css pwa-rescate.js fisico/index.html fisico/fisico.css fisico/Caoz-PnP-Duelo-del-Pergamino.zip; do cp "$AQUI/$f" "$PAGES/$DESTINO/$f" || exit 1; done
 cp "$AQUI"/audio/*.wav "$AQUI/audio/catalogo.json" "$PAGES/$DESTINO/audio/" || exit 1
 cp "$AQUI/index.html"   "$PAGES/$DESTINO/index.html"
 cp "$AQUI/motor.js"     "$PAGES/$DESTINO/motor.js"
@@ -422,7 +423,7 @@ git add "$DESTINO/fx-aliento.js"
 git add "$DESTINO/arte-vistas.js" "$DESTINO/estudio-vista.js" "$DESTINO/estudio.js" "$DESTINO/estudio.css" "$DESTINO/estudio-publicacion.js" "$DESTINO/estudio-publicacion.css" "$DESTINO/arte-remoto.js" "$DESTINO/nombres-cartas.js" "$DESTINO/acabados.css" "$DESTINO/coleccion.css" "$DESTINO/coleccion-modelo.js" "$DESTINO/coleccion-juego.js" "$DESTINO/coleccion-ui.js" "$DESTINO/sobres-escena.js" "$DESTINO/sobres-apertura.js" "$DESTINO/sobres-revelacion.js" "$DESTINO/sobres-apertura.css" "$DESTINO/carta-pintor.js" "$DESTINO/carta-diseno.js" "$DESTINO/carta-juego.js" "$DESTINO/visor-3d-gl.js" "$DESTINO/visor-3d.js" "$DESTINO/carta-diseno.css" "$DESTINO/carta-juego.css" "$DESTINO/tema-domo.css" "$DESTINO/visor-3d.css" "$DESTINO/fuentes"
 git add "$DESTINO/cuenta-modelo.js" "$DESTINO/cuenta-progreso.js" "$DESTINO/cuenta-servicio.js" "$DESTINO/cuenta-ui.js" "$DESTINO/cuenta-acceso.js" "$DESTINO/cuenta-juego.js" "$DESTINO/cuenta.css" "$DESTINO/cuenta-juego.css" "$DESTINO/cuenta-servidor.js" "$DESTINO/cuenta-correo.js"
 git add "$DESTINO/audio-domo.js" "$DESTINO/sonidos.html" "$DESTINO/sonidos.js" "$DESTINO/sonidos.css" "$DESTINO/_worker.js" "$DESTINO/_routes.json" "$DESTINO/audio"
-git add "$DESTINO/portal.html" "$DESTINO/portal.css" "$DESTINO/portal.js"
+git add "$DESTINO/portal.html" "$DESTINO/portal.css" "$DESTINO/portal.js" "$DESTINO/pwa-rescate.html" "$DESTINO/pwa-rescate.css" "$DESTINO/pwa-rescate.js"
 [ -d "$AQUI/fisico" ] && git add "$DESTINO/fisico"
 [ -d "$AQUI/art" ] && git add "$DESTINO/art" 
 
@@ -501,7 +502,7 @@ comprobar_portal_publico(){
   local marca="$1" f remoto esp srv cabeceras estado
   # La entrada es pública para que el formulario pueda abrirse, pero debe ser
   # exactamente el Portal, con CSP, y no una copia residual del juego antiguo.
-  for f in portal.html portal.css portal.js; do
+  for f in portal.html portal.css portal.js pwa-rescate.css pwa-rescate.js; do
     remoto="$f"
     # Cloudflare Pages responde con 308 a portal.html; /portal es el documento
     # canónico que la raíz del Worker debe servir sin una redirección circular.
@@ -527,6 +528,16 @@ comprobar_sesion_portal(){
   estado="$(curl_portal -H 'Accept: application/json' "$CF_URL/api/portal/sesion?cb=$marca")" || return 1
   [ "$estado" = '{"autenticado":true}' ]
 }
+comprobar_puente_produccion(){
+  local marca="$1" esp srv cabeceras
+  esp="$(shasum -a 256 "$AQUI/pwa-rescate.html" | cut -d" " -f1)"
+  srv="$(curl_portal "$CF_URL/abrir-produccion?siguiente=%2Fproduccion%2F%3Fsala%3DAB12&cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
+  [ "$srv" = "$esp" ] || return 1
+  cabeceras="$(curl_portal -D - -o /dev/null "$CF_URL/abrir-produccion?siguiente=%2Fproduccion%2F&cb=$marca")" || return 1
+  printf '%s\n' "$cabeceras" | grep -Eq '^HTTP/[0-9.]+ 200' || return 1
+  printf '%s\n' "$cabeceras" | grep -Eqi '^cache-control:.*no-store' || return 1
+  printf '%s\n' "$cabeceras" | grep -Eqi '^content-security-policy:.*script-src' || return 1
+}
 comprobar_cloudflare(){
   gris "  esperando a Cloudflare Pages ($CF_URL, también caoz-tcg.pages.dev)"
   for j in $(seq 1 12); do
@@ -536,6 +547,7 @@ comprobar_cloudflare(){
       if comprobar_portal_publico "$marca"; then
         crear_sesion_verificacion_portal || { ok=0; }
         [ "$ok" = "1" ] && comprobar_sesion_portal "$marca" || ok=0
+        [ "$ok" = "1" ] && comprobar_puente_produccion "$marca" || ok=0
       else
         ok=0
       fi
@@ -607,7 +619,7 @@ for i in $(seq 1 10); do
   SERVIDO_FINAL="$(curl -s "$URL_FINAL?cb=$(date +%s)" | shasum -a 256 | cut -d" " -f1)"
   if [ "$CODIGO" = "200" ] && [ "$SERVIDO" = "$ESPERADO" ] && [ "$CODIGO_MOTOR" = "200" ] && [ "$SERVIDO_MOTOR" = "$ESPERADO_MOTOR" ] && [ "$SERVIDO_MOVIL" = "$ESPERADO_MOVIL" ] && [ "$SERVIDO_FINAL" = "$ESPERADO_FINAL" ]; then
     verde "  GitHub Pages verificado byte a byte (index.html, motor.js, movil.html y final.js)"
-    for f in invitaciones-compartidas.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js mulligan-ui.js mulligan-ui.css arte-remoto.js arte-vistas.js nombres-cartas.js estudio.js estudio.html coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js fx-aliento.js sobres-apertura.css carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js carta-diseno.css carta-juego.css tema-domo.css visor-3d.css fuentes/cinzel.woff2 fuentes/cormorant-garamond.woff2 fuentes/cormorant-garamond-italica.woff2 cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js sw.js manifest.webmanifest portal.html portal.css portal.js fisico/index.html fisico/fisico.css fisico/Caoz-PnP-Duelo-del-Pergamino.zip art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
+    for f in invitaciones-compartidas.js final-core.js campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js mulligan-ui.js mulligan-ui.css arte-remoto.js arte-vistas.js nombres-cartas.js estudio.js estudio.html coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js fx-aliento.js sobres-apertura.css carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js carta-diseno.css carta-juego.css tema-domo.css visor-3d.css fuentes/cinzel.woff2 fuentes/cormorant-garamond.woff2 fuentes/cormorant-garamond-italica.woff2 cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js sw.js manifest.webmanifest portal.html portal.css portal.js pwa-rescate.html pwa-rescate.css pwa-rescate.js fisico/index.html fisico/fisico.css fisico/Caoz-PnP-Duelo-del-Pergamino.zip art/pitagoras-abismo-v216.webp art/esbirro-editor-v219.webp art/moneda-cara-v245.webp art/moneda-cruz-v245.webp; do
       curl -fsSL "https://rafarorr1.github.io/csm-game-guide/$DESTINO/$f?cb=$(date +%s)" -o "/tmp/caoz-verificar-$(basename "$f")" || exit 1
       cmp -s "$AQUI/$f" "/tmp/caoz-verificar-$(basename "$f")" || { rojo "$f no coincide con la versión local"; exit 1; }
     done

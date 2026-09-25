@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v49 · Build 288 · Rescate de instalaciones antiguas · 2026-09-25
+
+- La puerta de Producción abre primero una pantalla de actualización mínima,
+  fuera de las cachés históricas. Retira exclusivamente los workers y cachés
+  del juego que quedaron en la raíz o en una mesa antigua de `/produccion/`.
+- Después vuelve automáticamente a la mesa actual. Las cuentas, el progreso
+  local y la sesión del Portal no se modifican.
+- El rescate tiene un límite de tiempo: si un navegador restringe la API PWA,
+  sigue entrando al juego en vez de quedarse en una pantalla de carga.
+
 ### v48 · Build 287 · Beta promovida a Producción · 2026-09-25
 
 - Producción adopta el arranque de Beta: mientras el juego prepara sus recursos

@@ -329,6 +329,7 @@ class BetaCloudflare(unittest.TestCase):
         dependencias = {'estudio.html', 'sonidos.html', 'coleccion-modelo.js',
                          'coleccion-juego.js', 'coleccion-ui.js', 'coleccion.css', 'sobres-escena.js',
                          'sobres-apertura.js', 'sobres-apertura.css', 'portal.html', 'portal.css', 'portal.js',
+                         'pwa-rescate.html', 'pwa-rescate.css', 'pwa-rescate.js',
                          'fisico/index.html',
                          'fisico/fisico.css', 'fisico/Caoz-PnP-Duelo-del-Pergamino.zip'}
         for panel in ['estudio.html', 'sonidos.html']:
