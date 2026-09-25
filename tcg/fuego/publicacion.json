@@ -4,24 +4,27 @@
     "art/bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
     "art/eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b",
     "art/machete.webp": "ea3443061e49e5046b965d6389bf10d730a8ec8cc94420e16bf42fe021641eb6",
+    "art/petunia.webp": "c9912ce6d558bede0c134464171d2c7977b66e94945214f678323f76af15ecc4",
     "art/rey.webp": "a18041ee78195792a07bbc81d83b4dc6f7fcae6b2a4bf5949232f8e4c0e7b492",
     "art/tal.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
+    "art/tok_petunia.webp": "03511a3d6c026b74796c6b7a8bcd2da236bb3ef6ce93d82ae971f95daa1b7b60",
     "fuego.css": "249b0320c1193e842c4a6495e28c76a75b6efb6d495c8ace44e42d4cc6daa5d0",
-    "fuego.js": "96691fa7e09447efbe43f93570d26a9b12256ed3e3b6397676a813bff590e797",
-    "generado/datos.js": "c33cfc6e15e38e4335e410e6f711d5e41400e23d6da60c0503ccd26786184f63",
-    "index.html": "98f9fa43ae4dacefd955d6ead468686d20adf800d5716070a4598cf8ed5ff2c8",
+    "fuego.js": "89dcd8ed247dc136ca50947f9000f01fc45acdebd3521c8998512a8b3e5712bf",
+    "generado/datos.js": "fed85d8bab92ccd112692d34a7db28f8c857d806edec07c441fcbd78497ae986",
+    "index.html": "ef024885c0de04dcaf993134b9bba9578c115f37fef1a1d007da0deb57be2db1",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "juego/fx-aliento.js": "5704eed6dfeb7663786c0f8b575d2faaef5fdd459d159cbd87bfaab003676700",
-    "procedencia.json": "1022226d3ed0b2ceed2fc19fb8cdb3b29d5300900966b84d44e40b21efa5c339"
+    "juego/fx-ascension.js": "e890cdca886339527dd6bf9a9929f1552b79505625ee9d8555b58e2f8c52862e",
+    "procedencia.json": "22246027c0e65f8c58bfd343a381b334d4597d492b7d83faa8cc6a24d65366ab"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "e099909eb31e25c0969e4a92d782e84bc685db5b"
+    "sha": "b7eec924eb7a0074ef9706fcd1e53d24bf74ac12"
   },
   "seccion": "fuego",
   "version": 1
