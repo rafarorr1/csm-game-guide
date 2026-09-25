@@ -11,9 +11,10 @@ const mutantes={
   cierreConflicto:["if(s.guardado==='conflicto')throw Object.assign(Error('CONFLICTO'),{codigo:'CONFLICTO',...s.conflicto});",'void s;'],
   cierreCaducado:["if(s.guardado==='sesion')throw Object.assign(Error('SESION'),{codigo:'SESION'});",'void s;'],
   vinculoEscrito:["return !bloqueado&&!destruido&&s.acceso===true&&\n        identidad===s.sesion?.id&&progreso.vinculado()?.cuentaId===identidad&&servicio.identidad()?.id===identidad;", "return !bloqueado&&!destruido&&!!s.sesion&&s.pantalla==='perfil';"],
-  recuperacionPendiente:['return !destruido&&!bloqueado&&!iniciando&&!s.ocupado&&!s.sesion;','return !destruido&&!bloqueado&&!iniciando&&!s.ocupado;']
+  recuperacionPendiente:['return !destruido&&!bloqueado&&!iniciando&&!s.ocupado&&!s.sesion;','return !destruido&&!bloqueado&&!iniciando&&!s.ocupado;'],
+  finRecuperacion:['finally{iniciando=false;avisar();}','finally{iniciando=false;}']
 };
-function crear({nubeInicial=false}={}){
+function crear({nubeInicial=false,demora=0}={}){
   const contexto=vm.createContext({crypto:webcrypto,TextEncoder,AbortController,Headers,Response,URL,Event,EventTarget,CustomEvent,setTimeout,clearTimeout,setInterval,clearInterval});
   for(const f of fuentes){
     let texto=fs.readFileSync(new URL('../../caoz_tcg/'+f,import.meta.url),'utf8');
@@ -27,7 +28,7 @@ function crear({nubeInicial=false}={}){
   const memoria=contexto.CAOZ_CUENTA_DEMO.crearMemoria(),storage={
     getItem:k=>memoria.getItem(k),removeItem:k=>memoria.removeItem(k),setItem(k,v){if(fallar&&k.endsWith('.vinculo'))throw Error('Cuota');memoria.setItem(k,v);}
   };
-  const t=contexto.CAOZ_CUENTA_DEMO.crearTransporte({demora:0,reloj:()=>ahora,alCodigo:r=>codigo=r.codigo,
+  const t=contexto.CAOZ_CUENTA_DEMO.crearTransporte({demora,reloj:()=>ahora,alCodigo:r=>codigo=r.codigo,
     progresoNube:nubeInicial?contexto.CAOZ_CUENTA_PROGRESO.vacio('beta'):null});
   const eventos=new EventTarget();
   const p=contexto.CAOZ_CUENTA_PROGRESO.crear({storage,entorno:'beta',ruta:'/',eventos,intervalo:0});
@@ -43,6 +44,7 @@ function crear({nubeInicial=false}={}){
 }
 let total=0;
 async function prueba(nombre,fn,opciones){const c=crear(opciones);try{await c.a.iniciar();await fn(c);console.log('✓ '+nombre);total++;}finally{c.cerrar();}}
+async function pruebaSinInicio(nombre,fn,opciones){const c=crear(opciones);try{await fn(c);console.log('✓ '+nombre);total++;}finally{c.cerrar();}}
 await prueba('Verificar el correo no abre el juego si todavía no se permite escribir el vínculo',async c=>{
   c.permisoVinculo(false);await c.entrar();assert.equal(c.a.puedeJugar(),false);assert.equal(c.p.vinculado(),null);
   c.permisoVinculo(true);c.a.activarVinculo();assert.equal(c.a.puedeJugar(),true);assert.equal(c.p.vinculado().cuentaId,c.a.estado().sesion.id);
@@ -114,6 +116,12 @@ await prueba('Una recuperación pendiente no se reinicia al volver a la app',asy
   }
   soltar();
 },{nubeInicial:true});
+await pruebaSinInicio('El final de una recuperación automática vuelve a notificar su resultado',async c=>{
+  const estados=[];const soltar=c.a.suscribir(()=>estados.push({recuperando:c.a.recuperando(),sesion:!!c.a.estado().sesion}));
+  estados.length=0;const listo=c.a.iniciar();assert.equal(c.a.recuperando(),true);
+  await listo;assert.equal(c.a.recuperando(),false);assert.ok(estados.some(s=>s.recuperando),'La vista conoce que la consulta sigue en curso.');
+  assert.deepEqual(estados.at(-1),{recuperando:false,sesion:false},'La vista recibe el estado final para decidir si pide acceso.');soltar();
+},{demora:15});
 console.log(`${total} pruebas del coordinador de acceso aprobadas.`);
 if(process.argv.includes('--sabotaje')&&!process.env.CAOZ_SABOTAJE_ACCESO){
   for(const nombre of Object.keys(mutantes)){
