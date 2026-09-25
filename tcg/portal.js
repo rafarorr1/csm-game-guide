@@ -4,8 +4,9 @@
   const API=window.CAOZ_PORTAL_API||'/api/portal/sesion';
   const REINICIO_PWA='portal-pwa-limpia';
   const $=id=>document.getElementById(id);
-  const acceso=$('portalAcceso'),menu=$('portalMenu'),formulario=$('portalFormulario'),clave=$('portalClave'),enviar=$('portalEnviar'),estado=$('portalEstado'),salir=$('portalSalir'),estadoMenu=$('portalMenuEstado');
-  if(!acceso||!menu||!formulario||!clave||!enviar||!estado||!salir||!estadoMenu)return;
+  const inicio=$('portalInicio'),acceso=$('portalAcceso'),menu=$('portalMenu'),formulario=$('portalFormulario'),clave=$('portalClave'),enviar=$('portalEnviar'),estado=$('portalEstado'),salir=$('portalSalir'),estadoMenu=$('portalMenuEstado');
+  if(!inicio||!acceso||!menu||!formulario||!clave||!enviar||!estado||!salir||!estadoMenu)return;
+  const esInicio=location.pathname==='/'||location.pathname==='/inicio'||location.pathname==='/inicio.html';
 
   // Una invitación y los atajos antiguos seguían llegando a la raíz. Al pedir
   // acceso se conserva el destino, pero nunca se acepta una redirección ajena.
@@ -50,7 +51,8 @@
   }
 
   const texto=(n,error=false)=>{estado.textContent=n;estado.classList.toggle('portalError',!!error);};
-  const mostrarAcceso=(mensaje='',error=false)=>{menu.hidden=true;acceso.hidden=false;texto(mensaje,error);if(!mensaje)setTimeout(()=>clave.focus(),0);};
+  const mostrarInicio=()=>{acceso.hidden=true;menu.hidden=true;inicio.hidden=false;};
+  const mostrarAcceso=(mensaje='',error=false)=>{inicio.hidden=true;menu.hidden=true;acceso.hidden=false;texto(mensaje,error);if(!mensaje)setTimeout(()=>clave.focus(),0);};
   const cacheRaizLegada=nombre=>/^caoz-cache-\/-\d+$/.test(nombre)||/^caoz-arte-publico-\/-v\d+$/.test(nombre);
   async function retirarPwaRaiz(){
     if(!LIMPIA_PWA_RAIZ)return false;
@@ -87,7 +89,7 @@
   const mostrarMenu=async()=>{
     if(!await prepararPortal())return false;
     if(siguiente){location.replace(puertaProduccion(siguiente));return;}
-    acceso.hidden=true;menu.hidden=false;estadoMenu.textContent='Elige una puerta del Domo.';
+    inicio.hidden=true;acceso.hidden=true;menu.hidden=false;estadoMenu.textContent='Elige una herramienta de Develop.';
     return true;
   };
   async function respuesta(r){try{return await r.json();}catch(_){return {};}}
@@ -125,5 +127,5 @@
     if(!enlace||!window.CAOZ_PORTAL_PREVIEW)return;
     e.preventDefault();estadoMenu.textContent='En producción, esta puerta abrirá: '+enlace.dataset.destino+'.';
   });
-  (async()=>{if(await prepararPortal())await consultar();})();
+  (async()=>{if(!await prepararPortal())return;if(esInicio){mostrarInicio();return;}await consultar();})();
 })();
