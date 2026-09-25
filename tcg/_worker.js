@@ -515,8 +515,21 @@ async function apiPortal(req,env){
   if(env.SFX_DB){const ip=await sha((req.headers.get('cf-connecting-ip')||'local')+config.clave);await env.SFX_DB.prepare('DELETE FROM portal_accesos WHERE ip=? OR vence<?').bind(ip,ahora).run();}
   return json({ok:true},200,{'Set-Cookie':cookiePortal(sesion,DURACION_PORTAL/1000)});
 }
+function destinoPuenteProduccion(valor,origen){
+  try{
+    const destino=new URL(typeof valor==='string'&&valor?valor:'/produccion/',origen);
+    if(destino.origin!==origen)return '/produccion/';
+    const ruta=destino.pathname==='/produccion'?'/produccion/':destino.pathname;
+    if(!['/produccion/','/produccion/index.html','/produccion/movil.html'].includes(ruta))return '/produccion/';
+    return ruta+destino.search+destino.hash;
+  }catch(_){return '/produccion/';}
+}
 function siguientePortal(url){
   let ruta='';
+  // Si el rescate llega con una sesión caducada, no debe olvidar que el
+  // jugador iba a Producción. El valor se vuelve a validar aquí, antes de
+  // escribirlo en el enlace de regreso al Portal.
+  if(url.pathname==='/abrir-produccion'||url.pathname==='/abrir-produccion/')return destinoPuenteProduccion(url.searchParams.get('siguiente'),url.origin);
   if(url.pathname==='/produccion')ruta='/produccion/';
   else if(url.pathname.startsWith('/produccion/'))ruta=url.pathname;
   else if(url.pathname==='/index.html')ruta='/produccion/';
