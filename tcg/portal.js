@@ -39,6 +39,15 @@
     parametros.delete('siguiente');const resto=parametros.toString();
     return resto?'/produccion/?'+resto+location.hash:'';
   })();
+  // Esta puerta no pertenecía a las PWA antiguas. Antes de entrar a la mesa,
+  // puede retirar su worker y caché viejos sin tocar cuentas ni progreso.
+  function puertaProduccion(destino){
+    try{
+      const u=new URL(destino,location.origin),rutas=['/produccion/','/produccion/index.html','/produccion/movil.html'];
+      if(u.origin===location.origin&&rutas.includes(u.pathname))return '/abrir-produccion?siguiente='+encodeURIComponent(u.pathname+u.search+u.hash);
+    }catch(_){}
+    return destino;
+  }
 
   const texto=(n,error=false)=>{estado.textContent=n;estado.classList.toggle('portalError',!!error);};
   const mostrarAcceso=(mensaje='',error=false)=>{menu.hidden=true;acceso.hidden=false;texto(mensaje,error);if(!mensaje)setTimeout(()=>clave.focus(),0);};
@@ -77,7 +86,7 @@
   }
   const mostrarMenu=async()=>{
     if(!await prepararPortal())return false;
-    if(siguiente){location.replace(siguiente);return;}
+    if(siguiente){location.replace(puertaProduccion(siguiente));return;}
     acceso.hidden=true;menu.hidden=false;estadoMenu.textContent='Elige una puerta del Domo.';
     return true;
   };
