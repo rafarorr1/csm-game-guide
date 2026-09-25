@@ -138,6 +138,51 @@ await prueba('La guardia pública existe antes del DOM sin iniciar el servicio n
  const listeners=[];const c=vm.createContext({URLSearchParams,location:{search:''},document:{readyState:'loading',addEventListener:(...v)=>listeners.push(v)}});c.window=c;
  vm.runInContext(fuentes['cuenta-juego.js'],c);assert(c.CAOZ_CUENTA_JUEGO);assert.equal(c.CAOZ_CUENTA_JUEGO.puedeJugar(),false);assert.equal(c.CAOZ_CUENTA_JUEGO.requerir(()=>assert.fail('No debe continuar')),false);assert.equal(c.CAOZ_CUENTA_JUEGO.cerrar(),false);assert.equal(listeners[0][0],'DOMContentLoaded');
 });
+async function inicioCuenta(resultado){
+ const carga=[],eventos=[],boton={dataset:{},addEventListener(){}},menu={append(){}},estado={sesion:null,guardado:'sesion',ocupado:false};
+ let resolver,autorizado=false,montajes=0,modales=0;
+ const documento={readyState:'loading',addEventListener(tipo,fn){if(tipo==='DOMContentLoaded')carga.push(fn);},getElementById:id=>id==='mCuenta'?boton:null,
+  querySelector:selector=>selector==='#menu .menucol'?menu:null,body:{append(){}},createElement(){return {setAttribute(){},append(){},appendChild(){},addEventListener(){},showModal(){modales++;this.open=true;},close(){this.open=false;},remove(){}};}};
+ const acceso={modelo:{actualizarLocal(){},ver:()=>estado},suscribir(fn){fn(estado);return()=>{};},necesitaRestaurar:()=>true,
+  iniciar:()=>new Promise(resolve=>{resolver=()=>{autorizado=resultado;estado.sesion=resultado?{id:'ari',nombre:'Ari'}:null;resolve(resultado);};}),
+  puedeJugar:()=>autorizado,activarVinculo(){},guardar:async()=>true,estado:()=>estado};
+ const c=vm.createContext({URLSearchParams,location:{search:''},document:documento,queueMicrotask:fn=>Promise.resolve().then(fn),setTimeout,clearTimeout,
+  CustomEvent:class{constructor(tipo,opciones){this.type=tipo;this.detail=opciones?.detail;}},addEventListener(){},dispatchEvent:e=>eventos.push(e),
+  CAOZ_CUENTA_PROGRESO:{crear:()=>({instalarGuardia(){},capturar:()=>null,resumir:()=>null,vinculado:()=>null})},CAOZ_CUENTA_SERVICIO:{crear:()=>({})},CAOZ_CUENTA_ACCESO:{crear:()=>acceso},
+  CAOZ_CUENTA_UI:{montar(){montajes++;return{destruir(){}};}}});c.window=c;
+ vm.runInContext(fuentes['cuenta-juego.js'],c);carga.shift()();
+ for(let i=0;i<3&&!resolver;i++)await Promise.resolve();assert.equal(typeof resolver,'function','La recuperación automática empieza sin esperar al formulario.');
+ assert.equal(montajes,0,'Una sesión que todavía se está comprobando no monta el popup de correo.');assert.equal(modales,0);
+ resolver();for(let i=0;i<3;i++)await Promise.resolve();
+ assert.equal(montajes,resultado?0:1,resultado?'Una sesión válida no destella el popup antes de abrir el menú.':'Sin sesión, el popup sí aparece después de confirmar que hace falta.');
+ assert.equal(modales,resultado?0:1);assert.equal(eventos.length,resultado?1:0);
+}
+await prueba('La restauración de una cuenta válida no destella el popup de login',()=>inicioCuenta(true));
+await prueba('Sin sesión, el popup aparece sólo después de la comprobación inicial',()=>inicioCuenta(false));
+async function recuperacionExterna(resultado){
+ const carga=[],boton={dataset:{},addEventListener(){}},menu={append(){}},estado={sesion:null,guardado:'sesion',ocupado:false};
+ let autorizado=false,recuperando=true,actualizarEstado,montajes=0,modales=0;
+ const documento={readyState:'loading',addEventListener(tipo,fn){if(tipo==='DOMContentLoaded')carga.push(fn);},getElementById:id=>id==='mCuenta'?boton:null,
+  querySelector:selector=>selector==='#menu .menucol'?menu:null,body:{append(){}},createElement(){return {setAttribute(){},append(){},appendChild(){},addEventListener(){},showModal(){modales++;this.open=true;},close(){this.open=false;},remove(){}};}};
+ const acceso={modelo:{actualizarLocal(){},ver:()=>estado},suscribir(fn){actualizarEstado=fn;fn(estado);return()=>{};},necesitaRestaurar:()=>!recuperando,
+  recuperando:()=>recuperando,iniciar:()=>assert.fail('No duplica una recuperación iniciada por el navegador.'),puedeJugar:()=>autorizado,activarVinculo(){},guardar:async()=>true,estado:()=>estado};
+ const c=vm.createContext({URLSearchParams,location:{search:''},document:documento,queueMicrotask:fn=>Promise.resolve().then(fn),setTimeout,clearTimeout,
+  CustomEvent:class{constructor(tipo,opciones){this.type=tipo;this.detail=opciones?.detail;}},addEventListener(){},dispatchEvent(){},
+  CAOZ_CUENTA_PROGRESO:{crear:()=>({instalarGuardia(){},capturar:()=>null,resumir:()=>null,vinculado:()=>null})},CAOZ_CUENTA_SERVICIO:{crear:()=>({})},CAOZ_CUENTA_ACCESO:{crear:()=>acceso},
+  CAOZ_CUENTA_UI:{montar(){montajes++;return{destruir(){}};}}});c.window=c;
+ vm.runInContext(fuentes['cuenta-juego.js'],c);carga.shift()();
+ for(let i=0;i<3;i++)await Promise.resolve();
+ // cuenta-acceso emite este estado antes de que termine la consulta lanzada
+ // por online, focus o pageshow; no debe montar un popup transitorio.
+ actualizarEstado(estado);assert.equal(montajes,0);assert.equal(modales,0);
+ recuperando=false;
+ if(resultado){autorizado=true;estado.sesion={id:'ari',nombre:'Ari'};}
+ actualizarEstado(estado);
+ assert.equal(montajes,resultado?0:1,resultado?'Una sesión externa válida no destella el popup.':'Una recuperación externa sin sesión sí solicita el acceso al terminar.');
+ assert.equal(modales,resultado?0:1);
+}
+await prueba('La recuperación externa de una sesión válida no destella el popup',()=>recuperacionExterna(true));
+await prueba('Una recuperación externa sin sesión abre el popup sólo al terminar',()=>recuperacionExterna(false));
 await prueba('La continuación pendiente sólo sale una vez y se cancela si se revoca el acceso',async()=>{
  for(const revocar of [false,true]){
   const tareas=[];let ejecuciones=0,segunda=0;

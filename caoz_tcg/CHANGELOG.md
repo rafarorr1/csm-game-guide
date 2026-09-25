@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### v47 · Build 286 · Entrada sin destello · 2026-09-25
+
+- Al abrir Producción, el juego recupera primero una cuenta ya vinculada. El
+  diálogo de correo sólo aparece si no hay sesión, la sesión caducó o el
+  jugador tiene que resolver su progreso.
+- La restauración inicial, la reconexión, el foco y el regreso a la pestaña ya
+  no pueden abrir y cerrar el mismo diálogo en un cuadro; las acciones de juego
+  siguen esperando una cuenta válida.
+- Las regresiones cubren una sesión válida que tarda en responder, una
+  recuperación externa válida sin popup y una sesión ausente que sí abre el
+  acceso después de comprobarla.
+
 ### v46 · Build 285 · Portal sin ciclos de PWA · 2026-09-24
 
 - El Portal retira de forma segura sólo la PWA y las cachés que pertenecían a

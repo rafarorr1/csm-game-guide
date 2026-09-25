@@ -75,7 +75,7 @@
     async function iniciar({automatico=false}={}){
       if(iniciando||destruido||bloqueado||(automatico&&!necesitaRestaurar()))return false;iniciando=true;
       try{modelo.actualizarLocal(progreso.capturar());await modelo.restaurar();recibir(modelo.ver());return puedeJugar();}
-      finally{iniciando=false;}
+      finally{iniciando=false;avisar();}
     }
     const volver=()=>{if(necesitaRestaurar())void iniciar({automatico:true});};
     const sinRed=()=>{
@@ -86,7 +86,7 @@
     };
     for(const e of ['online','focus','pageshow'])eventos.addEventListener?.(e,volver);
     eventos.addEventListener?.('offline',sinRed);
-    return Object.freeze({modelo,estado,puedeJugar,necesitaRestaurar,iniciar,guardar,
+    return Object.freeze({modelo,estado,puedeJugar,necesitaRestaurar,recuperando:()=>iniciando,iniciar,guardar,
       activarVinculo(){recibir(modelo.ver());},
       bloquear(){bloqueado=true;detener();avisar();},
       suscribir(fn){if(typeof fn!=='function'||destruido)return()=>{};oyentes.add(fn);fn(estado());return()=>oyentes.delete(fn);},

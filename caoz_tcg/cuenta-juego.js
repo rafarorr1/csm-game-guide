@@ -37,7 +37,7 @@
     if(!permitido())notificada='';else notificar();
     // Una sesión que caduca durante un duelo no interrumpe su resolución.
     // Se conserva el progreso local y se exige acceso antes de otro combate.
-    if(!restaurando&&!s.ocupado&&!permitido()&&menuSeguro()&&!montando)abrir();
+    if(!restaurando&&!acceso?.recuperando?.()&&!s.ocupado&&!permitido()&&menuSeguro()&&!montando)abrir();
   }
   function cerrar(){
     if(!dialogo?.open||acceso.modelo.ver().ocupado||!permitido())return false;
@@ -60,8 +60,20 @@
     }finally{montando=false;}
   }
   async function restaurar(){
-    if(restaurando||!acceso?.necesitaRestaurar?.()||pruebas()||bloqueado)return false;restaurando=true;
+    if(restaurando||pruebas()||bloqueado)return false;
+    // Al arrancar puede existir una cuenta válida. Primero se consulta su
+    // sesión y sólo se pinta el diálogo si esa recuperación no permite jugar:
+    // así el formulario de correo no destella antes de cerrar solo.
+    if(!acceso?.necesitaRestaurar?.()){
+      // Otro listener (online, focus o pageshow) puede haber iniciado ya la
+      // misma recuperación. Se espera su resultado, en vez de mostrar un
+      // diálogo que se cerraría enseguida si la sesión resulta válida.
+      if(!permitido()&&!acceso?.recuperando?.())abrir();
+      return false;
+    }
+    restaurando=true;
     try{const ok=await acceso.iniciar({automatico:true});if(ok){cerrar();notificar();}else abrir();return ok;}
+    catch(_){abrir();return false;}
     finally{restaurando=false;}
   }
   function bloquearOtraPestana(){
@@ -88,10 +100,10 @@
     document.querySelector('#menu .menucol')?.append(marca);
     iniciado=true;restaurando=true;acceso.suscribir(actualizar);restaurando=false;
     boton.addEventListener('click',()=>{abrir();if(!permitido())void restaurar();});
-    global.addEventListener('caoz:pantalla',e=>{if(['menu','extras'].includes(e.detail?.id)){if(permitido())void acceso.guardar();else abrir();}});
+    global.addEventListener('caoz:pantalla',e=>{if(['menu','extras'].includes(e.detail?.id)){if(permitido())void acceso.guardar();else if(!restaurando)void restaurar();}});
     global.addEventListener('online',()=>{if(!permitido()&&menuSeguro())void restaurar();});
     global.addEventListener('caoz:cuenta-importada',refrescarJuego);
-    abrir();void restaurar();
+    void restaurar();
   }
   // Disponible de forma síncrona: también protege enlaces de invitación y
   // arranques que ocurren antes de DOMContentLoaded o de comprobar la cookie.
