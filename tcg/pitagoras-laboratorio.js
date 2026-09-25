@@ -2,6 +2,24 @@
 'use strict';
 (function(){
   let actual=null;
+  function instalarAccesoBatallaBeta(){
+    if(typeof campanaPruebaDisponible!=='function'||!campanaPruebaDisponible())return null;
+    const menu=document.querySelector('#menu .menucol');if(!menu)return null;
+    const existente=menu.querySelector('#mPitagorasBeta');if(existente)return existente;
+    const boton=document.createElement('button');boton.type='button';boton.id='mPitagorasBeta';boton.className='btn betaPitagoras';
+    boton.textContent='⚔ Batalla contra Pitágoras · Beta';
+    boton.setAttribute('aria-label','Abrir batalla de prueba contra Pitágoras');
+    boton.title='Ensayo de Beta: tu campaña, logros y recompensas se conservan.';
+    boton.onclick=async()=>{
+      if(boton.disabled)return;boton.disabled=true;
+      try{await window.campanaEnsayarPitagoras?.();}
+      catch(_){window.toast?.('No se pudo abrir la batalla. Inténtalo de nuevo.');}
+      finally{if(boton.isConnected)boton.disabled=false;}
+    };
+    menu.insertBefore(boton,menu.querySelector('#mPlay')||null);
+    return boton;
+  }
+  window.campanaInstalarAccesoPitagorasBeta=instalarAccesoBatallaBeta;
   window.abrirLaboratorioEditor=function(){
     if(!campanaPruebaDisponible()||actual||(typeof NET!=='undefined'&&NET.on)||(typeof G!=='undefined'&&(G?.online||G?.guest))||window.PITAGORAS_PRUEBAS?.activa)return;
     const d=document.createElement('dialog');d.className='editorLaboratorio';d.setAttribute('aria-labelledby','laboratorioTitulo');
@@ -34,7 +52,8 @@
   .editorLaboratorio[open]{display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:18px}.editorLaboratorio::backdrop{background:#02050ced;backdrop-filter:blur(8px)}.elCab{text-align:center}.elCab small{font-size:9px;letter-spacing:3px;color:#bea879}.elCab h1{font:small-caps 700 clamp(24px,4vw,42px)/1.1 Georgia;margin:10px 0;color:#f2deae}.elCab p{font-size:12px;margin:0;color:#8f9fae}.elMundos{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:14px;min-height:0}.elMundo{position:relative;appearance:none;border:1px solid #66685d;border-radius:8px;min-width:0;min-height:0;padding:0;overflow:hidden;background:#0b101a;color:#e7d4af;cursor:pointer;text-align:left;transition:scale .2s,border-color .2s,box-shadow .2s}.elMundo:hover,.elMundo:focus-visible{scale:1.025;outline:none;border-color:#d8bd82;box-shadow:0 0 28px #c6a36822}.elArte{width:100%;height:100%;object-fit:cover;position:absolute;inset:0;opacity:.85}.elTexto{position:absolute;inset:auto 0 0;padding:22px 14px 14px;background:linear-gradient(transparent,#050b14 45%)}.elTexto small{font-size:8px;letter-spacing:1.3px;color:#96c2cf}.elTexto strong{display:block;font:small-caps 700 clamp(17px,2vw,24px) Georgia;margin:5px 0}.elTexto span{font-size:10px;color:#b1a99e}.elMundo[data-probado]:after{content:'✦';position:absolute;right:10px;top:8px;color:#e4c588}.elPie{display:flex;align-items:center;justify-content:space-between;gap:14px;font-size:11px;color:#8796a6}.elSalir{appearance:none;min-height:44px;padding:9px 18px;border:1px solid #776b55;border-radius:5px;background:#111b29;color:#e0d0b2;font:600 12px system-ui;cursor:pointer}.elSalir:focus-visible{outline:2px solid #dcc693}.elAcciones{display:flex;gap:8px}.elBatalla{background:#29222e;border-color:#ab8c62;color:#f2d0a1}.elPie>span{min-width:0}@media(max-width:640px){.elPie>span{display:none}.elAcciones{width:100%}.elAcciones .elSalir{flex:1;padding:8px;font-size:11px}}
   @media(max-width:640px){.editorLaboratorio[open]{gap:12px}.elMundos{grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));gap:10px}.elTexto{padding:16px 9px 9px}.elTexto span{display:none}.elTexto small{font-size:7px;letter-spacing:.7px}.elTexto strong{font-size:18px}.elCab h1{margin:6px 0}.elCab small{letter-spacing:1.7px}.elPie{font-size:9px}}
   @media(max-height:480px){.editorLaboratorio[open]{gap:8px;padding:12px!important}.elCab p{display:none}.elCab h1{font-size:25px;margin:3px 0}.elMundos{grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:8px}.elTexto{padding:8px}.elTexto span{display:none}.elTexto strong{font-size:16px;margin:3px 0}.elPie{font-size:9px}.elSalir{min-height:44px}}
+  #menu .menucol #mPitagorasBeta{min-height:48px;padding:11px 16px;border-color:#879b7788;background:linear-gradient(115deg,#15211de8,#26332ae8,#151e1be8);box-shadow:inset 0 1px 0 #e4f1c21a,0 3px 0 #070908,0 7px 16px #0006;color:#e4ebd9;font:700 15px/1.2 var(--serif,Georgia,serif);letter-spacing:.6px;text-shadow:0 1px #0008}.betaPitagoras:hover:not(:disabled),.betaPitagoras:focus-visible{outline:none;border-color:#c7d69a;background:linear-gradient(115deg,#233224,#3b4d38,#1a281f);box-shadow:inset 0 1px 0 #efffd633,0 3px 0 #070908,0 0 22px #97b57b26}.betaPitagoras:disabled{opacity:.58;cursor:wait}@media(max-width:640px){#menu .menucol #mPitagorasBeta{min-height:46px;font-size:14px;padding:10px 12px}}
   @media(prefers-reduced-motion:reduce){.elMundo{transition:none}}
   `;document.head.appendChild(css);
-  addEventListener('load',()=>{const modo=new URLSearchParams(location.search).get('editor');if(modo==='1')abrirLaboratorioEditor();else if(modo==='batalla')window.campanaEnsayarPitagoras?.();},{once:true});
+  addEventListener('load',()=>{instalarAccesoBatallaBeta();const modo=new URLSearchParams(location.search).get('editor');if(modo==='1')abrirLaboratorioEditor();else if(modo==='batalla')window.campanaEnsayarPitagoras?.();},{once:true});
 })();

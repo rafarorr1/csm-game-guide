@@ -121,6 +121,10 @@
   }
   window.campanaEnsayarPitagoras=async function(){
     if(!campanaPruebaDisponible()||NET.on||G?.online||G?.guest||campanaLanzando||PITAGORAS_PRUEBAS?.activa)return false;
+    // El acceso directo de Beta también debe volver aquí después de crear o
+    // recuperar una cuenta. Pedirla antes de fabricar el ensayo evita dejar
+    // una campaña temporal en memoria y luego mandar al jugador al mapa.
+    if(!window.CAOZ_CUENTA_JUEGO?.requerir(()=>window.campanaEnsayarPitagoras?.()))return false;
     const anterior=campanaLeer(),ensayoAnterior=campanaEnsayoGero;
     const lider=anterior?.lider||'fender',personaje=campanaNormalizarPersonaje(anterior?.personaje||{nombre:'Viajero'});
     // El ensayo usa el mismo recorrido que la campaña y guarda únicamente en

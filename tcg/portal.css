@@ -38,9 +38,10 @@ button{cursor:pointer}
 .portalDomo::after{background:radial-gradient(ellipse 76% 67% at 50% 44%,transparent 40%,rgba(3,2,7,.58) 100%)}
 
 .portalMarco{width:min(1040px,calc(100% - 36px));position:relative;z-index:1;padding:42px 0}
-.portalAcceso,.portalMenu{border:1px solid var(--portal-line);border-radius:24px;background:linear-gradient(145deg,rgba(37,26,52,.96),rgba(18,13,29,.96));box-shadow:0 28px 80px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.09);position:relative;overflow:hidden}
-.portalAcceso::before,.portalMenu::before{content:"";position:absolute;inset:9px;border:1px solid rgba(230,187,82,.16);border-radius:18px;pointer-events:none}
+.portalInicio,.portalAcceso,.portalMenu{border:1px solid var(--portal-line);border-radius:24px;background:linear-gradient(145deg,rgba(37,26,52,.96),rgba(18,13,29,.96));box-shadow:0 28px 80px rgba(0,0,0,.48),inset 0 1px rgba(255,255,255,.09);position:relative;overflow:hidden}
+.portalInicio::before,.portalAcceso::before,.portalMenu::before{content:"";position:absolute;inset:9px;border:1px solid rgba(230,187,82,.16);border-radius:18px;pointer-events:none}
 
+.portalInicio{max-width:800px;margin:auto;padding:54px clamp(26px,7vw,66px) 42px;text-align:center}
 .portalAcceso{max-width:520px;margin:auto;padding:54px clamp(26px,7vw,66px) 42px;text-align:center}
 .portalSobrelinea{margin:0;color:var(--portal-gold);font-size:.7rem;font-weight:700;letter-spacing:.33em}
 .portalSello{width:92px;height:92px;border:1px solid var(--portal-gold);border-radius:50%;display:grid;place-items:center;margin:24px auto 19px;color:var(--portal-gold);background:radial-gradient(circle,rgba(177,118,254,.25),transparent 66%);box-shadow:0 0 0 8px rgba(230,187,82,.06),0 0 38px rgba(174,115,255,.18)}
@@ -60,9 +61,17 @@ button{cursor:pointer}
 .portalEstado{min-height:1.45em;margin:19px 0 0;color:var(--portal-gold-soft);font-size:.88rem}
 .portalEstado.portalError{color:#ff9b94}
 
+.portalEleccion{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:15px;margin:31px auto 0;max-width:690px;text-align:left}
+.portalEntradaRuta{display:grid;grid-template-columns:46px 1fr auto;align-items:center;gap:14px;min-height:144px;padding:20px;text-decoration:none;color:inherit;border:1px solid rgba(185,161,215,.30);border-radius:17px;background:linear-gradient(135deg,rgba(50,37,67,.9),rgba(26,18,39,.9));box-shadow:inset 0 1px rgba(255,255,255,.06),0 8px 18px rgba(0,0,0,.14);transition:transform .16s,border-color .16s,background .16s,box-shadow .16s}
+.portalEntradaRuta:hover,.portalEntradaRuta:focus-visible{outline:none;transform:translateY(-4px);border-color:var(--portal-gold);background:linear-gradient(135deg,rgba(66,47,91,.96),rgba(32,21,48,.96));box-shadow:0 14px 25px rgba(0,0,0,.25),0 0 0 3px rgba(230,187,82,.12)}
+.portalEntradaIcono{width:46px;height:46px;border-radius:13px;display:grid;place-items:center;background:rgba(146,95,240,.18);border:1px solid rgba(169,128,247,.47);color:#d7bfff;font-size:1.45rem}
+.portalEntradaJuego .portalEntradaIcono{background:rgba(230,187,82,.13);border-color:rgba(246,210,108,.60);color:#ffdc7f}.portalEntradaDevelop .portalEntradaIcono{background:rgba(83,157,245,.15);border-color:rgba(110,172,255,.55);color:#acd1ff}
+.portalEntradaTexto{display:grid;gap:6px}.portalEntradaTexto strong{font:1.42rem/1.05 var(--portal-serif);color:#fff8e7}.portalEntradaTexto small{font-size:.82rem;line-height:1.36;color:var(--portal-muted)}
+.portalEntradaRuta:hover .portalFlecha{transform:translateX(3px)}
+
 .portalMenu{padding:clamp(30px,5vw,58px)}
 .portalCabecera{display:flex;align-items:flex-start;justify-content:space-between;gap:24px;padding:0 0 27px;border-bottom:1px solid rgba(208,181,246,.15)}
-.portalSalir{font-size:.82rem;flex:none;padding:9px 12px;background:rgba(42,31,57,.85);border-color:rgba(222,188,104,.68);color:var(--portal-gold-soft)}
+.portalAcciones{display:flex;align-items:center;justify-content:flex-end;gap:9px;flex-wrap:wrap}.portalVolver,.portalSalir{font-size:.82rem;flex:none;padding:9px 12px;background:rgba(42,31,57,.85);border:1px solid rgba(222,188,104,.68);border-radius:10px;color:var(--portal-gold-soft);text-decoration:none}.portalVolver:hover,.portalVolver:focus-visible{outline:none;filter:brightness(1.12);border-color:var(--portal-gold)}
 .portalBienvenida{font:clamp(1rem,2.3vw,1.18rem)/1.45 var(--portal-serif);color:#ddd1ec;margin:26px 0 21px}
 .portalRutas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
 .portalRuta{display:grid;grid-template-columns:42px 1fr auto;align-items:center;gap:14px;min-height:110px;text-decoration:none;color:inherit;padding:18px;border:1px solid rgba(185,161,215,.26);border-radius:16px;background:linear-gradient(135deg,rgba(50,37,67,.9),rgba(26,18,39,.9));box-shadow:inset 0 1px rgba(255,255,255,.06),0 8px 18px rgba(0,0,0,.14);transition:transform .16s,border-color .16s,background .16s,box-shadow .16s}
@@ -75,6 +84,6 @@ button{cursor:pointer}
 .portalPie{margin:22px 0 0;color:#a89abb;font-size:.82rem;text-align:center;min-height:1.4em}
 
 @media(max-width:640px){
-  .portalMarco{width:min(100% - 24px,520px);padding:18px 0}.portalAcceso{padding:42px 22px 31px;border-radius:19px}.portalMenu{padding:28px 18px;border-radius:19px}.portalCabecera{padding-bottom:20px;gap:12px}.portalCabecera h1{font-size:2.1rem}.portalRutas{grid-template-columns:1fr}.portalRutaProduccion{grid-column:auto}.portalRuta{min-height:92px;padding:15px}.portalEntrada{display:grid;grid-template-columns:1fr}.portalEntrada button{min-height:45px}.portalSalir{font-size:.72rem;padding:8px 9px}.portalSobrelinea{letter-spacing:.25em;font-size:.64rem}}
+  .portalMarco{width:min(100% - 24px,520px);padding:18px 0}.portalInicio,.portalAcceso{padding:42px 22px 31px;border-radius:19px}.portalMenu{padding:28px 18px;border-radius:19px}.portalCabecera{padding-bottom:20px;gap:12px}.portalCabecera h1{font-size:2.1rem}.portalRutas,.portalEleccion{grid-template-columns:1fr}.portalRutaProduccion{grid-column:auto}.portalRuta,.portalEntradaRuta{min-height:92px;padding:15px}.portalEntrada{display:grid;grid-template-columns:1fr}.portalEntrada button{min-height:45px}.portalAcciones{gap:6px}.portalVolver,.portalSalir{font-size:.72rem;padding:8px 9px}.portalSobrelinea{letter-spacing:.25em;font-size:.64rem}}
 
-@media(prefers-reduced-motion:reduce){.portalRuta,.portalEntrada input,.portalEntrada button,.portalSalir,.portalFlecha{transition:none}}
+@media(prefers-reduced-motion:reduce){.portalRuta,.portalEntradaRuta,.portalEntrada input,.portalEntrada button,.portalSalir,.portalVolver,.portalFlecha{transition:none}}
