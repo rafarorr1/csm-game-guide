@@ -454,13 +454,16 @@ function configuracionPortal(env){
   const hash=typeof env.PORTAL_PASSWORD_HASH==='string'?env.PORTAL_PASSWORD_HASH.trim().toLowerCase():'',clave=typeof env.PORTAL_SESSION_KEY==='string'?env.PORTAL_SESSION_KEY:'';
   return /^[a-f0-9]{64}$/.test(hash)&&clave.length>=32?{hash,clave}:null;
 }
+// La huella de la contraseña participa en la firma. Al cambiar la clave del
+// Portal, todas las sesiones emitidas con la anterior dejan de abrir rutas.
+function llaveSesionPortal(config){return config.clave+'|'+config.hash;}
 function portalActivo(url,env){return url.hostname.toLowerCase()===HOST_PORTAL;}
 function valorCookie(req,nombre){return (req.headers.get('cookie')||'').split(';').map(x=>x.trim()).find(x=>x.startsWith(nombre+'='))?.slice(nombre.length+1)||'';}
 async function portalAutenticado(req,env){
   const config=configuracionPortal(env),valor=valorCookie(req,COOKIE_PORTAL);if(!config)return false;
   const [vence,azar,firma]=valor.split('.');
   if(!/^\d{13}$/.test(vence||'')||!/^[a-f0-9]{32}$/.test(azar||'')||Number(vence)<Date.now()||Number(vence)>Date.now()+DURACION_PORTAL+1000)return false;
-  return igual(firma,await hmac(config.clave,vence+'.'+azar));
+  return igual(firma,await hmac(llaveSesionPortal(config),vence+'.'+azar));
 }
 async function prepararPortal(db){
   if(!preparacionesPortal.has(db))preparacionesPortal.set(db,db.prepare('CREATE TABLE IF NOT EXISTS portal_accesos (ip TEXT PRIMARY KEY, n INTEGER NOT NULL, vence INTEGER NOT NULL)').run().catch(e=>{preparacionesPortal.delete(db);throw e;}));
@@ -508,7 +511,7 @@ async function apiPortal(req,env){
   if(!datos||Array.isArray(datos)||Object.keys(datos).length!==1||typeof datos.clave!=='string')return json({error:'La solicitud no es válida.'},400);
   const intentos=await intentoPortal(req,env,config.clave);if(intentos>INTENTOS_PORTAL)return json({error:'Demasiados intentos. Espera 15 minutos.'},429,{'Retry-After':'900'});
   if(!igual(await sha(datos.clave),config.hash))return json({error:'La clave no es correcta.'},401);
-  const ahora=Date.now(),texto=String(ahora+DURACION_PORTAL)+'.'+hex(crypto.getRandomValues(new Uint8Array(16))),sesion=texto+'.'+await hmac(config.clave,texto);
+  const ahora=Date.now(),texto=String(ahora+DURACION_PORTAL)+'.'+hex(crypto.getRandomValues(new Uint8Array(16))),sesion=texto+'.'+await hmac(llaveSesionPortal(config),texto);
   if(env.SFX_DB){const ip=await sha((req.headers.get('cf-connecting-ip')||'local')+config.clave);await env.SFX_DB.prepare('DELETE FROM portal_accesos WHERE ip=? OR vence<?').bind(ip,ahora).run();}
   return json({ok:true},200,{'Set-Cookie':cookiePortal(sesion,DURACION_PORTAL/1000)});
 }

@@ -1,5 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
+### v46 · Build 284 · Portal sin ciclos de PWA · 2026-09-24
+
+- El Portal retira de forma segura sólo la PWA y las cachés que pertenecían a
+  la antigua raíz del juego antes de abrir Producción. La PWA actual de
+  `/produccion/` no se toca.
+- Tras aceptar la clave, el Portal confirma que el navegador puede devolver la
+  sesión firmada antes de redirigir. Si no puede hacerlo, explica el problema
+  en el mismo formulario en vez de entrar en un ciclo.
+- La firma de sesión incorpora la huella actual de la clave: un cambio de
+  contraseña cierra las sesiones del Portal que se hubieran creado antes.
+- Las regresiones cubren la PWA raíz heredada, una cookie que no llega a
+  confirmarse y una sesión válida que sí abre el destino solicitado.
+
 ### v45 · Build 283 · Machete arde al morir · 2026-09-24
 
 - Cuando Machete muere, su carta no viaja a las Alcantarillas: se incendia
