@@ -164,7 +164,9 @@ respuesta=await pedir('/portal.html');assert.equal(respuesta.status,200);assert.
 assert.equal((await pedir('/portal.css')).status,200);
 assert.equal((await pedir('/produccion/')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
 assert.equal((await pedir('/index.html')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
-assert.equal((await pedir('/abrir-produccion?siguiente=%2Fproduccion%2F')).headers.get('location'),origen+'/','La puerta de rescate tampoco abre el juego sin sesión.');
+assert.equal((await pedir('/abrir-produccion?siguiente=%2Fproduccion%2F')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F','Una sesión vencida en el rescate vuelve al Portal sin perder Producción.');
+assert.equal((await pedir('/abrir-produccion?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12','El rescate vencido conserva la mesa móvil y su sala.');
+assert.equal((await pedir('/abrir-produccion?siguiente=https%3A%2F%2Fotro.invalid%2F')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F','Un destino ajeno en el rescate vuelve sólo a Producción.');
 assert.equal((await pedir('/?sala=AB12')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F%3Fsala%3DAB12','Una invitación antigua llega al juego tras el portal.');
 assert.equal((await pedir('/api/arte/catalogo')).status,401,'Las API públicas tampoco saltan la puerta.');
 respuesta=await pedir('/api/portal/sesion');assert.equal(respuesta.status,200);assert.deepEqual(await respuesta.json(),{autenticado:false});

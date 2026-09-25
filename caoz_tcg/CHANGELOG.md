@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### v50 · Build 289 · Regreso de rescate al juego · 2026-09-25
+
+- Si el Portal necesita pedir acceso mientras la instalación antigua se está
+  reparando, conserva la mesa de Producción solicitada y retoma ese destino al
+  confirmar la sesión; no deja al jugador en el menú del Portal.
+- El regreso admite la mesa principal, la pantalla móvil y una sala de esas
+  rutas, y descarta cualquier destino externo o no permitido.
+
 ### v49 · Build 288 · Rescate de instalaciones antiguas · 2026-09-25
 
 - La puerta de Producción abre primero una pantalla de actualización mínima,
