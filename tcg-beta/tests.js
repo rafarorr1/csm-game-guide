@@ -2309,7 +2309,14 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       const retirada=raiz();panel().querySelector('.coleccionCerrar').click();
       t.check(!panel().open&&!retirada.isConnected&&interrumpida.destruida===1,pagina+': cerrar Colección destruye inmediatamente la apertura activa.');
       t.igual(JSON.stringify(m.pendiente()),persistido,pagina+': cerrar durante la rotura conserva exactamente sus premios.');
-      w.showGallery();await esperar(()=>!!raiz(),'reabrir monta el mismo pending después de preparar su arte.');const reabierta=raiz();interrumpida.soltar();await drenar();
+      // El botón Colección comparte esta entrada: nunca salta a un sobre
+      // pendiente. Reanudarlo es una elección explícita dentro de Sobres.
+      const botonColeccion=d.querySelector('#mCards');t.check(!!botonColeccion,pagina+': el menú conserva el botón Colección de cartas.');botonColeccion.click();
+      t.igual(panel().dataset.vista,'cartas',pagina+': abrir Colección con un sobre pendiente muestra Mis cartas.');
+      t.check(!raiz()&&m.pendiente(),pagina+': la entrada manual no monta ni consume el sobre pendiente.');
+      const pestañaSobres=[...panel().querySelectorAll('.coleccionPestana')].find(b=>/^Sobres/.test(b.textContent));pestañaSobres.click();
+      const continuar=panel().querySelector('.coleccionReanudarSobre');t.check(!!continuar,pagina+': Sobres ofrece reanudar el sobre pendiente de forma explícita.');continuar.click();
+      await esperar(()=>!!raiz(),'reanudar monta el mismo pending después de preparar su arte.');const reabierta=raiz();interrumpida.soltar();await drenar();
       t.check(reabierta&&raiz()===reabierta&&reabierta.isConnected&&escenas.at(-1).destruida===0,pagina+': un close o callback tardío no desmonta la reapertura.');
       t.igual(JSON.stringify(m.pendiente()),persistido,pagina+': reabrir recupera el mismo pending.');t.igual(m.sobres(),4,pagina+': la recuperación no consume otro sobre.');
       await terminarFunda();await revelarTodas(5);
@@ -2329,7 +2336,10 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       m.concederSobreCampana('reserva-legado-uno');m.concederSobreCampana('reserva-legado-dos');
       const eleccionesLegado=JSON.stringify(m.recompensasPendientes()),inventarioLegado=JSON.stringify(m.inventarioSobres());
       const legado=m.leer();legado.pendiente={id:'sobre-legado-tres',creado:1,cartas:antiguas};w.localStorage.setItem(m.clave,JSON.stringify(legado));
-      w.showGallery();await esperar(()=>!!raiz(),'monta el pending legado.');t.check(m.pendiente()?.cartas.length===3&&raiz(),pagina+': reconoce y abre un pending legado de tres cartas.');
+      d.querySelector('#mCards').click();t.igual(panel().dataset.vista,'cartas',pagina+': un sobre legado tampoco reemplaza la vista de Colección.');
+      t.check(!raiz()&&m.pendiente()?.cartas.length===3,pagina+': la entrada manual conserva intacto el pending legado.');
+      [...panel().querySelectorAll('.coleccionPestana')].find(b=>/^Sobres/.test(b.textContent)).click();
+      panel().querySelector('.coleccionReanudarSobre').click();await esperar(()=>!!raiz(),'reanuda el pending legado sólo desde Sobres.');t.check(m.pendiente()?.cartas.length===3&&raiz(),pagina+': reconoce y abre un pending legado de tres cartas.');
       t.igual(raiz().querySelectorAll('.sobresReverso').length,3,pagina+': el legado prepara sólo tres reversos.');
       for(const c of antiguas){const frente=raiz().querySelector('.sobresFrente[data-carta="'+c.id+'"] .sobresCarta');t.check(frente?.dataset.acabado===c.acabado,pagina+': conserva la edición real del premio '+c.id+'.');}
       await terminarFunda();await revelarTodas(3);

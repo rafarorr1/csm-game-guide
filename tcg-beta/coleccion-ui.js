@@ -117,7 +117,10 @@
     aplicarModoFinalCampana(!!opciones.finalCampana);
     volverFoco=document.activeElement;origen=document.querySelector('.screen.on');
     conservarFondo=!!opciones.conservarFondo;alCerrarRecompensa=typeof opciones.onCerrar==='function'?opciones.onCerrar:null;
-    s.mostrarPendiente=!!modelo().pendiente();s.vista=s.mostrarPendiente?'sobres':'cartas';s.carta=null;s.demoEdiciones='real';
+    // Entrar desde el menú significa consultar la Colección. Un sobre pendiente
+    // sigue protegido en el inventario y sólo se reanuda cuando el jugador abre
+    // explícitamente la pestaña Sobres y pulsa «Continuar el sobre abierto».
+    s.mostrarPendiente=false;s.vista='cartas';s.carta=null;s.demoEdiciones='real';
     if(!conservarFondo&&typeof cerrarOv==='function'&&$('#ov.on'))cerrarOv();
     panel.showModal();
     panel.querySelector('.coleccionVolver').textContent=origen?.id==='extras'?'Volver a Extras':'Volver';
