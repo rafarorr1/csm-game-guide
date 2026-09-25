@@ -1,5 +1,12 @@
 # Registro de versiones — el TCG del Domo
 
+### v54 · Build 293 · Colección antes que sobres · 2026-09-25
+
+- El botón **Colección de cartas** abre siempre **Mis cartas**, incluso si hay
+  un sobre pendiente de revelar.
+- El sobre queda resguardado y sólo se retoma desde **Sobres → Continuar el
+  sobre abierto**; no se consume, duplica ni se pierde al consultar cartas.
+
 ### v53 · Build 292 · Batalla de Pitágoras en Beta · 2026-09-25
 
 - Beta muestra una entrada directa a la batalla de prueba contra Pitágoras,
