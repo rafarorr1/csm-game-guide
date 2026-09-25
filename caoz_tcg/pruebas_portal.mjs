@@ -28,20 +28,86 @@ const env={
 };
 const origen='https://juego.caozcontodo.com';let cookie='';
 
-// Un 200 de la sesión sólo indica que el Worker contestó: aún debe revisar el
-// campo autenticado. Esta regresión arranca la interfaz en el estado inverso
-// para comprobar que no muestra las puertas antes de recibir una sesión válida.
-const nodo=({hidden=false}={})=>({hidden,textContent:'',value:'',disabled:false,classList:{toggle(){}},addEventListener(){},focus(){}});
-const nodos={portalAcceso:nodo({hidden:true}),portalMenu:nodo(),portalFormulario:nodo(),portalClave:nodo(),portalEnviar:nodo(),portalEstado:nodo(),portalSalir:nodo(),portalMenuEstado:nodo()};
-runInNewContext(readFileSync(new URL('./portal.js',import.meta.url),'utf8'),{
-  window:{},document:{getElementById:id=>nodos[id],addEventListener(){}},
-  fetch:async()=>({ok:true,json:async()=>({autenticado:false})}),
-  URL,URLSearchParams,location:{origin:origen,search:'',hash:'',replace(){}},console
+// Estas regresiones ejecutan el cliente real. Un 200 de la sesión sólo indica
+// que el Worker contestó: el Portal tiene que mirar el campo autenticado, borrar
+// la PWA de raíz heredada y confirmar la cookie antes de cambiar de ruta.
+const pausaPortal=()=>new Promise(resolve=>setTimeout(resolve,0));
+function interfazPortal({respuestas=[],search='',registros=[],cachesIniciales=[],controlador=null,origenPortal=origen}={}){
+  const eventos={},pedidos=[],borrados=[],destinos=[];
+  const nodo=({hidden=false}={})=>({
+    hidden,textContent:'',value:'',disabled:false,classList:{toggle(){}},
+    addEventListener(tipo,escucha){eventos[tipo]??=[];eventos[tipo].push(escucha);},focus(){}
+  });
+  const nodos={portalAcceso:nodo({hidden:true}),portalMenu:nodo(),portalFormulario:nodo(),portalClave:nodo(),portalEnviar:nodo(),portalEstado:nodo(),portalSalir:nodo(),portalMenuEstado:nodo()};
+  const location={origin:origenPortal,hostname:new URL(origenPortal).hostname,href:origenPortal+'/'+search,pathname:'/',search,hash:'',replace:destino=>destinos.push(destino)};
+  runInNewContext(readFileSync(new URL('./portal.js',import.meta.url),'utf8'),{
+    window:{},document:{getElementById:id=>nodos[id],addEventListener(){}},
+    fetch:async(...args)=>{
+      pedidos.push(args);const siguiente=respuestas.shift();
+      if(siguiente instanceof Error)throw siguiente;
+      return {ok:siguiente?.ok??true,json:async()=>siguiente?.datos??{}};
+    },
+    navigator:{serviceWorker:{controller:controlador,getRegistrations:async()=>registros}},
+    caches:{keys:async()=>cachesIniciales,delete:async nombre=>{borrados.push(nombre);return true;}},
+    URL,URLSearchParams,location,history:{replaceState(){}},setTimeout:fn=>{fn();return 0;},console
+  });
+  return {nodos,pedidos,borrados,destinos,enviar:async()=>{
+    const escucha=eventos.submit?.[0];assert.ok(escucha,'El formulario del Portal escucha su envío.');
+    return escucha({preventDefault(){}});
+  }};
+}
+
+let vista=interfazPortal({respuestas:[{ok:true,datos:{autenticado:false}}]});
+await pausaPortal();
+assert.equal(vista.nodos.portalAcceso.hidden,false,'Un 200 sin sesión mantiene visible la contraseña.');
+assert.equal(vista.nodos.portalMenu.hidden,true,'Un 200 {autenticado:false} no muestra las puertas del portal.');
+assert.match(vista.nodos.portalEstado.textContent,/contraseña/i);
+
+let pwaRaizRetirada=0;
+vista=interfazPortal({
+  registros:[{scope:origen+'/',unregister:async()=>{pwaRaizRetirada++;return true;}}],
+  cachesIniciales:['caoz-cache-/-283','caoz-arte-publico-/-v1','caoz-cache-/produccion/-283']
 });
-await new Promise(resolve=>setTimeout(resolve,0));
-assert.equal(nodos.portalAcceso.hidden,false,'Un 200 sin sesión mantiene visible la contraseña.');
-assert.equal(nodos.portalMenu.hidden,true,'Un 200 {autenticado:false} no muestra las puertas del portal.');
-assert.match(nodos.portalEstado.textContent,/contraseña/i);
+await pausaPortal();
+assert.equal(pwaRaizRetirada,1,'El Portal retira sólo la PWA antigua de la raíz.');
+assert.deepEqual(vista.borrados.sort(),['caoz-arte-publico-/-v1','caoz-cache-/-283'],'No borra la caché de la PWA actual bajo /produccion/.');
+assert.deepEqual(vista.destinos,['/?portal-pwa-limpia=1'],'El navegador se reinicia una vez sin el controlador heredado.');
+assert.equal(vista.pedidos.length,0,'No consulta la sesión mientras el reinicio del Portal está pendiente.');
+
+let pwaBetaRetirada=0;
+vista=interfazPortal({
+  origenPortal:'https://beta.caoz-tcg.pages.dev',
+  registros:[{scope:'https://beta.caoz-tcg.pages.dev/',unregister:async()=>{pwaBetaRetirada++;return true;}}],
+  cachesIniciales:['caoz-cache-/-284','caoz-arte-publico-/-v1'],
+  respuestas:[{ok:true,datos:{autenticado:false}}]
+});
+await pausaPortal();
+assert.equal(pwaBetaRetirada,0,'Beta conserva su propia PWA de raíz.');
+assert.deepEqual(vista.borrados,[],'Beta no borra sus cachés al abrir el Portal.');
+assert.deepEqual(vista.destinos,[],'Beta no se reinicia para una migración exclusiva de Producción.');
+assert.equal(vista.pedidos.length,1,'Beta consulta la sesión normalmente.');
+
+vista=interfazPortal({search:'?portal-pwa-limpia=1',controlador:{scriptURL:origen+'/sw.js?b=267'}});
+await pausaPortal();
+assert.deepEqual(vista.destinos,[],'Un controlador raíz persistente no reinicia el Portal una segunda vez.');
+assert.match(vista.nodos.portalEstado.textContent,/pestaña o la app/i,'El Portal explica cómo salir de una PWA raíz que no terminó de retirarse.');
+assert.equal(vista.pedidos.length,0);
+
+vista=interfazPortal({
+  search:'?siguiente=%2Fproduccion%2F',
+  respuestas:[{ok:true,datos:{autenticado:false}},{ok:true,datos:{ok:true}},{ok:true,datos:{autenticado:false}}]
+});
+await pausaPortal();vista.nodos.portalClave.value='clave-de-prueba';await vista.enviar();
+assert.deepEqual(vista.destinos,[],'Una respuesta de acceso sin cookie no redirige a Producción en un ciclo.');
+assert.equal(vista.nodos.portalAcceso.hidden,false);
+assert.match(vista.nodos.portalEstado.textContent,/confirmar la sesión/i);
+
+vista=interfazPortal({
+  search:'?siguiente=%2Fproduccion%2F',
+  respuestas:[{ok:true,datos:{autenticado:false}},{ok:true,datos:{ok:true}},{ok:true,datos:{autenticado:true}}]
+});
+await pausaPortal();vista.nodos.portalClave.value='clave-de-prueba';await vista.enviar();
+assert.deepEqual(vista.destinos,['/produccion/'],'Una cookie confirmada sí abre el destino solicitado.');
 
 const pedir=(ruta,metodo='GET',cuerpo,headers={},entorno=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookie,...headers},body:cuerpo}),entorno);
 
@@ -63,6 +129,7 @@ cookie=respuesta.headers.get('set-cookie').split(';')[0];const atributos=respues
 for(const atributo of ['__Host-caoz-portal=','Secure','HttpOnly','SameSite=Strict','Path=/','Max-Age=28800'])assert.match(atributos,new RegExp(atributo.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')));
 assert.deepEqual(await (await pedir('/api/portal/sesion')).json(),{autenticado:true});
 assert.deepEqual(await (await pedir('/api/portal/sesion','GET',undefined,{Cookie:cookie+'x'})).json(),{autenticado:false},'Una firma alterada no abre el portal.');
+assert.deepEqual(await (await pedir('/api/portal/sesion','GET',undefined,{}, {...env,PORTAL_PASSWORD_HASH:sha(clave+'-nueva')})).json(),{autenticado:false},'Cambiar la contraseña cierra también las sesiones emitidas con la anterior.');
 
 respuesta=await pedir('/produccion/');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Producción');assert.equal(rutas.at(-1),'/','El índice protegido se pide a Assets sin volver a la raíz del Worker.');
 respuesta=await pedir('/produccion/index.html');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Producción');assert.equal(rutas.at(-1),'/','El índice explícito no se canoniza fuera de Producción.');
