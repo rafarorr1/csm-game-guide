@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### v53 · Build 292 · Batalla de Pitágoras en Beta · 2026-09-25
+
+- Beta muestra una entrada directa a la batalla de prueba contra Pitágoras,
+  sin alterar la campaña, los sellos ni las recompensas guardadas.
+- Si el jugador necesita iniciar sesión, el acceso regresa a la batalla al
+  completar el proceso en vez de desviarlo al mapa de campaña.
+- La entrada no existe en Producción y comparte el mismo control en escritorio
+  y móvil.
+
 ### v52 · Build 291 · Juego público y Develop privado · 2026-09-25
 
 - La raíz ofrece dos entradas claras: **Juego** abre la publicación y

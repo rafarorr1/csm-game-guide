@@ -897,6 +897,24 @@ PRUEBAS.suite('pitagorasLaboratorio',async t=>{
   }
 });
 
+PRUEBAS.suite('pitagorasAccesoBeta',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=boton-pitagoras-interno';document.body.appendChild(f);await carga;
+    const w=f.contentWindow,d=f.contentDocument,disponible=w.campanaPruebaDisponible,ensayar=w.campanaEnsayarPitagoras;
+    try{
+      const boton=d.querySelector('#mPitagorasBeta');
+      t.check(!!boton&&boton.getClientRects().length>0&&/Batalla contra Pitágoras/.test(boton.textContent),pagina+': Beta muestra un acceso visible a la batalla contra Pitágoras.');
+      let llamadas=0;w.campanaEnsayarPitagoras=async()=>{llamadas++;return false;};boton.click();await sleep(0);
+      t.igual(llamadas,1,pagina+': el acceso delega una sola vez al ensayo aislado.');t.check(!boton.disabled,pagina+': el acceso vuelve a estar disponible si la batalla no inicia.');
+      boton.remove();w.campanaPruebaDisponible=()=>false;
+      t.check(!w.campanaInstalarAccesoPitagorasBeta()&&!d.querySelector('#mPitagorasBeta'),pagina+': Producción no instala el acceso de Beta.');
+      w.campanaPruebaDisponible=disponible;
+      const restaurado=w.campanaInstalarAccesoPitagorasBeta();
+      t.check(!!restaurado&&d.querySelectorAll('#mPitagorasBeta').length===1,pagina+': volver a Beta restaura una sola entrada.');
+    }finally{w.campanaEnsayarPitagoras=ensayar;w.campanaPruebaDisponible=disponible;f.remove();}
+  }
+});
+
 PRUEBAS.suite('pitagorasTopdown',async t=>{
   for(const pagina of ['index.html','movil.html']){
     const f=document.createElement('iframe');f.style.cssText='position:fixed;left:-10000px;width:390px;height:844px';const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=cenital-interna';document.body.appendChild(f);await carga;
