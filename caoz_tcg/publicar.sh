@@ -492,33 +492,46 @@ crear_sesion_verificacion_portal(){
   PORTAL_CLAVE_VERIFICACION=""
   export CAOZ_PORTAL_COOKIE_JAR="$jar"
 }
-comprobar_redireccion_privada(){
-  local ruta="$1" marca="$2" cabeceras
+comprobar_redireccion_develop(){
+  local ruta="$1" destino="$2" marca="$3" cabeceras
   cabeceras="$(cabecera_portal "$CF_URL$ruta?cb=$marca")" || return 1
   printf '%s\n' "$cabeceras" | grep -Eq '^HTTP/[0-9.]+ 302' || return 1
-  printf '%s\n' "$cabeceras" | grep -Eqi '^location: https://juego[.]caozcontodo[.]com/[?]siguiente=%2Fproduccion%2F' || return 1
+  printf '%s\n' "$cabeceras" | grep -Eqi "^location: https://juego[.]caozcontodo[.]com/develop[?]siguiente=${destino}" || return 1
 }
 comprobar_portal_publico(){
   local marca="$1" f remoto esp srv cabeceras estado
-  # La entrada es pública para que el formulario pueda abrirse, pero debe ser
-  # exactamente el Portal, con CSP, y no una copia residual del juego antiguo.
+  # La entrada es pública y ofrece Juego/Develop. Develop muestra su formulario
+  # sin exponer herramientas; la mesa publicada abre sin la clave administrativa.
   for f in portal.html portal.css portal.js pwa-rescate.css pwa-rescate.js; do
     remoto="$f"
-    # Cloudflare Pages responde con 308 a portal.html; /portal es el documento
-    # canónico que la raíz del Worker debe servir sin una redirección circular.
-    [ "$f" = 'portal.html' ] && remoto='portal'
+    # El Worker sirve la misma página en / y /develop. Pages normaliza .html,
+    # por lo que la verificación usa la ruta canónica que evita un 308.
+    [ "$f" = 'portal.html' ] && remoto='develop'
     esp="$(shasum -a 256 "$AQUI/$f" | cut -d" " -f1)"
     srv="$(curl -fsS --max-time 25 "$CF_URL/${remoto}?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
     [ "$srv" = "$esp" ] || return 1
   done
+  esp="$(shasum -a 256 "$AQUI/portal.html" | cut -d" " -f1)"
+  srv="$(curl -fsS --max-time 25 "$CF_URL/?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
+  [ "$srv" = "$esp" ] || return 1
   cabeceras="$(cabecera_portal "$CF_URL/?cb=$marca")" || return 1
   printf '%s\n' "$cabeceras" | grep -Eq '^HTTP/[0-9.]+ 200' || return 1
   printf '%s\n' "$cabeceras" | grep -Eqi '^content-security-policy:.*frame-ancestors' || return 1
   printf '%s\n' "$cabeceras" | grep -Eqi '^cache-control:.*no-store' || return 1
   estado="$(curl -fsS --max-time 25 -H 'Accept: application/json' "$CF_URL/api/portal/sesion?cb=$marca")" || return 1
   [ "$estado" = '{"autenticado":false}' ] || return 1
-  comprobar_redireccion_privada '/index.html' "$marca" || return 1
-  comprobar_redireccion_privada '/produccion/index.html' "$marca" || return 1
+  esp="$(shasum -a 256 "$AQUI/index.html" | cut -d" " -f1)"
+  srv="$(curl -fsS --max-time 25 "$CF_URL/produccion/index.html?cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
+  [ "$srv" = "$esp" ] || return 1
+  cabeceras="$(cabecera_portal "$CF_URL/juego?cb=$marca")" || return 1
+  printf '%s\n' "$cabeceras" | grep -Eq '^HTTP/[0-9.]+ 302' || return 1
+  printf '%s\n' "$cabeceras" | grep -Eqi '^location: https://juego[.]caozcontodo[.]com/produccion/[?]cb=' || return 1
+  esp="$(shasum -a 256 "$AQUI/pwa-rescate.html" | cut -d" " -f1)"
+  srv="$(curl -fsS --max-time 25 "$CF_URL/abrir-produccion?siguiente=%2Fproduccion%2F&cb=$marca" | shasum -a 256 | cut -d" " -f1)" || return 1
+  [ "$srv" = "$esp" ] || return 1
+  comprobar_redireccion_develop '/estudio' '%2Festudio' "$marca" || return 1
+  comprobar_redireccion_develop '/sonidos' '%2Fsonidos' "$marca" || return 1
+  comprobar_redireccion_develop '/fisico/' '%2Ffisico%2F' "$marca" || return 1
   # El antiguo PWA de raíz no puede conservar una ruta abierta al juego: el
   # worker de retiro se desregistra antes de que un cliente vuelva a cargar.
   curl -fsS --max-time 25 "$CF_URL/sw.js?cb=$marca" | grep -Fq 'self.registration.unregister' || return 1
@@ -581,7 +594,7 @@ comprobar_cloudflare(){
       python3 "$AQUI/verificar_audio_web.py" "$base_verificada" || return 1
       python3 "$AQUI/verificar_arte_web.py" "$base_verificada" || return 1
       if [ "$DESTINO" = "tcg" ]; then
-        verde "  Portal público, sesión y juego protegido verificados byte a byte en Cloudflare: $CF_URL/"
+        verde "  Inicio público, Develop privado y juego verificados byte a byte en Cloudflare: $CF_URL/"
       else
         verde "  publicado y verificado byte a byte en Cloudflare: $CF_URL/"
       fi

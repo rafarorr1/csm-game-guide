@@ -1,5 +1,14 @@
 # Registro de versiones — el TCG del Domo
 
+### v52 · Build 291 · Juego público y Develop privado · 2026-09-25
+
+- La raíz ofrece dos entradas claras: **Juego** abre la publicación y
+  **Develop** concentra Beta, estudios y juego físico detrás de la clave.
+- La mesa pública conserva sus cuentas, cartas e iluminación sonora; las APIs
+  de edición y todas las herramientas siguen cerradas fuera de Develop.
+- La ruta de rescate PWA sigue disponible sólo para recuperar instalaciones
+  antiguas, sin reconstruir la PWA del juego en cada entrada normal.
+
 ### v51 · Build 290 · Puente PWA sin redirección · 2026-09-25
 
 - El rescate de Producción se sirve directamente en su ruta canónica, sin la

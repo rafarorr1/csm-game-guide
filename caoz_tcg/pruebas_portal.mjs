@@ -18,12 +18,16 @@ function base(){
   return {db,binding:{prepare:sql=>new Consulta(sql)}};
 }
 const sha=v=>createHash('sha256').update(v).digest('hex'),clave=randomBytes(24).toString('hex'),baseD1=base(),rutas=[];
+const htmlPortal=readFileSync(new URL('./portal.html',import.meta.url),'utf8');
+assert.match(htmlPortal,/href="\/juego"/,'La portada ofrece una entrada explícita al juego publicado.');
+assert.match(htmlPortal,/href="\/develop"/,'La portada ofrece una entrada explícita a Develop.');
+assert.doesNotMatch(htmlPortal,/data-destino="Producción"/,'La publicación no se mezcla con las herramientas de Develop.');
 const archivos=new Map([
-  ['/portal','<main>Portal del Domo</main>'],['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/pwa-rescate','Rescate PWA'],['/pwa-rescate.html','Rescate PWA'],['/pwa-rescate.css','body{}'],['/pwa-rescate.js','window.rescate=true'],['/art/icono-192.png','icono'],
+  ['/portal','<main>Juego · Develop</main>'],['/portal.html','<main>Juego · Develop</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/pwa-rescate','Rescate PWA'],['/pwa-rescate.html','Rescate PWA'],['/pwa-rescate.css','body{}'],['/pwa-rescate.js','window.rescate=true'],['/art/icono-192.png','icono'],
   ['/','Producción'],['/index.html','Producción'],['/movil.html','Móvil'],['/sw.js','Juego PWA'],['/estudio','Estudio de Cartas'],['/sonidos','Estudio de Sonidos'],['/fisico/index.html','Juego Físico']
 ]);
 const env={
-  PORTAL_PASSWORD_HASH:sha(clave),PORTAL_SESSION_KEY:randomBytes(32).toString('hex'),SFX_DB:baseD1.binding,ESTUDIO_UNICO:'1',CF_PAGES_BRANCH:'gh-pages',
+  PORTAL_PASSWORD_HASH:sha(clave),PORTAL_SESSION_KEY:randomBytes(32).toString('hex'),SFX_DB:baseD1.binding,SFX_ADMIN_HASH:sha('clave-estudio'),SFX_SESSION_KEY:randomBytes(32).toString('hex'),ESTUDIO_UNICO:'1',CF_PAGES_BRANCH:'gh-pages',
   ASSETS:{async fetch(req){const url=new URL(req.url);rutas.push(url.pathname+url.search);return new Response(archivos.get(url.pathname)||'Estático '+url.pathname,{status:archivos.has(url.pathname)?200:404});}}
 };
 const origen='https://juego.caozcontodo.com';let cookie='';
@@ -32,14 +36,14 @@ const origen='https://juego.caozcontodo.com';let cookie='';
 // que el Worker contestó: el Portal tiene que mirar el campo autenticado, borrar
 // la PWA de raíz heredada y confirmar la cookie antes de cambiar de ruta.
 const pausaPortal=()=>new Promise(resolve=>setTimeout(resolve,0));
-function interfazPortal({respuestas=[],search='',registros=[],cachesIniciales=[],controlador=null,origenPortal=origen}={}){
+function interfazPortal({respuestas=[],search='',ruta='/develop',registros=[],cachesIniciales=[],controlador=null,origenPortal=origen}={}){
   const eventos={},pedidos=[],borrados=[],destinos=[];
   const nodo=({hidden=false}={})=>({
     hidden,textContent:'',value:'',disabled:false,classList:{toggle(){}},
     addEventListener(tipo,escucha){eventos[tipo]??=[];eventos[tipo].push(escucha);},focus(){}
   });
-  const nodos={portalAcceso:nodo({hidden:true}),portalMenu:nodo(),portalFormulario:nodo(),portalClave:nodo(),portalEnviar:nodo(),portalEstado:nodo(),portalSalir:nodo(),portalMenuEstado:nodo()};
-  const location={origin:origenPortal,hostname:new URL(origenPortal).hostname,href:origenPortal+'/'+search,pathname:'/',search,hash:'',replace:destino=>destinos.push(destino)};
+  const nodos={portalInicio:nodo({hidden:true}),portalAcceso:nodo({hidden:true}),portalMenu:nodo(),portalFormulario:nodo(),portalClave:nodo(),portalEnviar:nodo(),portalEstado:nodo(),portalSalir:nodo(),portalMenuEstado:nodo()};
+  const location={origin:origenPortal,hostname:new URL(origenPortal).hostname,href:origenPortal+ruta+search,pathname:ruta,search,hash:'',replace:destino=>destinos.push(destino)};
   runInNewContext(readFileSync(new URL('./portal.js',import.meta.url),'utf8'),{
     window:{},document:{getElementById:id=>nodos[id],addEventListener(){}},
     fetch:async(...args)=>{
@@ -93,7 +97,14 @@ assert.deepEqual(rescate.destinos,[],'El límite no se adelanta mientras la API 
 rescate.relojes[0]();rescate.relojes[0]();
 assert.deepEqual(rescate.destinos,['/produccion/'],'El límite abre Producción una vez si la API PWA queda pendiente.');
 
-let vista=interfazPortal({respuestas:[{ok:true,datos:{autenticado:false}}]});
+let vista=interfazPortal({ruta:'/',respuestas:[{ok:true,datos:{autenticado:false}}]});
+await pausaPortal();
+assert.equal(vista.nodos.portalInicio.hidden,false,'La raíz muestra sólo las dos entradas públicas.');
+assert.equal(vista.nodos.portalAcceso.hidden,true,'La raíz no pide la contraseña antes de elegir Develop.');
+assert.equal(vista.nodos.portalMenu.hidden,true,'La raíz tampoco expone las herramientas de Develop.');
+assert.equal(vista.pedidos.length,0,'La portada pública no consulta ni necesita una sesión de Develop.');
+
+vista=interfazPortal({respuestas:[{ok:true,datos:{autenticado:false}}]});
 await pausaPortal();
 assert.equal(vista.nodos.portalAcceso.hidden,false,'Un 200 sin sesión mantiene visible la contraseña.');
 assert.equal(vista.nodos.portalMenu.hidden,true,'Un 200 {autenticado:false} no muestra las puertas del portal.');
@@ -101,6 +112,7 @@ assert.match(vista.nodos.portalEstado.textContent,/contraseña/i);
 
 let pwaRaizRetirada=0;
 vista=interfazPortal({
+  ruta:'/',
   registros:[{scope:origen+'/',unregister:async()=>{pwaRaizRetirada++;return true;}}],
   cachesIniciales:['caoz-cache-/-283','caoz-arte-publico-/-v1','caoz-cache-/produccion/-283']
 });
@@ -123,7 +135,7 @@ assert.deepEqual(vista.borrados,[],'Beta no borra sus cachés al abrir el Portal
 assert.deepEqual(vista.destinos,[],'Beta no se reinicia para una migración exclusiva de Producción.');
 assert.equal(vista.pedidos.length,1,'Beta consulta la sesión normalmente.');
 
-vista=interfazPortal({search:'?portal-pwa-limpia=1',controlador:{scriptURL:origen+'/sw.js?b=267'}});
+vista=interfazPortal({ruta:'/',search:'?portal-pwa-limpia=1',controlador:{scriptURL:origen+'/sw.js?b=267'}});
 await pausaPortal();
 assert.deepEqual(vista.destinos,[],'Un controlador raíz persistente no reinicia el Portal una segunda vez.');
 assert.match(vista.nodos.portalEstado.textContent,/pestaña o la app/i,'El Portal explica cómo salir de una PWA raíz que no terminó de retirarse.');
@@ -158,17 +170,26 @@ assert.deepEqual(vista.destinos,['/fisico/'],'El rescate no intercepta las otras
 const pedir=(ruta,metodo='GET',cuerpo,headers={},entorno=env)=>worker.fetch(new Request(origen+ruta,{method:metodo,headers:{Origin:origen,Cookie:cookie,...headers},body:cuerpo}),entorno);
 
 assert.deepEqual(JSON.parse(readFileSync(new URL('./_routes.json',import.meta.url),'utf8')).include,['/*'],'El Worker recibe también la raíz y los assets del juego.');
-let respuesta=await pedir('/');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/);assert.match(respuesta.headers.get('content-security-policy'),/frame-ancestors 'none'/);assert.equal(rutas.at(-1),'/portal','La raíz usa el documento canónico y no el .html que Pages redirige.');
-respuesta=await pedir('/portal');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/,'La ruta canónica del Portal no puede volver a la raíz.');
-respuesta=await pedir('/portal.html');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Portal del Domo/,'La ruta histórica del Portal se normaliza sin una puerta privada.');
+let respuesta=await pedir('/');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Juego · Develop/);assert.match(respuesta.headers.get('content-security-policy'),/frame-ancestors 'none'/);assert.equal(rutas.at(-1),'/portal','La raíz usa el documento canónico sin pasar por un .html que Pages redirige.');
+respuesta=await pedir('/develop');assert.equal(respuesta.status,200);assert.match(await respuesta.text(),/Juego · Develop/,'Develop carga el formulario público, no las herramientas.');
+assert.equal((await pedir('/develop/')).headers.get('location'),origen+'/develop','Develop conserva una ruta canónica para que sus assets sean de raíz.');
+assert.equal((await pedir('/portal')).headers.get('location'),origen+'/develop','La ruta histórica del Portal lleva a Develop.');
+assert.equal((await pedir('/portal.html')).headers.get('location'),origen+'/develop','La grafía .html también lleva a Develop.');
 assert.equal((await pedir('/portal.css')).status,200);
-assert.equal((await pedir('/produccion/')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
-assert.equal((await pedir('/index.html')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F');
-assert.equal((await pedir('/abrir-produccion?siguiente=%2Fproduccion%2F')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F','Una sesión vencida en el rescate vuelve al Portal sin perder Producción.');
-assert.equal((await pedir('/abrir-produccion?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12','El rescate vencido conserva la mesa móvil y su sala.');
-assert.equal((await pedir('/abrir-produccion?siguiente=https%3A%2F%2Fotro.invalid%2F')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F','Un destino ajeno en el rescate vuelve sólo a Producción.');
-assert.equal((await pedir('/?sala=AB12')).headers.get('location'),origen+'/?siguiente=%2Fproduccion%2F%3Fsala%3DAB12','Una invitación antigua llega al juego tras el portal.');
-assert.equal((await pedir('/api/arte/catalogo')).status,401,'Las API públicas tampoco saltan la puerta.');
+respuesta=await pedir('/produccion/');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Producción','El juego publicado abre sin contraseña.');assert.equal(rutas.at(-1),'/','El índice público se pide a Assets sin volver a la portada.');
+assert.equal((await pedir('/juego?sala=AB12')).headers.get('location'),origen+'/produccion/?sala=AB12','Juego conserva una invitación al entrar desde la portada.');
+assert.equal((await pedir('/index.html')).headers.get('location'),origen+'/produccion/','El alias histórico abre el juego público.');
+respuesta=await pedir('/abrir-produccion?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','El rescate ya no pide la clave administrativa.');assert.equal(rutas.at(-1),'/pwa-rescate?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12','El rescate público sirve la canónica sin pasar por un 308.');assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('content-security-policy'),/script-src 'self'/);
+assert.equal((await pedir('/?sala=AB12')).headers.get('location'),origen+'/juego?sala=AB12','Una invitación antigua llega al juego sin abrir Develop.');
+assert.equal((await pedir('/estudio')).headers.get('location'),origen+'/develop?siguiente=%2Festudio','El estudio pide Develop al entrar directo.');
+assert.equal((await pedir('/sonidos')).headers.get('location'),origen+'/develop?siguiente=%2Fsonidos','Los sonidos piden Develop al entrar directo.');
+assert.equal((await pedir('/fisico/')).headers.get('location'),origen+'/develop?siguiente=%2Ffisico%2F','El juego físico pide Develop al entrar directo.');
+assert.equal((await pedir('/api/estudio/arte/privado')).status,401,'La API de Develop no se abre con el juego público.');
+assert.notEqual((await pedir('/api/arte/catalogo')).status,401,'El catálogo de cartas pasa a su API pública, no a Develop.');
+assert.notEqual((await pedir('/api/sfx/catalogo')).status,401,'El catálogo de sonidos pasa a su API pública, no a Develop.');
+assert.notEqual((await pedir('/produccion/api/arte/catalogo')).status,401,'La mesa obtiene arte relativo sin pedir Develop.');
+assert.equal((await pedir('/produccion/api/estudio/arte/privado')).status,401,'El prefijo público no puede ocultar una API privada.');
+assert.notEqual((await pedir('/api/cuenta/sesion')).status,401,'La cuenta de jugadores ya no depende de la clave administrativa.');
 respuesta=await pedir('/api/portal/sesion');assert.equal(respuesta.status,200);assert.deepEqual(await respuesta.json(),{autenticado:false});
 assert.equal((await pedir('/api/portal/sesion','POST',JSON.stringify({clave}),{Origin:'https://otro.invalid'})).status,403);
 assert.equal((await pedir('/api/portal/sesion','POST','[]')).status,400);
@@ -189,7 +210,7 @@ assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate 
 assert.equal(rutas.at(-1),'/pwa-rescate?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12','La puerta sirve el puente canónico sin perder el destino ni pasar por un 308.');
 assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('content-security-policy'),/script-src 'self'/);
 respuesta=await pedir('/abrir-produccion/');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','Ambas grafías de la puerta reparan la PWA.');
-respuesta=await pedir('/pwa-rescate?siguiente=%2Fproduccion%2F');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','La ruta canónica queda protegida y no deja a una PWA antigua interceptar un 308.');assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('content-security-policy'),/script-src 'self'/);
+respuesta=await pedir('/pwa-rescate?siguiente=%2Fproduccion%2F');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','La ruta canónica pública no deja a una PWA antigua interceptar un 308.');assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('content-security-policy'),/script-src 'self'/);
 respuesta=await pedir('/pwa-rescate.html');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','La grafía histórica también se resuelve dentro del Worker.');
 respuesta=await pedir('/pwa-rescate.js');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'window.rescate=true');assert.match(respuesta.headers.get('cache-control'),/no-store/);
 assert.equal((await pedir('/produccion?b=9')).headers.get('location'),origen+'/produccion/?b=9');
@@ -203,11 +224,11 @@ assert.equal(await (await pedir('/fisico/')).text(),'Juego Físico');assert.equa
 respuesta=await pedir('/sw.js');assert.match(await respuesta.text(),/registration\.unregister/);assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('service-worker-allowed'),/^\/$/);
 
 respuesta=await pedir('/api/portal/sesion','DELETE');assert.equal(respuesta.status,200);assert.match(respuesta.headers.get('set-cookie'),/Max-Age=0/);cookie='';
-assert.equal((await pedir('/sonidos')).headers.get('location'),origen+'/');
+assert.equal((await pedir('/sonidos')).headers.get('location'),origen+'/develop?siguiente=%2Fsonidos');
 const incompleto={...env,PORTAL_SESSION_KEY:'demasiado-corta'};
 assert.equal((await pedir('/api/portal/sesion','GET',undefined,{},incompleto)).status,503,'Una configuración parcial falla cerrada.');
 for(let i=0;i<=8;i++)respuesta=await pedir('/api/portal/sesion','POST',JSON.stringify({clave:clave+'z'}),{'CF-Connecting-IP':'203.0.113.50'});
 assert.equal(respuesta.status,429,'El noveno intento de la misma ventana se detiene.');
 assert.equal(await (await worker.fetch(new Request('https://beta.caoz-tcg.pages.dev/'),env)).text(),'Producción','La beta no hereda el bloqueo del dominio oficial.');
 baseD1.db.close();
-console.log('Portal: sesión firmada, rutas protegidas, producción virtual, estudios y retiro seguro del SW raíz en verde.');
+console.log('Inicio: Juego público, Develop protegido, APIs separadas y retiro seguro del SW raíz en verde.');
