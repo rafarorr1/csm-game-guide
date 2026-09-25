@@ -325,6 +325,65 @@ void main(){
       raf=requestAnimationFrame(cuadro);
     });
   }
+  /* QUEMAR · quemar(host,{objetivo,imagen,color,velocidad,reducir}) → Promise<boolean>
+     Una carta que muere ardiendo, sin atacante: se prende desde abajo, arde y
+     se deshace en ceniza. La promesa se cumple (true) en cuanto la carta se ha
+     consumido; la ceniza sigue flotando sola y su lienzo se retira al final.
+     Devuelve false, sin hacer nada, si no hay WebGL o no hay cara que quemar:
+     quien llama sigue con su animación de siempre. */
+  function quemar(host,o){
+    const obj=o.objetivo,vel=o.velocidad||1,pal=PALETAS[o.color]||PALETAS.naranja;
+    const consulta=typeof matchMedia==='function'?matchMedia('(prefers-reduced-motion: reduce)'):null;
+    const reducir=o.reducir??!!consulta?.matches;
+    const cara=o.imagen||obj?.querySelector?.(':scope > .cjCara');
+    if(!obj||reducir||document.hidden||!cara||(cara.tagName==='IMG'&&!(cara.complete&&cara.naturalWidth)))return Promise.resolve(false);
+    const capa=z=>{const c=document.createElement('canvas');c.className='fxAlientoCapa';c.setAttribute('aria-hidden','true');c.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:'+z;host.append(c);return c;};
+    const lienzoGL=capa(20);let gl=null;try{gl=crearGL(lienzoGL);}catch(_){gl=null;}
+    if(!gl){lienzoGL.remove();return Promise.resolve(false);}
+    const lienzo2D=capa(21),g=lienzo2D.getContext('2d'),chispa=sprite(pal.chispa);
+    const hr=host.getBoundingClientRect(),W=hr.width,H=hr.height,dpr=Math.min(devicePixelRatio||1,2);
+    for(const c of [lienzoGL,lienzo2D]){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);}
+    try{gl.textura(cara);}catch(_){gl.destruir();lienzoGL.remove();lienzo2D.remove();return Promise.resolve(false);}
+    const r0=obj.getBoundingClientRect(),O={x:r0.left-hr.left,y:r0.top-hr.top,w:r0.width,h:r0.height};
+    const impacto=[.5,.92],puntos=Array.from({length:1200},()=>{const u=Math.random(),v=Math.random();return {u,v,f:frente(u,v,impacto[0],impacto[1])};}).sort((a,b)=>a.f-b.f);
+    const umbralDe=q=>q<=0?-1:q>=1?9:puntos[Math.min(puntos.length-1,Math.floor(q*puntos.length))].f;
+    const ceniza=[],chispas=[];let hecha=0;
+    obj.style.visibility='hidden';
+    return new Promise(resolve=>{
+      let t0=0,antes=0,raf=0,avisado=false,fin=false;
+      const avisar=()=>{if(!avisado){avisado=true;resolve(true);}};
+      const terminar=()=>{if(fin)return;fin=true;cancelAnimationFrame(raf);clearTimeout(seguro);gl.destruir();lienzoGL.remove();lienzo2D.remove();avisar();};
+      const seguro=setTimeout(terminar,4200/vel);
+      function cuadro(ahora){
+        raf=0;if(fin)return;if(!t0)t0=ahora;const dt=Math.min(.05,antes?(ahora-antes)/1000:0)*vel;antes=ahora;
+        const tt=typeof o.reloj==='function'?o.reloj():(ahora-t0)/1000*vel;
+        // Se prende (0–0,35 s), arde de abajo arriba (0,2–1,7 s); la ceniza sigue hasta ~3,2 s.
+        const prende=suave(entre(tt,0,.35)),quema=entre(tt,.2,1.7),llamas=prende*(1-suave(entre(tt,1.4,1.9)));
+        const tiembla=tt<.5?Math.sin(tt*90)*1.6*(1-tt*2):0,R={x:O.x+tiembla,y:O.y,w:O.w,h:O.h};
+        gl.empezar(W,H,dpr,pal,tt);
+        if(quema<1)gl.quemar(R,umbralDe(quema),impacto,prende);
+        gl.llamas(R,llamas*.95);
+        g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,W,H);
+        const escala=O.w/180,umbral=umbralDe(quema);
+        while(hecha<puntos.length&&puntos[hecha].f<umbral){const q=puntos[hecha++];
+          ceniza.push({x:O.x+q.u*O.w,y:O.y+q.v*O.h,vx:(Math.random()-.5)*40,vy:-20-Math.random()*55,rot:Math.random()*TAU,vr:(Math.random()-.5)*7,vida:1.1+Math.random()*1.3,t:0,l:(2.2+Math.random()*4.5)*escala,gris:30+Math.random()*70,brasa:Math.random()<.25});}
+        if(llamas>.2&&Math.random()<llamas)chispas.push({x:O.x+Math.random()*O.w,y:O.y+O.h*(.2+Math.random()*.8),vx:(Math.random()-.5)*30,vy:-70-Math.random()*90,t:0,vida:.6+Math.random()*.5,r:(2+Math.random()*2.5)*escala});
+        for(let i=ceniza.length-1;i>=0;i--){const c=ceniza[i];c.t+=dt;if(c.t>=c.vida){ceniza.splice(i,1);continue;}
+          c.vx+=Math.sin(c.t*3+c.rot)*18*dt;c.vy-=12*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.rot+=c.vr*dt;
+          g.save();g.translate(c.x,c.y);g.rotate(c.rot);g.globalAlpha=(1-c.t/c.vida)*.9;
+          g.fillStyle=c.brasa&&c.t<.5?rgb(pal.llama):`rgb(${c.gris},${c.gris},${c.gris*.95})`;g.fillRect(-c.l/2,-c.l/3,c.l,c.l*.66);g.restore();}
+        g.globalCompositeOperation='lighter';
+        for(let i=chispas.length-1;i>=0;i--){const c=chispas[i];c.t+=dt;if(c.t>=c.vida){chispas.splice(i,1);continue;}
+          c.x+=c.vx*dt;c.y+=c.vy*dt;g.globalAlpha=1-c.t/c.vida;g.drawImage(chispa,c.x-c.r*2,c.y-c.r*2,c.r*4,c.r*4);}
+        g.globalCompositeOperation='source-over';g.globalAlpha=1;
+        if(quema>=1)avisar();
+        if(quema>=1&&!ceniza.length&&!chispas.length){terminar();return;}
+        raf=requestAnimationFrame(cuadro);
+      }
+      raf=requestAnimationFrame(cuadro);
+    });
+  }
+
   // reproducir: el ataque letal de la primera prueba.
-  window.CAOZ_FX_ALIENTO=Object.freeze({entrada,ataque,reproducir:(h,o)=>ataque(h,{...o,letal:true}),frente});
+  window.CAOZ_FX_ALIENTO=Object.freeze({entrada,ataque,quemar,reproducir:(h,o)=>ataque(h,{...o,letal:true}),frente});
 })();
