@@ -19,7 +19,7 @@ function base(){
 }
 const sha=v=>createHash('sha256').update(v).digest('hex'),clave=randomBytes(24).toString('hex'),baseD1=base(),rutas=[];
 const archivos=new Map([
-  ['/portal','<main>Portal del Domo</main>'],['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/pwa-rescate.html','Rescate PWA'],['/pwa-rescate.css','body{}'],['/pwa-rescate.js','window.rescate=true'],['/art/icono-192.png','icono'],
+  ['/portal','<main>Portal del Domo</main>'],['/portal.html','<main>Portal del Domo</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/pwa-rescate','Rescate PWA'],['/pwa-rescate.html','Rescate PWA'],['/pwa-rescate.css','body{}'],['/pwa-rescate.js','window.rescate=true'],['/art/icono-192.png','icono'],
   ['/','Producción'],['/index.html','Producción'],['/movil.html','Móvil'],['/sw.js','Juego PWA'],['/estudio','Estudio de Cartas'],['/sonidos','Estudio de Sonidos'],['/fisico/index.html','Juego Físico']
 ]);
 const env={
@@ -186,9 +186,11 @@ respuesta=await pedir('/produccion/movil.html?escritorio=1');assert.equal(respue
 respuesta=await pedir('/produccion/sw.js');assert.equal(await respuesta.text(),'Juego PWA');assert.equal(rutas.at(-1),'/sw.js','El SW del juego se mantiene bajo /produccion/.');
 respuesta=await pedir('/abrir-produccion?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12');
 assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA');
-assert.equal(rutas.at(-1),'/pwa-rescate.html?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12','La puerta sirve el puente nuevo sin perder el destino.');
+assert.equal(rutas.at(-1),'/pwa-rescate?siguiente=%2Fproduccion%2Fmovil.html%3Fsala%3DAB12','La puerta sirve el puente canónico sin perder el destino ni pasar por un 308.');
 assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('content-security-policy'),/script-src 'self'/);
 respuesta=await pedir('/abrir-produccion/');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','Ambas grafías de la puerta reparan la PWA.');
+respuesta=await pedir('/pwa-rescate?siguiente=%2Fproduccion%2F');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','La ruta canónica queda protegida y no deja a una PWA antigua interceptar un 308.');assert.match(respuesta.headers.get('cache-control'),/no-store/);assert.match(respuesta.headers.get('content-security-policy'),/script-src 'self'/);
+respuesta=await pedir('/pwa-rescate.html');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'Rescate PWA','La grafía histórica también se resuelve dentro del Worker.');
 respuesta=await pedir('/pwa-rescate.js');assert.equal(respuesta.status,200);assert.equal(await respuesta.text(),'window.rescate=true');assert.match(respuesta.headers.get('cache-control'),/no-store/);
 assert.equal((await pedir('/produccion?b=9')).headers.get('location'),origen+'/produccion/?b=9');
 assert.equal((await pedir('/index.html?b=9')).headers.get('location'),origen+'/produccion/?b=9');

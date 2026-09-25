@@ -20,7 +20,7 @@
   var q=new URLSearchParams(location.search);
   if(!('serviceWorker' in navigator)||q.has('test')||q.has('estudioVista')
      ||!(location.protocol==='https:'||location.hostname==='localhost'))return;
-  navigator.serviceWorker.register('sw.js?b=289&test=arranque').catch(function(){});
+  navigator.serviceWorker.register('sw.js?b=290&test=arranque').catch(function(){});
 })();
 </script>
 <!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
@@ -2222,7 +2222,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=289&test=arranque">
+<link rel="stylesheet" href="mulligan-ui.css?b=290&test=arranque">
 </head>
 <body>
 <div id="arranqueCaoz" role="status" aria-label="Cargando Caoz Con Todo">
@@ -2391,9 +2391,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=289&test=arranque"></script>
-<script src="final.js?b=289&test=arranque"></script>
-<script src="mulligan-ui.js?b=289&test=arranque"></script>
+<script src="motor.js?b=290&test=arranque"></script>
+<script src="final.js?b=290&test=arranque"></script>
+<script src="mulligan-ui.js?b=290&test=arranque"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2412,7 +2412,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:289, fecha:'2026-09-25'};
+const BUILD = {n:290, fecha:'2026-09-25'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -5263,7 +5263,7 @@ if(new URLSearchParams(location.search).has('biblia')){
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
    && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
-  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=289&test=arranque').catch(()=>{}); });
+  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=290&test=arranque').catch(()=>{}); });
 }
 /* El menú ya existe desde el HTML para que la cuenta, las invitaciones y la
    campaña puedan inicializarse normalmente. Sólo se ocultó su presentación

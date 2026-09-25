@@ -557,7 +557,10 @@ async function puertaPortal(req,env,url){
   // Esta ruta no estaba en la caché de la PWA raíz ni en la primera PWA bajo
   // /produccion/. Su página externa limpia sólo esas dos instalaciones y luego
   // vuelve a la mesa solicitada, incluso si el acceso llegó desde un marcador.
-  if(ruta==='/abrir-produccion'||ruta==='/abrir-produccion/')return {respuesta:await recursoPortal(req,env,'/pwa-rescate.html',true)};
+  // Pages normaliza pwa-rescate.html a /pwa-rescate con un 308. Una PWA vieja
+  // puede interceptar justo ese segundo viaje y devolver su portada histórica;
+  // servimos la ruta canónica desde el Worker, sin salto intermedio.
+  if(['/abrir-produccion','/abrir-produccion/','/pwa-rescate','/pwa-rescate.html'].includes(ruta))return {respuesta:await recursoPortal(req,env,'/pwa-rescate',true)};
   if(ruta==='/produccion')return {respuesta:redireccionPortal(url,'/produccion/',true)};
   if(/^\/produccion\/(estudio|sonidos)(\.html)?\/?$/.test(ruta))return {respuesta:redireccionPortal(url,'/'+(ruta.includes('sonidos')?'sonidos':'estudio'),true)};
   if(ruta==='/produccion/'||ruta==='/produccion/index.html')return {respuesta:await recursoProduccion(req,env,'/')};

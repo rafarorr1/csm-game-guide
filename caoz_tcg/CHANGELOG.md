@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### v51 · Build 290 · Puente PWA sin redirección · 2026-09-25
+
+- El rescate de Producción se sirve directamente en su ruta canónica, sin la
+  redirección de Pages que una instalación antigua podía interceptar y usar
+  para volver a mostrar el menú anterior.
+- Las variantes históricas de la puerta pasan por el mismo control protegido;
+  la página de reparación y el regreso al juego quedan siempre sin caché.
+
 ### v50 · Build 289 · Regreso de rescate al juego · 2026-09-25
 
 - Si el Portal necesita pedir acceso mientras la instalación antigua se está

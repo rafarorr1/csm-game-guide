@@ -18,7 +18,7 @@
    ========================================================================== */
 'use strict';
 
-const VERSION = 289;
+const VERSION = 290;
 const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
 const CACHE = PREFIJO + VERSION;
 // Los reemplazos ya vistos sobreviven al cambio de build. Sólo contiene el
