@@ -97,6 +97,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-aliento.js', 'juego/fx-ascension.js'},
         'pruebas': ('pruebas_fuego.mjs',),
     },
+    'poderes': {
+        'nombre': 'Animaciones de poderes',
+        'exportador': 'poderes-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-poderes.js'},
+        'pruebas': ('pruebas_poderes.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',

@@ -95,6 +95,40 @@ disolvente del quemado al revés; detrás se abren alas de luz y caen plumas.
 acabar el objetivo vuelve a verse. Sin WebGL o con movimiento reducido devuelve
 `false` y quien llama cambia la carta directamente.
 
+## Animaciones de poderes
+
+La revisión está en `/poderes/`, con `caoz_tcg/fx-poderes.js` (aún sin conectar a
+la partida). Cada botón hace la llamada que hará el juego:
+
+- `esporas(host,{origen,objetivos})`: del muerto salen nubes de esporas hasta
+  cada objetivo, que queda **Infectado**: moho oscuro que crece desde los bordes
+  y late mientras dura (`infectar`, `curar`).
+- `polimorfar(host,{objetivo,imagen,imagenNueva,alCambiar,sacudir})`: la carta
+  se retuerce, estalla en humo morado y la nueva cae y sacude la mesa. La
+  vuelta es la misma llamada con las caras al revés.
+- `congelar(host,{objetivo,origen,impacto})` y `descongelar`: escarcha con
+  cristales desde el impacto, vaho y carámbanos; al deshelarse gotea.
+- `apagar(host,{objetivo,origen})`: el Collar de Agua; una burbuja apaga el
+  fuego entre vapor y estalla en gotas.
+- `poseer(host,{objetivo,destino})` y `liberar`: humo negro con ojos rojos y la
+  carta apagada; con `destino` (Poseer de Thal) flota hasta allí.
+- `gracia(host,{pip,celestiales,alLlenar})`: la quinta Gracia de Talesyn; luz
+  celestial en toda la mesa y las Celestiales se vuelven de oro un instante.
+- `aturdir(host,{objetivo})`, `despertar` y `risa`: estrellas y pajaritos que
+  giran sobre la carta ladeada; la Risa de Tasha la hace temblar entre «¡JA!».
+- `llave(host,{desde,hasta,alLlegar})` y `pergamino(host,{objetivo,turno,total})`:
+  la Llave vuela girando hasta el contador; el Pergamino se abre y enciende sus
+  runas, y en el último turno estalla en luz.
+
+Los estados que duran van en un lienzo dentro de la carta (`canvas.fxEstado`,
+`data-fx-<estado>`), con un reloj compartido. Con movimiento reducido no hay
+animación, pero los estados se ponen igual, quietos.
+
+```bash
+node dev/secciones/pruebas_poderes.mjs
+python3 dev/secciones/publicar.py --publicar --seccion poderes --salida /tmp/caoz-poderes
+```
+
 ```bash
 node dev/secciones/pruebas_fuego.mjs
 python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego
