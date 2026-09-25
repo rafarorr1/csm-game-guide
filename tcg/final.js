@@ -30,6 +30,10 @@
   const recurso=nombre=>nombre+'?b='+encodeURIComponent(b)+'&test=arranque';
   const estilo=nombre=>document.write('<link rel="stylesheet" href="'+recurso(nombre)+'">');
   const guion=nombre=>document.write('<script src="'+recurso(nombre)+'"><\/script>');
+  // Las tipografías del tema se piden en cuanto su CSS está leído: si llegan
+  // tarde, un panel abierto cambia de medida al aplicarlas. Sin etiquetas
+  // nuevas: cada recurso escrito aquí lleva el query de rescate de la PWA.
+  window.addEventListener?.('DOMContentLoaded',()=>{for(const f of ["700 16px 'Cinzel Domo'","500 16px 'Cormorant Domo Texto'"])document.fonts?.load(f).catch(()=>{});},{once:true});
   estilo('acabados.css');
   guion('arte-vistas.js');
   if(new URLSearchParams(location.search).has('estudioVista'))guion('estudio-vista.js');
@@ -62,10 +66,12 @@
   guion('dado-fisico.js');
   guion('moneda-fisica.js');
   guion('polish-aaa.js');
+  guion('fx-aliento.js');
   guion('coleccion-juego.js');
   guion('sobres-escena.js');
   guion('sobres-apertura.js');
   guion('sobres-revelacion.js');
+  guion('fx-aliento.js');
   guion('carta-pintor.js');
   guion('carta-diseno.js');
   guion('carta-juego.js');
@@ -74,6 +80,8 @@
   guion('coleccion-ui.js');
   estilo('cuenta.css');
   estilo('cuenta-juego.css');
+  // El tema del visor para el resto del juego: después del CSS de cada módulo.
+  estilo('tema-domo.css');
   guion('cuenta-modelo.js');
   guion('cuenta-progreso.js');
   guion('cuenta-servicio.js');

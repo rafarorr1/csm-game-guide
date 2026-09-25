@@ -339,11 +339,13 @@ PRUEBAS.suite('tutoriales', async t => {
    rompa y se arregle, el caso se queda escrito aquí.
    ======================================================================== */
 PRUEBAS.suite('integracion', async t => {
-  // El cargador y el modo sin conexión necesitan las dos piezas compartidas.
+  // El cargador y el modo sin conexión necesitan las piezas compartidas.
   {
     t.check(!!window.CAOZ_AAA, 'la capa AAA debe instalarse al cargar ambas piezas');
+    t.check(typeof window.CAOZ_FX_ALIENTO?.entrada==='function'&&typeof window.CAOZ_FX_ALIENTO?.ataque==='function',
+      'el módulo visual de Thal debe cargar sus dos efectos');
     const sw = await (await fetch('sw.js')).text();
-    for(const archivo of ['final-core.js','polish-aaa.js']){
+    for(const archivo of ['final-core.js','polish-aaa.js','fx-aliento.js']){
       const respuesta=await fetch(archivo);
       t.check(respuesta.ok && (await respuesta.text()).includes('use strict'), archivo+' debe estar publicado');
       t.check(sw.includes("'"+archivo+"'"), archivo+' debe estar en la caché inicial');
@@ -351,6 +353,50 @@ PRUEBAS.suite('integracion', async t => {
   }
 
 
+});
+
+/* ===========================================================================
+   SUITE: alientoThal — el dragón cambia la coreografía, no las reglas.
+   La capa se suplanta para medir qué pide el motor sin depender del navegador.
+   ======================================================================== */
+PRUEBAS.suite('alientoThal',async t=>{
+  const viejo={entrada:window.fxThalEntrada,ataque:window.fxThalAtaque,hit:window.fxHit,lunge:window.fxLunge,muerte:window.fxDeath};
+  try{
+    const entradas=[],ataques=[];let golpes=0,lances=0,muertes=0;
+    window.fxThalEntrada=async(atacante,afectados)=>{entradas.push({atacante,afectados});return true;};
+    window.fxThalAtaque=async(atacante,objetivo,dano,opt)=>{ataques.push({atacante,objetivo,dano,opt});return true;};
+    window.fxHit=async()=>{golpes++;}; window.fxLunge=async()=>{lances++;}; window.fxDeath=async()=>{muertes++;};
+
+    T.newGame('talesin','fender');T.fast(true);
+    const thal=T.mkUnit('tal',0),uno=T.mkUnit('discipulo',1),dos=T.mkUnit('bartolomeo',1);
+    uno.pH=10;dos.pH=10;thal.sick=false;
+    T.P(0).field=[thal];T.P(1).field=[uno,dos];T.P(0).pd=10;
+    T.G.active=0;T.G.phase='combate';T.G.resolving=false;T.recalc();T.render();
+    await T.CARDS.tal.enter(T.G,0,thal);
+    t.igual(entradas.length,1,'Thal debe abrir una sola onda de ácido');
+    t.igual(entradas[0].afectados.length,2,'la onda debe cubrir a cada rival vivo');
+    t.check(uno.dmg===3&&dos.dmg===3,'el Aliento de Ácido debe conservar sus 3 daños reales');
+    t.igual(golpes,2,'cada daño de entrada conserva su resolución y cifra normal');
+
+    uno.pH=20;uno.dmg=0;thal.sick=false;thal.attacked=false;
+    T.P(1).field=[uno];T.G.active=0;T.G.phase='combate';T.G.resolving=false;T.recalc();T.render();
+    await T.doAttack(thal,uno);
+    t.igual(ataques.length,1,'el ataque de Thal debe pedir su propio aliento');
+    t.check(ataques[0].atacante===thal&&ataques[0].objetivo===uno&&ataques[0].dano===thal.atk,
+      'el aliento debe usar el atacante, el objetivo y el daño reales');
+    t.check(!ataques[0].opt.letal,'un objetivo que sobrevive debe quedar chamuscado, no en ceniza');
+    t.igual(lances,0,'Thal no debe usar la embestida genérica contra Personajes');
+
+    const ceniza=T.mkUnit('discipulo',1);thal.sick=false;thal.attacked=false;
+    T.P(1).field=[ceniza];T.G.active=0;T.G.phase='combate';T.G.resolving=false;T.recalc();T.render();
+    await T.doAttack(thal,ceniza);
+    t.check(ataques[1]?.opt.letal===true,'un golpe confirmado letal debe encender la ceniza');
+    t.check(!ceniza.alive&&!T.P(1).field.includes(ceniza),'la muerte sigue yendo a las Alcantarillas');
+    t.igual(muertes,0,'la ceniza no debe resucitar como fantasma de muerte genérico');
+  }finally{
+    window.fxThalEntrada=viejo.entrada;window.fxThalAtaque=viejo.ataque;
+    window.fxHit=viejo.hit;window.fxLunge=viejo.lunge;window.fxDeath=viejo.muerte;
+  }
 });
 
 PRUEBAS.suite('visual', async t => {
@@ -2634,6 +2680,8 @@ PRUEBAS.suite('campanaEpilogoSobres', async t => {
     const carga=new Promise(r=>f.onload=r);f.src=pagina+'?test=epilogo-sobres-interno';document.body.appendChild(f);await carga;
     const w=f.contentWindow,d=w.document,media=w.matchMedia;let inventario;
     try{
+      // Con las tipografías ya aplicadas: al llegar reacomodan el carrusel.
+      await d.fonts?.ready;
       inventario=coleccionDePrueba(w,t,pagina);const m=inventario.modelo;
       w.matchMedia=q=>q==='(prefers-reduced-motion:reduce)'?{matches:true,addEventListener(){},removeEventListener(){}}:media.call(w,q);
       w.newGame('fender','gero');w.showScreen('board');
@@ -2945,6 +2993,21 @@ PRUEBAS.suite('pwaSinConexion', async t => {
     }
     let respuesta;eventos.fetch({request:new Request(new URL('desconocido',scope)),respondWith:p=>respuesta=p});
     t.check((await respuesta).status===504,ruta+': una ruta desconocida no debe confundirse con el juego.');
+  }
+});
+
+/* La portada de arranque es visual, pero no puede volver a dejar asomarse el
+   menú viejo antes del acabado ni congelar las rutas de captura del arnés. */
+PRUEBAS.suite('portadaArranque', async t => {
+  const paginas=await Promise.all(['index.html','movil.html'].map(async pagina=>[pagina,await fetch(pagina+'?test=portada-arranque').then(r=>r.text())]));
+  for(const [pagina,html] of paginas){
+    t.check(/classList\.add\(['"]arrancando['"]\)/.test(html),pagina+': debe marcar el arranque antes de pintar el cuerpo.');
+    t.check(/id=["']arranqueCaoz["'][\s\S]*?art\/logo\.webp/.test(html),pagina+': la portada inicial debe mostrar el logo de Caoz.');
+    t.check(/html\.arrancando #app,html\.arrancando dialog\[open\]\{visibility:hidden\}/.test(html),pagina+': el menú y los diálogos no pueden asomarse durante la carga.');
+    t.check(/addEventListener\(['"]load['"]/.test(html)&&/menu\?\.classList\.add\(['"]entra['"]\)/.test(html),pagina+': el menú debe revelarse después de load con su entrada.');
+    t.check(/html\.arranqueCaozSaliendo #arranqueCaoz > \*\{opacity:0/.test(html),pagina+': el logo temporal debe apagarse antes de revelar el menú.');
+    t.check(/prefers-reduced-motion:reduce/.test(html),pagina+': el arranque debe respetar menos movimiento.');
+    t.check(/class=["']screen on portada["'] id=["']menu["']/.test(html),pagina+': el menú debe conservar su estado interno inicial.');
   }
 });
 
@@ -5293,6 +5356,42 @@ PRUEBAS.suite('cartaPintada',async t=>{
   }
 });
 
+
+/* ===========================================================================
+   SUITE: muerteMachete — Machete no va volando a las Alcantarillas: su carta
+   arde hasta la ceniza (fx-aliento.js). Sólo él; si el efecto no puede
+   dibujarse, la muerte de siempre. En las dos pantallas.
+   ======================================================================== */
+PRUEBAS.suite('muerteMachete',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const marco=document.createElement('iframe');marco.style.cssText='position:fixed;left:-10000px;'+(pagina==='index.html'?'width:1440px;height:900px':'width:390px;height:844px');
+    const carga=new Promise(r=>marco.onload=r);marco.src=pagina+'?test=muerte-machete-interna';document.body.appendChild(marco);await carga;
+    const w=marco.contentWindow,d=marco.contentDocument;
+    try{
+      t.check(typeof w.CAOZ_FX_ALIENTO?.quemar==='function',pagina+': falta fx-aliento.js en el juego.');
+      w.showEnd=()=>{};w.netSend=()=>{};w.newGame('fender','gero');w.aiTurn=async()=>{};
+      Object.assign(w.eval('NET'),{on:false,host:false,guest:false});
+      w.eval(`G.fast=false;G.auto=true;G.silent=false;G.active=0;G.phase='principal';P(0).field=[];P(1).field=[mkUnit('machete',1),mkUnit('bartolomeo',1)];recalc();`);
+      w.showScreen('board');w.render();
+      const quemadas=[],original=w.CAOZ_FX_ALIENTO.quemar;
+      let respuesta=null;
+      w.CAOZ_FX_ALIENTO=Object.freeze({...w.CAOZ_FX_ALIENTO,quemar:(h,o)=>{quemadas.push(o.objetivo?.dataset.uid);return respuesta!==null?Promise.resolve(respuesta):original(h,o);}});
+      const unidad=id=>w.eval(`P(1).field.find(u=>u.card.id==='${id}')`);
+      const t0=performance.now();while(w.fxEl(unidad('machete'))?.dataset.piel!=='lista'&&performance.now()-t0<15000)await new Promise(r=>w.requestAnimationFrame(r));
+      // Otra carta: la muerte de siempre, sin fuego.
+      await w.destroy(unidad('bartolomeo'));
+      t.igual(quemadas.length,0,pagina+': sólo Machete arde al morir.');
+      const m=unidad('machete'),uid=String(m.uid);
+      await w.destroy(m);
+      t.check(quemadas.length===1&&quemadas[0]===uid,pagina+': la muerte de Machete debe pasar por el incendio.');
+      t.check(!w.eval(`P(1).field.some(u=>u.card.id==='machete')`),pagina+': Machete sale del campo tras arder.');
+      // Si el efecto no puede dibujarse (false), la muerte de siempre sigue.
+      respuesta=false;w.eval(`P(1).field=[mkUnit('machete',1)];recalc();`);w.render();
+      await w.destroy(unidad('machete'));
+      t.check(!w.eval(`P(1).field.some(u=>u.card.id==='machete')`)&&quemadas.length===2,pagina+': sin incendio, Machete muere igual.');
+    }finally{marco.remove();}
+  }
+});
 
 /* Arranque automático cuando se entra por ?test=... */
 if(new URLSearchParams(location.search).has('test')){

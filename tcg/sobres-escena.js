@@ -679,7 +679,9 @@
     }
     pintar(null, null); contenedor.appendChild(canvas);
     const recursos = cargarRecursos(opciones, grupo, variante);
-    recursos.listos.then(r => pintar(r.logo, r.arte));
+    // El repintado con portada y tipografías espera un rato libre: con varios
+    // sobres en la biblioteca no debe coincidir con un toque.
+    recursos.listos.then(r => (window.requestIdleCallback || setTimeout)(() => pintar(r.logo, r.arte), { timeout: 400 }));
     return { destruir() { vivo = false; recursos.cancelar(); canvas.remove(); } };
   }
   // Logo, ilustración de portada y tipografías: se espera a los tres (o a que
