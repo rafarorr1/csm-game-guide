@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Aliento de fuego · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./fuego.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/fx-aliento.js"></script>
+<script src="./fuego.js" defer></script>
+</head>
+<body>
+<main class="fuegoShell" aria-labelledby="fuegoTitulo">
+  <header class="fuegoCabecera">
+    <p class="fuegoEtiqueta">PRUEBA DE ANIMACIÓN · SIN PARTIDA</p>
+    <h1 id="fuegoTitulo">Thal · Aliento de Ácido</h1>
+    <p><b>Entrada:</b> Thal brilla en verde y su onda de ácido hace brillar a las cartas que reciben daño. <b>Ataque:</b> se envuelve en fuego verde y lo escupe; si el golpe no mata, el rival encaja el golpe y sigue en pie; si lo mata, arde hasta volverse ceniza. <b>Machete:</b> al morir, su carta se incendia y se vuelve ceniza, igual que en la partida.</p>
+  </header>
+  <section id="mesaFuego" class="mesaFuego" aria-label="Mesa de prueba">
+    <div class="filaFuego"><figure class="cartaFuego" id="rival-rey" aria-label="El Rey"></figure><figure class="cartaFuego" id="rival-bartolomeo" aria-label="Bartolomeo"></figure><figure class="cartaFuego" id="rival-eric" aria-label="Eric"></figure></div>
+    <div class="lineaMesa" aria-hidden="true"></div>
+    <div class="filaFuego"><figure class="cartaFuego" id="atacante" aria-label="Thal"></figure><figure class="cartaFuego" id="aliado-machete" aria-label="Machete"></figure></div>
+  </section>
+  <div class="fuegoControles">
+    <button type="button" class="fuegoBoton oro" id="entrar">Entra Thal</button>
+    <button type="button" class="fuegoBoton oro" id="golpear">Ataque que no mata · El Rey</button>
+    <button type="button" class="fuegoBoton oro" id="matar">Ataque letal · Bartolomeo</button>
+    <button type="button" class="fuegoBoton oro" id="morirMachete">Muere Machete</button>
+    <button type="button" class="fuegoBoton" id="reiniciar">Reiniciar</button>
+    <label class="fuegoOpcion"><input type="checkbox" id="lento"> Cámara lenta</label>
+  </div>
+  <p id="fuegoEstado" class="fuegoEstado" role="status" aria-live="polite">Preparando las cartas…</p>
+  <p class="fuegoNota">El Rey tiene 8 de vida y Thal 9 de ATQ: en la partida sólo aguanta el golpe con la vida mejorada. Aquí se muestra así para ver la animación.</p>
+</main>
+</body>
+</html>

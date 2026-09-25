@@ -1,0 +1,23 @@
+/* Mesa mínima para revisar el aliento de fuego. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(12px,3vw,32px);background:radial-gradient(ellipse 60% 50% at 50% 55%,#2a1a4a55,transparent 70%),#07050b}
+.fuegoShell{width:min(1100px,100%);margin:auto;display:flex;flex-direction:column;gap:14px}
+.fuegoEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.fuegoCabecera h1{color:#f0d796;font:700 clamp(26px,4vw,42px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.fuegoCabecera p:last-child{color:#c9bdda;font-size:1.1em}
+.mesaFuego{position:relative;isolation:isolate;display:grid;grid-template-rows:1fr auto 1fr;gap:clamp(18px,4vh,46px);padding:clamp(20px,4vh,44px) 12px;border-radius:18px;overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 50% 50%,#1b3a2233,transparent 70%),linear-gradient(180deg,#140f20,#0b0812);border:1px solid #e7bb5530;box-shadow:inset 0 0 80px #000c}
+.filaFuego{display:flex;justify-content:center;gap:clamp(10px,3vw,34px)}
+.lineaMesa{height:1px;margin:0 8%;background:linear-gradient(90deg,transparent,#e7bb5566,transparent)}
+.cartaFuego{position:relative;width:clamp(96px,17vw,200px);aspect-ratio:5/7;border-radius:4.8%/3.43%;will-change:transform,filter}
+.cartaFuego canvas{width:100%;height:100%;display:block;border-radius:inherit;box-shadow:0 14px 30px #000b}
+.fuegoControles{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.fuegoBoton{font:700 14px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.06em;color:#f1dcae;padding:12px 20px;border-radius:10px;cursor:pointer;border:1px solid #e7bb5566;background:linear-gradient(180deg,#261c38,#110c19)}
+.fuegoBoton.oro{color:#2a1706;border-color:#fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18)}
+.fuegoBoton:disabled{opacity:.5;cursor:default}
+.fuegoOpcion{display:flex;gap:6px;align-items:center;color:#d9cbe8;font-size:1.05em}
+.fuegoOpcion select{font:inherit;background:#150f20;color:#f1dcae;border:1px solid #e7bb5555;border-radius:6px;padding:3px 6px}
+.fuegoEstado{text-align:center;color:#b9aecb}
+.fuegoNota{text-align:center;color:#8f84a3;font-size:.95em}
+.fuegoCabecera b{color:#f1d59a}

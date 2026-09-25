@@ -1,5 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
+### v48 · Build 287 · Beta promovida a Producción · 2026-09-25
+
+- Producción adopta el arranque de Beta: mientras el juego prepara sus recursos
+  sólo se muestra el logo de Caoz sobre fondo oscuro; después el menú entra sin
+  revelar por un cuadro la portada anterior.
+- Se promueven también el acabado visual, los efectos y los ajustes de la Beta
+  validada, conservando el Portal, las cuentas y la recuperación de sesión de
+  Producción.
+- La caché se renueva como build 287 para que una instalación anterior no pueda
+  mezclar el menú antiguo con la nueva portada.
+
 ### v47 · Build 286 · Entrada sin destello · 2026-09-25
 
 - Al abrir Producción, el juego recupera primero una cuenta ya vinculada. El
@@ -24,6 +35,56 @@
   contraseña cierra las sesiones del Portal que se hubieran creado antes.
 - Las regresiones cubren la PWA raíz heredada, una cookie que no llega a
   confirmarse y una sesión válida que sí abre el destino solicitado.
+
+### v45 · Build 283 · Machete arde al morir · 2026-09-24
+
+- Cuando Machete muere, su carta no viaja a las Alcantarillas: se incendia
+  desde abajo, se deshace en ceniza y la partida continúa al consumirse la
+  carta. Si el efecto no puede dibujarse, conserva la muerte habitual.
+- La secuencia usa el mismo efecto en escritorio y móvil, queda precargada por
+  la aplicación y cuenta con una regresión en ambas pantallas.
+
+### v44 · Build 282 · Fundido limpio de la portada · 2026-09-24
+
+- La portada de arranque ahora apaga el logo contra negro antes de revelar el
+  menú. Ya no se cruzan el logo temporal y el logo de la portada durante el
+  fundido.
+
+### v43 · Build 281 · Portada de arranque de Caoz · 2026-09-24
+
+- Al abrir el juego, el menú ya no se asoma a medio cargar: aparece sólo el
+  logo de Caoz sobre fondo oscuro mientras se prepara la partida.
+- Cuando el acabado completo está listo, el logo se desvanece y el menú entra
+  con su animación habitual. Las cuentas, invitaciones y campañas conservan
+  exactamente el mismo arranque interno.
+- Las rutas de pruebas y capturas siguen entrando de forma directa, y quienes
+  prefieren menos movimiento ven la transición de forma inmediata.
+
+### v42 · Build 280 · Aliento de Thal en la mesa · 2026-09-24
+
+- Cuando Thal entra y sobrevive a la Nube de Dagas, su Aliento de Ácido abre
+  con una onda verde por todos los Personajes rivales. El motor sigue decidiendo
+  el daño, por lo que una respuesta que salve a una carta nunca anuncia un daño
+  falso.
+- Al atacar a un Personaje, Thal reúne fuego verde y lo exhala: si el golpe se
+  confirma no letal, la carta queda chamuscada y en pie; si se confirma letal,
+  se vuelve ceniza en vez de viajar como carta fantasma a las Alcantarillas.
+- La secuencia viaja también a la partida en línea, tiene salida Canvas cuando
+  WebGL o el arte no están disponibles y conserva el golpe habitual como plan B.
+
+### v41 · Build 279 · Tema del visor en todo el juego · 2026-09-24
+
+- Títulos, nombres, botones y cifras en Cinzel; el texto que se lee (reglas,
+  registro, chat, avisos, menús) en Cormorant, un poco mayor para que se lea
+  bien y con cifras alineadas.
+- Paneles y ventanas de cristal oscuro con filo de oro, títulos con una regla
+  dorada que se desvanece; botones de cristal con filo metálico y el dorado de
+  metal pulido.
+- En combate, los números de daño y curación son gemas como las de la carta;
+  los avisos, cápsulas con rombos; «Tu turno», letras de metal entre reglas
+  doradas; los mensajes breves, del mismo cristal.
+- Las tipografías se piden al arrancar y los sobres de la biblioteca repintan su
+  portada en un rato libre, para que ningún panel cambie de medida al tocarlo.
 
 ### v40 · Build 278 · Epílogo verificado sin carreras · 2026-09-24
 

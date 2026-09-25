@@ -338,7 +338,18 @@ C('tal',{n:'Thal',t:'personaje',c:10,a:9,h:9,tr:['Dragón'],r:2,art:'🐉',
  x:'<b>Vuelo. Aliento de Ácido — al entrar:</b> 3 daño a todos los Personajes rivales. <b>Poseer (3 PD):</b> revive un rival muerto este turno como 2/2 en tu campo. <b>Ganador de la temporada:</b> puedes jugar el Pergamino sin Llaves.',
  keys:['vuelo'], scrollFree:true,
  enter:async(g,s,u)=>{ log('🐉 <b>Aliento de Ácido</b>: 3 daño a todo el campo rival.','dmg');
-   for(const o of [...P(1-s).field]) await dmgU(o,3,{src:'tal'}); },
+   const afectados=[...P(1-s).field].filter(o=>o.alive);
+   // La onda sale antes de bajar las vidas: así el invitado también recibe una
+   // fotografía de la mesa completa y los números aparecen al cruzar el ácido.
+   if(afectados.length){
+     netFx('thalEntrada',{uid:u.uid,afectados:afectados.map(o=>({uid:o.uid,n:3}))});
+     if(NET.host) netPushState();
+     if(typeof fxThalEntrada==='function') await fxThalEntrada(u,afectados.map(o=>({u:o,n:3})));
+   }
+   if(G!==g||g.over) return;
+   // El motor, no la onda, decide el daño: Eric o una respuesta que salve a
+   // alguien nunca recibe una cifra anticipada que contradiga la partida.
+   for(const o of afectados) if(o.alive) await dmgU(o,3,{src:'tal'}); },
  act:{cost:3,n:'Poseer',req:(g,s)=>g.diedThisTurn.some(d=>d.side===1-s),do:async(g,s,u)=>{
    const d=g.diedThisTurn.find(d=>d.side===1-s); if(!d) return;
    const idx=g.diedThisTurn.indexOf(d); g.diedThisTurn.splice(idx,1);
@@ -1227,14 +1238,29 @@ async function dmgU(u, n, opt={}){
       }
     }
   }
+  const golpe={inf:opt.src==='infeccion', fuego:!!opt.fire, letal:u.dmg+n>=u.maxHp,
+    combate:opt.src==='combate', atacante:opt.att?opt.att.uid:null,
+    ataqueThal:!!opt.thalAttack};
+  let efectoThal=false;
+  // Thal no embiste: reúne el fuego y respira sobre el Personaje. Se comunica
+  // antes de cambiar el estado para que el invitado conserve ambos cuerpos en
+  // pantalla durante la animación. Las reglas se aplican justo después igual.
+  if(opt.thalAttack&&opt.att&&typeof fxThalAtaque==='function'){
+    netFx('thalAtaque',{uid:u.uid,atacante:opt.att.uid,n,letal:golpe.letal});
+    if(NET.host) netPushState();
+    efectoThal=await fxThalAtaque(opt.att,u,n,golpe);
+    if(G.over||!u.alive) return 0;
+    // El efecto se puede desactivar o fallar sin convertir un combate en un
+    // silencio: en ese caso conserva la embestida y el golpe de siempre.
+    if(!efectoThal) await fxLunge(opt.att,u);
+  }
   u.dmg+=n;
   if(opt.att) u.killer=opt.att;
-  const golpe={inf:opt.src==='infeccion', fuego:!!opt.fire, letal:u.dmg>=u.maxHp,
-    combate:opt.src==='combate', atacante:opt.att?opt.att.uid:null};
+  if(efectoThal&&golpe.letal) u.fxCeniza=true;
   netFx('hit',{uid:u.uid,n,...golpe});
   log(`${u.card.n} recibe ${n} daño (${Math.max(0,u.maxHp-u.dmg)}/${u.maxHp}).`,'dmg');
   render();
-  await fxHit(u, n, golpe);
+  if(!efectoThal) await fxHit(u, n, golpe);
   await checkDeaths();
   return n;
 }
@@ -1279,7 +1305,10 @@ async function destroy(u,opt={}){
 async function killUnit(u, opt={}){
   if(!u.alive) return;
   const s=u.side;
-  await fxDeath(u);                       // se anima mientras sigue en el campo
+  // Si Thal ya redujo la carta a ceniza, no la hacemos reaparecer como una
+  // carta fantasma camino a las Alcantarillas.
+  if(u.fxCeniza) delete u.fxCeniza;
+  else await fxDeath(u);                  // se anima mientras sigue en el campo
   const idx=P(s).field.indexOf(u); if(idx>=0) P(s).field.splice(idx,1);
   u.alive=false;
   // La muerte rompe la corte antes de que una Trampa o un Al morir la repueble.
@@ -2069,7 +2098,9 @@ async function playFromHand(s, id, forcedTargets){
     P(s).field.push(u); recalc();
     if(u.keys.has('prisa')) u.sick=false;
     render();
-    fxAterriza(u);
+    // Thal trae su propia entrada (onda de ácido) después de sobrevivir la
+    // Nube de Dagas; la caída genérica competiría por transform y filtro.
+    if(id!=='tal') fxAterriza(u);
     await cloudCheck(u);
     if(u.alive){
       if(c.enter) await c.enter(G,s,u,ts);
@@ -2354,8 +2385,11 @@ async function doAttack(u, target){
       else if(r<=5){ log('Aidman pierde la apuesta y se hace el daño a sí mismo.','dmg');
         await dmgU(u,atk,{src:'ludopata'}); render(); return true; }
     }
-    netFx('lunge',{uid:u.uid, tg:target==='face' ? 'face' : target.uid, side:(s===FOE?0:1)});
-    await fxLunge(u,target);
+    const alientoThal=u.card.id==='tal'&&target!=='face'&&!target.card.illusion;
+    if(!alientoThal){
+      netFx('lunge',{uid:u.uid, tg:target==='face' ? 'face' : target.uid, side:(s===FOE?0:1)});
+      await fxLunge(u,target);
+    }
     // Ilusión
     if(target!=='face' && target.card.illusion){
       log('La Ilusión se desvanece sin recibir daño.','sys');
@@ -2366,7 +2400,7 @@ async function doAttack(u, target){
     } else {
       const back = target.atk;
       const noCounter = u.noCounter || target.marked || target.atk<=0;
-      await dmgU(target,atk,{att:u,src:'combate'});
+      await dmgU(target,atk,{att:u,src:'combate',thalAttack:alientoThal});
       if(!noCounter && back>0) await dmgU(u,back,{att:target,src:'combate'});  // daño simultáneo
       target.marked=false;
     }
@@ -3946,7 +3980,21 @@ async function netPlayFxLote(list,partida){
   for(const f of list){
     if(G!==partida) return;
     const u=f.uid!=null? [...P(0).field,...P(1).field].find(x=>x.uid===f.uid) : null;
-    if(f.k==='hit'&&u) await fxHit(u,f.n,{inf:f.inf,fuego:f.fuego,letal:f.letal,combate:f.combate,atacante:f.atacante});
+    if(f.k==='thalEntrada'&&u){
+      const afectados=(f.afectados||[]).map(a=>{
+        const objetivo=[...P(0).field,...P(1).field].find(x=>x.uid===a.uid);
+        return objetivo?{u:objetivo,n:a.n}:null;
+      }).filter(Boolean);
+      if(afectados.length&&typeof fxThalEntrada==='function') await fxThalEntrada(u,afectados);
+    }
+    else if(f.k==='thalAtaque'&&u){
+      const atacante=[...P(0).field,...P(1).field].find(x=>x.uid===f.atacante);
+      if(atacante&&typeof fxThalAtaque==='function') await fxThalAtaque(atacante,u,f.n,{letal:f.letal});
+    }
+    else if(f.k==='hit'&&u){
+      // El ataque de Thal ya colocó su propio número de daño y quemado.
+      if(!f.ataqueThal) await fxHit(u,f.n,{inf:f.inf,fuego:f.fuego,letal:f.letal,combate:f.combate,atacante:f.atacante});
+    }
     else if(f.k==='lunge'&&u){
       const tg = f.tg==='face' ? 'face' : [...P(0).field,...P(1).field].find(x=>x.uid===f.tg);
       if(tg) await fxLunge(u, tg);

@@ -91,6 +91,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'movil.html', 'procedencia.json', '_headers', 'juego/carta-juego.js', 'juego/carta-juego.css'},
         'pruebas': ('pruebas_cartas.mjs',),
     },
+    'fuego': {
+        'nombre': 'Aliento de fuego',
+        'exportador': 'fuego-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-aliento.js'},
+        'pruebas': ('pruebas_fuego.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',
