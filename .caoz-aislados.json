@@ -53,6 +53,10 @@
       "fuente": "d45399456abc09f44ea7cccbdcdec43d0e5b1787",
       "ruta": "tcg/pitagoras"
     },
+    "poderes": {
+      "fuente": "7a48c3543c173a3536c44fac8e5ee18d3c4b5f2f",
+      "ruta": "tcg/poderes"
+    },
     "portal": {
       "fuente": "034503171f665f7e7caa2275af847032dd89bfc5",
       "ruta": "tcg/portal"

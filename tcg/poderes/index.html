@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Animaciones de poderes · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./poderes.css">
+<script src="./generado/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/fx-poderes.js"></script>
+<script src="./poderes.js" defer></script>
+</head>
+<body>
+<main class="poderesShell" aria-labelledby="poderesTitulo">
+  <header class="poderesCabecera">
+    <p class="poderesEtiqueta">PRUEBA DE ANIMACIÓN · SIN PARTIDA</p>
+    <h1 id="poderesTitulo">Animaciones de poderes</h1>
+    <p>Esporas e Infectado, la Polimorfia de Rulchete, el Rayo de Escarcha y el Collar de Agua, Poseído, la Ascensión de Talesyn, Aturdido y la Risa de Tasha, y las Llaves del Domo con el Pergamino de Deseo. Los estados (moho, escarcha, humo con ojos, pajaritos) se quedan en la carta mientras duran; «Reiniciar» deja la mesa como al principio.</p>
+  </header>
+  <section id="mesaPoderes" class="mesaPoderes" aria-label="Mesa de prueba">
+    <div class="marcadores">
+      <div class="marcador" id="llaves" aria-label="Llaves del Domo"><span>Llaves del Domo</span><b id="llavesCuenta">1</b><i>/ 3</i></div>
+      <div class="marcador" aria-label="Gracia de Talesyn"><span>Gracia de Talesyn</span><span class="pips" id="gracia"><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i><i class="pip"></i></span></div>
+    </div>
+    <div class="filaPoderes"><figure class="cartaPoder" id="c-rey" aria-label="El Rey"></figure><figure class="cartaPoder" id="c-bartolomeo" aria-label="Bartolomeo"></figure><figure class="cartaPoder" id="c-eric" aria-label="Eric"></figure></div>
+    <div class="lineaMesa" aria-hidden="true"></div>
+    <div class="filaPoderes"><figure class="cartaPoder" id="c-horton" aria-label="Sir Horton"></figure><figure class="cartaPoder" id="c-discipulo" aria-label="Discípulo de Rul"></figure><figure class="cartaPoder" id="c-tok_petunia" aria-label="Petunia Sagrada"></figure><figure class="cartaPoder" id="c-llavemago" aria-label="Llave del Mago"></figure><figure class="cartaPoder" id="c-pergamino" aria-label="Pergamino de Deseo Ilimitado"></figure><div class="cartaPoder hueco" id="hueco" aria-label="Hueco libre"></div></div>
+  </section>
+  <div class="poderesControles" id="controles">
+    <button type="button" class="poderesBoton oro" data-accion="esporas">2 · Esporas del Demonio</button>
+    <button type="button" class="poderesBoton oro" data-accion="polimorfia">3 · Polimorfia de Rulchete</button>
+    <button type="button" class="poderesBoton oro" data-accion="escarcha">4 · Rayo de Escarcha</button>
+    <button type="button" class="poderesBoton oro" data-accion="collar">4 · Collar de Agua</button>
+    <button type="button" class="poderesBoton oro" data-accion="gema">5 · Gema del Conserje</button>
+    <button type="button" class="poderesBoton oro" data-accion="poseer">5 · Poseer de Thal</button>
+    <button type="button" class="poderesBoton oro" data-accion="talesyn">6 · Talesyn asciende</button>
+    <button type="button" class="poderesBoton oro" data-accion="aturdir">7 · Aturdido</button>
+    <button type="button" class="poderesBoton oro" data-accion="tasha">7 · Risa de Tasha</button>
+    <button type="button" class="poderesBoton oro" data-accion="llave">8 · Gana una Llave</button>
+    <button type="button" class="poderesBoton oro" data-accion="pergamino">8 · Turno del Pergamino</button>
+    <button type="button" class="poderesBoton" data-accion="reiniciar">Reiniciar</button>
+    <label class="poderesOpcion"><input type="checkbox" id="lento"> Cámara lenta</label>
+  </div>
+  <p id="poderesEstado" class="poderesEstado" role="status" aria-live="polite">Preparando las cartas…</p>
+</main>
+</body>
+</html>

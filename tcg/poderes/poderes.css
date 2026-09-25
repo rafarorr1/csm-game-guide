@@ -1,0 +1,28 @@
+/* Mesa mínima para revisar las animaciones de poderes. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(12px,3vw,32px);background:radial-gradient(ellipse 60% 50% at 50% 55%,#2a1a4a55,transparent 70%),#07050b}
+.poderesShell{width:min(1180px,100%);margin:auto;display:flex;flex-direction:column;gap:14px}
+.poderesEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.poderesCabecera h1{color:#f0d796;font:700 clamp(26px,4vw,42px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.poderesCabecera p:last-child{color:#c9bdda;font-size:1.1em}
+.mesaPoderes{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:clamp(14px,3vh,34px);padding:clamp(14px,3vh,30px) 12px clamp(20px,4vh,40px);border-radius:18px;overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 50% 50%,#2a1a4a33,transparent 70%),linear-gradient(180deg,#140f20,#0b0812);border:1px solid #e7bb5530;box-shadow:inset 0 0 80px #000c}
+.marcadores{display:flex;justify-content:center;flex-wrap:wrap;gap:10px 22px}
+.marcador{display:flex;align-items:center;gap:8px;padding:6px 14px;border-radius:999px;border:1px solid #e7bb5555;background:linear-gradient(180deg,#221834,#110c19);color:#d9cbe8;font:600 12px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.05em}
+.marcador b{color:#ffe08a;font-size:20px;font-weight:900}
+.marcador i{font-style:normal;color:#a896bd}
+.pips{display:flex;gap:6px}
+.pip{width:14px;height:14px;border-radius:50%;border:2px solid #e7bb55aa;background:#150f20}
+.pip[data-llena]{background:radial-gradient(circle at 40% 35%,#fff6c8,#f0c14e 45%,#9a6414);box-shadow:0 0 10px #ffd76688}
+.filaPoderes{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(10px,2.4vw,26px)}
+.lineaMesa{height:1px;margin:0 8%;background:linear-gradient(90deg,transparent,#e7bb5566,transparent)}
+.cartaPoder{position:relative;width:clamp(84px,13vw,160px);aspect-ratio:5/7;border-radius:4.8%/3.43%}
+.cartaPoder>canvas:first-child{width:100%;height:100%;display:block;border-radius:inherit;box-shadow:0 14px 30px #000b}
+.cartaPoder.hueco{border:2px dashed #e7bb5540;background:#ffffff05}
+.poderesControles{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.poderesBoton{font:700 13px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.04em;color:#f1dcae;padding:11px 15px;border-radius:10px;cursor:pointer;border:1px solid #e7bb5566;background:linear-gradient(180deg,#261c38,#110c19)}
+.poderesBoton.oro{color:#2a1706;border-color:#fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18)}
+.poderesBoton:disabled{opacity:.5;cursor:default}
+.poderesOpcion{display:flex;gap:6px;align-items:center;color:#d9cbe8;font-size:1.05em}
+.poderesEstado{text-align:center;color:#b9aecb;min-height:1.5em}

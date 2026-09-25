@@ -1,0 +1,32 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "art/bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
+    "art/discipulo.webp": "5e0995f6a7d159c24649d3811a318bcc19061b6dbb4140b757d5e073c5afa5e8",
+    "art/eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b",
+    "art/horton.webp": "6809db22f6b27516d6e3bf6ecc032573322c16ced4ff45b66c5b5e01ebb52499",
+    "art/llavemago.webp": "c8a49fe3ff484093bd994e8ecfbbffdd5b6af08c08fd507164f4a137a77a07d6",
+    "art/pergamino.webp": "9121e561d62119377082ea3c3a4e6d1a1de087cba0de4cb748e6c49beecc9da8",
+    "art/rey.webp": "a18041ee78195792a07bbc81d83b4dc6f7fcae6b2a4bf5949232f8e4c0e7b492",
+    "art/tok_dragon.webp": "4e504d92088a40b00b025d5a06315548862dd0b5b496d0a9907d4fd5b82809a7",
+    "art/tok_petunia.webp": "03511a3d6c026b74796c6b7a8bcd2da236bb3ef6ce93d82ae971f95daa1b7b60",
+    "generado/datos.js": "8b563ee4072097675588fca87c3d8583be45dde8b1573a25fb2bafc974eefd53",
+    "index.html": "564b0ab9b4633f9aa764b58167377716663ed868b25bc72ab57970fd63157c3a",
+    "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
+    "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "juego/fx-poderes.js": "a0e06d2fe94b3b61a38b7b7c1003df1950842a670081c2004feafa7743736bbf",
+    "poderes.css": "8a874202c35b40b9cdfc8ad9fa49d61dc25ebaebfd1dfa91f07095c60da65d60",
+    "poderes.js": "f23b1f42b690b0bf41899d450f900c05f0a96a3ae3d16593c918b3f835c5f7b2",
+    "procedencia.json": "f5ff9f870c4323eef0de3e5f153cbb9486fee7427b4623980d333b2d2430ecf4"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/visor-3d-coleccion",
+    "sha": "7a48c3543c173a3536c44fac8e5ee18d3c4b5f2f"
+  },
+  "seccion": "poderes",
+  "version": 1
+}
