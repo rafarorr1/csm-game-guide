@@ -94,7 +94,7 @@ SECCIONES = {
     'fuego': {
         'nombre': 'Aliento de fuego',
         'exportador': 'fuego-exportar.mjs',
-        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-aliento.js'},
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-aliento.js', 'juego/fx-ascension.js'},
         'pruebas': ('pruebas_fuego.mjs',),
     },
     'portal': {

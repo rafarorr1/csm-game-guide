@@ -65,7 +65,7 @@ progreso. Su comprobación concreta es:
 node dev/secciones/pruebas_interacciones_exportacion.mjs
 ```
 
-## Aliento de fuego (pruebas de animación de Thal)
+## Aliento de fuego (pruebas de animación de poderes)
 
 La revisión está en `/fuego/`, con tres animaciones de `caoz_tcg/fx-aliento.js`:
 
@@ -84,6 +84,16 @@ ceniza en Canvas 2D. «Cámara lenta» lo reproduce a 0,35×. Las animaciones de
 Thal aún no están conectadas al combate. `quemar(host,{objetivo,color})` sí:
 es la muerte de Machete en la partida (build 278), y en la sección se revisa con
 «Muere Machete», con la misma llamada.
+
+La misma sección revisa la **Ascensión de Petunia** (`caoz_tcg/fx-ascension.js`,
+«Petunia asciende»), aún sin conectar a la partida:
+`ascender(host,{objetivo,imagen,imagenNueva,alRevelar})`. La carta se queda gris,
+cae un rayo de luz dorada, gira dos vueltas en 3D envuelta en oro (textura en
+perspectiva en WebGL) y la cara de Petunia Sagrada se revela desde arriba con el
+disolvente del quemado al revés; detrás se abren alas de luz y caen plumas.
+`alRevelar()` avisa cuando la cara nueva está entera para ponerla en el DOM; al
+acabar el objetivo vuelve a verse. Sin WebGL o con movimiento reducido devuelve
+`false` y quien llama cambia la carta directamente.
 
 ```bash
 node dev/secciones/pruebas_fuego.mjs

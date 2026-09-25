@@ -1,7 +1,8 @@
 /* Pruebas de animación de Thal, en la sección aislada: el paquete sólo lleva
    sus dependencias. La entrada hace brillar a Thal, sin fuego, y marca el daño
    en las tres afectadas sin quemar a nadie; el ataque que no mata deja al
-   objetivo en pie; el letal lo deja hecho ceniza. Cada efecto libera sus
+   objetivo en pie; el letal lo deja hecho ceniza. Petunia asciende: al
+   acabar es Petunia Sagrada y sigue en la mesa. Cada efecto libera sus
    lienzos y estilos. También con movimiento reducido. Usa Playwright. */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -12,8 +13,8 @@ import {exportar,componentesFuego,cartasFuego} from './fuego-exportar.mjs';
 import {crearServidor} from './servidor.mjs';
 import {juego,hash} from './fuentes.mjs';
 
-const js=fs.readFileSync(path.join(juego,'fx-aliento.js'),'utf8');
-assert.ok(!/\.finished\b/.test(js)&&!/preserve-3d/.test(js),'Sin Animation.finished ni preserve-3d');
+for(const f of ['fx-aliento.js','fx-ascension.js']){const js=fs.readFileSync(path.join(juego,f),'utf8');
+  assert.ok(!/\.finished\b/.test(js)&&!/preserve-3d/.test(js),f+': sin Animation.finished ni preserve-3d');}
 const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-fuego-'));
 try{
   const destino=path.join(temporal,'fuego'),p=exportar(destino);
@@ -41,8 +42,8 @@ try{
     try{
       await pagina.goto(url);
       await pagina.waitForFunction(()=>/Listo/.test(document.getElementById('fuegoEstado').textContent),null,{timeout:30000});
-      const cartas=await pagina.evaluate(()=>['atacante','aliado-machete','rival-rey','rival-bartolomeo','rival-eric'].map(id=>document.querySelector('#'+id+' canvas')?.width||0));
-      assert.ok(cartas.every(w=>w>300),caso+': las cinco cartas están pintadas');
+      const cartas=await pagina.evaluate(()=>['atacante','aliado-machete','aliado-petunia','rival-rey','rival-bartolomeo','rival-eric'].map(id=>document.querySelector('#'+id+' canvas')?.width||0));
+      assert.ok(cartas.every(w=>w>300),caso+': las seis cartas están pintadas');
       const listo=()=>pagina.waitForFunction(()=>!document.getElementById('entrar').disabled&&!/…/.test(document.getElementById('fuegoEstado').textContent),null,{timeout:30000});
       const estado=()=>pagina.evaluate(()=>({capas:document.querySelectorAll('canvas.fxAlientoCapa').length,cifras:document.querySelectorAll('.fxAlientoDano').length,
         visibles:['rival-rey','rival-bartolomeo','rival-eric'].filter(id=>{const n=document.getElementById(id);return n.style.visibility!=='hidden'&&n.dataset.fxCeniza===undefined;}),
@@ -81,10 +82,23 @@ try{
       await pagina.waitForFunction(()=>/Machete ardió/.test(document.getElementById('fuegoEstado').textContent),null,{timeout:30000});
       assert.equal(await pagina.evaluate(()=>document.getElementById('aliado-machete').style.visibility),'hidden',caso+': Machete queda hecho ceniza');
       await pagina.waitForFunction(()=>!document.querySelector('canvas.fxAlientoCapa'),null,{timeout:10000});
+      // Ascensión de Petunia: renace como Petunia Sagrada y sigue en la mesa.
+      await pagina.click('#reiniciar');await listo();
+      const firma=()=>pagina.evaluate(()=>{const c=document.querySelector('#aliado-petunia canvas'),g=c.getContext('2d'),d=g.getImageData(0,0,c.width,c.height).data;let s=0;for(let i=0;i<d.length;i+=4099)s=(s*31+d[i])%1000003;return s;});
+      const antes=await firma();
+      await pagina.click('#ascenderPetunia');
+      if(movimiento!=='reduce'){await pagina.waitForFunction(()=>document.querySelectorAll('canvas.fxAscensionCapa').length===3,null,{timeout:5000});
+        assert.equal(await pagina.evaluate(()=>document.getElementById('aliado-petunia').style.visibility),'hidden',caso+': el efecto dibuja a Petunia mientras asciende');}
+      await pagina.waitForFunction(()=>/Petunia Sagrada/.test(document.getElementById('fuegoEstado').textContent),null,{timeout:30000});
+      e=await pagina.evaluate(()=>{const o=document.getElementById('aliado-petunia');return {visible:o.style.visibility!=='hidden',nombre:o.getAttribute('aria-label'),capas:document.querySelectorAll('canvas.fxAscensionCapa').length};});
+      assert.ok(e.visible&&e.nombre==='Petunia Sagrada',caso+': Petunia renace como Petunia Sagrada y queda en la mesa');
+      assert.notEqual(await firma(),antes,caso+': la carta muestra la cara nueva');
+      assert.equal(e.capas,0,caso+': la ascensión libera sus lienzos');
       await pagina.click('#reiniciar');
+      await pagina.waitForFunction(()=>document.getElementById('aliado-petunia').getAttribute('aria-label')==='Petunia',null,{timeout:10000});
       await pagina.waitForFunction(()=>{const o=document.getElementById('rival-bartolomeo');return o.style.visibility!=='hidden'&&o.dataset.fxCeniza===undefined;},null,{timeout:10000});
       assert.deepEqual(errores,[],caso+': sin errores de página');
-      console.log('✓ '+caso+': entrada, golpe que no mata, ataque letal, muerte de Machete hasta la ceniza, y se reinicia');
+      console.log('✓ '+caso+': entrada, golpe que no mata, ataque letal, muerte de Machete hasta la ceniza, Ascensión de Petunia, y se reinicia');
     }finally{await contexto.close();}
   }
 }finally{await navegador?.close();servidor.close();}
