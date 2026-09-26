@@ -151,18 +151,22 @@ node dev/secciones/pruebas_lugares.mjs
 python3 dev/secciones/publicar.py --publicar --seccion lugares --salida /tmp/caoz-lugares
 ```
 
-Con `fondo(id)` el escenario acepta un fondo propio del Estudio,
-`{url,x,y,z,efectos}`: se muestra más claro y sin el suelo pintado, con su
-encuadre y zoom; con `efectos:false` tampoco lleva el ambiente del Lugar. Las
-reglas visibles siguen igual. `fondoCambiado()` repinta la escena en curso.
+Con `fondo(id)` cada mapa lleva lo que se guardó en el Estudio,
+`{url,x,y,z,efectos,intensidad}`: un fondo propio (más claro y sin el suelo
+pintado, con su encuadre y zoom) y su propia lista de efectos encima, elegidos
+de `CAOZ_CAMPO_LUGAR.EFECTOS` (brasas, humo, proyectiles, velas, polvo,
+niebla, guardianes, nieve, lluvia, relámpagos, luciérnagas, sombra de dragón,
+cúpula y ascuas), con intensidad de 0,25 a 2. Sin lista usa los de serie del
+Lugar (`DE_SERIE`). Las reglas visibles siguen igual. `fondoCambiado()`
+repinta la escena en curso.
 
 ## Estudio · Campos de batalla (laboratorio)
 
 La revisión está en `/estudio-campos/`: el espacio que tendría el Estudio para
 cambiar el fondo de cada Lugar con un diseño propio. Se sube una imagen (se
 prepara igual que en el Estudio: WebP de hasta 1600 px y 1,5 MB), se encuadra
-con horizontal, vertical y zoom, se decide si lleva encima los efectos del
-Lugar, y se ve en la mesa real (`campo-lugar.js`) en escritorio y móvil.
+con horizontal, vertical y zoom, se eligen los efectos propios del mapa y su
+intensidad (también sin cambiar la imagen), y se ve en la mesa real (`campo-lugar.js`) en escritorio y móvil.
 «Guardar» sólo lo conserva en memoria: no hay acceso ni peticiones.
 
 ```bash

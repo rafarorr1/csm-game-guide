@@ -18,7 +18,7 @@
   <header class="ecCabecera">
     <p class="ecEtiqueta">ESTUDIO · PRUEBA SIN GUARDADO REAL</p>
     <h1 id="ecTitulo">Campos de batalla</h1>
-    <p>Sube tu propio diseño de fondo para cada Lugar, encuádralo y míralo en la mesa, en escritorio y en móvil. Con un fondo propio el campo lo muestra tal cual, sin el suelo pintado; las partículas y la luz del Lugar se pueden dejar encima o quitar, y sus reglas se siguen viendo. En esta prueba, «Guardar» sólo lo conserva en esta página.</p>
+    <p>Sube tu propio diseño de fondo para cada Lugar, encuádralo y míralo en la mesa, en escritorio y en móvil. Cada mapa elige además sus propios efectos (lluvia, nieve, niebla, brasas, luciérnagas, relámpagos…) y su intensidad. Con un fondo propio el campo lo muestra tal cual, sin el suelo pintado; las reglas del Lugar se siguen viendo. En esta prueba, «Guardar» sólo lo conserva en esta página.</p>
   </header>
   <div class="ecCuerpo">
     <nav class="ecLista" id="ecLista" aria-label="Lugares"></nav>
@@ -44,7 +44,12 @@
         <label>Vertical <input type="range" id="ecY" min="0" max="100" value="50"><output id="ecVY">50%</output></label>
         <label>Zoom <input type="range" id="ecZ" min="100" max="300" value="100"><output id="ecVZ">100%</output></label>
         <button type="button" class="ecBoton" id="ecCentrar">Centrar</button>
-        <label class="ecOpcion"><input type="checkbox" id="ecEfectos" checked> Efectos del Lugar encima (partículas, luz)</label>
+      </fieldset>
+      <fieldset class="ecEfectos" id="ecEfectosCaja">
+        <legend>Efectos del mapa</legend>
+        <div class="ecChips" id="ecEfectos" role="group" aria-label="Efectos encima del fondo"></div>
+        <div class="ecFilaEfectos"><label>Intensidad <input type="range" id="ecI" min="25" max="200" value="100"><output id="ecVI">100%</output></label>
+        <button type="button" class="ecBoton" id="ecSerie">Efectos de serie</button><button type="button" class="ecBoton" id="ecNinguno">Sin efectos</button></div>
       </fieldset>
       <div class="ecControles">
         <button type="button" class="ecBoton oro" id="ecGuardar">Guardar fondo</button>

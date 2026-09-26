@@ -1,8 +1,8 @@
 /* Pruebas del laboratorio «Campos de batalla» del Estudio: el paquete sólo lleva
    sus dependencias; subir una imagen la prepara como WebP y la muestra de fondo
-   en la mesa (sin suelo pintado), el encuadre y el zoom la mueven, los efectos
-   del Lugar se pueden quitar, «Guardar» la conserva al cambiar de Lugar y
-   «Restaurar original» vuelve a la ilustración. También la vista móvil y el
+   en la mesa (sin suelo pintado), el encuadre y el zoom la mueven, cada mapa
+   elige sus propios efectos e intensidad, «Guardar» lo conserva al cambiar de
+   Lugar y «Restaurar original» vuelve a la ilustración y a los efectos de serie. También la vista móvil y el
    movimiento reducido. Usa Playwright. */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -42,9 +42,17 @@ try{
       await pagina.goto(url);
       await pagina.waitForFunction(()=>/Listo/.test(document.getElementById('ecEstado').textContent),null,{timeout:30000});
       const escena=()=>pagina.evaluate(()=>{const e=document.querySelector('#ecMesa > .clEscena'),i=e?.querySelector('.clFondoImg');
-        return {id:e?.dataset.escena,propio:e?.dataset.propio!==undefined,url:i?.style.backgroundImage||'',pos:i?.style.backgroundPosition||'',zoom:i?.style.transform||'',suelo:e?getComputedStyle(e.querySelector('.clSuelo')).display:'',amb:e?getComputedStyle(e.querySelector('.clAmbiente')).display:''};});
+        return {id:e?.dataset.escena,propio:e?.dataset.propio!==undefined,url:i?.style.backgroundImage||'',pos:i?.style.backgroundPosition||'',zoom:i?.style.transform||'',suelo:e?getComputedStyle(e.querySelector('.clSuelo')).display:'',amb:e?getComputedStyle(e.querySelector('.clAmbiente')).display:'',efectos:e?.dataset.efectos};});
       let e=await escena();
       assert.ok(e.id==='domo'&&!e.propio&&/art\/domo\.webp/.test(e.url)&&e.suelo!=='none',caso+': empieza con la ilustración del Domo y su suelo');
+      assert.equal(e.efectos,'cupula ascuas',caso+': el Domo empieza con sus efectos de serie');
+      // Efectos propios sin cambiar la imagen: el Antro con lluvia y relámpagos.
+      await pagina.click('[data-lugar="antro"]');await pagina.waitForFunction(()=>!document.getElementById('ecArchivo').disabled&&document.querySelectorAll('#ecMesa > .clEscena').length===1&&document.querySelector('#ecMesa > .clEscena').dataset.escena==='antro',null,{timeout:8000});
+      await pagina.click('[data-efecto="polvo"]');await pagina.click('[data-efecto="lluvia"]');await pagina.click('[data-efecto="relampagos"]');
+      e=await escena();assert.equal(e.efectos,'velas relampagos lluvia',caso+': el mapa elige sus efectos');
+      await pagina.fill('#ecI','160');await pagina.dispatchEvent('#ecI','input');
+      await pagina.click('#ecGuardar');assert.match(await pagina.textContent('[data-lugar="antro"] small'),/Ilustración del Lugar · 🕯️🌧️⚡/,caso+': la lista muestra los efectos guardados');
+      await pagina.click('[data-lugar="domo"]');await pagina.waitForFunction(()=>!document.getElementById('ecArchivo').disabled&&document.querySelectorAll('#ecMesa > .clEscena').length===1&&document.querySelector('#ecMesa > .clEscena').dataset.escena==='domo',null,{timeout:8000});
       // Una imagen horizontal de prueba, hecha en el navegador.
       const png=Buffer.from(await pagina.evaluate(()=>{const c=document.createElement('canvas');c.width=1920;c.height=1080;const g=c.getContext('2d'),gr=g.createLinearGradient(0,0,0,1080);gr.addColorStop(0,'#3a2a7a');gr.addColorStop(1,'#d08a40');g.fillStyle=gr;g.fillRect(0,0,1920,1080);g.fillStyle='#fff';g.fillRect(900,400,120,120);return c.toDataURL('image/png').split(',')[1];}),'base64');
       await pagina.setInputFiles('#ecArchivo',{name:'mi-domo.png',mimeType:'image/png',buffer:png});
@@ -54,23 +62,23 @@ try{
       assert.match(await pagina.textContent('#ecOrigen'),/1600×900 · \d+ KB WebP/,caso+': se prepara como WebP de 1600 px');
       await pagina.fill('#ecX','20');await pagina.dispatchEvent('#ecX','input');await pagina.fill('#ecZ','180');await pagina.dispatchEvent('#ecZ','input');
       e=await escena();assert.ok(e.pos==='20% 50%'&&e.zoom==='scale(1.8)',caso+': el encuadre y el zoom mueven el fondo ('+e.pos+', '+e.zoom+')');
-      await pagina.uncheck('#ecEfectos');e=await escena();assert.equal(e.amb,'none',caso+': se pueden quitar los efectos del Lugar');
-      await pagina.check('#ecEfectos');
+      await pagina.click('#ecNinguno');e=await escena();assert.ok(e.amb==='none'&&e.efectos==='',caso+': un mapa puede ir sin efectos');
+      await pagina.click('#ecSerie');await pagina.click('[data-efecto="nieve"]');e=await escena();assert.equal(e.efectos,'cupula nieve ascuas',caso+': y combinar los de serie con otros');
       await pagina.click('#ecGuardar');
-      assert.match(await pagina.textContent('[data-lugar="domo"] small'),/^Diseño propio$/,caso+': guardado en la lista');
+      assert.match(await pagina.textContent('[data-lugar="domo"] small'),/^Fondo propio · ❄️🔴🩸$/,caso+': guardado en la lista');
       await pagina.click('[data-lugar="antro"]');await pagina.waitForFunction(()=>!document.getElementById('ecArchivo').disabled&&document.querySelector('#ecMesa > .clEscena')?.dataset.escena==='antro'&&document.querySelectorAll('#ecMesa > .clEscena').length===1,null,{timeout:8000});
-      e=await escena();assert.ok(!e.propio&&/art\/antro\.webp/.test(e.url),caso+': otro Lugar conserva su ilustración');
+      e=await escena();assert.ok(!e.propio&&/art\/antro\.webp/.test(e.url)&&e.efectos==='velas relampagos lluvia',caso+': el Antro conserva su ilustración y sus efectos guardados');
       await pagina.click('[data-lugar="domo"]');await pagina.waitForFunction(()=>!document.getElementById('ecArchivo').disabled&&document.querySelector('#ecMesa > .clEscena')?.dataset.escena==='domo'&&document.querySelectorAll('#ecMesa > .clEscena').length===1,null,{timeout:8000});
-      e=await escena();assert.ok(e.propio&&e.pos==='20% 50%'&&e.zoom==='scale(1.8)',caso+': al volver, el Domo conserva su fondo guardado');
+      e=await escena();assert.ok(e.propio&&e.pos==='20% 50%'&&e.zoom==='scale(1.8)'&&e.efectos==='cupula nieve ascuas',caso+': al volver, el Domo conserva su fondo y sus efectos');
       await pagina.click('#ecMovil');await pagina.waitForTimeout(150);
       assert.ok(await pagina.evaluate(()=>{const r=document.getElementById('ecMesa').getBoundingClientRect();return r.height>r.width;}),caso+': la vista móvil es vertical');
       await pagina.click('#ecRestaurar');e=await escena();
-      assert.ok(!e.propio&&/art\/domo\.webp/.test(e.url)&&e.suelo!=='none',caso+': «Restaurar original» vuelve a la ilustración');
-      assert.equal(await pagina.textContent('[data-lugar="domo"] small'),'Ilustración del Lugar',caso+': la lista lo refleja');
+      assert.ok(!e.propio&&/art\/domo\.webp/.test(e.url)&&e.suelo!=='none'&&e.efectos==='cupula ascuas',caso+': «Restaurar original» vuelve a la ilustración y a los efectos de serie');
+      assert.equal(await pagina.textContent('[data-lugar="domo"] small'),'Ilustración del Lugar · 🔴🩸',caso+': la lista lo refleja');
       await pagina.setInputFiles('#ecArchivo',{name:'no.txt',mimeType:'text/plain',buffer:Buffer.from('hola')});
       await pagina.waitForFunction(()=>document.getElementById('ecEstado').classList.contains('error'),null,{timeout:5000});
       assert.deepEqual(errores,[],caso+': sin errores de página');
-      console.log('✓ '+caso+': subir, encuadrar, quitar efectos, guardar, cambiar de Lugar, vista móvil, restaurar y rechazar un archivo no válido');
+      console.log('✓ '+caso+': efectos propios por mapa, subir, encuadrar, guardar, cambiar de Lugar, vista móvil, restaurar y rechazar un archivo no válido');
     }finally{await contexto.close();}
   }
 }finally{await navegador?.close();servidor.close();}
