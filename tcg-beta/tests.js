@@ -344,8 +344,14 @@ PRUEBAS.suite('integracion', async t => {
     t.check(!!window.CAOZ_AAA, 'la capa AAA debe instalarse al cargar ambas piezas');
     t.check(typeof window.CAOZ_FX_ALIENTO?.entrada==='function'&&typeof window.CAOZ_FX_ALIENTO?.ataque==='function',
       'el módulo visual de Thal debe cargar sus dos efectos');
+    t.check(typeof window.CAOZ_FX_ASCENSION?.ascender==='function',
+      'la ascensión visual de Petunia debe cargar con la partida');
+    t.check(typeof window.CAOZ_FX_PODERES?.risa==='function'&&typeof window.CAOZ_FX_PODERES?.polimorfar==='function',
+      'los efectos visuales de poderes deben cargar con la partida');
+    t.check(typeof window.CAOZ_CAMPO_LUGAR?.crear==='function'&&typeof window.CAOZ_EFECTOS_CLAUDE?.sincronizar==='function',
+      'los escenarios de Lugar deben estar conectados a la mesa real');
     const sw = await (await fetch('sw.js')).text();
-    for(const archivo of ['final-core.js','polish-aaa.js','fx-aliento.js']){
+    for(const archivo of ['final-core.js','polish-aaa.js','fx-aliento.js','fx-ascension.js','fx-poderes.js','campo-lugar.js','efectos-claude.js']){
       const respuesta=await fetch(archivo);
       t.check(respuesta.ok && (await respuesta.text()).includes('use strict'), archivo+' debe estar publicado');
       t.check(sw.includes("'"+archivo+"'"), archivo+' debe estar en la caché inicial');
@@ -2983,6 +2989,8 @@ PRUEBAS.suite('pwaSinConexion', async t => {
     );
     t.check(escritas.length>20,'final.js debe seguir cargando sus dependencias compartidas.');
     for(const etiqueta of escritas)t.check(/(?:src|href)="[^"]+\?b=777&test=arranque"/.test(etiqueta),'final.js debe propagar el query de rescate a cada dependencia.');
+    for(const archivo of ['fx-ascension.js','fx-poderes.js','campo-lugar.js','efectos-claude.js'])
+      t.check(escritas.some(etiqueta=>etiqueta.includes(archivo+'?b=777&test=arranque')),archivo+' debe entrar en el cargador de la PWA.');
   }
   for(const ruta of ['/','/tcg-beta/']){
     const scope='https://domo.invalid'+ruta,eventos={},guardados=new Map();
