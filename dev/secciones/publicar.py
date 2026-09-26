@@ -109,6 +109,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/campo-lugar.js'},
         'pruebas': ('pruebas_lugares.mjs',),
     },
+    'estudio-campos': {
+        'nombre': 'Estudio · Campos de batalla',
+        'exportador': 'estudio-campos-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/campo-lugar.js'},
+        'pruebas': ('pruebas_estudio_campos.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',

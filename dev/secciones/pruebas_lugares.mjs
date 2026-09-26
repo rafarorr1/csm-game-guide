@@ -45,7 +45,7 @@ try{
       const escena=()=>pagina.evaluate(()=>{const e=[...document.querySelectorAll('#mesaLugar > .clEscena')],u=e.at(-1);if(!u)return {n:0};
         const c=u.querySelector('.clAmbiente'),s=u.querySelector('.clSuelo'),pix=k=>{const d=k.getContext('2d').getImageData(0,0,k.width,k.height).data;let n=0;for(let i=3;i<d.length;i+=97)if(d[i])n++;return n;};
         const lado=u.querySelector('.clLado'),r=lado.getBoundingClientRect(),m=document.getElementById('mesaLugar').getBoundingClientRect();
-        return {n:e.length,id:u.dataset.escena,host:document.getElementById('mesaLugar').dataset.campoLugar,fondo:getComputedStyle(u.querySelector('.clFondo')).backgroundImage,ambiente:pix(c),suelo:pix(s),clip:u.style.clipPath,
+        return {n:e.length,id:u.dataset.escena,host:document.getElementById('mesaLugar').dataset.campoLugar,fondo:getComputedStyle(u.querySelector('.clFondoImg')).backgroundImage,ambiente:pix(c),suelo:pix(s),clip:u.style.clipPath,
           lado:getComputedStyle(lado).display!=='none'?(r.top-m.top<2?'arriba':'abajo'):'ninguno'};});
       let anterior=null;
       for(const id of ['tomsage','antro','puente','montanas','domo']){
