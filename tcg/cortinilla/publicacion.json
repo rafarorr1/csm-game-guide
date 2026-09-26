@@ -1,0 +1,37 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "art/eric-foil-v1.webp": "d4e36d8a0b6e9bbf84c02d5a4eb44cc5299521279ae25a5b0cdb8819e004e6be",
+    "art/escarcha-foil-v1.webp": "fe89125dd8b9c8b8932c536761eedffd549e8518ca6144a2147a22b11ba9e8a6",
+    "art/horton.webp": "6809db22f6b27516d6e3bf6ecc032573322c16ced4ff45b66c5b5e01ebb52499",
+    "art/logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
+    "art/machete.webp": "ea3443061e49e5046b965d6389bf10d730a8ec8cc94420e16bf42fe021641eb6",
+    "art/pergamino-dorado-v1.webp": "d63166672279a8dc1640c918f11d94e5735ae1f1c1968dcfa6f96db55a9b6edb",
+    "art/petunia-foil-v1.webp": "5ea2612a4a0463a46bbfe3710d0e90e1cc0da5c168449cf2ee0994771f6d4ab6",
+    "art/rey-dorado-v1.webp": "f1554cd02196a5dece9de1dbb4a1509b622c01724c86fd238d671c528fedc2cd",
+    "art/rulchete-foil-v1.webp": "c515915a04160e4ef0c6563640aa8653129595ad6b6288d21be7712f398f8d2d",
+    "art/tal-dorado-final-v1.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
+    "art/tasha.webp": "b00c3102de481f4bc7b75c73cdebfa8ea3cd8fd18140f7c7ebbd2cf7796b09c6",
+    "art/tok_dragon-foil-v1.webp": "cb103faac66a303a66b3c38e02d09c9fdb4149a63d5e0630eb0c20de302133df",
+    "art/tok_petunia-dorado-v1.webp": "ae35ca689dd27ea41c89570bc992b05c160f28ac5f032e3b1cc5820cf8093443",
+    "cortinilla-mesa.css": "39a5b033e13e9b267f90c3c817a9e540ad8b0b5ede35a3b04b404de193d646ad",
+    "cortinilla-mesa.js": "0b4c557043f5452e95dea5e26d921fcdebacab52055f5858326d377437a823ce",
+    "generado/datos.js": "3f5e4abf15ae652551e28c9d50c2d25e846be8f5e0175312580c69f49cb68d94",
+    "index.html": "231bfc89e21dbc6f0ed31b7a1af2483cc32a6cbf9dd0cd614f1186812793717a",
+    "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "juego/cortinilla.js": "45f3815cfc4d95826b8b17888add219d4f35949b8c9cf941a3b5485938e8959b",
+    "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
+    "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "juego/visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
+    "procedencia.json": "948ff5af5dad53fa21efa9006cce145574edbae09a934069e4615f292613e3bc"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/visor-3d-coleccion",
+    "sha": "16933cdc5a6f129d4c5a944cb4b35f304d7bfaaa"
+  },
+  "seccion": "cortinilla",
+  "version": 1
+}
