@@ -20,7 +20,7 @@
   var q=new URLSearchParams(location.search);
   if(!('serviceWorker' in navigator)||q.has('test')||q.has('estudioVista')
      ||!(location.protocol==='https:'||location.hostname==='localhost'))return;
-  navigator.serviceWorker.register('sw.js?b=296&test=arranque').catch(function(){});
+  navigator.serviceWorker.register('sw.js?b=297&test=arranque').catch(function(){});
 })();
 </script>
 <!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
@@ -2231,11 +2231,17 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 .extrasOpciones .btn{min-height:62px;padding:12px;font-size:14px;line-height:1.35}
 .extrasOpciones>.btn:last-child:nth-child(odd){grid-column:1/-1}
 #audioExtras{display:flex;justify-content:center;width:min(100%,480px);min-height:40px}
+.extrasAislados{width:min(100%,480px);margin:2px 0 0;border:1px solid #b58b4a66;border-radius:12px;background:#100a18aa;text-align:left}
+.extrasAislados summary{cursor:pointer;padding:12px 14px;font:700 12px/1.2 var(--serif);letter-spacing:1.3px;color:#f0d796;list-style:none}
+.extrasAislados summary::-webkit-details-marker{display:none}.extrasAislados summary::after{content:'⌄';float:right;font-size:18px;line-height:10px}.extrasAislados[open] summary::after{content:'⌃'}
+.aisladosLista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:0 10px 12px}
+.aisladosLista a{display:flex;align-items:center;min-height:34px;padding:7px 9px;border:1px solid #d5b26a44;border-radius:7px;background:#21162db8;color:#e9dcbe;font:600 11px/1.15 var(--sans);text-decoration:none}
+.aisladosLista a:hover,.aisladosLista a:focus-visible{border-color:#f0d796;background:#3a2740;color:#fff4d5;outline:none}
 #extras #mBorrarProgreso{margin-top:4px;min-height:44px;padding:10px 18px;font-size:13px;color:#eab2a7;border-color:#a2544d80;background:#351918bb}
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=296&test=arranque">
+<link rel="stylesheet" href="mulligan-ui.css?b=297&test=arranque">
 </head>
 <body>
 <div id="arranqueCaoz" role="status" aria-label="Cargando Caoz Con Todo">
@@ -2287,6 +2293,22 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
     <button class="btn taller" id="mEstudio">Editor de cartas</button>
   </div>
   <div id="audioExtras" aria-label="Ajustes de sonido"></div>
+  <details class="extrasAislados">
+    <summary>Secciones aisladas de revisión</summary>
+    <div class="aisladosLista" aria-label="Laboratorios aislados">
+      <a href="https://aislados.caoz-tcg.pages.dev/asedio/" target="_blank" rel="noopener">Asedio de Thal</a><a href="https://aislados.caoz-tcg.pages.dev/cartas/" target="_blank" rel="noopener">Cartas de partida</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/coleccion/" target="_blank" rel="noopener">Colección</a><a href="https://aislados.caoz-tcg.pages.dev/cortinilla/" target="_blank" rel="noopener">Cortinilla del Domo</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/cuenta/" target="_blank" rel="noopener">Cuenta</a><a href="https://aislados.caoz-tcg.pages.dev/epilogo-gero/" target="_blank" rel="noopener">Epílogo de Gero</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/estudio-campos/" target="_blank" rel="noopener">Estudio · Campos</a><a href="https://aislados.caoz-tcg.pages.dev/estudio-nombres/" target="_blank" rel="noopener">Estudio de nombres</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/fuego/" target="_blank" rel="noopener">Aliento de fuego</a><a href="https://aislados.caoz-tcg.pages.dev/heroe/" target="_blank" rel="noopener">Creador de héroe</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/interacciones/" target="_blank" rel="noopener">Interacciones</a><a href="https://aislados.caoz-tcg.pages.dev/invocar/" target="_blank" rel="noopener">Invocar una carta</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/lugares/" target="_blank" rel="noopener">Campos de Lugares</a><a href="https://aislados.caoz-tcg.pages.dev/mesa-real/" target="_blank" rel="noopener">Mesa real</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/mesa-visual/" target="_blank" rel="noopener">Mesa visual</a><a href="https://aislados.caoz-tcg.pages.dev/mulligan/" target="_blank" rel="noopener">Mulligan inicial</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/pitagoras/" target="_blank" rel="noopener">Pitágoras</a><a href="https://aislados.caoz-tcg.pages.dev/poderes/" target="_blank" rel="noopener">Animaciones de poderes</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/portal/" target="_blank" rel="noopener">Portal</a><a href="https://aislados.caoz-tcg.pages.dev/rey/" target="_blank" rel="noopener">El Rey</a>
+      <a href="https://aislados.caoz-tcg.pages.dev/sobres/" target="_blank" rel="noopener">Apertura de sobres</a>
+    </div>
+  </details>
   <button class="btn" id="mBorrarProgreso" aria-haspopup="dialog">Borrar mi progreso</button>
   <button class="btn" id="extrasBack">← Menú principal</button>
 </div>
@@ -2404,9 +2426,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=296&test=arranque"></script>
-<script src="final.js?b=296&test=arranque"></script>
-<script src="mulligan-ui.js?b=296&test=arranque"></script>
+<script src="motor.js?b=297&test=arranque"></script>
+<script src="final.js?b=297&test=arranque"></script>
+<script src="mulligan-ui.js?b=297&test=arranque"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2425,7 +2447,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:296, fecha:'2026-09-26'};
+const BUILD = {n:297, fecha:'2026-09-26'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -5285,7 +5307,7 @@ if(new URLSearchParams(location.search).has('biblia')){
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
    && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
-  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=296&test=arranque').catch(()=>{}); });
+  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=297&test=arranque').catch(()=>{}); });
 }
 /* El menú ya existe desde el HTML para que la cuenta, las invitaciones y la
    campaña puedan inicializarse normalmente. Sólo se ocultó su presentación
