@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Campos de los Lugares · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./lugares.css">
+<script src="./generado/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/campo-lugar.js"></script>
+<script src="./lugares.js" defer></script>
+</head>
+<body>
+<main class="lugaresShell" aria-labelledby="lugaresTitulo">
+  <header class="lugaresCabecera">
+    <p class="lugaresEtiqueta">PRUEBA DE ESCENARIO · SIN PARTIDA</p>
+    <h1 id="lugaresTitulo">El campo según el Lugar</h1>
+    <p>Cada Lugar convierte la mesa en su escenario: su ilustración de fondo, un suelo propio, partículas y luz, y el borde del lado que lo controla. Al cambiar de Lugar, el nuevo se abre como un portal. Los botones de reglas muestran lo que hace cada Lugar.</p>
+  </header>
+  <section id="mesaLugar" class="mesaLugar" aria-label="Mesa de prueba">
+    <div class="marcadorLado arriba"><span class="quien">Rival</span><span class="alma" id="almaRival" aria-label="Alma del rival">♥ <b>20</b></span><span class="pds" id="pdRival" aria-label="PD del rival"></span></div>
+    <div class="filaLugar"><figure class="cartaLugar" id="c-rey"></figure><figure class="cartaLugar" id="c-bartolomeo"></figure><figure class="cartaLugar" id="c-eric"></figure><figure class="cartaLugar hueco" id="c-aidman" aria-label="Hueco libre"></figure></div>
+    <div class="lineaLugar" id="linea" aria-hidden="true"></div>
+    <div class="filaLugar"><figure class="cartaLugar" id="c-horton"></figure><figure class="cartaLugar" id="c-discipulo"></figure><figure class="cartaLugar" id="c-tok_petunia"></figure></div>
+    <div class="marcadorLado abajo"><span class="quien">Tú</span><span class="alma" id="almaPropia" aria-label="Tu Alma">♥ <b>20</b></span><span class="pds" id="pdPropio" aria-label="Tus PD"></span><span class="mano" id="mano" aria-label="Tu mano">Mano <b>4</b></span><span class="mazo" id="mazo" aria-label="Tu mazo">Mazo <b>22</b></span></div>
+  </section>
+  <div class="lugaresControles" id="lugaresBotones">
+    <button type="button" class="lugaresBoton" data-lugar="tomsage">🏰 Tomsage</button>
+    <button type="button" class="lugaresBoton" data-lugar="antro">🍻 Antro Juan</button>
+    <button type="button" class="lugaresBoton" data-lugar="puente">🌉 El Puente</button>
+    <button type="button" class="lugaresBoton" data-lugar="montanas">⛰️ Las Montañas</button>
+    <button type="button" class="lugaresBoton" data-lugar="domo">🔴 El Domo</button>
+    <button type="button" class="lugaresBoton" data-lugar="">Sin Lugar</button>
+    <label class="lugaresOpcion"><input type="checkbox" id="delRival"> Lo controla el rival</label>
+    <label class="lugaresOpcion"><input type="checkbox" id="lento"> Cámara lenta</label>
+  </div>
+  <div class="lugaresControles" id="reglas" aria-label="Reglas del Lugar"></div>
+  <p id="lugaresEstado" class="lugaresEstado" role="status" aria-live="polite">Preparando la mesa…</p>
+</main>
+</body>
+</html>
