@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v57 · Build 296 · Cortinilla del Domo · 2026-09-26
+
+- Al entrar, el logo y la carga preparan una cortinilla con doce cartas de la
+  colección equipada del jugador antes de revelar el menú.
+- La secuencia se puede omitir con toque o tecla, ocurre una sola vez por
+  sesión y se degrada a un fundido limpio cuando no hay WebGL o se reduce el
+  movimiento.
+- La pantalla anterior no se revela debajo de la cortinilla: el menú entra
+  sólo cuando la secuencia abre el Domo.
+
 ### v56 · Build 295 · Cartas más claras en mano · 2026-09-25
 
 - Las cartas en mano priorizan la lectura: texto más luminoso, contraste más

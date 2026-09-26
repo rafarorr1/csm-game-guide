@@ -12,11 +12,11 @@ index.html motor.js movil.html final.js invitaciones-compartidas.js final-core.j
 campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js
 campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js
 pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js
-pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js fx-aliento.js fx-ascension.js fx-poderes.js campo-lugar.js efectos-claude.js
+pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js fx-aliento.js fx-ascension.js fx-poderes.js campo-lugar.js efectos-claude.js cortinilla.js cortinilla-juego.js
 sw.js manifest.webmanifest tests.js estudio.html audio-domo.js sonidos.html
 sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js
 estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js nombres-cartas.js acabados.css
-coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js fx-aliento.js sobres-apertura.css _worker.js
+coleccion.css coleccion-modelo.js coleccion-juego.js coleccion-ui.js sobres-escena.js sobres-apertura.js sobres-revelacion.js sobres-apertura.css _worker.js
 carta-pintor.js carta-diseno.js carta-juego.js visor-3d-gl.js visor-3d.js carta-diseno.css carta-juego.css tema-domo.css visor-3d.css fuentes/cinzel.woff2 fuentes/cormorant-garamond.woff2 fuentes/cormorant-garamond-italica.woff2 fuentes/OFL-Cinzel.txt fuentes/OFL-CormorantGaramond.txt
 _routes.json cuenta-modelo.js cuenta-progreso.js cuenta-servicio.js cuenta-ui.js cuenta-acceso.js cuenta-juego.js cuenta.css cuenta-juego.css cuenta-servidor.js cuenta-correo.js audio/catalogo.json
 portal.html portal.css portal.js pwa-rescate.html pwa-rescate.css pwa-rescate.js
