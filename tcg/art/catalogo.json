@@ -1232,6 +1232,23 @@
       }
     },
     {
+      "id": "acolitokenya",
+      "nombre": "Acólito de Kenya",
+      "tipo": "personaje",
+      "coste": 2,
+      "ataque": 1,
+      "vida": 3,
+      "texto": "Ofrenda de Kenya (1 PD, 1× turno): sacrifica otro aliado. Roba 1 carta.",
+      "tribu": "Humano · Acólito",
+      "simbolo": "🌞",
+      "esLider": false,
+      "ficha": false,
+      "mazos": [
+        "Talesyn"
+      ],
+      "original": null
+    },
+    {
       "id": "juangabriel",
       "nombre": "Juan Gabriel",
       "tipo": "personaje",
@@ -5414,9 +5431,7 @@
       "simbolo": "🔴",
       "esLider": false,
       "ficha": false,
-      "mazos": [
-        "Talesyn"
-      ],
+      "mazos": [],
       "original": {
         "url": "art/domo.webp",
         "encuadre": {
@@ -6767,7 +6782,7 @@
       "coste": 4,
       "ataque": 2,
       "vida": 4,
-      "texto": "Interceptar — al entrar: invoca dos Goblins de Camino 1/1 con Provocar.",
+      "texto": "Interceptar — al entrar: invoca un Goblin de Camino 1/1 con Provocar.",
       "tribu": "Humano",
       "simbolo": "🛻",
       "esLider": false,
@@ -7267,7 +7282,7 @@
       "coste": null,
       "ataque": null,
       "vida": null,
-      "texto": "Intimidante: tus Personajes con 4 o más ATQ tienen Provocar.\nGolpe Directo (2 PD): un aliado gana +2 ATQ y no recibe daño de contraataque este turno.",
+      "texto": "Intimidante: tus Personajes con 4 o más ATQ tienen Provocar.\nGolpe Directo (3 PD): un aliado gana +2 ATQ y no recibe daño de contraataque este turno.",
       "tribu": "Midrange · Provocar · Combate",
       "simbolo": "⚔️",
       "esLider": true,
@@ -7377,7 +7392,7 @@
       "coste": null,
       "ataque": null,
       "vida": null,
-      "texto": "Rebaño de Rul: cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.\nEstornudo de Rul (2 PD): 1 daño a un Personaje rival y cura 1 PV a un aliado.",
+      "texto": "Rebaño de Rul: cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 1 Alma a ti.\nEstornudo de Rul (2 PD): 1 daño a un Personaje rival y cura 1 PV a un aliado.",
       "tribu": "Enjambre · Fe · Curación",
       "simbolo": "✨",
       "esLider": true,
