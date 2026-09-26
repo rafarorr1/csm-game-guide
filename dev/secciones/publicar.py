@@ -121,6 +121,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/cortinilla.js', 'juego/visor-3d-gl.js'},
         'pruebas': ('pruebas_cortinilla.mjs',),
     },
+    'invocar': {
+        'nombre': 'Invocar una carta',
+        'exportador': 'invocar-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-invocar.js', 'juego/visor-3d-gl.js'},
+        'pruebas': ('pruebas_invocar.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',

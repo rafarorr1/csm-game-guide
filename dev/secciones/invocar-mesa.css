@@ -1,0 +1,25 @@
+/* Mesa mínima para revisar la invocación de cartas. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
+.invShell{width:min(1180px,100%);margin:auto;display:flex;flex-direction:column;gap:12px}
+.invEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.invCabecera h1{color:#f0d796;font:700 clamp(26px,4vw,42px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.invCabecera p:last-child{color:#c9bdda;font-size:1.1em}
+.invMesa{position:relative;display:flex;flex-direction:column;gap:clamp(8px,2vh,18px);padding:14px 12px;border-radius:18px;overflow:hidden;
+  background:radial-gradient(ellipse 70% 60% at 50% 50%,#2a1a4a55,transparent 70%),linear-gradient(180deg,#140f20,#0b0812);border:1px solid #e7bb5530;box-shadow:inset 0 0 80px #000c}
+.invCampo,.invMano,.invManoRival{display:flex;justify-content:center;gap:clamp(6px,1.6vw,16px)}
+.invCasilla{position:relative;width:clamp(58px,10.5vw,122px);aspect-ratio:5/7;border-radius:5%/3.6%;border:1px dashed #ffffff1c;background:#ffffff05}
+.invCasilla>canvas,.invMano canvas{width:100%;height:100%;display:block;border-radius:5%/3.6%;box-shadow:0 10px 22px #000b}
+.invMano .invCarta{width:clamp(58px,10.5vw,122px);aspect-ratio:5/7;cursor:pointer;transition:transform .15s;border:0;padding:0;background:none;border-radius:5%/3.6%}
+.invMano .invCarta:hover,.invMano .invCarta:focus-visible{transform:translateY(-10px);outline:2px solid #f0d79688;outline-offset:3px}
+.invMano .invCarta[disabled]{opacity:.35;cursor:default;transform:none}
+.invManoRival .dorso{width:clamp(34px,5.5vw,62px);aspect-ratio:5/7;border-radius:6%;background:linear-gradient(135deg,#3b2766,#1a1030);border:2px solid #b98a2e;box-shadow:0 6px 12px #000a}
+.invLinea{height:1px;margin:0 8%;background:linear-gradient(90deg,transparent,#e7bb5566,transparent)}
+.invControles{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:center}
+.invBoton{font:700 13px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.04em;color:#f1dcae;padding:11px 15px;border-radius:10px;cursor:pointer;border:1px solid #e7bb5566;background:linear-gradient(180deg,#261c38,#110c19)}
+.invBoton.oro{color:#2a1706;border-color:#fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18)}
+.invBoton:disabled{opacity:.5;cursor:default}
+.invOpcion{display:flex;gap:6px;align-items:center;color:#d9cbe8;font-size:1.05em}
+.invEstado{text-align:center;color:#b9aecb;min-height:1.5em}
+.invFx{position:fixed;inset:0;pointer-events:none;z-index:40}

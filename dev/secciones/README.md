@@ -195,6 +195,25 @@ node dev/secciones/pruebas_cortinilla.mjs
 python3 dev/secciones/publicar.py --publicar --seccion cortinilla --salida /tmp/caoz-cortinilla
 ```
 
+## Invocar una carta
+
+La revisión está en `/invocar/`, con `caoz_tcg/fx-invocar.js` (aún sin conectar
+a la partida, donde hoy `fxSummon` hace un pequeño salto). La carta sale de la
+mano como carta 3D del visor (`visor-3d-gl.js`, con la cara ya pintada: no
+repinta nada), sube hacia la cámara dando una vuelta y cae sobre su casilla:
+onda, destello, chispas del color de su edición, polvo y un leve temblor de la
+mesa. La legendaria se detiene en lo alto entre rayos de luz y cae con más
+fuerza; la del rival viene de arriba; las fichas aparecen del aire. Varias a la
+vez comparten un lienzo WebGL y uno 2D.
+
+`CAOZ_FX_INVOCAR.invocar(host,{carta,imagen,desde,lado,acabado,legendaria,aire,sacudir})`
+→ `Promise<boolean>` al caer; `false` sin WebGL, sin cara o con movimiento reducido.
+
+```bash
+node dev/secciones/pruebas_invocar.mjs
+python3 dev/secciones/publicar.py --publicar --seccion invocar --salida /tmp/caoz-invocar
+```
+
 ```bash
 node dev/secciones/pruebas_fuego.mjs
 python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego
