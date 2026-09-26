@@ -853,3 +853,34 @@ node dev/secciones/pruebas_heroe_exportacion.mjs
 python3 dev/secciones/publicar.py --seccion heroe --publicar --salida /ruta/nueva
 python3 dev/secciones/publicar.py --seccion heroe --verificar https://aislados.caoz-tcg.pages.dev --salida /ruta/nueva
 ```
+
+## Teaser del juego (animatic de 20 s)
+
+La revisión está en `/teaser/`: el animatic del teaser para el pitch (16:9,
+sin música, termina en el logo sin frase). No copia animaciones: una sola
+línea de tiempo (`teaser-mesa.js`) dirige los módulos reales del juego.
+
+| Tiempo | Plano | Módulo |
+|---|---|---|
+| 0,0–4,45 s | El Mago del Domo dorado en la tormenta; los relámpagos lo iluminan y se da la vuelta | `visor-3d-gl.js` + `tormenta-gl.js` |
+| 4,45–6,9 s | Thal dorado, invocación legendaria en la tormenta | `fx-invocar.js` |
+| 6,9–8,8 s | El aliento de Thal reduce a ceniza a El Rey | `fx-aliento.js` |
+| 8,8–11,4 s | Montaje: Rayo de Escarcha, Polimorfia, Ascensión de Petunia | `fx-poderes.js`, `fx-ascension.js` |
+| 11,4–12,0 s | Silencio: una gota en la oscuridad | lienzo propio |
+| 12,0–16,1 s | La colección en rueda, torbellino y muro, que se abre | `cortinilla.js` |
+| 14,6–20,0 s | El logo sobre la tormenta, con el último relámpago; fundido | lienzo propio + tormenta |
+
+«Repetir» y «Empezar en…» recargan la página (los efectos no se rebobinan);
+`?desde=s` empieza en ese segundo y `?auto=1` arranca solo.
+
+Con `?captura=1`, `teaser-reloj.js` (se carga antes que los módulos) sustituye
+`requestAnimationFrame`, `performance.now`, `setTimeout` y las Web Animations
+por un reloj virtual: cada módulo dibuja exactamente el fotograma pedido,
+aunque pintarlo tarde segundos. Así se exporta el vídeo:
+
+```bash
+node dev/secciones/teaser-fotogramas.mjs /tmp/teaser-png --fps 30 --ancho 1920 --alto 1080
+ffmpeg -framerate 30 -i /tmp/teaser-png/f%05d.png -c:v libx264 -pix_fmt yuv420p -crf 16 teaser.mp4
+node dev/secciones/pruebas_teaser.mjs
+python3 dev/secciones/publicar.py --publicar --seccion teaser --salida /tmp/caoz-teaser
+```

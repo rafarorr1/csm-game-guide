@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Teaser · Caoz Con Todo</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./teaser-mesa.css">
+<script src="./teaser-reloj.js"></script>
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/visor-3d-gl.js"></script>
+<script src="./juego/tormenta-gl.js"></script>
+<script src="./juego/fx-invocar.js"></script>
+<script src="./juego/fx-aliento.js"></script>
+<script src="./juego/fx-poderes.js"></script>
+<script src="./juego/fx-ascension.js"></script>
+<script src="./juego/cortinilla.js"></script>
+<script src="./teaser-mesa.js" defer></script>
+</head>
+<body>
+<main class="tzPagina">
+  <section class="tzEscena" id="teaser" aria-label="Teaser de Caoz Con Todo">
+    <div class="tzCamara" id="camara">
+      <canvas class="tzCapa" id="lienzoTormenta" aria-hidden="true"></canvas>
+      <div class="tzCapa" id="hostInvocar"><figure class="tzCarta" id="ranuraThal" aria-label="Thal, edición dorada"></figure></div>
+      <div class="tzCapa tzMesa" id="planoAliento" data-tono="acido"><div class="tzFondo" data-fondo="montanas"></div>
+        <figure class="tzCarta" id="alientoThal" aria-label="Thal"></figure><figure class="tzCarta" id="alientoRey" aria-label="El Rey"></figure></div>
+      <div class="tzCapa tzMesa" id="planoEscarcha" data-tono="hielo"><div class="tzFondo" data-fondo="puente"></div>
+        <figure class="tzCarta" id="escarchaOrigen" aria-label="Escarcha"></figure><figure class="tzCarta" id="escarchaEric" aria-label="Eric"></figure></div>
+      <div class="tzCapa tzMesa" id="planoPolimorfia" data-tono="morado"><div class="tzFondo" data-fondo="antro"></div>
+        <figure class="tzCarta" id="polimorfiaDiscipulo" aria-label="Discípulo de Rul"></figure></div>
+      <div class="tzCapa tzMesa" id="planoAscension" data-tono="oro"><div class="tzFondo" data-fondo="domo"></div>
+        <figure class="tzCarta" id="ascensionPetunia" aria-label="Petunia"></figure></div>
+      <canvas class="tzCapa" id="lienzoGota" aria-hidden="true"></canvas>
+      <canvas class="tzCapa" id="lienzoLogo" aria-label="Caoz Con Todo"></canvas>
+      <div class="tzCapa" id="fondoCortinilla" aria-hidden="true"></div>
+      <div class="tzCapa" id="hostCortinilla"></div>
+    </div>
+    <div class="tzVelo" id="veloBlanco" aria-hidden="true"></div>
+    <div class="tzVelo" id="veloNegro" aria-hidden="true"></div>
+    <div class="tzVineta" aria-hidden="true"></div>
+    <div class="tzPortada" id="portada"><button type="button" id="reproducir" disabled>Preparando…</button></div>
+  </section>
+  <aside class="tzPanel" aria-label="Controles del animatic">
+    <div class="tzLinea" id="linea" aria-hidden="true"><i id="lineaAvance"></i></div>
+    <div class="tzFila">
+      <strong>Teaser · animatic</strong><span id="reloj" class="tzReloj">0,0 / 20,0 s</span>
+      <button type="button" id="repetir">Repetir</button>
+      <label>Empezar en <select id="desde"></select></label>
+      <button type="button" id="completa">Pantalla completa</button>
+    </div>
+    <p id="estado" role="status">Pintando las cartas…</p>
+  </aside>
+</main>
+</body>
+</html>

@@ -133,6 +133,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/visor-3d-gpu.js', 'juego/visor-3d-gl.js', 'juego/tormenta-gl.js', 'juego/tormenta-gpu.js'},
         'pruebas': ('pruebas_visor_gpu.mjs',),
     },
+    'teaser': {
+        'nombre': 'Teaser del juego',
+        'exportador': 'teaser-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'teaser-reloj.js', 'teaser-mesa.js', 'juego/cortinilla.js', 'juego/tormenta-gl.js'},
+        'pruebas': ('pruebas_teaser.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',
