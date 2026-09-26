@@ -1,5 +1,12 @@
 # Registro de versiones — el TCG del Domo
 
+### v59 · Build 298 · Arranque listo y retos rotativos · 2026-09-26
+
+- El menú principal queda preparado detrás de la cortinilla del Domo antes de
+  que las cartas se abran: la transición ya no deja una pausa al final.
+- Pitágoras rota sus seis minijuegos. Un reto ya mostrado no vuelve a aparecer
+  hasta que hayan salido los otros cinco; al completar los seis inicia un ciclo nuevo.
+
 ### v58 · Build 297 · Laboratorios accesibles desde Extras · 2026-09-26
 
 - **Extras** incluye una sección plegable con todas las revisiones aisladas
