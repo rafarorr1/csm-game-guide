@@ -127,6 +127,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-invocar.js', 'juego/visor-3d-gl.js'},
         'pruebas': ('pruebas_invocar.mjs',),
     },
+    'visor-gpu': {
+        'nombre': 'Visor en WebGPU',
+        'exportador': 'visor-gpu-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/visor-3d-gpu.js', 'juego/visor-3d-gl.js'},
+        'pruebas': ('pruebas_visor_gpu.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',

@@ -214,6 +214,26 @@ node dev/secciones/pruebas_invocar.mjs
 python3 dev/secciones/publicar.py --publicar --seccion invocar --salida /tmp/caoz-invocar
 ```
 
+## Visor en WebGPU (El Mago del Domo)
+
+La revisión está en `/visor-gpu/`: la carta del visor 3D portada a WebGPU
+(`caoz_tcg/visor-3d-gpu.js`, shader en WGSL) junto a la misma carta en WebGL
+(`visor-3d-gl.js`, el motor del juego). Misma interfaz (`crear` es asíncrono y
+devuelve `null` sin WebGPU); añade MSAA 4×, mipmaps generados en la GPU y
+filtrado anisótropo 16×. «Comparar», «WebGPU» o «WebGL»; edición Normal, Foil
+o Foil dorado; «Dar la vuelta»; arrastrar para girar. `?solo=gpu|gl` crea un
+solo motor. Sin WebGPU, la sección avisa y enseña sólo WebGL.
+
+Chrome sin pantalla (el de las pruebas) pierde el dispositivo WebGPU al
+presentar el lienzo; por eso las pruebas usan `?presentar=0` y
+`CAOZ_VISOR_GPU_REVISION.captura()`, que lee el fotograma de una textura propia
+(`capturar()`). En un navegador normal se presenta con normalidad.
+
+```bash
+node dev/secciones/pruebas_visor_gpu.mjs
+python3 dev/secciones/publicar.py --publicar --seccion visor-gpu --salida /tmp/caoz-visor-gpu
+```
+
 ```bash
 node dev/secciones/pruebas_fuego.mjs
 python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego

@@ -1,0 +1,24 @@
+/* Visor de prueba: WebGPU frente a WebGL. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
+.vgShell{width:min(1240px,100%);margin:auto;display:flex;flex-direction:column;gap:12px}
+.vgEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.vgCabecera h1{color:#f0d796;font:700 clamp(24px,4vw,40px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.vgCabecera p:last-child{color:#c9bdda;font-size:1.08em;max-width:900px}
+.vgControles{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.vgGrupo{display:flex;border:1px solid #e7bb5555;border-radius:10px;overflow:hidden}
+.vgGrupo button,.vgBoton{font:700 12px/1 'Cinzel Domo',Georgia,serif;color:#e0cfa6;background:#150f20;border:0;padding:10px 13px;cursor:pointer}
+.vgBoton{border:1px solid #e7bb5555;border-radius:10px}
+.vgGrupo button[aria-pressed="true"]{background:#e8bb5a;color:#2a1706}
+.vgOpcion{display:flex;gap:6px;align-items:center;color:#d9cbe8}
+.vgEscenario{display:grid;grid-template-columns:1fr 1fr;gap:12px;height:min(78vh,760px);touch-action:none}
+.vgEscenario[data-motor="gpu"],.vgEscenario[data-motor="gl"]{grid-template-columns:1fr}
+.vgEscenario[data-motor="gpu"] #panelGl,.vgEscenario[data-motor="gl"] #panelGpu{display:none}
+@media (max-width:700px){.vgEscenario{grid-template-columns:1fr;grid-template-rows:1fr 1fr;height:min(88vh,900px)}.vgEscenario[data-motor="gpu"],.vgEscenario[data-motor="gl"]{grid-template-rows:1fr}}
+.vgPanel{position:relative;min-height:0;border-radius:16px;overflow:hidden;cursor:grab;background:radial-gradient(ellipse 60% 55% at 50% 45%,#2a1a4a,#0d0818 65%,#050308);border:1px solid #e7bb5530}
+.vgPanel:active{cursor:grabbing}
+.vgPanel canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.vgPanel figcaption{position:absolute;left:10px;top:10px;padding:5px 10px;border-radius:8px;background:#0d0914cc;color:#cdbfdf;font-size:13px;pointer-events:none}
+.vgPanel figcaption b{color:#f0d796;font:700 12px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.06em}
+.vgEstado{color:#b9aecb;min-height:1.5em}

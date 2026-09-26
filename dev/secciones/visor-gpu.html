@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Visor WebGPU · El Mago del Domo · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./visor-gpu-mesa.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/visor-3d-gl.js"></script>
+<script src="./juego/visor-3d-gpu.js"></script>
+<script src="./visor-gpu-mesa.js" defer></script>
+</head>
+<body>
+<main class="vgShell" aria-labelledby="vgTitulo">
+  <header class="vgCabecera">
+    <p class="vgEtiqueta">PRUEBA DE MOTOR GRÁFICO · SIN PARTIDA</p>
+    <h1 id="vgTitulo">El Mago del Domo · WebGPU</h1>
+    <p>La carta del visor 3D dibujada con WebGPU (shader traducido a WGSL, antialiasing MSAA 4×, mipmaps en la GPU y filtrado anisótropo 16×) junto a la misma carta en WebGL, el motor que usa hoy el juego. Arrastra para girarla; la luz sigue al puntero.</p>
+  </header>
+  <div class="vgControles" role="group" aria-label="Motor y edición">
+    <div class="vgGrupo" role="group" aria-label="Motor"><button type="button" data-motor="comparar" aria-pressed="true">Comparar</button><button type="button" data-motor="gpu" aria-pressed="false">WebGPU</button><button type="button" data-motor="gl" aria-pressed="false">WebGL</button></div>
+    <div class="vgGrupo" role="group" aria-label="Edición"><button type="button" data-edicion="normal" aria-pressed="false">Normal</button><button type="button" data-edicion="foil" aria-pressed="false">Foil</button><button type="button" data-edicion="dorado" aria-pressed="true">Foil dorado</button></div>
+    <button type="button" class="vgBoton" id="voltear">Dar la vuelta</button>
+    <label class="vgOpcion"><input type="checkbox" id="girar" checked> Girar sola</label>
+  </div>
+  <section class="vgEscenario" id="escenario" data-motor="comparar" aria-label="Visor de la carta">
+    <figure class="vgPanel" id="panelGpu"><canvas id="lienzoGpu" aria-label="El Mago del Domo en WebGPU"></canvas><figcaption><b>WebGPU</b> <span id="infoGpu">Preparando…</span></figcaption></figure>
+    <figure class="vgPanel" id="panelGl"><canvas id="lienzoGl" aria-label="El Mago del Domo en WebGL"></canvas><figcaption><b>WebGL</b> <span id="infoGl">Preparando…</span></figcaption></figure>
+  </section>
+  <p id="estado" class="vgEstado" role="status" aria-live="polite">Pintando la carta…</p>
+</main>
+</body>
+</html>
