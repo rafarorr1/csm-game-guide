@@ -41,7 +41,9 @@
     st.textContent=
       '.clEscena{position:absolute;inset:0;z-index:0;pointer-events:none;overflow:hidden;border-radius:inherit}'
       +'.clEscena>*{position:absolute;pointer-events:none}'
-      +'.clFondo{inset:-6%;background:center/cover no-repeat;filter:blur(1.5px) brightness(.62) saturate(1.15);animation:clDeriva 38s ease-in-out infinite alternate}'
+      +'.clFondo{inset:-6%;filter:blur(1.5px) brightness(.62) saturate(1.15);animation:clDeriva 38s ease-in-out infinite alternate}'
+      +'.clFondoImg{position:absolute;inset:0;background:center/cover no-repeat}'
+      +'.clEscena[data-propio] .clFondo{filter:brightness(.8) saturate(1.05)}.clEscena[data-propio] .clSuelo{display:none}'
       +'@keyframes clDeriva{from{transform:scale(1.02) translate(-1.2%,-.8%)}to{transform:scale(1.08) translate(1.2%,.8%)}}'
       +'.clVelo{inset:0}'
       +'.clSuelo,.clAmbiente{inset:0;width:100%;height:100%}'
@@ -201,9 +203,13 @@
 
   function caja(nodo,host){const a=nodo.getBoundingClientRect(),b=host.getBoundingClientRect(),r={x:a.left-b.left,y:a.top-b.top,w:a.width,h:a.height};r.cx=r.x+r.w/2;r.cy=r.y+r.h/2;return r;}
 
-  /* crear(host,{arte,linea,reducir}) → {poner(id,{lado}), quitar, perderPD, brindis, ataqueAlma, tiradaAidman, muerte, lugar, destruir}
+  /* crear(host,{arte,fondo,linea,reducir}) → {poner(id,{lado}), quitar, fondoCambiado, perderPD, brindis, ataqueAlma, tiradaAidman, muerte, lugar, destruir}
      host: la mesa (position:relative); sus hijos deben ir por encima (z-index ≥ 1).
-     arte(id) → url de la ilustración; linea: el nodo que separa los dos campos
+     arte(id) → url de la ilustración; fondo(id) → un fondo propio diseñado en el
+     Estudio, {url,x,y,z,efectos} (encuadre 0–100, zoom 50–300 y, con
+     efectos:false, sin el ambiente del Lugar), o null. Con fondo propio
+     el escenario lo muestra tal cual, más claro y sin el suelo pintado; el
+     ambiente y las reglas siguen. linea: el nodo que separa los dos campos
      (el Puente la usa y el borde de cada lado se corta ahí). */
   function crear(host,op={}){
     ponerEstilo();
@@ -216,16 +222,28 @@
 
     function hacerEscena(id,lado){
       const L=LUGARES[id],div=document.createElement('div');div.className='clEscena';div.dataset.escena=id;div.setAttribute('aria-hidden','true');
-      const fondo=document.createElement('div');fondo.className='clFondo';fondo.style.backgroundImage='url("'+arte(id)+'")';
+      const fondo=document.createElement('div');fondo.className='clFondo';const img=document.createElement('div');img.className='clFondoImg';fondo.append(img);
       const velo=document.createElement('div');velo.className='clVelo';
-      velo.style.background='radial-gradient(ellipse 60% 55% at 50% 52%,rgba(6,4,10,.5),rgba(6,4,10,.15) 75%,transparent),linear-gradient('+L.tinte+','+L.tinte+')';
       const suelo=document.createElement('canvas');suelo.className='clSuelo';suelo.style.opacity=String(L.brillo);
       const amb=document.createElement('canvas');amb.className='clAmbiente';
       const ladoDiv=document.createElement('div');ladoDiv.className='clLado';
       div.append(fondo,velo,suelo,amb,ladoDiv);host.prepend(div);
-      const e={id,div,fondo,suelo,amb,ladoDiv,lado,estado:{},W:0,H:0,t0:performance.now()};
-      ajustar(e);return e;
+      const e={id,div,fondo,img,velo,suelo,amb,ladoDiv,lado,estado:{},W:0,H:0,t0:performance.now()};
+      vestirFondo(e);ajustar(e);return e;
     }
+    // La imagen del fondo: la propia del Estudio, con su encuadre, o la ilustración del Lugar.
+    function vestirFondo(e){
+      let f=null;try{f=op.fondo?.(e.id)||null;}catch(_){f=null;}
+      const ok=f&&typeof f.url==='string'&&f.url,x=ok?acotar(+f.x||50,0,100):50,y=ok?acotar(+f.y||50,0,100):50,z=ok?acotar((+f.z||100)/100,.5,3):1;
+      e.img.style.backgroundImage='url("'+String(ok?f.url:arte(e.id)).replace(/["\\\n]/g,'')+'")';
+      e.img.style.backgroundPosition=x+'% '+y+'%';e.img.style.transformOrigin=x+'% '+y+'%';e.img.style.transform=z===1?'':'scale('+z+')';
+      if(ok)e.div.dataset.propio='';else delete e.div.dataset.propio;
+      // Un fondo propio puede prescindir del ambiente del Lugar (efectos:false).
+      e.amb.style.display=ok&&f.efectos===false?'none':'';
+      const L=LUGARES[e.id];e.velo.style.background=ok?'radial-gradient(ellipse 55% 50% at 50% 52%,rgba(6,4,10,.32),transparent 80%)':'radial-gradient(ellipse 60% 55% at 50% 52%,rgba(6,4,10,.5),rgba(6,4,10,.15) 75%,transparent),linear-gradient('+L.tinte+','+L.tinte+')';
+    }
+    // El Estudio cambió el fondo: se repinta la escena en curso sin portal.
+    function fondoCambiado(){if(escena)vestirFondo(escena);}
     function ajustar(e){
       const {W,H}=medir(),dpr=dprDe();if(!W||!H)return;e.W=W;e.H=H;
       for(const c of [e.suelo,e.amb]){c.width=Math.round(W*dpr);c.height=Math.round(H*dpr);}
@@ -403,7 +421,7 @@
     }
 
     function destruir(){destruido=true;cancelAnimationFrame(raf);ro?.disconnect();escena?.div.remove();escena=null;efectos.remove();delete host.dataset.campoLugar;}
-    return Object.freeze({poner,quitar,perderPD,brindis,ataqueAlma,tiradaAidman,muerte,destruir,get lugar(){return escena?.id||null;},lugares:Object.keys(LUGARES)});
+    return Object.freeze({poner,quitar,fondoCambiado,perderPD,brindis,ataqueAlma,tiradaAidman,muerte,destruir,get lugar(){return escena?.id||null;},lugares:Object.keys(LUGARES)});
   }
 
   window.CAOZ_CAMPO_LUGAR=Object.freeze({crear,LUGARES:Object.freeze(Object.fromEntries(Object.entries(LUGARES).map(([k,v])=>[k,Object.freeze({...v})])))});
