@@ -1,5 +1,21 @@
 # Registro de versiones — el TCG del Domo
 
+### v60 · Build 299 · Playtest de balance · 2026-09-26
+
+- **Talesyn** sustituye El Domo y una Rayo de Escarcha por dos **Acólitos de
+  Kenya**: por 1 PD sacrifica otro aliado para robar una carta y avanzar la
+  Gracia. La IA aprende a elegir el aliado prescindible para esa ofrenda.
+- La IA conserva las piezas tempranas de Talesyn y Mohamed en su mulligan, y
+  cobra **Puntos Robados** sólo al habilitar una jugada útil o al llegar al
+  máximo de contadores.
+- **Golpe Directo** de Adreida cuesta 3 PD; **Rebaño de Rul** conserva la
+  curación de 2 PV pero da sólo 1 Alma cuando no hay heridos; **Can** invoca un
+  único Goblin de Camino.
+- Banco reproducible: 8 variantes × 7 200 partidas, misma semilla, 57 600
+  partidas completas y sin errores. La candidata mejora especialmente Talesyn,
+  pero Gero y el cruce Rafaela–Fender quedan abiertos para el playtest humano;
+  por eso se publica exclusivamente en Beta.
+
 ### v59 · Build 298 · Arranque listo y retos rotativos · 2026-09-26
 
 - El menú principal queda preparado detrás de la cortinilla del Domo antes de

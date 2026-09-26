@@ -4117,6 +4117,97 @@ PRUEBAS.suite('auditoria', async t => {
   t.nota('Habilidades, muerte de cartas, victoria online e identificación del daño.');
 });
 
+/* ===========================================================================
+   SUITE: balanceCandidata — el paquete que llega al playtest no es sólo texto
+   de carta. Cada palanca tiene una regresión pequeña y directa para que una
+   mejora visual o una refactorización no la desconecte del motor.
+   ======================================================================== */
+PRUEBAS.suite('balanceCandidata', async t => {
+  const preparar = (a='talesin', b='fender') => {
+    T.newGame(a,b); T.G.fast=true; T.G.auto=true; T.G.silent=true;
+    T.G.active=0; T.G.phase='principal';
+    return T.P(0);
+  };
+  const copias = (lid,id) => T.DECKS[lid].list.find(([c])=>c===id)?.[1] || 0;
+
+  /* El mazo sigue siendo legal y el Acólito reemplaza exactamente las tres
+     ranuras anunciadas: un Domo y un Rayo, no una carta extra escondida. */
+  {
+    const d=T.buildDeck('talesin');
+    t.igual(d.length,40,'Talesyn conserva exactamente 40 cartas');
+    t.igual(copias('talesin','acolitokenya'),2,'Talesyn lleva dos Acólitos de Kenya');
+    t.igual(copias('talesin','domo'),0,'el Acólito reemplaza El Domo en la candidata');
+    t.igual(copias('talesin','escarcha'),1,'Talesyn conserva una sola Rayo de Escarcha');
+  }
+
+  /* La ofrenda exige OTRO aliado, cobra 1 PD, destruye por el motor real y
+     por eso concede Gracia y roba. La IA debe escoger el cuerpo sacrificable. */
+  {
+    const p=preparar();
+    const mat=T.mkUnit('matildus',0),aco=T.mkUnit('acolitokenya',0);
+    p.field=[mat,aco];p.deck=['bob'];p.pd=1;T.recalc();
+    const regla=T.CARDS.acolitokenya.act.tg;
+    t.check(!window.targetPool(0,regla,aco,T.CARDS.acolitokenya).includes(aco),
+      'el Acólito no puede elegirse a sí mismo como ofrenda');
+    const eleccion=window.aiTargets(0,[regla],aco,{id:'acolitokenya',tg:[regla]});
+    t.check(eleccion?.[0]?.[0]===mat,'la IA entrega el aliado prescindible, no el Acólito');
+    const ok=await window.useAct(aco);
+    t.check(ok&&!mat.alive&&!p.field.includes(mat),'la ofrenda destruye al aliado elegido');
+    t.check(p.hand.includes('bob')&&p.gracia===1,'la ofrenda roba y concede una Ficha de Gracia');
+    t.igual(p.pd,0,'la ofrenda cuesta exactamente 1 PD');
+    const solo=preparar();
+    const unico=T.mkUnit('acolitokenya',0);solo.field=[unico];solo.pd=1;T.recalc();
+    t.check(!window.canUseAct(unico),'el Acólito solo no ofrece una ofrenda imposible');
+  }
+
+  /* Puntos Robados no se malgasta con un único contador: se cobra cuando sus
+     dos PD abren una jugada real. */
+  {
+    const p=preparar();
+    p.hand=['rayoabrasador'];p.pd=1;p.relics=[{id:'puntosrobados',counters:2}];
+    t.check(window.debeCobrarPuntosRobadosIA(0,p.relics[0]),
+      'la IA cobra Puntos Robados cuando dos PD habilitan una carta útil');
+    await window.usarReliquiasIA(0);
+    t.check(!p.relics.length&&p.pd===3,'cobrar sacrifica la Reliquia y suma sus dos PD');
+    p.relics=[{id:'puntosrobados',counters:1}];
+    t.check(!window.debeCobrarPuntosRobadosIA(0,p.relics[0]),
+      'la IA nunca quema Puntos Robados con un solo contador');
+  }
+
+  /* La nueva valoración de la primera mano sólo protege las piezas de plan;
+     todavía devuelve los ladrillos para no convertir el mulligan en ventaja
+     gratis. */
+  {
+    let p=preparar('talesin');T.G.phase='mulligan';
+    p.hand=['puntosrobados','montanas','tal','rey','machete'];p.deck=['bob','matildus'];
+    const talesyn=window.seleccionMulliganIA(0);
+    t.check(!talesyn.includes(0)&&!talesyn.includes(1)&&talesyn.length===2,
+      'la IA de Talesyn conserva Puntos Robados y Las Montañas en el mulligan');
+    p=preparar('mohamed');T.G.phase='mulligan';
+    p.hand=['sangrefria','ilusion','tasha','tal','rey'];p.deck=['bob','matildus'];
+    const mohamed=window.seleccionMulliganIA(0);
+    t.check(!mohamed.includes(0)&&!mohamed.includes(1)&&!mohamed.includes(2)&&mohamed.length===2,
+      'la IA de Mohamed conserva sus respuestas tempranas en el mulligan');
+  }
+
+  /* Los tres recortes de poder tienen la regla y el texto alineados. */
+  {
+    t.igual(T.LEADERS.adreida.habCost,3,'Golpe Directo cuesta 3 PD en la candidata');
+    t.check(/3 PD/.test(T.LEADERS.adreida.hab),'el texto de Golpe Directo muestra el coste correcto');
+    const p=preparar('rafaela');
+    p.alma=19;p.hand=['discipulo'];p.pd=3;
+    await window.playFromHand(0,'discipulo');
+    t.igual(p.alma,20,'Rebaño de Rul devuelve sólo 1 Alma sin aliado herido');
+    T.newGame('gero','fender');T.G.fast=true;T.G.auto=true;T.G.silent=true;T.G.active=0;T.G.phase='principal';
+    const g=T.P(0);g.hand=['can'];g.pd=4;
+    await window.playFromHand(0,'can');
+    t.igual(g.field.filter(u=>u.card.id==='tok_goblincamino').length,1,
+      'Can invoca exactamente un Goblin de Camino');
+  }
+
+  t.nota('paquete candidato: Acólito, IA, mulligan y recortes de Adreida/Rafaela/Gero');
+});
+
 PRUEBAS.suite('regresiones', async t => {
   /* La IA no atacaba nunca: G.busy servía a la vez de "IA ocupada" y de
      reentrada de doAttack, así que se bloqueaba a sí misma. */

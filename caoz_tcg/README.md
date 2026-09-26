@@ -372,7 +372,7 @@ internet con el mismo diseño y acceso del estudio de sonidos. La beta está en
 https://beta.caoz-tcg.pages.dev/estudio. La producción conserva su versión
 hasta que se solicite publicarla; cada entorno tiene sus propios datos y clave.
 
-La biblioteca incluye 134 cartas y protagonistas, con búsqueda y filtros.
+La biblioteca incluye 135 cartas y protagonistas, con búsqueda y filtros.
 Seleccionar JPEG, PNG o WebP prepara una vista previa; los controles horizontal,
 vertical y acercamiento ajustan el encuadre. **Guardar** publica el cambio en
 la nube y **Restaurar original** recupera el arte del repositorio. Si otra

@@ -581,13 +581,13 @@ function catalogoDelMotor(){
   vm.runInContext(fs.readFileSync(new URL('./motor.js',import.meta.url),'utf8'),c);
   return JSON.parse(vm.runInContext('JSON.stringify({cartas:CARDS,lideres:LEADERS})',c));
 }
-caso('Tres colecciones cubren las 134 cartas reales: 48 Trucos, 46 Juramentos y 48 Caos',()=>{
+caso('Tres colecciones cubren las 135 cartas reales: 48 Trucos, 46 Juramentos y 49 Caos',()=>{
   const datos=catalogoDelMotor(),e=entorno(datos),{api}=e,lista=api.grupos(),catalogo=api.ids();
-  assert.equal(catalogo.length,134);assert.equal(lista.length,3);assert.equal(new Set(lista.map(g=>g.id)).size,3);
+  assert.equal(catalogo.length,135);assert.equal(lista.length,3);assert.equal(new Set(lista.map(g=>g.id)).size,3);
   assert.deepEqual(limpiar(lista.map(g=>[g.id,g.nombre,g.ids.length])),[
-    ['trucos','Trucos del Domo',48],['juramentos','Juramentos del Domo',46],['caos','Caos y Dragones',48],
+    ['trucos','Trucos del Domo',48],['juramentos','Juramentos del Domo',46],['caos','Caos y Dragones',49],
   ]);
-  const afinidades={trucos:['lider_mohamed','lider_fender','cantaberna','ilusion'],juramentos:['lider_adreida','lider_rafaela','augusto','rulchete'],caos:['lider_gero','lider_talesin','rey','tal']};
+  const afinidades={trucos:['lider_mohamed','lider_fender','cantaberna','ilusion'],juramentos:['lider_adreida','lider_rafaela','augusto','rulchete'],caos:['lider_gero','lider_talesin','rey','tal','acolitokenya']};
   for(const grupo of lista){
     assert.equal(new Set(grupo.ids).size,grupo.ids.length);assert.ok(afinidades[grupo.id].every(id=>grupo.ids.includes(id)));
     assert.equal(grupo.ids.every(id=>catalogo.includes(id)),true);
@@ -610,8 +610,8 @@ caso('Cartas futuras se asignan al grupo menor determinísticamente sin crear un
   const ampliada=entorno({cartas:{...datos.cartas,...Object.fromEntries(nuevas.map(id=>[id,{}]))},lideres:datos.lideres}).api;
   const invertida=entorno({cartas:Object.fromEntries(Object.entries({...datos.cartas,...Object.fromEntries(nuevas.map(id=>[id,{}]))}).reverse()),lideres:datos.lideres}).api;
   const grupos=ampliada.grupos();assert.equal(grupos.length,3);assert.deepEqual(limpiar(grupos),limpiar(invertida.grupos()));
-  assert.deepEqual(limpiar(grupos.map(g=>g.ids.length)),[51,51,51]);
-  const esperado=['juramentos','juramentos','trucos','juramentos','caos','trucos','juramentos','caos','trucos','juramentos','caos'];
+  assert.deepEqual(limpiar(grupos.map(g=>g.ids.length)),[52,51,51]);
+  const esperado=['juramentos','juramentos','trucos','juramentos','trucos','juramentos','caos','trucos','juramentos','caos','trucos'];
   nuevas.forEach((id,i)=>{const incluidos=grupos.filter(g=>g.ids.includes(id));assert.equal(incluidos.length,1);assert.equal(incluidos[0].id,esperado[i]);});
   originales.forEach(g=>assert.deepEqual(limpiar(grupos.find(n=>n.id===g.id).ids.filter(id=>!nuevas.includes(id))),limpiar(g.ids),'Los nuevos IDs no cambian afinidades existentes'));
   const soloFuturas=entorno({cartas:Object.fromEntries(nuevas.map(id=>[id,{}])),lideres:{}}).api.grupos();

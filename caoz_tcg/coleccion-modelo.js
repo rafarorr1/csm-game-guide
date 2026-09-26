@@ -31,12 +31,12 @@
     return [...new Set(cartas.concat(protagonistas).filter(idSeguro))];
   }
   // Tres colecciones: Mohamed/Fender, Adreida/Rafaela y Gero/Talesyn.
-  // Conservan las afinidades y las 134 cartas; deduplicar evita dar más
+  // Conservan las afinidades y las 135 cartas; deduplicar evita dar más
   // probabilidad a una carta presente en ambas colecciones anteriores.
   const gruposBase=[
     ['trucos','Trucos del Domo','lider_mohamed conserje machete brickbrock trol lucy magodomo ilusion tok_ilusion mensaje sangrefria acertijo disipar peaje notario sombrero jabon llavemago pergamino puente bolafuego nubedagas disfrazarse copiajabon lider_fender petunia bartolomeo eric cantaberna burla balada zancada pasoatronador tasha mazo antro escarcha calentarmetal palabracuracion luzhadas puas gatobachatero humobob afterparty propaganda minus rantiago bob'],
     ['juramentos','Juramentos del Domo','lider_adreida augusto lucius ninolanza talia aldrick horton modificar auxilio armadura saeta destello colapso collar tomsage armamagica ballesta lifestealer esporashorton espadaboveda ladrillos fetichemino brazosagua lanzallave lider_rafaela julia adolfo titaus matildus discipulo tok_petunia rulchete leche bendicion manosardientes ceguera espiritus taumaturgia arco tok_rulchete campanafe lecheslact espadaluz lutorafaela petunia juangabriel'],
-    ['caos','Caos y Dragones','lider_gero rey aidman juangabriel brujula rulchetebajo ciclope can spiderman hermanotrol rambo coyote correcaminos editorcosecha editorcorte editorcuadro editorcarrera editororbita editorduelo tok_goblincamino ipadkid lentesmachete eclipse viajehongos lider_talesin edbor tal tok_poseido tok_dragon cuerda hongos alientoacido rayoabrasador proyectil contrahechizo gemaconserje esporas talcadaver puntosrobados montanas domo lanzallamas conserje eric rantiago horton pergamino llavemago'],
+    ['caos','Caos y Dragones','lider_gero rey aidman juangabriel brujula rulchetebajo ciclope can spiderman hermanotrol rambo coyote correcaminos editorcosecha editorcorte editorcuadro editorcarrera editororbita editorduelo tok_goblincamino ipadkid lentesmachete eclipse viajehongos lider_talesin edbor acolitokenya tal tok_poseido tok_dragon cuerda hongos alientoacido rayoabrasador proyectil contrahechizo gemaconserje esporas talcadaver puntosrobados montanas domo lanzallamas conserje eric rantiago horton pergamino llavemago'],
   ];
   function grupos(){
     const catalogo=ids(),conocidos=new Set(catalogo),cubiertos=new Set();
