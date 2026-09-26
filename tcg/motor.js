@@ -409,9 +409,13 @@ C('rulchete',{n:'Rulchete, la Polimorfia Verdadera',t:'hechizo',c:5,sub:['fe'],r
  x:'Transforma un aliado de Costo 2 o menos en un <b>Dragón Celestial Morado 7/7</b> con Vuelo hasta el final de tu siguiente turno.',
  tg:[{k:'unidadAliada',min:1,max:1,f:u=>u.card.c<=2}],
  req:(g,s)=>P(s).field.some(u=>u.card.c<=2),
- cast:async(g,s,ts)=>{ const u=ts[0][0]; u.poly={card:u.card,until:g.turnNo+2};
-   u.card=CARDS.tok_dragon; u.tribes=[...CARDS.tok_dragon.tr]; u.dmg=0;
-   log(`¡${u.poly.card.n} se convierte en un Dragón Celestial Morado 7/7!`); }});
+ cast:async(g,s,ts)=>{ const u=ts[0][0];
+   const cambiar=()=>{ if(G!==g||g.over||!u.alive)return;
+     u.poly={card:u.card,until:g.turnNo+2};
+     u.card=CARDS.tok_dragon; u.tribes=[...CARDS.tok_dragon.tr]; u.dmg=0;
+     log(`¡${u.poly.card.n} se convierte en un Dragón Celestial Morado 7/7!`); render(); };
+   if(typeof fxClaudePolimorfia==='function') await fxClaudePolimorfia(u,cambiar);
+   else cambiar(); }});
 
 C('cuerda',{n:'Cuerda Dimensional',t:'hechizo',c:2,r:0,art:'🪢',
  x:'Retira hasta 3 aliados del campo hasta el inicio de tu siguiente turno. Al volver recuperan 2 PV.',
@@ -543,8 +547,12 @@ C('escarcha',{n:'Rayo de Escarcha',t:'hechizo',c:1,r:0,art:'❄️',
  x:'1 daño a un Personaje rival. Pierde Prisa y tiene −1 ATQ hasta el final del turno rival.',
  tg:[{k:'unidadEnemiga',min:1,max:1}],
  req:(g,s)=>P(1-s).field.length>0,
- cast:async(g,s,ts)=>{ const u=ts[0][0]; debuff(u,-1,0); u.keysOwn.delete('prisa');
-   await dmgU(u,1,{src:'hechizo'}); }});
+ cast:async(g,s,ts)=>{ const u=ts[0][0];
+   const congelar=async()=>{ if(G!==g||g.over||!u.alive)return;
+     debuff(u,-1,0); u.keysOwn.delete('prisa');
+     await dmgU(u,1,{src:'hechizo'}); };
+   if(typeof fxClaudeEscarcha==='function') await fxClaudeEscarcha(u,congelar);
+   else await congelar(); }});
 
 C('proyectil',{n:'Proyectil Mágico',t:'hechizo',c:2,r:0,art:'🔷',
  x:'3 daño repartidos entre Personajes rivales. <b>Impacta sin fallar:</b> no puede ser anulado.',
@@ -701,7 +709,10 @@ C('taumaturgia',{n:'Taumaturgia',t:'hechizo',c:1,sub:['fe'],r:0,art:'🕯️',
 C('tasha',{n:'Risa Incontrolable de Tasha',t:'trampa',c:2,r:0,art:'🤣',
  x:'<b>Cuando un Personaje rival declara un ataque:</b> el ataque se cancela y queda <b>Aturdido</b>.',
  on:'ataque', can:(g,s,ev)=>true,
- fire:async(g,s,ev)=>{ ev.cancel=true; stun(ev.att);
+ fire:async(g,s,ev)=>{ ev.cancel=true;
+   if(typeof fxClaudeRisa==='function') await fxClaudeRisa(ev.att);
+   if(G!==g||g.over)return;
+   stun(ev.att);
    log(`El chiste del aeropuerto deja a ${ev.att.card.n} <b>Aturdido</b>.`,'dmg'); }});
 
 C('destello',{n:'Destello Protector',t:'trampa',c:2,r:0,art:'🔆',
@@ -794,7 +805,10 @@ C('tomsage',{n:'Tomsage bajo asedio',t:'lugar',c:2,r:0,art:'🏰',
  x:'Trol, Ogro y Goblin ganan +1/+1. Al inicio de cada turno, el jugador activo pierde 1 PD máximo.',
  aura:(g)=>{ [0,1].forEach(s=>P(s).field.forEach(u=>{
    if(u.tribes.some(t=>['Trol','Ogro','Goblin'].includes(t))){u.aA++;u.aH++;} })); },
- onAnyStart:async(g,s)=>{ P(s).pd=Math.max(0,P(s).pd-1); log('Tomsage bajo asedio: −1 PD.','sys'); }});
+ onAnyStart:async(g,s)=>{ const perder=()=>{ if(G!==g||g.over)return;
+   P(s).pd=Math.max(0,P(s).pd-1); log('Tomsage bajo asedio: −1 PD.','sys'); render(); };
+   if(typeof fxClaudeTomsage==='function') await fxClaudeTomsage(s,perder);
+   else perder(); }});
 
 C('antro',{n:'Antro Juan',t:'lugar',c:2,r:0,art:'🍻',
  x:'En la Fase Final, cada jugador puede pagar 2 PD para robar 1 carta. Los Valoria tienen +0/+1.',
@@ -813,8 +827,11 @@ C('montanas',{n:'Las Montañas de Thal',t:'lugar',c:3,r:1,art:'⛰️',
       siOk:'No aparece nadie', siMal:reservado?'El campo del Editor rechaza a Aidman.':'¡Aidman aparece en el campo rival!'});
    if(G!==g||g.over)return;
    if(r<=3 && puedeEntrarCampo(rival,'aidman') && !P(rival).field.some(u=>u.card.id==='aidman')){
-     const u=mkUnit('aidman',rival); P(rival).field.push(u); recalc();
-     log('¡Aidman aparece en el campo rival buscando trabajo!','sys'); } }});
+     const aparecer=()=>{ if(G!==g||g.over)return;
+       const u=mkUnit('aidman',rival); P(rival).field.push(u); recalc();
+       log('¡Aidman aparece en el campo rival buscando trabajo!','sys'); render(); };
+     if(typeof fxClaudeMontanas==='function') await fxClaudeMontanas(rival,r,aparecer);
+     else aparecer(); } }});
 
 C('domo',{n:'El Domo',t:'lugar',c:4,r:1,art:'🔴',
  x:'Cada vez que un Personaje muere, su controlador pierde 1 Alma y el otro gana 1 PD. Las Llaves del Domo se ganan al doble.',
@@ -1219,10 +1236,15 @@ function costOf(cardId, s){
 
 async function dmgU(u, n, opt={}){
   if(!u||!u.alive||n<=0||G.over) return 0;
+  const partida=G;
   if(opt.fire){
     if(grant(u,'fireProof')){ log(`${u.card.n} es inmune al Fuego (Collar de Agua).`,'sys');
       const src=u.objs.find(o=>CARDS[o]&&CARDS[o].grants&&CARDS[o].grants.fireProof);
-      fxObj(u, src||'collar', 'Inmune al Fuego'); await nap(700); return 0; }
+      let burbuja=false;
+      if(typeof fxClaudeCollarAgua==='function') burbuja=await fxClaudeCollarAgua(u);
+      if(G!==partida||partida.over||!u.alive)return 0;
+      if(!burbuja) fxObj(u, src||'collar', 'Inmune al Fuego');
+      await nap(700); return 0; }
     u.tookFire=true;
   }
   if(!opt.unstoppable && u.dmg+n >= u.maxHp){
@@ -1304,11 +1326,23 @@ async function destroy(u,opt={}){
 
 async function killUnit(u, opt={}){
   if(!u.alive) return;
-  const s=u.side;
+  const partida=G,s=u.side;
+  // El viaje del Domo se dibuja mientras la carta sigue visible, pero la
+  // regla conserva su momento histórico de resolución, más abajo, después de
+  // objetos, Nexo y Puntos Robados.
+  const domoActivo=!!(G.place && CARDS[G.place.id].domeDeath);
+  if(domoActivo){
+    if(typeof fxClaudeDomoMuerte==='function') await fxClaudeDomoMuerte(u,s);
+    if(G!==partida||partida.over)return;
+  }
+  let petuniaAsciende=false;
+  if(u.card.id==='petunia'&&!P(s).petuniaUsed&&typeof fxClaudeAscensionPetunia==='function')
+    petuniaAsciende=await fxClaudeAscensionPetunia(u);
+  if(G!==partida||partida.over)return;
   // Si Thal ya redujo la carta a ceniza, no la hacemos reaparecer como una
   // carta fantasma camino a las Alcantarillas.
   if(u.fxCeniza) delete u.fxCeniza;
-  else await fxDeath(u);                  // se anima mientras sigue en el campo
+  else if(!petuniaAsciende) await fxDeath(u); // se anima mientras sigue en el campo
   const idx=P(s).field.indexOf(u); if(idx>=0) P(s).field.splice(idx,1);
   u.alive=false;
   // La muerte rompe la corte antes de que una Trampa o un Al morir la repueble.
@@ -1334,7 +1368,8 @@ async function killUnit(u, opt={}){
   // Puntos Robados del rival
   P(1-s).relics.forEach(r=>{ if(CARDS[r.id].id==='puntosrobados'){ r.counters=(r.counters||0)+1;
     render(); fxStat(1-s,'.stat.relic'); fxNotice('💰 Puntos Robados: '+r.counters,'var(--c-objeto)'); } });
-  // Lugar El Domo
+  // Lugar El Domo: el efecto visual ya mostró el viaje, y la regla conserva
+  // el orden original respecto a objetos, Nexo y Puntos Robados.
   if(G.place && CARDS[G.place.id].domeDeath){
     P(s).alma--; P(1-s).pd++;
     log('El Domo cobra: −1 Alma para su controlador, +1 PD para el rival.','sys');
@@ -1342,13 +1377,22 @@ async function killUnit(u, opt={}){
   }
   // Talesin: Ficha de Gracia
   if(P(s).leaderId==='talesin' && !P(s).ascended){
-    P(s).gracia++;
-    log(`✨ Ficha de Gracia ${P(s).gracia}/5.`);
-    if(P(s).gracia>=5){
-      P(s).ascended=true; P(s).alma+=5;
-      P(s).field.forEach(o=>{ if(o.tribes.includes('Celestial')){o.pA+=2;o.pH+=2;} });
-      toast('😇 ¡TALESIN ASCIENDE!');
-      log('<b>Talesyn asciende</b>: +5 Alma, Celestiales +2/+2, y a partir de ahora lo que baje nace Celestial con +2/+2.','heal');
+    const p=P(s); p.gracia++;
+    log(`✨ Ficha de Gracia ${p.gracia}/5.`);
+    if(p.gracia>=5){
+      const ascender=()=>{
+        if(p.ascended||G!==partida||partida.over)return;
+        p.ascended=true; p.alma+=5;
+        p.field.forEach(o=>{ if(o.tribes.includes('Celestial')){o.pA+=2;o.pH+=2;} });
+        toast('😇 ¡TALESIN ASCIENDE!');
+        log('<b>Talesyn asciende</b>: +5 Alma, Celestiales +2/+2, y a partir de ahora lo que baje nace Celestial con +2/+2.','heal');
+        render();
+      };
+      render();
+      if(typeof fxClaudeGracia==='function') await fxClaudeGracia(s,ascender);
+      else ascender();
+      if(G!==partida||partida.over)return;
+      if(!p.ascended) ascender();
     }
   }
   // trampas de muerte
@@ -1364,11 +1408,20 @@ async function killUnit(u, opt={}){
 
 function debuff(u,a,h){ u.nA+=a; u.nH+=h; u.nUntil=G.turnNo+1; recalc(); }
 
-function stun(u){ if(!u||!u.alive) return; if(u.card.stunProof){log(`${u.card.n} es inmune a Aturdido.`,'sys');return;} u.stunned=2; }
+function stun(u){
+  if(!u||!u.alive) return;
+  if(u.card.stunProof){log(`${u.card.n} es inmune a Aturdido.`,'sys');return;}
+  u.stunned=2;
+  if(typeof fxClaudeEstado==='function') fxClaudeEstado(u);
+}
 
-function infect(u){ if(u&&u.alive) u.infected=true; }
+function infect(u){
+  if(u&&u.alive){ u.infected=true; if(typeof fxClaudeEstado==='function') fxClaudeEstado(u); }
+}
 
-function possess(u){ if(u&&u.alive){ u.possessed=true; recalc(); } }
+function possess(u){
+  if(u&&u.alive){ u.possessed=true; recalc(); if(typeof fxClaudeEstado==='function') fxClaudeEstado(u); }
+}
 
 function bounce(u){
   if(!u||!u.alive) return;
@@ -1927,7 +1980,11 @@ async function startTurn(s){
     if(P(1-s).field.some(u=>u.card.freezeScroll)) log('Juan Gabriel congela el contador del Pergamino.','sys');
     else { p.scrollTurns++; log(`📜 El Pergamino brilla (${p.scrollTurns}/2).`);
       render(); fxStat(s,'.stat.relic');
-      fxNotice('📜 Pergamino de Deseo Ilimitado — '+p.scrollTurns+'/2','var(--gold)'); await nap(900);
+      fxNotice('📜 Pergamino de Deseo Ilimitado — '+p.scrollTurns+'/2','var(--gold)');
+      const runas=typeof fxClaudePergamino==='function' ? await fxClaudePergamino(s,p.scrollTurns) : false;
+      if(G!==partida||partida.over)return;
+      if(!runas) await nap(900);
+      if(G!==partida||partida.over)return;
       if(p.scrollTurns>=2){ endGame(s,`${p.L.n} formula su Deseo Ilimitado. El Domo obedece.`); return; } }
   }
   if(G.over) return;
@@ -1951,21 +2008,29 @@ async function startTurn(s){
 async function endTurn(){
   if(G.over||G.busy||G.resolving) return;
   relojPara();
-  const s=G.active, p=P(s);
+  const partida=G,s=G.active,p=P(s);
   await cumplirAtaquesObligados(s);            // los que deben atacar, atacan
-  if(G.over) return;
+  if(G!==partida||G.over) return;
   G.phase='final';
   if(G.tutorial) tutCheck();
   // Adreida — Maratón de K-dramas
   if(p.leaderId==='adreida' && !p.attacked && !p.leaderUsed){
     log('📺 Maratón de K-dramas: robas 1 carta.'); await draw(s,1); p.leaderUsed=true;
   }
+  if(G!==partida||G.over) return;
   if(G.tutorial) await tutBeat('finTurno',{side:s});
+  if(G!==partida||G.over) return;
   // Antro Juan
   if(G.place && CARDS[G.place.id].endPhase && p.pd>=2 && p.deck.length){
     const c=await ask(s,'Antro Juan: ¿pagar 2 PD para robar 1 carta?',['Sí, una ronda más','No'],
       (g,ss)=>P(ss).hand.length<6?0:1);
-    if(c===0){ p.pd-=2; await draw(s,1); }
+    if(c===0){
+      const beber=async()=>{ if(G!==partida||partida.over)return;
+        p.pd-=2; await draw(s,1); };
+      if(typeof fxClaudeAntro==='function') await fxClaudeAntro(s,beber);
+      else await beber();
+      if(G!==partida||G.over) return;
+    }
   }
   // Machete — Banco de Puntos
   const machete=p.field.find(u=>u.card.bank);
@@ -1987,9 +2052,16 @@ async function endTurn(){
     if(u.doomed && u.doomed<=G.turnNo){ log(`${u.card.n} vuelve a morir.`,'dmg'); await destroy(u,{silent:true}); }
   // Rulchete: fin de la polimorfia
   for(const side of [0,1]) for(const u of P(side).field) if(u.poly && u.poly.until<=G.turnNo){
-    const ratio=u.dmg/u.maxHp; u.card=u.poly.card; u.tribes=[...u.poly.card.tr]; u.poly=null;
-    recalc(); u.dmg=Math.min(u.maxHp-1,Math.round(ratio*u.maxHp));
-    log(`${u.card.n} recupera su forma original.`,'sys');
+    const recuperar=()=>{
+      if(G!==partida||partida.over||!u.alive||!u.poly)return;
+      const ratio=u.dmg/u.maxHp; u.card=u.poly.card; u.tribes=[...u.poly.card.tr]; u.poly=null;
+      recalc(); u.dmg=Math.min(u.maxHp-1,Math.round(ratio*u.maxHp));
+      log(`${u.card.n} recupera su forma original.`,'sys'); render();
+    };
+    if(typeof fxClaudePolimorfia==='function') await fxClaudePolimorfia(u,recuperar);
+    else recuperar();
+    if(G!==partida||G.over)return;
+    if(u.poly) recuperar();
   }
   recalc(); render();
   if(G.over) return;
@@ -2336,6 +2408,8 @@ async function doAttack(u, target){
       const r=await roll('Acertijo del Puente', s, {necesita:'8 o más', min:8,
         siOk:'Resuelve el acertijo y puede atacar al Alma',
         siMal:'No lo resuelve: no puede atacar al Alma'});
+      if(G!==partida||partida.over)return false;
+      if(typeof fxClaudePuente==='function') await fxClaudePuente(u,r);
       if(G!==partida||partida.over)return false;
       if(r<8){ log('No resuelve el acertijo: no puede atacar al Alma.','sys'); u.attacked=true; render(); return true; }
     }
