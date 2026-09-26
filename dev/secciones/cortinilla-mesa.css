@@ -1,0 +1,41 @@
+/* Escenario de prueba: la pantalla de carga, la cortinilla y una réplica del menú. */
+*{box-sizing:border-box;margin:0}
+html,body{height:100%;background:#07050b;color:#e9e0f2;overflow:hidden}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif}
+.escenario{position:fixed;inset:0;overflow:hidden;background:#07050b;cursor:default}
+.escenario[data-reproduciendo]{cursor:pointer}
+/* Pantalla de carga: el logo, del tamaño del dorso de la baraja, y una barra de oro. */
+.carga{position:absolute;inset:0;z-index:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;
+  background:radial-gradient(ellipse 55% 50% at 50% 48%,#2a1a4a,#0d0818 60%,#050308);transition:opacity .45s}
+.cargaLogo{width:var(--logo,260px);filter:drop-shadow(0 10px 30px #000) drop-shadow(0 0 30px #a070ff44);animation:cargaLatido 2.4s ease-in-out infinite;transition:opacity .3s,transform .3s}
+@keyframes cargaLatido{50%{transform:scale(1.03);filter:drop-shadow(0 10px 30px #000) drop-shadow(0 0 44px #c9a0ff66)}}
+.cargaBarra{position:absolute;left:50%;top:calc(50% + var(--logo,260px)*.95);translate:-50% 0;width:min(280px,60vw);height:3px;border-radius:3px;background:#ffffff14;overflow:hidden;transition:opacity .3s}
+.cargaBarra i{display:block;height:100%;width:0;background:linear-gradient(90deg,#8a5d18,#f0d796,#fff3c9);box-shadow:0 0 12px #f0d796;transition:width .25s}
+.cargaTexto{position:absolute;left:0;right:0;text-align:center;top:calc(50% + var(--logo,260px)*.95 + 18px);font:600 12px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.24em;color:#cdb98a;transition:opacity .3s}
+.carga[data-baraja] .cargaLogo,.carga[data-baraja] .cargaBarra,.carga[data-baraja] .cargaTexto{opacity:0}
+.carga[data-baraja] .cargaLogo{transform:scale(.9)}
+.carga[data-fuera]{opacity:0;pointer-events:none}
+/* Réplica del menú principal. */
+.menuReplica{position:absolute;inset:0;z-index:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;padding:24px;text-align:center}
+.menuReplica[hidden]{display:none}
+.menuFondo{position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse 60% 55% at 50% 45%,#3a220f66,transparent 70%),radial-gradient(ellipse 90% 80% at 50% 50%,#1a1024,#07050b)}
+.menuMarca{width:min(420px,78vw);filter:drop-shadow(0 12px 30px #000)}
+.menuSub{font:700 13px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.42em;color:#e7c874}
+.menuFilete{width:min(320px,60vw);height:1px;background:linear-gradient(90deg,transparent,#e7bb55,transparent)}
+.menuTexto{max-width:520px;color:#cdbfdf;font-size:1.08em}
+.menuCol{display:flex;flex-direction:column;gap:10px;margin-top:8px;width:min(320px,80vw)}
+.menuBtn{font:700 15px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.06em;color:#f1dcae;padding:14px 18px;border-radius:12px;border:1px solid #e7bb5577;background:linear-gradient(180deg,#261c38,#110c19);box-shadow:0 8px 20px #0009}
+.menuBtn.oro{color:#2a1706;border-color:#fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18)}
+.menuReplica[data-entra]>*:not(.menuFondo){animation:menuEntra .7s cubic-bezier(.2,.75,.3,1) both}
+.menuReplica[data-entra]>.menuMarca{animation-name:menuMarca;animation-duration:.9s}
+.menuReplica[data-entra]>:nth-child(3){animation-delay:.08s}.menuReplica[data-entra]>:nth-child(4){animation-delay:.12s}.menuReplica[data-entra]>:nth-child(5){animation-delay:.16s}.menuReplica[data-entra]>:nth-child(6){animation-delay:.22s}
+@keyframes menuEntra{from{opacity:0;transform:translateY(14px)}}
+@keyframes menuMarca{from{opacity:0;transform:scale(1.18);filter:drop-shadow(0 0 60px #ffd98a) brightness(1.6)}}
+.saltarAviso{position:absolute;left:50%;bottom:22px;translate:-50% 0;z-index:5;font:600 11px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.25em;color:#ffffff66;pointer-events:none}
+.panelPrueba{position:fixed;right:12px;bottom:12px;z-index:10;display:flex;flex-direction:column;gap:6px;padding:10px 12px;border-radius:12px;background:#0d0914e6;border:1px solid #e7bb5544;font-size:13px;max-width:260px}
+.panelPrueba strong{font:700 13px/1 'Cinzel Domo',Georgia,serif;color:#f0d796}
+.panelPrueba span{color:#b9aecb}
+.panelPrueba div{display:flex;gap:10px;align-items:center}
+.panelPrueba button{font:700 12px/1 'Cinzel Domo',Georgia,serif;color:#2a1706;padding:8px 12px;border-radius:8px;border:1px solid #fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 40%,#b98a2e);cursor:pointer}
+.panelPrueba button:disabled{opacity:.5}
+@media (prefers-reduced-motion:reduce){.cargaLogo{animation:none}.menuReplica[data-entra]>*{animation:none!important}}

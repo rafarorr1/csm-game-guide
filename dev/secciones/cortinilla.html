@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Cortinilla del Domo · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./cortinilla-mesa.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/visor-3d-gl.js"></script>
+<script src="./juego/cortinilla.js"></script>
+<script src="./cortinilla-mesa.js" defer></script>
+</head>
+<body>
+<main id="escenario" class="escenario" aria-label="Arranque del juego">
+  <section id="menu" class="menuReplica" aria-labelledby="menuTitulo" hidden>
+    <div class="menuFondo" aria-hidden="true"></div>
+    <img class="menuMarca" id="menuTitulo" src="./art/logo.webp" alt="Caoz Con Todo">
+    <p class="menuSub">EL JUEGO DE CARTAS</p>
+    <div class="menuFilete" aria-hidden="true"></div>
+    <p class="menuTexto">Dos jugadores entran al Domo. Cada uno lleva a un Protagonista como Líder y un mazo de 40 cartas. Gana quien reclame el alma del rival… o el Deseo.</p>
+    <nav class="menuCol" aria-label="Menú principal">
+      <button type="button" class="menuBtn oro">Campaña</button>
+      <button type="button" class="menuBtn">Jugar contra el Domo</button>
+      <button type="button" class="menuBtn">Online</button>
+      <button type="button" class="menuBtn">Extras ›</button>
+    </nav>
+  </section>
+  <section id="carga" class="carga" aria-live="polite">
+    <img class="cargaLogo" id="cargaLogo" src="./art/logo.webp" alt="">
+    <div class="cargaBarra" aria-hidden="true"><i id="cargaRelleno"></i></div>
+    <p class="cargaTexto" id="cargaTexto">Preparando el Domo…</p>
+  </section>
+  <p class="saltarAviso" id="saltarAviso" hidden>Toca para saltar</p>
+</main>
+<aside class="panelPrueba" aria-label="Controles de la prueba">
+  <strong>Cortinilla del Domo</strong>
+  <span>Prueba aislada · carga → cortinilla → menú</span>
+  <div><button type="button" id="repetir">Repetir</button><label><input type="checkbox" id="lento"> Cámara lenta</label></div>
+  <span id="estadoPrueba" role="status">Cargando…</span>
+</aside>
+</body>
+</html>

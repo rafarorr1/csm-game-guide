@@ -174,6 +174,27 @@ node dev/secciones/pruebas_estudio_campos.mjs
 python3 dev/secciones/publicar.py --publicar --seccion estudio-campos --salida /tmp/caoz-estudio-campos
 ```
 
+## Cortinilla del Domo
+
+La revisión está en `/cortinilla/`: la transición entre la pantalla de carga y
+el menú principal, hecha con las cartas del visor 3D (`caoz_tcg/cortinilla.js`
+sobre `visor-3d-gl.js` y las texturas de `carta-pintor.js`). La pantalla de
+carga avanza mientras se pintan doce cartas en sus tres ediciones; el logo se
+convierte en el dorso de una baraja, la baraja se abre en un carrusel 3D que
+gira y voltea las cartas, el carrusel se deshace en un torbellino que forma un
+muro de cartas que tapa la pantalla (ahí se cambia la carga por el menú), una
+ola de luz lo recorre y las cartas se abren desde el centro como hojas de
+puerta para dejar ver el menú. Unos 4 s; un toque o una tecla la salta. Sin
+WebGL o con movimiento reducido, la carga se funde en el menú.
+
+`CAOZ_CORTINILLA.crear(host,{cartas,logoUrl})` → `preparar(progreso)`,
+`reproducir({alCubrir,alAbrir})`, `saltar()`, `destruir()`.
+
+```bash
+node dev/secciones/pruebas_cortinilla.mjs
+python3 dev/secciones/publicar.py --publicar --seccion cortinilla --salida /tmp/caoz-cortinilla
+```
+
 ```bash
 node dev/secciones/pruebas_fuego.mjs
 python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego

@@ -115,6 +115,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/campo-lugar.js'},
         'pruebas': ('pruebas_estudio_campos.mjs',),
     },
+    'cortinilla': {
+        'nombre': 'Cortinilla del Domo',
+        'exportador': 'cortinilla-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/cortinilla.js', 'juego/visor-3d-gl.js'},
+        'pruebas': ('pruebas_cortinilla.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',
