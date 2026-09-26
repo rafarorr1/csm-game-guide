@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Invocar una carta · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./invocar-mesa.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/visor-3d-gl.js"></script>
+<script src="./juego/fx-invocar.js"></script>
+<script src="./invocar-mesa.js" defer></script>
+</head>
+<body>
+<main class="invShell" aria-labelledby="invTitulo">
+  <header class="invCabecera">
+    <p class="invEtiqueta">PRUEBA DE ANIMACIÓN · SIN PARTIDA</p>
+    <h1 id="invTitulo">Invocar una carta</h1>
+    <p>Toca una carta de tu mano para invocarla: sale como carta 3D del visor, da una vuelta hacia la cámara y cae sobre su casilla con un golpe. Las chispas tienen el color de su edición; la legendaria se detiene en lo alto entre rayos de luz. Las fichas aparecen del aire.</p>
+  </header>
+  <section id="mesa" class="invMesa" aria-label="Mesa de prueba">
+    <div class="invManoRival" id="manoRival" aria-label="Mano del rival"></div>
+    <div class="invCampo" id="campoRival" aria-label="Campo del rival"></div>
+    <div class="invLinea" aria-hidden="true"></div>
+    <div class="invCampo" id="campoPropio" aria-label="Tu campo"></div>
+    <div class="invMano" id="mano" aria-label="Tu mano"></div>
+  </section>
+  <div class="invControles">
+    <button type="button" class="invBoton oro" id="rival">El rival invoca</button>
+    <button type="button" class="invBoton oro" id="ficha">Aparece una ficha</button>
+    <button type="button" class="invBoton" id="reiniciar">Reiniciar</button>
+    <label class="invOpcion"><input type="checkbox" id="lento"> Cámara lenta</label>
+  </div>
+  <p id="estado" class="invEstado" role="status" aria-live="polite">Preparando las cartas…</p>
+  <div id="fx" class="invFx" aria-hidden="true"></div>
+</main>
+</body>
+</html>

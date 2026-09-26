@@ -1,5 +1,12 @@
 # Registro de versiones — el TCG del Domo
 
+### v58 · Build 297 · Laboratorios accesibles desde Extras · 2026-09-26
+
+- **Extras** incluye una sección plegable con todas las revisiones aisladas
+  publicadas, incluido el nuevo laboratorio **Invocar una carta**.
+- La invocación 3D de Claude queda registrada como sección aislada: carta desde
+  la mano, giro, caída, impacto y variantes para rival, ficha y legendaria.
+
 ### v57 · Build 296 · Cortinilla del Domo · 2026-09-26
 
 - Al entrar, el logo y la carga preparan una cortinilla con doce cartas de la
