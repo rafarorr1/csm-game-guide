@@ -130,7 +130,7 @@ SECCIONES = {
     'visor-gpu': {
         'nombre': 'Visor en WebGPU',
         'exportador': 'visor-gpu-exportar.mjs',
-        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/visor-3d-gpu.js', 'juego/visor-3d-gl.js'},
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/visor-3d-gpu.js', 'juego/visor-3d-gl.js', 'juego/tormenta-gl.js', 'juego/tormenta-gpu.js'},
         'pruebas': ('pruebas_visor_gpu.mjs',),
     },
     'portal': {
