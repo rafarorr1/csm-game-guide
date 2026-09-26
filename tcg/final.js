@@ -95,4 +95,7 @@
   guion('cuenta-acceso.js');
   guion('cuenta-juego.js');
   guion('audio-domo.js');
+  // El arranque: la carga y, una vez por sesión, la cortinilla hasta el menú.
+  guion('cortinilla.js');
+  guion('cortinilla-juego.js');
 })();
