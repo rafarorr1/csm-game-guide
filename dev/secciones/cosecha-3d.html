@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>La cosecha en 3D · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./cosecha-3d-mesa.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/pitagoras-pruebas.js"></script>
+<script src="./juego/pitagoras-mundos.js"></script>
+<script src="./juego/pitagoras-cine.js"></script>
+<script src="./juego/pitagoras-pixel.js"></script>
+<script src="./juego/pitagoras-cosecha-3d.js"></script>
+<script src="./cosecha-3d-mesa.js" defer></script>
+</head>
+<body>
+<main class="c3Shell" aria-labelledby="c3Titulo">
+  <header class="c3Cabecera">
+    <p class="c3Etiqueta">PRUEBA I DEL EDITOR · SIN PARTIDA</p>
+    <h1 id="c3Titulo">La cosecha, dentro de su carta dorada</h1>
+    <p>El minijuego con su modelo real, dibujado en 3D con el mundo de la edición dorada: losas verdes sobre grietas de lava, el Segador alzándose del abismo, fantasmas de humo y estrellas de oro. Las reglas, los tiempos y la dificultad no cambian. «Ver con el bot» juega solo con una semilla fija; «Jugar de verdad» abre la prueba tal como la verá el jugador.</p>
+  </header>
+  <div class="c3Controles" role="group" aria-label="Controles">
+    <button type="button" class="c3Boton oro" id="bot">▶ Ver con el bot</button>
+    <button type="button" class="c3Boton" id="jugar">Jugar de verdad</button>
+    <div class="c3Grupo" role="group" aria-label="Pintor"><button type="button" data-pintor="3d" aria-pressed="true">3D dorado</button><button type="button" data-pintor="clasico" aria-pressed="false">Clásico</button></div>
+    <div class="c3Grupo" role="group" aria-label="Pantalla"><button type="button" data-marco="escritorio" aria-pressed="true">Escritorio</button><button type="button" data-marco="movil" aria-pressed="false">Móvil</button></div>
+    <label class="c3Opcion"><input type="checkbox" id="lento"> Cámara lenta</label>
+    <label class="c3Opcion">Semilla <input type="number" id="semilla" value="7" min="1" step="1"></label>
+  </div>
+  <section class="c3Escenario" id="escenario" data-marco="escritorio" aria-label="La cosecha"><canvas id="lienzo" aria-label="La cosecha jugada por el bot"></canvas><p class="c3Hud" id="hud"></p></section>
+  <p id="estado" class="c3Estado" role="status" aria-live="polite">Preparando…</p>
+</main>
+</body>
+</html>

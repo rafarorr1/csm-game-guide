@@ -505,7 +505,7 @@
   function entrada(s,dt){
     const k=s.keys,tecla=c=>k.has(c)?1:0;let mx=s.mov.x+tecla('KeyD')-tecla('KeyA'),my=s.mov.y+tecla('KeyS')-tecla('KeyW'),giro=0;
     if(s.tipo==='fps'){my+=tecla('ArrowDown')-tecla('ArrowUp');giro=(tecla('ArrowRight')+tecla('KeyE')-tecla('ArrowLeft')-tecla('KeyQ'))*2.3+s.aim.x*2.5+s.mirada/Math.max(.001,dt);s.mirada=0;}else{mx+=tecla('ArrowRight')-tecla('ArrowLeft');my+=tecla('ArrowDown')-tecla('ArrowUp');}
-    let apuntar=s.apuntar;if(s.tipo==='isometrico'){if(s.puntoRaton){const r=s.ui.canvas.getBoundingClientRect(),q=proyeccion(s),x=(s.puntoRaton.x-r.left-q.cx)/q.esc,y=(s.puntoRaton.y-r.top-q.cy)/q.esc;apuntar=Math.atan2(y-s.modelo.jugador.y,x-s.modelo.jugador.x);}if(s.fire&&Math.hypot(s.aim.x,s.aim.y)>.25)apuntar=Math.atan2(s.aim.y,s.aim.x);else if(s.fire||(k.has('Space')&&!s.puntoRaton))apuntar=null;}
+    let apuntar=s.apuntar;if(s.tipo==='isometrico'){if(s.puntoRaton){const r=s.ui.canvas.getBoundingClientRect(),q=proyeccion(s),g=API.sueloDesdePantalla?.[s.tipo]?.(s,s.puntoRaton.x-r.left,s.puntoRaton.y-r.top),x=g?g.x:(s.puntoRaton.x-r.left-q.cx)/q.esc,y=g?g.y:(s.puntoRaton.y-r.top-q.cy)/q.esc;apuntar=Math.atan2(y-s.modelo.jugador.y,x-s.modelo.jugador.x);}if(s.fire&&Math.hypot(s.aim.x,s.aim.y)>.25)apuntar=Math.atan2(s.aim.y,s.aim.x);else if(s.fire||(k.has('Space')&&!s.puntoRaton))apuntar=null;}
     s.andando=Math.min(1,Math.hypot(mx,my));const elegir=s.elegir,accion=s.fire||s.mouseFire||s.disparoUnico||k.has('Space')||(s.tipo==='laseres'&&k.has('Enter'));s.elegir=null;s.disparoUnico=false;return{mx,my,giro,accion,elegir,apuntar:typeof apuntar==='number'?apuntar:undefined};
   }
   function efectos(s){
