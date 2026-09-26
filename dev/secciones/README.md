@@ -224,6 +224,18 @@ filtrado anisótropo 16×. «Comparar», «WebGPU» o «WebGL»; edición Normal
 o Foil dorado; «Dar la vuelta»; arrastrar para girar. `?solo=gpu|gl` crea un
 solo motor. Sin WebGPU, la sección avisa y enseña sólo WebGL.
 
+El escenario por defecto es la tormenta (`?escena=estudio` abre el estudio):
+`tormenta-gl.js` y `tormenta-gpu.js` son la misma escena para cada motor, que
+el visor recibe con `crear(lienzo,{escena})`. Detrás de la carta, un cielo de
+nubes (fbm), tres cordilleras con niebla y el rayo, todo procedural; delante,
+hasta 160 000 gotas en 3D que la profundidad esconde detrás de la carta. Los
+relámpagos caen cada 3–7 s en instantes fijos (los dos motores y las pruebas
+ven el mismo) y encienden nubes, montañas, lluvia y la carta (`e.flash`,
+`e.flashDir`, `e.tormenta`; sin ellos el visor del juego queda igual). Calidad
+Media, Alta o Extrema (10 000, 40 000 o 160 000 gotas y 4, 6 u 8 octavas de
+nubes), «⚡ Relámpago» y trueno sintetizado opcional. Para medir, elige un solo
+motor: los FPS aparecen en su panel.
+
 Chrome sin pantalla (el de las pruebas) pierde el dispositivo WebGPU al
 presentar el lienzo; por eso las pruebas usan `?presentar=0` y
 `CAOZ_VISOR_GPU_REVISION.captura()`, que lee el fotograma de una textura propia
