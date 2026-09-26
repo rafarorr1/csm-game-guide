@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v56 · Build 295 · Cartas más claras en mano · 2026-09-25
+
+- Las cartas en mano priorizan la lectura: texto más luminoso, contraste más
+  definido y un tamaño mínimo mayor al ajustar la descripción.
+- Cuando una carta tiene dos o más habilidades encabezadas, cada una se muestra
+  en su propio renglón, con una separación sutil que conserva el orden y evita
+  que el efecto se lea como un solo párrafo.
+- El formato funciona igual en escritorio, teléfono y colección, sin alterar
+  las reglas, los textos ni los valores de ninguna carta.
+
 ### v55 · Build 294 · Efectos y campos de Claude en la partida · 2026-09-25
 
 - Los **Lugares** ahora transforman visualmente la mesa: Tomsage, Antro Juan,

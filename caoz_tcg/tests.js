@@ -406,6 +406,14 @@ PRUEBAS.suite('alientoThal',async t=>{
 });
 
 PRUEBAS.suite('visual', async t => {
+  const habilidades=cardEl('brickbrock');
+  document.body.appendChild(habilidades);
+  try{
+    const filas=[...habilidades.querySelectorAll('.txt > .habilidadCarta')];
+    t.igual(filas.length,2,'Las cartas con dos habilidades deben separar cada encabezado en su propio renglón.');
+    t.check(filas[0].textContent.includes('Peaje')&&filas[1].textContent.includes('Acertijo'),
+      'El orden de las habilidades debe conservarse al formatear la carta.');
+  }finally{habilidades.remove();}
   const carta=cardEl('eric');
   // Esta suite mide la plantilla clásica; cartaPintada mide aparte la cara
   // pintada. Si una suite anterior ya dejó la cara en caché, cardEl puede
