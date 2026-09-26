@@ -15,7 +15,7 @@
     "art/tomsage.webp": "75ccc7684f4eb32bfbd9fc5943306761a47ea91e1cf62d6d570ef7ea1a744fe2",
     "generado/datos.js": "90ee160b36bc5e1349f825faac8716d61eaf8d1d3bd0a51fb030a0ab6affa79e",
     "index.html": "309223fb87d3aa7b7d5f72094b97f43b9fc7e4dcf50cba287e950d59b9bd3303",
-    "juego/campo-lugar.js": "6cc8e4d8bcf1b5b4149ea423227c9bca17b280870022dc2595f715ac8829dfe0",
+    "juego/campo-lugar.js": "69514d1fb4c63748c0a48f1c113fc3a6d44b3554d99d06b6168716a32179192c",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
@@ -23,12 +23,12 @@
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "lugares.css": "9e17c695691a61c67a1c4fab7cf317b4bd266b7749dc63e651c882e24a66f3be",
     "lugares.js": "1f262c2f561f6be9a1eea7c36e02355476cbff5859868d26ee601c7915a2bf55",
-    "procedencia.json": "c98f5dfcf3fabff93dd99a054d6511992fe6fbf8794d4a10593596ab22e775e5"
+    "procedencia.json": "4ffaae442d197829c46a167b8aa42a9b2d526de7b299adf33250cb07be449632"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "8fa8a3657dda31af6a56d45fd462095eab6c269a"
+    "sha": "a454f5b4fa8c59095db98017a56d4e69dd65a085"
   },
   "seccion": "lugares",
   "version": 1

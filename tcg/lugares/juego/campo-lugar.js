@@ -109,69 +109,100 @@
     const a=aleteo*28;for(const l of [-1,1]){g.beginPath();g.moveTo(-5,0);g.quadraticCurveTo(-10,l*(20+a),-50,l*(55+a));g.lineTo(-25,l*(30+a*.6));g.lineTo(-40,l*(42+a*.8));g.lineTo(-10,l*(18+a*.3));g.lineTo(20,l*4);g.closePath();g.fill();}
     g.restore();}
 
-  /* AMBIENTE: estado de partículas por Lugar; cuadro(g,t,dt,W,H,e). */
-  const AMBIENTES={
-    tomsage(g,t,dt,W,H,e){
-      e.brasas||=[];e.humo||=[];e.bolas||=[];e.sig??=2+Math.random()*3;
-      const brasa=sp('brasa',[255,120,30],.9,true),humo=sp('humoT',[40,32,30],.35),ceniza=sp('ceniza',[150,140,130],.6);
-      if(Math.random()<dt*W/35)e.brasas.push({x:Math.random()*W,y:H+10,vx:(Math.random()-.5)*20,vy:-30-Math.random()*50,t:0,vida:3+Math.random()*3,r:1.5+Math.random()*2,c:Math.random()<.3});
-      if(Math.random()<dt*1.2)e.humo.push({x:-80,y:H*(.2+Math.random()*.7),vx:25+Math.random()*25,t:0,vida:W/35,r:70+Math.random()*80});
-      for(let i=e.humo.length-1;i>=0;i--){const h=e.humo[i];h.t+=dt;h.x+=h.vx*dt;if(h.x>W+120){e.humo.splice(i,1);continue;}pintar(g,humo,h.x,h.y+Math.sin(h.t*.5)*10,h.r,.55);}
+  /* EFECTOS DE AMBIENTE: piezas sueltas que cada mapa combina a su gusto.
+     cuadro(g,t,dt,W,H,e,k): e es el estado de la escena (cada efecto guarda lo
+     suyo en su propia clave) y k la intensidad (0,25–2; 1 es la de serie). */
+  const EFECTOS={
+    brasas:{nombre:'Brasas',icono:'🔥',cuadro(g,t,dt,W,H,e,k){
+      const L=e.brasas||=[],brasa=sp('brasa',[255,120,30],.9,true),ceniza=sp('ceniza',[150,140,130],.6);
+      if(Math.random()<dt*W/35*k)L.push({x:Math.random()*W,y:H+10,vx:(Math.random()-.5)*20,vy:-30-Math.random()*50,t:0,vida:3+Math.random()*3,r:1.5+Math.random()*2,c:Math.random()<.3});
       g.globalCompositeOperation='lighter';
-      for(let i=e.brasas.length-1;i>=0;i--){const b=e.brasas[i];b.t+=dt;if(b.t>b.vida){e.brasas.splice(i,1);continue;}b.x+=(b.vx+Math.sin(b.t*2+i)*12)*dt;b.y+=b.vy*dt;
-        pintar(g,b.c?ceniza:brasa,b.x,b.y,b.r*3,Math.sin(Math.PI*b.t/b.vida)*.9);}
-      // Proyectiles ardientes a lo lejos.
-      e.sig-=dt;if(e.sig<=0){e.sig=3+Math.random()*5;e.bolas.push({x0:W*(Math.random()<.5?.1:.9),x1:W*(.3+Math.random()*.4),t:0});}
-      for(let i=e.bolas.length-1;i>=0;i--){const b=e.bolas[i];b.t+=dt;const p=b.t/1.3;if(p>1.4){e.bolas.splice(i,1);continue;}
-        if(p<1){const x=b.x0+(b.x1-b.x0)*p,y=H*.05+Math.sin(Math.PI*p)*-H*.04+p*H*.12;pintar(g,brasa,x,y,10,.9);for(let k=1;k<6;k++){const q=Math.max(0,p-k*.03);pintar(g,brasa,b.x0+(b.x1-b.x0)*q,H*.05+Math.sin(Math.PI*q)*-H*.04+q*H*.12,8-k,.5-k*.08);}}
+      for(let i=L.length-1;i>=0;i--){const b=L[i];b.t+=dt;if(b.t>b.vida){L.splice(i,1);continue;}b.x+=(b.vx+Math.sin(b.t*2+i)*12)*dt;b.y+=b.vy*dt;pintar(g,b.c?ceniza:brasa,b.x,b.y,b.r*3,Math.sin(Math.PI*b.t/b.vida)*.9);}
+    }},
+    humo:{nombre:'Humo',icono:'🌫️',cuadro(g,t,dt,W,H,e,k){
+      const L=e.humo||=[],humo=sp('humoT',[40,32,30],.35);
+      if(Math.random()<dt*1.2*k)L.push({x:-80,y:H*(.2+Math.random()*.7),vx:25+Math.random()*25,t:0,r:70+Math.random()*80});
+      for(let i=L.length-1;i>=0;i--){const h=L[i];h.t+=dt;h.x+=h.vx*dt;if(h.x>W+120){L.splice(i,1);continue;}pintar(g,humo,h.x,h.y+Math.sin(h.t*.5)*10,h.r,.55*Math.min(1,k));}
+    }},
+    proyectiles:{nombre:'Proyectiles ardientes',icono:'☄️',cuadro(g,t,dt,W,H,e,k){
+      const L=e.bolas||=[],brasa=sp('brasa',[255,120,30],.9,true);e.sigBola??=2+Math.random()*3;
+      e.sigBola-=dt*k;if(e.sigBola<=0){e.sigBola=3+Math.random()*5;L.push({x0:W*(Math.random()<.5?.1:.9),x1:W*(.3+Math.random()*.4),t:0});}
+      g.globalCompositeOperation='lighter';
+      for(let i=L.length-1;i>=0;i--){const b=L[i];b.t+=dt;const p=b.t/1.3;if(p>1.4){L.splice(i,1);continue;}
+        const py=q=>H*.05+Math.sin(Math.PI*q)*-H*.04+q*H*.12;
+        if(p<1){for(let n=0;n<6;n++){const q=Math.max(0,p-n*.03);pintar(g,brasa,b.x0+(b.x1-b.x0)*q,py(q),10-n*1.4,.9-n*.14);}}
         else{const f=1-entre(p,1,1.4);pintar(g,brasa,b.x1,H*.17,60*(1.4-f),f*.8);e.golpe=f;}}
-      g.globalCompositeOperation='source-over';
-    },
-    antro(g,t,dt,W,H,e){
-      e.polvo||=Array.from({length:Math.round(W*H/9000)},()=>({x:Math.random()*W,y:Math.random()*H,f:Math.random()*TAU,r:1+Math.random()*2}));
-      const vela=sp('vela',[255,170,70],.4),mota=sp('mota',[255,215,140],.8,true);
-      // Luz de velas que parpadea en tres puntos.
+    }},
+    velas:{nombre:'Luz de velas',icono:'🕯️',cuadro(g,t,dt,W,H,e,k){
+      const vela=sp('vela',[255,170,70],.4);g.globalCompositeOperation='lighter';
+      [[.12,.18],[.88,.22],[.5,.08]].forEach(([u,v],i)=>{const p=.75+.15*Math.sin(t*9+i*3)+.1*Math.sin(t*23+i);pintar(g,vela,u*W,v*H,H*.55,.45*p*k);});
+    }},
+    polvo:{nombre:'Polvo dorado',icono:'✨',cuadro(g,t,dt,W,H,e,k){
+      const n=Math.round(W*H/9000*k),L=e.polvo||=[],mota=sp('mota',[255,215,140],.8,true);
+      while(L.length<n)L.push({x:Math.random()*W,y:Math.random()*H,f:Math.random()*TAU,r:1+Math.random()*2});L.length=Math.min(L.length,n);
       g.globalCompositeOperation='lighter';
-      [[.12,.18],[.88,.22],[.5,.08]].forEach(([u,v],i)=>{const p=.75+.15*Math.sin(t*9+i*3)+.1*Math.sin(t*23+i);pintar(g,vela,u*W,v*H,H*.55,.45*p);});
-      for(const m of e.polvo){m.f+=dt*.4;m.x+=Math.sin(m.f)*6*dt;m.y-=4*dt;if(m.y<-5)m.y=H+5;pintar(g,mota,m.x,m.y,m.r*2.2,.35+.3*Math.sin(m.f*3));}
-      g.globalCompositeOperation='source-over';
-    },
-    puente(g,t,dt,W,H,e){
-      e.niebla||=Array.from({length:9},(_,i)=>({x:Math.random()*W,y:H*(.35+Math.random()*.6),v:8+Math.random()*14,r:H*(.18+Math.random()*.16)}));
-      const niebla=sp('niebla',[170,180,210],.2),farol=sp('farol',[255,200,110],.7,true);
-      for(const n of e.niebla){n.x+=n.v*dt;if(n.x-n.r>W)n.x=-n.r;pintar(g,niebla,n.x,n.y+Math.sin(t*.3+n.v)*8,n.r,.7);}
-      // Los dos guardianes de piedra a los extremos del puente, con faroles.
-      const y=(e.linea??H/2)+Math.min(H*.3,140)*.08,alto=Math.min(H*.3,140);
-      for(const lado of [-1,1]){const x=lado<0?W*.06:W*.94,brazo=e.martillos??0;
-        g.save();g.translate(x,y);g.scale(-lado,1);guardian(g,alto,brazo,t);g.restore();
-        g.globalCompositeOperation='lighter';pintar(g,farol,x-lado*alto*.35,y-alto*.55,alto*.25,.6+.2*Math.sin(t*7+lado));g.globalCompositeOperation='source-over';}
-    },
-    montanas(g,t,dt,W,H,e){
-      e.nieve||=Array.from({length:Math.round(W*H/5000)},()=>({x:Math.random()*W,y:Math.random()*H,z:.4+Math.random()*.9}));
-      e.sombra??=6;const viento=1+.8*Math.max(0,Math.sin(t*.35));
-      g.fillStyle='rgba(245,250,255,.85)';
-      for(const f of e.nieve){f.x+=(28*viento+Math.sin(t+f.z*9)*8)*f.z*dt;f.y+=38*f.z*dt;if(f.y>H+4){f.y=-4;f.x=Math.random()*W;}if(f.x>W+4)f.x=-4;
-        g.globalAlpha=.35+.5*f.z;g.beginPath();g.arc(f.x,f.y,1+f.z*1.6,0,TAU);g.fill();}
-      g.globalAlpha=1;
-      // La sombra del dragón cruza la mesa de vez en cuando.
-      e.sombra-=dt;if(e.sombra<-3.5)e.sombra=9+Math.random()*8;
-      if(e.sombra<0){const p=-e.sombra/3.5;g.fillStyle='rgba(5,10,20,'+(.32*Math.sin(Math.PI*p))+')';g.filter='blur(6px)';dragon(g,-W*.2+p*W*1.4,H*(.75-p*.5),Math.min(W,H)/160,Math.sin(t*6));g.filter='none';}
-    },
-    domo(g,t,dt,W,H,e){
-      // La cúpula: un arco de energía por encima de la mesa, con venas que laten.
-      e.venas||=(()=>{const r=azar(5),v=[];for(let k=0;k<12;k++){let a=Math.PI+r()*Math.PI,d=0;const p=[];for(let i=0;i<14;i++){p.push([a,d]);a+=(r()-.5)*.12;d+=.07;}v.push(p);}return v;})();
-      const pulso=.55+.25*Math.sin(t*1.6)+(e.destello||0),cx=W/2,cy=H*1.02,rx=W*.62,ry=H*1.02;
-      e.destello=Math.max(0,(e.destello||0)-dt*1.2);
+      for(const m of L){m.f+=dt*.4;m.x+=Math.sin(m.f)*6*dt;m.y-=4*dt;if(m.y<-5)m.y=H+5;pintar(g,mota,m.x,m.y,m.r*2.2,.35+.3*Math.sin(m.f*3));}
+    }},
+    niebla:{nombre:'Niebla',icono:'🌁',cuadro(g,t,dt,W,H,e,k){
+      const L=e.niebla||=Array.from({length:9},()=>({x:Math.random()*W,y:H*(.35+Math.random()*.6),v:8+Math.random()*14,r:H*(.18+Math.random()*.16)})),niebla=sp('niebla',[170,180,210],.2);
+      for(const n of L){n.x+=n.v*dt;if(n.x-n.r>W)n.x=-n.r;pintar(g,niebla,n.x,n.y+Math.sin(t*.3+n.v)*8,n.r,.7*k);}
+    }},
+    guardianes:{nombre:'Guardianes de piedra',icono:'🗿',cuadro(g,t,dt,W,H,e,k){
+      const farol=sp('farol',[255,200,110],.7,true),alto=Math.min(H*.3,140),y=(e.linea??H/2)+alto*.08;
+      for(const lado of [-1,1]){const x=lado<0?W*.06:W*.94;g.save();g.translate(x,y);g.scale(-lado,1);guardian(g,alto,e.martillos??0,t);g.restore();
+        g.globalCompositeOperation='lighter';pintar(g,farol,x-lado*alto*.35,y-alto*.55,alto*.25,(.6+.2*Math.sin(t*7+lado))*Math.min(1.5,k));g.globalCompositeOperation='source-over';}
+    }},
+    nieve:{nombre:'Nieve',icono:'❄️',cuadro(g,t,dt,W,H,e,k){
+      const n=Math.round(W*H/5000*k),L=e.nieve||=[];while(L.length<n)L.push({x:Math.random()*W,y:Math.random()*H,z:.4+Math.random()*.9});L.length=Math.min(L.length,n);
+      const viento=1+.8*Math.max(0,Math.sin(t*.35));g.fillStyle='rgba(245,250,255,.85)';
+      for(const f of L){f.x+=(28*viento+Math.sin(t+f.z*9)*8)*f.z*dt;f.y+=38*f.z*dt;if(f.y>H+4){f.y=-4;f.x=Math.random()*W;}if(f.x>W+4)f.x=-4;g.globalAlpha=.35+.5*f.z;g.beginPath();g.arc(f.x,f.y,1+f.z*1.6,0,TAU);g.fill();}
+    }},
+    lluvia:{nombre:'Lluvia',icono:'🌧️',cuadro(g,t,dt,W,H,e,k){
+      const n=Math.round(W*H/4000*k),L=e.lluvia||=[];while(L.length<n)L.push({x:Math.random()*W,y:Math.random()*H,v:600+Math.random()*400,l:10+Math.random()*14});L.length=Math.min(L.length,n);
+      g.strokeStyle='rgba(180,200,235,.45)';g.lineWidth=1.1;g.beginPath();
+      for(const d of L){d.y+=d.v*dt;d.x+=d.v*.18*dt;if(d.y>H){d.y=-d.l;d.x=Math.random()*W*1.1-W*.1;}g.moveTo(d.x,d.y);g.lineTo(d.x-d.l*.18,d.y-d.l);}g.stroke();
+    }},
+    relampagos:{nombre:'Relámpagos',icono:'⚡',cuadro(g,t,dt,W,H,e,k){
+      e.sigRayo??=3;e.sigRayo-=dt*k;if(e.sigRayo<=0){e.sigRayo=4+Math.random()*7;e.rayo={t:0,x:W*(.15+Math.random()*.7),semilla:Math.random()*999};}
+      const r=e.rayo;if(!r)return;r.t+=dt;if(r.t>.5){e.rayo=null;return;}
+      const a=(r.t<.08?1:r.t<.14?.3:r.t<.2?.8:1-entre(r.t,.2,.5));g.fillStyle='rgba(220,230,255,'+.22*a+')';g.fillRect(0,0,W,H);
+      const q=azar(Math.floor(r.semilla));let x=r.x,y=0;g.strokeStyle='rgba(235,240,255,'+.9*a+')';g.lineWidth=2.4;g.beginPath();g.moveTo(x,y);
+      while(y<H*.55){x+=(q()-.5)*40;y+=18+q()*22;g.lineTo(x,y);}g.stroke();
+    }},
+    luciernagas:{nombre:'Luciérnagas',icono:'🪲',cuadro(g,t,dt,W,H,e,k){
+      const n=Math.round(22*k),L=e.luciernagas||=[],luz=sp('luciernaga',[210,255,120],.8,true);
+      while(L.length<n)L.push({x:Math.random()*W,y:H*(.2+Math.random()*.75),a:Math.random()*TAU,f:Math.random()*TAU,v:10+Math.random()*16});L.length=Math.min(L.length,n);
+      g.globalCompositeOperation='lighter';
+      for(const f of L){f.a+=(Math.random()-.5)*dt*2;f.x+=Math.cos(f.a)*f.v*dt;f.y+=Math.sin(f.a)*f.v*dt*.6;f.f+=dt*(1.5+f.v*.05);
+        if(f.x<0)f.x+=W;if(f.x>W)f.x-=W;if(f.y<H*.1||f.y>H)f.a+=Math.PI;pintar(g,luz,f.x,f.y,7,Math.max(0,Math.sin(f.f))*.9);}
+    }},
+    dragon:{nombre:'Sombra de dragón',icono:'🐉',cuadro(g,t,dt,W,H,e,k){
+      e.sombra??=6;e.sombra-=dt*k;if(e.sombra<-3.5)e.sombra=9+Math.random()*8;
+      if(e.sombra<0){const p=Math.min(1,-e.sombra/3.5);g.fillStyle='rgba(5,10,20,'+(.32*Math.sin(Math.PI*p))+')';g.filter='blur(6px)';dragon(g,-W*.2+p*W*1.4,H*(.75-p*.5),Math.min(W,H)/160,Math.sin(t*6));g.filter='none';}
+    }},
+    cupula:{nombre:'Cúpula de energía',icono:'🔴',cuadro(g,t,dt,W,H,e,k){
+      e.venas||=(()=>{const r=azar(5),v=[];for(let n=0;n<12;n++){let a=Math.PI+r()*Math.PI,d=0;const p=[];for(let i=0;i<14;i++){p.push([a,d]);a+=(r()-.5)*.12;d+=.07;}v.push(p);}return v;})();
+      const pulso=(.55+.25*Math.sin(t*1.6)+(e.destello||0))*Math.min(1.6,k),cx=W/2,cy=H*1.02,rx=W*.62,ry=H*1.02;
       const gr=g.createRadialGradient(cx,cy,ry*.6,cx,cy,ry*1.05);gr.addColorStop(0,'rgba(255,40,70,0)');gr.addColorStop(.85,'rgba(255,40,80,'+.1*pulso+')');gr.addColorStop(1,'rgba(255,60,90,'+.3*pulso+')');
       g.fillStyle=gr;g.beginPath();g.ellipse(cx,cy,rx*1.05,ry*1.05,0,Math.PI,TAU);g.fill();
       g.globalCompositeOperation='lighter';g.strokeStyle='rgba(255,70,110,'+.5*pulso+')';g.lineWidth=2.5;g.beginPath();g.ellipse(cx,cy,rx,ry,0,Math.PI,TAU);g.stroke();
-      e.venas.forEach((v,k)=>{const fase=(t*.35+k/12)%1;g.strokeStyle='rgba(200,80,255,'+(.25+.5*Math.sin(Math.PI*fase))*pulso+')';g.lineWidth=1.4;g.beginPath();
+      e.venas.forEach((v,n)=>{const fase=(t*.35+n/12)%1;g.strokeStyle='rgba(200,80,255,'+(.25+.5*Math.sin(Math.PI*fase))*pulso+')';g.lineWidth=1.4;g.beginPath();
         v.forEach(([a,d],i)=>{const f=1-d*.55,x=cx+Math.cos(a)*rx*f,y=cy+Math.sin(a)*ry*f;i?g.lineTo(x,y):g.moveTo(x,y);});g.stroke();});
-      e.motas||=[];if(Math.random()<dt*6)e.motas.push({x:Math.random()*W,y:H,vy:-20-Math.random()*30,t:0,vida:4});
-      const m=sp('motaD',[255,70,110],.8,true);for(let i=e.motas.length-1;i>=0;i--){const q=e.motas[i];q.t+=dt;if(q.t>q.vida){e.motas.splice(i,1);continue;}q.y+=q.vy*dt;pintar(g,m,q.x+Math.sin(q.t*2+i)*8,q.y,3,Math.sin(Math.PI*q.t/q.vida)*.8);}
-      g.globalCompositeOperation='source-over';
-    },
+    }},
+    ascuas:{nombre:'Ascuas rojas',icono:'🩸',cuadro(g,t,dt,W,H,e,k){
+      const L=e.ascuas||=[],m=sp('motaD',[255,70,110],.8,true);if(Math.random()<dt*6*k)L.push({x:Math.random()*W,y:H,vy:-20-Math.random()*30,t:0,vida:4});
+      g.globalCompositeOperation='lighter';
+      for(let i=L.length-1;i>=0;i--){const q=L[i];q.t+=dt;if(q.t>q.vida){L.splice(i,1);continue;}q.y+=q.vy*dt;pintar(g,m,q.x+Math.sin(q.t*2+i)*8,q.y,3,Math.sin(Math.PI*q.t/q.vida)*.8);}
+    }},
   };
+  // Los efectos de serie de cada Lugar.
+  const DE_SERIE={tomsage:['humo','brasas','proyectiles'],antro:['velas','polvo'],puente:['niebla','guardianes'],montanas:['nieve','dragon'],domo:['cupula','ascuas']};
+  // Orden de dibujo: lo que cubre la mesa entera primero, las partículas encima.
+  const ORDEN=['cupula','humo','niebla','velas','guardianes','dragon','relampagos','lluvia','nieve','polvo','luciernagas','brasas','ascuas','proyectiles'];
+  function efectosDe(id,f){
+    const lista=f?.efectos===false?[]:Array.isArray(f?.efectos)?f.efectos:DE_SERIE[id]||[];
+    return ORDEN.filter(k=>lista.includes(k));
+  }
   // Un guardián de piedra estilizado (mirando hacia el centro), con su martillo:
   // brazo 0 = martillo en reposo; 1 = cruzado sobre el puente.
   function guardian(g,alto,brazo,t){
@@ -205,9 +236,10 @@
 
   /* crear(host,{arte,fondo,linea,reducir}) → {poner(id,{lado}), quitar, fondoCambiado, perderPD, brindis, ataqueAlma, tiradaAidman, muerte, lugar, destruir}
      host: la mesa (position:relative); sus hijos deben ir por encima (z-index ≥ 1).
-     arte(id) → url de la ilustración; fondo(id) → un fondo propio diseñado en el
-     Estudio, {url,x,y,z,efectos} (encuadre 0–100, zoom 50–300 y, con
-     efectos:false, sin el ambiente del Lugar), o null. Con fondo propio
+     arte(id) → url de la ilustración; fondo(id) → lo que el Estudio guardó para ese mapa,
+     {url,x,y,z,efectos,intensidad} o null: url y encuadre (0–100, zoom 50–300)
+     de un fondo propio; efectos, la lista de EFECTOS que lleva encima (sin ella,
+     los de serie del Lugar; [] ninguno) e intensidad (0,25–2). Con fondo propio
      el escenario lo muestra tal cual, más claro y sin el suelo pintado; el
      ambiente y las reglas siguen. linea: el nodo que separa los dos campos
      (el Puente la usa y el borde de cada lado se corta ahí). */
@@ -238,8 +270,10 @@
       e.img.style.backgroundImage='url("'+String(ok?f.url:arte(e.id)).replace(/["\\\n]/g,'')+'")';
       e.img.style.backgroundPosition=x+'% '+y+'%';e.img.style.transformOrigin=x+'% '+y+'%';e.img.style.transform=z===1?'':'scale('+z+')';
       if(ok)e.div.dataset.propio='';else delete e.div.dataset.propio;
-      // Un fondo propio puede prescindir del ambiente del Lugar (efectos:false).
-      e.amb.style.display=ok&&f.efectos===false?'none':'';
+      // Cada mapa lleva sus propios efectos (los de serie si no se eligieron) e intensidad.
+      e.efectos=efectosDe(e.id,f);e.intensidad=acotar(Number.isFinite(+f?.intensidad)?+f.intensidad:1,.25,2);
+e.div.dataset.efectos=e.efectos.join(' ');
+      e.amb.style.display=e.efectos.length?'':'none';if(quieto(op)&&e.W)ajustar(e);
       const L=LUGARES[e.id];e.velo.style.background=ok?'radial-gradient(ellipse 55% 50% at 50% 52%,rgba(6,4,10,.32),transparent 80%)':'radial-gradient(ellipse 60% 55% at 50% 52%,rgba(6,4,10,.5),rgba(6,4,10,.15) 75%,transparent),linear-gradient('+L.tinte+','+L.tinte+')';
     }
     // El Estudio cambió el fondo: se repinta la escena en curso sin portal.
@@ -260,7 +294,8 @@
     }
     function pintarAmbiente(e,t,dt){
       const g=e.amb.getContext('2d'),dpr=dprDe();g.setTransform(dpr,0,0,dpr,0,0);g.globalAlpha=1;g.globalCompositeOperation='source-over';g.clearRect(0,0,e.W,e.H);
-      e.estado.linea=e.estado.linea??lineaY();AMBIENTES[e.id](g,t,dt,e.W,e.H,e.estado);g.globalAlpha=1;
+      e.estado.linea=e.estado.linea??lineaY();
+      for(const k of e.efectos||[]){g.save();EFECTOS[k].cuadro(g,t,dt,e.W,e.H,e.estado,e.intensidad??1);g.restore();g.globalAlpha=1;g.globalCompositeOperation='source-over';}
       if(e.estado.golpe>0){e.fondo.style.translate=(Math.random()-.5)*6*e.estado.golpe+'px '+(Math.random()-.5)*4*e.estado.golpe+'px';e.estado.golpe=0;}else e.fondo.style.translate='';
     }
     let antes=0;
@@ -424,5 +459,5 @@
     return Object.freeze({poner,quitar,fondoCambiado,perderPD,brindis,ataqueAlma,tiradaAidman,muerte,destruir,get lugar(){return escena?.id||null;},lugares:Object.keys(LUGARES)});
   }
 
-  window.CAOZ_CAMPO_LUGAR=Object.freeze({crear,LUGARES:Object.freeze(Object.fromEntries(Object.entries(LUGARES).map(([k,v])=>[k,Object.freeze({...v})])))});
+  window.CAOZ_CAMPO_LUGAR=Object.freeze({crear,EFECTOS:Object.freeze(Object.fromEntries(Object.entries(EFECTOS).map(([k,v])=>[k,Object.freeze({nombre:v.nombre,icono:v.icono})]))),DE_SERIE:Object.freeze(Object.fromEntries(Object.entries(DE_SERIE).map(([k,v])=>[k,Object.freeze([...v])]))),LUGARES:Object.freeze(Object.fromEntries(Object.entries(LUGARES).map(([k,v])=>[k,Object.freeze({...v})])))});
 })();
