@@ -1,0 +1,29 @@
+/* Mesa de prueba para los escenarios de los Lugares. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
+.lugaresShell{width:min(1180px,100%);margin:auto;display:flex;flex-direction:column;gap:12px}
+.lugaresEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.lugaresCabecera h1{color:#f0d796;font:700 clamp(26px,4vw,42px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.lugaresCabecera p:last-child{color:#c9bdda;font-size:1.1em}
+.mesaLugar{position:relative;isolation:isolate;display:flex;flex-direction:column;gap:clamp(10px,2.2vh,22px);padding:12px;border-radius:18px;overflow:hidden;min-height:min(78vh,760px);justify-content:space-between;
+  background:linear-gradient(180deg,#140f20,#0b0812);border:1px solid #e7bb5530;box-shadow:inset 0 0 80px #000c}
+.mesaLugar>:not(.clEscena):not(.clEfectos){position:relative;z-index:2}
+.filaLugar{display:flex;flex-wrap:wrap;justify-content:center;gap:clamp(8px,2vw,22px)}
+.lineaLugar{height:2px;margin:0 6%;background:linear-gradient(90deg,transparent,#e7bb5566,transparent)}
+.cartaLugar{position:relative;width:clamp(70px,12vw,140px);aspect-ratio:5/7;border-radius:4.8%/3.43%}
+.cartaLugar>canvas{width:100%;height:100%;display:block;border-radius:inherit;box-shadow:0 12px 26px #000c}
+.cartaLugar.hueco:empty{border:2px dashed #ffffff22}
+.marcadorLado{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;justify-content:center;font:600 13px/1 'Cinzel Domo',Georgia,serif;color:#e9dcff}
+.marcadorLado>span{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:999px;background:#0d0914cc;border:1px solid #e7bb5544}
+.marcadorLado b{color:#ffe08a;font-size:17px}
+.alma{color:#ff8a9a}
+.pds{gap:5px!important}
+.pds i{width:13px;height:17px;display:inline-block;clip-path:polygon(50% 0,100% 50%,50% 100%,0 50%);background:linear-gradient(135deg,#dff4ff,#58a8ff 55%,#1d4a9a)}
+.pds i[data-apagado]{background:#2a2a3a}
+.lugaresControles{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center}
+.lugaresBoton{font:700 13px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.04em;color:#f1dcae;padding:11px 14px;border-radius:10px;cursor:pointer;border:1px solid #e7bb5566;background:linear-gradient(180deg,#261c38,#110c19)}
+.lugaresBoton[aria-pressed="true"],.lugaresBoton.oro{color:#2a1706;border-color:#fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18)}
+.lugaresBoton:disabled{opacity:.5;cursor:default}
+.lugaresOpcion{display:flex;gap:6px;align-items:center;color:#d9cbe8;font-size:1.05em}
+.lugaresEstado{text-align:center;color:#b9aecb;min-height:1.5em}

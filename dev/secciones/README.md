@@ -129,6 +129,28 @@ node dev/secciones/pruebas_poderes.mjs
 python3 dev/secciones/publicar.py --publicar --seccion poderes --salida /tmp/caoz-poderes
 ```
 
+## Campos de los Lugares
+
+La revisión está en `/lugares/`, con `caoz_tcg/campo-lugar.js` (aún sin conectar
+a la partida). `CAOZ_CAMPO_LUGAR.crear(mesa,{arte,linea})` pinta detrás de las
+cartas el escenario del Lugar en juego: su ilustración de fondo (oscurecida,
+con deriva lenta), un velo para que se lean las cartas, un suelo propio
+(losas con brasas, tablones, adoquines, roca nevada, obsidiana con runas), el
+ambiente (brasas y proyectiles, luz de velas, niebla y los guardianes, nieve y
+la sombra del dragón, la cúpula que late) y el borde del lado que lo controla.
+`poner(id,{lado})` lo abre como un portal sobre el anterior; `quitar()` lo retira.
+
+Las reglas visibles: `perderPD` (Tomsage), `brindis` (Antro), `ataqueAlma`
+(Puente: con 8+ pasa, si no los martillos se cruzan), `tiradaAidman` (Montañas:
+con 1-3, alud y Aidman) y `muerte` (Domo: −1 Alma al dueño, +1 PD al rival).
+Con movimiento reducido el escenario queda quieto y las reglas se aplican sin
+animación.
+
+```bash
+node dev/secciones/pruebas_lugares.mjs
+python3 dev/secciones/publicar.py --publicar --seccion lugares --salida /tmp/caoz-lugares
+```
+
 ```bash
 node dev/secciones/pruebas_fuego.mjs
 python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego

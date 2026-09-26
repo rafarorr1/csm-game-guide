@@ -103,6 +103,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/fx-poderes.js'},
         'pruebas': ('pruebas_poderes.mjs',),
     },
+    'lugares': {
+        'nombre': 'Campos de los Lugares',
+        'exportador': 'lugares-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/campo-lugar.js'},
+        'pruebas': ('pruebas_lugares.mjs',),
+    },
     'portal': {
         'nombre': 'Portal del Domo',
         'exportador': 'portal-exportar.mjs',
