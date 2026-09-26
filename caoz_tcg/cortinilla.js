@@ -155,10 +155,10 @@
       return new Promise(r=>{terminar=()=>r(true);const seguro=setTimeout(acabar,(T.fin+3)*1000/(o.velocidad||1));const fin=terminar;terminar=()=>{clearTimeout(seguro);fin();};
         t0=performance.now();previo=-1;jugando=true;raf=requestAnimationFrame(cuadro);});
     }
-    // Saltar: si aún no se cubrió, se va directo a la apertura; si ya se abre, termina.
+    // Saltar: se va directo a la apertura (el menú ya está detrás); si ya se abre, termina.
     function saltar(){
       if(terminado||!raf)return;const t=previo<0?0:previo;
-      if(t<T.muro){salto+=T.muro-t;}else acabar();
+      if(t<T.apertura-.1){salto+=T.apertura-.1-t;}else acabar();
     }
     function destruir(){vivo=false;cancelAnimationFrame(raf);observador?.disconnect();gl.destruir();capa3D.remove();capa2D.remove();}
     return {preparar,reproducir,saltar,destruir,get tiempos(){return {...T};}};

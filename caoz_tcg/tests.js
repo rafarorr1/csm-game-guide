@@ -5306,6 +5306,45 @@ PRUEBAS.suite('muerteMachete',async t=>{
   }
 });
 
+/* ===========================================================================
+   SUITE: cortinillaArranque — la carga y la cortinilla del Domo hasta el menú
+   (cortinilla-juego.js). En pruebas no arranca sola; forzada, monta la carga,
+   pinta cartas de la colección, termina en el menú y se retira; con saltar
+   termina antes. En las dos pantallas.
+   ======================================================================== */
+PRUEBAS.suite('cortinillaArranque',async t=>{
+  for(const pagina of ['index.html','movil.html']){
+    const marco=document.createElement('iframe');marco.style.cssText='position:fixed;left:-10000px;'+(pagina==='index.html'?'width:1440px;height:900px':'width:390px;height:844px');
+    const carga=new Promise(r=>marco.onload=r);marco.src=pagina+'?test=cortinilla-interna';document.body.appendChild(marco);await carga;
+    const w=marco.contentWindow,d=marco.contentDocument;
+    try{
+      const J=w.CAOZ_CORTINILLA_JUEGO;
+      t.check(typeof J?.forzar==='function'&&typeof w.CAOZ_CORTINILLA?.crear==='function',pagina+': faltan cortinilla.js o cortinilla-juego.js.');
+      t.check(!d.getElementById('cargaDomo')&&!J.activa,pagina+': en pruebas la cortinilla no arranca sola.');
+      const cartas=J.elegirCartas();
+      t.check(cartas.length===12&&cartas.every(c=>c.url&&['normal','foil','dorado'].includes(c.acabado)),pagina+': doce cartas ilustradas de la colección.');
+      const tipos=w.eval('CARDS');t.check(!cartas.some(c=>tipos[c.id]?.t==='lugar'),pagina+': la cortinilla no usa Lugares.');
+      const fin=J.forzar({velocidad:3});
+      t.check(!!d.getElementById('cargaDomo'),pagina+': la carga aparece al forzarla.');
+      const t0=performance.now();while(d.getElementById('cargaDomo')?.dataset.reproduciendo===undefined&&performance.now()-t0<20000)await new Promise(r=>setTimeout(r,50));
+      t.check(d.querySelectorAll('#cargaDomo canvas.cortinillaCartas').length===1,pagina+': la cortinilla dibuja las cartas en 3D.');
+      const modo=await fin;
+      t.igual(modo,'cortinilla',pagina+': la cortinilla se reproduce hasta el final.');
+      t.check(!d.getElementById('cargaDomo')&&d.getElementById('menu').classList.contains('on'),pagina+': termina en el menú y se retira.');
+      // Saltar, con el reloj de la prueba parado en 1 s: la primera tecla lleva a
+      // la apertura (el menú ya queda detrás) y la segunda la termina.
+      let reloj=1;const otra=J.forzar({reloj:()=>reloj});
+      const t1=performance.now();while(d.getElementById('cargaDomo')?.dataset.reproduciendo===undefined&&performance.now()-t1<20000)await new Promise(r=>setTimeout(r,50));
+      await new Promise(r=>setTimeout(r,300));
+      const tecla=()=>w.dispatchEvent(new w.KeyboardEvent('keydown',{key:' '}));
+      tecla();const t2=performance.now();while(!d.querySelector('#cargaDomo[data-cubierto]')&&performance.now()-t2<10000)await new Promise(r=>setTimeout(r,50));
+      t.check(!!d.querySelector('#cargaDomo[data-cubierto]'),pagina+': saltar lleva a la apertura y deja el menú detrás.');
+      tecla();const salida=await Promise.race([otra,new Promise(r=>setTimeout(()=>r('colgada'),10000))]);
+      t.check(salida==='cortinilla'&&!d.getElementById('cargaDomo'),pagina+': saltar otra vez la termina aunque el reloj siga parado.');
+    }finally{marco.remove();}
+  }
+});
+
 /* Arranque automático cuando se entra por ?test=... */
 if(new URLSearchParams(location.search).has('test')){
   window.addEventListener('load', ()=>setTimeout(()=>PRUEBAS.correr(), 300));

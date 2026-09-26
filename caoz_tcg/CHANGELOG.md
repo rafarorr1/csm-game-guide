@@ -1,5 +1,18 @@
 # Registro de versiones — el TCG del Domo
 
+### v41 · Build 279 · Pantalla de carga y cortinilla del Domo · 2026-09-26
+
+- El juego tiene pantalla de carga: el logo del Domo con una barra de oro. Si
+  hay que entrar a la cuenta, el acceso aparece encima y la carga espera.
+- Con la cuenta lista, una vez por sesión, la cortinilla lleva al menú con las
+  cartas 3D del visor: se pintan doce cartas de la colección del jugador con el
+  acabado que tiene equipado (primero las premium), el logo se vuelve el dorso
+  de una baraja, la baraja se abre en un carrusel 3D, el carrusel se deshace en
+  un torbellino que forma un muro de cartas y el muro se abre desde el centro
+  para dejar ver el menú (unos 4 s). Un toque o una tecla la salta.
+- Sin WebGL o con movimiento reducido, la carga se funde en el menú. No corre en
+  las pruebas ni al recargar en la misma sesión. Suite `cortinillaArranque`.
+
 ### v40 · Build 278 · Machete arde al morir · 2026-09-24
 
 - Cuando Machete muere, su carta no va volando a las Alcantarillas: se prende
