@@ -2626,6 +2626,20 @@ function nombresDeHabilidad(cardId){
   return HAB_CACHE[cardId] = out;
 }
 
+/* Una carta con varias habilidades no es un párrafo: cada encabezado merece
+   su propio renglón. Sólo separamos cuando el texto tiene al menos dos
+   encabezados reales (en negrita y terminados en dos puntos), para no alterar
+   descripciones normales ni el énfasis que vive dentro de una sola habilidad. */
+function textoCartaFormateado(texto){
+  const html=String(texto||''),re=/<b>[^<:]{2,26}:<\/b>/g,marcas=[];let m;
+  while((m=re.exec(html)))marcas.push(m.index);
+  if(marcas.length<2)return html;
+  const inicio=html.slice(0,marcas[0]).trim();
+  const filas=marcas.map((desde,i)=>html.slice(desde,marcas[i+1]??html.length).trim())
+    .filter(Boolean).map(fila=>'<span class="habilidadCarta">'+fila+'</span>');
+  return (inicio?inicio:'')+filas.join('');
+}
+
 // el cascarón se reutiliza entre renders para que las animaciones no se corten
 /* DE DÓNDE SALEN SUS NÚMEROS.
    La carta enseña el ATQ y los PV finales, pero no por qué: un 6/1 puede ser un
