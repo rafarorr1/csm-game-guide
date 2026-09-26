@@ -81,6 +81,33 @@ const SUBNAME = {engano:'Engaño', fe:'Fe', cancion:'Canción', fuego:'Fuego',
    1. LÍDERES
    ========================================================================== */
 
+/* ===========================================================================
+   BALANCE — variantes reproducibles para el banco
+   ---------------------------------------------------------------------------
+   La partida normal siempre usa la candidata completa. El banco carga la mesa
+   con ?balance=base, ia, talesyn, adreida, rafaela, gero o paquete para poder
+   medir una sola palanca contra la misma base. No hay una regla distinta para
+   quien juega: el parámetro sólo existe para comparar antes de decidir si la
+   candidata merece quedarse.
+   ======================================================================== */
+const VARIANTE_BALANCE = (()=>{
+  try{
+    const v=new URLSearchParams(location&&location.search||'').get('balance');
+    return ['base','ia','talesyn','luzkenya','adreida','rafaela','gero','paquete','candidata'].includes(v)
+      ? v : 'candidata';
+  }catch(_){ return 'candidata'; }
+})();
+const AJUSTES_BALANCE = Object.freeze({
+  base:[], ia:['ia'], talesyn:['talesyn'], luzkenya:['luzkenya'], adreida:['adreida'], rafaela:['rafaela'], gero:['gero'],
+  paquete:['ia','talesyn','adreida','rafaela','gero'],
+  candidata:['ia','talesyn','adreida','rafaela','gero'],
+});
+function usaAjusteBalance(id){ return AJUSTES_BALANCE[VARIANTE_BALANCE].includes(id); }
+const COSTE_GOLPE_DIRECTO = usaAjusteBalance('adreida') ? 3 : 2;
+const CURA_ALMA_REBANO = usaAjusteBalance('rafaela') ? 1 : 2;
+const GOBLINS_DE_CAN = usaAjusteBalance('gero') ? 1 : 2;
+const COSTE_LUZ_KENYA = usaAjusteBalance('luzkenya') ? 2 : 3;
+
 const LEADERS = {
 mohamed:{ n:'Mohamed', ep:'El Mago Pitero', art:'🧙‍♂️', arch:'Control · Engaño · Llaves',
   pasiva:'<b>Disfraz de Mago:</b> tus Hechizos de Engaño cuestan 1 PD menos (mínimo 1).',
@@ -110,8 +137,8 @@ fender:{ n:'Fender', ep:'El Bardo Honesto', art:'🎸', arch:'Aggro · Canciones
    dice la ficha del mazo dos líneas más abajo. El mazo se sigue llamando así. */
 adreida:{ n:'Adreida', ep:'La Guerrera Semiorca', art:'⚔️', arch:'Midrange · Provocar · Combate',
   pasiva:'<b>Intimidante:</b> tus Personajes con 4 o más ATQ tienen <b>Provocar</b>.',
-  hab:'<b>Golpe Directo (2 PD):</b> un aliado gana +2 ATQ y no recibe daño de contraataque este turno.',
-  habCost:2, habName:'Golpe Directo', habTg:{k:'unidadAliada',min:1,max:1},
+  hab:`<b>Golpe Directo (${COSTE_GOLPE_DIRECTO} PD):</b> un aliado gana +2 ATQ y no recibe daño de contraataque este turno.`,
+  habCost:COSTE_GOLPE_DIRECTO, habName:'Golpe Directo', habTg:{k:'unidadAliada',min:1,max:1},
   hab2:{n:'Maratón de K-dramas (0 PD)', cost:0,
         d:'Si no atacaste este turno, roba 1 carta en tu Fase Final.'},
   lore:'Guerrera semiorca. Intimida y prefiere resolver las cosas peleando. Ama los K-dramas.',
@@ -136,7 +163,7 @@ gero:{ n:'Gero', ep:'El Dungeon Master', art:'🎲', arch:'Caos · Tiradas · NP
     render();
   }},
 rafaela:{ n:'Rafaela', ep:'Devota de Rul', art:'✨', arch:'Enjambre · Fe · Curación',
-  pasiva:'<b>Rebaño de Rul:</b> cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 2 Alma a ti.',
+  pasiva:`<b>Rebaño de Rul:</b> cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o ${CURA_ALMA_REBANO} Alma a ti.`,
   hab:'<b>Estornudo de Rul (2 PD):</b> 1 daño a un Personaje rival y cura 1 PV a un aliado.',
   habCost:2, habName:'Estornudo de Rul',
   habTg:[{k:'unidadEnemiga',min:1,max:1,label:'objetivo rival del estornudo',ai:'rematar'},
@@ -149,8 +176,8 @@ rafaela:{ n:'Rafaela', ep:'Devota de Rul', art:'✨', arch:'Enjambre · Fe · Cu
     if(ts[1]&&ts[1][0]&&ts[1][0].alive) healU(ts[1][0],1); }},
 talesin:{ n:'Talesyn', ep:'El Heredero Celestial', art:'😇', arch:'Sacrificio · Rampa · Ascensión',
   pasiva:'<b>Digno de Ascender:</b> cada vez que muere un aliado ganas 1 Ficha de Gracia. Con 5, <b>asciendes</b>: +5 Alma y tus Celestiales ganan +2/+2 permanentes. <b>Después de ascender, cada Personaje que entre a tu campo nace Celestial y con +2/+2.</b>',
-  hab:'<b>Luz de Kenya (3 PD):</b> un aliado gana +1/+1 permanentes y la tribu Celestial.',
-  habCost:3, habName:'Luz de Kenya', habTg:{k:'unidadAliada',min:1,max:1},
+  hab:`<b>Luz de Kenya (${COSTE_LUZ_KENYA} PD):</b> un aliado gana +1/+1 permanentes y la tribu Celestial.`,
+  habCost:COSTE_LUZ_KENYA, habName:'Luz de Kenya', habTg:{k:'unidadAliada',min:1,max:1},
   lore:'Hijo del solar Kenya. Bajó en cuerpo humano para demostrar que es digno de ascender.',
   habReq:(g,s)=>P(s).field.length>0,
   hab_do:async(g,s,ts)=>{ const u=ts[0][0]; u.pA++; u.pH++; if(!u.tribes.includes('Celestial'))u.tribes.push('Celestial');
@@ -299,6 +326,21 @@ C('edbor',{n:'Edbor',t:'personaje',c:5,a:5,h:4,tr:['Humano','Paladín','Oathbrea
  enterTg:{k:'unidadAliada',min:0,max:1,label:'Paladín aliado a sacrificar',f:(u,g,s,self)=>u!==self&&u.tribes.includes('Paladín')},
  enter:async(g,s,u,ts)=>{ const t=ts&&ts[0]&&ts[0][0];
    if(t){ log(`Edbor rompe sus votos y destruye a ${t.card.n}.`,'dmg'); await destroy(t); gainKey(s,1,'Votos rotos'); } }});
+
+/* La pieza que le faltaba a Talesyn: sus muertes dejan de depender de que el
+   rival quiera colaborar. No es un remate gratis: cuesta 1 PD, deja un 1/3
+   vulnerable y exige sacrificar a OTRO aliado. Al destruir pasa por el motor
+   real, así que concede Gracia y dispara todos los «Al morir» que correspondan. */
+C('acolitokenya',{n:'Acólito de Kenya',t:'personaje',c:2,a:1,h:3,tr:['Humano','Acólito'],r:1,art:'🌞',
+ x:'<b>Ofrenda de Kenya (1 PD, 1× turno):</b> sacrifica otro aliado. Roba 1 carta.',
+ act:{cost:1,n:'Ofrenda de Kenya',tg:{k:'unidadAliada',min:1,max:1,ai:'sacrificar',
+   f:(o,g,s,self)=>o!==self,label:'aliado a sacrificar'},
+   req:(g,s,u)=>P(s).field.some(o=>o.alive&&o!==u),
+   do:async(g,s,u,ts)=>{ const t=ts[0][0];
+     log(`Ofrenda de Kenya: ${t.card.n} se entrega por una carta.`,'dmg');
+     await destroy(t);
+     if(G===g&&!g.over) await draw(s,1);
+   }}});
 
 C('juangabriel',{n:'Juan Gabriel',t:'personaje',c:6,a:5,h:6,tr:['Humano','Valoria','Arquero'],r:2,art:'🏹',
  x:'<b>Arco Dorado:</b> Arquero. <b>Alcalde:</b> los demás Valoria aliados ganan +0/+2. <b>Ganar tiempo:</b> el Pergamino rival no cuenta turnos.',
@@ -1007,8 +1049,8 @@ C('tok_goblincamino',{n:'Goblin de Camino',t:'personaje',c:1,a:1,h:1,tr:['Goblin
  keys:['provocar'], token:true});
 
 C('can',{n:'Can, el de los Goblins',t:'personaje',c:4,a:2,h:4,tr:['Humano'],r:1,art:'🛻',
- x:'<b>Interceptar — al entrar:</b> invoca dos <b>Goblins de Camino</b> 1/1 con <b>Provocar</b>.',
- enter:async(g,s,u)=>{ for(let i=0;i<2;i++) await summonToken(s,'tok_goblincamino',
+ x:`<b>Interceptar — al entrar:</b> invoca ${GOBLINS_DE_CAN===1?'un':'dos'} <b>Goblin${GOBLINS_DE_CAN===1?'':'s'} de Camino</b> 1/1 con <b>Provocar</b>.`,
+ enter:async(g,s,u)=>{ for(let i=0;i<GOBLINS_DE_CAN;i++) await summonToken(s,'tok_goblincamino',
    {msg:'🪓 Can pone un goblin en el camino.'}); }});
 
 C('spiderman',{n:'Spider-Man',t:'personaje',c:3,a:2,h:4,tr:['Bestia','Araña'],r:1,art:'🕷️',
@@ -1083,9 +1125,12 @@ rafaela:{ n:'Los Doce Discípulos', d:'Enjambre · Fe · Aguante',
 talesin:{ n:'Ascensión', d:'Sacrificio · Rampa · Thal',
   plan:'Todo en este mazo quiere morir. Junta 5 Fichas de Gracia, asciende y baja a Thal en el turno 7.',
   list:[['conserje',3],['matildus',3],['machete',1],['petunia',1],['eric',3],['bob',1],
-        ['rantiago',1],['horton',1],['aidman',1],['edbor',1],['rayoabrasador',2],['proyectil',2],
+        ['rantiago',1],['horton',1],['aidman',1],['edbor',1],
+        ...(usaAjusteBalance('talesyn') ? [['acolitokenya',2]] : []),
+        ['rayoabrasador',2],['proyectil',2],
         ['alientoacido',2],['disipar',2],['cuerda',1],['hongos',1],['esporas',2],['talcadaver',2],
-        ['puntosrobados',2],['llavemago',1],['pergamino',1],['domo',1],['escarcha',2],['nubedagas',1],
+        ['puntosrobados',2],['llavemago',1],['pergamino',1],
+        ...(usaAjusteBalance('talesyn') ? [['escarcha',1]] : [['domo',1],['escarcha',2]]),['nubedagas',1],
         ['tal',1],['montanas',1]]},
 };
 
@@ -1848,6 +1893,18 @@ function valorMulliganIA(id,s){
   else if(c.t==='lugar')valor=12-coste*9;
   else valor=0;
   if(c.id==='tal'||c.scroll)valor-=45;
+  /* El mulligan genérico sólo veía coste y cuerpo, por eso tiraba las cartas
+     que hacen funcionar a los dos mazos más delicados. Estas prioridades no
+     miran la carta siguiente del mazo: únicamente reconocen piezas de plan que
+     un jugador competente no devolvería de salida. */
+  if(usaAjusteBalance('ia')){
+    const porLider={
+      talesin:{puntosrobados:84,montanas:68,domo:54,acolitokenya:72},
+      mohamed:{sangrefria:76,ilusion:70,peaje:66,tasha:64},
+    };
+    const prioridad=porLider[P(s).leaderId]?.[id];
+    if(prioridad!=null)valor=Math.max(valor,prioridad);
+  }
   return valor;
 }
 
@@ -2196,7 +2253,7 @@ async function playFromHand(s, id, forcedTargets){
       if(u.tribes.includes('Discípulo')&&P(s).leaderId==='rafaela'){
         const hurt=P(s).field.filter(o=>o.dmg>0).sort((a,b)=>b.dmg-a.dmg)[0];
         if(hurt){ healU(hurt,2); log('🐉 Rebaño de Rul: +2 PV.','heal'); }
-        else { P(s).alma=Math.min(30,P(s).alma+2); log('🐉 Rebaño de Rul: +2 Alma.','heal'); }
+        else { P(s).alma=Math.min(30,P(s).alma+CURA_ALMA_REBANO); log(`🐉 Rebaño de Rul: +${CURA_ALMA_REBANO} Alma.`,'heal'); }
       }
       // Aldrick — Recompensa
       if(id==='talia'&&P(s).field.some(o=>o.card.id==='aldrick')){ log('Recompensa de Aldrick: robas 2.'); await draw(s,2); }
@@ -2283,8 +2340,11 @@ function whyNotLeader(s){
   if(!p||!L) return 'La partida ha terminado';
   if(G.active!==s) return 'No es tu turno';
   if(p.leaderUsed) return 'Ya usaste tu Habilidad de Líder este turno';
-  if(p.pd<L.habCost) return `Necesitas ${L.habCost} PD`;
+  // Un objetivo inexistente es el bloqueo que el jugador puede resolver
+  // primero. Así Adreida no dice «faltan PD» cuando ni siquiera tiene un
+  // aliado que pueda recibir el Golpe Directo.
   if(L.habReq&&!L.habReq(G,s)) return L.habReqMsg||'No hay objetivos válidos';
+  if(p.pd<L.habCost) return `Necesitas ${L.habCost} PD`;
   return '';
 }
 
@@ -2315,14 +2375,17 @@ async function useLeader(s){
 function canUseAct(u){
   if(!G||G.over||!u||!u.alive) return false;
   const a=u.card.act,s=u.side;
-  return !!(a&&!u.actUsed&&P(s).pd>=a.cost&&G.active===s&&u.stunned<=0&&!u.possessed&&(!a.req||a.req(G,s)));
+  return !!(a&&!u.actUsed&&P(s).pd>=a.cost&&G.active===s&&u.stunned<=0&&!u.possessed&&(!a.req||a.req(G,s,u)));
 }
 
 async function useAct(u){
   if(!canUseAct(u)) return false;
   const s=u.side, a=u.card.act;
   let ts=null;
-  if(a.tg){ ts=await resolveTargets(s,{tg:[a.tg]},u); if(ts===null) return false; }
+  // Conservar el id permite que la IA entienda una habilidad activa igual que
+  // entiende una carta: Acólito de Kenya puede elegir la ofrenda barata en vez
+  // de sacrificar el mejor aliado. También viaja en línea como contexto seguro.
+  if(a.tg){ ts=await resolveTargets(s,{id:u.card.id,tg:[a.tg]},u); if(ts===null) return false; }
   P(s).pd-=a.cost; u.actUsed=true;
   log(`<b>${u.card.n}</b> usa <b>${a.n}</b>.`);
   await a.do(G,s,u,ts);
@@ -2846,7 +2909,7 @@ function loQuePodriasHacer(s){
   if(!p.leaderUsed && p.pd>=L.habCost && (!L.habReq||L.habReq(G,s)))
     out.push(`usar <b>${L.habName}</b>`);
   p.field.forEach(u=>{ const a=u.card.act;
-    if(a && !u.actUsed && p.pd>=a.cost && !u.stunned && !u.possessed && (!a.req||a.req(G,s)))
+    if(a && !u.actUsed && p.pd>=a.cost && !u.stunned && !u.possessed && (!a.req||a.req(G,s,u)))
       out.push(`usar <b>${a.n}</b> de ${u.card.n}`);
   });
   return out;
@@ -3000,6 +3063,13 @@ function aiTargets(s, groups, self, card){
         cand=cand.filter(x=>x&&x.alive&&x.dmg>0);
         if(!cand.length)break;
         best=cand.slice().sort((a,b)=>(b.dmg-a.dmg)||valor(b)-valor(a))[0];
+      } else if(g.ai==='sacrificar'){
+        // La ofrenda quiere convertir un cuerpo prescindible en carta y Gracia,
+        // no regalar la amenaza que estaba ganando la mesa. Los «al morir» de
+        // Talesyn tienen prioridad, luego el cuerpo menos valioso.
+        const premioMuerte={conserje:-40,matildus:-34,aidman:-28,petunia:-20,eric:-12};
+        const valorSacrificio=x=>(premioMuerte[x.card.id]||0)+(x.card.c||0)*3+x.atk+x.maxHp-x.dmg*2;
+        best=cand.slice().sort((a,b)=>valorSacrificio(a)-valorSacrificio(b))[0];
       } else if(g.ai==='rematar'){
         // El estornudo vale más si termina una amenaza que si sólo raspa a la
         // carta más cara. Para el resto conserva el desempate por valor.
@@ -3052,7 +3122,16 @@ function aiScore(id,s){
       v = p.field.length? 12+(c.mod?(c.mod.a||0)*2+(c.mod.h||0):0) : 0;
       break;
     case 'trampa': v = 14 - p.traps.length*3; break;
-    case 'lugar': v = G.place && G.place.side===s ? 2 : 12; break;
+    case 'lugar':
+      if(id==='domo'&&usaAjusteBalance('ia')){
+        const fragiles=campo=>campo.filter(u=>u.alive&&(u.maxHp-u.dmg)<=2).length;
+        const propios=fragiles(p.field),rivales=fragiles(foe.field);
+        // Reemplazar Montañas antes de bajar a Thal se sentía como una jugada
+        // suicida: se pierde el descuento y cada muerte propia cuesta Alma.
+        if(G.place?.id==='montanas'&&G.place.side===s&&(p.hand.includes('tal')||p.field.some(u=>u.tribes.includes('Dragón'))))v=-18;
+        else v=10+rivales*8-propios*14;
+      } else v = G.place && G.place.side===s ? 2 : 12;
+      break;
     case 'hechizo': {
       const en=foe.field, my=p.field;
       if(c.fast) return 0;                                  // se guardan para respuesta
@@ -3086,6 +3165,36 @@ function aiScore(id,s){
       break; }
   }
   return v - Math.max(0,cost-p.pd)*100;
+}
+
+/* Puntos Robados era una Reliquia que el humano podía cobrar pero la IA nunca
+   activaba. Sólo se sacrifica con dos o más contadores y si libera una carta
+   útil de la mano (o ya está al tope): evitar quemarla por un solo PD conserva
+   la tensión del recurso. */
+function debeCobrarPuntosRobadosIA(s,r){
+  if(!usaAjusteBalance('ia')||r?.id!=='puntosrobados'||(r.counters||0)<2)return false;
+  const p=P(s),ganancia=Math.min(4,r.counters||0);
+  if(ganancia>=4)return true;
+  return p.hand.some(id=>{
+    const coste=costOf(id,s);
+    if(coste<=p.pd||coste>p.pd+ganancia)return false;
+    // aiScore penaliza a propósito las cartas que AÚN no puedes pagar. Para
+    // saber si cobrar la Reliquia abre una jugada hay que valorarla con esos
+    // PD provisionales, y además verificar que sus objetivos sean legales.
+    const antes=p.pd;p.pd+=ganancia;
+    try{return canPlay(s,id)&&aiScore(id,s)>0;}
+    finally{p.pd=antes;}
+  });
+}
+
+async function usarReliquiasIA(s){
+  if(!usaAjusteBalance('ia')||!G||G.over||G.active!==s)return false;
+  let usada=false;
+  for(const r of [...P(s).relics]){
+    if(!debeCobrarPuntosRobadosIA(s,r))continue;
+    if(await useRelic(s,r))usada=true;
+  }
+  return usada;
 }
 
 function aiPickAttack(u){
@@ -3130,6 +3239,7 @@ async function aiTurn(){
   try{
     let guard=0, played=0; const skip=new Set();
     const maxPlays = 12;
+    await usarReliquiasIA(s);
     while(guard++<16 && viva() && !G.over && played<maxPlays){
       const opts=P(s).hand.filter(id=>canPlay(s,id)&&!skip.has(id))
         .map(id=>({id,v:aiScore(id,s)})).filter(o=>o.v>0)
@@ -3141,7 +3251,7 @@ async function aiTurn(){
     if(!viva() || G.over) return;
     // habilidades activadas
     for(const u of [...P(s).field]){
-      if(u.card.act && !u.actUsed && P(s).pd>=u.card.act.cost && (!u.card.act.req||u.card.act.req(G,s))){
+      if(u.card.act && !u.actUsed && P(s).pd>=u.card.act.cost && (!u.card.act.req||u.card.act.req(G,s,u))){
         await pause(); if(!viva()) return; await useAct(u);
       }
     }
@@ -4459,15 +4569,16 @@ talesin:{
     partida: <b>a partir de ahí, cada Personaje que bajes nace Celestial y con +2/+2</b>.
     Ascender con el campo vacío no es un problema, es el momento de rellenarlo. Tu mazo no
     protege a nadie — lo gasta. Y detrás viene <b>Thal</b> o el <b>Pergamino</b>.`,
-  motor:['matildus','eric','tal','montanas','domo'],
+  motor:['matildus','acolitokenya','tal','montanas','puntosrobados'],
   motorTxt:`<b>Matildus</b> explota en la cara de quien lo mata, <b>Eric</b> se sacrifica por
-    otro, el <b>Conserje</b> deja Llaves, <b>Aidman</b> te da 2 PD al morir. Todo suma
-    Gracia. <b>Las Montañas de Thal</b> abaratan a los Dragones 2 PD: Thal deja de costar 10 y
-    baja el turno 8, o antes con <b>Puntos Robados</b>.`,
+    otro, el <b>Conserje</b> deja Llaves y <b>Aidman</b> te da 2 PD al morir. El
+    <b>Acólito de Kenya</b> convierte voluntariamente uno de esos aliados en una carta y una
+    Ficha de Gracia. <b>Las Montañas de Thal</b> abaratan a los Dragones 2 PD: Thal deja de
+    costar 10 y baja antes con <b>Puntos Robados</b>.`,
   turnos:[
     ['1–3','Cosas baratas y sacrificables. No te importa perderlas: es el plan. <b>Puntos Robados</b> temprano para acelerar después.'],
-    ['4–6','<b>Aliento de Ácido</b> limpia su mesa y, si mata a los tuyos también, mejor: más Gracia. <b>Rayo Abrasador</b> puede rematar a tus propios Personajes para llegar a cinco.'],
-    ['7+','Asciendes y bajas a <b>Thal</b> o el <b>Pergamino</b>. Con Thal en mesa el Pergamino <b>no necesita Llaves</b>, y llevas <b>El Domo</b> para que cada Llave cuente doble.']
+    ['4–6','<b>Aliento de Ácido</b> limpia su mesa. Cuando necesites Gracia, usa el <b>Acólito de Kenya</b> para entregar un Conserje, Matildus o Aidman: robas y avanzas el plan sin esperar al rival.'],
+    ['7+','Asciendes y bajas a <b>Thal</b> o el <b>Pergamino</b>. Con Thal en mesa el Pergamino <b>no necesita Llaves</b>, y los Personajes que bajes después nacen Celestiales con +2/+2.']
   ],
   combo:`<b>Petunia + Ascensión.</b> Petunia muere y vuelve como <b>Petunia Sagrada</b>, que es
     <i>Celestial</i>. Si asciendes después, se queda en <b>5/7 con Vuelo</b>. Y con
@@ -4491,16 +4602,16 @@ gero:{
     compañeros: son los <b>NPC</b> que repartes, y ganan por acumulación — cuantos más haya
     en pie, más cerca estás de proteger a <b>El Rey</b> durante dos inicios de turno y ganar el duelo por la corte.`,
   motor:['can','rambo','correcaminos','coyote','rey'],
-  motorTxt:`Cuerpos baratos que llegan de dos en dos. <b>Can</b> entra con <b>dos Goblins</b>
-    de regalo, así que él solo llena media mesa. <b>Rambo</b> cuesta 1 y pega 3 el turno que
+  motorTxt:`Cuerpos baratos que llegan rápido. <b>Can</b> entra con <b>un Goblin</b>
+    de regalo: dos cuerpos por una carta, sin llenar media mesa él solo. <b>Rambo</b> cuesta 1 y pega 3 el turno que
     entra. <b>El Correcaminos</b> corre más si <b>El Coyote</b> anda por ahí — aunque sea del
     rival. La corte requiere a <b>El Rey</b> y otros tres en pie hasta dos inicios de turno propios consecutivos.`,
   turnos:[
     ['1–3','Cuerpos, cuerpos y cuerpos. <b>Machete</b>, <b>El Correcaminos</b>, <b>Rambo</b> si quieres tres de daño gratis. No mires el Alma del rival todavía: mira cuántos NPC tienes de pie al empezar tu turno.'],
-    ['4–6','<b>Can</b> es tu mejor turno: entra él y entran dos Goblins con Provocar, que además te protegen a los demás. <b>Juguetes para el Cíclope</b> boca abajo cancela el ataque que venga a romperte la mesa y te deja dos Ilusiones más.'],
+    ['4–6','<b>Can</b> es un buen turno: entra él y un Goblin con Provocar, que protege a los demás. <b>Juguetes para el Cíclope</b> boca abajo cancela el ataque que venga a romperte la mesa y te deja dos Ilusiones más.'],
     ['7+','Con la mesa a cuatro, baja a <b>El Rey</b>. El primer inicio de turno con él y otros tres marca 1/2; necesitas conservar la corte hasta el siguiente para ganar. Si baja de cuatro o pierdes al Rey, vuelves a cero. Guarda <b>Peaje del Puente</b> y las Trampas para defenderla.']
   ],
-  combo:`<b>Can + El Rey.</b> Can pone tres cuerpos con una sola carta, así que la corte se
+  combo:`<b>Can + El Rey.</b> Can pone dos cuerpos con una sola carta, así que la corte se
     reúne rápido, pero todavía debe sobrevivir hasta dos inicios de turno propios. Si te falta uno, <b>Rulchete de Bajo Presupuesto</b>
     invoca un 0/6 con Provocar por 3 PD: no pega, pero cuenta — y aguanta.`,
   mano:`Quédate lo barato. <b>Machete</b>, <b>El Correcaminos</b> y <b>Brújula</b> valen más
@@ -4533,13 +4644,14 @@ let GUIA_SEL='fender';
 async function autoTurn(s){
   // usa la misma lógica del rival para el bando indicado (arnés de pruebas)
   let guard=0; const skip=new Set();
+  await usarReliquiasIA(s);
   while(guard++<16&&!G.over){
     const o=P(s).hand.filter(id=>canPlay(s,id)&&!skip.has(id)).map(id=>({id,v:aiScore(id,s)}))
       .filter(x=>x.v>0).sort((a,b)=>b.v-a.v);
     if(!o.length) break;
     if(!await playFromHand(s,o[0].id)) skip.add(o[0].id);
   }
-  for(const u of [...P(s).field]) if(u.card.act&&!u.actUsed&&P(s).pd>=u.card.act.cost&&(!u.card.act.req||u.card.act.req(G,s))) await useAct(u);
+  for(const u of [...P(s).field]) if(u.card.act&&!u.actUsed&&P(s).pd>=u.card.act.cost&&(!u.card.act.req||u.card.act.req(G,s,u))) await useAct(u);
   const L=P(s).L;
   if(!P(s).leaderUsed&&P(s).pd>=L.habCost&&(!L.habReq||L.habReq(G,s))) await useLeader(s);
   let g2=0;

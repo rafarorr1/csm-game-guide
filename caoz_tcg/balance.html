@@ -61,7 +61,7 @@ code{background:#0c0916;padding:1px 5px;border-radius:4px;font-size:12px}
 <body>
 
 <h1>Banco de balance</h1>
-<div class="sub">Caoz Con Todo · el TCG del Domo — juega solo y cuenta lo que pasa</div>
+<div class="sub">Caoz Con Todo · el TCG del Domo — juega solo y cuenta lo que pasa <span id="varianteActiva"></span></div>
 
 <div class="barra">
   <select id="cuantas">
@@ -76,13 +76,40 @@ code{background:#0c0916;padding:1px 5px;border-radius:4px;font-size:12px}
 
 <div id="salida"></div>
 
-<iframe id="juego" src="index.html" style="position:fixed;left:-9999px;width:1280px;height:900px;border:0"></iframe>
+<iframe id="juego" src="about:blank" style="position:fixed;left:-9999px;width:1280px;height:900px;border:0"></iframe>
 
 <script>
 'use strict';
 const $ = s => document.querySelector(s);
 let J = null;                       // window del juego
 let INFORME = null;
+const PARAMETROS=new URLSearchParams(location.search);
+const VARIANTES={
+  base:{motor:'base',nombre:'Base de control'},
+  ia:{motor:'ia',nombre:'Sólo IA fiel'},
+  acolitodekenya:{motor:'talesyn',nombre:'Sólo Acólito de Kenya'},
+  talesyn:{motor:'talesyn',nombre:'Sólo Acólito de Kenya'},
+  luzkenya:{motor:'luzkenya',nombre:'Sólo Luz de Kenya · 2 PD'},
+  golpedirecto:{motor:'adreida',nombre:'Sólo Golpe Directo · 3 PD'},
+  adreida:{motor:'adreida',nombre:'Sólo Golpe Directo · 3 PD'},
+  rebanoderul:{motor:'rafaela',nombre:'Sólo Rebaño de Rul · 1 Alma'},
+  rafaela:{motor:'rafaela',nombre:'Sólo Rebaño de Rul · 1 Alma'},
+  can:{motor:'gero',nombre:'Sólo Can · 1 Goblin'},
+  gero:{motor:'gero',nombre:'Sólo Can · 1 Goblin'},
+  combinada:{motor:'paquete',nombre:'Paquete candidato'},
+  paquete:{motor:'paquete',nombre:'Paquete candidato'},
+};
+const VARIANTE=VARIANTES[PARAMETROS.get('variante')]||VARIANTES.combinada;
+const qSemilla=PARAMETROS.get('semilla');
+const SEMILLA_BANCO=qSemilla===null?null:(Number(qSemilla)>>>0);
+function azarSemilla(seed){ let x=seed>>>0; return ()=>{ x=(Math.imul(1664525,x)+1013904223)>>>0; return x/4294967296; }; }
+function semillaPartida(indice){ return (SEMILLA_BANCO+Math.imul(indice+1,0x9e3779b9))>>>0; }
+
+function cargarJuego(){
+  const url=new URL('index.html',location.href);
+  url.searchParams.set('balance',VARIANTE.motor);
+  $('#juego').src=url.href;
+}
 
 function esperarJuego(){
   return new Promise((ok, mal) => {
@@ -156,11 +183,13 @@ async function tanda(porCruce){
     return finOrig(ganador, porque);
   };
 
-  const t0 = performance.now();
+  const t0 = performance.now(); let indicePartida=0;
   for (const a of L) for (const b of L){
     const clave = a + ' vs ' + b;
     d.cruce[clave] = {gana:0, total:0};
     for (let k = 0; k < porCruce; k++){
+      const randomOriginal=J.Math.random;
+      if(SEMILLA_BANCO!==null)J.Math.random=azarSemilla(semillaPartida(indicePartida));
       try{
         // alternar quién empieza para que no sesgue la muestra
         const primero = k % 2;
@@ -194,6 +223,9 @@ async function tanda(porCruce){
         }
       }catch(e){
         d.errores.push(`${a} vs ${b}: ${e && e.message}`);
+      }finally{
+        J.Math.random=randomOriginal;
+        indicePartida++;
       }
     }
     $('#progreso').textContent = `${d.partidas} partidas…`;
@@ -211,22 +243,29 @@ async function tanda(porCruce){
    ======================================================================== */
 async function medirTurnosMuertos(veces){
   const T = J.TCG, L = Object.keys(T.LEADERS);
-  let turnos = 0, muertos = 0, primerJuego = [];
+  let turnos = 0, muertos = 0, primerJuego = [],indicePartida=1000000;
   for (const a of L){
     for (let k = 0; k < veces; k++){
-      await T.setupMatch(a, L[(L.indexOf(a)+1) % L.length], {fast:true,auto:true,silent:true});
-      let g = 0, jugoAlgo = -1;
-      while (!T.G.over && g++ < 40){
-        const s = T.G.active;
-        if (s === 0){
-          turnos++;
-          const puede = T.P(0).hand.some(id => T.canPlay(0, id));
-          if (!puede) muertos++;
-          else if (jugoAlgo < 0) jugoAlgo = Math.ceil(T.G.turnNo / 2);
+      const randomOriginal=J.Math.random;
+      if(SEMILLA_BANCO!==null)J.Math.random=azarSemilla(semillaPartida(indicePartida));
+      try{
+        await T.setupMatch(a, L[(L.indexOf(a)+1) % L.length], {fast:true,auto:true,silent:true});
+        let g = 0, jugoAlgo = -1;
+        while (!T.G.over && g++ < 40){
+          const s = T.G.active;
+          if (s === 0){
+            turnos++;
+            const puede = T.P(0).hand.some(id => T.canPlay(0, id));
+            if (!puede) muertos++;
+            else if (jugoAlgo < 0) jugoAlgo = Math.ceil(T.G.turnNo / 2);
+          }
+          await T.autoTurn(s);
         }
-        await T.autoTurn(s);
+        if (jugoAlgo > 0) primerJuego.push(jugoAlgo);
+      }finally{
+        J.Math.random=randomOriginal;
+        indicePartida++;
       }
-      if (jugoAlgo > 0) primerJuego.push(jugoAlgo);
     }
   }
   return {turnos, muertos, primerJuego};
@@ -652,6 +691,8 @@ function aplicarAjustes(cual){
 
 /* ======================================================================== */
 async function arrancar(){
+  $('#varianteActiva').textContent='· '+VARIANTE.nombre+(SEMILLA_BANCO===null?'':' · semilla '+SEMILLA_BANCO);
+  cargarJuego();
   J = await esperarJuego();
   const cruces=Object.keys(J.TCG.LEADERS).length**2;
   for(const o of $('#cuantas').options){
@@ -700,6 +741,7 @@ async function arrancar(){
     const m = await medirTurnosMuertos(Math.max(4, Math.round(n/8)));
     $('#progreso').textContent = '';
     pintar(d, m);
+    window.RESULTADO_DETALLADO={variante:VARIANTE,semilla:SEMILLA_BANCO,datos:d,turnosMuertos:m,informe:INFORME};
     $('#correr').disabled = false;
     // para leerlo desde fuera (publicar.sh, o una corrida sin ventana)
     window.RESULTADO = INFORME;
