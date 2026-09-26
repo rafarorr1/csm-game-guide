@@ -45,6 +45,10 @@
       "fuente": "c568529b736bbba9b5507f992446c3d5cb06c135",
       "ruta": "tcg/interacciones"
     },
+    "invocar": {
+      "fuente": "b234c35c41a14d636f5ce57b80a0b7b575466309",
+      "ruta": "tcg/invocar"
+    },
     "lugares": {
       "fuente": "a454f5b4fa8c59095db98017a56d4e69dd65a085",
       "ruta": "tcg/lugares"

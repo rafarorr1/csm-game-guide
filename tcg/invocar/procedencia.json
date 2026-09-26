@@ -1,0 +1,46 @@
+{
+  "seccion": "invocar",
+  "partida": false,
+  "almacenamiento": "ninguno",
+  "proposito": "Prueba de la invocación de cartas: la carta sale de la mano como carta 3D del visor, da una vuelta hacia la cámara y cae sobre su casilla con un golpe; la legendaria se detiene en lo alto; las fichas aparecen del aire.",
+  "cartas": [
+    "eric/normal",
+    "horton/foil",
+    "rey/dorado",
+    "bartolomeo/normal",
+    "machete/foil",
+    "aidman/normal",
+    "tasha/foil",
+    "escarcha/normal",
+    "tok_petunia/dorado"
+  ],
+  "componentes": {
+    "carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
+    "fx-invocar.js": "3fa30874967498d4c8a0de3b382d9eec70950dc5ea2b4fba5ee7907cf1082aa4",
+    "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f"
+  },
+  "arte": {
+    "logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
+    "eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b",
+    "horton-foil-v1.webp": "96763b2debca0a86cb5dcdf6d8f9cc38afbd7d868c7300eba43666d673b46583",
+    "rey-dorado-v1.webp": "f1554cd02196a5dece9de1dbb4a1509b622c01724c86fd238d671c528fedc2cd",
+    "bartolomeo.webp": "7e566700ee2f6b6046ae1410660cdbfcc24f4fbf3fff0ac837d0e78678e5dfca",
+    "machete-foil-v1.webp": "136280762f47652058804c354a9247d59b70919a0e25e25c2f6f6dba8cbd5f9f",
+    "aidman.webp": "7e9f45206fc866624c4b73ca1947aaf54c2b4b8fe3bcd2ac0a90d7cdd8e2ee29",
+    "tasha-foil-v1.webp": "ca15ae7aa02d5a140a71813128da9ef017ebee61eda87e0d851797a91c94a55c",
+    "escarcha.webp": "06a3d183d496800f9a49fc8cfd69fc07b35f3e02b615aa862e632958822ee79b",
+    "tok_petunia-dorado-v1.webp": "ae35ca689dd27ea41c89570bc992b05c160f28ac5f032e3b1cc5820cf8093443"
+  },
+  "entorno": {
+    "invocar-mesa.js": "abe174746885be2a3293eeb8ced47c6b6139182785a6dce76e70da0791f7130d",
+    "invocar-mesa.css": "ff7c9194d63077e6f49135e65970d0134c155094e578f480a028400a3ed1ab9f"
+  },
+  "derivados": {
+    "index.html": "aa55c7a94197ca33644e86101894a5d3b00cd7d14eea81625b955745be057556",
+    "generado/datos.js": "84c36090cb3fafefaf570325040a504c3dda7ab074810050c6c3807a45bca0e1"
+  }
+}
