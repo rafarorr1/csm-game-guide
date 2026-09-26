@@ -17,6 +17,10 @@
       "fuente": "1fce0c9551d8ce2eb0a97298b728bc7cbb3f85e8",
       "ruta": "tcg/cortinilla"
     },
+    "cosecha-3d": {
+      "fuente": "cd977cb65fe325df2a7114bb3437e0eb6e461d57",
+      "ruta": "tcg/cosecha-3d"
+    },
     "cuenta": {
       "fuente": "69861e7f4547b54fa6225dfc366e0eb9ca145e85",
       "ruta": "tcg/cuenta"
