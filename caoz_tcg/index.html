@@ -20,7 +20,7 @@
   var q=new URLSearchParams(location.search);
   if(!('serviceWorker' in navigator)||q.has('test')||q.has('estudioVista')
      ||!(location.protocol==='https:'||location.hostname==='localhost'))return;
-  navigator.serviceWorker.register('sw.js?b=293&test=arranque').catch(function(){});
+  navigator.serviceWorker.register('sw.js?b=294&test=arranque').catch(function(){});
 })();
 </script>
 <!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
@@ -2222,7 +2222,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=293&test=arranque">
+<link rel="stylesheet" href="mulligan-ui.css?b=294&test=arranque">
 </head>
 <body>
 <div id="arranqueCaoz" role="status" aria-label="Cargando Caoz Con Todo">
@@ -2391,9 +2391,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=293&test=arranque"></script>
-<script src="final.js?b=293&test=arranque"></script>
-<script src="mulligan-ui.js?b=293&test=arranque"></script>
+<script src="motor.js?b=294&test=arranque"></script>
+<script src="final.js?b=294&test=arranque"></script>
+<script src="mulligan-ui.js?b=294&test=arranque"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2412,7 +2412,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:293, fecha:'2026-09-25'};
+const BUILD = {n:294, fecha:'2026-09-25'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -3566,6 +3566,9 @@ function renderField(host, list, mine){
       +((mine&&!rest&&canAttack(u))?' ready':'')+(tgt?' tgt':'')
       +(gastada?' gastada':'')
       +((mine&&SEL===u)?' selected':'');
+    // Los estados siguen siendo datos del motor; esta capa sólo los hace
+    // visibles sobre la carta que ya existe en la mesa.
+    window.fxClaudeEstado?.(u,d);
     d.title='';   // el cajón ya lo cuenta; el aviso del sistema salía descolocado
     d.onclick = mine
       ? ()=>{ if(TGT){ pickTarget(u); return; }   // un objetivo inválido no cambia a selección de ataque
@@ -3714,6 +3717,7 @@ function render(){
   h.classList.toggle('apretada', nMano>7);
   renderControls();
   encajarTextos();                 // las tribus largas, a la medida de su carta
+  window.fxClaudeCampo?.();
   window.PITAGORAS_MESA?.actualizar(G);
   if(G.tutorial) tutHighlight();
 }
@@ -3962,6 +3966,7 @@ function showScreen(id){
   if(antes!==pantalla||!esMenu)limpiarTransicionMenu();
   $$('.screen').forEach(s=>s.classList.remove('on'));
   pantalla.classList.add('on');
+  window.fxClaudeActivarCampo?.(id==='board');
   $('#fondoMenus').classList.toggle('on',esMenu);
   if(id!=='board'){document.body.classList.remove('peligro','remate');}
   // El tablero entra con su propio VS; las pantallas de menú comparten el oro.
@@ -5263,7 +5268,7 @@ if(new URLSearchParams(location.search).has('biblia')){
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
    && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
-  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=293&test=arranque').catch(()=>{}); });
+  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=294&test=arranque').catch(()=>{}); });
 }
 /* El menú ya existe desde el HTML para que la cuenta, las invitaciones y la
    campaña puedan inicializarse normalmente. Sólo se ocultó su presentación

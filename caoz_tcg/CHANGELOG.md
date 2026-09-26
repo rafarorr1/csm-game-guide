@@ -1,5 +1,17 @@
 # Registro de versiones — el TCG del Domo
 
+### v55 · Build 294 · Efectos y campos de Claude en la partida · 2026-09-25
+
+- Los **Lugares** ahora transforman visualmente la mesa: Tomsage, Antro Juan,
+  el Puente, las Montañas de Thal y el Domo muestran su propio campo y
+  responden a sus disparadores reales.
+- Se integran las secuencias de **Rulchete**, Rayo de Escarcha, Risa de Tasha,
+  Collar de Agua, Pergamino, Gracia de Talesyn y la ascensión de Petunia,
+  sin cambiar las reglas ni los resultados de las cartas.
+- Las capas se cargan en escritorio, móvil y sin conexión; si un dispositivo
+  reduce movimiento o una animación no puede dibujarse, la partida conserva
+  inmediatamente su resolución habitual.
+
 ### v54 · Build 293 · Colección antes que sobres · 2026-09-25
 
 - El botón **Colección de cartas** abre siempre **Mis cartas**, incluso si hay

@@ -12,7 +12,7 @@ index.html motor.js movil.html final.js invitaciones-compartidas.js final-core.j
 campana-mesa.js campana-personaje.js campana-deseo.js campana-pitagoras.js
 campana-secreto.js campana-honores.js pitagoras-pruebas.js pitagoras-mundos.js
 pitagoras-cine.js pitagoras-laboratorio.js pitagoras-fps.js pitagoras-pixel.js
-pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js fx-aliento.js
+pitagoras-combate.js pitagoras-mesa.js dado-fisico.js moneda-fisica.js polish-aaa.js fx-aliento.js fx-ascension.js fx-poderes.js campo-lugar.js efectos-claude.js
 sw.js manifest.webmanifest tests.js estudio.html audio-domo.js sonidos.html
 sonidos.js sonidos.css estudio.js estudio.css estudio-publicacion.js
 estudio-publicacion.css arte-vistas.js estudio-vista.js arte-remoto.js nombres-cartas.js acabados.css

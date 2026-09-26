@@ -67,6 +67,12 @@
   guion('moneda-fisica.js');
   guion('polish-aaa.js');
   guion('fx-aliento.js');
+  // Efectos visuales de poderes y escenarios: dibujan encima de la mesa, sin
+  // tocar reglas. El puente se carga después para conectarlos a ambas vistas.
+  guion('fx-ascension.js');
+  guion('fx-poderes.js');
+  guion('campo-lugar.js');
+  guion('efectos-claude.js');
   guion('coleccion-juego.js');
   guion('sobres-escena.js');
   guion('sobres-apertura.js');
