@@ -179,8 +179,9 @@ for(const [id,n,tipo,art,a,h,editorPrioridad] of [['editorcosecha','La cosecha',
     // Una prueba a la vez conserva la presión del Editor legible: con 4+ PD
     // la IA no encadena dos minijuegos en el mismo turno. Tampoco baja una
     // copia mientras esa Pesadilla siga viva: cada hueco del jefe representa
-    // un minijuego distinto, no una repetición del mismo reto.
-    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on&&g.campana.editorPesadillaTurno!==g.turnNo&&!pesadillaRepetidaEnMesa(s,id)});
+    // un minijuego distinto. Además, el jefe rota los seis retos antes de
+    // repetir cualquiera de ellos.
+    req:(g,s)=>!!g.campana?.jefeSecreto&&s===FOE&&!g.online&&!g.guest&&!NET.on&&g.campana.editorPesadillaTurno!==g.turnNo&&!pesadillaRepetidaEnMesa(s,id)&&pesadillaDisponibleEnCiclo(g,id)});
 }
 
 
@@ -2086,6 +2087,17 @@ function pesadillaRepetidaEnMesa(s,id){
   const c=CARDS[id];
   return !!(c?.editorJuego&&s===FOE&&G.campana?.jefeSecreto&&P(s).field.some(u=>u.alive&&u.card.id===id));
 }
+function pesadillaDisponibleEnCiclo(g,id){
+  if(!CARDS[id]?.editorJuego||!g?.campana?.jefeSecreto)return true;
+  const vistas=Array.isArray(g.campana.editorJuegosVistos)?g.campana.editorJuegosVistos:[];
+  // Al completar las seis Pesadillas, el siguiente reto abre una vuelta nueva.
+  return vistas.length>=CARTAS_EDITOR.length||!vistas.includes(id);
+}
+function registrarPesadillaEnCiclo(g,id){
+  if(!CARDS[id]?.editorJuego||!g?.campana?.jefeSecreto)return;
+  const vistas=Array.isArray(g.campana.editorJuegosVistos)?g.campana.editorJuegosVistos:[];
+  g.campana.editorJuegosVistos=vistas.length>=CARTAS_EDITOR.length?[id]:[...vistas,id];
+}
 
 function canPlay(s,id){
   const c=CARDS[id];
@@ -2093,6 +2105,7 @@ function canPlay(s,id){
   if(G.phase!=='principal'&&G.phase!=='combate') return false;
   if(costOf(id,s)>P(s).pd) return false;
   if(pesadillaRepetidaEnMesa(s,id)) return false;
+  if(!pesadillaDisponibleEnCiclo(G,id)) return false;
   if(c.t==='personaje'&&!puedeEntrarCampo(s,id)) return false;
   if(c.t==='trampa'&&P(s).traps.length>=3) return false;
   if(c.t==='objeto'&&c.equip&&!P(s).field.some(u=>u.objs.length<(u.card.objSlots||1))) return false;
@@ -2119,7 +2132,10 @@ async function playFromHand(s, id, forcedTargets){
   // La restricción sólo pertenece al jefe final. Se fija al pagar la carta,
   // antes de abrir la prueba, para que la IA no pueda encadenar otra cuando
   // vuelva de un minijuego ni si la presentación se cancela.
-  if(c.editorJuego&&s===FOE&&partida.campana?.jefeSecreto)partida.campana.editorPesadillaTurno=partida.turnNo;
+  if(c.editorJuego&&s===FOE&&partida.campana?.jefeSecreto){
+    partida.campana.editorPesadillaTurno=partida.turnNo;
+    registrarPesadillaEnCiclo(partida,id);
+  }
   /* De una Trampa no se dice cuál es: va boca abajo. Esta línea anunciaba toda
      carta jugada con su nombre y no era privada, así que en línea le cantaba al
      rival la Trampa que acababas de poner. Era la fuga que quedaba. */
@@ -2774,6 +2790,7 @@ function whyNot(s,id){
   if(G.phase!=='principal'&&G.phase!=='combate') return 'Todavía no es la fase de jugar cartas';
   if(costOf(id,s)>P(s).pd) return `Cuesta ${costOf(id,s)} PD y tienes ${P(s).pd}`;
   if(pesadillaRepetidaEnMesa(s,id)) return 'Pitágoras ya tiene esta Pesadilla en mesa';
+  if(!pesadillaDisponibleEnCiclo(G,id)) return 'Pitágoras debe presentar los otros minijuegos antes de repetir este';
   if(c.t==='personaje'&&campoEditorReservado(s,id)) return 'El campo del Editor está reservado para sus Pesadillas';
   if(c.t==='personaje'&&!puedeEntrarCampo(s,id))
     return limiteCampoPersonajes(s,id)===CARTAS_EDITOR.length ? 'La mesa del Editor ya tiene sus 6 Pesadillas' : 'Tu campo está lleno: caben 5 Personajes';

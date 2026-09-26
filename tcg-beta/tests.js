@@ -1437,6 +1437,13 @@ PRUEBAS.suite('pitagorasIntegracion',async t=>{
       const vida=guardian.dmg;await w.doAttack(pesadilla,guardian);t.check(guardian.dmg>vida||!guardian.alive,pagina+': la pesadilla también pelea contra cartas');
       arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha']");await w.playFromHand(1,'editorcosecha');const devuelta=w.eval('P(1)').field[0];w.bounce(devuelta);
       t.check(!devuelta.alive&&w.eval("P(1).hand.includes('editorcosecha')&&P(1).field.length===0"),pagina+': devolver a la mano no desvanece una ficha');
+      // Aunque la carta ya haya abandonado la mesa, el reto no puede volver a
+      // salir hasta que Pitágoras haya presentado los otros cinco. Al completar
+      // las seis, el ciclo se reinicia y permite una nueva vuelta.
+      arena();inmediato({sobrevivio:true});w.eval("P(1).hand=['editorcosecha'];P(1).pd=20");await w.playFromHand(1,'editorcosecha');const primera=w.eval('P(1).field[0]');await w.destroy(primera);w.eval("G.turnNo+=1;P(1).pd=20;P(1).hand=['editorcosecha']");
+      t.check(!w.canPlay(1,'editorcosecha')&&w.whyNot(1,'editorcosecha').includes('otros minijuegos'),pagina+': no repite una prueba ya vista antes de cerrar el ciclo.');
+      w.eval("P(1).hand=['editorcorte']");
+      t.check(w.canPlay(1,'editorcorte')&&await w.playFromHand(1,'editorcorte'),pagina+': permite el siguiente minijuego distinto del ciclo.');
       // El jefe reserva seis plazas para sus seis minijuegos, pero ninguna
       // puede repetir una Pesadilla que siga en mesa. Las demás mesas se
       // quedan en cinco; ésta es una excepción exclusiva del combate secreto.

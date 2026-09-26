@@ -107,7 +107,10 @@
         if(lista){
           progreso(raiz,1);await new Promise(r=>setTimeout(r,200));
           raiz.dataset.reproduciendo='';raiz.dataset.baraja='';
-          await cortinilla.reproducir({alCubrir:()=>{raiz.dataset.cubierto='';},alAbrir:entradaMenu});
+          /* El menú se prepara cuando el muro ya cubrió por completo la carga,
+             no al terminar la apertura. Así las cartas se apartan mostrando
+             una portada que ya está lista, incluso en equipos más lentos. */
+          await cortinilla.reproducir({alCubrir:()=>{raiz.dataset.cubierto='';entradaMenu();}});
           modo='cortinilla';
         }else{progreso(raiz,1);entradaMenu();}
       }catch(e){console.warn('Arranque: se omite la cortinilla.',e);}
