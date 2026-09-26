@@ -12,22 +12,22 @@
     "art/rey.webp": "a18041ee78195792a07bbc81d83b4dc6f7fcae6b2a4bf5949232f8e4c0e7b492",
     "art/tok_petunia.webp": "03511a3d6c026b74796c6b7a8bcd2da236bb3ef6ce93d82ae971f95daa1b7b60",
     "art/tomsage.webp": "75ccc7684f4eb32bfbd9fc5943306761a47ea91e1cf62d6d570ef7ea1a744fe2",
-    "estudio-campos.css": "e43ae30320f6bccc545c7ae9dc61d386dbc1c6484d72c0aa94cb8401730a2b9e",
-    "estudio-campos.js": "62212aa8811e2953e8f7b9e9d73910c7bf74e5ebcdbcef4d08e79d6a2a8a5323",
+    "estudio-campos.css": "c59bd12a4f3239e7ce7534db91941f66206a4700e7ecc82e6938db6b296ddc49",
+    "estudio-campos.js": "13a087aa9381080827b64c2bb68b32134cb509f05637a99eea7f5d9e797a3c06",
     "generado/datos.js": "6d2783f998d6e90a07120f23e25aa950873958c5f4aa878fc6ee21c04f38b78e",
-    "index.html": "31fa0334a738c63ff9f18b743292837c513617061ae8770c1383641e8765254c",
-    "juego/campo-lugar.js": "6cc8e4d8bcf1b5b4149ea423227c9bca17b280870022dc2595f715ac8829dfe0",
+    "index.html": "15b52223a2022cca3283dd79c9d52aa162535a87cd39f2b1e876db5508304bc7",
+    "juego/campo-lugar.js": "69514d1fb4c63748c0a48f1c113fc3a6d44b3554d99d06b6168716a32179192c",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "procedencia.json": "627a04ba2fa3cdd2c345da79aea7076ca7c5bf0a3672dd120445501c5e62baa3"
+    "procedencia.json": "c974ddc3b7822ee3dfd03b79a0fd50bb621759248698b8905bee2a8fa9151890"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "8fa8a3657dda31af6a56d45fd462095eab6c269a"
+    "sha": "a454f5b4fa8c59095db98017a56d4e69dd65a085"
   },
   "seccion": "estudio-campos",
   "version": 1

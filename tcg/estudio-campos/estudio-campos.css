@@ -47,3 +47,14 @@ body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
 .ecEncuadre:disabled{opacity:.45}
 .ecEstado{color:#b9aecb;min-height:1.5em}
 .ecEstado.error{color:#ff9a8a}
+.ecEfectos{border:1px solid #e7bb5533;border-radius:12px;padding:10px 14px;display:flex;flex-direction:column;gap:10px}
+.ecEfectos legend{padding:0 6px;color:#f0d796;font:700 12px/1 'Cinzel Domo',Georgia,serif}
+.ecChips{display:flex;flex-wrap:wrap;gap:6px}
+.ecChips button{font:600 14px/1 'Cormorant Domo',Georgia,serif;color:#d9cbe8;background:#150f20;border:1px solid #ffffff22;border-radius:999px;padding:7px 11px;cursor:pointer}
+.ecChips button[aria-pressed="true"]{background:#3a2a12;border-color:#f0d796;color:#ffe9b0}
+.ecChips button .serie{color:#9f8fb8;font-size:11px;margin-left:4px}
+.ecFilaEfectos{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:center}
+.ecFilaEfectos label{display:flex;align-items:center;gap:8px;color:#d9cbe8}
+.ecFilaEfectos input{width:160px;accent-color:#e8bb5a}
+.ecFilaEfectos output{min-width:3.2em;color:#ffe08a}
+.ecEfectos:disabled{opacity:.45}
