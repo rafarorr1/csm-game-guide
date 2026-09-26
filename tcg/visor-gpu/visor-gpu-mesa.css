@@ -22,3 +22,4 @@ body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
 .vgPanel figcaption{position:absolute;left:10px;top:10px;padding:5px 10px;border-radius:8px;background:#0d0914cc;color:#cdbfdf;font-size:13px;pointer-events:none}
 .vgPanel figcaption b{color:#f0d796;font:700 12px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.06em}
 .vgEstado{color:#b9aecb;min-height:1.5em}
+[hidden]{display:none!important}

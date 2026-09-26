@@ -17,7 +17,7 @@ void main(){vec4 w=uModel*vec4(aPos,1.);vPos=w.xyz;vNor=uRot*aNor;vUv=aUv;gl_Pos
   const FRAG=`precision highp float;
 uniform sampler2D uColor,uNormal,uOrm,uMascara;
 uniform float uUsaOrm,uUsaMascara,uCanto,uMetal,uRugosidad,uRelieve,uHolo,uDestellos,uLaca,uTiempo,uPulso;
-uniform vec3 uCam,uT,uB,uLuzDir,uLuzCol,uPuntoPos,uPuntoCol,uCantoCol;
+uniform vec3 uCam,uT,uB,uLuzDir,uLuzCol,uPuntoPos,uPuntoCol,uCantoCol,uFlash,uFlashDir;uniform float uTormenta;
 varying vec3 vPos;varying vec3 vNor;varying vec2 vUv;
 vec3 tono(float h){return clamp(abs(mod(h*6.+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.);}
 float azar(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
@@ -29,6 +29,9 @@ vec3 estudio(vec3 r){
   c+=uPuntoCol*.3*pow(max(0.,dot(r,normalize(uPuntoPos-vPos))),14.);
   return c;
 }
+// En una tormenta (uTormenta) el reflejo es el cielo gris, que se enciende con cada relámpago.
+vec3 entorno(vec3 r){vec3 s=estudio(r);if(uTormenta<=0.)return s;
+  vec3 t=mix(vec3(.05,.055,.07),vec3(.2,.22,.27),smoothstep(-.3,.8,r.y))+uFlash*.35*max(0.,.3+r.y);return mix(s,t,uTormenta);}
 vec3 aces(vec3 x){return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),0.,1.);}
 vec3 luz(vec3 N,vec3 V,vec3 L,vec3 col,vec3 albedo,vec3 F0,float rug){
   float d=max(dot(N,L),0.);vec3 H=normalize(L+V);float e=mix(700.,5.,rug);
@@ -44,14 +47,15 @@ void main(){
     if(uUsaOrm>.5){vec3 o=texture2D(uOrm,vUv).rgb;rug=o.g;met=o.b;}
   }
   vec3 V=normalize(uCam-vPos),albedo=base*(1.-met),F0=mix(vec3(.04),base,met);
-  vec3 c=albedo*.24;
+  vec3 c=albedo*.24*(1.-.55*uTormenta);
   c+=luz(N,V,normalize(uLuzDir),uLuzCol,albedo,F0,rug);
   vec3 Lp=uPuntoPos-vPos;float dp=length(Lp);c+=luz(N,V,Lp/dp,uPuntoCol/(1.+dp*dp*.06),albedo,F0,rug);
   float fr=pow(1.-max(dot(N,V),0.),5.);vec3 F=F0+(1.-F0)*fr;
-  c+=estudio(reflect(-V,N))*F*mix(1.,.35,rug);
+  c+=luz(N,V,normalize(uFlashDir+vec3(0.,0.,1e-4)),uFlash,albedo,F0,rug);
+  c+=entorno(reflect(-V,N))*F*mix(1.,.35,rug);
   // Laca: capa lisa sobre lo impreso, con la normal de la cara.
   float fc=.04+.96*pow(1.-max(dot(Ng,V),0.),5.);
-  c+=estudio(reflect(-V,Ng))*fc*uLaca*.6*(1.-met);
+  c+=entorno(reflect(-V,Ng))*fc*uLaca*.6*(1.-met);
   if(uUsaMascara>.5){
     vec4 m=texture2D(uMascara,vUv);
     vec2 inc=vec2(dot(V,uT),dot(V,uB));
@@ -103,7 +107,11 @@ void main(){
     return {frente:cara(GROSOR/2,1,false),dorso:cara(-GROSOR/2,-1,true),canto:new Float32Array(canto)};
   }
 
-  function crear(canvas){
+  /* crear(canvas,{escena}): escena (opcional) dibuja un fondo y lo que va
+     delante de las cartas en el mismo contexto: escena.iniciar(gl,{dos}) →
+     {fondo(e,info), frente(e,info), destruir()}. La prueba de la tormenta la usa;
+     el juego no. e.tormenta (0–1), e.flash ([r,g,b]) y e.flashDir iluminan la carta. */
+  function crear(canvas,opciones={}){
     let gl=null,dos=false;
     const op={alpha:true,antialias:true,premultipliedAlpha:false,powerPreference:'high-performance'};
     try{gl=canvas.getContext('webgl2',op);dos=!!gl;if(!gl)gl=canvas.getContext('webgl',op);}catch(_){gl=null;}
@@ -113,11 +121,14 @@ void main(){
     try{prog=gl.createProgram();gl.attachShader(prog,shader(gl.VERTEX_SHADER,VERT));gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(prog);
       if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));}catch(e){console.warn('Visor 3D sin WebGL:',e.message);return null;}
     gl.useProgram(prog);
-    const u={};for(const n of ['uModel','uVista','uProy','uRot','uColor','uNormal','uOrm','uMascara','uUsaOrm','uUsaMascara','uCanto','uMetal','uRugosidad','uRelieve','uHolo','uDestellos','uLaca','uTiempo','uPulso','uCam','uT','uB','uLuzDir','uLuzCol','uPuntoPos','uPuntoCol','uCantoCol'])u[n]=gl.getUniformLocation(prog,n);
+    const u={};for(const n of ['uModel','uVista','uProy','uRot','uColor','uNormal','uOrm','uMascara','uUsaOrm','uUsaMascara','uCanto','uMetal','uRugosidad','uRelieve','uHolo','uDestellos','uLaca','uTiempo','uPulso','uCam','uT','uB','uLuzDir','uLuzCol','uPuntoPos','uPuntoCol','uCantoCol','uFlash','uFlashDir','uTormenta'])u[n]=gl.getUniformLocation(prog,n);
+    let escena=null;
     const a={pos:gl.getAttribLocation(prog,'aPos'),nor:gl.getAttribLocation(prog,'aNor'),uv:gl.getAttribLocation(prog,'aUv')};
     const geo=geometria(),bufs={};
     for(const [k,d]of Object.entries(geo)){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,d,gl.STATIC_DRAW);bufs[k]={b,n:d.length/8};}
     const aniso=gl.getExtension('EXT_texture_filter_anisotropic');
+    try{escena=opciones.escena?.iniciar?.(gl,{dos})||null;}catch(err){console.warn('Visor 3D: escena no disponible.',err);escena=null;}
+    gl.useProgram(prog);
     function textura(fuente,srgb){
       const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,fuente);
@@ -173,39 +184,49 @@ void main(){
       gl.enable(gl.DEPTH_TEST);gl.disable(gl.CULL_FACE);gl.useProgram(prog);
       // Cámara a la distancia en que la carta mide lo mismo que en el CSS.
       const dist=ALTO*h/(altoCarta*2*Math.tan(FOV/2)),cam=[0,0,dist];
-      gl.uniformMatrix4fv(u.uProy,false,mat.persp(FOV,w/h,.1,dist*4));
-      gl.uniformMatrix4fv(u.uVista,false,mat.mover(0,0,-dist));
+      const proy=mat.persp(FOV,w/h,.1,dist*4),vista=mat.mover(0,0,-dist);
+      gl.uniformMatrix4fv(u.uProy,false,proy);
+      gl.uniformMatrix4fv(u.uVista,false,vista);
       gl.uniform3fv(u.uCam,cam);
-      gl.uniform3fv(u.uLuzDir,[-.35,.55,.75]);gl.uniform3fv(u.uLuzCol,[.95,.9,.84]);
+      const tor=e.tormenta||0,k=1-.6*tor;
+      gl.uniform3fv(u.uLuzDir,[-.35,.55,.75]);gl.uniform3fv(u.uLuzCol,[.95*k,.9*k,.84*k]);
+      gl.uniform1f(u.uTormenta,tor);gl.uniform3fv(u.uFlash,e.flash||[0,0,0]);gl.uniform3fv(u.uFlashDir,e.flashDir||[0,1,0]);
       gl.uniform3fv(u.uPuntoPos,[1.7+e.luzX*2.2,1.7-e.luzY*1.8,2.6]);gl.uniform3fv(u.uPuntoCol,[2.2+e.pulso*4,2.+e.pulso*4,1.75+e.pulso*3]);
       gl.uniform1f(u.uTiempo,e.tiempo);gl.uniform1f(u.uPulso,e.pulso);
+      const info={vista,proy,dist,w,h,px:ALTO/altoCarta,fov:FOV,anchoPx:canvas.width,altoPx:canvas.height};
+      if(escena){escena.fondo(e,info);restaurar();}
+      return info;
     }
+    // Lo que la escena dibuja delante (con la profundidad de las cartas) y el estado que espera el visor.
+    function cerrar(e,info){if(escena){escena.frente(e,info);restaurar();}}
+    function restaurar(){gl.useProgram(prog);gl.enable(gl.DEPTH_TEST);gl.depthMask(true);gl.disable(gl.BLEND);gl.disable(gl.CULL_FACE);}
     function dibujar(e){
       if(!elegir(0)||!dorso)return false;
-      preparar(e);
+      const info=preparar(e);
       const px=ALTO/altoCarta;
       const base=mat.mult(mat.mult(mat.mult(mat.mult(mat.mover(0,-e.y*px,0),mat.escala(e.s)),mat.rx(-e.rx)),mat.ry(e.ry)),mat.rz(-e.rz));
       for(let i=Math.min(4,e.pila||0);i>=1;i--){
         const m=mat.mult(base,mat.mult(mat.mover(i*.045,-i*.035,-i*(GROSOR+.03)),mat.rz((i%2?1:-1)*(.012+i*.008))));
         carta(m,false);
       }
-      carta(base,true);
+      carta(base,true);cerrar(e,info);
       return true;
     }
     // Varias cartas en la misma luz: [{ranura,x,y,z,rx,ry,rz,s}], x/y en píxeles
     // desde el centro (y hacia abajo), z en unidades de carta hacia la cámara.
     function dibujarVarias(e,lista){
       if(!dorso)return false;
-      preparar(e);
+      const info=preparar(e);
       const px=ALTO/altoCarta;
       for(const c of [...lista].sort((a,b)=>(a.z||0)-(b.z||0))){
         if(!elegir(c.ranura||0))continue;
         const m=mat.mult(mat.mult(mat.mult(mat.mult(mat.mover((c.x||0)*px,-(c.y||0)*px,c.z||0),mat.escala(c.s??1)),mat.rx(-(c.rx||0))),mat.ry(c.ry||0)),mat.rz(-(c.rz||0)));
         carta(m,true);
       }
+      cerrar(e,info);
       return true;
     }
-    function destruir(){for(const f of frentes)if(f)liberar(f.tex);liberar(dorso);for(const b of Object.values(bufs))gl.deleteBuffer(b.b);gl.deleteProgram(prog);gl.getExtension('WEBGL_lose_context')?.loseContext();}
+    function destruir(){escena?.destruir?.();for(const f of frentes)if(f)liberar(f.tex);liberar(dorso);for(const b of Object.values(bufs))gl.deleteBuffer(b.b);gl.deleteProgram(prog);gl.getExtension('WEBGL_lose_context')?.loseContext();}
     return {cargarFrente,cargarDorso,medir,dibujar,dibujarVarias,destruir,listo:()=>!!(frentes[0]&&dorso)};
   }
   window.CAOZ_VISOR3D_GL=Object.freeze({crear});

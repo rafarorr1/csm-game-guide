@@ -6,22 +6,24 @@
     "art/magodomo-foil-v1.webp": "55d3f0cd477e92b5835c5fac0900a8d97e39189bc372140ee2339fc8f4794f5a",
     "art/magodomo.webp": "b823cd04dc13a98a355db8e9fbedce31e8185baa945d65f03238ab343dd885a6",
     "generado/datos.js": "6f6f8e3188a6569c53c6fc875ca00412e4567235f6e6b65bb5fdd92acef21304",
-    "index.html": "5b159a35603c577eb7169969ab592b2a8f9fc59d1632cb43b41957f2e68aa1b0",
+    "index.html": "fbca047d28b71f2ec65816821186ca511cef5feee6fb1475085e8c04e12a489b",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "juego/visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
-    "juego/visor-3d-gpu.js": "2b27262ce2a886890589fc760023567fcf1d6b11ae3d673b71ac6dc095dcac75",
-    "procedencia.json": "1be383d5ca05523eb7b6d250d8211c80081f1600475c0408011b1c27b30ae9b9",
-    "visor-gpu-mesa.css": "477c62b5512ef19cfee5a9f730fdef08642e78aa2e8da944189964c0dfd160b6",
-    "visor-gpu-mesa.js": "c0b9cfacb721e276b2c0fd5ad3d10a71f9c9c42f01af5ef7fdab9ba281c1e5eb"
+    "juego/tormenta-gl.js": "08052f87ec4a5abdefcc961fd55b592879c6041e57a621ffb54e4f3ad264c4ad",
+    "juego/tormenta-gpu.js": "3f86c431ff2ada147424bb417cdbd952d230bdde1009cd5d8fb34fdc459d6522",
+    "juego/visor-3d-gl.js": "44fd5a68bbb3e676d69d562792bf10948444353589fd69422c3ecf790a19a4cc",
+    "juego/visor-3d-gpu.js": "8c2f97ee3349ba024ba8ee5552575704da3cf32d275dc13cfbec929f8c254f34",
+    "procedencia.json": "5bf87359c00612f5659c2b328bf69e67351eb40791afd3b1288a6d6cf01f16dd",
+    "visor-gpu-mesa.css": "e7f1da5d904b0f2fded56b45b4a0902bf9682895e21c8372f6730f578e27a160",
+    "visor-gpu-mesa.js": "19b730556bc06b8ecfc59567eeea12607d7451d4882e7440cf15b51f2642a549"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "5e00913d84d21e5d105a1820ac8f771532eab0ce"
+    "sha": "529c4e2f19f225830ce93f00fa328f358db00910"
   },
   "seccion": "visor-gpu",
   "version": 1

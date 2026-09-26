@@ -11,7 +11,7 @@
   const EDICION={normal:{holo:.12,destellos:.25,laca:.55},foil:{holo:.7,destellos:.8,laca:.7},dorado:{holo:.55,destellos:.9,laca:.75}};
 
   const WGSL=`
-struct U{model:mat4x4f,vista:mat4x4f,proy:mat4x4f,rot:mat4x4f,cam:vec4f,T:vec4f,B:vec4f,luzDir:vec4f,luzCol:vec4f,puntoPos:vec4f,puntoCol:vec4f,cantoCol:vec4f,p0:vec4f,p1:vec4f,p2:vec4f};
+struct U{model:mat4x4f,vista:mat4x4f,proy:mat4x4f,rot:mat4x4f,cam:vec4f,T:vec4f,B:vec4f,luzDir:vec4f,luzCol:vec4f,puntoPos:vec4f,puntoCol:vec4f,cantoCol:vec4f,p0:vec4f,p1:vec4f,p2:vec4f,flash:vec4f,flashDir:vec4f};
 @group(0) @binding(0) var<uniform> u:U;
 @group(1) @binding(0) var sm:sampler;
 @group(1) @binding(1) var tColor:texture_2d<f32>;
@@ -30,6 +30,9 @@ fn estudio(r:vec3f,wpos:vec3f)->vec3f{
   c+=vec3f(.9,.72,.5)*.45*pow(max(0.,dot(r,normalize(vec3f(0.,-.9,.35)))),3.);
   c+=u.puntoCol.xyz*.3*pow(max(0.,dot(r,normalize(u.puntoPos.xyz-wpos))),14.);
   return c;}
+// En una tormenta (p2.w) el reflejo es el cielo gris, que se enciende con cada relámpago.
+fn entorno(r:vec3f,wpos:vec3f)->vec3f{let s=estudio(r,wpos);if(u.p2.w<=0.){return s;}
+  let t=mix(vec3f(.05,.055,.07),vec3f(.2,.22,.27),smoothstep(-.3,.8,r.y))+u.flash.xyz*.35*max(0.,.3+r.y);return mix(s,t,u.p2.w);}
 fn aces(x:vec3f)->vec3f{return clamp((x*(2.51*x+.03))/(x*(2.43*x+.59)+.14),vec3f(0.),vec3f(1.));}
 fn luz(N:vec3f,V:vec3f,L:vec3f,col:vec3f,albedo:vec3f,F0:vec3f,rug:f32)->vec3f{
   let d=max(dot(N,L),0.);let H=normalize(L+V);let e=mix(700.,5.,rug);
@@ -46,13 +49,14 @@ fn luz(N:vec3f,V:vec3f,L:vec3f,col:vec3f,albedo:vec3f,F0:vec3f,rug:f32)->vec3f{
     if(u.p0.x>.5){rug=to.g;met=to.b;}
   }
   let V=normalize(u.cam.xyz-i.wpos);let albedo=base*(1.-met);let F0=mix(vec3f(.04),base,met);
-  var c=albedo*.24;
+  var c=albedo*.24*(1.-.55*u.p2.w);
   c+=luz(N,V,normalize(u.luzDir.xyz),u.luzCol.xyz,albedo,F0,rug);
   let Lp=u.puntoPos.xyz-i.wpos;let dp=length(Lp);c+=luz(N,V,Lp/dp,u.puntoCol.xyz/(1.+dp*dp*.06),albedo,F0,rug);
   let fr=pow(1.-max(dot(N,V),0.),5.);let F=F0+(1.-F0)*fr;
-  c+=estudio(reflect(-V,N),i.wpos)*F*mix(1.,.35,rug);
+  c+=luz(N,V,normalize(u.flashDir.xyz+vec3f(0.,0.,1e-4)),u.flash.xyz,albedo,F0,rug);
+  c+=entorno(reflect(-V,N),i.wpos)*F*mix(1.,.35,rug);
   let fc=.04+.96*pow(1.-max(dot(Ng,V),0.),5.);
-  c+=estudio(reflect(-V,Ng),i.wpos)*fc*u.p2.x*.6*(1.-met);
+  c+=entorno(reflect(-V,Ng),i.wpos)*fc*u.p2.x*.6*(1.-met);
   if(u.p0.y>.5){
     let inc=vec2f(dot(V,u.T.xyz),dot(V,u.B.xyz));
     let lum=dot(base,vec3f(.3,.59,.11));
@@ -105,7 +109,10 @@ struct VO{@builtin(position) p:vec4f,@location(0) uv:vec2f};
     return {frente:cara(GROSOR/2,1,false),dorso:cara(-GROSOR/2,-1,true),canto:new Float32Array(canto)};
   }
 
-  async function crear(canvas){
+  /* crear(canvas,{escena}): escena (opcional) dibuja un fondo y lo que va
+     delante en el mismo pase: escena.iniciar(dev,{formato,muestras}) →
+     {actualizar(e,info), fondo(pase,e,info), frente(pase,e,info), destruir()}. */
+  async function crear(canvas,opciones={}){
     if(!navigator.gpu)return null;
     let adaptador,dispositivo;
     try{adaptador=await navigator.gpu.requestAdapter({powerPreference:'high-performance'});if(!adaptador)return null;dispositivo=await adaptador.requestDevice();}catch(_){return null;}
@@ -120,7 +127,7 @@ struct VO{@builtin(position) p:vec4f,@location(0) uv:vec2f};
     const geo=geometria(),bufs={};
     for(const [k,d]of Object.entries(geo)){const b=dev.createBuffer({size:d.byteLength,usage:GPUBufferUsage.VERTEX|GPUBufferUsage.COPY_DST});dev.queue.writeBuffer(b,0,d);bufs[k]={b,n:d.length/8};}
     // Uniformes: una ranura de 512 bytes por dibujo (desplazamiento dinámico).
-    const RANURA=512,MAXDIB=18,TAM=108;
+    const RANURA=512,MAXDIB=18,TAM=116;
     const ubuf=dev.createBuffer({size:RANURA*MAXDIB,usage:GPUBufferUsage.UNIFORM|GPUBufferUsage.COPY_DST});
     const ulayout=dev.createBindGroupLayout({entries:[{binding:0,visibility:GPUShaderStage.VERTEX|GPUShaderStage.FRAGMENT,buffer:{type:'uniform',hasDynamicOffset:true,minBindingSize:TAM*4}}]});
     const pipelineDin=dev.createRenderPipeline({layout:dev.createPipelineLayout({bindGroupLayouts:[ulayout,dev.createBindGroupLayout({entries:[
@@ -128,6 +135,7 @@ struct VO{@builtin(position) p:vec4f,@location(0) uv:vec2f};
       vertex:{module:modulo,entryPoint:'vs',buffers:[{arrayStride:32,attributes:[{shaderLocation:0,offset:0,format:'float32x3'},{shaderLocation:1,offset:12,format:'float32x3'},{shaderLocation:2,offset:24,format:'float32x2'}]}]},
       fragment:{module:modulo,entryPoint:'fs',targets:[{format:formato}]},
       primitive:{topology:'triangle-list',cullMode:'none'},depthStencil:{format:'depth24plus',depthWriteEnabled:true,depthCompare:'less'},multisample:{count:MUESTRAS}});
+    let escena=null;try{escena=opciones.escena?.iniciar?.(dev,{formato,muestras:MUESTRAS})||null;}catch(err){console.warn('Visor WebGPU: escena no disponible.',err);}
     const ugrupo=dev.createBindGroup({layout:ulayout,entries:[{binding:0,resource:{buffer:ubuf,size:TAM*4}}]});
     const datos=new Float32Array(RANURA/4*MAXDIB);
 
@@ -176,13 +184,14 @@ struct VO{@builtin(position) p:vec4f,@location(0) uv:vec2f};
       const o=i*RANURA/4,d=datos;
       d.set(model,o);d.set(glob.vista,o+16);d.set(glob.proy,o+32);d.set(model,o+48);
       d.set([...glob.cam,0],o+64);d.set([...cfg.T,0],o+68);d.set([...cfg.B,0],o+72);
-      d.set([-.35,.55,.75,0],o+76);d.set([.95,.9,.84,0],o+80);d.set([...glob.puntoPos,0],o+84);d.set([...glob.puntoCol,0],o+88);d.set([...canto,0],o+92);
-      d.set([cfg.usaOrm,cfg.usaMascara,cfg.canto,cfg.metal],o+96);d.set([cfg.rugosidad,cfg.relieve,cfg.holo,cfg.destellos],o+100);d.set([cfg.laca,glob.tiempo,glob.pulso,0],o+104);
+      const k=1-.6*glob.tormenta;d.set([-.35,.55,.75,0],o+76);d.set([.95*k,.9*k,.84*k,0],o+80);d.set([...glob.puntoPos,0],o+84);d.set([...glob.puntoCol,0],o+88);d.set([...canto,0],o+92);
+      d.set([cfg.usaOrm,cfg.usaMascara,cfg.canto,cfg.metal],o+96);d.set([cfg.rugosidad,cfg.relieve,cfg.holo,cfg.destellos],o+100);d.set([cfg.laca,glob.tiempo,glob.pulso,glob.tormenta],o+104);d.set([...glob.flash,0],o+108);d.set([...glob.flashDir,0],o+112);
     }
     function dibujar(e,destino){
       if(!frente||!dorso||!objetivos||perdido)return false;
       const dist=ALTO*h/(altoCarta*2*Math.tan(FOV/2));
-      const glob={vista:mat.mover(0,0,-dist),proy:mat.persp(FOV,w/h,.1,dist*4),cam:[0,0,dist],puntoPos:[1.7+e.luzX*2.2,1.7-e.luzY*1.8,2.6],puntoCol:[2.2+e.pulso*4,2.+e.pulso*4,1.75+e.pulso*3],tiempo:e.tiempo,pulso:e.pulso};
+      const glob={vista:mat.mover(0,0,-dist),proy:mat.persp(FOV,w/h,.1,dist*4),cam:[0,0,dist],puntoPos:[1.7+e.luzX*2.2,1.7-e.luzY*1.8,2.6],puntoCol:[2.2+e.pulso*4,2.+e.pulso*4,1.75+e.pulso*3],tiempo:e.tiempo,pulso:e.pulso,tormenta:e.tormenta||0,flash:e.flash||[0,0,0],flashDir:e.flashDir||[0,1,0]};
+      const info={vista:glob.vista,proy:glob.proy,dist,w,h,px:ALTO/altoCarta,fov:FOV,anchoPx:canvas.width,altoPx:canvas.height};escena?.actualizar(e,info);
       const px=ALTO/altoCarta,ed=EDICION[edicion]||EDICION.normal;
       const baseM=mat.mult(mat.mult(mat.mult(mat.mult(mat.mover(0,-e.y*px,0),mat.escala(e.s)),mat.rx(-e.rx)),mat.ry(e.ry)),mat.rz(-e.rz));
       const cartas=[];for(let i=Math.min(4,e.pila||0);i>=1;i--)cartas.push([mat.mult(baseM,mat.mult(mat.mover(i*.045,-i*.035,-i*(GROSOR+.03)),mat.rz((i%2?1:-1)*(.012+i*.008)))),false]);
@@ -197,8 +206,10 @@ struct VO{@builtin(position) p:vec4f,@location(0) uv:vec2f};
       const enc=dev.createCommandEncoder();
       const pase=enc.beginRenderPass({colorAttachments:[{view:objetivos.color.createView(),resolveTarget:(destino||ctx.getCurrentTexture()).createView(),loadOp:'clear',storeOp:'discard',clearValue:[0,0,0,0]}],
         depthStencilAttachment:{view:objetivos.prof.createView(),depthLoadOp:'clear',depthStoreOp:'discard',depthClearValue:1}});
+      escena?.fondo(pase,e,info);
       pase.setPipeline(pipelineDin);
       for(const [r,g,b]of dibujos){pase.setBindGroup(0,ugrupo,[r*RANURA]);pase.setBindGroup(1,g);pase.setVertexBuffer(0,b.b);pase.draw(b.n);}
+      escena?.frente(pase,e,info);
       pase.end();
       if(destino)enc.copyTextureToBuffer({texture:destino},{buffer:destino.lectura,bytesPerRow:destino.fila},[destino.width,destino.height]);
       dev.queue.submit([enc.finish()]);return true;
@@ -219,7 +230,7 @@ struct VO{@builtin(position) p:vec4f,@location(0) uv:vec2f};
         t.lectura.unmap();return {ancho:W,alto:H,datos};
       }finally{t.lectura.destroy();t.destroy();}
     }
-    function destruir(){liberar(frente);liberar(dorso);tLisa?.destroy();tNegra?.destroy();objetivos?.color.destroy();objetivos?.prof.destroy();for(const b of Object.values(bufs))b.b.destroy();ubuf.destroy();try{ctx.unconfigure();}catch(_){}dev.destroy();}
+    function destruir(){escena?.destruir?.();liberar(frente);liberar(dorso);tLisa?.destroy();tNegra?.destroy();objetivos?.color.destroy();objetivos?.prof.destroy();for(const b of Object.values(bufs))b.b.destroy();ubuf.destroy();try{ctx.unconfigure();}catch(_){}dev.destroy();}
     return {cargarFrente,cargarDorso,medir,dibujar,capturar,destruir,listo:()=>!!(frente&&dorso),adaptador:[info.vendor,info.architecture,info.description].filter(Boolean).join(' · ')||'WebGPU',muestras:MUESTRAS};
   }
   window.CAOZ_VISOR3D_GPU=Object.freeze({crear});
