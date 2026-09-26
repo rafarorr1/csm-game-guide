@@ -20,17 +20,17 @@
     "index.html": "231bfc89e21dbc6f0ed31b7a1af2483cc32a6cbf9dd0cd614f1186812793717a",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
-    "juego/cortinilla.js": "45f3815cfc4d95826b8b17888add219d4f35949b8c9cf941a3b5485938e8959b",
+    "juego/cortinilla.js": "75106b5ba42b6e66bdb4c598e24e648a7b50e50ac18ad96e845aa7160500268f",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "juego/visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
-    "procedencia.json": "948ff5af5dad53fa21efa9006cce145574edbae09a934069e4615f292613e3bc"
+    "procedencia.json": "b3086fd4e686e548e44cb1438ccee0b5a46ecb3a07845077190c48ab67f0e4ac"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "16933cdc5a6f129d4c5a944cb4b35f304d7bfaaa"
+    "sha": "1fce0c9551d8ce2eb0a97298b728bc7cbb3f85e8"
   },
   "seccion": "cortinilla",
   "version": 1
