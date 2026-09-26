@@ -84,6 +84,10 @@
     "sobres": {
       "fuente": "cca6f477989027167e4caf5c39b72a1dcbc9a36a",
       "ruta": "tcg/sobres"
+    },
+    "visor-gpu": {
+      "fuente": "5e00913d84d21e5d105a1820ac8f771532eab0ce",
+      "ruta": "tcg/visor-gpu"
     }
   },
   "version": 1

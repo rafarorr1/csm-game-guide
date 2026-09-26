@@ -1,0 +1,28 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "art/logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
+    "art/magodomo-dorado-v1.webp": "86bc6a3a666558f4fb1f5693ec947f323966ec9f32384b8c1c615de0334595c9",
+    "art/magodomo-foil-v1.webp": "55d3f0cd477e92b5835c5fac0900a8d97e39189bc372140ee2339fc8f4794f5a",
+    "art/magodomo.webp": "b823cd04dc13a98a355db8e9fbedce31e8185baa945d65f03238ab343dd885a6",
+    "generado/datos.js": "6f6f8e3188a6569c53c6fc875ca00412e4567235f6e6b65bb5fdd92acef21304",
+    "index.html": "5b159a35603c577eb7169969ab592b2a8f9fc59d1632cb43b41957f2e68aa1b0",
+    "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
+    "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "juego/visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
+    "juego/visor-3d-gpu.js": "2b27262ce2a886890589fc760023567fcf1d6b11ae3d673b71ac6dc095dcac75",
+    "procedencia.json": "1be383d5ca05523eb7b6d250d8211c80081f1600475c0408011b1c27b30ae9b9",
+    "visor-gpu-mesa.css": "477c62b5512ef19cfee5a9f730fdef08642e78aa2e8da944189964c0dfd160b6",
+    "visor-gpu-mesa.js": "c0b9cfacb721e276b2c0fd5ad3d10a71f9c9c42f01af5ef7fdab9ba281c1e5eb"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/visor-3d-coleccion",
+    "sha": "5e00913d84d21e5d105a1820ac8f771532eab0ce"
+  },
+  "seccion": "visor-gpu",
+  "version": 1
+}
