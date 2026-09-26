@@ -1,0 +1,49 @@
+/* Laboratorio del espacio «Campos de batalla» del Estudio. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
+.ecShell{width:min(1240px,100%);margin:auto;display:flex;flex-direction:column;gap:14px}
+.ecEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.ecCabecera h1{color:#f0d796;font:700 clamp(26px,4vw,40px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.ecCabecera p:last-child{color:#c9bdda;font-size:1.08em;max-width:900px}
+.ecCuerpo{display:grid;grid-template-columns:250px minmax(0,1fr);gap:18px;align-items:start}
+@media (max-width:820px){.ecCuerpo{grid-template-columns:1fr}.ecLista{flex-direction:row;overflow-x:auto}.ecFilaLugar{min-width:190px}}
+.ecLista{display:flex;flex-direction:column;gap:8px}
+.ecFilaLugar{display:flex;gap:10px;align-items:center;text-align:left;padding:8px;border-radius:12px;border:1px solid #e7bb5533;background:#120d1b;color:inherit;font:inherit;cursor:pointer}
+.ecFilaLugar[aria-pressed="true"]{border-color:#f0d796;background:#221832;box-shadow:0 0 0 1px #f0d79655}
+.ecFilaLugar img{width:74px;height:44px;object-fit:cover;border-radius:6px;flex:none;background:#000}
+.ecFilaLugar strong{display:block;font:700 13px/1.2 'Cinzel Domo',Georgia,serif;color:#f1dcae}
+.ecFilaLugar small{color:#b39fcb;font-size:12.5px}
+.ecFilaLugar small[data-propio]{color:#9fe0a0}
+.ecEditor{display:flex;flex-direction:column;gap:12px;min-width:0}
+.ecEncabezado{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+.ecGrupo{color:#b8a3cc;font:700 10px/1 system-ui,sans-serif;letter-spacing:2px}
+.ecEncabezado h2{color:#f0d796;font:700 clamp(20px,3vw,28px)/1.15 'Cinzel Domo',Georgia,serif}
+.ecOrigen{color:#b9aecb;font-size:.98em}
+.ecDispositivo{display:flex;border:1px solid #e7bb5555;border-radius:10px;overflow:hidden}
+.ecDispositivo button{font:700 12px/1 'Cinzel Domo',Georgia,serif;color:#e0cfa6;background:#150f20;border:0;padding:10px 14px;cursor:pointer}
+.ecDispositivo button[aria-pressed="true"]{background:#e8bb5a;color:#2a1706}
+.ecMarco{display:flex;justify-content:center;background:#050308;border-radius:16px;padding:10px;border:1px solid #ffffff10}
+.ecMesa{position:relative;isolation:isolate;overflow:hidden;border-radius:12px;width:100%;aspect-ratio:16/10;display:flex;flex-direction:column;justify-content:space-around;padding:3% 4%;background:#0b0812}
+.ecMarco[data-movil] .ecMesa{width:min(340px,100%);aspect-ratio:9/17}
+.ecMesa>:not(.clEscena):not(.clEfectos){position:relative;z-index:2}
+.ecFila{display:flex;justify-content:center;gap:3%}
+.ecFila canvas{width:clamp(44px,11%,120px);aspect-ratio:5/7;height:auto;border-radius:5%/3.5%;box-shadow:0 10px 20px #000b}
+.ecMarco[data-movil] .ecFila canvas{width:27%}
+.ecLinea{height:2px;margin:0 6%;background:linear-gradient(90deg,transparent,#e7bb5566,transparent)}
+.ecControles{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.ecBoton{font:700 13px/1 'Cinzel Domo',Georgia,serif;letter-spacing:.04em;color:#f1dcae;padding:11px 15px;border-radius:10px;cursor:pointer;border:1px solid #e7bb5566;background:linear-gradient(180deg,#261c38,#110c19)}
+.ecBoton.oro{color:#2a1706;border-color:#fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18)}
+.ecBoton:disabled{opacity:.45;cursor:default}
+.ecSubir{position:relative;overflow:hidden}
+.ecSubir input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.ecArchivoNombre{color:#b39fcb;font-size:.98em}
+.ecEncuadre{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center;border:1px solid #e7bb5533;border-radius:12px;padding:10px 14px}
+.ecEncuadre legend{padding:0 6px;color:#f0d796;font:700 12px/1 'Cinzel Domo',Georgia,serif}
+.ecEncuadre label{display:flex;align-items:center;gap:8px;color:#d9cbe8}
+.ecEncuadre input{width:140px;accent-color:#e8bb5a}
+.ecEncuadre .ecOpcion input{width:auto}
+.ecEncuadre output{min-width:3.2em;color:#ffe08a;font-variant-numeric:tabular-nums}
+.ecEncuadre:disabled{opacity:.45}
+.ecEstado{color:#b9aecb;min-height:1.5em}
+.ecEstado.error{color:#ff9a8a}

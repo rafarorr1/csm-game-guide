@@ -21,6 +21,10 @@
       "fuente": "ebe638e1d507c902dd2889b96de1b32260cb7455",
       "ruta": "tcg/epilogo-gero"
     },
+    "estudio-campos": {
+      "fuente": "8fa8a3657dda31af6a56d45fd462095eab6c269a",
+      "ruta": "tcg/estudio-campos"
+    },
     "estudio-nombres": {
       "fuente": "cc67476f8ae22a7827f5376489bb4cad2ef3dfa7",
       "ruta": "tcg/estudio-nombres"

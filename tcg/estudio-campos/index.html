@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Estudio · Campos de batalla · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./estudio-campos.css">
+<script src="./generado/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./juego/campo-lugar.js"></script>
+<script src="./estudio-campos.js" defer></script>
+</head>
+<body>
+<main class="ecShell" aria-labelledby="ecTitulo">
+  <header class="ecCabecera">
+    <p class="ecEtiqueta">ESTUDIO · PRUEBA SIN GUARDADO REAL</p>
+    <h1 id="ecTitulo">Campos de batalla</h1>
+    <p>Sube tu propio diseño de fondo para cada Lugar, encuádralo y míralo en la mesa, en escritorio y en móvil. Con un fondo propio el campo lo muestra tal cual, sin el suelo pintado; las partículas y la luz del Lugar se pueden dejar encima o quitar, y sus reglas se siguen viendo. En esta prueba, «Guardar» sólo lo conserva en esta página.</p>
+  </header>
+  <div class="ecCuerpo">
+    <nav class="ecLista" id="ecLista" aria-label="Lugares"></nav>
+    <section class="ecEditor" aria-labelledby="ecNombre">
+      <div class="ecEncabezado">
+        <div><p class="ecGrupo" id="ecGrupo">TERRENO</p><h2 id="ecNombre">—</h2><p class="ecOrigen" id="ecOrigen"></p></div>
+        <div class="ecDispositivo" role="group" aria-label="Vista"><button type="button" id="ecEscritorio" aria-pressed="true">Escritorio</button><button type="button" id="ecMovil" aria-pressed="false">Móvil</button></div>
+      </div>
+      <div class="ecMarco" id="ecMarco">
+        <div class="ecMesa" id="ecMesa" aria-label="Vista previa del campo">
+          <div class="ecFila" id="ecRival"></div>
+          <div class="ecLinea" id="ecLinea" aria-hidden="true"></div>
+          <div class="ecFila" id="ecPropia"></div>
+        </div>
+      </div>
+      <div class="ecControles">
+        <label class="ecBoton oro ecSubir">Subir diseño propio<input type="file" id="ecArchivo" accept="image/jpeg,image/png,image/webp"></label>
+        <span class="ecArchivoNombre" id="ecArchivoNombre">Recomendado: horizontal, 1920×1080 o mayor. JPEG, PNG o WebP.</span>
+      </div>
+      <fieldset class="ecEncuadre" id="ecEncuadre">
+        <legend>Encuadre del fondo</legend>
+        <label>Horizontal <input type="range" id="ecX" min="0" max="100" value="50"><output id="ecVX">50%</output></label>
+        <label>Vertical <input type="range" id="ecY" min="0" max="100" value="50"><output id="ecVY">50%</output></label>
+        <label>Zoom <input type="range" id="ecZ" min="100" max="300" value="100"><output id="ecVZ">100%</output></label>
+        <button type="button" class="ecBoton" id="ecCentrar">Centrar</button>
+        <label class="ecOpcion"><input type="checkbox" id="ecEfectos" checked> Efectos del Lugar encima (partículas, luz)</label>
+      </fieldset>
+      <div class="ecControles">
+        <button type="button" class="ecBoton oro" id="ecGuardar">Guardar fondo</button>
+        <button type="button" class="ecBoton" id="ecDescartar">Descartar cambios</button>
+        <button type="button" class="ecBoton" id="ecRestaurar">Restaurar original</button>
+        <button type="button" class="ecBoton" id="ecPortal">Ver cómo entra</button>
+      </div>
+      <p class="ecEstado" id="ecEstado" role="status" aria-live="polite">Preparando…</p>
+    </section>
+  </div>
+</main>
+</body>
+</html>
