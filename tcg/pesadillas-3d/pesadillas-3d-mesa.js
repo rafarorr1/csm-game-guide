@@ -9,6 +9,7 @@
   const PRUEBAS={
     isometrico:{carta:'editorcosecha',mundo:()=>window.CAOZ_COSECHA_3D,apagar:'CAOZ_COSECHA_3D_APAGADA',bot:botCosecha},
     laseres:{carta:'editorcorte',mundo:()=>window.CAOZ_CORTE_3D,apagar:'CAOZ_CORTE_3D_APAGADA',bot:(m,mem)=>API.guiasPrueba.laseres(m,mem)},
+    fps:{carta:'editorcuadro',mundo:()=>window.CAOZ_CUADRO_3D,apagar:'CAOZ_CUADRO_3D_APAGADA',bot:botCuadro},
   };
   if(q.get('captura')==='1')document.documentElement.dataset.captura='';
   let tipo=PRUEBAS[q.get('prueba')]?q.get('prueba'):'isometrico';
@@ -22,6 +23,16 @@
     for(const l of m.losas){const dx=p.x-l.x,dy=p.y-l.y;if(Math.max(Math.abs(dx),Math.abs(dy))<1.9){const d=Math.hypot(dx,dy)+.01;fx+=dx/d*3;fy+=dy/d*3;}}
     const n=Math.hypot(fx,fy);return {mx:n>.12?fx/n:0,my:n>.12?fy/n:0,accion:true};
   }
+  // El bot de Fuera de cuadro: gira hacia el espectro visible más cercano, dispara cuando lo tiene
+  // delante y se aparta si se le echa encima; si no hay ninguno, vuelve hacia el centro del archivo.
+  function botCuadro(m){
+    const p=m.jugador;let blanco=null,d=1e9;
+    for(const u of m.enemigos){if(u.aparece>0)continue;const dx=u.x-p.x,dy=u.y-p.y,dd=Math.hypot(dx,dy);if(dd<d&&M.raycast(m,p.x,p.y,dx/dd,dy/dd,dd).d>=dd-.25){d=dd;blanco=u;}}
+    const objetivo=blanco?Math.atan2(blanco.y-p.y,blanco.x-p.x):Math.atan2(8-p.y,8-p.x),dif=Math.atan2(Math.sin(objetivo-p.a),Math.cos(objetivo-p.a));
+    const lejos=Math.hypot(8-p.x,8-p.y);
+    return {mx:blanco&&d<3?Math.sign(Math.sin(m.t*.7))||1:0,my:blanco?(d<2.6?1:0):(lejos>2.5?-1:0),giro:lim(dif*7,-4,4),accion:!!blanco&&Math.abs(dif)<.07};
+  }
+  const lim=(x,a,b)=>Math.max(a,Math.min(b,x));
   const reducido=()=>matchMedia('(prefers-reduced-motion:reduce)').matches;
   // El bot de revisión no muere (vidas de sobra en su propia copia del modelo) para ver los 20 s.
   function nuevo(){const semilla=Math.max(1,+$('semilla').value||7);memBot={};s={modelo:M.crear({tipo,semilla}),tipo,ancho:1,alto:1,reducido:reducido(),andando:0,id:semilla};s.modelo.vidas=99;}
@@ -32,7 +43,7 @@
     g.save();if(s.modelo.impacto>0){const f=s.modelo.impacto*4;g.translate(Math.sin(s.modelo.t*79)*f,Math.cos(s.modelo.t*97)*f);}API.pintores[tipo](s,g);g.restore();
     // La viñeta que pone la prueba encima (roja al recibir daño).
     const v=g.createRadialGradient(s.ancho*.5,s.alto*.45,Math.min(s.ancho,s.alto)*.24,s.ancho*.5,s.alto*.45,Math.max(s.ancho,s.alto)*.72);v.addColorStop(0,'transparent');v.addColorStop(1,s.modelo.impacto>0?'#a71f47a6':'#030408bb');g.fillStyle=v;g.fillRect(0,0,s.ancho,s.alto);
-    const m=s.modelo;$('hud').textContent=m.t.toFixed(1)+' / '+m.duracion+' s · golpes recibidos '+(99-m.vidas)+(tipo==='isometrico'?' · '+m.enemigos.length+' fantasmas · '+m.muertes+' derrotados':' · '+m.rayos.filter(r=>r.edad>=0).length+' rayos');
+    const m=s.modelo;$('hud').textContent=m.t.toFixed(1)+' / '+m.duracion+' s · golpes recibidos '+(99-m.vidas)+(tipo==='laseres'?' · '+m.rayos.filter(r=>r.edad>=0).length+' rayos':' · '+m.enemigos.length+(tipo==='fps'?' espectros · ':' fantasmas · ')+m.muertes+' derrotados');
   }
   function cuadro(ahora){
     if(!corriendo)return;const dt=Math.min(.05,(ahora-antes)/1000||0)*($('lento').checked?.3:1);antes=ahora;
@@ -60,6 +71,8 @@
     proyectar:(x,y)=>API.sueloDesdePantalla[tipo](s,x,y),
     pantalla:(x,y)=>PRUEBAS[tipo].mundo()?.pantallaDesdeSuelo(x,y),
     mundo:()=>{const w=PRUEBAS[tipo].mundo();return w&&{activo:w.activo,ancho:w.anchoPintado};},
+    // Primera persona: dónde cae en pantalla un punto del suelo a d unidades delante del jugador.
+    delante(d=3){const p=s.modelo.jugador,x=p.x+Math.cos(p.a)*d,y=p.y+Math.sin(p.a)*d,r=esc.getBoundingClientRect();return {punto:PRUEBAS[tipo].mundo()?.pantallaDesdeSuelo(x,y),ancho:r.width,alto:r.height};},
     // Pone al héroe (de esta copia) en un punto, deja que la cámara lo siga y devuelve dónde se ve y el tamaño del escenario.
     mirarHeroe(x,y){nuevo();s.modelo.jugador.x=x;s.modelo.jugador.y=y;for(let i=0;i<120;i++){s.ambiente=3+i/30;pintar();}
       const w=PRUEBAS[tipo].mundo(),r=esc.getBoundingClientRect();return {punto:w?.pantallaDesdeSuelo(x,y),ancho:r.width,alto:r.height};},

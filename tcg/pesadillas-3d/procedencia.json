@@ -5,28 +5,32 @@
   "proposito": "Las pruebas del Editor (Pitágoras) con su modelo real, dibujadas en 3D con el mundo de su carta dorada.",
   "pruebas": [
     "isometrico",
-    "laseres"
+    "laseres",
+    "fps"
   ],
   "componentes": {
     "pitagoras-pruebas.js": "b0808969d1fbedc2cf2523592834a7e21cf9d6d5f405b0bcf5805b7d8a8b10ff",
     "pitagoras-mundos.js": "0d2961f36d5e727e69423b088c24d319db9f2bbeffc5aca72b85badf302e3ad3",
     "pitagoras-cine.js": "a2a7cf22ff3cb3e556e183f0f9bdd7a072e9185f1abac242ee33c4cae6cd09d1",
     "pitagoras-pixel.js": "768074cc1ece82648f684fba20d3b064ed8aa0c89d47ef7590cd68f8cff935dd",
-    "pitagoras-mundo-3d.js": "ffb149bfa1e7ce7b3b2e7aafd5bd61343b5b1c7202548381f59e2ee6aeb77b53",
+    "pitagoras-fps.js": "9a3e9f8021c54217e8bb0efecca04ca81873c83e0af30de8a72ff33a456a6df2",
+    "pitagoras-mundo-3d.js": "1de2f8d9d547c349b19f84f7f37e5420701c4ff01fd68c5b3e6820662ff2cab9",
     "pitagoras-cosecha-3d.js": "d9a9c4143aa262fcc49ad06d955ac80eb45885185a3ed8e29b8ec91e8890885c",
-    "pitagoras-corte-3d.js": "d2496d9d432962eb582e415df300d94c7943a0f2adde3317bf680de262f52707"
+    "pitagoras-corte-3d.js": "d2496d9d432962eb582e415df300d94c7943a0f2adde3317bf680de262f52707",
+    "pitagoras-cuadro-3d.js": "38777b016fb41cd43a21f2d62e32086c80ec8f79b153e282de7f7ec59baa7b9a"
   },
   "arte": {
     "esbirro-editor-v219.webp": "87fab064c69e6e34dcdd9ecc9f0b78b4ed693d18066877f685cfea830ade66c3",
     "editorcosecha-dorado-v1.webp": "61401f993d0aee551494a138dae651249d492a5049caaa3eb24e2a1ef6374ae7",
-    "editorcorte-dorado-v1.webp": "efb8a17b4c65a304bb69e098094dfbbd67a73e71989ea9a33c54486d3480c810"
+    "editorcorte-dorado-v1.webp": "efb8a17b4c65a304bb69e098094dfbbd67a73e71989ea9a33c54486d3480c810",
+    "editorcuadro-dorado-v1.webp": "de64fb7472ecd3a03055bd1297e6bdb07ec72422bcdab64463d3f5b86a8efea4"
   },
   "entorno": {
-    "pesadillas-3d-mesa.js": "af7355a3b00ed8205e5b29df38ca8a13b6c4498a4248f90ed1aff883b9daa3aa",
+    "pesadillas-3d-mesa.js": "e7edd19bf35c43ed0b3d5de8efefbc2bbd5f8c50e70d03de33b60efe9c66f90c",
     "pesadillas-3d-mesa.css": "a89ac38eb99f234ed15125f7887a8000864ef1ecd6657c767d92ce835d360377"
   },
   "derivados": {
-    "index.html": "48ebb79f4d7f184820a6498a1bfde99bf9ed513aa30ed81273e5083e4c4d366d",
-    "generado/datos.js": "bb3d5c13315a7111a6435590c9d5849df96632c8320f8b516fc9cfca8dade762"
+    "index.html": "652b28f9e2925a9bb51dc68c01507a8fb903e3fcb70790d7eeea1505ad1941a8",
+    "generado/datos.js": "25f1cf5028069deffd38088582f9b7b565fc846ac526a47d8b9634dbcc5d9a01"
   }
 }
