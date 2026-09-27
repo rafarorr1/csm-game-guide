@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Las pruebas de Pitágoras en 3D · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./pesadillas-3d-mesa.css">
+<script src="./generado/datos.js"></script>
+<script src="./juego/pitagoras-pruebas.js"></script>
+<script src="./juego/pitagoras-mundos.js"></script>
+<script src="./juego/pitagoras-cine.js"></script>
+<script src="./juego/pitagoras-pixel.js"></script>
+<script src="./juego/pitagoras-mundo-3d.js"></script>
+<script src="./juego/pitagoras-cosecha-3d.js"></script>
+<script src="./juego/pitagoras-corte-3d.js"></script>
+<script src="./pesadillas-3d-mesa.js" defer></script>
+</head>
+<body>
+<main class="p3Shell" aria-labelledby="p3Titulo">
+  <header class="p3Cabecera">
+    <p class="p3Etiqueta">LAS PRUEBAS DEL EDITOR · SIN PARTIDA</p>
+    <h1 id="p3Titulo">Las pruebas de Pitágoras, dentro de sus cartas doradas</h1>
+    <p>Cada minijuego con su modelo real, dibujado en 3D con el mundo de su edición dorada. Las reglas, los tiempos y la dificultad no cambian. «Ver con el bot» juega solo con una semilla fija (sin perder vidas, para ver los 20 segundos); «Jugar de verdad» abre la prueba tal como la verá el jugador.</p>
+  </header>
+  <div class="p3Controles" role="group" aria-label="Controles">
+    <div class="p3Grupo" role="group" aria-label="Prueba"><button type="button" data-prueba="isometrico" aria-pressed="true">I · La cosecha</button><button type="button" data-prueba="laseres" aria-pressed="false">II · El corte final</button></div>
+    <button type="button" class="p3Boton oro" id="bot">▶ Ver con el bot</button>
+    <button type="button" class="p3Boton" id="jugar">Jugar de verdad</button>
+    <div class="p3Grupo" role="group" aria-label="Pintor"><button type="button" data-pintor="3d" aria-pressed="true">3D dorado</button><button type="button" data-pintor="clasico" aria-pressed="false">Clásico</button></div>
+    <div class="p3Grupo" role="group" aria-label="Pantalla"><button type="button" data-marco="escritorio" aria-pressed="true">Escritorio</button><button type="button" data-marco="movil" aria-pressed="false">Móvil</button></div>
+    <label class="p3Opcion"><input type="checkbox" id="lento"> Cámara lenta</label>
+    <label class="p3Opcion">Semilla <input type="number" id="semilla" value="7" min="1" step="1"></label>
+  </div>
+  <section class="p3Escenario" id="escenario" data-marco="escritorio" aria-label="La prueba"><canvas id="lienzo" aria-label="La prueba jugada por el bot"></canvas><p class="p3Hud" id="hud"></p></section>
+  <p id="estado" class="p3Estado" role="status" aria-live="polite">Preparando…</p>
+</main>
+</body>
+</html>
