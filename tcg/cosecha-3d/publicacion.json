@@ -8,16 +8,16 @@
     "juego/art/editorcosecha-dorado-v1.webp": "61401f993d0aee551494a138dae651249d492a5049caaa3eb24e2a1ef6374ae7",
     "juego/art/esbirro-editor-v219.webp": "87fab064c69e6e34dcdd9ecc9f0b78b4ed693d18066877f685cfea830ade66c3",
     "juego/pitagoras-cine.js": "a2a7cf22ff3cb3e556e183f0f9bdd7a072e9185f1abac242ee33c4cae6cd09d1",
-    "juego/pitagoras-cosecha-3d.js": "aaed51ef79069e83d91565a07d1b355bc42173fc5020a7f32a2ca835249c0508",
+    "juego/pitagoras-cosecha-3d.js": "dd84b395a5c322fbfea2dfca006359841f3ab74733e8153d9fdf4d1902d9b803",
     "juego/pitagoras-mundos.js": "0d2961f36d5e727e69423b088c24d319db9f2bbeffc5aca72b85badf302e3ad3",
     "juego/pitagoras-pixel.js": "768074cc1ece82648f684fba20d3b064ed8aa0c89d47ef7590cd68f8cff935dd",
     "juego/pitagoras-pruebas.js": "b0808969d1fbedc2cf2523592834a7e21cf9d6d5f405b0bcf5805b7d8a8b10ff",
-    "procedencia.json": "1916a2884b3b5914f3cbe8146bb3c756f7d31b2562f885887088fd16e5bca53c"
+    "procedencia.json": "9edde9f52fd0ea64dff3ee742b7fcd099a39e3ff945a476587e45e27c5b43071"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "421e9d463718cec627f538629a414fae99312874"
+    "sha": "e356ccff8272243459e5edc0dc03dac22d6945c8"
   },
   "seccion": "cosecha-3d",
   "version": 1
