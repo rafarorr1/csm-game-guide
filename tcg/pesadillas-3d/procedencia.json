@@ -7,7 +7,8 @@
     "isometrico",
     "laseres",
     "fps",
-    "carrera"
+    "carrera",
+    "orbital"
   ],
   "componentes": {
     "pitagoras-pruebas.js": "b0808969d1fbedc2cf2523592834a7e21cf9d6d5f405b0bcf5805b7d8a8b10ff",
@@ -15,25 +16,28 @@
     "pitagoras-cine.js": "a2a7cf22ff3cb3e556e183f0f9bdd7a072e9185f1abac242ee33c4cae6cd09d1",
     "pitagoras-pixel.js": "768074cc1ece82648f684fba20d3b064ed8aa0c89d47ef7590cd68f8cff935dd",
     "pitagoras-fps.js": "9a3e9f8021c54217e8bb0efecca04ca81873c83e0af30de8a72ff33a456a6df2",
-    "pitagoras-mundo-3d.js": "601a5ab6d16f5886317719da3b880387d3a8f8769d6b085320761275f17d40c9",
+    "pitagoras-orbita.js": "784e3a93cebcf7201c96d0fbc4a9ee4dce7cbdc3a46d35d430f66a7ab3a9749e",
+    "pitagoras-mundo-3d.js": "a6d8cefa515ccf25b6ea6d55e3586a3d801b377bba49e2c8e9c20996b516b128",
     "pitagoras-cosecha-3d.js": "d9a9c4143aa262fcc49ad06d955ac80eb45885185a3ed8e29b8ec91e8890885c",
     "pitagoras-corte-3d.js": "d2496d9d432962eb582e415df300d94c7943a0f2adde3317bf680de262f52707",
     "pitagoras-cuadro-3d.js": "38777b016fb41cd43a21f2d62e32086c80ec8f79b153e282de7f7ec59baa7b9a",
-    "pitagoras-puente-3d.js": "5033bddebd56ffa46f175ad172cf4a52031097881802df2d78c62d327313be54"
+    "pitagoras-puente-3d.js": "5033bddebd56ffa46f175ad172cf4a52031097881802df2d78c62d327313be54",
+    "pitagoras-orbita-3d.js": "4e2d8ab603fc6df9d5b44448e6d88468e1475c73b813e631dd22a9a47d2fcc41"
   },
   "arte": {
     "esbirro-editor-v219.webp": "87fab064c69e6e34dcdd9ecc9f0b78b4ed693d18066877f685cfea830ade66c3",
     "editorcosecha-dorado-v1.webp": "61401f993d0aee551494a138dae651249d492a5049caaa3eb24e2a1ef6374ae7",
     "editorcorte-dorado-v1.webp": "efb8a17b4c65a304bb69e098094dfbbd67a73e71989ea9a33c54486d3480c810",
     "editorcuadro-dorado-v1.webp": "de64fb7472ecd3a03055bd1297e6bdb07ec72422bcdab64463d3f5b86a8efea4",
-    "editorcarrera-dorado-v1.webp": "99281f05da920db2adc8a91f26ac1e9329bd47a45d26c59e86076cf927d9683f"
+    "editorcarrera-dorado-v1.webp": "99281f05da920db2adc8a91f26ac1e9329bd47a45d26c59e86076cf927d9683f",
+    "editororbita-dorado-v1.webp": "d328792e7480643fba26048a65d4f5a4c74625da93808b6ad81ceeedeb655d42"
   },
   "entorno": {
-    "pesadillas-3d-mesa.js": "0170b866166a3ad312aa2a01605b759b3bdae2d65b7b3058703b5d820b0c1c77",
+    "pesadillas-3d-mesa.js": "ffb8f217030df099cec3f56b355ac546e4630d2ad16abfca75ebf133f6914e3b",
     "pesadillas-3d-mesa.css": "a89ac38eb99f234ed15125f7887a8000864ef1ecd6657c767d92ce835d360377"
   },
   "derivados": {
-    "index.html": "4683f8ac150dce3990e4dc73b55b595520215000d0666cf4652d1885c8c7a5f5",
-    "generado/datos.js": "9a8909c760f1d28b433a31781007c08c1a78cd2980b05b2d2c8dd8d8387d04b9"
+    "index.html": "441408a093e6205526465c8e2cc5ea467afb8c37d70688f5f5de11196bedd5df",
+    "generado/datos.js": "5bea844ef004295bb9d0e6cf484e35a74fb8d1fe3a54cfe4d9013475a11bf360"
   }
 }
