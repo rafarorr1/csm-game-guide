@@ -136,7 +136,7 @@ SECCIONES = {
     'pesadillas-3d': {
         'nombre': 'Pruebas de Pitágoras en 3D',
         'exportador': 'pesadillas-3d-exportar.mjs',
-        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/pitagoras-mundo-3d.js', 'juego/pitagoras-cosecha-3d.js', 'juego/pitagoras-corte-3d.js', 'juego/pitagoras-cuadro-3d.js', 'juego/pitagoras-puente-3d.js', 'juego/pitagoras-pruebas.js', 'juego/art/editorcosecha-dorado-v1.webp', 'juego/art/editorcorte-dorado-v1.webp', 'juego/art/editorcuadro-dorado-v1.webp', 'juego/art/editorcarrera-dorado-v1.webp'},
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/pitagoras-mundo-3d.js', 'juego/pitagoras-cosecha-3d.js', 'juego/pitagoras-corte-3d.js', 'juego/pitagoras-cuadro-3d.js', 'juego/pitagoras-puente-3d.js', 'juego/pitagoras-orbita.js', 'juego/pitagoras-orbita-3d.js', 'juego/pitagoras-pruebas.js', 'juego/art/editorcosecha-dorado-v1.webp', 'juego/art/editorcorte-dorado-v1.webp', 'juego/art/editorcuadro-dorado-v1.webp', 'juego/art/editorcarrera-dorado-v1.webp', 'juego/art/editororbita-dorado-v1.webp'},
         'pruebas': ('pruebas_pesadillas_3d.mjs',),
     },
     'teaser': {

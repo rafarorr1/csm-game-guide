@@ -35,9 +35,9 @@ try{
 }finally{fs.rmSync(temporal,{recursive:true,force:true});}
 
 // El color que distingue cada mundo: losas verdes en La cosecha, lapislázuli en El corte final.
-const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2],fps:['lapislázuli y verde del archivo',d=>d[2]>d[0]*1.2||(d[1]>d[0]*1.1&&d[1]>=d[2]),.2],carrera:['cielo de lapislázuli y carriles de color',d=>d[2]>d[0]*1.2||d[0]>d[2]*1.6,.2]};
+const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2],fps:['lapislázuli y verde del archivo',d=>d[2]>d[0]*1.2||(d[1]>d[0]*1.1&&d[1]>=d[2]),.2],carrera:['cielo de lapislázuli y carriles de color',d=>d[2]>d[0]*1.2||d[0]>d[2]*1.6,.2],orbital:['cielo de lapislázuli y oro de la órbita',d=>d[2]>d[0]*1.2||(d[0]>d[2]*1.3&&d[1]>d[2]),.3]};
 // Puntos del suelo para el puntero, delante de la cámara de cada prueba.
-const PUNTOS={carrera:[[0,0],[1,-5],[-1,-12],[.5,-3]]};
+const PUNTOS={carrera:[[0,0],[1,-5],[-1,-12],[.5,-3]],orbital:[[0,-14],[6,-12],[-8,-20],[3,-30]]};
 // En primera persona la cámara es el jugador: no hay encuadre del héroe ni puntero sobre el suelo.
 const PRIMERA_PERSONA=new Set(['fps']);
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
@@ -77,6 +77,37 @@ try{
     if(tipo==='carrera')for(const c of [-1,0,1]){const r=await pagina.evaluate(c=>CAOZ_PESADILLAS3D_REVISION.carrilHeroe(c),c),fx=r.heroe.x/r.ancho,fy=r.heroe.y/r.alto,ly=r.lejos.y/r.alto;
       assert.ok(fx>.05&&fx<.95&&fy>.3&&fy<.92,caso+': el héroe en el carril '+c+' se ve ('+(fx*100).toFixed(0)+'%, '+(fy*100).toFixed(0)+'%)');
       assert.ok(ly>.08&&ly<fy-.15,caso+': lo que viene a 20 unidades se ve por delante del héroe ('+(ly*100).toFixed(0)+'%)');}
+    else if(tipo==='orbital'){
+      // La órbita entera, la estrella (con su corona) y el reino debajo quedan en pantalla.
+      const r=await pagina.evaluate(()=>CAOZ_PESADILLAS3D_REVISION.orbita()),X=p=>p.x/r.ancho,Y=p=>p.y/r.alto;
+      for(const [i,p] of r.aro.entries())assert.ok(X(p)>.03&&X(p)<.97&&Y(p)>.05&&Y(p)<.92,caso+': la órbita se ve entera ('+i*30+'°: '+(X(p)*100).toFixed(0)+'%, '+(Y(p)*100).toFixed(0)+'%)');
+      assert.ok(Y(r.cima)>.02&&Math.abs(X(r.estrella)-.5)<.02,caso+': la estrella, centrada y con su corona dentro ('+(Y(r.cima)*100).toFixed(0)+'%)');
+      assert.ok(Y(r.reino)>Y(r.aro[3])-.12&&Y(r.reino)<.97,caso+': el reino se ve debajo de la órbita ('+(Y(r.reino)*100).toFixed(0)+'%)');
+      if(ancho===1280){
+        // Las reglas: devolver a tiempo, bloquear antes de tiempo, el golpe y el reino que arde.
+        const reglas=await pagina.evaluate(()=>{const API=PITAGORAS_PRUEBAS,M=API.modelo,O=CAOZ_ORBITA,out={};
+          const prueba=(fi,pulsar,espera)=>{const s=M.crear({tipo:'orbital',semilla:3});s.siguiente=Infinity;s.meteoros.push({id:99,tipo:'reino',fi,curva:.5,t0:0,tc:1,origen:O.RS,estado:'vuela',desde:0,x:0,y:0,caida:0,rx:0,rz:0});
+            M.paso(s,{},1-espera);if(pulsar)M.paso(s,{accion:true},1/60);M.paso(s,{},espera+.02);return s;};
+          const justo=prueba(Math.PI/2,true,.1);M.paso(justo,{},.4);out.justo=[justo.devueltas,justo.grietas,justo.vidas,justo.recargaImpulso];
+          const pronto=prueba(Math.PI/2,true,.45);out.pronto=[pronto.devueltas,pronto.bloqueos,pronto.vidas,pronto.reino];
+          const sin=prueba(Math.PI/2,false,.1);out.sin=[sin.vidas,sin.reino];
+          const lejos=prueba(Math.PI/2+1,false,.1);M.paso(lejos,{},.8);out.lejos=[lejos.vidas,lejos.reino];
+          const arriba=prueba(-Math.PI/2,false,.1);M.paso(arriba,{},1);out.arriba=[arriba.vidas,arriba.reino];
+          const tres=M.crear({tipo:'orbital',semilla:3});tres.siguiente=Infinity;for(let i=0;i<3;i++)tres.meteoros.push({id:90+i,tipo:'reino',fi:Math.PI/2+1.1,curva:.4,t0:0,tc:1+i*.2,origen:O.RS,estado:'vuela',desde:0,x:0,y:0,caida:0,rx:0,rz:0});
+          M.paso(tres,{},2.6);out.tres=[tres.vidas,tres.reino];
+          const quieto=M.crear({tipo:'orbital',semilla:6});for(let i=0;i<1300&&!quieto.terminado;i++)M.paso(quieto,{},1/60);out.quieto=[quieto.terminado,quieto.sobrevivio,quieto.t];
+          const guia=M.crear({tipo:'orbital',semilla:1}),mem={};for(let i=0;i<1300&&!guia.terminado;i++)M.paso(guia,API.guiasPrueba.orbital(guia,mem),1/60);out.guia=[guia.sobrevivio,guia.vidas,guia.devueltas];
+          return out;});
+        assert.deepEqual(reglas.justo,[1,1,3,0],'Órbita: parar justo devuelve el meteoro, agrieta la estrella y deja la burbuja lista');
+        assert.deepEqual(reglas.pronto,[0,1,3,0],'Órbita: parar antes de tiempo sólo bloquea (y el reino no arde)');
+        assert.deepEqual(reglas.sin,[2,0],'Órbita: sin burbuja, el meteoro que llega al héroe cuesta una vida');
+        assert.deepEqual(reglas.lejos,[3,1],'Órbita: lo que cruza la mitad baja sin detenerse arde en el reino');
+        assert.deepEqual(reglas.arriba,[3,0],'Órbita: lo que cruza la mitad alta se pierde en el vacío');
+        assert.deepEqual(reglas.tres,[2,3],'Órbita: cada tres fuegos en el reino cuestan una vida');
+        assert.ok(reglas.quieto[0]&&!reglas.quieto[1]&&reglas.quieto[2]<20,'Órbita: sin jugar se pierde antes de 20 s');
+        assert.ok(reglas.guia[0]&&reglas.guia[1]===3&&reglas.guia[2]>=15,'Órbita: la guía gana devolviendo meteoros ('+reglas.guia[2]+')');
+      }
+    }
     else if(!PRIMERA_PERSONA.has(tipo))for(const [x,y] of [[-6.55,-6.55],[6.55,-6.55],[-6.55,6.55],[6.55,6.55]]){
       const r=await pagina.evaluate(([x,y])=>CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y),[x,y]),fx=r.punto.x/r.ancho,fy=r.punto.y/r.alto;
       assert.ok(fx>.05&&fx<.95&&fy>.08&&fy<.92,caso+': el héroe en ('+x+','+y+') se ve ('+(fx*100).toFixed(0)+'%, '+(fy*100).toFixed(0)+'%)');}
