@@ -97,7 +97,7 @@ void main(){
     telon:presion=>{const ancho=21,corte=.62,alto=ancho*768/512*corte;return {ancho,corte,centro:[0,alto*.5-12.5+presion*2.2,-ARENA-4.5]};},
     camara:{fov:36,pitch:41,
       // En pantallas anchas la cámara mira algo más al fondo: deja ver al Segador sobre la arena.
-      objetivo:(p,asp)=>{const ancha=lim((asp-.9)/.8,0,1);return [p.x*.36,0,p.y*.36-.4-1.5*ancha];},
+      objetivo:(p,asp)=>{const ancha=lim((asp-.9)/.8,0,1);return [p.x*.36,0,p.y*(p.y>0?.52:.36)-.4-1.5*ancha];},
       distancia:(tan,asp,pitch,s)=>Math.max(6.3/(tan*asp),6.4*Math.sin(pitch)/tan+4.5)*(1-.05*(s.modelo.presionCosecha||0))},
     suelo:{tam:ARENA+4.5,glsl:SUELO,subir(gl,u,s){
       const m=s.modelo,losas=new Float32Array(MAXLOSAS*4);m.losas.slice(0,MAXLOSAS).forEach((l,i)=>losas.set([l.x,l.y,l.hueco||l.edad>=l.aviso?1:0,lim(l.edad/l.aviso,0,1)],i*4));

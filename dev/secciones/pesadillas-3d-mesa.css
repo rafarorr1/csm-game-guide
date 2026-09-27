@@ -1,0 +1,23 @@
+/* Revisión de La cosecha en 3D. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 Georgia,serif;padding:clamp(10px,3vw,28px)}
+.p3Shell{width:min(1240px,100%);margin:auto;display:flex;flex-direction:column;gap:12px}
+.p3Etiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.p3Cabecera h1{color:#f0d796;font:700 clamp(24px,4vw,38px)/1.1 Georgia,serif;margin:4px 0 6px}
+.p3Cabecera p:last-child{color:#c9bdda;max-width:900px}
+.p3Controles{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.p3Grupo{display:flex;border:1px solid #e7bb5555;border-radius:10px;overflow:hidden}
+.p3Grupo button,.p3Boton{font:700 12px/1 Georgia,serif;color:#e0cfa6;background:#150f20;border:0;padding:10px 13px;cursor:pointer}
+.p3Boton{border:1px solid #e7bb5555;border-radius:10px}
+.p3Boton.oro{color:#2a1706;border-color:#fff0c4;background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18)}
+.p3Grupo button[aria-pressed="true"]{background:#e8bb5a;color:#2a1706}
+.p3Opcion{display:flex;gap:6px;align-items:center;color:#d9cbe8}
+.p3Opcion input[type=number]{width:7ch;background:#150f20;color:#f1dcae;border:1px solid #e7bb5555;border-radius:6px;padding:3px 6px}
+.p3Escenario{position:relative;margin:auto;width:100%;aspect-ratio:16/10;max-height:74vh;border-radius:14px;overflow:hidden;background:#000;border:1px solid #e7bb5530}
+.p3Escenario[data-marco="movil"]{width:auto;height:min(74vh,760px);aspect-ratio:390/620}
+.p3Escenario canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.p3Hud{position:absolute;left:12px;top:10px;padding:4px 10px;border-radius:8px;background:#0d0914bb;color:#f0e2c4;font:600 13px/1.3 system-ui,sans-serif;pointer-events:none}
+.p3Estado{color:#b9aecb;min-height:1.5em}
+html[data-captura] body{padding:0}html[data-captura] .p3Cabecera,html[data-captura] .p3Controles,html[data-captura] .p3Estado{display:none}
+html[data-captura] .p3Shell{width:100%}html[data-captura] .p3Escenario{border-radius:0;border:0;max-height:none;height:100vh;width:100vw;aspect-ratio:auto}

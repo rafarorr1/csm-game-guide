@@ -133,11 +133,11 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/visor-3d-gpu.js', 'juego/visor-3d-gl.js', 'juego/tormenta-gl.js', 'juego/tormenta-gpu.js'},
         'pruebas': ('pruebas_visor_gpu.mjs',),
     },
-    'cosecha-3d': {
-        'nombre': 'La cosecha en 3D',
-        'exportador': 'cosecha-3d-exportar.mjs',
-        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/pitagoras-cosecha-3d.js', 'juego/pitagoras-mundo-3d.js', 'juego/pitagoras-pruebas.js', 'juego/art/editorcosecha-dorado-v1.webp'},
-        'pruebas': ('pruebas_cosecha_3d.mjs',),
+    'pesadillas-3d': {
+        'nombre': 'Pruebas de Pitágoras en 3D',
+        'exportador': 'pesadillas-3d-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/pitagoras-mundo-3d.js', 'juego/pitagoras-cosecha-3d.js', 'juego/pitagoras-corte-3d.js', 'juego/pitagoras-pruebas.js', 'juego/art/editorcosecha-dorado-v1.webp', 'juego/art/editorcorte-dorado-v1.webp'},
+        'pruebas': ('pruebas_pesadillas_3d.mjs',),
     },
     'teaser': {
         'nombre': 'Teaser del juego',

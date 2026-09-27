@@ -884,3 +884,30 @@ ffmpeg -framerate 30 -i /tmp/teaser-png/f%05d.png -c:v libx264 -pix_fmt yuv420p 
 node dev/secciones/pruebas_teaser.mjs
 python3 dev/secciones/publicar.py --publicar --seccion teaser --salida /tmp/caoz-teaser
 ```
+
+## Pruebas de Pitágoras en 3D (dentro de sus cartas doradas)
+
+La revisión está en `/pesadillas-3d/` (sustituye a `/cosecha-3d/`): cada
+prueba del Editor con su modelo real, dibujada en 3D con el mundo de la edición
+dorada de su carta. `pitagoras-mundo-3d.js` es el motor común (cámara y
+proyección del puntero, telón con el arte de la carta, figuras en 2,5D con
+sombras proyectadas, y el paso a resolución completa sin el filtro de pixel
+art de `pitagoras-pixel.js`); cada prueba registra su mundo con
+`CAOZ_MUNDO_3D.registrar(tipo,{…})`:
+
+| Prueba | Módulo | Mundo |
+|---|---|---|
+| I · La cosecha | `pitagoras-cosecha-3d.js` | losas verdes sobre lava, el Segador alzándose del abismo, fantasmas de humo, estrellas de oro |
+| II · El corte final | `pitagoras-corte-3d.js` | nave de catedral pulida, columnas verdes, el espectro coronado; avisos ámbar y haces de luz dorada |
+
+Sólo presentación: los pintores leen `s.modelo` y nunca lo escriben (las
+pruebas comparan el estado con el pintor clásico). Sin WebGL o con movimiento
+reducido sigue el pintor anterior. `?prueba=laseres` elige la prueba; «Ver con
+el bot» usa el bot de revisión (La cosecha) o la guía del modelo (El corte
+final) sin perder vidas; `CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y)`
+comprueba el encuadre.
+
+```bash
+node dev/secciones/pruebas_pesadillas_3d.mjs
+python3 dev/secciones/publicar.py --publicar --seccion pesadillas-3d --salida /tmp/caoz-pesadillas-3d
+```
