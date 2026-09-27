@@ -1,5 +1,15 @@
 # Registro de versiones — el TCG del Domo
 
+### v61 · Build 300 · Acceso visible al iniciar · 2026-09-26
+
+- Cuando una visita necesita crear cuenta o entrar, la cortinilla libera la
+  portada antes de esperar la autenticación. El formulario de acceso queda
+  visible y pulsable, en vez de quedar cubierto indefinidamente por
+  «Preparando el Domo…». Las recargas que ya vieron la cortinilla entran
+  directamente al menú en lugar de conservar la portada oculta.
+- Se añade una comprobación real en escritorio y móvil que verifica que el
+  acceso inicial no queda tapado por la capa de carga.
+
 ### v60 · Build 299 · Playtest de balance · 2026-09-26
 
 - **Talesyn** sustituye El Domo y una Rayo de Escarcha por dos **Acólitos de

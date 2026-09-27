@@ -65,6 +65,11 @@ try{
   await pagina.goto(base+'/'+tamano.pagina);
   await pagina.locator('#cuentaJuego[open] .cuentaUI[data-pantalla="inicio"]').waitFor();
   await pagina.waitForFunction(()=>window.CAOZ_CUENTA_JUEGO?.estado()?.ocupado===false);
+  const accesoClicable=await pagina.locator('[data-foco="tab-crear"]').evaluate(n=>{
+    const r=n.getBoundingClientRect(),encima=document.elementFromPoint(r.left+r.width/2,r.top+r.height/2);
+    return encima===n||n.contains(encima);
+  });
+  assert(accesoClicable,'El acceso inicial no queda tapado por la cortinilla');
   assert.equal(await pagina.evaluate(()=>window.CAOZ_CUENTA_JUEGO.estado().error),'','El primer401 no se presenta como sesión vencida');
   assert.equal(await pagina.evaluate(()=>window.CAOZ_CUENTA_JUEGO.puedeJugar()),false,'No se permite jugar antes del acceso');
   await pagina.keyboard.press('Escape');
@@ -106,6 +111,8 @@ try{
   assert.equal(alVolver.pantalla,'recuperar','Volver online conserva la elección de recuperación');
   assert.deepEqual(erroresRecuperacion,[]);await recuperacion.close();
   await pagina.locator('[data-foco="volver"]').click();
+  await pagina.locator('#cargaDomo').waitFor({state:'detached',timeout:30000});
+  await pagina.locator('#mPlay').waitFor({state:'visible'});
   await pagina.locator('#mPlay').click();await pagina.locator('#select.on').waitFor();
   await pagina.locator('#selBack').click();await pagina.locator('#menu.on').waitFor();
   await pagina.locator('#mExtras').click();await pagina.locator('#mCuenta').click();
@@ -123,6 +130,8 @@ try{
   await pagina.locator('#cuentaJuego').waitFor({state:'detached'});
   assert.equal(await pagina.evaluate(()=>localStorage.getItem('caoz_nombre')),'Ari sin conexión','Reabrir sin red conserva la cola del dispositivo');
   assert.equal(guardados,guardadosAntesDeReabrir,'Reabrir sin red no afirma guardar en la nube');
+  await pagina.locator('#cargaDomo').waitFor({state:'detached',timeout:30000});
+  await pagina.locator('#mPlay').waitFor({state:'visible'});
   await pagina.locator('#mPlay').click();await pagina.locator('#select.on').waitFor();
   await pagina.locator('#selBack').click();await pagina.locator('#menu.on').waitFor();
   await pagina.locator('#mExtras').click();await pagina.locator('#mCuenta').click();
