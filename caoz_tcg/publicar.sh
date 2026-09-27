@@ -20,7 +20,10 @@ set -uo pipefail
 
 AQUI="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$AQUI/.." && pwd)"
-PAGES="${CAOZ_PAGES_DIR:-$HOME/Documents/AppW40k-pages}"
+# La copia de publicación vive junto al repositorio.  Se conserva el override
+# para instalaciones explícitas, pero nunca se debe caer a la carpeta histórica
+# de otro proyecto.
+PAGES="${CAOZ_PAGES_DIR:-$REPO-pages}"
 CHROME="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 DESTINO=""
 SUITES="1&rapido=1"
