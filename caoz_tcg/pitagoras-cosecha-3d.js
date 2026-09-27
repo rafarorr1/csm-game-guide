@@ -116,7 +116,7 @@ void main(){
   // Iluminación: cielo de lapislázuli, el oro del halo desde el fondo y las luces de la escena.
   vec3 c=base*(vec3(.42,.46,.6)*(.6+.4*N.y));
   c*=.78+.4*smoothstep(0.,.4,borde);
-  c+=base*vec3(1.,.82,.5)*.55*max(dot(N,normalize(vec3(.15,.8,-.6))),0.);
+  c+=base*vec3(1.,.82,.5)*.55*max(dot(N,normalize(vec3(-.45,.8,-.68))),0.);
   c+=base*puntuales(vP,N);
   // Tinta entre losas y lava en las grietas (más con la presión y cerca de los huecos).
   float tinta=1.-smoothstep(.025,.06,borde);c=mix(c,vec3(.07,.06,.05),tinta*.95);
@@ -151,62 +151,90 @@ void main(){
 void main(){vP=aPos;vN=aNor;vTono=aTono;gl_Position=uVP*vec4(aPos,1.);}`;
   const CAJA_F=`precision highp float;varying vec3 vP;varying vec3 vN;varying float vTono;${LUCES}
 void main(){vec3 N=normalize(vN);vec3 base=vTono>.5?vec3(.36,.42,.33):vec3(.16,.13,.12);
-  float hondo=clamp(-vP.y/5.,0.,1.);vec3 c=base*(vec3(.2,.24,.36)*(.6+.4*N.y)+vec3(1.,.82,.5)*.5*max(dot(N,normalize(vec3(.15,.8,-.6))),0.))+base*puntuales(vP,N);
+  float hondo=clamp(-vP.y/5.,0.,1.);vec3 c=base*(vec3(.2,.24,.36)*(.6+.4*N.y)+vec3(1.,.82,.5)*.5*max(dot(N,normalize(vec3(-.45,.8,-.68))),0.))+base*puntuales(vP,N);
   if(vTono<.5){float veta=.7+.3*sin(vP.y*9.+sin(vP.x*3.+vP.z*2.)*2.);c=mix(vec3(.12,.07,.06)*veta,vec3(1.,.3,.07),.3+.7*hondo)+vec3(1.,.5,.2)*smoothstep(-.15,0.,vP.y)*.35;}gl_FragColor=vec4(c,1.);}`;
   // Figuras: fantasmas, héroe, estrellas, humo, fuego, sombras y oro en el suelo.
   // Alfa premultiplicado: las figuras tapan (alfa) y la luz suma (alfa 0).
+  // Figuras: fantasmas, héroe, estrellas, humo, fuego, sombras y oro en el suelo.
+  // Alfa premultiplicado: las figuras tapan (alfa) y la luz suma (alfa 0).
+  // Las figuras de pie (2,5D) tienen relieve (normales) y proyectan sombras
+  // sobre las losas: la del halo del fondo y la que les hace el aura del héroe.
   const FIG_V=`attribute vec3 aCentro;attribute vec2 aEsq;attribute vec2 aTam;attribute vec4 aColor;attribute vec4 aParam;
 uniform mat4 uVP;uniform vec3 uDer,uArr;varying vec2 vQ;varying vec4 vColor;varying vec4 vParam;varying vec3 vP;
-void main(){vQ=aEsq;vColor=aColor;vParam=aParam;float modo=aParam.x;vec3 P;
-  if(modo>5.5){float a=aParam.w;vec2 e=vec2(aEsq.x*aTam.x,aEsq.y*aTam.y);vec2 r=vec2(e.x*cos(a)-e.y*sin(a),e.x*sin(a)+e.y*cos(a));P=aCentro+vec3(r.x,.012,r.y);}
-  else if(modo<1.5)P=aCentro+normalize(vec3(uDer.x,0.,uDer.z))*aEsq.x*aTam.x+vec3(0.,1.,0.)*(aEsq.y*.5+.5)*aTam.y;
+void main(){vQ=aEsq;vColor=aColor;vParam=aParam;float modo=aParam.x;vec3 P;vec3 derH=normalize(vec3(uDer.x,0.,uDer.z));
+  if(modo>9.5){
+    // Sombra: la silueta tumbada sobre el suelo, alejándose de la luz.
+    vec2 dir=aColor.xy;vec3 perp=normalize(vec3(-dir.y,0.,dir.x));if(dot(perp,derH)<0.)perp=-perp;
+    float alto=(aEsq.y*.5+.5)*aTam.y;P=aCentro+perp*aEsq.x*aTam.x+vec3(dir.x,0.,dir.y)*alto*aColor.z;P.y=.02;}
+  else if(modo>5.5){float a=aParam.w;vec2 e=vec2(aEsq.x*aTam.x,aEsq.y*aTam.y);vec2 r=vec2(e.x*cos(a)-e.y*sin(a),e.x*sin(a)+e.y*cos(a));P=aCentro+vec3(r.x,.012,r.y);}
+  else if(modo<1.5)P=aCentro+derH*aEsq.x*aTam.x+vec3(0.,1.,0.)*(aEsq.y*.5+.5)*aTam.y;
   else P=aCentro+uDer*aEsq.x*aTam.x+uArr*aEsq.y*aTam.y;
   vP=P;gl_Position=uVP*vec4(P,1.);}`;
-  const FIG_F=`precision highp float;varying vec2 vQ;varying vec4 vColor;varying vec4 vParam;varying vec3 vP;uniform sampler2D uHeroe;uniform float uT;${RUIDO}${LUCES}
+  const FIG_F=`precision highp float;varying vec2 vQ;varying vec4 vColor;varying vec4 vParam;varying vec3 vP;
+uniform sampler2D uHeroe,uHeroeN;uniform float uT;uniform vec3 uDer,uFrente;${RUIDO}${LUCES}
 float estrella(vec2 q){float r=length(q);float a=atan(q.y,q.x);float rayos=pow(abs(cos(a*2.)),40.)*1.+pow(abs(cos(a*2.+.785)),40.)*.55;return clamp(exp(-r*r*18.)*1.3+rayos*exp(-r*3.2)*.9,0.,3.);}
+vec2 torcer(vec2 p,float sem,float t){return p+vec2(fbm(p*vec2(3.,4.)+vec2(sem,-t*.8))-.5,fbm(p*vec2(3.,4.)+vec2(5.+sem,-t*.7))-.5)*.16;}
+// El fantasma de humo como distancia con signo: capucha, cuerpo, brazos y garras.
+float sdfFantasma(vec2 s,float t){
+  float cabeza=length((s-vec2(0.,.74))*vec2(1.,1.2))-.25;
+  float ancho=mix(.08,.34,smoothstep(.02,.62,s.y))-.06*smoothstep(.62,.75,s.y);float cuerpo=max(abs(s.x)-ancho,max(s.y-.76,.04-s.y));
+  vec2 b0=vec2(.2,.6),b1=vec2(.78,.34+.04*sin(t*2.));vec2 ba=s-b0,bb=b1-b0;float h=clamp(dot(ba,bb)/dot(bb,bb),0.,1.);float brazo=length(ba-bb*h)-mix(.07,.03,h);
+  float garras=9.;for(int i=0;i<3;i++){vec2 g0=b1,g1=b1+vec2(.13,-.16+float(i)*.1);vec2 ga=s-g0,gb=g1-g0;float hh=clamp(dot(ga,gb)/dot(gb,gb),0.,1.);garras=min(garras,length(ga-gb*hh)-.012*(1.-hh));}
+  vec2 b2=vec2(-.2,.6),b3=vec2(-.6,.45+.05*sin(t*1.7+1.));vec2 ca=s-b2,cb=b3-b2;float h2=clamp(dot(ca,cb)/dot(cb,cb),0.,1.);float brazo2=length(ca-cb*h2)-mix(.06,.02,h2);
+  return min(min(cabeza,cuerpo),min(min(brazo,brazo2),garras));
+}
+// De la normal de la figura (x a la derecha, y arriba, z hacia la cámara) al mundo.
+vec3 mundo(vec3 n){vec3 der=normalize(vec3(uDer.x,0.,uDer.z));return normalize(der*n.x+vec3(0.,1.,0.)*n.y+uFrente*n.z);}
+// Luz de una figura: cielo, el oro del halo del fondo y las luces de la escena por su lado.
+vec3 luzFigura(vec3 P,vec3 N,float propia){
+  vec3 c=vec3(.3,.34,.48)*(.55+.45*max(N.y,0.));c+=vec3(1.,.82,.5)*.75*max(dot(N,normalize(vec3(-.45,.8,-.68))),0.);
+  for(int i=0;i<${MAXL};i++){if(float(i)>=uNL)break;if(i==0&&propia>.5)continue;
+    vec3 D=uLP[i].xyz-P;float d=length(D);float k=clamp(1.-d/uLP[i].w,0.,1.);c+=uLC[i].rgb*k*k*max(dot(N,D/max(d,1e-3)),0.)*1.6;}
+  return c;}
 void main(){
   float modo=vParam.x,sem=vParam.y,k=vParam.z;vec2 q=vQ;vec4 o=vec4(0.);
-  if(modo<.5){
-    // Fantasma de humo: capucha, cuerpo que se deshilacha, brazos con garras y ojos amarillos.
+  if(modo>9.5){
+    // Sombras: la silueta de la figura, desenfocada y más clara lejos de los pies.
+    float a;
+    if(modo<10.5){vec2 uv=vec2(q.x*vParam.w*.5+.5,1.-(q.y*.5+.5));a=texture2D(uHeroe,uv,2.5).a;}
+    else{float lado=vParam.w;vec2 p=vec2(q.x*lado,q.y*.5+.5);float t=uT*1.3+sem*20.;a=smoothstep(.1,-.06,sdfFantasma(torcer(p,sem,t),t))*step(p.y,k*1.08)*smoothstep(0.,.3,p.y);}
+    o=vec4(0.,0.,0.,a*vColor.w*(1.-.55*(q.y*.5+.5)));
+  }else if(modo<.5){
+    // Fantasma de humo, con relieve de almohada y luz por el lado que la recibe.
     float lado=vParam.w;vec2 p=vec2(q.x*lado,q.y*.5+.5);float t=uT*1.3+sem*20.;
     if(p.y>k*1.08)discard;
-    vec2 w=vec2(fbm(p*vec2(3.,4.)+vec2(sem,-t*.8))-.5,fbm(p*vec2(3.,4.)+vec2(5.+sem,-t*.7))-.5)*.16;vec2 s=p+w;
-    float cabeza=length((s-vec2(0.,.74))*vec2(1.,1.2))-.25;
-    float ancho=mix(.08,.34,smoothstep(.02,.62,s.y))-.06*smoothstep(.62,.75,s.y);float cuerpo=max(abs(s.x)-ancho,max(s.y-.76,.04-s.y));
-    vec2 b0=vec2(.2,.6),b1=vec2(.78,.34+.04*sin(t*2.));vec2 ba=s-b0,bb=b1-b0;float h=clamp(dot(ba,bb)/dot(bb,bb),0.,1.);float brazo=length(ba-bb*h)-mix(.07,.03,h);
-    float garras=9.;for(int i=0;i<3;i++){vec2 g0=b1,g1=b1+vec2(.13,-.16+float(i)*.1);vec2 ga=s-g0,gb=g1-g0;float hh=clamp(dot(ga,gb)/dot(gb,gb),0.,1.);garras=min(garras,length(ga-gb*hh)-.012*(1.-hh));}
-    vec2 b2=vec2(-.2,.6),b3=vec2(-.6,.45+.05*sin(t*1.7+1.));vec2 ca=s-b2,cb=b3-b2;float h2=clamp(dot(ca,cb)/dot(cb,cb),0.,1.);float brazo2=length(ca-cb*h2)-mix(.06,.02,h2);
-    float sdf=min(min(cabeza,cuerpo),min(min(brazo,brazo2),garras));
+    vec2 s=torcer(p,sem,t);float sdf=sdfFantasma(s,t);
     float a=smoothstep(.03,-.03,sdf)*smoothstep(0.,.25,p.y+.05*sin(p.x*9.+t*3.));
-    float filo=smoothstep(-.09,0.,sdf)*a;
-    vec3 N=normalize(vec3(q.x,.3,.8));vec3 luz=puntuales(vP+vec3(0.,.3,0.),N);
-    vec3 col=mix(vec3(.03,.035,.07),vec3(.42,.48,.64),filo)+luz*(.15+.8*filo);
+    if(a<.003)discard;
+    float e=.02,gx=(sdfFantasma(s+vec2(e,0.),t)-sdf)/e,gy=(sdfFantasma(s+vec2(0.,e),t)-sdf)/e;
+    float grosor=clamp(-sdf*7.,0.,1.);vec3 N=mundo(normalize(vec3(gx*lado*(1.-grosor),gy*(1.-grosor),.3+grosor)));
+    float filo=smoothstep(-.09,0.,sdf);
+    vec3 albedo=mix(vec3(.07,.075,.13),vec3(.36,.42,.58),filo*.75);
+    vec3 col=albedo*luzFigura(vP,N,0.)*1.3+vec3(.2,.25,.4)*filo*.2;
     col+=vec3(1.,.95,.9)*vColor.r*a;
-    // Ojos: dos almendras amarillas que brillan (suman luz).
-    vec2 e=vec2(abs(s.x)-.095,s.y-.755);float ojo=1.-smoothstep(.0,.012,length(e*vec2(1.,2.3))-.035);
-    o=vec4(col*a,a)+vec4(vec3(1.,.8,.25)*(ojo*1.6+exp(-dot(e,e)*400.)*.5)*(1.-vColor.r),0.);
+    vec2 ej=vec2(abs(s.x)-.095,s.y-.755);float ojo=1.-smoothstep(.0,.012,length(ej*vec2(1.,2.3))-.035);
+    o=vec4(col*a,a)+vec4(vec3(1.,.8,.25)*(ojo*1.6+exp(-dot(ej,ej)*400.)*.5)*(1.-vColor.r),0.);
     o*=vColor.g;
   }else if(modo<1.5){
-    // El héroe (atlas pintado): capa que ondea con el paso y parpadeo al ser herido.
+    // El héroe (atlas pintado con su mapa de normales): la capa ondea con el paso.
     vec2 uv=vec2(q.x*vParam.w*.5+.5,1.-(q.y*.5+.5));
-    uv.x+=sin(uv.y*9.-uT*8.)*.02*k*smoothstep(.35,.9,uv.y)*step(uv.x,.55);
-    vec4 tx=texture2D(uHeroe,uv);vec3 N=normalize(vec3(q.x,.4,.8));
-    vec3 col=tx.rgb*(.7+.5*vec3(.2,.24,.36))+tx.rgb*puntuales(vP+vec3(0.,.4,0.),N)*.35;
+    uv.x+=sin(uv.y*9.-uT*8.)*.015*k*smoothstep(.35,.9,uv.y)*step(uv.x,.52);
+    vec4 tx=texture2D(uHeroe,uv);if(tx.a<.01)discard;
+    vec3 nm=texture2D(uHeroeN,uv).xyz*2.-1.;nm.x*=vParam.w;vec3 N=mundo(nm);
+    // Relleno cálido desde la cámara: el héroe siempre se lee, con el relieve encima.
+    vec3 col=tx.rgb*(luzFigura(vP,N,1.)*1.1+vec3(.42,.38,.34)*(.4+.6*max(nm.z,0.)));
+    col+=vec3(1.,.8,.45)*pow(clamp(1.-nm.z,0.,1.),2.)*.3;
     o=vec4(col*tx.a,tx.a)*vColor.a;
   }else if(modo<2.5){
-    // Estrella o destello: luz pura.
     o=vec4(vColor.rgb*estrella(q)*vColor.a,0.);
   }else if(modo<3.5){
-    // Humo: mancha suave que se enrosca.
     float r=length(q)+(fbm(q*2.5+sem*9.+uT*.2)-.5)*.6;float a=smoothstep(1.,.2,r)*vColor.a;o=vec4(vColor.rgb*a,a);
   }else if(modo<4.5){
-    // Llama: gota que sube con ruido (luz).
     vec2 p=vec2(q.x,q.y*.5+.5);float n=fbm(vec2(p.x*3.,p.y*2.-uT*3.)+sem*7.);float forma=1.-smoothstep(.0,.55,abs(p.x)*(1.3+p.y*2.)+ (1.-p.y)*.1-n*.35);
     float f=forma*smoothstep(1.,.25,p.y)*smoothstep(0.,.08,p.y);vec3 c=mix(vec3(1.,.25,.05),vec3(1.,.9,.5),f*f);o=vec4(c*f*vColor.a*1.4,0.);
   }else{
-    // En el suelo: sombras (alfa) y oro (luz): aura del héroe y su mira.
     float r=length(q);
-    if(modo<6.5){float a=smoothstep(1.,.3,r)*vColor.a;o=vec4(0.,0.,0.,a);}
+    if(modo<6.5){float a=smoothstep(1.,.2,r)*vColor.a;o=vec4(0.,0.,0.,a);}
     else if(modo<7.5){float anillo=(1.-smoothstep(.0,.08,abs(r-.85)))+smoothstep(1.,0.,r)*.35;o=vec4(vColor.rgb*anillo*vColor.a,0.);}
     else{float a=smoothstep(1.,.2,abs(q.y))*smoothstep(1.,.6,q.x)*smoothstep(-1.,-.4,q.x);o=vec4(vColor.rgb*a*vColor.a,0.);}
   }
@@ -215,7 +243,7 @@ void main(){
 
   /* ---- El héroe, pintado a mano en un lienzo (mirando a la derecha) --------- */
   function pintarHeroe(){
-    const c=document.createElement('canvas');c.width=192;c.height=256;const g=c.getContext('2d');
+    const c=document.createElement('canvas');c.width=c.height=256;const g=c.getContext('2d');g.translate(32,0);
     const tinta='#1a0f0a';g.lineJoin='round';g.lineCap='round';g.lineWidth=4;g.strokeStyle=tinta;
     const forma=(pts,fill)=>{g.beginPath();g.moveTo(...pts[0]);for(let i=1;i<pts.length;i++)g.quadraticCurveTo(...pts[i]);g.closePath();g.fillStyle=fill;g.fill();g.stroke();};
     // Halo de oro con anillos, como en el manuscrito.
@@ -241,6 +269,19 @@ void main(){
     g.strokeStyle=tinta;g.lineWidth=4;g.beginPath();g.moveTo(148,94);g.lineTo(176,52);g.stroke();g.strokeStyle='#e8c46a';g.lineWidth=2;g.beginPath();g.moveTo(148,94);g.lineTo(176,52);g.stroke();
     return c;
   }
+  // Relieve del héroe: la silueta desenfocada como altura (más un poco del dibujo) → normales.
+  function mapaNormal(c){
+    const w=c.width,h=c.height,d=c.getContext('2d').getImageData(0,0,w,h).data,alt=new Float32Array(w*h),tmp=new Float32Array(w*h);
+    for(let i=0;i<w*h;i++)alt[i]=d[i*4+3]/255;
+    const caja=(a,b,r,paso,n,largo)=>{for(let l=0;l<largo;l++){let suma=0;const base=l*(paso===1?w:1);for(let i=-r;i<=r;i++)suma+=a[base+lim(i,0,n-1)*paso];
+      for(let i=0;i<n;i++){b[base+i*paso]=suma/(2*r+1);suma+=a[base+lim(i+r+1,0,n-1)*paso]-a[base+lim(i-r,0,n-1)*paso];}}};
+    for(let k=0;k<2;k++){caja(alt,tmp,7,1,w,h);caja(tmp,alt,7,w,h,w);}
+    for(let i=0;i<w*h;i++)alt[i]=alt[i]*alt[i]*(3-2*alt[i])+(d[i*4]+d[i*4+1]+d[i*4+2])/765*.08*(d[i*4+3]/255);
+    const n=document.createElement('canvas');n.width=w;n.height=h;const g=n.getContext('2d'),im=g.createImageData(w,h);
+    for(let y=0;y<h;y++)for(let x=0;x<w;x++){const i=y*w+x,dx=alt[y*w+Math.min(w-1,x+1)]-alt[y*w+Math.max(0,x-1)],dy=alt[Math.min(h-1,y+1)*w+x]-alt[Math.max(0,y-1)*w+x];
+      let nx=-dx*15,ny=dy*15,nz=1;const l=Math.hypot(nx,ny,nz);nx/=l;ny/=l;nz/=l;im.data[i*4]=(nx*.5+.5)*255;im.data[i*4+1]=(ny*.5+.5)*255;im.data[i*4+2]=(nz*.5+.5)*255;im.data[i*4+3]=255;}
+    g.putImageData(im,0,0);return n;
+  }
 
   /* ---- El motor ------------------------------------------------------------------ */
   function crear(){
@@ -260,8 +301,9 @@ void main(){
     const S=ARENA+4.5,bSuelo=buf(new Float32Array([-S,-S,S,-S,S,S,-S,-S,S,S,-S,S]));
     const bCajas=gl.createBuffer(),bFig=gl.createBuffer();
     const textura=(fuente,mip)=>{const t=gl.createTexture();gl.bindTexture(gl.TEXTURE_2D,t);gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL,false);gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,fuente);
-      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);return t;};
-    const tHeroe=textura(pintarHeroe());
+      gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+      if(mip){gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);}return t;};
+    const lienzoHeroe=pintarHeroe(),tHeroe=textura(lienzoHeroe,true),tHeroeN=textura(mapaNormal(lienzoHeroe),true);
     // El arte dorado llega cuando carga; mientras, un píxel de lapislázuli.
     const tmp=document.createElement('canvas');tmp.width=tmp.height=1;tmp.getContext('2d').fillStyle='#101a40';tmp.getContext('2d').fillRect(0,0,1,1);
     let tArte=textura(tmp),arteListo=false;const img=new Image();img.onload=()=>{tArte=textura(img);arteListo=true;};img.src=arteUrl;
@@ -276,13 +318,14 @@ void main(){
       const ojo=[mem.cam[0],dist*Math.sin(pitch),mem.cam[2]+dist*Math.cos(pitch)];
       const vista=M.mirar(ojo,mem.cam),proy=M.persp(fov,asp,.5,120),vp=M.mult(proy,vista);
       const der=[vista[0],vista[4],vista[8]],arr=[vista[1],vista[5],vista[9]];
-      return {vp,inv:M.invertir(vp),ojo,der,arr,w,h};
+      const fr=norm3([ojo[0]-mem.cam[0],0,ojo[2]-mem.cam[2]]);
+      return {vp,inv:M.invertir(vp),ojo,der,arr,frente:fr,w,h};
     }
     function memoria(s){let m=memorias.get(s.modelo);if(!m){m={vivos:new Map(),efectos:[],cam:null};memorias.set(s.modelo,m);}return m;}
     function luces(s,t){
       const m=s.modelo,p=m.jugador,L=[];
       const poner=(x,y,z,r,col,i)=>{L.push([x,y,z,r,col[0]*i,col[1]*i,col[2]*i]);};
-      poner(p.x,1.1,p.y,3.6,[1,.78,.4],1.25+.15*Math.sin(t*3));
+      poner(p.x,1.1,p.y,3.6,[1,.78,.4],1.02+.12*Math.sin(t*3));
       if(m.fogonazo>0)poner(p.x+Math.cos(p.a)*.7,1,p.y+Math.sin(p.a)*.7,4.5,[1,.85,.5],m.fogonazo/.075*2.5);
       for(const mc of m.marcas){const e=mc.edad-mc.aviso;if(e>=0&&e<mc.activo)poner(mc.x,1,mc.y,4.5,[1,.55,.2],1.8*(1-e/mc.activo));else if(e>=mc.activo&&e<mc.activo+mc.fuego)poner(mc.x,.8,mc.y,3.2,[1,.4,.1],1.1);}
       for(const b of m.balas.slice(-5))poner(b.x,.9,b.y,2.4,[1,.8,.4],1.2);
@@ -322,8 +365,16 @@ void main(){
       const m=s.modelo,p=m.jugador,mem=memoria(s),planas=[],de_pie=[];
       const fig=(lista,x,y,z,w,h,col,modo,sem=0,k=0,extra=0)=>lista.push({x,y,z,w,h,col,par:[modo,sem,k,extra]});
       // Sombras y oro en el suelo.
-      for(const u of m.enemigos)fig(planas,u.x,0,u.y,.7,.5,[0,0,0,.55*lim(1-u.aparece/.65,0,1)],6);
-      fig(planas,p.x,0,p.y,.5,.36,[0,0,0,.5],6);
+      // Sombras proyectadas: la del halo del fondo (larga, hacia la cámara) para
+      // todos, y la que el aura del héroe hace girar alrededor de cada fantasma.
+      const clave=[.55,.835],sombra=(x,z,w,h,modo,dir,largo,a,sem,k,lado)=>fig(planas,x,0,z,w,h,[dir[0],dir[1],largo,a],modo,sem,k,lado);
+      const ladoHeroe=Math.cos(p.a)*cam.der[0]+Math.sin(p.a)*cam.der[2]>=0?1:-1;
+      for(const u of m.enemigos){const sale=lim(1-u.aparece/.65,0,1),lado=(u.x-p.x)*cam.der[0]+(u.y-p.y)*cam.der[2]>0?-1:1,sem=(u.id*.137)%1;
+        sombra(u.x,u.y,.95,2.3,11,clave,.8,.5*sale,sem,sale,lado);
+        const dx=u.x-p.x,dz=u.y-p.y,d=Math.hypot(dx,dz);if(d>.3&&d<4.6)sombra(u.x,u.y,.95,2.3,11,[dx/d,dz/d],lim(.5+d*.22,.5,1.4),.5*(1-d/4.6)*sale,sem,sale,lado);
+        fig(planas,u.x,0,u.y,.5,.34,[0,0,0,.6*sale],6);}
+      sombra(p.x,p.y,1.04,2.05,10,clave,.85,.8,0,0,ladoHeroe);
+      fig(planas,p.x,0,p.y,.42,.28,[0,0,0,.6],6);
       fig(planas,p.x,0,p.y,1.1,1.1,[1,.8,.4,.55+.15*Math.sin(t*3)],7);
       fig(planas,p.x+Math.cos(p.a)*1.05,0,p.y+Math.sin(p.a)*1.05,.55,.12,[1,.85,.45,.7],8,0,0,p.a);
       // Fantasmas: aparecen desde el suelo, miran al héroe y destellan al recibir.
@@ -340,7 +391,7 @@ void main(){
         for(let i=0;i<6;i++){const a=i*TAU/6+e.sem;fig(de_pie,e.x+Math.cos(a)*k*1.1,.6+Math.sin(k*3+i)*.3,e.y+Math.sin(a)*k*1.1,.18,.18,[1,.8,.4,1-k],2);}}
       // El héroe: parpadea mientras es invulnerable; tras caer, una columna de oro.
       const parpadeo=m.invulnerable>0&&Math.floor(m.invulnerable*14)%2?.35:1,cae=lim((m.caidaJugador||0)/.35,0,1);
-      fig(de_pie,p.x,0,p.y,.78,2.05*(1-cae*.5),[1,1,1,parpadeo],1,0,s.andando||0,Math.cos(p.a)*cam.der[0]+Math.sin(p.a)*cam.der[2]>=0?1:-1);
+      fig(de_pie,p.x,0,p.y,1.04,2.05*(1-cae*.5),[1,1,1,parpadeo],1,0,s.andando||0,ladoHeroe);
       const punta=[p.x+Math.cos(p.a)*.62,1.6,p.y+Math.sin(p.a)*.62];
       fig(de_pie,punta[0],punta[1],punta[2],.28+(m.fogonazo>0?.5:0),.28+(m.fogonazo>0?.5:0),[1,.85,.5,.9],2);
       if(cae>0)fig(de_pie,p.x,1.2,p.y,.5,2.2*cae,[1,.85,.45,cae],2);
@@ -401,8 +452,8 @@ void main(){
       // 5 · Figuras, de lejos a cerca, sin escribir profundidad.
       const lista=figuras(s,t,cam),n=subirFiguras(lista);
       pr=P.fig;gl.useProgram(pr.p);gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-      gl.uniformMatrix4fv(pr.u.uVP,false,cam.vp);gl.uniform3fv(pr.u.uDer,cam.der);gl.uniform3fv(pr.u.uArr,cam.arr);gl.uniform1f(pr.u.uT,t);subirLuces(pr,L);
-      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tHeroe);gl.uniform1i(pr.u.uHeroe,0);
+      gl.uniformMatrix4fv(pr.u.uVP,false,cam.vp);gl.uniform3fv(pr.u.uDer,cam.der);gl.uniform3fv(pr.u.uArr,cam.arr);gl.uniform3fv(pr.u.uFrente,cam.frente);gl.uniform1f(pr.u.uT,t);subirLuces(pr,L);
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tHeroe);gl.uniform1i(pr.u.uHeroe,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,tHeroeN);gl.uniform1i(pr.u.uHeroeN,1);gl.activeTexture(gl.TEXTURE0);
       const st=60;atributo(pr,'aCentro',bFig,3,st,0);atributo(pr,'aEsq',bFig,2,st,12);atributo(pr,'aTam',bFig,2,st,20);atributo(pr,'aColor',bFig,4,st,28);atributo(pr,'aParam',bFig,4,st,44);
       gl.drawArrays(gl.TRIANGLES,0,n);soltar(pr);gl.depthMask(true);gl.disable(gl.BLEND);
       return true;
