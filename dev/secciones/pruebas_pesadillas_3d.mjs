@@ -35,7 +35,9 @@ try{
 }finally{fs.rmSync(temporal,{recursive:true,force:true});}
 
 // El color que distingue cada mundo: losas verdes en La cosecha, lapislázuli en El corte final.
-const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2]};
+const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2],fps:['lapislázuli y verde del archivo',d=>d[2]>d[0]*1.2||(d[1]>d[0]*1.1&&d[1]>=d[2]),.2]};
+// En primera persona la cámara es el jugador: no hay encuadre del héroe ni puntero sobre el suelo.
+const PRIMERA_PERSONA=new Set(['fps']);
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
 const servidor=crearServidor();await new Promise((ok,mal)=>{servidor.once('error',mal);servidor.listen(0,'127.0.0.1',ok);});
 const base='http://127.0.0.1:'+servidor.address().port+'/dev/secciones/pesadillas-3d.html';
@@ -57,18 +59,24 @@ try{
       let luz=0,color=0;for(let i=0;i<d.length;i+=4){luz+=(d[i]+d[i+1]+d[i+2])/3;if(f([d[i],d[i+1],d[i+2]]))color++;}return {luz:luz/(d.length/4),color:color/(d.length/4)};},esColor.toString());
     assert.ok(px.luz>25,caso+': el mundo se ve (luz media '+px.luz.toFixed(1)+')');
     assert.ok(px.color>minimo,caso+': '+nombre+' de la carta dorada ('+(px.color*100).toFixed(0)+'%)');
+    if(!PRIMERA_PERSONA.has(tipo)){
     // El puntero: del suelo a la pantalla y de vuelta al mismo punto.
     const ida=await pagina.evaluate(()=>{const R=CAOZ_PESADILLAS3D_REVISION,out=[];for(const [x,y] of [[0,0],[3,-2],[-4.5,4],[5,5]]){const s=R.pantalla(x,y),g=R.proyectar(s.x,s.y);out.push([x,y,g.x,g.y]);}return out;});
     for(const [x,y,gx,gy]of ida)assert.ok(Math.hypot(gx-x,gy-y)<.01,caso+': el puntero cae en el suelo donde apunta ('+x+','+y+' → '+gx.toFixed(3)+','+gy.toFixed(3)+')');
+    }else{
+      // Lo que está justo delante del jugador (a donde dispara) se ve en el centro de la retícula.
+      for(const d of [2,4,7]){const r=await pagina.evaluate(d=>CAOZ_PESADILLAS3D_REVISION.delante(d),d);
+        assert.ok(Math.abs(r.punto.x-r.ancho/2)<1.5,caso+': a '+d+' unidades delante, el disparo cae en el centro ('+r.punto.x.toFixed(1)+' de '+r.ancho+' px)');}
+    }
     // El pintor no toca el modelo: la misma semilla con el pintor clásico da el mismo estado.
     const clasico=await pagina.evaluate(()=>{document.querySelector('[data-pintor="clasico"]').click();const e=CAOZ_PESADILLAS3D_REVISION.irA(9,20);document.querySelector('[data-pintor="3d"]').click();return e;});
     assert.deepEqual({...clasico,activo3d:true,arte:true},e3,caso+': el modelo evoluciona igual con los dos pintores');
     // El encuadre: en las cuatro esquinas de la arena el héroe queda dentro de la pantalla.
-    for(const [x,y] of [[-6.55,-6.55],[6.55,-6.55],[-6.55,6.55],[6.55,6.55]]){
+    if(!PRIMERA_PERSONA.has(tipo))for(const [x,y] of [[-6.55,-6.55],[6.55,-6.55],[-6.55,6.55],[6.55,6.55]]){
       const r=await pagina.evaluate(([x,y])=>CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y),[x,y]),fx=r.punto.x/r.ancho,fy=r.punto.y/r.alto;
       assert.ok(fx>.05&&fx<.95&&fy>.08&&fy<.92,caso+': el héroe en ('+x+','+y+') se ve ('+(fx*100).toFixed(0)+'%, '+(fy*100).toFixed(0)+'%)');}
     assert.deepEqual(errores,[],caso+': sin errores de página');
-    console.log('✓ '+caso+': mundo 3D con el arte dorado, puntero preciso, encuadre y el modelo intacto');
+    console.log('✓ '+caso+': mundo 3D con el arte dorado, '+(PRIMERA_PERSONA.has(tipo)?'mira centrada':'puntero preciso, encuadre')+' y el modelo intacto');
     await pagina.close();
   }
   // La prueba real se abre con el pintor 3D a resolución completa; con movimiento reducido, el clásico.

@@ -55,13 +55,16 @@ void main(){vec4 a=uInv*vec4(vNdc,-1.,1.),b=uInv*vec4(vNdc,1.,1.);gl_FragColor=v
   // El telón: el arte de la carta dorada (Segador, halo, torres), de cara a la cámara.
   const TELON_V=`attribute vec2 aPos;uniform mat4 uVP;uniform vec3 uCentro,uDer,uArr;uniform vec2 uTam;varying vec2 vUv;
 void main(){vUv=aPos*.5+.5;vec3 P=uCentro+uDer*aPos.x*uTam.x*.5+uArr*aPos.y*uTam.y*.5;gl_Position=uVP*vec4(P,1.);}`;
-  const TELON_F=`precision highp float;varying vec2 vUv;uniform sampler2D uArte;uniform float uT,uPresion,uCorte;${RUIDO}
+  const TELON_F=`precision highp float;varying vec2 vUv;uniform sampler2D uArte;uniform float uT,uPresion,uCorte,uMarco;${RUIDO}
 void main(){
   vec2 uv=vec2(vUv.x,(1.-vUv.y)*uCorte);
   uv+=vec2(fbm(vUv*3.+uT*.05)-.5,fbm(vUv*3.+7.-uT*.04)-.5)*.006;
   vec3 c=texture2D(uArte,uv).rgb;
   c*=mix(.72,1.05,uPresion);c=mix(c,c*vec3(1.2,.8,.75),uPresion*.35);
   float borde=smoothstep(0.,.16,vUv.x)*smoothstep(1.,.84,vUv.x)*smoothstep(.1,.4,vUv.y)*smoothstep(1.,.97,vUv.y);
+  // Un cuadro colgado: bordes nítidos y marco de oro con moldura.
+  if(uMarco>.5){float e=min(min(vUv.x,1.-vUv.x),min(vUv.y,1.-vUv.y));borde=1.;float m=1.-smoothstep(.045,.05,e);
+    vec3 oro=vec3(.95,.72,.32)*(.7+.5*sin(e*140.))*(.8+.2*fbm(vUv*40.));c=mix(c,oro,m);c*=1.-.35*(1.-smoothstep(.05,.075,e))*(1.-m);}
   gl_FragColor=vec4(c*borde,borde);
 }`;
   // El suelo: cada mundo pone su shader entero tras esta cabecera.
@@ -72,9 +75,20 @@ const vec3 CLAVE=vec3(-.45,.8,-.68);`;
   // brillo 1: pared de pozo que se enciende de lava hacia abajo.
   const CAJA_V=`attribute vec3 aPos;attribute vec3 aNor;attribute vec3 aColor;attribute float aBrillo;uniform mat4 uVP;varying vec3 vP;varying vec3 vN;varying vec3 vColor;varying float vBrillo;
 void main(){vP=aPos;vN=aNor;vColor=aColor;vBrillo=aBrillo;gl_Position=uVP*vec4(aPos,1.);}`;
-  const CAJA_F=`precision highp float;varying vec3 vP;varying vec3 vN;varying vec3 vColor;varying float vBrillo;${LUCES}
+  const CAJA_F=`precision highp float;varying vec3 vP;varying vec3 vN;varying vec3 vColor;varying float vBrillo;${RUIDO}${LUCES}
 void main(){vec3 N=normalize(vN);vec3 base=vColor;
   float hondo=clamp(-vP.y/5.,0.,1.);vec3 c=base*(vec3(.2,.24,.36)*(.6+.4*N.y)+vec3(1.,.82,.5)*.5*max(dot(N,normalize(vec3(-.45,.8,-.68))),0.))+base*puntuales(vP,N);
+  float u=vP.x*abs(N.z)+vP.z*abs(N.x);
+  if(vBrillo>2.5){vec3 lapis=vec3(.12,.2,.52)*(.8+.3*fbm(vec2(u*6.,vP.y*3.)));float fu=fract(u*.9+.5)-.5;
+    float tallo=1.-smoothstep(.015,.03,abs(fu+.05*sin(vP.y*5.)));float hoja=1.-smoothstep(.0,.05,length(vec2(abs(fu)-.08-.04*sin(vP.y*5.),fract(vP.y*1.6)-.5)*vec2(1.,2.2))-.04);
+    vec3 oro=vec3(1.,.76,.34)*(.7+.6*max(dot(N,normalize(vec3(-.45,.8,-.68))),0.)+puntuales(vP,N)*.6);
+    c=lapis*(vec3(.3,.34,.5)+puntuales(vP,N))+lapis*.4;c=mix(c,oro,clamp(tallo+hoja,0.,1.));gl_FragColor=vec4(c,1.);return;}
+  if(vBrillo>1.5){float fila=floor(vP.y/.64),y=fract(vP.y/.64);float id=floor(u*11.+fila*3.7);float lib=h21(vec2(id,fila));
+    vec3 lomo=mix(mix(vec3(.45,.1,.08),vec3(.1,.28,.2),step(.4,lib)),vec3(.12,.18,.45),step(.75,lib))*(.7+.4*h21(vec2(id,fila+9.)));
+    float alto=.62+.3*h21(vec2(id,fila+3.)),hueco=step(alto,y);float tabla=1.-smoothstep(.0,.06,y);
+    vec3 b=mix(lomo,vec3(.05,.04,.04),hueco);b=mix(b,vec3(.33,.2,.1),tabla);b=mix(b,vec3(.9,.7,.3),step(.93,fract(u*11.))*(1.-hueco)*.6);
+    if(fract(u*1.3)>.8&&lib>.85)b=mix(vec3(.85,.8,.66),vec3(.55,.1,.08),step(.45,abs(y-.3)));
+    c=b*(vec3(.3,.34,.46)*(.7+.3*(1.-hueco))+puntuales(vP,N)*1.1);gl_FragColor=vec4(c,1.);return;}
   if(vBrillo>.5){float veta=.7+.3*sin(vP.y*9.+sin(vP.x*3.+vP.z*2.)*2.);c=mix(vec3(.12,.07,.06)*veta,vec3(1.,.3,.07),.3+.7*hondo)+vec3(1.,.5,.2)*smoothstep(-.15,0.,vP.y)*.35;}gl_FragColor=vec4(c,1.);}`;
   // Figuras: fantasmas, héroe, estrellas, humo, fuego, sombras y oro en el suelo.
   // Alfa premultiplicado: las figuras tapan (alfa) y la luz suma (alfa 0).
@@ -96,6 +110,7 @@ void main(){vQ=aEsq;vColor=aColor;vParam=aParam;float modo=aParam.x;vec3 P;vec3 
   vP=P;gl_Position=uVP*vec4(P,1.);}`;
   const FIG_F=`precision highp float;varying vec2 vQ;varying vec4 vColor;varying vec4 vParam;varying vec3 vP;
 uniform sampler2D uHeroe,uHeroeN;uniform float uT;uniform vec3 uDer,uFrente;${RUIDO}${LUCES}
+float h11s(float n){return fract(sin(n*91.7)*43758.5);}
 float estrella(vec2 q){float r=length(q);float a=atan(q.y,q.x);float rayos=pow(abs(cos(a*2.)),40.)*1.+pow(abs(cos(a*2.+.785)),40.)*.55;return clamp(exp(-r*r*18.)*1.3+rayos*exp(-r*3.2)*.9,0.,3.);}
 vec2 torcer(vec2 p,float sem,float t){return p+vec2(fbm(p*vec2(3.,4.)+vec2(sem,-t*.8))-.5,fbm(p*vec2(3.,4.)+vec2(5.+sem,-t*.7))-.5)*.16;}
 // El fantasma de humo como distancia con signo: capucha, cuerpo, brazos y garras.
@@ -133,11 +148,23 @@ void main(){
     float e=.02,gx=(sdfFantasma(s+vec2(e,0.),t)-sdf)/e,gy=(sdfFantasma(s+vec2(0.,e),t)-sdf)/e;
     float grosor=clamp(-sdf*7.,0.,1.);vec3 N=mundo(normalize(vec3(gx*lado*(1.-grosor),gy*(1.-grosor),.3+grosor)));
     float filo=smoothstep(-.09,0.,sdf);
+    if(vColor.b>.5){
+      vec3 tela=mix(vec3(.3,.03,.03),vec3(.78,.16,.1),filo*.6+.25*fbm(s*vec2(9.,3.)+t*.2));
+      vec3 col=tela*luzFigura(vP,N,0.)*1.35+vec3(.3,.05,.03)*.25;
+      float mask=1.-smoothstep(0.,.02,length((s-vec2(0.,.74))*vec2(1.,.8))-.13);
+      vec2 cu=vec2(abs(s.x)-.055,s.y-.76);float cuenca=1.-smoothstep(0.,.015,length(cu*vec2(1.,.8))-.035);
+      col=mix(col,vec3(.9,.87,.78)*(.6+.5*luzFigura(vP,N,0.)),mask);col=mix(col,vec3(.05,.02,.02),cuenca*mask);
+      col+=vec3(1.,.95,.9)*vColor.r*a;
+      // La corona de púas de oro tras la cabeza (suma luz).
+      vec2 hc=s-vec2(0.,.77);float ang=atan(hc.y,hc.x),rr=length(hc);float puas=pow(abs(cos(ang*7.)),10.)*(1.-smoothstep(.2,.36,rr))*smoothstep(.15,.2,rr);
+      float aro=1.-smoothstep(0.,.015,abs(rr-.19));
+      o=vec4(col*a,a)+vec4(vec3(1.,.78,.3)*(puas+aro)*.9*step(.6,s.y)*(1.-vColor.r),0.);
+    }else{
     vec3 albedo=mix(vec3(.07,.075,.13),vec3(.36,.42,.58),filo*.75);
     vec3 col=albedo*luzFigura(vP,N,0.)*1.3+vec3(.2,.25,.4)*filo*.2;
     col+=vec3(1.,.95,.9)*vColor.r*a;
     vec2 ej=vec2(abs(s.x)-.095,s.y-.755);float ojo=1.-smoothstep(.0,.012,length(ej*vec2(1.,2.3))-.035);
-    o=vec4(col*a,a)+vec4(vec3(1.,.8,.25)*(ojo*1.6+exp(-dot(ej,ej)*400.)*.5)*(1.-vColor.r),0.);
+    o=vec4(col*a,a)+vec4(vec3(1.,.8,.25)*(ojo*1.6+exp(-dot(ej,ej)*400.)*.5)*(1.-vColor.r),0.);}
     o*=vColor.g;
   }else if(modo<1.5){
     // El héroe (atlas pintado con su mapa de normales): la capa ondea con el paso.
@@ -242,8 +269,8 @@ void main(){
         sombra(u.x,u.y,w,h,11,CLAVE,.8,.5*sale,sem,sale,lado);
         const dx=u.x-p.x,dz=u.y-p.y,d=Math.hypot(dx,dz);if(d>.3&&d<4.6)sombra(u.x,u.y,w,h,11,[dx/d,dz/d],lim(.5+d*.22,.5,1.4),.5*(1-d/4.6)*sale,sem,sale,lado);
         fig(planas,u.x,0,u.y,.5*w/.95,.34*w/.95,[0,0,0,.6*sale],6);
-        fig(de_pie,u.x,y+.3,u.y,1.1*w/.95,.9*h/2.3,[.3,.35,.5,.35*sale],3,u.id||0);
-        fig(de_pie,u.x,y,u.y,w,h,[op.dolor?1:0,op.alfa??1,0,0],0,sem,sale,lado);
+        if(!op.rojo)fig(de_pie,u.x,y+.3,u.y,1.1*w/.95,.9*h/2.3,[.3,.35,.5,.35*sale],3,u.id||0);
+        fig(de_pie,u.x,y,u.y,w,h,[op.dolor?1:0,op.alfa??1,op.rojo?1:0,0],0,sem,sale,lado);
       },
       chispas(){for(const q of m.particulas){const c=hexa(q.color);fig(de_pie,q.x,.4,q.y,.12,.12,[c[0],c[1],c[2],lim(q.t*3,0,1)],2);}},
     };
@@ -277,7 +304,11 @@ void main(){
     const memoria=s=>{let m=memorias.get(s.modelo);if(!m){m={vivos:new Map(),efectos:[],cam:null};memorias.set(s.modelo,m);}return m;};
 
     function camara(s,ahora){
-      const w=s.ancho,h=s.alto,asp=w/h,C=def.camara,fov=C.fov*Math.PI/180,pitch=C.pitch*Math.PI/180,p=s.modelo.jugador,mem=memoria(s);
+      const w=s.ancho,h=s.alto,asp=w/h,C=def.camara,p=s.modelo.jugador,mem=memoria(s);
+      // Cámara propia del mundo (primera persona): ojo, punto al que mira y campo vertical.
+      if(C.personalizada){const v=C.personalizada(s,w,h),vista=M.mirar(v.ojo,v.mira),vp=M.mult(M.persp(v.fov*Math.PI/180,asp,v.cerca??.05,60),vista);
+        return {vp,inv:M.invertir(vp),ojo:v.ojo,der:[vista[0],vista[4],vista[8]],arr:[vista[1],vista[5],vista[9]],frente:norm3([v.ojo[0]-v.mira[0],0,v.ojo[2]-v.mira[2]]),w,h};}
+      const fov=C.fov*Math.PI/180,pitch=C.pitch*Math.PI/180;
       const obj=C.objetivo(p,asp);
       if(!mem.cam)mem.cam=obj.slice();else for(let i=0;i<3;i++)mem.cam[i]+=(obj[i]-mem.cam[i])*Math.min(1,.12*60*Math.max(1/240,ahora-(mem.antes??ahora)||1/60));
       const tan=Math.tan(fov/2),dist=C.distancia(tan,asp,pitch,s);
@@ -323,8 +354,9 @@ void main(){
       let pr=P.fondo;gl.useProgram(pr.p);gl.uniformMatrix4fv(pr.u.uInv,false,cam.inv);gl.uniform3fv(pr.u.uCam,cam.ojo);gl.uniform1f(pr.u.uT,t);gl.uniform1f(pr.u.uPresion,presion);
       atributo(pr,'aPos',bTri,2,0,0);gl.drawArrays(gl.TRIANGLES,0,3);soltar(pr);
       // 2 · El telón: el arte dorado de la carta tras la arena.
-      if(arteListo){const T=def.telon(presion);pr=P.telon;gl.useProgram(pr.p);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
-        gl.uniformMatrix4fv(pr.u.uVP,false,cam.vp);gl.uniform3fv(pr.u.uCentro,T.centro);gl.uniform3fv(pr.u.uDer,cam.der);gl.uniform3fv(pr.u.uArr,cam.arr);gl.uniform2f(pr.u.uTam,T.ancho,T.ancho*768/512*T.corte);
+      const T=arteListo?def.telon(presion):null;
+      if(T&&!T.marco){pr=P.telon;gl.useProgram(pr.p);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
+        gl.uniformMatrix4fv(pr.u.uVP,false,cam.vp);gl.uniform3fv(pr.u.uCentro,T.centro);gl.uniform3fv(pr.u.uDer,T.der||cam.der);gl.uniform3fv(pr.u.uArr,T.arr||cam.arr);gl.uniform2f(pr.u.uTam,T.ancho,T.ancho*768/512*T.corte);gl.uniform1f(pr.u.uMarco,T.marco?1:0);
         gl.uniform1f(pr.u.uT,t);gl.uniform1f(pr.u.uPresion,presion);gl.uniform1f(pr.u.uCorte,T.corte);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tArte);gl.uniform1i(pr.u.uArte,0);
         atributo(pr,'aPos',bQuad,2,0,0);gl.drawArrays(gl.TRIANGLES,0,6);soltar(pr);gl.disable(gl.BLEND);}
       // 3 · El suelo.
@@ -336,6 +368,10 @@ void main(){
       const vc=cajas(s);if(vc.length){pr=P.caja;gl.useProgram(pr.p);gl.uniformMatrix4fv(pr.u.uVP,false,cam.vp);subirLuces(pr,L);
         gl.bindBuffer(gl.ARRAY_BUFFER,bCajas);gl.bufferData(gl.ARRAY_BUFFER,vc,gl.DYNAMIC_DRAW);
         atributo(pr,'aPos',bCajas,3,40,0);atributo(pr,'aNor',bCajas,3,40,12);atributo(pr,'aColor',bCajas,3,40,24);atributo(pr,'aBrillo',bCajas,1,40,36);gl.drawArrays(gl.TRIANGLES,0,vc.length/10);soltar(pr);}
+      // El cuadro colgado, después de las paredes y con profundidad.
+      if(T&&T.marco){pr=P.telon;gl.useProgram(pr.p);gl.uniformMatrix4fv(pr.u.uVP,false,cam.vp);gl.uniform3fv(pr.u.uCentro,T.centro);gl.uniform3fv(pr.u.uDer,T.der);gl.uniform3fv(pr.u.uArr,T.arr);gl.uniform2f(pr.u.uTam,T.ancho,T.ancho*768/512*T.corte);gl.uniform1f(pr.u.uMarco,1);
+        gl.uniform1f(pr.u.uT,t);gl.uniform1f(pr.u.uPresion,presion);gl.uniform1f(pr.u.uCorte,T.corte);gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tArte);gl.uniform1i(pr.u.uArte,0);
+        atributo(pr,'aPos',bQuad,2,0,0);gl.drawArrays(gl.TRIANGLES,0,6);soltar(pr);}
       // 5 · Figuras: las planas primero y las de pie de lejos a cerca, sin escribir profundidad.
       const h=ayudas(s,t,cam,mem);def.figuras(h);
       const prof=f=>(f.x-cam.ojo[0])**2+(f.y-cam.ojo[1])**2+(f.z-cam.ojo[2])**2;h.de_pie.sort((a,b)=>prof(b)-prof(a));
@@ -376,7 +412,7 @@ void main(){
     API.pintores=Object.assign(API.pintores||{},{[tipo](s,ctx){
       if(!usable(e,s))return e.anterior?.(s,ctx);
       if(!e.motor){try{e.motor=crear(def);}catch(err){console.warn(def.nombre+' en 3D no pudo crearse:',err);e.motor=null;}if(!e.motor){e.fallo=true;return e.anterior?.(s,ctx);}}
-      try{e.motor.dibujar(s);e.ancho=e.motor.canvas.width;ctx.drawImage(e.motor.canvas,0,0,s.ancho,s.alto);}
+      try{e.motor.dibujar(s);e.ancho=e.motor.canvas.width;ctx.drawImage(e.motor.canvas,0,0,s.ancho,s.alto);def.superponer?.(ctx,s,Number.isFinite(s.ambiente)?s.ambiente:performance.now()/1000);}
       catch(err){console.warn(def.nombre+' en 3D vuelve al pintor anterior:',err);e.fallo=true;e.anterior?.(s,ctx);}
     }});
     API.sueloDesdePantalla=Object.assign(API.sueloDesdePantalla||{},{[tipo]:(s,x,y)=>usable(e,s)&&e.motor?e.motor.sueloDesdePantalla(s,x,y):null});
