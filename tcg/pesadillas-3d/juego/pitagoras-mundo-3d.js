@@ -93,13 +93,15 @@ void main(){vec3 N=normalize(vN);vec3 base=vColor;
   // Figuras: fantasmas, héroe, estrellas, humo, fuego, sombras y oro en el suelo.
   // Alfa premultiplicado: las figuras tapan (alfa) y la luz suma (alfa 0).
   // De cara a la cámara (12+): 12 astro con rostro, 13 meteoro, 14 burbuja,
-  // 15 punto de luz, 16 marca de cruce.
+  // 15 punto de luz, 16 marca de cruce, 18 pieza pintada del atlas del mundo (def.atlas).
   // Las figuras de pie (2,5D) tienen relieve (normales) y proyectan sombras
   // sobre las losas: la del halo del fondo y la que les hace el aura del héroe.
   const FIG_V=`attribute vec3 aCentro;attribute vec2 aEsq;attribute vec2 aTam;attribute vec4 aColor;attribute vec4 aParam;
 uniform mat4 uVP;uniform vec3 uDer,uArr;varying vec2 vQ;varying vec4 vColor;varying vec4 vParam;varying vec3 vP;
 void main(){vQ=aEsq;vColor=aColor;vParam=aParam;float modo=aParam.x;vec3 P;vec3 derH=normalize(vec3(uDer.x,0.,uDer.z));
-  if(modo>11.5)P=aCentro+uDer*aEsq.x*aTam.x+uArr*aEsq.y*aTam.y;
+  // Piezas del atlas (18): de cara a la cámara, giradas en su plano; ancho negativo = espejo.
+  if(modo>17.5){vec2 e=vec2(aEsq.x*aTam.x,aEsq.y*aTam.y);float g=aParam.z;P=aCentro+uDer*(e.x*cos(g)-e.y*sin(g))+uArr*(e.x*sin(g)+e.y*cos(g));}
+  else if(modo>11.5)P=aCentro+uDer*aEsq.x*aTam.x+uArr*aEsq.y*aTam.y;
   else if(modo>9.5){
     // Sombra: la silueta tumbada sobre el suelo, alejándose de la luz.
     vec2 dir=aColor.xy;vec3 perp=normalize(vec3(-dir.y,0.,dir.x));if(dot(perp,derH)<0.)perp=-perp;
@@ -110,7 +112,7 @@ void main(){vQ=aEsq;vColor=aColor;vParam=aParam;float modo=aParam.x;vec3 P;vec3 
   else P=aCentro+uDer*aEsq.x*aTam.x+uArr*aEsq.y*aTam.y;
   vP=P;gl_Position=uVP*vec4(P,1.);}`;
   const FIG_F=`precision highp float;varying vec2 vQ;varying vec4 vColor;varying vec4 vParam;varying vec3 vP;
-uniform sampler2D uHeroe,uHeroeN;uniform float uT;uniform vec3 uDer,uFrente;${RUIDO}${LUCES}
+uniform sampler2D uHeroe,uHeroeN,uAtlas;uniform float uT;uniform vec3 uDer,uFrente;${RUIDO}${LUCES}
 float h11s(float n){return fract(sin(n*91.7)*43758.5);}
 // Celdas (Voronoi): distancia a la más cercana y a la segunda, para grietas en la roca.
 vec2 celdas(vec2 x){vec2 n=floor(x),f=fract(x);float d1=8.,d2=8.;for(int j=-1;j<=1;j++)for(int i=-1;i<=1;i++){vec2 g=vec2(float(i),float(j));vec2 r=g+h22(n+g)-f;float d=dot(r,r);if(d<d1){d2=d1;d1=d;}else if(d<d2)d2=d;}return vec2(sqrt(d1),sqrt(d2));}
@@ -140,7 +142,15 @@ vec3 luzFigura(vec3 P,vec3 N,float propia){
   return c;}
 void main(){
   float modo=vParam.x,sem=vParam.y,k=vParam.z;vec2 q=vQ;vec4 o=vec4(0.);
-  if(modo>11.5){
+  if(modo>17.5){
+    // Pieza pintada del atlas del mundo (4×4 celdas de 256 px con 4 px de margen).
+    // vParam: celda, giro, luz; vColor: destello, rojo, sombra, alfa.
+    float celda=floor(vParam.y+.5);vec2 cel=vec2(celda-4.*floor(celda/4.+.01),floor(celda/4.+.01));
+    vec2 uv=(cel*256.+4.+vec2(q.x*.5+.5,.5-q.y*.5)*248.)/1024.;vec4 tx=texture2D(uAtlas,uv);if(tx.a<.02)discard;
+    vec3 col=tx.rgb*(.72+.12*vParam.w+luzFigura(vP,mundo(vec3(0.,0.,1.)),0.)*.3);
+    col=mix(col,vec3(1.,.97,.9),vColor.x*.75);col=mix(col,col*vec3(1.6,.45,.4),vColor.y);col*=1.-vColor.z;
+    o=vec4(col*tx.a,tx.a)*vColor.w;
+  }else if(modo>11.5){
     vec2 p=q*1.7;float r=length(p);
     if(modo<12.5){
       // La estrella muerta: roca negra, lava en las grietas, ojos que siguen al héroe,
@@ -301,7 +311,7 @@ void main(){
   const CLAVE=[.55,.835];
   function ayudas(s,t,cam,mem){
     const m=s.modelo,p=m.jugador,planas=[],de_pie=[];
-    const fig=(lista,x,y,z,w,h,col,modo,sem=0,k=0,extra=0)=>lista.push({x,y,z,w,h,col,par:[modo,sem,k,extra]});
+    const fig=(lista,x,y,z,w,h,col,modo,sem=0,k=0,extra=0)=>{const f={x,y,z,w,h,col,par:[modo,sem,k,extra]};lista.push(f);return f;};
     const sombra=(x,z,w,h,modo,dir,largo,a,sem,k,lado)=>fig(planas,x,0,z,w,h,[dir[0],dir[1],largo,a],modo,sem,k,lado);
     const ladoHeroe=Math.cos(p.a)*cam.der[0]+Math.sin(p.a)*cam.der[2]>=0?1:-1;
     return {s,t,cam,mem,m,p,planas,de_pie,fig,sombra,ladoHeroe,
@@ -352,6 +362,7 @@ void main(){
       gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
       if(mip){gl.generateMipmap(gl.TEXTURE_2D);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR_MIPMAP_LINEAR);}return t;};
     const lienzoHeroe=pintarHeroe(),tHeroe=textura(lienzoHeroe,true),tHeroeN=textura(mapaNormal(lienzoHeroe),true);
+    const lienzoAtlas=def.atlas?.(),tAtlas=lienzoAtlas?textura(lienzoAtlas,true):tHeroe;
     // El arte dorado llega cuando carga; mientras, un píxel de lapislázuli.
     const tmp=document.createElement('canvas');tmp.width=tmp.height=1;tmp.getContext('2d').fillStyle='#101a40';tmp.getContext('2d').fillRect(0,0,1,1);
     let tArte=textura(tmp),arteListo=false;const img=new Image();img.onload=()=>{tArte=textura(img);arteListo=true;};img.src=def.arte;
@@ -429,11 +440,12 @@ void main(){
         atributo(pr,'aPos',bQuad,2,0,0);gl.drawArrays(gl.TRIANGLES,0,6);soltar(pr);}
       // 5 · Figuras: las planas primero y las de pie de lejos a cerca, sin escribir profundidad.
       const h=ayudas(s,t,cam,mem);def.figuras(h);
-      const prof=f=>(f.x-cam.ojo[0])**2+(f.y-cam.ojo[1])**2+(f.z-cam.ojo[2])**2;h.de_pie.sort((a,b)=>prof(b)-prof(a));
+      // Las piezas de un personaje por partes llevan su orden (distancia) explícito: f.orden.
+      const prof=f=>f.orden!==undefined?f.orden*f.orden:(f.x-cam.ojo[0])**2+(f.y-cam.ojo[1])**2+(f.z-cam.ojo[2])**2;h.de_pie.sort((a,b)=>prof(b)-prof(a));
       const n=subirFiguras([...h.planas,...h.de_pie]);
       pr=P.fig;gl.useProgram(pr.p);gl.depthMask(false);gl.enable(gl.BLEND);gl.blendFunc(gl.ONE,gl.ONE_MINUS_SRC_ALPHA);
       gl.uniformMatrix4fv(pr.u.uVP,false,cam.vp);gl.uniform3fv(pr.u.uDer,cam.der);gl.uniform3fv(pr.u.uArr,cam.arr);gl.uniform3fv(pr.u.uFrente,cam.frente);gl.uniform1f(pr.u.uT,t);subirLuces(pr,L);
-      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tHeroe);gl.uniform1i(pr.u.uHeroe,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,tHeroeN);gl.uniform1i(pr.u.uHeroeN,1);gl.activeTexture(gl.TEXTURE0);
+      gl.activeTexture(gl.TEXTURE0);gl.bindTexture(gl.TEXTURE_2D,tHeroe);gl.uniform1i(pr.u.uHeroe,0);gl.activeTexture(gl.TEXTURE1);gl.bindTexture(gl.TEXTURE_2D,tHeroeN);gl.uniform1i(pr.u.uHeroeN,1);gl.activeTexture(gl.TEXTURE2);gl.bindTexture(gl.TEXTURE_2D,tAtlas);gl.uniform1i(pr.u.uAtlas,2);gl.activeTexture(gl.TEXTURE0);
       const st=60;atributo(pr,'aCentro',bFig,3,st,0);atributo(pr,'aEsq',bFig,2,st,12);atributo(pr,'aTam',bFig,2,st,20);atributo(pr,'aColor',bFig,4,st,28);atributo(pr,'aParam',bFig,4,st,44);
       gl.drawArrays(gl.TRIANGLES,0,n);soltar(pr);gl.depthMask(true);gl.disable(gl.BLEND);
       return true;

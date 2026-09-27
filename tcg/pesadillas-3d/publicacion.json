@@ -2,33 +2,34 @@
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
     "generado/datos.js": "5bea844ef004295bb9d0e6cf484e35a74fb8d1fe3a54cfe4d9013475a11bf360",
-    "index.html": "441408a093e6205526465c8e2cc5ea467afb8c37d70688f5f5de11196bedd5df",
+    "index.html": "146b810ea6fc28064ba10e74bebd9c58bb2b5bfdb38d3e922b69b0348c67e71e",
     "juego/art/editorcarrera-dorado-v1.webp": "99281f05da920db2adc8a91f26ac1e9329bd47a45d26c59e86076cf927d9683f",
     "juego/art/editorcorte-dorado-v1.webp": "efb8a17b4c65a304bb69e098094dfbbd67a73e71989ea9a33c54486d3480c810",
     "juego/art/editorcosecha-dorado-v1.webp": "61401f993d0aee551494a138dae651249d492a5049caaa3eb24e2a1ef6374ae7",
     "juego/art/editorcuadro-dorado-v1.webp": "de64fb7472ecd3a03055bd1297e6bdb07ec72422bcdab64463d3f5b86a8efea4",
     "juego/art/editororbita-dorado-v1.webp": "d328792e7480643fba26048a65d4f5a4c74625da93808b6ad81ceeedeb655d42",
     "juego/art/esbirro-editor-v219.webp": "87fab064c69e6e34dcdd9ecc9f0b78b4ed693d18066877f685cfea830ade66c3",
+    "juego/art/tok_dragon-dorado-v1.webp": "c063ad2e79abc3deeb47247ecce6877322108241e09750a7ae85a45367dbc360",
     "juego/pitagoras-cine.js": "a2a7cf22ff3cb3e556e183f0f9bdd7a072e9185f1abac242ee33c4cae6cd09d1",
     "juego/pitagoras-corte-3d.js": "d2496d9d432962eb582e415df300d94c7943a0f2adde3317bf680de262f52707",
     "juego/pitagoras-cosecha-3d.js": "d9a9c4143aa262fcc49ad06d955ac80eb45885185a3ed8e29b8ec91e8890885c",
     "juego/pitagoras-cuadro-3d.js": "38777b016fb41cd43a21f2d62e32086c80ec8f79b153e282de7f7ec59baa7b9a",
+    "juego/pitagoras-dragon-3d.js": "1442268f06a9f1b561e0e8a7a184c0b37398fdcca1a0a5d9bef953a7ca9e10fd",
+    "juego/pitagoras-dragon.js": "138e1f38acb6cfe88a89844e35a4c2a0cedd694746216f7a7adf0f0c9f964522",
     "juego/pitagoras-fps.js": "9a3e9f8021c54217e8bb0efecca04ca81873c83e0af30de8a72ff33a456a6df2",
-    "juego/pitagoras-mundo-3d.js": "a6d8cefa515ccf25b6ea6d55e3586a3d801b377bba49e2c8e9c20996b516b128",
+    "juego/pitagoras-mundo-3d.js": "7409ff6c805231df6250368a7c1bfa00f16d28cc9c2d78f33856253c1d855558",
     "juego/pitagoras-mundos.js": "0d2961f36d5e727e69423b088c24d319db9f2bbeffc5aca72b85badf302e3ad3",
-    "juego/pitagoras-orbita-3d.js": "4e2d8ab603fc6df9d5b44448e6d88468e1475c73b813e631dd22a9a47d2fcc41",
-    "juego/pitagoras-orbita.js": "784e3a93cebcf7201c96d0fbc4a9ee4dce7cbdc3a46d35d430f66a7ab3a9749e",
     "juego/pitagoras-pixel.js": "768074cc1ece82648f684fba20d3b064ed8aa0c89d47ef7590cd68f8cff935dd",
     "juego/pitagoras-pruebas.js": "b0808969d1fbedc2cf2523592834a7e21cf9d6d5f405b0bcf5805b7d8a8b10ff",
     "juego/pitagoras-puente-3d.js": "5033bddebd56ffa46f175ad172cf4a52031097881802df2d78c62d327313be54",
     "pesadillas-3d-mesa.css": "a89ac38eb99f234ed15125f7887a8000864ef1ecd6657c767d92ce835d360377",
-    "pesadillas-3d-mesa.js": "ffb8f217030df099cec3f56b355ac546e4630d2ad16abfca75ebf133f6914e3b",
-    "procedencia.json": "3fdbb8b5ce31b623ebc04083138151b4ace5c526beb9457f068cbb67e068f6d1"
+    "pesadillas-3d-mesa.js": "64fe25aa67256fa54cf7f8613bb292e3d8f86472fcd2180e2dcc7697be5feb12",
+    "procedencia.json": "becd2bc5b97ee491a9673f2f9505236c5e10ef2af109194efc886f44d17fd30a"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "549b1ed5f36757d64249cc86d27d9baae2a32ca9"
+    "sha": "1e3c9ffd959d409e43a8be80ae8e44687545c4a7"
   },
   "seccion": "pesadillas-3d",
   "version": 1
