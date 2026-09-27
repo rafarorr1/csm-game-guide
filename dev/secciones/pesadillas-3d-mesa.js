@@ -9,6 +9,7 @@
   const PRUEBAS={
     isometrico:{carta:'editorcosecha',mundo:()=>window.CAOZ_COSECHA_3D,apagar:'CAOZ_COSECHA_3D_APAGADA',bot:botCosecha},
     laseres:{carta:'editorcorte',mundo:()=>window.CAOZ_CORTE_3D,apagar:'CAOZ_CORTE_3D_APAGADA',bot:(m,mem)=>API.guiasPrueba.laseres(m,mem)},
+    carrera:{carta:'editorcarrera',mundo:()=>window.CAOZ_PUENTE_3D,apagar:'CAOZ_PUENTE_3D_APAGADA',bot:m=>API.guiasPrueba.carrera(m)},
     fps:{carta:'editorcuadro',mundo:()=>window.CAOZ_CUADRO_3D,apagar:'CAOZ_CUADRO_3D_APAGADA',bot:botCuadro},
   };
   if(q.get('captura')==='1')document.documentElement.dataset.captura='';
@@ -43,7 +44,7 @@
     g.save();if(s.modelo.impacto>0){const f=s.modelo.impacto*4;g.translate(Math.sin(s.modelo.t*79)*f,Math.cos(s.modelo.t*97)*f);}API.pintores[tipo](s,g);g.restore();
     // La viñeta que pone la prueba encima (roja al recibir daño).
     const v=g.createRadialGradient(s.ancho*.5,s.alto*.45,Math.min(s.ancho,s.alto)*.24,s.ancho*.5,s.alto*.45,Math.max(s.ancho,s.alto)*.72);v.addColorStop(0,'transparent');v.addColorStop(1,s.modelo.impacto>0?'#a71f47a6':'#030408bb');g.fillStyle=v;g.fillRect(0,0,s.ancho,s.alto);
-    const m=s.modelo;$('hud').textContent=m.t.toFixed(1)+' / '+m.duracion+' s · golpes recibidos '+(99-m.vidas)+(tipo==='laseres'?' · '+m.rayos.filter(r=>r.edad>=0).length+' rayos':' · '+m.enemigos.length+(tipo==='fps'?' espectros · ':' fantasmas · ')+m.muertes+' derrotados');
+    const m=s.modelo;$('hud').textContent=m.t.toFixed(1)+' / '+m.duracion+' s · golpes recibidos '+(99-m.vidas)+(tipo==='laseres'?' · '+m.rayos.filter(r=>r.edad>=0).length+' rayos':tipo==='carrera'?' · '+m.muertes+' obstáculos superados · '+m.velocidad.toFixed(1)+' de velocidad':' · '+m.enemigos.length+(tipo==='fps'?' espectros · ':' fantasmas · ')+m.muertes+' derrotados');
   }
   function cuadro(ahora){
     if(!corriendo)return;const dt=Math.min(.05,(ahora-antes)/1000||0)*($('lento').checked?.3:1);antes=ahora;
@@ -71,6 +72,9 @@
     proyectar:(x,y)=>API.sueloDesdePantalla[tipo](s,x,y),
     pantalla:(x,y)=>PRUEBAS[tipo].mundo()?.pantallaDesdeSuelo(x,y),
     mundo:()=>{const w=PRUEBAS[tipo].mundo();return w&&{activo:w.activo,ancho:w.anchoPintado};},
+    // El puente: pone al héroe en un carril y devuelve dónde se ven él y lo que viene a 20 unidades.
+    carrilHeroe(c){nuevo();s.modelo.carril=c;s.modelo.carrilVisual=c;s.modelo.jugador.x=c;s.ambiente=3;pintar();const w=PRUEBAS[tipo].mundo(),r=esc.getBoundingClientRect();
+      return {heroe:w?.pantallaDesdeSuelo(c,0),lejos:w?.pantallaDesdeSuelo(c,-20),ancho:r.width,alto:r.height};},
     // Primera persona: dónde cae en pantalla un punto del suelo a d unidades delante del jugador.
     delante(d=3){const p=s.modelo.jugador,x=p.x+Math.cos(p.a)*d,y=p.y+Math.sin(p.a)*d,r=esc.getBoundingClientRect();return {punto:PRUEBAS[tipo].mundo()?.pantallaDesdeSuelo(x,y),ancho:r.width,alto:r.height};},
     // Pone al héroe (de esta copia) en un punto, deja que la cámara lo siga y devuelve dónde se ve y el tamaño del escenario.

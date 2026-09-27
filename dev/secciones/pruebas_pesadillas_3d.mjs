@@ -35,7 +35,9 @@ try{
 }finally{fs.rmSync(temporal,{recursive:true,force:true});}
 
 // El color que distingue cada mundo: losas verdes en La cosecha, lapislázuli en El corte final.
-const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2],fps:['lapislázuli y verde del archivo',d=>d[2]>d[0]*1.2||(d[1]>d[0]*1.1&&d[1]>=d[2]),.2]};
+const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2],fps:['lapislázuli y verde del archivo',d=>d[2]>d[0]*1.2||(d[1]>d[0]*1.1&&d[1]>=d[2]),.2],carrera:['cielo de lapislázuli y carriles de color',d=>d[2]>d[0]*1.2||d[0]>d[2]*1.6,.2]};
+// Puntos del suelo para el puntero, delante de la cámara de cada prueba.
+const PUNTOS={carrera:[[0,0],[1,-5],[-1,-12],[.5,-3]]};
 // En primera persona la cámara es el jugador: no hay encuadre del héroe ni puntero sobre el suelo.
 const PRIMERA_PERSONA=new Set(['fps']);
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
@@ -61,7 +63,7 @@ try{
     assert.ok(px.color>minimo,caso+': '+nombre+' de la carta dorada ('+(px.color*100).toFixed(0)+'%)');
     if(!PRIMERA_PERSONA.has(tipo)){
     // El puntero: del suelo a la pantalla y de vuelta al mismo punto.
-    const ida=await pagina.evaluate(()=>{const R=CAOZ_PESADILLAS3D_REVISION,out=[];for(const [x,y] of [[0,0],[3,-2],[-4.5,4],[5,5]]){const s=R.pantalla(x,y),g=R.proyectar(s.x,s.y);out.push([x,y,g.x,g.y]);}return out;});
+    const ida=await pagina.evaluate(P=>{const R=CAOZ_PESADILLAS3D_REVISION,out=[];for(const [x,y] of P){const s=R.pantalla(x,y),g=R.proyectar(s.x,s.y);out.push([x,y,g.x,g.y]);}return out;},PUNTOS[tipo]||[[0,0],[3,-2],[-4.5,4],[5,5]]);
     for(const [x,y,gx,gy]of ida)assert.ok(Math.hypot(gx-x,gy-y)<.01,caso+': el puntero cae en el suelo donde apunta ('+x+','+y+' → '+gx.toFixed(3)+','+gy.toFixed(3)+')');
     }else{
       // Lo que está justo delante del jugador (a donde dispara) se ve en el centro de la retícula.
@@ -72,7 +74,10 @@ try{
     const clasico=await pagina.evaluate(()=>{document.querySelector('[data-pintor="clasico"]').click();const e=CAOZ_PESADILLAS3D_REVISION.irA(9,20);document.querySelector('[data-pintor="3d"]').click();return e;});
     assert.deepEqual({...clasico,activo3d:true,arte:true},e3,caso+': el modelo evoluciona igual con los dos pintores');
     // El encuadre: en las cuatro esquinas de la arena el héroe queda dentro de la pantalla.
-    if(!PRIMERA_PERSONA.has(tipo))for(const [x,y] of [[-6.55,-6.55],[6.55,-6.55],[-6.55,6.55],[6.55,6.55]]){
+    if(tipo==='carrera')for(const c of [-1,0,1]){const r=await pagina.evaluate(c=>CAOZ_PESADILLAS3D_REVISION.carrilHeroe(c),c),fx=r.heroe.x/r.ancho,fy=r.heroe.y/r.alto,ly=r.lejos.y/r.alto;
+      assert.ok(fx>.05&&fx<.95&&fy>.3&&fy<.92,caso+': el héroe en el carril '+c+' se ve ('+(fx*100).toFixed(0)+'%, '+(fy*100).toFixed(0)+'%)');
+      assert.ok(ly>.08&&ly<fy-.15,caso+': lo que viene a 20 unidades se ve por delante del héroe ('+(ly*100).toFixed(0)+'%)');}
+    else if(!PRIMERA_PERSONA.has(tipo))for(const [x,y] of [[-6.55,-6.55],[6.55,-6.55],[-6.55,6.55],[6.55,6.55]]){
       const r=await pagina.evaluate(([x,y])=>CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y),[x,y]),fx=r.punto.x/r.ancho,fy=r.punto.y/r.alto;
       assert.ok(fx>.05&&fx<.95&&fy>.08&&fy<.92,caso+': el héroe en ('+x+','+y+') se ve ('+(fx*100).toFixed(0)+'%, '+(fy*100).toFixed(0)+'%)');}
     assert.deepEqual(errores,[],caso+': sin errores de página');

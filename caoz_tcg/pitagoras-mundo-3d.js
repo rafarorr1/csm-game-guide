@@ -253,15 +253,16 @@ void main(){
     const ladoHeroe=Math.cos(p.a)*cam.der[0]+Math.sin(p.a)*cam.der[2]>=0?1:-1;
     return {s,t,cam,mem,m,p,planas,de_pie,fig,sombra,ladoHeroe,
       // El héroe: su sombra, la de contacto, el aura, la mira, la figura y la estrella de la varita.
+      // op.x/op.z colocan al héroe (si el mundo no usa jugador.x/y) y op.y lo eleva (un salto); su sombra se queda en el suelo.
       heroe(op={}){
-        const parpadeo=m.invulnerable>0&&Math.floor(m.invulnerable*14)%2?.35:1,cae=lim((m.caidaJugador||0)/.35,0,1);
-        sombra(p.x,p.y,1.04,2.05,10,CLAVE,.85,.8,0,0,ladoHeroe);fig(planas,p.x,0,p.y,.42,.28,[0,0,0,.6],6);
-        fig(planas,p.x,0,p.y,1.1,1.1,[1,.8,.4,.55+.15*Math.sin(t*3)],7);
-        if(op.mira!==false)fig(planas,p.x+Math.cos(p.a)*1.05,0,p.y+Math.sin(p.a)*1.05,.55,.12,[1,.85,.45,.7],8,0,0,p.a);
-        fig(de_pie,p.x,0,p.y,1.04,2.05*(1-cae*.5),[1,1,1,parpadeo],1,0,s.andando||0,ladoHeroe);
-        const punta=[p.x+Math.cos(p.a)*.62,1.6,p.y+Math.sin(p.a)*.62],f=m.fogonazo>0?.5:0;
+        const parpadeo=m.invulnerable>0&&Math.floor(m.invulnerable*14)%2?.35:1,cae=lim((m.caidaJugador||0)/.35,0,1),hx=op.x??p.x,hz=op.z??p.y,hy=op.y??0,lado=op.lado??ladoHeroe,alejado=1-lim(hy/2.5,0,.6);
+        sombra(hx,hz,1.04,2.05,10,CLAVE,.85,.8*alejado,0,0,lado);fig(planas,hx,0,hz,.42*(1+hy*.3),.28*(1+hy*.3),[0,0,0,.6*alejado],6);
+        fig(planas,hx,0,hz,1.1,1.1,[1,.8,.4,(.55+.15*Math.sin(t*3))*alejado],7);
+        if(op.mira!==false)fig(planas,hx+Math.cos(p.a)*1.05,0,hz+Math.sin(p.a)*1.05,.55,.12,[1,.85,.45,.7],8,0,0,p.a);
+        fig(de_pie,hx,hy,hz,1.04,2.05*(1-cae*.5),[1,1,1,parpadeo],1,0,s.andando||0,lado);
+        const punta=op.punta??[hx+Math.cos(p.a)*.62,hy+1.6,hz+Math.sin(p.a)*.62],f=m.fogonazo>0?.5:0;
         fig(de_pie,punta[0],punta[1],punta[2],.28+f,.28+f,[1,.85,.5,.9],2);
-        if(cae>0)fig(de_pie,p.x,1.2,p.y,.5,2.2*cae,[1,.85,.45,cae],2);
+        if(cae>0)fig(de_pie,hx,1.2,hz,.5,2.2*cae,[1,.85,.45,cae],2);
       },
       // Un fantasma de humo con sus dos sombras (la del halo y la del aura del héroe).
       fantasma(u,op={}){
@@ -306,7 +307,7 @@ void main(){
     function camara(s,ahora){
       const w=s.ancho,h=s.alto,asp=w/h,C=def.camara,p=s.modelo.jugador,mem=memoria(s);
       // Cámara propia del mundo (primera persona): ojo, punto al que mira y campo vertical.
-      if(C.personalizada){const v=C.personalizada(s,w,h),vista=M.mirar(v.ojo,v.mira),vp=M.mult(M.persp(v.fov*Math.PI/180,asp,v.cerca??.05,60),vista);
+      if(C.personalizada){const v=C.personalizada(s,w,h),vista=M.mirar(v.ojo,v.mira),vp=M.mult(M.persp(v.fov*Math.PI/180,asp,v.cerca??.05,v.lejos??60),vista);
         return {vp,inv:M.invertir(vp),ojo:v.ojo,der:[vista[0],vista[4],vista[8]],arr:[vista[1],vista[5],vista[9]],frente:norm3([v.ojo[0]-v.mira[0],0,v.ojo[2]-v.mira[2]]),w,h};}
       const fov=C.fov*Math.PI/180,pitch=C.pitch*Math.PI/180;
       const obj=C.objetivo(p,asp);

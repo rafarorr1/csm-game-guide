@@ -900,13 +900,15 @@ art de `pitagoras-pixel.js`); cada prueba registra su mundo con
 | I · La cosecha | `pitagoras-cosecha-3d.js` | losas verdes sobre lava, el Segador alzándose del abismo, fantasmas de humo, estrellas de oro |
 | II · El corte final | `pitagoras-corte-3d.js` | nave de catedral pulida, columnas verdes, el espectro coronado; avisos ámbar y haces de luz dorada |
 | III · Fuera de cuadro | `pitagoras-cuadro-3d.js` | primera persona en el archivo: estanterías, columnas de lapislázuli, bóvedas, el cuadro de la carta en la pared; espectros rojos y la mano con la estrella de oro |
+| IV · El último puente | `pitagoras-puente-3d.js` | carrera por tres carriles (lapislázuli con estrellas, bermellón, verde con flores) hacia la torre del arte; columnas talladas, sellos de ondas de oro, braseros y bloques que caen al vacío |
 
 Sólo presentación: los pintores leen `s.modelo` y nunca lo escriben (las
 pruebas comparan el estado con el pintor clásico). Sin WebGL o con movimiento
 reducido sigue el pintor anterior. `?prueba=laseres` elige la prueba; «Ver con
-el bot» usa el bot de revisión (La cosecha) o la guía del modelo (El corte
-final) sin perder vidas; `CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y)`
-comprueba el encuadre y, en primera persona (misma geometría que el raycaster), `delante(d)` que el disparo cae en el centro de la retícula.
+el bot» usa el bot de revisión (La cosecha, Fuera de cuadro) o la guía del
+modelo (El corte final, El último puente) sin perder vidas; `CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y)`
+comprueba el encuadre y, en primera persona (misma geometría que el raycaster), `delante(d)` que el disparo cae en el centro de la retícula. En la carrera,
+`carrilHeroe(c)` comprueba que el héroe y el tramo que viene queden a la vista.
 
 ```bash
 node dev/secciones/pruebas_pesadillas_3d.mjs
