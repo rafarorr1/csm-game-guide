@@ -70,6 +70,12 @@ try{
     await pagina.waitForFunction(()=>PITAGORAS_PRUEBAS.estado?.fase==='jugando',null,{timeout:20000});await pagina.waitForTimeout(600);
     const activo=await pagina.evaluate(()=>CAOZ_COSECHA_3D.activo);
     assert.equal(activo,!reducido,reducido?'Con movimiento reducido sigue el pintor clásico':'La prueba real usa el pintor 3D');
+    if(!reducido){
+      // A resolución completa: ni el filtro de pixel art ni el lienzo «pixelated».
+      const r=await pagina.evaluate(()=>{const c=document.querySelector('.pitPrueba canvas.ppLienzo')||document.querySelector('.pitPrueba canvas');return {ancho:CAOZ_COSECHA_3D.anchoPintado,lienzo:c.width,css:c.getBoundingClientRect().width,render:getComputedStyle(c).imageRendering};});
+      assert.ok(r.ancho>=r.css*.95,'La prueba real pinta La cosecha a resolución completa ('+r.ancho+' px para '+Math.round(r.css)+' px de lienzo)');
+      assert.notEqual(r.render,'pixelated','El lienzo de La cosecha 3D no se amplía como pixel art');
+    }
     await pagina.evaluate(()=>PITAGORAS_PRUEBAS.cancelar());
     assert.deepEqual(errores,[],'Sin errores al jugar');
     await contexto.close();

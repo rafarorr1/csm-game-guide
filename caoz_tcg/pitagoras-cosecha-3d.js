@@ -469,15 +469,26 @@ void main(){
     return {canvas,dibujar,sueloDesdePantalla,pantallaDesdeSuelo,get arteListo(){return arteListo;}};
   }
 
-  let motor=null,fallo=false;
+  let motor=null,fallo=false,ultimoAncho=0;
   const anterior=API.pintores?.isometrico;
+  const usable=s=>!s.reducido&&!fallo&&!global.CAOZ_COSECHA_3D_APAGADA;
+  // La prueba real pasa cada pintor por pintarEscena (pitagoras-pixel.js), que
+  // dibuja a ~384 px y lo amplía como pixel art. La cosecha 3D se pinta a
+  // resolución completa y sin «pixelated» en el lienzo.
+  const escenaPixel=API.pintarEscena;
+  if(escenaPixel)API.pintarEscena=function(s,c,dibujar){
+    const lienzo=s.ui?.canvas;
+    if(s.tipo==='isometrico'&&usable(s)){if(lienzo&&lienzo.style.imageRendering!=='auto')lienzo.style.imageRendering='auto';dibujar(c);return;}
+    if(lienzo&&lienzo.style.imageRendering==='auto')lienzo.style.imageRendering='';
+    return escenaPixel.call(this,s,c,dibujar);
+  };
   function pintar(s,ctx){
-    if(s.reducido||fallo||global.CAOZ_COSECHA_3D_APAGADA)return anterior?.(s,ctx);
+    if(!usable(s))return anterior?.(s,ctx);
     if(!motor){try{motor=crear();}catch(e){console.warn('La cosecha 3D no pudo crearse:',e);motor=null;}if(!motor){fallo=true;return anterior?.(s,ctx);}}
-    try{motor.dibujar(s);ctx.drawImage(motor.canvas,0,0,s.ancho,s.alto);}
+    try{motor.dibujar(s);ultimoAncho=motor.canvas.width;ctx.drawImage(motor.canvas,0,0,s.ancho,s.alto);}
     catch(e){console.warn('La cosecha 3D vuelve al pintor anterior:',e);fallo=true;anterior?.(s,ctx);}
   }
   API.pintores=Object.assign(API.pintores||{},{isometrico:pintar});
   API.sueloDesdePantalla=Object.assign(API.sueloDesdePantalla||{},{isometrico:(s,x,y)=>(!fallo&&motor&&!s.reducido&&!global.CAOZ_COSECHA_3D_APAGADA)?motor.sueloDesdePantalla(s,x,y):null});
-  global.CAOZ_COSECHA_3D=Object.freeze({get activo(){return !!motor&&!fallo;},get arteListo(){return !!motor?.arteListo;},anterior,pantallaDesdeSuelo:(x,y)=>motor?.pantallaDesdeSuelo(x,y)??null});
+  global.CAOZ_COSECHA_3D=Object.freeze({get activo(){return !!motor&&!fallo;},get anchoPintado(){return ultimoAncho;},get arteListo(){return !!motor?.arteListo;},anterior,pantallaDesdeSuelo:(x,y)=>motor?.pantallaDesdeSuelo(x,y)??null});
 })(typeof window!=='undefined'?window:globalThis);
