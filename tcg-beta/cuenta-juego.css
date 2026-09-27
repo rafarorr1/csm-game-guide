@@ -12,3 +12,20 @@
 @media(max-height:650px){#extras{gap:8px;padding:16px}#extras h2{font-size:29px}.extrasOpciones{gap:8px;margin:3px 0}.extrasOpciones .btn{min-height:48px;padding:9px}#extras #mBorrarProgreso{margin-top:0}}
 
 .cuentaBloqueada{text-align:center}.cuentaBloqueada .cuentaDescripcion{margin-block:12px 20px}
+
+/* La beta candidata no pide correo: Pato y Rafa eligen una copia local
+   completa del avance. Se mantiene fuera del lienzo igual que Mi cuenta. */
+.cuentaCandidataRaiz{display:grid;place-items:center}
+.cuentaCandidata{box-sizing:border-box;width:min(100%,560px);margin:auto;padding:clamp(24px,5vw,42px);border:1px solid #c9a86799;border-radius:20px;background:radial-gradient(ellipse at 50% 0,#60452d44,transparent 56%),linear-gradient(145deg,#21172a,#100c17 74%);box-shadow:0 24px 80px #000a;text-align:center}
+.cuentaCandidata .cuentaDescripcion{margin:13px auto 25px;max-width:400px}
+.cuentaPerfiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.cuentaPerfil{display:grid;grid-template-columns:auto minmax(0,1fr);grid-template-rows:auto auto;column-gap:12px;align-items:center;min-height:106px;padding:15px;border:1px solid #c6a36580;border-radius:14px;background:linear-gradient(145deg,#3d292d,#1d1424);box-shadow:inset 0 1px #fff0cc12,0 6px 16px #0005;color:#f4dfb0;text-align:left;cursor:pointer;transition:border-color .16s ease,translate .16s ease,background .16s ease}
+.cuentaPerfil:hover:not(:disabled),.cuentaPerfil:focus-visible{border-color:#f3d98e;background:linear-gradient(145deg,#5a3831,#25172d);translate:0 -3px;outline:none}
+.cuentaPerfil:disabled{cursor:wait;opacity:.65}
+.cuentaPerfilSello{grid-row:1/3;display:grid;place-items:center;width:45px;height:45px;border:1px solid #d8b35d99;border-radius:50%;background:radial-gradient(circle at 35% 30%,#f6dc9577,#6f432b 58%,#2d1c27);color:#fff2c5;font:700 23px/1 var(--serif,Georgia,serif);box-shadow:inset 0 0 0 3px #fff3cf13,0 3px 8px #0008}
+.cuentaPerfil strong{min-width:0;font:600 22px/1.1 var(--serif,Georgia,serif);color:#f7e4bb}
+.cuentaPerfil small{min-width:0;margin-top:4px;color:#cbb99c;font:11px/1.25 var(--sans,sans-serif)}
+.cuentaCandidataError{margin:17px 0 0;color:#ffc3b2;font:12px/1.45 var(--sans,sans-serif)}
+.cuentaCandidataCancelar{margin-top:19px;border:0;background:transparent;color:#d7c5a4;font:600 12px/1.2 var(--sans,sans-serif);text-decoration:underline;cursor:pointer}
+.cuentaCandidataCancelar:hover,.cuentaCandidataCancelar:focus-visible{color:#fff0c9;outline:2px solid #e6c370;outline-offset:4px}
+@media(max-width:420px){.cuentaCandidata{padding:25px 20px}.cuentaPerfiles{grid-template-columns:1fr}.cuentaPerfil{min-height:84px}}
