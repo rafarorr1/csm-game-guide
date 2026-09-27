@@ -1,5 +1,16 @@
 # Registro de versiones — el TCG del Domo
 
+### v62 · Build 301 · Perfiles del playtest candidato · 2026-09-27
+
+- El enlace de la **beta de balance candidata** ya no pide correo: al entrar
+  permite elegir **Pato** o **Rafa**.
+- Campaña, héroe, Colección, sobres y récords se conservan de forma separada
+  para los dos perfiles en el dispositivo. Cambiar de perfil desde Extras no
+  mezcla sus avances.
+- El progreso normal de Beta se respalda antes del playtest y se restaura al
+  volver a la beta habitual; el modo candidato no envía datos al acceso por
+  correo ni al Worker.
+
 ### v61 · Build 300 · Acceso visible al iniciar · 2026-09-26
 
 - Cuando una visita necesita crear cuenta o entrar, la cortinilla libera la
