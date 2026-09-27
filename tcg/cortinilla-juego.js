@@ -73,6 +73,12 @@
   function cuentaLista(){
     const J=window.CAOZ_CUENTA_JUEGO;
     if(!J||J.puedeJugar())return Promise.resolve();
+    // La portada inicial oculta los diálogos mientras el menú termina de
+    // montarse. Al necesitar una cuenta, no puede seguir tapando el formulario
+    // que desbloquea esta misma espera: se revela antes de escuchar el acceso.
+    // El diálogo vive en la capa superior y la carga queda detrás hasta que el
+    // jugador entra; así no hay destello para una sesión ya restaurable.
+    window.cerrarArranqueCaoz?.();
     return new Promise(r=>{
       let vigia=0;const listo=()=>{clearInterval(vigia);removeEventListener('caoz:cuenta-lista',listo);r();};
       addEventListener('caoz:cuenta-lista',listo);
@@ -99,7 +105,9 @@
       raiz.addEventListener('pointerdown',saltar);const tecla=e=>{if(raiz.isConnected)saltar();};addEventListener('keydown',tecla);
       try{
         progreso(raiz,0,'PREPARANDO EL DOMO…');
-        if(!o.forzar)await cuentaLista();
+        // La revisión puede forzar esta espera para comprobar que el acceso
+        // nunca vuelve a quedar bajo la capa de carga.
+        if(!o.forzar||o.esperarCuenta)await cuentaLista();
         marcarVista();
         const cartas=elegirCartas();
         if(!quieto()&&cartas.length&&window.CAOZ_CORTINILLA)cortinilla=window.CAOZ_CORTINILLA.crear(raiz,{cartas,logoUrl:'art/logo.webp',velocidad:o.velocidad,reloj:o.reloj});
@@ -123,7 +131,11 @@
     return activa;
   }
   window.CAOZ_CORTINILLA_JUEGO=Object.freeze({arrancar,forzar:o=>arrancar({...o,forzar:true}),elegirCartas,get activa(){return !!activa;}});
-  if(!especial&&!vista()){
-    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>arrancar(),{once:true});else arrancar();
+  if(!especial){
+    // Si la cortinilla ya se vio en esta sesión, no se reproduce otra vez,
+    // pero la portada inicial sí debe retirarse. Dejarla puesta ocultaba el
+    // menú para siempre tras recargar una sesión recién autenticada.
+    const iniciar=()=>vista()?entradaMenu():arrancar();
+    if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',iniciar,{once:true});else iniciar();
   }
 })();
