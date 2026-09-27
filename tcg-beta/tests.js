@@ -3050,7 +3050,10 @@ PRUEBAS.suite('pwaSinConexion', async t => {
 /* La portada de arranque es visual, pero no puede volver a dejar asomarse el
    menú viejo antes del acabado ni congelar las rutas de captura del arnés. */
 PRUEBAS.suite('portadaArranque', async t => {
-  const paginas=await Promise.all(['index.html','movil.html'].map(async pagina=>[pagina,await fetch(pagina+'?test=portada-arranque').then(r=>r.text())]));
+  const [paginas,cortinilla]=await Promise.all([
+    Promise.all(['index.html','movil.html'].map(async pagina=>[pagina,await fetch(pagina+'?test=portada-arranque').then(r=>r.text())])),
+    fetch('cortinilla-juego.js?test=portada-arranque').then(r=>r.text())
+  ]);
   for(const [pagina,html] of paginas){
     t.check(/classList\.add\(['"]arrancando['"]\)/.test(html),pagina+': debe marcar el arranque antes de pintar el cuerpo.');
     t.check(/id=["']arranqueCaoz["'][\s\S]*?art\/logo\.webp/.test(html),pagina+': la portada inicial debe mostrar el logo de Caoz.');
@@ -3060,6 +3063,8 @@ PRUEBAS.suite('portadaArranque', async t => {
     t.check(/prefers-reduced-motion:reduce/.test(html),pagina+': el arranque debe respetar menos movimiento.');
     t.check(/class=["']screen on portada["'] id=["']menu["']/.test(html),pagina+': el menú debe conservar su estado interno inicial.');
   }
+  t.check(/const iniciar=\(\)=>vista\(\)\?entradaMenu\(\):arrancar\(\)/.test(cortinilla),
+    'Una recarga que ya vio la cortinilla debe retirar la portada y mostrar el menú.');
 });
 
 PRUEBAS.suite('campanaMesa', async t => {
@@ -5487,13 +5492,21 @@ PRUEBAS.suite('cartaPintada',async t=>{
         t.check(coste.offsetParent===carta&&Math.abs(cx-.88)<.03&&Math.abs(cy-.08)<.03,pagina+': el coste no cae sobre su gema ('+cx.toFixed(2)+','+cy.toFixed(2)+').');
         t.check(w.getComputedStyle(carta.querySelector('.cost')).color!=='rgba(0, 0, 0, 0)',pagina+': el coste debe verse.');
       }
-      const u=w.eval('P(0).field[0]'),atq=u.atk,cara=unidad().querySelector('.cjCara').getAttribute('src');
+      const u=w.eval('P(0).field[0]'),atq=u.atk;
       u.dmg=2;u.atk=atq+3;w.render();
-      const hp=unidad().querySelector('.hp'),atk=unidad().querySelector('.atk');
+      // El render recrea el nodo de mesa. En una ventana visible el pintor
+      // puede necesitar un fotograma para volver a colocar su cara ya cacheada;
+      // esperamos ese estado real antes de medir que no hubo parpadeo.
+      const actualizada=unidad();
+      t.check(await lista(actualizada),pagina+': refrescar el tablero dejó la cara sin pintar.');
+      const hp=actualizada.querySelector('.hp'),atk=actualizada.querySelector('.atk');
       t.igual(+atk.textContent,atq+3,pagina+': el ataque vivo no se actualizó.');
       t.check(atk.classList.contains('cjSube')&&hp.classList.contains('cjBaja'),pagina+': una mejora o una herida no se distinguen.');
-      t.check(unidad().dataset.piel==='lista'&&unidad().querySelector('.cjCara').getAttribute('src')===cara,pagina+': refrescar el tablero repintó o apagó la cara.');
-      t.check(w.getComputedStyle(unidad().querySelector('.cjCara')).opacity==='1',pagina+': la cara parpadea tras el refresco.');
+      // El renderer puede sustituir el nodo al recalcular la mesa (y con ello
+      // renovar su URL Blob); el contrato visible es que la cara ya esté lista
+      // y no vuelva a enseñar la plantilla sin pintar entre ambos estados.
+      t.check(actualizada.dataset.piel==='lista'&&actualizada.querySelector('.cjCara').naturalWidth>0,pagina+': refrescar el tablero apagó la cara pintada.');
+      t.check(w.getComputedStyle(actualizada.querySelector('.cjCara')).opacity==='1',pagina+': la cara parpadea tras el refresco.');
     }finally{marco.remove();}
   }
 });
@@ -5538,8 +5551,9 @@ PRUEBAS.suite('muerteMachete',async t=>{
 /* ===========================================================================
    SUITE: cortinillaArranque — la carga y la cortinilla del Domo hasta el menú
    (cortinilla-juego.js). En pruebas no arranca sola; forzada, monta la carga,
-   pinta cartas de la colección, termina en el menú y se retira; con saltar
-   termina antes. En las dos pantallas.
+   pinta cartas de la colección, termina en el menú y se retira; una cuenta sin
+   sesión revela su acceso antes de esperar; con saltar termina antes. En las
+   dos pantallas.
    ======================================================================== */
 PRUEBAS.suite('cortinillaArranque',async t=>{
   for(const pagina of ['index.html','movil.html']){
@@ -5550,6 +5564,21 @@ PRUEBAS.suite('cortinillaArranque',async t=>{
       const J=w.CAOZ_CORTINILLA_JUEGO;
       t.check(typeof J?.forzar==='function'&&typeof w.CAOZ_CORTINILLA?.crear==='function',pagina+': faltan cortinilla.js o cortinilla-juego.js.');
       t.check(!d.getElementById('cargaDomo')&&!J.activa,pagina+': en pruebas la cortinilla no arranca sola.');
+      // Sin una sesión, la cortinilla debe soltar la portada antes de esperar
+      // el evento que sólo puede producir el formulario de acceso. Si se
+      // quita esa llamada, este caso se queda con la carga sobre el diálogo.
+      const cuentaAnterior=Object.getOwnPropertyDescriptor(w,'CAOZ_CUENTA_JUEGO'),cierreAnterior=w.cerrarArranqueCaoz,media=w.matchMedia;
+      let portadaLiberada=0;
+      Object.defineProperty(w,'CAOZ_CUENTA_JUEGO',{configurable:true,writable:true,value:{puedeJugar:()=>false}});
+      w.cerrarArranqueCaoz=()=>{portadaLiberada++;};
+      w.matchMedia=q=>q==='(prefers-reduced-motion: reduce)'?{matches:true}:media.call(w,q);
+      const esperaCuenta=J.forzar({esperarCuenta:true});await sleep(30);
+      t.check(portadaLiberada===1&&!!d.getElementById('cargaDomo'),pagina+': sin sesión, la carga libera el acceso antes de esperarlo.');
+      w.dispatchEvent(new w.CustomEvent('caoz:cuenta-lista'));
+      const salidaCuenta=await Promise.race([esperaCuenta,sleep(2000).then(()=> 'colgada')]);
+      t.check(salidaCuenta!=='colgada'&&!d.getElementById('cargaDomo'),pagina+': el acceso resuelto libera también la carga inicial.');
+      Object.defineProperty(w,'CAOZ_CUENTA_JUEGO',cuentaAnterior);
+      w.cerrarArranqueCaoz=cierreAnterior;w.matchMedia=media;
       const cartas=J.elegirCartas();
       t.check(cartas.length===12&&cartas.every(c=>c.url&&['normal','foil','dorado'].includes(c.acabado)),pagina+': doce cartas ilustradas de la colección.');
       const tipos=w.eval('CARDS');t.check(!cartas.some(c=>tipos[c.id]?.t==='lugar'),pagina+': la cortinilla no usa Lugares.');

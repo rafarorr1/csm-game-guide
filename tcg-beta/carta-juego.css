@@ -7,7 +7,11 @@
    pintor (1024×1434): coste en (902,108), ATQ en (146,1316), VIDA en (878,1316). */
 :is(.card,.cjFicha)>.cjCara{position:absolute!important;inset:0;z-index:2!important;width:100%;height:100%;display:block;
   opacity:0;pointer-events:none;border-radius:inherit;user-select:none;-webkit-user-select:none}
-:is(.card,.cjFicha)[data-piel="lista"]{container-type:inline-size;border-radius:4.8%/3.43%!important;border-color:transparent!important;background-color:#07060a}
+:is(.card,.cjFicha)[data-piel="lista"]{container-type:inline-size;border-radius:4.8%/3.43%!important;
+  /* La cara ya incluye el marco. En una ventana escalada Chrome puede usar un
+     borde de 1.5 px: si se conserva, el área absoluta queda tres píxeles más
+     chica. Al quitar sólo ese borde, la cara llena la carta sin desbordarla. */
+  border-color:transparent!important;border-width:0!important;background-color:#07060a}
 :is(.card,.cjFicha)[data-piel="lista"]>.cjCara{opacity:1}
 /* El metal de las gemas, el mismo del marco pintado de cada edición. */
 :is(.card,.cjFicha){--cj-metal:linear-gradient(135deg,#f3d6b5,#8a6030 40%,#e7bb55 65%,#4f3108)}
