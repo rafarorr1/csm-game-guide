@@ -35,7 +35,7 @@ try{
 }finally{fs.rmSync(temporal,{recursive:true,force:true});}
 
 // El color que distingue cada mundo: losas verdes en La cosecha, lapislázuli en El corte final.
-const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2],fps:['lapislázuli y verde del archivo',d=>d[2]>d[0]*1.2||(d[1]>d[0]*1.1&&d[1]>=d[2]),.2],carrera:['cielo de lapislázuli y carriles de color',d=>d[2]>d[0]*1.2||d[0]>d[2]*1.6,.2],orbital:['cielo de lapislázuli y oro de la órbita',d=>d[2]>d[0]*1.2||(d[0]>d[2]*1.3&&d[1]>d[2]),.3]};
+const COLOR={isometrico:['losas verdes',d=>d[1]>d[0]&&d[1]>d[2]*.95,.12],laseres:['lapislázuli',d=>d[2]>d[0]*1.25&&d[2]>d[1]*1.15,.2],fps:['lapislázuli y verde del archivo',d=>d[2]>d[0]*1.2||(d[1]>d[0]*1.1&&d[1]>=d[2]),.2],carrera:['cielo de lapislázuli y carriles de color',d=>d[2]>d[0]*1.2||d[0]>d[2]*1.6,.2],orbital:['lapislázuli del cielo y morado del dragón',d=>d[2]>d[0]*1.15&&d[2]>d[1]*1.1,.25]};
 // Puntos del suelo para el puntero, delante de la cámara de cada prueba.
 const PUNTOS={carrera:[[0,0],[1,-5],[-1,-12],[.5,-3]],orbital:[[0,-14],[6,-12],[-8,-20],[3,-30]]};
 // En primera persona la cámara es el jugador: no hay encuadre del héroe ni puntero sobre el suelo.
@@ -78,34 +78,39 @@ try{
       assert.ok(fx>.05&&fx<.95&&fy>.3&&fy<.92,caso+': el héroe en el carril '+c+' se ve ('+(fx*100).toFixed(0)+'%, '+(fy*100).toFixed(0)+'%)');
       assert.ok(ly>.08&&ly<fy-.15,caso+': lo que viene a 20 unidades se ve por delante del héroe ('+(ly*100).toFixed(0)+'%)');}
     else if(tipo==='orbital'){
-      // La órbita entera, la estrella (con su corona) y el reino debajo quedan en pantalla.
-      const r=await pagina.evaluate(()=>CAOZ_PESADILLAS3D_REVISION.orbita()),X=p=>p.x/r.ancho,Y=p=>p.y/r.alto;
-      for(const [i,p] of r.aro.entries())assert.ok(X(p)>.03&&X(p)<.97&&Y(p)>.05&&Y(p)<.92,caso+': la órbita se ve entera ('+i*30+'°: '+(X(p)*100).toFixed(0)+'%, '+(Y(p)*100).toFixed(0)+'%)');
-      assert.ok(Y(r.cima)>.02&&Math.abs(X(r.estrella)-.5)<.02,caso+': la estrella, centrada y con su corona dentro ('+(Y(r.cima)*100).toFixed(0)+'%)');
-      assert.ok(Y(r.reino)>Y(r.aro[3])-.12&&Y(r.reino)<.97,caso+': el reino se ve debajo de la órbita ('+(Y(r.reino)*100).toFixed(0)+'%)');
+      // El último asalto: el halo del dragón arriba, el guerrero de espaldas abajo y centrado; en apaisado, las alas enteras.
+      const r=await pagina.evaluate(()=>CAOZ_PESADILLAS3D_REVISION.asalto()),X=p=>p.x/r.ancho,Y=p=>p.y/r.alto;
+      assert.ok(Y(r.halo)>.02&&Y(r.halo)<.35&&Math.abs(X(r.halo)-.5)<.02,caso+': el halo del dragón arriba y centrado ('+(Y(r.halo)*100).toFixed(0)+'%)');
+      assert.ok(Y(r.guerrero)>.5&&Y(r.guerrero)<.8&&Math.abs(X(r.guerrero)-.5)<.02,caso+': el guerrero, de espaldas abajo y en el centro ('+(Y(r.guerrero)*100).toFixed(0)+'%)');
+      assert.ok(Y(r.pies)>Y(r.guerrero),caso+': el dragón se alza por encima del guerrero');
+      if(ancho>alto)for(const k of ['alaIzq','alaDer'])assert.ok(X(r[k])>.02&&X(r[k])<.98&&Y(r[k])>.02,caso+': en apaisado se ve el ala entera ('+k+' '+(X(r[k])*100).toFixed(0)+'%)');
       if(ancho===1280){
-        // Las reglas: devolver a tiempo, bloquear antes de tiempo, el golpe y el reino que arde.
-        const reglas=await pagina.evaluate(()=>{const API=PITAGORAS_PRUEBAS,M=API.modelo,O=CAOZ_ORBITA,out={};
-          const prueba=(fi,pulsar,espera)=>{const s=M.crear({tipo:'orbital',semilla:3});s.siguiente=Infinity;s.meteoros.push({id:99,tipo:'reino',fi,curva:.5,t0:0,tc:1,origen:O.RS,estado:'vuela',desde:0,x:0,y:0,caida:0,rx:0,rz:0});
-            M.paso(s,{},1-espera);if(pulsar)M.paso(s,{accion:true},1/60);M.paso(s,{},espera+.02);return s;};
-          const justo=prueba(Math.PI/2,true,.1);M.paso(justo,{},.4);out.justo=[justo.devueltas,justo.grietas,justo.vidas,justo.recargaImpulso];
-          const pronto=prueba(Math.PI/2,true,.45);out.pronto=[pronto.devueltas,pronto.bloqueos,pronto.vidas,pronto.reino];
-          const sin=prueba(Math.PI/2,false,.1);out.sin=[sin.vidas,sin.reino];
-          const lejos=prueba(Math.PI/2+1,false,.1);M.paso(lejos,{},.8);out.lejos=[lejos.vidas,lejos.reino];
-          const arriba=prueba(-Math.PI/2,false,.1);M.paso(arriba,{},1);out.arriba=[arriba.vidas,arriba.reino];
-          const tres=M.crear({tipo:'orbital',semilla:3});tres.siguiente=Infinity;for(let i=0;i<3;i++)tres.meteoros.push({id:90+i,tipo:'reino',fi:Math.PI/2+1.1,curva:.4,t0:0,tc:1+i*.2,origen:O.RS,estado:'vuela',desde:0,x:0,y:0,caida:0,rx:0,rz:0});
-          M.paso(tres,{},2.6);out.tres=[tres.vidas,tres.reino];
+        // Las reglas: cada ataque se evita con su esquiva, el golpe sólo sirve con el dragón aturdido, la contra y el derribo.
+        const reglas=await pagina.evaluate(()=>{const API=PITAGORAS_PRUEBAS,M=API.modelo,out={};
+          const duelo=(ataque,entrada)=>{const s=M.crear({tipo:'orbital',semilla:4});s.siguiente=Infinity;Object.assign(s.dragon,{estado:'aviso',ataque,desde:0,dur:.8,fase:0});
+            M.paso(s,{},.55);M.paso(s,entrada,.4);M.paso(s,{},.3);return [s.vidas,s.dragon.estado];};
+          for(const [a,e] of [['garra_izq','der'],['garra_izq','izq'],['garra_izq','agacha'],['garra_der','izq'],['fuego','agacha'],['fuego','der'],['mordisco','izq'],['mordisco','agacha'],['aplastar','der'],['aplastar','agacha']])
+            out[a+'/'+e]=duelo(a,{mx:e==='izq'?-1:e==='der'?1:0,my:e==='agacha'?1:0});
+          out['garra_izq/nada']=duelo('garra_izq',{});
+          const golpe=estado=>{const s=M.crear({tipo:'orbital',semilla:4});s.siguiente=Infinity;Object.assign(s.dragon,{estado,ataque:'garra_izq',desde:0,dur:5});M.paso(s,{accion:true},.1);return [s.dragon.hp,s.juicioTexto,s.siguiente];};
+          out.aturdido=golpe('aturdido');out.guardia=golpe('guardia');
+          const contra=M.crear({tipo:'orbital',semilla:4});contra.siguiente=Infinity;Object.assign(contra.dragon,{estado:'aviso',ataque:'fuego',desde:0,dur:1});M.paso(contra,{},.2);M.paso(contra,{accion:true},.1);out.contra=[contra.dragon.hp,contra.dragon.estado,contra.juicioTexto];
+          const tarde=M.crear({tipo:'orbital',semilla:4});tarde.siguiente=Infinity;Object.assign(tarde.dragon,{estado:'aviso',ataque:'fuego',desde:0,dur:1});M.paso(tarde,{},.8);M.paso(tarde,{accion:true},.1);out.tarde=[tarde.dragon.hp,tarde.dragon.estado];
+          const ko=M.crear({tipo:'orbital',semilla:4});ko.siguiente=Infinity;Object.assign(ko.dragon,{estado:'aturdido',ataque:'garra_izq',desde:0,dur:5,hp:1});M.paso(ko,{accion:true},.1);const caido=ko.dragon.estado;M.paso(ko,{},3);out.ko=[caido,ko.dragon.estado,ko.dragon.hp,ko.derribos,ko.dragon.ritmo<1];
           const quieto=M.crear({tipo:'orbital',semilla:6});for(let i=0;i<1300&&!quieto.terminado;i++)M.paso(quieto,{},1/60);out.quieto=[quieto.terminado,quieto.sobrevivio,quieto.t];
-          const guia=M.crear({tipo:'orbital',semilla:1}),mem={};for(let i=0;i<1300&&!guia.terminado;i++)M.paso(guia,API.guiasPrueba.orbital(guia,mem),1/60);out.guia=[guia.sobrevivio,guia.vidas,guia.devueltas];
+          const machaca=M.crear({tipo:'orbital',semilla:6});for(let i=0;i<1300&&!machaca.terminado;i++)M.paso(machaca,{accion:i%6<3},1/60);out.machaca=[machaca.sobrevivio,machaca.t];
+          const guia=M.crear({tipo:'orbital',semilla:1}),mem={};for(let i=0;i<1300&&!guia.terminado;i++)M.paso(guia,API.guiasPrueba.orbital(guia,mem),1/60);out.guia=[guia.sobrevivio,guia.vidas,guia.golpes,guia.derribos];
           return out;});
-        assert.deepEqual(reglas.justo,[1,1,3,0],'Órbita: parar justo devuelve el meteoro, agrieta la estrella y deja la burbuja lista');
-        assert.deepEqual(reglas.pronto,[0,1,3,0],'Órbita: parar antes de tiempo sólo bloquea (y el reino no arde)');
-        assert.deepEqual(reglas.sin,[2,0],'Órbita: sin burbuja, el meteoro que llega al héroe cuesta una vida');
-        assert.deepEqual(reglas.lejos,[3,1],'Órbita: lo que cruza la mitad baja sin detenerse arde en el reino');
-        assert.deepEqual(reglas.arriba,[3,0],'Órbita: lo que cruza la mitad alta se pierde en el vacío');
-        assert.deepEqual(reglas.tres,[2,3],'Órbita: cada tres fuegos en el reino cuestan una vida');
-        assert.ok(reglas.quieto[0]&&!reglas.quieto[1]&&reglas.quieto[2]<20,'Órbita: sin jugar se pierde antes de 20 s');
-        assert.ok(reglas.guia[0]&&reglas.guia[1]===3&&reglas.guia[2]>=15,'Órbita: la guía gana devolviendo meteoros ('+reglas.guia[2]+')');
+        for(const [k,ok] of Object.entries({'garra_izq/der':1,'garra_izq/izq':0,'garra_izq/agacha':0,'garra_der/izq':1,'fuego/agacha':1,'fuego/der':0,'mordisco/izq':1,'mordisco/agacha':0,'aplastar/der':1,'aplastar/agacha':0,'garra_izq/nada':0}))
+          assert.deepEqual(reglas[k],ok?[3,'aturdido']:[2,'recupera'],'Asalto: '+k.replace('/',' con ')+(ok?' se esquiva y deja al dragón aturdido':' no se esquiva: cuesta una vida'));
+        assert.deepEqual(reglas.aturdido.slice(0,2),[9,'¡TOMA!'],'Asalto: golpear al dragón aturdido le quita vida');
+        assert.ok(reglas.guardia[0]===10&&reglas.guardia[1]==='BLOQUEA'&&reglas.guardia[2]<1,'Asalto: golpear su guardia no hace daño y adelanta su ataque');
+        assert.deepEqual(reglas.contra,[8,'aturdido','¡CONTRA!'],'Asalto: golpear mientras carga el fuego lo interrumpe con doble daño');
+        assert.deepEqual(reglas.tarde,[10,'aviso'],'Asalto: tarde, el fuego ya no se interrumpe');
+        assert.deepEqual(reglas.ko,['derribado','guardia',10,1,true],'Asalto: a 0 de vida cae, se levanta entero y pelea más rápido');
+        assert.ok(reglas.quieto[0]&&!reglas.quieto[1]&&reglas.quieto[2]<20,'Asalto: sin jugar se pierde antes de 20 s');
+        assert.ok(!reglas.machaca[0],'Asalto: machacar el golpe no gana');
+        assert.ok(reglas.guia[0]&&reglas.guia[1]===3&&reglas.guia[2]>=10&&reglas.guia[3]>=1,'Asalto: la guía gana leyendo al dragón ('+reglas.guia.join(', ')+')');
       }
     }
     else if(!PRIMERA_PERSONA.has(tipo))for(const [x,y] of [[-6.55,-6.55],[6.55,-6.55],[-6.55,6.55],[6.55,6.55]]){

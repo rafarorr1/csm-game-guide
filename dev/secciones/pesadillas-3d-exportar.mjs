@@ -10,9 +10,10 @@ const aqui=path.dirname(fileURLToPath(import.meta.url));
 export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 // Prueba → carta del Editor cuyo arte dorado la rodea.
 export const pruebasPesadillas3d=Object.freeze({isometrico:'editorcosecha',laseres:'editorcorte',fps:'editorcuadro',carrera:'editorcarrera',orbital:'editororbita'});
-export const componentesPesadillas3d=Object.freeze(['pitagoras-pruebas.js','pitagoras-mundos.js','pitagoras-cine.js','pitagoras-pixel.js','pitagoras-fps.js','pitagoras-orbita.js','pitagoras-mundo-3d.js','pitagoras-cosecha-3d.js','pitagoras-corte-3d.js','pitagoras-cuadro-3d.js','pitagoras-puente-3d.js','pitagoras-orbita-3d.js']);
+export const componentesPesadillas3d=Object.freeze(['pitagoras-pruebas.js','pitagoras-mundos.js','pitagoras-cine.js','pitagoras-pixel.js','pitagoras-fps.js','pitagoras-dragon.js','pitagoras-mundo-3d.js','pitagoras-cosecha-3d.js','pitagoras-corte-3d.js','pitagoras-cuadro-3d.js','pitagoras-puente-3d.js','pitagoras-dragon-3d.js']);
 // Los módulos resuelven su arte relativo a sí mismos (juego/art/…).
-export const recursosPesadillas3d=Object.freeze(['art/esbirro-editor-v219.webp',...Object.values(pruebasPesadillas3d).map(id=>'art/'+id+'-dorado-v1.webp')]);
+// El último asalto (hueco V) pinta al Dragón Celestial Morado de la edición dorada.
+export const recursosPesadillas3d=Object.freeze(['art/esbirro-editor-v219.webp','art/tok_dragon-dorado-v1.webp',...Object.values(pruebasPesadillas3d).map(id=>'art/'+id+'-dorado-v1.webp')]);
 export function derivarPesadillas3d(){
   const datos=datosDesdeMotor(leer('motor.js')),cards={};
   for(const [tipo,id] of Object.entries(pruebasPesadillas3d)){const c=datos.CARDS[id];if(!c||c.editorJuego!==tipo)throw Error(id+' ya no es la Pesadilla de '+tipo+'.');cards[id]=c;}

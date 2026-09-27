@@ -901,33 +901,40 @@ art de `pitagoras-pixel.js`); cada prueba registra su mundo con
 | II · El corte final | `pitagoras-corte-3d.js` | nave de catedral pulida, columnas verdes, el espectro coronado; avisos ámbar y haces de luz dorada |
 | III · Fuera de cuadro | `pitagoras-cuadro-3d.js` | primera persona en el archivo: estanterías, columnas de lapislázuli, bóvedas, el cuadro de la carta en la pared; espectros rojos y la mano con la estrella de oro |
 | IV · El último puente | `pitagoras-puente-3d.js` | carrera por tres carriles (lapislázuli con estrellas, bermellón, verde con flores) hacia la torre del arte; columnas talladas, sellos de ondas de oro, braseros y bloques que caen al vacío |
-| V · Órbita muerta | `pitagoras-orbita.js` + `pitagoras-orbita-3d.js` | **juego nuevo, «Devuelve la luz»**: el héroe recorre una órbita de oro alrededor de la estrella muerta (rostro de roca y lava, ojos que lo siguen, boca que se carga) y para los meteoros; abajo, el reino con sus castillos y, en el horizonte, el reino del arte de la carta |
+| V · El último asalto | `pitagoras-dragon.js` + `pitagoras-dragon-3d.js` | **juego nuevo a lo Punch-Out**: el guerrero, de espaldas, contra el Dragón Celestial Morado de la edición dorada (alas con estrellas, halo, garras, fauces), montado por piezas pintadas; arena de piedra y oro, nubes de manuscrito y el reino del arte en el horizonte |
 
-**V · Órbita muerta cambia las reglas**, no sólo el dibujo. `pitagoras-orbita.js`
-sustituye la prueba orbital de `pitagoras-mundos.js` allí donde se carga (por
-ahora sólo en esta sección; el juego sigue con la versión anterior hasta que se
-integre). La palanca señala el punto de la órbita al que ir y PARAR abre la
-burbuja 0,55 s:
-- parar ≤ 0,2 s antes del cruce devuelve el meteoro, que agrieta la estrella, y la burbuja queda lista al momento;
-- parar antes sólo lo bloquea;
-- sin burbuja, el golpe cuesta una vida.
+**V · El último asalto sustituye a «Órbita muerta»** en el hueco V (tipo
+`orbital`), con reglas nuevas, no sólo el dibujo. `pitagoras-dragon.js`
+reemplaza la prueba de `pitagoras-mundos.js` allí donde se carga (por ahora
+sólo en esta sección; el juego sigue con la versión anterior hasta que se
+integre). El dragón avisa cada ataque con su pose:
+- zarpazo (brazo alzado a un lado): esquiva hacia el otro lado;
+- fuego (cabeza atrás, pecho encendido): agáchate; golpearlo mientras carga lo interrumpe (contra: doble daño);
+- mordisco (cabeza baja, fauces abiertas) y aplastar (las dos garras arriba): esquiva a un lado.
 
-Lo que cruza la mitad baja de la órbita sin detenerse arde en el reino; cada
-tres fuegos cuestan una vida. En los últimos segundos la estrella abre la boca
-y lanza dos salvas de tres sobre el reino. Se mantiene el contrato: 20 s y
-3 vidas, y si la superas Pitágoras pierde 2 Alma. Al integrarla habrá que
-reescribir las tres pruebas de «Órbita» de `caoz_tcg/tests.js` (escudo sobre
-proyectiles) y el texto de la carta en `motor.js`.
+Izquierda o A/S/D: esquivar o agacharse. Derecha, Espacio o clic: golpe.
+Tras una esquiva, el dragón queda aturdido y es el momento de golpear.
+Golpear su guardia no sirve: bloquea y ataca antes. A 0 de vida cae, se
+levanta entero y pelea más rápido. Se mantiene el contrato: 20 s y 3 vidas,
+y si la superas Pitágoras pierde 2 Alma.
+
+Las piezas se pintan una vez en un atlas: cabeza, fauces, brazos, garras,
+alas, halo y guerrero. La pose de cada instante (`rig`) sirve para el pintor
+3D y para el clásico. Al integrarla habrá que:
+- reescribir las pruebas de «Órbita» de `caoz_tcg/tests.js`;
+- dar a la carta del hueco V su nombre y su arte (hoy es «Órbita muerta»);
+- actualizar el texto de la carta en `motor.js`.
 
 Sólo presentación: los pintores leen `s.modelo` y nunca lo escriben (las
 pruebas comparan el estado con el pintor clásico). Sin WebGL o con movimiento
 reducido sigue el pintor anterior. `?prueba=laseres` elige la prueba; «Ver con
 el bot» usa el bot de revisión (La cosecha, Fuera de cuadro) o la guía del
-modelo (El corte final, El último puente, Órbita muerta) sin perder vidas; `CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y)`
+modelo (El corte final, El último puente, El último asalto) sin perder vidas; `CAOZ_PESADILLAS3D_REVISION.mirarHeroe(x,y)`
 comprueba el encuadre y, en primera persona (misma geometría que el raycaster), `delante(d)` que el disparo cae en el centro de la retícula. En la carrera,
 `carrilHeroe(c)` comprueba que el héroe y el tramo que viene queden a la vista.
-En la órbita, `orbita()` comprueba que la órbita entera, la estrella con su corona
-y el reino quepan en pantalla; las reglas se prueban con meteoros colocados a mano.
+En el asalto, `asalto()` comprueba dónde se ven el halo, las alas y el guerrero, y
+`posar(ataque,estado,k,accion)` pone al dragón en cualquier pose para revisarla;
+las reglas se prueban con cada ataque frente a cada esquiva.
 
 ```bash
 node dev/secciones/pruebas_pesadillas_3d.mjs
