@@ -14,7 +14,7 @@ import {exportar,componentesCosecha3d,recursosCosecha3d} from './cosecha-3d-expo
 import {crearServidor} from './servidor.mjs';
 import {juego,hash} from './fuentes.mjs';
 
-const js=fs.readFileSync(path.join(juego,'pitagoras-cosecha-3d.js'),'utf8');
+const js=['pitagoras-mundo-3d.js','pitagoras-cosecha-3d.js'].map(f=>fs.readFileSync(path.join(juego,f),'utf8')).join('\n');
 assert.ok(!/\.finished\b/.test(js)&&!/preserve-3d/.test(js),'Sin Animation.finished ni preserve-3d');
 assert.ok(!/\b(?:modelo|m)\.[a-zA-Z]+\s*=[^=]/.test(js),'El pintor no escribe en el modelo');
 const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-cosecha3d-'));
@@ -25,7 +25,7 @@ try{
   assert.deepEqual(archivos,esperados,'La revisión sólo publica sus dependencias');
   const html=fs.readFileSync(path.join(destino,'index.html'),'utf8');
   for(const m of html.matchAll(/(?:src|href)="\.\/([^"?#]+)"/g))assert.ok(fs.existsSync(path.join(destino,m[1])),m[1]);
-  assert.ok(html.indexOf('pitagoras-pixel.js')<html.indexOf('pitagoras-cosecha-3d.js'),'El pintor 3D se carga después del clásico');
+  assert.ok(html.indexOf('pitagoras-pixel.js')<html.indexOf('pitagoras-mundo-3d.js')&&html.indexOf('pitagoras-mundo-3d.js')<html.indexOf('pitagoras-cosecha-3d.js'),'El motor 3D se carga después del pintor clásico y antes de La cosecha');
   for(const [f,firma]of Object.entries(p.componentes))assert.equal(hash(fs.readFileSync(path.join(destino,'juego',f))),firma,f+' conserva su fuente');
   assert.equal(p.partida,false);assert.throws(()=>exportar(destino),/vacío/);
   console.log('✓ Exportación con sus dependencias declaradas');

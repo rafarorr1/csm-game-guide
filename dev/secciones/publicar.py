@@ -136,7 +136,7 @@ SECCIONES = {
     'cosecha-3d': {
         'nombre': 'La cosecha en 3D',
         'exportador': 'cosecha-3d-exportar.mjs',
-        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/pitagoras-cosecha-3d.js', 'juego/pitagoras-pruebas.js', 'juego/art/editorcosecha-dorado-v1.webp'},
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/pitagoras-cosecha-3d.js', 'juego/pitagoras-mundo-3d.js', 'juego/pitagoras-pruebas.js', 'juego/art/editorcosecha-dorado-v1.webp'},
         'pruebas': ('pruebas_cosecha_3d.mjs',),
     },
     'teaser': {

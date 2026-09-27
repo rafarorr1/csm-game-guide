@@ -7,7 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {datosDesdeMotor,leer,juego,hash} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
 export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
-export const componentesCosecha3d=Object.freeze(['pitagoras-pruebas.js','pitagoras-mundos.js','pitagoras-cine.js','pitagoras-pixel.js','pitagoras-cosecha-3d.js']);
+export const componentesCosecha3d=Object.freeze(['pitagoras-pruebas.js','pitagoras-mundos.js','pitagoras-cine.js','pitagoras-pixel.js','pitagoras-mundo-3d.js','pitagoras-cosecha-3d.js']);
 // Los módulos resuelven su arte relativo a sí mismos (juego/art/…).
 export const recursosCosecha3d=Object.freeze(['art/esbirro-editor-v219.webp','art/editorcosecha-dorado-v1.webp']);
 export function derivarCosecha3d(){
