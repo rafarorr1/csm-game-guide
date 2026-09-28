@@ -357,10 +357,9 @@
     if(d.kind==='grave')v.position.y=ALTURA+Math.min(10,P(d.side).grave.length)*GROSOR*ESC*.09;
   }
 
-  // Una carta del tapete nunca se mueve para inspeccionarla: un clic genera
-  // una copia de lectura pegada a la cámara. Así conserva su puesto, su click
-  // táctico y su proxy de raycast, pero se lee con claridad sin reaccionar al
-  // paso del mouse durante ataques o hechizos.
+  // Una carta del tapete nunca se mueve para inspeccionarla: su lectura vive
+  // abajo a la izquierda. Así la carta real conserva puesto y raycast, sin
+  // invadir el campo ni el abanico de la mano.
   function disposeInspectionCard(card){
     if(!card)return;card.userData.frente?.material?.dispose?.();card.userData.atras?.material?.dispose?.();const edge=card.userData.borde?.material;if(Array.isArray(edge))edge[1]?.dispose?.();else edge?.dispose?.();for(const gem of [card.userData.a,card.userData.h,card.userData.c,card.userData.soulBadge])if(gem){gem.material?.dispose?.();gem.geometry?.dispose?.();gem.userData.tex?.dispose?.();}card.removeFromParent();
   }
@@ -378,11 +377,19 @@
   }
   function inspectionPose(){
     const z=camera.aspect<.9?7.15:6.85,hh=Math.tan(camera.fov*Math.PI/360)*z,ww=hh*camera.aspect,scale=Math.min(ESC*1.15,(hh*1.22)/ALTO,(ww*.80)/ANCHO),halfH=ALTO*scale*.5;
-    // El visor siempre vive en la banda izquierda. Es una copia ligada a la
-    // cámara, de modo que leer una carta nunca desplaza la mano ni la mesa.
-    return {pos:new THREE.Vector3(-ww+ANCHO*scale*.5+.18,Math.max(-hh+halfH+.18,Math.min(hh-halfH-.18,.20)),-z),rot:new THREE.Euler(-.045,.02,0),scale};
+    // La lectura de la mesa queda baja y a la izquierda; esa esquina está
+    // libre del tablero y deja visibles los objetivos y la mano.
+    return {pos:new THREE.Vector3(-ww+ANCHO*scale*.5+.18,-hh+halfH+.18,-z),rot:new THREE.Euler(-.045,.035,.015),scale};
   }
-  function setTableHover(key){hoverTable=key;}
+  function setTableHover(key){
+    if(hoverTable===key)return;
+    hoverTable=key;
+    // El hover del tapete sirve para leer. Durante una orden táctica (ataque,
+    // hechizo o habilidad) se apaga para que ningún preview intercepte la
+    // decisión ni distraiga de los objetivos resaltados.
+    const lectura=key&&!drag&&!TGT&&!SEL&&!selected?key:null;
+    void setHoverPreview(lectura);
+  }
   function canPreview(source){if(!source)return false;const d=source.userData;return canInspectOnTable({kind:d.kind,side:d.side,back:d.kind==='enemyHand'});}
   async function setHoverPreview(key){
     if(key===hoverPreview)return;hoverPreview=key;clearTablePreview();if(!key)return;
@@ -478,17 +485,12 @@
      caras canónicas que usa dado-fisico.js. Así su quaternion, su radio y el
      número pintado sobre cada cara son exactamente los de la simulación. */
   const D20=globalThis.CAOZ_D20,D20_FACES=Array.isArray(D20?.caras)?D20.caras:[],D20_VERTICES=Array.isArray(D20?.vertices)?D20.vertices:[];
-  // El dado tiene una bandeja propia delante de Talesyn, fuera del campo y
-  // suficientemente cerca de cámara para que su trayectoria y su cara final
-  // se lean sin tapar una carta. Las coordenadas siguen siendo las físicas;
-  // sólo comprimimos el recorrido horizontal para mantenerlo en la bandeja.
-  const DICE_SCALE=1.28,DICE_PATH_SCALE=.62,DICE_ANCHOR=new THREE.Vector3(3.3,0,5.22),DICE_IMPULSE=Object.freeze({x:.16,z:-.64,fuerza:.68});
+  // El d20 entra desde detrás de la mano de Gero y cruza la mesa hasta el
+  // lado de Talesyn. La traslación es cinematográfica; su rotación y su cara
+  // final siguen viniendo intactas de la simulación física canónica.
+  const DICE_SCALE=1.28,DICE_LAUNCH=new THREE.Vector3(1,0,-7.05),DICE_TRAVEL_Z=10.15,DICE_IMPULSE=Object.freeze({x:.16,z:-.64,fuerza:.68});
   const diceRoot=new THREE.Group(),diceState={visible:false,estado:'oculto',valor:null,frames:0,decalCount:D20_FACES.length,spriteCount:0,caraSuperior:null,caraIndice:null};diceRoot.scale.setScalar(DICE_SCALE);table.add(diceRoot);diceRoot.visible=false;
-  const diceTray=new THREE.Group();diceTray.position.copy(DICE_ANCHOR);table.add(diceTray);
-  const trayBase=new THREE.Mesh(new THREE.BoxGeometry(4.95,.16,3.08),new THREE.MeshPhysicalMaterial({color:0x241321,metalness:.58,roughness:.27,clearcoat:.36}));trayBase.position.y=-.08;trayBase.castShadow=true;trayBase.receiveShadow=true;diceTray.add(trayBase);
-  const trayPad=new THREE.Mesh(new THREE.PlaneGeometry(4.56,2.7),new THREE.MeshStandardMaterial({color:0x211829,roughness:.78,metalness:.08,emissive:0x170f21,emissiveIntensity:.24}));trayPad.rotation.x=-Math.PI/2;trayPad.position.y=.006;trayPad.receiveShadow=true;diceTray.add(trayPad);
-  const trayRing=new THREE.Mesh(new THREE.RingGeometry(.72,.79,40),new THREE.MeshBasicMaterial({color:0xe6b75b,transparent:true,opacity:.68,side:THREE.DoubleSide,depthWrite:false}));trayRing.rotation.x=-Math.PI/2;trayRing.position.y=.012;diceTray.add(trayRing);
-  const diceLight=new THREE.PointLight(0xffd49a,0,9,2);diceLight.position.copy(DICE_ANCHOR).add(new THREE.Vector3(0,2.6,.4));diceLight.visible=false;scene.add(diceLight);
+  const diceLight=new THREE.PointLight(0xffd49a,0,9,2);diceLight.visible=false;scene.add(diceLight);
   const d20Vector=v=>new THREE.Vector3(v[0],v[1],v[2]);
   function d20BodyGeometry(){
     const positions=[],normals=[];
@@ -510,7 +512,7 @@
       if(up.lengthSq()<.0001)up.set(0,0,-1).addScaledVector(normal,normal.z);up.normalize();
       const right=new THREE.Vector3().crossVectors(up,normal).normalize(),half=D20_LABEL_SIZE/2,corners=[center.clone().addScaledVector(right,-half).addScaledVector(up,-half),center.clone().addScaledVector(right,half).addScaledVector(up,-half),center.clone().addScaledVector(right,half).addScaledVector(up,half),center.clone().addScaledVector(right,-half).addScaledVector(up,half)];
       for(const point of corners)point.addScaledVector(normal,D20_LABEL_LIFT);
-      const col=i%D20_ATLAS_COLS,row=Math.floor(i/D20_ATLAS_COLS),pad=.07,u0=(col+pad)/D20_ATLAS_COLS,u1=(col+1-pad)/D20_ATLAS_COLS,v0=(row+pad)/D20_ATLAS_ROWS,v1=(row+1-pad)/D20_ATLAS_ROWS;
+      const col=i%D20_ATLAS_COLS,row=Math.floor(i/D20_ATLAS_COLS),pad=.07,u0=(col+pad)/D20_ATLAS_COLS,u1=(col+1-pad)/D20_ATLAS_COLS,v0=1-(row+1-pad)/D20_ATLAS_ROWS,v1=1-(row+pad)/D20_ATLAS_ROWS;
       for(const point of [corners[0],corners[1],corners[2],corners[0],corners[2],corners[3]])positions.push(point.x,point.y,point.z);
       uvs.push(u0,v0,u1,v0,u1,v1,u0,v0,u1,v1,u0,v1);
     });
@@ -523,8 +525,8 @@
   function unitQuat(q){const out=new THREE.Quaternion(q[0],q[1],q[2],q[3]);return out.normalize();}
   function readDiceFace(q){if(!D20?.leer)return null;const face=D20.leer([q.x,q.y,q.z,q.w]);return face?{valor:face.valor,indice:face.indice}:null;}
   function diceAt(tirada,t){const frames=tirada.frames||[],last=frames.at(-1);if(!last)return;let i=0;while(i<frames.length-2&&frames[i+1].t<t)i++;const a=frames[i],b=frames[Math.min(i+1,frames.length-1)],k=Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t||1))),sign=a.q[0]*b.q[0]+a.q[1]*b.q[1]+a.q[2]*b.q[2]+a.q[3]*b.q[3]<0?-1:1;
-    const first=frames[0]?.p||[0,0,.9],px=a.p[0]+(b.p[0]-a.p[0])*k,py=a.p[1]+(b.p[1]-a.p[1])*k,pz=a.p[2]+(b.p[2]-a.p[2])*k;
-    diceRoot.position.set(DICE_ANCHOR.x+(px-first[0])*DICE_PATH_SCALE,D20_SURFACE_Y+py*DICE_SCALE,DICE_ANCHOR.z+(pz-first[2])*DICE_PATH_SCALE);const q=unitQuat(a.q).slerp(unitQuat([b.q[0]*sign,b.q[1]*sign,b.q[2]*sign,b.q[3]*sign]),k);diceRoot.quaternion.copy(q);const top=readDiceFace(q);diceState.caraSuperior=top?.valor??null;diceState.caraIndice=top?.indice??null;
+    const first=frames[0]?.p||[0,0,.9],px=a.p[0]+(b.p[0]-a.p[0])*k,py=a.p[1]+(b.p[1]-a.p[1])*k,progress=Math.max(0,Math.min(1,t/(last.t||1)));
+    diceRoot.position.set(DICE_LAUNCH.x+(px-first[0])*.58,D20_SURFACE_Y+py*DICE_SCALE,DICE_LAUNCH.z+DICE_TRAVEL_Z*progress);diceLight.position.copy(diceRoot.position).add(new THREE.Vector3(0,2,.35));const q=unitQuat(a.q).slerp(unitQuat([b.q[0]*sign,b.q[1]*sign,b.q[2]*sign,b.q[3]*sign]),k);diceRoot.quaternion.copy(q);const top=readDiceFace(q);diceState.caraSuperior=top?.valor??null;diceState.caraIndice=top?.indice??null;
   }
   // Evita hasta 419 simulaciones síncronas cuando se pide una cara conocida.
   // Cada semilla se obtuvo con el mismo impulso canónico y se valida al usarla,
@@ -532,17 +534,22 @@
   const D20_SEEDS=Object.freeze({1:32,2:1,3:23,4:21,5:31,6:15,7:61,8:36,9:11,10:14,11:12,12:2,13:3,14:54,15:4,16:17,17:19,18:8,19:5,20:27}),d20ReplayCache=new Map();
   function physicalFor(value){if(!globalThis.CAOZ_D20)return null;const seed=D20_SEEDS[value];if(!seed)return null;if(d20ReplayCache.has(value))return d20ReplayCache.get(value);const roll=globalThis.CAOZ_D20.simular(seed,DICE_IMPULSE);if(roll.asentado&&roll.valor===value){d20ReplayCache.set(value,roll);return roll;}return null;}
   async function showD20(value,label,interactive,meta,fisica){
-    let tirada=fisica&&(fisica.frames?fisica:globalThis.CAOZ_D20?.desempaquetar?.(fisica));if(!tirada)tirada=physicalFor(value)||globalThis.CAOZ_D20?.simular?.(17,DICE_IMPULSE);
-    if(!tirada){messageFor(`🎲 ${label}: ${value}`);return value;}
+    const esperado=Number(value);let tirada=fisica&&(fisica.frames?fisica:globalThis.CAOZ_D20?.desempaquetar?.(fisica));
+    const caraFinal=r=>{const q=r?.frames?.at(-1)?.q;return q?readDiceFace(unitQuat(q))?.valor:null;};
+    // Jamás mostramos una animación cuya cara superior contradiga el resultado
+    // que el motor acaba de resolver. Una ruta remota incompleta se sustituye
+    // por su replay canónico, nunca por una semilla arbitraria.
+    if(!tirada||Number(tirada.valor)!==esperado||caraFinal(tirada)!==esperado)tirada=physicalFor(esperado);
+    if(!tirada){messageFor(`🎲 ${label}: ${esperado}`);return esperado;}
     diceRoot.visible=true;diceLight.visible=true;diceLight.intensity=13;diceState.visible=true;diceState.estado='rodando';diceState.valor=null;diceState.caraSuperior=null;diceState.caraIndice=null;diceState.frames=tirada.frames.length;diceReadout.hidden=false;diceReadout.innerHTML=`<small>${strip(label)}</small><b>◇</b><span>Rodando el d20…</span>`;shadowDirty=true;
     animationHistory.push({tipo:'dado',etapa:'entrada',frames:tirada.frames.length,orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();
     const duration=G?.fast?.10:Math.min(2.4,Math.max(.82,tirada.duracion||2.2));
     await tween(duration,k=>diceAt(tirada,(tirada.frames.at(-1)?.t||0)*ease(k)));
-    diceAt(tirada,tirada.frames.at(-1)?.t||0);diceState.estado='resultado';diceState.valor=value;const good=meta?.min!=null&&value>=meta.min,bad=meta?.max!=null&&value<=meta.max;
-    diceReadout.innerHTML=`<small>${strip(label)}</small><b>${value}</b><span>${good?'Éxito':bad?'Falla':value===20||value===1?'Crítico':'Resultado'}</span>`;
+    diceAt(tirada,tirada.frames.at(-1)?.t||0);diceState.estado='resultado';diceState.valor=esperado;const good=meta?.min!=null&&esperado>=meta.min,bad=meta?.max!=null&&esperado<=meta.max;
+    diceReadout.innerHTML=`<small>${strip(label)}</small><b>${esperado}</b><span>${good?'Éxito':bad?'Falla':esperado===20||esperado===1?'Crítico':'Resultado'}</span>`;
     animationHistory.push({tipo:'dado',etapa:'fin',frames:tirada.frames.length,orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();
-    if(interactive&&G?.active===ME)return new Promise(resolve=>modalShow({kicker:'D20',title:label,body:`<p class="ctDiceResult"><b>${value}</b></p><p>${meta?.necesita||''}</p><p>${good?(meta?.siOk||''):(bad?(meta?.siMal||''):'')}</p>`,actions:[{t:'Continuar',cls:'gold',fn:()=>{modalHide();diceRoot.visible=false;diceLight.visible=false;diceReadout.hidden=true;diceState.visible=false;shadowDirty=true;resolve(value);}}]}));
-    await fxDelay(meta?2600:1500);diceRoot.visible=false;diceLight.visible=false;diceReadout.hidden=true;diceState.visible=false;shadowDirty=true;return value;
+    if(interactive&&G?.active===ME)return new Promise(resolve=>modalShow({kicker:'D20',title:label,body:`<p class="ctDiceResult"><b>${esperado}</b></p><p>${meta?.necesita||''}</p><p>${good?(meta?.siOk||''):(bad?(meta?.siMal||''):'')}</p>`,actions:[{t:'Continuar',cls:'gold',fn:()=>{modalHide();diceRoot.visible=false;diceLight.visible=false;diceReadout.hidden=true;diceState.visible=false;shadowDirty=true;resolve(esperado);}}]}));
+    await fxDelay(meta?2600:1500);diceRoot.visible=false;diceLight.visible=false;diceReadout.hidden=true;diceState.visible=false;shadowDirty=true;return esperado;
   }
   globalThis.d20FisicoDisponible=()=>!!globalThis.CAOZ_D20;
   globalThis.prepararTiradaD20=(label,interactive,meta)=>{
@@ -599,9 +606,8 @@
   // La copia de lectura no participa en raycast. Aun así, al pulsarla no
   // dejamos que el clic atraviese accidentalmente hacia una carta de mesa.
   function previewContainsClientPoint(e){if(!tablePreview)return false;const r=cardRect(tablePreview);return e.clientX>=r.x&&e.clientX<=r.x+r.width&&e.clientY>=r.y&&e.clientY<=r.y+r.height;}
-  // La carta ampliada de la mano queda lejos de su ranura original. Si el
-  // usuario hace clic o inicia un arrastre sobre esa lectura, conservamos la
-  // misma carta en vez de dejar que el gesto atraviese la mesa de fondo.
+  // El pequeño crecimiento de la mano conserva su propia carta aunque el
+  // puntero caiga sobre el borde recién ampliado.
   function handPreviewContainsClientPoint(e){const v=hoverHand&&visuals.get(hoverHand);if(!v||v.userData.kind!=='hand')return false;const r=cardRect(v);return e.clientX>=r.x&&e.clientX<=r.x+r.width&&e.clientY>=r.y&&e.clientY<=r.y+r.height;}
   function updateDropMarks(){const slots=freeSlots(ME);for(const {slot,m} of dragMarks){const active=!!drag&&slots.includes(slot);m.visible=active;m.material.opacity=active?(drag.slot===slot ? .68 : .23+.08*Math.sin(reloj*7+slot)):0;}}
   function nearestDrop(pos){let best=null,dist=1.48;for(const slot of freeSlots(ME)){const p=new THREE.Vector3((slot-2)*2,.72,sideZ(ME)*1.55),d=Math.hypot(pos.x-p.x,pos.z-p.z);if(d<dist){best=slot;dist=d;}}return best;}
@@ -611,11 +617,9 @@
     camera.attach(v);v.userData.dragging=false;const hit=handHits.get(current.key);if(hit)hit.visible=true;messageFor('La carta vuelve a tu mano.');}
   function animateHand(dt){
     for(const [key,v] of visuals){if(v.userData.kind!=='hand'||v.userData.dragging||v.userData.motion)continue;const base=v.userData.handPose;if(!base)continue;const active=hoverHand===key&&!G?.busy&&G?.active===ME,pos=handWorkPos.copy(base.pos),rot=handWorkRot.copy(base.rot);let scale=base.scale;
-      // La ampliación ya no invade el centro de la mesa: se instala abajo a
-      // la izquierda, al lado de la mano. La ranura de hit se queda en la
-      // pose base, así que sigue siendo estable incluso cuando la carta crece.
-      if(active){const z=camera.aspect<.9?6.45:7.4,hh=Math.tan(camera.fov*Math.PI/360)*z,ww=hh*camera.aspect;scale=Math.min(ESC*1.22,(hh*1.0)/ALTO,(ww*.46)/ANCHO);pos.set(-ww+ANCHO*scale*.5+.22,-hh+ALTO*scale*.5+.18,-z);rot.set(-.045+(hoverUV.y-.5)*.09,.035+(hoverUV.x-.5)*.11,.015);}
-      else if(hoverHand){const other=visuals.get(hoverHand);const dx=base.pos.x-(other?.userData.handPose?.pos.x||0);pos.x+=Math.sign(dx||1)*.15/Math.sqrt(Math.max(1,Math.abs(dx)));}
+      // El hover aprobado de la mano nunca abandona su sitio: sólo se acerca
+      // lo justo para confirmar la carta bajo el mouse, sin desplazar vecinos.
+      if(active){scale=base.scale*1.045;pos.y+=.10;pos.z+=.08;rot.set(-.10+(hoverUV.y-.5)*.05,(hoverUV.x-.5)*.07,0);}
       const q=handWorkQuat.setFromEuler(rot),mix=1-Math.exp(-dt*(active?18:8));v.position.lerp(pos,mix);v.quaternion.slerp(q,mix);v.scale.setScalar(THREE.MathUtils.lerp(v.scale.x,scale,mix));const m=v.userData.frente.material,legal=G?.active===ME&&!G?.busy&&canPlay(ME,v.userData.id);
       // Una carta no jugable conserva lectura: la disponibilidad se comunica
       // por la acción bloqueada y el borde, no convirtiendo su texto y arte en
@@ -624,7 +628,7 @@
     }
   }
   function updateDrag(dt){if(!drag)return;const point=tablePoint();if(point)drag.point.copy(point);drag.slot=drag.spell?null:nearestDrop(drag.point);const target=drag.point.clone();target.y=.82;drag.v.position.lerp(target,1-Math.exp(-dt*19));const lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+.08,0,0));drag.v.quaternion.slerp(lean,1-Math.exp(-dt*14));drag.v.scale.setScalar(THREE.MathUtils.lerp(drag.v.scale.x,ESC*1.08,1-Math.exp(-dt*14)));updateDropMarks();}
-  function selectVisual(u){selected=u;render();}
+  function selectVisual(u){setHoverPreview(null);selected=u;render();}
   async function activateCard(v){if(!v||!G||G.over)return;const kind=v.userData.kind,side=v.userData.side,u=v.userData.unit;
     if(TGT){if(kind==='leader'&&side===FOE)pickTarget('face');else if(u)pickTarget(u);return;}
     if(kind==='hand'&&side===ME){
@@ -679,7 +683,9 @@
   const isBoardPointer=e=>e.target===canvas||!!gesture||!!drag;
   stage.addEventListener('pointerdown',e=>{if(e.button!==0||!isBoardPointer(e))return;if(previewContainsClientPoint(e)){gesture={preview:true,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);return;}if(handPreviewContainsClientPoint(e)){gesture={key:hoverHand,hand:true,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);return;}setPointer(e);const hand=handSlotUnderPointer(),tableSlot=hand?null:tableSlotUnderPointer();gesture={key:hand?.key||tableSlot?.key||null,hand:!!hand,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);});
   stage.addEventListener('pointerup',async e=>{if(!isBoardPointer(e))return;const g=gesture;gesture=null;if(g?.preview)return;setPointer(e);if(drag){await finishDrag();return;}if(g?.key&&g.moved<=10){const v=visuals.get(g.key);if(v){if(g.hand)await activateCard(v);else await activateBoardCard(v);}return;}const hit=tableSlotUnderPointer(),v=hit?visuals.get(hit.key):hitCard();if(v)await activateBoardCard(v);else if(TGT)toast('Elige una carta resaltada o cancela.');else setHoverPreview(null);});
-  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e)){if(!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}return;}if(!drag&&previewContainsClientPoint(e)){hoverHand=null;setTableHover(null);stage.style.cursor='default';return;}const onHandPreview=!drag&&handPreviewContainsClientPoint(e);setPointer(e);const h=onHandPreview?null:handSlotUnderPointer(),tableSlot=h||onHandPreview?null:tableSlotUnderPointer();if(!drag){hoverHand=h?.key||(onHandPreview?hoverHand:null);if(h)hoverUV.copy(h.uv);setTableHover(tableSlot?.key||null);stage.style.cursor=h||tableSlot||onHandPreview?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.hand&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
+  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e)){if(!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}return;}if(!drag&&previewContainsClientPoint(e)){// El visor no se evapora al llevar el cursor hacia él para leerlo.
+      hoverHand=null;stage.style.cursor='default';return;
+    }const onHandPreview=!drag&&handPreviewContainsClientPoint(e);setPointer(e);const h=onHandPreview?null:handSlotUnderPointer(),tableSlot=(h||onHandPreview)?null:tableSlotUnderPointer();if(!drag){hoverHand=h?.key||(onHandPreview?hoverHand:null);if(h)hoverUV.copy(h.uv);setTableHover(tableSlot?.key||null);stage.style.cursor=h||tableSlot||onHandPreview?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.hand&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
   stage.addEventListener('pointerleave',()=>{if(!gesture&&!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}});
   stage.addEventListener('wheel',e=>{e.preventDefault();view.target=Math.max(.78,Math.min(1.25,view.target+e.deltaY*.0008));},{passive:false});
   prompt.addEventListener('pointerdown',e=>e.stopPropagation());
@@ -773,7 +779,7 @@
     const enemyHand=[...visuals.values()].filter(v=>v.userData.kind==='enemyHand').sort((a,b)=>(a.userData.handIndex||0)-(b.userData.handIndex||0)).map(v=>({centro:plain(v.getWorldPosition(new THREE.Vector3()))}));
     const leaders=[ME,FOE].map(side=>{const v=leaderVisual(side),badge=v?.userData?.soulBadge;return {side,alma:P(side).alma,badge:!!badge,badgeEscala:Number((badge?.scale.x||0).toFixed(4)),badgePos:badge?plain(badge.position):null};});
     const decks=[ME,FOE].map(side=>{const v=visuals.get('deck:'+side);return {side,visible:!!v,rotacion:v?plain(v.rotation):null};});
-    return {mano:{ranuras:hand,objetivo:hoverHand,foco:handFocus},mesa:{ranuras:tableSlots,preview:{key:tablePreviewKey,visible:!!tablePreview,escala:Number((tablePreview?.scale.x||0).toFixed(4)),localX:Number((tablePreview?.position.x||0).toFixed(4)),rect:tablePreview?cardRect(tablePreview):null},seleccionado:selected?.uid||null},campo:[field(ME),field(FOE)],enemigo:{mano:enemyHand,campo:field(FOE)},lideres:leaders,mazos:decks,dado:{...diceState,centro:plain(diceRoot.position),bandeja:plain(DICE_ANCHOR)},rendimiento:{dpr:Number(renderer.getPixelRatio().toFixed(3)),escala:Number(renderScale.toFixed(3)),frameMs:Number(frameAverage.toFixed(2)),sombrasAutomaticas:renderer.shadowMap.autoUpdate,impactosActivos:impacts.length},animaciones:{activas:[...activeAnimations.values()].map(x=>({...x})),historial:animationHistory.map(x=>({...x}))},cementerio:[P(ME).grave.map(id=>({id})),P(FOE).grave.map(id=>({id}))]};
+    return {mano:{ranuras:hand,objetivo:hoverHand,foco:handFocus},mesa:{ranuras:tableSlots,preview:{key:tablePreviewKey,visible:!!tablePreview,escala:Number((tablePreview?.scale.x||0).toFixed(4)),localX:Number((tablePreview?.position.x||0).toFixed(4)),rect:tablePreview?cardRect(tablePreview):null},seleccionado:selected?.uid||null},campo:[field(ME),field(FOE)],enemigo:{mano:enemyHand,campo:field(FOE)},lideres:leaders,mazos:decks,dado:{...diceState,centro:plain(diceRoot.position),origen:plain(DICE_LAUNCH)},rendimiento:{dpr:Number(renderer.getPixelRatio().toFixed(3)),escala:Number(renderScale.toFixed(3)),frameMs:Number(frameAverage.toFixed(2)),sombrasAutomaticas:renderer.shadowMap.autoUpdate,impactosActivos:impacts.length},animaciones:{activas:[...activeAnimations.values()].map(x=>({...x})),historial:animationHistory.map(x=>({...x}))},cementerio:[P(ME).grave.map(id=>({id})),P(FOE).grave.map(id=>({id}))]};
   }
   async function testScenario(name){
     if(!G)throw Error('La partida todavía no está lista.');G.fast=false;G.over=false;G.busy=false;G.resolving=false;G.active=ME;G.phase='principal';P(ME).pd=10;P(ME).pdMax=10;P(FOE).pd=10;P(FOE).pdMax=10;P(ME).leaderUsed=false;P(FOE).leaderUsed=false;selected=null;SEL=null;TGT=null;
