@@ -49,20 +49,26 @@ try{
     const R='CAOZ_MESA_THREE_REVISION',av=s=>pagina.evaluate(([R,s])=>window[R].avanzar(s),[R,s]);
     let e=await av(.5);
     assert.ok(e.webgl2&&e.hdr&&e.muestras===4,caso+': WebGL 2, HDR y MSAA 4×');
-    assert.deepEqual(e.pases,['render','oclusion','enfoque','resplandor','salida'],caso+': oclusión ambiental, profundidad de campo, resplandor y salida AgX');
-    assert.equal(e.intensidad,58,caso+': la atmósfera empieza equilibrada');
-    assert.equal(await pagina.$eval('#intensidadEfectos',n=>n.value),'58',caso+': el slider refleja la intensidad inicial');
+    assert.deepEqual(e.pases,['render'],caso+': el perfil base usa render directo, sin posproceso');
+    assert.ok(e.rutaDirecta&&e.dpr<=1.25,caso+': el perfil base evita el compositor y limita el DPR ('+e.dpr+')');
+    assert.equal(e.intensidad,10,caso+': la atmósfera empieza al diez por ciento');
+    assert.equal(e.sombra,.1,caso+': la sombra de la lámpara empieza al diez por ciento');
+    assert.deepEqual(e.efectos,{sombras:true,oclusion:false,enfoque:false,resplandor:false,velas:true},caso+': sólo sombras y velas están activas');
+    assert.equal(await pagina.$eval('#intensidadEfectos',n=>n.value),'10',caso+': el slider refleja el perfil de rendimiento');
     assert.ok(e.iluminacionMano.every(m=>m.entorno>=.45&&m.emision>=.18&&m.laca<=.21),caso+': la mano tiene entorno, emisión y laca de lectura');
-    // En «Priorizar lectura» se van los efectos pesados, no la iluminación que hace legible la mano.
+    // En «Priorizar lectura» se van hasta las sombras y velas, no la iluminación que hace legible la mano.
     await pagina.evaluate(R=>window[R].intensidad(0),R);e=await av(.2);
     assert.equal(e.intensidad,0,caso+': el slider llega a lectura');
-    assert.deepEqual(e.pases,['render','salida'],caso+': a cero sólo quedan el render y la salida');
+    assert.deepEqual(e.pases,['render'],caso+': a cero sólo queda el render directo');
     assert.ok(e.iluminacionMano.every(m=>m.entorno>=.45&&m.emision>=.18),caso+': la mano no se oscurece al bajar los efectos');
     await pagina.evaluate(R=>window[R].intensidad(100),R);e=await av(.2);
     assert.equal(e.intensidad,100,caso+': el slider llega a cinematográfico');
-    assert.deepEqual(e.pases,['render','oclusion','enfoque','resplandor','salida'],caso+': a cien vuelve la cadena visual completa');
-    await pagina.evaluate(R=>window[R].intensidad(58),R);e=await av(.2);
-    assert.deepEqual(e.pases,['render','oclusion','enfoque','resplandor','salida'],caso+': el equilibrio recupera sus efectos');
+    assert.deepEqual(e.pases,['render'],caso+': subir el slider no enciende efectos pesados por sí solo');
+    for(const k of ['oclusion','enfoque','resplandor'])await pagina.evaluate(([R,k])=>window[R].efecto(k,true),[R,k]);
+    e=await av(.2);assert.deepEqual(e.pases,['render','oclusion','enfoque','resplandor','salida'],caso+': el ajuste fino puede recuperar la cadena cinematográfica');
+    for(const k of ['oclusion','enfoque','resplandor'])await pagina.evaluate(([R,k])=>window[R].efecto(k,false),[R,k]);
+    await pagina.evaluate(R=>window[R].intensidad(10),R);e=await av(.2);
+    assert.deepEqual(e.pases,['render'],caso+': el perfil de rendimiento se recupera tras el ajuste fino');
     assert.deepEqual([e.mano.length,e.campo.length,e.rival.length,e.almaYo,e.almaRival,e.pd,e.manoRival],[5,3,3,17,12,6,5],caso+': la partida está montada (manos, campos, Alma y PD)');
     // Encuadre: los dos campos siempre; en escritorio, también protagonistas, mazos y cementerios; la mano abajo.
     const P=await pagina.evaluate(R=>window[R].posiciones(),R),vis=async([x,y,z])=>{const q=await pagina.evaluate(([R,x,y,z])=>window[R].pantalla(x,y,z),[R,x,y,z]);return q.x>q.ancho*.01&&q.x<q.ancho*.99&&q.y>q.alto*.01&&q.y<q.alto*.99?q:null;};
@@ -85,7 +91,7 @@ try{
     assert.ok(e.cementerioRival>antes.cementerioRival||e.rival.length>antes.rival.length,caso+': el rival roba y juega su carta');
     assert.ok(e.campo.length<antes.campo.length||e.almaYo<antes.almaYo||e.campo.join()!==antes.campo.join(),caso+': el rival ataca ('+e.campo.join(', ')+' · Alma '+e.almaYo+')');
     for(const k of ['oclusion','enfoque','resplandor'])await pagina.evaluate(([R,k])=>window[R].efecto(k,false),[R,k]);
-    e=await av(.2);assert.deepEqual(e.pases,['render','salida'],caso+': los efectos se apagan');
+    e=await av(.2);assert.deepEqual(e.pases,['render'],caso+': los efectos permanecen apagados');
     assert.deepEqual(errores,[],caso+': sin errores ni avisos de página');
     console.log('✓ '+caso+': la partida, el encuadre, jugar, atacar, el turno del rival y los efectos');
     await pagina.close();

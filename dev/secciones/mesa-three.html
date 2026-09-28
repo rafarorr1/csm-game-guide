@@ -31,22 +31,22 @@
         <p class="mtEtiqueta">AMBIENTE VISUAL</p>
         <h2 id="ambienteTitulo">Efectos sin perder la mesa</h2>
       </div>
-      <output id="intensidadTexto" for="intensidadEfectos" aria-live="polite">Equilibrado · 58%</output>
+      <output id="intensidadTexto" for="intensidadEfectos" aria-live="polite">Prioriza lectura · 10%</output>
     </div>
     <label class="mtRango" for="intensidadEfectos">
       <span>Intensidad de efectos</span>
-      <input id="intensidadEfectos" type="range" min="0" max="100" value="58" step="1" aria-describedby="intensidadAyuda">
+      <input id="intensidadEfectos" type="range" min="0" max="100" value="10" step="1" aria-describedby="intensidadAyuda">
     </label>
     <div class="mtExtremos" aria-hidden="true"><span>Priorizar lectura</span><span>Más cinematográfico</span></div>
-    <p id="intensidadAyuda" class="mtAyuda">La mano conserva su propia luz de lectura; este control ajusta sombras, velas, profundidad, brillo y atmósfera de la mesa.</p>
+    <p id="intensidadAyuda" class="mtAyuda">Perfil de prueba: sombras y velas al 10%, sin posproceso pesado. La mano conserva su propia luz de lectura.</p>
     <details class="mtEfectos">
       <summary>Ajuste fino</summary>
       <div class="mtEfectosOpciones">
         <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
-        <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
+        <label><input type="checkbox" data-efecto="oclusion"> Oclusión ambiental</label>
         <label><input type="checkbox" data-efecto="velas" checked> Velas</label>
-        <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
-        <label><input type="checkbox" data-efecto="enfoque" checked> Profundidad de campo</label>
+        <label><input type="checkbox" data-efecto="resplandor"> Resplandor</label>
+        <label><input type="checkbox" data-efecto="enfoque"> Profundidad de campo</label>
       </div>
     </details>
   </section>
