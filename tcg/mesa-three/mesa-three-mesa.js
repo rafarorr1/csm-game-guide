@@ -25,6 +25,10 @@
   if(CAPTURA)document.documentElement.dataset.captura='';
   const {THREE,EffectComposer,RenderPass,GTAOPass,UnrealBloomPass,BokehPass,OutputPass}=window.CAOZ_THREE;
   const C=window.CAOZ_THREE_CARTA,{ANCHO,ALTO,GROSOR,GEMAS}=C,S=.62,TAU=Math.PI*2;
+  // Todas las cartas que descansan en la mesa comparten esta separación física: el
+  // canto nunca atraviesa el tapete, ni siquiera durante una animación o una pila alta.
+  const ALTURA_TAPETE=.003,ALTURA_CARTA=ALTURA_TAPETE+GROSOR*S/2+.012,PASO_PILA=GROSOR*S*1.08,ALTURA_MARCA=ALTURA_TAPETE+.004;
+  const alturaCementerio=n=>ALTURA_CARTA+Math.max(0,n-1)*PASO_PILA;
   const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
   // Perfil base de rendimiento: sólo la sombra suave de la lámpara y dos velas discretas.
   const efectos={sombras:true,oclusion:false,enfoque:false,resplandor:false,velas:true};
@@ -68,7 +72,9 @@
     mazo:Object.freeze({x:6.9,z:4.15}),
     cementerio:Object.freeze({x:6.9,z:1.35}),
     recursos:Object.freeze({alma:Object.freeze({x:-4.2,z:4.95}),pd:Object.freeze({x:-7.12,z:5.28}),llaves:Object.freeze({x:-2.45,z:5.48})}),
-    manoRival:Object.freeze({z:-5.34,escala:.76,altura:.028})
+    // La mano rival vive sobre la banda de madera, detrás de sus trampas. Al estar
+    // inclinada necesita altura real: antes su borde inferior atravesaba el tapete.
+    manoRival:Object.freeze({z:-6.45,escala:.76,altura:.72})
   });
   const ladoSign=lado=>lado==='yo'?1:-1;
   const zonas=[];// dónde está cada zona (para pintarla y para poner las cartas)
@@ -161,7 +167,7 @@
   const enGema=(m,[cx,cy,r])=>{m.position.set((cx/1024-.5)*ANCHO,(.5-cy/1434)*ALTO,GROSOR/2+.004);m.scale.setScalar(r/1024*ANCHO*.78);return m;};
   async function nuevaCarta(id,ed){
     const tx=await texturasDe(id,ed),c=CARDS[id]||null,g=F.carta(F.materialCara(tx,ed),dorsoPintado.mat,F.materialCanto(ed));g.scale.setScalar(S);
-    const u={id,ed,g,atq:c?.a??0,vida:c?.h??0,vidaMax:c?.h??0,coste:c?.c??0,tipo:c?.t||'personaje',cifras:{}};
+    const u={id,ed,g,atq:c?.a??0,vida:c?.h??0,vidaMax:c?.h??0,coste:c?.c??0,tipo:c?.t||'personaje',cifras:{},animando:false};
     if(c?.t==='personaje'){u.cifras.atq=enGema(cifra(u.atq,'#fff1d8'),GEMAS.atq);u.cifras.vida=enGema(cifra(u.vida,'#fff1d8'),GEMAS.vida);g.add(u.cifras.atq,u.cifras.vida);}
     if(c)u.cifras.coste=enGema(cifra(u.coste,'#f4ecff'),GEMAS.coste),g.add(u.cifras.coste);
     g.userData.unidad=u;return u;
@@ -176,10 +182,10 @@
     for(const parte of [u.g.userData.frente,u.g.userData.atras,u.g.userData.borde])parte.castShadow=!si;
     m.needsUpdate=true;}
   // Pilas de cartas (mazo y cementerio): cantos apilados con un poco de desorden.
-  function pila(n,x,z,dorso=true){const g=new THREE.Group();g.position.set(x,0,z);mesa.add(g);g.userData.n=0;g.userData.poner=k=>{while(g.children.length<k){const i=g.children.length,m=F.carta(dorso?dorsoPintado.mat:dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));m.scale.setScalar(S);m.rotation.set(-Math.PI/2+(dorso?Math.PI:0),0,(rnd()-.5)*.06);m.position.set((rnd()-.5)*.04,.02+i*GROSOR*S*1.05,(rnd()-.5)*.04);g.add(m);}while(g.children.length>k)g.remove(g.children.at(-1));g.userData.n=k;};g.userData.poner(n);return g;}
+  function pila(n,x,z,dorso=true){const g=new THREE.Group();g.position.set(x,0,z);mesa.add(g);g.userData.n=0;g.userData.poner=k=>{while(g.children.length<k){const i=g.children.length,m=F.carta(dorso?dorsoPintado.mat:dorsoPintado.mat,F.materialCanto('normal'));m.scale.setScalar(S);m.rotation.set(-Math.PI/2+(dorso?Math.PI:0),0,(rnd()-.5)*.06);m.position.set((rnd()-.5)*.04,ALTURA_CARTA+i*PASO_PILA,(rnd()-.5)*.04);g.add(m);}while(g.children.length>k)g.remove(g.children.at(-1));g.userData.n=k;};g.userData.poner(n);return g;}
   // Cristales: el Alma (grande, rojo) y los PD (gemas moradas); con transmisión real.
   const vidrio=(color,att)=>new THREE.MeshPhysicalMaterial({color,transmission:1,thickness:.8,ior:1.6,roughness:.04,attenuationColor:new THREE.Color(att),attenuationDistance:2.2,dispersion:.6,specularIntensity:1,emissive:new THREE.Color(att),emissiveIntensity:.35,flatShading:true});
-  function cristalAlma(x,z,valor){const g=new THREE.Group();g.position.set(x,0,z);mesa.add(g);
+  function cristalAlma(x,z,valor){const g=new THREE.Group();g.position.set(x,ALTURA_TAPETE+.002,z);mesa.add(g);
     const pie=new THREE.Mesh(new THREE.CylinderGeometry(.55,.7,.18,48),new THREE.MeshPhysicalMaterial({color:0xd9a94f,metalness:1,roughness:.3}));pie.position.y=.09;pie.castShadow=pie.receiveShadow=true;g.add(pie);
     const gema=new THREE.Mesh(new THREE.OctahedronGeometry(.62,0),vidrio(0xffd0d8,0xd01840));gema.scale.set(.8,1.25,.8);gema.position.y=1.05;gema.castShadow=true;g.add(gema);
     const brillo=new THREE.PointLight(0xff3050,5,3.5,2);brillo.position.y=1.05;g.add(brillo);const nucleo=new THREE.Mesh(new THREE.SphereGeometry(.16,24,16),new THREE.MeshBasicMaterial({color:new THREE.Color(0xff5070).multiplyScalar(3),toneMapped:false}));nucleo.position.y=1.05;g.add(nucleo);
@@ -205,7 +211,7 @@
         vec4 m=modelViewMatrix*vec4(p,1.);gl_Position=projectionMatrix*m;vA=clamp(1.-uE/1.3,0.,1.);gl_PointSize=(1.5+aVel)*uEsc*vA/(-m.z)*9.;}`,
       fragmentShader:`uniform vec3 uC;varying float vA;void main(){float d=length(gl_PointCoord-.5);gl_FragColor=vec4(mix(uC,vec3(1.,.97,.85),.4)*smoothstep(.5,0.,d)*vA*2.,1.);}`}));
     p.frustumCulled=false;escena.add(p);
-    const onda=new THREE.Mesh(new THREE.RingGeometry(.85,1,96),new THREE.MeshBasicMaterial({color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));onda.rotation.x=-Math.PI/2;onda.position.set(pos.x,.02,pos.z);escena.add(onda);
+    const onda=new THREE.Mesh(new THREE.RingGeometry(.85,1,96),new THREE.MeshBasicMaterial({color,transparent:true,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));onda.rotation.x=-Math.PI/2;onda.position.set(pos.x,ALTURA_MARCA,pos.z);escena.add(onda);
     estallidos.push({t0:reloj,p,u,onda,fuerza});
   }
   const numeros=[];
@@ -216,7 +222,7 @@
   function numero(pos,texto,color){const e=etiqueta('mtNumero',pos.clone().add(new THREE.Vector3(0,1,0)));e.el.textContent=texto;e.el.style.color=color;numeros.push({e,t0:reloj,y:e.pos.y});}
   const pilar=new THREE.Mesh(new THREE.CylinderGeometry(.9,1.25,9,48,1,true),new THREE.ShaderMaterial({uniforms:{uA:{value:0}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:`varying float vH;void main(){vH=uv.y;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,fragmentShader:`uniform float uA;varying float vH;void main(){gl_FragColor=vec4(vec3(1.,.82,.45)*uA*pow(1.-vH,1.5),1.);}`}));
-  pilar.position.y=4.5;pilar.visible=false;escena.add(pilar);
+  pilar.position.y=4.5+ALTURA_TAPETE;pilar.visible=false;escena.add(pilar);
 
   /* ---- Posproceso HDR ------------------------------------------------------------- */
   const objetivo=new THREE.WebGLRenderTarget(2,2,{type:hdr?THREE.HalfFloatType:THREE.UnsignedByteType,samples:muestras});
@@ -232,7 +238,7 @@
     rival:{lider:['lider_talesin','foil'],campo:[['bartolomeo','foil'],['tok_dragon','dorado'],['conserje','normal']],mano:5,mazo:18,cementerio:['bob','rantiago'],alma:12,pdMax:7,trampas:2,roba:[['esporas','normal'],['matildus','foil']]},
   };
   const J={yo:null,rival:null},seleccion={u:null};
-  const campoPos=(lado,i)=>{const [x,z]=hueco(i,lado==='yo'?1:-1);return new THREE.Vector3(x,.02,z);};
+  const campoPos=(lado,i)=>{const [x,z]=hueco(i,lado==='yo'?1:-1);return new THREE.Vector3(x,ALTURA_CARTA,z);};
   const libres=lado=>[0,1,2,3,4].filter(h=>!J[lado].campo.some(u=>u.hueco===h));
   // Por qué no se puede jugar una carta ahora (o null si se puede).
   const porQueNo=u=>u.coste>J.yo.pd?'Te faltan '+(u.coste-J.yo.pd)+' PD para '+CARDS[u.id].n+' ('+u.coste+' PD).':u.tipo==='personaje'&&!libres('yo').length?'Tu campo está lleno.':null;
@@ -257,31 +263,37 @@
   // La mano rival se apoya en su borde de mesa: cada dorso tiene su propia profundidad y el
   // paso supera su ancho. Así ni se corta fuera del tapete ni aparecen destellos de z-fighting.
   const manoRivalMesa=new THREE.Group();mesa.add(manoRivalMesa);
-  function colocarManoRival(){if(!J.rival)return;const n=J.rival.manoG.length,retrato=camara.aspect<.9,escala=LAYOUT.manoRival.escala*(retrato?.72:1),paso=ANCHO*escala+.1;
-    J.rival.manoG.forEach((g,i)=>{const k=i-(n-1)/2;g.scale.setScalar(escala);g.position.set(1+k*paso,LAYOUT.manoRival.altura+i*.025,LAYOUT.manoRival.z+i*.04);g.rotation.set(-1.1,Math.PI,k*.035);g.renderOrder=20+i;
-      g.traverse(o=>{o.renderOrder=20+i;});});}
+  function poseManoRival(i,n){const retrato=camara.aspect<.9,escala=LAYOUT.manoRival.escala*(retrato?.72:1),paso=ANCHO*escala+.1,k=i-(n-1)/2;
+    return {escala,pos:new THREE.Vector3(1+k*paso,LAYOUT.manoRival.altura+i*.025,LAYOUT.manoRival.z+i*.04),rot:new THREE.Euler(-1.1,Math.PI,k*.035)};}
+  function aplicarPoseManoRival(g,p){g.scale.setScalar(p.escala);g.position.copy(p.pos);g.rotation.copy(p.rot);}
+  function colocarManoRival(inmediato=false){if(!J.rival)return;const n=J.rival.manoG.length;
+    J.rival.manoG.forEach((g,i)=>{const p=poseManoRival(i,n);g.renderOrder=20+i;g.traverse(o=>{o.renderOrder=20+i;});
+      if(inmediato){aplicarPoseManoRival(g,p);return;}
+      const p0=g.position.clone(),q0=g.quaternion.clone(),s0=g.scale.x,q1=new THREE.Quaternion().setFromEuler(p.rot);
+      animar(.24,k=>{const e=suave(k);g.position.lerpVectors(p0,p.pos,e);g.quaternion.slerpQuaternions(q0,q1,e);g.scale.setScalar(THREE.MathUtils.lerp(s0,p.escala,e));});
+    });}
   function dorsoRival(){const g=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));manoRivalMesa.add(g);return g;}
   // Mantiene el flujo visual listo para el motor real: al robar entra un dorso y al jugar sale uno
   // distinto. La mano nunca comparte plano ni necesita ocultar cartas por encima de otras.
   function tomarDorsoRival(){const g=J.rival.manoG.shift();if(!g)return null;mesa.updateMatrixWorld(true);g.updateMatrixWorld(true);
-    const p=g.getWorldPosition(new THREE.Vector3()),q=g.getWorldQuaternion(new THREE.Quaternion());g.removeFromParent();colocarManoRival();return {p,q};}
+    const p=g.getWorldPosition(new THREE.Vector3()),q=g.getWorldQuaternion(new THREE.Quaternion()),escala=g.getWorldScale(new THREE.Vector3()).x;g.removeFromParent();colocarManoRival();return {p,q,escala};}
   async function preparar(){
     await CAOZ_CARTA_PINTOR.fuentes();estado('Pintando las cartas…');
     const logo=await imagen('./art/logo.webp'),d=CAOZ_CARTA_PINTOR.dorso(logo);dorsoPintado.mat=F.materialDorso(d);
     Object.assign(matTapete,tapete(logo));matTapete.needsUpdate=true;Object.assign(matMadera,madera());matMadera.needsUpdate=true;
     for(const lado of ['yo','rival']){const P=PARTIDA[lado],s=ladoSign(lado),j={campo:[],mano:[],cementerio:[...P.cementerio],alma:P.alma,pd:P.pd??P.pdMax,pdMax:P.pdMax,roba:P.roba?[...P.roba]:[]};J[lado]=j;
-      j.lider=await nuevaCarta(...P.lider);j.lider.g.scale.setScalar(S*1.12);j.lider.g.position.set(LAYOUT.lider.x,.05,s*LAYOUT.lider.z);j.lider.g.rotation.copy(tumbada);mesa.add(j.lider.g);
+      j.lider=await nuevaCarta(...P.lider);j.lider.g.scale.setScalar(S*1.12);j.lider.g.position.set(LAYOUT.lider.x,ALTURA_CARTA+.026,s*LAYOUT.lider.z);j.lider.g.rotation.copy(tumbada);mesa.add(j.lider.g);
       for(const [i,[id,ed]] of P.campo.entries()){const u=await nuevaCarta(id,ed);u.hueco=i;ponerTumbada(u,campoPos(lado,i));u.lado=lado;mesa.add(u.g);j.campo.push(u);}
-      j.trampas=[];for(let i=0;i<P.trampas;i++){const t=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));t.scale.setScalar(S*.8);t.rotation.set(-Math.PI/2+Math.PI,0,Math.PI/2+(rnd()-.5)*.05);t.position.set(trampaX(i),.02,s*3.95);mesa.add(t);j.trampas.push(t);}
-      j.mazo=pila(P.mazo,LAYOUT.mazo.x,s*LAYOUT.mazo.z,true);j.cem=pila(0,LAYOUT.cementerio.x,s*LAYOUT.cementerio.z,false);
-      if(j.cementerio.length){const top=await nuevaCarta(j.cementerio.at(-1),'normal');ponerTumbada(top,new THREE.Vector3(LAYOUT.cementerio.x,.02+j.cementerio.length*.012,s*LAYOUT.cementerio.z));top.g.rotation.z=(rnd()-.5)*.2;mesa.add(top.g);j.cemTop=top;}
+      j.trampas=[];for(let i=0;i<P.trampas;i++){const t=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));t.scale.setScalar(S*.8);t.rotation.set(-Math.PI/2+Math.PI,0,Math.PI/2+(rnd()-.5)*.05);t.position.set(trampaX(i),ALTURA_CARTA,s*3.95);mesa.add(t);j.trampas.push(t);}
+      j.mazo=pila(P.mazo,LAYOUT.mazo.x,s*LAYOUT.mazo.z,true);j.cem=pila(Math.max(0,j.cementerio.length-1),LAYOUT.cementerio.x,s*LAYOUT.cementerio.z,false);
+      if(j.cementerio.length){const top=await nuevaCarta(j.cementerio.at(-1),'normal');ponerTumbada(top,new THREE.Vector3(LAYOUT.cementerio.x,alturaCementerio(j.cementerio.length),s*LAYOUT.cementerio.z));top.g.rotation.z=(rnd()-.5)*.2;mesa.add(top.g);j.cemTop=top;}
       j.cristal=cristalAlma(LAYOUT.recursos.alma.x,s*LAYOUT.recursos.alma.z,j.alma);
     }
     J.yo.pdG=gemasPD('yo',PARTIDA.yo.pdMax);J.yo.pdG.userData.poner(J.yo.pd);J.rival.pdG=gemasPD('rival',PARTIDA.rival.pdMax);J.rival.pdG.userData.poner(J.rival.pd);
     J.yo.llavesG=llaves(LAYOUT.recursos.llaves.x,LAYOUT.recursos.llaves.z,PARTIDA.yo.llaves);
     for(const [id,ed] of PARTIDA.yo.mano){const u=await nuevaCarta(id,ed);u.lado='yo';enMano(u,true);manoCam.add(u.g);J.yo.mano.push(u);}
     J.rival.manoG=[];for(let i=0;i<PARTIDA.rival.mano;i++)J.rival.manoG.push(dorsoRival());
-    colocarMano(false);colocarManoRival();
+    colocarMano(false);colocarManoRival(true);
     medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
     estado('Tu turno. Pulsa una carta de tu mano para jugarla, o una de tus cartas y después una enemiga para atacar.');
     listo=true;if(!CAPTURA)requestAnimationFrame(cuadro);
@@ -293,8 +305,8 @@
   const animar=(dur,fn)=>new Promise(ok=>tareas.push({t0:reloj,dur,fn,ok}));
   const espera=dur=>animar(dur,()=>{});
   // Un arco de vuelo: de la pose actual a la de destino, subiendo en medio.
-  async function volar(g,pos,rot,dur=.7,alto=2.2){const p0=g.position.clone(),q0=g.quaternion.clone(),q1=new THREE.Quaternion().setFromEuler(rot);
-    await animar(dur,k=>{const e=suave(k);g.position.lerpVectors(p0,pos,e);g.position.y+=Math.sin(Math.PI*e)*alto;g.quaternion.slerpQuaternions(q0,q1,e);});}
+  async function volar(g,pos,rot,dur=.7,alto=2.2,escalaFinal=g.scale.x){const p0=g.position.clone(),q0=g.quaternion.clone(),q1=new THREE.Quaternion().setFromEuler(rot),s0=g.scale.x;
+    await animar(dur,k=>{const e=suave(k);g.position.lerpVectors(p0,pos,e);g.position.y+=Math.sin(Math.PI*e)*alto;g.quaternion.slerpQuaternions(q0,q1,e);g.scale.setScalar(THREE.MathUtils.lerp(s0,escalaFinal,e));});}
   function temblar(f){vista.temblor=Math.max(vista.temblor,f);}
   function refrescar(u){if(u.cifras.atq){u.cifras.atq.userData.pintar(u.atq,u.atq>(CARDS[u.id]?.a??0)?'#9dff9d':'#fff1d8');u.cifras.vida.userData.pintar(u.vida,u.vida<u.vidaMax?'#ff8a7a':'#fff1d8');}}
 
@@ -303,45 +315,49 @@
     const j=J.yo,u=j.mano[i];if(!u||ocupado)return false;
     const no=porQueNo(u);if(no){rechazar(u,no);return false;}
     if(u.tipo==='personaje'&&h!==null&&!libres('yo').includes(h))h=null;
-    ocupado=true;j.mano.splice(i,1);if(u.ranura){manoCam.remove(u.ranura);u.ranura=null;}j.pd-=u.coste;j.pdG.userData.poner(j.pd);colocarMano();escena.attach(u.g);
+    ocupado=true;u.animando=true;j.mano.splice(i,1);if(u.ranura){manoCam.remove(u.ranura);u.ranura=null;}j.pd-=u.coste;j.pdG.userData.poner(j.pd);colocarMano();escena.attach(u.g);
     if(u.tipo==='personaje'){
       u.hueco=h??libres('yo')[0];const pos=campoPos('yo',u.hueco);j.campo.push(u);mesa.attach(u.g);enMano(u,false);
       // Arrastrada, ya está encima de su hueco: sólo cae. Pulsada, vuela desde la mano.
-      if(arrastrada)await animar(.12,k=>{u.g.position.lerp(pos.clone().add(new THREE.Vector3(0,1.4,0)),k);u.g.quaternion.slerp(new THREE.Quaternion().setFromEuler(tumbada),k);});
-      else await volar(u.g,pos.clone().add(new THREE.Vector3(0,1.4,0)),tumbada,.55,1.6);u.g.scale.setScalar(S);
-      if(u.ed==='dorado'){pilar.position.x=pos.x;pilar.position.z=pos.z;pilar.visible=true;animar(1.1,k=>{pilar.material.uniforms.uA.value=Math.sin(Math.PI*k)*.9;}).then(()=>{pilar.visible=false;});}
-      await animar(.16,k=>{u.g.position.lerpVectors(pos.clone().add(new THREE.Vector3(0,1.4,0)),pos,k*k);});ponerTumbada(u,pos);
+      if(arrastrada){const p0=u.g.position.clone(),q0=u.g.quaternion.clone(),q1=new THREE.Quaternion().setFromEuler(tumbada),s0=u.g.scale.x,alto=pos.clone().add(new THREE.Vector3(0,1.4,0));await animar(.16,k=>{const e=suave(k);u.g.position.lerpVectors(p0,alto,e);u.g.quaternion.slerpQuaternions(q0,q1,e);u.g.scale.setScalar(THREE.MathUtils.lerp(s0,S,e));});}
+      else await volar(u.g,pos.clone().add(new THREE.Vector3(0,1.4,0)),tumbada,.55,1.6,S);
+      if(u.ed==='dorado'){pilar.position.x=pos.x;pilar.position.z=pos.z;pilar.visible=true;animar(1.1,k=>{pilar.material.uniforms.uA.value=Math.sin(Math.PI*k)**2*.9;}).then(()=>{pilar.visible=false;});}
+      await animar(.18,k=>{u.g.position.lerpVectors(pos.clone().add(new THREE.Vector3(0,1.4,0)),pos,suave(k));});ponerTumbada(u,pos);u.animando=false;
       estallido(pos.clone().add(new THREE.Vector3(0,.1,0)),u.ed==='dorado'?0xffc860:u.ed==='foil'?0xbfe0ff:0xffb070,u.ed==='dorado'?1.3:.9);temblar(u.ed==='dorado'?.25:.14);
       estado(CARDS[u.id].n+' entra en juego.');
     }else{
-      u.g.scale.setScalar(S);enMano(u,false);await volar(u.g,new THREE.Vector3(0,3.2,1.2),new THREE.Euler(-.7,0,0),.6,1);
-      await animar(.5,k=>{u.g.rotation.y=k*TAU;u.g.position.y=3.2+Math.sin(k*Math.PI)*.4;});
+      enMano(u,false);await volar(u.g,new THREE.Vector3(0,3.2,1.2),new THREE.Euler(-.7,0,0),.6,1,S);
+      await animar(.5,k=>{const e=suave(k);u.g.rotation.y=e*TAU;u.g.position.y=3.2+Math.sin(e*Math.PI)*.4;});
       estallido(u.g.position.clone(),0xb89bff,1.4);temblar(.12);estado(CARDS[u.id].n+': el hechizo se lanza.');
-      await aCementerio(u,'yo');
+      await aCementerio(u,'yo');u.animando=false;
     }
     ocupado=false;return true;
   }
   // Al cementerio: arde (disolverse) y su carta queda encima de la pila.
   async function aCementerio(u,lado,arder=true){
     const j=J[lado],s=lado==='yo'?1:-1;const m=u.g.userData.frente.material;
-    if(arder){estallido(u.g.getWorldPosition(new THREE.Vector3()),0xff6a2a,.7);await animar(1,k=>{m.userData.u.uDisuelve.value=k;});}
-    u.g.parent?.remove(u.g);m.userData.u.uDisuelve.value=0;
+    if(arder){estallido(u.g.getWorldPosition(new THREE.Vector3()),0xff6a2a,.7);await animar(1,k=>{m.userData.u.uDisuelve.value=suave(k);});}
+    u.g.parent?.remove(u.g);
     j.cementerio.push(u.id);j.cem.userData.poner(j.cementerio.length-1);
-    if(j.cemTop)j.cemTop.g.parent?.remove(j.cemTop.g);j.cemTop=u;ponerTumbada(u,new THREE.Vector3(LAYOUT.cementerio.x,.02+j.cementerio.length*.012,s*LAYOUT.cementerio.z));u.g.scale.setScalar(S);mesa.add(u.g);
-    for(const c of Object.values(u.cifras))c.visible=false;
+    if(j.cemTop)j.cemTop.g.parent?.remove(j.cemTop.g);j.cemTop=u;
+    const destino=new THREE.Vector3(LAYOUT.cementerio.x,alturaCementerio(j.cementerio.length),s*LAYOUT.cementerio.z),entrada=destino.clone().add(new THREE.Vector3(0,.22,0));
+    u.g.position.copy(entrada);u.g.rotation.copy(tumbada);u.g.scale.setScalar(S*.94);mesa.add(u.g);for(const c of Object.values(u.cifras))c.visible=false;
+    m.userData.u.uDisuelve.value=arder?1:0;
+    await animar(.22,k=>{const e=suave(k);u.g.position.lerpVectors(entrada,destino,e);u.g.scale.setScalar(THREE.MathUtils.lerp(S*.94,S,e));m.userData.u.uDisuelve.value=arder?1-e:0;});
+    ponerTumbada(u,destino);m.userData.u.uDisuelve.value=0;
   }
   // Atacar: la carta se levanta, embiste, golpea (chispas, números, temblor) y vuelve.
   async function atacar(a,b){
-    if(ocupado||!a||!b)return false;ocupado=true;seleccionar(null);
-    const pa=a.g.position.clone(),pb=b.g?b.g.position.clone():b.pos.clone(),dir=pb.clone().sub(pa),arriba=pa.clone().add(new THREE.Vector3(0,1.3,0));
-    await animar(.25,k=>{a.g.position.lerpVectors(pa,arriba,suave(k));a.g.rotation.x=-Math.PI/2+.3*suave(k);});
+    if(ocupado||!a||!b)return false;ocupado=true;const inicio=a.g.position.clone();seleccionar(null);a.animando=true;
+    const pa=a.g.userData.base?.clone()||a.g.position.clone(),pb=b.g?b.g.position.clone():b.pos.clone(),dir=pb.clone().sub(pa),arriba=pa.clone().add(new THREE.Vector3(0,1.3,0));
+    await animar(.25,k=>{const e=suave(k);a.g.position.lerpVectors(inicio,arriba,e);a.g.rotation.x=-Math.PI/2+.3*e;});
     const golpe=pb.clone().sub(dir.clone().normalize().multiplyScalar(1.1)).add(new THREE.Vector3(0,.5,0));
-    await animar(.14,k=>{a.g.position.lerpVectors(arriba,golpe,k*k);});
+    await animar(.16,k=>{a.g.position.lerpVectors(arriba,golpe,1-Math.pow(1-k,3));});
     estallido(pb.clone().add(new THREE.Vector3(0,.3,0)),0xffa050,1.1);temblar(.3);
     const danoB=a.atq;numero(pb,'-'+danoB,'#ff9a8a');
-    if(b.cristal){b.alma=Math.max(0,b.alma-danoB);b.cristal.userData.pintar(b.alma);animar(.5,k=>{b.cristal.userData.gema.scale.set(.8,1.25,.8).multiplyScalar(1+Math.sin(k*Math.PI)*.25);b.cristal.userData.brillo.intensity=3+Math.sin(k*Math.PI)*25;});}
+    let pulsoCristal=null;if(b.cristal){b.alma=Math.max(0,b.alma-danoB);b.cristal.userData.pintar(b.alma);const baseBrillo=b.cristal.userData.brillo.intensity;pulsoCristal=animar(.5,k=>{const p=Math.sin(k*Math.PI)**2;b.cristal.userData.gema.scale.set(.8,1.25,.8).multiplyScalar(1+p*.25);b.cristal.userData.brillo.intensity=baseBrillo+p*25;});}
     else{b.vida-=danoB;refrescar(b);animar(.3,k=>{b.g.position.x=pb.x+Math.sin(k*TAU*4)*.1*(1-k);});if(b.atq>0){a.vida-=b.atq;refrescar(a);numero(pa,'-'+b.atq,'#ff9a8a');}}
-    await animar(.35,k=>{a.g.position.lerpVectors(golpe,pa,suave(k));a.g.rotation.x=-Math.PI/2+.3*(1-suave(k));});ponerTumbada(a,pa);
+    await animar(.35,k=>{const e=suave(k);a.g.position.lerpVectors(golpe,pa,e);a.g.rotation.x=-Math.PI/2+.3*(1-e);});ponerTumbada(a,pa);a.animando=false;if(pulsoCristal)await pulsoCristal;
     const muertos=[];for(const u of [a,b])if(!u.cristal&&u.vida<=0)muertos.push(u);
     for(const u of muertos){const lado=u.lado,j=J[lado];j.campo.splice(j.campo.indexOf(u),1);}
     await Promise.all(muertos.map(u=>aCementerio(u,u.lado)));
@@ -352,13 +368,14 @@
   async function turnoRival(){
     if(ocupado)return false;const r=J.rival;if(!r.roba.length){estado('El rival ya no tiene más jugadas preparadas.');return false;}
     estado('Turno del rival…');ocupado=true;
-    const [id,ed]=r.roba.shift(),u=await nuevaCarta(id,ed);u.lado='rival';r.mazo.userData.poner(r.mazo.userData.n-1);
-    r.manoG.push(dorsoRival());colocarManoRival();await espera(.16);
-    const desde=tomarDorsoRival()||{p:new THREE.Vector3(LAYOUT.mazo.x,.5,-LAYOUT.mazo.z),q:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+Math.PI,0,0))};
-    u.g.position.copy(desde.p);u.g.quaternion.copy(desde.q);escena.add(u.g);
-    await volar(u.g,new THREE.Vector3(0,2.2,-2.6),new THREE.Euler(-.25,0,0),.7,1.2);await espera(.35);
-    if(u.tipo==='personaje'&&libres('rival').length){u.hueco=libres('rival')[0];const pos=campoPos('rival',u.hueco);r.campo.push(u);escena.remove(u.g);mesa.add(u.g);await volar(u.g,pos,tumbada,.4,.6);ponerTumbada(u,pos);estallido(pos,0xd070ff,1);temblar(.15);}
-    else{estallido(u.g.position.clone(),0xd070ff,1.2);await aCementerio(u,'rival');}
+    const [id,ed]=r.roba.shift(),u=await nuevaCarta(id,ed);u.lado='rival';u.animando=true;r.mazo.userData.poner(r.mazo.userData.n-1);
+    const dorsoNuevo=dorsoRival(),origenRobo=new THREE.Vector3(LAYOUT.mazo.x,ALTURA_CARTA+Math.max(0,r.mazo.userData.n-1)*PASO_PILA,-LAYOUT.mazo.z),escalaRival=poseManoRival(r.manoG.length,r.manoG.length+1).escala;
+    dorsoNuevo.position.copy(origenRobo);dorsoNuevo.rotation.set(-Math.PI/2+Math.PI,0,0);dorsoNuevo.scale.setScalar(escalaRival*.72);r.manoG.push(dorsoNuevo);colocarManoRival();await espera(.3);
+    const desde=tomarDorsoRival()||{p:origenRobo,q:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+Math.PI,0,0)),escala:escalaRival};
+    u.g.position.copy(desde.p);u.g.quaternion.copy(desde.q);u.g.scale.setScalar(desde.escala);escena.add(u.g);
+    await volar(u.g,new THREE.Vector3(0,2.2,-2.6),new THREE.Euler(-.25,0,0),.7,1.2,S);await espera(.35);
+    if(u.tipo==='personaje'&&libres('rival').length){u.hueco=libres('rival')[0];const pos=campoPos('rival',u.hueco);r.campo.push(u);mesa.attach(u.g);await volar(u.g,pos,tumbada,.4,.6,S);ponerTumbada(u,pos);u.animando=false;estallido(pos,0xd070ff,1);temblar(.15);}
+    else{estallido(u.g.position.clone(),0xd070ff,1.2);await aCementerio(u,'rival');u.animando=false;}
     await espera(.3);ocupado=false;
     const atacante=r.campo.filter(x=>x.atq>0).sort((x,y)=>y.atq-x.atq)[0];
     if(atacante){const presa=J.yo.campo.slice().sort((x,y)=>x.vida-y.vida)[0];await atacar(atacante,presa||{cristal:J.yo.cristal,pos:J.yo.cristal.position.clone(),get alma(){return J.yo.alma;},set alma(v){J.yo.alma=v;}});}
@@ -382,9 +399,9 @@
   // Las marcas de los huecos libres (se encienden al arrastrar) y la silueta de la carta en el elegido.
   function marcoBrillo(){const [c,g]=lienzoDe(256,340);g.strokeStyle='#ffd27a';g.lineWidth=10;g.shadowColor='#ffb040';g.shadowBlur=24;g.beginPath();g.roundRect(18,18,220,304,18);g.stroke();return tex(c,true);}
   const texMarco=marcoBrillo(),marcas=[0,1,2,3,4].map(h=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(ANCHO*S+.5,ALTO*S+.62),new THREE.MeshBasicMaterial({map:texMarco,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
-    m.rotation.x=-Math.PI/2;m.position.copy(campoPos('yo',h)).setY(.016);mesa.add(m);return m;});
+    m.rotation.x=-Math.PI/2;m.position.copy(campoPos('yo',h)).setY(ALTURA_MARCA);mesa.add(m);return m;});
   const silueta=new THREE.Mesh(new THREE.PlaneGeometry(ANCHO*S,ALTO*S),new THREE.MeshBasicMaterial({transparent:true,opacity:.42,depthWrite:false}));silueta.rotation.x=-Math.PI/2;silueta.visible=false;mesa.add(silueta);
-  const zonaHechizo=new THREE.Mesh(new THREE.CircleGeometry(2.6,64),new THREE.MeshBasicMaterial({color:0xb89bff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));zonaHechizo.rotation.x=-Math.PI/2;zonaHechizo.position.set(0,.017,0);mesa.add(zonaHechizo);
+  const zonaHechizo=new THREE.Mesh(new THREE.CircleGeometry(2.6,64),new THREE.MeshBasicMaterial({color:0xb89bff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));zonaHechizo.rotation.x=-Math.PI/2;zonaHechizo.position.set(0,ALTURA_MARCA,0);mesa.add(zonaHechizo);
   // El arrastre: la carta sigue al puntero sobre la mesa, inclinada por su velocidad.
   const planoArrastre=new THREE.Plane(new THREE.Vector3(0,1,0),-1.1),arr={u:null,punto:new THREE.Vector3(),antes:new THREE.Vector3(),h:null,zona:false,inc:new THREE.Vector2()};
   function puntoMesa(){rayo.setFromCamera(puntero,camara);return rayo.ray.intersectPlane(planoArrastre,new THREE.Vector3());}
@@ -473,10 +490,11 @@
     const calidad=calidadVisual();
     for(const v of velas){const f=.85+.1*Math.sin(reloj*13+v.x)+.06*Math.sin(reloj*29+v.x*3);v.luz.intensity=26*calidad*f;v.llama.scale.set(1,f,1);v.llama.lookAt(camara.position.x,v.llama.getWorldPosition(new THREE.Vector3()).y,camara.position.z);}
     matTapete.emissiveIntensity=(.24+.18*calidad)+(.06+.17*calidad)*Math.sin(reloj*1.6);
-    for(const g of J.rival?.trampas||[])g.position.y=.02;
+    for(const g of J.rival?.trampas||[])g.position.y=ALTURA_CARTA;
     if(listo){manoYArrastre(dt);
-      for(const u of J.yo.campo)u.g.position.y=(u===seleccion.u?.35+Math.sin(reloj*4)*.05:.02)+(u.g.userData.base?0:0);
-      for(const u of J.rival.campo)if(!tareas.length)u.g.position.y=.02;
+      // Sólo las cartas en reposo se asientan o flotan al ser seleccionadas. Las que
+      // vuelan conservan su arco completo: no se vuelven a clavar en el tapete.
+      for(const lado of ['yo','rival'])for(const u of J[lado].campo){if(u.animando)continue;const base=u.g.userData.base?.y??ALTURA_CARTA,seleccionada=lado==='yo'&&u===seleccion.u,objetivo=seleccionada?base+.33+Math.sin(reloj*4)*.05:base,k=1-Math.exp(-dt*(seleccionada?16:12));u.g.position.y+=(objetivo-u.g.position.y)*k;}
       J.yo.cristal.userData.gema.rotation.y=reloj*.6;J.rival.cristal.userData.gema.rotation.y=-reloj*.5;
       for(const lado of ['yo','rival'])J[lado].pdG.userData.lista.forEach((m,i)=>{m.rotation.y=reloj*.8+i;m.position.y=.25+(m.userData.on?Math.sin(reloj*2+i)*.05:0);});}
     for(let i=estallidos.length-1;i>=0;i--){const e=estallidos[i],s=reloj-e.t0;e.u.uE.value=s;e.onda.scale.setScalar(.3+s*3.2*e.fuerza);e.onda.material.opacity=Math.max(0,1-s/.8);if(s>1.4){escena.remove(e.p,e.onda);e.p.material.dispose();e.onda.material.dispose();estallidos.splice(i,1);}}
@@ -509,19 +527,19 @@
         q.setFromEuler(new THREE.Euler(-(mano.uv.y-.5)*.3,(mano.uv.x-.5)*.4,0));}
       else{q.setFromEuler(obj.rot);if(ia>=0){const d=i-ia;pos.x+=Math.sign(d)*.42/Math.sqrt(Math.abs(d));}}
       if(u.sacudida!==undefined&&reloj-u.sacudida<.4)pos.x+=Math.sin((reloj-u.sacudida)*TAU*7)*.1*(1-(reloj-u.sacudida)/.4);
-      const k=Math.min(1,dt*(activa||mira?18:7));u.g.position.lerp(pos,k);u.g.quaternion.slerp(q,k);u.g.scale.setScalar(u.g.scale.x+(esc-u.g.scale.x)*k);
+      const k=1-Math.exp(-dt*(activa||mira?18:7));u.g.position.lerp(pos,k);u.g.quaternion.slerp(q,k);u.g.scale.setScalar(u.g.scale.x+(esc-u.g.scale.x)*k);
       // Se puede pagar: canto encendido. No: la cara apagada (salvo mientras la miras).
       const no=porQueNo(u),m=u.g.userData.frente.material,canto=u.g.userData.borde.material[1];
       m.color.setScalar(no&&!activa&&!mira?.5:1);canto.emissive=canto.emissive||new THREE.Color();canto.emissive.setHex(no?0:0xffb040);canto.emissiveIntensity=no?0:.35+.25*Math.sin(reloj*3+i);}
     // La carta arrastrada sigue al puntero sobre la mesa, inclinada por su velocidad.
-    if(arr.u){const u=arr.u,p=puntoMesa();if(p)arr.punto.copy(p);const v=arr.punto.clone().sub(arr.antes).divideScalar(Math.max(dt,1/120));arr.antes.lerp(arr.punto,Math.min(1,dt*20));
-      arr.inc.lerp(new THREE.Vector2(Math.max(-.35,Math.min(.35,v.x*.02)),Math.max(-.35,Math.min(.35,v.z*.02))),Math.min(1,dt*10));
-      u.g.position.lerp(arr.punto,Math.min(1,dt*20));u.g.quaternion.slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+arr.inc.y,arr.inc.x,0)),Math.min(1,dt*14));u.g.scale.setScalar(u.g.scale.x+(S*1.08-u.g.scale.x)*Math.min(1,dt*12));
+    if(arr.u){const u=arr.u,p=puntoMesa();if(p)arr.punto.copy(p);const v=arr.punto.clone().sub(arr.antes).divideScalar(Math.max(dt,1/120));arr.antes.lerp(arr.punto,1-Math.exp(-dt*20));
+      arr.inc.lerp(new THREE.Vector2(Math.max(-.35,Math.min(.35,v.x*.02)),Math.max(-.35,Math.min(.35,v.z*.02))),1-Math.exp(-dt*10));
+      u.g.position.lerp(arr.punto,1-Math.exp(-dt*20));u.g.quaternion.slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+arr.inc.y,arr.inc.x,0)),1-Math.exp(-dt*14));u.g.scale.setScalar(u.g.scale.x+(S*1.08-u.g.scale.x)*(1-Math.exp(-dt*12)));
       const libre=libres('yo');arr.h=null;arr.zona=false;
       if(u.tipo==='personaje'){let mejor=1.7;for(const h of libre){const d=Math.hypot(arr.punto.x-campoPos('yo',h).x,arr.punto.z-campoPos('yo',h).z);if(d<mejor){mejor=d;arr.h=h;}}}
       else arr.zona=Math.abs(arr.punto.x)<7.5&&arr.punto.z>-5.5&&arr.punto.z<3.2;
       marcas.forEach((m,h)=>{m.material.opacity=u.tipo!=='personaje'||!libre.includes(h)?0:h===arr.h?.95:.28+.12*Math.sin(reloj*5+h);});
-      silueta.visible=arr.h!==null;if(arr.h!==null)silueta.position.copy(campoPos('yo',arr.h)).setY(.03);zonaHechizo.material.opacity=u.tipo==='personaje'?0:arr.zona?.45:.15;}
+      silueta.visible=arr.h!==null;if(arr.h!==null)silueta.position.copy(campoPos('yo',arr.h)).setY(ALTURA_MARCA);zonaHechizo.material.opacity=u.tipo==='personaje'?0:arr.zona?.45:.15;}
     if(avisoHasta&&reloj>avisoHasta){avisoMesa.classList.remove('visto');avisoHasta=0;}
     const vista=viendo||mano.activa,rc=vista&&vista.g.scale.x>S*1.2?rectDe(vista):null,no=vista&&porQueNo(vista);
     for(const e of etiquetas){const v=e.pos.clone().project(camara),x=(v.x*.5+.5)*(rc?.ancho||1),y=(.5-v.y*.5)*(rc?.alto||1);e.el.classList.toggle('tapada',!!rc&&x>rc.izquierda-20&&x<rc.derecha+20&&y>rc.arriba-20&&y<rc.abajo+20);}
@@ -537,6 +555,15 @@
       const detalle=`${resumen} · ${i.memory.textures} texturas · WebGL 2 · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${(simple||sinPosproceso)?'render directo · ':''}${gpu} · three ${THREE.REVISION}`;
       $('info').textContent=resumen;$('info').title=detalle;}
     requestAnimationFrame(cuadro);}
+  // Auditoría geométrica para la revisión: mide el volumen real (no sólo el centro)
+  // de cada carta que vive sobre la mesa. Así una futura regla no puede hundir una
+  // carta en el tapete sin que la prueba automatizada lo detecte.
+  function seguridadMesa(){mesa.updateMatrixWorld(true);const carta=(nombre,g)=>{const b=new THREE.Box3().setFromObject(g),c=b.getCenter(new THREE.Vector3());return {nombre,minY:b.min.y,maxY:b.max.y,x:c.x,y:c.y,z:c.z};},cartas=[];
+    const agregar=(nombre,g)=>{if(g?.parent)cartas.push(carta(nombre,g));};
+    for(const lado of ['yo','rival']){const j=J[lado];if(!j)continue;agregar(lado+':lider',j.lider.g);j.campo.forEach(u=>agregar(lado+':campo:'+u.id,u.g));j.trampas.forEach((g,i)=>agregar(lado+':trampa:'+i,g));j.mazo.children.forEach((g,i)=>agregar(lado+':mazo:'+i,g));j.cem.children.forEach((g,i)=>agregar(lado+':cementerio-pila:'+i,g));agregar(lado+':cementerio-tapa',j.cemTop?.g);}
+    J.rival?.manoG.forEach((g,i)=>agregar('rival:mano:'+i,g));
+    const cementerios=Object.fromEntries(['yo','rival'].map(lado=>{const j=J[lado],pila=j.cem.children.length?new THREE.Box3().setFromObject(j.cem):null,tapa=j.cemTop?.g?new THREE.Box3().setFromObject(j.cemTop.g):null;return [lado,{pilaMaxY:pila?.max.y??null,tapaMinY:tapa?.min.y??null}];}));
+    return {tapete:ALTURA_TAPETE,alturaCarta:ALTURA_CARTA,cartas,cementerios};}
   // Revisión: avanzar(s) mueve el reloj a pasos de 1/30 s y dibuja; las acciones devuelven promesas que se cumplen al avanzar.
   window.CAOZ_MESA_THREE_REVISION=Object.freeze({
     listo:()=>listo,
@@ -554,6 +581,7 @@
     efecto(k,v){efectos[k]=v;const c=document.querySelector(`[data-efecto="${k}"]`);if(c)c.checked=v;aplicarEfectos();},
     intensidad(v){if(v!==undefined)fijarIntensidad(v);return intensidadVisual;},
     vista(p){Object.assign(vista,p);},
+    seguridadMesa,
     estado:()=>({ocupado,apagadas:J.yo?.mano.filter(u=>u.g.userData.frente.material.color.r<.9).map(u=>u.id),huecos:J.yo&&[0,1,2,3,4].map(h=>J.yo.campo.find(u=>u.hueco===h)?.id||null),aviso:avisoMesa.classList.contains('visto')?avisoMesa.textContent:'',mano:J.yo?.mano.map(u=>u.id),campo:J.yo?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),rival:J.rival?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),almaYo:J.yo?.alma,almaRival:J.rival?.alma,pd:J.yo?.pd,
       cementerio:J.yo?.cementerio.length,cementerioRival:J.rival?.cementerio.length,manoRival:J.rival?.manoG.length,webgl2:true,hdr,muestras,simple,rutaDirecta:simple||sinPosproceso,dpr:renderer.getPixelRatio(),intensidad:intensidadVisual,sombra:lampara.shadow.intensity,efectos:{...efectos},
       iluminacionMano:J.yo?.mano.map(u=>{const m=u.g.userData.frente.material;return {id:u.id,entorno:m.envMapIntensity,laca:m.clearcoat,emision:m.emissiveIntensity};}),
