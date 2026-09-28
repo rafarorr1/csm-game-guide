@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Las Grietas del Editor · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./arpg-three-mesa.css">
+<script src="./generado/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./visor-three-vendor.js"></script>
+<script src="./three-carta.js"></script>
+<script src="./arpg-three-modelos.js"></script>
+<script src="./arpg-three-mesa.js" defer></script>
+</head>
+<body>
+<main class="apShell" aria-labelledby="apTitulo">
+  <header class="apCabecera">
+    <p class="apEtiqueta">PROYECTO PARALELO · ARPG EN THREE.JS · HITO 1 (UNA SALA JUGABLE)</p>
+    <h1 id="apTitulo">Las Grietas del Editor</h1>
+    <p>Tomsage está bajo asedio. Adreida, la Guerrera Semiorca, defiende la plaza contra cuatro oleadas hasta que entra Can, el de los Goblins. <b>Clic</b> para andar y atacar (mantén pulsado para seguir el cursor; con Mayús, tajo en el sitio). <b>1 / Q / clic derecho</b> Torbellino · <b>2 / W</b> Salto · <b>3 / E</b> Provocar. El botín cae como cartas físicas: pasa por encima para leerlas y haz clic para recogerlas. En táctil, la palanca de la izquierda y los botones.</p>
+  </header>
+  <div class="apControles" role="group" aria-label="Acciones">
+    <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
+    <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
+  </div>
+  <fieldset class="apEfectos">
+    <legend>Efectos</legend>
+    <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
+    <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
+    <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
+  </fieldset>
+  <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
+    <canvas id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
+    <div class="apCapa" id="capa"></div>
+    <div class="apVineta" id="vineta"></div>
+    <p class="apOleada" id="oleada"></p>
+    <div class="apObjetivo" id="objetivo" hidden><b id="objNombre"></b><div class="apBarra"><i id="objVida"></i></div></div>
+    <div class="apBanner" id="banner" role="status"></div>
+    <p class="apTostada" id="tostada" role="status"></p>
+    <div class="apStats" id="stats"></div>
+    <div class="apBotin" id="botin" aria-label="Botín recogido"></div>
+    <div class="apHud">
+      <div class="apOrbe apAlma" id="orbeAlma"><i></i><b id="almaTxt"></b><small>Alma</small></div>
+      <div class="apHabilidades" role="group" aria-label="Habilidades">
+        <img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida">
+        <button type="button" data-hab="tajo" title="Tajo"><span>⚔</span><small>Tajo</small><kbd>Clic</kbd></button>
+        <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>1 · Q</kbd><em>30</em></button>
+        <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>2 · W</kbd><em>25</em></button>
+        <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>3 · E</kbd></button>
+      </div>
+      <div class="apOrbe apFuria" id="orbeFuria"><i></i><b id="furiaTxt"></b><small>Furia</small></div>
+    </div>
+    <div class="apPalanca" id="palanca" aria-label="Palanca para andar"><i></i></div>
+    <div class="apFin" id="fin" hidden><h2 id="finTitulo"></h2><p id="finTexto"></p><button type="button" id="reintentar">Volver a empezar</button></div>
+    <p class="apInfo" id="info">Preparando…</p>
+  </section>
+  <p id="estado" class="apEstado" role="status" aria-live="polite">Preparando la plaza…</p>
+</main>
+</body>
+</html>

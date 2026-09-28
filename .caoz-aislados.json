@@ -1,6 +1,10 @@
 {
   "formato": "caoz.secciones.aisladas",
   "secciones": {
+    "arpg-three": {
+      "fuente": "794a1578c97c22eecf542b4de2eab1135414f877",
+      "ruta": "tcg/arpg-three"
+    },
     "asedio": {
       "fuente": "00e51b3c24640ab33346f398e68616157e651158",
       "ruta": "tcg/asedio"
