@@ -38,7 +38,7 @@
   // una sola sombra y DPR limitado.  La fidelidad visual no debe costar FPS.
   const renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:CAPTURA});
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.AgXToneMapping;renderer.toneMappingExposure=1.2;
-  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.info.autoReset=false;
   const scene=new THREE.Scene();scene.background=new THREE.Color(0x07050a);scene.fog=new THREE.FogExp2(0x07050a,.028);
   const camera=new THREE.PerspectiveCamera(38,1,.1,120);camera.position.set(0,13.6,20.3);camera.lookAt(0,0,.4);scene.add(camera);
   const cameraTarget=new THREE.Vector3(0,0,.4),view={zoom:1,target:1,shake:0};
@@ -89,7 +89,14 @@
   const slab=new THREE.Mesh(new THREE.BoxGeometry(24,.6,17),matWood);slab.position.y=-.3;slab.receiveShadow=true;table.add(slab);
   const matFelt=new THREE.MeshPhysicalMaterial({roughness:1,metalness:1,emissive:new THREE.Color(0xffa040),emissiveIntensity:.6,sheen:.4,sheenColor:new THREE.Color(0x8a6ab0),sheenRoughness:.6});
   const felt=new THREE.Mesh(new THREE.PlaneGeometry(...TABLE_SIZE),matFelt);felt.rotation.x=-Math.PI/2;felt.position.y=.003;felt.receiveShadow=true;table.add(felt);
-  async function skinLikeDemo(){const logo=await image('./art/logo.webp');Object.assign(matFelt,demoMat(logo));matFelt.needsUpdate=true;Object.assign(matWood,demoWood());matWood.needsUpdate=true;}
+  async function skinLikeDemo(){
+    const logo=await image('./art/logo.webp');
+    // El reverso canónico conserva el logo, el relieve y las capas de metal
+    // de la prueba Three; la partida no debe sustituirlo por una textura plana.
+    back=factory.materialDorso(CAOZ_CARTA_PINTOR.dorso(logo));
+    Object.assign(matFelt,demoMat(logo));matFelt.needsUpdate=true;
+    Object.assign(matWood,demoWood());matWood.needsUpdate=true;
+  }
 
   const FLAME_V='varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}';
   const FLAME_F='uniform float uT,uSeed;varying vec2 vUv;void main(){vec2 p=vUv-vec2(.5,.18);float t=uT*7.+uSeed;p.x+=sin(p.y*9.+t)*.04*p.y*3.;float shape=1.-smoothstep(.0,.2,length(p*vec2(2.8,1.)-vec2(0.,.2))-.12*(1.-p.y*1.6));float n=shape*smoothstep(.95,.1,vUv.y);vec3 c=mix(vec3(1.,.35,.05),vec3(1.,.95,.7),n*n);gl_FragColor=vec4(c*n*2.2,1.);}';
@@ -98,8 +105,9 @@
 
   /* ------------------------ Cartas físicas y recursos --------------------- */
   const factory=Carta.fabrica(THREE,renderer),textures=new Map();
-  const back=(()=>{const c=document.createElement('canvas');c.width=640;c.height=900;const g=c.getContext('2d');const r=g.createRadialGradient(320,360,20,320,430,550);r.addColorStop(0,'#5a377c');r.addColorStop(1,'#10091a');g.fillStyle=r;g.fillRect(0,0,640,900);g.strokeStyle='#dfb75c';g.lineWidth=22;g.strokeRect(30,30,580,840);g.lineWidth=5;g.strokeRect(52,52,536,796);g.fillStyle='#ecd28d';g.font='700 60px Georgia';g.textAlign='center';g.fillText('CAOZ',320,420);g.font='28px Georgia';g.fillText('CON TODO',320,466);return factory.materialDorso({color:c,normal:c});})();
-  back.map.colorSpace=THREE.SRGBColorSpace;
+  // Se prepara junto con el tapete, una vez que fuentes y logo están listos.
+  // boot() no sincroniza ninguna carta antes de ese punto.
+  let back=null;
   /*
     Identidad visual y puestos físicos
     ---------------------------------
@@ -145,16 +153,23 @@
   const gravePos=s=>new THREE.Vector3(layout.grave.x,ALTURA,sideZ(s)*layout.grave.z);
   const leaderPos=s=>new THREE.Vector3(layout.leader.x,ALTURA+.012,sideZ(s)*layout.leader.z);
   const placePos=()=>new THREE.Vector3(layout.place.x,ALTURA,layout.place.z);
-  function editionFor(id){return id==='tal'||id==='lider_talesin'||id==='lider_gero'?'dorado':'normal';}
+  function editionFor(id){
+    if(id==='tal'||id==='lider_talesin'||id==='lider_gero')return 'dorado';
+    // El TCG ya representa r:2 como foil. Respetarlo aquí recupera la laca e
+    // iridiscencia de la prueba sin inventar una rareza ni tocar una regla.
+    return CARDS[id]?.r===2?'foil':'normal';
+  }
   function image(url){return new Promise(resolve=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>resolve(null);i.src=url;});}
   async function textureFor(id,edition='normal'){
     const key=id+'/'+edition;if(textures.has(key))return textures.get(key);
     const entry=(typeof ARTE!=='undefined'&&ARTE[id])||{};const variation=edition!=='normal'?entry.variantes?.[edition]:null;const url=variation?.url||entry.url||'art/'+id+'.webp';const img=await image('./'+url);
-    const tx=factory.texturas(CAOZ_CARTA_PINTOR.texturas({id,acabado:edition,arte:{img,enc:{x:variation?.x??entry.x??50,y:variation?.y??entry.y??50,z:variation?.z??entry.z??100}},ancho:560,cifras:false}));textures.set(key,tx);return tx;
+    // La prueba aprobada pinta a 640 px. A 560 px se perdía definición justo
+    // en nombres, texto y detalles de la ilustración.
+    const tx=factory.texturas(CAOZ_CARTA_PINTOR.texturas({id,acabado:edition,arte:{img,enc:{x:variation?.x??entry.x??50,y:variation?.y??entry.y??50,z:variation?.z??100}},ancho:640,cifras:false}));textures.set(key,tx);return tx;
   }
-  function digit(n,color){const tex=canvasTexture(128,128,(g,w,h)=>{g.clearRect(0,0,w,h);g.font="900 76px Georgia";g.textAlign='center';g.textBaseline='middle';g.lineWidth=10;g.strokeStyle='#160d0d';g.strokeText(String(n),w/2,h/2+5);g.fillStyle=color;g.fillText(String(n),w/2,h/2+5);});const m=new THREE.Mesh(new THREE.CircleGeometry(1,28),new THREE.MeshBasicMaterial({map:tex,transparent:true,toneMapped:false,depthWrite:false}));m.userData.tex=tex;return m;}
-  function putGem(mesh,[x,y,r]){mesh.position.set((x/1024-.5)*ANCHO,(.5-y/1434)*ALTO,GROSOR/2+.006);mesh.scale.setScalar(r/1024*ANCHO*.78);return mesh;}
-  function paintDigit(mesh,n,color){const c=mesh.userData.tex.image,g=c.getContext('2d'),w=c.width,h=c.height;g.clearRect(0,0,w,h);g.font="900 76px Georgia";g.textAlign='center';g.textBaseline='middle';g.lineWidth=10;g.strokeStyle='#160d0d';g.strokeText(String(n),w/2,h/2+5);g.fillStyle=color;g.fillText(String(n),w/2,h/2+5);mesh.userData.tex.needsUpdate=true;}
+  function digit(n,color){const tex=canvasTexture(128,128,(g,w,h)=>{g.clearRect(0,0,w,h);g.font="900 78px 'Cinzel Domo',Georgia,serif";g.textAlign='center';g.textBaseline='middle';g.lineWidth=12;g.strokeStyle='#1a0f0a';g.strokeText(String(n),w/2,h/2+6);g.fillStyle=color;g.fillText(String(n),w/2,h/2+6);});const m=new THREE.Mesh(new THREE.CircleGeometry(1,32),new THREE.MeshBasicMaterial({map:tex,transparent:true,toneMapped:false,depthWrite:false}));m.userData.tex=tex;return m;}
+  function putGem(mesh,[x,y,r]){mesh.position.set((x/1024-.5)*ANCHO,(.5-y/1434)*ALTO,GROSOR/2+.004);mesh.scale.setScalar(r/1024*ANCHO*.78);return mesh;}
+  function paintDigit(mesh,n,color){const c=mesh.userData.tex.image,g=c.getContext('2d'),w=c.width,h=c.height;g.clearRect(0,0,w,h);g.font="900 78px 'Cinzel Domo',Georgia,serif";g.textAlign='center';g.textBaseline='middle';g.lineWidth=12;g.strokeStyle='#1a0f0a';g.strokeText(String(n),w/2,h/2+6);g.fillStyle=color;g.fillText(String(n),w/2,h/2+6);mesh.userData.tex.needsUpdate=true;}
   async function makeCard(key,id,opt={}){
     const epoch=opt.epoch??visualEpoch,ed=opt.edition||editionFor(id),tx=opt.back?null:await textureFor(id,ed);if(epoch!==visualEpoch||!wantedKeys.has(key))return null;
     const face=opt.back?back:factory.materialCara(tx,ed),card=factory.carta(face,back,factory.materialCanto(ed));card.scale.setScalar(opt.scale||ESC);card.userData.key=key;card.userData.id=id;card.userData.kind=opt.kind;card.userData.side=opt.side;card.userData.unit=opt.unit||null;card.userData.base=new THREE.Vector3();card.userData.edition=ed;
@@ -342,7 +357,11 @@
 
   /* ----------------------------- Alma / PD -------------------------------- */
   const resourceRoot=new THREE.Group();table.add(resourceRoot);const gems={},souls={};
-  function soulMesh(s){const group=new THREE.Group(),base=new THREE.Mesh(new THREE.CylinderGeometry(.5,.67,.14,32),new THREE.MeshPhysicalMaterial({color:0xdcae50,metalness:1,roughness:.28})),crystal=new THREE.Mesh(new THREE.OctahedronGeometry(.62,0),new THREE.MeshPhysicalMaterial({color:s===ME?0xa3d7ff:0xffa6ac,transmission:.65,thickness:.7,roughness:.06,emissive:new THREE.Color(s===ME?0x165784:0x851c33),emissiveIntensity:.55}));base.position.y=.07;crystal.position.y=.76;crystal.scale.y=1.34;group.add(base,crystal);group.position.set(layout.soul.x,0,sideZ(s)*layout.soul.z);resourceRoot.add(group);return {group,crystal};}
+  // El material y la luz del Alma son los de la mesa de referencia: cristal
+  // refractivo, núcleo visible y un relleno local contenido. Conservamos el
+  // acento azul/rojo por jugador para que la partida siga siendo legible.
+  function soulGlass(color,accent){return new THREE.MeshPhysicalMaterial({color,transmission:1,thickness:.8,ior:1.6,roughness:.04,attenuationColor:new THREE.Color(accent),attenuationDistance:2.2,dispersion:.6,specularIntensity:1,emissive:new THREE.Color(accent),emissiveIntensity:.35,flatShading:true});}
+  function soulMesh(s){const accent=s===ME?0x2778ab:0xd01840,group=new THREE.Group(),base=new THREE.Mesh(new THREE.CylinderGeometry(.55,.7,.18,48),new THREE.MeshPhysicalMaterial({color:0xd9a94f,metalness:1,roughness:.3})),crystal=new THREE.Mesh(new THREE.OctahedronGeometry(.62,0),soulGlass(s===ME?0xccecff:0xffd0d8,accent));base.position.y=.09;crystal.position.y=1.05;crystal.scale.set(.8,1.25,.8);crystal.castShadow=true;const glow=new THREE.PointLight(accent,5,3.5,2);glow.position.y=1.05;const core=new THREE.Mesh(new THREE.SphereGeometry(.16,24,16),new THREE.MeshBasicMaterial({color:new THREE.Color(accent).multiplyScalar(3),toneMapped:false}));core.position.y=1.05;base.castShadow=base.receiveShadow=true;group.add(base,crystal,glow,core);group.position.set(layout.soul.x,0,sideZ(s)*layout.soul.z);resourceRoot.add(group);return {group,crystal,glow,core};}
   function pdMesh(s){const root=new THREE.Group();resourceRoot.add(root);const list=[];for(let i=0;i<10;i++){const g=new THREE.Mesh(new THREE.OctahedronGeometry(.17,0),new THREE.MeshPhysicalMaterial({color:0xd1c3ff,transmission:.3,roughness:.08,emissive:0x452180,emissiveIntensity:.08}));g.position.set(layout.pd.x+(i%5)*.46,.23,sideZ(s)*(layout.pd.z-Math.floor(i/5)*.38));root.add(g);list.push(g);}return list;}
   for(const s of [ME,FOE]){souls[s]=soulMesh(s);gems[s]=pdMesh(s);}
   function drawResources(){if(!G)return;for(const s of [ME,FOE]){const p=P(s);souls[s].crystal.rotation.y=reloj*(s===ME?.45:-.45);souls[s].crystal.scale.set(.8,1.25,.8);gems[s].forEach((g,i)=>{const on=i<p.pd;g.material.emissiveIntensity=on?1.25:.045;g.material.color.setHex(on?0xe4d6ff:0x382c48);g.position.y=.23+(on?Math.sin(reloj*2+i)*.035:0);});}}
@@ -472,7 +491,11 @@
     for(const [key,v] of visuals){if(v.userData.kind!=='hand'||v.userData.dragging||v.userData.motion)continue;const base=v.userData.handPose;if(!base)continue;const active=hoverHand===key&&!G?.busy&&G?.active===ME,pos=base.pos.clone(),rot=base.rot.clone();let scale=base.scale;
       if(active){const z=Math.max(4.5,-base.pos.z-.85),hh=Math.tan(camera.fov*Math.PI/360)*z,ww=hh*camera.aspect;scale=Math.min(ESC*1.58,(hh*1.72)/(ALTO),(ww*1.72)/(ANCHO));pos.y=Math.max(-hh*.82+ALTO*scale*.5,base.pos.y+1.0);pos.z=base.pos.z+.9;pos.x=Math.max(-ww*.89+ANCHO*scale*.5,Math.min(ww*.89-ANCHO*scale*.5,pos.x));rot.set(-.08+(hoverUV.y-.5)*.18,(hoverUV.x-.5)*.24,0);}
       else if(hoverHand){const other=visuals.get(hoverHand);const dx=(base.pos.x-(other?.userData.handPose?.pos.x||0));pos.x+=Math.sign(dx||1)*.26/Math.sqrt(Math.max(1,Math.abs(dx)));}
-      const q=new THREE.Quaternion().setFromEuler(rot),mix=1-Math.exp(-dt*(active?18:8));v.position.lerp(pos,mix);v.quaternion.slerp(q,mix);v.scale.setScalar(THREE.MathUtils.lerp(v.scale.x,scale,mix));const m=v.userData.frente.material,legal=G?.active===ME&&!G?.busy&&canPlay(ME,v.userData.id);m.color.setScalar(active?1.08:legal?1:.63);
+      const q=new THREE.Quaternion().setFromEuler(rot),mix=1-Math.exp(-dt*(active?18:8));v.position.lerp(pos,mix);v.quaternion.slerp(q,mix);v.scale.setScalar(THREE.MathUtils.lerp(v.scale.x,scale,mix));const m=v.userData.frente.material,legal=G?.active===ME&&!G?.busy&&canPlay(ME,v.userData.id);
+      // Una carta no jugable conserva lectura: la disponibilidad se comunica
+      // por la acción bloqueada y el borde, no convirtiendo su texto y arte en
+      // una mancha oscura frente a la mano luminosa de la mesa de referencia.
+      m.color.setScalar(active?1.08:legal?1:.84);
     }
   }
   function updateDrag(dt){if(!drag)return;const point=tablePoint();if(point)drag.point.copy(point);drag.slot=drag.spell?null:nearestDrop(drag.point);const target=drag.point.clone();target.y=.82;drag.v.position.lerp(target,1-Math.exp(-dt*19));const lean=new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+.08,0,0));drag.v.quaternion.slerp(lean,1-Math.exp(-dt*14));drag.v.scale.setScalar(THREE.MathUtils.lerp(drag.v.scale.x,ESC*1.08,1-Math.exp(-dt*14)));updateDropMarks();}
