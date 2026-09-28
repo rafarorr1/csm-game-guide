@@ -26,9 +26,10 @@
   const {THREE,EffectComposer,RenderPass,GTAOPass,UnrealBloomPass,BokehPass,OutputPass}=window.CAOZ_THREE;
   const C=window.CAOZ_THREE_CARTA,{ANCHO,ALTO,GROSOR,GEMAS}=C,S=.62,TAU=Math.PI*2;
   const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  const efectos={sombras:true,oclusion:true,enfoque:true,resplandor:true,velas:true};
+  // Perfil base de rendimiento: sólo la sombra suave de la lámpara y dos velas discretas.
+  const efectos={sombras:true,oclusion:false,enfoque:false,resplandor:false,velas:true};
   // La mano tiene luz propia. Esta intensidad sólo gobierna el ambiente de la mesa.
-  let intensidadVisual=58,escalaPolvo=.18+.82*(intensidadVisual/100);
+  let intensidadVisual=10,escalaPolvo=.18+.82*(intensidadVisual/100);
   const limitar=(n,min,max)=>Math.max(min,Math.min(max,n));
   const calidadVisual=()=>intensidadVisual/100;
 
@@ -98,7 +99,8 @@
   /* ---- Luces: la lámpara, la ventana, dos velas y el polvo ------------------ */
   const ambiente=new THREE.HemisphereLight(0x9aa8d0,0x1a0e08,.2);escena.add(ambiente);
   const lampara=new THREE.SpotLight(0xffd6a0,640,0,.62,.6,2);lampara.position.set(0,13,3.5);lampara.target.position.set(0,0,.3);lampara.castShadow=true;
-  lampara.shadow.mapSize.set(2048,2048);lampara.shadow.bias=-.0003;lampara.shadow.normalBias=.02;lampara.shadow.radius=4;lampara.shadow.blurSamples=16;escena.add(lampara,lampara.target);
+  // Una sola sombra a 1024 px: conserva volumen sin el coste de las tres sombras de la versión cinematográfica.
+  lampara.shadow.mapSize.set(1024,1024);lampara.shadow.camera.near=1;lampara.shadow.camera.far=32;lampara.shadow.bias=-.0003;lampara.shadow.normalBias=.02;lampara.shadow.radius=1;lampara.shadow.blurSamples=1;escena.add(lampara,lampara.target);
   const ventana=new THREE.DirectionalLight(0x8fa8ff,.7);ventana.position.set(-6,7,-10);escena.add(ventana);
   const FLAMA_V=`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`;
   const FLAMA_F=`uniform float uT,uSem;varying vec2 vUv;void main(){vec2 p=vUv-vec2(.5,.18);float t=uT*7.+uSem;p.x+=sin(p.y*9.+t)*.04*p.y*3.;
@@ -112,7 +114,8 @@
     const cera=new THREE.Mesh(new THREE.CylinderGeometry(.34,.36,2.6,40),new THREE.MeshPhysicalMaterial({color:0xf3e6c8,roughness:.55,transmission:.35,thickness:.6,sheen:.5,sheenColor:new THREE.Color(0xffd9a0)}));cera.position.y=1.42;cera.castShadow=true;g.add(cera);
     const llama=new THREE.Mesh(new THREE.PlaneGeometry(.55,1.1),new THREE.ShaderMaterial({vertexShader:FLAMA_V,fragmentShader:FLAMA_F,uniforms:{uT:tiempo,uSem:{value:x}},transparent:true,blending:THREE.AdditiveBlending,depthWrite:false}));
     llama.position.y=3.05;g.add(llama);
-    const luz=new THREE.PointLight(0xff9a45,26,18,2);luz.position.y=3.1;luz.castShadow=true;luz.shadow.mapSize.set(512,512);luz.shadow.bias=-.002;luz.shadow.radius=6;g.add(luz);
+    // Las velas iluminan, pero no abren mapas de sombra propios: la lámpara ya aporta la única sombra de la prueba.
+    const luz=new THREE.PointLight(0xff9a45,26,18,2);luz.position.y=3.1;luz.castShadow=false;g.add(luz);
     velas.push({g,llama,luz,x});
   }
   // Polvo en la luz de la lámpara.
@@ -150,6 +153,8 @@
   function enMano(u,si){const m=u.g.userData.frente.material,p=m.userData.lecturaMano??={envMap:m.envMap,envMapIntensity:m.envMapIntensity,clearcoat:m.clearcoat,emissiveMap:m.emissiveMap,emissive:m.emissive.clone(),emissiveIntensity:m.emissiveIntensity};m.userData.lecturaMano=p;
     if(si){m.envMap=escena.environment;m.envMapIntensity=.48;m.clearcoat=Math.min(.21,p.clearcoat*.34);m.emissiveMap=m.map;m.emissive.setHex(0x3c3428);m.emissiveIntensity=.19;}
     else{m.envMap=p.envMap;m.envMapIntensity=p.envMapIntensity;m.clearcoat=p.clearcoat;m.emissiveMap=p.emissiveMap;m.emissive.copy(p.emissive);m.emissiveIntensity=p.emissiveIntensity;}
+    // La mano no proyecta sobre el tapete: evita cinco objetos extra en el mapa de la única sombra activa.
+    for(const parte of [u.g.userData.frente,u.g.userData.atras,u.g.userData.borde])parte.castShadow=!si;
     m.needsUpdate=true;}
   // Pilas de cartas (mazo y cementerio): cantos apilados con un poco de desorden.
   function pila(n,x,z,dorso=true){const g=new THREE.Group();g.position.set(x,0,z);mesa.add(g);g.userData.n=0;g.userData.poner=k=>{while(g.children.length<k){const i=g.children.length,m=F.carta(dorso?dorsoPintado.mat:dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));m.scale.setScalar(S);m.rotation.set(-Math.PI/2+(dorso?Math.PI:0),0,(rnd()-.5)*.06);m.position.set((rnd()-.5)*.04,.02+i*GROSOR*S*1.05,(rnd()-.5)*.04);g.add(m);}while(g.children.length>k)g.remove(g.children.at(-1));g.userData.n=k;};g.userData.poner(n);return g;}
@@ -398,11 +403,13 @@
   function aplicarEfectos(){const k=calidadVisual(),sombras=efectos.sombras&&k>.06;
     // A menor atmósfera, el tablero gana relleno y pierde niebla: se siguen viendo las zonas y cartas.
     ambiente.intensity=.22+(1-k)*.14;ventana.intensity=.88-k*.22;lampara.intensity=500+150*k;escena.fog.density=.007+.021*k;
-    renderer.shadowMap.enabled=sombras;lampara.castShadow=sombras;
-    for(const v of velas){v.luz.castShadow=sombras&&efectos.velas&&k>.18;v.luz.visible=efectos.velas&&k>.04;v.llama.visible=efectos.velas&&k>.04;}
+    renderer.shadowMap.enabled=sombras;lampara.castShadow=sombras;lampara.shadow.intensity=sombras?k:0;
+    for(const v of velas){v.luz.castShadow=false;v.luz.visible=efectos.velas&&k>.04;v.llama.visible=efectos.velas&&k>.04;v.llama.material.opacity=efectos.velas?k:0;}
     oclusion.enabled=efectos.oclusion&&k>.13;oclusion.blendIntensity=.18+.72*k;oclusion.updateGtaoMaterial({radius:.4+.24*k,distanceExponent:1.02+.38*k,thickness:.7+.3*k,scale:.58+.52*k,samples:Math.max(4,Math.round(4+8*k))});
     enfoque.enabled=efectos.enfoque&&k>.18;enfoque.uniforms.aperture.value=.00002+.00020*k;enfoque.uniforms.maxblur.value=.0005+.0035*k;
     resplandor.enabled=efectos.resplandor&&k>.05;resplandor.threshold=.95-.25*k;resplandor.radius=.18+.48*k;
+    polvo.visible=k>.2&&(oclusion.enabled||enfoque.enabled||resplandor.enabled);
+    sinPosproceso=!oclusion.enabled&&!enfoque.enabled&&!resplandor.enabled;
     actualizarPolvo();escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   // Una jugada completa para verlo todo: juega, ataca y deja jugar al rival.
   async function demostracion(){if(ocupado)return;const yo=J.yo;
@@ -411,7 +418,7 @@
     await turnoRival();}
 
   /* ---- Cada fotograma ---------------------------------------------------------- */
-  function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),W=Math.max(1,b.width),H=Math.max(1,b.height);
+  function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,1.25),W=Math.max(1,b.width),H=Math.max(1,b.height);
     renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?46:38;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900*escalaPolvo;if(J.yo)colocarMano(false);}
   function paso(dt){
     reloj+=dt;tiempo.value=reloj;F.tiempo.value=reloj;
@@ -425,7 +432,7 @@
       enfoque.uniforms.focus.value+=(f-enfoque.uniforms.focus.value)*Math.min(1,dt*(u?14:5));}
     // Velas que tiemblan, runas que laten, la mano que se levanta al pasar por encima.
     const calidad=calidadVisual();
-    for(const v of velas){const f=.85+.1*Math.sin(reloj*13+v.x)+.06*Math.sin(reloj*29+v.x*3);v.luz.intensity=(8+18*calidad)*f;v.llama.scale.set(1,f,1);v.llama.lookAt(camara.position.x,v.llama.getWorldPosition(new THREE.Vector3()).y,camara.position.z);}
+    for(const v of velas){const f=.85+.1*Math.sin(reloj*13+v.x)+.06*Math.sin(reloj*29+v.x*3);v.luz.intensity=26*calidad*f;v.llama.scale.set(1,f,1);v.llama.lookAt(camara.position.x,v.llama.getWorldPosition(new THREE.Vector3()).y,camara.position.z);}
     matTapete.emissiveIntensity=(.24+.18*calidad)+(.06+.17*calidad)*Math.sin(reloj*1.6);
     for(const g of J.rival?.trampas||[])g.position.y=.02;
     if(listo){manoYArrastre(dt);
@@ -439,7 +446,7 @@
     const pulso=estallidos.reduce((a,e)=>a+Math.max(0,1-(reloj-e.t0)*2),0);
     resplandor.strength=.1+.4*calidad+Math.min(.1+.55*calidad,pulso*(.16+.55*calidad));
   }
-  let simple=false,revisados=0,cuadros=0,revisionPuntero=false;
+  let simple=false,sinPosproceso=true,revisados=0,cuadros=0,revisionPuntero=false;
   // La mano, como en la mesa de siempre: la carta bajo el puntero se endereza, sube desde su base y
   // crece hasta leerse (sin salirse de la pantalla), se inclina con el puntero y aparta a sus vecinas;
   // entra rápido y se va despacio. Las que puedes pagar brillan en el canto; las demás se apagan.
@@ -482,12 +489,12 @@
     falta.classList.toggle('visto',!!(rc&&no));if(rc&&no){falta.textContent=no;falta.style.transform=`translate(-50%,-100%) translate(${(rc.izquierda+rc.derecha)/2}px,${Math.max(34,rc.arriba-6)}px)`;}
   }
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
-  function dibujar(){renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
+  function dibujar(){renderer.info.reset();if(simple||sinPosproceso)renderer.render(escena,camara);else composer.render();
     if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}else aviso('La escena sale negra en esta tarjeta gráfica ('+gpu+'). Cuéntanos qué navegador y dispositivo usas.');}}}
   let antes=performance.now(),fps={n:0,t:performance.now(),v:0};
   function cuadro(ahora){const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;paso(reducido?Math.min(dt,.05):dt);dibujar();
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;const i=renderer.info;
-      $('info').textContent=`${fps.v} fps · ${i.render.calls} llamadas de dibujo · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${i.memory.textures} texturas · WebGL 2 · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
+      $('info').textContent=`${fps.v} fps · ${i.render.calls} llamadas de dibujo · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${i.memory.textures} texturas · WebGL 2 · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${(simple||sinPosproceso)?'render directo · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);}
   // Revisión: avanzar(s) mueve el reloj a pasos de 1/30 s y dibuja; las acciones devuelven promesas que se cumplen al avanzar.
   window.CAOZ_MESA_THREE_REVISION=Object.freeze({
@@ -507,9 +514,9 @@
     intensidad(v){if(v!==undefined)fijarIntensidad(v);return intensidadVisual;},
     vista(p){Object.assign(vista,p);},
     estado:()=>({ocupado,apagadas:J.yo?.mano.filter(u=>u.g.userData.frente.material.color.r<.9).map(u=>u.id),huecos:J.yo&&[0,1,2,3,4].map(h=>J.yo.campo.find(u=>u.hueco===h)?.id||null),aviso:avisoMesa.classList.contains('visto')?avisoMesa.textContent:'',mano:J.yo?.mano.map(u=>u.id),campo:J.yo?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),rival:J.rival?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),almaYo:J.yo?.alma,almaRival:J.rival?.alma,pd:J.yo?.pd,
-      cementerio:J.yo?.cementerio.length,cementerioRival:J.rival?.cementerio.length,manoRival:J.rival?.manoG.length,webgl2:true,hdr,muestras,simple,intensidad:intensidadVisual,
+      cementerio:J.yo?.cementerio.length,cementerioRival:J.rival?.cementerio.length,manoRival:J.rival?.manoG.length,webgl2:true,hdr,muestras,simple,rutaDirecta:simple||sinPosproceso,dpr:renderer.getPixelRatio(),intensidad:intensidadVisual,sombra:lampara.shadow.intensity,efectos:{...efectos},
       iluminacionMano:J.yo?.mano.map(u=>{const m=u.g.userData.frente.material;return {id:u.id,entorno:m.envMapIntensity,laca:m.clearcoat,emision:m.emissiveIntensity};}),
-      pases:[['render',pasoRender],['oclusion',oclusion],['enfoque',enfoque],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n)}),
+      pases:(simple||sinPosproceso)?['render']:[['render',pasoRender],['oclusion',oclusion],['enfoque',enfoque],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n)}),
     pantalla(x,y,z){const v=new THREE.Vector3(x,y,z).project(camara),b=esc.getBoundingClientRect();return {x:(v.x*.5+.5)*b.width,y:(.5-v.y*.5)*b.height,ancho:b.width,alto:b.height};},
     posiciones:()=>({mano:J.yo.mano.map(u=>u.g.getWorldPosition(new THREE.Vector3()).toArray()),campo:J.yo.campo.map(u=>u.g.position.toArray()),rival:J.rival.campo.map(u=>u.g.position.toArray()),liderYo:J.yo.lider.g.position.toArray(),liderRival:J.rival.lider.g.position.toArray(),mazo:J.yo.mazo.position.toArray()}),
   });
