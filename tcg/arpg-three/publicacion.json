@@ -1,9 +1,9 @@
 {
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
-    "arpg-three-mesa.css": "7f7098ee5f3d01d03ef70ba23e39b5a5c44103fe487d4ad039c49811b8f05057",
-    "arpg-three-mesa.js": "4846a93848a38655e4b8d1e348a48e021177b1de7ca9d5be8d41afb9967d9536",
-    "arpg-three-modelos.js": "fa1a69ae01847d707a4951bd4d8a0d81653d3909e9b0fc7dcf79b8a5f200c98f",
+    "arpg-three-mesa.css": "4f1f8ee83fade3c03822b62aba4715b05e9e7b40024968269a9f920b9a4ae760",
+    "arpg-three-mesa.js": "34a32201c6e3829b608e1e16ce33d432d6e58dbdf3acd0a8c5f5abeb16d3d711",
+    "arpg-three-modelos.js": "c2d648b9fb413ca50ef09d09bff287499bbe5ad33980681428bc223bc275e29f",
     "art/arco-dorado-v1.webp": "cc0ab6d86a234442d09bdae97bd895ebc46d4bf133b532fbc95d02c9fb9e3977",
     "art/arco-foil-v1.webp": "7f8cdf5f214bbbf448040e9bc0eb7467d54e965255a537b08b82546008913b18",
     "art/arco.webp": "6ad23a2d9c551049b6e16afd2ebe4a402505ae8477624effff2fe44d62f86338",
@@ -32,20 +32,20 @@
     "art/sombrero-foil-v1.webp": "1b2cb4136cacb53ffdaf05dba4d48354ae21101daae3c82dd09992de7f600a45",
     "art/sombrero.webp": "5aa16f2412bbe75791fb4939489b0dec9c1f9832528505af0d7fba6d26ee4f18",
     "generado/datos.js": "1286d0e677b620264a1f9f22cc286b2f3e174c7303bd8f0ebabe3077143ba990",
-    "index.html": "e2af2c00c41588d3d7dd8385ec2a2fd48d86996902c60a6a17db8ecbd43e8470",
+    "index.html": "112e9e43880deabf75f31de6dec29821696b4db98debd19fc5f9e2393befd94b",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "procedencia.json": "17ec3e1be76cf377539b3213e9a97252e2a8660f1736c8ee6741ba59f3a246e7",
+    "procedencia.json": "2fb1d24e252808d003855abf6d40b638433adc7b933bfb6384b5d56cce79b618",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "794a1578c97c22eecf542b4de2eab1135414f877"
+    "sha": "0e4552e5a668e00aebad1c6129fcd22e7d86520c"
   },
   "seccion": "arpg-three",
   "version": 1

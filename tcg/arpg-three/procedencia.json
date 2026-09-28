@@ -68,14 +68,14 @@
     "llavemago-dorado-v1.webp": "5544e73160ca8661b726769ff18006734af1f586dc0af17d70bd354f940502b2"
   },
   "entorno": {
-    "arpg-three-mesa.js": "4846a93848a38655e4b8d1e348a48e021177b1de7ca9d5be8d41afb9967d9536",
-    "arpg-three-mesa.css": "7f7098ee5f3d01d03ef70ba23e39b5a5c44103fe487d4ad039c49811b8f05057",
-    "arpg-three-modelos.js": "fa1a69ae01847d707a4951bd4d8a0d81653d3909e9b0fc7dcf79b8a5f200c98f",
+    "arpg-three-mesa.js": "34a32201c6e3829b608e1e16ce33d432d6e58dbdf3acd0a8c5f5abeb16d3d711",
+    "arpg-three-mesa.css": "4f1f8ee83fade3c03822b62aba4715b05e9e7b40024968269a9f920b9a4ae760",
+    "arpg-three-modelos.js": "c2d648b9fb413ca50ef09d09bff287499bbe5ad33980681428bc223bc275e29f",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733"
   },
   "derivados": {
-    "index.html": "e2af2c00c41588d3d7dd8385ec2a2fd48d86996902c60a6a17db8ecbd43e8470",
+    "index.html": "112e9e43880deabf75f31de6dec29821696b4db98debd19fc5f9e2393befd94b",
     "generado/datos.js": "1286d0e677b620264a1f9f22cc286b2f3e174c7303bd8f0ebabe3077143ba990"
   }
 }
