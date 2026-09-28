@@ -339,6 +339,43 @@ node dev/secciones/pruebas_mesa_three.mjs
 python3 dev/secciones/publicar.py --publicar --seccion mesa-three --salida /tmp/caoz-mesa-three
 ```
 
+## Las Grietas del Editor (ARPG en three.js, proyecto paralelo)
+
+La revisión está en `/arpg-three/`: el Hito 1 de la propuesta de un ARPG al
+estilo Diablo con los personajes del juego. Es una sala jugable: Adreida, la
+Guerrera Semiorca, defiende la plaza de Tomsage bajo asedio contra cuatro
+oleadas, y al final entra Can, el de los Goblins.
+
+- **Modelos 3D sencillos:**
+  - hechos con primitivas de three.js en `arpg-three-modelos.js`, sin archivos de modelo;
+  - Adreida, el Goblin de Camino, el Kobold lancero, el Saqueador y Can, con los colores de sus cartas;
+  - cada uno tiene un esqueleto de huesos y una malla con piel por material (tres llamadas de dibujo por personaje);
+  - las animaciones son procedurales: andar, tajo, aviso, torbellino, salto, grito, lanzar, aturdido y muerte;
+  - al morir se deshacen en brasas.
+- **La plaza:**
+  - adoquines con relieve, casas con entramado (tres arden), el pozo, un carro, barriles y braseros;
+  - la luna con sombras, la luz que lleva Adreida (el radio de luz de Diablo) y el fuego;
+  - todo lo estático se funde por material.
+- **Combate:**
+  - clic para andar y atacar; mantén pulsado para seguir el cursor o seguir pegando;
+  - Torbellino (1/Q o clic derecho), Salto (2/W) y Provocar (3/E);
+  - la Furia sube al golpear y al recibir golpes;
+  - los enemigos avisan antes de pegar, así que apartarse esquiva el golpe;
+  - los kobolds apuntan con una línea y lanzan;
+  - Can avisa su golpazo con un círculo que se llena.
+- **Botín:**
+  - los Objetos del juego caen como cartas físicas (`three-carta.js`) en Normal, Foil o Dorado, con su columna de luz;
+  - al pasar por encima la carta se levanta y crece para leerla;
+  - al recogerla da su bonificación;
+  - Can suelta la Llave del Mago dorada (la llave de la primera Grieta, para el Hito 3).
+- **Táctil:** palanca y botones de habilidad.
+- **Demostración:** juega sola; es el piloto automático que usan las pruebas para ganar la partida entera.
+
+```bash
+node dev/secciones/pruebas_arpg_three.mjs
+python3 dev/secciones/publicar.py --publicar --seccion arpg-three --salida /tmp/caoz-arpg-three
+```
+
 ```bash
 node dev/secciones/pruebas_fuego.mjs
 python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego

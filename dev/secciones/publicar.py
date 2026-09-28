@@ -145,6 +145,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'three-carta.js', 'mesa-three-mesa.js', 'juego/carta-pintor.js'},
         'pruebas': ('pruebas_mesa_three.mjs',),
     },
+    'arpg-three': {
+        'nombre': 'Las Grietas del Editor (ARPG en three.js)',
+        'exportador': 'arpg-three-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'three-carta.js', 'arpg-three-modelos.js', 'arpg-three-mesa.js', 'juego/carta-pintor.js'},
+        'pruebas': ('pruebas_arpg_three.mjs',),
+    },
     'pesadillas-3d': {
         'nombre': 'Pruebas de Pitágoras en 3D',
         'exportador': 'pesadillas-3d-exportar.mjs',
