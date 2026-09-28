@@ -10,12 +10,12 @@
   },
   "motor": {
     "archivo": "caoz_tcg/motor.js",
-    "sha256": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076",
+    "sha256": "877e9d18780426d20b9a1898506425c73d2092bb621d13c9668b8992bbad0488",
     "modo": "copiado byte por byte"
   },
   "three": "0.186.1",
   "componentes": {
-    "motor.js": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076",
+    "motor.js": "877e9d18780426d20b9a1898506425c73d2092bb621d13c9668b8992bbad0488",
     "dado-fisico.js": "20fab24160f948b74d22b0f67f4d7c95dad1744ae5e07ad53a851c2bce703522",
     "carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
@@ -441,9 +441,9 @@
   },
   "entorno": {
     "mesa-three-combate.html": "117a1484957e60953463f60a462c1946db380deba125c2285c0fc7003ab56410",
-    "mesa-three-combate.css": "77dbf7ec1b70befe4241c562f50bea7ae06d6982f84f35e39611d7a6dd69c76a",
+    "mesa-three-combate.css": "09998806c92b296c1514808a23db11f26b16dc9473524271980ddcd158fe0c36",
     "mesa-three-combate-arranque.js": "63dabe705930d52567aaa79eb8ca662eb0b2d418f1dca78bf18703da890955f0",
-    "mesa-three-combate.js": "d0c01c065eb1dc044a122715243fc5c9d4338830dd9ad07249028217f8db72ed",
+    "mesa-three-combate.js": "eed2142a64041b9372185f85a52a5d56f61c264e358d0139150c18ef837e16fe",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733"
   },

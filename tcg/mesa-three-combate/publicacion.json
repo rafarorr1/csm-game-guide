@@ -423,18 +423,18 @@
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "juego/motor.js": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076",
+    "juego/motor.js": "877e9d18780426d20b9a1898506425c73d2092bb621d13c9668b8992bbad0488",
     "mesa-three-combate-arranque.js": "63dabe705930d52567aaa79eb8ca662eb0b2d418f1dca78bf18703da890955f0",
-    "mesa-three-combate.css": "77dbf7ec1b70befe4241c562f50bea7ae06d6982f84f35e39611d7a6dd69c76a",
-    "mesa-three-combate.js": "d0c01c065eb1dc044a122715243fc5c9d4338830dd9ad07249028217f8db72ed",
-    "procedencia.json": "08a0927f25e30508b905a85b48f793dcff44c3d78587a0c4ed1a89fe9649233e",
+    "mesa-three-combate.css": "09998806c92b296c1514808a23db11f26b16dc9473524271980ddcd158fe0c36",
+    "mesa-three-combate.js": "eed2142a64041b9372185f85a52a5d56f61c264e358d0139150c18ef837e16fe",
+    "procedencia.json": "90bd7428c484d06f74ddf32670d00b0097b5220afbd1eddd71edaf7a38657cf7",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/mesa-three-legibilidad",
-    "sha": "838f685c216c839446b68e7f8ad6555ac857ab4a"
+    "sha": "ebeff92b5b7ba8b6b13d46698d306cadc54c3d5b"
   },
   "seccion": "mesa-three-combate",
   "version": 1

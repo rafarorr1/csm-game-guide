@@ -19,7 +19,7 @@
   const ESC=.62,HAND_SCALE=ESC*.76,ALTURA=.003+GROSOR*ESC/2+.012,TAU=Math.PI*2;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   let modo=qs.get('modo')==='duelo'?'duelo':'final',reloj=0,ready=false,ocupadoFx=0,selected=null,logCount=0,logOpen=false,logUnread=0,visualEpoch=0;
-  const tweens=[],visuals=new Map(),pending=new Set(),floating=[],animationHistory=[],activeAnimations=new Map(),impacts=[];
+  const tweens=[],visuals=new Map(),pending=new Set(),floating=[],animationHistory=[],activeAnimations=new Map(),impacts=[],impactPool=[];
   // Fuente única de posiciones: los mismos carriles del demo Three. En
   // particular, las trampas viven detrás del campo (z 3.95), no entre las
   // unidades y los líderes.
@@ -38,7 +38,11 @@
   // una sola sombra y DPR limitado.  La fidelidad visual no debe costar FPS.
   const renderer=new THREE.WebGLRenderer({canvas,antialias:false,powerPreference:'high-performance',preserveDrawingBuffer:CAPTURA});
   renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.AgXToneMapping;renderer.toneMappingExposure=1.2;
-  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.info.autoReset=false;
+  // Las sombras de la escena son estáticas casi todo el tiempo. Actualizarlas
+  // a 60 Hz para cartas planas era el gasto más caro de la mesa, así que sólo
+  // se regeneran al cambiar la atmósfera o mientras el d20 está en movimiento.
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.shadowMap.autoUpdate=false;renderer.info.autoReset=true;
+  let shadowDirty=true;
   const scene=new THREE.Scene();scene.background=new THREE.Color(0x07050a);scene.fog=new THREE.FogExp2(0x07050a,.028);
   const camera=new THREE.PerspectiveCamera(38,1,.1,120);camera.position.set(0,13.6,20.3);camera.lookAt(0,0,.4);scene.add(camera);
   const cameraTarget=new THREE.Vector3(0,0,.4),view={zoom:1,target:1,shake:0};
@@ -123,6 +127,7 @@
   const handHits=new Map(),tableHits=new Map(),visualWaiters=new Map(),desiredByKey=new Map(),pendingEntries=new Map();
   const spentVisuals=[[],[]],graveGhosts=[null,null];
   let nextHandToken=1,hoverHand=null,hoverTable=null,hoverPreview=null,hoverUV=new THREE.Vector2(.5,.5),gesture=null,drag=null,tablePreview=null,tablePreviewKey=null,tablePreviewEpoch=0;
+  const handWorkPos=new THREE.Vector3(),handWorkRot=new THREE.Euler(),handWorkQuat=new THREE.Quaternion(),candleLookAt=new THREE.Vector3();
   const hitMaterial=new THREE.MeshBasicMaterial({transparent:true,opacity:0,colorWrite:false,depthWrite:false,depthTest:false,side:THREE.DoubleSide});
   const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
   function reconcileFieldSlots(){
@@ -191,7 +196,10 @@
     }
     if(!opt.back&&CARDS[id]){const c=putGem(digit(opt.cost??CARDS[id].c,'#f6edff'),GEMAS.coste);card.add(c);card.userData.c=c;}
     if(!opt.back&&opt.kind==='leader'){const badge=soulBadge(opt.side);card.add(badge);card.userData.soulBadge=badge;}
-    card.traverse(o=>{if(o.isMesh){o.castShadow=opt.kind!=='hand';o.receiveShadow=true;}});
+    // El tapete conserva la sombra de lámpara; las cartas, muy delgadas, no
+    // necesitan volver a dibujar su propia sombra en cada frame. Esto evita
+    // la mayor parte del coste GPU sin cambiar su lectura ni sus materiales.
+    card.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;}});
     table.add(card);visuals.set(key,card);return card;
   }
   const wantedKeys=new Set();
@@ -225,7 +233,7 @@
     if(!saved){saved={envMap:m.envMap,envMapIntensity:m.envMapIntensity,clearcoat:m.clearcoat,emissiveMap:m.emissiveMap,emissive:m.emissive?.clone?.()||new THREE.Color(),emissiveIntensity:m.emissiveIntensity};m.userData.lecturaMano=saved;}
     if(on){m.envMap=scene.environment;m.envMapIntensity=.68;m.clearcoat=Math.min(.16,(saved.clearcoat||0)*.25);m.emissiveMap=m.map;m.emissive=(m.emissive||new THREE.Color());m.emissive.setHex(0x584832);m.emissiveIntensity=.30;}
     else {m.envMap=saved.envMap;m.envMapIntensity=saved.envMapIntensity;m.clearcoat=saved.clearcoat;m.emissiveMap=saved.emissiveMap;m.emissive=(m.emissive||new THREE.Color());m.emissive.copy(saved.emissive);m.emissiveIntensity=saved.emissiveIntensity;}
-    for(const part of [card.userData.frente,card.userData.atras,card.userData.borde])if(part)part.castShadow=!on;
+    for(const part of [card.userData.frente,card.userData.atras,card.userData.borde])if(part){part.castShadow=false;part.receiveShadow=false;}
     m.needsUpdate=true;
   }
   function liveCard(card,u){if(!card||!u)return;card.userData.unit=u;setFieldStats(card,true);if(card.userData.a)paintDigit(card.userData.a,u.atk,u.atk>(u.card.a||0)?'#9effb1':'#fff1d8',card.userData.a.userData.fieldLabel||'');if(card.userData.h)paintDigit(card.userData.h,Math.max(0,u.maxHp-u.dmg),u.dmg?'#ff9e90':'#fff1d8',card.userData.h.userData.fieldLabel||'');const material=card.userData.frente.material;material.emissive=material.emissive||new THREE.Color();let glow=0;if(TGT&&isTargetable(u))glow=0x356040;else if(selected===u)glow=0x5a4210;material.emissive.setHex(glow);material.emissiveIntensity=glow?.55:0;}
@@ -254,8 +262,14 @@
   // Las ranuras son siempre del tamaño completo de la carta: no cambian cuando
   // una carta se amplía y no dejan franjas muertas entre los naipes.
   function handPose(i,n){
-    const k=i-(n-1)/2,portrait=camera.aspect<.9,sep=portrait?.44:.82,z=portrait?-9.35:-7.55,y=portrait?-3.45:-2.15;
-    return {pos:new THREE.Vector3(k*sep,y-Math.abs(k)*.055,z+i*.012),rot:new THREE.Euler(-.12,0,-k*.08),scale:HAND_SCALE};
+    const k=i-(n-1)/2,portrait=camera.aspect<.9,z=portrait?-9.35:-7.55,y=portrait?-3.45:-2.15;
+    // La esquina de coste vive muy a la derecha de cada carta. 1.12 unidades
+    // deja la cifra libre en escritorio; sólo compactamos cuando la mano ya
+    // no cabe en la cámara. El orden de profundidad se invierte para que una
+    // carta de la derecha nunca tape el coste de la que queda a su izquierda.
+    const hh=Math.tan(camera.fov*Math.PI/360)*-z,ww=hh*camera.aspect,wanted=portrait?.72:1.12,min=portrait?.48:.78,available=ww*1.78;
+    const sep=n>1?Math.max(min,Math.min(wanted,(available-ANCHO*HAND_SCALE)/(n-1))):wanted;
+    return {pos:new THREE.Vector3(k*sep,y-Math.abs(k)*.055,z-i*.012),rot:new THREE.Euler(-.12,0,-k*.08),scale:HAND_SCALE};
   }
   function enemyHandPose(i,n){const k=i-(n-1)/2,portrait=camera.aspect<.9,scale=.76*(portrait?.72:1),step=ANCHO*scale+.1;return {pos:new THREE.Vector3(1+k*step,layout.enemyHandY+i*.025,layout.enemyHandZ+i*.04),rot:new THREE.Euler(-1.1,Math.PI,k*.035),scale};}
   function makeHitSlot(d,p){
@@ -405,6 +419,14 @@
   function playerHUD(s){const p=P(s),extra=[];if(p.leaderId==='talesin')extra.push(p.ascended?'<span class="ctPill gracia">😇 Ascendido</span>':pill('✨',p.gracia+'/5','gracia'));if(p.corte?.turnos)extra.push(pill('👑',p.corte.turnos+'/2','corte'));if(p.relics.length)extra.push(`<span class="ctPill">✦ ${p.relics.map(r=>CARDS[r.id].n).join(', ')}</span>`);return `<b>${p.L.n}</b>${pill('♥',Math.max(0,p.alma),'alma')}${pill('◆',p.pd+'/'+p.pdMax,'pd')}${pill('🗝',keys(s))}${extra.join('')}`;}
   function updateHUD(){if(!G)return;meHud.innerHTML=playerHUD(ME);enemyHud.innerHTML=playerHUD(FOE);turnEl.textContent=G.over?'Partida terminada':`${G.active===ME?'Tu turno':'Turno de Gero'} · ${G.phase||'preparando'} · ronda ${Math.max(1,Math.ceil(G.turnNo/2))}`;leaderBtn.textContent=`${P(ME).L.art} ${P(ME).L.habName} (${P(ME).L.habCost} PD)`;leaderBtn.disabled=G.active!==ME||G.busy||G.over||!canUseLeader(ME);abilityBtn.disabled=!selected||G.active!==ME||G.busy||G.over||!canUseAct(selected);abilityBtn.textContent=selected?.card.act?`${selected.card.act.n} (${selected.card.act.cost} PD)`:'Habilidad de carta';endBtn.disabled=G.active!==ME||G.busy||G.resolving||G.over||!!TGT;}
   function messageFor(t,cls=''){message.textContent=strip(t);message.className='ctMessage '+cls;}
+  const rivalCue=document.createElement('div');rivalCue.className='ctRivalCue';rivalCue.hidden=true;stage.append(rivalCue);let rivalCueEpoch=0;
+  function rivalCueText(cue){
+    if(cue?.kind==='card'){const c=CARDS[cue.id];return `GERO PREPARA · ${c?.art||'🃏'} ${c?.n||cue.id}`;}
+    if(cue?.kind==='act')return `GERO ACTIVA · ${cue.u?.card?.n||'Personaje'} · ${cue.u?.card?.act?.n||'Habilidad'}`;
+    if(cue?.kind==='leader')return `GERO USA · ${cue.leader?.habName||'Habilidad de líder'}`;
+    if(cue?.kind==='attack'){const target=cue.target==='face'?'tu Alma':cue.target?.card?.n||'su objetivo';return `GERO DECLARA · ${cue.u?.card?.n||'Personaje'} → ${target}`;}
+    return 'GERO PREPARA SU JUGADA';
+  }
   function paintLogToggle(){
     if(!logToggle)return;logToggle.setAttribute('aria-expanded',String(logOpen));logToggle.textContent=logOpen?'Ocultar registro':'Registro';logToggle.append(' ');const badge=document.createElement('span');badge.id='ctLogBadge';badge.hidden=!logUnread;badge.textContent=String(Math.min(99,logUnread));logToggle.append(badge);
   }
@@ -417,14 +439,24 @@
   function modalShow({kicker='EL DOMO ESPERA',title,body='',actions=[]}){modalKicker.textContent=kicker;modalTitle.textContent=title;modalBody.innerHTML=body;modalActions.innerHTML='';actions.forEach(a=>{const b=document.createElement('button');b.type='button';b.textContent=a.t;b.className=a.cls||'';b.onclick=a.fn;modalActions.append(b);});modal.hidden=false;}
   function modalHide(){modal.hidden=true;}
   function floatAt(pos,text,kind='note'){const el=document.createElement('div');el.className='ctFloat '+kind;el.textContent=text;labels.append(el);floating.push({el,pos:pos.clone(),until:performance.now()+900});}
-  function worldToScreen(pos){const v=pos.clone().project(camera),b=stage.getBoundingClientRect();return {x:(v.x*.5+.5)*b.width,y:(.5-v.y*.5)*b.height,hide:v.z>1};}
+  const screenWork=new THREE.Vector3();
+  function worldToScreen(pos){const v=screenWork.copy(pos).project(camera);return {x:(v.x*.5+.5)*stageSize.w,y:(.5-v.y*.5)*stageSize.h,hide:v.z>1};}
   function unitPos(u){const v=visuals.get('unit:'+u?.uid);return v?.getWorldPosition(new THREE.Vector3())||new THREE.Vector3();}
   function soulPos(s){const leader=leaderVisual(s);return leader?leader.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,.42,0)):leaderPos(s).add(new THREE.Vector3(0,.42,0));}
 
   /* --------------------- Contrato del motor: UI / FX ---------------------- */
   // La IA ya decide a través del motor; este adaptador no debe comprimir sus
   // pausas a 420 ms. Conservamos el modo rápido sólo para las pruebas.
-  globalThis.nap=ms=>sleep(G?.fast?1:Math.max(110,Math.min(1100,Math.round(ms))));
+  // Misma semántica que la mesa original: los tiempos escritos por el motor
+  // son tiempos reales, sin la compresión silenciosa que hacía que Gero
+  // encadenara acciones imposibles de seguir.
+  globalThis.nap=ms=>((G&&G.fast)||document.hidden)?Promise.resolve():sleep(Math.max(0,Math.round(ms)));
+  globalThis.fxRivalCue=async(cue,ms=820)=>{
+    if(G?.fast||document.hidden)return globalThis.nap(ms);
+    const epoch=++rivalCueEpoch;rivalCue.textContent=rivalCueText(cue);rivalCue.hidden=false;rivalCue.classList.remove('is-in');void rivalCue.offsetWidth;rivalCue.classList.add('is-in');
+    await globalThis.nap(ms);
+    if(epoch===rivalCueEpoch){rivalCue.classList.remove('is-in');rivalCue.hidden=true;}
+  };
   // El motor pregunta esto para no disparar pasivas durante un paso didáctico.
   // Esta pantalla no carga el tutorial HTML, así que la pasiva siempre procede.
   globalThis.tutPasivaLista=()=>true;
@@ -446,19 +478,29 @@
      caras canónicas que usa dado-fisico.js. Así su quaternion, su radio y el
      número pintado sobre cada cara son exactamente los de la simulación. */
   const D20=globalThis.CAOZ_D20,D20_FACES=Array.isArray(D20?.caras)?D20.caras:[],D20_VERTICES=Array.isArray(D20?.vertices)?D20.vertices:[];
-  const diceRoot=new THREE.Group(),diceState={visible:false,estado:'oculto',valor:null,frames:0,decalCount:D20_FACES.length,spriteCount:0,caraSuperior:null,caraIndice:null};table.add(diceRoot);diceRoot.visible=false;
+  // El dado tiene una bandeja propia delante de Talesyn, fuera del campo y
+  // suficientemente cerca de cámara para que su trayectoria y su cara final
+  // se lean sin tapar una carta. Las coordenadas siguen siendo las físicas;
+  // sólo comprimimos el recorrido horizontal para mantenerlo en la bandeja.
+  const DICE_SCALE=1.28,DICE_PATH_SCALE=.62,DICE_ANCHOR=new THREE.Vector3(3.3,0,5.22),DICE_IMPULSE=Object.freeze({x:.16,z:-.64,fuerza:.68});
+  const diceRoot=new THREE.Group(),diceState={visible:false,estado:'oculto',valor:null,frames:0,decalCount:D20_FACES.length,spriteCount:0,caraSuperior:null,caraIndice:null};diceRoot.scale.setScalar(DICE_SCALE);table.add(diceRoot);diceRoot.visible=false;
+  const diceTray=new THREE.Group();diceTray.position.copy(DICE_ANCHOR);table.add(diceTray);
+  const trayBase=new THREE.Mesh(new THREE.BoxGeometry(4.95,.16,3.08),new THREE.MeshPhysicalMaterial({color:0x241321,metalness:.58,roughness:.27,clearcoat:.36}));trayBase.position.y=-.08;trayBase.castShadow=true;trayBase.receiveShadow=true;diceTray.add(trayBase);
+  const trayPad=new THREE.Mesh(new THREE.PlaneGeometry(4.56,2.7),new THREE.MeshStandardMaterial({color:0x211829,roughness:.78,metalness:.08,emissive:0x170f21,emissiveIntensity:.24}));trayPad.rotation.x=-Math.PI/2;trayPad.position.y=.006;trayPad.receiveShadow=true;diceTray.add(trayPad);
+  const trayRing=new THREE.Mesh(new THREE.RingGeometry(.72,.79,40),new THREE.MeshBasicMaterial({color:0xe6b75b,transparent:true,opacity:.68,side:THREE.DoubleSide,depthWrite:false}));trayRing.rotation.x=-Math.PI/2;trayRing.position.y=.012;diceTray.add(trayRing);
+  const diceLight=new THREE.PointLight(0xffd49a,0,9,2);diceLight.position.copy(DICE_ANCHOR).add(new THREE.Vector3(0,2.6,.4));diceLight.visible=false;scene.add(diceLight);
   const d20Vector=v=>new THREE.Vector3(v[0],v[1],v[2]);
   function d20BodyGeometry(){
     const positions=[],normals=[];
     for(const face of D20_FACES)for(const i of face.ids){positions.push(...D20_VERTICES[i]);normals.push(...face.n);}
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('normal',new THREE.Float32BufferAttribute(normals,3));geometry.computeBoundingSphere();return geometry;
   }
-  const D20_ATLAS_COLS=5,D20_ATLAS_ROWS=4,D20_ATLAS_CELL=192,D20_LABEL_SIZE=.19,D20_LABEL_LIFT=.005,D20_SURFACE_Y=.008;
+  const D20_ATLAS_COLS=5,D20_ATLAS_ROWS=4,D20_ATLAS_CELL=192,D20_LABEL_SIZE=.31,D20_LABEL_LIFT=.009,D20_SURFACE_Y=.008;
   const diceNumberAtlas=canvasTexture(D20_ATLAS_COLS*D20_ATLAS_CELL,D20_ATLAS_ROWS*D20_ATLAS_CELL,(g,w,h)=>{
     g.clearRect(0,0,w,h);g.textAlign='center';g.textBaseline='middle';
     D20_FACES.forEach((face,i)=>{const col=i%D20_ATLAS_COLS,row=Math.floor(i/D20_ATLAS_COLS),x=(col+.5)*D20_ATLAS_CELL,y=(row+.5)*D20_ATLAS_CELL;
-      g.font='900 118px Cinzel Domo, Georgia';g.lineWidth=10;g.strokeStyle='#220811';g.shadowColor='#000';g.shadowBlur=8;g.strokeText(String(face.valor),x,y+5);g.shadowBlur=0;g.fillStyle='#fff0bd';g.fillText(String(face.valor),x,y+5);
-      if(face.valor===6||face.valor===9){g.fillStyle='#fff0bd';g.fillRect(x-4,y+60,8,8);}
+      g.font='900 142px Cinzel Domo, Georgia';g.lineWidth=12;g.strokeStyle='#1c0a15';g.shadowColor='#000';g.shadowBlur=8;g.strokeText(String(face.valor),x,y+7);g.shadowBlur=0;g.fillStyle='#fff0bd';g.fillText(String(face.valor),x,y+7);
+      if(face.valor===6||face.valor===9){g.fillStyle='#fff0bd';g.fillRect(x-5,y+70,10,9);}
     });
   });
   function d20LabelGeometry(){
@@ -474,30 +516,33 @@
     });
     const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(positions,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uvs,2));geometry.computeBoundingSphere();return geometry;
   }
-  const diceGeometry=d20BodyGeometry(),diceMesh=new THREE.Mesh(diceGeometry,new THREE.MeshPhysicalMaterial({color:0x842946,metalness:.66,roughness:.28,clearcoat:.54,clearcoatRoughness:.16,emissive:0x210612,emissiveIntensity:.22,flatShading:true}));diceMesh.castShadow=true;diceMesh.receiveShadow=true;
-  const diceLabels=new THREE.Mesh(d20LabelGeometry(),new THREE.MeshBasicMaterial({map:diceNumberAtlas,transparent:true,alphaTest:.04,side:THREE.FrontSide,depthWrite:false,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-1,polygonOffsetUnits:-1}));diceLabels.renderOrder=1;
-  const diceEdges=new THREE.LineSegments(new THREE.EdgesGeometry(diceGeometry),new THREE.LineBasicMaterial({color:0xffd98c,transparent:true,opacity:.78,toneMapped:false}));diceRoot.add(diceMesh,diceLabels,diceEdges);
+  const diceGeometry=d20BodyGeometry(),diceMesh=new THREE.Mesh(diceGeometry,new THREE.MeshPhysicalMaterial({color:0x271126,metalness:.28,roughness:.20,clearcoat:.82,clearcoatRoughness:.11,emissive:0x160817,emissiveIntensity:.18,flatShading:true}));diceMesh.castShadow=true;diceMesh.receiveShadow=true;
+  const diceLabels=new THREE.Mesh(d20LabelGeometry(),new THREE.MeshBasicMaterial({map:diceNumberAtlas,transparent:true,alphaTest:.14,side:THREE.DoubleSide,depthWrite:true,toneMapped:false,polygonOffset:true,polygonOffsetFactor:-2,polygonOffsetUnits:-2}));diceLabels.renderOrder=1;
+  const diceEdges=new THREE.LineSegments(new THREE.EdgesGeometry(diceGeometry),new THREE.LineBasicMaterial({color:0xf4ca73,transparent:true,opacity:.96,toneMapped:false}));diceRoot.add(diceMesh,diceLabels,diceEdges);
   const diceReadout=document.createElement('div');diceReadout.className='ctDiceReadout';diceReadout.hidden=true;stage.append(diceReadout);
   function unitQuat(q){const out=new THREE.Quaternion(q[0],q[1],q[2],q[3]);return out.normalize();}
   function readDiceFace(q){if(!D20?.leer)return null;const face=D20.leer([q.x,q.y,q.z,q.w]);return face?{valor:face.valor,indice:face.indice}:null;}
   function diceAt(tirada,t){const frames=tirada.frames||[],last=frames.at(-1);if(!last)return;let i=0;while(i<frames.length-2&&frames[i+1].t<t)i++;const a=frames[i],b=frames[Math.min(i+1,frames.length-1)],k=Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t||1))),sign=a.q[0]*b.q[0]+a.q[1]*b.q[1]+a.q[2]*b.q[2]+a.q[3]*b.q[3]<0?-1:1;
-    // La simulación vive cerca de z=.9; al desplazarla al carril neutro (z=0)
-    // el d20 no rueda encima de una unidad ni de las dianas de combate.
-    diceRoot.position.set(a.p[0]+(b.p[0]-a.p[0])*k,D20_SURFACE_Y+a.p[1]+(b.p[1]-a.p[1])*k,a.p[2]+(b.p[2]-a.p[2])*k-.9);const q=unitQuat(a.q).slerp(unitQuat([b.q[0]*sign,b.q[1]*sign,b.q[2]*sign,b.q[3]*sign]),k);diceRoot.quaternion.copy(q);const top=readDiceFace(q);diceState.caraSuperior=top?.valor??null;diceState.caraIndice=top?.indice??null;
+    const first=frames[0]?.p||[0,0,.9],px=a.p[0]+(b.p[0]-a.p[0])*k,py=a.p[1]+(b.p[1]-a.p[1])*k,pz=a.p[2]+(b.p[2]-a.p[2])*k;
+    diceRoot.position.set(DICE_ANCHOR.x+(px-first[0])*DICE_PATH_SCALE,D20_SURFACE_Y+py*DICE_SCALE,DICE_ANCHOR.z+(pz-first[2])*DICE_PATH_SCALE);const q=unitQuat(a.q).slerp(unitQuat([b.q[0]*sign,b.q[1]*sign,b.q[2]*sign,b.q[3]*sign]),k);diceRoot.quaternion.copy(q);const top=readDiceFace(q);diceState.caraSuperior=top?.valor??null;diceState.caraIndice=top?.indice??null;
   }
-  function physicalFor(value){if(!globalThis.CAOZ_D20)return null;for(let seed=1;seed<420;seed++){const roll=globalThis.CAOZ_D20.simular(seed,{x:.16,z:-.64,fuerza:.68});if(roll.asentado&&roll.valor===value)return roll;}return null;}
+  // Evita hasta 419 simulaciones síncronas cuando se pide una cara conocida.
+  // Cada semilla se obtuvo con el mismo impulso canónico y se valida al usarla,
+  // así la física sigue siendo auténtica y el hilo de UI no se congela.
+  const D20_SEEDS=Object.freeze({1:32,2:1,3:23,4:21,5:31,6:15,7:61,8:36,9:11,10:14,11:12,12:2,13:3,14:54,15:4,16:17,17:19,18:8,19:5,20:27}),d20ReplayCache=new Map();
+  function physicalFor(value){if(!globalThis.CAOZ_D20)return null;const seed=D20_SEEDS[value];if(!seed)return null;if(d20ReplayCache.has(value))return d20ReplayCache.get(value);const roll=globalThis.CAOZ_D20.simular(seed,DICE_IMPULSE);if(roll.asentado&&roll.valor===value){d20ReplayCache.set(value,roll);return roll;}return null;}
   async function showD20(value,label,interactive,meta,fisica){
-    let tirada=fisica&&(fisica.frames?fisica:globalThis.CAOZ_D20?.desempaquetar?.(fisica));if(!tirada)tirada=physicalFor(value)||globalThis.CAOZ_D20?.simular?.(17,{x:.12,z:-.58,fuerza:.65});
+    let tirada=fisica&&(fisica.frames?fisica:globalThis.CAOZ_D20?.desempaquetar?.(fisica));if(!tirada)tirada=physicalFor(value)||globalThis.CAOZ_D20?.simular?.(17,DICE_IMPULSE);
     if(!tirada){messageFor(`🎲 ${label}: ${value}`);return value;}
-    diceRoot.visible=true;diceState.visible=true;diceState.estado='rodando';diceState.valor=null;diceState.caraSuperior=null;diceState.caraIndice=null;diceState.frames=tirada.frames.length;diceReadout.hidden=false;diceReadout.innerHTML=`<small>${strip(label)}</small><b>◇</b><span>Rodando el d20…</span>`;
+    diceRoot.visible=true;diceLight.visible=true;diceLight.intensity=13;diceState.visible=true;diceState.estado='rodando';diceState.valor=null;diceState.caraSuperior=null;diceState.caraIndice=null;diceState.frames=tirada.frames.length;diceReadout.hidden=false;diceReadout.innerHTML=`<small>${strip(label)}</small><b>◇</b><span>Rodando el d20…</span>`;shadowDirty=true;
     animationHistory.push({tipo:'dado',etapa:'entrada',frames:tirada.frames.length,orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();
-    const duration=G?.fast?.10:Math.min(2.25,Math.max(.82,(tirada.duracion||2.2)*.45));
+    const duration=G?.fast?.10:Math.min(2.4,Math.max(.82,tirada.duracion||2.2));
     await tween(duration,k=>diceAt(tirada,(tirada.frames.at(-1)?.t||0)*ease(k)));
     diceAt(tirada,tirada.frames.at(-1)?.t||0);diceState.estado='resultado';diceState.valor=value;const good=meta?.min!=null&&value>=meta.min,bad=meta?.max!=null&&value<=meta.max;
     diceReadout.innerHTML=`<small>${strip(label)}</small><b>${value}</b><span>${good?'Éxito':bad?'Falla':value===20||value===1?'Crítico':'Resultado'}</span>`;
     animationHistory.push({tipo:'dado',etapa:'fin',frames:tirada.frames.length,orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();
-    if(interactive&&G?.active===ME)return new Promise(resolve=>modalShow({kicker:'D20',title:label,body:`<p class="ctDiceResult"><b>${value}</b></p><p>${meta?.necesita||''}</p><p>${good?(meta?.siOk||''):(bad?(meta?.siMal||''):'')}</p>`,actions:[{t:'Continuar',cls:'gold',fn:()=>{modalHide();diceRoot.visible=false;diceReadout.hidden=true;diceState.visible=false;resolve(value);}}]}));
-    await fxDelay(1050);diceRoot.visible=false;diceReadout.hidden=true;diceState.visible=false;return value;
+    if(interactive&&G?.active===ME)return new Promise(resolve=>modalShow({kicker:'D20',title:label,body:`<p class="ctDiceResult"><b>${value}</b></p><p>${meta?.necesita||''}</p><p>${good?(meta?.siOk||''):(bad?(meta?.siMal||''):'')}</p>`,actions:[{t:'Continuar',cls:'gold',fn:()=>{modalHide();diceRoot.visible=false;diceLight.visible=false;diceReadout.hidden=true;diceState.visible=false;shadowDirty=true;resolve(value);}}]}));
+    await fxDelay(meta?2600:1500);diceRoot.visible=false;diceLight.visible=false;diceReadout.hidden=true;diceState.visible=false;shadowDirty=true;return value;
   }
   globalThis.d20FisicoDisponible=()=>!!globalThis.CAOZ_D20;
   globalThis.prepararTiradaD20=(label,interactive,meta)=>{
@@ -508,7 +553,12 @@
   globalThis.elegirMulliganInicial=(side,{cartas,limite})=>{if(side!==ME)return Promise.resolve([]);return new Promise(resolve=>{let picks=[];const refresh=()=>{modalShow({kicker:'MANO INICIAL',title:`Puedes cambiar hasta ${limite} carta${limite===1?'':'s'}`,body:`<p>Las cartas seleccionadas se cambian antes de volver al mazo.</p><div class="ctChoiceGrid">${cartas.map((id,i)=>`<button type="button" class="ctChoiceCard ${picks.includes(i)?'selected':''}" data-mull="${i}"><b>${CARDS[id]?.n||id}</b>${strip(CARDS[id]?.x||'')}</button>`).join('')}</div>`,actions:[{t:'Conservar / confirmar',cls:'gold',fn:()=>{modalHide();resolve(picks.slice());}}]});modalBody.querySelectorAll('[data-mull]').forEach(b=>b.onclick=()=>{const i=Number(b.dataset.mull);picks=picks.includes(i)?picks.filter(x=>x!==i):(picks.length<limite?[...picks,i]:picks);refresh();});};refresh();});};
   globalThis.endGame=(winner,reason)=>{if(!G||G.over)return;G.over=true;clearUI();render();modalShow({kicker:winner===ME?'VICTORIA':'DERROTA',title:winner===ME?'Talesyn prevalece':'Gero cierra la mesa',body:`<p>${reason}</p><p>${winner===ME?'La Ascensión sobrevivió al Domo.':'Puedes empezar de nuevo con las mismas reglas.'}</p>`,actions:[{t:'Revancha',cls:'gold',fn:()=>{modalHide();startGame(modo);}},{t:'Elegir modo',fn:()=>chooseMode()}]});};
   function fxDelay(ms=180){return new Promise(r=>setTimeout(r,G?.fast?1:ms));}
-  function impactAt(pos,color=0xffc15d,power=1){const ring=new THREE.Mesh(new THREE.RingGeometry(.22,.3,40),new THREE.MeshBasicMaterial({color,transparent:true,opacity:.8,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.copy(pos).setY(Math.max(.028,pos.y+.015));table.add(ring);const light=new THREE.PointLight(color,0,5,2);light.position.copy(pos).add(new THREE.Vector3(0,.7,0));scene.add(light);impacts.push({ring,light,at:reloj,power});animationHistory.push({tipo:'impacto',etapa:'entrada',orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();}
+  // Impactos se reutilizan: los efectos de Gero podían crear una geometría y
+  // una luz nuevas por cada daño, provocando pausas de GC en turnos largos.
+  const impactGeometry=new THREE.RingGeometry(.22,.3,32);
+  function makeImpact(){const ring=new THREE.Mesh(impactGeometry,new THREE.MeshBasicMaterial({color:0xffc15d,transparent:true,opacity:.8,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide})),light=new THREE.PointLight(0xffc15d,0,5,2);ring.rotation.x=-Math.PI/2;return {ring,light,at:0,power:1};}
+  function releaseImpact(fx){fx.ring.removeFromParent();fx.light.removeFromParent();impactPool.push(fx);}
+  function impactAt(pos,color=0xffc15d,power=1){const fx=impactPool.pop()||makeImpact();fx.ring.material.color.setHex(color);fx.ring.material.opacity=.8;fx.ring.scale.setScalar(1);fx.ring.position.copy(pos).setY(Math.max(.028,pos.y+.015));fx.light.color.setHex(color);fx.light.position.copy(pos).add(new THREE.Vector3(0,.7,0));fx.light.intensity=0;fx.at=reloj;fx.power=power;table.add(fx.ring);scene.add(fx.light);impacts.push(fx);animationHistory.push({tipo:'impacto',etapa:'entrada',orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();}
   function impact(v,d){const p=d?.pos||v.position;impactAt(p,d?.edition==='dorado'?0xffd174:sideColor(d?.side??v.userData.side),1);view.shake=Math.max(view.shake,.11);}
   function takeSpent(side,id){const list=spentVisuals[side],i=list.map(x=>x.id).lastIndexOf(id);return i<0?null:list.splice(i,1)[0];}
   async function spellFlight(id,s,kind='hechizo',color=0xb493ff){const spent=takeSpent(s,id);if(!spent){flash(color);return fxDelay(220);}const v=spent.v;placeWorld(v,spent.pose);v.visible=true;const center=new THREE.Vector3(0,2.45,sideZ(s)*.35);await flyCard(v,center,new THREE.Euler(-.48,0,0),.45,1.05,ESC,kind);impactAt(center,color,1.3);await motion(v,kind+'-brasas',()=>tween(.3,k=>{setDissolve(v,ease(k));v.rotation.y+=.13;}));setDissolve(v,1);v.position.copy(gravePos(s)).add(new THREE.Vector3(0,.21,0));v.rotation.set(-Math.PI/2,0,0);graveGhosts[s]={id,v,pose:poseWorld(v)};visuals.delete(v.userData.key);}
@@ -521,17 +571,20 @@
   globalThis.fxNumber=(anchor,text,kind)=>{floatAt(anchor==='face0'?soulPos(ME):soulPos(FOE),text,kind==='buff'?'heal':'note');};
   globalThis.fxDeath=async u=>{const key='unit:'+u.uid,v=await waitVisual(key);if(!v)return fxDelay(160);await waitMotion(v);v.userData.dying=true;const from=v.position.clone(),to=gravePos(u.owner??u.side).add(new THREE.Vector3(0,.24,0));impactAt(from,0xff6745,1.1);await motion(v,'muerte',()=>tween(.46,k=>{const e=ease(k);v.position.lerpVectors(from,to,e);v.position.y+=Math.sin(k*Math.PI)*.9;v.scale.setScalar(ESC*(1-e*.16));setDissolve(v,e);}));setDissolve(v,1);visuals.delete(key);v.userData.dying=false;graveGhosts[u.owner??u.side]={id:u.card.id,v,pose:poseWorld(v)};};
   globalThis.fxAterriza=async u=>{const v=await waitVisual('unit:'+u.uid);if(!v)return fxDelay(120);await waitMotion(v);const p=v.position.clone();await motion(v,'aterrizaje',()=>tween(.2,k=>{v.position.y=p.y+Math.sin(k*Math.PI)*.34;}));v.position.copy(p);impact(v,{pos:p,side:u.side,edition:v.userData.edition});};
-  globalThis.fxSpell=async(id,s)=>{floatAt(new THREE.Vector3(0,1.2,0),CARDS[id]?.n||'Hechizo','note');await spellFlight(id,s,'hechizo',0xb493ff);flash(0xb493ff);};
-  globalThis.fxHabilidad=s=>{floatAt(leaderPos(s).add(new THREE.Vector3(0,1,0)),P(s).L.habName,'note');impactAt(leaderPos(s),sideColor(s),1);flash(sideColor(s));return fxDelay(260);};
-  globalThis.fxBanner=s=>{messageFor(`— Turno de ${sideName(s)} —`);return fxDelay(250);};
+  globalThis.fxSpell=async(id,s)=>{floatAt(new THREE.Vector3(0,1.2,0),CARDS[id]?.n||'Hechizo','note');await spellFlight(id,s,'hechizo',0xb493ff);flash(0xb493ff);if(s===FOE)await fxDelay(430);};
+  globalThis.fxHabilidad=async s=>{floatAt(leaderPos(s).add(new THREE.Vector3(0,1,0)),P(s).L.habName,'note');impactAt(leaderPos(s),sideColor(s),1);flash(sideColor(s));return fxDelay(s===FOE?1180:260);};
+  // La cortinilla de turno conserva los 680 ms de la mesa original antes de
+  // que el d20 o cualquier efecto de inicio compita por la atención.
+  globalThis.fxBanner=s=>{messageFor(`— Turno de ${sideName(s)} —`);return fxDelay(680);};
   globalThis.fxStat=()=>fxDelay(1);
-  globalThis.fxLunge=async(u,target)=>{const v=await waitVisual('unit:'+u.uid);if(!v)return fxDelay(180);await waitMotion(v);const start=v.position.clone(),targetPos=target==='face'?soulPos(1-u.side):unitPos(target),end=targetPos.clone().sub(start).normalize().multiplyScalar(.8).sub(targetPos).multiplyScalar(-1).add(targetPos);await motion(v,'embestida',async()=>{await tween(.14,k=>{v.position.lerpVectors(start,end,k);v.position.y+=Math.sin(k*Math.PI)*.6;});impactAt(targetPos,0xffa261,1.1);view.shake=.28;await tween(.24,k=>{v.position.lerpVectors(end,start,k);});});v.position.copy(start);};
+  globalThis.fxLunge=async(u,target)=>{const v=await waitVisual('unit:'+u.uid);if(!v)return fxDelay(180);await waitMotion(v);const start=v.position.clone(),targetPos=target==='face'?soulPos(1-u.side):unitPos(target),end=targetPos.clone().sub(start).normalize().multiplyScalar(.8).sub(targetPos).multiplyScalar(-1).add(targetPos);await motion(v,'embestida',async()=>{await tween(.30,k=>{v.position.lerpVectors(start,end,k);v.position.y+=Math.sin(k*Math.PI)*.6;});impactAt(targetPos,0xffa261,1.1);view.shake=.28;await fxDelay(70);await tween(.22,k=>{v.position.lerpVectors(end,start,k);});});v.position.copy(start);};
   // Estas tres funciones ya existen en motor.js; se reasignan para evitar que
   // su interfaz HTML antigua toque nodos ausentes en esta mesa.
-  fxTrap=async(id,s)=>{floatAt(trapPos(s,1).add(new THREE.Vector3(0,1,0)),'🪤 '+(CARDS[id]?.n||'Trampa'),'note');impactAt(trapPos(s,1),0xff7b73,.9);flash(0xff7b73);await fxDelay(260);};
+  fxTrap=async(id,s)=>{floatAt(trapPos(s,1).add(new THREE.Vector3(0,1,0)),'🪤 '+(CARDS[id]?.n||'Trampa'),'note');impactAt(trapPos(s,1),0xff7b73,.9);flash(0xff7b73);await fxDelay(s===FOE?1180:260);};
   relojArranca=()=>{};globalThis.relojPara=()=>{};globalThis.relojPinta=()=>{};
 
-  function flash(color){const l=new THREE.PointLight(color,0,8,2);l.position.set(0,3,0);scene.add(l);tween(.35,k=>l.intensity=Math.sin(k*Math.PI)*18).then(()=>scene.remove(l));}
+  const flashLight=new THREE.PointLight(0xffffff,0,8,2);flashLight.position.set(0,3,0);flashLight.visible=false;scene.add(flashLight);let flashEpoch=0;
+  function flash(color){const epoch=++flashEpoch;flashLight.color.setHex(color);flashLight.visible=true;tween(.35,k=>flashLight.intensity=Math.sin(k*Math.PI)*18).then(()=>{if(epoch===flashEpoch){flashLight.intensity=0;flashLight.visible=false;}});}
   function tween(sec,fn){return new Promise(resolve=>tweens.push({at:reloj,d:Math.max(.001,sec),fn,resolve}));}
 
   /* ------------------------- Clics y acciones reales ----------------------- */
@@ -546,6 +599,10 @@
   // La copia de lectura no participa en raycast. Aun así, al pulsarla no
   // dejamos que el clic atraviese accidentalmente hacia una carta de mesa.
   function previewContainsClientPoint(e){if(!tablePreview)return false;const r=cardRect(tablePreview);return e.clientX>=r.x&&e.clientX<=r.x+r.width&&e.clientY>=r.y&&e.clientY<=r.y+r.height;}
+  // La carta ampliada de la mano queda lejos de su ranura original. Si el
+  // usuario hace clic o inicia un arrastre sobre esa lectura, conservamos la
+  // misma carta en vez de dejar que el gesto atraviese la mesa de fondo.
+  function handPreviewContainsClientPoint(e){const v=hoverHand&&visuals.get(hoverHand);if(!v||v.userData.kind!=='hand')return false;const r=cardRect(v);return e.clientX>=r.x&&e.clientX<=r.x+r.width&&e.clientY>=r.y&&e.clientY<=r.y+r.height;}
   function updateDropMarks(){const slots=freeSlots(ME);for(const {slot,m} of dragMarks){const active=!!drag&&slots.includes(slot);m.visible=active;m.material.opacity=active?(drag.slot===slot ? .68 : .23+.08*Math.sin(reloj*7+slot)):0;}}
   function nearestDrop(pos){let best=null,dist=1.48;for(const slot of freeSlots(ME)){const p=new THREE.Vector3((slot-2)*2,.72,sideZ(ME)*1.55),d=Math.hypot(pos.x-p.x,pos.z-p.z);if(d<dist){best=slot;dist=d;}}return best;}
   function beginDrag(key){const v=visuals.get(key);if(!v||v.userData.kind!=='hand'||!G||G.active!==ME||G.busy||!canPlay(ME,v.userData.id)){if(v)toast(whyNot(ME,v.userData.id));return false;}const point=tablePoint();if(!point)return false;setHoverPreview(null);table.attach(v);v.userData.dragging=true;drag={key,v,id:v.userData.id,point,slot:null,spell:CARDS[v.userData.id]?.t!=='personaje',started:reloj};const hit=handHits.get(key);if(hit)hit.visible=false;hoverHand=null;messageFor(drag.spell?'Suelta la carta sobre la mesa para lanzarla.':'Suelta la carta sobre una diana libre.');updateDropMarks();return true;}
@@ -553,13 +610,13 @@
     if(canDrop){if(slot!=null)dropHints[ME].push({id:current.id,slot});v.userData.dragging=false;await playFromHand(ME,current.id);return;}
     camera.attach(v);v.userData.dragging=false;const hit=handHits.get(current.key);if(hit)hit.visible=true;messageFor('La carta vuelve a tu mano.');}
   function animateHand(dt){
-    for(const [key,v] of visuals){if(v.userData.kind!=='hand'||v.userData.dragging||v.userData.motion)continue;const base=v.userData.handPose;if(!base)continue;const active=hoverHand===key&&!G?.busy&&G?.active===ME,pos=base.pos.clone(),rot=base.rot.clone();let scale=base.scale;
-      // La mano conserva el hover que ya funcionaba: la carta activa se abre
-      // frente al jugador y las demás se hacen a un lado. Sus dianas siguen
-      // ancladas a la pose base, por lo que no aparecen huecos muertos.
-      if(active){const z=Math.max(4.5,-base.pos.z-.85),hh=Math.tan(camera.fov*Math.PI/360)*z,ww=hh*camera.aspect;scale=Math.min(ESC*1.58,(hh*1.72)/ALTO,(ww*1.72)/ANCHO);pos.y=Math.max(-hh*.82+ALTO*scale*.5,base.pos.y+1.0);pos.z=base.pos.z+.9;pos.x=Math.max(-ww*.89+ANCHO*scale*.5,Math.min(ww*.89-ANCHO*scale*.5,pos.x));rot.set(-.08+(hoverUV.y-.5)*.18,(hoverUV.x-.5)*.24,0);}
-      else if(hoverHand){const other=visuals.get(hoverHand);const dx=base.pos.x-(other?.userData.handPose?.pos.x||0);pos.x+=Math.sign(dx||1)*.26/Math.sqrt(Math.max(1,Math.abs(dx)));}
-      const q=new THREE.Quaternion().setFromEuler(rot),mix=1-Math.exp(-dt*(active?18:8));v.position.lerp(pos,mix);v.quaternion.slerp(q,mix);v.scale.setScalar(THREE.MathUtils.lerp(v.scale.x,scale,mix));const m=v.userData.frente.material,legal=G?.active===ME&&!G?.busy&&canPlay(ME,v.userData.id);
+    for(const [key,v] of visuals){if(v.userData.kind!=='hand'||v.userData.dragging||v.userData.motion)continue;const base=v.userData.handPose;if(!base)continue;const active=hoverHand===key&&!G?.busy&&G?.active===ME,pos=handWorkPos.copy(base.pos),rot=handWorkRot.copy(base.rot);let scale=base.scale;
+      // La ampliación ya no invade el centro de la mesa: se instala abajo a
+      // la izquierda, al lado de la mano. La ranura de hit se queda en la
+      // pose base, así que sigue siendo estable incluso cuando la carta crece.
+      if(active){const z=camera.aspect<.9?6.45:7.4,hh=Math.tan(camera.fov*Math.PI/360)*z,ww=hh*camera.aspect;scale=Math.min(ESC*1.22,(hh*1.0)/ALTO,(ww*.46)/ANCHO);pos.set(-ww+ANCHO*scale*.5+.22,-hh+ALTO*scale*.5+.18,-z);rot.set(-.045+(hoverUV.y-.5)*.09,.035+(hoverUV.x-.5)*.11,.015);}
+      else if(hoverHand){const other=visuals.get(hoverHand);const dx=base.pos.x-(other?.userData.handPose?.pos.x||0);pos.x+=Math.sign(dx||1)*.15/Math.sqrt(Math.max(1,Math.abs(dx)));}
+      const q=handWorkQuat.setFromEuler(rot),mix=1-Math.exp(-dt*(active?18:8));v.position.lerp(pos,mix);v.quaternion.slerp(q,mix);v.scale.setScalar(THREE.MathUtils.lerp(v.scale.x,scale,mix));const m=v.userData.frente.material,legal=G?.active===ME&&!G?.busy&&canPlay(ME,v.userData.id);
       // Una carta no jugable conserva lectura: la disponibilidad se comunica
       // por la acción bloqueada y el borde, no convirtiendo su texto y arte en
       // una mancha oscura frente a la mano luminosa de la mesa de referencia.
@@ -620,9 +677,9 @@
   // Sólo el lienzo recibe gestos de mesa. Sin esta frontera, un botón de la
   // confirmación interna queda capturado por el canvas antes de recibir click.
   const isBoardPointer=e=>e.target===canvas||!!gesture||!!drag;
-  stage.addEventListener('pointerdown',e=>{if(e.button!==0||!isBoardPointer(e))return;if(previewContainsClientPoint(e)){gesture={preview:true,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);return;}setPointer(e);const hand=handSlotUnderPointer(),tableSlot=hand?null:tableSlotUnderPointer();gesture={key:hand?.key||tableSlot?.key||null,hand:!!hand,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);});
+  stage.addEventListener('pointerdown',e=>{if(e.button!==0||!isBoardPointer(e))return;if(previewContainsClientPoint(e)){gesture={preview:true,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);return;}if(handPreviewContainsClientPoint(e)){gesture={key:hoverHand,hand:true,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);return;}setPointer(e);const hand=handSlotUnderPointer(),tableSlot=hand?null:tableSlotUnderPointer();gesture={key:hand?.key||tableSlot?.key||null,hand:!!hand,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);});
   stage.addEventListener('pointerup',async e=>{if(!isBoardPointer(e))return;const g=gesture;gesture=null;if(g?.preview)return;setPointer(e);if(drag){await finishDrag();return;}if(g?.key&&g.moved<=10){const v=visuals.get(g.key);if(v){if(g.hand)await activateCard(v);else await activateBoardCard(v);}return;}const hit=tableSlotUnderPointer(),v=hit?visuals.get(hit.key):hitCard();if(v)await activateBoardCard(v);else if(TGT)toast('Elige una carta resaltada o cancela.');else setHoverPreview(null);});
-  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e)){if(!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}return;}if(!drag&&previewContainsClientPoint(e)){hoverHand=null;setTableHover(null);stage.style.cursor='default';return;}setPointer(e);const h=handSlotUnderPointer(),tableSlot=h?null:tableSlotUnderPointer();if(!drag){hoverHand=h?.key||null;if(h)hoverUV.copy(h.uv);setTableHover(tableSlot?.key||null);stage.style.cursor=h||tableSlot?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.hand&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
+  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e)){if(!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}return;}if(!drag&&previewContainsClientPoint(e)){hoverHand=null;setTableHover(null);stage.style.cursor='default';return;}const onHandPreview=!drag&&handPreviewContainsClientPoint(e);setPointer(e);const h=onHandPreview?null:handSlotUnderPointer(),tableSlot=h||onHandPreview?null:tableSlotUnderPointer();if(!drag){hoverHand=h?.key||(onHandPreview?hoverHand:null);if(h)hoverUV.copy(h.uv);setTableHover(tableSlot?.key||null);stage.style.cursor=h||tableSlot||onHandPreview?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.hand&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
   stage.addEventListener('pointerleave',()=>{if(!gesture&&!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}});
   stage.addEventListener('wheel',e=>{e.preventDefault();view.target=Math.max(.78,Math.min(1.25,view.target+e.deltaY*.0008));},{passive:false});
   prompt.addEventListener('pointerdown',e=>e.stopPropagation());
@@ -644,7 +701,7 @@
   /* --------------------------- Inicio y modos ------------------------------ */
   function resetPresentation(){
     visualEpoch++;for(const v of visuals.values())v.removeFromParent();visuals.clear();pending.clear();wantedKeys.clear();desiredByKey.clear();pendingEntries.clear();spentVisuals[ME].length=0;spentVisuals[FOE].length=0;graveGhosts[ME]=graveGhosts[FOE]=null;fieldSlots[ME].clear();fieldSlots[FOE].clear();handTokens[ME]=[];handTokens[FOE]=[];dropHints[ME].length=0;dropHints[FOE].length=0;hoverHand=null;hoverTable=null;hoverPreview=null;clearTablePreview();gesture=null;drag=null;
-    for(const hit of handHits.values())hit.removeFromParent();handHits.clear();for(const hit of tableHits.values())hit.removeFromParent();tableHits.clear();for(const {m} of dragMarks){m.visible=false;m.material.opacity=0;}for(const impact of impacts.splice(0)){impact.ring.removeFromParent();impact.light.removeFromParent();}diceRoot.visible=false;diceReadout.hidden=true;diceState.visible=false;diceState.estado='oculto';diceState.valor=null;diceState.caraSuperior=null;diceState.caraIndice=null;
+    for(const hit of handHits.values())hit.removeFromParent();handHits.clear();for(const hit of tableHits.values())hit.removeFromParent();tableHits.clear();for(const {m} of dragMarks){m.visible=false;m.material.opacity=0;}for(const impact of impacts.splice(0))releaseImpact(impact);diceRoot.visible=false;diceLight.visible=false;diceReadout.hidden=true;diceState.visible=false;diceState.estado='oculto';diceState.valor=null;diceState.caraSuperior=null;diceState.caraIndice=null;shadowDirty=true;
   }
   async function startGame(nextMode){
     modo=nextMode;ready=false;selected=null;resetPresentation();clearUI();modalHide();messageFor('Barajando los mazos de Talesyn y Gero…');
@@ -663,26 +720,38 @@
   }
 
   /* ------------------------------- Fotogramas ------------------------------ */
-  let last=performance.now(),effectLevel=.10;
+  let last=performance.now(),effectLevel=.10,renderBaseDpr=1,renderScale=1,frameAverage=16.7,lastQualityTune=0;
+  const stageSize={w:1,h:1};
   function setAtmosphere(k){
     effectLevel=k;
     // Perfil de 10 % del demo: el tapete y las cartas siguen legibles, con
     // una única sombra económica y velas sin mapas de sombra propios.
     hemi.intensity=.22+(1-k)*.14;rim.intensity=.88-k*.22;lamp.intensity=500+150*k;scene.fog.density=.007+.021*k;
-    const shadows=k>.06;renderer.shadowMap.enabled=shadows;lamp.castShadow=shadows;lamp.shadow.intensity=shadows?k:0;
+    const shadows=k>.06;renderer.shadowMap.enabled=shadows;lamp.castShadow=shadows;lamp.shadow.intensity=shadows?k:0;shadowDirty=true;
     for(const candle of candles){const on=k>.04;candle.light.visible=on;candle.flame.visible=on;candle.flame.material.opacity=on?k:0;}
   }
   setAtmosphere(.10);
-  function measure(){const b=stage.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,1.25),w=Math.max(1,b.width),h=Math.max(1,b.height);renderer.setPixelRatio(dpr);renderer.setSize(w,h,false);camera.aspect=w/h;camera.fov=w/h<.9?62:38;camera.updateProjectionMatrix();}
+  function applyRenderSize(){renderer.setPixelRatio(Math.max(.78,renderBaseDpr*renderScale));renderer.setSize(stageSize.w,stageSize.h,false);}
+  function measure(){const b=stage.getBoundingClientRect(),w=Math.max(1,b.width),h=Math.max(1,b.height);stageSize.w=w;stageSize.h=h;renderBaseDpr=Math.min(devicePixelRatio||1,1.15);applyRenderSize();camera.aspect=w/h;camera.fov=w/h<.9?62:38;camera.updateProjectionMatrix();shadowDirty=true;}
+  function tuneRenderScale(dt){
+    frameAverage=frameAverage*.90+dt*1000*.10;
+    if(reloj-lastQualityTune<1.4)return;
+    let next=renderScale;
+    if(frameAverage>20.5&&renderScale>.82)next=Math.max(.82,renderScale-.09);
+    else if(frameAverage<15.2&&renderScale<1)next=Math.min(1,renderScale+.05);
+    if(next!==renderScale){renderScale=next;applyRenderSize();}
+    lastQualityTune=reloj;
+  }
   new ResizeObserver(measure).observe(stage);measure();
-  function animate(now){const dt=Math.min(.05,(now-last)/1000);last=now;reloj+=dt;factory.tiempo.value=reloj;flameClock.value=reloj;view.zoom+=(view.target-view.zoom)*Math.min(1,dt*7);view.shake=Math.max(0,view.shake-dt*1.5);const portrait=camera.aspect<.9,d=(portrait?Math.min(40,13.5/camera.aspect):20.3)*view.zoom,alt=portrait?1.2:.9;camera.position.set(Math.sin(reloj*61)*view.shake*.25,Math.sin(alt)*d+Math.cos(reloj*53)*view.shake*.2,Math.cos(alt)*d);camera.lookAt(cameraTarget.x,cameraTarget.y-(portrait?1.2:0),cameraTarget.z+(portrait?.9:.7));
+  function animate(now){const dt=Math.min(.05,(now-last)/1000);last=now;reloj+=dt;tuneRenderScale(dt);factory.tiempo.value=reloj;flameClock.value=reloj;view.zoom+=(view.target-view.zoom)*Math.min(1,dt*7);view.shake=Math.max(0,view.shake-dt*1.5);const portrait=camera.aspect<.9,d=(portrait?Math.min(40,13.5/camera.aspect):20.3)*view.zoom,alt=portrait?1.2:.9;camera.position.set(Math.sin(reloj*61)*view.shake*.25,Math.sin(alt)*d+Math.cos(reloj*53)*view.shake*.2,Math.cos(alt)*d);camera.lookAt(cameraTarget.x,cameraTarget.y-(portrait?1.2:0),cameraTarget.z+(portrait?.9:.7));
     for(let i=tweens.length-1;i>=0;i--){const t=tweens[i],k=Math.min(1,(reloj-t.at)/t.d);t.fn(k);if(k>=1){tweens.splice(i,1);t.resolve();}}
     const quality=effectLevel;matFelt.emissiveIntensity=(.24+.18*quality)+(.06+.17*quality)*Math.sin(reloj*1.6);
-    candles.forEach(c=>{const f=.85+.1*Math.sin(reloj*13+c.x)+.06*Math.sin(reloj*29+c.x*3);c.light.intensity=26*quality*f;c.flame.scale.set(1,f,1);c.flame.lookAt(camera.position.x,c.flame.getWorldPosition(new THREE.Vector3()).y,camera.position.z);});
+    candles.forEach(c=>{const f=.85+.1*Math.sin(reloj*13+c.x)+.06*Math.sin(reloj*29+c.x*3);c.light.intensity=26*quality*f;c.flame.scale.set(1,f,1);candleLookAt.set(camera.position.x,c.g.position.y+c.flame.position.y,camera.position.z);c.flame.lookAt(candleLookAt);});
     animateHand(dt);animateTablePreview(dt);updateDrag(dt);
     for(const [key,v] of visuals){if(v.userData.kind==='field'&&!v.userData.dying&&!v.userData.motion){const u=v.userData.unit;if(u){const raised=(selected===u||TGT&&isTargetable(u))?.15:0;v.position.y+=(v.userData.base.y+raised-v.position.y)*Math.min(1,dt*12);}}}
-    for(let i=impacts.length-1;i>=0;i--){const fx=impacts[i],age=reloj-fx.at,k=Math.min(1,age/.54);fx.ring.scale.setScalar(1+k*4*fx.power);fx.ring.material.opacity=Math.max(0,.86*(1-k));fx.light.intensity=Math.max(0,18*effectLevel*(1-k));if(k>=1){fx.ring.removeFromParent();fx.light.removeFromParent();impacts.splice(i,1);}}
+    for(let i=impacts.length-1;i>=0;i--){const fx=impacts[i],age=reloj-fx.at,k=Math.min(1,age/.54);fx.ring.scale.setScalar(1+k*4*fx.power);fx.ring.material.opacity=Math.max(0,.86*(1-k));fx.light.intensity=Math.max(0,18*effectLevel*(1-k));if(k>=1){impacts.splice(i,1);releaseImpact(fx);}}
     for(let i=floating.length-1;i>=0;i--){const f=floating[i],p=worldToScreen(f.pos);f.el.style.transform=`translate(-50%,-50%) translate(${p.x}px,${p.y}px)`;f.el.hidden=p.hide;if(now>f.until){f.el.remove();floating.splice(i,1);}}
+    if(shadowDirty||diceState.visible){renderer.shadowMap.needsUpdate=true;shadowDirty=false;}
     renderer.render(scene,camera);requestAnimationFrame(animate);
   }
 
@@ -698,12 +767,13 @@
   }
   function inspect(){
     const field=s=>P(s).field.map(u=>{const v=visuals.get('unit:'+u.uid),p=v?v.getWorldPosition(new THREE.Vector3()):cardPos(s,u),stat=m=>m?{escala:Number(m.scale.x.toFixed(4)),etiqueta:m.userData.fieldLabel||''}:null;return {uid:u.uid,id:u.card.id,slot:fieldSlot(s,u),centro:plain(p),ataque:stat(v?.userData?.a),vida:stat(v?.userData?.h)};});
-    const hand=[...handHits.entries()].map(([key,slot])=>{const v=visuals.get(key);return {key,indice:slot.userData.index,id:slot.userData.id,rect:slotRect(slot),hover:hoverHand===key,escala:Number((v?.scale.x||0).toFixed(4)),anchoMundo:Number((slot.geometry.parameters.width*slot.scale.x).toFixed(4)),visible:slot.visible};}).sort((a,b)=>a.indice-b.indice);
+    const hand=[...handHits.entries()].map(([key,slot])=>{const v=visuals.get(key);return {key,indice:slot.userData.index,id:slot.userData.id,rect:slotRect(slot),centro:v?plain(v.position):null,hover:hoverHand===key,escala:Number((v?.scale.x||0).toFixed(4)),anchoMundo:Number((slot.geometry.parameters.width*slot.scale.x).toFixed(4)),visible:slot.visible};}).sort((a,b)=>a.indice-b.indice);
+    const focus=hoverHand&&visuals.get(hoverHand);const handFocus=focus?{key:hoverHand,rect:cardRect(focus),escala:Number(focus.scale.x.toFixed(4))}:null;
     const tableSlots=[...tableHits.entries()].map(([key,slot])=>({key,id:slot.userData.id,kind:slot.userData.kind,side:slot.userData.side,rect:slotRect(slot),hover:hoverTable===key,visible:slot.visible,centro:plain(slot.getWorldPosition(new THREE.Vector3()))}));
     const enemyHand=[...visuals.values()].filter(v=>v.userData.kind==='enemyHand').sort((a,b)=>(a.userData.handIndex||0)-(b.userData.handIndex||0)).map(v=>({centro:plain(v.getWorldPosition(new THREE.Vector3()))}));
     const leaders=[ME,FOE].map(side=>{const v=leaderVisual(side),badge=v?.userData?.soulBadge;return {side,alma:P(side).alma,badge:!!badge,badgeEscala:Number((badge?.scale.x||0).toFixed(4)),badgePos:badge?plain(badge.position):null};});
     const decks=[ME,FOE].map(side=>{const v=visuals.get('deck:'+side);return {side,visible:!!v,rotacion:v?plain(v.rotation):null};});
-    return {mano:{ranuras:hand,objetivo:hoverHand},mesa:{ranuras:tableSlots,preview:{key:tablePreviewKey,visible:!!tablePreview,escala:Number((tablePreview?.scale.x||0).toFixed(4)),localX:Number((tablePreview?.position.x||0).toFixed(4)),rect:tablePreview?cardRect(tablePreview):null},seleccionado:selected?.uid||null},campo:[field(ME),field(FOE)],enemigo:{mano:enemyHand,campo:field(FOE)},lideres:leaders,mazos:decks,dado:{...diceState},animaciones:{activas:[...activeAnimations.values()].map(x=>({...x})),historial:animationHistory.map(x=>({...x}))},cementerio:[P(ME).grave.map(id=>({id})),P(FOE).grave.map(id=>({id}))]};
+    return {mano:{ranuras:hand,objetivo:hoverHand,foco:handFocus},mesa:{ranuras:tableSlots,preview:{key:tablePreviewKey,visible:!!tablePreview,escala:Number((tablePreview?.scale.x||0).toFixed(4)),localX:Number((tablePreview?.position.x||0).toFixed(4)),rect:tablePreview?cardRect(tablePreview):null},seleccionado:selected?.uid||null},campo:[field(ME),field(FOE)],enemigo:{mano:enemyHand,campo:field(FOE)},lideres:leaders,mazos:decks,dado:{...diceState,centro:plain(diceRoot.position),bandeja:plain(DICE_ANCHOR)},rendimiento:{dpr:Number(renderer.getPixelRatio().toFixed(3)),escala:Number(renderScale.toFixed(3)),frameMs:Number(frameAverage.toFixed(2)),sombrasAutomaticas:renderer.shadowMap.autoUpdate,impactosActivos:impacts.length},animaciones:{activas:[...activeAnimations.values()].map(x=>({...x})),historial:animationHistory.map(x=>({...x}))},cementerio:[P(ME).grave.map(id=>({id})),P(FOE).grave.map(id=>({id}))]};
   }
   async function testScenario(name){
     if(!G)throw Error('La partida todavía no está lista.');G.fast=false;G.over=false;G.busy=false;G.resolving=false;G.active=ME;G.phase='principal';P(ME).pd=10;P(ME).pdMax=10;P(FOE).pd=10;P(FOE).pdMax=10;P(ME).leaderUsed=false;P(FOE).leaderUsed=false;selected=null;SEL=null;TGT=null;

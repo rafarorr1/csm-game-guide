@@ -2987,7 +2987,12 @@ async function aiTurn(){
   }
   G.busy=true;
   // 200 ms era ilegible: sus jugadas pasaban antes de que te dieras cuenta.
-  const pause = ()=>nap(G.tutorial?700:820);
+  // Una interfaz alternativa puede usar la misma pausa para anunciar la
+  // orden antes de ejecutarla. Sin ese hook se conserva exactamente la mesa
+  // HTML original y sus 820 ms de lectura.
+  const pause = cue=>typeof fxRivalCue==='function'
+    ? fxRivalCue(cue,G.tutorial?700:820)
+    : nap(G.tutorial?700:820);
   try{
     let guard=0, played=0; const skip=new Set();
     const maxPlays = 12;
@@ -2996,20 +3001,20 @@ async function aiTurn(){
         .map(id=>({id,v:aiScore(id,s)})).filter(o=>o.v>0)
         .sort((a,b)=>b.v-a.v);
       if(!opts.length) break;
-      await pause();
+      await pause({kind:'card',id:opts[0].id});
       if(await playFromHand(s,opts[0].id)) played++; else skip.add(opts[0].id);
     }
     if(!viva() || G.over) return;
     // habilidades activadas
     for(const u of [...P(s).field]){
       if(u.card.act && !u.actUsed && P(s).pd>=u.card.act.cost && (!u.card.act.req||u.card.act.req(G,s))){
-        await pause(); if(!viva()) return; await useAct(u);
+        await pause({kind:'act',u}); if(!viva()) return; await useAct(u);
       }
     }
     // habilidad de líder
     const L=P(s).L;
     if(!P(s).leaderUsed && P(s).pd>=L.habCost && (!L.habReq||L.habReq(G,s))){
-      await pause(); if(!viva()) return; await useLeader(s);
+      await pause({kind:'leader',leader:L}); if(!viva()) return; await useLeader(s);
     }
     if(!viva() || G.over) return;
     // combate
@@ -3021,7 +3026,7 @@ async function aiTurn(){
       const u=ready[0];
       const t=aiPickAttack(u);
       if(!t){ u.attacked=true; recalc(); continue; }
-      await pause();
+      await pause({kind:'attack',u,target:t});
       if(!viva()) return;
       // Si el ataque no llega a hacerse, esta unidad se da por gastada: sin
       // esto el bucle la reintentaba con el mismo resultado hasta agotar el
