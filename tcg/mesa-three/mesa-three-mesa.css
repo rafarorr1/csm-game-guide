@@ -27,7 +27,7 @@ body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
 .mtEscenario{position:relative;height:min(84vh,860px);min-height:460px;border-radius:16px;overflow:hidden;border:1px solid #e7bb5530;background:#07060a;touch-action:none;cursor:grab}
 .mtEscenario:active{cursor:grabbing}
 .mtEscenario canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.mtInfo{position:absolute;left:10px;top:10px;padding:5px 10px;border-radius:8px;background:#0d0914cc;color:#cdbfdf;font:12px/1.4 system-ui,sans-serif;pointer-events:none}
+.mtInfo{position:absolute;right:10px;top:10px;padding:5px 10px;border-radius:8px;background:#0d0914cc;color:#cdbfdf;font:600 11px/1.2 system-ui,sans-serif;pointer-events:none;letter-spacing:.01em}
 .mtEstado{color:#b9aecb;min-height:1.5em}
 html[data-captura] body{padding:0}
 html[data-captura] .mtShell>*:not(.mtEscenario){display:none}

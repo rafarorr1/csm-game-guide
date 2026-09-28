@@ -3,10 +3,10 @@
    three-carta.js y las texturas de siempre (carta-pintor.js, sin cifras: el
    ataque y la vida van encima, vivos).
      · La mesa: madera tallada y un tapete de cuero repujado en oro con sus zonas
-       (cinco huecos por campo, trampas, protagonista, mazo y cementerio) y runas
-       que laten; velas con llama y sombras, polvo en la luz.
-     · El Alma, un cristal que refracta (transmisión) junto a cada protagonista;
-       los PD, gemas que se encienden; las Llaves, fichas de oro.
+       (cinco huecos por campo, trampas, protagonista, mazo, cementerio y recursos)
+       y runas que laten; una sombra de lámpara, velas y polvo en la luz.
+     · El Alma, un cristal que refracta (transmisión), los PD y las Llaves viven
+       en una franja de recursos separada de las cartas.
      · Posproceso HDR con MSAA: oclusión ambiental (GTAO), profundidad de campo,
        resplandor y AgX.
    Jugar: pasa por encima de tu mano y pulsa una carta para jugarla (vuela a su
@@ -61,8 +61,19 @@
       for(const k of [g,ga]){k.beginPath();k.moveTo(0,y);for(let x=0;x<=1024;x+=32)k.lineTo(x,y+Math.sin(x*.006+i)*o+Math.sin(x*.02+i*3)*3);k.stroke();}}
     return {map:tex(c,true,[2,1.4]),normalMap:tex(normales(a,2),false,[2,1.4])};}
   const MAT=[18,12.6];// el tapete, en unidades de mundo
+  // La mesa tiene tres franjas inequívocas: juego (centro), apoyos (lados) y recursos (bordes).
+  // Mantener estas coordenadas juntas evita que una carta nueva invada un contador al ajustar la mesa.
+  const LAYOUT=Object.freeze({
+    lider:Object.freeze({x:-6.9,z:2.5}),
+    mazo:Object.freeze({x:6.9,z:4.15}),
+    cementerio:Object.freeze({x:6.9,z:1.35}),
+    recursos:Object.freeze({alma:Object.freeze({x:-4.2,z:4.95}),pd:Object.freeze({x:-7.12,z:5.28}),llaves:Object.freeze({x:-2.45,z:5.48})}),
+    manoRival:Object.freeze({z:-5.34,escala:.76,altura:.028})
+  });
+  const ladoSign=lado=>lado==='yo'?1:-1;
   const zonas=[];// dónde está cada zona (para pintarla y para poner las cartas)
-  const hueco=(i,lado)=>[(i-2)*1.9,lado*1.55];
+  const hueco=(i,lado)=>[(i-2)*2,lado*1.55];
+  const trampaX=i=>(i-1)*2.15;
   function tapete(logo){
     const W=2048,H=Math.round(W*MAT[1]/MAT[0]),[c,g]=lienzoDe(W,H),[a,ga]=lienzoDe(W,H),[e,ge]=lienzoDe(W,H),k=W/MAT[0];
     const P=(x,z)=>[W/2+x*k,H/2+z*k];
@@ -76,10 +87,17 @@
     oro(g,6);rect(0,0,MAT[0]-.5,MAT[1]-.5,.5);oro(g,2.5,.8);rect(0,0,MAT[0]-.8,MAT[1]-.8,.4);
     const marco=(x,z,w,h,runa)=>{oro(g,3,.85);rect(x,z,w,h,.12);zonas.push({x,z,w,h});
       if(runa){const [cx,cy]=P(x,z);ge.strokeStyle='#ffb04a';ge.lineWidth=3;ge.beginPath();ge.arc(cx,cy,Math.min(w,h)*k*.28,0,TAU);ge.stroke();for(let i=0;i<6;i++){const an=i*TAU/6;ge.beginPath();ge.moveTo(cx+Math.cos(an)*Math.min(w,h)*k*.18,cy+Math.sin(an)*Math.min(w,h)*k*.18);ge.lineTo(cx+Math.cos(an)*Math.min(w,h)*k*.34,cy+Math.sin(an)*Math.min(w,h)*k*.34);ge.stroke();}}};
-    const cw=ANCHO*S+.16,ch=ALTO*S+.16;
+    const cw=ANCHO*S+.16,ch=ALTO*S+.16,tw=ALTO*S*.8+.16,th=ANCHO*S*.8+.16;
     for(const lado of [1,-1]){for(let i=0;i<5;i++){const [x,z]=hueco(i,lado);marco(x,z,cw,ch,true);}
-      for(let i=0;i<3;i++)marco((i-1)*1.9,lado*3.95,cw*.8,ch*.62,false);
-      marco(-6.9,lado*2.5,cw*1.15,ch*1.15,true);marco(6.9,lado*2.9,cw,ch,false);marco(6.9,lado*.75,cw,ch,false);}
+      // Las trampas giran 90°: el marco conserva el mismo pie que su carta, con aire entre vecinas.
+      for(let i=0;i<3;i++)marco(trampaX(i),lado*3.95,tw,th,false);
+      marco(LAYOUT.lider.x,lado*LAYOUT.lider.z,cw*1.15,ch*1.15,true);
+      // Mazo y cementerio dejan una separación visible: ni sus cartas ni sus marcos se pisan.
+      marco(LAYOUT.mazo.x,lado*LAYOUT.mazo.z,cw,ch,false);marco(LAYOUT.cementerio.x,lado*LAYOUT.cementerio.z,cw,ch,false);
+      // Los recursos viven en una banda propia, lejos de protagonistas, campo y trampas.
+      marco(LAYOUT.recursos.pd.x+(.52*3)/2,lado*(LAYOUT.recursos.pd.z-.43/2),2.14,1.2,false);
+      marco(LAYOUT.recursos.alma.x,lado*LAYOUT.recursos.alma.z,1.6,1.42,true);
+      marco(LAYOUT.recursos.llaves.x,lado*LAYOUT.recursos.llaves.z,1.08,.72,false);}
     // La línea central con el emblema y runas que laten (su brillo va en el mapa emisivo).
     ge.strokeStyle='#ffb04a';ge.lineWidth=4;ge.beginPath();ge.moveTo(P(-7.6,0)[0],H/2);ge.lineTo(P(7.6,0)[0],H/2);ge.stroke();
     ge.font=`${Math.round(k*.3)}px Georgia`;ge.fillStyle='#ffb04a';ge.textAlign='center';const runas='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';
@@ -107,7 +125,8 @@
     float forma=1.-smoothstep(.0,.2,length(p*vec2(2.8,1.)-vec2(0.,.2))-.12*(1.-p.y*1.6));float n=forma*smoothstep(.95,.1,vUv.y);
     vec3 c=mix(vec3(1.,.35,.05),vec3(1.,.95,.7),n*n);gl_FragColor=vec4(c*n*2.2,1.);}`;
   const tiempo={value:0};const velas=[];
-  for(const [x,z] of [[-10.4,-6.8],[10.4,-6.8]]){
+  // Un poco dentro de la mesa para que su silueta no quede cortada en los extremos del encuadre.
+  for(const [x,z] of [[-9.4,-5.9],[9.4,-5.9]]){
     const g=new THREE.Group();g.position.set(x,0,z);mesa.add(g);
     const laton=new THREE.MeshPhysicalMaterial({color:0xd9a94f,metalness:1,roughness:.28});
     const plato=new THREE.Mesh(new THREE.CylinderGeometry(.9,1,.12,48),laton);plato.position.y=.06;plato.castShadow=plato.receiveShadow=true;g.add(plato);
@@ -164,9 +183,12 @@
     const pie=new THREE.Mesh(new THREE.CylinderGeometry(.55,.7,.18,48),new THREE.MeshPhysicalMaterial({color:0xd9a94f,metalness:1,roughness:.3}));pie.position.y=.09;pie.castShadow=pie.receiveShadow=true;g.add(pie);
     const gema=new THREE.Mesh(new THREE.OctahedronGeometry(.62,0),vidrio(0xffd0d8,0xd01840));gema.scale.set(.8,1.25,.8);gema.position.y=1.05;gema.castShadow=true;g.add(gema);
     const brillo=new THREE.PointLight(0xff3050,5,3.5,2);brillo.position.y=1.05;g.add(brillo);const nucleo=new THREE.Mesh(new THREE.SphereGeometry(.16,24,16),new THREE.MeshBasicMaterial({color:new THREE.Color(0xff5070).multiplyScalar(3),toneMapped:false}));nucleo.position.y=1.05;g.add(nucleo);
-    const et=etiqueta('mtAlma',new THREE.Vector3(x,2.1,z));
+    // Más cerca de la gema: las dos etiquetas permanecen dentro del encuadre, incluso en retrato.
+    const et=etiqueta('mtAlma',new THREE.Vector3(x,1.82,z));
     g.userData={gema,brillo,valor,pintar(v){g.userData.valor=v;et.el.innerHTML='<b>'+v+'</b><small>Alma</small>';}};g.userData.pintar(valor);return g;}
-  function gemasPD(x0,z,max){const g=new THREE.Group();mesa.add(g);const lista=[];for(let i=0;i<max;i++){const m=new THREE.Mesh(new THREE.OctahedronGeometry(.19,0),vidrio(0xe8d8ff,0x7a3fe0));m.position.set(x0+i*.5,.25,z);m.castShadow=true;g.add(m);lista.push(m);}
+  // Ocho PD en dos filas cortas: se leen como un recurso, no como una sexta carta horizontal.
+  function posicionesPD(lado,max){const s=ladoSign(lado);return Array.from({length:max},(_,i)=>{const fila=Math.floor(i/4),col=i%4;return new THREE.Vector3(LAYOUT.recursos.pd.x+col*.52,.25,s*(LAYOUT.recursos.pd.z-fila*.43));});}
+  function gemasPD(lado,max){const g=new THREE.Group();mesa.add(g);const lista=[];for(const p of posicionesPD(lado,max)){const m=new THREE.Mesh(new THREE.OctahedronGeometry(.19,0),vidrio(0xe8d8ff,0x7a3fe0));m.position.copy(p);m.castShadow=true;g.add(m);lista.push(m);}
     g.userData={lista,poner(pd){lista.forEach((m,i)=>{const on=i<pd;m.material.emissiveIntensity=on?1.4:.02;m.material.transmission=on?.4:1;m.userData.on=on;});}};return g;}
   function llaves(x,z,n){const g=new THREE.Group();g.position.set(x,.05,z);mesa.add(g);const oro=new THREE.MeshPhysicalMaterial({color:0xffcf73,metalness:1,roughness:.22,clearcoat:.4});
     for(let i=0;i<n;i++){const k=new THREE.Group();const aro=new THREE.Mesh(new THREE.TorusGeometry(.2,.06,16,40),oro);aro.rotation.x=Math.PI/2;const cana=new THREE.Mesh(new THREE.BoxGeometry(.08,.06,.6),oro);cana.position.z=.45;const diente=new THREE.Mesh(new THREE.BoxGeometry(.2,.06,.08),oro);diente.position.set(.1,0,.66);
@@ -232,23 +254,33 @@
       u.ranura.position.copy(obj.pos);u.ranura.rotation.copy(obj.rot);u.ranura.scale.setScalar(S);u.ranura.visible=true;
       if(!anim){u.g.position.copy(obj.pos);u.g.rotation.copy(obj.rot);}});
     for(const u of J.yo.mano)if(u.arrastrando&&u.ranura)u.ranura.visible=false;}
-  function colocarManoRival(){const n=J.rival.manoG.length;J.rival.manoG.forEach((g,i)=>{const k=i-(n-1)/2;g.position.set(k*.95,.7,-6.75);g.rotation.set(-1.1,Math.PI,k*.07);});}
+  // La mano rival se apoya en su borde de mesa: cada dorso tiene su propia profundidad y el
+  // paso supera su ancho. Así ni se corta fuera del tapete ni aparecen destellos de z-fighting.
+  const manoRivalMesa=new THREE.Group();mesa.add(manoRivalMesa);
+  function colocarManoRival(){if(!J.rival)return;const n=J.rival.manoG.length,retrato=camara.aspect<.9,escala=LAYOUT.manoRival.escala*(retrato?.72:1),paso=ANCHO*escala+.1;
+    J.rival.manoG.forEach((g,i)=>{const k=i-(n-1)/2;g.scale.setScalar(escala);g.position.set(1+k*paso,LAYOUT.manoRival.altura+i*.025,LAYOUT.manoRival.z+i*.04);g.rotation.set(-1.1,Math.PI,k*.035);g.renderOrder=20+i;
+      g.traverse(o=>{o.renderOrder=20+i;});});}
+  function dorsoRival(){const g=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));manoRivalMesa.add(g);return g;}
+  // Mantiene el flujo visual listo para el motor real: al robar entra un dorso y al jugar sale uno
+  // distinto. La mano nunca comparte plano ni necesita ocultar cartas por encima de otras.
+  function tomarDorsoRival(){const g=J.rival.manoG.shift();if(!g)return null;mesa.updateMatrixWorld(true);g.updateMatrixWorld(true);
+    const p=g.getWorldPosition(new THREE.Vector3()),q=g.getWorldQuaternion(new THREE.Quaternion());g.removeFromParent();colocarManoRival();return {p,q};}
   async function preparar(){
     await CAOZ_CARTA_PINTOR.fuentes();estado('Pintando las cartas…');
     const logo=await imagen('./art/logo.webp'),d=CAOZ_CARTA_PINTOR.dorso(logo);dorsoPintado.mat=F.materialDorso(d);
     Object.assign(matTapete,tapete(logo));matTapete.needsUpdate=true;Object.assign(matMadera,madera());matMadera.needsUpdate=true;
-    for(const lado of ['yo','rival']){const P=PARTIDA[lado],s=lado==='yo'?1:-1,j={campo:[],mano:[],cementerio:[...P.cementerio],alma:P.alma,pd:P.pd??P.pdMax,pdMax:P.pdMax,roba:P.roba?[...P.roba]:[]};J[lado]=j;
-      j.lider=await nuevaCarta(...P.lider);j.lider.g.scale.setScalar(S*1.12);j.lider.g.position.set(-6.9,.05,s*2.5);j.lider.g.rotation.copy(tumbada);mesa.add(j.lider.g);
+    for(const lado of ['yo','rival']){const P=PARTIDA[lado],s=ladoSign(lado),j={campo:[],mano:[],cementerio:[...P.cementerio],alma:P.alma,pd:P.pd??P.pdMax,pdMax:P.pdMax,roba:P.roba?[...P.roba]:[]};J[lado]=j;
+      j.lider=await nuevaCarta(...P.lider);j.lider.g.scale.setScalar(S*1.12);j.lider.g.position.set(LAYOUT.lider.x,.05,s*LAYOUT.lider.z);j.lider.g.rotation.copy(tumbada);mesa.add(j.lider.g);
       for(const [i,[id,ed]] of P.campo.entries()){const u=await nuevaCarta(id,ed);u.hueco=i;ponerTumbada(u,campoPos(lado,i));u.lado=lado;mesa.add(u.g);j.campo.push(u);}
-      j.trampas=[];for(let i=0;i<P.trampas;i++){const t=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));t.scale.setScalar(S*.8);t.rotation.set(-Math.PI/2+Math.PI,0,Math.PI/2+(rnd()-.5)*.05);t.position.set((i-1)*1.9,.02,s*3.95);mesa.add(t);j.trampas.push(t);}
-      j.mazo=pila(P.mazo,6.9,s*2.9,true);j.cem=pila(0,6.9,s*.75,false);
-      if(j.cementerio.length){const top=await nuevaCarta(j.cementerio.at(-1),'normal');ponerTumbada(top,new THREE.Vector3(6.9,.02+j.cementerio.length*.012,s*.75));top.g.rotation.z=(rnd()-.5)*.2;mesa.add(top.g);j.cemTop=top;}
-      j.cristal=cristalAlma(-4.7,s*2.5,j.alma);
+      j.trampas=[];for(let i=0;i<P.trampas;i++){const t=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));t.scale.setScalar(S*.8);t.rotation.set(-Math.PI/2+Math.PI,0,Math.PI/2+(rnd()-.5)*.05);t.position.set(trampaX(i),.02,s*3.95);mesa.add(t);j.trampas.push(t);}
+      j.mazo=pila(P.mazo,LAYOUT.mazo.x,s*LAYOUT.mazo.z,true);j.cem=pila(0,LAYOUT.cementerio.x,s*LAYOUT.cementerio.z,false);
+      if(j.cementerio.length){const top=await nuevaCarta(j.cementerio.at(-1),'normal');ponerTumbada(top,new THREE.Vector3(LAYOUT.cementerio.x,.02+j.cementerio.length*.012,s*LAYOUT.cementerio.z));top.g.rotation.z=(rnd()-.5)*.2;mesa.add(top.g);j.cemTop=top;}
+      j.cristal=cristalAlma(LAYOUT.recursos.alma.x,s*LAYOUT.recursos.alma.z,j.alma);
     }
-    J.yo.pdG=gemasPD(-7.6,5.35,PARTIDA.yo.pdMax);J.yo.pdG.userData.poner(J.yo.pd);J.rival.pdG=gemasPD(-7.6,-5.35,PARTIDA.rival.pdMax);J.rival.pdG.userData.poner(J.rival.pd);
-    llaves(-5.2,4.45,PARTIDA.yo.llaves);
+    J.yo.pdG=gemasPD('yo',PARTIDA.yo.pdMax);J.yo.pdG.userData.poner(J.yo.pd);J.rival.pdG=gemasPD('rival',PARTIDA.rival.pdMax);J.rival.pdG.userData.poner(J.rival.pd);
+    J.yo.llavesG=llaves(LAYOUT.recursos.llaves.x,LAYOUT.recursos.llaves.z,PARTIDA.yo.llaves);
     for(const [id,ed] of PARTIDA.yo.mano){const u=await nuevaCarta(id,ed);u.lado='yo';enMano(u,true);manoCam.add(u.g);J.yo.mano.push(u);}
-    J.rival.manoG=[];for(let i=0;i<PARTIDA.rival.mano;i++){const g=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));g.scale.setScalar(S*.9);escena.add(g);J.rival.manoG.push(g);}
+    J.rival.manoG=[];for(let i=0;i<PARTIDA.rival.mano;i++)J.rival.manoG.push(dorsoRival());
     colocarMano(false);colocarManoRival();
     medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
     estado('Tu turno. Pulsa una carta de tu mano para jugarla, o una de tus cartas y después una enemiga para atacar.');
@@ -295,7 +327,7 @@
     if(arder){estallido(u.g.getWorldPosition(new THREE.Vector3()),0xff6a2a,.7);await animar(1,k=>{m.userData.u.uDisuelve.value=k;});}
     u.g.parent?.remove(u.g);m.userData.u.uDisuelve.value=0;
     j.cementerio.push(u.id);j.cem.userData.poner(j.cementerio.length-1);
-    if(j.cemTop)j.cemTop.g.parent?.remove(j.cemTop.g);j.cemTop=u;ponerTumbada(u,new THREE.Vector3(6.9,.02+j.cementerio.length*.012,s*.75));u.g.scale.setScalar(S);mesa.add(u.g);
+    if(j.cemTop)j.cemTop.g.parent?.remove(j.cemTop.g);j.cemTop=u;ponerTumbada(u,new THREE.Vector3(LAYOUT.cementerio.x,.02+j.cementerio.length*.012,s*LAYOUT.cementerio.z));u.g.scale.setScalar(S);mesa.add(u.g);
     for(const c of Object.values(u.cifras))c.visible=false;
   }
   // Atacar: la carta se levanta, embiste, golpea (chispas, números, temblor) y vuelve.
@@ -321,7 +353,9 @@
     if(ocupado)return false;const r=J.rival;if(!r.roba.length){estado('El rival ya no tiene más jugadas preparadas.');return false;}
     estado('Turno del rival…');ocupado=true;
     const [id,ed]=r.roba.shift(),u=await nuevaCarta(id,ed);u.lado='rival';r.mazo.userData.poner(r.mazo.userData.n-1);
-    u.g.position.set(6.9,.5,-2.9);u.g.rotation.set(-Math.PI/2+Math.PI,0,0);escena.add(u.g);
+    r.manoG.push(dorsoRival());colocarManoRival();await espera(.16);
+    const desde=tomarDorsoRival()||{p:new THREE.Vector3(LAYOUT.mazo.x,.5,-LAYOUT.mazo.z),q:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+Math.PI,0,0))};
+    u.g.position.copy(desde.p);u.g.quaternion.copy(desde.q);escena.add(u.g);
     await volar(u.g,new THREE.Vector3(0,2.2,-2.6),new THREE.Euler(-.25,0,0),.7,1.2);await espera(.35);
     if(u.tipo==='personaje'&&libres('rival').length){u.hueco=libres('rival')[0];const pos=campoPos('rival',u.hueco);r.campo.push(u);escena.remove(u.g);mesa.add(u.g);await volar(u.g,pos,tumbada,.4,.6);ponerTumbada(u,pos);estallido(pos,0xd070ff,1);temblar(.15);}
     else{estallido(u.g.position.clone(),0xd070ff,1.2);await aCementerio(u,'rival');}
@@ -419,14 +453,19 @@
 
   /* ---- Cada fotograma ---------------------------------------------------------- */
   function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,1.25),W=Math.max(1,b.width),H=Math.max(1,b.height);
-    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?46:38;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900*escalaPolvo;if(J.yo)colocarMano(false);}
+    // En retrato abrimos el ángulo: los recursos de ambos lados siguen dentro del lienzo en vez de
+    // quedar bajo la mano o cortados en el borde lateral.
+    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?62:38;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900*escalaPolvo;if(J.yo)colocarMano(false);if(J.rival)colocarManoRival();}
   function paso(dt){
     reloj+=dt;tiempo.value=reloj;F.tiempo.value=reloj;
     for(let i=tareas.length-1;i>=0;i--){const t=tareas[i],k=Math.min(1,(reloj-t.t0)/t.dur);t.fn(k);if(k>=1){tareas.splice(i,1);t.ok();}}
     // Cámara: la silla del jugador; se puede mirar alrededor un poco y acercar.
     for(const k of ['yaw','pitch','dist'])vista[k]+=(vista['obj'+k[0].toUpperCase()+k.slice(1)]-vista[k])*Math.min(1,dt*6);
     const retrato=camara.aspect<.9,d=(retrato?Math.min(40,13.5/camara.aspect):17.6)*vista.dist,alt=(retrato?1.2:.9)+vista.pitch;vista.temblor=Math.max(0,vista.temblor-dt*1.2);const tr=vista.temblor;
-    camara.position.set(Math.sin(vista.yaw)*d*Math.cos(alt)+Math.sin(reloj*61)*tr*.25,Math.sin(alt)*d+Math.sin(reloj*.4)*.08+Math.cos(reloj*53)*tr*.2,Math.cos(vista.yaw)*d*Math.cos(alt));camara.lookAt(mira.x,mira.y,mira.z+(retrato?.9:.7));
+    camara.position.set(Math.sin(vista.yaw)*d*Math.cos(alt)+Math.sin(reloj*61)*tr*.25,Math.sin(alt)*d+Math.sin(reloj*.4)*.08+Math.cos(reloj*53)*tr*.2,Math.cos(vista.yaw)*d*Math.cos(alt));
+    // En móvil se apunta un poco bajo el tapete: ocupa el lienzo y no deja un bloque negro vacío
+    // sobre la mano, mientras el abanico local de la cámara conserva su sitio de lectura.
+    camara.lookAt(mira.x,mira.y-(retrato?1.2:0),mira.z+(retrato?.9:.7));
     // El enfoque: la mesa; si miras una carta de la mano, el foco pasa a ella (y la mesa se desenfoca detrás).
     {const u=listo&&(viendo||mano.activa),f=u?camara.position.distanceTo(u.g.getWorldPosition(new THREE.Vector3())):camara.position.distanceTo(new THREE.Vector3(0,0,1));
       enfoque.uniforms.focus.value+=(f-enfoque.uniforms.focus.value)*Math.min(1,dt*(u?14:5));}
@@ -494,7 +533,9 @@
   let antes=performance.now(),fps={n:0,t:performance.now(),v:0};
   function cuadro(ahora){const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;paso(reducido?Math.min(dt,.05):dt);dibujar();
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;const i=renderer.info;
-      $('info').textContent=`${fps.v} fps · ${i.render.calls} llamadas de dibujo · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${i.memory.textures} texturas · WebGL 2 · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${(simple||sinPosproceso)?'render directo · ':''}${gpu} · three ${THREE.REVISION}`;}
+      const resumen=`${fps.v} fps · ${i.render.calls} draw · ${(i.render.triangles/1000).toFixed(0)}k tri · ${renderer.getPixelRatio().toFixed(2)}×`;
+      const detalle=`${resumen} · ${i.memory.textures} texturas · WebGL 2 · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${(simple||sinPosproceso)?'render directo · ':''}${gpu} · three ${THREE.REVISION}`;
+      $('info').textContent=resumen;$('info').title=detalle;}
     requestAnimationFrame(cuadro);}
   // Revisión: avanzar(s) mueve el reloj a pasos de 1/30 s y dibuja; las acciones devuelven promesas que se cumplen al avanzar.
   window.CAOZ_MESA_THREE_REVISION=Object.freeze({
@@ -518,7 +559,13 @@
       iluminacionMano:J.yo?.mano.map(u=>{const m=u.g.userData.frente.material;return {id:u.id,entorno:m.envMapIntensity,laca:m.clearcoat,emision:m.emissiveIntensity};}),
       pases:(simple||sinPosproceso)?['render']:[['render',pasoRender],['oclusion',oclusion],['enfoque',enfoque],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n)}),
     pantalla(x,y,z){const v=new THREE.Vector3(x,y,z).project(camara),b=esc.getBoundingClientRect();return {x:(v.x*.5+.5)*b.width,y:(.5-v.y*.5)*b.height,ancho:b.width,alto:b.height};},
-    posiciones:()=>({mano:J.yo.mano.map(u=>u.g.getWorldPosition(new THREE.Vector3()).toArray()),campo:J.yo.campo.map(u=>u.g.position.toArray()),rival:J.rival.campo.map(u=>u.g.position.toArray()),liderYo:J.yo.lider.g.position.toArray(),liderRival:J.rival.lider.g.position.toArray(),mazo:J.yo.mazo.position.toArray()}),
+    posiciones:()=>{const p=g=>g.getWorldPosition(new THREE.Vector3()).toArray();return {
+      mano:J.yo.mano.map(u=>p(u.g)),campo:J.yo.campo.map(u=>p(u.g)),rival:J.rival.campo.map(u=>p(u.g)),
+      liderYo:p(J.yo.lider.g),liderRival:p(J.rival.lider.g),mazo:p(J.yo.mazo),cementerio:p(J.yo.cem),
+      cristalYo:p(J.yo.cristal),cristalRival:p(J.rival.cristal),pdYo:J.yo.pdG.userData.lista.map(p),pdRival:J.rival.pdG.userData.lista.map(p),
+      llavesYo:J.yo.llavesG.children.map(p),trampasYo:J.yo.trampas.map(p),trampasRival:J.rival.trampas.map(p),manoRival:J.rival.manoG.map(p),
+      zonas:zonas.map(({x,z,w,h})=>({x,z,w,h}))
+    };},
   });
   preparar().catch(e=>aviso('No se pudo preparar la mesa: '+e.message));
 })();
