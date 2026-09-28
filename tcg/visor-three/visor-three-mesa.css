@@ -1,0 +1,26 @@
+/* Visor de prueba en three.js. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
+.vtShell{width:min(1240px,100%);margin:auto;display:flex;flex-direction:column;gap:12px}
+.vtEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.vtCabecera h1{color:#f0d796;font:700 clamp(24px,4vw,40px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.vtCabecera p:last-child{color:#c9bdda;font-size:1.08em;max-width:900px}
+.vtControles{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.vtGrupo{display:flex;border:1px solid #e7bb5555;border-radius:10px;overflow:hidden}
+.vtGrupo button,.vtBoton{font:700 12px/1 'Cinzel Domo',Georgia,serif;color:#e0cfa6;background:#150f20;border:0;padding:10px 13px;cursor:pointer;min-height:40px}
+.vtBoton{border:1px solid #e7bb5555;border-radius:10px}
+.vtGrupo button[aria-pressed="true"]{background:#e8bb5a;color:#2a1706}
+.vtOpcion,.vtEfectos label{display:inline-flex;gap:6px;align-items:center;color:#d9cbe8;min-height:32px}
+.vtEfectos{display:flex;flex-wrap:wrap;gap:4px 16px;border:1px solid #e7bb5530;border-radius:10px;padding:6px 12px 8px}
+.vtEfectos legend{color:#b8a3cc;font:700 10px/1 system-ui,sans-serif;letter-spacing:1px;padding:0 6px}
+.vtEscenario{position:relative;height:min(78vh,780px);min-height:420px;border-radius:16px;overflow:hidden;border:1px solid #e7bb5530;background:#07060a;touch-action:none;cursor:grab}
+.vtEscenario:active{cursor:grabbing}
+.vtEscenario canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.vtInfo{position:absolute;left:10px;top:10px;padding:5px 10px;border-radius:8px;background:#0d0914cc;color:#cdbfdf;font:12px/1.4 system-ui,sans-serif;pointer-events:none}
+.vtEstado{color:#b9aecb;min-height:1.5em}
+html[data-captura] body{padding:0}
+html[data-captura] .vtShell>*:not(.vtEscenario){display:none}
+html[data-captura] .vtEscenario{height:100vh;border:0;border-radius:0}
+html[data-captura] .vtInfo{display:none}
+[hidden]{display:none!important}

@@ -100,6 +100,10 @@
     "visor-gpu": {
       "fuente": "529c4e2f19f225830ce93f00fa328f358db00910",
       "ruta": "tcg/visor-gpu"
+    },
+    "visor-three": {
+      "fuente": "ae15f388599bff5cc75c7af4f81adc90b3394658",
+      "ruta": "tcg/visor-three"
     }
   },
   "version": 1

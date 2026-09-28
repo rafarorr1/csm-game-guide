@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Visor three.js · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./visor-three-mesa.css">
+<script src="./generado/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./visor-three-vendor.js"></script>
+<script src="./visor-three-mesa.js" defer></script>
+</head>
+<body>
+<main class="vtShell" aria-labelledby="vtTitulo">
+  <header class="vtCabecera">
+    <p class="vtEtiqueta">PRUEBA DE MOTOR GRÁFICO · THREE.JS · SIN PARTIDA</p>
+    <h1 id="vtTitulo">El Mago del Domo · three.js</h1>
+    <p>La carta del visor en three.js, con lo mejor que ofrece: material físico con relieve, metal y rugosidad por zona, laca (<i>clearcoat</i>) y la película holográfica como iridiscencia real; canto de oro cepillado; reflejos de un entorno, sombras suaves, haces de luz con polvo, suelo espejo y un pedestal de terciopelo; y posproceso en HDR con antialias, resplandor en los destellos y profundidad de campo. Arrastra para girarla; la luz sigue al puntero sobre la carta.</p>
+  </header>
+  <div class="vtControles" role="group" aria-label="Edición y acciones">
+    <div class="vtGrupo" role="group" aria-label="Edición"><button type="button" data-edicion="normal" aria-pressed="false">Normal</button><button type="button" data-edicion="foil" aria-pressed="false">Foil</button><button type="button" data-edicion="dorado" aria-pressed="true">Foil dorado</button></div>
+    <button type="button" class="vtBoton" id="invocar">✦ Invocar</button>
+    <button type="button" class="vtBoton" id="voltear">Dar la vuelta</button>
+    <label class="vtOpcion"><input type="checkbox" id="girar" checked> Girar sola</label>
+  </div>
+  <fieldset class="vtEfectos">
+    <legend>Efectos (actívalos y desactívalos para ver qué aporta y cuánto cuesta cada uno)</legend>
+    <label><input type="checkbox" data-efecto="iridiscencia" checked> Iridiscencia</label>
+    <label><input type="checkbox" data-efecto="laca" checked> Laca</label>
+    <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
+    <label><input type="checkbox" data-efecto="espejo" checked> Suelo espejo</label>
+    <label><input type="checkbox" data-efecto="haces" checked> Haces y polvo</label>
+    <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
+    <label><input type="checkbox" data-efecto="enfoque" checked> Profundidad de campo</label>
+  </fieldset>
+  <section class="vtEscenario" id="escenario" aria-label="Visor de la carta en three.js">
+    <canvas id="lienzo" aria-label="El Mago del Domo en three.js"></canvas>
+    <p class="vtInfo" id="info">Preparando…</p>
+  </section>
+  <p id="estado" class="vtEstado" role="status" aria-live="polite">Pintando la carta…</p>
+</main>
+</body>
+</html>
