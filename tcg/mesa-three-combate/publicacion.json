@@ -425,15 +425,15 @@
     "juego/motor.js": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076",
     "mesa-three-combate-arranque.js": "63dabe705930d52567aaa79eb8ca662eb0b2d418f1dca78bf18703da890955f0",
     "mesa-three-combate.css": "bbb977bf5f900301afcb637393bd409c690c781c5f4ffb1ac90aa34af4389f26",
-    "mesa-three-combate.js": "8628c562d73c2350493baca3681f5fdbb6c3fcd56afa71180621c1b3753210eb",
-    "procedencia.json": "7f2584f5528821086d2e0fa9dd3f8e2d884c046ad2685dd337d7ba736767e9a4",
+    "mesa-three-combate.js": "bb05740dca70d341e3b86de7ac7764485ea7afbdcf95357d0f43b2046237878e",
+    "procedencia.json": "3ad41fa4f7405f61b2758905e5a4b801da2a51b351285b52b3d98dd9e9b7a1c7",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/mesa-three-legibilidad",
-    "sha": "9e5e064c8d84b6085f6bebad2554542e200d5b7e"
+    "sha": "2096df8eb2c6041eac2ecf73ba672a2dbd622be8"
   },
   "seccion": "mesa-three-combate",
   "version": 1

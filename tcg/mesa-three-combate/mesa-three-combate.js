@@ -210,7 +210,16 @@
   function selectVisual(u){selected=u;render();}
   async function activateCard(v){if(!v||!G||G.over)return;const kind=v.userData.kind,side=v.userData.side,u=v.userData.unit;
     if(TGT){if(kind==='leader'&&side===FOE)pickTarget('face');else if(u)pickTarget(u);return;}
-    if(kind==='hand'&&side===ME){if(G.active!==ME||G.busy){toast('Espera a que termine la jugada actual.');return;}const id=v.userData.id;const reason=whyNot(ME,id);if(reason){toast(reason);return;}await playFromHand(ME,id);return;}
+    if(kind==='hand'&&side===ME){
+      if(G.active!==ME||G.busy){toast('Espera a que termine la jugada actual.');return;}
+      const id=v.userData.id;
+      // whyNot() siempre devuelve una explicación textual, incluso como
+      // reserva final cuando la carta sí es legal. La autoridad binaria es
+      // canPlay(); consultar sólo whyNot() convertía todas las cartas de la
+      // mano en "no jugables" aunque el motor las aceptara.
+      if(!canPlay(ME,id)){toast(whyNot(ME,id));return;}
+      await playFromHand(ME,id);return;
+    }
     if(kind==='field'&&side===ME&&u){selectVisual(u);selectUnit(u);return;}
     if(kind==='field'&&side===FOE&&u){if(SEL)await tryAttack(SEL,u);else toast('Elige primero uno de tus Personajes para atacar.');return;}
     if(kind==='leader'&&side===FOE){if(TGT){pickTarget('face');return;}if(SEL)await tryAttack(SEL,'face');else toast('Elige un Personaje para atacar al Alma de Gero.');return;}
