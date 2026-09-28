@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Talesyn vs Gero · Mesa Three · Caoz</title>
+  <link rel="icon" href="data:,">
+  <link rel="stylesheet" href="./juego/carta-diseno.css">
+  <link rel="stylesheet" href="./mesa-three-combate.css">
+  <script src="./mesa-three-combate-arranque.js"></script>
+  <script src="./juego/motor.js"></script>
+  <script src="./juego/carta-pintor.js"></script>
+  <script src="./visor-three-vendor.js"></script>
+  <script src="./three-carta.js"></script>
+  <script src="./mesa-three-combate.js" defer></script>
+</head>
+<body>
+  <main class="ctShell">
+    <header class="ctHeader">
+      <div>
+        <p class="ctKicker">PARTIDA COMPLETA · MOTOR ORIGINAL · IA</p>
+        <h1>Talesyn <span>contra</span> Gero</h1>
+        <p id="ctSubtitulo">La Mesa del DM · final de campaña</p>
+      </div>
+      <div class="ctHeaderActions">
+        <button id="ctReiniciar" type="button">Nueva partida</button>
+        <button id="ctEfectos" type="button" aria-pressed="false">Efectos 10%</button>
+      </div>
+    </header>
+
+    <section class="ctStage" id="ctStage" aria-label="Mesa de Talesyn contra Gero">
+      <canvas id="ctCanvas" aria-label="Mesa 3D de la partida"></canvas>
+      <div class="ctHud ctHudEnemy" id="ctEnemyHud" aria-live="polite"></div>
+      <div class="ctHud ctHudMe" id="ctMeHud" aria-live="polite"></div>
+      <div class="ctTurn" id="ctTurn" aria-live="polite">Preparando el Domo…</div>
+      <div class="ctMessage" id="ctMessage" role="status" aria-live="polite"></div>
+      <div class="ctPrompt" id="ctPrompt" hidden></div>
+      <div class="ctLog" id="ctLog" aria-label="Registro de partida"></div>
+      <div class="ctHint" id="ctHint">Rueda: acercar o alejar · Pulsa una carta de tu mano para jugarla.</div>
+      <div class="ctLabels" id="ctLabels" aria-hidden="true"></div>
+    </section>
+
+    <nav class="ctActions" aria-label="Acciones de partida">
+      <button id="ctLeader" type="button">🎲 Improvisar</button>
+      <button id="ctAbility" type="button" disabled>Habilidad de carta</button>
+      <button id="ctEnd" class="primary" type="button">Terminar turno ⏭</button>
+    </nav>
+    <p class="ctExplain">Tú controlas a <b>Talesyn</b>. Gero usa la misma IA, mazo, dados, trampas y reglas del juego original. Elige hasta dos cartas al abrir la mano; las decisiones y objetivos aparecen sobre la mesa.</p>
+  </main>
+
+  <div class="ctModal" id="ctModal" hidden role="dialog" aria-modal="true" aria-labelledby="ctModalTitle">
+    <section class="ctModalCard">
+      <p class="ctKicker" id="ctModalKicker">EL DOMO ESPERA</p>
+      <h2 id="ctModalTitle">Preparando la partida</h2>
+      <div id="ctModalBody"></div>
+      <div id="ctModalActions" class="ctModalActions"></div>
+    </section>
+  </div>
+</body>
+</html>
