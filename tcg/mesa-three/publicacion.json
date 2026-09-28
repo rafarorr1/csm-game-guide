@@ -27,16 +27,16 @@
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "mesa-three-mesa.css": "83ab4a242029644294aba212d70d7019baa4e9f8dbabfcff85ba1119e772ad73",
-    "mesa-three-mesa.js": "8fa73dc085fff84475f1ed1b454677cfe590c2d59bb8ff2c8e89823a38f1b8b2",
-    "procedencia.json": "9b74920f88973854d8797a687309b575ba2e43eb6f55f0e07340e9454baaa0c0",
+    "mesa-three-mesa.css": "9194c4e2a4d45d9d96aced65d0288c1654cef8b7de9e380ada34bfa25084845a",
+    "mesa-three-mesa.js": "b1d0deef3900bddb50ae5f0dc79b55496cb0128a56a25f50a4ad9eadd7424359",
+    "procedencia.json": "9d059c7c38c039bfd8c796b851e838167e7dbf67f9e742f33ab683e49648ec24",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "0ec7af66475369edfbbb8b0ddd3f9979601798b6"
+    "sha": "1929f7d33fca7671fc058af0be4f720f251490c6"
   },
   "seccion": "mesa-three",
   "version": 1

@@ -141,6 +141,9 @@
     g.userData.unidad=u;return u;
   }
   const tumbada=new THREE.Euler(-Math.PI/2,0,0);
+  // En la mano, la cara mira a la cámara bajo la lámpara: con el entorno entero, la laca refleja la caja de luz
+  // como un velo. Allí lleva su propio entorno, más tenue; en la mesa vuelve al de la escena.
+  function enMano(u,si){const m=u.g.userData.frente.material;m.envMap=si?escena.environment:null;m.envMapIntensity=si?.1:1;m.userData.lacaMesa??=m.clearcoat;m.clearcoat=si?m.userData.lacaMesa*.3:m.userData.lacaMesa;m.needsUpdate=true;}
   // Pilas de cartas (mazo y cementerio): cantos apilados con un poco de desorden.
   function pila(n,x,z,dorso=true){const g=new THREE.Group();g.position.set(x,0,z);mesa.add(g);g.userData.n=0;g.userData.poner=k=>{while(g.children.length<k){const i=g.children.length,m=F.carta(dorso?dorsoPintado.mat:dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));m.scale.setScalar(S);m.rotation.set(-Math.PI/2+(dorso?Math.PI:0),0,(rnd()-.5)*.06);m.position.set((rnd()-.5)*.04,.02+i*GROSOR*S*1.05,(rnd()-.5)*.04);g.add(m);}while(g.children.length>k)g.remove(g.children.at(-1));g.userData.n=k;};g.userData.poner(n);return g;}
   // Cristales: el Alma (grande, rojo) y los PD (gemas moradas); con transmisión real.
@@ -196,11 +199,26 @@
   };
   const J={yo:null,rival:null},seleccion={u:null};
   const campoPos=(lado,i)=>{const [x,z]=hueco(i,lado==='yo'?1:-1);return new THREE.Vector3(x,.02,z);};
+  const libres=lado=>[0,1,2,3,4].filter(h=>!J[lado].campo.some(u=>u.hueco===h));
+  // Por qué no se puede jugar una carta ahora (o null si se puede).
+  const porQueNo=u=>u.coste>J.yo.pd?'Te faltan '+(u.coste-J.yo.pd)+' PD para '+CARDS[u.id].n+' ('+u.coste+' PD).':u.tipo==='personaje'&&!libres('yo').length?'Tu campo está lleno.':null;
   function ponerTumbada(u,pos){u.g.position.copy(pos);u.g.rotation.copy(tumbada);u.g.userData.base=pos.clone();}
   // Mano: abanico delante de la cámara, un poco levantado hacia el jugador.
   // La mano va pegada a la cámara: un abanico abajo en pantalla, como en las cartas digitales.
   const manoCam=new THREE.Group();camara.add(manoCam);escena.add(camara);
-  function colocarMano(anim=true){const n=J.yo.mano.length,retrato=camara.aspect<.9,sep=retrato?.5:.95,lejos=retrato?-9.2:-7.2;J.yo.mano.forEach((u,i)=>{const k=i-(n-1)/2,obj={pos:new THREE.Vector3(k*sep,(retrato?-3.35:-2.55)-Math.abs(k)*.07,lejos+Math.abs(k)*.02),rot:new THREE.Euler(-.12,0,-k*.08)};u.mano=obj;if(!anim){u.g.position.copy(obj.pos);u.g.rotation.copy(obj.rot);}});}
+  // Luz de lectura: viaja con la cámara, arriba a la izquierda (su brillo cae fuera de la carta),
+  // y sólo alcanza la mano (no llega a la mesa).
+  const lectura=new THREE.PointLight(0xfff0dc,34,13,2);lectura.position.set(-4.5,4,-3.5);camara.add(lectura);
+  // Cada carta tiene su ranura: un rectángulo invisible en su sitio del abanico que no crece. Es la
+  // zona estable del puntero (como .handSlot en la mesa de siempre): la carta ampliada puede taparle
+  // a la vecina, pero no le roba el puntero ni hace parpadear el resaltado en los solapes.
+  const matRanura=new THREE.MeshBasicMaterial({visible:false,side:THREE.DoubleSide});
+  function colocarMano(anim=true){const lista=J.yo.mano.filter(u=>!u.arrastrando),n=lista.length,retrato=camara.aspect<.9,sep=retrato?.5:.95,lejos=retrato?-9.2:-7.2;
+    lista.forEach((u,i)=>{const k=i-(n-1)/2,obj={pos:new THREE.Vector3(k*sep,(retrato?-3.35:-2.55)-Math.abs(k)*.07,lejos+i*.012),rot:new THREE.Euler(-.12,0,-k*.08),i};u.mano=obj;
+      if(!u.ranura){u.ranura=new THREE.Mesh(new THREE.PlaneGeometry(ANCHO,ALTO),matRanura);u.ranura.userData.unidad=u;manoCam.add(u.ranura);}
+      u.ranura.position.copy(obj.pos);u.ranura.rotation.copy(obj.rot);u.ranura.scale.setScalar(S);u.ranura.visible=true;
+      if(!anim){u.g.position.copy(obj.pos);u.g.rotation.copy(obj.rot);}});
+    for(const u of J.yo.mano)if(u.arrastrando&&u.ranura)u.ranura.visible=false;}
   function colocarManoRival(){const n=J.rival.manoG.length;J.rival.manoG.forEach((g,i)=>{const k=i-(n-1)/2;g.position.set(k*.95,.7,-6.75);g.rotation.set(-1.1,Math.PI,k*.07);});}
   async function preparar(){
     await CAOZ_CARTA_PINTOR.fuentes();estado('Pintando las cartas…');
@@ -208,7 +226,7 @@
     Object.assign(matTapete,tapete(logo));matTapete.needsUpdate=true;Object.assign(matMadera,madera());matMadera.needsUpdate=true;
     for(const lado of ['yo','rival']){const P=PARTIDA[lado],s=lado==='yo'?1:-1,j={campo:[],mano:[],cementerio:[...P.cementerio],alma:P.alma,pd:P.pd??P.pdMax,pdMax:P.pdMax,roba:P.roba?[...P.roba]:[]};J[lado]=j;
       j.lider=await nuevaCarta(...P.lider);j.lider.g.scale.setScalar(S*1.12);j.lider.g.position.set(-6.9,.05,s*2.5);j.lider.g.rotation.copy(tumbada);mesa.add(j.lider.g);
-      for(const [i,[id,ed]] of P.campo.entries()){const u=await nuevaCarta(id,ed);ponerTumbada(u,campoPos(lado,i));u.lado=lado;mesa.add(u.g);j.campo.push(u);}
+      for(const [i,[id,ed]] of P.campo.entries()){const u=await nuevaCarta(id,ed);u.hueco=i;ponerTumbada(u,campoPos(lado,i));u.lado=lado;mesa.add(u.g);j.campo.push(u);}
       j.trampas=[];for(let i=0;i<P.trampas;i++){const t=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));t.scale.setScalar(S*.8);t.rotation.set(-Math.PI/2+Math.PI,0,Math.PI/2+(rnd()-.5)*.05);t.position.set((i-1)*1.9,.02,s*3.95);mesa.add(t);j.trampas.push(t);}
       j.mazo=pila(P.mazo,6.9,s*2.9,true);j.cem=pila(0,6.9,s*.75,false);
       if(j.cementerio.length){const top=await nuevaCarta(j.cementerio.at(-1),'normal');ponerTumbada(top,new THREE.Vector3(6.9,.02+j.cementerio.length*.012,s*.75));top.g.rotation.z=(rnd()-.5)*.2;mesa.add(top.g);j.cemTop=top;}
@@ -216,7 +234,7 @@
     }
     J.yo.pdG=gemasPD(-7.6,5.35,PARTIDA.yo.pdMax);J.yo.pdG.userData.poner(J.yo.pd);J.rival.pdG=gemasPD(-7.6,-5.35,PARTIDA.rival.pdMax);J.rival.pdG.userData.poner(J.rival.pd);
     llaves(-5.2,4.45,PARTIDA.yo.llaves);
-    for(const [id,ed] of PARTIDA.yo.mano){const u=await nuevaCarta(id,ed);u.lado='yo';manoCam.add(u.g);J.yo.mano.push(u);}
+    for(const [id,ed] of PARTIDA.yo.mano){const u=await nuevaCarta(id,ed);u.lado='yo';enMano(u,true);manoCam.add(u.g);J.yo.mano.push(u);}
     J.rival.manoG=[];for(let i=0;i<PARTIDA.rival.mano;i++){const g=F.carta(dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));g.scale.setScalar(S*.9);escena.add(g);J.rival.manoG.push(g);}
     colocarMano(false);colocarManoRival();
     medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
@@ -236,20 +254,22 @@
   function refrescar(u){if(u.cifras.atq){u.cifras.atq.userData.pintar(u.atq,u.atq>(CARDS[u.id]?.a??0)?'#9dff9d':'#fff1d8');u.cifras.vida.userData.pintar(u.vida,u.vida<u.vidaMax?'#ff8a7a':'#fff1d8');}}
 
   // Jugar una carta de la mano: vuela a su hueco y cae con onda y chispas; los Hechizos estallan y van al cementerio.
-  async function jugar(i){
+  async function jugar(i,h=null,arrastrada=false){
     const j=J.yo,u=j.mano[i];if(!u||ocupado)return false;
-    if(u.coste>j.pd){estado('No tienes PD suficientes para '+CARDS[u.id].n+' ('+u.coste+' PD).');await animar(.35,k=>{u.g.position.x=u.mano.pos.x+Math.sin(k*TAU*3)*.12*(1-k);});return false;}
-    if(u.tipo==='personaje'&&j.campo.length>=5){estado('Tu campo está lleno.');return false;}
-    ocupado=true;j.mano.splice(i,1);j.pd-=u.coste;j.pdG.userData.poner(j.pd);colocarMano();escena.attach(u.g);
+    const no=porQueNo(u);if(no){rechazar(u,no);return false;}
+    if(u.tipo==='personaje'&&h!==null&&!libres('yo').includes(h))h=null;
+    ocupado=true;j.mano.splice(i,1);if(u.ranura){manoCam.remove(u.ranura);u.ranura=null;}j.pd-=u.coste;j.pdG.userData.poner(j.pd);colocarMano();escena.attach(u.g);
     if(u.tipo==='personaje'){
-      const pos=campoPos('yo',j.campo.length);j.campo.push(u);mesa.attach(u.g);
-      await volar(u.g,pos.clone().add(new THREE.Vector3(0,1.4,0)),tumbada,.55,1.6);
+      u.hueco=h??libres('yo')[0];const pos=campoPos('yo',u.hueco);j.campo.push(u);mesa.attach(u.g);enMano(u,false);
+      // Arrastrada, ya está encima de su hueco: sólo cae. Pulsada, vuela desde la mano.
+      if(arrastrada)await animar(.12,k=>{u.g.position.lerp(pos.clone().add(new THREE.Vector3(0,1.4,0)),k);u.g.quaternion.slerp(new THREE.Quaternion().setFromEuler(tumbada),k);});
+      else await volar(u.g,pos.clone().add(new THREE.Vector3(0,1.4,0)),tumbada,.55,1.6);u.g.scale.setScalar(S);
       if(u.ed==='dorado'){pilar.position.x=pos.x;pilar.position.z=pos.z;pilar.visible=true;animar(1.1,k=>{pilar.material.uniforms.uA.value=Math.sin(Math.PI*k)*.9;}).then(()=>{pilar.visible=false;});}
       await animar(.16,k=>{u.g.position.lerpVectors(pos.clone().add(new THREE.Vector3(0,1.4,0)),pos,k*k);});ponerTumbada(u,pos);
       estallido(pos.clone().add(new THREE.Vector3(0,.1,0)),u.ed==='dorado'?0xffc860:u.ed==='foil'?0xbfe0ff:0xffb070,u.ed==='dorado'?1.3:.9);temblar(u.ed==='dorado'?.25:.14);
       estado(CARDS[u.id].n+' entra en juego.');
     }else{
-      await volar(u.g,new THREE.Vector3(0,3.2,1.2),new THREE.Euler(-.7,0,0),.6,1);
+      u.g.scale.setScalar(S);enMano(u,false);await volar(u.g,new THREE.Vector3(0,3.2,1.2),new THREE.Euler(-.7,0,0),.6,1);
       await animar(.5,k=>{u.g.rotation.y=k*TAU;u.g.position.y=3.2+Math.sin(k*Math.PI)*.4;});
       estallido(u.g.position.clone(),0xb89bff,1.4);temblar(.12);estado(CARDS[u.id].n+': el hechizo se lanza.');
       await aCementerio(u,'yo');
@@ -280,7 +300,6 @@
     const muertos=[];for(const u of [a,b])if(!u.cristal&&u.vida<=0)muertos.push(u);
     for(const u of muertos){const lado=u.lado,j=J[lado];j.campo.splice(j.campo.indexOf(u),1);}
     await Promise.all(muertos.map(u=>aCementerio(u,u.lado)));
-    for(const lado of ['yo','rival'])J[lado].campo.forEach((u,i)=>{const p=campoPos(lado,i);if(!u.g.position.equals(p))volar(u.g,p,tumbada,.4,.3).then(()=>ponerTumbada(u,p));});
     ocupado=false;return true;
   }
   function seleccionar(u){if(seleccion.u)seleccion.u.g.userData.frente.material.emissive?.setHex(0);seleccion.u=u;if(u){u.g.userData.frente.material.emissive=new THREE.Color(0x3a2a08);}}
@@ -291,7 +310,7 @@
     const [id,ed]=r.roba.shift(),u=await nuevaCarta(id,ed);u.lado='rival';r.mazo.userData.poner(r.mazo.userData.n-1);
     u.g.position.set(6.9,.5,-2.9);u.g.rotation.set(-Math.PI/2+Math.PI,0,0);escena.add(u.g);
     await volar(u.g,new THREE.Vector3(0,2.2,-2.6),new THREE.Euler(-.25,0,0),.7,1.2);await espera(.35);
-    if(u.tipo==='personaje'&&r.campo.length<5){const pos=campoPos('rival',r.campo.length);r.campo.push(u);escena.remove(u.g);mesa.add(u.g);await volar(u.g,pos,tumbada,.4,.6);ponerTumbada(u,pos);estallido(pos,0xd070ff,1);temblar(.15);}
+    if(u.tipo==='personaje'&&libres('rival').length){u.hueco=libres('rival')[0];const pos=campoPos('rival',u.hueco);r.campo.push(u);escena.remove(u.g);mesa.add(u.g);await volar(u.g,pos,tumbada,.4,.6);ponerTumbada(u,pos);estallido(pos,0xd070ff,1);temblar(.15);}
     else{estallido(u.g.position.clone(),0xd070ff,1.2);await aCementerio(u,'rival');}
     await espera(.3);ocupado=false;
     const atacante=r.campo.filter(x=>x.atq>0).sort((x,y)=>y.atq-x.atq)[0];
@@ -299,21 +318,63 @@
     estado('Tu turno.');return true;
   }
 
-  /* ---- Puntero: resaltar la mano, jugar, elegir y atacar ------------------------- */
-  const rayo=new THREE.Raycaster(),puntero=new THREE.Vector2(9,9);let encima=null;
+  /* ---- Puntero: ver la mano, bajar cartas (pulsar o arrastrar), elegir y atacar ---- */
+  const rayo=new THREE.Raycaster(),puntero=new THREE.Vector2(9,9);
   const cartasDe=lista=>lista.map(u=>u.g);
-  function tocar(){rayo.setFromCamera(puntero,camara);const objetos=[...cartasDe(J.yo.mano),...cartasDe(J.yo.campo),...cartasDe(J.rival.campo),J.rival.cristal];const hit=rayo.intersectObjects(objetos,true)[0];if(!hit)return null;
+  // Lo que hay bajo el puntero en la mesa (tus cartas, las del rival y su cristal).
+  function tocar(){rayo.setFromCamera(puntero,camara);const objetos=[...cartasDe(J.yo.campo),...cartasDe(J.rival.campo),J.rival.cristal];const hit=rayo.intersectObjects(objetos,true)[0];if(!hit)return null;
     let o=hit.object;while(o&&!o.userData.unidad&&o!==J.rival.cristal)o=o.parent;return o;}
-  const arrastre={x:0,y:0,activo:false,movido:0};
-  esc.addEventListener('pointerdown',e=>{arrastre.activo=true;arrastre.x=e.clientX;arrastre.y=e.clientY;arrastre.movido=0;esc.setPointerCapture(e.pointerId);});
-  esc.addEventListener('pointermove',e=>{const b=esc.getBoundingClientRect();puntero.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);
-    if(arrastre.activo){const dx=e.clientX-arrastre.x,dy=e.clientY-arrastre.y;arrastre.movido+=Math.abs(dx)+Math.abs(dy);arrastre.x=e.clientX;arrastre.y=e.clientY;if(arrastre.movido>6){vista.objYaw=Math.max(-.5,Math.min(.5,vista.objYaw-dx/400));vista.objPitch=Math.max(-.25,Math.min(.35,vista.objPitch+dy/500));}}});
-  esc.addEventListener('pointerup',async e=>{arrastre.activo=false;if(arrastre.movido>6||!listo)return;const o=tocar();if(!o)return seleccionar(null);
+  // La ranura de la mano bajo el puntero: la de encima (cada carta monta sobre la de su izquierda,
+  // como una mano de verdad). Sólo cuentan las ranuras, nunca la carta ampliada.
+  const mano={activa:null,uv:new THREE.Vector2(.5,.5)};
+  function ranuraBajo(){if(!J.yo)return null;rayo.setFromCamera(puntero,camara);const hits=rayo.intersectObjects(J.yo.mano.filter(u=>u.ranura?.visible).map(u=>u.ranura),false);if(!hits.length)return null;
+    return {u:hits[0].object.userData.unidad,uv:hits[0].uv};}
+  // Avisos breves sobre la mesa (por qué no se puede jugar una carta).
+  const avisoMesa=document.createElement('p');avisoMesa.className='mtAviso';avisoMesa.setAttribute('role','status');esc.appendChild(avisoMesa);let avisoHasta=0;
+  function rechazar(u,texto){estado(texto);avisoMesa.textContent=texto;avisoMesa.classList.add('visto');avisoHasta=reloj+2.2;u.sacudida=reloj;}
+  // Las marcas de los huecos libres (se encienden al arrastrar) y la silueta de la carta en el elegido.
+  function marcoBrillo(){const [c,g]=lienzoDe(256,340);g.strokeStyle='#ffd27a';g.lineWidth=10;g.shadowColor='#ffb040';g.shadowBlur=24;g.beginPath();g.roundRect(18,18,220,304,18);g.stroke();return tex(c,true);}
+  const texMarco=marcoBrillo(),marcas=[0,1,2,3,4].map(h=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(ANCHO*S+.5,ALTO*S+.62),new THREE.MeshBasicMaterial({map:texMarco,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+    m.rotation.x=-Math.PI/2;m.position.copy(campoPos('yo',h)).setY(.016);mesa.add(m);return m;});
+  const silueta=new THREE.Mesh(new THREE.PlaneGeometry(ANCHO*S,ALTO*S),new THREE.MeshBasicMaterial({transparent:true,opacity:.42,depthWrite:false}));silueta.rotation.x=-Math.PI/2;silueta.visible=false;mesa.add(silueta);
+  const zonaHechizo=new THREE.Mesh(new THREE.CircleGeometry(2.6,64),new THREE.MeshBasicMaterial({color:0xb89bff,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false}));zonaHechizo.rotation.x=-Math.PI/2;zonaHechizo.position.set(0,.017,0);mesa.add(zonaHechizo);
+  // El arrastre: la carta sigue al puntero sobre la mesa, inclinada por su velocidad.
+  const planoArrastre=new THREE.Plane(new THREE.Vector3(0,1,0),-1.1),arr={u:null,punto:new THREE.Vector3(),antes:new THREE.Vector3(),h:null,zona:false,inc:new THREE.Vector2()};
+  function puntoMesa(){rayo.setFromCamera(puntero,camara);return rayo.ray.intersectPlane(planoArrastre,new THREE.Vector3());}
+  function iniciarArrastre(u){const no=porQueNo(u);if(no){rechazar(u,no);return false;}
+    arr.u=u;u.arrastrando=true;mano.activa=null;escena.attach(u.g);colocarMano();const p=puntoMesa();if(p){arr.punto.copy(p);arr.antes.copy(p);}
+    silueta.material.map=u.g.userData.frente.material.map;silueta.material.needsUpdate=true;estado(u.tipo==='personaje'?'Suéltala sobre un hueco libre de tu campo.':'Suéltalo sobre la mesa para lanzarlo.');return true;}
+  function acabarArrastre(){const u=arr.u;if(!u)return;arr.u=null;u.arrastrando=false;silueta.visible=false;zonaHechizo.material.opacity=0;for(const m of marcas)m.material.opacity=0;
+    const i=J.yo.mano.indexOf(u);
+    if(u.tipo==='personaje'&&arr.h!==null)return jugar(i,arr.h,true);
+    if(u.tipo!=='personaje'&&arr.zona)return jugar(i,null,true);
+    manoCam.attach(u.g);colocarMano();estado('La carta vuelve a tu mano.');}
+  // Mirar una carta en grande (en táctil, donde no hay «pasar por encima»).
+  const panelVer=document.createElement('div');panelVer.className='mtVer';panelVer.hidden=true;panelVer.innerHTML='<button type="button" data-ver="jugar">Jugar</button><button type="button" data-ver="cerrar">Cerrar</button>';esc.appendChild(panelVer);
+  let viendo=null;
+  function ver(u){viendo=u;panelVer.hidden=!u;if(u){const no=porQueNo(u);panelVer.querySelector('[data-ver="jugar"]').disabled=!!no;panelVer.querySelector('[data-ver="jugar"]').title=no||'';estado(no||'Pulsa «Jugar» para bajarla, o arrástrala a la mesa.');}}
+  panelVer.addEventListener('pointerdown',e=>e.stopPropagation());
+  panelVer.querySelector('[data-ver="cerrar"]').onclick=()=>ver(null);
+  panelVer.querySelector('[data-ver="jugar"]').onclick=()=>{const u=viendo;ver(null);if(u)jugar(J.yo.mano.indexOf(u));};
+  // Los gestos: pulsar (jugar, elegir, atacar), arrastrar desde la mano (bajar) o desde la mesa (mirar alrededor).
+  let gesto=null;
+  esc.addEventListener('pointerdown',e=>{if(!listo)return;const b=esc.getBoundingClientRect();puntero.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);revisionPuntero=true;
+    const r=ranuraBajo();gesto={u:viendo&&!r?null:r?.u||null,x:e.clientX,y:e.clientY,movido:0,tactil:e.pointerType==='touch'};esc.setPointerCapture(e.pointerId);});
+  esc.addEventListener('pointermove',e=>{const b=esc.getBoundingClientRect();puntero.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);revisionPuntero=true;
+    if(!gesto)return;const dx=e.clientX-gesto.x,dy=e.clientY-gesto.y;gesto.movido+=Math.abs(dx)+Math.abs(dy);gesto.x=e.clientX;gesto.y=e.clientY;
+    if(gesto.u&&!arr.u&&!gesto.falla&&gesto.movido>10&&!ocupado){if(viendo)ver(null);if(!iniciarArrastre(gesto.u))gesto.falla=true;}
+    else if(!gesto.u&&gesto.movido>6){vista.objYaw=Math.max(-.5,Math.min(.5,vista.objYaw-dx/400));vista.objPitch=Math.max(-.25,Math.min(.35,vista.objPitch+dy/500));}});
+  esc.addEventListener('pointerup',async e=>{const g=gesto;gesto=null;if(!g||!listo)return;
+    if(arr.u)return acabarArrastre();
+    if(g.u&&g.movido<=10){if(g.tactil)return ver(viendo===g.u?null:g.u);return jugar(J.yo.mano.indexOf(g.u));}
+    if(g.u||g.movido>6)return;if(viendo)return ver(null);
+    const o=tocar();if(!o)return seleccionar(null);
     if(o===J.rival.cristal){if(seleccion.u)await atacar(seleccion.u,{cristal:J.rival.cristal,pos:J.rival.cristal.position.clone(),get alma(){return J.rival.alma;},set alma(v){J.rival.alma=v;}});return;}
-    const u=o.userData.unidad;if(J.yo.mano.includes(u))return jugar(J.yo.mano.indexOf(u));
+    const u=o.userData.unidad;
     if(J.yo.campo.includes(u))return seleccionar(seleccion.u===u?null:u);
     if(J.rival.campo.includes(u)&&seleccion.u)return atacar(seleccion.u,u);});
-  esc.addEventListener('pointerleave',()=>puntero.set(9,9));
+  esc.addEventListener('pointercancel',()=>{gesto=null;if(arr.u){arr.h=null;arr.zona=false;acabarArrastre();}});
+  esc.addEventListener('pointerleave',()=>{if(!gesto)puntero.set(9,9);});
   esc.addEventListener('wheel',e=>{e.preventDefault();vista.objDist=Math.max(.75,Math.min(1.25,vista.objDist+e.deltaY*.0008));},{passive:false});
   $('turnoRival').onclick=()=>turnoRival();
   $('demo').onclick=()=>demostracion();
@@ -336,15 +397,14 @@
     for(const k of ['yaw','pitch','dist'])vista[k]+=(vista['obj'+k[0].toUpperCase()+k.slice(1)]-vista[k])*Math.min(1,dt*6);
     const retrato=camara.aspect<.9,d=(retrato?Math.min(40,13.5/camara.aspect):17.6)*vista.dist,alt=(retrato?1.2:.9)+vista.pitch;vista.temblor=Math.max(0,vista.temblor-dt*1.2);const tr=vista.temblor;
     camara.position.set(Math.sin(vista.yaw)*d*Math.cos(alt)+Math.sin(reloj*61)*tr*.25,Math.sin(alt)*d+Math.sin(reloj*.4)*.08+Math.cos(reloj*53)*tr*.2,Math.cos(vista.yaw)*d*Math.cos(alt));camara.lookAt(mira.x,mira.y,mira.z+(retrato?.9:.7));
-    enfoque.uniforms.focus.value=camara.position.distanceTo(new THREE.Vector3(0,0,1));
+    // El enfoque: la mesa; si miras una carta de la mano, el foco pasa a ella (y la mesa se desenfoca detrás).
+    {const u=listo&&(viendo||mano.activa),f=u?camara.position.distanceTo(u.g.getWorldPosition(new THREE.Vector3())):camara.position.distanceTo(new THREE.Vector3(0,0,1));
+      enfoque.uniforms.focus.value+=(f-enfoque.uniforms.focus.value)*Math.min(1,dt*(u?14:5));}
     // Velas que tiemblan, runas que laten, la mano que se levanta al pasar por encima.
     for(const v of velas){const f=.85+.1*Math.sin(reloj*13+v.x)+.06*Math.sin(reloj*29+v.x*3);v.luz.intensity=26*f;v.llama.scale.set(1,f,1);v.llama.lookAt(camara.position.x,v.llama.getWorldPosition(new THREE.Vector3()).y,camara.position.z);}
     matTapete.emissiveIntensity=.45+.25*Math.sin(reloj*1.6);
     for(const g of J.rival?.trampas||[])g.position.y=.02;
-    if(listo){const o=CAPTURA&&!revisionPuntero?null:tocar();encima=o?.userData?.unidad||null;
-      for(const u of J.yo.mano){const e=u===encima&&!ocupado,obj=u.mano;if(!obj||tareas.some(t=>t.g===u.g))continue;const pos=obj.pos.clone(),rot=obj.rot;
-        const objetivo=e?pos.clone().add(new THREE.Vector3(0,.95,.6)):pos;u.g.position.lerp(objetivo,Math.min(1,dt*10));const q=new THREE.Quaternion().setFromEuler(e?new THREE.Euler(0,0,0):rot);u.g.quaternion.slerp(q,Math.min(1,dt*10));
-        u.g.scale.setScalar(S*(e?1.35:1)+(u.g.scale.x-S*(e?1.35:1))*Math.max(0,1-dt*10));}
+    if(listo){manoYArrastre(dt);
       for(const u of J.yo.campo)u.g.position.y=(u===seleccion.u?.35+Math.sin(reloj*4)*.05:.02)+(u.g.userData.base?0:0);
       for(const u of J.rival.campo)if(!tareas.length)u.g.position.y=.02;
       J.yo.cristal.userData.gema.rotation.y=reloj*.6;J.rival.cristal.userData.gema.rotation.y=-reloj*.5;
@@ -355,6 +415,47 @@
     resplandor.strength=.5+Math.min(.8,estallidos.reduce((a,e)=>a+Math.max(0,1-(reloj-e.t0)*2),0));
   }
   let simple=false,revisados=0,cuadros=0,revisionPuntero=false;
+  // La mano, como en la mesa de siempre: la carta bajo el puntero se endereza, sube desde su base y
+  // crece hasta leerse (sin salirse de la pantalla), se inclina con el puntero y aparta a sus vecinas;
+  // entra rápido y se va despacio. Las que puedes pagar brillan en el canto; las demás se apagan.
+  function rectDe(u){camara.updateMatrixWorld(true);u.g.updateMatrixWorld(true);const b=esc.getBoundingClientRect(),xs=[],ys=[];
+    for(const [x,y] of [[-1,-1],[1,-1],[1,1],[-1,1]]){const v=new THREE.Vector3(x*ANCHO/2,y*ALTO/2,0).applyMatrix4(u.g.matrixWorld).project(camara);xs.push((v.x*.5+.5)*b.width);ys.push((.5-v.y*.5)*b.height);}
+    return {izquierda:Math.min(...xs),derecha:Math.max(...xs),arriba:Math.min(...ys),abajo:Math.max(...ys),ancho:b.width,alto:b.height};}
+  const falta=document.createElement('p');falta.className='mtFalta';esc.appendChild(falta);
+  function manoYArrastre(dt){
+    const r=CAPTURA&&!revisionPuntero?null:(arr.u||gesto?.u&&gesto.movido>10?null:ranuraBajo());
+    if(!ocupado&&!viendo){mano.activa=r?.u||null;if(r)mano.uv.copy(r.uv);}else if(ocupado)mano.activa=null;
+    const lista=J.yo.mano.filter(u=>!u.arrastrando),ia=lista.indexOf(mano.activa),fov=camara.fov*Math.PI/360;
+    for(const u of lista){const obj=u.mano;if(!obj)continue;const i=lista.indexOf(u),activa=u===mano.activa,mira=u===viendo;
+      const pos=obj.pos.clone(),q=new THREE.Quaternion();let esc=S;
+      if(mira){// En grande, en el centro (para leerla en táctil).
+        const zc=5.4,hv=Math.tan(fov)*zc,G=Math.min(2.4,hv*1.5/(ALTO*S));pos.set(0,hv*.08,-zc);esc=S*G;}
+      else if(activa){
+        const zc=-(obj.pos.z+.9),hv=Math.tan(fov)*zc,hw=hv*camara.aspect,base=Math.max(obj.pos.y-ALTO*S/2,-hv*.97);
+        // El margen deja sitio a la inclinación con el puntero (la carta girada ocupa algo más).
+        const G=Math.max(1.15,Math.min(1.7,(hv*.95-base-.1)/(ALTO*S),(hw*1.84)/(ANCHO*S)));
+        pos.y=base+.1+ALTO*S*G/2;pos.z=obj.pos.z+.9;pos.x=Math.max(-hw*.93+ANCHO*S*G/2,Math.min(hw*.93-ANCHO*S*G/2,pos.x));esc=S*G;
+        q.setFromEuler(new THREE.Euler(-(mano.uv.y-.5)*.3,(mano.uv.x-.5)*.4,0));}
+      else{q.setFromEuler(obj.rot);if(ia>=0){const d=i-ia;pos.x+=Math.sign(d)*.42/Math.sqrt(Math.abs(d));}}
+      if(u.sacudida!==undefined&&reloj-u.sacudida<.4)pos.x+=Math.sin((reloj-u.sacudida)*TAU*7)*.1*(1-(reloj-u.sacudida)/.4);
+      const k=Math.min(1,dt*(activa||mira?18:7));u.g.position.lerp(pos,k);u.g.quaternion.slerp(q,k);u.g.scale.setScalar(u.g.scale.x+(esc-u.g.scale.x)*k);
+      // Se puede pagar: canto encendido. No: la cara apagada (salvo mientras la miras).
+      const no=porQueNo(u),m=u.g.userData.frente.material,canto=u.g.userData.borde.material[1];
+      m.color.setScalar(no&&!activa&&!mira?.5:1);canto.emissive=canto.emissive||new THREE.Color();canto.emissive.setHex(no?0:0xffb040);canto.emissiveIntensity=no?0:.35+.25*Math.sin(reloj*3+i);}
+    // La carta arrastrada sigue al puntero sobre la mesa, inclinada por su velocidad.
+    if(arr.u){const u=arr.u,p=puntoMesa();if(p)arr.punto.copy(p);const v=arr.punto.clone().sub(arr.antes).divideScalar(Math.max(dt,1/120));arr.antes.lerp(arr.punto,Math.min(1,dt*20));
+      arr.inc.lerp(new THREE.Vector2(Math.max(-.35,Math.min(.35,v.x*.02)),Math.max(-.35,Math.min(.35,v.z*.02))),Math.min(1,dt*10));
+      u.g.position.lerp(arr.punto,Math.min(1,dt*20));u.g.quaternion.slerp(new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+arr.inc.y,arr.inc.x,0)),Math.min(1,dt*14));u.g.scale.setScalar(u.g.scale.x+(S*1.08-u.g.scale.x)*Math.min(1,dt*12));
+      const libre=libres('yo');arr.h=null;arr.zona=false;
+      if(u.tipo==='personaje'){let mejor=1.7;for(const h of libre){const d=Math.hypot(arr.punto.x-campoPos('yo',h).x,arr.punto.z-campoPos('yo',h).z);if(d<mejor){mejor=d;arr.h=h;}}}
+      else arr.zona=Math.abs(arr.punto.x)<7.5&&arr.punto.z>-5.5&&arr.punto.z<3.2;
+      marcas.forEach((m,h)=>{m.material.opacity=u.tipo!=='personaje'||!libre.includes(h)?0:h===arr.h?.95:.28+.12*Math.sin(reloj*5+h);});
+      silueta.visible=arr.h!==null;if(arr.h!==null)silueta.position.copy(campoPos('yo',arr.h)).setY(.03);zonaHechizo.material.opacity=u.tipo==='personaje'?0:arr.zona?.45:.15;}
+    if(avisoHasta&&reloj>avisoHasta){avisoMesa.classList.remove('visto');avisoHasta=0;}
+    const vista=viendo||mano.activa,rc=vista&&vista.g.scale.x>S*1.2?rectDe(vista):null,no=vista&&porQueNo(vista);
+    for(const e of etiquetas){const v=e.pos.clone().project(camara),x=(v.x*.5+.5)*(rc?.ancho||1),y=(.5-v.y*.5)*(rc?.alto||1);e.el.classList.toggle('tapada',!!rc&&x>rc.izquierda-20&&x<rc.derecha+20&&y>rc.arriba-20&&y<rc.abajo+20);}
+    falta.classList.toggle('visto',!!(rc&&no));if(rc&&no){falta.textContent=no;falta.style.transform=`translate(-50%,-100%) translate(${(rc.izquierda+rc.derecha)/2}px,${Math.max(34,rc.arriba-6)}px)`;}
+  }
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
   function dibujar(){renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
     if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}else aviso('La escena sale negra en esta tarjeta gráfica ('+gpu+'). Cuéntanos qué navegador y dispositivo usas.');}}}
@@ -369,10 +470,17 @@
     // Entre paso y paso cede el turno para que las animaciones encadenadas (await) sigan como en tiempo real.
     async avanzar(s,fps=30){const n=Math.max(1,Math.round(s*fps));for(let i=0;i<n;i++){paso(1/fps);await new Promise(r=>setTimeout(r,0));}dibujar();return this.estado();},
     puntero(x,y){revisionPuntero=true;puntero.set(x,y);},
+    // Un punto de la parte de la carta que asoma: arriba y a la izquierda (la de su derecha la monta).
+    manoPantalla(i){const u=J.yo.mano[i];if(!u?.ranura)return null;camara.updateMatrixWorld(true);u.ranura.updateMatrixWorld(true);const v=new THREE.Vector3(-ANCHO*.3,ALTO*.28,0).applyMatrix4(u.ranura.matrixWorld).project(camara),b=esc.getBoundingClientRect();return {x:b.left+(v.x*.5+.5)*b.width,y:b.top+(.5-v.y*.5)*b.height};},
+    huecoPantalla(h){const v=campoPos('yo',h).project(camara),b=esc.getBoundingClientRect();return {x:b.left+(v.x*.5+.5)*b.width,y:b.top+(.5-v.y*.5)*b.height};},
+    // La carta que se mira: su índice, cuánto ha crecido y su rectángulo en pantalla (para ver que cabe entera).
+    mirada(){const u=viendo||mano.activa;if(!u)return {indice:-1,viendo:false};
+      return {indice:J.yo.mano.indexOf(u),id:u.id,viendo:!!viendo,escala:u.g.scale.x/S,...rectDe(u),apagada:u.g.userData.frente.material.color.r<.9,falta:falta.classList.contains('visto')?falta.textContent:'',etiquetasTapadas:etiquetas.filter(e=>e.el.classList.contains('tapada')).length};},
+    arrastrando:()=>arr.u?{id:arr.u.id,hueco:arr.h,zona:arr.zona}:null,
     jugar:i=>{jugar(i);},atacar:(a,b)=>{const A=J.yo.campo.find(u=>u.id===a),B=J.rival.campo.find(u=>u.id===b);atacar(A,B);},turnoRival:()=>{turnoRival();},demostracion:()=>{demostracion();},
     efecto(k,v){efectos[k]=v;const c=document.querySelector(`[data-efecto="${k}"]`);if(c)c.checked=v;aplicarEfectos();},
     vista(p){Object.assign(vista,p);},
-    estado:()=>({ocupado,mano:J.yo?.mano.map(u=>u.id),campo:J.yo?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),rival:J.rival?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),almaYo:J.yo?.alma,almaRival:J.rival?.alma,pd:J.yo?.pd,
+    estado:()=>({ocupado,apagadas:J.yo?.mano.filter(u=>u.g.userData.frente.material.color.r<.9).map(u=>u.id),huecos:J.yo&&[0,1,2,3,4].map(h=>J.yo.campo.find(u=>u.hueco===h)?.id||null),aviso:avisoMesa.classList.contains('visto')?avisoMesa.textContent:'',mano:J.yo?.mano.map(u=>u.id),campo:J.yo?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),rival:J.rival?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),almaYo:J.yo?.alma,almaRival:J.rival?.alma,pd:J.yo?.pd,
       cementerio:J.yo?.cementerio.length,cementerioRival:J.rival?.cementerio.length,manoRival:J.rival?.manoG.length,webgl2:true,hdr,muestras,simple,
       pases:[['render',pasoRender],['oclusion',oclusion],['enfoque',enfoque],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n)}),
     pantalla(x,y,z){const v=new THREE.Vector3(x,y,z).project(camara),b=esc.getBoundingClientRect();return {x:(v.x*.5+.5)*b.width,y:(.5-v.y*.5)*b.height,ancho:b.width,alto:b.height};},
