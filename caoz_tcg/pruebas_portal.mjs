@@ -22,6 +22,8 @@ const htmlPortal=readFileSync(new URL('./portal.html',import.meta.url),'utf8');
 assert.match(htmlPortal,/href="\/juego"/,'La portada ofrece una entrada explícita al juego publicado.');
 assert.match(htmlPortal,/href="\/develop"/,'La portada ofrece una entrada explícita a Develop.');
 assert.doesNotMatch(htmlPortal,/data-destino="Producción"/,'La publicación no se mezcla con las herramientas de Develop.');
+assert.match(htmlPortal,/href="https:\/\/beta\.caoz-tcg\.pages\.dev\/\?balance=candidata"/,'Develop enlaza la beta candidata de balance con su progreso aislado.');
+assert.match(htmlPortal,/>Beta de balance<\/strong>/,'La beta candidata queda identificada como puerta independiente.');
 const archivos=new Map([
   ['/portal','<main>Juego · Develop</main>'],['/portal.html','<main>Juego · Develop</main>'],['/portal.css','body{}'],['/portal.js','window.portal=true'],['/pwa-rescate','Rescate PWA'],['/pwa-rescate.html','Rescate PWA'],['/pwa-rescate.css','body{}'],['/pwa-rescate.js','window.rescate=true'],['/art/icono-192.png','icono'],
   ['/','Producción'],['/index.html','Producción'],['/movil.html','Móvil'],['/sw.js','Juego PWA'],['/estudio','Estudio de Cartas'],['/sonidos','Estudio de Sonidos'],['/fisico/index.html','Juego Físico']
