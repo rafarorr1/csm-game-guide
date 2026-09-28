@@ -3,15 +3,20 @@
    el navegador, con ratón y dedos de verdad:
      · modelos 3D con esqueleto (tres mallas con piel por personaje) que se
        animan, y pocas llamadas de dibujo aunque haya diez enemigos;
-     · clic para andar, clic para atacar (mantener pulsado sigue pegando);
-     · los enemigos avisan antes de golpear (y apartarse lo esquiva); los
-       kobolds apuntan con una línea y lanzan;
-     · Torbellino, Salto y Provocar hacen lo que dicen, y sin Furia no salen;
-     · el botín: la carta se levanta al pasar por encima, se lee entera y al
-       recogerla da su bonificación;
+     · control a lo Hades: WASD mueve, el clic ataca hacia el cursor y
+       mantenerlo encadena el combo de tres golpes;
+     · quién ataca y cuándo: cada ataque dibuja su zona exacta en el suelo,
+       el atacante lleva un «!» y un contorno rojo, se fija antes del golpe
+       (salir de la zona o esquivar lo evita), el golpe recibido marca de dónde
+       vino y los atacantes de fuera de la pantalla tienen su flecha; como
+       mucho dos atacan cuerpo a cuerpo a la vez;
+     · Q Torbellino, clic derecho Salto y E Provocar, y sin Furia no salen;
+     · el botín: la carta se levanta con el ratón encima (o al tocarla), se lee
+       entera y se recoge pisándola;
      · la partida entera (el piloto automático gana las cuatro oleadas y a Can,
        que suelta la Llave del Mago), la derrota y volver a empezar;
-     · táctil (palanca y botones), movimiento reducido y sin WebGL 2.
+     · táctil (palanca, Atacar con puntería automática y Esquiva), movimiento
+       reducido y sin WebGL 2.
    Usa Playwright. */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
@@ -75,71 +80,96 @@ try{
     assert.deepEqual(errores,[],caso+': sin errores');await contexto.close();}
   console.log('✓ Modelos 3D con esqueleto que se animan; plaza y personajes fundidos en pocas llamadas de dibujo');
 
-  // ---- Andar, atacar y los avisos de los enemigos ---------------------------------------
-  {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');
-    let s=await r('r.pantalla(4,0,0)');await pagina.mouse.click(s.x,s.y);await r('r.avanzar(1.5)');let e=await r('r.estado()');
-    assert.ok(Math.hypot(e.heroe.x-4,e.heroe.z)<.3,'Clic en el suelo: Adreida anda hasta allí ('+e.heroe.x+', '+e.heroe.z+')');
-    const g=await r('r.invocar("goblin",4,-1.8,true)');await r('r.avanzar(.1)');s=await r('r.enemigoPantalla(a[0])',g);
-    await pagina.mouse.move(s.x,s.y);await r('r.avanzar(.1)');e=await r('r.estado()');assert.ok(e.sobre==='enemigo:'+g&&/Goblin de Camino/.test(e.objetivo),'Al pasar por encima se marca el enemigo y su vida arriba ('+e.objetivo+')');
-    await pagina.mouse.click(s.x,s.y);await r('r.avanzar(.8)');e=await r('r.estado()');const G=e.enemigos.find(x=>x.id===g);
-    assert.ok(G.vida<G.vidaMax&&e.heroe.furia>0,'Clic en un enemigo: un tajo que le quita vida ('+G.vida+'/'+G.vidaMax+') y da Furia ('+e.heroe.furia+')');
-    await pagina.mouse.down();await r('r.avanzar(3)');await pagina.mouse.up();e=await r('r.estado()');
-    assert.ok(!e.enemigos.some(x=>x.id===g),'Manteniendo pulsado sigue pegando hasta matarlo; muere, se deshace en brasas y desaparece');
-    // El goblin avisa (levanta el hacha) antes de pegar; el golpe llega después del aviso.
-    await r('r.heroe({x:0,z:0,alma:140})');const a=await r('r.invocar("goblin",0,-1.3,false)');await r('r.despertar(a[0])',a);
-    const alma0=(await r('r.estado()')).heroe.alma;let avisoT=null,golpeT=null;for(let t=0;t<3&&golpeT===null;t+=1/30){e=await r('r.avanzar(1/30)');const x=e.enemigos.find(x=>x.id===a);if(x?.estado==='aviso'&&avisoT===null)avisoT=t;if(e.heroe.alma<alma0)golpeT=t;}
-    assert.ok(avisoT!==null&&golpeT!==null&&golpeT-avisoT>=.45,'El goblin avisa antes de pegar ('+(golpeT-avisoT).toFixed(2)+' s de aviso)');
-    // Apartarse durante el aviso esquiva el golpe.
-    await r('r.avanzar(1)');for(let t=0;t<3;t+=1/30){e=await r('r.avanzar(1/30)');if(e.enemigos.find(x=>x.id===a)?.estado==='aviso')break;}
-    await r('r.heroe({alma:140})');
-    await r('r.ordenar("ir",6,4)');await r('r.avanzar(.8)');e=await r('r.estado()');assert.equal(e.heroe.alma,140,'Apartarse durante el aviso esquiva el golpe');
-    // El kobold se queda lejos, apunta (se ve la línea) y lanza.
-    await r('r.matar(a[0])',a);await r('r.avanzar(2)');await r('r.heroe({x:0,z:4,alma:140})');const k=await r('r.invocar("kobold",0,-4,false)');await r('r.despertar(a[0])',k);
-    let linea=false,lanza=false,herida=false;for(let t=0;t<6&&!herida;t+=1/30){e=await r('r.avanzar(1/30)');linea||=e.marcas.includes('linea');lanza||=e.lanzas>0;herida=e.heroe.alma<140;}
-    assert.ok(linea&&lanza&&herida,'El kobold apunta con una línea en el suelo, lanza y la lanza hiere');
-    assert.deepEqual(errores,[],'Sin errores al andar y combatir');await contexto.close();}
-  console.log('✓ Clic para andar y atacar (mantener sigue pegando); avisos antes de cada golpe, esquivar y lanzas');
+  // ---- Control a lo Hades: WASD, atacar hacia el cursor, combo ----------------------------
+  // Espera paso a paso hasta que se cumpla una condición sobre el estado (máximo s segundos).
+  const hasta=async(r,cond,s=4)=>{let e;for(let t=0;t<s;t+=1/30){e=await r('r.avanzar(1/30)');if(cond(e))return e;}return e;};
+  {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:0})');
+    const s0=await r('r.heroePantalla(1)');await pagina.mouse.move(s0.x,s0.y);
+    await pagina.keyboard.down('KeyD');let e=await r('r.avanzar(1)');await pagina.keyboard.up('KeyD');
+    assert.ok(e.heroe.x>4.5&&Math.abs(e.heroe.z)<.3,'D la lleva a la derecha ('+e.heroe.x+', '+e.heroe.z+')');
+    await pagina.keyboard.down('KeyW');await pagina.keyboard.down('KeyA');e=await r('r.avanzar(.6)');await pagina.keyboard.up('KeyW');await pagina.keyboard.up('KeyA');
+    assert.ok(e.heroe.z<-2&&e.heroe.x<4,'W+A: arriba a la izquierda, en diagonal ('+e.heroe.x+', '+e.heroe.z+')');
+    // Mira al oeste y el goblin está al este: el clic ataca hacia el cursor, no hacia donde mira.
+    await r('r.heroe({x:0,z:0,dir:-Math.PI/2})');const g=await r('r.invocar("goblin",1.7,0,true)');await r('r.avanzar(.1)');let s=await r('r.enemigoPantalla(a[0])',g);
+    await pagina.mouse.move(s.x,s.y);await r('r.avanzar(.1)');e=await r('r.estado()');assert.ok(e.sobre==='enemigo:'+g&&/Goblin de Camino/.test(e.objetivo),'Al pasar el ratón por encima se ve su nombre y su vida arriba');
+    await pagina.mouse.down();await r('r.avanzar(.1)');await pagina.mouse.up();e=await r('r.avanzar(.4)');
+    assert.ok(e.enemigos.find(x=>x.id===g).vida<34&&Math.abs(e.heroe.dir-Math.PI/2)<.3,'Clic: el tajo sale hacia el cursor (se gira al este) y le quita vida');
+    // Mantener pulsado: combo de tres golpes (tajo, revés y estocada).
+    await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');await r('r.heroe({x:0,z:0})');const q=await r('r.invocar("saqueador",1.9,0,true)');await r('r.avanzar(.1)');s=await r('r.enemigoPantalla(a[0])',q);
+    await pagina.mouse.move(s.x,s.y);await pagina.mouse.down();const combos=new Set();for(let i=0;i<40;i++){e=await r('r.avanzar(1/30)');if(e.heroe.estado==='golpe')combos.add(e.heroe.combo);}await pagina.mouse.up();
+    assert.deepEqual([...combos].sort(),[0,1,2],'Manteniendo el clic encadena el combo de tres golpes');
+    assert.ok(e.enemigos.find(x=>x.id===q).vida<70,'…y el combo hace daño de verdad ('+e.enemigos.find(x=>x.id===q).vida+'/100)');
+    await r('r.matar(a[0])',q);
+    assert.deepEqual(errores,[],'Sin errores con el control');await contexto.close();}
+  console.log('✓ WASD para moverse, ataque hacia el cursor y combo de tres golpes manteniendo el clic');
+
+  // ---- Quién ataca y cuándo: la zona en el suelo, el «!», el contorno rojo y esquivar --------
+  {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:0,alma:140})');
+    const g=await r('r.invocar("goblin",0,-1.4,false)');await r('r.despertar(a[0])',g);
+    let e=await hasta(r,e=>e.enemigos[0].ataque),t0=0;const G=(x=e)=>x.enemigos.find(y=>y.id===g);
+    assert.ok(G().ataque?.forma==='cono'&&e.alertas===1&&G().borde>.2,'Al empezar a atacar dibuja su cono en el suelo, lleva un «!» y se le enciende el contorno');
+    let fijadoT=null,golpeT=null;for(let t=0;t<2&&golpeT===null;t+=1/30){e=await r('r.avanzar(1/30)');if(G()?.ataque?.fijado&&fijadoT===null)fijadoT=t;if(e.heroe.alma<140)golpeT=t;}
+    assert.ok(fijadoT!==null&&golpeT!==null&&golpeT-fijadoT>.18&&golpeT>.5,'Se fija antes del golpe (margen para reaccionar: '+(golpeT-fijadoT).toFixed(2)+' s; aviso total '+golpeT.toFixed(2)+' s)');
+    assert.ok(e.heroe.golpeDe===g&&e.golpeDir>.5,'Al recibir el golpe se marca quién fue y de qué lado vino');
+    // Salir del cono cuando se fija: no golpea.
+    await r('r.heroe({alma:140})');e=await hasta(r,x=>G(x)?.ataque?.fijado);await pagina.keyboard.down('KeyS');e=await r('r.avanzar(.5)');await pagina.keyboard.up('KeyS');
+    assert.equal(e.heroe.alma,140,'Salir de la zona cuando se fija esquiva el golpe');
+    // Esquivar a través: invulnerable un instante, aunque la esquiva la deje dentro.
+    await r('r.heroe({x:0,z:0,alma:140})');await r('r.enemigo(a[0],{x:0,z:-1.4})',g);e=await hasta(r,x=>G(x)?.ataque&&G(x).ataque.k>.85);await pagina.keyboard.press('Space');e=await r('r.avanzar(.4)');
+    assert.ok(e.heroe.alma===140&&e.heroe.esquivados>=1,'Esquivar justo antes del golpe lo atraviesa («¡Esquivado!»)');
+    // Nunca más de dos atacando cuerpo a cuerpo a la vez.
+    await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');await r('r.heroe({x:0,z:0,alma:5000})');const ids=[];for(let i=0;i<5;i++)ids.push(await r('r.invocar("goblin",Math.cos(a[0])*1.6,Math.sin(a[0])*1.6,false)',i*1.25));
+    for(const id of ids)await r('r.despertar(a[0])',id);let max=0;for(let i=0;i<120;i++){e=await r('r.avanzar(1/30)');max=Math.max(max,e.enemigos.filter(x=>x.ataque).length);}
+    assert.ok(max>=1&&max<=2,'Rodeada por cinco goblins, como mucho dos avisan a la vez ('+max+')');
+    for(const id of ids)await r('r.matar(a[0])',id);await r('r.avanzar(1.5)');
+    // El kobold desde fuera de la pantalla (detrás de la cámara): flecha en el borde y su línea; la lanza sigue la línea.
+    await r('r.heroe({x:0,z:-6,alma:140})');const k=await r('r.invocar("kobold",0,5,false)');await r('r.despertar(a[0])',k);
+    e=await hasta(r,e=>e.enemigos.find(x=>x.id===k)?.ataque,6);assert.ok(e.enemigos.find(x=>x.id===k).ataque.forma==='linea'&&e.flechas===1,'El kobold de fuera de la pantalla apunta con su línea y una flecha en el borde lo señala');
+    e=await hasta(r,e=>e.heroe.alma<140,3);assert.ok(e.heroe.alma<140&&e.heroe.golpeDe===k,'Quedarse en la línea: la lanza la alcanza');
+    await r('r.heroe({alma:140})');e=await hasta(r,e=>e.enemigos.find(x=>x.id===k)?.ataque?.fijado,6);await pagina.keyboard.down('KeyA');e=await r('r.avanzar(1)');await pagina.keyboard.up('KeyA');
+    assert.equal(e.heroe.alma,140,'Apartarse de la línea cuando se fija: la lanza pasa de largo');
+    assert.deepEqual(errores,[],'Sin errores con los avisos');await contexto.close();}
+  console.log('✓ Quién ataca y cuándo: zona en el suelo, «!», contorno, dirección del golpe, flechas en el borde; apartarse o esquivar lo evita');
 
   // ---- Habilidades --------------------------------------------------------------------
   {const {contexto,errores,pagina,r}=await abrir(navegador);await r('r.oleadas(false)');
-    await r('r.heroe({x:0,z:0,furia:0})');assert.equal(await r('r.usar("torbellino")'),false,'Sin Furia no hay Torbellino');
+    await r('r.heroe({x:0,z:0,furia:0})');await pagina.keyboard.press('KeyQ');let e=await r('r.avanzar(.1)');assert.notEqual(e.heroe.estado,'torbellino','Sin Furia no hay Torbellino');
     assert.ok(/Furia/.test(await pagina.textContent('#tostada')),'…y lo dice');
     const ids=[];for(let i=0;i<3;i++)ids.push(await r('r.invocar("goblin",Math.cos(a[0])*1.8,Math.sin(a[0])*1.8,true)',i*2.1));
-    await r('r.heroe({furia:100})');assert.equal(await r('r.usar("torbellino",0,0)'),true);let e=await r('r.avanzar(1.5)');
-    assert.ok(ids.every(id=>{const x=e.enemigos.find(x=>x.id===id);return !x||x.vida<x.vidaMax;}),'Torbellino hiere a todos los que la rodean');
+    await r('r.heroe({furia:100})');await pagina.keyboard.press('KeyQ');e=await r('r.avanzar(1.5)');
+    assert.ok(ids.every(id=>{const x=e.enemigos.find(x=>x.id===id);return !x||x.vida<x.vidaMax;}),'Q: el Torbellino hiere a todos los que la rodean');
     for(const id of ids)await r('r.matar(a[0])',id);await r('r.avanzar(2)');
     const lejos=[];for(let i=0;i<3;i++)lejos.push(await r('r.invocar("goblin",6+a[0]*.8,-.5+a[0]*.6,true)',i));
-    await r('r.heroe({x:0,z:0,furia:100})');assert.equal(await r('r.usar("salto",6.5,0)'),true);e=await r('r.avanzar(.35)');const enAire=e.heroe.alto;e=await r('r.avanzar(.5)');
-    assert.ok(enAire>1&&Math.hypot(e.heroe.x-6.5,e.heroe.z)<1.2,'Salto: vuela ('+enAire+' m) y cae donde apuntas');
-    assert.ok(lejos.every(id=>{const x=e.enemigos.find(x=>x.id===id);return !x||x.vida<x.vidaMax&&['aturdido','muere'].includes(x.estado);}),'…y aturde y hiere al caer ('+e.enemigos.map(x=>x.estado).join(', ')+')');
-    assert.ok(e.heroe.cd.salto>3,'…y queda en recarga');
+    await r('r.heroe({x:0,z:0,furia:100})');await r('r.avanzar(.1)');const s=await r('r.pantalla(6.5,0,0)');await pagina.mouse.move(s.x,s.y);await pagina.mouse.down({button:'right'});await pagina.mouse.up({button:'right'});
+    e=await r('r.avanzar(.35)');const enAire=e.heroe.alto;e=await r('r.avanzar(.5)');
+    assert.ok(enAire>1&&Math.hypot(e.heroe.x-6.5,e.heroe.z)<1.2,'Clic derecho: Salto al cursor ('+enAire+' m de alto)');
+    assert.ok(lejos.every(id=>{const x=e.enemigos.find(x=>x.id===id);return !x||x.vida<x.vidaMax&&['aturdido','muere'].includes(x.estado);}),'…que aturde y hiere al caer');
     for(const id of lejos)await r('r.matar(a[0])',id);await r('r.avanzar(2)');
     const rodean=[];for(let i=0;i<3;i++)rodean.push(await r('r.invocar("goblin",Math.cos(a[0])*7,Math.sin(a[0])*7,true)',i*2.1));
-    await r('r.heroe({x:0,z:0,furia:0})');assert.equal(await r('r.usar("provocar")'),true);e=await r('r.avanzar(.8)');
+    await r('r.heroe({x:0,z:0,furia:0})');await pagina.keyboard.press('KeyE');e=await r('r.avanzar(.8)');
     const dist=rodean.map(id=>{const x=e.enemigos.find(x=>x.id===id);return Math.hypot(x.x,x.z);});
-    assert.ok(e.heroe.escudo>2&&e.heroe.furia>=30&&dist.every(d=>d<6.5),'Provocar: atrae a los enemigos ('+dist.map(d=>d.toFixed(1)).join(', ')+'), da Furia y reduce el daño');
+    assert.ok(e.heroe.escudo>2&&e.heroe.furia>=30&&dist.every(d=>d<6.5),'E: Provocar atrae a los enemigos, da Furia y reduce el daño');
     assert.deepEqual(errores,[],'Sin errores con las habilidades');await contexto.close();}
-  console.log('✓ Torbellino, Salto y Provocar; sin Furia no salen');
+  console.log('✓ Q Torbellino, clic derecho Salto al cursor, E Provocar; sin Furia no salen');
 
-  // ---- Botín: cartas físicas que se leen al pasar por encima ------------------------------
+  // ---- Botín: se lee con el ratón encima y se recoge pisándolo -------------------------------
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:3,dir:0})');
-    await r('r.soltar("mazo","dorado",1.5,6)');await r('r.avanzar(.5)');let s=await r('r.botinPantalla(0)');const atq=(await r('r.estado()')).heroe.atq;
+    await r('r.soltar("mazo","dorado",1.5,6)');await r('r.avanzar(.5)');const s=await r('r.botinPantalla(0)');const atq=(await r('r.estado()')).heroe.atq;
     await pagina.mouse.move(s.x,s.y);await r('r.avanzar(.6)');let e=await r('r.estado()');const c=await r('r.rectBotin(0)');
-    assert.ok(e.botines[0].mirada>.95&&e.botines[0].escala>3,'Al pasar por encima la carta se levanta y crece ('+e.botines[0].escala+'×)');
-    assert.ok(c.izquierda>=0&&c.derecha<=c.ancho&&c.arriba>=0&&c.abajo<=c.alto&&c.abajo-c.arriba>c.alto*.28,'…entera en pantalla y grande para leerla ('+Math.round(c.abajo-c.arriba)+' px de alto)');
-    assert.ok(/Mazo de Brock/.test(e.botines[0].nombre)&&/Dorado/.test(e.botines[0].nombre)&&/ATQ/.test(e.botines[0].nombre),'…con su nombre, edición y bonificación ('+e.botines[0].nombre+')');
-    await pagina.mouse.click(s.x,s.y);await r('r.avanzar(1.5)');e=await r('r.estado()');
-    assert.ok(e.heroe.botin.includes('mazo/dorado')&&e.heroe.atq>atq&&!e.botines.length,'Clic: Adreida va a por ella, la recoge y gana ATQ ('+atq+' → '+e.heroe.atq+')');
+    assert.ok(e.botines[0].mirada>.95&&e.botines[0].escala>3,'Con el ratón encima la carta se levanta y crece ('+e.botines[0].escala+'×)');
+    assert.ok(c.izquierda>=0&&c.derecha<=c.ancho&&c.arriba>=0&&c.abajo<=c.alto&&c.abajo-c.arriba>c.alto*.28,'…entera en pantalla y grande para leerla ('+Math.round(c.abajo-c.arriba)+' px)');
+    assert.ok(/Mazo de Brock/.test(e.botines[0].nombre)&&/Dorado/.test(e.botines[0].nombre)&&/ATQ/.test(e.botines[0].nombre),'…con su nombre, edición y bonificación');
+    await pagina.mouse.move(5,5);await r('r.control({mov:[.45,.9]})');e=await r('r.avanzar(1.2)');await r('r.control(null)');e=await r('r.avanzar(.6)');
+    assert.ok(e.heroe.botin.includes('mazo/dorado')&&e.heroe.atq>atq&&!e.botines.length,'Pisarla la recoge y da ATQ ('+atq+' → '+e.heroe.atq+')');
     assert.equal(await pagina.locator('#botin figure').count(),1,'La carta recogida aparece en la lista del botín');
     assert.deepEqual(errores,[],'Sin errores con el botín');await contexto.close();}
-  console.log('✓ Botín en cartas físicas: se levanta, se lee entera y al recogerla da su bonificación');
+  console.log('✓ Botín en cartas físicas: se lee con el ratón encima y se recoge pisándolo');
 
   // ---- La partida entera con el piloto automático; la derrota --------------------------
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(true)');await r('r.piloto(true)');let e;
     for(let i=0;i<40;i++){e=await r('r.avanzar(5)');if(e.finVisible||!e.heroe.vivo)break;}
-    assert.ok(e.heroe.vivo&&e.fin&&e.finVisible&&/Tomsage resiste/.test(e.finTitulo),'El piloto gana las cuatro oleadas y a Can ('+e.heroe.alma+'/'+e.heroe.almaMax+' de Alma)');
+    assert.ok(e.heroe.vivo&&e.fin&&e.finVisible&&/Tomsage resiste/.test(e.finTitulo),'El piloto (que sólo lee los avisos) gana las cuatro oleadas y a Can ('+e.heroe.alma+'/'+e.heroe.almaMax+' de Alma)');
     assert.ok(e.heroe.botin.includes('llavemago/dorado')&&e.heroe.llaves===1,'Can suelta la Llave del Mago dorada y se recoge ('+e.heroe.botin.length+' cartas)');
-    // Derrota: con poca Alma y un saqueador encima cae; «Volver a empezar» la levanta.
     await r('r.reiniciar()');await r('r.oleadas(false)');await r('r.piloto(false)');await r('r.heroe({x:0,z:0,alma:8})');const x=await r('r.invocar("saqueador",0,-1.6,false)');await r('r.despertar(a[0])',x);
     for(let i=0;i<8;i++){e=await r('r.avanzar(.5)');if(e.finVisible)break;}
     assert.ok(!e.heroe.vivo&&e.finVisible&&/Has caído/.test(e.finTitulo),'Sin Alma, Adreida cae y se ofrece volver a empezar');
@@ -148,19 +178,21 @@ try{
     assert.deepEqual(errores,[],'Sin errores en la partida');await contexto.close();}
   console.log('✓ La partida entera: cuatro oleadas, Can y la Llave del Mago; la derrota y volver a empezar');
 
-  // ---- Táctil: palanca, botones y tocar el botín ---------------------------------------
+  // ---- Táctil: palanca, Atacar (apunta solo), Esquiva y leer una carta tocándola ---------------
   {const {contexto,pagina,errores,r}=await abrir(navegador,{ancho:390,alto:780,tactil:true});await r('r.oleadas(false)');
     let e=await r('r.estado()');assert.ok(e.tactil&&await pagina.isVisible('#palanca'),'En táctil aparece la palanca');
     const p=await pagina.locator('#palanca').boundingBox(),cx=p.x+p.width/2,cy=p.y+p.height/2;
     await pagina.mouse.move(cx,cy);await pagina.mouse.down();await pagina.mouse.move(cx,cy-p.height*.45,{steps:4});await r('r.avanzar(1)');await pagina.mouse.up();e=await r('r.estado()');
-    assert.ok(e.heroe.z<2.5&&Math.abs(e.heroe.x)<.6,'La palanca hacia arriba la lleva hacia el fondo de la pantalla ('+e.heroe.x+', '+e.heroe.z+')');
-    const g=await r('r.invocar("goblin",a[0],a[1]-1.8,true)',e.heroe.x,e.heroe.z);await pagina.tap('[data-hab="tajo"]');await r('r.avanzar(.8)');e=await r('r.estado()');
-    assert.ok(e.enemigos.find(x=>x.id===g).vida<34,'El botón de Tajo ataca al enemigo más cercano');
-    await r('r.matar(a[0])',g);await r('r.avanzar(2)');await r('r.soltar("arco","foil",a[0]+1.5,a[1]+1)',e.heroe.x,e.heroe.z);await r('r.avanzar(.5)');const s=await r('r.botinPantalla(0)');
-    await pagina.touchscreen.tap(s.x,s.y);await r('r.avanzar(1.5)');e=await r('r.estado()');assert.ok(e.heroe.botin.includes('arco/foil'),'Tocar una carta del suelo la recoge');
-    await r('r.heroe({furia:100})');await pagina.tap('[data-hab="torbellino"]');e=await r('r.avanzar(.2)');assert.equal(e.heroe.estado,'torbellino','Los botones lanzan las habilidades');
+    assert.ok(e.heroe.z<0&&Math.abs(e.heroe.x)<.6,'La palanca hacia arriba la lleva al fondo de la plaza ('+e.heroe.x+', '+e.heroe.z+')');
+    const g=await r('r.invocar("goblin",a[0]+1.7,a[1],true)',e.heroe.x,e.heroe.z);await r('r.avanzar(.1)');await pagina.tap('[data-hab="tajo"]');await r('r.avanzar(.6)');e=await r('r.estado()');
+    assert.ok(e.enemigos.find(x=>x.id===g).vida<34,'Atacar apunta solo al enemigo más cercano');
+    await r('r.matar(a[0])',g);await r('r.avanzar(2)');const x0=e.heroe.x;await pagina.tap('[data-hab="esquiva"]');e=await r('r.avanzar(.3)');
+    assert.ok(e.heroe.cd.esquiva>0&&e.heroe.x!==x0,'El botón de Esquiva esquiva');
+    await r('r.soltar("arco","foil",a[0],a[1]+2.5)',e.heroe.x,e.heroe.z);await r('r.avanzar(.5)');const s=await r('r.botinPantalla(0)');
+    await pagina.touchscreen.tap(s.x,s.y);e=await r('r.avanzar(.6)');assert.ok(e.botines[0].mirada>.9,'Tocar una carta del suelo la levanta para leerla');
+    await r('r.control({mov:[0,1]})');await r('r.avanzar(.8)');await r('r.control(null)');e=await r('r.avanzar(.6)');assert.ok(e.heroe.botin.includes('arco/foil'),'…y pisándola se recoge');
     assert.deepEqual(errores,[],'Sin errores en táctil');await contexto.close();}
-  console.log('✓ Táctil: palanca, botones de habilidad y tocar el botín');
+  console.log('✓ Táctil: palanca, Atacar con puntería automática, Esquiva y leer el botín tocándolo');
 
   // ---- Uso real: arranca solo, marcador y movimiento reducido; sin WebGL 2 ---------------
   for(const reducido of [false,true]){const {contexto,pagina,errores}=await abrir(navegador,{captura:false,reducido});

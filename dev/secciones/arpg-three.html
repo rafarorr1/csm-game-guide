@@ -20,7 +20,7 @@
   <header class="apCabecera">
     <p class="apEtiqueta">PROYECTO PARALELO · ARPG EN THREE.JS · HITO 1 (UNA SALA JUGABLE)</p>
     <h1 id="apTitulo">Las Grietas del Editor</h1>
-    <p>Tomsage está bajo asedio. Adreida, la Guerrera Semiorca, defiende la plaza contra cuatro oleadas hasta que entra Can, el de los Goblins. <b>Clic</b> para andar y atacar (mantén pulsado para seguir el cursor; con Mayús, tajo en el sitio). <b>1 / Q / clic derecho</b> Torbellino · <b>2 / W</b> Salto · <b>3 / E</b> Provocar. El botín cae como cartas físicas: pasa por encima para leerlas y haz clic para recogerlas. En táctil, la palanca de la izquierda y los botones.</p>
+    <p>Tomsage está bajo asedio. Adreida, la Guerrera Semiorca, defiende la plaza contra cuatro oleadas hasta que entra Can, el de los Goblins. <b>WASD</b> para moverte y <b>clic izquierdo</b> para atacar hacia el cursor (mantenlo: combo de tres golpes). <b>Espacio</b> esquiva (un instante invulnerable) · <b>clic derecho</b> Salto al cursor · <b>Q</b> Torbellino · <b>E</b> Provocar. Cada enemigo que va a atacar se enciende en rojo, lleva un «!» y dibuja en el suelo la zona exacta que golpeará, que se llena hasta el golpe; cuando se fija ya no gira: sal de ella o esquiva. El botín se lee pasando el ratón por encima y se recoge pisándolo. En táctil, palanca y botones.</p>
   </header>
   <div class="apControles" role="group" aria-label="Acciones">
     <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
@@ -36,6 +36,8 @@
     <canvas id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>
+    <div class="apGolpeDir" id="golpeDir"><i></i></div>
+    <div class="apFlechas" id="flechas"></div>
     <p class="apOleada" id="oleada"></p>
     <div class="apObjetivo" id="objetivo" hidden><b id="objNombre"></b><div class="apBarra"><i id="objVida"></i></div></div>
     <div class="apBanner" id="banner" role="status"></div>
@@ -46,10 +48,11 @@
       <div class="apOrbe apAlma" id="orbeAlma"><i></i><b id="almaTxt"></b><small>Alma</small></div>
       <div class="apHabilidades" role="group" aria-label="Habilidades">
         <img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida">
-        <button type="button" data-hab="tajo" title="Tajo"><span>⚔</span><small>Tajo</small><kbd>Clic</kbd></button>
-        <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>1 · Q</kbd><em>30</em></button>
-        <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>2 · W</kbd><em>25</em></button>
-        <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>3 · E</kbd></button>
+        <button type="button" data-hab="tajo" title="Atacar (mantener: combo)"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
+        <button type="button" data-hab="esquiva" title="Esquiva"><span>»</span><small>Esquiva</small><kbd>Espacio</kbd></button>
+        <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
+        <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
+        <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>E</kbd></button>
       </div>
       <div class="apOrbe apFuria" id="orbeFuria"><i></i><b id="furiaTxt"></b><small>Furia</small></div>
     </div>

@@ -7,10 +7,10 @@
        piezas se funden en una sola malla con piel (SkinnedMesh) por material,
        cada una atada a su hueso: tres llamadas de dibujo por personaje.
      · Tres materiales por personaje (piel y tela, metal, brillo de los ojos),
-       con un destello blanco al recibir un golpe y el disolverse en brasas al
-       morir inyectados en su shader.
-     · posar(m,a) pone la pose de cada animación (quieto, andar, golpe, aviso,
-       torbellino, salto, grito, lanzar, aturdido, muerte) a partir de un
+       con un destello al recibir un golpe, un contorno de luz (el aviso de que
+       va a atacar) y el disolverse en brasas al morir inyectados en su shader.
+     · posar(m,a) pone la pose de cada animación (quieto, andar, golpe, revés,
+       estocada, esquiva, aviso, torbellino, salto, grito, lanzar, aturdido, muerte) a partir de un
        reloj: no hay clips, todo es procedural.
    CAOZ_ARPG_MODELOS.fabrica(THREE) → {crear(tipo), posar(m,a), TIPOS}. */
 'use strict';
@@ -46,16 +46,17 @@
 
     // Los materiales de un personaje: comparten los uniformes del destello y del disolverse.
     function materiales(){
-      const u={uDisuelve:{value:0},uDestello:{value:0},uColorD:{value:new THREE.Color(1,1,1)}};
+      const u={uDisuelve:{value:0},uDestello:{value:0},uColorD:{value:new THREE.Color(1,1,1)},uBorde:{value:0},uColorB:{value:new THREE.Color(1,.2,.05)}};
       const hacer=(p,brillo=0)=>{const m=new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,...p});
         m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,u,{uBrillo:{value:brillo}});
           sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vPosD;').replace('#include <begin_vertex>','#include <begin_vertex>\nvPosD=position;');
           sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
-uniform float uDisuelve,uDestello,uBrillo;uniform vec3 uColorD;varying vec3 vPosD;
+uniform float uDisuelve,uDestello,uBrillo,uBorde;uniform vec3 uColorD,uColorB;varying vec3 vPosD;
 float azarM(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
 float ruidoM(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(azarM(i),azarM(i+vec3(1,0,0)),f.x),mix(azarM(i+vec3(0,1,0)),azarM(i+vec3(1,1,0)),f.x),f.y),mix(mix(azarM(i+vec3(0,0,1)),azarM(i+vec3(1,0,1)),f.x),mix(azarM(i+vec3(0,1,1)),azarM(i+vec3(1,1,1)),f.x),f.y),f.z);}`)
             .replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat quemaM=ruidoM(vPosD*14.)*.65+ruidoM(vPosD*37.)*.35;if(uDisuelve>0.&&quemaM<uDisuelve*1.15-.08)discard;')
             .replace('#include <opaque_fragment>',`outgoingLight+=vColor.rgb*uBrillo;
+float fresM=pow(1.-abs(dot(normalize(vViewPosition),normal)),2.);outgoingLight+=uColorB*uBorde*(fresM*4.+.12);
 outgoingLight=mix(outgoingLight,uColorD*1.6,uDestello);
 if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));outgoingLight=mix(outgoingLight,vec3(5.,1.6,.3),bordeM);}
 #include <opaque_fragment>`);};
@@ -241,6 +242,24 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.piernaD.rotation.x=.3*car-.1*gol-.2*rec;H.piernaI.rotation.x=-.35*car+.35*rec;H.rodillaI.rotation.x=.4*car-.4*rec;H.rodillaD.rotation.x=.25;H.cuerpo.position.y=-.05*car*esc+.05*rec*esc;
           H.torso.rotation.x=.12*car+.1*gol-.1*rec;
           if(a.anim==='aviso')H.cuerpo.position.x=Math.sin(t*40)*.012;break;}
+        // Revés: el segundo golpe del combo, de izquierda a derecha (empieza donde acabó el tajo).
+        case 'reves':{const car=tramo(k,0,.3),gol=tramo(k,.32,.55),rec=tramo(k,.62,1),giro=.75*car-1.55*gol+.8*rec;
+          H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.35;
+          H.brazoD.rotation.x=-.15-1.25*car+.05*gol+1.35*rec;H.brazoD.rotation.z=-.18+.35*car-.75*gol+.4*rec;H.brazoD.rotation.y=.9*car-1.6*gol+.7*rec;
+          H.anteD.rotation.x=-.55-.9*car+.6*gol+.3*rec;H.manoD.rotation.y=-.5*car+.8*gol-.3*rec;
+          H.brazoI.rotation.x=-.3*car+.3*rec;H.brazoI.rotation.z=.18+.3*gol-.3*rec;
+          H.piernaI.rotation.x=.25*car-.25*rec;H.piernaD.rotation.x=-.3*car+.3*rec;H.rodillaD.rotation.x=.35*car-.35*rec+.1;H.cuerpo.position.y=-.04*car*esc+.04*rec*esc;break;}
+        // Estocada: el tercer golpe, se echa atrás y embiste con la hoja por delante.
+        case 'estocada':{const car=tramo(k,0,.4),emp=tramo(k,.42,.56),rec=tramo(k,.66,1),e2=emp*(1-rec);
+          H.torso.rotation.y=-.7*car*(1-emp)+.35*e2;H.torso.rotation.x=.05-.1*car+.35*e2;
+          H.brazoD.rotation.x=-.15+.45*car*(1-emp)-1.45*e2;H.brazoD.rotation.z=-.18-.2*car;H.anteD.rotation.x=-.55-1.1*car*(1-emp)+.45*e2;H.manoD.rotation.x=1.3*e2+.3*car*(1-emp);
+          H.brazoI.rotation.x=.6*e2-.4*car*(1-emp);H.brazoI.rotation.z=.18+.4*e2;
+          H.piernaI.rotation.x=-.9*e2-.2*car*(1-emp);H.rodillaI.rotation.x=.7*e2+.3*car;H.piernaD.rotation.x=.7*e2+.2*car*(1-emp);H.rodillaD.rotation.x=.2+.3*e2;
+          H.cuerpo.position.y=-.14*e2*esc-.05*car*(1-emp)*esc;break;}
+        // Esquiva: rueda corta, agachada y hacia delante.
+        case 'esquiva':{const e=Math.sin(Math.PI*Math.min(1,k));H.torso.rotation.x=.25+.55*e;H.cabeza.rotation.x=.2*e;H.cuerpo.position.y=-.22*e*esc;
+          H.piernaI.rotation.x=-.9*e;H.rodillaI.rotation.x=1.1*e;H.piernaD.rotation.x=.7*e;H.rodillaD.rotation.x=.9*e;
+          H.brazoI.rotation.x=.9*e;H.brazoD.rotation.x=.7*e;H.anteD.rotation.x=-.9;H.brazoI.rotation.z=.5*e;H.brazoD.rotation.z=-.5*e;break;}
         // Torbellino: brazos abiertos, la hoja extendida; el giro del cuerpo lo pone el juego.
         case 'torbellino':H.brazoD.rotation.z=-1.35;H.brazoD.rotation.x=-.2;H.anteD.rotation.x=-.15;H.manoD.rotation.y=-1.3;H.manoD.rotation.x=.2;H.brazoI.rotation.z=1.1;H.anteI.rotation.x=-.2;
           H.torso.rotation.x=.18;H.piernaI.rotation.x=-.35;H.piernaD.rotation.x=.3;H.rodillaI.rotation.x=.5;H.rodillaD.rotation.x=.45;H.cuerpo.position.y=-.1*esc;H.cabeza.rotation.x=.15;break;

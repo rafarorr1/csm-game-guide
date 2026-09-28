@@ -356,20 +356,27 @@ oleadas, y al final entra Can, el de los Goblins.
   - adoquines con relieve, casas con entramado (tres arden), el pozo, un carro, barriles y braseros;
   - la luna con sombras, la luz que lleva Adreida (el radio de luz de Diablo) y el fuego;
   - todo lo estático se funde por material.
-- **Combate:**
-  - clic para andar y atacar; mantén pulsado para seguir el cursor o seguir pegando;
-  - Torbellino (1/Q o clic derecho), Salto (2/W) y Provocar (3/E);
-  - la Furia sube al golpear y al recibir golpes;
-  - los enemigos avisan antes de pegar, así que apartarse esquiva el golpe;
-  - los kobolds apuntan con una línea y lanzan;
-  - Can avisa su golpazo con un círculo que se llena.
+- **Control a lo Hades:**
+  - WASD (o flechas) mueve;
+  - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tajo, revés y estocada;
+  - con el ratón encima de un enemigo se apunta a él;
+  - Espacio esquiva (un instante invulnerable; atravesar un golpe da «¡Esquivado!» y Furia);
+  - clic derecho, Salto al cursor; Q, Torbellino; E, Provocar;
+  - la Furia sube al golpear y al recibir golpes.
+- **Quién ataca y cuándo:**
+  - cada ataque dibuja en el suelo su zona exacta (cono, línea del kobold o círculo del golpazo de Can), que se llena hasta el golpe; lo que se ve es lo que golpea;
+  - el atacante lleva un «!» y un contorno rojo que crece;
+  - en el último tramo se fija: deja de girar, la zona y el «!» se encienden, y es el momento de salir o esquivar;
+  - quien ataca desde fuera de la pantalla tiene su flecha en el borde;
+  - al recibir un golpe, un arco rojo en el borde marca de dónde vino y el atacante destella;
+  - como mucho dos enemigos atacan cuerpo a cuerpo a la vez.
 - **Botín:**
   - los Objetos del juego caen como cartas físicas (`three-carta.js`) en Normal, Foil o Dorado, con su columna de luz;
-  - al pasar por encima la carta se levanta y crece para leerla;
-  - al recogerla da su bonificación;
+  - con el ratón encima (o al tocarla) la carta se levanta y crece para leerla;
+  - se recoge pisándola y da su bonificación;
   - Can suelta la Llave del Mago dorada (la llave de la primera Grieta, para el Hito 3).
-- **Táctil:** palanca y botones de habilidad.
-- **Demostración:** juega sola; es el piloto automático que usan las pruebas para ganar la partida entera.
+- **Táctil:** palanca, Atacar (apunta solo al más cercano), Esquiva y los demás botones.
+- **Demostración:** juega sola leyendo sólo los avisos, como un jugador; es el piloto automático que usan las pruebas para ganar la partida entera.
 
 ```bash
 node dev/secciones/pruebas_arpg_three.mjs

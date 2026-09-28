@@ -111,3 +111,16 @@ html[data-captura] .apInfo{display:none}
   .apOrbe b{font-size:11px;white-space:nowrap}
   .apTostada{bottom:150px}
 }
+/* Quién va a atacar: el «!» sobre su cabeza (crece mientras se llena; rojo y latiendo al fijarse). */
+.apAlerta{font:900 calc(24px + var(--k,0)*14px)/1 'Cinzel Domo',Georgia,serif;color:#ffb040;text-shadow:0 0 8px #ff5a00,0 2px 0 #1a0a04}
+.apAlerta.fijado{color:#ff3a2a;text-shadow:0 0 12px #ff1a00,0 2px 0 #1a0404;animation:apLate .12s infinite alternate}
+@keyframes apLate{to{opacity:.55}}
+.apNumero.esquivado{color:#9fe0ff;font-size:clamp(16px,2vw,22px)}
+/* Ataques desde fuera de la pantalla: flechas en el borde. */
+.apFlechas{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.apFlecha{position:absolute;left:0;top:0;width:0;height:0;margin:-14px 0 0 -14px}
+.apFlecha::before{content:'';position:absolute;left:0;top:0;border-left:30px solid #ffa040;border-top:14px solid transparent;border-bottom:14px solid transparent;filter:drop-shadow(0 0 6px #ff5a00)}
+.apFlecha.fijado::before{border-left-color:#ff3a2a;animation:apLate .12s infinite alternate}
+/* De dónde vino el último golpe: un arco rojo en el borde, girado hacia el atacante. */
+.apGolpeDir{position:absolute;left:50%;top:50%;width:0;height:0;pointer-events:none;opacity:0}
+.apGolpeDir i{position:absolute;left:min(34vw,300px);top:-90px;width:34px;height:180px;border-radius:0 100% 100% 0/0 50% 50% 0;border-right:12px solid #ff3a2a;filter:drop-shadow(0 0 14px #ff2000)}
