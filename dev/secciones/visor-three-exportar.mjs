@@ -34,7 +34,7 @@ export function exportar(destino){
   const escribir=(f,c)=>{const p=path.join(destino,f);fs.mkdirSync(path.dirname(p),{recursive:true});fs.writeFileSync(p,c);};
   const {datosJS,lista}=derivarVisorThree(),html=pagina('./generado');
   escribir('index.html',html);escribir('generado/datos.js',datosJS);
-  const entorno={};for(const f of ['visor-three-mesa.js','visor-three-mesa.css','visor-three-vendor.js']){const b=fs.readFileSync(path.join(aqui,f));escribir(f,b);entorno[f]=hash(b);}
+  const entorno={};for(const f of ['visor-three-mesa.js','visor-three-mesa.css','visor-three-vendor.js','three-carta.js']){const b=fs.readFileSync(path.join(aqui,f));escribir(f,b);entorno[f]=hash(b);}
   const componentes={};for(const f of componentesVisorThree){const b=fs.readFileSync(path.join(juego,f));escribir('juego/'+f,b);componentes[f]=hash(b);}
   const arte={};for(const url of ['art/logo.webp',...lista.map(c=>c.url)]){const b=fs.readFileSync(path.join(juego,url));escribir(url,b);arte[url.slice(4)]=hash(b);}
   const procedencia={seccion:'visor-three',partida:false,almacenamiento:'ninguno',proposito:'Prueba del visor 3D en three.js con El Mago del Domo: material físico, iridiscencia, sombras, suelo espejo, haces de luz y posproceso, para compararlo con el visor propio.',three:'0.186.1',

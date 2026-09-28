@@ -23,7 +23,7 @@ const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-visor-three-'));
 try{
   const destino=path.join(temporal,'visor-three'),p=exportar(destino);
   const archivos=fs.readdirSync(destino,{recursive:true}).filter(f=>fs.statSync(path.join(destino,f)).isFile()).sort();
-  const esperados=['index.html','_headers','procedencia.json','generado/datos.js','visor-three-mesa.js','visor-three-mesa.css','visor-three-vendor.js',...componentesVisorThree.map(f=>'juego/'+f),'art/logo.webp'];
+  const esperados=['index.html','_headers','procedencia.json','generado/datos.js','visor-three-mesa.js','visor-three-mesa.css','visor-three-vendor.js','three-carta.js',...componentesVisorThree.map(f=>'juego/'+f),'art/logo.webp'];
   for(const f of esperados)assert.ok(archivos.includes(f),'Se publica '+f);
   assert.ok(archivos.every(f=>esperados.includes(f)||/^art\/magodomo[^/]*\.webp$/.test(f)),'La prueba sólo publica sus dependencias: '+archivos.filter(f=>!esperados.includes(f)).join(', '));
   const html=fs.readFileSync(path.join(destino,'index.html'),'utf8');

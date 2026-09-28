@@ -280,8 +280,9 @@
 
   // Texturas completas para el visor 3D.
   // Con ancho, a menor resolución (la apertura de sobres carga cinco a la vez).
-  function texturas({id,acabado='normal',nombre,arte,ancho}){
-    const d=datos(id,nombre),k=ancho?Math.min(1,ancho/TW):1;
+  // cifras:false deja las gemas vacías (quien las muestra pone encima las cifras vivas).
+  function texturas({id,acabado='normal',nombre,arte,ancho,cifras=true}){
+    const d=datos(id,nombre,cifras),k=ancho?Math.min(1,ancho/TW):1;
     const color=pintarColor(d,acabado,arte,k),altura=pintarAltura(d,acabado,arte,k);
     return {color,normal:normales(altura,6*k,.02,hash(id+acabado)),orm:pintarORM(d,acabado,k),mascara:pintarMascara(d,acabado,k)};
   }

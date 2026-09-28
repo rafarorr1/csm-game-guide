@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>La mesa en three.js · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./juego/carta-diseno.css">
+<link rel="stylesheet" href="./mesa-three-mesa.css">
+<script src="__GENERADO__/datos.js"></script>
+<script src="./juego/carta-pintor.js"></script>
+<script src="./visor-three-vendor.js"></script>
+<script src="./three-carta.js"></script>
+<script src="./mesa-three-mesa.js" defer></script>
+</head>
+<body>
+<main class="mtShell" aria-labelledby="mtTitulo">
+  <header class="mtCabecera">
+    <p class="mtEtiqueta">PRUEBA DE MOTOR GRÁFICO · THREE.JS · MAQUETA SIN PARTIDA REAL</p>
+    <h1 id="mtTitulo">La mesa · three.js</h1>
+    <p>Una partida a medias vista desde tu silla: Gero contra Talesin sobre un tapete de cuero repujado en oro, a la luz de una lámpara y dos velas. Las cartas son las del visor (relieve, laca, iridiscencia) con el ataque y la vida vivos; el Alma es un cristal que refracta y los PD, gemas que se encienden. Pasa por encima de tu mano y pulsa una carta para jugarla; pulsa una de tus cartas y después una enemiga (o el cristal rival) para atacar. Arrastra para mirar alrededor; la rueda acerca.</p>
+  </header>
+  <div class="mtControles" role="group" aria-label="Acciones">
+    <button type="button" class="mtBoton" id="demo">▶ Demostración</button>
+    <button type="button" class="mtBoton" id="turnoRival">Turno del rival</button>
+  </div>
+  <fieldset class="mtEfectos">
+    <legend>Efectos (actívalos y desactívalos para ver qué aporta y cuánto cuesta cada uno)</legend>
+    <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
+    <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
+    <label><input type="checkbox" data-efecto="velas" checked> Velas</label>
+    <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
+    <label><input type="checkbox" data-efecto="enfoque" checked> Profundidad de campo</label>
+  </fieldset>
+  <section class="mtEscenario" id="escenario" aria-label="La mesa de juego en three.js">
+    <canvas id="lienzo" aria-label="La mesa de juego"></canvas>
+    <p class="mtInfo" id="info">Preparando…</p>
+  </section>
+  <p id="estado" class="mtEstado" role="status" aria-live="polite">Preparando la mesa…</p>
+</main>
+</body>
+</html>

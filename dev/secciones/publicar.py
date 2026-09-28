@@ -139,6 +139,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'visor-three-mesa.js', 'juego/carta-pintor.js'},
         'pruebas': ('pruebas_visor_three.mjs',),
     },
+    'mesa-three': {
+        'nombre': 'La mesa en three.js',
+        'exportador': 'mesa-three-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'three-carta.js', 'mesa-three-mesa.js', 'juego/carta-pintor.js'},
+        'pruebas': ('pruebas_mesa_three.mjs',),
+    },
     'pesadillas-3d': {
         'nombre': 'Pruebas de Pitágoras en 3D',
         'exportador': 'pesadillas-3d-exportar.mjs',

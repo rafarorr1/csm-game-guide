@@ -249,7 +249,8 @@ python3 dev/secciones/publicar.py --publicar --seccion visor-gpu --salida /tmp/c
 ## Visor en three.js (El Mago del Domo)
 
 La revisión está en `/visor-three/`: la misma carta y las mismas texturas de
-`carta-pintor.js`, esta vez con three.js 0.186.1 para ver qué aporta el motor.
+`carta-pintor.js`, esta vez con three.js 0.186.1 para ver qué aporta el motor
+(la carta física está en `three-carta.js`, compartida con la mesa).
 - **Carta:** `MeshPhysicalMaterial` con:
   - relieve (normal map), metal y rugosidad por zona (el ORM de siempre);
   - laca como `clearcoat`;
@@ -277,6 +278,40 @@ npm i --prefix /tmp/three three@0.186.1 esbuild@0.25.10
 node dev/secciones/visor-three-construir.mjs /tmp/three
 node dev/secciones/pruebas_visor_three.mjs
 python3 dev/secciones/publicar.py --publicar --seccion visor-three --salida /tmp/caoz-visor-three
+```
+
+## La mesa en three.js (maqueta de partida)
+
+La revisión está en `/mesa-three/`: una partida a medias (Gero contra Talesin)
+vista desde la silla del jugador, con las mismas cartas físicas del visor. La
+carta está en `three-carta.js`, que comparten las dos pruebas: relieve, laca,
+iridiscencia, destellos y un disolverse en brasas cuando muere.
+`carta-pintor.js` pinta la cara con `cifras:false`, y el ataque y la vida van
+encima, vivos: se ponen rojos al recibir daño.
+
+- **La mesa:**
+  - madera con vetas en relieve y un tapete de cuero repujado en oro con sus zonas (cinco huecos por campo, trampas, protagonista, mazo y cementerio) y runas que laten;
+  - una lámpara con sombras, dos velas con llama y sombras, y polvo en la luz.
+- **Recursos:**
+  - el Alma, un cristal de vidrio que refracta (transmisión y dispersión) con su número encima;
+  - los PD, gemas que se encienden; las Llaves, fichas de oro.
+- **Posproceso:** HDR con MSAA, oclusión ambiental (GTAO: el contacto de las cartas con el tapete), profundidad de campo, resplandor y AgX.
+- **Jugar:**
+  - la mano va pegada a la cámara y la carta bajo el puntero se levanta;
+  - al pulsarla vuela a su hueco y cae con una onda, chispas y un temblor; si es dorada, con un pilar de luz;
+  - los Hechizos estallan y van al cementerio;
+  - para atacar, pulsa una de tus cartas y después una enemiga (o el cristal rival): la carta embiste, salen los números de daño y la que muere arde y va al cementerio;
+  - «Turno del rival» roba, juega y ataca; «Demostración» hace todo seguido.
+
+Las reglas son una maqueta, no el motor del juego. En horizontal se ve la mesa
+entera; en vertical, los dos campos, y lo demás se ve mirando alrededor
+(arrastrando). La revisión (`CAOZ_MESA_THREE_REVISION`) avanza el tiempo a pasos
+fijos, cediendo el turno entre pasos, para que las animaciones encadenadas
+sigan como en tiempo real.
+
+```bash
+node dev/secciones/pruebas_mesa_three.mjs
+python3 dev/secciones/publicar.py --publicar --seccion mesa-three --salida /tmp/caoz-mesa-three
 ```
 
 ```bash
