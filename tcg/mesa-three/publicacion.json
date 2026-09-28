@@ -1,0 +1,43 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "art/aldrick.webp": "f57c278b91790d44753495cea6549cad12e52e4b41ff36e229637948fb25a75f",
+    "art/bartolomeo-foil-v1.webp": "be80e6b03907428098104221b37544d12c03d59b24555b4c0e32ae18da0c2fa1",
+    "art/bob.webp": "bb56f2debb9e7c732ecf8b3e52c56c9bf30a9d5401b8818f09c17dd73da63260",
+    "art/conserje.webp": "5353392c03fd6522c44919041d438dbbe4d8b3db3377d2e22bdf1fc984039df8",
+    "art/destello-foil-v1.webp": "987d2ca5909ec52238b727323d8a2ecdddfd27ba07c74f85689dd24a8f423cb3",
+    "art/discipulo.webp": "5e0995f6a7d159c24649d3811a318bcc19061b6dbb4140b757d5e073c5afa5e8",
+    "art/eric.webp": "cb1d65776dffd866960d853cc0aecb720e2e220a8e1464fddfb4e42f2749ce4b",
+    "art/esporas.webp": "feaa14d79796f598b5e4fe07752cdd9bf6af0ebbbcaca766e9c83351ac15fe60",
+    "art/lider_gero-dorado-v1.webp": "4d77cdb0a7aeb76ea5bd5d3174d81761dbc0fad2a90bff9370e7af4eeacdc3af",
+    "art/lider_talesin-foil-v1.webp": "955cdbbc12d6fc5c7eba937483650393783ffe74b74706cd2c2b4f1bb31855d1",
+    "art/logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
+    "art/lucius.webp": "6ad3a0c8a579cb3d0d27be9bd8030ab937c0fed877d15086ac43c57bf039b821",
+    "art/machete-foil-v1.webp": "136280762f47652058804c354a9247d59b70919a0e25e25c2f6f6dba8cbd5f9f",
+    "art/magodomo-dorado-v1.webp": "86bc6a3a666558f4fb1f5693ec947f323966ec9f32384b8c1c615de0334595c9",
+    "art/matildus-foil-v1.webp": "05909c1023e92889e7e052a6083ef1d8161b420454ba07224118096a98a22d78",
+    "art/petunia-foil-v1.webp": "5ea2612a4a0463a46bbfe3710d0e90e1cc0da5c168449cf2ee0994771f6d4ab6",
+    "art/rantiago.webp": "df4a95f67075e910f537351778f97b56a7bdc1fbbf2d05e3447021af65e42b17",
+    "art/tal-dorado-final-v1.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
+    "art/tok_dragon-dorado-v1.webp": "c063ad2e79abc3deeb47247ecce6877322108241e09750a7ae85a45367dbc360",
+    "generado/datos.js": "6ce409473955baf23c97c18d845e9c7216bc6875d075744a6f0346be2114e402",
+    "index.html": "f4ca586b46d7eb530a0c2acfcf2de64641d27a11bada5da4b2d581aa8695a55b",
+    "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
+    "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
+    "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "mesa-three-mesa.css": "83ab4a242029644294aba212d70d7019baa4e9f8dbabfcff85ba1119e772ad73",
+    "mesa-three-mesa.js": "8fa73dc085fff84475f1ed1b454677cfe590c2d59bb8ff2c8e89823a38f1b8b2",
+    "procedencia.json": "9b74920f88973854d8797a687309b575ba2e43eb6f55f0e07340e9454baaa0c0",
+    "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
+    "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/visor-3d-coleccion",
+    "sha": "0ec7af66475369edfbbb8b0ddd3f9979601798b6"
+  },
+  "seccion": "mesa-three",
+  "version": 1
+}

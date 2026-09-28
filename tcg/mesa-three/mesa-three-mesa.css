@@ -1,0 +1,32 @@
+/* La mesa de juego en three.js. */
+*{box-sizing:border-box;margin:0}
+html,body{min-height:100%;background:#07050b;color:#e9e0f2}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
+.mtShell{width:min(1240px,100%);margin:auto;display:flex;flex-direction:column;gap:12px}
+.mtEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
+.mtCabecera h1{color:#f0d796;font:700 clamp(24px,4vw,40px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
+.mtCabecera p:last-child{color:#c9bdda;font-size:1.08em;max-width:900px}
+.mtControles{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.mtGrupo{display:flex;border:1px solid #e7bb5555;border-radius:10px;overflow:hidden}
+.mtGrupo button,.mtBoton{font:700 12px/1 'Cinzel Domo',Georgia,serif;color:#e0cfa6;background:#150f20;border:0;padding:10px 13px;cursor:pointer;min-height:40px}
+.mtBoton{border:1px solid #e7bb5555;border-radius:10px}
+.mtGrupo button[aria-pressed="true"]{background:#e8bb5a;color:#2a1706}
+.mtOpcion,.mtEfectos label{display:inline-flex;gap:6px;align-items:center;color:#d9cbe8;min-height:32px}
+.mtEfectos{display:flex;flex-wrap:wrap;gap:4px 16px;border:1px solid #e7bb5530;border-radius:10px;padding:6px 12px 8px}
+.mtEfectos legend{color:#b8a3cc;font:700 10px/1 system-ui,sans-serif;letter-spacing:1px;padding:0 6px}
+.mtEscenario{position:relative;height:min(84vh,860px);min-height:460px;border-radius:16px;overflow:hidden;border:1px solid #e7bb5530;background:#07060a;touch-action:none;cursor:grab}
+.mtEscenario:active{cursor:grabbing}
+.mtEscenario canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.mtInfo{position:absolute;left:10px;top:10px;padding:5px 10px;border-radius:8px;background:#0d0914cc;color:#cdbfdf;font:12px/1.4 system-ui,sans-serif;pointer-events:none}
+.mtEstado{color:#b9aecb;min-height:1.5em}
+html[data-captura] body{padding:0}
+html[data-captura] .mtShell>*:not(.mtEscenario){display:none}
+html[data-captura] .mtEscenario{height:100vh;border:0;border-radius:0}
+html[data-captura] .mtInfo{display:none}
+[hidden]{display:none!important}
+/* Etiquetas sobre la mesa: el Alma de cada lado y los números de daño. */
+.mtEtiquetas{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.mtEtiquetas>div{position:absolute;left:0;top:0;will-change:transform;text-align:center;font-family:'Cinzel Domo',Georgia,serif;text-shadow:0 2px 0 #1a0f0a,0 0 10px #000,0 0 3px #000}
+.mtAlma b{display:block;color:#ffe2e6;font-size:clamp(22px,3.2vw,40px);font-weight:900;line-height:1}
+.mtAlma small{display:block;color:#e8c89a;font-size:clamp(9px,1vw,12px);letter-spacing:.2em;text-transform:uppercase}
+.mtNumero{color:#ff9a8a;font-size:clamp(26px,4vw,48px);font-weight:900}
