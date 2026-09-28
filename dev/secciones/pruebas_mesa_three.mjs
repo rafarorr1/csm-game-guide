@@ -76,6 +76,52 @@ try{
     console.log('✓ '+caso+': la partida, el encuadre, jugar, atacar, el turno del rival y los efectos');
     await pagina.close();
   }
+  // Bajar cartas y mirar la mano, con ratón de verdad (como en la mesa de siempre, pero en 3D).
+  const abrir=async(opciones={})=>{const pagina=await navegador.newPage({viewport:{width:1280,height:800},...opciones}),errores=[];pagina.on('pageerror',e=>errores.push(e.message));
+    await pagina.goto(base+'?captura=1');await pagina.waitForFunction(()=>window.CAOZ_MESA_THREE_REVISION?.listo(),null,{timeout:240000});
+    const R='CAOZ_MESA_THREE_REVISION',av=s=>pagina.evaluate(([R,s])=>window[R].avanzar(s),[R,s]),ev=(f,...a)=>pagina.evaluate(([R,f,a])=>window[R][f](...a),[R,f,a]);await av(.3);return {pagina,errores,av,ev};};
+  const arrastrar=async({pagina,av},de,a,pasos=12)=>{await pagina.mouse.move(de.x,de.y);await av(.2);await pagina.mouse.down();for(let k=1;k<=pasos;k++){await pagina.mouse.move(de.x+(a.x-de.x)*k/pasos,de.y+(a.y-de.y)*k/pasos);await av(1/30);}await av(.25);};
+  {const m=await abrir(),{pagina,av,ev}=m;
+    // Mirar: cada carta, al pasar por encima, se endereza y crece hasta leerse, entera en pantalla.
+    for(let i=0;i<5;i++){const p=await ev('manoPantalla',i);await pagina.mouse.move(p.x,p.y);await av(.45);const r=await ev('mirada');
+      assert.ok(r.indice===i&&r.escala>=1.5,'Mano: la carta '+i+' crece al pasar por encima ('+r.escala?.toFixed(2)+'×)');
+      assert.ok(r.izquierda>=0&&r.derecha<=r.ancho&&r.arriba>=0&&r.abajo<=r.alto,'Mano: la carta '+i+' ampliada cabe entera en pantalla ('+[r.izquierda,r.arriba,r.derecha,r.abajo].map(Math.round).join(', ')+')');}
+    // Sin parpadeo: al barrer la mano de lado a lado, cada carta se resalta una sola vez (sin ir y volver).
+    const a0=await ev('manoPantalla',0),a4=await ev('manoPantalla',4),vistas=[];
+    for(let k=0;k<=40;k++){await pagina.mouse.move(a0.x-30+(a4.x-a0.x+60)*k/40,(a0.y+a4.y)/2);await av(1/30);vistas.push((await ev('mirada')).indice);}
+    const tramos=vistas.filter((v,i)=>v!==vistas[i-1]&&v>=0);assert.deepEqual(tramos,[...new Set(tramos)],'Mano: sin parpadeo entre vecinas al barrer ('+tramos.join('→')+')');
+    assert.ok(new Set(tramos).size===5,'Mano: el barrido pasa por las cinco cartas');
+    // Las que no puedes pagar se ven apagadas, y al mirarlas dicen por qué.
+    await pagina.mouse.move(640,300);await av(.5);assert.ok((await ev('estado')).apagadas.includes('magodomo'),'Mano: El Mago del Domo (8 PD) se ve apagado con 6 PD');
+    const pm=await ev('manoPantalla',0);await pagina.mouse.move(pm.x,pm.y);await av(.45);let r=await ev('mirada');
+    assert.ok(!r.apagada&&/PD/.test(r.falta)&&r.etiquetasTapadas>=1,'Mano: al mirarla se ve entera, dice por qué no se puede jugar y no la tapan las etiquetas ('+r.falta+')');
+    // Arrastrarla sin PD no la suelta: se queda en la mano y lo dice.
+    await arrastrar(m,pm,await ev('huecoPantalla',3));assert.equal(await ev('arrastrando'),null,'Arrastre: sin PD no se levanta');await pagina.mouse.up();await av(.4);
+    let e=await ev('estado');assert.ok(e.mano.includes('magodomo')&&/PD/.test(e.aviso),'Arrastre: sin PD vuelve a la mano con el aviso');
+    // Arrastrar a Aldrick al quinto hueco: la silueta marca el hueco y cae exactamente ahí.
+    await arrastrar(m,await ev('manoPantalla',2),await ev('huecoPantalla',4));const d=await ev('arrastrando');assert.deepEqual(d,{id:'aldrick',hueco:4,zona:false},'Arrastre: la carta sobre el quinto hueco lo marca');
+    await pagina.mouse.up();await av(1.2);e=await ev('estado');
+    assert.deepEqual([e.huecos,e.pd],[['tal','petunia','discipulo',null,'aldrick'],2],'Arrastre: Aldrick cae en el hueco donde se suelta y gasta sus PD');
+    // Soltarla lejos de un hueco libre: vuelve a la mano y nada cambia.
+    const lucius=(await ev('estado')).mano.indexOf('lucius');await arrastrar(m,await ev('manoPantalla',lucius),{x:1100,y:130});await pagina.mouse.up();await av(1);e=await ev('estado');
+    assert.ok(e.mano.includes('lucius')&&e.huecos[3]===null,'Arrastre: soltada fuera de un hueco libre, vuelve a la mano');
+    // Pulsar (sin arrastrar) la baja al primer hueco libre, como en la mesa de siempre.
+    const mach=e.mano.indexOf('machete'),pmach=await ev('manoPantalla',mach);await pagina.mouse.move(pmach.x,pmach.y);await av(.3);await pagina.mouse.down();await pagina.mouse.up();await av(1.3);e=await ev('estado');
+    assert.equal(e.huecos[3],'machete','Pulsar: la carta va al primer hueco libre');
+    assert.deepEqual(m.errores,[],'Bajar cartas: sin errores de página');await pagina.close();
+    console.log('✓ Mirar la mano (crece, cabe entera, sin parpadeo, dice por qué no) y bajar cartas arrastrando o pulsando');}
+  // En táctil no hay «pasar por encima»: tocar la abre en grande con «Jugar» y «Cerrar».
+  {const m=await abrir({viewport:{width:390,height:700},hasTouch:true,isMobile:true}),{pagina,av,ev}=m;
+    const p=await ev('manoPantalla',2);await pagina.touchscreen.tap(p.x,p.y);await av(.5);let r=await ev('mirada');
+    assert.ok(r.viendo&&r.id==='aldrick'&&r.izquierda>=0&&r.derecha<=r.ancho&&r.arriba>=0&&r.abajo<=r.alto&&(r.abajo-r.arriba)>r.alto*.55,'Táctil: tocar una carta la abre en grande y entera');
+    const jugar=await pagina.$('.mtVer [data-ver="jugar"]');const bj=await jugar.boundingBox();await pagina.touchscreen.tap(bj.x+bj.width/2,bj.y+bj.height/2);await av(1.4);
+    const e=await ev('estado');assert.ok(e.huecos.includes('aldrick')&&!(await ev('mirada')).viendo,'Táctil: «Jugar» la baja a la mesa');
+    const p0=await ev('manoPantalla',0);await pagina.touchscreen.tap(p0.x,p0.y);await av(.4);r=await ev('mirada');
+    assert.ok(r.viendo&&await pagina.$eval('.mtVer [data-ver="jugar"]',b=>b.disabled),'Táctil: si no se puede pagar, «Jugar» está desactivado');
+    const bc=await (await pagina.$('.mtVer [data-ver="cerrar"]')).boundingBox();await pagina.touchscreen.tap(bc.x+bc.width/2,bc.y+bc.height/2);await av(.4);
+    assert.ok(!(await ev('mirada')).viendo,'Táctil: «Cerrar» la devuelve a la mano');
+    assert.deepEqual(m.errores,[],'Táctil: sin errores de página');await pagina.close();
+    console.log('✓ Táctil: tocar para ver en grande, «Jugar» y «Cerrar»');}
   // Uso real: arranca, cuenta fotogramas y enseña la tarjeta gráfica.
   {const pagina=await navegador.newPage({viewport:{width:1280,height:800}}),errores=[];pagina.on('pageerror',e=>errores.push(e.message));
     await pagina.goto(base);await pagina.waitForFunction(()=>/fps/.test(document.getElementById('info').textContent),null,{timeout:240000});

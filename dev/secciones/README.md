@@ -303,6 +303,31 @@ encima, vivos: se ponen rojos al recibir daño.
   - para atacar, pulsa una de tus cartas y después una enemiga (o el cristal rival): la carta embiste, salen los números de daño y la que muere arde y va al cementerio;
   - «Turno del rival» roba, juega y ataca; «Demostración» hace todo seguido.
 
+**Mirar la mano y bajar cartas.**
+
+La mano copia la de la mesa de siempre (`#hand .handSlot`):
+- **Al pasar por encima**, la carta:
+  - se endereza, sube desde su base y crece hasta leerse (hasta 1,7×), sin salirse nunca de la pantalla;
+  - se inclina con el puntero y aparta a sus vecinas;
+  - entra rápido y se va despacio;
+  - lleva el foco del posproceso consigo, así que la mesa se desenfoca detrás;
+  - tapa las etiquetas del Alma que tiene debajo, en vez de dejar que se pinten encima.
+- **Sin parpadeo:** el puntero lo recibe la ranura, un rectángulo invisible que no crece, no la carta ampliada. Cada carta monta sobre la de su izquierda.
+- **PD:** las que puedes pagar brillan en el canto; las demás se ven apagadas y, al mirarlas, dicen por qué («Te faltan 2 PD…»).
+- **En la mano:** una luz de lectura que viaja con la cámara y un reflejo del entorno más tenue evitan que la laca refleje la caja de luz como un velo.
+
+**Para bajarla:**
+- **Pulsar** la lleva al primer hueco libre, como en la mesa de siempre.
+- **Arrastrar:**
+  - la carta sigue al puntero sobre la mesa, inclinada por su velocidad;
+  - se encienden los huecos libres, y el que queda debajo muestra la silueta de dónde caerá;
+  - al soltar cae exactamente ahí; soltada fuera, vuelve a la mano;
+  - sin PD no se levanta y lo dice;
+  - los Hechizos y las Trampas se lanzan soltándolos sobre la mesa.
+- **En táctil**, donde no hay «pasar por encima»: tocar la abre en grande con «Jugar» (desactivado si no se puede pagar) y «Cerrar».
+
+Las cartas del campo recuerdan su hueco. Cuando una muere, el suyo queda libre.
+
 Las reglas son una maqueta, no el motor del juego. En horizontal se ve la mesa
 entera; en vertical, los dos campos, y lo demás se ve mirando alrededor
 (arrastrando). La revisión (`CAOZ_MESA_THREE_REVISION`) avanza el tiempo a pasos

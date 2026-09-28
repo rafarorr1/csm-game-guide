@@ -30,3 +30,17 @@ html[data-captura] .mtInfo{display:none}
 .mtAlma b{display:block;color:#ffe2e6;font-size:clamp(22px,3.2vw,40px);font-weight:900;line-height:1}
 .mtAlma small{display:block;color:#e8c89a;font-size:clamp(9px,1vw,12px);letter-spacing:.2em;text-transform:uppercase}
 .mtNumero{color:#ff9a8a;font-size:clamp(26px,4vw,48px);font-weight:900}
+/* Por qué no se puede jugar una carta: un aviso breve sobre la mesa. */
+.mtAviso{position:absolute;left:50%;top:14%;transform:translate(-50%,-8px);max-width:min(88%,520px);padding:9px 16px;border-radius:10px;background:#1a0d12e6;border:1px solid #ff8a7a88;color:#ffd9d2;font:600 14px/1.35 system-ui,sans-serif;text-align:center;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+.mtAviso.visto{opacity:1;transform:translate(-50%,0)}
+/* Mirar una carta en grande (táctil): sus dos botones, abajo. */
+.mtVer{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);display:flex;gap:10px;z-index:2}
+.mtVer button{font:700 13px/1 'Cinzel Domo',Georgia,serif;min-height:44px;min-width:110px;padding:0 18px;border-radius:12px;border:1px solid #e7bb55aa;background:#150f20ee;color:#f0d796;cursor:pointer}
+.mtVer button[data-ver="jugar"]{background:#e8bb5a;color:#2a1706}
+.mtVer button:disabled{opacity:.45;cursor:not-allowed}
+/* Las etiquetas que quedan bajo la carta ampliada se apagan (no se pintan encima). */
+.mtEtiquetas>div{transition:opacity .15s}
+.mtEtiquetas>div.tapada{opacity:0!important}
+/* Encima de la carta que miras, si no la puedes jugar ahora: por qué. */
+.mtFalta{position:absolute;left:0;top:0;margin:0;padding:5px 12px;border-radius:9px;background:#2a0f14ee;border:1px solid #ff8a7a99;color:#ffd9d2;font:700 13px/1.2 system-ui,sans-serif;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s}
+.mtFalta.visto{opacity:1}
