@@ -246,6 +246,39 @@ node dev/secciones/pruebas_visor_gpu.mjs
 python3 dev/secciones/publicar.py --publicar --seccion visor-gpu --salida /tmp/caoz-visor-gpu
 ```
 
+## Visor en three.js (El Mago del Domo)
+
+La revisión está en `/visor-three/`: la misma carta y las mismas texturas de
+`carta-pintor.js`, esta vez con three.js 0.186.1 para ver qué aporta el motor.
+- **Carta:** `MeshPhysicalMaterial` con:
+  - relieve (normal map), metal y rugosidad por zona (el ORM de siempre);
+  - laca como `clearcoat`;
+  - la película holográfica como iridiscencia de capa fina (`iridescenceMap` = la máscara);
+  - destellos inyectados en su shader (`onBeforeCompile`);
+  - canto de oro cepillado (`anisotropy`) y dorso con el logo en relieve.
+- **Estudio:**
+  - un entorno propio con cajas de luz, preconvolucionado con PMREM;
+  - dos focos con sombras suaves;
+  - haces de luz visibles con polvo;
+  - suelo espejo de mármol negro (`Reflector`) y un pedestal de terciopelo (`sheen`);
+  - una linterna que sigue al puntero sobre la carta (raycasting).
+- **Posproceso:** HDR (media precisión) con MSAA 4×, profundidad de campo, resplandor y tono AgX.
+- **Invocar:** lanza un estallido de 5000 chispas de oro animadas en la GPU.
+- **Efectos:** cada uno se apaga desde la página, y el marcador enseña fps, llamadas de dibujo y triángulos para ver cuánto cuesta cada uno.
+
+three.js no es una dependencia del juego: `visor-three-construir.mjs`
+empaqueta `visor-three-entrada.mjs` (el núcleo y los complementos que usa la
+prueba) en `visor-three-vendor.js`, un único script minificado con su
+licencia MIT. Así cumple la CSP de las secciones: sólo scripts propios, sin
+CDN ni `eval`. Para regenerarlo:
+
+```bash
+npm i --prefix /tmp/three three@0.186.1 esbuild@0.25.10
+node dev/secciones/visor-three-construir.mjs /tmp/three
+node dev/secciones/pruebas_visor_three.mjs
+python3 dev/secciones/publicar.py --publicar --seccion visor-three --salida /tmp/caoz-visor-three
+```
+
 ```bash
 node dev/secciones/pruebas_fuego.mjs
 python3 dev/secciones/publicar.py --publicar --seccion fuego --salida /tmp/caoz-fuego

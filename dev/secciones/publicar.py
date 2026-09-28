@@ -133,6 +133,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'juego/visor-3d-gpu.js', 'juego/visor-3d-gl.js', 'juego/tormenta-gl.js', 'juego/tormenta-gpu.js'},
         'pruebas': ('pruebas_visor_gpu.mjs',),
     },
+    'visor-three': {
+        'nombre': 'Visor en three.js',
+        'exportador': 'visor-three-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'visor-three-mesa.js', 'juego/carta-pintor.js'},
+        'pruebas': ('pruebas_visor_three.mjs',),
+    },
     'pesadillas-3d': {
         'nombre': 'Pruebas de Pitágoras en 3D',
         'exportador': 'pesadillas-3d-exportar.mjs',
