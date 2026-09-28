@@ -9,7 +9,7 @@
   const qs=new URLSearchParams(location.search),CAPTURA=qs.get('captura')==='1';
   const stage=$('ctStage'),canvas=$('ctCanvas'),message=$('ctMessage'),prompt=$('ctPrompt'),labels=$('ctLabels');
   const modal=$('ctModal'),modalKicker=$('ctModalKicker'),modalTitle=$('ctModalTitle'),modalBody=$('ctModalBody'),modalActions=$('ctModalActions');
-  const logEl=$('ctLog'),meHud=$('ctMeHud'),enemyHud=$('ctEnemyHud'),turnEl=$('ctTurn'),leaderBtn=$('ctLeader'),abilityBtn=$('ctAbility'),endBtn=$('ctEnd');
+  const logEl=$('ctLog'),logToggle=$('ctLogToggle'),meHud=$('ctMeHud'),enemyHud=$('ctEnemyHud'),turnEl=$('ctTurn'),leaderBtn=$('ctLeader'),abilityBtn=$('ctAbility'),endBtn=$('ctEnd');
   if(CAPTURA)document.documentElement.dataset.captura='';
   if(!document.createElement('canvas').getContext('webgl2')){message.textContent='Este navegador necesita WebGL 2 para abrir la mesa.';return;}
   const {THREE}=window.CAOZ_THREE;
@@ -18,13 +18,13 @@
   // por esta pantalla: el motor sólo aporta el estado de la partida.
   const ESC=.62,ALTURA=.003+GROSOR*ESC/2+.012,TAU=Math.PI*2;
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
-  let modo=qs.get('modo')==='duelo'?'duelo':'final',reloj=0,ready=false,ocupadoFx=0,selected=null,logCount=0,visualEpoch=0;
+  let modo=qs.get('modo')==='duelo'?'duelo':'final',reloj=0,ready=false,ocupadoFx=0,selected=null,logCount=0,logOpen=false,logUnread=0,visualEpoch=0;
   const tweens=[],visuals=new Map(),pending=new Set(),floating=[],animationHistory=[],activeAnimations=new Map(),impacts=[];
   // Fuente única de posiciones: los mismos carriles del demo Three. En
   // particular, las trampas viven detrás del campo (z 3.95), no entre las
   // unidades y los líderes.
   const layout=Object.freeze({
-    leader:{x:-6.9,z:2.5}, deck:{x:6.9,z:4.15},grave:{x:6.9,z:1.35},soul:{x:-4.2,z:4.95},pd:{x:-7.12,z:5.28},
+    leader:{x:-6.9,z:2.5},place:{x:-6.9,z:0}, deck:{x:6.9,z:4.15},grave:{x:6.9,z:1.35},soul:{x:-4.2,z:4.95},pd:{x:-7.12,z:5.28},
     trapZ:3.95,relicX:-2.45,enemyHandZ:-6.45,enemyHandY:.92
   });
   const sideZ=s=>s===ME?1:-1;
@@ -79,7 +79,7 @@
     gold(6);rect(0,0,TABLE_SIZE[0]-.5,TABLE_SIZE[1]-.5,.5);gold(2.5,.8);rect(0,0,TABLE_SIZE[0]-.8,TABLE_SIZE[1]-.8,.4);
     const frame=(x,z,w,h,rune)=>{gold(3,.85);rect(x,z,w,h,.12);if(rune){const [cx,cy]=point(x,z);ge.strokeStyle='#ffb04a';ge.lineWidth=3;ge.beginPath();ge.arc(cx,cy,Math.min(w,h)*k*.28,0,TAU);ge.stroke();for(let i=0;i<6;i++){const a=i*TAU/6;ge.beginPath();ge.moveTo(cx+Math.cos(a)*Math.min(w,h)*k*.18,cy+Math.sin(a)*Math.min(w,h)*k*.18);ge.lineTo(cx+Math.cos(a)*Math.min(w,h)*k*.34,cy+Math.sin(a)*Math.min(w,h)*k*.34);ge.stroke();}}};
     const cw=ANCHO*ESC+.16,ch=ALTO*ESC+.16,tw=ALTO*ESC*.8+.16,th=ANCHO*ESC*.8+.16;
-    for(const s of [ME,FOE]){const side=sideZ(s);for(let i=0;i<5;i++)frame((i-2)*2,side*1.55,cw,ch,true);for(let i=0;i<3;i++)frame((i-1)*2.15,side*layout.trapZ,tw,th,false);frame(layout.leader.x,side*layout.leader.z,cw*1.15,ch*1.15,true);frame(layout.deck.x,side*layout.deck.z,cw,ch,false);frame(layout.grave.x,side*layout.grave.z,cw,ch,false);frame(layout.pd.x+(.52*3)/2,side*(layout.pd.z-.43/2),2.14,1.2,false);frame(layout.soul.x,side*layout.soul.z,1.6,1.42,true);frame(layout.relicX,side*5.48,1.08,.72,false);}
+    for(const s of [ME,FOE]){const side=sideZ(s);for(let i=0;i<5;i++)frame((i-2)*2,side*1.55,cw,ch,true);for(let i=0;i<3;i++)frame((i-1)*2.15,side*layout.trapZ,tw,th,false);frame(layout.leader.x,side*layout.leader.z,cw*1.15,ch*1.15,true);frame(layout.deck.x,side*layout.deck.z,cw,ch,false);frame(layout.grave.x,side*layout.grave.z,cw,ch,false);frame(layout.pd.x+(.52*3)/2,side*(layout.pd.z-.43/2),2.14,1.2,false);frame(layout.soul.x,side*layout.soul.z,1.6,1.42,true);frame(layout.relicX,side*5.48,1.08,.72,false);}frame(layout.place.x,layout.place.z,ANCHO*ESC*.82+.16,ALTO*ESC*.82+.16,true);
     ge.strokeStyle='#ffb04a';ge.lineWidth=4;ge.beginPath();ge.moveTo(point(-7.6,0)[0],H/2);ge.lineTo(point(7.6,0)[0],H/2);ge.stroke();ge.font=`${Math.round(k*.3)}px Georgia`;ge.fillStyle='#ffb04a';ge.textAlign='center';const runes='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';for(let i=0;i<36;i++){const x=-7.2+i*.41;if(Math.abs(x)<1.3)continue;ge.fillText(runes[i%runes.length],point(x,0)[0],H/2-k*.12);}
     if(logo?.naturalWidth){const lw=k*3,lh=lw*logo.naturalHeight/logo.naturalWidth;g.globalAlpha=.22;g.drawImage(logo,W/2-lw/2,H/2-lh/2,lw,lh);g.globalAlpha=1;gh.globalAlpha=.5;gh.filter='grayscale(1)';gh.drawImage(logo,W/2-lw/2,H/2-lh/2,lw,lh);gh.filter='none';gh.globalAlpha=1;}
     g.drawImage(emissive,0,0);const [orm,go]=canvasPair(W,H);go.fillStyle='rgb(255,200,0)';go.fillRect(0,0,W,H);go.drawImage(height,0,0);const data=go.getImageData(0,0,W,H);for(let i=0;i<data.data.length;i+=4){const v=data.data[i]/255,metal=Math.max(0,(v-.7)/.3);data.data[i]=255;data.data[i+1]=Math.round((.75-.45*metal)*255);data.data[i+2]=Math.round(metal*255);}go.putImageData(data,0,0);
@@ -111,9 +111,10 @@
   const FIELD_ORDER=Object.freeze([2,1,3,0,4]);
   const fieldSlots=[new Map(),new Map()],handTokens=[[],[]],dropHints=[[],[]];
   const handHitRoot=new THREE.Group();camera.add(handHitRoot);
-  const handHits=new Map(),visualWaiters=new Map(),desiredByKey=new Map(),pendingEntries=new Map();
+  const tableHitRoot=new THREE.Group();table.add(tableHitRoot);
+  const handHits=new Map(),tableHits=new Map(),visualWaiters=new Map(),desiredByKey=new Map(),pendingEntries=new Map();
   const spentVisuals=[[],[]],graveGhosts=[null,null];
-  let nextHandToken=1,hoverHand=null,hoverUV=new THREE.Vector2(.5,.5),gesture=null,drag=null;
+  let nextHandToken=1,hoverHand=null,hoverTable=null,hoverUV=new THREE.Vector2(.5,.5),gesture=null,drag=null,tablePreview=null,tablePreviewKey=null,tablePreviewEpoch=0;
   const hitMaterial=new THREE.MeshBasicMaterial({transparent:true,opacity:0,colorWrite:false,depthWrite:false,depthTest:false,side:THREE.DoubleSide});
   const ease=k=>k<.5?4*k*k*k:1-Math.pow(-2*k+2,3)/2;
   function reconcileFieldSlots(){
@@ -143,6 +144,7 @@
   const deckPos=s=>new THREE.Vector3(layout.deck.x,ALTURA,sideZ(s)*layout.deck.z);
   const gravePos=s=>new THREE.Vector3(layout.grave.x,ALTURA,sideZ(s)*layout.grave.z);
   const leaderPos=s=>new THREE.Vector3(layout.leader.x,ALTURA+.012,sideZ(s)*layout.leader.z);
+  const placePos=()=>new THREE.Vector3(layout.place.x,ALTURA,layout.place.z);
   function editionFor(id){return id==='tal'||id==='lider_talesin'||id==='lider_gero'?'dorado':'normal';}
   function image(url){return new Promise(resolve=>{const i=new Image();i.onload=()=>resolve(i);i.onerror=()=>resolve(null);i.src=url;});}
   async function textureFor(id,edition='normal'){
@@ -211,7 +213,7 @@
       if(p.deck.length)out.push({key:'deck:'+s,id:'conserje',side:s,kind:'deck',back:true,pos:deckPos(s),rot:new THREE.Euler(-Math.PI/2+Math.PI,0,.035),scale:ESC});
       if(p.grave.length){const id=p.grave.at(-1);out.push({key:'grave:'+s,id,side:s,kind:'grave',pos:gravePos(s),rot:new THREE.Euler(-Math.PI/2,0,-.05),scale:ESC*.94});}
     }
-    if(G.place)out.push({key:'place',id:G.place.id,side:G.place.side,kind:'place',pos:new THREE.Vector3(0,ALTURA,0),rot:new THREE.Euler(-Math.PI/2,0,0),scale:ESC*.82});
+    if(G.place)out.push({key:'place',id:G.place.id,side:G.place.side,kind:'place',pos:placePos(),rot:new THREE.Euler(-Math.PI/2,0,0),scale:ESC*.82});
     const own=reconcileHandTokens(ME,P(ME).hand);own.forEach((token,i)=>out.push({key:'hand:'+token.serial,id:token.id,side:ME,kind:'hand',handIndex:i,token}));
     const enemy=reconcileHandTokens(FOE,P(FOE).hand);enemy.forEach((token,i)=>out.push({key:'enemy-hand:'+token.serial,id:token.id,side:FOE,kind:'enemyHand',back:true,handIndex:i,token,scale:.76}));
     return out;
@@ -228,6 +230,17 @@
   function updateHandHitSlots(list){
     const active=new Set();for(const d of list)if(d.kind==='hand'){active.add(d.key);makeHitSlot(d,handPose(d.handIndex,P(ME).hand.length));}
     for(const [key,slot] of handHits)if(!active.has(key)){slot.visible=false;handHits.delete(key);slot.removeFromParent();}
+  }
+  // Los proxies de mesa se quedan donde está la carta aunque aparezca su
+  // ampliación. Es la misma solución que elimina las zonas muertas de la mano.
+  function canInspectOnTable(d){return ['field','leader','place','relic','grave'].includes(d.kind)||(d.kind==='trap'&&d.side===ME&&!d.back);}
+  function makeTableHit(d){
+    let slot=tableHits.get(d.key);if(!slot){slot=new THREE.Mesh(new THREE.PlaneGeometry(ANCHO,ALTO),hitMaterial);slot.userData.key=d.key;tableHitRoot.add(slot);tableHits.set(d.key,slot);}
+    slot.visible=true;slot.userData.id=d.id;slot.userData.kind=d.kind;slot.userData.side=d.side;slot.position.copy(d.pos).add(new THREE.Vector3(0,.018,0));slot.rotation.copy(d.rot);slot.scale.setScalar(d.scale||ESC);return slot;
+  }
+  function updateTableHitSlots(list){
+    const active=new Set();for(const d of list)if(canInspectOnTable(d)){active.add(d.key);makeTableHit(d);}
+    for(const [key,slot] of tableHits)if(!active.has(key)){slot.visible=false;tableHits.delete(key);slot.removeFromParent();}
   }
   function takeOutgoing(side,id,kind){
     const candidates=[...visuals.entries()].filter(([key,v])=>v.userData.side===side&&v.userData.kind===kind&&!wantedKeys.has(key)&&v.userData.id===id);
@@ -253,6 +266,11 @@
       }}
       pendingEntries.set(d.key,{type:'invocacion',source:{pos:deckPos(d.side).add(new THREE.Vector3(0,.35,0)),q:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+Math.PI,0,0)),scale:ESC*.72}});
     }
+    for(const d of list)if(d.kind==='place'&&!visuals.has(d.key)&&!pendingEntries.has(d.key)){
+      const from=takeOutgoing(d.side,d.id,'hand');
+      if(from){adoptVisual(from,d,{type:'entrada',source:from.pose});continue;}
+      pendingEntries.set(d.key,{type:'invocacion',source:{pos:deckPos(d.side).add(new THREE.Vector3(0,.35,0)),q:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+Math.PI,0,0)),scale:ESC*.72}});
+    }
     for(const d of list)if(d.kind==='grave'&&!visuals.has(d.key)){
       const ghost=graveGhosts[d.side];if(ghost&&ghost.id===d.id){graveGhosts[d.side]=null;ghost.v.userData.key=d.key;ghost.v.userData.kind='grave';ghost.v.userData.side=d.side;visuals.set(d.key,ghost.v);pendingEntries.set(d.key,{type:'cementerio',source:ghost.pose});}
     }
@@ -273,7 +291,7 @@
   }
   function sync(){
     if(!ready||!G)return;const list=desired();wantedKeys.clear();desiredByKey.clear();list.forEach(x=>{wantedKeys.add(x.key);desiredByKey.set(x.key,x);});
-    updateHandHitSlots(list);prepareTransitions(list);spendDepartures();
+    updateHandHitSlots(list);updateTableHitSlots(list);prepareTransitions(list);spendDepartures();
     for(const d of list){let v=visuals.get(d.key);if(!v&&!pending.has(d.key)){pending.add(d.key);makeCard(d.key,d.id,{...d,epoch:visualEpoch}).then(x=>{pending.delete(d.key);const fresh=desiredByKey.get(d.key);if(x&&fresh){applyVisual(x,fresh);const entry=pendingEntries.get(d.key);if(entry){pendingEntries.delete(d.key);beginEntry(x,fresh,entry);} // Avisar al motor sólo cuando la entrada ya existe.
           wakeVisual(d.key,x);
         }}).catch(e=>{pending.delete(d.key);toast('No se pudo pintar una carta: '+e.message);});}
@@ -290,6 +308,38 @@
     if(d.kind==='grave')v.position.y=ALTURA+Math.min(10,P(d.side).grave.length)*GROSOR*ESC*.09;
   }
 
+  // Una carta del tapete nunca se mueve para inspeccionarla: se genera una
+  // copia de lectura pegada a la cámara. Así conserva su puesto, su click y
+  // su proxy de raycast, pero se lee con la misma claridad que una carta mano.
+  function disposeInspectionCard(card){
+    if(!card)return;card.userData.frente?.material?.dispose?.();card.userData.atras?.material?.dispose?.();const edge=card.userData.borde?.material;if(Array.isArray(edge))edge[1]?.dispose?.();else edge?.dispose?.();for(const gem of [card.userData.a,card.userData.h,card.userData.c])if(gem){gem.material?.dispose?.();gem.geometry?.dispose?.();gem.userData.tex?.dispose?.();}card.removeFromParent();
+  }
+  function clearTablePreview(){tablePreviewEpoch++;if(tablePreview)disposeInspectionCard(tablePreview);tablePreview=null;tablePreviewKey=null;}
+  async function makeInspectionCard(source){
+    const id=source.userData.id,ed=source.userData.edition||editionFor(id),tx=await textureFor(id,ed),face=factory.materialCara(tx,ed),card=factory.carta(face,back.clone(),factory.materialCanto(ed));
+    card.userData.key='preview:'+source.userData.key;card.userData.id=id;card.userData.kind='preview';card.userData.side=source.userData.side;card.userData.unit=source.userData.unit||null;card.userData.base=new THREE.Vector3();card.userData.edition=ed;
+    const unit=source.userData.unit;
+    if(CARDS[id]?.t==='personaje'){
+      const a=putGem(digit(unit?.atk??CARDS[id].a??0,'#fff1d8'),GEMAS.atq),h=putGem(digit(Math.max(0,(unit?.maxHp??CARDS[id].h??0)-(unit?.dmg??0)),'#fff1d8'),GEMAS.vida);card.add(a,h);card.userData.a=a;card.userData.h=h;
+    }
+    if(CARDS[id]){const c=putGem(digit(CARDS[id].c,'#f6edff'),GEMAS.coste);card.add(c);card.userData.c=c;}
+    card.traverse(o=>{if(o.isMesh){o.castShadow=false;o.receiveShadow=false;o.raycast=()=>{};}});setHandRead(card,true);return card;
+  }
+  function inspectionPose(){
+    const z=camera.aspect<.9?7.4:7.0,hh=Math.tan(camera.fov*Math.PI/360)*z,ww=hh*camera.aspect,scale=Math.min(ESC*1.22,(hh*1.30)/ALTO,(ww*1.38)/ANCHO);
+    return {pos:new THREE.Vector3(0,1.28,-z),rot:new THREE.Euler(-.065,0,0),scale};
+  }
+  async function setTableHover(key){
+    if(key===hoverTable)return;hoverTable=key;clearTablePreview();if(!key)return;
+    const source=visuals.get(key);if(!source||!canInspectOnTable({kind:source.userData.kind,side:source.userData.side,back:false}))return;
+    const token=++tablePreviewEpoch,card=await makeInspectionCard(source);if(token!==tablePreviewEpoch||hoverTable!==key||visuals.get(key)!==source){disposeInspectionCard(card);return;}
+    const p=inspectionPose();camera.add(card);card.position.set(p.pos.x,p.pos.y-3.2,p.pos.z);card.rotation.copy(p.rot);card.scale.setScalar(p.scale*.86);tablePreview=card;tablePreviewKey=key;
+  }
+  function animateTablePreview(dt){
+    if(!tablePreview)return;if(hoverTable!==tablePreviewKey){clearTablePreview();return;}
+    const p=inspectionPose(),mix=1-Math.exp(-dt*18),q=new THREE.Quaternion().setFromEuler(p.rot);tablePreview.position.lerp(p.pos,mix);tablePreview.quaternion.slerp(q,mix);tablePreview.scale.setScalar(THREE.MathUtils.lerp(tablePreview.scale.x,p.scale,mix));
+  }
+
   /* ----------------------------- Alma / PD -------------------------------- */
   const resourceRoot=new THREE.Group();table.add(resourceRoot);const gems={},souls={};
   function soulMesh(s){const group=new THREE.Group(),base=new THREE.Mesh(new THREE.CylinderGeometry(.5,.67,.14,32),new THREE.MeshPhysicalMaterial({color:0xdcae50,metalness:1,roughness:.28})),crystal=new THREE.Mesh(new THREE.OctahedronGeometry(.62,0),new THREE.MeshPhysicalMaterial({color:s===ME?0xa3d7ff:0xffa6ac,transmission:.65,thickness:.7,roughness:.06,emissive:new THREE.Color(s===ME?0x165784:0x851c33),emissiveIntensity:.55}));base.position.y=.07;crystal.position.y=.76;crystal.scale.y=1.34;group.add(base,crystal);group.position.set(layout.soul.x,0,sideZ(s)*layout.soul.z);resourceRoot.add(group);return {group,crystal};}
@@ -303,6 +353,13 @@
   function playerHUD(s){const p=P(s),extra=[];if(p.leaderId==='talesin')extra.push(p.ascended?'<span class="ctPill gracia">😇 Ascendido</span>':pill('✨',p.gracia+'/5','gracia'));if(p.corte?.turnos)extra.push(pill('👑',p.corte.turnos+'/2','corte'));if(p.relics.length)extra.push(`<span class="ctPill">✦ ${p.relics.map(r=>CARDS[r.id].n).join(', ')}</span>`);return `<b>${p.L.n}</b>${pill('♥',Math.max(0,p.alma),'alma')}${pill('◆',p.pd+'/'+p.pdMax,'pd')}${pill('🗝',keys(s))}${extra.join('')}`;}
   function updateHUD(){if(!G)return;meHud.innerHTML=playerHUD(ME);enemyHud.innerHTML=playerHUD(FOE);turnEl.textContent=G.over?'Partida terminada':`${G.active===ME?'Tu turno':'Turno de Gero'} · ${G.phase||'preparando'} · ronda ${Math.max(1,Math.ceil(G.turnNo/2))}`;leaderBtn.textContent=`${P(ME).L.art} ${P(ME).L.habName} (${P(ME).L.habCost} PD)`;leaderBtn.disabled=G.active!==ME||G.busy||G.over||!canUseLeader(ME);abilityBtn.disabled=!selected||G.active!==ME||G.busy||G.over||!canUseAct(selected);abilityBtn.textContent=selected?.card.act?`${selected.card.act.n} (${selected.card.act.cost} PD)`:'Habilidad de carta';endBtn.disabled=G.active!==ME||G.busy||G.resolving||G.over||!!TGT;}
   function messageFor(t,cls=''){message.textContent=strip(t);message.className='ctMessage '+cls;}
+  function paintLogToggle(){
+    if(!logToggle)return;logToggle.setAttribute('aria-expanded',String(logOpen));logToggle.textContent=logOpen?'Ocultar registro':'Registro';logToggle.append(' ');const badge=document.createElement('span');badge.id='ctLogBadge';badge.hidden=!logUnread;badge.textContent=String(Math.min(99,logUnread));logToggle.append(badge);
+  }
+  function setLogOpen(open){logOpen=!!open;logEl.classList.toggle('is-open',logOpen);logEl.setAttribute('aria-hidden',String(!logOpen));if(logOpen)logUnread=0;paintLogToggle();}
+  logToggle?.addEventListener('click',e=>{e.stopPropagation();setLogOpen(!logOpen);});
+  logToggle?.addEventListener('pointerdown',e=>e.stopPropagation());
+  logEl.addEventListener('pointerenter',()=>{if(!drag){hoverHand=null;setTableHover(null);}});
   function showPrompt(text,options=[]){prompt.hidden=false;prompt.innerHTML=`<p>${text}</p><div class="ctPromptActions">${options.map((o,i)=>`<button type="button" data-ct-opt="${i}" class="${o.cls||''}">${o.t}</button>`).join('')}</div>`;prompt.querySelectorAll('[data-ct-opt]').forEach(b=>b.onclick=()=>options[Number(b.dataset.ctOpt)]?.fn?.());}
   function clearUI(){prompt.hidden=true;prompt.replaceChildren();}
   function modalShow({kicker='EL DOMO ESPERA',title,body='',actions=[]}){modalKicker.textContent=kicker;modalTitle.textContent=title;modalBody.innerHTML=body;modalActions.innerHTML='';actions.forEach(a=>{const b=document.createElement('button');b.type='button';b.textContent=a.t;b.className=a.cls||'';b.onclick=a.fn;modalActions.append(b);});modal.hidden=false;}
@@ -313,12 +370,14 @@
   function soulPos(s){return souls[s].group.getWorldPosition(new THREE.Vector3()).add(new THREE.Vector3(0,1.2,0));}
 
   /* --------------------- Contrato del motor: UI / FX ---------------------- */
-  globalThis.nap=ms=>sleep(Math.min(ms,G?.fast?1:Math.max(80,Math.min(420,ms))));
+  // La IA ya decide a través del motor; este adaptador no debe comprimir sus
+  // pausas a 420 ms. Conservamos el modo rápido sólo para las pruebas.
+  globalThis.nap=ms=>sleep(G?.fast?1:Math.max(110,Math.min(1100,Math.round(ms))));
   // El motor pregunta esto para no disparar pasivas durante un paso didáctico.
   // Esta pantalla no carga el tutorial HTML, así que la pasiva siempre procede.
   globalThis.tutPasivaLista=()=>true;
   globalThis.render=()=>{sync();};
-  globalThis.log=(text,cls='sys')=>{if(!G)return;G.log.push({txt:text,cls:cls||''});const p=document.createElement('p');p.className=cls||'';p.textContent=strip(text);logEl.prepend(p);while(logEl.children.length>18)logEl.lastElementChild.remove();logCount++;};
+  globalThis.log=(text,cls='sys')=>{if(!G)return;G.log.push({txt:text,cls:cls||''});const p=document.createElement('p');p.className=cls||'';p.textContent=strip(text);logEl.prepend(p);while(logEl.children.length>18)logEl.lastElementChild.remove();logCount++;if(!logOpen){logUnread=Math.min(99,logUnread+1);paintLogToggle();}};
   globalThis.toast=(text)=>messageFor(text,'notice');
   globalThis.setPrompt=(text,opts)=>showPrompt(text,opts||[]);
   globalThis.clearPrompt=()=>clearUI();
@@ -331,26 +390,33 @@
   /* D20: motor auténtico, cuerpo y trayectoria en la mesa Three.  El motor
      genera la simulación firmada; esta capa sólo interpola sus fotogramas. */
   const diceRoot=new THREE.Group(),diceState={visible:false,estado:'oculto',valor:null,frames:0};table.add(diceRoot);diceRoot.visible=false;
-  const diceMesh=new THREE.Mesh(new THREE.IcosahedronGeometry(.62,0),new THREE.MeshPhysicalMaterial({color:0x6d1834,metalness:.72,roughness:.23,clearcoat:.75,emissive:0x210410,emissiveIntensity:.32,flatShading:true}));diceMesh.castShadow=true;diceMesh.receiveShadow=true;diceRoot.add(diceMesh);
+  // Un solo sólido grande y facetado. Los 20 sprites antiguos eran billboards
+  // y se leían como números sueltos sobre las cartas, no como caras del dado.
+  const diceGeometry=new THREE.IcosahedronGeometry(.86,0),diceMesh=new THREE.Mesh(diceGeometry,new THREE.MeshPhysicalMaterial({color:0x842946,metalness:.66,roughness:.28,clearcoat:.54,clearcoatRoughness:.16,emissive:0x210612,emissiveIntensity:.22,flatShading:true}));diceMesh.castShadow=true;diceMesh.receiveShadow=true;diceRoot.add(diceMesh);
+  const diceEdges=new THREE.LineSegments(new THREE.EdgesGeometry(diceGeometry),new THREE.LineBasicMaterial({color:0xffd98c,transparent:true,opacity:.78,toneMapped:false}));diceRoot.add(diceEdges);
+  const diceBadgeTexture=canvasTexture(256,256,(g,w,h)=>{g.clearRect(0,0,w,h);g.fillStyle='#221126';g.beginPath();g.arc(w/2,h/2,w*.42,0,TAU);g.fill();g.lineWidth=12;g.strokeStyle='#f4cf78';g.stroke();});
+  const diceBadge=new THREE.Sprite(new THREE.SpriteMaterial({map:diceBadgeTexture,transparent:true,depthTest:false,depthWrite:false,toneMapped:false}));diceBadge.scale.set(.78,.78,1);diceBadge.visible=false;table.add(diceBadge);
+  function paintDiceBadge(value){const c=diceBadgeTexture.image,g=c.getContext('2d'),w=c.width,h=c.height;g.clearRect(0,0,w,h);const ring=g.createRadialGradient(w*.35,h*.28,4,w*.5,h*.5,w*.48);ring.addColorStop(0,'#5c2345');ring.addColorStop(1,'#170a1e');g.fillStyle=ring;g.beginPath();g.arc(w/2,h/2,w*.42,0,TAU);g.fill();g.lineWidth=11;g.strokeStyle='#f5d27d';g.stroke();g.fillStyle='#fff0bd';g.font='900 124px Cinzel Domo, Georgia';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#000';g.shadowBlur=9;g.fillText(String(value),w/2,h*.53);diceBadgeTexture.needsUpdate=true;}
   const diceReadout=document.createElement('div');diceReadout.className='ctDiceReadout';diceReadout.hidden=true;stage.append(diceReadout);
-  if(globalThis.CAOZ_D20?.caras){for(const face of globalThis.CAOZ_D20.caras){const tx=canvasTexture(96,96,(g,w,h)=>{g.clearRect(0,0,w,h);g.fillStyle='#fff0ba';g.font='900 46px Georgia';g.textAlign='center';g.textBaseline='middle';g.shadowColor='#24030d';g.shadowBlur=5;g.fillText(String(face.valor),w/2,h/2+2);});const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tx,transparent:true,depthWrite:false,toneMapped:false}));sprite.position.set(face.n[0]*.565,face.n[1]*.565,face.n[2]*.565);sprite.scale.set(.22,.22,.22);diceRoot.add(sprite);}}
   function unitQuat(q){const out=new THREE.Quaternion(q[0],q[1],q[2],q[3]);return out.normalize();}
   function diceAt(tirada,t){const frames=tirada.frames||[],last=frames.at(-1);if(!last)return;let i=0;while(i<frames.length-2&&frames[i+1].t<t)i++;const a=frames[i],b=frames[Math.min(i+1,frames.length-1)],k=Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t||1))),sign=a.q[0]*b.q[0]+a.q[1]*b.q[1]+a.q[2]*b.q[2]+a.q[3]*b.q[3]<0?-1:1;
-    diceRoot.position.set(a.p[0]+(b.p[0]-a.p[0])*k,.06+a.p[1]+(b.p[1]-a.p[1])*k,a.p[2]+(b.p[2]-a.p[2])*k);diceRoot.quaternion.copy(unitQuat(a.q)).slerp(unitQuat([b.q[0]*sign,b.q[1]*sign,b.q[2]*sign,b.q[3]*sign]),k);
+    // La simulación vive cerca de z=.9; al desplazarla al carril neutro (z=0)
+    // el d20 no rueda encima de una unidad ni de las dianas de combate.
+    diceRoot.position.set(a.p[0]+(b.p[0]-a.p[0])*k,.38+a.p[1]+(b.p[1]-a.p[1])*k,a.p[2]+(b.p[2]-a.p[2])*k-.9);diceRoot.quaternion.copy(unitQuat(a.q)).slerp(unitQuat([b.q[0]*sign,b.q[1]*sign,b.q[2]*sign,b.q[3]*sign]),k);if(diceBadge.visible)diceBadge.position.copy(diceRoot.position).add(new THREE.Vector3(0,1.14,0));
   }
   function physicalFor(value){if(!globalThis.CAOZ_D20)return null;for(let seed=1;seed<420;seed++){const roll=globalThis.CAOZ_D20.simular(seed,{x:.16,z:-.64,fuerza:.68});if(roll.asentado&&roll.valor===value)return roll;}return null;}
   async function showD20(value,label,interactive,meta,fisica){
     let tirada=fisica&&(fisica.frames?fisica:globalThis.CAOZ_D20?.desempaquetar?.(fisica));if(!tirada)tirada=physicalFor(value)||globalThis.CAOZ_D20?.simular?.(17,{x:.12,z:-.58,fuerza:.65});
     if(!tirada){messageFor(`🎲 ${label}: ${value}`);return value;}
-    diceRoot.visible=true;diceState.visible=true;diceState.estado='rodando';diceState.valor=null;diceState.frames=tirada.frames.length;diceReadout.hidden=false;diceReadout.innerHTML=`<small>${strip(label)}</small><b>🎲</b><span>Rodando…</span>`;
+    diceRoot.visible=true;diceBadge.visible=false;diceState.visible=true;diceState.estado='rodando';diceState.valor=null;diceState.frames=tirada.frames.length;diceReadout.hidden=false;diceReadout.innerHTML=`<small>${strip(label)}</small><b>◇</b><span>Rodando el d20…</span>`;
     animationHistory.push({tipo:'dado',etapa:'entrada',frames:tirada.frames.length,orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();
-    const duration=G?.fast?.10:Math.min(1.75,Math.max(.56,(tirada.duracion||2.2)*.34));
+    const duration=G?.fast?.10:Math.min(2.25,Math.max(.82,(tirada.duracion||2.2)*.45));
     await tween(duration,k=>diceAt(tirada,(tirada.frames.at(-1)?.t||0)*ease(k)));
     diceAt(tirada,tirada.frames.at(-1)?.t||0);diceState.estado='resultado';diceState.valor=value;const good=meta?.min!=null&&value>=meta.min,bad=meta?.max!=null&&value<=meta.max;
-    diceReadout.innerHTML=`<small>${strip(label)}</small><b>${value}</b><span>${good?'Éxito':bad?'Falla':value===20||value===1?'Crítico':'Resultado'}</span>`;floatAt(new THREE.Vector3(diceRoot.position.x,diceRoot.position.y+.7,diceRoot.position.z),'🎲 '+value,good?'heal':bad?'damage':'note');
+    paintDiceBadge(value);diceBadge.visible=true;diceBadge.position.copy(diceRoot.position).add(new THREE.Vector3(0,1.14,0));diceReadout.innerHTML=`<small>${strip(label)}</small><b>${value}</b><span>${good?'Éxito':bad?'Falla':value===20||value===1?'Crítico':'Resultado'}</span>`;
     animationHistory.push({tipo:'dado',etapa:'fin',frames:tirada.frames.length,orden:animationHistory.length+1});if(animationHistory.length>48)animationHistory.shift();
-    if(interactive&&G?.active===ME)return new Promise(resolve=>modalShow({kicker:'D20',title:label,body:`<p class="ctDiceResult"><b>${value}</b></p><p>${meta?.necesita||''}</p><p>${good?meta?.siOk||'':bad?meta?.siMal||'':''}</p>`,actions:[{t:'Continuar',cls:'gold',fn:()=>{modalHide();diceRoot.visible=false;diceReadout.hidden=true;diceState.visible=false;resolve(value);}}]}));
-    await fxDelay(520);diceRoot.visible=false;diceReadout.hidden=true;diceState.visible=false;return value;
+    if(interactive&&G?.active===ME)return new Promise(resolve=>modalShow({kicker:'D20',title:label,body:`<p class="ctDiceResult"><b>${value}</b></p><p>${meta?.necesita||''}</p><p>${good?meta?.siOk||'':bad?meta?.siMal||'':''}</p>`,actions:[{t:'Continuar',cls:'gold',fn:()=>{modalHide();diceRoot.visible=false;diceBadge.visible=false;diceReadout.hidden=true;diceState.visible=false;resolve(value);}}]}));
+    await fxDelay(1050);diceRoot.visible=false;diceBadge.visible=false;diceReadout.hidden=true;diceState.visible=false;return value;
   }
   globalThis.d20FisicoDisponible=()=>!!globalThis.CAOZ_D20;
   globalThis.prepararTiradaD20=(label,interactive,meta)=>{
@@ -368,7 +434,7 @@
   globalThis.fxHit=async(u,n)=>{const v=await waitVisual('unit:'+u.uid);if(v){await waitMotion(v);floatAt(unitPos(u),'-'+n,'damage');impactAt(v.position,0xff8a70,1);await motion(v,'golpe',()=>tween(.24,k=>{v.rotation.z=Math.sin(k*TAU*3)*(1-k)*.12;}));v.rotation.z=0;}else await fxDelay();};
   globalThis.fxHeal=async(u,n)=>{const v=await waitVisual('unit:'+u.uid);floatAt(unitPos(u),'+'+n,'heal');if(v){await motion(v,'cura',()=>tween(.22,k=>{const q=1+Math.sin(Math.PI*k)*.1;v.scale.setScalar(ESC*q);}));}return fxDelay(80);};
   globalThis.fxFace=async(s,n)=>{floatAt(soulPos(s),'-'+n,'damage');impactAt(souls[s].group.position.clone().add(new THREE.Vector3(0,.08,0)),0xff746d,1.2);const c=souls[s].crystal;await tween(.28,k=>c.scale.set(.8+Math.sin(k*Math.PI)*.28,1.25+Math.sin(k*Math.PI)*.36,.8+Math.sin(k*Math.PI)*.28));};
-  globalThis.fxDraw=async s=>{const tokens=handTokens[s],token=tokens.at(-1),key=token?(s===ME?'hand:':'enemy-hand:')+token.serial:null,v=key&&await waitVisual(key);floatAt(deckPos(s).add(new THREE.Vector3(0,1,0)),'+ carta','note');if(!v)return fxDelay(120);const target=poseWorld(v),from={pos:deckPos(s).add(new THREE.Vector3(0,.3,0)),q:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+Math.PI,0,0)),scale:ESC*.7};placeWorld(v,from);await motion(v,'robo',()=>tween(.36,k=>{const e=ease(k);v.position.lerpVectors(from.pos,target.pos,e);v.quaternion.slerpQuaternions(from.q,target.q,e);v.scale.setScalar(THREE.MathUtils.lerp(from.scale,target.scale,e));}));if(s===ME)camera.attach(v);else table.attach(v);};
+  globalThis.fxDraw=async s=>{const tokens=handTokens[s],token=tokens.at(-1),key=token?(s===ME?'hand:':'enemy-hand:')+token.serial:null,v=key&&await waitVisual(key);if(!v)return fxDelay(120);const target=poseWorld(v),from={pos:deckPos(s).add(new THREE.Vector3(0,.48,0)),q:new THREE.Quaternion().setFromEuler(new THREE.Euler(-Math.PI/2+Math.PI,0,0)),scale:ESC*.72};v.visible=true;placeWorld(v,from);impactAt(from.pos,sideColor(s),.42);await motion(v,'robo',()=>tween(s===ME?.72:.58,k=>{const e=ease(k);v.position.lerpVectors(from.pos,target.pos,e);v.position.y+=Math.sin(Math.PI*e)*.52;v.quaternion.slerpQuaternions(from.q,target.q,e);v.scale.setScalar(THREE.MathUtils.lerp(from.scale,target.scale,e));}));if(s===ME)camera.attach(v);else table.attach(v);};
   globalThis.fxObj=(u,id,text)=>{floatAt(unitPos(u),text||CARDS[id]?.n||'Objeto','note');impactAt(unitPos(u),0x78caff,.72);return fxDelay(220);};
   globalThis.fxNotice=(text)=>{messageFor(text);return fxDelay(250);};
   globalThis.fxNumber=(anchor,text,kind)=>{floatAt(anchor==='face0'?soulPos(ME):soulPos(FOE),text,kind==='buff'?'heal':'note');};
@@ -392,6 +458,7 @@
   function setPointer(e){const b=stage.getBoundingClientRect();pointer.set((e.clientX-b.left)/b.width*2-1,-(e.clientY-b.top)/b.height*2+1);}
   function rootFrom(o){while(o&&(!o.userData||!o.userData.key))o=o.parent;return o||null;}
   function handSlotUnderPointer(){ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([...handHits.values()].filter(x=>x.visible),false)[0];if(!hit)return null;return {key:hit.object.userData.key,uv:hit.uv||new THREE.Vector2(.5,.5)};}
+  function tableSlotUnderPointer(){ray.setFromCamera(pointer,camera);const hit=ray.intersectObjects([...tableHits.values()].filter(x=>x.visible),false)[0];return hit?{key:hit.object.userData.key}:null;}
   function hitCard(){ray.setFromCamera(pointer,camera);const roots=[...visuals.values()].filter(v=>!['hand','enemyHand','deck','grave'].includes(v.userData.kind));const objects=[];roots.forEach(v=>v.traverse(x=>x.isMesh&&objects.push(x)));const hit=ray.intersectObjects(objects,false)[0];return hit?rootFrom(hit.object):null;}
   function freeSlots(side){const used=new Set(P(side).field.map(u=>fieldSlot(side,u)));return FIELD_ORDER.filter(slot=>!used.has(slot));}
   function tablePoint(){ray.setFromCamera(pointer,camera);return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-.72),new THREE.Vector3());}
@@ -430,10 +497,10 @@
   // Sólo el lienzo recibe gestos de mesa. Sin esta frontera, un botón de la
   // confirmación interna queda capturado por el canvas antes de recibir click.
   const isBoardPointer=e=>e.target===canvas||!!gesture||!!drag;
-  stage.addEventListener('pointerdown',e=>{if(e.button!==0||!isBoardPointer(e))return;setPointer(e);const hand=handSlotUnderPointer();gesture={key:hand?.key||null,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);});
-  stage.addEventListener('pointerup',async e=>{if(!isBoardPointer(e))return;setPointer(e);const g=gesture;gesture=null;if(drag){await finishDrag();return;}if(g?.key&&g.moved<=10){const v=visuals.get(g.key);if(v)await activateCard(v);return;}const v=hitCard();if(v)await activateCard(v);else if(TGT)toast('Elige una carta resaltada o cancela.');});
-  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e))return;setPointer(e);const h=handSlotUnderPointer();if(!drag){hoverHand=h?.key||null;if(h)hoverUV.copy(h.uv);stage.style.cursor=h?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.key&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
-  stage.addEventListener('pointerleave',()=>{if(!gesture&&!drag){hoverHand=null;stage.style.cursor='default';}});
+  stage.addEventListener('pointerdown',e=>{if(e.button!==0||!isBoardPointer(e))return;setPointer(e);const hand=handSlotUnderPointer(),tableSlot=hand?null:tableSlotUnderPointer();gesture={key:hand?.key||tableSlot?.key||null,hand:!!hand,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);});
+  stage.addEventListener('pointerup',async e=>{if(!isBoardPointer(e))return;setPointer(e);const g=gesture;gesture=null;if(drag){await finishDrag();return;}if(g?.key&&g.moved<=10){const v=visuals.get(g.key);if(v)await activateCard(v);return;}const hit=tableSlotUnderPointer(),v=hit?visuals.get(hit.key):hitCard();if(v)await activateCard(v);else if(TGT)toast('Elige una carta resaltada o cancela.');});
+  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e)){if(!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}return;}setPointer(e);const h=handSlotUnderPointer(),tableSlot=h?null:tableSlotUnderPointer();if(!drag){hoverHand=h?.key||null;if(h)hoverUV.copy(h.uv);setTableHover(tableSlot?.key||null);stage.style.cursor=h||tableSlot?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.hand&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
+  stage.addEventListener('pointerleave',()=>{if(!gesture&&!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}});
   stage.addEventListener('wheel',e=>{e.preventDefault();view.target=Math.max(.78,Math.min(1.25,view.target+e.deltaY*.0008));},{passive:false});
   prompt.addEventListener('pointerdown',e=>e.stopPropagation());
   prompt.addEventListener('pointerup',e=>e.stopPropagation());
@@ -453,15 +520,18 @@
 
   /* --------------------------- Inicio y modos ------------------------------ */
   function resetPresentation(){
-    visualEpoch++;for(const v of visuals.values())v.removeFromParent();visuals.clear();pending.clear();wantedKeys.clear();desiredByKey.clear();pendingEntries.clear();spentVisuals[ME].length=0;spentVisuals[FOE].length=0;graveGhosts[ME]=graveGhosts[FOE]=null;fieldSlots[ME].clear();fieldSlots[FOE].clear();handTokens[ME]=[];handTokens[FOE]=[];dropHints[ME].length=0;dropHints[FOE].length=0;hoverHand=null;gesture=null;drag=null;
-    for(const hit of handHits.values())hit.removeFromParent();handHits.clear();for(const {m} of dragMarks){m.visible=false;m.material.opacity=0;}for(const impact of impacts.splice(0)){impact.ring.removeFromParent();impact.light.removeFromParent();}diceRoot.visible=false;diceReadout.hidden=true;diceState.visible=false;diceState.estado='oculto';diceState.valor=null;
+    visualEpoch++;for(const v of visuals.values())v.removeFromParent();visuals.clear();pending.clear();wantedKeys.clear();desiredByKey.clear();pendingEntries.clear();spentVisuals[ME].length=0;spentVisuals[FOE].length=0;graveGhosts[ME]=graveGhosts[FOE]=null;fieldSlots[ME].clear();fieldSlots[FOE].clear();handTokens[ME]=[];handTokens[FOE]=[];dropHints[ME].length=0;dropHints[FOE].length=0;hoverHand=null;hoverTable=null;clearTablePreview();gesture=null;drag=null;
+    for(const hit of handHits.values())hit.removeFromParent();handHits.clear();for(const hit of tableHits.values())hit.removeFromParent();tableHits.clear();for(const {m} of dragMarks){m.visible=false;m.material.opacity=0;}for(const impact of impacts.splice(0)){impact.ring.removeFromParent();impact.light.removeFromParent();}diceRoot.visible=false;diceBadge.visible=false;diceReadout.hidden=true;diceState.visible=false;diceState.estado='oculto';diceState.valor=null;
   }
   async function startGame(nextMode){
     modo=nextMode;ready=false;selected=null;resetPresentation();clearUI();modalHide();messageFor('Barajando los mazos de Talesyn y Gero…');
     // setupMatch conserva el lanzamiento de moneda, el segundo robo y el
     // mulligan reales. Sólo la variante final modifica el Alma inicial de Gero.
     const opts=modo==='final'?{campana:{id:'mesa-three-gero',etapa:5,alma:40,prueba:true}}:{};
-    try{await setupMatch('talesin','gero',opts);ready=true;render();messageFor('La partida está en marcha.');}
+    // setupMatch reproduce el mulligan y el primer turno real. La mesa debe
+    // estar viva durante ese flujo: de otro modo el primer robo y, si Gero
+    // empieza, su dado y sus acciones ocurren antes de que exista un visual.
+    try{ready=true;await setupMatch('talesin','gero',opts);render();messageFor('La partida está en marcha.');}
     catch(e){console.error(e);messageFor('No se pudo iniciar la partida: '+e.message);modalShow({kicker:'ERROR',title:'La mesa no pudo abrirse',body:`<p>${e.message}</p>`,actions:[{t:'Reintentar',cls:'gold',fn:()=>startGame(modo)}]});}
   }
   function chooseMode(){
@@ -486,7 +556,7 @@
     for(let i=tweens.length-1;i>=0;i--){const t=tweens[i],k=Math.min(1,(reloj-t.at)/t.d);t.fn(k);if(k>=1){tweens.splice(i,1);t.resolve();}}
     const quality=effectLevel;matFelt.emissiveIntensity=(.24+.18*quality)+(.06+.17*quality)*Math.sin(reloj*1.6);
     candles.forEach(c=>{const f=.85+.1*Math.sin(reloj*13+c.x)+.06*Math.sin(reloj*29+c.x*3);c.light.intensity=26*quality*f;c.flame.scale.set(1,f,1);c.flame.lookAt(camera.position.x,c.flame.getWorldPosition(new THREE.Vector3()).y,camera.position.z);});
-    animateHand(dt);updateDrag(dt);
+    animateHand(dt);animateTablePreview(dt);updateDrag(dt);
     for(const [key,v] of visuals){if(v.userData.kind==='field'&&!v.userData.dying&&!v.userData.motion){const u=v.userData.unit;if(u){const raised=(selected===u||TGT&&isTargetable(u))?.15:0;v.position.y+=(v.userData.base.y+raised-v.position.y)*Math.min(1,dt*12);}}}
     for(let i=impacts.length-1;i>=0;i--){const fx=impacts[i],age=reloj-fx.at,k=Math.min(1,age/.54);fx.ring.scale.setScalar(1+k*4*fx.power);fx.ring.material.opacity=Math.max(0,.86*(1-k));fx.light.intensity=Math.max(0,18*effectLevel*(1-k));if(k>=1){fx.ring.removeFromParent();fx.light.removeFromParent();impacts.splice(i,1);}}
     for(let i=floating.length-1;i>=0;i--){const f=floating[i],p=worldToScreen(f.pos);f.el.style.transform=`translate(-50%,-50%) translate(${p.x}px,${p.y}px)`;f.el.hidden=p.hide;if(now>f.until){f.el.remove();floating.splice(i,1);}}
@@ -502,8 +572,9 @@
   function inspect(){
     const field=s=>P(s).field.map(u=>{const v=visuals.get('unit:'+u.uid),p=v?v.getWorldPosition(new THREE.Vector3()):cardPos(s,u);return {uid:u.uid,id:u.card.id,slot:fieldSlot(s,u),centro:plain(p)};});
     const hand=[...handHits.entries()].map(([key,slot])=>{const v=visuals.get(key);return {indice:slot.userData.index,id:slot.userData.id,rect:slotRect(slot),hover:hoverHand===key,escala:Number((v?.scale.x||0).toFixed(4)),anchoMundo:Number((slot.geometry.parameters.width*slot.scale.x).toFixed(4)),visible:slot.visible};}).sort((a,b)=>a.indice-b.indice);
+    const tableSlots=[...tableHits.entries()].map(([key,slot])=>({key,id:slot.userData.id,kind:slot.userData.kind,side:slot.userData.side,rect:slotRect(slot),hover:hoverTable===key,visible:slot.visible,centro:plain(slot.getWorldPosition(new THREE.Vector3()))}));
     const enemyHand=[...visuals.values()].filter(v=>v.userData.kind==='enemyHand').sort((a,b)=>(a.userData.handIndex||0)-(b.userData.handIndex||0)).map(v=>({centro:plain(v.getWorldPosition(new THREE.Vector3()))}));
-    return {mano:{ranuras:hand,objetivo:hoverHand},campo:[field(ME),field(FOE)],enemigo:{mano:enemyHand,campo:field(FOE)},dado:{...diceState},animaciones:{activas:[...activeAnimations.values()].map(x=>({...x})),historial:animationHistory.map(x=>({...x}))},cementerio:[P(ME).grave.map(id=>({id})),P(FOE).grave.map(id=>({id}))]};
+    return {mano:{ranuras:hand,objetivo:hoverHand},mesa:{ranuras:tableSlots,preview:{key:tablePreviewKey,visible:!!tablePreview,escala:Number((tablePreview?.scale.x||0).toFixed(4))},seleccionado:selected?.uid||null},campo:[field(ME),field(FOE)],enemigo:{mano:enemyHand,campo:field(FOE)},dado:{...diceState},animaciones:{activas:[...activeAnimations.values()].map(x=>({...x})),historial:animationHistory.map(x=>({...x}))},cementerio:[P(ME).grave.map(id=>({id})),P(FOE).grave.map(id=>({id}))]};
   }
   async function testScenario(name){
     if(!G)throw Error('La partida todavía no está lista.');G.fast=false;G.over=false;G.busy=false;G.resolving=false;G.active=ME;G.phase='principal';P(ME).pd=10;P(ME).pdMax=10;P(FOE).pd=10;P(FOE).pdMax=10;P(ME).leaderUsed=false;P(FOE).leaderUsed=false;selected=null;SEL=null;TGT=null;
@@ -530,6 +601,6 @@
     inspeccion:inspect,
     pruebas:Object.freeze({escenario:testScenario,tirarDado:async({valor=13}={})=>{const old=G?.fast;if(G)G.fast=false;try{return await showD20(valor,'Prueba de d20',false,{min:10,siOk:'La tirada queda registrada.'},physicalFor(valor));}finally{if(G)G.fast=old;}}})
   });
-  async function boot(){try{await CAOZ_CARTA_PINTOR.fuentes();if(typeof cargarArte==='function')await cargarArte();await skinLikeDemo();ready=true;sync();requestAnimationFrame(animate);if(CAPTURA){await startGame(qs.get('modo')||'duelo');}else chooseMode();}catch(e){console.error(e);messageFor('No se pudo preparar la mesa: '+e.message);}}
+  async function boot(){try{await CAOZ_CARTA_PINTOR.fuentes();if(typeof cargarArte==='function')await cargarArte();await skinLikeDemo();setLogOpen(false);ready=true;sync();requestAnimationFrame(animate);if(CAPTURA){await startGame(qs.get('modo')||'duelo');}else chooseMode();}catch(e){console.error(e);messageFor('No se pudo preparar la mesa: '+e.message);}}
   boot();
 })();

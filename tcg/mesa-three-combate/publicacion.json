@@ -416,7 +416,7 @@
     "art/zancada-foil-v1.webp": "b444d1f829d193df836d2e4cd6946879482070ee0bcc94fdc57c4a6de19a9af4",
     "art/zancada.webp": "c3d6ddd4f63b0c04cb4eecfc91d94effe4734f5a65f7d6045603812fcf28eda0",
     "generado/arte.js": "846b9083e7f5f10fb6a20b3c3d76c26d88993ee2927f0f2b724a0c438b18b0f0",
-    "index.html": "e2e73376662ca2af9d10cfb30d3c0faae69d3e23c598f42a2a535744a8ac827e",
+    "index.html": "7bacc71cd1539388b48e0fe78d5fe4c438f87d29fa8e11ae368e3ecf1bb1a609",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/dado-fisico.js": "20fab24160f948b74d22b0f67f4d7c95dad1744ae5e07ad53a851c2bce703522",
@@ -425,16 +425,16 @@
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "juego/motor.js": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076",
     "mesa-three-combate-arranque.js": "63dabe705930d52567aaa79eb8ca662eb0b2d418f1dca78bf18703da890955f0",
-    "mesa-three-combate.css": "791dc0c3fdea2ff7fde5479cc0ffbee27a8017e7b1640be6fe91418e86e92a87",
-    "mesa-three-combate.js": "a21de0943e494043e8baba5229b9d3faba305176500ded874ebeac95a59b47e2",
-    "procedencia.json": "2a5f4791211a77bfbda3594d1a5fae2bd7e2ce7d090e9562c44f846bdbfbf05d",
+    "mesa-three-combate.css": "0913b8ba15a7396f9e2435e9b2f056eaaef005b7edd985fe7cc45f828e5b7be2",
+    "mesa-three-combate.js": "42e67ae57d23784d4d349cd6f81f33f55d0642cbc7d4a89e835268e3f519347c",
+    "procedencia.json": "1a719e8c3da669e4d23b01927287dcc3a0a5106a5e372e9385bcd1530e03aefc",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/mesa-three-legibilidad",
-    "sha": "c131134071ef9459ead2db3e9c2280bef1d8508a"
+    "sha": "57e453c956aac0becd4d09a4a2a7e76829f2b747"
   },
   "seccion": "mesa-three-combate",
   "version": 1

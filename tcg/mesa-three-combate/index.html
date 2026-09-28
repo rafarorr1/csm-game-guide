@@ -38,7 +38,8 @@
       <div class="ctTurn" id="ctTurn" aria-live="polite">Preparando el Domo…</div>
       <div class="ctMessage" id="ctMessage" role="status" aria-live="polite"></div>
       <div class="ctPrompt" id="ctPrompt" hidden></div>
-      <div class="ctLog" id="ctLog" aria-label="Registro de partida"></div>
+      <button id="ctLogToggle" class="ctLogToggle" type="button" aria-controls="ctLog" aria-expanded="false">Registro <span id="ctLogBadge" hidden>0</span></button>
+      <div class="ctLog" id="ctLog" aria-label="Registro de partida" aria-hidden="true"></div>
       <div class="ctHint" id="ctHint">Rueda: acercar o alejar · Pulsa una carta de tu mano para jugarla.</div>
       <div class="ctLabels" id="ctLabels" aria-hidden="true"></div>
     </section>
