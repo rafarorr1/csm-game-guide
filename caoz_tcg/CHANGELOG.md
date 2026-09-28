@@ -1,5 +1,11 @@
 # Registro de versiones — el TCG del Domo
 
+### v63 · Build 302 · Acceso al playtest de balance · 2026-09-28
+
+- El menú privado de **Develop** incluye una entrada explícita a la **Beta de
+  balance**, que abre el playtest candidato con los perfiles locales de Pato y
+  Rafa sin mezclar su progreso con la beta normal.
+
 ### v62 · Build 301 · Perfiles del playtest candidato · 2026-09-27
 
 - El enlace de la **beta de balance candidata** ya no pide correo: al entrar
