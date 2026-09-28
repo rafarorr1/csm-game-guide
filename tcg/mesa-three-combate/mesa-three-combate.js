@@ -51,7 +51,21 @@
   const slab=new THREE.Mesh(new THREE.BoxGeometry(24,.72,17),new THREE.MeshPhysicalMaterial({map:wood,roughness:.43,clearcoat:.35,clearcoatRoughness:.25}));slab.position.y=-.37;slab.castShadow=slab.receiveShadow=true;table.add(slab);
   const feltTex=canvasTexture(1500,1050,(g,w,h)=>{const r=g.createRadialGradient(w/2,h/2,20,w/2,h/2,w*.65);r.addColorStop(0,'#36215d');r.addColorStop(1,'#120923');g.fillStyle=r;g.fillRect(0,0,w,h);g.strokeStyle='#d5a64d';g.lineWidth=11;g.strokeRect(30,30,w-60,h-60);g.lineWidth=2;g.strokeRect(52,52,w-104,h-104);for(let i=0;i<3300;i++){g.fillStyle=`rgba(255,255,255,${Math.random()*.035})`;g.fillRect(Math.random()*w,Math.random()*h,2,2);}});
   const felt=new THREE.Mesh(new THREE.PlaneGeometry(18,12.6),new THREE.MeshPhysicalMaterial({map:feltTex,roughness:.88,metalness:.18,clearcoat:.12}));felt.rotation.x=-Math.PI/2;felt.position.y=.002;felt.receiveShadow=true;table.add(felt);
-  const lineMat=new THREE.LineBasicMaterial({color:0xdcae50,transparent:true,opacity:.72});
+  // La maqueta original tenía un tapete grabado: cada puesto libre era una
+  // diana rúnica y el centro llevaba la escritura del Domo. Se conserva en
+  // una capa transparente bajo las cartas para que siga viéndose como una
+  // mesa física, no como una cuadrícula utilitaria.
+  const matMarks=canvasTexture(1500,1050,(g,w,h)=>{
+    const worldW=18,worldH=12.6,toPx=(x,z)=>[w*.5+x/worldW*w,h*.5+z/worldH*h],scale=w/worldW;
+    const rounded=(x,z,pw,ph)=>{const [cx,cy]=toPx(x,z),rw=pw*scale,rh=ph*scale,r=Math.min(rw,rh)*.095;g.beginPath();g.roundRect(cx-rw*.5,cy-rh*.5,rw,rh,r);g.stroke();};
+    const dial=(x,z,r=.46)=>{const [cx,cy]=toPx(x,z),radius=r*scale;g.save();g.shadowColor='rgba(255,191,84,.72)';g.shadowBlur=10;g.strokeStyle='rgba(255,198,90,.82)';g.lineWidth=3.2;g.beginPath();g.arc(cx,cy,radius,0,TAU);g.stroke();g.shadowBlur=0;for(let i=0;i<6;i++){const a=i*TAU/6-Math.PI/2,inner=radius*.64,outer=radius*1.22;g.beginPath();g.moveTo(cx+Math.cos(a)*inner,cy+Math.sin(a)*inner);g.lineTo(cx+Math.cos(a)*outer,cy+Math.sin(a)*outer);g.stroke();}g.restore();};
+    const panel=(x,z,pw,ph,mark=false)=>{g.save();g.strokeStyle='rgba(5,2,16,.72)';g.lineWidth=7;rounded(x,z,pw,ph);g.strokeStyle='rgba(133,102,187,.34)';g.lineWidth=1.8;rounded(x,z,pw-.12,ph-.12);g.restore();if(mark)dial(x,z);};
+    const fieldW=ANCHO*ESC+.18,fieldH=ALTO*ESC+.18,trapW=ALTO*ESC*.78,trapH=ANCHO*ESC*.78;
+    for(const s of [ME,FOE]){const sign=sideZ(s);for(let i=0;i<5;i++)panel((i-2)*2,sign*1.58,fieldW,fieldH,true);for(let i=0;i<3;i++)panel((i-1)*2.05,sign*layout.trapZ,trapW,trapH);panel(layout.leader.x,sign*layout.leader.z,fieldW*1.12,fieldH*1.12,true);panel(layout.deck.x,sign*layout.deck.z,fieldW,fieldH);panel(layout.grave.x,sign*layout.grave.z,fieldW,fieldH);}
+    const [x0,y0]=toPx(-7.65,0),[x1,y1]=toPx(7.65,0);g.save();g.strokeStyle='rgba(255,196,86,.68)';g.shadowColor='rgba(255,183,61,.42)';g.shadowBlur=8;g.lineWidth=2.1;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.shadowBlur=0;g.font=`${Math.round(scale*.29)}px Georgia`;g.textAlign='center';g.textBaseline='middle';g.fillStyle='rgba(255,214,130,.78)';const glyphs='ᚠᚢᚦᚨᚱᚲᚷᚹᚺᚾᛁᛃᛇᛈᛉᛊᛏᛒᛖᛗᛚᛜᛞᛟ';for(let i=0;i<36;i++){const x=-7.25+i*.414;if(Math.abs(x)<1.35)continue;const [px,py]=toPx(x,0);g.fillText(glyphs[i%glyphs.length],px,py-scale*.17);}g.restore();
+  });
+  const marks=new THREE.Mesh(new THREE.PlaneGeometry(18,12.6),new THREE.MeshBasicMaterial({map:matMarks,transparent:true,opacity:.94,depthWrite:false,toneMapped:false}));marks.rotation.x=-Math.PI/2;marks.position.y=.008;table.add(marks);
+  const lineMat=new THREE.LineBasicMaterial({color:0xdcae50,transparent:true,opacity:.43});
   function zone(x,z,w,h){const pts=[[-w/2,-h/2],[w/2,-h/2],[w/2,h/2],[-w/2,h/2],[-w/2,-h/2]].map(([a,b])=>new THREE.Vector3(x+a,.012,z+b));table.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts),lineMat));}
   for(const s of [ME,FOE]){const sign=sideZ(s);for(let i=0;i<5;i++)zone((i-2)*2,sign*1.58,ANCHO*ESC+.18,ALTO*ESC+.18);for(let i=0;i<3;i++)zone((i-1)*2.05,sign*layout.trapZ,ALTO*ESC*.78,ANCHO*ESC*.78);zone(layout.leader.x,sign*layout.leader.z,ANCHO*ESC*1.12,ALTO*ESC*1.12);zone(layout.deck.x,sign*layout.deck.z,ANCHO*ESC,ALTO*ESC);zone(layout.grave.x,sign*layout.grave.z,ANCHO*ESC,ALTO*ESC);}
   const rune=new THREE.Mesh(new THREE.TorusGeometry(.7,.024,10,60),new THREE.MeshBasicMaterial({color:0xffc25d,transparent:true,opacity:.65}));rune.rotation.x=-Math.PI/2;rune.position.y=.018;table.add(rune);
