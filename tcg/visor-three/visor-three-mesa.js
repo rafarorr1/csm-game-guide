@@ -25,6 +25,11 @@
   const efectos={iridiscencia:true,laca:true,sombras:true,espejo:true,haces:true,resplandor:true,enfoque:true};
   const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
   const estado=t=>{$('estado').textContent=t;};
+  // Cualquier fallo se ve en la página (no un lienzo negro sin explicación).
+  const aviso=t=>{estado(t);$('info').textContent=t;};
+  addEventListener('error',e=>aviso('Error: '+(e.message||e.error)));
+  addEventListener('unhandledrejection',e=>aviso('Error: '+(e.reason?.message||e.reason)));
+  if(!document.createElement('canvas').getContext('webgl2')){aviso('Este navegador no tiene WebGL 2, que three.js necesita. Prueba con Chrome, Edge, Firefox o Safari actualizados.');return;}
 
   /* ---- Motor, escena y cámara ------------------------------------------------ */
   const lienzo=$('lienzo'),esc=$('escenario');
@@ -126,7 +131,10 @@
   const anillo=new THREE.Mesh(new THREE.RingGeometry(.9,1,96),new THREE.MeshBasicMaterial({color:0xffd27a,transparent:true,opacity:0,blending:THREE.AdditiveBlending,depthWrite:false,side:THREE.DoubleSide}));anillo.rotation.x=-Math.PI/2;anillo.position.y=.52;escena.add(anillo);
 
   /* ---- Posproceso HDR: MSAA 4×, profundidad de campo, resplandor y AgX -------- */
-  const objetivo=new THREE.WebGLRenderTarget(2,2,{type:THREE.HalfFloatType,samples:4});
+  // HDR y MSAA si la tarjeta los admite; si no, el formato de 8 bits y menos (o ninguna) muestra.
+  const gl=renderer.getContext(),hdr=renderer.extensions.has('EXT_color_buffer_half_float')||renderer.extensions.has('EXT_color_buffer_float'),muestras=Math.min(4,gl.getParameter(gl.MAX_SAMPLES)||0);
+  const depura=gl.getExtension('WEBGL_debug_renderer_info'),gpu=String(depura?gl.getParameter(depura.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)).slice(0,60);
+  const objetivo=new THREE.WebGLRenderTarget(2,2,{type:hdr?THREE.HalfFloatType:THREE.UnsignedByteType,samples:muestras});
   const composer=new EffectComposer(renderer,objetivo),pasoRender=new RenderPass(escena,camara);
   const enfoque=new BokehPass(escena,camara,{focus:8.5,aperture:.00035,maxblur:.0045});
   const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.45,.5,.96);
@@ -186,11 +194,16 @@
     if(toque){linterna.position.copy(toque.point).addScaledVector(toque.face.normal.clone().transformDirection(frente.matrixWorld),1.1);linterna.intensity+=(2.4-linterna.intensity)*.2;}else linterna.intensity*=.85;
     enfoque.uniforms.focus.value=camara.position.distanceTo(carta.position);
   }
-  function dibujar(){renderer.info.reset();composer.render();}
+  // Si los primeros fotogramas salen negros (el posproceso falla en esa tarjeta), se dibuja sin él.
+  let simple=false,revisados=0,cuadros=0;
+  function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let suma=0;
+    for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);suma+=px[0]+px[1]+px[2];}return suma<27;}
+  function dibujar(){renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
+    if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}else aviso('La escena sale negra en esta tarjeta gráfica ('+gpu+'). Cuéntanos qué navegador y dispositivo usas.');}}}
   function cuadro(ahora){
     const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;reloj+=dt;paso(reloj,dt);dibujar();
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;const i=renderer.info;
-      $('info').textContent=`${fps.v} fps · ${i.render.calls} llamadas de dibujo · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${i.memory.textures} texturas · WebGL ${renderer.capabilities.isWebGL2?'2':'1'} · three ${THREE.REVISION}`;}
+      $('info').textContent=`${fps.v} fps · ${i.render.calls} llamadas de dibujo · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${i.memory.textures} texturas · WebGL 2 · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);
   }
   async function preparar(){
@@ -207,12 +220,12 @@
       // Para depurar desde la consola o las pruebas: los objetos de la escena.
       objetos:()=>({THREE,escena,suelo,espejo,renderer,carta,matCara}),
       cargar,edicion:()=>edicion,efecto(k,v){efectos[k]=v;const c=document.querySelector(`[data-efecto="${k}"]`);if(c)c.checked=v;aplicarEfectos();},
-      estado:()=>({webgl2:renderer.capabilities.isWebGL2,version:THREE.REVISION,muestras:objetivo.samples,tipo:objetivo.texture.type===THREE.HalfFloatType?'half':'otro',
+      estado:()=>({webgl2:renderer.capabilities.isWebGL2,gpu,simple,version:THREE.REVISION,muestras:objetivo.samples,tipo:objetivo.texture.type===THREE.HalfFloatType?'half':'otro',
         iridiscencia:matCara.iridescence,laca:matCara.clearcoat,pases:[['render',pasoRender],['enfoque',enfoque],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n),linterna:linterna.intensity}),
       pantalla(x,y,z){const v=new THREE.Vector3(x,y,z).project(camara),b=esc.getBoundingClientRect();return {x:(v.x*.5+.5)*b.width,y:(.5-v.y*.5)*b.height,ancho:b.width,alto:b.height};},
       carta:()=>{const v=carta.position.clone(),b=esc.getBoundingClientRect(),arriba=v.clone().add(new THREE.Vector3(0,ALTO/2*carta.scale.y,0)).project(camara),abajo=v.clone().add(new THREE.Vector3(0,-ALTO/2*carta.scale.y,0)).project(camara);
         return {arriba:(.5-arriba.y*.5)*b.height,abajo:(.5-abajo.y*.5)*b.height,alto:b.height};},
     });
   }
-  preparar().catch(e=>estado('No se pudo preparar el visor: '+e.message));
+  preparar().catch(e=>aviso('No se pudo preparar el visor: '+e.message));
 })();
