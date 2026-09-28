@@ -1,5 +1,12 @@
 # Registro de versiones — el TCG del Domo
 
+### v53 · Build 292 · Acceso a la beta de balance · 2026-09-28
+
+- Develop incorpora una puerta independiente a la **Beta de balance**. Abre
+  la candidata con los perfiles locales Pato y Rafa, separados del progreso
+  normal de la Beta.
+- No modifica cartas, reglas, mazos, cuentas ni el juego de Producción.
+
 ### v52 · Build 291 · Juego público y Develop privado · 2026-09-25
 
 - La raíz ofrece dos entradas claras: **Juego** abre la publicación y
