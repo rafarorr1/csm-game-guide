@@ -89,8 +89,14 @@ try{
     await pagina.waitForFunction(()=>/fps/.test(document.getElementById('info').textContent),null,{timeout:60000});
     const r=await pagina.evaluate(()=>({girar:document.getElementById('girar').checked,info:document.getElementById('info').textContent,estado:document.getElementById('estado').textContent}));
     assert.equal(r.girar,!reducido,reducido?'Con movimiento reducido la carta no gira sola':'La carta gira sola');
-    assert.ok(/llamadas de dibujo/.test(r.info)&&/three 186/.test(r.info),'El marcador muestra fps, llamadas y la versión ('+r.info+')');
+    assert.ok(/llamadas de dibujo/.test(r.info)&&/three 186/.test(r.info)&&/MSAA \d×/.test(r.info)&&!/sin posproceso/.test(r.info),'El marcador muestra fps, llamadas, formato, tarjeta y versión ('+r.info+')');
     assert.deepEqual(errores,[],'Sin errores al usarla');await contexto.close();
   }
   console.log('✓ Uso real: marcador de rendimiento y respeto al movimiento reducido');
+  // Sin WebGL 2 (three.js lo necesita): la página lo dice en lugar de quedarse en negro.
+  {const pagina=await navegador.newPage({viewport:{width:1280,height:800}}),errores=[];pagina.on('pageerror',e=>errores.push(e.message));
+    await pagina.addInitScript(()=>{const g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,...a){return t==='webgl2'?null:g.call(this,t,...a);};});
+    await pagina.goto(base);await pagina.waitForFunction(()=>/WebGL 2/.test(document.getElementById('estado').textContent),null,{timeout:30000});
+    assert.deepEqual(errores,[],'Sin WebGL 2 no hay errores sueltos: sólo el aviso');await pagina.close();
+    console.log('✓ Sin WebGL 2, la página avisa en vez de quedarse en negro');}
 }finally{await navegador?.close();servidor.close();}
