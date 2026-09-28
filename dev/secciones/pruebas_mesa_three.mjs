@@ -2,7 +2,8 @@
    sólo publica sus dependencias y respeta la CSP. En el navegador: WebGL 2 con
    posproceso HDR (oclusión ambiental, profundidad de campo, resplandor), la
    partida montada (campos, manos, pilas, Alma y PD), la mesa y la mano en
-   pantalla (en escritorio, la mesa entera), y la maqueta de reglas: jugar una
+   pantalla (en escritorio, la mesa entera), el slider de atmósfera sin apagar
+   la luz de lectura de la mano, y la maqueta de reglas: jugar una
    carta la lleva a su hueco y gasta PD, sin PD no se juega, atacar hace daño y
    la que muere arde y va al cementerio, y el rival juega su turno. Que cada
    efecto se apaga, sin WebGL 2 avisa y con uso real cuenta fotogramas. Usa
@@ -39,7 +40,7 @@ const zona=(pagina,[x0,y0,x1,y1])=>pagina.evaluate(([x0,y0,x1,y1])=>{const c=doc
   x.drawImage(c,x0*c.width,y0*c.height,(x1-x0)*c.width,(y1-y0)*c.height,0,0,64,64);const d=x.getImageData(0,0,64,64).data;let s=0;for(let i=0;i<d.length;i+=4)s+=(d[i]+d[i+1]+d[i+2])/3;return s/(d.length/4);},[x0,y0,x1,y1]);
 let navegador;
 try{
-  navegador=await chromium.launch({headless:true});
+  navegador=await chromium.launch({channel:process.env.CHROME_CHANNEL||'chrome',headless:true});
   for(const [ancho,alto]of [[1280,800],[390,700]]){
     const pagina=await navegador.newPage({viewport:{width:ancho,height:alto}}),errores=[],caso=ancho+'×'+alto;
     pagina.on('pageerror',e=>errores.push(e.message));
@@ -49,6 +50,19 @@ try{
     let e=await av(.5);
     assert.ok(e.webgl2&&e.hdr&&e.muestras===4,caso+': WebGL 2, HDR y MSAA 4×');
     assert.deepEqual(e.pases,['render','oclusion','enfoque','resplandor','salida'],caso+': oclusión ambiental, profundidad de campo, resplandor y salida AgX');
+    assert.equal(e.intensidad,58,caso+': la atmósfera empieza equilibrada');
+    assert.equal(await pagina.$eval('#intensidadEfectos',n=>n.value),'58',caso+': el slider refleja la intensidad inicial');
+    assert.ok(e.iluminacionMano.every(m=>m.entorno>=.45&&m.emision>=.18&&m.laca<=.21),caso+': la mano tiene entorno, emisión y laca de lectura');
+    // En «Priorizar lectura» se van los efectos pesados, no la iluminación que hace legible la mano.
+    await pagina.evaluate(R=>window[R].intensidad(0),R);e=await av(.2);
+    assert.equal(e.intensidad,0,caso+': el slider llega a lectura');
+    assert.deepEqual(e.pases,['render','salida'],caso+': a cero sólo quedan el render y la salida');
+    assert.ok(e.iluminacionMano.every(m=>m.entorno>=.45&&m.emision>=.18),caso+': la mano no se oscurece al bajar los efectos');
+    await pagina.evaluate(R=>window[R].intensidad(100),R);e=await av(.2);
+    assert.equal(e.intensidad,100,caso+': el slider llega a cinematográfico');
+    assert.deepEqual(e.pases,['render','oclusion','enfoque','resplandor','salida'],caso+': a cien vuelve la cadena visual completa');
+    await pagina.evaluate(R=>window[R].intensidad(58),R);e=await av(.2);
+    assert.deepEqual(e.pases,['render','oclusion','enfoque','resplandor','salida'],caso+': el equilibrio recupera sus efectos');
     assert.deepEqual([e.mano.length,e.campo.length,e.rival.length,e.almaYo,e.almaRival,e.pd,e.manoRival],[5,3,3,17,12,6,5],caso+': la partida está montada (manos, campos, Alma y PD)');
     // Encuadre: los dos campos siempre; en escritorio, también protagonistas, mazos y cementerios; la mano abajo.
     const P=await pagina.evaluate(R=>window[R].posiciones(),R),vis=async([x,y,z])=>{const q=await pagina.evaluate(([R,x,y,z])=>window[R].pantalla(x,y,z),[R,x,y,z]);return q.x>q.ancho*.01&&q.x<q.ancho*.99&&q.y>q.alto*.01&&q.y<q.alto*.99?q:null;};

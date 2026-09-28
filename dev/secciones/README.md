@@ -296,6 +296,7 @@ encima, vivos: se ponen rojos al recibir daño.
   - el Alma, un cristal de vidrio que refracta (transmisión y dispersión) con su número encima;
   - los PD, gemas que se encienden; las Llaves, fichas de oro.
 - **Posproceso:** HDR con MSAA, oclusión ambiental (GTAO: el contacto de las cartas con el tapete), profundidad de campo, resplandor y AgX.
+- **Legibilidad:** el slider «Intensidad de efectos» va de priorizar lectura a cinematográfico y gobierna niebla, sombras, velas, polvo y posproceso; la mano conserva una luz cálida propia para que sus cartas nunca dependan de ese ajuste.
 - **Jugar:**
   - la mano va pegada a la cámara y la carta bajo el puntero se levanta;
   - al pulsarla vuela a su hueco y cae con una onda, chispas y un temblor; si es dorada, con un pilar de luz;
