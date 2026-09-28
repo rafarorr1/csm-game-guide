@@ -6,21 +6,22 @@
     "art/magodomo-foil-v1.webp": "55d3f0cd477e92b5835c5fac0900a8d97e39189bc372140ee2339fc8f4794f5a",
     "art/magodomo.webp": "b823cd04dc13a98a355db8e9fbedce31e8185baa945d65f03238ab343dd885a6",
     "generado/datos.js": "4b40644d657509e9a6708a37d954df11703197901a4a32f7e35412d68c44998f",
-    "index.html": "6327cee7cf976941f6daeee73ce36d240ffe664f4ba2c1b044700e98ab53d934",
+    "index.html": "156eadc2f2712425f0e0d1bcbff5e61c96ecf4a80fc91eb3fb8194649333c845",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
-    "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "procedencia.json": "40a0a292b2b7b73fa44ca7c79b5796ab01b51e60b25f63ba0016ce9faf6e87f4",
+    "procedencia.json": "45499c85d334619208ab2d342ec540f17b0f0fcb2564dbaeea5b1a33207b10e2",
+    "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-mesa.css": "f79eca95a9e8eff0c998ae264a2800ba75be71cbfdaef1a7d6d48181abae45c1",
-    "visor-three-mesa.js": "e82400e6acffd37578d8916a51b9b07903401fba9e737ac3f60a41c5a236d464",
-    "visor-three-vendor.js": "aa0e5e358dcb3986b5fa08d619cfdefa40ff025c7106c33d60703d8bb7d72368"
+    "visor-three-mesa.js": "b853a9bafc24e449d06089472643d0713a4aff5421fc7344384ce9b3265d89ce",
+    "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "beaa3bd0180755fd10b6c0eb028d76c996abb312"
+    "sha": "0ec7af66475369edfbbb8b0ddd3f9979601798b6"
   },
   "seccion": "visor-three",
   "version": 1

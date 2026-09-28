@@ -19,9 +19,7 @@
   const {THREE,EffectComposer,RenderPass,UnrealBloomPass,BokehPass,OutputPass,Reflector}=window.CAOZ_THREE;
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1',ID='magodomo';
   if(CAPTURA)document.documentElement.dataset.captura='';
-  const ANCHO=2.5,ALTO=3.5,RADIO=.13,GROSOR=.035,CENTRO=2.45;
-  // Por edición: iridiscencia, destellos, laca y el metal del canto.
-  const EDICION={normal:{irid:.18,destellos:.25,laca:.55,canto:0xa88f63},foil:{irid:1,destellos:.8,laca:.7,canto:0xe3ecf7},dorado:{irid:.85,destellos:1,laca:.75,canto:0xffd98a}};
+  const {ALTO,EDICION}=CAOZ_THREE_CARTA,CENTRO=2.45;
   const efectos={iridiscencia:true,laca:true,sombras:true,espejo:true,haces:true,resplandor:true,enfoque:true};
   const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
   const estado=t=>{$('estado').textContent=t;};
@@ -48,36 +46,11 @@
   const pmrem=new THREE.PMREMGenerator(renderer);escena.environment=pmrem.fromScene(estudio(),.03).texture;escena.environmentIntensity=.9;
   const camara=new THREE.PerspectiveCamera(30,1,.1,80);camara.position.set(0,2.6,9.5);const mira=new THREE.Vector3(0,2.15,0);camara.lookAt(mira);
 
-  /* ---- La carta: cara, dorso y canto ------------------------------------------ */
-  const forma=new THREE.Shape(),w=ANCHO/2,h=ALTO/2,r=RADIO;
-  forma.moveTo(-w+r,-h);forma.lineTo(w-r,-h);forma.quadraticCurveTo(w,-h,w,-h+r);forma.lineTo(w,h-r);forma.quadraticCurveTo(w,h,w-r,h);
-  forma.lineTo(-w+r,h);forma.quadraticCurveTo(-w,h,-w,h-r);forma.lineTo(-w,-h+r);forma.quadraticCurveTo(-w,-h,-w+r,-h);
-  const cara=lado=>{const g=new THREE.ShapeGeometry(forma,16),p=g.attributes.position,uv=g.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,p.getX(i)/ANCHO+.5,p.getY(i)/ALTO+.5);
-    if(lado<0)g.rotateY(Math.PI);g.translate(0,0,lado*GROSOR/2);return g;};
-  const canto=new THREE.ExtrudeGeometry(forma,{depth:GROSOR,bevelEnabled:false,curveSegments:16});canto.translate(0,0,-GROSOR/2);
-  const lisa=()=>{const c=document.createElement('canvas');c.width=c.height=4;const g=c.getContext('2d');g.fillStyle='#8080ff';g.fillRect(0,0,4,4);return c;};
-  const tex=(fuente,srgb)=>{const t=new THREE.CanvasTexture(fuente);if(srgb)t.colorSpace=THREE.SRGBColorSpace;t.anisotropy=renderer.capabilities.getMaxAnisotropy();return t;};
-  // El grosor de la película holográfica varía por la carta: bandas de arcoíris que se mueven con el ángulo.
-  function grosorPelicula(){const c=document.createElement('canvas');c.width=256;c.height=358;const g=c.getContext('2d'),d=g.createImageData(256,358);
-    for(let y=0;y<358;y++)for(let x=0;x<256;x++){const v=.5+.25*Math.sin(x*.045+y*.03)+.15*Math.sin(x*.11-y*.07+Math.sin(y*.02)*3)+.1*Math.sin((x+y)*.2),i=(y*256+x)*4,n=Math.round(Math.max(0,Math.min(1,v))*255);d.data[i]=d.data[i+1]=d.data[i+2]=n;d.data[i+3]=255;}
-    g.putImageData(d,0,0);return c;}
-  const tiempo={value:0},uDestellos={value:1},uMascara={value:null};
-  const matCara=new THREE.MeshPhysicalMaterial({roughness:1,metalness:1,clearcoatRoughness:.06,iridescenceIOR:1.35,iridescenceThicknessRange:[160,640],normalScale:new THREE.Vector2(1,1)});
-  // Destellos: puntos de purpurina donde la máscara lo pide, que se encienden según el ángulo.
-  matCara.onBeforeCompile=sh=>{
-    Object.assign(sh.uniforms,{uTiempo:tiempo,uDestellos,uMascaraD:uMascara});
-    sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float uTiempo,uDestellos;uniform sampler2D uMascaraD;\nfloat azarD(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}')
-      .replace('#include <opaque_fragment>',`{vec4 mk=texture2D(uMascaraD,vMapUv);vec2 g=vMapUv*vec2(64.,90.),id=floor(g),f=fract(g)-.5;float r=azarD(id);vec2 off=vec2(azarD(id+3.1),azarD(id+7.7))-.5;
-        float tw=pow(.5+.5*sin(r*90.+normal.x*45.-normal.y*32.+uTiempo*1.3),28.);outgoingLight+=vec3(1.,.96,.88)*smoothstep(.2,0.,length(f-off*.6))*step(.78,r)*tw*mk.g*uDestellos*4.;}
-#include <opaque_fragment>`);
-  };
-  matCara.customProgramCacheKey=()=>'cara-destellos';
-  const matDorso=new THREE.MeshPhysicalMaterial({roughness:.5,metalness:.15,clearcoat:.6,clearcoatRoughness:.1});
-  const matCanto=new THREE.MeshPhysicalMaterial({color:EDICION.dorado.canto,metalness:1,roughness:.3,anisotropy:.85,anisotropyRotation:Math.PI/2});
-  const oculto=new THREE.MeshBasicMaterial({visible:false});
-  const carta=new THREE.Group(),giro=new THREE.Group();carta.add(giro);carta.position.set(0,CENTRO,0);escena.add(carta);
-  const frente=new THREE.Mesh(cara(1),matCara),dorso=new THREE.Mesh(cara(-1),matDorso),borde=new THREE.Mesh(canto,[oculto,matCanto]);
-  for(const m of [frente,dorso,borde]){m.castShadow=true;giro.add(m);}
+  /* ---- La carta (three-carta.js): cara física, dorso y canto ----------------- */
+  const F=CAOZ_THREE_CARTA.fabrica(THREE,renderer),tiempo=F.tiempo,tex=F.tex;
+  const matCara=F.materialCara(null,'dorado'),matDorso=F.materialDorso(),matCanto=F.materialCanto('dorado');
+  const carta=new THREE.Group(),giro=F.carta(matCara,matDorso,matCanto);carta.add(giro);carta.position.set(0,CENTRO,0);escena.add(carta);
+  const frente=giro.userData.frente;
 
   /* ---- La sala: suelo espejo de mármol negro, pedestal de terciopelo -------- */
   function marmol(){const c=document.createElement('canvas');c.width=c.height=1024;const g=c.getContext('2d');g.fillStyle='#0c0b10';g.fillRect(0,0,1024,1024);
@@ -146,14 +119,13 @@
   async function cargar(ed){
     edicion=ed;estado('Pintando '+CARDS[ID].n+' · '+{normal:'Normal',foil:'Foil',dorado:'Foil dorado'}[ed]+'…');
     if(!cache[ed]){const a=window.VISOR_THREE_ARTE[ed],img=await imagen('./'+a.url),t=CAOZ_CARTA_PINTOR.texturas({id:ID,acabado:ed,arte:{img,enc:a.enc},ancho:1024});
-      cache[ed]={map:tex(t.color,true),normalMap:tex(t.normal),orm:tex(t.orm),mascara:tex(t.mascara)};}
-    const c=cache[ed],E=EDICION[ed];Object.assign(matCara,{map:c.map,normalMap:c.normalMap,roughnessMap:c.orm,metalnessMap:c.orm,iridescenceMap:c.mascara});uMascara.value=c.mascara;uDestellos.value=E.destellos;
-    matCanto.color.setHex(E.canto);aplicarEfectos();matCara.needsUpdate=true;
+      cache[ed]=F.texturas(t);}
+    F.cambiar(matCara,cache[ed],ed);matCanto.color.setHex(EDICION[ed].canto);aplicarEfectos();
     for(const b of document.querySelectorAll('[data-edicion]'))b.setAttribute('aria-pressed',String(b.dataset.edicion===ed));
     estado('Listo. Arrastra para girar la carta; «Invocar» la hace aparecer.');
   }
   function aplicarEfectos(){
-    const E=EDICION[edicion];matCara.iridescence=efectos.iridiscencia?E.irid:0;matCara.clearcoat=efectos.laca?E.laca:0;matDorso.clearcoat=efectos.laca?.6:0;
+    F.ajustar(matCara,efectos);matDorso.clearcoat=efectos.laca?.6:0;
     renderer.shadowMap.enabled=efectos.sombras;clave.castShadow=contra.castShadow=efectos.sombras;for(const m of [matCara,matDorso,matCanto,suelo.material,terciopelo,oro])m.needsUpdate=true;
     espejo.visible=efectos.espejo;suelo.material.opacity=efectos.espejo?.6:1;haces.visible=efectos.haces;resplandor.enabled=efectos.resplandor;enfoque.enabled=efectos.enfoque;
   }
@@ -209,7 +181,6 @@
   async function preparar(){
     await CAOZ_CARTA_PINTOR.fuentes();
     const logo=await imagen('./art/logo.webp'),d=CAOZ_CARTA_PINTOR.dorso(logo);Object.assign(matDorso,{map:tex(d.color,true),normalMap:tex(d.normal)});matDorso.needsUpdate=true;
-    matCara.normalMap=tex(lisa());matCara.iridescenceThicknessMap=tex(grosorPelicula());
     medir();new ResizeObserver(medir).observe(esc);
     await cargar(edicion);if(!CAPTURA&&!reducido)pose.invocada=.2;
     if(!CAPTURA)requestAnimationFrame(cuadro);
