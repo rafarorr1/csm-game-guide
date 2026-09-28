@@ -1,0 +1,176 @@
+{
+  "seccion": "campana-three",
+  "almacenamiento": "memoria temporal",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "progresoReal": false,
+  "proposito": "Revisar una mesa narrativa en Three.js y la miniatura personalizable de Campaña, conservando los datos reales de ruta.",
+  "componentes": {
+    "campana-personaje.js": "3f6736241a3798e4e2cd15dafaa382afeb1fe2038c58fc0db1799c4f081db2fd"
+  },
+  "entorno": {
+    "campana-three.css": "e4f5c4c4428ce42e798bd7cd979fbebe2ee81ab3fae6f8a0db025ac3609f8e9e",
+    "campana-three.js": "89b34a0273d35d00ffdef7987402e26e36394ba076f131ab6418e78e15f6b7cc",
+    "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
+  },
+  "arte": {
+    "lider_mohamed.webp": "415a0b31c9515364ccdccb754e09cdb02a037526c90625e5a4560343cf7192a1",
+    "lider_fender.webp": "282e64ac98c9923ccaf685586f9c2be41d18849fe27032a34d9c4042764a1fe0",
+    "lider_talesin.webp": "c7dac4a7b1fe769460d2d7b563b04cb7bd951c5bfab7022d38b6a1498c76bfb9",
+    "lider_rafaela.webp": "d82e9dfa694fb208c2e62d94abdb6f1790bf1b714c11b7ff92cafbb04cf10719",
+    "lider_adreida.webp": "9d7a2303f2dc3dd20863eaa651ca8bc394f76b70c247226149e8e9a388274ecf",
+    "lider_gero.webp": "8a5ecbf8d68c60657cc0a80abb711c8f394c7ee46017536d19661cacbdc92d3c"
+  },
+  "fuentes": {
+    "cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235"
+  },
+  "fixture": {
+    "lideres": {
+      "mohamed": {
+        "n": "Mohamed",
+        "ep": "El Mago Pitero",
+        "arch": "Control · Engaño · Llaves",
+        "pasiva": "<b>Disfraz de Mago:</b> tus Hechizos de Engaño cuestan 1 PD menos (mínimo 1).",
+        "habName": "Manos Largas",
+        "hab": "<b>Manos Largas (2 PD):</b> mira la carta superior del mazo rival. Si es un Objeto, a tu mano; si no, a sus Alcantarillas.",
+        "lore": "Pícaro humano. Se disfraza de mago para robar. Odia la magia porque es injusta."
+      },
+      "fender": {
+        "n": "Fender",
+        "ep": "El Bardo Honesto",
+        "arch": "Aggro · Canciones · Tempo",
+        "pasiva": "<b>Inspiración:</b> cada vez que juegas un Hechizo de Canción, un aliado gana +1 ATQ <b>permanente</b>.",
+        "habName": "Sube el Volumen",
+        "hab": "<b>Sube el Volumen (2 PD):</b> todos tus Personajes ganan +1 ATQ hasta el final del turno.",
+        "lore": "Tiefling carismático. Canta, baila y se gana la vida con música."
+      },
+      "talesin": {
+        "n": "Talesyn",
+        "ep": "El Heredero Celestial",
+        "arch": "Sacrificio · Rampa · Ascensión",
+        "pasiva": "<b>Digno de Ascender:</b> cada vez que muere un aliado ganas 1 Ficha de Gracia. Con 5, <b>asciendes</b>: +5 Alma y tus Celestiales ganan +2/+2 permanentes. <b>Después de ascender, cada Personaje que entre a tu campo nace Celestial y con +2/+2.</b>",
+        "habName": "Luz de Kenya",
+        "hab": "<b>Luz de Kenya (3 PD):</b> un aliado gana +1/+1 permanentes y la tribu Celestial.",
+        "lore": "Hijo del solar Kenya. Bajó en cuerpo humano para demostrar que es digno de ascender."
+      },
+      "rafaela": {
+        "n": "Rafaela",
+        "ep": "Devota de Rul",
+        "arch": "Enjambre · Fe · Curación",
+        "pasiva": "<b>Rebaño de Rul:</b> cada vez que un Discípulo entra a tu campo, restaura 2 PV a un aliado o 1 Alma a ti.",
+        "habName": "Estornudo de Rul",
+        "hab": "<b>Estornudo de Rul (2 PD):</b> 1 daño a un Personaje rival y cura 1 PV a un aliado.",
+        "lore": "Clériga elfa de Rul, un dragón que estornuda fuego. Busca a sus doce discípulos perdidos."
+      },
+      "adreida": {
+        "n": "Adreida",
+        "ep": "La Guerrera Semiorca",
+        "arch": "Midrange · Provocar · Combate",
+        "pasiva": "<b>Intimidante:</b> tus Personajes con 4 o más ATQ tienen <b>Provocar</b>.",
+        "habName": "Golpe Directo",
+        "hab": "<b>Golpe Directo (3 PD):</b> un aliado gana +2 ATQ y no recibe daño de contraataque este turno.",
+        "lore": "Guerrera semiorca. Intimida y prefiere resolver las cosas peleando. Ama los K-dramas."
+      },
+      "gero": {
+        "n": "Gero",
+        "ep": "El Dungeon Master",
+        "arch": "Caos · Tiradas · NPCs",
+        "pasiva": "<b>El dado decide:</b> al inicio de tu turno se tira un d20. Con <b>15 o más</b> ganas <b>2 PD</b>; con <b>10 o menos</b> pierdes <b>1 Alma</b>.",
+        "habName": "Improvisar",
+        "hab": "<b>Improvisar (2 PD):</b> mira la carta superior de tu mazo; si no te sirve, mándala a las Alcantarillas.",
+        "lore": "El Dungeon Master. No lleva un aventurero: lleva la mesa entera. Los NPC son suyos, y el dado también."
+      }
+    },
+    "rivales": [
+      {
+        "lider": "mohamed",
+        "alma": 16
+      },
+      {
+        "lider": "fender",
+        "alma": 20
+      },
+      {
+        "lider": "talesin",
+        "alma": 24
+      },
+      {
+        "lider": "rafaela",
+        "alma": 28
+      },
+      {
+        "lider": "adreida",
+        "alma": 32
+      },
+      {
+        "lider": "gero",
+        "alma": 40
+      }
+    ],
+    "casillas": [
+      [
+        22,
+        84
+      ],
+      [
+        68,
+        73
+      ],
+      [
+        33,
+        60
+      ],
+      [
+        73,
+        47
+      ],
+      [
+        40,
+        32
+      ],
+      [
+        62,
+        17
+      ]
+    ],
+    "esperas": [
+      [
+        62,
+        94
+      ],
+      [
+        56,
+        78
+      ],
+      [
+        45,
+        65
+      ],
+      [
+        61,
+        52
+      ],
+      [
+        52,
+        37
+      ],
+      [
+        50,
+        22
+      ]
+    ]
+  },
+  "derivados": {
+    "index.html": "d93000b346550f2b8b4ebc79ea69aef254bfc23a0795af6022273e6dd74e7a2e",
+    "generado/datos.js": "79b2fd8fe7dc52824e5b4477d7b4ee874a12a1b37e56805ea1a183e5c9b174bb",
+    "fuentes": {
+      "motor": "a3654f0ef7e7b2455407047c4b179f985938c310289df4c1cb2d921e4bb41566",
+      "final": "623972fe352072abbdd11ea1205d002b23a97b0a7ca588d12dcec41b92ba595c",
+      "rivales": "e147fb98738e1a28fa8f0bf6b1d148170d65ec560783231d9968e9cd2dd4b8a1",
+      "casillas": "0d601f8530ced8c1684dec99d25eb329471d32d36323e1a3986fd6e7b5c6cf7f",
+      "esperas": "db7e39abce60cfa1a4c07090bec85f3939378a5570b1773963abda7c54757d0f"
+    }
+  }
+}

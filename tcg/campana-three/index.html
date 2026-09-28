@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>La Mesa del Domo · campaña Three.js</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./campana-three.css">
+<script src="./generado/datos.js" defer></script>
+<script src="./visor-three-vendor.js" defer></script>
+<script src="./juego/campana-personaje.js" defer></script>
+<script src="./campana-three.js" defer></script>
+</head>
+<body>
+<main class="campanaThreeLab" aria-labelledby="tituloCampanaThree">
+  <header class="cabeceraThree">
+    <div>
+      <p>REVISIÓN AISLADA · THREE.JS</p>
+      <h1 id="tituloCampanaThree">La mesa del Domo</h1>
+    </div>
+    <div class="cabeceraAcciones">
+      <button type="button" id="campanaThreeMovimiento" aria-pressed="false">Movimiento: activo</button>
+      <button type="button" id="campanaThreeReiniciar">Reiniciar muestra</button>
+    </div>
+  </header>
+
+  <section id="campanaThreeEscena" class="escenaThree" aria-label="Propuesta visual de la campaña">
+    <div class="veloEscena" aria-hidden="true"></div>
+
+    <section class="campanaTitulo" aria-label="Estado de campaña">
+      <p>CAMPAÑA DEL DOMO</p>
+      <strong id="campanaThreeProgreso">Aventurera · 0 de 6 rivales</strong>
+      <span>La miniatura, el mapa y los encuentros son una escena Three.js. Esta revisión no guarda progreso.</span>
+    </section>
+
+    <aside class="panelThree panelRival" aria-labelledby="campanaThreeRivalTitulo">
+      <p class="eyebrow">PRÓXIMO ENCUENTRO</p>
+      <h2 id="campanaThreeRivalTitulo">Mohamed</h2>
+      <p id="campanaThreeRivalEp" class="epiteto"></p>
+      <dl class="datosRival">
+        <div><dt>Alma</dt><dd id="campanaThreeAlma">16</dd></div>
+        <div><dt>Mazo</dt><dd id="campanaThreeMazo">—</dd></div>
+      </dl>
+      <p id="campanaThreeDescripcion" class="descripcionRival"></p>
+      <button type="button" class="botonOro" id="campanaThreeAcercar">Acercarse al rival</button>
+    </aside>
+
+    <nav class="rutaThree" aria-label="Encuentros de campaña">
+      <p>RUTA DEL DOMO</p>
+      <ol id="campanaThreeRuta"></ol>
+    </nav>
+
+    <section class="panelThree panelHeroe" aria-labelledby="campanaThreeHeroeTitulo">
+      <p class="eyebrow">TU MINIATURA</p>
+      <h2 id="campanaThreeHeroeTitulo">Aventurera del Domo</h2>
+      <p id="campanaThreeHeroeDetalle">Guardiana · espada y escudo</p>
+      <div class="presetsHeroe" aria-label="Aspectos de prueba para la miniatura">
+        <button type="button" data-heroe="guardia" aria-pressed="true">Guardia</button>
+        <button type="button" data-heroe="oraculo" aria-pressed="false">Oráculo</button>
+        <button type="button" data-heroe="explorador" aria-pressed="false">Explorador</button>
+      </div>
+      <div class="controlesHeroe">
+        <button type="button" id="campanaThreeGirarIzq" aria-label="Girar miniatura a la izquierda">↶</button>
+        <button type="button" id="campanaThreeVolverMapa">Mapa</button>
+        <button type="button" id="campanaThreeGirarDer" aria-label="Girar miniatura a la derecha">↷</button>
+      </div>
+      <button type="button" class="botonOro verHeroeThree" id="campanaThreeVerHeroe">Ver tu miniatura 3D</button>
+    </section>
+
+    <div id="campanaThreeMarcadores" class="marcadoresThree" aria-label="Miniaturas y encuentros en la mesa"></div>
+
+    <footer class="accionesThree">
+      <label class="selectorEstado">Vista de prueba
+        <select id="campanaThreeEstado">
+          <option value="0">Inicio · Mohamed</option>
+          <option value="2">Mitad · Talesyn</option>
+          <option value="5">Final · Gero</option>
+        </select>
+      </label>
+      <button type="button" class="botonOro grande" id="campanaThreeEntrar">Acercarse al encuentro</button>
+      <button type="button" id="campanaThreeMapa">Volver al mapa</button>
+    </footer>
+  </section>
+
+  <footer class="notaThree" id="campanaThreeAviso" role="status" aria-live="polite">
+    Muestra en memoria temporal. Sin partida, IA, red, cuentas ni progreso real.
+  </footer>
+</main>
+</body>
+</html>
