@@ -12,8 +12,18 @@ body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
 .mtBoton{border:1px solid #e7bb5555;border-radius:10px}
 .mtGrupo button[aria-pressed="true"]{background:#e8bb5a;color:#2a1706}
 .mtOpcion,.mtEfectos label{display:inline-flex;gap:6px;align-items:center;color:#d9cbe8;min-height:32px}
-.mtEfectos{display:flex;flex-wrap:wrap;gap:4px 16px;border:1px solid #e7bb5530;border-radius:10px;padding:6px 12px 8px}
-.mtEfectos legend{color:#b8a3cc;font:700 10px/1 system-ui,sans-serif;letter-spacing:1px;padding:0 6px}
+/* El control principal compone la atmósfera; el ajuste fino queda disponible sin competir con él. */
+.mtAmbiente{border:1px solid #e7bb5538;border-radius:12px;padding:12px 14px;background:linear-gradient(108deg,#160d22d9,#0c1018d9);box-shadow:inset 0 1px #f6d99512}
+.mtAmbienteCabecera{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.mtAmbiente h2{color:#e8d7ad;font:700 clamp(16px,2.2vw,21px)/1.1 'Cinzel Domo',Georgia,serif;margin-top:3px}
+#intensidadTexto{flex:none;margin-top:2px;padding:5px 8px;border:1px solid #e7bb5555;border-radius:999px;color:#f0d796;background:#09070dcc;font:700 11px/1 system-ui,sans-serif;letter-spacing:.04em;white-space:nowrap}
+.mtRango{display:grid;grid-template-columns:max-content minmax(180px,1fr);align-items:center;gap:12px;margin-top:12px;color:#e6d9c8;font:700 12px/1.2 'Cinzel Domo',Georgia,serif}
+.mtRango input{width:100%;min-width:0;accent-color:#e8bb5a;cursor:pointer}
+.mtExtremos{display:flex;justify-content:space-between;gap:16px;margin:4px 0 0 calc(min(100%,186px));color:#9f91b2;font:600 10px/1.25 system-ui,sans-serif;letter-spacing:.03em}
+.mtAyuda{margin-top:9px;color:#bdb1cc;font-size:.92em;line-height:1.35}
+.mtEfectos{margin-top:10px;border:1px solid #e7bb5530;border-radius:9px;padding:0 10px;background:#07050a33}
+.mtEfectos summary{padding:8px 0;cursor:pointer;color:#b8a3cc;font:700 10px/1 system-ui,sans-serif;letter-spacing:1px;list-style-position:inside}
+.mtEfectosOpciones{display:flex;flex-wrap:wrap;gap:4px 16px;padding:0 0 7px}
 .mtEscenario{position:relative;height:min(84vh,860px);min-height:460px;border-radius:16px;overflow:hidden;border:1px solid #e7bb5530;background:#07060a;touch-action:none;cursor:grab}
 .mtEscenario:active{cursor:grabbing}
 .mtEscenario canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
@@ -44,3 +54,9 @@ html[data-captura] .mtInfo{display:none}
 /* Encima de la carta que miras, si no la puedes jugar ahora: por qué. */
 .mtFalta{position:absolute;left:0;top:0;margin:0;padding:5px 12px;border-radius:9px;background:#2a0f14ee;border:1px solid #ff8a7a99;color:#ffd9d2;font:700 13px/1.2 system-ui,sans-serif;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s}
 .mtFalta.visto{opacity:1}
+@media (max-width:560px){
+  .mtAmbienteCabecera{align-items:flex-start}
+  .mtRango{grid-template-columns:1fr;gap:7px}
+  .mtExtremos{margin-left:0}
+  .mtEfectosOpciones{gap:2px 12px}
+}

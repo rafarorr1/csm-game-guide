@@ -27,6 +27,10 @@
   const C=window.CAOZ_THREE_CARTA,{ANCHO,ALTO,GROSOR,GEMAS}=C,S=.62,TAU=Math.PI*2;
   const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
   const efectos={sombras:true,oclusion:true,enfoque:true,resplandor:true,velas:true};
+  // La mano tiene luz propia. Esta intensidad sólo gobierna el ambiente de la mesa.
+  let intensidadVisual=58,escalaPolvo=.18+.82*(intensidadVisual/100);
+  const limitar=(n,min,max)=>Math.max(min,Math.min(max,n));
+  const calidadVisual=()=>intensidadVisual/100;
 
   /* ---- Motor, escena, cámara y entorno --------------------------------------- */
   const lienzo=$('lienzo'),esc=$('escenario');
@@ -92,7 +96,7 @@
   const cuero=new THREE.Mesh(new THREE.PlaneGeometry(...MAT),matTapete);cuero.rotation.x=-Math.PI/2;cuero.position.y=.003;cuero.receiveShadow=true;mesa.add(cuero);
 
   /* ---- Luces: la lámpara, la ventana, dos velas y el polvo ------------------ */
-  escena.add(new THREE.HemisphereLight(0x9aa8d0,0x1a0e08,.2));
+  const ambiente=new THREE.HemisphereLight(0x9aa8d0,0x1a0e08,.2);escena.add(ambiente);
   const lampara=new THREE.SpotLight(0xffd6a0,640,0,.62,.6,2);lampara.position.set(0,13,3.5);lampara.target.position.set(0,0,.3);lampara.castShadow=true;
   lampara.shadow.mapSize.set(2048,2048);lampara.shadow.bias=-.0003;lampara.shadow.normalBias=.02;lampara.shadow.radius=4;lampara.shadow.blurSamples=16;escena.add(lampara,lampara.target);
   const ventana=new THREE.DirectionalLight(0x8fa8ff,.7);ventana.position.set(-6,7,-10);escena.add(ventana);
@@ -141,9 +145,12 @@
     g.userData.unidad=u;return u;
   }
   const tumbada=new THREE.Euler(-Math.PI/2,0,0);
-  // En la mano, la cara mira a la cámara bajo la lámpara: con el entorno entero, la laca refleja la caja de luz
-  // como un velo. Allí lleva su propio entorno, más tenue; en la mesa vuelve al de la escena.
-  function enMano(u,si){const m=u.g.userData.frente.material;m.envMap=si?escena.environment:null;m.envMapIntensity=si?.1:1;m.userData.lacaMesa??=m.clearcoat;m.clearcoat=si?m.userData.lacaMesa*.3:m.userData.lacaMesa;m.needsUpdate=true;}
+  // En la mano la carta deja de ser un espejo oscuro: mantiene el relieve, pero toma una luz de lectura
+  // cálida y su propio mapa emisivo. Al volver a la mesa recupera exactamente su acabado original.
+  function enMano(u,si){const m=u.g.userData.frente.material,p=m.userData.lecturaMano??={envMap:m.envMap,envMapIntensity:m.envMapIntensity,clearcoat:m.clearcoat,emissiveMap:m.emissiveMap,emissive:m.emissive.clone(),emissiveIntensity:m.emissiveIntensity};m.userData.lecturaMano=p;
+    if(si){m.envMap=escena.environment;m.envMapIntensity=.48;m.clearcoat=Math.min(.21,p.clearcoat*.34);m.emissiveMap=m.map;m.emissive.setHex(0x3c3428);m.emissiveIntensity=.19;}
+    else{m.envMap=p.envMap;m.envMapIntensity=p.envMapIntensity;m.clearcoat=p.clearcoat;m.emissiveMap=p.emissiveMap;m.emissive.copy(p.emissive);m.emissiveIntensity=p.emissiveIntensity;}
+    m.needsUpdate=true;}
   // Pilas de cartas (mazo y cementerio): cantos apilados con un poco de desorden.
   function pila(n,x,z,dorso=true){const g=new THREE.Group();g.position.set(x,0,z);mesa.add(g);g.userData.n=0;g.userData.poner=k=>{while(g.children.length<k){const i=g.children.length,m=F.carta(dorso?dorsoPintado.mat:dorsoPintado.mat,dorsoPintado.mat,F.materialCanto('normal'));m.scale.setScalar(S);m.rotation.set(-Math.PI/2+(dorso?Math.PI:0),0,(rnd()-.5)*.06);m.position.set((rnd()-.5)*.04,.02+i*GROSOR*S*1.05,(rnd()-.5)*.04);g.add(m);}while(g.children.length>k)g.remove(g.children.at(-1));g.userData.n=k;};g.userData.poner(n);return g;}
   // Cristales: el Alma (grande, rojo) y los PD (gemas moradas); con transmisión real.
@@ -206,9 +213,10 @@
   // Mano: abanico delante de la cámara, un poco levantado hacia el jugador.
   // La mano va pegada a la cámara: un abanico abajo en pantalla, como en las cartas digitales.
   const manoCam=new THREE.Group();camara.add(manoCam);escena.add(camara);
-  // Luz de lectura: viaja con la cámara, arriba a la izquierda (su brillo cae fuera de la carta),
-  // y sólo alcanza la mano (no llega a la mesa).
-  const lectura=new THREE.PointLight(0xfff0dc,34,13,2);lectura.position.set(-4.5,4,-3.5);camara.add(lectura);
+  // Luz de lectura: viaja con la cámara y sólo alcanza la mano. No responde al slider: aun con la
+  // atmósfera al mínimo, las cartas permanecen claras y sus textos se pueden leer.
+  const lectura=new THREE.PointLight(0xfff0dc,55,12,2);lectura.position.set(-4.5,3.5,-3.3);camara.add(lectura);
+  const rellenoMano=new THREE.PointLight(0xc6d5ff,12,11,2);rellenoMano.position.set(3.8,1,-3.7);camara.add(rellenoMano);
   // Cada carta tiene su ranura: un rectángulo invisible en su sitio del abanico que no crece. Es la
   // zona estable del puntero (como .handSlot en la mesa de siempre): la carta ampliada puede taparle
   // a la vecina, pero no le roba el puntero ni hace parpadear el resaltado en los solapes.
@@ -379,8 +387,23 @@
   $('turnoRival').onclick=()=>turnoRival();
   $('demo').onclick=()=>demostracion();
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};
-  function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;lampara.castShadow=efectos.sombras;for(const v of velas){v.luz.castShadow=efectos.sombras&&efectos.velas;v.luz.visible=efectos.velas;v.llama.visible=efectos.velas;}
-    oclusion.enabled=efectos.oclusion;enfoque.enabled=efectos.enfoque;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
+  const rangoIntensidad=$('intensidadEfectos'),textoIntensidad=$('intensidadTexto');
+  function nombreIntensidad(){return intensidadVisual<33?'Prioriza lectura':intensidadVisual<77?'Equilibrado':'Cinemático';}
+  function actualizarPolvo(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2);escPuntos.value=Math.max(1,b.height)*dpr/900*escalaPolvo;}
+  function fijarIntensidad(valor){intensidadVisual=Math.round(limitar(Number(valor)||0,0,100));escalaPolvo=.18+.82*calidadVisual();
+    if(rangoIntensidad)rangoIntensidad.value=String(intensidadVisual);
+    if(textoIntensidad)textoIntensidad.textContent=nombreIntensidad()+' · '+intensidadVisual+'%';
+    aplicarEfectos();}
+  rangoIntensidad?.addEventListener('input',()=>fijarIntensidad(rangoIntensidad.value));
+  function aplicarEfectos(){const k=calidadVisual(),sombras=efectos.sombras&&k>.06;
+    // A menor atmósfera, el tablero gana relleno y pierde niebla: se siguen viendo las zonas y cartas.
+    ambiente.intensity=.22+(1-k)*.14;ventana.intensity=.88-k*.22;lampara.intensity=500+150*k;escena.fog.density=.007+.021*k;
+    renderer.shadowMap.enabled=sombras;lampara.castShadow=sombras;
+    for(const v of velas){v.luz.castShadow=sombras&&efectos.velas&&k>.18;v.luz.visible=efectos.velas&&k>.04;v.llama.visible=efectos.velas&&k>.04;}
+    oclusion.enabled=efectos.oclusion&&k>.13;oclusion.blendIntensity=.18+.72*k;oclusion.updateGtaoMaterial({radius:.4+.24*k,distanceExponent:1.02+.38*k,thickness:.7+.3*k,scale:.58+.52*k,samples:Math.max(4,Math.round(4+8*k))});
+    enfoque.enabled=efectos.enfoque&&k>.18;enfoque.uniforms.aperture.value=.00002+.00020*k;enfoque.uniforms.maxblur.value=.0005+.0035*k;
+    resplandor.enabled=efectos.resplandor&&k>.05;resplandor.threshold=.95-.25*k;resplandor.radius=.18+.48*k;
+    actualizarPolvo();escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   // Una jugada completa para verlo todo: juega, ataca y deja jugar al rival.
   async function demostracion(){if(ocupado)return;const yo=J.yo;
     await jugar(yo.mano.findIndex(u=>u.id==='aldrick'));await espera(.3);
@@ -389,7 +412,7 @@
 
   /* ---- Cada fotograma ---------------------------------------------------------- */
   function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),W=Math.max(1,b.width),H=Math.max(1,b.height);
-    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?46:38;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;if(J.yo)colocarMano(false);}
+    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?46:38;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900*escalaPolvo;if(J.yo)colocarMano(false);}
   function paso(dt){
     reloj+=dt;tiempo.value=reloj;F.tiempo.value=reloj;
     for(let i=tareas.length-1;i>=0;i--){const t=tareas[i],k=Math.min(1,(reloj-t.t0)/t.dur);t.fn(k);if(k>=1){tareas.splice(i,1);t.ok();}}
@@ -401,18 +424,20 @@
     {const u=listo&&(viendo||mano.activa),f=u?camara.position.distanceTo(u.g.getWorldPosition(new THREE.Vector3())):camara.position.distanceTo(new THREE.Vector3(0,0,1));
       enfoque.uniforms.focus.value+=(f-enfoque.uniforms.focus.value)*Math.min(1,dt*(u?14:5));}
     // Velas que tiemblan, runas que laten, la mano que se levanta al pasar por encima.
-    for(const v of velas){const f=.85+.1*Math.sin(reloj*13+v.x)+.06*Math.sin(reloj*29+v.x*3);v.luz.intensity=26*f;v.llama.scale.set(1,f,1);v.llama.lookAt(camara.position.x,v.llama.getWorldPosition(new THREE.Vector3()).y,camara.position.z);}
-    matTapete.emissiveIntensity=.45+.25*Math.sin(reloj*1.6);
+    const calidad=calidadVisual();
+    for(const v of velas){const f=.85+.1*Math.sin(reloj*13+v.x)+.06*Math.sin(reloj*29+v.x*3);v.luz.intensity=(8+18*calidad)*f;v.llama.scale.set(1,f,1);v.llama.lookAt(camara.position.x,v.llama.getWorldPosition(new THREE.Vector3()).y,camara.position.z);}
+    matTapete.emissiveIntensity=(.24+.18*calidad)+(.06+.17*calidad)*Math.sin(reloj*1.6);
     for(const g of J.rival?.trampas||[])g.position.y=.02;
     if(listo){manoYArrastre(dt);
       for(const u of J.yo.campo)u.g.position.y=(u===seleccion.u?.35+Math.sin(reloj*4)*.05:.02)+(u.g.userData.base?0:0);
       for(const u of J.rival.campo)if(!tareas.length)u.g.position.y=.02;
       J.yo.cristal.userData.gema.rotation.y=reloj*.6;J.rival.cristal.userData.gema.rotation.y=-reloj*.5;
       for(const lado of ['yo','rival'])J[lado].pdG.userData.lista.forEach((m,i)=>{m.rotation.y=reloj*.8+i;m.position.y=.25+(m.userData.on?Math.sin(reloj*2+i)*.05:0);});}
-    for(let i=estallidos.length-1;i>=0;i--){const e=estallidos[i],s=reloj-e.t0;e.u.uE.value=s;e.onda.scale.setScalar(.3+s*3.2*e.fuerza);e.onda.material.opacity=Math.max(0,1-s/.8);resplandor.strength=Math.max(resplandor.strength,.5);if(s>1.4){escena.remove(e.p,e.onda);e.p.material.dispose();e.onda.material.dispose();estallidos.splice(i,1);}}
+    for(let i=estallidos.length-1;i>=0;i--){const e=estallidos[i],s=reloj-e.t0;e.u.uE.value=s;e.onda.scale.setScalar(.3+s*3.2*e.fuerza);e.onda.material.opacity=Math.max(0,1-s/.8);if(s>1.4){escena.remove(e.p,e.onda);e.p.material.dispose();e.onda.material.dispose();estallidos.splice(i,1);}}
     for(let i=numeros.length-1;i>=0;i--){const n=numeros[i],s=reloj-n.t0;n.e.pos.y=n.y+s*1.2;n.e.el.style.opacity=String(Math.max(0,1-Math.max(0,s-.5)/.6));if(s>1.1){n.e.el.remove();etiquetas.splice(etiquetas.indexOf(n.e),1);numeros.splice(i,1);}}
     camara.updateMatrixWorld();for(const e of etiquetas)colocar(e);
-    resplandor.strength=.5+Math.min(.8,estallidos.reduce((a,e)=>a+Math.max(0,1-(reloj-e.t0)*2),0));
+    const pulso=estallidos.reduce((a,e)=>a+Math.max(0,1-(reloj-e.t0)*2),0);
+    resplandor.strength=.1+.4*calidad+Math.min(.1+.55*calidad,pulso*(.16+.55*calidad));
   }
   let simple=false,revisados=0,cuadros=0,revisionPuntero=false;
   // La mano, como en la mesa de siempre: la carta bajo el puntero se endereza, sube desde su base y
@@ -479,9 +504,11 @@
     arrastrando:()=>arr.u?{id:arr.u.id,hueco:arr.h,zona:arr.zona}:null,
     jugar:i=>{jugar(i);},atacar:(a,b)=>{const A=J.yo.campo.find(u=>u.id===a),B=J.rival.campo.find(u=>u.id===b);atacar(A,B);},turnoRival:()=>{turnoRival();},demostracion:()=>{demostracion();},
     efecto(k,v){efectos[k]=v;const c=document.querySelector(`[data-efecto="${k}"]`);if(c)c.checked=v;aplicarEfectos();},
+    intensidad(v){if(v!==undefined)fijarIntensidad(v);return intensidadVisual;},
     vista(p){Object.assign(vista,p);},
     estado:()=>({ocupado,apagadas:J.yo?.mano.filter(u=>u.g.userData.frente.material.color.r<.9).map(u=>u.id),huecos:J.yo&&[0,1,2,3,4].map(h=>J.yo.campo.find(u=>u.hueco===h)?.id||null),aviso:avisoMesa.classList.contains('visto')?avisoMesa.textContent:'',mano:J.yo?.mano.map(u=>u.id),campo:J.yo?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),rival:J.rival?.campo.map(u=>u.id+':'+u.atq+'/'+u.vida),almaYo:J.yo?.alma,almaRival:J.rival?.alma,pd:J.yo?.pd,
-      cementerio:J.yo?.cementerio.length,cementerioRival:J.rival?.cementerio.length,manoRival:J.rival?.manoG.length,webgl2:true,hdr,muestras,simple,
+      cementerio:J.yo?.cementerio.length,cementerioRival:J.rival?.cementerio.length,manoRival:J.rival?.manoG.length,webgl2:true,hdr,muestras,simple,intensidad:intensidadVisual,
+      iluminacionMano:J.yo?.mano.map(u=>{const m=u.g.userData.frente.material;return {id:u.id,entorno:m.envMapIntensity,laca:m.clearcoat,emision:m.emissiveIntensity};}),
       pases:[['render',pasoRender],['oclusion',oclusion],['enfoque',enfoque],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n)}),
     pantalla(x,y,z){const v=new THREE.Vector3(x,y,z).project(camara),b=esc.getBoundingClientRect();return {x:(v.x*.5+.5)*b.width,y:(.5-v.y*.5)*b.height,ancho:b.width,alto:b.height};},
     posiciones:()=>({mano:J.yo.mano.map(u=>u.g.getWorldPosition(new THREE.Vector3()).toArray()),campo:J.yo.campo.map(u=>u.g.position.toArray()),rival:J.rival.campo.map(u=>u.g.position.toArray()),liderYo:J.yo.lider.g.position.toArray(),liderRival:J.rival.lider.g.position.toArray(),mazo:J.yo.mazo.position.toArray()}),

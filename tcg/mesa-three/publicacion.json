@@ -21,22 +21,22 @@
     "art/tal-dorado-final-v1.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
     "art/tok_dragon-dorado-v1.webp": "c063ad2e79abc3deeb47247ecce6877322108241e09750a7ae85a45367dbc360",
     "generado/datos.js": "6ce409473955baf23c97c18d845e9c7216bc6875d075744a6f0346be2114e402",
-    "index.html": "f4ca586b46d7eb530a0c2acfcf2de64641d27a11bada5da4b2d581aa8695a55b",
+    "index.html": "81861275d8433cf37de3d01812c00f7ff9841990c8ed779dc43a839fa7b652f8",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "mesa-three-mesa.css": "9194c4e2a4d45d9d96aced65d0288c1654cef8b7de9e380ada34bfa25084845a",
-    "mesa-three-mesa.js": "b1d0deef3900bddb50ae5f0dc79b55496cb0128a56a25f50a4ad9eadd7424359",
-    "procedencia.json": "9d059c7c38c039bfd8c796b851e838167e7dbf67f9e742f33ab683e49648ec24",
+    "mesa-three-mesa.css": "8c73dcd7053e928defba0d62c22105e1e95df1b34f2875e905fcea4d3a0309ba",
+    "mesa-three-mesa.js": "c918e940aae618d2d2ed5c9a0f3894b2b73bdcfe6b58b9bdf065067e7c08df7a",
+    "procedencia.json": "daaf640f0f250f322c5cec6d57ad149c411ee19dff0495947da0430811ee9a51",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
-    "rama": "feature/visor-3d-coleccion",
-    "sha": "1929f7d33fca7671fc058af0be4f720f251490c6"
+    "rama": "feature/mesa-three-legibilidad",
+    "sha": "4bbbdc895d8142c78269d97024139fe5f5992a0a"
   },
   "seccion": "mesa-three",
   "version": 1

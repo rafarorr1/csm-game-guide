@@ -25,14 +25,31 @@
     <button type="button" class="mtBoton" id="demo">▶ Demostración</button>
     <button type="button" class="mtBoton" id="turnoRival">Turno del rival</button>
   </div>
-  <fieldset class="mtEfectos">
-    <legend>Efectos (actívalos y desactívalos para ver qué aporta y cuánto cuesta cada uno)</legend>
-    <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
-    <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
-    <label><input type="checkbox" data-efecto="velas" checked> Velas</label>
-    <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
-    <label><input type="checkbox" data-efecto="enfoque" checked> Profundidad de campo</label>
-  </fieldset>
+  <section class="mtAmbiente" aria-labelledby="ambienteTitulo">
+    <div class="mtAmbienteCabecera">
+      <div>
+        <p class="mtEtiqueta">AMBIENTE VISUAL</p>
+        <h2 id="ambienteTitulo">Efectos sin perder la mesa</h2>
+      </div>
+      <output id="intensidadTexto" for="intensidadEfectos" aria-live="polite">Equilibrado · 58%</output>
+    </div>
+    <label class="mtRango" for="intensidadEfectos">
+      <span>Intensidad de efectos</span>
+      <input id="intensidadEfectos" type="range" min="0" max="100" value="58" step="1" aria-describedby="intensidadAyuda">
+    </label>
+    <div class="mtExtremos" aria-hidden="true"><span>Priorizar lectura</span><span>Más cinematográfico</span></div>
+    <p id="intensidadAyuda" class="mtAyuda">La mano conserva su propia luz de lectura; este control ajusta sombras, velas, profundidad, brillo y atmósfera de la mesa.</p>
+    <details class="mtEfectos">
+      <summary>Ajuste fino</summary>
+      <div class="mtEfectosOpciones">
+        <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
+        <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
+        <label><input type="checkbox" data-efecto="velas" checked> Velas</label>
+        <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
+        <label><input type="checkbox" data-efecto="enfoque" checked> Profundidad de campo</label>
+      </div>
+    </details>
+  </section>
   <section class="mtEscenario" id="escenario" aria-label="La mesa de juego en three.js">
     <canvas id="lienzo" aria-label="La mesa de juego"></canvas>
     <p class="mtInfo" id="info">Preparando…</p>
