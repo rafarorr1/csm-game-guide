@@ -343,9 +343,10 @@
     if(d.kind==='grave')v.position.y=ALTURA+Math.min(10,P(d.side).grave.length)*GROSOR*ESC*.09;
   }
 
-  // Una carta del tapete nunca se mueve para inspeccionarla: se genera una
-  // copia de lectura pegada a la cámara. Así conserva su puesto, su click y
-  // su proxy de raycast, pero se lee con la misma claridad que una carta mano.
+  // Una carta del tapete nunca se mueve para inspeccionarla: un clic genera
+  // una copia de lectura pegada a la cámara. Así conserva su puesto, su click
+  // táctico y su proxy de raycast, pero se lee con claridad sin reaccionar al
+  // paso del mouse durante ataques o hechizos.
   function disposeInspectionCard(card){
     if(!card)return;card.userData.frente?.material?.dispose?.();card.userData.atras?.material?.dispose?.();const edge=card.userData.borde?.material;if(Array.isArray(edge))edge[1]?.dispose?.();else edge?.dispose?.();for(const gem of [card.userData.a,card.userData.h,card.userData.c,card.userData.soulBadge])if(gem){gem.material?.dispose?.();gem.geometry?.dispose?.();gem.userData.tex?.dispose?.();}card.removeFromParent();
   }
@@ -368,12 +369,17 @@
     return {pos:new THREE.Vector3(-ww+ANCHO*scale*.5+.18,Math.max(-hh+halfH+.18,Math.min(hh-halfH-.18,.20)),-z),rot:new THREE.Euler(-.045,.02,0),scale};
   }
   function setTableHover(key){hoverTable=key;}
-  function canPreview(source){if(!source)return false;const d=source.userData;return d.kind==='hand'||canInspectOnTable({kind:d.kind,side:d.side,back:d.kind==='enemyHand'});}
+  function canPreview(source){if(!source)return false;const d=source.userData;return canInspectOnTable({kind:d.kind,side:d.side,back:d.kind==='enemyHand'});}
   async function setHoverPreview(key){
     if(key===hoverPreview)return;hoverPreview=key;clearTablePreview();if(!key)return;
     const source=visuals.get(key);if(!canPreview(source))return;
     const token=++tablePreviewEpoch,card=await makeInspectionCard(source);if(token!==tablePreviewEpoch||hoverPreview!==key||visuals.get(key)!==source){disposeInspectionCard(card);return;}
     const p=inspectionPose();camera.add(card);card.position.set(p.pos.x,p.pos.y-3.2,p.pos.z);card.rotation.copy(p.rot);card.scale.setScalar(p.scale*.86);tablePreview=card;tablePreviewKey=key;
+  }
+  async function toggleTablePreview(v){
+    if(!canPreview(v))return false;
+    if(tablePreviewKey===v.userData.key&&tablePreview){hoverPreview=null;clearTablePreview();return true;}
+    await setHoverPreview(v.userData.key);return true;
   }
   function animateTablePreview(dt){
     if(!tablePreview)return;if(hoverPreview!==tablePreviewKey){clearTablePreview();return;}
@@ -405,7 +411,7 @@
   function setLogOpen(open){logOpen=!!open;logEl.classList.toggle('is-open',logOpen);logEl.setAttribute('aria-hidden',String(!logOpen));if(logOpen)logUnread=0;paintLogToggle();}
   logToggle?.addEventListener('click',e=>{e.stopPropagation();setLogOpen(!logOpen);});
   logToggle?.addEventListener('pointerdown',e=>e.stopPropagation());
-  logEl.addEventListener('pointerenter',()=>{if(!drag){hoverHand=null;setTableHover(null);setHoverPreview(null);}});
+  logEl.addEventListener('pointerenter',()=>{if(!drag){hoverHand=null;setTableHover(null);}});
   function showPrompt(text,options=[]){prompt.hidden=false;prompt.innerHTML=`<p>${text}</p><div class="ctPromptActions">${options.map((o,i)=>`<button type="button" data-ct-opt="${i}" class="${o.cls||''}">${o.t}</button>`).join('')}</div>`;prompt.querySelectorAll('[data-ct-opt]').forEach(b=>b.onclick=()=>options[Number(b.dataset.ctOpt)]?.fn?.());}
   function clearUI(){prompt.hidden=true;prompt.replaceChildren();}
   function modalShow({kicker='EL DOMO ESPERA',title,body='',actions=[]}){modalKicker.textContent=kicker;modalTitle.textContent=title;modalBody.innerHTML=body;modalActions.innerHTML='';actions.forEach(a=>{const b=document.createElement('button');b.type='button';b.textContent=a.t;b.className=a.cls||'';b.onclick=a.fn;modalActions.append(b);});modal.hidden=false;}
@@ -537,6 +543,8 @@
   function hitCard(){ray.setFromCamera(pointer,camera);const roots=[...visuals.values()].filter(v=>!['hand','enemyHand','deck','grave'].includes(v.userData.kind));const objects=[];roots.forEach(v=>v.traverse(x=>x.isMesh&&objects.push(x)));const hit=ray.intersectObjects(objects,false)[0];return hit?rootFrom(hit.object):null;}
   function freeSlots(side){const used=new Set(P(side).field.map(u=>fieldSlot(side,u)));return FIELD_ORDER.filter(slot=>!used.has(slot));}
   function tablePoint(){ray.setFromCamera(pointer,camera);return ray.ray.intersectPlane(new THREE.Plane(new THREE.Vector3(0,1,0),-.72),new THREE.Vector3());}
+  // La copia de lectura no participa en raycast. Aun así, al pulsarla no
+  // dejamos que el clic atraviese accidentalmente hacia una carta de mesa.
   function previewContainsClientPoint(e){if(!tablePreview)return false;const r=cardRect(tablePreview);return e.clientX>=r.x&&e.clientX<=r.x+r.width&&e.clientY>=r.y&&e.clientY<=r.y+r.height;}
   function updateDropMarks(){const slots=freeSlots(ME);for(const {slot,m} of dragMarks){const active=!!drag&&slots.includes(slot);m.visible=active;m.material.opacity=active?(drag.slot===slot ? .68 : .23+.08*Math.sin(reloj*7+slot)):0;}}
   function nearestDrop(pos){let best=null,dist=1.48;for(const slot of freeSlots(ME)){const p=new THREE.Vector3((slot-2)*2,.72,sideZ(ME)*1.55),d=Math.hypot(pos.x-p.x,pos.z-p.z);if(d<dist){best=slot;dist=d;}}return best;}
@@ -546,10 +554,11 @@
     camera.attach(v);v.userData.dragging=false;const hit=handHits.get(current.key);if(hit)hit.visible=true;messageFor('La carta vuelve a tu mano.');}
   function animateHand(dt){
     for(const [key,v] of visuals){if(v.userData.kind!=='hand'||v.userData.dragging||v.userData.motion)continue;const base=v.userData.handPose;if(!base)continue;const active=hoverHand===key&&!G?.busy&&G?.active===ME,pos=base.pos.clone(),rot=base.rot.clone();let scale=base.scale;
-      // La lectura detallada está en el visor fijo izquierdo. La carta física
-      // sólo confirma el hover con un gesto breve; no se hincha ni corre bajo
-      // el cursor, por lo que sus hitboxes siguen estables.
-      if(active){scale=base.scale*1.045;pos.y+=.10;pos.z+=.08;rot.set(-.10+(hoverUV.y-.5)*.05,(hoverUV.x-.5)*.07,0);}
+      // La mano conserva el hover que ya funcionaba: la carta activa se abre
+      // frente al jugador y las demás se hacen a un lado. Sus dianas siguen
+      // ancladas a la pose base, por lo que no aparecen huecos muertos.
+      if(active){const z=Math.max(4.5,-base.pos.z-.85),hh=Math.tan(camera.fov*Math.PI/360)*z,ww=hh*camera.aspect;scale=Math.min(ESC*1.58,(hh*1.72)/ALTO,(ww*1.72)/ANCHO);pos.y=Math.max(-hh*.82+ALTO*scale*.5,base.pos.y+1.0);pos.z=base.pos.z+.9;pos.x=Math.max(-ww*.89+ANCHO*scale*.5,Math.min(ww*.89-ANCHO*scale*.5,pos.x));rot.set(-.08+(hoverUV.y-.5)*.18,(hoverUV.x-.5)*.24,0);}
+      else if(hoverHand){const other=visuals.get(hoverHand);const dx=base.pos.x-(other?.userData.handPose?.pos.x||0);pos.x+=Math.sign(dx||1)*.26/Math.sqrt(Math.max(1,Math.abs(dx)));}
       const q=new THREE.Quaternion().setFromEuler(rot),mix=1-Math.exp(-dt*(active?18:8));v.position.lerp(pos,mix);v.quaternion.slerp(q,mix);v.scale.setScalar(THREE.MathUtils.lerp(v.scale.x,scale,mix));const m=v.userData.frente.material,legal=G?.active===ME&&!G?.busy&&canPlay(ME,v.userData.id);
       // Una carta no jugable conserva lectura: la disponibilidad se comunica
       // por la acción bloqueada y el borde, no convirtiendo su texto y arte en
@@ -577,13 +586,44 @@
     if(kind==='leader'&&side===FOE){if(TGT){pickTarget('face');return;}if(SEL)await tryAttack(SEL,'face');else toast('Elige un Personaje para atacar al Alma de Gero.');return;}
     if(kind==='leader'&&side===ME){await useLeader(ME);}
   }
+  async function activateBoardCard(v){
+    if(!v)return;
+    const {kind,side}=v.userData;
+    // Las transiciones de entrada pueden conservar el mesh un fotograma antes
+    // de que `userData.unit` se refresque. La clave de la carta es estable,
+    // así que recuperamos la unidad del motor en vez de degradar ese clic a
+    // una inspección accidental.
+    const u=v.userData.unit||(kind==='field'?P(side).field.find(x=>'unit:'+x.uid===v.userData.key):null);
+    if(u)v.userData.unit=u;
+    // Los objetivos, ataques y habilidades siempre ganan. El visor sólo se
+    // abre cuando el clic no representa una orden táctica para el motor.
+    if(TGT){setHoverPreview(null);await activateCard(v);return;}
+    if(kind==='field'&&side===ME&&u){
+      // Requerimos ambos estados de selección: evita que una referencia vieja
+      // del motor convierta el primer clic de una unidad en inspección.
+      if(SEL?.uid===u.uid&&selected?.uid===u.uid){await toggleTablePreview(v);return;}
+      setHoverPreview(null);await activateCard(v);return;
+    }
+    if(kind==='field'&&side===FOE&&u){
+      if(SEL){setHoverPreview(null);await activateCard(v);return;}
+      await toggleTablePreview(v);return;
+    }
+    if(kind==='leader'&&side===FOE){
+      if(SEL){setHoverPreview(null);await activateCard(v);return;}
+      await toggleTablePreview(v);return;
+    }
+    // La habilidad del propio líder mantiene su comportamiento normal.
+    if(kind==='leader'&&side===ME){setHoverPreview(null);await activateCard(v);return;}
+    if(await toggleTablePreview(v))return;
+    await activateCard(v);
+  }
   // Sólo el lienzo recibe gestos de mesa. Sin esta frontera, un botón de la
   // confirmación interna queda capturado por el canvas antes de recibir click.
   const isBoardPointer=e=>e.target===canvas||!!gesture||!!drag;
   stage.addEventListener('pointerdown',e=>{if(e.button!==0||!isBoardPointer(e))return;if(previewContainsClientPoint(e)){gesture={preview:true,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);return;}setPointer(e);const hand=handSlotUnderPointer(),tableSlot=hand?null:tableSlotUnderPointer();gesture={key:hand?.key||tableSlot?.key||null,hand:!!hand,x:e.clientX,y:e.clientY,moved:0};stage.setPointerCapture?.(e.pointerId);});
-  stage.addEventListener('pointerup',async e=>{if(!isBoardPointer(e))return;const g=gesture;gesture=null;if(g?.preview)return;setPointer(e);if(drag){await finishDrag();return;}if(g?.key&&g.moved<=10){const v=visuals.get(g.key);if(v)await activateCard(v);return;}const hit=tableSlotUnderPointer(),v=hit?visuals.get(hit.key):hitCard();if(v)await activateCard(v);else if(TGT)toast('Elige una carta resaltada o cancela.');});
-  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e)){if(!drag){hoverHand=null;setTableHover(null);setHoverPreview(null);stage.style.cursor='default';}return;}if(!drag&&previewContainsClientPoint(e)){stage.style.cursor='default';return;}setPointer(e);const h=handSlotUnderPointer(),tableSlot=h?null:tableSlotUnderPointer();if(!drag){hoverHand=h?.key||null;if(h)hoverUV.copy(h.uv);setTableHover(tableSlot?.key||null);setHoverPreview(h?.key||tableSlot?.key||null);stage.style.cursor=h||tableSlot?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.hand&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
-  stage.addEventListener('pointerleave',()=>{if(!gesture&&!drag){hoverHand=null;setTableHover(null);setHoverPreview(null);stage.style.cursor='default';}});
+  stage.addEventListener('pointerup',async e=>{if(!isBoardPointer(e))return;const g=gesture;gesture=null;if(g?.preview)return;setPointer(e);if(drag){await finishDrag();return;}if(g?.key&&g.moved<=10){const v=visuals.get(g.key);if(v){if(g.hand)await activateCard(v);else await activateBoardCard(v);}return;}const hit=tableSlotUnderPointer(),v=hit?visuals.get(hit.key):hitCard();if(v)await activateBoardCard(v);else if(TGT)toast('Elige una carta resaltada o cancela.');else setHoverPreview(null);});
+  stage.addEventListener('pointermove',e=>{if(!isBoardPointer(e)){if(!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}return;}if(!drag&&previewContainsClientPoint(e)){hoverHand=null;setTableHover(null);stage.style.cursor='default';return;}setPointer(e);const h=handSlotUnderPointer(),tableSlot=h?null:tableSlotUnderPointer();if(!drag){hoverHand=h?.key||null;if(h)hoverUV.copy(h.uv);setTableHover(tableSlot?.key||null);stage.style.cursor=h||tableSlot?'pointer':'default';}if(gesture){gesture.moved+=Math.abs(e.movementX||e.clientX-gesture.x)+Math.abs(e.movementY||e.clientY-gesture.y);gesture.x=e.clientX;gesture.y=e.clientY;if(gesture.hand&&gesture.moved>10&&!drag)beginDrag(gesture.key);}});
+  stage.addEventListener('pointerleave',()=>{if(!gesture&&!drag){hoverHand=null;setTableHover(null);stage.style.cursor='default';}});
   stage.addEventListener('wheel',e=>{e.preventDefault();view.target=Math.max(.78,Math.min(1.25,view.target+e.deltaY*.0008));},{passive:false});
   prompt.addEventListener('pointerdown',e=>e.stopPropagation());
   prompt.addEventListener('pointerup',e=>e.stopPropagation());
