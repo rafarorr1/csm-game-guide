@@ -53,13 +53,13 @@
     "matildus-foil-v1.webp": "05909c1023e92889e7e052a6083ef1d8161b420454ba07224118096a98a22d78"
   },
   "entorno": {
-    "mesa-three-mesa.js": "2fac0bf2a7157d7a05aa1dd5f3f2acbe7518df09e39bc72ffbcb9253644b72f1",
+    "mesa-three-mesa.js": "2d95db5a03cbc097ac5fae1635eb47f2768116d36fec17b728ebc60c1cdab87d",
     "mesa-three-mesa.css": "5a92acf14f707507b406bc33a4e2f4319c3f417e846b124d567edeb985d2036d",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733"
   },
   "derivados": {
-    "index.html": "21a4cc7d672131a04d9879f1b6239cd3a28dea5db76760a2d0310e600a1759b5",
+    "index.html": "466d1ff6cf02fd24856b0662f8455f37cbbe4cba302b212bc6e6cbc2962bd3bd",
     "generado/datos.js": "6ce409473955baf23c97c18d845e9c7216bc6875d075744a6f0346be2114e402"
   }
 }

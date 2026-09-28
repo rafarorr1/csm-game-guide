@@ -21,22 +21,22 @@
     "art/tal-dorado-final-v1.webp": "67522d3d9e6baabccad94bdfa1184ba6b471e83dd54c6e61a1e40a518d04a20d",
     "art/tok_dragon-dorado-v1.webp": "c063ad2e79abc3deeb47247ecce6877322108241e09750a7ae85a45367dbc360",
     "generado/datos.js": "6ce409473955baf23c97c18d845e9c7216bc6875d075744a6f0346be2114e402",
-    "index.html": "21a4cc7d672131a04d9879f1b6239cd3a28dea5db76760a2d0310e600a1759b5",
+    "index.html": "466d1ff6cf02fd24856b0662f8455f37cbbe4cba302b212bc6e6cbc2962bd3bd",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "mesa-three-mesa.css": "5a92acf14f707507b406bc33a4e2f4319c3f417e846b124d567edeb985d2036d",
-    "mesa-three-mesa.js": "2fac0bf2a7157d7a05aa1dd5f3f2acbe7518df09e39bc72ffbcb9253644b72f1",
-    "procedencia.json": "cee784e5bd293160dde6e6ed8036925e708098c97b00390b710a2a053cf251c6",
+    "mesa-three-mesa.js": "2d95db5a03cbc097ac5fae1635eb47f2768116d36fec17b728ebc60c1cdab87d",
+    "procedencia.json": "69eab8ec8c702fdaea274d17944cf2ea3f1d4459b26e5b7c1480fd549f2801b4",
     "three-carta.js": "a4820fa861bd73a21e59a91aee9fb142f410bc82da24f2ea029875d3f2cc9733",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/mesa-three-legibilidad",
-    "sha": "0c3839dc11ff53f7d3b1b879be61c32197785d51"
+    "sha": "a7dcb11daafcc337f8480727ca1420cf86c99be2"
   },
   "seccion": "mesa-three",
   "version": 1
