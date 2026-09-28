@@ -1,0 +1,12 @@
+/* Three sólo ocupa el fondo del tapete. Las cajas y eventos originales siguen
+   arriba: no hay preserve-3d ni una nueva superficie de interacción. */
+body.mesa-three-fondo #mat{isolation:isolate}
+body.mesa-three-fondo #mat::before{background:none;border-color:transparent;box-shadow:none}
+body.mesa-three-fondo #mat::after{opacity:0}
+body.mesa-three-fondo #mesaThreeFondo{
+  position:absolute;inset:0;z-index:0;width:100%;height:100%;display:block;
+  pointer-events:none;clip-path:inset(0 round 20px)
+}
+body.mesa-three-fondo #mat>#polvo{display:none}
+body.mesa-three-fondo #mat>.zone,
+body.mesa-three-fondo #mat>.midrow{position:relative;z-index:1}

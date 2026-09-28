@@ -73,6 +73,10 @@
       "fuente": "9fa9af73ee1016b43f8dff418170f4845a7f1db2",
       "ruta": "tcg/mesa-three-combate"
     },
+    "mesa-three-fondo": {
+      "fuente": "08f3b3df3504e06c849e61661aa1ffcb03d03736",
+      "ruta": "tcg/mesa-three-fondo"
+    },
     "mesa-visual": {
       "fuente": "0e2f3302ffc97538a177dac86f1de479de311b96",
       "ruta": "tcg/mesa-visual"
