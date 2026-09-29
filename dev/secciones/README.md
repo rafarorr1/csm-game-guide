@@ -385,8 +385,9 @@ oleadas, y al final entra Can, el de los Goblins.
   - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
-  - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres hachazos: tajo, revés y estocada;
-  - el hacha de doble filo de Adreida es la prolongación del brazo, así que en cada impacto la cabeza barre la zona que golpea, con un rastro de corte;
+  - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres hachazos: tajo, revés y un hachazo vertical;
+  - Adreida lleva el hacha de doble filo con las dos manos: cada pose dice dónde va la empuñadura y hacia dónde apunta el hacha, y los dos brazos llegan con cinemática inversa (la izquierda, más abajo del mango);
+  - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
   - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
   - con el ratón encima de un enemigo se apunta a él;
   - Espacio esquiva (un instante invulnerable; atravesar un golpe da «¡Esquivado!» y Furia);
@@ -410,6 +411,41 @@ oleadas, y al final entra Can, el de los Goblins.
 ```bash
 node dev/secciones/pruebas_arpg_three.mjs
 python3 dev/secciones/publicar.py --publicar --seccion arpg-three --salida /tmp/caoz-arpg-three
+```
+
+## Las batallas de la historia (episodios en three.js)
+
+La revisión local está en `episodios-three.html`: cada batalla de la historia
+jugable con el motor del ARPG (control a lo Hades, avisos de ataque) y los
+modelos de `arpg-three-modelos.js`. De momento se juega sólo con Adreida; el
+resto del grupo hace lo que hizo en la historia, guiado por un director de
+escena (`GUION` en `episodios-three-mesa.js`).
+
+**Episodio 1 · Emboscada en la Carreta hacia el Domo.** El camino del bosque
+con la carreta y su caballo; se parte una rueda y la escuadra goblin sale de
+los arbustos (en tres tandas: la segunda cuando Mohamed trepa, y Glip al final).
+
+1. Una flecha alcanza a Talesin en el hombro (se le queda clavada).
+2. Talesin lanza un Rayo de fuego al jefe y falla por el dolor (da en un árbol).
+3. Fender se mete bajo la carreta y canta sobre goblins vaqueros: Inspiración
+   bárdica (Adreida, +40% daño y +15% velocidad de ataque durante 25 s).
+4. Mohamed salta a los árboles con acrobacias y se agazapa en una rama.
+5. Rafaela calcina al líder goblin con Manos ardientes.
+6. La primera muerte de Adreida parte al goblin por la mitad (planos de recorte).
+7. Talesin reparte tres dardos de luz: Proyectil mágico.
+8. Fender proyecta una gata que baila bachata (Ilusión menor): los goblins se
+   quedan embobados; Mohamed cae desde la rama sobre uno y sigue con el bastón.
+9. Adreida le corta las piernas a Glip (sobrevive: será Machete) y el último
+   goblin huye; Rafaela lo alcanza y lo remata con Manos ardientes.
+
+Al final, la crónica cuenta lo que pasó. Una tecla o un clic se saltan la
+entrada; la Demostración juega el episodio entero (es lo que usan las pruebas).
+Mientras no salga la gata, la escuadra no baja de tres goblins a la vista (salen
+refuerzos de la maleza), para que la historia llegue a sus momentos.
+
+```bash
+node dev/secciones/pruebas_episodios_three.mjs
+CAPTURAS=/tmp/ep1 node dev/secciones/pruebas_episodios_three.mjs   # con capturas de cada momento
 ```
 
 ```bash

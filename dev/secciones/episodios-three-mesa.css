@@ -1,0 +1,44 @@
+/* Las batallas de la historia: lo propio de los episodios (sobre arpg-three-mesa.css). */
+/* La misión, arriba a la izquierda (debajo del grupo). */
+.epMision{top:100px;max-width:44%}
+.epMision small{display:block;color:#d9cbe8;font:600 11px/1.3 system-ui,sans-serif;margin-top:2px}
+/* El grupo: retratos con su estado; se iluminan al hablar. */
+.epGrupo{position:absolute;left:10px;top:10px;display:flex;gap:6px;pointer-events:none}
+.epMiembro{display:flex;flex-direction:column;align-items:center;width:58px;gap:2px;transition:transform .2s}
+.epMiembro img{width:44px;height:44px;border-radius:50%;object-fit:cover;object-position:50% 12%;border:2px solid #7a5c30;background:#12080c;transition:border-color .2s,box-shadow .2s}
+.epMiembro b{font:700 10px/1 'Cinzel Domo',Georgia,serif;color:#f0d796;text-shadow:0 1px 3px #000}
+.epMiembro small{font:600 9px/1.1 system-ui,sans-serif;color:#d9cbe8;text-align:center;text-shadow:0 1px 3px #000;min-height:2.2em}
+.epMiembro.habla{transform:translateY(2px) scale(1.06)}
+.epMiembro.habla img{border-color:#ffd36a;box-shadow:0 0 14px #ffc850aa}
+.epMiembro.herido img{border-color:#ff6a5a}
+/* Los diálogos de la historia: quién habla y qué dice. */
+.epDialogo{position:absolute;left:50%;bottom:clamp(128px,20vh,178px);transform:translate(-50%,6px);width:min(92%,660px);padding:9px 16px 10px;border-radius:12px;background:#0d0914e8;border:1px solid #e7bb5566;
+  color:#f3ead8;font:600 clamp(14px,1.6vw,17px)/1.35 Georgia,serif;text-align:center;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;box-shadow:0 6px 20px #000a}
+.epDialogo.visto{opacity:1;transform:translate(-50%,0)}
+.epDialogo b{display:block;color:#ffd36a;font:700 12px/1.2 'Cinzel Domo',Georgia,serif;letter-spacing:1px;margin-bottom:3px}
+.epDialogo.narrador{font-style:italic;color:#e0d4f0;background:#07050bd9}
+.epDialogo.narrador b{color:#b8a3cc}
+.epDialogo em{font-style:normal;color:#ffd9a0}
+/* Franjas de cine en la entrada. */
+.epBarras{position:absolute;inset:0;pointer-events:none}
+.epBarras i{position:absolute;left:0;right:0;height:0;background:#000;transition:height .6s ease}
+.epBarras i:first-child{top:0}.epBarras i:last-child{bottom:0}
+.epBarras.cine i{height:11%}
+.epBarras.cine~.apHud,.epBarras.cine~.apStats{opacity:.15}
+/* Etiquetas del mundo: gritos y notas musicales. */
+.epGrito{font:900 clamp(13px,1.5vw,17px)/1 'Cinzel Domo',Georgia,serif;color:#fff0c8;text-shadow:0 0 6px #000,0 2px 0 #1a0f0a}
+.epGrito.goblin{color:#c8f07a}
+.epNota{font:900 clamp(18px,2.2vw,26px)/1 Georgia,serif;color:#ffd36a;text-shadow:0 0 10px #ff9a2a}
+.apNumero.historia{color:#ffd9a0;font-size:clamp(15px,1.8vw,21px)}
+.apNumero.magia{color:#c8a8ff}
+/* El final: la crónica de lo que pasó, como en la historia. */
+.epCronica{list-style:none;padding:0;margin:4px auto 6px;max-width:560px;text-align:left;display:grid;gap:3px;color:#d9cbe8;font:600 13px/1.3 system-ui,sans-serif}
+.epCronica li{padding-left:24px;position:relative}
+.epCronica li::before{content:'·';position:absolute;left:6px;color:#7a6a90}
+.epCronica li.hecho::before{content:'✓';color:#8dff9a}
+@media (max-width:640px){
+  .epGrupo{gap:2px}.epMiembro{width:46px}.epMiembro img{width:34px;height:34px}.epMiembro small{display:none}
+  .epMision{top:62px;max-width:60%}
+  .epDialogo{bottom:150px}
+}
+.apEscenario.tactil .epDialogo{bottom:180px}
