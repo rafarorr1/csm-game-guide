@@ -136,12 +136,13 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('ante'+l,'piel',G.cil(.072,.078,.2,7),brazal,[0,-.15,0]);
         for(let i=0;i<3;i++)pon('ante'+l,'piel',G.cono(.018,.07,4),0xdcd2bf,[s*.07,-.08-i*.06,-.01],[0,0,-s*1.4]);
         pon('mano'+l,'piel',G.bola(.058,6,5),piel2,[0,-.03,0],[0,0,0],[1,1.1,1.15]);}
-      // El mandoble, en la mano derecha, con la hoja hacia delante.
-      pon('manoD','piel',G.cil(.022,.022,.26,6),0x2e2018,[0,-.03,0],[Math.PI/2,0,0]);
-      pon('manoD','metal',G.caja(.28,.045,.05),0xc39a52,[0,-.03,.14]);
-      pon('manoD','metal',G.caja(.075,.016,1.1),0xd8dce6,[0,-.03,.71],[0,0,0],1,.06);
-      pon('manoD','metal',G.cono(.0375,.2,4),0xd8dce6,[0,-.03,1.36],[Math.PI/2,0,Math.PI/4],[1,1,.3]);
-      pon('manoD','metal',G.bola(.036,6,5),0xc39a52,[0,-.03,-.15]);
+      // El mandoble en la mano derecha, como prolongación del brazo (la hoja sigue al antebrazo, hacia -Y de la mano),
+      // con el plano de la hoja hacia arriba cuando el brazo está horizontal: se ve bien desde la cámara.
+      pon('manoD','piel',G.cil(.024,.024,.28,6),0x2e2018,[0,.02,0]);
+      pon('manoD','metal',G.caja(.05,.045,.3),0xc39a52,[0,-.13,0]);
+      pon('manoD','metal',G.caja(.018,1.12,.085),0xd8dce6,[0,-.72,0],[0,0,0],1,.06);
+      pon('manoD','metal',G.cono(.0425,.22,4),0xd8dce6,[0,-1.39,0],[Math.PI,Math.PI/4,0],[.3,1,1]);
+      pon('manoD','metal',G.bola(.038,6,5),0xc39a52,[0,.18,0]);
       return {H,montar,p};
     }
     function goblin(){
@@ -212,6 +213,8 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     function crear(tipo){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(),{H,montar,p}=constructores[tipo](),mallas=montar(M);
+      // La punta de la espada de Adreida (para colocar el rastro del corte y para las pruebas).
+      if(tipo==='adreida'){const punta=new THREE.Object3D();punta.position.set(0,-1.5,0);H.manoD.add(punta);M.punta=punta;}
       return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo]};
     }
 
@@ -230,6 +233,8 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         H.brazoI.rotation.x=s*.5*amp;H.brazoD.rotation.x+=-s*.3*amp;H.torso.rotation.y=s*.12*amp;H.torso.rotation.x+=.1*amp;
         H.cuerpo.position.y=Math.abs(c)*.05*amp*esc-.02*amp;if(H.cola)H.cola.rotation.y+=s*.3*amp;};
       reposo();
+      // Adreida lleva la espada baja por delante (la hoja apunta al frente y abajo, la punta cerca del suelo).
+      if(m.tipo==='adreida'){H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.75;H.brazoD.rotation.z=-.22;}
       switch(a.anim){
         case 'andar':andar(a.fase||0,a.paso??1);break;
         case 'quieto':H.cuerpo.position.y=respira*.006;H.brazoI.rotation.z+=respira*.02;break;
@@ -242,6 +247,20 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.piernaD.rotation.x=.3*car-.1*gol-.2*rec;H.piernaI.rotation.x=-.35*car+.35*rec;H.rodillaI.rotation.x=.4*car-.4*rec;H.rodillaD.rotation.x=.25;H.cuerpo.position.y=-.05*car*esc+.05*rec*esc;
           H.torso.rotation.x=.12*car+.1*gol-.1*rec;
           if(a.anim==='aviso')H.cuerpo.position.x=Math.sin(t*40)*.012;break;}
+        // Los espadazos de Adreida: el brazo casi horizontal barre un arco delante (la hoja lo prolonga).
+        // brazoD.z lo levanta hacia su derecha y brazoD.y lo barre en horizontal: -.5 detrás a la derecha, 1.57 delante, 2.5 a la izquierda.
+        case 'tajoA':case 'revesA':{const r=a.anim==='revesA',car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1),de=r?2.4:-.55,a2=r?-.45:2.35;
+          const barre=de+(a2-de)*gol,alto=1-rec;
+          H.brazoD.rotation.z=-.3-.95*Math.max(car,gol)*alto;H.brazoD.rotation.y=(barre*(car>0?1:0))*alto+(r?.2:-.2)*(1-car)*alto;H.brazoD.rotation.x=-.25*rec-.15*(1-car)*alto;
+          H.anteD.rotation.x=-.75*(1-car)*alto-.45*car*(1-gol)*alto-.08*gol*alto-.7*rec;
+          const giro=(r?.55:-.55)*car*(1-gol)+(r?-.5:.5)*gol*alto;H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.4;H.torso.rotation.x=.08+.1*gol*alto;
+          H.brazoI.rotation.z=.18+.5*gol*alto;H.brazoI.rotation.x=(r?-.5:.4)*gol*alto;
+          H.piernaI.rotation.x=-.35*gol*alto;H.rodillaI.rotation.x=.35*gol*alto+.05;H.piernaD.rotation.x=.3*gol*alto;H.rodillaD.rotation.x=.15;H.cuerpo.position.y=-.06*gol*alto;break;}
+        case 'estocadaA':{const car=tramo(k,0,.42),emp=tramo(k,.42,.56),rec=tramo(k,.68,1),e2=emp*(1-rec),c2=car*(1-emp);
+          const alto=1-rec;H.brazoD.rotation.z=-(.3+1.2*car)*alto-.3*rec;H.brazoD.rotation.y=(.5*car+1.07*emp)*alto;H.brazoD.rotation.x=-.3*rec;
+          H.anteD.rotation.x=(-.75*(1-car)-1.5*car*(1-emp)-.02*emp)*alto-.75*rec;H.torso.rotation.y=-.6*c2+.35*e2;H.torso.rotation.x=.05+.3*e2;H.cadera.rotation.y=-.25*c2+.15*e2;
+          H.brazoI.rotation.x=.6*e2-.3*c2;H.brazoI.rotation.z=.18+.35*e2;
+          H.piernaI.rotation.x=-.95*e2-.15*c2;H.rodillaI.rotation.x=.75*e2+.25*c2;H.piernaD.rotation.x=.75*e2+.15*c2;H.rodillaD.rotation.x=.2+.3*e2;H.cuerpo.position.y=-.14*e2-.04*c2;break;}
         // Revés: el segundo golpe del combo, de izquierda a derecha (empieza donde acabó el tajo).
         case 'reves':{const car=tramo(k,0,.3),gol=tramo(k,.32,.55),rec=tramo(k,.62,1),giro=.75*car-1.55*gol+.8*rec;
           H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.35;
@@ -261,7 +280,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.piernaI.rotation.x=-.9*e;H.rodillaI.rotation.x=1.1*e;H.piernaD.rotation.x=.7*e;H.rodillaD.rotation.x=.9*e;
           H.brazoI.rotation.x=.9*e;H.brazoD.rotation.x=.7*e;H.anteD.rotation.x=-.9;H.brazoI.rotation.z=.5*e;H.brazoD.rotation.z=-.5*e;break;}
         // Torbellino: brazos abiertos, la hoja extendida; el giro del cuerpo lo pone el juego.
-        case 'torbellino':H.brazoD.rotation.z=-1.35;H.brazoD.rotation.x=-.2;H.anteD.rotation.x=-.15;H.manoD.rotation.y=-1.3;H.manoD.rotation.x=.2;H.brazoI.rotation.z=1.1;H.anteI.rotation.x=-.2;
+        case 'torbellino':H.brazoD.rotation.z=-1.35;H.brazoD.rotation.x=-.2;H.anteD.rotation.x=-.15;if(m.tipo!=='adreida'){H.manoD.rotation.y=-1.3;H.manoD.rotation.x=.2;}H.brazoI.rotation.z=1.1;H.anteI.rotation.x=-.2;
           H.torso.rotation.x=.18;H.piernaI.rotation.x=-.35;H.piernaD.rotation.x=.3;H.rodillaI.rotation.x=.5;H.rodillaD.rotation.x=.45;H.cuerpo.position.y=-.1*esc;H.cabeza.rotation.x=.15;break;
         // Salto: se agacha, sube con la espada en alto y cae clavándola.
         case 'salto':{const ag=1-tramo(k,0,.15),arr=tramo(k,.12,.3)*(1-tramo(k,.75,.9)),cae=tramo(k,.75,.9);

@@ -355,10 +355,13 @@ oleadas, y al final entra Can, el de los Goblins.
 - **La plaza:**
   - adoquines con relieve, casas con entramado (tres arden), el pozo, un carro, barriles y braseros;
   - la luna con sombras, la luz que lleva Adreida (el radio de luz de Diablo) y el fuego;
-  - todo lo estático se funde por material.
+  - todo lo estático se funde por material;
+  - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
-  - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tajo, revés y estocada;
+  - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres espadazos: tajo, revés y estocada;
+  - la espada es la prolongación del brazo, así que en cada impacto la hoja barre la zona que golpea, con un rastro de corte;
+  - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
   - con el ratón encima de un enemigo se apunta a él;
   - Espacio esquiva (un instante invulnerable; atravesar un golpe da «¡Esquivado!» y Furia);
   - clic derecho, Salto al cursor; Q, Torbellino; E, Provocar;

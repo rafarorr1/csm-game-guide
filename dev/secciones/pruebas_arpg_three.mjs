@@ -72,12 +72,16 @@ try{
   for(const [ancho,alto] of [[1280,800],[390,780]]){const caso=ancho+'×'+alto,{contexto,pagina,errores,r}=await abrir(navegador,{ancho,alto});
     const e=await r('r.estado()');
     assert.ok(e.webgl2&&e.version==='186'&&e.muestras===4&&e.hdr,caso+': WebGL 2, three r186, HDR con MSAA 4×');
-    assert.deepEqual(e.pases,['render','oclusion','resplandor','salida'],caso+': render, oclusión ambiental, resplandor y salida');
+    assert.deepEqual(e.pases,['render','oclusion','saneado','resplandor','salida'],caso+': render, oclusión ambiental, saneado (sin NaN), resplandor y salida');
     assert.ok(e.mallasHeroe===3&&e.triangulosHeroe>1500,caso+': Adreida es un modelo 3D con esqueleto: 3 mallas con piel, '+e.triangulosHeroe+' triángulos');
     await r('r.oleadas(false)');await r('r.heroe({dir:0})');await r('r.avanzar(.3)');
     const h=await r('r.heroePantalla(1)');assert.ok(h.dentro&&Math.abs(h.x-ancho/2)<ancho*.1,caso+': la cámara sigue a Adreida en el centro');
     const quieta=await zona(pagina,h.x,h.y,40);await r('r.pose("torbellino",0)');await r('r.avanzar(.1)');const girando=await zona(pagina,h.x,h.y,40);await r('r.pose(null)');
     assert.ok(diferencia(quieta,girando)>4,caso+': el modelo se ve y se anima (cambia la pose: '+diferencia(quieta,girando).toFixed(1)+')');
+    // Un píxel NaN (como los que da Metal en Mac) no ennegrece la pantalla gracias al saneado; sin él, el resplandor la tapa entera.
+    await r('r.nan(true,2,-1)');await r('r.avanzar(.1)');const conSaneado=await zona(pagina,ancho*.25,alto*.3,30);await r('r.saneado(false)');await r('r.avanzar(.1)');const sinSaneado=await zona(pagina,ancho*.25,alto*.3,30);await r('r.saneado(true)');await r('r.nan(false)');
+    const luz=px=>{let t=0;for(let i=0;i<px.length;i+=4)t+=px[i]+px[i+1]+px[i+2];return t/(px.length/4)/3;};
+    assert.ok(luz(conSaneado)>8&&luz(sinSaneado)<luz(conSaneado)*.3,caso+': con un píxel NaN la escena se sigue viendo ('+luz(conSaneado).toFixed(0)+'; sin saneado '+luz(sinSaneado).toFixed(0)+')');
     for(let i=0;i<10;i++)await r('r.invocar(a[0],Math.cos(a[1])*4,Math.sin(a[1])*4+4,true)',['goblin','kobold','saqueador'][i%3],i*.63);
     await r('r.avanzar(.2)');const d=await r('r.dibujar()');
     assert.ok(d.llamadas<220,caso+': con diez enemigos siguen siendo pocas llamadas de dibujo ('+d.llamadas+', '+(d.triangulos/1000).toFixed(0)+' mil triángulos)');
@@ -100,12 +104,27 @@ try{
     assert.ok(e.enemigos.find(x=>x.id===g).vida<34&&Math.abs(e.heroe.dir-Math.PI/2)<.3,'Clic: el tajo sale hacia el cursor (se gira al este) y le quita vida');
     // Mantener pulsado: combo de tres golpes (tajo, revés y estocada).
     await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');await r('r.heroe({x:0,z:0})');const q=await r('r.invocar("saqueador",1.9,0,true)');await r('r.avanzar(.1)');s=await r('r.enemigoPantalla(a[0])',q);
-    await pagina.mouse.move(s.x,s.y);await pagina.mouse.down();const combos=new Set();for(let i=0;i<40;i++){e=await r('r.avanzar(1/30)');if(e.heroe.estado==='golpe')combos.add(e.heroe.combo);}await pagina.mouse.up();
+    // Son espadazos, no puñetazos: en el tajo y el revés la punta de la espada barre un arco amplio a la altura del torso;
+    // en la estocada acaba al frente y extendida. (Ángulo de la punta respecto a donde mira, en grados.)
+    const IMP=[.3,.3,.39],combos=new Set(),traza={0:[],1:[],2:[]},impacto={};let duracion0=0;
+    await pagina.mouse.move(s.x,s.y);await pagina.mouse.down();for(let i=0;i<80;i++){e=await r('r.avanzar(1/30)');const h=e.heroe;if(h.estado!=='golpe')continue;combos.add(h.combo);if(h.combo===0)duracion0++;
+      const dx=h.punta[0]-h.x,dz=h.punta[2]-h.z,ang=Math.atan2(dx*Math.cos(h.dir)-dz*Math.sin(h.dir),dx*Math.sin(h.dir)+dz*Math.cos(h.dir))*180/Math.PI,p={ang,d:Math.hypot(dx,dz),y:h.punta[1]};
+      if(h.t<=IMP[h.combo]*2.2)traza[h.combo].push(p);if(h.t>=IMP[h.combo]&&!impacto[h.combo])impacto[h.combo]=p;}
+    await pagina.mouse.up();
     assert.deepEqual([...combos].sort(),[0,1,2],'Manteniendo el clic encadena el combo de tres golpes');
+    for(const c of [0,1]){const angs=traza[c].map(p=>p.ang),barrido=Math.max(...angs)-Math.min(...angs),I=impacto[c];
+      assert.ok(barrido>120&&I.d>1.4&&I.y>.3&&I.y<1.4,(c?'Revés':'Tajo')+': la espada barre '+barrido.toFixed(0)+'° y en el impacto está a '+I.d.toFixed(2)+' m y '+I.y.toFixed(2)+' m de altura');}
+    assert.ok(Math.abs(impacto[2].ang)<35&&impacto[2].d>1.7&&impacto[2].y>.2&&impacto[2].y<1.4,'Estocada: la hoja acaba al frente y extendida ('+impacto[2].ang.toFixed(0)+'°, '+impacto[2].d.toFixed(2)+' m, '+impacto[2].y.toFixed(2)+' m de altura)');
     assert.ok(e.enemigos.find(x=>x.id===q).vida<70,'…y el combo hace daño de verdad ('+e.enemigos.find(x=>x.id===q).vida+'/100)');
-    await r('r.matar(a[0])',q);
+    await r('r.matar(a[0])',q);await r('r.avanzar(1.5)');
+    // La velocidad de ataque: al empezar es lenta; una carta que la da (el Arco Dorado de Juan) acorta el combo.
+    e=await r('r.estado()');assert.equal(e.heroe.vatq,1,'Empieza con la velocidad de ataque base');
+    await r('r.soltar("arco","dorado",a[0],a[1]+.5)',e.heroe.x,e.heroe.z);await r('r.avanzar(.5)');await r('r.control({mov:[0,.3]})');await r('r.avanzar(.4)');await r('r.control(null)');e=await r('r.avanzar(.6)');
+    assert.ok(e.heroe.botin.includes('arco/dorado')&&e.heroe.vatq>1.2&&/Vel\. ataque 124%/.test(await pagina.textContent('#stats')),'El Arco Dorado de Juan (dorado) da +24% de velocidad de ataque ('+e.heroe.vatq+')');
+    await r('r.control({atacar:true,apunta:[a[0],a[1]+2]})',e.heroe.x,e.heroe.z);let rapido=0;for(let i=0;i<40;i++){e=await r('r.avanzar(1/30)');if(e.heroe.estado==='golpe'&&e.heroe.combo===0)rapido++;}await r('r.control(null)');
+    assert.ok(rapido<duracion0*.88,'…y el espadazo es más rápido ('+duracion0+' → '+rapido+' fotogramas)');
     assert.deepEqual(errores,[],'Sin errores con el control');await contexto.close();}
-  console.log('✓ WASD para moverse, ataque hacia el cursor y combo de tres golpes manteniendo el clic');
+  console.log('✓ WASD, ataque hacia el cursor, combo de tres espadazos (la hoja extendida en cada impacto) y velocidad de ataque de las cartas');
 
   // ---- Quién ataca y cuándo: la zona en el suelo, el «!», el contorno rojo y esquivar --------
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:0,alma:140})');
