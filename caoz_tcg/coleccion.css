@@ -674,6 +674,14 @@
 #coleccionPanel[data-vista="detalle"]:has(.con3D) :is(.coleccionPestanas,.coleccionPie,.coleccionTitulos,.coleccionEmblema){display:none}
 #coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionCabecera{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;margin:0;padding:0;min-height:0;border:0;background:none}
 #coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+#coleccionPanel.coleccionFusionando{inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel.coleccionFusionando .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel.coleccionFusionando .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+/* Archivo y detalle coexisten brevemente en este único plano. La capa de
+   detalle no crea otro fondo: flota sobre la misma escena que ya sostenía la
+   biblioteca mientras sus controles entran y el Archivo sale de cuadro. */
+#coleccionPanel .coleccionDetalleCapa{position:absolute;inset:0;z-index:4;display:block;pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionDetalleCapa :is(.coleccionDetalleCabecera .coleccionAtras,.coleccionVersiones,.coleccionReglas button){pointer-events:auto}
 #coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionEstado{position:absolute;left:0;right:0;bottom:12px;z-index:7;text-align:center;pointer-events:none}
 #coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{position:absolute;left:0;right:360px;bottom:16px;z-index:5;margin:0;text-align:center;color:#cbbfd9b3;pointer-events:none}
 #coleccionPanel .coleccionDetalle3D.con3D~.coleccionDetalleCabecera,#coleccionPanel .coleccionDetalleCabecera:has(~.con3D){position:absolute;top:max(14px,env(safe-area-inset-top));left:0;right:360px;z-index:6;padding:0 72px;pointer-events:none;text-shadow:0 2px 12px #000}
@@ -973,7 +981,7 @@
   overflow:hidden;pointer-events:none;isolation:isolate;
   /* La misma variable mueve escena, halo y tarjeta dentro del visor. La
      transición ocurre sobre este huésped persistente, no entre dos fondos. */
-  transition:--reserva-der .74s cubic-bezier(.16,.78,.18,1),--controles-alto .74s cubic-bezier(.16,.78,.18,1);
+  transition:--reserva-der .76s cubic-bezier(.42,0,.58,1),--controles-alto .76s cubic-bezier(.42,0,.58,1);
 }
 #coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor[hidden]{display:none}
 #coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor .visor3dMundo{width:100%;height:100%}
@@ -1001,6 +1009,7 @@
 /* En el detalle el mismo host deja libre la columna de ediciones. La capa de
    controles no roba el arrastre de la carta: sólo sus botones reciben puntero. */
 #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:360px;pointer-events:auto}
+#coleccionPanel.coleccionFusionando[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:0px}
 #coleccionPanel[data-mundo="detalle"] .coleccionInterior{pointer-events:none}
 #coleccionPanel[data-mundo="detalle"] .coleccionContenido{pointer-events:none}
 #coleccionPanel[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor{pointer-events:none}
@@ -1082,11 +1091,9 @@
 #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor .coleccionVersiones{
   animation:coleccionDetallePanelEntra .54s .1s cubic-bezier(.16,.8,.2,1) backwards;
 }
-/* El halo y las motas no se animan ni se reconstruyen: sólo el pedestal toma
-   el relevo del naipe volador mientras éste hace su último fundido. */
-#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dEscena{
-  animation:coleccionDetalleEscenaEntra .34s .04s cubic-bezier(.16,.8,.2,1) backwards;
-}
+/* La escena nunca recibe un fade o scale al abrir una carta. El anillo, halo
+   y pedestal son el mismo nodo que estaba detrás del Archivo; sólo cambian
+   sus coordenadas dentro de la transición FLIP de la ficha seleccionada. */
 #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dControles{
   animation:coleccionDetalleHerramientasEntran .44s .17s cubic-bezier(.16,.8,.2,1) backwards;
 }
@@ -1097,10 +1104,6 @@
 @keyframes coleccionDetallePanelEntra{
   from{opacity:0;translate:calc(100vw + 96px) -50%;scale:.97;filter:blur(6px)}
   to{opacity:1;translate:0 -50%;scale:1;filter:none}
-}
-@keyframes coleccionDetalleEscenaEntra{
-  from{opacity:0;scale:.985;filter:brightness(.82)}
-  to{opacity:1;scale:1;filter:none}
 }
 @keyframes coleccionDetalleHerramientasEntran{
   from{opacity:0;translate:calc(100vw + 72px) -50%;filter:blur(4px)}
