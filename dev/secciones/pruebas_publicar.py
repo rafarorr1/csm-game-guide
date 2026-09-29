@@ -641,6 +641,20 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
         self.assertEqual(p.revision_remota(self.repo), anterior)
         self.assertEqual(self.referencias_protegidas(), protegidas)
 
+    def test_actualizar_seccion_conserva_reglas_especificas_de_cabecera_remota(self):
+        p.publicar(self.repo, self.preparar('coleccion'))
+        anterior = p.publicar(self.repo, self.preparar('rey'))['commit']
+        cabeceras = self.git('show', f'{anterior}:tcg/_headers', binario=True)
+        extendidas = cabeceras + b"\n/balance\n  ! Content-Security-Policy\n  Content-Security-Policy: default-src 'self'\n"
+        remoto = self.cambiar_artefacto({'tcg/_headers': extendidas})
+        rey = self.git('rev-parse', f'{remoto}:tcg/rey')
+        self.siguiente_fuente()
+        resultado = p.publicar(self.repo, self.preparar('coleccion'))
+        self.assertTrue(resultado['nuevo'])
+        self.assertEqual(self.git('rev-parse', resultado['commit'] + '^'), remoto)
+        self.assertEqual(self.git('show', f"{resultado['commit']}:tcg/_headers", binario=True), extendidas)
+        self.assertEqual(self.git('rev-parse', f"{resultado['commit']}:tcg/rey"), rey)
+
     def test_no_toma_rama_ajena_o_marcador_invalido(self):
         salida = self.preparar()
         self.git('push', '-q', 'origin', 'HEAD:' + p.RAMA)

@@ -291,6 +291,11 @@ def registro_remoto(repo, revision):
     return registro
 
 
+def cabecera_compartida(contenido):
+    """Devuelve el bloque raíz de _headers, sin reglas de rutas hermanas."""
+    return contenido.split(b'\n\n', 1)[0].rstrip() + b'\n'
+
+
 def publicar(repo, salida, seccion=None):
     repo, salida = Path(repo).resolve(), Path(salida)
     registro, manifiesto, contenido = validar_paquete(salida, seccion)
@@ -300,9 +305,18 @@ def publicar(repo, salida, seccion=None):
     if anterior:
         previo = registro_remoto(repo, anterior)
         # Las cabeceras raíz afectan a todas las secciones. Una nueva revisión
-        # no puede cambiar la CSP/caché de las hermanas ya publicadas.
-        if set(previo['secciones']) - {seccion} and git(repo, 'show', f'{anterior}:tcg/_headers', binario=True) != contenido['tcg/_headers']:
+        # no puede cambiar la CSP/caché de las hermanas ya publicadas. Sí puede
+        # conservar reglas más específicas que otra publicación ya añadió
+        # (por ejemplo /balance), siempre que el bloque raíz exportado sea el
+        # mismo. Así una revisión de Colección no borra la política de Balance.
+        cabeceras_previas = git(repo, 'show', f'{anterior}:tcg/_headers', binario=True)
+        cabeceras_nuevas = contenido['tcg/_headers']
+        if set(previo['secciones']) - {seccion} and (
+                cabecera_compartida(cabeceras_previas) != cabecera_compartida(cabeceras_nuevas)
+                or cabeceras_nuevas != cabecera_compartida(cabeceras_nuevas)):
             raise ValueError('Las cabeceras compartidas cambiarían otras secciones; conserva su política.')
+        if set(previo['secciones']) - {seccion}:
+            contenido['tcg/_headers'] = cabeceras_previas
         previo['secciones'][seccion] = registro['secciones'][seccion]
         registro = previo
     contenido[MARCADOR] = json_bytes(registro)
