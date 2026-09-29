@@ -13,7 +13,7 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
-  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null,cartaTransferida=null,entradaMenu=0;
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null,cartaTransferida=null,entradaMenu=0,archivoCapa=null,detalleCapa=null,encuadreDetalle=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
@@ -101,8 +101,8 @@
     // adopte el nodo. El visor lo usa como pose inicial y converge desde ahí:
     // no hay ni recarga del arte ni teletransporte entre los dos encuadres.
     const r=entrega?.nodo?.getBoundingClientRect();
-    const continuidad=!matchMedia('(prefers-reduced-motion: reduce)').matches&&r?.width>8&&r?.height>8?{izquierda:r.left,arriba:r.top,ancho:r.width,alto:r.height}:null;
-    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),cartaLista:entrega?.nodo||null,continuidad,ediciones:edicionesDe(id)});
+    const continuidad=!matchMedia('(prefers-reduced-motion: reduce)').matches&&r?.width>8&&r?.height>8?{izquierda:r.left,arriba:r.top,ancho:r.width,alto:r.height,esperar:panel?.classList.contains('coleccionFusionando')}:null;
+    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id)});
     // montarMundo sólo confirma después de insertar la ficha. Así, si el
     // visor no estuviera disponible, el vuelo conserva su salida de respaldo.
     if(visible&&entrega){
@@ -118,6 +118,8 @@
     // una escena invisible consumiendo recursos.
     if(!activo){if(mundo3D)soltarMundoVisor();else{mundoHost?.setAttribute('hidden','');panel?.removeAttribute('data-mundo');}return;}
     mundoHost?.removeAttribute('hidden');montarMundoVisor();
+    if(vista==='cartas'&&!transicionDetalle){encuadreDetalle=null;mundoHost?.style.removeProperty('--reserva-der');mundoHost?.style.removeProperty('--controles-alto');}
+    else if(vista==='detalle'&&encuadreDetalle&&!panel?.classList.contains('coleccionFusionando')){mundoHost?.style.setProperty('--reserva-der',encuadreDetalle.reserva+'px');mundoHost?.style.setProperty('--controles-alto',encuadreDetalle.controles+'px');}
     if(vista==='cartas')mundoHost?.setAttribute('aria-hidden','true');else mundoHost?.removeAttribute('aria-hidden');
     panel.dataset.mundo=vista==='cartas'?'archivo':'detalle';
   }
@@ -270,11 +272,12 @@
     const selector=(nombre,opciones,valor,cambiar)=>{const label=crear('label','coleccionFiltro');label.append(crear('span','coleccionSr',nombre));const select=crear('select');select.setAttribute('aria-label',nombre);opciones.forEach(([v,n])=>{const op=crear('option','',n);op.value=v;select.append(op);});select.value=valor;select.onchange=()=>{cambiar(select.value);s.desplazamiento=0;dibujarLista();};label.append(select);return label;};
     filtros.append(selector('Filtrar por mazo',[['todos','Todos los mazos'],...Object.keys(LEADERS).map(id=>[id,LEADERS[id].n]),['cajon','El Cajón']],s.mazo,v=>s.mazo=v));
     filtros.append(selector('Filtrar por tipo',[['todos','Todos los tipos'],['protagonista','Protagonistas'],['personaje','Personajes'],['hechizo','Hechizos'],['trampa','Trampas'],['objeto','Objetos'],['lugar','Lugares']],s.tipo,v=>s.tipo=v));
+    const capa=crear('section','coleccionArchivoCapa');archivoCapa=capa;detalleCapa=null;
     const escena=crear('section','coleccionEscenaArchivo');escena.setAttribute('aria-label','Archivo inmersivo de cartas');
     const grid=crear('div','coleccionRejilla coleccionArchivoRejilla');grid.setAttribute('role','region');grid.setAttribute('aria-label','Cartas de tu colección. Desplázate para recorrerlas y abre una para verla en detalle.');grid.tabIndex=0;
     grid.addEventListener('scroll',()=>{if(grid.isConnected&&!restaurarLista)s.desplazamiento=grid.scrollTop;},{passive:true});
     const resumen=crear('p','coleccionResumen coleccionResumenArchivo');resumen.setAttribute('role','status');resumen.setAttribute('aria-live','polite');
-    escena.append(grid,resumen);contenido.append(filtros,escena);dibujarLista();
+    escena.append(grid,resumen);capa.append(filtros,escena);contenido.append(capa);dibujarLista();
   }
   function destruirCarruselCartas(){carruselCartas?.destruir();carruselCartas=null;}
   function dibujarLista(){
@@ -372,24 +375,15 @@
     if(!rejilla||!ficha||!ficha.isConnected){verCarta(id);return;}
     const origen=ficha.getBoundingClientRect();
     if(origen.width<12||origen.height<12){verCarta(id);return;}
-    // No clonamos la miniatura: la ficha que vuela es la misma que el usuario
-    // acaba de ver. Conserva el <img> y el canvas ya cargados hasta que el
-    // visor la recibe, por lo que no hay una segunda descarga ni un cambio de
-    // ilustración a mitad del viaje.
-    const vuelo=ficha;vuelo.classList.add('coleccionVueloCarta');vuelo.setAttribute('aria-hidden','true');
-    // La miniatura usa zoom para encajar en su columna. La misma ficha ya
-    // recibe su rectángulo visible, así que reiniciamos ese zoom para no
-    // ampliarla dos veces durante el viaje hacia el visor.
-    vuelo.style.zoom='1';vuelo.style.left=origen.left+'px';vuelo.style.top=origen.top+'px';vuelo.style.width=origen.width+'px';vuelo.style.height=origen.height+'px';
-    vuelo.style.setProperty('--cw',origen.width+'px');vuelo.style.setProperty('--ch',origen.height+'px');vuelo.style.fontSize=(origen.width*.081)+'px';
-    const movil=innerWidth<760,centroX=innerWidth*(movil?.5:.39),centroY=innerHeight*(movil?.45:.5),altoDestino=Math.max(origen.height*1.08,Math.min(movil?innerHeight*.57:innerHeight*.66,movil?390:520));
-    vuelo.style.setProperty('--coleccion-vuelo-x',Math.round(centroX-(origen.left+origen.width/2))+'px');
-    vuelo.style.setProperty('--coleccion-vuelo-y',Math.round(centroY-(origen.top+origen.height/2))+'px');
-    vuelo.style.setProperty('--coleccion-vuelo-escala',String(altoDestino/origen.height));
-    panel.append(vuelo);
+    /* No hay una "carta de vuelo" independiente. La ficha de la rejilla se
+       inserta directamente en el visor persistente y el visor le aplica FLIP
+       desde este rectángulo. Así Archivo y detalle son el mismo mundo y la
+       misma ficha, no dos pantallas que se turnan para mostrarla. */
+    const movil=innerWidth<760,reserva=movil?0:360,controles=movil?Math.max(250,Math.min(320,Math.round(innerHeight*.34))):0;
+    encuadreDetalle=mundo3D?.encuadreColeccion?.({reserva,controles})||{modo:'coleccion',reserva,controles};
     guardarPosicionLista();focoLista=id;s.cartaSeleccionada=id;
     const cartas=[...rejilla.querySelectorAll('.coleccionMini')],bloqueados=[rejilla,contenido.querySelector('.coleccionFiltrosInmersivos'),barra].filter(Boolean);
-    const transicion={vuelo,origenMiniatura:miniatura,rejilla,cartas,bloqueados,temporizador:0,entrega:0,transferida:false};transicionDetalle=transicion;
+    const transicion={origen,origenMiniatura:miniatura,rejilla,cartas,bloqueados,temporizador:0,entrega:0,transferida:false};transicionDetalle=transicion;
     const centro={x:origen.left+origen.width/2,y:origen.top+origen.height/2};
     cartas.forEach((n,indice)=>{
       n.dataset.animacion=n===miniatura?'entra':'sale';n.tabIndex=-1;
@@ -400,20 +394,18 @@
     });
     bloqueados.forEach(n=>n.setAttribute('inert',''));
     rejilla.setAttribute('aria-busy','true');panel.dataset.transicion='abrir-carta';panel.dataset.cartaActiva=id;mensaje('Abriendo '+dato(id).n+'…');
-    requestAnimationFrame(()=>{if(transicionDetalle!==transicion)return;panel.classList.add('coleccionAbriendoCarta');rejilla.classList.add('coleccionRejillaSaliendo');vuelo.classList.add('coleccionVueloCartaEntra');});
+    cartaTransferida={id,acabado:modelo().elegido(id),nodo:ficha,transicion,entregada:false};
+    s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';s.vista='detalle';
+    panel.classList.add('coleccionFusionando');activarMundo('detalle');actualizarCabecera();dibujarDetalle({preservarArchivo:true});entradaDelMundo('detalle');
+    requestAnimationFrame(()=>{if(transicionDetalle!==transicion)return;mundoHost?.style.setProperty('--reserva-der',reserva+'px');mundoHost?.style.setProperty('--controles-alto',controles+'px');mundo3D?.iniciarEntrada?.();panel.classList.add('coleccionAbriendoCarta');rejilla.classList.add('coleccionRejillaSaliendo');});
     transicion.temporizador=setTimeout(()=>{
-      if(transicionDetalle!==transicion||!panel?.open||s.vista!=='cartas')return;
-      s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';
-      panel.classList.remove('coleccionAbriendoCarta');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
-      // La escena consume el mismo nodo durante dibujarDetalle(). Si por una
-      // degradación del visor no pudiera hacerlo, conservamos el vuelo breve
-      // actual como respaldo visual y lo retiramos al final de la transición.
-      cartaTransferida={id,acabado:s.acabadoVista,nodo:vuelo,transicion,entregada:false};
-      s.vista='detalle';mensaje('');actualizarCabecera();dibujar();
-      entradaDelMundo('detalle');
-      if(!transicion.transferida)vuelo.classList.add('coleccionVueloCartaEntregada');
-      transicion.entrega=setTimeout(()=>limpiarTransicionDetalle(transicion),190);sonido('ui_confirm');
-    },560);
+      if(transicionDetalle!==transicion||!panel?.open||s.vista!=='detalle')return;
+      // Al cerrar la coreografía no se reconstruye el visor: sólo se aparta la
+      // capa de Archivo que ya salió de cuadro. El detalle ya existía desde el
+      // primer fotograma de la interpolación.
+      archivoCapa?.setAttribute('hidden','');panel.dataset.vista='detalle';panel.classList.remove('coleccionFusionando');mensaje('');
+      limpiarTransicionDetalle(transicion);sonido('ui_confirm');
+    },760);
   }
   function verCarta(id,miniatura){
     // Movimiento reducido no reproduce el vuelo, pero aún puede entregar la
@@ -429,10 +421,14 @@
   let escena3D=null;
   const edicionesDe=id=>ACABADOS.map(a=>({id:a,...estadoEdicionVisible(id,a)}));
   function soltarEscena3D(){escena3D?.destruir();escena3D=null;mundo3D?.ocultarCarta?.();}
-  function dibujarDetalle(){
-    if(!s.carta){ir('cartas');return;}vaciarContenido();panel.dataset.vista='detalle';
+  function dibujarDetalle(opciones={}){
+    if(!s.carta){ir('cartas');return;}
+    const preservarArchivo=opciones.preservarArchivo===true&&archivoCapa?.isConnected;
+    if(preservarArchivo){detalleCapa?.remove();detalleCapa=crear('section','coleccionDetalleCapa');contenido.append(detalleCapa);}
+    else{vaciarContenido();panel.dataset.vista='detalle';}
+    const destino=preservarArchivo?detalleCapa:contenido;
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));
-    cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));contenido.append(cab);
+    cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));destino.append(cab);
     const versiones=crear('div','coleccionVersiones');
     ACABADOS.forEach(a=>{
       const visible=estadoEdicionVisible(s.carta,a),{tiene,cantidad,elegida}=visible,demostracion=!!visible.demostracion,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
@@ -456,14 +452,14 @@
       // Los controles quedan en el DOM de la Colección, pero la carta se dibuja
       // dentro del mismo mundo que el archivo. La escena no se desmonta ni se
       // vuelve a encender entre una vista y la otra.
-      zona.classList.add('con3D','conMundoVisor');zona.append(versiones);contenido.append(zona);
+      zona.classList.add('con3D','conMundoVisor');zona.append(versiones);destino.append(zona);
       mostrarCartaEnMundo(s.carta);
       const medirControles=()=>{
-        const alto=Math.ceil(versiones.getBoundingClientRect().height+20)+'px';
+        const alto=(encuadreDetalle?.modo==='coleccion'?encuadreDetalle.controles:Math.ceil(versiones.getBoundingClientRect().height+20))+'px';
         // En teléfono la escena y sus controles internos comparten esta reserva:
         // así Voltear/Ampliar quedan justo arriba del panel de acabados, no debajo.
         zona.style.setProperty('--controles-alto',alto);
-        mundoHost?.style.setProperty('--controles-alto',alto);
+        if(!panel.classList.contains('coleccionFusionando'))mundoHost?.style.setProperty('--controles-alto',alto);
         mundo3D?.medir();
       };
       medirControles();requestAnimationFrame(medirControles);
@@ -471,7 +467,7 @@
       zona.classList.add('con3D');const escenario=crear('div','coleccionEscena3D');
       if(escena3D&&escena3D.id!==s.carta)soltarEscena3D();
       if(escena3D)escenario.append(escena3D.raiz);
-      zona.append(escenario,versiones);contenido.append(zona);
+      zona.append(escenario,versiones);destino.append(zona);
       if(escena3D)escena3D.actualizar({ediciones:edicionesDe(s.carta),edicion:s.acabadoVista});
       else escena3D=window.CAOZ_VISOR3D.montar(escenario,{id:s.carta,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(s.carta,a),ediciones:edicionesDe(s.carta)});
       // En el teléfono la escena ocupa lo que dejan libre los controles de abajo.
@@ -480,12 +476,12 @@
       // El visor alternativo conserva el recorrido funcional aunque no pueda
       // adoptar la ficha en vuelo. Ya no retenemos el nodo huérfano del Archivo.
       cartaTransferida=null;
-    }else{cartaTransferida=null;zona.append(versiones);contenido.append(zona);}
+    }else{cartaTransferida=null;zona.append(versiones);destino.append(zona);}
     const reglas=crear('section','coleccionReglas');reglas.setAttribute('aria-label','Información de la carta');
     const linea=crear('div','coleccionReglasTitulo');linea.append(crear('strong','','Habilidades'));
     const stats=c.t==='personaje'?'Coste '+c.c+' · Ataque '+c.a+' · Vida '+c.h:c.t==='protagonista'?'Protagonista':'Coste '+c.c;linea.append(crear('span','',stats));
-    reglas.append(linea,crear('p','coleccionReglaTexto'),crear('div','coleccionReglaPaginas'));contenido.append(reglas);
-    contenido.append(crear('p','coleccionAviso','Las tres ediciones tienen las mismas habilidades. Tu elección se usa en todas tus partidas.'));
+    reglas.append(linea,crear('p','coleccionReglaTexto'),crear('div','coleccionReglaPaginas'));destino.append(reglas);
+    destino.append(crear('p','coleccionAviso','Las tres ediciones tienen las mismas habilidades. Tu elección se usa en todas tus partidas.'));
     // Medir en este mismo render evita un fotograma con el retrato del tamaño
     // anterior encima del contador al alternar ediciones en teléfonos bajos.
     encajarCartas();programarAjuste();
@@ -525,7 +521,7 @@
     if(paginas.length>1){const anterior=boton('‹',()=>{s.regla--;paginacionReglas();}),siguiente=boton('›',()=>{s.regla++;paginacionReglas();});anterior.disabled=s.regla===0;siguiente.disabled=s.regla===paginas.length-1;anterior.setAttribute('aria-label','Página anterior de habilidades');siguiente.setAttribute('aria-label','Página siguiente de habilidades');nav.append(anterior,crear('span','',(s.regla+1)+' / '+paginas.length),siguiente);}
   }
   function destruirVistasSobres(){for(const vista of vistasSobres)vista.destruir();vistasSobres.clear();}
-  function vaciarContenido(){destruirVistasSobres();contenido.replaceChildren();}
+  function vaciarContenido(){destruirVistasSobres();contenido.replaceChildren();archivoCapa=null;detalleCapa=null;}
   function destruirCarrusel(){carruselSobres?.destruir();carruselSobres=null;}
   function colorSobre(nodo,grupo){nodo.dataset.grupo=grupo;nodo.style.setProperty('--sobre-color',COLORES_SOBRES[grupo]||'#947640');}
   function envoltura(grupo){

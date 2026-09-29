@@ -90,7 +90,7 @@
     dlg.style.setProperty('--anillo-mascara',texturaAnillo());
     let configuracion=null,ediciones=[],edicion=tonoValido(opciones.edicion||opciones.tono||opciones.inicial),cuerpo=null,lienzoGL=null,gl3d=null,carta=null,frente=null,pila=[],logoGL=null;
     let turnoGL=0,copias=0,ancho=0,alto=0,raf=0,antes=0,reloj=0,vivo=true,observador=null;
-    const e={giro:reducir()?0:-PI*2,vel:0,encaje:0,forzado:!reducir(),arrastrando:false,x:0,y:0,t:0,inclX:0,inclY:0,objX:0,objY:0,arrastreX:0,pulso:0,escala:reducir()?1:.86,entradaX:0,entradaY:0,entrando:false};
+    const e={giro:reducir()?0:-PI*2,vel:0,encaje:0,forzado:!reducir(),arrastrando:false,x:0,y:0,t:0,inclX:0,inclY:0,objX:0,objY:0,arrastreX:0,pulso:0,escala:reducir()?1:.86,entradaX:0,entradaY:0,entradaX0:0,entradaY0:0,escala0:1,entradaInicio:0,entradaDuracion:760,esperaEntrada:false,glPendiente:false,entrando:false};
     const puntos=Array.from({length:120},()=>({x:Math.random(),y:Math.random(),z:.35+Math.random()*.65,v:.02+Math.random()*.035,f:Math.random()*PI*2}));
     const vivas=[];
 
@@ -125,7 +125,7 @@
     }
     function soltarSuperficie(){
       turnoGL++;gl3d?.destruir();gl3d=null;lienzoGL?.remove();lienzoGL=null;cuerpo?.remove();cuerpo=null;frente=null;pila=[];carta=null;copias=0;logoGL=null;
-      e.entradaX=0;e.entradaY=0;e.entrando=false;
+      e.entradaX=0;e.entradaY=0;e.entradaX0=0;e.entradaY0=0;e.escala0=1;e.entradaInicio=0;e.esperaEntrada=false;e.glPendiente=false;e.entrando=false;
       dlg.classList.remove('visor3dConGL','visor3dBloqueada','visor3dEntraDesdeArchivo');
     }
     function asegurarGL(){
@@ -170,6 +170,18 @@
       for(const propiedad of ['left','top','width','height','font-size','zoom','--cw','--ch','--coleccion-vuelo-x','--coleccion-vuelo-y','--coleccion-vuelo-escala'])lista.style.removeProperty(propiedad);
       return lista;
     }
+    // Archivo y visor no calculan su carta por separado. Este único encuadre
+    // es la fuente de verdad para ambos: la ficha llega exactamente al tamaño
+    // y al centro que tendrá dentro del visor, antes de cambiar de capa.
+    function medidasCarta(anchoEscena,altoEscena,conCarta=true){
+      const altoCarta=Math.max(120,Math.min(conCarta?altoEscena-Math.max(56,altoEscena*.2):altoEscena*.56,(anchoEscena-120)*1.4,conCarta?760:520));
+      return {ancho:altoCarta/1.4,alto:altoCarta};
+    }
+    function encuadreColeccion(opciones={}){
+      const r=dlg.getBoundingClientRect(),reserva=Math.max(0,Number(opciones.reserva)||0),controles=Math.max(0,Number(opciones.controles)||0);
+      const anchoEscena=Math.max(120,r.width-reserva),altoEscena=Math.max(120,r.height-controles),medidas=medidasCarta(anchoEscena,altoEscena,true);
+      return {modo:'coleccion',reserva,controles,centroX:r.left+anchoEscena/2,centroY:r.top+altoEscena/2,...medidas};
+    }
     function entrarDesdeArchivo(continuidad){
       if(reducir()||!continuidad||!ancho||!alto)return;
       const r=escena.getBoundingClientRect(),centroX=continuidad.izquierda+continuidad.ancho/2,centroY=continuidad.arriba+continuidad.alto/2;
@@ -177,12 +189,21 @@
       e.escala=acotar(continuidad.alto/alto,.18,1.8);
       e.entradaX=centroX-(r.left+r.width/2);
       e.entradaY=centroY-(r.top+r.height/2);
+      // Si Archivo ya llegó al encuadre de esta misma escena no forzamos una
+      // segunda animación ni escondemos la ficha un fotograma: adopta el nodo
+      // en la misma coordenada, tamaño y escala con que terminó el vuelo.
+      if(Math.abs(e.entradaX)<.75&&Math.abs(e.entradaY)<.75&&Math.abs(e.escala-1)<.01){e.entradaX=0;e.entradaY=0;e.escala=1;return;}
+      e.entradaX0=e.entradaX;e.entradaY0=e.entradaY;e.escala0=e.escala;e.entradaInicio=continuidad.esperar?0:performance.now();e.esperaEntrada=!!continuidad.esperar;
       // La adopción del nodo y el siguiente RAF pueden caer en fotogramas
       // distintos. Escribimos la pose inicial ahora para no mostrar un cuadro
       // con la carta ya teletransportada al centro.
       const estilo=cuerpo?.style;
       estilo?.setProperty('--entrada-x',e.entradaX+'px');estilo?.setProperty('--entrada-y',e.entradaY+'px');estilo?.setProperty('--s',String(e.escala));estilo?.setProperty('--y','0px');
       e.entrando=true;dlg.classList.add('visor3dEntraDesdeArchivo');
+    }
+    function iniciarEntrada(){
+      if(!e.entrando||!e.esperaEntrada)return;
+      e.esperaEntrada=false;e.entradaInicio=performance.now();
     }
     function ponerCarta(){
       if(!configuracion||!cuerpo||typeof configuracion.crearCarta!=='function')return false;
@@ -197,7 +218,11 @@
       medir();
       if(adoptada)entrarDesdeArchivo(configuracion.continuidad);
       else{e.entradaX=0;e.entradaY=0;e.entrando=false;dlg.classList.remove('visor3dEntraDesdeArchivo');}
-      prepararGL();return true;
+      // Pintar la textura WebGL puede decodificar arte y bloquear un cuadro.
+      // Durante el FLIP usamos la ficha CSS ya cargada; WebGL entra sólo al
+      // terminar el recorrido para no convertir una animación continua en un
+      // salto por trabajo de GPU/CPU en medio de ella.
+      if(adoptada&&e.entrando)e.glPendiente=true;else prepararGL();return true;
     }
     function medir(){
       const R=dlg.getBoundingClientRect(),W=R.width,H=R.height,E=escena.getBoundingClientRect(),anchoEscena=E.width||W,altoEscena=E.height||H;if(!W||!H||!anchoEscena||!altoEscena)return;
@@ -205,7 +230,9 @@
       // El mundo puede reservar abajo el lugar para sus controles. La carta
       // mide la escena realmente visible; las motas y chispas siguen cubriendo
       // todo el host para que no haya un corte entre ambas capas.
-      alto=Math.max(120,Math.min(conCarta?altoEscena-Math.max(56,altoEscena*.2):H*.56,(anchoEscena-120)*1.4,conCarta?760:520));ancho=alto/1.4;
+      const encuadre=configuracion?.encuadre?.modo==='coleccion'?encuadreColeccion(configuracion.encuadre):null;
+      if(encuadre){alto=encuadre.alto;ancho=encuadre.ancho;}
+      else{const medidas=medidasCarta(anchoEscena,altoEscena,conCarta);alto=medidas.alto;ancho=medidas.ancho;}
       dlg.style.setProperty('--w',ancho+'px');dlg.style.setProperty('--h',alto+'px');dlg.style.setProperty('--p',Math.max(900,alto*2.6)+'px');
       if(carta){
         carta.style.width=ancho+'px';carta.style.height=alto+'px';carta.style.setProperty('--cw',ancho+'px');carta.style.setProperty('--ch',alto+'px');carta.style.fontSize=(ancho*.081)+'px';
@@ -248,8 +275,11 @@
         if(!e.arrastrando){if(!e.forzado&&Math.abs(e.vel)>3){e.giro+=e.vel*dt;e.vel*=Math.exp(-1.6*dt);}else{if(!e.forzado)e.encaje=Math.round(e.giro/PI)*PI;const k=70,c=2*Math.sqrt(k)*.85;e.vel+=((e.encaje-e.giro)*k-e.vel*c)*dt;e.giro+=e.vel*dt;if(e.forzado&&Math.abs(e.encaje-e.giro)<.002&&Math.abs(e.vel)<.02)e.forzado=false;}e.arrastreX=acercar(e.arrastreX,0,4,dt);}
         const reposo=reducir()?0:1;e.inclX=acercar(e.inclX,e.arrastrando?0:e.objX,6,dt);e.inclY=acercar(e.inclY,e.arrastrando?0:e.objY,6,dt);e.pulso=acercar(e.pulso,0,3,dt);
         if(e.entrando){
-          e.entradaX=acercar(e.entradaX,0,7.5,dt);e.entradaY=acercar(e.entradaY,0,7.5,dt);e.escala=acercar(e.escala,1,7.5,dt);
-          if(Math.abs(e.entradaX)<.45&&Math.abs(e.entradaY)<.45&&Math.abs(e.escala-1)<.004){e.entradaX=0;e.entradaY=0;e.escala=1;e.entrando=false;dlg.classList.remove('visor3dEntraDesdeArchivo');}
+          if(!e.esperaEntrada){
+            const progreso=acotar((ahora-e.entradaInicio)/e.entradaDuracion,0,1),suave=progreso*progreso*(3-2*progreso);
+            e.entradaX=e.entradaX0*(1-suave);e.entradaY=e.entradaY0*(1-suave);e.escala=1+(e.escala0-1)*(1-suave);
+            if(progreso>=1){e.entradaX=0;e.entradaY=0;e.escala=1;e.entrando=false;dlg.classList.remove('visor3dEntraDesdeArchivo');if(e.glPendiente){e.glPendiente=false;prepararGL();}}
+          }
         }else e.escala=acercar(e.escala,1,5,dt);
         const ry=e.giro+e.inclX*.42+Math.sin(reloj*.6)*.05*reposo,rx=-e.inclY*.32+e.arrastreX+Math.sin(reloj*.8)*.03*reposo,flota=Math.sin(reloj*1.1)*6*reposo,frenteY=Math.atan2(Math.sin(ry),Math.cos(ry)),inclina=acotar(Math.hypot(frenteY,rx)*2.2,0,1),s=cuerpo.style;
         s.setProperty('--rx',rx+'rad');s.setProperty('--ry',ry+'rad');s.setProperty('--rz',(Math.sin(reloj*.7)*.012*reposo)+'rad');s.setProperty('--y',flota+'px');s.setProperty('--s',e.escala*(1+e.pulso*.03));s.setProperty('--entrada-x',e.entradaX+'px');s.setProperty('--entrada-y',e.entradaY+'px');s.setProperty('--gx',acotar(72-frenteY*120,-30,130)+'%');s.setProperty('--gy',acotar(26+rx*120,-30,130)+'%');s.setProperty('--fx',(50+frenteY*160)+'%');s.setProperty('--fy',(50+rx*160)+'%');s.setProperty('--inclina',inclina.toFixed(3));s.setProperty('--pila',Math.cos(frenteY)>0?1:0);
@@ -280,7 +310,7 @@
       if(!vivo)return;vivo=false;turnoGL++;cancelAnimationFrame(raf);soltarSuperficie();document.removeEventListener('visibilitychange',reanudar);removeEventListener('resize',medir);window.visualViewport?.removeEventListener('resize',medir);observador?.disconnect();dlg.remove();
     }
     aplicarTono(edicion);contenedor.append(dlg);if(typeof ResizeObserver==='function'){observador=new ResizeObserver(medir);observador.observe(dlg);}document.addEventListener('visibilitychange',reanudar);addEventListener('resize',medir);window.visualViewport?.addEventListener('resize',medir);medir();reanudar();
-    return {raiz:dlg,get id(){return configuracion?.id||null;},mostrarCarta,ocultarCarta,actualizar,voltear,destruir,medir};
+    return {raiz:dlg,get id(){return configuracion?.id||null;},mostrarCarta,ocultarCarta,actualizar,voltear,destruir,medir,encuadreColeccion,iniciarEntrada};
   }
 
   function construir(o,contenedor){
