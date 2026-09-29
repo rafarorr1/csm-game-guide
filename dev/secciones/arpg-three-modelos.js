@@ -61,9 +61,7 @@ outgoingLight=mix(outgoingLight,uColorD*1.6,uDestello);
 if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));outgoingLight=mix(outgoingLight,vec3(5.,1.6,.3),bordeM);}
 #include <opaque_fragment>`);};
         m.customProgramCacheKey=()=>'arpg-modelo';return m;};
-      return {u,piel:hacer({roughness:.82,metalness:0}),metal:hacer({roughness:.32,metalness:.85}),brillo:hacer({roughness:1,metalness:0,color:0x000000},4),
-        // Lisos, para el modelo de la miniatura de Adreida (tiene detalle de sobra; las facetas sobran).
-        pielLisa:hacer({roughness:.78,metalness:0,flatShading:false}),metalLiso:hacer({roughness:.34,metalness:.8,flatShading:false})};
+      return {u,piel:hacer({roughness:.82,metalness:0}),metal:hacer({roughness:.32,metalness:.85}),brillo:hacer({roughness:1,metalness:0,color:0x000000},4)};
     }
 
     // El esqueleto común (de pie en el origen, mirando a +Z; su derecha es -X).
@@ -219,41 +217,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('anteI','piel',G.cil(.27,.27,.04,12),0x6b4a2e,[.1,-.17,.02],[0,0,Math.PI/2],1,.2);pon('anteI','metal',G.toro(.27,.022,14),acero,[.12,-.17,.02],[0,Math.PI/2,0]);pon('anteI','metal',G.bola(.06,6,4),acero,[.13,-.17,.02],[0,0,-Math.PI/2],[1,.6,1]);}
       return {H,montar,p};
     }
-    // Adreida desde su miniatura (arpg-three-adreida.js, si está cargado): la malla del STL reducida, pintada y
-    // atada a este mismo esqueleto. Los huesos se colocan en la pose de la miniatura para atarla y luego vuelven
-    // a la de reposo; las poses de posar() le sirven igual que al modelo de primitivas.
-    let geosMiniatura=null;
-    function geometriasMiniatura(D){
-      if(geosMiniatura)return geosMiniatura;
-      const s=atob(D.datos),buf=new Uint8Array(s.length);for(let i=0;i<s.length;i++)buf[i]=s.charCodeAt(i);
-      const b=buf.buffer,c=new THREE.Color();geosMiniatura={};
-      for(const [nombre,m] of Object.entries(D.cab.mallas)){const n=m.vertices,Pq=new Uint16Array(b,m.pos.o,m.pos.n),Nq=new Int8Array(b,m.normal.o,m.normal.n),Cq=new Uint8Array(b,m.color.o,m.color.n);
-        const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3);
-        for(let i=0;i<n;i++)for(let e=0;e<3;e++){const j=i*3+e;P[j]=m.min[e]+Pq[j]/65535*m.tam[e];N[j]=Nq[j]/127;}
-        for(let i=0;i<n;i++){c.setRGB(Cq[i*3]/255,Cq[i*3+1]/255,Cq[i*3+2]/255,THREE.SRGBColorSpace);C[i*3]=c.r;C[i*3+1]=c.g;C[i*3+2]=c.b;}
-        const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3));g.setAttribute('normal',new THREE.BufferAttribute(N,3));g.setAttribute('color',new THREE.BufferAttribute(C,3));
-        g.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(Uint16Array.from(new Uint8Array(b,m.skinIndex.o,m.skinIndex.n)),4));
-        g.setAttribute('skinWeight',new THREE.BufferAttribute(Float32Array.from(new Uint8Array(b,m.skinWeight.o,m.skinWeight.n),x=>x/255),4));
-        g.setIndex(new THREE.BufferAttribute(m.indices.bits===16?new Uint16Array(b,m.indices.o,m.indices.n):new Uint32Array(b,m.indices.o,m.indices.n),1));
-        g.computeBoundingSphere();geosMiniatura[nombre]=g;}
-      return geosMiniatura;
-    }
-    function adreidaMiniatura(D){
-      const p={muslo:.47,pierna:.45,pie:.05,cintura:.08,torso:.52,hombros:.25,brazo:.31,antebrazo:.29,ancho:.11},H=esqueleto(p);
-      for(const k of D.cab.huesos){H[k].position.fromArray(D.cab.local[k].p);H[k].quaternion.fromArray(D.cab.local[k].q);}
-      const huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
-      // Los datos guardan los huesos en su orden; aquí se buscan por nombre.
-      if(D.cab.huesos.some((k,i)=>huesos[i]!==H[k]))throw new Error('El esqueleto de Adreida no coincide con el de la miniatura');
-      H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),geos=geometriasMiniatura(D);
-      const montar=M=>{const mallas=[];
-        for(const [nombre,mat] of [['piel',M.pielLisa],['metal',M.metalLiso],['brillo',M.brillo]]){const malla=new THREE.SkinnedMesh(geos[nombre],mat);
-          malla.castShadow=nombre!=='brillo';malla.receiveShadow=true;malla.frustumCulled=false;H.raiz.add(malla);malla.bind(esq,malla.matrixWorld);mallas.push(malla);}
-        // Atada: los huesos vuelven a la pose de reposo del juego (de pie, con la cadera a la altura de las piernas rectas).
-        for(const o of huesos)o.quaternion.identity();H.cadera.position.y=D.cab.caderaDePie;return mallas;};
-      return {H,montar,p};
-    }
-    const miniatura=()=>typeof window!=='undefined'&&window.CAOZ_ADREIDA;
-    const constructores={adreida:()=>miniatura()?adreidaMiniatura(miniatura()):adreida(),goblin,kobold,saqueador:()=>humano(false),can:()=>humano(true)};
+    const constructores={adreida,goblin,kobold,saqueador:()=>humano(false),can:()=>humano(true)};
     function crear(tipo){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(),{H,montar,p}=constructores[tipo](),mallas=montar(M);

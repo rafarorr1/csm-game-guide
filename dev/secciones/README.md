@@ -372,20 +372,9 @@ estilo Diablo con los personajes del juego. Es una sala jugable: Adreida, la
 Guerrera Semiorca, defiende la plaza de Tomsage bajo asedio contra cuatro
 oleadas, y al final entra Can, el de los Goblins.
 
-- **Adreida, desde su miniatura:**
-  - `arpg-three-adreida.js` es el STL de su miniatura preparado para el juego por `arpg-three-adreida-construir.mjs`:
-    - reducido con meshoptimizer de 524 mil a unos 33 mil triángulos;
-    - cada una de sus 158 piezas pintada con la paleta de su carta (piel verde menta, melena azul noche, cuero, falda de piel, ojos rojos que brillan);
-    - con la oclusión ambiental horneada en los colores;
-  - la malla va atada al mismo esqueleto que los demás personajes:
-    - las articulaciones se midieron en la miniatura;
-    - el cuerpo se pesa por cercanía a los huesos, y cada pieza de equipo va rígida con los suyos;
-    - todas las animaciones le sirven igual;
-  - su hacha de doble filo se separa de la mano y se recoloca como la prolongación del antebrazo, con un filo a cada lado para el tajo y el revés;
-  - el STL no está en el repo; para regenerar: `MESHOPT_MODULE=…/meshoptimizer/index.js node dev/secciones/arpg-three-adreida-construir.mjs miniatura.stl`.
-- **Los demás, modelos 3D sencillos:**
-  - hechos con primitivas de three.js en `arpg-three-modelos.js`, sin archivos de modelo (si falta `arpg-three-adreida.js`, Adreida también);
-  - el Goblin de Camino, el Kobold lancero, el Saqueador y Can, con los colores de sus cartas;
+- **Modelos 3D sencillos:**
+  - hechos con primitivas de three.js en `arpg-three-modelos.js`, sin archivos de modelo;
+  - Adreida (con su hacha de doble filo), el Goblin de Camino, el Kobold lancero, el Saqueador y Can, con los colores de sus cartas;
   - cada uno tiene un esqueleto de huesos y una malla con piel por material (tres llamadas de dibujo por personaje);
   - las animaciones son procedurales: andar, tajo, aviso, torbellino, salto, grito, lanzar, aturdido y muerte;
   - al morir se deshacen en brasas.
