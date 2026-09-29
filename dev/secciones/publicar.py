@@ -351,6 +351,19 @@ def registro_remoto(repo, revision):
     return registro
 
 
+def bloques_ajenos(remotas, propias, secciones, seccion):
+    """¿Son las cabeceras publicadas las propias más bloques sólo para rutas de otras secciones ya publicadas?"""
+    if not remotas.startswith(propias):
+        return False
+    for linea in remotas[len(propias):].decode('utf-8').splitlines():
+        if not linea.strip() or linea[0] in ' \t':
+            continue
+        ruta = re.fullmatch(r'/([a-z0-9-]+)(?:/\*)?', linea)
+        if not ruta or ruta.group(1) == seccion or ruta.group(1) not in secciones:
+            return False
+    return True
+
+
 def publicar(repo, salida, seccion=None):
     repo, salida = Path(repo).resolve(), Path(salida)
     registro, manifiesto, contenido = validar_paquete(salida, seccion)
@@ -361,8 +374,13 @@ def publicar(repo, salida, seccion=None):
         previo = registro_remoto(repo, anterior)
         # Las cabeceras raíz afectan a todas las secciones. Una nueva revisión
         # no puede cambiar la CSP/caché de las hermanas ya publicadas.
-        if set(previo['secciones']) - {seccion} and git(repo, 'show', f'{anterior}:tcg/_headers', binario=True) != contenido['tcg/_headers']:
-            raise ValueError('Las cabeceras compartidas cambiarían otras secciones; conserva su política.')
+        remotas = git(repo, 'show', f'{anterior}:tcg/_headers', binario=True)
+        if set(previo['secciones']) - {seccion} and remotas != contenido['tcg/_headers']:
+            # Otra sección pudo publicar reglas sólo para sus rutas (/balance, /balance/*) tras la política
+            # general. Si la política general es idéntica, se conservan tal cual; cualquier otro cambio se rechaza.
+            if not bloques_ajenos(remotas, contenido['tcg/_headers'], previo['secciones'], seccion):
+                raise ValueError('Las cabeceras compartidas cambiarían otras secciones; conserva su política.')
+            contenido['tcg/_headers'] = remotas
         previo['secciones'][seccion] = registro['secciones'][seccion]
         registro = previo
     contenido[MARCADOR] = json_bytes(registro)

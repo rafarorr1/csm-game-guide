@@ -340,6 +340,20 @@ for(const [n,b] of Object.entries(datos)){const archivo=path.join(destino,n);fs.
         self.assertEqual(p.revision_remota(self.repo), primero)
         self.assertEqual(self.referencias_protegidas(), protegido)
 
+    def test_conserva_bloques_de_cabeceras_de_otras_secciones(self):
+        primero = p.publicar(self.repo, self.preparar())['commit']
+        raiz = self.git('show', f'{primero}:tcg/_headers', binario=True)
+        ajenas = raiz + b"\n/coleccion\n  ! Content-Security-Policy\n  Content-Security-Policy: default-src 'self'\n\n/coleccion/*\n  X-Frame-Options: DENY\n"
+        self.cambiar_artefacto({'tcg/_headers': ajenas})
+        segundo = p.publicar(self.repo, self.preparar('rey'))
+        self.assertTrue(segundo['nuevo'])
+        self.assertEqual(self.git('show', f"{segundo['commit']}:tcg/_headers", binario=True), ajenas)
+        # Un bloque para la propia sección se sigue rechazando.
+        self.cambiar_artefacto({'tcg/_headers': raiz + b"\n/rey\n  X-Frame-Options: DENY\n"})
+        self.siguiente_fuente()
+        with self.assertRaisesRegex(ValueError, 'cabeceras compartidas'):
+            p.publicar(self.repo, self.preparar('rey'))
+
     def test_sobres_exportador_propio_y_registro_explicito(self):
         self.assertEqual(set(p.SECCIONES), {'coleccion', 'rey', 'sobres', 'cuenta', 'interacciones', 'epilogo-gero', 'pitagoras', 'heroe', 'mulligan', 'invitaciones', 'estudio-nombres', 'portal', 'cartas', 'fuego', 'poderes', 'lugares', 'estudio-campos', 'cortinilla', 'invocar', 'visor-gpu', 'visor-three', 'mesa-three', 'arpg-three', 'teaser', 'pesadillas-3d'})
         original_run = subprocess.run
