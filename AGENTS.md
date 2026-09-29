@@ -17,6 +17,11 @@ del respaldo.
 - Las revisiones de secciones se publican desde GitHub a Cloudflare en la rama `aislados`.
   Entregar su URL pública, sin enlaces ChatGPT/Sites ni login; 127.0.0.1 es sólo local.
 - La antigua `feature/aaa-combat-cards` queda conservada como historial, no como rama general.
+- **Las Grietas del Editor** (el ARPG en three.js, `arpg-three`, y sus casas, `casas-three`; proyecto
+  paralelo, rama `feature/visor-3d-coleccion`): el usuario revisa en local. Cada cambio se sube a la rama
+  tras una comprobación mínima (que la página cargue sin errores); la batería completa de pruebas y la
+  publicación en `aislados` sólo cuando el usuario lo pida. Se revisa con `node dev/secciones/servidor.mjs`
+  en `http://127.0.0.1:8878/dev/secciones/arpg-three.html` y `.../casas-three.html`.
 
 Comandos, transición inicial y pruebas en **`dev/README.md`**. No copiar el juego completo
 para construir un prototipo: usar componentes reales y dependencias mínimas, con datos
