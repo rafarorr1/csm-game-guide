@@ -2,7 +2,7 @@
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
     "campana-three.css": "e4f5c4c4428ce42e798bd7cd979fbebe2ee81ab3fae6f8a0db025ac3609f8e9e",
-    "campana-three.js": "89b34a0273d35d00ffdef7987402e26e36394ba076f131ab6418e78e15f6b7cc",
+    "campana-three.js": "962eed238f2c16edd1cab02e376539f5309d7792c4ae7edd713e19e413ea49e2",
     "generado/datos.js": "79b2fd8fe7dc52824e5b4477d7b4ee874a12a1b37e56805ea1a183e5c9b174bb",
     "index.html": "d93000b346550f2b8b4ebc79ea69aef254bfc23a0795af6022273e6dd74e7a2e",
     "juego/art/lider_adreida.webp": "9d7a2303f2dc3dd20863eaa651ca8bc394f76b70c247226149e8e9a388274ecf",
@@ -14,13 +14,13 @@
     "juego/campana-personaje.js": "3f6736241a3798e4e2cd15dafaa382afeb1fe2038c58fc0db1799c4f081db2fd",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "procedencia.json": "771a68915a03e12ff2b23041f87738dae9ece506052b3c15e8c9b36b6c4bfcf5",
+    "procedencia.json": "9081534f3add099ace2fb1483b42c71071e71f5fe0b80d66bf8b92e6cb96866b",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/campana-three-menu",
-    "sha": "95fba1bce8465629f3238da12f2d688495feb45e"
+    "sha": "2bc7654e69de0794288d7194910e083814436471"
   },
   "seccion": "campana-three",
   "version": 1

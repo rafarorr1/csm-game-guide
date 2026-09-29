@@ -48,13 +48,13 @@
 
   let renderer,escena,camara,grupoMesa,grupoRuta,grupoHeroe,grupoNiebla;
   let observador=null,animacion=null,raf=0,etapa=0,aspecto='guardia',vista='mesa',sinMovimiento=reducirSistema();
-  let objetivoCamara=new THREE.Vector3(0,.12,0),posicionCamara=new THREE.Vector3(0,10.8,14.1);
-  const nodos=[],marcadores=[];
+  let objetivoCamara=new THREE.Vector3(0,.16,0),posicionCamara=new THREE.Vector3(0,8.45,11.55);
+  const nodos=[],marcadores=[],nieblas=[];
 
   function texturaDibujo(ancho,alto,dibujar,repite=null){
     const lienzo=document.createElement('canvas');lienzo.width=ancho;lienzo.height=alto;
     const ctx=lienzo.getContext('2d');dibujar(ctx,ancho,alto);
-    const textura=new THREE.CanvasTexture(lienzo);textura.colorSpace=THREE.SRGBColorSpace;
+    const textura=new THREE.CanvasTexture(lienzo);textura.colorSpace=THREE.SRGBColorSpace;textura.premultiplyAlpha=true;
     if(repite){textura.wrapS=textura.wrapT=THREE.RepeatWrapping;textura.repeat.set(repite[0],repite[1]);}
     return textura;
   }
@@ -80,7 +80,7 @@
       ctx.save();ctx.translate(w-88,h-100);ctx.strokeStyle='#665234aa';ctx.lineWidth=3;ctx.beginPath();ctx.arc(0,0,31,0,Math.PI*2);ctx.stroke();ctx.beginPath();ctx.moveTo(0,-42);ctx.lineTo(10,0);ctx.lineTo(0,42);ctx.lineTo(-10,0);ctx.closePath();ctx.fillStyle='#665234bb';ctx.fill();ctx.font='20px Georgia';ctx.fillText('N',0,-53);ctx.restore();
     });
   }
-  function texturaNiebla(){return texturaDibujo(512,512,(ctx,w,h)=>{const r=azar(933);ctx.clearRect(0,0,w,h);for(let i=0;i<34;i++){const x=r()*w,y=r()*h,radio=35+r()*145,g=ctx.createRadialGradient(x,y,0,x,y,radio);g.addColorStop(0,'rgba(221,229,209,.50)');g.addColorStop(1,'rgba(191,204,194,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x,y,radio,0,Math.PI*2);ctx.fill();}});}
+  function texturaNubeRival(){return texturaDibujo(512,512,(ctx,w,h)=>{const radio=Math.min(w,h),nubes=[[.50,.48,.31,.58],[.34,.55,.21,.43],[.66,.47,.23,.47],[.49,.32,.19,.35],[.55,.67,.17,.29],[.24,.42,.13,.22],[.77,.62,.14,.22]];ctx.clearRect(0,0,w,h);for(const [x,y,tamano,opacidad] of nubes){const g=ctx.createRadialGradient(x*w,y*h,0,x*w,y*h,tamano*radio);g.addColorStop(0,'rgba(238,247,242,'+opacidad+')');g.addColorStop(.43,'rgba(209,228,222,'+(opacidad*.54)+')');g.addColorStop(.78,'rgba(175,207,199,'+(opacidad*.12)+')');g.addColorStop(1,'rgba(175,207,199,0)');ctx.fillStyle=g;ctx.beginPath();ctx.arc(x*w,y*h,tamano*radio,0,Math.PI*2);ctx.fill();}});}
   function posicionMundo(p){return new THREE.Vector3((p[0]-50)*.102,.18,(p[1]-50)*.072);}
   function liberar(nodo){nodo?.traverse?.(n=>{n.geometry?.dispose?.();const ms=Array.isArray(n.material)?n.material:[n.material];for(const m of ms)if(m){for(const campo of ['map','alphaMap','emissiveMap'])m[campo]?.dispose?.();m.dispose?.();}});}
   function crearMaterial(color,extras={}){return new THREE.MeshStandardMaterial({color,roughness:.55,metalness:.12,...extras});}
@@ -122,9 +122,17 @@
     const g=new THREE.Group(),geo=geometriaPersonaje(aspectos[aspecto],detalle),m=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.48,metalness:.08,side:THREE.DoubleSide});
     const figura=new THREE.Mesh(geo,m);figura.name='miniatura-protagonista';g.add(figura);return g;
   }
+  function crearNieblaRival(sitio,orden,textura){
+    const grupo=new THREE.Group(),capas=[[1.58,1.48,.91,.65,.15],[1.20,1.16,1.39,.42,-.22]];
+    capas.forEach(([ancho,alto,y,opacidad,giro],i)=>{
+      const material=new THREE.SpriteMaterial({map:textura,color:i?0x688687:0xa7bdb5,transparent:true,opacity:opacidad,alphaTest:.012,depthWrite:false,depthTest:false});
+      material.rotation=giro;const nube=new THREE.Sprite(material);nube.scale.set(ancho,alto,1);nube.position.y=y;nube.renderOrder=14+orden;grupo.add(nube);
+    });
+    grupo.position.copy(sitio);return grupo;
+  }
   function escenaBase(){
     escena=new THREE.Scene();escena.background=new THREE.Color(0x08060c);escena.fog=new THREE.Fog(0x08060c,15,29);
-    camara=new THREE.PerspectiveCamera(38,1,.1,52);camara.position.copy(posicionCamara);camara.lookAt(objetivoCamara);
+    camara=new THREE.PerspectiveCamera(35,1,.1,52);camara.position.copy(posicionCamara);camara.lookAt(objetivoCamara);
     const lienzo=document.createElement('canvas');lienzo.id='campanaThreeLienzo';lienzo.setAttribute('aria-hidden','true');host.prepend(lienzo);
     renderer=new THREE.WebGLRenderer({canvas:lienzo,antialias:false,alpha:false,powerPreference:'high-performance'});renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.15));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.AgXToneMapping;renderer.toneMappingExposure=1.05;
     escena.add(new THREE.HemisphereLight(0x8799b9,0x170b0a,1.55));const calida=new THREE.DirectionalLight(0xffd2a0,3.1);calida.position.set(-4,10,6);escena.add(calida);const fria=new THREE.DirectionalLight(0x8195d5,.58);fria.position.set(8,5,-9);escena.add(fria);
@@ -137,8 +145,8 @@
     const diario=new THREE.Mesh(new THREE.BoxGeometry(1.35,.21,1.85),crearMaterial(0x452d31,{roughness:.54,metalness:.1}));diario.position.set(4.65,.22,2.43);diario.rotation.y=-.21;grupoMesa.add(diario);
     const hojas=new THREE.Mesh(new THREE.BoxGeometry(1.18,.12,1.62),crearMaterial(0xd0bd8f,{roughness:.82}));hojas.position.set(4.65,.38,2.43);hojas.rotation.y=-.21;grupoMesa.add(hojas);
     grupoRuta=new THREE.Group();escena.add(grupoRuta);const puntos=datos.casillas.map(posicionMundo);const curva=new THREE.CatmullRomCurve3(puntos,false,'centripetal');const camino=new THREE.Mesh(new THREE.TubeGeometry(curva,64,.034,6,false),new THREE.MeshBasicMaterial({color:0xf0cc82,transparent:true,opacity:.65}));camino.position.y=.2;grupoRuta.add(camino);
-    datos.rivales.forEach((r,i)=>{const sitio=posicionMundo(datos.casillas[i]),g=new THREE.Group(),aro=new THREE.Mesh(new THREE.TorusGeometry(.47,.035,7,28),new THREE.MeshBasicMaterial({color:0xe8bf73,transparent:true,opacity:.3})),peana=new THREE.Mesh(new THREE.CylinderGeometry(.47,.57,.13,16),crearMaterial(0x66503b,{metalness:.38,roughness:.43})),figura=figuraRival(r.lider);aro.rotation.x=-Math.PI/2;aro.position.y=.18;peana.position.y=.065;figura.position.y=.15;g.position.copy(sitio);g.add(peana,aro,figura);grupoRuta.add(g);nodos.push({g,aro,figura,sitio,r});});
-    grupoNiebla=new THREE.Group();const niebla=new THREE.Mesh(new THREE.PlaneGeometry(10.3,3.1),new THREE.MeshBasicMaterial({map:texturaNiebla(),transparent:true,opacity:.35,depthWrite:false,side:THREE.DoubleSide}));niebla.rotation.x=-Math.PI/2;niebla.position.set(.2,.31,-2.2);grupoNiebla.add(niebla);escena.add(grupoNiebla);
+    grupoNiebla=new THREE.Group();escena.add(grupoNiebla);const texturaBruma=texturaNubeRival();
+    datos.rivales.forEach((r,i)=>{const sitio=posicionMundo(datos.casillas[i]),g=new THREE.Group(),aro=new THREE.Mesh(new THREE.TorusGeometry(.47,.035,7,28),new THREE.MeshBasicMaterial({color:0xe8bf73,transparent:true,opacity:.3})),peana=new THREE.Mesh(new THREE.CylinderGeometry(.47,.57,.13,16),crearMaterial(0x66503b,{metalness:.38,roughness:.43})),figura=figuraRival(r.lider),bruma=crearNieblaRival(sitio,i,texturaBruma);aro.rotation.x=-Math.PI/2;aro.position.y=.18;peana.position.y=.065;figura.position.y=.15;g.position.copy(sitio);g.add(peana,aro,figura);grupoRuta.add(g);grupoNiebla.add(bruma);nodos.push({g,aro,figura,sitio,r});nieblas.push(bruma);});
     grupoHeroe=crearHeroe('medio');escena.add(grupoHeroe);
   }
   function construirRutaHTML(){
@@ -155,8 +163,8 @@
     $('campanaThreeProgreso').textContent=heroe.nombre+' · '+etapa+' de 6 rivales vencidos';
     $('campanaThreeRivalTitulo').textContent=l.n;$('campanaThreeRivalEp').textContent=l.ep||'Protagonista del Domo';$('campanaThreeAlma').textContent=String(r.alma);$('campanaThreeMazo').textContent=l.arch||'Mazo de campaña';$('campanaThreeDescripcion').textContent=descripciones[r.lider]||'';
     $('campanaThreeHeroeTitulo').textContent=heroe.nombre;$('campanaThreeHeroeDetalle').textContent=[heroe.figura,heroe.estatura,heroe.equipo].join(' · ');
-    document.querySelectorAll('#campanaThreeRuta button').forEach((b,i)=>b.dataset.estado=estadoDeNodo(i));
-    marcadores.forEach((m,i)=>{if(i<datos.rivales.length){m.dataset.estado=estadoDeNodo(i);m.setAttribute('aria-pressed',String(i===etapa));m.textContent=datos.lideres[datos.rivales[i].lider].n;}else{m.textContent=heroe.nombre;m.setAttribute('aria-pressed',String(vista==='heroe'));}});
+    document.querySelectorAll('#campanaThreeRuta button').forEach((b,i)=>{const oculto=i>etapa,nombre=datos.lideres[datos.rivales[i].lider].n;b.dataset.estado=estadoDeNodo(i);b.title=oculto?'Encuentro aún cubierto por niebla':nombre;b.setAttribute('aria-label',oculto?'Encuentro '+(i+1)+' oculto por niebla':'Encuentro '+(i+1)+': '+nombre);});
+    marcadores.forEach((m,i)=>{if(i<datos.rivales.length){const oculto=i>etapa,nombre=datos.lideres[datos.rivales[i].lider].n;m.dataset.estado=estadoDeNodo(i);m.setAttribute('aria-pressed',String(i===etapa));m.textContent=oculto?'?':nombre;m.setAttribute('aria-label',oculto?'Encuentro oculto por niebla':nombre);m.title=oculto?'Encuentro aún cubierto por niebla':nombre;}else{m.textContent=heroe.nombre;m.setAttribute('aria-pressed',String(vista==='heroe'));}});
     document.querySelectorAll('[data-heroe]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.heroe===aspecto)));
     const movimiento=$('campanaThreeMovimiento'),reducido=sinMovimiento||reducirSistema();
     movimiento.setAttribute('aria-pressed',String(reducido));movimiento.textContent=reducido?'Movimiento: reducido':'Movimiento: activo';
@@ -164,9 +172,8 @@
     movimiento.title=reducirSistema()?'El sistema solicitó reducir movimiento.':'Alternar transiciones de cámara.';
   }
   function actualizarMesa(){
-    nodos.forEach((n,i)=>{const actual=i===etapa,anterior=i<etapa;n.aro.material.color.set(actual?0xffd98f:anterior?0x82b184:0x826549);n.aro.material.opacity=actual?.96:anterior?.48:.16;n.figura.traverse(x=>{if(x.isMesh){x.material.emissive?.set(actual?0x40230f:0x000000);x.material.emissiveIntensity=actual?.22:0;}});n.g.scale.setScalar(actual?1.08:anterior?.92:.78);});
+    nodos.forEach((n,i)=>{const actual=i===etapa,anterior=i<etapa,futuro=i>etapa;n.aro.material.color.set(actual?0xffd98f:anterior?0x82b184:0x826549);n.aro.material.opacity=actual?.96:anterior?.48:.11;n.figura.visible=!futuro;n.figura.traverse(x=>{if(x.isMesh){x.material.emissive?.set(actual?0x40230f:0x000000);x.material.emissiveIntensity=actual?.22:0;}});n.g.scale.setScalar(actual?1.08:anterior?.92:.78);nieblas[i].visible=futuro;});
     const espera=datos.esperas[Math.min(etapa,datos.esperas.length-1)]||[50,90];grupoHeroe.position.copy(posicionMundo(espera));grupoHeroe.position.y=.17;grupoHeroe.rotation.y=.15;
-    grupoNiebla.visible=etapa<5;grupoNiebla.children[0].material.opacity=etapa<5?limitar(.45-etapa*.055,.15,.45):0;
   }
   function reconstruirHeroe(detalle='medio'){
     if(!grupoHeroe)return;const posicion=grupoHeroe.position.clone(),rot=grupoHeroe.rotation.y;liberar(grupoHeroe);escena.remove(grupoHeroe);grupoHeroe=crearHeroe(detalle);grupoHeroe.position.copy(posicion);grupoHeroe.rotation.y=rot;escena.add(grupoHeroe);actualizarMesa();
@@ -178,13 +185,14 @@
     const m=marcadores.at(-1),p=grupoHeroe.position.clone();p.y+=1.63;p.project(camara);m.style.left=((p.x*.5+.5)*rect.width)+'px';m.style.top=((-p.y*.5+.5)*rect.height)+'px';m.hidden=!(p.z>-1&&p.z<1);
   }
   function renderizar(){if(!renderer||document.hidden)return;camara.position.copy(posicionCamara);camara.lookAt(objetivoCamara);renderer.render(escena,camara);posicionarMarcadores();}
-  function acomodar(){if(!renderer)return;const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h,false);camara.aspect=w/h;camara.updateProjectionMatrix();renderizar();}
+  function vistaMapa(){const estrecho=host.clientWidth/Math.max(1,host.clientHeight)<1.25;return {objetivo:new THREE.Vector3(0,.16,0),posicion:new THREE.Vector3(0,estrecho?9.55:8.45,estrecho?13.15:11.55)};}
+  function acomodar(){if(!renderer)return;const w=Math.max(1,host.clientWidth),h=Math.max(1,host.clientHeight);renderer.setSize(w,h,false);camara.aspect=w/h;camara.updateProjectionMatrix();if(vista==='mesa'&&!animacion){const mapa=vistaMapa();posicionCamara.copy(mapa.posicion);objetivoCamara.copy(mapa.objetivo);}renderizar();}
   function animarCamara(posicion,objetivo,duracion=650){
     const desdePos=posicionCamara.clone(),desdeObj=objetivoCamara.clone(),inicio=performance.now();cancelAnimationFrame(raf);animacion=null;
     if(sinMovimiento||reducirSistema()){posicionCamara.copy(posicion);objetivoCamara.copy(objetivo);renderizar();return;}
     const cuadro=ahora=>{const t=limitar((ahora-inicio)/duracion,0,1),e=suave(t);posicionCamara.set(mezcla(desdePos.x,posicion.x,e),mezcla(desdePos.y,posicion.y,e),mezcla(desdePos.z,posicion.z,e));objetivoCamara.set(mezcla(desdeObj.x,objetivo.x,e),mezcla(desdeObj.y,objetivo.y,e),mezcla(desdeObj.z,objetivo.z,e));renderizar();if(t<1){animacion=cuadro;raf=requestAnimationFrame(cuadro);}else animacion=null;};animacion=cuadro;raf=requestAnimationFrame(cuadro);
   }
-  function mostrarMapa(){vista='mesa';host.dataset.vista='mesa';reconstruirHeroe('medio');const objetivo=new THREE.Vector3(0,.1,0),posicion=new THREE.Vector3(0,10.8,14.1);animarCamara(posicion,objetivo);actualizarUI();if(estadoTexto)estadoTexto.textContent='Vista de mapa: '+datos.lideres[datos.rivales[etapa].lider].n+' es el siguiente encuentro.';}
+  function mostrarMapa(){vista='mesa';host.dataset.vista='mesa';reconstruirHeroe('medio');const mapa=vistaMapa();animarCamara(mapa.posicion,mapa.objetivo);actualizarUI();if(estadoTexto)estadoTexto.textContent='Vista de mapa: '+datos.lideres[datos.rivales[etapa].lider].n+' es el siguiente encuentro; los demás siguen cubiertos por niebla.';}
   function mostrarHeroe(){vista='heroe';host.dataset.vista='heroe';reconstruirHeroe('alto');const p=grupoHeroe.position.clone(),objetivo=p.clone().add(new THREE.Vector3(0,1.05,0)),posicion=p.clone().add(new THREE.Vector3(2.55,3.1,5.15));animarCamara(posicion,objetivo,720);actualizarUI();if(estadoTexto)estadoTexto.textContent='Vista de héroe: la misma malla configurable de la campaña se muestra con detalle alto.';}
   function mostrarEncuentro(){vista='encuentro';host.dataset.vista='mesa';reconstruirHeroe('medio');const p=nodos[etapa].sitio.clone(),objetivo=p.clone().add(new THREE.Vector3(0,.72,0)),posicion=p.clone().add(new THREE.Vector3(etapa%2?2.8:-2.8,3.55,5.1));animarCamara(posicion,objetivo,620);actualizarUI();if(estadoTexto)estadoTexto.textContent='Enfoque visual en '+datos.lideres[datos.rivales[etapa].lider].n+'. Esta revisión no inicia un combate.';}
   function cambiarEtapa(n,enfocar){etapa=limitar(Number(n)||0,0,datos.rivales.length-1);$('campanaThreeEstado').value=String(etapa);vista='mesa';host.dataset.vista='mesa';actualizarMesa();actualizarUI();if(enfocar)mostrarEncuentro();else mostrarMapa();}
