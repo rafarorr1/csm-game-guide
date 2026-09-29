@@ -13,7 +13,7 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
-  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null;
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null,cartaTransferida=null,entradaMenu=0;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
@@ -29,7 +29,17 @@
   }
   function sonido(id){window.CAOZ_AUDIO?.play(id);}
   function mensaje(texto,error=false){if(!estado)return;estado.textContent=texto;estado.classList.toggle('error',error);carruselSobres?.medir();if(s.vista==='recompensa')medirRecompensa();}
-  function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);limpiarTransicionDetalle();}
+  function limpiarEntradaMenu(){clearTimeout(entradaMenu);entradaMenu=0;panel?.classList.remove('coleccionDetalleEntrando','coleccionArchivoEntrando');}
+  function entradaDelMundo(vista){
+    limpiarEntradaMenu();
+    if(!panel||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const clase=vista==='detalle'?'coleccionDetalleEntrando':'coleccionArchivoEntrando';
+    panel.classList.add(clase);
+    // La clase sólo define la pose de arranque y el keyframe de entrada. Al
+    // retirarla después no se vuelve a pintar otro estado del menú.
+    entradaMenu=setTimeout(()=>{panel?.classList.remove(clase);entradaMenu=0;},700);
+  }
+  function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);limpiarEntradaMenu();limpiarTransicionDetalle();}
   function esFinalCampana(){return !!finalCampana?.activa;}
   function aplicarModoFinalCampana(activo){
     if(!panel)return;
@@ -73,12 +83,33 @@
     if(!id||!mundo3D?.actualizar)return;
     mundo3D.actualizar({edicion:modelo().elegido(id)});
   }
+  // La ficha que se ve en el Archivo ya contiene su <img> decodificada y, para
+  // las cartas del Diseño, su lienzo horneado. La entregamos al visor en vez de
+  // pedir una segunda ficha: el cambio de menú conserva el mismo recurso en
+  // memoria y el pintor WebGL recibe ese mismo <img> como fuente.
+  function tomarCartaTransferida(id,acabado){
+    const entrega=cartaTransferida;
+    if(!entrega||entrega.id!==id||entrega.acabado!==acabado||!entrega.nodo)return null;
+    return entrega;
+  }
   function mostrarCartaEnMundo(id){
     if(!id||!mundo3D?.mostrarCarta)return false;
     const c=dato(id);
     tonoMundoVisor(id);
-    mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),ediciones:edicionesDe(id)});
-    return true;
+    const entrega=tomarCartaTransferida(id,s.acabadoVista);
+    // Guardamos el rectángulo ya interpolado del vuelo antes de que el visor
+    // adopte el nodo. El visor lo usa como pose inicial y converge desde ahí:
+    // no hay ni recarga del arte ni teletransporte entre los dos encuadres.
+    const r=entrega?.nodo?.getBoundingClientRect();
+    const continuidad=!matchMedia('(prefers-reduced-motion: reduce)').matches&&r?.width>8&&r?.height>8?{izquierda:r.left,arriba:r.top,ancho:r.width,alto:r.height}:null;
+    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),cartaLista:entrega?.nodo||null,continuidad,ediciones:edicionesDe(id)});
+    // montarMundo sólo confirma después de insertar la ficha. Así, si el
+    // visor no estuviera disponible, el vuelo conserva su salida de respaldo.
+    if(visible&&entrega){
+      entrega.entregada=true;cartaTransferida=null;
+      if(entrega.transicion){entrega.transicion.vuelo=null;entrega.transicion.transferida=true;}
+    }
+    return visible;
   }
   function activarMundo(vista){
     const activo=vista==='cartas'||vista==='detalle';
@@ -183,7 +214,7 @@
   function limpiar(evento){
     // close se encola: no desmontar una Colección que ya se volvió a abrir.
     if(evento?.type==='close'&&panel?.open)return;
-    soltarEscena3D();soltarMundoVisor();
+    soltarEscena3D();soltarMundoVisor();cartaTransferida=null;limpiarEntradaMenu();
     if(evento?.type==='close'){const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();}
     destruirApertura();destruirCarrusel();destruirCarruselCartas();destruirVistasSobres();limpiarTiempos();limpiarFinalCampana();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
@@ -217,7 +248,12 @@
     cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
   }
   function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista){const lista=contenido.querySelector('.coleccionRejilla');s.desplazamiento=lista?.scrollTop||0;}}
-  function ir(vista){if(esFinalCampana()&&vista!=='recompensa')return;if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
+  function ir(vista){
+    if(esFinalCampana()&&vista!=='recompensa')return;
+    const anterior=s.vista,regresarAlArchivo=anterior==='detalle'&&vista==='cartas';
+    if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(regresarAlArchivo)focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();
+    if(regresarAlArchivo)entradaDelMundo('cartas');
+  }
   function dibujar(){activarMundo(s.vista);actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){destruirCarruselCartas();dibujarSobres();return;}destruirApertura();destruirCarrusel();destruirCarruselCartas();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
@@ -311,7 +347,16 @@
   function limpiarTransicionDetalle(transicion=transicionDetalle){
     if(!transicion||transicion!==transicionDetalle)return;
     clearTimeout(transicion.temporizador);clearTimeout(transicion.entrega);
-    transicion.vuelo?.remove();
+    // Si el recorrido se interrumpe antes de entrar al visor, devolvemos la
+    // ficha real a su botón. No dejamos una miniatura vacía ni descartamos la
+    // imagen que ya estaba decodificada. Una ficha entregada pertenece ahora al
+    // visor y no se toca aquí.
+    if(transicion.vuelo&&transicion.origenMiniatura?.isConnected&&!transicion.transferida&&s.vista==='cartas'){
+      transicion.origenMiniatura.prepend(transicion.vuelo);
+      transicion.vuelo.classList.remove('coleccionVueloCarta','coleccionVueloCartaEntra','coleccionVueloCartaEntregada');
+      for(const propiedad of ['left','top','width','height','font-size','zoom','--cw','--ch','--coleccion-vuelo-x','--coleccion-vuelo-y','--coleccion-vuelo-escala'])transicion.vuelo.style.removeProperty(propiedad);
+    }else transicion.vuelo?.remove();
+    if(cartaTransferida?.transicion===transicion)cartaTransferida=null;
     transicion.rejilla?.classList.remove('coleccionRejillaSaliendo');
     transicion.rejilla?.removeAttribute('aria-busy');transicion.rejilla?.removeAttribute('inert');
     transicion.bloqueados?.forEach(n=>n?.removeAttribute('inert'));
@@ -322,15 +367,19 @@
   function abrirCartaDesdeArchivo(id,miniatura){
     if(transicionDetalle||!panel?.open||s.vista!=='cartas')return;
     tonoMundoVisor(id);
-    if(matchMedia('(prefers-reduced-motion: reduce)').matches){verCarta(id);return;}
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){verCarta(id,miniatura);return;}
     const rejilla=contenido.querySelector('.coleccionRejilla'),ficha=miniatura?.querySelector('.coleccionCarta');
     if(!rejilla||!ficha||!ficha.isConnected){verCarta(id);return;}
     const origen=ficha.getBoundingClientRect();
     if(origen.width<12||origen.height<12){verCarta(id);return;}
-    const vuelo=ficha.cloneNode(true);vuelo.classList.add('coleccionVueloCarta');vuelo.setAttribute('aria-hidden','true');
-    // La miniatura usa zoom para encajar en su columna. El clon ya recibe su
-    // rectángulo visible, así que reiniciamos ese zoom para no ampliarlo dos
-    // veces durante el viaje hacia el visor.
+    // No clonamos la miniatura: la ficha que vuela es la misma que el usuario
+    // acaba de ver. Conserva el <img> y el canvas ya cargados hasta que el
+    // visor la recibe, por lo que no hay una segunda descarga ni un cambio de
+    // ilustración a mitad del viaje.
+    const vuelo=ficha;vuelo.classList.add('coleccionVueloCarta');vuelo.setAttribute('aria-hidden','true');
+    // La miniatura usa zoom para encajar en su columna. La misma ficha ya
+    // recibe su rectángulo visible, así que reiniciamos ese zoom para no
+    // ampliarla dos veces durante el viaje hacia el visor.
     vuelo.style.zoom='1';vuelo.style.left=origen.left+'px';vuelo.style.top=origen.top+'px';vuelo.style.width=origen.width+'px';vuelo.style.height=origen.height+'px';
     vuelo.style.setProperty('--cw',origen.width+'px');vuelo.style.setProperty('--ch',origen.height+'px');vuelo.style.fontSize=(origen.width*.081)+'px';
     const movil=innerWidth<760,centroX=innerWidth*(movil?.5:.39),centroY=innerHeight*(movil?.45:.5),altoDestino=Math.max(origen.height*1.08,Math.min(movil?innerHeight*.57:innerHeight*.66,movil?390:520));
@@ -340,7 +389,7 @@
     panel.append(vuelo);
     guardarPosicionLista();focoLista=id;s.cartaSeleccionada=id;
     const cartas=[...rejilla.querySelectorAll('.coleccionMini')],bloqueados=[rejilla,contenido.querySelector('.coleccionFiltrosInmersivos'),barra].filter(Boolean);
-    const transicion={vuelo,rejilla,cartas,bloqueados,temporizador:0,entrega:0};transicionDetalle=transicion;
+    const transicion={vuelo,origenMiniatura:miniatura,rejilla,cartas,bloqueados,temporizador:0,entrega:0,transferida:false};transicionDetalle=transicion;
     const centro={x:origen.left+origen.width/2,y:origen.top+origen.height/2};
     cartas.forEach((n,indice)=>{
       n.dataset.animacion=n===miniatura?'entra':'sale';n.tabIndex=-1;
@@ -356,11 +405,23 @@
       if(transicionDetalle!==transicion||!panel?.open||s.vista!=='cartas')return;
       s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';
       panel.classList.remove('coleccionAbriendoCarta');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
+      // La escena consume el mismo nodo durante dibujarDetalle(). Si por una
+      // degradación del visor no pudiera hacerlo, conservamos el vuelo breve
+      // actual como respaldo visual y lo retiramos al final de la transición.
+      cartaTransferida={id,acabado:s.acabadoVista,nodo:vuelo,transicion,entregada:false};
       s.vista='detalle';mensaje('');actualizarCabecera();dibujar();
-      vuelo.classList.add('coleccionVueloCartaEntregada');transicion.entrega=setTimeout(()=>limpiarTransicionDetalle(transicion),190);sonido('ui_confirm');
+      entradaDelMundo('detalle');
+      if(!transicion.transferida)vuelo.classList.add('coleccionVueloCartaEntregada');
+      transicion.entrega=setTimeout(()=>limpiarTransicionDetalle(transicion),190);sonido('ui_confirm');
     },560);
   }
-  function verCarta(id){tonoMundoVisor(id);s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');}
+  function verCarta(id,miniatura){
+    // Movimiento reducido no reproduce el vuelo, pero aún puede entregar la
+    // ficha ya cargada al visor de forma instantánea.
+    const ficha=miniatura?.querySelector('.coleccionCarta'),acabado=modelo().elegido(id);
+    if(ficha)cartaTransferida={id,acabado,nodo:ficha,transicion:null,entregada:false};
+    tonoMundoVisor(id);s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=acabado;s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');
+  }
   // El detalle es la carta en 3D (visor-3d.js incrustado): una escena por carta
   // que sólo cambia de edición o de copias al redibujar. Cuando está disponible
   // el mundo persistente, no se crea una segunda escena: la carta toma el
@@ -416,7 +477,10 @@
       // En el teléfono la escena ocupa lo que dejan libre los controles de abajo.
       const medirControles=()=>{zona.style.setProperty('--controles-alto',Math.ceil(versiones.getBoundingClientRect().height+20)+'px');escena3D?.medir();};
       medirControles();requestAnimationFrame(medirControles);
-    }else{zona.append(versiones);contenido.append(zona);}
+      // El visor alternativo conserva el recorrido funcional aunque no pueda
+      // adoptar la ficha en vuelo. Ya no retenemos el nodo huérfano del Archivo.
+      cartaTransferida=null;
+    }else{cartaTransferida=null;zona.append(versiones);contenido.append(zona);}
     const reglas=crear('section','coleccionReglas');reglas.setAttribute('aria-label','Información de la carta');
     const linea=crear('div','coleccionReglasTitulo');linea.append(crear('strong','','Habilidades'));
     const stats=c.t==='personaje'?'Coste '+c.c+' · Ataque '+c.a+' · Vida '+c.h:c.t==='protagonista'?'Protagonista':'Coste '+c.c;linea.append(crear('span','',stats));

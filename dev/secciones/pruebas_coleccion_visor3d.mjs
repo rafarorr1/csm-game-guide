@@ -83,6 +83,15 @@ try{
       // La rejilla muestra la carta pintada (los Protagonistas conservan su retrato).
       const pintada=await mini.evaluate(n=>!!n.querySelector('.cdCarta'));
       if(pintada)await pagina.waitForFunction(n=>n.querySelector('.cdCarta')?.classList.contains('cdLista'),await mini.elementHandle(),{timeout:20000});
+      // La transición no puede fabricar otra ficha: retenemos la identidad de
+      // este nodo real antes de abrirlo y la comprobamos tanto en el vuelo como
+      // en la cara final del visor. Así también se conserva su arte ya cargado.
+      const fichaInicial=await mini.evaluate(n=>{
+        const ficha=n.querySelector('.coleccionCarta');
+        window.__coleccionFichaPrueba=ficha;
+        return !!ficha;
+      });
+      assert.ok(fichaInicial,'La miniatura aporta una ficha real para el relevo');
       if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-archivo.png')});
       await mini.click();
       if(conMovimiento){
@@ -92,9 +101,9 @@ try{
         },carta,{timeout:2200});
         const transicion=await pagina.evaluate(id=>{
           const panel=document.querySelector('#coleccionPanel'),rejilla=panel.querySelector('.coleccionRejilla'),elegida=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),resto=[...rejilla.querySelectorAll('.coleccionMini')].filter(n=>n!==elegida),vuelo=panel.querySelector('.coleccionVueloCarta'),mundo=panel.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');
-          return {estado:panel.dataset.transicion,activa:panel.dataset.cartaActiva,elegida:elegida?.dataset.animacion,salen:resto.every(n=>n.dataset.animacion==='sale'&&n.getAttribute('aria-hidden')==='true'),vuelo:!!vuelo&&vuelo.classList.contains('coleccionVueloCartaEntra'),bloqueada:rejilla.hasAttribute('inert')&&rejilla.getAttribute('aria-busy')==='true',mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente'};
+          return {estado:panel.dataset.transicion,activa:panel.dataset.cartaActiva,elegida:elegida?.dataset.animacion,salen:resto.every(n=>n.dataset.animacion==='sale'&&n.getAttribute('aria-hidden')==='true'),vuelo:!!vuelo&&vuelo.classList.contains('coleccionVueloCartaEntra'),mismaFicha:vuelo===window.__coleccionFichaPrueba,bloqueada:rejilla.hasAttribute('inert')&&rejilla.getAttribute('aria-busy')==='true',mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente'};
         },carta);
-        assert.deepEqual(transicion,{estado:'abrir-carta',activa:carta,elegida:'entra',salen:true,vuelo:true,bloqueada:true,mundo:true},'Abrir una carta aparta el resto dentro del mismo mundo, antes del visor');
+        assert.deepEqual(transicion,{estado:'abrir-carta',activa:carta,elegida:'entra',salen:true,vuelo:true,mismaFicha:true,bloqueada:true,mundo:true},'Abrir una carta aparta el resto dentro del mismo mundo usando la ficha original, antes del visor');
         if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-transicion.png')});
       }
       const escena=pagina.locator('#coleccionPanel .coleccionMundoVisor .visor3dIncrustado');await escena.waitFor({timeout:4000});
@@ -109,9 +118,10 @@ try{
         const fichas=[...document.querySelectorAll('#coleccionPanel .coleccionVersion .coleccionCarta')].filter(n=>n.getClientRects().length);
         return {acabado:v.dataset.acabado,elegido:CAOZ_COLECCION.elegido(frente.dataset.card||frente.closest('[data-carta]')?.dataset.carta||''),cartaReal:frente.classList.contains('coleccionCarta')&&!!frente.querySelector('.marcoDibujo, .lface'),
           dentro:r.left>=e.left-2&&r.right<=e.right+2&&r.top>=e.top-2&&r.bottom<=e.bottom+2&&r.width>60,fichasVisibles:fichas.length,versiones:document.querySelectorAll('#coleccionPanel .coleccionVersion').length,
-          desborde:document.documentElement.scrollWidth>innerWidth,logo:v.querySelector('.visor3dDorso img.visor3dLogo')?.getAttribute('src'),mundo:panel.dataset.mundo==='detalle'&&mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&v.dataset.modo==='carta',visores:panel.querySelectorAll('.visor3dIncrustado').length};
+          desborde:document.documentElement.scrollWidth>innerWidth,logo:v.querySelector('.visor3dDorso img.visor3dLogo')?.getAttribute('src'),mismaFicha:frente===window.__coleccionFichaPrueba,mundo:panel.dataset.mundo==='detalle'&&mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&v.dataset.modo==='carta',visores:panel.querySelectorAll('.visor3dIncrustado').length};
       });
       assert.ok(abierta.cartaReal,'La escena muestra la ficha real de la Colección');
+      assert.ok(abierta.mismaFicha,'El visor adopta la misma ficha del Archivo: no vuelve a cargar ni sustituye el asset');
       assert.ok(abierta.mundo,'El visor individual reutiliza el mismo mundo que sostenía el Archivo');
       assert.equal(abierta.visores,1,'No queda un segundo visor detrás de la carta: Archivo y detalle comparten la única escena');
       assert.ok(abierta.dentro&&!abierta.desborde,'La carta cabe en su escena');

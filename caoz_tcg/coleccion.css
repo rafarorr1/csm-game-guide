@@ -889,17 +889,50 @@
 #coleccionPanel[data-vista="cartas"] .coleccionTotales{display:none}
 #coleccionPanel[data-vista="cartas"] .coleccionVolver{padding:0!important;color:#d8c5ed!important;font-size:11px!important;text-decoration-color:#d8c5ed80!important}
 #coleccionPanel[data-vista="cartas"] .coleccionVacio{position:absolute;z-index:9;inset:0;display:flex;padding:0 24px;background:#07040bb8;color:#e9d9f6}
+
+/* La biblioteca y el visor son dos encuadres del mismo mundo. Antes de que la
+   carta elegida alcance el pedestal, el resto de la interfaz abandona el
+   plano por sus propios bordes; no se desvanece en el centro ni deja un
+   fotograma que parezca otra pantalla. */
+#coleccionPanel[data-vista="cartas"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){will-change:translate,opacity,filter}
 #coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla{overflow:hidden!important;pointer-events:none}
-#coleccionPanel.coleccionAbriendoCarta :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){opacity:0;translate:0 -10px;pointer-events:none;transition:opacity .22s ease,translate .22s ease}
+#coleccionPanel.coleccionAbriendoCarta .coleccionCabecera{
+  opacity:0;translate:calc(-100vw - 96px) -8px;filter:blur(5px);pointer-events:none;
+  transition:opacity .34s ease,translate .5s cubic-bezier(.16,.76,.18,1),filter .27s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionPestanas{
+  opacity:0;translate:-50% calc(-100vh - 78px);filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease,translate .48s cubic-bezier(.16,.76,.18,1),filter .25s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionFiltrosInmersivos{
+  opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease .03s,translate .48s cubic-bezier(.16,.76,.18,1) .03s,filter .24s ease .03s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionResumenArchivo{
+  opacity:0;translate:calc(100vw + 96px) 0;filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease .04s,translate .48s cubic-bezier(.16,.76,.18,1) .04s,filter .24s ease .04s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionPie{
+  opacity:0;translate:0 calc(100vh + 60px);filter:blur(4px);pointer-events:none;
+  transition:opacity .28s ease .05s,translate .44s cubic-bezier(.16,.76,.18,1) .05s,filter .22s ease .05s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionEstado{
+  opacity:0;translate:-50% calc(-100vh - 62px);filter:blur(4px);pointer-events:none;
+  transition:opacity .26s ease,translate .42s cubic-bezier(.16,.76,.18,1),filter .2s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini{
+  transition-duration:.48s,.5s,.5s,.38s,.34s;
+  transition-timing-function:cubic-bezier(.18,.76,.2,1),cubic-bezier(.18,.76,.2,1),cubic-bezier(.18,.76,.2,1),ease,ease;
+}
 #coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini[data-animacion="sale"]{
-  translate:var(--coleccion-salida-x,0) var(--coleccion-salida-y,0)!important;scale:.56;rotate:var(--coleccion-salida-giro,0deg);opacity:0;
-  filter:blur(2px) brightness(.46) saturate(.42)!important;transition-delay:var(--coleccion-salida-demora,0ms);
+  translate:var(--coleccion-salida-x,0) var(--coleccion-salida-y,0)!important;scale:.46;rotate:var(--coleccion-salida-giro,0deg);opacity:0;
+  filter:blur(3px) brightness(.4) saturate(.36)!important;transition-delay:var(--coleccion-salida-demora,0ms);
 }
 #coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini[data-animacion="entra"]{opacity:0!important;filter:brightness(.78)!important}
 #coleccionPanel .coleccionVueloCarta{
   position:fixed!important;z-index:50;margin:0!important;min-width:0!important;max-width:none!important;max-height:none!important;pointer-events:none;
-  translate:0 0;scale:1;rotate:0deg;opacity:1;transform:none!important;will-change:translate,scale,opacity;
-  transition:translate .56s cubic-bezier(.16,.79,.21,1),scale .56s cubic-bezier(.16,.79,.21,1),opacity .19s ease,filter .56s ease;
+  translate:0 0;scale:1;rotate:0deg;opacity:1;transform:none!important;will-change:translate,scale,opacity,filter;
+  transition:translate .56s cubic-bezier(.16,.79,.21,1),scale .56s cubic-bezier(.16,.79,.21,1),opacity .22s ease,filter .56s ease;
 }
 #coleccionPanel .coleccionVueloCartaEntra{translate:var(--coleccion-vuelo-x,0) var(--coleccion-vuelo-y,0);scale:var(--coleccion-vuelo-escala,1);filter:drop-shadow(0 27px 33px #000d) brightness(1.04)!important}
 #coleccionPanel .coleccionVueloCartaEntregada{opacity:0}
@@ -979,6 +1012,115 @@
     right:10px;top:auto;bottom:calc(var(--controles-alto,250px) + 10px);translate:0;
   }
 }
+
+/* Coreografía del mismo mundo ------------------------------------------------
+   Estos dos estados se activan sólo cuando el controlador ya dejó listo el
+   siguiente encuadre. Así el fondo del visor jamás se corta: el Archivo sale
+   por los bordes y los controles del detalle llegan desde fuera del plano.
+   `coleccionAbriendoCarta` sigue siendo la salida de la carta elegida. */
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionCabecera{
+  animation:coleccionArchivoCabeceraEntra .52s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionPestanas{
+  animation:coleccionArchivoPestanasEntran .48s .04s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionFiltrosInmersivos{
+  animation:coleccionArchivoFiltrosEntran .5s .08s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionResumenArchivo{
+  animation:coleccionArchivoResumenEntra .46s .13s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionPie{
+  animation:coleccionArchivoPieEntra .42s .11s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionEstado{
+  animation:coleccionArchivoEstadoEntra .4s .06s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini{
+  animation:coleccionArchivoCartaEntra .46s var(--archivo-entrada-demora,0ms) cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 1){--archivo-entrada-x:-52px;--archivo-entrada-y:28px;--archivo-entrada-demora:80ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 2){--archivo-entrada-x:0px;--archivo-entrada-y:48px;--archivo-entrada-demora:110ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n){--archivo-entrada-x:52px;--archivo-entrada-y:28px;--archivo-entrada-demora:140ms}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini{animation:none!important}
+
+@keyframes coleccionArchivoCabeceraEntra{
+  from{opacity:0;translate:calc(-100vw - 96px) -8px;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoPestanasEntran{
+  from{opacity:0;translate:-50% calc(-100vh - 78px);filter:blur(5px)}
+  to{opacity:1;translate:-50% 0;filter:none}
+}
+@keyframes coleccionArchivoFiltrosEntran{
+  from{opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoResumenEntra{
+  from{opacity:0;translate:calc(100vw + 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoPieEntra{
+  from{opacity:0;translate:0 calc(100vh + 60px);filter:blur(4px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoEstadoEntra{
+  from{opacity:0;translate:-50% calc(-100vh - 62px);filter:blur(4px)}
+  to{opacity:1;translate:-50% 0;filter:none}
+}
+@keyframes coleccionArchivoCartaEntra{
+  from{opacity:0;translate:var(--archivo-entrada-x,0) var(--archivo-entrada-y,42px);scale:.88}
+  to{opacity:1;translate:0 0;scale:1}
+}
+
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalleCabecera:has(~.coleccionDetalle3D.conMundoVisor){
+  animation:coleccionDetalleCabeceraEntra .5s .04s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor .coleccionVersiones{
+  animation:coleccionDetallePanelEntra .54s .1s cubic-bezier(.16,.8,.2,1) backwards;
+}
+/* El halo y las motas no se animan ni se reconstruyen: sólo el pedestal toma
+   el relevo del naipe volador mientras éste hace su último fundido. */
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dEscena{
+  animation:coleccionDetalleEscenaEntra .34s .04s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dControles{
+  animation:coleccionDetalleHerramientasEntran .44s .17s cubic-bezier(.16,.8,.2,1) backwards;
+}
+@keyframes coleccionDetalleCabeceraEntra{
+  from{opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionDetallePanelEntra{
+  from{opacity:0;translate:calc(100vw + 96px) -50%;scale:.97;filter:blur(6px)}
+  to{opacity:1;translate:0 -50%;scale:1;filter:none}
+}
+@keyframes coleccionDetalleEscenaEntra{
+  from{opacity:0;scale:.985;filter:brightness(.82)}
+  to{opacity:1;scale:1;filter:none}
+}
+@keyframes coleccionDetalleHerramientasEntran{
+  from{opacity:0;translate:calc(100vw + 72px) -50%;filter:blur(4px)}
+  to{opacity:1;translate:0 -50%;filter:none}
+}
+@media(max-width:760px){
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor .coleccionVersiones{
+    animation-name:coleccionDetallePanelEntraMovil;
+  }
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dControles{
+    animation-name:coleccionDetalleHerramientasEntranMovil;
+  }
+  @keyframes coleccionDetallePanelEntraMovil{
+    from{opacity:0;translate:0 calc(100vh + 72px);scale:.97;filter:blur(6px)}
+    to{opacity:1;translate:0 0;scale:1;filter:none}
+  }
+  @keyframes coleccionDetalleHerramientasEntranMovil{
+    from{opacity:0;translate:calc(100vw + 72px) 0;filter:blur(4px)}
+    to{opacity:1;translate:0 0;filter:none}
+  }
+}
 @media(prefers-reduced-motion:reduce){
-  #coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta{animation:none}
+  #coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta,
+  #coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado,.coleccionMini),
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] :is(.coleccionDetalleCabecera,.coleccionVersiones,.visor3dEscena,.visor3dControles){animation:none!important}
 }
