@@ -13,7 +13,7 @@ export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsaf
 export const botinArpgThree=Object.freeze(['mazo','arco','collar','espadaluz','espadaboveda','lentesmachete','sombrero','brazosagua']);
 export const cartasArpgThree=Object.freeze([...botinArpgThree.flatMap(id=>['normal','foil','dorado'].map(ed=>[id,ed])),['llavemago','dorado']]);
 export const componentesArpgThree=Object.freeze(['carta-pintor.js','carta-diseno.css','fuentes/cinzel.woff2','fuentes/cormorant-garamond.woff2','fuentes/cormorant-garamond-italica.woff2']);
-export const entornoArpgThree=Object.freeze(['arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-modelos.js','visor-three-vendor.js','three-carta.js']);
+export const entornoArpgThree=Object.freeze(['arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js']);
 function ilustraciones(){
   const encuadres=JSON.parse(leer('art/encuadres.json'));
   return cartasArpgThree.map(([id,acabado])=>{

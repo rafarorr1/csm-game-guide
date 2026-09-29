@@ -339,6 +339,32 @@ node dev/secciones/pruebas_mesa_three.mjs
 python3 dev/secciones/publicar.py --publicar --seccion mesa-three --salida /tmp/caoz-mesa-three
 ```
 
+## Las casas de Tomsage (three.js)
+
+La revisión está en `/casas-three/`: una calle de noche con los tres tipos de
+casa del módulo `casas-three.js`, que también usa la plaza del ARPG.
+
+- **Tipos:**
+  - la entramada: dos plantas, la de arriba volada sobre ménsulas;
+  - la taberna La Jarra Rota: planta baja de sillares, letrero colgado y toneles;
+  - la cabaña de piedra: con buhardilla y chimenea exterior.
+- **Ventanas con interior mapping:**
+  - cada cristal es un solo cuadro, pero su shader sigue la mirada dentro de una habitación (papel pintado, suelo de tablas, vigas, un cuadro, la chimenea encendida y la lámpara) con perspectiva que cambia al moverse;
+  - encima, cortinas, vidrio emplomado en rombos y el reflejo del cielo;
+  - un halo cálido en la fachada y la luz que cae al suelo, sin luces reales;
+  - la semilla de cada ventana (qué habitación y si está encendida) llega al shader con `flat`: interpolada, el hash la convertía en moteado.
+- **Texturas pintadas por código, con relieve:** yeso con manchas, grietas y desconchones; roble; sillares; tejas con musgo; tablas con herrajes. La base de las paredes se oscurece con color por vértice.
+- **Coste:**
+  - entre 800 y 2.800 triángulos por casa;
+  - `fundir()` junta todas las casas en una malla por material, así que la calle entera son unas 12 mallas;
+  - las farolas no tienen sombra, porque una luz puntual con sombra dibuja la escena seis veces.
+- Cámara orbital, vistas de cada casa, noche o atardecer, y botón para apagar las luces de dentro.
+
+```bash
+node dev/secciones/pruebas_casas_three.mjs
+python3 dev/secciones/publicar.py --publicar --seccion casas-three --salida /tmp/caoz-casas-three
+```
+
 ## Las Grietas del Editor (ARPG en three.js, proyecto paralelo)
 
 La revisión está en `/arpg-three/`: el Hito 1 de la propuesta de un ARPG al
@@ -353,7 +379,7 @@ oleadas, y al final entra Can, el de los Goblins.
   - las animaciones son procedurales: andar, tajo, aviso, torbellino, salto, grito, lanzar, aturdido y muerte;
   - al morir se deshacen en brasas.
 - **La plaza:**
-  - adoquines con relieve, casas con entramado (tres arden), el pozo, un carro, barriles y braseros;
+  - adoquines con relieve, las casas de Tomsage (`casas-three.js`, con su interior tras las ventanas; tres arden), el pozo, un carro, barriles y braseros;
   - la luna con sombras, la luz que lleva Adreida (el radio de luz de Diablo) y el fuego;
   - todo lo estático se funde por material;
   - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).

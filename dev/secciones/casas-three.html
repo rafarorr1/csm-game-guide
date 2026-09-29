@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Las casas de Tomsage · Caoz</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./casas-three-mesa.css">
+<script src="./visor-three-vendor.js"></script>
+<script src="./casas-three.js"></script>
+<script src="./casas-three-mesa.js" defer></script>
+</head>
+<body>
+<main class="csShell" aria-labelledby="csTitulo">
+  <header class="csCabecera">
+    <p class="csEtiqueta">PRUEBA DE ARTE · THREE.JS · CASAS PARA LAS GRIETAS DEL EDITOR</p>
+    <h1 id="csTitulo">Las casas de Tomsage</h1>
+    <p>Una calle de noche con los tres tipos de casa: la entramada de dos plantas con la de arriba volada, la taberna La Jarra Rota y la cabaña de piedra con buhardilla. Cada ventana es un solo cuadro, pero su shader pinta la habitación de dentro con perspectiva (papel pintado, suelo de tablas, una chimenea encendida, una lámpara), con cortinas, vidrio emplomado y el reflejo del cielo; el detalle de las fachadas está en texturas con relieve pintadas por código. Toda la calle se dibuja en una docena de llamadas. Arrastra para girar y usa la rueda para acercar.</p>
+  </header>
+  <div class="csControles" role="group" aria-label="Vistas y luces">
+    <div class="csGrupo" role="group" aria-label="Vista">
+      <button type="button" data-vista="calle" aria-pressed="true">Calle</button>
+      <button type="button" data-vista="entramada" aria-pressed="false">Entramada</button>
+      <button type="button" data-vista="taberna" aria-pressed="false">Taberna</button>
+      <button type="button" data-vista="piedra" aria-pressed="false">Piedra</button>
+    </div>
+    <div class="csGrupo" role="group" aria-label="Hora">
+      <button type="button" data-hora="noche" aria-pressed="true">Noche</button>
+      <button type="button" data-hora="atardecer" aria-pressed="false">Atardecer</button>
+    </div>
+    <button type="button" class="csBoton" id="luces" aria-pressed="true">Luces de dentro: encendidas</button>
+    <label class="csOpcion"><input type="checkbox" id="girar" checked> Girar sola</label>
+  </div>
+  <section class="csEscenario" id="escenario" aria-label="La calle de Tomsage">
+    <canvas id="lienzo" aria-label="Tres casas en una calle de noche"></canvas>
+    <p class="csInfo" id="info">Preparando…</p>
+  </section>
+  <ul class="csFicha" id="ficha" aria-label="Coste de cada casa"></ul>
+  <p id="estado" class="csEstado" role="status" aria-live="polite">Preparando la calle…</p>
+</main>
+</body>
+</html>

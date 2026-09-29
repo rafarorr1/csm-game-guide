@@ -145,6 +145,12 @@ SECCIONES = {
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'three-carta.js', 'mesa-three-mesa.js', 'juego/carta-pintor.js'},
         'pruebas': ('pruebas_mesa_three.mjs',),
     },
+    'casas-three': {
+        'nombre': 'Las casas de Tomsage (three.js)',
+        'exportador': 'casas-three-exportar.mjs',
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'casas-three.js', 'casas-three-mesa.js'},
+        'pruebas': ('pruebas_casas_three.mjs',),
+    },
     'arpg-three': {
         'nombre': 'Las Grietas del Editor (ARPG en three.js)',
         'exportador': 'arpg-three-exportar.mjs',

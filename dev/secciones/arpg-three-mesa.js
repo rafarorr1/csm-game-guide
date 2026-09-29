@@ -2,8 +2,9 @@
    Guerrera Semiorca, defiende la plaza de Tomsage bajo asedio contra cuatro
    oleadas. Vista isométrica, clic para andar y atacar, como en Diablo.
      · Modelos 3D sencillos (arpg-three-modelos.js), animados por código.
-     · La plaza: adoquines con relieve, casas con entramado (tres arden), un
-       pozo, carros, barriles y braseros; la luna con sombras, la luz que lleva
+     · La plaza: adoquines con relieve, las casas de Tomsage (casas-three.js,
+       con su interior tras las ventanas; tres arden), un pozo, carros, barriles
+       y braseros; la luna con sombras, la luz que lleva
        Adreida y el fuego de las casas; brasas y ceniza en el aire.
      · Combate: Tajo (clic), Torbellino (1/Q o clic derecho), Salto (2/W) y
        Provocar (3/E). La Furia sube al golpear y al recibir golpes. Los
@@ -52,7 +53,7 @@
   const composer=new EffectComposer(renderer,objetivo),pasoRender=new RenderPass(escena,camara);
   const oclusion=new GTAOPass(escena,camara,2,2);oclusion.updateGtaoMaterial({radius:.9,distanceExponent:1.5,thickness:1.2,scale:1,samples:12});oclusion.blendIntensity=.85;
   // La oclusión sólo oculta puntos y líneas en su pasada de normales; las llamas, haces y marcas (transparentes) tampoco deben hacer sombra de contacto.
-  {const ocultar=oclusion._overrideVisibility.bind(oclusion);oclusion._overrideVisibility=function(){ocultar();escena.traverse(n=>{if(n.visible&&n.material?.transparent){n.visible=false;this._visibilityCache.push(n);}});};}
+  {const ocultar=oclusion._overrideVisibility.bind(oclusion);oclusion._overrideVisibility=function(){ocultar();escena.traverse(n=>{if(n.visible&&(n.material?.transparent||n.material?.userData?.sinOclusion)){n.visible=false;this._visibilityCache.push(n);}});};}
   const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.5,.45,1.05),salida=new OutputPass();
   // Saneado: un píxel NaN o infinito (en Metal salen de cálculos que otras tarjetas toleran) lo agranda el
   // resplandor en cuadros negros. Esta pasada los cambia por negro antes del resplandor, vengan de donde vengan.
@@ -97,7 +98,7 @@
   const suelo=new THREE.Mesh(new THREE.PlaneGeometry(140,140),matSuelo);suelo.rotation.x=-Math.PI/2;suelo.receiveShadow=true;mundo.add(suelo);
   const capaQuemada=new THREE.Mesh(new THREE.PlaneGeometry(44,44),new THREE.MeshBasicMaterial({transparent:true,depthWrite:false,color:0xffffff}));capaQuemada.rotation.x=-Math.PI/2;capaQuemada.position.y=.01;mundo.add(capaQuemada);
   const std=(color,p={})=>new THREE.MeshStandardMaterial({color,roughness:.85,metalness:0,flatShading:true,...p});
-  const MAT={yeso:std(0xb5a283),viga:std(0x3a2618),teja:std(0x6e2d22,{roughness:.7}),piedra:std(0x6d6760),madera:std(0x5b3d26),hierro:std(0x4a4a50,{metalness:.8,roughness:.4}),ventana:std(0x1a0d06,{emissive:0xff7a2a,emissiveIntensity:0}),oscuro:std(0x15100c)};
+  const MAT={teja:std(0x6e2d22,{roughness:.7}),piedra:std(0x6d6760),madera:std(0x5b3d26),hierro:std(0x4a4a50,{metalness:.8,roughness:.4}),oscuro:std(0x15100c)};
   function poner(geo,mat,x,y,z,ry=0,sombra=true){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.y=ry;m.castShadow=sombra;m.receiveShadow=true;mundo.add(m);return m;}
   const fuegos=[];// casas que arden: llamas y su luz
   const matLlama=new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
@@ -114,26 +115,20 @@
       for(const [u,v] of [[0,0],[1,0],[1,1],[0,1]]){P.push(cx,y,cz);U.push(u,v);S.push(s);T.push(w,h);}I.push(o,o+1,o+2,o,o+2,o+3);}
     g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setAttribute('aSem',new THREE.Float32BufferAttribute(S,1));g.setAttribute('aTam',new THREE.Float32BufferAttribute(T,2));g.setIndex(I);
     const m=new THREE.Mesh(g,matLlama);m.frustumCulled=false;m.renderOrder=2;mundo.add(m);return m;}
-  function casa(x,z,ry,w,d,h,arde){const g=new THREE.Group();g.position.set(x,0,z);g.rotation.y=ry;mundo.add(g);
-    const pieza=(geo,mat,px,py,pz,rx=0,rz=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(px,py,pz);m.rotation.set(rx,0,rz);m.castShadow=true;m.receiveShadow=true;g.add(m);return m;};
-    pieza(new THREE.BoxGeometry(w,.5,d),MAT.piedra,0,.25,0);pieza(new THREE.BoxGeometry(w-.04,h-.5,d-.04),MAT.yeso,0,.5+(h-.5)/2,0);
-    for(const s of [-1,1]){pieza(new THREE.BoxGeometry(.18,h,.18),MAT.viga,s*(w/2-.02),h/2,d/2);pieza(new THREE.BoxGeometry(.18,h,.18),MAT.viga,s*(w/2-.02),h/2,-d/2);}
-    pieza(new THREE.BoxGeometry(w+.1,.16,.16),MAT.viga,0,h*.55,d/2+.01);pieza(new THREE.BoxGeometry(w+.1,.16,.16),MAT.viga,0,h-.05,d/2+.01);
-    for(const s of [-1,1])pieza(new THREE.BoxGeometry(.13,Math.hypot(w*.35,h*.45),.12),MAT.viga,s*w*.3,h*.77,d/2+.02,0,s*.75);
-    pieza(new THREE.BoxGeometry(.9,1.5,.1),MAT.oscuro,-w*.18,1.25,d/2+.03);
-    const ventana=pieza(new THREE.BoxGeometry(.7,.6,.1),arde?MAT.ventana:MAT.oscuro,w*.25,h*.35+.3,d/2+.03);
-    const tejado=new THREE.Shape();tejado.moveTo(-w/2-.35,0);tejado.lineTo(w/2+.35,0);tejado.lineTo(0,h*.62);tejado.lineTo(-w/2-.35,0);
-    const t=pieza(new THREE.ExtrudeGeometry(tejado,{depth:d+.5,bevelEnabled:false}),MAT.teja,0,h,-d/2-.25);
-    if(arde){const f=llamas(0,0,0,w*.7,2.6,5);g.remove(f);f.position.set(0,h+.3,0);g.add(f);
-      const luz=new THREE.PointLight(0xff7a2a,60,16,1.7);luz.position.set(0,h+1.4,d/2+.8);g.add(luz);fuegos.push({luz,x:x,z:z,alto:h+1});}
-    if(Math.hypot(x,z)<R+Math.max(w,d)*.7)obstaculos.push({x,z,r:Math.max(w,d)*.55});
-    return {g,ventana,t};}
-  // Casas en corro, dejando tres calles por donde entra el asedio.
+  // Las casas de Tomsage (casas-three.js): entramadas, de piedra y la taberna, con su interior tras las ventanas.
+  // En corro, dejando tres calles por donde entra el asedio; el frente mira a la plaza. Tres arden.
+  const CASAS=window.CAOZ_CASAS.fabrica(THREE,{renderer}),barrio=[];
+  function casa(tipo,x,z,ry,opc,arde){const g=CASAS.casa(tipo,opc);g.position.set(x,0,z);g.rotation.y=ry;barrio.push(g);const u=g.userData;
+    if(arde){g.updateMatrixWorld(true);const cima=g.localToWorld(new V3(0,u.alto-1,0)),f=llamas(cima.x,cima.y,cima.z,u.huella[0]*.6,3,6),luz=new THREE.PointLight(0xff7a2a,60,16,1.7);
+      luz.position.copy(g.localToWorld(new V3(0,u.alto-.5,u.huella[1]/2+1)));mundo.add(luz);fuegos.push({luz,x,z,alto:cima.y});}
+    if(Math.hypot(x,z)<R+Math.max(...u.huella)*.7)obstaculos.push({x,z,r:Math.max(...u.huella)*.5});
+    return g;}
   const CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];// norte, sureste y suroeste (en el plano XZ)
   const calle=a=>new V3(Math.cos(a),0,Math.sin(a));
-  {let n=0;for(let a=0;a<TAU;a+=TAU/15){if(CALLES.some(c=>Math.abs(difAng(a,c))<.3))continue;const r=19.5+rnd()*2.5,x=Math.cos(a)*r,z=Math.sin(a)*r,w=3.6+rnd()*2,d=3.4+rnd()*1.5,h=2.6+rnd()*1.2;
-    casa(x,z,-a-Math.PI/2+(rnd()-.5)*.25,w,d,h,[1,4,8].includes(n));n++;}
-    for(let a=TAU/30;a<TAU;a+=TAU/11){const r=28+rnd()*4;casa(Math.cos(a)*r,Math.sin(a)*r,-a-Math.PI/2,4+rnd()*2,4,3+rnd()*1.5,false);}}
+  {let n=0;const tipos=['entramada','piedra','entramada','taberna','entramada','piedra'];
+    for(let a=0;a<TAU;a+=TAU/15){if(CALLES.some(c=>Math.abs(difAng(a,c))<.3))continue;const r=20.5+rnd()*1.5,t=tipos[n%tipos.length]==='taberna'&&n!==3?'entramada':tipos[n%tipos.length];
+      casa(t,Math.cos(a)*r,Math.sin(a)*r,Math.atan2(-Math.cos(a),-Math.sin(a))+(rnd()-.5)*.15,{semilla:n+2,ancho:t==='entramada'?5.4+rnd()*1.2:undefined,tinteYeso:[1,.95+rnd()*.05,.86+rnd()*.14],tinteTeja:[.8+rnd()*.2,.8+rnd()*.15,.8+rnd()*.15]},[1,4,8].includes(n));n++;}
+    for(let a=TAU/30;a<TAU;a+=TAU/11){const r=29+rnd()*3;casa(n%2?'piedra':'entramada',Math.cos(a)*r,Math.sin(a)*r,Math.atan2(-Math.cos(a),-Math.sin(a)),{semilla:n+40},false);n++;}}
   // El pozo, un carro volcado, barriles, cajas y dos braseros.
   const braseros=[];
   {const pozo=poner(new THREE.CylinderGeometry(1.1,1.2,.8,12),MAT.piedra,-5,.4,-3);poner(new THREE.CylinderGeometry(.95,.95,.05,12),MAT.oscuro,-5,.81,-3,0,false);
@@ -157,6 +152,8 @@
       const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('uv',new THREE.BufferAttribute(U,2));geo.computeBoundingSphere();
       const m=new THREE.Mesh(geo,mat);m.castShadow=m.receiveShadow=true;mundo.add(m);}}
   fundirMundo();
+  // Las casas se funden aparte (su módulo conserva el color por vértice y los atributos de las ventanas).
+  const casasFundidas=CASAS.fundir(barrio);mundo.add(casasFundidas);
   // Luces: luna azul con sombras (sigue a Adreida), cielo tenue y la luz que ella lleva (el radio de luz de Diablo).
   const hemi=new THREE.HemisphereLight(0x5a6aa0,0x2a1a10,.4);escena.add(hemi);
   const luna=new THREE.DirectionalLight(0xa8b8ff,1.5);luna.castShadow=true;luna.shadow.mapSize.set(2048,2048);luna.shadow.radius=3;luna.shadow.blurSamples=12;luna.shadow.bias=-.0004;luna.shadow.normalBias=.03;
@@ -572,7 +569,7 @@
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
   function paso(dt){
     if(paron>0){paron-=dt;dt*=.08;}
-    reloj.t+=dt;tiempo.value=reloj.t;F.tiempo.value=reloj.t;
+    reloj.t+=dt;tiempo.value=reloj.t;F.tiempo.value=reloj.t;CASAS.uniformes.uT.value=reloj.t;
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
     leerControles();
