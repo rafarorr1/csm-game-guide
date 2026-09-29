@@ -90,7 +90,7 @@
     dlg.style.setProperty('--anillo-mascara',texturaAnillo());
     let configuracion=null,ediciones=[],edicion=tonoValido(opciones.edicion||opciones.tono||opciones.inicial),cuerpo=null,lienzoGL=null,gl3d=null,carta=null,frente=null,pila=[],logoGL=null;
     let turnoGL=0,copias=0,ancho=0,alto=0,raf=0,antes=0,reloj=0,vivo=true,observador=null;
-    const e={giro:reducir()?0:-PI*2,vel:0,encaje:0,forzado:!reducir(),arrastrando:false,x:0,y:0,t:0,inclX:0,inclY:0,objX:0,objY:0,arrastreX:0,pulso:0,escala:reducir()?1:.86};
+    const e={giro:reducir()?0:-PI*2,vel:0,encaje:0,forzado:!reducir(),arrastrando:false,x:0,y:0,t:0,inclX:0,inclY:0,objX:0,objY:0,arrastreX:0,pulso:0,escala:reducir()?1:.86,entradaX:0,entradaY:0,entrando:false};
     const puntos=Array.from({length:120},()=>({x:Math.random(),y:Math.random(),z:.35+Math.random()*.65,v:.02+Math.random()*.035,f:Math.random()*PI*2}));
     const vivas=[];
 
@@ -125,7 +125,8 @@
     }
     function soltarSuperficie(){
       turnoGL++;gl3d?.destruir();gl3d=null;lienzoGL?.remove();lienzoGL=null;cuerpo?.remove();cuerpo=null;frente=null;pila=[];carta=null;copias=0;logoGL=null;
-      dlg.classList.remove('visor3dConGL','visor3dBloqueada');
+      e.entradaX=0;e.entradaY=0;e.entrando=false;
+      dlg.classList.remove('visor3dConGL','visor3dBloqueada','visor3dEntraDesdeArchivo');
     }
     function asegurarGL(){
       if(gl3d||!lienzoGL)return;
@@ -154,16 +155,49 @@
         dlg.classList.add('visor3dConGL');medir();
       }catch(error){console.warn('Visor 3D: se usan las capas CSS.',error);dlg.classList.remove('visor3dConGL');}
     }
+    // La Colección puede entregar la propia ficha que estaba en la miniatura.
+    // Conservamos ese nodo (incluidos su <img> decodificada y .cdLienzo) y sólo
+    // quitamos las reglas efímeras del vuelo antes de colocarlo en la cara 3D.
+    // Si llega algo ajeno o de otra edición, devolver null mantiene el camino
+    // tradicional de crearCarta() como respaldo.
+    function tomarCartaLista(){
+      const lista=configuracion?.cartaLista;
+      if(!(lista instanceof HTMLElement))return null;
+      const idLista=lista.dataset.card,acabadoLista=lista.dataset.coleccionAcabado||lista.dataset.acabado;
+      if((configuracion.id&&idLista&&idLista!==configuracion.id)||(acabadoLista&&acabadoLista!==edicion))return null;
+      configuracion.cartaLista=null;
+      lista.classList.remove('coleccionVueloCarta','coleccionVueloCartaEntra','coleccionVueloCartaEntregada');
+      for(const propiedad of ['left','top','width','height','font-size','zoom','--cw','--ch','--coleccion-vuelo-x','--coleccion-vuelo-y','--coleccion-vuelo-escala'])lista.style.removeProperty(propiedad);
+      return lista;
+    }
+    function entrarDesdeArchivo(continuidad){
+      if(reducir()||!continuidad||!ancho||!alto)return;
+      const r=escena.getBoundingClientRect(),centroX=continuidad.izquierda+continuidad.ancho/2,centroY=continuidad.arriba+continuidad.alto/2;
+      e.giro=0;e.encaje=0;e.forzado=false;e.vel=0;e.pulso=0;
+      e.escala=acotar(continuidad.alto/alto,.18,1.8);
+      e.entradaX=centroX-(r.left+r.width/2);
+      e.entradaY=centroY-(r.top+r.height/2);
+      // La adopción del nodo y el siguiente RAF pueden caer en fotogramas
+      // distintos. Escribimos la pose inicial ahora para no mostrar un cuadro
+      // con la carta ya teletransportada al centro.
+      const estilo=cuerpo?.style;
+      estilo?.setProperty('--entrada-x',e.entradaX+'px');estilo?.setProperty('--entrada-y',e.entradaY+'px');estilo?.setProperty('--s',String(e.escala));estilo?.setProperty('--y','0px');
+      e.entrando=true;dlg.classList.add('visor3dEntraDesdeArchivo');
+    }
     function ponerCarta(){
       if(!configuracion||!cuerpo||typeof configuracion.crearCarta!=='function')return false;
-      let siguiente=null;try{siguiente=configuracion.crearCarta(edicion);}catch(error){console.warn('Visor 3D: no se pudo crear la carta.',error);return false;}
+      let siguiente=tomarCartaLista(),adoptada=!!siguiente;
+      if(!siguiente)try{siguiente=configuracion.crearCarta(edicion);}catch(error){console.warn('Visor 3D: no se pudo crear la carta.',error);return false;}
       if(!siguiente)return false;
       carta?.remove();carta=siguiente;carta.classList.add('visor3dCarta');carta.setAttribute('aria-hidden','true');
       const capasLuz=['visor3dFoil','visor3dDestellos','visor3dBrillo'].map(clase=>nodo('i',clase));capasLuz[1].style.backgroundImage=texturaDestellos();
       frente.replaceChildren(carta,...capasLuz);aplicarTono(edicion);
       const estado=ediciones.find(x=>x.id===edicion)||{cantidad:0,tiene:true};copias=estado.cantidad||0;
       pila.forEach((p,i)=>{p.hidden=i>=Math.min(MAX_PILA,Math.max(0,copias-1));});dlg.classList.remove('visor3dConGL');dlg.classList.toggle('visor3dBloqueada',estado.tiene===false);botonAmpliar.hidden=estado.tiene===false;
-      prepararGL();medir();return true;
+      medir();
+      if(adoptada)entrarDesdeArchivo(configuracion.continuidad);
+      else{e.entradaX=0;e.entradaY=0;e.entrando=false;dlg.classList.remove('visor3dEntraDesdeArchivo');}
+      prepararGL();return true;
     }
     function medir(){
       const R=dlg.getBoundingClientRect(),W=R.width,H=R.height,E=escena.getBoundingClientRect(),anchoEscena=E.width||W,altoEscena=E.height||H;if(!W||!H||!anchoEscena||!altoEscena)return;
@@ -212,9 +246,13 @@
       raf=0;if(!vivo)return;const dt=Math.min(.05,antes?(ahora-antes)/1000:0);antes=ahora;reloj+=dt;
       if(carta){
         if(!e.arrastrando){if(!e.forzado&&Math.abs(e.vel)>3){e.giro+=e.vel*dt;e.vel*=Math.exp(-1.6*dt);}else{if(!e.forzado)e.encaje=Math.round(e.giro/PI)*PI;const k=70,c=2*Math.sqrt(k)*.85;e.vel+=((e.encaje-e.giro)*k-e.vel*c)*dt;e.giro+=e.vel*dt;if(e.forzado&&Math.abs(e.encaje-e.giro)<.002&&Math.abs(e.vel)<.02)e.forzado=false;}e.arrastreX=acercar(e.arrastreX,0,4,dt);}
-        const reposo=reducir()?0:1;e.inclX=acercar(e.inclX,e.arrastrando?0:e.objX,6,dt);e.inclY=acercar(e.inclY,e.arrastrando?0:e.objY,6,dt);e.pulso=acercar(e.pulso,0,3,dt);e.escala=acercar(e.escala,1,5,dt);
+        const reposo=reducir()?0:1;e.inclX=acercar(e.inclX,e.arrastrando?0:e.objX,6,dt);e.inclY=acercar(e.inclY,e.arrastrando?0:e.objY,6,dt);e.pulso=acercar(e.pulso,0,3,dt);
+        if(e.entrando){
+          e.entradaX=acercar(e.entradaX,0,7.5,dt);e.entradaY=acercar(e.entradaY,0,7.5,dt);e.escala=acercar(e.escala,1,7.5,dt);
+          if(Math.abs(e.entradaX)<.45&&Math.abs(e.entradaY)<.45&&Math.abs(e.escala-1)<.004){e.entradaX=0;e.entradaY=0;e.escala=1;e.entrando=false;dlg.classList.remove('visor3dEntraDesdeArchivo');}
+        }else e.escala=acercar(e.escala,1,5,dt);
         const ry=e.giro+e.inclX*.42+Math.sin(reloj*.6)*.05*reposo,rx=-e.inclY*.32+e.arrastreX+Math.sin(reloj*.8)*.03*reposo,flota=Math.sin(reloj*1.1)*6*reposo,frenteY=Math.atan2(Math.sin(ry),Math.cos(ry)),inclina=acotar(Math.hypot(frenteY,rx)*2.2,0,1),s=cuerpo.style;
-        s.setProperty('--rx',rx+'rad');s.setProperty('--ry',ry+'rad');s.setProperty('--rz',(Math.sin(reloj*.7)*.012*reposo)+'rad');s.setProperty('--y',flota+'px');s.setProperty('--s',e.escala*(1+e.pulso*.03));s.setProperty('--gx',acotar(72-frenteY*120,-30,130)+'%');s.setProperty('--gy',acotar(26+rx*120,-30,130)+'%');s.setProperty('--fx',(50+frenteY*160)+'%');s.setProperty('--fy',(50+rx*160)+'%');s.setProperty('--inclina',inclina.toFixed(3));s.setProperty('--pila',Math.cos(frenteY)>0?1:0);
+        s.setProperty('--rx',rx+'rad');s.setProperty('--ry',ry+'rad');s.setProperty('--rz',(Math.sin(reloj*.7)*.012*reposo)+'rad');s.setProperty('--y',flota+'px');s.setProperty('--s',e.escala*(1+e.pulso*.03));s.setProperty('--entrada-x',e.entradaX+'px');s.setProperty('--entrada-y',e.entradaY+'px');s.setProperty('--gx',acotar(72-frenteY*120,-30,130)+'%');s.setProperty('--gy',acotar(26+rx*120,-30,130)+'%');s.setProperty('--fx',(50+frenteY*160)+'%');s.setProperty('--fy',(50+rx*160)+'%');s.setProperty('--inclina',inclina.toFixed(3));s.setProperty('--pila',Math.cos(frenteY)>0?1:0);
         if(gl3d?.listo()&&dlg.classList.contains('visor3dConGL'))gl3d.dibujar({rx,ry,rz:Math.sin(reloj*.7)*.012*reposo,y:flota,s:e.escala*(1+e.pulso*.03),tiempo:reloj,luzX:e.inclX,luzY:e.inclY,pulso:e.pulso,pila:Math.min(MAX_PILA,Math.max(0,copias-1))});
       }
       const reposo=reducir()?0:1;dlg.style.setProperty('--anillo-giro',(reloj*.12*reposo)+'rad');dlg.style.setProperty('--anillo-brillo',(.5+Math.sin(reloj*2)*.07*reposo+e.pulso*.45).toFixed(3));dibujarMotas(reloj,dt);if(!document.hidden)raf=requestAnimationFrame(cuadro);
