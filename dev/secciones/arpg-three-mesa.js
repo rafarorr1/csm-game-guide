@@ -305,7 +305,7 @@
      WASD mueve; el clic izquierdo ataca hacia el cursor (combo de tres golpes si lo mantienes);
      Espacio esquiva (invulnerable un instante); clic derecho, Salto al cursor; Q Torbellino; E Provocar. */
   const VEL=5.8,DUR_ESQ=.2,VEL_ESQ=17;
-  // El combo empieza lento (se ve venir cada espadazo) y se acelera con la velocidad de ataque de las cartas (heroe.vatq).
+  // El combo empieza lento (se ve venir cada hachazo) y se acelera con la velocidad de ataque de las cartas (heroe.vatq).
   const COMBO=[{dur:.6,imp:.3,alc:2.05,ang:1.1,mult:1,emp:1.4,anim:'tajoA'},{dur:.6,imp:.3,alc:2.05,ang:1.1,mult:1,emp:1.4,anim:'revesA'},{dur:.8,imp:.39,alc:2.7,ang:.5,mult:1.8,emp:3.8,anim:'estocadaA'}];
   const frente=a=>new V3(Math.sin(a),0,Math.cos(a));
   const libre=()=>heroe.vivo&&(['quieto','andar'].includes(heroe.estado)||heroe.estado==='golpe'&&heroe.golpeo);
@@ -609,7 +609,7 @@
   const aura=new THREE.Mesh(new THREE.SphereGeometry(1.25,24,16),new THREE.ShaderMaterial({uniforms:{uA:{value:0},uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     vertexShader:`varying vec3 vN,vV;varying float vY;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);vY=position.y;gl_Position=projectionMatrix*mv;}`,
     fragmentShader:`uniform float uA,uT;varying vec3 vN,vV;varying float vY;void main(){float f=pow(clamp(1.-abs(dot(vN,vV)),0.,1.),2.5)*(.7+.3*sin(vY*14.-uT*6.));gl_FragColor=vec4(vec3(1.,.75,.3)*1.6,f*uA);}`}));aura.visible=false;escena.add(aura);
-  // El rastro del espadazo: un arco que se dibuja detrás de la hoja (del lado donde empieza el tajo) y se desvanece;
+  // El rastro del hachazo: un arco que se dibuja detrás del hacha (del lado donde empieza el tajo) y se desvanece;
   // coincide con la zona que golpea. La estocada deja una estela recta al frente.
   const matRastro=new THREE.ShaderMaterial({uniforms:{uP:{value:0},uA:{value:0},uS:{value:1}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:'attribute float aK,aR;varying float vK,vR;void main(){vK=aK;vR=aR;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',

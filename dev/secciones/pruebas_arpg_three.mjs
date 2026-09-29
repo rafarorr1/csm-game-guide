@@ -104,8 +104,8 @@ try{
     assert.ok(e.enemigos.find(x=>x.id===g).vida<34&&Math.abs(e.heroe.dir-Math.PI/2)<.3,'Clic: el tajo sale hacia el cursor (se gira al este) y le quita vida');
     // Mantener pulsado: combo de tres golpes (tajo, revés y estocada).
     await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');await r('r.heroe({x:0,z:0})');const q=await r('r.invocar("saqueador",1.9,0,true)');await r('r.avanzar(.1)');s=await r('r.enemigoPantalla(a[0])',q);
-    // Son espadazos, no puñetazos: en el tajo y el revés la punta de la espada barre un arco amplio a la altura del torso;
-    // en la estocada acaba al frente y extendida. (Ángulo de la punta respecto a donde mira, en grados.)
+    // Son hachazos, no puñetazos: en el tajo y el revés la cabeza del hacha barre un arco amplio a la altura del torso;
+    // en la estocada acaba al frente y extendida. (Ángulo de la cabeza respecto a donde mira, en grados.)
     const IMP=[.3,.3,.39],combos=new Set(),traza={0:[],1:[],2:[]},impacto={};let duracion0=0;
     await pagina.mouse.move(s.x,s.y);await pagina.mouse.down();for(let i=0;i<80;i++){e=await r('r.avanzar(1/30)');const h=e.heroe;if(h.estado!=='golpe')continue;combos.add(h.combo);if(h.combo===0)duracion0++;
       const dx=h.punta[0]-h.x,dz=h.punta[2]-h.z,ang=Math.atan2(dx*Math.cos(h.dir)-dz*Math.sin(h.dir),dx*Math.sin(h.dir)+dz*Math.cos(h.dir))*180/Math.PI,p={ang,d:Math.hypot(dx,dz),y:h.punta[1]};
@@ -113,8 +113,8 @@ try{
     await pagina.mouse.up();
     assert.deepEqual([...combos].sort(),[0,1,2],'Manteniendo el clic encadena el combo de tres golpes');
     for(const c of [0,1]){const angs=traza[c].map(p=>p.ang),barrido=Math.max(...angs)-Math.min(...angs),I=impacto[c];
-      assert.ok(barrido>120&&I.d>1.4&&I.y>.3&&I.y<1.4,(c?'Revés':'Tajo')+': la espada barre '+barrido.toFixed(0)+'° y en el impacto está a '+I.d.toFixed(2)+' m y '+I.y.toFixed(2)+' m de altura');}
-    assert.ok(Math.abs(impacto[2].ang)<35&&impacto[2].d>1.7&&impacto[2].y>.2&&impacto[2].y<1.4,'Estocada: la hoja acaba al frente y extendida ('+impacto[2].ang.toFixed(0)+'°, '+impacto[2].d.toFixed(2)+' m, '+impacto[2].y.toFixed(2)+' m de altura)');
+      assert.ok(barrido>120&&I.d>1.05&&I.y>.3&&I.y<1.4,(c?'Revés':'Tajo')+': el hacha barre '+barrido.toFixed(0)+'° y en el impacto está a '+I.d.toFixed(2)+' m y '+I.y.toFixed(2)+' m de altura');}
+    assert.ok(Math.abs(impacto[2].ang)<35&&impacto[2].d>1.3&&impacto[2].y>.2&&impacto[2].y<1.4,'Estocada: el hacha acaba al frente y extendida ('+impacto[2].ang.toFixed(0)+'°, '+impacto[2].d.toFixed(2)+' m, '+impacto[2].y.toFixed(2)+' m de altura)');
     assert.ok(e.enemigos.find(x=>x.id===q).vida<70,'…y el combo hace daño de verdad ('+e.enemigos.find(x=>x.id===q).vida+'/100)');
     await r('r.matar(a[0])',q);await r('r.avanzar(1.5)');
     // La velocidad de ataque: al empezar es lenta; una carta que la da (el Arco Dorado de Juan) acorta el combo.
@@ -122,9 +122,9 @@ try{
     await r('r.soltar("arco","dorado",a[0],a[1]+.5)',e.heroe.x,e.heroe.z);await r('r.avanzar(.5)');await r('r.control({mov:[0,.3]})');await r('r.avanzar(.4)');await r('r.control(null)');e=await r('r.avanzar(.6)');
     assert.ok(e.heroe.botin.includes('arco/dorado')&&e.heroe.vatq>1.2&&/Vel\. ataque 124%/.test(await pagina.textContent('#stats')),'El Arco Dorado de Juan (dorado) da +24% de velocidad de ataque ('+e.heroe.vatq+')');
     await r('r.control({atacar:true,apunta:[a[0],a[1]+2]})',e.heroe.x,e.heroe.z);let rapido=0;for(let i=0;i<40;i++){e=await r('r.avanzar(1/30)');if(e.heroe.estado==='golpe'&&e.heroe.combo===0)rapido++;}await r('r.control(null)');
-    assert.ok(rapido<duracion0*.88,'…y el espadazo es más rápido ('+duracion0+' → '+rapido+' fotogramas)');
+    assert.ok(rapido<duracion0*.88,'…y el hachazo es más rápido ('+duracion0+' → '+rapido+' fotogramas)');
     assert.deepEqual(errores,[],'Sin errores con el control');await contexto.close();}
-  console.log('✓ WASD, ataque hacia el cursor, combo de tres espadazos (la hoja extendida en cada impacto) y velocidad de ataque de las cartas');
+  console.log('✓ WASD, ataque hacia el cursor, combo de tres hachazos (el hacha extendida en cada impacto) y velocidad de ataque de las cartas');
 
   // ---- Quién ataca y cuándo: la zona en el suelo, el «!», el contorno rojo y esquivar --------
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:0,alma:140})');

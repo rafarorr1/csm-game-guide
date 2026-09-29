@@ -372,9 +372,20 @@ estilo Diablo con los personajes del juego. Es una sala jugable: Adreida, la
 Guerrera Semiorca, defiende la plaza de Tomsage bajo asedio contra cuatro
 oleadas, y al final entra Can, el de los Goblins.
 
-- **Modelos 3D sencillos:**
-  - hechos con primitivas de three.js en `arpg-three-modelos.js`, sin archivos de modelo;
-  - Adreida, el Goblin de Camino, el Kobold lancero, el Saqueador y Can, con los colores de sus cartas;
+- **Adreida, desde su miniatura:**
+  - `arpg-three-adreida.js` es el STL de su miniatura preparado para el juego por `arpg-three-adreida-construir.mjs`:
+    - reducido con meshoptimizer de 524 mil a unos 33 mil triángulos;
+    - cada una de sus 158 piezas pintada con la paleta de su carta (piel verde menta, melena azul noche, cuero, falda de piel, ojos rojos que brillan);
+    - con la oclusión ambiental horneada en los colores;
+  - la malla va atada al mismo esqueleto que los demás personajes:
+    - las articulaciones se midieron en la miniatura;
+    - el cuerpo se pesa por cercanía a los huesos, y cada pieza de equipo va rígida con los suyos;
+    - todas las animaciones le sirven igual;
+  - su hacha de doble filo se separa de la mano y se recoloca como la prolongación del antebrazo, con un filo a cada lado para el tajo y el revés;
+  - el STL no está en el repo; para regenerar: `MESHOPT_MODULE=…/meshoptimizer/index.js node dev/secciones/arpg-three-adreida-construir.mjs miniatura.stl`.
+- **Los demás, modelos 3D sencillos:**
+  - hechos con primitivas de three.js en `arpg-three-modelos.js`, sin archivos de modelo (si falta `arpg-three-adreida.js`, Adreida también);
+  - el Goblin de Camino, el Kobold lancero, el Saqueador y Can, con los colores de sus cartas;
   - cada uno tiene un esqueleto de huesos y una malla con piel por material (tres llamadas de dibujo por personaje);
   - las animaciones son procedurales: andar, tajo, aviso, torbellino, salto, grito, lanzar, aturdido y muerte;
   - al morir se deshacen en brasas.
@@ -385,8 +396,8 @@ oleadas, y al final entra Can, el de los Goblins.
   - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
-  - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres espadazos: tajo, revés y estocada;
-  - la espada es la prolongación del brazo, así que en cada impacto la hoja barre la zona que golpea, con un rastro de corte;
+  - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres hachazos: tajo, revés y estocada;
+  - el hacha de doble filo de Adreida es la prolongación del brazo, así que en cada impacto la cabeza barre la zona que golpea, con un rastro de corte;
   - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
   - con el ratón encima de un enemigo se apunta a él;
   - Espacio esquiva (un instante invulnerable; atravesar un golpe da «¡Esquivado!» y Furia);
