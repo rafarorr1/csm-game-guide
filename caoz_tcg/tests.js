@@ -1805,6 +1805,16 @@ function coleccionDePrueba(w,t,pagina){
   return {modelo,restaurar(){if(guardado===null)w.localStorage.removeItem(modelo.clave);else w.localStorage.setItem(modelo.clave,guardado);}};
 }
 
+// Abrir una miniatura del Archivo puede encadenar la salida de la biblioteca
+// con el visor. Las regresiones no deben convertir esa transición en una
+// obligación de pintar el detalle en el mismo clic; esperan la vista pública
+// que ve quien juega y siguen siendo inmediatas con movimiento reducido.
+async function esperarVistaColeccion(panel,vista,mensaje,espera=1800){
+  const limite=Date.now()+espera;
+  while(panel?.open&&panel.dataset.vista!==vista&&Date.now()<limite)await sleep(16);
+  if(panel?.dataset.vista!==vista)throw new FalloDePrueba(mensaje+' (la Colección no llegó a '+vista+').');
+}
+
 PRUEBAS.suite('encuadresVistas',async t=>{
   const clave='caoz_arte_publico_v2:'+new URL('.',location.href).pathname,antes=localStorage.getItem(clave);
   try{for(const pagina of ['index.html','movil.html']){
@@ -2112,6 +2122,7 @@ PRUEBAS.suite('coleccion',async t=>{
       t.igual(panel.querySelector('.coleccionMini')?.dataset.carta,'tal',pagina+': buscar Thal coloca el nombre exacto antes que coincidencias parciales o subtipos.');
       buscar.value='Augusto';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
       const entrada=panel.querySelector('.coleccionMini[data-carta="augusto"]');t.check(!!entrada,pagina+': la búsqueda encuentra Augusto.');entrada.click();
+      await esperarVistaColeccion(panel,'detalle',pagina+': abrir Augusto debe terminar en su visor');
       const revisarVersiones=()=>{
         t.igual(panel.querySelectorAll('.coleccionVersion').length,3,pagina+': presenta Normal, Foil y Dorada juntas.');
         for(const acabado of ['normal','foil','dorado']){
@@ -2169,6 +2180,7 @@ PRUEBAS.suite('coleccionCanjes',async t=>{
       w.showGallery();const buscar=d.querySelector('.coleccionBuscar input');
       buscar.value='Thal';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
       d.querySelector('.coleccionMini[data-carta="tal"]').click();
+      await esperarVistaColeccion(d.querySelector('#coleccionPanel'),'detalle',pagina+': abrir Thal debe terminar en su visor');
       const version=a=>d.querySelector('.coleccionVersion[data-edicion="'+a+'"]');
       t.check(!version('normal').querySelector('.coleccionMejorar').disabled,pagina+': cinco copias ganadas permiten mejorar.');
       const antes=JSON.stringify(m.leer());
@@ -4027,6 +4039,11 @@ PRUEBAS.suite('tipografia', async t => {
     const buscar=panel.querySelector('input[type="search"]');buscar.value='';buscar.dispatchEvent(new w.Event('input',{bubbles:true}));
     for(const select of panel.querySelectorAll('.coleccionFiltros select')){select.value='todos';select.dispatchEvent(new w.Event('change',{bubbles:true}));}
     const ajustar=()=>new Promise(r=>w.requestAnimationFrame(()=>w.requestAnimationFrame(r)));
+    // El Archivo se desplaza suave para la persona. La regresión necesita
+    // saltar a posiciones exactas antes de medir límites y restauración; si
+    // no anula esa preferencia sólo para el salto, Chrome aún va recorriendo
+    // miles de píxeles cuando se toma la medida siguiente.
+    const saltar=async(lista,arriba)=>{const previo=lista.style.scrollBehavior;lista.style.scrollBehavior='auto';lista.scrollTop=arriba;await ajustar();lista.style.scrollBehavior=previo;};
     await ajustar();
     const visitadas=new Set(),cortados=[],descentrados=[],cartas=[...panel.querySelectorAll('.coleccionMini')];
     let grid=panel.querySelector('.coleccionRejilla');
@@ -4047,12 +4064,19 @@ PRUEBAS.suite('tipografia', async t => {
     t.check(primeras.length===6&&primeras[0].width>0&&primeras[0].left<primeras[1].left&&primeras[1].left<primeras[2].left&&Math.abs(primeras[0].top-primeras[2].top)<2&&Math.abs(primeras[3].left-primeras[0].left)<2&&primeras[3].top>=primeras[0].bottom-2,pagina+': deben verse exactamente tres cartas por fila.');
     t.check(grid.scrollHeight>grid.clientHeight+20&&['auto','scroll'].includes(w.getComputedStyle(grid).overflowY),pagina+': el listado completo debe permitir scroll interno.');
     t.check(grid.scrollWidth<=grid.clientWidth+2,pagina+': el listado no debe desbordarse horizontalmente.');
-    grid.scrollTop=grid.scrollHeight;await ajustar();
+    await saltar(grid,grid.scrollHeight);
     const limite=grid.getBoundingClientRect(),ultima=cartas[cartas.length-1].getBoundingClientRect();
     t.check(ultima.top>=limite.top-2&&ultima.bottom<=limite.bottom+2,pagina+': la última carta no se puede alcanzar al final del scroll.');
     const elegida=cartas[Math.floor(cartas.length/2)],pos=elegida.getBoundingClientRect();
-    grid.scrollTop+=pos.top-limite.top-(grid.clientHeight-pos.height)/2;await ajustar();
-    const desplazamiento=grid.scrollTop,id=elegida.dataset.carta;elegida.focus({preventScroll:true});elegida.click();await ajustar();
+    // Aquí se valida la restauración exacta de una posición intermedia. La
+    // biblioteca usa snap orgánico para una persona, pero el salto sintético
+    // de esta prueba no representa un gesto terminado; lo desactivamos sólo
+    // en la rejilla que se destruirá al abrir la carta.
+    grid.style.scrollSnapType='none';
+    await saltar(grid,grid.scrollTop+pos.top-limite.top-(grid.clientHeight-pos.height)/2);
+    const desplazamiento=grid.scrollTop,id=elegida.dataset.carta;elegida.focus({preventScroll:true});elegida.click();
+    await esperarVistaColeccion(panel,'detalle',pagina+': abrir una carta a mitad de la lista debe terminar en sus versiones.');
+    await ajustar();
     t.igual(panel.dataset.vista,'detalle',pagina+': abrir una carta a mitad de la lista debe mostrar sus versiones.');
     panel.querySelector('.coleccionAtras').click();await ajustar();grid=panel.querySelector('.coleccionRejilla');
     t.check(Math.abs(grid.scrollTop-desplazamiento)<=2,pagina+': volver de una carta pierde la posición de la lista.');

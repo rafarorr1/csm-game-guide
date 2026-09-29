@@ -13,7 +13,7 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
-  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null;
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
@@ -29,7 +29,7 @@
   }
   function sonido(id){window.CAOZ_AUDIO?.play(id);}
   function mensaje(texto,error=false){if(!estado)return;estado.textContent=texto;estado.classList.toggle('error',error);carruselSobres?.medir();if(s.vista==='recompensa')medirRecompensa();}
-  function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);}
+  function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);limpiarTransicionDetalle();}
   function esFinalCampana(){return !!finalCampana?.activa;}
   function aplicarModoFinalCampana(activo){
     if(!panel)return;
@@ -69,22 +69,13 @@
     if(!panel?.open)return;
     const movil=panel.clientWidth<550;
     panel.querySelectorAll('.coleccionCarta').forEach(n=>{
-      if(n.closest('.sobresApertura,.visor3d'))return;
+      if(n.closest('.sobresApertura,.visor3d,.coleccionVueloCarta'))return;
       if(!n.getClientRects().length)return;
       const p=n.parentElement,clase=p.classList;let alto=p.clientHeight,ancho=p.clientWidth;
-      const navegador=clase.contains('coleccionNavegadorCarta');
-      if(navegador){
-        // El carrusel no usa una segunda escena WebGL por carta: una ficha
-        // real, ligera, flota por cada posición. La del centro abre el visor
-        // completo cuando el jugador la confirma.
-        const escena=p.closest('.coleccionEscenaArchivo'),limiteAlto=Math.max(160,Math.min(490,(escena?.clientHeight||alto)*.68)),proporcion=movil?(panel.clientHeight<650?.48:.54):.33;
-        alto=limiteAlto;ancho=Math.min(limiteAlto/1.4,Math.max(118,(escena?.clientWidth||ancho)*proporcion));
-        n.style.zoom='1';
-      }
       // Las filas de la lista crecen con el ancho de sus tres columnas. No
       // dependemos de la altura visible: el resto se recorre con scroll.
       const mini=clase.contains('coleccionMini');
-      if(mini&&!navegador){
+      if(mini){
         alto=280;ancho=206;
         // La biblioteca puede ser mucho más ancha que el diálogo anterior.
         // Conservamos tres columnas, pero nunca dejamos que una miniatura sea
@@ -101,7 +92,6 @@
       }
       alto=Math.min(alto,movil?470:480);ancho-=6;
       const h=Math.max(28,Math.min(alto,ancho*1.4)),w=h/1.4;
-      if(navegador){p.style.setProperty('--archivo-carta-w',w+'px');p.style.flexBasis=w+'px';p.parentElement?.style.setProperty('--archivo-carta-w',w+'px');}
       n.style.height=h+'px';n.style.width=w+'px';n.style.flex='0 0 auto';n.style.setProperty('--cw',w+'px');n.style.setProperty('--ch',h+'px');n.style.fontSize=(w*.081)+'px';
       // Sólo ajustamos texto al espacio; marco, orbes y composición son los del juego.
       const texto=n.querySelector('.pieCarta .txt');if(texto){texto.style.fontSize='';const max=h*.47;let tam=parseFloat(getComputedStyle(texto).fontSize);for(let i=0;i<8&&texto.scrollHeight>max&&tam>10;i++){tam=Math.max(10,tam*.93);texto.style.fontSize=tam+'px';}}
@@ -109,8 +99,13 @@
     if(restaurarLista&&s.vista==='cartas'){
       const grid=contenido.querySelector('.coleccionRejilla');
       if(grid){
-        if(carruselCartas){carruselCartas.centrar(s.cartaSeleccionada||focoLista,false);const tarjeta=[...grid.children].find(n=>n.dataset.carta===(s.cartaSeleccionada||focoLista));tarjeta?.focus({preventScroll:true});}
-        else{grid.scrollTop=s.desplazamiento;const tarjeta=[...grid.children].find(n=>n.dataset.carta===focoLista);tarjeta?.focus({preventScroll:true});}
+        // El archivo sí usa desplazamiento suave para los gestos normales,
+        // pero volver del visor debe recuperar exactamente la fila desde la
+        // que se abrió; de otro modo el navegador sigue animando el salto y
+        // deja al usuario mirando una posición intermedia.
+        const comportamiento=grid.style.scrollBehavior,encaje=grid.style.scrollSnapType;grid.style.scrollBehavior='auto';grid.style.scrollSnapType='none';grid.scrollTop=s.desplazamiento;void grid.offsetHeight;
+        requestAnimationFrame(()=>{if(!grid.isConnected)return;if(comportamiento)grid.style.scrollBehavior=comportamiento;else grid.style.removeProperty('scroll-behavior');if(encaje)grid.style.scrollSnapType=encaje;else grid.style.removeProperty('scroll-snap-type');});
+        const tarjeta=[...grid.children].find(n=>n.dataset.carta===focoLista);tarjeta?.focus({preventScroll:true});
       }
       restaurarLista=false;focoLista=null;
     }
@@ -173,10 +168,10 @@
     return true;
   }
   function falloGuardado(){mensaje('No se pudo guardar. Libera espacio en el navegador e inténtalo otra vez.',true);}
-  function cambio(){if(!panel?.open||guardando||finalCampana?.confirmando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
-  function arteActualizado(){if(!panel?.open)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
+  function cambio(){if(!panel?.open||guardando||finalCampana?.confirmando||transicionDetalle)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
+  function arteActualizado(){if(!panel?.open||transicionDetalle)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
   function nombresActualizados(){
-    if(!panel?.open)return;
+    if(!panel?.open||transicionDetalle)return;
     if(s.vista==='detalle')dibujarDetalle();
     else if(s.vista==='cartas')dibujarLista();
     else if(s.vista==='contenidoSobre')dibujarContenidoSobre();
@@ -188,7 +183,7 @@
     cartas.prepend(icono('libro'));sobres.prepend(icono('sobre'));sobres.append(crear('span','coleccionNumero',m.sobres()));
     cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
   }
-  function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista){const lista=contenido.querySelector('.coleccionRejilla');s.desplazamiento=carruselCartas?lista?.scrollLeft||0:lista?.scrollTop||0;}}
+  function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista){const lista=contenido.querySelector('.coleccionRejilla');s.desplazamiento=lista?.scrollTop||0;}}
   function ir(vista){if(esFinalCampana()&&vista!=='recompensa')return;if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
   function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){destruirCarruselCartas();dibujarSobres();return;}destruirApertura();destruirCarrusel();destruirCarruselCartas();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
@@ -196,10 +191,9 @@
     const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
     return modelo().ids().filter(id=>{const c=dato(id);return (!q||normalizar(c.n+' '+c.sub).includes(q))&&(s.tipo==='todos'||c.t===s.tipo)&&(!enMazo||enMazo.has(id))&&(s.mazo!=='cajon'||c.set==='cajon');}).sort((a,b)=>{const x=dato(a),y=dato(b);return relevancia(a)-relevancia(b)||Number(y.t==='protagonista')-Number(x.t==='protagonista')||(Number(x.c)||0)-(Number(y.c)||0)||x.n.localeCompare(y.n,'es');});
   }
-  /* El Archivo no es una rejilla dentro de otro cuadro: es la antesala del
-     visor. Las cartas reales forman un carrusel nativo, y sólo la elegida
-     ocupa el primer plano. Así no creamos 135 escenas WebGL ni sacrificamos
-     la lectura/fluidez de los teléfonos. */
+  /* El Archivo conserva la biblioteca que se recorre: tres cartas por fila,
+     scroll vertical y las cartas reales. El visor inmersivo aparece al elegir
+     una; no necesitamos una escena WebGL por cada miniatura. */
   function dibujarGaleria(){
     const filtros=crear('div','coleccionFiltros coleccionFiltrosInmersivos'),buscar=crear('label','coleccionBuscar');buscar.append(icono('buscar'));
     const input=crear('input');input.type='search';input.placeholder='Buscar una carta…';input.setAttribute('aria-label','Buscar cartas por nombre');input.value=s.busqueda;input.autocomplete='off';
@@ -210,68 +204,32 @@
     const escena=crear('section','coleccionEscenaArchivo');escena.setAttribute('aria-label','Archivo inmersivo de cartas');
     const motas=crear('div','coleccionArchivoMotas');motas.setAttribute('aria-hidden','true');
     const pedestal=crear('div','coleccionArchivoPedestal');pedestal.setAttribute('aria-hidden','true');
-    const grid=crear('div','coleccionRejilla coleccionCarruselCartas');grid.setAttribute('role','listbox');grid.setAttribute('aria-label','Cartas de tu colección. Usa flechas, Inicio, Fin o desliza para recorrerlas.');grid.tabIndex=0;
-    const anterior=boton('‹',()=>carruselCartas?.mover(-1),'coleccionNavegarCarta coleccionNavegarAnterior');anterior.setAttribute('aria-label','Carta anterior');
-    const siguiente=boton('›',()=>carruselCartas?.mover(1),'coleccionNavegarCarta coleccionNavegarSiguiente');siguiente.setAttribute('aria-label','Carta siguiente');
-    const meta=crear('div','coleccionCartaActual'),nombre=crear('strong','coleccionCartaActualNombre'),sub=crear('span','coleccionCartaActualSub'),copias=crear('span','coleccionCartaActualCopias'),abrir=boton('Abrir visualizador',()=>{if(s.cartaSeleccionada)verCarta(s.cartaSeleccionada);},'coleccionAbrirCarta');abrir.setAttribute('aria-label','Abrir la carta seleccionada en el visualizador');meta.append(nombre,sub,copias,abrir);
-    const resumen=crear('p','coleccionResumen');resumen.setAttribute('role','status');resumen.setAttribute('aria-live','polite');
-    const pista=crear('p','coleccionArchivoPista','Desliza para explorar · Selecciona una carta para traerla al frente · Abre el visualizador para cambiar su edición');
-    escena.append(motas,pedestal,grid,anterior,siguiente,meta,resumen,pista);contenido.append(filtros,escena);dibujarLista();
+    const grid=crear('div','coleccionRejilla coleccionArchivoRejilla');grid.setAttribute('role','region');grid.setAttribute('aria-label','Cartas de tu colección. Desplázate para recorrerlas y abre una para verla en detalle.');grid.tabIndex=0;
+    grid.addEventListener('scroll',()=>{if(grid.isConnected&&!restaurarLista)s.desplazamiento=grid.scrollTop;},{passive:true});
+    const resumen=crear('p','coleccionResumen coleccionResumenArchivo');resumen.setAttribute('role','status');resumen.setAttribute('aria-live','polite');
+    escena.append(motas,pedestal,grid,resumen);contenido.append(filtros,escena);dibujarLista();
   }
   function destruirCarruselCartas(){carruselCartas?.destruir();carruselCartas=null;}
   function dibujarLista(){
     const grid=contenido.querySelector('.coleccionRejilla');if(!grid)return;
     destruirCarruselCartas();
-    const ids=idsFiltrados(),resumen=contenido.querySelector('.coleccionResumen'),meta=contenido.querySelector('.coleccionCartaActual');restaurarLista=true;
+    const ids=idsFiltrados(),resumen=contenido.querySelector('.coleccionResumen');restaurarLista=true;
     if(grid.contains(document.activeElement))focoLista=document.activeElement.dataset.carta||null;
     grid.replaceChildren();
     if(!ids.length){
       resumen.textContent='No hay cartas con esos filtros.';
-      const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.desplazamiento=0;dibujarLista();}));grid.append(vacio);meta?.setAttribute('hidden','');programarAjuste();return;
+      const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.desplazamiento=0;dibujarLista();}));grid.append(vacio);programarAjuste();return;
     }
-    meta?.removeAttribute('hidden');
-    const botones=[];
+    resumen.textContent=ids.length+' cartas'+(s.busqueda?' encontradas':' en tu colección')+' · Elige una para verla en el visor';
     ids.forEach(id=>{
-      const c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v)),b=boton('',()=>{if(!omitirClick)seleccionar(id,true,true);},'coleccionMini coleccionNavegadorCarta');b.dataset.carta=id;b.id='coleccionArchivoCarta_'+id;b.setAttribute('role','option');b.setAttribute('aria-label',c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Seleccionar carta.');
+      const c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v));let b;
+      b=boton('',()=>abrirCartaDesdeArchivo(id,b),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
       const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');
       const pie=crear('span','coleccionMiniPie'),puntos=crear('span','coleccionPuntos');
       propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
-      pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);botones.push(b);
+      pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);
     });
-    let indice=Math.max(0,ids.indexOf(ids.includes(s.cartaSeleccionada)?s.cartaSeleccionada:(focoLista&&ids.includes(focoLista)?focoLista:ids[0]))),raf=0,arrastre=null,omitirClick=false;
-    const eventos=new AbortController();
-    const preferenciaReducida=()=>matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const cercano=()=>{
-      const centro=grid.scrollLeft+grid.clientWidth/2;let mejor=0,distancia=Infinity;
-      botones.forEach((b,i)=>{const d=Math.abs(b.offsetLeft+b.offsetWidth/2-centro);if(d<distancia){distancia=d;mejor=i;}});return mejor;
-    };
-    const centrar=(i,suave=true)=>{
-      const b=botones[i];if(!b)return;
-      const destino=Math.max(0,b.offsetLeft+b.offsetWidth/2-grid.clientWidth/2);
-      grid.scrollTo({left:destino,behavior:suave&&!preferenciaReducida()?'smooth':'auto'});
-    };
-    function actualizar(i,anunciar=false){
-      indice=Math.max(0,Math.min(ids.length-1,i));const id=ids[indice],c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v));s.cartaSeleccionada=id;
-      botones.forEach((b,n)=>{const distancia=Math.max(-5,Math.min(5,n-indice));b.dataset.profundidad=String(distancia);b.classList.toggle('seleccionada',n===indice);b.setAttribute('aria-selected',String(n===indice));b.tabIndex=n===indice?0:-1;});
-      grid.setAttribute('aria-activedescendant',botones[indice].id);
-      const nombre=meta?.querySelector('.coleccionCartaActualNombre'),sub=meta?.querySelector('.coleccionCartaActualSub'),copias=meta?.querySelector('.coleccionCartaActualCopias');
-      if(nombre)nombre.textContent=c.n;if(sub)sub.textContent=limpiarTexto(c.sub);if(copias)copias.textContent=(indice+1)+' / '+ids.length+' · '+propias.map(v=>NOMBRES[v]).join(' · ')+' · En uso: '+NOMBRES[a];
-      resumen.textContent=(indice+1)+' de '+ids.length+' · '+c.n+(anunciar?' seleccionada':'');
-    }
-    function seleccionar(id,centrarCarta=true,anunciar=false){const i=ids.indexOf(id);if(i<0)return;actualizar(i,anunciar);if(centrarCarta)centrar(i);sonido('ui_hover');}
-    grid.addEventListener('scroll',()=>{if(!grid.isConnected||arrastre)return;if(raf)return;raf=requestAnimationFrame(()=>{raf=0;actualizar(cercano());});},{passive:true,signal:eventos.signal});
-    grid.addEventListener('wheel',e=>{if(Math.abs(e.deltaY)<=Math.abs(e.deltaX))return;e.preventDefault();grid.scrollLeft+=e.deltaY;},{passive:false,signal:eventos.signal});
-    grid.addEventListener('keydown',e=>{let destino=null;if(e.key==='ArrowLeft')destino=indice-1;else if(e.key==='ArrowRight')destino=indice+1;else if(e.key==='Home')destino=0;else if(e.key==='End')destino=ids.length-1;else if((e.key==='Enter'||e.key===' ')&&s.cartaSeleccionada){e.preventDefault();verCarta(s.cartaSeleccionada);return;}if(destino==null)return;e.preventDefault();destino=Math.max(0,Math.min(ids.length-1,destino));seleccionar(ids[destino],true,true);},{signal:eventos.signal});
-    grid.addEventListener('pointerdown',e=>{if(e.pointerType==='mouse'&&e.button!==0)return;arrastre={x:e.clientX,desplazamiento:grid.scrollLeft};grid.setPointerCapture?.(e.pointerId);},{signal:eventos.signal});
-    grid.addEventListener('pointermove',e=>{if(!arrastre)return;const dx=e.clientX-arrastre.x;if(Math.abs(dx)>3)omitirClick=true;grid.scrollLeft=arrastre.desplazamiento-dx;},{signal:eventos.signal});
-    const soltar=()=>{if(!arrastre)return;arrastre=null;const i=cercano();actualizar(i);centrar(i);setTimeout(()=>{omitirClick=false;},0);};grid.addEventListener('pointerup',soltar,{signal:eventos.signal});grid.addEventListener('pointercancel',soltar,{signal:eventos.signal});
-    carruselCartas={
-      centrar:(id,suave)=>{const i=ids.indexOf(id);if(i>=0){actualizar(i);centrar(i,suave);}},
-      mover:paso=>{const i=Math.max(0,Math.min(ids.length-1,indice+paso));seleccionar(ids[i],true,true);},
-      medir:()=>{if(!grid.isConnected)return;centrar(indice,false);},
-      destruir:()=>{eventos.abort();if(raf)cancelAnimationFrame(raf);arrastre=null;}
-    };
-    actualizar(indice);requestAnimationFrame(()=>{if(carruselCartas)centrar(indice,false);});programarAjuste();
+    programarAjuste();
   }
   function actualizarCarta(nodo){
     const soporte=nodo.matches('[data-arte-id]')?nodo:nodo.querySelector('[data-arte-id]');if(!soporte)return;
@@ -316,6 +274,57 @@
     const caja=crear('div','coleccionDemoEdiciones'),accion=boton(texto[s.demoEdiciones],()=>{s.demoEdiciones=siguiente[s.demoEdiciones];dibujarDetalle();mensaje(nota[s.demoEdiciones]);},'coleccionBeta coleccionDemoCambiar');
     accion.dataset.demoEdiciones=s.demoEdiciones;accion.setAttribute('aria-label',texto[s.demoEdiciones]+'. '+nota[s.demoEdiciones]);
     caja.append(accion,crear('p','coleccionDemoNota',nota[s.demoEdiciones]));return caja;
+  }
+  function limpiarTransicionDetalle(transicion=transicionDetalle){
+    if(!transicion||transicion!==transicionDetalle)return;
+    clearTimeout(transicion.temporizador);clearTimeout(transicion.entrega);
+    transicion.vuelo?.remove();
+    transicion.rejilla?.classList.remove('coleccionRejillaSaliendo');
+    transicion.rejilla?.removeAttribute('aria-busy');transicion.rejilla?.removeAttribute('inert');
+    transicion.bloqueados?.forEach(n=>n?.removeAttribute('inert'));
+    transicion.cartas?.forEach(n=>{delete n.dataset.animacion;n.removeAttribute('aria-hidden');n.style.removeProperty('--coleccion-salida-x');n.style.removeProperty('--coleccion-salida-y');n.style.removeProperty('--coleccion-salida-giro');n.style.removeProperty('--coleccion-salida-demora');});
+    panel?.classList.remove('coleccionAbriendoCarta');panel?.removeAttribute('data-transicion');panel?.removeAttribute('data-carta-activa');
+    transicionDetalle=null;
+  }
+  function abrirCartaDesdeArchivo(id,miniatura){
+    if(transicionDetalle||!panel?.open||s.vista!=='cartas')return;
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){verCarta(id);return;}
+    const rejilla=contenido.querySelector('.coleccionRejilla'),ficha=miniatura?.querySelector('.coleccionCarta');
+    if(!rejilla||!ficha||!ficha.isConnected){verCarta(id);return;}
+    const origen=ficha.getBoundingClientRect();
+    if(origen.width<12||origen.height<12){verCarta(id);return;}
+    const vuelo=ficha.cloneNode(true);vuelo.classList.add('coleccionVueloCarta');vuelo.setAttribute('aria-hidden','true');
+    // La miniatura usa zoom para encajar en su columna. El clon ya recibe su
+    // rectángulo visible, así que reiniciamos ese zoom para no ampliarlo dos
+    // veces durante el viaje hacia el visor.
+    vuelo.style.zoom='1';vuelo.style.left=origen.left+'px';vuelo.style.top=origen.top+'px';vuelo.style.width=origen.width+'px';vuelo.style.height=origen.height+'px';
+    vuelo.style.setProperty('--cw',origen.width+'px');vuelo.style.setProperty('--ch',origen.height+'px');vuelo.style.fontSize=(origen.width*.081)+'px';
+    const movil=innerWidth<760,centroX=innerWidth*(movil?.5:.39),centroY=innerHeight*(movil?.45:.5),altoDestino=Math.max(origen.height*1.08,Math.min(movil?innerHeight*.57:innerHeight*.66,movil?390:520));
+    vuelo.style.setProperty('--coleccion-vuelo-x',Math.round(centroX-(origen.left+origen.width/2))+'px');
+    vuelo.style.setProperty('--coleccion-vuelo-y',Math.round(centroY-(origen.top+origen.height/2))+'px');
+    vuelo.style.setProperty('--coleccion-vuelo-escala',String(altoDestino/origen.height));
+    panel.append(vuelo);
+    guardarPosicionLista();focoLista=id;s.cartaSeleccionada=id;
+    const cartas=[...rejilla.querySelectorAll('.coleccionMini')],bloqueados=[rejilla,contenido.querySelector('.coleccionFiltrosInmersivos'),barra].filter(Boolean);
+    const transicion={vuelo,rejilla,cartas,bloqueados,temporizador:0,entrega:0};transicionDetalle=transicion;
+    const centro={x:origen.left+origen.width/2,y:origen.top+origen.height/2};
+    cartas.forEach((n,indice)=>{
+      n.dataset.animacion=n===miniatura?'entra':'sale';n.tabIndex=-1;
+      if(n!==miniatura){
+        n.setAttribute('aria-hidden','true');const r=n.getBoundingClientRect(),dx=r.left+r.width/2-centro.x,dy=r.top+r.height/2-centro.y,distancia=Math.max(1,Math.hypot(dx,dy)),impulso=Math.min(500,180+distancia*.38),lado=dx/distancia,alto=dy/distancia;
+        n.style.setProperty('--coleccion-salida-x',Math.round(lado*impulso)+'px');n.style.setProperty('--coleccion-salida-y',Math.round(alto*impulso*.72)+'px');n.style.setProperty('--coleccion-salida-giro',((indice%2?1:-1)*(7+(indice%4)*2))+'deg');n.style.setProperty('--coleccion-salida-demora',Math.min(110,(indice%7)*17)+'ms');
+      }
+    });
+    bloqueados.forEach(n=>n.setAttribute('inert',''));
+    rejilla.setAttribute('aria-busy','true');panel.dataset.transicion='abrir-carta';panel.dataset.cartaActiva=id;mensaje('Abriendo '+dato(id).n+'…');
+    requestAnimationFrame(()=>{if(transicionDetalle!==transicion)return;panel.classList.add('coleccionAbriendoCarta');rejilla.classList.add('coleccionRejillaSaliendo');vuelo.classList.add('coleccionVueloCartaEntra');});
+    transicion.temporizador=setTimeout(()=>{
+      if(transicionDetalle!==transicion||!panel?.open||s.vista!=='cartas')return;
+      s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';
+      panel.classList.remove('coleccionAbriendoCarta');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
+      s.vista='detalle';mensaje('');actualizarCabecera();dibujar();
+      vuelo.classList.add('coleccionVueloCartaEntregada');transicion.entrega=setTimeout(()=>limpiarTransicionDetalle(transicion),190);sonido('ui_confirm');
+    },560);
   }
   function verCarta(id){s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');}
   // El detalle es la carta en 3D (visor-3d.js incrustado): una escena por carta

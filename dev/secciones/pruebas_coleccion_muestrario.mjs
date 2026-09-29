@@ -1,4 +1,4 @@
-/* Recorre las tres series en el Archivo/carrusel real, con memoria temporal.
+/* Recorre las tres series en el Archivo de tres columnas, con memoria temporal.
    PLAYWRIGHT_MODULE permite usar la instalación del entorno sin dependencias
    nuevas. --capturas /ruta guarda el Archivo y los controles de revisión. */
 import assert from 'node:assert/strict';
@@ -29,14 +29,18 @@ try{
           return {cantidad:minis.length,total:m.ids().length,
             inventario:m.ids().every(id=>m.elegido(id)===acabado&&['normal','foil','dorado'].every(a=>m.cantidad(id,a)===1)),
             cartas:minis.every(n=>{const carta=n.querySelector('.coleccionCarta'),img=carta.querySelector('img'),v=CAOZ_ARTE.version(n.dataset.carta,acabado);return carta.dataset.coleccionAcabado===acabado&&(!img||img.getAttribute('src')===v.url);}),
-            marcadores:minis.every(n=>{const ps=[...n.querySelectorAll('.coleccionPuntos>i')];return ps.map(p=>p.dataset.edicion).join(',')===['normal','foil','dorado'].filter(a=>m.tiene(n.dataset.carta,a)).join(',')&&ps.filter(p=>p.classList.contains('elegida')).map(p=>p.dataset.edicion).join(',')===acabado&&!n.querySelector('.coleccionCopias')&&n.querySelector('.coleccionMiniInfo').textContent.trim()==='';}),
-            marcadorActivo:(()=>{const n=grid.querySelector('.coleccionMini[aria-selected="true"]'),r=n?.querySelector('.coleccionCarta')?.getBoundingClientRect();return !!n&&[...n.querySelectorAll('.coleccionPuntos>i')].every(p=>{const b=p.getBoundingClientRect(),s=getComputedStyle(p);return p.classList.contains('propia')&&b.width>0&&b.height>0&&b.top>=r.bottom-1&&s.display!=='none'&&s.visibility==='visible'&&Number(s.opacity)>0;});})(),
-            carrusel:grid.classList.contains('coleccionCarruselCartas')&&grid.scrollWidth>grid.clientWidth+1,
+            marcadores:minis.every(n=>{const ps=[...n.querySelectorAll('.coleccionPuntos>i')],r=n.querySelector('.coleccionCarta').getBoundingClientRect();return ps.map(p=>p.dataset.edicion).join(',')===['normal','foil','dorado'].filter(a=>m.tiene(n.dataset.carta,a)).join(',')&&ps.filter(p=>p.classList.contains('elegida')).map(p=>p.dataset.edicion).join(',')===acabado&&ps.every(p=>{const b=p.getBoundingClientRect(),s=getComputedStyle(p);return p.classList.contains('propia')&&b.width>0&&b.height>0&&b.top>=r.bottom-1&&s.display!=='none'&&s.visibility==='visible'&&Number(s.opacity)>0;})&&!n.querySelector('.coleccionCopias')&&n.querySelector('.coleccionMiniInfo').textContent.trim()==='';}),
+            tresColumnas:getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).filter(Boolean).length===3,
+            archivoVertical:grid.classList.contains('coleccionArchivoRejilla')&&grid.scrollHeight>grid.clientHeight+1&&grid.scrollWidth<=grid.clientWidth+1,
+            region:grid.getAttribute('role')==='region'&&!grid.classList.contains('coleccionCarruselCartas'),
             desborde:document.documentElement.scrollWidth>innerWidth};
         },acabado);
         assert.equal(datos.cantidad,datos.total);assert.ok(datos.inventario&&datos.cartas,'Todas las cartas muestran la serie elegida, con una copia por acabado');
-        assert.ok(datos.marcadores&&datos.marcadorActivo,'Sólo las ediciones propias tienen un marcador activo visible y la serie en uso está elegida, sin nombres ni contadores en el pie');
-        assert.ok(datos.carrusel);assert.equal(datos.desborde,false);
+        assert.ok(datos.marcadores,'Sólo las ediciones propias tienen un marcador visible y la serie en uso está elegida, sin nombres ni contadores en el pie');
+        assert.ok(datos.tresColumnas&&datos.archivoVertical&&datos.region,'El Archivo conserva tres columnas con scroll vertical, no un carrusel');
+        const recorrido=await pagina.evaluate(()=>{const grid=document.querySelector('.coleccionRejilla'),maximo=grid.scrollHeight-grid.clientHeight,conducta=grid.style.scrollBehavior;grid.style.scrollBehavior='auto';grid.scrollTop=Math.round(maximo*.52);const desplazamiento=grid.scrollTop;grid.style.scrollBehavior=conducta;return {maximo,desplazamiento};});
+        assert.ok(recorrido.maximo>20&&recorrido.desplazamiento>1,'Cada serie se puede recorrer verticalmente');
+        assert.equal(datos.desborde,false);
         if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-'+acabado+'.png')});
       }
       await pagina.locator('.coleccionCerrar').click();
@@ -50,7 +54,7 @@ try{
       assert.ok(await pagina.evaluate(()=>CAOZ_COLECCION.ids().every(id=>CAOZ_COLECCION.elegido(id)==='foil'&&CAOZ_COLECCION.cantidad(id)===3)),'Cambiar serie recarga el fixture sin sumar copias');
       const almacen=await contexto.storageState();
       assert.ok(almacen.origins.every(o=>o.localStorage.length===1&&o.localStorage[0].name==='centinela-muestrario'&&o.localStorage[0].value==='intacto'),'El muestrario no escribe progreso persistente');
-      assert.deepEqual(errores,[]);console.log('✓ '+vista+' '+width+'×'+height+': tres series completas, marcadores propios sin texto, elegida, selector, enlaces y memoria temporal');
+      assert.deepEqual(errores,[]);console.log('✓ '+vista+' '+width+'×'+height+': tres series completas, archivo vertical de tres columnas, marcadores propios sin texto, selector, enlaces y memoria temporal');
     }finally{await contexto.close();}
   }
 }finally{await navegador?.close();await new Promise(resolve=>servidor.close(resolve));}
