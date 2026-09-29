@@ -971,6 +971,9 @@
 #coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor{
   position:absolute!important;inset:0!important;z-index:0!important;display:block;
   overflow:hidden;pointer-events:none;isolation:isolate;
+  /* La misma variable mueve escena, halo y tarjeta dentro del visor. La
+     transición ocurre sobre este huésped persistente, no entre dos fondos. */
+  transition:--reserva-der .74s cubic-bezier(.16,.78,.18,1),--controles-alto .74s cubic-bezier(.16,.78,.18,1);
 }
 #coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor[hidden]{display:none}
 #coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor .visor3dMundo{width:100%;height:100%}
