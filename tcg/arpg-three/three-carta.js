@@ -42,7 +42,7 @@
         sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nuniform float uTiempo,uDestellos,uDisuelve;uniform sampler2D uMascaraD;\nfloat azarD(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}\nfloat ruidoD(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(azarD(i),azarD(i+vec2(1.,0.)),f.x),mix(azarD(i+vec2(0.,1.)),azarD(i+1.),f.x),f.y);}')
           .replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat quema=ruidoD(vMapUv*vec2(9.,12.))*.6+ruidoD(vMapUv*vec2(31.,40.))*.4;if(uDisuelve>0.&&quema<uDisuelve*1.15-.05)discard;')
           .replace('#include <opaque_fragment>',`{vec4 mk=texture2D(uMascaraD,vMapUv);vec2 g=vMapUv*vec2(64.,90.),id=floor(g),f=fract(g)-.5;float r=azarD(id);vec2 off=vec2(azarD(id+3.1),azarD(id+7.7))-.5;
-            float tw=pow(.5+.5*sin(r*90.+normal.x*45.-normal.y*32.+uTiempo*1.3),28.);outgoingLight+=vec3(1.,.96,.88)*smoothstep(.2,0.,length(f-off*.6))*step(.78,r)*tw*mk.g*uDestellos*4.;
+            float tw=pow(.5+.5*sin(r*90.+normal.x*45.-normal.y*32.+uTiempo*1.3),28.);outgoingLight+=vec3(1.,.96,.88)*(1.-smoothstep(0.,.2,length(f-off*.6)))*step(.78,r)*tw*mk.g*uDestellos*4.;
             if(uDisuelve>0.){float borde=1.-smoothstep(0.,.09,quema-(uDisuelve*1.15-.05));outgoingLight=mix(outgoingLight,vec3(4.,1.5,.35),borde);}}
 #include <opaque_fragment>`);
       };
