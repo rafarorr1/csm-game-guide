@@ -814,7 +814,7 @@
 }
 #coleccionPanel[data-vista="cartas"] .coleccionCabecera{
   position:absolute;z-index:9;left:max(22px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));
-  width:auto;min-height:0;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  width:fit-content!important;max-width:calc(100vw - 76px)!important;min-height:0;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
   background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
 }
 #coleccionPanel[data-vista="cartas"] .coleccionTitulos{display:block}
@@ -929,4 +929,56 @@
 @media(prefers-reduced-motion:reduce){
   #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{scroll-behavior:auto}
   #coleccionPanel.coleccionAbriendoCarta :is(.coleccionArchivoRejilla .coleccionMini,.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado),#coleccionPanel .coleccionVueloCarta{transition:none}
+}
+
+/* Un solo mundo para Archivo y detalle -----------------------------------
+   El fondo no se reproduce en dos pantallas: este huésped conserva la escena
+   real del visor mientras la rejilla se recorre y también cuando una ficha se
+   convierte en la carta central. Los controles sólo flotan sobre la escena. */
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor{
+  position:absolute!important;inset:0!important;z-index:0!important;display:block;
+  overflow:hidden;pointer-events:none;isolation:isolate;
+}
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor[hidden]{display:none}
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor .visor3dMundo{width:100%;height:100%}
+#coleccionPanel[data-mundo] .coleccionInterior>:not(.coleccionMundoVisor):not(.barridoModal){position:relative;z-index:2}
+
+/* El Archivo usa exactamente la noche, halo, motas y pedestal del visor;
+   se eliminan el aro y el degradado que antes intentaban imitarla con CSS. */
+#coleccionPanel[data-mundo="archivo"] .coleccionInterior{background:transparent!important}
+#coleccionPanel[data-mundo="archivo"] .coleccionInterior::before,
+#coleccionPanel[data-mundo="archivo"] .coleccionInterior::after,
+#coleccionPanel[data-mundo="archivo"] .coleccionEscenaArchivo::before{display:none!important}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor{--reserva-der:0px}
+
+/* Las fichas siguen en tres columnas y scroll vertical, pero cada una tiene
+   una deriva propia dentro del mundo. La caja de clic no cambia de tamaño. */
+#coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta{
+  animation:coleccionCartaFlota 4.8s ease-in-out var(--archivo-flota-demora,0s) infinite alternate;
+  will-change:translate,rotate;
+}
+@keyframes coleccionCartaFlota{
+  from{translate:0 0;rotate:0deg}
+  to{translate:0 var(--archivo-flota-y,-5px);rotate:var(--archivo-flota-giro,.5deg)}
+}
+
+/* En el detalle el mismo host deja libre la columna de ediciones. La capa de
+   controles no roba el arrastre de la carta: sólo sus botones reciben puntero. */
+#coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:360px;pointer-events:auto}
+#coleccionPanel[data-mundo="detalle"] .coleccionInterior{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionContenido{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] :is(.coleccionMundoVisor,.coleccionDetalle3D.conMundoVisor .coleccionVersiones,.coleccionDetalleCabecera .coleccionAtras,.coleccionCabecera .coleccionCerrar){pointer-events:auto}
+
+@media(max-width:760px){
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:0px}
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor .visor3dEscena{inset:0 0 var(--controles-alto,250px) 0;margin-right:0}
+  /* El acabado se elige abajo en móvil: las acciones de la carta descansan
+     inmediatamente encima, siempre dentro de la parte visible de la escena. */
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor .visor3dControles{
+    right:10px;top:auto;bottom:calc(var(--controles-alto,250px) + 10px);translate:0;
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta{animation:none}
 }

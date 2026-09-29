@@ -13,7 +13,7 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
-  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null;
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
@@ -57,13 +57,46 @@
     if(anterior){anterior.cancelada=true;anterior.componente?.destruir();}
     panel?.classList.remove('coleccionAbriendoSobre');
   }
+  // Archivo y detalle comparten una única escena persistente. Así el catálogo
+  // no intenta imitar al visor: sus controles y cartas viven sobre el mismo
+  // halo, motas y pedestal que recibe la carta al abrirse.
+  function montarMundoVisor(){
+    if(!mundoHost||mundo3D||!window.CAOZ_VISOR3D?.montarMundo)return;
+    mundo3D=window.CAOZ_VISOR3D.montarMundo(mundoHost,{inicial:'normal',logoUrl:'art/logo.webp',sonar:sonido});
+  }
+  function soltarMundoVisor(){
+    mundo3D?.destruir();mundo3D=null;
+    mundoHost?.replaceChildren();
+    panel?.removeAttribute('data-mundo');
+  }
+  function tonoMundoVisor(id){
+    if(!id||!mundo3D?.actualizar)return;
+    mundo3D.actualizar({edicion:modelo().elegido(id)});
+  }
+  function mostrarCartaEnMundo(id){
+    if(!id||!mundo3D?.mostrarCarta)return false;
+    const c=dato(id);
+    tonoMundoVisor(id);
+    mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),ediciones:edicionesDe(id)});
+    return true;
+  }
+  function activarMundo(vista){
+    const activo=vista==='cartas'||vista==='detalle';
+    // La continuidad importa entre Archivo y detalle. Fuera de ese recorrido
+    // desmontamos el RAF/canvases para que las pestañas convencionales no dejen
+    // una escena invisible consumiendo recursos.
+    if(!activo){if(mundo3D)soltarMundoVisor();else{mundoHost?.setAttribute('hidden','');panel?.removeAttribute('data-mundo');}return;}
+    mundoHost?.removeAttribute('hidden');montarMundoVisor();
+    if(vista==='cartas')mundoHost?.setAttribute('aria-hidden','true');else mundoHost?.removeAttribute('aria-hidden');
+    panel.dataset.mundo=vista==='cartas'?'archivo':'detalle';
+  }
   function medida(){
     if(!panel?.open)return;
     const v=window.visualViewport,alto=v?v.height:innerHeight;
     panel.style.setProperty('--coleccion-alto',alto+'px');panel.style.setProperty('--coleccion-top',(v?v.offsetTop:0)+'px');
     panel.classList.toggle('coleccionBaja',alto<650);panel.classList.toggle('coleccionTeclado',alto<430);
     if(s.vista==='detalle')paginacionReglas();
-    encajarCartas();carruselSobres?.medir();carruselCartas?.medir();if(s.vista==='recompensa')medirRecompensa();
+    encajarCartas();mundo3D?.medir();carruselSobres?.medir();carruselCartas?.medir();if(s.vista==='recompensa')medirRecompensa();
   }
   function encajarCartas(){
     if(!panel?.open)return;
@@ -114,9 +147,9 @@
   function crearPanel(){
     if(panel)return;
     panel=crear('dialog');panel.id='coleccionPanel';panel.setAttribute('aria-labelledby','coleccionTitulo');
-    panel.innerHTML='<div class="coleccionInterior"><header class="coleccionCabecera"><div class="coleccionEmblema" aria-hidden="true"></div><div class="coleccionTitulos"><span class="coleccionAntetitulo">EL ARCHIVO DEL DOMO</span><h2 id="coleccionTitulo">Colección de cartas</h2></div><button type="button" class="coleccionCerrar" aria-label="Cerrar colección"></button></header><nav class="coleccionPestanas" aria-label="Secciones de la colección"></nav><main class="coleccionContenido"></main><div class="coleccionEstado" role="status" aria-live="polite"></div><footer class="coleccionPie"><span class="coleccionTotales"></span><button type="button" class="coleccionVolver">Volver a Extras</button></footer></div>';
+    panel.innerHTML='<div class="coleccionInterior"><div class="coleccionMundoVisor" aria-hidden="true"></div><header class="coleccionCabecera"><div class="coleccionEmblema" aria-hidden="true"></div><div class="coleccionTitulos"><span class="coleccionAntetitulo">EL ARCHIVO DEL DOMO</span><h2 id="coleccionTitulo">Colección de cartas</h2></div><button type="button" class="coleccionCerrar" aria-label="Cerrar colección"></button></header><nav class="coleccionPestanas" aria-label="Secciones de la colección"></nav><main class="coleccionContenido"></main><div class="coleccionEstado" role="status" aria-live="polite"></div><footer class="coleccionPie"><span class="coleccionTotales"></span><button type="button" class="coleccionVolver">Volver a Extras</button></footer></div>';
     panel.querySelector('.coleccionEmblema').append(icono('libro'));panel.querySelector('.coleccionCerrar').append(icono('cerrar'));
-    contenido=panel.querySelector('.coleccionContenido');barra=panel.querySelector('.coleccionPestanas');estado=panel.querySelector('.coleccionEstado');
+    contenido=panel.querySelector('.coleccionContenido');barra=panel.querySelector('.coleccionPestanas');estado=panel.querySelector('.coleccionEstado');mundoHost=panel.querySelector('.coleccionMundoVisor');
     panel.querySelector('.coleccionCerrar').onclick=cerrar;panel.querySelector('.coleccionVolver').onclick=cerrar;
     panel.addEventListener('cancel',e=>{e.preventDefault();if(esFinalCampana())return;if(s.vista==='detalle')ir('cartas');else cerrar();});
     panel.addEventListener('close',limpiar);
@@ -142,7 +175,7 @@
     panel.querySelector('.coleccionVolver').textContent=origen?.id==='extras'?'Volver a Extras':'Volver';
     window.addEventListener('resize',medida);window.visualViewport?.addEventListener('resize',medida);window.visualViewport?.addEventListener('scroll',medida);
     window.addEventListener('caoz:coleccion',cambio);window.addEventListener('caoz:arte',arteActualizado);window.addEventListener('caoz:nombres',nombresActualizados);window.addEventListener('caoz:coleccion-error',falloGuardado);
-    medida();dibujar();
+    medida();activarMundo(s.vista);dibujar();
     observador=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(medida);});observador.observe(panel);observador.observe(contenido);
     if(typeof animarTransicionMenu==='function')animarTransicionMenu(panel.querySelector('.coleccionInterior'),panel);
     if(!opciones.finalCampana)panel.querySelector('.coleccionCerrar')?.focus({preventScroll:true});
@@ -150,7 +183,7 @@
   function limpiar(evento){
     // close se encola: no desmontar una Colección que ya se volvió a abrir.
     if(evento?.type==='close'&&panel?.open)return;
-    soltarEscena3D();
+    soltarEscena3D();soltarMundoVisor();
     if(evento?.type==='close'){const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();}
     destruirApertura();destruirCarrusel();destruirCarruselCartas();destruirVistasSobres();limpiarTiempos();limpiarFinalCampana();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
@@ -185,7 +218,7 @@
   }
   function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista){const lista=contenido.querySelector('.coleccionRejilla');s.desplazamiento=lista?.scrollTop||0;}}
   function ir(vista){if(esFinalCampana()&&vista!=='recompensa')return;if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
-  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){destruirCarruselCartas();dibujarSobres();return;}destruirApertura();destruirCarrusel();destruirCarruselCartas();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
+  function dibujar(){activarMundo(s.vista);actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){destruirCarruselCartas();dibujarSobres();return;}destruirApertura();destruirCarrusel();destruirCarruselCartas();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
     const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
@@ -202,12 +235,10 @@
     filtros.append(selector('Filtrar por mazo',[['todos','Todos los mazos'],...Object.keys(LEADERS).map(id=>[id,LEADERS[id].n]),['cajon','El Cajón']],s.mazo,v=>s.mazo=v));
     filtros.append(selector('Filtrar por tipo',[['todos','Todos los tipos'],['protagonista','Protagonistas'],['personaje','Personajes'],['hechizo','Hechizos'],['trampa','Trampas'],['objeto','Objetos'],['lugar','Lugares']],s.tipo,v=>s.tipo=v));
     const escena=crear('section','coleccionEscenaArchivo');escena.setAttribute('aria-label','Archivo inmersivo de cartas');
-    const motas=crear('div','coleccionArchivoMotas');motas.setAttribute('aria-hidden','true');
-    const pedestal=crear('div','coleccionArchivoPedestal');pedestal.setAttribute('aria-hidden','true');
     const grid=crear('div','coleccionRejilla coleccionArchivoRejilla');grid.setAttribute('role','region');grid.setAttribute('aria-label','Cartas de tu colección. Desplázate para recorrerlas y abre una para verla en detalle.');grid.tabIndex=0;
     grid.addEventListener('scroll',()=>{if(grid.isConnected&&!restaurarLista)s.desplazamiento=grid.scrollTop;},{passive:true});
     const resumen=crear('p','coleccionResumen coleccionResumenArchivo');resumen.setAttribute('role','status');resumen.setAttribute('aria-live','polite');
-    escena.append(motas,pedestal,grid,resumen);contenido.append(filtros,escena);dibujarLista();
+    escena.append(grid,resumen);contenido.append(filtros,escena);dibujarLista();
   }
   function destruirCarruselCartas(){carruselCartas?.destruir();carruselCartas=null;}
   function dibujarLista(){
@@ -224,6 +255,8 @@
     ids.forEach(id=>{
       const c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v));let b;
       b=boton('',()=>abrirCartaDesdeArchivo(id,b),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
+      const orden=ids.indexOf(id),altura=3+(orden%5)*1.3;b.style.setProperty('--archivo-flota-demora',(orden%9)*.23+'s');b.style.setProperty('--archivo-flota-y',-altura+'px');b.style.setProperty('--archivo-flota-giro',((orden%2?1:-1)*(0.35+(orden%4)*.18))+'deg');
+      b.addEventListener('pointerenter',()=>tonoMundoVisor(id),{passive:true});b.addEventListener('focus',()=>tonoMundoVisor(id));
       const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');
       const pie=crear('span','coleccionMiniPie'),puntos=crear('span','coleccionPuntos');
       propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
@@ -288,6 +321,7 @@
   }
   function abrirCartaDesdeArchivo(id,miniatura){
     if(transicionDetalle||!panel?.open||s.vista!=='cartas')return;
+    tonoMundoVisor(id);
     if(matchMedia('(prefers-reduced-motion: reduce)').matches){verCarta(id);return;}
     const rejilla=contenido.querySelector('.coleccionRejilla'),ficha=miniatura?.querySelector('.coleccionCarta');
     if(!rejilla||!ficha||!ficha.isConnected){verCarta(id);return;}
@@ -326,12 +360,14 @@
       vuelo.classList.add('coleccionVueloCartaEntregada');transicion.entrega=setTimeout(()=>limpiarTransicionDetalle(transicion),190);sonido('ui_confirm');
     },560);
   }
-  function verCarta(id){s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');}
+  function verCarta(id){tonoMundoVisor(id);s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');}
   // El detalle es la carta en 3D (visor-3d.js incrustado): una escena por carta
-  // que sólo cambia de edición o de copias al redibujar, sin rehacer su WebGL.
+  // que sólo cambia de edición o de copias al redibujar. Cuando está disponible
+  // el mundo persistente, no se crea una segunda escena: la carta toma el
+  // pedestal que ya estaba detrás del archivo.
   let escena3D=null;
   const edicionesDe=id=>ACABADOS.map(a=>({id:a,...estadoEdicionVisible(id,a)}));
-  function soltarEscena3D(){escena3D?.destruir();escena3D=null;}
+  function soltarEscena3D(){escena3D?.destruir();escena3D=null;mundo3D?.ocultarCarta?.();}
   function dibujarDetalle(){
     if(!s.carta){ir('cartas');return;}vaciarContenido();panel.dataset.vista='detalle';
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));
@@ -355,7 +391,22 @@
     });
     const demo=controlDemoEdiciones();if(demo)versiones.append(demo);
     const zona=crear('div','coleccionDetalle3D');
-    if(window.CAOZ_VISOR3D?.montar){
+    if(mundo3D?.mostrarCarta){
+      // Los controles quedan en el DOM de la Colección, pero la carta se dibuja
+      // dentro del mismo mundo que el archivo. La escena no se desmonta ni se
+      // vuelve a encender entre una vista y la otra.
+      zona.classList.add('con3D','conMundoVisor');zona.append(versiones);contenido.append(zona);
+      mostrarCartaEnMundo(s.carta);
+      const medirControles=()=>{
+        const alto=Math.ceil(versiones.getBoundingClientRect().height+20)+'px';
+        // En teléfono la escena y sus controles internos comparten esta reserva:
+        // así Voltear/Ampliar quedan justo arriba del panel de acabados, no debajo.
+        zona.style.setProperty('--controles-alto',alto);
+        mundoHost?.style.setProperty('--controles-alto',alto);
+        mundo3D?.medir();
+      };
+      medirControles();requestAnimationFrame(medirControles);
+    }else if(window.CAOZ_VISOR3D?.montar){
       zona.classList.add('con3D');const escenario=crear('div','coleccionEscena3D');
       if(escena3D&&escena3D.id!==s.carta)soltarEscena3D();
       if(escena3D)escenario.append(escena3D.raiz);
