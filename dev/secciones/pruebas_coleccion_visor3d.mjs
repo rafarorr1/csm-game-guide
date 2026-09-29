@@ -49,6 +49,9 @@ try{
         // La referencia se conserva en la propia página para comprobar que no
         // se cambia el mundo durante el viaje al detalle ni al volver.
         window.__coleccionMundoPrueba=mundo;
+        window.__coleccionPedestalPrueba=visor?.querySelector('.visor3dPedestal')||null;
+        const pR=window.__coleccionPedestalPrueba?.getBoundingClientRect();
+        window.__coleccionPedestalRectPrueba=pR?{left:pR.left,top:pR.top,width:pR.width,height:pR.height}:null;
         return {cubre:p.left<=1&&p.top<=1&&p.right>=innerWidth-1&&p.bottom>=innerHeight-1,
           sinMarco:parseFloat(getComputedStyle(panel).borderTopWidth)===0&&parseFloat(getComputedStyle(panel).borderRadius)===0,
           mundo:!!mundo&&panel.dataset.mundo==='archivo'&&visor?.dataset.modo==='ambiente'&&!visor.querySelector('.visor3dCuerpo,.visor3dGL'),mundoCubreMenu:[panel.querySelector('.coleccionCabecera'),panel.querySelector('.coleccionPestanas'),panel.querySelector('.coleccionFiltrosInmersivos'),rejilla].every(n=>cubre(n,rMundo)),cartasEncimaMundo:encima,
@@ -97,13 +100,13 @@ try{
       if(conMovimiento){
         await pagina.waitForFunction(id=>{
           const panel=document.querySelector('#coleccionPanel'),rejilla=panel?.querySelector('.coleccionRejilla'),elegida=rejilla?.querySelector('.coleccionMini[data-carta="'+id+'"]'),resto=[...(rejilla?.querySelectorAll('.coleccionMini')||[])].filter(n=>n!==elegida),mundo=panel?.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');
-          return panel?.dataset.transicion==='abrir-carta'&&panel.dataset.cartaActiva===id&&elegida?.dataset.animacion==='entra'&&resto.length>0&&resto.every(n=>n.dataset.animacion==='sale')&&rejilla.getAttribute('aria-busy')==='true'&&rejilla.hasAttribute('inert')&&!!panel.querySelector('.coleccionVueloCarta')&&mundo===window.__coleccionMundoPrueba&&visor?.dataset.modo==='ambiente';
+          return panel?.dataset.transicion==='abrir-carta'&&panel.dataset.cartaActiva===id&&elegida?.dataset.animacion==='entra'&&resto.length>0&&resto.every(n=>n.dataset.animacion==='sale')&&rejilla.getAttribute('aria-busy')==='true'&&rejilla.hasAttribute('inert')&&!!panel.querySelector('.coleccionVueloCarta')&&mundo===window.__coleccionMundoPrueba&&visor?.dataset.modo==='ambiente'&&visor.querySelector('.visor3dPedestal')===window.__coleccionPedestalPrueba;
         },carta,{timeout:2200});
         const transicion=await pagina.evaluate(id=>{
           const panel=document.querySelector('#coleccionPanel'),rejilla=panel.querySelector('.coleccionRejilla'),elegida=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),resto=[...rejilla.querySelectorAll('.coleccionMini')].filter(n=>n!==elegida),vuelo=panel.querySelector('.coleccionVueloCarta'),mundo=panel.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');
-          return {estado:panel.dataset.transicion,activa:panel.dataset.cartaActiva,elegida:elegida?.dataset.animacion,salen:resto.every(n=>n.dataset.animacion==='sale'&&n.getAttribute('aria-hidden')==='true'),vuelo:!!vuelo&&vuelo.classList.contains('coleccionVueloCartaEntra'),mismaFicha:vuelo===window.__coleccionFichaPrueba,bloqueada:rejilla.hasAttribute('inert')&&rejilla.getAttribute('aria-busy')==='true',mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente'};
+          return {estado:panel.dataset.transicion,activa:panel.dataset.cartaActiva,elegida:elegida?.dataset.animacion,salen:resto.every(n=>n.dataset.animacion==='sale'&&n.getAttribute('aria-hidden')==='true'),vuelo:!!vuelo&&vuelo.classList.contains('coleccionVueloCartaEntra'),mismaFicha:vuelo===window.__coleccionFichaPrueba,bloqueada:rejilla.hasAttribute('inert')&&rejilla.getAttribute('aria-busy')==='true',mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente',pedestal:visor?.querySelector('.visor3dPedestal')===window.__coleccionPedestalPrueba};
         },carta);
-        assert.deepEqual(transicion,{estado:'abrir-carta',activa:carta,elegida:'entra',salen:true,vuelo:true,mismaFicha:true,bloqueada:true,mundo:true},'Abrir una carta aparta el resto dentro del mismo mundo usando la ficha original, antes del visor');
+        assert.deepEqual(transicion,{estado:'abrir-carta',activa:carta,elegida:'entra',salen:true,vuelo:true,mismaFicha:true,bloqueada:true,mundo:true,pedestal:true},'Abrir una carta aparta el resto dentro del mismo mundo usando la ficha y el círculo rúnico originales, antes del visor');
         if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-transicion.png')});
       }
       const escena=pagina.locator('#coleccionPanel .coleccionMundoVisor .visor3dIncrustado');await escena.waitFor({timeout:4000});
@@ -115,14 +118,15 @@ try{
       },null,{timeout:5000});
       const abierta=await pagina.evaluate(()=>{
         const panel=document.querySelector('#coleccionPanel'),mundo=panel.querySelector('.coleccionMundoVisor'),v=mundo?.querySelector('.visor3dIncrustado'),frente=v.querySelector('.visor3dFrente .visor3dCarta'),r=frente.getBoundingClientRect(),e=v.getBoundingClientRect();
-        const fichas=[...document.querySelectorAll('#coleccionPanel .coleccionVersion .coleccionCarta')].filter(n=>n.getClientRects().length);
+        const fichas=[...document.querySelectorAll('#coleccionPanel .coleccionVersion .coleccionCarta')].filter(n=>n.getClientRects().length),pedestal=v.querySelector('.visor3dPedestal'),rP=pedestal?.getBoundingClientRect(),inicio=window.__coleccionPedestalRectPrueba,estilo=pedestal&&getComputedStyle(pedestal),reposicionado=!!rP&&!!inicio&&(Math.abs(rP.left-inicio.left)>3||Math.abs(rP.top-inicio.top)>3||Math.abs(rP.width-inicio.width)>3||Math.abs(rP.height-inicio.height)>3),reducido=matchMedia('(prefers-reduced-motion: reduce)').matches;
         return {acabado:v.dataset.acabado,elegido:CAOZ_COLECCION.elegido(frente.dataset.card||frente.closest('[data-carta]')?.dataset.carta||''),cartaReal:frente.classList.contains('coleccionCarta')&&!!frente.querySelector('.marcoDibujo, .lface'),
           dentro:r.left>=e.left-2&&r.right<=e.right+2&&r.top>=e.top-2&&r.bottom<=e.bottom+2&&r.width>60,fichasVisibles:fichas.length,versiones:document.querySelectorAll('#coleccionPanel .coleccionVersion').length,
-          desborde:document.documentElement.scrollWidth>innerWidth,logo:v.querySelector('.visor3dDorso img.visor3dLogo')?.getAttribute('src'),mismaFicha:frente===window.__coleccionFichaPrueba,mundo:panel.dataset.mundo==='detalle'&&mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&v.dataset.modo==='carta',visores:panel.querySelectorAll('.visor3dIncrustado').length};
+          desborde:document.documentElement.scrollWidth>innerWidth,logo:v.querySelector('.visor3dDorso img.visor3dLogo')?.getAttribute('src'),mismaFicha:frente===window.__coleccionFichaPrueba,mundo:panel.dataset.mundo==='detalle'&&mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&v.dataset.modo==='carta',pedestal:pedestal===window.__coleccionPedestalPrueba&&pedestal.isConnected&&reposicionado&&(reducido||estilo.transitionProperty.includes('top')),visores:panel.querySelectorAll('.visor3dIncrustado').length};
       });
       assert.ok(abierta.cartaReal,'La escena muestra la ficha real de la Colección');
       assert.ok(abierta.mismaFicha,'El visor adopta la misma ficha del Archivo: no vuelve a cargar ni sustituye el asset');
       assert.ok(abierta.mundo,'El visor individual reutiliza el mismo mundo que sostenía el Archivo');
+      assert.ok(abierta.pedestal,'El círculo rúnico es el mismo nodo y se reposiciona en vez de desaparecer al entrar al visor');
       assert.equal(abierta.visores,1,'No queda un segundo visor detrás de la carta: Archivo y detalle comparten la única escena');
       assert.ok(abierta.dentro&&!abierta.desborde,'La carta cabe en su escena');
       assert.equal(abierta.fichasVisibles,0,'La escena 3D es la única carta visible del detalle');
@@ -164,10 +168,11 @@ try{
         const rejilla=document.querySelector('.coleccionRejilla'),mini=rejilla?.querySelector('.coleccionMini[data-carta="'+id+'"]'),r=mini?.getBoundingClientRect(),g=rejilla?.getBoundingClientRect();
         return document.activeElement===mini&&rejilla.scrollTop>1&&r.bottom>g.top+18&&r.top<g.bottom-18;
       },carta,{timeout:4000});
-      const regreso=await pagina.evaluate(id=>{const panel=document.querySelector('#coleccionPanel'),rejilla=panel.querySelector('.coleccionRejilla'),mini=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),r=mini.getBoundingClientRect(),g=rejilla.getBoundingClientRect(),mundo=panel.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');return {foco:document.activeElement===mini,desplazamiento:rejilla.scrollTop,visible:r.bottom>g.top+18&&r.top<g.bottom-18,mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente'&&!visor.querySelector('.visor3dCuerpo,.visor3dGL')};},carta);
+      const regreso=await pagina.evaluate(id=>{const panel=document.querySelector('#coleccionPanel'),rejilla=panel.querySelector('.coleccionRejilla'),mini=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),r=mini.getBoundingClientRect(),g=rejilla.getBoundingClientRect(),mundo=panel.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');return {foco:document.activeElement===mini,desplazamiento:rejilla.scrollTop,visible:r.bottom>g.top+18&&r.top<g.bottom-18,mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente'&&!visor.querySelector('.visor3dCuerpo,.visor3dGL'),pedestal:visor?.querySelector('.visor3dPedestal')===window.__coleccionPedestalPrueba};},carta);
       assert.ok(regreso.foco,'Volver devuelve el foco a la carta que se estaba viendo');
       assert.ok(regreso.desplazamiento>1&&regreso.visible,'Volver restaura la fila desplazada del Archivo, no el inicio de la biblioteca');
       assert.ok(regreso.mundo,'Volver no destruye ni sustituye el mundo del visor');
+      assert.ok(regreso.pedestal,'Volver conserva el mismo círculo rúnico en el Archivo');
       assert.deepEqual(errores,[],'Sin errores de página');
       console.log('✓ '+vista+' '+width+'×'+height+': '+(pintada?'carta pintada, '+(hayGL?'escena WebGL':'escena CSS'):'retrato de Protagonista')+', mundo continuo del visor, archivo de tres columnas, transición al detalle 3D, ediciones, vuelta, pantalla completa y regreso con foco/scroll');
     }finally{await contexto.close();}
