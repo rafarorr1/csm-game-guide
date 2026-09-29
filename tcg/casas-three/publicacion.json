@@ -1,0 +1,18 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "casas-three-mesa.css": "83cd3504f170360258c3ba9810b11eac145ad2c410c8d132a1ebe4ad8b2659cc",
+    "casas-three-mesa.js": "786af0c9f4a737440f522efe0febb5323ca506085d2f6fc83f31f50ee4d983a6",
+    "casas-three.js": "caf16320581412f7e2fe8024b7430cf432d81153eee505fbd17301e91ad13e88",
+    "index.html": "2b70a49026d2ab484ab04b7b4054760e7633cf5b61d0d5ac8217c8a2693f4d26",
+    "procedencia.json": "5ffe8d1a9a0e65e8bbcba3730520d0b27b4d692a248f6367eb0fb9abe74efc6f",
+    "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/visor-3d-coleccion",
+    "sha": "2c71981d3db1ff78dc95be4b59830415b9666347"
+  },
+  "seccion": "casas-three",
+  "version": 1
+}

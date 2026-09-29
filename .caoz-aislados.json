@@ -21,6 +21,10 @@
       "fuente": "58017071a5df689f22d7d19b8ac6695f758dc369",
       "ruta": "tcg/cartas"
     },
+    "casas-three": {
+      "fuente": "2c71981d3db1ff78dc95be4b59830415b9666347",
+      "ruta": "tcg/casas-three"
+    },
     "coleccion": {
       "fuente": "157aa97e7d1a83f02117e6a287b7b62c156c7fc7",
       "ruta": "tcg/coleccion"

@@ -1,0 +1,16 @@
+{
+  "seccion": "casas-three",
+  "partida": false,
+  "almacenamiento": "ninguno",
+  "proposito": "Prueba de arte: las casas de Tomsage para el ARPG en three.js, con interior mapping en las ventanas y texturas procedurales, fundidas en pocas llamadas de dibujo.",
+  "three": "0.186.1",
+  "entorno": {
+    "casas-three.js": "caf16320581412f7e2fe8024b7430cf432d81153eee505fbd17301e91ad13e88",
+    "casas-three-mesa.js": "786af0c9f4a737440f522efe0febb5323ca506085d2f6fc83f31f50ee4d983a6",
+    "casas-three-mesa.css": "83cd3504f170360258c3ba9810b11eac145ad2c410c8d132a1ebe4ad8b2659cc",
+    "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
+  },
+  "derivados": {
+    "index.html": "2b70a49026d2ab484ab04b7b4054760e7633cf5b61d0d5ac8217c8a2693f4d26"
+  }
+}
