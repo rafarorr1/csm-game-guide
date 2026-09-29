@@ -1,0 +1,151 @@
+/* ==========================================================================
+   CAOZ CON TODO — TCG · EL SERVICE WORKER
+   Guarda el juego en el teléfono para que abra sin red y sin depender de
+   que GitHub o Cloudflare contesten: las dos pantallas, el motor, la
+   cinemática, el manifiesto y todas las ilustraciones que lista
+   art/encuadres.json.
+
+   Reglas:
+   - Lo propio (HTML, JS, manifiesto) se pide primero a la red y, si no
+     contesta, sale de la caché: así una versión nueva llega en cuanto hay
+     conexión, y sin conexión sigue jugándose la última que se vio.
+   - Las ilustraciones salen primero de la caché (no cambian) y se piden a
+     la red sólo si faltan.
+   - Nada de otros dominios pasa por aquí (los relevos del online, por
+     ejemplo, van directos).
+   - La caché lleva el número de build: al instalarse una versión nueva se
+     borran las anteriores. publicar.sh exige que VERSION coincida con BUILD.
+   ========================================================================== */
+'use strict';
+
+const VERSION = 303;
+const PREFIJO = 'caoz-cache-' + new URL(self.registration.scope).pathname + '-';
+const CACHE = PREFIJO + VERSION;
+// Los reemplazos ya vistos sobreviven al cambio de build. Sólo contiene el
+// catálogo público y sus imágenes inmutables; nunca sesiones ni administración.
+const ARTE_PUBLICO='caoz-arte-publico-'+new URL(self.registration.scope).pathname+'-v1';
+const NUCLEO = ['./', 'index.html', 'movil.html', 'motor.js', 'final.js', 'invitaciones-compartidas.js', 'mulligan-ui.js', 'mulligan-ui.css', 'arte-remoto.js', 'arte-vistas.js', 'nombres-cartas.js', 'estudio-vista.js', 'acabados.css', 'coleccion.css', 'coleccion-modelo.js', 'coleccion-juego.js', 'coleccion-ui.js', 'cuenta-modelo.js', 'cuenta-progreso.js', 'cuenta-servicio.js', 'cuenta-ui.js', 'cuenta-acceso.js', 'cuenta-juego.js', 'cuenta.css', 'cuenta-juego.css', 'sobres-escena.js', 'sobres-apertura.js', 'sobres-revelacion.js', 'sobres-apertura.css', 'carta-pintor.js', 'carta-diseno.js', 'carta-juego.js', 'visor-3d-gl.js', 'visor-3d.js', 'carta-diseno.css', 'carta-juego.css', 'tema-domo.css', 'visor-3d.css', 'fuentes/cinzel.woff2', 'fuentes/cormorant-garamond.woff2', 'fuentes/cormorant-garamond-italica.woff2', 'final-core.js', 'campana-mesa.js', 'campana-personaje.js', 'campana-deseo.js', 'campana-pitagoras.js', 'campana-secreto.js', 'campana-honores.js', 'pitagoras-pruebas.js', 'pitagoras-combate.js', 'pitagoras-mesa.js', 'pitagoras-mundos.js', 'pitagoras-cine.js', 'pitagoras-laboratorio.js', 'pitagoras-fps.js', 'pitagoras-pixel.js', 'dado-fisico.js', 'moneda-fisica.js', 'polish-aaa.js', 'fx-aliento.js', 'fx-ascension.js', 'fx-poderes.js', 'campo-lugar.js', 'efectos-claude.js', 'cortinilla.js', 'cortinilla-juego.js', 'audio-domo.js', 'audio/catalogo.json', 'manifest.webmanifest',
+                'art/encuadres.json', 'art/logo.webp', 'art/moneda-cara-v245.webp', 'art/moneda-cruz-v245.webp', 'art/pitagoras-abismo-v216.webp', 'art/esbirro-editor-v219.webp',
+                'art/icono-192.png', 'art/icono-512.png', 'art/icono-512-maskable.png', 'art/icono-180.png'];
+
+/* las ilustraciones: las que lista el índice, más los seis Líderes por si acaso */
+async function listaDeArte(){
+  const out = ['lider_mohamed', 'lider_fender', 'lider_adreida', 'lider_rafaela', 'lider_talesin', 'lider_gero']
+    .map(id => 'art/' + id + '.webp');
+  try{
+    const r = await fetch('art/encuadres.json', {cache: 'no-cache'});
+    if(r.ok){ const enc = await r.json(); Object.keys(enc).forEach(id => out.push('art/' + id + '.webp')); }
+  }catch(e){}
+  return [...new Set(out)];
+}
+
+self.addEventListener('install', ev => {
+  ev.waitUntil((async () => {
+    const c = await caches.open(CACHE);
+    await c.addAll(NUCLEO);
+    // las ilustraciones que fallen (un id sin dibujo aún) no impiden instalar
+    const arte = await listaDeArte();
+    await Promise.all(arte.map(u => c.add(u).catch(() => {})));
+    // El audio es opcional: un sonido caído nunca impide actualizar la PWA.
+    try{const r=await fetch('audio/catalogo.json'),j=await r.json();await Promise.all(j.sonidos.map(async s=>{try{const r=await fetch(s.archivo,{signal:AbortSignal.timeout(8000)});if(r.ok)await c.put(s.archivo,r);}catch(e){}}));}catch(e){}
+    await self.skipWaiting();
+  })());
+});
+
+self.addEventListener('activate', ev => {
+  ev.waitUntil((async () => {
+    const claves = await caches.keys();
+    await Promise.all(claves.filter(k => k.startsWith(PREFIJO) && k !== CACHE).map(k => caches.delete(k)));
+    await self.clients.claim();
+  })());
+});
+
+const esArte = url => /\/art\/.+\.(webp|png|jpg)$/.test(url.pathname);
+// Nunca dejar una petición de arranque a merced de una red que se queda
+// abierta: las PWA viejas no tenían límite aquí y podían congelar la carga
+// para siempre. La copia de caché se sigue usando como respaldo.
+async function redConLimite(req,ms=5000){
+  const control=new AbortController(),plazo=setTimeout(()=>control.abort(),ms);
+  try{return await fetch(req,{signal:control.signal});}
+  finally{clearTimeout(plazo);}
+}
+// Un HTML precargado puede venir de una redirección de Cloudflare. Al navegar
+// sin red Chrome no acepta esa marca: conservar sus bytes y cabeceras la elimina.
+const sinRedireccion = r => r.redirected ? new Response(r.body,{status:r.status,statusText:r.statusText,headers:r.headers}) : r;
+
+self.addEventListener('fetch', ev => {
+  const req = ev.request;
+  if(req.method !== 'GET') return;
+  const url = new URL(req.url);
+  if(url.origin !== self.location.origin) return;           // relevos y demás: directos
+  // Las pruebas reales no pasan por la caché. test=arranque es distinto:
+  // lo llevan sólo los recursos nuevos para atravesar SW antiguos que sí
+  // omiten cualquier test=, pero este SW debe atenderlos normalmente.
+  if(url.searchParams.has('test')&&url.searchParams.get('test')!=='arranque') return;
+  if(/\/api\/cuenta(?:\/|$)/.test(url.pathname))return;      // sesiones y progreso siempre privados, nunca caché
+  if(url.pathname.includes('/api/estudio/'))return;          // borradores privados
+  const catalogoArte=/\/api\/arte\/catalogo$/.test(url.pathname);
+  const imagenArte=/\/api\/arte\/imagen\/[a-f0-9]{64}$/.test(url.pathname);
+  if(url.pathname.includes('/api/arte/')&&!catalogoArte&&!imagenArte)return;
+  if(catalogoArte||imagenArte){
+    if(req.headers.has('range'))return;
+    ev.respondWith((async()=>{
+      const c=await caches.open(ARTE_PUBLICO),clave=url.origin+url.pathname,guardada=await c.match(clave);
+      if(imagenArte&&guardada)return guardada;
+      try{
+        const r=await redConLimite(req,4000);
+        if(r.ok){
+          const tipo=r.headers.get('content-type')||'';
+          if((catalogoArte&&tipo.includes('application/json'))||(imagenArte&&/^image\/(webp|png|jpeg)/.test(tipo)))await c.put(clave,r.clone()).catch(()=>{});
+          return r;
+        }
+        return guardada||r;
+      }catch(e){return guardada||new Response('',{status:504});}
+    })());return;
+  }
+  // La sesión y los datos privados jamás se guardan en la PWA. Sólo los WAV
+  // públicos con hash inmutable pueden reproducirse también sin conexión.
+  const audioRemoto=/\/api\/sfx\/audio\/[a-f0-9]{64}$/.test(url.pathname);
+  if(url.pathname.includes('/api/sfx/')&&!audioRemoto)return;
+  if(audioRemoto||/\/audio\/.+\.wav$/.test(url.pathname)){
+    if(req.headers.has('range'))return;
+    ev.respondWith((async()=>{const c=await caches.open(CACHE),hit=await c.match(url.origin+url.pathname);if(hit)return hit;try{const r=await fetch(req);if(r.status===200)c.put(url.origin+url.pathname,r.clone());return r;}catch(e){return new Response('',{status:504});}})());return;
+  }
+
+  if(esArte(url)){
+    ev.respondWith((async () => {
+      const c = await caches.open(CACHE);
+      const hit = await c.match(req, {ignoreSearch: true});
+      if(hit) return hit;
+      try{ const r = await fetch(req); if(r.ok) c.put(req, r.clone()); return r; }
+      catch(e){ return new Response('', {status: 504}); }
+    })());
+    return;
+  }
+
+  // HTML, JS, manifiesto: red primero, caché de respaldo. La versión (?b=N)
+  // va en la petición pero no en la clave: la caché guarda un solo motor.js.
+  ev.respondWith((async () => {
+    const c = await caches.open(CACHE);
+    try{
+      const r = await redConLimite(req);
+      // se guarda sin la parte de la interrogación: un solo motor.js, no uno
+      // por cada ?b= o ?cb= con el que se haya pedido
+      if(r.ok) c.put(url.origin + url.pathname, r.clone());
+      return r;
+    }catch(e){
+      const hit = await c.match(req, {ignoreSearch: true});
+      if(hit) return sinRedireccion(hit);
+      // Cloudflare quita .html de la dirección visible, pero el precaché conserva
+      // el nombre del archivo. La primera recarga sin red también debe encontrarlo.
+      for(const pagina of ['index','movil','estudio']){
+        if(url.pathname===new URL(pagina,self.registration.scope).pathname){
+          const guardada=await c.match(pagina+'.html');if(guardada)return sinRedireccion(guardada);
+        }
+      }
+      // la raíz sin red: la pantalla de escritorio, que decide sola si ir al teléfono
+      if(url.pathname.endsWith('/')) { const idx = await c.match('index.html'); if(idx) return sinRedireccion(idx); }
+      return new Response('Sin conexión y sin copia guardada.', {status: 504, headers: {'Content-Type': 'text/plain; charset=utf-8'}});
+    }
+  })());
+});

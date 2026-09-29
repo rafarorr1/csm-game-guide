@@ -1,0 +1,114 @@
+/* Tema del Domo: el lenguaje del visor de cartas aplicado al resto del juego.
+   Cinzel para títulos, nombres, botones y cifras; Cormorant para el texto que
+   se lee; paneles de cristal oscuro con filo metálico, reglas doradas que se
+   desvanecen y rombos; las burbujas de combate como gemas de la carta.
+   Sólo estilo: no cambia estructura ni clases. Las tipografías vienen de
+   carta-diseno.css (fuentes/, OFL). Va después del CSS de cada pantalla; para
+   ganar al pulido AAA, que se inyecta al cargar, los selectores llevan :root. */
+/* Cormorant tiene poca altura de x: para leer en paneles y registro se usa
+   algo mayor, sin tocar los tamaños que ya pone cada pantalla. En el texto
+   corrido las cifras son las de Cormorant: las de Cinzel confunden el 1 con la I. */
+@font-face{font-family:'Cormorant Domo Texto';src:url('fuentes/cormorant-garamond.woff2') format('woff2');font-weight:300 700;font-style:normal;font-display:swap;size-adjust:118%}
+@font-face{font-family:'Cormorant Domo Texto';src:url('fuentes/cormorant-garamond-italica.woff2') format('woff2');font-weight:300 700;font-style:italic;font-display:swap;size-adjust:118%}
+:root{
+  --serif:'Cinzel Domo','Cinzel',"Iowan Old Style","Palatino Linotype",Palatino,Georgia,serif;
+  --texto:'Cormorant Domo Texto','Cormorant Garamond',"Iowan Old Style",Georgia,serif;
+  --domo-vidrio:linear-gradient(180deg,rgba(27,20,40,.9),rgba(12,9,19,.94));
+  --domo-hilo:rgba(231,187,85,.34);
+  --domo-oro:#f1dcae;
+  --domo-metal:linear-gradient(135deg,#fff1cf,#b8862b 30%,#f7d774 52%,#8a5d18 78%,#e7bb55);
+  --domo-regla:linear-gradient(90deg,transparent,rgba(231,187,85,.85) 20%,rgba(255,236,190,.95) 50%,rgba(231,187,85,.85) 80%,transparent);
+}
+
+/* ---------- Botones: cristal con filo de oro; el dorado, metal pulido ---------- */
+:root .btn{font-family:var(--serif);font-weight:700;letter-spacing:.07em;color:var(--domo-oro);
+  background:linear-gradient(180deg,rgba(38,28,56,.92),rgba(16,11,25,.95)) padding-box,
+    linear-gradient(180deg,rgba(255,236,190,.55),rgba(231,187,85,.2) 45%,rgba(120,86,40,.45)) border-box;
+  border:1px solid transparent;text-shadow:0 1px 2px rgba(0,0,0,.8);
+  box-shadow:0 3px 0 rgba(0,0,0,.45),0 6px 16px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,240,210,.12)}
+:root .btn:hover:not(:disabled){color:#fff4dc;
+  background:linear-gradient(180deg,rgba(56,40,80,.94),rgba(24,16,36,.96)) padding-box,
+    linear-gradient(180deg,#fff1cf,#e7bb55 45%,#8a5d18) border-box;
+  box-shadow:0 4px 0 rgba(0,0,0,.45),0 8px 22px rgba(0,0,0,.5),0 0 18px rgba(231,187,85,.22),inset 0 1px 0 rgba(255,240,210,.18)}
+:root .btn.gold{color:#2a1706;text-shadow:0 1px 0 rgba(255,240,200,.55);font-variant:normal;
+  background:linear-gradient(180deg,#fff0c4,#e8bb5a 38%,#b98a2e 70%,#8a5d18) padding-box,
+    linear-gradient(180deg,#fff8e0,#8a5d18) border-box;
+  box-shadow:0 3px 0 #3a2508,0 8px 20px rgba(0,0,0,.5),0 0 22px rgba(231,187,85,.28),inset 0 1px 0 rgba(255,255,255,.6),inset 0 -2px 6px rgba(90,55,10,.4)}
+:root .btn.gold:hover:not(:disabled){color:#1f1104;
+  background:linear-gradient(180deg,#fff6d8,#f2c96a 38%,#c99a3a 70%,#9a6a1e) padding-box,linear-gradient(180deg,#fffaf0,#9a6a1e) border-box;
+  box-shadow:0 4px 0 #3a2508,0 10px 26px rgba(0,0,0,.55),0 0 30px rgba(247,215,116,.45),inset 0 1px 0 rgba(255,255,255,.7)}
+
+/* ---------- Paneles y ventanas: cristal oscuro con filo de metal ---------- */
+:root .ov{background:radial-gradient(ellipse 60% 55% at 50% 45%,rgba(90,52,144,.22),transparent 70%),rgba(5,3,9,.84);
+  -webkit-backdrop-filter:blur(6px) saturate(120%);backdrop-filter:blur(6px) saturate(120%)}
+:root .ov.suave{background:transparent;-webkit-backdrop-filter:none;backdrop-filter:none}
+:root .panel{border:1px solid transparent;border-radius:16px;
+  background:var(--domo-vidrio) padding-box,linear-gradient(160deg,rgba(255,236,190,.6),rgba(231,187,85,.18) 30%,rgba(231,187,85,.1) 70%,rgba(255,236,190,.45)) border-box;
+  box-shadow:0 30px 80px rgba(0,0,0,.75),0 0 60px rgba(90,52,144,.25),inset 0 1px 0 rgba(255,240,210,.1)}
+:root .panel h3{font-family:var(--serif);font-weight:700;letter-spacing:.06em;color:#f3d38a;font-size:21px;
+  text-shadow:0 2px 12px rgba(0,0,0,.8),0 0 24px rgba(231,187,85,.25);padding-bottom:10px;margin-bottom:12px;position:relative}
+:root .panel h3::after{content:"";position:absolute;left:0;right:0;bottom:0;height:1px;background:var(--domo-regla)}
+:root .panel h4{font-family:var(--serif);font-weight:700;letter-spacing:.05em;color:#e9c77a}
+:root .panel{font-family:var(--texto);line-height:1.45}
+:root :is(.panel,#log,#chat,.tst,.cajon,.big){font-variant-numeric:lining-nums}
+:root .panel :is(p,li,td,dd){font-family:var(--texto)}
+:root .panel p{color:#d6cbe4}
+:root .panel :is(p,li,td) b{color:#f1d59a;font-weight:700}
+:root .panel table{border-color:rgba(231,187,85,.22)}
+:root .panel :is(td,th){border-color:rgba(231,187,85,.16)!important}
+:root .panel th{font-family:var(--serif);font-size:.95em;letter-spacing:.05em;color:#e9c77a}
+/* Las ventanas de menú (piel cálida) conservan su brasa, con el mismo filo. */
+:root .ov.calido .panel{background:linear-gradient(180deg,rgba(42,26,16,.95),rgba(20,12,9,.96)) padding-box,linear-gradient(160deg,rgba(255,236,190,.6),rgba(217,164,65,.2) 35%,rgba(255,236,190,.4)) border-box}
+:root .ov.calido .panel .btn.gold{color:#2a1706}
+
+/* ---------- Burbujas de combate: cifras en gema ---------- */
+:root .fxnum{font-family:var(--serif);font-weight:900;letter-spacing:0;border:3px solid transparent;border-radius:999px;
+  background:radial-gradient(circle at 50% 30%,color-mix(in srgb,currentColor 34%,#0b0710),#07050b 72%) padding-box,
+    linear-gradient(135deg,#fff8e8,color-mix(in srgb,currentColor 70%,#fff) 30%,color-mix(in srgb,currentColor 55%,#000) 62%,#f3d6b5) border-box;
+  -webkit-text-stroke:2px rgba(0,0,0,.6);paint-order:stroke fill;
+  text-shadow:0 0 16px currentColor,0 2px 0 rgba(0,0,0,.9);
+  box-shadow:0 0 26px color-mix(in srgb,currentColor 55%,transparent),0 10px 24px rgba(0,0,0,.9),inset 0 2px 10px rgba(255,255,255,.12)}
+:root .fxnum.plain{background:none;border:0;box-shadow:none}
+:root .fxnum.inf{border-color:transparent}
+/* Avisos y etiquetas: cápsula de cristal con rombos a los lados. */
+:root .fxlabel{font-family:var(--serif);font-weight:700;letter-spacing:.07em;font-size:15px;padding:7px 18px 8px;border:1px solid transparent;border-radius:999px;
+  background:linear-gradient(180deg,rgba(28,20,42,.95),rgba(10,7,16,.96)) padding-box,linear-gradient(90deg,transparent,currentColor 18%,color-mix(in srgb,currentColor 40%,#fff) 50%,currentColor 82%,transparent) border-box;
+  box-shadow:0 8px 28px rgba(0,0,0,.85),0 0 22px color-mix(in srgb,currentColor 30%,transparent);text-shadow:0 0 12px color-mix(in srgb,currentColor 50%,transparent),0 1px 2px #000}
+:root .fxlabel{white-space:normal;max-width:min(92vw,620px);text-align:center;line-height:1.25}
+@media (max-width:560px){:root .fxlabel{font-size:12.5px;letter-spacing:.04em;padding:6px 12px 7px}}
+:root .fxlabel::before,:root .fxlabel::after{content:"◆";font-size:.55em;vertical-align:.25em;opacity:.8;margin:0 .7em}
+:root .fxlabel b{color:#fff3d6}
+/* El cartel del turno: letras de metal con reglas que se desvanecen. */
+:root .fxbanner{font-family:var(--serif);font-weight:900;letter-spacing:.14em;color:#f7d774;
+  background:linear-gradient(180deg,transparent 18%,#fffaf0 30%,#ffe7a3 44%,#f2bf52 58%,#fff3cf 72%,transparent 86%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.95)) drop-shadow(0 0 18px rgba(255,210,110,.55));padding:14px 0}
+:root .fxbanner::before,:root .fxbanner::after{content:"";position:absolute;left:18%;right:18%;height:1px;background:var(--domo-regla)}
+:root .fxbanner::before{top:0}:root .fxbanner::after{bottom:0}
+:root .fxbanner small{font-family:var(--texto);font-style:italic;font-weight:600;letter-spacing:.32em;font-size:15px;-webkit-text-fill-color:#d9cbe8;color:#d9cbe8}
+/* Mensajes breves («Robas…»). */
+:root .tst{font-family:var(--texto);font-weight:700;letter-spacing:.01em;color:#f5e3b8;border:1px solid transparent;border-radius:999px;padding:8px 22px 9px;
+  background:linear-gradient(180deg,rgba(28,20,42,.95),rgba(10,7,16,.96)) padding-box,linear-gradient(90deg,transparent,rgba(231,187,85,.9) 20%,#fff0c4 50%,rgba(231,187,85,.9) 80%,transparent) border-box;
+  box-shadow:0 10px 28px rgba(0,0,0,.8),0 0 22px rgba(231,187,85,.18)}
+/* El cartel de «elige un objetivo». */
+:root #prompt{border-radius:16px}
+:root #prompt .pmsg{font-family:var(--serif);letter-spacing:.05em}
+
+/* ---------- Registro, chat y cajones de texto ---------- */
+:root #log,:root #chat{font-family:var(--texto);line-height:1.4;color:#d3c7e2;border-color:rgba(231,187,85,.2)}
+:root #log b,:root #chat .de{font-family:var(--serif);font-weight:700;font-size:.86em;letter-spacing:.04em}
+:root #log div{border-bottom-color:rgba(231,187,85,.08)}
+:root #log .sys{color:#9d90b8}
+:root .card.unit .cajon{font-family:var(--texto);line-height:1.35;border:1px solid transparent;
+  background:var(--domo-vidrio) padding-box,linear-gradient(160deg,rgba(255,236,190,.55),rgba(231,187,85,.15) 40%,rgba(255,236,190,.35)) border-box}
+:root .card.unit .cajon b{font-weight:700}
+:root .big :is(.bigrow,.bigbase,.mods,.porque){font-family:var(--texto)}
+:root .big .bigrow{font-family:var(--serif);font-size:.95em;letter-spacing:.04em}
+:root .big .bigsep{background:var(--domo-regla);opacity:.6}
+
+/* ---------- Textos de menú y presentación ---------- */
+:root :is(.sub,#tut p,.fin p){font-family:var(--texto);font-variant-numeric:lining-nums}
+
+/* ---------- Chapas de habilidad: Cinzel pequeña, como las de la carta ---------- */
+:root .kw{font-family:var(--serif);font-weight:700;letter-spacing:.04em}
+
+@media (prefers-reduced-motion:reduce){:root .fxbanner{filter:none}}

@@ -9,6 +9,10 @@
       "fuente": "00e51b3c24640ab33346f398e68616157e651158",
       "ruta": "tcg/asedio"
     },
+    "balance": {
+      "fuente": "74fdf6ed521843947188988586169a8a758905a7",
+      "ruta": "tcg/balance"
+    },
     "campana-three": {
       "fuente": "2bc7654e69de0794288d7194910e083814436471",
       "ruta": "tcg/campana-three"

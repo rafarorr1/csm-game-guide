@@ -1,0 +1,94 @@
+/* Acabados de impresión, independientes de la rareza y de las reglas.
+   El brillo vive sobre la ilustración y por debajo de nombres, cifras y texto.
+   Juego y estudio comparten únicamente data-acabado; no hacen falta nodos extra. */
+[data-acabado] .foil{display:none!important}
+[data-acabado="normal"]{--acabado-borde:#897758;--acabado-reflejo:transparent}
+[data-acabado="foil"]{
+  --acabado-borde:#c5d1de;
+  --acabado-metal:linear-gradient(128deg,#eef0ee 0%,#94a3b3 13%,#424c66 30%,#dee2e8 48%,#727d95 65%,#dae8e2 79%,#4e5a73 100%);
+  --acabado-pelicula:linear-gradient(122deg,#dc9de633 0%,#8daae50b 18%,#91d8d626 38%,#ebdba70d 53%,#a8aae631 72%,#dbeafa12 100%);
+  --acabado-brillo:linear-gradient(112deg,transparent 32%,#b9c9f311 41%,#a9ecd336 45%,#e7e6ff6b 48.5%,#ffffffb0 50%,#e2c6ff56 52%,#d9ebf329 55%,transparent 65%);
+  --acabado-tinta:#d9e3ef;--acabado-fondo-nombre:linear-gradient(#303448,#131725);
+  --acabado-luz:rgba(186,214,246,.25);
+}
+[data-acabado="dorado"]{
+  --acabado-borde:#f1d38a;
+  --acabado-metal:linear-gradient(128deg,#fff4c6 0%,#b17a25 15%,#603713 30%,#f5d777 43%,#fff5c2 50%,#ba822d 64%,#f2d392 80%,#825015 100%);
+  --acabado-pelicula:linear-gradient(125deg,#efb85925 0%,#fff5c00a 26%,#dda15c3b 46%,#efd5920e 59%,#ffe09e2c 76%,#a47cda10 100%);
+  --acabado-brillo:linear-gradient(112deg,transparent 32%,#fac98415 41%,#f6c67245 45%,#ffe5a788 48.5%,#fff8d4bf 50%,#e8b34e64 52%,#f7d38a24 56%,transparent 65%);
+  --acabado-tinta:#fff0c1;--acabado-fondo-nombre:linear-gradient(#5e401d,#20160f);
+  --acabado-luz:rgba(248,203,105,.35);
+}
+/* La pintura del borde no sustituye los indicadores de objetivo, disponibilidad
+   o selección. Esos estados conservan su propio color y sus contornos. */
+:is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.cartaVista,.miniatura,.lrostro)[data-acabado="foil"],
+:is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.cartaVista,.miniatura,.lrostro)[data-acabado="dorado"]{
+  background-image:var(--acabado-metal)!important;
+}
+/* La ficha ampliada conserva el papel oscuro debajo de sus reglas. El metal
+   sólo rodea su borde y el reflejo permanece dentro de la ilustración. */
+:is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.big,.cartaVista,.miniatura,.lrostro):is([data-acabado="foil"],[data-acabado="dorado"]):not(:is(.ready,.tgt,.selected,.sel,.usable,.enfrente,.ppSeleccionada)){
+  border-color:var(--acabado-borde)!important;
+}
+/* Un único borde dorado deja libre la ilustración. Los indicadores de combate
+   conservan sus contornos y el reflejo foil sigue sobre el arte. */
+:is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.big,.cartaVista)[data-acabado="dorado"]:not(:is(.ready,.tgt,.selected,.sel,.usable,.enfrente,.ppSeleccionada,.playable,.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras)){
+  box-shadow:0 5px 13px #0008!important;
+}
+/* Los originales siguen siendo legibles: el acabado no tiñe el texto ni añade
+   una capa encima de sus paneles. Sólo cambian metal y pequeños perfiles. */
+:is([data-acabado="foil"],[data-acabado="dorado"]) :is(.nm,.nombreCarta){border-color:var(--acabado-borde)!important}
+:is([data-acabado="foil"],[data-acabado="dorado"]) :is(.pieCarta .nm,.nombreCarta){background:var(--acabado-fondo-nombre)!important;color:var(--acabado-tinta)!important}
+:is([data-acabado="foil"],[data-acabado="dorado"]) :is(.txt,.textoCarta){border-color:color-mix(in srgb,var(--acabado-borde) 48%,#24212c)!important}
+:is([data-acabado="foil"],[data-acabado="dorado"]):not(:is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras)) .marcoDibujo{
+  box-shadow:inset 0 0 0 1px var(--acabado-borde),0 0 0 1px #100d1699;
+}
+:is([data-acabado="foil"],[data-acabado="dorado"]):not(:is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras)) .marcoDibujo::before,
+:is([data-acabado="foil"],[data-acabado="dorado"]):not(:is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras)) .marcoDibujo::after,
+.miniatura:is([data-acabado="foil"],[data-acabado="dorado"])::before,
+.miniatura:is([data-acabado="foil"],[data-acabado="dorado"])::after{
+  content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;z-index:1;
+}
+:is([data-acabado="foil"],[data-acabado="dorado"]) .marcoDibujo::before,
+.miniatura:is([data-acabado="foil"],[data-acabado="dorado"])::before{
+  background-image:var(--acabado-pelicula);mix-blend-mode:screen;opacity:.55;
+}
+[data-acabado="dorado"] .marcoDibujo::before,.miniatura[data-acabado="dorado"]::before{
+  box-shadow:none;
+  mix-blend-mode:normal;opacity:1;
+}
+:is([data-acabado="foil"],[data-acabado="dorado"]) .marcoDibujo::after,
+.miniatura:is([data-acabado="foil"],[data-acabado="dorado"])::after{
+  background-image:var(--acabado-brillo);background-size:280% 160%;background-position:0% 40%;
+  mix-blend-mode:screen;opacity:.34;animation:acabadoReflejo 10s ease-in-out infinite;
+  transition:opacity .25s ease,background-position .3s ease;
+}
+@keyframes acabadoReflejo{0%,12%,100%{background-position:0% 40%;opacity:.22}48%,60%{background-position:100% 60%;opacity:.42}}
+@media(hover:hover){
+  :is([data-acabado="foil"],[data-acabado="dorado"]):hover .marcoDibujo::after,
+  .miniatura:is([data-acabado="foil"],[data-acabado="dorado"]):hover::after{
+    animation:none;opacity:.64;background-position:calc(var(--mx,.65)*100%) calc(var(--my,.4)*100%);
+  }
+}
+@media(hover:none){
+  :is([data-acabado="foil"],[data-acabado="dorado"]) .marcoDibujo::after{animation-duration:8s;opacity:.42}
+}
+/* Miniaturas muy pequeñas conservan la distinción sin una animación continua
+   en cada fila de la biblioteca. Las cartas de juego sí mantienen su reflejo. */
+.miniatura:is([data-acabado="foil"],[data-acabado="dorado"])::after{animation:none;background-position:48% 50%;opacity:.35}
+.aaa-combat :is([data-acabado="foil"],[data-acabado="dorado"]) .marcoDibujo::after{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){
+  :is([data-acabado="foil"],[data-acabado="dorado"]) .marcoDibujo::after,
+  .miniatura:is([data-acabado="foil"],[data-acabado="dorado"])::after{animation:none!important;transition:none!important;background-position:46% 50%;opacity:.32}
+}
+/* El Viajero y Pitágoras tienen retratos propios y no heredan la impresión del
+   mazo prestado, incluso durante el fotograma en que cambia su identidad. */
+:is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras)[data-acabado]{background-image:revert!important}
+:is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras) .marcoDibujo::before,
+:is(.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras) .marcoDibujo::after{content:none!important}
+
+/* El marco de la carta es el único perfil: no se dibuja otro alrededor del arte. */
+:is(.card,.lcard,.ltile,.vscard,.campanaCarta,.leadercard,.big,.cartaVista)[data-acabado="dorado"]{border-width:1.5px}
+[data-acabado="dorado"] .marcoDibujo{box-shadow:none!important}
+body.aaa-polish .card.acomodo[data-acabado="dorado"] .marcoDibujo{inset:0;border-radius:7px}
+body.aaa-polish .card.acomodo.sinarte[data-acabado="dorado"] .art{inset:0;border-radius:7px}
