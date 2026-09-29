@@ -103,6 +103,8 @@
 .visor3d.visor3dConGL .visor3dCapa{visibility:hidden}
 .visor3d.visor3dEntraDesdeArchivo.visor3dConGL .visor3dCapa{visibility:visible}
 .visor3d.visor3dEntraDesdeArchivo .visor3dGL{visibility:hidden}
+.visor3d.visor3dDevolviendo .visor3dCuerpo,.visor3d.visor3dDevolviendo .visor3dGL{visibility:hidden}
+.visor3d.visor3dPreparandoRegreso .visor3dControles{pointer-events:none;opacity:.32}
 /* Sin la carta actual en WebGL (cargando, bloqueada o sin soporte) el lienzo no
    puede quedarse mostrando la anterior. */
 .visor3d:not(.visor3dConGL) .visor3dGL{visibility:hidden}

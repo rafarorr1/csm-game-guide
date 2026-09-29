@@ -81,6 +81,7 @@ try{
       await pagina.locator('.coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado').click();
       await pagina.locator('.coleccionVersion[data-edicion="foil"] .coleccionUsar').click();
       await pagina.locator('.coleccionAtras').click();
+      await pagina.waitForFunction(()=>{const panel=document.querySelector('#coleccionPanel');return panel?.dataset.vista==='cartas'&&!panel.dataset.transicion&&!panel.classList.contains('coleccionRegresandoArchivo');},null,{timeout:4000});
       await comprobarMarcadores(pagina.locator('.coleccionMini[data-carta="eric"]'),['normal','foil','dorado'],'foil');
       assert.equal(await pagina.evaluate(()=>CAOZ_COLECCION.cantidad('eric')),7,'Equipar no gasta ni duplica cartas');
 
