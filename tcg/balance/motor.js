@@ -3415,7 +3415,7 @@ mohamed:{ c1:'conserje', c2:'bartolomeo', quita:'sangrefria', trampa:'tasha',
 adreida:{ c1:'machete', c2:'bartolomeo', quita:'saeta', trampa:'colapso',
   mano:['machete','bartolomeo','saeta','colapso','augusto'],
   top:['mazo','horton','auxilio','armadura','lucius','brickbrock'],
-  quitaTxt:`<b>Saeta Guía</b> (2 PD): 3 daño radiante, de sobra.`,
+  quitaTxt:`<b>Saeta Guía</b> (${COSTE_SAETA_GUIA} PD): 3 daño radiante, de sobra.`,
   quitaExtra:`Y deja al objetivo <b>marcado</b>: el siguiente ataque tuyo contra él no recibe
     contraataque. Junta eso con tu Habilidad <b>Golpe Directo</b> y matas lo que quieras sin
     recibir un solo punto de daño.`,
