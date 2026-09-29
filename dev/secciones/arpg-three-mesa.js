@@ -93,7 +93,7 @@
       float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
       float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}
       void main(){float r=n(vec2(vUv.x*4.+vS*7.,vUv.y*3.-uT*2.6+vS*3.))*.6+n(vec2(vUv.x*9.,vUv.y*7.-uT*4.))*.4;
-        float forma=(1.-vUv.y)*smoothstep(.5,.05,abs(vUv.x-.5)*(1.1+vUv.y*1.6));float f=smoothstep(.22,.85,forma*(.55+.9*r));
+        float forma=(1.-vUv.y)*(1.-smoothstep(.05,.5,abs(vUv.x-.5)*(1.1+vUv.y*1.6)));float f=smoothstep(.22,.85,forma*(.55+.9*r));
         vec3 c=mix(vec3(1.,.2,.02),vec3(1.,.62,.22),f*f);gl_FragColor=vec4(c*f*1.15,f);}`});
   // Llamas: cuadros que miran siempre a la cámara (se construyen en el espacio de la vista).
   function llamas(x,y,z,ancho,alto,n){const g=new THREE.BufferGeometry(),P=[],U=[],S=[],T=[],I=[];
@@ -156,7 +156,7 @@
   const geoP=new THREE.BufferGeometry();geoP.setAttribute('position',new THREE.BufferAttribute(pPos,3).setUsage(THREE.DynamicDrawUsage));geoP.setAttribute('aColor',new THREE.BufferAttribute(pCol,4).setUsage(THREE.DynamicDrawUsage));geoP.setAttribute('aTam',new THREE.BufferAttribute(pTam,1).setUsage(THREE.DynamicDrawUsage));
   const puntos=new THREE.Points(geoP,new THREE.ShaderMaterial({uniforms:{uEsc:escPuntos},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     vertexShader:`attribute float aTam;attribute vec4 aColor;uniform float uEsc;varying vec4 vC;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;gl_PointSize=aTam*uEsc*60./(-mv.z);vC=aColor;}`,
-    fragmentShader:`varying vec4 vC;void main(){float d=length(gl_PointCoord-.5);float a=smoothstep(.5,.05,d);gl_FragColor=vec4(vC.rgb,vC.a*a);}`}));
+    fragmentShader:`varying vec4 vC;void main(){float d=length(gl_PointCoord-.5);float a=1.-smoothstep(.05,.5,d);gl_FragColor=vec4(vC.rgb,vC.a*a);}`}));
   puntos.frustumCulled=false;puntos.renderOrder=3;escena.add(puntos);
   function particula(x,y,z,vx,vy,vz,vida,tam,r,g,b,grav=0){const i=pSig;pSig=(pSig+1)%NP;pPos.set([x,y,z],i*3);pVel.set([vx,vy,vz],i*3);pVida[i]=vida;pMax[i]=vida;pTam[i]=tam;pBase.set([r,g,b,1],i*4);pGrav[i]=grav;}
   function chispas(p,n,color=[1,.7,.3],vel=6,tam=.5){for(let i=0;i<n;i++){const a=rnd()*TAU,e=rnd()*1.2-.1,v=vel*(.4+rnd()*.8);particula(p.x,p.y,p.z,Math.cos(a)*Math.cos(e)*v,Math.sin(e)*v+1,Math.sin(a)*Math.cos(e)*v,.35+rnd()*.4,tam*(.6+rnd()*.8),color[0]*3,color[1]*3,color[2]*3,14);}}
@@ -178,7 +178,7 @@
       'float b=1.-abs(vUv.x-.5)*2.,l=1.-vUv.y;float borde=smoothstep(.72,.9,1.-b)*(1.-smoothstep(.9,1.,1.-b));float a=(.14+.4*step(l,uP)+smoothstep(uP-.03,uP,l)*step(l,uP)*.7)*smoothstep(0.,.12,b)+borde*(.8+.9*uF);a*=1.-smoothstep(.85,1.,l);gl_FragColor=vec4(uC,a*uA);':
       `vec2 p=vUv*2.-1.;float r=length(p);if(r>1.)discard;float a=0.;
       ${tipo==='circulo'?'a=smoothstep(.9,.97,r)*(1.-smoothstep(.98,1.,r))*(1.2+uF)+step(r,uP)*.28+smoothstep(uP-.04,uP,r)*step(r,uP)*.8;':''}
-      ${tipo==='cono'?'float an=abs(atan(p.x,-p.y));if(an>uAng)discard;a=(smoothstep(.9,.98,r)+smoothstep(uAng-.07,uAng,an))*(.8+.9*uF)+step(r,uP)*.26+smoothstep(uP-.05,uP,r)*step(r,uP)*.75;':''}
+      ${tipo==='cono'?'float an=r<.001?0.:abs(atan(p.x,-p.y));if(an>uAng)discard;a=(smoothstep(.9,.98,r)+smoothstep(uAng-.07,uAng,an))*(.8+.9*uF)+step(r,uP)*.26+smoothstep(uP-.05,uP,r)*step(r,uP)*.75;':''}
       ${tipo==='onda'?'a=smoothstep(uP-.2,uP,r)*(1.-smoothstep(uP,uP+.03,r))*1.5;':''}
       ${tipo==='anillo'?'a=smoothstep(.72,.84,r)*(1.-smoothstep(.9,1.,r));':''}
       gl_FragColor=vec4(uC,a*uA);`}}`});
@@ -594,7 +594,7 @@
   const matEstrella=new THREE.MeshBasicMaterial({color:0xffe070,toneMapped:false});
   const aura=new THREE.Mesh(new THREE.SphereGeometry(1.25,24,16),new THREE.ShaderMaterial({uniforms:{uA:{value:0},uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     vertexShader:`varying vec3 vN,vV;varying float vY;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);vY=position.y;gl_Position=projectionMatrix*mv;}`,
-    fragmentShader:`uniform float uA,uT;varying vec3 vN,vV;varying float vY;void main(){float f=pow(1.-abs(dot(vN,vV)),2.5)*(.7+.3*sin(vY*14.-uT*6.));gl_FragColor=vec4(vec3(1.,.75,.3)*1.6,f*uA);}`}));aura.visible=false;escena.add(aura);
+    fragmentShader:`uniform float uA,uT;varying vec3 vN,vV;varying float vY;void main(){float f=pow(clamp(1.-abs(dot(vN,vV)),0.,1.),2.5)*(.7+.3*sin(vY*14.-uT*6.));gl_FragColor=vec4(vec3(1.,.75,.3)*1.6,f*uA);}`}));aura.visible=false;escena.add(aura);
   const estela=new THREE.Mesh(new THREE.RingGeometry(1.1,2.5,48,1).rotateX(-Math.PI/2),new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:`varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
     fragmentShader:`varying vec3 vP;void main(){float a=atan(vP.z,vP.x)/6.2832+.5,r=length(vP.xz);float s=pow(fract(a*2.),3.)*smoothstep(1.1,1.6,r)*(1.-smoothstep(2.1,2.5,r));gl_FragColor=vec4(vec3(1.,.85,.6)*1.8,s*.8);}`}));estela.visible=false;escena.add(estela);
