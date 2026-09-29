@@ -1,0 +1,20 @@
+{
+  "archivos": {
+    "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
+    "heroe-three.css": "023e55d7bcce37f797b22c669b2ca1dad4584e0ad6f070831c704903027eec6a",
+    "heroe-three.js": "21f9c01c67042fd044ceabcaac77ff71965780af6b9d8f159ccb350722eb457e",
+    "index.html": "9baa3ebe56d8751be60bdb6cb5bd141456fcecaaf0f7098217d5d711333132eb",
+    "juego/campana-personaje.js": "3f6736241a3798e4e2cd15dafaa382afeb1fe2038c58fc0db1799c4f081db2fd",
+    "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
+    "procedencia.json": "7ac333c88f1a25a2e351a3b42347611e98c9aaf5bdc230ed84e0e61b1bad0426",
+    "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
+  },
+  "formato": "caoz.secciones.aisladas",
+  "fuente": {
+    "rama": "feature/campana-three-menu",
+    "sha": "deef9dcc623ad59367a94e4a2ad74a3a7a8aa256"
+  },
+  "seccion": "heroe-three",
+  "version": 1
+}

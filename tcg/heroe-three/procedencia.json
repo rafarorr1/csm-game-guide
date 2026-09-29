@@ -1,0 +1,29 @@
+{
+  "seccion": "heroe-three",
+  "almacenamiento": "ninguno",
+  "partida": false,
+  "ia": false,
+  "online": false,
+  "progresoReal": false,
+  "proposito": "Revisar una silueta adulta y expresiva en Three.js con perfiles compatibles con la campaña, sin montar una mesa o combate.",
+  "componentes": {
+    "campana-personaje.js": "3f6736241a3798e4e2cd15dafaa382afeb1fe2038c58fc0db1799c4f081db2fd"
+  },
+  "entorno": {
+    "heroe-three.css": "023e55d7bcce37f797b22c669b2ca1dad4584e0ad6f070831c704903027eec6a",
+    "heroe-three.js": "21f9c01c67042fd044ceabcaac77ff71965780af6b9d8f159ccb350722eb457e",
+    "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
+  },
+  "fuentes": {
+    "cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
+    "cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235"
+  },
+  "derivado": {
+    "personaje": "3f6736241a3798e4e2cd15dafaa382afeb1fe2038c58fc0db1799c4f081db2fd",
+    "origen": "perfil compatible con campaña"
+  },
+  "derivados": {
+    "index.html": "9baa3ebe56d8751be60bdb6cb5bd141456fcecaaf0f7098217d5d711333132eb",
+    "plantilla": "5541e191c7824d7a44d8149f2853ee318a5ec827940185ff65735c0941c05672"
+  }
+}

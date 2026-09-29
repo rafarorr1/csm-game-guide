@@ -53,6 +53,10 @@
       "fuente": "54682d432ce1498b2d802b8597cca1a4cc3c8cfd",
       "ruta": "tcg/heroe"
     },
+    "heroe-three": {
+      "fuente": "deef9dcc623ad59367a94e4a2ad74a3a7a8aa256",
+      "ruta": "tcg/heroe-three"
+    },
     "interacciones": {
       "fuente": "c568529b736bbba9b5507f992446c3d5cb06c135",
       "ruta": "tcg/interacciones"

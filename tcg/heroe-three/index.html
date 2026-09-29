@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Héroe del Domo · estudio Three.js</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./heroe-three.css">
+<script src="./visor-three-vendor.js" defer></script>
+<script src="./juego/campana-personaje.js" defer></script>
+<script src="./heroe-three.js" defer></script>
+</head>
+<body>
+<main class="heroeThreeLab" aria-labelledby="heroeThreeTitulo">
+  <header class="heroeThreeCabecera">
+    <div>
+      <p>ESTUDIO AISLADO · PERSONAJE THREE.JS</p>
+      <h1 id="heroeThreeTitulo">El Héroe del Domo</h1>
+    </div>
+    <p class="heroeThreeEstado" id="heroeThreeEstado" role="status" aria-live="polite">Guardiana preparada para la campaña.</p>
+  </header>
+
+  <section class="heroeThreeEscena" id="heroeThreeEscena" aria-label="Estudio tridimensional del personaje jugador">
+    <canvas id="heroeThreeLienzo" aria-hidden="true"></canvas>
+    <div class="heroeThreeMarco" aria-hidden="true"></div>
+    <section class="heroeThreeFicha" aria-labelledby="heroeThreeNombre">
+      <p class="etiqueta">PROTAGONISTA</p>
+      <h2 id="heroeThreeNombre">Aurelia</h2>
+      <p id="heroeThreeClase">Guardiana del Domo</p>
+      <dl>
+        <div><dt>Estatura</dt><dd id="heroeThreeEstatura">Alta</dd></div>
+        <div><dt>Equipo</dt><dd id="heroeThreeEquipo">Hoja solar y escudo</dd></div>
+      </dl>
+    </section>
+
+    <section class="heroeThreeLeyenda" aria-label="Detalles de la propuesta">
+      <span><i class="marcador piel"></i>Rostro expresivo</span>
+      <span><i class="marcador capa"></i>Capas de atuendo</span>
+      <span><i class="marcador metal"></i>Equipo distintivo</span>
+    </section>
+
+    <section class="heroeThreeControles" aria-label="Aspectos y vista del personaje">
+      <p class="etiqueta">ARQUETIPOS</p>
+      <div class="heroeThreeArquetipos" role="group" aria-label="Elegir arquetipo">
+        <button type="button" data-arquetipo="guardiana" aria-pressed="true">
+          <b>Guardiana</b><span>Acero y juramento</span>
+        </button>
+        <button type="button" data-arquetipo="oraculo" aria-pressed="false">
+          <b>Oráculo</b><span>Runas y visión</span>
+        </button>
+        <button type="button" data-arquetipo="explorador" aria-pressed="false">
+          <b>Explorador</b><span>Ruta y precisión</span>
+        </button>
+      </div>
+      <div class="heroeThreeVista" role="group" aria-label="Girar personaje">
+        <button type="button" id="heroeThreeIzquierda" aria-label="Girar personaje a la izquierda">↶</button>
+        <button type="button" id="heroeThreeCentro">Frente</button>
+        <button type="button" id="heroeThreeDerecha" aria-label="Girar personaje a la derecha">↷</button>
+      </div>
+    </section>
+  </section>
+
+  <footer class="heroeThreeNota">Prueba visual autónoma: no carga partida, progreso, IA, red ni almacenamiento.</footer>
+</main>
+</body>
+</html>
