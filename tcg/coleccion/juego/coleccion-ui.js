@@ -102,7 +102,13 @@
     // no hay ni recarga del arte ni teletransporte entre los dos encuadres.
     const r=entrega?.nodo?.getBoundingClientRect();
     const continuidad=!matchMedia('(prefers-reduced-motion: reduce)').matches&&r?.width>8&&r?.height>8?{izquierda:r.left,arriba:r.top,ancho:r.width,alto:r.height,esperar:panel?.classList.contains('coleccionFusionando')}:null;
-    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id)});
+    const refrescarFicha=(nodo,acabado)=>{
+      nodo.dataset.coleccionAcabado=acabado;nodo.dataset.acabado=acabado;
+      nodo.classList.toggle('cdFullArt',acabado==='dorado');nodo.classList.toggle('cdClasica',acabado!=='dorado');
+      actualizarCarta(nodo);
+      actualizarMiniatura(id);
+    };
+    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
     // montarMundo sólo confirma después de insertar la ficha. Así, si el
     // visor no estuviera disponible, el vuelo conserva su salida de respaldo.
     if(visible&&entrega){
@@ -253,6 +259,7 @@
   function ir(vista){
     if(esFinalCampana()&&vista!=='recompensa')return;
     const anterior=s.vista,regresarAlArchivo=anterior==='detalle'&&vista==='cartas';
+    if(regresarAlArchivo&&volverAlArchivoFusionado())return;
     if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(regresarAlArchivo)focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();
     if(regresarAlArchivo)entradaDelMundo('cartas');
   }
@@ -302,6 +309,17 @@
       pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);
     });
     programarAjuste();
+  }
+  /* Al volver desde el visor no reconstruimos la fila —la ficha sigue siendo
+     el mismo nodo—, pero sí reflejamos en su marco los acabados que hayan
+     cambiado mientras estaba abierta. Los puntos y el texto accesible se
+     actualizan sin sustituir la carta ni alterar su geometría. */
+  function actualizarMiniatura(id){
+    const mini=archivoCapa?.querySelector('.coleccionMini[data-carta="'+id+'"]');if(!mini)return;
+    const a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v)),puntos=mini.querySelector('.coleccionPuntos');
+    mini.setAttribute('aria-label',dato(id).n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
+    if(!puntos)return;
+    puntos.replaceChildren();propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
   }
   function actualizarCarta(nodo){
     const soporte=nodo.matches('[data-arte-id]')?nodo:nodo.querySelector('[data-arte-id]');if(!soporte)return;
@@ -363,9 +381,22 @@
     transicion.rejilla?.classList.remove('coleccionRejillaSaliendo');
     transicion.rejilla?.removeAttribute('aria-busy');transicion.rejilla?.removeAttribute('inert');
     transicion.bloqueados?.forEach(n=>n?.removeAttribute('inert'));
-    transicion.cartas?.forEach(n=>{delete n.dataset.animacion;n.removeAttribute('aria-hidden');n.style.removeProperty('--coleccion-salida-x');n.style.removeProperty('--coleccion-salida-y');n.style.removeProperty('--coleccion-salida-giro');n.style.removeProperty('--coleccion-salida-demora');});
+    transicion.cartas?.forEach(n=>{delete n.dataset.animacion;n.removeAttribute('aria-hidden');n.removeAttribute('tabindex');n.style.removeProperty('--coleccion-salida-x');n.style.removeProperty('--coleccion-salida-y');n.style.removeProperty('--coleccion-salida-giro');n.style.removeProperty('--coleccion-salida-demora');});
     panel?.classList.remove('coleccionAbriendoCarta');panel?.removeAttribute('data-transicion');panel?.removeAttribute('data-carta-activa');
     transicionDetalle=null;
+  }
+  // La propia escena confirma cuándo la ficha terminó su interpolación. El
+  // Archivo no se oculta con un segundo reloj que pueda adelantarse bajo una
+  // caída de fps: sólo se aparta después del último fotograma real del FLIP.
+  function completarApertura(transicion){
+    if(transicionDetalle!==transicion||!panel?.open||s.vista!=='detalle')return;
+    archivoCapa?.setAttribute('hidden','');detalleCapa?.removeAttribute('inert');panel.dataset.vista='detalle';panel.classList.remove('coleccionFusionando');mensaje('');
+    limpiarTransicionDetalle(transicion);sonido('ui_confirm');
+  }
+  function prepararEncuadreDetalle(){
+    const movil=innerWidth<760,reserva=movil?0:360,controles=movil?Math.max(250,Math.min(320,Math.round(innerHeight*.34))):0;
+    encuadreDetalle=mundo3D?.encuadreColeccion?.({reserva,controles})||{modo:'coleccion',reserva,controles};
+    return {movil,reserva,controles};
   }
   function abrirCartaDesdeArchivo(id,miniatura){
     if(transicionDetalle||!panel?.open||s.vista!=='cartas')return;
@@ -379,8 +410,7 @@
        inserta directamente en el visor persistente y el visor le aplica FLIP
        desde este rectángulo. Así Archivo y detalle son el mismo mundo y la
        misma ficha, no dos pantallas que se turnan para mostrarla. */
-    const movil=innerWidth<760,reserva=movil?0:360,controles=movil?Math.max(250,Math.min(320,Math.round(innerHeight*.34))):0;
-    encuadreDetalle=mundo3D?.encuadreColeccion?.({reserva,controles})||{modo:'coleccion',reserva,controles};
+    const {reserva,controles}=prepararEncuadreDetalle();
     guardarPosicionLista();focoLista=id;s.cartaSeleccionada=id;
     const cartas=[...rejilla.querySelectorAll('.coleccionMini')],bloqueados=[rejilla,contenido.querySelector('.coleccionFiltrosInmersivos'),barra].filter(Boolean);
     const transicion={origen,origenMiniatura:miniatura,rejilla,cartas,bloqueados,temporizador:0,entrega:0,transferida:false};transicionDetalle=transicion;
@@ -397,22 +427,27 @@
     cartaTransferida={id,acabado:modelo().elegido(id),nodo:ficha,transicion,entregada:false};
     s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';s.vista='detalle';
     panel.classList.add('coleccionFusionando');activarMundo('detalle');actualizarCabecera();dibujarDetalle({preservarArchivo:true});entradaDelMundo('detalle');
-    requestAnimationFrame(()=>{if(transicionDetalle!==transicion)return;mundoHost?.style.setProperty('--reserva-der',reserva+'px');mundoHost?.style.setProperty('--controles-alto',controles+'px');mundo3D?.iniciarEntrada?.();panel.classList.add('coleccionAbriendoCarta');rejilla.classList.add('coleccionRejillaSaliendo');});
-    transicion.temporizador=setTimeout(()=>{
-      if(transicionDetalle!==transicion||!panel?.open||s.vista!=='detalle')return;
-      // Al cerrar la coreografía no se reconstruye el visor: sólo se aparta la
-      // capa de Archivo que ya salió de cuadro. El detalle ya existía desde el
-      // primer fotograma de la interpolación.
-      archivoCapa?.setAttribute('hidden','');panel.dataset.vista='detalle';panel.classList.remove('coleccionFusionando');mensaje('');
-      limpiarTransicionDetalle(transicion);sonido('ui_confirm');
-    },760);
+    requestAnimationFrame(()=>{if(transicionDetalle!==transicion)return;mundoHost?.style.setProperty('--reserva-der',reserva+'px');mundoHost?.style.setProperty('--controles-alto',controles+'px');mundo3D?.iniciarEntrada?.();panel.classList.add('coleccionAbriendoCarta');rejilla.classList.add('coleccionRejillaSaliendo');
+      // Sólo es un seguro ante una API de visor interrumpida; el cierre normal
+      // lo dispara alTerminarEntrada desde el mismo raf que dibuja la carta.
+      transicion.temporizador=setTimeout(()=>completarApertura(transicion),2500);
+    });
   }
   function verCarta(id,miniatura){
     // Movimiento reducido no reproduce el vuelo, pero aún puede entregar la
     // ficha ya cargada al visor de forma instantánea.
     const ficha=miniatura?.querySelector('.coleccionCarta'),acabado=modelo().elegido(id);
     if(ficha)cartaTransferida={id,acabado,nodo:ficha,transicion:null,entregada:false};
-    tonoMundoVisor(id);s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=acabado;s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');
+    tonoMundoVisor(id);s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=acabado;s.regla=0;s.demoEdiciones='real';
+    /* Movimiento reducido no significa volver a construir el Archivo. La
+       carta aparece de inmediato, pero sus dos estados siguen compartiendo el
+       mismo mundo, capa y ficha para que «Mis cartas» no abra otra pantalla. */
+    if(archivoCapa?.isConnected&&miniatura?.isConnected){
+      guardarPosicionLista();focoLista=id;prepararEncuadreDetalle();s.vista='detalle';
+      activarMundo('detalle');actualizarCabecera();panel.dataset.vista='detalle';dibujarDetalle({preservarArchivo:true});
+      archivoCapa.setAttribute('hidden','');mensaje('');entradaDelMundo('detalle');sonido('ui_confirm');return;
+    }
+    ir('detalle');sonido('ui_confirm');
   }
   // El detalle es la carta en 3D (visor-3d.js incrustado): una escena por carta
   // que sólo cambia de edición o de copias al redibujar. Cuando está disponible
@@ -421,10 +456,52 @@
   let escena3D=null;
   const edicionesDe=id=>ACABADOS.map(a=>({id:a,...estadoEdicionVisible(id,a)}));
   function soltarEscena3D(){escena3D?.destruir();escena3D=null;mundo3D?.ocultarCarta?.();}
+  function volverAlArchivoFusionado(){
+    /* Si el usuario vuelve justo durante la última fracción de la llegada,
+       cerramos esa coreografía sobre los mismos nodos antes de iniciar el
+       viaje inverso. Jamás caemos en `dibujar()` (que reconstruiría Archivo)
+       sólo porque un RAF lento aún no retiró su marcador transitorio. */
+    if(transicionDetalle&&s.vista==='detalle')completarApertura(transicionDetalle);
+    const id=s.carta,miniatura=archivoCapa?.querySelector('.coleccionMini[data-carta="'+id+'"]'),rejilla=archivoCapa?.querySelector('.coleccionRejilla');
+    if(!id||!miniatura||!rejilla||!mundo3D?.devolverCarta||transicionDetalle)return false;
+    // La biblioteca se quedó montada debajo del detalle. La volvemos a poner
+    // en escena antes de mover la ficha: no se regenera ninguna fila, arte ni
+    // anillo. Sólo el mismo nodo vuelve a ocupar su celda original.
+    archivoCapa.removeAttribute('hidden');focoLista=id;miniatura.dataset.regresoActiva='';
+    panel.classList.add('coleccionRegresandoArchivo');panel.dataset.transicion='volver-archivo';panel.dataset.cartaActiva=id;panel.dataset.vista='cartas';
+    /* La celda elegida está vacía mientras su ficha vive en el visor. Primero
+       la devolvemos (sin pintar todavía) y sólo entonces restauramos scroll:
+       así la rejilla ya tiene la altura real de esa fila y el destino del FLIP
+       no queda una pantalla más abajo en móvil. */
+    const prepararDestino=()=>{
+      encajarCartas();
+      const comportamientoPrevio=rejilla.style.scrollBehavior,encajePrevio=rejilla.style.scrollSnapType;
+      rejilla.style.scrollBehavior='auto';rejilla.style.scrollSnapType='none';rejilla.scrollTop=s.desplazamiento;void rejilla.offsetHeight;
+      requestAnimationFrame(()=>{if(!rejilla.isConnected)return;if(comportamientoPrevio)rejilla.style.scrollBehavior=comportamientoPrevio;else rejilla.style.removeProperty('scroll-behavior');if(encajePrevio)rejilla.style.scrollSnapType=encajePrevio;else rejilla.style.removeProperty('scroll-snap-type');});
+      mundoHost?.style.setProperty('--reserva-der','0px');mundoHost?.style.removeProperty('--controles-alto');
+    };
+    mensaje('Volviendo a Mis cartas…');
+    let terminado=false;
+    const terminar=nodo=>{
+      if(terminado||!panel?.open)return;terminado=true;
+      detalleCapa?.remove();detalleCapa=null;encuadreDetalle=null;s.vista='cartas';focoLista=null;
+      panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
+      activarMundo('cartas');actualizarCabecera();mensaje('');entradaDelMundo('cartas');
+      const enfocar=()=>{if(panel?.open&&s.vista==='cartas'&&miniatura.isConnected)miniatura.focus({preventScroll:true});};
+      requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>miniatura.removeAttribute('data-regreso-activa'),720);});
+    };
+    const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino,alTerminar:terminar});
+    if(ok)return true;
+    miniatura.removeAttribute('data-regreso-activa');panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');panel.dataset.vista='detalle';archivoCapa.setAttribute('hidden','');mensaje('');return false;
+  }
   function dibujarDetalle(opciones={}){
     if(!s.carta){ir('cartas');return;}
-    const preservarArchivo=opciones.preservarArchivo===true&&archivoCapa?.isConnected;
-    if(preservarArchivo){detalleCapa?.remove();detalleCapa=crear('section','coleccionDetalleCapa');contenido.append(detalleCapa);}
+    // Una vez que se abrió desde la biblioteca, Archivo y detalle siguen
+    // siendo las dos capas del mismo componente incluso si se cambia edición,
+    // se actualiza el arte o llega un cambio del modelo. Nunca se hace un
+    // replaceChildren que destruiría la ruta inversa de la ficha.
+    const preservarArchivo=archivoCapa?.isConnected&&(opciones.preservarArchivo===true||panel?.dataset.mundo==='detalle');
+    if(preservarArchivo){detalleCapa?.remove();detalleCapa=crear('section','coleccionDetalleCapa');if(transicionDetalle)detalleCapa.setAttribute('inert','');contenido.append(detalleCapa);}
     else{vaciarContenido();panel.dataset.vista='detalle';}
     const destino=preservarArchivo?detalleCapa:contenido;
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));

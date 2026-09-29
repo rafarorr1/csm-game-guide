@@ -436,8 +436,8 @@
     "juego/carta-diseno.js": "0b3327ee89de1c5539e81d45da4eecb30f9dad48f689a231238e3b68be3b7b36",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/coleccion-modelo.js": "ddd70c9c812277efc5e525032568a70a18a7fd1db4eff93c7a7ba0117bfb99de",
-    "juego/coleccion-ui.js": "b0a11ffeeb1ab06a53ffab7a0588de7253a928d53d1b57f492938ddbb003ce69",
-    "juego/coleccion.css": "ec85af46cbf66f44ff761faf8fa16c1ab42f30524423af68c1403d0937bae017",
+    "juego/coleccion-ui.js": "994169854e38f9f59080573ac8cbfea40d02b45c3264e3d5571328d8e5c029cf",
+    "juego/coleccion.css": "bd24c3b34c8d42a4b295040f3226cb6a25f27fc303e1d07131e45f74cbadbba2",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
@@ -446,17 +446,17 @@
     "juego/sobres-escena.js": "2afd3c27a1973727aba00de5bfbedd9198b105133aed5d64333ef0efa86f8518",
     "juego/sobres-revelacion.js": "0409659d3b519531ffbae3b3d62e37ad8c258c7afa7f48c0bad1510dd0b6152c",
     "juego/visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
-    "juego/visor-3d.css": "d372fdac23b1161c1b1c6e679d56d00a2a9494216a1d538c68a304bbe79eba3b",
-    "juego/visor-3d.js": "6cc022cd9acd7b0e0dcd4f5946c88f2379e27e2384093db2d8984f8d5735db0b",
+    "juego/visor-3d.css": "6a95d2275fd614d42d993baed6eb2ec86dd546d417ef18a0c4b24cf120494c30",
+    "juego/visor-3d.js": "956f01e790262197ee55c145d63c6a9e37d44648d996a201da2e2419b13360ea",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "movil.html": "2a40d85ab96e291f44989895638f5051d209aacc18c64a019de537edbde8fa45",
-    "procedencia.json": "9c322e96c63b42c9ee6f8f67da6e8ec78e4b50493791294ff038e84bcded69c7",
+    "procedencia.json": "126dfad2b07b1ce77c29d272d9e12e15cde315340998f53ffddc62d86c333d88",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/coleccion-pantalla-completa-visor",
-    "sha": "6a82163ad0fab6ea43100cd35e79bb4e4bb2fe8c"
+    "sha": "dff211bc028d2e3a02caf198d704fcbed0f77720"
   },
   "seccion": "coleccion",
   "version": 1

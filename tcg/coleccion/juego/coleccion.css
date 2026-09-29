@@ -677,6 +677,10 @@
 #coleccionPanel.coleccionFusionando{inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
 #coleccionPanel.coleccionFusionando .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
 #coleccionPanel.coleccionFusionando .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+/* La ficha aún está encontrando su encuadre: los controles se habilitan al
+   terminar el mismo FLIP. Así un clic veloz no sustituye la ficha a mitad de
+   trayecto ni fuerza una segunda transición. */
+#coleccionPanel.coleccionFusionando .coleccionMundoVisor{pointer-events:none!important}
 /* Archivo y detalle coexisten brevemente en este único plano. La capa de
    detalle no crea otro fondo: flota sobre la misma escena que ya sostenía la
    biblioteca mientras sus controles entran y el Archivo sale de cuadro. */
@@ -937,6 +941,12 @@
   filter:blur(3px) brightness(.4) saturate(.36)!important;transition-delay:var(--coleccion-salida-demora,0ms);
 }
 #coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini[data-animacion="entra"]{opacity:0!important;filter:brightness(.78)!important}
+#coleccionPanel.coleccionRegresandoArchivo :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){
+  opacity:0;pointer-events:none;
+}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionDetalleCapa{opacity:0;translate:0 -20px;pointer-events:none;transition:opacity .28s ease,translate .4s cubic-bezier(.16,.78,.18,1)}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionArchivoRejilla .coleccionMini:not([data-regreso-activa]){opacity:0;pointer-events:none}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionArchivoRejilla .coleccionMini[data-regreso-activa]{z-index:8;pointer-events:none}
 #coleccionPanel .coleccionVueloCarta{
   position:fixed!important;z-index:50;margin:0!important;min-width:0!important;max-width:none!important;max-height:none!important;pointer-events:none;
   translate:0 0;scale:1;rotate:0deg;opacity:1;transform:none!important;will-change:translate,scale,opacity,filter;
@@ -989,10 +999,14 @@
 
 /* El Archivo usa exactamente la noche, halo, motas y pedestal del visor;
    se eliminan el aro y el degradado que antes intentaban imitarla con CSS. */
-#coleccionPanel[data-mundo="archivo"] .coleccionInterior{background:transparent!important}
-#coleccionPanel[data-mundo="archivo"] .coleccionInterior::before,
-#coleccionPanel[data-mundo="archivo"] .coleccionInterior::after,
-#coleccionPanel[data-mundo="archivo"] .coleccionEscenaArchivo::before{display:none!important}
+#coleccionPanel[data-mundo] .coleccionInterior{background:transparent!important}
+/* El Archivo no conserva una versión de respaldo del cielo del visor. Esta
+   regla también se mantiene durante el fotograma en que la vista lógica aún
+   dice "cartas" pero el mundo ya está preparando el detalle: de otro modo el
+   aro antiguo reaparece un instante detrás de la carta que viaja. */
+#coleccionPanel[data-mundo] .coleccionInterior::before,
+#coleccionPanel[data-mundo] .coleccionInterior::after,
+#coleccionPanel[data-mundo] .coleccionEscenaArchivo::before{display:none!important}
 #coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor{--reserva-der:0px}
 
 /* Las fichas siguen en tres columnas y scroll vertical, pero cada una tiene
@@ -1054,6 +1068,7 @@
 #coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 1){--archivo-entrada-x:-52px;--archivo-entrada-y:28px;--archivo-entrada-demora:80ms}
 #coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 2){--archivo-entrada-x:0px;--archivo-entrada-y:48px;--archivo-entrada-demora:110ms}
 #coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n){--archivo-entrada-x:52px;--archivo-entrada-y:28px;--archivo-entrada-demora:140ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini[data-regreso-activa]{animation:none!important;opacity:1}
 #coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini{animation:none!important}
 
 @keyframes coleccionArchivoCabeceraEntra{
