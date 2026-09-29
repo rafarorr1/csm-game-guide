@@ -397,7 +397,14 @@
       // vuelve a encender entre una vista y la otra.
       zona.classList.add('con3D','conMundoVisor');zona.append(versiones);contenido.append(zona);
       mostrarCartaEnMundo(s.carta);
-      const medirControles=()=>{zona.style.setProperty('--controles-alto',Math.ceil(versiones.getBoundingClientRect().height+20)+'px');mundo3D?.medir();};
+      const medirControles=()=>{
+        const alto=Math.ceil(versiones.getBoundingClientRect().height+20)+'px';
+        // En teléfono la escena y sus controles internos comparten esta reserva:
+        // así Voltear/Ampliar quedan justo arriba del panel de acabados, no debajo.
+        zona.style.setProperty('--controles-alto',alto);
+        mundoHost?.style.setProperty('--controles-alto',alto);
+        mundo3D?.medir();
+      };
       medirControles();requestAnimationFrame(medirControles);
     }else if(window.CAOZ_VISOR3D?.montar){
       zona.classList.add('con3D');const escenario=crear('div','coleccionEscena3D');
