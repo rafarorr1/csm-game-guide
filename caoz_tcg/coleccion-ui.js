@@ -75,7 +75,15 @@
       // Las filas de la lista crecen con el ancho de sus tres columnas. No
       // dependemos de la altura visible: el resto se recorre con scroll.
       const mini=clase.contains('coleccionMini');
-      if(mini){alto=280;ancho=206;n.style.zoom=Math.max(.1,(p.clientWidth-8)/200);}
+      if(mini){
+        alto=280;ancho=206;
+        // La biblioteca puede ser mucho más ancha que el diálogo anterior.
+        // Conservamos tres columnas, pero nunca dejamos que una miniatura sea
+        // más alta que la primera fila visible: así una laptop baja no abre
+        // mostrando cartas cortadas aunque haya sitio horizontal de sobra.
+        const rejilla=p.parentElement,porAncho=Math.max(.1,(p.clientWidth-8)/200),porAlto=rejilla?Math.max(.1,(rejilla.clientHeight-10)/303):porAncho;
+        n.style.zoom=Math.min(porAncho,porAlto);
+      }
       else if(clase.contains('coleccionVersion')&&movil){const caja=p.parentElement;const filas=getComputedStyle(caja).gridTemplateRows.split(' ').map(Number.parseFloat);alto=filas[1]||caja.clientHeight-214;ancho=caja.clientWidth-30;}
       else{
         const estilos=getComputedStyle(p),gap=parseFloat(estilos.rowGap)||0;

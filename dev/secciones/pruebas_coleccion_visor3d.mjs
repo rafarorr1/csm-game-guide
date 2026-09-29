@@ -29,12 +29,22 @@ const giro=pagina=>pagina.evaluate(()=>parseFloat(getComputedStyle(document.quer
 let navegador;
 try{
   navegador=await chromium.launch({channel:'chrome',headless:true});
-  for(const [vista,width,height,carta]of [['desktop',1440,900,'tal'],['movil',390,844,'tal'],['movil',320,568,'lider_fender']]){
+  for(const [vista,width,height,carta]of [['desktop',1440,900,'tal'],['desktop',1280,720,'tal'],['movil',390,844,'tal'],['movil',320,568,'lider_fender']]){
     const contexto=await navegador.newContext({viewport:{width,height},reducedMotion:'reduce',hasTouch:vista==='movil'}),pagina=await contexto.newPage(),errores=[];
     pagina.on('pageerror',e=>errores.push(e.message));
     if(sabotaje)await contexto.addInitScript(()=>{Object.defineProperty(window,'CAOZ_VISOR3D',{configurable:true,get:()=>undefined,set:()=>{}});});
     try{
       await pagina.goto(urlPara({vista,estado:'ediciones'}));
+      // La biblioteca es una escena completa, no el diálogo morado reducido
+      // que tenía antes. La rejilla conserva su propio desplazamiento interno.
+      const biblioteca=await pagina.evaluate(()=>{
+        const panel=document.querySelector('#coleccionPanel'),interior=panel.querySelector('.coleccionInterior'),rejilla=panel.querySelector('.coleccionRejilla'),primera=rejilla.querySelector('.coleccionMini .coleccionCarta'),p=panel.getBoundingClientRect(),r=rejilla.getBoundingClientRect(),c=primera.getBoundingClientRect(),i=getComputedStyle(interior);
+        return {cubre:p.left<=1&&p.top<=1&&p.right>=innerWidth-1&&p.bottom>=innerHeight-1,
+          sinMarco:parseFloat(getComputedStyle(panel).borderTopWidth)===0&&parseFloat(getComputedStyle(panel).borderRadius)===0,
+          escena:/radial-gradient/.test(i.backgroundImage),rejillaConScroll:rejilla.scrollHeight>rejilla.clientHeight,primeraFilaCabe:c.top>=r.top-1&&c.bottom<=r.bottom+1};
+      });
+      assert.ok(biblioteca.cubre&&biblioteca.sinMarco,'La biblioteca ocupa toda la pantalla, sin una caja modal reducida');
+      assert.ok(biblioteca.escena&&biblioteca.rejillaConScroll&&biblioteca.primeraFilaCabe,'La biblioteca usa la escena del visor, conserva el scroll y no corta su primera fila');
       const mini=pagina.locator('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]');await mini.waitFor();await mini.scrollIntoViewIfNeeded();
       // La rejilla muestra la carta pintada (los Protagonistas conservan su retrato).
       const pintada=await mini.evaluate(n=>!!n.querySelector('.cdCarta'));
