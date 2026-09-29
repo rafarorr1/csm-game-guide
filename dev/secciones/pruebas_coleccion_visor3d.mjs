@@ -1,5 +1,6 @@
-/* Detalle de Colección con la carta en 3D, sólo en la sección aislada: tocar
-   una carta de la rejilla abre su escena 3D con la ficha real; las pestañas
+/* Detalle de Colección con la carta en 3D, sólo en la sección aislada: el
+   Archivo es un carrusel inmersivo; seleccionar una carta la trae al frente y
+   abrir el visualizador muestra su escena 3D con la ficha real; las pestañas
    cambian la edición sin rehacer la escena; una edición bloqueada se ve velada
    y sin WebGL; voltear gira media vuelta; pantalla completa abre el diálogo y
    al cerrarlo se vuelve al detalle; regresar a la rejilla libera la escena.
@@ -35,21 +36,32 @@ try{
     if(sabotaje)await contexto.addInitScript(()=>{Object.defineProperty(window,'CAOZ_VISOR3D',{configurable:true,get:()=>undefined,set:()=>{}});});
     try{
       await pagina.goto(urlPara({vista,estado:'ediciones'}));
-      // La biblioteca es una escena completa, no el diálogo morado reducido
-      // que tenía antes. La rejilla conserva su propio desplazamiento interno.
+      // El Archivo es una escena completa, no el diálogo morado reducido que
+      // tenía antes. El carrusel conserva scroll horizontal y una carta activa.
       const biblioteca=await pagina.evaluate(()=>{
-        const panel=document.querySelector('#coleccionPanel'),interior=panel.querySelector('.coleccionInterior'),rejilla=panel.querySelector('.coleccionRejilla'),primera=rejilla.querySelector('.coleccionMini .coleccionCarta'),p=panel.getBoundingClientRect(),r=rejilla.getBoundingClientRect(),c=primera.getBoundingClientRect(),i=getComputedStyle(interior);
+        const panel=document.querySelector('#coleccionPanel'),interior=panel.querySelector('.coleccionInterior'),rejilla=panel.querySelector('.coleccionRejilla'),activa=rejilla.querySelector('.coleccionMini[aria-selected="true"] .coleccionCarta'),p=panel.getBoundingClientRect(),r=rejilla.getBoundingClientRect(),c=activa.getBoundingClientRect(),i=getComputedStyle(interior);
         return {cubre:p.left<=1&&p.top<=1&&p.right>=innerWidth-1&&p.bottom>=innerHeight-1,
           sinMarco:parseFloat(getComputedStyle(panel).borderTopWidth)===0&&parseFloat(getComputedStyle(panel).borderRadius)===0,
-          escena:/radial-gradient/.test(i.backgroundImage),rejillaConScroll:rejilla.scrollHeight>rejilla.clientHeight,primeraFilaCabe:c.top>=r.top-1&&c.bottom<=r.bottom+1};
+          escena:/radial-gradient/.test(i.backgroundImage),carrusel:rejilla.scrollWidth>rejilla.clientWidth,
+          activaVisible:c.width>60&&c.height>80&&c.left>=r.left-2&&c.right<=r.right+2,
+          sinCaja:getComputedStyle(panel.querySelector('.coleccionCabecera')).backgroundImage==='none'};
       });
       assert.ok(biblioteca.cubre&&biblioteca.sinMarco,'La biblioteca ocupa toda la pantalla, sin una caja modal reducida');
-      assert.ok(biblioteca.escena&&biblioteca.rejillaConScroll&&biblioteca.primeraFilaCabe,'La biblioteca usa la escena del visor, conserva el scroll y no corta su primera fila');
+      assert.ok(biblioteca.escena&&biblioteca.carrusel&&biblioteca.activaVisible&&biblioteca.sinCaja,'La biblioteca usa la escena del visor, conserva el carrusel y no deja una caja morada');
       const mini=pagina.locator('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]');await mini.waitFor();await mini.scrollIntoViewIfNeeded();
       // La rejilla muestra la carta pintada (los Protagonistas conservan su retrato).
       const pintada=await mini.evaluate(n=>!!n.querySelector('.cdCarta'));
       if(pintada)await pagina.waitForFunction(n=>n.querySelector('.cdCarta')?.classList.contains('cdLista'),await mini.elementHandle(),{timeout:20000});
       await mini.click();
+      await pagina.waitForFunction(id=>document.querySelector('.coleccionMini[data-carta="'+id+'"]')?.getAttribute('aria-selected')==='true',carta);
+      const foco=await pagina.evaluate(id=>{
+        const activa=document.querySelector('.coleccionMini[data-carta="'+id+'"]'),vecina=activa?.nextElementSibling||activa?.previousElementSibling;
+        return {activa:activa?.dataset.profundidad,seleccionada:activa?.classList.contains('seleccionada'),vecina:vecina?.dataset.profundidad,accion:!!document.querySelector('.coleccionAbrirCarta')};
+      },carta);
+      assert.equal(foco.activa,'0','La carta elegida ocupa el frente del Archivo');
+      assert.ok(foco.seleccionada&&foco.accion&&foco.vecina!=='0','Las demás cartas quedan detrás hasta abrir el visor');
+      if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-archivo.png')});
+      await pagina.locator('.coleccionAbrirCarta').click();
       const escena=pagina.locator('#coleccionPanel .coleccionEscena3D .visor3dIncrustado');await escena.waitFor({timeout:4000});
       const hayGL=await pagina.evaluate(()=>{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'));});
       if(hayGL&&pintada)await pagina.waitForFunction(()=>document.querySelector('.visor3dIncrustado')?.classList.contains('visor3dConGL'),null,{timeout:30000});
@@ -90,9 +102,10 @@ try{
       await pagina.locator('dialog.visor3d[open]').waitFor();
       await pagina.keyboard.press('Escape');
       await pagina.waitForFunction(()=>!document.querySelector('dialog.visor3d')&&document.querySelector('#coleccionPanel').open&&document.querySelector('.visor3dIncrustado'));
-      // Volver a la rejilla libera la escena.
+      // Volver al Archivo libera la escena y conserva la carta en el frente.
       await pagina.locator('.coleccionAtras').click();
       await pagina.waitForFunction(()=>!document.querySelector('.visor3dIncrustado'));
+      assert.equal(await pagina.locator('.coleccionMini[data-carta="'+carta+'"]').getAttribute('aria-selected'),'true','Volver conserva la carta que estaba explorando');
       assert.deepEqual(errores,[],'Sin errores de página');
       console.log('✓ '+vista+' '+width+'×'+height+': '+(pintada?'carta pintada, '+(hayGL?'escena WebGL':'escena CSS'):'retrato de Protagonista')+', detalle 3D, ediciones en la misma escena, bloqueada velada, voltea, pantalla completa y libera la escena');
     }finally{await contexto.close();}

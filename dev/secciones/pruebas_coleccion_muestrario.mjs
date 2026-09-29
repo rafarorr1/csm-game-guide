@@ -1,6 +1,6 @@
-/* Recorre las tres series en la grilla real, con memoria temporal.
+/* Recorre las tres series en el Archivo/carrusel real, con memoria temporal.
    PLAYWRIGHT_MODULE permite usar la instalación del entorno sin dependencias
-   nuevas. --capturas /ruta guarda la grilla y los controles de revisión. */
+   nuevas. --capturas /ruta guarda el Archivo y los controles de revisión. */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import fs from 'node:fs';
@@ -29,13 +29,14 @@ try{
           return {cantidad:minis.length,total:m.ids().length,
             inventario:m.ids().every(id=>m.elegido(id)===acabado&&['normal','foil','dorado'].every(a=>m.cantidad(id,a)===1)),
             cartas:minis.every(n=>{const carta=n.querySelector('.coleccionCarta'),img=carta.querySelector('img'),v=CAOZ_ARTE.version(n.dataset.carta,acabado);return carta.dataset.coleccionAcabado===acabado&&(!img||img.getAttribute('src')===v.url);}),
-            marcadores:minis.every(n=>{const ps=[...n.querySelectorAll('.coleccionPuntos>i')],r=n.querySelector('.coleccionCarta').getBoundingClientRect();return ps.map(p=>p.dataset.edicion).join(',')===['normal','foil','dorado'].filter(a=>m.tiene(n.dataset.carta,a)).join(',')&&ps.filter(p=>p.classList.contains('elegida')).map(p=>p.dataset.edicion).join(',')===acabado&&ps.every(p=>{const b=p.getBoundingClientRect(),s=getComputedStyle(p);return p.classList.contains('propia')&&b.width>0&&b.height>0&&b.top>=r.bottom-1&&s.display!=='none'&&s.visibility==='visible'&&Number(s.opacity)>0;})&&!n.querySelector('.coleccionCopias')&&n.querySelector('.coleccionMiniInfo').textContent.trim()==='';}),
-            columnas:getComputedStyle(grid).gridTemplateColumns.split(' ').length,
-            desborde:document.documentElement.scrollWidth>innerWidth||grid.scrollWidth>grid.clientWidth+1};
+            marcadores:minis.every(n=>{const ps=[...n.querySelectorAll('.coleccionPuntos>i')];return ps.map(p=>p.dataset.edicion).join(',')===['normal','foil','dorado'].filter(a=>m.tiene(n.dataset.carta,a)).join(',')&&ps.filter(p=>p.classList.contains('elegida')).map(p=>p.dataset.edicion).join(',')===acabado&&!n.querySelector('.coleccionCopias')&&n.querySelector('.coleccionMiniInfo').textContent.trim()==='';}),
+            marcadorActivo:(()=>{const n=grid.querySelector('.coleccionMini[aria-selected="true"]'),r=n?.querySelector('.coleccionCarta')?.getBoundingClientRect();return !!n&&[...n.querySelectorAll('.coleccionPuntos>i')].every(p=>{const b=p.getBoundingClientRect(),s=getComputedStyle(p);return p.classList.contains('propia')&&b.width>0&&b.height>0&&b.top>=r.bottom-1&&s.display!=='none'&&s.visibility==='visible'&&Number(s.opacity)>0;});})(),
+            carrusel:grid.classList.contains('coleccionCarruselCartas')&&grid.scrollWidth>grid.clientWidth+1,
+            desborde:document.documentElement.scrollWidth>innerWidth};
         },acabado);
         assert.equal(datos.cantidad,datos.total);assert.ok(datos.inventario&&datos.cartas,'Todas las cartas muestran la serie elegida, con una copia por acabado');
-        assert.ok(datos.marcadores,'Sólo las ediciones propias tienen un marcador visible y la serie en uso está elegida, sin nombres ni contadores en el pie');
-        assert.equal(datos.columnas,3);assert.equal(datos.desborde,false);
+        assert.ok(datos.marcadores&&datos.marcadorActivo,'Sólo las ediciones propias tienen un marcador activo visible y la serie en uso está elegida, sin nombres ni contadores en el pie');
+        assert.ok(datos.carrusel);assert.equal(datos.desborde,false);
         if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-'+acabado+'.png')});
       }
       await pagina.locator('.coleccionCerrar').click();
