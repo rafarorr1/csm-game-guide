@@ -115,3 +115,18 @@
    del detalle de Colección): la carta, el pedestal y el halo se centran en el
    resto, mientras las partículas siguen llenando todo. */
 .visor3dIncrustado .visor3dEscena{margin-right:var(--reserva-der,0px)}
+
+/* Mundo persistente: el Archivo puede vivir dentro de la misma noche del
+   visor sin crear una carta o contexto WebGL hasta que el usuario elige una.
+   La interfaz que lo aloja pone sus propios controles encima; el ambiente no
+   captura puntero mientras está en modo ambiente. */
+.visor3d.visor3dMundo{position:relative;inset:auto;display:block;width:100%;height:100%;padding:0;border-radius:0;background:#07050c;overflow:hidden}
+.visor3dMundo .visor3dEscena{position:absolute;inset:0;display:block;min-height:0;margin-right:var(--reserva-der,0px)}
+.visor3dMundo[data-modo="ambiente"] .visor3dEscena{pointer-events:none;cursor:default}
+.visor3dMundo[data-modo="ambiente"] :is(.visor3dControles,.visor3dCandadoEscena){display:none}
+.visor3dMundo[data-modo="ambiente"] .visor3dPedestal{top:52%;width:min(680px,72vw);opacity:.78}
+.visor3dMundo[data-modo="ambiente"] .visor3dSuelo{top:54%;width:min(600px,66vw);height:min(150px,18vw);opacity:.8}
+.visor3dMundo[data-modo="ambiente"] .visor3dHalo{opacity:.96}
+.visor3dMundo[data-modo="carta"] .visor3dEscena{touch-action:none;cursor:grab}
+.visor3dMundo[data-modo="carta"] .visor3dEscena.arrastrando{cursor:grabbing}
+@media(prefers-reduced-motion:reduce){.visor3dMundo .visor3dEscena{cursor:default}}

@@ -1,9 +1,10 @@
 /* Detalle de Colección con la carta en 3D, sólo en la sección aislada: el
-   Archivo conserva tres cartas por fila y scroll vertical. Al abrir una, la
-   transición observable aparta las demás y entrega la elegida al visor real;
-   las pestañas cambian la edición sin rehacer la escena; una edición bloqueada
-   se ve velada y sin WebGL; volver restaura foco y desplazamiento de la lista.
-   Usa Playwright instalado en el entorno (PLAYWRIGHT_MODULE opcional). */
+   Archivo conserva tres cartas por fila y scroll vertical dentro del mismo
+   mundo del visor. Al abrir una, la transición observable aparta las demás y
+   entrega la elegida al visor real sin cambiar de escenario; las pestañas
+   cambian la edición sin rehacer la escena; una edición bloqueada se ve velada
+   y sin WebGL; volver restaura foco y desplazamiento de la lista. Usa
+   Playwright instalado en el entorno (PLAYWRIGHT_MODULE opcional). */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import fs from 'node:fs';
@@ -39,19 +40,26 @@ try{
     try{
       await pagina.goto(urlPara({vista,estado:'ediciones'}));
       // El Archivo es una escena completa, no el diálogo morado reducido que
-      // tenía antes. Conserva una cuadrícula vertical de tres cartas por fila.
+      // tenía antes. Sus cartas y controles flotan sobre el mismo mundo que
+      // termina mostrando el visor individual.
       const biblioteca=await pagina.evaluate(()=>{
-        const panel=document.querySelector('#coleccionPanel'),interior=panel.querySelector('.coleccionInterior'),rejilla=panel.querySelector('.coleccionRejilla'),cartas=[...rejilla.querySelectorAll('.coleccionMini')],p=panel.getBoundingClientRect(),i=getComputedStyle(interior),columnas=getComputedStyle(rejilla).gridTemplateColumns.trim().split(/\s+/).filter(Boolean);
+        const panel=document.querySelector('#coleccionPanel'),interior=panel.querySelector('.coleccionInterior'),mundo=interior.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo'),rejilla=panel.querySelector('.coleccionRejilla'),cartas=[...rejilla.querySelectorAll('.coleccionMini')],p=panel.getBoundingClientRect(),columnas=getComputedStyle(rejilla).gridTemplateColumns.trim().split(/\s+/).filter(Boolean),rMundo=mundo?.getBoundingClientRect();
+        const cubre=(n,base)=>{const r=n?.getBoundingClientRect();return !!r&&!!base&&r.width>0&&r.height>0&&r.left>=base.left-2&&r.right<=base.right+2&&r.top>=base.top-2&&r.bottom<=base.bottom+2;};
+        const muestra=cartas.find(n=>n.querySelector('.coleccionCarta')?.getBoundingClientRect().width>40),rMuestra=muestra?.getBoundingClientRect(),encima=!!rMuestra&&!!document.elementFromPoint(rMuestra.left+rMuestra.width/2,rMuestra.top+rMuestra.height*.38)?.closest('.coleccionMini');
+        // La referencia se conserva en la propia página para comprobar que no
+        // se cambia el mundo durante el viaje al detalle ni al volver.
+        window.__coleccionMundoPrueba=mundo;
         return {cubre:p.left<=1&&p.top<=1&&p.right>=innerWidth-1&&p.bottom>=innerHeight-1,
           sinMarco:parseFloat(getComputedStyle(panel).borderTopWidth)===0&&parseFloat(getComputedStyle(panel).borderRadius)===0,
-          escena:/radial-gradient/.test(i.backgroundImage),tresColumnas:columnas.length===3,
+          mundo:!!mundo&&panel.dataset.mundo==='archivo'&&visor?.dataset.modo==='ambiente'&&!visor.querySelector('.visor3dCuerpo,.visor3dGL'),mundoCubreMenu:[panel.querySelector('.coleccionCabecera'),panel.querySelector('.coleccionPestanas'),panel.querySelector('.coleccionFiltrosInmersivos'),rejilla].every(n=>cubre(n,rMundo)),cartasEncimaMundo:encima,
+          tresColumnas:columnas.length===3,
           vertical:rejilla.scrollHeight>rejilla.clientHeight+1,sinDesbordeHorizontal:rejilla.scrollWidth<=rejilla.clientWidth+1,
           region:rejilla.getAttribute('role')==='region',sinCarrusel:!rejilla.classList.contains('coleccionCarruselCartas'),
           cartasVisibles:cartas.filter(n=>n.querySelector('.coleccionCarta')?.getBoundingClientRect().width>40).length>=3,
           sinCaja:getComputedStyle(panel.querySelector('.coleccionCabecera')).backgroundImage==='none'};
       });
       assert.ok(biblioteca.cubre&&biblioteca.sinMarco,'La biblioteca ocupa toda la pantalla, sin una caja modal reducida');
-      assert.ok(biblioteca.escena&&biblioteca.tresColumnas&&biblioteca.vertical&&biblioteca.sinDesbordeHorizontal&&biblioteca.region&&biblioteca.sinCarrusel&&biblioteca.cartasVisibles&&biblioteca.sinCaja,'La biblioteca usa la escena del visor, mantiene tres columnas con scroll vertical y no deja una caja morada');
+      assert.ok(biblioteca.mundo&&biblioteca.mundoCubreMenu&&biblioteca.cartasEncimaMundo&&biblioteca.tresColumnas&&biblioteca.vertical&&biblioteca.sinDesbordeHorizontal&&biblioteca.region&&biblioteca.sinCarrusel&&biblioteca.cartasVisibles&&biblioteca.sinCaja,'La biblioteca vive sobre el mundo del visor: controles y cartas flotan en él, mantiene tres columnas con scroll vertical y no deja una caja morada');
       const recorrido=await pagina.evaluate(()=>{
         const rejilla=document.querySelector('.coleccionRejilla'),maximo=rejilla.scrollHeight-rejilla.clientHeight;
         const conducta=rejilla.style.scrollBehavior;rejilla.style.scrollBehavior='auto';
@@ -79,17 +87,17 @@ try{
       await mini.click();
       if(conMovimiento){
         await pagina.waitForFunction(id=>{
-          const panel=document.querySelector('#coleccionPanel'),rejilla=panel?.querySelector('.coleccionRejilla'),elegida=rejilla?.querySelector('.coleccionMini[data-carta="'+id+'"]'),resto=[...(rejilla?.querySelectorAll('.coleccionMini')||[])].filter(n=>n!==elegida);
-          return panel?.dataset.transicion==='abrir-carta'&&panel.dataset.cartaActiva===id&&elegida?.dataset.animacion==='entra'&&resto.length>0&&resto.every(n=>n.dataset.animacion==='sale')&&rejilla.getAttribute('aria-busy')==='true'&&rejilla.hasAttribute('inert')&&!!panel.querySelector('.coleccionVueloCarta');
+          const panel=document.querySelector('#coleccionPanel'),rejilla=panel?.querySelector('.coleccionRejilla'),elegida=rejilla?.querySelector('.coleccionMini[data-carta="'+id+'"]'),resto=[...(rejilla?.querySelectorAll('.coleccionMini')||[])].filter(n=>n!==elegida),mundo=panel?.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');
+          return panel?.dataset.transicion==='abrir-carta'&&panel.dataset.cartaActiva===id&&elegida?.dataset.animacion==='entra'&&resto.length>0&&resto.every(n=>n.dataset.animacion==='sale')&&rejilla.getAttribute('aria-busy')==='true'&&rejilla.hasAttribute('inert')&&!!panel.querySelector('.coleccionVueloCarta')&&mundo===window.__coleccionMundoPrueba&&visor?.dataset.modo==='ambiente';
         },carta,{timeout:2200});
         const transicion=await pagina.evaluate(id=>{
-          const panel=document.querySelector('#coleccionPanel'),rejilla=panel.querySelector('.coleccionRejilla'),elegida=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),resto=[...rejilla.querySelectorAll('.coleccionMini')].filter(n=>n!==elegida),vuelo=panel.querySelector('.coleccionVueloCarta');
-          return {estado:panel.dataset.transicion,activa:panel.dataset.cartaActiva,elegida:elegida?.dataset.animacion,salen:resto.every(n=>n.dataset.animacion==='sale'&&n.getAttribute('aria-hidden')==='true'),vuelo:!!vuelo&&vuelo.classList.contains('coleccionVueloCartaEntra'),bloqueada:rejilla.hasAttribute('inert')&&rejilla.getAttribute('aria-busy')==='true'};
+          const panel=document.querySelector('#coleccionPanel'),rejilla=panel.querySelector('.coleccionRejilla'),elegida=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),resto=[...rejilla.querySelectorAll('.coleccionMini')].filter(n=>n!==elegida),vuelo=panel.querySelector('.coleccionVueloCarta'),mundo=panel.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');
+          return {estado:panel.dataset.transicion,activa:panel.dataset.cartaActiva,elegida:elegida?.dataset.animacion,salen:resto.every(n=>n.dataset.animacion==='sale'&&n.getAttribute('aria-hidden')==='true'),vuelo:!!vuelo&&vuelo.classList.contains('coleccionVueloCartaEntra'),bloqueada:rejilla.hasAttribute('inert')&&rejilla.getAttribute('aria-busy')==='true',mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente'};
         },carta);
-        assert.deepEqual(transicion,{estado:'abrir-carta',activa:carta,elegida:'entra',salen:true,vuelo:true,bloqueada:true},'Abrir una carta aparta el resto y deja una transición observable antes del visor');
+        assert.deepEqual(transicion,{estado:'abrir-carta',activa:carta,elegida:'entra',salen:true,vuelo:true,bloqueada:true,mundo:true},'Abrir una carta aparta el resto dentro del mismo mundo, antes del visor');
         if(capturas)await pagina.screenshot({path:path.join(capturas,vista+'-'+width+'-transicion.png')});
       }
-      const escena=pagina.locator('#coleccionPanel .coleccionEscena3D .visor3dIncrustado');await escena.waitFor({timeout:4000});
+      const escena=pagina.locator('#coleccionPanel .coleccionMundoVisor .visor3dIncrustado');await escena.waitFor({timeout:4000});
       const hayGL=await pagina.evaluate(()=>{const c=document.createElement('canvas');return !!(c.getContext('webgl2')||c.getContext('webgl'));});
       if(hayGL&&pintada)await pagina.waitForFunction(()=>document.querySelector('.visor3dIncrustado')?.classList.contains('visor3dConGL'),null,{timeout:30000});
       await pagina.waitForFunction(()=>{
@@ -97,13 +105,15 @@ try{
         return !!r&&!!e&&r.width>60&&r.left>=e.left-2&&r.right<=e.right+2&&r.top>=e.top-2&&r.bottom<=e.bottom+2;
       },null,{timeout:5000});
       const abierta=await pagina.evaluate(()=>{
-        const v=document.querySelector('.visor3dIncrustado'),frente=v.querySelector('.visor3dFrente .visor3dCarta'),r=frente.getBoundingClientRect(),e=v.getBoundingClientRect();
+        const panel=document.querySelector('#coleccionPanel'),mundo=panel.querySelector('.coleccionMundoVisor'),v=mundo?.querySelector('.visor3dIncrustado'),frente=v.querySelector('.visor3dFrente .visor3dCarta'),r=frente.getBoundingClientRect(),e=v.getBoundingClientRect();
         const fichas=[...document.querySelectorAll('#coleccionPanel .coleccionVersion .coleccionCarta')].filter(n=>n.getClientRects().length);
         return {acabado:v.dataset.acabado,elegido:CAOZ_COLECCION.elegido(frente.dataset.card||frente.closest('[data-carta]')?.dataset.carta||''),cartaReal:frente.classList.contains('coleccionCarta')&&!!frente.querySelector('.marcoDibujo, .lface'),
           dentro:r.left>=e.left-2&&r.right<=e.right+2&&r.top>=e.top-2&&r.bottom<=e.bottom+2&&r.width>60,fichasVisibles:fichas.length,versiones:document.querySelectorAll('#coleccionPanel .coleccionVersion').length,
-          desborde:document.documentElement.scrollWidth>innerWidth,logo:v.querySelector('.visor3dDorso img.visor3dLogo')?.getAttribute('src')};
+          desborde:document.documentElement.scrollWidth>innerWidth,logo:v.querySelector('.visor3dDorso img.visor3dLogo')?.getAttribute('src'),mundo:panel.dataset.mundo==='detalle'&&mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&v.dataset.modo==='carta',visores:panel.querySelectorAll('.visor3dIncrustado').length};
       });
       assert.ok(abierta.cartaReal,'La escena muestra la ficha real de la Colección');
+      assert.ok(abierta.mundo,'El visor individual reutiliza el mismo mundo que sostenía el Archivo');
+      assert.equal(abierta.visores,1,'No queda un segundo visor detrás de la carta: Archivo y detalle comparten la única escena');
       assert.ok(abierta.dentro&&!abierta.desborde,'La carta cabe en su escena');
       assert.equal(abierta.fichasVisibles,0,'La escena 3D es la única carta visible del detalle');
       assert.equal(abierta.versiones,3,'Los controles de las tres ediciones siguen presentes');
@@ -132,23 +142,24 @@ try{
       await pagina.locator('.visor3dIncrustado .visor3dAmpliar').click();
       await pagina.locator('dialog.visor3d[open]').waitFor();
       await pagina.keyboard.press('Escape');
-      await pagina.waitForFunction(()=>!document.querySelector('dialog.visor3d')&&document.querySelector('#coleccionPanel').open&&document.querySelector('.visor3dIncrustado'));
+      await pagina.waitForFunction(()=>!document.querySelector('dialog.visor3d')&&document.querySelector('#coleccionPanel').open&&document.querySelector('.coleccionMundoVisor .visor3dIncrustado'));
       // Volver al Archivo libera la escena y devuelve foco/desplazamiento a la
       // misma carta, aunque la lista se haya recorrido antes de abrirla.
       await pagina.locator('.coleccionAtras').click();
       await pagina.waitForFunction(id=>{
-        const panel=document.querySelector('#coleccionPanel'),rejilla=panel?.querySelector('.coleccionRejilla'),mini=rejilla?.querySelector('.coleccionMini[data-carta="'+id+'"]');
-        return panel?.dataset.vista==='cartas'&&!document.querySelector('.visor3dIncrustado')&&!!mini;
+        const panel=document.querySelector('#coleccionPanel'),rejilla=panel?.querySelector('.coleccionRejilla'),mini=rejilla?.querySelector('.coleccionMini[data-carta="'+id+'"]'),mundo=panel?.querySelector('.coleccionMundoVisor');
+        return panel?.dataset.vista==='cartas'&&panel.dataset.mundo==='archivo'&&mundo===window.__coleccionMundoPrueba&&!!mini;
       },carta,{timeout:4000});
       await pagina.waitForFunction(id=>{
         const rejilla=document.querySelector('.coleccionRejilla'),mini=rejilla?.querySelector('.coleccionMini[data-carta="'+id+'"]'),r=mini?.getBoundingClientRect(),g=rejilla?.getBoundingClientRect();
         return document.activeElement===mini&&rejilla.scrollTop>1&&r.bottom>g.top+18&&r.top<g.bottom-18;
       },carta,{timeout:4000});
-      const regreso=await pagina.evaluate(id=>{const rejilla=document.querySelector('.coleccionRejilla'),mini=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),r=mini.getBoundingClientRect(),g=rejilla.getBoundingClientRect();return {foco:document.activeElement===mini,desplazamiento:rejilla.scrollTop,visible:r.bottom>g.top+18&&r.top<g.bottom-18};},carta);
+      const regreso=await pagina.evaluate(id=>{const panel=document.querySelector('#coleccionPanel'),rejilla=panel.querySelector('.coleccionRejilla'),mini=rejilla.querySelector('.coleccionMini[data-carta="'+id+'"]'),r=mini.getBoundingClientRect(),g=rejilla.getBoundingClientRect(),mundo=panel.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo');return {foco:document.activeElement===mini,desplazamiento:rejilla.scrollTop,visible:r.bottom>g.top+18&&r.top<g.bottom-18,mundo:mundo===window.__coleccionMundoPrueba&&mundo.isConnected&&visor?.dataset.modo==='ambiente'&&!visor.querySelector('.visor3dCuerpo,.visor3dGL')};},carta);
       assert.ok(regreso.foco,'Volver devuelve el foco a la carta que se estaba viendo');
       assert.ok(regreso.desplazamiento>1&&regreso.visible,'Volver restaura la fila desplazada del Archivo, no el inicio de la biblioteca');
+      assert.ok(regreso.mundo,'Volver no destruye ni sustituye el mundo del visor');
       assert.deepEqual(errores,[],'Sin errores de página');
-      console.log('✓ '+vista+' '+width+'×'+height+': '+(pintada?'carta pintada, '+(hayGL?'escena WebGL':'escena CSS'):'retrato de Protagonista')+', archivo de tres columnas, transición al detalle 3D, ediciones, vuelta, pantalla completa y regreso con foco/scroll');
+      console.log('✓ '+vista+' '+width+'×'+height+': '+(pintada?'carta pintada, '+(hayGL?'escena WebGL':'escena CSS'):'retrato de Protagonista')+', mundo continuo del visor, archivo de tres columnas, transición al detalle 3D, ediciones, vuelta, pantalla completa y regreso con foco/scroll');
     }finally{await contexto.close();}
   }
 }catch(error){

@@ -1,6 +1,8 @@
 /* Recorre las tres series en el Archivo de tres columnas, con memoria temporal.
-   PLAYWRIGHT_MODULE permite usar la instalación del entorno sin dependencias
-   nuevas. --capturas /ruta guarda el Archivo y los controles de revisión. */
+   El Archivo debe vivir sobre el mundo persistente del visor, no sobre una
+   segunda caja visual. PLAYWRIGHT_MODULE permite usar la instalación del
+   entorno sin dependencias nuevas. --capturas /ruta guarda el Archivo y los
+   controles de revisión. */
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import fs from 'node:fs';
@@ -25,7 +27,7 @@ try{
         await pagina.locator('#coleccionPanel[open] .coleccionPuntos>i').first().waitFor();
         await pagina.locator('.coleccionRejilla img').evaluateAll(imgs=>Promise.all(imgs.map(img=>img.decode())));
         const datos=await pagina.evaluate(acabado=>{
-          const m=CAOZ_COLECCION,grid=document.querySelector('.coleccionRejilla'),minis=[...grid.querySelectorAll('.coleccionMini')];
+          const m=CAOZ_COLECCION,panel=document.querySelector('#coleccionPanel'),mundo=panel.querySelector('.coleccionMundoVisor'),visor=mundo?.querySelector('.visor3dIncrustado.visor3dMundo'),grid=document.querySelector('.coleccionRejilla'),minis=[...grid.querySelectorAll('.coleccionMini')],rMundo=mundo?.getBoundingClientRect(),rGrid=grid.getBoundingClientRect();
           return {cantidad:minis.length,total:m.ids().length,
             inventario:m.ids().every(id=>m.elegido(id)===acabado&&['normal','foil','dorado'].every(a=>m.cantidad(id,a)===1)),
             cartas:minis.every(n=>{const carta=n.querySelector('.coleccionCarta'),img=carta.querySelector('img'),v=CAOZ_ARTE.version(n.dataset.carta,acabado);return carta.dataset.coleccionAcabado===acabado&&(!img||img.getAttribute('src')===v.url);}),
@@ -33,11 +35,12 @@ try{
             tresColumnas:getComputedStyle(grid).gridTemplateColumns.trim().split(/\s+/).filter(Boolean).length===3,
             archivoVertical:grid.classList.contains('coleccionArchivoRejilla')&&grid.scrollHeight>grid.clientHeight+1&&grid.scrollWidth<=grid.clientWidth+1,
             region:grid.getAttribute('role')==='region'&&!grid.classList.contains('coleccionCarruselCartas'),
+            mundo:!!mundo&&panel.dataset.mundo==='archivo'&&visor?.dataset.modo==='ambiente'&&!visor.querySelector('.visor3dCuerpo,.visor3dGL')&&rMundo.width>0&&rMundo.height>0&&rGrid.left>=rMundo.left-2&&rGrid.right<=rMundo.right+2&&rGrid.top>=rMundo.top-2&&rGrid.bottom<=rMundo.bottom+2,
             desborde:document.documentElement.scrollWidth>innerWidth};
         },acabado);
         assert.equal(datos.cantidad,datos.total);assert.ok(datos.inventario&&datos.cartas,'Todas las cartas muestran la serie elegida, con una copia por acabado');
         assert.ok(datos.marcadores,'Sólo las ediciones propias tienen un marcador visible y la serie en uso está elegida, sin nombres ni contadores en el pie');
-        assert.ok(datos.tresColumnas&&datos.archivoVertical&&datos.region,'El Archivo conserva tres columnas con scroll vertical, no un carrusel');
+        assert.ok(datos.tresColumnas&&datos.archivoVertical&&datos.region&&datos.mundo,'El Archivo conserva tres columnas con scroll vertical dentro del mundo del visor, no un carrusel ni una segunda caja');
         const recorrido=await pagina.evaluate(()=>{const grid=document.querySelector('.coleccionRejilla'),maximo=grid.scrollHeight-grid.clientHeight,conducta=grid.style.scrollBehavior;grid.style.scrollBehavior='auto';grid.scrollTop=Math.round(maximo*.52);const desplazamiento=grid.scrollTop;grid.style.scrollBehavior=conducta;return {maximo,desplazamiento};});
         assert.ok(recorrido.maximo>20&&recorrido.desplazamiento>1,'Cada serie se puede recorrer verticalmente');
         assert.equal(datos.desborde,false);
