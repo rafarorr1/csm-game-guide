@@ -29,6 +29,25 @@ body{
   color:var(--ink);font:14px/1.4 var(--sans);
   -webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;
   user-select:none;-webkit-user-select:none;touch-action:manipulation}
+/* La primera imagen nunca es el menú a medio montar. El juego se prepara
+   detrás de esta cubierta y, cuando ya llegó el acabado completo, aparece con
+   la entrada habitual de sus pantallas. */
+html.arrancando #app,html.arrancando dialog[open]{visibility:hidden}
+#arranqueCaoz{display:none;position:fixed;inset:0;z-index:10001;place-items:center;
+  overflow:hidden;background:
+    radial-gradient(ellipse 52% 38% at 50% 46%,rgba(187,115,44,.18),transparent 68%),
+    linear-gradient(180deg,#120d12 0%,#09070b 100%);
+  opacity:1;visibility:hidden}
+html.arrancando #arranqueCaoz,html.arranqueCaozSaliendo #arranqueCaoz{display:grid}
+html.arrancando #arranqueCaoz{opacity:1;visibility:visible}
+html.arranqueCaozSaliendo #arranqueCaoz{opacity:1;visibility:visible;pointer-events:none}
+#arranqueCaoz > *{transition:opacity .38s ease,transform .38s cubic-bezier(.3,.72,.35,1)}
+html.arranqueCaozSaliendo #arranqueCaoz > *{opacity:0;transform:scale(.965)}
+.arranqueCaozLogo{display:block;width:min(500px,70vw);max-width:82vw;height:auto;object-fit:contain;
+  filter:drop-shadow(0 16px 42px rgba(0,0,0,.78)) drop-shadow(0 0 24px rgba(255,160,62,.17))}
+.arranqueCaozTexto{font:900 clamp(32px,7vw,70px)/1 var(--serif);font-variant:small-caps;letter-spacing:2px;color:#f7d488;
+  text-shadow:0 7px 22px #000}
+@media(prefers-reduced-motion:reduce){#arranqueCaoz > *{transition:none}}
 button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;touch-action:manipulation}
 .btn{
   background:linear-gradient(180deg,#2e2244,#1a1228);
@@ -401,6 +420,8 @@ html.app #board{padding-top:calc(var(--arriba) + 32px)}
   text-transform:uppercase;padding:4px 5px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .card .txt{font:9px/1.3 var(--sans);color:#cfc3e4;flex:1;overflow:hidden;padding:0 7px;text-align:center}
 .card .txt b{color:var(--gold);font-weight:700}
+.card .txt .habilidadCarta{display:block}
+.card .txt .habilidadCarta+.habilidadCarta{margin-top:.34em;padding-top:.34em;border-top:1px solid rgba(255,230,170,.24)}
 .card .stats{display:flex;justify-content:space-between;align-items:flex-end;margin-top:auto;padding:0 5px 5px}
 .card .atk,.card .hp{font:800 16px/1 var(--serif);text-shadow:0 2px 4px #000;min-width:30px;text-align:center;
   border-radius:7px;padding:3px 6px;border:1px solid transparent;
@@ -434,6 +455,11 @@ body.tut-on .card.playable{box-shadow:0 0 0 2px var(--bg),0 0 0 4px var(--green)
 /* el acomodo: el dibujo ocupa la carta y el pie con velo abajo */
 .card.acomodo{font-size:calc(var(--cw) * 0.105)}
 #hand .card.acomodo{font-size:calc(var(--cwm) * 0.095)}
+#hand .card.acomodo .dibujo{filter:contrast(1.05) saturate(1.05)}
+#hand .card.acomodo .pieCarta{background:linear-gradient(180deg,rgba(8,6,14,.06) 0%,rgba(8,6,14,.80) 25%,rgba(8,6,14,.96) 54%,#08050e 100%)}
+#hand .card.acomodo .pieCarta .tribe{color:#d7caea;font-weight:700}
+#hand .card.acomodo .pieCarta .txt{color:#fbf7ff;font-size:.92em;line-height:1.2;font-weight:500;text-shadow:0 1px 2px #000,0 0 5px rgba(0,0,0,.75)}
+#hand .card.acomodo .pieCarta .txt .habilidadCarta+.habilidadCarta{margin-top:.30em;padding-top:.30em}
 .card.acomodo.conarte .art{display:none}
 .marcoDibujo{position:absolute;inset:0;z-index:0;overflow:hidden;border-radius:8px;pointer-events:none}
 .dibujo{position:absolute;inset:0;width:100%;height:100%;max-width:100%;max-height:100%;object-fit:cover;
@@ -777,6 +803,7 @@ body.peligro #field{box-shadow:inset 0 0 40px rgba(224,40,40,calc(.25 + .35 * va
 .extrasOpciones{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;width:min(100%,480px);margin:8px 0}
 .extrasOpciones .btn{min-height:62px;padding:12px;font-size:14px;line-height:1.35}
 .extrasOpciones>.btn:last-child:nth-child(odd){grid-column:1/-1}
+.extrasAislados{width:min(100%,480px);margin:2px 0 0;border:1px solid #b58b4a66;border-radius:12px;background:#100a18aa;text-align:left}.extrasAislados summary{cursor:pointer;padding:12px 14px;font:700 12px/1.2 var(--serif);letter-spacing:1.3px;color:#f0d796;list-style:none}.extrasAislados summary::-webkit-details-marker{display:none}.extrasAislados summary::after{content:'⌄';float:right;font-size:18px;line-height:10px}.extrasAislados[open] summary::after{content:'⌃'}.aisladosLista{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:0 10px 12px}.aisladosLista a{display:flex;align-items:center;min-height:34px;padding:7px 9px;border:1px solid #d5b26a44;border-radius:7px;background:#21162db8;color:#e9dcbe;font:600 11px/1.15 var(--sans);text-decoration:none}.aisladosLista a:hover,.aisladosLista a:focus-visible{border-color:#f0d796;background:#3a2740;color:#fff4d5;outline:none}
 #extras #mBorrarProgreso{margin-top:4px;min-height:44px;padding:10px 18px;font-size:13px;color:#eab2a7;border-color:#a2544d80;background:#351918bb}
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}

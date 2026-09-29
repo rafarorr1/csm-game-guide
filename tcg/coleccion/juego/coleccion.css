@@ -123,6 +123,9 @@
 #coleccionPanel .coleccionSobreCuenta{font-size:13px;color:#c5aa80}
 #coleccionPanel .coleccionAbrirSobre{width:min(280px,100%);min-height:46px;font-size:17px}
 #coleccionPanel .coleccionBeta{background:none;border:1px dashed #8c765780;box-shadow:none;min-height:31px;padding:5px 13px;font-family:var(--sans,system-ui);font-size:11px;color:#baaa8e}
+#coleccionPanel .coleccionDemoEdiciones{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;padding-top:4px;text-align:center}
+#coleccionPanel .coleccionDemoEdiciones .coleccionBeta{min-width:205px}
+#coleccionPanel .coleccionDemoNota{margin:0;color:#a9987f;font-size:10px;line-height:1.35}
 #coleccionPanel .coleccionSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
 #coleccionPanel .barridoModal{position:absolute;inset:0;z-index:50;pointer-events:none}
 #coleccionPanel .coleccionInterior.menuEntra{animation:entraPantalla .4s cubic-bezier(.2,.75,.3,1) both}
@@ -714,3 +717,85 @@
 #coleccionPanel.coleccionAbriendoSobre .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
 #coleccionPanel.coleccionAbriendoSobre .coleccionAperturaSobre{border-radius:0;background:#06040b}
 #coleccionPanel.coleccionAbriendoSobre .coleccionEstado:not(:empty){position:absolute;left:0;right:0;top:16px;z-index:8;text-align:center}
+
+/* Archivo del Domo: la biblioteca ya no vive dentro de una caja reducida. La
+   carta individual ya abre el visor 3D a pantalla completa; el listado, sobres
+   y canjes comparten ahora su misma noche, halo y cristal. Conservamos las
+   tres columnas y el scroll interno: cambiar esa geometría haría crecer las
+   miniaturas de forma desigual y rompería la lectura de las cartas. */
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre){
+  position:fixed;inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;height:var(--coleccion-alto,100dvh);max-width:none;max-height:none;margin:0;padding:0;
+  overflow:hidden;border:0;border-radius:0;background:#06040b;box-shadow:none;isolation:isolate;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre)::backdrop{background:#000;backdrop-filter:none}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior{
+  padding:max(22px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));
+  border:0;border-radius:0;background:
+    radial-gradient(ellipse 55% 48% at 50% 35%,#5a349044,transparent 72%),
+    radial-gradient(ellipse 92% 72% at 50% 42%,#281441aa,transparent 78%),
+    radial-gradient(ellipse 130% 105% at 50% 50%,#150d24,#06040b 82%);
+  isolation:isolate;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior::before{
+  content:'';display:block;position:absolute;z-index:0;left:50%;top:52%;width:min(920px,78vw);aspect-ratio:1;translate:-50% -50%;
+  opacity:.26;pointer-events:none;filter:drop-shadow(0 0 18px #a273d86b);
+  background:repeating-conic-gradient(from .08turn,#e6c9ff 0deg 1deg,transparent 1deg 11deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 49%,#000 49.2% 50.4%,transparent 50.8% 61%,#000 61.2% 61.7%,transparent 62%);
+  mask:radial-gradient(circle,transparent 0 49%,#000 49.2% 50.4%,transparent 50.8% 61%,#000 61.2% 61.7%,transparent 62%);
+  border:1px solid #e6c9ff38;border-radius:50%;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior::after{
+  content:'';display:block;position:absolute;z-index:0;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 26%,#f0d1ff12,transparent 26%),radial-gradient(circle at 82% 78%,#b879ff0d,transparent 31%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior>:not(.barridoModal){position:relative;z-index:1}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera{
+  width:min(1360px,100%);margin:0 auto 12px;padding:11px 15px;min-height:58px;border:1px solid #ffffff1f;border-radius:18px;
+  background:linear-gradient(100deg,#120c1cb8,#0b0712a6);box-shadow:inset 0 1px 0 #ffffff12,0 10px 30px #0005;
+  -webkit-backdrop-filter:blur(15px) saturate(130%);backdrop-filter:blur(15px) saturate(130%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera::before,
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera::after{display:none}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionEmblema{border-color:#c99bff78;background:radial-gradient(circle at 36% 27%,#fbebff75,#7039a4 43%,#1a102b 78%);box-shadow:0 0 20px #ae73ef40}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionAntetitulo{color:#dfc6ff;text-shadow:0 0 15px #bb8bff80}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) h2{color:#f4e5ff;text-shadow:0 2px 17px #000,0 0 20px #bd89ff36}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCerrar{
+  border-color:#ffffff2b;border-radius:12px;background:#0d0916b8;color:#f1e5ff;box-shadow:inset 0 1px 0 #ffffff12;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCerrar:hover{background:#2a1b3cbf}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestanas{
+  width:max-content;max-width:100%;margin:0 auto 12px;padding:4px;overflow-x:auto;border:1px solid #ffffff1c;border-radius:999px;
+  background:#0d0916a8;box-shadow:inset 0 1px 0 #ffffff10,0 8px 22px #0004;-webkit-backdrop-filter:blur(12px) saturate(130%);backdrop-filter:blur(12px) saturate(130%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana{min-width:142px;border:1px solid transparent;border-radius:999px;color:#d5c5e4}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana[aria-current="page"]{border-color:#d2a8ff73;background:linear-gradient(135deg,#8a56ba55,#2d1a42c7);box-shadow:inset 0 1px 0 #ffffff1d,0 0 16px #a66ce334;color:#fff1ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionNumero{border-color:#d2a8ff5c;background:#09060f;color:#f5e8ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionContenido{width:min(1360px,100%);align-self:center;gap:11px}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionFiltros{padding:8px;border:1px solid #ffffff18;border-radius:15px;background:#0c0812a1;box-shadow:inset 0 1px 0 #ffffff0e;-webkit-backdrop-filter:blur(11px);backdrop-filter:blur(11px)}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) :is(.coleccionBuscar,select){border-color:#c9a0f04a;background:#090611bd;color:#f0e4fa}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionBuscar{color:#dfc2ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionRejilla{
+  max-width:1360px;width:100%;align-self:center;padding:15px 22px 18px;gap:20px 24px;border:1px solid #ffffff0d;border-radius:22px;
+  background:radial-gradient(ellipse at 50% 30%,#b87aff12,transparent 58%);box-shadow:none;scrollbar-color:#a879ce #100a18;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini{filter:drop-shadow(0 16px 18px #0009);transition:translate .18s ease,filter .18s ease}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini:hover{translate:0 -5px!important;filter:drop-shadow(0 20px 24px #000d) brightness(1.08)!important}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMiniInfo{padding:3px 7px;border-radius:999px;background:#090611a8;box-shadow:0 3px 12px #0006}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPuntos i{border-color:#dac3ee7d;background:#251633}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionEstado{min-height:22px;color:#ddd0e9;text-shadow:0 1px 7px #000}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPie{width:min(1360px,100%);align-self:center;padding:7px 11px 0;border-top-color:#ffffff1a;color:#d7c8e4}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionVolver{color:#eadbfa;text-decoration-color:#c89df477}
+
+@media(max-width:580px){
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre){width:100vw;height:var(--coleccion-alto,100dvh);padding:0}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior{padding:max(12px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera{min-height:48px;margin-bottom:8px;padding:7px 10px;border-radius:14px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestanas{width:100%;margin-bottom:8px;padding:3px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana{min-width:0;border-radius:999px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionFiltros{padding:6px;border-radius:12px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionRejilla{padding:10px 5px 14px;gap:13px 11px;border-radius:15px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini{transition:none}
+}

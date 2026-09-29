@@ -62,14 +62,14 @@ function ilustrar(d, id){
   window.CAOZ_CARTA_JUEGO?.vestir(d,id);
   return d;
 }
-// cardEl · SHA256 c9fd0ca1f5888836ef84be8c4d286d911829299cabe013d23e4aa4aa1512d148
+// cardEl · SHA256 1b248ee4e31f297cef13e1b63c35c5b5e91594a14fcedd6162f115e5f12b201f
 function cardEl(id,opt={}){
   const c=CARDS[id], d=el('div','card t-'+c.t);
   window.CAOZ_COLECCION_JUEGO?.marcar(d,opt.ladoArte??opt.side);
   const cost=opt.side!=null&&G ? costOf(id,opt.side) : c.c, disc=cost<c.c;
   d.innerHTML=`<div class="top"><div class="cost${disc?' rebajado':''}">${cost}</div><div class="nm">${c.n}</div></div>
     ${c.r===2?'<div class="rar">★</div><i class="foil" aria-hidden="true"></i>':''}
-    <div class="art">${c.art}</div><div class="tribe">${tribeLine(c)}</div><div class="txt">${c.x||''}</div>
+    <div class="art">${c.art}</div><div class="tribe">${tribeLine(c)}</div><div class="txt">${textoCartaFormateado(c.x)}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
   window.marcarNombreCarta(d.querySelector('.nm'),id,c.n);
   d.dataset.card=id;

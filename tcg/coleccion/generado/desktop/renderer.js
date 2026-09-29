@@ -64,7 +64,7 @@ function ilustrar(d, id){
   window.CAOZ_CARTA_JUEGO?.vestir(d,id);
   return d;
 }
-// cardEl · SHA256 2a8067454495085e9b65bbbe090926d6353ea44087d8e7c55ab29032d8b2f4e2
+// cardEl · SHA256 dca5c5fd205588e82880c8c26aa4c04dafd9d0c2a4ec985e37c19d1be3afc85f
 
 function cardEl(id,opt={}){
   const c=CARDS[id];
@@ -78,7 +78,7 @@ function cardEl(id,opt={}){
     ${c.r===2?'<div class="rar">★</div><i class="foil" aria-hidden="true"></i>':''}
     <div class="art">${c.art}</div>
     <div class="tribe">${tribeLine(c)}</div>
-    <div class="txt">${c.x||''}</div>
+    <div class="txt">${textoCartaFormateado(c.x)}</div>
     ${c.t==='personaje'?`<div class="stats"><span class="atk">${c.a}</span><span class="hp">${c.h}</span></div>`:''}`;
   window.marcarNombreCarta(d.querySelector('.nm'),id,c.n);
   d.dataset.card=id;
