@@ -864,7 +864,7 @@
 }
 #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos .coleccionBuscar{padding:0 7px;color:#e2c6ff}
 #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos select{padding:0 5px;font-size:12px}
-#coleccionPanel[data-vista="cartas"] .coleccionEscenaArchivo{position:absolute;inset:0;overflow:hidden;isolation:isolate;perspective:1200px}
+#coleccionPanel[data-vista="cartas"] .coleccionEscenaArchivo{position:absolute;inset:0;overflow:hidden;isolation:isolate;perspective:1200px;pointer-events:none}
 #coleccionPanel[data-vista="cartas"] .coleccionEscenaArchivo::before{
   content:'';position:absolute;z-index:0;left:50%;top:47%;width:min(760px,74vw);aspect-ratio:1;translate:-50% -50%;pointer-events:none;opacity:.44;
   background:repeating-conic-gradient(from .07turn,#edd6ff 0deg 1deg,transparent 1.5deg 10deg);
@@ -880,6 +880,7 @@
   width:auto!important;height:auto!important;max-width:none!important;min-height:0;align-self:stretch!important;flex:none!important;padding:18px clamp(10px,2vw,30px) 82px!important;gap:clamp(14px,2.3vw,30px)!important;
   overflow-y:auto!important;overflow-x:hidden!important;scroll-snap-type:y proximity;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#c58deb #12091a;overscroll-behavior:contain;touch-action:pan-y;
   background:linear-gradient(180deg,#0e09151a,transparent 24%,#0b06121c)!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  pointer-events:auto;
 }
 #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar{width:8px}
 #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar-track{background:#10091a70;border-radius:999px}
@@ -1325,3 +1326,222 @@
   #coleccionPanel .coleccionLogroMeta{gap:5px;font-size:9px}
   #coleccionPanel .coleccionLogroPremio{font-size:9px}
 }
+
+/* Un mismo mundo para las pestañas principales ---------------------------
+   El Archivo ya conserva un visor vivo detrás de Mis cartas. Sobres, Canjear
+   y Logros no deben volver a encerrarse en un segundo diálogo: sus controles
+   flotan sobre ese mismo halo, motas y círculo rúnico. El bloque se limita a
+   las tres vistas auxiliares para no cambiar la coreografía Archivo → detalle
+   ni las pantallas transitorias de apertura/recompensa. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]){
+  --escena-cristal:#0905108f;
+  --escena-cristal-fuerte:#0a0612ba;
+  --escena-borde:#ead7ff32;
+  --escena-texto:#e9dcf5;
+  --escena-suave:#cbb9dc;
+}
+
+/* Si el visor WebGL no estuviera disponible, el mismo encuadre conserva una
+   alternativa visual silenciosa; cuando el visor existe, :empty deja de
+   coincidir y no duplica su halo ni sus motas. */
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty{
+  background:
+    radial-gradient(ellipse 55% 48% at 50% 44%,#7443b447,transparent 72%),
+    radial-gradient(ellipse 90% 70% at 50% 40%,#2b174bba,transparent 78%),
+    linear-gradient(180deg,#090611,#030207 78%,#020104);
+}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty::before{
+  content:'';position:absolute;left:50%;top:52%;width:min(680px,72vw);aspect-ratio:1;
+  translate:-50% -50%;opacity:.72;pointer-events:none;
+  background:repeating-conic-gradient(from .08turn,#ead5ff 0deg 1deg,transparent 1.6deg 10deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  filter:drop-shadow(0 0 18px #b076ed71);
+}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.64;
+  background-image:radial-gradient(circle at 13% 22%,#fff7d2 0 1px,transparent 2px),radial-gradient(circle at 30% 67%,#cda2ff 0 1px,transparent 2px),radial-gradient(circle at 81% 28%,#e6c3ff 0 1px,transparent 2px),radial-gradient(circle at 71% 74%,#f4d09a 0 1px,transparent 2px),radial-gradient(circle at 47% 15%,#fff7d2 0 1px,transparent 2px);
+  background-size:173px 157px,251px 233px,199px 281px,311px 269px,419px 347px;
+}
+
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionInterior{
+  padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{
+  position:absolute;z-index:9;left:max(22px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));
+  width:fit-content!important;max-width:calc(100vw - 76px)!important;min-height:0;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionTitulos{display:block}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera .coleccionAntetitulo{
+  display:block;color:#cfb8ef;font-size:10px;letter-spacing:3px;text-shadow:0 0 14px #b77bff8f;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) h2{
+  font-size:clamp(22px,2.2vw,31px);color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{
+  position:fixed;z-index:11;right:max(18px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));
+  width:42px;height:42px;margin:0;padding:0;border:1px solid #ffffff36!important;border-radius:50%!important;
+  background:#120b1b78!important;box-shadow:0 8px 25px #0007,inset 0 1px 0 #ffffff1c!important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{
+  position:absolute;z-index:10;left:50%;top:max(18px,env(safe-area-inset-top));translate:-50% 0;
+  display:flex;gap:clamp(11px,2vw,24px);width:max-content;max-width:calc(100vw - 200px);margin:0!important;padding:0!important;
+  overflow:visible;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana{
+  position:relative;min-width:0!important;min-height:34px;padding:5px 1px!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;color:#bdb0ce!important;font:600 14px/1.2 var(--serif,Georgia,serif)!important;
+  transition:color .2s ease,opacity .2s ease;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana::after{
+  content:'';position:absolute;left:50%;right:50%;bottom:0;height:1px;background:#f0c976;box-shadow:0 0 10px #efbd6855;transition:left .2s ease,right .2s ease;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana[aria-current="page"]{color:#fff1cf!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana[aria-current="page"]::after{left:0;right:0}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionNumero{
+  min-width:17px;padding:0 4px;border-color:#d9b5f154!important;border-radius:7px;background:#130b1d!important;color:#f7ebff!important;font-size:10px;
+}
+
+/* El contenido conserva su flujo propio, pero ya no ocupa una caja: se
+   convierte en una capa transparente sobre la escena compartida. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{
+  position:absolute;z-index:3;top:max(94px,calc(env(safe-area-inset-top) + 82px));right:max(28px,env(safe-area-inset-right));bottom:max(36px,env(safe-area-inset-bottom));left:max(28px,env(safe-area-inset-left));
+  width:auto!important;max-width:none!important;align-self:auto;gap:0;overflow:hidden;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionEstado{
+  position:absolute;z-index:12;left:50%;bottom:max(9px,env(safe-area-inset-bottom));translate:-50% 0;min-height:0;
+  color:#f0d8aa;text-align:center;text-shadow:0 2px 10px #000;pointer-events:none;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{
+  position:absolute;z-index:10;right:max(20px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));
+  width:auto!important;min-height:0;margin:0!important;padding:0!important;border:0!important;background:none!important;color:#bcb0ca;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionTotales{display:none}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionVolver{
+  padding:0!important;color:#d8c5ed!important;font-size:11px!important;text-decoration-color:#d8c5ed80!important;
+}
+
+/* Sobres: título, carrusel y acciones flotan sobre el pedestal del visor. */
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo{
+  position:relative;z-index:2;max-width:570px;margin:0 auto;padding:2px 16px 8px;text-align:center;text-shadow:0 3px 16px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo .coleccionAntetitulo{display:block;color:#cfb8ef;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo p{color:#d4c4e6}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresPorElegir,
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionReanudarSobre{
+  position:relative;z-index:3;border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:inset 0 1px 0 #fff2,0 9px 25px #0005;
+  -webkit-backdrop-filter:blur(9px) saturate(120%);backdrop-filter:blur(9px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionBibliotecaSobres{width:min(960px,100%)}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionCarreteVentana{
+  background:radial-gradient(ellipse at 50% 62%,#aa76e12b,transparent 62%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionCarreteNavegacion .coleccionBoton{
+  border-color:var(--escena-borde);background:var(--escena-cristal-fuerte);box-shadow:inset 0 1px 0 #fff2,0 5px 18px #0007;
+  -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreSeleccion h4{color:#f3e8ff;text-shadow:0 2px 10px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreSeleccion p,
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionDeslizarPista{color:#cfbedf;text-shadow:0 2px 8px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreAcciones{
+  position:relative;z-index:4;padding-top:6px;text-shadow:0 2px 8px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresVacios{color:var(--escena-texto);text-shadow:0 2px 12px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresVaciosSello{border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:0 12px 34px #0008}
+
+/* Canjear: la lista de recetas es una constelación de controles legibles, no
+   una tarjeta violeta independiente. */
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller{
+  width:min(690px,100%);padding:clamp(14px,3vh,30px) clamp(8px,2vw,20px);gap:14px;color:var(--escena-texto);text-shadow:0 2px 12px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] :is(.coleccionTallerRegla,.coleccionTallerNota){color:#d4c4e6}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjesListos{padding:5px 7px;background:transparent}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo{
+  border-color:var(--escena-borde);background:linear-gradient(110deg,#140d20a9,#08050d8a);box-shadow:inset 0 1px 0 #fff2,0 8px 24px #0005;
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo strong{color:#f1e5ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo span,
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjesListos>p{color:#cfbedf}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeFisico{border-top-color:#ead7ff30;color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeFisico summary{color:#eadbfa}
+
+/* Logros: conservan su grilla y scroll, pero el registro se lee como placas
+   suspendidas en el Archivo, con el halo y las motas aún visibles entre ellas. */
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogros{width:min(100%,1080px);padding:0 5px;color:var(--escena-texto)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera{
+  border-bottom-color:#ead7ff2b;text-shadow:0 2px 12px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>.coleccionAntetitulo{color:#cfb8ef;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>p,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCuenta{color:#cfbedf;border-color:#ead7ff30}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCuenta strong{color:#f3e8ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosSobres,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro{
+  border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:inset 0 1px 0 #fff2,0 6px 18px #0005;
+  -webkit-backdrop-filter:blur(9px) saturate(120%);backdrop-filter:blur(9px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro{color:#d7c7e7}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro[aria-pressed="true"]{
+  border-color:#e5c8ff90;background:linear-gradient(135deg,#8757b575,#2c1942a8);color:#fff1ff;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionListaLogros{scrollbar-color:#c58deb #12091a}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro{
+  border-color:#ead7ff2e;background:linear-gradient(112deg,#130c1eb5,#08050daf);box-shadow:inset 0 1px 0 #fff2,0 9px 25px #0005;
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro:hover{border-color:#e7c6ff80;filter:brightness(1.1)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro.completado{
+  border-color:#f0ca8b86;background:linear-gradient(112deg,#3a25149e,#100a1499);box-shadow:inset 0 1px 0 #fff3,0 9px 25px #0005,0 0 22px #d7a6561b;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroSello{border-color:#e1c7ff58;background:#0c0714a8;color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroTexto h4{color:#f2e5ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroTexto p,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosNota{color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress{border-color:#ddc2ff65;background:#0b0611}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-webkit-progress-bar{background:#0b0611}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#8d5bc4,#ddb46b)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#8d5bc4,#ddb46b)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroPrueba{border-color:#d9b5f16e;background:#130b1b9e;color:#eadbfa}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosNota{border-top-color:#ead7ff2b;text-shadow:0 2px 9px #000}
+
+@media(max-width:760px){
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{left:max(14px,env(safe-area-inset-left));top:max(11px,env(safe-area-inset-top))}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera .coleccionAntetitulo{font-size:8px;letter-spacing:2px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) h2{font-size:21px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{right:max(12px,env(safe-area-inset-right));top:max(11px,env(safe-area-inset-top));width:37px;height:37px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{top:max(48px,calc(env(safe-area-inset-top) + 40px));gap:10px;max-width:calc(100vw - 26px)}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana{font-size:12px!important}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{top:max(88px,calc(env(safe-area-inset-top) + 79px));right:max(10px,env(safe-area-inset-right));bottom:max(7px,env(safe-area-inset-bottom));left:max(10px,env(safe-area-inset-left))}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo{padding-bottom:4px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo h3{font-size:24px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller{padding:8px 2px;gap:10px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo{background:#100919a8}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogros{padding-inline:0}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera{padding-inline:3px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionListaLogros{padding-right:4px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{display:none}
+}
+@media(max-width:760px) and (max-height:650px){
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{top:max(80px,calc(env(safe-area-inset-top) + 72px));bottom:3px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo p{display:none}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller h3{font-size:24px}
+}
+
+/* El huésped común llega después de la composición del Archivo y normaliza
+   sus hijos a z-index 2. Reafirmamos la capa de navegación de Mis cartas
+   para que su escena decorativa jamás capture los clics de sus pestañas. */
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionCabecera{position:absolute!important;z-index:9!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionPestanas{position:absolute!important;z-index:10!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionCerrar{position:fixed!important;z-index:11!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionContenido{position:relative!important;z-index:2!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionEstado{position:absolute!important;z-index:12!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionPie{position:absolute!important;z-index:10!important}

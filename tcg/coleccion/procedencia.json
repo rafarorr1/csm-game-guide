@@ -172,7 +172,7 @@
     "coleccion-modelo.js": "66ef643bf474e1d0e5fd6bf2512b813eed88aab9dd33d5ea4e8099de8cce0bb0",
     "logros.js": "1c795dff5283adeaeb305c3cce2135f27b0c45c2df3f6fafda398c1107f044e9",
     "arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
-    "coleccion-ui.js": "8a1e23cc91a86848cb024a9e25ae2c89158d8788766613fc1c12404657010a62",
+    "coleccion-ui.js": "420f69b1ebd0b6dd681a82cbc29d763a3274704a6e22bc60d57b8d2a23737fde",
     "visor-3d.js": "956f01e790262197ee55c145d63c6a9e37d44648d996a201da2e2419b13360ea",
     "visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
     "visor-3d.css": "6a95d2275fd614d42d993baed6eb2ec86dd546d417ef18a0c4b24cf120494c30",
@@ -186,7 +186,7 @@
     "sobres-apertura.js": "031a9e88ba2e140aee63ec075f1acb7174335d6a2a0a605fbafe0f1d3dfddc7b",
     "sobres-revelacion.js": "0409659d3b519531ffbae3b3d62e37ad8c258c7afa7f48c0bad1510dd0b6152c",
     "sobres-apertura.css": "12d234191ead3690e54b1dbc596a62266d7bc98173c3c9e3801de8fabfcbdc3f",
-    "coleccion.css": "78b433e2d77fa1c3ff048f80179338f06626685cf49e72a91dc72b510cba3b41",
+    "coleccion.css": "7bde0fff9d1cb97f0222badaad16257a6d43eb17651aab32f7a1d12bdac6567d",
     "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
   },
   "arte": {

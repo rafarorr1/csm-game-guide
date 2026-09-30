@@ -436,8 +436,8 @@
     "juego/carta-diseno.js": "0b3327ee89de1c5539e81d45da4eecb30f9dad48f689a231238e3b68be3b7b36",
     "juego/carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "juego/coleccion-modelo.js": "66ef643bf474e1d0e5fd6bf2512b813eed88aab9dd33d5ea4e8099de8cce0bb0",
-    "juego/coleccion-ui.js": "8a1e23cc91a86848cb024a9e25ae2c89158d8788766613fc1c12404657010a62",
-    "juego/coleccion.css": "78b433e2d77fa1c3ff048f80179338f06626685cf49e72a91dc72b510cba3b41",
+    "juego/coleccion-ui.js": "420f69b1ebd0b6dd681a82cbc29d763a3274704a6e22bc60d57b8d2a23737fde",
+    "juego/coleccion.css": "7bde0fff9d1cb97f0222badaad16257a6d43eb17651aab32f7a1d12bdac6567d",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
@@ -451,13 +451,13 @@
     "juego/visor-3d.js": "956f01e790262197ee55c145d63c6a9e37d44648d996a201da2e2419b13360ea",
     "memoria.js": "3a73ddf2676efb2c43fb017ed9552e79991ad82423e6385a1aa1138774d34bae",
     "movil.html": "35de3112dc797f1af0d08b11d6b76e39fd31a75df5dd2da9c0482668a05e7348",
-    "procedencia.json": "5496939c88b2c0d9e66d9caac4f4b930e2e00a0397da57c76d2e8e34af0eff07",
+    "procedencia.json": "8a103d3ac0dd048b347b471d611c709677b266d73979bb2358768e1dbe5e1e9f",
     "red-estatica.js": "31edb2aa0b18c77954c07ee9af0bc3897e636250b57ba25d0271f7777a25957c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/logros-sobres",
-    "sha": "f16a82f6eae042f132707ff0806e067e79d3d477"
+    "sha": "8d85f5109b56c9cfe35567c221c13d50d9181873"
   },
   "seccion": "coleccion",
   "version": 1

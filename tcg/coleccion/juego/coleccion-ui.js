@@ -118,16 +118,18 @@
     return visible;
   }
   function activarMundo(vista){
-    const activo=vista==='cartas'||vista==='detalle';
-    // La continuidad importa entre Archivo y detalle. Fuera de ese recorrido
-    // desmontamos el RAF/canvases para que las pestañas convencionales no dejen
-    // una escena invisible consumiendo recursos.
+    // Todas las pestañas principales de la Colección viven sobre el mismo
+    // mundo del Archivo. Sobres, Canjear y Logros no son cuadros ajenos: sus
+    // controles flotan sobre el halo, las motas y el círculo rúnico que ya ve
+    // el jugador al abrir Mis cartas. Sólo las escenas transitorias (elección
+    // de recompensa, contenido y apertura) pueden apartar ese mundo.
+    const archivo=['cartas','sobres','canje','logros'].includes(vista),activo=archivo||vista==='detalle';
     if(!activo){if(mundo3D)soltarMundoVisor();else{mundoHost?.setAttribute('hidden','');panel?.removeAttribute('data-mundo');}return;}
     mundoHost?.removeAttribute('hidden');montarMundoVisor();
-    if(vista==='cartas'&&!transicionDetalle){encuadreDetalle=null;mundoHost?.style.removeProperty('--reserva-der');mundoHost?.style.removeProperty('--controles-alto');}
+    if(archivo&&!transicionDetalle){encuadreDetalle=null;mundoHost?.style.removeProperty('--reserva-der');mundoHost?.style.removeProperty('--controles-alto');}
     else if(vista==='detalle'&&encuadreDetalle&&!panel?.classList.contains('coleccionFusionando')){mundoHost?.style.setProperty('--reserva-der',encuadreDetalle.reserva+'px');mundoHost?.style.setProperty('--controles-alto',encuadreDetalle.controles+'px');}
-    if(vista==='cartas')mundoHost?.setAttribute('aria-hidden','true');else mundoHost?.removeAttribute('aria-hidden');
-    panel.dataset.mundo=vista==='cartas'?'archivo':'detalle';
+    if(archivo)mundoHost?.setAttribute('aria-hidden','true');else mundoHost?.removeAttribute('aria-hidden');
+    panel.dataset.mundo=archivo?'archivo':'detalle';
   }
   function medida(){
     if(!panel?.open)return;
