@@ -395,7 +395,7 @@ oleadas, y al final entra Can, el de los Goblins.
   - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
   - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
   - con el ratón encima de un enemigo se apunta a él;
-  - Espacio es el parry: Adreida alza el hacha 0,35 s y se gira sola hacia el golpe que llega;
+  - Espacio es el parry: Adreida alza el hacha 0,35 s y se gira sola hacia el golpe que llega; su cuerpo y su hacha brillan en dorado durante el parry, con un destello que se desvanece durante 0,3 s si es perfecto;
     - si el golpe llega en las primeras 0,18 s es perfecto: no hace daño, aturde al atacante 2 s (1 s a Can) y lo deja expuesto (le haces el doble), con un parón y +20 de Furia; una lanza desviada vuelve contra quien la lanzó (el triple de daño);
     - las lanzas de los kobolds brillan (un halo naranja que late y una estela densa); cuando el halo se vuelve blanco y grande, está en la ventana del parry perfecto (para las lanzas, 0,25 s);
     - más tarde, solo bloquea: recibe el 30%;
