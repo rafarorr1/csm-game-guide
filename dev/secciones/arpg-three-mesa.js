@@ -51,10 +51,13 @@
   const camara=new THREE.PerspectiveCamera(32,1,.5,200);
   const objetivo=new THREE.WebGLRenderTarget(2,2,{type:hdr?THREE.HalfFloatType:THREE.UnsignedByteType,samples:muestras});
   const composer=new EffectComposer(renderer,objetivo),pasoRender=new RenderPass(escena,camara);
-  const oclusion=new GTAOPass(escena,camara,2,2);oclusion.updateGtaoMaterial({radius:.9,distanceExponent:1.5,thickness:1.2,scale:1,samples:12});oclusion.blendIntensity=.85;
+  const oclusion=new GTAOPass(escena,camara,2,2);oclusion.updateGtaoMaterial({radius:.9,distanceExponent:1.5,thickness:1.2,scale:1,samples:8});oclusion.blendIntensity=.85;
   // La oclusión sólo oculta puntos y líneas en su pasada de normales; las llamas, haces y marcas (transparentes) tampoco deben hacer sombra de contacto.
   {const ocultar=oclusion._overrideVisibility.bind(oclusion);oclusion._overrideVisibility=function(){ocultar();escena.traverse(n=>{if(n.visible&&(n.material?.transparent||n.material?.userData?.sinOclusion)){n.visible=false;this._visibilityCache.push(n);}});};}
   const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.5,.45,1.05),salida=new OutputPass();
+  // Oclusión y halo trabajan a media resolución; la escena y el HUD conservan su detalle.
+  // El compositor vuelve a llamar setSize al redimensionar: aplicar la escala en cada pasada.
+  for(const pasada of [oclusion,resplandor]){const ajustar=pasada.setSize.bind(pasada);pasada.setSize=(w,h)=>ajustar(Math.max(32,Math.round(w*.5)),Math.max(32,Math.round(h*.5)));}
   // Saneado: un píxel NaN o infinito (en Metal salen de cálculos que otras tarjetas toleran) lo agranda el
   // resplandor en cuadros negros. Esta pasada los cambia por negro antes del resplandor, vengan de donde vengan.
   const saneado={enabled:true,needsSwap:true,clear:false,renderToScreen:false,setSize(){},dispose(){},
@@ -921,7 +924,7 @@
     vertexShader:`varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
     fragmentShader:`varying vec3 vP;void main(){float a=atan(vP.z,vP.x)/6.2832+.5,r=length(vP.xz);float s=pow(fract(a*2.),3.)*smoothstep(1.1,1.6,r)*(1.-smoothstep(2.1,2.5,r));gl_FragColor=vec4(vec3(1.,.85,.6)*1.8,s*.8);}`}));estela.visible=false;escena.add(estela);
 
-  function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),W=Math.max(1,b.width),H=Math.max(1,b.height);
+  function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,CAPTURA?2:1.5),W=Math.max(1,b.width),H=Math.max(1,b.height);
     renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;}
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};

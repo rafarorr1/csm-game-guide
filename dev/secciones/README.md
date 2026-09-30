@@ -1138,3 +1138,5 @@ las reglas se prueban con cada ataque frente a cada esquiva.
 node dev/secciones/pruebas_pesadillas_3d.mjs
 python3 dev/secciones/publicar.py --publicar --seccion pesadillas-3d --salida /tmp/caoz-pesadillas-3d
 ```
+
+- **Rendimiento del ARPG:** densidad de render limitada a 1,5× en juego (2× en captura); oclusión GTAO a media resolución y 8 muestras; resplandor a media resolución adicional sobre sus niveles internos. Conserva modelos, sombras, HDR y MSAA 4×. Las escalas se reaplican al redimensionar.
