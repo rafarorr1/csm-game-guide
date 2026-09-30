@@ -176,6 +176,25 @@
     pPos[j]+=pVel[j]*dt;pPos[j+1]+=pVel[j+1]*dt;pPos[j+2]+=pVel[j+2]*dt;if(pPos[j+1]<.03){pPos[j+1]=.03;pVel[j+1]*=-.3;}
     const k=Math.max(0,pVida[i]/pMax[i]);pCol[i*4]=pBase[i*4];pCol[i*4+1]=pBase[i*4+1];pCol[i*4+2]=pBase[i*4+2];pCol[i*4+3]=Math.min(1,k*1.6);}
     geoP.attributes.position.needsUpdate=geoP.attributes.aColor.needsUpdate=geoP.attributes.aTam.needsUpdate=true;}
+  // Adoquines arrancados por el salto: una sola malla y una reserva reutilizable.
+  const MAX_ESCOMBROS=72,escombros=[],moldeEscombro=new THREE.Object3D();
+  const mallaEscombros=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),std(0x79716a),MAX_ESCOMBROS);
+  mallaEscombros.count=0;mallaEscombros.frustumCulled=false;mallaEscombros.castShadow=mallaEscombros.receiveShadow=true;
+  mallaEscombros.instanceMatrix.setUsage(THREE.DynamicDrawUsage);escena.add(mallaEscombros);
+  function romperPiso(p){for(let i=0;i<24;i++){
+    const a=(i+rnd()*.7)*TAU/24,r=.45+rnd()*1.45,v=1.4+rnd()*2.5,s=.18+rnd()*.22;
+    if(escombros.length===MAX_ESCOMBROS)escombros.shift();
+    escombros.push({pos:new V3(p.x+Math.cos(a)*r,.09,p.z+Math.sin(a)*r),vel:new V3(Math.cos(a)*v,4+rnd()*4,Math.sin(a)*v),
+      giro:new V3(rnd(),rnd()*TAU,rnd()),rot:new V3((rnd()-.5)*9,(rnd()-.5)*8,(rnd()-.5)*9),
+      escala:new V3(s,.08+rnd()*.1,s*(.7+rnd()*.6)),vida:2.2+rnd()*.7,rebotes:0});}}
+  function pasoEscombros(dt){let n=0;
+    for(let i=escombros.length-1;i>=0;i--){const e=escombros[i];e.vida-=dt;if(e.vida<=0){escombros.splice(i,1);continue;}
+      if(e.rebotes<2){e.vel.y-=18*dt;e.pos.addScaledVector(e.vel,dt);e.giro.addScaledVector(e.rot,dt);
+        if(e.pos.y<=e.escala.y&&e.vel.y<0){e.pos.y=e.escala.y;e.rebotes++;e.vel.y*=-.25;e.vel.x*=.55;e.vel.z*=.55;e.rot.multiplyScalar(.45);
+          if(e.rebotes===2){e.giro.x=e.giro.z=0;}}}
+      const k=Math.min(1,e.vida/.55);moldeEscombro.position.copy(e.pos);moldeEscombro.position.y-=e.escala.y*(1-k);
+      moldeEscombro.rotation.set(e.giro.x,e.giro.y,e.giro.z);moldeEscombro.scale.copy(e.escala).multiplyScalar(k);moldeEscombro.updateMatrix();mallaEscombros.setMatrixAt(n++,moldeEscombro.matrix);}
+    mallaEscombros.count=n;mallaEscombros.instanceMatrix.needsUpdate=true;}
   // Brasas y ceniza que suben de los incendios todo el rato.
   function ambiente(dt){for(const f of fuegos)if(rnd()<dt*9)particula(f.x+(rnd()-.5)*3,f.alto+rnd(),f.z+(rnd()-.5)*3,(rnd()-.5)*1.5+.6,1.5+rnd()*2,(rnd()-.5)*1.5+.4,2.5+rnd()*2,.35+rnd()*.3,3,1,.25,-.15);
     if(rnd()<dt*14){const h=heroe?heroe.pos:new V3();particula(h.x+(rnd()-.5)*26,6+rnd()*3,h.z+(rnd()-.5)*20,.4,-.5-rnd()*.4,.2,6,.25+rnd()*.25,.35,.33,.34,0);}}
@@ -486,7 +505,7 @@
         for(const e of enemigos){if(e.estado==='muere')continue;const v=h.pos.clone().sub(e.pos).setY(0),d=v.length();if(d>6)continue;
           if(d>.8&&v.normalize().dot(frente(e.dir))<Math.cos(1.9))continue;
           cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.d.jefe?1.2:2.6;e.impresionado=true;numero(e.pos.clone().setY(e.m.alto+.5),'¡Impresionado!','impresionado',1.3);}}
-      if(!h.golpeo&&k>=.86){h.golpeo=true;h.alto=0;golpearEn(3.2,Math.PI,h.atq*1.7,{empuje:4.5,aturde:1.1,chispas:14});marca('onda',h.pos.x,h.pos.z,4.2,0xffb050,.5);polvo(h.pos,40,2);chispas(h.pos.clone().setY(.3),30,[1,.7,.35],8,.5);temblar(.5);paron=.08;}
+      if(!h.golpeo&&k>=.86){h.golpeo=true;h.alto=0;golpearEn(3.2,Math.PI,h.atq*1.7,{empuje:4.5,aturde:1.1,chispas:14});marca('onda',h.pos.x,h.pos.z,4.2,0xffb050,.5);polvo(h.pos,40,2);romperPiso(h.pos);chispas(h.pos.clone().setY(.3),30,[1,.7,.35],8,.5);temblar(.5);paron=.08;}
       if(h.t>=D){cambiar(h,'quieto');h.alto=0;}}
     else if(h.estado==='grito'){if(!h.golpeo&&h.t>=.18){h.golpeo=true;h.escudo=4;h.furia=Math.min(100,h.furia+35);marca('onda',h.pos.x,h.pos.z,10,0xffd070,.7);chispas(h.pos.clone().setY(1.4),40,[1,.85,.4],7,.5);temblar(.2);
         for(const e of enemigos){if(e.estado==='muere')continue;const d=plano(e.pos,h.pos);if(d<10){e.provocado=3.5;e.tirón={p:e.pos.clone().lerp(h.pos,Math.min(.5,1.6/Math.max(d,.1))),hasta:reloj.t+.35};if(e.estado==='entra')e.dentro=true;}}}
@@ -611,7 +630,7 @@
     ol.i++;const O=OLEADAS[ol.i];let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(ol.cola[i][0]!=='can'&&ol.cola[j][0]!=='can')[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;banner(O.nombre,O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.');}
-  function reiniciar(){presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+  function reiniciar(){escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);escena.remove(heroe.m.raiz);crearHeroe();$('botin').innerHTML='';Object.assign(ol,{i:-1,cola:[],espera:1.8,lote:0,descanso:null,fin:false});$('fin').hidden=true;finMostrado=false;}
 
   /* ---- Entrada: teclado, ratón y táctil ---------------------------------------------------
@@ -742,7 +761,7 @@
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
     leerControles();
-    pasoHeroe(dt);coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);
+    pasoHeroe(dt);coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);
     // Poses y posiciones de los modelos.
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
