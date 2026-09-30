@@ -647,6 +647,35 @@
   const ctl={mov:new V3(),atacar:false,apunta:null};
   const teclas=new Set(),DIRS={KeyW:[0,-1],ArrowUp:[0,-1],KeyS:[0,1],ArrowDown:[0,1],KeyA:[-1,0],ArrowLeft:[-1,0],KeyD:[1,0],ArrowRight:[1,0]};
   const ACCION={Space:'parry',ShiftLeft:'esquiva',ShiftRight:'esquiva',KeyQ:'torbellino',Digit1:'torbellino',KeyR:'salto',Digit2:'salto',KeyE:'provocar',Digit3:'provocar'};
+  // DualSense y otros mandos que el navegador presenta con distribución estándar.
+  const mando={indice:null,botones:[],activo:false,foco:true,listo:false,dir:new V3(0,0,-1)};
+  const BOTONES_MANDO={0:'esquiva',1:'salto',3:'provocar',4:'parry',5:'torbellino',6:'parry'};
+  function ejeMando(x=0,z=0){const d=Math.hypot(x,z);return d<=.18?new V3():new V3(x,0,z).multiplyScalar(Math.min(1,(d-.18)/.82)/d);}
+  function estadoMando(txt){const el=$('estadoMando');if(el&&el.textContent!==txt)el.textContent=txt;}
+  function leerMando(){
+    let lista=[];try{lista=Array.from(navigator.getGamepads?.()||[]);}catch{estadoMando('Mando no disponible en este navegador. Puedes usar teclado y ratón.');return null;}
+    const g=lista.find(g=>g?.connected&&g.mapping==='standard'&&g.index===mando.indice)||lista.find(g=>g?.connected&&g.mapping==='standard');
+    if(!g){mando.indice=null;mando.botones=[];mando.activo=false;mando.listo=false;estadoMando(lista.some(g=>g?.connected)?'El navegador no reconoce la distribución de este mando. Prueba otro navegador.':'PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.');return null;}
+    if(mando.indice!==g.index){mando.indice=g.index;mando.botones=[];mando.listo=false;mando.activo=false;}
+    estadoMando('Mando conectado · Izquierdo: mover · Derecho: apuntar · R2 / □: atacar · ×: dash · ○: salto · L1 / L2: parry · R1: especial · △: provocar');
+    const botones=g.buttons.map(b=>b.pressed||b.value>.5),mov=ejeMando(g.axes[0],g.axes[1]),mira=ejeMando(g.axes[2],g.axes[3]);
+    const pulsado=botones.some(Boolean),actividad=pulsado||mov.lengthSq()>0||mira.lengthSq()>0;
+    // Al conectar o volver a la ventana, soltar primero evita ataques involuntarios.
+    if(document.hidden||!mando.foco||!mando.listo){mando.botones=botones;mando.activo=false;mando.listo=!document.hidden&&mando.foco&&!actividad;return null;}
+    const nuevos=botones.map((v,i)=>v&&!mando.botones[i]);mando.botones=botones;
+    if(actividad){mando.activo=true;ent.piloto=false;ent.atacando=ent.pendiente=false;}
+    if(!mando.activo)return null;
+    if(mira.lengthSq())mando.dir.copy(mira).normalize();else if(mov.lengthSq())mando.dir.copy(mov).normalize();
+    const apunta=heroe.pos.clone().addScaledVector(mando.dir,7);
+    ctl.mov.copy(mov);ctl.apunta=apunta;
+    for(const [i,accion] of Object.entries(BOTONES_MANDO))if(nuevos[i])usar(accion,accion==='esquiva'?(mov.lengthSq()?mov:mando.dir).clone():apunta.clone());
+    return {mov,apunta,atacar:!!(botones[2]||botones[7])};
+  }
+  addEventListener('focus',()=>{mando.foco=true;});
+  addEventListener('blur',()=>{mando.foco=false;mando.listo=false;mando.activo=false;});
+  addEventListener('keydown',()=>{mando.activo=false;});
+  esc.addEventListener('pointerdown',()=>{mando.activo=false;});
+  esc.addEventListener('pointermove',()=>{mando.activo=false;});
   function movTeclado(){const v=new V3();for(const k of teclas){const d=DIRS[k];if(d){v.x+=d[0];v.z+=d[1];}}return v.lengthSq()?v.normalize():v;}
   function apuntar(cx,cy){const b=esc.getBoundingClientRect();puntero.set((cx-b.left)/b.width*2-1,-(cy-b.top)/b.height*2+1);}
   function bajo(){ray.setFromCamera(puntero,camara);const cajas=[...enemigos.filter(e=>e.estado!=='muere').map(e=>e.m.caja),...botines.filter(b=>b.listo&&!b.recogida&&!b.volando).map(b=>b.caja)];
@@ -678,6 +707,8 @@
     const fin=e=>{if(e.pointerId!==id)return;id=null;ent.palanca=null;bola.style.transform='';};pal.addEventListener('pointerup',fin);pal.addEventListener('pointercancel',fin);}
   // Un toque o un clic corto dan siempre un golpe (ent.pendiente), aunque se suelte antes del fotograma.
   function leerControles(){
+    const pad=ent.rev?null:leerMando();
+    if(pad){ctl.mov.copy(pad.mov);ctl.atacar=pad.atacar;ctl.apunta=pad.apunta;return;}
     if(ent.piloto){const p=piloto();ctl.mov.copy(p.mov);ctl.atacar=p.atacar;ctl.apunta=p.apunta;return;}
     if(ent.rev){ctl.mov.copy(ent.rev.mov);ctl.atacar=ent.rev.atacar;ctl.apunta=ent.rev.apunta;return;}
     ctl.mov.copy(ent.palanca||movTeclado());ctl.atacar=ent.atacando||ent.pendiente;ctl.apunta=ent.tactil||!(ent.dentro||ent.atacando)?null:ent.sobre?.d?ent.sobre.pos.clone():ent.suelo.clone();}// con el ratón encima de un enemigo se apunta a él

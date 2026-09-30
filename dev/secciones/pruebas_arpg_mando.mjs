@@ -1,0 +1,23 @@
+/* Entrada real con lecturas simuladas: no necesita un mando físico. */
+import fs from 'node:fs';
+import vm from 'node:vm';
+import assert from 'node:assert/strict';
+const c=vm.createContext({console});c.window=c;
+vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),c);
+const s=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
+vm.runInContext(`const V3=CAOZ_THREE.THREE.Vector3;let pads=[],avisos=[];const navigator={getGamepads:()=>pads},document={hidden:false},$=()=>null,ent={piloto:false},ctl={mov:new V3()},heroe={pos:new V3()};function usar(a,p){avisos.push(a);} `+s.slice(s.indexOf('  const mando='),s.indexOf("  addEventListener('focus',()=>{mando.foco")),c);
+const run=x=>vm.runInContext(x,c);
+assert.equal(run('leerMando()'),null);
+run(`const g={index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};pads=[g];leerMando();`);
+assert.equal(run('mando.listo'),true);
+run('g.axes=[.05,-.05,0,0]');assert.equal(run('leerMando()'),null);
+run('g.axes=[1,1,0,0]');assert.ok(Math.abs(run('leerMando().mov.length()')-1)<1e-9);
+run('g.axes=[0,0,1,0];g.buttons[7].pressed=true');assert.equal(run('leerMando().atacar'),true);assert.equal(run('ctl.apunta.x'),7);
+run('g.buttons[0].pressed=true;leerMando();leerMando()');assert.equal(run('avisos.length'),1);assert.equal(run('avisos[0]'),'esquiva');
+run('g.buttons[0].pressed=false;leerMando();g.buttons[0].pressed=true;leerMando()');assert.equal(run('avisos.length'),2);
+run('document.hidden=true');assert.equal(run('leerMando()'),null);
+run('document.hidden=false');assert.equal(run('leerMando()'),null);
+run('g.axes=[0,0,0,0];g.buttons.forEach(b=>b.pressed=false);leerMando();g.buttons[2].pressed=true');assert.equal(run('leerMando().atacar'),true);
+run('pads=[]');assert.equal(run('leerMando()'),null);assert.equal(run('mando.activo'),false);
+run("g.mapping='';pads=[g]");assert.equal(run('leerMando()'),null);
+console.log('Mando: zona muerta, ejes, apuntado, ataque mantenido, flancos, foco y desconexión correctos.');
