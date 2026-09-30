@@ -11,17 +11,17 @@ const obtener=(nombre,tipo='function')=>extraerDeclaracion(fuente,nombre,tipo).t
 const constantes=['DEF','RITMO','presion','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
 const funciones=['sectorLibre','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque'].map(n=>obtener(n)).join('\n');
 vm.runInContext(`
-const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,R=15.5;
+const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,R=15.5,q={get:()=>null};
 const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
-const heroe={pos:new V3(),radio:.4,vivo:true,invul:0,estado:'quieto'};let sigId=1,semilla=11;
+const heroe={pos:new V3(),alma:60,almaMax:120,radio:.4,vivo:true,invul:0,estado:'quieto'};let sigId=1,semilla=11;
 const rnd=()=>(semilla=semilla*16807%2147483647)/2147483647,plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),calle=a=>new V3(Math.cos(a),0,Math.sin(a));
 const difAng=(a,b)=>{let d=(b-a)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;};
 const eventos=[],nacimientos=[];let golpes=0;
 const cuerpoDe=tipo=>({radio:tipo==='can'?.62:.34,alto:1.3,caja:{userData:{}},raiz:{position:new V3()},M:{u:{uDisuelve:{value:0}}},mallas:[]});
-const cambiar=(e,s)=>{e.estado=s;e.t=0;},banner=()=>{},marca=()=>{},polvo=()=>{},temblar=()=>{},brasas=()=>{};
+const cambiar=(e,s)=>{e.estado=s;e.t=0;},banner=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},temblar=()=>{},brasas=()=>{};
 const colocarAtaque=()=>{},cancelarAtaque=e=>{e.ataque=null;},parar=()=>null,herir=()=>{golpes++;},lanzar=()=>{},escena={remove(){}};
-function empezarAtaque(e,forma,o){e.ataque={...o,forma,t0:reloj.t,dir:e.dir,fijado:false};eventos.push({t:reloj.t,id:e.id,tipo:e.tipo});}
+function empezarAtaque(e,forma,o){e.ataque={...o,forma,t0:reloj.t,dir:e.dir,fijado:false};eventos.push({t:reloj.t,id:e.id,tipo:e.tipo,forma,duracion:o.dur});}
 ${constantes}
 ${funciones}
 function paso(dt=.05){reloj.t+=dt;coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();const antes=new Set(enemigos.map(e=>e.id));pasoOleadas(dt);for(const e of enemigos)if(!antes.has(e.id))nacimientos.push({t:reloj.t,id:e.id,oleada:ol.i});}
@@ -53,13 +53,13 @@ for(let oleada=0;oleada<4;oleada++){
  for(let i=0;i<240;i++)paso();({vivos:enemigos.length,cola:ol.cola.length,max:OLEADAS[ol.i].maxVivos,tiempos:nacimientos.map(e=>e.t)});`);
  assert.ok(r.vivos>=3&&r.vivos<=r.max,'La presión limita los refuerzos');assert.ok(r.cola>0);if(r.tiempos.length>3)assert.ok(r.tiempos[3]-r.tiempos[2]>=2.4-1e-6,'Pausa entre grupos');assert.ok(r.vivos<=r.max);assert.ok(r.tiempos[1]-r.tiempos[0]>=.75-1e-6);
 }
-// Vaciar grupos permite terminar las cuatro oleadas y respeta tres segundos entre ellas.
-const oleadas=ejecutar(`limpiar();ol.auto=true;let maxima=[0,0,0,0],cambios=[],ultimaBaja=0;
+// Vaciar grupos permite terminar las dos etapas y respeta tres segundos entre ellas.
+const oleadas=ejecutar(`limpiar();ol.auto=true;let maxima=[0,0,0,0,0],cambios=[],ultimaBaja=0;
 for(let i=0;i<3000&&!ol.fin;i++){const anterior=ol.i;paso();if(ol.i!==anterior)cambios.push({i:ol.i,pausa:reloj.t-ultimaBaja});
  if(ol.i>=0)maxima[ol.i]=Math.max(maxima[ol.i],enemigos.length);
  if(i%80===79&&enemigos.length){enemigos.length=0;ultimaBaja=reloj.t;}}
 ({fin:ol.fin,maxima,cambios});`);
-assert.ok(oleadas.fin);assert.ok(oleadas.maxima.every((v,i)=>v<=[4,5,6,5][i]));assert.ok(oleadas.cambios.slice(1).every(c=>c.pausa>=3-1e-6));
+assert.ok(oleadas.fin);assert.equal(oleadas.cambios.length,5);assert.ok(oleadas.cambios[4].pausa>=8-1e-6);assert.ok(oleadas.maxima.every((v,i)=>v<=[4,5,6,5,4][i]));assert.ok(oleadas.cambios.slice(1).every(c=>c.pausa>=3-1e-6));
 console.log('✓ Refuerzos por grupos, límites de población y descansos entre oleadas');
 
 // Can mete sus refuerzos en la misma cola: no se salta el límite al gritar.
@@ -70,3 +70,13 @@ enemigos.splice(1,3);let maxJefe=enemigos.length;for(let i=0;i<160;i++){paso();m
 ({retenidos,antes,maxJefe,cola:ol.cola.length});`);
 assert.equal(jefe.retenidos,3);assert.equal(jefe.antes,5);assert.ok(jefe.maxJefe<=5);assert.equal(jefe.cola,0);
 console.log('✓ Los refuerzos de Can esperan y respetan el máximo de cinco');
+
+// El cobro de piso tiene exactamente un troll y seis goblins, sin invocaciones adicionales.
+const cobro=ejecutar(`limpiar();ol.auto=true;ol.i=3;ol.descanso=.01;heroe.alma=50;let tipos=[],maximos=0;
+for(let i=0;i<1600&&!ol.fin;i++){paso();maximos=Math.max(maximos,enemigos.length);for(const e of enemigos)if(!e.contado){e.contado=true;tipos.push(e.tipo);}
+ if(i%100===99)enemigos.length=0;}
+({tipos,maximos,fin:ol.fin,alma:heroe.alma});`);
+assert.equal(cobro.tipos.filter(t=>t==='troll').length,1);assert.equal(cobro.tipos.filter(t=>t==='cobrador').length,6);assert.equal(cobro.tipos.length,7);assert.ok(cobro.maximos<=4);assert.ok(cobro.fin);assert.equal(cobro.alma,90);
+const troll=ejecutar(`limpiar();const e=invocar('troll',0,-3);for(let i=0;i<800;i++)paso();({formas:eventos.map(a=>a.forma),ataques:e.ataques,refuerzos:ol.cola.length});`);
+assert.ok(troll.ataques>=2);assert.ok(troll.formas.includes('cono')&&troll.formas.includes('circulo'));assert.equal(troll.refuerzos,0);
+console.log('✓ Segunda etapa: un troll, seis cobradores, descanso de ocho segundos, recuperación de Alma y victoria');

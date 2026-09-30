@@ -96,6 +96,8 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       goblin:{nombre:'Goblin de Camino',alto:1.15,radio:.34},
       kobold:{nombre:'Kobold lancero',alto:1.25,radio:.34},
       saqueador:{nombre:'Saqueador de Tomsage',alto:1.8,radio:.42},
+      troll:{nombre:'El Recaudador · Troll',alto:3,radio:.85},
+      cobrador:{nombre:'Goblin cobrador',alto:1.15,radio:.34},
       can:{nombre:'Can, el de los Goblins',alto:2.4,radio:.62},
       mohamed:{nombre:'Mohamed',alto:1.85,radio:.4},
     };
@@ -155,9 +157,9 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       pon('manoD','metal',G.cono(.035,.14,4),hierro,[0,-1.22,0],[Math.PI,Math.PI/4,0]);
       return {H,montar,p};
     }
-    function goblin(){
+    function goblin(cobrador=false){
       const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
-      const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=0x8e3324,tela=0x4f4636,bota=0x3d2c20;
+      const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=cobrador?0x703798:0x8e3324,tela=0x4f4636,bota=0x3d2c20;
       pon('cadera','piel',G.caja(.24,.13,.16),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,7,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.35);
       pon('cadera','piel',G.cil(.14,.145,.05,8),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.caja(.08,.07,.06),0x6b4c32,[.1,.0,.1]);
       for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.caja(.1,.13,.15),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,6),bota,[0,.1,0]);}
@@ -171,6 +173,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('cabeza','piel',G.cono(.01,.03,4),0xefe6d2,[s*.04,.06,.11],[Math.PI,0,0]);}
       pon('cabeza','piel',G.casco(.145,8,3,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.3);
       for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,6),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,6,5),piel2,[0,-.02,0]);}
+      if(cobrador){pon('cadera','piel',G.bola(.095,7,5),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,6,4),0xe6b64e,[.19,.035,.065]);}
       pon('manoD','piel',G.cil(.018,.02,.46,6),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0]);
       pon('manoD','metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3]);
       return {H,montar,p};
@@ -219,6 +222,38 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('anteI','piel',G.cil(.27,.27,.04,12),0x6b4a2e,[.1,-.17,.02],[0,0,Math.PI/2],1,.2);pon('anteI','metal',G.toro(.27,.022,14),acero,[.12,-.17,.02],[0,Math.PI/2,0]);pon('anteI','metal',G.bola(.06,6,4),acero,[.13,-.17,.02],[0,0,-Math.PI/2],[1,.6,1]);}
       return {H,montar,p};
     }
+    // Tres metros hasta la coronilla: cuerpo ancho, brazos largos y una maza de piedra.
+    function troll(){
+      const p={muslo:.62,pierna:.58,pie:.08,cintura:.1,torso:.98,hombros:.55,brazo:.56,antebrazo:.52,ancho:.27},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
+      const piel=0x6c8867,sombra=0x52694f,cuero=0x493126,piedra=0x787b80;
+      pon('cadera','piel',G.caja(.86,.34,.54),cuero,[0,0,0]);
+      pon('cadera','piel',G.cil(.48,.6,.48,9,true),0x574137,[0,-.2,0],[0,0,0],[1,1,.72]);
+      pon('cadera','metal',G.caja(.22,.19,.08),0xba9746,[0,.06,.32]);
+      pon('torso','piel',G.capsula(.4,.25),piel,[0,.4,0],[0,0,0],[1.4,1,.92]);
+      pon('torso','piel',G.bola(.38,9,7),sombra,[0,.25,.12],[0,0,0],[1.25,1,.85]);
+      pon('torso','piel',G.caja(.12,1.08,.05),cuero,[0,.45,.37],[0,0,.6]);
+      pon('cabeza','piel',G.bola(.34,9,7),piel,[0,.3,0]);
+      pon('cabeza','piel',G.caja(.48,.23,.34),sombra,[0,.13,.18]);
+      pon('cabeza','piel',G.bola(.105,7,5),sombra,[0,.28,.32],[0,0,0],[1,1.2,1]);
+      for(const signo of [-1,1]){
+        pon('cabeza','brillo',G.bola(.045,6,5),0xffc046,[signo*.13,.36,.285]);
+        pon('cabeza','piel',G.caja(.19,.07,.075),sombra,[signo*.14,.42,.29],[0,0,signo*.15]);
+        pon('cabeza','piel',G.cono(.055,.23,6),0xe6d9b9,[signo*.2,.17,.34],[0,0,-signo*.2]);
+        pon('cabeza','piel',G.cono(.1,.32,5),piel,[signo*.36,.32,-.03],[0,0,-signo*1.2]);
+      }
+      for(const l of ['I','D']){
+        miembro('pierna'+l,.18,.43,piel);miembro('rodilla'+l,.145,.4,sombra);
+        pon('pie'+l,'piel',G.caja(.35,.19,.48),sombra,[0,.015,.13]);
+        miembro('brazo'+l,.21,.4,piel);miembro('ante'+l,.17,.37,sombra);
+        pon('mano'+l,'piel',G.bola(.18,7,5),piel,[0,-.08,.04],[0,0,0],[1,1.2,1]);
+        pon('ante'+l,'metal',G.cil(.185,.195,.15,8),0x544f4a,[0,-.33,0]);
+      }
+      pon('brazoI','metal',G.bola(.3,7,5),piedra,[0,.02,0],[0,0,0],[1.2,.6,1.1]);
+      pon('manoD','piel',G.cil(.07,.09,1.6,7),0x47301e,[0,0,.45],[Math.PI/2,0,0]);
+      pon('manoD','metal',G.bola(.38,6,4),piedra,[0,0,1.2],[0,.3,0],[.85,.85,1.4]);
+      pon('manoD','metal',G.caja(.69,.12,.48),0x413e3b,[0,0,1.2]);
+      return {H,montar,p};
+    }
     // Una persona del grupo: piernas, torso, cabeza con cara y brazos; cada uno añade su ropa y su arma.
     function persona(o){
       const p={muslo:.44,pierna:.42,pie:.05,cintura:.07,torso:.5,hombros:.22,brazo:.3,antebrazo:.28,ancho:.1,...o.p},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
@@ -241,7 +276,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('cadera','piel',G.caja(.1,.12,.05),0x5a3a22,[.16,-.02,.1]);for(const x of [-.12,-.05,.02])pon('cadera','metal',G.cil(.014,.014,.06,5),0xc8a050,[x,.07,.15],[Math.PI/2,0,0]);
         pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
         pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
-    const constructores={adreida,goblin,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
+    const constructores={adreida,goblin,cobrador:()=>goblin(true),troll,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
     function crear(tipo){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(),{H,montar,p}=constructores[tipo](),mallas=montar(M);
@@ -299,7 +334,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
 
     // Pone la pose. a={anim,t (segundos en la animación), k (0..1 de la animación), fase (del paso), paso (0..1 cuánto anda)}.
     function posar(m,a){
-      const H=m.H,esc=m.tipo==='can'?1.25:1;
+      const H=m.H,esc=m.tipo==='troll'?1.5:m.tipo==='can'?1.25:1;
       for(const k in H)if(k!=='raiz'){H[k].rotation.set(0,0,0);}
       H.cuerpo.position.set(0,0,0);H.cuerpo.rotation.set(0,0,0);
       const t=a.t||0,k=a.k||0,respira=Math.sin(t*2.2);
@@ -371,6 +406,12 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.piernaI.rotation.x=-.9*e2-.2*car*(1-emp);H.rodillaI.rotation.x=.7*e2+.3*car;H.piernaD.rotation.x=.7*e2+.2*car*(1-emp);H.rodillaD.rotation.x=.2+.3*e2;
           H.cuerpo.position.y=-.14*e2*esc-.05*car*(1-emp)*esc;break;}
         // Esquiva: rueda corta, agachada y hacia delante.
+        // La maza sube despacio y cae con todo el torso; la recuperación deja al troll expuesto.
+        case 'cargaMazazo':case 'mazazo':{const carga=a.anim==='cargaMazazo'?suave(k):1,caida=a.anim==='mazazo'?tramo(k,0,.3):0,rec=a.anim==='mazazo'?tramo(k,.45,1):0,arriba=carga*(1-caida);
+          H.brazoD.rotation.x=-2.6*arriba-1.2*caida*(1-rec);H.anteD.rotation.x=-.55-.7*arriba;
+          H.brazoI.rotation.x=-1.6*arriba;H.brazoI.rotation.z=.3+.3*arriba;H.anteI.rotation.x=-.7;
+          H.torso.rotation.x=-.18*arriba+.65*caida*(1-rec);H.cabeza.rotation.x=-.12*arriba;
+          H.rodillaI.rotation.x=H.rodillaD.rotation.x=.18+.35*caida*(1-rec);H.cuerpo.position.y=-.16*caida*(1-rec);break;}
         case 'esquiva':{const e=Math.sin(Math.PI*Math.min(1,k));H.torso.rotation.x=.25+.55*e;H.cabeza.rotation.x=.2*e;H.cuerpo.position.y=-.22*e*esc;
           H.piernaI.rotation.x=-.9*e;H.rodillaI.rotation.x=1.1*e;H.piernaD.rotation.x=.7*e;H.rodillaD.rotation.x=.9*e;
           H.brazoI.rotation.x=.9*e;H.brazoD.rotation.x=.7*e;H.anteD.rotation.x=-.9;H.brazoI.rotation.z=.5*e;H.brazoD.rotation.z=-.5*e;break;}
