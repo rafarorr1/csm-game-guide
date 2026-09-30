@@ -313,22 +313,28 @@
     const herida=heroe.vivo&&heroe.alma<heroe.almaMax;if(herida&&d<3.2){g.pos.lerp(heroe.pos,Math.min(1,dt*(3.2-d)*3));}
     g.m.position.set(g.pos.x,.45+Math.sin(reloj.t*3+g.t0)*.08,g.pos.z);g.m.rotation.y+=dt*2;
     if(herida&&d<1){const c=Math.round(heroe.almaMax*.2);heroe.alma=Math.min(heroe.almaMax,heroe.alma+c);numero(heroe.pos.clone().setY(2.2),'+'+c,'cura');chispas(g.m.position,16,[1,.25,.3],3,.4);escena.remove(g.m);globos.splice(globos.indexOf(g),1);}}}
-  const geoLanza=new THREE.CylinderGeometry(.018,.018,1.2,5).rotateX(Math.PI/2),geoPunta=new THREE.ConeGeometry(.04,.16,4).rotateX(Math.PI/2).translate(0,0,.66);
-  // La lanza sigue exactamente la línea que se dibujó (su ancho es el de la línea) y deja una estela roja.
-  const matPuntaLanza=new THREE.MeshBasicMaterial({color:0xffb070,toneMapped:false});
+  const geoLanza=new THREE.CylinderGeometry(.024,.024,1.2,6).rotateX(Math.PI/2),geoPunta=new THREE.ConeGeometry(.17,.38,4).rotateX(Math.PI/2).translate(0,0,.69);
+  // Flechas luminosas: punta ancha, asta, plumas y una estela afilada orientadas hacia el avance.
+  const matPuntaLanza=new THREE.MeshBasicMaterial({color:new THREE.Color(2.6,1.8,.65),toneMapped:false});
+  const geoPluma=new THREE.ConeGeometry(.12,.36,4).rotateX(-Math.PI/2).translate(0,0,-.48);
+  const materialesHaloFlecha=[0xffa530,0xfff3c0,0xffd060].map(color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  const geoEstelaFlecha=new THREE.PlaneGeometry(.24,2.2).rotateX(Math.PI/2).translate(0,0,-1.55);
+  const matEstelaFlecha=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+    vertexShader:`varying vec2 vUv;void main(){vUv=uv;vec3 p=position;p.x*=uv.y;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
+    fragmentShader:`varying vec2 vUv;void main(){float centro=1.-abs(vUv.x*2.-1.);float a=pow(centro,1.5)*vUv.y*vUv.y;gl_FragColor=vec4(vec3(2.4,1.25,.25),a*.65);}`});
   // Un halo brillante (aditivo, lo agranda el resplandor) alrededor de lo que vuela: se ve de lejos y marca el momento del parry.
   const geoHalo=new THREE.SphereGeometry(1,14,10);
   const halo=(color,r)=>{const m=new THREE.Mesh(geoHalo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.6,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));m.scale.setScalar(r);m.renderOrder=3;return m;};
-  function lanzar(e,a){const g=new THREE.Group(),punta=new THREE.Mesh(geoPunta,matPuntaLanza);punta.scale.setScalar(1.7);const brillo=halo(0xff7a30,.36);brillo.position.z=.62;
-    g.add(new THREE.Mesh(geoLanza,MAT.madera),punta,brillo);const dir=frente(a.dir),p=e.pos.clone().setY(1.1);
-    g.position.copy(p);g.lookAt(p.clone().add(dir));g.traverse(o=>{if(o!==brillo)o.castShadow=true;});escena.add(g);lanzas.push({g,brillo,dir,vel:16,t0:reloj.t,dano:a.dano,clavada:0,e,origen:e.pos.clone(),radio:a.ancho/2});}
-  function pasoLanzas(dt){for(const l of [...lanzas]){if(l.clavada){if(reloj.t-l.clavada>1.2){escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);}continue;}
+  function lanzar(e,a){const g=new THREE.Group(),punta=new THREE.Mesh(geoPunta,matPuntaLanza),brillo=new THREE.Mesh(geoPunta,materialesHaloFlecha[0]);brillo.scale.setScalar(1.25);
+    const estela=new THREE.Group();for(const giro of [0,Math.PI/2]){const cinta=new THREE.Mesh(geoEstelaFlecha,matEstelaFlecha);cinta.rotation.z=giro;estela.add(cinta);}
+    g.add(new THREE.Mesh(geoLanza,matPuntaLanza),new THREE.Mesh(geoPluma,matPuntaLanza),punta,brillo,estela);const dir=frente(a.dir),p=e.pos.clone().setY(1.1);
+    g.position.copy(p);g.lookAt(p.clone().add(dir));escena.add(g);lanzas.push({g,brillo,estela,dir,vel:16,t0:reloj.t,dano:a.dano,clavada:0,e,origen:e.pos.clone(),radio:a.ancho/2});}
+  function pasoLanzas(dt){for(const l of [...lanzas]){if(l.clavada){l.estela.visible=false;l.brillo.visible=false;if(reloj.t-l.clavada>1.2){escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);}continue;}
     l.g.position.addScaledVector(l.dir,l.vel*dt);const p=l.g.position;
-    // La estela, densa; y el halo: naranja latiendo mientras viene, blanco dorado y el doble de grande justo en la ventana del parry perfecto.
-    for(let i=0;i<2;i++)particula(p.x+(rnd()-.5)*.1,p.y+(rnd()-.5)*.1,p.z+(rnd()-.5)*.1,0,0,0,.35,.8,3,.9,.3,0);
+    // La silueta sigue siendo una flecha al iluminarse la ventana del parry.
     if(!l.devuelta){const v=heroe.pos.clone().sub(p).setY(0),d=v.length(),llega=v.dot(l.dir)>d*.7?Math.max(0,d-heroe.radio*.6-l.radio)/l.vel:9,ya=llega<=PARRY.perfectoLanza;
-      l.brillo.material.color.setHex(ya?0xfff0b0:0xff7a30);l.brillo.scale.setScalar(ya?.7:.36+.07*Math.sin(reloj.t*32));l.ahora=ya;}
-    else{l.brillo.material.color.setHex(0xffd060);l.brillo.scale.setScalar(.5);}
+      l.brillo.material=materialesHaloFlecha[ya?1:0];l.brillo.scale.setScalar(ya?1.7:1.25+.06*Math.sin(reloj.t*24));l.ahora=ya;}
+    else{l.brillo.material=materialesHaloFlecha[2];l.brillo.scale.setScalar(1.45);}
     if(l.devuelta){const e=enemigos.find(e=>e.estado!=='muere'&&plano(e.pos,p)<e.radio+.25);if(e){danar(e,l.dano*3,{empuje:2.5,crit:true});chispas(p,16,[1,.8,.35],5,.45);escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);continue;}}
     else if(heroe.vivo&&!l.pasada&&plano(p,heroe.pos)<heroe.radio*.6+l.radio&&p.y<2.2){const par=parar(p,false,PARRY.perfectoLanza);
       if(heroe.invul>0){esquivado(l.e);l.pasada=true;}
