@@ -307,6 +307,22 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       const reposo=()=>{H.brazoI.rotation.z=.18;H.brazoD.rotation.z=-.18;H.anteI.rotation.x=-.25;H.anteD.rotation.x=-.55;H.brazoD.rotation.x=-.15;
         H.torso.rotation.x=.04+respira*.015;H.cabeza.rotation.x=-.04;if(H.cola){H.cola.rotation.x=-.3+Math.sin(t*2)*.08;H.cola.rotation.y=Math.sin(t*1.3)*.25;H.cola2.rotation.y=Math.sin(t*1.3-1)*.35;}};
       const andar=(fase,amp)=>{const s=Math.sin(fase),c=Math.cos(fase);
+        if(m.tipo==='adreida'){
+          // Apoyo y balanceo alternos: el talón avanza, la rodilla recoge y el tobillo amortigua.
+          for(const [lado,desfase] of [['I',0],['D',Math.PI]]){
+            const f=fase+desfase,avance=Math.sin(f),vuelo=Math.max(0,Math.cos(f)),impulso=Math.max(0,-avance);
+            const muslo=-avance*.78*amp,rodilla=.12+(vuelo*vuelo*1.05+.1*impulso)*amp;
+            H['pierna'+lado].rotation.x=muslo;H['rodilla'+lado].rotation.x=rodilla;
+            H['pie'+lado].rotation.x=(-muslo-(rodilla-.12))*.75+.16*impulso*amp;
+            H['pierna'+lado].rotation.z=(lado==='I'?-.025:.025)*amp;
+          }
+          // La cadera carga el peso sobre la pierna de apoyo; el torso compensa el hacha pesada.
+          H.cuerpo.position.set(s*.025*amp,-.025+respira*.006+(Math.cos(fase*2)*.022-.008)*amp,0);
+          H.cadera.rotation.y=s*.11*amp;H.cadera.rotation.z=-s*.035*amp;
+          H.torso.rotation.set(.1+respira*.012+.065*amp,-s*.075*amp,s*.025*amp);
+          H.cabeza.rotation.x=-.04-.035*amp;H.cabeza.rotation.y=s*.035*amp;H.cabeza.rotation.z=-s*.02*amp;
+          return;
+        }
         H.piernaI.rotation.x=-s*.62*amp;H.piernaD.rotation.x=s*.62*amp;H.rodillaI.rotation.x=Math.max(0,c)*.9*amp+.05;H.rodillaD.rotation.x=Math.max(0,-c)*.9*amp+.05;
         H.pieI.rotation.x=s*.25*amp;H.pieD.rotation.x=-s*.25*amp;
         H.brazoI.rotation.x=s*.5*amp;H.brazoD.rotation.x+=-s*.3*amp;H.torso.rotation.y=s*.12*amp;H.torso.rotation.x+=.1*amp;
