@@ -2616,6 +2616,7 @@ async function revelarCarta(cardId, aMano, side){
 function endGame(winner, why){
   if(G.over) return;
   G.over=true; G.winner=winner; G.endWhy=why;
+  if(typeof telemetriaFinalizar==='function')telemetriaFinalizar(winner,why);
   campanaCancelarInterferencia();
   log(`<b>=== FIN: gana ${P(winner).L.n} ===</b>`);
   // En el tutorial la partida puede acabar antes de la lección de estrategia — con
@@ -3900,7 +3901,10 @@ function tutNext(){
   const resume=TUT.pending;
   TUT.pending=null; TUT.bubble=0; TUT.data=null; TUT.i++; TUT.block=0; TUT.stepTurn=null; TUT.jugadas=null;
   document.body.classList.remove('tutpause');
-  if(s.last){ tutEnd(); } else tutRender();
+  if(s.last){
+    if(typeof telemetriaTutorialCompletado==='function')telemetriaTutorialCompletado(TUT.lider);
+    tutEnd();
+  } else tutRender();
   if(resume) resume();
 }
 /* pasos de acción: se cumplen solos */

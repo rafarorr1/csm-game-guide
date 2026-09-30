@@ -54,6 +54,12 @@ sobres y canjear copias. Las Normales iniciales están disponibles siempre.
 Ganar una partida contra el Domo entrega un sobre y completar una campaña
 entrega tres; sus encuentros intermedios no entregan sobres adicionales.
 
+La pestaña **Logros** conserva los retos de cada protagonista, su progreso y
+los sobres obtenidos. Cada logro entrega exactamente un sobre: se registra en
+el inventario junto con el desbloqueo, por lo que una recarga o un doble cierre
+de partida no puede concederlo dos veces. Los sobres de Logros se eligen y se
+abren desde el mismo flujo de Colección → Sobres.
+
 Al recibir la recompensa se elige la colección de cada sobre: los tres de una
 campaña pueden ser iguales o combinarse. «Guardar sobres» los lleva sellados a
 Colección → Sobres. Allí se desliza el carrusel con el dedo o se arrastra con el

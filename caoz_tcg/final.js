@@ -44,6 +44,7 @@
   estilo('carta-juego.css');
   estilo('visor-3d.css');
   guion('coleccion-modelo.js');
+  guion('logros.js');
   guion('arte-remoto.js');
   // Las invitaciones se cargan antes del coordinador: las dos mesas comparten
   // el mismo parser y la misma ruta de regreso a una app instalada.
