@@ -601,20 +601,33 @@
     s.regla=Math.min(s.regla,paginas.length-1);texto.textContent=paginas[s.regla];nav.replaceChildren();
     if(paginas.length>1){const anterior=boton('‹',()=>{s.regla--;paginacionReglas();}),siguiente=boton('›',()=>{s.regla++;paginacionReglas();});anterior.disabled=s.regla===0;siguiente.disabled=s.regla===paginas.length-1;anterior.setAttribute('aria-label','Página anterior de habilidades');siguiente.setAttribute('aria-label','Página siguiente de habilidades');nav.append(anterior,crear('span','',(s.regla+1)+' / '+paginas.length),siguiente);}
   }
-  function destruirVistasSobres(){for(const vista of vistasSobres)vista.destruir();vistasSobres.clear();}
+  function destruirVistaSobre(registro){
+    if(!registro||registro.destruida)return;registro.destruida=true;vistasSobres.delete(registro);
+    try{registro.vista?.destruir?.();registro.vista?.cancelar?.();}catch(_){}registro.host?.remove();
+    if(registro.sobre?.__coleccionVistaSobre===registro){delete registro.sobre.__coleccionVistaSobre;if(!registro.sobre.classList.contains('coleccionSobre3DInteractivo'))registro.sobre.classList.remove('conSobreReal');}
+  }
+  function registrarVistaSobre(sobre,host,vista,tipo){
+    if(!vista||(!vista.destruir&&!vista.cancelar)){host.remove();return null;}
+    const registro={sobre,host,vista,tipo,destruida:false,destruir:()=>destruirVistaSobre(registro)};
+    sobre.__coleccionVistaSobre=registro;vistasSobres.add(registro);sobre.classList.add('conSobreReal');return registro;
+  }
+  function montarPrevisualizacionSobre(sobre,grupo){
+    if(!sobre||sobre.__coleccionVistaSobre||!window.CAOZ_SOBRES_ESCENA?.previsualizar)return null;
+    const host=crear('div','coleccionSobreReal');sobre.append(host);
+    try{return registrarVistaSobre(sobre,host,window.CAOZ_SOBRES_ESCENA.previsualizar(host,{grupo:grupo.id,logoUrl:'art/logo.webp',arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp'}),'previsualizacion');}
+    catch(_){host.remove();return null;}
+  }
+  function destruirPrevisualizacionSobre(sobre){const registro=sobre?.__coleccionVistaSobre;if(registro?.tipo==='previsualizacion')registro.destruir();}
+  function destruirVistasSobres(){for(const vista of [...vistasSobres])vista.destruir();vistasSobres.clear();}
   function vaciarContenido(){destruirVistasSobres();contenido.replaceChildren();archivoCapa=null;detalleCapa=null;}
   function destruirCarrusel(){carruselSobres?.destruir();carruselSobres=null;}
   function colorSobre(nodo,grupo){nodo.dataset.grupo=grupo;nodo.style.setProperty('--sobre-color',COLORES_SOBRES[grupo]||'#947640');}
-  function envoltura(grupo){
+  function envoltura(grupo,opciones={}){
     const sobre=crear('div','coleccionSobre coleccionSobreColor');colorSobre(sobre,grupo.id);sobre.setAttribute('aria-hidden','true');
     sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreColeccion',grupo.nombre),crear('span','coleccionSobreLeyenda','5 CARTAS'));
     // La misma textura de la apertura, sin montar una escena 3D por cada sobre.
     // El papel CSS queda como respaldo si el módulo aún no está disponible.
-    if(window.CAOZ_SOBRES_ESCENA?.previsualizar){
-      const host=crear('div','coleccionSobreReal');sobre.append(host);
-      try{const vista=window.CAOZ_SOBRES_ESCENA.previsualizar(host,{grupo:grupo.id,logoUrl:'art/logo.webp',arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp'});if(vista?.destruir){vistasSobres.add(vista);sobre.classList.add('conSobreReal');}else host.remove();}
-      catch(_){host.remove();}
-    }
+    if(opciones.previsualizar!==false)montarPrevisualizacionSobre(sobre,grupo);
     return sobre;
   }
   function abrirRecompensaSobres(opciones={}){
@@ -879,11 +892,48 @@
     if(inventario.length){
       const escena=crear('div','coleccionBibliotecaSobres'),ventana=crear('div','coleccionCarreteVentana'),carrete=crear('div','coleccionCarruselSobres');carrete.setAttribute('role','region');carrete.setAttribute('aria-label','Tus sobres guardados');carrete.tabIndex=0;
       const botones=inventario.map(item=>{const g=grupos.find(g=>g.id===item.grupo),b=boton('',()=>centrar(item.grupo),'coleccionSobreGuardado');colorSobre(b,item.grupo);b.setAttribute('aria-label',g.nombre+'. '+item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados'));b.append(envoltura(g),crear('span','coleccionSobreExistencias','×'+item.cantidad));carrete.append(b);return b;});
-      ventana.append(carrete);const navegacion=crear('div','coleccionCarreteNavegacion'),anterior=boton('‹',()=>mover(-1),'coleccionSobreAnterior'),siguiente=boton('›',()=>mover(1),'coleccionSobreSiguiente'),rotulo=crear('div','coleccionSobreSeleccion'),nombre=crear('h4'),cantidad=crear('p');anterior.setAttribute('aria-label','Sobre anterior');siguiente.setAttribute('aria-label','Sobre siguiente');rotulo.setAttribute('aria-live','polite');rotulo.append(nombre,cantidad);navegacion.append(anterior,rotulo,siguiente);escena.append(ventana,navegacion,crear('p','coleccionDeslizarPista','Desliza · Arrastra · Usa las flechas'));contenido.append(escena);
+      ventana.append(carrete);const navegacion=crear('div','coleccionCarreteNavegacion'),anterior=boton('‹',()=>mover(-1),'coleccionSobreAnterior'),siguiente=boton('›',()=>mover(1),'coleccionSobreSiguiente'),rotulo=crear('div','coleccionSobreSeleccion'),nombre=crear('h4'),cantidad=crear('p');anterior.setAttribute('aria-label','Sobre anterior');siguiente.setAttribute('aria-label','Sobre siguiente');rotulo.setAttribute('aria-live','polite');rotulo.append(nombre,cantidad);navegacion.append(anterior,rotulo,siguiente);escena.append(ventana,navegacion,crear('p','coleccionDeslizarPista','Desliza para elegir · Arrastra el sobre para girarlo'));contenido.append(escena);
       const ver=boton('Ver contenido',()=>verContenidoSobre(s.grupoSobre,'sobres'),'coleccionVerContenido');acciones.prepend(ver);
-      let arrastre=null,omitirClick=false,raf=0,anchoAnterior=0,altoAnterior=0,destino=null,finDesplazamiento=0;
+      let arrastre=null,omitirClick=false,raf=0,anchoAnterior=0,altoAnterior=0,destino=null,finDesplazamiento=0,modelo3D=null,botonModelo3D=null,animacionGiro=0;
       const indice=()=>Math.max(0,inventario.findIndex(p=>p.grupo===s.grupoSobre));
-      function seleccionar(i){const item=inventario[i],g=grupos.find(g=>g.id===item.grupo);s.grupoSobre=item.grupo;botones.forEach((b,j)=>{b.setAttribute('aria-pressed',String(j===i));b.classList.toggle('seleccionado',j===i);});carrete.dataset.grupo=item.grupo;nombre.textContent=g.nombre;cantidad.textContent=item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados');anterior.disabled=i===0;siguiente.disabled=i===inventario.length-1;}
+      const anguloCorto=n=>Math.atan2(Math.sin(n),Math.cos(n));
+      function actualizarModelo(registro,yaw,pitch){
+        if(modelo3D!==registro)return;
+        registro.yaw=yaw;registro.pitch=Math.max(-.55,Math.min(.55,pitch));registro.vista.orientar(registro.yaw,registro.pitch);
+        const lado=Math.cos(registro.yaw)>=0?'frente':'reverso';registro.boton.dataset.orientacion=lado;registro.sobre.dataset.orientacion=lado;
+        registro.boton.setAttribute('aria-description','Modelo tridimensional, '+lado+'. Arrastra horizontalmente para girarlo; Flecha izquierda o derecha gira el sobre; Inicio muestra el frente y Fin el reverso.');
+      }
+      function animarModelo(yaw,pitch){
+        const registro=modelo3D;if(!registro)return;cancelAnimationFrame(animacionGiro);
+        const inicioYaw=registro.yaw,inicioPitch=registro.pitch,finalYaw=inicioYaw+anguloCorto(yaw-inicioYaw),reducir=matchMedia('(prefers-reduced-motion:reduce)').matches;
+        if(reducir){actualizarModelo(registro,finalYaw,pitch);return;}
+        const inicio=performance.now(),duracion=170,paso=ahora=>{
+          if(modelo3D!==registro)return;
+          const p=Math.min(1,(ahora-inicio)/duracion),suave=1-Math.pow(1-p,3);actualizarModelo(registro,inicioYaw+(finalYaw-inicioYaw)*suave,inicioPitch+(pitch-inicioPitch)*suave);
+          if(p<1)animacionGiro=requestAnimationFrame(paso);else animacionGiro=0;
+        };animacionGiro=requestAnimationFrame(paso);
+      }
+      function desmontarModelo(restaurar=true){
+        cancelAnimationFrame(animacionGiro);animacionGiro=0;const registro=modelo3D;modelo3D=null;botonModelo3D=null;if(!registro)return;
+        registro.registroVista.destruir();registro.sobre.classList.remove('conSobreReal','coleccionSobre3DInteractivo');registro.boton.classList.remove('modelo3d','girando');delete registro.boton.dataset.modelo;delete registro.boton.dataset.orientacion;delete registro.boton.dataset.girando;delete registro.sobre.dataset.orientacion;registro.boton.removeAttribute('aria-description');
+        if(restaurar&&registro.sobre.isConnected)montarPrevisualizacionSobre(registro.sobre,registro.grupo);
+      }
+      function montarModelo(b,grupo){
+        if(botonModelo3D===b)return;desmontarModelo(true);botonModelo3D=b;
+        const sobre=b.querySelector('.coleccionSobre');if(!sobre||!window.CAOZ_SOBRES_ESCENA?.crear){botonModelo3D=null;return;}
+        destruirPrevisualizacionSobre(sobre);
+        const host=crear('div','coleccionSobreReal');sobre.append(host);
+        try{
+          const vista=window.CAOZ_SOBRES_ESCENA.crear(host,{variante:'reliquia',grupo:grupo.id,logoUrl:'art/logo.webp',arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp'});
+          if(!vista?.orientar||!vista?.destruir)throw Error('El modelo 3D no está disponible.');
+          const registroVista=registrarVistaSobre(sobre,host,vista,'modelo');if(!registroVista)throw Error('El modelo 3D no se pudo registrar.');
+          modelo3D={vista,host,registroVista,boton:b,sobre,grupo,yaw:-.14,pitch:.06};b.classList.add('modelo3d');b.dataset.modelo='3d';b.setAttribute('aria-keyshortcuts','ArrowLeft ArrowRight ArrowUp ArrowDown Home End');sobre.classList.add('coleccionSobre3DInteractivo');actualizarModelo(modelo3D,-.14,.06);
+        }catch(_){host.remove();botonModelo3D=null;montarPrevisualizacionSobre(sobre,grupo);}
+      }
+      function seleccionar(i){
+        const item=inventario[i],g=grupos.find(g=>g.id===item.grupo),b=botones[i];s.grupoSobre=item.grupo;
+        botones.forEach((boton,j)=>{boton.setAttribute('aria-pressed',String(j===i));boton.classList.toggle('seleccionado',j===i);});carrete.dataset.grupo=item.grupo;nombre.textContent=g.nombre;cantidad.textContent=item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados');anterior.disabled=i===0;siguiente.disabled=i===inventario.length-1;montarModelo(b,g);
+      }
       function objetivo(i){return botones[i].offsetLeft-carrete.clientWidth/2+botones[i].offsetWidth/2;}
       function cercano(){const centro=carrete.scrollLeft+carrete.clientWidth/2;let mejor=0;botones.forEach((b,i)=>{if(Math.abs(b.offsetLeft+b.offsetWidth/2-centro)<Math.abs(botones[mejor].offsetLeft+botones[mejor].offsetWidth/2-centro))mejor=i;});return mejor;}
       function terminarDesplazamiento(){clearTimeout(finDesplazamiento);finDesplazamiento=0;carrete.dataset.desplazando='false';carrete.setAttribute('aria-busy','false');abrir.disabled=false;}
@@ -915,6 +965,40 @@
       function interrumpirDesplazamiento(){
         if(destino===null)return;destino=null;terminarDesplazamiento();carrete.scrollTo({left:carrete.scrollLeft,behavior:'instant'});seleccionar(cercano());
       }
+      function prepararGiro(botonSobre){
+        let gesto=null,omitir=false;
+        const cancelarGesto=e=>{
+          if(!gesto||(e&&e.pointerId!==gesto.id))return;
+          const movido=gesto.movido,id=gesto.id;gesto=null;botonSobre.classList.remove('girando');delete botonSobre.dataset.girando;
+          if(botonSobre.hasPointerCapture?.(id))botonSobre.releasePointerCapture(id);
+          if(movido)omitir=true;
+        };
+        botonSobre.addEventListener('pointerdown',e=>{
+          if(botonModelo3D!==botonSobre||!modelo3D||(e.pointerType==='mouse'&&e.button!==0))return;
+          // Este gesto pertenece al modelo activo. Así el arrastre no cae en
+          // el carrusel ni puede confundirse con el clic que selecciona/abre.
+          e.stopPropagation();interrumpirDesplazamiento();omitir=false;gesto={id:e.pointerId,x:e.clientX,yaw:modelo3D.yaw,pitch:modelo3D.pitch,movido:false};botonSobre.setPointerCapture?.(e.pointerId);
+        });
+        botonSobre.addEventListener('pointermove',e=>{
+          if(!gesto||gesto.id!==e.pointerId||botonModelo3D!==botonSobre||!modelo3D)return;
+          const dx=e.clientX-gesto.x;if(!gesto.movido&&Math.abs(dx)>5){gesto.movido=true;botonSobre.classList.add('girando');botonSobre.dataset.girando='true';}
+          if(gesto.movido){e.preventDefault();e.stopPropagation();actualizarModelo(modelo3D,gesto.yaw+dx*.012,gesto.pitch);}
+        });
+        botonSobre.addEventListener('pointerup',cancelarGesto);botonSobre.addEventListener('pointercancel',cancelarGesto);botonSobre.addEventListener('lostpointercapture',cancelarGesto);
+        botonSobre.addEventListener('click',e=>{if(!omitir)return;e.preventDefault();e.stopImmediatePropagation();omitir=false;},true);
+        botonSobre.addEventListener('keydown',e=>{
+          if(botonModelo3D!==botonSobre||!modelo3D)return;
+          const paso=e.shiftKey ? .45 : .22;
+          if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+          e.preventDefault();e.stopPropagation();
+          if(e.key==='Home')animarModelo(-.14,.06);
+          else if(e.key==='End')animarModelo(Math.PI-.14,.06);
+          else if(e.key==='ArrowLeft')animarModelo(modelo3D.yaw-paso,modelo3D.pitch);
+          else if(e.key==='ArrowRight')animarModelo(modelo3D.yaw+paso,modelo3D.pitch);
+          else animarModelo(modelo3D.yaw,modelo3D.pitch+(e.key==='ArrowUp'?paso:-paso));
+        });
+      }
+      botones.forEach(prepararGiro);
       carrete.addEventListener('scroll',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(seguirDesplazamiento);},{passive:true});
       carrete.addEventListener('scrollend',seguirDesplazamiento);
       carrete.addEventListener('wheel',interrumpirDesplazamiento,{passive:true});
@@ -925,7 +1009,7 @@
       const soltar=e=>{if(!arrastre||arrastre.id!==e.pointerId)return;const movido=arrastre.movido;arrastre=null;carrete.classList.remove('arrastrando');if(carrete.hasPointerCapture(e.pointerId))carrete.releasePointerCapture(e.pointerId);if(movido){omitirClick=true;centrar(inventario[cercano()].grupo);}};
       carrete.addEventListener('pointerup',soltar);carrete.addEventListener('pointercancel',soltar);carrete.addEventListener('lostpointercapture',e=>{if(arrastre?.id===e.pointerId)soltar(e);});
       carrete.addEventListener('click',e=>{if(omitirClick){e.preventDefault();e.stopImmediatePropagation();omitirClick=false;}},true);
-      carruselSobres={medir,destruir:()=>{cancelAnimationFrame(raf);clearTimeout(finDesplazamiento);destino=null;arrastre=null;}};
+      carruselSobres={medir,destruir:()=>{cancelAnimationFrame(raf);clearTimeout(finDesplazamiento);destino=null;arrastre=null;desmontarModelo(false);}};
       seleccionar(indice());contenido.append(acciones);medir();
     }else{
       const vacio=crear('div','coleccionSobresVacios'),sello=crear('div','coleccionSobresVaciosSello');sello.append(icono('sobre'));vacio.append(sello,crear('h4','','Tu tesoro empieza aquí'),crear('p','',recompensas.length?'Elige las colecciones de tus recompensas para guardar tus primeros sobres.':'Gana una partida contra el Domo para conseguir 1 sobre, o completa la campaña para ganar 3.'));contenido.append(vacio,acciones);
