@@ -12,6 +12,7 @@ const constantes=['DEF','RITMO','presion','OLEADAS','ol'].map(n=>obtener(n,'cons
 const funciones=['sectorLibre','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque'].map(n=>obtener(n)).join('\n');
 vm.runInContext(`
 const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,R=15.5,q={get:()=>null};
+const peligrosTroll=[],activarFaseTroll=()=>{},puedeLanzarGoblin=()=>false,lanzarPiedras=()=>{};
 const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
 const heroe={pos:new V3(),alma:60,almaMax:120,radio:.4,vivo:true,invul:0,estado:'quieto'};let sigId=1,semilla=11;
 const rnd=()=>(semilla=semilla*16807%2147483647)/2147483647,plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);

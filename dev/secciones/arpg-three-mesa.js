@@ -439,6 +439,7 @@
   function amenaza(){const H=heroe;let mejor=null,t=1e9;
     for(const e of enemigos){const a=e.ataque;if(!a||a.forma==='linea'||!enZona(a,e,H.pos,H.radio*.6))continue;const r=a.dur-(reloj.t-a.t0);if(r<t){t=r;mejor=e.pos;}}
     for(const l of lanzas){if(l.clavada||l.devuelta)continue;const v=H.pos.clone().sub(l.g.position).setY(0),d=v.length();if(d>9||v.dot(l.dir)<d*.7)continue;const r=d/l.vel;if(r<t){t=r;mejor=l.g.position;}}
+    for(const p of peligrosTroll){if(p.tipo!=='goblin'||p.devuelto||plano(H.pos,p.hasta)>p.radio+H.radio*.6)continue;const r=p.dur-p.t;if(r<t){t=r;mejor=p.desde;}}
     return mejor?{p:mejor.clone(),t}:null;}
   function usar(h,punto){if(!heroe.vivo)return false;const H=HAB[h];
     // Parry: se puede incluso a mitad de un golpe; mira sola hacia lo que viene (o hacia el cursor).
@@ -459,13 +460,14 @@
   function rechazo(h,texto){const b=document.querySelector(`[data-hab="${h}"]`);if(b){b.classList.remove('no');void b.offsetWidth;b.classList.add('no');}tostada(texto,true);}
   // Un golpe del combo hacia donde apuntas; encadena si el anterior acaba de terminar.
   function iniciarGolpe(){const h=heroe;ent.pendiente=false;h.combo=h.estado==='golpe'||reloj.t-h.finGolpe<.3?(h.combo+1)%3:0;h.dir=rumbo(h.pos,puntoApuntado());cambiar(h,'golpe');h.golpeo=false;}
-  function danar(e,dano,opc={}){if(e.estado==='muere')return;heroe.ultimo=e;const crit=opc.crit??rnd()<.12;const expuesto=e.expuestoHasta>reloj.t;dano=Math.round(dano*(crit?1.8:1)*(expuesto?2:1)*(.9+rnd()*.2));e.vida-=dano;e.destello=1;
+  function danar(e,dano,opc={}){if(e.estado==='muere')return;activarFaseTroll(e);heroe.ultimo=e;
+    if(blindadoTroll(e)){if((e.avisoBlindaje??-9)<reloj.t){numero(e.pos.clone().setY(e.m.alto+.3),'¡Necesitas un parry!','bloqueo');e.avisoBlindaje=reloj.t+.8;}return;}const crit=opc.crit??rnd()<.12;const expuesto=e.expuestoHasta>reloj.t;dano=Math.round(dano*(crit?1.8:1)*(expuesto?2:1)*(.9+rnd()*.2));if(e.tipo==='troll'&&!e.fase2)dano=Math.min(dano,e.vida-e.vidaMax*.5);e.vida-=dano;e.destello=1;activarFaseTroll(e);
     numero(e.pos.clone().setY(e.m.alto+.3),String(dano),crit||expuesto?'critico':'dano');
     const lejos=e.pos.clone().sub(heroe.pos).setY(0).normalize();e.emp.addScaledVector(lejos,(opc.empuje??1.6)*(e.d.aguante?.35:1));
     if(e.vida<=0){morir(e);return;}
     // Los pequeños se interrumpen al recibir un golpe (se les borra el aviso); los grandes aguantan.
     if(!e.d.aguante&&['persigue','aviso','recupera'].includes(e.estado)&&!opc.sinDolor&&!expuesto){cancelarAtaque(e);cambiar(e,'dolor');}
-    if(opc.aturde){cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=opc.aturde*(e.d.jefe?.4:1);}
+    if(opc.aturde&&!(e.tipo==='troll'&&e.fase2)){cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=opc.aturde*(e.d.jefe?.4:1);}
     e.provocado=Math.max(e.provocado,.1);}
   function golpearEn(radio,arco,dano,opc){let n=0;const f=frente(heroe.dir);
     for(const e of enemigos){if(e.estado==='muere')continue;const d=plano(e.pos,heroe.pos);if(d>radio+e.radio)continue;
@@ -510,7 +512,7 @@
       // Mohamed cae del backflip: los que lo han visto (a 6 m y mirando hacia él) se quedan impresionados, aturdidos unos segundos.
       // Adreida, en cambio, clava el hacha.
       if(!h.golpeo&&k>=.86&&aDistancia()){h.golpeo=true;h.alto=0;marca('onda',h.pos.x,h.pos.z,6,0xffd070,.5);polvo(h.pos,16,1);chispas(h.pos.clone().setY(1.6),24,[1,.9,.5],4,.45);temblar(.12);
-        for(const e of enemigos){if(e.estado==='muere')continue;const v=h.pos.clone().sub(e.pos).setY(0),d=v.length();if(d>6)continue;
+        for(const e of enemigos){if(e.estado==='muere'||e.tipo==='troll'&&e.fase2)continue;const v=h.pos.clone().sub(e.pos).setY(0),d=v.length();if(d>6)continue;
           if(d>.8&&v.normalize().dot(frente(e.dir))<Math.cos(1.9))continue;
           cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.d.jefe?1.2:2.6;e.impresionado=true;numero(e.pos.clone().setY(e.m.alto+.5),'¡Impresionado!','impresionado',1.3);}}
       if(!h.golpeo&&k>=.86){h.golpeo=true;h.alto=0;golpearEn(3.2,Math.PI,h.atq*1.7,{empuje:4.5,aturde:1.1,chispas:14});marca('onda',h.pos.x,h.pos.z,4.2,0xffb050,.5);polvo(h.pos,40,2);romperPiso(h.pos);chispas(h.pos.clone().setY(.3),30,[1,.7,.35],8,.5);temblar(.5);paron=.08;}
@@ -533,7 +535,7 @@
     else{m.position.set(e.pos.x,.05,e.pos.z);m.rotation.y=a.dir;if(a.forma==='cono')m.scale.setScalar(a.radio);else m.scale.set(a.ancho,1,a.largo);}
     u.uP.value=k;u.uF.value=a.fijado?1:0;if(a.forma==='circulo')u.uC.value.setRGB(a.fijado?.85:.6,.15,a.fijado?1:.85);else u.uC.value.setRGB(a.fijado?1:.95,a.fijado?.06:.22,a.fijado?.03:.05);u.uA.value=(a.fijado?.95:.7)+.05*Math.sin(reloj.t*(a.fijado?38:14));
     e.alerta.pos.set(e.pos.x,e.m.alto+.55,e.pos.z);e.alerta.el.classList.toggle('fijado',a.fijado);e.alerta.el.style.setProperty('--k',k.toFixed(2));}
-  function cancelarAtaque(e){if(e.ataque){escena.remove(e.ataque.m);e.ataque.m.material.dispose();e.ataque=null;}if(e.alerta){quitarEtiqueta(e.alerta);e.alerta=null;}}
+  function cancelarAtaque(e){if(e.goblinSujeto){liberarModeloTroll(e.goblinSujeto);e.goblinSujeto=null;}if(e.ataque){escena.remove(e.ataque.m);e.ataque.m.material.dispose();e.ataque=null;}if(e.alerta){quitarEtiqueta(e.alerta);e.alerta=null;}}
   // ¿Está p dentro de la zona del ataque? (margen: el cuerpo de Adreida)
   function enZona(a,e,p,margen){const o=a.centro||e.pos,dx=p.x-o.x,dz=p.z-o.z,d=Math.hypot(dx,dz);
     if(a.forma==='circulo')return d<a.radio+margen;
@@ -545,11 +547,12 @@
     if(v.lengthSq()>1e-6&&v.normalize().dot(frente(H.dir))<Math.cos(1.05))return null;return H.t<=ventana?'perfecto':'bloqueo';}
   function parryPerfecto(e,p){const H=heroe;H.parryExito=true;H.brilloParry=.3;H.parrys++;H.cd.parry=0;H.furia=Math.min(100,H.furia+20);cambiar(H,'quieto');
     numero(H.pos.clone().setY(2.5),'¡Parry!','parry');chispas(p,34,[1,.85,.35],7,.55);marca('onda',H.pos.x,H.pos.z,2.6,0xffd060,.35);paron=.16;temblar(.2);
-    if(e&&e.estado!=='muere'){cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.d.jefe?PARRY.aturdeJefe:PARRY.aturde;e.expuestoHasta=reloj.t+e.aturdidoT+.3;e.emp.addScaledVector(e.pos.clone().sub(H.pos).setY(0).normalize(),2.2);e.culpableT=-9;}}
+    aturdirPorParry(e);}
+  function aturdirPorParry(e){if(e&&e.estado!=='muere'){cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.tipo==='troll'?2.5:e.d.jefe?PARRY.aturdeJefe:PARRY.aturde;if(e.tipo==='troll')e.parryHasta=reloj.t+e.aturdidoT;e.expuestoHasta=reloj.t+e.aturdidoT+.3;e.emp.addScaledVector(e.pos.clone().sub(heroe.pos).setY(0).normalize(),2.2);e.culpableT=-9;}}
   function bloqueado(dano,desde,e){const H=heroe;H.parryExito=true;H.bloqueos++;numero(H.pos.clone().setY(2.4),'Bloqueo','bloqueo');chispas(desde.clone().lerp(H.pos,.7).setY(1.2),12,[.9,.9,1],4,.4);herir(Math.max(1,Math.round(dano*PARRY.bloqueo)),desde,e);}
   function resolverAtaque(e){const a=e.ataque,H=heroe;cambiar(e,'golpe');e.ataques++;
-    if(a.forma==='linea')lanzar(e,a);
-    else{const o=a.centro||e.pos;if(a.forma==='circulo'){marca('onda',o.x,o.z,a.radio+.6,0xff7040,.45);polvo(o,36,a.radio);if(e.tipo==='troll')romperPiso(o);temblar(.45);}
+    if(a.forma==='linea'){if(e.tipo==='troll')arrojarGoblin(e,a);else lanzar(e,a);}
+    else{const o=a.centro||e.pos;if(a.forma==='circulo'){marca('onda',o.x,o.z,a.radio+.6,0xff7040,.45);polvo(o,36,a.radio);if(e.tipo==='troll'){romperPiso(o);lanzarPiedras(e,o);}temblar(.45);}
       // Esquivar a tiempo (empezando dentro de la zona) cuenta como «¡Esquivado!» aunque la esquiva la saque.
       const dentro=enZona(a,e,H.pos,H.radio*.6),par=dentro?parar(e.pos,a.forma==='circulo'):null;
       if(H.vivo&&H.invul>0&&(dentro||H.esqDesde&&enZona(a,e,H.esqDesde,H.radio*.6)))esquivado(e);
@@ -557,6 +560,48 @@
       else if(H.vivo&&par==='bloqueo')bloqueado(a.dano,e.pos,e);
       else if(H.vivo&&dentro)herir(a.dano,e.pos,e);}
     cancelarAtaque(e);}
+  // La armadura sólo se abre durante el aturdimiento causado por un parry perfecto.
+  function vulnerableTroll(e){return e.estado==='aturdido'&&e.aturdidoT>0&&e.parryHasta>reloj.t;}
+  function blindadoTroll(e){return e.tipo==='troll'&&e.fase2&&!vulnerableTroll(e);}
+  function activarFaseTroll(e){if(e.tipo!=='troll'||e.fase2||e.estado==='muere'||e.vida>e.vidaMax*.5)return;
+    e.fase2=true;e.parryHasta=0;e.expuestoHasta=0;
+    banner('El Recaudador · Segunda fase','Su armadura sólo se abre con un parry perfecto. ¡Devuélvele también sus goblins!');
+    marca('onda',e.pos.x,e.pos.z,5,0x916aff,.8);}
+  const peligrosTroll=[];
+  const geoRocaTroll=new THREE.IcosahedronGeometry(.36,0),matRocaTroll=new THREE.MeshStandardMaterial({color:0x887566,roughness:1});
+  function liberarModeloTroll(m){m.raiz.removeFromParent();const geometrías=new Set(),materiales=new Set(),esqueletos=new Set();m.raiz.traverse(o=>{if(o.skeleton)esqueletos.add(o.skeleton);if(o.geometry)geometrías.add(o.geometry);if(o.material)for(const mat of Array.isArray(o.material)?o.material:[o.material])materiales.add(mat);});for(const g of geometrías)g.dispose();for(const mat of materiales)mat.dispose();for(const esq of esqueletos)esq.dispose();}
+  function quitarPeligroTroll(p){if(p.marca)quitarMarca(p.marca);if(p.modelo)liberarModeloTroll(p.modelo);else escena.remove(p.m);const i=peligrosTroll.indexOf(p);if(i>=0)peligrosTroll.splice(i,1);}
+  function limpiarPeligrosTroll(e){for(const p of [...peligrosTroll])if(!e||p.dueno===e)quitarPeligroTroll(p);}
+  function peligroTroll(e,tipo,m,desde,hasta,dur,altura,radio,dano,modelo=null){dentroPlaza(hasta,radio);hasta.y=0;
+    const p={dueno:e,tipo,m,modelo,desde:desde.clone(),hasta:hasta.clone(),dur,altura,radio,dano,t:0,devuelto:false,
+      marca:marca('circulo',hasta.x,hasta.z,radio,tipo==='roca'?0xff6030:0xffbd40,dur,{fijo:true})};
+    m.position.copy(desde);escena.add(m);peligrosTroll.push(p);return p;}
+  function lanzarPiedras(e,o){const centro=heroe.pos.clone();for(let i=0;i<5;i++){const a=i*TAU/4+rnd()*.35,r=i===0?0:2.1+rnd()*1.5;
+      const destino=centro.clone().add(new V3(Math.sin(a)*r,0,Math.cos(a)*r));
+      const m=new THREE.Mesh(geoRocaTroll,matRocaTroll);m.castShadow=true;m.scale.set(1+rnd()*.4,.7+rnd()*.4,1);
+      peligroTroll(e,'roca',m,o.clone().setY(.2),destino,1.45+i*.12,4.5+rnd()*1.5,.85,22);}}
+  // Nunca más de cuatro enemigos entre los que caminan, los sujetos y los que vuelan.
+  function puedeLanzarGoblin(e){return !e.goblinSujeto&&!peligrosTroll.some(p=>p.dueno===e&&p.tipo==='goblin')&&
+    enemigos.filter(o=>o.estado!=='muere').length+peligrosTroll.filter(p=>p.tipo==='goblin'&&!p.devuelto).length<4;}
+  function sujetarGoblin(e){const m=MOD.crear('cobrador');MOD.posar(m,{anim:'aturdido',t:0});e.m.H.manoI.add(m.raiz);m.raiz.position.set(0,-.45,0);m.raiz.rotation.z=Math.PI;e.goblinSujeto=m;}
+  function arrojarGoblin(e,a){const modelo=e.goblinSujeto;if(!modelo)return;e.m.raiz.updateMatrixWorld(true);const desde=modelo.raiz.getWorldPosition(new V3());
+    e.goblinSujeto=null;modelo.raiz.removeFromParent();modelo.raiz.rotation.set(0,a.dir,0);
+    const distancia=Math.min(12,Math.max(2,plano(e.pos,heroe.pos))),hasta=e.pos.clone().addScaledVector(frente(a.dir),distancia);
+    peligroTroll(e,'goblin',modelo.raiz,desde,hasta,1.15,2.5,1,24,modelo);}
+  function pasoPeligrosTroll(dt){for(const p of [...peligrosTroll]){if(p.dueno.estado==='muere'||!heroe.vivo){quitarPeligroTroll(p);continue;}
+      if(p.devuelto)p.hasta.copy(p.dueno.pos).setY(1.8);
+      p.t+=dt;const k=Math.min(1,p.t/p.dur);p.m.position.lerpVectors(p.desde,p.hasta,k);p.m.position.y+=4*p.altura*k*(1-k);
+      p.m.rotation.x+=dt*(p.tipo==='roca'?4:7);p.m.rotation.z+=dt*1.5;
+      if(k<1)continue;
+      if(p.devuelto){aturdirPorParry(p.dueno);danar(p.dueno,45,{crit:false});quitarPeligroTroll(p);continue;}
+      const dentro=plano(heroe.pos,p.hasta)<p.radio+heroe.radio*.6;
+      if(dentro&&heroe.invul<=0){const par=p.tipo==='goblin'?parar(p.desde,false,PARRY.perfectoLanza):null;
+        if(par==='perfecto'){parryPerfecto(null,p.hasta.clone().setY(1.2));quitarMarca(p.marca);p.marca=null;p.devuelto=true;p.desde=p.hasta.clone().setY(1.2);p.hasta=p.dueno.pos.clone().setY(1.8);p.dur=.6;p.t=0;p.altura=1;continue;}
+        if(par==='bloqueo')bloqueado(p.dano,p.desde,p.dueno);else herir(p.dano,p.desde,p.dueno);}
+      polvo(p.hasta,12,p.radio);marca('onda',p.hasta.x,p.hasta.z,p.radio,0xffb050,.25);
+      if(p.tipo==='goblin'){const e=crearEnemigo('cobrador',p.hasta.x,p.hasta.z);e.sinBotin=true;cambiar(e,'aturdido');e.aturdidoT=1.2;}
+      quitarPeligroTroll(p);}}
+
   // Dos plazas de acercamiento, no sólo dos permisos de atacar: los demás guardan espacio.
   // Los turnos caducan si alguien se atasca y rotan después de cada ataque.
   const RITMO={cuerpo:2,entreAtaques:.55,distanciaEspera:3.8};
@@ -571,7 +616,7 @@
     candidatos.sort((a,b)=>(b.turnoHasta>reloj.t)-(a.turnoHasta>reloj.t)||a.ultimoTurno-b.ultimoTurno||plano(a.pos,heroe.pos)-plano(b.pos,heroe.pos));
     for(const e of candidatos){if(presion.primeraLinea.size>=RITMO.cuerpo)break;
       if(e.turnoHasta<=reloj.t){e.turnoHasta=reloj.t+3;e.ultimoTurno=reloj.t;}presion.primeraLinea.add(e.id);}}
-  function pasoEnemigo(e,dt){const d=e.d;e.t+=dt;e.destello=Math.max(0,e.destello-dt*9);e.provocado=Math.max(0,e.provocado-dt);e.cd-=dt;
+  function pasoEnemigo(e,dt){activarFaseTroll(e);const d=e.d;e.t+=dt;e.destello=Math.max(0,e.destello-dt*9);e.provocado=Math.max(0,e.provocado-dt);e.cd-=dt;
     e.pos.addScaledVector(e.emp,dt);e.emp.multiplyScalar(Math.exp(-dt*7));
     // El tirón de Provocar dura un instante (si el punto cae en un obstáculo no se queda enganchado).
     if(e.tirón){e.pos.lerp(e.tirón.p,Math.min(1,dt*8));if(reloj.t>e.tirón.hasta||plano(e.pos,e.tirón.p)<.05)e.tirón=null;}
@@ -588,12 +633,15 @@
           else{const lado=new V3(-lejos.z,0,lejos.x).multiplyScalar(e.rodeo>0?1:-1);movido=hacia(e.pos.clone().addScaledVector(lado,1.5),vel*.45);}
           if(e.cd<=0&&dist<d.alcance&&reloj.t>=presion.siguiente&&!enemigos.some(o=>o!==e&&o.d.lanza&&['aviso','golpe'].includes(o.estado))){presion.siguiente=reloj.t+RITMO.entreAtaques;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');empezarAtaque(e,'linea',{dur:d.aviso,largo:d.largo,ancho:d.ancho,fija:.65,dano:d.dano});}break;}
         // Quien no tiene turno se reparte en un anillo exterior; deja libre el cuerpo del jugador.
+        const tira=e.tipo==='troll'&&e.ataques%3===2&&puedeLanzarGoblin(e);
         const entra=presion.primeraLinea.has(e.id),radio=entra?H.radio+e.radio+d.alcance*.55:RITMO.distanciaEspera+(e.id%3)*.35;
         const a=entra?rumbo(H.pos,e.pos):e.sector,obj=H.pos.clone().add(frente(a).multiplyScalar(radio));
         dentroPlaza(obj,e.radio);movido=hacia(obj,vel*(entra?1:.8));
-        if(entra&&dist<H.radio+e.radio+d.alcance+.2&&e.cd<=0&&reloj.t>=presion.siguiente){
+        if(entra&&dist<(tira?9:H.radio+e.radio+d.alcance+.2)&&e.cd<=0&&reloj.t>=presion.siguiente){
           presion.siguiente=reloj.t+RITMO.entreAtaques;e.turnoHasta=0;e.ultimoTurno=reloj.t;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');
-          if(e.tipo==='troll'&&e.ataques%2===1)empezarAtaque(e,'circulo',{dur:1.5,radio:3.5,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.5)),fija:0,dano:44});
+          e.tiraGoblin=tira;
+          if(tira){sujetarGoblin(e);empezarAtaque(e,'linea',{dur:1.4,largo:12,ancho:1.4,fija:.5,dano:24});e.alerta.el.textContent='¡Goblin!';}
+          else if(e.tipo==='troll'&&e.ataques%3===1)empezarAtaque(e,'circulo',{dur:1.5,radio:3.5,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.5)),fija:0,dano:44});
           else if(e.tipo==='can'&&e.ataques%3===2)empezarAtaque(e,'circulo',{dur:1.15,radio:2.8,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.8)),fija:0,dano:Math.round(d.dano*1.5)});
           else empezarAtaque(e,'cono',{dur:d.aviso,radio:d.radio,ang:d.ang,fija:.5,dano:d.dano});}
         break;}
@@ -602,7 +650,7 @@
         colocarAtaque(e);if(k>=1)resolverAtaque(e);break;}
       case 'grito':if(e.t>=.9){cambiar(e,'persigue');if(ol.auto){for(let i=0;i<3;i++)ol.cola.push(['goblin',i]);}
         else{const n=Math.min(3,Math.max(0,5-enemigos.filter(o=>o.estado!=='muere').length));for(let i=0;i<n;i++){const p=calle(CALLES[i]).multiplyScalar(R+3);crearEnemigo('goblin',p.x,p.z);}}}break;
-      case 'golpe':if(e.t>=d.golpe){cambiar(e,'recupera');if(e.tipo==='troll'&&e.mazazo)e.expuestoHasta=reloj.t+d.recupera;}break;
+      case 'golpe':if(e.t>=d.golpe){cambiar(e,'recupera');if(e.tipo==='troll'&&e.mazazo&&!e.fase2)e.expuestoHasta=reloj.t+d.recupera;}break;
       case 'recupera':if(e.t>=d.recupera){e.cd=d.cd*(.8+rnd()*.4);cambiar(e,'persigue');}break;
       case 'dolor':if(e.t>=.28){e.cd=Math.max(e.cd,.35);cambiar(e,'persigue');}break;
       case 'aturdido':e.aturdidoT-=dt;if(e.aturdidoT<=0){cambiar(e,'persigue');}break;
@@ -611,7 +659,7 @@
     }
     e.fase+=movido*TAU/(e.m.alto*.95);e.paso+=((movido>0?1:0)-e.paso)*Math.min(1,dt*10);
     if(e.estado!=='muere'&&(e.dentro||e.estado==='persigue'))dentroPlaza(e.pos,e.radio);}
-  function morir(e){cancelarAtaque(e);cambiar(e,'muere');e.vida=0;brasas(e.pos,14,e.m.alto);if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}
+  function morir(e){cancelarAtaque(e);limpiarPeligrosTroll(e);cambiar(e,'muere');e.vida=0;brasas(e.pos,14,e.m.alto);if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}
     if(e.sinBotin)return;
     if(e.tipo==='troll'){soltar(POOL[Math.floor(rnd()*POOL.length)],'dorado',e.pos.x,e.pos.z,e.pos.clone().setY(2));globo(e.pos);globo(e.pos);globo(e.pos);banner('¡Se acabó el cobro de piso!','El Recaudador ha caído. Acaba con los cobradores que queden.');return;}
     if(e.tipo==='can'){soltar('llavemago','dorado',e.pos.x,e.pos.z,e.pos.clone().setY(1.5));soltar(POOL[Math.floor(rnd()*POOL.length)],'dorado',e.pos.x,e.pos.z,e.pos.clone().setY(1.5));globo(e.pos);globo(e.pos);return;}
@@ -628,7 +676,7 @@
   ];
   const ol={auto:!CAPTURA,i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false};
   function pasoOleadas(dt){if(!ol.auto||ol.fin||!heroe.vivo)return;
-    const vivos=enemigos.filter(e=>e.estado!=='muere').length;
+    const vivos=enemigos.filter(e=>e.estado!=='muere').length+peligrosTroll.filter(p=>p.tipo==='goblin'&&!p.devuelto).length+enemigos.filter(e=>e.goblinSujeto).length;
     if(ol.cola.length){const max=OLEADAS[ol.i]?.maxVivos??5;ol.descanso=null;ol.espera-=dt;
       if(ol.espera>0||vivos>=max)return;
       // Refuerzos de hasta tres: sólo entran cuando la presión baja, nunca una cola continua de diez.
@@ -637,11 +685,11 @@
       ol.lote--;ol.espera=ol.lote?.75:2.4;return;}
     if(vivos){ol.descanso=null;return;}
     if(ol.descanso===null){ol.descanso=ol.i===3?8:ol.i<0?1.8:3;if(ol.i===3)banner('Etapa 1 superada','Can ha caído. Recoge el botín: los cobradores de piso se acercan.');}ol.descanso-=dt;if(ol.descanso>0)return;
-    if(ol.i+1>=OLEADAS.length){ol.fin=true;banner('Tomsage es libre','Has derrotado al troll y a sus seis cobradores. Nadie vuelve a cobrar piso en esta plaza.');return;}
+    if(ol.i+1>=OLEADAS.length){ol.fin=true;banner('Tomsage es libre','Has derrotado al troll y a todos sus cobradores. Nadie vuelve a cobrar piso en esta plaza.');return;}
     ol.i++;const O=OLEADAS[ol.i];if(O.etapa===2)heroe.alma=Math.min(heroe.almaMax,heroe.alma+40);let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(!DEF[ol.cola[i][0]].jefe&&!DEF[ol.cola[j][0]].jefe)[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;banner(O.nombre,O.texto||(O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.'));}
-  function reiniciar(){escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+  function reiniciar(){limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);escena.remove(heroe.m.raiz);crearHeroe();$('botin').innerHTML='';Object.assign(ol,{i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});$('fin').hidden=true;finMostrado=false;}
 
   /* ---- Entrada: teclado, ratón y táctil ---------------------------------------------------
@@ -733,7 +781,10 @@
     if(peligros.length){const p=peligros[0],juntos=peligros.filter(x=>x.a.forma!=='linea'&&x.r-p.r<.45).length;
       if(p.a.forma==='cono'&&juntos===1&&(h.cd.parry<=0||h.estado==='parry')){if(p.r<=.1&&h.estado!=='parry')usar('parry');return c;}
       const v=escape(p.a,p.e,h.pos);if(p.r<.3&&!h.cd.esquiva)usar('esquiva',v);c.mov.copy(v);return c;}
-    // Una lanza a punto de llegar: parry (la devuelve).
+    // Las piedras no admiten parry: salir de su destino antes del impacto.
+    const piedra=peligrosTroll.find(p=>p.tipo==='roca'&&plano(h.pos,p.hasta)<p.radio+h.radio+.4);
+    if(piedra){const v=h.pos.clone().sub(piedra.hasta).setY(0);if(v.lengthSq()<.01)v.copy(frente(h.dir+Math.PI/2));v.normalize();if(piedra.dur-piedra.t<.3&&!h.cd.esquiva)usar('esquiva',v);c.mov.copy(v);return c;}
+    // Una lanza o un goblin a punto de llegar: parry (lo devuelve).
     {const am=amenaza();if(am&&am.t<=.1&&!h.cd.parry&&h.estado!=='parry'){usar('parry');return c;}}
     if(!libre())return c;
     if(aDistancia()){const vivosD=enemigos.filter(e=>e.estado!=='muere'&&Math.hypot(e.pos.x,e.pos.z)<R+.5);if(!vivosD.length)return pilotoSinEnemigos(c);
@@ -769,8 +820,8 @@
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');$('furiaTxt').textContent=Math.floor(h.furia);
     for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0;b.style.setProperty('--cd',(H.cd?cd/H.cd*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',{torbellino:'torbellino',salto:'salto',provocar:'grito',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
     const st=(aDistancia()?`<span>Balas <b>${h.recargaT>0?'recargando…':h.balas+' / '+HEROES.mohamed.cargador}</b></span>`:'')+`<span>Parrys perfectos <b>${h.parrys}</b></span><span>ATQ <b>${h.atq}</b></span><span>Vel. ataque <b>${Math.round(h.vatq*100)}%</b></span><span>Alma <b>${h.almaMax}</b></span><span>Llaves <b>${h.llaves}</b></span>`+(h.escudo>0?'<span class="escudo">Provocar: −50% daño</span>':'');if(st!==hud.st){hud.st=st;$('stats').innerHTML=st;}
-    const vivos=enemigos.filter(e=>e.estado!=='muere').length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':ol.i===3&&q.get('etapa')==='2'?'Preparando el cobro de piso…':(OLEADAS[ol.i].etapa===2?'Etapa 2 · Cobro de piso':OLEADAS[ol.i].jefe?'Etapa 1 · Can':'Etapa 1 · Oleada '+(ol.i+1))+' · '+vivos+' en pie'+(ol.cola.length?' · '+ol.cola.length+' por llegar':!vivos&&ol.i<OLEADAS.length-1?' · siguiente oleada en '+Math.ceil(ol.descanso??3)+' s':'')):'Enemigos en pie: '+vivos;
-    const o=ent.sobre?.d?ent.sobre:enemigos.includes(h.ultimo)&&h.ultimo.estado!=='muere'?h.ultimo:enemigos.find(e=>e.d.jefe&&e.estado!=='muere')||null;$('objetivo').hidden=!o;if(o){$('objNombre').textContent=o.m.nombre+(o.d.jefe?' · Jefe':'');$('objVida').style.width=(Math.max(0,o.vida)/o.vidaMax*100).toFixed(1)+'%';}
+    const vivos=enemigos.filter(e=>e.estado!=='muere').length+peligrosTroll.filter(p=>p.tipo==='goblin'&&!p.devuelto).length+enemigos.filter(e=>e.goblinSujeto).length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':ol.i===3&&q.get('etapa')==='2'?'Preparando el cobro de piso…':(OLEADAS[ol.i].etapa===2?'Etapa 2 · Cobro de piso':OLEADAS[ol.i].jefe?'Etapa 1 · Can':'Etapa 1 · Oleada '+(ol.i+1))+' · '+vivos+' en pie'+(ol.cola.length?' · '+ol.cola.length+' por llegar':!vivos&&ol.i<OLEADAS.length-1?' · siguiente oleada en '+Math.ceil(ol.descanso??3)+' s':'')):'Enemigos en pie: '+vivos;
+    const o=ent.sobre?.d?ent.sobre:enemigos.includes(h.ultimo)&&h.ultimo.estado!=='muere'?h.ultimo:enemigos.find(e=>e.d.jefe&&e.estado!=='muere')||null;$('objetivo').hidden=!o;if(o){$('objNombre').textContent=o.m.nombre+(o.d.jefe?' · Jefe':'')+(o.fase2?(blindadoTroll(o)?' · Fase 2: haz parry':' · Fase 2: ¡vulnerable!'):'');$('objVida').style.width=(Math.max(0,o.vida)/o.vidaMax*100).toFixed(1)+'%';}
     flechas();golpeDir();
     $('vineta').style.opacity=h.heridaT===undefined?'0':Math.max(0,.9*(1-(reloj.t-h.heridaT)/.45)).toFixed(3);
     if(tostadaHasta&&reloj.t>tostadaHasta){$('tostada').classList.remove('visto');tostadaHasta=0;}if(bannerHasta&&reloj.t>bannerHasta){$('banner').classList.remove('visto');bannerHasta=0;}
@@ -807,7 +858,7 @@
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
     leerControles();
-    pasoHeroe(dt);coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);
+    pasoHeroe(dt);coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoPeligrosTroll(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);
     // Poses y posiciones de los modelos.
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
@@ -828,11 +879,13 @@
       const pe={quieto:['quieto'],entra:['andar'],persigue:[e.paso>.05?'andar':'quieto'],aviso:[d.lanza?'apunta':'aviso',ka],golpe:[d.lanza?'lanzar':'golpe',d.lanza?e.t/d.golpe*.6:.38+.24*(e.t/d.golpe)],
         recupera:[d.lanza?'lanzar':'golpe',d.lanza?.6+.4*Math.min(1,e.t/d.recupera):.62+.38*Math.min(1,e.t/d.recupera)],dolor:['dolor',e.t/.28],aturdido:['aturdido'],grito:['grito',e.t/.9],muere:['muerte',Math.min(1,e.t/.6)]}[e.estado];
       if(e.tipo==='troll'&&e.mazazo&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'cargaMazazo':'mazazo';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.3*e.t/d.golpe:.3+.7*Math.min(1,e.t/d.recupera);}
+      if(e.tipo==='troll'&&e.tiraGoblin&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'preparaGoblin':'arrojaGoblin';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.4*e.t/d.golpe:.4+.6*Math.min(1,e.t/d.recupera);}
       MOD.posar(m,{anim:pe[0],k:pe[1],t:reloj.t+e.id,fase:e.fase,paso:e.paso});
       // Quién va a atacar: se enciende en rojo mientras avisa (más al fijarse); quién te acaba de golpear, un destello rojo.
       m.M.u.uDestello.value=e.destello*.42;m.M.u.uColorD.value.setRGB(1,.92,.8);
       const culpa=Math.max(0,1-(reloj.t-e.culpableT)/.6);
       m.M.u.uBorde.value=e.ataque?(e.ataque.fijado?1.1+.4*Math.sin(reloj.t*40):.25+.45*ka):culpa*1.3;m.M.u.uColorB.value.setRGB(1,e.ataque&&!e.ataque.fijado?.16:.07,.03);
+      if(e.fase2&&!e.ataque&&e.estado!=='muere'){const cerrado=blindadoTroll(e);m.M.u.uBorde.value=cerrado?1.2:1.8;m.M.u.uColorB.value.setHex(cerrado?0x916aff:0xffd45a);}
       if(e.estado==='aturdido'){if(!e.estrellas){e.estrellas=new THREE.Group();for(let i=0;i<3;i++){const s=new THREE.Mesh(new THREE.OctahedronGeometry(.07),matEstrella);s.position.set(Math.cos(i*TAU/3)*.3,0,Math.sin(i*TAU/3)*.3);e.estrellas.add(s);}escena.add(e.estrellas);}
         e.estrellas.position.set(e.pos.x,m.alto+.25,e.pos.z);e.estrellas.rotation.y=reloj.t*5;}
       else if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}}
@@ -902,12 +955,12 @@
 
   // Revisión: avanzar(s) mueve el reloj a pasos de 1/30 s (cede el turno entre pasos) y dibuja.
   const aPantalla=p=>{camara.updateMatrixWorld(true);const v=p.clone().project(camara),b=esc.getBoundingClientRect();return {x:b.left+(v.x*.5+.5)*b.width,y:b.top+(.5-v.y*.5)*b.height,dentro:Math.abs(v.x)<1&&Math.abs(v.y)<1};};
-  const resumen=e=>({borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
+  const resumen=e=>({borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,fase2:!!e.fase2,blindado:!!blindadoTroll(e),parryHasta:e.parryHasta||0,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
   window.CAOZ_ARPG_THREE_REVISION=Object.freeze({
     listo:()=>listo,
     async avanzar(s,fps=30){const n=Math.max(1,Math.round(s*fps));for(let i=0;i<n;i++){paso(1/fps);if(i%3===2)await new Promise(r=>setTimeout(r,0));}dibujar();return this.estado();},
     dibujar(){dibujar();const i=renderer.info.render;return {llamadas:i.calls,triangulos:i.triangles};},
-    estado:()=>({listo,webgl2:true,hdr,muestras,simple,version:THREE.REVISION,pases:[['render',pasoRender],['oclusion',oclusion],['saneado',saneado],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n),
+    estado:()=>({peligrosTroll:peligrosTroll.map(p=>({tipo:p.tipo,k:p.t/p.dur,x:p.hasta.x,z:p.hasta.z,alto:p.m.position.y,devuelto:p.devuelto})),listo,webgl2:true,hdr,muestras,simple,version:THREE.REVISION,pases:[['render',pasoRender],['oclusion',oclusion],['saneado',saneado],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n),
       heroe:{t:+heroe.t.toFixed(3),vatq:+heroe.vatq.toFixed(2),punta:(()=>{const p=heroe.m.M.punta.getWorldPosition(new V3());return [+p.x.toFixed(2),+p.y.toFixed(2),+p.z.toFixed(2)];})(),combo:heroe.combo,invul:+heroe.invul.toFixed(2),parrys:heroe.parrys,tipo:heroe.tipo,balas:heroe.balas,recarga:+heroe.recargaT.toFixed(2),disparos:heroe.disparos,bloqueos:heroe.bloqueos,esquivados:heroe.esquivados||0,golpeDe:heroe.golpeDe?.id??null,x:+heroe.pos.x.toFixed(2),z:+heroe.pos.z.toFixed(2),alto:+(heroe.alto||0).toFixed(2),alma:heroe.alma,almaMax:heroe.almaMax,furia:+heroe.furia.toFixed(1),atq:heroe.atq,estado:heroe.estado,vivo:heroe.vivo,escudo:+heroe.escudo.toFixed(2),cd:{...heroe.cd},llaves:heroe.llaves,botin:heroe.botin.map(b=>b.id+'/'+b.ed),dir:+heroe.dir.toFixed(3)},
       enemigos:enemigos.map(resumen),botines:botines.map(b=>({id:b.id,ed:b.ed,listo:b.listo,volando:b.volando,x:+b.pos.x.toFixed(2),z:+b.pos.z.toFixed(2),mirada:+b.mirada.toFixed(2),escala:b.g?+(b.g.scale.x/SB).toFixed(2):0,nombre:b.nombre?.el.textContent||''})),
       globos:globos.length,alertas:etiquetas.filter(x=>x.el.classList.contains('apAlerta')&&!x.el.hidden).length,flechas:flechasEl.filter(f=>!f.hidden&&f.parentNode).length,golpeDir:+$('golpeDir').style.opacity||0,lanzas:lanzas.filter(l=>!l.clavada).length,lanzaAhora:lanzas.some(l=>l.ahora&&!l.clavada),balas:balas.length,marcas:marcas.filter(o=>!o.fijo).map(o=>o.tipo),oleada:ol.i,fin:ol.fin,finVisible:!$('fin').hidden,finTitulo:$('finTitulo').textContent,

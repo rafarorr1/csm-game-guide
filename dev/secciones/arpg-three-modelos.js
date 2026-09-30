@@ -530,7 +530,12 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.cuerpo.position.y=-.14*e2*esc-.05*car*(1-emp)*esc;break;}
         // Esquiva: rueda corta, agachada y hacia delante.
         // La maza sube despacio y cae con todo el torso; la recuperación deja al troll expuesto.
-        case 'cargaMazazo':case 'mazazo':{const carga=a.anim==='cargaMazazo'?suave(k):1,caida=a.anim==='mazazo'?tramo(k,0,.3):0,rec=a.anim==='mazazo'?tramo(k,.45,1):0,arriba=carga*(1-caida);
+        case 'preparaGoblin':case 'arrojaGoblin':{
+            const carga=a.anim==='preparaGoblin'?suave(k):1,tiro=a.anim==='arrojaGoblin'?tramo(k,0,.4):0,rec=a.anim==='arrojaGoblin'?tramo(k,.5,1):0;
+            H.brazoI.rotation.x=(-2.5*carga+3*tiro)*(1-rec);H.brazoI.rotation.z=-.5*carga*(1-rec);H.anteI.rotation.x=-.8*carga*(1-tiro);
+            H.torso.rotation.y=.35*carga*(1-tiro)-.4*tiro*(1-rec);H.torso.rotation.x=-.12*carga+.35*tiro*(1-rec);
+            H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.4;H.rodillaI.rotation.x=.2;H.rodillaD.rotation.x=.1;break;}
+          case 'cargaMazazo':case 'mazazo':{const carga=a.anim==='cargaMazazo'?suave(k):1,caida=a.anim==='mazazo'?tramo(k,0,.3):0,rec=a.anim==='mazazo'?tramo(k,.45,1):0,arriba=carga*(1-caida);
           H.brazoD.rotation.x=-2.6*arriba-1.2*caida*(1-rec);H.anteD.rotation.x=-.55-.7*arriba;
           H.brazoI.rotation.x=-1.6*arriba;H.brazoI.rotation.z=.3+.3*arriba;H.anteI.rotation.x=-.7;
           H.torso.rotation.x=-.18*arriba+.65*caida*(1-rec);H.cabeza.rotation.x=-.12*arriba;

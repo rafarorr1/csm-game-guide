@@ -8,7 +8,7 @@ const THREE=c.CAOZ_THREE.THREE,modelos=c.CAOZ_ARPG_MODELOS.fabrica(THREE);
 for(const tipo of ['troll','cobrador']){
   const m=modelos.crear(tipo),caja=new THREE.Box3().setFromObject(m.raiz);
   if(tipo==='troll'){assert.equal(m.alto,3);assert.ok(Math.abs(caja.max.y-3)<.01,'La coronilla queda a tres metros del suelo');assert.ok(caja.max.x-caja.min.x>1,'El troll tiene una silueta ancha');}
-  for(const anim of ['andar','aviso','golpe','cargaMazazo','mazazo','muerte'])for(let i=0;i<=50;i++){
+  for(const anim of ['andar','aviso','golpe','cargaMazazo','mazazo','preparaGoblin','arrojaGoblin','muerte'])for(let i=0;i<=50;i++){
     modelos.posar(m,{anim,k:i/50,t:i/10,fase:i/5,paso:1});m.raiz.updateMatrixWorld(true);
     for(const hueso of Object.values(m.H))assert.ok(hueso.matrixWorld.elements.every(Number.isFinite),`${tipo}: pose ${anim} válida`);
   }
