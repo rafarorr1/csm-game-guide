@@ -62,6 +62,30 @@ try{
         assert.equal(inicio.canciones,'7 / 22');assert.equal(inicio.oponentes,'2 / 4','Los avances acumulativos se ven antes de completarse.');
         assert.ok(inicio.ancho<=inicio.visor+1,'La pestaña de Logros no desborda horizontalmente.');
 
+        // Sobres, Canjear y Logros no sustituyen al Archivo: comparten su
+        // huésped real del visor. La referencia al nodo detecta incluso un
+        // desmontaje que intente dejar un fondo visualmente parecido.
+        const mundoInicial=await pagina.evaluate(()=>{
+          const panel=document.querySelector('#coleccionPanel'),host=panel?.querySelector('.coleccionMundoVisor');
+          window.__mundoArchivoPrueba=host;
+          return {modo:panel?.dataset.mundo,visible:!!host&&!host.hidden,escena:!!host?.querySelector('.visor3dMundo'),ancho:host?.getBoundingClientRect().width||0,alto:host?.getBoundingClientRect().height||0};
+        });
+        assert.equal(mundoInicial.modo,'archivo','Logros se abre sobre el mundo del Archivo, no sobre una pantalla ajena.');
+        assert.ok(mundoInicial.visible&&mundoInicial.escena&&mundoInicial.ancho>0&&mundoInicial.alto>0,'Logros conserva visible la escena real del visor.');
+        for(const destino of ['cartas','sobres','canje','logros']){
+          await pagina.locator('#coleccionPanel .coleccionPestana[data-vista="'+destino+'"]').click();
+          await pagina.locator('#coleccionPanel[data-vista="'+destino+'"]').waitFor({timeout:4000});
+          const mundo=await pagina.evaluate(()=>{
+            const panel=document.querySelector('#coleccionPanel'),host=panel?.querySelector('.coleccionMundoVisor'),contenido=panel?.querySelector('.coleccionContenido');
+            const estilo=host?getComputedStyle(host):null;
+            return {mismo:host===window.__mundoArchivoPrueba,modo:panel?.dataset.mundo,visible:!!host&&!host.hidden&&estilo?.display!=='none',escena:!!host?.querySelector('.visor3dMundo'),contenidosSobre:!!contenido&&!!host&&(contenido.compareDocumentPosition(host)&Node.DOCUMENT_POSITION_PRECEDING)!==0};
+          });
+          assert.ok(mundo.mismo,'La pestaña '+destino+' reutiliza el mismo mundo, sin reemplazarlo.');
+          assert.equal(mundo.modo,'archivo','La pestaña '+destino+' conserva el encuadre Archivo.');
+          assert.ok(mundo.visible&&mundo.escena,'La escena del visor queda detrás de '+destino+'.');
+          assert.ok(mundo.contenidosSobre,'Los controles de '+destino+' flotan por encima de la escena.');
+        }
+
         const objetivo='mohamed_sneaky_tricky';
         await pagina.locator('#coleccionPanel .coleccionLogro[data-logro="'+objetivo+'"] .coleccionLogroPrueba').click();
         await pagina.locator('#coleccionPanel .coleccionLogro[data-logro="'+objetivo+'"].completado').waitFor({timeout:4000});
