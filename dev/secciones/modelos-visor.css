@@ -1,0 +1,10 @@
+:root{--fondo:#1d2230;--panel:rgba(18,20,28,.82);--texto:#e9e6dc;--borde:#3b4152;--acento:#86c49c}
+html,body{margin:0;height:100%;background:var(--fondo);color:var(--texto);font:14px/1.4 system-ui,sans-serif;overflow:hidden}
+#lienzo{display:block;width:100vw;height:100vh;touch-action:none;cursor:grab}
+#lienzo:active{cursor:grabbing}
+.mvPanel{position:fixed;top:12px;left:12px;max-width:calc(100vw - 24px);box-sizing:border-box;background:var(--panel);border:1px solid var(--borde);border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+.mvPanel label{display:flex;justify-content:space-between;gap:10px;align-items:center}
+.mvPanel select,.mvPanel button{background:#2a2f3e;color:var(--texto);border:1px solid var(--borde);border-radius:6px;padding:4px 8px;font:inherit}
+.mvBotones{display:flex;flex-wrap:wrap;gap:6px}
+.mvPanel button[aria-pressed="true"]{border-color:var(--acento);color:var(--acento)}
+#datos,.mvAyuda{margin:0;font-size:12px;opacity:.75}

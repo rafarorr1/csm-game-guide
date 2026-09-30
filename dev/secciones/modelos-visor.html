@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Visor de modelos</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./modelos-visor.css">
+<script src="./visor-three-vendor.js"></script>
+<script src="./arpg-three-modelos.js"></script>
+<script src="./modelos-visor.js" defer></script>
+</head>
+<body>
+<canvas id="lienzo"></canvas>
+<div class="mvPanel">
+  <label>Personaje <select id="tipo"></select></label>
+  <label>Animación <select id="anim"></select></label>
+  <label>Velocidad <input id="vel" type="range" min="0" max="2" step="0.05" value="1"></label>
+  <div class="mvBotones">
+    <button id="pausa" type="button">Pausa</button>
+    <button id="girar" type="button" aria-pressed="false">Girar solo</button>
+    <button id="cara" type="button">Cara</button>
+    <button id="cuerpo" type="button">Cuerpo</button>
+  </div>
+  <p id="datos"></p>
+  <p class="mvAyuda">Arrastra para girar · rueda o pellizco para acercar</p>
+</div>
+</body>
+</html>
