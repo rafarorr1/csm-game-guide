@@ -23,7 +23,8 @@ SECCIONES = {
         'exportador': 'exportar.mjs',
         'requeridos': {'index.html', 'movil.html', 'escritorio.html', 'procedencia.json', '_headers', 'juego/logros.js'},
         'pruebas': ('pruebas.mjs', 'pruebas_exportacion.mjs', 'pruebas_sobres_revelacion.mjs',
-                    'pruebas_coleccion_visor3d.mjs', 'pruebas_coleccion_logros.mjs'),
+                    'pruebas_sobres_modelo3d.mjs', 'pruebas_coleccion_visor3d.mjs',
+                    'pruebas_coleccion_logros.mjs'),
     },
     'rey': {
         'nombre': 'El Rey',

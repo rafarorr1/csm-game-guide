@@ -501,6 +501,18 @@
 #coleccionPanel .coleccionSobreGuardado{scroll-snap-align:center;scroll-snap-stop:always;width:var(--sobre-ancho);flex:0 0 var(--sobre-ancho);min-height:0;padding:6px 0 0;display:flex;flex-direction:column;align-items:center;gap:14px;border:0;background:none;box-shadow:none;filter:none!important;translate:none!important;opacity:.48;scale:.84;transition:opacity .22s ease,scale .22s ease;touch-action:pan-x}
 #coleccionPanel .coleccionSobreGuardado.seleccionado{opacity:1;scale:1}
 #coleccionPanel .coleccionSobreGuardado .coleccionSobre{width:calc(100% - 12px);height:auto;max-height:none;aspect-ratio:.68;rotate:0deg;margin:0}
+/* El sobre activo es la única pieza WebGL de la biblioteca. Se manipula como
+   un objeto físico, no como una miniatura: el cursor y el halo aclaran que
+   se puede arrastrar para descubrir su reverso sin cargar la escena de cada
+   sobre que queda al fondo. */
+#coleccionPanel .coleccionSobreGuardado.modelo3d{cursor:grab;touch-action:none;isolation:isolate}
+#coleccionPanel .coleccionSobreGuardado.modelo3d .coleccionSobre{filter:drop-shadow(0 18px 18px #000b) drop-shadow(0 0 15px color-mix(in srgb,var(--sobre-color) 34%,transparent));transition:filter .18s ease}
+#coleccionPanel .coleccionSobreGuardado.modelo3d[data-orientacion="reverso"] .coleccionSobre{filter:drop-shadow(0 18px 18px #000c) drop-shadow(0 0 18px #d9bd7a42)}
+#coleccionPanel .coleccionSobreGuardado.modelo3d::before{content:"ARRASTRA PARA GIRAR";position:absolute;z-index:4;left:50%;bottom:calc(100% + 3px);translate:-50% 0;min-width:max-content;padding:3px 7px;border:1px solid #d7bb7c72;border-radius:20px;background:#0b0714bd;color:#eadab7;font:700 8px/1 var(--sans,system-ui);letter-spacing:.7px;opacity:.9;pointer-events:none;text-shadow:0 1px 3px #000;box-shadow:0 3px 8px #0007}
+#coleccionPanel .coleccionSobreGuardado.modelo3d.girando{cursor:grabbing}
+#coleccionPanel .coleccionSobreGuardado.modelo3d.girando .coleccionSobre{filter:drop-shadow(0 22px 23px #000d) drop-shadow(0 0 23px color-mix(in srgb,var(--sobre-color) 48%,#ead696))}
+#coleccionPanel .coleccionSobreGuardado.modelo3d:focus-visible{outline:2px solid #f4d58a;outline-offset:5px;border-radius:10px}
+#coleccionPanel .coleccionSobreGuardado.modelo3d:focus-visible::before{border-color:#f4d58a;color:#fff0cb}
 #coleccionPanel .coleccionSobreExistencias{font:700 13px var(--sans,system-ui);color:#f1e2c2;background:#120f1c;border:1px solid color-mix(in srgb,var(--sobre-color) 65%,#aaa);border-radius:20px;padding:4px 15px;min-width:50px;text-align:center;letter-spacing:.2px}
 #coleccionPanel .coleccionCarreteNavegacion{flex:none;display:flex;align-items:center;justify-content:center;gap:26px;padding-top:9px}
 #coleccionPanel .coleccionCarreteNavegacion .coleccionBoton{width:41px;min-height:41px;padding:3px;font-size:30px;background:#21182e;border-color:#6b516f;border-radius:50%;box-shadow:none}
@@ -562,7 +574,7 @@
   #coleccionPanel .coleccionDeslizarPista{padding-top:4px}
   #coleccionPanel .coleccionReanudarSobre{min-height:28px;padding:4px 9px;font-size:11px}
 }
-@media(prefers-reduced-motion:reduce){#coleccionPanel .coleccionSobreGuardado,#coleccionPanel .coleccionRecompensaElegir .coleccionSobre{transition:none}}
+@media(prefers-reduced-motion:reduce){#coleccionPanel .coleccionSobreGuardado,#coleccionPanel .coleccionRecompensaElegir .coleccionSobre,#coleccionPanel .coleccionSobreGuardado.modelo3d .coleccionSobre{transition:none}}
 #coleccionPanel .coleccionRecompensaElegir{flex:none}
 #coleccionPanel .coleccionRecompensaElegir .coleccionSobre{width:var(--premio-ancho,100px);height:calc(var(--premio-ancho,100px)/.68);max-width:none;flex:none}
 #coleccionPanel .coleccionSobreGuardado{position:relative;gap:0;padding:5px 0}
@@ -1545,3 +1557,14 @@
 #coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionContenido{position:relative!important;z-index:2!important}
 #coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionEstado{position:absolute!important;z-index:12!important}
 #coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionPie{position:absolute!important;z-index:10!important}
+
+/* La capa común del mundo usa un selector muy específico para normalizar sus
+   hijos. Las pestañas auxiliares son HUDs del mismo mundo, no flujo normal:
+   se reafirma su anclaje para que, en alturas cortas, Sobres no empuje los
+   botones bajo el pie ni pierda el centro de la escena. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{position:absolute!important;z-index:9!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{position:absolute!important;z-index:10!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{position:fixed!important;z-index:11!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{position:absolute!important;z-index:3!important;flex:none!important;align-self:stretch!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionEstado{position:absolute!important;z-index:12!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{position:absolute!important;z-index:10!important}
