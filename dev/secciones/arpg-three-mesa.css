@@ -22,6 +22,8 @@ html[data-captura] .apEscenario{height:100vh;border:0;border-radius:0}
 html[data-captura] .apInfo{display:none}
 [hidden]{display:none!important}
 .apElegir{display:inline-flex;gap:6px}
+.apEfectos select{font:600 12px system-ui,sans-serif;background:#150f20;color:#e0cfa6;border:1px solid #e7bb5555;border-radius:6px;padding:3px 6px}
+.apNumero.impresionado{color:#ffe08a;font-size:clamp(14px,1.7vw,19px)}
 /* Etiquetas del mundo: nombres del botín y números de daño. */
 .apCapa{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .apCapa>div{position:absolute;left:0;top:0;will-change:transform;text-align:center;white-space:nowrap}

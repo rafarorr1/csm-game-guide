@@ -369,7 +369,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.torso.rotation.x=.04+.12*e;H.cuerpo.position.y=-.07*e;H.rodillaI.rotation.x=H.rodillaD.rotation.x=.35*e;H.piernaI.rotation.x=-.25*e;H.piernaD.rotation.x=.12*e;H.cabeza.rotation.x=-.12*e;break;}
         // Disparar (Mohamed): el brazo derecho al frente, a la altura del hombro; el retroceso levanta la pistola al disparar (k: 0 → 1).
         case 'disparar':{const r=Math.max(0,1-k*4);H.brazoD.rotation.x=-1.52-.25*r;H.brazoD.rotation.z=.05;H.anteD.rotation.x=-.05-.2*r;H.brazoI.rotation.x=-.2;H.brazoI.rotation.z=.25;H.torso.rotation.y=-.18;H.cabeza.rotation.y=.12;H.torso.rotation.x=-.03;break;}
-        // Voltereta: salto mortal hacia delante, recogido, girando alrededor de la cadera.
+        // Backflip de Mohamed (salto mortal), recogido, girando alrededor de la cadera.
         case 'acrobacia':{const g=tramo(k,.15,.85)*Math.PI*2,rec=Math.sin(Math.PI*Math.min(1,k)),hc=(m.p.muslo+m.p.pierna)*.9;
           H.cuerpo.rotation.x=g;H.cuerpo.position.set(0,hc-hc*Math.cos(g),-hc*Math.sin(g));H.piernaI.rotation.x=H.piernaD.rotation.x=-1.6*rec;H.rodillaI.rotation.x=H.rodillaD.rotation.x=2*rec;
           H.torso.rotation.x=.6*rec;H.brazoI.rotation.x=H.brazoD.rotation.x=-.8*rec;H.anteI.rotation.x=H.anteD.rotation.x=-1.2*rec;break;}

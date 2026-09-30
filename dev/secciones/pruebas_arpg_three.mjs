@@ -174,7 +174,7 @@ try{
     assert.deepEqual(errores,[],'Sin errores con el parry');await contexto.close();}
   console.log('✓ Parry: perfecto aturde y deja expuesto (el doble de daño), tardío bloquea el 70%, al aire se paga');
 
-  // ---- Mohamed, a distancia: pistola de seis balas, recarga, Abanico, Voltereta; y las lanzas que brillan para el parry ----
+  // ---- Mohamed, a distancia: pistola de seis balas, recarga, Abanico, Backflip que impresiona; y las lanzas que brillan para el parry ----
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.elegir("mohamed")');
     let e=await r('r.avanzar(.2)');assert.ok(e.heroe.tipo==='mohamed'&&e.heroe.alma===100&&e.heroe.balas===6&&e.mallasHeroe===3,'Se puede jugar con Mohamed: 100 de Alma y seis balas');
     await r('r.heroe({x:0,z:2})');const g=await r('r.invocar("goblin",0,-4,true)');await r('r.control({atacar:true,apunta:[0,-4]})');
@@ -185,7 +185,12 @@ try{
     const ids=[];for(let i=0;i<4;i++)ids.push(await r('r.invocar("goblin",a[0],-5,true)',i*1.5-2.2));await r('r.heroe({x:0,z:2,furia:100})');await r('r.control({apunta:[0,-5]})');await r('r.avanzar(.1)');
     assert.ok(await r('r.usar("torbellino")'),'Q con Furia: Abanico');e=await r('r.avanzar(.8)');await r('r.control(null)');
     assert.ok(e.enemigos.filter(x=>ids.includes(x.id)&&x.vida<34).length>=3,'El Abanico (siete balas) alcanza a varios a la vez');
-    assert.ok(await r('r.usar("salto",4,2)'),'Clic derecho con Furia: Voltereta');e=await r('r.avanzar(1)');assert.ok(Math.abs(e.heroe.x-4)<.5&&e.heroe.estado==='quieto','La Voltereta la lleva al cursor');
+    await r('r.heroe({furia:100})');assert.ok(await r('r.usar("salto",0,-2.2)'),'Clic derecho con Furia: Backflip');e=await r('r.avanzar(.8)');
+    assert.ok(Math.abs(e.heroe.z+2.2)<.5,'El Backflip la lleva al cursor');
+    assert.ok(e.enemigos.filter(x=>ids.includes(x.id)&&x.estado==='aturdido').length>=2,'Los goblins que lo ven se quedan impresionados (aturdidos): '+e.enemigos.map(x=>x.estado).join(', '));
+    // Las dos propuestas de bala se pueden elegir y disparar.
+    for(const v of ['trazadora','plomo']){await r('r.balas(a[0])',v);const d0=(await r('r.estado()')).heroe.disparos;await r('r.control({atacar:true,apunta:[3,-8]})');let vistas=0;
+      for(let i=0;i<45;i++){e=await r('r.avanzar(1/30)');vistas=Math.max(vistas,e.balas);}await r('r.control(null)');assert.ok(e.heroe.disparos>d0&&vistas>0,'Se dispara con la bala «'+v+'»');await r('r.avanzar(1.5)');}
     for(const id of ids)await r('r.matar(a[0])',id);await r('r.avanzar(1.5)');
     // La lanza del kobold brilla y, justo en la ventana del parry perfecto, el brillo se vuelve blanco y grande; un parry ahí la devuelve.
     await r('r.heroe({x:0,z:-6,alma:100})');const k=await r('r.invocar("kobold",0,3,false)');await r('r.despertar(a[0])',k);let ahora=false;
@@ -193,7 +198,7 @@ try{
     assert.ok(ahora,'La lanza avisa (brillo blanco) en la ventana del parry perfecto');
     await pagina.keyboard.press('Space');e=await r('r.avanzar(.5)');assert.ok(e.heroe.alma===100&&e.heroe.parrys===1,'Un parry con ese aviso la desvía sin daño');
     assert.deepEqual(errores,[],'Sin errores con Mohamed');await contexto.close();}
-  console.log('✓ Mohamed a distancia: pistola, recarga, Abanico y Voltereta; las lanzas brillan en la ventana del parry');
+  console.log('✓ Mohamed a distancia: pistola (dos propuestas de bala), recarga, Abanico y Backflip que impresiona; las lanzas brillan en la ventana del parry');
 
   // ---- Habilidades --------------------------------------------------------------------
   {const {contexto,errores,pagina,r}=await abrir(navegador);await r('r.oleadas(false)');

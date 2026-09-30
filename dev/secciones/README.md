@@ -385,8 +385,8 @@ oleadas, y al final entra Can, el de los Goblins.
   - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).
 - **Dos personajes (se elige arriba, o con `?heroe=mohamed`):**
   - Adreida, cuerpo a cuerpo, con el hacha a dos manos (el combo de tres hachazos, Torbellino, Salto con el hacha clavada);
-  - Mohamed, a distancia, con una pistola de chispa: el clic dispara hacia el cursor (se puede andar, más despacio, mientras dispara); seis balas y recarga sola (1,1 s); Q, Abanico de siete balas; clic derecho, Voltereta al cursor que cae disparando en corona; 100 de Alma;
-  - las balas brillan en dorado, no interrumpen a los enemigos pero dan Furia; el parry, el dash y Provocar son iguales para los dos.
+  - Mohamed, a distancia, con una pistola de chispa: el clic dispara hacia el cursor (se puede andar, más despacio, mientras dispara); seis balas y recarga sola (1,1 s); Q, Abanico de siete balas; clic derecho, Backflip al cursor: al caer, los enemigos que lo ven (a 6 m y mirando hacia él) se quedan impresionados, aturdidos 2,6 s (Can, 1,2 s); 100 de Alma;
+  - dos propuestas de bala (se elige en Efectos o con `?balas=trazadora`): A, la bola de plomo de una pistola de chispa con un trazo corto al rojo y chispas; B, una bala alargada de latón con ojiva de cobre y una estela larga y fina de luz; no interrumpen a los enemigos pero dan Furia; el parry, el dash y Provocar son iguales para los dos.
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
   - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres hachazos: tajo, revés y un hachazo vertical;

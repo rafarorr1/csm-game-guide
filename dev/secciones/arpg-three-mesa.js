@@ -319,14 +319,29 @@
     if(obstaculos.some(o=>Math.hypot(p.x-o.x,p.z-o.z)<o.r)||Math.hypot(p.x,p.z)>R+4||p.y<.1||reloj.t-l.t0>2){l.clavada=reloj.t;chispas(p,5,[.8,.7,.6],2,.3);}}}
 
   // Las balas de Mohamed: rápidas, doradas y con estela; no interrumpen (así no se aturde a nadie a tiros), pero dan Furia.
-  const balas=[],matBala=new THREE.MeshBasicMaterial({color:0xfff0c0,toneMapped:false}),geoBala=new THREE.SphereGeometry(.07,8,6);
+  // Dos propuestas de bala:
+  //   · «plomo»: la bola de plomo de una pistola de chispa (esfera metálica gris) con un trazo corto al rojo detrás y chispas;
+  //   · «trazadora»: una bala alargada de latón (cuerpo y ojiva) que apunta adonde va, con una estela larga y fina de luz.
+  // Las dos llevan su cuerpo sólido (se ve que es una bala) y algo de luz para seguirla con la vista.
+  const balas=[];let estiloBala=q.get('balas')==='trazadora'?'trazadora':'plomo';
+  const matPlomo=new THREE.MeshStandardMaterial({color:0x7a7e86,metalness:.95,roughness:.28}),matLaton=new THREE.MeshStandardMaterial({color:0xd09a48,metalness:.95,roughness:.25}),matCobre=new THREE.MeshStandardMaterial({color:0xb86a3a,metalness:.9,roughness:.3});
+  const matTrazo=new THREE.MeshBasicMaterial({color:0xffc070,transparent:true,opacity:.85,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+  const matEstela=new THREE.MeshBasicMaterial({color:0xff9a40,transparent:true,opacity:.7,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false});
+  // Más grandes que una bala de verdad (desde la cámara del juego una de verdad no se vería); el brillo va detrás, no encima.
+  const geoPlomo=new THREE.SphereGeometry(.095,12,10),geoTrazoCorto=new THREE.ConeGeometry(.06,.75,8,1,true).rotateX(-Math.PI/2).translate(0,0,-.42);
+  const geoCuerpo=new THREE.CylinderGeometry(.05,.05,.2,12).rotateX(Math.PI/2),geoOjiva=new THREE.ConeGeometry(.05,.14,12).rotateX(Math.PI/2).translate(0,0,.17),geoCulote=new THREE.CylinderGeometry(.056,.056,.03,12).rotateX(Math.PI/2).translate(0,0,-.1);
+  const geoEstelaLarga=new THREE.ConeGeometry(.03,2.4,6,1,true).rotateX(-Math.PI/2).translate(0,0,-1.32);
+  function mallaBala(){const g=new THREE.Group();let brillo;
+    if(estiloBala==='trazadora'){brillo=halo(0xffa050,.07);brillo.position.z=-.14;g.add(new THREE.Mesh(geoCuerpo,matLaton),new THREE.Mesh(geoOjiva,matCobre),new THREE.Mesh(geoCulote,matLaton),new THREE.Mesh(geoEstelaLarga,matEstela),brillo);}
+    else{brillo=halo(0xffc070,.08);brillo.position.z=-.12;g.add(new THREE.Mesh(geoPlomo,matPlomo),new THREE.Mesh(geoTrazoCorto,matTrazo),brillo);}
+    g.children[0].castShadow=true;return g;}
   function disparar(dir=heroe.dir,opc={}){const h=heroe,T=HEROES.mohamed,desde=(h.m.M.boca?h.m.M.boca.getWorldPosition(new V3()):h.pos.clone().setY(1.35));
     if(!opc.gratis){h.balas--;h.disparos++;h.cadT=T.cadencia;h.disparoT=0;ent.pendiente=false;if(h.balas<=0)h.recargaT=T.recarga;}
-    const g=new THREE.Group();g.add(new THREE.Mesh(geoBala,matBala),halo(0xffc860,.24));g.position.copy(desde);escena.add(g);
+    const g=mallaBala();g.position.copy(desde);g.lookAt(desde.clone().add(frente(dir)));escena.add(g);
     balas.push({g,pos:new V3(desde.x,0,desde.z),y:desde.y,dir:frente(dir),vel:T.vel,dist:0,dano:opc.dano??h.atq});
     chispas(desde,5,[1,.85,.5],3,.35);particula(desde.x,desde.y,desde.z,0,0,0,.08,2.2,3,2.4,1.4,0);}
   function pasoBalas(dt){for(const b of [...balas]){const paso=b.vel*dt;b.pos.addScaledVector(b.dir,paso);b.dist+=paso;b.y+=(1.15-b.y)*Math.min(1,dt*6);b.g.position.set(b.pos.x,b.y,b.pos.z);
-    particula(b.pos.x,b.y,b.pos.z,0,0,0,.18,.45,2.6,2,1,0);
+    if(estiloBala==='plomo'){if(rnd()<.6)particula(b.pos.x,b.y,b.pos.z,(rnd()-.5)*.6,.2,(rnd()-.5)*.6,.25,.3,2.8,1.6,.6,0);}else if(rnd()<.3)particula(b.pos.x,b.y,b.pos.z,0,0,0,.2,.25,2.4,1.4,.6,0);
     const e=enemigos.find(e=>e.estado!=='muere'&&plano(e.pos,b.pos)<e.radio+.18);
     const fuera=b.dist>HEROES.mohamed.alcance||obstaculos.some(o=>Math.hypot(b.pos.x-o.x,b.pos.z-o.z)<o.r);
     if(e){danar(e,b.dano,{empuje:.45,sinDolor:true});heroe.furia=Math.min(100,heroe.furia+3);chispas(b.pos.clone().setY(1.1),8,[1,.8,.45],4,.35);}
@@ -422,8 +437,12 @@
       if(rnd()<.8){const a=rnd()*TAU;particula(h.pos.x+Math.cos(a)*2,1+rnd()*.3,h.pos.z+Math.sin(a)*2,-Math.sin(a)*6,.3,Math.cos(a)*6,.25,.5,2.2,1.6,1.2,0);}
       if(h.t>=D)cambiar(h,'quieto');}
     else if(h.estado==='salto'){const D=.72,k=Math.min(1,h.t/D),m=tramo(k,.12,.86);h.pos.lerpVectors(h.origenSalto,h.objetivoSalto,m);h.alto=Math.sin(Math.PI*m)*2.4;h.invul=Math.max(h.invul,k<.86?.05:0);
-      // Mohamed cae de la voltereta disparando en corona; Adreida clava el hacha.
-      if(!h.golpeo&&k>=.86&&aDistancia()){h.golpeo=true;h.alto=0;for(let i=0;i<10;i++)disparar(i*TAU/10,{gratis:true});marca('onda',h.pos.x,h.pos.z,3,0xffd070,.4);polvo(h.pos,16,1);}
+      // Mohamed cae del backflip: los que lo han visto (a 6 m y mirando hacia él) se quedan impresionados, aturdidos unos segundos.
+      // Adreida, en cambio, clava el hacha.
+      if(!h.golpeo&&k>=.86&&aDistancia()){h.golpeo=true;h.alto=0;marca('onda',h.pos.x,h.pos.z,6,0xffd070,.5);polvo(h.pos,16,1);chispas(h.pos.clone().setY(1.6),24,[1,.9,.5],4,.45);temblar(.12);
+        for(const e of enemigos){if(e.estado==='muere')continue;const v=h.pos.clone().sub(e.pos).setY(0),d=v.length();if(d>6)continue;
+          if(d>.8&&v.normalize().dot(frente(e.dir))<Math.cos(1.9))continue;
+          cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.d.jefe?1.2:2.6;e.impresionado=true;numero(e.pos.clone().setY(e.m.alto+.5),'¡Impresionado!','impresionado',1.3);}}
       if(!h.golpeo&&k>=.86){h.golpeo=true;h.alto=0;golpearEn(3.2,Math.PI,h.atq*1.7,{empuje:4.5,aturde:1.1,chispas:14});marca('onda',h.pos.x,h.pos.z,4.2,0xffb050,.5);polvo(h.pos,40,2);chispas(h.pos.clone().setY(.3),30,[1,.7,.35],8,.5);temblar(.5);paron=.08;}
       if(h.t>=D){cambiar(h,'quieto');h.alto=0;}}
     else if(h.estado==='grito'){if(!h.golpeo&&h.t>=.18){h.golpeo=true;h.escudo=4;h.furia=Math.min(100,h.furia+35);marca('onda',h.pos.x,h.pos.z,10,0xffd070,.7);chispas(h.pos.clone().setY(1.4),40,[1,.85,.4],7,.5);temblar(.2);
@@ -718,11 +737,12 @@
     renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;}
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};
+  {const sel=$('estiloBala');sel.value=estiloBala;sel.onchange=()=>{estiloBala=sel.value;};}
   $('demo').onclick=()=>{ent.piloto=!ent.piloto;$('demo').setAttribute('aria-pressed',String(ent.piloto));};
   $('reiniciar').onclick=()=>reiniciar();
   // Elegir personaje: cambia el héroe y los rótulos de la barra (sus habilidades son otras) y vuelve a empezar.
   function rotulos(){const d=aDistancia(),pon=(h,icono,txt)=>{const b=document.querySelector(`[data-hab="${h}"]`);if(!b)return;b.querySelector('span').textContent=icono;b.querySelector('small').textContent=txt;};
-    pon('tajo',d?'➶':'⚔',d?'Disparar':'Atacar');pon('torbellino',d?'✺':'↻',d?'Abanico':'Torbellino');pon('salto',d?'⤿':'⤓',d?'Voltereta':'Salto');
+    pon('tajo',d?'➶':'⚔',d?'Disparar':'Atacar');pon('torbellino',d?'✺':'↻',d?'Abanico':'Torbellino');pon('salto',d?'⤿':'⤓',d?'Backflip':'Salto');
     const r=document.querySelector('.apRetrato');r.src='./art/'+HEROES[tipoHeroe].retrato+'.webp';r.alt=HEROES[tipoHeroe].nombre;
     for(const b of document.querySelectorAll('[data-heroe]'))b.setAttribute('aria-pressed',String(b.dataset.heroe===tipoHeroe));}
   function elegir(t){if(!HEROES[t]||t===tipoHeroe)return;tipoHeroe=t;rotulos();reiniciar();}
@@ -774,6 +794,7 @@
     efecto(k,v){efectos[k]=v;const c=document.querySelector(`[data-efecto="${k}"]`);if(c)c.checked=v;aplicarEfectos();},
     reiniciar,
     elegir,
+    balas(v){estiloBala=v;$('estiloBala').value=v;},
     nan(v,x=0,z=0){puntoNaN.visible=v;puntoNaN.position.set(x,.3,z);},
     saneado(v){saneado.enabled=v;},
     pantalla:(x,y,z)=>aPantalla(new V3(x,y,z)),
