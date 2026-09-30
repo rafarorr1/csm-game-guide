@@ -40,7 +40,7 @@ try{
   let navegador;
   try{
     navegador=await chromium.launch({channel:'chrome',headless:true});
-    for(const [vista,width,height] of [['desktop',1440,900],['movil',390,844]]){
+    for(const [vista,width,height] of [['desktop',1440,900],['desktop',760,844],['movil',390,844],['movil',320,568]]){
       const contexto=await navegador.newContext({viewport:{width,height},hasTouch:vista==='movil',reducedMotion:'reduce'}),pagina=await contexto.newPage(),errores=[];
       pagina.on('pageerror',error=>errores.push(error.message));
       try{
@@ -61,6 +61,30 @@ try{
         assert.equal(inicio.sobres,2);assert.equal(inicio.pendientes,2,'Cada uno de los dos logros de muestra deja exactamente un sobre pendiente.');
         assert.equal(inicio.canciones,'7 / 22');assert.equal(inicio.oponentes,'2 / 4','Los avances acumulativos se ven antes de completarse.');
         assert.ok(inicio.ancho<=inicio.visor+1,'La pestaña de Logros no desborda horizontalmente.');
+
+        const medallasYTexto=await pagina.evaluate(()=>{
+          const tarjetas=[...document.querySelectorAll('#coleccionPanel .coleccionLogro')];
+          const dentro=(interior,exterior)=>interior.left>=exterior.left-1&&interior.right<=exterior.right+1&&interior.top>=exterior.top-1&&interior.bottom<=exterior.bottom+1;
+          const fuera=[];
+          for(const tarjeta of tarjetas){
+            const limite=tarjeta.getBoundingClientRect();
+            for(const selector of ['.coleccionMedalla','.coleccionLogroTitulo','.coleccionLogroDescripcion','.coleccionLogroMeta','.coleccionLogroPremio','.coleccionLogroPrueba']){
+              const nodo=tarjeta.querySelector(selector);if(!nodo)continue;
+              const rect=nodo.getBoundingClientRect();
+              // Chrome redondea algunos line-height fraccionales a dos píxeles
+              // distintos entre scrollHeight y clientHeight aun cuando no hay
+              // recorte. El rectángulo es la comprobación geométrica decisiva.
+              if(!dentro(rect,limite)||nodo.scrollWidth>nodo.clientWidth+2||nodo.scrollHeight>nodo.clientHeight+2)fuera.push({id:tarjeta.dataset.logro,selector,limite:[limite.width,limite.height],nodo:[rect.width,rect.height],scroll:[nodo.scrollWidth,nodo.scrollHeight,nodo.clientWidth,nodo.clientHeight]});
+            }
+          }
+          const medallas=tarjetas.map(t=>{const sello=t.querySelector('.coleccionMedalla');return {id:t.dataset.logro,diseno:sello?.dataset.medalla,protagonista:sello?.dataset.protagonista,estado:sello?.dataset.estado,svg:!!sello?.querySelector('svg')};});
+          return {medallas,fuera};
+        });
+        assert.equal(medallasYTexto.medallas.length,23,'Cada logro tiene su medalla.');
+        assert.equal(new Set(medallasYTexto.medallas.map(m=>m.diseno)).size,23,'Cada logro recibe un emblema distinto.');
+        assert.ok(medallasYTexto.medallas.every(m=>m.diseno&&m.protagonista&&m.svg),'Todas las medallas conservan su glifo y protagonista.');
+        assert.equal(medallasYTexto.medallas.find(m=>m.id==='mohamed_ctt')?.estado,'obtenida','Un logro cumplido recibe su sello iluminado.');
+        assert.deepEqual(medallasYTexto.fuera,[],'Los textos, medallas y controles quedan dentro de cada recuadro.');
 
         // Sobres, Canjear y Logros no sustituyen al Archivo: comparten su
         // huésped real del visor. La referencia al nodo detecta incluso un

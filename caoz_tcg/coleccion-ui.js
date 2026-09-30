@@ -24,6 +24,49 @@
     const trazos={libro:'M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3z M12 6v15 M6 8h3 M6 11h3 M15 8h3 M15 11h3',cerrar:'m6 6 12 12 M18 6 6 18',buscar:'M16 10a6 6 0 1 1-12 0 6 6 0 0 1 12 0 M15 15l6 6',candado:'M7 10V7a5 5 0 0 1 10 0v3 M5 10h14v11H5z M12 14v3',sobre:'M5 3h14l2 18H3z M6 7h12 M6 17h12 M12 9l3 3-3 3-3-3z',check:'m5 12 5 5L20 6',flecha:'m14 5-7 7 7 7',logro:'M12 3 14.7 8.6 21 9.5l-4.6 4.5 1.1 6.4-5.5-2.9-5.5 2.9 1.1-6.4L3 9.5l6.3-.9z'};
     const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',trazos[tipo]||trazos.libro);svg.append(p);return svg;
   }
+  /* Cada logro conserva su propio emblema, pero todos comparten la acuñación
+     del Domo. Así el catálogo se siente como un registro de hazañas y no
+     como una lista de checks repetidos. Los glifos son SVG local: no añaden
+     descargas ni retrasan el scroll de la Colección. */
+  const MEDALLAS_LOGRO=Object.freeze({
+    mohamed_sneaky_tricky:'pergamino',mohamed_ctt:'escudo',mohamed_ahora_me_ves:'ojo',mohamed_ladron_templos:'templo',mohamed_backstabber:'daga',mohamed_cinco_caras:'moneda',
+    fender_bardnt:'lira',fender_22_canciones:'musica',fender_vida_goblin:'goblin',fender_olvidadizo:'reloj',fender_rapidin:'alas',
+    talesin_amor_salvaje:'rosa',talesin_thalesyn:'thal',talesin_presidente_thal:'corona',talesin_hola_papi:'corazonPergamino',talesin_cero_a_heroe:'ceroDiez',talesin_talesimp:'petunia',
+    rafaela_rul_no_es_negro:'rul',rafaela_you_rul:'rulCorona',rafaela_charles_menson:'apostoles',rafaela_oculto:'oculto',
+    adreida_dos_orejas:'orejas',adreida_adreidos:'espejo'
+  });
+  const GLIFOS_MEDALLA=Object.freeze({
+    pergamino:'<path d="M35 31h24v31H35z M39 31c-5 3-5 8 0 10m16-10c5 3 5 8 0 10M39 52c-5 3-5 8 0 10m16-10c5 3 5 8 0 10"/><path d="m47 41 3 4 5 1-4 3 1 5-5-3-4 3 1-5-4-3 5-1z" class="medallaRelleno"/>',
+    escudo:'<path d="M48 29 66 36v13c0 12-7 19-18 23-11-4-18-11-18-23V36z"/><path d="m39 49 6 6 12-14"/>',
+    ojo:'<path d="M28 49s8-14 20-14 20 14 20 14-8 14-20 14-20-14-20-14z"/><circle cx="48" cy="49" r="6" class="medallaRelleno"/><path d="M48 25v5m0 38v5m-27-24h5m44 0h5"/>',
+    templo:'<path d="m28 42 20-14 20 14H28zM32 45v18m11-18v18m10-18v18m11-18v18M27 65h42"/><path d="M38 35h20"/>',
+    daga:'<path d="m62 31-7 8 4 4-9 9-4-4-15 15-4-4 15-15-4-4 9-9 4 4 8-7z"/><path d="m29 61 7 7m-12-2 7 7"/>',
+    moneda:'<circle cx="48" cy="49" r="20"/><circle cx="48" cy="49" r="15"/><text x="48" y="57" text-anchor="middle" class="medallaNumero">5</text><path d="m29 31-4-4m42 4 4-4m-42 40-4 4m42-4 4 4"/>',
+    lira:'<path d="M36 31v19c0 12 6 19 12 19s12-7 12-19V31M36 32c7 5 17 5 24 0M33 32h30M41 41v15m14-15v15M36 70h24"/><circle cx="48" cy="51" r="3" class="medallaRelleno"/>',
+    musica:'<path d="M39 33v25a7 7 0 1 1-4-6V39l23-5v21a7 7 0 1 1-4-6V37z"/><text x="49" y="69" text-anchor="middle" class="medallaMicroNumero">22</text>',
+    goblin:'<path d="m30 42 12-6 6-8 6 8 12 6-7 8 1 13-12 7-12-7 1-13z"/><path d="m36 50 5 2m14-2-5 2m-10 8h16"/><circle cx="41" cy="48" r="2" class="medallaRelleno"/><circle cx="55" cy="48" r="2" class="medallaRelleno"/>',
+    reloj:'<path d="M37 29h22m-22 40h22M39 32c0 7 5 10 9 16 4-6 9-9 9-16M39 66c0-7 5-10 9-16 4 6 9 9 9 16"/><path d="M43 43h10m-10 12h10"/>',
+    alas:'<path d="M48 37v25m-10-18-13-7m13 12-13 7m33-12 13-7m-13 12 13 7"/><path d="M40 31h16v8H40zM40 62h16v8H40z"/><path d="m29 34-7 5 8 1m-8 13 8 1-7 5m45-25 7 5-8 1m8 13-8 1 7 5"/>',
+    rosa:'<path d="M48 69V51m0 8-10-8m10 3 10-8"/><path d="M48 50c-15 0-15-15-6-16-1-9 12-9 13 0 9 1 9 16-7 16z"/><path d="m43 42 5-5 5 5m-5-5v10"/>',
+    thal:'<path d="M48 27c10 10 16 17 16 27 0 10-7 17-16 17s-16-7-16-17c0-10 6-17 16-27z"/><path d="m48 39-6 15 6-3 6 3z" class="medallaRelleno"/><path d="M48 60v5"/>',
+    corona:'<path d="m29 39 8 8 11-16 11 16 8-8-4 25H33zM33 68h30"/><path d="m35 35-4-7m14 1v-7m14 13 4-7"/>',
+    corazonPergamino:'<path d="M35 32h25v30H35zM39 32c-5 3-5 8 0 10m17-10c5 3 5 8 0 10M39 52c-5 3-5 8 0 10m17-10c5 3 5 8 0 10"/><path d="M48 55c-13-8-6-17 0-10 6-7 13 2 0 10z" class="medallaRelleno"/>',
+    ceroDiez:'<text x="36" y="56" text-anchor="middle" class="medallaNumero">0</text><path d="M45 49h16m-6-6 6 6-6 6"/><text x="56" y="69" text-anchor="middle" class="medallaMicroNumero">10</text><path d="M28 31h40M28 70h40"/>',
+    petunia:'<path d="M48 31c3 8 8 9 15 8-4 7-2 12 4 16-9 1-12 5-13 12-5-5-10-5-15 0-1-7-4-11-13-12 6-4 8-9 4-16 7 1 12 0 15-8z"/><circle cx="48" cy="49" r="5" class="medallaRelleno"/><path d="m48 24 2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/>',
+    rul:'<path d="m48 28 15 9v24l-15 9-15-9V37z"/><path d="M48 36v26m-8-19 8-7 8 7m-8 12 8 7"/><circle cx="48" cy="49" r="3" class="medallaRelleno"/>',
+    rulCorona:'<path d="m30 42 7 6 11-15 11 15 7-6-4 22H34zM35 68h26"/><path d="M48 38v21m-7-13 7-5 7 5"/><circle cx="48" cy="51" r="3" class="medallaRelleno"/>',
+    apostoles:'<path d="M30 67v-9c0-7 5-11 10-11s10 4 10 11v9M46 67v-9c0-7 5-11 10-11s10 4 10 11v9"/><circle cx="40" cy="39" r="7"/><circle cx="56" cy="39" r="7"/><path d="M48 67v-12c0-8-5-13-12-13m12 13c0-8 5-13 12-13"/><circle cx="48" cy="32" r="7" class="medallaRelleno"/>',
+    oculto:'<path d="M29 59c3-18 10-29 19-29s16 11 19 29"/><path d="M35 56s5-8 13-8 13 8 13 8-5 8-13 8-13-8-13-8z"/><circle cx="48" cy="56" r="4" class="medallaRelleno"/><path d="m28 67 8-6m32 6-8-6"/>',
+    orejas:'<path d="M38 66c-7-8-10-20-7-30 2-8 10-8 11 1l3 15M58 66c7-8 10-20 7-30-2-8-10-8-11 1l-3 15"/><path d="M37 63c4 5 18 5 22 0"/><circle cx="43" cy="62" r="2" class="medallaRelleno"/><circle cx="53" cy="62" r="2" class="medallaRelleno"/>',
+    espejo:'<path d="M48 28 65 37v24L48 70 31 61V37z"/><path d="M48 31v36M42 42c-6 3-6 10 0 13m12-13c6 3 6 10 0 13"/><path d="m37 37 7 5m15-5-7 5m-15 15-7 5m29-5-7-5"/>'
+  });
+  function medallaLogro(def,tiene){
+    const motivo=MEDALLAS_LOGRO[def.id]||'escudo',rareza=def.tipo==='racha'||Number(def.meta)>=100?'eclipse':(['conjunto','campo','combate'].includes(def.tipo)?'oro':def.tipo==='contador'?'plata':'bronce'),sello=crear('span','coleccionLogroSello coleccionMedalla');
+    sello.dataset.medalla=motivo;sello.dataset.protagonista=def.protagonista;sello.dataset.rareza=rareza;sello.dataset.estado=tiene?'obtenida':'pendiente';sello.setAttribute('aria-hidden','true');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('coleccionMedallaSvg');svg.setAttribute('viewBox','0 0 96 96');svg.setAttribute('focusable','false');svg.setAttribute('aria-hidden','true');
+    svg.innerHTML='<path class="medallaCinta medallaCintaIzquierda" d="M26 20 43 28 39 55 23 47z"/><path class="medallaCinta medallaCintaDerecha" d="m70 20-17 8 4 27 16-8z"/><circle class="medallaHalo" cx="48" cy="50" r="33"/><circle class="medallaAro" cx="48" cy="50" r="29"/><circle class="medallaNucleo" cx="48" cy="50" r="23"/><path class="medallaRayas" d="m48 18 2 5 5 2-5 2-2 5-2-5-5-2 5-2zM22 50l5-2 2-5 2 5 5 2-5 2-2 5-2-5zM74 50l-5-2-2-5-2 5-5 2 5 2 2 5 2-5z"/><g class="medallaGlifo">'+(GLIFOS_MEDALLA[motivo]||GLIFOS_MEDALLA.escudo)+'</g><path class="medallaBrillo" d="M33 34c7-9 20-12 31-6"/>';
+    sello.append(svg);return sello;
+  }
   function boton(texto,accion,clase=''){
     const b=crear('button','coleccionBoton '+clase,texto);b.type='button';b.addEventListener('click',accion);return b;
   }
@@ -1042,13 +1085,12 @@
     const lista=crear('div','coleccionListaLogros');lista.setAttribute('role','region');lista.setAttribute('aria-label','Lista de logros del Domo');lista.tabIndex=0;
     const defs=api.definiciones.filter(def=>s.logrosProtagonista==='todos'||def.protagonista===s.logrosProtagonista);
     for(const def of defs){
-      const tiene=api.logrado(estadoLogros,def.id),progreso=api.progreso(def,estadoLogros),tarjeta=crear('article','coleccionLogro');tarjeta.classList.toggle('completado',tiene);tarjeta.dataset.logro=def.id;
-      const sello=crear('span','coleccionLogroSello');sello.append(icono(tiene?'check':'candado'));sello.setAttribute('aria-hidden','true');
-      const texto=crear('div','coleccionLogroTexto'),titulo=crear('h4','',def.titulo),descripcion=crear('p','',def.descripcion);texto.append(titulo,descripcion);
+      const tiene=api.logrado(estadoLogros,def.id),progreso=api.progreso(def,estadoLogros),tarjeta=crear('article','coleccionLogro');tarjeta.classList.toggle('completado',tiene);tarjeta.dataset.logro=def.id;tarjeta.dataset.protagonista=def.protagonista;
+      const sello=medallaLogro(def,tiene),titulo=crear('h4','coleccionLogroTitulo',def.titulo),descripcion=crear('p','coleccionLogroDescripcion',def.descripcion);
       const estadoPremio=tiene?(pendientesPorLogro.has(def.id)?'Sobre por elegir':'Sobre recibido'):progreso.texto;
       const meta=crear('div','coleccionLogroMeta'),barraProgreso=crear('progress');barraProgreso.max=Math.max(1,progreso.total);barraProgreso.value=Math.min(progreso.actual,progreso.total);barraProgreso.setAttribute('aria-label',def.titulo+': '+progreso.texto);meta.append(barraProgreso,crear('span','',estadoPremio));
       const premio=crear('span','coleccionLogroPremio','+1 sobre');premio.prepend(icono('sobre'));
-      tarjeta.append(sello,texto,meta,premio);
+      tarjeta.append(sello,titulo,descripcion,meta,premio);
       if(window.CAOZ_DEV?.aislado&&!tiene){
         const prueba=boton('Simular',()=>{const r=api.simularDesbloqueo(def.id);if(r.ok&&r.nuevos.length){mensaje('Logro desbloqueado: '+def.titulo+' · +1 sobre.');sonido('ui_confirm');}else mensaje('Ese logro ya estaba registrado o no se pudo guardar.',true);dibujarLogros();actualizarCabecera();},'coleccionLogroPrueba');prueba.setAttribute('aria-label','Simular logro '+def.titulo);tarjeta.append(prueba);
       }
