@@ -221,11 +221,17 @@
   // Parry (Espacio): Adreida alza el hacha 0,35 s. Si el golpe llega en las primeras 0,18 s es perfecto: no hace daño,
   // aturde al atacante (2 s; 1 s el jefe) y lo deja expuesto (tus golpes le hacen el doble). Más tarde, bloquea el 70%.
   // Un parry al aire deja medio segundo sin poder repetirlo. Por la espalda no se para, ni el golpazo de Can (se esquiva).
-  const PARRY={dur:.35,perfecto:.18,cd:.5,bloqueo:.3,aturde:2,aturdeJefe:1,expuesto:2};
+  const PARRY={dur:.35,perfecto:.18,perfectoLanza:.25,cd:.5,bloqueo:.3,aturde:2,aturdeJefe:1,expuesto:2};
   const hitboxMat=new THREE.MeshBasicMaterial({visible:false});
   let heroe=null,sigId=1;const enemigos=[],lanzas=[],globos=[];
   function cuerpoDe(tipo){const m=MOD.crear(tipo);const caja=new THREE.Mesh(new THREE.CylinderGeometry(m.radio*1.35,m.radio*1.35,m.alto*1.05,10).translate(0,m.alto*.52,0),hitboxMat);m.raiz.add(caja);m.caja=caja;escena.add(m.raiz);return m;}
-  function crearHeroe(){const m=cuerpoDe('adreida');heroe={id:0,m,pos:new V3(0,0,4),dir:Math.PI,giro:0,estado:'quieto',t:0,alma:120,almaMax:120,furia:0,atqBase:12,atq:12,cd:{salto:0,provocar:0,esquiva:0,parry:0},parrys:0,bloqueos:0,parryExito:false,escudo:0,fase:0,paso:0,golpeo:false,tick:0,
+  // Se juega con Adreida (cuerpo a cuerpo, el hacha a dos manos) o con Mohamed (a distancia, una pistola de seis balas).
+  const HEROES={adreida:{nombre:'Adreida',alma:120,atq:12,retrato:'lider_adreida'},
+    mohamed:{nombre:'Mohamed',alma:100,atq:9,retrato:'lider_mohamed',cargador:6,cadencia:.24,recarga:1.1,alcance:15,vel:30}};
+  let tipoHeroe=q.get('heroe')==='mohamed'?'mohamed':'adreida';
+  const aDistancia=()=>tipoHeroe==='mohamed';
+  function crearHeroe(){const T=HEROES[tipoHeroe],m=cuerpoDe(tipoHeroe);heroe={id:0,tipo:tipoHeroe,m,pos:new V3(0,0,4),dir:Math.PI,giro:0,estado:'quieto',t:0,alma:T.alma,almaMax:T.alma,furia:0,atqBase:T.atq,atq:T.atq,
+    balas:T.cargador||0,recargaT:0,cadT:0,disparoT:9,disparos:0,cd:{salto:0,provocar:0,esquiva:0,parry:0},parrys:0,bloqueos:0,parryExito:false,escudo:0,fase:0,paso:0,golpeo:false,tick:0,
     combo:0,finGolpe:-9,invul:0,vatq:1,dirEsq:new V3(),destello:0,dolor:1,vivo:true,botin:[],llaves:0,objetivoSalto:null,origenSalto:null,radio:m.radio,muerteT:0,golpeDe:null};m.caja.userData.heroe=true;}
   function crearEnemigo(tipo,x,z,opc={}){const m=cuerpoDe(tipo),d=DEF[tipo],e={id:sigId++,tipo,m,d,pos:new V3(x,0,z),dir:rumbo(new V3(x,0,z),new V3()),vida:d.vida,vidaMax:d.vida,estado:opc.quieto?'quieto':'entra',t:0,cd:.4+rnd()*.8,emp:new V3(),fase:rnd()*TAU,paso:0,
       destello:0,radio:m.radio,rodeo:(rnd()-.5)*1.6,provocado:0,dentro:Math.hypot(x,z)<R-.5,quieto:!!opc.quieto,ataques:0,gritó:false,ataque:null,alerta:null,aturdidoT:0,estrellas:null,culpableT:-9};
@@ -290,19 +296,41 @@
     if(herida&&d<1){const c=Math.round(heroe.almaMax*.2);heroe.alma=Math.min(heroe.almaMax,heroe.alma+c);numero(heroe.pos.clone().setY(2.2),'+'+c,'cura');chispas(g.m.position,16,[1,.25,.3],3,.4);escena.remove(g.m);globos.splice(globos.indexOf(g),1);}}}
   const geoLanza=new THREE.CylinderGeometry(.018,.018,1.2,5).rotateX(Math.PI/2),geoPunta=new THREE.ConeGeometry(.04,.16,4).rotateX(Math.PI/2).translate(0,0,.66);
   // La lanza sigue exactamente la línea que se dibujó (su ancho es el de la línea) y deja una estela roja.
-  const matPuntaLanza=new THREE.MeshBasicMaterial({color:0xff5a30,toneMapped:false});
-  function lanzar(e,a){const g=new THREE.Group();g.add(new THREE.Mesh(geoLanza,MAT.madera),new THREE.Mesh(geoPunta,matPuntaLanza));const dir=frente(a.dir),p=e.pos.clone().setY(1.1);
-    g.position.copy(p);g.lookAt(p.clone().add(dir));g.traverse(o=>{o.castShadow=true;});escena.add(g);lanzas.push({g,dir,vel:16,t0:reloj.t,dano:a.dano,clavada:0,e,origen:e.pos.clone(),radio:a.ancho/2});}
+  const matPuntaLanza=new THREE.MeshBasicMaterial({color:0xffb070,toneMapped:false});
+  // Un halo brillante (aditivo, lo agranda el resplandor) alrededor de lo que vuela: se ve de lejos y marca el momento del parry.
+  const geoHalo=new THREE.SphereGeometry(1,14,10);
+  const halo=(color,r)=>{const m=new THREE.Mesh(geoHalo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.6,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));m.scale.setScalar(r);m.renderOrder=3;return m;};
+  function lanzar(e,a){const g=new THREE.Group(),punta=new THREE.Mesh(geoPunta,matPuntaLanza);punta.scale.setScalar(1.7);const brillo=halo(0xff7a30,.36);brillo.position.z=.62;
+    g.add(new THREE.Mesh(geoLanza,MAT.madera),punta,brillo);const dir=frente(a.dir),p=e.pos.clone().setY(1.1);
+    g.position.copy(p);g.lookAt(p.clone().add(dir));g.traverse(o=>{if(o!==brillo)o.castShadow=true;});escena.add(g);lanzas.push({g,brillo,dir,vel:16,t0:reloj.t,dano:a.dano,clavada:0,e,origen:e.pos.clone(),radio:a.ancho/2});}
   function pasoLanzas(dt){for(const l of [...lanzas]){if(l.clavada){if(reloj.t-l.clavada>1.2){escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);}continue;}
     l.g.position.addScaledVector(l.dir,l.vel*dt);const p=l.g.position;
-    if(rnd()<.8)particula(p.x,p.y,p.z,0,0,0,.25,.5,2.4,.5,.2,0);
+    // La estela, densa; y el halo: naranja latiendo mientras viene, blanco dorado y el doble de grande justo en la ventana del parry perfecto.
+    for(let i=0;i<2;i++)particula(p.x+(rnd()-.5)*.1,p.y+(rnd()-.5)*.1,p.z+(rnd()-.5)*.1,0,0,0,.35,.8,3,.9,.3,0);
+    if(!l.devuelta){const v=heroe.pos.clone().sub(p).setY(0),d=v.length(),llega=v.dot(l.dir)>d*.7?Math.max(0,d-heroe.radio*.6-l.radio)/l.vel:9,ya=llega<=PARRY.perfectoLanza;
+      l.brillo.material.color.setHex(ya?0xfff0b0:0xff7a30);l.brillo.scale.setScalar(ya?.7:.36+.07*Math.sin(reloj.t*32));l.ahora=ya;}
+    else{l.brillo.material.color.setHex(0xffd060);l.brillo.scale.setScalar(.5);}
     if(l.devuelta){const e=enemigos.find(e=>e.estado!=='muere'&&plano(e.pos,p)<e.radio+.25);if(e){danar(e,l.dano*3,{empuje:2.5,crit:true});chispas(p,16,[1,.8,.35],5,.45);escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);continue;}}
-    else if(heroe.vivo&&!l.pasada&&plano(p,heroe.pos)<heroe.radio*.6+l.radio&&p.y<2.2){const par=parar(p,false);
+    else if(heroe.vivo&&!l.pasada&&plano(p,heroe.pos)<heroe.radio*.6+l.radio&&p.y<2.2){const par=parar(p,false,PARRY.perfectoLanza);
       if(heroe.invul>0){esquivado(l.e);l.pasada=true;}
       else if(par==='perfecto'){parryPerfecto(null,p.clone());l.devuelta=true;l.dir.negate();l.vel=22;l.t0=reloj.t;l.g.lookAt(p.clone().add(l.dir));numero(p.clone().setY(2),'¡Desviada!','parry');continue;}
       else if(par==='bloqueo'){bloqueado(l.dano,l.origen,enemigos.includes(l.e)?l.e:null);escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);continue;}
       else{herir(l.dano,l.origen,enemigos.includes(l.e)?l.e:null);chispas(p,10,[1,.4,.3],4,.4);escena.remove(l.g);lanzas.splice(lanzas.indexOf(l),1);continue;}}
     if(obstaculos.some(o=>Math.hypot(p.x-o.x,p.z-o.z)<o.r)||Math.hypot(p.x,p.z)>R+4||p.y<.1||reloj.t-l.t0>2){l.clavada=reloj.t;chispas(p,5,[.8,.7,.6],2,.3);}}}
+
+  // Las balas de Mohamed: rápidas, doradas y con estela; no interrumpen (así no se aturde a nadie a tiros), pero dan Furia.
+  const balas=[],matBala=new THREE.MeshBasicMaterial({color:0xfff0c0,toneMapped:false}),geoBala=new THREE.SphereGeometry(.07,8,6);
+  function disparar(dir=heroe.dir,opc={}){const h=heroe,T=HEROES.mohamed,desde=(h.m.M.boca?h.m.M.boca.getWorldPosition(new V3()):h.pos.clone().setY(1.35));
+    if(!opc.gratis){h.balas--;h.disparos++;h.cadT=T.cadencia;h.disparoT=0;ent.pendiente=false;if(h.balas<=0)h.recargaT=T.recarga;}
+    const g=new THREE.Group();g.add(new THREE.Mesh(geoBala,matBala),halo(0xffc860,.24));g.position.copy(desde);escena.add(g);
+    balas.push({g,pos:new V3(desde.x,0,desde.z),y:desde.y,dir:frente(dir),vel:T.vel,dist:0,dano:opc.dano??h.atq});
+    chispas(desde,5,[1,.85,.5],3,.35);particula(desde.x,desde.y,desde.z,0,0,0,.08,2.2,3,2.4,1.4,0);}
+  function pasoBalas(dt){for(const b of [...balas]){const paso=b.vel*dt;b.pos.addScaledVector(b.dir,paso);b.dist+=paso;b.y+=(1.15-b.y)*Math.min(1,dt*6);b.g.position.set(b.pos.x,b.y,b.pos.z);
+    particula(b.pos.x,b.y,b.pos.z,0,0,0,.18,.45,2.6,2,1,0);
+    const e=enemigos.find(e=>e.estado!=='muere'&&plano(e.pos,b.pos)<e.radio+.18);
+    const fuera=b.dist>HEROES.mohamed.alcance||obstaculos.some(o=>Math.hypot(b.pos.x-o.x,b.pos.z-o.z)<o.r);
+    if(e){danar(e,b.dano,{empuje:.45,sinDolor:true});heroe.furia=Math.min(100,heroe.furia+3);chispas(b.pos.clone().setY(1.1),8,[1,.8,.45],4,.35);}
+    if(e||fuera){if(fuera&&!e)chispas(b.pos.clone().setY(b.y),4,[.9,.8,.6],2,.3);escena.remove(b.g);balas.splice(balas.indexOf(b),1);}}}
 
   /* ---- Colisiones --------------------------------------------------------------------- */
   function dentroPlaza(p,r){for(const o of obstaculos){const dx=p.x-o.x,dz=p.z-o.z,d=Math.hypot(dx,dz),m=o.r+r;if(d<m&&d>1e-4){p.x=o.x+dx/d*m;p.z=o.z+dz/d*m;}}
@@ -337,7 +365,8 @@
       heroe.cd.esquiva=H.cd;heroe.invul=DUR_ESQ+.1;heroe.esqDesde=heroe.pos.clone();cambiar(heroe,'esquiva');return true;}
     if(!libre())return false;if(heroe.furia<H.coste){rechazo(h,'Te falta Furia');return false;}if((heroe.cd[h]||0)>0){rechazo(h,'Aún no está lista');return false;}
     heroe.furia-=H.coste;if(H.cd)heroe.cd[h]=H.cd;
-    if(h==='torbellino'){cambiar(heroe,'torbellino');heroe.tick=0;}
+    if(h==='torbellino'&&aDistancia()){const base=rumbo(heroe.pos,puntoApuntado());heroe.dir=base;for(let i=-3;i<=3;i++)disparar(base+i*.12,{gratis:true,dano:Math.round(heroe.atq*1.2)});cambiar(heroe,'abanico');temblar(.1);}
+    else if(h==='torbellino'){cambiar(heroe,'torbellino');heroe.tick=0;}
     if(h==='salto'){const p=punto?punto.clone():puntoApuntado(),d=plano(p,heroe.pos);if(d>8)p.sub(heroe.pos).multiplyScalar(8/d).add(heroe.pos);
       p.y=0;dentroPlaza(p,heroe.radio);heroe.origenSalto=heroe.pos.clone();heroe.objetivoSalto=p;heroe.dir=rumbo(heroe.pos,p);cambiar(heroe,'salto');heroe.golpeo=false;}
     if(h==='provocar'){cambiar(heroe,'grito');heroe.golpeo=false;}
@@ -368,7 +397,13 @@
     let movido=0;const mov=ctl.mov;
     const andar=(v,vel)=>{if(v.lengthSq()<.01)return 0;const l=Math.min(1,v.length()),paso=vel*l*dt;h.pos.x+=v.x/v.length()*paso;h.pos.z+=v.z/v.length()*paso;return paso;};
     if(h.estado==='muerta'){h.muerteT+=dt;return;}
-    if(['quieto','andar'].includes(h.estado)){movido=andar(mov,VEL);if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
+    if(aDistancia()){const T=HEROES.mohamed;h.cadT-=dt*h.vatq;h.disparoT+=dt;if(h.recargaT>0){h.recargaT-=dt*h.vatq;if(h.recargaT<=0){h.balas=T.cargador;numero(h.pos.clone().setY(2.3),'¡Cargada!','esquivado');}}}
+    if(['quieto','andar'].includes(h.estado)&&aDistancia()){const apunta=ctl.atacar,obj=apunta?puntoApuntado():null;movido=andar(mov,VEL*(apunta?.7:1));
+      if(obj&&plano(obj,h.pos)>.1)h.dir+=difAng(h.dir,rumbo(h.pos,obj))*Math.min(1,dt*22);else if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
+      if(apunta&&h.balas>0&&h.recargaT<=0&&h.cadT<=0&&(!obj||plano(obj,h.pos)<=.1||Math.abs(difAng(h.dir,rumbo(h.pos,obj)))<.3))disparar();
+      h.estado=movido>0?'andar':'quieto';}
+    else if(h.estado==='abanico'){if(h.t>=.3)cambiar(h,'quieto');}
+    else if(['quieto','andar'].includes(h.estado)){movido=andar(mov,VEL);if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
       if(ctl.atacar)iniciarGolpe();else h.estado=movido>0?'andar':'quieto';}
     else if(h.estado==='golpe'){const C=COMBO[h.combo];h.t+=dt*(h.vatq-1);// más velocidad de ataque: la animación y el impacto llegan antes
       // Un paso adelante al golpear, salvo si ya hay alguien delante.
@@ -387,6 +422,8 @@
       if(rnd()<.8){const a=rnd()*TAU;particula(h.pos.x+Math.cos(a)*2,1+rnd()*.3,h.pos.z+Math.sin(a)*2,-Math.sin(a)*6,.3,Math.cos(a)*6,.25,.5,2.2,1.6,1.2,0);}
       if(h.t>=D)cambiar(h,'quieto');}
     else if(h.estado==='salto'){const D=.72,k=Math.min(1,h.t/D),m=tramo(k,.12,.86);h.pos.lerpVectors(h.origenSalto,h.objetivoSalto,m);h.alto=Math.sin(Math.PI*m)*2.4;h.invul=Math.max(h.invul,k<.86?.05:0);
+      // Mohamed cae de la voltereta disparando en corona; Adreida clava el hacha.
+      if(!h.golpeo&&k>=.86&&aDistancia()){h.golpeo=true;h.alto=0;for(let i=0;i<10;i++)disparar(i*TAU/10,{gratis:true});marca('onda',h.pos.x,h.pos.z,3,0xffd070,.4);polvo(h.pos,16,1);}
       if(!h.golpeo&&k>=.86){h.golpeo=true;h.alto=0;golpearEn(3.2,Math.PI,h.atq*1.7,{empuje:4.5,aturde:1.1,chispas:14});marca('onda',h.pos.x,h.pos.z,4.2,0xffb050,.5);polvo(h.pos,40,2);chispas(h.pos.clone().setY(.3),30,[1,.7,.35],8,.5);temblar(.5);paron=.08;}
       if(h.t>=D){cambiar(h,'quieto');h.alto=0;}}
     else if(h.estado==='grito'){if(!h.golpeo&&h.t>=.18){h.golpeo=true;h.escudo=4;h.furia=Math.min(100,h.furia+35);marca('onda',h.pos.x,h.pos.z,10,0xffd070,.7);chispas(h.pos.clone().setY(1.4),40,[1,.85,.4],7,.5);temblar(.2);
@@ -415,8 +452,8 @@
     if(a.forma==='cono'){if(d>a.radio+margen)return false;if(d<e.radio+margen)return true;return Math.acos(Math.max(-1,Math.min(1,(dx*fx+dz*fz)/d)))<a.ang+Math.asin(Math.min(1,margen/d));}
     const largo=dx*fx+dz*fz,lado=Math.abs(-dx*fz+dz*fx);return largo>-margen&&largo<a.largo&&lado<a.ancho/2+margen;}
   // ¿Lo para? Tiene que estar en parry, de cara (±60°) y no ser un imparable.
-  function parar(desde,imparable){const H=heroe;if(H.estado!=='parry'||imparable)return null;const v=desde.clone().sub(H.pos).setY(0);
-    if(v.lengthSq()>1e-6&&v.normalize().dot(frente(H.dir))<Math.cos(1.05))return null;return H.t<=PARRY.perfecto?'perfecto':'bloqueo';}
+  function parar(desde,imparable,ventana=PARRY.perfecto){const H=heroe;if(H.estado!=='parry'||imparable)return null;const v=desde.clone().sub(H.pos).setY(0);
+    if(v.lengthSq()>1e-6&&v.normalize().dot(frente(H.dir))<Math.cos(1.05))return null;return H.t<=ventana?'perfecto':'bloqueo';}
   function parryPerfecto(e,p){const H=heroe;H.parryExito=true;H.parrys++;H.cd.parry=0;H.furia=Math.min(100,H.furia+20);cambiar(H,'quieto');
     numero(H.pos.clone().setY(2.5),'¡Parry!','parry');chispas(p,34,[1,.85,.35],7,.55);marca('onda',H.pos.x,H.pos.z,2.6,0xffd060,.35);paron=.16;temblar(.2);
     if(e&&e.estado!=='muere'){cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.d.jefe?PARRY.aturdeJefe:PARRY.aturde;e.expuestoHasta=reloj.t+e.aturdidoT+.3;e.emp.addScaledVector(e.pos.clone().sub(H.pos).setY(0).normalize(),2.2);e.culpableT=-9;}}
@@ -490,7 +527,7 @@
     ol.i++;const O=OLEADAS[ol.i];let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(ol.cola[i][0]!=='can'&&ol.cola[j][0]!=='can')[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;banner(O.nombre,O.jefe?'El jefe del asedio entra en la plaza.':'Llegan por las calles.');}
-  function reiniciar(){for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;
+  function reiniciar(){for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);escena.remove(heroe.m.raiz);crearHeroe();$('botin').innerHTML='';Object.assign(ol,{i:-1,cola:[],espera:1.8,fin:false});$('fin').hidden=true;finMostrado=false;}
 
   /* ---- Entrada: teclado, ratón y táctil ---------------------------------------------------
@@ -550,7 +587,17 @@
     // Una lanza a punto de llegar: parry (la devuelve).
     {const am=amenaza();if(am&&am.t<=.1&&!h.cd.parry&&h.estado!=='parry'){usar('parry');return c;}}
     if(!libre())return c;
-    if(!vivos.length){const b=botines.filter(b=>b.listo&&!b.recogida&&!b.volando).sort((a,d)=>plano(a.pos,h.pos)-plano(d.pos,h.pos))[0];
+    if(aDistancia()){const vivosD=enemigos.filter(e=>e.estado!=='muere'&&Math.hypot(e.pos.x,e.pos.z)<R+.5);if(!vivosD.length)return pilotoSinEnemigos(c);
+      const exp=vivosD.filter(e=>e.expuestoHasta>reloj.t),obj=(exp.length?exp:vivosD).sort((a,b)=>plano(a.pos,h.pos)-plano(b.pos,h.pos))[0],d=plano(obj.pos,h.pos),cerca=vivosD.filter(e=>plano(e.pos,h.pos)<3).length;
+      if(!h.cd.provocar&&cerca>=3){usar('provocar');return c;}
+      if(h.furia>=25&&!h.cd.salto&&cerca>=2){const fuera=h.pos.clone().sub(obj.pos).setY(0).normalize().multiplyScalar(6).add(h.pos);usar('salto',fuera);return c;}
+      if(h.furia>=30&&vivosD.filter(e=>plano(e.pos,h.pos)<8).length>=3){usar('torbellino');return c;}
+      const lejos=h.pos.clone().sub(obj.pos).setY(0).normalize(),lado=new V3(-lejos.z,0,lejos.x);
+      if(d<4.5)c.mov.copy(lejos).addScaledVector(lado,.6).normalize();else if(d>9)c.mov.copy(lejos).negate();
+      if(Math.hypot(h.pos.x,h.pos.z)>R-2.5)c.mov.addScaledVector(h.pos.clone().setY(0).normalize(),-1);
+      c.atacar=true;c.apunta=obj.pos.clone();return c;}
+    if(!vivos.length)return pilotoSinEnemigos(c);
+    function pilotoSinEnemigos(c){const b=botines.filter(b=>b.listo&&!b.recogida&&!b.volando).sort((a,d)=>plano(a.pos,h.pos)-plano(d.pos,h.pos))[0];
       const g=globos[0],meta=b?b.pos:g&&h.alma<h.almaMax?g.pos:plano(h.pos,new V3())>3?new V3(0,0,1):null;if(meta)c.mov.copy(meta).sub(h.pos).setY(0).normalize();return c;}
     const cerca=r=>vivos.filter(e=>plano(e.pos,h.pos)<r);
     if(h.alma<h.almaMax*.4&&globos.length){c.mov.copy(globos[0].pos).sub(h.pos).setY(0).normalize();return c;}
@@ -572,7 +619,7 @@
   function hud(){const h=heroe;$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');$('almaTxt').textContent=Math.ceil(h.alma)+' / '+h.almaMax;
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');$('furiaTxt').textContent=Math.floor(h.furia);
     for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0;b.style.setProperty('--cd',(H.cd?cd/H.cd*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',{torbellino:'torbellino',salto:'salto',provocar:'grito',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
-    const st=`<span>Parrys perfectos <b>${h.parrys}</b></span><span>ATQ <b>${h.atq}</b></span><span>Vel. ataque <b>${Math.round(h.vatq*100)}%</b></span><span>Alma <b>${h.almaMax}</b></span><span>Llaves <b>${h.llaves}</b></span>`+(h.escudo>0?'<span class="escudo">Provocar: −50% daño</span>':'');if(st!==hud.st){hud.st=st;$('stats').innerHTML=st;}
+    const st=(aDistancia()?`<span>Balas <b>${h.recargaT>0?'recargando…':h.balas+' / '+HEROES.mohamed.cargador}</b></span>`:'')+`<span>Parrys perfectos <b>${h.parrys}</b></span><span>ATQ <b>${h.atq}</b></span><span>Vel. ataque <b>${Math.round(h.vatq*100)}%</b></span><span>Alma <b>${h.almaMax}</b></span><span>Llaves <b>${h.llaves}</b></span>`+(h.escudo>0?'<span class="escudo">Provocar: −50% daño</span>':'');if(st!==hud.st){hud.st=st;$('stats').innerHTML=st;}
     const vivos=enemigos.filter(e=>e.estado!=='muere').length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':OLEADAS[ol.i].nombre+' · '+vivos+' en pie'):'Enemigos en pie: '+vivos;
     const o=ent.sobre?.d?ent.sobre:enemigos.includes(h.ultimo)&&h.ultimo.estado!=='muere'?h.ultimo:null;$('objetivo').hidden=!o;if(o){$('objNombre').textContent=o.m.nombre+(o.d.jefe?' · Jefe':'');$('objVida').style.width=(Math.max(0,o.vida)/o.vidaMax*100).toFixed(1)+'%';}
     flechas();golpeDir();
@@ -611,12 +658,15 @@
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
     leerControles();
-    pasoHeroe(dt);for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);
+    pasoHeroe(dt);for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);
     // Poses y posiciones de los modelos.
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
-    const ph=poses.heroe||{quieto:['quieto'],andar:['andar'],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:['salto',h.t/.72],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.t/1)]}[h.estado];
+    const ph=poses.heroe||{quieto:['quieto'],andar:['andar'],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.t/1)]}[h.estado];
     MOD.posar(hm,{anim:h.paso>.05&&h.estado==='andar'?'andar':ph[0],k:ph[1],t:reloj.t,fase:h.fase,paso:h.paso});
+    // Mohamed apuntando o recién disparado: el brazo de la pistola al frente (sobre el paso), con el retroceso.
+    if(aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45)){const r=Math.max(0,1-h.disparoT*6),H=hm.H;
+      H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
     if(h.dolor<1&&['quieto','andar'].includes(h.estado)){hm.H.torso.rotation.x-=.25*(1-h.dolor);}
     // Rojo al recibir; azulado y translúcido mientras es invulnerable (esquiva).
     if(h.destello>0){hm.M.u.uDestello.value=h.destello*.8;hm.M.u.uColorD.value.setRGB(1,.25,.2);}else{hm.M.u.uDestello.value=h.invul>0?.4:0;hm.M.u.uColorD.value.setRGB(.55,.8,1.3);}
@@ -670,6 +720,14 @@
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};
   $('demo').onclick=()=>{ent.piloto=!ent.piloto;$('demo').setAttribute('aria-pressed',String(ent.piloto));};
   $('reiniciar').onclick=()=>reiniciar();
+  // Elegir personaje: cambia el héroe y los rótulos de la barra (sus habilidades son otras) y vuelve a empezar.
+  function rotulos(){const d=aDistancia(),pon=(h,icono,txt)=>{const b=document.querySelector(`[data-hab="${h}"]`);if(!b)return;b.querySelector('span').textContent=icono;b.querySelector('small').textContent=txt;};
+    pon('tajo',d?'➶':'⚔',d?'Disparar':'Atacar');pon('torbellino',d?'✺':'↻',d?'Abanico':'Torbellino');pon('salto',d?'⤿':'⤓',d?'Voltereta':'Salto');
+    const r=document.querySelector('.apRetrato');r.src='./art/'+HEROES[tipoHeroe].retrato+'.webp';r.alt=HEROES[tipoHeroe].nombre;
+    for(const b of document.querySelectorAll('[data-heroe]'))b.setAttribute('aria-pressed',String(b.dataset.heroe===tipoHeroe));}
+  function elegir(t){if(!HEROES[t]||t===tipoHeroe)return;tipoHeroe=t;rotulos();reiniciar();}
+  for(const b of document.querySelectorAll('[data-heroe]'))b.onclick=()=>elegir(b.dataset.heroe);
+  rotulos();
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
   function dibujar(){renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
     if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}else aviso('La escena sale negra en esta tarjeta gráfica ('+gpu+'). Cuéntanos qué navegador y dispositivo usas.');}}}
@@ -695,9 +753,9 @@
     async avanzar(s,fps=30){const n=Math.max(1,Math.round(s*fps));for(let i=0;i<n;i++){paso(1/fps);if(i%3===2)await new Promise(r=>setTimeout(r,0));}dibujar();return this.estado();},
     dibujar(){dibujar();const i=renderer.info.render;return {llamadas:i.calls,triangulos:i.triangles};},
     estado:()=>({listo,webgl2:true,hdr,muestras,simple,version:THREE.REVISION,pases:[['render',pasoRender],['oclusion',oclusion],['saneado',saneado],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n),
-      heroe:{t:+heroe.t.toFixed(3),vatq:+heroe.vatq.toFixed(2),punta:(()=>{const p=heroe.m.M.punta.getWorldPosition(new V3());return [+p.x.toFixed(2),+p.y.toFixed(2),+p.z.toFixed(2)];})(),combo:heroe.combo,invul:+heroe.invul.toFixed(2),parrys:heroe.parrys,bloqueos:heroe.bloqueos,esquivados:heroe.esquivados||0,golpeDe:heroe.golpeDe?.id??null,x:+heroe.pos.x.toFixed(2),z:+heroe.pos.z.toFixed(2),alto:+(heroe.alto||0).toFixed(2),alma:heroe.alma,almaMax:heroe.almaMax,furia:+heroe.furia.toFixed(1),atq:heroe.atq,estado:heroe.estado,vivo:heroe.vivo,escudo:+heroe.escudo.toFixed(2),cd:{...heroe.cd},llaves:heroe.llaves,botin:heroe.botin.map(b=>b.id+'/'+b.ed),dir:+heroe.dir.toFixed(3)},
+      heroe:{t:+heroe.t.toFixed(3),vatq:+heroe.vatq.toFixed(2),punta:(()=>{const p=heroe.m.M.punta.getWorldPosition(new V3());return [+p.x.toFixed(2),+p.y.toFixed(2),+p.z.toFixed(2)];})(),combo:heroe.combo,invul:+heroe.invul.toFixed(2),parrys:heroe.parrys,tipo:heroe.tipo,balas:heroe.balas,recarga:+heroe.recargaT.toFixed(2),disparos:heroe.disparos,bloqueos:heroe.bloqueos,esquivados:heroe.esquivados||0,golpeDe:heroe.golpeDe?.id??null,x:+heroe.pos.x.toFixed(2),z:+heroe.pos.z.toFixed(2),alto:+(heroe.alto||0).toFixed(2),alma:heroe.alma,almaMax:heroe.almaMax,furia:+heroe.furia.toFixed(1),atq:heroe.atq,estado:heroe.estado,vivo:heroe.vivo,escudo:+heroe.escudo.toFixed(2),cd:{...heroe.cd},llaves:heroe.llaves,botin:heroe.botin.map(b=>b.id+'/'+b.ed),dir:+heroe.dir.toFixed(3)},
       enemigos:enemigos.map(resumen),botines:botines.map(b=>({id:b.id,ed:b.ed,listo:b.listo,volando:b.volando,x:+b.pos.x.toFixed(2),z:+b.pos.z.toFixed(2),mirada:+b.mirada.toFixed(2),escala:b.g?+(b.g.scale.x/SB).toFixed(2):0,nombre:b.nombre?.el.textContent||''})),
-      globos:globos.length,alertas:etiquetas.filter(x=>x.el.classList.contains('apAlerta')&&!x.el.hidden).length,flechas:flechasEl.filter(f=>!f.hidden&&f.parentNode).length,golpeDir:+$('golpeDir').style.opacity||0,lanzas:lanzas.filter(l=>!l.clavada).length,marcas:marcas.filter(o=>!o.fijo).map(o=>o.tipo),oleada:ol.i,fin:ol.fin,finVisible:!$('fin').hidden,finTitulo:$('finTitulo').textContent,
+      globos:globos.length,alertas:etiquetas.filter(x=>x.el.classList.contains('apAlerta')&&!x.el.hidden).length,flechas:flechasEl.filter(f=>!f.hidden&&f.parentNode).length,golpeDir:+$('golpeDir').style.opacity||0,lanzas:lanzas.filter(l=>!l.clavada).length,lanzaAhora:lanzas.some(l=>l.ahora&&!l.clavada),balas:balas.length,marcas:marcas.filter(o=>!o.fijo).map(o=>o.tipo),oleada:ol.i,fin:ol.fin,finVisible:!$('fin').hidden,finTitulo:$('finTitulo').textContent,
       sobre:ent.sobre?.d?'enemigo:'+ent.sobre.id:ent.sobre?.bono?'botin:'+ent.sobre.id:null,objetivo:$('objetivo').hidden?null:$('objNombre').textContent,tactil:ent.tactil,temblor:vista.temblor,
       mallasHeroe:heroe.m.mallas.length,triangulosHeroe:heroe.m.mallas.reduce((a,m)=>a+m.geometry.attributes.position.count/3,0)}),
     oleadas(v){ol.auto=v;},
@@ -715,6 +773,7 @@
     camara(p){Object.assign(vista,p);},
     efecto(k,v){efectos[k]=v;const c=document.querySelector(`[data-efecto="${k}"]`);if(c)c.checked=v;aplicarEfectos();},
     reiniciar,
+    elegir,
     nan(v,x=0,z=0){puntoNaN.visible=v;puntoNaN.position.set(x,.3,z);},
     saneado(v){saneado.enabled=v;},
     pantalla:(x,y,z)=>aPantalla(new V3(x,y,z)),

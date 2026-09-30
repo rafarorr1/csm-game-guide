@@ -30,7 +30,7 @@ const temporal=fs.mkdtempSync(path.join(os.tmpdir(),'caoz-arpg-three-'));
 try{
   const destino=path.join(temporal,'arpg-three'),p=exportar(destino);
   const archivos=fs.readdirSync(destino,{recursive:true}).filter(f=>fs.statSync(path.join(destino,f)).isFile()).sort();
-  const arte=['art/logo.webp','art/lider_adreida.webp',...p.cartas.map(c=>{const [id,ed]=c.split('/');return ed==='normal'?'art/'+id+'.webp':'art/'+id+'-'+ed+'-v1.webp';})];
+  const arte=['art/logo.webp','art/lider_adreida.webp','art/lider_mohamed.webp',...p.cartas.map(c=>{const [id,ed]=c.split('/');return ed==='normal'?'art/'+id+'.webp':'art/'+id+'-'+ed+'-v1.webp';})];
   const esperados=['index.html','_headers','procedencia.json','generado/datos.js',...entornoArpgThree,...componentesArpgThree.map(f=>'juego/'+f),...arte];
   for(const f of esperados)assert.ok(archivos.includes(f),'Se publica '+f);
   assert.deepEqual(archivos.filter(f=>!esperados.includes(f)),[],'Sólo publica sus dependencias');
@@ -173,6 +173,27 @@ try{
     await pagina.keyboard.press('Space');e=await r('r.avanzar(.4)');assert.ok(e.heroe.cd.parry>0&&e.heroe.estado!=='parry','Un parry al aire deja un momento sin parry');
     assert.deepEqual(errores,[],'Sin errores con el parry');await contexto.close();}
   console.log('✓ Parry: perfecto aturde y deja expuesto (el doble de daño), tardío bloquea el 70%, al aire se paga');
+
+  // ---- Mohamed, a distancia: pistola de seis balas, recarga, Abanico, Voltereta; y las lanzas que brillan para el parry ----
+  {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.elegir("mohamed")');
+    let e=await r('r.avanzar(.2)');assert.ok(e.heroe.tipo==='mohamed'&&e.heroe.alma===100&&e.heroe.balas===6&&e.mallasHeroe===3,'Se puede jugar con Mohamed: 100 de Alma y seis balas');
+    await r('r.heroe({x:0,z:2})');const g=await r('r.invocar("goblin",0,-4,true)');await r('r.control({atacar:true,apunta:[0,-4]})');
+    for(let i=0;i<16&&e.enemigos.find(x=>x.id===g&&x.estado!=='muere');i++)e=await r('r.avanzar(.2)');
+    assert.ok(!e.enemigos.find(x=>x.id===g&&x.estado!=='muere'),'Disparando hacia el cursor, las balas matan al goblin a distancia');
+    for(let i=0;i<20&&!(e.heroe.recarga>0);i++)e=await r('r.avanzar(.1)');await r('r.control(null)');assert.ok(e.heroe.recarga>0&&e.heroe.balas===0,'Al vaciar el cargador recarga sola');
+    e=await r('r.avanzar(1.3)');assert.equal(e.heroe.balas,6,'…y vuelve a tener seis balas');
+    const ids=[];for(let i=0;i<4;i++)ids.push(await r('r.invocar("goblin",a[0],-5,true)',i*1.5-2.2));await r('r.heroe({x:0,z:2,furia:100})');await r('r.control({apunta:[0,-5]})');await r('r.avanzar(.1)');
+    assert.ok(await r('r.usar("torbellino")'),'Q con Furia: Abanico');e=await r('r.avanzar(.8)');await r('r.control(null)');
+    assert.ok(e.enemigos.filter(x=>ids.includes(x.id)&&x.vida<34).length>=3,'El Abanico (siete balas) alcanza a varios a la vez');
+    assert.ok(await r('r.usar("salto",4,2)'),'Clic derecho con Furia: Voltereta');e=await r('r.avanzar(1)');assert.ok(Math.abs(e.heroe.x-4)<.5&&e.heroe.estado==='quieto','La Voltereta la lleva al cursor');
+    for(const id of ids)await r('r.matar(a[0])',id);await r('r.avanzar(1.5)');
+    // La lanza del kobold brilla y, justo en la ventana del parry perfecto, el brillo se vuelve blanco y grande; un parry ahí la devuelve.
+    await r('r.heroe({x:0,z:-6,alma:100})');const k=await r('r.invocar("kobold",0,3,false)');await r('r.despertar(a[0])',k);let ahora=false;
+    for(let i=0;i<150&&!ahora;i++){e=await r('r.avanzar(1/30)');ahora=e.lanzaAhora;}
+    assert.ok(ahora,'La lanza avisa (brillo blanco) en la ventana del parry perfecto');
+    await pagina.keyboard.press('Space');e=await r('r.avanzar(.5)');assert.ok(e.heroe.alma===100&&e.heroe.parrys===1,'Un parry con ese aviso la desvía sin daño');
+    assert.deepEqual(errores,[],'Sin errores con Mohamed');await contexto.close();}
+  console.log('✓ Mohamed a distancia: pistola, recarga, Abanico y Voltereta; las lanzas brillan en la ventana del parry');
 
   // ---- Habilidades --------------------------------------------------------------------
   {const {contexto,errores,pagina,r}=await abrir(navegador);await r('r.oleadas(false)');

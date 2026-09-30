@@ -40,7 +40,7 @@ export function exportar(destino){
   escribir('index.html',html);escribir('generado/datos.js',datosJS);
   const entorno={};for(const f of entornoArpgThree){const b=fs.readFileSync(path.join(aqui,f));escribir(f,b);entorno[f]=hash(b);}
   const componentes={};for(const f of componentesArpgThree){const b=fs.readFileSync(path.join(juego,f));escribir('juego/'+f,b);componentes[f]=hash(b);}
-  const arte={};for(const url of ['art/logo.webp','art/lider_adreida.webp',...lista.map(c=>c.url)]){const b=fs.readFileSync(path.join(juego,url));escribir(url,b);arte[url.slice(4)]=hash(b);}
+  const arte={};for(const url of ['art/logo.webp','art/lider_adreida.webp','art/lider_mohamed.webp',...lista.map(c=>c.url)]){const b=fs.readFileSync(path.join(juego,url));escribir(url,b);arte[url.slice(4)]=hash(b);}
   const procedencia={seccion:'arpg-three',partida:false,almacenamiento:'ninguno',proposito:'Proyecto paralelo: prueba de un ARPG isométrico al estilo Diablo en three.js (Hito 1, una sala jugable) con modelos 3D sencillos hechos con primitivas y el botín como cartas físicas del juego.',three:'0.186.1',
     cartas:lista.map(c=>c.id+'/'+c.acabado),componentes,arte,entorno,derivados:{'index.html':hash(html),'generado/datos.js':hash(datosJS)}};
   escribir('procedencia.json',JSON.stringify(procedencia,null,2));

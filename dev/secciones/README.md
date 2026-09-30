@@ -383,6 +383,10 @@ oleadas, y al final entra Can, el de los Goblins.
   - la luna con sombras, la luz que lleva Adreida (el radio de luz de Diablo) y el fuego;
   - todo lo estático se funde por material;
   - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).
+- **Dos personajes (se elige arriba, o con `?heroe=mohamed`):**
+  - Adreida, cuerpo a cuerpo, con el hacha a dos manos (el combo de tres hachazos, Torbellino, Salto con el hacha clavada);
+  - Mohamed, a distancia, con una pistola de chispa: el clic dispara hacia el cursor (se puede andar, más despacio, mientras dispara); seis balas y recarga sola (1,1 s); Q, Abanico de siete balas; clic derecho, Voltereta al cursor que cae disparando en corona; 100 de Alma;
+  - las balas brillan en dorado, no interrumpen a los enemigos pero dan Furia; el parry, el dash y Provocar son iguales para los dos.
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
   - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres hachazos: tajo, revés y un hachazo vertical;
@@ -392,6 +396,7 @@ oleadas, y al final entra Can, el de los Goblins.
   - con el ratón encima de un enemigo se apunta a él;
   - Espacio es el parry: Adreida alza el hacha 0,35 s y se gira sola hacia el golpe que llega;
     - si el golpe llega en las primeras 0,18 s es perfecto: no hace daño, aturde al atacante 2 s (1 s a Can) y lo deja expuesto (le haces el doble), con un parón y +20 de Furia; una lanza desviada vuelve contra quien la lanzó (el triple de daño);
+    - las lanzas de los kobolds brillan (un halo naranja que late y una estela densa); cuando el halo se vuelve blanco y grande, está en la ventana del parry perfecto (para las lanzas, 0,25 s);
     - más tarde, solo bloquea: recibe el 30%;
     - un parry al aire deja medio segundo sin poder repetirlo; por la espalda no se para, ni el golpazo de Can (zona violeta, «¡Imparable!»);
   - Shift es el dash (un instante invulnerable; atravesar un golpe da «¡Esquivado!» y Furia);

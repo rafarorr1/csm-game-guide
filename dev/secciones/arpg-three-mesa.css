@@ -21,6 +21,7 @@ html[data-captura] .apShell>*:not(.apEscenario){display:none}
 html[data-captura] .apEscenario{height:100vh;border:0;border-radius:0}
 html[data-captura] .apInfo{display:none}
 [hidden]{display:none!important}
+.apElegir{display:inline-flex;gap:6px}
 /* Etiquetas del mundo: nombres del botín y números de daño. */
 .apCapa{position:absolute;inset:0;pointer-events:none;overflow:hidden}
 .apCapa>div{position:absolute;left:0;top:0;will-change:transform;text-align:center;white-space:nowrap}
