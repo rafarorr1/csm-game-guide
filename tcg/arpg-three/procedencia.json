@@ -41,6 +41,7 @@
   "arte": {
     "logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
     "lider_adreida.webp": "9d7a2303f2dc3dd20863eaa651ca8bc394f76b70c247226149e8e9a388274ecf",
+    "lider_mohamed.webp": "415a0b31c9515364ccdccb754e09cdb02a037526c90625e5a4560343cf7192a1",
     "mazo.webp": "19edbd45376a6768f63d6c7dd92069cf12758553d2c307589866ef2fad4dcb45",
     "mazo-foil-v1.webp": "27f346011511cd9d8d49e2495c7c9857c76792cd7cae47b6b989963e44cf3686",
     "mazo-dorado-v1.webp": "7193cca99824f80a45cc979c77c75a88e68fa4089ebda7c9078253020329c1f8",
@@ -68,15 +69,15 @@
     "llavemago-dorado-v1.webp": "5544e73160ca8661b726769ff18006734af1f586dc0af17d70bd354f940502b2"
   },
   "entorno": {
-    "arpg-three-mesa.js": "b58036fc1c1a9f345fb852a598d8ec04027096d029eab9b11be694b705325fee",
-    "arpg-three-mesa.css": "4f1f8ee83fade3c03822b62aba4715b05e9e7b40024968269a9f920b9a4ae760",
-    "arpg-three-modelos.js": "9deb8e257af18036e03dc3d02543ee9aeaf951766b618d2948720a324b7f563c",
+    "arpg-three-mesa.js": "10310c219412c55bf1a45f7bbd4ae4cc5ba4efdd6a642e780e8779a875766d23",
+    "arpg-three-mesa.css": "c9244878eecf71d8a084bd0bf4d731b43ce6c921f53401a3602eefcc368928bf",
+    "arpg-three-modelos.js": "9297415b0171942c8dc4111a35cd46f69e95aca3db8a9bd0bf65caecadc31253",
     "casas-three.js": "caf16320581412f7e2fe8024b7430cf432d81153eee505fbd17301e91ad13e88",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259",
     "three-carta.js": "a4422e790fffd4e9c1e856ca96d1133380872fcd17b9403e9d05b44bd3e38328"
   },
   "derivados": {
-    "index.html": "005c9da8ec1daf11b518cf7bc73590e2eb73e1b2c56645904cf2eef99c2f559c",
+    "index.html": "f8f33906df137da6490726df46d35de64f4c05e5b07762667a68687ad4d2ef5f",
     "generado/datos.js": "1286d0e677b620264a1f9f22cc286b2f3e174c7303bd8f0ebabe3077143ba990"
   }
 }

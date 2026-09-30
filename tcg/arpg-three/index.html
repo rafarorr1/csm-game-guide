@@ -21,9 +21,10 @@
   <header class="apCabecera">
     <p class="apEtiqueta">PROYECTO PARALELO · ARPG EN THREE.JS · HITO 1 (UNA SALA JUGABLE)</p>
     <h1 id="apTitulo">Las Grietas del Editor</h1>
-    <p>Tomsage está bajo asedio. Adreida, la Guerrera Semiorca, defiende la plaza contra cuatro oleadas hasta que entra Can, el de los Goblins. <b>WASD</b> para moverte y <b>clic izquierdo</b> para atacar hacia el cursor (mantenlo: combo de tres golpes). <b>Espacio</b> esquiva (un instante invulnerable) · <b>clic derecho</b> Salto al cursor · <b>Q</b> Torbellino · <b>E</b> Provocar. Cada enemigo que va a atacar se enciende en rojo, lleva un «!» y dibuja en el suelo la zona exacta que golpeará, que se llena hasta el golpe; cuando se fija ya no gira: sal de ella o esquiva. El botín se lee pasando el ratón por encima y se recoge pisándolo. En táctil, palanca y botones.</p>
+    <p>Tomsage está bajo asedio. Elige a Adreida, la Guerrera Semiorca (cuerpo a cuerpo, su hacha a dos manos), o a Mohamed (a distancia, una pistola de seis balas que recarga sola; Q Abanico de siete balas y clic derecho Backflip: los enemigos que lo ven se quedan impresionados, aturdidos unos segundos) y defiende la plaza contra cuatro oleadas hasta que entra Can, el de los Goblins. <b>WASD</b> para moverte y <b>clic izquierdo</b> para atacar hacia el cursor (mantenlo: combo de tres golpes). <b>Espacio</b> parry: justo antes del golpe lo para y deja al enemigo aturdido y expuesto (tus golpes le hacen el doble); un poco antes, solo bloquea parte · <b>Shift</b> dash (un instante invulnerable) · <b>clic derecho</b> Salto al cursor · <b>Q</b> Torbellino · <b>E</b> Provocar. Pegan fuerte: cada enemigo que va a atacar se enciende en rojo, lleva un «!» y dibuja en el suelo la zona exacta que golpeará, que se llena hasta el golpe; cuando se fija ya no gira: para, sal de ella o haz dash. El golpazo de Can (zona violeta) es imparable. Las lanzas de los kobolds brillan: cuando el brillo se vuelve blanco y grande, es el momento del parry (y la lanza vuelve contra quien la lanzó). El botín se lee pasando el ratón por encima y se recoge pisándolo. En táctil, palanca y botones.</p>
   </header>
   <div class="apControles" role="group" aria-label="Acciones">
+    <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
     <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
     <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
   </div>
@@ -32,6 +33,7 @@
     <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
     <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
     <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
+    <label>Balas de Mohamed <select id="estiloBala"><option value="plomo">A · Plomo de pistola de chispa</option><option value="trazadora">B · Bala de latón trazadora</option></select></label>
   </fieldset>
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
     <canvas id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
@@ -50,7 +52,8 @@
       <div class="apHabilidades" role="group" aria-label="Habilidades">
         <img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida">
         <button type="button" data-hab="tajo" title="Atacar (mantener: combo)"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
-        <button type="button" data-hab="esquiva" title="Esquiva"><span>»</span><small>Esquiva</small><kbd>Espacio</kbd></button>
+        <button type="button" data-hab="parry" title="Parry (justo antes del golpe)"><span>⛨</span><small>Parry</small><kbd>Espacio</kbd></button>
+        <button type="button" data-hab="esquiva" title="Dash"><span>»</span><small>Dash</small><kbd>Shift</kbd></button>
         <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
         <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
         <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>E</kbd></button>

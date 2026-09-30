@@ -10,8 +10,9 @@
        con un destello al recibir un golpe, un contorno de luz (el aviso de que
        va a atacar) y el disolverse en brasas al morir inyectados en su shader.
      · posar(m,a) pone la pose de cada animación (quieto, andar, golpe, revés,
-       estocada, esquiva, aviso, torbellino, salto, grito, lanzar, aturdido, muerte) a partir de un
-       reloj: no hay clips, todo es procedural.
+       estocada, esquiva, aviso, torbellino, salto, grito, lanzar, aturdido, muerte)
+       a partir de un reloj: no hay clips, todo es procedural. Adreida lleva el
+       hacha con las dos manos (cinemática inversa de los brazos).
    CAOZ_ARPG_MODELOS.fabrica(THREE) → {crear(tipo), posar(m,a), TIPOS}. */
 'use strict';
 (function(){
@@ -96,6 +97,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       kobold:{nombre:'Kobold lancero',alto:1.25,radio:.34},
       saqueador:{nombre:'Saqueador de Tomsage',alto:1.8,radio:.42},
       can:{nombre:'Can, el de los Goblins',alto:2.4,radio:.62},
+      mohamed:{nombre:'Mohamed',alto:1.85,radio:.4},
     };
 
     function adreida(){
@@ -136,13 +138,21 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('ante'+l,'piel',G.cil(.072,.078,.2,7),brazal,[0,-.15,0]);
         for(let i=0;i<3;i++)pon('ante'+l,'piel',G.cono(.018,.07,4),0xdcd2bf,[s*.07,-.08-i*.06,-.01],[0,0,-s*1.4]);
         pon('mano'+l,'piel',G.bola(.058,6,5),piel2,[0,-.03,0],[0,0,0],[1,1.1,1.15]);}
-      // El mandoble en la mano derecha, como prolongación del brazo (la hoja sigue al antebrazo, hacia -Y de la mano),
-      // con el plano de la hoja hacia arriba cuando el brazo está horizontal: se ve bien desde la cámara.
-      pon('manoD','piel',G.cil(.024,.024,.28,6),0x2e2018,[0,.02,0]);
-      pon('manoD','metal',G.caja(.05,.045,.3),0xc39a52,[0,-.13,0]);
-      pon('manoD','metal',G.caja(.018,1.12,.085),0xd8dce6,[0,-.72,0],[0,0,0],1,.06);
-      pon('manoD','metal',G.cono(.0425,.22,4),0xd8dce6,[0,-1.39,0],[Math.PI,Math.PI/4,0],[.3,1,1]);
-      pon('manoD','metal',G.bola(.038,6,5),0xc39a52,[0,.18,0]);
+      // El hacha de guerra en la mano derecha, como prolongación del brazo (el mango sigue al antebrazo, hacia -Y de la mano).
+      // La cabeza es de doble filo (un filo a cada lado, en ±Z): corta igual en el tajo y en el revés, y con la cara
+      // plana hacia arriba cuando el brazo está horizontal se lee bien desde la cámara.
+      const hierro=0xc9ced8,filo=0xeef1f6,mango=0x3a2616,cuero2=0x5a3a22;
+      pon('manoD','piel',G.cil(.026,.03,1.3,6),mango,[0,-.5,0]);
+      for(const y of [.06,-.08])pon('manoD','piel',G.cil(.034,.034,.1,6),cuero2,[0,y,0]);
+      pon('manoD','metal',G.bola(.045,6,5),hierro,[0,.17,0]);
+      pon('manoD','metal',G.cil(.045,.045,.26,6),hierro,[0,-1.02,0]);
+      for(const s of [1,-1]){
+        // Cada filo: una cuña que se abre desde el mango (barba abajo), con el borde de acero claro.
+        pon('manoD','metal',G.caja(.035,.24,.2),hierro,[0,-1.02,s*.14],[s*.12,0,0],1,.08);
+        pon('manoD','metal',G.caja(.028,.42,.1),filo,[0,-1.02,s*.28],[s*.05,0,0],1,.06);
+        pon('manoD','metal',G.cono(.05,.12,4),filo,[0,-.8,s*.3],[0,0,0],[.35,1,1]);
+        pon('manoD','metal',G.cono(.05,.12,4),filo,[0,-1.24,s*.3],[Math.PI,0,0],[.35,1,1]);}
+      pon('manoD','metal',G.cono(.035,.14,4),hierro,[0,-1.22,0],[Math.PI,Math.PI/4,0]);
       return {H,montar,p};
     }
     function goblin(){
@@ -209,14 +219,75 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('anteI','piel',G.cil(.27,.27,.04,12),0x6b4a2e,[.1,-.17,.02],[0,0,Math.PI/2],1,.2);pon('anteI','metal',G.toro(.27,.022,14),acero,[.12,-.17,.02],[0,Math.PI/2,0]);pon('anteI','metal',G.bola(.06,6,4),acero,[.13,-.17,.02],[0,0,-Math.PI/2],[1,.6,1]);}
       return {H,montar,p};
     }
-    const constructores={adreida,goblin,kobold,saqueador:()=>humano(false),can:()=>humano(true)};
+    // Una persona del grupo: piernas, torso, cabeza con cara y brazos; cada uno añade su ropa y su arma.
+    function persona(o){
+      const p={muslo:.44,pierna:.42,pie:.05,cintura:.07,torso:.5,hombros:.22,brazo:.3,antebrazo:.28,ancho:.1,...o.p},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
+      pon('cadera','piel',G.caja(.3,.18,.19),o.pantalon,[0,0,0]);pon('cadera','piel',G.cil(.17,.175,.06,10),o.cinturon,[0,.06,0],[0,0,0],[1,1,.72]);
+      for(const l of ['I','D']){miembro('pierna'+l,.075,.28,o.pantalon);miembro('rodilla'+l,.065,.27,o.pantalon);pon('pie'+l,'piel',G.caja(.12,.18,.18),o.botas,[0,.05,.02]);}
+      pon('torso','piel',G.capsula(.14,.16),o.camisa,[0,.2,0],[0,0,0],[1.15,1,.8],.18);
+      pon('cabeza','piel',G.cil(.05,.055,.1,7),o.piel,[0,.03,0]);pon('cabeza','piel',G.bola(.115,8,7),o.piel,[0,.16,.01],[0,0,0],[.92,1.06,1]);
+      for(const s of [1,-1]){pon('cabeza','piel',G.caja(.034,.02,.01),0xf4f0ea,[s*.042,.17,.108]);pon('cabeza','brillo',G.caja(.014,.018,.012),o.ojos||0x2a1a10,[s*.042,.17,.113]);
+        pon('cabeza','piel',G.caja(.045,.01,.012),o.pelo,[s*.043,.198,.108],[0,0,-s*.12]);}
+      for(const l of ['I','D']){miembro('brazo'+l,.058,.19,o.mangas||o.camisa);miembro('ante'+l,.05,.17,o.antebrazos||o.piel);pon('mano'+l,'piel',G.bola(.05,6,5),o.piel,[0,-.03,0]);}
+      o.extra(pon,H);
+      return {H,montar,p};
+    }
+    // Mohamed: túnica larga, capa, barba y el sombrero de ala ancha con la punta caída; una pistola de chispa en la derecha.
+    // La pistola sigue al antebrazo (el cañón hacia -Y de la mano): con el brazo al frente, apunta adonde mira.
+    function mohamed(){return persona({pantalon:0x2b2028,cinturon:0x6a2a24,botas:0x1e1614,camisa:0x3a2a3e,piel:0xb07a58,pelo:0x1e1612,ojos:0xffc070,
+      extra(pon){pon('cadera','piel',G.cil(.19,.34,.72,9,true),0x33243a,[0,-.32,0],[0,0,0],[1,1,.85],.3);pon('torso','piel',G.caja(.46,.66,.03),0x281c2c,[0,.18,-.15],[.08,0,0],1,.25);
+        pon('torso','piel',G.cil(.09,.15,.1,8),0x5a2a2a,[0,.47,0]);pon('cabeza','piel',G.cono(.08,.14,6),0x1e1612,[0,.07,.08],[Math.PI+.35,0,0],[1.2,1,.7]);
+        pon('cabeza','piel',G.cil(.3,.3,.02,14),0x2c2230,[0,.25,0],[.08,0,0]);pon('cabeza','piel',G.cono(.12,.38,8),0x2c2230,[0,.43,-.03],[-.28,0,0]);pon('cabeza','piel',G.cil(.125,.125,.04,10),0x7a2a2a,[0,.28,-.01]);
+        pon('cadera','piel',G.caja(.1,.12,.05),0x5a3a22,[.16,-.02,.1]);for(const x of [-.12,-.05,.02])pon('cadera','metal',G.cil(.014,.014,.06,5),0xc8a050,[x,.07,.15],[Math.PI/2,0,0]);
+        pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
+        pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
+    const constructores={adreida,goblin,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
     function crear(tipo){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(),{H,montar,p}=constructores[tipo](),mallas=montar(M);
-      // La punta de la espada de Adreida (para colocar el rastro del corte y para las pruebas).
-      if(tipo==='adreida'){const punta=new THREE.Object3D();punta.position.set(0,-1.5,0);H.manoD.add(punta);M.punta=punta;}
+      // El extremo del hacha de Adreida, la cabeza (para colocar el rastro del corte y para las pruebas).
+      if(tipo==='adreida'){const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
+      // La boca de la pistola de Mohamed (de donde salen las balas).
+      if(tipo==='mohamed'){const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
       return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo]};
     }
+
+    /* ---- El hacha a dos manos de Adreida ------------------------------------------------------
+       Cada pose dice dónde está la empuñadura (G, la mano derecha) y hacia dónde apunta el hacha (A),
+       en el espacio del torso; los dos brazos llegan con cinemática inversa de dos huesos: la derecha
+       a G y la izquierda un poco más abajo del mango, hacia el pomo. La mano derecha se orienta para
+       que el hacha (su -Y) siga A, con la cara plana hacia «arriba» (en los tajos horizontales, al
+       cielo: se ve desde la cámara; en el hachazo vertical, de lado: el filo corta de arriba abajo). */
+    const _v=Array.from({length:10},()=>new THREE.Vector3()),_q=new THREE.Quaternion(),_m=new THREE.Matrix4(),ABAJO=new THREE.Vector3(0,-1,0);
+    function apuntarHueso(b,dir){b.parent.getWorldQuaternion(_q).invert();b.quaternion.setFromUnitVectors(ABAJO,_v[9].copy(dir).normalize().applyQuaternion(_q));b.updateMatrixWorld(true);}
+    function ik(brazo,ante,mano,T,polo){const S=brazo.getWorldPosition(_v[0]),a=ante.position.length(),b=mano.position.length(),D=_v[1].copy(T).sub(S);
+      const d=Math.min(a+b-1e-3,Math.max(Math.abs(a-b)+1e-3,D.length())),dir=D.normalize(),x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x));
+      const p=_v[2].copy(polo).sub(S);p.addScaledVector(dir,-p.dot(dir));if(p.lengthSq()<1e-8)p.set(0,-1,0);p.normalize();
+      const E=_v[3].copy(S).addScaledVector(dir,x).addScaledVector(p,h);apuntarHueso(brazo,_v[4].copy(E).sub(S));apuntarHueso(ante,_v[5].copy(S).addScaledVector(dir,d).sub(E));}
+    const dirA=(f,e)=>[Math.sin(f)*Math.cos(e),Math.sin(e),Math.cos(f)*Math.cos(e)];
+    function empunar(m,{G,A,arriba}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
+      const g=_v[6].fromArray(G).applyMatrix4(T),a=_v[7].fromArray(A).transformDirection(T),up=_v[8].fromArray(arriba||[0,1,0]).transformDirection(T);
+      ik(H.brazoD,H.anteD,H.manoD,g,new THREE.Vector3(-.7,-.5,-.35).applyMatrix4(T));
+      // La mano derecha: -Y por el mango, X (la cara del hacha) lo más cerca posible de «arriba».
+      const y=a.clone().negate(),x=up.clone().addScaledVector(y,-up.dot(y));if(x.lengthSq()<1e-6)x.set(1,0,0);x.normalize();const z=new THREE.Vector3().crossVectors(x,y);
+      H.manoD.parent.getWorldQuaternion(_q).invert();H.manoD.quaternion.setFromRotationMatrix(_m.makeBasis(x,y,z)).premultiply(_q);H.manoD.updateMatrixWorld(true);
+      // La izquierda, 26 cm más abajo por el mango (hacia el pomo).
+      ik(H.brazoI,H.anteI,H.manoI,g.clone().addScaledVector(a,-.26),new THREE.Vector3(.7,-.5,-.35).applyMatrix4(T));}
+    // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
+    function agarreAdreida(a){const k=a.k||0,t=a.t||0;
+      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.02*(a.paso??1):Math.sin(t*2.2)*.008;return {G:[-.12,.08+bob,.3],A:dirA(-.35,-.75)};};
+      const horizontal=(f,e)=>{const r=.42-.08*Math.abs(Math.sin(f));return {G:[Math.sin(f)*r,.28,Math.cos(f)*r],A:dirA(f,e),arriba:[0,1,0]};};
+      const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
+      const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
+      switch(a.anim){
+        case 'tajoA':case 'revesA':{const r=a.anim==='revesA',s=r?-1:1,car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1);
+          const f=(-1.3*car+2.4*gol)*s,e=-.25;return mezcla(mezcla(reposo(),horizontal(f,e),Math.max(car,gol)),reposo(),rec);}
+        case 'estocadaA':{const car=tramo(k,0,.38),emp=tramo(k,.38,.48),rec=tramo(k,.66,1);return mezcla(mezcla(reposo(),vertical(-.8+2.8*car-2.3*emp),Math.min(1,car*1.5)),reposo(),rec);}
+        case 'torbellino':return horizontal(-1.25,-.12);
+        // Parry: el hacha en guardia diagonal delante del pecho (la cabeza sobre el hombro derecho), la cara plana hacia el golpe.
+        case 'parry':{const e=tramo(k,0,.15)*(1-tramo(k,.8,1));const A=[-.55,.82,.14],l=Math.hypot(...A);return mezcla(reposo(),{G:[.16,.16,.38],A:A.map(x=>x/l),arriba:[0,0,1]},e);}
+        case 'salto':{const arr=tramo(k,.12,.3)*(1-tramo(k,.75,.9)),cae=tramo(k,.75,.9);return mezcla(reposo(),vertical(2.1*arr-.7*cae),Math.max(arr,cae));}
+        default:return reposo();}}
 
     // Pone la pose. a={anim,t (segundos en la animación), k (0..1 de la animación), fase (del paso), paso (0..1 cuánto anda)}.
     function posar(m,a){
@@ -233,7 +304,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         H.brazoI.rotation.x=s*.5*amp;H.brazoD.rotation.x+=-s*.3*amp;H.torso.rotation.y=s*.12*amp;H.torso.rotation.x+=.1*amp;
         H.cuerpo.position.y=Math.abs(c)*.05*amp*esc-.02*amp;if(H.cola)H.cola.rotation.y+=s*.3*amp;};
       reposo();
-      // Adreida lleva la espada baja por delante (la hoja apunta al frente y abajo, la punta cerca del suelo).
+      // Adreida lleva el hacha baja por delante (la cabeza al frente y abajo, cerca del suelo).
       if(m.tipo==='adreida'){H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.75;H.brazoD.rotation.z=-.22;}
       switch(a.anim){
         case 'andar':andar(a.fase||0,a.paso??1);break;
@@ -247,7 +318,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.piernaD.rotation.x=.3*car-.1*gol-.2*rec;H.piernaI.rotation.x=-.35*car+.35*rec;H.rodillaI.rotation.x=.4*car-.4*rec;H.rodillaD.rotation.x=.25;H.cuerpo.position.y=-.05*car*esc+.05*rec*esc;
           H.torso.rotation.x=.12*car+.1*gol-.1*rec;
           if(a.anim==='aviso')H.cuerpo.position.x=Math.sin(t*40)*.012;break;}
-        // Los espadazos de Adreida: el brazo casi horizontal barre un arco delante (la hoja lo prolonga).
+        // Los hachazos de Adreida: el brazo casi horizontal barre un arco delante (el hacha lo prolonga).
         // brazoD.z lo levanta hacia su derecha y brazoD.y lo barre en horizontal: -.5 detrás a la derecha, 1.57 delante, 2.5 a la izquierda.
         case 'tajoA':case 'revesA':{const r=a.anim==='revesA',car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1),de=r?2.4:-.55,a2=r?-.45:2.35;
           const barre=de+(a2-de)*gol,alto=1-rec;
@@ -282,7 +353,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         // Torbellino: brazos abiertos, la hoja extendida; el giro del cuerpo lo pone el juego.
         case 'torbellino':H.brazoD.rotation.z=-1.35;H.brazoD.rotation.x=-.2;H.anteD.rotation.x=-.15;if(m.tipo!=='adreida'){H.manoD.rotation.y=-1.3;H.manoD.rotation.x=.2;}H.brazoI.rotation.z=1.1;H.anteI.rotation.x=-.2;
           H.torso.rotation.x=.18;H.piernaI.rotation.x=-.35;H.piernaD.rotation.x=.3;H.rodillaI.rotation.x=.5;H.rodillaD.rotation.x=.45;H.cuerpo.position.y=-.1*esc;H.cabeza.rotation.x=.15;break;
-        // Salto: se agacha, sube con la espada en alto y cae clavándola.
+        // Salto: se agacha, sube con el arma en alto y cae clavándola.
         case 'salto':{const ag=1-tramo(k,0,.15),arr=tramo(k,.12,.3)*(1-tramo(k,.75,.9)),cae=tramo(k,.75,.9);
           H.cuerpo.position.y=-.2*ag*esc-.25*cae*esc;H.rodillaI.rotation.x=1.1*ag+.6*arr+1.1*cae;H.rodillaD.rotation.x=1.1*ag+.9*arr+.6*cae;H.piernaI.rotation.x=-.9*ag-.4*arr-.9*cae;H.piernaD.rotation.x=-.5*ag+.3*arr-.2*cae;
           H.brazoD.rotation.x=-.3*ag-2.7*arr-1*cae;H.brazoI.rotation.x=-.3*ag-2.5*arr-.9*cae;H.anteD.rotation.x=-.4-.3*arr+.3*cae;H.anteI.rotation.x=-.4-.3*arr;H.brazoD.rotation.z=-.1;H.brazoI.rotation.z=.1;H.manoD.rotation.x=-.3*arr+.9*cae;
@@ -294,6 +365,14 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         case 'lanzar':case 'apunta':{const kk=a.anim==='apunta'?Math.min(k,1)*.5:.5+k*.5,atr=tramo(kk,0,.45),lan=tramo(kk,.5,.7),rec=tramo(kk,.75,1);
           H.brazoD.rotation.x=-.2-2.4*atr+1.9*lan+.5*rec;H.brazoD.rotation.z=-.18-.4*atr+.3*lan;H.anteD.rotation.x=-.5-.6*atr+.9*lan;H.manoD.rotation.x=.3*atr;
           H.torso.rotation.y=-.6*atr+1*lan-.4*rec;H.brazoI.rotation.x=-.9*atr+.6*lan;H.piernaI.rotation.x=-.4*atr+.2*lan;H.piernaD.rotation.x=.3*atr;H.torso.rotation.x=-.1*atr+.25*lan-.15*rec;break;}
+        case 'parry':{const e=tramo(k,0,.15)*(1-tramo(k,.8,1));if(m.tipo!=='adreida'){H.brazoD.rotation.x=-1.25*e;H.brazoD.rotation.z=-.18+.55*e;H.anteD.rotation.x=-.55-.9*e;H.brazoI.rotation.x=-1.1*e;H.brazoI.rotation.z=.18-.45*e;H.anteI.rotation.x=-.25-1.1*e;}
+          H.torso.rotation.x=.04+.12*e;H.cuerpo.position.y=-.07*e;H.rodillaI.rotation.x=H.rodillaD.rotation.x=.35*e;H.piernaI.rotation.x=-.25*e;H.piernaD.rotation.x=.12*e;H.cabeza.rotation.x=-.12*e;break;}
+        // Disparar (Mohamed): el brazo derecho al frente, a la altura del hombro; el retroceso levanta la pistola al disparar (k: 0 → 1).
+        case 'disparar':{const r=Math.max(0,1-k*4);H.brazoD.rotation.x=-1.52-.25*r;H.brazoD.rotation.z=.05;H.anteD.rotation.x=-.05-.2*r;H.brazoI.rotation.x=-.2;H.brazoI.rotation.z=.25;H.torso.rotation.y=-.18;H.cabeza.rotation.y=.12;H.torso.rotation.x=-.03;break;}
+        // Backflip de Mohamed (salto mortal), recogido, girando alrededor de la cadera.
+        case 'acrobacia':{const g=tramo(k,.15,.85)*Math.PI*2,rec=Math.sin(Math.PI*Math.min(1,k)),hc=(m.p.muslo+m.p.pierna)*.9;
+          H.cuerpo.rotation.x=g;H.cuerpo.position.set(0,hc-hc*Math.cos(g),-hc*Math.sin(g));H.piernaI.rotation.x=H.piernaD.rotation.x=-1.6*rec;H.rodillaI.rotation.x=H.rodillaD.rotation.x=2*rec;
+          H.torso.rotation.x=.6*rec;H.brazoI.rotation.x=H.brazoD.rotation.x=-.8*rec;H.anteI.rotation.x=H.anteD.rotation.x=-1.2*rec;break;}
         case 'aturdido':andar(t*3,.08);H.cabeza.rotation.z=Math.sin(t*5)*.3;H.torso.rotation.z=Math.sin(t*5+1)*.12;H.brazoI.rotation.z=.4;H.brazoD.rotation.z=-.4;H.anteD.rotation.x=-.2;break;
         case 'dolor':H.torso.rotation.x=-.3*(1-k);H.cabeza.rotation.x=-.3*(1-k);H.brazoI.rotation.z=.4*(1-k)+.18;break;
         // Muerte: se le doblan las rodillas y cae de espaldas.
@@ -301,6 +380,8 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.brazoI.rotation.z=.18+1.2*c;H.brazoD.rotation.z=-.18-1.1*c;H.cabeza.rotation.x=-.4*c;
           H.cuerpo.rotation.x=-Math.PI/2*c*.96;H.cuerpo.position.y=-.3*r*(1-c)*esc+.12*c*esc;H.cuerpo.position.z=-(m.alto*.22)*c;break;}
       }
+      // Adreida agarra el hacha con las dos manos (salvo al gritar, con los brazos abiertos, y al caer).
+      if(m.tipo==='adreida'&&!['grito','muerte'].includes(a.anim))empunar(m,agarreAdreida(a));
     }
     return {crear,posar,TIPOS};
   }

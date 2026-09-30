@@ -1,9 +1,9 @@
 {
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
-    "arpg-three-mesa.css": "4f1f8ee83fade3c03822b62aba4715b05e9e7b40024968269a9f920b9a4ae760",
-    "arpg-three-mesa.js": "b58036fc1c1a9f345fb852a598d8ec04027096d029eab9b11be694b705325fee",
-    "arpg-three-modelos.js": "9deb8e257af18036e03dc3d02543ee9aeaf951766b618d2948720a324b7f563c",
+    "arpg-three-mesa.css": "c9244878eecf71d8a084bd0bf4d731b43ce6c921f53401a3602eefcc368928bf",
+    "arpg-three-mesa.js": "10310c219412c55bf1a45f7bbd4ae4cc5ba4efdd6a642e780e8779a875766d23",
+    "arpg-three-modelos.js": "9297415b0171942c8dc4111a35cd46f69e95aca3db8a9bd0bf65caecadc31253",
     "art/arco-dorado-v1.webp": "cc0ab6d86a234442d09bdae97bd895ebc46d4bf133b532fbc95d02c9fb9e3977",
     "art/arco-foil-v1.webp": "7f8cdf5f214bbbf448040e9bc0eb7467d54e965255a537b08b82546008913b18",
     "art/arco.webp": "6ad23a2d9c551049b6e16afd2ebe4a402505ae8477624effff2fe44d62f86338",
@@ -23,6 +23,7 @@
     "art/lentesmachete-foil-v1.webp": "b26d8928e8662eb5162e3b64158488f8dc94f7bbea14a611fc75e3dcbef8479f",
     "art/lentesmachete.webp": "78cd7e06fe5386452099b18bf1a2cdf0786d1a811ef0a090924d23d3fa22bf3c",
     "art/lider_adreida.webp": "9d7a2303f2dc3dd20863eaa651ca8bc394f76b70c247226149e8e9a388274ecf",
+    "art/lider_mohamed.webp": "415a0b31c9515364ccdccb754e09cdb02a037526c90625e5a4560343cf7192a1",
     "art/llavemago-dorado-v1.webp": "5544e73160ca8661b726769ff18006734af1f586dc0af17d70bd354f940502b2",
     "art/logo.webp": "6824d70437420203eb2aa540475fec09039df55972eaf295f2fb8e25f15a3ffe",
     "art/mazo-dorado-v1.webp": "7193cca99824f80a45cc979c77c75a88e68fa4089ebda7c9078253020329c1f8",
@@ -33,20 +34,20 @@
     "art/sombrero.webp": "5aa16f2412bbe75791fb4939489b0dec9c1f9832528505af0d7fba6d26ee4f18",
     "casas-three.js": "caf16320581412f7e2fe8024b7430cf432d81153eee505fbd17301e91ad13e88",
     "generado/datos.js": "1286d0e677b620264a1f9f22cc286b2f3e174c7303bd8f0ebabe3077143ba990",
-    "index.html": "005c9da8ec1daf11b518cf7bc73590e2eb73e1b2c56645904cf2eef99c2f559c",
+    "index.html": "f8f33906df137da6490726df46d35de64f4c05e5b07762667a68687ad4d2ef5f",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "procedencia.json": "e6dd2c6dbbc0e61c32709e116a000743a6976978143c7492b9f439849b5c9665",
+    "procedencia.json": "40baa238436f9ce8153834ef9c7768ab465ca229c9b3ecc979cd7a3be9faabf8",
     "three-carta.js": "a4422e790fffd4e9c1e856ca96d1133380872fcd17b9403e9d05b44bd3e38328",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "2c71981d3db1ff78dc95be4b59830415b9666347"
+    "sha": "a16b6c3206732d930d5f7e8c278597f338d3d5de"
   },
   "seccion": "arpg-three",
   "version": 1
