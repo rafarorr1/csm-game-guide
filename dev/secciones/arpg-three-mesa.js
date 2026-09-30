@@ -656,11 +656,12 @@
   marcaSaltoMando.add(anilloSaltoMando,reglaSaltoMando);
   function cancelarSaltoMando(){saltoMando.activo=false;marcaSaltoMando.visible=false;const panel=$('saltoMando');if(panel)panel.hidden=true;}
   function destinoSaltoMando(){const p=saltoMando.destino.copy(heroe.pos).addScaledVector(saltoMando.dir,saltoMando.distancia);dentroPlaza(p,heroe.radio);return p;}
-  function prepararSaltoMando(){
+  function ajustarSaltoMando(mov){const fuerza=mov.length();if(fuerza>0){saltoMando.dir.copy(mov).normalize();saltoMando.distancia=1+7*Math.min(1,fuerza);}}
+  function prepararSaltoMando(mov){
     if(!heroe.vivo||!['quieto','andar'].includes(heroe.estado))return;
     if(heroe.furia<HAB.salto.coste){rechazo('salto','Te falta Furia');return;}
     if(heroe.cd.salto>0){rechazo('salto','Aún no está lista');return;}
-    saltoMando.activo=true;saltoMando.distancia=4;saltoMando.dir.copy(mando.dir);destinoSaltoMando();
+    saltoMando.activo=true;saltoMando.distancia=4;saltoMando.dir.copy(mando.dir);ajustarSaltoMando(mov);destinoSaltoMando();
   }
   function dibujarSaltoMando(){
     if(!saltoMando.activo)return;
@@ -691,16 +692,15 @@
     const apunta=heroe.pos.clone().addScaledVector(mando.dir,7);
     ctl.mov.copy(mov);ctl.apunta=apunta;
     if(saltoMando.activo){
-      if(mira.lengthSq())saltoMando.dir.copy(mira).normalize();
-      if(nuevos[12])saltoMando.distancia=Math.min(8,saltoMando.distancia+.5);
-      if(nuevos[13])saltoMando.distancia=Math.max(1,saltoMando.distancia-.5);
+      // El stick izquierdo elige dirección y alcance; al soltarlo se conserva el destino.
+      ajustarSaltoMando(mov);
       if(nuevos[0]){cancelarSaltoMando();return {mov:new V3(),apunta,atacar:false};}
       if(nuevos[1]){const destino=heroe.pos.clone().addScaledVector(saltoMando.dir,saltoMando.distancia);cancelarSaltoMando();usar('salto',destino);return {mov:new V3(),apunta:destino,atacar:false};}
       // Preparar no gasta Furia ni altera las ventanas del salto: se cobra al confirmar.
       return {mov:new V3(),apunta:destinoSaltoMando().clone(),atacar:false};
     }
     for(const [i,accion] of Object.entries(BOTONES_MANDO))if(nuevos[i]){
-      if(accion==='salto'&&!aDistancia())prepararSaltoMando();
+      if(accion==='salto'&&!aDistancia())prepararSaltoMando(mov);
       else usar(accion,accion==='esquiva'?(mov.lengthSq()?mov:mando.dir).clone():apunta.clone());
     }
     if(saltoMando.activo)return {mov:new V3(),apunta:destinoSaltoMando().clone(),atacar:false};

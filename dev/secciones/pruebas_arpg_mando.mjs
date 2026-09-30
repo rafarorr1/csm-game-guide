@@ -26,8 +26,11 @@ console.log('Mando: zona muerta, ejes, apuntado, ataque mantenido, flancos, foco
 run("g.mapping='standard';g.axes=[0,0,0,0];g.buttons.forEach(b=>b.pressed=false);leerMando();leerMando();avisos=[];g.buttons[1].pressed=true;leerMando()");
 assert.equal(run('saltoMando.activo'),true);assert.equal(run('avisos.length'),0);assert.equal(run('heroe.furia'),50);
 run('leerMando()');assert.equal(run('avisos.length'),0);
-run('g.buttons[1].pressed=false;g.buttons[12].pressed=true;g.axes=[0,0,1,0];leerMando()');assert.equal(run('saltoMando.distancia'),4.5);assert.equal(run('saltoMando.destino.x'),4.5);
-run('g.buttons[12].pressed=false;g.buttons[1].pressed=true;leerMando()');assert.equal(run('avisos[0]'),'salto');assert.equal(run('heroe.furia'),25);assert.equal(run('ultimoDestino.x'),4.5);assert.equal(run('saltoMando.activo'),false);
+run('g.buttons[1].pressed=false;g.axes=[.59,0,0,0];leerMando()');assert.ok(Math.abs(run('saltoMando.distancia')-4.5)<1e-9);assert.ok(Math.abs(run('saltoMando.destino.x')-4.5)<1e-9);
+run('g.axes=[1,0,0,0];leerMando()');assert.equal(run('saltoMando.distancia'),8);
+run('g.axes=[0,-.59,0,0];leerMando()');assert.ok(Math.abs(run('saltoMando.destino.z')+4.5)<1e-9);
+run('g.axes=[.59,0,0,0];leerMando();g.axes=[0,0,-1,0];g.buttons[12].pressed=true;leerMando()');assert.ok(Math.abs(run('saltoMando.destino.x')-4.5)<1e-9);
+run('g.buttons[12].pressed=false;g.buttons[1].pressed=true;leerMando()');assert.equal(run('avisos[0]'),'salto');assert.equal(run('heroe.furia'),25);assert.ok(Math.abs(run('ultimoDestino.x')-4.5)<1e-9);assert.equal(run('saltoMando.activo'),false);
 run("heroe.estado='quieto';g.buttons[1].pressed=false;leerMando();g.buttons[1].pressed=true;leerMando();g.buttons[1].pressed=false;g.buttons[0].pressed=true;leerMando()");assert.equal(run('saltoMando.activo'),false);assert.equal(run('avisos.length'),1);
 run('g.buttons[0].pressed=false;leerMando();g.buttons[1].pressed=true;leerMando();pads=[];leerMando()');assert.equal(run('saltoMando.activo'),false);
 run("heroe.tipo='mohamed';pads=[g];g.buttons.forEach(b=>b.pressed=false);g.axes=[0,0,0,0];leerMando();g.buttons[1].pressed=true;leerMando()");assert.equal(run('avisos.length'),2);assert.equal(run('saltoMando.activo'),false);
