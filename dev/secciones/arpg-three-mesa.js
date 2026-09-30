@@ -636,7 +636,7 @@
     ol.i++;const O=OLEADAS[ol.i];let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(ol.cola[i][0]!=='can'&&ol.cola[j][0]!=='can')[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;banner(O.nombre,O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.');}
-  function reiniciar(){cancelarSaltoMando();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+  function reiniciar(){escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);escena.remove(heroe.m.raiz);crearHeroe();$('botin').innerHTML='';Object.assign(ol,{i:-1,cola:[],espera:1.8,lote:0,descanso:null,fin:false});$('fin').hidden=true;finMostrado=false;}
 
   /* ---- Entrada: teclado, ratón y táctil ---------------------------------------------------
@@ -648,75 +648,44 @@
   const teclas=new Set(),DIRS={KeyW:[0,-1],ArrowUp:[0,-1],KeyS:[0,1],ArrowDown:[0,1],KeyA:[-1,0],ArrowLeft:[-1,0],KeyD:[1,0],ArrowRight:[1,0]};
   const ACCION={Space:'parry',ShiftLeft:'esquiva',ShiftRight:'esquiva',KeyQ:'torbellino',Digit1:'torbellino',KeyR:'salto',Digit2:'salto',KeyE:'provocar',Digit3:'provocar'};
   // DualSense y otros mandos que el navegador presenta con distribución estándar.
-  const saltoMando={activo:false,distancia:4,dir:new V3(0,0,-1),destino:new V3()};
-  const marcaSaltoMando=new THREE.Group();marcaSaltoMando.visible=false;escena.add(marcaSaltoMando);
-  const materialSaltoMando=new THREE.MeshBasicMaterial({color:0xff4538,transparent:true,opacity:.85,depthWrite:false,side:THREE.DoubleSide});
-  const anilloSaltoMando=new THREE.Mesh(new THREE.RingGeometry(.45,.58,40).rotateX(-Math.PI/2),materialSaltoMando);
-  const reglaSaltoMando=new THREE.Mesh(new THREE.PlaneGeometry(.065,1).rotateX(-Math.PI/2).translate(0,0,.5),materialSaltoMando);
-  marcaSaltoMando.add(anilloSaltoMando,reglaSaltoMando);
-  function cancelarSaltoMando(){saltoMando.activo=false;marcaSaltoMando.visible=false;const panel=$('saltoMando');if(panel)panel.hidden=true;}
-  function destinoSaltoMando(){const p=saltoMando.destino.copy(heroe.pos).addScaledVector(saltoMando.dir,saltoMando.distancia);dentroPlaza(p,heroe.radio);return p;}
-  function ajustarSaltoMando(mov){const fuerza=mov.length();if(fuerza>0){saltoMando.dir.copy(mov).normalize();saltoMando.distancia=1+7*Math.min(1,fuerza);}}
-  function prepararSaltoMando(mov){
-    if(!heroe.vivo||!['quieto','andar'].includes(heroe.estado))return;
-    if(heroe.furia<HAB.salto.coste){rechazo('salto','Te falta Furia');return;}
-    if(heroe.cd.salto>0){rechazo('salto','Aún no está lista');return;}
-    saltoMando.activo=true;saltoMando.distancia=4;saltoMando.dir.copy(mando.dir);ajustarSaltoMando(mov);destinoSaltoMando();
-  }
-  function dibujarSaltoMando(){
-    if(!saltoMando.activo)return;
-    if(!heroe.vivo||aDistancia()||!['quieto','andar'].includes(heroe.estado)){cancelarSaltoMando();return;}
-    const p=destinoSaltoMando(),d=plano(p,heroe.pos);marcaSaltoMando.visible=true;
-    anilloSaltoMando.position.set(p.x,.055,p.z);reglaSaltoMando.position.set(heroe.pos.x,.05,heroe.pos.z);reglaSaltoMando.rotation.y=rumbo(heroe.pos,p);reglaSaltoMando.scale.z=d;
-    const panel=$('saltoMando');if(panel){panel.hidden=false;$('distanciaSaltoMando').textContent=d.toFixed(1)+' m';$('medidorSaltoMando').value=Math.min(8,d);}
-  }
   const mando={indice:null,botones:[],activo:false,foco:true,listo:false,dir:new V3(0,0,-1)};
   const BOTONES_MANDO={0:'esquiva',1:'salto',3:'provocar',4:'parry',5:'torbellino',6:'parry'};
   function ejeMando(x=0,z=0){const d=Math.hypot(x,z);return d<=.18?new V3():new V3(x,0,z).multiplyScalar(Math.min(1,(d-.18)/.82)/d);}
   function estadoMando(txt){const el=$('estadoMando');if(el&&el.textContent!==txt)el.textContent=txt;}
   function leerMando(){
-    let lista=[];try{lista=Array.from(navigator.getGamepads?.()||[]);}catch{cancelarSaltoMando();estadoMando('Mando no disponible en este navegador. Puedes usar teclado y ratón.');return null;}
+    let lista=[];try{lista=Array.from(navigator.getGamepads?.()||[]);}catch{estadoMando('Mando no disponible en este navegador. Puedes usar teclado y ratón.');return null;}
     const g=lista.find(g=>g?.connected&&g.mapping==='standard'&&g.index===mando.indice)||lista.find(g=>g?.connected&&g.mapping==='standard');
-    if(!g){cancelarSaltoMando();mando.indice=null;mando.botones=[];mando.activo=false;mando.listo=false;estadoMando(lista.some(g=>g?.connected)?'El navegador no reconoce la distribución de este mando. Prueba otro navegador.':'PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.');return null;}
-    if(mando.indice!==g.index){cancelarSaltoMando();mando.indice=g.index;mando.botones=[];mando.listo=false;mando.activo=false;}
-    estadoMando('Mando conectado · Izquierdo: mover · Derecho: apuntar · R2 / □: atacar · ×: dash · ○: preparar / confirmar salto · L1 / L2: parry · R1: especial · △: provocar');
+    if(!g){mando.indice=null;mando.botones=[];mando.activo=false;mando.listo=false;estadoMando(lista.some(g=>g?.connected)?'El navegador no reconoce la distribución de este mando. Prueba otro navegador.':'PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.');return null;}
+    if(mando.indice!==g.index){mando.indice=g.index;mando.botones=[];mando.listo=false;mando.activo=false;}
+    estadoMando('Mando conectado · Izquierdo: mover · Derecho: apuntar · R2 / □: atacar · ×: dash · ○: salto · L1 / L2: parry · R1: especial · △: provocar');
     const botones=g.buttons.map(b=>b.pressed||b.value>.5),mov=ejeMando(g.axes[0],g.axes[1]),mira=ejeMando(g.axes[2],g.axes[3]);
     const pulsado=botones.some(Boolean),actividad=pulsado||mov.lengthSq()>0||mira.lengthSq()>0;
     // Al conectar o volver a la ventana, soltar primero evita ataques involuntarios.
-    if(document.hidden||!mando.foco||!mando.listo){cancelarSaltoMando();mando.botones=botones;mando.activo=false;mando.listo=!document.hidden&&mando.foco&&!actividad;return null;}
+    if(document.hidden||!mando.foco||!mando.listo){mando.botones=botones;mando.activo=false;mando.listo=!document.hidden&&mando.foco&&!actividad;return null;}
     const nuevos=botones.map((v,i)=>v&&!mando.botones[i]);mando.botones=botones;
     if(actividad){mando.activo=true;ent.piloto=false;ent.atacando=ent.pendiente=false;}
-    if(!mando.activo){cancelarSaltoMando();return null;}
-    if(saltoMando.activo&&(!heroe.vivo||aDistancia()||!['quieto','andar'].includes(heroe.estado)))cancelarSaltoMando();
+    if(!mando.activo){return null;}
     if(mira.lengthSq())mando.dir.copy(mira).normalize();else if(mov.lengthSq())mando.dir.copy(mov).normalize();
     const apunta=heroe.pos.clone().addScaledVector(mando.dir,7);
     ctl.mov.copy(mov);ctl.apunta=apunta;
-    if(saltoMando.activo){
-      // El stick izquierdo elige dirección y alcance; al soltarlo se conserva el destino.
-      ajustarSaltoMando(mov);
-      if(nuevos[0]){cancelarSaltoMando();return {mov:new V3(),apunta,atacar:false};}
-      if(nuevos[1]){const destino=heroe.pos.clone().addScaledVector(saltoMando.dir,saltoMando.distancia);cancelarSaltoMando();usar('salto',destino);return {mov:new V3(),apunta:destino,atacar:false};}
-      // Preparar no gasta Furia ni altera las ventanas del salto: se cobra al confirmar.
-      return {mov:new V3(),apunta:destinoSaltoMando().clone(),atacar:false};
-    }
     for(const [i,accion] of Object.entries(BOTONES_MANDO))if(nuevos[i]){
-      if(accion==='salto'&&!aDistancia())prepararSaltoMando(mov);
-      else usar(accion,accion==='esquiva'?(mov.lengthSq()?mov:mando.dir).clone():apunta.clone());
+      // Adreida salta cinco metros hacia el stick izquierdo, o hacia su frente si está centrado.
+      const destino=accion==='salto'&&!aDistancia()?heroe.pos.clone().addScaledVector(mov.lengthSq()?mov.clone().normalize():frente(heroe.dir),5):apunta.clone();
+      usar(accion,accion==='esquiva'?(mov.lengthSq()?mov:mando.dir).clone():destino);
     }
-    if(saltoMando.activo)return {mov:new V3(),apunta:destinoSaltoMando().clone(),atacar:false};
     return {mov,apunta,atacar:!!(botones[2]||botones[7])};
   }
   addEventListener('focus',()=>{mando.foco=true;});
-  addEventListener('blur',()=>{mando.foco=false;mando.listo=false;mando.activo=false;cancelarSaltoMando();});
-  addEventListener('keydown',()=>{mando.activo=false;cancelarSaltoMando();});
-  esc.addEventListener('pointerdown',()=>{mando.activo=false;cancelarSaltoMando();});
-  esc.addEventListener('pointermove',()=>{mando.activo=false;cancelarSaltoMando();});
+  addEventListener('blur',()=>{mando.foco=false;mando.listo=false;mando.activo=false;});
+  addEventListener('keydown',()=>{mando.activo=false;});
+  esc.addEventListener('pointerdown',()=>{mando.activo=false;});
+  esc.addEventListener('pointermove',()=>{mando.activo=false;});
   function movTeclado(){const v=new V3();for(const k of teclas){const d=DIRS[k];if(d){v.x+=d[0];v.z+=d[1];}}return v.lengthSq()?v.normalize():v;}
   function apuntar(cx,cy){const b=esc.getBoundingClientRect();puntero.set((cx-b.left)/b.width*2-1,-(cy-b.top)/b.height*2+1);}
   function bajo(){ray.setFromCamera(puntero,camara);const cajas=[...enemigos.filter(e=>e.estado!=='muere').map(e=>e.m.caja),...botines.filter(b=>b.listo&&!b.recogida&&!b.volando).map(b=>b.caja)];
     const hit=ray.intersectObjects(cajas,false)[0];ray.ray.intersectPlane(planoSuelo,ent.suelo);return hit?(hit.object.userData.enemigo||hit.object.userData.botin):null;}
   lienzo.addEventListener('contextmenu',e=>e.preventDefault());
-  lienzo.addEventListener('pointerdown',e=>{cancelarSaltoMando();apuntar(e.clientX,e.clientY);camara.updateMatrixWorld();const s=bajo();
+  lienzo.addEventListener('pointerdown',e=>{apuntar(e.clientX,e.clientY);camara.updateMatrixWorld();const s=bajo();
     if(e.pointerType==='touch'){activarTactil();if(s?.bono){ent.lectura=s;ent.lecturaHasta=reloj.t+2.5;}return;}// en táctil, tocar una carta la lee; se recoge pasando por encima
     ent.piloto=false;ent.dentro=true;lienzo.setPointerCapture?.(e.pointerId);
     if(e.button===2)usar('salto',ent.suelo.clone());else if(e.button===0)ent.atacando=ent.pendiente=true;});
@@ -729,7 +698,7 @@
   addEventListener('keyup',e=>{teclas.delete(e.code);});addEventListener('blur',()=>{teclas.clear();ent.atacando=false;});
   // Botones del HUD (y de táctil): Atacar se mantiene pulsado; los demás lanzan su habilidad.
   for(const b of document.querySelectorAll('[data-hab]')){const h=b.dataset.hab;
-    b.addEventListener('pointerdown',e=>{cancelarSaltoMando();mando.activo=false;e.preventDefault();e.stopPropagation();ent.piloto=false;if(e.pointerType==='touch')activarTactil();if(h==='tajo'){ent.atacando=ent.pendiente=true;b.setPointerCapture?.(e.pointerId);return;}usar(h,h==='salto'?puntoApuntado():null);});
+    b.addEventListener('pointerdown',e=>{mando.activo=false;e.preventDefault();e.stopPropagation();ent.piloto=false;if(e.pointerType==='touch')activarTactil();if(h==='tajo'){ent.atacando=ent.pendiente=true;b.setPointerCapture?.(e.pointerId);return;}usar(h,h==='salto'?puntoApuntado():null);});
     if(h==='tajo')for(const t of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(t,()=>{ent.atacando=false;});}
   // Palanca táctil: arrastra para andar (la cámara mira al norte: arriba es el fondo de la plaza).
   function activarTactil(){if(ent.tactil)return;ent.tactil=true;esc.classList.add('tactil');}
@@ -833,7 +802,7 @@
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
     leerControles();
-    pasoHeroe(dt);dibujarSaltoMando();coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);
+    pasoHeroe(dt);coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);
     // Poses y posiciones de los modelos.
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
@@ -849,7 +818,6 @@
     const oroParry=!aDistancia()&&h.vivo?Math.max(h.estado==='parry'?1:0,h.brilloParry/.3*1.5):0;
     hm.M.u.uBorde.value=oroParry*1.15;hm.M.u.uColorB.value.setRGB(1,.58,.08);
     if(oroParry>0&&h.destello<=0){hm.M.u.uDestello.value=Math.min(.6,oroParry*.42);hm.M.u.uColorD.value.setRGB(1,.65,.12);}
-    if(saltoMando.activo){hm.M.u.uBorde.value=1.2;hm.M.u.uColorB.value.setRGB(1,.025,.015);hm.M.u.uDestello.value=.55;hm.M.u.uColorD.value.setRGB(1,.035,.02);}
     for(const e of enemigos){const m=e.m;m.raiz.position.set(e.pos.x,0,e.pos.z);m.raiz.rotation.y=e.dir;const d=e.d;
       const ka=e.ataque?Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur):1;
       const pe={quieto:['quieto'],entra:['andar'],persigue:[e.paso>.05?'andar':'quieto'],aviso:[d.lanza?'apunta':'aviso',ka],golpe:[d.lanza?'lanzar':'golpe',d.lanza?e.t/d.golpe*.6:.38+.24*(e.t/d.golpe)],
