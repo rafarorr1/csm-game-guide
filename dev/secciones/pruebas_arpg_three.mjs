@@ -266,7 +266,8 @@ try{
   // ---- Uso real: arranca solo, marcador y movimiento reducido; sin WebGL 2 ---------------
   for(const reducido of [false,true]){const {contexto,pagina,errores}=await abrir(navegador,{captura:false,reducido});
     await pagina.waitForFunction(()=>/fps/.test(document.getElementById('info').textContent),null,{timeout:60000});
-    await pagina.waitForFunction(()=>/Oleada 1/.test(document.getElementById('oleada').textContent),null,{timeout:60000});
+    // En WebGL por software la plaza va a 0–1 fps: la cuenta atrás de 1,8 s de juego puede tardar más de un minuto real.
+    await pagina.waitForFunction(()=>/Oleada 1/.test(document.getElementById('oleada').textContent),null,{timeout:120000});
     const info=await pagina.textContent('#info');assert.ok(/llamadas/.test(info)&&/three 186/.test(info)&&!/sin posproceso/.test(info),'El marcador muestra fps, llamadas y versión ('+info+')');
     if(reducido){const t=await pagina.evaluate(R=>{window[R].heroe({furia:100});window[R].usar('salto',3,0);return new Promise(ok=>setTimeout(()=>ok(window[R].estado().temblor),1200));},R);assert.equal(t,0,'Con movimiento reducido la cámara no tiembla');}
     assert.deepEqual(errores,[],'Sin errores al usarla');await contexto.close();}

@@ -390,6 +390,7 @@ oleadas, y al final entra Can, el de los Goblins.
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
   - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres hachazos: tajo, revés y un hachazo vertical;
+  - Adreida es un modelo detallado sacado de su carta (sombreado suave, sigue siendo 3 llamadas de dibujo): cabeza esculpida con mandíbula ancha, ojos rojos, colmillos y orejas en punta; melena azul noche en mechones ondulados con la raya al medio; top negro con la correa en diagonal y los tres aros de plata; hombrera de cuero en capas; brazales con púas de hueso; puños cerrados sobre el mango; cinturón con hebilla de plata, cráneos de pájaro y bolsa; faldón de piel sobre la falda de tela; botas altas con correas y púa en la rodilla, y el hacha de doble hoja en creciente con la runa que brilla;
   - Adreida lleva el hacha de doble filo con las dos manos: cada pose dice dónde va la empuñadura y hacia dónde apunta el hacha, y los dos brazos llegan con cinemática inversa (la izquierda, más abajo del mango);
   - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
   - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
