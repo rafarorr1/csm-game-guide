@@ -409,11 +409,17 @@ oleadas, y al final entra Can, el de los Goblins.
   - en el último tramo se fija: deja de girar, la zona y el «!» se encienden, y es el momento de salir o esquivar;
   - quien ataca desde fuera de la pantalla tiene su flecha en el borde;
   - al recibir un golpe, un arco rojo en el borde marca de dónde vino y el atacante destella;
-  - como mucho tres enemigos atacan cuerpo a cuerpo a la vez.
-- **Dificultad alta, a lo Hades y Elden Ring:**
-  - los enemigos pegan fuerte (un goblin 13, un kobold 16, un saqueador 24, Can 32 y su golpazo 48) y atacan a menudo; Adreida empieza con 120 de Alma;
-  - las oleadas son más grandes (8, 10, 12 y Can con 8) y Can aguanta 800;
-  - jugando a lo bruto (pegar sin parar ni moverse) Adreida cae hacia la tercera oleada; con buenos parrys y moviéndose, la partida se gana sin que la toquen (es lo que hace el piloto automático).
+  - como mucho dos enemigos se acercan para atacar cuerpo a cuerpo a la vez; los demás se reparten alrededor, a unos 4 m, y los turnos rotan. Los comienzos de los ataques se separan al menos 0,55 s; sólo un kobold prepara o lanza a la vez.
+- **Ritmo de combate (referencia: [Hades II, video de penguinz0](https://www.youtube.com/watch?v=6a4LIrDkyag)):**
+  - propuesta: leer el aviso → abrir espacio con movimiento/parry/dash → contraatacar durante la recuperación;
+  - goblins a 2,85 m/s (antes 3,8), aviso de 0,85 s y recuperación de 0,8 s. Mohamed puede ganar distancia incluso mientras dispara; los saqueadores y Can mantienen su peso con avisos y recuperaciones más largos;
+  - la dificultad sigue en el daño (goblin 13, kobold 16, saqueador 24, Can 32 y su golpazo 48), no en perseguir todos el mismo punto; Adreida empieza con 120 de Alma y Can conserva sus 800 de vida;
+  - oleadas de 6, 8, 10 y Can con 4 escoltas. Entradas en grupos de hasta tres, separadas 0,75 s dentro del grupo y al menos 2,4 s entre grupos; los refuerzos esperan a que baje la presión. Límites de 4/5/6/5 enemigos vivos según la oleada, incluyendo los refuerzos que llama Can;
+  - tres segundos de respiro entre oleadas para recoger botín y recolocarse. El HUD muestra los enemigos que faltan por entrar y la cuenta atrás;
+  - la separación entre enemigos deja huecos; los que esperan mantienen distancia, pero pueden agruparse con Provocar para aprovechar las habilidades de área.
+
+  Revisión acotada de IA y oleadas (sin navegador ni batería completa):
+  `node dev/secciones/pruebas_arpg_ritmo.mjs`.
 - **Botín:**
   - los Objetos del juego caen como cartas físicas (`three-carta.js`) en Normal, Foil o Dorado, con su columna de luz;
   - con el ratón encima (o al tocarla) la carta se levanta y crece para leerla;

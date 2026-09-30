@@ -212,10 +212,10 @@
   /* ---- Personajes ------------------------------------------------------------------ */
   // Cada enemigo tiene la forma exacta de su ataque: el cono o la línea que se dibuja en el suelo es lo que golpea.
   const DEF={
-    goblin:{vida:34,dano:13,vel:3.8,alcance:1.05,aviso:.65,golpe:.18,recupera:.45,cd:.95,forma:'cono',radio:2,ang:.85,botin:.24,globo:.18},
-    kobold:{vida:26,dano:16,vel:3.3,alcance:11,aviso:.95,golpe:.3,recupera:.6,cd:1.9,forma:'linea',largo:13,ancho:.8,botin:.3,globo:.2,lanza:true},
-    saqueador:{vida:100,dano:24,vel:2.6,alcance:1.5,aviso:.8,golpe:.2,recupera:.6,cd:1.15,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.4},
-    can:{vida:800,dano:32,vel:2.9,alcance:2.3,aviso:.8,golpe:.22,recupera:.65,cd:.95,forma:'cono',radio:3.3,ang:.9,aguante:true,jefe:true,botin:1,globo:1},
+    goblin:{vida:34,dano:13,vel:2.85,alcance:1.05,aviso:.85,golpe:.18,recupera:.8,cd:1.35,forma:'cono',radio:2,ang:.85,botin:.24,globo:.18},
+    kobold:{vida:26,dano:16,vel:2.65,alcance:11,aviso:1.1,golpe:.3,recupera:.8,cd:2.4,forma:'linea',largo:13,ancho:.8,botin:.3,globo:.2,lanza:true},
+    saqueador:{vida:100,dano:24,vel:2.35,alcance:1.5,aviso:1,golpe:.2,recupera:1,cd:1.5,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.4},
+    can:{vida:800,dano:32,vel:2.5,alcance:2.3,aviso:1,golpe:.22,recupera:1.05,cd:1.35,forma:'cono',radio:3.3,ang:.9,aguante:true,jefe:true,botin:1,globo:1},
   };
   const HAB={torbellino:{coste:30,cd:0},salto:{coste:25,cd:5},provocar:{coste:0,cd:10},esquiva:{coste:0,cd:.55},parry:{coste:0,cd:.5}};
   // Parry (Espacio): Adreida alza el hacha 0,35 s. Si el golpe llega en las primeras 0,18 s es perfecto: no hace daño,
@@ -234,7 +234,7 @@
     balas:T.cargador||0,recargaT:0,cadT:0,disparoT:9,disparos:0,cd:{salto:0,provocar:0,esquiva:0,parry:0},parrys:0,bloqueos:0,parryExito:false,escudo:0,fase:0,paso:0,golpeo:false,tick:0,
     combo:0,finGolpe:-9,invul:0,vatq:1,dirEsq:new V3(),destello:0,dolor:1,vivo:true,botin:[],llaves:0,objetivoSalto:null,origenSalto:null,radio:m.radio,muerteT:0,golpeDe:null};m.caja.userData.heroe=true;}
   function crearEnemigo(tipo,x,z,opc={}){const m=cuerpoDe(tipo),d=DEF[tipo],e={id:sigId++,tipo,m,d,pos:new V3(x,0,z),dir:rumbo(new V3(x,0,z),new V3()),vida:d.vida,vidaMax:d.vida,estado:opc.quieto?'quieto':'entra',t:0,cd:.4+rnd()*.8,emp:new V3(),fase:rnd()*TAU,paso:0,
-      destello:0,radio:m.radio,rodeo:(rnd()-.5)*1.6,provocado:0,dentro:Math.hypot(x,z)<R-.5,quieto:!!opc.quieto,ataques:0,gritó:false,ataque:null,alerta:null,aturdidoT:0,estrellas:null,culpableT:-9};
+      destello:0,radio:m.radio,sector:sectorLibre(x,z),turnoHasta:0,ultimoTurno:-10,rodeo:(rnd()-.5)*1.6,provocado:0,dentro:Math.hypot(x,z)<R-.5,quieto:!!opc.quieto,ataques:0,gritó:false,ataque:null,alerta:null,aturdidoT:0,estrellas:null,culpableT:-9};
     m.caja.userData.enemigo=e;m.raiz.position.copy(e.pos);enemigos.push(e);return e;}
 
   /* ---- Cartas de botín (three-carta.js) -------------------------------------------- */
@@ -391,7 +391,10 @@
   function dentroPlaza(p,r){for(const o of obstaculos){const dx=p.x-o.x,dz=p.z-o.z,d=Math.hypot(dx,dz),m=o.r+r;if(d<m&&d>1e-4){p.x=o.x+dx/d*m;p.z=o.z+dz/d*m;}}
     const d=Math.hypot(p.x,p.z);if(d>R-r){p.x*=(R-r)/d;p.z*=(R-r)/d;}}
   function separar(){const todos=[heroe,...enemigos.filter(e=>e.estado!=='muere')];for(let i=0;i<todos.length;i++)for(let j=i+1;j<todos.length;j++){const a=todos[i],b=todos[j];if(a===heroe&&heroe.estado==='salto')continue;
-    const dx=b.pos.x-a.pos.x,dz=b.pos.z-a.pos.z,d=Math.hypot(dx,dz),m=a.radio+b.radio;if(d<m&&d>1e-4){const k=(m-d)/d,wa=a===heroe?.15:.5,wb=b===heroe?.15:.5;a.pos.x-=dx*k*wa;a.pos.z-=dz*k*wa;b.pos.x+=dx*k*wb;b.pos.z+=dz*k*wb;}}}
+    const dx=b.pos.x-a.pos.x,dz=b.pos.z-a.pos.z,d=Math.hypot(dx,dz),m=a.radio+b.radio+(a===heroe?0:.55);
+    if(d<m){const nx=d>1e-4?dx/d:1,nz=d>1e-4?dz/d:0,k=m-d,wa=a===heroe?.15:a.ataque?0:.5,wb=b.ataque?0:.5;
+      a.pos.x-=nx*k*wa;a.pos.z-=nz*k*wa;b.pos.x+=nx*k*wb;b.pos.z+=nz*k*wb;}}
+    for(const e of todos)if(e===heroe||e.dentro)dentroPlaza(e.pos,e.radio);}
 
   /* ---- Adreida: control a lo Hades ------------------------------------------------------
      WASD mueve; el clic izquierdo ataca hacia el cursor (combo de tres golpes si lo mantienes);
@@ -527,6 +530,20 @@
       else if(H.vivo&&par==='bloqueo')bloqueado(a.dano,e.pos,e);
       else if(H.vivo&&dentro)herir(a.dano,e.pos,e);}
     cancelarAtaque(e);}
+  // Dos plazas de acercamiento, no sólo dos permisos de atacar: los demás guardan espacio.
+  // Los turnos caducan si alguien se atasca y rotan después de cada ataque.
+  const RITMO={cuerpo:2,entreAtaques:.55,distanciaEspera:3.8};
+  const presion={siguiente:0,primeraLinea:new Set()};
+  function sectorLibre(x,z){const a=rumbo(heroe.pos,new V3(x,0,z)),ocupados=enemigos.filter(e=>e.estado!=='muere'&&!e.d.lanza).map(e=>e.sector);
+    let mejor=a,nota=Infinity;for(let i=0;i<10;i++){const candidato=i*TAU/10,coste=Math.abs(difAng(a,candidato))+ocupados.filter(v=>Math.abs(difAng(v,candidato))<.3).length*10;
+      if(coste<nota){nota=coste;mejor=candidato;}}return mejor;}
+  function coordinarEnemigos(){const cuerpo=enemigos.filter(e=>!e.d.lanza&&e.estado!=='muere');
+    const atacando=cuerpo.filter(e=>['aviso','golpe'].includes(e.estado));presion.primeraLinea=new Set(atacando.map(e=>e.id));
+    const candidatos=cuerpo.filter(e=>e.estado==='persigue'&&e.cd<=0&&plano(e.pos,heroe.pos)<9);
+    // Conserva al que ya entró; después, quien lleve más tiempo esperando (distancia deshace empates).
+    candidatos.sort((a,b)=>(b.turnoHasta>reloj.t)-(a.turnoHasta>reloj.t)||a.ultimoTurno-b.ultimoTurno||plano(a.pos,heroe.pos)-plano(b.pos,heroe.pos));
+    for(const e of candidatos){if(presion.primeraLinea.size>=RITMO.cuerpo)break;
+      if(e.turnoHasta<=reloj.t){e.turnoHasta=reloj.t+3;e.ultimoTurno=reloj.t;}presion.primeraLinea.add(e.id);}}
   function pasoEnemigo(e,dt){const d=e.d;e.t+=dt;e.destello=Math.max(0,e.destello-dt*9);e.provocado=Math.max(0,e.provocado-dt);e.cd-=dt;
     e.pos.addScaledVector(e.emp,dt);e.emp.multiplyScalar(Math.exp(-dt*7));
     // El tirón de Provocar dura un instante (si el punto cae en un obstáculo no se queda enganchado).
@@ -542,19 +559,21 @@
         if(d.lanza){// Kobold: guarda la distancia (salvo provocado) y apunta con la línea.
           const lejos=e.pos.clone().sub(H.pos).setY(0).normalize();if(dist>8.5||e.provocado)movido=hacia(H.pos,vel);else if(dist<5)movido=hacia(e.pos.clone().addScaledVector(lejos,2),vel*.9);
           else{const lado=new V3(-lejos.z,0,lejos.x).multiplyScalar(e.rodeo>0?1:-1);movido=hacia(e.pos.clone().addScaledVector(lado,1.5),vel*.45);}
-          if(e.cd<=0&&dist<d.alcance){e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');empezarAtaque(e,'linea',{dur:d.aviso,largo:d.largo,ancho:d.ancho,fija:.65,dano:d.dano});}break;}
-        // Cuerpo a cuerpo: rodea (cada uno por su lado) y se acerca. Como mucho dos atacan a la vez.
-        const a=rumbo(H.pos,e.pos)+e.rodeo*Math.min(1,Math.max(0,dist-2)/4),radio=H.radio+e.radio+d.alcance*.55;
-        const obj=dist>2.8?H.pos.clone().add(frente(a).multiplyScalar(Math.min(dist,2.4))):H.pos.clone().add(frente(rumbo(H.pos,e.pos)).multiplyScalar(radio));
-        movido=hacia(obj,vel);const atacan=enemigos.filter(o=>o!==e&&!o.d.lanza&&['aviso','golpe'].includes(o.estado)).length;
-        if(dist<H.radio+e.radio+d.alcance+.2&&e.cd<=0&&atacan<3){e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');
+          if(e.cd<=0&&dist<d.alcance&&reloj.t>=presion.siguiente&&!enemigos.some(o=>o!==e&&o.d.lanza&&['aviso','golpe'].includes(o.estado))){presion.siguiente=reloj.t+RITMO.entreAtaques;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');empezarAtaque(e,'linea',{dur:d.aviso,largo:d.largo,ancho:d.ancho,fija:.65,dano:d.dano});}break;}
+        // Quien no tiene turno se reparte en un anillo exterior; deja libre el cuerpo del jugador.
+        const entra=presion.primeraLinea.has(e.id),radio=entra?H.radio+e.radio+d.alcance*.55:RITMO.distanciaEspera+(e.id%3)*.35;
+        const a=entra?rumbo(H.pos,e.pos):e.sector,obj=H.pos.clone().add(frente(a).multiplyScalar(radio));
+        dentroPlaza(obj,e.radio);movido=hacia(obj,vel*(entra?1:.8));
+        if(entra&&dist<H.radio+e.radio+d.alcance+.2&&e.cd<=0&&reloj.t>=presion.siguiente){
+          presion.siguiente=reloj.t+RITMO.entreAtaques;e.turnoHasta=0;e.ultimoTurno=reloj.t;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');
           if(e.tipo==='can'&&e.ataques%3===2)empezarAtaque(e,'circulo',{dur:1.15,radio:2.8,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.8)),fija:0,dano:Math.round(d.dano*1.5)});
           else empezarAtaque(e,'cono',{dur:d.aviso,radio:d.radio,ang:d.ang,fija:.5,dano:d.dano});}
         break;}
       case 'aviso':{const a=e.ataque;if(!a){cambiar(e,'persigue');break;}const k=(reloj.t-a.t0)/a.dur;
         if(!a.fijado&&k<a.fija){e.dir+=difAng(e.dir,rumbo(e.pos,H.pos))*Math.min(1,dt*(d.lanza?5:3.5));a.dir=e.dir;}else a.fijado=true;
         colocarAtaque(e);if(k>=1)resolverAtaque(e);break;}
-      case 'grito':if(e.t>=.9){cambiar(e,'persigue');for(let i=0;i<3;i++){const a=CALLES[i],p=calle(a).multiplyScalar(R+3);crearEnemigo('goblin',p.x,p.z);}}break;
+      case 'grito':if(e.t>=.9){cambiar(e,'persigue');if(ol.auto){for(let i=0;i<3;i++)ol.cola.push(['goblin',i]);}
+        else{const n=Math.min(3,Math.max(0,5-enemigos.filter(o=>o.estado!=='muere').length));for(let i=0;i<n;i++){const p=calle(CALLES[i]).multiplyScalar(R+3);crearEnemigo('goblin',p.x,p.z);}}}break;
       case 'golpe':if(e.t>=d.golpe){cambiar(e,'recupera');}break;
       case 'recupera':if(e.t>=d.recupera){e.cd=d.cd*(.8+rnd()*.4);cambiar(e,'persigue');}break;
       case 'dolor':if(e.t>=.28){e.cd=Math.max(e.cd,.35);cambiar(e,'persigue');}break;
@@ -572,22 +591,28 @@
 
   /* ---- Oleadas ------------------------------------------------------------------------- */
   const OLEADAS=[
-    {nombre:'Oleada 1 · Los goblins del camino',grupos:[['goblin',8]]},
-    {nombre:'Oleada 2 · Lanzas desde las calles',grupos:[['goblin',6],['kobold',4]]},
-    {nombre:'Oleada 3 · Los saqueadores',grupos:[['saqueador',4],['goblin',5],['kobold',3]]},
-    {nombre:'Can, el de los Goblins',grupos:[['can',1],['goblin',6],['kobold',2]],jefe:true},
+    {nombre:'Oleada 1 · Los goblins del camino',grupos:[['goblin',6]],maxVivos:4},
+    {nombre:'Oleada 2 · Lanzas desde las calles',grupos:[['goblin',5],['kobold',3]],maxVivos:5},
+    {nombre:'Oleada 3 · Los saqueadores',grupos:[['saqueador',3],['goblin',4],['kobold',3]],maxVivos:6},
+    {nombre:'Can, el de los Goblins',grupos:[['can',1],['goblin',2],['kobold',2]],maxVivos:5,jefe:true},
   ];
-  const ol={auto:!CAPTURA,i:-1,cola:[],espera:1.8,fin:false};
+  const ol={auto:!CAPTURA,i:-1,cola:[],espera:1.8,lote:0,descanso:null,fin:false};
   function pasoOleadas(dt){if(!ol.auto||ol.fin||!heroe.vivo)return;
-    if(ol.cola.length){ol.espera-=dt;if(ol.espera<=0){const [tipo,k]=ol.cola.shift(),a=CALLES[k%3]+(rnd()-.5)*.25,p=calle(a).multiplyScalar(R+4+rnd()*2);crearEnemigo(tipo,p.x,p.z);ol.espera=.4;}return;}
-    if(enemigos.some(e=>e.estado!=='muere'))return;
-    ol.espera-=dt;if(ol.espera>0)return;
+    const vivos=enemigos.filter(e=>e.estado!=='muere').length;
+    if(ol.cola.length){const max=OLEADAS[ol.i]?.maxVivos??5;ol.descanso=null;ol.espera-=dt;
+      if(ol.espera>0||vivos>=max)return;
+      // Refuerzos de hasta tres: sólo entran cuando la presión baja, nunca una cola continua de diez.
+      if(!ol.lote){if(vivos>Math.max(1,max-3))return;ol.lote=Math.min(3,max-vivos,ol.cola.length);}
+      const [tipo,k]=ol.cola.shift(),a=CALLES[k%3]+(rnd()-.5)*.25,p=calle(a).multiplyScalar(R+3+rnd());crearEnemigo(tipo,p.x,p.z);
+      ol.lote--;ol.espera=ol.lote?.75:2.4;return;}
+    if(vivos){ol.descanso=null;return;}
+    if(ol.descanso===null)ol.descanso=ol.i<0?1.8:3;ol.descanso-=dt;if(ol.descanso>0)return;
     if(ol.i+1>=OLEADAS.length){ol.fin=true;banner('Tomsage resiste','Has vencido a Can, el de los Goblins. Recoge el botín: la Llave del Mago abrirá la primera Grieta.');return;}
     ol.i++;const O=OLEADAS[ol.i];let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(ol.cola[i][0]!=='can'&&ol.cola[j][0]!=='can')[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
-    ol.espera=.6;banner(O.nombre,O.jefe?'El jefe del asedio entra en la plaza.':'Llegan por las calles.');}
-  function reiniciar(){disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
-    for(const o of [...marcas])if(!o.fijo)quitarMarca(o);escena.remove(heroe.m.raiz);crearHeroe();$('botin').innerHTML='';Object.assign(ol,{i:-1,cola:[],espera:1.8,fin:false});$('fin').hidden=true;finMostrado=false;}
+    ol.espera=.6;ol.lote=0;ol.descanso=null;banner(O.nombre,O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.');}
+  function reiniciar(){presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+    for(const o of [...marcas])if(!o.fijo)quitarMarca(o);escena.remove(heroe.m.raiz);crearHeroe();$('botin').innerHTML='';Object.assign(ol,{i:-1,cola:[],espera:1.8,lote:0,descanso:null,fin:false});$('fin').hidden=true;finMostrado=false;}
 
   /* ---- Entrada: teclado, ratón y táctil ---------------------------------------------------
      ctl es lo que manda en cada fotograma: movimiento, si ataca y hacia dónde apunta. Lo llenan el
@@ -679,7 +704,7 @@
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');$('furiaTxt').textContent=Math.floor(h.furia);
     for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0;b.style.setProperty('--cd',(H.cd?cd/H.cd*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',{torbellino:'torbellino',salto:'salto',provocar:'grito',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
     const st=(aDistancia()?`<span>Balas <b>${h.recargaT>0?'recargando…':h.balas+' / '+HEROES.mohamed.cargador}</b></span>`:'')+`<span>Parrys perfectos <b>${h.parrys}</b></span><span>ATQ <b>${h.atq}</b></span><span>Vel. ataque <b>${Math.round(h.vatq*100)}%</b></span><span>Alma <b>${h.almaMax}</b></span><span>Llaves <b>${h.llaves}</b></span>`+(h.escudo>0?'<span class="escudo">Provocar: −50% daño</span>':'');if(st!==hud.st){hud.st=st;$('stats').innerHTML=st;}
-    const vivos=enemigos.filter(e=>e.estado!=='muere').length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':OLEADAS[ol.i].nombre+' · '+vivos+' en pie'):'Enemigos en pie: '+vivos;
+    const vivos=enemigos.filter(e=>e.estado!=='muere').length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':(OLEADAS[ol.i].jefe?'Can · Jefe':'Oleada '+(ol.i+1))+' · '+vivos+' en pie'+(ol.cola.length?' · '+ol.cola.length+' por llegar':!vivos&&ol.i<OLEADAS.length-1?' · siguiente oleada en '+Math.ceil(ol.descanso??3)+' s':'')):'Enemigos en pie: '+vivos;
     const o=ent.sobre?.d?ent.sobre:enemigos.includes(h.ultimo)&&h.ultimo.estado!=='muere'?h.ultimo:null;$('objetivo').hidden=!o;if(o){$('objNombre').textContent=o.m.nombre+(o.d.jefe?' · Jefe':'');$('objVida').style.width=(Math.max(0,o.vida)/o.vidaMax*100).toFixed(1)+'%';}
     flechas();golpeDir();
     $('vineta').style.opacity=h.heridaT===undefined?'0':Math.max(0,.9*(1-(reloj.t-h.heridaT)/.45)).toFixed(3);
@@ -717,7 +742,7 @@
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
     leerControles();
-    pasoHeroe(dt);for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);
+    pasoHeroe(dt);coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();pasoOleadas(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);
     // Poses y posiciones de los modelos.
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
