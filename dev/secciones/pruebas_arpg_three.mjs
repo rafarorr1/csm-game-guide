@@ -140,10 +140,10 @@ try{
     // Esquivar a través: invulnerable un instante, aunque la esquiva la deje dentro.
     await r('r.heroe({x:0,z:0,alma:140})');await r('r.enemigo(a[0],{x:0,z:-1.4})',g);e=await hasta(r,x=>G(x)?.ataque&&G(x).ataque.k>.85);await pagina.keyboard.press('Shift');e=await r('r.avanzar(.4)');
     assert.ok(e.heroe.alma===140&&e.heroe.esquivados>=1,'El dash (Shift) justo antes del golpe lo atraviesa («¡Esquivado!»)');
-    // Nunca más de tres atacando cuerpo a cuerpo a la vez.
+    // Nunca más de dos atacando cuerpo a cuerpo a la vez.
     await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');await r('r.heroe({x:0,z:0,alma:5000})');const ids=[];for(let i=0;i<5;i++)ids.push(await r('r.invocar("goblin",Math.cos(a[0])*1.6,Math.sin(a[0])*1.6,false)',i*1.25));
     for(const id of ids)await r('r.despertar(a[0])',id);let max=0;for(let i=0;i<120;i++){e=await r('r.avanzar(1/30)');max=Math.max(max,e.enemigos.filter(x=>x.ataque).length);}
-    assert.ok(max>=1&&max<=3,'Rodeada por cinco goblins, como mucho tres avisan a la vez ('+max+')');
+    assert.ok(max>=1&&max<=2,'Rodeada por cinco goblins, como mucho dos avisan a la vez ('+max+')');
     for(const id of ids)await r('r.matar(a[0])',id);await r('r.avanzar(1.5)');
     // El kobold desde fuera de la pantalla (detrás de la cámara): flecha en el borde y su línea; la lanza sigue la línea.
     await r('r.heroe({x:0,z:-6,alma:140})');const k=await r('r.invocar("kobold",0,5,false)');await r('r.despertar(a[0])',k);

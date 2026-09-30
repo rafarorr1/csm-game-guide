@@ -110,6 +110,8 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       goblin:{nombre:'Goblin de Camino',alto:1.15,radio:.34},
       kobold:{nombre:'Kobold lancero',alto:1.25,radio:.34},
       saqueador:{nombre:'Saqueador de Tomsage',alto:1.8,radio:.42},
+      troll:{nombre:'El Recaudador · Troll',alto:3,radio:.85},
+      cobrador:{nombre:'Goblin cobrador',alto:1.15,radio:.34},
       can:{nombre:'Can, el de los Goblins',alto:2.4,radio:.62},
       mohamed:{nombre:'Mohamed',alto:1.85,radio:.4},
     };
@@ -276,9 +278,9 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         for(const [u,v] of [[.07,.05],[.07,-.06],[.12,0]])for(const x of [1,-1])pon('manoD','metal',G.bola(.009,6,4),hierro2,[x*.019,-1.02+v,s*u]);}
       return {H,montar,p};
     }
-    function goblin(){
+    function goblin(cobrador=false){
       const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
-      const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=0x8e3324,tela=0x4f4636,bota=0x3d2c20;
+      const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=cobrador?0x703798:0x8e3324,tela=0x4f4636,bota=0x3d2c20;
       pon('cadera','piel',G.caja(.24,.13,.16),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,7,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.35);
       pon('cadera','piel',G.cil(.14,.145,.05,8),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.caja(.08,.07,.06),0x6b4c32,[.1,.0,.1]);
       for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.caja(.1,.13,.15),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,6),bota,[0,.1,0]);}
@@ -292,6 +294,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('cabeza','piel',G.cono(.01,.03,4),0xefe6d2,[s*.04,.06,.11],[Math.PI,0,0]);}
       pon('cabeza','piel',G.casco(.145,8,3,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.3);
       for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,6),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,6,5),piel2,[0,-.02,0]);}
+      if(cobrador){pon('cadera','piel',G.bola(.095,7,5),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,6,4),0xe6b64e,[.19,.035,.065]);}
       pon('manoD','piel',G.cil(.018,.02,.46,6),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0]);
       pon('manoD','metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3]);
       return {H,montar,p};
@@ -340,6 +343,38 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('anteI','piel',G.cil(.27,.27,.04,12),0x6b4a2e,[.1,-.17,.02],[0,0,Math.PI/2],1,.2);pon('anteI','metal',G.toro(.27,.022,14),acero,[.12,-.17,.02],[0,Math.PI/2,0]);pon('anteI','metal',G.bola(.06,6,4),acero,[.13,-.17,.02],[0,0,-Math.PI/2],[1,.6,1]);}
       return {H,montar,p};
     }
+    // Tres metros hasta la coronilla: cuerpo ancho, brazos largos y una maza de piedra.
+    function troll(){
+      const p={muslo:.62,pierna:.58,pie:.08,cintura:.1,torso:.98,hombros:.55,brazo:.56,antebrazo:.52,ancho:.27},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
+      const piel=0x6c8867,sombra=0x52694f,cuero=0x493126,piedra=0x787b80;
+      pon('cadera','piel',G.caja(.86,.34,.54),cuero,[0,0,0]);
+      pon('cadera','piel',G.cil(.48,.6,.48,9,true),0x574137,[0,-.2,0],[0,0,0],[1,1,.72]);
+      pon('cadera','metal',G.caja(.22,.19,.08),0xba9746,[0,.06,.32]);
+      pon('torso','piel',G.capsula(.4,.25),piel,[0,.4,0],[0,0,0],[1.4,1,.92]);
+      pon('torso','piel',G.bola(.38,9,7),sombra,[0,.25,.12],[0,0,0],[1.25,1,.85]);
+      pon('torso','piel',G.caja(.12,1.08,.05),cuero,[0,.45,.37],[0,0,.6]);
+      pon('cabeza','piel',G.bola(.34,9,7),piel,[0,.3,0]);
+      pon('cabeza','piel',G.caja(.48,.23,.34),sombra,[0,.13,.18]);
+      pon('cabeza','piel',G.bola(.105,7,5),sombra,[0,.28,.32],[0,0,0],[1,1.2,1]);
+      for(const signo of [-1,1]){
+        pon('cabeza','brillo',G.bola(.045,6,5),0xffc046,[signo*.13,.36,.285]);
+        pon('cabeza','piel',G.caja(.19,.07,.075),sombra,[signo*.14,.42,.29],[0,0,signo*.15]);
+        pon('cabeza','piel',G.cono(.055,.23,6),0xe6d9b9,[signo*.2,.17,.34],[0,0,-signo*.2]);
+        pon('cabeza','piel',G.cono(.1,.32,5),piel,[signo*.36,.32,-.03],[0,0,-signo*1.2]);
+      }
+      for(const l of ['I','D']){
+        miembro('pierna'+l,.18,.43,piel);miembro('rodilla'+l,.145,.4,sombra);
+        pon('pie'+l,'piel',G.caja(.35,.19,.48),sombra,[0,.015,.13]);
+        miembro('brazo'+l,.21,.4,piel);miembro('ante'+l,.17,.37,sombra);
+        pon('mano'+l,'piel',G.bola(.18,7,5),piel,[0,-.08,.04],[0,0,0],[1,1.2,1]);
+        pon('ante'+l,'metal',G.cil(.185,.195,.15,8),0x544f4a,[0,-.33,0]);
+      }
+      pon('brazoI','metal',G.bola(.3,7,5),piedra,[0,.02,0],[0,0,0],[1.2,.6,1.1]);
+      pon('manoD','piel',G.cil(.07,.09,1.6,7),0x47301e,[0,0,.45],[Math.PI/2,0,0]);
+      pon('manoD','metal',G.bola(.38,6,4),piedra,[0,0,1.2],[0,.3,0],[.85,.85,1.4]);
+      pon('manoD','metal',G.caja(.69,.12,.48),0x413e3b,[0,0,1.2]);
+      return {H,montar,p};
+    }
     // Una persona del grupo: piernas, torso, cabeza con cara y brazos; cada uno añade su ropa y su arma.
     function persona(o){
       const p={muslo:.44,pierna:.42,pie:.05,cintura:.07,torso:.5,hombros:.22,brazo:.3,antebrazo:.28,ancho:.1,...o.p},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
@@ -362,7 +397,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('cadera','piel',G.caja(.1,.12,.05),0x5a3a22,[.16,-.02,.1]);for(const x of [-.12,-.05,.02])pon('cadera','metal',G.cil(.014,.014,.06,5),0xc8a050,[x,.07,.15],[Math.PI/2,0,0]);
         pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
         pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
-    const constructores={adreida,goblin,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
+    const constructores={adreida,goblin,cobrador:()=>goblin(true),troll,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
     function crear(tipo){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=constructores[tipo](),mallas=montar(M);
@@ -376,7 +411,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     /* ---- El hacha a dos manos de Adreida ------------------------------------------------------
        Cada pose dice dónde está la empuñadura (G, la mano derecha) y hacia dónde apunta el hacha (A),
        en el espacio del torso; los dos brazos llegan con cinemática inversa de dos huesos: la derecha
-       a G y la izquierda un poco más abajo del mango, hacia el pomo. La mano derecha se orienta para
+       a G, junto al pomo, y la izquierda 30 cm hacia la cabeza del hacha. La mano derecha se orienta para
        que el hacha (su -Y) siga A, con la cara plana hacia «arriba» (en los tajos horizontales, al
        cielo: se ve desde la cámara; en el hachazo vertical, de lado: el filo corta de arriba abajo). */
     const _v=Array.from({length:10},()=>new THREE.Vector3()),_q=new THREE.Quaternion(),_m=new THREE.Matrix4(),ABAJO=new THREE.Vector3(0,-1,0);
@@ -388,15 +423,23 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     const dirA=(f,e)=>[Math.sin(f)*Math.cos(e),Math.sin(e),Math.cos(f)*Math.cos(e)];
     function empunar(m,{G,A,arriba}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
       const g=_v[6].fromArray(G).applyMatrix4(T),a=_v[7].fromArray(A).transformDirection(T),up=_v[8].fromArray(arriba||[0,1,0]).transformDirection(T);
+      // Los dos agarres deben quedar al alcance sin estirar los brazos ni soltar el mango.
+      const separacion=.3,sd=H.brazoD.getWorldPosition(new THREE.Vector3()),si=H.brazoI.getWorldPosition(new THREE.Vector3()).addScaledVector(a,-separacion);
+      const alcance=m.p.brazo+m.p.antebrazo-.015;
+      for(let i=0;i<8;i++)for(const centro of [sd,si]){const delta=g.clone().sub(centro);if(delta.length()>alcance)g.copy(centro).add(delta.setLength(alcance));}
       ik(H.brazoD,H.anteD,H.manoD,g,new THREE.Vector3(-.7,-.5,-.35).applyMatrix4(T));
       // La mano derecha: -Y por el mango, X (la cara del hacha) lo más cerca posible de «arriba».
       const y=a.clone().negate(),x=up.clone().addScaledVector(y,-up.dot(y));if(x.lengthSq()<1e-6)x.set(1,0,0);x.normalize();const z=new THREE.Vector3().crossVectors(x,y);
       H.manoD.parent.getWorldQuaternion(_q).invert();H.manoD.quaternion.setFromRotationMatrix(_m.makeBasis(x,y,z)).premultiply(_q);H.manoD.updateMatrixWorld(true);
-      // La izquierda, 26 cm más abajo por el mango (hacia el pomo).
-      ik(H.brazoI,H.anteI,H.manoI,g.clone().addScaledVector(a,-.26),new THREE.Vector3(.7,-.5,-.35).applyMatrix4(T));}
+      // La izquierda envuelve el mango entre la derecha y la cabeza, nunca fuera del pomo.
+      const apoyo=H.manoD.localToWorld(new THREE.Vector3(0,-separacion,0));
+      ik(H.brazoI,H.anteI,H.manoI,apoyo,new THREE.Vector3(.7,-.5,-.35).applyMatrix4(T));
+      const orientacion=H.manoD.getWorldQuaternion(new THREE.Quaternion());
+      H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);H.manoI.updateMatrixWorld(true);}
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
-      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.02*(a.paso??1):Math.sin(t*2.2)*.008;return {G:[-.12,.08+bob,.3],A:dirA(-.35,-.75)};};
+      // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
+      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.008*(a.paso??1):Math.sin(t*2.2)*.004;return {G:[-.11,.35+bob,.36],A:dirA(-2.73,.46),arriba:[0,1,0]};};
       const horizontal=(f,e)=>{const r=.42-.08*Math.abs(Math.sin(f));return {G:[Math.sin(f)*r,.28,Math.cos(f)*r],A:dirA(f,e),arriba:[0,1,0]};};
       const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
@@ -412,7 +455,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
 
     // Pone la pose. a={anim,t (segundos en la animación), k (0..1 de la animación), fase (del paso), paso (0..1 cuánto anda)}.
     function posar(m,a){
-      const H=m.H,esc=m.tipo==='can'?1.25:1;
+      const H=m.H,esc=m.tipo==='troll'?1.5:m.tipo==='can'?1.25:1;
       for(const k in H)if(k!=='raiz'){H[k].rotation.set(0,0,0);}
       H.cuerpo.position.set(0,0,0);H.cuerpo.rotation.set(0,0,0);
       const t=a.t||0,k=a.k||0,respira=Math.sin(t*2.2);
@@ -420,16 +463,32 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       const reposo=()=>{H.brazoI.rotation.z=.18;H.brazoD.rotation.z=-.18;H.anteI.rotation.x=-.25;H.anteD.rotation.x=-.55;H.brazoD.rotation.x=-.15;
         H.torso.rotation.x=.04+respira*.015;H.cabeza.rotation.x=-.04;if(H.cola){H.cola.rotation.x=-.3+Math.sin(t*2)*.08;H.cola.rotation.y=Math.sin(t*1.3)*.25;H.cola2.rotation.y=Math.sin(t*1.3-1)*.35;}};
       const andar=(fase,amp)=>{const s=Math.sin(fase),c=Math.cos(fase);
+        if(m.tipo==='adreida'){
+          // Apoyo y balanceo alternos: el talón avanza, la rodilla recoge y el tobillo amortigua.
+          for(const [lado,desfase] of [['I',0],['D',Math.PI]]){
+            const f=fase+desfase,avance=Math.sin(f),vuelo=Math.max(0,Math.cos(f)),impulso=Math.max(0,-avance);
+            const muslo=-avance*.78*amp,rodilla=.12+(vuelo*vuelo*1.05+.1*impulso)*amp;
+            H['pierna'+lado].rotation.x=muslo;H['rodilla'+lado].rotation.x=rodilla;
+            H['pie'+lado].rotation.x=(-muslo-(rodilla-.12))*.75+.16*impulso*amp;
+            H['pierna'+lado].rotation.z=(lado==='I'?-.025:.025)*amp;
+          }
+          // La cadera carga el peso sobre la pierna de apoyo; el torso compensa el hacha pesada.
+          H.cuerpo.position.set(s*.025*amp,-.025+respira*.006+(Math.cos(fase*2)*.022-.008)*amp,0);
+          H.cadera.rotation.y=s*.11*amp;H.cadera.rotation.z=-s*.035*amp;
+          H.torso.rotation.set(.1+respira*.012+.065*amp,-s*.075*amp,s*.025*amp);
+          H.cabeza.rotation.x=-.04-.035*amp;H.cabeza.rotation.y=s*.035*amp;H.cabeza.rotation.z=-s*.02*amp;
+          return;
+        }
         H.piernaI.rotation.x=-s*.62*amp;H.piernaD.rotation.x=s*.62*amp;H.rodillaI.rotation.x=Math.max(0,c)*.9*amp+.05;H.rodillaD.rotation.x=Math.max(0,-c)*.9*amp+.05;
         H.pieI.rotation.x=s*.25*amp;H.pieD.rotation.x=-s*.25*amp;
         H.brazoI.rotation.x=s*.5*amp;H.brazoD.rotation.x+=-s*.3*amp;H.torso.rotation.y=s*.12*amp;H.torso.rotation.x+=.1*amp;
         H.cuerpo.position.y=Math.abs(c)*.05*amp*esc-.02*amp;if(H.cola)H.cola.rotation.y+=s*.3*amp;};
       reposo();
-      // Adreida lleva el hacha baja por delante (la cabeza al frente y abajo, cerca del suelo).
+      // La cinemática inversa coloca después el hacha sobre el hombro de Adreida.
       if(m.tipo==='adreida'){H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.75;H.brazoD.rotation.z=-.22;}
       switch(a.anim){
         case 'andar':andar(a.fase||0,a.paso??1);break;
-        case 'quieto':H.cuerpo.position.y=respira*.006;H.brazoI.rotation.z+=respira*.02;break;
+        case 'quieto':H.cuerpo.position.y=respira*.006;if(m.tipo==='adreida'){H.torso.rotation.x=.1+respira*.012;H.rodillaI.rotation.x=.12;H.rodillaD.rotation.x=.12;H.cuerpo.position.y-=.025;}else H.brazoI.rotation.z+=respira*.02;break;
         // Tajo horizontal de derecha a izquierda: carga (0–.35), golpe (.35–.55), recoge.
         case 'golpe':case 'aviso':{const kk=a.anim==='aviso'?k*.38:k,car=tramo(kk,0,.35),gol=tramo(kk,.36,.55),rec=tramo(kk,.62,1);
           const giro=-.9*car+1.6*gol-.7*rec;H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.35;
@@ -468,6 +527,12 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.piernaI.rotation.x=-.9*e2-.2*car*(1-emp);H.rodillaI.rotation.x=.7*e2+.3*car;H.piernaD.rotation.x=.7*e2+.2*car*(1-emp);H.rodillaD.rotation.x=.2+.3*e2;
           H.cuerpo.position.y=-.14*e2*esc-.05*car*(1-emp)*esc;break;}
         // Esquiva: rueda corta, agachada y hacia delante.
+        // La maza sube despacio y cae con todo el torso; la recuperación deja al troll expuesto.
+        case 'cargaMazazo':case 'mazazo':{const carga=a.anim==='cargaMazazo'?suave(k):1,caida=a.anim==='mazazo'?tramo(k,0,.3):0,rec=a.anim==='mazazo'?tramo(k,.45,1):0,arriba=carga*(1-caida);
+          H.brazoD.rotation.x=-2.6*arriba-1.2*caida*(1-rec);H.anteD.rotation.x=-.55-.7*arriba;
+          H.brazoI.rotation.x=-1.6*arriba;H.brazoI.rotation.z=.3+.3*arriba;H.anteI.rotation.x=-.7;
+          H.torso.rotation.x=-.18*arriba+.65*caida*(1-rec);H.cabeza.rotation.x=-.12*arriba;
+          H.rodillaI.rotation.x=H.rodillaD.rotation.x=.18+.35*caida*(1-rec);H.cuerpo.position.y=-.16*caida*(1-rec);break;}
         case 'esquiva':{const e=Math.sin(Math.PI*Math.min(1,k));H.torso.rotation.x=.25+.55*e;H.cabeza.rotation.x=.2*e;H.cuerpo.position.y=-.22*e*esc;
           H.piernaI.rotation.x=-.9*e;H.rodillaI.rotation.x=1.1*e;H.piernaD.rotation.x=.7*e;H.rodillaD.rotation.x=.9*e;
           H.brazoI.rotation.x=.9*e;H.brazoD.rotation.x=.7*e;H.anteD.rotation.x=-.9;H.brazoI.rotation.z=.5*e;H.brazoD.rotation.z=-.5*e;break;}

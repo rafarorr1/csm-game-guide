@@ -384,18 +384,23 @@ oleadas, y al final entra Can, el de los Goblins.
   - todo lo estático se funde por material;
   - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).
 - **Dos personajes (se elige arriba, o con `?heroe=mohamed`):**
-  - Adreida, cuerpo a cuerpo, con el hacha a dos manos (el combo de tres hachazos, Torbellino, Salto con el hacha clavada);
+  - Adreida, cuerpo a cuerpo, con el hacha a dos manos (el combo de tres hachazos, Torbellino, Salto con el hacha clavada que arranca 24 fragmentos de adoquín: salen despedidos, giran, rebotan y desaparecen en unos tres segundos; reserva de 72 fragmentos en una sola malla reutilizable);
   - Mohamed, a distancia, con una pistola de chispa: el clic dispara hacia el cursor (se puede andar, más despacio, mientras dispara); seis balas y recarga sola (1,1 s); Q, Abanico de siete balas; clic derecho, Backflip al cursor: al caer, los enemigos que lo ven (a 6 m y mirando hacia él) se quedan impresionados, aturdidos 2,6 s (Can, 1,2 s); 100 de Alma;
+  - una línea de puntería sale del cañón y termina en el primer enemigo u obstáculo (o al agotar el alcance); el extremo se vuelve rojo al apuntar a un enemigo. La pistola sigue el cursor incluso sin disparar. Las balas salen de la pose actual y siguen exactamente ese eje, sin retraso al girar ni desviación vertical; el Abanico se abre alrededor de la misma dirección. La colisión recorre todo el segmento de cada fotograma para no atravesar enemigos ni coberturas;
   - dos propuestas de bala (se elige en Efectos o con `?balas=trazadora`): A, la bola de plomo de una pistola de chispa con un trazo corto al rojo y chispas; B, una bala alargada de latón con ojiva de cobre y una estela larga y fina de luz; no interrumpen a los enemigos pero dan Furia; el parry, el dash y Provocar son iguales para los dos.
+- Los proyectiles de los kobolds se representan como flechas doradas luminosas, con punta ancha, asta, plumas y estela afilada. El brillo de la punta pasa a blanco dorado durante la ventana de parry; al desviarlas conservan su silueta.
+- **Mando PS5 (DualSense):** USB o Bluetooth mediante Gamepad API con distribución estándar. Pulsa un botón para que el navegador lo detecte y suéltalo. Stick izquierdo: mover; derecho: apuntar; R2 o cuadrado: atacar; cruz: dash; círculo: salto inmediato de Adreida de 5 m hacia el stick izquierdo (si está centrado, hacia donde mira; respeta los límites y obstáculos de la plaza) / backflip inmediato de Mohamed; L1 o L2: parry; R1: Torbellino / Abanico; triángulo: Provocar. Zona muerta del 18 %, habilidades por pulsación y ataque continuo al mantener. Al perder foco o desconectar se libera el control; al volver hay que soltar botones y sticks. Teclado, ratón y táctil siguen disponibles.
+- **Etapa 2 · Cobro de piso:** en la misma plaza, después de vencer a Can y su escolta, hay 8 s para recoger el botín. Se conservan las cartas, estadísticas y la Llave del Mago, y se recuperan hasta 40 de Alma. Entra El Recaudador, un troll de 3 m con 1100 de vida y una maza de piedra, acompañado de exactamente seis goblins cobradores (pañuelos morados y bolsas de monedas). Llegan por grupos, con un máximo de cuatro enemigos presentes y los turnos de ataque habituales. El troll alterna barridos que se pueden parar y mazazos circulares imparables, anunciados durante 1,5 s; después del mazazo queda expuesto durante su recuperación. La victoria requiere derrotar al troll y a los seis cobradores. Para probarla directamente: `arpg-three.html?etapa=2` (admite también `&heroe=mohamed`). Reiniciar conserva la etapa de inicio elegida por la URL.
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
+  - Adreida recorre 2,1 m por ciclo de zancada: balanceo de piernas más amplio, recogida de rodilla, tobillo que compensa la inclinación, transferencia de peso entre apoyos y contragiro de cadera, torso y cabeza. La amplitud responde al stick y se suaviza al arrancar y detenerse, conservando las dos manos sobre el hacha;
   - el clic izquierdo ataca hacia el cursor, y mantenerlo encadena tres hachazos: tajo, revés y un hachazo vertical;
   - Adreida es un modelo detallado sacado de su carta (sombreado suave, sigue siendo 3 llamadas de dibujo): cabeza esculpida con mandíbula ancha, ojos rojos, colmillos y orejas en punta; melena azul noche en mechones ondulados con la raya al medio; top negro con la correa en diagonal y los tres aros de plata; hombrera de cuero en capas; brazales con púas de hueso; puños cerrados sobre el mango; cinturón con hebilla de plata, cráneos de pájaro y bolsa; faldón de piel sobre la falda de tela; botas altas con correas y púa en la rodilla, y el hacha de doble hoja en creciente con la runa que brilla;
-  - Adreida lleva el hacha de doble filo con las dos manos: cada pose dice dónde va la empuñadura y hacia dónde apunta el hacha, y los dos brazos llegan con cinemática inversa (la izquierda, más abajo del mango);
+  - Adreida descansa el hacha de doble filo sobre el hombro derecho, con la cabeza detrás y ambas manos delante del pecho; la empuña con las dos manos al atacar: cada pose dice dónde va la empuñadura y hacia dónde apunta el hacha, y los dos brazos llegan con cinemática inversa (la derecha junto al pomo y la izquierda 30 cm hacia la cabeza, siempre sobre el mango y dentro del alcance de ambos brazos);
   - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
   - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
   - con el ratón encima de un enemigo se apunta a él;
-  - Espacio es el parry: Adreida alza el hacha 0,35 s y se gira sola hacia el golpe que llega;
+  - Espacio es el parry: Adreida alza el hacha 0,35 s y se gira sola hacia el golpe que llega; su cuerpo y su hacha brillan en dorado durante el parry, con un destello que se desvanece durante 0,3 s si es perfecto;
     - si el golpe llega en las primeras 0,18 s es perfecto: no hace daño, aturde al atacante 2 s (1 s a Can) y lo deja expuesto (le haces el doble), con un parón y +20 de Furia; una lanza desviada vuelve contra quien la lanzó (el triple de daño);
     - las lanzas de los kobolds brillan (un halo naranja que late y una estela densa); cuando el halo se vuelve blanco y grande, está en la ventana del parry perfecto (para las lanzas, 0,25 s);
     - más tarde, solo bloquea: recibe el 30%;
@@ -409,11 +414,17 @@ oleadas, y al final entra Can, el de los Goblins.
   - en el último tramo se fija: deja de girar, la zona y el «!» se encienden, y es el momento de salir o esquivar;
   - quien ataca desde fuera de la pantalla tiene su flecha en el borde;
   - al recibir un golpe, un arco rojo en el borde marca de dónde vino y el atacante destella;
-  - como mucho tres enemigos atacan cuerpo a cuerpo a la vez.
-- **Dificultad alta, a lo Hades y Elden Ring:**
-  - los enemigos pegan fuerte (un goblin 13, un kobold 16, un saqueador 24, Can 32 y su golpazo 48) y atacan a menudo; Adreida empieza con 120 de Alma;
-  - las oleadas son más grandes (8, 10, 12 y Can con 8) y Can aguanta 800;
-  - jugando a lo bruto (pegar sin parar ni moverse) Adreida cae hacia la tercera oleada; con buenos parrys y moviéndose, la partida se gana sin que la toquen (es lo que hace el piloto automático).
+  - como mucho dos enemigos se acercan para atacar cuerpo a cuerpo a la vez; los demás se reparten alrededor, a unos 4 m, y los turnos rotan. Los comienzos de los ataques se separan al menos 0,55 s; sólo un kobold prepara o lanza a la vez.
+- **Ritmo de combate (referencia: [Hades II, video de penguinz0](https://www.youtube.com/watch?v=6a4LIrDkyag)):**
+  - propuesta: leer el aviso → abrir espacio con movimiento/parry/dash → contraatacar durante la recuperación;
+  - goblins a 2,85 m/s (antes 3,8), aviso de 0,85 s y recuperación de 0,8 s. Mohamed puede ganar distancia incluso mientras dispara; los saqueadores y Can mantienen su peso con avisos y recuperaciones más largos;
+  - la dificultad sigue en el daño (goblin 13, kobold 16, saqueador 24, Can 32 y su golpazo 48), no en perseguir todos el mismo punto; Adreida empieza con 120 de Alma y Can conserva sus 800 de vida;
+  - oleadas de 6, 8, 10 y Can con 4 escoltas. Entradas en grupos de hasta tres, separadas 0,75 s dentro del grupo y al menos 2,4 s entre grupos; los refuerzos esperan a que baje la presión. Límites de 4/5/6/5 enemigos vivos según la oleada, incluyendo los refuerzos que llama Can;
+  - tres segundos de respiro entre oleadas para recoger botín y recolocarse. El HUD muestra los enemigos que faltan por entrar y la cuenta atrás;
+  - la separación entre enemigos deja huecos; los que esperan mantienen distancia, pero pueden agruparse con Provocar para aprovechar las habilidades de área.
+
+  Revisión acotada de IA y oleadas (sin navegador ni batería completa):
+  `node dev/secciones/pruebas_arpg_ritmo.mjs`.
 - **Botín:**
   - los Objetos del juego caen como cartas físicas (`three-carta.js`) en Normal, Foil o Dorado, con su columna de luz;
   - con el ratón encima (o al tocarla) la carta se levanta y crece para leerla;
@@ -421,6 +432,12 @@ oleadas, y al final entra Can, el de los Goblins.
   - Can suelta la Llave del Mago dorada (la llave de la primera Grieta, para el Hito 3).
 - **Táctil:** palanca, Atacar (apunta solo al más cercano), Esquiva y los demás botones.
 - **Demostración:** juega sola leyendo sólo los avisos, como un jugador; es el piloto automático que usan las pruebas para ganar la partida entera.
+
+Comprobación acotada de la línea de puntería y los disparos de Mohamed:
+
+```bash
+node dev/secciones/pruebas_arpg_punteria.mjs
+```
 
 ```bash
 node dev/secciones/pruebas_arpg_three.mjs
