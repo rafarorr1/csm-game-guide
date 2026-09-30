@@ -196,7 +196,8 @@ try{
     await r('r.heroe({x:0,z:-6,alma:100})');const k=await r('r.invocar("kobold",0,3,false)');await r('r.despertar(a[0])',k);let ahora=false;
     for(let i=0;i<150&&!ahora;i++){e=await r('r.avanzar(1/30)');ahora=e.lanzaAhora;}
     assert.ok(ahora,'La lanza avisa (brillo blanco) en la ventana del parry perfecto');
-    await pagina.keyboard.press('Space');e=await r('r.avanzar(.5)');assert.ok(e.heroe.alma===100&&e.heroe.parrys===1,'Un parry con ese aviso la desvía sin daño');
+    // (el Alma de antes del parry: algún orbe de curación de los goblins de antes puede haberla subido por el camino)
+    const alma0=e.heroe.alma;await pagina.keyboard.press('Space');e=await r('r.avanzar(.5)');assert.ok(e.heroe.alma>=alma0&&e.heroe.parrys===1,'Un parry con ese aviso la desvía sin daño ('+alma0+' → '+e.heroe.alma+')');
     assert.deepEqual(errores,[],'Sin errores con Mohamed');await contexto.close();}
   console.log('✓ Mohamed a distancia: pistola (dos propuestas de bala), recarga, Abanico y Backflip que impresiona; las lanzas brillan en la ventana del parry');
 
