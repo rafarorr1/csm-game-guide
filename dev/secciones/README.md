@@ -390,7 +390,11 @@ oleadas, y al final entra Can, el de los Goblins.
   - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
   - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
   - con el ratón encima de un enemigo se apunta a él;
-  - Espacio esquiva (un instante invulnerable; atravesar un golpe da «¡Esquivado!» y Furia);
+  - Espacio es el parry: Adreida alza el hacha 0,35 s y se gira sola hacia el golpe que llega;
+    - si el golpe llega en las primeras 0,18 s es perfecto: no hace daño, aturde al atacante 2 s (1 s a Can) y lo deja expuesto (le haces el doble), con un parón y +20 de Furia; una lanza desviada vuelve contra quien la lanzó (el triple de daño);
+    - más tarde, solo bloquea: recibe el 30%;
+    - un parry al aire deja medio segundo sin poder repetirlo; por la espalda no se para, ni el golpazo de Can (zona violeta, «¡Imparable!»);
+  - Shift es el dash (un instante invulnerable; atravesar un golpe da «¡Esquivado!» y Furia);
   - clic derecho, Salto al cursor; Q, Torbellino; E, Provocar;
   - la Furia sube al golpear y al recibir golpes.
 - **Quién ataca y cuándo:**
@@ -399,7 +403,11 @@ oleadas, y al final entra Can, el de los Goblins.
   - en el último tramo se fija: deja de girar, la zona y el «!» se encienden, y es el momento de salir o esquivar;
   - quien ataca desde fuera de la pantalla tiene su flecha en el borde;
   - al recibir un golpe, un arco rojo en el borde marca de dónde vino y el atacante destella;
-  - como mucho dos enemigos atacan cuerpo a cuerpo a la vez.
+  - como mucho tres enemigos atacan cuerpo a cuerpo a la vez.
+- **Dificultad alta, a lo Hades y Elden Ring:**
+  - los enemigos pegan fuerte (un goblin 13, un kobold 16, un saqueador 24, Can 32 y su golpazo 48) y atacan a menudo; Adreida empieza con 120 de Alma;
+  - las oleadas son más grandes (8, 10, 12 y Can con 8) y Can aguanta 800;
+  - jugando a lo bruto (pegar sin parar ni moverse) Adreida cae hacia la tercera oleada; con buenos parrys y moviéndose, la partida se gana sin que la toquen (es lo que hace el piloto automático).
 - **Botín:**
   - los Objetos del juego caen como cartas físicas (`three-carta.js`) en Normal, Foil o Dorado, con su columna de luz;
   - con el ratón encima (o al tocarla) la carta se levanta y crece para leerla;

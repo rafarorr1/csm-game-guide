@@ -138,12 +138,12 @@ try{
     await r('r.heroe({alma:140})');e=await hasta(r,x=>G(x)?.ataque?.fijado);await pagina.keyboard.down('KeyS');e=await r('r.avanzar(.5)');await pagina.keyboard.up('KeyS');
     assert.equal(e.heroe.alma,140,'Salir de la zona cuando se fija esquiva el golpe');
     // Esquivar a través: invulnerable un instante, aunque la esquiva la deje dentro.
-    await r('r.heroe({x:0,z:0,alma:140})');await r('r.enemigo(a[0],{x:0,z:-1.4})',g);e=await hasta(r,x=>G(x)?.ataque&&G(x).ataque.k>.85);await pagina.keyboard.press('Space');e=await r('r.avanzar(.4)');
-    assert.ok(e.heroe.alma===140&&e.heroe.esquivados>=1,'Esquivar justo antes del golpe lo atraviesa («¡Esquivado!»)');
-    // Nunca más de dos atacando cuerpo a cuerpo a la vez.
+    await r('r.heroe({x:0,z:0,alma:140})');await r('r.enemigo(a[0],{x:0,z:-1.4})',g);e=await hasta(r,x=>G(x)?.ataque&&G(x).ataque.k>.85);await pagina.keyboard.press('Shift');e=await r('r.avanzar(.4)');
+    assert.ok(e.heroe.alma===140&&e.heroe.esquivados>=1,'El dash (Shift) justo antes del golpe lo atraviesa («¡Esquivado!»)');
+    // Nunca más de tres atacando cuerpo a cuerpo a la vez.
     await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');await r('r.heroe({x:0,z:0,alma:5000})');const ids=[];for(let i=0;i<5;i++)ids.push(await r('r.invocar("goblin",Math.cos(a[0])*1.6,Math.sin(a[0])*1.6,false)',i*1.25));
     for(const id of ids)await r('r.despertar(a[0])',id);let max=0;for(let i=0;i<120;i++){e=await r('r.avanzar(1/30)');max=Math.max(max,e.enemigos.filter(x=>x.ataque).length);}
-    assert.ok(max>=1&&max<=2,'Rodeada por cinco goblins, como mucho dos avisan a la vez ('+max+')');
+    assert.ok(max>=1&&max<=3,'Rodeada por cinco goblins, como mucho tres avisan a la vez ('+max+')');
     for(const id of ids)await r('r.matar(a[0])',id);await r('r.avanzar(1.5)');
     // El kobold desde fuera de la pantalla (detrás de la cámara): flecha en el borde y su línea; la lanza sigue la línea.
     await r('r.heroe({x:0,z:-6,alma:140})');const k=await r('r.invocar("kobold",0,5,false)');await r('r.despertar(a[0])',k);
@@ -152,7 +152,27 @@ try{
     await r('r.heroe({alma:140})');e=await hasta(r,e=>e.enemigos.find(x=>x.id===k)?.ataque?.fijado,6);await pagina.keyboard.down('KeyA');e=await r('r.avanzar(1)');await pagina.keyboard.up('KeyA');
     assert.equal(e.heroe.alma,140,'Apartarse de la línea cuando se fija: la lanza pasa de largo');
     assert.deepEqual(errores,[],'Sin errores con los avisos');await contexto.close();}
-  console.log('✓ Quién ataca y cuándo: zona en el suelo, «!», contorno, dirección del golpe, flechas en el borde; apartarse o esquivar lo evita');
+  console.log('✓ Quién ataca y cuándo: zona en el suelo, «!», contorno, dirección del golpe, flechas en el borde; apartarse o hacer dash lo evita');
+
+  // ---- Parry (Espacio): perfecto aturde y expone; tardío bloquea parte; al aire, medio segundo sin parry ----------
+  {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:0,alma:120,dir:0})');
+    const nuevo=async()=>{const g=await r('r.invocar("goblin",0,-1.4,false)');await r('r.despertar(a[0])',g);return g;};
+    let g=await nuevo();const G=(x,id=g)=>x.enemigos.find(y=>y.id===id);
+    // Perfecto: Espacio cuando al golpe le queda un instante (aunque mire hacia otro lado: se gira sola hacia el golpe).
+    let e=await hasta(r,x=>G(x)?.ataque&&G(x).ataque.k>.87);await pagina.keyboard.press('Space');e=await r('r.avanzar(.3)');
+    assert.ok(e.heroe.alma===120&&e.heroe.parrys===1&&G(e)?.estado==='aturdido'&&G(e).expuesto,'Parry perfecto: sin daño, el goblin queda aturdido y expuesto ('+JSON.stringify(G(e))+')');
+    // Expuesto: el contraataque le hace el doble.
+    const v0=G(e).vida;await r('r.control({atacar:true,apunta:[0,-1.4]})');e=await r('r.avanzar(.45)');await r('r.control(null)');
+    assert.ok(!G(e)||G(e).estado==='muere'||v0-G(e).vida>=20,'El goblin expuesto recibe el doble ('+v0+' → '+(G(e)?.vida??'muerto')+')');
+    await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');
+    // Tardío: Espacio demasiado pronto; cuando llega el golpe ya no es perfecto: bloquea el 70%.
+    await r('r.heroe({x:0,z:0,alma:120,dir:Math.PI})');g=await nuevo();e=await hasta(r,x=>G(x)?.ataque&&G(x).ataque.k>.6);await pagina.keyboard.press('Space');e=await r('r.avanzar(.35)');
+    assert.ok(e.heroe.bloqueos===1&&e.heroe.alma<120&&e.heroe.alma>=114&&G(e)?.estado!=='aturdido','Parry tardío: bloquea, recibe solo el 30% ('+(120-e.heroe.alma)+' de daño) y no aturde');
+    await r('r.matar(a[0])',g);await r('r.avanzar(1.5)');
+    // Al aire: sin golpe que parar, medio segundo sin poder repetirlo.
+    await pagina.keyboard.press('Space');e=await r('r.avanzar(.4)');assert.ok(e.heroe.cd.parry>0&&e.heroe.estado!=='parry','Un parry al aire deja un momento sin parry');
+    assert.deepEqual(errores,[],'Sin errores con el parry');await contexto.close();}
+  console.log('✓ Parry: perfecto aturde y deja expuesto (el doble de daño), tardío bloquea el 70%, al aire se paga');
 
   // ---- Habilidades --------------------------------------------------------------------
   {const {contexto,errores,pagina,r}=await abrir(navegador);await r('r.oleadas(false)');
