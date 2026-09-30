@@ -1229,16 +1229,16 @@
    siempre disponibles. El espacio al final evita que la última ficha choque
    con el borde al llegar con rueda o toque. */
 #coleccionPanel .coleccionListaLogros{
-  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;
   flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
   touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8d6d43 #18100d;
   scrollbar-gutter:stable;gap:10px 12px;padding:2px 10px 20px 2px;
 }
 #coleccionPanel .coleccionLogro{
-  display:grid;grid-template-columns:42px minmax(0,1fr) auto;
-  grid-template-areas:"sello texto premio" "sello meta prueba";
-  column-gap:11px;row-gap:8px;align-items:center;min-width:0;min-height:114px;
-  padding:13px 12px;border:1px solid #80603d80;border-radius:4px;
+  display:grid;grid-template-columns:64px minmax(0,1fr) max-content;
+  grid-template-areas:"sello titulo premio" "sello descripcion descripcion" "sello meta prueba";
+  column-gap:12px;row-gap:8px;align-items:start;min-width:0;min-height:132px;
+  padding:12px 14px;border:1px solid #80603d80;border-radius:4px;
   background:radial-gradient(ellipse at 0 0,#a2793a12,transparent 46%),linear-gradient(120deg,#2c1f16e8,#17110edb);
   box-shadow:inset 0 1px 0 #e1bd8030,inset 0 -16px 27px #00000024,0 3px 9px #0000001c;
   transition:border-color .18s ease,translate .18s ease,filter .18s ease;
@@ -1249,26 +1249,55 @@
   box-shadow:inset 0 1px 0 #f3d89348,inset 0 -16px 27px #0000001f,0 3px 9px #00000020;
 }
 #coleccionPanel .coleccionLogroSello{
-  grid-area:sello;display:grid;place-items:center;width:42px;height:42px;
-  border:1px solid #806449;border-radius:50%;color:#a58f72;
-  background:radial-gradient(circle at 34% 28%,#4e3a29,#221914 68%);
-  box-shadow:inset 0 0 0 3px #120d0abf,0 2px 5px #0008;
+  grid-area:sello;display:grid;place-items:center;justify-self:center;align-self:center;width:64px;height:72px;
+  position:relative;color:#a58f72;isolation:isolate;
 }
-#coleccionPanel .coleccionLogroSello svg{width:20px;height:20px}
-#coleccionPanel .coleccionLogro.completado .coleccionLogroSello{
-  border-color:#e0bd78;color:#f4d78c;background:radial-gradient(circle at 34% 28%,#a87932,#4a3015 68%);
-  box-shadow:inset 0 0 0 3px #271b0dbf,0 0 14px #d4a24728;
+#coleccionPanel .coleccionMedalla{
+  --medalla-acento:#d8a85e;--medalla-sombra:#593819;--medalla-cinta:#63411d;--medalla-metal:#e9c77a;
+  --medalla-nucleo:#20150f;--medalla-brillo:#fff0bd;
 }
-#coleccionPanel .coleccionLogroTexto{grid-area:text;min-width:0;align-self:end}
-#coleccionPanel .coleccionLogroTexto h4{
-  overflow-wrap:anywhere;font:600 18px/1.12 var(--serif,Georgia,serif);letter-spacing:.15px;color:#efd9ac;
+#coleccionPanel .coleccionMedalla[data-protagonista="mohamed"]{--medalla-acento:#65c7e4;--medalla-sombra:#164967;--medalla-cinta:#274f6e;--medalla-metal:#badfec}
+#coleccionPanel .coleccionMedalla[data-protagonista="fender"]{--medalla-acento:#e17750;--medalla-sombra:#662718;--medalla-cinta:#76341f;--medalla-metal:#f0b18b}
+#coleccionPanel .coleccionMedalla[data-protagonista="talesin"]{--medalla-acento:#ddc69b;--medalla-sombra:#6a5841;--medalla-cinta:#76644b;--medalla-metal:#fff0c4}
+#coleccionPanel .coleccionMedalla[data-protagonista="rafaela"]{--medalla-acento:#a8cd78;--medalla-sombra:#3f5c30;--medalla-cinta:#4d6b37;--medalla-metal:#d8ecac}
+#coleccionPanel .coleccionMedalla[data-protagonista="adreida"]{--medalla-acento:#d399df;--medalla-sombra:#60366e;--medalla-cinta:#6b4079;--medalla-metal:#f0c2f5}
+#coleccionPanel .coleccionMedallaSvg{
+  display:block;width:64px;height:72px;overflow:visible;transform-origin:50% 58%;
+  filter:drop-shadow(0 4px 4px #0009);transition:transform .2s ease,filter .2s ease;
 }
-#coleccionPanel .coleccionLogroTexto p{
-  margin-top:4px;color:#b9a58b;font-size:11px;line-height:1.35;text-wrap:pretty;
+#coleccionPanel .coleccionLogro:hover .coleccionMedallaSvg{transform:translateY(-2px) rotate(-2deg) scale(1.035);filter:drop-shadow(0 6px 7px #000b)}
+#coleccionPanel .medallaCinta{stroke:#140e0b;stroke-width:2;stroke-linejoin:round}
+#coleccionPanel .medallaCintaIzquierda{fill:color-mix(in srgb,var(--medalla-cinta),#0d0907 27%)}
+#coleccionPanel .medallaCintaDerecha{fill:color-mix(in srgb,var(--medalla-cinta),#fff 12%)}
+#coleccionPanel .medallaHalo{fill:#090605;border-radius:50%;opacity:.88}
+#coleccionPanel .medallaAro{fill:#20130b;stroke:var(--medalla-metal);stroke-width:3}
+#coleccionPanel .medallaNucleo{fill:color-mix(in srgb,var(--medalla-nucleo),var(--medalla-sombra) 32%);stroke:var(--medalla-acento);stroke-width:1.4}
+#coleccionPanel .medallaRayas{fill:var(--medalla-metal);opacity:.78}
+#coleccionPanel .medallaGlifo{fill:none;stroke:var(--medalla-acento);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+#coleccionPanel .medallaGlifo .medallaRelleno{fill:var(--medalla-acento);stroke:var(--medalla-acento)}
+#coleccionPanel .medallaNumero{fill:var(--medalla-acento);stroke:none;font:700 25px/1 var(--serif,Georgia,serif)}
+#coleccionPanel .medallaMicroNumero{fill:var(--medalla-acento);stroke:none;font:700 13px/1 var(--serif,Georgia,serif);letter-spacing:-.7px}
+#coleccionPanel .medallaBrillo{fill:none;stroke:var(--medalla-brillo);stroke-width:2;stroke-linecap:round;opacity:.65}
+#coleccionPanel .coleccionMedalla[data-rareza="oro"] .medallaAro{stroke:#f2c462}
+#coleccionPanel .coleccionMedalla[data-rareza="eclipse"] .medallaAro{stroke:#c692f0;stroke-dasharray:3 1}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"] .coleccionMedallaSvg{filter:grayscale(.52) saturate(.5) brightness(.67) drop-shadow(0 4px 4px #0009)}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"] .medallaGlifo{opacity:.62}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"]::after{
+  content:'◆';position:absolute;z-index:2;right:0;bottom:7px;width:17px;height:17px;display:grid;place-items:center;
+  border:1px solid #b7a78d80;border-radius:50%;background:#17100de8;box-shadow:0 2px 5px #0009;color:#d1c2a8;font-size:9px;
+}
+#coleccionPanel .coleccionLogro.completado .coleccionMedallaSvg{filter:drop-shadow(0 4px 5px #0009) drop-shadow(0 0 8px color-mix(in srgb,var(--medalla-acento),transparent 72%))}
+#coleccionPanel .coleccionLogroTitulo{
+  grid-area:titulo;min-width:0;align-self:end;margin:0;padding-top:3px;overflow-wrap:anywhere;hyphens:auto;
+  font:600 18px/1.15 var(--serif,Georgia,serif);letter-spacing:.15px;color:#efd9ac;
+}
+#coleccionPanel .coleccionLogroDescripcion{
+  grid-area:descripcion;min-width:0;max-width:100%;align-self:start;margin:0;overflow-wrap:anywhere;hyphens:auto;
+  color:#b9a58b;font-size:11px;line-height:1.4;text-wrap:pretty;
 }
 #coleccionPanel .coleccionLogroMeta{
   grid-area:meta;display:grid;grid-template-columns:minmax(56px,1fr) auto;gap:8px;
-  align-items:center;min-width:0;color:#ae9b80;font-size:10px;line-height:1.2;
+  align-self:end;align-items:center;min-width:0;color:#ae9b80;font-size:10px;line-height:1.2;
 }
 #coleccionPanel .coleccionLogroMeta progress{
   width:100%;min-width:0;height:7px;overflow:hidden;border:1px solid #806440;border-radius:999px;
@@ -1282,7 +1311,7 @@
 #coleccionPanel .coleccionLogro.completado .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#ad7f31,#f0c86f)}
 #coleccionPanel .coleccionLogroPremio{
   grid-area:premio;display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;
-  color:#d3b270;font-size:10px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;white-space:nowrap;
+  align-self:start;padding-top:4px;color:#d3b270;font-size:10px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;white-space:nowrap;
 }
 #coleccionPanel .coleccionLogroPremio svg{width:14px;height:14px}
 #coleccionPanel .coleccionLogro.completado .coleccionLogroPremio{color:#efd28f}
@@ -1306,7 +1335,7 @@
   #coleccionPanel .coleccionLogrosCuenta{min-width:137px;padding-left:12px}
   #coleccionPanel .coleccionLogrosCuenta strong{font-size:22px}
   #coleccionPanel .coleccionListaLogros{gap:9px;padding-right:7px}
-  #coleccionPanel .coleccionLogro{padding:11px 10px;column-gap:9px}
+  #coleccionPanel .coleccionLogro{padding:11px 10px;column-gap:10px}
 }
 @media(max-width:620px){
   #coleccionPanel .coleccionLogrosCabecera{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;row-gap:0}
@@ -1323,6 +1352,15 @@
   #coleccionPanel .coleccionLogrosSobres{justify-self:end;min-height:29px;margin:0;padding:4px 8px}
   #coleccionPanel .coleccionLogrosFiltros{padding-top:9px;padding-bottom:8px}
   #coleccionPanel .coleccionListaLogros{grid-template-columns:1fr;padding-bottom:15px}
+  #coleccionPanel .coleccionLogro{
+    grid-template-columns:60px minmax(0,1fr) max-content;grid-template-areas:"sello titulo premio" "sello descripcion descripcion" "sello meta prueba";
+    row-gap:7px;min-height:146px;padding:11px 12px 10px;
+  }
+  #coleccionPanel .coleccionLogroSello{width:60px;height:68px}
+  #coleccionPanel .coleccionMedallaSvg{width:60px;height:68px}
+  #coleccionPanel .coleccionLogroMeta{align-self:start;padding-top:2px}
+  #coleccionPanel .coleccionLogroPremio{align-self:start;padding:2px 0 0}
+  #coleccionPanel .coleccionLogroPrueba{align-self:end}
 }
 @media(max-width:420px){
   #coleccionPanel[data-vista="logros"] .coleccionPestana{padding-inline:4px;font-size:11px;gap:3px}
@@ -1331,10 +1369,11 @@
   #coleccionPanel .coleccionLogrosCabecera>p{font-size:11px}
   #coleccionPanel .coleccionLogrosCuenta{column-gap:6px}
   #coleccionPanel .coleccionLogrosCuenta>span{font-size:9px}
-  #coleccionPanel .coleccionLogro{grid-template-columns:38px minmax(0,1fr) auto;min-height:106px;padding:10px 8px}
-  #coleccionPanel .coleccionLogroSello{width:38px;height:38px}
-  #coleccionPanel .coleccionLogroTexto h4{font-size:16px}
-  #coleccionPanel .coleccionLogroTexto p{font-size:10px}
+  #coleccionPanel .coleccionLogro{grid-template-columns:52px minmax(0,1fr) max-content;min-height:156px;padding:10px 8px;column-gap:8px}
+  #coleccionPanel .coleccionLogroSello{width:52px;height:60px}
+  #coleccionPanel .coleccionMedallaSvg{width:52px;height:60px}
+  #coleccionPanel .coleccionLogroTitulo{font-size:16px}
+  #coleccionPanel .coleccionLogroDescripcion{font-size:10px}
   #coleccionPanel .coleccionLogroMeta{gap:5px;font-size:9px}
   #coleccionPanel .coleccionLogroPremio{font-size:9px}
 }
@@ -1513,9 +1552,9 @@
 #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro.completado{
   border-color:#f0ca8b86;background:linear-gradient(112deg,#3a25149e,#100a1499);box-shadow:inset 0 1px 0 #fff3,0 9px 25px #0005,0 0 22px #d7a6561b;
 }
-#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroSello{border-color:#e1c7ff58;background:#0c0714a8;color:#cbb9dc}
-#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroTexto h4{color:#f2e5ff}
-#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroTexto p,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroSello{border-color:transparent;background:transparent;color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroTitulo{color:#f2e5ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroDescripcion,
 #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta,
 #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosNota{color:#cbb9dc}
 #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress{border-color:#ddc2ff65;background:#0b0611}
