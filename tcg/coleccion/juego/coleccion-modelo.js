@@ -24,6 +24,33 @@
   const copia=v=>JSON.parse(JSON.stringify(v));
   const maxSobres=100000;
   const maxCopias=Math.floor(Number.MAX_SAFE_INTEGER/acabados.length);
+  const maxLogros=200;
+
+  /* Los logros pertenecen al inventario: así se sincronizan junto con los
+     sobres y una recompensa no puede marcarse dos veces por un doble final de
+     partida. El modelo no conoce las reglas de cada logro; sólo conserva un
+     estado pequeño, seguro y futuro-compatible para logros.js. */
+  function metasVacias(){return {version:1,obtenidos:[],contadores:{},conjuntos:{},rachas:{},eventos:[]};}
+  function sanearMetas(original){
+    const estado=metasVacias();
+    if(!objeto(original)||original.version!==1)return estado;
+    if(Array.isArray(original.obtenidos))estado.obtenidos=[...new Set(original.obtenidos.filter(idSeguro))].slice(0,maxLogros);
+    for(const campo of ['contadores','rachas']){
+      const origen=objeto(original[campo])?original[campo]:{};
+      for(const [id,n] of Object.entries(origen))if(idSeguro(id)&&entero(n,maxSobres))estado[campo][id]=n;
+    }
+    const conjuntos=objeto(original.conjuntos)?original.conjuntos:{};
+    for(const [id,lista] of Object.entries(conjuntos)){
+      if(!idSeguro(id)||!Array.isArray(lista))continue;
+      const limpio=[...new Set(lista.filter(idSeguro))].slice(0,16);
+      if(limpio.length)estado.conjuntos[id]=limpio;
+    }
+    // El motor manda un identificador estable por evento importante. Conservar
+    // una ventana acotada evita que un doble endGame sume contadores dos veces
+    // sin dejar que el historial de una cuenta crezca sin límite.
+    if(Array.isArray(original.eventos))estado.eventos=[...new Set(original.eventos.filter(idSeguro))].slice(-1000);
+    return estado;
+  }
 
   function ids(){
     const cartas=typeof CARDS!=='undefined'&&objeto(CARDS)?Object.keys(CARDS):[];
@@ -75,7 +102,7 @@
   }
   let clave=claveActual();
   function usarClaveDeCuenta(){const nueva=claveActual();if(nueva!==clave){clave=nueva;avisar('cuenta',leer());}return clave;}
-  function vacio(){return {version:1,revision:0,desbloqueos:{},cantidades:{},selecciones:{},sobres:0,sobresVersion:2,sobresGuardados:{},recompensasPorElegir:[],pendiente:null,campanasPremiadas:[],campanasElegidas:[],domosPremiados:[]};}
+  function vacio(){return {version:1,revision:0,desbloqueos:{},cantidades:{},selecciones:{},sobres:0,sobresVersion:2,sobresGuardados:{},recompensasPorElegir:[],pendiente:null,campanasPremiadas:[],campanasElegidas:[],domosPremiados:[],metas:metasVacias(),logrosPremiados:[]};}
   function idRecompensa(estado,origen){
     const base='premio_'+origen+'_'+(estado.revision+1).toString(36),usados=new Set(estado.recompensasPorElegir.map(r=>r.id));
     let id=base,n=0;while(usados.has(id))id=base+'_'+(++n).toString(36);
@@ -92,9 +119,10 @@
       const vistos=new Set(),referencias=new Set();
       if(Array.isArray(original.recompensasPorElegir))for(const r of original.recompensasPorElegir){
         if(!objeto(r)||!idSeguro(r.id)||vistos.has(r.id)||!idSeguro(r.referencia)||
-          !['domo','campana','beta','legado'].includes(r.origen)||!entero(r.cantidad,maxSobres)||r.cantidad<1)continue;
+          !['domo','campana','beta','legado','logro'].includes(r.origen)||!entero(r.cantidad,maxSobres)||r.cantidad<1)continue;
         const valido=r.origen==='legado'||r.origen==='campana'&&r.cantidad===3&&estado.campanasPremiadas.includes(r.referencia)||
-          r.origen==='domo'&&r.cantidad===1&&estado.domosPremiados.includes(r.referencia)||r.origen==='beta'&&r.cantidad===1;
+          r.origen==='domo'&&r.cantidad===1&&estado.domosPremiados.includes(r.referencia)||r.origen==='beta'&&r.cantidad===1||
+          r.origen==='logro'&&r.cantidad===1&&estado.logrosPremiados.includes(r.referencia);
         const recibo=r.origen+':'+r.referencia;
         if(!valido||referencias.has(recibo)||asignados+r.cantidad>maxSobres)continue;
         estado.recompensasPorElegir.push({id:r.id,origen:r.origen,referencia:r.referencia,cantidad:r.cantidad});
@@ -122,6 +150,8 @@
     for(const registro of ['campanasPremiadas','campanasElegidas','domosPremiados']){
       if(Array.isArray(original[registro]))estado[registro]=[...new Set(original[registro].filter(idSeguro))];
     }
+    estado.metas=sanearMetas(original.metas);
+    if(Array.isArray(original.logrosPremiados))estado.logrosPremiados=[...new Set(original.logrosPremiados.filter(idSeguro))].slice(0,maxLogros);
     sanearSobres(estado,original);
     // El sello se escribe en la misma transacción que asigna los tres sobres.
     // Sólo es válido si ese recorrido fue premiado y ya no conserva recibo
@@ -294,6 +324,35 @@
   function concederSobreDomo(partidaId){
     return concederPremio(partidaId,'domosPremiados',1,'sobre-domo',{partidaId});
   }
+  function leerMetas(){return copia(leer().metas);}
+  /* Persiste la telemetría y todos los sobres que nacen de ella en UNA sola
+     escritura. Un recibo por ID es el cerrojo: repetir endGame, reintentar una
+     sincronización o recargar nunca suma un segundo sobre para el mismo logro. */
+  function guardarLogros(metas,nuevos=[]){
+    if(!Array.isArray(nuevos))return {ok:false,nuevos:[],metas:leerMetas()};
+    const estado=cargar();if(!estado)return {ok:false,nuevos:[],metas:leerMetas()};
+    const limpio=sanearMetas(metas);
+    // Reconciliamos contra todos los logros logrados, no sólo contra `nuevos`:
+    // si una versión anterior alcanzó a guardar la meta y se interrumpió antes
+    // del recibo, la siguiente escritura recupera su único sobre en vez de
+    // perderlo. El recibo sigue impidiendo que se repita después de cobrarlo.
+    const porPremiar=limpio.obtenidos.filter(id=>!estado.logrosPremiados.includes(id));
+    if(estado.sobres>maxSobres-porPremiar.length)return {ok:false,nuevos:[],metas:leerMetas()};
+    estado.metas=limpio;
+    const recompensas=[];
+    for(const id of porPremiar){
+      const recompensa={id:idRecompensa(estado,'logro'),origen:'logro',referencia:id,cantidad:1};
+      estado.sobres++;estado.logrosPremiados.push(id);estado.recompensasPorElegir.push(recompensa);recompensas.push(copia(recompensa));
+    }
+    if(!guardar(estado,porPremiar.length?'logro':'progreso-logros',{logros:porPremiar.slice(),sobres:porPremiar.length,recompensas}))return {ok:false,nuevos:[],metas:leerMetas()};
+    return {ok:true,nuevos:porPremiar,metas:copia(estado.metas),recompensas};
+  }
+  function concederSobreLogro(logroId,metas){
+    if(!idSeguro(logroId))return false;
+    const siguiente=sanearMetas(metas||leerMetas());
+    if(!siguiente.obtenidos.includes(logroId))siguiente.obtenidos.push(logroId);
+    return guardarLogros(siguiente,[logroId]).ok;
+  }
   function sobres(){return leer().sobres;}
   function recompensasPendientes(){return copia(leer().recompensasPorElegir);}
   // El deseo usa este sello sólo para recuperarse tras una recarga donde la
@@ -362,7 +421,7 @@
     estado.pendiente=null;
     return guardar(estado,'cerrar-sobre');
   }
-  window.CAOZ_COLECCION=Object.freeze({acabados,get clave(){return clave;},usarClaveDeCuenta,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,sobres,recompensasPendientes,campanaElegida,elegirSobres,inventarioSobres,abrirSobre,pendiente,cerrarSobre});
+  window.CAOZ_COLECCION=Object.freeze({acabados,get clave(){return clave;},usarClaveDeCuenta,ids,grupos,tiene,cantidad,canjeables,canjear,elegido,seleccionar,desbloquear,otorgarCopia,leer,reiniciar,betaDisponible,darSobreBeta,concederSobreCampana,concederSobreDomo,leerMetas,guardarLogros,concederSobreLogro,sobres,recompensasPendientes,campanaElegida,elegirSobres,inventarioSobres,abrirSobre,pendiente,cerrarSobre});
   window.addEventListener('storage',event=>{
     if(event.key===clave||event.key===null)avisar('externo',leer());
   });

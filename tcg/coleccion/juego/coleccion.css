@@ -1145,3 +1145,183 @@
   #coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado,.coleccionMini),
   #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] :is(.coleccionDetalleCabecera,.coleccionVersiones,.visor3dEscena,.visor3dControles){animation:none!important}
 }
+
+/* Logros -------------------------------------------------------------------
+   El registro vive dentro de la Colección: conserva el mismo papel oscuro,
+   latón y jerarquía de la biblioteca, sin introducir otra caja o un modal. */
+#coleccionPanel[data-vista="logros"] .coleccionContenido{gap:0}
+#coleccionPanel .coleccionLogros{
+  width:min(100%,1020px);flex:1;min-height:0;display:flex;flex-direction:column;
+  margin:0 auto;padding:1px 4px 0;color:#e4d2b2;
+}
+#coleccionPanel .coleccionLogrosVacios{
+  align-items:center;justify-content:center;gap:9px;text-align:center;
+  color:#c5ad89;
+}
+#coleccionPanel .coleccionLogrosVacios h3{font:600 25px/1.2 var(--serif,Georgia,serif);color:#efd8a4}
+#coleccionPanel .coleccionLogrosVacios p{max-width:390px;font-size:13px;line-height:1.55}
+#coleccionPanel .coleccionLogrosCabecera{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto;
+  column-gap:26px;align-items:center;flex:none;padding:3px 3px 13px;border-bottom:1px solid #9b754442;
+}
+#coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo{grid-column:1;grid-row:1;margin-bottom:2px}
+#coleccionPanel .coleccionLogrosCabecera>h3{
+  grid-column:1;grid-row:2;font:700 28px/1.08 var(--serif,Georgia,serif);
+  letter-spacing:.3px;color:#f1dcae;
+}
+#coleccionPanel .coleccionLogrosCabecera>p{
+  grid-column:1;grid-row:3;max-width:610px;margin-top:5px;color:#bca68a;
+  font-size:12px;line-height:1.45;
+}
+#coleccionPanel .coleccionLogrosCuenta{
+  grid-column:2;grid-row:1 / 4;align-self:center;display:grid;
+  grid-template-columns:auto minmax(74px,1fr);grid-template-areas:"numero texto" "accion accion";
+  column-gap:8px;row-gap:2px;min-width:154px;padding:5px 0 5px 17px;
+  border-left:1px solid #9b75445e;color:#bca788;
+}
+#coleccionPanel .coleccionLogrosCuenta strong{
+  grid-area:numero;align-self:center;font:700 25px/1 var(--serif,Georgia,serif);
+  font-variant-numeric:tabular-nums;color:#f1dba9;text-align:right;white-space:nowrap;
+}
+#coleccionPanel .coleccionLogrosCuenta>span{
+  grid-area:text;align-self:center;font-size:10px;line-height:1.22;
+  letter-spacing:.55px;text-transform:uppercase;
+}
+#coleccionPanel .coleccionLogrosSobres{
+  grid-area:accion;justify-self:stretch;min-height:30px;margin-top:3px;padding:5px 8px;
+  border-color:#a9874e;background:linear-gradient(110deg,#644729,#392719);box-shadow:inset 0 1px 0 #d3af6b35,0 2px 0 #130d08;
+  color:#f1d6a1;font-size:12px;
+}
+#coleccionPanel .coleccionLogrosSobres svg{width:15px;height:15px}
+
+/* Los filtros se deslizan si no caben: nunca fuerzan la lista ni recortan un
+   nombre de protagonista. */
+#coleccionPanel .coleccionLogrosFiltros{
+  display:flex;gap:7px;flex:none;overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#87643d #1b120e;
+  padding:12px 2px 10px;scroll-snap-type:x proximity;
+}
+#coleccionPanel .coleccionLogrosFiltro{
+  min-height:32px;padding:5px 12px;flex:none;white-space:nowrap;scroll-snap-align:start;
+  border-color:#7152329c;background:linear-gradient(160deg,#312318d9,#1b1410e8);
+  box-shadow:inset 0 1px 0 #c6a26c1f,0 1px 0 #090706;color:#bea98b;font-size:12px;
+}
+#coleccionPanel .coleccionLogrosFiltro:hover{border-color:#b48d51;color:#ecd4a5}
+#coleccionPanel .coleccionLogrosFiltro[aria-pressed="true"]{
+  border-color:#d0a961;color:#f4ddab;background:linear-gradient(160deg,#74502a,#3b291b);
+  box-shadow:inset 0 1px 0 #f0d18b42,0 1px 0 #110b07;
+}
+
+/* Sólo esta zona hace scroll; la cabecera, filtros y recompensa permanecen
+   siempre disponibles. El espacio al final evita que la última ficha choque
+   con el borde al llegar con rueda o toque. */
+#coleccionPanel .coleccionListaLogros{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));align-content:start;
+  flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8d6d43 #18100d;
+  scrollbar-gutter:stable;gap:10px 12px;padding:2px 10px 20px 2px;
+}
+#coleccionPanel .coleccionLogro{
+  display:grid;grid-template-columns:42px minmax(0,1fr) auto;
+  grid-template-areas:"sello texto premio" "sello meta prueba";
+  column-gap:11px;row-gap:8px;align-items:center;min-width:0;min-height:114px;
+  padding:13px 12px;border:1px solid #80603d80;border-radius:4px;
+  background:radial-gradient(ellipse at 0 0,#a2793a12,transparent 46%),linear-gradient(120deg,#2c1f16e8,#17110edb);
+  box-shadow:inset 0 1px 0 #e1bd8030,inset 0 -16px 27px #00000024,0 3px 9px #0000001c;
+  transition:border-color .18s ease,translate .18s ease,filter .18s ease;
+}
+#coleccionPanel .coleccionLogro:hover{border-color:#af8950;translate:0 -1px;filter:brightness(1.055)}
+#coleccionPanel .coleccionLogro.completado{
+  border-color:#b9985d;background:radial-gradient(ellipse at 0 0,#d1aa5623,transparent 48%),linear-gradient(120deg,#302516eb,#1e1810e8);
+  box-shadow:inset 0 1px 0 #f3d89348,inset 0 -16px 27px #0000001f,0 3px 9px #00000020;
+}
+#coleccionPanel .coleccionLogroSello{
+  grid-area:sello;display:grid;place-items:center;width:42px;height:42px;
+  border:1px solid #806449;border-radius:50%;color:#a58f72;
+  background:radial-gradient(circle at 34% 28%,#4e3a29,#221914 68%);
+  box-shadow:inset 0 0 0 3px #120d0abf,0 2px 5px #0008;
+}
+#coleccionPanel .coleccionLogroSello svg{width:20px;height:20px}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroSello{
+  border-color:#e0bd78;color:#f4d78c;background:radial-gradient(circle at 34% 28%,#a87932,#4a3015 68%);
+  box-shadow:inset 0 0 0 3px #271b0dbf,0 0 14px #d4a24728;
+}
+#coleccionPanel .coleccionLogroTexto{grid-area:text;min-width:0;align-self:end}
+#coleccionPanel .coleccionLogroTexto h4{
+  overflow-wrap:anywhere;font:600 18px/1.12 var(--serif,Georgia,serif);letter-spacing:.15px;color:#efd9ac;
+}
+#coleccionPanel .coleccionLogroTexto p{
+  margin-top:4px;color:#b9a58b;font-size:11px;line-height:1.35;text-wrap:pretty;
+}
+#coleccionPanel .coleccionLogroMeta{
+  grid-area:meta;display:grid;grid-template-columns:minmax(56px,1fr) auto;gap:8px;
+  align-items:center;min-width:0;color:#ae9b80;font-size:10px;line-height:1.2;
+}
+#coleccionPanel .coleccionLogroMeta progress{
+  width:100%;min-width:0;height:7px;overflow:hidden;border:1px solid #806440;border-radius:999px;
+  appearance:none;background:#120d0b;accent-color:#c49146;
+}
+#coleccionPanel .coleccionLogroMeta progress::-webkit-progress-bar{background:#120d0b}
+#coleccionPanel .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#80612d,#d4a653);box-shadow:inset 0 1px #ffe0a24d}
+#coleccionPanel .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#80612d,#d4a653);box-shadow:inset 0 1px #ffe0a24d}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta{color:#d4bd8d}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#ad7f31,#f0c86f)}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#ad7f31,#f0c86f)}
+#coleccionPanel .coleccionLogroPremio{
+  grid-area:premio;display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;
+  color:#d3b270;font-size:10px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;white-space:nowrap;
+}
+#coleccionPanel .coleccionLogroPremio svg{width:14px;height:14px}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroPremio{color:#efd28f}
+#coleccionPanel .coleccionLogroPrueba{
+  grid-area:prueba;justify-self:end;min-height:27px;padding:4px 8px;border-color:#8b6b42;
+  background:#241810;box-shadow:none;color:#d4ba8b;font-size:11px;
+}
+#coleccionPanel .coleccionLogroPrueba:hover{background:#493220}
+#coleccionPanel .coleccionLogrosNota{
+  flex:none;max-width:650px;margin:7px auto 0;padding:7px 14px 0;border-top:1px solid #8b683e42;
+  color:#aa967b;font-size:10px;line-height:1.35;text-align:center;
+}
+
+@media(max-width:760px){
+  #coleccionPanel[data-vista="logros"] .coleccionPestana{min-width:0;flex:1;padding-inline:7px;font-size:13px;gap:5px}
+  #coleccionPanel[data-vista="logros"] .coleccionPestana svg{width:16px;height:16px}
+  #coleccionPanel[data-vista="logros"] .coleccionNumero{min-width:20px;padding-inline:4px;font-size:10px}
+  #coleccionPanel .coleccionLogros{padding-inline:0}
+  #coleccionPanel .coleccionLogrosCabecera{column-gap:15px;padding-bottom:10px}
+  #coleccionPanel .coleccionLogrosCabecera>h3{font-size:25px}
+  #coleccionPanel .coleccionLogrosCuenta{min-width:137px;padding-left:12px}
+  #coleccionPanel .coleccionLogrosCuenta strong{font-size:22px}
+  #coleccionPanel .coleccionListaLogros{gap:9px;padding-right:7px}
+  #coleccionPanel .coleccionLogro{padding:11px 10px;column-gap:9px}
+}
+@media(max-width:620px){
+  #coleccionPanel .coleccionLogrosCabecera{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;row-gap:0}
+  #coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo,
+  #coleccionPanel .coleccionLogrosCabecera>h3,
+  #coleccionPanel .coleccionLogrosCabecera>p{grid-column:1}
+  #coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo{grid-row:1}
+  #coleccionPanel .coleccionLogrosCabecera>h3{grid-row:2}
+  #coleccionPanel .coleccionLogrosCabecera>p{grid-row:3;max-width:none;padding-right:2px}
+  #coleccionPanel .coleccionLogrosCuenta{
+    grid-column:1;grid-row:4;justify-self:stretch;grid-template-columns:auto 1fr auto;
+    grid-template-areas:"numero texto accion";align-items:center;min-width:0;margin-top:9px;padding:8px 0 0;border-top:1px solid #8f6c4045;border-left:0;
+  }
+  #coleccionPanel .coleccionLogrosSobres{justify-self:end;min-height:29px;margin:0;padding:4px 8px}
+  #coleccionPanel .coleccionLogrosFiltros{padding-top:9px;padding-bottom:8px}
+  #coleccionPanel .coleccionListaLogros{grid-template-columns:1fr;padding-bottom:15px}
+}
+@media(max-width:420px){
+  #coleccionPanel[data-vista="logros"] .coleccionPestana{padding-inline:4px;font-size:11px;gap:3px}
+  #coleccionPanel[data-vista="logros"] .coleccionPestana svg{display:none}
+  #coleccionPanel .coleccionLogrosCabecera>h3{font-size:23px}
+  #coleccionPanel .coleccionLogrosCabecera>p{font-size:11px}
+  #coleccionPanel .coleccionLogrosCuenta{column-gap:6px}
+  #coleccionPanel .coleccionLogrosCuenta>span{font-size:9px}
+  #coleccionPanel .coleccionLogro{grid-template-columns:38px minmax(0,1fr) auto;min-height:106px;padding:10px 8px}
+  #coleccionPanel .coleccionLogroSello{width:38px;height:38px}
+  #coleccionPanel .coleccionLogroTexto h4{font-size:16px}
+  #coleccionPanel .coleccionLogroTexto p{font-size:10px}
+  #coleccionPanel .coleccionLogroMeta{gap:5px;font-size:9px}
+  #coleccionPanel .coleccionLogroPremio{font-size:9px}
+}

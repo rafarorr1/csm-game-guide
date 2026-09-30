@@ -5,11 +5,11 @@
   "fuentes": [
     {
       "archivo": "caoz_tcg/index.html",
-      "sha256": "07416dba56868226b09285548ea36e0741c837abc480e57927c98a231c16cbab"
+      "sha256": "d126b69f50fb39fecd4edc784674ae66018ab2c83192a7ada6a5ee2699cf901a"
     },
     {
       "archivo": "caoz_tcg/motor.js",
-      "sha256": "a3654f0ef7e7b2455407047c4b179f985938c310289df4c1cb2d921e4bb41566"
+      "sha256": "f2380454aedcc6460cc4f7e7e218f55e0b8b39d118890cb3f5c398c29375c32f"
     },
     {
       "archivo": "caoz_tcg/polish-aaa.js",
@@ -17,7 +17,7 @@
     },
     {
       "archivo": "caoz_tcg/final.js",
-      "sha256": "e733af72a40ceec6dc79dcb481afa4e86571f1a91fe0a76a7821446dfeab30a6"
+      "sha256": "c60aa83121a41db9772ab0d5e7778753af4a47f7a8f30c19a55fc51d62593b83"
     }
   ],
   "funciones": [
@@ -38,7 +38,7 @@
     },
     {
       "nombre": "tribeLine",
-      "linea": 2693,
+      "linea": 2930,
       "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
     },
     {
@@ -63,12 +63,12 @@
     },
     {
       "nombre": "cardEl",
-      "linea": 2784,
+      "linea": 2785,
       "sha256": "dca5c5fd205588e82880c8c26aa4c04dafd9d0c2a4ec985e37c19d1be3afc85f"
     },
     {
       "nombre": "cartaDeLiderVS",
-      "linea": 4373,
+      "linea": 4377,
       "sha256": "7b1950587efeed16883f4ffa413c605e39fe4d1c838e4ecf2cdec4704c9552f2"
     }
   ],

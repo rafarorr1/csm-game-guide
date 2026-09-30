@@ -1,8 +1,24 @@
 'use strict';
 (function(){
   const parametros=new URLSearchParams(location.search),estado=parametros.get('estado')||'sobres';
-  const estados=['nuevo','sobres','premio-domo','premio-campana','legado-sobres','ediciones','muestrario','legacy','canjes'];
+  const estados=['nuevo','sobres','premio-domo','premio-campana','legado-sobres','ediciones','muestrario','legacy','canjes','logros'];
   const acabado=['normal','foil','dorado'].includes(parametros.get('acabado'))?parametros.get('acabado'):'normal';
+  function prepararLogros(){
+    const logros=window.CAOZ_LOGROS;
+    if(!logros?.registrar)throw Error('No se pudo cargar el registro de logros.');
+    // La muestra mezcla avances parciales y condiciones cumplidas por el
+    // evaluador real. Así se pueden revisar tanto los contadores como el
+    // sobre pendiente, sin conceder nada fuera de esta memoria temporal.
+    logros.registrar({tipo:'partida-finalizada',elegible:true,ganada:true,protagonista:'mohamed',rival:'gero',ronda:5,danoAlmaRecibido:0,duracionMs:360000});
+    logros.registrar({tipo:'partida-finalizada',elegible:true,ganada:true,protagonista:'fender',rival:'gero',ronda:6,cancionesJugadas:7,duracionMs:360000});
+    logros.registrar({tipo:'hito-campo',elegible:true,protagonista:'talesin',atkBase:0,atk:10});
+    logros.registrar({tipo:'partida-finalizada',elegible:true,ganada:true,protagonista:'rafaela',rival:'mohamed',almaFinal:21,ronda:6,duracionMs:360000});
+    logros.registrar({tipo:'partida-finalizada',elegible:true,ganada:true,protagonista:'rafaela',rival:'fender',almaFinal:22,ronda:6,duracionMs:360000});
+  }
+  function abrirPestana(nombre){
+    const buscada=[...document.querySelectorAll('#coleccionPanel .coleccionPestana')].find(n=>n.textContent.trim().startsWith(nombre));
+    buscada?.click();
+  }
   function preparar(){
     const m=window.CAOZ_COLECCION;
     if(!window.CAOZ_DEV?.aislado||!m||typeof abrirColeccion!=='function')throw Error('No se pudo montar la sección aislada.');
@@ -37,6 +53,7 @@
       for(let i=0;i<4;i++)m.otorgarCopia('tal','foil');
       for(let i=0;i<5;i++)m.otorgarCopia('eric','foil');
     }
+    if(estado==='logros')prepararLogros();
     if(estado==='muestrario'){
       // Una copia por edición permite recorrer la serie completa en la grilla.
       // El almacén temporal se reconstruye al recargar, sin canjes ni premios.
@@ -63,7 +80,7 @@
       }else location.search=parametros.toString();
     });
     document.getElementById('devAbrir').onclick=()=>abrirColeccion();
-    document.getElementById('devEstado').textContent=m.ids().length+' cartas disponibles · '+(estado==='muestrario'?'En memoria: todas las ediciones para revisar ilustraciones.':'Almacenamiento temporal · sin partida activa.');
+    document.getElementById('devEstado').textContent=m.ids().length+' cartas disponibles · '+(estado==='muestrario'?'En memoria: todas las ediciones para revisar ilustraciones.':estado==='logros'?'Logros, progreso y sobres sólo en memoria temporal.':'Almacenamiento temporal · sin partida activa.');
     // El proveedor real carga exclusivamente los archivos locales; el servidor
     // responde un catálogo remoto vacío, sin contactar los estudios publicados.
     cargarArte().catch(()=>{}).finally(()=>{
@@ -74,7 +91,8 @@
       abrirColeccion();
       const carta=parametros.get('carta');
       if(carta&&m.ids().includes(carta))document.querySelector('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]')?.click();
-      else if(parametros.get('pestana')==='sobres')document.querySelector('#coleccionPanel .coleccionPestana:nth-child(2)')?.click();
+      else if(estado==='logros'||parametros.get('pestana')==='logros')abrirPestana('Logros');
+      else if(parametros.get('pestana')==='sobres')abrirPestana('Sobres');
     });
   }
   if(document.readyState==='complete')preparar();else addEventListener('load',preparar,{once:true});

@@ -5,11 +5,11 @@
   "fuentes": [
     {
       "archivo": "caoz_tcg/movil.html",
-      "sha256": "8e41acadf11832e8d9d324cd1a8c9eabcf98a10d1e9b1ec7ffebc44aeabb2e8e"
+      "sha256": "5b2572820bb5061f5df4db3dbfac8fb33d6991cb09325c7ed2e5d5b3b9e735d0"
     },
     {
       "archivo": "caoz_tcg/motor.js",
-      "sha256": "a3654f0ef7e7b2455407047c4b179f985938c310289df4c1cb2d921e4bb41566"
+      "sha256": "f2380454aedcc6460cc4f7e7e218f55e0b8b39d118890cb3f5c398c29375c32f"
     },
     {
       "archivo": "caoz_tcg/polish-aaa.js",
@@ -17,7 +17,7 @@
     },
     {
       "archivo": "caoz_tcg/final.js",
-      "sha256": "e733af72a40ceec6dc79dcb481afa4e86571f1a91fe0a76a7821446dfeab30a6"
+      "sha256": "c60aa83121a41db9772ab0d5e7778753af4a47f7a8f30c19a55fc51d62593b83"
     }
   ],
   "funciones": [
@@ -38,7 +38,7 @@
     },
     {
       "nombre": "tribeLine",
-      "linea": 2693,
+      "linea": 2930,
       "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
     },
     {
@@ -63,7 +63,7 @@
     },
     {
       "nombre": "cardEl",
-      "linea": 1587,
+      "linea": 1588,
       "sha256": "1b248ee4e31f297cef13e1b63c35c5b5e91594a14fcedd6162f115e5f12b201f"
     },
     {

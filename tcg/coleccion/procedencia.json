@@ -9,11 +9,11 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/index.html",
-          "sha256": "07416dba56868226b09285548ea36e0741c837abc480e57927c98a231c16cbab"
+          "sha256": "d126b69f50fb39fecd4edc784674ae66018ab2c83192a7ada6a5ee2699cf901a"
         },
         {
           "archivo": "caoz_tcg/motor.js",
-          "sha256": "a3654f0ef7e7b2455407047c4b179f985938c310289df4c1cb2d921e4bb41566"
+          "sha256": "f2380454aedcc6460cc4f7e7e218f55e0b8b39d118890cb3f5c398c29375c32f"
         },
         {
           "archivo": "caoz_tcg/polish-aaa.js",
@@ -21,7 +21,7 @@
         },
         {
           "archivo": "caoz_tcg/final.js",
-          "sha256": "e733af72a40ceec6dc79dcb481afa4e86571f1a91fe0a76a7821446dfeab30a6"
+          "sha256": "c60aa83121a41db9772ab0d5e7778753af4a47f7a8f30c19a55fc51d62593b83"
         }
       ],
       "funciones": [
@@ -42,7 +42,7 @@
         },
         {
           "nombre": "tribeLine",
-          "linea": 2693,
+          "linea": 2930,
           "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
         },
         {
@@ -67,12 +67,12 @@
         },
         {
           "nombre": "cardEl",
-          "linea": 2784,
+          "linea": 2785,
           "sha256": "dca5c5fd205588e82880c8c26aa4c04dafd9d0c2a4ec985e37c19d1be3afc85f"
         },
         {
           "nombre": "cartaDeLiderVS",
-          "linea": 4373,
+          "linea": 4377,
           "sha256": "7b1950587efeed16883f4ffa413c605e39fe4d1c838e4ecf2cdec4704c9552f2"
         }
       ],
@@ -91,11 +91,11 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/movil.html",
-          "sha256": "8e41acadf11832e8d9d324cd1a8c9eabcf98a10d1e9b1ec7ffebc44aeabb2e8e"
+          "sha256": "5b2572820bb5061f5df4db3dbfac8fb33d6991cb09325c7ed2e5d5b3b9e735d0"
         },
         {
           "archivo": "caoz_tcg/motor.js",
-          "sha256": "a3654f0ef7e7b2455407047c4b179f985938c310289df4c1cb2d921e4bb41566"
+          "sha256": "f2380454aedcc6460cc4f7e7e218f55e0b8b39d118890cb3f5c398c29375c32f"
         },
         {
           "archivo": "caoz_tcg/polish-aaa.js",
@@ -103,7 +103,7 @@
         },
         {
           "archivo": "caoz_tcg/final.js",
-          "sha256": "e733af72a40ceec6dc79dcb481afa4e86571f1a91fe0a76a7821446dfeab30a6"
+          "sha256": "c60aa83121a41db9772ab0d5e7778753af4a47f7a8f30c19a55fc51d62593b83"
         }
       ],
       "funciones": [
@@ -124,7 +124,7 @@
         },
         {
           "nombre": "tribeLine",
-          "linea": 2693,
+          "linea": 2930,
           "sha256": "093a941fd24d5ee4e776d689756598060d1b18cd57a767940319bee8aaf87bd2"
         },
         {
@@ -149,7 +149,7 @@
         },
         {
           "nombre": "cardEl",
-          "linea": 1587,
+          "linea": 1588,
           "sha256": "1b248ee4e31f297cef13e1b63c35c5b5e91594a14fcedd6162f115e5f12b201f"
         },
         {
@@ -169,9 +169,10 @@
   },
   "componentes": {
     "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
-    "coleccion-modelo.js": "ddd70c9c812277efc5e525032568a70a18a7fd1db4eff93c7a7ba0117bfb99de",
+    "coleccion-modelo.js": "66ef643bf474e1d0e5fd6bf2512b813eed88aab9dd33d5ea4e8099de8cce0bb0",
+    "logros.js": "1c795dff5283adeaeb305c3cce2135f27b0c45c2df3f6fafda398c1107f044e9",
     "arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
-    "coleccion-ui.js": "994169854e38f9f59080573ac8cbfea40d02b45c3264e3d5571328d8e5c029cf",
+    "coleccion-ui.js": "8a1e23cc91a86848cb024a9e25ae2c89158d8788766613fc1c12404657010a62",
     "visor-3d.js": "956f01e790262197ee55c145d63c6a9e37d44648d996a201da2e2419b13360ea",
     "visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
     "visor-3d.css": "6a95d2275fd614d42d993baed6eb2ec86dd546d417ef18a0c4b24cf120494c30",
@@ -185,7 +186,7 @@
     "sobres-apertura.js": "031a9e88ba2e140aee63ec075f1acb7174335d6a2a0a605fbafe0f1d3dfddc7b",
     "sobres-revelacion.js": "0409659d3b519531ffbae3b3d62e37ad8c258c7afa7f48c0bad1510dd0b6152c",
     "sobres-apertura.css": "12d234191ead3690e54b1dbc596a62266d7bc98173c3c9e3801de8fabfcbdc3f",
-    "coleccion.css": "bd24c3b34c8d42a4b295040f3226cb6a25f27fc303e1d07131e45f74cbadbba2",
+    "coleccion.css": "78b433e2d77fa1c3ff048f80179338f06626685cf49e72a91dc72b510cba3b41",
     "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
   },
   "arte": {
