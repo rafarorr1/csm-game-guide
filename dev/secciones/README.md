@@ -386,6 +386,7 @@ oleadas, y al final entra Can, el de los Goblins.
 - **Dos personajes (se elige arriba, o con `?heroe=mohamed`):**
   - Adreida, cuerpo a cuerpo, con el hacha a dos manos (el combo de tres hachazos, Torbellino, Salto con el hacha clavada);
   - Mohamed, a distancia, con una pistola de chispa: el clic dispara hacia el cursor (se puede andar, más despacio, mientras dispara); seis balas y recarga sola (1,1 s); Q, Abanico de siete balas; clic derecho, Backflip al cursor: al caer, los enemigos que lo ven (a 6 m y mirando hacia él) se quedan impresionados, aturdidos 2,6 s (Can, 1,2 s); 100 de Alma;
+  - una línea de puntería sale del cañón y termina en el primer enemigo u obstáculo (o al agotar el alcance); el extremo se vuelve rojo al apuntar a un enemigo. La pistola sigue el cursor incluso sin disparar. Las balas salen de la pose actual y siguen exactamente ese eje, sin retraso al girar ni desviación vertical; el Abanico se abre alrededor de la misma dirección. La colisión recorre todo el segmento de cada fotograma para no atravesar enemigos ni coberturas;
   - dos propuestas de bala (se elige en Efectos o con `?balas=trazadora`): A, la bola de plomo de una pistola de chispa con un trazo corto al rojo y chispas; B, una bala alargada de latón con ojiva de cobre y una estela larga y fina de luz; no interrumpen a los enemigos pero dan Furia; el parry, el dash y Provocar son iguales para los dos.
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
@@ -420,6 +421,12 @@ oleadas, y al final entra Can, el de los Goblins.
   - Can suelta la Llave del Mago dorada (la llave de la primera Grieta, para el Hito 3).
 - **Táctil:** palanca, Atacar (apunta solo al más cercano), Esquiva y los demás botones.
 - **Demostración:** juega sola leyendo sólo los avisos, como un jugador; es el piloto automático que usan las pruebas para ganar la partida entera.
+
+Comprobación acotada de la línea de puntería y los disparos de Mohamed:
+
+```bash
+node dev/secciones/pruebas_arpg_punteria.mjs
+```
 
 ```bash
 node dev/secciones/pruebas_arpg_three.mjs
