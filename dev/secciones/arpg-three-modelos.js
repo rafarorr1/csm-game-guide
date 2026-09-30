@@ -143,7 +143,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       // plana hacia arriba cuando el brazo está horizontal se lee bien desde la cámara.
       const hierro=0xc9ced8,filo=0xeef1f6,mango=0x3a2616,cuero2=0x5a3a22;
       pon('manoD','piel',G.cil(.026,.03,1.3,6),mango,[0,-.5,0]);
-      for(const y of [.06,-.08])pon('manoD','piel',G.cil(.034,.034,.1,6),cuero2,[0,y,0]);
+      for(const y of [.03,-.3])pon('manoD','piel',G.cil(.034,.034,.1,6),cuero2,[0,y,0]);
       pon('manoD','metal',G.bola(.045,6,5),hierro,[0,.17,0]);
       pon('manoD','metal',G.cil(.045,.045,.26,6),hierro,[0,-1.02,0]);
       for(const s of [1,-1]){
@@ -255,7 +255,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     /* ---- El hacha a dos manos de Adreida ------------------------------------------------------
        Cada pose dice dónde está la empuñadura (G, la mano derecha) y hacia dónde apunta el hacha (A),
        en el espacio del torso; los dos brazos llegan con cinemática inversa de dos huesos: la derecha
-       a G y la izquierda un poco más abajo del mango, hacia el pomo. La mano derecha se orienta para
+       a G, junto al pomo, y la izquierda 30 cm hacia la cabeza del hacha. La mano derecha se orienta para
        que el hacha (su -Y) siga A, con la cara plana hacia «arriba» (en los tajos horizontales, al
        cielo: se ve desde la cámara; en el hachazo vertical, de lado: el filo corta de arriba abajo). */
     const _v=Array.from({length:10},()=>new THREE.Vector3()),_q=new THREE.Quaternion(),_m=new THREE.Matrix4(),ABAJO=new THREE.Vector3(0,-1,0);
@@ -267,15 +267,22 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     const dirA=(f,e)=>[Math.sin(f)*Math.cos(e),Math.sin(e),Math.cos(f)*Math.cos(e)];
     function empunar(m,{G,A,arriba}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
       const g=_v[6].fromArray(G).applyMatrix4(T),a=_v[7].fromArray(A).transformDirection(T),up=_v[8].fromArray(arriba||[0,1,0]).transformDirection(T);
+      // Los dos agarres deben quedar al alcance sin estirar los brazos ni soltar el mango.
+      const separacion=.3,sd=H.brazoD.getWorldPosition(new THREE.Vector3()),si=H.brazoI.getWorldPosition(new THREE.Vector3()).addScaledVector(a,-separacion);
+      const alcance=m.p.brazo+m.p.antebrazo-.015;
+      for(let i=0;i<8;i++)for(const centro of [sd,si]){const delta=g.clone().sub(centro);if(delta.length()>alcance)g.copy(centro).add(delta.setLength(alcance));}
       ik(H.brazoD,H.anteD,H.manoD,g,new THREE.Vector3(-.7,-.5,-.35).applyMatrix4(T));
       // La mano derecha: -Y por el mango, X (la cara del hacha) lo más cerca posible de «arriba».
       const y=a.clone().negate(),x=up.clone().addScaledVector(y,-up.dot(y));if(x.lengthSq()<1e-6)x.set(1,0,0);x.normalize();const z=new THREE.Vector3().crossVectors(x,y);
       H.manoD.parent.getWorldQuaternion(_q).invert();H.manoD.quaternion.setFromRotationMatrix(_m.makeBasis(x,y,z)).premultiply(_q);H.manoD.updateMatrixWorld(true);
-      // La izquierda, 26 cm más abajo por el mango (hacia el pomo).
-      ik(H.brazoI,H.anteI,H.manoI,g.clone().addScaledVector(a,-.26),new THREE.Vector3(.7,-.5,-.35).applyMatrix4(T));}
+      // La izquierda envuelve el mango entre la derecha y la cabeza, nunca fuera del pomo.
+      const apoyo=H.manoD.localToWorld(new THREE.Vector3(0,-separacion,0));
+      ik(H.brazoI,H.anteI,H.manoI,apoyo,new THREE.Vector3(.7,-.5,-.35).applyMatrix4(T));
+      const orientacion=H.manoD.getWorldQuaternion(new THREE.Quaternion());
+      H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);H.manoI.updateMatrixWorld(true);}
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
-      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.02*(a.paso??1):Math.sin(t*2.2)*.008;return {G:[-.12,.08+bob,.3],A:dirA(-.35,-.75)};};
+      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.02*(a.paso??1):Math.sin(t*2.2)*.008;return {G:[-.13,.12+bob,.25],A:dirA(.8,-.48)};};
       const horizontal=(f,e)=>{const r=.42-.08*Math.abs(Math.sin(f));return {G:[Math.sin(f)*r,.28,Math.cos(f)*r],A:dirA(f,e),arriba:[0,1,0]};};
       const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
@@ -308,7 +315,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       if(m.tipo==='adreida'){H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.75;H.brazoD.rotation.z=-.22;}
       switch(a.anim){
         case 'andar':andar(a.fase||0,a.paso??1);break;
-        case 'quieto':H.cuerpo.position.y=respira*.006;H.brazoI.rotation.z+=respira*.02;break;
+        case 'quieto':H.cuerpo.position.y=respira*.006;if(m.tipo==='adreida'){H.torso.rotation.x=.1+respira*.012;H.rodillaI.rotation.x=.12;H.rodillaD.rotation.x=.12;H.cuerpo.position.y-=.025;}else H.brazoI.rotation.z+=respira*.02;break;
         // Tajo horizontal de derecha a izquierda: carga (0–.35), golpe (.35–.55), recoge.
         case 'golpe':case 'aviso':{const kk=a.anim==='aviso'?k*.38:k,car=tramo(kk,0,.35),gol=tramo(kk,.36,.55),rec=tramo(kk,.62,1);
           const giro=-.9*car+1.6*gol-.7*rec;H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.35;
