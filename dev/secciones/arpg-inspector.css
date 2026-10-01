@@ -15,3 +15,6 @@
 @media(max-width:900px){.apLaboratorio{display:block;height:auto;overflow:auto}.labPanel{margin-top:12px}.apLaboratorio .apEscenario{height:60vh}}
 
 .labPanel table{width:100%;font-size:11px;border-collapse:collapse;margin-top:12px}.labPanel th,.labPanel td{padding:4px;text-align:right;border-bottom:1px solid #56405c}.labPanel td:first-child{text-align:left}.labPanel textarea{width:100%;height:120px;background:#100c18;color:#d3c5dd;font:10px monospace}.labPanel details{margin-top:12px}
+
+/* La vista previa conserva el encuadre 16:9 del búfer fijo de 1080p. */
+.apLaboratorio[data-resolucion="1080p"] .apEscenario{height:auto;aspect-ratio:16/9;min-height:0;border:0}

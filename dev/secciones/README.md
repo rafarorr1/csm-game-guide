@@ -1221,13 +1221,21 @@ Se reduce a la mitad la intensidad anterior del resplandor (bloom 0,5 → 0,25) 
 
 «Mostrar estadísticas (incluye FPS)», en los controles y en el menú de pausa, permite ocultar tanto las cifras del personaje como el diagnóstico inferior. La preferencia se guarda en este navegador y mantiene visibles Alma, Furia y habilidades. «Pantalla completa» amplía únicamente el escenario; los diálogos de pausa y destino siguen disponibles. Se sale desde el mismo botón en pausa o con Escape del navegador. El tamaño de render se adapta automáticamente.
 
+### Resolución interna y objetivo de 1080p
+
+El presupuesto de renderizado normal pasa de 1.000.000 a 2.073.600 píxeles. A pantalla completa de 1920 × 1080, la escena se dibuja a 1920 × 1080 con escala adaptativa 1; anteriormente quedaba cerca de 1333 × 750 y se ampliaba. El HUD permanece a resolución nativa. En monitores mayores se mantiene el presupuesto de 1080p, respetando su proporción; en ventanas pequeñas se conserva el límite de densidad 1,25×. Las capturas mantienen su configuración de hasta 2×.
+
+La partida normal conserva la resolución adaptativa: ante menos de 45 FPS sostenidos puede reducir cada dimensión hasta el 70 %, y recupera nitidez cuando el rendimiento mejora. El diagnóstico inferior muestra el ancho y alto internos efectivos. No confundir estos valores con el tamaño CSS del escenario ni con la resolución del monitor.
+
+El inspector inicia con **1920 × 1080 fijos**, sin adaptación. Su vista previa es 16:9 y puede ser menor; el renderizador y todos los efectos procesan el búfer completo. «Adaptada a la ventana» permite volver al modo anterior. El informe v3 registra por separado dimensiones de la vista y del búfer WebGL; cualquier cambio durante una captura la cancela. `node dev/secciones/pruebas_arpg_resolucion.mjs` verifica 1080p, Retina/4K, móvil, adaptación, capturas y el modo fijo del inspector.
+
 ### Inspector local de combate, animación y rendimiento
 
 Arrancar `node dev/secciones/arpg-inspector-servidor.mjs 8883` y abrir `http://127.0.0.1:8883/dev/secciones/arpg-inspector.html?inspector=1`. La herramienta sirve la página y los modelos reales; sus paneles, estilos y módulo de métricas no forman parte de la exportación pública. La partida normal no registra muestras del inspector.
 
 Permite reiniciar una escena sin oleadas, elegir Adreida o Mohamed, ajustar daño/velocidad de ataque, añadir enemigos con vida/velocidad/daño configurables, congelar y avanzar un cuadro. La vista de poses tiene una fase ajustable y repetición; los botones de ataques reales ejecutan el combate, incluyendo salto con piedras y carga. Los ajustes se aplican sólo en memoria y se pueden descargar como JSON; no alteran automáticamente el balance del repositorio.
 
-Las referencias `plaza-0-v2`, `plaza-12-v2` y `plaza-24-v2` reinician la semilla 11 con Adreida sola, ocho goblins/dos kobolds/dos saqueadores, o ambos héroes con el doble de enemigos y vida. La captura mantiene vivos a los dos héroes y bloquea las entradas. Usa paso fijo de 1/60 s, cámara 1 y resolución adaptativa desactivada. «Comparar efectos» mide Base, Sin sombras, Sin halo y Con oclusión, y repite en orden inverso: 90 cuadros de calentamiento y 300 medidos por caso. La medición individual registra 600. Ocultar la pestaña, cambiar el tamaño o pulsar Escape cancela la captura. Comparar sólo con el mismo equipo, tamaño, escala y versión del código; dejar las otras partidas pausadas, incluidas las abiertas en otros puertos o en la web pública.
+Las referencias `plaza-0-v3`, `plaza-12-v3` y `plaza-24-v3` reinician la semilla 11 con Adreida sola, ocho goblins/dos kobolds/dos saqueadores, o ambos héroes con el doble de enemigos y vida. La captura mantiene vivos a los dos héroes y bloquea las entradas. Usa paso fijo de 1/60 s, cámara 1 y resolución adaptativa desactivada. «Comparar efectos» mide Base, Sin sombras, Sin halo y Con oclusión, y repite en orden inverso: 90 cuadros de calentamiento y 300 medidos por caso. La medición individual registra 600. Ocultar la pestaña, cambiar el tamaño o pulsar Escape cancela la captura. Comparar sólo con el mismo equipo, tamaño, escala y versión del código; dejar las otras partidas pausadas, incluidas las abiertas en otros puertos o en la web pública.
 
 El informe muestra y descarga muestras, entorno, FPS medio, p50/p95/máximo del intervalo entre cuadros, cuadros superiores a 33,34 ms, tiempo CPU de simulación, tiempo CPU de envío de dibujo, llamadas y triángulos. Cuando está disponible, `EXT_disjoint_timer_query_webgl2` mide la duración de GPU cada diez cuadros, recoge resultados asíncronos y descarta consultas inválidas; en otros navegadores se muestra N/D. El envío de CPU y el intervalo entre cuadros no sustituyen esa medida. Los percentiles usan intervalos sin recorte. La interfaz se actualiza cuatro veces por segundo. Los FPS pueden estar limitados por la pantalla: una mejora de GPU puede aumentar el margen disponible sin elevar los FPS.
 
@@ -1244,3 +1252,13 @@ Comprobación del 1 de octubre de 2026: Apple M2 Max, navegador integrado (ANGLE
 | Cooperativo, 24 enemigos | 368,58 | 299,58 | 397.633 → 299.381 |
 
 Con la configuración base (oclusión apagada) el trabajo de dibujo permanece igual. Las tres escenas finales rondaron 120 FPS y no registraron intervalos superiores a 33,34 ms. La simulación media del perfil base costó 0,35 / 0,67 / 0,80 ms; la GPU, 4,65 / 4,92 / 5,10 ms. Los tiempos de GPU variaron entre rondas incluso sin cambios de dibujo: no se atribuye esa variación a la optimización ni se promete la misma tasa a pantalla completa, en otros equipos o con varias partidas abiertas. Se descartó una prueba de buffers de posprocesado sin MSAA porque no mostró una mejora consistente.
+
+Repetición a **1920 × 1080 internos fijos** el mismo día, M2 Max/ANGLE Metal, HDR y MSAA 2×, vista previa 892 × 502, otras partidas pausadas. Se registraron 7.200 cuadros entre tres escenas, cuatro perfiles y dos rondas; la resolución interna permaneció en 1920 × 1080 y no hubo intervalos mayores a 33,34 ms.
+
+| Escena | FPS base | p95 base, peor ronda | GPU base | GPU con oclusión |
+| --- | ---: | ---: | ---: | ---: |
+| Adreida sola | 120,0 | 9,1 ms | 6,09 ms | 7,03 ms |
+| Combate, 12 enemigos | 120,0 | 9,1 ms | 6,45 ms | 7,26 ms |
+| Cooperativo, 24 enemigos | 120,0 | 9,3 ms | 6,42 ms | 7,47 ms |
+
+FPS y tiempos de GPU son promedios de las dos rondas. También se midieron Sin sombras y Sin halo; los cuatro perfiles rondaron 120 FPS. Esta comprobación supera el objetivo de 60 FPS en ese equipo y esas escenas cortas, sin representar una garantía para otras GPU o todos los encuentros del juego. Se verificó en navegador alternar resolución de ventana y 1080p fijo, sin errores de consola, además de las pruebas de cálculo de resolución y controles.

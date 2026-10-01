@@ -1217,8 +1217,13 @@
     else if(cuadrosRapidos>=6){escalaRender=Math.min(1,escalaRender+.05);cuadrosRapidos=0;}
     if(Math.abs(anterior-escalaRender)>.001)medir();
   }
-  function medir(){const b=esc.getBoundingClientRect(),W=Math.max(1,b.width),H=Math.max(1,b.height),dpr=CAPTURA?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.25,Math.sqrt(1000000/(W*H)))*escalaRender;
-    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;}
+  function medir(){
+    const b=esc.getBoundingClientRect(),fija=laboratorio?.resolucion;
+    const W=fija?.ancho||Math.max(1,b.width),H=fija?.alto||Math.max(1,b.height);
+    // El presupuesto normal admite 1080p nativos; el inspector puede fijar el búfer aunque su vista sea menor.
+    const dpr=fija?1:CAPTURA?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.25,Math.sqrt((1920*1080)/(W*H)))*escalaRender;
+    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
+  }
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};
   {const sel=$('estiloBala');sel.value=estiloBala;sel.onchange=()=>{estiloBala=sel.value;};}
@@ -1250,7 +1255,7 @@
   let antes=performance.now(),fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const intervalo=ahora-antes,dt=Math.min(.05,intervalo/1000);antes=ahora;const inicio=performance.now();laboratorio?.antes?.();if(!laboratorio?.detenido)paso(laboratorio?.fijo?1/60:dt);const preparado=performance.now();if(pausa.activa){fps.n=0;fps.t=ahora;$('info').textContent='En pausa';requestAnimationFrame(cuadro);return;}laboratorio?.preDibujo?.();dibujar();const finDibujo=performance.now();laboratorio?.postDibujo?.();laboratorio?.despues?.({intervalo,simulacion:preparado-inicio,envio:finDibujo-preparado,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles});fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;ajustarResolucion(fps.v);const i=renderer.info;
-      $('info').textContent=`${fps.v} fps · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
+      $('info').textContent=`${fps.v} fps · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${gl.drawingBufferWidth} × ${gl.drawingBufferHeight} px internos · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);}
 
   async function preparar(){
@@ -1319,6 +1324,7 @@
       observar(fn){laboratorio.despues=fn;},
       temporizador(antes,despues){laboratorio.preDibujo=antes;laboratorio.postDibujo=despues;return gl;},
       pasoFijo(v){laboratorio.fijo=!!v;},
+      resolucion(fija){laboratorio.resolucion=fija?{ancho:1920,alto:1080}:null;medir();},
       antes(fn){laboratorio.antes=fn;},
       limpiar(tipo='adreida',semillaEscena=11){ponerPausa(false);poses.heroe=null;semilla=semillaEscena;reloj.t=0;paron=0;sigId=1;tipoHeroe=tipo;reiniciar();for(const n of numeros)quitarEtiqueta(n.e);numeros.length=0;pVida.fill(0);pCol.fill(0);rotulos();ol.auto=false;ent.rev={mov:new V3(),atacar:false,apunta:new V3(0,0,0)};heroe.furia=100;for(const h of jugadores)h.entrada.rev={mov:new V3(),atacar:false,apunta:new V3(0,0,0)};vista.temblor=0;vista.foco.copy(heroe.pos);pasoCamara(1);camara.updateMatrixWorld();},
       configurar(p){
@@ -1332,7 +1338,7 @@
       prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
       proteger(){for(const h of jugadores){h.alma=h.almaMax;h.invul=1;h.mando.foco=h.mando.activo=h.mando.listo=false;}},
       restaurarEntrada(){for(const h of jugadores){h.mando.foco=document.hasFocus();h.mando.listo=false;}},
-      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
+      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
       valores:()=>structuredClone(originales)
     };
   }

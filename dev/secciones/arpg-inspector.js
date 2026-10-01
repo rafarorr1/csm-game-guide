@@ -5,7 +5,7 @@ else iniciar();
 async function iniciar(){
   document.body.classList.add('apLaboratorio');
   const panel=document.createElement('aside');panel.className='labPanel';panel.innerHTML=`
-    <header><small>LAS GRIETAS DEL EDITOR · HERRAMIENTAS</small><h1>Inspector</h1><p>Combate, animación y rendimiento · v2</p></header>
+    <header><small>LAS GRIETAS DEL EDITOR · HERRAMIENTAS</small><h1>Inspector</h1><p>Combate, animación y rendimiento · v3</p></header>
     <p id="labEstado" role="status">Preparando el juego…</p>
     <fieldset id="labEdicion" disabled>
       <legend>Escena de trabajo</legend>
@@ -31,6 +31,7 @@ async function iniciar(){
       <button id="labExportar">Exportar ajustes JSON</button>
     </fieldset>
     <section><h2>Rendimiento</h2><p id="labMetricas">Esperando muestras…</p><p id="labPersonaje"></p><p class="labNota">Envío = trabajo de CPU para dibujar; no mide GPU. Resolución adaptativa desactivada en el inspector.</p>
+    <label>Resolución interna<select id="labResolucion"><option value="1080p">1920 × 1080 · fija</option><option value="ventana">Adaptada a la ventana</option></select></label><p id="labPixeles" class="labNota"></p>
     <label>Escena de referencia<select id="labEscena"><option value="0">Adreida sola</option><option value="12" selected>Combate · 12 enemigos</option><option value="24">Cooperativo · 24 enemigos</option></select></label>
     <button id="labComparar" disabled>Comparar efectos · 2 rondas</button><button id="labMedir" disabled>Medir escena fija · 600 cuadros</button><button id="labCancelar" hidden>Cancelar medición</button><button id="labInforme" disabled>Descargar informe JSON</button><p id="labResultado" role="status"></p><div id="labTabla"></div><details><summary>Datos del informe</summary><textarea id="labDatos" readonly aria-label="Informe de rendimiento JSON"></textarea></details>
     <p class="labNota">Semilla 11, paso fijo de 1/60 s, resolución y cámara fijas. Comparativa: 90 cuadros de calentamiento + 300 medidos por caso, dos rondas en orden inverso. Repite en el mismo equipo y tamaño de ventana.</p></section>`;
@@ -57,6 +58,9 @@ async function iniciar(){
   for(const b of panel.querySelectorAll('[data-accion]'))b.onclick=()=>{volver();api.prepararAccion();const h=r.equipo()[0];if(b.dataset.accion==='basico'||b.dataset.accion==='cargado'){r.control({atacar:true,apunta:[h.x,h.z-5]});secuencia={t:0,duracion:b.dataset.accion==='cargado'?1:.06,x:h.x,z:h.z-5};}else r.usar(b.dataset.accion,h.x,h.z-5);};
   $('labExportar').onclick=()=>descargar('ajustes-arpg.json',{version:1,heroe:$('labHeroe').value,dano:numero('labDano'),velAtaque:numero('labVel'),enemigo:{tipo:$('labEnemigo').value,cantidad:numero('labCantidad'),...ajustesEnemigo()},entorno:api.entorno()});
   const perfiles=[['Base',{sombras:true,oclusion:false,resplandor:true}],['Sin sombras',{sombras:false,oclusion:false,resplandor:true}],['Sin halo',{sombras:true,oclusion:false,resplandor:false}],['Con oclusión',{sombras:true,oclusion:true,resplandor:true}]];
+  function aplicarResolucion(){const fija=$('labResolucion').value==='1080p';document.body.dataset.resolucion=fija?'1080p':'ventana';api.resolucion(fija);const u=new URL(location.href);u.searchParams.set('resolucion',$('labResolucion').value);history.replaceState(null,'',u);}
+  $('labResolucion').value=new URLSearchParams(location.search).get('resolucion')==='ventana'?'ventana':'1080p';
+  $('labResolucion').onchange=aplicarResolucion;aplicarResolucion();
   $('labEscena').value=api.entorno().coop?'24':'12';
   $('labEscena').onchange=()=>{const coop=numero('labEscena')===24;if(coop!==api.entorno().coop){const u=new URL(location.href);u.searchParams.set('coop',coop?'1':'0');u.searchParams.set('mandos','1');location.href=u.href;}};
   function guardarInforme(){
@@ -66,11 +70,11 @@ async function iniciar(){
   }
   function finalizar(cancelada=false){
     if(!medicion)return;
-    const resultado={version:2,escena:`plaza-${medicion.cantidad}-v2`,perfil:medicion.nombre,semilla:11,paso:1/60,fecha:new Date().toISOString(),entorno:medicion.entorno,resumen:resumir(medicion.muestras),muestras:medicion.muestras};
+    const resultado={version:3,escena:`plaza-${medicion.cantidad}-v3`,perfil:medicion.nombre,semilla:11,paso:1/60,fecha:new Date().toISOString(),entorno:medicion.entorno,resumen:resumir(medicion.muestras),muestras:medicion.muestras};
     medicion=null;api.pasoFijo(false);api.restaurarEntrada();
-    if(lote&&!cancelada){lote.resultados.push(resultado);if(lote.cola.length){const siguiente=lote.cola.shift();iniciarMedicion(siguiente,300);return;}informe={version:2,resultados:lote.resultados};}
+    if(lote&&!cancelada){lote.resultados.push(resultado);if(lote.cola.length){const siguiente=lote.cola.shift();iniciarMedicion(siguiente,300);return;}informe={version:3,resultados:lote.resultados};}
     else informe=cancelada?null:resultado;
-    lote=null;$('labEdicion').disabled=false;$('labMedir').disabled=false;$('labComparar').disabled=false;$('labEscena').disabled=false;$('labCancelar').hidden=true;$('labInforme').disabled=!informe;congelar(true);
+    lote=null;$('labEdicion').disabled=false;$('labMedir').disabled=false;$('labComparar').disabled=false;$('labEscena').disabled=false;$('labResolucion').disabled=false;$('labCancelar').hidden=true;$('labInforme').disabled=!informe;congelar(true);
     decir(cancelada?'Medición interrumpida.':'Medición terminada. Informe listo.');$('labResultado').textContent=cancelada?'Medición cancelada.':`Completada: ${resultado.resumen.fps.toFixed(1)} FPS · p95 ${resultado.resumen.p95.toFixed(1)} ms.`;
     if(informe)guardarInforme();
   }
@@ -80,7 +84,7 @@ async function iniciar(){
     const cantidad=numero('labEscena'),factor=cantidad===24?2:1;
     if(cantidad)for(const [tipo,n] of [['goblin',8],['kobold',2],['saqueador',2]])api.invocar(tipo,n*factor,{...valores.enemigos[tipo],vida:valores.enemigos[tipo].vida*factor,quieto:false});
     medicion={cantidad,nombre:perfil[0],total,calentamiento:90,muestras:[],entorno:api.entorno()};muestras=[];
-    $('labEdicion').disabled=true;$('labMedir').disabled=true;$('labComparar').disabled=true;$('labEscena').disabled=true;$('labCancelar').hidden=false;$('labInforme').disabled=true;
+    $('labEdicion').disabled=true;$('labMedir').disabled=true;$('labComparar').disabled=true;$('labEscena').disabled=true;$('labResolucion').disabled=true;$('labCancelar').hidden=false;$('labInforme').disabled=true;
     decir(`Midiendo ${perfil[0]}. Mantén la pestaña visible y el tamaño fijo.`);
   }
   $('labMedir').onclick=()=>iniciarMedicion();
@@ -101,8 +105,8 @@ async function iniciar(){
   api.antes(()=>{if(medicion)api.proteger();if(clip)r.pose($('labAnim').value,tiempoClip%1);});
   api.observar(m=>{
     m.gpu=gpuMs;const dt=medicion?1/60:Math.min(.05,m.intervalo/1000);if(!detenido){tiempoClip+=dt;if(secuencia){secuencia.t+=dt;if(secuencia.t>=secuencia.duracion){r.control({atacar:false,apunta:[secuencia.x,secuencia.z]});secuencia=null;}}muestras.push(m);if(muestras.length>120)muestras.shift();}
-    if(medicion){const e=api.entorno();if(e.ancho!==medicion.entorno.ancho||e.alto!==medicion.entorno.alto){finalizar(true);decir('Cambió el tamaño de la escena. Repite la medición.');}else if(medicion.calentamiento-->0){}else{medicion.muestras.push(m);if(medicion.muestras.length===medicion.total)finalizar();}}
-    if(performance.now()-ultimaUI<250)return;ultimaUI=performance.now();const s=resumir(muestras),h=r.equipo()[0];$('labPersonaje').textContent=`${h.tipo} · ${h.estado} · Alma ${Math.round(h.alma)}`;
+    if(medicion){const e=api.entorno();if(e.ancho!==medicion.entorno.ancho||e.alto!==medicion.entorno.alto||e.anchoRender!==medicion.entorno.anchoRender||e.altoRender!==medicion.entorno.altoRender){finalizar(true);decir('Cambió el tamaño o la resolución interna. Repite la medición.');}else if(medicion.calentamiento-->0){}else{medicion.muestras.push(m);if(medicion.muestras.length===medicion.total)finalizar();}}
+    if(performance.now()-ultimaUI<250)return;ultimaUI=performance.now();const s=resumir(muestras),h=r.equipo()[0],e=api.entorno();$('labPixeles').textContent=`GPU: ${e.anchoRender} × ${e.altoRender} px · Vista: ${e.ancho} × ${e.alto} px · Resolución adaptativa desactivada`; $('labPersonaje').textContent=`${h.tipo} · ${h.estado} · Alma ${Math.round(h.alma)}`;
     if(s)$('labMetricas').textContent=`${s.fps.toFixed(1)} FPS · p95 ${s.p95.toFixed(1)} ms\nSimulación ${s.simulacion.toFixed(2)} ms · envío ${s.envio.toFixed(2)} ms\n${Math.round(s.llamadas)} llamadas · ${Math.round(s.triangulos/1000)} mil triángulos`;
     if(medicion)$('labResultado').textContent=medicion.calentamiento>0?'Calentando…':`${medicion.nombre}: ${medicion.muestras.length} / ${medicion.total} cuadros`;
   });
