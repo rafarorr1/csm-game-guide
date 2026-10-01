@@ -63,14 +63,14 @@ run("reset();mando.activo=true;usar('salto',new V3(0,0,5));ctl.mov.set(0,0,-1);a
 assert.ok(Math.abs(run('heroe.pos.z')-5)<.001,'Adelante recupera la distancia original sin rebasarla');
 console.log('✓ Salto de 0,72 s: alcance 4–5 m, freno y recuperación; mouse conserva destino');
 // La resolución reacciona a carga sostenida, con límites e histéresis; no altera capturas.
-vm.runInContext(`let escalaRender=1,cuadrosLentos=0,cuadrosRapidos=0,redimensionados=0;let CAPTURA=false;function medir(){redimensionados++;}${extraer('ajustarResolucion')}`,c);
+vm.runInContext(`let escalaRender=1,cuadrosLentos=0,cuadrosRapidos=0,redimensionados=0;let CAPTURA=false;const laboratorio=null;function medir(){redimensionados++;}${extraer('ajustarResolucion')}`,c);
 run('document.hidden=false;for(let i=0;i<30;i++)ajustarResolucion(25)');assert.ok(Math.abs(run('escalaRender')-.7)<1e-9);
 run('for(let i=0;i<60;i++)ajustarResolucion(60)');assert.equal(run('escalaRender'),1);
 run('CAPTURA=true;for(let i=0;i<10;i++)ajustarResolucion(20)');assert.equal(run('escalaRender'),1);
 console.log('✓ Resolución adaptativa acotada; recupera detalle; capturas sin cambios');
 // Una partida cedida o escondida no consume lógica ni dibuja, aunque siga recibiendo RAF.
 const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0}});
-vm.runInContext(`const pausa={activa:false};let partidaActiva=false,antes=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;function requestAnimationFrame(){solicitudes++;}function paso(){logica++;}function dibujar(){dibujos++;}${extraer('cuadro')}`,pausa);
+vm.runInContext(`const laboratorio=null,pausa={activa:false};let partidaActiva=false,antes=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;function requestAnimationFrame(){solicitudes++;}function paso(){logica++;}function dibujar(){dibujos++;}${extraer('cuadro')}`,pausa);
 vm.runInContext('cuadro(16)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),0);
 vm.runInContext('partidaActiva=true;document.hidden=true;cuadro(32)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),0);
 vm.runInContext('document.hidden=false;cuadro(48)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),2);

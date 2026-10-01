@@ -1220,3 +1220,15 @@ Se reduce a la mitad la intensidad anterior del resplandor (bloom 0,5 → 0,25) 
 ### Estadísticas y pantalla completa
 
 «Mostrar estadísticas (incluye FPS)», en los controles y en el menú de pausa, permite ocultar tanto las cifras del personaje como el diagnóstico inferior. La preferencia se guarda en este navegador y mantiene visibles Alma, Furia y habilidades. «Pantalla completa» amplía únicamente el escenario; los diálogos de pausa y destino siguen disponibles. Se sale desde el mismo botón en pausa o con Escape del navegador. El tamaño de render se adapta automáticamente.
+
+### Inspector local de combate, animación y rendimiento
+
+Arrancar `node dev/secciones/arpg-inspector-servidor.mjs 8883` y abrir `http://127.0.0.1:8883/dev/secciones/arpg-inspector.html?inspector=1`. La herramienta sirve la página y los modelos reales; sus paneles, estilos y módulo de métricas no forman parte de la exportación pública. La partida normal no registra muestras del inspector.
+
+Permite reiniciar una escena sin oleadas, elegir Adreida o Mohamed, ajustar daño/velocidad de ataque, añadir enemigos con vida/velocidad/daño configurables, congelar y avanzar un cuadro. La vista de poses tiene una fase ajustable y repetición; los botones de ataques reales ejecutan el combate, incluyendo salto con piedras y carga. Los ajustes se aplican sólo en memoria y se pueden descargar como JSON; no alteran automáticamente el balance del repositorio.
+
+La referencia `plaza-12-enemigos-v1` reinicia Adreida con semilla 11, ocho goblins, dos kobolds y dos saqueadores; mantiene viva a Adreida, deja 60 cuadros de calentamiento y registra 600. Usa cámara 1, sombras y halo activados, oclusión apagada y resolución adaptativa desactivada. Es una carga comparable con el mismo estado inicial, no una simulación determinista entre dispositivos: el combate conserva su paso temporal real. Ocultar la pestaña o cambiar el tamaño cancela la captura. Escape también cancela. Comparar informes sólo con el mismo equipo, tamaño, escala y versión del código.
+
+El informe descarga muestras, entorno, FPS medio, p50/p95/máximo del intervalo entre cuadros, cuadros superiores a 33,34 ms, tiempo CPU de simulación, tiempo CPU de envío de dibujo, llamadas y triángulos. El tiempo de envío no mide duración de GPU. Los percentiles usan intervalos sin el recorte del paso de simulación. La interfaz de métricas se actualiza cuatro veces por segundo; no usar su resultado como garantía de FPS de la versión pública.
+
+`node dev/secciones/pruebas_arpg_inspector.mjs` verifica el cálculo de métricas y que la exportación jugable no incluya las herramientas.

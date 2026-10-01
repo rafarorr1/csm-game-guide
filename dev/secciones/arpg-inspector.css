@@ -1,0 +1,15 @@
+/* El inspector sólo se carga desde su servidor local. */
+.apLaboratorio{padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;height:100vh;overflow:hidden;font-family:system-ui,sans-serif}
+.apLaboratorio .apShell{width:100%;min-width:0;justify-content:center}
+.apLaboratorio .apShell>*:not(.apEscenario){display:none}
+.apLaboratorio .apEscenario{height:min(78vh,800px);min-height:0}
+.apLaboratorio .apInfo{display:none}
+.labPanel{overflow:auto;background:#17131f;border:1px solid #584566;border-radius:14px;padding:18px;color:#e8e1ed;font:13px/1.5 system-ui,sans-serif}
+.labPanel h1{font-size:28px;color:#efd395}.labPanel header small{font-size:9px;letter-spacing:1.2px;color:#c3a9d5}
+.labPanel h2{font-size:14px;margin:18px 0 8px;color:#efd395}.labPanel fieldset{border:0;padding:0;margin-top:16px}.labPanel legend{font-size:16px;font-weight:700}
+.labPanel label{display:flex;flex-direction:column;gap:4px;margin:8px 0}.labPanel input,.labPanel select,.labPanel button{max-width:100%;min-width:0;font:inherit;accent-color:#dbb877}
+.labPanel input:not([type=checkbox]):not([type=range]),.labPanel select{padding:7px;border:1px solid #685572;border-radius:6px;background:#0d0a12;color:#f2e9f8;width:100%}
+.labPanel button{padding:8px 10px;border:1px solid #806440;background:#2c2236;border-radius:7px;color:#f0d99f;cursor:pointer;margin:3px 0}.labPanel button:hover{background:#463151}.labPanel button:disabled{opacity:.45;cursor:default}
+.labFila{display:flex;gap:6px;flex-wrap:wrap}.labDos{display:grid;grid-template-columns:1fr 1fr;gap:8px}.labPanel .labCheck,.labFila label{flex-direction:row;align-items:center}
+.labNota{font-size:11px;color:#b6a7c1;margin-top:8px}#labEstado{color:#b7d3ce;margin-top:12px}#labMetricas{white-space:pre-line;font-variant-numeric:tabular-nums;color:#a5dfd1}#labResultado{color:#efd395}
+@media(max-width:900px){.apLaboratorio{display:block;height:auto;overflow:auto}.labPanel{margin-top:12px}.apLaboratorio .apEscenario{height:60vh}}

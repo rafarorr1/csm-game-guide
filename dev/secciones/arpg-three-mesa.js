@@ -22,6 +22,7 @@
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
+  const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
   const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;};
   addEventListener('error',e=>aviso('Error: '+(e.message||e.error)));
   addEventListener('unhandledrejection',e=>aviso('Error: '+(e.reason?.message||e.reason)));
@@ -1204,7 +1205,7 @@
 
   // Resolución adaptativa de la escena: el HUD permanece a resolución nativa.
   let escalaRender=1,cuadrosLentos=0,cuadrosRapidos=0;
-  function ajustarResolucion(f){if(CAPTURA||document.hidden||pausa.activa)return;
+  function ajustarResolucion(f){if(CAPTURA||laboratorio||document.hidden||pausa.activa)return;
     cuadrosLentos=f<45?cuadrosLentos+1:0;cuadrosRapidos=f>58?cuadrosRapidos+1:0;
     const anterior=escalaRender;
     if(cuadrosLentos>=2){escalaRender=Math.max(.7,escalaRender-.1);cuadrosLentos=0;}
@@ -1242,7 +1243,7 @@
     activarPartida();}
   $('reanudarPartida').onclick=activarPartida;
   let antes=performance.now(),fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
-  function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;const inicio=performance.now();paso(dt);const preparado=performance.now();if(pausa.activa){fps.n=0;fps.t=ahora;$('info').textContent='En pausa';requestAnimationFrame(cuadro);return;}dibujar();fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
+  function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const intervalo=ahora-antes,dt=Math.min(.05,intervalo/1000);antes=ahora;const inicio=performance.now();laboratorio?.antes?.();if(!laboratorio?.detenido)paso(dt);const preparado=performance.now();if(pausa.activa){fps.n=0;fps.t=ahora;$('info').textContent='En pausa';requestAnimationFrame(cuadro);return;}dibujar();laboratorio?.despues?.({intervalo,simulacion:preparado-inicio,envio:performance.now()-preparado,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles});fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;ajustarResolucion(fps.v);const i=renderer.info;
       $('info').textContent=`${fps.v} fps · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);}
@@ -1301,5 +1302,32 @@
     rectBotin(i){const b=botines[i];if(!b?.g)return null;b.g.updateMatrixWorld(true);const xs=[],ys=[],B=esc.getBoundingClientRect();for(const [x,y] of [[-1,-1],[1,-1],[1,1],[-1,1]]){const v=new V3(x*ANCHO/2,y*ALTO/2,0).applyMatrix4(b.g.matrixWorld).project(camara);xs.push((v.x*.5+.5)*B.width);ys.push((.5-v.y*.5)*B.height);}
       return {izquierda:Math.min(...xs),derecha:Math.max(...xs),arriba:Math.min(...ys),abajo:Math.max(...ys),ancho:B.width,alto:B.height};},
   });
+  // Puente exclusivo del inspector. No carga paneles ni recoge muestras en una partida normal.
+  if(laboratorio){
+    ol.auto=false;
+    const originales={heroes:structuredClone(HEROES),enemigos:structuredClone(DEF)};
+    window.CAOZ_ARPG_LAB={
+      listo:()=>listo,
+      revision:window.CAOZ_ARPG_THREE_REVISION,
+      detener(v){laboratorio.detenido=!!v;},
+      paso(){if(listo&&laboratorio.detenido&&!pausa.activa){paso(1/60);dibujar();}},
+      observar(fn){laboratorio.despues=fn;},
+      antes(fn){laboratorio.antes=fn;},
+      limpiar(tipo='adreida',semillaEscena=11){ponerPausa(false);poses.heroe=null;semilla=semillaEscena;reloj.t=0;paron=0;sigId=1;tipoHeroe=tipo;reiniciar();rotulos();ol.auto=false;ent.rev={mov:new V3(),atacar:false,apunta:new V3(0,0,0)};heroe.furia=100;vista.foco.copy(heroe.pos);},
+      configurar(p){
+        for(const [k,min,max] of [['dano',1,100],['velAtaque',.25,3]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw Error('Parámetro fuera de rango: '+k);
+        heroe.atq=heroe.atqBase=p.dano;heroe.vatq=p.velAtaque;
+      },
+      invocar(tipo,n,p){if(!Object.hasOwn(DEF,tipo)||!Number.isInteger(n)||n<1||n>24)throw Error('Grupo inválido');
+        for(const [k,min,max] of [['vida',1,3000],['vel',0,8],['dano',0,100]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw Error('Parámetro fuera de rango: '+k);
+        for(let i=0;i<n;i++){const a=i*TAU/n,radio=p.quieto?Math.max(1.7,Math.sqrt(n)*.9):7,e=crearEnemigo(tipo,heroe.pos.x+Math.sin(a)*radio,heroe.pos.z-Math.cos(a)*radio,{quieto:p.quieto});Object.assign(e.d,{vida:p.vida,vel:p.vel,dano:p.dano});e.vida=e.vidaMax=p.vida;e.dentro=true;if(!p.quieto)cambiar(e,'persigue');}
+      },
+      prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
+      proteger(){heroe.alma=heroe.almaMax;heroe.invul=1;for(const h of jugadores)h.mando.foco=h.mando.activo=h.mando.listo=false;},
+      restaurarEntrada(){for(const h of jugadores){h.mando.foco=document.hasFocus();h.mando.listo=false;}},
+      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP};},
+      valores:()=>structuredClone(originales)
+    };
+  }
   preparar().catch(e=>aviso('No se pudo preparar la plaza: '+e.message));
 })();
