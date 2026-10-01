@@ -134,9 +134,8 @@
     for(let a=TAU/30;a<TAU;a+=TAU/11){const r=29+rnd()*3;casa(n%2?'piedra':'entramada',Math.cos(a)*r,Math.sin(a)*r,Math.atan2(-Math.cos(a),-Math.sin(a)),{semilla:n+40},false);n++;}}
   // El pozo, un carro volcado, barriles, cajas y dos braseros.
   const braseros=[];
-  {const pozo=poner(new THREE.CylinderGeometry(1.1,1.2,.8,12),MAT.piedra,-5,.4,-3);poner(new THREE.CylinderGeometry(.95,.95,.05,12),MAT.oscuro,-5,.81,-3,0,false);
-    for(const s of [-1,1])poner(new THREE.BoxGeometry(.14,1.8,.14),MAT.madera,-5+s*.9,1.3,-3);poner(new THREE.BoxGeometry(2.3,.14,.2),MAT.madera,-5,2.15,-3);
-    poner(new THREE.ConeGeometry(1.6,.8,4),MAT.teja,-5,2.6,-3,Math.PI/4);obstaculos.push({x:-5,z:-3,r:1.3});pozo.name='pozo';
+  // El pozo (casas-three.js, con los materiales de las casas): se funde con ellas; el abrevadero queda hacia la plaza.
+  {const pozo=CASAS.casa('pozo',{semilla:21});pozo.position.set(-5,0,-3);pozo.rotation.y=.27;barrio.push(pozo);obstaculos.push({x:-5,z:-3,r:1.3},{x:-2.82,z:-2.51,r:.55});
     const carro=new THREE.Group();carro.position.set(6.5,0,-5.5);carro.rotation.set(0,.6,.35);mundo.add(carro);
     const cm=(geo,mat,x,y,z,rx=0,ry=0,rz=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=m.receiveShadow=true;carro.add(m);};
     cm(new THREE.BoxGeometry(2.6,.15,1.4),MAT.madera,0,.8,0);for(const s of [-1,1])cm(new THREE.BoxGeometry(2.6,.5,.1),MAT.madera,0,1.1,s*.7);

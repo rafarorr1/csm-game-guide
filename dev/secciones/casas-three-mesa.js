@@ -48,7 +48,9 @@
   const PLAN=[['entramada',-8.5,-6.5,0,{semilla:3,ancho:6,fondo:5}],['taberna',0,-7,0,{semilla:7}],['piedra',8.5,-6.2,0,{semilla:11}],
     ['piedra',-9,7.5,Math.PI,{semilla:5,tinteTeja:[.8,.85,.95]}],['entramada',0,7.5,Math.PI,{semilla:9,ancho:6.6,tinteYeso:[1,.93,.82],tinteTeja:[.85,.8,.8]}],['entramada',9,7,Math.PI,{semilla:13,ancho:5.4,tinteYeso:[.92,.95,1]}]];
   const casas=PLAN.map(([tipo,x,z,r,o])=>{const c=CASAS.casa(tipo,o);c.position.set(x,0,z);c.rotation.y=r;return c;});
-  const calle=CASAS.fundir(casas);escena.add(calle);
+  // El pozo, en medio de la calle (fuera de «casas»: no tiene ventanas).
+  const pozo=CASAS.casa('pozo',{semilla:21});pozo.position.set(-3.2,0,1.2);pozo.rotation.y=.35;
+  const calle=CASAS.fundir([...casas,pozo]);escena.add(calle);
   // Farolas: poste de hierro, farol que brilla y una luz de verdad cada una (sin sombra: una luz puntual con sombra dibuja la escena seis veces).
   const farolas=[];
   for(const [x,z] of [[-4.3,-2.4],[4.3,2.6]]){const g=new THREE.Group();g.position.set(x,0,z);escena.add(g);
@@ -83,7 +85,7 @@
 
   /* ---- Cámara orbital -------------------------------------------------------------------- */
   // Las vistas de cerca se quedan dentro de la calle (la acera de enfrente está a unos 8 m).
-  const VISTAS={calle:{foco:[0,1.6,0],yaw:.35,pitch:.32,dist:26},entramada:{foco:[-8.5,3.4,-5],yaw:.25,pitch:.2,dist:9.5},taberna:{foco:[0,3.4,-5.5],yaw:-.15,pitch:.18,dist:10},piedra:{foco:[8.5,3,-5.5],yaw:-.25,pitch:.12,dist:10}};
+  const VISTAS={calle:{foco:[0,1.6,0],yaw:.35,pitch:.32,dist:26},entramada:{foco:[-8.5,3.4,-5],yaw:.25,pitch:.2,dist:9.5},taberna:{foco:[0,3.4,-5.5],yaw:-.15,pitch:.18,dist:10},piedra:{foco:[8.5,3,-5.5],yaw:-.25,pitch:.12,dist:10},pozo:{foco:[-3.2,1.3,1.2],yaw:.55,pitch:.3,dist:6.5}};
   const vista={foco:new V3(0,1.6,0),yaw:.35,pitch:.32,dist:26,obj:null,girar:!reducido&&!CAPTURA};
   function irA(k){const v=VISTAS[k];vista.obj={foco:new V3(...v.foco),yaw:v.yaw,pitch:v.pitch,dist:v.dist};for(const b of document.querySelectorAll('[data-vista]'))b.setAttribute('aria-pressed',String(b.dataset.vista===k));}
   let arrastre=null;
@@ -103,7 +105,7 @@
   for(const b of document.querySelectorAll('[data-vista]'))b.onclick=()=>irA(b.dataset.vista);
   $('girar').onchange=e=>{vista.girar=e.target.checked;};
   const tri=casas.map(c=>c.userData.triangulos);
-  $('ficha').innerHTML=['entramada','taberna','piedra'].map(t=>{const c=casas.find(c=>c.userData.tipo===t);return `<li><b>${{entramada:'Casa entramada',taberna:'La Jarra Rota (taberna)',piedra:'Cabaña de piedra'}[t]}</b><span>${c.userData.triangulos.toLocaleString('es')} triángulos · ${c.userData.ventanas.length} ventanas</span></li>`;}).join('');
+  $('ficha').innerHTML=['entramada','taberna','piedra'].map(t=>{const c=casas.find(c=>c.userData.tipo===t);return `<li><b>${{entramada:'Casa entramada',taberna:'La Jarra Rota (taberna)',piedra:'Cabaña de piedra'}[t]}</b><span>${c.userData.triangulos.toLocaleString('es')} triángulos · ${c.userData.ventanas.length} ventanas</span></li>`;}).join('')+`<li><b>Pozo</b><span>${pozo.userData.triangulos.toLocaleString('es')} triángulos</span></li>`;
 
   /* ---- Fotogramas ------------------------------------------------------------------------ */
   let reloj=0,listo=false,simple=false,revisados=0,cuadros=0;
