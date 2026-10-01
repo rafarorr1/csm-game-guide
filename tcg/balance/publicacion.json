@@ -472,8 +472,8 @@
     "carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "coleccion-juego.js": "64f80e5c2f0cd3a4e85c61f0f3936510e94e64c24b15d50d17d560cf4b8f8a18",
     "coleccion-modelo.js": "66ef643bf474e1d0e5fd6bf2512b813eed88aab9dd33d5ea4e8099de8cce0bb0",
-    "coleccion-ui.js": "bc80a6a8dd56439adf6c7c2184b12641225a84cf2a7e05dd3c4e4bfd96d40221",
-    "coleccion.css": "364a1cd2d13fd75ff3ed8dc44e836618464b727b03724f6c34e498cd960ce001",
+    "coleccion-ui.js": "67362265f83a88e67dd2e796f391b8a2e4cd66e1904d05705244f4a1c1c93365",
+    "coleccion.css": "4452828649213a1b748afba89c56c0f88aae166f3588a63b3c91e9fd2cbbae57",
     "cortinilla-juego.js": "26fee0fea9237cc6709ae8236be87b6f93832fd3d68ae5cc1a39f6c65334ac7c",
     "cortinilla.js": "75106b5ba42b6e66bdb4c598e24e648a7b50e50ac18ad96e845aa7160500268f",
     "cuenta-acceso.js": "2eff223fa9b6bb50b49b1765946d559c5bb3d9be80cd0ec5cc76140b230eebc5",
@@ -516,7 +516,7 @@
     "pitagoras-pixel.js": "768074cc1ece82648f684fba20d3b064ed8aa0c89d47ef7590cd68f8cff935dd",
     "pitagoras-pruebas.js": "463ea603edec0afaddd3660d6660d73759526a2ac4eccade904c6dbbfe2a9c10",
     "polish-aaa.js": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d",
-    "procedencia.json": "5d73a432fdc934650813f1d03e55fb2192723457b14f39a59fa4360c60dd8b08",
+    "procedencia.json": "be2ef8352fb2cd39d0cbd650a6b325b0b676f67ab3ae1c2bbf0e3a1c642904a6",
     "sobres-apertura.css": "12d234191ead3690e54b1dbc596a62266d7bc98173c3c9e3801de8fabfcbdc3f",
     "sobres-apertura.js": "031a9e88ba2e140aee63ec075f1acb7174335d6a2a0a605fbafe0f1d3dfddc7b",
     "sobres-escena.js": "2afd3c27a1973727aba00de5bfbedd9198b105133aed5d64333ef0efa86f8518",
@@ -530,7 +530,7 @@
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/balance-logros-promotion",
-    "sha": "b683716a80649790696470a0b3accb622dbd72f2"
+    "sha": "5bf6bbbdc78eeb142e950a89ea669ea939b911bb"
   },
   "seccion": "balance",
   "version": 1

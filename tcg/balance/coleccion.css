@@ -889,8 +889,11 @@
 #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{
   position:absolute;z-index:3;top:max(147px,calc(env(safe-area-inset-top) + 130px));right:max(24px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));left:max(24px,env(safe-area-inset-left));
   display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-rows:max-content;align-content:start;
-  width:auto!important;height:auto!important;max-width:none!important;min-height:0;align-self:stretch!important;flex:none!important;padding:18px clamp(10px,2vw,30px) 82px!important;gap:clamp(14px,2.3vw,30px)!important;
-  overflow-y:auto!important;overflow-x:hidden!important;scroll-snap-type:y proximity;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#c58deb #12091a;overscroll-behavior:contain;touch-action:pan-y;
+  width:auto!important;height:auto!important;max-width:none!important;min-height:0;align-self:stretch!important;flex:none!important;padding:var(--coleccion-ancla-arriba,18px) clamp(10px,2vw,30px) var(--coleccion-ancla-abajo,82px)!important;gap:clamp(14px,2.3vw,30px)!important;
+  /* El Archivo se desplaza de forma libre. Un snap posterior al FLIP podía
+     mover la ficha recién devuelta a la siguiente fila y romper su ancla
+     central; la inercia nativa sigue haciendo el recorrido orgánico. */
+  overflow-y:auto!important;overflow-x:hidden!important;scroll-snap-type:none;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#c58deb #12091a;overscroll-behavior:contain;touch-action:pan-y;
   background:linear-gradient(180deg,#0e09151a,transparent 24%,#0b06121c)!important;border:0!important;border-radius:0!important;box-shadow:none!important;
   pointer-events:auto;
 }
@@ -898,7 +901,7 @@
 #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar-track{background:#10091a70;border-radius:999px}
 #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:#c58deb99;background-clip:padding-box}
 #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini{
-  z-index:1;align-self:start;min-width:0;scroll-snap-align:start;scroll-margin-block:18px;
+  z-index:1;align-self:start;min-width:0;scroll-snap-align:none;scroll-margin-block:18px;
   filter:drop-shadow(0 14px 17px #0009)!important;transition:translate .24s cubic-bezier(.2,.76,.25,1),scale .24s cubic-bezier(.2,.76,.25,1),rotate .24s cubic-bezier(.2,.76,.25,1),filter .24s ease,opacity .24s ease;
 }
 #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini:not([data-animacion]):hover{z-index:4;translate:0 -7px!important;scale:1.025;filter:drop-shadow(0 23px 25px #000d) brightness(1.08)!important}
@@ -978,7 +981,7 @@
   #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos{top:max(82px,calc(env(safe-area-inset-top) + 75px));left:max(12px,env(safe-area-inset-left));grid-template-columns:minmax(100px,1fr) 103px 94px;width:calc(100vw - 24px);gap:4px}
   #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos :is(.coleccionBuscar,select){min-height:31px;height:31px;font-size:10px}
   #coleccionPanel[data-vista="cartas"] .coleccionArchivoPedestal{top:calc(50% + min(19vh,120px));width:82vw}
-  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{top:max(126px,calc(env(safe-area-inset-top) + 118px));right:max(9px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));left:max(9px,env(safe-area-inset-left));padding:9px 3px 48px!important;gap:10px 5px!important;scrollbar-gutter:auto}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{top:max(126px,calc(env(safe-area-inset-top) + 118px));right:max(9px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));left:max(9px,env(safe-area-inset-left));padding:var(--coleccion-ancla-arriba,9px) 3px var(--coleccion-ancla-abajo,48px)!important;gap:10px 5px!important;scrollbar-gutter:auto}
   #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMiniInfo{padding:2px 5px}
   #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos{gap:4px}
   #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos i{width:6px;height:6px}

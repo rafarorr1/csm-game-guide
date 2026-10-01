@@ -303,6 +303,42 @@
     cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');logros.prepend(icono('logro'));logros.setAttribute('aria-current',s.vista==='logros'?'page':'false');if(resumenLogros)logros.append(crear('span','coleccionNumero',resumenLogros.pendientes));barra.append(cartas,sobres,canje,logros);
   }
   function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista){const lista=contenido.querySelector('.coleccionRejilla');s.desplazamiento=lista?.scrollTop||0;}}
+  /* El detalle no devuelve la ficha a la esquina desde la que salió. Antes de
+     iniciar el FLIP inverso convertimos su celda en el ancla del Archivo: así
+     todos los regresos terminan en el mismo centro visual y el resto de la
+     biblioteca puede volver a entrar alrededor de ella. Las reservas sólo se
+     amplían al tocar el principio o final del listado; no dejan huecos en una
+     navegación normal. */
+  function anclarCartaEnArchivo(rejilla,miniatura){
+    if(!(rejilla instanceof HTMLElement)||!(miniatura instanceof HTMLElement))return 0;
+    // El botón también contiene los puntos de edición debajo de la ficha. El
+    // ancla se calcula contra la carta que el jugador ve, no contra esa caja
+    // completa; de otro modo el marco quedaría unos píxeles por arriba del
+    // centro aunque la celda técnica estuviera alineada.
+    const ficha=miniatura.querySelector('.coleccionCarta')||miniatura;
+    rejilla.style.removeProperty('--coleccion-ancla-arriba');rejilla.style.removeProperty('--coleccion-ancla-abajo');void rejilla.offsetHeight;
+    const centroVisible=()=>{const v=window.visualViewport,alto=v?.height||innerHeight,arriba=v?.offsetTop||0;return arriba+alto/2;};
+    const medir=()=>{
+      const lista=rejilla.getBoundingClientRect(),carta=ficha.getBoundingClientRect();
+      if(!lista.width||!lista.height||!carta.width||!carta.height)return null;
+      const margen=Math.min(10,Math.max(2,(lista.height-carta.height)/6));
+      const minimo=lista.top+Math.min(lista.height/2,carta.height/2+margen),maximo=lista.bottom-Math.min(lista.height/2,carta.height/2+margen);
+      const objetivo=Math.max(minimo,Math.min(maximo,centroVisible()));
+      return {carta,objetivo,diferencia:carta.top+carta.height/2-objetivo};
+    };
+    let medida=medir();if(!medida)return rejilla.scrollTop;
+    const limite=()=>Math.max(0,rejilla.scrollHeight-rejilla.clientHeight);
+    let destino=rejilla.scrollTop+medida.diferencia,maximo=limite();
+    // Cuando la carta está en la primera/última fila, el scroll ordinario no
+    // puede llevarla al ancla. Sumamos sólo el espacio necesario para que la
+    // misma regla también se cumpla en esos bordes.
+    if(destino<0){const previo=parseFloat(getComputedStyle(rejilla).paddingTop)||0;rejilla.style.setProperty('--coleccion-ancla-arriba',Math.ceil(previo-destino)+'px');void rejilla.offsetHeight;}
+    else if(destino>maximo){const previo=parseFloat(getComputedStyle(rejilla).paddingBottom)||0;rejilla.style.setProperty('--coleccion-ancla-abajo',Math.ceil(previo+destino-maximo)+'px');void rejilla.offsetHeight;}
+    medida=medir();if(!medida)return rejilla.scrollTop;
+    maximo=limite();destino=Math.max(0,Math.min(maximo,rejilla.scrollTop+medida.diferencia));
+    rejilla.scrollTop=Math.round(destino);s.desplazamiento=rejilla.scrollTop;void rejilla.offsetHeight;
+    return rejilla.scrollTop;
+  }
   function ir(vista){
     if(esFinalCampana()&&vista!=='recompensa')return;
     const anterior=s.vista,regresarAlArchivo=anterior==='detalle'&&vista==='cartas';
@@ -514,16 +550,28 @@
     // La biblioteca se quedó montada debajo del detalle. La volvemos a poner
     // en escena antes de mover la ficha: no se regenera ninguna fila, arte ni
     // anillo. Sólo el mismo nodo vuelve a ocupar su celda original.
-    archivoCapa.removeAttribute('hidden');focoLista=id;miniatura.dataset.regresoActiva='';
+    archivoCapa.removeAttribute('hidden');
+    focoLista=id;miniatura.dataset.regresoActiva='';
     panel.classList.add('coleccionRegresandoArchivo');panel.dataset.transicion='volver-archivo';panel.dataset.cartaActiva=id;panel.dataset.vista='cartas';
+    // Fijamos desde este mismo fotograma el encuadre de Archivo. No esperamos
+    // al final del FLIP para cambiar `data-mundo`: hacerlo entonces alteraba
+    // la altura de la rejilla y desplazaba la carta ya medida.
+    activarMundo('cartas');
+    /* El Archivo vuelve a existir visualmente antes del FLIP, pero sus cartas,
+       filtros y controles siguen fuera de la interacción hasta que el viaje
+       termina. Sin este bloqueo Tab podía aterrizar en una ficha opaca mientras
+       la carta elegida aún estaba regresando. */
+    const elementosRegreso=[archivoCapa,detalleCapa,barra,panel.querySelector('.coleccionCabecera'),panel.querySelector('.coleccionPie'),estado,mundoHost].filter(Boolean).map(n=>({n,inert:n.hasAttribute('inert')})),ocupadoPrevio=rejilla.getAttribute('aria-busy');
+    elementosRegreso.forEach(({n,inert})=>{if(!inert)n.setAttribute('inert','');});rejilla.setAttribute('aria-busy','true');
+    const restaurarInteraccion=()=>{elementosRegreso.forEach(({n,inert})=>{if(!inert)n.removeAttribute('inert');});if(ocupadoPrevio===null)rejilla.removeAttribute('aria-busy');else rejilla.setAttribute('aria-busy',ocupadoPrevio);};
     /* La celda elegida está vacía mientras su ficha vive en el visor. Primero
-       la devolvemos (sin pintar todavía) y sólo entonces restauramos scroll:
+       la devolvemos (sin pintar todavía) y la anclamos al centro del Archivo:
        así la rejilla ya tiene la altura real de esa fila y el destino del FLIP
-       no queda una pantalla más abajo en móvil. */
+       siempre es el mismo, incluso en móvil. */
     const prepararDestino=()=>{
       encajarCartas();
       const comportamientoPrevio=rejilla.style.scrollBehavior,encajePrevio=rejilla.style.scrollSnapType;
-      rejilla.style.scrollBehavior='auto';rejilla.style.scrollSnapType='none';rejilla.scrollTop=s.desplazamiento;void rejilla.offsetHeight;
+      rejilla.style.scrollBehavior='auto';rejilla.style.scrollSnapType='none';anclarCartaEnArchivo(rejilla,miniatura);
       requestAnimationFrame(()=>{if(!rejilla.isConnected)return;if(comportamientoPrevio)rejilla.style.scrollBehavior=comportamientoPrevio;else rejilla.style.removeProperty('scroll-behavior');if(encajePrevio)rejilla.style.scrollSnapType=encajePrevio;else rejilla.style.removeProperty('scroll-snap-type');});
       mundoHost?.style.setProperty('--reserva-der','0px');mundoHost?.style.removeProperty('--controles-alto');
     };
@@ -534,11 +582,13 @@
       detalleCapa?.remove();detalleCapa=null;encuadreDetalle=null;s.vista='cartas';focoLista=null;
       panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
       activarMundo('cartas');actualizarCabecera();mensaje('');entradaDelMundo('cartas');
+      restaurarInteraccion();
       const enfocar=()=>{if(panel?.open&&s.vista==='cartas'&&miniatura.isConnected)miniatura.focus({preventScroll:true});};
       requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>miniatura.removeAttribute('data-regreso-activa'),720);});
     };
     const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino,alTerminar:terminar});
     if(ok)return true;
+    restaurarInteraccion();
     miniatura.removeAttribute('data-regreso-activa');panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');panel.dataset.vista='detalle';archivoCapa.setAttribute('hidden','');mensaje('');return false;
   }
   function dibujarDetalle(opciones={}){
