@@ -17,26 +17,28 @@
 <script src="./arpg-three-mesa.js" defer></script>
 </head>
 <body>
-<main class="apShell" aria-labelledby="apTitulo">
-  <header class="apCabecera">
-    <p class="apEtiqueta">PROYECTO PARALELO · ARPG EN THREE.JS · HITO 1 (UNA SALA JUGABLE)</p>
-    <h1 id="apTitulo">Las Grietas del Editor</h1>
-    <p>Tomsage está bajo asedio. Elige a Adreida, la Guerrera Semiorca (cuerpo a cuerpo, su hacha a dos manos), o a Mohamed (a distancia, una pistola de seis balas que recarga sola; Q Abanico de siete balas y clic derecho Backflip: los enemigos que lo ven se quedan impresionados, aturdidos unos segundos) y defiende la plaza contra cuatro oleadas hasta que entra Can, el de los Goblins. <b>WASD</b> para moverte y <b>clic izquierdo</b> para atacar hacia el cursor (mantenlo: combo de tres golpes). <b>Espacio</b> parry: justo antes del golpe lo para y deja al enemigo aturdido y expuesto (tus golpes le hacen el doble); un poco antes, solo bloquea parte · <b>Shift</b> dash (un instante invulnerable) · <b>clic derecho</b> Salto al cursor · <b>Q</b> Torbellino · <b>E</b> Provocar. Pegan fuerte: cada enemigo que va a atacar se enciende en rojo, lleva un «!» y dibuja en el suelo la zona exacta que golpeará, que se llena hasta el golpe; cuando se fija ya no gira: para, sal de ella o haz dash. El golpazo de Can (zona violeta) es imparable. Las lanzas de los kobolds brillan: cuando el brillo se vuelve blanco y grande, es el momento del parry (y la lanza vuelve contra quien la lanzó). El botín se lee pasando el ratón por encima y se recoge pisándolo. En táctil, palanca y botones.</p>
-  </header>
+<main class="apShell" aria-label="Las Grietas del Editor">
+  <nav class="apEtapas" aria-label="Etapas"><a href="?etapa=1">Etapa 1 · El asedio</a><a href="?etapa=2">Etapa 2 · Cobro de piso</a><a href="?mundo=abierto">Mundo abierto · Prototipo</a></nav>
   <div class="apControles" role="group" aria-label="Acciones">
     <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
     <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
+    <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
+    <button type="button" class="apBoton" id="abrirPausa">Pausa · Esc / Options</button>
     <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
   </div>
+  <label class="apModo">Partida <select id="modoEquipo"><option value="solo">Un jugador</option><option value="mixto">Cooperativo · Teclado/ratón + mando</option><option value="mandos">Cooperativo · Dos mandos</option></select></label>
   <fieldset class="apEfectos">
-    <legend>Efectos</legend>
+    <legend>Efectos e interfaz</legend>
+    <label><input type="checkbox" data-mostrar-stats checked> Mostrar estadísticas (incluye FPS)</label>
     <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
-    <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
+    <label><input type="checkbox" data-efecto="oclusion"> Oclusión ambiental</label>
     <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
     <label>Balas de Mohamed <select id="estiloBala"><option value="plomo">A · Plomo de pistola de chispa</option><option value="trazadora">B · Bala de latón trazadora</option></select></label>
   </fieldset>
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
-    <canvas id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
+    <div id="pausaOtra" class="apPausaOtra" hidden><p>Otra partida está activa.</p><button type="button" id="reanudarPartida" class="apBoton">Continuar aquí</button></div>
+    <button type="button" id="pausaPantalla" class="apBoton apPausaPantalla">Pausa · Esc / Options</button>
+    <canvas tabindex="-1" id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>
     <div class="apGolpeDir" id="golpeDir"><i></i></div>
@@ -45,17 +47,20 @@
     <div class="apObjetivo" id="objetivo" hidden><b id="objNombre"></b><div class="apBarra"><i id="objVida"></i></div></div>
     <div class="apBanner" id="banner" role="status"></div>
     <p class="apTostada" id="tostada" role="status"></p>
+    <p id="equipoEstado" class="apEquipo" hidden></p>
+    <aside id="mapaPanel" class="apMapa" hidden><canvas id="mapaExplorado" width="336" height="336" aria-label="Mapa descubierto del mundo"></canvas><small id="mapaTexto"></small></aside>
     <div class="apStats" id="stats"></div>
     <div class="apBotin" id="botin" aria-label="Botín recogido"></div>
     <div class="apHud">
       <div class="apOrbe apAlma" id="orbeAlma"><i></i><b id="almaTxt"></b><small>Alma</small></div>
       <div class="apHabilidades" role="group" aria-label="Habilidades">
         <img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida">
-        <button type="button" data-hab="tajo" title="Atacar (mantener: combo)"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
+        <button type="button" data-hab="tajo" title="Pulsar: básico · Mantener y soltar: golpe cargado"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
         <button type="button" data-hab="parry" title="Parry (justo antes del golpe)"><span>⛨</span><small>Parry</small><kbd>Espacio</kbd></button>
         <button type="button" data-hab="esquiva" title="Dash"><span>»</span><small>Dash</small><kbd>Shift</kbd></button>
         <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
         <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
+        <button type="button" data-hab="ulti" title="Ulti · 90 segundos; cada parry resta uno"><span>◆</span><small>Ulti</small><kbd>R / L3</kbd></button>
         <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>E</kbd></button>
       </div>
       <div class="apOrbe apFuria" id="orbeFuria"><i></i><b id="furiaTxt"></b><small>Furia</small></div>
@@ -64,7 +69,32 @@
     <div class="apFin" id="fin" hidden><h2 id="finTitulo"></h2><p id="finTexto"></p><button type="button" id="reintentar">Volver a empezar</button></div>
     <p class="apInfo" id="info">Preparando…</p>
   </section>
+  <p id="estadoMando" class="apEstado" role="status">PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.</p>
   <p id="estado" class="apEstado" role="status" aria-live="polite">Preparando la plaza…</p>
 </main>
+<dialog id="pausa" class="apMenuPausa" aria-labelledby="pausaTitulo">
+  <h2 id="pausaTitulo">En pausa</h2>
+  <p>La partida se detiene aquí.</p>
+  <div class="apAjustesPausa">
+    <label><input type="checkbox" data-mostrar-stats checked> Mostrar estadísticas (incluye FPS)</label>
+    <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
+    <p id="estadoPantalla" role="status" aria-live="polite"></p>
+  </div>
+  <button type="button" id="continuar" class="apBoton">Continuar</button>
+  <small>Escape · Options del control · × para continuar</small>
+</dialog>
+<dialog id="destino" class="apDestino" aria-labelledby="destinoTitulo">
+    <h2 id="destinoTitulo">Elige tu destino</h2>
+    <p>Tres cartas encontradas. Elige una y tira d20. Cuanto mayor es el poder, menor es la probabilidad de éxito.</p>
+    <div id="destinoCartas" class="apDestinoCartas"></div>
+    <div id="dadoDestino" class="apD20" aria-label="Dado de veinte caras">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60 4 110 32 110 88 60 116 10 88 10 32Z"/><path d="M60 4 30 42 10 32M60 4 90 42 110 32M10 32 30 42 10 88 60 116 60 90 110 88 90 42 110 32M30 42 90 42 60 90ZM10 88 60 90 110 88M30 42 60 116 90 42"/></svg>
+      <strong id="dadoNumero" aria-hidden="true">?</strong>
+    </div>
+    <p id="destinoResultado" role="status" aria-live="polite"></p>
+    <p><b>Efectos de la partida:</b> <span id="destinoEfectos"></span></p>
+    <div class="apDestinoAcciones"><button type="button" id="destinoTirar">Tirar d20</button><button type="button" id="destinoSeguir" hidden>Siguiente nivel</button></div>
+    <small>Ratón: elige y confirma · Teclado: Tab y Enter · Mando: izquierda/derecha y ×. Un 1 elimina todos los buffs positivos; las penalizaciones permanecen.</small>
+  </dialog>
 </body>
 </html>

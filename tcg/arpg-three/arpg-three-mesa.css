@@ -131,3 +131,50 @@ html[data-captura] .apInfo{display:none}
 .apNumero.parry{color:#ffd24a;font-size:clamp(22px,3vw,36px);text-shadow:0 0 14px #ff9a00,0 2px 0 #1a0f0a}
 .apNumero.bloqueo{color:#d8e0f0;font-size:clamp(15px,1.8vw,20px)}
 .apAlerta.imparable{font-size:calc(16px + var(--k,0)*8px);color:#d9a0ff;text-shadow:0 0 10px #8a2aff,0 2px 0 #10041a}
+
+/* Acceso directo a las dos etapas de la plaza. */
+.apEtapas{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0}
+.apEtapas a{padding:9px 14px;color:#efd28b;background:#20191e;border:1px solid #796344;border-radius:8px;text-decoration:none}
+.apEtapas a:hover,.apEtapas a:focus-visible{background:#493322;outline:2px solid #efd28b;outline-offset:2px}
+
+/* Elección roguelike: el diálogo nativo pausa el combate y retiene el foco. */
+.apDestino{margin:auto;box-sizing:border-box;width:min(980px,96vw);max-height:94dvh;overflow:auto;border:1px solid #b18c50;border-radius:18px;background:#16111d;color:#f8eed8;padding:24px;box-shadow:0 20px 90px #000b}
+.apDestino::backdrop{background:#06040bd9}
+.apDestino h2{margin:0;color:#ffe0a0}.apDestino p{line-height:1.5}
+.apDestinoCartas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin:18px 0}
+.apDestinoCarta{display:flex;flex-direction:column;align-items:center;gap:10px;min-width:0;padding:14px;border:2px solid #544258;border-radius:12px;background:#241b2c;color:#fff0da;font:inherit;cursor:pointer;text-align:center}
+.apDestinoCarta[aria-pressed=true]{border-color:#ffe09b;background:#392c35;box-shadow:0 0 0 2px #ffe09b44}
+.apDestinoCarta img{height:155px;max-width:100%;object-fit:contain;border-radius:5px}.apDestinoCarta strong{font-size:16px}.apDestinoCarta em{color:#ffd38a}
+.apDestinoCarta span{font-size:13px;line-height:1.5}.apDestinoBueno{color:#adf1c1}.apDestinoMalo{color:#ffb7a9}
+.apDestinoAcciones{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}.apDestinoAcciones button{border:1px solid #ddba78;border-radius:9px;background:#f5d28d;color:#24151a;padding:12px 20px;font:inherit;cursor:pointer}.apDestino button:disabled{cursor:default;opacity:.72}.apDestino small{display:block;color:#d6c5b2;line-height:1.5}
+#destinoResultado{background:#302439;padding:14px;border-radius:10px;font-weight:600}
+@media(max-width:650px){.apDestino{padding:16px}.apDestinoCartas{grid-template-columns:1fr}.apDestinoCarta img{height:110px}}
+
+/* Progreso del hachazo: el porcentaje permanece legible con mando, ratón y táctil. */
+.apHabilidades button.cargando,button[data-hab="tajo"].cargando{background:linear-gradient(to top,#95641c var(--carga),#29212c var(--carga));box-shadow:0 0 12px #ffc55a80;border-color:#ffc55a;}
+
+.apPausaOtra:not([hidden]){position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#08050bc9;color:#f0d796;font:16px system-ui,sans-serif;}
+
+.apMenuPausa{margin:auto;padding:32px;min-width:280px;text-align:center;background:#171020;color:#f0d796;border:1px solid #b99853;border-radius:16px;box-shadow:0 16px 80px #0009;}
+.apMenuPausa::backdrop{background:#07050b99}.apMenuPausa p{margin:12px 0 22px}.apMenuPausa small{display:block;margin-top:20px;color:#c9bdda;}
+
+.apD20{width:92px;height:92px;position:relative;margin:12px auto;filter:drop-shadow(0 6px 8px #0008)}.apD20 svg{width:100%;height:100%;fill:#422558;stroke:#d7b66b;stroke-width:1.4}.apD20 strong{position:absolute;inset:0;display:grid;place-items:center;font:700 26px system-ui;color:#fff3cc;text-shadow:0 2px 5px #000}.apD20.rodando{animation:d20Rodar .27s linear infinite}@keyframes d20Rodar{0%{transform:translateY(0) rotate(-20deg) scale(.9)}50%{transform:translateY(-12px) rotate(160deg) scale(1.05)}100%{transform:translateY(0) rotate(340deg) scale(.9)}}@media(prefers-reduced-motion:reduce){.apD20.rodando{animation:none}}
+
+/* Partida compartida y mapa de exploración. */
+.apModo{display:flex;gap:12px;align-items:center;margin:12px 0;color:#dfcfab}.apModo select{background:#211e23;color:#f4e4bc;padding:10px;border:1px solid #75664e;border-radius:8px}
+.apEquipo{position:absolute;left:12px;top:30px;max-width:85%;padding:8px 12px;border-radius:8px;background:#151721d9;color:#ffe0a0;font:12px/1.5 system-ui;pointer-events:none;z-index:6}
+.apAliado{color:#9be6d6;font:bold 12px system-ui;text-shadow:0 2px 3px #000;white-space:nowrap}
+.apMapa{position:absolute;left:12px;top:85px;width:165px;background:#111722e8;border:1px solid #928269;border-radius:8px;overflow:hidden;z-index:7;pointer-events:none}.apMapa canvas{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:1}.apMapa small{display:block;padding:7px;color:#e3d9bd;font:10px system-ui}.apMapa.ampliado{width:min(60%,480px);left:50%;top:12%;transform:translateX(-50%)}
+.apMapa[hidden],.apEquipo[hidden]{display:none}
+
+/* Preferencias de interfaz y escenario a pantalla completa. */
+.apSinStats .apStats,.apSinStats .apInfo{display:none}
+.apAjustesPausa{display:grid;gap:14px;margin-bottom:20px;font:13px/1.4 system-ui,sans-serif}
+.apAjustesPausa label{display:flex;align-items:center;gap:8px;text-align:left}
+.apAjustesPausa #estadoPantalla{margin:0}.apAjustesPausa #estadoPantalla:empty{display:none}
+.apPausaPantalla{display:none}
+html:fullscreen body{padding:0;overflow:hidden}
+html:fullscreen .apShell{width:100%;gap:0}
+html:fullscreen .apShell>*:not(.apEscenario){display:none}
+html:fullscreen .apEscenario{width:100vw;height:100dvh;min-height:0;border:0;border-radius:0}
+html:fullscreen .apPausaPantalla{display:block;position:absolute;right:12px;bottom:150px;z-index:5}

@@ -69,15 +69,15 @@
     "llavemago-dorado-v1.webp": "5544e73160ca8661b726769ff18006734af1f586dc0af17d70bd354f940502b2"
   },
   "entorno": {
-    "arpg-three-mesa.js": "10310c219412c55bf1a45f7bbd4ae4cc5ba4efdd6a642e780e8779a875766d23",
-    "arpg-three-mesa.css": "c9244878eecf71d8a084bd0bf4d731b43ce6c921f53401a3602eefcc368928bf",
-    "arpg-three-modelos.js": "9297415b0171942c8dc4111a35cd46f69e95aca3db8a9bd0bf65caecadc31253",
-    "casas-three.js": "caf16320581412f7e2fe8024b7430cf432d81153eee505fbd17301e91ad13e88",
+    "arpg-three-mesa.js": "89c3b6de35915eff396bdbe1c380a489ce357a3401f5b897ee18bf944326b45a",
+    "arpg-three-mesa.css": "a8dc6a993bf733d9a4cfd599b9333a46d534d720691ffd8af55fcf4c05306bfa",
+    "arpg-three-modelos.js": "51db0f10b2d6aebd8b34ebd87edf7cc36b428cdf2fc5294c5a76b6fdd7d0690f",
+    "casas-three.js": "01afbdbf45553e21274ca58d4d1ff0e860b664c121574d3296c7ce392daf3586",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259",
     "three-carta.js": "a4422e790fffd4e9c1e856ca96d1133380872fcd17b9403e9d05b44bd3e38328"
   },
   "derivados": {
-    "index.html": "f8f33906df137da6490726df46d35de64f4c05e5b07762667a68687ad4d2ef5f",
+    "index.html": "6777fed79cce08751c60b8b8c4edc2521b5652f86664962dab937db58ef29181",
     "generado/datos.js": "1286d0e677b620264a1f9f22cc286b2f3e174c7303bd8f0ebabe3077143ba990"
   }
 }

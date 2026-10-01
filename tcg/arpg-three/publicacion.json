@@ -1,9 +1,16 @@
 {
+  "formato": "caoz.secciones.aisladas",
+  "version": 1,
+  "seccion": "arpg-three",
+  "fuente": {
+    "sha": "8e9a211db4066b41315a533f343bd41d84b25cb6",
+    "rama": "feature/visor-3d-coleccion"
+  },
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
-    "arpg-three-mesa.css": "c9244878eecf71d8a084bd0bf4d731b43ce6c921f53401a3602eefcc368928bf",
-    "arpg-three-mesa.js": "10310c219412c55bf1a45f7bbd4ae4cc5ba4efdd6a642e780e8779a875766d23",
-    "arpg-three-modelos.js": "9297415b0171942c8dc4111a35cd46f69e95aca3db8a9bd0bf65caecadc31253",
+    "arpg-three-mesa.css": "a8dc6a993bf733d9a4cfd599b9333a46d534d720691ffd8af55fcf4c05306bfa",
+    "arpg-three-mesa.js": "89c3b6de35915eff396bdbe1c380a489ce357a3401f5b897ee18bf944326b45a",
+    "arpg-three-modelos.js": "51db0f10b2d6aebd8b34ebd87edf7cc36b428cdf2fc5294c5a76b6fdd7d0690f",
     "art/arco-dorado-v1.webp": "cc0ab6d86a234442d09bdae97bd895ebc46d4bf133b532fbc95d02c9fb9e3977",
     "art/arco-foil-v1.webp": "7f8cdf5f214bbbf448040e9bc0eb7467d54e965255a537b08b82546008913b18",
     "art/arco.webp": "6ad23a2d9c551049b6e16afd2ebe4a402505ae8477624effff2fe44d62f86338",
@@ -32,23 +39,16 @@
     "art/sombrero-dorado-v1.webp": "49b1613b36d8c7a0d52e72fd4b87a6c7072923a3d759f3336d1d638d59b7b668",
     "art/sombrero-foil-v1.webp": "1b2cb4136cacb53ffdaf05dba4d48354ae21101daae3c82dd09992de7f600a45",
     "art/sombrero.webp": "5aa16f2412bbe75791fb4939489b0dec9c1f9832528505af0d7fba6d26ee4f18",
-    "casas-three.js": "caf16320581412f7e2fe8024b7430cf432d81153eee505fbd17301e91ad13e88",
+    "casas-three.js": "01afbdbf45553e21274ca58d4d1ff0e860b664c121574d3296c7ce392daf3586",
     "generado/datos.js": "1286d0e677b620264a1f9f22cc286b2f3e174c7303bd8f0ebabe3077143ba990",
-    "index.html": "f8f33906df137da6490726df46d35de64f4c05e5b07762667a68687ad4d2ef5f",
+    "index.html": "6777fed79cce08751c60b8b8c4edc2521b5652f86664962dab937db58ef29181",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "juego/fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
-    "procedencia.json": "40baa238436f9ce8153834ef9c7768ab465ca229c9b3ecc979cd7a3be9faabf8",
+    "procedencia.json": "da9da363d5abb25e67495c99de893c97231e8db405b5d611fd80d43f55b31a25",
     "three-carta.js": "a4422e790fffd4e9c1e856ca96d1133380872fcd17b9403e9d05b44bd3e38328",
     "visor-three-vendor.js": "d697dc3e15fbe2001d8b34ba45a368e29dcb6616341b970d6f8706026a993259"
-  },
-  "formato": "caoz.secciones.aisladas",
-  "fuente": {
-    "rama": "feature/visor-3d-coleccion",
-    "sha": "a16b6c3206732d930d5f7e8c278597f338d3d5de"
-  },
-  "seccion": "arpg-three",
-  "version": 1
+  }
 }

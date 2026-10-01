@@ -18,7 +18,8 @@
        entera cuesta una docena de llamadas de dibujo.
    Tipos: 'entramada' (dos plantas de entramado, la de arriba volada),
    'taberna' (planta baja de piedra, letrero colgado, toneles) y 'piedra'
-   (cabaña de sillares con buhardilla y chimenea exterior).
+   (cabaña de sillares con buhardilla y chimenea exterior). Y casa('pozo'): el pozo
+   de la plaza con los mismos materiales (no está en TIPOS: no tiene ventanas).
    CAOZ_CASAS.fabrica(THREE,{renderer}) → {casa(tipo,opc), fundir(casas), materiales, uniformes, TIPOS}. */
 'use strict';
 (function(){
@@ -97,6 +98,7 @@
       hierro:estandar({color:0x9a9aa2,metalness:.75,roughness:.45}),
       planta:estandar({roughness:.85,flatShading:true}),
       letrero:estandar({map:letrero(),roughness:.75}),
+      agua:estandar({color:0x1e3c42,emissive:0x061214,roughness:.48,metalness:0,envMapIntensity:.2}),
       farol:new THREE.MeshBasicMaterial({color:new THREE.Color(4,2.4,1.1),vertexColors:false}),
     };
     // Las ventanas: interior mapping. Por cada píxel del cristal se sigue la mirada dentro de una habitación
@@ -196,7 +198,7 @@
           if(rnd()<.55)fa.geo('planta',new THREE.IcosahedronGeometry(.045,0),[x-w/2+.1+i*(w-.2)/6+(rnd()-.5)*.1,y-h/2+.05+rnd()*.05,.2],[0,0,0],{tinte:rnd()<.7?[.8,.12,.1]:[.9,.75,.8],sucio:false});}}
         return s;}
       function puerta(fa,x,w,h,alto0,opc={}){const y=alto0+h/2;fa.caja('madera',.14,h+.1,.16,[x-w/2-.07,y,.06]);fa.caja('madera',.14,h+.1,.16,[x+w/2+.07,y,.06]);fa.caja('madera',w+.46,.2,.2,[x,y+h/2+.1,.08]);
-        fa.caja('tablas',w,h,.08,[x,y,-.04],[0,0,0],{escala:1.1});fa.caja('hierro',.05,.18,.06,[x+w*.32,y,.03]);fa.caja('piedra',w+.5,.18,.5,[x,alto0-.09,.25]);
+        fa.caja('tablas',w,h,.08,[x,y,.035],[0,0,0],{escala:1.1});fa.caja('hierro',.05,.18,.06,[x+w*.32,y,.10]);fa.caja('piedra',w+.5,.18,.5,[x,alto0-.09,.25]);
         if(opc.farol){const fx=x+(w/2+.45)*opc.farol;fa.caja('hierro',.06,.06,.42,[fx,y+.75,.21]);fa.caja('hierro',.22,.05,.22,[fx,y+.62,.4]);fa.caja('farol',.16,.24,.16,[fx,y+.46,.4],[0,0,0],{sucio:false});fa.caja('hierro',.2,.04,.2,[fx,y+.33,.4]);
           cuadro('halo',1.3,1.5,fa.F,[fx,y+.4,.02],{sem:900+sem});cuadro('derrame',2.2,2.4,fa.F.clone().multiply(mat4([fx,-fa.alto+.03,0],[-Math.PI/2,0,0])),[0,-1.2,0],{sem:900+sem});}}
       // Entramado de una planta: pies derechos, travesaño y tornapuntas en los paños sin ventana.
@@ -274,7 +276,48 @@
       // Chimenea exterior de sillares, desde el suelo.
       C.caja('piedra',1.1,yT+R*.5,.7,[W/2+.35,(yT+R*.5)/2,-D*.15],[0,0,0],{escala:1.3});
       return {alto:yT+R,humo:C.chimenea(W/2+.35,-D*.15,yT+R*.5,yT+R+.9),huella:[W+1.2,D+.6]};}
-    const CONSTRUCTORES={entramada,taberna,piedra};
+    // El pozo de la plaza: brocal de sillares en tres hiladas a soga con remate de losas, el hueco oscuro con el
+    // agua al fondo, dos postes de roble sobre zapatas con un tejadillo de tejas, el torno con la cuerda enrollada
+    // y su manivela, el cubo colgado y otro sobre el brocal, el abrevadero de piedra y matas al pie.
+    function pozo(C,o){const R=o.radio??1.02,hR=.86,anillo=.24,ri=R-anillo,rm=(ri+R)/2,n=14,hil=3,hh=hR/hil,tono=()=>{const v=.8+rnd()*.25;return [v,v*(.96+rnd()*.05),v*(.92+rnd()*.06)];};
+      // Losas del pie, en corro.
+      for(let i=0;i<16;i++){const a=i/16*TAU+(rnd()-.5)*.03,r=R+.27;C.pon('piedra',new THREE.BoxGeometry(TAU*r/16*.96,.07+rnd()*.02,.5),mat4([Math.sin(a)*r,.04,Math.cos(a)*r],[0,a+(rnd()-.5)*.06,0]),{escala:3,sucio:false,tinte:tono()});}
+      // Alma de argamasa (tapa las juntas entre sillares) y los sillares, cada hilada desplazada media piedra.
+      C.pon('piedra',new THREE.LatheGeometry([[ri+.03,0],[R-.04,0],[R-.04,hR],[ri+.03,hR],[ri+.03,0]].map(([x,y])=>new THREE.Vector2(x,y)),28),mat4([0,0,0]),{escala:1.3,tinte:[.42,.4,.37]});
+      for(let h=0;h<hil;h++)for(let i=0;i<n;i++){const a=(i+(h%2)*.5+(rnd()-.5)*.08)/n*TAU,w=TAU*rm/n*(.9+rnd()*.07);
+        C.pon('piedra',new THREE.BoxGeometry(w,hh*.9,anillo*(.95+rnd()*.12)),mat4([Math.sin(a)*(rm+(rnd()-.5)*.016),hh*(h+.5),Math.cos(a)*(rm+(rnd()-.5)*.016)],[0,a,(rnd()-.5)*.02]),{escala:3.2,tinte:tono()});}
+      for(let i=0;i<12;i++){const a=(i+.25)/12*TAU,w=TAU*rm/12*.97;C.pon('piedra',new THREE.BoxGeometry(w,.1,anillo+.12),mat4([Math.sin(a)*(rm+.02),hR+.05,Math.cos(a)*(rm+.02)],[0,a,0]),{escala:3,sucio:false,tinte:tono().map(v=>v*1.08)});}
+      // El hueco: forro hacia dentro (el perfil baja), más oscuro cuanto más hondo, y el agua.
+      C.pon('piedra',new THREE.LatheGeometry([[ri-.005,hR+.02],[ri-.005,.5]].map(([x,y])=>new THREE.Vector2(x,y)),24),mat4([0,0,0]),{escala:1.2,sucio:false,tinte:[.45,.43,.4]});
+      C.pon('piedra',new THREE.LatheGeometry([[ri-.005,.5],[ri-.03,.12]].map(([x,y])=>new THREE.Vector2(x,y)),24),mat4([0,0,0]),{escala:1.2,sucio:false,tinte:[.16,.16,.15]});
+      C.pon('agua',new THREE.CircleGeometry(ri-.02,24),mat4([0,.14,0],[-Math.PI/2,0,0]),{uv:'propio',sucio:false});
+      // Postes de roble sobre zapatas de piedra, la viga y los jabalcones.
+      const X=R+.12,yV=2.3;
+      for(const s of [-1,1]){C.caja('piedra',.34,.22,.34,[s*X,.11,0],[0,0,0],{escala:2.5,tinte:tono()});C.caja('madera',.17,yV-.2,.17,[s*X,.22+(yV-.2)/2-.1,0]);
+        for(const z of [-1,1])C.pon('madera',new THREE.BoxGeometry(.1,.55,.1),mat4([s*X,yV-.3,z*.2],[z*.75,0,0]));}
+      C.caja('madera',2*X+.3,.17,.19,[0,yV+.04,0]);
+      const Rt=C.tejado(2*X+.2,1.5,yV+.12,.72,.28,{hastial:'madera',tinteTeja:o.tinteTeja});
+      // El torno: eje que cruza los postes, la cuerda enrollada en el centro y la manivela de hierro.
+      const yT=1.62;C.pon('madera',new THREE.CylinderGeometry(.065,.065,2*X+.34,10),mat4([0,yT,0],[0,0,Math.PI/2]),{escala:.5});
+      C.pon('madera',new THREE.CylinderGeometry(.11,.11,.5,14),mat4([0,yT,0],[0,0,Math.PI/2]),{escala:.25,tinte:[1.55,1.25,.85],sucio:false});
+      for(let i=0;i<7;i++)C.pon('madera',new THREE.TorusGeometry(.112,.016,5,16),mat4([-.21+i*.07,yT,0],[0,Math.PI/2,0]),{escala:.2,tinte:[1.45,1.15,.78],sucio:false});
+      C.caja('hierro',.05,.34,.05,[X+.25,yT-.15,0]);C.pon('hierro',new THREE.CylinderGeometry(.025,.025,.22,8),mat4([X+.35,yT-.3,0],[0,0,Math.PI/2]));
+      // La cuerda baja desde el rollo hasta el cubo, que cuelga sobre el hueco.
+      const yC=1.2;C.pon('madera',new THREE.CylinderGeometry(.013,.013,yT-yC-.12,6),mat4([0,(yT+yC+.12)/2-.05,.11]),{escala:.2,tinte:[1.45,1.15,.78],sucio:false});
+      const cubo=(pos,giro)=>{const F=mat4(pos,[0,giro,0]),en=(p,r=[0,0,0])=>F.clone().multiply(mat4(p,r));
+        C.pon('tablas',new THREE.CylinderGeometry(.16,.125,.3,12),en([0,0,0]),{escala:.45,sucio:false});C.pon('tablas',new THREE.CircleGeometry(.15,12),en([0,.152,0],[-Math.PI/2,0,0]),{escala:.4,sucio:false,tinte:[.35,.33,.3]});
+        for(const y of [.1,-.1])C.pon('hierro',new THREE.CylinderGeometry(.153+y*.12,.153+y*.12,.03,12,1,true),en([0,y,0]));
+        C.pon('hierro',new THREE.TorusGeometry(.16,.01,4,14,Math.PI),en([0,.15,0]));};
+      cubo([0,yC,.11],0);cubo([-Math.sin(.9)*rm,hR+.25,Math.cos(.9)*rm],.4);
+      // El abrevadero: una pila de piedra con agua, a un lado y de cara a la plaza.
+      {const F=mat4([R+.95,0,1.05],[0,-.75,0]),en=(p,r=[0,0,0])=>F.clone().multiply(mat4(p,r)),L=1.5,A=.55,H=.48,g=.09;
+        C.pon('piedra',new THREE.BoxGeometry(L,.1,A),en([0,.05,0]),{escala:2.6,tinte:tono()});
+        for(const s of [-1,1]){C.pon('piedra',new THREE.BoxGeometry(L,H,g),en([0,H/2,s*(A/2-g/2)]),{escala:2.6,tinte:tono()});C.pon('piedra',new THREE.BoxGeometry(g,H,A-2*g),en([s*(L/2-g/2),H/2,0]),{escala:2.6,tinte:tono()});}
+        C.pon('agua',new THREE.PlaneGeometry(L-2*g,A-2*g),en([0,H-.08,0],[-Math.PI/2,0,0]),{uv:'propio',sucio:false});}
+      // Matas al pie del brocal.
+      for(let i=0;i<12;i++){const a=rnd()*TAU,r=R+.05+rnd()*.12,v=rnd();C.pon('planta',new THREE.IcosahedronGeometry(.07+rnd()*.06,0),mat4([Math.sin(a)*r,.05,Math.cos(a)*r],[rnd()*3,rnd()*3,0],[1,.6,1]),{tinte:[.16+v*.1,.3+v*.15,.1],sucio:false});}
+      return {alto:yV+.12+Rt,huella:[2*X+.6,2*R+.6]};}
+    const CONSTRUCTORES={entramada,taberna,piedra,pozo};
 
     // Una casa: un grupo con una malla por material (en coordenadas de la casa; el frente mira a +Z).
     function casa(tipo,o={}){semilla=((o.semilla??1)*48271)%2147483647||1;const C=Casa(),info=CONSTRUCTORES[tipo](C,o),g=new THREE.Group();let tri=0;

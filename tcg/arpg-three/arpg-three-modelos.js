@@ -1,7 +1,9 @@
 /* Modelos 3D sencillos para la prueba de ARPG (arpg-three): Adreida, el Goblin
    de Camino, el Kobold lancero, el Saqueador y Can, el de los Goblins. Son
    low poly, hechos con primitivas de three.js (cápsulas, cajas, conos) y
-   colores por vértice sacados de su carta, sin archivos de modelo.
+   colores por vértice sacados de su carta, sin archivos de modelo. Adreida
+   es la detallada: sólidos de revolución, mechones y correas en tubo, la
+   cabeza esculpida y las hojas del hacha extruidas, con sombreado suave.
      · Esqueleto de huesos (THREE.Bone): cadera, torso, cabeza, brazos con
        antebrazo y mano, piernas con rodilla (y cola para el kobold). Todas las
        piezas se funden en una sola malla con piel (SkinnedMesh) por material,
@@ -29,8 +31,19 @@
       capsula:(r,l,s=7)=>new THREE.CapsuleGeometry(r,l,2,s),
       cono:(r,h,s=6)=>new THREE.ConeGeometry(r,h,s),
       cil:(r1,r2,h,s=8,abierto=false)=>new THREE.CylinderGeometry(r1,r2,h,s,1,abierto),
-      toro:(r,t,s=12)=>new THREE.TorusGeometry(r,t,5,s),
+      toro:(r,t,s=12,l=t<.01?3:5)=>new THREE.TorusGeometry(r,t,l,s),
+      // Sólido de revolución (muslos, brazos, torso): perfil [[radio,y],…] alrededor del eje Y.
+      torno:(perfil,s=16)=>new THREE.LatheGeometry(perfil.slice().sort((a,b)=>a[1]-b[1]).map(([r,y])=>new THREE.Vector2(Math.max(r,1e-4),y)),s),
+      // Un tubo por una curva con el radio variable r(t), t de 0 (inicio) a 1 (final): mechones, colmillos, correas.
+      tubo:(pts,r,n=16,lados=6,cerrado=false,forma=null)=>{const curva=new THREE.CatmullRomCurve3(pts.map(p=>V(...p)),cerrado),g=new THREE.TubeGeometry(curva,n,1,lados,cerrado),P=g.attributes.position,c=V(0,0,0),v=V(0,0,0);
+        for(let i=0;i<=n;i++){curva.getPointAt(cerrado?(i%n)/n:i/n,c);const k=r(i/n);for(let j=0;j<=lados;j++){const q=i*(lados+1)+j;v.fromBufferAttribute(P,q).sub(c).multiplyScalar(k);if(forma)forma(v,c);v.add(c);P.setXYZ(q,v.x,v.y,v.z);}}return g;},
+      // Deforma los vértices de una geometría con f(v) y recalcula las normales (la cabeza esculpida).
+      deformar:(g,f)=>{const P=g.attributes.position,v=V(0,0,0);for(let i=0;i<P.count;i++){f(v.fromBufferAttribute(P,i));P.setXYZ(i,v.x,v.y,v.z);}g.computeVertexNormals();return g;},
+      // Una forma plana (THREE.Shape) con grosor, centrada en su espesor: las hojas del hacha.
+      placa:(forma,grueso,bisel=0)=>{const g=new THREE.ExtrudeGeometry(forma,{depth:grueso,curveSegments:6,bevelEnabled:bisel>0,bevelThickness:bisel,bevelSize:bisel*.8,bevelSegments:1});g.translate(0,0,-grueso/2);return g;},
     };
+    // El giro que lleva el eje +Y de una pieza (conos, púas) a la dirección d.
+    const apunta=d=>{const e=new THREE.Euler().setFromQuaternion(new THREE.Quaternion().setFromUnitVectors(V(0,1,0),V(...d).normalize()));return [e.x,e.y,e.z];};
     // Funde las piezas de un hueso (geometría transformada + color) en una sola geometría con color por
     // vértice. Cada cara varía un poco de tono: el aire facetado de los modelos low poly.
     let semilla=1;const azar=()=>(semilla=(semilla*16807)%2147483647)/2147483647;
@@ -46,23 +59,24 @@
       r.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(SI,4));r.setAttribute('skinWeight',new THREE.Float32BufferAttribute(SW,4));r.computeBoundingSphere();return r;}
 
     // Los materiales de un personaje: comparten los uniformes del destello y del disolverse.
-    function materiales(){
-      const u={uDisuelve:{value:0},uDestello:{value:0},uColorD:{value:new THREE.Color(1,1,1)},uBorde:{value:0},uColorB:{value:new THREE.Color(1,.2,.05)}};
-      const hacer=(p,brillo=0)=>{const m=new THREE.MeshStandardMaterial({vertexColors:true,flatShading:true,...p});
+    // lisos: sombreado suave (el modelo detallado de Adreida) y las dos caras de la tela (faldas, melena).
+    function materiales(lisos){
+      const u={uSigilo:{value:0},uDisuelve:{value:0},uDestello:{value:0},uColorD:{value:new THREE.Color(1,1,1)},uBorde:{value:0},uColorB:{value:new THREE.Color(1,.2,.05)}};
+      const hacer=(p,brillo=0)=>{const m=new THREE.MeshStandardMaterial({vertexColors:true,flatShading:!lisos,...p});
         m.onBeforeCompile=sh=>{Object.assign(sh.uniforms,u,{uBrillo:{value:brillo}});
           sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nvarying vec3 vPosD;').replace('#include <begin_vertex>','#include <begin_vertex>\nvPosD=position;');
           sh.fragmentShader=sh.fragmentShader.replace('#include <common>',`#include <common>
-uniform float uDisuelve,uDestello,uBrillo,uBorde;uniform vec3 uColorD,uColorB;varying vec3 vPosD;
+uniform float uSigilo,uDisuelve,uDestello,uBrillo,uBorde;uniform vec3 uColorD,uColorB;varying vec3 vPosD;
 float azarM(vec3 p){p=fract(p*.3183099+.1);p*=17.;return fract(p.x*p.y*p.z*(p.x+p.y+p.z));}
 float ruidoM(vec3 x){vec3 i=floor(x),f=fract(x);f=f*f*(3.-2.*f);return mix(mix(mix(azarM(i),azarM(i+vec3(1,0,0)),f.x),mix(azarM(i+vec3(0,1,0)),azarM(i+vec3(1,1,0)),f.x),f.y),mix(mix(azarM(i+vec3(0,0,1)),azarM(i+vec3(1,0,1)),f.x),mix(azarM(i+vec3(0,1,1)),azarM(i+vec3(1,1,1)),f.x),f.y),f.z);}`)
-            .replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nfloat quemaM=ruidoM(vPosD*14.)*.65+ruidoM(vPosD*37.)*.35;if(uDisuelve>0.&&quemaM<uDisuelve*1.15-.08)discard;')
+            .replace('#include <clipping_planes_fragment>','#include <clipping_planes_fragment>\nif(uSigilo>0.&&fract(sin(dot(floor(gl_FragCoord.xy),vec2(12.9898,78.233)))*43758.5453)<uSigilo)discard;float quemaM=ruidoM(vPosD*14.)*.65+ruidoM(vPosD*37.)*.35;if(uDisuelve>0.&&quemaM<uDisuelve*1.15-.08)discard;')
             .replace('#include <opaque_fragment>',`outgoingLight+=vColor.rgb*uBrillo;
 float fresM=pow(clamp(1.-abs(dot(normalize(vViewPosition),normal)),0.,1.),2.);outgoingLight+=uColorB*uBorde*(fresM*4.+.12);
 outgoingLight=mix(outgoingLight,uColorD*1.6,uDestello);
 if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));outgoingLight=mix(outgoingLight,vec3(5.,1.6,.3),bordeM);}
 #include <opaque_fragment>`);};
         m.customProgramCacheKey=()=>'arpg-modelo';return m;};
-      return {u,piel:hacer({roughness:.82,metalness:0}),metal:hacer({roughness:.32,metalness:.85}),brillo:hacer({roughness:1,metalness:0,color:0x000000},4)};
+      return {u,piel:hacer({roughness:.82,metalness:0,side:lisos?THREE.DoubleSide:THREE.FrontSide}),metal:hacer({roughness:.32,metalness:.85}),brillo:hacer({roughness:1,metalness:0,color:0x000000},4)};
     }
 
     // El esqueleto común (de pie en el origen, mirando a +Z; su derecha es -X).
@@ -79,9 +93,9 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       return H;
     }
     // Recoge las piezas por material (con su hueso); al final las funde en una malla con piel por material.
-    function constructor(H){
+    function constructor(H,varioBase=.14){
       const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
-      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=.14)=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso});};
+      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase)=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso});};
       const montar=M=>{H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),mallas=[];
         for(const [mat,lista] of piezas){for(const p of lista)p.m.premultiply(H[p.nombre].matrixWorld);
           const malla=new THREE.SkinnedMesh(fundir(lista),M[mat]);malla.castShadow=mat!=='brillo';malla.receiveShadow=true;malla.frustumCulled=false;H.raiz.add(malla);malla.bind(esq,malla.matrixWorld);mallas.push(malla);}
@@ -92,72 +106,184 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     }
 
     const TIPOS={
-      adreida:{nombre:'Adreida',alto:1.95,radio:.42},
+      adreida:{nombre:'Adreida',alto:1.95,radio:.42,lisos:true},
       goblin:{nombre:'Goblin de Camino',alto:1.15,radio:.34},
       kobold:{nombre:'Kobold lancero',alto:1.25,radio:.34},
       saqueador:{nombre:'Saqueador de Tomsage',alto:1.8,radio:.42},
+      troll:{nombre:'El Recaudador · Troll',alto:3,radio:.85},
+      cobrador:{nombre:'Goblin cobrador',alto:1.15,radio:.34},
       can:{nombre:'Can, el de los Goblins',alto:2.4,radio:.62},
       mohamed:{nombre:'Mohamed',alto:1.85,radio:.4},
     };
 
+    // Adreida, detallada a partir de su carta: piel verde menta con los abdominales marcados, melena azul noche en
+    // mechones ondulados con la raya al medio, orejas en punta, ojos rojos y colmillos; top negro con la correa en
+    // diagonal y los tres aros de plata, hombrera de cuero en capas (izquierda), brazales con púas de hueso, el
+    // cinturón ancho con la hebilla y los cráneos de pájaro, el faldón de piel sobre la falda de tela y las botas
+    // altas con correas y púa en la rodilla. Sombreado suave; tres mallas como los demás.
     function adreida(){
-      const p={muslo:.47,pierna:.45,pie:.05,cintura:.08,torso:.52,hombros:.25,brazo:.31,antebrazo:.29,ancho:.11},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
-      const piel=0x86c49c,pelo=0x1c1f38,cuero=0x3e2b1f,negro=0x1d1a23,brazal=0x6d4529,piel2=0x7ab38e;
-      // Cadera: pantalón, cinturón con hebilla y cráneos, falda de piel.
-      pon('cadera','piel',G.caja(.34,.2,.21),negro,[0,0,0]);
-      pon('cadera','piel',G.cil(.2,.205,.08,10),cuero,[0,.06,0],[0,0,0],[1,1,.68]);
-      pon('cadera','metal',G.caja(.07,.065,.02),0xd8d8e0,[0,.06,.145]);
-      for(const [x,z] of [[.12,.12],[.19,.06]]){pon('cadera','piel',G.bola(.042,6,5),0xefe6d2,[x,.0,z],[0,0,0],[1,1.15,1]);pon('cadera','piel',G.cono(.02,.05,4),0xefe6d2,[x,-.05,z],[Math.PI,0,0]);}
-      pon('cadera','piel',G.cil(.2,.3,.3,9,true),0x6e5238,[0,-.14,0],[0,0,0],[1,1,.78],.35);
-      for(const l of ['I','D']){miembro('pierna'+l,.085,.3,negro);miembro('rodilla'+l,.07,.28,negro);
-        pon('pie'+l,'piel',G.caja(.13,.2,.18),cuero,[0,.06,.01]);pon('pie'+l,'piel',G.caja(.12,.07,.12),cuero,[0,-.005,.1]);}
-      // Torso: abdomen, pecho, top negro, correa, colgante y hombrera de cuero (lado izquierdo).
-      pon('torso','piel',G.capsula(.14,.1),piel,[0,.1,0],[0,0,0],[1.18,1,.78]);
-      pon('torso','piel',G.capsula(.16,.1),piel,[0,.33,0],[0,0,0],[1.28,1,.82]);
-      pon('torso','piel',G.capsula(.168,.06),negro,[0,.35,.004],[0,0,0],[1.3,1,.88]);
-      pon('torso','piel',G.cil(.08,.09,.1,8),negro,[0,.5,0]);
-      pon('torso','piel',G.caja(.045,.56,.02),cuero,[0,.33,.132],[0,0,.62]);
-      pon('torso','metal',G.toro(.028,.009,10),0xd9dbe6,[0,.44,.14]);
-      pon('torso','piel',G.bola(.14,7,5),0x2b2632,[.26,.49,0],[0,0,-.3],[1.25,.75,1.1]);
-      pon('torso','piel',G.bola(.12,7,5),0x383140,[.3,.42,0],[0,0,-.5],[1.1,.7,1.05]);
-      pon('torso','metal',G.bola(.022,5,4),0xc9ccd6,[.36,.53,.07]);
-      // Cabeza: mandíbula ancha, colmillos, ojos rojos, orejas en punta y la melena azul noche.
-      pon('cabeza','piel',G.cil(.06,.066,.1,7),piel2,[0,.03,0]);
-      pon('cabeza','piel',G.bola(.125,8,7),piel,[0,.18,.01],[0,0,0],[.95,1.1,1]);
-      pon('cabeza','piel',G.caja(.16,.07,.13),piel2,[0,.1,.03]);
-      for(const s of [1,-1]){pon('cabeza','piel',G.cono(.017,.055,5),0xf3ecd8,[s*.05,.13,.1],[.2,0,0]);
-        pon('cabeza','brillo',G.caja(.038,.016,.01),0xff2238,[s*.045,.19,.118],[0,0,s*.18]);
-        pon('cabeza','piel',G.caja(.05,.012,.012),0x14161f,[s*.045,.212,.12],[0,0,-s*.35]);
-        pon('cabeza','piel',G.cono(.03,.13,4),piel,[s*.125,.2,-.01],[0,0,-s*1.2]);}
-      pon('cabeza','piel',G.casco(.142,9,4),pelo,[0,.19,-.01],[-.25,0,0],[1.02,1.05,1.08],.3);
-      pon('cabeza','piel',G.capsula(.075,.32),pelo,[0,.0,-.1],[.18,0,0],[1.5,1,.8],.3);
-      for(const s of [1,-1]){pon('cabeza','piel',G.capsula(.05,.26),pelo,[s*.1,.02,-.06],[.15,0,s*.18],1,.3);pon('cabeza','piel',G.capsula(.035,.2),pelo,[s*.115,.1,.05],[-.05,0,s*.08],1,.3);
-        pon('cabeza','piel',G.cono(.045,.12,4),pelo,[s*.05,.27,.1],[.9,0,s*.4]);}
-      // Brazos: piel, brazales de cuero con púas y manos.
-      for(const l of ['I','D']){const s=l==='I'?1:-1;miembro('brazo'+l,.066,.2,piel,[1.05,1,1]);miembro('ante'+l,.056,.18,piel);
-        pon('ante'+l,'piel',G.cil(.072,.078,.2,7),brazal,[0,-.15,0]);
-        for(let i=0;i<3;i++)pon('ante'+l,'piel',G.cono(.018,.07,4),0xdcd2bf,[s*.07,-.08-i*.06,-.01],[0,0,-s*1.4]);
-        pon('mano'+l,'piel',G.bola(.058,6,5),piel2,[0,-.03,0],[0,0,0],[1,1.1,1.15]);}
-      // El hacha de guerra en la mano derecha, como prolongación del brazo (el mango sigue al antebrazo, hacia -Y de la mano).
-      // La cabeza es de doble filo (un filo a cada lado, en ±Z): corta igual en el tajo y en el revés, y con la cara
-      // plana hacia arriba cuando el brazo está horizontal se lee bien desde la cámara.
-      const hierro=0xc9ced8,filo=0xeef1f6,mango=0x3a2616,cuero2=0x5a3a22;
-      pon('manoD','piel',G.cil(.026,.03,1.3,6),mango,[0,-.5,0]);
-      for(const y of [.06,-.08])pon('manoD','piel',G.cil(.034,.034,.1,6),cuero2,[0,y,0]);
-      pon('manoD','metal',G.bola(.045,6,5),hierro,[0,.17,0]);
-      pon('manoD','metal',G.cil(.045,.045,.26,6),hierro,[0,-1.02,0]);
+      const p={muslo:.47,pierna:.45,pie:.05,cintura:.08,torso:.52,hombros:.25,brazo:.31,antebrazo:.29,ancho:.11},H=esqueleto(p);
+      // Paños articulados desde la cintura; comparten las mismas mallas del personaje.
+      for(let i=0;i<7;i++){H["falda"+i]=new THREE.Bone();H.cadera.add(H["falda"+i]);}
+      const {pon,montar}=constructor(H,.035);
+      const piel=0x86c49c,piel2=0x76b18b,piel3=0x93d0a8,pelo=0x1c1f38,cuero=0x3e2b1f,cuero2=0x5a3a22,brazal=0x6d4529,negro=0x1d1a23,tela=0x2a2530,
+        hueso=0xe9e0cc,plata=0xd9dbe6,pielT=0xa48258,pielT2=0x7c5f3e,pielT3=0xbd9c6c,bota=0x241c1d,suela=0x120e0e;
+      const PI=Math.PI;
+      // ---- Cadera: mallas, cinturón, hebilla, cráneos, bolsa, falda de tela y faldón de piel.
+      pon('cadera','piel',G.torno([[.13,.1],[.165,.02],[.17,-.06],[.15,-.13]],18),negro,[0,0,0],[0,0,0],[1,1,.74]);
+      pon('cadera','piel',G.cil(.195,.19,.1,24),0x2a1f1a,[0,.05,0],[0,0,0],[1,1,.76]);
+      for(const y of [.1,0])pon('cadera','piel',G.toro(.195,.007,28),cuero,[0,y,0],[PI/2,0,0],[1,.76,1]);
+      for(let i=0;i<10;i++){const f=-1.6+i*.355;if(Math.abs(f)<.3)continue;pon('cadera','metal',G.bola(.009,6,4),plata,[Math.sin(f)*.197,.05,Math.cos(f)*.197*.76]);}
+      pon('cadera','metal',G.caja(.115,.095,.018),plata,[0,.05,.152],[0,0,0],1,.02);
+      pon('cadera','piel',G.caja(.075,.055,.02),0x2a1f1a,[0,.05,.154]);
+      pon('cadera','metal',G.caja(.012,.07,.026),plata,[0,.05,.155]);
+      for(const x of [-.05,.05])for(const y of [.012,.088])pon('cadera','metal',G.bola(.008,6,4),0xf0f2f8,[x,y,.162]);
+      // Los cráneos de pájaro colgando de la cadera izquierda, cada uno de su cordón.
+      for(const [f,y] of [[.95,-.05],[1.3,-.085],[1.65,-.04]]){const o=[Math.sin(f),0,Math.cos(f)*.76],t=[Math.cos(f),0,-Math.sin(f)],c=[o[0]*.23,y,o[2]*.23+.01*Math.cos(f)];
+        pon('cadera','piel',G.cil(.004,.004,.08+y*-.5,4),0x3a2a20,[o[0]*.205,(.05+y)/2+.01,o[2]*.205]);
+        pon('cadera','piel',G.bola(.033,8,6),hueso,c,[0,f,0],[1,.92,1.12]);
+        pon('cadera','piel',G.cono(.017,.075,8),0xd4c8ae,[c[0]+o[0]*.03,c[1]-.035,c[2]+o[2]*.03],apunta([o[0]*.9,-1,o[2]*.9]));
+        for(const s of [1,-1])pon('cadera','piel',G.bola(.009,6,4),0x16110f,[c[0]+o[0]*.026+t[0]*s*.015,c[1]+.004,c[2]+o[2]*.026+t[2]*s*.015]);}
+      // La bolsa de cuero en la cadera derecha.
+      {const f=-1.25,o=[Math.sin(f),0,Math.cos(f)*.76];pon('cadera','piel',G.caja(.075,.09,.05),cuero2,[o[0]*.23,-.02,o[2]*.23],[0,f,0]);
+        pon('cadera','piel',G.caja(.08,.035,.056),cuero,[o[0]*.232,.02,o[2]*.232],[.12,f,0]);pon('cadera','metal',G.bola(.008,6,4),plata,[o[0]*.262,.005,o[2]*.262]);}
+      // La falda de tela oscura en paños (se abren al andar) y el faldón de piel por encima con sus mechones.
+      for(let i=0;i<7;i++){const a=i/7*TAU+.08,l=.4+(i%2)*.05;pon('falda'+i,'piel',new THREE.CylinderGeometry(.2,.3,l,6,1,true,a,TAU/7-.07),i%2?tela:0x221e28,[0,.02-l/2,0],[0,0,0],[1,1,.8]);}
+      for(let i=0;i<7;i++)pon('falda'+i,'piel',new THREE.CylinderGeometry(.205,.275,.24,4,2,true,i/7*TAU+.08,TAU/7+.025),pielT,[0,-.1,0],[0,0,0],[1,1,.8],.08);
+      for(let i=0;i<34;i++){const a=i/34*TAU,r=.275+(i%3)*.006,cc=[pielT,pielT2,pielT3][i%3];
+        pon('falda'+Math.floor(((a-.08+TAU)%TAU)/TAU*7),'piel',G.cono(.05,.1+(i*7%5)*.014,7),cc,[Math.sin(a)*r,-.25-(i*5%3)*.008,Math.cos(a)*r*.8],apunta([-Math.sin(a)*.3+Math.cos(a)*.15*((i%2)*2-1),1,-Math.cos(a)*.3*.8]),[1.3,1,.4],.1);}
+      for(let i=0;i<24;i++){const a=(i+.5)/24*TAU,r=.245;
+        pon('falda'+Math.floor(((a-.08+TAU)%TAU)/TAU*7),'piel',G.cono(.045,.09,7),[pielT3,pielT][i%2],[Math.sin(a)*r,-.15,Math.cos(a)*r*.8],apunta([-Math.sin(a)*.25,1,-Math.cos(a)*.25*.8]),[1.3,1,.4],.1);}
+      // ---- Piernas: mallas negras y botas altas con el puño de cuero, correas y la púa en la rodilla.
+      for(const l of ['I','D']){const s=l==='I'?1:-1;
+        pon('pierna'+l,'piel',G.torno([[.1,.03],[.106,-.06],[.098,-.18],[.086,-.32],[.07,-.44],[.066,-.5]]),negro,[0,0,0],[0,0,0],[1,1,.95]);
+        pon('rodilla'+l,'piel',G.torno([[.06,.1],[.074,.06],[.077,-.02],[.074,-.1],[.08,-.18],[.071,-.3],[.059,-.4],[.061,-.47]]),bota);
+        pon('rodilla'+l,'piel',G.cil(.09,.082,.06,18),cuero,[0,.07,0]);pon('rodilla'+l,'piel',G.toro(.09,.008,20),cuero2,[0,.1,0],[PI/2,0,0]);
+        pon('rodilla'+l,'piel',G.casco(.062,14,6),0x2c2428,[0,.0,.045],[PI/2,0,0],[1,1.25,.55]);
+        pon('rodilla'+l,'metal',G.bola(.018,8,6),0x9aa0aa,[0,.0,.08]);
+        pon('rodilla'+l,'piel',G.cono(.017,.085,8),hueso,[0,.03,.11],apunta([0,.55,1]));
+        for(const [y,r] of [[-.11,.079],[-.2,.081],[-.3,.072]]){pon('rodilla'+l,'piel',G.toro(r,.009,20),cuero2,[0,y,0],[PI/2+.08,0,0]);
+          pon('rodilla'+l,'metal',G.caja(.014,.022,.022),plata,[s*r,y,.0],[0,0,0],1,.02);}
+        pon('pie'+l,'piel',G.cil(.06,.066,.1,14),bota,[0,.02,0]);
+        pon('pie'+l,'piel',G.bola(.068,12,8),bota,[0,-.005,.055],[0,0,0],[.95,.72,1.85]);
+        pon('pie'+l,'piel',G.caja(.125,.026,.27),suela,[0,-.037,.048]);
+        pon('pie'+l,'piel',G.caja(.095,.045,.07),suela,[0,-.028,-.06]);
+        pon('pie'+l,'piel',G.toro(.064,.008,18),cuero2,[0,.035,.01],[PI/2+.3,0,0],[1,1.2,1]);}
+      // ---- Torso: abdomen con los abdominales, pecho, top negro, la correa, los tres aros y el paño del cuello.
+      pon('torso','piel',G.torno([[.15,-.05],[.14,.04],[.135,.12],[.145,.2],[.168,.28]],22),piel,[0,0,0],[0,0,0],[1,1,.72]);
+      pon('torso','piel',G.torno([[.165,.25],[.19,.32],[.205,.39],[.2,.44],[.17,.49],[.11,.53],[.07,.57]],22),piel,[0,0,0],[0,0,0],[1,1,.74]);
+      for(const y of [.03,.1,.17])for(const s of [1,-1])pon('torso','piel',G.bola(.04,8,6),piel,[s*.04,y,.088-(y===.03?.004:0)],[0,0,0],[.9,.75,.24]);
+      for(const s of [1,-1]){pon('torso','piel',G.bola(.05,10,8),piel,[s*.115,.14,.045],[0,0,s*.15],[.45,1.5,.8]);
+        pon('torso','piel',G.bola(.09,14,8),piel,[s*.1,.5,-.02],[0,0,s*.35],[1,.55,.8]);}
+      pon('torso','piel',G.caja(.006,.2,.01),piel2,[0,.1,.103]);
+      pon('torso','piel',G.torno([[.174,.27],[.199,.32],[.214,.39],[.209,.44],[.186,.48]],22),negro,[0,0,0],[0,0,0],[1,1,.8]);
+      for(const s of [1,-1]){pon('torso','piel',G.bola(.08,12,8),negro,[s*.075,.37,.112],[0,0,0],[1,.85,.72]);
+        pon('torso','piel',G.tubo([[s*.07,.46,.15],[s*.12,.53,.06],[s*.13,.54,-.04],[s*.08,.46,-.15]],()=>.02,10,6),negro,[0,0,0],[0,0,0],[1,1,1]);}
+      pon('torso','piel',G.toro(.174,.009,28),tela,[0,.27,0],[PI/2,0,0],[1,.8,1]);
+      // La correa de cuero en diagonal: del hombro izquierdo a la cadera derecha, por delante y por la espalda.
+      const radioT=y=>{const pr=y>=.27?[[.27,.174],[.32,.199],[.39,.214],[.44,.209],[.48,.186],[.53,.12],[.57,.075]]:[[-.05,.15],[.04,.14],[.12,.135],[.2,.145],[.28,.168]];
+        if(y<=pr[0][0])return pr[0][1];for(let i=1;i<pr.length;i++)if(y<=pr[i][0]){const [y0,r0]=pr[i-1],[y1,r1]=pr[i];return r0+(r1-r0)*(y-y0)/(y1-y0);}return pr[pr.length-1][1];};
+      const sobre=(x,y,lado)=>{const R=radioT(y)+.013,zs=y>=.27?.8:.72;return [x,y,lado*(zs*Math.sqrt(Math.max(0,R*R-x*x))+.013)];};
+      const correa=[];for(let i=0;i<=6;i++){const t=i/6;correa.push(sobre(.17-.33*t,.52-.42*t,1));}
+      correa.push([-.18,.08,0]);for(let i=6;i>=0;i--){const t=i/6;correa.push(sobre(.17-.33*t,.52-.42*t,-1));}correa.push([.2,.5,0]);
+      pon('torso','piel',G.tubo(correa,()=>.016,40,5,true),cuero2,[0,0,0],[0,0,0],[1,1,1],.05);
+      {const c=sobre(.0,.31,1);pon('torso','metal',G.caja(.045,.035,.012),plata,[c[0],c[1],c[2]+.01],[0,0,.64],1,.02);}
+      // Los tres aros de plata arriba, en el centro del top.
+      for(const [x,y] of [[-.024,.462],[.024,.462],[0,.43]])pon('torso','metal',G.toro(.017,.0045,16,6),plata,[x,y,.172+(y<.44?.004:0)],[0,0,0],1,.02);
+      pon('torso','metal',G.bola(.01,8,6),0xf2f3f8,[0,.45,.176]);
+      // El paño negro del cuello, con sus pliegues.
+      pon('torso','piel',G.torno([[.105,.49],[.108,.52],[.097,.56],[.086,.6]],18),negro);
+      for(const [y,r] of [[.505,.109],[.545,.1],[.585,.09]])pon('torso','piel',G.toro(r,.012,20),tela,[0,y,0],[PI/2+.1,0,0]);
+      // ---- Brazos: deltoides, bíceps, hombrera de cuero (izquierda), brazales con púas de hueso, puños cerrados.
+      for(const l of ['I','D']){const s=l==='I'?1:-1;
+        pon('brazo'+l,'piel',G.bola(.078,12,9),piel,[s*.012,-.035,0],[0,0,0],[1,1.15,1.05]);
+        pon('brazo'+l,'piel',G.torno([[.064,-.02],[.07,-.1],[.066,-.17],[.058,-.25],[.052,-.33]]),piel);
+        pon('brazo'+l,'piel',G.bola(.045,8,6),piel3,[0,-.14,.03],[0,0,0],[1,1.6,.9]);
+        pon('brazo'+l,'piel',G.bola(.045,8,6),piel,[0,-.12,-.03],[0,0,0],[1,1.7,.9]);
+        pon('ante'+l,'piel',G.torno([[.052,.0],[.061,-.06],[.056,-.12],[.047,-.2],[.04,-.29]]),piel);
+        pon('ante'+l,'piel',G.torno([[.066,-.07],[.065,-.13],[.058,-.2],[.052,-.27]]),brazal);
+        pon('ante'+l,'piel',G.toro(.066,.008,18),cuero,[0,-.072,0],[PI/2,0,0]);pon('ante'+l,'piel',G.toro(.053,.008,18),cuero,[0,-.268,0],[PI/2,0,0]);
+        for(const y of [-.14,-.2])pon('ante'+l,'piel',G.toro(y<-.15?.06:.066,.006,18),0x2a1f1a,[0,y,0],[PI/2,0,0]);
+        for(let i=0;i<4;i++){const y=-.1-i*.047,r=.064-i*.004;pon('ante'+l,'piel',G.bola(.013,6,4),0xd6ccb4,[s*r,y,-.01]);
+          pon('ante'+l,'piel',G.cono(.014,.08-i*.008,8),hueso,[s*(r+.03),y+.02,-.018],apunta([s,.6,-.25]));}
+        // El puño: los dedos rodean el mango (que pasa por el eje Y de la mano).
+        pon('mano'+l,'piel',G.cil(.042,.046,.04,14),piel2,[0,.0,0]);
+        for(let i=0;i<4;i++)pon('mano'+l,'piel',G.toro(.036-(i===3?.004:0),.0145,10,6),i%2?piel:piel2,[0,-.03-i*.024,0],[PI/2,0,0],[1,1.12,1]);
+        for(let i=0;i<4;i++)pon('mano'+l,'piel',G.bola(.015,6,5),piel3,[s*.02,-.03-i*.024,.043],[0,0,0],[1.2,1,1]);
+        pon('mano'+l,'piel',G.capsula(.014,.04,8),piel,[-s*.03,-.02,.03],[.3,0,s*.9]);}
+      // La hombrera izquierda: tres placas de cuero negro superpuestas, con remaches y la correa bajo la axila.
+      for(const [i,y,rz,c] of [[0,.01,-.2,0x2a2430],[1,-.045,-.5,0x332c3a],[2,-.095,-.75,0x2a2430]]){
+        pon('brazoI','piel',G.casco(.1-i*.005,14,6),c,[.012+i*.028,y,0],[0,0,rz],[1.08,.78-i*.1,1.12]);
+        for(const z of [-.05,0,.05])pon('brazoI','metal',G.bola(.01,6,5),plata,[.06+i*.03+Math.abs(z)*-.2,y+.03-i*.004,z]);}
+      pon('brazoI','piel',G.toro(.074,.01,18),cuero,[0,-.14,0],[PI/2,0,0]);
+      pon('brazoD','piel',G.toro(.07,.01,18),cuero,[0,-.2,0],[PI/2,0,0]);
+      // ---- Cabeza: cuello, cráneo esculpido (mandíbula ancha, cejas marcadas, pómulos), cara, colmillos, orejas en punta.
+      pon('cabeza','piel',G.torno([[.064,-.03],[.058,.06],[.06,.11]],14),piel2);
+      const cabeza=G.deformar(new THREE.SphereGeometry(.12,24,16).rotateY(-PI/2),v=>{const n=v.clone().divideScalar(.12),fr=Math.max(0,n.z);
+        if(n.y<0){const w=-n.y;v.x*=1+.17*w;v.z+=.02*w*fr;}
+        v.z+=.014*Math.exp(-(((n.y-.28)/.1)**2))*fr*fr;
+        v.z-=.011*Math.exp(-(((Math.abs(n.x)-.38)/.13)**2+((n.y-.13)/.1)**2))*fr;
+        v.x+=Math.sign(n.x)*.008*Math.exp(-(((n.y-.02)/.14)**2))*fr*Math.abs(n.x);
+        v.x*=.93;v.y*=1.1;});
+      pon('cabeza','piel',cabeza,piel,[0,.18,.01]);
       for(const s of [1,-1]){
-        // Cada filo: una cuña que se abre desde el mango (barba abajo), con el borde de acero claro.
-        pon('manoD','metal',G.caja(.035,.24,.2),hierro,[0,-1.02,s*.14],[s*.12,0,0],1,.08);
-        pon('manoD','metal',G.caja(.028,.42,.1),filo,[0,-1.02,s*.28],[s*.05,0,0],1,.06);
-        pon('manoD','metal',G.cono(.05,.12,4),filo,[0,-.8,s*.3],[0,0,0],[.35,1,1]);
-        pon('manoD','metal',G.cono(.05,.12,4),filo,[0,-1.24,s*.3],[Math.PI,0,0],[.35,1,1]);}
-      pon('manoD','metal',G.cono(.035,.14,4),hierro,[0,-1.22,0],[Math.PI,Math.PI/4,0]);
+        pon('cabeza','brillo',G.bola(.016,12,8),0xff1a2e,[s*.043,.198,.112],[0,0,-s*.18],[1.35,.55,.5]);
+        pon('cabeza','piel',G.bola(.006,6,4),0x2a0006,[s*.043,.198,.119]);
+        pon('cabeza','piel',G.caja(.056,.014,.02),pelo,[s*.046,.224,.119],[.1,0,s*.32]);
+        pon('cabeza','piel',G.tubo([[s*.029,.108,.106],[s*.034,.13,.123],[s*.03,.152,.13]],t=>.011*(1-t*.92),8,6),0xf3ecd8);
+        // La oreja: un cono aplastado hacia fuera y atrás; por dentro, más oscura.
+        pon('cabeza','piel',G.cono(.034,.16,10),piel,[s*.13,.215,-.03],[0,s*.4,-s*1.25],[1,1,.35]);
+        pon('cabeza','piel',G.cono(.022,.12,8),piel2,[s*.128,.213,-.022],[0,s*.4,-s*1.25],[1,1,.2]);}
+      pon('cabeza','piel',G.bola(.017,12,8),piel2,[0,.163,.124],[0,0,0],[1.25,.75,.8]);
+      pon('cabeza','piel',G.caja(.018,.045,.016),piel,[0,.188,.118],[-.25,0,0]);
+      for(const s of [1,-1])pon('cabeza','piel',G.bola(.004,5,4),0x2e4a38,[s*.008,.156,.134]);
+      pon('cabeza','piel',G.caja(.056,.008,.012),0x3a2a2e,[0,.12,.117]);
+      pon('cabeza','piel',G.bola(.03,10,6),piel2,[0,.111,.113],[0,0,0],[1,.25,.35]);
+      // La melena: casquete en dos mitades (la raya al medio), la masa de atrás, el flequillo abierto y ~30 mechones ondulados.
+      for(const s of [1,-1])pon('cabeza','piel',new THREE.SphereGeometry(.136,18,12,s>0?PI/2:3*PI/2,PI,0,1.55),pelo,[0,.19,-.006],[-.45,0,-s*.05],[1.02,1.1,1.1],.06);
+      pon('cabeza','piel',G.bola(.13,12,9),pelo,[0,.12,-.07],[0,0,0],[1.12,1.25,.82],.06);
+      pon('cabeza','piel',G.torno([[.1,.16],[.13,.06],[.15,-.08],[.14,-.22],[.1,-.3]],16),pelo,[0,0,-.07],[0,0,0],[1,1,.55],.06);
+      const tonos=[0x1c1f38,0x22284c,0x171a2e,0x272d56];let ni=0;
+      // Cada mechón es una cinta: ancho a lo largo de la cabeza y fino hacia fuera (se aplasta en la dirección radial).
+      const plano=(v,c)=>{const l=Math.hypot(c.x,c.z)||1,rx=c.x/l,rz=c.z/l,d=v.x*rx+v.z*rz;v.x+=rx*d*-.55;v.z+=rz*d*-.55;v.x*=1.35;v.z*=1.35;};
+      const mechon=(pts,r0,r1)=>pon('cabeza','piel',G.tubo(pts,t=>(r0+(r1-r0)*t)*(t<.08?.7+t*3.7:1),12,5,false,plano),tonos[ni++%4],[0,0,0],[0,0,0],1,.05);
+      for(const s of [1,-1]){
+        mechon([[s*.006,.315,.1],[s*.05,.3,.135],[s*.1,.24,.13],[s*.13,.15,.11],[s*.15,.05,.09],[s*.16,-.06,.08]],.024,.009);
+        mechon([[s*.02,.3,.11],[s*.08,.27,.13],[s*.12,.18,.125],[s*.14,.08,.115],[s*.13,-.04,.12],[s*.15,-.16,.1]],.02,.006);}
+      for(let i=0;i<34;i++){const u=i/33,f=.85+u*(TAU-1.7),atras=Math.abs(Math.cos(f/2)),lado=Math.sin(f),ph=i*2.3;
+        const y1=-.04-.3*(1-atras*atras)+(i%3)*-.035,R0=.13,pts=[];
+        for(let j=0;j<=7;j++){const t=j/7,y=.24+(y1-.24)*t,R=R0+.03*Math.sin(Math.min(1,t*1.6)*PI/2)+.035*t*(1-Math.abs(lado)*.4)+.012*Math.sin(t*8+ph)*t,ff=f+.12*Math.sin(t*7+ph)*t;
+          pts.push([Math.sin(ff)*R*1.02,y,Math.cos(ff)*R*.92-.02]);}
+        mechon(pts,.034,.01);}
+      // ---- El hacha de guerra a dos manos (en la derecha, como prolongación del brazo: el mango hacia -Y de la mano).
+      // Doble hoja en creciente (un filo a cada lado, en ±Z) con el borde de acero claro; empuñadura de cuero en
+      // espiral, pomo con púa, cubo con la runa que brilla, langetas y la púa del extremo.
+      const hierro=0xb9bfca,hierro2=0x8a909b,filo=0xeef1f6,mango=0x3a2616;
+      pon('manoD','piel',G.cil(.024,.028,1.34,12),mango,[0,-.5,0]);
+      for(let i=0;i<14;i++)pon('manoD','piel',G.toro(.029,.0075,10,4),i%2?cuero2:0x4a2f1c,[0,.13-i*.039,0],[PI/2+(i%2?.2:-.2),0,0]);
+      pon('manoD','metal',G.cil(.034,.03,.03,12),hierro2,[0,.18,0]);pon('manoD','metal',G.bola(.036,10,6),hierro,[0,.21,0]);
+      pon('manoD','metal',G.cono(.018,.07,10),filo,[0,.27,0]);
+      for(const y of [-.43,-.8])pon('manoD','metal',G.toro(.03,.007,14),hierro2,[0,y,0],[PI/2,0,0]);
+      for(const s of [1,-1])pon('manoD','metal',G.caja(.01,.17,.02),hierro2,[s*.027,-.82,0],[0,0,0],1,.02);
+      pon('manoD','metal',G.cil(.048,.048,.3,14),hierro,[0,-1.02,0],[0,0,0],1,.02);
+      for(const y of [-.87,-1.17])pon('manoD','metal',G.toro(.05,.009,16),hierro2,[0,y,0],[PI/2,0,0]);
+      for(const s of [1,-1]){pon('manoD','brillo',G.cil(.021,.021,.012,14),0x78e6ff,[s*.049,-1.02,0],[0,0,PI/2]);
+        pon('manoD','metal',G.toro(.027,.006,16),hierro2,[s*.05,-1.02,0],[0,PI/2,0]);}
+      pon('manoD','metal',G.cono(.032,.15,10),filo,[0,-1.245,0],[PI,0,0]);
+      const arco=(r,g)=>[.08+r*Math.cos(g*PI/180),r*Math.sin(g*PI/180)];
+      const hoja=new THREE.Shape();hoja.moveTo(.03,.11);hoja.quadraticCurveTo(.12,.08,...arco(.262,58));hoja.absarc(.08,0,.262,58*PI/180,-62*PI/180,true);
+      hoja.quadraticCurveTo(.12,-.1,.03,-.13);hoja.lineTo(.03,.11);
+      const borde=new THREE.Shape();borde.moveTo(...arco(.256,60));borde.lineTo(...arco(.292,71));borde.absarc(.08,0,.3,63*PI/180,-66*PI/180,true);
+      borde.lineTo(...arco(.287,-76));borde.lineTo(...arco(.256,-64));borde.absarc(.08,0,.256,-64*PI/180,60*PI/180,false);
+      for(const s of [1,-1]){const giro=[0,-s*PI/2,0];
+        pon('manoD','metal',G.placa(hoja,.03,.006),hierro,[0,-1.02,0],giro,1,.03);
+        pon('manoD','metal',G.placa(borde,.014),filo,[0,-1.02,0],giro,1,.02);
+        for(const [u,v] of [[.07,.05],[.07,-.06],[.12,0]])for(const x of [1,-1])pon('manoD','metal',G.bola(.009,6,4),hierro2,[x*.019,-1.02+v,s*u]);}
       return {H,montar,p};
     }
-    function goblin(){
+    function goblin(cobrador=false){
       const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
-      const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=0x8e3324,tela=0x4f4636,bota=0x3d2c20;
+      const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=cobrador?0x703798:0x8e3324,tela=0x4f4636,bota=0x3d2c20;
       pon('cadera','piel',G.caja(.24,.13,.16),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,7,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.35);
       pon('cadera','piel',G.cil(.14,.145,.05,8),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.caja(.08,.07,.06),0x6b4c32,[.1,.0,.1]);
       for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.caja(.1,.13,.15),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,6),bota,[0,.1,0]);}
@@ -171,6 +297,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('cabeza','piel',G.cono(.01,.03,4),0xefe6d2,[s*.04,.06,.11],[Math.PI,0,0]);}
       pon('cabeza','piel',G.casco(.145,8,3,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.3);
       for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,6),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,6,5),piel2,[0,-.02,0]);}
+      if(cobrador){pon('cadera','piel',G.bola(.095,7,5),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,6,4),0xe6b64e,[.19,.035,.065]);}
       pon('manoD','piel',G.cil(.018,.02,.46,6),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0]);
       pon('manoD','metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3]);
       return {H,montar,p};
@@ -219,6 +346,38 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('anteI','piel',G.cil(.27,.27,.04,12),0x6b4a2e,[.1,-.17,.02],[0,0,Math.PI/2],1,.2);pon('anteI','metal',G.toro(.27,.022,14),acero,[.12,-.17,.02],[0,Math.PI/2,0]);pon('anteI','metal',G.bola(.06,6,4),acero,[.13,-.17,.02],[0,0,-Math.PI/2],[1,.6,1]);}
       return {H,montar,p};
     }
+    // Tres metros hasta la coronilla: cuerpo ancho, brazos largos y una maza de piedra.
+    function troll(){
+      const p={muslo:.62,pierna:.58,pie:.08,cintura:.1,torso:.98,hombros:.55,brazo:.56,antebrazo:.52,ancho:.27},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
+      const piel=0x6c8867,sombra=0x52694f,cuero=0x493126,piedra=0x787b80;
+      pon('cadera','piel',G.caja(.86,.34,.54),cuero,[0,0,0]);
+      pon('cadera','piel',G.cil(.48,.6,.48,9,true),0x574137,[0,-.2,0],[0,0,0],[1,1,.72]);
+      pon('cadera','metal',G.caja(.22,.19,.08),0xba9746,[0,.06,.32]);
+      pon('torso','piel',G.capsula(.4,.25),piel,[0,.4,0],[0,0,0],[1.4,1,.92]);
+      pon('torso','piel',G.bola(.38,9,7),sombra,[0,.25,.12],[0,0,0],[1.25,1,.85]);
+      pon('torso','piel',G.caja(.12,1.08,.05),cuero,[0,.45,.37],[0,0,.6]);
+      pon('cabeza','piel',G.bola(.34,9,7),piel,[0,.3,0]);
+      pon('cabeza','piel',G.caja(.48,.23,.34),sombra,[0,.13,.18]);
+      pon('cabeza','piel',G.bola(.105,7,5),sombra,[0,.28,.32],[0,0,0],[1,1.2,1]);
+      for(const signo of [-1,1]){
+        pon('cabeza','brillo',G.bola(.045,6,5),0xffc046,[signo*.13,.36,.285]);
+        pon('cabeza','piel',G.caja(.19,.07,.075),sombra,[signo*.14,.42,.29],[0,0,signo*.15]);
+        pon('cabeza','piel',G.cono(.055,.23,6),0xe6d9b9,[signo*.2,.17,.34],[0,0,-signo*.2]);
+        pon('cabeza','piel',G.cono(.1,.32,5),piel,[signo*.36,.32,-.03],[0,0,-signo*1.2]);
+      }
+      for(const l of ['I','D']){
+        miembro('pierna'+l,.18,.43,piel);miembro('rodilla'+l,.145,.4,sombra);
+        pon('pie'+l,'piel',G.caja(.35,.19,.48),sombra,[0,.015,.13]);
+        miembro('brazo'+l,.21,.4,piel);miembro('ante'+l,.17,.37,sombra);
+        pon('mano'+l,'piel',G.bola(.18,7,5),piel,[0,-.08,.04],[0,0,0],[1,1.2,1]);
+        pon('ante'+l,'metal',G.cil(.185,.195,.15,8),0x544f4a,[0,-.33,0]);
+      }
+      pon('brazoI','metal',G.bola(.3,7,5),piedra,[0,.02,0],[0,0,0],[1.2,.6,1.1]);
+      pon('manoD','piel',G.cil(.07,.09,1.6,7),0x47301e,[0,0,.45],[Math.PI/2,0,0]);
+      pon('manoD','metal',G.bola(.38,6,4),piedra,[0,0,1.2],[0,.3,0],[.85,.85,1.4]);
+      pon('manoD','metal',G.caja(.69,.12,.48),0x413e3b,[0,0,1.2]);
+      return {H,montar,p};
+    }
     // Una persona del grupo: piernas, torso, cabeza con cara y brazos; cada uno añade su ropa y su arma.
     function persona(o){
       const p={muslo:.44,pierna:.42,pie:.05,cintura:.07,torso:.5,hombros:.22,brazo:.3,antebrazo:.28,ancho:.1,...o.p},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
@@ -241,21 +400,21 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         pon('cadera','piel',G.caja(.1,.12,.05),0x5a3a22,[.16,-.02,.1]);for(const x of [-.12,-.05,.02])pon('cadera','metal',G.cil(.014,.014,.06,5),0xc8a050,[x,.07,.15],[Math.PI/2,0,0]);
         pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
         pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
-    const constructores={adreida,goblin,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
+    const constructores={adreida,goblin,cobrador:()=>goblin(true),troll,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
     function crear(tipo){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
-      const M=materiales(),{H,montar,p}=constructores[tipo](),mallas=montar(M);
+      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=constructores[tipo](),mallas=montar(M);
       // El extremo del hacha de Adreida, la cabeza (para colocar el rastro del corte y para las pruebas).
-      if(tipo==='adreida'){const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
+      if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
-      if(tipo==='mohamed'){const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
+      if(tipo==='mohamed'){M.metal.roughness=.78;M.metal.metalness=.4;M.metal.envMapIntensity=.12;const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
       return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo]};
     }
 
     /* ---- El hacha a dos manos de Adreida ------------------------------------------------------
        Cada pose dice dónde está la empuñadura (G, la mano derecha) y hacia dónde apunta el hacha (A),
        en el espacio del torso; los dos brazos llegan con cinemática inversa de dos huesos: la derecha
-       a G y la izquierda un poco más abajo del mango, hacia el pomo. La mano derecha se orienta para
+       a G, junto al pomo, y la izquierda 30 cm hacia la cabeza del hacha. La mano derecha se orienta para
        que el hacha (su -Y) siga A, con la cara plana hacia «arriba» (en los tajos horizontales, al
        cielo: se ve desde la cámara; en el hachazo vertical, de lado: el filo corta de arriba abajo). */
     const _v=Array.from({length:10},()=>new THREE.Vector3()),_q=new THREE.Quaternion(),_m=new THREE.Matrix4(),ABAJO=new THREE.Vector3(0,-1,0);
@@ -267,15 +426,23 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     const dirA=(f,e)=>[Math.sin(f)*Math.cos(e),Math.sin(e),Math.cos(f)*Math.cos(e)];
     function empunar(m,{G,A,arriba}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
       const g=_v[6].fromArray(G).applyMatrix4(T),a=_v[7].fromArray(A).transformDirection(T),up=_v[8].fromArray(arriba||[0,1,0]).transformDirection(T);
+      // Los dos agarres deben quedar al alcance sin estirar los brazos ni soltar el mango.
+      const separacion=.3,sd=H.brazoD.getWorldPosition(new THREE.Vector3()),si=H.brazoI.getWorldPosition(new THREE.Vector3()).addScaledVector(a,-separacion);
+      const alcance=m.p.brazo+m.p.antebrazo-.015;
+      for(let i=0;i<8;i++)for(const centro of [sd,si]){const delta=g.clone().sub(centro);if(delta.length()>alcance)g.copy(centro).add(delta.setLength(alcance));}
       ik(H.brazoD,H.anteD,H.manoD,g,new THREE.Vector3(-.7,-.5,-.35).applyMatrix4(T));
       // La mano derecha: -Y por el mango, X (la cara del hacha) lo más cerca posible de «arriba».
       const y=a.clone().negate(),x=up.clone().addScaledVector(y,-up.dot(y));if(x.lengthSq()<1e-6)x.set(1,0,0);x.normalize();const z=new THREE.Vector3().crossVectors(x,y);
       H.manoD.parent.getWorldQuaternion(_q).invert();H.manoD.quaternion.setFromRotationMatrix(_m.makeBasis(x,y,z)).premultiply(_q);H.manoD.updateMatrixWorld(true);
-      // La izquierda, 26 cm más abajo por el mango (hacia el pomo).
-      ik(H.brazoI,H.anteI,H.manoI,g.clone().addScaledVector(a,-.26),new THREE.Vector3(.7,-.5,-.35).applyMatrix4(T));}
+      // La izquierda envuelve el mango entre la derecha y la cabeza, nunca fuera del pomo.
+      const apoyo=H.manoD.localToWorld(new THREE.Vector3(0,-separacion,0));
+      ik(H.brazoI,H.anteI,H.manoI,apoyo,new THREE.Vector3(.7,-.5,-.35).applyMatrix4(T));
+      const orientacion=H.manoD.getWorldQuaternion(new THREE.Quaternion());
+      H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);H.manoI.updateMatrixWorld(true);}
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
-      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.02*(a.paso??1):Math.sin(t*2.2)*.008;return {G:[-.12,.08+bob,.3],A:dirA(-.35,-.75)};};
+      // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
+      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.008*(a.paso??1):Math.sin(t*2.2)*.004;return {G:[-.11,.35+bob,.36],A:dirA(-2.73,.46),arriba:[0,1,0]};};
       const horizontal=(f,e)=>{const r=.42-.08*Math.abs(Math.sin(f));return {G:[Math.sin(f)*r,.28,Math.cos(f)*r],A:dirA(f,e),arriba:[0,1,0]};};
       const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
@@ -291,7 +458,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
 
     // Pone la pose. a={anim,t (segundos en la animación), k (0..1 de la animación), fase (del paso), paso (0..1 cuánto anda)}.
     function posar(m,a){
-      const H=m.H,esc=m.tipo==='can'?1.25:1;
+      const H=m.H,esc=m.tipo==='troll'?1.5:m.tipo==='can'?1.25:1;
       for(const k in H)if(k!=='raiz'){H[k].rotation.set(0,0,0);}
       H.cuerpo.position.set(0,0,0);H.cuerpo.rotation.set(0,0,0);
       const t=a.t||0,k=a.k||0,respira=Math.sin(t*2.2);
@@ -299,16 +466,32 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       const reposo=()=>{H.brazoI.rotation.z=.18;H.brazoD.rotation.z=-.18;H.anteI.rotation.x=-.25;H.anteD.rotation.x=-.55;H.brazoD.rotation.x=-.15;
         H.torso.rotation.x=.04+respira*.015;H.cabeza.rotation.x=-.04;if(H.cola){H.cola.rotation.x=-.3+Math.sin(t*2)*.08;H.cola.rotation.y=Math.sin(t*1.3)*.25;H.cola2.rotation.y=Math.sin(t*1.3-1)*.35;}};
       const andar=(fase,amp)=>{const s=Math.sin(fase),c=Math.cos(fase);
+        if(m.tipo==='adreida'){
+          // Apoyo y balanceo alternos: el talón avanza, la rodilla recoge y el tobillo amortigua.
+          for(const [lado,desfase] of [['I',0],['D',Math.PI]]){
+            const f=fase+desfase,avance=Math.sin(f),vuelo=Math.max(0,Math.cos(f)),impulso=Math.max(0,-avance);
+            const muslo=-avance*.78*amp,rodilla=.12+(vuelo*vuelo*1.05+.1*impulso)*amp;
+            H['pierna'+lado].rotation.x=muslo;H['rodilla'+lado].rotation.x=rodilla;
+            H['pie'+lado].rotation.x=(-muslo-(rodilla-.12))*.75+.16*impulso*amp;
+            H['pierna'+lado].rotation.z=(lado==='I'?-.025:.025)*amp;
+          }
+          // La cadera carga el peso sobre la pierna de apoyo; el torso compensa el hacha pesada.
+          H.cuerpo.position.set(s*.025*amp,-.025+respira*.006+(Math.cos(fase*2)*.022-.008)*amp,0);
+          H.cadera.rotation.y=s*.11*amp;H.cadera.rotation.z=-s*.035*amp;
+          H.torso.rotation.set(.1+respira*.012+.065*amp,-s*.075*amp,s*.025*amp);
+          H.cabeza.rotation.x=-.04-.035*amp;H.cabeza.rotation.y=s*.035*amp;H.cabeza.rotation.z=-s*.02*amp;
+          return;
+        }
         H.piernaI.rotation.x=-s*.62*amp;H.piernaD.rotation.x=s*.62*amp;H.rodillaI.rotation.x=Math.max(0,c)*.9*amp+.05;H.rodillaD.rotation.x=Math.max(0,-c)*.9*amp+.05;
         H.pieI.rotation.x=s*.25*amp;H.pieD.rotation.x=-s*.25*amp;
         H.brazoI.rotation.x=s*.5*amp;H.brazoD.rotation.x+=-s*.3*amp;H.torso.rotation.y=s*.12*amp;H.torso.rotation.x+=.1*amp;
         H.cuerpo.position.y=Math.abs(c)*.05*amp*esc-.02*amp;if(H.cola)H.cola.rotation.y+=s*.3*amp;};
       reposo();
-      // Adreida lleva el hacha baja por delante (la cabeza al frente y abajo, cerca del suelo).
+      // La cinemática inversa coloca después el hacha sobre el hombro de Adreida.
       if(m.tipo==='adreida'){H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.75;H.brazoD.rotation.z=-.22;}
       switch(a.anim){
         case 'andar':andar(a.fase||0,a.paso??1);break;
-        case 'quieto':H.cuerpo.position.y=respira*.006;H.brazoI.rotation.z+=respira*.02;break;
+        case 'quieto':H.cuerpo.position.y=respira*.006;if(m.tipo==='adreida'){H.torso.rotation.x=.1+respira*.012;H.rodillaI.rotation.x=.12;H.rodillaD.rotation.x=.12;H.cuerpo.position.y-=.025;}else H.brazoI.rotation.z+=respira*.02;break;
         // Tajo horizontal de derecha a izquierda: carga (0–.35), golpe (.35–.55), recoge.
         case 'golpe':case 'aviso':{const kk=a.anim==='aviso'?k*.38:k,car=tramo(kk,0,.35),gol=tramo(kk,.36,.55),rec=tramo(kk,.62,1);
           const giro=-.9*car+1.6*gol-.7*rec;H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.35;
@@ -331,7 +514,9 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           const alto=1-rec;H.brazoD.rotation.z=-(.3+1.2*car)*alto-.3*rec;H.brazoD.rotation.y=(.5*car+1.07*emp)*alto;H.brazoD.rotation.x=-.3*rec;
           H.anteD.rotation.x=(-.75*(1-car)-1.5*car*(1-emp)-.02*emp)*alto-.75*rec;H.torso.rotation.y=-.6*c2+.35*e2;H.torso.rotation.x=.05+.3*e2;H.cadera.rotation.y=-.25*c2+.15*e2;
           H.brazoI.rotation.x=.6*e2-.3*c2;H.brazoI.rotation.z=.18+.35*e2;
-          H.piernaI.rotation.x=-.95*e2-.15*c2;H.rodillaI.rotation.x=.75*e2+.25*c2;H.piernaD.rotation.x=.75*e2+.15*c2;H.rodillaD.rotation.x=.2+.3*e2;H.cuerpo.position.y=-.14*e2-.04*c2;break;}
+          H.piernaI.rotation.x=-.95*e2-.15*c2;H.rodillaI.rotation.x=.75*e2+.25*c2;H.piernaD.rotation.x=.75*e2+.15*c2;H.rodillaD.rotation.x=.2+.3*e2;H.cuerpo.position.y=-.14*e2-.04*c2;
+          // Un paso dentro del hachazo: con las dos manos al alcance de ambos brazos, el cuerpo lleva el hacha hasta el golpe.
+          H.cuerpo.position.z=.22*e2*esc;break;}
         // Revés: el segundo golpe del combo, de izquierda a derecha (empieza donde acabó el tajo).
         case 'reves':{const car=tramo(k,0,.3),gol=tramo(k,.32,.55),rec=tramo(k,.62,1),giro=.75*car-1.55*gol+.8*rec;
           H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.35;
@@ -347,6 +532,17 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.piernaI.rotation.x=-.9*e2-.2*car*(1-emp);H.rodillaI.rotation.x=.7*e2+.3*car;H.piernaD.rotation.x=.7*e2+.2*car*(1-emp);H.rodillaD.rotation.x=.2+.3*e2;
           H.cuerpo.position.y=-.14*e2*esc-.05*car*(1-emp)*esc;break;}
         // Esquiva: rueda corta, agachada y hacia delante.
+        // La maza sube despacio y cae con todo el torso; la recuperación deja al troll expuesto.
+        case 'preparaGoblin':case 'arrojaGoblin':{
+            const carga=a.anim==='preparaGoblin'?suave(k):1,tiro=a.anim==='arrojaGoblin'?tramo(k,0,.4):0,rec=a.anim==='arrojaGoblin'?tramo(k,.5,1):0;
+            H.brazoI.rotation.x=(-2.5*carga+3*tiro)*(1-rec);H.brazoI.rotation.z=-.5*carga*(1-rec);H.anteI.rotation.x=-.8*carga*(1-tiro);
+            H.torso.rotation.y=.35*carga*(1-tiro)-.4*tiro*(1-rec);H.torso.rotation.x=-.12*carga+.35*tiro*(1-rec);
+            H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.4;H.rodillaI.rotation.x=.2;H.rodillaD.rotation.x=.1;break;}
+          case 'cargaMazazo':case 'mazazo':{const carga=a.anim==='cargaMazazo'?suave(k):1,caida=a.anim==='mazazo'?tramo(k,0,.3):0,rec=a.anim==='mazazo'?tramo(k,.45,1):0,arriba=carga*(1-caida);
+          H.brazoD.rotation.x=-2.6*arriba-1.2*caida*(1-rec);H.anteD.rotation.x=-.55-.7*arriba;
+          H.brazoI.rotation.x=-1.6*arriba;H.brazoI.rotation.z=.3+.3*arriba;H.anteI.rotation.x=-.7;
+          H.torso.rotation.x=-.18*arriba+.65*caida*(1-rec);H.cabeza.rotation.x=-.12*arriba;
+          H.rodillaI.rotation.x=H.rodillaD.rotation.x=.18+.35*caida*(1-rec);H.cuerpo.position.y=-.16*caida*(1-rec);break;}
         case 'esquiva':{const e=Math.sin(Math.PI*Math.min(1,k));H.torso.rotation.x=.25+.55*e;H.cabeza.rotation.x=.2*e;H.cuerpo.position.y=-.22*e*esc;
           H.piernaI.rotation.x=-.9*e;H.rodillaI.rotation.x=1.1*e;H.piernaD.rotation.x=.7*e;H.rodillaD.rotation.x=.9*e;
           H.brazoI.rotation.x=.9*e;H.brazoD.rotation.x=.7*e;H.anteD.rotation.x=-.9;H.brazoI.rotation.z=.5*e;H.brazoD.rotation.z=-.5*e;break;}
@@ -381,6 +577,27 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.cuerpo.rotation.x=-Math.PI/2*c*.96;H.cuerpo.position.y=-.3*r*(1-c)*esc+.12*c*esc;H.cuerpo.position.z=-(m.alto*.22)*c;break;}
       }
       // Adreida agarra el hacha con las dos manos (salvo al gritar, con los brazos abiertos, y al caer).
+      // El hachazo cargado toma impulso con cadera y torso, hundiendo las rodillas antes del barrido.
+      if(m.tipo==='adreida'&&a.potencia>0&&['tajoA','revesA','estocadaA'].includes(a.anim)){
+        const p=a.potencia,pre=tramo(k,0,.38)*(1-tramo(k,.4,.62)),gol=tramo(k,.4,.62)*(1-tramo(k,.66,1));
+        H.torso.rotation.y*=1+.65*p;H.cadera.rotation.y*=1+.5*p;
+        H.torso.rotation.x+=p*(-.2*pre+.24*gol);H.cuerpo.position.y-=p*(.13*pre+.08*gol);
+        H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
+      }
+      if(m.tipo==='saqueador'&&a.escudazo){H.brazoI.rotation.set(-1.35,0,.15);H.anteI.rotation.x=-.35;H.torso.rotation.x+=.18*a.escudazo;H.torso.position.z=.09*a.escudazo;}
+      else if(m.tipo==='saqueador')H.torso.position.z=0;
+      if(m.tipo==='adreida'){
+        const tela=m.tela||(m.tela={t:t,aperturas:Array(7).fill(0)}),dt=Math.max(0,Math.min(.05,t-tela.t));tela.t=t;
+        for(let i=0;i<7;i++){
+          const ang=(i+.5)/7*TAU+.08,fr=Math.cos(ang),lado=Math.sin(ang);
+          const piernas=[H.piernaI,H.piernaD],empuje=Math.max(...piernas.map(b=>Math.max(0,-b.rotation.x*fr+b.rotation.z*lado)));
+          const objetivo=Math.min(1.2,.04+empuje*1.12),anterior=tela.aperturas[i];
+          // Se abre enseguida ante la pierna; vuelve con retraso y un leve vaivén de tela.
+          const apertura=objetivo>anterior?objetivo:objetivo+(anterior-objetivo)*Math.exp(-dt*9);
+          tela.aperturas[i]=apertura;const balanceo=Math.sin(t*5+i)*.018*(a.paso||0);
+          H['falda'+i].rotation.set(-fr*(apertura+balanceo),0,lado*(apertura+balanceo));
+        }
+      }
       if(m.tipo==='adreida'&&!['grito','muerte'].includes(a.anim))empunar(m,agarreAdreida(a));
     }
     return {crear,posar,TIPOS};
