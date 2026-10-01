@@ -24,11 +24,17 @@
        a G, junto al pomo, y la izquierda 30 cm hacia la cabeza del hacha. La mano derecha se orienta para
        que el hacha (su -Y) siga A, con la cara plana hacia «arriba» (en los tajos horizontales, al
        cielo: se ve desde la cámara; en el hachazo vertical, de lado: el filo corta de arriba abajo). */
-    const _v=Array.from({length:10},()=>new THREE.Vector3()),_q=new THREE.Quaternion(),_m=new THREE.Matrix4(),ABAJO=new THREE.Vector3(0,-1,0);
-    function apuntarHueso(b,dir){b.parent.getWorldQuaternion(_q).invert();b.quaternion.setFromUnitVectors(ABAJO,_v[9].copy(dir).normalize().applyQuaternion(_q));b.updateMatrixWorld(true);}
+    const _v=Array.from({length:10},()=>new THREE.Vector3()),_q=new THREE.Quaternion(),_m=new THREE.Matrix4();
+    const normalIK=new THREE.Vector3(),yIK=new THREE.Vector3(),zIK=new THREE.Vector3(),baseIK=new THREE.Matrix4();
+    function apuntarHueso(b,dir){
+      // Una dirección sola deja indeterminado el giro cuando el antebrazo apunta hacia arriba.
+      // El plano del codo fija también la torsión: no hay un salto de 180° al recoger el arma.
+      b.parent.getWorldQuaternion(_q).invert();yIK.copy(dir).normalize().negate();zIK.crossVectors(normalIK,yIK).normalize();
+      b.quaternion.setFromRotationMatrix(baseIK.makeBasis(normalIK,yIK,zIK)).premultiply(_q);b.updateMatrixWorld(true);
+    }
     function ik(brazo,ante,mano,T,polo){const S=brazo.getWorldPosition(_v[0]),a=ante.position.length(),b=mano.position.length(),D=_v[1].copy(T).sub(S);
       const d=Math.min(a+b-1e-3,Math.max(Math.abs(a-b)+1e-3,D.length())),dir=D.normalize(),x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x));
-      const p=_v[2].copy(polo).sub(S);p.addScaledVector(dir,-p.dot(dir));if(p.lengthSq()<1e-8)p.set(0,-1,0);p.normalize();
+      const p=_v[2].copy(polo).sub(S);p.addScaledVector(dir,-p.dot(dir));if(p.lengthSq()<1e-8)p.set(0,-1,0);p.normalize();normalIK.crossVectors(dir,p).normalize();
       const E=_v[3].copy(S).addScaledVector(dir,x).addScaledVector(p,h);apuntarHueso(brazo,_v[4].copy(E).sub(S));apuntarHueso(ante,_v[5].copy(S).addScaledVector(dir,d).sub(E));}
     const dirA=(f,e)=>[Math.sin(f)*Math.cos(e),Math.sin(e),Math.cos(f)*Math.cos(e)];
     const _agarre=Array.from({length:8},()=>new THREE.Vector3()),_orientacion=new THREE.Quaternion();
@@ -47,6 +53,17 @@
       ik(H.brazoI,H.anteI,H.manoI,apoyo,_agarre[3].set(.7,-.5,-.35).applyMatrix4(T));
       const orientacion=H.manoD.getWorldQuaternion(_orientacion);
       H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);H.manoI.updateMatrixWorld(true);}
+    const ejeDesde=new THREE.Vector3(),ejeHasta=new THREE.Vector3(),giroAgarre=new THREE.Quaternion(),giroParcial=new THREE.Quaternion();
+    function mezclarAgarre(dest,p,q,w,arco=0){
+      ejeDesde.fromArray(p.A).normalize();ejeHasta.fromArray(q.A).normalize();giroAgarre.setFromUnitVectors(ejeDesde,ejeHasta);
+      const amplitud=Math.min(1,giroAgarre.angleTo(giroParcial.identity())/1.4);
+      giroParcial.slerp(giroAgarre,w);ejeDesde.applyQuaternion(giroParcial);
+      for(const campo of ['G','arriba'])for(let i=0;i<3;i++)dest[campo][i]=p[campo][i]+(q[campo][i]-p[campo][i])*w;
+      ejeDesde.toArray(dest.A);
+      // El mango rodea el cuerpo por delante; el apoyo izquierdo no cruza el hombro.
+      dest.G[2]+=arco*Math.sin(Math.PI*w)*amplitud;
+      return dest;
+    }
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
       // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
@@ -56,7 +73,7 @@
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
       switch(a.anim){
         case 'tajoA':case 'revesA':{const r=a.anim==='revesA',s=r?-1:1,car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1);
-          const f=(-1.3*car+2.4*gol)*s,e=-.25;return mezcla(mezcla(reposo(),horizontal(f,e),Math.max(car,gol)),reposo(),rec);}
+          const f=(-1.3*car+2.4*gol)*s,e=-.25;return mezclarAgarre({G:[],A:[],arriba:[]},mezcla(reposo(),horizontal(f,e),Math.max(car,gol)),reposo(),rec,.24);}
         case 'estocadaA':{const car=tramo(k,0,.38),emp=tramo(k,.38,.48),rec=tramo(k,.66,1);return mezcla(mezcla(reposo(),vertical(-.8+2.8*car-2.3*emp),Math.min(1,car*1.5)),reposo(),rec);}
         case 'torbellino':return horizontal(-1.25,-.12);
         // Parry: el hacha en guardia diagonal delante del pecho (la cabeza sobre el hombro derecho), la cara plana hacia el golpe.
@@ -128,8 +145,7 @@
       if(w<1){
         e.huesos.forEach((b,i)=>b.quaternion.slerp(e.desde[i],1-w));
         m.H.cuerpo.position.lerpVectors(e.desdePos,m.H.cuerpo.position,w);
-        for(const k of ['G','A','arriba'])for(let i=0;i<3;i++)agarre[k][i]=e.desdeAgarre[k][i]+(agarre[k][i]-e.desdeAgarre[k][i])*w;
-        const longitud=Math.hypot(...agarre.A);if(longitud>1e-6)for(let i=0;i<3;i++)agarre.A[i]/=longitud;
+        mezclarAgarre(agarre,e.desdeAgarre,agarre,w,['quieto','andar'].includes(estado)?.24:0);
       }
       e.huesos.forEach((b,i)=>e.ultima[i].copy(b.quaternion));e.pos.copy(m.H.cuerpo.position);copiarAgarre(e.agarre,agarre);
       e.estado=estado;e.anim=a.anim;e.libre=libre;e.valido=!exacta;

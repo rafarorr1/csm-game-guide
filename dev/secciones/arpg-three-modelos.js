@@ -413,6 +413,23 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo]};
     }
 
+    const salidas=new WeakMap();
+    function recogerPose(m,a){
+      let e=salidas.get(m);
+      if(!e){const huesos=Object.entries(m.H).filter(([k])=>k!=='raiz').map(([,b])=>b);
+        e={huesos,ultima:huesos.map(b=>b.quaternion.clone()),desde:huesos.map(b=>b.quaternion.clone()),pos:huesos.map(b=>b.position.clone()),desdePos:huesos.map(b=>b.position.clone()),valida:false,estado:null,t:0,dur:0};salidas.set(m,e);}
+      const estado=m.tipo==='mohamed'&&a.armaLista?'apunta':a.estado||a.anim,locomocion=['quieto','andar','persigue','entra'];
+      if(a.mezclar!==true||!e.valida){e.dur=0;e.t=0;}
+      else if(estado!==e.estado){
+        // Sólo la vuelta a guardia: avisos, impactos y aturdimientos conservan sus instantes.
+        e.dur=locomocion.includes(estado)&&!locomocion.includes(e.estado)?.16:0;e.t=0;
+        for(let i=0;i<e.huesos.length;i++){e.desde[i].copy(e.ultima[i]);e.desdePos[i].copy(e.pos[i]);}
+      }
+      e.t+=Math.max(0,Math.min(.05,a.dt||0));const w=e.dur?suave(e.t/e.dur):1;
+      for(let i=0;i<e.huesos.length;i++){const b=e.huesos[i];if(w<1){b.quaternion.slerp(e.desde[i],1-w);b.position.lerpVectors(e.desdePos[i],b.position,w);}e.ultima[i].copy(b.quaternion);e.pos[i].copy(b.position);}
+      e.estado=estado;e.valida=a.mezclar===true;
+    }
+
     // Pone la pose. a={anim,t (segundos en la animación), k (0..1 de la animación), fase (del paso), paso (0..1 cuánto anda)}.
     function posar(m,a){
       const H=m.H,esc=m.tipo==='troll'?1.5:m.tipo==='can'?1.25:1;
@@ -504,6 +521,10 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       if(m.tipo==='saqueador'&&a.escudazo){H.brazoI.rotation.set(-1.35,0,.15);H.anteI.rotation.x=-.35;H.torso.rotation.x+=.18*a.escudazo;H.torso.position.z=.09*a.escudazo;}
       else if(m.tipo==='saqueador')H.torso.position.z=0;
       if(m.tipo==='adreida')animacion.resolver(m,a);
+      else{
+        if(m.tipo==='mohamed'&&a.armaLista){const r=a.retroceso||0;H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
+        recogerPose(m,a);
+      }
     }
     return {crear,posar,TIPOS,animacion};
   }

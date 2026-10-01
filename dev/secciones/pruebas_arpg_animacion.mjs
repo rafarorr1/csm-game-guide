@@ -47,3 +47,35 @@ for(const malo of [{...p,version:9},{...p,personaje:'mohamed'},{...p,ajustes:{..
 }
 M.animacion.restablecer();assert.equal(JSON.stringify(M.animacion.configuracion()),original);
 console.log('✓ Transiciones continuas, agarre, impacto exacto, recuperación fija, 30/60/120 Hz, independencia y variantes validadas');
+
+// Regresión del tirón al recoger el hacha: la dirección del mango y el plano del codo
+// no deben invertir la muñeca en un cuadro al pasar cerca del hombro izquierdo.
+M.animacion.restablecer();
+for(const anim of ['tajoA','revesA','estocadaA'])for(const potencia of [0,1]){
+ const dur=anim==='estocadaA'?.8:.6,poses=[];
+ for(let i=0;i<Math.ceil(dur*60);i++){const k=i/(dur*60);if(potencia&&k>=.64)break;poses.push({anim,estado:'golpe',k,potencia});}
+ if(potencia)for(let i=0;i<18;i++)poses.push({anim,estado:'recuperacion',k:.64,potencia});
+ for(let i=0;i<25;i++)poses.push({anim:'quieto',estado:'quieto'});
+ let anterior=null;
+ for(const [i,pose] of poses.entries()){
+  M.posar(m,{...pose,t:i/60,dt:1/60,mezclar:true});seguro(m);
+  if(anterior&&(pose.k>=.66||pose.estado==='quieto'))for(const nombre of ['brazoI','anteI','manoI','brazoD','anteD','manoD']){
+   assert.ok(m.H[nombre].quaternion.angleTo(anterior[nombre].q)<1,`Recogida continua: ${anim}, carga ${potencia}, cuadro ${i}, ${nombre}`);
+  }
+  anterior=cuerpo(m);
+ }
+}
+console.log('✓ Los tres hachazos, normales y cargados, recogen el hacha sin invertir codos ni muñecas');
+// Los enemigos no saltan de la última pose de recuperación a la guardia en un cuadro.
+for(const tipo of ['goblin','cobrador','kobold','saqueador','can','troll','mohamed']){
+ const h=M.crear(tipo),objetivo=M.crear(tipo),anim=tipo==='kobold'?'lanzar':tipo==='troll'?'mazazo':'golpe';
+ const anterior={anim,k:.99,estado:'recupera',t:4,dt:1/60,mezclar:true};
+ if(tipo==='mohamed')Object.assign(anterior,{anim:'quieto',estado:'quieto',armaLista:true,retroceso:0});
+ M.posar(h,anterior);const f=cuerpo(h),quieto={anim:'quieto',estado:tipo==='mohamed'?'quieto':'persigue',t:4,dt:0,mezclar:true};
+ M.posar(h,quieto);igual(h,f,tipo+': salida continua con dt=0');
+ for(let i=0;i<15;i++)M.posar(h,{...quieto,dt:1/60});M.posar(objetivo,{...quieto,mezclar:false});igual(h,cuerpo(objetivo),tipo+': termina en guardia');
+ // Volver a preparar un ataque no hereda una mezcla ni retrasa la pose de impacto.
+ M.posar(h,anterior);M.posar(objetivo,{...anterior,mezclar:false});igual(h,cuerpo(objetivo),tipo+': ataque sin retraso');
+ for(const modelo of [h,objetivo])for(const mesh of modelo.mallas){mesh.geometry.dispose();mesh.material.dispose();}
+}
+console.log('✓ Goblins, lanceros, escudos, jefes y Mohamed vuelven a guardia sin saltos de pose');
