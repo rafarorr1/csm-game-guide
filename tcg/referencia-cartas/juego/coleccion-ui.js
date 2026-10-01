@@ -12,6 +12,10 @@
   const textoCopias=n=>n+' '+(n===1?'copia':'copias');
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  // La referencia exportada declara su vista en <body>; el juego completo
+  // conserva el marcador del panel móvil. Centralizarlo evita que una carta
+  // móvil de Archivo use por accidente los encuadres de escritorio.
+  const prefijoVista=()=>document.body?.dataset?.vista==='movil'||document.getElementById('panelCerrar')?'movil_':'desktop_';
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
   let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null,cartaTransferida=null,entradaMenu=0,archivoCapa=null,detalleCapa=null,encuadreDetalle=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real',logrosProtagonista:'todos'};
@@ -144,18 +148,28 @@
     const c=dato(id);
     tonoMundoVisor(id);
     const entrega=tomarCartaTransferida(id,s.acabadoVista);
+    // La ficha sale de Archivo con encuadre de Colección, pero al tocar el
+    // pedestal debe conservar el mismo nodo y pasar al encuadre de Detalle.
+    // Así una ilustración Foil/Dorada con composición propia no queda cortada
+    // ni vuelve a pedir otra imagen al entrar al visor.
+    const vistaDetalle=prefijoVista()+'detalle';
+    const prepararFichaDetalle=(nodo,acabado)=>{
+      if(!nodo)return nodo;
+      nodo.dataset.coleccionAcabado=acabado;nodo.dataset.acabado=acabado;nodo.dataset.vistaArte=vistaDetalle;
+      nodo.classList.toggle('cdFullArt',acabado==='dorado');nodo.classList.toggle('cdClasica',acabado!=='dorado');
+      actualizarCarta(nodo);return nodo;
+    };
+    if(entrega?.nodo)prepararFichaDetalle(entrega.nodo,s.acabadoVista);
     // Guardamos el rectángulo ya interpolado del vuelo antes de que el visor
     // adopte el nodo. El visor lo usa como pose inicial y converge desde ahí:
     // no hay ni recarga del arte ni teletransporte entre los dos encuadres.
     const r=entrega?.nodo?.getBoundingClientRect();
     const continuidad=!matchMedia('(prefers-reduced-motion: reduce)').matches&&r?.width>8&&r?.height>8?{izquierda:r.left,arriba:r.top,ancho:r.width,alto:r.height,esperar:panel?.classList.contains('coleccionFusionando')}:null;
     const refrescarFicha=(nodo,acabado)=>{
-      nodo.dataset.coleccionAcabado=acabado;nodo.dataset.acabado=acabado;
-      nodo.classList.toggle('cdFullArt',acabado==='dorado');nodo.classList.toggle('cdClasica',acabado!=='dorado');
-      actualizarCarta(nodo);
+      prepararFichaDetalle(nodo,acabado);
       actualizarMiniatura(id);
     };
-    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
+    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>prepararFichaDetalle(carta(id,a),a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
     // montarMundo sólo confirma después de insertar la ficha. Así, si el
     // visor no estuviera disponible, el vuelo conserva su salida de respaldo.
     if(visible&&entrega){
@@ -429,7 +443,7 @@
     const diseno=!id.startsWith('lider_')&&window.CAOZ_CARTA_DISENO;
     const n=diseno?diseno.crear(id,acabado):(id.startsWith('lider_')?cartaDeLiderVS(id.slice(6),''):cardEl(id,{})).cloneNode(true);
     n.classList.add('coleccionCarta');n.dataset.coleccionAcabado=acabado;n.dataset.acabado=acabado;
-    n.dataset.vistaArte=(document.getElementById('panelCerrar')?'movil_':'desktop_')+'coleccion';
+    n.dataset.vistaArte=prefijoVista()+'coleccion';
     n.removeAttribute('tabindex');n.setAttribute('aria-hidden','true');actualizarCarta(n);return n;
   }
   function cartaSobre(item){
@@ -602,7 +616,13 @@
       activarMundo('cartas');actualizarCabecera();mensaje('');
       restaurarInteraccion();
       const enfocar=()=>{if(panel?.open&&s.vista==='cartas'&&miniatura.isConnected)miniatura.focus({preventScroll:true});};
-      requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>{miniatura.removeAttribute('data-regreso-activa');mundoHost?.style.removeProperty('--coleccion-regreso-duracion');},Math.max(90,720-duracionRegreso));});
+      requestAnimationFrame(()=>{
+        // El FLIP ya llegó a su destino: ahora (no antes) restituimos el
+        // encuadre de Archivo para que la miniatura conserve su composición
+        // de rejilla y la siguiente apertura pueda adoptar el mismo nodo.
+        if(nodo?.isConnected){nodo.dataset.vistaArte=prefijoVista()+'coleccion';actualizarCarta(nodo);}
+        actualizarMiniatura(id);enfocar();setTimeout(enfocar,48);setTimeout(()=>{miniatura.removeAttribute('data-regreso-activa');mundoHost?.style.removeProperty('--coleccion-regreso-duracion');},Math.max(90,720-duracionRegreso));
+      });
     };
     const ok=mundo3D.devolverCarta(miniatura,{duracion:duracionRegreso,directo:true,prepararDestino,alTerminar:terminar});
     if(ok)return true;
@@ -624,7 +644,17 @@
     const versiones=crear('div','coleccionVersiones');
     ACABADOS.forEach(a=>{
       const visible=estadoEdicionVisible(s.carta,a),{tiene,cantidad,elegida}=visible,demostracion=!!visible.demostracion,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
-      const etiqueta=boton(NOMBRES[a],()=>{s.acabadoVista=a;dibujarDetalle();},'coleccionElegirAcabado');etiqueta.setAttribute('aria-pressed',s.acabadoVista===a?'true':'false');etiqueta.setAttribute('aria-label',NOMBRES[a]+'. '+textoCopias(cantidad)+'.');slot.append(etiqueta,carta(s.carta,a));
+      const etiqueta=boton(NOMBRES[a],()=>{
+        s.acabadoVista=a;
+        // En el Archivo las tres caras existen para comparación visual. La
+        // elección es efímera, pero debe seguir la ficha que vuelve a la
+        // rejilla: de otro modo Foil/Dorada se verían y el siguiente viaje
+        // intentaría adoptar una Normal, creando una segunda carta.
+        if(esReferenciaVisual()){
+          guardando=true;try{modelo().seleccionar(s.carta,a);}finally{guardando=false;}
+        }
+        dibujarDetalle();
+      },'coleccionElegirAcabado');etiqueta.setAttribute('aria-pressed',s.acabadoVista===a?'true':'false');etiqueta.setAttribute('aria-label',NOMBRES[a]+'. '+textoCopias(cantidad)+'.');slot.append(etiqueta,carta(s.carta,a));
       const estadoEd=crear('span','coleccionEstadoEdicion'),copias=crear('span','coleccionCantidadEdicion',textoCopias(cantidad));copias.dataset.cantidad=cantidad;
       const separador=crear('span','coleccionCantidadSeparador','·');separador.setAttribute('aria-hidden','true');
       const estadoTexto=esReferenciaVisual()?(elegida?'Muestra visual':'Disponible para referencia'):demostracion?(s.demoEdiciones==='bloqueadas'?'Bloqueada · prueba':'Desbloqueada · prueba'):elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Por canje':'En sobres o canje';

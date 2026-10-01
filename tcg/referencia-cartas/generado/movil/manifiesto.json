@@ -3,7 +3,12 @@
   "referenciaVisual": {
     "cartas": 129,
     "protagonistas": 6,
-    "recursos": 135,
+    "recursos": 403,
+    "ediciones": [
+      "Normal",
+      "Foil",
+      "Dorada"
+    ],
     "campos": "sólo cara impresa, retrato, arquetipo y subtipo"
   },
   "almacenamiento": "ninguno",

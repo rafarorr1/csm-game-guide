@@ -26,16 +26,29 @@
   function encolar(carta){if(pendientes.has(carta))return;pendientes.add(carta);cola.push(carta);if(!trabajando)siguiente();}
   function siguiente(){
     const carta=cola.shift();if(!carta){trabajando=false;return;}trabajando=true;
-    pintar(carta).catch(()=>{}).finally(()=>{pendientes.delete(carta);(window.requestIdleCallback||setTimeout)(siguiente,{timeout:60});});
+    pintar(carta).catch(()=>{}).finally(()=>{
+      pendientes.delete(carta);
+      // Si una Foil/Dorada (o su encuadre) cambió durante la espera de la
+      // imagen, no perdemos ese segundo pedido sólo porque la primera pintura
+      // seguía en cola. El siguiente turno hornea la firma más reciente.
+      if(carta.isConnected&&carta.dataset.firma!==firma(carta))programar(carta);
+      (window.requestIdleCallback||setTimeout)(siguiente,{timeout:60});
+    });
   }
   async function pintar(carta){
     if(!carta.isConnected)return;
     const pintor=window.CAOZ_CARTA_PINTOR;if(!pintor)return;
+    const inicio=firma(carta);
     await pintor.fuentes();const arte=arteDe(carta);await cargada(arte.img);
+    // La ilustración se carga de forma asíncrona. Si durante esa espera se
+    // cambió edición, vista o crop, dejamos que siguiente() reprograme la
+    // firma nueva en vez de hornear una mezcla de ambas versiones.
+    if(!carta.isConnected||firma(carta)!==inicio)return;
     const ancho=Math.round(Math.min(pintor.ancho,Math.max(260,(carta.clientWidth||300)*Math.min(devicePixelRatio||1,2)*1.15)));
     const hecho=pintor.hornear({id:carta.dataset.card,acabado:carta.dataset.acabado||'normal',nombre:carta.querySelector('.cdNombre')?.textContent,arte:{...arte,img:arte.img&&arte.img.naturalWidth?arte.img:null},ancho});
+    if(!carta.isConnected||firma(carta)!==inicio)return;
     const lienzo=carta.querySelector('.cdLienzo');lienzo.width=hecho.width;lienzo.height=hecho.height;lienzo.getContext('2d').drawImage(hecho,0,0);
-    carta.dataset.pintada=String(hecho.width);carta.dataset.firma=firma(carta);carta.classList.add('cdLista');
+    carta.dataset.pintada=String(hecho.width);carta.dataset.firma=inicio;carta.classList.add('cdLista');
   }
   // Lo que cambia el dibujo: ilustración, encuadre, edición y nombre.
   function firma(carta){const a=arteDe(carta);return [a.img?.getAttribute('src')||'',a.enc?.x,a.enc?.y,a.enc?.z,carta.dataset.acabado,carta.querySelector('.cdNombre')?.textContent].join('|');}
@@ -66,7 +79,7 @@
     // o cuando la carta crece mucho más de lo que se pintó (rejilla → detalle).
     const repintar=()=>pedirRevision(carta);
     const vigia=new MutationObserver(repintar);
-    vigia.observe(carta,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['src','style']});
+    vigia.observe(carta,{subtree:true,childList:true,characterData:true,attributes:true,attributeFilter:['src','style','class','data-acabado','data-vista-arte']});
     if(typeof ResizeObserver==='function')new ResizeObserver(repintar).observe(carta);
     carta.addEventListener('load',repintar,true);
     return carta;
