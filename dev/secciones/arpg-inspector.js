@@ -48,7 +48,7 @@ async function iniciar(){
       <button id="labExportar">Exportar ajustes JSON</button>
     </fieldset>
     <section><h2>Rendimiento</h2><p id="labMetricas">Esperando muestras…</p><p id="labPersonaje"></p><p class="labNota">Envío = trabajo de CPU para dibujar; no mide GPU. Resolución adaptativa desactivada en el inspector.</p>
-    <label>Límite de render<select id="labHz"><option value="0">Sin límite</option><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="120">120 FPS</option></select></label><p id="labReloj" class="labNota">Combate fijo a 60 Hz · movimiento interpolado</p>
+    <label>Límite de render<select id="labHz"><option value="0">Sin límite</option><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="120">120 FPS</option></select></label><p id="labReloj" class="labNota">Actualización por cuadro · dibujo directo</p>
     <label>Resolución interna<select id="labResolucion"><option value="1080p">1920 × 1080 · fija</option><option value="ventana">Adaptada a la ventana</option></select></label><p id="labPixeles" class="labNota"></p>
     <label>Escena de referencia<select id="labEscena"><option value="0">Adreida sola</option><option value="12" selected>Combate · 12 enemigos</option><option value="24">Cooperativo · 24 enemigos</option></select></label>
     <button id="labComparar" disabled>Comparar efectos · 2 rondas</button><button id="labMedir" disabled>Medir escena fija · 600 cuadros</button><button id="labCancelar" hidden>Cancelar medición</button><button id="labInforme" disabled>Descargar informe JSON</button><p id="labResultado" role="status"></p><div id="labTabla"></div><details><summary>Datos del informe</summary><textarea id="labDatos" readonly aria-label="Informe de rendimiento JSON"></textarea></details>
@@ -102,7 +102,7 @@ async function iniciar(){
     else if(cadena.fase==='quieto'&&cadena.t>=.5){cadena=null;r.control({mov:[0,0],atacar:false});$('labSecuenciaEstado').textContent='Secuencia completa. Ajusta las transiciones y vuelve a probar.';decir('Secuencia terminada.');}
     else if(cadena.t>5){cancelarCadena();r.control({mov:[0,0],atacar:false});$('labSecuenciaEstado').textContent='Secuencia interrumpida. Reinicia para volver a probar.';}
   }
-  $('labHz').onchange=()=>{api.frecuencia(numero('labHz'));muestras=[];decir('Límite de imagen aplicado. El combate conserva sus 60 pasos por segundo.');};
+  $('labHz').onchange=()=>{api.frecuencia(numero('labHz'));muestras=[];decir('Límite de imagen aplicado. Movimiento y animación se actualizan con cada cuadro.');};
   const perfiles=[['Base',{sombras:true,oclusion:false,resplandor:true}],['Sin sombras',{sombras:false,oclusion:false,resplandor:true}],['Sin halo',{sombras:true,oclusion:false,resplandor:false}],['Con oclusión',{sombras:true,oclusion:true,resplandor:true}]];
   function aplicarResolucion(){const fija=$('labResolucion').value==='1080p';document.body.dataset.resolucion=fija?'1080p':'ventana';api.resolucion(fija);const u=new URL(location.href);u.searchParams.set('resolucion',$('labResolucion').value);history.replaceState(null,'',u);}
   $('labResolucion').value=new URLSearchParams(location.search).get('resolucion')==='ventana'?'ventana':'1080p';
@@ -156,7 +156,7 @@ async function iniciar(){
   api.observar(m=>{
     m.gpu=gpuMs;if(!detenido){muestras.push(m);if(muestras.length>120)muestras.shift();}
     if(medicion){const e=api.entorno();if(e.ancho!==medicion.entorno.ancho||e.alto!==medicion.entorno.alto||e.anchoRender!==medicion.entorno.anchoRender||e.altoRender!==medicion.entorno.altoRender){finalizar(true);decir('Cambió el tamaño o la resolución interna. Repite la medición.');}else if(medicion.calentamiento-->0){}else{medicion.muestras.push(m);if(medicion.muestras.length===medicion.total)finalizar();}}
-    if(performance.now()-ultimaUI<250)return;ultimaUI=performance.now();const s=resumir(muestras),h=r.equipo()[0],e=api.entorno();$('labPixeles').textContent=`GPU: ${e.anchoRender} × ${e.altoRender} px · Vista: ${e.ancho} × ${e.alto} px · Resolución adaptativa desactivada`; $('labReloj').textContent=medicion?'Referencia: un paso de 1/60 s por imagen, sin límite de render':`Simulación fija: 60 Hz · ${m.pasos} pasos en este cuadro · ${Math.round(m.alfa*100)} % de interpolación`; $('labPersonaje').textContent=`${h.tipo} · ${h.estado} · Alma ${Math.round(h.alma)}`;
+    if(performance.now()-ultimaUI<250)return;ultimaUI=performance.now();const s=resumir(muestras),h=r.equipo()[0],e=api.entorno();$('labPixeles').textContent=`GPU: ${e.anchoRender} × ${e.altoRender} px · Vista: ${e.ancho} × ${e.alto} px · Resolución adaptativa desactivada`; $('labReloj').textContent=medicion?'Referencia: un paso de 1/60 s por imagen, sin límite de render':`Actualización por cuadro · ${(m.avance*1000).toFixed(1)} ms · dibujo directo`; $('labPersonaje').textContent=`${h.tipo} · ${h.estado} · Alma ${Math.round(h.alma)}`;
     if(s)$('labMetricas').textContent=`${s.fps.toFixed(1)} FPS · p95 ${s.p95.toFixed(1)} ms\nSimulación ${s.simulacion.toFixed(2)} ms · envío ${s.envio.toFixed(2)} ms\n${Math.round(s.llamadas)} llamadas · ${Math.round(s.triangulos/1000)} mil triángulos`;
     if(medicion)$('labResultado').textContent=medicion.calentamiento>0?'Calentando…':`${medicion.nombre}: ${medicion.muestras.length} / ${medicion.total} cuadros`;
   });

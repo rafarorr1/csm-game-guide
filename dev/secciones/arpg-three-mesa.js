@@ -16,7 +16,7 @@
        levantan para leerlas; al recogerlas se guardan hasta elegir al finalizar el nivel.
      · En táctil: palanca para andar y botones de habilidad.
    ?captura=1 deja sólo el escenario, sin oleadas automáticas, y la revisión
-   (CAOZ_ARPG_THREE_REVISION) avanza el tiempo a pasos fijos. */
+   (CAOZ_ARPG_THREE_REVISION) permite avanzar cuadros de duración explícita. */
 'use strict';
 (function(){
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
@@ -31,8 +31,8 @@
   const {THREE,EffectComposer,RenderPass,GTAOPass,UnrealBloomPass,OutputPass}=window.CAOZ_THREE;
   const MOD=window.CAOZ_ARPG_MODELOS.fabrica(THREE),C=window.CAOZ_THREE_CARTA,{ANCHO,ALTO}=C;
   const TAU=Math.PI*2,V3=THREE.Vector3;
-  const temporizador=window.CAOZ_ARPG_TIEMPO.crearReloj(),interpolacion=window.CAOZ_ARPG_TIEMPO.crearInterpolador(THREE);
-  function sincronizarTiempo(){temporizador.reiniciar();interpolacion.sincronizar();}
+  const temporizador=window.CAOZ_ARPG_TIEMPO.crearReloj();
+  function sincronizarTiempo(){temporizador.reiniciar();}
   const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
   const efectos={sombras:true,oclusion:false,resplandor:true};
   let semilla=11;const rnd=()=>(semilla=(semilla*16807)%2147483647)/2147483647;
@@ -897,7 +897,7 @@
     ol.i++;const O=OLEADAS[ol.i];if(ol.i===0||ol.i===4)iniciarDestino(ol.i===0?1:2);if(O.etapa===2&&O.fase===1)for(const h of jugadores){h.alma=Math.min(h.almaMax,h.alma+40);h.vivo=true;cambiar(h,'quieto');}let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n*FACTOR_COOP;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(!DEF[ol.cola[i][0]].jefe&&!DEF[ol.cola[j][0]].jefe)[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;banner(O.nombre,O.texto||(O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.'));}
-  function reiniciar(){temporizador.reiniciar();interpolacion.limpiar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+  function reiniciar(){temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);for(const h of jugadores)liberarModeloTroll(h.m);limpiarAliados();crearEquipo();reiniciarExploracion();$('botin').innerHTML='';Object.assign(ol,{i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});$('fin').hidden=true;finMostrado=false;}
 
   /* ---- Entrada: teclado, ratón y táctil ---------------------------------------------------
@@ -1195,7 +1195,7 @@
     h.punalT=Math.max(0,(h.punalT||0)-dt);if(h.sigilo>0){hm.H.brazoI.rotation.x=-1.2-Math.sin((h.punalT/.3)*Math.PI)*.8;hm.H.anteI.rotation.x=-.3;}hm.M.u.uSigilo.value=h.sigilo>0?.78:0;if(h.daga)h.daga.visible=h.sigilo>0;
     for(const m of hm.mallas)m.castShadow=h.sigilo<=0;
   }
-  /* ---- Simulación a paso fijo ----------------------------------------------------------- */
+  /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
   function paso(dt){
     leerPausaMando();if(pausa.activa)return false;
@@ -1302,32 +1302,15 @@
     activarPartida();}
   $('reanudarPartida').onclick=activarPartida;
   document.addEventListener('visibilitychange',sincronizarTiempo);
-  function capturarVisuales(){
-    interpolacion.empezar();
-    // El esqueleto conserva una pose completa a 60 Hz. Sólo se interpola su raíz:
-    // mezclar huesos resueltos por IK durante el render puede separar el cuerpo del arma.
-    const modelo=m=>{if(m)interpolacion.capturar(m.raiz);};
-    for(const h of jugadores)modelo(h.m);
-    for(const e of enemigos){modelo(e.m);interpolacion.capturar(e.estrellas);}
-    for(const a of aliados)modelo(a.m);
-    for(const l of lanzas)interpolacion.capturar(l.g);
-    for(const b of balas)interpolacion.capturar(b.g);
-    for(const p of peligrosTroll)interpolacion.capturar(p.m);
-    for(const g of globos)interpolacion.capturar(g.m);
-    for(const b of botines)if(b.listo)for(const o of [b.g,b.haz,b.luz])interpolacion.capturar(o);
-    for(const e of etiquetas)interpolacion.capturar(e.pos);
-    for(const o of [camara,luzHeroe,luzCompanero,luna,luna.target,aura,estela,rastroArco,rastroRecto,seleccion.m,puntoMira])interpolacion.capturar(o);
-    interpolacion.terminar();
-  }
   function simularPaso(dt){
     laboratorio?.antes?.(dt);
     if(paso(dt)===false)return false;
-    capturarVisuales();laboratorio?.despuesPaso?.(dt);return true;
+    laboratorio?.despuesPaso?.(dt);return true;
   }
-  function dibujarEntrePasos(alfa=1){
-    try{return interpolacion.dibujar(alfa,()=>{camara.updateMatrixWorld(true);for(const e of etiquetas)colocar(e);dibujar();});}
-    // También restaura matrices derivadas y enlaces de las mallas con piel, no sólo posición y giro.
-    finally{escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);}
+  function dibujarCuadro(){
+    // Poses, raíces y cámara pertenecen al mismo cuadro; no se sustituyen al dibujar.
+    escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);
+    for(const e of etiquetas)colocar(e);dibujar();
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
@@ -1338,17 +1321,17 @@
     if(limite&&ahora+.1<siguienteDibujo){requestAnimationFrame(cuadro);return;}
     siguienteDibujo=limite?Math.max(siguienteDibujo+1000/limite,ahora):0;
     const intervalo=ahora-antes;antes=ahora;
-    if(intervalo>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;interpolacion.sincronizar();}
-    const inicio=performance.now();let avance={pasos:0,alfa:1,avance:0,descartado:0};
+    if(intervalo>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}
+    const inicio=performance.now();let avance={pasos:0,avance:0,descartado:0};
     if(rog.abierto){sincronizarTiempo();mandoDestino();}
     else if(laboratorio?.detenido)sincronizarTiempo();
-    else avance=laboratorio?.fijo?temporizador.unPaso(simularPaso):temporizador.avanzar(intervalo/1000,simularPaso);
+    else avance=laboratorio?.fijo?temporizador.avanzar(1/60,simularPaso):temporizador.avanzar(intervalo/1000,simularPaso);
     const preparado=performance.now();
-    laboratorio?.preDibujo?.();dibujarEntrePasos(avance.alfa);const finDibujo=performance.now();laboratorio?.postDibujo?.();
-    laboratorio?.despues?.({intervalo,simulacion:preparado-inicio,envio:finDibujo-preparado,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles,pasos:avance.pasos,alfa:avance.alfa,avance:avance.avance,descartado:avance.descartado});
+    laboratorio?.preDibujo?.();dibujarCuadro();const finDibujo=performance.now();laboratorio?.postDibujo?.();
+    laboratorio?.despues?.({intervalo,simulacion:preparado-inicio,envio:finDibujo-preparado,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles,pasos:avance.pasos,avance:avance.avance,descartado:avance.descartado});
     fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;ajustarResolucion(fps.v);const i=renderer.info;
-      $('info').textContent=`${fps.v} fps · Simulación 60 Hz · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${gl.drawingBufferWidth} × ${gl.drawingBufferHeight} px internos · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
+      $('info').textContent=`${fps.v} fps · Actualización por cuadro · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${gl.drawingBufferWidth} × ${gl.drawingBufferHeight} px internos · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);
   }
 
@@ -1360,17 +1343,17 @@
     listo=true;simularPaso(1/60);sincronizarTiempo();if(!CAPTURA)requestAnimationFrame(cuadro);else dibujar();
   }
 
-  // Revisión: fps simula la frecuencia de presentación; el combate siempre avanza en pasos de 1/60 s.
+  // Revisión: fps define la duración de cada actualización, igual que los cuadros de la partida.
   const aPantalla=p=>{camara.updateMatrixWorld(true);const v=p.clone().project(camara),b=esc.getBoundingClientRect();return {x:b.left+(v.x*.5+.5)*b.width,y:b.top+(.5-v.y*.5)*b.height,dentro:Math.abs(v.x)<1&&Math.abs(v.y)<1};};
   const resumen=e=>({borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,fase2:!!e.fase2,blindado:!!blindadoTroll(e),parryHasta:e.parryHasta||0,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
   window.CAOZ_ARPG_THREE_REVISION=Object.freeze({
     equipo:()=>jugadores.map(h=>({id:h.id,tipo:h.tipo,x:h.pos.x,z:h.pos.z,alma:h.alma,estado:h.estado,cd:{...h.cd},sigilo:h.sigilo,ultiT:h.ultiT,basicos:h.basicos,disparos:h.disparos})),
     aliados:()=>aliados.map(a=>({vida:a.vida,x:a.pos.x,z:a.pos.z})),
     exploracion:()=>({descubiertas:exploracion.celdas.size,activa:exploracion.activa?.nombre,campamentos:exploracion.campamentos.map(c=>({...c}))}),
-    jugador(i,accion,p){const h=jugadores[i];if(!h)return;return conHeroe(h,()=>{if(accion==='control'){ent.rev=p?{mov:new V3(p.mov?.[0]||0,0,p.mov?.[1]||0),atacar:!!p.atacar,apunta:p.apunta?new V3(p.apunta[0],0,p.apunta[1]):null}:null;return;}if(accion==='posicion'){h.pos.set(p.x,0,p.z);if(p.dir!==undefined)h.dir=p.dir;interpolacion.limpiar();return;}if(accion==='parryPrueba')return parryPerfecto(null,h.pos.clone());return usar(accion);});},
+    jugador(i,accion,p){const h=jugadores[i];if(!h)return;return conHeroe(h,()=>{if(accion==='control'){ent.rev=p?{mov:new V3(p.mov?.[0]||0,0,p.mov?.[1]||0),atacar:!!p.atacar,apunta:p.apunta?new V3(p.apunta[0],0,p.apunta[1]):null}:null;return;}if(accion==='posicion'){h.pos.set(p.x,0,p.z);if(p.dir!==undefined)h.dir=p.dir;return;}if(accion==='parryPrueba')return parryPerfecto(null,h.pos.clone());return usar(accion);});},
     listo:()=>listo,
-    async avanzar(s,fps=30){if(!Number.isFinite(s)||s<0||!Number.isFinite(fps)||fps<10||fps>240)throw Error('Duración o frecuencia inválida');const n=Math.ceil(s*fps);for(let i=0;i<n;i++){temporizador.avanzar(Math.min(1/fps,s-i/fps),simularPaso);if(i%3===2)await new Promise(r=>setTimeout(r,0));}dibujarEntrePasos(1);return this.estado();},
-    dibujar(){dibujarEntrePasos(1);const i=renderer.info.render;return {llamadas:i.calls,triangulos:i.triangles};},
+    async avanzar(s,fps=30){if(!Number.isFinite(s)||s<0||!Number.isFinite(fps)||fps<10||fps>240)throw Error('Duración o frecuencia inválida');const n=Math.ceil(s*fps);for(let i=0;i<n;i++){temporizador.avanzar(Math.min(1/fps,s-i/fps),simularPaso);if(i%3===2)await new Promise(r=>setTimeout(r,0));}dibujarCuadro();return this.estado();},
+    dibujar(){dibujarCuadro();const i=renderer.info.render;return {llamadas:i.calls,triangulos:i.triangles};},
     estado:()=>({tiempo:temporizador.estado(),pausa:pausa.activa,destino:{vuelta:rog.vuelta,nivel:rog.nivel,cartas:rog.mano.length,emitidas:rog.emitidas,abierto:rog.abierto,resuelto:rog.resuelto,efectos:rog.efectos.map(e=>({...e}))},peligrosTroll:peligrosTroll.map(p=>({tipo:p.tipo,k:p.t/p.dur,x:p.hasta.x,z:p.hasta.z,alto:p.m.position.y,devuelto:p.devuelto})),listo,webgl2:true,hdr,muestras,simple,version:THREE.REVISION,pases:[['render',pasoRender],['oclusion',oclusion],['saneado',saneado],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n),
       heroe:{carga:heroe.carga,acortarSalto:heroe.acortarSalto,t:+heroe.t.toFixed(3),vatq:+heroe.vatq.toFixed(2),punta:(()=>{const p=heroe.m.M.punta.getWorldPosition(new V3());return [+p.x.toFixed(2),+p.y.toFixed(2),+p.z.toFixed(2)];})(),combo:heroe.combo,invul:+heroe.invul.toFixed(2),parrys:heroe.parrys,tipo:heroe.tipo,balas:heroe.balas,recarga:+heroe.recargaT.toFixed(2),disparos:heroe.disparos,bloqueos:heroe.bloqueos,esquivados:heroe.esquivados||0,golpeDe:heroe.golpeDe?.id??null,x:+heroe.pos.x.toFixed(2),z:+heroe.pos.z.toFixed(2),alto:+(heroe.alto||0).toFixed(2),alma:heroe.alma,almaMax:heroe.almaMax,furia:+heroe.furia.toFixed(1),atq:heroe.atq,estado:heroe.estado,vivo:heroe.vivo,escudo:+heroe.escudo.toFixed(2),cd:{...heroe.cd},llaves:heroe.llaves,botin:heroe.botin.map(b=>b.id+'/'+b.ed),dir:+heroe.dir.toFixed(3)},
       enemigos:enemigos.map(resumen),botines:botines.map(b=>({id:b.id,ed:b.ed,listo:b.listo,volando:b.volando,x:+b.pos.x.toFixed(2),z:+b.pos.z.toFixed(2),mirada:+b.mirada.toFixed(2),escala:b.g?+(b.g.scale.x/SB).toFixed(2):0,nombre:b.nombre?.el.textContent||''})),
@@ -1388,8 +1371,8 @@
     // control({mov:[x,z],atacar,apunta:[x,z]}) manda como el teclado y el ratón; control(null) lo devuelve.
     control(c){ent.rev=c?{mov:new V3(c.mov?.[0]||0,0,c.mov?.[1]||0),atacar:!!c.atacar,apunta:c.apunta?new V3(c.apunta[0],0,c.apunta[1]):null}:null;},
     usar:(h,x,z)=>usar(h,x===undefined?null:new V3(x,0,z)),
-    heroe(p){if('x' in p)heroe.pos.set(p.x,0,p.z);if('alma' in p)heroe.alma=p.alma;if('furia' in p)heroe.furia=p.furia;if('dir' in p)heroe.dir=p.dir;vista.foco.copy(heroe.pos);interpolacion.limpiar();},
-    enemigo(id,p){const e=enemigos.find(e=>e.id===id);if(!e)return;if('x' in p)e.pos.set(p.x,0,p.z);if('dir' in p)e.dir=p.dir;if('vida' in p)e.vida=p.vida;interpolacion.limpiar();},
+    heroe(p){if('x' in p)heroe.pos.set(p.x,0,p.z);if('alma' in p)heroe.alma=p.alma;if('furia' in p)heroe.furia=p.furia;if('dir' in p)heroe.dir=p.dir;vista.foco.copy(heroe.pos);},
+    enemigo(id,p){const e=enemigos.find(e=>e.id===id);if(!e)return;if('x' in p)e.pos.set(p.x,0,p.z);if('dir' in p)e.dir=p.dir;if('vida' in p)e.vida=p.vida;},
     piloto(v){ent.piloto=v;},
     pose(anim,k){poses.heroe=anim?[anim,k]:null;},
     camara(p){Object.assign(vista,p);},
@@ -1414,7 +1397,7 @@
       listo:()=>listo,
       revision:window.CAOZ_ARPG_THREE_REVISION,
       detener(v){laboratorio.detenido=!!v;sincronizarTiempo();},
-      paso(){if(listo&&laboratorio.detenido&&!pausa.activa){temporizador.unPaso(simularPaso);dibujarEntrePasos(1);}},
+      paso(){if(listo&&laboratorio.detenido&&!pausa.activa){temporizador.avanzar(1/60,simularPaso);dibujarCuadro();}},
       observar(fn){laboratorio.despues=fn;},
       temporizador(antes,despues){laboratorio.preDibujo=antes;laboratorio.postDibujo=despues;return gl;},
       pasoFijo(v){laboratorio.fijo=!!v;sincronizarTiempo();},
@@ -1434,7 +1417,7 @@
       prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
       proteger(){for(const h of jugadores){h.alma=h.almaMax;h.invul=1;h.mando.foco=h.mando.activo=h.mando.listo=false;}},
       restaurarEntrada(){for(const h of jugadores){h.mando.foco=document.hasFocus();h.mando.listo=false;}},
-      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,animacion:MOD.animacion.configuracion(),simulacionHz:60,reloj:laboratorio.fijo?'referencia-por-cuadro':'tiempo-real',limiteRender:laboratorio.limite||0,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
+      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,animacion:MOD.animacion.configuracion(),simulacionHz:null,reloj:laboratorio.fijo?'referencia-por-cuadro':'tiempo-real',limiteRender:laboratorio.limite||0,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
       animacion:{leer:MOD.animacion.configuracion,aplicar:MOD.animacion.configurar,restablecer:MOD.animacion.restablecer},
       valores:()=>structuredClone(originales)
     };
