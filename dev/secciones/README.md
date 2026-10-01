@@ -398,7 +398,7 @@ oleadas, y al final entra Can, el de los Goblins.
   - Adreida es un modelo detallado sacado de su carta (sombreado suave, sigue siendo 3 llamadas de dibujo): cabeza esculpida con mandíbula ancha, ojos rojos, colmillos y orejas en punta; melena azul noche en mechones ondulados con la raya al medio; top negro con la correa en diagonal y los tres aros de plata; hombrera de cuero en capas; brazales con púas de hueso; puños cerrados sobre el mango; cinturón con hebilla de plata, cráneos de pájaro y bolsa; faldón de piel sobre la falda de tela; botas altas con correas y púa en la rodilla, y el hacha de doble hoja en creciente con la runa que brilla;
   - Adreida descansa el hacha de doble filo sobre el hombro derecho, con la cabeza detrás y ambas manos delante del pecho; la empuña con las dos manos al atacar: cada pose dice dónde va la empuñadura y hacia dónde apunta el hacha, y los dos brazos llegan con cinemática inversa (la derecha junto al pomo y la izquierda 30 cm hacia la cabeza, siempre sobre el mango y dentro del alcance de ambos brazos);
   - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
-  - el combo empieza lento; las cartas con velocidad de ataque lo aceleran (Arco Dorado de Juan, Lentes de Machete, Sombrero de Brick, Espada Común de la Bóveda), hasta un 180%;
+  - el combo empieza lento; los resultados de cartas de rapidez modifican su velocidad para el siguiente nivel;
   - con el ratón encima de un enemigo se apunta a él;
   - Espacio es el parry: Adreida alza el hacha 0,35 s y se gira sola hacia el golpe que llega; su cuerpo y su hacha brillan en dorado durante el parry, con un destello que se desvanece durante 0,3 s si es perfecto;
     - si el golpe llega en las primeras 0,18 s es perfecto: no hace daño, aturde al atacante 2 s (1 s a Can) y lo deja expuesto (le haces el doble), con un parón, +20 de Furia y reinicio de todos los cooldowns de habilidades (los costes de Furia se mantienen); una lanza desviada vuelve contra quien la lanzó (el triple de daño);
@@ -428,10 +428,15 @@ oleadas, y al final entra Can, el de los Goblins.
 - **Botín:**
   - los Objetos del juego caen como cartas físicas (`three-carta.js`) en Normal, Foil o Dorado, con su columna de luz;
   - con el ratón encima (o al tocarla) la carta se levanta y crece para leerla;
-  - se recoge pisándola y da su bonificación;
+  - se recoge pisándola y se guarda, sin modificar estadísticas;
   - Can suelta la Llave del Mago dorada (la llave de la primera Grieta, para el Hito 3).
+- **Roguelike · Cartas y destino:** cada nivel completo (Asedio o Cobro de piso, no cada fase interna) genera tres cartas distintas del catálogo con riesgos barajados: Audaz (11–20, +25 % / −10 %), Temeraria (17–20, +50 % / −10 %) y Descomunal (19–20, +200 % / −15 %). Para cooldown de dash, los beneficios son −15/−30/−60 % y los fallos +10/+10/+15 %. Se garantizan drops en las bajas 1, 3 y 5; los goblins invocados no cuentan. Si faltan drops al terminar, aparecen junto al héroe. La Llave del Mago es independiente de estas tres cartas.
+  - Recoger no aplica buffs: después de derrotar al jefe y su escolta y recoger las tres, el combate se pausa en un diálogo. Eliges una carta, descartas las otras dos y tiras una sola vez. Cada d20 y reparto usan `crypto.getRandomValues` con rechazo del resto para evitar sesgo; no dependen de la semilla del combate.
+  - El 1 (5 % siempre) elimina todos los efectos positivos de toda la partida; conserva todas las penalizaciones. El resto aplica el beneficio o el riesgo anunciado. Los efectos se acumulan multiplicándose. Básicos afecta al combo y la pistola; habilidades afecta al Salto/Torbellino de Adreida y Abanico de Mohamed; rapidez afecta al ataque y recarga; vida modifica el máximo conservando el porcentaje de salud; dash modifica el cooldown, no la invulnerabilidad.
+  - Tras el ogro puedes iniciar otra vuelta conservando efectos, con +25 % de vida y +10 % de daño base por vuelta para los enemigos. Reiniciar o cambiar de héroe comienza una partida limpia. Ratón/táctil: carta y confirmar; teclado: Tab/Enter; DualSense: izquierda/derecha y ×. El 1 crítico también puede reducir tu vida máxima al retirar un buff.
+  - Pruebas acotadas: `node dev/secciones/pruebas_arpg_destino.mjs` (reparto, 20 caras, acumulación, crítico, inventario y transiciones).
 - **Táctil:** palanca, Atacar (apunta solo al más cercano), Esquiva y los demás botones.
-- **Demostración:** juega sola leyendo sólo los avisos, como un jugador; es el piloto automático que usan las pruebas para ganar la partida entera.
+- **Demostración:** juega sola leyendo sólo los avisos, como un jugador; se detiene en la elección de destino para que el usuario acepte el riesgo.
 
 Comprobación acotada de la línea de puntería y los disparos de Mohamed:
 
