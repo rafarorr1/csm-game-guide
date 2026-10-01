@@ -488,7 +488,7 @@
   lineaMira.frustumCulled=false;lineaMira.visible=puntoMira.visible=false;escena.add(lineaMira,puntoMira);
   let punteria=null;
   // Primera intersección del segmento: evita saltarse un enemigo o atravesar un obstáculo entre fotogramas.
-  function impactoBala(desde,dir,maximo){let distancia=maximo,enemigo=null,bloqueado=false;
+  function impactoBala(desde,dir,maximo,soloPlano=false){let distancia=maximo,enemigo=null,bloqueado=false;
     const circulo=(x,z,r)=>{const dx=desde.x-x,dz=desde.z-z,a=dir.x*dir.x+dir.z*dir.z,c=dx*dx+dz*dz-r*r;
       if(c<=0)return 0;if(a<1e-9)return Infinity;const b=dx*dir.x+dz*dir.z,d=b*b-a*c;
       if(d<0)return Infinity;const t=(-b-Math.sqrt(d))/a;return t>=0?t:Infinity;};
@@ -497,13 +497,18 @@
     if(!ABIERTO)for(const n of PLANOS_MURALLA){const avance=dir.x*n.x+dir.z*n.z;if(avance>0){const t=(R-desde.x*n.x-desde.z*n.z)/avance;if(t>=0&&t<=distancia){distancia=t;bloqueado=true;}}}
     if(dir.y<0){const t=(.08-desde.y)/dir.y;if(t>=0&&t<=distancia){distancia=t;bloqueado=true;}}
     for(const e of enemigos){if(e.estado==='muere')continue;const t=circulo(e.pos.x,e.pos.z,e.radio+.18),y=desde.y+dir.y*t;
-      if(t<distancia&&y>=0&&y<=e.m.alto+.18){distancia=t;enemigo=e;bloqueado=false;}}
+      if(t<distancia&&(soloPlano||(y>=0&&y<=e.m.alto+.18))){distancia=t;enemigo=e;bloqueado=false;}}
     return {distancia,enemigo,bloqueado};}
   function objetivoDisparo(){
     if(heroe.id===0&&!mando.activo&&!ent.piloto&&!ent.rev&&!ent.tactil&&(ent.dentro||ent.atacando)){
       const sobre=bajo();if(sobre?.d)return sobre.pos.clone().setY(Math.min(1.15,sobre.m.alto*.7));
       const p=new V3();if(ray.ray.intersectPlane(planoMira,p))return p;}
-    const p=puntoApuntado();p.y=1.15;return p;}
+    const p=puntoApuntado(),dir=p.clone().sub(heroe.pos).setY(0).normalize();
+    // El stick indica dirección, no altura: baja el cañón hacia el primer cuerpo en esa línea.
+    // Conserva la cobertura y evita disparar por encima de los goblins cercanos.
+    const e=impactoBala(heroe.pos,dir,HEROES.mohamed.alcance,true).enemigo;
+    if(e)return e.pos.clone().setY(Math.min(1.15,e.m.alto*.7));
+    p.y=1.15;return p;}
   function actualizarPunteria(){const h=heroe,m=h.m;
     const visible=aDistancia()&&h.vivo&&h.sigilo<=0&&['quieto','andar','abanico'].includes(h.estado)&&!poses.heroe;
     lineaMira.visible=puntoMira.visible=visible;punteria=null;if(!visible){disparosPendientes.length=0;return;}
