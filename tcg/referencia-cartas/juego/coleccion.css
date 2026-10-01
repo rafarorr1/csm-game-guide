@@ -1,0 +1,1622 @@
+/* Colección de naipes con el panel violeta del juego y botones de taberna.
+   Los estilos permanecen dentro del diálogo, sin alterar el tablero. */
+#coleccionPanel{
+  --col-papel:#ebd7b2;--col-tinta:#f0dfc0;--col-suave:#b7a186;--col-laton:#a7834b;
+  --alto-util:calc(var(--coleccion-alto,100dvh) - max(10px,env(safe-area-inset-top)) - max(10px,env(safe-area-inset-bottom)));
+  position:fixed;inset:calc(var(--coleccion-top,0px) + max(10px,env(safe-area-inset-top))) 0 calc(100% - var(--coleccion-top,0px) - var(--coleccion-alto,100dvh) + max(10px,env(safe-area-inset-bottom)));
+  box-sizing:border-box;margin:auto;width:min(1120px,calc(100vw - 28px - env(safe-area-inset-left) - env(safe-area-inset-right)));height:min(840px,var(--alto-util));max-width:none;max-height:var(--alto-util);padding:6px;overflow:hidden;
+  color:var(--col-tinta);border:1px solid #c6a264;border-radius:7px;background:repeating-linear-gradient(4deg,#ffffff03 0 2px,#09050306 3px 6px),linear-gradient(110deg,#553b26,#211610 55%,#493322);
+  box-shadow:inset 0 0 0 3px #291e16,0 28px 90px #000d;font-family:var(--sans,system-ui,sans-serif);font-size:14px;font-variant:normal;line-height:1.4;text-align:left;zoom:1;overscroll-behavior:contain;color-scheme:dark;
+}
+#coleccionPanel::backdrop{background:#080609cf;backdrop-filter:blur(7px)}
+#coleccionPanel,#coleccionPanel *{box-sizing:border-box}
+#coleccionPanel :is(h2,h3,h4,p){margin:0}
+#coleccionPanel button,#coleccionPanel input,#coleccionPanel select{font:inherit}
+#coleccionPanel button{cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
+#coleccionPanel button:disabled{cursor:default}
+#coleccionPanel :is(button,input,select):focus-visible{outline:2px solid #ffe0a0;outline-offset:3px}
+#coleccionPanel svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.4;stroke-linejoin:round;stroke-linecap:round;flex:none}
+#coleccionPanel .coleccionInterior{height:100%;display:flex;flex-direction:column;min-height:0;overflow:hidden;padding:19px 23px 10px;border:1px solid #87613b;background:radial-gradient(ellipse at 45% 0,#70402625,transparent 65%),linear-gradient(100deg,#251e17,#191513 48%,#211b16);border-radius:2px;position:relative}
+#coleccionPanel .coleccionInterior:before,#coleccionPanel .coleccionInterior:after{content:'';position:absolute;width:9px;height:9px;z-index:1;border:1px solid #a07b43;border-radius:50%;background:radial-gradient(circle at 35% 28%,#eed79a,#946d31 40%,#332416 75%);top:8px;pointer-events:none}
+#coleccionPanel .coleccionInterior:before{left:8px}#coleccionPanel .coleccionInterior:after{right:8px}
+#coleccionPanel .coleccionCabecera{display:flex;align-items:center;gap:14px;flex:none;min-height:52px;margin-bottom:15px}
+#coleccionPanel .coleccionEmblema{display:grid;place-items:center;width:42px;height:47px;flex:none;color:#c6a46a;border:1px solid #8c693c;background:linear-gradient(#553b25,#2a2017);clip-path:polygon(0 0,100% 0,100% 80%,50% 100%,0 80%)}
+#coleccionPanel .coleccionEmblema svg{width:26px;height:26px;translate:0 -3px}
+#coleccionPanel .coleccionTitulos{min-width:0}
+#coleccionPanel .coleccionAntetitulo{display:block;color:#c4a572;font-size:10px;letter-spacing:2.8px;font-weight:600;line-height:1.4}
+#coleccionPanel h2{font-family:var(--serif,Georgia,serif);font-size:30px;font-weight:700;line-height:1.25;color:#f4dfb1;letter-spacing:.4px}
+#coleccionPanel .coleccionCerrar{margin-left:auto;display:grid;place-items:center;width:42px;height:42px;flex:none;border:1px solid #8a6b4670;border-radius:3px;background:#1c1610;color:#d4b98e;transition:background .18s ease}
+#coleccionPanel .coleccionCerrar:hover{background:#47321f}
+#coleccionPanel .coleccionPestanas{display:flex;gap:4px;flex:none;border-bottom:1px solid #8d683c77;margin-bottom:15px}
+#coleccionPanel .coleccionPestana{display:flex;align-items:center;justify-content:center;gap:10px;min-height:42px;min-width:156px;box-shadow:none;background:none;border:0;border-bottom:2px solid transparent;border-radius:0;color:#b39e82;padding:8px 20px;translate:none;scale:1;font-family:var(--serif,Georgia,serif);font-size:16px}
+#coleccionPanel .coleccionPestana[aria-current="page"]{color:#f3dba7;background:linear-gradient(transparent,#9d73371f);border-bottom-color:#cca45f}
+#coleccionPanel .coleccionNumero{min-width:24px;border:1px solid #9c75467a;border-radius:3px;padding:1px 5px;background:#140f0d;font:12px/1.5 var(--sans,system-ui)}
+#coleccionPanel .coleccionContenido{position:relative;flex:1;display:flex;flex-direction:column;min-height:0;gap:10px;overflow:hidden}
+#coleccionPanel .coleccionBoton{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:39px;border:1px solid #a3814a;border-radius:3px;color:#efdab3;padding:8px 18px;text-align:center;background:radial-gradient(circle at 35% 25%,#e8d095,#99743d 45%,#473218 75%,transparent 90%) left 7px center/4px 4px no-repeat,radial-gradient(circle at 35% 25%,#e8d095,#99743d 45%,#473218 75%,transparent 90%) right 7px center/4px 4px no-repeat,repeating-linear-gradient(3deg,transparent 0 4px,#00000015 5px 6px),linear-gradient(#60432b,#36271c);box-shadow:inset 0 1px 0 #c8a77840,inset 0 -2px 0 #130c0780,0 3px 0 #0e0b08;font-family:var(--serif,Georgia,serif);font-size:14px;font-weight:600;line-height:1.2;letter-spacing:.3px;transition:translate .16s ease,filter .16s ease,border-color .16s ease}
+#coleccionPanel .coleccionBoton:not(:disabled):hover{filter:brightness(1.17);border-color:#e6c27e;translate:0 -1px}
+#coleccionPanel .coleccionBoton:not(:disabled):active{translate:0 2px}
+#coleccionPanel .coleccionBoton:disabled{opacity:.4;filter:saturate(.4);box-shadow:inset 0 1px 0 #c8a77820,0 1px 0 #0e0b08}
+#coleccionPanel .coleccionFiltros{display:grid;grid-template-columns:minmax(140px,1fr) 190px 170px;gap:10px;flex:none}
+#coleccionPanel .coleccionBuscar{display:flex;align-items:center;gap:9px;background:#100d0b;border:1px solid #745737b0;border-radius:3px;padding:0 11px;min-width:0;color:#aa8b60}
+#coleccionPanel .coleccionBuscar input{min-width:0;width:100%;height:39px;padding:6px 0;background:none;border:0;color:#f3e0be;font-size:14px;outline-offset:0}
+#coleccionPanel input::placeholder{color:#a28d71;opacity:1}
+#coleccionPanel .coleccionFiltro{display:block;min-width:0}
+#coleccionPanel select{width:100%;height:41px;border:1px solid #745737b0;border-radius:3px;background:#211911;color:#e1cba4;padding:0 9px;font-size:13px;cursor:pointer}
+#coleccionPanel .coleccionResumen{color:#b09d85;font-size:12px;flex:none;line-height:1.4}
+#coleccionPanel .coleccionRejilla{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;overflow-y:auto;overflow-x:hidden;overscroll-behavior:contain;touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8d7443 #181020;scrollbar-gutter:stable;gap:16px 20px;flex:1;min-height:0;padding:8px 14px 10px;position:relative;background:repeating-linear-gradient(89deg,transparent 0 35px,#ffe6b602 36px 37px),radial-gradient(ellipse at center,#c2935630,transparent 85%),#1a1410;border:1px solid #74543166;border-radius:4px;box-shadow:inset 0 0 30px #0006}
+#coleccionPanel .coleccionMini{display:grid;grid-template-rows:minmax(0,1fr) auto;justify-items:center;gap:7px;min-width:0;min-height:0;position:relative;background:none;border:0;padding:0;box-shadow:none;color:var(--col-tinta);border-radius:4px;translate:none!important;filter:none!important}
+#coleccionPanel .coleccionMiniInfo{display:flex;flex-direction:column;gap:3px;width:100%;max-width:190px;min-width:0;text-align:center}
+#coleccionPanel .coleccionMiniInfo>strong{height:2.45em;display:flex;align-items:center;justify-content:center;font-family:var(--serif,Georgia,serif);font-size:13px;line-height:1.2;font-weight:600;color:#edd9b9}
+#coleccionPanel .coleccionMiniPie{display:flex;align-items:center;justify-content:center;gap:12px;font-size:10px;color:#b7a185;line-height:1.4}
+#coleccionPanel .coleccionPuntos{display:inline-flex;gap:4px}
+#coleccionPanel .coleccionPuntos i{display:block;width:7px;height:7px;border:1px solid #7e715d;background:#332b22;rotate:45deg}
+#coleccionPanel .coleccionPuntos i[data-edicion="foil"]{border-color:#aaa8c7}
+#coleccionPanel .coleccionPuntos i[data-edicion="dorado"]{border-color:#c3a162}
+#coleccionPanel .coleccionPuntos i.propia[data-edicion="normal"]{background:#bba685}
+#coleccionPanel .coleccionPuntos i.propia[data-edicion="foil"]{background:linear-gradient(#dcbdeb,#93d0c7)}
+#coleccionPanel .coleccionPuntos i.propia[data-edicion="dorado"]{background:#e0b65d}
+#coleccionPanel .coleccionPuntos i.elegida{box-shadow:0 0 0 2px #dcc7a138}
+/* La colección usa la carta del tablero, sin dibujar otra composición. */
+#coleccionPanel .coleccionCarta{position:relative;flex:none;margin:0;max-width:none;max-height:none;min-height:0;aspect-ratio:5/7;transform:none;rotate:none;scale:1;translate:none;transition:filter .18s ease;pointer-events:none}
+#coleccionPanel .coleccionCarta.card{overflow:visible;display:flex;flex-direction:column}
+#coleccionPanel .coleccionCarta.card.acomodo .pieCarta .txt{display:block;max-height:none;overflow:visible;-webkit-line-clamp:unset;white-space:normal}
+#coleccionPanel .coleccionCarta.card.acomodo .pieCarta .tribe{white-space:normal}
+/* El retrato ocupa el naipe entero; el nombre y el arquetipo se leen al pie.
+   Sólo Colección: la tarjeta de VS y los frentes de sobres conservan su formato. */
+#coleccionPanel .coleccionCarta.vscard{inset:auto;position:relative;display:flex;flex-direction:column;justify-content:flex-end;border-radius:10px;background:#1a1325;overflow:hidden;animation:none}
+#coleccionPanel .coleccionCarta.vscard .lface{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0}
+#coleccionPanel .coleccionCarta.vscard .lname{position:relative;inset:auto;z-index:3;margin:0;padding:.16em .25em .08em;text-align:center;font:700 1.5em/1.2 var(--serif,Georgia,serif);font-variant:small-caps;color:var(--acabado-tinta,#fdf6e6);background:#17101ee8}
+#coleccionPanel .coleccionCarta.vscard .larch{position:relative;inset:auto;z-index:3;display:block;margin:0;padding:0 .65em .7em;text-align:center;font:700 .65em/1.3 var(--sans,system-ui,sans-serif);letter-spacing:.07em;text-transform:uppercase;color:#d6c8e4;background:#17101ee8}
+#coleccionPanel .coleccionMini:hover .coleccionCarta{filter:brightness(1.09)}
+#coleccionPanel .coleccionVacio{grid-column:1/-1;grid-row:1/-1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;text-align:center}
+#coleccionPanel .coleccionVacio svg{width:32px;height:32px;color:#a38559}
+#coleccionPanel .coleccionVacio h3{font-family:var(--serif,Georgia,serif);font-weight:400;font-size:20px}
+#coleccionPanel .coleccionEstado{flex:none;min-height:20px;font-size:12px;line-height:20px;color:#d8c095;text-align:center;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+#coleccionPanel .coleccionEstado.error{color:#ffb3a3}
+#coleccionPanel .coleccionPie{display:flex;align-items:center;justify-content:space-between;gap:12px;flex:none;border-top:1px solid #80603866;min-height:34px;padding-top:5px}
+#coleccionPanel .coleccionTotales{font-size:11px;color:#b4a085}
+#coleccionPanel .coleccionVolver{font-family:var(--serif,Georgia,serif);color:#e4cc9e;font-size:13px;min-height:30px;border:0;background:none;padding:4px 0 4px 10px;flex:none;text-decoration:underline;text-underline-offset:4px;text-decoration-color:#9e794990}
+#coleccionPanel .coleccionDetalleCabecera{position:relative;flex:none;text-align:center;padding:0 120px;min-height:53px}
+#coleccionPanel .coleccionDetalleCabecera h3{font-family:var(--serif,Georgia,serif);font-size:25px;line-height:1.2;text-wrap:balance;color:#edd6aa}
+#coleccionPanel .coleccionDetalleCabecera p{color:#b8a28a;font-size:12px;margin-top:4px}
+#coleccionPanel .coleccionAtras{position:absolute;left:0;top:0;font-size:12px;padding:7px 11px;min-height:34px;background:none;box-shadow:none;border:0}
+#coleccionPanel .coleccionAtras svg{width:15px;height:15px}
+#coleccionPanel .coleccionVersiones{flex:1;min-height:140px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;max-width:780px;width:100%;margin:0 auto;padding:8px 8px 6px;background:radial-gradient(ellipse at 50% 55%,#af865624,transparent 72%)}
+#coleccionPanel .coleccionVersion{display:flex;flex-direction:column;align-items:center;min-width:0;min-height:0;gap:8px;position:relative}
+#coleccionPanel .coleccionVersion h4{font-family:var(--serif,Georgia,serif);font-size:17px;font-weight:400;letter-spacing:1px;color:#e0c79f;flex:none}
+#coleccionPanel .coleccionVersion[data-edicion="foil"] h4{color:#c5d3e4}
+#coleccionPanel .coleccionVersion[data-edicion="dorado"] h4{color:#efd086}
+#coleccionPanel .coleccionVersion .coleccionCarta{height:auto;flex:1;min-height:0;max-height:300px}
+#coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline:2px solid #d8b273;outline-offset:4px}
+/* Una edición sin desbloquear sólo deja entrever el naipe. Las etiquetas,
+   cantidades y acciones permanecen nítidas fuera de la carta. */
+#coleccionPanel .coleccionVersion.bloqueada .coleccionCarta{filter:blur(clamp(3px,calc(var(--cw,200px) / 40),7px)) saturate(.55) brightness(.72)}
+#coleccionPanel .coleccionEstadoEdicion{display:flex;align-items:center;gap:5px;font-size:11px;color:#b3a18a;min-height:18px;flex:none}
+#coleccionPanel .coleccionEstadoEdicion svg{width:13px;height:13px}
+#coleccionPanel .coleccionCantidadEdicion{font-weight:700;font-variant-numeric:tabular-nums;color:#eadfbf}
+#coleccionPanel .coleccionCantidadSeparador{opacity:.55;margin:0 2px}
+#coleccionPanel .coleccionVersion.elegida .coleccionEstadoEdicion{color:#dbc68e}
+#coleccionPanel .coleccionUsar{width:100%;max-width:180px;flex:none;min-height:36px;padding:7px 12px;font-size:13px}
+#coleccionPanel .coleccionVersion.elegida .coleccionUsar:disabled{opacity:1;border-color:#857148;background:linear-gradient(#3c3324,#272319);color:#d8c296;box-shadow:none}
+#coleccionPanel .coleccionReglas{flex:none;max-width:850px;width:100%;margin:0 auto;padding:12px 17px 7px;border:1px solid #84613a77;border-radius:3px;background:linear-gradient(110deg,#3c2a1b66,#281d1470);position:relative}
+#coleccionPanel .coleccionReglasTitulo{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:11px;color:#b69d7a;margin-bottom:7px}
+#coleccionPanel .coleccionReglasTitulo strong{font-family:var(--serif,Georgia,serif);font-size:15px;font-weight:500;color:#dfc398}
+#coleccionPanel .coleccionReglaTexto{height:4.6em;overflow:hidden;font-size:14px;line-height:1.52;color:#e7d9c2}
+#coleccionPanel .coleccionReglaPaginas{height:24px;display:flex;align-items:center;justify-content:flex-end;gap:9px;color:#b8a082;font-size:10px}
+#coleccionPanel .coleccionReglaPaginas:empty{height:0}
+#coleccionPanel .coleccionReglaPaginas .coleccionBoton{min-height:23px;width:28px;padding:0;font-family:system-ui;font-size:18px;line-height:1;border-color:#705332;background:#271c13;box-shadow:none}
+#coleccionPanel .coleccionAviso{text-align:center;font-size:11px;line-height:1.4;color:#b29c7d;flex:none;padding:3px 6px 1px}
+#coleccionPanel .coleccionSobreTitulo{flex:none;text-align:center;padding-top:4px}
+#coleccionPanel .coleccionSobreTitulo h3{font-family:var(--serif,Georgia,serif);font-size:31px;color:#efd6a3;line-height:1.3;margin-top:5px}
+#coleccionPanel .coleccionSobreTitulo p{font-size:13px;color:#b9a287;line-height:1.5;margin-top:5px}
+#coleccionPanel .coleccionSobreEscena{flex:1;min-height:100px;display:grid;place-items:center;position:relative;isolation:isolate}
+#coleccionPanel .coleccionSobreAura{position:absolute;width:390px;max-width:100%;height:100%;background:radial-gradient(ellipse,#bc914336,transparent 67%);filter:blur(3px);pointer-events:none}
+#coleccionPanel .coleccionSobre{height:90%;width:auto;max-height:330px;aspect-ratio:.68;position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;isolation:isolate;border:1px solid #c3a369;border-radius:3px 3px 6px 6px;background:repeating-linear-gradient(92deg,#e2b65008 0 2px,transparent 3px 8px),linear-gradient(125deg,#654725,#2f251d 30%,#50371d 53%,#171310 80%);box-shadow:inset 0 0 0 7px #16120cd9,inset 0 0 0 8px #a6814666,0 16px 30px #000b;rotate:-5deg;animation:coleccionSobreFlota 6s ease-in-out infinite;color:#d6b473;overflow:hidden;container-type:inline-size}
+#coleccionPanel .coleccionSobre:before,#coleccionPanel .coleccionSobre:after{content:'';position:absolute;left:0;right:0;height:8%;border-top:1px solid #b99a5c66;border-bottom:1px solid #b99a5c66;background:repeating-linear-gradient(90deg,#daba6d35 0 1px,transparent 2px 4px),#251e16;z-index:-1}
+#coleccionPanel .coleccionSobre:before{top:0}#coleccionPanel .coleccionSobre:after{bottom:0}
+#coleccionPanel .coleccionSobreMarca{font:700 24cqw/1 var(--serif,Georgia,serif);letter-spacing:2px;text-shadow:0 1px 0 #fde0a073,0 4px 6px #0006}
+#coleccionPanel .coleccionSobreLinea{font:9cqw/1.3 var(--serif,Georgia,serif);letter-spacing:2px}
+#coleccionPanel .coleccionSobre>svg{width:26%;height:22%;margin-top:10%;stroke-width:.8;opacity:.7}
+#coleccionPanel .coleccionSobreSello{position:absolute;display:grid;place-items:center;bottom:19%;right:12%;width:26%;aspect-ratio:1;border-radius:50%;border:2px solid #8d3626;background:radial-gradient(circle at 32% 23%,#ae5439,#5f221b 60%,#32150f);box-shadow:0 2px 4px #000b,inset 0 0 0 3px #bc725433;font-size:15cqw;color:#e9b77b;rotate:15deg}
+#coleccionPanel .coleccionSobreLeyenda{position:absolute;bottom:11%;font-size:5cqw;letter-spacing:1.8px}
+#coleccionPanel .coleccionSobreAcciones{flex:none;display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 0 6px}
+#coleccionPanel .coleccionSobreCuenta{font-size:13px;color:#c5aa80}
+#coleccionPanel .coleccionAbrirSobre{width:min(280px,100%);min-height:46px;font-size:17px}
+#coleccionPanel .coleccionBeta{background:none;border:1px dashed #8c765780;box-shadow:none;min-height:31px;padding:5px 13px;font-family:var(--sans,system-ui);font-size:11px;color:#baaa8e}
+#coleccionPanel .coleccionDemoEdiciones{grid-column:1/-1;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:6px 12px;padding-top:4px;text-align:center}
+#coleccionPanel .coleccionDemoEdiciones .coleccionBeta{min-width:205px}
+#coleccionPanel .coleccionDemoNota{margin:0;color:#a9987f;font-size:10px;line-height:1.35}
+#coleccionPanel .coleccionSr{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+#coleccionPanel .barridoModal{position:absolute;inset:0;z-index:50;pointer-events:none}
+#coleccionPanel .coleccionInterior.menuEntra{animation:entraPantalla .4s cubic-bezier(.2,.75,.3,1) both}
+@keyframes coleccionSobreFlota{0%,100%{translate:0 3px;rotate:-5deg}50%{translate:0 -5px;rotate:-3deg}}
+@media(max-width:850px){
+  #coleccionPanel .coleccionInterior{padding:15px 17px 8px}
+  #coleccionPanel .coleccionFiltros{grid-template-columns:minmax(110px,1fr) 150px 145px}
+  #coleccionPanel .coleccionRejilla{gap:13px 14px}
+  #coleccionPanel .coleccionVersiones{gap:20px;max-width:680px}
+}
+@media(max-width:580px){
+  #coleccionPanel{width:calc(100vw - 16px - env(safe-area-inset-left) - env(safe-area-inset-right));padding:4px;border-radius:6px;height:var(--alto-util)}
+  #coleccionPanel .coleccionInterior{padding:13px 10px 6px}
+  #coleccionPanel .coleccionCabecera{min-height:41px;gap:8px;margin-bottom:9px}
+  #coleccionPanel .coleccionEmblema{width:30px;height:36px}
+  #coleccionPanel .coleccionEmblema svg{width:19px;height:19px}
+  #coleccionPanel .coleccionCabecera .coleccionAntetitulo{font-size:8px;letter-spacing:1.7px}
+  #coleccionPanel h2{font-size:21px;letter-spacing:0}
+  #coleccionPanel .coleccionCerrar{width:34px;height:36px}
+  #coleccionPanel .coleccionCerrar svg{width:17px;height:17px}
+  #coleccionPanel .coleccionPestanas{gap:2px;margin-bottom:10px}
+  #coleccionPanel .coleccionPestana{flex:1;min-width:0;min-height:39px;padding:7px 12px;font-size:14px;gap:7px}
+  #coleccionPanel .coleccionPestana svg{width:16px;height:16px}
+  #coleccionPanel .coleccionContenido{gap:8px}
+  #coleccionPanel .coleccionFiltros{grid-template-columns:1fr 1fr;gap:7px}
+  #coleccionPanel .coleccionBuscar{grid-column:1/-1;height:37px}
+  #coleccionPanel .coleccionBuscar input{height:35px;font-size:16px}
+  #coleccionPanel select{height:36px;font-size:12px}
+  #coleccionPanel .coleccionResumen{font-size:10px;line-height:1.4;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  #coleccionPanel .coleccionRejilla{padding:9px 7px;gap:12px 10px}
+  #coleccionPanel .coleccionMini{gap:5px}
+  #coleccionPanel .coleccionMiniInfo>strong{font-size:11px;line-height:1.18;height:3.54em}
+  #coleccionPanel .coleccionMiniPie{font-size:9px;gap:7px}
+  #coleccionPanel .coleccionPuntos{gap:3px}
+  #coleccionPanel .coleccionPuntos i{width:5px;height:5px}
+  #coleccionPanel .coleccionCarta{max-height:235px}
+  #coleccionPanel .coleccionEstado{font-size:10px;min-height:17px;line-height:17px}
+  #coleccionPanel .coleccionPie{min-height:28px;gap:6px;padding-top:3px}
+  #coleccionPanel .coleccionTotales{font-size:9px}
+  #coleccionPanel .coleccionVolver{font-size:11px;min-height:28px}
+  #coleccionPanel .coleccionDetalleCabecera{padding:0 0 0 44px;text-align:center;min-height:48px;display:flex;flex-direction:column;justify-content:center}
+  #coleccionPanel .coleccionDetalleCabecera h3{font-size:18px;line-height:1.15}
+  #coleccionPanel .coleccionDetalleCabecera p{font-size:10px;margin-top:3px}
+  #coleccionPanel .coleccionAtras{font-size:0;gap:0;width:35px;height:37px;min-height:37px;padding:5px;border:1px solid #8c693c70}
+  #coleccionPanel .coleccionAtras svg{width:18px;height:18px}
+  #coleccionPanel .coleccionVersiones{gap:11px;padding:5px 3px 3px;min-height:175px;max-height:345px}
+  #coleccionPanel .coleccionVersion{gap:6px}
+  #coleccionPanel .coleccionVersion h4{font-size:13px;letter-spacing:.3px}
+  #coleccionPanel .coleccionVersion .coleccionCarta{max-height:228px}
+  #coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline-width:1px;outline-offset:3px}
+  #coleccionPanel .coleccionEstadoEdicion{font-size:9px;gap:3px;min-height:15px;white-space:nowrap}
+  #coleccionPanel .coleccionEstadoEdicion svg{width:11px;height:11px}
+  #coleccionPanel .coleccionUsar{font-size:11px;min-height:34px;padding:5px 7px;letter-spacing:0;background-image:repeating-linear-gradient(3deg,transparent 0 4px,#00000015 5px 6px),linear-gradient(#60432b,#36271c)}
+  #coleccionPanel .coleccionReglas{padding:10px 11px 7px}
+  #coleccionPanel .coleccionReglasTitulo{font-size:10px;margin-bottom:5px;gap:6px}
+  #coleccionPanel .coleccionReglasTitulo strong{font-size:13px}
+  #coleccionPanel .coleccionReglaTexto{font-size:13px;line-height:1.5;height:7.5em}
+  #coleccionPanel .coleccionReglaPaginas{height:24px;font-size:10px}
+  #coleccionPanel .coleccionReglaPaginas:empty{height:0}
+  #coleccionPanel .coleccionAviso{font-size:10px;padding:1px 0}
+  #coleccionPanel .coleccionSobreTitulo h3{font-size:24px}
+  #coleccionPanel .coleccionSobreTitulo p{font-size:12px;max-width:290px;margin:5px auto 0}
+  #coleccionPanel .coleccionSobreTitulo .coleccionAntetitulo{font-size:9px;letter-spacing:2px}
+  #coleccionPanel .coleccionSobreAcciones{gap:10px}
+  #coleccionPanel .coleccionSobreCuenta{font-size:11px}
+  #coleccionPanel .coleccionAbrirSobre{min-height:43px;font-size:15px}
+}
+#coleccionPanel.coleccionBaja .coleccionInterior{padding-top:9px}
+#coleccionPanel.coleccionBaja .coleccionCabecera{min-height:33px;margin-bottom:5px}
+#coleccionPanel.coleccionBaja .coleccionCabecera .coleccionAntetitulo{display:none}
+#coleccionPanel.coleccionBaja .coleccionPestanas{margin-bottom:7px}
+#coleccionPanel.coleccionBaja .coleccionDetalleCabecera{min-height:36px}
+#coleccionPanel.coleccionBaja .coleccionReglaTexto{height:4.5em;font-size:12px}
+#coleccionPanel.coleccionBaja .coleccionVersiones{min-height:140px}
+#coleccionPanel.coleccionBaja .coleccionAviso{display:none}
+#coleccionPanel.coleccionBaja .coleccionSobreTitulo{padding:0}
+#coleccionPanel.coleccionBaja .coleccionSobreTitulo h3{font-size:22px;margin-top:0}
+#coleccionPanel.coleccionBaja .coleccionSobreTitulo>.coleccionAntetitulo{display:none}
+#coleccionPanel.coleccionBaja .coleccionSobreAcciones{gap:6px}
+#coleccionPanel.coleccionBaja .coleccionSobreCuenta{display:none}
+#coleccionPanel.coleccionTeclado .coleccionCabecera,#coleccionPanel.coleccionTeclado .coleccionResumen,#coleccionPanel.coleccionTeclado .coleccionEstado,#coleccionPanel.coleccionTeclado .coleccionPie{display:none}
+#coleccionPanel.coleccionTeclado .coleccionPestanas{margin-bottom:6px}
+#coleccionPanel.coleccionTeclado .coleccionRejilla{gap:6px}
+#coleccionPanel.coleccionTeclado .coleccionMiniInfo>strong{font-size:10px;height:2.2em}
+#coleccionPanel.coleccionTeclado .coleccionMiniPie{display:none}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel *,#coleccionPanel *:before,#coleccionPanel *:after{animation:none!important;transition:none!important}
+  #coleccionPanel .coleccionBoton:hover,#coleccionPanel .coleccionMini:hover .coleccionCarta{translate:none}
+}
+/* Las miniaturas conservan su proporción; el hueco libre no estira el papel. */
+#coleccionPanel .coleccionMini>.coleccionCarta{align-self:center}
+#coleccionPanel .coleccionVersion .coleccionCarta{margin:auto 0}
+#coleccionPanel .coleccionPestanas .coleccionPestana{background:none;box-shadow:none;border:0;border-bottom:2px solid transparent;border-radius:0;translate:none}
+#coleccionPanel .coleccionPestanas .coleccionPestana[aria-current="page"]{color:#f3dba7;background:linear-gradient(transparent,#9d73371f);border-bottom-color:#cca45f}
+@media(max-width:580px){
+  #coleccionPanel.coleccionBaja .coleccionResumen{display:none}
+  #coleccionPanel.coleccionBaja .coleccionContenido{gap:6px}
+  #coleccionPanel.coleccionBaja .coleccionRejilla{gap:8px;padding:7px}
+  #coleccionPanel.coleccionBaja .coleccionMiniInfo{gap:2px}
+  #coleccionPanel.coleccionBaja .coleccionMiniInfo>strong{font-size:11px;height:1.3em;display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;line-height:1.3}
+  #coleccionPanel.coleccionBaja .coleccionMiniPie{font-size:9px;line-height:1.2}
+  #coleccionPanel.coleccionBaja .coleccionEstado:empty{min-height:5px;height:5px}
+  #coleccionPanel.coleccionBaja .coleccionReglas{padding-top:8px;padding-bottom:5px}
+  #coleccionPanel.coleccionBaja .coleccionVersiones{max-height:none}
+}
+@media(max-width:360px){
+  #coleccionPanel .coleccionEmblema{display:none}
+  #coleccionPanel h2{font-size:20px}
+  #coleccionPanel .coleccionCabecera{gap:5px}
+  #coleccionPanel .coleccionTotales{max-width:170px;line-height:1.25}
+}
+/* Ediciones grandes: el formato del naipe original conserva su texto completo. */
+#coleccionPanel .coleccionRejilla{gap:22px;padding:17px 18px 12px}
+#coleccionPanel .coleccionMini{gap:12px;grid-template-rows:auto 20px}
+#coleccionPanel .coleccionMiniInfo{display:block;max-width:none}
+#coleccionPanel .coleccionMiniPie{font-family:var(--sans,system-ui);font-size:12px;gap:14px;line-height:20px}
+#coleccionPanel .coleccionPuntos{gap:5px}
+#coleccionPanel .coleccionPuntos i{width:8px;height:8px}
+#coleccionPanel .coleccionVersiones{max-width:970px;max-height:none;gap:24px;padding:8px 12px 12px;min-height:0}
+#coleccionPanel .coleccionVersion .coleccionCarta{max-height:none}
+#coleccionPanel .coleccionVersion.elegida .coleccionCarta{outline:0;box-shadow:0 0 20px #d5ae5126}
+#coleccionPanel .coleccionElegirAcabado{min-height:34px;background:none;border:1px solid #80603d70;box-shadow:none;color:#d3bc99;font-size:14px;min-width:95px;padding:6px 10px}
+#coleccionPanel .coleccionElegirAcabado[aria-pressed="true"]{border-color:#d6b273;color:#f2dfb7;background:#a9823220}
+#coleccionPanel .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{color:#d2d4e8}
+#coleccionPanel .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{color:#edcc87}
+#coleccionPanel .coleccionReglas{display:none}
+#coleccionPanel .coleccionCanje{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;text-align:center;max-width:450px;width:100%;margin:auto}
+#coleccionPanel .coleccionCanjeSello{width:84px;height:84px;display:grid;place-items:center;border:1px solid #bd9658;border-radius:50%;color:#edc983;background:radial-gradient(circle at 30% 23%,#795020,#302318 65%);box-shadow:inset 0 0 0 5px #36281c,inset 0 0 0 6px #b18d5133,0 10px 30px #0005}
+#coleccionPanel .coleccionCanjeSello svg{width:35px;height:35px}
+#coleccionPanel .coleccionCanje h3{font:700 32px/1.15 var(--serif,Georgia,serif);color:#efd6a5}
+#coleccionPanel .coleccionCanje>p{font-size:14px;line-height:1.6;color:#ccb393}
+#coleccionPanel .coleccionCanjeCodigo{display:flex;flex-direction:column;gap:7px;width:100%;max-width:310px;color:#c7af8c;font-size:12px;text-align:left}
+#coleccionPanel .coleccionCanjeCodigo input{width:100%;height:45px;font-size:16px;border:1px solid #86683e88;border-radius:3px;background:#100d0a;color:#9c8a6c;padding:8px 12px;opacity:1}
+#coleccionPanel .coleccionCanje .coleccionCanjeNota{font-size:11px;max-width:300px;color:#aa9579}
+#coleccionPanel .coleccionCanjeVolver{align-self:center;margin-bottom:12px;flex:none}
+@media(max-width:580px){
+  #coleccionPanel .coleccionPestana{font-size:12px;padding:7px 6px;gap:5px}
+  #coleccionPanel .coleccionPestana svg{width:14px;height:14px}
+  #coleccionPanel .coleccionNumero{min-width:19px;padding:0 4px;font-size:10px}
+  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{padding:14px 12px 8px}
+  #coleccionPanel .coleccionMini{gap:9px}
+  #coleccionPanel .coleccionMiniPie,#coleccionPanel.coleccionBaja .coleccionMiniPie{display:flex;font-size:11px}
+  #coleccionPanel .coleccionVersiones{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:34px minmax(0,1fr) 18px 40px;gap:10px;padding:2px 4px 8px;min-height:0!important;max-height:none}
+  #coleccionPanel .coleccionVersion{display:contents}
+  #coleccionPanel .coleccionVersion .coleccionElegirAcabado{grid-row:1;min-width:0;width:100%;font-size:13px;padding:5px 4px}
+  #coleccionPanel .coleccionVersion[data-edicion="normal"] .coleccionElegirAcabado{grid-column:1}
+  #coleccionPanel .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{grid-column:2}
+  #coleccionPanel .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{grid-column:3}
+  #coleccionPanel .coleccionVersion:not(.vista) :is(.coleccionCarta,.coleccionEstadoEdicion,.coleccionUsar){display:none}
+  #coleccionPanel .coleccionVersion.vista .coleccionCarta{grid-column:1/-1;grid-row:2;justify-self:center;align-self:center;margin:0}
+  #coleccionPanel .coleccionVersion.vista .coleccionEstadoEdicion{grid-column:1/-1;grid-row:3;justify-self:center;align-self:center;font-size:11px}
+  #coleccionPanel .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:4;justify-self:center;align-self:center;width:100%;min-height:39px;max-width:230px;font-size:14px}
+  #coleccionPanel .coleccionSobreTitulo h3{font-size:23px}
+  #coleccionPanel .coleccionSobreTitulo p{max-width:320px}
+  #coleccionPanel .coleccionCanje{gap:14px;padding:8px 10px}
+  #coleccionPanel .coleccionCanje h3{font-size:27px}
+  #coleccionPanel .coleccionCanje>p{font-size:13px}
+}
+#coleccionPanel.coleccionBaja .coleccionCanje{gap:9px}
+#coleccionPanel.coleccionBaja .coleccionCanjeSello{width:54px;height:54px}
+#coleccionPanel.coleccionBaja .coleccionCanjeSello svg{width:26px;height:26px}
+#coleccionPanel.coleccionBaja .coleccionCanje .coleccionAntetitulo{display:none}
+@media(max-width:580px){
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera .coleccionAntetitulo{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera{min-height:34px;margin-bottom:5px}
+  #coleccionPanel[data-vista="cartas"] .coleccionResumen{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionEstado:empty{height:5px;min-height:5px}
+  #coleccionPanel .coleccionMini{gap:8px}
+  #coleccionPanel .coleccionMiniPie{font-size:10px}
+}
+/* El panel vuelve al violeta del juego. Sólo los botones adoptan la madera
+   de Taberna: sin cambiar el diseño original de las cartas ni añadir herrajes. */
+#coleccionPanel{--col-tinta:#e6def2;--col-suave:#b4a5ca;--col-laton:#8d6f21;border-color:var(--gold2,#8d6f21);border-radius:14px;background:linear-gradient(180deg,var(--panel2,#241a34),var(--panel,#1c1429));box-shadow:0 20px 60px #000b;padding:4px}
+#coleccionPanel .coleccionInterior{border:0;border-radius:10px;background:none;padding-top:17px}
+#coleccionPanel .coleccionInterior:before,#coleccionPanel .coleccionInterior:after{display:none}
+#coleccionPanel .coleccionEmblema,#coleccionPanel .coleccionCabecera .coleccionAntetitulo{display:none}
+#coleccionPanel .coleccionCabecera{min-height:41px;margin-bottom:11px}
+#coleccionPanel h2,#coleccionPanel .coleccionDetalleCabecera h3{color:var(--gold,#e6bb52)}
+#coleccionPanel .coleccionCerrar{background:#150f1f;border-color:#5c4872;border-radius:7px;color:#dfd0ed}
+#coleccionPanel .coleccionCerrar:hover{background:#30233f}
+#coleccionPanel .coleccionPestanas,#coleccionPanel .coleccionPie{border-color:#473357}
+#coleccionPanel .coleccionPestanas .coleccionPestana{color:#b4a5ca}
+#coleccionPanel .coleccionPestanas .coleccionPestana[aria-current="page"]{color:#ecd18e}
+#coleccionPanel .coleccionBuscar{background:#130e1d;border-color:#4d3a65;border-radius:6px;color:#b5a3cb}
+#coleccionPanel .coleccionBuscar input{color:#e4dcef}
+#coleccionPanel .coleccionBuscar input::placeholder{color:#a492bb}
+#coleccionPanel select{background:#1a1227;border-color:#4d3a65;border-radius:6px;color:#d5c7e7}
+#coleccionPanel .coleccionNumero{background:#150f1f;border-color:#625072;color:#e1d5ed}
+#coleccionPanel .coleccionResumen,#coleccionPanel .coleccionTotales,#coleccionPanel .coleccionAviso,#coleccionPanel .coleccionDetalleCabecera p{color:#afa0c2}
+#coleccionPanel .coleccionRejilla{background:none;border:0;box-shadow:none;border-radius:0}
+#coleccionPanel .coleccionMiniPie{color:#c6b7da}
+#coleccionPanel .coleccionVersiones{background:none}
+#coleccionPanel .coleccionElegirAcabado{background:#1a1424;border-color:#54405f;color:#c8bbd6}
+#coleccionPanel .coleccionElegirAcabado[aria-pressed="true"]{background:#352647;border-color:#c6a056}
+#coleccionPanel .coleccionCarta.card.acomodo.t-personaje .pieCarta{margin-bottom:1.15em}
+#coleccionPanel .coleccionEstado{color:#d7c48f}
+#coleccionPanel .coleccionEstado.error{color:#ffb3a3}
+#coleccionPanel .coleccionSobreTitulo h3,#coleccionPanel .coleccionCanje h3{color:#ecd18e}
+#coleccionPanel .coleccionSobreTitulo p,#coleccionPanel .coleccionCanje>p{color:#c0b1d3}
+@media(max-width:580px){
+  #coleccionPanel .coleccionInterior{padding-top:11px}
+  #coleccionPanel .coleccionCabecera{min-height:36px;margin-bottom:7px}
+}
+/* Tres columnas continuas. El scroll queda dentro del listado para mantener
+   búsqueda, filtros y salida siempre disponibles, incluso con teclado móvil. */
+#coleccionPanel .coleccionRejilla{scroll-padding-block:8px;gap:10px;padding:10px 6px}
+#coleccionPanel .coleccionRejilla:focus-visible{outline:1px solid #c6a056;outline-offset:-1px}
+#coleccionPanel .coleccionMini{align-self:start;scroll-margin-block:8px;gap:3px;grid-template-rows:auto auto}
+#coleccionPanel .coleccionMini .coleccionMiniPie{line-height:16px;min-height:16px;flex-wrap:wrap;column-gap:8px;row-gap:0}
+#coleccionPanel .coleccionMini>.coleccionCarta{max-height:none}
+#coleccionPanel .coleccionVacio{min-height:160px;padding:12px}
+@media(max-width:580px){
+  #coleccionPanel .coleccionRejilla,#coleccionPanel.coleccionBaja .coleccionRejilla,#coleccionPanel.coleccionTeclado .coleccionRejilla{column-gap:4px;row-gap:6px;padding:8px 0;scrollbar-gutter:auto}
+  #coleccionPanel[data-vista="cartas"] .coleccionInterior{padding-left:6px;padding-right:6px}
+  #coleccionPanel .coleccionMini{gap:2px;grid-template-rows:auto auto}
+  #coleccionPanel .coleccionMini .coleccionMiniPie{column-gap:4px;row-gap:0;font-size:9px;line-height:14px;min-height:14px}
+  #coleccionPanel .coleccionMini .coleccionPuntos{gap:6px}
+  #coleccionPanel .coleccionMini .coleccionPuntos i{width:7px;height:7px}
+}
+
+/* La apertura conserva su propia medida y sus frentes durante toda la sesión. */
+#coleccionPanel.coleccionAbriendoSobre .coleccionContenido{gap:0}
+#coleccionPanel.coleccionAbriendoSobre .coleccionPestanas{margin-bottom:4px}
+#coleccionPanel .coleccionAperturaSobre{position:relative;flex:1;min-height:0;width:100%;isolation:isolate;border-radius:7px;overflow:hidden;background:#140f1a}
+#coleccionPanel .coleccionAperturaCargando,#coleccionPanel .coleccionAperturaError{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:24px;text-align:center;color:#d7c7e5}
+#coleccionPanel.coleccionAbriendoSobre .coleccionEstado{white-space:normal;line-height:1.35;padding:4px 0}
+#coleccionPanel.coleccionAbriendoSobre .coleccionEstado:empty{min-height:5px;height:5px;padding:0}
+#coleccionPanel.coleccionAbriendoSobre .coleccionEstado.error{display:block;height:auto}
+#coleccionPanel .sobresGesto{touch-action:none}
+#coleccionPanel .sobresAccion{font:15px Georgia,serif}
+/* Los protagonistas emplean su frente real, con el mismo arte y nombre que
+   las demás cartas del sobre; la descripción queda en la colección. */
+#coleccionPanel .sobresApertura .coleccionCartaSobre.vscard{position:relative;inset:auto;flex:none;width:200px;height:280px;--cw:200px;--ch:280px;font-size:16.2px;zoom:var(--sobre-escala,1);margin:0;max-width:none;max-height:none;border:1px solid var(--acabado-borde,#b5985e);border-radius:10px;background:#1a1325;overflow:hidden;transform:none!important;rotate:none!important;translate:none!important;scale:1;animation:none;pointer-events:none}
+#coleccionPanel .sobresApertura .coleccionCartaSobre.vscard .lface{position:absolute;inset:0;width:100%;height:100%;margin:0;border-radius:0}
+#coleccionPanel .sobresApertura .coleccionCartaSobre.vscard .lface::after{display:none}
+#coleccionPanel .sobresApertura .coleccionCartaSobre.vscard .dibujo{width:100%;height:100%;object-fit:contain;object-position:center;transform:none}
+#coleccionPanel .sobresApertura .coleccionCartaSobre.vscard .lname{position:absolute;left:6px;right:6px;top:auto;bottom:17px;z-index:4;margin:0;padding:4px 3px;font:700 17px/1.15 Georgia,serif;text-align:center;color:var(--acabado-tinta,#f2e4ca);background:var(--acabado-fondo-nombre,#251b32);border:1px solid var(--acabado-borde,#b5985e);border-radius:3px}
+#coleccionPanel .sobresApertura .coleccionCartaSobre.vscard .larch{display:none}
+
+/* Sobres temáticos: elección y contenido a la vista antes de gastar el sobre. */
+#coleccionPanel .coleccionPrepararSobre{flex:1;min-height:0;display:grid;grid-template-columns:minmax(160px,.8fr) minmax(0,1.25fr);gap:26px;width:100%;max-width:900px;margin:0 auto;overflow:hidden}
+#coleccionPanel .coleccionPrepararSobre .coleccionSobreEscena{min-height:0}
+#coleccionPanel .coleccionElegirGrupo{min-height:0;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;padding:10px 7px;display:flex;flex-direction:column;justify-content:flex-start;justify-content:safe center;gap:13px}
+#coleccionPanel .coleccionElegirGrupo h4{font:700 19px Georgia,serif;color:#ecd18e}
+#coleccionPanel .coleccionGrupos{display:grid;grid-template-columns:minmax(0,1fr);gap:9px;flex:none}
+#coleccionPanel .coleccionGrupo{min-width:0;min-height:66px;flex-direction:column;gap:6px;padding:10px;background:linear-gradient(130deg,#30223f,#1d1528);border-color:#594166;border-radius:6px;box-shadow:none;font-family:var(--sans,system-ui);letter-spacing:0}
+#coleccionPanel .coleccionGrupo strong{font:700 15px/1.15 Georgia,serif;color:#ddd0e8}
+#coleccionPanel .coleccionGrupo span{font-size:10px;font-weight:400;color:#b8a7c9}
+#coleccionPanel .coleccionGrupo[aria-pressed="true"]{border-color:#dbb868;background:linear-gradient(130deg,#4f3c35,#2f2234);box-shadow:inset 0 0 0 1px #c9a45755,0 0 20px #cca95112}
+#coleccionPanel .coleccionGrupo[aria-pressed="true"] strong{color:#f1d596}
+#coleccionPanel .coleccionVerContenido{background:none;box-shadow:none;border:0;color:#d9c59d;text-decoration:underline;text-underline-offset:4px;min-height:30px;padding:5px;font-size:12px;flex:none}
+#coleccionPanel .coleccionContenidoGrupo{flex:none;max-height:190px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 12px;padding:12px;border:1px solid #65506e;border-radius:6px;background:#170f23;font-size:11px;line-height:1.3;color:#dbcee7}
+#coleccionPanel .coleccionContenidoGrupo[hidden]{display:none}
+#coleccionPanel .coleccionTasas{flex:none;font-size:12px;line-height:1.45;color:#c4b5d5;border-top:1px solid #61474f;padding-top:11px}
+#coleccionPanel .coleccionTasas strong{color:#e7ce91;font-size:13px}
+#coleccionPanel .coleccionTasas p{margin-top:4px}
+#coleccionPanel .coleccionTasas p:last-child{font-size:11px;color:#b4a5c6}
+#coleccionPanel[data-vista="sobres"] .coleccionSobreCuenta{display:block}
+#coleccionPanel[data-vista="sobres"] .coleccionSobreAcciones{gap:7px;padding-top:3px}
+/* El canje forma parte del detalle; no añade cifras al listado de cartas. */
+#coleccionPanel .coleccionMejora{width:100%;max-width:280px;min-height:108px;flex:none;display:flex;flex-direction:column;justify-content:center;gap:6px;border-top:1px solid #5d466c;padding-top:10px;color:#d1c3df}
+#coleccionPanel .coleccionMejoraProgreso{display:flex;justify-content:space-between;gap:6px;align-items:center;font-size:11px}
+#coleccionPanel .coleccionMejoraProgreso strong{color:#e7cf98;font-variant-numeric:tabular-nums}
+#coleccionPanel .coleccionMejora progress{display:block;width:100%;height:4px;border:0;border-radius:3px;overflow:hidden;background:#130d1d;accent-color:#d9b568}
+#coleccionPanel .coleccionMejora progress::-webkit-progress-bar{background:#130d1d}
+#coleccionPanel .coleccionMejora progress::-webkit-progress-value{background:linear-gradient(90deg,#9173ba,#dbc78d)}
+#coleccionPanel .coleccionMejorar{width:100%;min-height:35px;padding:6px 8px;font-size:12px}
+#coleccionPanel .coleccionMejora p{font-size:10px;line-height:1.3;text-align:center;color:#b9a8c9}
+#coleccionPanel .coleccionCodigoEnlace{background:none;border:0;box-shadow:none;padding:5px;font-size:11px;text-decoration:underline;text-underline-offset:4px;color:#d6bd8e}
+#coleccionPanel[data-vista="detalle"] .coleccionEstado{white-space:normal;line-height:1.3;min-height:18px;padding:2px 0}
+#coleccionPanel .coleccionRecienMejorada .coleccionCarta{animation:coleccionMejoraBrillo .9s ease-out}
+@keyframes coleccionMejoraBrillo{0%{filter:brightness(1.65);box-shadow:0 0 30px #e5c78280}100%{filter:brightness(1)}}
+#coleccionPanel .coleccionTaller{flex:1;min-height:0;width:min(640px,100%);align-self:center;display:flex;flex-direction:column;gap:14px;text-align:center;padding:10px}
+#coleccionPanel .coleccionTaller h3{font:700 29px/1.2 Georgia,serif;color:#ecd18e}
+#coleccionPanel .coleccionTallerRegla{color:#e2cda0;font-size:15px}
+#coleccionPanel .coleccionTallerNota{color:#bbaeC7;font-size:12px;line-height:1.45}
+#coleccionPanel .coleccionCanjesListos{flex:1;min-height:70px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;display:flex;flex-direction:column;gap:8px;padding:4px 6px}
+#coleccionPanel .coleccionCanjesListos>p{margin:auto;font-size:13px;line-height:1.5;color:#c8b8da;max-width:350px}
+#coleccionPanel .coleccionCanjeListo{flex:none;justify-content:space-between;text-align:left;gap:14px;min-height:50px;background:linear-gradient(120deg,#32243f,#23192d);border-color:#655073;border-radius:5px;box-shadow:none;padding:10px 12px}
+#coleccionPanel .coleccionCanjeListo strong{font:700 15px Georgia,serif;color:#e1d1e9}
+#coleccionPanel .coleccionCanjeListo span{flex:none;color:#ccb88f;font:11px var(--sans,system-ui)}
+#coleccionPanel .coleccionElegirParaCanje{align-self:center;flex:none;min-width:200px}
+#coleccionPanel .coleccionCanjeFisico{flex:none;font-size:12px;color:#b5a3c9;padding-top:12px;border-top:1px solid #5c466b;text-align:center}
+#coleccionPanel .coleccionCanjeFisico summary{cursor:pointer;color:#d5c291;min-height:30px}
+#coleccionPanel .coleccionCanjeFisico .coleccionCanjeCodigo{margin:5px auto 10px}
+@media(max-width:580px){
+  #coleccionPanel .coleccionPrepararSobre{display:flex;flex-direction:column;gap:0}
+  #coleccionPanel .coleccionPrepararSobre .coleccionSobreEscena{display:none}
+  #coleccionPanel .coleccionElegirGrupo{justify-content:flex-start;gap:9px;padding:3px 4px 5px;flex:1}
+  #coleccionPanel .coleccionElegirGrupo h4{text-align:center;font-size:15px}
+  #coleccionPanel .coleccionGrupos{gap:7px}
+  #coleccionPanel .coleccionGrupo{min-height:54px;padding:7px 6px;gap:4px}
+  #coleccionPanel .coleccionGrupo strong{font-size:13px}
+  #coleccionPanel .coleccionGrupo span{font-size:9px}
+  #coleccionPanel .coleccionTasas{padding-top:8px;font-size:11px;line-height:1.35;text-align:center}
+  #coleccionPanel .coleccionTasas strong{font-size:12px}
+  #coleccionPanel .coleccionTasas p:last-child{font-size:10px}
+  #coleccionPanel .coleccionVerContenido{min-height:30px;font-size:11px}
+  #coleccionPanel .coleccionContenidoGrupo{font-size:10px;padding:9px}
+  #coleccionPanel .coleccionVersiones{grid-template-rows:34px minmax(0,1fr) 18px 39px 98px;row-gap:7px;padding-bottom:2px}
+  #coleccionPanel .coleccionVersion:not(.vista) .coleccionMejora{display:none}
+  #coleccionPanel .coleccionVersion.vista .coleccionMejora{grid-column:1/-1;grid-row:5;justify-self:center;align-self:start;min-height:0;height:98px;padding-top:8px;gap:5px;max-width:280px}
+  #coleccionPanel .coleccionMejora p{font-size:10px}
+  #coleccionPanel .coleccionMejorar{min-height:34px;font-size:12px}
+  #coleccionPanel .coleccionMejoraProgreso{font-size:11px}
+  #coleccionPanel[data-vista="detalle"] .coleccionAviso{display:none}
+  #coleccionPanel .coleccionTaller{gap:10px;padding:7px 1px}
+  #coleccionPanel .coleccionTaller h3{font-size:23px}
+  #coleccionPanel .coleccionTallerRegla{font-size:12px}
+  #coleccionPanel .coleccionTallerNota{font-size:11px}
+  #coleccionPanel .coleccionCanjeListo{flex-direction:column;gap:5px;min-height:61px;text-align:center}
+}
+#coleccionPanel.coleccionBaja .coleccionTaller{gap:7px;padding-top:3px}
+#coleccionPanel.coleccionBaja .coleccionCanjeFisico{padding-top:6px}
+#coleccionPanel.coleccionBaja .coleccionElegirGrupo{gap:6px}
+#coleccionPanel.coleccionBaja .coleccionGrupo{min-height:46px;padding:5px;gap:3px}
+@media(max-width:580px) and (max-height:650px){
+  #coleccionPanel .coleccionVersiones{grid-template-rows:30px minmax(0,1fr) 15px 33px 88px;row-gap:5px}
+  #coleccionPanel .coleccionVersion.vista .coleccionUsar{min-height:33px;font-size:12px}
+  #coleccionPanel .coleccionVersion.vista .coleccionMejora{height:88px;gap:4px;padding-top:5px}
+  #coleccionPanel .coleccionVersion.vista .coleccionEstadoEdicion{font-size:10px}
+  #coleccionPanel .coleccionMejorar{min-height:31px;font-size:11px}
+  #coleccionPanel .coleccionMejora p{font-size:9px}
+}
+@media(prefers-reduced-motion:reduce){#coleccionPanel .coleccionRecienMejorada .coleccionCarta{animation:none}}
+
+#coleccionPanel .coleccionGrupoCompacto{display:none}
+@media(max-width:580px) and (max-height:650px){
+  #coleccionPanel .coleccionGrupos{display:none}
+  #coleccionPanel .coleccionGrupoCompacto{display:block;flex:none}
+  #coleccionPanel .coleccionGrupoCompacto select{height:36px;font-size:13px}
+  #coleccionPanel .coleccionElegirGrupo{justify-content:flex-start}
+  #coleccionPanel .coleccionTasas p:last-child{line-height:1.3}
+}
+
+/* La colección del sobre se decide al recibirlo. La biblioteca sólo recorre
+   sobres sellados propios; los colores identifican grupos, nunca rarezas. */
+#coleccionPanel :is(.coleccionRecompensaGrupo,.coleccionSobreGuardado){--sobre-color:#947640}
+#coleccionPanel .coleccionSobreColor{--sobre-color:#947640;background:repeating-linear-gradient(92deg,#ffffff0c 0 1px,transparent 2px 7px),radial-gradient(ellipse at 30% 10%,color-mix(in srgb,var(--sobre-color) 92%,white),transparent 63%),linear-gradient(125deg,color-mix(in srgb,var(--sobre-color) 85%,#10121c),#0b101c 72%);border-color:color-mix(in srgb,var(--sobre-color) 55%,#e8d4a5);color:#f0dfb8;box-shadow:inset 0 0 0 6px #12121baa,inset 0 0 0 7px #dec89360,0 16px 28px #0009;animation:none;rotate:-3deg;filter:drop-shadow(0 0 12px color-mix(in srgb,var(--sobre-color) 27%,transparent));pointer-events:none}
+#coleccionPanel .coleccionSobreColor .coleccionSobreSello{background:radial-gradient(circle at 30% 25%,#bb7945,#692e24 64%,#301414);border-color:#b87643;color:#f6d392;bottom:23%;right:11%;box-shadow:0 3px 6px #000b,inset 0 0 0 3px #d8a46a40}
+#coleccionPanel .coleccionSobreColor>svg{opacity:.5;width:23%;height:19%;margin-top:0}
+#coleccionPanel .coleccionSobreColeccion{position:absolute;left:10%;right:10%;bottom:12%;text-align:center;font:700 8cqw/1.1 Georgia,serif;text-wrap:balance;letter-spacing:.3px;text-shadow:0 2px 3px #000}
+#coleccionPanel .coleccionSobreColor .coleccionSobreLeyenda{font-size:4cqw;bottom:6.5%;letter-spacing:1px}
+#coleccionPanel .coleccionSobreColor .coleccionSobreMarca{font-size:24cqw}
+#coleccionPanel .coleccionSobreColor .coleccionSobreLinea{font-size:8cqw}
+#coleccionPanel .coleccionRecompensaOpciones{flex:1;min-height:0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;align-items:center;width:min(780px,100%);margin:auto}
+#coleccionPanel .coleccionRecompensaGrupo{min-height:0;min-width:0;display:flex;flex-direction:column;align-items:center;gap:10px;padding:8px 7px;border:1px solid transparent;border-radius:12px;max-height:100%;background:radial-gradient(ellipse at 50% 43%,color-mix(in srgb,var(--sobre-color) 12%,transparent),transparent 75%)}
+#coleccionPanel .coleccionRecompensaGrupo.seleccionada{border-color:color-mix(in srgb,var(--sobre-color) 70%,transparent);background:radial-gradient(ellipse at 50% 43%,color-mix(in srgb,var(--sobre-color) 23%,transparent),transparent 90%)}
+#coleccionPanel .coleccionRecompensaElegir{width:100%;min-height:0;flex:1;display:grid;place-items:center;padding:12px 10px 9px;background:none;border:0;box-shadow:none;filter:none;translate:none!important}
+#coleccionPanel .coleccionRecompensaElegir:disabled{opacity:1;filter:none;box-shadow:none}
+#coleccionPanel .coleccionRecompensaElegir .coleccionSobre{width:min(170px,100%);height:auto;max-height:none;aspect-ratio:.68;transition:scale .18s ease,rotate .18s ease;flex:none}
+#coleccionPanel .coleccionRecompensaElegir:not(:disabled):hover .coleccionSobre{scale:1.035;rotate:0deg}
+#coleccionPanel .coleccionRecompensaGrupo h4{font:700 17px/1.2 Georgia,serif;color:#eadac0;text-align:center;min-height:2.4em;display:grid;align-content:center;text-wrap:balance}
+#coleccionPanel .coleccionRecompensaCantidad{display:flex;align-items:center;justify-content:center;gap:14px;width:100%;flex:none}
+#coleccionPanel .coleccionRecompensaCantidad .coleccionBoton{width:36px;min-height:34px;padding:2px;font:22px/1 system-ui;letter-spacing:0;background:linear-gradient(#352743,#201829);border-color:#69516e;border-radius:5px;box-shadow:none}
+#coleccionPanel .coleccionRecompensaCantidad output{min-width:16px;font-size:18px;font-weight:700;color:#f0dfb8;text-align:center;font-variant-numeric:tabular-nums}
+#coleccionPanel .coleccionRecompensaContenido{min-height:30px;padding:3px;background:none;border:0;box-shadow:none;font:11px var(--sans,system-ui);color:#c8b5db;text-decoration:underline;text-underline-offset:4px}
+#coleccionPanel .coleccionRecompensaPie{flex:none;display:flex;flex-direction:column;align-items:center;gap:8px;padding-top:5px}
+#coleccionPanel .coleccionEleccionMarcas{display:flex;justify-content:center;gap:8px;min-height:13px}
+#coleccionPanel .coleccionEleccionMarca{display:block;width:21px;height:8px;border-radius:4px;border:1px solid #82758a70;background:#100b18}
+#coleccionPanel .coleccionEleccionMarca[data-grupo]{background:var(--sobre-color);border-color:color-mix(in srgb,var(--sobre-color) 65%,white);box-shadow:0 0 10px color-mix(in srgb,var(--sobre-color) 50%,transparent)}
+#coleccionPanel .coleccionEleccionCuenta{font:13px var(--sans,system-ui);color:#d0bfdd}
+#coleccionPanel .coleccionGuardarSobres{min-height:45px;width:min(300px,100%);font-size:17px}
+#coleccionPanel .coleccionElegirDespues{min-height:30px;padding:3px 10px;background:none;border:0;box-shadow:none;color:#cbb5d9;font-size:12px;text-decoration:underline;text-underline-offset:4px}
+#coleccionPanel .coleccionSobresPorElegir{flex:none;display:flex;align-items:center;justify-content:center;gap:12px;padding:8px 12px;border:1px solid #88714365;border-radius:7px;background:linear-gradient(90deg,#64492824,#604c192b);font-size:12px;color:#e4c996;width:min(600px,100%);align-self:center}
+#coleccionPanel .coleccionElegirPendientes{min-height:31px;padding:5px 15px;font-size:13px}
+#coleccionPanel .coleccionReanudarSobre{flex:none;align-self:center;min-height:34px;padding:6px 15px;font-size:12px}
+#coleccionPanel .coleccionBibliotecaSobres{position:relative;display:flex;flex-direction:column;flex:1;min-height:0;width:min(900px,100%);margin:0 auto}
+#coleccionPanel .coleccionCarreteVentana{--sobre-ancho:180px;flex:1;min-height:0;position:relative;width:100%;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 68%,#9d854114,transparent 65%)}
+#coleccionPanel .coleccionCarruselSobres{position:absolute;inset:0;display:flex;align-items:center;gap:32px;padding:10px calc(50% - var(--sobre-ancho)/2);overflow-x:auto;overflow-y:hidden;scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x;cursor:grab;scroll-behavior:auto;-webkit-tap-highlight-color:transparent;user-select:none}
+#coleccionPanel .coleccionCarruselSobres::-webkit-scrollbar{display:none}
+#coleccionPanel .coleccionCarruselSobres.arrastrando{cursor:grabbing;scroll-snap-type:none}
+#coleccionPanel .coleccionSobreGuardado{scroll-snap-align:center;scroll-snap-stop:always;width:var(--sobre-ancho);flex:0 0 var(--sobre-ancho);min-height:0;padding:6px 0 0;display:flex;flex-direction:column;align-items:center;gap:14px;border:0;background:none;box-shadow:none;filter:none!important;translate:none!important;opacity:.48;scale:.84;transition:opacity .22s ease,scale .22s ease;touch-action:pan-x}
+#coleccionPanel .coleccionSobreGuardado.seleccionado{opacity:1;scale:1}
+#coleccionPanel .coleccionSobreGuardado .coleccionSobre{width:calc(100% - 12px);height:auto;max-height:none;aspect-ratio:.68;rotate:0deg;margin:0}
+/* El sobre activo es la única pieza WebGL de la biblioteca. Se manipula como
+   un objeto físico, no como una miniatura: el cursor y el halo aclaran que
+   se puede arrastrar para descubrir su reverso sin cargar la escena de cada
+   sobre que queda al fondo. */
+#coleccionPanel .coleccionSobreGuardado.modelo3d{cursor:grab;touch-action:none;isolation:isolate}
+#coleccionPanel .coleccionSobreGuardado.modelo3d .coleccionSobre{filter:drop-shadow(0 18px 18px #000b) drop-shadow(0 0 15px color-mix(in srgb,var(--sobre-color) 34%,transparent));transition:filter .18s ease}
+#coleccionPanel .coleccionSobreGuardado.modelo3d[data-orientacion="reverso"] .coleccionSobre{filter:drop-shadow(0 18px 18px #000c) drop-shadow(0 0 18px #d9bd7a42)}
+#coleccionPanel .coleccionSobreGuardado.modelo3d::before{content:"ARRASTRA PARA GIRAR";position:absolute;z-index:4;left:50%;bottom:calc(100% + 3px);translate:-50% 0;min-width:max-content;padding:3px 7px;border:1px solid #d7bb7c72;border-radius:20px;background:#0b0714bd;color:#eadab7;font:700 8px/1 var(--sans,system-ui);letter-spacing:.7px;opacity:.9;pointer-events:none;text-shadow:0 1px 3px #000;box-shadow:0 3px 8px #0007}
+#coleccionPanel .coleccionSobreGuardado.modelo3d.girando{cursor:grabbing}
+#coleccionPanel .coleccionSobreGuardado.modelo3d.girando .coleccionSobre{filter:drop-shadow(0 22px 23px #000d) drop-shadow(0 0 23px color-mix(in srgb,var(--sobre-color) 48%,#ead696))}
+#coleccionPanel .coleccionSobreGuardado.modelo3d:focus-visible{outline:2px solid #f4d58a;outline-offset:5px;border-radius:10px}
+#coleccionPanel .coleccionSobreGuardado.modelo3d:focus-visible::before{border-color:#f4d58a;color:#fff0cb}
+#coleccionPanel .coleccionSobreExistencias{font:700 13px var(--sans,system-ui);color:#f1e2c2;background:#120f1c;border:1px solid color-mix(in srgb,var(--sobre-color) 65%,#aaa);border-radius:20px;padding:4px 15px;min-width:50px;text-align:center;letter-spacing:.2px}
+#coleccionPanel .coleccionCarreteNavegacion{flex:none;display:flex;align-items:center;justify-content:center;gap:26px;padding-top:9px}
+#coleccionPanel .coleccionCarreteNavegacion .coleccionBoton{width:41px;min-height:41px;padding:3px;font-size:30px;background:#21182e;border-color:#6b516f;border-radius:50%;box-shadow:none}
+#coleccionPanel .coleccionSobreSeleccion{width:240px;text-align:center;min-width:0}
+#coleccionPanel .coleccionSobreSeleccion h4{font:700 22px/1.2 Georgia,serif;color:#e8d3a4;text-wrap:balance}
+#coleccionPanel .coleccionSobreSeleccion p{font-size:12px;color:#bbaacb;margin-top:5px}
+#coleccionPanel .coleccionDeslizarPista{flex:none;padding:8px 0 1px;font-size:10px;text-align:center;color:#9a86ae;letter-spacing:.4px}
+#coleccionPanel .coleccionSobresVacios{flex:1;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:15px;text-align:center;padding:10px 20px;color:#c3b0d1}
+#coleccionPanel .coleccionSobresVacios h4{font:700 23px/1.2 Georgia,serif;color:#e5cea0}
+#coleccionPanel .coleccionSobresVacios p{font-size:13px;line-height:1.5;max-width:380px}
+#coleccionPanel .coleccionSobresVaciosSello{display:grid;place-items:center;width:75px;height:85px;color:#bb9c5b;border:1px solid #93723e80;border-radius:8px;background:radial-gradient(#79563240,#261b2c);rotate:-8deg}
+#coleccionPanel .coleccionSobresVaciosSello svg{width:36px;height:36px}
+#coleccionPanel .coleccionContenidoCompleto{flex:1;min-height:0;max-height:none;align-content:start;grid-template-columns:repeat(3,minmax(0,1fr));gap:15px 20px;padding:20px;font-size:13px}
+#coleccionPanel .coleccionVolverSobres{flex:none;align-self:center;min-width:220px}
+#coleccionPanel:is([data-vista="recompensa"],[data-vista="sobres"]) .coleccionEstado{white-space:normal;line-height:1.25}
+#coleccionPanel:is([data-vista="recompensa"],[data-vista="sobres"]) .coleccionEstado:empty{min-height:3px;height:3px}
+@media(max-width:580px){
+  #coleccionPanel .coleccionRecompensaOpciones{gap:6px;width:100%;align-items:center}
+  #coleccionPanel .coleccionRecompensaGrupo{padding:5px 3px;gap:7px;border-radius:8px}
+  #coleccionPanel .coleccionRecompensaElegir{padding:9px 5px 6px}
+  #coleccionPanel .coleccionRecompensaGrupo h4{font-size:13px;min-height:2.4em}
+  #coleccionPanel .coleccionRecompensaCantidad{gap:7px}
+  #coleccionPanel .coleccionRecompensaCantidad .coleccionBoton{width:29px;min-height:32px;font-size:20px}
+  #coleccionPanel .coleccionRecompensaCantidad output{font-size:16px;min-width:12px}
+  #coleccionPanel .coleccionRecompensaContenido{font-size:10px;min-height:27px;padding:2px}
+  #coleccionPanel .coleccionRecompensaPie{gap:7px}
+  #coleccionPanel .coleccionGuardarSobres{min-height:42px;font-size:15px}
+  #coleccionPanel .coleccionSobresPorElegir{font-size:11px;padding:6px 8px;gap:9px}
+  #coleccionPanel .coleccionElegirPendientes{min-height:30px;font-size:12px;padding:4px 11px}
+  #coleccionPanel .coleccionCarruselSobres{gap:24px}
+  #coleccionPanel .coleccionCarreteNavegacion{gap:12px;padding-top:5px}
+  #coleccionPanel .coleccionCarreteNavegacion .coleccionBoton{width:33px;min-height:33px;font-size:25px}
+  #coleccionPanel .coleccionSobreSeleccion{width:190px}
+  #coleccionPanel .coleccionSobreSeleccion h4{font-size:18px}
+  #coleccionPanel .coleccionSobreSeleccion p{font-size:11px;margin-top:3px}
+  #coleccionPanel .coleccionDeslizarPista{font-size:9px;padding-top:7px}
+  #coleccionPanel .coleccionSobreGuardado{gap:11px}
+  #coleccionPanel .coleccionSobreExistencias{font-size:11px;padding:3px 13px}
+  #coleccionPanel .coleccionContenidoCompleto{grid-template-columns:repeat(2,minmax(0,1fr));font-size:11px;padding:12px;gap:12px}
+  #coleccionPanel .coleccionSobresVacios{gap:11px;padding:5px 10px}
+  #coleccionPanel .coleccionSobresVacios h4{font-size:20px}
+  #coleccionPanel .coleccionSobresVacios p{font-size:12px}
+}
+@media(max-width:580px) and (max-height:650px){
+  #coleccionPanel .coleccionRecompensaGrupo{gap:4px;padding:3px 1px}
+  #coleccionPanel .coleccionRecompensaElegir{padding:6px 4px 4px}
+  #coleccionPanel .coleccionRecompensaGrupo h4{font-size:11px}
+  #coleccionPanel .coleccionRecompensaCantidad{gap:3px}
+  #coleccionPanel .coleccionRecompensaCantidad .coleccionBoton{width:26px;min-height:28px;font-size:18px}
+  #coleccionPanel .coleccionRecompensaContenido{font-size:9px;min-height:25px}
+  #coleccionPanel .coleccionRecompensaPie{gap:5px;padding-top:0}
+  #coleccionPanel .coleccionEleccionCuenta{font-size:11px}
+  #coleccionPanel .coleccionGuardarSobres{min-height:36px;font-size:14px}
+  #coleccionPanel .coleccionElegirDespues{min-height:26px;font-size:11px}
+  #coleccionPanel .coleccionSobreTitulo p{font-size:11px;line-height:1.35}
+  #coleccionPanel .coleccionSobreSeleccion h4{font-size:16px}
+  #coleccionPanel .coleccionSobreSeleccion p{font-size:10px}
+  #coleccionPanel .coleccionSobresPorElegir{padding:4px 7px}
+  #coleccionPanel .coleccionDeslizarPista{padding-top:4px}
+  #coleccionPanel .coleccionReanudarSobre{min-height:28px;padding:4px 9px;font-size:11px}
+}
+@media(prefers-reduced-motion:reduce){#coleccionPanel .coleccionSobreGuardado,#coleccionPanel .coleccionRecompensaElegir .coleccionSobre,#coleccionPanel .coleccionSobreGuardado.modelo3d .coleccionSobre{transition:none}}
+#coleccionPanel .coleccionRecompensaElegir{flex:none}
+#coleccionPanel .coleccionRecompensaElegir .coleccionSobre{width:var(--premio-ancho,100px);height:calc(var(--premio-ancho,100px)/.68);max-width:none;flex:none}
+#coleccionPanel .coleccionSobreGuardado{position:relative;gap:0;padding:5px 0}
+#coleccionPanel .coleccionSobreExistencias{position:absolute;right:0;top:2px;z-index:3;box-shadow:0 3px 8px #0007}
+@media(max-width:580px) and (max-height:650px){
+  #coleccionPanel .coleccionDeslizarPista{display:none}
+  #coleccionPanel[data-vista="sobres"] .coleccionSobreAcciones{gap:4px}
+  #coleccionPanel[data-vista="sobres"] .coleccionVerContenido{min-height:26px}
+  #coleccionPanel[data-vista="sobres"] .coleccionBeta{min-height:26px;font-size:10px}
+  #coleccionPanel[data-vista="sobres"] .coleccionAbrirSobre{min-height:37px}
+}
+/* La funda real comparte logo, herrajes y sello con la apertura 3D. */
+#coleccionPanel .coleccionSobreReal{position:absolute;inset:0;z-index:5;pointer-events:none;overflow:hidden;border-radius:inherit}
+#coleccionPanel .coleccionSobreColor.conSobreReal{background:none;border:0;box-shadow:0 12px 24px #0008}
+#coleccionPanel .coleccionSobreColor.conSobreReal::before,#coleccionPanel .coleccionSobreColor.conSobreReal::after,#coleccionPanel .coleccionSobreColor.conSobreReal>:not(.coleccionSobreReal){visibility:hidden}
+
+/* Epílogo de campaña: no es una pestaña de Colección, sino el último plano
+   antes de volver al menú. El diálogo ocupa el visor real y sólo deja activo
+   el carrusel; las salidas ordinarias quedan fuera de foco y de la escena. */
+#coleccionPanel.coleccionFinalCampana{
+  position:fixed;inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;height:var(--coleccion-alto,100dvh);max-width:none;max-height:none;margin:0;padding:0;overflow:hidden;border:0;border-radius:0;background:#030205;box-shadow:none;
+}
+#coleccionPanel.coleccionFinalCampana::backdrop{background:#000;backdrop-filter:none}
+#coleccionPanel.coleccionFinalCampana .coleccionInterior{
+  padding:max(24px,env(safe-area-inset-top)) max(26px,env(safe-area-inset-right)) max(20px,env(safe-area-inset-bottom)) max(26px,env(safe-area-inset-left));border:0;border-radius:0;background:radial-gradient(ellipse at 50% 32%,#5d42292e,transparent 48%),radial-gradient(ellipse at 50% 100%,#351f3f42,transparent 57%),linear-gradient(180deg,#100c16,#050409 74%,#020203);
+}
+#coleccionPanel.coleccionFinalCampana .coleccionInterior::before,#coleccionPanel.coleccionFinalCampana .coleccionInterior::after,#coleccionPanel.coleccionFinalCampana :is(.coleccionCabecera,.coleccionPestanas,.coleccionEstado,.coleccionPie){display:none!important}
+#coleccionPanel.coleccionFinalCampana .coleccionContenido{display:block;flex:1;min-height:0;height:100%;overflow:hidden}
+@keyframes coleccionFinalCampanaEntrada{from{opacity:0;filter:brightness(.7)}to{opacity:1;filter:none}}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{position:relative;isolation:isolate;width:min(1140px,100%);height:100%;margin:0 auto;display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto auto auto;align-items:center;justify-items:center;gap:clamp(7px,1.25vh,15px);overflow:hidden;text-align:center;animation:coleccionFinalCampanaEntrada .46s cubic-bezier(.2,.78,.2,1) both}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera{max-width:650px;text-wrap:balance}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera .coleccionAntetitulo{color:#e0a957;font-size:11px;letter-spacing:3.5px;text-shadow:0 0 16px #d58b3e55}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera h3{margin-top:4px;font:700 clamp(30px,4.1vw,50px)/1.06 var(--serif,Georgia,serif);color:#f5e4c0;text-shadow:0 3px 20px #000}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera p{max-width:500px;margin:8px auto 0;color:#cfbca9;font-size:14px;line-height:1.45}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgreso{display:flex;align-items:center;justify-content:center;gap:13px;min-height:26px;color:#efd8a9;font-size:14px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgresoTexto{min-width:132px;text-align:right;font-variant-numeric:tabular-nums}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra{width:min(250px,35vw);height:8px;overflow:hidden;border:1px solid #a77d427a;border-radius:8px;background:#160f1b;color:#d39a47;accent-color:#d39a47}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra::-webkit-progress-bar{background:#160f1b}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra::-webkit-progress-value{background:linear-gradient(90deg,#9b6234,#efd187);box-shadow:0 0 10px #e4a84c80}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarruselVentana{--final-sobre-ancho:300px;position:relative;align-self:stretch;justify-self:stretch;min-height:0;overflow:hidden;isolation:isolate;background:radial-gradient(ellipse at 50% 58%,#b5773128,transparent 59%)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel{position:absolute;inset:0;display:flex;align-items:center;gap:clamp(28px,5vw,76px);overflow-x:auto;overflow-y:hidden;padding:12px calc(50% - var(--final-sobre-ancho)/2);scroll-snap-type:x mandatory;overscroll-behavior-x:contain;scrollbar-width:none;touch-action:pan-x;cursor:grab;scroll-behavior:auto;-webkit-tap-highlight-color:transparent;user-select:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel::-webkit-scrollbar{display:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel:focus-visible{outline:0}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel:focus-visible .coleccionFinalSobre.seleccionado{outline:2px solid #e2b86c;outline-offset:5px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel.arrastrando{cursor:grabbing;scroll-snap-type:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobre{width:var(--final-sobre-ancho);flex:0 0 var(--final-sobre-ancho);min-height:0;display:flex;flex-direction:column;align-items:center;gap:13px;padding:10px 8px;border:1px solid transparent;border-radius:16px;background:radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--sobre-color) 13%,transparent),transparent 68%);box-shadow:none;filter:saturate(.65) brightness(.72);opacity:.44;scale:.76;translate:none!important;scroll-snap-align:center;scroll-snap-stop:always;transition:opacity .22s ease,scale .22s ease,filter .22s ease,border-color .22s ease,background .22s ease}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobre.seleccionado{border-color:color-mix(in srgb,var(--sobre-color) 66%,#edc77e);background:radial-gradient(ellipse at 50% 46%,color-mix(in srgb,var(--sobre-color) 33%,transparent),transparent 70%);filter:none;opacity:1;scale:1}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobre .coleccionSobre{width:100%;height:auto;max-height:none;aspect-ratio:.68;margin:0;rotate:0deg;animation:none;filter:drop-shadow(0 18px 20px #0009)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalSobreNombre{font:700 18px/1.15 var(--serif,Georgia,serif);color:#f0dfbd;text-shadow:0 2px 5px #000}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion{display:grid;grid-template-columns:48px minmax(150px,260px) 48px;align-items:center;justify-content:center;gap:18px;min-height:48px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion .coleccionBoton{width:48px;min-height:48px;padding:0;border-radius:50%;font:34px/1 var(--serif,Georgia,serif);background:#1d1525;border-color:#805d47;box-shadow:inset 0 0 0 1px #e6c57b1f,0 3px 0 #070509}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalActual{min-width:0;color:var(--sobre-color,#e5cc9a);font:700 21px/1.2 var(--serif,Georgia,serif);text-wrap:balance;text-shadow:0 2px 7px #000}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalMarcas{display:flex;align-items:center;justify-content:center;gap:11px;min-height:16px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalMarca{display:block;width:30px;height:9px;border:1px solid #8e7b8659;border-radius:9px;background:#100c15;transition:background .2s ease,border-color .2s ease,box-shadow .2s ease}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalMarca[data-grupo]{background:var(--sobre-color);border-color:color-mix(in srgb,var(--sobre-color) 72%,white);box-shadow:0 0 13px color-mix(in srgb,var(--sobre-color) 62%,transparent)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones{display:flex;align-items:center;justify-content:center;gap:15px;min-height:47px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-width:min(280px,65vw);min-height:47px;font-size:17px}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones [hidden]{display:none!important}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalGuardar{border-color:#d6aa5b;background:radial-gradient(circle at 35% 25%,#f7dc9f,#bc7b36 43%,#5c3318 77%)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalAviso{min-height:1.4em;max-width:500px;color:#ffb6a5;font-size:12px;line-height:1.35}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalFundido{position:fixed;inset:0;width:100vw;height:100dvh;z-index:10;background:#000;opacity:0;pointer-events:none;transition:opacity .46s ease}
+#coleccionPanel.coleccionFinalCampana.coleccionFinalCampanaFundiendo .coleccionFinalFundido{opacity:1;pointer-events:auto}
+#coleccionPanel.coleccionFinalCampana.coleccionFinalCampanaFundiendo .coleccionFinalCampanaEscena>*:not(.coleccionFinalFundido){pointer-events:none}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaError{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:11px;text-align:center;color:#e7d4bd}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaError h3{font:700 30px/1.15 var(--serif,Georgia,serif)}
+#coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaError p{max-width:420px;color:#c5b4a4}
+@media(max-width:580px){
+  #coleccionPanel.coleccionFinalCampana .coleccionInterior{padding:max(16px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) max(13px,env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left))}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{gap:8px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera .coleccionAntetitulo{font-size:9px;letter-spacing:2.6px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera h3{font-size:clamp(27px,9vw,38px)}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera p{max-width:330px;margin-top:5px;font-size:12px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgreso{gap:8px;font-size:12px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgresoTexto{min-width:105px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaBarra{width:min(170px,43vw);height:7px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCarrusel{gap:31px;padding-top:4px;padding-bottom:4px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalSobre{gap:9px;padding:7px 5px;border-radius:11px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalSobreNombre{font-size:15px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion{grid-template-columns:40px minmax(130px,190px) 40px;gap:11px;min-height:40px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion .coleccionBoton{width:40px;min-height:40px;font-size:29px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalActual{font-size:18px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalMarcas{gap:8px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalMarca{width:25px;height:8px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones{gap:9px;min-height:42px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-width:min(235px,61vw);min-height:42px;font-size:15px}
+}
+@media(max-height:650px){
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{gap:5px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera p{display:none}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaCabecera h3{font-size:29px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaProgreso{min-height:20px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion{min-height:34px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalNavegacion .coleccionBoton{width:35px;min-height:35px;font-size:25px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAcciones .coleccionBoton{min-height:38px}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalAviso{min-height:0;font-size:10px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel.coleccionFinalCampana :is(.coleccionFinalSobre,.coleccionFinalMarca,.coleccionFinalFundido){transition:none}
+  #coleccionPanel.coleccionFinalCampana .coleccionFinalCampanaEscena{animation:none}
+}
+
+/* Detalle: la carta en 3D a pantalla completa, como el visor. El panel pierde
+   su marco, pestañas y pie; la escena llena todo y los controles de la edición
+   flotan en cristal a la derecha (abajo en el teléfono). Las fichas de cada
+   edición siguen en el DOM, ocultas: la escena 3D es la única carta visible. */
+#coleccionPanel[data-vista="detalle"]:has(.coleccionDetalle3D.con3D){inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior::before,#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionInterior::after{display:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) :is(.coleccionPestanas,.coleccionPie,.coleccionTitulos,.coleccionEmblema){display:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionCabecera{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;margin:0;padding:0;min-height:0;border:0;background:none}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+#coleccionPanel.coleccionFusionando{inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel.coleccionFusionando .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel.coleccionFusionando .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+/* La ficha aún está encontrando su encuadre: los controles se habilitan al
+   terminar el mismo FLIP. Así un clic veloz no sustituye la ficha a mitad de
+   trayecto ni fuerza una segunda transición. */
+#coleccionPanel.coleccionFusionando .coleccionMundoVisor{pointer-events:none!important}
+/* Archivo y detalle coexisten brevemente en este único plano. La capa de
+   detalle no crea otro fondo: flota sobre la misma escena que ya sostenía la
+   biblioteca mientras sus controles entran y el Archivo sale de cuadro. */
+#coleccionPanel .coleccionDetalleCapa{position:absolute;inset:0;z-index:4;display:block;pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionDetalleCapa :is(.coleccionDetalleCabecera .coleccionAtras,.coleccionVersiones,.coleccionReglas button){pointer-events:auto}
+#coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionEstado{position:absolute;left:0;right:0;bottom:12px;z-index:7;text-align:center;pointer-events:none}
+#coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{position:absolute;left:0;right:360px;bottom:16px;z-index:5;margin:0;text-align:center;color:#cbbfd9b3;pointer-events:none}
+#coleccionPanel .coleccionDetalle3D.con3D~.coleccionDetalleCabecera,#coleccionPanel .coleccionDetalleCabecera:has(~.con3D){position:absolute;top:max(14px,env(safe-area-inset-top));left:0;right:360px;z-index:6;padding:0 72px;pointer-events:none;text-shadow:0 2px 12px #000}
+#coleccionPanel .coleccionDetalleCabecera:has(~.con3D) .coleccionAtras{pointer-events:auto}
+#coleccionPanel .coleccionDetalleCabecera:has(~.con3D) h3{font-size:30px}
+#coleccionPanel .coleccionDetalle3D{flex:1;min-height:0;width:100%;max-width:1040px;margin:0 auto;display:flex;flex-direction:column}
+#coleccionPanel .coleccionDetalle3D.con3D{position:absolute;inset:0;display:block;max-width:none;margin:0;padding:0}
+#coleccionPanel .coleccionEscena3D{position:absolute;inset:0;min-height:0}
+#coleccionPanel .coleccionEscena3D .visor3dIncrustado{--reserva-der:360px;border-radius:0}
+/* La carta de la escena mide lo que decide el visor, no los topes de las fichas del panel. */
+#coleccionPanel .visor3dFrente .coleccionCarta{max-height:none;max-width:none;min-height:0}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{position:absolute;right:28px;top:50%;translate:0 -50%;z-index:5;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:auto;align-content:center;gap:14px 8px;width:310px;max-width:none;max-height:calc(100% - 40px);min-height:0!important;margin:0;padding:20px 16px;overflow:auto;
+  border:1px solid #ffffff1c;border-radius:16px;background:#0e0a16a6;-webkit-backdrop-filter:blur(14px) saturate(130%);backdrop-filter:blur(14px) saturate(130%);box-shadow:0 24px 60px #0009}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion{display:contents}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionCarta{display:none!important}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion .coleccionElegirAcabado{grid-row:1;min-width:0;width:100%}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="normal"] .coleccionElegirAcabado{grid-column:1}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="foil"] .coleccionElegirAcabado{grid-column:2}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion[data-edicion="dorado"] .coleccionElegirAcabado{grid-column:3}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion:not(.vista) :is(.coleccionEstadoEdicion,.coleccionUsar,.coleccionMejora){display:none}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionEstadoEdicion{grid-column:1/-1;grid-row:2;justify-self:center;align-self:center;font-size:13px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{grid-column:1/-1;grid-row:3;justify-self:center;width:100%;min-height:44px}
+#coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionMejora{grid-column:1/-1;grid-row:4;justify-self:center;width:100%;height:auto;min-height:0}
+@media(max-width:760px){
+  #coleccionPanel .coleccionEscena3D{inset:0 0 var(--controles-alto,250px) 0}
+  #coleccionPanel .coleccionEscena3D .visor3dIncrustado{--reserva-der:0px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersiones{left:10px;right:10px;top:auto;bottom:max(10px,env(safe-area-inset-bottom));translate:none;width:auto;gap:8px 6px;padding:12px 12px 10px}
+  #coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{display:none}
+  #coleccionPanel .coleccionDetalleCabecera:has(~.con3D){right:0;padding:0 56px}
+  #coleccionPanel .coleccionDetalleCabecera:has(~.con3D) h3{font-size:20px}
+  #coleccionPanel .coleccionDetalle3D.con3D .coleccionVersion.vista .coleccionUsar{min-height:39px}
+}
+
+/* Apertura de sobres a pantalla completa, como el detalle: sin marco, pestañas
+   ni pie; el sobre, el bonche en 3D y sus chispas llenan la pantalla. */
+#coleccionPanel.coleccionAbriendoSobre{inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel.coleccionAbriendoSobre .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel.coleccionAbriendoSobre .coleccionInterior::before,#coleccionPanel.coleccionAbriendoSobre .coleccionInterior::after{display:none}
+#coleccionPanel.coleccionAbriendoSobre :is(.coleccionPestanas,.coleccionPie,.coleccionTitulos,.coleccionEmblema){display:none}
+#coleccionPanel.coleccionAbriendoSobre .coleccionCabecera{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:9;margin:0;padding:0;min-height:0;border:0;background:none}
+#coleccionPanel.coleccionAbriendoSobre .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+#coleccionPanel.coleccionAbriendoSobre .coleccionAperturaSobre{border-radius:0;background:#06040b}
+#coleccionPanel.coleccionAbriendoSobre .coleccionEstado:not(:empty){position:absolute;left:0;right:0;top:16px;z-index:8;text-align:center}
+
+/* Archivo del Domo: la biblioteca ya no vive dentro de una caja reducida. La
+   carta individual ya abre el visor 3D a pantalla completa; el listado, sobres
+   y canjes comparten ahora su misma noche, halo y cristal. Conservamos las
+   tres columnas y el scroll interno: cambiar esa geometría haría crecer las
+   miniaturas de forma desigual y rompería la lectura de las cartas. */
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre){
+  position:fixed;inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;height:var(--coleccion-alto,100dvh);max-width:none;max-height:none;margin:0;padding:0;
+  overflow:hidden;border:0;border-radius:0;background:#06040b;box-shadow:none;isolation:isolate;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre)::backdrop{background:#000;backdrop-filter:none}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior{
+  padding:max(22px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));
+  border:0;border-radius:0;background:
+    radial-gradient(ellipse 55% 48% at 50% 35%,#5a349044,transparent 72%),
+    radial-gradient(ellipse 92% 72% at 50% 42%,#281441aa,transparent 78%),
+    radial-gradient(ellipse 130% 105% at 50% 50%,#150d24,#06040b 82%);
+  isolation:isolate;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior::before{
+  content:'';display:block;position:absolute;z-index:0;left:50%;top:52%;width:min(920px,78vw);aspect-ratio:1;translate:-50% -50%;
+  opacity:.26;pointer-events:none;filter:drop-shadow(0 0 18px #a273d86b);
+  background:repeating-conic-gradient(from .08turn,#e6c9ff 0deg 1deg,transparent 1deg 11deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 49%,#000 49.2% 50.4%,transparent 50.8% 61%,#000 61.2% 61.7%,transparent 62%);
+  mask:radial-gradient(circle,transparent 0 49%,#000 49.2% 50.4%,transparent 50.8% 61%,#000 61.2% 61.7%,transparent 62%);
+  border:1px solid #e6c9ff38;border-radius:50%;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior::after{
+  content:'';display:block;position:absolute;z-index:0;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 26%,#f0d1ff12,transparent 26%),radial-gradient(circle at 82% 78%,#b879ff0d,transparent 31%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior>:not(.barridoModal){position:relative;z-index:1}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera{
+  width:min(1360px,100%);margin:0 auto 12px;padding:11px 15px;min-height:58px;border:1px solid #ffffff1f;border-radius:18px;
+  background:linear-gradient(100deg,#120c1cb8,#0b0712a6);box-shadow:inset 0 1px 0 #ffffff12,0 10px 30px #0005;
+  -webkit-backdrop-filter:blur(15px) saturate(130%);backdrop-filter:blur(15px) saturate(130%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera::before,
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera::after{display:none}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionEmblema{border-color:#c99bff78;background:radial-gradient(circle at 36% 27%,#fbebff75,#7039a4 43%,#1a102b 78%);box-shadow:0 0 20px #ae73ef40}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionAntetitulo{color:#dfc6ff;text-shadow:0 0 15px #bb8bff80}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) h2{color:#f4e5ff;text-shadow:0 2px 17px #000,0 0 20px #bd89ff36}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCerrar{
+  border-color:#ffffff2b;border-radius:12px;background:#0d0916b8;color:#f1e5ff;box-shadow:inset 0 1px 0 #ffffff12;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCerrar:hover{background:#2a1b3cbf}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestanas{
+  width:max-content;max-width:100%;margin:0 auto 12px;padding:4px;overflow-x:auto;border:1px solid #ffffff1c;border-radius:999px;
+  background:#0d0916a8;box-shadow:inset 0 1px 0 #ffffff10,0 8px 22px #0004;-webkit-backdrop-filter:blur(12px) saturate(130%);backdrop-filter:blur(12px) saturate(130%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana{min-width:142px;border:1px solid transparent;border-radius:999px;color:#d5c5e4}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana[aria-current="page"]{border-color:#d2a8ff73;background:linear-gradient(135deg,#8a56ba55,#2d1a42c7);box-shadow:inset 0 1px 0 #ffffff1d,0 0 16px #a66ce334;color:#fff1ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionNumero{border-color:#d2a8ff5c;background:#09060f;color:#f5e8ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionContenido{width:min(1360px,100%);align-self:center;gap:11px}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionFiltros{padding:8px;border:1px solid #ffffff18;border-radius:15px;background:#0c0812a1;box-shadow:inset 0 1px 0 #ffffff0e;-webkit-backdrop-filter:blur(11px);backdrop-filter:blur(11px)}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) :is(.coleccionBuscar,select){border-color:#c9a0f04a;background:#090611bd;color:#f0e4fa}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionBuscar{color:#dfc2ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionRejilla{
+  max-width:1360px;width:100%;align-self:center;padding:15px 22px 18px;gap:20px 24px;border:1px solid #ffffff0d;border-radius:22px;
+  background:radial-gradient(ellipse at 50% 30%,#b87aff12,transparent 58%);box-shadow:none;scrollbar-color:#a879ce #100a18;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini{filter:drop-shadow(0 16px 18px #0009);transition:translate .18s ease,filter .18s ease}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini:hover{translate:0 -5px!important;filter:drop-shadow(0 20px 24px #000d) brightness(1.08)!important}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMiniInfo{padding:3px 7px;border-radius:999px;background:#090611a8;box-shadow:0 3px 12px #0006}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPuntos i{border-color:#dac3ee7d;background:#251633}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionEstado{min-height:22px;color:#ddd0e9;text-shadow:0 1px 7px #000}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPie{width:min(1360px,100%);align-self:center;padding:7px 11px 0;border-top-color:#ffffff1a;color:#d7c8e4}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionVolver{color:#eadbfa;text-decoration-color:#c89df477}
+
+@media(max-width:580px){
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre){width:100vw;height:var(--coleccion-alto,100dvh);padding:0}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior{padding:max(12px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera{min-height:48px;margin-bottom:8px;padding:7px 10px;border-radius:14px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestanas{width:100%;margin-bottom:8px;padding:3px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana{min-width:0;border-radius:999px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionFiltros{padding:6px;border-radius:12px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionRejilla{padding:10px 5px 14px;gap:13px 11px;border-radius:15px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini{transition:none}
+}
+
+/* Archivo inmersivo -------------------------------------------------------
+   Mis cartas conserva la biblioteca que se recorre: tres cartas por fila y
+   desplazamiento vertical. Al abrir una, el archivo se despeja y la ficha
+   seleccionada viaja hasta el visor ya existente. No hay un carrusel ni una
+   segunda versión del visor. */
+#coleccionPanel[data-vista="cartas"] .coleccionInterior{
+  padding:0!important;border:0!important;border-radius:0!important;
+  background:
+    radial-gradient(ellipse 42% 46% at 50% 48%,#7952bc33 0%,#2b164855 42%,transparent 72%),
+    radial-gradient(ellipse 98% 88% at 50% 40%,#160b2aac,transparent 76%),
+    linear-gradient(180deg,#090611,#030207 78%,#020104)!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionCabecera{
+  position:absolute;z-index:9;left:max(22px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));
+  width:fit-content!important;max-width:calc(100vw - 76px)!important;min-height:0;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionTitulos{display:block}
+#coleccionPanel[data-vista="cartas"] .coleccionCabecera .coleccionAntetitulo{display:block;color:#cfb8ef;font-size:10px;letter-spacing:3px;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-vista="cartas"] h2{font-size:clamp(22px,2.2vw,31px);color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-vista="cartas"] .coleccionCerrar{
+  position:fixed;z-index:11;right:max(18px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));
+  width:42px;height:42px;margin:0;padding:0;border:1px solid #ffffff36!important;border-radius:50%!important;
+  background:#120b1b78!important;box-shadow:0 8px 25px #0007,inset 0 1px 0 #ffffff1c!important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel[data-vista="cartas"] .coleccionPestanas{
+  position:absolute;z-index:10;left:50%;top:max(18px,env(safe-area-inset-top));translate:-50% 0;
+  display:flex;gap:clamp(11px,2vw,24px);width:max-content;max-width:calc(100vw - 200px);margin:0!important;padding:0!important;
+  overflow:visible;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana{
+  position:relative;min-width:0!important;min-height:34px;padding:5px 1px!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;color:#bdb0ce!important;font:600 14px/1.2 var(--serif,Georgia,serif)!important;
+  transition:color .2s ease,opacity .2s ease;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana::after{content:'';position:absolute;left:50%;right:50%;bottom:0;height:1px;background:#f0c976;box-shadow:0 0 10px #efbd6855;transition:left .2s ease,right .2s ease}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana[aria-current="page"]{color:#fff1cf!important}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana[aria-current="page"]::after{left:0;right:0}
+#coleccionPanel[data-vista="cartas"] .coleccionNumero{min-width:17px;padding:0 4px;border-color:#d9b5f154!important;border-radius:7px;background:#130b1d!important;color:#f7ebff!important;font-size:10px}
+#coleccionPanel[data-vista="cartas"] .coleccionContenido{position:relative;width:100%!important;max-width:none!important;align-self:stretch;gap:0;overflow:hidden}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos{
+  position:absolute;z-index:8;top:max(88px,calc(env(safe-area-inset-top) + 72px));left:max(22px,env(safe-area-inset-left));
+  display:grid;grid-template-columns:minmax(170px,260px) 150px 135px;gap:7px;width:min(570px,calc(100vw - 44px));
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos :is(.coleccionBuscar,select){
+  min-height:34px;height:34px;border:0!important;border-bottom:1px solid #e1c6ff4f!important;border-radius:0!important;
+  background:#0b06105e!important;box-shadow:0 7px 18px #0003!important;color:#eee5f8!important;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos .coleccionBuscar{padding:0 7px;color:#e2c6ff}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos select{padding:0 5px;font-size:12px}
+#coleccionPanel[data-vista="cartas"] .coleccionEscenaArchivo{position:absolute;inset:0;overflow:hidden;isolation:isolate;perspective:1200px;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionEscenaArchivo::before{
+  content:'';position:absolute;z-index:0;left:50%;top:47%;width:min(760px,74vw);aspect-ratio:1;translate:-50% -50%;pointer-events:none;opacity:.44;
+  background:repeating-conic-gradient(from .07turn,#edd6ff 0deg 1deg,transparent 1.5deg 10deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  filter:drop-shadow(0 0 18px #b076ed71);
+}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoMotas{position:absolute;z-index:0;inset:0;pointer-events:none;opacity:.65;background-image:radial-gradient(circle at 13% 22%,#fff7d2 0 1px,transparent 2px),radial-gradient(circle at 30% 67%,#cda2ff 0 1px,transparent 2px),radial-gradient(circle at 81% 28%,#e6c3ff 0 1px,transparent 2px),radial-gradient(circle at 71% 74%,#f4d09a 0 1px,transparent 2px),radial-gradient(circle at 47% 15%,#fff7d2 0 1px,transparent 2px);background-size:173px 157px,251px 233px,199px 281px,311px 269px,419px 347px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoPedestal{position:absolute;z-index:1;left:50%;top:calc(50% + min(18vh,145px));width:clamp(310px,48vw,680px);aspect-ratio:2.9;translate:-50% -50%;border:1px solid #d7b7ff42;border-radius:50%;background:radial-gradient(ellipse,#9b6bc02e 0 18%,transparent 52%),repeating-conic-gradient(from .1turn,#f2d5ff70 0deg 1deg,transparent 1.7deg 9deg);box-shadow:0 0 32px #a06bd643,inset 0 0 20px #dec6ff13;opacity:.75}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{
+  position:absolute;z-index:3;top:max(147px,calc(env(safe-area-inset-top) + 130px));right:max(24px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));left:max(24px,env(safe-area-inset-left));
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-rows:max-content;align-content:start;
+  width:auto!important;height:auto!important;max-width:none!important;min-height:0;align-self:stretch!important;flex:none!important;padding:var(--coleccion-ancla-arriba,18px) clamp(10px,2vw,30px) var(--coleccion-ancla-abajo,82px)!important;gap:clamp(14px,2.3vw,30px)!important;
+  /* El Archivo se desplaza de forma libre. Un snap posterior al FLIP podía
+     mover la ficha recién devuelta a la siguiente fila y romper su ancla
+     central; la inercia nativa sigue haciendo el recorrido orgánico. */
+  overflow-y:auto!important;overflow-x:hidden!important;scroll-snap-type:none;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#c58deb #12091a;overscroll-behavior:contain;touch-action:pan-y;
+  background:linear-gradient(180deg,#0e09151a,transparent 24%,#0b06121c)!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  pointer-events:auto;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar{width:8px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar-track{background:#10091a70;border-radius:999px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:#c58deb99;background-clip:padding-box}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini{
+  z-index:1;align-self:start;min-width:0;scroll-snap-align:none;scroll-margin-block:18px;
+  filter:drop-shadow(0 14px 17px #0009)!important;transition:translate .24s cubic-bezier(.2,.76,.25,1),scale .24s cubic-bezier(.2,.76,.25,1),rotate .24s cubic-bezier(.2,.76,.25,1),filter .24s ease,opacity .24s ease;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini:not([data-animacion]):hover{z-index:4;translate:0 -7px!important;scale:1.025;filter:drop-shadow(0 23px 25px #000d) brightness(1.08)!important}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini:focus-visible{z-index:4;outline:2px solid #f2d89d;outline-offset:7px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMiniInfo{width:auto;max-width:100%;padding:3px 7px;border-radius:999px;background:#0906119e;box-shadow:0 3px 12px #0006}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMiniPie{min-height:15px;line-height:15px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos{gap:5px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos i{width:7px;height:7px;border-color:#efe0ff9c;background:#3d2458}
+#coleccionPanel[data-vista="cartas"] .coleccionResumenArchivo{position:absolute;z-index:8;right:max(24px,env(safe-area-inset-right));top:max(123px,calc(env(safe-area-inset-top) + 106px));margin:0;color:#d9c7eb;font-size:11px;letter-spacing:.55px;text-align:right;text-shadow:0 2px 10px #000;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoPista{position:absolute;z-index:8;left:50%;bottom:max(6px,env(safe-area-inset-bottom));translate:-50% 0;width:max-content;max-width:calc(100vw - 28px);margin:0;color:#b4a5c8a8;font-size:10px;text-align:center;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionEstado{position:absolute;z-index:12;left:50%;top:max(111px,calc(env(safe-area-inset-top) + 94px));translate:-50% 0;min-height:0;color:#f0d8aa;text-shadow:0 2px 10px #000;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionPie{position:absolute;z-index:10;right:max(20px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));width:auto!important;min-height:0;margin:0!important;padding:0!important;border:0!important;color:#bcb0ca;background:none!important}
+#coleccionPanel[data-vista="cartas"] .coleccionTotales{display:none}
+#coleccionPanel[data-vista="cartas"] .coleccionVolver{padding:0!important;color:#d8c5ed!important;font-size:11px!important;text-decoration-color:#d8c5ed80!important}
+#coleccionPanel[data-vista="cartas"] .coleccionVacio{position:absolute;z-index:9;inset:0;display:flex;padding:0 24px;background:#07040bb8;color:#e9d9f6}
+
+/* La biblioteca y el visor son dos encuadres del mismo mundo. Antes de que la
+   carta elegida alcance el pedestal, el resto de la interfaz abandona el
+   plano por sus propios bordes; no se desvanece en el centro ni deja un
+   fotograma que parezca otra pantalla. */
+#coleccionPanel[data-vista="cartas"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){will-change:translate,opacity,filter}
+/* Al volver del visor, la interfaz del Archivo reaparece por opacidad. No
+   ejecutamos una segunda entrada con translate: la única trayectoria física
+   de ese gesto pertenece a la carta que viaja hacia su ancla. */
+#coleccionPanel[data-vista="cartas"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){transition:opacity .16s ease}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla{overflow:hidden!important;pointer-events:none}
+#coleccionPanel.coleccionAbriendoCarta .coleccionCabecera{
+  opacity:0;translate:calc(-100vw - 96px) -8px;filter:blur(5px);pointer-events:none;
+  transition:opacity .34s ease,translate .5s cubic-bezier(.16,.76,.18,1),filter .27s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionPestanas{
+  opacity:0;translate:-50% calc(-100vh - 78px);filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease,translate .48s cubic-bezier(.16,.76,.18,1),filter .25s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionFiltrosInmersivos{
+  opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease .03s,translate .48s cubic-bezier(.16,.76,.18,1) .03s,filter .24s ease .03s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionResumenArchivo{
+  opacity:0;translate:calc(100vw + 96px) 0;filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease .04s,translate .48s cubic-bezier(.16,.76,.18,1) .04s,filter .24s ease .04s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionPie{
+  opacity:0;translate:0 calc(100vh + 60px);filter:blur(4px);pointer-events:none;
+  transition:opacity .28s ease .05s,translate .44s cubic-bezier(.16,.76,.18,1) .05s,filter .22s ease .05s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionEstado{
+  opacity:0;translate:-50% calc(-100vh - 62px);filter:blur(4px);pointer-events:none;
+  transition:opacity .26s ease,translate .42s cubic-bezier(.16,.76,.18,1),filter .2s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini{
+  transition-duration:.48s,.5s,.5s,.38s,.34s;
+  transition-timing-function:cubic-bezier(.18,.76,.2,1),cubic-bezier(.18,.76,.2,1),cubic-bezier(.18,.76,.2,1),ease,ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini[data-animacion="sale"]{
+  translate:var(--coleccion-salida-x,0) var(--coleccion-salida-y,0)!important;scale:.46;rotate:var(--coleccion-salida-giro,0deg);opacity:0;
+  filter:blur(3px) brightness(.4) saturate(.36)!important;transition-delay:var(--coleccion-salida-demora,0ms);
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini[data-animacion="entra"]{opacity:0!important;filter:brightness(.78)!important}
+#coleccionPanel.coleccionRegresandoArchivo :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){
+  opacity:0;pointer-events:none;
+}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionDetalleCapa{opacity:0;translate:0 -20px;pointer-events:none;transition:opacity .28s ease,translate .4s cubic-bezier(.16,.78,.18,1)}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionArchivoRejilla .coleccionMini:not([data-regreso-activa]){opacity:0;pointer-events:none}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionArchivoRejilla .coleccionMini[data-regreso-activa]{z-index:8;pointer-events:none}
+#coleccionPanel .coleccionVueloCarta{
+  position:fixed!important;z-index:50;margin:0!important;min-width:0!important;max-width:none!important;max-height:none!important;pointer-events:none;
+  translate:0 0;scale:1;rotate:0deg;opacity:1;transform:none!important;will-change:translate,scale,opacity,filter;
+  transition:translate .56s cubic-bezier(.16,.79,.21,1),scale .56s cubic-bezier(.16,.79,.21,1),opacity .22s ease,filter .56s ease;
+}
+#coleccionPanel .coleccionVueloCartaEntra{translate:var(--coleccion-vuelo-x,0) var(--coleccion-vuelo-y,0);scale:var(--coleccion-vuelo-escala,1);filter:drop-shadow(0 27px 33px #000d) brightness(1.04)!important}
+#coleccionPanel .coleccionVueloCartaEntregada{opacity:0}
+
+@media(max-width:760px){
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera{left:max(14px,env(safe-area-inset-left));top:max(11px,env(safe-area-inset-top))}
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera .coleccionAntetitulo{font-size:8px;letter-spacing:2px}
+  #coleccionPanel[data-vista="cartas"] h2{font-size:21px}
+  #coleccionPanel[data-vista="cartas"] .coleccionCerrar{right:max(12px,env(safe-area-inset-right));top:max(11px,env(safe-area-inset-top));width:37px;height:37px}
+  #coleccionPanel[data-vista="cartas"] .coleccionPestanas{top:max(48px,calc(env(safe-area-inset-top) + 40px));gap:10px;max-width:calc(100vw - 26px)}
+  #coleccionPanel[data-vista="cartas"] .coleccionPestana{font-size:12px!important}
+  #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos{top:max(82px,calc(env(safe-area-inset-top) + 75px));left:max(12px,env(safe-area-inset-left));grid-template-columns:minmax(100px,1fr) 103px 94px;width:calc(100vw - 24px);gap:4px}
+  #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos :is(.coleccionBuscar,select){min-height:31px;height:31px;font-size:10px}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoPedestal{top:calc(50% + min(19vh,120px));width:82vw}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{top:max(126px,calc(env(safe-area-inset-top) + 118px));right:max(9px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));left:max(9px,env(safe-area-inset-left));padding:var(--coleccion-ancla-arriba,9px) 3px var(--coleccion-ancla-abajo,48px)!important;gap:10px 5px!important;scrollbar-gutter:auto}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMiniInfo{padding:2px 5px}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos{gap:4px}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos i{width:6px;height:6px}
+  #coleccionPanel[data-vista="cartas"] .coleccionResumenArchivo{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoPista{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionPie{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionEstado{top:max(118px,calc(env(safe-area-inset-top) + 109px));font-size:10px}
+}
+@media(max-width:760px) and (max-height:650px){
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{top:max(114px,calc(env(safe-area-inset-top) + 106px));bottom:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{scroll-behavior:auto}
+  #coleccionPanel.coleccionAbriendoCarta :is(.coleccionArchivoRejilla .coleccionMini,.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado),#coleccionPanel .coleccionVueloCarta{transition:none}
+}
+
+/* Un solo mundo para Archivo y detalle -----------------------------------
+   El fondo no se reproduce en dos pantallas: este huésped conserva la escena
+   real del visor mientras la rejilla se recorre y también cuando una ficha se
+   convierte en la carta central. Los controles sólo flotan sobre la escena. */
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor{
+  position:absolute!important;inset:0!important;z-index:0!important;display:block;
+  overflow:hidden;pointer-events:none;isolation:isolate;
+  /* La misma variable mueve escena, halo y tarjeta dentro del visor. La
+     transición ocurre sobre este huésped persistente, no entre dos fondos. */
+  transition:--reserva-der .76s cubic-bezier(.42,0,.58,1),--controles-alto .76s cubic-bezier(.42,0,.58,1);
+}
+/* El regreso del visor y el reencuadre del anillo son un solo gesto. El
+   controlador fija esta duración temporal sólo mientras la ficha real vuela
+   de vuelta a su ancla del Archivo. */
+#coleccionPanel.coleccionRegresandoArchivo[data-mundo] .coleccionInterior>.coleccionMundoVisor{
+  transition-duration:var(--coleccion-regreso-duracion,.56s),var(--coleccion-regreso-duracion,.56s);
+}
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor[hidden]{display:none}
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor .visor3dMundo{width:100%;height:100%}
+#coleccionPanel[data-mundo] .coleccionInterior>:not(.coleccionMundoVisor):not(.barridoModal){position:relative;z-index:2}
+
+/* El Archivo usa exactamente la noche, halo, motas y pedestal del visor;
+   se eliminan el aro y el degradado que antes intentaban imitarla con CSS. */
+#coleccionPanel[data-mundo] .coleccionInterior{background:transparent!important}
+/* El Archivo no conserva una versión de respaldo del cielo del visor. Esta
+   regla también se mantiene durante el fotograma en que la vista lógica aún
+   dice "cartas" pero el mundo ya está preparando el detalle: de otro modo el
+   aro antiguo reaparece un instante detrás de la carta que viaja. */
+#coleccionPanel[data-mundo] .coleccionInterior::before,
+#coleccionPanel[data-mundo] .coleccionInterior::after,
+#coleccionPanel[data-mundo] .coleccionEscenaArchivo::before{display:none!important}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor{--reserva-der:0px}
+
+/* Las fichas siguen en tres columnas y scroll vertical, pero cada una tiene
+   una deriva propia dentro del mundo. La caja de clic no cambia de tamaño. */
+#coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta{
+  animation:coleccionCartaFlota 4.8s ease-in-out var(--archivo-flota-demora,0s) infinite alternate;
+  will-change:translate,rotate;
+}
+@keyframes coleccionCartaFlota{
+  from{translate:0 0;rotate:0deg}
+  to{translate:0 var(--archivo-flota-y,-5px);rotate:var(--archivo-flota-giro,.5deg)}
+}
+
+/* En el detalle el mismo host deja libre la columna de ediciones. La capa de
+   controles no roba el arrastre de la carta: sólo sus botones reciben puntero. */
+#coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:360px;pointer-events:auto}
+#coleccionPanel.coleccionFusionando[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:0px}
+#coleccionPanel[data-mundo="detalle"] .coleccionInterior{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionContenido{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] :is(.coleccionMundoVisor,.coleccionDetalle3D.conMundoVisor .coleccionVersiones,.coleccionDetalleCabecera .coleccionAtras,.coleccionCabecera .coleccionCerrar){pointer-events:auto}
+
+@media(max-width:760px){
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:0px}
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor .visor3dEscena{inset:0 0 var(--controles-alto,250px) 0;margin-right:0}
+  /* El acabado se elige abajo en móvil: las acciones de la carta descansan
+     inmediatamente encima, siempre dentro de la parte visible de la escena. */
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor .visor3dControles{
+    right:10px;top:auto;bottom:calc(var(--controles-alto,250px) + 10px);translate:0;
+  }
+}
+
+/* Coreografía del mismo mundo ------------------------------------------------
+   Estos dos estados se activan sólo cuando el controlador ya dejó listo el
+   siguiente encuadre. Así el fondo del visor jamás se corta: el Archivo sale
+   por los bordes y los controles del detalle llegan desde fuera del plano.
+   `coleccionAbriendoCarta` sigue siendo la salida de la carta elegida. */
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionCabecera{
+  animation:coleccionArchivoCabeceraEntra .52s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionPestanas{
+  animation:coleccionArchivoPestanasEntran .48s .04s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionFiltrosInmersivos{
+  animation:coleccionArchivoFiltrosEntran .5s .08s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionResumenArchivo{
+  animation:coleccionArchivoResumenEntra .46s .13s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionPie{
+  animation:coleccionArchivoPieEntra .42s .11s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionEstado{
+  animation:coleccionArchivoEstadoEntra .4s .06s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini{
+  animation:coleccionArchivoCartaEntra .46s var(--archivo-entrada-demora,0ms) cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 1){--archivo-entrada-x:-52px;--archivo-entrada-y:28px;--archivo-entrada-demora:80ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 2){--archivo-entrada-x:0px;--archivo-entrada-y:48px;--archivo-entrada-demora:110ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n){--archivo-entrada-x:52px;--archivo-entrada-y:28px;--archivo-entrada-demora:140ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini[data-regreso-activa]{animation:none!important;opacity:1}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini{animation:none!important}
+
+@keyframes coleccionArchivoCabeceraEntra{
+  from{opacity:0;translate:calc(-100vw - 96px) -8px;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoPestanasEntran{
+  from{opacity:0;translate:-50% calc(-100vh - 78px);filter:blur(5px)}
+  to{opacity:1;translate:-50% 0;filter:none}
+}
+@keyframes coleccionArchivoFiltrosEntran{
+  from{opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoResumenEntra{
+  from{opacity:0;translate:calc(100vw + 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoPieEntra{
+  from{opacity:0;translate:0 calc(100vh + 60px);filter:blur(4px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoEstadoEntra{
+  from{opacity:0;translate:-50% calc(-100vh - 62px);filter:blur(4px)}
+  to{opacity:1;translate:-50% 0;filter:none}
+}
+@keyframes coleccionArchivoCartaEntra{
+  from{opacity:0;translate:var(--archivo-entrada-x,0) var(--archivo-entrada-y,42px);scale:.88}
+  to{opacity:1;translate:0 0;scale:1}
+}
+
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalleCabecera:has(~.coleccionDetalle3D.conMundoVisor){
+  animation:coleccionDetalleCabeceraEntra .5s .04s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor .coleccionVersiones{
+  animation:coleccionDetallePanelEntra .54s .1s cubic-bezier(.16,.8,.2,1) backwards;
+}
+/* La escena nunca recibe un fade o scale al abrir una carta. El anillo, halo
+   y pedestal son el mismo nodo que estaba detrás del Archivo; sólo cambian
+   sus coordenadas dentro de la transición FLIP de la ficha seleccionada. */
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dControles{
+  animation:coleccionDetalleHerramientasEntran .44s .17s cubic-bezier(.16,.8,.2,1) backwards;
+}
+@keyframes coleccionDetalleCabeceraEntra{
+  from{opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionDetallePanelEntra{
+  from{opacity:0;translate:calc(100vw + 96px) -50%;scale:.97;filter:blur(6px)}
+  to{opacity:1;translate:0 -50%;scale:1;filter:none}
+}
+@keyframes coleccionDetalleHerramientasEntran{
+  from{opacity:0;translate:calc(100vw + 72px) -50%;filter:blur(4px)}
+  to{opacity:1;translate:0 -50%;filter:none}
+}
+@media(max-width:760px){
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor .coleccionVersiones{
+    animation-name:coleccionDetallePanelEntraMovil;
+  }
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dControles{
+    animation-name:coleccionDetalleHerramientasEntranMovil;
+  }
+  @keyframes coleccionDetallePanelEntraMovil{
+    from{opacity:0;translate:0 calc(100vh + 72px);scale:.97;filter:blur(6px)}
+    to{opacity:1;translate:0 0;scale:1;filter:none}
+  }
+  @keyframes coleccionDetalleHerramientasEntranMovil{
+    from{opacity:0;translate:calc(100vw + 72px) 0;filter:blur(4px)}
+    to{opacity:1;translate:0 0;filter:none}
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta,
+  #coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado,.coleccionMini),
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] :is(.coleccionDetalleCabecera,.coleccionVersiones,.visor3dEscena,.visor3dControles){animation:none!important}
+}
+
+/* Logros -------------------------------------------------------------------
+   El registro vive dentro de la Colección: conserva el mismo papel oscuro,
+   latón y jerarquía de la biblioteca, sin introducir otra caja o un modal. */
+#coleccionPanel[data-vista="logros"] .coleccionContenido{gap:0}
+#coleccionPanel .coleccionLogros{
+  width:min(100%,1020px);flex:1;min-height:0;display:flex;flex-direction:column;
+  margin:0 auto;padding:1px 4px 0;color:#e4d2b2;
+}
+#coleccionPanel .coleccionLogrosVacios{
+  align-items:center;justify-content:center;gap:9px;text-align:center;
+  color:#c5ad89;
+}
+#coleccionPanel .coleccionLogrosVacios h3{font:600 25px/1.2 var(--serif,Georgia,serif);color:#efd8a4}
+#coleccionPanel .coleccionLogrosVacios p{max-width:390px;font-size:13px;line-height:1.55}
+#coleccionPanel .coleccionLogrosCabecera{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto;
+  column-gap:26px;align-items:center;flex:none;padding:3px 3px 13px;border-bottom:1px solid #9b754442;
+}
+#coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo{grid-column:1;grid-row:1;margin-bottom:2px}
+#coleccionPanel .coleccionLogrosCabecera>h3{
+  grid-column:1;grid-row:2;font:700 28px/1.08 var(--serif,Georgia,serif);
+  letter-spacing:.3px;color:#f1dcae;
+}
+#coleccionPanel .coleccionLogrosCabecera>p{
+  grid-column:1;grid-row:3;max-width:610px;margin-top:5px;color:#bca68a;
+  font-size:12px;line-height:1.45;
+}
+#coleccionPanel .coleccionLogrosCuenta{
+  grid-column:2;grid-row:1 / 4;align-self:center;display:grid;
+  grid-template-columns:auto minmax(74px,1fr);grid-template-areas:"numero texto" "accion accion";
+  column-gap:8px;row-gap:2px;min-width:154px;padding:5px 0 5px 17px;
+  border-left:1px solid #9b75445e;color:#bca788;
+}
+#coleccionPanel .coleccionLogrosCuenta strong{
+  grid-area:numero;align-self:center;font:700 25px/1 var(--serif,Georgia,serif);
+  font-variant-numeric:tabular-nums;color:#f1dba9;text-align:right;white-space:nowrap;
+}
+#coleccionPanel .coleccionLogrosCuenta>span{
+  grid-area:text;align-self:center;font-size:10px;line-height:1.22;
+  letter-spacing:.55px;text-transform:uppercase;
+}
+#coleccionPanel .coleccionLogrosSobres{
+  grid-area:accion;justify-self:stretch;min-height:30px;margin-top:3px;padding:5px 8px;
+  border-color:#a9874e;background:linear-gradient(110deg,#644729,#392719);box-shadow:inset 0 1px 0 #d3af6b35,0 2px 0 #130d08;
+  color:#f1d6a1;font-size:12px;
+}
+#coleccionPanel .coleccionLogrosSobres svg{width:15px;height:15px}
+
+/* Los filtros se deslizan si no caben: nunca fuerzan la lista ni recortan un
+   nombre de protagonista. */
+#coleccionPanel .coleccionLogrosFiltros{
+  display:flex;gap:7px;flex:none;overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#87643d #1b120e;
+  padding:12px 2px 10px;scroll-snap-type:x proximity;
+}
+#coleccionPanel .coleccionLogrosFiltro{
+  min-height:32px;padding:5px 12px;flex:none;white-space:nowrap;scroll-snap-align:start;
+  border-color:#7152329c;background:linear-gradient(160deg,#312318d9,#1b1410e8);
+  box-shadow:inset 0 1px 0 #c6a26c1f,0 1px 0 #090706;color:#bea98b;font-size:12px;
+}
+#coleccionPanel .coleccionLogrosFiltro:hover{border-color:#b48d51;color:#ecd4a5}
+#coleccionPanel .coleccionLogrosFiltro[aria-pressed="true"]{
+  border-color:#d0a961;color:#f4ddab;background:linear-gradient(160deg,#74502a,#3b291b);
+  box-shadow:inset 0 1px 0 #f0d18b42,0 1px 0 #110b07;
+}
+
+/* Sólo esta zona hace scroll; la cabecera, filtros y recompensa permanecen
+   siempre disponibles. El espacio al final evita que la última ficha choque
+   con el borde al llegar con rueda o toque. */
+#coleccionPanel .coleccionListaLogros{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;
+  flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8d6d43 #18100d;
+  scrollbar-gutter:stable;gap:10px 12px;padding:2px 10px 20px 2px;
+}
+#coleccionPanel .coleccionLogro{
+  display:grid;grid-template-columns:64px minmax(0,1fr) max-content;
+  grid-template-areas:"sello titulo premio" "sello descripcion descripcion" "sello meta prueba";
+  column-gap:12px;row-gap:8px;align-items:start;min-width:0;min-height:132px;
+  padding:12px 14px;border:1px solid #80603d80;border-radius:4px;
+  background:radial-gradient(ellipse at 0 0,#a2793a12,transparent 46%),linear-gradient(120deg,#2c1f16e8,#17110edb);
+  box-shadow:inset 0 1px 0 #e1bd8030,inset 0 -16px 27px #00000024,0 3px 9px #0000001c;
+  transition:border-color .18s ease,translate .18s ease,filter .18s ease;
+}
+#coleccionPanel .coleccionLogro:hover{border-color:#af8950;translate:0 -1px;filter:brightness(1.055)}
+#coleccionPanel .coleccionLogro.completado{
+  border-color:#b9985d;background:radial-gradient(ellipse at 0 0,#d1aa5623,transparent 48%),linear-gradient(120deg,#302516eb,#1e1810e8);
+  box-shadow:inset 0 1px 0 #f3d89348,inset 0 -16px 27px #0000001f,0 3px 9px #00000020;
+}
+#coleccionPanel .coleccionLogroSello{
+  grid-area:sello;display:grid;place-items:center;justify-self:center;align-self:center;width:64px;height:72px;
+  position:relative;color:#a58f72;isolation:isolate;
+}
+#coleccionPanel .coleccionMedalla{
+  --medalla-acento:#d8a85e;--medalla-sombra:#593819;--medalla-cinta:#63411d;--medalla-metal:#e9c77a;
+  --medalla-nucleo:#20150f;--medalla-brillo:#fff0bd;
+}
+#coleccionPanel .coleccionMedalla[data-protagonista="mohamed"]{--medalla-acento:#65c7e4;--medalla-sombra:#164967;--medalla-cinta:#274f6e;--medalla-metal:#badfec}
+#coleccionPanel .coleccionMedalla[data-protagonista="fender"]{--medalla-acento:#e17750;--medalla-sombra:#662718;--medalla-cinta:#76341f;--medalla-metal:#f0b18b}
+#coleccionPanel .coleccionMedalla[data-protagonista="talesin"]{--medalla-acento:#ddc69b;--medalla-sombra:#6a5841;--medalla-cinta:#76644b;--medalla-metal:#fff0c4}
+#coleccionPanel .coleccionMedalla[data-protagonista="rafaela"]{--medalla-acento:#a8cd78;--medalla-sombra:#3f5c30;--medalla-cinta:#4d6b37;--medalla-metal:#d8ecac}
+#coleccionPanel .coleccionMedalla[data-protagonista="adreida"]{--medalla-acento:#d399df;--medalla-sombra:#60366e;--medalla-cinta:#6b4079;--medalla-metal:#f0c2f5}
+#coleccionPanel .coleccionMedallaSvg{
+  display:block;width:64px;height:72px;overflow:visible;transform-origin:50% 58%;
+  filter:drop-shadow(0 4px 4px #0009);transition:transform .2s ease,filter .2s ease;
+}
+#coleccionPanel .coleccionLogro:hover .coleccionMedallaSvg{transform:translateY(-2px) rotate(-2deg) scale(1.035);filter:drop-shadow(0 6px 7px #000b)}
+#coleccionPanel .medallaCinta{stroke:#140e0b;stroke-width:2;stroke-linejoin:round}
+#coleccionPanel .medallaCintaIzquierda{fill:color-mix(in srgb,var(--medalla-cinta),#0d0907 27%)}
+#coleccionPanel .medallaCintaDerecha{fill:color-mix(in srgb,var(--medalla-cinta),#fff 12%)}
+#coleccionPanel .medallaHalo{fill:#090605;border-radius:50%;opacity:.88}
+#coleccionPanel .medallaAro{fill:#20130b;stroke:var(--medalla-metal);stroke-width:3}
+#coleccionPanel .medallaNucleo{fill:color-mix(in srgb,var(--medalla-nucleo),var(--medalla-sombra) 32%);stroke:var(--medalla-acento);stroke-width:1.4}
+#coleccionPanel .medallaRayas{fill:var(--medalla-metal);opacity:.78}
+#coleccionPanel .medallaGlifo{fill:none;stroke:var(--medalla-acento);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+#coleccionPanel .medallaGlifo .medallaRelleno{fill:var(--medalla-acento);stroke:var(--medalla-acento)}
+#coleccionPanel .medallaNumero{fill:var(--medalla-acento);stroke:none;font:700 25px/1 var(--serif,Georgia,serif)}
+#coleccionPanel .medallaMicroNumero{fill:var(--medalla-acento);stroke:none;font:700 13px/1 var(--serif,Georgia,serif);letter-spacing:-.7px}
+#coleccionPanel .medallaBrillo{fill:none;stroke:var(--medalla-brillo);stroke-width:2;stroke-linecap:round;opacity:.65}
+#coleccionPanel .coleccionMedalla[data-rareza="oro"] .medallaAro{stroke:#f2c462}
+#coleccionPanel .coleccionMedalla[data-rareza="eclipse"] .medallaAro{stroke:#c692f0;stroke-dasharray:3 1}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"] .coleccionMedallaSvg{filter:grayscale(.52) saturate(.5) brightness(.67) drop-shadow(0 4px 4px #0009)}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"] .medallaGlifo{opacity:.62}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"]::after{
+  content:'◆';position:absolute;z-index:2;right:0;bottom:7px;width:17px;height:17px;display:grid;place-items:center;
+  border:1px solid #b7a78d80;border-radius:50%;background:#17100de8;box-shadow:0 2px 5px #0009;color:#d1c2a8;font-size:9px;
+}
+#coleccionPanel .coleccionLogro.completado .coleccionMedallaSvg{filter:drop-shadow(0 4px 5px #0009) drop-shadow(0 0 8px color-mix(in srgb,var(--medalla-acento),transparent 72%))}
+#coleccionPanel .coleccionLogroTitulo{
+  grid-area:titulo;min-width:0;align-self:end;margin:0;padding-top:3px;overflow-wrap:anywhere;hyphens:auto;
+  font:600 18px/1.15 var(--serif,Georgia,serif);letter-spacing:.15px;color:#efd9ac;
+}
+#coleccionPanel .coleccionLogroDescripcion{
+  grid-area:descripcion;min-width:0;max-width:100%;align-self:start;margin:0;overflow-wrap:anywhere;hyphens:auto;
+  color:#b9a58b;font-size:11px;line-height:1.4;text-wrap:pretty;
+}
+#coleccionPanel .coleccionLogroMeta{
+  grid-area:meta;display:grid;grid-template-columns:minmax(56px,1fr) auto;gap:8px;
+  align-self:end;align-items:center;min-width:0;color:#ae9b80;font-size:10px;line-height:1.2;
+}
+#coleccionPanel .coleccionLogroMeta progress{
+  width:100%;min-width:0;height:7px;overflow:hidden;border:1px solid #806440;border-radius:999px;
+  appearance:none;background:#120d0b;accent-color:#c49146;
+}
+#coleccionPanel .coleccionLogroMeta progress::-webkit-progress-bar{background:#120d0b}
+#coleccionPanel .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#80612d,#d4a653);box-shadow:inset 0 1px #ffe0a24d}
+#coleccionPanel .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#80612d,#d4a653);box-shadow:inset 0 1px #ffe0a24d}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta{color:#d4bd8d}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#ad7f31,#f0c86f)}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#ad7f31,#f0c86f)}
+#coleccionPanel .coleccionLogroPremio{
+  grid-area:premio;display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;
+  align-self:start;padding-top:4px;color:#d3b270;font-size:10px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;white-space:nowrap;
+}
+#coleccionPanel .coleccionLogroPremio svg{width:14px;height:14px}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroPremio{color:#efd28f}
+#coleccionPanel .coleccionLogroPrueba{
+  grid-area:prueba;justify-self:end;min-height:27px;padding:4px 8px;border-color:#8b6b42;
+  background:#241810;box-shadow:none;color:#d4ba8b;font-size:11px;
+}
+#coleccionPanel .coleccionLogroPrueba:hover{background:#493220}
+#coleccionPanel .coleccionLogrosNota{
+  flex:none;max-width:650px;margin:7px auto 0;padding:7px 14px 0;border-top:1px solid #8b683e42;
+  color:#aa967b;font-size:10px;line-height:1.35;text-align:center;
+}
+
+@media(max-width:760px){
+  #coleccionPanel[data-vista="logros"] .coleccionPestana{min-width:0;flex:1;padding-inline:7px;font-size:13px;gap:5px}
+  #coleccionPanel[data-vista="logros"] .coleccionPestana svg{width:16px;height:16px}
+  #coleccionPanel[data-vista="logros"] .coleccionNumero{min-width:20px;padding-inline:4px;font-size:10px}
+  #coleccionPanel .coleccionLogros{padding-inline:0}
+  #coleccionPanel .coleccionLogrosCabecera{column-gap:15px;padding-bottom:10px}
+  #coleccionPanel .coleccionLogrosCabecera>h3{font-size:25px}
+  #coleccionPanel .coleccionLogrosCuenta{min-width:137px;padding-left:12px}
+  #coleccionPanel .coleccionLogrosCuenta strong{font-size:22px}
+  #coleccionPanel .coleccionListaLogros{gap:9px;padding-right:7px}
+  #coleccionPanel .coleccionLogro{padding:11px 10px;column-gap:10px}
+}
+@media(max-width:620px){
+  #coleccionPanel .coleccionLogrosCabecera{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;row-gap:0}
+  #coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo,
+  #coleccionPanel .coleccionLogrosCabecera>h3,
+  #coleccionPanel .coleccionLogrosCabecera>p{grid-column:1}
+  #coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo{grid-row:1}
+  #coleccionPanel .coleccionLogrosCabecera>h3{grid-row:2}
+  #coleccionPanel .coleccionLogrosCabecera>p{grid-row:3;max-width:none;padding-right:2px}
+  #coleccionPanel .coleccionLogrosCuenta{
+    grid-column:1;grid-row:4;justify-self:stretch;grid-template-columns:auto 1fr auto;
+    grid-template-areas:"numero texto accion";align-items:center;min-width:0;margin-top:9px;padding:8px 0 0;border-top:1px solid #8f6c4045;border-left:0;
+  }
+  #coleccionPanel .coleccionLogrosSobres{justify-self:end;min-height:29px;margin:0;padding:4px 8px}
+  #coleccionPanel .coleccionLogrosFiltros{padding-top:9px;padding-bottom:8px}
+  #coleccionPanel .coleccionListaLogros{grid-template-columns:1fr;padding-bottom:15px}
+  #coleccionPanel .coleccionLogro{
+    grid-template-columns:60px minmax(0,1fr) max-content;grid-template-areas:"sello titulo premio" "sello descripcion descripcion" "sello meta prueba";
+    row-gap:7px;min-height:146px;padding:11px 12px 10px;
+  }
+  #coleccionPanel .coleccionLogroSello{width:60px;height:68px}
+  #coleccionPanel .coleccionMedallaSvg{width:60px;height:68px}
+  #coleccionPanel .coleccionLogroMeta{align-self:start;padding-top:2px}
+  #coleccionPanel .coleccionLogroPremio{align-self:start;padding:2px 0 0}
+  #coleccionPanel .coleccionLogroPrueba{align-self:end}
+}
+@media(max-width:420px){
+  #coleccionPanel[data-vista="logros"] .coleccionPestana{padding-inline:4px;font-size:11px;gap:3px}
+  #coleccionPanel[data-vista="logros"] .coleccionPestana svg{display:none}
+  #coleccionPanel .coleccionLogrosCabecera>h3{font-size:23px}
+  #coleccionPanel .coleccionLogrosCabecera>p{font-size:11px}
+  #coleccionPanel .coleccionLogrosCuenta{column-gap:6px}
+  #coleccionPanel .coleccionLogrosCuenta>span{font-size:9px}
+  #coleccionPanel .coleccionLogro{grid-template-columns:52px minmax(0,1fr) max-content;min-height:156px;padding:10px 8px;column-gap:8px}
+  #coleccionPanel .coleccionLogroSello{width:52px;height:60px}
+  #coleccionPanel .coleccionMedallaSvg{width:52px;height:60px}
+  #coleccionPanel .coleccionLogroTitulo{font-size:16px}
+  #coleccionPanel .coleccionLogroDescripcion{font-size:10px}
+  #coleccionPanel .coleccionLogroMeta{gap:5px;font-size:9px}
+  #coleccionPanel .coleccionLogroPremio{font-size:9px}
+}
+
+/* Un mismo mundo para las pestañas principales ---------------------------
+   El Archivo ya conserva un visor vivo detrás de Mis cartas. Sobres, Canjear
+   y Logros no deben volver a encerrarse en un segundo diálogo: sus controles
+   flotan sobre ese mismo halo, motas y círculo rúnico. El bloque se limita a
+   las tres vistas auxiliares para no cambiar la coreografía Archivo → detalle
+   ni las pantallas transitorias de apertura/recompensa. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]){
+  --escena-cristal:#0905108f;
+  --escena-cristal-fuerte:#0a0612ba;
+  --escena-borde:#ead7ff32;
+  --escena-texto:#e9dcf5;
+  --escena-suave:#cbb9dc;
+}
+
+/* Si el visor WebGL no estuviera disponible, el mismo encuadre conserva una
+   alternativa visual silenciosa; cuando el visor existe, :empty deja de
+   coincidir y no duplica su halo ni sus motas. */
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty{
+  background:
+    radial-gradient(ellipse 55% 48% at 50% 44%,#7443b447,transparent 72%),
+    radial-gradient(ellipse 90% 70% at 50% 40%,#2b174bba,transparent 78%),
+    linear-gradient(180deg,#090611,#030207 78%,#020104);
+}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty::before{
+  content:'';position:absolute;left:50%;top:52%;width:min(680px,72vw);aspect-ratio:1;
+  translate:-50% -50%;opacity:.72;pointer-events:none;
+  background:repeating-conic-gradient(from .08turn,#ead5ff 0deg 1deg,transparent 1.6deg 10deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  filter:drop-shadow(0 0 18px #b076ed71);
+}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.64;
+  background-image:radial-gradient(circle at 13% 22%,#fff7d2 0 1px,transparent 2px),radial-gradient(circle at 30% 67%,#cda2ff 0 1px,transparent 2px),radial-gradient(circle at 81% 28%,#e6c3ff 0 1px,transparent 2px),radial-gradient(circle at 71% 74%,#f4d09a 0 1px,transparent 2px),radial-gradient(circle at 47% 15%,#fff7d2 0 1px,transparent 2px);
+  background-size:173px 157px,251px 233px,199px 281px,311px 269px,419px 347px;
+}
+
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionInterior{
+  padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{
+  position:absolute;z-index:9;left:max(22px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));
+  width:fit-content!important;max-width:calc(100vw - 76px)!important;min-height:0;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionTitulos{display:block}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera .coleccionAntetitulo{
+  display:block;color:#cfb8ef;font-size:10px;letter-spacing:3px;text-shadow:0 0 14px #b77bff8f;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) h2{
+  font-size:clamp(22px,2.2vw,31px);color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{
+  position:fixed;z-index:11;right:max(18px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));
+  width:42px;height:42px;margin:0;padding:0;border:1px solid #ffffff36!important;border-radius:50%!important;
+  background:#120b1b78!important;box-shadow:0 8px 25px #0007,inset 0 1px 0 #ffffff1c!important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{
+  position:absolute;z-index:10;left:50%;top:max(18px,env(safe-area-inset-top));translate:-50% 0;
+  display:flex;gap:clamp(11px,2vw,24px);width:max-content;max-width:calc(100vw - 200px);margin:0!important;padding:0!important;
+  overflow:visible;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana{
+  position:relative;min-width:0!important;min-height:34px;padding:5px 1px!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;color:#bdb0ce!important;font:600 14px/1.2 var(--serif,Georgia,serif)!important;
+  transition:color .2s ease,opacity .2s ease;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana::after{
+  content:'';position:absolute;left:50%;right:50%;bottom:0;height:1px;background:#f0c976;box-shadow:0 0 10px #efbd6855;transition:left .2s ease,right .2s ease;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana[aria-current="page"]{color:#fff1cf!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana[aria-current="page"]::after{left:0;right:0}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionNumero{
+  min-width:17px;padding:0 4px;border-color:#d9b5f154!important;border-radius:7px;background:#130b1d!important;color:#f7ebff!important;font-size:10px;
+}
+
+/* El contenido conserva su flujo propio, pero ya no ocupa una caja: se
+   convierte en una capa transparente sobre la escena compartida. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{
+  position:absolute;z-index:3;top:max(94px,calc(env(safe-area-inset-top) + 82px));right:max(28px,env(safe-area-inset-right));bottom:max(36px,env(safe-area-inset-bottom));left:max(28px,env(safe-area-inset-left));
+  width:auto!important;max-width:none!important;align-self:auto;gap:0;overflow:hidden;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionEstado{
+  position:absolute;z-index:12;left:50%;bottom:max(9px,env(safe-area-inset-bottom));translate:-50% 0;min-height:0;
+  color:#f0d8aa;text-align:center;text-shadow:0 2px 10px #000;pointer-events:none;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{
+  position:absolute;z-index:10;right:max(20px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));
+  width:auto!important;min-height:0;margin:0!important;padding:0!important;border:0!important;background:none!important;color:#bcb0ca;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionTotales{display:none}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionVolver{
+  padding:0!important;color:#d8c5ed!important;font-size:11px!important;text-decoration-color:#d8c5ed80!important;
+}
+
+/* Sobres: título, carrusel y acciones flotan sobre el pedestal del visor. */
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo{
+  position:relative;z-index:2;max-width:570px;margin:0 auto;padding:2px 16px 8px;text-align:center;text-shadow:0 3px 16px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo .coleccionAntetitulo{display:block;color:#cfb8ef;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo p{color:#d4c4e6}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresPorElegir,
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionReanudarSobre{
+  position:relative;z-index:3;border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:inset 0 1px 0 #fff2,0 9px 25px #0005;
+  -webkit-backdrop-filter:blur(9px) saturate(120%);backdrop-filter:blur(9px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionBibliotecaSobres{width:min(960px,100%)}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionCarreteVentana{
+  background:radial-gradient(ellipse at 50% 62%,#aa76e12b,transparent 62%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionCarreteNavegacion .coleccionBoton{
+  border-color:var(--escena-borde);background:var(--escena-cristal-fuerte);box-shadow:inset 0 1px 0 #fff2,0 5px 18px #0007;
+  -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreSeleccion h4{color:#f3e8ff;text-shadow:0 2px 10px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreSeleccion p,
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionDeslizarPista{color:#cfbedf;text-shadow:0 2px 8px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreAcciones{
+  position:relative;z-index:4;padding-top:6px;text-shadow:0 2px 8px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresVacios{color:var(--escena-texto);text-shadow:0 2px 12px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresVaciosSello{border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:0 12px 34px #0008}
+
+/* Canjear: la lista de recetas es una constelación de controles legibles, no
+   una tarjeta violeta independiente. */
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller{
+  width:min(690px,100%);padding:clamp(14px,3vh,30px) clamp(8px,2vw,20px);gap:14px;color:var(--escena-texto);text-shadow:0 2px 12px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] :is(.coleccionTallerRegla,.coleccionTallerNota){color:#d4c4e6}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjesListos{padding:5px 7px;background:transparent}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo{
+  border-color:var(--escena-borde);background:linear-gradient(110deg,#140d20a9,#08050d8a);box-shadow:inset 0 1px 0 #fff2,0 8px 24px #0005;
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo strong{color:#f1e5ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo span,
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjesListos>p{color:#cfbedf}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeFisico{border-top-color:#ead7ff30;color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeFisico summary{color:#eadbfa}
+
+/* Logros: conservan su grilla y scroll, pero el registro se lee como placas
+   suspendidas en el Archivo, con el halo y las motas aún visibles entre ellas. */
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogros{width:min(100%,1080px);padding:0 5px;color:var(--escena-texto)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera{
+  border-bottom-color:#ead7ff2b;text-shadow:0 2px 12px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>.coleccionAntetitulo{color:#cfb8ef;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>p,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCuenta{color:#cfbedf;border-color:#ead7ff30}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCuenta strong{color:#f3e8ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosSobres,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro{
+  border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:inset 0 1px 0 #fff2,0 6px 18px #0005;
+  -webkit-backdrop-filter:blur(9px) saturate(120%);backdrop-filter:blur(9px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro{color:#d7c7e7}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro[aria-pressed="true"]{
+  border-color:#e5c8ff90;background:linear-gradient(135deg,#8757b575,#2c1942a8);color:#fff1ff;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionListaLogros{scrollbar-color:#c58deb #12091a}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro{
+  border-color:#ead7ff2e;background:linear-gradient(112deg,#130c1eb5,#08050daf);box-shadow:inset 0 1px 0 #fff2,0 9px 25px #0005;
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro:hover{border-color:#e7c6ff80;filter:brightness(1.1)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro.completado{
+  border-color:#f0ca8b86;background:linear-gradient(112deg,#3a25149e,#100a1499);box-shadow:inset 0 1px 0 #fff3,0 9px 25px #0005,0 0 22px #d7a6561b;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroSello{border-color:transparent;background:transparent;color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroTitulo{color:#f2e5ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroDescripcion,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosNota{color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress{border-color:#ddc2ff65;background:#0b0611}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-webkit-progress-bar{background:#0b0611}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#8d5bc4,#ddb46b)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#8d5bc4,#ddb46b)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroPrueba{border-color:#d9b5f16e;background:#130b1b9e;color:#eadbfa}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosNota{border-top-color:#ead7ff2b;text-shadow:0 2px 9px #000}
+
+@media(max-width:760px){
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{left:max(14px,env(safe-area-inset-left));top:max(11px,env(safe-area-inset-top))}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera .coleccionAntetitulo{font-size:8px;letter-spacing:2px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) h2{font-size:21px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{right:max(12px,env(safe-area-inset-right));top:max(11px,env(safe-area-inset-top));width:37px;height:37px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{top:max(48px,calc(env(safe-area-inset-top) + 40px));gap:10px;max-width:calc(100vw - 26px)}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana{font-size:12px!important}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{top:max(88px,calc(env(safe-area-inset-top) + 79px));right:max(10px,env(safe-area-inset-right));bottom:max(7px,env(safe-area-inset-bottom));left:max(10px,env(safe-area-inset-left))}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo{padding-bottom:4px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo h3{font-size:24px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller{padding:8px 2px;gap:10px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo{background:#100919a8}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogros{padding-inline:0}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera{padding-inline:3px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionListaLogros{padding-right:4px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{display:none}
+}
+@media(max-width:760px) and (max-height:650px){
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{top:max(80px,calc(env(safe-area-inset-top) + 72px));bottom:3px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo p{display:none}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller h3{font-size:24px}
+}
+
+/* El huésped común llega después de la composición del Archivo y normaliza
+   sus hijos a z-index 2. Reafirmamos la capa de navegación de Mis cartas
+   para que su escena decorativa jamás capture los clics de sus pestañas. */
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionCabecera{position:absolute!important;z-index:9!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionPestanas{position:absolute!important;z-index:10!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionCerrar{position:fixed!important;z-index:11!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionContenido{position:relative!important;z-index:2!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionEstado{position:absolute!important;z-index:12!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionPie{position:absolute!important;z-index:10!important}
+
+/* La capa común del mundo usa un selector muy específico para normalizar sus
+   hijos. Las pestañas auxiliares son HUDs del mismo mundo, no flujo normal:
+   se reafirma su anclaje para que, en alturas cortas, Sobres no empuje los
+   botones bajo el pie ni pierda el centro de la escena. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{position:absolute!important;z-index:9!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{position:absolute!important;z-index:10!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{position:fixed!important;z-index:11!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{position:absolute!important;z-index:3!important;flex:none!important;align-self:stretch!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionEstado{position:absolute!important;z-index:12!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{position:absolute!important;z-index:10!important}

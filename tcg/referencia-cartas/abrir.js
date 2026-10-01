@@ -1,0 +1,1 @@
+'use strict';const p=new URLSearchParams(location.search),v=p.get('vista'),movil=v==='movil'||(v!=='desktop'&&matchMedia('(max-width: 760px)').matches),u=new URL(movil?'movil.html':'escritorio.html',location.href);if(p.has('carta'))u.searchParams.set('carta',p.get('carta'));location.replace(u.href);

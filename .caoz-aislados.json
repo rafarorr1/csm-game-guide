@@ -117,6 +117,10 @@
       "fuente": "034503171f665f7e7caa2275af847032dd89bfc5",
       "ruta": "tcg/portal"
     },
+    "referencia-cartas": {
+      "fuente": "f3554690f154541890ad501e38d66ca6288d64f9",
+      "ruta": "tcg/referencia-cartas"
+    },
     "rey": {
       "fuente": "4633cfedba6e5b98ece815fdc20a4aaecfb9c5bf",
       "ruta": "tcg/rey"

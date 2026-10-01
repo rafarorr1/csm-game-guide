@@ -1,0 +1,16 @@
+{
+  "vista": "movil",
+  "referenciaVisual": {
+    "cartas": 129,
+    "protagonistas": 6,
+    "recursos": 135,
+    "campos": "sólo cara impresa, retrato, arquetipo y subtipo"
+  },
+  "almacenamiento": "ninguno",
+  "red": "ninguna petición de datos; sólo assets locales de la página",
+  "componentes": [
+    "Archivo visual",
+    "visor de carta",
+    "pintor de carta"
+  ]
+}

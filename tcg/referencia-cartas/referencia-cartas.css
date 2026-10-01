@@ -1,0 +1,14 @@
+/* Sólo fija el contexto de una página sin laboratorio. La composición de
+   cartas, el halo, el círculo y el movimiento siguen siendo del visor real. */
+html:has(body.referenciaCartas){overflow:hidden;background:#0b0712}
+body.referenciaCartas{margin:0;min-width:0;width:100%;height:100dvh;overflow:hidden;background:radial-gradient(ellipse at 50% 20%,#3c236b 0%,#160c2a 46%,#09050f 100%);color:#f6eddd}
+#referenciaCarga{position:fixed;inset:0;z-index:1;display:grid;place-content:center;gap:10px;padding:30px;text-align:center;background:radial-gradient(circle at 50% 65%,#512b7b99,transparent 38%),#0c0713;color:#eee1cf;font-family:var(--serif,Georgia,serif)}
+#referenciaCarga span{font:700 11px/1 var(--sans,system-ui,sans-serif);letter-spacing:.34em;color:#d3af64}
+#referenciaCarga strong{font-size:clamp(24px,4vw,46px)}
+#referenciaCarga p{margin:0;color:#cbb8df;font:500 15px/1.45 var(--sans,system-ui,sans-serif)}
+#referenciaCarga.referenciaFallo{z-index:20}
+#coleccionPanel.coleccionReferenciaCartas .coleccionCerrar,#coleccionPanel.coleccionReferenciaCartas .coleccionPie{display:none!important}
+#coleccionPanel.coleccionReferenciaCartas .coleccionCabecera::after{content:'ARCHIVO DE ARTE · SIN PROGRESO DE JUEGO';position:absolute;right:26px;bottom:10px;color:#cdb484a8;font:700 9px/1 var(--sans,system-ui,sans-serif);letter-spacing:.14em;pointer-events:none}
+#coleccionPanel.coleccionReferenciaCartas .coleccionEstadoEdicion{display:none}
+#coleccionPanel.coleccionReferenciaCartas .coleccionAviso{max-width:42em;text-align:center;color:#d7c9ee}
+@media(max-width:620px){#coleccionPanel.coleccionReferenciaCartas .coleccionCabecera::after{display:none}}
