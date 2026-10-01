@@ -18,3 +18,5 @@
 
 /* La vista previa conserva el encuadre 16:9 del búfer fijo de 1080p. */
 .apLaboratorio[data-resolucion="1080p"] .apEscenario{height:auto;aspect-ratio:16/9;min-height:0;border:0}
+
+.labSecuencia{display:flex;gap:5px;flex-wrap:wrap;list-style:none;padding:0;margin:12px 0}.labSecuencia li{padding:4px 7px;border-radius:5px;background:#100c18;color:#aa9bb5;font-size:11px;border:1px solid #463451}.labSecuencia [aria-current="step"]{color:#16121c;background:#e0c18b;border-color:#f1dba7;font-weight:700}

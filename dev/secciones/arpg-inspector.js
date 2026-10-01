@@ -5,7 +5,7 @@ else iniciar();
 async function iniciar(){
   document.body.classList.add('apLaboratorio');
   const panel=document.createElement('aside');panel.className='labPanel';panel.innerHTML=`
-    <header><small>LAS GRIETAS DEL EDITOR · HERRAMIENTAS</small><h1>Inspector</h1><p>Combate, animación y rendimiento · v3</p></header>
+    <header><small>LAS GRIETAS DEL EDITOR · HERRAMIENTAS</small><h1>Inspector</h1><p>Combate, animación y rendimiento · v4</p></header>
     <p id="labEstado" role="status">Preparando el juego…</p>
     <fieldset id="labEdicion" disabled>
       <legend>Escena de trabajo</legend>
@@ -19,6 +19,23 @@ async function iniciar(){
       <label>Fase <output id="labFaseTxt">0%</output><input id="labFase" type="range" min="0" max="1" step="0.01" value="0"></label>
       <div class="labFila"><button id="labReproducir">Repetir animación</button><button id="labVolver">Volver al combate</button></div>
       <p class="labNota">Vista de poses. Para comprobar desplazamiento, piedras e impactos, usa los ataques reales.</p>
+      <h2>Transiciones de Adreida</h2>
+      <p class="labNota">Ajusta la entrada y salida de las poses. El impacto, el daño y los 0,3 s de cansancio conservan sus tiempos de combate.</p>
+      <div class="labDos">
+        <label>Entrada al caminar (s)<input id="labEntradaCaminar" type="number" min="0" max="0.3" step="0.01"></label>
+        <label>Entrada a la carga (s)<input id="labEntradaCarga" type="number" min="0" max="0.18" step="0.01"></label>
+        <label>Vuelta al reposo (s)<input id="labRegreso" type="number" min="0" max="0.4" step="0.01"></label>
+        <label>Amplitud de zancada<input id="labZancada" type="number" min="0.75" max="1.15" step="0.05"></label>
+      </div>
+      <div class="labFila"><button id="labAplicarAnimacion">Aplicar transiciones</button><button id="labSecuencia">Probar secuencia completa</button></div>
+      <ol id="labSecuenciaPasos" class="labSecuencia" aria-label="Secuencia de Adreida"><li data-fase="andar">Caminar</li><li data-fase="carga">Cargar</li><li data-fase="golpe">Golpear</li><li data-fase="recuperacion">Recuperar</li><li data-fase="quieto">Reposo</li></ol>
+      <p id="labSecuenciaEstado" class="labNota" role="status">La secuencia reinicia la escena con Adreida. También puedes congelar o avanzar cuadro a cuadro.</p>
+      <div class="labFila"><button id="labGuardarAnimacion">Guardar variante</button><button id="labCargarAnimacion">Cargar guardada</button><button id="labResetAnimacion">Restablecer</button></div>
+      <details><summary>Compartir o importar animación</summary>
+        <p class="labNota">JSON de las transiciones. Guardar conserva una variante en este navegador; cargar o importar sólo afecta al inspector.</p>
+        <textarea id="labAnimacionJSON" aria-label="Ajustes de animación JSON" spellcheck="false"></textarea>
+        <div class="labFila"><button id="labExportarAnimacion">Descargar animación</button><button id="labImportarAnimacion">Importar JSON</button></div>
+      </details>
       <h2>Ataques reales</h2>
       <div class="labFila"><button data-accion="basico">Básico</button><button data-accion="cargado">Cargado</button><button data-accion="salto">Salto</button><button data-accion="parry">Parry</button></div>
       <h2>Enemigos de prueba</h2>
@@ -37,26 +54,53 @@ async function iniciar(){
     <p class="labNota">Semilla 11, paso fijo de 1/60 s, resolución y cámara fijas. Comparativa: 90 cuadros de calentamiento + 300 medidos por caso, dos rondas en orden inverso. Repite en el mismo equipo y tamaño de ventana.</p></section>`;
   document.body.append(panel);
   while(!window.CAOZ_ARPG_LAB?.listo())await new Promise(r=>setTimeout(r,100));
-  const api=window.CAOZ_ARPG_LAB,r=api.revision,valores=api.valores();let detenido=false,clip=false,tiempoClip=0,secuencia=null,muestras=[],medicion=null,informe=null,ultimaUI=0,lote=null;
+  const api=window.CAOZ_ARPG_LAB,r=api.revision,valores=api.valores();let detenido=false,clip=false,tiempoClip=0,secuencia=null,cadena=null,muestras=[],medicion=null,informe=null,ultimaUI=0,lote=null;
   const decir=t=>$('labEstado').textContent=t;
   const numero=id=>Number($(id).value);
   const descargar=(nombre,datos)=>{const u=URL.createObjectURL(new Blob([JSON.stringify(datos,null,2)],{type:'application/json'})),a=document.createElement('a');a.href=u;a.download=nombre;a.click();setTimeout(()=>URL.revokeObjectURL(u),1000);};
   function congelar(v){detenido=v;api.detener(v);$('labPausa').textContent=v?'Continuar':'Congelar';}
-  function limpiar(){clip=false;secuencia=null;congelar(false);api.limpiar($('labHeroe').value);$('labDano').value=valores.heroes[$('labHeroe').value].atq;$('labVel').value=1;muestras=[];decir('Escena lista. Los ajustes sólo afectan esta sesión.');}
-  function volver(){clip=false;secuencia=null;r.pose(null);r.control(null);congelar(false);}
-  function pose(){clip=false;congelar(true);r.pose($('labAnim').value,numero('labFase'));$('labFaseTxt').textContent=Math.round(numero('labFase')*100)+'%';api.paso();}
+  function cancelarCadena(){cadena=null;for(const li of panel.querySelectorAll('[data-fase]'))li.removeAttribute('aria-current');}
+  function limpiar(){clip=false;secuencia=null;cancelarCadena();congelar(false);api.limpiar($('labHeroe').value);$('labDano').value=valores.heroes[$('labHeroe').value].atq;$('labVel').value=1;muestras=[];decir('Escena lista. Los ajustes sólo afectan esta sesión.');}
+  function volver(){clip=false;secuencia=null;cancelarCadena();r.pose(null);r.control(null);congelar(false);}
+  function pose(){clip=false;secuencia=null;cancelarCadena();r.control({mov:[0,0],atacar:false});congelar(true);r.pose($('labAnim').value,numero('labFase'));$('labFaseTxt').textContent=Math.round(numero('labFase')*100)+'%';api.paso();}
   function ajustesEnemigo(){return {vida:numero('labVida'),vel:numero('labVelEnemigo'),dano:numero('labDanoEnemigo'),quieto:$('labQuieto').checked};}
   const ejecutar=fn=>()=>{try{fn();}catch(e){decir(e.message);}};
-  $('labLimpiar').onclick=limpiar;$('labHeroe').onchange=limpiar;$('labPausa').onclick=()=>congelar(!detenido);$('labPaso').onclick=()=>{congelar(true);api.paso();};
+  $('labLimpiar').onclick=limpiar;$('labHeroe').onchange=limpiar;$('labPausa').onclick=()=>congelar(!detenido);$('labPaso').onclick=()=>{congelar(true);api.paso();avanzarCadena(1/60);};
   $('labAplicar').onclick=ejecutar(()=>{api.configurar({dano:numero('labDano'),velAtaque:numero('labVel')});decir('Daño y velocidad aplicados.');});
   $('labFase').oninput=pose;$('labAnim').onchange=pose;$('labVolver').onclick=volver;
-  $('labReproducir').onclick=()=>{congelar(false);secuencia=null;clip=true;tiempoClip=0;r.control({mov:[0,0],atacar:false});};
+  $('labReproducir').onclick=()=>{congelar(false);secuencia=null;cancelarCadena();clip=true;tiempoClip=0;r.control({mov:[0,0],atacar:false});};
   $('labEnemigo').onchange=()=>{const d=valores.enemigos[$('labEnemigo').value];$('labVida').value=d.vida;$('labVelEnemigo').value=d.vel;$('labDanoEnemigo').value=d.dano;};
   $('labInvocar').onclick=ejecutar(()=>{api.invocar($('labEnemigo').value,numero('labCantidad'),ajustesEnemigo());decir('Enemigos añadidos alrededor del personaje.');});
   $('labCamara').oninput=()=>{r.camara({dist:numero('labCamara')});if(detenido)api.paso();};
   for(const c of panel.querySelectorAll('[data-lab-efecto]'))c.onchange=()=>r.efecto(c.dataset.labEfecto,c.checked);
   for(const b of panel.querySelectorAll('[data-accion]'))b.onclick=()=>{volver();api.prepararAccion();const h=r.equipo()[0];if(b.dataset.accion==='basico'||b.dataset.accion==='cargado'){r.control({atacar:true,apunta:[h.x,h.z-5]});secuencia={t:0,duracion:b.dataset.accion==='cargado'?1:.06,x:h.x,z:h.z-5};}else r.usar(b.dataset.accion,h.x,h.z-5);};
-  $('labExportar').onclick=()=>descargar('ajustes-arpg.json',{version:1,heroe:$('labHeroe').value,dano:numero('labDano'),velAtaque:numero('labVel'),enemigo:{tipo:$('labEnemigo').value,cantidad:numero('labCantidad'),...ajustesEnemigo()},entorno:api.entorno()});
+  $('labExportar').onclick=()=>descargar('ajustes-arpg.json',{version:1,animacion:api.animacion.leer(),heroe:$('labHeroe').value,dano:numero('labDano'),velAtaque:numero('labVel'),enemigo:{tipo:$('labEnemigo').value,cantidad:numero('labCantidad'),...ajustesEnemigo()},entorno:api.entorno()});
+  const camposAnimacion={caminar:'labEntradaCaminar',carga:'labEntradaCarga',regreso:'labRegreso',zancada:'labZancada'},claveAnimacion='caoz.arpg.adreida.animacion.v1';
+  function mostrarAnimacion(p){for(const [k,id] of Object.entries(camposAnimacion))$(id).value=p.ajustes[k];$('labAnimacionJSON').value=JSON.stringify(p,null,2);}
+  function leerAnimacionJSON(texto){try{return JSON.parse(texto);}catch{throw Error('El JSON no es válido. Revisa su formato antes de importarlo.');}}
+  function aplicarAnimacion(){for(const id of Object.values(camposAnimacion))if(!$(id).value.trim())throw Error('Completa todos los ajustes de animación.');const p=api.animacion.aplicar({version:1,personaje:'adreida',ajustes:Object.fromEntries(Object.entries(camposAnimacion).map(([k,id])=>[k,numero(id)]))});mostrarAnimacion(p);if(detenido)api.paso();return p;}
+  $('labAplicarAnimacion').onclick=ejecutar(()=>{aplicarAnimacion();decir('Transiciones aplicadas a Adreida y Adreidos en esta sesión.');});
+  $('labGuardarAnimacion').onclick=ejecutar(()=>{const p=aplicarAnimacion();try{localStorage.setItem(claveAnimacion,JSON.stringify(p));}catch{throw Error('El navegador no permite guardar. Descarga la animación como JSON.');}decir('Variante guardada en este navegador. Usa Cargar guardada para recuperarla.');});
+  $('labCargarAnimacion').onclick=ejecutar(()=>{const texto=localStorage.getItem(claveAnimacion);if(!texto)throw Error('Aún no hay una variante guardada.');mostrarAnimacion(api.animacion.aplicar(leerAnimacionJSON(texto)));decir('Variante guardada aplicada.');});
+  $('labResetAnimacion').onclick=()=>{mostrarAnimacion(api.animacion.restablecer());decir('Transiciones originales restauradas. La variante guardada sigue disponible.');};
+  $('labExportarAnimacion').onclick=ejecutar(()=>{descargar('adreida-animacion.json',aplicarAnimacion());});
+  $('labImportarAnimacion').onclick=ejecutar(()=>{const p=api.animacion.aplicar(leerAnimacionJSON($('labAnimacionJSON').value));mostrarAnimacion(p);decir('Animación importada y aplicada.');});
+  mostrarAnimacion(api.animacion.leer());
+  function indicarCadena(estado){for(const li of panel.querySelectorAll('[data-fase]')){if(li.dataset.fase===estado)li.setAttribute('aria-current','step');else li.removeAttribute('aria-current');}}
+  $('labSecuencia').onclick=ejecutar(()=>{
+    aplicarAnimacion();$('labHeroe').value='adreida';limpiar();api.prepararAccion();
+    cadena={fase:'andar',t:0};r.control({mov:[0,-.65],atacar:false});indicarCadena('andar');
+    $('labSecuenciaEstado').textContent='Caminar → cargar → golpear → recuperar → reposo';decir('Secuencia real en curso.');
+  });
+  function avanzarCadena(dt){
+    if(!cadena)return;const h=r.equipo()[0];cadena.t+=dt;indicarCadena(h.estado);
+    if(cadena.fase==='andar'&&cadena.t>=.75){cadena.fase='carga';cadena.t=0;cadena.x=h.x;cadena.z=h.z-5;r.control({mov:[0,0],atacar:true,apunta:[cadena.x,cadena.z]});}
+    else if(cadena.fase==='carga'&&cadena.t>=1.05){cadena.fase='golpe';cadena.t=0;r.control({mov:[0,0],atacar:false,apunta:[cadena.x,cadena.z]});}
+    else if(cadena.fase==='golpe'&&h.estado==='recuperacion')cadena.fase='recuperacion';
+    else if(cadena.fase==='recuperacion'&&h.estado==='quieto'){cadena.fase='quieto';cadena.t=0;}
+    else if(cadena.fase==='quieto'&&cadena.t>=.5){cadena=null;r.control({mov:[0,0],atacar:false});$('labSecuenciaEstado').textContent='Secuencia completa. Ajusta las transiciones y vuelve a probar.';decir('Secuencia terminada.');}
+    else if(cadena.t>5){cancelarCadena();r.control({mov:[0,0],atacar:false});$('labSecuenciaEstado').textContent='Secuencia interrumpida. Reinicia para volver a probar.';}
+  }
   const perfiles=[['Base',{sombras:true,oclusion:false,resplandor:true}],['Sin sombras',{sombras:false,oclusion:false,resplandor:true}],['Sin halo',{sombras:true,oclusion:false,resplandor:false}],['Con oclusión',{sombras:true,oclusion:true,resplandor:true}]];
   function aplicarResolucion(){const fija=$('labResolucion').value==='1080p';document.body.dataset.resolucion=fija?'1080p':'ventana';api.resolucion(fija);const u=new URL(location.href);u.searchParams.set('resolucion',$('labResolucion').value);history.replaceState(null,'',u);}
   $('labResolucion').value=new URLSearchParams(location.search).get('resolucion')==='ventana'?'ventana':'1080p';
@@ -104,7 +148,7 @@ async function iniciar(){
   function limpiarConsultas(){for(const q of pendientes)gl.deleteQuery(q);pendientes=[];gpuMs=null;turno=0;}
   api.antes(()=>{if(medicion)api.proteger();if(clip)r.pose($('labAnim').value,tiempoClip%1);});
   api.observar(m=>{
-    m.gpu=gpuMs;const dt=medicion?1/60:Math.min(.05,m.intervalo/1000);if(!detenido){tiempoClip+=dt;if(secuencia){secuencia.t+=dt;if(secuencia.t>=secuencia.duracion){r.control({atacar:false,apunta:[secuencia.x,secuencia.z]});secuencia=null;}}muestras.push(m);if(muestras.length>120)muestras.shift();}
+    m.gpu=gpuMs;const dt=medicion?1/60:Math.min(.05,m.intervalo/1000);if(!detenido){avanzarCadena(dt);tiempoClip+=dt;if(secuencia){secuencia.t+=dt;if(secuencia.t>=secuencia.duracion){r.control({atacar:false,apunta:[secuencia.x,secuencia.z]});secuencia=null;}}muestras.push(m);if(muestras.length>120)muestras.shift();}
     if(medicion){const e=api.entorno();if(e.ancho!==medicion.entorno.ancho||e.alto!==medicion.entorno.alto||e.anchoRender!==medicion.entorno.anchoRender||e.altoRender!==medicion.entorno.altoRender){finalizar(true);decir('Cambió el tamaño o la resolución interna. Repite la medición.');}else if(medicion.calentamiento-->0){}else{medicion.muestras.push(m);if(medicion.muestras.length===medicion.total)finalizar();}}
     if(performance.now()-ultimaUI<250)return;ultimaUI=performance.now();const s=resumir(muestras),h=r.equipo()[0],e=api.entorno();$('labPixeles').textContent=`GPU: ${e.anchoRender} × ${e.altoRender} px · Vista: ${e.ancho} × ${e.alto} px · Resolución adaptativa desactivada`; $('labPersonaje').textContent=`${h.tipo} · ${h.estado} · Alma ${Math.round(h.alma)}`;
     if(s)$('labMetricas').textContent=`${s.fps.toFixed(1)} FPS · p95 ${s.p95.toFixed(1)} ms\nSimulación ${s.simulacion.toFixed(2)} ms · envío ${s.envio.toFixed(2)} ms\n${Math.round(s.llamadas)} llamadas · ${Math.round(s.triangulos/1000)} mil triángulos`;

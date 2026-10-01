@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const c=vm.createContext({console});c.window=c;
-for(const archivo of ['visor-three-vendor.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),c);
+for(const archivo of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),c);
 const THREE=c.CAOZ_THREE.THREE,modelos=c.CAOZ_ARPG_MODELOS.fabrica(THREE);
 for(const tipo of ['troll','cobrador']){
   const m=modelos.crear(tipo),caja=new THREE.Box3().setFromObject(m.raiz);

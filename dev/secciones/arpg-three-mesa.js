@@ -1079,7 +1079,7 @@
     if(a.atacando){a.t+=dt;if(a.t>=.3&&!a.golpeo){a.golpeo=true;conHeroe(a.dueno,()=>{for(const e of enemigos)if(e.estado!=='muere'&&plano(e.pos,a.pos)<2.2)danar(e,a.dueno.atq*(a.dueno.basicos??1),{empuje:2});});}if(a.t>=.6)a.atacando=false;}
     else if(dist>(obj?1.7:2)){paso=Math.min(5.8*dt,dist-1.4);a.dir=rumbo(a.pos,destino);a.pos.addScaledVector(frente(a.dir),paso);dentroPlaza(a.pos,a.m.radio);}
     else if(obj&&a.cd<=0){a.atacando=true;a.t=0;a.golpeo=false;a.cd=1.1;a.dir=rumbo(a.pos,obj.pos);}
-    a.fase+=paso*TAU/2.1;MOD.posar(a.m,{anim:a.atacando?'tajoA':paso?'andar':'quieto',k:a.t/.6,t:reloj.t,fase:a.fase,paso:paso?1:0});
+    a.fase+=paso*TAU/2.1;MOD.posar(a.m,{anim:a.atacando?'tajoA':paso?'andar':'quieto',k:a.t/.6,t:reloj.t,fase:a.fase,paso:paso?1:0,dt,mezclar:true});
     a.m.raiz.position.copy(a.pos);a.m.raiz.rotation.y=a.dir;a.m.M.u.uBorde.value=.12;a.m.M.u.uColorB.value.setHex(0x80c9bb);
     a.rotulo.pos.copy(a.pos).setY(2.7);a.rotulo.el.textContent='Adreidos · '+Math.ceil(a.vida)+' s';
   }}
@@ -1134,7 +1134,7 @@
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
     const ph=poses.heroe||{quieto:['quieto'],andar:['andar'],recuperacion:[COMBO[h.combo].anim,.64],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.t/1)]}[h.estado];
-    MOD.posar(hm,{anim:!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,t:reloj.t,fase:h.fase,paso:h.paso});
+    MOD.posar(hm,{anim:!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:!poses.heroe&&['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,t:reloj.t,fase:poses.heroe?ph[1]*TAU:h.fase,paso:poses.heroe?1:h.paso,dt,estado:h.estado,mezclar:!poses.heroe});
     // Mohamed apuntando o recién disparado: el brazo de la pistola al frente (sobre el paso), con el retroceso.
     if(aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45)){const r=Math.max(0,1-h.disparoT*6),H=hm.H;
       H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
@@ -1338,7 +1338,8 @@
       prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
       proteger(){for(const h of jugadores){h.alma=h.almaMax;h.invul=1;h.mando.foco=h.mando.activo=h.mando.listo=false;}},
       restaurarEntrada(){for(const h of jugadores){h.mando.foco=document.hasFocus();h.mando.listo=false;}},
-      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
+      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,animacion:MOD.animacion.configuracion(),optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
+      animacion:{leer:MOD.animacion.configuracion,aplicar:MOD.animacion.configurar,restablecer:MOD.animacion.restablecer},
       valores:()=>structuredClone(originales)
     };
   }

@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const c=vm.createContext({console});c.window=c;
-for(const f of ['visor-three-vendor.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const run=s=>vm.runInContext(s,c);
 run("const M=CAOZ_ARPG_MODELOS.fabrica(CAOZ_THREE.THREE),h=M.crear('adreida');");
 assert.equal(run("Object.keys(h.H).filter(k=>k.startsWith('falda')).length"),7);
