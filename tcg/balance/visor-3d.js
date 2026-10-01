@@ -400,16 +400,19 @@
     }
     function devolverCarta(destino,opciones={}){
       if(!carta||!(destino instanceof HTMLElement))return false;
-      const nodo=carta,duracion=Math.max(120,Number(opciones.duracion)||760),turno=++turnoRegreso;
+      const nodo=carta,duracion=Math.max(120,Number(opciones.duracion)||760),turno=++turnoRegreso,directo=opciones.directo===true;
       /* Si el dorso está mirando a cámara, no extraemos en seco la cara
          frontal invisible. Primero la propia escena termina el giro hacia el
-         frente; sólo entonces comienza el FLIP con la misma ficha. Así volver
-         desde una carta volteada también es una trayectoria continua. */
+       frente; sólo entonces comienza el FLIP con la misma ficha. Así volver
+       desde una carta volteada también es una trayectoria continua. El Archivo
+       inmersivo opta explícitamente por `directo`: su regreso es una sola
+       trayectoria desde la pose actual hasta su ancla, sin una coreografía de
+       preparación que duplique el tiempo de salida. */
       const frontal=()=>{
         const ry=e.giro+e.inclX*.42+Math.sin(reloj*.6)*(reducir()?0:.05),rx=-e.inclY*.32+e.arrastreX+Math.sin(reloj*.8)*(reducir()?0:.03);
         return Math.cos(ry)>.997&&Math.abs(rx)<.025&&!e.forzado&&Math.abs(e.vel)<.04;
       };
-      if(!frontal()){
+      if(!directo&&!frontal()){
         dlg.classList.add('visor3dPreparandoRegreso');
         e.objX=0;e.objY=0;e.arrastreX=0;e.vel=0;e.encaje=Math.round(e.giro/(PI*2))*PI*2;e.forzado=true;e.pulso=1;
         e.preparandoRegreso=true;e.regresoInicio=performance.now();e.regresoGiro0=e.giro;e.regresoGiro1=e.encaje;

@@ -472,8 +472,8 @@
     "carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
     "coleccion-juego.js": "64f80e5c2f0cd3a4e85c61f0f3936510e94e64c24b15d50d17d560cf4b8f8a18",
     "coleccion-modelo.js": "66ef643bf474e1d0e5fd6bf2512b813eed88aab9dd33d5ea4e8099de8cce0bb0",
-    "coleccion-ui.js": "67362265f83a88e67dd2e796f391b8a2e4cd66e1904d05705244f4a1c1c93365",
-    "coleccion.css": "4452828649213a1b748afba89c56c0f88aae166f3588a63b3c91e9fd2cbbae57",
+    "coleccion-ui.js": "6f03b953f0fc4313232660cae68f12d1c4f002a8608a81da467e58f4dc9770e8",
+    "coleccion.css": "746fa7ff9607f24104a3f1786a919ad168f15cf7b21b9faaa8106d47df6da68c",
     "cortinilla-juego.js": "26fee0fea9237cc6709ae8236be87b6f93832fd3d68ae5cc1a39f6c65334ac7c",
     "cortinilla.js": "75106b5ba42b6e66bdb4c598e24e648a7b50e50ac18ad96e845aa7160500268f",
     "cuenta-acceso.js": "2eff223fa9b6bb50b49b1765946d559c5bb3d9be80cd0ec5cc76140b230eebc5",
@@ -516,7 +516,7 @@
     "pitagoras-pixel.js": "768074cc1ece82648f684fba20d3b064ed8aa0c89d47ef7590cd68f8cff935dd",
     "pitagoras-pruebas.js": "463ea603edec0afaddd3660d6660d73759526a2ac4eccade904c6dbbfe2a9c10",
     "polish-aaa.js": "66259da6e191b2cb5b645de4bcea3a6136ee66489fbeadfc0d3d22744324305d",
-    "procedencia.json": "be2ef8352fb2cd39d0cbd650a6b325b0b676f67ab3ae1c2bbf0e3a1c642904a6",
+    "procedencia.json": "6c383092f2d8c2c89a860d5d54f3f995da582ef79cdbba6dcc4f44bdff0c7911",
     "sobres-apertura.css": "12d234191ead3690e54b1dbc596a62266d7bc98173c3c9e3801de8fabfcbdc3f",
     "sobres-apertura.js": "031a9e88ba2e140aee63ec075f1acb7174335d6a2a0a605fbafe0f1d3dfddc7b",
     "sobres-escena.js": "2afd3c27a1973727aba00de5bfbedd9198b105133aed5d64333ef0efa86f8518",
@@ -524,13 +524,13 @@
     "sw.js": "72fc170de3f9331b1ecb7d54520b41cd67a9ad537985b64438689f2549b6720e",
     "tema-domo.css": "665a5018edface4c70cdb02aa56be05a6ad56dff49d7073ff60eac1a4c5cbb30",
     "visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
-    "visor-3d.css": "6a95d2275fd614d42d993baed6eb2ec86dd546d417ef18a0c4b24cf120494c30",
-    "visor-3d.js": "956f01e790262197ee55c145d63c6a9e37d44648d996a201da2e2419b13360ea"
+    "visor-3d.css": "f75f4bc41e845ab60ce4d0ac1a1599b8708952cc4bb3608a23df1352b1838e3e",
+    "visor-3d.js": "ffc9a891b6a6023f08718d56db7c2d39ee528aa9a25345b2989c4ada19ab354c"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/balance-logros-promotion",
-    "sha": "5bf6bbbdc78eeb142e950a89ea669ea939b911bb"
+    "sha": "1338926a29cf952a8389aa2c66ee87755cf50468"
   },
   "seccion": "balance",
   "version": 1

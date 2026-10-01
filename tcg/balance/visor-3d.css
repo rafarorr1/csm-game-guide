@@ -138,6 +138,12 @@
 .visor3dMundo[data-modo="ambiente"] .visor3dPedestal{top:52%;width:min(680px,72vw);opacity:.78}
 .visor3dMundo[data-modo="ambiente"] .visor3dSuelo{top:54%;width:min(600px,66vw);height:min(150px,18vw);opacity:.8}
 .visor3dMundo[data-modo="ambiente"] .visor3dHalo{opacity:.96}
+/* El regreso de una ficha no termina para después mover el altar. Mientras la
+   carta hace su FLIP, el mismo círculo y su sombra ya convergen al encuadre
+   ambiente con exactamente la misma duración. Cuando el controlador cambia a
+   `ambiente`, los valores ya coinciden y no queda una segunda animación. */
+#coleccionPanel.coleccionRegresandoArchivo .visor3dMundo.visor3dDevolviendo .visor3dPedestal{top:52%;width:min(680px,72vw);opacity:.78;transition-duration:var(--coleccion-regreso-duracion,.56s),var(--coleccion-regreso-duracion,.56s),.32s}
+#coleccionPanel.coleccionRegresandoArchivo .visor3dMundo.visor3dDevolviendo .visor3dSuelo{top:54%;width:min(600px,66vw);height:min(150px,18vw);opacity:.8;transition-duration:var(--coleccion-regreso-duracion,.56s),var(--coleccion-regreso-duracion,.56s),var(--coleccion-regreso-duracion,.56s),.32s}
 .visor3dMundo[data-modo="carta"] .visor3dEscena{touch-action:none;cursor:grab}
 .visor3dMundo[data-modo="carta"] .visor3dEscena.arrastrando{cursor:grabbing}
 @media(prefers-reduced-motion:reduce){.visor3dMundo .visor3dEscena{cursor:default}}

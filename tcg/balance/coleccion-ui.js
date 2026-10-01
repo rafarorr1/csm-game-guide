@@ -550,9 +550,18 @@
     // La biblioteca se quedó montada debajo del detalle. La volvemos a poner
     // en escena antes de mover la ficha: no se regenera ninguna fila, arte ni
     // anillo. Sólo el mismo nodo vuelve a ocupar su celda original.
+    // El regreso usa una única duración compartida por la ficha y por el
+    // encuadre del mundo. Antes había una preparación de giro seguida por el
+    // FLIP y, al terminar, otra entrada del Archivo: se percibían dos (o tres)
+    // viajes independientes. Ahora todo arranca en este mismo fotograma.
+    const duracionRegreso=560;
+    // Si se pulsa volver mientras todavía entra el detalle, descartamos esa
+    // animación residual en vez de encadenarla al único trayecto de regreso.
+    limpiarEntradaMenu();
     archivoCapa.removeAttribute('hidden');
     focoLista=id;miniatura.dataset.regresoActiva='';
     panel.classList.add('coleccionRegresandoArchivo');panel.dataset.transicion='volver-archivo';panel.dataset.cartaActiva=id;panel.dataset.vista='cartas';
+    mundoHost?.style.setProperty('--coleccion-regreso-duracion',duracionRegreso+'ms');
     // Fijamos desde este mismo fotograma el encuadre de Archivo. No esperamos
     // al final del FLIP para cambiar `data-mundo`: hacerlo entonces alteraba
     // la altura de la rejilla y desplazaba la carta ya medida.
@@ -581,15 +590,15 @@
       if(terminado||!panel?.open)return;terminado=true;
       detalleCapa?.remove();detalleCapa=null;encuadreDetalle=null;s.vista='cartas';focoLista=null;
       panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
-      activarMundo('cartas');actualizarCabecera();mensaje('');entradaDelMundo('cartas');
+      activarMundo('cartas');actualizarCabecera();mensaje('');
       restaurarInteraccion();
       const enfocar=()=>{if(panel?.open&&s.vista==='cartas'&&miniatura.isConnected)miniatura.focus({preventScroll:true});};
-      requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>miniatura.removeAttribute('data-regreso-activa'),720);});
+      requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>{miniatura.removeAttribute('data-regreso-activa');mundoHost?.style.removeProperty('--coleccion-regreso-duracion');},Math.max(90,720-duracionRegreso));});
     };
-    const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino,alTerminar:terminar});
+    const ok=mundo3D.devolverCarta(miniatura,{duracion:duracionRegreso,directo:true,prepararDestino,alTerminar:terminar});
     if(ok)return true;
     restaurarInteraccion();
-    miniatura.removeAttribute('data-regreso-activa');panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');panel.dataset.vista='detalle';archivoCapa.setAttribute('hidden','');mensaje('');return false;
+    miniatura.removeAttribute('data-regreso-activa');mundoHost?.style.removeProperty('--coleccion-regreso-duracion');panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');panel.dataset.vista='detalle';archivoCapa.setAttribute('hidden','');mensaje('');return false;
   }
   function dibujarDetalle(opciones={}){
     if(!s.carta){ir('cartas');return;}
