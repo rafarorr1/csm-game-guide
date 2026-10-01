@@ -1229,6 +1229,18 @@ La partida normal conserva la resolución adaptativa: ante menos de 45 FPS soste
 
 El inspector inicia con **1920 × 1080 fijos**, sin adaptación. Su vista previa es 16:9 y puede ser menor; el renderizador y todos los efectos procesan el búfer completo. «Adaptada a la ventana» permite volver al modo anterior. El informe v3 registra por separado dimensiones de la vista y del búfer WebGL; cualquier cambio durante una captura la cancela. `node dev/secciones/pruebas_arpg_resolucion.mjs` verifica 1080p, Retina/4K, móvil, adaptación, capturas y el modo fijo del inspector.
 
+### Simulación fija e interpolación
+
+`arpg-three-tiempo.js` desacopla la lógica de la frecuencia de pantalla. El combate, la IA, los proyectiles, las animaciones procedurales y los enfriamientos avanzan en pasos de **1/60 s**; a 30 FPS suelen ejecutarse dos pasos por imagen y a 120 FPS hay imágenes sin un paso nuevo. El hitstop conserva su dilatación temporal dentro de esos pasos. La partida normal sigue usando la resolución adaptativa y el inspector mantiene 1080p fijos.
+
+El dibujo interpola posición, orientación y escala entre los dos últimos pasos: héroes, esqueletos, enemigos, Adreidos, cámara, luces móviles, proyectiles, pociones, cartas y rótulos. Es interpolación con hasta un paso de retraso visual (16,7 ms), sin extrapolar colisiones. Se vuelve a resolver el agarre de Adreida durante el dibujo para mantener ambas manos en el hacha. Un bloque `finally` restaura las transformaciones de simulación, incluso si falla el render. Las partículas y los escombros instanciados mantienen su actualización a 60 Hz.
+
+El acumulador admite hasta seis pasos por imagen (100 ms de recuperación); descarta pasos completos sobrantes para evitar una espiral de carga. Las interrupciones superiores a 250 ms, la pausa, un reinicio y los cambios de pestaña vacían el acumulador. No se recupera combate pendiente al volver. Las apariciones y los teletransportes reinician su historial visual para que no se deslicen desde una ubicación anterior.
+
+En el inspector v5, **Límite de render** permite comparar 30, 60 y 120 FPS o dejar la imagen sin límite; la simulación conserva 60 Hz. El diagnóstico indica pasos por cuadro e interpolación. «+1 cuadro» avanza exactamente un paso, y las secuencias del inspector usan ese reloj, no el tiempo entre imágenes. Las capturas de rendimiento de referencia conservan un paso por cuadro para repetir la misma carga; al iniciarlas se desactiva el límite de render. Su informe identifica la frecuencia de simulación y el límite usado. `CAOZ_ARPG_THREE_REVISION.avanzar(s, fps)` pasa por el mismo acumulador: `fps` ya sólo define la frecuencia de presentación simulada.
+
+`node dev/secciones/pruebas_arpg_tiempo.mjs` comprueba pasos a 30/60/120/144 FPS, cuadros irregulares, suspensión, pausa, límite de recuperación, interpolación y restauración tras errores. Con las funciones reales de combate verifica idénticas posiciones, impactos, ventanas de parry, salto de 5 m, carga completa, hitstop, dash, enfriamiento de ulti y recarga de Mohamed en solitario y cooperativo. También verifica el agarre del hacha en cuadros intermedios.
+
 ### Inspector local de combate, animación y rendimiento
 
 Arrancar `node dev/secciones/arpg-inspector-servidor.mjs 8883` y abrir `http://127.0.0.1:8883/dev/secciones/arpg-inspector.html?inspector=1`. La herramienta sirve la página y los modelos reales; sus paneles, estilos y módulo de métricas no forman parte de la exportación pública. La partida normal no registra muestras del inspector.

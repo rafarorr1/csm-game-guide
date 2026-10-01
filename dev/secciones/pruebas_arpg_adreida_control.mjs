@@ -69,14 +69,21 @@ run('for(let i=0;i<60;i++)ajustarResolucion(60)');assert.equal(run('escalaRender
 run('CAPTURA=true;for(let i=0;i<10;i++)ajustarResolucion(20)');assert.equal(run('escalaRender'),1);
 console.log('✓ Resolución adaptativa acotada; recupera detalle; capturas sin cambios');
 // Una partida cedida o escondida no consume lógica ni dibuja, aunque siga recibiendo RAF.
-const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0}});
-vm.runInContext(`const laboratorio=null,pausa={activa:false};let partidaActiva=false,antes=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;function requestAnimationFrame(){solicitudes++;}function paso(){logica++;}function dibujar(){dibujos++;}${extraer('cuadro')}`,pausa);
+const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0}});pausa.window=pausa;
+vm.runInContext(fs.readFileSync(new URL('./arpg-three-tiempo.js',import.meta.url),'utf8'),pausa);
+vm.runInContext(`const laboratorio=null,pausa={activa:false},rog={abierto:false},interpolacion={sincronizar(){}},temporizador=CAOZ_ARPG_TIEMPO.crearReloj();
+let partidaActiva=false,antes=0,siguienteDibujo=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;
+function requestAnimationFrame(){solicitudes++;}function leerPausaMando(){}function simularPaso(){logica++;return true;}function dibujarEntrePasos(){dibujos++;}const $=()=>({});
+${extraer('sincronizarTiempo')}${extraer('cuadro')}`,pausa);
 vm.runInContext('cuadro(16)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),0);
 vm.runInContext('partidaActiva=true;document.hidden=true;cuadro(32)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),0);
-vm.runInContext('document.hidden=false;cuadro(48)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),2);
+vm.runInContext('document.hidden=false;cuadro(49)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),2);
+vm.runInContext('cuadro(57)',pausa);assert.equal(vm.runInContext('logica',pausa),1,'A 120 Hz puede dibujar sin volver a simular');
+vm.runInContext('cuadro(66)',pausa);assert.equal(vm.runInContext('logica',pausa),2);
+vm.runInContext('pausa.activa=true;cuadro(1000)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),5,'Pausa sin lógica ni dibujo');
 console.log('✓ Las pestañas pausadas no simulan ni renderizan; reanudan correctamente');
 // Pausa por teclado/botón y flancos reales de Options: el reloj permanece congelado.
-vm.runInContext(`const teclas=new Set(),lienzo={focus(){}};let dialogoAbierto=false,pads=[];const navigator={getGamepads:()=>pads};const $=()=>({showModal(){dialogoAbierto=true;},close(){dialogoAbierto=false;},focus(){}});${extraer('ponerPausa')}${extraer('leerPausaMando')}${extraer('paso')}`,c);
+vm.runInContext(`function sincronizarTiempo(){}const teclas=new Set(),lienzo={focus(){}};let dialogoAbierto=false,pads=[];const navigator={getGamepads:()=>pads};const $=()=>({showModal(){dialogoAbierto=true;},close(){dialogoAbierto=false;},focus(){}});${extraer('ponerPausa')}${extraer('leerPausaMando')}${extraer('paso')}`,c);
 run("reset();heroe.estado='carga';ent.atacando=true;ponerPausa(true)");
 assert.equal(run('pausa.activa&&dialogoAbierto'),true);assert.equal(run('ent.atacando'),false);assert.equal(run('heroe.estado'),'quieto');
 run('const tiempoPausado=reloj.t;paso(.5)');assert.equal(run('reloj.t'),run('tiempoPausado'));

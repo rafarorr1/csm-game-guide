@@ -40,7 +40,7 @@ try{
   assert.equal(p.partida,false);assert.equal(p.three,'0.186.1');assert.equal(p.cartas.length,cartasArpgThree.length);assert.throws(()=>exportar(destino),/vacío/);
   const datos=fs.readFileSync(path.join(destino,'generado/datos.js'),'utf8');assert.ok(/"llavemago"/.test(datos)&&/"mazo"/.test(datos),'El botín son Objetos del juego');
   // En Metal (Mac), smoothstep con los bordes al revés o atan(0,0) pueden dar NaN, y el resplandor los agranda en cuadros negros.
-  for(const f of ['arpg-three-mesa.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js','three-carta.js']){const src=fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname),f),'utf8');
+  for(const f of ['arpg-three-tiempo.js','arpg-three-mesa.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js','three-carta.js']){const src=fs.readFileSync(path.join(path.dirname(new URL(import.meta.url).pathname),f),'utf8');
     for(const m of src.matchAll(/smoothstep\(\s*(-?[\d.]+)\s*,\s*(-?[\d.]+)\s*,/g))assert.ok(+m[1]<+m[2],f+': smoothstep con los bordes al revés ('+m[0]+'): en Metal no está definido');
     assert.ok(!/abs\(atan\(p\.x,-p\.y\)\)/.test(src.replace(/r<\.001\?0\.:abs\(atan\(p\.x,-p\.y\)\)/g,'')),f+': atan(0,0) sin proteger en el centro del cono');}
   console.log('✓ Exportación: modelos, three.js empaquetado y las cartas del botín, sin CDN ni scripts en línea');

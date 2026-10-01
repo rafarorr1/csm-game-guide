@@ -154,7 +154,7 @@ SECCIONES = {
     'arpg-three': {
         'nombre': 'Las Grietas del Editor (ARPG en three.js)',
         'exportador': 'arpg-three-exportar.mjs',
-        'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'three-carta.js', 'arpg-three-adreida-animacion.js','arpg-three-modelos.js', 'arpg-three-mesa.js', 'juego/carta-pintor.js'},
+        'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'three-carta.js', 'arpg-three-adreida-animacion.js','arpg-three-modelos.js', 'arpg-three-tiempo.js','arpg-three-mesa.js', 'juego/carta-pintor.js'},
         'pruebas': ('pruebas_arpg_three.mjs',),
     },
     'pesadillas-3d': {

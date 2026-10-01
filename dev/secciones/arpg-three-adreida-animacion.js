@@ -47,6 +47,17 @@
       ik(H.brazoI,H.anteI,H.manoI,apoyo,_agarre[3].set(.7,-.5,-.35).applyMatrix4(T));
       const orientacion=H.manoD.getWorldQuaternion(_orientacion);
       H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);H.manoI.updateMatrixWorld(true);}
+    // Corrige el agarre después de interpolar los huesos para dibujar a más de 60 Hz.
+    // Los búferes del render restauran luego la pose física; no avanzamos la animación aquí.
+    const visual={G:[0,0,0],A:[0,-1,0],arriba:[1,0,0]},_localVisual=new THREE.Matrix4(),_manoVisual=new THREE.Quaternion(),_pVisual=new THREE.Vector3();
+    function ajustarAgarre(m){
+      if(m.tipo!=='adreida'||estados.get(m)?.libre)return;
+      const H=m.H;H.raiz.updateMatrixWorld(true);_localVisual.copy(H.torso.matrixWorld).invert();H.manoD.getWorldQuaternion(_manoVisual);
+      H.manoD.getWorldPosition(_pVisual).applyMatrix4(_localVisual).toArray(visual.G);
+      _pVisual.set(0,-1,0).applyQuaternion(_manoVisual).transformDirection(_localVisual).toArray(visual.A);
+      _pVisual.set(1,0,0).applyQuaternion(_manoVisual).transformDirection(_localVisual).toArray(visual.arriba);
+      empunar(m,visual);
+    }
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
       // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
@@ -159,7 +170,7 @@
       }
       if(!['grito','muerte'].includes(a.anim))empunar(m,agarre);
     }
-    return {posar,resolver,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
+    return {posar,resolver,ajustarAgarre,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
   }
   window.CAOZ_ARPG_ADREIDA_ANIMACION=Object.freeze({fabrica,validar,predeterminados});
 })();
