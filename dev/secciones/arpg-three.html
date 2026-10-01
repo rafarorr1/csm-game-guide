@@ -22,6 +22,7 @@
   <div class="apControles" role="group" aria-label="Acciones">
     <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
     <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
+    <button type="button" class="apBoton" id="abrirPausa">Pausa · Esc / Options</button>
     <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
   </div>
   <fieldset class="apEfectos">
@@ -33,7 +34,7 @@
   </fieldset>
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
     <div id="pausaOtra" class="apPausaOtra" hidden><p>Otra partida está activa.</p><button type="button" id="reanudarPartida" class="apBoton">Continuar aquí</button></div>
-    <canvas id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
+    <canvas tabindex="-1" id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>
     <div class="apGolpeDir" id="golpeDir"><i></i></div>
@@ -64,6 +65,12 @@
   <p id="estadoMando" class="apEstado" role="status">PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.</p>
   <p id="estado" class="apEstado" role="status" aria-live="polite">Preparando la plaza…</p>
 </main>
+<dialog id="pausa" class="apMenuPausa" aria-labelledby="pausaTitulo">
+  <h2 id="pausaTitulo">En pausa</h2>
+  <p>La partida se detiene aquí.</p>
+  <button type="button" id="continuar" class="apBoton">Continuar</button>
+  <small>Escape · Options del control · × para continuar</small>
+</dialog>
 <dialog id="destino" class="apDestino" aria-labelledby="destinoTitulo">
     <h2 id="destinoTitulo">Elige tu destino</h2>
     <p>Tres cartas encontradas. Elige una y tira d20. Cuanto mayor es el poder, menor es la probabilidad de éxito.</p>

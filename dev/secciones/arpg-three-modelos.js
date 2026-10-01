@@ -402,7 +402,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=constructores[tipo](),mallas=montar(M);
       // El extremo del hacha de Adreida, la cabeza (para colocar el rastro del corte y para las pruebas).
-      if(tipo==='adreida'){const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
+      if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
       if(tipo==='mohamed'){const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
       return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo]};

@@ -485,7 +485,7 @@
     for(const l of lanzas){if(l.clavada||l.devuelta)continue;const v=H.pos.clone().sub(l.g.position).setY(0),d=v.length();if(d>9||v.dot(l.dir)<d*.7)continue;const r=d/l.vel;if(r<t){t=r;mejor=l.g.position;}}
     for(const p of peligrosTroll){if(p.devuelto||plano(H.pos,p.hasta)>p.radio+H.radio*.6)continue;const r=p.dur-p.t;if(r<t){t=r;mejor=p.desde;}}
     return mejor?{p:mejor.clone(),t}:null;}
-  function usar(h,punto){if(rog.abierto||!heroe.vivo)return false;const H=HAB[h];
+  function usar(h,punto){if(pausa.activa||rog.abierto||!heroe.vivo)return false;const H=HAB[h];
     // Parry: se puede incluso a mitad de un golpe; mira sola hacia lo que viene (o hacia el cursor).
     if(h==='parry'){const E=heroe.estado;if(heroe.cd.parry>0||!['quieto','andar','golpe','carga','torbellino','abanico','parry'].includes(E)||E==='parry')return false;
       const am=amenaza(),hacia=am?am.p:punto||ctl.apunta;if(hacia&&plano(hacia,heroe.pos)>.05)heroe.dir=rumbo(heroe.pos,hacia);
@@ -505,7 +505,7 @@
   // Un golpe del combo hacia donde apuntas; encadena si el anterior acaba de terminar.
   function iniciarGolpe(){const h=heroe,preparado=h.estado==='carga',t=preparado?Math.min(h.t,COMBO[h.combo].dur*.38):0;ent.pendiente=false;
     if(!preparado){h.carga=0;h.combo=h.estado==='golpe'||reloj.t-h.finGolpe<.3?(h.combo+1)%3:0;}
-    h.dir=rumbo(h.pos,puntoApuntado());cambiar(h,'golpe');h.t=t;h.golpeo=false;}
+    h.dir=rumbo(h.pos,puntoApuntado());cambiar(h,'golpe');h.t=t;h.golpeo=false;h.avanceCargado=0;}
   // Pulsaciones cortas encadenan el combo; mantener prepara un único golpe que sale al soltar.
   function iniciarCarga(){const h=heroe;h.cargaMando=mando.activo;ent.pendiente=false;h.combo=reloj.t-h.finGolpe<.3?(h.combo+1)%3:0;h.carga=0;h.dir=rumbo(h.pos,puntoApuntado());cambiar(h,'carga');}
   function ajustarSalto(h,mov,dt,k){
@@ -549,9 +549,10 @@
     else if(h.estado==='carga'){h.carga=Math.max(0,Math.min(1,(h.t-.18)/.72));h.dir=rumbo(h.pos,puntoApuntado());if(!ctl.atacar)iniciarGolpe();}
     else if(h.estado==='golpe'){const C=COMBO[h.combo];h.t+=dt*(h.vatq-1);// más velocidad de ataque: la animación y el impacto llegan antes
       // Un paso adelante al golpear, salvo si ya hay alguien delante.
-      if(h.t<.1&&!enemigos.some(e=>e.estado!=='muere'&&plano(e.pos,h.pos)<C.alc*.6)){const f=frente(h.dir);h.pos.addScaledVector(f,(h.combo===2?9:5)*dt);}
-      if(!h.golpeo&&h.t>=C.imp){h.golpeo=true;const n=golpearEn(C.alc+.65*(h.carga||0),C.ang,h.atq*C.mult*(1+2*(h.carga||0))*(h.basicos??1),{empuje:C.emp+16*(h.carga||0)});if(h.carga>=.5){const p=h.pos.clone().addScaledVector(frente(h.dir),1.6);polvo(p,14,1.2);chispas(p.setY(.5),16,[1,.7,.25],7,.35);}
-        if(n){h.furia=Math.min(100,h.furia+Math.min(14,n*7));paron=h.carga>=.5?.11:h.combo===2?.09:.05;temblar(h.carga>=.5?.3:h.combo===2?.14:.06);}}
+      if(h.carga>=.5){const avance=.65*h.carga*tramo(h.t/C.dur,.38,.62);h.pos.addScaledVector(frente(h.dir),avance-(h.avanceCargado||0));h.avanceCargado=avance;}
+      else if(h.t<.1&&!enemigos.some(e=>e.estado!=='muere'&&plano(e.pos,h.pos)<C.alc*.6)){const f=frente(h.dir);h.pos.addScaledVector(f,(h.combo===2?9:5)*dt);}
+      if(!h.golpeo&&h.t>=C.imp){h.golpeo=true;const n=golpearEn(C.alc+.65*(h.carga||0),C.ang,h.atq*C.mult*(1+2*(h.carga||0))*(h.basicos??1),{empuje:C.emp+16*(h.carga||0)});if(h.carga>=.5){temblar(.12);const p=h.pos.clone().addScaledVector(frente(h.dir),1.6);polvo(p,14,1.2);chispas(p.setY(.5),16,[1,.7,.25],7,.35);}
+        if(n){h.furia=Math.min(100,h.furia+Math.min(14,n*7));paron=h.carga>=.5?.11:h.combo===2?.09:.05;temblar(h.carga>=.5?.12:h.combo===2?.14:.06);}}
       // Andar después del impacto corta el golpe (se puede salir del combo para esquivar un aviso).
       if(h.golpeo&&h.t>C.imp+.08&&mov.lengthSq()>.01&&!ctl.atacar){h.finGolpe=reloj.t;cambiar(h,'andar');}
       else if(h.t>=C.dur){h.finGolpe=reloj.t;if(ctl.atacar&&!h.bloqueoBasico){if(ent.piloto)iniciarGolpe();else iniciarCarga();}else{cambiar(h,'quieto');}}}
@@ -571,7 +572,7 @@
         for(const e of enemigos){if(e.estado==='muere'||e.tipo==='troll'&&e.fase2)continue;const v=h.pos.clone().sub(e.pos).setY(0),d=v.length();if(d>6)continue;
           if(d>.8&&v.normalize().dot(frente(e.dir))<Math.cos(1.9))continue;
           cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.d.jefe?1.2:2.6;e.impresionado=true;numero(e.pos.clone().setY(e.m.alto+.5),'¡Impresionado!','impresionado',1.3);}}
-      if(!h.golpeo&&k>=.86){h.golpeo=true;h.alto=0;golpearEn(3.2,Math.PI,h.atq*1.7*(h.especial??1),{empuje:4.5,aturde:1.1,chispas:14});marca('onda',h.pos.x,h.pos.z,4.2,0xffb050,.5);polvo(h.pos,40,2);romperPiso(h.pos);chispas(h.pos.clone().setY(.3),30,[1,.7,.35],8,.5);temblar(.5);paron=.08;}
+      if(!h.golpeo&&k>=.86){h.golpeo=true;h.alto=0;golpearEn(3.2,Math.PI,h.atq*1.7*(h.especial??1),{empuje:4.5,aturde:1.1,chispas:14});marca('onda',h.pos.x,h.pos.z,4.2,0xffb050,.5);polvo(h.pos,40,2);romperPiso(h.pos);chispas(h.pos.clone().setY(.3),30,[1,.7,.35],8,.5);temblar(.16);paron=.08;}
       if(h.t>=D){cambiar(h,'quieto');h.alto=0;}}
     else if(h.estado==='grito'){if(!h.golpeo&&h.t>=.18){h.golpeo=true;h.escudo=4;h.furia=Math.min(100,h.furia+35);marca('onda',h.pos.x,h.pos.z,10,0xffd070,.7);chispas(h.pos.clone().setY(1.4),40,[1,.85,.4],7,.5);temblar(.2);
         for(const e of enemigos){if(e.estado==='muere')continue;const d=plano(e.pos,h.pos);if(d<10){e.provocado=3.5;e.tirón={p:e.pos.clone().lerp(h.pos,Math.min(.5,1.6/Math.max(d,.1))),hasta:reloj.t+.35};if(e.estado==='entra')e.dentro=true;}}}
@@ -768,6 +769,19 @@
   const ACCION={Space:'parry',ShiftLeft:'esquiva',ShiftRight:'esquiva',KeyQ:'torbellino',Digit1:'torbellino',KeyR:'salto',Digit2:'salto',KeyE:'provocar',Digit3:'provocar'};
   // DualSense y otros mandos que el navegador presenta con distribución estándar.
   const mando={indice:null,botones:[],activo:false,foco:true,listo:false,dir:new V3(0,0,-1)};
+  const pausa={activa:false,boton:false,confirmar:false};
+  function ponerPausa(v){if(rog.abierto||v===pausa.activa)return;pausa.activa=v;
+    ent.atacando=ent.pendiente=false;ctl.atacar=false;ctl.mov.set(0,0,0);teclas.clear();mando.listo=false;mando.activo=false;
+    if(heroe?.estado==='carga'){heroe.carga=0;cambiar(heroe,'quieto');}
+    if(v){$('pausa').showModal();$('continuar').focus();}else{$('pausa').close();lienzo.focus();}}
+  function leerPausaMando(){let g;try{g=Array.from(navigator.getGamepads?.()||[]).find(g=>g?.connected&&g.mapping==='standard');}catch{return;}
+    const b=!!(g?.buttons[9]?.pressed||g?.buttons[9]?.value>.5),x=!!g?.buttons[0]?.pressed;
+    const pulsado=b&&!pausa.boton,confirma=x&&!pausa.confirmar;pausa.boton=b;pausa.confirmar=x;
+    if(document.hidden||!mando.foco)return;
+    if(pulsado)ponerPausa(!pausa.activa);else if(pausa.activa&&confirma)ponerPausa(false);}
+  $('continuar').onclick=()=>ponerPausa(false);
+  $('abrirPausa').onclick=()=>ponerPausa(true);
+  $('pausa').addEventListener('cancel',e=>{e.preventDefault();ponerPausa(false);});
   const BOTONES_MANDO={0:'esquiva',1:'salto',3:'provocar',4:'parry',5:'torbellino',6:'parry'};
   function ejeMando(x=0,z=0){const d=Math.hypot(x,z);return d<=.18?new V3():new V3(x,0,z).multiplyScalar(Math.min(1,(d-.18)/.82)/d);}
   function estadoMando(txt){const el=$('estadoMando');if(el&&el.textContent!==txt)el.textContent=txt;}
@@ -776,7 +790,7 @@
     const g=lista.find(g=>g?.connected&&g.mapping==='standard'&&g.index===mando.indice)||lista.find(g=>g?.connected&&g.mapping==='standard');
     if(!g){mando.indice=null;mando.botones=[];mando.activo=false;mando.listo=false;estadoMando(lista.some(g=>g?.connected)?'El navegador no reconoce la distribución de este mando. Prueba otro navegador.':'PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.');return null;}
     if(mando.indice!==g.index){mando.indice=g.index;mando.botones=[];mando.listo=false;mando.activo=false;}
-    estadoMando('Mando conectado · Izquierdo: mover · Derecho: apuntar · R2 / □: mantener y soltar para cargar · ×: dash · ○: salto · L1 / L2: parry · R1: especial · △: provocar');
+    estadoMando('Mando conectado · Izquierdo: mover · Derecho: apuntar · Options: pausa · R2 / □: mantener y soltar para cargar · ×: dash · ○: salto · L1 / L2: parry · R1: especial · △: provocar');
     const botones=g.buttons.map(b=>b.pressed||b.value>.5),mov=ejeMando(g.axes[0],g.axes[1]),mira=ejeMando(g.axes[2],g.axes[3]);
     const pulsado=botones.some(Boolean),actividad=pulsado||mov.lengthSq()>0||mira.lengthSq()>0;
     // Al conectar o volver a la ventana, soltar primero evita ataques involuntarios.
@@ -811,7 +825,7 @@
   lienzo.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;apuntar(e.clientX,e.clientY);ent.dentro=true;});
   const soltarPuntero=e=>{if(e.button===0||e.type==='pointercancel')ent.atacando=false;if(e.type==='pointercancel'&&heroe.estado==='carga'){heroe.carga=0;cambiar(heroe,'quieto');ent.pendiente=false;}};
   lienzo.addEventListener('pointerup',soltarPuntero);lienzo.addEventListener('pointercancel',soltarPuntero);lienzo.addEventListener('pointerleave',()=>{ent.dentro=false;});
-  addEventListener('keydown',e=>{if(rog.abierto||e.target.closest?.('input,textarea,select'))return;const k=e.code;
+  addEventListener('keydown',e=>{const k=e.code;if(k==='Escape'){e.preventDefault();if(!e.repeat)ponerPausa(!pausa.activa);return;}if(pausa.activa||rog.abierto||e.target.closest?.('input,textarea,select'))return;
     if(DIRS[k]){e.preventDefault();teclas.add(k);ent.piloto=false;return;}
     const h=ACCION[k];if(h){e.preventDefault();if(e.repeat)return;ent.piloto=false;usar(h,h==='salto'?puntoApuntado():null);}});
   addEventListener('keyup',e=>{teclas.delete(e.code);});addEventListener('blur',()=>{teclas.clear();ent.atacando=false;});
@@ -919,6 +933,7 @@
   /* ---- Cada fotograma ------------------------------------------------------------------ */
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
   function paso(dt){
+    leerPausaMando();if(pausa.activa)return;
     if(rog.abierto){mandoDestino();return;}
     if(paron>0){paron-=dt;dt*=.08;}
     reloj.t+=dt;tiempo.value=reloj.t;F.tiempo.value=reloj.t;CASAS.uniformes.uT.value=reloj.t;
@@ -990,7 +1005,7 @@
 
   // Resolución adaptativa de la escena: el HUD permanece a resolución nativa.
   let escalaRender=1,cuadrosLentos=0,cuadrosRapidos=0;
-  function ajustarResolucion(f){if(CAPTURA||document.hidden)return;
+  function ajustarResolucion(f){if(CAPTURA||document.hidden||pausa.activa)return;
     cuadrosLentos=f<45?cuadrosLentos+1:0;cuadrosRapidos=f>58?cuadrosRapidos+1:0;
     const anterior=escalaRender;
     if(cuadrosLentos>=2){escalaRender=Math.max(.7,escalaRender-.1);cuadrosLentos=0;}
@@ -1028,7 +1043,7 @@
     activarPartida();}
   $('reanudarPartida').onclick=activarPartida;
   let antes=performance.now(),fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
-  function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;const inicio=performance.now();paso(dt);const preparado=performance.now();dibujar();fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
+  function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;const inicio=performance.now();paso(dt);const preparado=performance.now();if(pausa.activa){fps.n=0;fps.t=ahora;$('info').textContent='En pausa';requestAnimationFrame(cuadro);return;}dibujar();fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;ajustarResolucion(fps.v);const i=renderer.info;
       $('info').textContent=`${fps.v} fps · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);}
@@ -1048,7 +1063,7 @@
     listo:()=>listo,
     async avanzar(s,fps=30){const n=Math.max(1,Math.round(s*fps));for(let i=0;i<n;i++){paso(1/fps);if(i%3===2)await new Promise(r=>setTimeout(r,0));}dibujar();return this.estado();},
     dibujar(){dibujar();const i=renderer.info.render;return {llamadas:i.calls,triangulos:i.triangles};},
-    estado:()=>({destino:{vuelta:rog.vuelta,nivel:rog.nivel,cartas:rog.mano.length,emitidas:rog.emitidas,abierto:rog.abierto,resuelto:rog.resuelto,efectos:rog.efectos.map(e=>({...e}))},peligrosTroll:peligrosTroll.map(p=>({tipo:p.tipo,k:p.t/p.dur,x:p.hasta.x,z:p.hasta.z,alto:p.m.position.y,devuelto:p.devuelto})),listo,webgl2:true,hdr,muestras,simple,version:THREE.REVISION,pases:[['render',pasoRender],['oclusion',oclusion],['saneado',saneado],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n),
+    estado:()=>({pausa:pausa.activa,destino:{vuelta:rog.vuelta,nivel:rog.nivel,cartas:rog.mano.length,emitidas:rog.emitidas,abierto:rog.abierto,resuelto:rog.resuelto,efectos:rog.efectos.map(e=>({...e}))},peligrosTroll:peligrosTroll.map(p=>({tipo:p.tipo,k:p.t/p.dur,x:p.hasta.x,z:p.hasta.z,alto:p.m.position.y,devuelto:p.devuelto})),listo,webgl2:true,hdr,muestras,simple,version:THREE.REVISION,pases:[['render',pasoRender],['oclusion',oclusion],['saneado',saneado],['resplandor',resplandor],['salida',salida]].filter(([,p])=>p.enabled).map(([n])=>n),
       heroe:{carga:heroe.carga,acortarSalto:heroe.acortarSalto,t:+heroe.t.toFixed(3),vatq:+heroe.vatq.toFixed(2),punta:(()=>{const p=heroe.m.M.punta.getWorldPosition(new V3());return [+p.x.toFixed(2),+p.y.toFixed(2),+p.z.toFixed(2)];})(),combo:heroe.combo,invul:+heroe.invul.toFixed(2),parrys:heroe.parrys,tipo:heroe.tipo,balas:heroe.balas,recarga:+heroe.recargaT.toFixed(2),disparos:heroe.disparos,bloqueos:heroe.bloqueos,esquivados:heroe.esquivados||0,golpeDe:heroe.golpeDe?.id??null,x:+heroe.pos.x.toFixed(2),z:+heroe.pos.z.toFixed(2),alto:+(heroe.alto||0).toFixed(2),alma:heroe.alma,almaMax:heroe.almaMax,furia:+heroe.furia.toFixed(1),atq:heroe.atq,estado:heroe.estado,vivo:heroe.vivo,escudo:+heroe.escudo.toFixed(2),cd:{...heroe.cd},llaves:heroe.llaves,botin:heroe.botin.map(b=>b.id+'/'+b.ed),dir:+heroe.dir.toFixed(3)},
       enemigos:enemigos.map(resumen),botines:botines.map(b=>({id:b.id,ed:b.ed,listo:b.listo,volando:b.volando,x:+b.pos.x.toFixed(2),z:+b.pos.z.toFixed(2),mirada:+b.mirada.toFixed(2),escala:b.g?+(b.g.scale.x/SB).toFixed(2):0,nombre:b.nombre?.el.textContent||''})),
       globos:globos.length,alertas:etiquetas.filter(x=>x.el.classList.contains('apAlerta')&&!x.el.hidden).length,flechas:flechasEl.filter(f=>!f.hidden&&f.parentNode).length,golpeDir:+$('golpeDir').style.opacity||0,lanzas:lanzas.filter(l=>!l.clavada).length,lanzaAhora:lanzas.some(l=>l.ahora&&!l.clavada),balas:balas.length,marcas:marcas.filter(o=>!o.fijo).map(o=>o.tipo),oleada:ol.i,fin:ol.fin,finVisible:!$('fin').hidden,finTitulo:$('finTitulo').textContent,

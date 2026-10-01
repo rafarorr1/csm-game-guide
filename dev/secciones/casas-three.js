@@ -98,7 +98,7 @@
       hierro:estandar({color:0x9a9aa2,metalness:.75,roughness:.45}),
       planta:estandar({roughness:.85,flatShading:true}),
       letrero:estandar({map:letrero(),roughness:.75}),
-      agua:estandar({color:0x1e3c42,emissive:0x061214,roughness:.06,metalness:.25}),
+      agua:estandar({color:0x1e3c42,emissive:0x061214,roughness:.48,metalness:0,envMapIntensity:.2}),
       farol:new THREE.MeshBasicMaterial({color:new THREE.Color(4,2.4,1.1),vertexColors:false}),
     };
     // Las ventanas: interior mapping. Por cada píxel del cristal se sigue la mirada dentro de una habitación
@@ -198,7 +198,7 @@
           if(rnd()<.55)fa.geo('planta',new THREE.IcosahedronGeometry(.045,0),[x-w/2+.1+i*(w-.2)/6+(rnd()-.5)*.1,y-h/2+.05+rnd()*.05,.2],[0,0,0],{tinte:rnd()<.7?[.8,.12,.1]:[.9,.75,.8],sucio:false});}}
         return s;}
       function puerta(fa,x,w,h,alto0,opc={}){const y=alto0+h/2;fa.caja('madera',.14,h+.1,.16,[x-w/2-.07,y,.06]);fa.caja('madera',.14,h+.1,.16,[x+w/2+.07,y,.06]);fa.caja('madera',w+.46,.2,.2,[x,y+h/2+.1,.08]);
-        fa.caja('tablas',w,h,.08,[x,y,-.04],[0,0,0],{escala:1.1});fa.caja('hierro',.05,.18,.06,[x+w*.32,y,.03]);fa.caja('piedra',w+.5,.18,.5,[x,alto0-.09,.25]);
+        fa.caja('tablas',w,h,.08,[x,y,.035],[0,0,0],{escala:1.1});fa.caja('hierro',.05,.18,.06,[x+w*.32,y,.10]);fa.caja('piedra',w+.5,.18,.5,[x,alto0-.09,.25]);
         if(opc.farol){const fx=x+(w/2+.45)*opc.farol;fa.caja('hierro',.06,.06,.42,[fx,y+.75,.21]);fa.caja('hierro',.22,.05,.22,[fx,y+.62,.4]);fa.caja('farol',.16,.24,.16,[fx,y+.46,.4],[0,0,0],{sucio:false});fa.caja('hierro',.2,.04,.2,[fx,y+.33,.4]);
           cuadro('halo',1.3,1.5,fa.F,[fx,y+.4,.02],{sem:900+sem});cuadro('derrame',2.2,2.4,fa.F.clone().multiply(mat4([fx,-fa.alto+.03,0],[-Math.PI/2,0,0])),[0,-1.2,0],{sem:900+sem});}}
       // Entramado de una planta: pies derechos, travesaño y tornapuntas en los paños sin ventana.

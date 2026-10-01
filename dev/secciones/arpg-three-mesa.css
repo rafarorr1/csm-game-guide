@@ -154,3 +154,6 @@ html[data-captura] .apInfo{display:none}
 .apHabilidades button.cargando,button[data-hab="tajo"].cargando{background:linear-gradient(to top,#95641c var(--carga),#29212c var(--carga));box-shadow:0 0 12px #ffc55a80;border-color:#ffc55a;}
 
 .apPausaOtra:not([hidden]){position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;background:#08050bc9;color:#f0d796;font:16px system-ui,sans-serif;}
+
+.apMenuPausa{margin:auto;padding:32px;min-width:280px;text-align:center;background:#171020;color:#f0d796;border:1px solid #b99853;border-radius:16px;box-shadow:0 16px 80px #0009;}
+.apMenuPausa::backdrop{background:#07050b99}.apMenuPausa p{margin:12px 0 22px}.apMenuPausa small{display:block;margin-top:20px;color:#c9bdda;}

@@ -1163,3 +1163,10 @@ python3 dev/secciones/publicar.py --publicar --seccion pesadillas-3d --salida /t
 - Oclusión ambiental desactivada inicialmente (se puede activar con su casilla). Sombras y halo permanecen activos. El render normal tiene un presupuesto máximo de un millón de píxeles antes de la escala adaptativa; las capturas mantienen calidad fija. Las pestañas ocultas pausan simulación y renderizado para evitar que dos partidas compitan por GPU.
 
 - Si el navegador mantiene varias pestañas visibles, `BroadcastChannel` cede el renderizado a la última activada. Las otras muestran «Continuar aquí» y suspenden lógica y GPU; las capturas aisladas no participan. El contador distingue tiempo de lógica y envío del render (no es una medición GPU).
+
+### Pausa, acabado de materiales y avance del cargado
+
+- Escape o Options/Start (botón estándar 9) abre/cierra el menú de pausa; × o Continuar reanuda. La pausa congela enemigos, proyectiles, animaciones y cooldowns; se libera la entrada acumulada y se cancela una carga pendiente. La elección de cartas conserva su propio menú.
+- Las puertas sobresalen 7,5 cm del plano del muro: antes su cara exterior coincidía con él y producía z-fighting. Los tiradores acompañan la nueva posición.
+- Agua del pozo y metal de Adreida más rugosos, con reflejo de entorno atenuado, para reducir destellos especulares hacia cámara.
+- El golpe cargado avanza progresivamente hasta 65 cm durante el barrido, sujeto a obstáculos y separación con enemigos; cargar sigue inmóvil. Parry cancela el avance pendiente. Sacudidas leves: 0,12 de intensidad en el cargado y 0,16 al aterrizar el salto; se respeta movimiento reducido.

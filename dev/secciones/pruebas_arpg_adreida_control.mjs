@@ -8,18 +8,18 @@ const c=vm.createContext({console});c.window=c;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),c);
 const extraer=(n,t='function')=>extraerDeclaracion(s,n,t).texto;
 vm.runInContext(`
-const V3=CAOZ_THREE.THREE.Vector3,TAU=Math.PI*2,enemigos=[],botines=[],reloj={t:0},rog={abierto:false};
+const V3=CAOZ_THREE.THREE.Vector3,TAU=Math.PI*2,enemigos=[],botines=[],reloj={t:0},rog={abierto:false},pausa={activa:false};
 const ent={piloto:false,pendiente:false},ctl={mov:new V3(),atacar:false,apunta:new V3(0,0,6)},mando={activo:false,foco:true},document={hidden:false};
-const heroe={};let paron=0,impactos=[];
+const heroe={};let paron=0,impactos=[],sacudidas=[];
 const aDistancia=()=>heroe.tipo==='mohamed',plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),difAng=(a,b)=>b-a;
 const suave=k=>k<=0?0:k>=1?1:k*k*(3-2*k),tramo=(k,a,b)=>suave((k-a)/(b-a));
 const puntoApuntado=()=>ctl.apunta.clone(),amenaza=()=>null,libre=()=>['quieto','andar'].includes(heroe.estado);
-const dentroPlaza=()=>{},rechazo=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},chispas=()=>{},temblar=()=>{};
+const dentroPlaza=()=>{},rechazo=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},chispas=()=>{},temblar=v=>sacudidas.push(v);
 const golpearEn=(r,a,d,o)=>{impactos.push({d,o});return 0;};
 ${['VEL','COMBO','HAB','PARRY'].map(n=>extraer(n,'const')).join('\n')}
 ${['cambiar','usar','iniciarGolpe','iniciarCarga','ajustarSalto','pasoHeroe','separar'].map(n=>extraer(n)).join('\n')}
-function reset(){Object.assign(heroe,{tipo:'adreida',pos:new V3(),vivo:true,estado:'quieto',t:0,atq:12,basicos:1,especial:1,furia:100,dir:0,cd:{parry:0,salto:0,esquiva:0},brilloParry:0,escudo:0,invul:0,destello:0,dolor:1,vatq:1,finGolpe:-9,combo:0,carga:0,bloqueoBasico:false,fase:0,paso:0,radio:.4,golpeo:false});impactos=[];paron=0;reloj.t=0;ctl.atacar=false;ctl.mov.set(0,0,0);mando.activo=false;mando.foco=true;document.hidden=false;}
+function reset(){Object.assign(heroe,{tipo:'adreida',pos:new V3(),vivo:true,estado:'quieto',t:0,atq:12,basicos:1,especial:1,furia:100,dir:0,cd:{parry:0,salto:0,esquiva:0},brilloParry:0,escudo:0,invul:0,destello:0,dolor:1,vatq:1,finGolpe:-9,combo:0,carga:0,bloqueoBasico:false,fase:0,paso:0,radio:.4,golpeo:false});impactos=[];sacudidas=[];paron=0;reloj.t=0;ctl.atacar=false;ctl.mov.set(0,0,0);mando.activo=false;mando.foco=true;document.hidden=false;}
 function avanzar(t){const n=Math.round(t*100);for(let i=0;i<n;i++){reloj.t+=.01;pasoHeroe(.01);}}
 `,c);
 const run=s=>vm.runInContext(s,c);
@@ -31,7 +31,7 @@ run('reset();ctl.atacar=true;avanzar(2)');
 assert.equal(run('impactos.length'),0,'Mantener nunca dispara automáticamente');
 assert.equal(run('heroe.carga'),1);
 run('ctl.atacar=false;avanzar(.7)');
-assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
+assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.equal(run('Math.max(...sacudidas)'),.12,'Sacudida leve al soltar, incluso sin acertar');assert.ok(run('heroe.pos.z>.6&&heroe.pos.z<.7'),'El cargado avanza 65 cm al soltar');assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
 run('reset();ctl.atacar=true;avanzar(.55);ctl.atacar=false;avanzar(.7)');
 assert.ok(run('impactos[0].d>12&&impactos[0].d<36'),'Carga parcial proporcional');
 for(const estado of ['golpe','carga','torbellino','abanico']){
@@ -57,7 +57,7 @@ for(const [pad,mov,esperado] of [[true,-1,4],[true,0,5],[true,1,5],[false,-1,5]]
   run(`reset();mando.activo=${pad};usar('salto',new V3(0,0,5));ctl.mov.set(0,0,${mov});avanzar(.72)`);
   assert.ok(Math.abs(run('heroe.pos.z')-esperado)<.001);
   assert.equal(run('heroe.estado'),'quieto');assert.equal(run('impactos.length'),1);
-  assert.equal(run('heroe.alto'),0);
+  assert.equal(run('heroe.alto'),0);assert.equal(run('Math.max(...sacudidas)'),.16,'Aterrizaje con sacudida leve');
 }
 run("reset();mando.activo=true;usar('salto',new V3(0,0,5));ctl.mov.set(0,0,-1);avanzar(.25);ctl.mov.set(0,0,1);avanzar(.47)");
 assert.ok(Math.abs(run('heroe.pos.z')-5)<.001,'Adelante recupera la distancia original sin rebasarla');
@@ -70,8 +70,19 @@ run('CAPTURA=true;for(let i=0;i<10;i++)ajustarResolucion(20)');assert.equal(run(
 console.log('✓ Resolución adaptativa acotada; recupera detalle; capturas sin cambios');
 // Una partida cedida o escondida no consume lógica ni dibuja, aunque siga recibiendo RAF.
 const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0}});
-vm.runInContext(`let partidaActiva=false,antes=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;function requestAnimationFrame(){solicitudes++;}function paso(){logica++;}function dibujar(){dibujos++;}${extraer('cuadro')}`,pausa);
+vm.runInContext(`const pausa={activa:false};let partidaActiva=false,antes=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;function requestAnimationFrame(){solicitudes++;}function paso(){logica++;}function dibujar(){dibujos++;}${extraer('cuadro')}`,pausa);
 vm.runInContext('cuadro(16)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),0);
 vm.runInContext('partidaActiva=true;document.hidden=true;cuadro(32)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),0);
 vm.runInContext('document.hidden=false;cuadro(48)',pausa);assert.equal(vm.runInContext('logica+dibujos',pausa),2);
 console.log('✓ Las pestañas pausadas no simulan ni renderizan; reanudan correctamente');
+// Pausa por teclado/botón y flancos reales de Options: el reloj permanece congelado.
+vm.runInContext(`const teclas=new Set(),lienzo={focus(){}};let dialogoAbierto=false,pads=[];const navigator={getGamepads:()=>pads};const $=()=>({showModal(){dialogoAbierto=true;},close(){dialogoAbierto=false;},focus(){}});${extraer('ponerPausa')}${extraer('leerPausaMando')}${extraer('paso')}`,c);
+run("reset();heroe.estado='carga';ent.atacando=true;ponerPausa(true)");
+assert.equal(run('pausa.activa&&dialogoAbierto'),true);assert.equal(run('ent.atacando'),false);assert.equal(run('heroe.estado'),'quieto');
+run('const tiempoPausado=reloj.t;paso(.5)');assert.equal(run('reloj.t'),run('tiempoPausado'));
+assert.equal(run("usar('salto',new V3(0,0,5))"),false);
+run('ponerPausa(false)');assert.equal(run('dialogoAbierto'),false);
+run("const padPausa={connected:true,mapping:'standard',buttons:Array.from({length:17},()=>({pressed:false,value:0}))};pads=[padPausa];leerPausaMando();padPausa.buttons[9].pressed=true;leerPausaMando();leerPausaMando()");assert.equal(run('pausa.activa'),true);
+run('padPausa.buttons[9].pressed=false;leerPausaMando();padPausa.buttons[0].pressed=true;leerPausaMando()');assert.equal(run('pausa.activa'),false);
+run('rog.abierto=true;ponerPausa(true)');assert.equal(run('pausa.activa'),false);
+console.log('✓ Menú de pausa, reloj congelado, Options por pulsación, × para volver y cartas sin interferencia');
