@@ -12,7 +12,7 @@ const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,reloj={t:0},escena=n
 let heroe,paron=0,recibidos=[];
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z),difAng=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
 const cambiar=(e,s)=>{e.estado=s;e.t=0;},rnd=()=>.5,dentroPlaza=()=>{},activarFaseTroll=()=>{},destinoEnemigo=(e,p)=>p,numero=()=>{},chispas=()=>{},marca=()=>{},polvo=()=>{},temblar=()=>{};
-const geoLinea=new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2).translate(0,0,.5),geoMarca=new THREE.PlaneGeometry(2,2);
+const geoLinea=new THREE.PlaneGeometry(1,1).rotateX(-Math.PI/2).translate(0,0,.5),geoMarca=new THREE.PlaneGeometry(2,2).rotateX(-Math.PI/2);
 const etiqueta=()=>({pos:new V3(),el:{textContent:'',classList:{toggle(){}},style:{setProperty(){}}}}),quitarEtiqueta=()=>{};
 const herir=(d)=>{heroe.alma-=d;recibidos.push({id:heroe.id,d});},esquivado=()=>{};
 const conHeroe=(h,f)=>{const anterior=heroe;heroe=h;try{return f();}finally{heroe=anterior;}};
@@ -28,18 +28,24 @@ function avanzarHasta(e,condicion,dt){for(let i=0;i<400&&!condicion();i++){reloj
 `,c);
 const run=s=>vm.runInContext(s,c);
 for(const dir of [0,Math.PI/2,Math.PI,-Math.PI/3]){
- run(`var can=iniciar(${dir});var f=frente(can.dir),l=frente(can.dir+Math.PI/2),centro=f.clone().multiplyScalar(2.5),izq=centro.clone().addScaledVector(l,-1.7),der=centro.clone().addScaledVector(l,1.7);`);
+ run(`var can=iniciar(${dir});var centro=can.pos.clone().addScaledVector(frente(can.dir),2.5),izq=can.pos.clone().addScaledVector(frente(can.dir-Math.PI/3),2.5),der=can.pos.clone().addScaledVector(frente(can.dir+Math.PI/3),2.5);`);
  assert.equal(run('enZona(can.ataque,can,centro,.24)'),true);
  assert.equal(run('enZona(can.ataque,can,izq,.24)||enZona(can.ataque,can,der,.24)'),false);
- run('var origen=can.comboCan.origen.clone(),direccion=can.comboCan.dir;cancelarAtaque(can,true);heroe.pos.set(9,0,-6);can.pos.set(.2,0,.3);empezarComboCan(can,1);');
- assert.equal(run('can.comboCan.origen.equals(origen)&&can.comboCan.dir===direccion'),true,'Los flancos quedan fijados al primer golpe');
- assert.equal(run('enZona(can.ataque,can,centro,.24)'),false,'El centro queda libre incluso con el radio del jugador');
+ assert.equal(run('enZona(can.ataque,can,can.pos.clone().addScaledVector(frente(can.dir),5),.24)'),false,'No golpea fuera del radio');
+ run('var direccion=can.comboCan.dir;cancelarAtaque(can,true);heroe.pos.set(9,0,-6);empezarComboCan(can,1);');
+ assert.equal(run('can.comboCan.dir===direccion'),true,'Los conos no persiguen al jugador');
+ assert.equal(run('enZona(can.ataque,can,centro,.24)'),false,'El sector central queda libre');
  assert.equal(run('enZona(can.ataque,can,izq,.24)&&enZona(can.ataque,can,der,.24)'),true);
- for(const i of [0,1])assert.equal(run(`can.ataque.m.children[${i}].position.x===can.ataque.zonas[${i}].centro.x&&can.ataque.m.children[${i}].scale.x===can.ataque.zonas[${i}].ancho`),true,'Dibujo y zona dañina coinciden');
+ assert.equal(run('enZona(can.ataque,can,can.pos.clone().addScaledVector(frente(can.dir+Math.PI),2.5),.24)'),false,'La espalda queda fuera del semicírculo');
+ // Un empuje desplaza el centro de todos los conos con Can, no su orientación.
+ run('can.pos.set(2,0,3);colocarAtaque(can);');
+ for(const i of [0,1])assert.equal(run(`can.ataque.zonas[${i}].centro===can.pos&&can.ataque.m.children[${i}].position.x===can.pos.x&&can.ataque.m.children[${i}].position.z===can.pos.z&&can.ataque.m.children[${i}].scale.x===can.ataque.zonas[${i}].radio&&can.ataque.m.children[${i}].rotation.y===can.ataque.zonas[${i}].dir&&can.ataque.m.children[${i}].material.uniforms.uAng.value===can.ataque.zonas[${i}].ang`),true,'Aviso y daño comparten centro, radio y ángulo');
+ assert.equal(run('enZona(can.ataque,can,can.pos.clone().addScaledVector(frente(direccion),2.5),.24)'),false);
+ assert.equal(run('enZona(can.ataque,can,can.pos.clone().addScaledVector(frente(direccion+Math.PI/3),2.5),.24)'),true);
 }
-console.log('✓ Centro → flancos, hueco seguro y zonas fijadas a la dirección inicial, en cuatro orientaciones');
+console.log('✓ Conos radiales: frente → lados, hueco central y origen unido a Can en cuatro orientaciones');
 for(const hz of [30,60,120,144]){
- run(`can=iniciar();avanzarHasta(can,()=>can.estado==='golpe',1/${hz});var tCentro=reloj.t;heroe.pos.x=1.7;avanzarHasta(can,()=>can.comboCan?.paso===1,1/${hz});avanzarHasta(can,()=>can.estado==='golpe',1/${hz});var tLados=reloj.t;avanzarHasta(can,()=>can.estado==='persigue',1/${hz});`);
+ run(`can=iniciar();avanzarHasta(can,()=>can.estado==='golpe',1/${hz});var tCentro=reloj.t;heroe.pos.copy(can.pos).addScaledVector(frente(can.dir+Math.PI/3),2.5);avanzarHasta(can,()=>can.comboCan?.paso===1,1/${hz});avanzarHasta(can,()=>can.estado==='golpe',1/${hz});var tLados=reloj.t;avanzarHasta(can,()=>can.estado==='persigue',1/${hz});`);
  assert.deepEqual(Array.from(run('recibidos.map(x=>x.d)')),[32,27]);
  assert.ok(run('tLados-tCentro')>=.77-1e-8&&run('tLados-tCentro')<.77+2/hz+.001,'Ritmo constante al cambiar FPS');
  assert.equal(run('can.comboCan'),null);assert.equal(run('escena.children.length'),0,'No quedan marcas después del combo');
@@ -47,13 +53,13 @@ for(const hz of [30,60,120,144]){
 }
 console.log('✓ Dos impactos, sin repetir daño, a 30/60/120/144 FPS; recuperación al terminar');
 for(const fase of [0,1]){
- run(`can=iniciar();${fase?'cancelarAtaque(can,true);empezarComboCan(can,1);heroe.pos.x=-1.7;':''}heroe.estado='parry';heroe.t=.1;heroe.dir=rumbo(heroe.pos,can.pos);resolverAtaque(can);`);
+ run(`can=iniciar();${fase?'cancelarAtaque(can,true);empezarComboCan(can,1);heroe.pos.copy(can.pos).addScaledVector(frente(can.dir-Math.PI/3),2.5);':''}heroe.estado='parry';heroe.t=.1;heroe.dir=rumbo(heroe.pos,can.pos);resolverAtaque(can);`);
  assert.equal(run('heroe.alma'),120);assert.equal(run('can.estado'),'aturdido');assert.equal(run('can.comboCan'),null);assert.equal(run('escena.children.length'),0);
  assert.equal(run('heroe.parrys'),1);assert.equal(run('heroe.cd.salto+heroe.cd.esquiva+heroe.cd.parry'),0);assert.equal(run('heroe.cd.ulti'),19);
  assert.ok(run('can.expuestoHasta>reloj.t'),'Parry abre una ventana de contraataque');
 }
 // En cooperativo, un parry en cualquiera de los flancos cancela ambos impactos antes de dañar al compañero.
-run("can=iniciar();cancelarAtaque(can,true);empezarComboCan(can,1);heroe.pos.x=-1.7;jugadores.push(nuevoHeroe(1,1.7));jugadores[1].estado='parry';jugadores[1].t=.1;jugadores[1].dir=rumbo(jugadores[1].pos,can.pos);resolverAtaque(can);");
+run("can=iniciar();cancelarAtaque(can,true);empezarComboCan(can,1);heroe.pos.copy(can.pos).addScaledVector(frente(can.dir-Math.PI/3),2.5);jugadores.push(nuevoHeroe(1));jugadores[1].pos.copy(can.pos).addScaledVector(frente(can.dir+Math.PI/3),2.5);jugadores[1].estado='parry';jugadores[1].t=.1;jugadores[1].dir=rumbo(jugadores[1].pos,can.pos);resolverAtaque(can);");
 assert.deepEqual(Array.from(run('jugadores.map(h=>h.alma)')),[120,120]);assert.equal(run('can.comboCan'),null);
 run("can=iniciar();heroe.estado='parry';heroe.t=.25;resolverAtaque(can);");assert.equal(run('heroe.alma'),110);assert.equal(run('can.comboCan.paso'),0,'Un bloqueo tardío no cancela la cadena');
 run("can=iniciar();heroe.invul=.1;resolverAtaque(can);");assert.equal(run('heroe.alma'),120,'El dash evita el golpe');
