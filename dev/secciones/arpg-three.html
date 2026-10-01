@@ -75,6 +75,10 @@
     <h2 id="destinoTitulo">Elige tu destino</h2>
     <p>Tres cartas encontradas. Elige una y tira d20. Cuanto mayor es el poder, menor es la probabilidad de éxito.</p>
     <div id="destinoCartas" class="apDestinoCartas"></div>
+    <div id="dadoDestino" class="apD20" aria-label="Dado de veinte caras">
+      <svg viewBox="0 0 120 120" aria-hidden="true"><path d="M60 4 110 32 110 88 60 116 10 88 10 32Z"/><path d="M60 4 30 42 10 32M60 4 90 42 110 32M10 32 30 42 10 88 60 116 60 90 110 88 90 42 110 32M30 42 90 42 60 90ZM10 88 60 90 110 88M30 42 60 116 90 42"/></svg>
+      <strong id="dadoNumero" aria-hidden="true">?</strong>
+    </div>
     <p id="destinoResultado" role="status" aria-live="polite"></p>
     <p><b>Efectos de la partida:</b> <span id="destinoEfectos"></span></p>
     <div class="apDestinoAcciones"><button type="button" id="destinoTirar">Tirar d20</button><button type="button" id="destinoSeguir" hidden>Siguiente nivel</button></div>

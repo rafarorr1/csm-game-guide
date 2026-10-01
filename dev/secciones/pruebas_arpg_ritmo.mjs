@@ -23,7 +23,7 @@ const eventos=[],nacimientos=[];let golpes=0;
 const cuerpoDe=tipo=>({radio:tipo==='can'?.62:.34,alto:1.3,caja:{userData:{}},raiz:{position:new V3()},M:{u:{uDisuelve:{value:0}}},mallas:[]});
 const cambiar=(e,s)=>{e.estado=s;e.t=0;},banner=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},temblar=()=>{},brasas=()=>{};
 const colocarAtaque=()=>{},cancelarAtaque=e=>{e.ataque=null;},parar=()=>null,herir=()=>{golpes++;},lanzar=()=>{},escena={remove(){}};
-function empezarAtaque(e,forma,o){e.ataque={...o,forma,t0:reloj.t,dir:e.dir,fijado:false};eventos.push({t:reloj.t,id:e.id,tipo:e.tipo,forma,duracion:o.dur});}
+function empezarAtaque(e,forma,o){e.alerta={el:{textContent:''}};e.ataque={...o,forma,t0:reloj.t,dir:e.dir,fijado:false};eventos.push({t:reloj.t,id:e.id,tipo:e.tipo,forma,duracion:o.dur});}
 ${constantes}
 ${funciones}
 function paso(dt=.05){reloj.t+=dt;coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();const antes=new Set(enemigos.map(e=>e.id));pasoOleadas(dt);for(const e of enemigos)if(!antes.has(e.id))nacimientos.push({t:reloj.t,id:e.id,oleada:ol.i});}

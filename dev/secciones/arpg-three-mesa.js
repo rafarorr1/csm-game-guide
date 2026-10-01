@@ -237,7 +237,7 @@
     troll:{vida:1100,dano:30,vel:1.85,alcance:2.6,aviso:1.3,golpe:.3,recupera:1.5,cd:1.6,forma:'cono',radio:3.8,ang:1.1,aguante:true,jefe:true,botin:1,globo:1},
     goblin:{vida:34,dano:13,vel:2.85,alcance:1.05,aviso:.85,golpe:.18,recupera:.8,cd:1.35,forma:'cono',radio:2,ang:.85,botin:.24,globo:.18},
     kobold:{vida:26,dano:16,vel:2.65,alcance:11,aviso:1.1,golpe:.3,recupera:.8,cd:2.4,forma:'linea',largo:13,ancho:.8,botin:.3,globo:.2,lanza:true},
-    saqueador:{vida:100,dano:24,vel:2.35,alcance:1.5,aviso:1,golpe:.2,recupera:1,cd:1.5,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.4},
+    saqueador:{vida:100,dano:24,vel:2.85,alcance:1.5,aviso:.85,golpe:.2,recupera:.8,cd:1.15,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.4},
     can:{vida:800,dano:32,vel:2.5,alcance:2.3,aviso:1,golpe:.22,recupera:1.05,cd:1.35,forma:'cono',radio:3.3,ang:.9,aguante:true,jefe:true,botin:1,globo:1},
   };
   const HAB={torbellino:{coste:30,cd:0},salto:{coste:25,cd:5},provocar:{coste:0,cd:10},esquiva:{coste:0,cd:1.05},parry:{coste:0,cd:.5}};
@@ -271,7 +271,7 @@
   // Azar independiente del combate: enteros uniformes sin sesgo de módulo.
   const DESTINO=(()=>{
     const tipos=[['mazo','basicos'],['arco','rapidez'],['collar','vida'],['espadaluz','especial'],['espadaboveda','basicos'],['lentesmachete','rapidez'],['sombrero','dash'],['brazosagua','vida']];
-    const niveles=[{nombre:'Audaz',min:11,gana:25,pierde:10,dash:15,ed:'normal'},{nombre:'Temeraria',min:17,gana:50,pierde:10,dash:30,ed:'foil'},{nombre:'Descomunal',min:19,gana:200,pierde:15,dash:60,ed:'dorado'}];
+    const niveles=[{nombre:'Conservadora',min:2,gana:10,pierde:0,dash:8,ed:'normal'},{nombre:'Temeraria',min:17,gana:50,pierde:10,dash:30,ed:'foil'},{nombre:'Descomunal',min:19,gana:200,pierde:15,dash:60,ed:'dorado'}];
     const etiquetas={basicos:'daño de básicos',rapidez:'velocidad de ataque',vida:'vida máxima',especial:'daño de habilidades',dash:'cooldown del dash'};
     function entero(n){const a=new Uint32Array(1),limite=Math.floor(4294967296/n)*n;do{crypto.getRandomValues(a);}while(a[0]>=limite);return a[0]%n;}
     function barajar(a,azar=entero){a=[...a];for(let i=a.length-1;i>0;i--){const j=azar(i+1);[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -288,17 +288,23 @@
   function aplicarDestino(){const f=DESTINO.factores(rog.efectos),proporcion=heroe.alma/heroe.almaMax;heroe.basicos=f.basicos;heroe.especial=f.especial;heroe.dash=f.dash;heroe.vatq=f.rapidez;
     heroe.almaMax=Math.max(1,Math.round(HEROES[tipoHeroe].alma*f.vida));heroe.alma=Math.max(1,Math.min(heroe.almaMax,proporcion*heroe.almaMax));}
   function pintarDestino(){const c=rog.mano[rog.elegida];$('destinoTitulo').textContent='Nivel '+rog.nivel+' completado · Vuelta '+rog.vuelta;
-    $('destinoCartas').innerHTML=rog.mano.map((c,i)=>`<button type="button" class="apDestinoCarta" data-destino="${i}" aria-pressed="${i===rog.elegida}" ${rog.resuelto?'disabled':''}><img src="${c.miniatura}" alt="${CARDS[c.id].n}"><strong>${CARDS[c.id].n}</strong><em>${c.nombre}</em><span class="apDestinoBueno">${c.min}–20 · ${(21-c.min)*5}%<br>${DESTINO.texto(c,true)}</span><span class="apDestinoMalo">2–${c.min-1} · ${(c.min-2)*5}%<br>${DESTINO.texto(c,false)}</span><span>1 · 5% · Pierdes todos los buffs positivos</span></button>`).join('');
-    $('destinoTirar').disabled=rog.resuelto;$('destinoTirar').textContent=rog.resuelto?'Tirada resuelta':'Elegir '+CARDS[c.id].n+' y tirar d20';$('destinoSeguir').hidden=!rog.resuelto;
+    $('destinoCartas').innerHTML=rog.mano.map((c,i)=>`<button type="button" class="apDestinoCarta" data-destino="${i}" aria-pressed="${i===rog.elegida}" ${rog.resuelto||rog.tirando?'disabled':''}><img src="${c.miniatura}" alt="${CARDS[c.id].n}"><strong>${CARDS[c.id].n}</strong><em>${c.nombre}</em><span class="apDestinoBueno">${c.min}–20 · ${(21-c.min)*5}%<br>${DESTINO.texto(c,true)}</span>${c.min>2?`<span class="apDestinoMalo">2–${c.min-1} · ${(c.min-2)*5}%<br>${DESTINO.texto(c,false)}</span>`:`<span class="apDestinoBueno">Beneficio en todas las tiradas salvo el 1</span>`}<span>1 · 5% · Pierdes todos los buffs positivos</span></button>`).join('');
+    $('destinoTirar').disabled=rog.resuelto||rog.tirando;$('destinoTirar').textContent=rog.tirando?'Tirando d20…':rog.resuelto?'Tirada resuelta':'Elegir '+CARDS[c.id].n+' y tirar d20';$('destinoSeguir').hidden=!rog.resuelto;
     $('destinoSeguir').textContent=ol.i===OLEADAS.length-1?'Siguiente vuelta · Enemigos más fuertes':'Entrar al siguiente nivel';
     $('destinoEfectos').textContent=rog.efectos.length?rog.efectos.map(e=>(e.valor>0?'+':'−')+Math.abs(e.valor)+'% '+DESTINO.etiquetas[e.stat]).join(' · '):'Sin efectos acumulados';}
-  function abrirDestino(){if(rog.abierto)return;rog.abierto=true;rog.resuelto=false;rog.elegida=0;rog.botones=[];rog.direccion=0;
+  function abrirDestino(){if(rog.abierto)return;rog.abierto=true;rog.tirando=false;rog.tirada=(rog.tirada||0)+1;$('dadoNumero').textContent='?';$('dadoDestino').classList.remove('rodando');rog.resuelto=false;rog.elegida=0;rog.botones=[];rog.direccion=0;
     ent.atacando=ent.pendiente=false;teclas.clear();ctl.mov.set(0,0,0);ctl.atacar=false;cambiar(heroe,'quieto');heroe.alto=0;
     limpiarPeligrosTroll();$('destinoResultado').textContent='Elige una carta. Las otras dos se descartan. Los efectos se acumulan multiplicándose; las penalizaciones sobreviven al 1.';
     pintarDestino();$('destino').showModal();$('destinoCartas').querySelector('button').focus();}
-  function tirarDestino(){if(!rog.abierto||rog.resuelto)return;rog.resuelto=true;const c=rog.mano[rog.elegida],dado=DESTINO.entero(20)+1,antes=rog.efectos.filter(e=>e.positivo).length,r=DESTINO.resolver(rog.efectos,c,dado);rog.efectos=r.efectos;aplicarDestino();
-    $('destinoResultado').textContent='d20: '+dado+' · '+(r.tipo==='critico'?'¡CRÍTICO! Pierdes '+antes+' buffs positivos. Conservas tus penalizaciones.':(r.tipo==='beneficio'?'¡BENEFICIO! ':'RIESGO: ')+DESTINO.texto(c,r.tipo==='beneficio'));
-    pintarDestino();$('destinoSeguir').focus();}
+  function animarDado(dado){const el=$('dadoDestino'),numero=$('dadoNumero'),token=rog.tirada;el.classList.add('rodando');
+    return new Promise(resolve=>{let paso=0;const tick=()=>{if(!rog.abierto||rog.tirada!==token){resolve();return;}numero.textContent=String((paso*7+3)%20+1);
+      if(++paso<18){setTimeout(tick,60);return;}el.classList.remove('rodando');numero.textContent=String(dado);resolve();};tick();});}
+  function tirarDestino(){if(!rog.abierto||rog.resuelto||rog.tirando)return;rog.tirando=true;const tirada=rog.tirada,c=rog.mano[rog.elegida],dado=DESTINO.entero(20)+1;
+    $('destinoResultado').textContent='El d20 está rodando…';pintarDestino();
+    return animarDado(dado).then(()=>{if(!rog.abierto||rog.tirada!==tirada)return;rog.tirando=false;rog.resuelto=true;
+      const antes=rog.efectos.filter(e=>e.positivo).length,r=DESTINO.resolver(rog.efectos,c,dado);rog.efectos=r.efectos;aplicarDestino();
+      $('destinoResultado').textContent='d20: '+dado+' · '+(r.tipo==='critico'?'¡CRÍTICO! Pierdes '+antes+' buffs positivos. Conservas tus penalizaciones.':(r.tipo==='beneficio'?'¡BENEFICIO! ':'RIESGO: ')+DESTINO.texto(c,r.tipo==='beneficio'));
+      pintarDestino();$('destinoSeguir').focus();});}
   function seguirDestino(){if(!rog.abierto||!rog.resuelto)return;rog.terminado=ol.i;rog.abierto=false;$('destino').close();
     ent.atacando=ent.pendiente=false;teclas.clear();mando.listo=false;mando.activo=false;heroe.invul=.5;
     for(const b of [...botines])quitarBotin(b);ol.descanso=.8;
@@ -306,9 +312,9 @@
   function mandoDestino(){if(document.hidden||!mando.foco){rog.botones=[];return;}const g=Array.from(navigator.getGamepads?.()||[]).find(g=>g?.connected&&g.mapping==='standard');if(!g)return;
     const b=g.buttons.map(b=>b.pressed||b.value>.5),direccion=g.axes[0]>.55||b[15]?1:g.axes[0]<-.55||b[14]?-1:0;
     if(!rog.botones.length){rog.botones=b;rog.direccion=direccion;return;}
-    if(!rog.resuelto&&direccion&&direccion!==rog.direccion){rog.elegida=(rog.elegida+direccion+3)%3;pintarDestino();$('destinoCartas').querySelectorAll('button')[rog.elegida].focus();}
+    if(!rog.resuelto&&!rog.tirando&&direccion&&direccion!==rog.direccion){rog.elegida=(rog.elegida+direccion+3)%3;pintarDestino();$('destinoCartas').querySelectorAll('button')[rog.elegida].focus();}
     const confirmar=b[0]&&!rog.botones[0];rog.botones=b;rog.direccion=direccion;if(confirmar){if(rog.resuelto)seguirDestino();else tirarDestino();}}
-  $('destinoCartas').onclick=e=>{const b=e.target.closest('[data-destino]');if(!b||rog.resuelto)return;rog.elegida=Number(b.dataset.destino);pintarDestino();$('destinoCartas').querySelectorAll('button')[rog.elegida].focus();};
+  $('destinoCartas').onclick=e=>{const b=e.target.closest('[data-destino]');if(!b||rog.resuelto||rog.tirando)return;rog.elegida=Number(b.dataset.destino);pintarDestino();$('destinoCartas').querySelectorAll('button')[rog.elegida].focus();};
   $('destinoTirar').onclick=tirarDestino;$('destinoSeguir').onclick=seguirDestino;$('destino').addEventListener('cancel',e=>e.preventDefault());
   // Cartas que dan velocidad de ataque (por su tema: el arco, los lentes, el sombrero, la espada ligera), en % por edición.
   const VELOCIDAD={arco:12,lentesmachete:9,sombrero:8,espadaboveda:7};
@@ -537,6 +543,7 @@
     let movido=0;const mov=ctl.mov;if(h.bloqueoBasico)ent.pendiente=false;if(!ctl.atacar)h.bloqueoBasico=false;
     const andar=(v,vel)=>{if(v.lengthSq()<.01)return 0;const l=Math.min(1,v.length()),paso=vel*l*dt;h.pos.x+=v.x/v.length()*paso;h.pos.z+=v.z/v.length()*paso;return paso;};
     if(h.estado==='muerta'){h.muerteT+=dt;return;}
+    if(h.retroceso){h.pos.addScaledVector(h.retroceso,dt);h.retroceso.multiplyScalar(Math.exp(-dt*9));if(h.retroceso.lengthSq()<.01)h.retroceso=null;}
     if(aDistancia()){const T=HEROES.mohamed;h.cadT-=dt*h.vatq;h.disparoT+=dt;if(h.recargaT>0){h.recargaT-=dt*h.vatq;if(h.recargaT<=0){h.balas=T.cargador;numero(h.pos.clone().setY(2.3),'¡Cargada!','esquivado');}}}
     if(['quieto','andar'].includes(h.estado)&&aDistancia()){const apunta=ctl.atacar,obj=apunta?puntoApuntado():null;movido=andar(mov,VEL*(apunta?.7:1));
       if(obj&&plano(obj,h.pos)>.1)h.dir=rumbo(h.pos,obj);else if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
@@ -617,7 +624,7 @@
       if(H.vivo&&H.invul>0&&(dentro||H.esqDesde&&enZona(a,e,H.esqDesde,H.radio*.6)))esquivado(e);
       else if(H.vivo&&par==='perfecto'){parryPerfecto(e,e.pos.clone().lerp(H.pos,.55).setY(1.2));return;}
       else if(H.vivo&&par==='bloqueo')bloqueado(a.dano,e.pos,e);
-      else if(H.vivo&&dentro)herir(a.dano,e.pos,e);}
+      else if(H.vivo&&dentro){herir(a.dano,e.pos,e);if(e.escudazo&&H.vivo){H.retroceso=H.pos.clone().sub(e.pos).setY(0).normalize().multiplyScalar(10);temblar(.14);}}}
     cancelarAtaque(e);}
   // La armadura sólo se abre durante el aturdimiento causado por un parry perfecto.
   function vulnerableTroll(e){return e.estado==='aturdido'&&e.aturdidoT>0&&e.parryHasta>reloj.t;}
@@ -700,8 +707,9 @@
         dentroPlaza(obj,e.radio);movido=hacia(obj,vel*(entra?1:.8));
         if(entra&&dist<(tira?9:H.radio+e.radio+d.alcance+.2)&&e.cd<=0&&reloj.t>=presion.siguiente){
           presion.siguiente=reloj.t+RITMO.entreAtaques;e.turnoHasta=0;e.ultimoTurno=reloj.t;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');
-          e.tiraGoblin=tira;
-          if(tira){sujetarGoblin(e);empezarAtaque(e,'linea',{dur:1.4,largo:12,ancho:1.4,fija:.5,dano:24});e.alerta.el.textContent='¡Goblin!';}
+          e.tiraGoblin=tira;e.escudazo=e.tipo==='saqueador'&&dist<2.5&&e.ataques%2===0;
+          if(e.escudazo){empezarAtaque(e,'cono',{dur:.65,radio:2.3,ang:1.05,fija:.4,dano:14});e.alerta.el.textContent='¡Escudo!';}
+          else if(tira){sujetarGoblin(e);empezarAtaque(e,'linea',{dur:1.4,largo:12,ancho:1.4,fija:.5,dano:24});e.alerta.el.textContent='¡Goblin!';}
           else if(e.tipo==='troll'&&e.ataques%3===1)empezarAtaque(e,'circulo',{dur:1.5,radio:3.5,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.5)),fija:0,dano:44});
           else if(e.tipo==='can'&&e.ataques%3===2)empezarAtaque(e,'circulo',{dur:1.15,radio:2.8,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.8)),fija:0,dano:Math.round(d.dano*1.5)});
           else empezarAtaque(e,'cono',{dur:d.aviso,radio:d.radio,ang:d.ang,fija:.5,dano:d.dano});}
@@ -964,7 +972,7 @@
         recupera:[d.lanza?'lanzar':'golpe',d.lanza?.6+.4*Math.min(1,e.t/d.recupera):.62+.38*Math.min(1,e.t/d.recupera)],dolor:['dolor',e.t/.28],aturdido:['aturdido'],grito:['grito',e.t/.9],muere:['muerte',Math.min(1,e.t/.6)]}[e.estado];
       if(e.tipo==='troll'&&e.mazazo&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'cargaMazazo':'mazazo';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.3*e.t/d.golpe:.3+.7*Math.min(1,e.t/d.recupera);}
       if(e.tipo==='troll'&&e.tiraGoblin&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'preparaGoblin':'arrojaGoblin';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.4*e.t/d.golpe:.4+.6*Math.min(1,e.t/d.recupera);}
-      MOD.posar(m,{anim:pe[0],k:pe[1],t:reloj.t+e.id,fase:e.fase,paso:e.paso});
+      MOD.posar(m,{anim:pe[0],k:pe[1],t:reloj.t+e.id,fase:e.fase,paso:e.paso,escudazo:e.escudazo&&['aviso','golpe','recupera'].includes(e.estado)?(e.estado==='aviso'?.25:1):0});
       // Quién va a atacar: se enciende en rojo mientras avisa (más al fijarse); quién te acaba de golpear, un destello rojo.
       m.M.u.uDestello.value=e.destello*.42;m.M.u.uColorD.value.setRGB(1,.92,.8);
       const culpa=Math.max(0,1-(reloj.t-e.culpableT)/.6);

@@ -5,7 +5,7 @@ const get=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
 const c=vm.createContext({console,crypto:webcrypto});c.window=c;
 vm.runInContext(fs.readFileSync(new URL('visor-three-vendor.js',import.meta.url),'utf8'),c);
 vm.runInContext(get('DESTINO','const')+'\n'+get('rog','const'),c);const run=s=>vm.runInContext(s,c);
-for(let i=0;i<200;i++){const deck=run('DESTINO.repartir()');assert.equal(deck.length,3);assert.equal(new Set(deck.map(c=>c.id)).size,3);assert.deepEqual(deck.map(c=>c.min).sort((a,b)=>a-b).join(','),'11,17,19');}
+for(let i=0;i<200;i++){const deck=run('DESTINO.repartir()');assert.equal(deck.length,3);assert.equal(new Set(deck.map(c=>c.id)).size,3);assert.deepEqual(deck.map(c=>c.min).sort((a,b)=>a-b).join(','),'2,17,19');}
 run("var carta={id:'mazo',stat:'basicos',min:17,bueno:50,malo:-10};var efectos=[];");
 for(let d=1;d<=20;d++){const r=run(`DESTINO.resolver([],carta,${d})`);assert.equal(r.tipo,d===1?'critico':d>=17?'beneficio':'riesgo');}
 run('efectos=DESTINO.resolver([],carta,17).efectos;efectos=DESTINO.resolver(efectos,carta,2).efectos;');
@@ -38,12 +38,17 @@ console.log('✓ Tres drops, recoger no mejora estadísticas, elección sólo en
 
 // Un doble clic no vuelve a tirar. Continuar tras el ogro conserva efectos y abre otra vuelta.
 vm.runInContext(`
-function pintarDestino(){};const ent={},teclas={clear(){}},mando={};function quitarBotin(){};
+let finDado;function animarDado(){return new Promise(r=>finDado=r);}function pintarDestino(){};const ent={},teclas={clear(){}},mando={};function quitarBotin(){};
 ${get('tirarDestino')}
 ${get('seguirDestino')}
 `,c);
-run('rog.abierto=true;rog.resuelto=false;rog.mano=[carta];rog.elegida=0;tirarDestino();var trasTirada=JSON.stringify(rog.efectos);tirarDestino();');
+run('rog.abierto=true;rog.resuelto=false;rog.mano=[carta];rog.elegida=0;');run('var efectosAntes=JSON.stringify(rog.efectos);var primera=tirarDestino();tirarDestino()');assert.equal(run('rog.tirando'),true);assert.equal(run('JSON.stringify(rog.efectos)'),run('efectosAntes'));run('finDado()');await run('primera');run('var trasTirada=JSON.stringify(rog.efectos);tirarDestino();');
 assert.equal(run('JSON.stringify(rog.efectos)'),run('trasTirada'));
 run('ol.i=OLEADAS.length-1;seguirDestino();');
 assert.equal(run('rog.vuelta'),2);assert.equal(run('ol.i'),-1);assert.equal(run('rog.abierto'),false);assert.equal(run('JSON.stringify(rog.efectos)'),run('trasTirada'));
 console.log('✓ Una tirada por elección y nueva vuelta con efectos conservados');
+
+const conservadora=run('DESTINO.repartir().find(c=>c.min===2)');
+for(let d=2;d<=20;d++){const r=run(`DESTINO.resolver([],${JSON.stringify(conservadora)},${d})`);assert.equal(r.tipo,'beneficio');}
+assert.equal(run(`DESTINO.resolver([],${JSON.stringify(conservadora)},1).tipo`),'critico');
+console.log('✓ Conservadora garantizada y resultados 2–20 siempre positivos; el 1 mantiene su riesgo');
