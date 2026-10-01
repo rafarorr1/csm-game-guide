@@ -31,7 +31,7 @@ run('reset();ctl.atacar=true;avanzar(2)');
 assert.equal(run('impactos.length'),0,'Mantener nunca dispara automáticamente');
 assert.equal(run('heroe.carga'),1);
 run('ctl.atacar=false;avanzar(.7)');
-assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.equal(run('Math.max(...sacudidas)'),.12,'Sacudida leve al soltar, incluso sin acertar');assert.ok(run('heroe.pos.z>.6&&heroe.pos.z<.7'),'El cargado avanza 65 cm al soltar');assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
+assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.equal(run('Math.max(...sacudidas)'),.28,'Sacudida leve al soltar, incluso sin acertar');assert.ok(run('heroe.pos.z>.6&&heroe.pos.z<.7'),'El cargado avanza 65 cm al soltar');assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
 run('reset();ctl.atacar=true;avanzar(.55);ctl.atacar=false;avanzar(.7)');
 assert.ok(run('impactos[0].d>12&&impactos[0].d<36'),'Carga parcial proporcional');
 for(const estado of ['golpe','carga','torbellino','abanico']){
@@ -57,7 +57,7 @@ for(const [pad,mov,esperado] of [[true,-1,4],[true,0,5],[true,1,5],[false,-1,5]]
   run(`reset();mando.activo=${pad};usar('salto',new V3(0,0,5));ctl.mov.set(0,0,${mov});avanzar(.72)`);
   assert.ok(Math.abs(run('heroe.pos.z')-esperado)<.001);
   assert.equal(run('heroe.estado'),'quieto');assert.equal(run('impactos.length'),1);
-  assert.equal(run('heroe.alto'),0);assert.equal(run('Math.max(...sacudidas)'),.16,'Aterrizaje con sacudida leve');
+  assert.equal(run('heroe.alto'),0);assert.equal(run('Math.max(...sacudidas)'),.32,'Aterrizaje con sacudida leve');
 }
 run("reset();mando.activo=true;usar('salto',new V3(0,0,5));ctl.mov.set(0,0,-1);avanzar(.25);ctl.mov.set(0,0,1);avanzar(.47)");
 assert.ok(Math.abs(run('heroe.pos.z')-5)<.001,'Adelante recupera la distancia original sin rebasarla');
@@ -86,3 +86,12 @@ run("const padPausa={connected:true,mapping:'standard',buttons:Array.from({lengt
 run('padPausa.buttons[9].pressed=false;leerPausaMando();padPausa.buttons[0].pressed=true;leerPausaMando()');assert.equal(run('pausa.activa'),false);
 run('rog.abierto=true;ponerPausa(true)');assert.equal(run('pausa.activa'),false);
 console.log('✓ Menú de pausa, reloj congelado, Options por pulsación, × para volver y cartas sin interferencia');
+
+// El golpe completo sostiene su pose durante 0,3 s y no admite cancelaciones de movimiento.
+run("rog.abierto=false;pausa.activa=false;reset();ctl.atacar=true;avanzar(1);ctl.atacar=false;avanzar(.17)");
+assert.equal(run('heroe.estado'),'recuperacion');
+run('const posRecuperacion=heroe.pos.clone();ctl.mov.set(1,0,0);avanzar(.25)');
+assert.equal(run('heroe.estado'),'recuperacion');assert.ok(run('heroe.pos.equals(posRecuperacion)'));
+assert.equal(run("usar('esquiva')"),false);assert.equal(run("usar('parry')"),false);
+run('avanzar(.05)');assert.equal(run('heroe.estado'),'quieto');
+console.log('✓ Recuperación completa: pose fija, 0,3 s inmóvil y sin cancelación por habilidades');

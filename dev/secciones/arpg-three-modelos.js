@@ -122,7 +122,10 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     // cinturón ancho con la hebilla y los cráneos de pájaro, el faldón de piel sobre la falda de tela y las botas
     // altas con correas y púa en la rodilla. Sombreado suave; tres mallas como los demás.
     function adreida(){
-      const p={muslo:.47,pierna:.45,pie:.05,cintura:.08,torso:.52,hombros:.25,brazo:.31,antebrazo:.29,ancho:.11},H=esqueleto(p),{pon,montar}=constructor(H,.035);
+      const p={muslo:.47,pierna:.45,pie:.05,cintura:.08,torso:.52,hombros:.25,brazo:.31,antebrazo:.29,ancho:.11},H=esqueleto(p);
+      // Paños articulados desde la cintura; comparten las mismas mallas del personaje.
+      for(let i=0;i<7;i++){H["falda"+i]=new THREE.Bone();H.cadera.add(H["falda"+i]);}
+      const {pon,montar}=constructor(H,.035);
       const piel=0x86c49c,piel2=0x76b18b,piel3=0x93d0a8,pelo=0x1c1f38,cuero=0x3e2b1f,cuero2=0x5a3a22,brazal=0x6d4529,negro=0x1d1a23,tela=0x2a2530,
         hueso=0xe9e0cc,plata=0xd9dbe6,pielT=0xa48258,pielT2=0x7c5f3e,pielT3=0xbd9c6c,bota=0x241c1d,suela=0x120e0e;
       const PI=Math.PI;
@@ -145,12 +148,12 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       {const f=-1.25,o=[Math.sin(f),0,Math.cos(f)*.76];pon('cadera','piel',G.caja(.075,.09,.05),cuero2,[o[0]*.23,-.02,o[2]*.23],[0,f,0]);
         pon('cadera','piel',G.caja(.08,.035,.056),cuero,[o[0]*.232,.02,o[2]*.232],[.12,f,0]);pon('cadera','metal',G.bola(.008,6,4),plata,[o[0]*.262,.005,o[2]*.262]);}
       // La falda de tela oscura en paños (se abren al andar) y el faldón de piel por encima con sus mechones.
-      for(let i=0;i<7;i++){const a=i/7*TAU+.08,l=.4+(i%2)*.05;pon('cadera','piel',new THREE.CylinderGeometry(.2,.3,l,6,1,true,a,TAU/7-.07),i%2?tela:0x221e28,[0,.02-l/2,0],[0,0,0],[1,1,.8]);}
-      pon('cadera','piel',new THREE.CylinderGeometry(.205,.275,.24,26,2,true),pielT,[0,-.1,0],[0,0,0],[1,1,.8],.08);
+      for(let i=0;i<7;i++){const a=i/7*TAU+.08,l=.4+(i%2)*.05;pon('falda'+i,'piel',new THREE.CylinderGeometry(.2,.3,l,6,1,true,a,TAU/7-.07),i%2?tela:0x221e28,[0,.02-l/2,0],[0,0,0],[1,1,.8]);}
+      for(let i=0;i<7;i++)pon('falda'+i,'piel',new THREE.CylinderGeometry(.205,.275,.24,4,2,true,i/7*TAU+.08,TAU/7+.025),pielT,[0,-.1,0],[0,0,0],[1,1,.8],.08);
       for(let i=0;i<34;i++){const a=i/34*TAU,r=.275+(i%3)*.006,cc=[pielT,pielT2,pielT3][i%3];
-        pon('cadera','piel',G.cono(.05,.1+(i*7%5)*.014,7),cc,[Math.sin(a)*r,-.25-(i*5%3)*.008,Math.cos(a)*r*.8],apunta([-Math.sin(a)*.3+Math.cos(a)*.15*((i%2)*2-1),1,-Math.cos(a)*.3*.8]),[1.3,1,.4],.1);}
+        pon('falda'+Math.floor(((a-.08+TAU)%TAU)/TAU*7),'piel',G.cono(.05,.1+(i*7%5)*.014,7),cc,[Math.sin(a)*r,-.25-(i*5%3)*.008,Math.cos(a)*r*.8],apunta([-Math.sin(a)*.3+Math.cos(a)*.15*((i%2)*2-1),1,-Math.cos(a)*.3*.8]),[1.3,1,.4],.1);}
       for(let i=0;i<24;i++){const a=(i+.5)/24*TAU,r=.245;
-        pon('cadera','piel',G.cono(.045,.09,7),[pielT3,pielT][i%2],[Math.sin(a)*r,-.15,Math.cos(a)*r*.8],apunta([-Math.sin(a)*.25,1,-Math.cos(a)*.25*.8]),[1.3,1,.4],.1);}
+        pon('falda'+Math.floor(((a-.08+TAU)%TAU)/TAU*7),'piel',G.cono(.045,.09,7),[pielT3,pielT][i%2],[Math.sin(a)*r,-.15,Math.cos(a)*r*.8],apunta([-Math.sin(a)*.25,1,-Math.cos(a)*.25*.8]),[1.3,1,.4],.1);}
       // ---- Piernas: mallas negras y botas altas con el puño de cuero, correas y la púa en la rodilla.
       for(const l of ['I','D']){const s=l==='I'?1:-1;
         pon('pierna'+l,'piel',G.torno([[.1,.03],[.106,-.06],[.098,-.18],[.086,-.32],[.07,-.44],[.066,-.5]]),negro,[0,0,0],[0,0,0],[1,1,.95]);
@@ -580,6 +583,18 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
         H.torso.rotation.y*=1+.65*p;H.cadera.rotation.y*=1+.5*p;
         H.torso.rotation.x+=p*(-.2*pre+.24*gol);H.cuerpo.position.y-=p*(.13*pre+.08*gol);
         H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
+      }
+      if(m.tipo==='adreida'){
+        const tela=m.tela||(m.tela={t:t,aperturas:Array(7).fill(0)}),dt=Math.max(0,Math.min(.05,t-tela.t));tela.t=t;
+        for(let i=0;i<7;i++){
+          const ang=(i+.5)/7*TAU+.08,fr=Math.cos(ang),lado=Math.sin(ang);
+          const piernas=[H.piernaI,H.piernaD],empuje=Math.max(...piernas.map(b=>Math.max(0,-b.rotation.x*fr+b.rotation.z*lado)));
+          const objetivo=Math.min(1.2,.04+empuje*1.12),anterior=tela.aperturas[i];
+          // Se abre enseguida ante la pierna; vuelve con retraso y un leve vaivén de tela.
+          const apertura=objetivo>anterior?objetivo:objetivo+(anterior-objetivo)*Math.exp(-dt*9);
+          tela.aperturas[i]=apertura;const balanceo=Math.sin(t*5+i)*.018*(a.paso||0);
+          H['falda'+i].rotation.set(-fr*(apertura+balanceo),0,lado*(apertura+balanceo));
+        }
       }
       if(m.tipo==='adreida'&&!['grito','muerte'].includes(a.anim))empunar(m,agarreAdreida(a));
     }

@@ -1170,3 +1170,10 @@ python3 dev/secciones/publicar.py --publicar --seccion pesadillas-3d --salida /t
 - Las puertas sobresalen 7,5 cm del plano del muro: antes su cara exterior coincidía con él y producía z-fighting. Los tiradores acompañan la nueva posición.
 - Agua del pozo y metal de Adreida más rugosos, con reflejo de entorno atenuado, para reducir destellos especulares hacia cámara.
 - El golpe cargado avanza progresivamente hasta 65 cm durante el barrido, sujeto a obstáculos y separación con enemigos; cargar sigue inmóvil. Parry cancela el avance pendiente. Sacudidas leves: 0,12 de intensidad en el cargado y 0,16 al aterrizar el salto; se respeta movimiento reducido.
+
+### Recuperación y falda articulada de Adreida
+
+- Sólo el básico cargado al 100 % entra en `recuperacion`: mantiene la pose al final del barrido durante 0,3 s, sin caminar, dash ni parry. No modifica la recuperación de cargas parciales. La separación con enemigos tampoco desplaza esa pose.
+- Sacudida del cargado 0,28 y del salto 0,32, con caída exponencial para que se perciban varios cuadros sin un corte brusco; se sigue respetando movimiento reducido.
+- Falda y faldón de piel divididos en siete paños con huesos propios. Se abren con la orientación de los muslos y regresan amortiguados, con un pequeño balanceo al caminar. Es una aproximación procedural de tela, sin simulación física de tela completa, y conserva las tres mallas del personaje.
+- Verificación puntual: `node dev/secciones/pruebas_arpg_adreida_control.mjs` y `node dev/secciones/pruebas_arpg_falda.mjs`.
