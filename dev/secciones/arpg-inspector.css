@@ -13,3 +13,5 @@
 .labFila{display:flex;gap:6px;flex-wrap:wrap}.labDos{display:grid;grid-template-columns:1fr 1fr;gap:8px}.labPanel .labCheck,.labFila label{flex-direction:row;align-items:center}
 .labNota{font-size:11px;color:#b6a7c1;margin-top:8px}#labEstado{color:#b7d3ce;margin-top:12px}#labMetricas{white-space:pre-line;font-variant-numeric:tabular-nums;color:#a5dfd1}#labResultado{color:#efd395}
 @media(max-width:900px){.apLaboratorio{display:block;height:auto;overflow:auto}.labPanel{margin-top:12px}.apLaboratorio .apEscenario{height:60vh}}
+
+.labPanel table{width:100%;font-size:11px;border-collapse:collapse;margin-top:12px}.labPanel th,.labPanel td{padding:4px;text-align:right;border-bottom:1px solid #56405c}.labPanel td:first-child{text-align:left}.labPanel textarea{width:100%;height:120px;background:#100c18;color:#d3c5dd;font:10px monospace}.labPanel details{margin-top:12px}

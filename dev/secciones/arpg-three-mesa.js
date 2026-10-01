@@ -71,6 +71,11 @@
         void main(){vec4 c=texture2D(tDiffuse,vUv);gl_FragColor=vec4(limpio(c.r),limpio(c.g),limpio(c.b),limpio(c.a));}`}),
     render(r,escribir,leer){this.mat.uniforms.tDiffuse.value=leer.texture;r.setRenderTarget(this.renderToScreen?null:escribir);r.render(this.escenaQ,this.camQ);}};
   saneado.escenaQ=new THREE.Scene();saneado.escenaQ.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),saneado.mat));saneado.camQ=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
+  // Las normales de GTAO reutilizan las sombras calculadas por la escena en este cuadro.
+  if(!(laboratorio&&q.get('referencia')==='1')){
+    const dibujarOclusion=oclusion.render.bind(oclusion);
+    oclusion.render=(r,...args)=>{const actualizar=r.shadowMap.autoUpdate;r.shadowMap.autoUpdate=false;try{return dibujarOclusion(r,...args);}finally{r.shadowMap.autoUpdate=actualizar;}};
+  }
   for(const p of [pasoRender,oclusion,saneado,resplandor,salida])composer.addPass(p);
   // Para la revisión: un punto que pinta NaN a propósito (comprueba que el saneado evita los cuadros negros).
   const puntoNaN=new THREE.Mesh(new THREE.PlaneGeometry(.3,.3).rotateX(-Math.PI/2),new THREE.ShaderMaterial({uniforms:{uCero:{value:0}},vertexShader:'void main(){gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
@@ -1243,7 +1248,7 @@
     activarPartida();}
   $('reanudarPartida').onclick=activarPartida;
   let antes=performance.now(),fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
-  function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const intervalo=ahora-antes,dt=Math.min(.05,intervalo/1000);antes=ahora;const inicio=performance.now();laboratorio?.antes?.();if(!laboratorio?.detenido)paso(dt);const preparado=performance.now();if(pausa.activa){fps.n=0;fps.t=ahora;$('info').textContent='En pausa';requestAnimationFrame(cuadro);return;}dibujar();laboratorio?.despues?.({intervalo,simulacion:preparado-inicio,envio:performance.now()-preparado,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles});fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
+  function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const intervalo=ahora-antes,dt=Math.min(.05,intervalo/1000);antes=ahora;const inicio=performance.now();laboratorio?.antes?.();if(!laboratorio?.detenido)paso(laboratorio?.fijo?1/60:dt);const preparado=performance.now();if(pausa.activa){fps.n=0;fps.t=ahora;$('info').textContent='En pausa';requestAnimationFrame(cuadro);return;}laboratorio?.preDibujo?.();dibujar();const finDibujo=performance.now();laboratorio?.postDibujo?.();laboratorio?.despues?.({intervalo,simulacion:preparado-inicio,envio:finDibujo-preparado,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles});fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;ajustarResolucion(fps.v);const i=renderer.info;
       $('info').textContent=`${fps.v} fps · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);}
@@ -1312,8 +1317,10 @@
       detener(v){laboratorio.detenido=!!v;},
       paso(){if(listo&&laboratorio.detenido&&!pausa.activa){paso(1/60);dibujar();}},
       observar(fn){laboratorio.despues=fn;},
+      temporizador(antes,despues){laboratorio.preDibujo=antes;laboratorio.postDibujo=despues;return gl;},
+      pasoFijo(v){laboratorio.fijo=!!v;},
       antes(fn){laboratorio.antes=fn;},
-      limpiar(tipo='adreida',semillaEscena=11){ponerPausa(false);poses.heroe=null;semilla=semillaEscena;reloj.t=0;paron=0;sigId=1;tipoHeroe=tipo;reiniciar();rotulos();ol.auto=false;ent.rev={mov:new V3(),atacar:false,apunta:new V3(0,0,0)};heroe.furia=100;vista.foco.copy(heroe.pos);},
+      limpiar(tipo='adreida',semillaEscena=11){ponerPausa(false);poses.heroe=null;semilla=semillaEscena;reloj.t=0;paron=0;sigId=1;tipoHeroe=tipo;reiniciar();for(const n of numeros)quitarEtiqueta(n.e);numeros.length=0;pVida.fill(0);pCol.fill(0);rotulos();ol.auto=false;ent.rev={mov:new V3(),atacar:false,apunta:new V3(0,0,0)};heroe.furia=100;for(const h of jugadores)h.entrada.rev={mov:new V3(),atacar:false,apunta:new V3(0,0,0)};vista.temblor=0;vista.foco.copy(heroe.pos);pasoCamara(1);camara.updateMatrixWorld();},
       configurar(p){
         for(const [k,min,max] of [['dano',1,100],['velAtaque',.25,3]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw Error('Parámetro fuera de rango: '+k);
         heroe.atq=heroe.atqBase=p.dano;heroe.vatq=p.velAtaque;
@@ -1323,9 +1330,9 @@
         for(let i=0;i<n;i++){const a=i*TAU/n,radio=p.quieto?Math.max(1.7,Math.sqrt(n)*.9):7,e=crearEnemigo(tipo,heroe.pos.x+Math.sin(a)*radio,heroe.pos.z-Math.cos(a)*radio,{quieto:p.quieto});Object.assign(e.d,{vida:p.vida,vel:p.vel,dano:p.dano});e.vida=e.vidaMax=p.vida;e.dentro=true;if(!p.quieto)cambiar(e,'persigue');}
       },
       prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
-      proteger(){heroe.alma=heroe.almaMax;heroe.invul=1;for(const h of jugadores)h.mando.foco=h.mando.activo=h.mando.listo=false;},
+      proteger(){for(const h of jugadores){h.alma=h.almaMax;h.invul=1;h.mando.foco=h.mando.activo=h.mando.listo=false;}},
       restaurarEntrada(){for(const h of jugadores){h.mando.foco=document.hasFocus();h.mando.listo=false;}},
-      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP};},
+      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
       valores:()=>structuredClone(originales)
     };
   }
