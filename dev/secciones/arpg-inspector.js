@@ -39,7 +39,7 @@ async function iniciar(){
       <h2>Ataques reales</h2>
       <div class="labFila"><button data-accion="basico">Básico</button><button data-accion="cargado">Cargado</button><button data-accion="salto">Salto</button><button data-accion="parry">Parry</button></div>
       <h2>Enemigos de prueba</h2>
-      <label>Tipo<select id="labEnemigo"><option value="goblin">Goblin</option><option value="kobold">Arquero</option><option value="saqueador">Saqueador con escudo</option><option value="troll">Troll</option></select></label>
+      <label>Tipo<select id="labEnemigo"><option value="goblin">Goblin</option><option value="kobold">Arquero</option><option value="saqueador">Saqueador con escudo</option><option value="can">Can · Centro y lados</option><option value="troll">Troll</option></select></label>
       <div class="labDos"><label>Cantidad<input id="labCantidad" type="number" min="1" max="24" value="1"></label><label>Vida<input id="labVida" type="number" min="1" max="3000" value="34"></label><label>Velocidad<input id="labVelEnemigo" type="number" min="0" max="8" step="0.05" value="2.85"></label><label>Daño<input id="labDanoEnemigo" type="number" min="0" max="100" value="13"></label></div>
       <label class="labCheck"><input id="labQuieto" type="checkbox" checked> Quietos para probar impactos</label><button id="labInvocar">Añadir enemigos</button>
       <h2>Imagen</h2>

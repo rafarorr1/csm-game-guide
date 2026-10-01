@@ -485,6 +485,17 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.brazoI.rotation.x=-1.6*arriba;H.brazoI.rotation.z=.3+.3*arriba;H.anteI.rotation.x=-.7;
           H.torso.rotation.x=-.18*arriba+.65*caida*(1-rec);H.cabeza.rotation.x=-.12*arriba;
           H.rodillaI.rotation.x=H.rodillaD.rotation.x=.18+.35*caida*(1-rec);H.cuerpo.position.y=-.16*caida*(1-rec);break;}
+        // Can: alza el hacha para el centro; después abre el cuerpo y barre los flancos.
+        // k=1 coincide con el impacto; 1,2–2 recoge el arma tras el segundo golpe.
+        case 'canCentro':case 'canLados':{const lateral=a.anim==='canLados',car=tramo(k,0,.65),gol=tramo(k,.8,1),rec=1-tramo(k,1.2,2);
+          H.torso.rotation.x=(lateral?.5*(1-car)+.18*gol:-.16*car+.66*gol)*rec;
+          H.torso.rotation.y=lateral?(-.65*car+1.3*gol)*rec:0;H.cadera.rotation.y=H.torso.rotation.y*.3;
+          H.brazoD.rotation.x=(lateral?-1.15-.45*car:-.15-2.45*car+1.45*gol)*rec;
+          H.brazoD.rotation.z=(-.18+(lateral?-.9*car+.45*gol:0))*rec;H.brazoD.rotation.y=lateral?(-.65*car+1.45*gol)*rec:0;
+          H.anteD.rotation.x=-.55-(lateral?.15:.65)*car*(1-gol)*rec;
+          H.brazoI.rotation.x=(lateral?-.9-.6*car+.5*gol:-1.8*car+.9*gol)*rec;H.anteI.rotation.x=-.55;
+          H.brazoI.rotation.z=(lateral?.38+.35*car:.18+.2*car)*rec;
+          const apoyo=lateral?Math.max(1-car,gol):gol;H.rodillaI.rotation.x=H.rodillaD.rotation.x=(.18+.3*apoyo)*rec;H.cuerpo.position.y=-.12*apoyo*rec;break;}
         case 'esquiva':{const e=Math.sin(Math.PI*Math.min(1,k));H.torso.rotation.x=.25+.55*e;H.cabeza.rotation.x=.2*e;H.cuerpo.position.y=-.22*e*esc;
           H.piernaI.rotation.x=-.9*e;H.rodillaI.rotation.x=1.1*e;H.piernaD.rotation.x=.7*e;H.rodillaD.rotation.x=.9*e;
           H.brazoI.rotation.x=.9*e;H.brazoD.rotation.x=.7*e;H.anteD.rotation.x=-.9;H.brazoI.rotation.z=.5*e;H.brazoD.rotation.z=-.5*e;break;}

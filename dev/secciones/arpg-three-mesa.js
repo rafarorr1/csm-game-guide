@@ -674,17 +674,22 @@
   /* ---- Ataques enemigos: la zona exacta en el suelo, que se llena hasta el golpe ---------- */
   // Mientras se llena, el atacante gira hacia ti; en el último tramo se fija (la marca se enciende): es el momento de apartarse o esquivar.
   function matZona(forma){const m=matMarca(forma);m.blending=THREE.NormalBlending;return m;}
-  function empezarAtaque(e,forma,o){e.objetivo=heroe.id;const a={forma,dur:o.dur*(e.tipo==='troll'&&e.fase2?.85:1),t0:reloj.t,dir:e.dir,radio:o.radio,ang:o.ang,largo:o.largo,ancho:o.ancho,centro:o.centro||null,fija:o.fija??.6,dano:o.dano,fijado:false};
-    const m=new THREE.Mesh(forma==='linea'?geoLinea:geoMarca,matZona(forma));m.renderOrder=1;m.material.uniforms.uC.value.set(0xff6a20);if(forma==='cono')m.material.uniforms.uAng.value=a.ang;escena.add(m);a.m=m;
+  function empezarAtaque(e,forma,o){e.objetivo=heroe.id;const a={forma,dur:o.dur*(e.tipo==='troll'&&e.fase2?.85:1),t0:reloj.t,dir:e.dir,radio:o.radio,ang:o.ang,largo:o.largo,ancho:o.ancho,centro:o.centro||null,fija:o.fija??.6,dano:o.dano,fijado:false,zonas:o.zonas||null};
+    if(a.zonas){a.m=new THREE.Group();for(const z of a.zonas){const m=new THREE.Mesh(geoLinea,matZona('linea'));m.renderOrder=1;a.m.add(m);}escena.add(a.m);}
+    const m=a.m||new THREE.Mesh(forma==='linea'?geoLinea:geoMarca,matZona(forma));if(!a.zonas){m.renderOrder=1;m.material.uniforms.uC.value.set(0xff6a20);if(forma==='cono')m.material.uniforms.uAng.value=a.ang;escena.add(m);}a.m=m;
     e.mazazo=e.tipo==='troll'&&forma==='circulo';e.ataque=a;if(!e.alerta){e.alerta=etiqueta('apAlerta',new V3());}e.alerta.el.textContent=forma==='circulo'?'¡Imparable!':'!';e.alerta.el.classList.toggle('imparable',forma==='circulo');colocarAtaque(e);return a;}
-  function colocarAtaque(e){const a=e.ataque,m=a.m,k=Math.min(1,(reloj.t-a.t0)/a.dur),u=m.material.uniforms;
+  function colocarAtaque(e){const a=e.ataque,m=a.m,k=Math.min(1,(reloj.t-a.t0)/a.dur);
+    if(a.zonas){const parry=a.dur-(reloj.t-a.t0)<=PARRY.perfecto;
+      for(let i=0;i<a.zonas.length;i++){const z=a.zonas[i],pieza=m.children[i],u=pieza.material.uniforms;pieza.position.set(z.centro.x,.05,z.centro.z);pieza.rotation.y=z.dir;pieza.scale.set(z.ancho,1,z.largo);u.uP.value=k;u.uF.value=parry?1:0;u.uA.value=.8;u.uC.value.setHex(parry?0xbfffff:0xff9b32);}
+      e.alerta.pos.set(e.pos.x,e.m.alto+.55,e.pos.z);e.alerta.el.classList.toggle('fijado',parry);e.alerta.el.style.setProperty('--k',k.toFixed(2));return;
+    }const u=m.material.uniforms;
     if(a.forma==='circulo'){m.position.set(a.centro.x,.05,a.centro.z);m.scale.setScalar(a.radio);}
     else{m.position.set(e.pos.x,.05,e.pos.z);m.rotation.y=a.dir;if(a.forma==='cono')m.scale.setScalar(a.radio);else m.scale.set(a.ancho,1,a.largo);}
     u.uP.value=k;u.uF.value=a.fijado?1:0;if(a.forma==='circulo')u.uC.value.setRGB(a.fijado?.85:.6,.15,a.fijado?1:.85);else u.uC.value.setRGB(a.fijado?1:.95,a.fijado?.06:.22,a.fijado?.03:.05);u.uA.value=(a.fijado?.95:.7)+.05*Math.sin(reloj.t*(a.fijado?38:14));
     e.alerta.pos.set(e.pos.x,e.m.alto+.55,e.pos.z);e.alerta.el.classList.toggle('fijado',a.fijado);e.alerta.el.style.setProperty('--k',k.toFixed(2));}
-  function cancelarAtaque(e){if(e.goblinSujeto){liberarModeloTroll(e.goblinSujeto);e.goblinSujeto=null;}if(e.ataque){escena.remove(e.ataque.m);e.ataque.m.material.dispose();e.ataque=null;}if(e.alerta){quitarEtiqueta(e.alerta);e.alerta=null;}}
+  function cancelarAtaque(e,conservarCombo=false){if(!conservarCombo)e.comboCan=null;if(e.goblinSujeto){liberarModeloTroll(e.goblinSujeto);e.goblinSujeto=null;}if(e.ataque){escena.remove(e.ataque.m);if(e.ataque.zonas)e.ataque.m.children.forEach(m=>m.material.dispose());else e.ataque.m.material.dispose();e.ataque=null;}if(e.alerta){quitarEtiqueta(e.alerta);e.alerta=null;}}
   // ¿Está p dentro de la zona del ataque? (margen: el cuerpo de Adreida)
-  function enZona(a,e,p,margen){const o=a.centro||e.pos,dx=p.x-o.x,dz=p.z-o.z,d=Math.hypot(dx,dz);
+  function enZona(a,e,p,margen){if(a.zonas)return a.zonas.some(z=>enZona({...z,forma:'linea'},e,p,margen));const o=a.centro||e.pos,dx=p.x-o.x,dz=p.z-o.z,d=Math.hypot(dx,dz);
     if(a.forma==='circulo')return d<a.radio+margen;
     const fx=Math.sin(a.dir),fz=Math.cos(a.dir);
     if(a.forma==='cono'){if(d>a.radio+margen)return false;if(d<e.radio+margen)return true;return Math.acos(Math.max(-1,Math.min(1,(dx*fx+dz*fz)/d)))<a.ang+Math.asin(Math.min(1,margen/d));}
@@ -708,7 +713,18 @@
         else if(dentro){if(parar(e.pos,a.forma==='circulo')==='bloqueo')bloqueado(a.dano,e.pos,e);
           else{herir(a.dano,e.pos,e);if(e.escudazo&&j.vivo)j.retroceso=j.pos.clone().sub(e.pos).setY(0).normalize().multiplyScalar(10);}}
       });}
-    cancelarAtaque(e);}
+    if(a.zonas){for(const z of a.zonas){const p=z.centro.clone().addScaledVector(frente(z.dir),z.largo*.55);marca('onda',p.x,p.z,z.ancho*.65,0xffbb65,.24);polvo(p,10,z.ancho*.5);}temblar(.13);}
+    cancelarAtaque(e,!!e.comboCan);}
+  // Centro y flancos comparten una dirección y un origen fijos; el hueco no persigue al jugador.
+  function empezarComboCan(e,paso=0){
+    if(paso===0)e.comboCan={paso:0,origen:e.pos.clone(),dir:e.dir};
+    const c=e.comboCan;if(!c)return;c.paso=paso;e.dir=c.dir;
+    const lado=frente(c.dir+Math.PI/2),zonas=(paso===0?[0]:[-1.7,1.7]).map(desplazamiento=>({centro:c.origen.clone().addScaledVector(lado,desplazamiento),dir:c.dir,ancho:1.5,largo:4.6}));
+    cambiar(e,'aviso');empezarAtaque(e,'franjas',{dur:paso===0?1.05:.55,zonas,fija:0,dano:paso===0?e.d.dano:Math.round(e.d.dano*.85)});
+    e.alerta.el.textContent=paso===0?'1/2 · Centro → lados':'2/2 · ¡Lados!';
+    // Las escoltas esperan el segundo aviso; no inician otra cadena encima de ésta.
+    presion.siguiente=Math.max(presion.siguiente,reloj.t+e.ataque.dur+e.d.golpe+.3);
+  }
   // La armadura sólo se abre durante el aturdimiento causado por un parry perfecto.
   function vulnerableTroll(e){return e.estado==='aturdido'&&e.aturdidoT>0&&e.parryHasta>reloj.t;}
   function blindadoTroll(e){return e.tipo==='troll'&&e.fase2&&!vulnerableTroll(e);}
@@ -843,6 +859,7 @@
           else if(tira){sujetarGoblin(e);empezarAtaque(e,'linea',{dur:1.4,largo:12,ancho:1.4,fija:.5,dano:24});e.alerta.el.textContent='¡Goblin!';}
           else if(e.tipo==='troll'&&e.ataques%3===1)empezarAtaque(e,'circulo',{dur:1.5,radio:3.5,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.5)),fija:0,dano:44});
           else if(e.tipo==='can'&&e.ataques%3===2)empezarAtaque(e,'circulo',{dur:1.15,radio:2.8,centro:e.pos.clone().add(frente(e.dir).multiplyScalar(1.8)),fija:0,dano:Math.round(d.dano*1.5)});
+          else if(e.tipo==='can')empezarComboCan(e);
           else empezarAtaque(e,'cono',{dur:d.aviso,radio:d.radio,ang:d.ang,fija:.5,dano:d.dano});}
         break;}
       case 'aviso':{if(H.sigilo>0&&e.ataque&&!e.ataque.fijado){cancelarAtaque(e);cambiar(e,'persigue');break;}const a=e.ataque;if(!a){cambiar(e,'persigue');break;}const k=(reloj.t-a.t0)/a.dur;
@@ -850,8 +867,8 @@
         colocarAtaque(e);if(k>=1)resolverAtaque(e);break;}
       case 'grito':if(e.t>=.9){cambiar(e,'persigue');if(ol.auto){for(let i=0;i<3*FACTOR_COOP;i++)ol.cola.push(['goblin',i]);}
         else{const n=Math.min(3*FACTOR_COOP,Math.max(0,5*FACTOR_COOP-enemigos.filter(o=>o.estado!=='muere').length));for(let i=0;i<n;i++){const p=ABIERTO?e.pos.clone().addScaledVector(calle(CALLES[i%3]),4):calle(CALLES[i%3]).multiplyScalar(R+3);const refuerzo=crearEnemigo('goblin',p.x,p.z);if(ABIERTO){refuerzo.dentro=true;cambiar(refuerzo,'persigue');}}}}break;
-      case 'golpe':if(e.t>=d.golpe){cambiar(e,'recupera');if(e.tipo==='troll'&&e.mazazo&&!e.fase2)e.expuestoHasta=reloj.t+d.recupera;}break;
-      case 'recupera':if(e.t>=d.recupera){e.cd=d.cd*(.8+rnd()*.4)*(e.tipo==='troll'&&e.fase2?.85:1);cambiar(e,'persigue');}break;
+      case 'golpe':if(e.t>=d.golpe){if(e.comboCan?.paso===0){empezarComboCan(e,1);break;}cambiar(e,'recupera');if(e.tipo==='troll'&&e.mazazo&&!e.fase2)e.expuestoHasta=reloj.t+d.recupera;}break;
+      case 'recupera':if(e.t>=d.recupera){e.comboCan=null;e.cd=d.cd*(.8+rnd()*.4)*(e.tipo==='troll'&&e.fase2?.85:1);cambiar(e,'persigue');}break;
       case 'dolor':if(e.t>=.28){e.cd=Math.max(e.cd,.35);cambiar(e,'persigue');}break;
       case 'aturdido':e.aturdidoT-=dt;if(e.aturdidoT<=0){cambiar(e,'persigue');}break;
       case 'muere':{if(e.t>.55){const k=(e.t-.55)/.9;e.m.M.u.uDisuelve.value=Math.min(1,k);if(k>.02)e.m.mallas.forEach(x=>x.castShadow=false);if(rnd()<.6)brasas(e.pos,1,e.m.alto);
@@ -1027,7 +1044,7 @@
     ctl.mov.copy(ent.palanca||movTeclado());ctl.atacar=ent.atacando||(heroe.estado!=='carga'&&ent.pendiente);ctl.apunta=ent.tactil||!(ent.dentro||ent.atacando)?null:ent.sobre?.d?ent.sobre.pos.clone():ent.suelo.clone();}// con el ratón encima de un enemigo se apunta a él
 
   /* ---- Piloto automático (Demostración): lee los avisos igual que un jugador ----------------- */
-  function escape(a,e,p){const o=a.centro||e.pos;if(a.forma==='linea'){const f=frente(a.dir),lado=new V3(-f.z,0,f.x),s=Math.sign(p.clone().sub(o).dot(lado))||1;return lado.multiplyScalar(s);}
+  function escape(a,e,p){if(a.zonas){const z=a.zonas.find(z=>enZona({...z,forma:'linea'},e,p,heroe.radio+.45));if(z)return escape({...z,forma:'linea'},e,p);}const o=a.centro||e.pos;if(a.forma==='linea'){const f=frente(a.dir),lado=new V3(-f.z,0,f.x),s=Math.sign(p.clone().sub(o).dot(lado))||1;return lado.multiplyScalar(s);}
     const v=p.clone().sub(o).setY(0);if(a.forma==='cono'){const f=frente(a.dir),l=new V3(-f.z,0,f.x);v.normalize().addScaledVector(l,Math.sign(v.dot(l))||1);}return v.lengthSq()>1e-4?v.normalize():frente(heroe.dir+Math.PI);}
   function piloto(){const h=heroe,c={mov:new V3(),atacar:false,apunta:null};if(!h.vivo)return c;
     const vivos=enemigos.filter(e=>e.estado!=='muere'&&Math.hypot(e.pos.x,e.pos.z)<R+.5);
@@ -1035,7 +1052,7 @@
     //    Si vienen varios a la vez, el golpazo imparable de Can o la línea de un kobold: sale de la zona (y hace dash si no da tiempo).
     const peligros=enemigos.filter(e=>e.ataque&&enZona(e.ataque,e,h.pos,h.radio+.45)).map(e=>({e,a:e.ataque,r:e.ataque.dur-(reloj.t-e.ataque.t0)})).sort((x,y)=>x.r-y.r);
     if(peligros.length){const p=peligros[0],juntos=peligros.filter(x=>x.a.forma!=='linea'&&x.r-p.r<.45).length;
-      if(p.a.forma==='cono'&&juntos===1&&(h.cd.parry<=0||h.estado==='parry')){if(p.r<=.1&&h.estado!=='parry')usar('parry');return c;}
+      if((p.a.forma==='cono'||p.a.forma==='franjas')&&juntos===1&&(h.cd.parry<=0||h.estado==='parry')){if(p.r<=.1&&h.estado!=='parry')usar('parry');return c;}
       const v=escape(p.a,p.e,h.pos);if(p.r<.3&&!h.cd.esquiva)usar('esquiva',v);c.mov.copy(v);return c;}
     // Piedras, goblins y lanzas: parry al llegar. Si no está disponible, apartarse de la caída.
     {const am=amenaza();if(am&&am.t<=.1&&!h.cd.parry&&h.estado!=='parry'){usar('parry');return c;}}
@@ -1215,6 +1232,7 @@
         recupera:[d.lanza?'lanzar':'golpe',d.lanza?.6+.4*Math.min(1,e.t/d.recupera):.62+.38*Math.min(1,e.t/d.recupera)],dolor:['dolor',e.t/.28],aturdido:['aturdido'],grito:['grito',e.t/.9],muere:['muerte',Math.min(1,e.t/.6)]}[e.estado];
       if(e.tipo==='troll'&&e.mazazo&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'cargaMazazo':'mazazo';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.3*e.t/d.golpe:.3+.7*Math.min(1,e.t/d.recupera);}
       if(e.tipo==='troll'&&e.tiraGoblin&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.estado==='aviso'?'preparaGoblin':'arrojaGoblin';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?.4*e.t/d.golpe:.4+.6*Math.min(1,e.t/d.recupera);}
+      if(e.comboCan&&['aviso','golpe','recupera'].includes(e.estado)){pe[0]=e.comboCan.paso===0?'canCentro':'canLados';pe[1]=e.estado==='aviso'?ka:e.estado==='golpe'?1+.2*Math.min(1,e.t/d.golpe):1.2+.8*Math.min(1,e.t/d.recupera);}
       MOD.posar(m,{anim:pe[0],k:pe[1],t:reloj.t+e.id,fase:e.fase,paso:e.paso,dt,estado:e.estado,mezclar:true,escudazo:e.escudazo&&['aviso','golpe','recupera'].includes(e.estado)?(e.estado==='aviso'?.25:1):0});
       // Quién va a atacar: se enciende en rojo mientras avisa (más al fijarse); quién te acaba de golpear, un destello rojo.
       m.M.u.uDestello.value=e.destello*.42;m.M.u.uColorD.value.setRGB(1,.92,.8);
