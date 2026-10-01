@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="./juego/carta-diseno.css">
 <link rel="stylesheet" href="./juego/visor-3d.css">
 <link rel="stylesheet" href="./referencia-cartas.css">
+<script src="./referencia-acceso.js"></script>
 <script src="./generado/movil/datos.js"></script>
 <script src="./generado/movil/renderer.js"></script>
 <script src="./referencia-arte.js"></script>
@@ -24,6 +25,22 @@
 <script src="./referencia-cartas.js" defer></script>
 </head>
 <body class="aaa-polish referenciaCartas" data-vista="movil" data-exportada="1">
+<section id="referenciaAcceso" aria-labelledby="referenciaAccesoTitulo">
+  <div class="referenciaAccesoMarco">
+    <p class="referenciaAccesoCeja">CAOZ CON TODO · ARCHIVO VISUAL</p>
+    <h1 id="referenciaAccesoTitulo">Acceso para artistas</h1>
+    <p>Introduce la clave compartida para abrir la colección visual.</p>
+    <form id="referenciaAccesoFormulario">
+      <label for="referenciaClave">Clave de acceso</label>
+      <div class="referenciaAccesoFila">
+        <input id="referenciaClave" name="clave" type="password" autocomplete="current-password" required maxlength="64" autofocus>
+        <button type="submit">Entrar</button>
+      </div>
+      <p id="referenciaAccesoEstado" role="alert" hidden></p>
+    </form>
+    <small>El acceso dura mientras esta pestaña permanezca abierta.</small>
+  </div>
+</section>
 <main id="referenciaCarga" aria-live="polite">
   <span>CAOZ CON TODO</span>
   <strong>Preparando el Archivo visual…</strong>

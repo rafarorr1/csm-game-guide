@@ -1,7 +1,7 @@
 {
   "seccion": "referencia-cartas",
   "proposito": "Archivo visual autónomo para artistas. No incluye partida, cuenta, progreso, recompensas, sobres, red de juego, audio ni Service Worker.",
-  "almacenamiento": "ninguno",
+  "almacenamiento": "sesión efímera por pestaña para la puerta del Archivo",
   "red": "ninguna petición en tiempo de ejecución",
   "vistas": {
     "desktop": {

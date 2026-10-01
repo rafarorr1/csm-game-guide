@@ -137,7 +137,7 @@
     "art/trol.webp": "64b85ac27ca9c1c62eb72d338ec48df52d87bc9ecbebd8a06dd44476bc783b91",
     "art/viajehongos.webp": "2a87f0b12f7b02f956dad3daf87beb02dc150f1bc79e3d9735eba188d907b797",
     "art/zancada.webp": "c3d6ddd4f63b0c04cb4eecfc91d94effe4734f5a65f7d6045603812fcf28eda0",
-    "escritorio.html": "1df9c5efa5cea278c63a371414cd296b0d9d14c5bb438ece27227a2424707959",
+    "escritorio.html": "6c4fccf712f87b3ee6e2a6e6980a40a7b1cf3394c26f5dafd81b6d2ef8526c88",
     "generado/desktop/base.css": "b1c10e87f6a8c98a61f12b6561ffe840279e7582344a3b75447ed1170ffed60e",
     "generado/desktop/datos.js": "fbb790c76aa45fb79b80a16bf06ee116054116c946a0ba8716b053e87df49826",
     "generado/desktop/manifiesto.json": "999902bc61027f294e849178d8c159d66593f4938f87fd88c69a1e64a78c701e",
@@ -159,16 +159,17 @@
     "juego/fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "juego/visor-3d.css": "f75f4bc41e845ab60ce4d0ac1a1599b8708952cc4bb3608a23df1352b1838e3e",
     "juego/visor-3d.js": "ffc9a891b6a6023f08718d56db7c2d39ee528aa9a25345b2989c4ada19ab354c",
-    "movil.html": "d42f8573a9bfdb1b4f5bd34e88dee145df2f080c5fcca2c30ce53aaf36d9fc0c",
-    "procedencia.json": "e9c9ce3cdcd23c41e18dde31709d00e07dd12c26a610fcd8b8f96f5cc832e538",
+    "movil.html": "10343092877a462cf28ef4255b1f38bd2dbbb2118f7b1ea82031bbc2ab128c26",
+    "procedencia.json": "52af0d2ba8a9fafe0380dc9c8465a395f767c70bd7d77776751729eb097948e7",
+    "referencia-acceso.js": "3f78e86e2b470cd4edf476b1cb4f120877c72e2781704b918e8d26cd8741341a",
     "referencia-arte.js": "707a60f3c86a90ed24c3a3512902a960360b0fa00fe0a9cb9148ae6629a3ff29",
-    "referencia-cartas.css": "2b1aa4269a0f97574225a1387281ed47f46f047e5fba2f2d7d1d50848af9f497",
-    "referencia-cartas.js": "9ae80a2be4ea9f97e11f6273d35e7f5c3a09576cc3d8b43ca9f1033557df00b8"
+    "referencia-cartas.css": "79cd810cc6419555b03367f067bf62fc97c9eb938fbe37873c3e5cbd43661acb",
+    "referencia-cartas.js": "17cd58d2d9e67ba41316c375166382c9aa5a57bb34967b6fb6fcb5556ea91f71"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/balance-logros-promotion",
-    "sha": "f3554690f154541890ad501e38d66ca6288d64f9"
+    "sha": "9baf839931558e12107af25bd8e370894dc8aec8"
   },
   "seccion": "referencia-cartas",
   "version": 1

@@ -10,6 +10,7 @@
   function iniciar(){
     try{
       const modelo=window.CAOZ_COLECCION;
+      if(!window.CAOZ_REFERENCIA_ACCESO?.permitido?.())return;
       if(!window.CAOZ_REFERENCIA_VISUAL||!modelo?.ids?.().length||typeof window.abrirColeccion!=='function'||!window.CAOZ_CARTA_DISENO?.crear)throw Error('Faltan los datos visuales de la colección.');
       window.abrirColeccion();
       const panel=document.getElementById('coleccionPanel');if(!panel?.open)throw Error('No se pudo montar el visor.');
@@ -28,5 +29,9 @@
       });
     }catch(error){fallo(error?.message||'Intenta abrir el enlace de nuevo.');}
   }
-  if(document.readyState==='complete')iniciar();else addEventListener('load',iniciar,{once:true});
+  function preparar(){
+    if(window.CAOZ_REFERENCIA_ACCESO?.permitido?.())iniciar();
+    else addEventListener('caoz:referencia-acceso',iniciar,{once:true});
+  }
+  if(document.readyState==='complete')preparar();else addEventListener('load',preparar,{once:true});
 })();
