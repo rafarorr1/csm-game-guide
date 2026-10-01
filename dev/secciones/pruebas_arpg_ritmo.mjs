@@ -9,7 +9,7 @@ const contexto=vm.createContext({console});contexto.window=contexto;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),contexto);
 const obtener=(nombre,tipo='function')=>extraerDeclaracion(fuente,nombre,tipo).texto;
 const constantes=['R','PANELES','DEF','RITMO','presion','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
-const funciones=['sectorLibre','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque'].map(n=>obtener(n)).join('\n');
+const funciones=['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','sectorLibre','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque'].map(n=>obtener(n)).join('\n');
 vm.runInContext(`
 const FACTOR_COOP=1;const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,q={get:()=>null};
 const rog={vuelta:1,cartas:[],terminado:-1},iniciarDestino=()=>{};
@@ -82,3 +82,30 @@ assert.equal(cobro.tipos.filter(t=>t==='troll').length,1);assert.equal(cobro.tip
 const troll=ejecutar(`limpiar();const e=invocar('troll',0,-3);for(let i=0;i<800;i++)paso();({formas:eventos.map(a=>a.forma),ataques:e.ataques,refuerzos:ol.cola.length});`);
 assert.ok(troll.ataques>=2);assert.ok(troll.formas.includes('cono')&&troll.formas.includes('circulo'));assert.equal(troll.refuerzos,0);
 console.log('✓ Cobro de piso: tres fases, troll sólo al final, límites de población y curación sólo al entrar');
+
+// Sin rivales esperando: un goblin mantiene la distancia de ataque durante su enfriamiento.
+const guardia=ejecutar(`limpiar();heroe.pos.set(0,0,0);const g=invocar('goblin',0,-1.5);let mayor=0,recargas=0;
+for(let i=0;i<900;i++){paso(1/60);if(g.estado==='persigue'&&g.cd>0&&g.ataques){recargas++;mayor=Math.max(mayor,plano(g.pos,heroe.pos));}}
+({mayor,recargas,ataques:g.ataques});`);
+assert.ok(guardia.recargas>30&&guardia.ataques>=3);assert.ok(guardia.mayor<2,'No vuelve a 4 m después de cada golpe');
+console.log('✓ Enfriamiento en guardia a distancia de combate, sin retirada automática');
+// Pozo y abrevadero reales: llegar desde ambos lados y también sobre la línea exacta del centro.
+for(const radio of [.34,.85])for(const [inicio,fin] of [
+ [[-9,-3],[-1,-3]],[[-1,-3],[-9,-3]],[[-5,-7],[-5,1]],[[-5,1],[-5,-7]],
+ [[-8,-6],[-1,0]],[[0,-1],[-8,-5]],
+]){
+ const resultado=ejecutar(`{limpiar();obstaculos.push({x:-5,z:-3,r:1.3},{x:-2.82,z:-2.51,r:.55});
+ const e=invocar('goblin',${inicio[0]},${inicio[1]});e.radio=${radio};const meta=new V3(${fin[0]},0,${fin[1]});let minimo=99,viaje=0;
+ for(let i=0;i<1200&&plano(e.pos,meta)>.12;i++){reloj.t+=1/60;const p=destinoEnemigo(e,meta),dist=plano(e.pos,p);if(dist)e.pos.addScaledVector(p.clone().sub(e.pos),Math.min(dist,2.85/60)/dist);
+  minimo=Math.min(minimo,...obstaculos.map(o=>Math.hypot(e.pos.x-o.x,e.pos.z-o.z)-o.r-e.radio));viaje++;
+ }const resultado={distancia:plano(e.pos,meta),minimo,viaje};obstaculos.length=0;resultado;}`);
+ assert.ok(resultado.distancia<.12,`Rodea el pozo ${JSON.stringify({inicio,fin,radio,resultado})}`);
+ assert.ok(resultado.minimo>=-.002,`La ruta no atraviesa obstáculos: ${JSON.stringify({inicio,fin,radio,resultado})}`);
+}
+console.log('✓ Rutas por ambos lados del pozo y abrevadero, radios de goblin y troll, sin penetración');
+
+const asedioPozo=ejecutar(`{limpiar();obstaculos.push({x:-5,z:-3,r:1.3},{x:-2.82,z:-2.51,r:.55});heroe.pos.set(-1,0,-3);
+for(let i=0;i<3;i++)invocar('goblin',-9, -4+i);for(let i=0;i<1200;i++)paso(1/60);
+const resultado={participantes:new Set(eventos.map(e=>e.id)).size,golpes};obstaculos.length=0;heroe.pos.set(0,0,0);resultado;}`);
+assert.equal(asedioPozo.participantes,3,'Todos rodean el pozo y alcanzan el combate, con separación y turnos reales');assert.ok(asedioPozo.golpes>2);
+console.log('✓ Tres goblins rodean el pozo y atacan usando la IA, colisiones y turnos reales');

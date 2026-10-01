@@ -26,19 +26,36 @@ o.position.x=80;interp.sincronizar();interp.dibujar(0,()=>assert.equal(o.positio
 interp.empezar();interp.capturar(o);interp.terminar();assert.equal(interp.cantidad(),1,'Eliminar referencias a objetos retirados');interp.limpiar();assert.equal(interp.cantidad(),0);
 const nuevo=new THREE.Object3D();nuevo.position.z=50;interp.empezar();interp.capturar(nuevo);interp.terminar();interp.dibujar(0,()=>assert.equal(nuevo.position.z,50,'Una aparición nunca vuela desde el origen'));
 console.log('✓ Posiciones, cámara, rótulos y giro corto; restauración, teletransporte y bajas');
-// Corregir las manos después de interpolar los huesos evita que el mango se separe en cuadros intermedios.
-const modelos=c.CAOZ_ARPG_MODELOS.fabrica(THREE),adreida=modelos.crear('adreida'),entre=T.crearInterpolador(THREE);
-for(const anim of ['tajoA','revesA','estocadaA','parry','salto'])for(let k=0;k<=1;k+=1/12){
-  modelos.posar(adreida,{anim,k,potencia:1});entre.empezar();for(const b of Object.values(adreida.H))entre.capturar(b);entre.terminar();
-  const mano=adreida.H.manoD.quaternion.clone();
-  for(const alfa of [.25,.5,.75])entre.dibujar(alfa,()=>{
-    modelos.animacion.ajustarAgarre(adreida);adreida.raiz.updateMatrixWorld(true);
-    const apoyo=adreida.H.manoD.localToWorld(new THREE.Vector3(0,-.3,0)),izquierda=adreida.H.manoI.getWorldPosition(new THREE.Vector3());
-    assert.ok(apoyo.distanceTo(izquierda)<.005,'Agarre continuo en los cuadros interpolados');
-  });assert.ok(adreida.H.manoD.quaternion.angleTo(mano)<1e-6,'La corrección visual no altera la pose de simulación');
-}
-console.log('✓ Agarre del hacha también en cuadros intermedios y a velocidad de ataque elevada');
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8'),extraer=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
+// La ruta real de dibujo conserva poses completas y restaura también las matrices derivadas.
+c.assert=assert;
+vm.runInContext(`{
+ const THREE=CAOZ_THREE.THREE,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),interpolacion=CAOZ_ARPG_TIEMPO.crearInterpolador(THREE);
+ const escena=new THREE.Scene(),camara=new THREE.PerspectiveCamera(),jugadores=[],enemigos=[],aliados=[],lanzas=[],balas=[],peligrosTroll=[],globos=[],botines=[],etiquetas=[];
+ const luzHeroe=null,luzCompanero=null,luna=new THREE.DirectionalLight(),aura=null,estela=null,rastroArco=null,rastroRecto=null,seleccion={m:null},puntoMira=null,colocar=()=>{};
+ let dibujo=()=>{};const dibujar=()=>dibujo();
+ ${extraer('capturarVisuales')}
+ ${extraer('dibujarEntrePasos')}
+ const modelos=Object.keys(MOD.TIPOS).map(tipo=>MOD.crear(tipo));
+ for(const m of modelos){escena.add(m.raiz);enemigos.push({m});MOD.posar(m,{anim:'quieto',t:0});}capturarVisuales();
+ for(const [i,m] of modelos.entries()){m.raiz.position.set(i*.2,0,3);m.raiz.rotation.y=1.7;MOD.posar(m,{anim:'andar',t:1,fase:1.2,paso:1,dt:1/60});}
+ escena.updateMatrixWorld(true);capturarVisuales();
+ const fotos=modelos.map(m=>({huesos:Object.values(m.H).filter(b=>b!==m.raiz).map(b=>[b,b.quaternion.clone(),b.matrixWorld.clone()]),raiz:m.raiz.matrixWorld.clone(),vertices:m.mallas.map(mesh=>Array.from({length:20},(_,i)=>mesh.getVertexPosition(Math.floor(i*mesh.geometry.attributes.position.count/20),new THREE.Vector3())))}));
+ for(const alfa of [0,.25,.5,.75,1]){
+  dibujo=()=>{escena.updateMatrixWorld(true);for(const [i,m] of modelos.entries()){
+   for(const [h,q] of fotos[i].huesos)assert.ok(h.quaternion.angleTo(q)<1e-6,'El render no vuelve a resolver ni mezclar el esqueleto');
+   for(const [j,mesh] of m.mallas.entries())for(let v=0;v<20;v++)assert.ok(mesh.getVertexPosition(Math.floor(v*mesh.geometry.attributes.position.count/20),new THREE.Vector3()).distanceTo(fotos[i].vertices[j][v])<1e-5,'La piel conserva su forma al interpolar la raíz de '+m.tipo);
+  }};
+  dibujarEntrePasos(alfa);
+  for(const [i,m] of modelos.entries()){
+   assert.ok(m.raiz.matrixWorld.equals(fotos[i].raiz),'Restaurar la matriz de la raíz');
+   for(const [h,,matriz] of fotos[i].huesos)assert.ok(h.matrixWorld.elements.every((x,k)=>Math.abs(x-matriz.elements[k])<1e-9),'Restaurar matrices de huesos y enlaces de piel');
+  }
+ }
+ dibujo=()=>{escena.updateMatrixWorld(true);throw Error('Fallo de GPU simulado');};
+ assert.throws(()=>dibujarEntrePasos(.5));assert.ok(modelos[0].raiz.matrixWorld.equals(fotos[0].raiz),'Restaurar matrices incluso tras un error');
+}`,c);
+console.log('✓ Los ocho personajes mantienen la forma de su piel y sus poses; matrices restauradas tras cada dibujo');
 vm.runInContext(`
 const V3=CAOZ_THREE.THREE.Vector3,TAU=Math.PI*2,reloj={t:0},enemigos=[],botines=[],jugadores=[],rog={abierto:false},pausa={activa:false},document={hidden:false};
 let heroe,ent,ctl,mando,disparosPendientes,paron=0,registro=[],tick=0;

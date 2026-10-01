@@ -753,26 +753,73 @@
       if(p.tipo==='goblin'){const e=crearEnemigo('cobrador',p.hasta.x,p.hasta.z);e.sinBotin=true;cambiar(e,'aturdido');e.aturdidoT=1.2;}
       quitarPeligroTroll(p);}}
 
-  // Dos plazas de acercamiento por jugador, no sólo dos permisos de atacar: los demás guardan espacio.
-  // Los turnos caducan si alguien se atasca y rotan después de cada ataque.
-  const RITMO={cuerpo:2*FACTOR_COOP,entreAtaques:.55,distanciaEspera:3.8};
+  // Las plazas se conservan entre golpes: descansar no obliga a dar la espalda y huir.
+  // Una pareja presiona varios segundos; después releva a quienes esperan en los flancos.
+  const RITMO={cuerpo:2*FACTOR_COOP,entreAtaques:.55,distanciaEspera:3.8,turno:7};
   const presion={siguiente:0,primeraLinea:new Set()};
   function sectorLibre(x,z){const a=rumbo(heroe.pos,new V3(x,0,z)),ocupados=enemigos.filter(e=>e.estado!=='muere'&&!e.d.lanza).map(e=>e.sector);
     let mejor=a,nota=Infinity;for(let i=0;i<10;i++){const candidato=i*TAU/10,coste=Math.abs(difAng(a,candidato))+ocupados.filter(v=>Math.abs(difAng(v,candidato))<.3).length*10;
       if(coste<nota){nota=coste;mejor=candidato;}}return mejor;}
-  function coordinarEnemigos(){const cuerpo=enemigos.filter(e=>!e.d.lanza&&e.estado!=='muere');
-    const atacando=cuerpo.filter(e=>['aviso','golpe'].includes(e.estado));presion.primeraLinea=new Set(atacando.map(e=>e.id));
-    const candidatos=cuerpo.filter(e=>e.estado==='persigue'&&e.cd<=0&&plano(e.pos,objetivoEnemigo(e).pos)<9);
-    // Conserva al que ya entró; después, quien lleve más tiempo esperando (distancia deshace empates).
-    candidatos.sort((a,b)=>(b.turnoHasta>reloj.t)-(a.turnoHasta>reloj.t)||a.ultimoTurno-b.ultimoTurno||plano(a.pos,heroe.pos)-plano(b.pos,heroe.pos));
+  function coordinarEnemigos(){const cuerpo=enemigos.filter(e=>!e.d.lanza&&e.estado!=='muere'),anteriores=presion.primeraLinea;
+    const atacando=cuerpo.filter(e=>['aviso','golpe','recupera'].includes(e.estado));presion.primeraLinea=new Set(atacando.map(e=>e.id));
+    const candidatos=cuerpo.filter(e=>e.estado==='persigue'&&plano(e.pos,objetivoEnemigo(e).pos)<9);
+    candidatos.sort((a,b)=>(b.turnoHasta>reloj.t)-(a.turnoHasta>reloj.t)||a.ultimoTurno-b.ultimoTurno||plano(a.pos,objetivoEnemigo(a).pos)-plano(b.pos,objetivoEnemigo(b).pos));
     for(const e of candidatos){if(presion.primeraLinea.size>=RITMO.cuerpo)break;
-      if(e.turnoHasta<=reloj.t){e.turnoHasta=reloj.t+3;e.ultimoTurno=reloj.t;}presion.primeraLinea.add(e.id);}}
+      if(e.turnoHasta<=reloj.t){e.turnoHasta=reloj.t+RITMO.turno;e.ultimoTurno=reloj.t;}presion.primeraLinea.add(e.id);}
+    for(const e of cuerpo)if(anteriores.has(e.id)&&!presion.primeraLinea.has(e.id)){
+      e.turnoHasta=0;e.sector=rumbo(objetivoEnemigo(e).pos,e.pos)+(e.rodeo>=0?1:-1)*.55;
+    }
+  }
+  // Trayectos en una cuadrícula local, sólo cuando un obstáculo tapa el camino directo.
+  // Se conserva la ruta mientras se rodea el pozo para no cambiar de lado en cada cuadro.
+  function pasoLibreEnemigo(a,b,r){
+    const dx=b.x-a.x,dz=b.z-a.z,l=dx*dx+dz*dz;
+    for(const o of obstaculos){const k=l?Math.max(0,Math.min(1,((o.x-a.x)*dx+(o.z-a.z)*dz)/l)):0;
+      if(Math.hypot(a.x+k*dx-o.x,a.z+k*dz-o.z)<o.r+r-.001)return false;
+    }return true;
+  }
+  function buscarRutaEnemigo(e,destino){
+    if(!pasoLibreEnemigo(destino,destino,e.radio))return [];
+    const celda=.65,margen=.06,radio=e.radio+margen,inicio=e.pos,abiertos=[],nodos=new Map(),cerrados=new Set();
+    const clave=(x,z)=>x+','+z,h=p=>plano(p,destino);
+    // Cola de prioridad: la búsqueda no ordena toda la frontera para cada nodo.
+    function poner(n){abiertos.push(n);let i=abiertos.length-1;while(i){const p=(i-1)>>1;if(abiertos[p].f<=n.f)break;abiertos[i]=abiertos[p];i=p;}abiertos[i]=n;}
+    function sacar(){const n=abiertos[0],ultimo=abiertos.pop();if(abiertos.length){let i=0;while(i*2+1<abiertos.length){let j=i*2+1;if(j+1<abiertos.length&&abiertos[j+1].f<abiertos[j].f)j++;if(abiertos[j].f>=ultimo.f)break;abiertos[i]=abiertos[j];i=j;}abiertos[i]=ultimo;}return n;}
+    const origen={x:inicio.x,z:inicio.z,g:0,f:h(inicio),padre:null};poner(origen);
+    const dentro=p=>ABIERTO||!e.dentro||PLANOS_MURALLA.every(n=>p.x*n.x+p.z*n.z<=R-radio);
+    let final=null;
+    for(let intentos=0;abiertos.length&&intentos<1600;intentos++){
+      const n=sacar(),id=clave(n.x,n.z);if(cerrados.has(id))continue;cerrados.add(id);
+      if(pasoLibreEnemigo(n,destino,e.radio)){final={...destino,padre:n};break;}
+      const ix=Math.round(n.x/celda),iz=Math.round(n.z/celda);
+      for(let x=ix-1;x<=ix+1;x++)for(let z=iz-1;z<=iz+1;z++){
+        const p={x:x*celda,z:z*celda},k=clave(p.x,p.z);if(cerrados.has(k)||!dentro(p))continue;
+        const g=n.g+plano(n,p),previo=nodos.get(k);if(previo&&previo.g<=g)continue;
+        // En el primer segmento se tolera estar ya tocando la colisión, por un empujón.
+        if(!pasoLibreEnemigo(n,p,n===origen?e.radio:radio))continue;
+        Object.assign(p,{g,f:g+h(p),padre:n});nodos.set(k,p);poner(p);
+      }
+    }
+    const puntos=[];for(let n=final;n&&n.padre;n=n.padre)puntos.push(new V3(n.x,0,n.z));
+    return puntos.reverse();
+  }
+  function destinoEnemigo(e,destino){
+    if(pasoLibreEnemigo(e.pos,destino,e.radio)){e.ruta=null;return destino;}
+    let ruta=e.ruta;
+    if(!ruta||plano(ruta.destino,destino)>1||reloj.t>ruta.hasta||ruta.puntos.length&&!pasoLibreEnemigo(e.pos,ruta.puntos[0],e.radio)){
+      ruta=e.ruta={puntos:buscarRutaEnemigo(e,destino),destino:destino.clone(),hasta:reloj.t+1.2};
+    }
+    while(ruta.puntos.length&&plano(e.pos,ruta.puntos[0])<.005)ruta.puntos.shift();
+    // Acorta esquinas sólo cuando el cuerpo completo cabe por el segmento.
+    while(ruta.puntos.length>1&&pasoLibreEnemigo(e.pos,ruta.puntos[1],e.radio+.025))ruta.puntos.shift();
+    return ruta.puntos[0]||e.pos;
+  }
   function pasoEnemigo(e,dt){activarFaseTroll(e);const d=e.d;e.t+=dt;e.destello=Math.max(0,e.destello-dt*9);e.provocado=Math.max(0,e.provocado-dt);e.cd-=dt;
     e.pos.addScaledVector(e.emp,dt);e.emp.multiplyScalar(Math.exp(-dt*7));
     // El tirón de Provocar dura un instante (si el punto cae en un obstáculo no se queda enganchado).
     if(e.tirón){e.pos.lerp(e.tirón.p,Math.min(1,dt*8));if(reloj.t>e.tirón.hasta||plano(e.pos,e.tirón.p)<.05)e.tirón=null;}
     if(!e.dentro&&Math.hypot(e.pos.x,e.pos.z)<R-1.2)e.dentro=true;
-    const H=heroe,dist=plano(e.pos,H.pos),hacia=(p,vel)=>{const dd=plano(p,e.pos);if(dd<.05)return 0;const paso=Math.min(dd,vel*dt),a=rumbo(e.pos,p);e.dir+=difAng(e.dir,a)*Math.min(1,dt*9);e.pos.x+=Math.sin(a)*paso;e.pos.z+=Math.cos(a)*paso;return paso;};
+    const H=heroe,dist=plano(e.pos,H.pos),hacia=(p,vel)=>{p=destinoEnemigo(e,p);const dd=plano(p,e.pos);if(dd<.05)return 0;const paso=Math.min(dd,vel*dt),a=rumbo(e.pos,p);e.dir+=difAng(e.dir,a)*Math.min(1,dt*9);e.pos.x+=Math.sin(a)*paso;e.pos.z+=Math.cos(a)*paso;return paso;};
     let movido=0;const vel=d.vel*(e.provocado>0?1.25:1)*(e.tipo==='troll'&&e.fase2?1.2:1);
     switch(e.estado){
       case 'quieto':break;
@@ -787,9 +834,10 @@
         const tira=e.tipo==='troll'&&e.ataques%3===2&&puedeLanzarGoblin(e);
         const entra=presion.primeraLinea.has(e.id),radio=entra?H.radio+e.radio+d.alcance*.55:RITMO.distanciaEspera+(e.id%3)*.35;
         const a=entra?rumbo(H.pos,e.pos):e.sector,obj=H.pos.clone().add(frente(a).multiplyScalar(radio));
-        dentroPlaza(obj,e.radio);movido=hacia(obj,vel*(entra?1:.8));
-        if(entra&&dist<(tira?9:H.radio+e.radio+d.alcance+.2)&&e.cd<=0&&reloj.t>=presion.siguiente){
-          presion.siguiente=reloj.t+RITMO.entreAtaques;e.turnoHasta=0;e.ultimoTurno=reloj.t;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');
+        for(let i=0;i<3;i++)dentroPlaza(obj,e.radio+.07);if(!entra||dist>radio+.18)movido=hacia(obj,vel*(entra?1:.55));
+        if(dist<5)e.dir+=difAng(e.dir,rumbo(e.pos,H.pos))*Math.min(1,dt*9);
+        if(entra&&dist<(tira?9:H.radio+e.radio+d.alcance+.2)&&e.cd<=0&&reloj.t>=presion.siguiente&&pasoLibreEnemigo(e.pos,H.pos,.05)){
+          presion.siguiente=reloj.t+RITMO.entreAtaques;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');
           e.tiraGoblin=tira;e.escudazo=e.tipo==='saqueador'&&dist<2.5&&e.ataques%2===0;
           if(e.escudazo){empezarAtaque(e,'cono',{dur:.65,radio:2.3,ang:1.05,fija:.4,dano:14});e.alerta.el.textContent='¡Escudo!';}
           else if(tira){sujetarGoblin(e);empezarAtaque(e,'linea',{dur:1.4,largo:12,ancho:1.4,fija:.5,dano:24});e.alerta.el.textContent='¡Goblin!';}
@@ -1259,7 +1307,9 @@
   document.addEventListener('visibilitychange',sincronizarTiempo);
   function capturarVisuales(){
     interpolacion.empezar();
-    const modelo=m=>{if(!m)return;const nodos=m.interpolables||(m.interpolables=[...new Set([m.raiz,...Object.values(m.H)])]);for(const n of nodos)interpolacion.capturar(n);};
+    // El esqueleto conserva una pose completa a 60 Hz. Sólo se interpola su raíz:
+    // mezclar huesos resueltos por IK durante el render puede separar el cuerpo del arma.
+    const modelo=m=>{if(m)interpolacion.capturar(m.raiz);};
     for(const h of jugadores)modelo(h.m);
     for(const e of enemigos){modelo(e.m);interpolacion.capturar(e.estrellas);}
     for(const a of aliados)modelo(a.m);
@@ -1278,8 +1328,9 @@
     capturarVisuales();laboratorio?.despuesPaso?.(dt);return true;
   }
   function dibujarEntrePasos(alfa=1){
-    try{return interpolacion.dibujar(alfa,()=>{if(alfa<1){for(const h of jugadores)MOD.animacion.ajustarAgarre(h.m);for(const a of aliados)MOD.animacion.ajustarAgarre(a.m);}camara.updateMatrixWorld(true);for(const e of etiquetas)colocar(e);dibujar();});}
-    finally{camara.updateMatrixWorld(true);}
+    try{return interpolacion.dibujar(alfa,()=>{camara.updateMatrixWorld(true);for(const e of etiquetas)colocar(e);dibujar();});}
+    // También restaura matrices derivadas y enlaces de las mallas con piel, no sólo posición y giro.
+    finally{escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);}
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
