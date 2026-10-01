@@ -50,7 +50,9 @@
   const casas=PLAN.map(([tipo,x,z,r,o])=>{const c=CASAS.casa(tipo,o);c.position.set(x,0,z);c.rotation.y=r;return c;});
   // El pozo, en medio de la calle (fuera de «casas»: no tiene ventanas).
   const pozo=CASAS.casa('pozo',{semilla:21});pozo.position.set(-3.2,0,1.2);pozo.rotation.y=.35;
-  const calle=CASAS.fundir([...casas,pozo]);escena.add(calle);
+  // ?solo=pozo: sólo el pozo en el empedrado, con la cámara girando a su alrededor.
+  const SOLO_POZO=q.get('solo')==='pozo';
+  const calle=CASAS.fundir(SOLO_POZO?[pozo]:[...casas,pozo]);escena.add(calle);
   // Farolas: poste de hierro, farol que brilla y una luz de verdad cada una (sin sombra: una luz puntual con sombra dibuja la escena seis veces).
   const farolas=[];
   for(const [x,z] of [[-4.3,-2.4],[4.3,2.6]]){const g=new THREE.Group();g.position.set(x,0,z);escena.add(g);
@@ -58,7 +60,7 @@
     m(new THREE.CylinderGeometry(.08,.12,3.6,8),hierro,1.8);m(new THREE.CylinderGeometry(.2,.28,.3,8),hierro,.15);m(new THREE.CylinderGeometry(.25,.12,.18,6),hierro,3.9);m(new THREE.BoxGeometry(.3,.4,.3),CASAS.materiales.farol,3.65);m(new THREE.ConeGeometry(.3,.3,6),hierro,4.05);
     const luz=new THREE.PointLight(0xffb070,38,16,1.7);luz.position.y=3.6;g.add(luz);farolas.push(luz);}
   // Humo de las chimeneas: bocanadas grises que suben, crecen y se deshacen con el viento.
-  const humos=casas.map(c=>c.userData.humo?c.localToWorld(c.userData.humo.clone()):null).filter(Boolean);
+  const humos=(SOLO_POZO?[]:casas).map(c=>c.userData.humo?c.localToWorld(c.userData.humo.clone()):null).filter(Boolean);
   const NH=humos.length*40,hPos=new Float32Array(NH*3),hEdad=new Float32Array(NH),geoH=new THREE.BufferGeometry();geoH.setAttribute('position',new THREE.BufferAttribute(hPos,3));geoH.setAttribute('aEdad',new THREE.BufferAttribute(hEdad,1));
   const escHumo={value:1};
   const humo=new THREE.Points(geoH,new THREE.ShaderMaterial({uniforms:{uEsc:escHumo},transparent:true,depthWrite:false,
@@ -94,7 +96,7 @@
   for(const t of ['pointerup','pointercancel'])lienzo.addEventListener(t,()=>{arrastre=null;});
   esc.addEventListener('wheel',e=>{e.preventDefault();vista.obj=null;vista.dist=Math.max(5,Math.min(45,vista.dist*(e.deltaY>0?1.08:.93)));},{passive:false});
   function pasoCamara(dt){if(vista.obj){const k=Math.min(1,dt*3.5),o=vista.obj;vista.foco.lerp(o.foco,k);vista.yaw+=(o.yaw-vista.yaw)*k;vista.pitch+=(o.pitch-vista.pitch)*k;vista.dist+=(o.dist-vista.dist)*k;}
-    if(vista.girar)vista.yaw+=dt*.06;
+    if(vista.girar)vista.yaw+=dt*(SOLO_POZO?.3:.06);
     const c=Math.cos(vista.pitch);camara.position.set(vista.foco.x+Math.sin(vista.yaw)*c*vista.dist,vista.foco.y+Math.sin(vista.pitch)*vista.dist,vista.foco.z+Math.cos(vista.yaw)*c*vista.dist);camara.lookAt(vista.foco);}
 
   /* ---- Botones y marcador ------------------------------------------------------------------ */
@@ -121,7 +123,7 @@
   function cuadro(ahora){const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;paso(dt);dibujar();fps.n++;
     if(ahora-fps.t>=1000){const i=renderer.info.render;$('info').textContent=`${Math.round(fps.n*1000/(ahora-fps.t))} fps · ${i.calls} llamadas · ${(i.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;fps.n=0;fps.t=ahora;}
     requestAnimationFrame(cuadro);}
-  ponerHora('noche');ponerLuces(true);irA('calle');Object.assign(vista,{foco:new V3(...VISTAS.calle.foco),...VISTAS.calle,foco:new V3(...VISTAS.calle.foco)});vista.girar=!reducido&&!CAPTURA;$('girar').checked=vista.girar;
+  ponerHora('noche');ponerLuces(true);const inicio=SOLO_POZO?'pozo':'calle';irA(inicio);Object.assign(vista,{...VISTAS[inicio],foco:new V3(...VISTAS[inicio].foco)});vista.girar=!reducido&&!CAPTURA;$('girar').checked=vista.girar;
   medir();new ResizeObserver(medir).observe(esc);listo=true;paso(1/60);
   estado('Arrastra para girar, rueda para acercar. Las ventanas son un solo cuadro cada una: la habitación de dentro la pinta su shader.');
   if(!CAPTURA)requestAnimationFrame(cuadro);else dibujar();
