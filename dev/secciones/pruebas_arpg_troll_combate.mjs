@@ -13,7 +13,7 @@ const escena=new THREE.Scene(),enemigos=[],reloj={t:0},heroe={pos:new V3(),radio
 const marcas=[];let paron=0,recibido=0,avisos=0;
 const rnd=()=>.5,plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),frente=a=>new V3(Math.sin(a),0,Math.cos(a));
 const numero=()=>{},chispas=()=>{},temblar=()=>{},polvo=()=>{},banner=()=>{avisos++;},quitarEtiqueta=()=>{};
-function marca(){const m=new THREE.Group();escena.add(m);const o={m};marcas.push(o);return o;}
+function marca(){const m=new THREE.Group();m.material={uniforms:{uC:{value:new THREE.Color()},uF:{value:0}}};escena.add(m);const o={m};marcas.push(o);return o;}
 function quitarMarca(o){escena.remove(o.m);marcas.splice(marcas.indexOf(o),1);}
 function dentroPlaza(p,r){p.x=Math.max(-14+r,Math.min(14-r,p.x));p.z=Math.max(-14+r,Math.min(14-r,p.z));}
 const cambiar=(e,estado)=>{e.estado=estado;e.t=0;};
@@ -87,3 +87,13 @@ run("limpiar();jefe=crearEnemigo('troll',0,-3);lanzarPiedras(jefe,jefe.pos);hero
 assert.ok(run('recibido>0&&recibido<22'),'El bloqueo tardío reduce daño');
 assert.equal(run('peligrosTroll.some(p=>p.devuelto)'),false,'El bloqueo no devuelve piedras');
 console.log('✓ Piedras: parry, devolución, apertura de armadura y bloqueo tardío');
+
+run("limpiar();jefe=crearEnemigo('troll',0,-3);lanzarPiedras(jefe,jefe.pos);avanzar(.5);");
+assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xff6030);
+run('avanzar(.5);');
+assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xffd050);
+run('avanzar(.21);');
+assert.equal(run('peligrosTroll[0].marca.m.material.uniforms.uC.value.getHex()'),0xbfffff);
+run('Object.assign(heroe.cd,{salto:4,provocar:8,esquiva:1.05,parry:.4});parryPerfecto(null,new V3());');
+assert.ok(run('Object.values(heroe.cd).every(t=>t===0)'), 'Parry perfecto refresca todos los cooldowns');
+console.log('✓ Círculos naranja, dorado y blanco azulado; refresco de habilidades');

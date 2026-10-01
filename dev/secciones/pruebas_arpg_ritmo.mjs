@@ -55,12 +55,12 @@ for(let oleada=0;oleada<4;oleada++){
  assert.ok(r.vivos>=3&&r.vivos<=r.max,'La presión limita los refuerzos');assert.ok(r.cola>0);if(r.tiempos.length>3)assert.ok(r.tiempos[3]-r.tiempos[2]>=2.4-1e-6,'Pausa entre grupos');assert.ok(r.vivos<=r.max);assert.ok(r.tiempos[1]-r.tiempos[0]>=.75-1e-6);
 }
 // Vaciar grupos permite terminar las dos etapas y respeta tres segundos entre ellas.
-const oleadas=ejecutar(`limpiar();ol.auto=true;let maxima=[0,0,0,0,0],cambios=[],ultimaBaja=0;
+const oleadas=ejecutar(`limpiar();ol.auto=true;let maxima=[0,0,0,0,0,0,0],cambios=[],ultimaBaja=0;
 for(let i=0;i<3000&&!ol.fin;i++){const anterior=ol.i;paso();if(ol.i!==anterior)cambios.push({i:ol.i,pausa:reloj.t-ultimaBaja});
  if(ol.i>=0)maxima[ol.i]=Math.max(maxima[ol.i],enemigos.length);
  if(i%80===79&&enemigos.length){enemigos.length=0;ultimaBaja=reloj.t;}}
 ({fin:ol.fin,maxima,cambios});`);
-assert.ok(oleadas.fin);assert.equal(oleadas.cambios.length,5);assert.ok(oleadas.cambios[4].pausa>=8-1e-6);assert.ok(oleadas.maxima.every((v,i)=>v<=[4,5,6,5,4][i]));assert.ok(oleadas.cambios.slice(1).every(c=>c.pausa>=3-1e-6));
+assert.ok(oleadas.fin);assert.equal(oleadas.cambios.length,7);assert.ok(oleadas.cambios[4].pausa>=8-1e-6);assert.ok(oleadas.maxima.every((v,i)=>v<=[4,5,6,5,4,4,4][i]));assert.ok(oleadas.cambios.slice(1).every(c=>c.pausa>=3-1e-6));
 console.log('✓ Refuerzos por grupos, límites de población y descansos entre oleadas');
 
 // Can mete sus refuerzos en la misma cola: no se salta el límite al gritar.
@@ -72,12 +72,12 @@ enemigos.splice(1,3);let maxJefe=enemigos.length;for(let i=0;i<160;i++){paso();m
 assert.equal(jefe.retenidos,3);assert.equal(jefe.antes,5);assert.ok(jefe.maxJefe<=5);assert.equal(jefe.cola,0);
 console.log('✓ Los refuerzos de Can esperan y respetan el máximo de cinco');
 
-// El cobro de piso tiene exactamente un troll y seis goblins, sin invocaciones adicionales.
-const cobro=ejecutar(`limpiar();ol.auto=true;ol.i=3;ol.descanso=.01;heroe.alma=50;let tipos=[],maximos=0;
-for(let i=0;i<1600&&!ol.fin;i++){paso();maximos=Math.max(maximos,enemigos.length);for(const e of enemigos)if(!e.contado){e.contado=true;tipos.push(e.tipo);}
+// Cobro de piso: dos cuadrillas antes del troll; sin contar sus invocaciones durante el combate.
+const cobro=ejecutar(`limpiar();ol.auto=true;ol.i=3;ol.descanso=.01;heroe.alma=50;let tipos=[],fasesTroll=[],maximos=0;
+for(let i=0;i<1600&&!ol.fin;i++){paso();maximos=Math.max(maximos,enemigos.length);for(const e of enemigos)if(!e.contado){e.contado=true;tipos.push(e.tipo);if(e.tipo==='troll')fasesTroll.push(OLEADAS[ol.i].fase);}
  if(i%100===99)enemigos.length=0;}
-({tipos,maximos,fin:ol.fin,alma:heroe.alma});`);
-assert.equal(cobro.tipos.filter(t=>t==='troll').length,1);assert.equal(cobro.tipos.filter(t=>t==='cobrador').length,6);assert.equal(cobro.tipos.length,7);assert.ok(cobro.maximos<=4);assert.ok(cobro.fin);assert.equal(cobro.alma,90);
+({tipos,fasesTroll,maximos,fin:ol.fin,alma:heroe.alma});`);
+assert.equal(cobro.tipos.filter(t=>t==='troll').length,1);assert.equal(cobro.tipos.filter(t=>t==='cobrador').length,16);assert.equal(cobro.tipos.length,19);assert.ok(cobro.maximos<=4);assert.ok(cobro.fin);assert.equal(cobro.alma,90);assert.deepEqual(Array.from(cobro.fasesTroll),[3]);
 const troll=ejecutar(`limpiar();const e=invocar('troll',0,-3);for(let i=0;i<800;i++)paso();({formas:eventos.map(a=>a.forma),ataques:e.ataques,refuerzos:ol.cola.length});`);
 assert.ok(troll.ataques>=2);assert.ok(troll.formas.includes('cono')&&troll.formas.includes('circulo'));assert.equal(troll.refuerzos,0);
-console.log('✓ Segunda etapa: un troll, seis cobradores, descanso de ocho segundos, recuperación de Alma y victoria');
+console.log('✓ Cobro de piso: tres fases, troll sólo al final, límites de población y curación sólo al entrar');

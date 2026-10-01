@@ -241,7 +241,7 @@
     saqueador:{vida:100,dano:24,vel:2.35,alcance:1.5,aviso:1,golpe:.2,recupera:1,cd:1.5,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.4},
     can:{vida:800,dano:32,vel:2.5,alcance:2.3,aviso:1,golpe:.22,recupera:1.05,cd:1.35,forma:'cono',radio:3.3,ang:.9,aguante:true,jefe:true,botin:1,globo:1},
   };
-  const HAB={torbellino:{coste:30,cd:0},salto:{coste:25,cd:5},provocar:{coste:0,cd:10},esquiva:{coste:0,cd:.55},parry:{coste:0,cd:.5}};
+  const HAB={torbellino:{coste:30,cd:0},salto:{coste:25,cd:5},provocar:{coste:0,cd:10},esquiva:{coste:0,cd:1.05},parry:{coste:0,cd:.5}};
   // Parry (Espacio): Adreida alza el hacha 0,35 s. Si el golpe llega en las primeras 0,18 s es perfecto: no hace daño,
   // aturde al atacante (2 s; 1 s el jefe) y lo deja expuesto (tus golpes le hacen el doble). Más tarde, bloquea el 70%.
   // Un parry al aire deja medio segundo sin poder repetirlo. Por la espalda no se para, ni el golpazo de Can (se esquiva).
@@ -548,7 +548,7 @@
   // ¿Lo para? Tiene que estar en parry, de cara (±60°) y no ser un imparable.
   function parar(desde,imparable,ventana=PARRY.perfecto){const H=heroe;if(H.estado!=='parry'||imparable)return null;const v=desde.clone().sub(H.pos).setY(0);
     if(v.lengthSq()>1e-6&&v.normalize().dot(frente(H.dir))<Math.cos(1.05))return null;return H.t<=ventana?'perfecto':'bloqueo';}
-  function parryPerfecto(e,p){const H=heroe;H.parryExito=true;H.brilloParry=.3;H.parrys++;H.cd.parry=0;H.furia=Math.min(100,H.furia+20);cambiar(H,'quieto');
+  function parryPerfecto(e,p){const H=heroe;H.parryExito=true;H.brilloParry=.3;H.parrys++;for(const habilidad of Object.keys(H.cd))H.cd[habilidad]=0;H.furia=Math.min(100,H.furia+20);cambiar(H,'quieto');
     numero(H.pos.clone().setY(2.5),'¡Parry!','parry');chispas(p,34,[1,.85,.35],7,.55);marca('onda',H.pos.x,H.pos.z,2.6,0xffd060,.35);paron=.16;temblar(.2);
     aturdirPorParry(e);}
   function aturdirPorParry(e){if(e&&e.estado!=='muere'){cancelarAtaque(e);cambiar(e,'aturdido');e.aturdidoT=e.tipo==='troll'?2.5:e.d.jefe?PARRY.aturdeJefe:PARRY.aturde;if(e.tipo==='troll')e.parryHasta=reloj.t+e.aturdidoT;e.expuestoHasta=reloj.t+e.aturdidoT+.3;e.emp.addScaledVector(e.pos.clone().sub(heroe.pos).setY(0).normalize(),2.2);e.culpableT=-9;}}
@@ -595,6 +595,8 @@
       if(p.devuelto)p.hasta.copy(p.dueno.pos).setY(1.8);
       p.t+=dt;const k=Math.min(1,p.t/p.dur);p.m.position.lerpVectors(p.desde,p.hasta,k);p.m.position.y+=4*p.altura*k*(1-k);
       p.m.rotation.x+=dt*(p.tipo==='roca'?4:7);p.m.rotation.z+=dt*1.5;
+      // El blanco azulado marca exactamente la ventana para empezar un parry perfecto.
+      if(p.tipo==='roca'&&p.marca){const falta=Math.max(0,p.dur-p.t),u=p.marca.m.material.uniforms;u.uC.value.setHex(falta<=PARRY.perfectoLanza?0xbfffff:falta<=.55?0xffd050:0xff6030);u.uF.value=falta<=PARRY.perfectoLanza?1:0;}
       if(k<1)continue;
       if(p.devuelto){aturdirPorParry(p.dueno);danar(p.dueno,45,{crit:false});quitarPeligroTroll(p);continue;}
       const dentro=plano(heroe.pos,p.hasta)<p.radio+heroe.radio*.6;
@@ -675,7 +677,9 @@
     {nombre:'Oleada 2 · Lanzas desde las calles',grupos:[['goblin',5],['kobold',3]],maxVivos:5},
     {nombre:'Oleada 3 · Los saqueadores',grupos:[['saqueador',3],['goblin',4],['kobold',3]],maxVivos:6},
     {nombre:'Can, el de los Goblins',grupos:[['can',1],['goblin',2],['kobold',2]],maxVivos:5,jefe:true,jefeNombre:'Can',etapa:1},
-    {nombre:'Etapa 2 · Cobro de piso',grupos:[['troll',1],['cobrador',6]],maxVivos:4,jefe:true,jefeNombre:'El Recaudador',etapa:2,texto:'«Esta plaza tiene dueño. ¡Paguen el piso!» Un troll de tres metros y seis goblins vienen a cobrar.'},
+    {nombre:'Cobro de piso · Fase 1/3 · Los cobradores',grupos:[['cobrador',6]],maxVivos:4,etapa:2,fase:1,texto:'La primera cuadrilla viene a cobrar. Despeja la plaza.'},
+    {nombre:'Cobro de piso · Fase 2/3 · Los refuerzos',grupos:[['cobrador',4],['kobold',2]],maxVivos:4,etapa:2,fase:2,texto:'Llegan cobradores con lanceros. Abre espacio y devuelve sus lanzas.'},
+    {nombre:'Cobro de piso · Fase 3/3 · El Recaudador',fase:3,grupos:[['troll',1],['cobrador',6]],maxVivos:4,jefe:true,jefeNombre:'El Recaudador',etapa:2,texto:'«Esta plaza tiene dueño. ¡Paguen el piso!» Un troll de tres metros y seis goblins vienen a cobrar.'},
   ];
   const ol={auto:!CAPTURA,i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false};
   function pasoOleadas(dt){if(!ol.auto||ol.fin||!heroe.vivo)return;
@@ -689,7 +693,7 @@
     if(vivos){ol.descanso=null;return;}
     if(ol.descanso===null){ol.descanso=ol.i===3?8:ol.i<0?1.8:3;if(ol.i===3)banner('Etapa 1 superada','Can ha caído. Recoge el botín: los cobradores de piso se acercan.');}ol.descanso-=dt;if(ol.descanso>0)return;
     if(ol.i+1>=OLEADAS.length){ol.fin=true;banner('Tomsage es libre','Has derrotado al troll y a todos sus cobradores. Nadie vuelve a cobrar piso en esta plaza.');return;}
-    ol.i++;const O=OLEADAS[ol.i];if(O.etapa===2)heroe.alma=Math.min(heroe.almaMax,heroe.alma+40);let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n;i++)ol.cola.push([tipo,k++]);
+    ol.i++;const O=OLEADAS[ol.i];if(O.etapa===2&&O.fase===1)heroe.alma=Math.min(heroe.almaMax,heroe.alma+40);let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(!DEF[ol.cola[i][0]].jefe&&!DEF[ol.cola[j][0]].jefe)[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;banner(O.nombre,O.texto||(O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.'));}
   function reiniciar(){limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
@@ -822,7 +826,7 @@
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');$('furiaTxt').textContent=Math.floor(h.furia);
     for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0;b.style.setProperty('--cd',(H.cd?cd/H.cd*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',{torbellino:'torbellino',salto:'salto',provocar:'grito',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
     const st=(aDistancia()?`<span>Balas <b>${h.recargaT>0?'recargando…':h.balas+' / '+HEROES.mohamed.cargador}</b></span>`:'')+`<span>Parrys perfectos <b>${h.parrys}</b></span><span>ATQ <b>${h.atq}</b></span><span>Vel. ataque <b>${Math.round(h.vatq*100)}%</b></span><span>Alma <b>${h.almaMax}</b></span><span>Llaves <b>${h.llaves}</b></span>`+(h.escudo>0?'<span class="escudo">Provocar: −50% daño</span>':'');if(st!==hud.st){hud.st=st;$('stats').innerHTML=st;}
-    const vivos=enemigos.filter(e=>e.estado!=='muere').length+peligrosTroll.filter(p=>p.tipo==='goblin'&&!p.devuelto).length+enemigos.filter(e=>e.goblinSujeto).length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':ol.i===3&&q.get('etapa')==='2'?'Preparando el cobro de piso…':(OLEADAS[ol.i].etapa===2?'Etapa 2 · Cobro de piso':OLEADAS[ol.i].jefe?'Etapa 1 · Can':'Etapa 1 · Oleada '+(ol.i+1))+' · '+vivos+' en pie'+(ol.cola.length?' · '+ol.cola.length+' por llegar':!vivos&&ol.i<OLEADAS.length-1?' · siguiente oleada en '+Math.ceil(ol.descanso??3)+' s':'')):'Enemigos en pie: '+vivos;
+    const vivos=enemigos.filter(e=>e.estado!=='muere').length+peligrosTroll.filter(p=>p.tipo==='goblin'&&!p.devuelto).length+enemigos.filter(e=>e.goblinSujeto).length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':ol.i===3&&q.get('etapa')==='2'?'Preparando el cobro de piso…':(OLEADAS[ol.i].etapa===2?'Cobro de piso · Fase '+OLEADAS[ol.i].fase+'/3':OLEADAS[ol.i].jefe?'Etapa 1 · Can':'Etapa 1 · Oleada '+(ol.i+1))+' · '+vivos+' en pie'+(ol.cola.length?' · '+ol.cola.length+' por llegar':!vivos&&ol.i<OLEADAS.length-1?' · siguiente oleada en '+Math.ceil(ol.descanso??3)+' s':'')):'Enemigos en pie: '+vivos;
     const o=ent.sobre?.d?ent.sobre:enemigos.includes(h.ultimo)&&h.ultimo.estado!=='muere'?h.ultimo:enemigos.find(e=>e.d.jefe&&e.estado!=='muere')||null;$('objetivo').hidden=!o;if(o){$('objNombre').textContent=o.m.nombre+(o.d.jefe?' · Jefe':'')+(o.fase2?(blindadoTroll(o)?' · Fase 2: haz parry':' · Fase 2: ¡vulnerable!'):'');$('objVida').style.width=(Math.max(0,o.vida)/o.vidaMax*100).toFixed(1)+'%';}
     flechas();golpeDir();
     $('vineta').style.opacity=h.heridaT===undefined?'0':Math.max(0,.9*(1-(reloj.t-h.heridaT)/.45)).toFixed(3);
