@@ -159,3 +159,10 @@ html[data-captura] .apInfo{display:none}
 .apMenuPausa::backdrop{background:#07050b99}.apMenuPausa p{margin:12px 0 22px}.apMenuPausa small{display:block;margin-top:20px;color:#c9bdda;}
 
 .apD20{width:92px;height:92px;position:relative;margin:12px auto;filter:drop-shadow(0 6px 8px #0008)}.apD20 svg{width:100%;height:100%;fill:#422558;stroke:#d7b66b;stroke-width:1.4}.apD20 strong{position:absolute;inset:0;display:grid;place-items:center;font:700 26px system-ui;color:#fff3cc;text-shadow:0 2px 5px #000}.apD20.rodando{animation:d20Rodar .27s linear infinite}@keyframes d20Rodar{0%{transform:translateY(0) rotate(-20deg) scale(.9)}50%{transform:translateY(-12px) rotate(160deg) scale(1.05)}100%{transform:translateY(0) rotate(340deg) scale(.9)}}@media(prefers-reduced-motion:reduce){.apD20.rodando{animation:none}}
+
+/* Partida compartida y mapa de exploración. */
+.apModo{display:flex;gap:12px;align-items:center;margin:12px 0;color:#dfcfab}.apModo select{background:#211e23;color:#f4e4bc;padding:10px;border:1px solid #75664e;border-radius:8px}
+.apEquipo{position:absolute;left:12px;top:30px;max-width:85%;padding:8px 12px;border-radius:8px;background:#151721d9;color:#ffe0a0;font:12px/1.5 system-ui;pointer-events:none;z-index:6}
+.apAliado{color:#9be6d6;font:bold 12px system-ui;text-shadow:0 2px 3px #000;white-space:nowrap}
+.apMapa{position:absolute;left:12px;top:85px;width:165px;background:#111722e8;border:1px solid #928269;border-radius:8px;overflow:hidden;z-index:7;pointer-events:none}.apMapa canvas{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:1}.apMapa small{display:block;padding:7px;color:#e3d9bd;font:10px system-ui}.apMapa.ampliado{width:min(60%,480px);left:50%;top:12%;transform:translateX(-50%)}
+.apMapa[hidden],.apEquipo[hidden]{display:none}

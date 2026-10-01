@@ -14,10 +14,10 @@ run('efectos=DESTINO.resolver(efectos,carta,1).efectos;');assert.equal(run('DEST
 assert.throws(()=>run('DESTINO.resolver([],carta,21)'));
 console.log('✓ Tres cartas únicas, riesgos distintos, 20 resultados exactos, acumulación y pérdida de todos los positivos');
 vm.runInContext(`
-const V3=CAOZ_THREE.THREE.Vector3,heroe={vivo:true,pos:new V3(),alma:60,almaMax:120,atq:12,vatq:1,botin:[],llaves:0},tipoHeroe='adreida',HEROES={adreida:{alma:120}};
+const V3=CAOZ_THREE.THREE.Vector3,heroe={mando:{},entrada:{},tipo:'adreida',vivo:true,pos:new V3(),alma:60,almaMax:120,atq:12,vatq:1,botin:[],llaves:0},tipoHeroe='adreida',ABIERTO=false,jugadores=[heroe],HEROES={adreida:{alma:120}};
 const elementos=new Map(),$=id=>{if(!elementos.has(id))elementos.set(id,{innerHTML:'',appendChild(){},focus(){},close(){}});return elementos.get(id);};
 const document={createElement:()=>({})},reloj={t:1},CARDS={mazo:{n:'Mazo'}},EDICIONES={normal:{nombre:'Normal'}};
-const tostada=()=>{},chispas=()=>{},banner=()=>{},rnd=()=>.5,CALLES=[0,1,2],R=15.5,calle=a=>new V3(a,0,1),CAPTURA=false,q={get:()=>null};
+const cambiar=(h,s)=>h.estado=s;const tostada=()=>{},chispas=()=>{},banner=()=>{},rnd=()=>.5,CALLES=[0,1,2],R=15.5,calle=a=>new V3(a,0,1),CAPTURA=false,q={get:()=>null};
 const enemigos=[],peligrosTroll=[],soltadas=[],botines=[];const DEF={goblin:{},troll:{jefe:true},cobrador:{},kobold:{},can:{jefe:true}};
 function crearEnemigo(tipo,x,z){enemigos.push({tipo,estado:'persigue'});}
 function soltar(id,ed,x,z,desde,contrato){soltadas.push(contrato);}

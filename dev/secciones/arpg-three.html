@@ -18,13 +18,14 @@
 </head>
 <body>
 <main class="apShell" aria-label="Las Grietas del Editor">
-  <nav class="apEtapas" aria-label="Etapas"><a href="?etapa=1">Etapa 1 · El asedio</a><a href="?etapa=2">Etapa 2 · Cobro de piso</a></nav>
+  <nav class="apEtapas" aria-label="Etapas"><a href="?etapa=1">Etapa 1 · El asedio</a><a href="?etapa=2">Etapa 2 · Cobro de piso</a><a href="?mundo=abierto">Mundo abierto · Prototipo</a></nav>
   <div class="apControles" role="group" aria-label="Acciones">
     <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
     <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
     <button type="button" class="apBoton" id="abrirPausa">Pausa · Esc / Options</button>
     <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
   </div>
+  <label class="apModo">Partida <select id="modoEquipo"><option value="solo">Un jugador</option><option value="mixto">Cooperativo · Teclado/ratón + mando</option><option value="mandos">Cooperativo · Dos mandos</option></select></label>
   <fieldset class="apEfectos">
     <legend>Efectos</legend>
     <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
@@ -43,6 +44,8 @@
     <div class="apObjetivo" id="objetivo" hidden><b id="objNombre"></b><div class="apBarra"><i id="objVida"></i></div></div>
     <div class="apBanner" id="banner" role="status"></div>
     <p class="apTostada" id="tostada" role="status"></p>
+    <p id="equipoEstado" class="apEquipo" hidden></p>
+    <aside id="mapaPanel" class="apMapa" hidden><canvas id="mapaExplorado" width="336" height="336" aria-label="Mapa descubierto del mundo"></canvas><small id="mapaTexto"></small></aside>
     <div class="apStats" id="stats"></div>
     <div class="apBotin" id="botin" aria-label="Botín recogido"></div>
     <div class="apHud">
@@ -54,6 +57,7 @@
         <button type="button" data-hab="esquiva" title="Dash"><span>»</span><small>Dash</small><kbd>Shift</kbd></button>
         <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
         <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
+        <button type="button" data-hab="ulti" title="Ulti · 90 segundos; cada parry resta uno"><span>◆</span><small>Ulti</small><kbd>R / L3</kbd></button>
         <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>E</kbd></button>
       </div>
       <div class="apOrbe apFuria" id="orbeFuria"><i></i><b id="furiaTxt"></b><small>Furia</small></div>

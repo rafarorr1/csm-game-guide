@@ -2,10 +2,11 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
+import {extraerDeclaracion} from './fuentes.mjs';
 const c=vm.createContext({console});c.window=c;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),c);
 const s=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
-vm.runInContext(`const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,escena=new THREE.Scene();const HAB={salto:{coste:25}};function frente(a){return new V3(Math.sin(a),0,Math.cos(a));}function aDistancia(){return heroe.tipo==='mohamed';}function dentroPlaza(){}function rechazo(){}let pads=[],avisos=[];const navigator={getGamepads:()=>pads},document={hidden:false},$=()=>({addEventListener(){}}),ent={piloto:false},ctl={mov:new V3()},heroe={pos:new V3(),tipo:'adreida',dir:Math.PI,vivo:true,estado:'quieto',furia:50,radio:.42,cd:{salto:0}};let ultimoDestino=null;function usar(a,p){avisos.push(a);ultimoDestino=p;if(a==='salto'){heroe.furia-=25;heroe.estado='salto';}return true;} `+s.slice(s.indexOf('  const mando='),s.indexOf("  addEventListener('focus',()=>{mando.foco")),c);
+vm.runInContext(`const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,escena=new THREE.Scene();const COOP=false,DOS_MANDOS=false;const HAB={salto:{coste:25}};function frente(a){return new V3(Math.sin(a),0,Math.cos(a));}function aDistancia(){return heroe.tipo==='mohamed';}function dentroPlaza(){}function rechazo(){}let pads=[],avisos=[];const navigator={getGamepads:()=>pads},document={hidden:false},$=()=>({addEventListener(){}}),ent={piloto:false},ctl={mov:new V3()},heroe={pos:new V3(),tipo:'adreida',dir:Math.PI,vivo:true,estado:'quieto',furia:50,radio:.42,cd:{salto:0}};let ultimoDestino=null;function usar(a,p){avisos.push(a);ultimoDestino=p;if(a==='salto'){heroe.furia-=25;heroe.estado='salto';}return true;} `+['mando','BOTONES_MANDO'].map(n=>extraerDeclaracion(s,n,n==='mando'?'let':'const').texto).join('\n')+';\n'+['ejeMando','estadoMando','leerMando'].map(n=>extraerDeclaracion(s,n,'function').texto).join('\n'),c);
 const run=x=>vm.runInContext(x,c);
 assert.equal(run('leerMando()'),null);
 run(`const g={index:0,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))};pads=[g];leerMando();`);

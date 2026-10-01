@@ -10,16 +10,16 @@ const extraer=(n,t='function')=>extraerDeclaracion(s,n,t).texto;
 vm.runInContext(`
 const V3=CAOZ_THREE.THREE.Vector3,TAU=Math.PI*2,enemigos=[],botines=[],reloj={t:0},rog={abierto:false},pausa={activa:false};
 const ent={piloto:false,pendiente:false},ctl={mov:new V3(),atacar:false,apunta:new V3(0,0,6)},mando={activo:false,foco:true},document={hidden:false};
-const heroe={};let paron=0,impactos=[],sacudidas=[];
+const heroe={};const jugadores=[heroe];let paron=0,impactos=[],sacudidas=[];
 const aDistancia=()=>heroe.tipo==='mohamed',plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),difAng=(a,b)=>b-a;
 const suave=k=>k<=0?0:k>=1?1:k*k*(3-2*k),tramo=(k,a,b)=>suave((k-a)/(b-a));
 const puntoApuntado=()=>ctl.apunta.clone(),amenaza=()=>null,libre=()=>['quieto','andar'].includes(heroe.estado);
-const dentroPlaza=()=>{},rechazo=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},chispas=()=>{},temblar=v=>sacudidas.push(v);
+const respetarMuralla=()=>{},dentroPlaza=()=>{},rechazo=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},chispas=()=>{},temblar=v=>sacudidas.push(v);
 const golpearEn=(r,a,d,o)=>{impactos.push({d,o});return 0;};
 ${['VEL','COMBO','HAB','PARRY'].map(n=>extraer(n,'const')).join('\n')}
 ${['cambiar','usar','iniciarGolpe','iniciarCarga','ajustarSalto','pasoHeroe','separar'].map(n=>extraer(n)).join('\n')}
-function reset(){Object.assign(heroe,{tipo:'adreida',pos:new V3(),vivo:true,estado:'quieto',t:0,atq:12,basicos:1,especial:1,furia:100,dir:0,cd:{parry:0,salto:0,esquiva:0},brilloParry:0,escudo:0,invul:0,destello:0,dolor:1,vatq:1,finGolpe:-9,combo:0,carga:0,bloqueoBasico:false,fase:0,paso:0,radio:.4,golpeo:false});impactos=[];sacudidas=[];paron=0;reloj.t=0;ctl.atacar=false;ctl.mov.set(0,0,0);mando.activo=false;mando.foco=true;document.hidden=false;}
+function reset(){Object.assign(heroe,{entrada:ent,control:ctl,mando,ultiT:0,sigilo:0,tipo:'adreida',pos:new V3(),vivo:true,estado:'quieto',t:0,atq:12,basicos:1,especial:1,furia:100,dir:0,cd:{parry:0,salto:0,esquiva:0},brilloParry:0,escudo:0,invul:0,destello:0,dolor:1,vatq:1,finGolpe:-9,combo:0,carga:0,bloqueoBasico:false,fase:0,paso:0,radio:.4,golpeo:false});impactos=[];sacudidas=[];paron=0;reloj.t=0;ctl.atacar=false;ctl.mov.set(0,0,0);mando.activo=false;mando.foco=true;document.hidden=false;}
 function avanzar(t){const n=Math.round(t*100);for(let i=0;i<n;i++){reloj.t+=.01;pasoHeroe(.01);}}
 `,c);
 const run=s=>vm.runInContext(s,c);

@@ -14,8 +14,8 @@ vm.runInContext(`
 const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,q={get:()=>null};
 const rog={vuelta:1,cartas:[],terminado:-1},iniciarDestino=()=>{};
 const peligrosTroll=[],activarFaseTroll=()=>{},puedeLanzarGoblin=()=>false,lanzarPiedras=()=>{};
-const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
-const heroe={pos:new V3(),alma:60,almaMax:120,radio:.4,vivo:true,invul:0,estado:'quieto'};let sigId=1,semilla=11;
+const objetivoEnemigo=()=>heroe,conHeroe=(h,f)=>f();const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
+const ABIERTO=false;const heroe={pos:new V3(),alma:60,almaMax:120,radio:.4,vivo:true,invul:0,estado:'quieto'};const jugadores=[heroe];let sigId=1,semilla=11;
 const rnd=()=>(semilla=semilla*16807%2147483647)/2147483647,plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),calle=a=>new V3(Math.cos(a),0,Math.sin(a));
 const difAng=(a,b)=>{let d=(b-a)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;};

@@ -10,7 +10,7 @@ const extraer=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
 vm.runInContext(`
 const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2;
 const escena=new THREE.Scene(),enemigos=[],reloj={t:0},heroe={pos:new V3(),radio:.4,invul:0,vivo:true,dir:Math.PI,estado:'quieto',t:0,cd:{},furia:0,parrys:0};
-const marcas=[];let paron=0,recibido=0,avisos=0;
+const jugadores=[heroe],conHeroe=(h,f)=>f();const marcas=[];let paron=0,recibido=0,avisos=0;
 const rnd=()=>.5,plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),frente=a=>new V3(Math.sin(a),0,Math.cos(a));
 const numero=()=>{},chispas=()=>{},temblar=()=>{},polvo=()=>{},banner=()=>{avisos++;},quitarEtiqueta=()=>{};
 function marca(){const m=new THREE.Group();m.material={uniforms:{uC:{value:new THREE.Color()},uF:{value:0}}};escena.add(m);const o={m};marcas.push(o);return o;}
