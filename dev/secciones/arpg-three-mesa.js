@@ -442,7 +442,7 @@
   function amenaza(){const H=heroe;let mejor=null,t=1e9;
     for(const e of enemigos){const a=e.ataque;if(!a||a.forma==='linea'||!enZona(a,e,H.pos,H.radio*.6))continue;const r=a.dur-(reloj.t-a.t0);if(r<t){t=r;mejor=e.pos;}}
     for(const l of lanzas){if(l.clavada||l.devuelta)continue;const v=H.pos.clone().sub(l.g.position).setY(0),d=v.length();if(d>9||v.dot(l.dir)<d*.7)continue;const r=d/l.vel;if(r<t){t=r;mejor=l.g.position;}}
-    for(const p of peligrosTroll){if(p.tipo!=='goblin'||p.devuelto||plano(H.pos,p.hasta)>p.radio+H.radio*.6)continue;const r=p.dur-p.t;if(r<t){t=r;mejor=p.desde;}}
+    for(const p of peligrosTroll){if(p.devuelto||plano(H.pos,p.hasta)>p.radio+H.radio*.6)continue;const r=p.dur-p.t;if(r<t){t=r;mejor=p.desde;}}
     return mejor?{p:mejor.clone(),t}:null;}
   function usar(h,punto){if(!heroe.vivo)return false;const H=HAB[h];
     // Parry: se puede incluso a mitad de un golpe; mira sola hacia lo que viene (o hacia el cursor).
@@ -530,7 +530,7 @@
   /* ---- Ataques enemigos: la zona exacta en el suelo, que se llena hasta el golpe ---------- */
   // Mientras se llena, el atacante gira hacia ti; en el último tramo se fija (la marca se enciende): es el momento de apartarse o esquivar.
   function matZona(forma){const m=matMarca(forma);m.blending=THREE.NormalBlending;return m;}
-  function empezarAtaque(e,forma,o){const a={forma,dur:o.dur,t0:reloj.t,dir:e.dir,radio:o.radio,ang:o.ang,largo:o.largo,ancho:o.ancho,centro:o.centro||null,fija:o.fija??.6,dano:o.dano,fijado:false};
+  function empezarAtaque(e,forma,o){const a={forma,dur:o.dur*(e.tipo==='troll'&&e.fase2?.85:1),t0:reloj.t,dir:e.dir,radio:o.radio,ang:o.ang,largo:o.largo,ancho:o.ancho,centro:o.centro||null,fija:o.fija??.6,dano:o.dano,fijado:false};
     const m=new THREE.Mesh(forma==='linea'?geoLinea:geoMarca,matZona(forma));m.renderOrder=1;m.material.uniforms.uC.value.set(0xff6a20);if(forma==='cono')m.material.uniforms.uAng.value=a.ang;escena.add(m);a.m=m;
     e.mazazo=e.tipo==='troll'&&forma==='circulo';e.ataque=a;if(!e.alerta){e.alerta=etiqueta('apAlerta',new V3());}e.alerta.el.textContent=forma==='circulo'?'¡Imparable!':'!';e.alerta.el.classList.toggle('imparable',forma==='circulo');colocarAtaque(e);return a;}
   function colocarAtaque(e){const a=e.ataque,m=a.m,k=Math.min(1,(reloj.t-a.t0)/a.dur),u=m.material.uniforms;
@@ -568,7 +568,7 @@
   function blindadoTroll(e){return e.tipo==='troll'&&e.fase2&&!vulnerableTroll(e);}
   function activarFaseTroll(e){if(e.tipo!=='troll'||e.fase2||e.estado==='muere'||e.vida>e.vidaMax*.5)return;
     e.fase2=true;e.parryHasta=0;e.expuestoHasta=0;
-    banner('El Recaudador · Segunda fase','Su armadura sólo se abre con un parry perfecto. ¡Devuélvele también sus goblins!');
+    banner('El Recaudador · Segunda fase','Su armadura sólo se abre con un parry perfecto. ¡Devuélvele sus piedras y goblins!');
     marca('onda',e.pos.x,e.pos.z,5,0x916aff,.8);}
   const peligrosTroll=[];
   const geoRocaTroll=new THREE.IcosahedronGeometry(.36,0),matRocaTroll=new THREE.MeshStandardMaterial({color:0x887566,roughness:1});
@@ -598,7 +598,7 @@
       if(k<1)continue;
       if(p.devuelto){aturdirPorParry(p.dueno);danar(p.dueno,45,{crit:false});quitarPeligroTroll(p);continue;}
       const dentro=plano(heroe.pos,p.hasta)<p.radio+heroe.radio*.6;
-      if(dentro&&heroe.invul<=0){const par=p.tipo==='goblin'?parar(p.desde,false,PARRY.perfectoLanza):null;
+      if(dentro&&heroe.invul<=0){const par=parar(p.desde,false,PARRY.perfectoLanza);
         if(par==='perfecto'){parryPerfecto(null,p.hasta.clone().setY(1.2));quitarMarca(p.marca);p.marca=null;p.devuelto=true;p.desde=p.hasta.clone().setY(1.2);p.hasta=p.dueno.pos.clone().setY(1.8);p.dur=.6;p.t=0;p.altura=1;continue;}
         if(par==='bloqueo')bloqueado(p.dano,p.desde,p.dueno);else herir(p.dano,p.desde,p.dueno);}
       polvo(p.hasta,12,p.radio);marca('onda',p.hasta.x,p.hasta.z,p.radio,0xffb050,.25);
@@ -625,7 +625,7 @@
     if(e.tirón){e.pos.lerp(e.tirón.p,Math.min(1,dt*8));if(reloj.t>e.tirón.hasta||plano(e.pos,e.tirón.p)<.05)e.tirón=null;}
     if(!e.dentro&&Math.hypot(e.pos.x,e.pos.z)<R-1.2)e.dentro=true;
     const H=heroe,dist=plano(e.pos,H.pos),hacia=(p,vel)=>{const dd=plano(p,e.pos);if(dd<.05)return 0;const paso=Math.min(dd,vel*dt),a=rumbo(e.pos,p);e.dir+=difAng(e.dir,a)*Math.min(1,dt*9);e.pos.x+=Math.sin(a)*paso;e.pos.z+=Math.cos(a)*paso;return paso;};
-    let movido=0;const vel=d.vel*(e.provocado>0?1.25:1);
+    let movido=0;const vel=d.vel*(e.provocado>0?1.25:1)*(e.tipo==='troll'&&e.fase2?1.2:1);
     switch(e.estado){
       case 'quieto':break;
       case 'entra':movido=hacia(new V3(e.pos.x*.5,0,e.pos.z*.5),vel);if(Math.hypot(e.pos.x,e.pos.z)<R-1.2){e.dentro=true;cambiar(e,'persigue');}break;
@@ -654,7 +654,7 @@
       case 'grito':if(e.t>=.9){cambiar(e,'persigue');if(ol.auto){for(let i=0;i<3;i++)ol.cola.push(['goblin',i]);}
         else{const n=Math.min(3,Math.max(0,5-enemigos.filter(o=>o.estado!=='muere').length));for(let i=0;i<n;i++){const p=calle(CALLES[i]).multiplyScalar(R+3);crearEnemigo('goblin',p.x,p.z);}}}break;
       case 'golpe':if(e.t>=d.golpe){cambiar(e,'recupera');if(e.tipo==='troll'&&e.mazazo&&!e.fase2)e.expuestoHasta=reloj.t+d.recupera;}break;
-      case 'recupera':if(e.t>=d.recupera){e.cd=d.cd*(.8+rnd()*.4);cambiar(e,'persigue');}break;
+      case 'recupera':if(e.t>=d.recupera){e.cd=d.cd*(.8+rnd()*.4)*(e.tipo==='troll'&&e.fase2?.85:1);cambiar(e,'persigue');}break;
       case 'dolor':if(e.t>=.28){e.cd=Math.max(e.cd,.35);cambiar(e,'persigue');}break;
       case 'aturdido':e.aturdidoT-=dt;if(e.aturdidoT<=0){cambiar(e,'persigue');}break;
       case 'muere':{if(e.t>.55){const k=(e.t-.55)/.9;e.m.M.u.uDisuelve.value=Math.min(1,k);if(k>.02)e.m.mallas.forEach(x=>x.castShadow=false);if(rnd()<.6)brasas(e.pos,1,e.m.alto);
@@ -784,11 +784,10 @@
     if(peligros.length){const p=peligros[0],juntos=peligros.filter(x=>x.a.forma!=='linea'&&x.r-p.r<.45).length;
       if(p.a.forma==='cono'&&juntos===1&&(h.cd.parry<=0||h.estado==='parry')){if(p.r<=.1&&h.estado!=='parry')usar('parry');return c;}
       const v=escape(p.a,p.e,h.pos);if(p.r<.3&&!h.cd.esquiva)usar('esquiva',v);c.mov.copy(v);return c;}
-    // Las piedras no admiten parry: salir de su destino antes del impacto.
-    const piedra=peligrosTroll.find(p=>p.tipo==='roca'&&plano(h.pos,p.hasta)<p.radio+h.radio+.4);
-    if(piedra){const v=h.pos.clone().sub(piedra.hasta).setY(0);if(v.lengthSq()<.01)v.copy(frente(h.dir+Math.PI/2));v.normalize();if(piedra.dur-piedra.t<.3&&!h.cd.esquiva)usar('esquiva',v);c.mov.copy(v);return c;}
-    // Una lanza o un goblin a punto de llegar: parry (lo devuelve).
+    // Piedras, goblins y lanzas: parry al llegar. Si no está disponible, apartarse de la caída.
     {const am=amenaza();if(am&&am.t<=.1&&!h.cd.parry&&h.estado!=='parry'){usar('parry');return c;}}
+    const piedra=peligrosTroll.find(p=>!p.devuelto&&p.tipo==='roca'&&plano(h.pos,p.hasta)<p.radio+h.radio+.4);
+    if(piedra){if(!h.cd.parry||h.estado==='parry')return c;const v=h.pos.clone().sub(piedra.hasta).setY(0);if(v.lengthSq()<.01)v.copy(frente(h.dir+Math.PI/2));v.normalize();if(piedra.dur-piedra.t<.3&&!h.cd.esquiva)usar('esquiva',v);c.mov.copy(v);return c;}
     if(!libre())return c;
     if(aDistancia()){const vivosD=enemigos.filter(e=>e.estado!=='muere'&&Math.hypot(e.pos.x,e.pos.z)<R+.5);if(!vivosD.length)return pilotoSinEnemigos(c);
       const exp=vivosD.filter(e=>e.expuestoHasta>reloj.t),obj=(exp.length?exp:vivosD).sort((a,b)=>plano(a.pos,h.pos)-plano(b.pos,h.pos))[0],d=plano(obj.pos,h.pos),cerca=vivosD.filter(e=>plano(e.pos,h.pos)<3).length;

@@ -73,3 +73,17 @@ assert.equal(run('peligrosTroll.length'),0);
 assert.equal(run('marcas.length'),0);
 assert.equal(run('escena.children.filter(o=>o.geometry===geoRocaTroll).length'),0);
 console.log('✓ Interrupción y muerte retiran modelos y peligros pendientes');
+
+// Las piedras admiten el mismo parry que un goblin, incluso en la fase blindada.
+run("limpiar();jefe=crearEnemigo('troll',0,-3);jefe.vida=550;activarFaseTroll(jefe);lanzarPiedras(jefe,jefe.pos);heroe.estado='parry';heroe.t=.05;avanzar(1.45);");
+assert.equal(run('recibido'),0,'Parry de piedra evita el daño');
+assert.equal(run('peligrosTroll[0].devuelto'),true,'La piedra vuelve al ogro');
+assert.equal(run('blindadoTroll(jefe)'),true,'El blindaje se abre cuando llega la piedra');
+run('avanzar(.6);');
+assert.equal(run('blindadoTroll(jefe)'),false);
+assert.equal(run('jefe.vida'),460);
+assert.equal(run('heroe.parrys'),1);
+run("limpiar();jefe=crearEnemigo('troll',0,-3);lanzarPiedras(jefe,jefe.pos);heroe.estado='parry';heroe.t=.3;avanzar(1.45);");
+assert.ok(run('recibido>0&&recibido<22'),'El bloqueo tardío reduce daño');
+assert.equal(run('peligrosTroll.some(p=>p.devuelto)'),false,'El bloqueo no devuelve piedras');
+console.log('✓ Piedras: parry, devolución, apertura de armadura y bloqueo tardío');
