@@ -149,3 +149,6 @@ html[data-captura] .apInfo{display:none}
 .apDestinoAcciones{display:flex;flex-wrap:wrap;gap:12px;margin:18px 0}.apDestinoAcciones button{border:1px solid #ddba78;border-radius:9px;background:#f5d28d;color:#24151a;padding:12px 20px;font:inherit;cursor:pointer}.apDestino button:disabled{cursor:default;opacity:.72}.apDestino small{display:block;color:#d6c5b2;line-height:1.5}
 #destinoResultado{background:#302439;padding:14px;border-radius:10px;font-weight:600}
 @media(max-width:650px){.apDestino{padding:16px}.apDestinoCartas{grid-template-columns:1fr}.apDestinoCarta img{height:110px}}
+
+/* Progreso del hachazo: el porcentaje permanece legible con mando, ratón y táctil. */
+.apHabilidades button.cargando,button[data-hab="tajo"].cargando{background:linear-gradient(to top,#95641c var(--carga),#29212c var(--carga));box-shadow:0 0 12px #ffc55a80;border-color:#ffc55a;}
