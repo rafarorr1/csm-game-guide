@@ -394,7 +394,7 @@ oleadas, y al final entra Can, el de los Goblins.
 - **Control a lo Hades:**
   - WASD (o flechas) mueve;
   - Adreida recorre 2,1 m por ciclo de zancada: balanceo de piernas más amplio, recogida de rodilla, tobillo que compensa la inclinación, transferencia de peso entre apoyos y contragiro de cadera, torso y cabeza. La amplitud responde al stick y se suaviza al arrancar y detenerse, conservando las dos manos sobre el hacha;
-  - los clics cortos encadenan tres hachazos: tajo, revés y un hachazo vertical. Mantener y soltar prepara un golpe cargado: 0,9 s para cargar al máximo, hasta ×3 el daño de ese básico y más empuje; camina al 30 % mientras carga. El brillo y el porcentaje del botón indican la carga;
+  - los clics cortos encadenan tres hachazos: tajo, revés y un hachazo vertical. Mantener y soltar prepara un golpe cargado: 0,9 s para cargar al máximo, hasta ×3 el daño de ese básico y más empuje; queda inmóvil mientras carga. El brillo y el porcentaje del botón indican la carga;
   - Adreida es un modelo detallado sacado de su carta (sombreado suave, sigue siendo 3 llamadas de dibujo): cabeza esculpida con mandíbula ancha, ojos rojos, colmillos y orejas en punta; melena azul noche en mechones ondulados con la raya al medio; top negro con la correa en diagonal y los tres aros de plata; hombrera de cuero en capas; brazales con púas de hueso; puños cerrados sobre el mango; cinturón con hebilla de plata, cráneos de pájaro y bolsa; faldón de piel sobre la falda de tela; botas altas con correas y púa en la rodilla, y el hacha de doble hoja en creciente con la runa que brilla;
   - Adreida descansa el hacha de doble filo sobre el hombro derecho, con la cabeza detrás y ambas manos delante del pecho; la empuña con las dos manos al atacar: cada pose dice dónde va la empuñadura y hacia dónde apunta el hacha, y los dos brazos llegan con cinemática inversa (la derecha junto al pomo y la izquierda 30 cm hacia la cabeza, siempre sobre el mango y dentro del alcance de ambos brazos);
   - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
@@ -1154,3 +1154,12 @@ python3 dev/secciones/publicar.py --publicar --seccion pesadillas-3d --salida /t
 - Diagnóstico local previo: 25 FPS con todos los efectos; aproximadamente 34 sin oclusión, 43 sin oclusión ni halo y 51 también sin sombras en la misma escena. Son muestras orientativas de ese viewport, no un benchmark universal.
 - Tras optimizar: muestra de 50 FPS con los tres efectos activos, MSAA 2× y densidad 1,25 en la oleada inicial. No garantiza esa tasa en todos los combates.
 - Prueba puntual de estas interacciones: `node dev/secciones/pruebas_arpg_adreida_control.mjs`.
+
+### Peso del hachazo y perfil de rendimiento
+
+- Se retiró el título y el bloque de instrucciones superior; los controles siguen disponibles.
+- Adreida se planta desde la primera pulsación de carga, sin caminar ni desplazarse por separación con enemigos. Puede orientar el golpe y cancelarlo con parry o dash.
+- A carga completa añade 16 unidades de impulso al básico (antes 3), 0,65 m de alcance, más torsión del torso, flexión de rodillas, una estela mayor y chispas/polvo de impacto. Los jefes conservan su resistencia al empuje.
+- Oclusión ambiental desactivada inicialmente (se puede activar con su casilla). Sombras y halo permanecen activos. El render normal tiene un presupuesto máximo de un millón de píxeles antes de la escala adaptativa; las capturas mantienen calidad fija. Las pestañas ocultas pausan simulación y renderizado para evitar que dos partidas compitan por GPU.
+
+- Si el navegador mantiene varias pestañas visibles, `BroadcastChannel` cede el renderizado a la última activada. Las otras muestran «Continuar aquí» y suspenden lógica y GPU; las capturas aisladas no participan. El contador distingue tiempo de lógica y envío del render (no es una medición GPU).

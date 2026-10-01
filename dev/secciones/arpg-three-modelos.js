@@ -574,6 +574,13 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           H.cuerpo.rotation.x=-Math.PI/2*c*.96;H.cuerpo.position.y=-.3*r*(1-c)*esc+.12*c*esc;H.cuerpo.position.z=-(m.alto*.22)*c;break;}
       }
       // Adreida agarra el hacha con las dos manos (salvo al gritar, con los brazos abiertos, y al caer).
+      // El hachazo cargado toma impulso con cadera y torso, hundiendo las rodillas antes del barrido.
+      if(m.tipo==='adreida'&&a.potencia>0&&['tajoA','revesA','estocadaA'].includes(a.anim)){
+        const p=a.potencia,pre=tramo(k,0,.38)*(1-tramo(k,.4,.62)),gol=tramo(k,.4,.62)*(1-tramo(k,.66,1));
+        H.torso.rotation.y*=1+.65*p;H.cadera.rotation.y*=1+.5*p;
+        H.torso.rotation.x+=p*(-.2*pre+.24*gol);H.cuerpo.position.y-=p*(.13*pre+.08*gol);
+        H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
+      }
       if(m.tipo==='adreida'&&!['grito','muerte'].includes(a.anim))empunar(m,agarreAdreida(a));
     }
     return {crear,posar,TIPOS};

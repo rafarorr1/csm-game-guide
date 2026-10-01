@@ -17,12 +17,7 @@
 <script src="./arpg-three-mesa.js" defer></script>
 </head>
 <body>
-<main class="apShell" aria-labelledby="apTitulo">
-  <header class="apCabecera">
-    <p class="apEtiqueta">PROYECTO PARALELO · ARPG EN THREE.JS · DOS ETAPAS EN TOMSAGE</p>
-    <h1 id="apTitulo">Las Grietas del Editor</h1>
-    <p>Tomsage está bajo asedio. Elige a Adreida, la Guerrera Semiorca (cuerpo a cuerpo, su hacha a dos manos), o a Mohamed (a distancia, una pistola de seis balas que recarga sola; Q Abanico de siete balas y clic derecho Backflip: los enemigos que lo ven se quedan impresionados, aturdidos unos segundos) y defiende la plaza contra cuatro oleadas hasta que entra Can, el de los Goblins. Después comienza «Cobro de piso»: primero llegan los cobradores, después sus refuerzos con lanceros y, en la tercera fase, El Recaudador, un troll de tres metros con seis goblins. <b>WASD</b> para moverte y <b>clic izquierdo</b> para atacar hacia el cursor (pulsaciones cortas: combo; mantén y suelta: golpe cargado). <b>Espacio</b> parry: justo antes del golpe lo para y deja al enemigo aturdido y expuesto (tus golpes le hacen el doble); un parry perfecto también reinicia los cooldowns de todas tus habilidades; un poco antes, solo bloquea parte · <b>Shift</b> dash (un instante invulnerable) · <b>clic derecho</b> Salto al cursor · <b>Q</b> Torbellino · <b>E</b> Provocar. Pegan fuerte: cada enemigo que va a atacar se enciende en rojo, lleva un «!» y dibuja en el suelo la zona exacta que golpeará, que se llena hasta el golpe; cuando se fija ya no gira: para, sal de ella o haz dash. Los golpazos de Can y del troll (zona violeta) son imparables. Las piedras sí permiten parry: pulsa cuando su círculo se vuelva blanco azulado. Las lanzas de los kobolds brillan: cuando el brillo se vuelve blanco y grande, es el momento del parry (y la lanza vuelve contra quien la lanzó). Hay tres cartas aleatorias por nivel: se recogen pisándolas y no aplican buffs todavía. Al terminar eliges una y tiras d20; el 1 borra todos tus buffs positivos. Tras el ogro comienza otra vuelta más difícil con tus efectos acumulados. En táctil, palanca y botones.</p>
-  </header>
+<main class="apShell" aria-label="Las Grietas del Editor">
   <nav class="apEtapas" aria-label="Etapas"><a href="?etapa=1">Etapa 1 · El asedio</a><a href="?etapa=2">Etapa 2 · Cobro de piso</a></nav>
   <div class="apControles" role="group" aria-label="Acciones">
     <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
@@ -32,11 +27,12 @@
   <fieldset class="apEfectos">
     <legend>Efectos</legend>
     <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
-    <label><input type="checkbox" data-efecto="oclusion" checked> Oclusión ambiental</label>
+    <label><input type="checkbox" data-efecto="oclusion"> Oclusión ambiental</label>
     <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
     <label>Balas de Mohamed <select id="estiloBala"><option value="plomo">A · Plomo de pistola de chispa</option><option value="trazadora">B · Bala de latón trazadora</option></select></label>
   </fieldset>
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
+    <div id="pausaOtra" class="apPausaOtra" hidden><p>Otra partida está activa.</p><button type="button" id="reanudarPartida" class="apBoton">Continuar aquí</button></div>
     <canvas id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>

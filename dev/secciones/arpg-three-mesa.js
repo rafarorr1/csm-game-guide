@@ -29,7 +29,7 @@
   const MOD=window.CAOZ_ARPG_MODELOS.fabrica(THREE),C=window.CAOZ_THREE_CARTA,{ANCHO,ALTO}=C;
   const TAU=Math.PI*2,V3=THREE.Vector3;
   const reducido=matchMedia('(prefers-reduced-motion:reduce)').matches;
-  const efectos={sombras:true,oclusion:true,resplandor:true};
+  const efectos={sombras:true,oclusion:false,resplandor:true};
   let semilla=11;const rnd=()=>(semilla=(semilla*16807)%2147483647)/2147483647;
   const suave=k=>k<=0?0:k>=1?1:k*k*(3-2*k),tramo=(k,a,b)=>suave((k-a)/(b-a));
   const difAng=(a,b)=>{let d=(b-a)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;};
@@ -463,7 +463,7 @@
     const d=Math.hypot(p.x,p.z);if(d>R-r){p.x*=(R-r)/d;p.z*=(R-r)/d;}}
   function separar(){const todos=[heroe,...enemigos.filter(e=>e.estado!=='muere')];for(let i=0;i<todos.length;i++)for(let j=i+1;j<todos.length;j++){const a=todos[i],b=todos[j];if(a===heroe&&heroe.estado==='salto')continue;
     const dx=b.pos.x-a.pos.x,dz=b.pos.z-a.pos.z,d=Math.hypot(dx,dz),m=a.radio+b.radio+(a===heroe?0:.55);
-    if(d<m){const nx=d>1e-4?dx/d:1,nz=d>1e-4?dz/d:0,k=m-d,wa=a===heroe?.15:a.ataque?0:.5,wb=b.ataque?0:.5;
+    if(d<m){const nx=d>1e-4?dx/d:1,nz=d>1e-4?dz/d:0,k=m-d,wa=a===heroe?(heroe.estado==='carga'?0:.15):a.ataque?0:.5,wb=b.ataque?0:.5;
       a.pos.x-=nx*k*wa;a.pos.z-=nz*k*wa;b.pos.x+=nx*k*wb;b.pos.z+=nz*k*wb;}}
     for(const e of todos)if(e===heroe||e.dentro)dentroPlaza(e.pos,e.radio);}
 
@@ -543,14 +543,15 @@
       if(apunta&&h.balas>0&&h.recargaT<=0&&h.cadT<=0)disparar();
       h.estado=movido>0?'andar':'quieto';}
     else if(h.estado==='abanico'){if(h.t>=.3)cambiar(h,'quieto');}
-    else if(['quieto','andar'].includes(h.estado)){movido=andar(mov,VEL);if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
+    else if(['quieto','andar'].includes(h.estado)){movido=ctl.atacar&&!h.bloqueoBasico?0:andar(mov,VEL);if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
       if(ctl.atacar&&!h.bloqueoBasico){if(ent.piloto)iniciarGolpe();else iniciarCarga();}else h.estado=movido>0?'andar':'quieto';}
     else if(h.estado==='carga'&&(document.hidden||!mando.foco||h.cargaMando&&!mando.activo)){h.carga=0;h.bloqueoBasico=true;cambiar(h,'quieto');}
-    else if(h.estado==='carga'){h.carga=Math.max(0,Math.min(1,(h.t-.18)/.72));movido=andar(mov,VEL*.3);h.dir=rumbo(h.pos,puntoApuntado());if(!ctl.atacar)iniciarGolpe();}
+    else if(h.estado==='carga'){h.carga=Math.max(0,Math.min(1,(h.t-.18)/.72));h.dir=rumbo(h.pos,puntoApuntado());if(!ctl.atacar)iniciarGolpe();}
     else if(h.estado==='golpe'){const C=COMBO[h.combo];h.t+=dt*(h.vatq-1);// más velocidad de ataque: la animación y el impacto llegan antes
       // Un paso adelante al golpear, salvo si ya hay alguien delante.
       if(h.t<.1&&!enemigos.some(e=>e.estado!=='muere'&&plano(e.pos,h.pos)<C.alc*.6)){const f=frente(h.dir);h.pos.addScaledVector(f,(h.combo===2?9:5)*dt);}
-      if(!h.golpeo&&h.t>=C.imp){h.golpeo=true;const n=golpearEn(C.alc,C.ang,h.atq*C.mult*(1+2*(h.carga||0))*(h.basicos??1),{empuje:C.emp+3*(h.carga||0)});if(n){h.furia=Math.min(100,h.furia+Math.min(14,n*7));paron=h.combo===2?.09:.05;temblar(h.combo===2?.14:.06);}}
+      if(!h.golpeo&&h.t>=C.imp){h.golpeo=true;const n=golpearEn(C.alc+.65*(h.carga||0),C.ang,h.atq*C.mult*(1+2*(h.carga||0))*(h.basicos??1),{empuje:C.emp+16*(h.carga||0)});if(h.carga>=.5){const p=h.pos.clone().addScaledVector(frente(h.dir),1.6);polvo(p,14,1.2);chispas(p.setY(.5),16,[1,.7,.25],7,.35);}
+        if(n){h.furia=Math.min(100,h.furia+Math.min(14,n*7));paron=h.carga>=.5?.11:h.combo===2?.09:.05;temblar(h.carga>=.5?.3:h.combo===2?.14:.06);}}
       // Andar después del impacto corta el golpe (se puede salir del combo para esquivar un aviso).
       if(h.golpeo&&h.t>C.imp+.08&&mov.lengthSq()>.01&&!ctl.atacar){h.finGolpe=reloj.t;cambiar(h,'andar');}
       else if(h.t>=C.dur){h.finGolpe=reloj.t;if(ctl.atacar&&!h.bloqueoBasico){if(ent.piloto)iniciarGolpe();else iniciarCarga();}else{cambiar(h,'quieto');}}}
@@ -929,7 +930,7 @@
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
     const ph=poses.heroe||{quieto:['quieto'],andar:['andar'],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.t/1)]}[h.estado];
-    MOD.posar(hm,{anim:!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],t:reloj.t,fase:h.fase,paso:h.paso});
+    MOD.posar(hm,{anim:!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:['carga','golpe'].includes(h.estado)?h.carga:0,t:reloj.t,fase:h.fase,paso:h.paso});
     // Mohamed apuntando o recién disparado: el brazo de la pistola al frente (sobre el paso), con el retroceso.
     if(aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45)){const r=Math.max(0,1-h.disparoT*6),H=hm.H;
       H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
@@ -982,7 +983,7 @@
   const rastroArco=new THREE.Mesh(geoRastro('arco'),matRastro),rastroRecto=new THREE.Mesh(geoRastro('recto'),matRastro.clone());for(const m of [rastroArco,rastroRecto]){m.visible=false;m.frustumCulled=false;escena.add(m);}
   function rastroCorte(h){rastroArco.visible=rastroRecto.visible=false;if(h.estado!=='golpe')return;const C=COMBO[h.combo],k=h.t/C.dur,m=h.combo===2?rastroRecto:rastroArco;
     const u=m.material.uniforms;u.uP.value=h.combo===2?tramo(k,.42,.56)*1.5:tramo(k,.38,.64)*1.5;u.uA.value=1-tramo(k,h.combo===2?.6:.64,.9);u.uS.value=h.combo===1?0:1;if(u.uP.value<=0||u.uA.value<=0)return;
-    m.visible=true;m.position.set(h.pos.x,.75,h.pos.z);m.rotation.y=h.dir;}
+    m.visible=true;m.scale.setScalar(1+.3*(h.carga||0));u.uA.value*=1+1.8*(h.carga||0);m.position.set(h.pos.x,.75,h.pos.z);m.rotation.y=h.dir;}
   const estela=new THREE.Mesh(new THREE.RingGeometry(1.1,2.5,48,1).rotateX(-Math.PI/2),new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:`varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
     fragmentShader:`varying vec3 vP;void main(){float a=atan(vP.z,vP.x)/6.2832+.5,r=length(vP.xz);float s=pow(fract(a*2.),3.)*smoothstep(1.1,1.6,r)*(1.-smoothstep(2.1,2.5,r));gl_FragColor=vec4(vec3(1.,.85,.6)*1.8,s*.8);}`}));estela.visible=false;escena.add(estela);
@@ -996,7 +997,7 @@
     else if(cuadrosRapidos>=6){escalaRender=Math.min(1,escalaRender+.05);cuadrosRapidos=0;}
     if(Math.abs(anterior-escalaRender)>.001)medir();
   }
-  function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,CAPTURA?2:1.25)*(CAPTURA?1:escalaRender),W=Math.max(1,b.width),H=Math.max(1,b.height);
+  function medir(){const b=esc.getBoundingClientRect(),W=Math.max(1,b.width),H=Math.max(1,b.height),dpr=CAPTURA?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.25,Math.sqrt(1000000/(W*H)))*escalaRender;
     renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;}
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};
@@ -1014,10 +1015,22 @@
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
   function dibujar(){renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
     if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}else aviso('La escena sale negra en esta tarjeta gráfica ('+gpu+'). Cuéntanos qué navegador y dispositivo usas.');}}}
-  let antes=performance.now(),fps={n:0,t:performance.now(),v:0};
-  function cuadro(ahora){if(document.hidden||ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;paso(dt);dibujar();
+  // Algunos navegadores integrados mantienen visibles varias pestañas: sólo la última activada renderiza.
+  let partidaActiva=true;
+  const canalPartida=!CAPTURA&&typeof BroadcastChannel==='function'?new BroadcastChannel('caoz-arpg-partida'):null;
+  function activarPartida(){partidaActiva=true;$('pausaOtra').hidden=true;canalPartida?.postMessage('activar');}
+  if(canalPartida){canalPartida.onmessage=e=>{if(e.data!=='activar')return;partidaActiva=false;$('pausaOtra').hidden=false;
+      ent.atacando=ent.pendiente=false;teclas.clear();mando.listo=false;
+      if(heroe?.estado==='carga'){heroe.carga=0;cambiar(heroe,'quieto');}};
+    addEventListener('focus',activarPartida);
+    addEventListener('pointerdown',()=>{if(!partidaActiva)activarPartida();});
+    addEventListener('keydown',()=>{if(!partidaActiva)activarPartida();});
+    activarPartida();}
+  $('reanudarPartida').onclick=activarPartida;
+  let antes=performance.now(),fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
+  function cuadro(ahora){if(document.hidden||!partidaActiva){antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}if(ahora-antes>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;const inicio=performance.now();paso(dt);const preparado=performance.now();dibujar();fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;ajustarResolucion(fps.v);const i=renderer.info;
-      $('info').textContent=`${fps.v} fps · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
+      $('info').textContent=`${fps.v} fps · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);}
 
   async function preparar(){
