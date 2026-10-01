@@ -379,6 +379,8 @@ oleadas, y al final entra Can, el de los Goblins.
   - las animaciones son procedurales: andar, tajo, aviso, torbellino, salto, grito, lanzar, aturdido y muerte;
   - al morir se deshacen en brasas.
 - **La plaza:**
+  - ciudad rodeada por una muralla de 24 paños, a 26 m del centro, con las casas dentro del recinto. La colisión coincide con las caras interiores de piedra. Tres portones alineados con las calles dejan entrar a los invasores; un sello ámbar visible impide que el jugador los cruce. Las oleadas aparecen fuera de esos portones y avanzan por ellos;
+  - prueba de límites y portones: `node dev/secciones/pruebas_arpg_muralla.mjs`;
   - adoquines con relieve, las casas de Tomsage (`casas-three.js`, con su interior tras las ventanas; tres arden), el pozo, un carro, barriles y braseros;
   - la luna con sombras, la luz que lleva Adreida (el radio de luz de Diablo) y el fuego;
   - todo lo estático se funde por material;

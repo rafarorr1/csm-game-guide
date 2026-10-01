@@ -94,7 +94,8 @@
     const cc=T/2,f=g.createRadialGradient(cc,cc,T*.28,cc,cc,T*.5);f.addColorStop(0,'rgba(0,0,0,0)');f.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=f;g.fillRect(0,0,T,T);return tex(c,true);}
 
   /* ---- La plaza de Tomsage -------------------------------------------------------- */
-  const R=15.5;// radio de la plaza donde se juega
+  const R=26;// distancia interior de los paños de la muralla
+  const PANELES=24,PLANOS_MURALLA=Array.from({length:PANELES},(_,i)=>({x:Math.cos(i*TAU/PANELES),z:Math.sin(i*TAU/PANELES)}));
   const obstaculos=[];// círculos {x,z,r}
   const mundo=new THREE.Group();escena.add(mundo);
   const matSuelo=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.92,metalness:0,normalScale:new THREE.Vector2(1.2,1.2)});
@@ -152,7 +153,28 @@
     for(const [mat,lista] of grupos){let n=0;const gs=lista.map(o=>{const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(o.matrixWorld);n+=g.attributes.position.count;return g;});
       const P=new Float32Array(n*3),N=new Float32Array(n*3),U=new Float32Array(n*2);let i=0;for(const g of gs){P.set(g.attributes.position.array,i*3);N.set(g.attributes.normal.array,i*3);if(g.attributes.uv)U.set(g.attributes.uv.array,i*2);i+=g.attributes.position.count;g.dispose();}
       const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(P,3));geo.setAttribute('normal',new THREE.BufferAttribute(N,3));geo.setAttribute('uv',new THREE.BufferAttribute(U,2));geo.computeBoundingSphere();
-      const m=new THREE.Mesh(geo,mat);m.castShadow=m.receiveShadow=true;mundo.add(m);}}
+      const m=new THREE.Mesh(geo,mat);m.castShadow=m.receiveShadow=!mat.transparent;mundo.add(m);}}
+  // Muralla poligonal: sus caras interiores son exactamente los planos de colisión.
+  const selloPuerta=new THREE.MeshBasicMaterial({color:0xffa64c,transparent:true,opacity:.24,side:THREE.DoubleSide,depthWrite:false,toneMapped:false});
+  for(let i=0;i<PANELES;i++){
+    const a=i*TAU/PANELES,n=calle(a),t=new V3(-n.z,0,n.x),ancho=2*(R+.45)*Math.tan(Math.PI/PANELES),puerta=CALLES.some(c=>Math.abs(difAng(a,c))<.01);
+    const pieza=(w,h,d,u,y,r,mat=MAT.piedra)=>poner(new THREE.BoxGeometry(w,h,d),mat,n.x*r+t.x*u,y,n.z*r+t.z*u,Math.PI/2-a);
+    if(puerta){
+      for(const lado of [-1,1])pieza(.55,4.5,.9,lado*(ancho/2-.275),2.25,R+.45);
+      pieza(ancho,.8,.9,0,4.1,R+.45); // Dintel suficientemente alto para el troll.
+      // Reja levantada; un sello ámbar visible deja entrar invasores y bloquea al héroe.
+      for(let j=-3;j<=3;j++)pieza(.07,.75,.1,j*.45,3.85,R+.05,MAT.hierro);
+      pieza(ancho-.55,3.7,.035,0,1.85,R+.025,selloPuerta);
+      for(const lado of [-1,1])pieza(.07,3.7,.07,lado*(ancho/2-.55),1.85,R+.02,MAT.hierro);
+      pieza(ancho-.55,.1,.28,0,.05,R+.02,MAT.hierro);
+    }else{
+      pieza(ancho+.04,3.3,.9,0,1.65,R+.45);
+      pieza(ancho+.12,.16,1.05,0,3.3,R+.45);
+      for(const u of [-ancho*.35,0,ancho*.35])pieza(.55,.5,.9,u,3.62,R+.45);
+      // Juntas y contrafuertes dan escala al lienzo de piedra, sin geometría por ladrillo.
+      for(const y of [.65,1.3,1.95,2.6])pieza(ancho,.025,.025,0,y,R-.01,MAT.oscuro);
+    }
+  }
   fundirMundo();
   // Las casas se funden aparte (su módulo conserva el color por vértice y los atributos de las ventanas).
   const casasFundidas=CASAS.fundir(barrio);mundo.add(casasFundidas);
@@ -466,7 +488,8 @@
 
   /* ---- Colisiones --------------------------------------------------------------------- */
   function dentroPlaza(p,r){for(const o of obstaculos){const dx=p.x-o.x,dz=p.z-o.z,d=Math.hypot(dx,dz),m=o.r+r;if(d<m&&d>1e-4){p.x=o.x+dx/d*m;p.z=o.z+dz/d*m;}}
-    const d=Math.hypot(p.x,p.z);if(d>R-r){p.x*=(R-r)/d;p.z*=(R-r)/d;}}
+    // Restricción contra las mismas caras que dibuja la muralla, incluidos los sellos de los portones.
+    let escala=1;for(const n of PLANOS_MURALLA){const d=p.x*n.x+p.z*n.z;if(d>R-r)escala=Math.min(escala,(R-r)/d);}p.x*=escala;p.z*=escala;}
   function separar(){const todos=[heroe,...enemigos.filter(e=>e.estado!=='muere')];for(let i=0;i<todos.length;i++)for(let j=i+1;j<todos.length;j++){const a=todos[i],b=todos[j];if(a===heroe&&heroe.estado==='salto')continue;
     const dx=b.pos.x-a.pos.x,dz=b.pos.z-a.pos.z,d=Math.hypot(dx,dz),m=a.radio+b.radio+(a===heroe?0:.55);
     if(d<m){const nx=d>1e-4?dx/d:1,nz=d>1e-4?dz/d:0,k=m-d,wa=a===heroe?(['carga','recuperacion'].includes(heroe.estado)?0:.15):a.ataque?0:.5,wb=b.ataque?0:.5;
@@ -752,7 +775,7 @@
       if(ol.espera>0||vivos>=max)return;
       // Refuerzos de hasta tres: sólo entran cuando la presión baja, nunca una cola continua de diez.
       if(!ol.lote){if(vivos>Math.max(1,max-3))return;ol.lote=Math.min(3,max-vivos,ol.cola.length);}
-      const [tipo,k]=ol.cola.shift(),a=CALLES[k%3]+(rnd()-.5)*.25,p=calle(a).multiplyScalar(R+3+rnd());crearEnemigo(tipo,p.x,p.z);
+      const [tipo,k]=ol.cola.shift(),a=CALLES[k%3],p=calle(a).multiplyScalar(R+3+rnd());crearEnemigo(tipo,p.x,p.z);
       ol.lote--;ol.espera=ol.lote?.75:2.4;return;}
     if(vivos){ol.descanso=null;return;}
     // Las fases internas no abren la selección: sólo el final de cada nivel.
@@ -1062,7 +1085,7 @@
     const suelo=adoquines();Object.assign(matSuelo,suelo);matSuelo.needsUpdate=true;capaQuemada.material.map=quemaduras();capaQuemada.material.needsUpdate=true;
     crearHeroe();medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
     estado('Preparando las cartas del botín…');await CAOZ_CARTA_PINTOR.fuentes();const logo=await imagen('./art/logo.webp');dorso.mat=F.materialDorso(CAOZ_CARTA_PINTOR.dorso(logo));
-    estado('WASD para moverte, clic izquierdo para atacar hacia el cursor, Espacio para parry, clic derecho para saltar, Q Torbellino, E Provocar.');
+    estado('Los portones sellados dejan entrar invasores; sus sellos ámbar bloquean tu salida. WASD para moverte, clic izquierdo para atacar hacia el cursor, Espacio para parry, clic derecho para saltar, Q Torbellino, E Provocar.');
     listo=true;paso(1/60);if(!CAPTURA)requestAnimationFrame(cuadro);else dibujar();
   }
 

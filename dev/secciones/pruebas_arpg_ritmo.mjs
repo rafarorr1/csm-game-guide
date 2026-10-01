@@ -8,10 +8,10 @@ const fuente=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'ut
 const contexto=vm.createContext({console});contexto.window=contexto;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),contexto);
 const obtener=(nombre,tipo='function')=>extraerDeclaracion(fuente,nombre,tipo).texto;
-const constantes=['DEF','RITMO','presion','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
+const constantes=['R','PANELES','DEF','RITMO','presion','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
 const funciones=['sectorLibre','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque'].map(n=>obtener(n)).join('\n');
 vm.runInContext(`
-const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,R=15.5,q={get:()=>null};
+const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,q={get:()=>null};
 const rog={vuelta:1,cartas:[],terminado:-1},iniciarDestino=()=>{};
 const peligrosTroll=[],activarFaseTroll=()=>{},puedeLanzarGoblin=()=>false,lanzarPiedras=()=>{};
 const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
