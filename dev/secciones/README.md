@@ -1208,3 +1208,11 @@ El cooperativo multiplica por dos el número de enemigos de cada oleada y campam
 Las cartas físicas del cooperativo usan acabado mate: rugosidad 0,95, metal 0, sin laca, iridiscencia, anisotropía, reflejo especular, reflejo de entorno ni destellos. La luz del botín baja al 25 % y el incremento al mirarlo pasa de 22 a 3. Se conserva la ilustración, el color de edición y el halo atenuado. Estos ajustes pertenecen al ARPG y no modifican el módulo compartido `three-carta.js` ni el juego de cartas.
 
 `node dev/secciones/pruebas_arpg_balance_coop.mjs` comprueba vida, composición de oleadas y campamentos, refuerzos iniciales, plazas de ataque y materiales, tanto en solitario como en cooperativo.
+
+### Liberación de carga, pociones y efectos
+
+La entrada de Adreida distingue el botón sostenido de un clic pendiente: el pendiente ya no mantiene una carga. Se recoge `pointerup` también fuera del lienzo y se cancela con seguridad al perder captura; la pérdida automática de captura después de soltar normalmente no cancela el golpe. Se conserva la recuperación intencional de 0,3 s tras el cargado completo. La prueba `pruebas_arpg_adreida_control.mjs` cubre liberación, pendiente residual, pérdida de captura y clic corto.
+
+Los braseros tienen las tres llamas ancladas en el centro de su copa, sin dispersión aleatoria. La altura de la llama crece verticalmente en el mundo, aunque su anchura mire hacia la cámara. El botín de vida usa frascos rojos con hombros, cuello, corcho y etiqueta, apoyados en el suelo; conserva la atracción y la curación del 20 % de Alma máxima. Sus geometrías y materiales se comparten entre pociones.
+
+Se reduce a la mitad la intensidad anterior del resplandor (bloom 0,5 → 0,25) y de la oclusión ambiental (0,85 → 0,425). La oclusión mantiene su interruptor y sigue desactivada por defecto.

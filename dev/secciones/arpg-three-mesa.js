@@ -53,10 +53,10 @@
   const camara=new THREE.PerspectiveCamera(32,1,.5,1200);
   const objetivo=new THREE.WebGLRenderTarget(2,2,{type:hdr?THREE.HalfFloatType:THREE.UnsignedByteType,samples:muestras});
   const composer=new EffectComposer(renderer,objetivo),pasoRender=new RenderPass(escena,camara);
-  const oclusion=new GTAOPass(escena,camara,2,2);oclusion.updateGtaoMaterial({radius:.9,distanceExponent:1.5,thickness:1.2,scale:1,samples:8});oclusion.blendIntensity=.85;
+  const oclusion=new GTAOPass(escena,camara,2,2);oclusion.updateGtaoMaterial({radius:.9,distanceExponent:1.5,thickness:1.2,scale:1,samples:8});oclusion.blendIntensity=.425;
   // La oclusión sólo oculta puntos y líneas en su pasada de normales; las llamas, haces y marcas (transparentes) tampoco deben hacer sombra de contacto.
   {const ocultar=oclusion._overrideVisibility.bind(oclusion);oclusion._overrideVisibility=function(){ocultar();escena.traverse(n=>{if(n.visible&&(n.material?.transparent||n.material?.userData?.sinOclusion)){n.visible=false;this._visibilityCache.push(n);}});};}
-  const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.5,.45,1.05),salida=new OutputPass();
+  const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.25,.45,1.05),salida=new OutputPass();
   // Oclusión y halo trabajan a media resolución; la escena y el HUD conservan su detalle.
   // El compositor vuelve a llamar setSize al redimensionar: aplicar la escala en cada pasada.
   for(const pasada of [oclusion,resplandor]){const ajustar=pasada.setSize.bind(pasada);pasada.setSize=(w,h)=>ajustar(Math.max(32,Math.round(w*.5)),Math.max(32,Math.round(h*.5)));}
@@ -111,16 +111,16 @@
   function poner(geo,mat,x,y,z,ry=0,sombra=true){const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.y=ry;m.castShadow=sombra;m.receiveShadow=true;mundo.add(m);return m;}
   const fuegos=[];// casas que arden: llamas y su luz
   const matLlama=new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
-    vertexShader:`attribute float aSem;attribute vec2 aTam;varying vec2 vUv;varying float vS;void main(){vUv=uv;vS=aSem;vec4 mv=modelViewMatrix*vec4(position,1.);mv.xy+=vec2((uv.x-.5)*aTam.x,uv.y*aTam.y);gl_Position=projectionMatrix*mv;}`,
+    vertexShader:`attribute float aSem;attribute vec2 aTam;varying vec2 vUv;varying float vS;void main(){vUv=uv;vS=aSem;vec4 mv=modelViewMatrix*vec4(position,1.);mv.x+=(uv.x-.5)*aTam.x;mv+=viewMatrix*vec4(0.,uv.y*aTam.y,0.,0.);gl_Position=projectionMatrix*mv;}`,
     fragmentShader:`uniform float uT;varying vec2 vUv;varying float vS;
       float h(vec2 p){p=fract(p*vec2(123.34,456.21));p+=dot(p,p+45.32);return fract(p.x*p.y);}
       float n(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),f.x),mix(h(i+vec2(0,1)),h(i+1.),f.x),f.y);}
       void main(){float r=n(vec2(vUv.x*4.+vS*7.,vUv.y*3.-uT*2.6+vS*3.))*.6+n(vec2(vUv.x*9.,vUv.y*7.-uT*4.))*.4;
         float forma=(1.-vUv.y)*(1.-smoothstep(.05,.5,abs(vUv.x-.5)*(1.1+vUv.y*1.6)));float f=smoothstep(.22,.85,forma*(.55+.9*r));
         vec3 c=mix(vec3(1.,.2,.02),vec3(1.,.62,.22),f*f);gl_FragColor=vec4(c*f*1.15,f);}`});
-  // Llamas: cuadros que miran siempre a la cámara (se construyen en el espacio de la vista).
-  function llamas(x,y,z,ancho,alto,n){const g=new THREE.BufferGeometry(),P=[],U=[],S=[],T=[],I=[];
-    for(let i=0;i<n;i++){const cx=x+(rnd()-.5)*ancho,cz=z+(rnd()-.5)*ancho*.6,w=(.5+rnd()*.5)*Math.max(.5,Math.min(1.8,ancho)),h=alto*(.7+rnd()*.6),s=rnd(),o=P.length/3;
+  // Llamas: anchura orientada a cámara, base anclada al soporte y altura vertical en el mundo.
+  function llamas(x,y,z,ancho,alto,n,dispersion=1){const g=new THREE.BufferGeometry(),P=[],U=[],S=[],T=[],I=[];
+    for(let i=0;i<n;i++){const cx=x+(rnd()-.5)*ancho*dispersion,cz=z+(rnd()-.5)*ancho*.6*dispersion,w=(.5+rnd()*.5)*Math.max(.5,Math.min(1.8,ancho)),h=alto*(.7+rnd()*.6),s=rnd(),o=P.length/3;
       for(const [u,v] of [[0,0],[1,0],[1,1],[0,1]]){P.push(cx,y,cz);U.push(u,v);S.push(s);T.push(w,h);}I.push(o,o+1,o+2,o,o+2,o+3);}
     g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));g.setAttribute('aSem',new THREE.Float32BufferAttribute(S,1));g.setAttribute('aTam',new THREE.Float32BufferAttribute(T,2));g.setIndex(I);
     const m=new THREE.Mesh(g,matLlama);m.frustumCulled=false;m.renderOrder=2;mundo.add(m);return m;}
@@ -150,7 +150,7 @@
     barril(-8.5,5,false);barril(-7.8,5.6,false);barril(-8.9,5.9,true);obstaculos.push({x:-8.3,z:5.5,r:1.1});
     for(const [x,z,s] of [[8.2,4.4,.9],[8.9,5.2,.7],[8.4,4.6,.6]])poner(new THREE.BoxGeometry(s,s,s),MAT.madera,x,s/2+(s===.6?.9:0),z,rnd());obstaculos.push({x:8.5,z:4.8,r:1});
     for(const [x,z] of [[-3.5,7.5],[4.5,-10]]){poner(new THREE.CylinderGeometry(.08,.08,1.2,6),MAT.hierro,x,.6,z);poner(new THREE.CylinderGeometry(.45,.2,.35,8,1,true),MAT.hierro,x,1.3,z);
-      const f=llamas(x,1.3,z,.9,1,3),luz=new THREE.PointLight(0xffa050,26,11,1.8);luz.position.set(x,2.1,z);mundo.add(luz);braseros.push({luz,f,x,z});obstaculos.push({x,z,r:.5});}}
+      const f=llamas(x,1.4,z,.48,.9,3,0),luz=new THREE.PointLight(0xffa050,26,11,1.8);luz.position.set(x,2.1,z);mundo.add(luz);braseros.push({luz,f,x,z});obstaculos.push({x,z,r:.5});}}
   // Todo lo estático de la plaza se funde por material: unas pocas mallas en vez de cientos.
   function fundirMundo(){mundo.updateMatrixWorld(true);const grupos=new Map(),quitar=[];
     mundo.traverse(o=>{if(!o.isMesh||o===suelo||o===terreno||o===capaQuemada||o.material.isShaderMaterial)return;if(!grupos.has(o.material))grupos.set(o.material,[]);grupos.get(o.material).push(o);quitar.push(o);});
@@ -415,11 +415,14 @@
       b.nombre.pos.copy(g.position).addScaledVector(arribaCam,ALTO*g.scale.x/2+.28);b.nombre.oculta=b.volando;b.nombre.el.classList.toggle('mirada',b.mirada>.5);}}
 
   /* ---- Globos de Alma (curan) y lanzas de los kobolds -------------------------------- */
-  const geoGlobo=new THREE.IcosahedronGeometry(.22,1),matGlobo=new THREE.MeshStandardMaterial({color:0x400008,emissive:0xff2a3a,emissiveIntensity:2.2,roughness:.3});
-  function globo(p){const m=new THREE.Mesh(geoGlobo,matGlobo);m.position.set(p.x,.5,p.z);escena.add(m);const a=rnd()*TAU;globos.push({m,pos:new V3(p.x,0,p.z),vel:new V3(Math.cos(a)*2,0,Math.sin(a)*2),t0:reloj.t});}
-  function pasoGlobos(dt){for(const g of [...globos])conHeroe(jugadores.filter(h=>h.vivo&&h.alma<h.almaMax).sort((a,b)=>plano(a.pos,g.pos)-plano(b.pos,g.pos))[0]||jugadores[0],()=>{g.vel.multiplyScalar(Math.exp(-dt*4));g.pos.addScaledVector(g.vel,dt);const d=plano(g.pos,heroe.pos);
+  // Pociones compartiendo geometrías y materiales: frasco, líquido, cuello, corcho y etiqueta.
+  const pocionGeo={cuerpo:new THREE.CylinderGeometry(.2,.16,.38,8),hombro:new THREE.CylinderGeometry(.085,.2,.13,8),cuello:new THREE.CylinderGeometry(.085,.085,.14,8),corcho:new THREE.CylinderGeometry(.075,.08,.09,8),etiqueta:new THREE.BoxGeometry(.16,.15,.012)};
+  const pocionMat={rojo:new THREE.MeshStandardMaterial({color:0x9c1731,roughness:.72,metalness:0}),vidrio:new THREE.MeshStandardMaterial({color:0x91bac0,roughness:.65,metalness:0}),corcho:new THREE.MeshStandardMaterial({color:0x8c6337,roughness:1}),papel:new THREE.MeshStandardMaterial({color:0xf0dbac,roughness:1})};
+  function modeloPocion(){const g=new THREE.Group();for(const [geo,mat,y,z] of [[pocionGeo.cuerpo,pocionMat.rojo,.21,0],[pocionGeo.hombro,pocionMat.vidrio,.465,0],[pocionGeo.cuello,pocionMat.vidrio,.6,0],[pocionGeo.corcho,pocionMat.corcho,.7,0],[pocionGeo.etiqueta,pocionMat.papel,.22,.195]]){const m=new THREE.Mesh(geo,mat);m.position.set(0,y,z);m.castShadow=true;g.add(m);}return g;}
+  function globo(p){const m=modeloPocion();m.position.set(p.x,.025,p.z);escena.add(m);const a=rnd()*TAU;globos.push({m,pos:new V3(p.x,0,p.z),vel:new V3(Math.cos(a)*2,0,Math.sin(a)*2),t0:reloj.t});}
+  function pasoGlobos(dt){for(const g of [...globos])conHeroe(jugadores.filter(h=>h.vivo&&h.alma<h.almaMax).sort((a,b)=>plano(a.pos,g.pos)-plano(b.pos,g.pos))[0]||jugadores[0],()=>{g.vel.multiplyScalar(Math.exp(-dt*4));g.pos.addScaledVector(g.vel,dt);dentroPlaza(g.pos,.22);const d=plano(g.pos,heroe.pos);
     const herida=heroe.vivo&&heroe.alma<heroe.almaMax;if(herida&&d<3.2){g.pos.lerp(heroe.pos,Math.min(1,dt*(3.2-d)*3));}
-    g.m.position.set(g.pos.x,.45+Math.sin(reloj.t*3+g.t0)*.08,g.pos.z);g.m.rotation.y+=dt*2;
+    g.m.position.set(g.pos.x,.025,g.pos.z);g.m.rotation.y+=dt*.45;
     if(herida&&d<1){const c=Math.round(heroe.almaMax*.2);heroe.alma=Math.min(heroe.almaMax,heroe.alma+c);numero(heroe.pos.clone().setY(2.2),'+'+c,'cura');chispas(g.m.position,16,[1,.25,.3],3,.4);escena.remove(g.m);globos.splice(globos.indexOf(g),1);}});}
   const geoLanza=new THREE.CylinderGeometry(.024,.024,1.2,6).rotateX(Math.PI/2),geoPunta=new THREE.ConeGeometry(.17,.38,4).rotateX(Math.PI/2).translate(0,0,.69);
   // Flechas luminosas: punta ancha, asta, plumas y una estela afilada orientadas hacia el avance.
@@ -623,7 +626,7 @@
     else if(['quieto','andar'].includes(h.estado)){movido=ctl.atacar&&!h.bloqueoBasico?0:andar(mov,VEL);if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
       if(ctl.atacar&&!h.bloqueoBasico){if(ent.piloto)iniciarGolpe();else iniciarCarga();}else h.estado=movido>0?'andar':'quieto';}
     else if(h.estado==='carga'&&(document.hidden||!mando.foco||h.cargaMando&&!mando.activo)){h.carga=0;h.bloqueoBasico=true;cambiar(h,'quieto');}
-    else if(h.estado==='carga'){h.carga=Math.max(0,Math.min(1,(h.t-.18)/.72));h.dir=rumbo(h.pos,puntoApuntado());if(!ctl.atacar)iniciarGolpe();}
+    else if(h.estado==='carga'){ent.pendiente=false;h.carga=Math.max(0,Math.min(1,(h.t-.18)/.72));h.dir=rumbo(h.pos,puntoApuntado());if(!ctl.atacar)iniciarGolpe();}
     else if(h.estado==='golpe'){const C=COMBO[h.combo];h.t+=dt*(h.vatq-1);// más velocidad de ataque: la animación y el impacto llegan antes
       // Un paso adelante al golpear, salvo si ya hay alguien delante.
       if(h.carga>=.5){const avance=.65*h.carga*tramo(h.t/C.dur,.38,.62);h.pos.addScaledVector(frente(h.dir),avance-(h.avanceCargado||0));h.avanceCargado=avance;}
@@ -910,8 +913,17 @@
     ent.piloto=false;ent.dentro=true;lienzo.setPointerCapture?.(e.pointerId);
     if(e.button===2)usar('salto',ent.suelo.clone());else if(e.button===0)ent.atacando=ent.pendiente=true;});
   lienzo.addEventListener('pointermove',e=>{if(e.pointerType==='touch')return;apuntar(e.clientX,e.clientY);ent.dentro=true;});
-  const soltarPuntero=e=>{if(e.button===0||e.type==='pointercancel')ent.atacando=false;if(e.type==='pointercancel'&&heroe.estado==='carga'){heroe.carga=0;cambiar(heroe,'quieto');ent.pendiente=false;}};
-  lienzo.addEventListener('pointerup',soltarPuntero);lienzo.addEventListener('pointercancel',soltarPuntero);lienzo.addEventListener('pointerleave',()=>{ent.dentro=false;});
+  function soltarBasico(cancelar=false){const sostenido=ent.atacando;ent.atacando=false;
+    if(heroe.estado==='carga'){ent.pendiente=false;if(cancelar&&sostenido){heroe.carga=0;heroe.bloqueoBasico=true;cambiar(heroe,'quieto');}}
+    else if(cancelar)ent.pendiente=false;
+  }
+  const soltarPuntero=e=>{if(e.button===0||e.type==='pointercancel')soltarBasico(e.type==='pointercancel');};
+  lienzo.addEventListener('pointerup',soltarPuntero);lienzo.addEventListener('pointercancel',soltarPuntero);
+  lienzo.addEventListener('lostpointercapture',()=>{if(ent.atacando)soltarBasico(true);});
+  // La liberación también llega al salir del lienzo; una captura perdida no deja el básico pegado.
+  addEventListener('pointerup',soltarPuntero);addEventListener('pointercancel',soltarPuntero);
+  addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&!(e.buttons&1)&&ent.atacando)soltarBasico();});
+  lienzo.addEventListener('pointerleave',()=>{ent.dentro=false;});
   addEventListener('keydown',e=>{const k=e.code;if(k==='KeyM'&&ABIERTO){e.preventDefault();if(!e.repeat){exploracion.grande=!exploracion.grande;$('mapaPanel').classList.toggle('ampliado',exploracion.grande);pintarMapa();}return;}if(k==='Escape'){e.preventDefault();if(!e.repeat)ponerPausa(!pausa.activa);return;}if(pausa.activa||rog.abierto||e.target.closest?.('input,textarea,select'))return;
     if(DIRS[k]){e.preventDefault();teclas.add(k);ent.piloto=false;return;}
     const h=ACCION[k];if(h){e.preventDefault();if(e.repeat)return;ent.piloto=false;usar(h,h==='salto'?puntoApuntado():null);}});
@@ -919,7 +931,7 @@
   // Botones del HUD (y de táctil): Atacar se mantiene pulsado; los demás lanzan su habilidad.
   for(const b of document.querySelectorAll('[data-hab]')){const h=b.dataset.hab;
     b.addEventListener('pointerdown',e=>{mando.activo=false;e.preventDefault();e.stopPropagation();ent.piloto=false;if(e.pointerType==='touch')activarTactil();if(h==='tajo'){ent.atacando=ent.pendiente=true;b.setPointerCapture?.(e.pointerId);return;}usar(h,h==='salto'?puntoApuntado():null);});
-    if(h==='tajo')for(const t of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(t,()=>{ent.atacando=false;});}
+    if(h==='tajo')for(const t of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(t,()=>{if(t==='lostpointercapture'){if(ent.atacando)soltarBasico(true);}else soltarBasico(t==='pointercancel');});}
   // Palanca táctil: arrastra para andar (la cámara mira al norte: arriba es el fondo de la plaza).
   function activarTactil(){if(ent.tactil)return;ent.tactil=true;esc.classList.add('tactil');}
   if(matchMedia('(pointer:coarse)').matches)activarTactil();
@@ -936,7 +948,7 @@
     if(ent.piloto){const p=piloto();ctl.mov.copy(p.mov);ctl.atacar=p.atacar;ctl.apunta=p.apunta;return;}
     if(ent.rev){ctl.mov.copy(ent.rev.mov);ctl.atacar=ent.rev.atacar;ctl.apunta=ent.rev.apunta;return;}
     if(COOP&&(heroe.id===1||DOS_MANDOS)){ctl.mov.set(0,0,0);ctl.atacar=false;ctl.apunta=heroe.pos.clone().addScaledVector(frente(heroe.dir),7);return;}
-    ctl.mov.copy(ent.palanca||movTeclado());ctl.atacar=ent.atacando||ent.pendiente;ctl.apunta=ent.tactil||!(ent.dentro||ent.atacando)?null:ent.sobre?.d?ent.sobre.pos.clone():ent.suelo.clone();}// con el ratón encima de un enemigo se apunta a él
+    ctl.mov.copy(ent.palanca||movTeclado());ctl.atacar=ent.atacando||(heroe.estado!=='carga'&&ent.pendiente);ctl.apunta=ent.tactil||!(ent.dentro||ent.atacando)?null:ent.sobre?.d?ent.sobre.pos.clone():ent.suelo.clone();}// con el ratón encima de un enemigo se apunta a él
 
   /* ---- Piloto automático (Demostración): lee los avisos igual que un jugador ----------------- */
   function escape(a,e,p){const o=a.centro||e.pos;if(a.forma==='linea'){const f=frente(a.dir),lado=new V3(-f.z,0,f.x),s=Math.sign(p.clone().sub(o).dot(lado))||1;return lado.multiplyScalar(s);}

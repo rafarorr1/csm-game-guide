@@ -9,7 +9,7 @@ vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.ur
 const extraer=(n,t='function')=>extraerDeclaracion(s,n,t).texto;
 vm.runInContext(`
 const V3=CAOZ_THREE.THREE.Vector3,TAU=Math.PI*2,enemigos=[],botines=[],reloj={t:0},rog={abierto:false},pausa={activa:false};
-const ent={piloto:false,pendiente:false},ctl={mov:new V3(),atacar:false,apunta:new V3(0,0,6)},mando={activo:false,foco:true},document={hidden:false};
+const ent={piloto:false,pendiente:false,suelo:new V3(0,0,6)},ctl={mov:new V3(),atacar:false,apunta:new V3(0,0,6)},mando={activo:false,foco:true},document={hidden:false};
 const heroe={};const jugadores=[heroe];let paron=0,impactos=[],sacudidas=[];
 const aDistancia=()=>heroe.tipo==='mohamed',plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),difAng=(a,b)=>b-a;
@@ -95,3 +95,14 @@ assert.equal(run('heroe.estado'),'recuperacion');assert.ok(run('heroe.pos.equals
 assert.equal(run("usar('esquiva')"),false);assert.equal(run("usar('parry')"),false);
 run('avanzar(.05)');assert.equal(run('heroe.estado'),'quieto');
 console.log('✓ Recuperación completa: pose fija, 0,3 s inmóvil y sin cancelación por habilidades');
+// Soltar fuera del lienzo o perder captura no puede dejar una carga retenida.
+run(`const COOP=false,DOS_MANDOS=false;const leerMando=()=>null,movTeclado=()=>new V3();
+${extraer('leerControles')}
+${extraer('soltarBasico')}`);
+run('reset();ent.atacando=true;leerControles();ctl.apunta=new V3(0,0,6);avanzar(.7);ent.pendiente=true;ent.atacando=false;leerControles()');
+assert.equal(run('ctl.atacar'),false,'Una pulsación pendiente no prolonga una carga sin botón sostenido');
+run('ctl.apunta=new V3(0,0,6);avanzar(.8)');assert.equal(run('impactos.length'),1);assert.equal(run('ent.pendiente'),false);
+run('reset();ent.atacando=true;ctl.atacar=true;avanzar(1.2);soltarBasico();leerControles();ctl.apunta=new V3(0,0,6);avanzar(1)');assert.equal(run('impactos.length'),1);assert.equal(run('heroe.estado'),'quieto');
+run('reset();ent.atacando=true;ctl.atacar=true;avanzar(1.2);soltarBasico(true);leerControles();avanzar(1)');assert.equal(run('impactos.length'),0);assert.equal(run('heroe.estado'),'quieto');
+run('reset();ent.atacando=true;ent.pendiente=true;soltarBasico();leerControles()');assert.equal(run('ctl.atacar'),true,'Un clic corto conserva un único básico');
+console.log('✓ Carga libera al soltar, ignora pulsaciones pendientes y cancela al perder captura; clic corto intacto');
