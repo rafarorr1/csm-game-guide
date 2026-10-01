@@ -8,7 +8,7 @@ const c=vm.createContext({console});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const extraer=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
 vm.runInContext(`
-const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2;
+const FACTOR_COOP=1;const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2;
 const escena=new THREE.Scene(),enemigos=[],reloj={t:0},heroe={pos:new V3(),radio:.4,invul:0,vivo:true,dir:Math.PI,estado:'quieto',t:0,cd:{},furia:0,parrys:0};
 const jugadores=[heroe],conHeroe=(h,f)=>f();const marcas=[];let paron=0,recibido=0,avisos=0;
 const rnd=()=>.5,plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),frente=a=>new V3(Math.sin(a),0,Math.cos(a));

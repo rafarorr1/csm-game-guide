@@ -11,7 +11,7 @@ const obtener=(nombre,tipo='function')=>extraerDeclaracion(fuente,nombre,tipo).t
 const constantes=['R','PANELES','DEF','RITMO','presion','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
 const funciones=['sectorLibre','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque'].map(n=>obtener(n)).join('\n');
 vm.runInContext(`
-const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,q={get:()=>null};
+const FACTOR_COOP=1;const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,q={get:()=>null};
 const rog={vuelta:1,cartas:[],terminado:-1},iniciarDestino=()=>{};
 const peligrosTroll=[],activarFaseTroll=()=>{},puedeLanzarGoblin=()=>false,lanzarPiedras=()=>{};
 const objetivoEnemigo=()=>heroe,conHeroe=(h,f)=>f();const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
