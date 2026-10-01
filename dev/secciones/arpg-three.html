@@ -22,12 +22,14 @@
   <div class="apControles" role="group" aria-label="Acciones">
     <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
     <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
+    <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
     <button type="button" class="apBoton" id="abrirPausa">Pausa · Esc / Options</button>
     <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
   </div>
   <label class="apModo">Partida <select id="modoEquipo"><option value="solo">Un jugador</option><option value="mixto">Cooperativo · Teclado/ratón + mando</option><option value="mandos">Cooperativo · Dos mandos</option></select></label>
   <fieldset class="apEfectos">
-    <legend>Efectos</legend>
+    <legend>Efectos e interfaz</legend>
+    <label><input type="checkbox" data-mostrar-stats checked> Mostrar estadísticas (incluye FPS)</label>
     <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
     <label><input type="checkbox" data-efecto="oclusion"> Oclusión ambiental</label>
     <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
@@ -35,6 +37,7 @@
   </fieldset>
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
     <div id="pausaOtra" class="apPausaOtra" hidden><p>Otra partida está activa.</p><button type="button" id="reanudarPartida" class="apBoton">Continuar aquí</button></div>
+    <button type="button" id="pausaPantalla" class="apBoton apPausaPantalla">Pausa · Esc / Options</button>
     <canvas tabindex="-1" id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>
@@ -72,6 +75,11 @@
 <dialog id="pausa" class="apMenuPausa" aria-labelledby="pausaTitulo">
   <h2 id="pausaTitulo">En pausa</h2>
   <p>La partida se detiene aquí.</p>
+  <div class="apAjustesPausa">
+    <label><input type="checkbox" data-mostrar-stats checked> Mostrar estadísticas (incluye FPS)</label>
+    <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
+    <p id="estadoPantalla" role="status" aria-live="polite"></p>
+  </div>
   <button type="button" id="continuar" class="apBoton">Continuar</button>
   <small>Escape · Options del control · × para continuar</small>
 </dialog>

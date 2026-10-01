@@ -1216,3 +1216,7 @@ La entrada de Adreida distingue el botón sostenido de un clic pendiente: el pen
 Los braseros tienen las tres llamas ancladas en el centro de su copa, sin dispersión aleatoria. La altura de la llama crece verticalmente en el mundo, aunque su anchura mire hacia la cámara. El botín de vida usa frascos rojos con hombros, cuello, corcho y etiqueta, apoyados en el suelo; conserva la atracción y la curación del 20 % de Alma máxima. Sus geometrías y materiales se comparten entre pociones.
 
 Se reduce a la mitad la intensidad anterior del resplandor (bloom 0,5 → 0,25) y de la oclusión ambiental (0,85 → 0,425). La oclusión mantiene su interruptor y sigue desactivada por defecto.
+
+### Estadísticas y pantalla completa
+
+«Mostrar estadísticas (incluye FPS)», en los controles y en el menú de pausa, permite ocultar tanto las cifras del personaje como el diagnóstico inferior. La preferencia se guarda en este navegador y mantiene visibles Alma, Furia y habilidades. «Pantalla completa» amplía únicamente el escenario; los diálogos de pausa y destino siguen disponibles. Se sale desde el mismo botón en pausa o con Escape del navegador. El tamaño de render se adapta automáticamente.

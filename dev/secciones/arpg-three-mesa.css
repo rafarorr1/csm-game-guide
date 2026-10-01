@@ -166,3 +166,15 @@ html[data-captura] .apInfo{display:none}
 .apAliado{color:#9be6d6;font:bold 12px system-ui;text-shadow:0 2px 3px #000;white-space:nowrap}
 .apMapa{position:absolute;left:12px;top:85px;width:165px;background:#111722e8;border:1px solid #928269;border-radius:8px;overflow:hidden;z-index:7;pointer-events:none}.apMapa canvas{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:1}.apMapa small{display:block;padding:7px;color:#e3d9bd;font:10px system-ui}.apMapa.ampliado{width:min(60%,480px);left:50%;top:12%;transform:translateX(-50%)}
 .apMapa[hidden],.apEquipo[hidden]{display:none}
+
+/* Preferencias de interfaz y escenario a pantalla completa. */
+.apSinStats .apStats,.apSinStats .apInfo{display:none}
+.apAjustesPausa{display:grid;gap:14px;margin-bottom:20px;font:13px/1.4 system-ui,sans-serif}
+.apAjustesPausa label{display:flex;align-items:center;gap:8px;text-align:left}
+.apAjustesPausa #estadoPantalla{margin:0}.apAjustesPausa #estadoPantalla:empty{display:none}
+.apPausaPantalla{display:none}
+html:fullscreen body{padding:0;overflow:hidden}
+html:fullscreen .apShell{width:100%;gap:0}
+html:fullscreen .apShell>*:not(.apEscenario){display:none}
+html:fullscreen .apEscenario{width:100vw;height:100dvh;min-height:0;border:0;border-radius:0}
+html:fullscreen .apPausaPantalla{display:block;position:absolute;right:12px;bottom:150px;z-index:5}

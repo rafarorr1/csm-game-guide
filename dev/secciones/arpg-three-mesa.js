@@ -870,6 +870,26 @@
   if(COOP){for(const b of document.querySelectorAll('[data-heroe]'))b.disabled=true;$('demo').hidden=true;}
   $('continuar').onclick=()=>ponerPausa(false);
   $('abrirPausa').onclick=()=>ponerPausa(true);
+  $('pausaPantalla').onclick=()=>ponerPausa(true);
+  // Preferencia local: ocultar las cifras auxiliares conserva vida, furia y habilidades.
+  const controlesStats=document.querySelectorAll('[data-mostrar-stats]');
+  function mostrarStats(v){document.documentElement.classList.toggle('apSinStats',!v);for(const c of controlesStats)c.checked=v;}
+  let statsVisibles=true;try{statsVisibles=localStorage.getItem('arpg-mostrar-stats')!=='0';}catch{}
+  mostrarStats(statsVisibles);
+  for(const c of controlesStats)c.onchange=()=>{mostrarStats(c.checked);try{localStorage.setItem('arpg-mostrar-stats',c.checked?'1':'0');}catch{}};
+  const botonesPantalla=document.querySelectorAll('[data-pantalla-completa]');
+  function rotularPantalla(){const activa=!!document.fullscreenElement;for(const b of botonesPantalla){b.textContent=activa?'Salir de pantalla completa':'Pantalla completa';b.setAttribute('aria-pressed',String(activa));}}
+  for(const b of botonesPantalla)b.onclick=async()=>{
+    try{
+      if(document.fullscreenElement)await document.exitFullscreen();
+      else if(document.documentElement.requestFullscreen)await document.documentElement.requestFullscreen();
+      else throw new Error('Pantalla completa no disponible');
+      $('estadoPantalla').textContent='';
+    }catch{const texto='Este navegador no permitió la pantalla completa. Puedes ampliarlo desde su menú.';$('estadoPantalla').textContent=texto;estado(texto);}
+    rotularPantalla();
+  };
+  document.addEventListener('fullscreenchange',rotularPantalla);
+
   $('pausa').addEventListener('cancel',e=>{e.preventDefault();ponerPausa(false);});
   const BOTONES_MANDO={0:'esquiva',1:'salto',3:'provocar',4:'parry',5:'torbellino',6:'parry',10:'ulti'};
   function ejeMando(x=0,z=0){const d=Math.hypot(x,z);return d<=.18?new V3():new V3(x,0,z).multiplyScalar(Math.min(1,(d-.18)/.82)/d);}
