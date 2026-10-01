@@ -139,11 +139,11 @@
     "art/zancada.webp": "c3d6ddd4f63b0c04cb4eecfc91d94effe4734f5a65f7d6045603812fcf28eda0",
     "escritorio.html": "6c4fccf712f87b3ee6e2a6e6980a40a7b1cf3394c26f5dafd81b6d2ef8526c88",
     "generado/desktop/base.css": "b1c10e87f6a8c98a61f12b6561ffe840279e7582344a3b75447ed1170ffed60e",
-    "generado/desktop/datos.js": "fbb790c76aa45fb79b80a16bf06ee116054116c946a0ba8716b053e87df49826",
+    "generado/desktop/datos.js": "4a4da2422daec4c562551d28663edc41f802656d0801c947c284a3d4b406bf18",
     "generado/desktop/manifiesto.json": "999902bc61027f294e849178d8c159d66593f4938f87fd88c69a1e64a78c701e",
     "generado/desktop/renderer.js": "90f02452b39a8770fcadc74528068f6c84635c1992f668c1265d79a682ffbd4e",
     "generado/movil/base.css": "b1c10e87f6a8c98a61f12b6561ffe840279e7582344a3b75447ed1170ffed60e",
-    "generado/movil/datos.js": "fbb790c76aa45fb79b80a16bf06ee116054116c946a0ba8716b053e87df49826",
+    "generado/movil/datos.js": "4a4da2422daec4c562551d28663edc41f802656d0801c947c284a3d4b406bf18",
     "generado/movil/manifiesto.json": "13c8917ec342a58a4b657b3491a560a1d7d186e92aa275e5178e9b1746d5da18",
     "generado/movil/renderer.js": "f2aa89bda035322d7064ac97cafb273c3d89a7fad31d0f09c8f1f62892ac564e",
     "index.html": "303a020943c36d0fa7f87ab7835916f9a708e15a687cef89711376ce27b5280b",
@@ -169,7 +169,7 @@
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/balance-logros-promotion",
-    "sha": "9baf839931558e12107af25bd8e370894dc8aec8"
+    "sha": "df59fc65faa27d3e03a62542b3c13d5be2de9ced"
   },
   "seccion": "referencia-cartas",
   "version": 1
