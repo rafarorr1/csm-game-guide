@@ -329,11 +329,29 @@
       for(const n of nombres){const tam=lista[0].attributes[n].itemSize,tot=lista.reduce((a,g)=>a+g.attributes[n].count,0),arr=new Float32Array(tot*tam);let o=0;for(const g of lista){arr.set(g.attributes[n].array,o);o+=g.attributes[n].array.length;}r.setAttribute(n,new THREE.BufferAttribute(arr,tam));}
       r.computeBoundingSphere();return r;}
     // Todas las casas en una malla por material (en coordenadas del mundo): pocas llamadas de dibujo.
-    function fundir(casas){const porMat=new Map();
-      for(const c of casas){c.updateMatrixWorld(true);for(const m of c.children){const g=m.geometry.clone(),mw=m.matrixWorld;g.applyMatrix4(mw);const nm=new THREE.Matrix3().getNormalMatrix(mw);
+    function fundir(casas,opciones={}){
+      const porMat=new Map(),opacidades=new Float32Array(casas.length).fill(1),cajas=[];
+      for(const [indice,c] of casas.entries()){c.updateMatrixWorld(true);cajas.push(new THREE.Box3().setFromObject(c));for(const m of c.children){const g=m.geometry.clone(),mw=m.matrixWorld;g.applyMatrix4(mw);const nm=new THREE.Matrix3().getNormalMatrix(mw);
+        if(opciones.ocultables)g.setAttribute('aCasa',new THREE.Float32BufferAttribute(new Float32Array(g.attributes.position.count).fill(indice),1));
         for(const k of ['aT','aN'])if(g.attributes[k]){g.attributes[k].applyNormalMatrix(nm);g.attributes[k].needsUpdate=true;}
         if(!porMat.has(m.material))porMat.set(m.material,{lista:[],malla:m});porMat.get(m.material).lista.push(g);}}
-      const grupo=new THREE.Group();for(const [mat,{lista,malla}] of porMat){const m=new THREE.Mesh(unir(lista),mat);m.castShadow=malla.castShadow;m.receiveShadow=malla.receiveShadow;m.renderOrder=malla.renderOrder;m.frustumCulled=false;grupo.add(m);}
+      const grupo=new THREE.Group();for(const [mat,{lista,malla}] of porMat){
+        const material=opciones.ocultables?mat.clone():mat;
+        if(opciones.ocultables){
+          if(mat.isShaderMaterial)material.uniforms=mat.uniforms;
+          const previo=mat.onBeforeCompile;
+          material.onBeforeCompile=function(sh,r){previo.call(this,sh,r);sh.uniforms.uCasas={value:opacidades};
+            sh.vertexShader='attribute float aCasa;varying float vCasa;\n'+sh.vertexShader;
+            sh.vertexShader=sh.vertexShader.replace(/void main\(\)\s*\{/,'void main(){vCasa=aCasa;');
+            sh.fragmentShader='varying float vCasa;uniform float uCasas['+casas.length+'];\n'+sh.fragmentShader;
+            sh.fragmentShader=sh.fragmentShader.replace(/void main\(\)\s*\{/,`void main(){
+              float muestraCasa=fract(sin(dot(floor(gl_FragCoord.xy),vec2(12.9898,78.233)))*43758.5453);
+              if(muestraCasa>uCasas[int(vCasa+.5)])discard;`);
+          };material.customProgramCacheKey=()=> 'casas-ocultables-'+casas.length+'-'+mat.uuid;
+        }
+        const m=new THREE.Mesh(unir(lista),material);m.castShadow=malla.castShadow;m.receiveShadow=malla.receiveShadow;m.renderOrder=malla.renderOrder;m.frustumCulled=false;grupo.add(m);
+      }
+      if(opciones.ocultables)grupo.userData.ocultacion={opacidades,cajas};
       return grupo;}
     return {casa,fundir,materiales:M,uniformes,TIPOS};
   }

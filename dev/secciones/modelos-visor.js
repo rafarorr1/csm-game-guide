@@ -7,6 +7,7 @@
   // Animaciones: nombre, duración de un ciclo (s) y para quién tiene sentido.
   const ANIMS=[['quieto',2.8],['andar',1.1],['tajoA',1.1,'adreida'],['revesA',1.1,'adreida'],['estocadaA',1.4,'adreida'],['torbellino',1],['salto',1.3],['parry',.8],
     ['golpe',1.1],['reves',1.1],['estocada',1.3],['aviso',1],['esquiva',.7],['grito',1.2],['lanzar',1.1],['apunta',1.2],['disparar',.5,'mohamed'],['acrobacia',1,'mohamed'],
+    ['muerte-partida',2.05,'goblins','Cargado completo · partido en dos',{...F.crearMuerteGoblin('cargado',0),partido:true,rodada:null,duracion:1.35,distancia:1.4,contactos:[.55,.8]}],
     ['cargaMazazo',1.5,'troll'],['mazazo',1.4,'troll'],['aturdido',2],['dolor',.5],['muerte',2],
     ...Object.entries(F.muertesGoblin).flatMap(([tipo,variantes])=>variantes.map((p,i)=>['muerte-'+tipo+'-'+(i+1),p.duracion+.7,'goblins',p.nombre,F.crearMuerteGoblin(tipo,i)]))];
   const lienzo=$('lienzo'),render=new THREE.WebGLRenderer({canvas:lienzo,antialias:true});

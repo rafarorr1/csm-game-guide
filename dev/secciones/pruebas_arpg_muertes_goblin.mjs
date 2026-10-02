@@ -40,7 +40,7 @@ run(`const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,MOD=CAOZ_ARPG_M
 const escena=new THREE.Scene(),enemigos=[],obstaculos=[],PLANOS_MURALLA=[{x:0,z:1},{x:0,z:-1},{x:1,z:0},{x:-1,z:0}],ABIERTO=false,R=26;
 let heroe={id:0,pos:new V3(0,0,-3),dir:0},particulasPolvo=[],paron=0;
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),difAng=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a)),plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z);
-const numero=()=>{},brasas=()=>{},cancelarAtaque=e=>e.ataque=null,limpiarPeligrosTroll=()=>{},activarFaseTroll=()=>{},blindadoTroll=()=>false,rnd=()=>.5,particula=(...p)=>particulasPolvo.push(p);
+let azarPrueba=.5;const numero=()=>{},brasas=()=>{},cancelarAtaque=e=>e.ataque=null,limpiarPeligrosTroll=()=>{},activarFaseTroll=()=>{},blindadoTroll=()=>false,rnd=()=>azarPrueba,particula=(...p)=>particulasPolvo.push(p);
 ${['cambiar','danar','morir','avanzarCaidaGoblin','dentroPlaza','pasoEnemigo'].map(n=>get(n)).join('\n')}
 function blanco(){const e={tipo:'goblin',pos:new V3(),dir:Math.PI,m:MOD.crear('goblin'),d:{},vida:10,estado:'quieto',emp:new V3(),sinBotin:true,radio:.3,provocado:0,destello:0,cd:0,dentro:true,fase:0,paso:0};enemigos.push(e);escena.add(e.m.raiz);return e;}
 `);
@@ -72,3 +72,25 @@ F.emitirPolvoMuerte(new THREE.Vector3(),3,null,emitir,()=>.5);assert.ok(nube.len
 run("particulasPolvo=[];e=blanco();danar(e,100,{exacto:true,causa:'daga'});e.t=1.5;avanzarCaidaGoblin(e)");assert.equal(run('particulasPolvo.length'),0);
 run("particulasPolvo=[];e=blanco();danar(e,100,{exacto:true,causa:'salto'});e.t=e.muerte.duracion;avanzarCaidaGoblin(e)");const polvoFinal=run('particulasPolvo.length');assert.ok(polvoFinal>=10);run('avanzarCaidaGoblin(e)');assert.equal(run('particulasPolvo.length'),polvoFinal,'Los impactos no repiten polvo al quedar inmóvil');
 console.log('✓ Torso, cadera y cabeza apoyados en 48 finales; rodada sincronizada al avance y al pivote; polvo sólo con impulso y al tocar el suelo');
+
+// Sólo el cargado completo puede separar al goblin; el umbral del sorteo es 33 %.
+for(const azar of [0,.12,.329,.33,.7,.999])for(const completa of [false,true]){
+ run(`azarPrueba=${azar};e=blanco();danar(e,100,{exacto:true,causa:'cargado',cargaCompleta:${completa}})`);
+ assert.equal(!!run('e.muerte.partido'),completa&&azar<.33);run('azarPrueba=.5');
+}
+for(const tipo of ['goblin','cobrador'])for(const variante of [0,1]){
+ const m=F.crear(tipo),muerte={...F.crearMuerteGoblin('cargado',variante),partido:true};
+ const arriba=new Set();m.H.torso.traverse(b=>arriba.add(b));
+ for(let i=0;i<=60;i++){
+  F.posar(m,{anim:'muerte',muerte,k:i/60,t:i/60});m.raiz.updateMatrixWorld(true);
+  const min=[Infinity,Infinity],max=[-Infinity,-Infinity];
+  for(const mesh of m.mallas)for(let j=0;j<mesh.geometry.attributes.position.count;j++){
+   const grupo=arriba.has(mesh.skeleton.bones[mesh.geometry.attributes.skinIndex.getX(j)])?1:0;
+   mesh.applyBoneTransform(j,v.fromBufferAttribute(mesh.geometry.attributes.position,j));min[grupo]=Math.min(min[grupo],v.y);max[grupo]=Math.max(max[grupo],v.y);
+  }
+  assert.ok(min.every(y=>Number.isFinite(y)&&y>-.035),'Las dos mitades no atraviesan el piso');
+  if(i===60){assert.ok(min.every(y=>y<.025),'Ambas mitades terminan apoyadas');assert.ok(max.every(y=>y<.65),'Las dos mitades quedan tumbadas');}
+ }
+ F.posar(m,{anim:'quieto'});assert.equal(m.H.torso.position.x,0);assert.equal(m.H.torso.position.y,m.p.cintura);
+}
+console.log('✓ Corte al 33 % sólo con carga completa; dos mitades apoyadas y restablecimiento del modelo');

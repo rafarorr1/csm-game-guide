@@ -8,14 +8,14 @@ const fuente=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'ut
 const contexto=vm.createContext({console});contexto.window=contexto;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),contexto);
 const obtener=(nombre,tipo='function')=>extraerDeclaracion(fuente,nombre,tipo).texto;
-const constantes=['R','PANELES','DEF','RITMO','presion','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
-const funciones=['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','sectorLibre','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque','empezarComboCan'].map(n=>obtener(n)).join('\n');
+const constantes=['R','PANELES','DEF','RITMO','presion','refuerzosCan','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
+const funciones=['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','sectorLibre','planEnemigo','convocarGoblins','pasoRefuerzosCan','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque','empezarComboCan'].map(n=>obtener(n)).join('\n');
 vm.runInContext(`
 const FACTOR_COOP=1;const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,q={get:()=>null};
 const rog={vuelta:1,cartas:[],terminado:-1},iniciarDestino=()=>{};
 const peligrosTroll=[],activarFaseTroll=()=>{},puedeLanzarGoblin=()=>false,lanzarPiedras=()=>{};
 const objetivoEnemigo=()=>heroe,conHeroe=(h,f)=>f();const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
-const ABIERTO=false;const heroe={pos:new V3(),alma:60,almaMax:120,radio:.4,vivo:true,invul:0,estado:'quieto'};const jugadores=[heroe];let sigId=1,semilla=11;
+const ABIERTO=false;const heroe={pos:new V3(),alma:60,almaMax:120,radio:.4,vivo:true,invul:0,dir:0,estado:'quieto'};const jugadores=[heroe];let sigId=1,semilla=11;
 const rnd=()=>(semilla=semilla*16807%2147483647)/2147483647,plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),calle=a=>new V3(Math.cos(a),0,Math.sin(a));
 const difAng=(a,b)=>{let d=(b-a)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;};
@@ -26,8 +26,8 @@ const colocarAtaque=()=>{},cancelarAtaque=e=>{e.ataque=null;},parar=()=>null,her
 function empezarAtaque(e,forma,o){e.alerta={el:{textContent:''}};e.ataque={...o,forma,t0:reloj.t,dir:e.dir,fijado:false};eventos.push({t:reloj.t,id:e.id,tipo:e.tipo,forma,duracion:o.dur});}
 ${constantes}
 ${funciones}
-function paso(dt=.05){reloj.t+=dt;coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();const antes=new Set(enemigos.map(e=>e.id));pasoOleadas(dt);for(const e of enemigos)if(!antes.has(e.id))nacimientos.push({t:reloj.t,id:e.id,oleada:ol.i});}
-function limpiar(){enemigos.length=0;eventos.length=0;nacimientos.length=0;reloj.t=0;sigId=1;golpes=0;presion.siguiente=0;presion.primeraLinea.clear();Object.assign(ol,{auto:false,i:-1,cola:[],espera:1.8,lote:0,descanso:null,fin:false});}
+function paso(dt=.05){reloj.t+=dt;presion.rutas=0;pasoRefuerzosCan();coordinarEnemigos();for(const e of [...enemigos])pasoEnemigo(e,dt);separar();const antes=new Set(enemigos.map(e=>e.id));pasoOleadas(dt);for(const e of enemigos)if(!antes.has(e.id))nacimientos.push({t:reloj.t,id:e.id,oleada:ol.i});}
+function limpiar(){enemigos.length=0;eventos.length=0;nacimientos.length=0;reloj.t=0;sigId=1;golpes=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;Object.assign(ol,{auto:false,i:-1,cola:[],espera:1.8,lote:0,descanso:null,fin:false});}
 function invocar(tipo,x,z){const e=crearEnemigo(tipo,x,z);e.dentro=true;e.estado='persigue';return e;}
 `,contexto);
 const ejecutar=s=>vm.runInContext(s,contexto);
@@ -64,14 +64,12 @@ for(let i=0;i<3000&&!ol.fin;i++){const anterior=ol.i;paso();if(ol.i!==anterior)c
 assert.ok(oleadas.fin);assert.equal(oleadas.cambios.length,7);assert.ok(oleadas.cambios[4].pausa>=8-1e-6);assert.ok(oleadas.maxima.every((v,i)=>v<=[4,5,6,5,4,4,4][i]));assert.ok(oleadas.cambios.slice(1).every(c=>c.pausa>=3-1e-6));
 console.log('✓ Refuerzos por grupos, límites de población y descansos entre oleadas');
 
-// Can mete sus refuerzos en la misma cola: no se salta el límite al gritar.
+// Can llama una horda desde los tres portones, independiente del cupo normal de oleada.
 const jefe=ejecutar(`limpiar();ol.auto=true;ol.i=3;const can=invocar('can',0,-5);can.vida=300;
-for(let i=0;i<4;i++)invocar('goblin',i*2-3,-7);
-for(let i=0;i<80;i++)paso();const retenidos=ol.cola.length,antes=enemigos.length;
-enemigos.splice(1,3);let maxJefe=enemigos.length;for(let i=0;i<160;i++){paso();maxJefe=Math.max(maxJefe,enemigos.length);}
-({retenidos,antes,maxJefe,cola:ol.cola.length});`);
-assert.equal(jefe.retenidos,3);assert.equal(jefe.antes,5);assert.ok(jefe.maxJefe<=5);assert.equal(jefe.cola,0);
-console.log('✓ Los refuerzos de Can esperan y respetan el máximo de cinco');
+for(let i=0;i<60;i++)paso();({total:enemigos.length,goblins:enemigos.filter(e=>e.tipo==='goblin').length,cola:refuerzosCan.length,
+portones:new Set(enemigos.filter(e=>e.tipo==='goblin').map(e=>CALLES.map((a,i)=>({i,d:Math.abs(difAng(a,Math.atan2(e.pos.z,e.pos.x)))})).sort((a,b)=>a.d-b.d)[0].i)).size});`);
+assert.equal(jefe.goblins,12);assert.equal(jefe.total,13);assert.equal(jefe.cola,0);assert.equal(jefe.portones,3);
+console.log('✓ Can llama doce goblins desde los tres portones, sin quedar retenidos por el límite normal');
 
 // Cobro de piso: dos cuadrillas antes del troll; sin contar sus invocaciones durante el combate.
 const cobro=ejecutar(`limpiar();ol.auto=true;ol.i=3;ol.descanso=.01;heroe.alma=50;let tipos=[],fasesTroll=[],maximos=0;
@@ -96,7 +94,7 @@ for(const radio of [.34,.85])for(const [inicio,fin] of [
 ]){
  const resultado=ejecutar(`{limpiar();obstaculos.push({x:-5,z:-3,r:1.3},{x:-2.82,z:-2.51,r:.55});
  const e=invocar('goblin',${inicio[0]},${inicio[1]});e.radio=${radio};const meta=new V3(${fin[0]},0,${fin[1]});let minimo=99,viaje=0;
- for(let i=0;i<1200&&plano(e.pos,meta)>.12;i++){reloj.t+=1/60;const p=destinoEnemigo(e,meta),dist=plano(e.pos,p);if(dist)e.pos.addScaledVector(p.clone().sub(e.pos),Math.min(dist,2.85/60)/dist);
+ for(let i=0;i<1200&&plano(e.pos,meta)>.12;i++){reloj.t+=1/60;presion.rutas=0;const p=destinoEnemigo(e,meta),dist=plano(e.pos,p);if(dist)e.pos.addScaledVector(p.clone().sub(e.pos),Math.min(dist,2.85/60)/dist);
   minimo=Math.min(minimo,...obstaculos.map(o=>Math.hypot(e.pos.x-o.x,e.pos.z-o.z)-o.r-e.radio));viaje++;
  }const resultado={distancia:plano(e.pos,meta),minimo,viaje};obstaculos.length=0;resultado;}`);
  assert.ok(resultado.distancia<.12,`Rodea el pozo ${JSON.stringify({inicio,fin,radio,resultado})}`);

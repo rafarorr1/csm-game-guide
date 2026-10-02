@@ -15,7 +15,7 @@ export const cartasArpgThree=Object.freeze([...botinArpgThree.flatMap(id=>['norm
 export const componentesArpgThree=Object.freeze(['carta-pintor.js','carta-diseno.css','fuentes/cinzel.woff2','fuentes/cormorant-garamond.woff2','fuentes/cormorant-garamond-italica.woff2']);
 export const texturasGoblin=Object.freeze(['texturas-goblin/piel-color.webp','texturas-goblin/piel-normal.png','texturas-goblin/piel-superficie.png']);
 export const texturasPiso=Object.freeze(['texturas-piso/vegetacion-color.webp','texturas-piso/vegetacion-normal.webp','texturas-piso/vegetacion-superficie.webp']);
-export const entornoArpgThree=Object.freeze(['arpg-three-tiempo.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...texturasPiso]);
+export const entornoArpgThree=Object.freeze(['arpg-three-tiempo.js','arpg-three-impactos.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...texturasPiso]);
 function ilustraciones(){
   const encuadres=JSON.parse(leer('art/encuadres.json'));
   return cartasArpgThree.map(([id,acabado])=>{

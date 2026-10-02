@@ -67,7 +67,7 @@
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
       // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
-      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2)*.008*(a.paso??1):Math.sin(t*2.2)*.004;return {G:[-.11,.35+bob,.36],A:dirA(-2.73,.46),arriba:[0,1,0]};};
+      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2-.4)*.018*(a.paso??1):Math.sin(t*2.2)*.004;return {G:[-.11,.35+bob,.36],A:dirA(-2.73,.46),arriba:[0,1,0]};};
       const horizontal=(f,e)=>{const r=.42-.08*Math.abs(Math.sin(f));return {G:[Math.sin(f)*r,.28,Math.cos(f)*r],A:dirA(f,e),arriba:[0,1,0]};};
       const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
@@ -85,20 +85,26 @@
       const H=m.H,k=a.k||0,respira=Math.sin((a.t||0)*2.2);
       switch(a.anim){
         case 'quieto':H.torso.rotation.x=.1+respira*.012;H.rodillaI.rotation.x=H.rodillaD.rotation.x=.12;H.cuerpo.position.y=-.025+respira*.006;break;
-        case 'andar':{const fase=a.fase||0,amp=(a.paso??1)*ajustes.zancada,s=Math.sin(fase);
-          // Apoyo y balanceo alternos: el talón avanza, la rodilla recoge y el tobillo amortigua.
-          for(const [lado,desfase] of [['I',0],['D',Math.PI]]){
-            const f=fase+desfase,avance=Math.sin(f),vuelo=Math.max(0,Math.cos(f)),impulso=Math.max(0,-avance);
-            const muslo=-avance*.78*amp,rodilla=.12+(vuelo*vuelo*1.05+.1*impulso)*amp;
-            H['pierna'+lado].rotation.x=muslo;H['rodilla'+lado].rotation.x=rodilla;
-            H['pie'+lado].rotation.x=(-muslo-(rodilla-.12))*.75+.16*impulso*amp;
-            H['pierna'+lado].rotation.z=(lado==='I'?-.025:.025)*amp;
+        case 'andar':{const fase=a.fase||0,amp=(a.paso??1)*ajustes.zancada,s=Math.sin(fase),giro=a.giroCarrera||0;
+          // Apoyo largo y recogida rápida: el pie empuja, despega y vuelve con la rodilla alta.
+          const rebote=(1-Math.cos(fase*2))*.024*amp;
+          H.cuerpo.position.set(s*.04*amp,-.025-.04*amp+rebote,Math.sin(fase*2)*.012*amp);
+          for(const [lado,desfase] of [['I',0],['D',.5]]){
+            const f=((fase/TAU+desfase)%1+1)%1,apoyo=f<.58;
+            const u=apoyo?f/.58:(f-.58)/.42,w=suave(u);
+            const z=(apoyo?.4-.8*u:-.4+.8*w)*amp;
+            const eleva=apoyo?0:Math.sin(Math.PI*u)*.2*amp;
+            const abajo=m.p.muslo+m.p.pierna-.035+H.cuerpo.position.y-eleva;
+            const A=m.p.muslo,B=m.p.pierna,d=Math.min(A+B-.008,Math.max(.2,Math.hypot(z,abajo)));
+            const rodilla=Math.PI-Math.acos(Math.max(-1,Math.min(1,(A*A+B*B-d*d)/(2*A*B))));
+            const muslo=Math.atan2(-z,abajo)-Math.acos(Math.max(-1,Math.min(1,(A*A+d*d-B*B)/(2*A*d))));
+            H['pierna'+lado].rotation.set(muslo*amp,0,(lado==='I'?-.04:.04)*amp);
+            H['rodilla'+lado].rotation.x=.12+(rodilla-.12)*amp;
+            H['pie'+lado].rotation.x=(-muslo-rodilla)*amp+(apoyo?tramo(u,.65,1)*.35:Math.sin(Math.PI*u)*.13)*amp;
           }
-          // La cadera carga el peso sobre la pierna de apoyo; el torso compensa el hacha pesada.
-          H.cuerpo.position.set(s*.025*amp,-.025+respira*.006+(Math.cos(fase*2)*.022-.008)*amp,0);
-          H.cadera.rotation.y=s*.11*amp;H.cadera.rotation.z=-s*.035*amp;
-          H.torso.rotation.set(.1+respira*.012+.065*amp,-s*.075*amp,s*.025*amp);
-          H.cabeza.rotation.x=-.04-.035*amp;H.cabeza.rotation.y=s*.035*amp;H.cabeza.rotation.z=-s*.02*amp;
+          H.cadera.rotation.set(.025*amp,s*.16*amp,-s*.055*amp-giro*.4);
+          H.torso.rotation.set(.16+amp*.04+Math.sin(fase*2-.3)*.022*amp,-Math.sin(fase-.25)*.1*amp,s*.04*amp+giro);
+          H.cabeza.rotation.set(-.075-Math.sin(fase*2-.3)*.014*amp,s*.045*amp,-s*.025*amp-giro*.6);
           break;
         }
         // Los hachazos de Adreida: el brazo casi horizontal barre un arco delante (el hacha lo prolonga).

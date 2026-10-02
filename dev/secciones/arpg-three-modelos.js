@@ -520,6 +520,7 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
         emitir(p.x+Math.cos(a)*.15,.06,p.z+Math.sin(a)*.15,Math.cos(a)*v+(dir?.x||0)*intensidad*.25,.25+azar()*.3,Math.sin(a)*v+(dir?.z||0)*intensidad*.25,.35+azar()*.3,2.3+azar()*1.2,.28,.23,.17,.7);}
     }
     function posarMuerteGoblin(m,a){
+      if(a.muerte?.partido){posarMuertePartida(m,a);return;}
       const muerte=a.muerte||crearMuerteGoblin('tajo',0),p=muertesGoblin[muerte.tipo]?.[muerte.variante]||muertesGoblin.tajo[0],k=Math.min(1,Math.max(0,a.k||0));
       let j=1;while(j<p.cuadros.length-1&&k>p.cuadros[j].k)j++;
       const u=p.cuadros[j-1],v=p.cuadros[j],w=suave((k-u.k)/(v.k-u.k)),valor=n=>u[n]+(v[n]-u[n])*w;
@@ -554,7 +555,23 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
     // Apoyo de bajo coste: 26 extremos de cada hueso, precalculados una vez por tipo.
     // No hay rigid bodies ni barridos de los miles de vértices durante la partida.
     const apoyosGoblin=new Map(),puntoApoyo=new THREE.Vector3(),ejeMuerte=new THREE.Vector3(0,1,0),giroMuerte=new THREE.Quaternion(),giroReposo=new THREE.Quaternion(),eulerMuerte=new THREE.Euler();
-    function apoyarMuerteGoblin(m){
+    function posarMuertePartida(m,a){
+      const H=m.H,k=Math.max(0,Math.min(1,a.k||0)),s=a.muerte.variante?-1:1;
+      const cae=tramo(k,.12,.66),separa=tramo(k,.03,.65);
+      H.cuerpo.rotation.set(-Math.PI/2*cae,0,s*.16*cae);
+      H.cadera.rotation.z=-s*.18*cae;
+      H.torso.rotation.set(Math.PI*cae,s*.45*cae,-s*.2*cae);
+      // Dos mitades rígidas en la cintura: no estiramos la piel entre ellas.
+      H.torso.position.set(s*.8*separa,m.p.cintura+.35*separa,.5*separa);
+      for(const [l,signo] of [['I',1],['D',-1]]){
+        H['pierna'+l].rotation.set(-.2*cae,0,signo*.24*cae);H['rodilla'+l].rotation.x=.35*cae;
+        H['brazo'+l].rotation.set(-.1,0,signo*.7*cae);H['ante'+l].rotation.z=signo*.2*cae;
+        H['mano'+l].rotation.y=Math.PI/2*cae;
+      }
+      H.cabeza.rotation.x=-.35*cae;
+      H.cuerpo.position.y=k<.55?Math.sin(k/.55*Math.PI)*.18:0;
+    }
+    function apoyarMuerteGoblin(m,partido=false,k=0){
       let apoyos=apoyosGoblin.get(m.tipo);const esq=m.mallas[0].skeleton;
       if(!apoyos){const direcciones=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)if(x||y||z)direcciones.push(new THREE.Vector3(x,y,z));
         const extremos=esq.bones.map(()=>direcciones.map(()=>({d:-Infinity,p:null})));
@@ -566,8 +583,18 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
       }
       // La altura escrita en la coreografía es el vuelo sobre el contacto, no el pivote de los pies.
       const vuelo=m.H.cuerpo.position.y;m.H.cuerpo.position.y=0;m.raiz.updateMatrixWorld(true);let minimo=Infinity;
-      for(let i=0;i<apoyos.length;i++){const e=esq.bones[i].matrixWorld.elements;for(const p of apoyos[i])minimo=Math.min(minimo,e[1]*p.x+e[5]*p.y+e[9]*p.z+e[13]);}
+      let superior=Infinity;
+      if(partido&&!m.huesosSuperiores){m.huesosSuperiores=new Set();m.H.torso.traverse(b=>m.huesosSuperiores.add(b));}
+      for(let i=0;i<apoyos.length;i++){const e=esq.bones[i].matrixWorld.elements;for(const p of apoyos[i]){
+        const y=e[1]*p.x+e[5]*p.y+e[9]*p.z+e[13];
+        if(partido&&m.huesosSuperiores.has(esq.bones[i]))superior=Math.min(superior,y);else minimo=Math.min(minimo,y);
+      }}
       m.H.cuerpo.position.y=vuelo+.012-minimo+m.raiz.position.y;
+      if(partido){
+        const aire=k<.8?Math.sin(Math.PI*k/.8)*.42:0,delta=aire+.012+m.raiz.position.y-superior-m.H.cuerpo.position.y;
+        m.H.torso.parent.getWorldQuaternion(giroMuerte).invert();
+        m.H.torso.position.add(puntoApoyo.set(0,delta,0).applyQuaternion(giroMuerte));
+      }
     }
 
     const salidas=new WeakMap();
@@ -585,7 +612,7 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
       e.t+=Math.max(0,Math.min(.05,a.dt||0));const w=e.dur?suave(e.t/e.dur):1;
       for(let i=0;i<e.huesos.length;i++){const b=e.huesos[i];if(w<1){b.quaternion.slerp(e.desde[i],1-w);b.position.lerpVectors(e.desdePos[i],b.position,w);}}
       for(let i=0;i<e.huesos.length;i++){e.ultima[i].copy(e.huesos[i].quaternion);e.pos[i].copy(e.huesos[i].position);}
-      if(a.anim==='muerte'&&(m.tipo==='goblin'||m.tipo==='cobrador'))apoyarMuerteGoblin(m);
+      if(a.anim==='muerte'&&(m.tipo==='goblin'||m.tipo==='cobrador'))apoyarMuerteGoblin(m,!!a.muerte?.partido,a.k||0);
       e.estado=estado;e.valida=a.mezclar===true;
     }
 
@@ -594,6 +621,7 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
       const H=m.H,esc=m.tipo==='troll'?1.5:m.tipo==='can'?1.25:1;
       for(const k in H)if(k!=='raiz'){H[k].rotation.set(0,0,0);}
       H.cuerpo.position.set(0,0,0);H.cuerpo.rotation.set(0,0,0);
+      if(m.tipo==='goblin'||m.tipo==='cobrador')H.torso.position.set(0,m.p.cintura,0);
       const t=a.t||0,k=a.k||0,respira=Math.sin(t*2.2);
       // Brazos en reposo: un poco separados; el arma, lista.
       const reposo=()=>{H.brazoI.rotation.z=.18;H.brazoD.rotation.z=-.18;H.anteI.rotation.x=-.25;H.anteD.rotation.x=-.55;H.brazoD.rotation.x=-.15;
