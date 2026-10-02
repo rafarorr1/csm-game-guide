@@ -1,0 +1,34 @@
+{
+  "origen": "goblin-skin-bumpy-bl-q9btow.zip, aportado por el usuario",
+  "uso": "Piel expuesta de goblins y cobradores; no afecta a ropa, ojos, colmillos ni armas",
+  "resolucion": [
+    1024,
+    1024
+  ],
+  "color": {
+    "archivo": "piel-color.webp",
+    "fuente": "goblin-skin-bumpy_albedo.png",
+    "espacio": "sRGB",
+    "preparacion": "Reducido de 2048 con Lanczos3; WebP calidad 92"
+  },
+  "normal": {
+    "archivo": "piel-normal.png",
+    "fuente": "goblin-skin-bumpy_normal-ogl.png",
+    "espacio": "Datos lineales, OpenGL +Y",
+    "intensidad": 0.7
+  },
+  "superficie": {
+    "archivo": "piel-superficie.png",
+    "r": "Oclusión; fuente goblin-skin-bumpy_ao.png; aplicada al 50%",
+    "g": "Rugosidad; fuente goblin-skin-bumpy_roughness.png",
+    "b": "Reservado, 255",
+    "espacio": "Datos lineales"
+  },
+  "altura": "No se aplica desplazamiento geométrico",
+  "metal": "El mapa original es negro uniforme; se conserva metalness=0",
+  "sha256": {
+    "piel-normal.png": "8b0503c85f744da793619cbe81513a3cf824f2d7baad1f9a0a746dba2d4a90f3",
+    "piel-color.webp": "c8ce4342cc3756c6e8ef36b26988e643a8f4b785aaf143d4435dbb3545f2e5e9",
+    "piel-superficie.png": "c2e688f4db7cba2f6f53e86d7f58f9d144b60caebdeddbf8e5f76ba6ff238496"
+  }
+}

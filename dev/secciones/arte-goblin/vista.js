@@ -1,7 +1,7 @@
 /* Localizador UV: la misma pieza y el mismo punto en el modelo y en el lienzo. */
 'use strict';
 (async()=>{
- const $=id=>document.getElementById(id),THREE=window.CAOZ_THREE.THREE,MOD=window.CAOZ_ARPG_MODELOS.fabrica(THREE),canvas=$('modelo'),detalle=$('detalle');
+ const $=id=>document.getElementById(id),THREE=window.CAOZ_THREE.THREE,MOD=window.CAOZ_ARPG_MODELOS.fabrica(THREE,{pielGoblin:false}),canvas=$('modelo'),detalle=$('detalle');
  try{
   const atlas=await (await fetch('goblin-uv.json')).json(),escena=new THREE.Scene();escena.background=new THREE.Color(0x192428);
   const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.1;

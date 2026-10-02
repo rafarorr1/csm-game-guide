@@ -2,7 +2,8 @@
    de Camino, el Kobold lancero, el Saqueador y Can, el de los Goblins. Son
    low poly, hechos con primitivas de three.js (cápsulas, cajas, conos) y
    colores por vértice sacados de su carta, sin archivos de modelo. Los goblins
-   suavizan sus volúmenes con más segmentos y normales interpoladas. Adreida
+   suavizan sus volúmenes con más segmentos y normales interpoladas; su piel
+   expuesta usa color, normales y rugosidad compartidos, sin añadir mallas. Adreida
    es la detallada: sólidos de revolución, mechones y correas en tubo, la
    cabeza esculpida y las hojas del hacha extruidas, con sombreado suave.
      · Esqueleto de huesos (THREE.Bone): cadera, torso, cabeza, brazos con
@@ -21,9 +22,10 @@
 'use strict';
 (function(){
   const TAU=Math.PI*2;
+  const rutaPiel=typeof document!=='undefined'&&document.currentScript?.src?new URL('./texturas-goblin/',document.currentScript.src).href:null;
   const suave=k=>k<=0?0:k>=1?1:k*k*(3-2*k);
   const tramo=(k,a,b)=>suave((k-a)/(b-a));
-  function fabrica(THREE){
+  function fabrica(THREE,{pielGoblin=true}={}){
     const animacion=window.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(THREE);
     const V=(x,y,z)=>new THREE.Vector3(x,y,z);
     const matriz=(pos=[0,0,0],rot=[0,0,0],esc=1)=>new THREE.Matrix4().compose(V(...pos),new THREE.Quaternion().setFromEuler(new THREE.Euler(...rot)),Array.isArray(esc)?V(...esc):V(esc,esc,esc));
@@ -54,14 +56,28 @@
     // vértice. Cada cara varía un poco de tono: el aire facetado de los modelos low poly.
     let semilla=1;const azar=()=>(semilla=(semilla*16807)%2147483647)/2147483647;
     // Cada pieza lleva el índice de su hueso (skinIndex) con peso 1: se mueve rígida con él.
+    // UV de detalle independientes del atlas de pintura. Un mosaico cubre aproximadamente un metro.
+    function uvPiel(p,g){
+      const uv=g.attributes.uv,r=new Float32Array(uv.count*2);if(!p.pielReal)return r;
+      const q=p.geo.parameters,esc=new THREE.Vector3().setFromMatrixScale(p.m),tipo=p.geo.type;
+      const ancho=TAU*(q.radius||q.radiusTop||q.radiusBottom||.1)*(esc.x+esc.z)/2,alto=((q.length||q.height||0)+((tipo==='CapsuleGeometry'||tipo==='SphereGeometry')?Math.PI*(q.radius||0):0))*esc.y;
+      for(let i=0;i<uv.count;i++){let a=ancho,b=alto;
+        if(tipo==='BoxGeometry'){const cara=g.groups.find(x=>i>=x.start&&i<x.start+x.count)?.materialIndex||0;[a,b]=cara<2?[q.depth*esc.z,q.height*esc.y]:cara<4?[q.width*esc.x,q.depth*esc.z]:[q.width*esc.x,q.height*esc.y];}
+        r[i*2]=uv.getX(i)*a;r[i*2+1]=uv.getY(i)*b;
+      }return r;
+    }
     function fundir(piezas){
-      let n=0;const gs=piezas.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());g.applyMatrix4(p.m);n+=g.attributes.position.count;return [g,p.color,p.vario,p.hueso];});
+      const conPiel=piezas.some(p=>p.pielReal),uvs=[];
+      let n=0;const gs=piezas.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());if(conPiel)uvs.push(uvPiel(p,g));g.applyMatrix4(p.m);n+=g.attributes.position.count;return [g,p.color,p.vario,p.hueso,p.pielReal];});
       const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3),SI=new Uint16Array(n*4),SW=new Float32Array(n*4),c=new THREE.Color();let o=0;
-      for(const [g,color,vario,hueso] of gs){const p=g.attributes.position,q=g.attributes.normal;c.set(color);let f=1;
+      const U=conPiel?new Float32Array(n*2):null,PIEL=conPiel?new Float32Array(n):null;let pieza=0;
+      for(const [g,color,vario,hueso,real] of gs){const p=g.attributes.position,q=g.attributes.normal;c.set(color);let f=1;
+        if(conPiel){U.set(uvs[pieza++],o*2);PIEL.fill(real?1:0,o,o+p.count);}
         for(let i=0;i<p.count;i++){if(i%3===0)f=1+(azar()-.5)*vario;const j=(o+i)*3;P[j]=p.getX(i);P[j+1]=p.getY(i);P[j+2]=p.getZ(i);N[j]=q.getX(i);N[j+1]=q.getY(i);N[j+2]=q.getZ(i);C[j]=c.r*f;C[j+1]=c.g*f;C[j+2]=c.b*f;SI[(o+i)*4]=hueso;SW[(o+i)*4]=1;}
         o+=p.count;g.dispose();}
       for(const p of piezas)p.geo.dispose();
       const r=new THREE.BufferGeometry();r.setAttribute('position',new THREE.BufferAttribute(P,3));r.setAttribute('normal',new THREE.BufferAttribute(N,3));r.setAttribute('color',new THREE.BufferAttribute(C,3));
+      if(conPiel){r.setAttribute('uv',new THREE.BufferAttribute(U,2));r.setAttribute('pielReal',new THREE.BufferAttribute(PIEL,1));}
       r.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(SI,4));r.setAttribute('skinWeight',new THREE.Float32BufferAttribute(SW,4));r.computeBoundingSphere();return r;}
 
     // Los materiales de un personaje: comparten los uniformes del destello y del disolverse.
@@ -85,6 +101,28 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       return {u,piel:hacer({roughness:.82,metalness:0,side:lisos?THREE.DoubleSide:THREE.FrontSide}),metal:hacer({roughness:.32,metalness:.85}),brillo:hacer({roughness:1,metalness:0,color:0x000000},4)};
     }
 
+    // Una sola copia de las texturas por fábrica, compartida por toda la horda y por los cobradores.
+    let mapasPiel=null;
+    function aplicarPielGoblin(material){
+      if(!pielGoblin||!rutaPiel)return;
+      if(!mapasPiel){const cargar=(nombre,color=false)=>{const t=new THREE.TextureLoader().load(rutaPiel+nombre,undefined,undefined,()=>console.warn('No se pudo cargar la piel del goblin: '+nombre));t.wrapS=t.wrapT=THREE.RepeatWrapping;t.colorSpace=color?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=4;return t;};
+        mapasPiel={color:cargar('piel-color.webp',true),normal:cargar('piel-normal.png'),superficie:cargar('piel-superficie.png')};}
+      material.map=mapasPiel.color;material.normalMap=mapasPiel.normal;material.roughnessMap=mapasPiel.superficie;material.normalScale.set(.7,.7);
+      const anterior=material.onBeforeCompile;material.onBeforeCompile=function(sh,render){anterior.call(this,sh,render);
+        sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute float pielReal;varying float vPielReal;').replace('#include <begin_vertex>','#include <begin_vertex>\nvPielReal=pielReal;');
+        sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vPielReal;')
+          .replace('#include <map_fragment>','')
+          .replace('#include <color_fragment>','#include <color_fragment>\n#ifdef USE_MAP\ndiffuseColor.rgb=mix(diffuseColor.rgb,texture2D(map,vMapUv).rgb*1.35,vPielReal);\n#endif')
+          .replace('#include <roughnessmap_fragment>',`float roughnessFactor=roughness;
+#ifdef USE_ROUGHNESSMAP
+vec2 superficiePiel=texture2D(roughnessMap,vRoughnessMapUv).rg;
+roughnessFactor=mix(roughness,clamp(superficiePiel.g,.6,1.),vPielReal);
+diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
+#endif`)
+          .replace('#include <normal_fragment_maps>','#include <normal_fragment_maps>\nnormal=normalize(mix(nonPerturbedNormal,normal,vPielReal));');
+      };material.customProgramCacheKey=()=>'arpg-modelo-piel-goblin-v1';
+    }
+
     // El esqueleto común (de pie en el origen, mirando a +Z; su derecha es -X).
     function esqueleto(p){
       const g=()=>new THREE.Bone(),raiz=new THREE.Group(),cuerpo=g(),cadera=g(),torso=g(),cabeza=g();
@@ -99,9 +137,9 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       return H;
     }
     // Recoge las piezas por material (con su hueso); al final las funde en una malla con piel por material.
-    function constructor(H,varioBase=.14,ladosMiembro=7,tapasMiembro=2){
+    function constructor(H,varioBase=.14,ladosMiembro=7,tapasMiembro=2,coloresPiel=[]){
       const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
-      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase)=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso});};
+      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase)=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso,pielReal:coloresPiel.includes(color)});};
       const montar=M=>{H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),mallas=[];
         for(const [mat,lista] of piezas){for(const p of lista)p.m.premultiply(H[p.nombre].matrixWorld);
           const malla=new THREE.SkinnedMesh(fundir(lista),M[mat]);malla.castShadow=mat!=='brillo';malla.receiveShadow=true;malla.frustumCulled=false;H.raiz.add(malla);malla.bind(esq,malla.matrixWorld);mallas.push(malla);}
@@ -289,8 +327,8 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     }
     function goblin(cobrador=false){
       // Más segmentos sólo en la silueta orgánica; mismo esqueleto y tres mallas por goblin.
-      const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H,.025,12,4);
       const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=cobrador?0x703798:0x8e3324,tela=0x4f4636,bota=0x3d2c20;
+      const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H,.025,12,4,[piel,piel2]);
       pon('cadera','piel',G.cajaSuave(.24,.13,.16,.025),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,14,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.045);
       pon('cadera','piel',G.cil(.14,.145,.05,16),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.cajaSuave(.08,.07,.06,.012),0x6b4c32,[.1,.0,.1]);
       for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.cajaSuave(.1,.13,.15,.024),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,12),bota,[0,.1,0]);}
@@ -412,7 +450,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=constructores[tipo](),mallas=montar(M);
       // Los goblins suavizan el sombreado sin duplicar la cara visible de sus materiales.
-      if(tipo==='goblin'||tipo==='cobrador')M.piel.side=THREE.FrontSide;
+      if(tipo==='goblin'||tipo==='cobrador'){M.piel.side=THREE.FrontSide;aplicarPielGoblin(M.piel);}
       // El extremo del hacha de Adreida, la cabeza (para colocar el rastro del corte y para las pruebas).
       if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
