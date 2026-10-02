@@ -1286,3 +1286,17 @@ Repetición a **1920 × 1080 internos fijos** el mismo día, M2 Max/ANGLE Metal,
 | Cooperativo, 24 enemigos | 120,0 | 9,3 ms | 6,42 ms | 7,47 ms |
 
 FPS y tiempos de GPU son promedios de las dos rondas. También se midieron Sin sombras y Sin halo; los cuatro perfiles rondaron 120 FPS. Esta comprobación supera el objetivo de 60 FPS en ese equipo y esas escenas cortas, sin representar una garantía para otras GPU o todos los encuentros del juego. Se verificó en navegador alternar resolución de ventana y 1080p fijo, sin errores de consola, además de las pruebas de cálculo de resolución y controles.
+
+
+### Goblin de Camino: plantilla para ilustración manual
+
+`arte-goblin/exportar.mjs` prepara un kit UV de 4096 × 4096 con las 39 piezas reales del goblin, sin cambiar el modelo de la partida. Requiere Node y los módulos `sharp` y `jszip` (o rutas en `SHARP_MODULE` y `JSZIP_MODULE`):
+
+```sh
+node dev/secciones/arte-goblin/exportar.mjs /ruta/vacia/goblin-para-pintar
+node /ruta/vacia/goblin-para-pintar/servidor.mjs
+```
+
+El kit incluye un PNG con colores base, una guía transparente PNG/SVG, un OpenRaster con tres capas, el OBJ/MTL estático, la correspondencia `goblin-uv.json` y un visor local en `http://127.0.0.1:8886/`. Las caras de las cajas se abren en cruz y las tapas de los cilindros se separan; no comparten pintura los lados izquierdo y derecho. Ocho píxeles de sangrado protegen las costuras. El exportador valida los 4044 vértices contra las tres mallas originales; el visor comprueba sus huellas SHA-256 antes de aplicar las UV.
+
+Se pinta sobre `goblin-pintar.png`, con `goblin-guia.png` en otra capa. Se devuelve un PNG sRGB de 4096 × 4096, con colores base y pintura fusionados, guía oculta y piezas sin mover. El visor permite probar el PNG en reposo y en movimiento, sin enviarlo a un servidor. La plantilla afecta al color; no modifica silueta, rig ni animaciones. Al integrar una ilustración se conserva el mapa UV de este kit y se puede reducir la resolución de la textura de juego después de comprobar la calidad.

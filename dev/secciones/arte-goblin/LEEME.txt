@@ -1,0 +1,54 @@
+GOBLIN DE CAMINO · PLANTILLA UV v1
+Las Grietas del Editor
+
+QUÉ PINTAR
+Abre goblin-pintar.png en tu programa de ilustración. Es un lienzo de
+4096 × 4096 píxeles con los colores de las 39 piezas del modelo real.
+Piel, ropa, ojos y arma tienen espacios separados. Izquierda y derecha
+son las del personaje, no las de quien lo mira.
+
+ARCHIVO CON CAPAS
+Si usas Krita o GIMP, abre goblin-capas.ora: ya incluye «Guía»,
+«Mi ilustración» y «Colores base» como capas separadas.
+
+GUÍA EN UNA CAPA APARTE
+Importa goblin-guia.png encima del lienzo: es transparente y señala nombres,
+caras y triángulos. No muevas, gires ni cambies de tamaño las piezas.
+Dibuja en otra capa o sobre los colores. Puedes salirte unos 8 píxeles de
+los bordes para evitar pequeñas costuras. El fondo gris no se usa.
+Oculta la guía antes de exportar; de lo contrario sus letras y líneas
+aparecerán pintadas en el personaje.
+
+goblin-mapa-explicado.png une ambas imágenes sólo para consultar.
+goblin-guia.svg es la misma guía en formato vectorial.
+
+QUÉ DEVOLVER
+Un PNG RGB o RGBA de 4096 × 4096 px, perfil sRGB, con la guía oculta y los
+colores de base debajo de tu pintura. No exportes sólo trazos transparentes:
+el modelo utiliza el color completo del PNG. Puedes llamarlo goblin-pintado.png.
+Conserva este kit: su archivo goblin-uv.json vincula cada zona con el modelo.
+Pintar cambia su acabado, no su silueta, volumen, esqueleto o animaciones.
+Si quieres modificar la forma de una oreja o añadir una prenda, acompaña
+la textura con un boceto y podremos modificar la geometría por separado.
+
+VISTA 3D LOCAL
+En esta carpeta ejecuta: node servidor.mjs
+Abre http://127.0.0.1:8886/ y pulsa «Cargar mi PNG».
+Puedes girarlo, verlo en movimiento o comparar frente, perfil y espalda.
+La imagen se queda en tu computadora; no se sube a internet ni al juego.
+No basta con abrir index.html haciendo doble clic: necesita ese servidor.
+
+MODELO PARA OTRAS HERRAMIENTAS
+Incluimos goblin.obj y goblin.mtl con las mismas UV y goblin-pintar.png como
+textura. Mantén los tres juntos al importarlos en una herramienta 3D.
+El OBJ es una copia estática en pose de construcción; no incluye rig ni clips.
+El visor sí usa el modelo y las animaciones procedurales reales del juego.
+
+NOTAS
+La cabeza y las piezas redondas se despliegan como un cilindro/esfera, por
+lo que se deforman en plano y se cierran alrededor de la superficie 3D.
+Las cajas se abren en cruz; el contorno y las tapas de cilindros/conos se
+separan para que puedas pintarlos sin que se repita el dibujo.
+Las marcas de frente/espalda se refieren al eje local de cada pieza.
+La luz del juego puede aclarar u oscurecer tu color: el modo «Color plano»
+del visor permite revisar la pintura sin iluminación.
