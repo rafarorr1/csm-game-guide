@@ -1,7 +1,8 @@
 /* Modelos 3D sencillos para la prueba de ARPG (arpg-three): Adreida, el Goblin
    de Camino, el Kobold lancero, el Saqueador y Can, el de los Goblins. Son
    low poly, hechos con primitivas de three.js (cápsulas, cajas, conos) y
-   colores por vértice sacados de su carta, sin archivos de modelo. Adreida
+   colores por vértice sacados de su carta, sin archivos de modelo. Los goblins
+   suavizan sus volúmenes con más segmentos y normales interpoladas. Adreida
    es la detallada: sólidos de revolución, mechones y correas en tubo, la
    cabeza esculpida y las hojas del hacha extruidas, con sombreado suave.
      · Esqueleto de huesos (THREE.Bone): cadera, torso, cabeza, brazos con
@@ -30,7 +31,10 @@
       caja:(w,h,d)=>new THREE.BoxGeometry(w,h,d),
       bola:(r,a=8,b=6)=>new THREE.SphereGeometry(r,a,b),
       casco:(r,a=8,b=4,t=Math.PI/2)=>new THREE.SphereGeometry(r,a,b,0,TAU,0,t),
-      capsula:(r,l,s=7)=>new THREE.CapsuleGeometry(r,l,2,s),
+      capsula:(r,l,s=7,tapas=2)=>new THREE.CapsuleGeometry(r,l,tapas,s),
+      // Conserva las seis caras y sus UV, con esquinas redondeadas y normales continuas.
+      cajaSuave:(w,h,d,r)=>{const g=new THREE.BoxGeometry(w,h,d,3,3,3),P=g.attributes.position,N=g.attributes.normal,c=V(w/2-r,h/2-r,d/2-r),v=V(0,0,0),q=V(0,0,0);
+        for(let i=0;i<P.count;i++){v.fromBufferAttribute(P,i);q.copy(v).clamp(c.clone().negate(),c);v.sub(q).normalize();N.setXYZ(i,v.x,v.y,v.z);v.multiplyScalar(r).add(q);P.setXYZ(i,v.x,v.y,v.z);}return g;},
       cono:(r,h,s=6)=>new THREE.ConeGeometry(r,h,s),
       cil:(r1,r2,h,s=8,abierto=false)=>new THREE.CylinderGeometry(r1,r2,h,s,1,abierto),
       toro:(r,t,s=12,l=t<.01?3:5)=>new THREE.TorusGeometry(r,t,l,s),
@@ -95,7 +99,7 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       return H;
     }
     // Recoge las piezas por material (con su hueso); al final las funde en una malla con piel por material.
-    function constructor(H,varioBase=.14){
+    function constructor(H,varioBase=.14,ladosMiembro=7,tapasMiembro=2){
       const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
       const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase)=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso});};
       const montar=M=>{H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),mallas=[];
@@ -103,17 +107,17 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
           const malla=new THREE.SkinnedMesh(fundir(lista),M[mat]);malla.castShadow=mat!=='brillo';malla.receiveShadow=true;malla.frustumCulled=false;H.raiz.add(malla);malla.bind(esq,malla.matrixWorld);mallas.push(malla);}
         return mallas;};
       // Miembros: una cápsula que cuelga del hueso.
-      const miembro=(hueso,r,l,color,esc=[1,1,1])=>pon(hueso,'piel',G.capsula(r,l),color,[0,-l/2-r*.3,0],[0,0,0],esc);
+      const miembro=(hueso,r,l,color,esc=[1,1,1])=>pon(hueso,'piel',G.capsula(r,l,ladosMiembro,tapasMiembro),color,[0,-l/2-r*.3,0],[0,0,0],esc);
       return {pon,montar,miembro};
     }
 
     const TIPOS={
       adreida:{nombre:'Adreida',alto:1.95,radio:.42,lisos:true},
-      goblin:{nombre:'Goblin de Camino',alto:1.15,radio:.34},
+      goblin:{nombre:'Goblin de Camino',alto:1.15,radio:.34,lisos:true},
       kobold:{nombre:'Kobold lancero',alto:1.25,radio:.34},
       saqueador:{nombre:'Saqueador de Tomsage',alto:1.8,radio:.42},
       troll:{nombre:'El Recaudador · Troll',alto:3,radio:.85},
-      cobrador:{nombre:'Goblin cobrador',alto:1.15,radio:.34},
+      cobrador:{nombre:'Goblin cobrador',alto:1.15,radio:.34,lisos:true},
       can:{nombre:'Can, el de los Goblins',alto:2.4,radio:.62},
       mohamed:{nombre:'Mohamed',alto:1.85,radio:.4},
     };
@@ -284,23 +288,24 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
       return {H,montar,p};
     }
     function goblin(cobrador=false){
-      const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H);
+      // Más segmentos sólo en la silueta orgánica; mismo esqueleto y tres mallas por goblin.
+      const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H,.025,12,4);
       const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=cobrador?0x703798:0x8e3324,tela=0x4f4636,bota=0x3d2c20;
-      pon('cadera','piel',G.caja(.24,.13,.16),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,7,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.35);
-      pon('cadera','piel',G.cil(.14,.145,.05,8),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.caja(.08,.07,.06),0x6b4c32,[.1,.0,.1]);
-      for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.caja(.1,.13,.15),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,6),bota,[0,.1,0]);}
-      pon('torso','piel',G.capsula(.12,.12),chaleco,[0,.14,0],[0,0,0],[1.1,1,.85]);pon('torso','piel',G.capsula(.1,.08),piel,[0,.16,.02],[0,0,0],[.9,1,.8]);
+      pon('cadera','piel',G.cajaSuave(.24,.13,.16,.025),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,14,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.045);
+      pon('cadera','piel',G.cil(.14,.145,.05,16),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.cajaSuave(.08,.07,.06,.012),0x6b4c32,[.1,.0,.1]);
+      for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.cajaSuave(.1,.13,.15,.024),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,12),bota,[0,.1,0]);}
+      pon('torso','piel',G.capsula(.12,.12,14,4),chaleco,[0,.14,0],[0,0,0],[1.1,1,.85]);pon('torso','piel',G.capsula(.1,.08,14,4),piel,[0,.16,.02],[0,0,0],[.9,1,.8]);
       pon('torso','piel',G.caja(.03,.34,.02),0x2e2218,[0,.15,.1],[0,0,.7]);
-      pon('torso','piel',G.cil(.1,.13,.08,8),panuelo,[0,.29,0],[0,0,0],1,.3);pon('torso','piel',G.cono(.16,.3,6),panuelo,[0,.12,-.1],[-.25,0,0],[1,1,.4],.3);
-      pon('cabeza','piel',G.bola(.14,8,6),piel,[0,.14,.01],[0,0,0],[1.05,.98,1]);pon('cabeza','piel',G.caja(.16,.06,.1),piel2,[0,.06,.06]);
-      pon('cabeza','piel',G.cono(.035,.14,5),piel2,[0,.12,.17],[Math.PI/2+.25,0,0]);
-      for(const s of [1,-1]){pon('cabeza','piel',G.cono(.055,.3,4),piel,[s*.2,.19,-.02],[0,0,-s*(Math.PI/2-.3)],[1,1,.35]);
-        pon('cabeza','brillo',G.bola(.025,6,4),0xffd23a,[s*.052,.16,.12]);pon('cabeza','piel',G.caja(.06,.015,.02),0x2a2a12,[s*.05,.19,.125],[0,0,s*.3]);
-        pon('cabeza','piel',G.cono(.01,.03,4),0xefe6d2,[s*.04,.06,.11],[Math.PI,0,0]);}
-      pon('cabeza','piel',G.casco(.145,8,3,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.3);
-      for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,6),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,6,5),piel2,[0,-.02,0]);}
-      if(cobrador){pon('cadera','piel',G.bola(.095,7,5),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,6,4),0xe6b64e,[.19,.035,.065]);}
-      pon('manoD','piel',G.cil(.018,.02,.46,6),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0]);
+      pon('torso','piel',G.cil(.1,.13,.08,16),panuelo,[0,.29,0],[0,0,0],1,.045);pon('torso','piel',G.cono(.16,.3,12),panuelo,[0,.12,-.1],[-.25,0,0],[1,1,.4],.045);
+      pon('cabeza','piel',G.bola(.14,20,14),piel,[0,.14,.01],[0,0,0],[1.05,.98,1]);pon('cabeza','piel',G.cajaSuave(.16,.06,.1,.018),piel2,[0,.06,.06]);
+      pon('cabeza','piel',G.cono(.035,.14,12),piel2,[0,.12,.17],[Math.PI/2+.25,0,0]);
+      for(const s of [1,-1]){pon('cabeza','piel',G.cono(.055,.3,12),piel,[s*.2,.19,-.02],[0,0,-s*(Math.PI/2-.3)],[1,1,.35]);
+        pon('cabeza','brillo',G.bola(.025,10,6),0xffd23a,[s*.052,.16,.12]);pon('cabeza','piel',G.caja(.06,.015,.02),0x2a2a12,[s*.05,.19,.125],[0,0,s*.3]);
+        pon('cabeza','piel',G.cono(.01,.03,8),0xefe6d2,[s*.04,.06,.11],[Math.PI,0,0]);}
+      pon('cabeza','piel',G.casco(.145,20,7,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.04);
+      for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,12),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,12,8),piel2,[0,-.02,0]);}
+      if(cobrador){pon('cadera','piel',G.bola(.095,14,10),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,10,6),0xe6b64e,[.19,.035,.065]);}
+      pon('manoD','piel',G.cil(.018,.02,.46,10),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0]);
       pon('manoD','metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3]);
       return {H,montar,p};
     }
@@ -406,6 +411,8 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     function crear(tipo){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=constructores[tipo](),mallas=montar(M);
+      // Los goblins suavizan el sombreado sin duplicar la cara visible de sus materiales.
+      if(tipo==='goblin'||tipo==='cobrador')M.piel.side=THREE.FrontSide;
       // El extremo del hacha de Adreida, la cabeza (para colocar el rastro del corte y para las pruebas).
       if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).

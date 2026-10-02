@@ -1,5 +1,12 @@
-GOBLIN DE CAMINO · PLANTILLA UV v1
+GOBLIN DE CAMINO SUAVIZADO · PLANTILLA UV v2
 Las Grietas del Editor
+
+MODELO SUAVIZADO
+4,652 triángulos, antes 1,348. Cabeza y extremidades con más segmentos,
+mandíbula y botas redondeadas, sombreado suave. Mismos huesos y animaciones.
+Este kit contiene un lienzo y unas UV nuevos para esa geometría.
+Conserva el kit v1 si ya pintaste sobre él: su pintura necesita adaptación
+antes de usarla con este modelo; no mezcles archivos de ambos kits.
 
 QUÉ PINTAR
 Abre goblin-pintar.png en tu programa de ilustración. Es un lienzo de
@@ -45,7 +52,7 @@ la superficie del personaje. Para zonas ocultas, gira la vista.
 El menú «Tu pintura y animación» conserva la carga del PNG, las poses,
 las tres vistas y el botón para ver la pintura completa sin resaltado.
 El recorte sirve sólo de referencia: pinta y devuelve el lienzo completo.
-Las coordenadas y los archivos de pintura originales no cambiaron.
+La numeración de las 39 piezas se conserva, pero la geometría y las UV son v2.
 La imagen se queda en tu computadora; no se sube a internet ni al juego.
 No basta con abrir index.html haciendo doble clic: necesita ese servidor.
 

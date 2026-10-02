@@ -75,7 +75,7 @@ for(const [celda,indice] of orden.entries()){
  guia.push(`<g fill="none" stroke="#f4fcff" stroke-opacity=".9" stroke-width="1.3">${[...aristas].map(a=>`<polyline points="${a}"/>`).join('')}</g>`);
  for(const r of d.regiones)if(r.w*escala>r.t.length*9&&r.h*escala>26)guia.push(`<text x="${ox+r.x*escala}" y="${oy+r.y*escala}" text-anchor="middle" font-family="Arial,sans-serif" font-size="17" fill="#14232a" stroke="white" stroke-width="3" paint-order="stroke">${xml(r.t)}</text>`);
 }
-let obj='# Goblin de Camino · UV v1 · metros · +Y arriba · +Z frente\nmtllib goblin.mtl\n',offset=1;
+let obj='# Goblin de Camino suavizado · UV v2 · metros · +Y arriba · +Z frente\nmtllib goblin.mtl\n',offset=1;
 for(const p of piezas){
  uvPorMat[p.mat]??=[];posPorMat[p.mat]??=[];uvPorMat[p.mat].push(...p.uv.flat());
  const g=p.g.clone().applyMatrix4(p.m),P=g.attributes.position,N=g.attributes.normal;
@@ -92,7 +92,7 @@ const mallas=modelo.mallas.map(m=>{
  assert.equal(uvPorMat[material].length,pos.length/3*2);assert.ok(uvPorMat[material].every(v=>v>=0&&v<=1));
  return {material,vertices:pos.length/3,huella:hash(Buffer.from(pos.buffer,pos.byteOffset,pos.byteLength)),uv:uvPorMat[material]};
 });
-const atlas={version:1,personaje:'goblin',tamano:TAM,modeloSHA256:hash(fs.readFileSync(path.join(fuentes,'arpg-three-modelos.js'))),piezas:rects,mallas};
+const atlas={version:2,personaje:'goblin',tamano:TAM,modeloSHA256:hash(fs.readFileSync(path.join(fuentes,'arpg-three-modelos.js'))),piezas:rects,mallas};
 fs.mkdirSync(destino,{recursive:true});const guardar=(n,v)=>fs.writeFileSync(path.join(destino,n),v);
 guardar('goblin-uv.json',JSON.stringify(atlas));guardar('goblin.obj',obj);guardar('goblin.mtl','newmtl goblin\nKd 1 1 1\nKa 0 0 0\nKs 0 0 0\nd 1\nillum 1\nmap_Kd goblin-pintar.png\n');
 const gris='<rect width="4096" height="4096" fill="#253039"/>';

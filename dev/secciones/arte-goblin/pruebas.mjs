@@ -1,7 +1,7 @@
-/* Correspondencia geométrica de la guía: UV v1, modelo real y puntos del localizador. */
+/* Correspondencia geométrica de la guía: UV v2, modelo suave y puntos del localizador. */
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {extraerDeclaracion} from '../fuentes.mjs';
-const atlas=JSON.parse(fs.readFileSync(new URL('goblin-uv-v1.json',import.meta.url),'utf8'));
+const atlas=JSON.parse(fs.readFileSync(new URL('goblin-uv-v2.json',import.meta.url),'utf8'));
 const fuente=fs.readFileSync(new URL('vista.js',import.meta.url),'utf8'),c=vm.createContext({atlas});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL('../'+f,import.meta.url),'utf8'),c);
 vm.runInContext(extraerDeclaracion(fuente,'piezaUV','const').texto+'\n'+extraerDeclaracion(fuente,'localizarUV').texto,c);
@@ -25,4 +25,11 @@ for(const mesh of m.mallas){
 }
 assert.equal(vistos.size,39);assert.ok(n>1000);assert.equal(pieza(.99,.01),undefined,'Las UV ajenas no se asocian por accidente');
 const vacio=atlas.piezas.every(p=>{const [x,y,w,h]=p.celda;return !(.99*4096>=x&&.99*4096<x+w&&.99*4096>=y&&.99*4096<y+h);});assert.ok(vacio,'La última celda sigue vacía');
-console.log(`✓ 39 piezas, geometría v1 intacta y ${n} triángulos: puntos exactos en reposo, caminata y ataque; zonas ajenas rechazadas`);
+assert.equal(atlas.version,2);assert.ok(n>=4000&&n<6000,'Presupuesto geométrico del goblin suavizado');
+assert.equal(m.mallas.length,3,'La mayor suavidad no añade llamadas de dibujo');
+for(const tipo of ['goblin','cobrador']){const g=MOD.crear(tipo);assert.equal(g.mallas.length,3);assert.equal(g.M.piel.side,THREE.FrontSide);assert.equal(g.M.piel.flatShading,false);assert.equal(g.H.cuerpo.children.length,m.H.cuerpo.children.length);
+ for(const mesh of g.mallas){const a=mesh.geometry.attributes;for(const nombre of ['position','normal','skinWeight'])assert.ok(a[nombre].array.every(Number.isFinite),tipo+': atributos válidos');
+  for(let i=0;i<a.normal.count;i++){v.fromBufferAttribute(a.normal,i);assert.ok(Math.abs(v.length()-1)<1e-5,'Normales unitarias en las esquinas suavizadas');}
+ }
+}
+console.log(`✓ 39 piezas, UV v2 y ${n} triángulos: puntos exactos en reposo, caminata y ataque; normales válidas, tres mallas y zonas ajenas rechazadas`);
