@@ -19,6 +19,24 @@
   const contra=new THREE.DirectionalLight(0x9fc0ff,1.2);contra.position.set(-4,3,-5);escena.add(contra);
   const suelo=new THREE.Mesh(new THREE.CylinderGeometry(2.2,2.3,.12,48),new THREE.MeshStandardMaterial({color:0x5b5650,roughness:.9}));
   suelo.position.y=-.06;suelo.receiveShadow=true;escena.add(suelo);
+  // Referencias fijas del suelo para apreciar el recorrido; el polvo usa el emisor real del combate.
+  const cuadricula=new THREE.GridHelper(7,14,0x77716a,0x77716a);cuadricula.position.y=.004;cuadricula.material.transparent=true;cuadricula.material.opacity=.18;escena.add(cuadricula);
+  const maxPolvo=64,posPolvo=new Float32Array(maxPolvo*3),tamPolvo=new Float32Array(maxPolvo),alfaPolvo=new Float32Array(maxPolvo),geoPolvo=new THREE.BufferGeometry();
+  geoPolvo.setAttribute('position',new THREE.BufferAttribute(posPolvo,3));geoPolvo.setAttribute('tamano',new THREE.BufferAttribute(tamPolvo,1));geoPolvo.setAttribute('alfa',new THREE.BufferAttribute(alfaPolvo,1));
+  const nubePolvo=new THREE.Points(geoPolvo,new THREE.ShaderMaterial({transparent:true,depthWrite:false,
+    vertexShader:'attribute float tamano;attribute float alfa;varying float opacidad;void main(){vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_PointSize=tamano*45./(-p.z);opacidad=alfa;}',
+    fragmentShader:'varying float opacidad;void main(){float a=1.-smoothstep(.04,.5,length(gl_PointCoord-.5));gl_FragColor=vec4(.6,.52,.39,a*opacidad*.52);}'}));
+  nubePolvo.frustumCulled=false;escena.add(nubePolvo);let particulasVista=[];
+  function prepararPolvo(muerte){particulasVista=[];cuadricula.visible=!!muerte;if(!muerte)return;
+    const eventos=muerte.contactos.map((k,i)=>({k,fuerza:muerte.fuerza*(i ? .45 : 1),roce:false})),r=muerte.rodada;
+    if(r)for(let d=muerte.distancia*.2+.4;d<=muerte.distancia;d+=.4){let a=r.inicio,b=r.fin;for(let i=0;i<24;i++){const c=(a+b)/2;if(F.recorridoMuerteGoblin(muerte,c)<d)a=c;else b=c;}eventos.push({k:(a+b)/2,fuerza:muerte.fuerza,roce:true});}
+    let semilla=17;const azar=()=>((semilla=semilla*16807%2147483647)-1)/2147483646;
+    for(const e of eventos)F.emitirPolvoMuerte({x:0,z:-F.recorridoMuerteGoblin(muerte,e.k)},e.fuerza,{x:0,z:-1},(...p)=>particulasVista.push({t:e.k*muerte.duracion,p}),azar,e.roce);
+  }
+  function dibujarPolvo(t){let n=0;for(const {t:inicio,p}of particulasVista){const edad=t-inicio;if(edad<0||edad>p[6]||n>=maxPolvo)continue;const fr=(1-Math.exp(-1.6*edad))/1.6;
+    posPolvo[n*3]=p[0]+p[3]*fr;posPolvo[n*3+1]=Math.max(.03,p[1]+p[4]*edad-p[11]*edad*edad/2);posPolvo[n*3+2]=p[2]+p[5]*fr;tamPolvo[n]=p[7];alfaPolvo[n]=1-edad/p[6];n++;}
+    geoPolvo.setDrawRange(0,n);for(const a of Object.values(geoPolvo.attributes))a.needsUpdate=true;
+  }
   const camara=new THREE.PerspectiveCamera(32,1,.05,100);
   // Cámara orbital: ángulo, elevación, distancia y altura del punto mirado.
   const vista={az:.35,el:.12,dist:4.6,alto:1.05},meta={...vista};
@@ -38,7 +56,7 @@
   $('tipo').addEventListener('change',()=>{cargar($('tipo').value);t=0;encuadrarAnimacion();});
   $('anim').addEventListener('change',()=>{t=0;encuadrarAnimacion();});
   const actual=()=>ANIMS.find(a=>a[0]===$('anim').value)||ANIMS[0];
-  function encuadrarAnimacion(){const muerte=actual()[4];Object.assign(meta,muerte?{dist:3.8,alto:.45,el:.4,az:.35}:encuadres.cuerpo(modelo));suelo.scale.setScalar(muerte?1.8:1);}
+  function encuadrarAnimacion(){const muerte=actual()[4];Object.assign(meta,muerte?{dist:4.8,alto:.35,el:.4,az:1.1}:encuadres.cuerpo(modelo));suelo.scale.set(muerte?1.8:1,1,muerte?1.8:1);prepararPolvo(muerte);}
   encuadrarAnimacion();
   $('repetir').addEventListener('click',()=>{t=0;pausa=false;$('pausa').textContent='Pausa';});
   $('faseAnim').addEventListener('input',()=>{t=+$('faseAnim').value*(actual()[1]-.00001);pausa=true;$('pausa').textContent='Seguir';});
@@ -61,9 +79,9 @@
     if(!pausa)t+=dt*+$('vel').value;if(girar)meta.az+=dt*.4;
     for(const k in vista)vista[k]+=(meta[k]-vista[k])*Math.min(1,dt*8);
     const [nombre,dur,,,muerte]=actual(),fase=(t%dur)/dur,k=muerte?Math.min(1,(t%dur)/muerte.duracion):fase;
-    $('faseAnim').value=fase;modelo.raiz.position.set(0,0,muerte?-muerte.distancia*(1-Math.pow(1-Math.min(1,k/.86),3)):0);
+    $('faseAnim').value=fase;modelo.raiz.position.set(0,0,muerte?-F.recorridoMuerteGoblin(muerte,k):0);
     F.posar(modelo,{anim:muerte?'muerte':nombre,muerte,t,k,fase:t*TAU_PASO,paso:1});
-    const c=Math.cos(vista.el),centroZ=muerte?modelo.raiz.position.z*.65:0;camara.position.set(Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,centroZ+Math.cos(vista.az)*c*vista.dist);camara.lookAt(0,vista.alto,centroZ);
+    dibujarPolvo(t%dur);const c=Math.cos(vista.el),centroZ=muerte?-muerte.distancia*.5:0;camara.position.set(Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,centroZ+Math.cos(vista.az)*c*vista.dist);camara.lookAt(0,vista.alto,centroZ);
     render.render(escena,camara);requestAnimationFrame(cuadro);}
   const TAU_PASO=Math.PI*2/1.1;
   requestAnimationFrame(cuadro);

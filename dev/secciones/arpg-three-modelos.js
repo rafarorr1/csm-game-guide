@@ -504,13 +504,26 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
     });
     function crearMuerteGoblin(tipo='tajo',variante=Math.random()<.5?0:1){
       if(!Object.hasOwn(muertesGoblin,tipo))tipo='tajo';variante=variante===1?1:0;
-      const p=muertesGoblin[tipo][variante];return {tipo,variante,duracion:p.duracion,distancia:p.distancia,impacto:p.impacto,adelante:p.adelante};
+      const p=muertesGoblin[tipo][variante],rodada=tipo==='cargado'?{inicio:variante ? .32 : .3,fin:variante ? .83 : .8}:null;
+      const fuerza=Math.hypot(p.distancia/p.duracion,Math.sqrt(19.6*Math.max(...p.cuadros.map(c=>c.vuelo))));
+      return {tipo,variante,duracion:p.duracion,distancia:p.distancia,impacto:p.impacto,adelante:p.adelante,rodada,
+        contactos:tipo==='salto'?[p.impacto,variante?1:.86]:[rodada?.inicio??p.impacto],fuerza};
+    }
+    // El 80 % del recorrido del cargado ocurre durante la vuelta y usa su misma curva angular.
+    function recorridoMuerteGoblin(m,k){k=Math.max(0,Math.min(1,k));const r=m.rodada;
+      return m.distancia*(r ? .2*tramo(k,0,r.inicio)+.8*tramo(k,r.inicio,r.fin) : 1-Math.pow(1-Math.min(1,k/.86),3));
+    }
+    // Partículas bajas y breves; el juego y el visor comparten el mismo emisor.
+    function emitirPolvoMuerte(p,fuerza,dir,emitir,azar=Math.random,roce=false){if(fuerza<.5)return;
+      const intensidad=Math.min(1,fuerza/4),n=roce?2:Math.round(3+5*intensidad);
+      for(let i=0;i<n;i++){const a=azar()*TAU,v=.3+azar()*.65+intensidad*.3;
+        emitir(p.x+Math.cos(a)*.15,.06,p.z+Math.sin(a)*.15,Math.cos(a)*v+(dir?.x||0)*intensidad*.25,.25+azar()*.3,Math.sin(a)*v+(dir?.z||0)*intensidad*.25,.35+azar()*.3,2.3+azar()*1.2,.28,.23,.17,.7);}
     }
     function posarMuerteGoblin(m,a){
       const muerte=a.muerte||crearMuerteGoblin('tajo',0),p=muertesGoblin[muerte.tipo]?.[muerte.variante]||muertesGoblin.tajo[0],k=Math.min(1,Math.max(0,a.k||0));
       let j=1;while(j<p.cuadros.length-1&&k>p.cuadros[j].k)j++;
       const u=p.cuadros[j-1],v=p.cuadros[j],w=suave((k-u.k)/(v.k-u.k)),valor=n=>u[n]+(v[n]-u[n])*w;
-      const H=m.H,lado=muerte.variante===1?-1:1,alinear=(muerte.angulo||0)*tramo(k,0,.22);
+      const H=m.H,lado=muerte.variante===1?-1:1,alinear=((muerte.angulo||0)+(muerte.tipo==='cargado'&&muerte.variante===1?Math.PI/2:0))*tramo(k,0,.22);
       H.cuerpo.rotation.set(valor('caida'),valor('giro'),valor('lado'));H.cuerpo.quaternion.premultiply(giroMuerte.setFromAxisAngle(ejeMuerte,alinear));H.cuerpo.position.y=valor('vuelo');
       H.torso.rotation.set(valor('torso'),lado*valor('asimetria')*.2,0);H.cabeza.rotation.set(valor('cabeza'),0,lado*tramo(k,.65,1)*.12);
       H.cadera.rotation.y=0;
@@ -522,10 +535,25 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
         H['brazo'+l].rotation.set(-.3-valor('encoger')*.35,0,s*(.18+valor('brazos')*.8));
         H['ante'+l].rotation.x=-.25-valor('encoger')*.65-valor('brazos')*.15;
       }
+      // Termina acostado: deshace la tensión de torso, piernas y manos para que ni el
+      // arma ni una extremidad levantada sostengan todo el cadáver por encima del piso.
+      const descanso=tramo(k,Math.max(.68,p.impacto),1),fin=p.cuadros[p.cuadros.length-1];
+      giroReposo.setFromEuler(eulerMuerte.set(fin.caida,fin.giro,fin.lado));
+      puntoApoyo.set(0,1,0).applyQuaternion(giroReposo);const rumbo=Math.atan2(puntoApoyo.x,puntoApoyo.z)-(p.adelante?0:Math.PI);
+      giroReposo.setFromEuler(eulerMuerte.set(p.adelante?Math.PI/2:-Math.PI/2,lado*.15,0));
+      giroReposo.premultiply(giroMuerte.setFromAxisAngle(ejeMuerte,rumbo+alinear));H.cuerpo.quaternion.slerp(giroReposo,descanso);H.cuerpo.position.y*=1-descanso;
+      const relajar=(b,x=0,y=0,z=0)=>b.quaternion.slerp(giroReposo.setFromEuler(eulerMuerte.set(x,y,z)),descanso);
+      relajar(H.torso);relajar(H.cabeza,p.adelante?-.5:.05);
+      for(const [l,s] of [['I',1],['D',-1]]){relajar(H['brazo'+l],0,0,s*(.6+lado*s*.08));relajar(H['ante'+l],0,0,s*.15);relajar(H['mano'+l],0,Math.PI/2,0);
+        relajar(H['pierna'+l],p.adelante?.12:-.15,0,s*.12);relajar(H['rodilla'+l],p.adelante?.18:.25);relajar(H['pie'+l]);}
+      // El giro se hace alrededor de la cadera, no de los pies: el centro no oscila
+      // hacia delante y atrás mientras el combate desplaza al goblin por el suelo.
+      puntoApoyo.set(0,m.p.muslo+m.p.pierna+(m.p.pie||.04),0).applyQuaternion(H.cuerpo.quaternion);
+      H.cuerpo.position.x=-puntoApoyo.x;H.cuerpo.position.z=-puntoApoyo.z;
     }
     // Apoyo de bajo coste: 26 extremos de cada hueso, precalculados una vez por tipo.
     // No hay rigid bodies ni barridos de los miles de vértices durante la partida.
-    const apoyosGoblin=new Map(),puntoApoyo=new THREE.Vector3(),ejeMuerte=new THREE.Vector3(0,1,0),giroMuerte=new THREE.Quaternion();
+    const apoyosGoblin=new Map(),puntoApoyo=new THREE.Vector3(),ejeMuerte=new THREE.Vector3(0,1,0),giroMuerte=new THREE.Quaternion(),giroReposo=new THREE.Quaternion(),eulerMuerte=new THREE.Euler();
     function apoyarMuerteGoblin(m){
       let apoyos=apoyosGoblin.get(m.tipo);const esq=m.mallas[0].skeleton;
       if(!apoyos){const direcciones=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)if(x||y||z)direcciones.push(new THREE.Vector3(x,y,z));
@@ -668,7 +696,7 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
         recogerPose(m,a);
       }
     }
-    return {crear,posar,TIPOS,animacion,muertesGoblin,crearMuerteGoblin};
+    return {crear,posar,TIPOS,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
   }
   window.CAOZ_ARPG_MODELOS=Object.freeze({fabrica});
 })();

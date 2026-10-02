@@ -884,7 +884,7 @@
   function morir(e,impacto={}){if(e.estado==='muere')return;
     if(e.tipo==='goblin'||e.tipo==='cobrador'){
       const m=MOD.crearMuerteGoblin(impacto.causa),direccion=(impacto.direccion||frente(e.dir+Math.PI)).clone().setY(0).normalize();
-      m.direccion=direccion;m.angulo=difAng(e.dir,Math.atan2(direccion.x,direccion.z)+(m.adelante?0:Math.PI));m.recorrido=0;m.polvo=false;e.muerte=m;e.emp.set(0,0,0);e.tirón=null;
+      m.direccion=direccion;m.angulo=difAng(e.dir,Math.atan2(direccion.x,direccion.z)+(m.adelante?0:Math.PI));m.recorrido=0;m.contactosEmitidos=0;m.roce=0;e.muerte=m;e.emp.set(0,0,0);e.tirón=null;
     }
     cancelarAtaque(e);limpiarPeligrosTroll(e);cambiar(e,'muere');e.vida=0;brasas(e.pos,14,e.m.alto);if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}
     if(e.sinBotin)return;
@@ -895,12 +895,15 @@
 
   // El recorrido de la caída depende del tiempo absoluto y se detiene ante pozo o muralla.
   // No suma el antiguo empuje: una muerte cargada debe dar una sola rodada, sin deslizarse de más.
-  function avanzarCaidaGoblin(e){const m=e.muerte,k=Math.min(1,e.t/m.duracion),viaje=m.distancia*(1-Math.pow(1-Math.min(1,k/.86),3));
+  function avanzarCaidaGoblin(e){const m=e.muerte,k=Math.min(1,e.t/m.duracion),viaje=MOD.recorridoMuerteGoblin(m,k),anterior=m.recorrido;let avance=0;
     if(!m.bloqueada){const distancia=viaje-m.recorrido,n=Math.max(1,Math.ceil(distancia/.12));
       for(let i=0;i<n;i++){const siguiente=e.pos.clone().addScaledVector(m.direccion,distancia/n),libre=siguiente.clone();dentroPlaza(libre,Math.max(e.radio,.58));
-        if(plano(siguiente,libre)>.015){m.bloqueada=true;break;}e.pos.copy(siguiente);}
+        if(plano(siguiente,libre)>.015){m.bloqueada=true;break;}e.pos.copy(siguiente);avance+=distancia/n;}
     }m.recorrido=viaje;
-    if(!m.polvo&&k>=m.impacto){m.polvo=true;polvo(e.pos,7,.45);}
+    while(m.contactosEmitidos<m.contactos.length&&k>=m.contactos[m.contactosEmitidos]){
+      const fuerza=m.fuerza*(m.contactosEmitidos ? .45 : 1);MOD.emitirPolvoMuerte(e.pos,fuerza,m.direccion,particula,rnd);m.contactosEmitidos++;
+    }
+    if(m.rodada&&avance>0&&!m.bloqueada){m.roce+=Math.min(avance,Math.max(0,Math.min(viaje,MOD.recorridoMuerteGoblin(m,m.rodada.fin))-Math.max(anterior,MOD.recorridoMuerteGoblin(m,m.rodada.inicio))));while(m.roce>=.4){m.roce-=.4;MOD.emitirPolvoMuerte(e.pos,m.fuerza,m.direccion,particula,rnd,true);}}
   }
 
   /* ---- Oleadas ------------------------------------------------------------------------- */
