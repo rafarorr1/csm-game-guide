@@ -215,8 +215,8 @@ try{
     assert.ok(enAire>1&&Math.hypot(e.heroe.x-6.5,e.heroe.z)<1.2,'Clic derecho: Salto al cursor ('+enAire+' m de alto)');
     assert.ok(lejos.every(id=>{const x=e.enemigos.find(x=>x.id===id);return !x||x.vida<x.vidaMax&&['aturdido','muere'].includes(x.estado);}),'…que aturde y hiere al caer');
     for(const id of lejos)await r('r.matar(a[0])',id);await r('r.avanzar(2)');
-    const rodean=[];for(let i=0;i<3;i++)rodean.push(await r('r.invocar("goblin",Math.cos(a[0])*7,Math.sin(a[0])*7,true)',i*2.1));
-    await r('r.heroe({x:0,z:0,furia:0})');const destino=await r('r.pantalla(7,0,0)');await pagina.mouse.move(destino.x,destino.y);
+    const rodean=[];for(let i=0;i<3;i++)rodean.push(await r('r.invocar("goblin",Math.cos(a[0])*3,Math.sin(a[0])*3,true)',i*2.1));
+    await r('r.heroe({x:0,z:0,furia:0})');const destino=await r('r.pantalla(3,0,0)');await pagina.mouse.move(destino.x,destino.y);
     await pagina.keyboard.press('KeyE');await r('r.avanzar(.35)');assert.equal((await r('r.bumeranes()')).length,1,'E lanza el hacha sin coste de Furia');
     e=await r('r.avanzar(2.5)');assert.equal((await r('r.bumeranes()')).length,0,'El hacha vuelve a la mano');
     const blanco=e.enemigos.find(x=>x.id===rodean[0]);

@@ -16,6 +16,7 @@ function preparar(){for(const b of [...bumeranes])quitarBumeran(b);obstaculos.le
  MOD.posar(heroe.m,{anim:'quieto',t:0});return heroe;
 }
 `);
+run('preparar();lanzarBumeran(heroe);pasoBumeranes(.25)');assert.equal(run('heroe.bumeran.fase'),'vuelta');assert.ok(Math.abs(run('heroe.bumeran.g.position.distanceTo(heroe.bumeran.desde)')-4)<1e-6,'Regresa exactamente tras cuatro metros');
 run('preparar();usar("provocar",new V3(0,0,8))');assert.equal(run('heroe.estado'),'lanzarHacha');assert.equal(run('heroe.cd.bumeran'),10);assert.equal(run('heroe.furia'),0);
 run('lanzarBumeran(heroe);heroe.estado="quieto";heroe.cd.bumeran=0');assert.equal(run('usar("provocar")'),false,'Un parry no duplica el arma que ya vuela');assert.equal(run('usar("torbellino")'),false);run('iniciarGolpe();iniciarCarga()');assert.equal(run('heroe.estado'),'quieto');
 const modelo=run('heroe.m');for(const mesh of modelo.mallas){const g=mesh.geometry;assert.ok(g.index);assert.ok([...g.index.array].every(i=>g.attributes.armaArrojable.getX(i)===0),'No quedan triángulos del arma en mano');assert.ok(g.index.count>0,'El cuerpo y las manos siguen visibles');}
@@ -26,11 +27,11 @@ for(const hz of [20,30,60,144]){
  assert.equal(run('bumeranes.length'),0,`${hz}: vuelve a la mano`);assert.equal(run('heroe.m.sinHacha'),false);assert.ok(run('curva')>1,`${hz}: regresa con arco lateral`);
  assert.equal(run('impactos.length'),2,`${hz}: un impacto por tramo`);assert.equal(run('impactos.every(i=>i.dueno===7&&i.d===18)'),true,'Daño y autor correctos');assert.equal(run('heroe.m.mallas.every(m=>m.geometry.index===null)'),true,'Recupera toda la geometría');
 }
-function trayectoria(dir){run('preparar();lanzarBumeran(heroe);pasoBumeranes(.5)');run(`heroe.dir=${dir};heroe.m.raiz.rotation.y=heroe.dir;pasoBumeranes(.55)`);return run('heroe.bumeran.g.position.clone()');}
+function trayectoria(dir){run('preparar();lanzarBumeran(heroe);pasoBumeranes(BUMERAN.alcance/BUMERAN.vel)');run(`heroe.dir=${dir};heroe.m.raiz.rotation.y=heroe.dir;pasoBumeranes(.55)`);return run('heroe.bumeran.g.position.clone()');}
 assert.ok(trayectoria(0).distanceTo(trayectoria(Math.PI))>2,'Girar cambia la curva de regreso');
 run('preparar();lanzarBumeran(heroe)');for(let i=0;i<240;i++)run('heroe.pos.x+=5.8/60;heroe.m.raiz.position.copy(heroe.pos);pasoBumeranes(1/60)');assert.equal(run('bumeranes.length'),0,'Alcanza a una Adreida que sigue corriendo');
 run('preparar();obstaculos.push({x:0,z:3,r:1});lanzarBumeran(heroe);pasoBumeranes(.3)');assert.equal(run('heroe.bumeran.fase'),'vuelta','Cobertura fuerza el regreso');run('pasoBumeranes(3)');assert.equal(run('bumeranes.length'),0,'No queda atrapada por el obstáculo');
 run('preparar();lanzarBumeran(heroe);heroe.vivo=false;pasoBumeranes(.02)');assert.equal(run('bumeranes.length'),0);assert.equal(run('heroe.m.sinHacha'),false,'Limpia el vuelo al morir');
-run('preparar();ABIERTO=true;heroe.pos.x=50;heroe.m.raiz.position.copy(heroe.pos);lanzarBumeran(heroe);pasoBumeranes(.3)');assert.equal(run('heroe.bumeran.fase'),'ida','Funciona fuera de la ciudad en el mundo abierto');run('pasoBumeranes(2)');assert.equal(run('bumeranes.length'),0);run('ABIERTO=false');
+run('preparar();ABIERTO=true;heroe.pos.x=50;heroe.m.raiz.position.copy(heroe.pos);lanzarBumeran(heroe);pasoBumeranes(.15)');assert.equal(run('heroe.bumeran.fase'),'ida','Funciona fuera de la ciudad en el mundo abierto');run('pasoBumeranes(2)');assert.equal(run('bumeranes.length'),0);run('ABIERTO=false');
 run('preparar();heroe.tipo="mohamed";usar("provocar")');assert.equal(run('heroe.estado'),'grito','Mohamed conserva su habilidad');
 console.log('✓ Búmeran: geometría y manos, E, enfriamiento, ida recta, curva dirigida, daño por tramo, cooperativo, carrera, obstáculos y muerte a 20/30/60/144 FPS');

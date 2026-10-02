@@ -1,4 +1,4 @@
-/* Reglas reales del cooperativo, ultis y mundo abierto, sin GPU. */
+/* Reglas reales del cooperativo, ultis, rutas de Adreidos y mundo abierto, sin GPU. */
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8');
 const c=vm.createContext({console});c.window=c;for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
@@ -12,8 +12,8 @@ const libre=()=>heroe.vivo&&heroe.estado==='quieto',etiqueta=()=>({el:{},pos:new
 const document={hidden:false},avisos=[],usar=(accion,p)=>{avisos.push({id:heroe.id,accion,p});return true;},aDistancia=()=>heroe.tipo==='mohamed';
 const $=()=>({textContent:''});let pads=[];const navigator={getGamepads:()=>pads};
 const danar=(e,d)=>e.vida-=d;
-${['R','PANELES','HEROES','DESTINO','BOTONES_MANDO','exploracion'].map(n=>get(n,'const')).join('\n')}
-${['conHeroe','cambiar','dentroPlaza','respetarMuralla','lanzarUlti','apunalar','pasoAliados','limpiarAliados','liberarModeloTroll','parryPerfecto','aplicarDestino','descubrirMapa','objetivoEnemigo','ejeMando','leerMando','estadoMando'].map(n=>get(n)).join('\n')}
+${['R','PANELES','presion','HEROES','DESTINO','BOTONES_MANDO','exploracion'].map(n=>get(n,'const')).join('\n')}
+${['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','conHeroe','cambiar','dentroPlaza','respetarMuralla','lanzarUlti','apunalar','pasoAliados','limpiarAliados','liberarModeloTroll','parryPerfecto','aplicarDestino','descubrirMapa','objetivoEnemigo','ejeMando','leerMando','estadoMando'].map(n=>get(n)).join('\n')}
 function crear(tipo,id){const m=MOD.crear(tipo);escena.add(m.raiz);const h={id,tipo,m,radio:m.radio,pos:new V3(id*2,0,0),dir:0,vivo:true,estado:'quieto',alma:HEROES[tipo].alma/2,almaMax:HEROES[tipo].alma,atq:HEROES[tipo].atq,basicos:1,sigilo:0,cd:{ulti:0,salto:4,parry:.4},furia:0,parrys:0,entrada:{},control:{mov:new V3()},mando:{indice:null,botones:[],dir:new V3(0,0,-1),activo:false,listo:false,foco:true},disparosPendientes:[]};jugadores.push(h);return h;}
 heroe=crear('adreida',0);crear('mohamed',1);ent=heroe.entrada;ctl=heroe.control;mando=heroe.mando;disparosPendientes=heroe.disparosPendientes;
 `);
@@ -27,7 +27,7 @@ run('parryPerfecto(null,new V3())');assert.equal(run('heroe.cd.ulti'),89);assert
 assert.equal(run('lanzarUlti()'),false);run('pasoAliados(29.9)');assert.equal(run('aliados.length'),1);run('pasoAliados(.11)');assert.equal(run('aliados.length'),0);
 run("const blanco={pos:new V3(2,0,1),dir:0,radio:.4,estado:'quieto',vida:500,m:{alto:2}};enemigos.push(blanco);jugadores[1].cadT=0;conHeroe(jugadores[1],apunalar)");assert.equal(run('blanco.vida'),455);
 run('blanco.dir=Math.PI;jugadores[1].cadT=0;conHeroe(jugadores[1],apunalar)');assert.equal(run('blanco.vida'),446);
-run("jugadores[0].pos.set(40,0,0);jugadores[1].sigilo=10");assert.equal(run('objetivoEnemigo(blanco).id'),0);run('jugadores[1].sigilo=0');assert.equal(run('objetivoEnemigo(blanco).id'),1);
+run("jugadores[0].pos.set(40,0,0);jugadores[1].sigilo=10");assert.equal(run('objetivoEnemigo(blanco).id'),0);run('jugadores[1].sigilo=0;reloj.t+=1.21');assert.equal(run('objetivoEnemigo(blanco).id'),1);
 console.log('✓ Ulti 90 s, parry −1 s, Adreidos 30 s, daga ×5 detrás/×1 delante, invisibilidad frente a IA');
 run("pads=[0,1].map(index=>({index,connected:true,mapping:'standard',axes:[0,0,0,0],buttons:Array.from({length:17},()=>({pressed:false,value:0}))}));for(const h of jugadores)conHeroe(h,leerMando);pads[0].axes[0]=1;pads[1].axes[0]=-1;pads[1].buttons[10].pressed=true");
 assert.equal(run('conHeroe(jugadores[0],leerMando).mov.x'),1);assert.equal(run('conHeroe(jugadores[1],leerMando).mov.x'),-1);assert.equal(run('avisos[0].id'),1);assert.equal(run('avisos[0].accion'),'ulti');
@@ -59,3 +59,34 @@ assert.deepEqual(Array.from(run('jugadores.map(h=>h.alma)')),[86,86]);
 run("jugadores[1].estado='parry';jugadores[1].t=.05;jugadores[1].dir=Math.PI;resolverAtaque(atacante())");assert.deepEqual(Array.from(run('jugadores.map(h=>h.alma)')),[86,86]);
 assert.equal(run('jugadores[1].parrys'),1);assert.equal(run('heroe.id'),0);
 console.log('✓ Un área golpea a ambos; el parry de Mohamed detiene el golpe y protege al equipo');
+
+// Adreidos usa su movimiento y sus ataques reales, con el pozo y abrevadero de la plaza.
+for(const fps of [20,60,144])for(const seguir of [false,true])for(const [inicio,fin] of [
+  [[-9,-3],[-1,-3]],[[-1,-3],[-9,-3]],[[-5,-7],[-5,1]],[[-5,1],[-5,-7]]
+]){
+  const resultado=run(`{
+    limpiarAliados();enemigos.length=0;obstaculos.length=0;ABIERTO=false;reloj.t=0;
+    obstaculos.push({x:-5,z:-3,r:1.3},{x:-2.82,z:-2.51,r:.55});
+    heroe.pos.set(${fin[0]},0,${fin[1]});heroe.cd.ulti=0;heroe.estado='quieto';lanzarUlti();
+    const a=aliados[0];a.pos.set(${inicio[0]},0,${inicio[1]});
+    const objetivo={pos:heroe.pos.clone(),estado:'quieto',vida:500,radio:.34};
+    if(!${seguir})enemigos.push(objetivo);
+    let minimo=99,maxPaso=0,maxRutas=0;
+    for(let i=0;i<${fps}*8;i++){
+      const antes=a.pos.clone();presion.rutas=0;reloj.t+=1/${fps};pasoAliados(1/${fps});
+      minimo=Math.min(minimo,...obstaculos.map(o=>Math.hypot(a.pos.x-o.x,a.pos.z-o.z)-o.r-a.radio));
+      maxPaso=Math.max(maxPaso,plano(antes,a.pos));maxRutas=Math.max(maxRutas,presion.rutas);
+      if(${seguir}?plano(a.pos,heroe.pos)<2.01:objetivo.vida<500)break;
+    }
+    ({distancia:plano(a.pos,objetivo.pos),vida:objetivo.vida,minimo,maxPaso,maxRutas});
+  }`);
+  assert.ok(resultado.minimo>=-.002,'No atraviesa el pozo ni el abrevadero: '+JSON.stringify(resultado));
+  assert.ok(resultado.maxPaso<=5.8/fps+1e-6,'Respeta su velocidad; no se teletransporta');
+  assert.ok(resultado.maxRutas<=2,'Respeta el presupuesto de búsquedas');
+  if(seguir)assert.ok(resultado.distancia<2.01,'Rodea el pozo al seguir a Adreida');
+  else assert.ok(resultado.vida<500,'Rodea el pozo y alcanza al enemigo: '+JSON.stringify({fps,inicio,fin,resultado}));
+}
+// Una cobertura aparecida durante la preparación también bloquea el daño del aliado.
+run("limpiarAliados();enemigos.length=obstaculos.length=0;heroe.pos.set(0,0,0);heroe.cd.ulti=0;heroe.estado='quieto';lanzarUlti();const asistente=aliados[0];asistente.pos.set(-.9,0,0);asistente.atacando=true;asistente.t=.29;enemigos.push({pos:new V3(.9,0,0),estado:'quieto',vida:100});obstaculos.push({x:0,z:0,r:.45});pasoAliados(.02)");
+assert.equal(run('enemigos[0].vida'),100,'El hachazo de Adreidos no atraviesa obstáculos');
+console.log('✓ Adreidos rodea pozo y abrevadero desde cuatro lados, combate y seguimiento a 20/60/144 FPS, sin teletransportes ni golpes a través de coberturas');

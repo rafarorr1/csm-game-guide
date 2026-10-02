@@ -408,11 +408,11 @@
   /* ---- Personajes ------------------------------------------------------------------ */
   // Cada enemigo tiene la forma exacta de su ataque: el cono o la línea que se dibuja en el suelo es lo que golpea.
   const DEF={
-    cobrador:{vida:46,dano:15,vel:2.7,alcance:1.05,aviso:.95,golpe:.18,recupera:.9,cd:1.5,forma:'cono',radio:2,ang:.85,botin:.35,globo:.25},
+    cobrador:{vida:46,dano:15,vel:2.7,alcance:1.05,aviso:.95,golpe:.18,recupera:.9,cd:1.5,forma:'cono',radio:2,ang:.85,botin:.35,globo:.125},
     troll:{vida:1100,dano:30,vel:1.85,alcance:2.6,aviso:1.3,golpe:.3,recupera:1.5,cd:1.6,forma:'cono',radio:3.8,ang:1.1,aguante:true,jefe:true,botin:1,globo:1},
-    goblin:{vida:34,dano:13,vel:2.85,alcance:1.05,aviso:.85,golpe:.18,recupera:.8,cd:1.35,forma:'cono',radio:2,ang:.85,botin:.24,globo:.18},
-    kobold:{vida:26,dano:16,vel:2.65,alcance:11,aviso:1.1,golpe:.3,recupera:.8,cd:2.4,forma:'linea',largo:13,ancho:.8,botin:.3,globo:.2,lanza:true},
-    saqueador:{vida:100,dano:24,vel:2.85,alcance:1.5,aviso:.85,golpe:.2,recupera:.8,cd:1.15,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.4},
+    goblin:{vida:34,dano:13,vel:2.85,alcance:1.05,aviso:.85,golpe:.18,recupera:.8,cd:1.35,forma:'cono',radio:2,ang:.85,botin:.24,globo:.09},
+    kobold:{vida:26,dano:16,vel:2.65,alcance:11,aviso:1.1,golpe:.3,recupera:.8,cd:2.4,forma:'linea',largo:13,ancho:.8,botin:.3,globo:.1,lanza:true},
+    saqueador:{vida:100,dano:24,vel:2.85,alcance:1.5,aviso:.85,golpe:.2,recupera:.8,cd:1.15,forma:'cono',radio:2.5,ang:1,aguante:true,botin:.6,globo:.2},
     can:{vida:800,dano:32,vel:2.5,alcance:2.3,aviso:1,golpe:.22,recupera:1.05,cd:1.35,forma:'cono',radio:3.3,ang:.9,aguante:true,jefe:true,botin:1,globo:1},
   };
   const HAB={ulti:{coste:0,cd:90},torbellino:{coste:30,cd:0},salto:{coste:25,cd:5},provocar:{coste:0,cd:10},bumeran:{coste:0,cd:10},esquiva:{coste:0,cd:1.05},parry:{coste:0,cd:.5}};
@@ -616,7 +616,7 @@
 
 
   // Búmeran de Adreida: ida recta, regreso con una curva que sigue su orientación actual.
-  const BUMERAN={alcance:8,vel:16,regreso:1.05,dano:1.5},bumeranes=[];
+  const BUMERAN={alcance:4,vel:16,regreso:1.05,dano:1.5},bumeranes=[];
   const matEstelaBumeran=matEstelaHacha.clone();matEstelaBumeran.uniforms.uT=tiempo;
   matEstelaBumeran.fragmentShader=matEstelaHacha.fragmentShader.replace('vec3(2.2,1.05,.08)','vec3(.2,1.05,2.2)').replace('vec3(3.1,2.2,.55)','vec3(.8,2.1,2.8)');
   function manoBumeran(h){h.m.raiz.updateMatrixWorld(true);return h.m.H.manoD.localToWorld(new V3(0,-.55,0));}
@@ -1357,7 +1357,7 @@
       const g=globos[0],meta=b?b.pos:g&&h.alma<h.almaMax?g.pos:plano(h.pos,new V3())>3?new V3(0,0,1):null;if(meta)c.mov.copy(meta).sub(h.pos).setY(0).normalize();return c;}
     const cerca=r=>vivos.filter(e=>plano(e.pos,h.pos)<r);
     if(h.alma<h.almaMax*.4&&globos.length){c.mov.copy(globos[0].pos).sub(h.pos).setY(0).normalize();return c;}
-    if(!h.bumeran&&!h.cd.bumeran&&cerca(8).length>=2){usar('bumeran',cerca(8)[0].pos);return c;}
+    if(!h.bumeran&&!h.cd.bumeran&&cerca(BUMERAN.alcance).length>=2){usar('bumeran',cerca(BUMERAN.alcance)[0].pos);return c;}
     if(!h.bumeran&&h.furia>=30&&cerca(3).length>=3){usar('torbellino');return c;}
     if(!h.cd.salto&&h.furia>=55){let mejor=null,n=1;for(const e of vivos){const d=plano(e.pos,h.pos);if(d<3.5||d>8)continue;const k=vivos.filter(o=>plano(o.pos,e.pos)<3).length+(e.d.lanza?1:0);if(k>n){n=k;mejor=e;}}
       if(mejor){usar('salto',mejor.pos.clone());return c;}}
@@ -1412,7 +1412,7 @@
     if(h.tipo==='adreida'){
       const m=MOD.crear('adreida'),pos=h.pos.clone().addScaledVector(frente(h.dir+1.2),1.5);dentroPlaza(pos,m.radio);escena.add(m.raiz);
       const rotulo=etiqueta('apAliado',pos.clone().setY(2.8));rotulo.el.textContent='Adreidos · 30 s';
-      aliados.push({m,pos,dueno:h,vida:30,cd:0,t:0,atacando:false,dir:h.dir,fase:0,rotulo});h.ultiT=30;
+      aliados.push({m,pos,radio:m.radio,dentro:true,ruta:null,dueno:h,vida:30,cd:0,t:0,atacando:false,dir:h.dir,fase:0,rotulo});h.ultiT=30;
       marca('onda',pos.x,pos.z,2,0xd5b56a,.45);
     }else{
       h.sigilo=h.ultiT=10;
@@ -1431,9 +1431,14 @@
   function pasoAliados(dt){for(const a of [...aliados]){
     a.vida-=dt;if(a.vida<=0){liberarModeloTroll(a.m);quitarEtiqueta(a.rotulo);aliados.splice(aliados.indexOf(a),1);continue;}
     const obj=enemigos.filter(e=>e.estado!=='muere'&&plano(e.pos,a.dueno.pos)<14).sort((b,c)=>plano(b.pos,a.pos)-plano(c.pos,a.pos))[0];
-    const destino=obj?.pos||a.dueno.pos,dist=plano(a.pos,destino);let paso=0;a.cd-=dt;
-    if(a.atacando){a.t+=dt;if(a.t>=.3&&!a.golpeo){a.golpeo=true;conHeroe(a.dueno,()=>{for(const e of enemigos)if(e.estado!=='muere'&&plano(e.pos,a.pos)<2.2)danar(e,a.dueno.atq*(a.dueno.basicos??1),{empuje:2,causa:'adreidos',origen:a.pos});});}if(a.t>=.6)a.atacando=false;}
-    else if(dist>(obj?1.7:2)){paso=Math.min(5.8*dt,dist-1.4);a.dir=rumbo(a.pos,destino);a.pos.addScaledVector(frente(a.dir),paso);dentroPlaza(a.pos,a.m.radio);}
+    const destino=obj?.pos||a.dueno.pos,dist=plano(a.pos,destino),directo=pasoLibreEnemigo(a.pos,destino,a.radio);let paso=0;a.cd-=dt;
+    if(a.atacando){a.t+=dt;if(a.t>=.3&&!a.golpeo){a.golpeo=true;conHeroe(a.dueno,()=>{for(const e of enemigos)if(e.estado!=='muere'&&plano(e.pos,a.pos)<2.2&&pasoLibreEnemigo(a.pos,e.pos,.05))danar(e,a.dueno.atq*(a.dueno.basicos??1),{empuje:2,causa:'adreidos',origen:a.pos});});}if(a.t>=.6)a.atacando=false;}
+    else if(dist>(obj?1.7:2)||!directo){
+      // Comparte las rutas persistentes y su presupuesto con los enemigos; también al seguir a Adreida.
+      const meta=destino.clone();dentroPlaza(meta,a.radio+.06);const p=destinoEnemigo(a,meta),dd=plano(a.pos,p);
+      paso=Math.min(5.8*dt,dd,directo?Math.max(0,dist-1.4):Infinity);
+      if(paso>1e-5){const antes=a.pos.clone();a.dir+=difAng(a.dir,rumbo(a.pos,p))*Math.min(1,dt*12);a.pos.lerp(p,paso/dd);dentroPlaza(a.pos,a.radio);paso=plano(antes,a.pos);}
+    }
     else if(obj&&a.cd<=0){a.atacando=true;a.t=0;a.golpeo=false;a.cd=1.1;a.dir=rumbo(a.pos,obj.pos);}
     a.fase+=paso*TAU/2.1;MOD.posar(a.m,{anim:a.atacando?'tajoA':paso?'andar':'quieto',k:a.t/.6,t:reloj.t,fase:a.fase,paso:paso?1:0,dt,mezclar:true});
     a.m.raiz.position.copy(a.pos);a.m.raiz.rotation.y=a.dir;a.m.M.u.uBorde.value=.12;a.m.M.u.uColorB.value.setHex(0x80c9bb);
@@ -1516,7 +1521,7 @@
     for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
     for(const h of jugadores)conHeroe(h,()=>{leerControles();const antes=h.pos.clone();pasoHeroe(dt);respetarMuralla(antes,h.pos,h.radio);h.velocidad??=new V3();const v=h.pos.clone().sub(antes).multiplyScalar(1/Math.max(dt,.001));if(v.length()>VEL)v.setLength(VEL);h.velocidad.lerp(v,1-Math.exp(-dt*8));});
     if(luzCompanero){const j=jugadores[1];luzCompanero.position.set(j.pos.x,4,j.pos.z);luzCompanero.intensity=j.vivo?24:0;}
-    const h=heroe;pasoAliados(dt);pasoExploracion(dt);presion.rutas=0;pasoRefuerzosCan();coordinarEnemigos();for(const e of [...enemigos])conHeroe(objetivoEnemigo(e),()=>pasoEnemigo(e,dt));separar();pasoOleadas(dt);pasoPeligrosTroll(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
+    const h=heroe;presion.rutas=0;pasoAliados(dt);pasoExploracion(dt);pasoRefuerzosCan();coordinarEnemigos();for(const e of [...enemigos])conHeroe(objetivoEnemigo(e),()=>pasoEnemigo(e,dt));separar();pasoOleadas(dt);pasoPeligrosTroll(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
     for(const h of jugadores)conHeroe(h,()=>{posarHeroe(dt);impactoFX.hacha(h,dt);});pasoBumeranes(dt);
     for(const e of enemigos){const m=e.m;m.raiz.position.set(e.pos.x,0,e.pos.z);m.raiz.rotation.y=e.dir;const d=e.d;
       const aDistanciaEnemigo=d.lanza||e.tiraHacha;
@@ -1607,7 +1612,7 @@
   };
   function rotulos(){const d=aDistancia(),pon=(h,icono,txt)=>{const b=document.querySelector(`[data-hab="${h}"]`);if(!b)return;b.querySelector('span').innerHTML=`<svg viewBox="0 0 32 32" aria-hidden="true"><path d="${ICONOS_HUD[icono]}"/></svg>`;b.querySelector('small').textContent=txt;};
     pon('tajo',d?'pistola':'hacha',d?'Disparar':'Atacar');pon('torbellino',d?'abanico':'torbellino',d?'Abanico':'Torbellino');pon('salto',d?'backflip':'salto',d?'Backflip':'Salto');
-    pon('parry','parry','Parry');pon('esquiva','esquiva','Dash');pon('ulti','ulti',d?'Sigilo':'Adreidos');const habilidad=document.querySelector('[data-hab="provocar"],[data-hab="bumeran"]');habilidad.dataset.hab=d?'provocar':'bumeran';habilidad.title=d?'Provocar':'Hacha búmeran · 8 m · Gira para cambiar su regreso';pon(habilidad.dataset.hab,d?'provocar':'bumeran',d?'Provocar':'Búmeran');
+    pon('parry','parry','Parry');pon('esquiva','esquiva','Dash');pon('ulti','ulti',d?'Sigilo':'Adreidos');const habilidad=document.querySelector('[data-hab="provocar"],[data-hab="bumeran"]');habilidad.dataset.hab=d?'provocar':'bumeran';habilidad.title=d?'Provocar':`Hacha búmeran · ${BUMERAN.alcance} m · Gira para cambiar su regreso`;pon(habilidad.dataset.hab,d?'provocar':'bumeran',d?'Provocar':'Búmeran');
     const r=document.querySelector('.apRetrato');r.src='./art/'+HEROES[tipoHeroe].retrato+'.webp';r.alt=HEROES[tipoHeroe].nombre;
     $('hudNombre').textContent=HEROES[tipoHeroe].nombre;$('hudClase').textContent=d?'Pistolero de las sombras':'Guerrera semiorca';
     for(const b of document.querySelectorAll('[data-heroe]'))b.setAttribute('aria-pressed',String(b.dataset.heroe===tipoHeroe));}
