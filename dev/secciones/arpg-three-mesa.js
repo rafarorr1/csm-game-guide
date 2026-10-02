@@ -1,4 +1,4 @@
-/* Prueba de ARPG en three.js («Las Grietas del Editor», Hito 1): Adreida, la
+/* Prueba de ARPG en three.js («Caoz ARPG», Hito 1): Adreida, la
    Guerrera Semiorca, defiende la plaza de Tomsage bajo asedio contra cuatro
    oleadas. Vista isométrica, clic para andar y atacar, como en Diablo.
      · Modelos 3D sencillos (arpg-three-modelos.js), animados por código.
@@ -23,7 +23,7 @@
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
   const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
-  const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;};
+  const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;$('diagnostico').open=true;};
   addEventListener('error',e=>aviso('Error: '+(e.message||e.error)));
   addEventListener('unhandledrejection',e=>aviso('Error: '+(e.reason?.message||e.reason)));
   if(!document.createElement('canvas').getContext('webgl2')){aviso('Este navegador no tiene WebGL 2, que three.js necesita. Prueba con Chrome, Edge, Firefox o Safari actualizados.');return;}
@@ -1106,7 +1106,7 @@
   if(COOP){for(const b of document.querySelectorAll('[data-heroe]'))b.disabled=true;$('demo').hidden=true;}
   $('continuar').onclick=()=>ponerPausa(false);
   $('abrirPausa').onclick=()=>ponerPausa(true);
-  $('pausaPantalla').onclick=()=>ponerPausa(true);
+  $('cerrarDiagnostico').onclick=()=>{$('diagnostico').open=false;$('diagnostico').querySelector('summary').focus();};
   // Preferencia local: ocultar las cifras auxiliares conserva vida, furia y habilidades.
   const controlesStats=document.querySelectorAll('[data-mostrar-stats]');
   function mostrarStats(v){document.documentElement.classList.toggle('apSinStats',!v);for(const c of controlesStats)c.checked=v;}
@@ -1180,7 +1180,7 @@
   addEventListener('pointerup',soltarPuntero);addEventListener('pointercancel',soltarPuntero);
   addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&!(e.buttons&1)&&ent.atacando)soltarBasico();});
   lienzo.addEventListener('pointerleave',()=>{ent.dentro=false;});
-  addEventListener('keydown',e=>{const k=e.code;if(k==='KeyM'&&ABIERTO){e.preventDefault();if(!e.repeat){exploracion.grande=!exploracion.grande;$('mapaPanel').classList.toggle('ampliado',exploracion.grande);pintarMapa();}return;}if(k==='Escape'){e.preventDefault();if(!e.repeat)ponerPausa(!pausa.activa);return;}if(pausa.activa||rog.abierto||e.target.closest?.('input,textarea,select'))return;
+  addEventListener('keydown',e=>{const k=e.code;if(k==='KeyM'&&ABIERTO){e.preventDefault();if(!e.repeat){exploracion.grande=!exploracion.grande;$('mapaPanel').classList.toggle('ampliado',exploracion.grande);pintarMapa();}return;}if(k==='Escape'){e.preventDefault();if(!e.repeat)ponerPausa(!pausa.activa);return;}if(pausa.activa||rog.abierto||e.target.closest?.('input,textarea,select,summary,button,a'))return;
     if(DIRS[k]){e.preventDefault();teclas.add(k);ent.piloto=false;return;}
     const h=ACCION[k];if(h){e.preventDefault();if(e.repeat)return;ent.piloto=false;usar(h,h==='salto'?puntoApuntado():null);}});
   addEventListener('keyup',e=>{teclas.delete(e.code);});addEventListener('blur',()=>{teclas.clear();ent.atacando=false;});
@@ -1253,10 +1253,14 @@
   function banner(titulo,texto){const b=$('banner');b.innerHTML=`<b>${titulo}</b><small>${texto}</small>`;b.classList.add('visto');bannerHasta=reloj.t+2.8;}
   function hud(){hudEquipo();const h=heroe;$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');$('almaTxt').textContent=Math.ceil(h.alma)+' / '+h.almaMax;
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');$('furiaTxt').textContent=Math.floor(h.furia);
-    for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0;b.style.setProperty('--cd',(H.cd?cd/(H.cd*(k==='esquiva'?(h.dash??1):1))*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',{torbellino:'torbellino',salto:'salto',provocar:'grito',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
+    for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0,recarga=cd>0?String(Math.ceil(cd)):'';if(b.dataset.recarga!==recarga)b.dataset.recarga=recarga;b.style.setProperty('--cd',(H.cd?cd/(H.cd*(k==='esquiva'?(h.dash??1):1))*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',{torbellino:'torbellino',salto:'salto',provocar:'grito',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
     const botonAtaque=document.querySelector('[data-hab="tajo"]');if(botonAtaque){botonAtaque.classList.toggle('cargando',h.estado==='carga');botonAtaque.style.setProperty('--carga',`${Math.round(h.carga*100)}%`);const rotulo=botonAtaque.querySelector('small');if(rotulo){const texto=aDistancia()?'Disparar':h.estado==='carga'?`Cargar ${Math.round(h.carga*100)}%`:'Atacar';if(rotulo.textContent!==texto)rotulo.textContent=texto;}}
+    const cartas='Cartas del destino · '+rog.mano.length+' / 3';if($('hudCartas').textContent!==cartas)$('hudCartas').textContent=cartas;
+    const municion=$('hudMunicion');municion.hidden=!aDistancia();if(aDistancia()){const texto=h.recargaT>0?'Recargando…':'Balas · '+h.balas+' / '+HEROES.mohamed.cargador;if(municion.textContent!==texto)municion.textContent=texto;}
+    if(hud.mando!==mando.activo){const teclasHud=mando.activo?['R2','L1','×','○','R1','L3','△']:['Clic izq.','Espacio','Shift','Clic dcho.','Q','R','E'];document.querySelectorAll('.apHabilidades kbd').forEach((el,i)=>el.textContent=teclasHud[i]);hud.mando=mando.activo;}
     const st=(aDistancia()?`<span>Balas <b>${h.recargaT>0?'recargando…':h.balas+' / '+HEROES.mohamed.cargador}</b></span>`:'')+`<span>Parrys perfectos <b>${h.parrys}</b></span><span>Básicos <b>${Math.round(h.atq*(h.basicos??1))}</b></span><span>Cartas <b>${rog.mano.length}/3</b></span><span>Vuelta <b>${rog.vuelta}</b></span><span>Vel. ataque <b>${Math.round(h.vatq*100)}%</b></span><span>Alma <b>${h.almaMax}</b></span><span>Llaves <b>${h.llaves}</b></span>`+(h.escudo>0?'<span class="escudo">Provocar: −50% daño</span>':'');if(st!==hud.st){hud.st=st;$('stats').innerHTML=st;}
     const vivos=enemigos.filter(e=>e.estado!=='muere').length+peligrosTroll.filter(p=>p.tipo==='goblin'&&!p.devuelto).length+enemigos.filter(e=>e.goblinSujeto).length;$('oleada').textContent=ol.auto?(ol.fin?'Tomsage resiste':ol.i<0?'Preparando el asedio…':ol.i===3&&q.get('etapa')==='2'?'Preparando el cobro de piso…':(OLEADAS[ol.i].etapa===2?'Cobro de piso · Fase '+OLEADAS[ol.i].fase+'/3':OLEADAS[ol.i].jefe?'Etapa 1 · Can':'Etapa 1 · Oleada '+(ol.i+1))+' · '+vivos+' en pie'+(ol.cola.length?' · '+ol.cola.length+' por llegar':!vivos&&ol.i<OLEADAS.length-1?' · siguiente oleada en '+Math.ceil(ol.descanso??3)+' s':'')):'Enemigos en pie: '+vivos;
+    const mision=ABIERTO?'EXPLORACIÓN · TOMSAGE':ol.i>=4||q.get('etapa')==='2'?'COBRO DE PISO · TOMSAGE':'EL ASEDIO · TOMSAGE';if(hud.mision!==mision){document.querySelector('.apMision>small').textContent=mision;hud.mision=mision;}
     if(ABIERTO)$('oleada').textContent=exploracion.activa?exploracion.activa.nombre+(vivos?' · '+vivos+' enemigos':' · Recoge las tres cartas'):'Exploración · '+exploracion.campamentos.filter(c=>c.limpio).length+'/3 campamentos liberados';
     const o=ent.sobre?.d?ent.sobre:enemigos.includes(h.ultimo)&&h.ultimo.estado!=='muere'?h.ultimo:enemigos.find(e=>e.d.jefe&&e.estado!=='muere')||null;$('objetivo').hidden=!o;if(o){$('objNombre').textContent=o.m.nombre+(o.d.jefe?' · Jefe':'')+(o.fase2?(blindadoTroll(o)?' · Fase 2: haz parry':' · Fase 2: ¡vulnerable!'):'');$('objVida').style.width=(Math.max(0,o.vida)/o.vidaMax*100).toFixed(1)+'%';}
     flechas();golpeDir();
@@ -1460,12 +1464,27 @@
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};
   {const sel=$('estiloBala');sel.value=estiloBala;sel.onchange=()=>{estiloBala=sel.value;};}
-  $('demo').onclick=()=>{ent.piloto=!ent.piloto;$('demo').setAttribute('aria-pressed',String(ent.piloto));};
-  $('reiniciar').onclick=()=>reiniciar();
+  $('demo').onclick=()=>{ent.piloto=!ent.piloto;$('demo').setAttribute('aria-pressed',String(ent.piloto));ponerPausa(false);};
+  $('reiniciar').onclick=()=>{reiniciar();ponerPausa(false);};
   // Elegir personaje: cambia el héroe y los rótulos de la barra (sus habilidades son otras) y vuelve a empezar.
-  function rotulos(){const d=aDistancia(),pon=(h,icono,txt)=>{const b=document.querySelector(`[data-hab="${h}"]`);if(!b)return;b.querySelector('span').textContent=icono;b.querySelector('small').textContent=txt;};
-    pon('tajo',d?'➶':'⚔',d?'Disparar':'Atacar');pon('torbellino',d?'✺':'↻',d?'Abanico':'Torbellino');pon('salto',d?'⤿':'⤓',d?'Backflip':'Salto');
+  // Iconos vectoriales locales: misma silueta en cualquier sistema y sin imágenes adicionales.
+  const ICONOS_HUD={
+    hacha:'M7 26 23 5M14 8l8 8 5-3-1-8-8-1zM5 24l3 3',
+    pistola:'M5 11h22v5H15l-3 10H7l3-11M22 11V8h5v3M16 16v4h4l2-4',
+    parry:'M16 3 27 8v8c0 6-6 10-11 13C11 26 5 22 5 16V8zM16 8v16M10 15l6 4 7-8',
+    esquiva:'m16 6 10 10-10 10M5 10h9M3 16h12M5 22h9',
+    salto:'M16 24V5m-6 6 6-6 6 6M5 24l-2 4h26l-2-4M10 20l-3 3m15-3 3 3',
+    backflip:'M6 15a10 10 0 1 1 5 13M6 7v8h8M15 11l6 8-6 3',
+    torbellino:'M26 10a12 12 0 1 0 2 10M26 4v6h-6M22 17a6 6 0 1 0-7 6M13 15l4-1 2 3',
+    abanico:'M16 28 3 13l6-5 7 20 7-20 6 5zM12 5h8l-4 23z',
+    ulti:'M16 2 27 16 16 30 5 16zM16 9l5 7-5 7-5-7zM1 16h4m22 0h4',
+    provocar:'m16 3 3 9 9-2-6 7 5 8-10-3-7 7 1-10-8-5 10-2z'
+  };
+  function rotulos(){const d=aDistancia(),pon=(h,icono,txt)=>{const b=document.querySelector(`[data-hab="${h}"]`);if(!b)return;b.querySelector('span').innerHTML=`<svg viewBox="0 0 32 32" aria-hidden="true"><path d="${ICONOS_HUD[icono]}"/></svg>`;b.querySelector('small').textContent=txt;};
+    pon('tajo',d?'pistola':'hacha',d?'Disparar':'Atacar');pon('torbellino',d?'abanico':'torbellino',d?'Abanico':'Torbellino');pon('salto',d?'backflip':'salto',d?'Backflip':'Salto');
+    pon('parry','parry','Parry');pon('esquiva','esquiva','Dash');pon('ulti','ulti',d?'Sigilo':'Adreidos');pon('provocar','provocar','Provocar');
     const r=document.querySelector('.apRetrato');r.src='./art/'+HEROES[tipoHeroe].retrato+'.webp';r.alt=HEROES[tipoHeroe].nombre;
+    $('hudNombre').textContent=HEROES[tipoHeroe].nombre;$('hudClase').textContent=d?'Pistolero de las sombras':'Guerrera semiorca';
     for(const b of document.querySelectorAll('[data-heroe]'))b.setAttribute('aria-pressed',String(b.dataset.heroe===tipoHeroe));}
   function elegir(t){if(COOP)return;if(!HEROES[t]||t===tipoHeroe)return;tipoHeroe=t;rotulos();reiniciar();}
   for(const b of document.querySelectorAll('[data-heroe]'))b.onclick=()=>elegir(b.dataset.heroe);
@@ -1500,7 +1519,7 @@
   function cuadro(ahora){
     if(document.hidden||!partidaActiva){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     leerPausaMando();
-    if(pausa.activa){sincronizarTiempo();antes=ahora;fps.n=0;fps.t=ahora;$('info').textContent='En pausa';requestAnimationFrame(cuadro);return;}
+    if(pausa.activa){sincronizarTiempo();antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     const limite=laboratorio?.limite||0;
     if(limite&&ahora+.1<siguienteDibujo){requestAnimationFrame(cuadro);return;}
     siguienteDibujo=limite?Math.max(siguienteDibujo+1000/limite,ahora):0;

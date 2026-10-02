@@ -15,7 +15,7 @@ static void mostrarCarta(const Carta& c, bool elegida) {
  printf("\n");
  if (c.umbral == 2) printf("  Todo 2-20 es positivo\n");
 }
-static void interfaz(Juego&j){printf("\x1b[H\x1b[2J");printf("   LAS GRIETAS DEL EDITOR\n   Adaptacion 3DS - prototipo\n\n");
+static void interfaz(Juego&j){printf("\x1b[H\x1b[2J");printf("   CAOZ ARPG\n   Adaptacion 3DS - prototipo\n\n");
  if(j.menu){printf("Elige personaje con izquierda/derecha\n\n%s Adreida - hacha a dos manos\n%s Mohamed - pistola y daga\n\nA: comenzar\n",j.seleccionHeroe==0?">":" ",j.seleccionHeroe==1?">":" ");}
  else if(j.cartas){printf("CARTAS PARA EL SIGUIENTE NIVEL\n1 critico: elimina todos los buffs\n\n");for(int n=0;n<3;n++)mostrarCarta(j.opciones[n],j.elegida==n);printf("\nD20: %s %d\n",j.tirando?"rodando...":j.resuelto?"resultado":"listo",j.dado);printf(j.resuelto?"A: seguir al cobro de piso\n":"Izq/der: carta   A: tirar\n");if(j.resuelto)printf("%s\n",j.anuncio.c_str());}
  else {printf("%s | Nivel %d | Oleada %d\n",j.h.tipo==ADREIDA?"Adreida":"Mohamed",j.nivel,j.oleada+1);printf("Alma %3.0f / %.0f    Furia %.0f\n",j.h.vida,j.h.maxVida,j.furia);printf("Enemigos %d    Cartas %d/3\n",j.vivos(),j.mano);if(j.h.tipo==MOHAMED)printf("Balas %d/6  %s\n",j.balas,j.recarga>0?"Recargando":"");printf("\nParry %.1f  Dash %.1f  Salto %.1f\n",j.cds[0],j.cds[1],j.cds[2]);printf("Ulti %.0f s   Parrys %d\n",j.ultiRestante,j.parrys);if(j.anuncioT>0||j.derrota||j.victoria)printf("\n%s\n",j.anuncio.c_str());if(j.pausa)printf("\nEN PAUSA - START para continuar\n");}

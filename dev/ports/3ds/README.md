@@ -1,4 +1,4 @@
-# Las Grietas del Editor · adaptación 3DS
+# Caoz ARPG · adaptación 3DS
 
 Prototipo nativo para **3DS/2DS original con homebrew**, separado del juego web. Produce `LasGrietas3DS.3dsx` y su icono `.smdh`. No es una conversión automática de three.js ni una versión con equivalencia completa: el motor de juego y renderizado son C++/libctru/citro3d.
 

@@ -365,7 +365,7 @@ node dev/secciones/pruebas_casas_three.mjs
 python3 dev/secciones/publicar.py --publicar --seccion casas-three --salida /tmp/caoz-casas-three
 ```
 
-## Las Grietas del Editor (ARPG en three.js, proyecto paralelo)
+## Caoz ARPG (ARPG en three.js, proyecto paralelo)
 
 La revisión está en `/arpg-three/`: el Hito 1 de la propuesta de un ARPG al
 estilo Diablo con los personajes del juego. Es una sala jugable: Adreida, la
@@ -1222,7 +1222,7 @@ Se reduce a la mitad la intensidad anterior del resplandor (bloom 0,5 → 0,25) 
 
 ### Estadísticas y pantalla completa
 
-«Mostrar estadísticas (incluye FPS)», en los controles y en el menú de pausa, permite ocultar tanto las cifras del personaje como el diagnóstico inferior. La preferencia se guarda en este navegador y mantiene visibles Alma, Furia y habilidades. «Pantalla completa» amplía únicamente el escenario; los diálogos de pausa y destino siguen disponibles. Se sale desde el mismo botón en pausa o con Escape del navegador. El tamaño de render se adapta automáticamente.
+El cajón «Diagnóstico», cerrado al entrar, reúne FPS, CPU, render, resolución, GPU, atributos y ayuda de controles. Se abre desde la esquina inferior izquierda y funciona también a pantalla completa. «Mostrar atributos del personaje», en pausa, controla esas cifras dentro del cajón; la preferencia se conserva en el navegador. Alma, Furia, munición y cartas permanecen en el HUD. «Pantalla completa» amplía únicamente el escenario; los diálogos de pausa y destino siguen disponibles. Se sale desde el mismo botón en pausa o con Escape del navegador. El tamaño de render se adapta automáticamente.
 
 ### Resolución interna y objetivo de 1080p
 
@@ -1352,7 +1352,7 @@ Para revisar: `modelos-visor.html?tipo=goblin&anim=muerte-cargado-1` (también `
 
 ### Impactos, escenario y movimientos · octubre de 2026
 
-El aterrizaje de Adreida abre un cráter irregular con el fondo 32 cm bajo el piso y un borde de adoquín que comparte sus texturas. Dura cinco segundos de juego, incluida la pausa del impacto; durante los últimos 0,45 s se cierra. El menú de pausa congela ese tiempo. `arpg-three-impactos.js` mantiene como máximo ocho cráteres y libera su geometría al desaparecer o reiniciar. El mismo módulo dibuja una cinta ámbar desde el filo real del hacha en los golpes cargados, con un núcleo fino y una cola de 0,19 s.
+El aterrizaje de Adreida abre un cráter irregular con el fondo 32 cm bajo el piso y un borde de adoquín que comparte sus texturas. Dura cinco segundos de juego, incluida la pausa del impacto; durante los últimos 1,5 s pierde opacidad progresivamente, conservando su radio y profundidad. El piso reaparece con cobertura complementaria: no se contrae el agujero ni se añade otra pasada de render. El menú de pausa congela ese tiempo. `arpg-three-impactos.js` mantiene como máximo ocho cráteres y libera su geometría al desaparecer o reiniciar. El mismo módulo dibuja una cinta ámbar desde el filo real del hacha en los golpes cargados, con un núcleo fino y una cola de 0,19 s.
 
 La sacudida del golpe cargado y del salto es mayor y avanza con el tiempo del cuadro, sin ralentizarse por el parón del impacto. Incluye un giro breve de cámara y respeta la preferencia de movimiento reducido. Los enemigos vivos reaccionan al impacto con torso y cabeza; el empuje, las chispas y el polvo conservan el sentido del golpe. Las flechas devueltas muestran sólo «¡Parry!»; los conos de Can conservan sus avisos visuales sin los rótulos «Centro» y «Lados».
 
@@ -1367,3 +1367,8 @@ La IA elige destinos con espacio libre, anticipo corto del movimiento y flanqueo
 Tras «¡A mí, goblins!», llegan **12 goblins (24 en cooperativo)** por los tres portones en grupos separados por 0,42 s. No atraviesan las murallas. La cola tiene un límite de 32 enemigos vivos para evitar picos sin control y debe terminar antes de avanzar la oleada. En el mapa abierto llegan por tres direcciones alrededor de Can.
 
 Comprobaciones acotadas: `pruebas_arpg_impactos.mjs` (cráteres y casas), `pruebas_arpg_muertes_goblin.mjs` (probabilidad y apoyo de ambas mitades), `pruebas_arpg_ritmo.mjs` (rutas, turnos y refuerzos), `pruebas_arpg_animacion.mjs` y `pruebas_arpg_can.mjs` (continuidad y combate).
+
+
+### Propuesta de HUD · Caoz ARPG
+
+Interfaz de obsidiana, latón y marfil con iconos vectoriales locales. El retrato, nombre y barras horizontales de Alma/Furia se agrupan junto a las siete habilidades. El HUD muestra la recarga en segundos, adapta las teclas al mando y mantiene la munición de Mohamed y las tres cartas del destino visibles sin abrir las métricas. La misión queda arriba a la izquierda y el objetivo arriba al centro. La selección de personaje, etapas, efectos, cooperativo y demostración están en pausa. El diseño se adapta a escritorio, móvil y controles táctiles; no agrega luces, texturas ni posprocesado al render.

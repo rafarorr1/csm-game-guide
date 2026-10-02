@@ -5,7 +5,7 @@ else iniciar();
 async function iniciar(){
   document.body.classList.add('apLaboratorio');
   const panel=document.createElement('aside');panel.className='labPanel';panel.innerHTML=`
-    <header><small>LAS GRIETAS DEL EDITOR · HERRAMIENTAS</small><h1>Inspector</h1><p>Combate, animación y rendimiento · v5</p></header>
+    <header><small>CAOZ ARPG · HERRAMIENTAS</small><h1>Inspector</h1><p>Combate, animación y rendimiento · v5</p></header>
     <p id="labEstado" role="status">Preparando el juego…</p>
     <fieldset id="labEdicion" disabled>
       <legend>Escena de trabajo</legend>

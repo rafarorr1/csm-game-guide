@@ -1,8 +1,8 @@
-/* Las Grietas del Editor: prueba de ARPG en three.js. */
+/* Caoz ARPG: interfaz de combate en obsidiana, latón y marfil. */
 *{box-sizing:border-box;margin:0}
 html,body{min-height:100%;background:#07050b;color:#e9e0f2}
-body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
-.apShell{width:min(1280px,100%);margin:auto;display:flex;flex-direction:column;gap:12px}
+body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:12px}
+.apShell{width:100%;margin:auto;display:flex;flex-direction:column;gap:0}
 .apEtiqueta{color:#b8a3cc;font:700 9px/1.2 system-ui,sans-serif;letter-spacing:2.2px}
 .apCabecera h1{color:#f0d796;font:700 clamp(24px,4vw,40px)/1.1 'Cinzel Domo',Georgia,serif;margin:4px 0 6px}
 .apCabecera p:last-child{color:#c9bdda;font-size:1.05em;max-width:960px}
@@ -12,16 +12,17 @@ body{font:15px/1.5 'Cormorant Domo',Georgia,serif;padding:clamp(10px,3vw,28px)}
 .apEfectos{display:flex;flex-wrap:wrap;gap:4px 16px;border:1px solid #e7bb5530;border-radius:10px;padding:6px 12px 8px}
 .apEfectos legend{color:#b8a3cc;font:700 10px/1 system-ui,sans-serif;letter-spacing:1px;padding:0 6px}
 .apEfectos label{display:inline-flex;gap:6px;align-items:center;color:#d9cbe8;min-height:32px}
-.apEscenario{position:relative;height:min(86vh,880px);min-height:480px;border-radius:16px;overflow:hidden;border:1px solid #e7bb5530;background:#07060a;touch-action:none;user-select:none;-webkit-user-select:none}
+.apEscenario{position:relative;height:calc(100dvh - 24px);min-height:480px;border-radius:10px;overflow:hidden;border:1px solid #e7bb5530;background:#07060a;touch-action:none;user-select:none;-webkit-user-select:none}
 .apEscenario canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-.apInfo{position:absolute;left:10px;bottom:6px;padding:3px 8px;border-radius:6px;background:#0d0914aa;color:#9d90b0;font:11px/1.3 system-ui,sans-serif;pointer-events:none;max-width:60%}
-.apEstado{color:#b9aecb;min-height:1.5em}
+/* La telemetría sólo ocupa espacio dentro del cajón, nunca sobre el combate. */
+.apInfo{color:#ded3bb;font:12px/1.8 ui-monospace,monospace;padding:12px;background:#080d12;border:1px solid #9d835630;border-radius:6px}
+.apEstado{color:#b5bbbd;font:12px/1.6 system-ui,sans-serif}
 html[data-captura] body{padding:0}
 html[data-captura] .apShell>*:not(.apEscenario){display:none}
 html[data-captura] .apEscenario{height:100vh;border:0;border-radius:0}
-html[data-captura] .apInfo{display:none}
+
 [hidden]{display:none!important}
-.apPruebaPiso{position:absolute;z-index:8;left:12px;top:38px;padding:9px 12px;border:1px solid #e7bb5555;border-radius:9px;background:#100d18e8;color:#eadcbf;font:12px/1.4 system-ui,sans-serif;max-width:calc(100% - 180px)}
+.apPruebaPiso{position:static;padding:10px 12px;margin:12px 0;border:1px solid #e7bb5533;border-radius:5px;background:#10191d;color:#eadcbf;font:12px/1.4 system-ui,sans-serif;text-align:left}
 .apPruebaPiso label{display:flex;align-items:center;flex-wrap:wrap;gap:6px}
 .apPruebaPiso select{max-width:100%;background:#201a2a;color:#f4e8cb;border:1px solid #978665;border-radius:5px;padding:5px}
 .apPruebaPiso small{display:block;margin-top:4px;color:#bcb2a0}
@@ -44,10 +45,20 @@ html[data-captura] .apInfo{display:none}
 /* Rojo en los bordes al recibir un golpe. */
 .apVineta{position:absolute;inset:0;pointer-events:none;opacity:0;background:radial-gradient(ellipse at center,transparent 55%,#c0101a 140%)}
 /* Arriba: la oleada, el objetivo, anuncios. */
-.apOleada{position:absolute;left:12px;top:10px;color:#e8d6ae;font:700 13px/1.2 'Cinzel Domo',Georgia,serif;text-shadow:0 1px 3px #000;pointer-events:none}
-.apObjetivo{position:absolute;left:50%;top:10px;transform:translateX(-50%);min-width:min(320px,60%);text-align:center;pointer-events:none}
+.apIdentidad{position:absolute;left:24px;top:20px;z-index:3;pointer-events:none;text-shadow:0 2px 5px #000}
+.apIdentidad b{font:700 25px/1 Georgia,serif;letter-spacing:4px;color:#f1dfb8}
+.apIdentidad b span{font:500 10px/1 system-ui,sans-serif;letter-spacing:3px;border-left:1px solid #af9464;margin-left:5px;padding-left:12px;vertical-align:middle}
+.apIdentidad>small{display:block;margin-top:8px;color:#c0b9a9;font:9px/1.3 system-ui,sans-serif;text-transform:uppercase;letter-spacing:2px}
+.apHerramientas{position:absolute;right:20px;top:18px;display:flex;gap:8px;z-index:8}
+.apHerramientas .apBoton{background:#11191de8;border-color:#a28a514d;font:11px system-ui,sans-serif;min-height:36px;border-radius:5px}
+.apHerramientas kbd{margin-left:8px;color:#a69980;font:10px system-ui,sans-serif}
+.apMision{position:absolute;left:24px;top:89px;max-width:300px;padding:10px 14px;border-left:2px solid #b59962;background:linear-gradient(90deg,#10191eeb,#10191e00);pointer-events:none}
+.apMision>small{color:#b49d72;font:700 8px system-ui,sans-serif;letter-spacing:2px}
+.apOleada{position:static;margin-top:5px;color:#eee3cc;font:600 12px/1.5 system-ui,sans-serif;text-shadow:0 1px 3px #000}
+.apMision>span{display:block;margin-top:9px;color:#cfb986;font:10px system-ui,sans-serif;letter-spacing:.4px}
+.apObjetivo{position:absolute;left:50%;top:24px;transform:translateX(-50%);width:min(340px,32%);min-width:0;text-align:center;pointer-events:none}
 .apObjetivo b{display:block;color:#ffd9c8;font:700 14px/1.2 'Cinzel Domo',Georgia,serif;text-shadow:0 1px 3px #000;margin-bottom:3px}
-.apBarra{height:10px;border-radius:5px;background:#1a0c0e;border:1px solid #6a3a30;overflow:hidden}
+.apBarra{height:7px;border-radius:1px;background:#241c1b;border:1px solid #b48e5b88;overflow:hidden;margin-top:7px;box-shadow:0 2px 10px #0008}
 .apBarra i{display:block;height:100%;background:linear-gradient(#e0473a,#8a1414);transition:width .12s}
 .apBanner{position:absolute;left:50%;top:22%;transform:translate(-50%,-10px);text-align:center;opacity:0;transition:opacity .35s,transform .35s;pointer-events:none;width:min(90%,640px)}
 .apBanner.visto{opacity:1;transform:translate(-50%,0)}
@@ -57,67 +68,60 @@ html[data-captura] .apInfo{display:none}
 .apTostada.visto{opacity:1}
 .apTostada.mala{border-color:#ff8a7a88;color:#ffd0c8}
 .apTostada em{font-style:normal;font-weight:800}.apTostada em.foil{color:#9fe0ff}.apTostada em.dorado{color:#ffd36a}
-.apStats{position:absolute;right:12px;top:10px;display:flex;flex-direction:column;align-items:flex-end;gap:2px;color:#d9cbe8;font:600 12px/1.2 system-ui,sans-serif;text-shadow:0 1px 3px #000;pointer-events:none}
-.apStats b{color:#f3d998}.apStats .escudo{color:#ffd36a}
-.apBotin{position:absolute;right:12px;top:74px;display:flex;flex-direction:column;gap:6px;max-height:calc(100% - 250px);overflow:hidden;pointer-events:none}
+.apStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px 16px;color:#b4b7b7;font:12px system-ui,sans-serif}
+.apStats span{display:flex;justify-content:space-between;gap:12px;border-bottom:1px solid #ffffff0d;padding-bottom:5px}
+.apStats b{color:#e8cca0}.apStats .escudo{color:#ffd36a}
+.apBotin{position:absolute;right:20px;top:74px;display:flex;flex-direction:column;gap:6px;max-height:calc(100% - 250px);overflow:hidden;pointer-events:none}
 .apCarta{display:flex;align-items:center;gap:6px;padding:3px 8px 3px 3px;border-radius:8px;background:#0d0914cc;border:1px solid #ffffff22;animation:apEntra .4s ease-out}
 .apCarta img{width:30px;height:42px;border-radius:3px;object-fit:cover}
 .apCarta figcaption{font:600 11px/1.2 system-ui,sans-serif;color:#e8e0d0;max-width:130px}
 .apCarta.foil{border-color:#7fd8ff88}.apCarta.dorado{border-color:#ffc85099}
 @keyframes apEntra{from{transform:translateX(30px);opacity:0}}
-/* Abajo: los orbes de Alma y Furia y la barra de habilidades. */
-.apHud{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:clamp(8px,2vw,22px);pointer-events:none}
-.apOrbe{position:relative;width:clamp(74px,9vw,112px);aspect-ratio:1;border-radius:50%;overflow:hidden;background:#12080c;border:3px solid #7a5c30;box-shadow:inset 0 0 20px #000,0 0 0 2px #1a120a,0 4px 14px #000a}
-.apOrbe i{position:absolute;left:0;right:0;bottom:0;height:var(--lleno,100%);background:radial-gradient(circle at 42% 20%,#ff7a7a,#b0121e 55%,#4a0508);transition:height .15s}
-.apFuria i{background:radial-gradient(circle at 42% 20%,#ffd07a,#d0640e 55%,#5a2604)}
-.apOrbe::after{content:'';position:absolute;left:18%;top:9%;width:42%;height:26%;border-radius:50%;background:linear-gradient(#ffffff55,#ffffff00)}
-.apOrbe b{position:absolute;inset:0;display:grid;place-items:center;color:#fff;font:800 clamp(12px,1.4vw,15px)/1 system-ui,sans-serif;text-shadow:0 1px 3px #000}
-.apOrbe small{position:absolute;left:0;right:0;bottom:12%;text-align:center;color:#ffffffcc;font:700 9px/1 system-ui,sans-serif;letter-spacing:1.5px;text-transform:uppercase;text-shadow:0 1px 2px #000}
-.apHabilidades{display:flex;align-items:flex-end;gap:6px;padding:6px 8px;border-radius:12px;background:#0d0914d9;border:1px solid #7a5c3088;pointer-events:auto}
-.apRetrato{width:clamp(40px,4.6vw,56px);aspect-ratio:1;border-radius:50%;object-fit:cover;object-position:50% 12%;border:2px solid #7a5c30;align-self:center}
-.apHabilidades button{position:relative;width:clamp(50px,5.6vw,66px);aspect-ratio:1;border-radius:10px;border:1px solid #e7bb5566;background:linear-gradient(#2a1d34,#150f20);color:#f0d796;cursor:pointer;display:grid;place-items:center;overflow:hidden;padding:0;touch-action:none}
-.apHabilidades button span{font:700 clamp(18px,2.2vw,26px)/1 Georgia,serif;margin-top:-10px}
-.apHabilidades button small{position:absolute;left:0;right:0;bottom:15px;font:700 8px/1 system-ui,sans-serif;color:#d9cbe8}
-.apHabilidades kbd{position:absolute;left:0;right:0;bottom:3px;font:700 8px/1 system-ui,sans-serif;color:#a99cbc}
-.apHabilidades em{position:absolute;right:3px;top:2px;font:800 9px/1 system-ui,sans-serif;font-style:normal;color:#ffb060}
-.apHabilidades button::after{content:'';position:absolute;inset:0;background:conic-gradient(#000b var(--cd,0%),transparent 0);pointer-events:none}
+/* Una base compacta: retrato, recursos y habilidades, sin panel sobre el personaje. */
+.apHud{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px;width:max-content;max-width:calc(100% - 36px);pointer-events:none}
+.apPersonaje{display:flex;align-items:center;gap:14px;width:300px;min-height:112px;padding:13px 16px;background:linear-gradient(125deg,#111d22f5,#11171bf2);border:1px solid #b59b6159;border-top:2px solid #bfa36a;border-radius:5px;box-shadow:0 8px 25px #0008}
+.apMarcoRetrato{overflow:hidden;width:64px;height:78px;flex:none;padding:3px;border:1px solid #bba36c88;transform:skewY(-5deg);background:#27302f}
+.apRetrato{width:100%;height:100%;object-fit:cover;object-position:50% 12%;filter:saturate(.8);transform:scale(1.65);transform-origin:50% 23%;border:0;border-radius:0}
+.apVitales{flex:1;min-width:0}.apNombreHeroe{display:flex;flex-direction:column;margin-bottom:10px}
+.apNombreHeroe>b{font:700 17px/1.2 Georgia,serif;color:#f2e4c6}
+.apNombreHeroe>small{color:#9da7a8;font:8px/1.2 system-ui,sans-serif;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
+.apRecurso{display:grid;grid-template-columns:1fr auto;gap:4px;margin-top:6px}
+.apRecurso>small{font:700 8px/1 system-ui,sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:#afbab8}
+.apRecurso>b{font:600 10px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e9e9de}
+.apMedidor{grid-column:1/-1;height:7px;background:#080d0f;border:1px solid #ffffff15;overflow:hidden}
+.apMedidor i{display:block;height:100%;width:var(--lleno,100%);transition:width .15s;background:linear-gradient(90deg,#823737,#d66f60);box-shadow:inset 0 1px #ffffff35}
+.apFuria .apMedidor{height:4px}.apFuria i{background:linear-gradient(90deg,#987444,#e2bd72)}
+.apMunicion{display:block;margin-top:7px;font:700 9px/1 system-ui,sans-serif;color:#c9d6dd}
+.apHabilidades{display:flex;gap:6px;padding:10px;background:linear-gradient(#111b20f5,#11171bf5);border:1px solid #b59b6159;border-radius:5px;pointer-events:auto;box-shadow:0 8px 25px #0008}
+.apHabilidades button{position:relative;width:66px;height:78px;border:1px solid #b89a5855;border-radius:3px;background:linear-gradient(145deg,#2b3436,#182126 70%);color:#e4ce9f;cursor:pointer;display:grid;place-items:center;overflow:hidden;padding:0;touch-action:none}
+.apHabilidades button:hover{border-color:#e3c284;background:linear-gradient(145deg,#3c4544,#243035)}
+.apHabilidades button span{display:block;width:29px;height:29px;margin-top:-7px}
+.apHabilidades svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.apHabilidades button small{position:absolute;left:0;right:0;bottom:10px;font:600 9px/1 system-ui,sans-serif;color:#ced4cf}
+.apHabilidades kbd{position:absolute;left:5px;top:5px;font:600 8px/1 system-ui,sans-serif;color:#a8b1ae}
+.apHabilidades em{position:absolute;right:5px;top:5px;font:600 8px/1 system-ui,sans-serif;color:#d0ac6e}
+.apHabilidades button::after{content:'';position:absolute;inset:0;background:conic-gradient(#05090cc9 var(--cd,0%),transparent 0);pointer-events:none}
+.apHabilidades button[data-hab="ulti"]{border-color:#b8cdd37d;background:linear-gradient(145deg,#253d49,#12232b);color:#c9e8ed}
 .apHabilidades button.sinFuria{filter:grayscale(.8) brightness(.6)}
-.apHabilidades button.enCurso{border-color:#ffd36a;box-shadow:0 0 12px #ffc85088 inset}
+.apHabilidades button.enCurso{border-color:#edd29a;box-shadow:inset 0 0 18px #dab67433}
 .apHabilidades button.no{animation:apNo .35s}
 @keyframes apNo{25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
-/* Táctil: palanca a la izquierda; la barra de habilidades a la derecha y más grande. */
-.apPalanca{display:none;position:absolute;left:18px;bottom:18px;width:128px;aspect-ratio:1;border-radius:50%;background:#0d0914aa;border:2px solid #e7bb5555;touch-action:none}
-.apPalanca i{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px 0 0 -26px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#f0d796,#8a6a2a);box-shadow:0 2px 8px #000a}
+.apPalanca{display:none;position:absolute;left:18px;bottom:18px;width:116px;aspect-ratio:1;border-radius:50%;background:#111b20cc;border:1px solid #bda36b66;touch-action:none}
+.apPalanca i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d8c18c,#6c654d);box-shadow:0 2px 8px #000a}
 .apEscenario.tactil .apPalanca{display:block}
-.apEscenario.tactil .apHud{left:auto;right:10px;transform:none;flex-direction:column;align-items:flex-end;gap:8px}
-.apEscenario.tactil .apHabilidades{display:grid;grid-template-columns:repeat(2,auto);gap:8px}
-.apEscenario.tactil .apHabilidades button{width:64px}
-.apEscenario.tactil .apRetrato,.apEscenario.tactil .apHabilidades kbd{display:none}
-.apEscenario.tactil .apHud>.apOrbe{position:absolute;width:62px}
-.apEscenario.tactil .apHud>.apAlma{left:auto;right:calc(100% + 10px);bottom:0}
-.apEscenario.tactil .apHud>.apFuria{left:auto;right:calc(100% + 10px);bottom:70px}
-.apEscenario.tactil .apBotin{top:64px;max-height:40%}
-.apEscenario.tactil .apTostada{bottom:170px}
+.apEscenario.tactil .apHud{left:auto;right:12px;bottom:20px;transform:none;max-width:none;flex-direction:column;align-items:flex-end}
+.apEscenario.tactil .apHabilidades{display:grid;grid-template-columns:repeat(3,54px);gap:5px;padding:6px}
+.apEscenario.tactil .apHabilidades button{width:54px;height:56px}
+.apEscenario.tactil .apHabilidades button span{width:23px;height:23px}
+.apEscenario.tactil .apHabilidades kbd{display:none}
+.apEscenario.tactil .apPersonaje{width:196px;min-height:0;padding:9px;gap:8px}
+.apEscenario.tactil .apMarcoRetrato{width:42px;height:60px}
+.apEscenario.tactil .apTostada{bottom:330px}
 /* Fin: derrota o victoria. */
 .apFin{position:absolute;inset:0;display:grid;place-content:center;gap:10px;text-align:center;background:radial-gradient(ellipse at center,#07050bcc,#07050bf2);padding:20px}
 .apFin h2{color:#f0d796;font:700 clamp(28px,5vw,52px)/1.1 'Cinzel Domo',Georgia,serif}
 .apFin p{color:#d9cbe8;max-width:520px;margin:auto;font-size:1.1em}
 .apFin button{justify-self:center;font:700 14px/1 'Cinzel Domo',Georgia,serif;min-height:46px;padding:0 22px;border-radius:12px;border:1px solid #e7bb55aa;background:#e8bb5a;color:#2a1706;cursor:pointer}
-/* Pantallas estrechas: los orbes suben sobre la barra y los textos de arriba se separan. */
-@media (max-width:640px){
-  .apOleada{font-size:11px;max-width:60%}
-  .apObjetivo{top:34px;min-width:70%}
-  .apStats{font-size:11px}
-  .apBotin{top:92px}
-  .apHud{bottom:8px}
-  .apHabilidades{gap:4px;padding:5px}
-  .apHabilidades button{width:50px}
-  .apRetrato{display:none}
-  .apHud>.apOrbe{position:absolute;bottom:calc(100% + 6px);width:62px}
-  .apHud>.apAlma{left:0}.apHud>.apFuria{right:0}
-  .apOrbe b{font-size:11px;white-space:nowrap}
-  .apTostada{bottom:150px}
-}
 /* Quién va a atacar: el «!» sobre su cabeza (crece mientras se llena; rojo y latiendo al fijarse). */
 .apAlerta{font:900 calc(24px + var(--k,0)*14px)/1 'Cinzel Domo',Georgia,serif;color:#ffb040;text-shadow:0 0 8px #ff5a00,0 2px 0 #1a0a04}
 .apAlerta.fijado{color:#ff3a2a;text-shadow:0 0 12px #ff1a00,0 2px 0 #1a0404;animation:apLate .12s infinite alternate}
@@ -166,19 +170,66 @@ html[data-captura] .apInfo{display:none}
 
 /* Partida compartida y mapa de exploración. */
 .apModo{display:flex;gap:12px;align-items:center;margin:12px 0;color:#dfcfab}.apModo select{background:#211e23;color:#f4e4bc;padding:10px;border:1px solid #75664e;border-radius:8px}
-.apEquipo{position:absolute;left:12px;top:30px;max-width:85%;padding:8px 12px;border-radius:8px;background:#151721d9;color:#ffe0a0;font:12px/1.5 system-ui;pointer-events:none;z-index:6}
+.apEquipo{position:absolute;left:24px;top:185px;max-width:290px;padding:8px 12px;border-radius:8px;background:#151721d9;color:#ffe0a0;font:12px/1.5 system-ui;pointer-events:none;z-index:6}
 .apAliado{color:#9be6d6;font:bold 12px system-ui;text-shadow:0 2px 3px #000;white-space:nowrap}
-.apMapa{position:absolute;left:12px;top:85px;width:165px;background:#111722e8;border:1px solid #928269;border-radius:8px;overflow:hidden;z-index:7;pointer-events:none}.apMapa canvas{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:1}.apMapa small{display:block;padding:7px;color:#e3d9bd;font:10px system-ui}.apMapa.ampliado{width:min(60%,480px);left:50%;top:12%;transform:translateX(-50%)}
+.apMapa{position:absolute;left:24px;top:195px;width:150px;background:#111722e8;border:1px solid #928269;border-radius:8px;overflow:hidden;z-index:7;pointer-events:none}.apMapa canvas{position:relative;inset:auto;display:block;width:100%;height:auto;aspect-ratio:1}.apMapa small{display:block;padding:7px;color:#e3d9bd;font:10px system-ui}.apMapa.ampliado{width:min(60%,480px);left:50%;top:12%;transform:translateX(-50%)}
 .apMapa[hidden],.apEquipo[hidden]{display:none}
 
 /* Preferencias de interfaz y escenario a pantalla completa. */
-.apSinStats .apStats,.apSinStats .apInfo{display:none}
+.apSinStats .apStats{display:none}
 .apAjustesPausa{display:grid;gap:14px;margin-bottom:20px;font:13px/1.4 system-ui,sans-serif}
 .apAjustesPausa label{display:flex;align-items:center;gap:8px;text-align:left}
 .apAjustesPausa #estadoPantalla{margin:0}.apAjustesPausa #estadoPantalla:empty{display:none}
-.apPausaPantalla{display:none}
+
 html:fullscreen body{padding:0;overflow:hidden}
 html:fullscreen .apShell{width:100%;gap:0}
 html:fullscreen .apShell>*:not(.apEscenario){display:none}
 html:fullscreen .apEscenario{width:100vw;height:100dvh;min-height:0;border:0;border-radius:0}
-html:fullscreen .apPausaPantalla{display:block;position:absolute;right:12px;bottom:150px;z-index:5}
+
+
+
+/* Cajón de diagnóstico: cerrado de inicio; mantiene disponibles los datos y controles. */
+.apDiagnostico{position:absolute;left:18px;bottom:5px;z-index:12;font:11px/1.4 system-ui,sans-serif}
+.apDiagnostico summary{list-style:none;cursor:pointer;color:#a6a99e;padding:5px 9px;background:#10191bcc;border-radius:3px}
+.apDiagnostico summary::-webkit-details-marker{display:none}
+.apDiagnostico summary>span{margin-left:9px;color:#c4ad79}
+.apDiagnostico[open] summary>span{display:inline-block;transform:rotate(180deg)}
+.apCajon{position:absolute;left:0;bottom:34px;width:min(470px,calc(100vw - 60px));max-height:min(65vh,480px);overflow:auto;padding:18px;background:#111b20fa;border:1px solid #ab935866;border-top:2px solid #ba9f67;border-radius:7px;box-shadow:0 12px 35px #000a;user-select:text;touch-action:pan-y}
+.apCajon header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;color:#e7d8b9;font:600 13px system-ui,sans-serif}
+.apCajon header button{background:none;border:0;color:#d8c49b;font-size:22px;cursor:pointer;width:32px;height:32px}
+.apCajon h3{color:#a8956d;text-transform:uppercase;letter-spacing:1.6px;font:700 9px system-ui,sans-serif;margin:18px 0 10px}
+.apCajon .apEstado+.apEstado{margin-top:10px}
+button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px solid #f2d796;outline-offset:3px}
+.apMenuPausa{width:min(720px,94vw);max-height:92dvh;overflow:auto;background:#111b20;border-color:#aa8d55;border-radius:8px;padding:28px}
+.apMenuPausa .apSelloMenu{color:#a9966e;font:700 10px system-ui,sans-serif;letter-spacing:4px;margin:0 0 12px}
+.apMenuPausa h2{font:500 32px Georgia,serif;color:#ede0c2}
+.apMenuPausa .apControles{justify-content:center}.apMenuPausa .apEtapas{justify-content:center}
+.apMenuPausa .apModo{justify-content:center;font:12px system-ui,sans-serif}
+.apMenuPausa .apEfectos{margin:18px 0;text-align:left;font:12px system-ui,sans-serif}
+.apMenuPausa #continuar{background:#c0a46b;color:#111a1d;border:0;min-width:170px}
+.apMenuPausa .apAjustesPausa{justify-items:center}
+@media(max-width:1000px){
+ .apPersonaje{width:245px;gap:9px;padding:12px}.apMarcoRetrato{width:48px;height:70px}
+ .apHabilidades button{width:56px;height:72px}.apHud{gap:8px}
+ .apIdentidad{left:18px}.apMision{left:18px;max-width:240px}.apHerramientas{right:14px}
+ .apHerramientas [data-pantalla-completa]{display:none}.apObjetivo{top:20px;width:32%}
+}
+@media(max-width:760px){
+ body{padding:0}.apEscenario{height:100dvh;border:0;border-radius:0;min-height:460px}
+ .apIdentidad{top:15px;left:14px}.apIdentidad b{font-size:20px}.apIdentidad>small{font-size:8px}
+ .apMision{top:78px;left:14px;max-width:210px;padding:6px 10px}.apOleada{font-size:10px}
+ .apMision>small{font-size:7px}.apMision>span{font-size:9px}
+ .apObjetivo{top:85px;left:auto;right:14px;transform:none;width:35%}.apObjetivo b{font-size:11px}
+ .apHud{flex-direction:column;align-items:flex-start;bottom:34px;gap:6px;max-width:calc(100% - 20px)}
+ .apPersonaje{width:225px;min-height:0;padding:9px 12px}.apMarcoRetrato{height:62px;width:47px}
+ .apNombreHeroe{margin-bottom:5px}.apNombreHeroe>b{font-size:15px}
+ .apHabilidades{gap:4px;padding:6px}.apHabilidades button{width:clamp(40px,11.6vw,57px);height:65px}
+ .apHabilidades button small{font-size:8px}.apHabilidades kbd{font-size:7px}
+ .apEquipo{left:14px;top:175px;max-width:220px;font-size:10px}
+ .apBotin{right:12px;top:145px;max-height:32%}.apCarta figcaption{max-width:90px}
+ .apMapa{left:14px;top:180px;width:105px}.apTostada{bottom:245px}
+ .apDiagnostico{left:10px}.apHerramientas{top:12px;right:12px}
+}
+@media(prefers-reduced-motion:reduce){.apMedidor i{transition:none}}
+
+.apHabilidades button::before{content:attr(data-recarga);position:absolute;inset:0;display:grid;place-items:center;padding-bottom:8px;z-index:2;color:#f5ecd8;font:700 18px system-ui,sans-serif;text-shadow:0 1px 6px #000;pointer-events:none}

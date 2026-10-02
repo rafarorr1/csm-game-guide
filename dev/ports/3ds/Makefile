@@ -25,7 +25,7 @@ build/vshader.o: build/vshader.c
 $(TARGET).elf: $(OBJECTS)
 	$(CXX) $(LDFLAGS) $(OBJECTS) -lcitro3d -lctru -lm -o $@
 $(TARGET).smdh:
-	$(DEVKITPRO)/tools/bin/smdhtool --create "Las Grietas del Editor" "Adaptacion 3DS - prototipo" "Caoz" $(DEVKITPRO)/libctru/default_icon.png $@
+	$(DEVKITPRO)/tools/bin/smdhtool --create "Caoz ARPG" "Adaptacion 3DS - prototipo" "Caoz" $(DEVKITPRO)/libctru/default_icon.png $@
 $(TARGET).3dsx: $(TARGET).elf $(TARGET).smdh
 	$(DEVKITPRO)/tools/bin/3dsxtool $< $@ --smdh=$(TARGET).smdh --romfs=romfs
 clean:

@@ -1,5 +1,5 @@
 GOBLIN DE CAMINO SUAVIZADO · PLANTILLA UV v2
-Las Grietas del Editor
+Caoz ARPG
 
 MODELO SUAVIZADO
 4,652 triángulos, antes 1,348. Cabeza y extremidades con más segmentos,

@@ -6,6 +6,17 @@
     const MAX=8,TAU=Math.PI*2,crateres=[],huecos={value:Array.from({length:MAX},()=>new THREE.Vector4(0,0,0,0))};
     const materiales=new WeakSet(),cintas=new Map(),centro=new THREE.Vector3(),mano=new THREE.Vector3();
     let materialPiso=null;
+    // Cobertura complementaria: el piso reaparece donde el cráter pierde opacidad.
+    // Conserva la profundidad sin transparencias ordenadas ni otra pasada de render.
+    const cobertura='fract(52.9829189*fract(dot(floor(gl_FragCoord.xy),vec2(.06711056,.00583715))))';
+    function desvanecerMaterial(material,opacidad){
+      material.onBeforeCompile=sh=>{
+        sh.uniforms.uCraterOpacidad=opacidad;
+        sh.fragmentShader='uniform float uCraterOpacidad;\n'+sh.fragmentShader;
+        sh.fragmentShader=sh.fragmentShader.replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>\nif(${cobertura}>=uCraterOpacidad)discard;`);
+      };
+      material.customProgramCacheKey=()=> 'crater-desvanecer-v2';
+    }
     function perforar(material){
       if(materiales.has(material))return;materiales.add(material);
       const previo=material.onBeforeCompile,clave=material.customProgramCacheKey();
@@ -15,11 +26,11 @@
         sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvPisoMundo=(modelMatrix*vec4(position,1.)).xyz;');
         sh.fragmentShader='varying vec3 vPisoMundo;uniform vec4 uHuecos[8];\n'+sh.fragmentShader;
         sh.fragmentShader=sh.fragmentShader.replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>
-          for(int i=0;i<8;i++){vec2 p=vPisoMundo.xz-uHuecos[i].xy;float a=atan(p.y,p.x);
+          for(int i=0;i<8;i++){vec2 p=vPisoMundo.xz-uHuecos[i].xy;float a=length(p)>.0001?atan(p.y,p.x):0.;
             float borde=uHuecos[i].z*(1.+.055*sin(a*7.)+.035*cos(a*11.));
-            if(uHuecos[i].z>0.&&length(p)<borde)discard;}`);
+            if(uHuecos[i].z>0.&&length(p)<borde&&${cobertura}<uHuecos[i].w)discard;}`);
       };
-      material.customProgramCacheKey=()=>clave+'-crater-v1';material.needsUpdate=true;
+      material.customProgramCacheKey=()=>clave+'-crater-v2';material.needsUpdate=true;
     }
     const interior=new THREE.MeshStandardMaterial({color:0x282522,roughness:1,side:THREE.DoubleSide,vertexColors:true});
     function geometriaCrater(){
@@ -46,11 +57,13 @@
       const radio=1.05,g=geometriaCrater(),uv=g.attributes.uv,diametro=52/Math.cos(Math.PI/24),a=Math.PI/24;
       for(let i=0;i<uv.count;i++){const x=p.x+uv.getX(i)*radio,z=p.z+uv.getY(i)*radio;uv.setXY(i,.5+(x*Math.cos(a)-z*Math.sin(a))/diametro,.5+(-x*Math.sin(a)-z*Math.cos(a))/diametro);}
       const labio=materialPiso.clone();labio.vertexColors=true;labio.side=THREE.DoubleSide;
-      const mesh=new THREE.Mesh(g,[labio,interior]);mesh.position.set(p.x,0,p.z);mesh.scale.set(radio,1,radio);mesh.receiveShadow=true;escena.add(mesh);
-      crateres.push({mesh,labio,t:0,radio});actualizarHuecos();
+      const fondo=interior.clone(),opacidad={value:1};
+      desvanecerMaterial(labio,opacidad);desvanecerMaterial(fondo,opacidad);
+      const mesh=new THREE.Mesh(g,[labio,fondo]);mesh.position.set(p.x,0,p.z);mesh.scale.set(radio,1,radio);mesh.receiveShadow=true;escena.add(mesh);
+      crateres.push({mesh,labio,fondo,opacidad,t:0,radio});actualizarHuecos();
     }
-    function quitar(c){escena.remove(c.mesh);c.mesh.geometry.dispose();c.labio.dispose();}
-    function actualizarHuecos(){for(let i=0;i<MAX;i++){const c=crateres[i];if(c)huecos.value[i].set(c.mesh.position.x,c.mesh.position.z,c.mesh.scale.x,1);else huecos.value[i].z=0;}}
+    function quitar(c){escena.remove(c.mesh);c.mesh.geometry.dispose();c.labio.dispose();c.fondo.dispose();}
+    function actualizarHuecos(){for(let i=0;i<MAX;i++){const c=crateres[i];if(c)huecos.value[i].set(c.mesh.position.x,c.mesh.position.z,c.radio,c.opacidad.value);else huecos.value[i].set(0,0,0,0);}}
     function crearCinta(){
       const n=20,P=new Float32Array(n*6),A=new Float32Array(n*2),U=new Float32Array(n*4),I=[];
       for(let i=0;i<n;i++){U.set([i/(n-1),0,i/(n-1),1],i*4);if(i<n-1){const k=i*2;I.push(k,k+1,k+2,k+1,k+3,k+2);}}
@@ -76,11 +89,11 @@
     }
     function paso(dt){
       for(let i=crateres.length-1;i>=0;i--){const c=crateres[i];c.t+=dt;if(c.t>=5){quitar(c);crateres.splice(i,1);continue;}
-        const k=Math.min(1,(5-c.t)/.45);c.mesh.scale.set(c.radio*k,k,c.radio*k);}
+        const k=Math.max(0,Math.min(1,(c.t-3.5)/1.5));c.opacidad.value=1-k*k*(3-2*k);}
       actualizarHuecos();
     }
     function limpiar(){for(const c of crateres)quitar(c);crateres.length=0;actualizarHuecos();for(const c of cintas.values()){escena.remove(c.mesh);c.g.dispose();c.mesh.material.dispose();}cintas.clear();}
-    return {perforar,actualizarMaterial,agujero,hacha,paso,limpiar,estado:()=>({crateres:crateres.map(c=>({t:c.t,x:c.mesh.position.x,z:c.mesh.position.z})),cintas:cintas.size})};
+    return {perforar,actualizarMaterial,agujero,hacha,paso,limpiar,estado:()=>({crateres:crateres.map(c=>({t:c.t,x:c.mesh.position.x,z:c.mesh.position.z,radio:c.radio,opacidad:c.opacidad.value})),cintas:cintas.size})};
   }
   window.CAOZ_ARPG_IMPACTOS={fabrica};
 })();

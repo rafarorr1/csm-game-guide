@@ -1,4 +1,4 @@
-/* Exporta la prueba de ARPG en three.js («Las Grietas del Editor», Hito 1):
+/* Exporta la prueba de ARPG en three.js («Caoz ARPG», Hito 1):
    modelos 3D sencillos hechos con primitivas (arpg-three-modelos.js), three.js
    empaquetado en visor-three-vendor.js (sin CDN) y las cartas físicas de
    three-carta.js para el botín (los Objetos del juego en sus tres ediciones). */
@@ -29,7 +29,7 @@ export function derivarArpgThree(){
   const motor=leer('motor.js'),datos=datosDesdeMotor(motor),lista=ilustraciones();
   const cards=Object.fromEntries([...new Set(lista.map(c=>c.id))].map(id=>{const c=datos.CARDS[id];if(!c)throw Error('No existe la carta del botín: '+id);if(c.t!=='objeto')throw Error('El botín son Objetos: '+id);return [id,c];}));
   const aux=['cap','tribeLine'].map(n=>extraerDeclaracion(motor,n,n==='cap'?'const':'function').texto).join('\n');
-  const datosJS='/* Las Grietas del Editor (ARPG en three.js); sin partida. */\nconst CARDS='+JSON.stringify(cards).replace(/</g,'\\u003c')+';\nconst SUBNAME='+JSON.stringify(datos.SUBNAME).replace(/</g,'\\u003c')+';\n'+aux+'\nwindow.ARPG_THREE_ARTE='+JSON.stringify(Object.fromEntries(lista.map(c=>[c.id+'/'+c.acabado,{url:c.url,enc:c.enc}])))+';\n';
+  const datosJS='/* Caoz ARPG (ARPG en three.js); sin partida. */\nconst CARDS='+JSON.stringify(cards).replace(/</g,'\\u003c')+';\nconst SUBNAME='+JSON.stringify(datos.SUBNAME).replace(/</g,'\\u003c')+';\n'+aux+'\nwindow.ARPG_THREE_ARTE='+JSON.stringify(Object.fromEntries(lista.map(c=>[c.id+'/'+c.acabado,{url:c.url,enc:c.enc}])))+';\n';
   new vm.Script(datosJS,{filename:'arpg-three-datos.js'});
   return {datosJS,lista};
 }
@@ -51,5 +51,5 @@ export function exportar(destino){
 }
 if(process.argv[1]&&path.resolve(process.argv[1])===fileURLToPath(import.meta.url)){
   if(!process.argv[2])throw Error('Indica una carpeta de salida nueva.');
-  exportar(process.argv[2]);console.log('Exportadas las Grietas del Editor.');
+  exportar(process.argv[2]);console.log('Exportadas Caoz ARPG.');
 }

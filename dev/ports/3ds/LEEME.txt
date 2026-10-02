@@ -1,10 +1,10 @@
-LAS GRIETAS DEL EDITOR - ADAPTACIÓN NATIVA PARA 3DS
+CAOZ ARPG - ADAPTACIÓN NATIVA PARA 3DS
 
 Prototipo para Nintendo 3DS, 3DS XL y 2DS originales con Homebrew Launcher.
 
 INSTALACIÓN
 1. Copia la carpeta "3ds" de este paquete a la raíz de la tarjeta SD.
-2. En Homebrew Launcher, abre "Las Grietas del Editor".
+2. En Homebrew Launcher, abre "Caoz ARPG".
 3. Elige Adreida o Mohamed y pulsa A.
 
 El archivo .3dsx ya incluye los modelos mediante RomFS. No necesita conexión,

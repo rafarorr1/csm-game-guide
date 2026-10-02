@@ -13,11 +13,16 @@ crater.geometry.computeBoundingBox();assert.ok(crater.geometry.boundingBox.min.y
 assert.equal(crater.material[0].map,piso.map,'El labio comparte la textura del piso');
 const shader={vertexShader:THREE.ShaderLib.standard.vertexShader,fragmentShader:THREE.ShaderLib.standard.fragmentShader,uniforms:{}};
 piso.onBeforeCompile(shader);assert.equal(shader.uniforms.uHuecos.value[0].z,1.05);
-fx.paso(4.9);assert.equal(fx.estado().crateres.length,1);assert.ok(shader.uniforms.uHuecos.value[0].z<1.05);
+fx.paso(3.5);assert.equal(shader.uniforms.uHuecos.value[0].w,1);
+fx.paso(.75);assert.equal(shader.uniforms.uHuecos.value[0].w,.5);
+assert.equal(shader.uniforms.uHuecos.value[0].z,1.05,'El agujero conserva su radio durante el desvanecimiento');
+assert.deepEqual(Array.from(crater.scale.toArray()),[1.05,1,1.05],'No se contrae ni se hunde al desaparecer');
+for(const material of crater.material){const sh={fragmentShader:THREE.ShaderLib.standard.fragmentShader,uniforms:{}};material.onBeforeCompile(sh);assert.equal(sh.uniforms.uCraterOpacidad.value,.5,'Pared y labio comparten la opacidad del hueco');}
+fx.paso(.65);assert.equal(fx.estado().crateres.length,1);assert.ok(shader.uniforms.uHuecos.value[0].w<.02);
 fx.paso(.11);assert.equal(fx.estado().crateres.length,0);assert.equal(shader.uniforms.uHuecos.value[0].z,0);assert.equal(escena.children.length,0);
 for(let i=0;i<20;i++)fx.agujero(new THREE.Vector3(i,0,0));assert.equal(fx.estado().crateres.length,8);assert.equal(escena.children.length,8);
 fx.limpiar();assert.equal(escena.children.length,0);assert.ok(shader.uniforms.uHuecos.value.every(v=>v.z===0));
-console.log('✓ Cráter bajo el piso, textura compartida, cierre a los cinco segundos y reserva acotada');
+console.log('✓ Cráter bajo el piso, radio constante, desvanecimiento gradual y limpieza a los cinco segundos');
 // La cinta usa los puntos mundiales del arma y se desvanece al terminar el ataque.
 const raiz=new THREE.Group(),mano=new THREE.Object3D(),punta=new THREE.Object3D();
 raiz.position.set(3,0,2);mano.position.set(0,1,0);punta.position.set(0,2,1);raiz.add(mano,punta);

@@ -10,7 +10,7 @@ float Juego::azar(){semilla=semilla*1664525u+1013904223u;return(semilla>>8)*(1.f
 void Juego::avisar(const std::string&s,float d){anuncio=s;anuncioT=d;}
 void Juego::iniciar(Tipo tipo){h=Actor{};h.tipo=tipo;h.vida=h.maxVida=datos[tipo].vida;h.p={0,4};h.dir=PI;h.dentro=true;aliado=Actor{};tieneAliado=false;tiempo=furia=ultiRestante=ultiActivo=sacudida=paron=recarga=cadencia=0;cds.fill(0);bonus.fill(1);enemigos.clear();proyectiles.clear();objetos.clear();efectos.clear();cola.clear();choques={{{-5,-3},1.3f},{{-2.82f,-2.51f},.55f},{{6.5f,-5.5f},1.5f},{{-8.3f,5.5f},1.1f},{{8.5f,4.8f},1},{{-3.5f,7.5f},.4f},{{4.5f,-10},.4f}};
  for(int i=0;i<15;i++){float a=i*TAU/15;bool puerta=false;for(float c:calles)if(std::fabs(delta(a,c))<.3f)puerta=true;if(!puerta)choques.push_back({{std::cos(a)*19.2f,std::sin(a)*19.2f},3.1f});}
- oleada=-1;nivel=1;mano=bajas=parrys=0;descanso=1.8f;proximaEntrada=0;menu=pausa=derrota=victoria=cartas=tirando=resuelto=false;balas=6;avisar("Las Grietas del Editor",3);}
+ oleada=-1;nivel=1;mano=bajas=parrys=0;descanso=1.8f;proximaEntrada=0;menu=pausa=derrota=victoria=cartas=tirando=resuelto=false;balas=6;avisar("Caoz ARPG",3);}
 int Juego::vivos()const{return std::count_if(enemigos.begin(),enemigos.end(),[](const Actor&e){return e.estado!=CAIDO;});}
 void Juego::cambiar(Actor&a,Estado e){a.estado=e;a.t=0;a.impacto=false;}
 void Juego::efecto(V p,int tipo,float radio,float dur,uint32_t color){if(efectos.size()>=80)efectos.erase(efectos.begin());efectos.push_back({p,0,dur,radio,color,tipo});}
