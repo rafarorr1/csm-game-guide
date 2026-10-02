@@ -31,7 +31,7 @@ if(uElegir>.5){if(uAislar>.5&&seleccionada<.5)discard;float gris=dot(outgoingLig
    material.onBeforeCompile=function(shader,render){original.call(this,shader,render);shader.fragmentShader=shader.fragmentShader.replace('outgoingLight+=vColor.rgb*uBrillo;','outgoingLight+=diffuseColor.rgb*uBrillo;');selectorShader(shader);};
    material.customProgramCacheKey=()=> 'goblin-localizador-v2';mesh.userData.iluminado=material;mesh.userData.plano=new THREE.MeshBasicMaterial();mesh.userData.plano.onBeforeCompile=selectorShader;mesh.userData.plano.customProgramCacheKey=()=> 'goblin-localizador-plano-v2';
   }
-  const guia=new Image();guia.src='goblin-guia.png';await guia.decode();
+  const guia=new Image();guia.src='goblin-orientacion.png';await guia.decode();
   function pintarDetalle(){
    if(!elegida||!textura)return;const g=detalle.getContext('2d'),W=detalle.width,H=detalle.height,[x,y,w,h]=elegida.celda;
    // La cabecera del atlas queda fuera: nombre y número se muestran como texto legible al lado.
@@ -87,10 +87,12 @@ if(uElegir>.5){if(uAislar>.5&&seleccionada<.5)discard;float gris=dot(outgoingLig
    const p=piezaUV(hit.uv.x,hit.uv.y);if(!p)return;seleccionar(p.id,false);localizacion=localizarUV(hit.uv,hit.object,hit.faceIndex*3);pintarDetalle();
   });
   async function aplicar(url,nombre){
-   const turno=++cargada,nueva=await new THREE.TextureLoader().loadAsync(url);if(turno!==cargada){nueva.dispose();return;}if(nueva.image.width!==4096||nueva.image.height!==4096){nueva.dispose();throw Error('El PNG debe medir 4096 × 4096 píxeles.');}
+   const turno=++cargada;let nueva=await new THREE.TextureLoader().loadAsync(url);if(turno!==cargada){nueva.dispose();return;}
+   let imagen;try{imagen=window.CAOZ_GOBLIN_CUADERNO.extraer(nueva.image,()=>document.createElement('canvas'));}catch(e){nueva.dispose();throw e;}
+   if(imagen!==nueva.image){nueva.dispose();nueva=new THREE.CanvasTexture(imagen);}
    nueva.colorSpace=THREE.SRGBColorSpace;nueva.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());const previa=textura;textura=nueva;
    for(const m of modelos)for(const mesh of m.mallas)for(const k of ['iluminado','plano']){mesh.userData[k].map=nueva;mesh.userData[k].needsUpdate=true;}
-   previa?.dispose();$('estado').textContent='Textura aplicada · '+nombre;pintarDetalle();
+   previa?.dispose();$('estado').textContent='Textura aplicada · '+nombre+' · referencias separadas de la pintura';pintarDetalle();
   }
   $('archivo').onchange=async()=>{const f=$('archivo').files[0];if(!f)return;const url=URL.createObjectURL(f);try{await aplicar(url,f.name);}catch(e){$('estado').textContent=e.message;}finally{URL.revokeObjectURL(url);}};
   $('restablecer').onclick=()=>{aplicar('goblin-pintar.png','colores originales').catch(e=>$('estado').textContent=e.message);$('archivo').value='';};

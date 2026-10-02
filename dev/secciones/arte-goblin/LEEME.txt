@@ -8,35 +8,58 @@ Este kit contiene un lienzo y unas UV nuevos para esa geometría.
 Conserva el kit v1 si ya pintaste sobre él: su pintura necesita adaptación
 antes de usarla con este modelo; no mezcles archivos de ambos kits.
 
-QUÉ PINTAR
-Abre goblin-pintar.png en tu programa de ilustración. Es un lienzo de
-4096 × 4096 píxeles con los colores de las 39 piezas del modelo real.
-Piel, ropa, ojos y arma tienen espacios separados. Izquierda y derecha
-son las del personaje, no las de quien lo mira.
+QUÉ PINTAR · RECOMENDADO
+Abre goblin-cuaderno.ora en Krita, GIMP u otro editor compatible con OpenRaster.
+Es un cuaderno de 6000 × 7200 píxeles. Cada una de las 39 fichas contiene:
+- El goblin completo en gris, con esa pieza resaltada en dorado.
+- La pieza ampliada en dos vistas: frente/espalda, o izquierda/derecha
+  para elementos alargados hacia delante, como el mango y la nariz.
+- Su superficie desplegada, con bordes de colores y letras de orientación.
+- Nombre, número y leyenda. Izquierda/derecha son siempre las del goblin.
+La referencia de ubicación deja ver también las piezas ocultas bajo la ropa.
 
-ARCHIVO CON CAPAS
-Si usas Krita o GIMP, abre goblin-capas.ora: ya incluye «Guía»,
-«Mi ilustración» y «Colores base» como capas separadas.
+LOS COLORES SIGNIFICAN
+F rojo: frente. E azul: espalda. I verde: izquierda. D violeta: derecha.
+A amarillo: arriba. B gris azulado: abajo.
+Los colores del detalle 3D coinciden con los bordes y las letras del plano.
+Indican hacia dónde mira cada superficie en la pose de construcción; no son
+parejas de costuras para unir ni colores que debas usar al ilustrar.
 
-GUÍA EN UNA CAPA APARTE
-Importa goblin-guia.png encima del lienzo: es transparente y señala nombres,
-caras y triángulos. No muevas, gires ni cambies de tamaño las piezas.
-Dibuja en otra capa o sobre los colores. Puedes salirte unos 8 píxeles de
-los bordes para evitar pequeñas costuras. El fondo gris no se usa.
-Oculta la guía antes de exportar; de lo contrario sus letras y líneas
-aparecerán pintadas en el personaje.
+CAPAS DEL CUADERNO
+«Orientación y bordes»: guía visible; OCULTAR al exportar.
+«Mi ilustración»: pinta aquí.
+«Colores base»: conservar debajo de tu pintura.
+«Referencias y nombres»: conservar; no aparecen en el modelo.
+No muevas ni redimensiones ninguna ficha o pieza.
 
-goblin-mapa-explicado.png une ambas imágenes sólo para consultar.
-goblin-guia.svg es la misma guía en formato vectorial.
+SI TU PROGRAMA NO ABRE .ORA
+Abre goblin-cuaderno-base.png y añade goblin-cuaderno-bordes.png encima,
+como otra capa del mismo tamaño y sin desplazarla. Pinta en una capa nueva.
+Oculta la capa de bordes antes de exportar.
 
 QUÉ DEVOLVER
-Un PNG RGB o RGBA de 4096 × 4096 px, perfil sRGB, con la guía oculta y los
-colores de base debajo de tu pintura. No exportes sólo trazos transparentes:
-el modelo utiliza el color completo del PNG. Puedes llamarlo goblin-pintado.png.
-Conserva este kit: su archivo goblin-uv.json vincula cada zona con el modelo.
-Pintar cambia su acabado, no su silueta, volumen, esqueleto o animaciones.
-Si quieres modificar la forma de una oreja o añadir una prenda, acompaña
-la textura con un boceto y podremos modificar la geometría por separado.
+Exporta el cuaderno completo como PNG sRGB RGB o RGBA de 6000 × 7200 px,
+con colores base, tu pintura y referencias visibles; sólo los bordes ocultos.
+Puedes llamarlo goblin-cuaderno-pintado.png. No recortes las fichas.
+El visor extrae automáticamente las 39 zonas de pintura: elimina referencias
+sin reescalar ni mover un píxel del atlas UV v2. Si dejas los bordes visibles,
+sus líneas y letras sí aparecerán sobre el goblin.
+
+REFERENCIAS PARA CONSULTAR
+- goblin-cuaderno-explicado.png: las 39 fichas con la guía visible.
+- goblin-cuaderno-ejemplo.png: una ficha completa, para revisar el formato.
+- goblin-cuaderno.json: posiciones exactas de las zonas que se extraen.
+
+ATLAS CLÁSICO · SIGUE SIENDO COMPATIBLE
+También puedes usar goblin-pintar.png o goblin-capas.ora (4096 × 4096).
+Su geometría y sus coordenadas UV v2 no han cambiado con este cuaderno.
+goblin-guia.png contiene los triángulos y nombres del atlas clásico;
+goblin-orientacion.png contiene los nuevos bordes de colores sobre ese atlas.
+Ambas guías van en capas separadas que debes ocultar antes de exportar.
+El visor acepta también el PNG clásico de 4096 × 4096.
+Puedes salirte unos 8 píxeles de los bordes para evitar pequeñas costuras.
+Conserva goblin-uv.json: vincula cada zona con el modelo suavizado.
+Pintar cambia el acabado, no su silueta, volumen, esqueleto o animaciones.
 
 VISTA 3D LOCAL
 En esta carpeta ejecuta: node servidor.mjs
@@ -48,7 +71,7 @@ También puedes elegirla en la lista o recorrerlas con Anterior/Siguiente.
 Mueve el cursor por el recorte: un punto azul señala esa misma zona sobre
 la superficie del personaje. Para zonas ocultas, gira la vista.
 «Acercar pieza» ajusta la cámara; «Aislar pieza» oculta las demás.
-«Ver líneas y orientación» muestra la guía sólo en el recorte.
+«Ver bordes de orientación» muestra los nuevos colores en el recorte.
 El menú «Tu pintura y animación» conserva la carga del PNG, las poses,
 las tres vistas y el botón para ver la pintura completa sin resaltado.
 El recorte sirve sólo de referencia: pinta y devuelve el lienzo completo.
@@ -67,6 +90,7 @@ La cabeza y las piezas redondas se despliegan como un cilindro/esfera, por
 lo que se deforman en plano y se cierran alrededor de la superficie 3D.
 Las cajas se abren en cruz; el contorno y las tapas de cilindros/conos se
 separan para que puedas pintarlos sin que se repita el dibujo.
-Las marcas de frente/espalda se refieren al eje local de cada pieza.
+Las letras y colores nuevos se refieren al goblin completo en pose de construcción.
+Los nombres del antiguo goblin-guia.png se refieren a ejes locales de cada pieza.
 La luz del juego puede aclarar u oscurecer tu color: el modo «Color plano»
 del visor permite revisar la pintura sin iluminación.

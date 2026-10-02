@@ -7,6 +7,7 @@ import crypto from 'node:crypto';
 import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {fileURLToPath} from 'node:url';
+import {crearCuaderno} from './guia-pintura.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url)),fuentes=path.dirname(aqui);
 const destino=path.resolve(process.argv[2]||'goblin-para-pintar');
 if(fs.existsSync(destino)&&fs.readdirSync(destino).length)throw Error('Elige una carpeta vacía para no sobrescribir tu ilustración.');
@@ -108,6 +109,7 @@ ora.file('mergedimage.png',await sharp(path.join(destino,'goblin-pintar.png')).c
 ora.file('Thumbnails/thumbnail.png',await sharp(path.join(destino,'goblin-pintar.png')).resize(256,256).png().toBuffer());
 guardar('goblin-capas.ora',await ora.generateAsync({type:'nodebuffer',compression:'DEFLATE'}));
 await sharp(path.join(destino,'goblin-pintar.png')).composite([{input:path.join(destino,'goblin-guia.png')}]).png().toFile(path.join(destino,'goblin-mapa-explicado.png'));
-for(const [desde,hasta] of [['vista.html','index.html'],['vista.css','vista.css'],['vista.js','vista.js'],['servidor.mjs','servidor.mjs'],['LEEME.txt','LEEME.txt']])fs.copyFileSync(path.join(aqui,desde),path.join(destino,hasta));
+await crearCuaderno({piezas,THREE,sharp,JSZip,destino});
+for(const [desde,hasta] of [['vista.html','index.html'],['vista.css','vista.css'],['vista.js','vista.js'],['cuaderno.js','cuaderno.js'],['servidor.mjs','servidor.mjs'],['LEEME.txt','LEEME.txt']])fs.copyFileSync(path.join(aqui,desde),path.join(destino,hasta));
 for(const archivo of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])fs.copyFileSync(path.join(fuentes,archivo),path.join(destino,archivo));
 console.log(`✓ ${piezas.length} piezas, UV sin superposiciones entre piezas/caras de caja/tapas, ${mallas.length} mallas y ${offset-1} vértices conservados.\nKit: ${destino}`);

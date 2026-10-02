@@ -1,6 +1,7 @@
 /* Correspondencia geométrica de la guía: UV v2, modelo suave y puntos del localizador. */
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import crypto from 'node:crypto';
 import {extraerDeclaracion} from '../fuentes.mjs';
+import cuaderno from './cuaderno.js';import {direccion} from './guia-pintura.mjs';
 const atlas=JSON.parse(fs.readFileSync(new URL('goblin-uv-v2.json',import.meta.url),'utf8'));
 const fuente=fs.readFileSync(new URL('vista.js',import.meta.url),'utf8'),c=vm.createContext({atlas});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL('../'+f,import.meta.url),'utf8'),c);
@@ -33,3 +34,13 @@ for(const tipo of ['goblin','cobrador']){const g=MOD.crear(tipo);assert.equal(g.
  }
 }
 console.log(`✓ 39 piezas, UV v2 y ${n} triángulos: puntos exactos en reposo, caminata y ataque; normales válidas, tres mallas y zonas ajenas rechazadas`);
+
+// Rectángulos enteros, sin recortes repetidos ni escalado: todas las piezas caben en el archivo de pintura.
+const copias=[],ctx={fillRect(){},drawImage(...args){copias.push(args.slice(1));}},lienzo={getContext(){return ctx;}};
+cuaderno.extraer({width:6000,height:7200},()=>lienzo);assert.equal(copias.length,39);assert.equal(ctx.imageSmoothingEnabled,false);
+let area=0;for(const [i,r] of copias.entries()){const [sx,sy,sw,sh,x,y,w,h]=r;assert.ok(r.every(Number.isInteger));assert.equal(sw,w);assert.equal(sh,h);assert.ok(sx>=0&&sy>=0&&sx+w<=6000&&sy+h<=7200);assert.ok(x>=0&&y>=0&&x+w<=4096&&y+h<=4096);area+=w*h;
+ for(const q of copias.slice(i+1))assert.ok(x+w<=q[4]||q[4]+q[6]<=x||y+h<=q[5]||q[5]+q[7]<=y,'Una región del atlas no puede recibir dos fichas');
+}
+assert.equal(area,4096*4096-820*512);assert.throws(()=>cuaderno.extraer({width:4000,height:4000},()=>lienzo),/6000/);
+for(const [normal,id] of [[[0,0,1],'F'],[[0,0,-1],'E'],[[1,0,0],'I'],[[-1,0,0],'D'],[[0,1,0],'A'],[[0,-1,0],'B']])assert.equal(direccion(normal).id,id);
+console.log('✓ Cuaderno: 39 regiones sin solapamiento ni reescalado, dimensiones controladas y orientación respecto al personaje');
