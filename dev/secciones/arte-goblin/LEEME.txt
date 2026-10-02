@@ -34,7 +34,18 @@ la textura con un boceto y podremos modificar la geometría por separado.
 VISTA 3D LOCAL
 En esta carpeta ejecuta: node servidor.mjs
 Abre http://127.0.0.1:8886/ y pulsa «Cargar mi PNG».
-Puedes girarlo, verlo en movimiento o comparar frente, perfil y espalda.
+GUÍA INTERACTIVA
+Haz clic en una pieza del goblin o en una casilla del mapa. La pieza elegida
+se resalta en dorado en 3D y aparece ampliada en 2D, con nombre y explicación.
+También puedes elegirla en la lista o recorrerlas con Anterior/Siguiente.
+Mueve el cursor por el recorte: un punto azul señala esa misma zona sobre
+la superficie del personaje. Para zonas ocultas, gira la vista.
+«Acercar pieza» ajusta la cámara; «Aislar pieza» oculta las demás.
+«Ver líneas y orientación» muestra la guía sólo en el recorte.
+El menú «Tu pintura y animación» conserva la carga del PNG, las poses,
+las tres vistas y el botón para ver la pintura completa sin resaltado.
+El recorte sirve sólo de referencia: pinta y devuelve el lienzo completo.
+Las coordenadas y los archivos de pintura originales no cambiaron.
 La imagen se queda en tu computadora; no se sube a internet ni al juego.
 No basta con abrir index.html haciendo doble clic: necesita ese servidor.
 
