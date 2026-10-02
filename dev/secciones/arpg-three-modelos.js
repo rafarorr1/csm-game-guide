@@ -59,8 +59,8 @@
     // UV de detalle independientes del atlas de pintura: un metro de piel o medio metro de tejido.
     function uvPiel(p,g){
       const uv=g.attributes.uv,r=new Float32Array(uv.count*2);
-      // Una muestra completa del metal en cada cara de la pequeña hoja.
-      if(p.hachaReal){r.set(uv.array);return r;}
+      // Una muestra completa en la hoja y alrededor del mango.
+      if(p.hachaReal||p.maderaReal){r.set(uv.array);return r;}
       if(!p.pielReal&&!p.telaReal)return r;
       const q=p.geo.parameters,esc=new THREE.Vector3().setFromMatrixScale(p.m),tipo=p.geo.type;
       const ancho=TAU*(q.radius||q.radiusTop||q.radiusBottom||.1)*(esc.x+esc.z)/2,alto=((q.length||q.height||0)+((tipo==='CapsuleGeometry'||tipo==='SphereGeometry')?Math.PI*(q.radius||0):0))*esc.y;
@@ -71,19 +71,19 @@
     }
     function fundir(piezas){
       const conPiel=piezas.some(p=>p.pielReal),conHacha=piezas.some(p=>p.hachaReal),conUV=conPiel||conHacha,uvs=[];
-      let n=0;const gs=piezas.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());if(conUV)uvs.push(uvPiel(p,g));g.applyMatrix4(p.m);n+=g.attributes.position.count;return [g,p.color,p.vario,p.hueso,p.pielReal,p.telaReal,p.hachaReal];});
+      let n=0;const gs=piezas.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());if(conUV)uvs.push(uvPiel(p,g));g.applyMatrix4(p.m);n+=g.attributes.position.count;return [g,p.color,p.vario,p.hueso,p.pielReal,p.telaReal,p.hachaReal,p.maderaReal];});
       const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3),SI=new Uint16Array(n*4),SW=new Float32Array(n*4),c=new THREE.Color();let o=0;
-      const U=conUV?new Float32Array(n*2):null,PIEL=conPiel?new Float32Array(n):null,TELA=conPiel?new Float32Array(n):null,HACHA=conHacha?new Float32Array(n):null;let pieza=0;
-      for(const [g,color,vario,hueso,real,tela,hacha] of gs){const p=g.attributes.position,q=g.attributes.normal;c.set(color);let f=1;
+      const U=conUV?new Float32Array(n*2):null,PIEL=conPiel?new Float32Array(n):null,TELA=conPiel?new Float32Array(n):null,MADERA=conPiel?new Float32Array(n):null,HACHA=conHacha?new Float32Array(n):null;let pieza=0;
+      for(const [g,color,vario,hueso,real,tela,hacha,madera] of gs){const p=g.attributes.position,q=g.attributes.normal;c.set(color);let f=1;
         if(conUV)U.set(uvs[pieza++],o*2);
-        if(conPiel){PIEL.fill(real?1:0,o,o+p.count);TELA.fill(tela||0,o,o+p.count);}
+        if(conPiel){PIEL.fill(real?1:0,o,o+p.count);TELA.fill(tela||0,o,o+p.count);MADERA.fill(madera?1:0,o,o+p.count);}
         if(conHacha)HACHA.fill(hacha?1:0,o,o+p.count);
         for(let i=0;i<p.count;i++){if(i%3===0)f=1+(azar()-.5)*vario;const j=(o+i)*3;P[j]=p.getX(i);P[j+1]=p.getY(i);P[j+2]=p.getZ(i);N[j]=q.getX(i);N[j+1]=q.getY(i);N[j+2]=q.getZ(i);C[j]=c.r*f;C[j+1]=c.g*f;C[j+2]=c.b*f;SI[(o+i)*4]=hueso;SW[(o+i)*4]=1;}
         o+=p.count;g.dispose();}
       for(const p of piezas)p.geo.dispose();
       const r=new THREE.BufferGeometry();r.setAttribute('position',new THREE.BufferAttribute(P,3));r.setAttribute('normal',new THREE.BufferAttribute(N,3));r.setAttribute('color',new THREE.BufferAttribute(C,3));
       if(conUV)r.setAttribute('uv',new THREE.BufferAttribute(U,2));
-      if(conPiel){r.setAttribute('pielReal',new THREE.BufferAttribute(PIEL,1));r.setAttribute('telaReal',new THREE.BufferAttribute(TELA,1));}
+      if(conPiel){r.setAttribute('pielReal',new THREE.BufferAttribute(PIEL,1));r.setAttribute('telaReal',new THREE.BufferAttribute(TELA,1));r.setAttribute('maderaReal',new THREE.BufferAttribute(MADERA,1));}
       if(conHacha)r.setAttribute('hachaReal',new THREE.BufferAttribute(HACHA,1));
       r.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(SI,4));r.setAttribute('skinWeight',new THREE.Float32BufferAttribute(SW,4));r.computeBoundingSphere();return r;}
 
@@ -114,18 +114,19 @@ if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));o
     function aplicarPielGoblin(material){
       if(!pielGoblin||!rutaPiel)return;
       if(!mapasPiel){const cargar=cargarMapaGoblin;
-        mapasPiel={color:cargar('piel-color.webp',true),normal:cargar('piel-normal.png'),superficie:cargar('piel-superficie.png'),telaColor:cargar('ropa-color.webp',true),telaNormal:cargar('ropa-normal.webp'),telaSuperficie:cargar('ropa-superficie.webp')};}
+        mapasPiel={color:cargar('piel-color.webp',true),normal:cargar('piel-normal.png'),superficie:cargar('piel-superficie.png'),telaColor:cargar('ropa-color.webp',true),telaNormal:cargar('ropa-normal.webp'),telaSuperficie:cargar('ropa-superficie.webp'),maderaColor:cargar('mango-color.webp',true),maderaNormal:cargar('mango-normal.webp'),maderaSuperficie:cargar('mango-superficie.webp')};}
       material.map=mapasPiel.color;material.normalMap=mapasPiel.normal;material.roughnessMap=mapasPiel.superficie;material.normalScale.set(.7,.7);
       const anterior=material.onBeforeCompile;material.onBeforeCompile=function(sh,render){anterior.call(this,sh,render);
-        Object.assign(sh.uniforms,{telaColor:{value:mapasPiel.telaColor},telaNormal:{value:mapasPiel.telaNormal},telaSuperficie:{value:mapasPiel.telaSuperficie}});
-        sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute float pielReal,telaReal;varying float vPielReal,vTelaReal;').replace('#include <begin_vertex>','#include <begin_vertex>\nvPielReal=pielReal;vTelaReal=telaReal;');
-        sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vPielReal,vTelaReal;uniform sampler2D telaColor,telaNormal,telaSuperficie;')
+        Object.assign(sh.uniforms,{telaColor:{value:mapasPiel.telaColor},telaNormal:{value:mapasPiel.telaNormal},telaSuperficie:{value:mapasPiel.telaSuperficie},maderaColor:{value:mapasPiel.maderaColor},maderaNormal:{value:mapasPiel.maderaNormal},maderaSuperficie:{value:mapasPiel.maderaSuperficie}});
+        sh.vertexShader=sh.vertexShader.replace('#include <common>','#include <common>\nattribute float pielReal,telaReal,maderaReal;varying float vPielReal,vTelaReal,vMaderaReal;').replace('#include <begin_vertex>','#include <begin_vertex>\nvPielReal=pielReal;vTelaReal=telaReal;vMaderaReal=maderaReal;');
+        sh.fragmentShader=sh.fragmentShader.replace('#include <common>','#include <common>\nvarying float vPielReal,vTelaReal,vMaderaReal;uniform sampler2D telaColor,telaNormal,telaSuperficie,maderaColor,maderaNormal,maderaSuperficie;')
           .replace('#include <map_fragment>','')
           .replace('#include <color_fragment>',`#include <color_fragment>
 #ifdef USE_MAP
 if(vPielReal>.5)diffuseColor.rgb=texture2D(map,vMapUv).rgb*1.35;
 // El pañuelo conserva su tinte rojo o morado; el resto muestra la arpillera natural.
 if(vTelaReal>.5)diffuseColor.rgb=texture2D(telaColor,vMapUv).rgb*mix(vec3(1.),vColor.rgb*3.,step(1.5,vTelaReal));
+if(vMaderaReal>.5)diffuseColor.rgb=texture2D(maderaColor,vMapUv).rgb;
 #endif`)
           .replace('#include <roughnessmap_fragment>',`float roughnessFactor=roughness;
 #ifdef USE_ROUGHNESSMAP
@@ -133,13 +134,15 @@ vec2 superficiePiel=texture2D(roughnessMap,vRoughnessMapUv).rg;
 roughnessFactor=mix(roughness,clamp(superficiePiel.g,.6,1.),vPielReal);
 diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
 if(vTelaReal>.5){vec2 superficieTela=texture2D(telaSuperficie,vRoughnessMapUv).rg;roughnessFactor=max(.85,superficieTela.g);diffuseColor.rgb*=mix(1.,superficieTela.r,.5);}
+if(vMaderaReal>.5){vec2 superficieMadera=texture2D(maderaSuperficie,vRoughnessMapUv).rg;roughnessFactor=max(.7,superficieMadera.g);diffuseColor.rgb*=mix(1.,superficieMadera.r,.5);}
 #endif`)
           .replace('#include <normal_fragment_maps>',`#ifdef USE_NORMALMAP_TANGENTSPACE
 vec3 mapN=texture2D(normalMap,vNormalMapUv).xyz*2.-1.;mapN.xy*=normalScale;
 if(vTelaReal>.5){mapN=texture2D(telaNormal,vNormalMapUv).xyz*2.-1.;mapN.xy*=.38;}
-normal=normalize(mix(nonPerturbedNormal,normalize(tbn*mapN),max(vPielReal,min(1.,vTelaReal))));
+if(vMaderaReal>.5){mapN=texture2D(maderaNormal,vNormalMapUv).xyz*2.-1.;mapN.xy*=.6;}
+normal=normalize(mix(nonPerturbedNormal,normalize(tbn*mapN),max(vMaderaReal,max(vPielReal,min(1.,vTelaReal)))));
 #endif`);
-      };material.customProgramCacheKey=()=>'arpg-modelo-piel-arpillera-goblin-v2';
+      };material.customProgramCacheKey=()=>'arpg-modelo-piel-arpillera-madera-goblin-v3';
     }
 
     // Pintura descascarada sólo en la hoja; la moneda del cobrador conserva su latón.
@@ -182,7 +185,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
     // Recoge las piezas por material (con su hueso); al final las funde en una malla con piel por material.
     function constructor(H,varioBase=.14,ladosMiembro=7,tapasMiembro=2,coloresPiel=[],coloresTela={}){
       const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
-      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase,hachaReal=false)=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso,pielReal:coloresPiel.includes(color),telaReal:coloresTela[color]||0,hachaReal});};
+      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase,{hachaReal=false,maderaReal=false}={})=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso,pielReal:coloresPiel.includes(color),telaReal:coloresTela[color]||0,hachaReal,maderaReal});};
       const montar=M=>{H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),mallas=[];
         for(const [mat,lista] of piezas){for(const p of lista)p.m.premultiply(H[p.nombre].matrixWorld);
           const malla=new THREE.SkinnedMesh(fundir(lista),M[mat]);malla.castShadow=mat!=='brillo';malla.receiveShadow=true;malla.frustumCulled=false;H.raiz.add(malla);malla.bind(esq,malla.matrixWorld);mallas.push(malla);}
@@ -386,8 +389,9 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       pon('cabeza','piel',G.casco(.145,20,7,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.04);
       for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,12),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,12,8),piel2,[0,-.02,0]);}
       if(cobrador){pon('cadera','piel',G.bola(.095,14,10),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,10,6),0xe6b64e,[.19,.035,.065]);}
-      pon('manoD','piel',G.cil(.018,.02,.46,10),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0]);
-      pon('manoD','metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3],undefined,undefined,.025,true);
+      // Las UV del cilindro llevan la veta a lo largo del mango y envuelven su contorno.
+      pon('manoD','piel',G.cil(.018,.02,.46,10),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0],undefined,.025,{maderaReal:true});
+      pon('manoD','metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3],undefined,undefined,.025,{hachaReal:true});
       return {H,montar,p};
     }
     function kobold(){

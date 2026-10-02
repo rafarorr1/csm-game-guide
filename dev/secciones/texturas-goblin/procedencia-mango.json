@@ -1,0 +1,36 @@
+{
+  "origen": "wood-veneer1-ue.zip, aportado por el usuario",
+  "uso": "Sólo el mango de madera de las hachas de goblins y cobradores. Conserva la hoja oxidada y el resto del equipo.",
+  "resolucion": [
+    512,
+    512
+  ],
+  "preparacion": "Reducción Lanczos desde 2048; color WebP calidad 92; datos WebP sin pérdida. Tres mapas compartidos por toda la horda.",
+  "color": {
+    "archivo": "mango-color.webp",
+    "fuente": "wood-veneer1-albedo.png",
+    "espacio": "sRGB"
+  },
+  "normal": {
+    "archivo": "mango-normal.webp",
+    "fuente": "wood-veneer1-Normal-dx.png",
+    "conversion": "DirectX a OpenGL: canal verde invertido (255 - G)",
+    "espacio": "Datos lineales, OpenGL +Y",
+    "intensidad": 0.6
+  },
+  "superficie": {
+    "archivo": "mango-superficie.webp",
+    "r": "Oclusión (wood-veneer1-ao.png), aplicada al 50 %",
+    "g": "Rugosidad (wood-veneer1-Roughness.png), mínimo 0.7",
+    "b": "Reservado, 255",
+    "espacio": "Datos lineales"
+  },
+  "uv": "UV originales del cilindro: U alrededor del mango, V a lo largo; la veta sigue el eje del mango",
+  "altura": "Sin desplazamiento geométrico",
+  "metal": "Mapa original negro uniforme; se conserva metalness=0",
+  "sha256": {
+    "mango-color.webp": "2e0ae654f15eeac3768b11d0f61deae7e1df275f814517a724dc37dbd217ae9e",
+    "mango-normal.webp": "60b3e374ecb08003d81dbd645b68e918df16e759447440f6ac07b5a2bf63833c",
+    "mango-superficie.webp": "b49f0812013004dd005b3fefbc46799350f7dc458d8dd8325cbacb626fdfaad6"
+  }
+}
