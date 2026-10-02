@@ -14,7 +14,7 @@ function parryPerfecto(){paradas++;cambiar(heroe,'quieto');}
 function empezarAtaque(e,forma,a){e.ataque={...a,forma,dir:e.dir,t0:reloj.t};e.alerta={el:{textContent:''}};}
 const geoHalo=new THREE.SphereGeometry(1,8,6),materialesHaloFlecha=[0xffa530,0xfff3c0,0xffd060].map(color=>new THREE.MeshBasicMaterial({color}));
 ${['geoLanza','matPuntaLanza','geoPluma','geoEstelaFlecha','matEstelaFlecha','materialesHaloHacha','matEstelaHacha','HAB','PARRY','RITMO'].map(n=>get(n,'const')).join('\n')}
-${['cambiar','conHeroe','herir','prenderFuego','apagarFuego','pasoFuego','usar','parar','bloqueado','pasoLibreEnemigo','intentarHachaGoblin','pasoEnemigo','resolverAtaque','enZona','lanzar','lanzarHacha','pasoLanzas'].map(n=>get(n)).join('\n')}
+${['cambiar','conHeroe','herir','prenderFuego','apagarFuego','pasoFuego','usar','parar','bloqueado','pasoLibreEnemigo','intentarHachaGoblin','pasoEnemigo','resolverAtaque','enZona','lanzar','lanzarHacha','alturaHacha','pasoLanzas'].map(n=>get(n)).join('\n')}
 function preparar(variante='clasico'){
  reloj.t=0;presion.siguiente=0;presion.primeraLinea=new Set([1]);enemigos.length=jugadores.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;obstaculos.length=0;paradas=dañoDevuelto=muestras=0;azar=.1;
  heroe={id:0,tipo:'adreida',pos:new V3(0,0,5),dir:Math.PI,radio:.42,alma:120,vivo:true,escudo:0,invul:0,furia:0,estado:'quieto',t:0,cd:{esquiva:0},dirEsq:new V3(),entrada:{},control:{mov:new V3()},mando:{},disparosPendientes:[]};jugadores.push(heroe);ent=heroe.entrada;ctl=heroe.control;mando=heroe.mando;
@@ -32,6 +32,11 @@ for(const id of ['cuchillo','antorcha']){run(`e=preparar('${id}')`);assert.equal
 for(const bloqueo of ['e.cd=1','e.provocado=2','presion.siguiente=1','presion.primeraLinea.clear()','obstaculos.push({x:0,z:2,r:1})',"enemigos.push({id:2,d:{},tiraHacha:true,estado:'aviso'})"]){run(`e=preparar();${bloqueo}`);assert.equal(run('intentarHachaGoblin(e,5)'),false,bloqueo);}
 for(const distancia of [2,9]){run('e=preparar()');assert.equal(run(`intentarHachaGoblin(e,${distancia})`),false);}
 run('e=preparar();azar=.8;intentarHachaGoblin(e,5)');const tiros=run('muestras');for(let i=0;i<100;i++)run('intentarHachaGoblin(e,5)');assert.equal(run('muestras'),tiros,'No tira azar cada cuadro');
+// La altura sigue una parábola: asciende, pasa por encima y cae al blanco original.
+run('e=preparar();lanzarHacha(e,{dir:0,dano:11});heroe.pos.z=2.5;volar(.25)');
+assert.ok(Math.abs(run('lanzas[0].g.position.y')-2.75)<1e-6,'El vértice queda 1.8 m por encima del punto de salida');
+assert.equal(run('heroe.alma'),120,'No golpea al pasar por encima de la cabeza');
+run('heroe.pos.z=5;volar(.3)');assert.equal(run('heroe.alma'),109,'Puede golpear al descender sobre su destino');
 // Colisiones, parry y cobertura a velocidades de render distintas.
 for(const hz of [20,30,60,144])for(const defensa of ['ninguna','parry','dash','pozo']){
  run(`e=preparar();lanzarHacha(e,{dir:0,dano:11});${defensa==='parry'?"heroe.estado='parry';heroe.t=.1;":defensa==='dash'?'heroe.invul=1;':defensa==='pozo'?'obstaculos.push({x:0,z:2.5,r:.6});':''}`);

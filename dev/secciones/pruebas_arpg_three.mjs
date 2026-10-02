@@ -10,7 +10,7 @@
        (salir de la zona o esquivar lo evita), el golpe recibido marca de dónde
        vino y los atacantes de fuera de la pantalla tienen su flecha; como
        mucho dos atacan cuerpo a cuerpo a la vez;
-     · Q Torbellino, clic derecho Salto y E Provocar, y sin Furia no salen;
+     · Q Torbellino y clic derecho Salto requieren Furia; E lanza el hacha búmeran;
      · el botín: la carta se levanta con el ratón encima (o al tocarla), se lee
        entera y se recoge pisándola;
      · la partida entera (el piloto automático gana las cuatro oleadas y a Can,
@@ -216,11 +216,14 @@ try{
     assert.ok(lejos.every(id=>{const x=e.enemigos.find(x=>x.id===id);return !x||x.vida<x.vidaMax&&['aturdido','muere'].includes(x.estado);}),'…que aturde y hiere al caer');
     for(const id of lejos)await r('r.matar(a[0])',id);await r('r.avanzar(2)');
     const rodean=[];for(let i=0;i<3;i++)rodean.push(await r('r.invocar("goblin",Math.cos(a[0])*7,Math.sin(a[0])*7,true)',i*2.1));
-    await r('r.heroe({x:0,z:0,furia:0})');await pagina.keyboard.press('KeyE');e=await r('r.avanzar(.8)');
-    const dist=rodean.map(id=>{const x=e.enemigos.find(x=>x.id===id);return Math.hypot(x.x,x.z);});
-    assert.ok(e.heroe.escudo>2&&e.heroe.furia>=30&&dist.every(d=>d<6.5),'E: Provocar atrae a los enemigos, da Furia y reduce el daño');
+    await r('r.heroe({x:0,z:0,furia:0})');const destino=await r('r.pantalla(7,0,0)');await pagina.mouse.move(destino.x,destino.y);
+    await pagina.keyboard.press('KeyE');await r('r.avanzar(.35)');assert.equal((await r('r.bumeranes()')).length,1,'E lanza el hacha sin coste de Furia');
+    e=await r('r.avanzar(2.5)');assert.equal((await r('r.bumeranes()')).length,0,'El hacha vuelve a la mano');
+    const blanco=e.enemigos.find(x=>x.id===rodean[0]);
+    assert.ok(!blanco||blanco.vida<blanco.vidaMax,'El búmeran hiere en su trayectoria');
+    assert.ok(e.heroe.escudo===0&&e.heroe.cd.bumeran>5,'Usa su enfriamiento sin activar Provocar');
     assert.deepEqual(errores,[],'Sin errores con las habilidades');await contexto.close();}
-  console.log('✓ Q Torbellino, clic derecho Salto al cursor, E Provocar; sin Furia no salen');
+  console.log('✓ Q Torbellino y clic derecho Salto al cursor con Furia; E Búmeran sin coste, con ida y regreso');
 
   // ---- Botín: se lee con el ratón encima y se recoge pisándolo -------------------------------
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:3,dir:0})');

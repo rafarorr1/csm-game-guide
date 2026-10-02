@@ -70,18 +70,21 @@
       }return r;
     }
     function fundir(piezas){
-      const conPiel=piezas.some(p=>p.pielReal),conHacha=piezas.some(p=>p.hachaReal),conUV=conPiel||conHacha,uvs=[];
-      let n=0;const gs=piezas.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());if(conUV)uvs.push(uvPiel(p,g));g.applyMatrix4(p.m);n+=g.attributes.position.count;return [g,p.color,p.vario,p.hueso,p.pielReal,p.telaReal,p.hachaReal,p.maderaReal];});
+      const conArma=piezas.some(p=>p.armaArrojable),conPiel=piezas.some(p=>p.pielReal),conHacha=piezas.some(p=>p.hachaReal),conUV=conPiel||conHacha,uvs=[];
+      let n=0;const gs=piezas.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());if(conUV)uvs.push(uvPiel(p,g));g.applyMatrix4(p.m);n+=g.attributes.position.count;return [g,p.color,p.vario,p.hueso,p.pielReal,p.telaReal,p.hachaReal,p.maderaReal,p.armaArrojable];});
       const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3),SI=new Uint16Array(n*4),SW=new Float32Array(n*4),c=new THREE.Color();let o=0;
+      const ARMA=conArma?new Float32Array(n):null;
       const U=conUV?new Float32Array(n*2):null,PIEL=conPiel?new Float32Array(n):null,TELA=conPiel?new Float32Array(n):null,MADERA=conPiel?new Float32Array(n):null,HACHA=conHacha?new Float32Array(n):null;let pieza=0;
-      for(const [g,color,vario,hueso,real,tela,hacha,madera] of gs){const p=g.attributes.position,q=g.attributes.normal;c.set(color);let f=1;
+      for(const [g,color,vario,hueso,real,tela,hacha,madera,arma] of gs){const p=g.attributes.position,q=g.attributes.normal;c.set(color);let f=1;
         if(conUV)U.set(uvs[pieza++],o*2);
         if(conPiel){PIEL.fill(real?1:0,o,o+p.count);TELA.fill(tela||0,o,o+p.count);MADERA.fill(madera?1:0,o,o+p.count);}
+        if(conArma)ARMA.fill(arma?1:0,o,o+p.count);
         if(conHacha)HACHA.fill(hacha?1:0,o,o+p.count);
         for(let i=0;i<p.count;i++){if(i%3===0)f=1+(azar()-.5)*vario;const j=(o+i)*3;P[j]=p.getX(i);P[j+1]=p.getY(i);P[j+2]=p.getZ(i);N[j]=q.getX(i);N[j+1]=q.getY(i);N[j+2]=q.getZ(i);C[j]=c.r*f;C[j+1]=c.g*f;C[j+2]=c.b*f;SI[(o+i)*4]=hueso;SW[(o+i)*4]=1;}
         o+=p.count;g.dispose();}
       for(const p of piezas)p.geo.dispose();
       const r=new THREE.BufferGeometry();r.setAttribute('position',new THREE.BufferAttribute(P,3));r.setAttribute('normal',new THREE.BufferAttribute(N,3));r.setAttribute('color',new THREE.BufferAttribute(C,3));
+      if(conArma)r.setAttribute('armaArrojable',new THREE.BufferAttribute(ARMA,1));
       if(conUV)r.setAttribute('uv',new THREE.BufferAttribute(U,2));
       if(conPiel){r.setAttribute('pielReal',new THREE.BufferAttribute(PIEL,1));r.setAttribute('telaReal',new THREE.BufferAttribute(TELA,1));r.setAttribute('maderaReal',new THREE.BufferAttribute(MADERA,1));}
       if(conHacha)r.setAttribute('hachaReal',new THREE.BufferAttribute(HACHA,1));
@@ -184,8 +187,8 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
     }
     // Recoge las piezas por material (con su hueso); al final las funde en una malla con piel por material.
     function constructor(H,varioBase=.14,ladosMiembro=7,tapasMiembro=2,coloresPiel=[],coloresTela={}){
-      const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
-      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase,{hachaReal=false,maderaReal=false}={})=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso,pielReal:coloresPiel.includes(color),telaReal:coloresTela[color]||0,hachaReal,maderaReal});};
+      let armaArrojable=false;const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
+      const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase,{hachaReal=false,maderaReal=false}={})=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso,pielReal:coloresPiel.includes(color),telaReal:coloresTela[color]||0,hachaReal,maderaReal,armaArrojable});};
       const montar=(M,escala=1)=>{
         // Escala de construcción: huesos y piezas crecen juntos, sin escalar la raíz ni las colisiones dos veces.
         if(escala!==1)for(const hueso of huesos)hueso.position.multiplyScalar(escala);
@@ -195,7 +198,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         return mallas;};
       // Miembros: una cápsula que cuelga del hueso.
       const miembro=(hueso,r,l,color,esc=[1,1,1])=>pon(hueso,'piel',G.capsula(r,l,ladosMiembro,tapasMiembro),color,[0,-l/2-r*.3,0],[0,0,0],esc);
-      return {pon,montar,miembro};
+      return {pon,montar,miembro,marcarArma:()=>{armaArrojable=true;}};
     }
 
     const TIPOS={
@@ -218,7 +221,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       const p={muslo:.47,pierna:.45,pie:.05,cintura:.08,torso:.52,hombros:.25,brazo:.31,antebrazo:.29,ancho:.11},H=esqueleto(p);
       // Paños articulados desde la cintura; comparten las mismas mallas del personaje.
       for(let i=0;i<7;i++){H["falda"+i]=new THREE.Bone();H.cadera.add(H["falda"+i]);}
-      const {pon,montar}=constructor(H,.035);
+      const {pon,montar,marcarArma}=constructor(H,.035);
       const piel=0x86c49c,piel2=0x76b18b,piel3=0x93d0a8,pelo=0x1c1f38,cuero=0x3e2b1f,cuero2=0x5a3a22,brazal=0x6d4529,negro=0x1d1a23,tela=0x2a2530,
         hueso=0xe9e0cc,plata=0xd9dbe6,pielT=0xa48258,pielT2=0x7c5f3e,pielT3=0xbd9c6c,bota=0x241c1d,suela=0x120e0e;
       const PI=Math.PI;
@@ -351,6 +354,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       // ---- El hacha de guerra a dos manos (en la derecha, como prolongación del brazo: el mango hacia -Y de la mano).
       // Doble hoja en creciente (un filo a cada lado, en ±Z) con el borde de acero claro; empuñadura de cuero en
       // espiral, pomo con púa, cubo con la runa que brilla, langetas y la púa del extremo.
+      marcarArma();
       const hierro=0xb9bfca,hierro2=0x8a909b,filo=0xeef1f6,mango=0x3a2616;
       pon('manoD','piel',G.cil(.024,.028,1.34,12),mango,[0,-.5,0]);
       for(let i=0;i<14;i++)pon('manoD','piel',G.toro(.029,.0075,10,4),i%2?cuero2:0x4a2f1c,[0,.13-i*.039,0],[PI/2+(i%2?.2:-.2),0,0]);
@@ -572,6 +576,26 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         }
       }
       const grupo=new THREE.Group();for(const p of piezasHachaArrojadiza)grupo.add(new THREE.Mesh(p.geo,p.material));return grupo;
+    }
+
+    // Retira sólo los triángulos del arma: manos, brazales y sombras permanecen correctos.
+    function mostrarHacha(m,visible){if(m.tipo!=='adreida')return;m.sinHacha=!visible;
+      for(const mesh of m.mallas){const g=mesh.geometry,a=g.attributes.armaArrojable;if(!a)continue;
+        if(!visible&&!g.userData.sinArma){const indices=[];for(let i=0;i<a.count;i++)if(a.getX(i)<.5)indices.push(i);g.userData.sinArma=new THREE.BufferAttribute(new Uint32Array(indices),1);}
+        g.setIndex(visible?null:g.userData.sinArma);}
+    }
+    let piezasHachaAdreida=null;
+    function crearHachaAdreida(m){
+      if(!piezasHachaAdreida){piezasHachaAdreida=[];const materialesArma=materiales(true);materialesArma.metal.roughness=.62;materialesArma.metal.envMapIntensity=.25;
+        // Las posiciones de construcción usan la pose de enlace, independiente del ataque actual.
+        for(const mesh of m.mallas){const a=mesh.geometry.attributes,indices=[];for(let i=0;i<a.position.count;i++)if(a.armaArrojable?.getX(i)>.5)indices.push(i);if(!indices.length)continue;
+          const local=mesh.skeleton.boneInverses[mesh.skeleton.bones.indexOf(m.H.manoD)],geo=new THREE.BufferGeometry();
+          for(const nombre of ['position','normal','color']){const src=a[nombre],dst=new Float32Array(indices.length*src.itemSize);indices.forEach((v,i)=>{for(let j=0;j<src.itemSize;j++)dst[i*src.itemSize+j]=src.array[v*src.itemSize+j];});geo.setAttribute(nombre,new THREE.BufferAttribute(dst,src.itemSize));}
+          geo.applyMatrix4(local);geo.translate(0,.55,0);geo.rotateZ(Math.PI/2);
+          const tipo=mesh.material===m.M.metal?'metal':mesh.material===m.M.brillo?'brillo':'piel';piezasHachaAdreida.push({geo,mat:materialesArma[tipo]});
+        }
+      }
+      const g=new THREE.Group();for(const p of piezasHachaAdreida)g.add(new THREE.Mesh(p.geo,p.mat));return g;
     }
 
     // Dos coreografías por golpe letal. Los giros se interpolan como ángulos continuos:
@@ -865,7 +889,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         recogerPose(m,a);
       }
     }
-    return {crear,crearHachaArrojadiza,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
+    return {crear,crearHachaArrojadiza,crearHachaAdreida,mostrarHacha,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
   }
   window.CAOZ_ARPG_MODELOS=Object.freeze({fabrica});
 })();

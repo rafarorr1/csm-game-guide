@@ -37,7 +37,8 @@ async function iniciar(){
         <div class="labFila"><button id="labExportarAnimacion">Descargar animación</button><button id="labImportarAnimacion">Importar JSON</button></div>
       </details>
       <h2>Ataques reales</h2>
-      <div class="labFila"><button data-accion="basico">Básico</button><button data-accion="cargado">Cargado</button><button data-accion="salto">Salto</button><button data-accion="parry">Parry</button></div>
+      <div class="labFila"><button data-accion="basico">Básico</button><button data-accion="cargado">Cargado</button><button data-accion="salto">Salto</button><button data-accion="parry">Parry</button><button data-accion="bumeran">Búmeran</button></div>
+      <label>Dirección del regreso del búmeran<input id="labRumboBumeran" type="range" min="-180" max="180" step="5" value="180"></label>
       <h2>Enemigos de prueba</h2>
       <label>Tipo<select id="labEnemigo"><option value="goblin">Goblin</option><option value="kobold">Arquero</option><option value="saqueador">Saqueador con escudo</option><option value="can">Can · Centro y lados</option><option value="troll">Troll</option></select></label>
       <label>Variante goblin<select id="labVarianteGoblin"><option value="">Aleatoria</option><option value="clasico">Clásico · Hacha</option><option value="dosHachas">Bruto · Dos hachas</option><option value="cuchillo">Pícaro · Cuchillo</option><option value="antorcha">Vigía · Antorcha</option></select></label>
@@ -76,6 +77,7 @@ async function iniciar(){
   $('labCamara').oninput=()=>{r.camara({dist:numero('labCamara')});if(detenido)api.paso();};
   for(const c of panel.querySelectorAll('[data-lab-efecto]'))c.onchange=()=>r.efecto(c.dataset.labEfecto,c.checked);
   for(const b of panel.querySelectorAll('[data-accion]'))b.onclick=()=>{volver();api.prepararAccion();const h=r.equipo()[0];if(b.dataset.accion==='basico'||b.dataset.accion==='cargado'){r.control({atacar:true,apunta:[h.x,h.z-5]});secuencia={t:0,duracion:b.dataset.accion==='cargado'?1:.06,x:h.x,z:h.z-5};}else r.usar(b.dataset.accion,h.x,h.z-5);};
+  $('labRumboBumeran').oninput=()=>{const h=r.equipo()[0],a=numero('labRumboBumeran')*Math.PI/180;r.control({mov:[0,0],atacar:false,apunta:[h.x+Math.sin(a)*6,h.z+Math.cos(a)*6]});if(detenido)api.paso();};
   $('labExportar').onclick=()=>descargar('ajustes-arpg.json',{version:1,animacion:api.animacion.leer(),heroe:$('labHeroe').value,dano:numero('labDano'),velAtaque:numero('labVel'),enemigo:{tipo:$('labEnemigo').value,cantidad:numero('labCantidad'),...ajustesEnemigo()},entorno:api.entorno()});
   const camposAnimacion={caminar:'labEntradaCaminar',carga:'labEntradaCarga',regreso:'labRegreso',zancada:'labZancada'},claveAnimacion='caoz.arpg.adreida.animacion.v1';
   function mostrarAnimacion(p){for(const [k,id] of Object.entries(camposAnimacion))$(id).value=p.ajustes[k];$('labAnimacionJSON').value=JSON.stringify(p,null,2);}

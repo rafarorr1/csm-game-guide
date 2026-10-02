@@ -75,6 +75,8 @@
         case 'tajoA':case 'revesA':{const r=a.anim==='revesA',s=r?-1:1,car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1);
           const f=(-1.3*car+2.4*gol)*s,e=-.25;return mezclarAgarre({G:[],A:[],arriba:[]},mezcla(reposo(),horizontal(f,e),Math.max(car,gol)),reposo(),rec,.24);}
         case 'estocadaA':{const car=tramo(k,0,.38),emp=tramo(k,.38,.48),rec=tramo(k,.66,1);return mezcla(mezcla(reposo(),vertical(-.8+2.8*car-2.3*emp),Math.min(1,car*1.5)),reposo(),rec);}
+        case 'lanzarHachaA':{const carga=tramo(k,0,.32),suelta=tramo(k,.32,.45);return mezcla(mezcla(reposo(),horizontal(-1.4,.22),carga),horizontal(.12,.12),suelta);}
+        case 'recogerHachaA':return mezclarAgarre({G:[],A:[],arriba:[]},{G:[-.15,.25,.4],A:dirA(.12,.12),arriba:[0,1,0]},reposo(),suave(k),.16);
         case 'torbellino':return horizontal(-1.25,-.12);
         // Parry: el hacha en guardia diagonal delante del pecho (la cabeza sobre el hombro derecho), la cara plana hacia el golpe.
         case 'parry':{const e=tramo(k,0,.15)*(1-tramo(k,.8,1));const A=[-.55,.82,.14],l=Math.hypot(...A);return mezcla(reposo(),{G:[.16,.16,.38],A:A.map(x=>x/l),arriba:[0,0,1]},e);}
@@ -116,6 +118,8 @@
           const giro=(r?.55:-.55)*car*(1-gol)+(r?-.5:.5)*gol*alto;H.torso.rotation.y=giro;H.cadera.rotation.y=giro*.4;H.torso.rotation.x=.08+.1*gol*alto;
           H.brazoI.rotation.z=.18+.5*gol*alto;H.brazoI.rotation.x=(r?-.5:.4)*gol*alto;
           H.piernaI.rotation.x=-.35*gol*alto;H.rodillaI.rotation.x=.35*gol*alto+.05;H.piernaD.rotation.x=.3*gol*alto;H.rodillaD.rotation.x=.15;H.cuerpo.position.y=-.06*gol*alto;break;}
+        case 'lanzarHachaA':{const carga=tramo(k,0,.32),suelta=tramo(k,.32,.55),rec=1-tramo(k,.65,1);H.torso.rotation.y=(-.5*carga+.8*suelta)*rec;H.torso.rotation.x=.1+.18*suelta*rec;H.cadera.rotation.y=H.torso.rotation.y*.4;H.rodillaI.rotation.x=.18+.2*carga*rec;H.rodillaD.rotation.x=.15;break;}
+        case 'recogerHachaA':H.torso.rotation.x=.1;H.rodillaI.rotation.x=H.rodillaD.rotation.x=.12;break;
         case 'estocadaA':{const car=tramo(k,0,.42),emp=tramo(k,.42,.56),rec=tramo(k,.68,1),e2=emp*(1-rec),c2=car*(1-emp);
           const alto=1-rec;H.brazoD.rotation.z=-(.3+1.2*car)*alto-.3*rec;H.brazoD.rotation.y=(.5*car+1.07*emp)*alto;H.brazoD.rotation.x=-.3*rec;
           H.anteD.rotation.x=(-.75*(1-car)-1.5*car*(1-emp)-.02*emp)*alto-.75*rec;H.torso.rotation.y=-.6*c2+.35*e2;H.torso.rotation.x=.05+.3*e2;H.cadera.rotation.y=-.25*c2+.15*e2;
@@ -179,7 +183,11 @@
           H['falda'+i].rotation.set(-fr*(apertura+balanceo),0,lado*(apertura+balanceo));
         }
       }
-      if(!['grito','muerte'].includes(a.anim))empunar(m,agarre);
+      if(a.sinHacha&&a.anim!=='muerte'){
+        const vuelo=a.anim==='lanzarHachaA'?1-tramo(k,.5,1):0,guardia=a.anim==='parry'?1:0,s=Math.sin(a.fase||0)*(a.paso||0)*.22;
+        H.brazoD.rotation.set(-.45-1.05*vuelo-.6*guardia+s,0,-.2);H.anteD.rotation.x=-.65+.45*vuelo-.5*guardia;H.manoD.rotation.set(0,0,0);
+        H.brazoI.rotation.set(-.35-.8*guardia-s,0,.2);H.anteI.rotation.x=-.7-.3*guardia;H.manoI.rotation.set(0,0,0);
+      }else if(!['grito','muerte'].includes(a.anim))empunar(m,agarre);
     }
     return {posar,resolver,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
   }
