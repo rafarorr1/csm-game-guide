@@ -19,15 +19,27 @@ function ilustraciones(){
     return {id,acabado,url,enc:{x:base.x??50,y:base.y??50,z:base.z??100}};
   });
 }
-export function derivarVisorThree(){
-  const motor=leer('motor.js'),datos=datosDesdeMotor(motor),lista=ilustraciones();
+// Otras cartas en el mismo visor (sólo en local): Fender, el Protagonista, con su ilustración de bardo en las tres
+// ediciones (la carta full art de carta-pintor.js: retrato, nombre y pasiva).
+const aquiArte=path.join(aqui,'arte-extra');
+export const variantesVisorThree=Object.freeze({fender:{id:'lider_fender',titulo:'Fender, el Bardo Honesto',url:'arte-extra/fender-bardo.webp',enc:{x:62,y:32,z:122}}});
+export function derivarVisorThree(variante){
+  const motor=leer('motor.js'),datos=datosDesdeMotor(motor);
+  if(variante){const v=variantesVisorThree[variante];if(!v)throw Error('Variante desconocida del visor: '+variante);
+    const L=datos.LEADERS[v.id.slice(6)];if(!L)throw Error('No existe el Protagonista: '+v.id);
+    const arte=Object.fromEntries(['normal','foil','dorado'].map(a=>[a,{url:v.url,enc:v.enc}]));
+    const datosJS='/* '+v.titulo+'; sin partida. */\nconst CARDS={};\nconst LEADERS='+JSON.stringify({[v.id.slice(6)]:L}).replace(/</g,'\\u003c')+';\nconst SUBNAME='+JSON.stringify(datos.SUBNAME).replace(/</g,'\\u003c')+';\n'
+      +['cap','tribeLine'].map(n=>extraerDeclaracion(motor,n,n==='cap'?'const':'function').texto).join('\n')+'\nwindow.VISOR_THREE_ARTE='+JSON.stringify(arte)+';\nwindow.VISOR_THREE_CARTA='+JSON.stringify({id:v.id,nombre:L.n,titulo:v.titulo})+';\n';
+    new vm.Script(datosJS,{filename:'visor-three-datos.js'});return {datosJS,lista:[]};}
+  const lista=ilustraciones();
   const cards=Object.fromEntries(lista.map(({id})=>{if(!datos.CARDS[id])throw Error('No existe la carta del visor: '+id);return [id,datos.CARDS[id]];}));
   const aux=['cap','tribeLine'].map(n=>extraerDeclaracion(motor,n,n==='cap'?'const':'function').texto).join('\n');
   const datosJS='/* El Mago del Domo; sin partida. */\nconst CARDS='+JSON.stringify(cards).replace(/</g,'\\u003c')+';\nconst SUBNAME='+JSON.stringify(datos.SUBNAME).replace(/</g,'\\u003c')+';\n'+aux+'\nwindow.VISOR_THREE_ARTE='+JSON.stringify(Object.fromEntries(lista.map(c=>[c.acabado,{url:c.url,enc:c.enc}])))+';\n';
   new vm.Script(datosJS,{filename:'visor-three-datos.js'});
   return {datosJS,lista};
 }
-export const pagina=generado=>fs.readFileSync(path.join(aqui,'visor-three.html'),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__',generado);
+export const pagina=(generado,variante)=>{let h=fs.readFileSync(path.join(aqui,'visor-three.html'),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__',generado);
+  const v=variante&&variantesVisorThree[variante];if(v)h=h.replaceAll('El Mago del Domo',v.titulo);return h;};
 export function exportar(destino){
   destino=path.resolve(destino);
   if(fs.existsSync(destino)&&(!fs.statSync(destino).isDirectory()||fs.readdirSync(destino).length))throw Error('El destino debe estar vacío; no se sobrescribe otro sitio.');

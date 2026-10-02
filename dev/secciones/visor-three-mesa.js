@@ -17,7 +17,7 @@
 'use strict';
 (function(){
   const {THREE,EffectComposer,RenderPass,UnrealBloomPass,BokehPass,OutputPass,Reflector}=window.CAOZ_THREE;
-  const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1',ID='magodomo';
+  const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1',ID=window.VISOR_THREE_CARTA?.id||'magodomo',NOMBRE=window.VISOR_THREE_CARTA?.nombre||CARDS[ID].n;
   if(CAPTURA)document.documentElement.dataset.captura='';
   const {ALTO,EDICION}=CAOZ_THREE_CARTA,CENTRO=2.45;
   const efectos={iridiscencia:true,laca:true,sombras:true,espejo:true,haces:true,resplandor:true,enfoque:true};
@@ -117,7 +117,7 @@
   const imagen=url=>new Promise(r=>{const i=new Image();i.onload=()=>r(i);i.onerror=()=>r(null);i.src=url;});
   let edicion='dorado';const cache={};
   async function cargar(ed){
-    edicion=ed;estado('Pintando '+CARDS[ID].n+' · '+{normal:'Normal',foil:'Foil',dorado:'Foil dorado'}[ed]+'…');
+    edicion=ed;estado('Pintando '+NOMBRE+' · '+{normal:'Normal',foil:'Foil',dorado:'Foil dorado'}[ed]+'…');
     if(!cache[ed]){const a=window.VISOR_THREE_ARTE[ed],img=await imagen('./'+a.url),t=CAOZ_CARTA_PINTOR.texturas({id:ID,acabado:ed,arte:{img,enc:a.enc},ancho:1024});
       cache[ed]=F.texturas(t);}
     F.cambiar(matCara,cache[ed],ed);matCanto.color.setHex(EDICION[ed].canto);aplicarEfectos();
