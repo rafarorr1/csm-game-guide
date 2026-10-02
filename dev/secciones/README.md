@@ -382,7 +382,7 @@ oleadas, y al final entra Can, el de los Goblins.
   - ciudad rodeada por una muralla de 24 paños, a 26 m del centro, con las casas dentro del recinto. La colisión coincide con las caras interiores de piedra. Tres portones alineados con las calles dejan entrar a los invasores; un sello ámbar visible impide que el jugador los cruce. Las oleadas aparecen fuera de esos portones y avanzan por ellos;
   - prueba de límites y portones: `node dev/secciones/pruebas_arpg_muralla.mjs`;
   - adoquines con relieve, las casas de Tomsage (`casas-three.js`, con su interior tras las ventanas; tres arden), el pozo, un carro, barriles y braseros;
-  - prueba optativa del piso aportado en `angled-blocks-vegetation-bl.zip`: abrir `arpg-three.html?heroe=adreida&piso=vegetacion`. El selector dentro del escenario alterna con el piso actual sin reiniciar la partida; `&captura=1` permite comparar el mismo encuadre quieto. El material original sigue siendo el predeterminado. Los tres mapas locales de `texturas-piso/` (1024 × 1024, unos 2.7 MB en total) aportan color sRGB, normales OpenGL y oclusión/rugosidad empaquetadas; repetición de 7.2 m (piedras un 50 % mayores que en la primera prueba), relieve 0.7 y oclusión al 50 %. No añade polígonos, desplazamiento ni llamadas de dibujo; sólo carga esos mapas al abrir la prueba. Fuentes y tratamiento en `texturas-piso/procedencia.json`;
+  - piso predeterminado con la textura aportada en `angled-blocks-vegetation-bl.zip`, también al abrir el juego sin parámetros. **Pausa → Textura del piso** permite comparar con los adoquines originales sin reiniciar; `?piso=actual` elige ese material explícitamente. La elección se conserva en los enlaces de etapas. `&captura=1` permite comparar el mismo encuadre quieto. Los tres mapas locales de `texturas-piso/` (1024 × 1024, unos 2.7 MB en total) aportan color sRGB, normales OpenGL y oclusión/rugosidad empaquetadas; repetición de 7.2 m (piedras un 50 % mayores que en la primera prueba), relieve 0.7 y oclusión al 50 %. No añade polígonos, desplazamiento ni llamadas de dibujo; los tres mapas son compartidos con las piedras del salto y los bordes de cráter. Si fallan al cargar, conserva el material original y muestra el aviso. Fuentes y tratamiento en `texturas-piso/procedencia.json`;
   - luna azul plateada con iluminación lateral y sombras, cielo frío de relleno, la luz cálida que lleva Adreida (el radio de luz de Diablo) y el fuego. La bruma azul de distancia comienza después del 62 % de la distancia de cámara y se completa a 2.65 veces esa distancia; se adapta al zoom y al encuadre cooperativo, sin otra pasada de render ni partículas adicionales;
   - todo lo estático se funde por material;
   - una pasada de saneado cambia cualquier píxel NaN o infinito por negro antes del resplandor (en Metal, en Mac, un solo NaN se agrandaba en cuadros negros).
@@ -1407,6 +1407,16 @@ Tras «¡A mí, goblins!», llegan **12 goblins (24 en cooperativo)** por los tr
 
 Comprobaciones acotadas: `pruebas_arpg_impactos.mjs` (cráteres y casas), `pruebas_arpg_muertes_goblin.mjs` (probabilidad y apoyo de ambas mitades), `pruebas_arpg_ritmo.mjs` (rutas, turnos y refuerzos), `pruebas_arpg_animacion.mjs` y `pruebas_arpg_can.mjs` (continuidad y combate).
 
+
+### Huida tras la muerte de Can y piedras del Troll
+
+Al morir Can, goblins de camino y cobradores vivos cancelan su ataque y corren asustados hacia el portón más cercano. La pose inclina el cuerpo y levanta la mano libre; corren a un mínimo de 4,5 m/s. Se cancelan los refuerzos goblin pendientes de esa oleada. La ruta sigue evitando obstáculos y abre el paso por la puerta sólo al alcanzarla; el jugador conserva el sello de la muralla. En mundo abierto se alejan de Can. No vuelven a atacar después de ser interrumpidos.
+
+Cada goblin desaparece sólo cuando una esfera que incluye cuerpo y arma queda completamente fuera del encuadre actual, con una reacción mínima de 0,35 s. La retirada libera sus mallas y no cuenta como baja ni genera botín. Mientras sigan visibles, se les puede golpear. La comparación de llegada a un punto de ruta y la de movimiento comparten tolerancia de 5 mm para no quedar parados a centímetros del siguiente punto. El inspector incluye **Derrotar a Can · Probar huida**; se añaden Can y goblins con los controles habituales.
+
+El mazazo circular del Troll mantiene aviso, daño y escombros centrados en su cuerpo. Las cinco piedras peligrosas salen desde un anillo a 1,2 m de él, con direcciones separadas por 72°, y caen entre 3,8 y 5,6 m de su posición al golpear. No se centran en el jugador ni lo siguen en vuelo. Se conservan los círculos de aviso, sus colores, las ventanas de parry y las devoluciones que abren su armadura; junto a obstáculos o muralla, los destinos se ajustan al terreno.
+
+Comprobaciones: `node dev/secciones/pruebas_arpg_huida.mjs` (doce huidos, portones, pozo, retirada fuera del encuadre, interrupciones, pose y puntos de ruta cercanos) y `node dev/secciones/pruebas_arpg_troll_combate.mjs` (distribución radial, daño, invulnerabilidad, parry y blindaje). Las pruebas de Can y de ritmo cubren los ataques y oleadas que continúan normalmente.
 
 ### Prueba de IA con Yuka
 

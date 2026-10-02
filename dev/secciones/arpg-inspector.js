@@ -46,6 +46,7 @@ async function iniciar(){
       <label>Variante goblin<select id="labVarianteGoblin"><option value="">Aleatoria</option><option value="clasico">Clásico · Hacha</option><option value="dosHachas">Bruto · Dos hachas</option><option value="cuchillo">Pícaro · Cuchillo</option><option value="antorcha">Vigía · Antorcha</option></select></label>
       <div class="labDos"><label>Cantidad<input id="labCantidad" type="number" min="1" max="24" value="1"></label><label>Vida<input id="labVida" type="number" min="1" max="3000" value="34"></label><label>Velocidad<input id="labVelEnemigo" type="number" min="0" max="8" step="0.05" value="2.85"></label><label>Daño<input id="labDanoEnemigo" type="number" min="0" max="100" value="13"></label></div>
       <label class="labCheck"><input id="labQuieto" type="checkbox" checked> Quietos para probar impactos</label><button id="labInvocar">Añadir enemigos</button>
+      <button id="labDerrotarCan">Derrotar a Can · Probar huida</button>
       <h2>Imagen</h2>
       <label>Distancia de cámara<input id="labCamara" type="range" min="0.45" max="1.4" step="0.05" value="1"></label>
       <div class="labFila"><label><input type="checkbox" data-lab-efecto="sombras" checked> Sombras</label><label><input type="checkbox" data-lab-efecto="oclusion"> Oclusión</label><label><input type="checkbox" data-lab-efecto="resplandor" checked> Halo</label></div>
@@ -77,6 +78,7 @@ async function iniciar(){
   $('labEnemigo').onchange=()=>{const d=valores.enemigos[$('labEnemigo').value];$('labVida').value=d.vida;$('labVelEnemigo').value=d.vel;$('labDanoEnemigo').value=d.dano;};
   $('labIA').value=r.ia().modo;$('labIA').onchange=()=>{r.ia($('labIA').value);decir('IA aplicada. Se conservan los ataques que ya estaban avisados.');};
   $('labInvocar').onclick=ejecutar(()=>{api.invocar($('labEnemigo').value,numero('labCantidad'),ajustesEnemigo());decir('Enemigos añadidos alrededor del personaje.');});
+  $('labDerrotarCan').onclick=()=>{volver();decir(api.derrotarCan()?'Can ha caído: los goblins huyen hasta salir de cuadro.':'Añade primero a Can y a sus goblins.');};
   $('labCamara').oninput=()=>{r.camara({dist:numero('labCamara')});if(detenido)api.paso();};
   for(const c of panel.querySelectorAll('[data-lab-efecto]'))c.onchange=()=>r.efecto(c.dataset.labEfecto,c.checked);
   for(const b of panel.querySelectorAll('[data-accion]'))b.onclick=()=>{volver();api.prepararAccion();const h=r.equipo()[0];if(b.dataset.accion==='basico'||b.dataset.accion==='cargado'){r.control({atacar:true,apunta:[h.x,h.z-5]});secuencia={t:0,duracion:b.dataset.accion==='cargado'?1:.06,x:h.x,z:h.z-5};}else r.usar(b.dataset.accion,h.x,h.z-5);};

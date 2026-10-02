@@ -24,6 +24,7 @@ ${['PARRY','peligrosTroll','geoRocaTroll'].map(n=>extraer(n,'const')).join('\n')
 ${['danar','activarFaseTroll','vulnerableTroll','blindadoTroll','parar','parryPerfecto','aturdirPorParry','cancelarAtaque','liberarModeloTroll','quitarPeligroTroll','limpiarPeligrosTroll','peligroTroll','lanzarPiedras','puedeLanzarGoblin','sujetarGoblin','arrojarGoblin','pasoPeligrosTroll'].map(n=>extraer(n)).join('\n')}
 function limpiar(){limpiarPeligrosTroll();for(const e of enemigos){cancelarAtaque(e);liberarModeloTroll(e.m);}enemigos.length=0;marcas.length=0;reloj.t=0;recibido=0;avisos=0;Object.assign(heroe,{invul:0,vivo:true,estado:'quieto',parrys:0,dir:Math.PI,t:0});heroe.pos.set(0,0,0);}
 function avanzar(t){reloj.t+=t;pasoPeligrosTroll(t);}
+function bajoPrimeraPiedra(){const p=peligrosTroll[0];heroe.pos.copy(p.hasta);heroe.dir=Math.atan2(p.desde.x-heroe.pos.x,p.desde.z-heroe.pos.z);}
 `,c);
 const run=s=>vm.runInContext(s,c);
 run("limpiar();var jefe=crearEnemigo('troll',0,-3);danar(jefe,9999,{crit:false});");
@@ -39,15 +40,17 @@ assert.equal(run('avisos'),1,'La transición sucede una vez');
 console.log('✓ Fase al 50 %, blindaje, parry y cierre de la ventana');
 run("limpiar();jefe=crearEnemigo('troll',0,-3);lanzarPiedras(jefe,jefe.pos);var destinos=peligrosTroll.map(p=>p.hasta.clone());avanzar(.7);");
 assert.equal(run('peligrosTroll.length'),5);
+assert.ok(run('peligrosTroll.every(p=>Math.abs(plano(p.desde,jefe.pos)-1.2)<1e-6&&plano(p.hasta,jefe.pos)>=3.8&&plano(p.hasta,jefe.pos)<=5.6)'), 'Origen y destinos rodean al troll');
+assert.ok(run('peligrosTroll.every((p,i)=>i===0||p.hasta.distanceTo(peligrosTroll[i-1].hasta)>4)'), 'Piedras repartidas alrededor del círculo');
 assert.ok(run('peligrosTroll.every(p=>p.m.position.y>3)'), 'Las piedras ascienden físicamente');
 run('heroe.pos.set(10,0,10);');
 assert.ok(run('peligrosTroll.every((p,i)=>p.hasta.equals(destinos[i]))'),'Destinos fijos para poder esquivarlos');
-run('heroe.pos.set(0,0,0);avanzar(.8);');
+run('bajoPrimeraPiedra();avanzar(.8);');
 assert.equal(run('recibido'),22,'Una piedra en la cabeza causa daño');
 run('avanzar(1);');
 assert.equal(run('peligrosTroll.length'),0);
 assert.equal(run('marcas.length'),5,'Sólo quedan las ondas cosméticas, sin indicadores fijos');
-run('limpiar();jefe=crearEnemigo("troll",0,-3);lanzarPiedras(jefe,jefe.pos);heroe.invul=1;avanzar(2);');
+run('limpiar();jefe=crearEnemigo("troll",0,-3);lanzarPiedras(jefe,jefe.pos);bajoPrimeraPiedra();heroe.invul=1;avanzar(2);');
 assert.equal(run('recibido'),0,'La esquiva evita las piedras');
 console.log('✓ Piedras en arco, marcas fijas, daño e invulnerabilidad de esquiva');
 run("limpiar();jefe=crearEnemigo('troll',0,-3);jefe.vida=550;activarFaseTroll(jefe);sujetarGoblin(jefe);arrojarGoblin(jefe,{dir:0});heroe.estado='parry';heroe.t=.05;avanzar(1.15);");
@@ -75,7 +78,7 @@ assert.equal(run('escena.children.filter(o=>o.geometry===geoRocaTroll).length'),
 console.log('✓ Interrupción y muerte retiran modelos y peligros pendientes');
 
 // Las piedras admiten el mismo parry que un goblin, incluso en la fase blindada.
-run("limpiar();jefe=crearEnemigo('troll',0,-3);jefe.vida=550;activarFaseTroll(jefe);lanzarPiedras(jefe,jefe.pos);heroe.estado='parry';heroe.t=.05;avanzar(1.45);");
+run("limpiar();jefe=crearEnemigo('troll',0,-3);jefe.vida=550;activarFaseTroll(jefe);lanzarPiedras(jefe,jefe.pos);bajoPrimeraPiedra();heroe.estado='parry';heroe.t=.05;avanzar(1.45);");
 assert.equal(run('recibido'),0,'Parry de piedra evita el daño');
 assert.equal(run('peligrosTroll[0].devuelto'),true,'La piedra vuelve al ogro');
 assert.equal(run('blindadoTroll(jefe)'),true,'El blindaje se abre cuando llega la piedra');
@@ -83,7 +86,7 @@ run('avanzar(.6);');
 assert.equal(run('blindadoTroll(jefe)'),false);
 assert.equal(run('jefe.vida'),460);
 assert.equal(run('heroe.parrys'),1);
-run("limpiar();jefe=crearEnemigo('troll',0,-3);lanzarPiedras(jefe,jefe.pos);heroe.estado='parry';heroe.t=.3;avanzar(1.45);");
+run("limpiar();jefe=crearEnemigo('troll',0,-3);lanzarPiedras(jefe,jefe.pos);bajoPrimeraPiedra();heroe.estado='parry';heroe.t=.3;avanzar(1.45);");
 assert.ok(run('recibido>0&&recibido<22'),'El bloqueo tardío reduce daño');
 assert.equal(run('peligrosTroll.some(p=>p.devuelto)'),false,'El bloqueo no devuelve piedras');
 console.log('✓ Piedras: parry, devolución, apertura de armadura y bloqueo tardío');

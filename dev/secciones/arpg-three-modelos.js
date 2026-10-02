@@ -742,7 +742,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       let e=salidas.get(m);
       if(!e){const huesos=Object.entries(m.H).filter(([k])=>k!=='raiz').map(([,b])=>b);
         e={huesos,ultima:huesos.map(b=>b.quaternion.clone()),desde:huesos.map(b=>b.quaternion.clone()),pos:huesos.map(b=>b.position.clone()),desdePos:huesos.map(b=>b.position.clone()),valida:false,estado:null,t:0,dur:0};salidas.set(m,e);}
-      const estado=m.tipo==='mohamed'&&a.armaLista?'apunta':a.estado||a.anim,locomocion=['quieto','andar','persigue','entra'];
+      const estado=m.tipo==='mohamed'&&a.armaLista?'apunta':a.estado||a.anim,locomocion=['quieto','andar','persigue','entra','huye'];
       if(a.mezclar!==true||!e.valida){e.dur=0;e.t=0;}
       else if(estado!==e.estado){
         // Sólo la vuelta a guardia: avisos, impactos y aturdimientos conservan sus instantes.
@@ -776,6 +776,8 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(m.tipo==='adreida'){H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.75;H.brazoD.rotation.z=-.22;}
       if(!(m.tipo==='adreida'&&animacion.posar(m,a)))switch(a.anim){
         case 'andar':andar(a.fase||0,a.paso??1);break;
+        // Huida: zancada rápida, torso inclinado y la mano libre protegiendo la cabeza.
+        case 'huir':andar(a.fase||0,1.15);H.torso.rotation.x+=.22;H.cabeza.rotation.y=Math.sin(t*7)*.3;H.cabeza.rotation.x=-.18;H.brazoI.rotation.x=-1.6;H.brazoI.rotation.z=.65;H.anteI.rotation.x=-1.2;H.brazoD.rotation.x+=.5;H.cuerpo.position.y-=.04;break;
         case 'quieto':H.cuerpo.position.y=respira*.006;H.brazoI.rotation.z+=respira*.02;break;
         // Tajo horizontal de derecha a izquierda: carga (0–.35), golpe (.35–.55), recoge.
         case 'golpe':case 'aviso':{const kk=a.anim==='aviso'?k*.38:k,car=tramo(kk,0,.35),gol=tramo(kk,.36,.55),rec=tramo(kk,.62,1);
