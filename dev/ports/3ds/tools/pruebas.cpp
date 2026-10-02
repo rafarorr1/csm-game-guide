@@ -11,6 +11,7 @@ int main(){
  j.iniciar(MOHAMED);j.h.p={0,0};j.invocar(GOBLIN,{0,-2});j.disparar(PI,9);for(int i=0;i<6;i++)j.pasoProyectiles(.016f);assert(j.enemigos[0].vida<34);
  j.iniciar(ADREIDA);j.oleada=3;j.descanso=0;j.paso(.05f,{});assert(j.cartas);assert(j.opciones[0].umbral==2);assert(j.opciones[0].castigo==0);j.tirar(0);for(int i=0;i<40;i++)j.paso(.05f,{});assert(j.resuelto&&j.dado>=1&&j.dado<=20);
  j.iniciar(ADREIDA);j.pausa=true;float t=j.tiempo;j.paso(.05f,e);assert(j.tiempo==t);
+ j.iniciar(ADREIDA);j.herir(1000,{0,3});assert(j.derrota);t=j.tiempo;for(int i=0;i<40;i++)j.paso(.05f,e);assert(j.h.anim==MUERTE&&j.h.k==1);assert(j.tiempo==t&&j.vivos()==0);
  int partidos=0;for(int i=0;i<1000;i++){Actor g;g.tipo=GOBLIN;g.vida=1;j.danar(g,100,{},true);partidos+=g.partido;}assert(partidos>270&&partidos<390);
  std::puts("OK: control, carga inmovil, recuperacion, parry, armadura, pozo, disparos, cartas, pausa y muerte partida");
 }
