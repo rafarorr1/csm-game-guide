@@ -1,0 +1,34 @@
+{
+  "origen": "worn-rusted-painted-bl.zip, aportado por el usuario",
+  "uso": "Hoja metálica del hacha de goblins y cobradores. El mango y la moneda conservan su material.",
+  "resolucion": [
+    512,
+    512
+  ],
+  "preparacion": "Reducción Lanczos desde 2048; color WebP calidad 92; datos WebP sin pérdida. Tres mapas compartidos por toda la horda.",
+  "color": {
+    "archivo": "hacha-color.webp",
+    "fuente": "worn-rusted-painted_albedo.png",
+    "espacio": "sRGB"
+  },
+  "normal": {
+    "archivo": "hacha-normal.webp",
+    "fuente": "worn-rusted-painted_normal-ogl.png",
+    "espacio": "Datos lineales, OpenGL +Y",
+    "intensidad": 0.45
+  },
+  "superficie": {
+    "archivo": "hacha-superficie.webp",
+    "r": "Oclusión (worn-rusted-painted_ao.png), aplicada al 50 %",
+    "g": "Rugosidad (worn-rusted-painted_roughness.png), mínimo 0.58",
+    "b": "Metalicidad (worn-rusted-painted_metallic.png), multiplicada por 0.65 para moderar reflejos",
+    "espacio": "Datos lineales"
+  },
+  "uv": "Una muestra completa por cara, fijada a la hoja",
+  "altura": "Sin desplazamiento geométrico",
+  "sha256": {
+    "hacha-color.webp": "2abd1befcfc407fa9134f4a25b297ab9847e09d48a49a6d604cfd7e42d81f1ef",
+    "hacha-normal.webp": "93be3e37ca4bec502cefa05ef0e404a46000ac5e14cbafb1ac6b21de4463bb54",
+    "hacha-superficie.webp": "0af451c5d0064871407b7aecb8701416524b463e0898514f7a2feeff82e4ea2a"
+  }
+}
