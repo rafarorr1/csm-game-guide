@@ -1,0 +1,37 @@
+{
+  "origen": "burlap-stained1-bl.zip, aportado por el usuario",
+  "autor": "FreePBR.com",
+  "uso": "Ropa de goblins y cobradores: gorro, chaleco, brazales, pantalón, faldón y pañuelo teñido. No afecta a piel, cuero, ojos ni armas.",
+  "resolucion": [
+    512,
+    512
+  ],
+  "preparacion": "Reducción Lanczos de 2048 a 512; color WebP calidad 92; datos WebP sin pérdida. Mapas compartidos por toda la horda.",
+  "color": {
+    "archivo": "ropa-color.webp",
+    "fuente": "burlap-stained1-albedo.png",
+    "espacio": "sRGB"
+  },
+  "normal": {
+    "archivo": "ropa-normal.webp",
+    "fuente": "burlap-stained1-Normal-ogl.png",
+    "espacio": "Datos lineales, OpenGL +Y",
+    "intensidad": 0.38
+  },
+  "superficie": {
+    "archivo": "ropa-superficie.webp",
+    "r": "Oclusión (burlap-stained1-ao.png), aplicada al 50 %",
+    "g": "Rugosidad (burlap-stained1-Roughness.png), mínimo 0.85",
+    "b": "Reservado, 255",
+    "espacio": "Datos lineales"
+  },
+  "repeticion": "Medio metro aproximadamente; UV atadas al esqueleto",
+  "altura": "Sin desplazamiento geométrico",
+  "metal": "metalness=0",
+  "aviso_fuente": "These texture files were created by FreePBR.com and may be used freely in your video games and 3d work at no cost. They may not however be redistributed on other websites or anywhere else other than FreePBR.com. We think that is more than fair. :) We also would greatly appreciate it if some sorrt of credit was given if you do indeed use these textures in a published game. Other than that, keep on creating and have fun. :)",
+  "sha256": {
+    "ropa-color.webp": "ffc18f310ee679e2aaef672e10785b7a7aba15bd8e05277ac334c3370271be87",
+    "ropa-normal.webp": "35c688db99a005b5b848502d62508141d323392879d553258bdf452fc78e6014",
+    "ropa-superficie.webp": "29b2a0b49101f83fd1ae89b65b7fd877642cc50a3c20b351315d173aefc1c397"
+  }
+}

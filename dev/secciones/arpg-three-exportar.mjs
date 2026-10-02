@@ -13,7 +13,7 @@ export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsaf
 export const botinArpgThree=Object.freeze(['mazo','arco','collar','espadaluz','espadaboveda','lentesmachete','sombrero','brazosagua']);
 export const cartasArpgThree=Object.freeze([...botinArpgThree.flatMap(id=>['normal','foil','dorado'].map(ed=>[id,ed])),['llavemago','dorado']]);
 export const componentesArpgThree=Object.freeze(['carta-pintor.js','carta-diseno.css','fuentes/cinzel.woff2','fuentes/cormorant-garamond.woff2','fuentes/cormorant-garamond-italica.woff2']);
-export const texturasGoblin=Object.freeze(['texturas-goblin/piel-color.webp','texturas-goblin/piel-normal.png','texturas-goblin/piel-superficie.png']);
+export const texturasGoblin=Object.freeze(['texturas-goblin/piel-color.webp','texturas-goblin/piel-normal.png','texturas-goblin/piel-superficie.png','texturas-goblin/ropa-color.webp','texturas-goblin/ropa-normal.webp','texturas-goblin/ropa-superficie.webp']);
 export const texturasPiso=Object.freeze(['texturas-piso/vegetacion-color.webp','texturas-piso/vegetacion-normal.webp','texturas-piso/vegetacion-superficie.webp']);
 export const entornoArpgThree=Object.freeze(['arpg-three-tiempo.js','arpg-three-impactos.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...texturasPiso]);
 function ilustraciones(){

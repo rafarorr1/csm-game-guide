@@ -41,25 +41,26 @@
     <aside id="mapaPanel" class="apMapa" hidden><canvas id="mapaExplorado" width="336" height="336" aria-label="Mapa descubierto del mundo"></canvas><small id="mapaTexto"></small></aside>
     <div class="apBotin" id="botin" aria-label="Botín recogido"></div>
     <div class="apHud">
-      <section class="apPersonaje" aria-label="Estado del personaje">
-        <div class="apMarcoRetrato"><img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida"></div>
-        <div class="apVitales">
-          <div class="apNombreHeroe"><b id="hudNombre">Adreida</b><small id="hudClase">Guerrera semiorca</small></div>
-          <div class="apRecurso apAlma" id="orbeAlma"><small>Alma</small><b id="almaTxt"></b><div class="apMedidor"><i></i></div></div>
-          <div class="apRecurso apFuria" id="orbeFuria"><small>Furia</small><b id="furiaTxt"></b><div class="apMedidor"><i></i></div></div>
-          <small class="apMunicion" id="hudMunicion" hidden></small>
+      <div class="apRecurso apAlma" id="orbeAlma" aria-label="Alma"><small>Alma</small><div class="apMedidor" aria-hidden="true"><i></i></div><b id="almaTxt"></b></div>
+      <div class="apCentroHud">
+        <section class="apPersonaje" aria-label="Estado del personaje">
+          <div class="apMarcoRetrato"><img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida"></div>
+          <div class="apVitales">
+            <div class="apNombreHeroe"><b id="hudNombre">Adreida</b><small id="hudClase">Guerrera semiorca</small></div>
+            <small class="apMunicion" id="hudMunicion" hidden></small>
+          </div>
+        </section>
+        <div class="apHabilidades" role="group" aria-label="Habilidades">
+          <button type="button" data-hab="tajo" title="Pulsar: básico · Mantener y soltar: golpe cargado"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
+          <button type="button" data-hab="parry" title="Parry (justo antes del golpe)"><span>⛨</span><small>Parry</small><kbd>Espacio</kbd></button>
+          <button type="button" data-hab="esquiva" title="Dash"><span>»</span><small>Dash</small><kbd>Shift</kbd></button>
+          <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
+          <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
+          <button type="button" data-hab="ulti" title="Ulti · 90 segundos; cada parry resta uno"><span>◆</span><small>Ulti</small><kbd>R / L3</kbd></button>
+          <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>E</kbd></button>
         </div>
-      </section>
-      <div class="apHabilidades" role="group" aria-label="Habilidades">
-        <button type="button" data-hab="tajo" title="Pulsar: básico · Mantener y soltar: golpe cargado"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
-        <button type="button" data-hab="parry" title="Parry (justo antes del golpe)"><span>⛨</span><small>Parry</small><kbd>Espacio</kbd></button>
-        <button type="button" data-hab="esquiva" title="Dash"><span>»</span><small>Dash</small><kbd>Shift</kbd></button>
-        <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
-        <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
-        <button type="button" data-hab="ulti" title="Ulti · 90 segundos; cada parry resta uno"><span>◆</span><small>Ulti</small><kbd>R / L3</kbd></button>
-        <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>E</kbd></button>
       </div>
-
+      <div class="apRecurso apFuria" id="orbeFuria" aria-label="Furia"><small>Furia</small><div class="apMedidor" aria-hidden="true"><i></i></div><b id="furiaTxt"></b></div>
     </div>
     <div class="apPalanca" id="palanca" aria-label="Palanca para andar"><i></i></div>
     <div class="apFin" id="fin" hidden><h2 id="finTitulo"></h2><p id="finTexto"></p><button type="button" id="reintentar">Volver a empezar</button></div>

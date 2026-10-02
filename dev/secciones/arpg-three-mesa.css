@@ -77,21 +77,24 @@ html[data-captura] .apEscenario{height:100vh;border:0;border-radius:0}
 .apCarta figcaption{font:600 11px/1.2 system-ui,sans-serif;color:#e8e0d0;max-width:130px}
 .apCarta.foil{border-color:#7fd8ff88}.apCarta.dorado{border-color:#ffc85099}
 @keyframes apEntra{from{transform:translateX(30px);opacity:0}}
-/* Una base compacta: retrato, recursos y habilidades, sin panel sobre el personaje. */
-.apHud{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:12px;width:max-content;max-width:calc(100% - 36px);pointer-events:none}
-.apPersonaje{display:flex;align-items:center;gap:14px;width:300px;min-height:112px;padding:13px 16px;background:linear-gradient(125deg,#111d22f5,#11171bf2);border:1px solid #b59b6159;border-top:2px solid #bfa36a;border-radius:5px;box-shadow:0 8px 25px #0008}
-.apMarcoRetrato{overflow:hidden;width:64px;height:78px;flex:none;padding:3px;border:1px solid #bba36c88;transform:skewY(-5deg);background:#27302f}
+/* Alma y Furia flanquean las habilidades: cantidad y llenado visibles de un vistazo. */
+.apHud{position:absolute;left:50%;bottom:32px;transform:translateX(-50%);display:flex;align-items:flex-end;gap:18px;width:max-content;max-width:calc(100% - 36px);pointer-events:none}
+.apCentroHud{display:flex;flex-direction:column;align-items:center;gap:7px;min-width:0}
+.apPersonaje{display:flex;align-items:center;gap:9px;padding:4px 16px 4px 5px;background:linear-gradient(125deg,#111d22f5,#11171bf2);border:1px solid #b59b6159;border-radius:4px;box-shadow:0 5px 18px #0006}
+.apMarcoRetrato{overflow:hidden;width:34px;height:38px;flex:none;border:1px solid #bba36c88;background:#27302f}
 .apRetrato{width:100%;height:100%;object-fit:cover;object-position:50% 12%;filter:saturate(.8);transform:scale(1.65);transform-origin:50% 23%;border:0;border-radius:0}
-.apVitales{flex:1;min-width:0}.apNombreHeroe{display:flex;flex-direction:column;margin-bottom:10px}
-.apNombreHeroe>b{font:700 17px/1.2 Georgia,serif;color:#f2e4c6}
+.apVitales{min-width:0}.apNombreHeroe{display:flex;flex-direction:column}
+.apNombreHeroe>b{font:700 16px/1.2 Georgia,serif;color:#f2e4c6}
 .apNombreHeroe>small{color:#9da7a8;font:8px/1.2 system-ui,sans-serif;letter-spacing:1px;text-transform:uppercase;margin-top:3px}
-.apRecurso{display:grid;grid-template-columns:1fr auto;gap:4px;margin-top:6px}
-.apRecurso>small{font:700 8px/1 system-ui,sans-serif;letter-spacing:1.5px;text-transform:uppercase;color:#afbab8}
-.apRecurso>b{font:600 10px/1 system-ui,sans-serif;font-variant-numeric:tabular-nums;color:#e9e9de}
-.apMedidor{grid-column:1/-1;height:7px;background:#080d0f;border:1px solid #ffffff15;overflow:hidden}
-.apMedidor i{display:block;height:100%;width:var(--lleno,100%);transition:width .15s;background:linear-gradient(90deg,#823737,#d66f60);box-shadow:inset 0 1px #ffffff35}
-.apFuria .apMedidor{height:4px}.apFuria i{background:linear-gradient(90deg,#987444,#e2bd72)}
-.apMunicion{display:block;margin-top:7px;font:700 9px/1 system-ui,sans-serif;color:#c9d6dd}
+.apRecurso{--orbe:132px;--lleno:0%;display:grid;grid-template-columns:var(--orbe);grid-template-rows:20px var(--orbe);flex:none;text-align:center}
+.apRecurso>small{grid-area:1/1;font:700 11px/1 system-ui,sans-serif;letter-spacing:3px;text-transform:uppercase;color:#e5d7b5;text-shadow:0 2px 4px #000}
+.apRecurso>b{grid-area:2/1;align-self:center;z-index:1;font:700 20px/1.2 Georgia,serif;font-variant-numeric:tabular-nums;color:#fff6df;text-shadow:0 2px 3px #000,0 0 8px #000}
+.apMedidor{grid-area:2/1;position:relative;overflow:hidden;border-radius:50%;background:radial-gradient(circle at 50% 70%,#291319,#080e12 75%);border:4px solid #99825a;box-shadow:0 0 0 2px #172127,0 0 0 3px #bca37188,inset 0 0 15px #000,0 6px 18px #0008}
+.apMedidor i{position:absolute;left:0;right:0;bottom:0;height:var(--lleno);transition:height .18s ease-out;background:linear-gradient(90deg,#682134,#c44150 48%,#8c2536);box-shadow:inset 0 3px 5px #ffada866}
+.apMedidor::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse at 32% 21%,#ffeac435,transparent 33%),radial-gradient(circle,transparent 46%,#0009 100%);box-shadow:inset 0 0 0 2px #edcf9844;pointer-events:none}
+.apFuria .apMedidor{background:radial-gradient(circle at 50% 70%,#372312,#080e12 75%)}
+.apFuria i{background:linear-gradient(90deg,#9b5420,#e9ab42 48%,#b57527);box-shadow:inset 0 3px 5px #fff1b880}
+.apMunicion{display:block;margin-top:3px;font:700 9px/1 system-ui,sans-serif;color:#c9d6dd}
 .apHabilidades{display:flex;gap:6px;padding:10px;background:linear-gradient(#111b20f5,#11171bf5);border:1px solid #b59b6159;border-radius:5px;pointer-events:auto;box-shadow:0 8px 25px #0008}
 .apHabilidades button{position:relative;width:66px;height:78px;border:1px solid #b89a5855;border-radius:3px;background:linear-gradient(145deg,#2b3436,#182126 70%);color:#e4ce9f;cursor:pointer;display:grid;place-items:center;overflow:hidden;padding:0;touch-action:none}
 .apHabilidades button:hover{border-color:#e3c284;background:linear-gradient(145deg,#3c4544,#243035)}
@@ -109,13 +112,16 @@ html[data-captura] .apEscenario{height:100vh;border:0;border-radius:0}
 .apPalanca{display:none;position:absolute;left:18px;bottom:18px;width:116px;aspect-ratio:1;border-radius:50%;background:#111b20cc;border:1px solid #bda36b66;touch-action:none}
 .apPalanca i{position:absolute;left:50%;top:50%;width:48px;height:48px;margin:-24px 0 0 -24px;border-radius:50%;background:radial-gradient(circle at 40% 35%,#d8c18c,#6c654d);box-shadow:0 2px 8px #000a}
 .apEscenario.tactil .apPalanca{display:block}
-.apEscenario.tactil .apHud{left:auto;right:12px;bottom:20px;transform:none;max-width:none;flex-direction:column;align-items:flex-end}
+.apEscenario.tactil .apHud{left:auto;right:12px;bottom:20px;transform:none;max-width:none;display:grid;grid-template-columns:repeat(2,1fr);gap:12px 8px}
+.apEscenario.tactil .apRecurso{--orbe:66px;grid-row:1;justify-self:center}
+.apEscenario.tactil .apAlma{grid-column:1}.apEscenario.tactil .apFuria{grid-column:2}
+.apEscenario.tactil .apCentroHud{grid-area:2/1/3/3}
+.apEscenario.tactil .apRecurso>b{font-size:13px}.apEscenario.tactil .apRecurso>small{font-size:9px;letter-spacing:2px}
 .apEscenario.tactil .apHabilidades{display:grid;grid-template-columns:repeat(3,54px);gap:5px;padding:6px}
 .apEscenario.tactil .apHabilidades button{width:54px;height:56px}
 .apEscenario.tactil .apHabilidades button span{width:23px;height:23px}
 .apEscenario.tactil .apHabilidades kbd{display:none}
-.apEscenario.tactil .apPersonaje{width:196px;min-height:0;padding:9px;gap:8px}
-.apEscenario.tactil .apMarcoRetrato{width:42px;height:60px}
+.apEscenario.tactil .apPersonaje{display:none}
 .apEscenario.tactil .apTostada{bottom:330px}
 /* Fin: derrota o victoria. */
 .apFin{position:absolute;inset:0;display:grid;place-content:center;gap:10px;text-align:center;background:radial-gradient(ellipse at center,#07050bcc,#07050bf2);padding:20px}
@@ -209,7 +215,7 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
 .apMenuPausa #continuar{background:#c0a46b;color:#111a1d;border:0;min-width:170px}
 .apMenuPausa .apAjustesPausa{justify-items:center}
 @media(max-width:1000px){
- .apPersonaje{width:245px;gap:9px;padding:12px}.apMarcoRetrato{width:48px;height:70px}
+ .apRecurso{--orbe:110px}.apRecurso>b{font-size:17px}
  .apHabilidades button{width:56px;height:72px}.apHud{gap:8px}
  .apIdentidad{left:18px}.apMision{left:18px;max-width:240px}.apHerramientas{right:14px}
  .apHerramientas [data-pantalla-completa]{display:none}.apObjetivo{top:20px;width:32%}
@@ -220,9 +226,11 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
  .apMision{top:78px;left:14px;max-width:210px;padding:6px 10px}.apOleada{font-size:10px}
  .apMision>small{font-size:7px}.apMision>span{font-size:9px}
  .apObjetivo{top:85px;left:auto;right:14px;transform:none;width:35%}.apObjetivo b{font-size:11px}
- .apHud{flex-direction:column;align-items:flex-start;bottom:34px;gap:6px;max-width:calc(100% - 20px)}
- .apPersonaje{width:225px;min-height:0;padding:9px 12px}.apMarcoRetrato{height:62px;width:47px}
- .apNombreHeroe{margin-bottom:5px}.apNombreHeroe>b{font-size:15px}
+ .apHud{display:grid;grid-template-columns:repeat(2,1fr);bottom:34px;gap:8px;max-width:calc(100% - 20px)}
+ .apRecurso{--orbe:74px;grid-row:1}.apAlma{grid-column:1;justify-self:start}.apFuria{grid-column:2;justify-self:end}
+ .apRecurso>b{font-size:14px}.apRecurso>small{font-size:9px;letter-spacing:2px}.apMedidor{border-width:3px}
+ .apCentroHud{grid-area:2/1/3/3;position:relative}.apPersonaje{position:absolute;bottom:calc(100% + 12px);padding:4px 8px 4px 4px;gap:6px}
+ .apMarcoRetrato{height:34px;width:27px}.apNombreHeroe>b{font-size:14px}.apNombreHeroe>small{display:none}
  .apHabilidades{gap:4px;padding:6px}.apHabilidades button{width:clamp(40px,11.6vw,57px);height:65px}
  .apHabilidades button small{font-size:8px}.apHabilidades kbd{font-size:7px}
  .apEquipo{left:14px;top:175px;max-width:220px;font-size:10px}
