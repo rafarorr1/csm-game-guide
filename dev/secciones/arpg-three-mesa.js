@@ -22,6 +22,7 @@
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
+  window.CAOZ_ARPG_IA.configurar(q.get('ia')==='clasica'?'clasica':'yuka');
   const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
   const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;$('diagnostico').open=true;};
   addEventListener('error',e=>aviso('Error: '+(e.message||e.error)));
@@ -446,6 +447,7 @@
 
   function crearEnemigo(tipo,x,z,opc={}){const m=cuerpoDe(tipo,opc.varianteGoblin),d={...DEF[tipo],vida:Math.round(DEF[tipo].vida*(1+.25*(rog.vuelta-1)))*FACTOR_COOP,dano:Math.round(DEF[tipo].dano*(1+.1*(rog.vuelta-1)))},e={id:sigId++,tipo,m,d,pos:new V3(x,0,z),dir:rumbo(new V3(x,0,z),new V3()),vida:d.vida,vidaMax:d.vida,estado:opc.quieto?'quieto':'entra',t:0,cd:.4+rnd()*.8,emp:new V3(),fase:rnd()*TAU,paso:0,
       destello:0,radio:m.radio,sector:sectorLibre(x,z),turnoHasta:0,ultimoTurno:-10,rodeo:(rnd()-.5)*1.6,provocado:0,dentro:Math.hypot(x,z)<R-.5,quieto:!!opc.quieto,ataques:0,gritó:false,ataque:null,alerta:null,aturdidoT:0,estrellas:null,culpableT:-9};
+    e.ia=window.CAOZ_ARPG_IA?.crear(e)||null;
     m.caja.userData.enemigo=e;m.raiz.position.copy(e.pos);enemigos.push(e);return e;}
 
   /* ---- Cartas de botín (three-carta.js) -------------------------------------------- */
@@ -998,20 +1000,22 @@
   }
   // Decisiones a intervalos, destinos persistentes y anticipación corta del movimiento.
   function planEnemigo(e,H,entra){
-    if(e.plan&&e.plan.entra===entra&&e.plan.hasta>reloj.t&&plano(e.plan.heroe,H.pos)<1.2)return e.plan.p;
-    const base=rumbo(H.pos,e.pos),radio=entra?H.radio+e.radio+e.d.alcance*.5:RITMO.distanciaEspera+(e.id%3)*.4;
+    const tactica=e.ia,version=tactica?.version||0;
+    if(e.plan&&e.plan.iaVersion===version&&e.plan.entra===entra&&e.plan.hasta>reloj.t&&plano(e.plan.heroe,H.pos)<1.2)return e.plan.p;
+    const flanquea=tactica?.accion==='flanquear',cubre=tactica?.accion==='cubrir';
+    const base=flanquea||cubre?tactica.angulo:rumbo(H.pos,e.pos),radio=flanquea?Math.min(3,plano(e.pos,H.pos)):entra?H.radio+e.radio+e.d.alcance*.5:RITMO.distanciaEspera+(e.id%3)*.4;
     const futuro=H.pos.clone().addScaledVector(H.velocidad||new V3(),entra?.18:.3);
     let mejor=null,coste=Infinity;
     for(const desvio of [0,.35,-.35,.7,-.7,1.05,-1.05]){
       const a=base+desvio+(entra?0:(e.rodeo>=0?1:-1)*.3),p=futuro.clone().addScaledVector(frente(a),radio),antes=p.clone();
       dentroPlaza(p,e.radio+.12);
-      let nota=plano(p,e.pos)+Math.abs(desvio)*.3+plano(p,antes)*5;
+      let nota=plano(p,e.pos)+Math.abs(desvio)*(flanquea||cubre?3:.3)+plano(p,antes)*5;
       if(!pasoLibreEnemigo(e.pos,p,e.radio+.03))nota+=2;
       for(const o of enemigos)if(o!==e&&o.estado!=='muere'){const d=plano(o.pos,p);if(d<1.6)nota+=(1.6-d)*3;}
       if(e.plan)nota+=plano(p,e.plan.p)*.15;
       if(nota<coste){coste=nota;mejor=p;}
     }
-    e.plan={p:mejor,entra,heroe:H.pos.clone(),hasta:reloj.t+.24+(e.id%4)*.035};return mejor;
+    e.plan={p:mejor,entra,iaVersion:version,heroe:H.pos.clone(),hasta:reloj.t+.24+(e.id%4)*.035};return mejor;
   }
   function sectorLibre(x,z){const a=rumbo(heroe.pos,new V3(x,0,z)),ocupados=enemigos.filter(e=>e.estado!=='muere'&&!e.d.lanza).map(e=>e.sector);
     let mejor=a,nota=Infinity;for(let i=0;i<10;i++){const candidato=i*TAU/10,coste=Math.abs(difAng(a,candidato))+ocupados.filter(v=>Math.abs(difAng(v,candidato))<.3).length*10;
@@ -1106,10 +1110,12 @@
           else if(dist>8.5||e.provocado)movido=hacia(H.pos,vel);else if(dist<5)movido=hacia(e.pos.clone().addScaledVector(lejos,2),vel*.9);
           else{const lado=new V3(-lejos.z,0,lejos.x).multiplyScalar(e.rodeo>0?1:-1);movido=hacia(e.pos.clone().addScaledVector(lado,1.5),vel*.45);}
           if(e.cd<=0&&dist<d.alcance&&pasoLibreEnemigo(e.pos,H.pos,.1)&&reloj.t>=presion.siguiente&&!enemigos.some(o=>o!==e&&(o.d.lanza||o.tiraHacha)&&['aviso','golpe'].includes(o.estado))){presion.siguiente=reloj.t+RITMO.entreAtaques;e.dir=rumbo(e.pos,H.pos);cambiar(e,'aviso');empezarAtaque(e,'linea',{dur:d.aviso,largo:d.largo,ancho:d.ancho,fija:.65,dano:d.dano});}break;}
-        if(['clasico','dosHachas'].includes(e.m.varianteGoblin)&&intentarHachaGoblin(e,dist))break;
+        const entra=presion.primeraLinea.has(e.id);
+        const tactica=e.ia?.decidir(H,entra,reloj.t,()=>pasoLibreEnemigo(e.pos,H.pos,.2));
+        if((!tactica||tactica.accion==='lanzar')&&['clasico','dosHachas'].includes(e.m.varianteGoblin)&&intentarHachaGoblin(e,dist))break;
         // Quien no tiene turno se reparte en un anillo exterior; deja libre el cuerpo del jugador.
         const tira=e.tipo==='troll'&&e.ataques%3===2&&puedeLanzarGoblin(e);
-        const entra=presion.primeraLinea.has(e.id),obj=planEnemigo(e,H,entra);
+        const obj=planEnemigo(e,H,entra);
         const frontal=frente(H.dir).dot(e.pos.clone().sub(H.pos).normalize())>.55;
         if((e.tipo==='goblin'||e.tipo==='cobrador')&&H.estado==='carga'&&H.carga>.55&&dist<3.5&&frontal&&reloj.t>(e.evadeCd||0)){
           const lado=frente(H.dir+Math.PI/2*(e.rodeo>=0?1:-1));e.evade={p:e.pos.clone().addScaledVector(lado,1.1),hasta:reloj.t+.32};dentroPlaza(e.evade.p,e.radio);e.evadeCd=reloj.t+3.2;
@@ -1221,9 +1227,17 @@
     const pulsado=b&&!pausa.boton,confirma=x&&!pausa.confirmar;pausa.boton=b;pausa.confirmar=x;
     if(document.hidden||!mando.foco)return;
     if(pulsado)ponerPausa(!pausa.activa);else if(pausa.activa&&confirma)ponerPausa(false);}
+  function configurarIA(modo){
+    const ia=window.CAOZ_ARPG_IA;if(modo!==ia.modo()){ia.configurar(modo);for(const e of enemigos){e.ia=ia.crear(e);e.plan=null;}}
+    $('modoIA').value=ia.modo();
+    const u=new URL(location.href);u.searchParams.set('ia',ia.modo());history.replaceState(null,'',u.href);
+    for(const a of document.querySelectorAll('.apEtapas a')){const destino=new URL(a.href);destino.searchParams.set('ia',ia.modo());a.href=destino.href;}
+    return ia.modo();
+  }
+  $('modoIA').value=window.CAOZ_ARPG_IA.modo();$('modoIA').onchange=()=>configurarIA($('modoIA').value);
   $('modoEquipo').value=COOP?(DOS_MANDOS?'mandos':'mixto'):'solo';
   $('modoEquipo').onchange=()=>{const u=new URL(location.href),v=$('modoEquipo').value;u.searchParams.set('coop',v==='solo'?'0':'1');u.searchParams.set('mandos',v==='mandos'?'2':'1');location.href=u.href;};
-  for(const a of document.querySelectorAll('.apEtapas a')){const u=new URL(a.href);if(COOP){u.searchParams.set('coop','1');u.searchParams.set('mandos',DOS_MANDOS?'2':'1');}a.href=u.href;}
+  for(const a of document.querySelectorAll('.apEtapas a')){const u=new URL(a.href);u.searchParams.set('ia',window.CAOZ_ARPG_IA.modo());if(COOP){u.searchParams.set('coop','1');u.searchParams.set('mandos',DOS_MANDOS?'2':'1');}a.href=u.href;}
   if(COOP){for(const b of document.querySelectorAll('[data-heroe]'))b.disabled=true;$('demo').hidden=true;}
   $('continuar').onclick=()=>ponerPausa(false);
   $('abrirPausa').onclick=()=>ponerPausa(true);
@@ -1681,8 +1695,9 @@
 
   // Revisión: fps define la duración de cada actualización, igual que los cuadros de la partida.
   const aPantalla=p=>{camara.updateMatrixWorld(true);const v=p.clone().project(camara),b=esc.getBoundingClientRect();return {x:b.left+(v.x*.5+.5)*b.width,y:b.top+(.5-v.y*.5)*b.height,dentro:Math.abs(v.x)<1&&Math.abs(v.y)<1};};
-  const resumen=e=>({borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,muerte:e.muerte?{causa:e.muerte.tipo,variante:e.muerte.variante,duracion:e.muerte.duracion}:null,fase2:!!e.fase2,blindado:!!blindadoTroll(e),parryHasta:e.parryHasta||0,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
+  const resumen=e=>({ia:e.ia?{accion:e.ia.accion,decisiones:e.ia.decisiones}:null,borde:+e.m.M.u.uBorde.value.toFixed(2),ataque:e.ataque?{forma:e.ataque.forma,k:+Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur).toFixed(2),fijado:e.ataque.fijado}:null,id:e.id,tipo:e.tipo,x:+e.pos.x.toFixed(2),z:+e.pos.z.toFixed(2),vida:e.vida,vidaMax:e.vidaMax,estado:e.estado,muerte:e.muerte?{causa:e.muerte.tipo,variante:e.muerte.variante,duracion:e.muerte.duracion}:null,fase2:!!e.fase2,blindado:!!blindadoTroll(e),parryHasta:e.parryHasta||0,disuelve:+e.m.M.u.uDisuelve.value.toFixed(2),expuesto:e.expuestoHasta>reloj.t});
   window.CAOZ_ARPG_THREE_REVISION=Object.freeze({
+    ia(modo){if(modo!==undefined)configurarIA(modo);return {modo:window.CAOZ_ARPG_IA.modo(),goblins:enemigos.filter(e=>e.ia&&e.estado!=='muere').map(e=>({id:e.id,variante:e.m.varianteGoblin,accion:e.ia.accion,decisiones:e.ia.decisiones}))};},
     impactos:()=>impactoFX.estado(),
     bumeranes:()=>bumeranes.map(b=>({dueno:b.h.id,fase:b.fase,x:b.g.position.x,y:b.g.position.y,z:b.g.position.z,distancia:b.distancia})),
     equipo:()=>jugadores.map(h=>({id:h.id,tipo:h.tipo,x:h.pos.x,z:h.pos.z,alma:h.alma,estado:h.estado,cd:{...h.cd},sigilo:h.sigilo,fuego:h.incendio?.restante||0,ultiT:h.ultiT,basicos:h.basicos,disparos:h.disparos})),
@@ -1755,7 +1770,7 @@
       prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
       proteger(){for(const h of jugadores){h.alma=h.almaMax;h.invul=1;h.mando.foco=h.mando.activo=h.mando.listo=false;}},
       restaurarEntrada(){for(const h of jugadores){h.mando.foco=document.hasFocus();h.mando.listo=false;}},
-      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,animacion:MOD.animacion.configuracion(),simulacionHz:null,reloj:laboratorio.fijo?'referencia-por-cuadro':'tiempo-real',limiteRender:laboratorio.limite||0,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
+      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,ia:window.CAOZ_ARPG_IA.modo(),animacion:MOD.animacion.configuracion(),simulacionHz:null,reloj:laboratorio.fijo?'referencia-por-cuadro':'tiempo-real',limiteRender:laboratorio.limite||0,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
       animacion:{leer:MOD.animacion.configuracion,aplicar:MOD.animacion.configurar,restablecer:MOD.animacion.restablecer},
       valores:()=>structuredClone(originales)
     };

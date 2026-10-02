@@ -17,6 +17,8 @@
 <script src="./arpg-three-modelos.js"></script>
 <script src="./arpg-three-tiempo.js"></script>
 <script src="./arpg-three-impactos.js"></script>
+<script src="./yuka-goals-vendor.js"></script>
+<script src="./arpg-three-ia.js"></script>
 <script src="./arpg-three-mesa.js" defer></script>
 </head>
 <body>
@@ -90,6 +92,7 @@
     <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
   </div>
   <label class="apModo">Partida <select id="modoEquipo"><option value="solo">Un jugador</option><option value="mixto">Cooperativo · Teclado/ratón + mando</option><option value="mandos">Cooperativo · Dos mandos</option></select></label>
+  <label class="apModo">Comportamiento de goblins <select id="modoIA"><option value="yuka">Yuka · Tácticas por variante</option><option value="clasica">IA anterior · Comparar</option></select></label>
   <fieldset class="apEfectos">
     <legend>Efectos e interfaz</legend>
     <label><input type="checkbox" data-mostrar-stats checked> Mostrar atributos del personaje</label>

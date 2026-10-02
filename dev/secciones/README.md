@@ -1408,6 +1408,23 @@ Tras «¡A mí, goblins!», llegan **12 goblins (24 en cooperativo)** por los tr
 Comprobaciones acotadas: `pruebas_arpg_impactos.mjs` (cráteres y casas), `pruebas_arpg_muertes_goblin.mjs` (probabilidad y apoyo de ambas mitades), `pruebas_arpg_ritmo.mjs` (rutas, turnos y refuerzos), `pruebas_arpg_animacion.mjs` y `pruebas_arpg_can.mjs` (continuidad y combate).
 
 
+### Prueba de IA con Yuka
+
+Yuka queda activo por defecto para goblins y cobradores. `?ia=yuka` y `?ia=clasica` permiten comparar en la misma página. También se cambia durante la partida en **Pausa → Comportamiento de goblins**, o en **Inspector → IA de goblins**. Cambiar conserva posiciones, vida, rutas y ataques ya avisados; reiniciar o recargar conserva el modo indicado en la URL. El inspector muestra las intenciones y guarda el modo en los informes de rendimiento. Un cambio de IA invalida una medición en curso.
+
+`arpg-three-ia.js` usa `Think`, `GoalEvaluator` y objetivos de Yuka para elegir entre **presionar, flanquear, cubrir y lanzar**. El clásico favorece lanzar cuando tiene línea libre; el bruto de dos hachas prioriza acercarse cuando no puede lanzar; el cuchillo busca un flanco más amplio y la antorcha uno más corto. Un bloqueo puede motivar buscar otro ángulo. Sin turno, se mantiene una posición en el anillo exterior. No aumenta velocidad, daño ni frecuencia de lanzamientos.
+
+Las evaluaciones se espacian entre 0,27 y 0,345 s de simulación, según el enemigo; recibir o perder turno, cambiar de objetivo o ser provocado invalida la espera. El ángulo del flanqueo se fija al empezar, dura aproximadamente un segundo y no se intenta otra vez hasta pasados 3,2 s. A distancia de golpe se conserva la guardia. La navegación A*, separación, selección de jugador cooperativo, avisos, parry y director de dos/cuatro atacantes siguen siendo los del juego. Can, troll, saqueadores, arqueros y Adreidos mantienen su comportamiento anterior en esta primera prueba.
+
+`yuka-goals-vendor.js` contiene sólo cinco clases oficiales de Yuka 0.7.8 (`Logger`, `Goal`, `CompositeGoal`, `GoalEvaluator`, `Think`), concatenadas dentro de una función y sin sus declaraciones import/export. Fuente fijada al [commit 1059130 de Mugen87/yuka](https://github.com/Mugen87/yuka/tree/10591304811222d6856020d5de129b39ef43b58d); el encabezado enumera los archivos para reproducir el empaquetado. Se conservan el código y comentarios originales del tercero y su licencia MIT en `yuka-LICENSE.txt`. Todo se sirve y exporta localmente, sin CDN ni scripts en línea.
+
+Comprobaciones específicas:
+
+- `node dev/secciones/pruebas_arpg_ia.mjs`: roles, cobertura, persistencia, turnos, provocación, 20/30/60/144 FPS, cambio de jugador y cambio de modo durante un aviso.
+- `node dev/secciones/pruebas_arpg_ritmo.mjs --yuka`: ritmo, rutas del pozo, participación de todos los goblins y oleadas con Yuka; sin `--yuka` comprueba la IA anterior.
+- Añadir `--medir` compara CPU de IA/combate de 24 goblins con semilla 11, cuatro rondas alternadas por modo y 1200 pasos medidos por ronda. Es una medición sin modelos ni renderizador: **no mide FPS ni coste de GPU**. La revisión inicial dio 0,156–0,158 ms/paso con Yuka y 0,167–0,175 ms/paso con la IA anterior en este equipo; repetir para comparar cambios.
+- `pruebas_arpg_hachas_fuego.mjs` conserva la comprobación de los ataques y parry; `pruebas_arpg_inspector.mjs` verifica que proveedor local, adaptador y licencia se exportan juntos.
+
 ### Propuesta de HUD · Caoz ARPG
 
 Interfaz de obsidiana, latón y marfil con iconos vectoriales locales. Dos esferas grandes de Alma (roja, izquierda) y Furia (ámbar, derecha) flanquean las siete habilidades. Se vacían verticalmente y muestran la cantidad actual y máxima en el centro. El retrato y nombre quedan sobre las habilidades; en pantallas pequeñas las esferas suben para conservar espacio. El HUD muestra la recarga en segundos, adapta las teclas al mando y mantiene la munición de Mohamed y las tres cartas del destino visibles sin abrir las métricas. La misión queda arriba a la izquierda y el objetivo arriba al centro. La selección de personaje, etapas, efectos, cooperativo y demostración están en pausa. El diseño se adapta a escritorio, móvil y controles táctiles; no agrega luces, texturas ni posprocesado al render.

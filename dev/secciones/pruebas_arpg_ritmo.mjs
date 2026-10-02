@@ -5,14 +5,19 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
+const modoIA=process.argv.includes('--yuka')?'yuka':'clasica';
 const contexto=vm.createContext({console});contexto.window=contexto;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),contexto);
+for(const f of ['yuka-goals-vendor.js','arpg-three-ia.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),contexto);
+contexto.CAOZ_ARPG_IA.configurar(modoIA);
+console.log('IA:',modoIA);
 const obtener=(nombre,tipo='function')=>extraerDeclaracion(fuente,nombre,tipo).texto;
 const constantes=['R','PANELES','DEF','RITMO','presion','refuerzosCan','OLEADAS','ol'].map(n=>obtener(n,'const')).join('\n');
-const funciones=['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','sectorLibre','planEnemigo','convocarGoblins','pasoRefuerzosCan','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque','empezarComboCan'].map(n=>obtener(n)).join('\n');
+const funciones=['pasoLibreEnemigo','buscarRutaEnemigo','destinoEnemigo','sectorLibre','planEnemigo','intentarHachaGoblin','convocarGoblins','pasoRefuerzosCan','coordinarEnemigos','crearEnemigo','pasoEnemigo','pasoOleadas','dentroPlaza','separar','enZona','resolverAtaque','empezarComboCan'].map(n=>obtener(n)).join('\n');
 vm.runInContext(`
 const FACTOR_COOP=1;const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,TAU=Math.PI*2,CAPTURA=true,q={get:()=>null};
 const rog={vuelta:1,cartas:[],terminado:-1},iniciarDestino=()=>{};
+const lanzas=[],lanzarHacha=()=>{},prenderFuego=()=>{};
 const peligrosTroll=[],activarFaseTroll=()=>{},puedeLanzarGoblin=()=>false,lanzarPiedras=()=>{};
 const objetivoEnemigo=()=>heroe,conHeroe=(h,f)=>f();const enemigos=[],obstaculos=[],reloj={t:0},CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];
 const ABIERTO=false;const heroe={pos:new V3(),alma:60,almaMax:120,radio:.4,vivo:true,invul:0,dir:0,estado:'quieto'};const jugadores=[heroe];let sigId=1,semilla=11;
@@ -20,7 +25,7 @@ const rnd=()=>(semilla=semilla*16807%2147483647)/2147483647,plano=(a,b)=>Math.hy
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),calle=a=>new V3(Math.cos(a),0,Math.sin(a));
 const difAng=(a,b)=>{let d=(b-a)%TAU;if(d>Math.PI)d-=TAU;if(d<-Math.PI)d+=TAU;return d;};
 const eventos=[],nacimientos=[];let golpes=0;
-const cuerpoDe=tipo=>({radio:tipo==='can'?.62:.34,alto:1.3,caja:{userData:{}},raiz:{position:new V3()},M:{u:{uDisuelve:{value:0}}},mallas:[]});
+const cuerpoDe=(tipo,variante)=>({varianteGoblin:['goblin','cobrador'].includes(tipo)?variante||['clasico','dosHachas','cuchillo','antorcha'][sigId%4]:null,radio:tipo==='can'?.62:.34,alto:1.3,caja:{userData:{}},raiz:{position:new V3()},M:{u:{uDisuelve:{value:0}}},mallas:[]});
 const cambiar=(e,s)=>{e.estado=s;e.t=0;},banner=()=>{},marca=()=>{},polvo=()=>{},romperPiso=()=>{},temblar=()=>{},brasas=()=>{};
 const colocarAtaque=()=>{},cancelarAtaque=e=>{e.ataque=null;},parar=()=>null,herir=()=>{golpes++;},lanzar=()=>{},escena={remove(){}};
 function empezarAtaque(e,forma,o){e.alerta={el:{textContent:''}};e.ataque={...o,forma,t0:reloj.t,dir:e.dir,fijado:false};eventos.push({t:reloj.t,id:e.id,tipo:e.tipo,forma,duracion:o.dur});}
@@ -33,15 +38,16 @@ function invocar(tipo,x,z){const e=crearEnemigo(tipo,x,z);e.dentro=true;e.estado
 const ejecutar=s=>vm.runInContext(s,contexto);
 // Ocho goblins que llegan juntos: sólo dos se acercan, el resto se abre y los turnos rotan.
 const grupo=ejecutar(`limpiar();for(let i=0;i<8;i++)invocar('goblin',(i-3.5)*.8,-7);
-let maxAtacan=0,maxCerca=0,minEspera=8;
-for(let i=0;i<800;i++){paso();maxAtacan=Math.max(maxAtacan,enemigos.filter(e=>['aviso','golpe'].includes(e.estado)).length);
+let maxAtacan=0,maxCerca=0,minEspera=8;const tacticas=new Set();
+for(let i=0;i<800;i++){paso();for(const e of enemigos)if(e.ia?.accion)tacticas.add(e.ia.accion);maxAtacan=Math.max(maxAtacan,enemigos.filter(e=>['aviso','golpe'].includes(e.estado)).length);
  if(i>200){maxCerca=Math.max(maxCerca,enemigos.filter(e=>plano(e.pos,heroe.pos)<2.2).length);minEspera=Math.min(minEspera,enemigos.filter(e=>plano(e.pos,heroe.pos)>2.8).length);}}
-({maxAtacan,maxCerca,minEspera,participantes:new Set(eventos.map(e=>e.id)).size,ataques:eventos.length,golpes,separacion:Math.min(...eventos.slice(1).map((e,i)=>e.t-eventos[i].t)),vel:DEF.goblin.vel});`);
+({tacticas:[...tacticas],maxAtacan,maxCerca,minEspera,participantes:new Set(eventos.map(e=>e.id)).size,ataques:eventos.length,golpes,separacion:Math.min(...eventos.slice(1).map((e,i)=>e.t-eventos[i].t)),vel:DEF.goblin.vel});`);
 assert.ok(grupo.vel<5.8*.7,'Mohamed puede ganar distancia mientras dispara');
 assert.ok(grupo.maxAtacan<=2&&grupo.maxAtacan>0,'Dos atacantes como máximo');
 assert.ok(grupo.maxCerca<=4&&grupo.minEspera>=4,'La multitud no se amontona sobre el jugador');
 assert.equal(grupo.participantes,8,'Los turnos rotan: nadie queda esperando para siempre');
 assert.ok(grupo.golpes>0&&grupo.separacion>=.55-1e-6,'Siguen siendo peligrosos, con ataques escalonados');
+if(modoIA==='yuka')for(const t of ['cubrir','presionar','flanquear','lanzar'])assert.ok(grupo.tacticas.includes(t),t);
 console.log('✓ Grupo de ocho:',JSON.stringify(grupo));
 // Dos lanceros y cuatro goblins: los avisos a distancia tampoco empiezan juntos.
 const mixto=ejecutar(`limpiar();for(let i=0;i<4;i++)invocar('goblin',(i-1.5)*1.5,-5);invocar('kobold',-6,0);invocar('kobold',6,0);
@@ -107,3 +113,14 @@ for(let i=0;i<3;i++)invocar('goblin',-9, -4+i);for(let i=0;i<1200;i++)paso(1/60)
 const resultado={participantes:new Set(eventos.map(e=>e.id)).size,golpes};obstaculos.length=0;heroe.pos.set(0,0,0);resultado;}`);
 assert.equal(asedioPozo.participantes,3,'Todos rodean el pozo y alcanzan el combate, con separación y turnos reales');assert.ok(asedioPozo.golpes>2);
 console.log('✓ Tres goblins rodean el pozo y atacan usando la IA, colisiones y turnos reales');
+
+// Mismo grupo, semilla y duración por modo. Se mide sólo CPU de IA/combate, sin renderizar.
+if(process.argv.includes('--medir')){
+ const muestras={clasica:[],yuka:[]};
+ for(let ronda=0;ronda<4;ronda++)for(const modo of ronda%2?['yuka','clasica']:['clasica','yuka']){
+  contexto.CAOZ_ARPG_IA.configurar(modo);
+  ejecutar(`limpiar();semilla=11;for(let i=0;i<24;i++)invocar('goblin',Math.sin(i*TAU/24)*7,Math.cos(i*TAU/24)*7);for(let i=0;i<120;i++)paso(1/60);`);
+  const inicio=performance.now();ejecutar('for(let i=0;i<1200;i++)paso(1/60)');muestras[modo].push((performance.now()-inicio)/1200);
+ }
+ console.log('CPU de IA/combate con 24 goblins, ms/cuadro:',JSON.stringify(muestras));
+}

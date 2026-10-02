@@ -40,6 +40,8 @@ async function iniciar(){
       <div class="labFila"><button data-accion="basico">Básico</button><button data-accion="cargado">Cargado</button><button data-accion="salto">Salto</button><button data-accion="parry">Parry</button><button data-accion="bumeran">Búmeran</button></div>
       <label>Dirección del regreso del búmeran<input id="labRumboBumeran" type="range" min="-180" max="180" step="5" value="180"></label>
       <h2>Enemigos de prueba</h2>
+      <label>IA de goblins<select id="labIA"><option value="yuka">Yuka · Tácticas por variante</option><option value="clasica">IA anterior · Comparar</option></select></label>
+      <p id="labTacticas" class="labNota" role="status"></p>
       <label>Tipo<select id="labEnemigo"><option value="goblin">Goblin</option><option value="kobold">Arquero</option><option value="saqueador">Saqueador con escudo</option><option value="can">Can · Centro y lados</option><option value="troll">Troll</option></select></label>
       <label>Variante goblin<select id="labVarianteGoblin"><option value="">Aleatoria</option><option value="clasico">Clásico · Hacha</option><option value="dosHachas">Bruto · Dos hachas</option><option value="cuchillo">Pícaro · Cuchillo</option><option value="antorcha">Vigía · Antorcha</option></select></label>
       <div class="labDos"><label>Cantidad<input id="labCantidad" type="number" min="1" max="24" value="1"></label><label>Vida<input id="labVida" type="number" min="1" max="3000" value="34"></label><label>Velocidad<input id="labVelEnemigo" type="number" min="0" max="8" step="0.05" value="2.85"></label><label>Daño<input id="labDanoEnemigo" type="number" min="0" max="100" value="13"></label></div>
@@ -73,6 +75,7 @@ async function iniciar(){
   $('labFase').oninput=pose;$('labAnim').onchange=pose;$('labVolver').onclick=volver;
   $('labReproducir').onclick=()=>{congelar(false);secuencia=null;cancelarCadena();clip=true;tiempoClip=0;r.control({mov:[0,0],atacar:false});};
   $('labEnemigo').onchange=()=>{const d=valores.enemigos[$('labEnemigo').value];$('labVida').value=d.vida;$('labVelEnemigo').value=d.vel;$('labDanoEnemigo').value=d.dano;};
+  $('labIA').value=r.ia().modo;$('labIA').onchange=()=>{r.ia($('labIA').value);decir('IA aplicada. Se conservan los ataques que ya estaban avisados.');};
   $('labInvocar').onclick=ejecutar(()=>{api.invocar($('labEnemigo').value,numero('labCantidad'),ajustesEnemigo());decir('Enemigos añadidos alrededor del personaje.');});
   $('labCamara').oninput=()=>{r.camara({dist:numero('labCamara')});if(detenido)api.paso();};
   for(const c of panel.querySelectorAll('[data-lab-efecto]'))c.onchange=()=>r.efecto(c.dataset.labEfecto,c.checked);
@@ -158,8 +161,11 @@ async function iniciar(){
   });
   api.observar(m=>{
     m.gpu=gpuMs;if(!detenido){muestras.push(m);if(muestras.length>120)muestras.shift();}
-    if(medicion){const e=api.entorno();if(e.ancho!==medicion.entorno.ancho||e.alto!==medicion.entorno.alto||e.anchoRender!==medicion.entorno.anchoRender||e.altoRender!==medicion.entorno.altoRender){finalizar(true);decir('Cambió el tamaño o la resolución interna. Repite la medición.');}else if(medicion.calentamiento-->0){}else{medicion.muestras.push(m);if(medicion.muestras.length===medicion.total)finalizar();}}
-    if(performance.now()-ultimaUI<250)return;ultimaUI=performance.now();const s=resumir(muestras),h=r.equipo()[0],e=api.entorno();$('labPixeles').textContent=`GPU: ${e.anchoRender} × ${e.altoRender} px · Vista: ${e.ancho} × ${e.alto} px · Resolución adaptativa desactivada`; $('labReloj').textContent=medicion?'Referencia: un paso de 1/60 s por imagen, sin límite de render':`Actualización por cuadro · ${(m.avance*1000).toFixed(1)} ms · dibujo directo`; $('labPersonaje').textContent=`${h.tipo} · ${h.estado} · Alma ${Math.round(h.alma)}`;
+    if(medicion){const e=api.entorno();if(e.ia!==medicion.entorno.ia||e.ancho!==medicion.entorno.ancho||e.alto!==medicion.entorno.alto||e.anchoRender!==medicion.entorno.anchoRender||e.altoRender!==medicion.entorno.altoRender){finalizar(true);decir('Cambió la IA, el tamaño o la resolución interna. Repite la medición.');}else if(medicion.calentamiento-->0){}else{medicion.muestras.push(m);if(medicion.muestras.length===medicion.total)finalizar();}}
+    if(performance.now()-ultimaUI<250)return;ultimaUI=performance.now();
+    const ia=r.ia(),tacticas={cubrir:0,presionar:0,flanquear:0,lanzar:0};for(const g of ia.goblins)if(g.accion)tacticas[g.accion]++;
+    $('labIA').value=ia.modo;$('labTacticas').textContent=ia.modo==='clasica'?'IA anterior activa.':`Yuka · ${tacticas.presionar} presionan · ${tacticas.flanquear} flanquean · ${tacticas.cubrir} cubren · ${tacticas.lanzar} buscan lanzar`;
+    const s=resumir(muestras),h=r.equipo()[0],e=api.entorno();$('labPixeles').textContent=`GPU: ${e.anchoRender} × ${e.altoRender} px · Vista: ${e.ancho} × ${e.alto} px · Resolución adaptativa desactivada`; $('labReloj').textContent=medicion?'Referencia: un paso de 1/60 s por imagen, sin límite de render':`Actualización por cuadro · ${(m.avance*1000).toFixed(1)} ms · dibujo directo`; $('labPersonaje').textContent=`${h.tipo} · ${h.estado} · Alma ${Math.round(h.alma)}`;
     if(s)$('labMetricas').textContent=`${s.fps.toFixed(1)} FPS · p95 ${s.p95.toFixed(1)} ms\nSimulación ${s.simulacion.toFixed(2)} ms · envío ${s.envio.toFixed(2)} ms\n${Math.round(s.llamadas)} llamadas · ${Math.round(s.triangulos/1000)} mil triángulos`;
     if(medicion)$('labResultado').textContent=medicion.calentamiento>0?'Calentando…':`${medicion.nombre}: ${medicion.muestras.length} / ${medicion.total} cuadros`;
   });
