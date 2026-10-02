@@ -5,7 +5,7 @@ const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8
 const c=vm.createContext({console});c.window=c;for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const run=s=>vm.runInContext(s,c);
 run(`const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2,FACTOR_COOP=1,R=26,DUR_ESQ=.2;
-const escena=new THREE.Scene(),reloj={t:0},enemigos=[],jugadores=[],lanzas=[],obstaculos=[],presion={primeraLinea:new Set([1]),siguiente:0},pausa={activa:false},rog={abierto:false};
+const escena=new THREE.Scene(),reloj={t:0},tiempo={value:0},enemigos=[],jugadores=[],lanzas=[],obstaculos=[],presion={primeraLinea:new Set([1]),siguiente:0},pausa={activa:false},rog={abierto:false};
 let heroe,ent={},ctl={mov:new V3()},mando={},disparosPendientes=[],paron=0,paradas=0,dañoDevuelto=0,muestras=0,azar=.1;
 const rnd=()=>{muestras++;return azar;},plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),frente=a=>new V3(Math.sin(a),0,Math.cos(a)),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z);
 const activarFaseTroll=()=>{},destinoEnemigo=(e,p)=>p,dentroPlaza=()=>{},colocarAtaque=()=>{},difAng=(a,b)=>b-a;
@@ -13,7 +13,7 @@ const numero=()=>{},temblar=()=>{},chispas=()=>{},particula=()=>{},marca=()=>{},
 function parryPerfecto(){paradas++;cambiar(heroe,'quieto');}
 function empezarAtaque(e,forma,a){e.ataque={...a,forma,dir:e.dir,t0:reloj.t};e.alerta={el:{textContent:''}};}
 const geoHalo=new THREE.SphereGeometry(1,8,6),materialesHaloFlecha=[0xffa530,0xfff3c0,0xffd060].map(color=>new THREE.MeshBasicMaterial({color}));
-${['geoLanza','matPuntaLanza','geoPluma','geoEstelaFlecha','matEstelaFlecha','HAB','PARRY','RITMO'].map(n=>get(n,'const')).join('\n')}
+${['geoLanza','matPuntaLanza','geoPluma','geoEstelaFlecha','matEstelaFlecha','materialesHaloHacha','matEstelaHacha','HAB','PARRY','RITMO'].map(n=>get(n,'const')).join('\n')}
 ${['cambiar','conHeroe','herir','prenderFuego','apagarFuego','pasoFuego','usar','parar','bloqueado','pasoLibreEnemigo','intentarHachaGoblin','pasoEnemigo','resolverAtaque','enZona','lanzar','lanzarHacha','pasoLanzas'].map(n=>get(n)).join('\n')}
 function preparar(variante='clasico'){
  reloj.t=0;presion.siguiente=0;presion.primeraLinea=new Set([1]);enemigos.length=jugadores.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;obstaculos.length=0;paradas=dañoDevuelto=muestras=0;azar=.1;

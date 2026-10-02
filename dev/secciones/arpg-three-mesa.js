@@ -292,6 +292,40 @@
     pPos[j]+=pVel[j]*dt;pPos[j+1]+=pVel[j+1]*dt;pPos[j+2]+=pVel[j+2]*dt;if(pPos[j+1]<.03){pPos[j+1]=.03;pVel[j+1]*=-.3;}
     const k=Math.max(0,pVida[i]/pMax[i]);pCol[i*4]=pBase[i*4];pCol[i*4+1]=pBase[i*4+1];pCol[i*4+2]=pBase[i*4+2];pCol[i*4+3]=Math.min(1,k*1.6);}
     geoP.attributes.position.needsUpdate=geoP.attributes.aColor.needsUpdate=geoP.attributes.aTam.needsUpdate=true;}
+  // Ropa incendiada: nueve llamas siguen los huesos; el humo usa una reserva de veinte motas.
+  // Sólo dos llamadas de dibujo mientras arde, sin luces ni sombras adicionales.
+  const fuegosRopa=new Map(),matFuegoRopa=matLlama.clone();
+  matFuegoRopa.uniforms.uT=tiempo;
+  matFuegoRopa.blending=THREE.NormalBlending;
+  matFuegoRopa.fragmentShader=matLlama.fragmentShader.replace('c*f*1.15,f','c*vec3(1.6,.85,.5)*(.8+f*1.25),min(1.,f*1.45)');
+  const matHumoRopa=new THREE.ShaderMaterial({uniforms:{uEsc:escPuntos},transparent:true,depthWrite:false,
+    vertexShader:`attribute vec2 aHumo;uniform float uEsc;varying float vEdad;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vEdad=aHumo.x;gl_Position=projectionMatrix*mv;gl_PointSize=aHumo.y*uEsc*450.*projectionMatrix[1][1]/max(.1,-mv.z);}`,
+    fragmentShader:`varying float vEdad;void main(){vec2 p=gl_PointCoord-.5;float d=length(p);float nube=1.-smoothstep(.08,.5,d);nube*=.8+.2*sin(p.x*18.+vEdad*6.)*sin(p.y*15.-vEdad*4.);float a=smoothstep(0.,.12,vEdad)*(1.-smoothstep(.25,1.,vEdad));gl_FragColor=vec4(mix(vec3(.24,.22,.21),vec3(.48,.47,.46),vEdad),nube*a*.38);}`});
+  function crearFuegoRopa(h){const anclas=[];
+    for(let i=0;i<7;i++){const a=(i+.5)*TAU/7+.08;anclas.push({hueso:h.m.H['falda'+i],local:new V3(Math.sin(a)*.27,-.22,Math.cos(a)*.22)});}
+    for(const lado of [-1,1])anclas.push({hueso:h.m.H.torso,local:new V3(lado*.23,.26,-.13)});
+    const p=[],uv=[],sem=[],tam=[],indices=[];
+    anclas.forEach((a,i)=>{for(const [u,v]of [[0,0],[1,0],[1,1],[0,1]]){p.push(0,0,0);uv.push(u,v);sem.push(i*.173);tam.push(i<7?.6:.48,i<7?1.05:.8);}const o=i*4;indices.push(o,o+1,o+2,o,o+2,o+3);});
+    const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.Float32BufferAttribute(p,3).setUsage(THREE.DynamicDrawUsage));geo.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));geo.setAttribute('aSem',new THREE.Float32BufferAttribute(sem,1));geo.setAttribute('aTam',new THREE.Float32BufferAttribute(tam,2));geo.setIndex(indices);
+    const llama=new THREE.Mesh(geo,matFuegoRopa),humoGeo=new THREE.BufferGeometry();
+    humoGeo.setAttribute('position',new THREE.BufferAttribute(new Float32Array(60),3).setUsage(THREE.DynamicDrawUsage));humoGeo.setAttribute('aHumo',new THREE.BufferAttribute(new Float32Array(40),2).setUsage(THREE.DynamicDrawUsage));
+    const humo=new THREE.Points(humoGeo,matHumoRopa);llama.frustumCulled=humo.frustumCulled=false;llama.renderOrder=2;humo.renderOrder=3;escena.add(llama,humo);
+    const f={anclas,llama,humo,motas:[],acum:0,siguiente:0,punto:new V3()};fuegosRopa.set(h,f);return f;
+  }
+  function pasoFuegoRopa(h,dt){let f=fuegosRopa.get(h);const arde=!!h.incendio&&h.vivo;if(!f){if(!arde)return;f=crearFuegoRopa(h);}
+    f.llama.visible=arde;
+    if(arde){h.m.raiz.updateMatrixWorld(true);const p=f.llama.geometry.attributes.position;
+      f.anclas.forEach((a,i)=>{f.punto.copy(a.local).applyMatrix4(a.hueso.matrixWorld);for(let j=0;j<4;j++)p.setXYZ(i*4+j,f.punto.x,f.punto.y,f.punto.z);});p.needsUpdate=true;
+      f.acum+=dt;while(f.acum>=.1){f.acum-=.1;const i=f.siguiente++%f.anclas.length,a=f.anclas[i];f.punto.copy(a.local).applyMatrix4(a.hueso.matrixWorld);f.punto.y+=.25;
+        if(f.motas.length<20)f.motas.push({pos:f.punto.clone(),edad:0,sem:i});}
+    }else f.acum=0;
+    const g=f.humo.geometry;let n=0;
+    for(let i=f.motas.length-1;i>=0;i--){const m=f.motas[i];m.edad+=dt;if(m.edad>=1.6){f.motas.splice(i,1);continue;}
+      m.pos.x+=dt*(.18+Math.sin(m.sem*2+m.edad*3)*.13);m.pos.y+=dt*.85;m.pos.z+=dt*.08;
+      g.attributes.position.setXYZ(n,m.pos.x,m.pos.y,m.pos.z);g.attributes.aHumo.setXY(n,m.edad/1.6,.34+m.edad*.5);n++;}
+    g.setDrawRange(0,n);g.attributes.position.needsUpdate=g.attributes.aHumo.needsUpdate=true;f.humo.visible=n>0;
+  }
+  function limpiarFuegoRopa(){for(const f of fuegosRopa.values()){escena.remove(f.llama,f.humo);f.llama.geometry.dispose();f.humo.geometry.dispose();}fuegosRopa.clear();}
   // Adoquines arrancados por el salto: una sola malla y una reserva reutilizable.
   const MAX_ESCOMBROS=72,escombros=[],moldeEscombro=new THREE.Object3D();
   const materialEscombrosInicial=std(0x79716a);
@@ -532,10 +566,14 @@
   const matPuntaLanza=new THREE.MeshBasicMaterial({color:new THREE.Color(2.6,1.8,.65),toneMapped:false});
   const geoPluma=new THREE.ConeGeometry(.12,.36,4).rotateX(-Math.PI/2).translate(0,0,-.48);
   const materialesHaloFlecha=[0xffa530,0xfff3c0,0xffd060].map(color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  const materialesHaloHacha=[new THREE.Color(2.8,1.55,.18),new THREE.Color(3.2,2.8,1.5),new THREE.Color(3.4,2.1,.3)].map(color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.72,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
   const geoEstelaFlecha=new THREE.PlaneGeometry(.24,2.2).rotateX(Math.PI/2).translate(0,0,-1.55);
   const matEstelaFlecha=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:`varying vec2 vUv;void main(){vUv=uv;vec3 p=position;p.x*=uv.y;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
     fragmentShader:`varying vec2 vUv;void main(){float centro=1.-abs(vUv.x*2.-1.);float a=pow(centro,1.5)*vUv.y*vUv.y;gl_FragColor=vec4(vec3(2.4,1.25,.25),a*.65);}`});
+  const matEstelaHacha=new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
+    vertexShader:matEstelaFlecha.vertexShader,
+    fragmentShader:`uniform float uT;varying vec2 vUv;void main(){float centro=1.-abs(vUv.x*2.-1.);float a=pow(centro,1.6)*pow(vUv.y,1.35);a*=.85+.15*sin(vUv.y*24.-uT*28.);gl_FragColor=vec4(mix(vec3(2.2,1.05,.08),vec3(3.1,2.2,.55),centro),a*.58);}`});
   // Un halo brillante (aditivo, lo agranda el resplandor) alrededor de lo que vuela: se ve de lejos y marca el momento del parry.
   const geoHalo=new THREE.SphereGeometry(1,14,10);
   const halo=(color,r)=>{const m=new THREE.Mesh(geoHalo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.6,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));m.scale.setScalar(r);m.renderOrder=3;return m;};
@@ -543,9 +581,11 @@
     const estela=new THREE.Group();for(const giro of [0,Math.PI/2]){const cinta=new THREE.Mesh(geoEstelaFlecha,matEstelaFlecha);cinta.rotation.z=giro;estela.add(cinta);}
     g.add(new THREE.Mesh(geoLanza,matPuntaLanza),new THREE.Mesh(geoPluma,matPuntaLanza),punta,brillo,estela);const dir=frente(a.dir),p=e.pos.clone().setY(1.1);
     g.position.copy(p);g.lookAt(p.clone().add(dir));escena.add(g);lanzas.push({g,brillo,estela,dir,vel:16,t0:reloj.t,dano:a.dano,clavada:0,e,origen:e.pos.clone(),radio:a.ancho/2});}
-  function lanzarHacha(e,a){const g=new THREE.Group(),giro=MOD.crearHachaArrojadiza(),brillo=new THREE.Mesh(giro.children[1].geometry,materialesHaloFlecha[0]),estela=new THREE.Group();
+  function lanzarHacha(e,a){const g=new THREE.Group(),giro=MOD.crearHachaArrojadiza(),brillo=new THREE.Mesh(giro.children[1].geometry,materialesHaloHacha[0]),estela=new THREE.Group();
     // El aviso luminoso sigue el filo al girar y conserva la silueta del hacha.
-    giro.scale.setScalar(1.2);brillo.scale.setScalar(1.04);giro.add(brillo);g.add(giro,estela);
+    giro.scale.setScalar(1.35);giro.rotation.y=.65;brillo.scale.setScalar(1.1);giro.add(brillo);g.add(giro,estela);
+    // La estela acompaña la trayectoria, independiente del giro del filo.
+    for(const ang of [0,Math.PI/2]){const cinta=new THREE.Mesh(geoEstelaFlecha,matEstelaHacha);cinta.rotation.z=ang;cinta.scale.set(1.6,1,.8);estela.add(cinta);}
     const dir=frente(a.dir),p=e.pos.clone().setY(.95);g.position.copy(p);g.lookAt(p.clone().add(dir));escena.add(g);
     lanzas.push({tipo:'hacha',g,giro,brillo,estela,dir,vel:10,t0:reloj.t,dano:a.dano,clavada:0,e,origen:e.pos.clone(),radio:.24,recorrido:0,alcance:10});}
   function pasoLanzas(dt){for(const l of [...lanzas])conHeroe(l.defensor||jugadores.filter(h=>h.vivo).sort((a,b)=>plano(a.pos,l.g.position)-plano(b.pos,l.g.position))[0]||jugadores[0],()=>{
@@ -564,11 +604,11 @@
         else if(par==='bloqueo'){bloqueado(l.dano,l.origen,enemigos.includes(l.e)?l.e:null);quitar();return;}
         else{herir(l.dano,l.origen,enemigos.includes(l.e)?l.e:null);chispas(p,10,[1,.4,.3],4,.4);quitar();return;}}
     }
-    const p=l.g.position;let escala=1.45;
+    const p=l.g.position,halos=l.tipo==='hacha'?materialesHaloHacha:materialesHaloFlecha;let escala=1.45;
     if(!l.devuelta){const v=heroe.pos.clone().sub(p).setY(0),d=v.length(),llega=v.dot(l.dir)>d*.7?Math.max(0,d-heroe.radio*.6-l.radio)/l.vel:9,ya=llega<=PARRY.perfectoLanza;
-      l.brillo.material=materialesHaloFlecha[ya?1:0];escala=ya?1.7:1.25+.06*Math.sin(reloj.t*24);l.ahora=ya;}
-    else l.brillo.material=materialesHaloFlecha[2];
-    l.brillo.scale.setScalar(l.tipo==='hacha'?1+(escala-1)*.18:escala);
+      l.brillo.material=halos[ya?1:0];escala=ya?1.7:1.25+.06*Math.sin(reloj.t*24);l.ahora=ya;}
+    else l.brillo.material=halos[2];
+    l.brillo.scale.setScalar(l.tipo==='hacha'?1.06+(escala-1)*.18:escala);
   });}
 
 
@@ -1114,7 +1154,7 @@
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(!DEF[ol.cola[i][0]].jefe&&!DEF[ol.cola[j][0]].jefe)[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;banner(O.nombre,O.texto||(O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.'));}
   function reiniciar(){impactoFX.limpiar();temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
-    for(const o of [...marcas])if(!o.fijo)quitarMarca(o);for(const h of jugadores)liberarModeloTroll(h.m);limpiarAliados();crearEquipo();reiniciarExploracion();$('botin').innerHTML='';Object.assign(ol,{i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});$('fin').hidden=true;finMostrado=false;}
+    for(const o of [...marcas])if(!o.fijo)quitarMarca(o);limpiarFuegoRopa();for(const h of jugadores)liberarModeloTroll(h.m);limpiarAliados();crearEquipo();reiniciarExploracion();$('botin').innerHTML='';Object.assign(ol,{i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});$('fin').hidden=true;finMostrado=false;}
 
   /* ---- Entrada: teclado, ratón y táctil ---------------------------------------------------
      ctl es lo que manda en cada paso de simulación: movimiento, si ataca y hacia dónde apunta. Lo llenan el
@@ -1416,6 +1456,7 @@
     if(oroParry>0&&h.destello<=0){hm.M.u.uDestello.value=Math.min(.6,oroParry*.42);hm.M.u.uColorD.value.setRGB(1,.65,.12);}
     h.punalT=Math.max(0,(h.punalT||0)-dt);if(h.sigilo>0){hm.H.brazoI.rotation.x=-1.2-Math.sin((h.punalT/.3)*Math.PI)*.8;hm.H.anteI.rotation.x=-.3;}hm.M.u.uSigilo.value=h.sigilo>0?.78:0;if(h.daga)h.daga.visible=h.sigilo>0;
     for(const m of hm.mallas)m.castShadow=h.sigilo<=0;
+    pasoFuegoRopa(h,dt);
   }
   /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
