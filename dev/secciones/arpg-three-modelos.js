@@ -555,6 +555,25 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo],alto:TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
     }
 
+    // Dos mallas estáticas reutilizables, extraídas del hacha real con sus UV y texturas.
+    // Los materiales propios evitan que el proyectil destelle o se disuelva con quien lo lanzó.
+    let piezasHachaArrojadiza=null;
+    function crearHachaArrojadiza(){
+      if(!piezasHachaArrojadiza){const base=crear('goblin');piezasHachaArrojadiza=[];
+        const local=base.H.manoD.matrixWorld.clone().invert();
+        for(const mesh of base.mallas){const a=mesh.geometry.attributes,mano=mesh.skeleton.bones.indexOf(base.H.manoD),indices=[];
+          for(let i=0;i<a.position.count;i++)if(a.skinIndex.getX(i)===mano&&(a.maderaReal?.getX(i)||a.hachaReal?.getX(i)))indices.push(i);
+          if(indices.length){const geo=new THREE.BufferGeometry();for(const [nombre,atributo]of Object.entries(a)){
+            if(nombre==='skinIndex'||nombre==='skinWeight')continue;const valores=new atributo.array.constructor(indices.length*atributo.itemSize);
+            for(let i=0;i<indices.length;i++)for(let j=0;j<atributo.itemSize;j++)valores[i*atributo.itemSize+j]=atributo.array[indices[i]*atributo.itemSize+j];
+            geo.setAttribute(nombre,new THREE.BufferAttribute(valores,atributo.itemSize,atributo.normalized));
+          }geo.applyMatrix4(local);geo.translate(0,.02,-.1);piezasHachaArrojadiza.push({geo,material:mesh.material});}
+          else mesh.material.dispose();mesh.geometry.dispose();
+        }
+      }
+      const grupo=new THREE.Group();for(const p of piezasHachaArrojadiza)grupo.add(new THREE.Mesh(p.geo,p.material));return grupo;
+    }
+
     // Dos coreografías por golpe letal. Los giros se interpolan como ángulos continuos:
     // convertir la rodada completa a un slerp la acortaría por el camino más corto.
     const secuenciaMuerte=(nombre,duracion,distancia,impacto,cuadros,adelante=false)=>{
@@ -819,7 +838,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       else{
         if(m.tipo==='mohamed'&&a.armaLista){const r=a.retroceso||0;H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
         // Poses de las variantes: ambas hachas participan en el mismo golpe anunciado.
-        if(m.varianteGoblin==='dosHachas'&&a.anim!=='muerte'){
+        if(m.varianteGoblin==='dosHachas'&&!['muerte','apunta','lanzar'].includes(a.anim)){
           H.brazoI.rotation.set(H.brazoD.rotation.x,-H.brazoD.rotation.y,-H.brazoD.rotation.z);
           H.anteI.rotation.x=H.anteD.rotation.x;H.manoI.rotation.y=-H.manoD.rotation.y;
         }
@@ -846,7 +865,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         recogerPose(m,a);
       }
     }
-    return {crear,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
+    return {crear,crearHachaArrojadiza,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
   }
   window.CAOZ_ARPG_MODELOS=Object.freeze({fabrica});
 })();

@@ -40,6 +40,7 @@ async function iniciar(){
       <div class="labFila"><button data-accion="basico">Básico</button><button data-accion="cargado">Cargado</button><button data-accion="salto">Salto</button><button data-accion="parry">Parry</button></div>
       <h2>Enemigos de prueba</h2>
       <label>Tipo<select id="labEnemigo"><option value="goblin">Goblin</option><option value="kobold">Arquero</option><option value="saqueador">Saqueador con escudo</option><option value="can">Can · Centro y lados</option><option value="troll">Troll</option></select></label>
+      <label>Variante goblin<select id="labVarianteGoblin"><option value="">Aleatoria</option><option value="clasico">Clásico · Hacha</option><option value="dosHachas">Bruto · Dos hachas</option><option value="cuchillo">Pícaro · Cuchillo</option><option value="antorcha">Vigía · Antorcha</option></select></label>
       <div class="labDos"><label>Cantidad<input id="labCantidad" type="number" min="1" max="24" value="1"></label><label>Vida<input id="labVida" type="number" min="1" max="3000" value="34"></label><label>Velocidad<input id="labVelEnemigo" type="number" min="0" max="8" step="0.05" value="2.85"></label><label>Daño<input id="labDanoEnemigo" type="number" min="0" max="100" value="13"></label></div>
       <label class="labCheck"><input id="labQuieto" type="checkbox" checked> Quietos para probar impactos</label><button id="labInvocar">Añadir enemigos</button>
       <h2>Imagen</h2>
@@ -64,7 +65,7 @@ async function iniciar(){
   function limpiar(){clip=false;secuencia=null;cancelarCadena();congelar(false);api.limpiar($('labHeroe').value);$('labDano').value=valores.heroes[$('labHeroe').value].atq;$('labVel').value=1;muestras=[];decir('Escena lista. Los ajustes sólo afectan esta sesión.');}
   function volver(){clip=false;secuencia=null;cancelarCadena();r.pose(null);r.control(null);congelar(false);}
   function pose(){clip=false;secuencia=null;cancelarCadena();r.control({mov:[0,0],atacar:false});congelar(true);r.pose($('labAnim').value,numero('labFase'));$('labFaseTxt').textContent=Math.round(numero('labFase')*100)+'%';api.paso();}
-  function ajustesEnemigo(){return {vida:numero('labVida'),vel:numero('labVelEnemigo'),dano:numero('labDanoEnemigo'),quieto:$('labQuieto').checked};}
+  function ajustesEnemigo(){return {vida:numero('labVida'),vel:numero('labVelEnemigo'),dano:numero('labDanoEnemigo'),quieto:$('labQuieto').checked,varianteGoblin:$('labVarianteGoblin').value};}
   const ejecutar=fn=>()=>{try{fn();}catch(e){decir(e.message);}};
   $('labLimpiar').onclick=limpiar;$('labHeroe').onchange=limpiar;$('labPausa').onclick=()=>congelar(!detenido);$('labPaso').onclick=()=>{congelar(true);api.paso();};
   $('labAplicar').onclick=ejecutar(()=>{api.configurar({dano:numero('labDano'),velAtaque:numero('labVel')});decir('Daño y velocidad aplicados.');});

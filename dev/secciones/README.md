@@ -1343,6 +1343,14 @@ Las apariciones de goblins de camino y cobradores recorren una bolsa barajada co
 
 `modelos-visor.html?tipo=goblin&comparar=1` muestra las cuatro juntas a escala relativa real; el selector permite examinarlas individualmente, también con `?tipo=goblin&variante=antorcha`. Las animaciones y caídas se pueden recorrer con los controles existentes. `node dev/secciones/pruebas_arpg_variantes_goblin.mjs` verifica reparto, dimensiones, pesos del esqueleto, armas, presupuesto geométrico y contacto final de las caídas en ambos tipos de goblin.
 
+### Hachas arrojadas y quemadura de antorcha
+
+Los goblins clásicos y los brutos de dos hachas, incluidos los cobradores, pueden arrojar un hacha cuando están a 3–8 metros, tienen línea de visión y les corresponde un turno de ataque. Cada intento disponible tiene un 30 % de probabilidad y deja pasar 3.5–5.5 segundos antes de volver a intentarlo. Comparten los cupos de presión del combate; no empiezan otro lanzamiento mientras hay un aviso a distancia o un hacha volando. El aviso **«¡Hacha!»** dura 1.05 segundos y fija la dirección a mitad de la preparación. El proyectil gira, conserva las texturas del arma, viaja a 10 m/s hasta 10 metros y causa el 85 % del daño cuerpo a cuerpo. El filo pasa de ámbar a claro al entrar en la ventana de parry; un parry perfecto lo devuelve con daño triple. Los obstáculos lo detienen. La geometría y los materiales se reutilizan entre proyectiles, sin luces nuevas.
+
+Un golpe de antorcha que alcanza a **Adreida** le aplica quemadura durante **5 segundos**, con **2 puntos de daño cada segundo** antes de las mitigaciones existentes. Las partículas, el borde naranja y el contador bajo su retrato indican el efecto. Otro golpe renueva la duración sin acumular quemaduras ni reiniciar el pulso de daño. Un dash válido lo apaga inmediatamente; pulsarlo mientras está en enfriamiento no basta. Parry, bloqueo e invulnerabilidad evitan que ese golpe prenda fuego. El tiempo se detiene con la pausa, se limpia al morir y pertenece a cada personaje en cooperativo. Mohamed no recibe este estado.
+
+El inspector permite seleccionar la variante al invocar enemigos para reproducir ambos ataques. `node dev/secciones/pruebas_arpg_hachas_fuego.mjs` comprueba la IA, los impactos y devoluciones a 20/30/60/144 FPS, obstáculos, flechas existentes, reutilización de las hachas y duración, renovación y cancelación del fuego.
+
 ### Caídas de goblins según el golpe letal
 
 Goblins de Camino y cobradores tienen **24 coreografías: dos por cada una de 12 causas**. Al morir se elige una variante al azar, independiente de la semilla de daño y botín. La causa y dirección se capturan en el impacto letal y ya no cambian por golpes posteriores.
