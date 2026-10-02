@@ -48,7 +48,8 @@
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFShadowMap;renderer.info.autoReset=false;
   const gl=renderer.getContext(),hdr=renderer.extensions.has('EXT_color_buffer_half_float')||renderer.extensions.has('EXT_color_buffer_float'),muestras=Math.min(CAPTURA?4:2,gl.getParameter(gl.MAX_SAMPLES)||0);
   const depura=gl.getExtension('WEBGL_debug_renderer_info'),gpu=String(depura?gl.getParameter(depura.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)).slice(0,60);
-  const escena=new THREE.Scene();escena.background=new THREE.Color(0x0b0810);escena.fog=new THREE.FogExp2(0x0d0a12,.022);
+  // Bruma azul al fondo: el centro de combate queda despejado. No requiere otra pasada.
+  const escena=new THREE.Scene();escena.background=new THREE.Color(0x233442);escena.fog=new THREE.Fog(0x233442,13,56);
   // Entorno de los reflejos: noche azul arriba y el resplandor naranja del incendio en el horizonte.
   {const e=new THREE.Scene();e.background=new THREE.Color(0x05040a);const caja=(w,h,color,f,pos)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(f),side:THREE.DoubleSide}));m.position.set(...pos);m.lookAt(0,0,0);e.add(m);};
     caja(8,8,0x6f86c8,.9,[0,9,0]);caja(14,2.5,0xff7a30,1.6,[0,1,-9]);caja(10,2,0xff8a40,1.1,[9,1,3]);caja(10,2,0x2a3050,.8,[-9,1,2]);
@@ -117,7 +118,7 @@
     panel.hidden=false;selector.disabled=true;mensaje.textContent='Cargando textura…';
     const cargador=new THREE.TextureLoader(),texturas=[];
     try{
-      const repeticion=2*R/Math.cos(Math.PI/PANELES)/4.8;
+      const repeticion=2*R/Math.cos(Math.PI/PANELES)/7.2;
       // Las tres capas comparten UV; sólo el color se interpreta como sRGB.
       const resultados=await Promise.allSettled(['color','normal','superficie'].map(async nombre=>{
         const t=await cargador.loadAsync('./texturas-piso/vegetacion-'+nombre+'.webp');texturas.push(t);
@@ -130,7 +131,7 @@
       const vegetacion=new THREE.MeshStandardMaterial({map:color,normalMap:normal,normalScale:new THREE.Vector2(.7,.7),
         aoMap:superficie,aoMapIntensity:.5,roughnessMap:superficie,roughness:1,metalness:0,envMapIntensity:.35});
       const aplicar=()=>{
-        suelo.material=selector.value==='vegetacion'?vegetacion:matSuelo;
+        aplicarMaterialPiso(selector.value==='vegetacion'?vegetacion:matSuelo);
         const url=new URL(location.href);url.searchParams.set('piso',selector.value);history.replaceState(null,'',url);
         mensaje.textContent=selector.value==='vegetacion'?'Piedra con vegetación':'Adoquines originales';
         if(listo)dibujarCuadro();
@@ -240,8 +241,8 @@
   // Las casas se funden aparte (su módulo conserva el color por vértice y los atributos de las ventanas).
   const casasFundidas=CASAS.fundir(barrio);mundo.add(casasFundidas);
   // Luces: luna azul con sombras (sigue a Adreida), cielo tenue y la luz que ella lleva (el radio de luz de Diablo).
-  const hemi=new THREE.HemisphereLight(0x5a6aa0,0x2a1a10,.4);escena.add(hemi);
-  const luna=new THREE.DirectionalLight(0xa8b8ff,1.5);luna.castShadow=true;luna.shadow.mapSize.set(CAPTURA?2048:1024,CAPTURA?2048:1024);luna.shadow.radius=3;luna.shadow.blurSamples=12;luna.shadow.bias=-.0004;luna.shadow.normalBias=.03;
+  const hemi=new THREE.HemisphereLight(0x829abd,0x29251f,.5);escena.add(hemi);
+  const luna=new THREE.DirectionalLight(0xc1d6ff,2.1);luna.castShadow=true;luna.shadow.mapSize.set(CAPTURA?2048:1024,CAPTURA?2048:1024);luna.shadow.radius=3;luna.shadow.blurSamples=12;luna.shadow.bias=-.0004;luna.shadow.normalBias=.03;
   Object.assign(luna.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:70});escena.add(luna,luna.target);
   const luzHeroe=new THREE.PointLight(0xffd2a0,40,16,1.5);escena.add(luzHeroe);
 
@@ -263,13 +264,39 @@
     geoP.attributes.position.needsUpdate=geoP.attributes.aColor.needsUpdate=geoP.attributes.aTam.needsUpdate=true;}
   // Adoquines arrancados por el salto: una sola malla y una reserva reutilizable.
   const MAX_ESCOMBROS=72,escombros=[],moldeEscombro=new THREE.Object3D();
-  const mallaEscombros=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),std(0x79716a),MAX_ESCOMBROS);
+  const materialEscombrosInicial=std(0x79716a);
+  const mallaEscombros=new THREE.InstancedMesh(new THREE.DodecahedronGeometry(1,0),materialEscombrosInicial,MAX_ESCOMBROS);
+  const uvEscombros=new THREE.InstancedBufferAttribute(new Float32Array(MAX_ESCOMBROS*4),4).setUsage(THREE.DynamicDrawUsage);
+  mallaEscombros.geometry.setAttribute('aPisoEscombro',uvEscombros);
+  const materialesEscombros=new Map(),diametroPiso=2*R/Math.cos(Math.PI/PANELES);
+  // Cada fragmento conserva una pequeña porción del suelo de donde salió, incluso al girar.
+  // Comparte las texturas y su escala; las 72 instancias siguen en una sola llamada.
+  function aplicarMaterialPiso(material){
+    suelo.material=material;
+    if(!materialesEscombros.has(material)){
+      const m=material.clone();m.flatShading=true;
+      m.onBeforeCompile=shader=>{
+        shader.vertexShader=shader.vertexShader.replace('#include <common>','#include <common>\nattribute vec4 aPisoEscombro;');
+        const capas=[['USE_MAP','vMapUv','mapTransform'],['USE_NORMALMAP','vNormalMapUv','normalMapTransform'],
+          ['USE_AOMAP','vAoMapUv','aoMapTransform'],['USE_ROUGHNESSMAP','vRoughnessMapUv','roughnessMapTransform']];
+        const uv='vec2 uvPiedra = aPisoEscombro.xy + (uv - 0.5) * aPisoEscombro.zw;';
+        shader.vertexShader=shader.vertexShader.replace('#include <uv_vertex>','#include <uv_vertex>\n'+uv+'\n'+
+          capas.map(([uso,v,t])=>`#ifdef ${uso}\n${v} = ( ${t} * vec3( uvPiedra, 1.0 ) ).xy;\n#endif`).join('\n'));
+      };
+      m.customProgramCacheKey=()=> 'piso-escombros-v1';materialesEscombros.set(material,m);
+    }
+    if(mallaEscombros.material===materialEscombrosInicial)materialEscombrosInicial.dispose();
+    mallaEscombros.material=materialesEscombros.get(material);
+  }
   mallaEscombros.count=0;mallaEscombros.frustumCulled=false;mallaEscombros.castShadow=mallaEscombros.receiveShadow=true;
   mallaEscombros.instanceMatrix.setUsage(THREE.DynamicDrawUsage);escena.add(mallaEscombros);
   function romperPiso(p){for(let i=0;i<24;i++){
     const a=(i+rnd()*.7)*TAU/24,r=.45+rnd()*1.45,v=1.4+rnd()*2.5,s=.18+rnd()*.22;
+    const x=p.x+Math.cos(a)*r,z=p.z+Math.sin(a)*r,c=Math.cos(Math.PI/PANELES),sen=Math.sin(Math.PI/PANELES);
+    // La geometría circular fue girada antes de apoyarla sobre XZ: deshacer ese giro en las UV.
+    const uvPiso=new THREE.Vector4(.5+(x*c-z*sen)/diametroPiso,.5+(-x*sen-z*c)/diametroPiso,2*s/diametroPiso,2*s/diametroPiso);
     if(escombros.length===MAX_ESCOMBROS)escombros.shift();
-    escombros.push({pos:new V3(p.x+Math.cos(a)*r,.09,p.z+Math.sin(a)*r),vel:new V3(Math.cos(a)*v,4+rnd()*4,Math.sin(a)*v),
+    escombros.push({pos:new V3(x,.09,z),uvPiso,vel:new V3(Math.cos(a)*v,4+rnd()*4,Math.sin(a)*v),
       giro:new V3(rnd(),rnd()*TAU,rnd()),rot:new V3((rnd()-.5)*9,(rnd()-.5)*8,(rnd()-.5)*9),
       escala:new V3(s,.08+rnd()*.1,s*(.7+rnd()*.6)),vida:2.2+rnd()*.7,rebotes:0});}}
   function pasoEscombros(dt){let n=0;
@@ -278,8 +305,9 @@
         if(e.pos.y<=e.escala.y&&e.vel.y<0){e.pos.y=e.escala.y;e.rebotes++;e.vel.y*=-.25;e.vel.x*=.55;e.vel.z*=.55;e.rot.multiplyScalar(.45);
           if(e.rebotes===2){e.giro.x=e.giro.z=0;}}}
       const k=Math.min(1,e.vida/.55);moldeEscombro.position.copy(e.pos);moldeEscombro.position.y-=e.escala.y*(1-k);
-      moldeEscombro.rotation.set(e.giro.x,e.giro.y,e.giro.z);moldeEscombro.scale.copy(e.escala).multiplyScalar(k);moldeEscombro.updateMatrix();mallaEscombros.setMatrixAt(n++,moldeEscombro.matrix);}
-    mallaEscombros.count=n;mallaEscombros.instanceMatrix.needsUpdate=true;}
+      moldeEscombro.rotation.set(e.giro.x,e.giro.y,e.giro.z);moldeEscombro.scale.copy(e.escala).multiplyScalar(k);moldeEscombro.updateMatrix();mallaEscombros.setMatrixAt(n,moldeEscombro.matrix);
+      uvEscombros.setXYZW(n,e.uvPiso.x,e.uvPiso.y,e.uvPiso.z,e.uvPiso.w);n++;}
+    mallaEscombros.count=n;mallaEscombros.instanceMatrix.needsUpdate=uvEscombros.needsUpdate=true;}
   // Brasas y ceniza que suben de los incendios todo el rato.
   function ambiente(dt){for(const f of fuegos)if(rnd()<dt*9)particula(f.x+(rnd()-.5)*3,f.alto+rnd(),f.z+(rnd()-.5)*3,(rnd()-.5)*1.5+.6,1.5+rnd()*2,(rnd()-.5)*1.5+.4,2.5+rnd()*2,.35+rnd()*.3,3,1,.25,-.15);
     if(rnd()<dt*14){const h=heroe?heroe.pos:new V3();particula(h.x+(rnd()-.5)*26,6+rnd()*3,h.z+(rnd()-.5)*20,.4,-.5-rnd()*.4,.2,6,.25+rnd()*.25,.35,.33,.34,0);}}
@@ -1247,9 +1275,9 @@
   esc.addEventListener('wheel',e=>{e.preventDefault();vista.dist=Math.max(.65,Math.min(1.45,vista.dist*(e.deltaY>0?1.08:.93)));},{passive:false});
   function pasoCamara(dt){const retrato=camara.aspect<.9;const vivos=jugadores.filter(h=>h.vivo),centro=new V3();for(const h of vivos)centro.add(h.pos);centro.divideScalar(vivos.length||1);vista.foco.lerp(vivos.length?centro:heroe.pos,Math.min(1,dt*6));vista.temblor=Math.max(0,vista.temblor*Math.exp(-dt*10));
     const separacion=vivos.length>1?plano(vivos[0].pos,vivos[1].pos):0,D=Math.max(21*vista.dist,14+separacion*2.2/Math.min(1,camara.aspect)),el=.92,tr=vista.temblor,t=reloj.t;
-    escena.fog.density=Math.min(.022,.65/D);
+    escena.fog.near=D*.62;escena.fog.far=D*2.65;
     camara.position.set(vista.foco.x+Math.sin(t*61)*tr*.3,vista.foco.y+Math.sin(el)*D+Math.cos(t*53)*tr*.25,vista.foco.z+Math.cos(el)*D);camara.lookAt(vista.foco.x,vista.foco.y+.8,vista.foco.z);
-    luna.position.set(heroe.pos.x-10,24,heroe.pos.z-8);luna.target.position.copy(heroe.pos);luzHeroe.position.set(heroe.pos.x,5.5+(heroe.alto||0),heroe.pos.z+2.2);}
+    luna.position.set(heroe.pos.x-14,22,heroe.pos.z-12);luna.target.position.copy(heroe.pos);luzHeroe.position.set(heroe.pos.x,5.5+(heroe.alto||0),heroe.pos.z+2.2);}
 
   function posarHeroe(dt){
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
@@ -1409,6 +1437,7 @@
 
   async function preparar(){
     const suelo=adoquines();Object.assign(matSuelo,suelo);matSuelo.needsUpdate=true;capaQuemada.material.map=quemaduras();capaQuemada.material.needsUpdate=true;
+    aplicarMaterialPiso(matSuelo);
     await prepararPruebaPiso();
     crearEquipo();reiniciarExploracion();medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
     estado('Preparando las cartas del botín…');await CAOZ_CARTA_PINTOR.fuentes();const logo=await imagen('./art/logo.webp');dorso.mat=F.materialDorso(CAOZ_CARTA_PINTOR.dorso(logo));

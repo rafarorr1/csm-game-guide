@@ -10,7 +10,7 @@
   "color": "sRGB, WebP calidad 90",
   "normal": "OpenGL, datos lineales, WebP sin pérdida",
   "superficie": "Datos lineales; rojo: oclusión, verde: rugosidad, azul: 255. WebP sin pérdida.",
-  "escalaMetros": 4.8,
+  "escalaMetros": 7.2,
   "oclusion": 0.5,
   "relieve": 0.7,
   "geometria": "Se conserva la malla del suelo; sin desplazamiento ni teselación."
