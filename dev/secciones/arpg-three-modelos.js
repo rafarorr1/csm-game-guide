@@ -186,8 +186,11 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
     function constructor(H,varioBase=.14,ladosMiembro=7,tapasMiembro=2,coloresPiel=[],coloresTela={}){
       const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
       const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase,{hachaReal=false,maderaReal=false}={})=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso,pielReal:coloresPiel.includes(color),telaReal:coloresTela[color]||0,hachaReal,maderaReal});};
-      const montar=M=>{H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),mallas=[];
-        for(const [mat,lista] of piezas){for(const p of lista)p.m.premultiply(H[p.nombre].matrixWorld);
+      const montar=(M,escala=1)=>{
+        // Escala de construcción: huesos y piezas crecen juntos, sin escalar la raíz ni las colisiones dos veces.
+        if(escala!==1)for(const hueso of huesos)hueso.position.multiplyScalar(escala);
+        H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),mallas=[];
+        for(const [mat,lista] of piezas){for(const p of lista){if(escala!==1){p.geo.scale(escala,escala,escala);p.m.elements[12]*=escala;p.m.elements[13]*=escala;p.m.elements[14]*=escala;}p.m.premultiply(H[p.nombre].matrixWorld);}
           const malla=new THREE.SkinnedMesh(fundir(lista),M[mat]);malla.castShadow=mat!=='brillo';malla.receiveShadow=true;malla.frustumCulled=false;H.raiz.add(malla);malla.bind(esq,malla.matrixWorld);mallas.push(malla);}
         return mallas;};
       // Miembros: una cápsula que cuelga del hueso.
@@ -371,10 +374,25 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         for(const [u,v] of [[.07,.05],[.07,-.06],[.12,0]])for(const x of [1,-1])pon('manoD','metal',G.bola(.009,6,4),hierro2,[x*.019,-1.02+v,s*u]);}
       return {H,montar,p};
     }
-    function goblin(cobrador=false){
+    const VARIANTES_GOBLIN=Object.freeze({
+      clasico:Object.freeze({nombre:'Clásico · Hacha',escala:1,orejas:1,sombrero:'Casquete'}),
+      dosHachas:Object.freeze({nombre:'Bruto · Dos hachas',escala:1.1,orejas:.8,sombrero:'Casco remachado'}),
+      cuchillo:Object.freeze({nombre:'Pícaro · Cuchillo',escala:.9,orejas:1.25,sombrero:'Gorro caído'}),
+      antorcha:Object.freeze({nombre:'Vigía · Antorcha',escala:1.05,orejas:.65,sombrero:'Ala ancha'})
+    });
+    // Bolsa barajada: cada grupo de cuatro apariciones contiene las cuatro siluetas.
+    const bolsaVariantes=[];
+    function elegirVarianteGoblin(azar=Math.random){
+      if(!bolsaVariantes.length){bolsaVariantes.push(...Object.keys(VARIANTES_GOBLIN));for(let i=bolsaVariantes.length-1;i>0;i--){const j=Math.floor(azar()*(i+1));[bolsaVariantes[i],bolsaVariantes[j]]=[bolsaVariantes[j],bolsaVariantes[i]];}}
+      return bolsaVariantes.pop();
+    }
+    function goblin(cobrador=false,variante='clasico'){
+      const aspecto=VARIANTES_GOBLIN[variante],oreja=.3*aspecto.orejas;
       // Más segmentos sólo en la silueta orgánica; mismo esqueleto y tres mallas por goblin.
       const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=cobrador?0x703798:0x8e3324,tela=0x4f4636,bota=0x3d2c20;
-      const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p),{pon,montar,miembro}=constructor(H,.025,12,4,[piel,piel2],{[chaleco]:1,[tela]:1,[panuelo]:2,[0x3a3024]:1});
+      const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p);
+      if(variante==='antorcha'){H.llama=new THREE.Bone();H.manoD.add(H.llama);H.llama.position.set(0,-.02,.39);}
+      const {pon,montar,miembro}=constructor(H,.025,12,4,[piel,piel2],{[chaleco]:1,[tela]:1,[panuelo]:2,[0x3a3024]:1});
       pon('cadera','piel',G.cajaSuave(.24,.13,.16,.025),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,14,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.045);
       pon('cadera','piel',G.cil(.14,.145,.05,16),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.cajaSuave(.08,.07,.06,.012),0x6b4c32,[.1,.0,.1]);
       for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.cajaSuave(.1,.13,.15,.024),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,12),bota,[0,.1,0]);}
@@ -383,15 +401,43 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       pon('torso','piel',G.cil(.1,.13,.08,16),panuelo,[0,.29,0],[0,0,0],1,.045);pon('torso','piel',G.cono(.16,.3,12),panuelo,[0,.12,-.1],[-.25,0,0],[1,1,.4],.045);
       pon('cabeza','piel',G.bola(.14,20,14),piel,[0,.14,.01],[0,0,0],[1.05,.98,1]);pon('cabeza','piel',G.cajaSuave(.16,.06,.1,.018),piel2,[0,.06,.06]);
       pon('cabeza','piel',G.cono(.035,.14,12),piel2,[0,.12,.17],[Math.PI/2+.25,0,0]);
-      for(const s of [1,-1]){pon('cabeza','piel',G.cono(.055,.3,12),piel,[s*.2,.19,-.02],[0,0,-s*(Math.PI/2-.3)],[1,1,.35]);
+      for(const s of [1,-1]){pon('cabeza','piel',G.cono(.055*aspecto.orejas,oreja,12),piel,[s*(.05+oreja/2),.19,-.02],[0,0,-s*(Math.PI/2-.3)],[1,1,.35]);
         pon('cabeza','brillo',G.bola(.025,10,6),0xffd23a,[s*.052,.16,.12]);pon('cabeza','piel',G.caja(.06,.015,.02),0x2a2a12,[s*.05,.19,.125],[0,0,s*.3]);
         pon('cabeza','piel',G.cono(.01,.03,8),0xefe6d2,[s*.04,.06,.11],[Math.PI,0,0]);}
-      pon('cabeza','piel',G.casco(.145,20,7,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.04);
+      if(variante==='clasico')pon('cabeza','piel',G.casco(.145,20,7,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.04);
+      else if(variante==='dosHachas'){
+        pon('cabeza','metal',G.casco(.154,18,8,1.65),0xa6acb4,[0,.14,0],undefined,[1.06,1,1],.025,{hachaReal:true});
+        pon('cabeza','piel',G.cil(.159,.16,.033,18,true),0x2e2218,[0,.145,0]);
+        for(const x of [-.105,0,.105])pon('cabeza','metal',G.bola(.013,6,4),0xdeb46b,[x,.166,.15-Math.abs(x)*.3]);
+      }else if(variante==='cuchillo'){
+        pon('cabeza','piel',G.casco(.15,18,7,1.5),0x3a3024,[0,.135,0]);
+        pon('cabeza','piel',G.tubo([[0,.245,0],[.005,.31,-.02],[.055,.345,-.035],[.115,.31,-.025]],t=>.09*(1-t)+.008,12,8),0x3a3024,[0,0,0]);
+        pon('cabeza','piel',G.cil(.152,.156,.035,18,true),panuelo,[0,.16,0]);
+      }else{
+        pon('cabeza','piel',G.cil(.24,.245,.025,20),0x3a3024,[0,.235,-.01],[.08,0,.04],[1,1,.65]);
+        pon('cabeza','piel',G.casco(.135,18,7,1.55),0x3a3024,[0,.22,-.01],[.08,0,.04]);
+        pon('cabeza','piel',G.cil(.136,.139,.026,16,true),0x2e2218,[0,.24,-.01]);
+      }
       for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,12),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,12,8),piel2,[0,-.02,0]);}
       if(cobrador){pon('cadera','piel',G.bola(.095,14,10),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,10,6),0xe6b64e,[.19,.035,.065]);}
-      // Las UV del cilindro llevan la veta a lo largo del mango y envuelven su contorno.
-      pon('manoD','piel',G.cil(.018,.02,.46,10),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0],undefined,.025,{maderaReal:true});
-      pon('manoD','metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3],undefined,undefined,.025,{hachaReal:true});
+      // Las armas comparten los materiales de madera y metal, sin añadir mallas.
+      const hacha=l=>{
+        pon('mano'+l,'piel',G.cil(.018,.02,.46,10),0x6b4a2e,[0,-.02,.1],[Math.PI/2,0,0],undefined,.025,{maderaReal:true});
+        pon('mano'+l,'metal',G.caja(.02,.15,.12),0xa6acb4,[0,.05,.3],undefined,undefined,.025,{hachaReal:true});
+      };
+      if(variante==='clasico'||variante==='dosHachas'){hacha('D');if(variante==='dosHachas')hacha('I');}
+      else if(variante==='cuchillo'){
+        pon('manoD','piel',G.cil(.018,.02,.13,10),0x6b4a2e,[0,-.02,.04],[Math.PI/2,0,0],undefined,.025,{maderaReal:true});
+        pon('manoD','metal',G.caja(.085,.025,.025),0xb5a276,[0,-.02,.115]);
+        pon('manoD','metal',G.cono(.045,.25,4),0xa6acb4,[0,-.02,.247],[Math.PI/2,0,0],[1,1,.22],.025,{hachaReal:true});
+      }else{
+        pon('manoD','piel',G.cil(.024,.021,.53,10),0x6b4a2e,[0,-.02,.125],[Math.PI/2,0,0],undefined,.025,{maderaReal:true});
+        pon('manoD','piel',G.cil(.037,.03,.12,12),0x3a3024,[0,-.02,.34],[Math.PI/2,0,0]);
+        for(const z of [.29,.37])pon('manoD','metal',G.toro(.037,.007,12),0xa6acb4,[0,-.02,z],undefined,1,.025,{hachaReal:true});
+        // Fuego sobre la mecha; vive en el material luminoso de los ojos y no crea luces dinámicas.
+        pon('llama','brillo',G.torno([[.022,0],[.057,.045],[.042,.12],[.018,.19],[.001,.25]],10),0x952609,[0,0,0],[Math.PI/2,0,0],[1,.85,1]);
+        pon('llama','brillo',G.cono(.033,.14,10),0xe38e25,[0,.045,.065],[Math.PI/2,0,0]);
+      }
       return {H,montar,p};
     }
     function kobold(){
@@ -493,16 +539,20 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
         pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
     const constructores={adreida,goblin,cobrador:()=>goblin(true),troll,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
-    function crear(tipo){
+    function crear(tipo,{varianteGoblin='clasico'}={}){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
-      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=constructores[tipo](),mallas=montar(M);
+      const esGoblin=tipo==='goblin'||tipo==='cobrador';
+      varianteGoblin=esGoblin&&VARIANTES_GOBLIN[varianteGoblin]?varianteGoblin:'clasico';
+      const aspecto=esGoblin?VARIANTES_GOBLIN[varianteGoblin]:null,escala=aspecto?.escala||1;
+      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=esGoblin?goblin(tipo==='cobrador',varianteGoblin):constructores[tipo](),mallas=montar(M,escala);
+      if(escala!==1)for(const clave in p)if(typeof p[clave]==='number')p[clave]*=escala;
       // Los goblins suavizan el sombreado sin duplicar la cara visible de sus materiales.
       if(tipo==='goblin'||tipo==='cobrador'){M.piel.side=THREE.FrontSide;aplicarPielGoblin(M.piel);aplicarMetalHachaGoblin(M.metal);}
       // El extremo del hacha de Adreida, la cabeza (para colocar el rastro del corte y para las pruebas).
       if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
       if(tipo==='mohamed'){M.metal.roughness=.78;M.metal.metalness=.4;M.metal.envMapIntensity=.12;const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
-      return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo]};
+      return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo],alto:TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
     }
 
     // Dos coreografías por golpe letal. Los giros se interpolan como ángulos continuos:
@@ -613,20 +663,20 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       for(const [l,signo] of [['I',1],['D',-1]]){
         H['pierna'+l].rotation.set(-.2*cae,0,signo*.24*cae);H['rodilla'+l].rotation.x=.35*cae;
         H['brazo'+l].rotation.set(-.1,0,signo*.7*cae);H['ante'+l].rotation.z=signo*.2*cae;
-        H['mano'+l].rotation.y=Math.PI/2*cae;
+        H['mano'+l].rotation.y=(m.varianteGoblin==='dosHachas'&&l==='I'?-1:1)*Math.PI/2*cae;
       }
       H.cabeza.rotation.x=-.35*cae;
       H.cuerpo.position.y=k<.55?Math.sin(k/.55*Math.PI)*.18:0;
     }
     function apoyarMuerteGoblin(m,partido=false,k=0){
-      let apoyos=apoyosGoblin.get(m.tipo);const esq=m.mallas[0].skeleton;
+      const clave=m.tipo+':'+m.varianteGoblin;let apoyos=apoyosGoblin.get(clave);const esq=m.mallas[0].skeleton;
       if(!apoyos){const direcciones=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)if(x||y||z)direcciones.push(new THREE.Vector3(x,y,z));
         const extremos=esq.bones.map(()=>direcciones.map(()=>({d:-Infinity,p:null})));
         for(const mesh of m.mallas){const g=mesh.geometry;for(let i=0;i<g.attributes.position.count;i++){
           const b=g.attributes.skinIndex.getX(i);puntoApoyo.fromBufferAttribute(g.attributes.position,i).applyMatrix4(esq.boneInverses[b]);
           for(let j=0;j<direcciones.length;j++){const d=puntoApoyo.dot(direcciones[j]),e=extremos[b][j];if(d>e.d){e.d=d;e.p=puntoApoyo.clone();}}
         }}
-        apoyos=extremos.map(lista=>[...new Map(lista.filter(e=>e.p).map(e=>[e.p.toArray().join(','),e.p])).values()]);apoyosGoblin.set(m.tipo,apoyos);
+        apoyos=extremos.map(lista=>[...new Map(lista.filter(e=>e.p).map(e=>[e.p.toArray().join(','),e.p])).values()]);apoyosGoblin.set(clave,apoyos);
       }
       // La altura escrita en la coreografía es el vuelo sobre el contacto, no el pivote de los pies.
       const vuelo=m.H.cuerpo.position.y;m.H.cuerpo.position.y=0;m.raiz.updateMatrixWorld(true);let minimo=Infinity;
@@ -768,14 +818,35 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(m.tipo==='adreida')animacion.resolver(m,a);
       else{
         if(m.tipo==='mohamed'&&a.armaLista){const r=a.retroceso||0;H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
+        // Poses de las variantes: ambas hachas participan en el mismo golpe anunciado.
+        if(m.varianteGoblin==='dosHachas'&&a.anim!=='muerte'){
+          H.brazoI.rotation.set(H.brazoD.rotation.x,-H.brazoD.rotation.y,-H.brazoD.rotation.z);
+          H.anteI.rotation.x=H.anteD.rotation.x;H.manoI.rotation.y=-H.manoD.rotation.y;
+        }
+        if(m.varianteGoblin==='antorcha'&&['quieto','andar','aturdido'].includes(a.anim)){
+          H.brazoD.rotation.x=-.35;H.anteD.rotation.x=-1.18;H.brazoD.rotation.z=-.23;
+        }
+        if(m.varianteGoblin==='cuchillo'&&['golpe','aviso'].includes(a.anim)){
+          const kk=a.anim==='aviso'?k*.38:k,prepara=tramo(kk,0,.35),punza=tramo(kk,.36,.55),recoge=tramo(kk,.62,1);
+          H.brazoD.rotation.x=-.15-.65*prepara-.55*punza+1.2*recoge;H.brazoD.rotation.z=-.18-.12*prepara+.12*recoge;
+          H.anteD.rotation.x=-.55-1.1*prepara+1.3*punza-.2*recoge;
+          H.manoD.rotation.x=1.55*punza*(1-recoge);
+        }
+        if(H.llama){const fuego=a.anim==='muerte'?Math.max(.001,1-tramo(k,0,.32)):1;
+          if(fuego===.001){H.llama.scale.setScalar(.001);H.llama.rotation.y=0;}
+          else{H.llama.scale.set((.94+.06*Math.sin(t*19))*fuego,(.94+.06*Math.sin(t*23))*fuego,(1+.1*Math.sin(t*17))*fuego);H.llama.rotation.y=.08*Math.sin(t*13);}
+        }
         // Media vuelta sobre el mango: el filo queda al frente, también durante el ataque.
         // El ajuste del agarre conserva la geometría y las UV del cuaderno de pintura.
         // Al caer afloja la muñeca para que el arma también repose sobre el suelo.
-        if(m.tipo==='goblin'||m.tipo==='cobrador')H.manoD.rotateZ(Math.PI*(a.anim==='muerte'?1-tramo(k,.12,.66):1));
+        if(m.tipo==='goblin'||m.tipo==='cobrador'){
+          const giro=Math.PI*(a.anim==='muerte'?1-tramo(k,.12,.66):1);H.manoD.rotateZ(giro);
+          if(m.varianteGoblin==='dosHachas')H.manoI.rotateZ(giro);
+        }
         recogerPose(m,a);
       }
     }
-    return {crear,posar,TIPOS,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
+    return {crear,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
   }
   window.CAOZ_ARPG_MODELOS=Object.freeze({fabrica});
 })();

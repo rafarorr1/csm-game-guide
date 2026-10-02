@@ -16,6 +16,8 @@
 <canvas id="lienzo"></canvas>
 <div class="mvPanel">
   <label>Personaje <select id="tipo"></select></label>
+  <label id="opcionVariante" hidden>Variante <select id="varianteGoblin"></select></label>
+  <button id="compararGoblins" type="button" aria-pressed="false" hidden>Ver las cuatro variantes</button>
   <label>Animación <select id="anim"></select></label>
   <label>Velocidad <input id="vel" type="range" min="0" max="2" step="0.05" value="1"></label>
   <label>Momento <input id="faseAnim" type="range" min="0" max="1" step="0.001" value="0"></label>
@@ -29,5 +31,6 @@
   <p id="datos"></p>
   <p class="mvAyuda">Arrastra para girar · rueda o pellizco para acercar</p>
 </div>
+<div id="fichasVariantes" class="mvFichas" hidden></div>
 </body>
 </html>

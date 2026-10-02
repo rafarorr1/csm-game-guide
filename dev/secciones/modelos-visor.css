@@ -8,3 +8,12 @@ html,body{margin:0;height:100%;background:var(--fondo);color:var(--texto);font:1
 .mvBotones{display:flex;flex-wrap:wrap;gap:6px}
 .mvPanel button[aria-pressed="true"]{border-color:var(--acento);color:var(--acento)}
 #datos,.mvAyuda{margin:0;font-size:12px;opacity:.75}
+
+[hidden]{display:none!important}
+.mvComparando .mvPanel{right:12px;max-width:none;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));font-size:12px}
+.mvComparando .mvPanel label{flex-direction:column;align-items:stretch;gap:2px}.mvComparando .mvPanel select{width:100%;min-width:0}
+.mvComparando .mvBotones{grid-column:span 2;align-content:center}.mvComparando #datos{grid-column:1/-1}.mvComparando .mvAyuda{display:none}
+.mvFichas{position:fixed;left:12%;right:12%;bottom:26px;display:grid;grid-template-columns:repeat(4,1fr);gap:10px;pointer-events:none;text-align:center}
+.mvFichas div{padding:10px 6px;background:var(--panel);border:1px solid var(--borde);border-radius:8px}
+.mvFichas b{display:block;color:#ead5a6;font-size:13px}.mvFichas small{display:block;margin-top:3px;opacity:.8;font-size:11px}
+@media(max-width:700px){.mvFichas{left:8px;right:8px;bottom:8px;gap:4px}.mvFichas b{font-size:10px}.mvFichas small{font-size:9px}.mvPanel{font-size:12px;gap:5px}}

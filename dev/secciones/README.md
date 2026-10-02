@@ -1328,6 +1328,21 @@ El mango usa `wood-veneer1-ue.zip`, limitado a la pieza 20 mediante `maderaReal`
 La geometría y el atlas del cuaderno UV v2 siguen intactos. Su visor pide `fabrica(THREE,{pielGoblin:false})`, para mostrar la ilustración cargada sin sustituirla por la piel del juego. Los mapas se resuelven desde la URL de `arpg-three-modelos.js`, quedan incluidos en la exportación y se sirven mediante una lista explícita de archivos locales. `node dev/secciones/pruebas_arpg_piel_goblin.mjs` comprueba las máscaras de las 16 piezas de piel, las ocho de ropa, la hoja y el mango, la reutilización de texturas, los espacios de color, la compatibilidad del cuaderno, los otros personajes y los recursos exportados.
 
 
+### Cuatro variantes de goblin
+
+Las apariciones de goblins de camino y cobradores recorren una bolsa barajada con cuatro siluetas. Cada grupo de cuatro incluye todas, con las mismas texturas compartidas de piel, arpillera, metal oxidado y madera:
+
+| Variante | Arma | Sombrero | Tamaño corporal | Orejas |
+| --- | --- | --- | --- | --- |
+| Clásico | Hacha original | Casquete original | 100 % | Originales |
+| Bruto | Dos hachas | Casco metálico remachado | 110 % | 80 % |
+| Pícaro | Cuchillo | Gorro de tela caído | 90 % | 125 % |
+| Vigía | Antorcha | Sombrero de ala ancha | 105 % | 65 % |
+
+`crear(tipo,{varianteGoblin})` permite elegir `clasico`, `dosHachas`, `cuchillo` o `antorcha`; omitir la opción conserva el modelo original y su cuaderno UV. La escala se aplica a huesos y geometría durante la construcción; altura y radio siguen esa proporción sin escalar dos veces la raíz. El bruto ataca con ambos brazos, el pícaro tiene una estocada compacta y el vigía sostiene la antorcha erguida. Conservan el daño y los avisos de su tipo de enemigo. Cada modelo sigue usando **tres mallas** (4,652–5,018 triángulos; el cobrador añade 352). La llama comparte el material de los ojos, se anima con un hueso y se apaga al morir, sin luces dinámicas adicionales.
+
+`modelos-visor.html?tipo=goblin&comparar=1` muestra las cuatro juntas a escala relativa real; el selector permite examinarlas individualmente, también con `?tipo=goblin&variante=antorcha`. Las animaciones y caídas se pueden recorrer con los controles existentes. `node dev/secciones/pruebas_arpg_variantes_goblin.mjs` verifica reparto, dimensiones, pesos del esqueleto, armas, presupuesto geométrico y contacto final de las caídas en ambos tipos de goblin.
+
 ### Caídas de goblins según el golpe letal
 
 Goblins de Camino y cobradores tienen **24 coreografías: dos por cada una de 12 causas**. Al morir se elige una variante al azar, independiente de la semilla de daño y botín. La causa y dirección se capturan en el impacto letal y ya no cambian por golpes posteriores.

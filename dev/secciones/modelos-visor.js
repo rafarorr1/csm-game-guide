@@ -12,7 +12,7 @@
     ...Object.entries(F.muertesGoblin).flatMap(([tipo,variantes])=>variantes.map((p,i)=>['muerte-'+tipo+'-'+(i+1),p.duracion+.7,'goblins',p.nombre,F.crearMuerteGoblin(tipo,i)]))];
   const lienzo=$('lienzo'),render=new THREE.WebGLRenderer({canvas:lienzo,antialias:true});
   render.setPixelRatio(Math.min(2,devicePixelRatio));render.outputColorSpace=THREE.SRGBColorSpace;render.toneMapping=THREE.AgXToneMapping;render.toneMappingExposure=1.1;
-  render.shadowMap.enabled=true;render.shadowMap.type=THREE.PCFSoftShadowMap;
+  render.shadowMap.enabled=true;render.shadowMap.type=THREE.PCFShadowMap;
   const escena=new THREE.Scene();escena.background=new THREE.Color(0x1d2230);
   escena.add(new THREE.HemisphereLight(0xdde8ff,0x3a3028,1.4));
   const sol=new THREE.DirectionalLight(0xfff0dd,2.8);sol.position.set(3,6,4);sol.castShadow=true;sol.shadow.mapSize.set(2048,2048);sol.shadow.bias=-.0004;sol.shadow.normalBias=.025;
@@ -42,29 +42,43 @@
   // Cámara orbital: ángulo, elevación, distancia y altura del punto mirado.
   const vista={az:.35,el:.12,dist:4.6,alto:1.05},meta={...vista};
   const encuadres={cara:m=>({dist:1.55,alto:m.alto*.86,el:.06}),cuerpo:m=>({dist:m.alto*2.35,alto:m.alto*.54,el:.12})};
-  let modelo=null,t=0,pausa=false,girar=false;
+  let modelo=null,modelos=[],t=0,pausa=false,girar=false,comparar=q.get('comparar')==='1';
+  for(const [id,v]of Object.entries(F.VARIANTES_GOBLIN)){const o=document.createElement('option');o.value=id;o.textContent=v.nombre;$('varianteGoblin').append(o);}
+  $('varianteGoblin').value=F.VARIANTES_GOBLIN[q.get('variante')]?q.get('variante'):'clasico';
   for(const k of Object.keys(F.TIPOS)){const o=document.createElement('option');o.value=k;o.textContent=F.TIPOS[k].nombre;$('tipo').append(o);}
   function listaAnims(){const tipo=$('tipo').value,antes=$('anim').value;$('anim').innerHTML='';
     for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada'].includes(n))continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
     if([...$('anim').options].some(o=>o.value===antes))$('anim').value=antes;}
-  function cargar(tipo){if(modelo){escena.remove(modelo.raiz);modelo.mallas.forEach(m=>{m.geometry.dispose();m.material.dispose();});}
-    modelo=F.crear(tipo);escena.add(modelo.raiz);Object.assign(meta,encuadres.cuerpo(modelo));
-    const tri=modelo.mallas.reduce((s,m)=>s+m.geometry.attributes.position.count/3,0);
-    $('datos').textContent=modelo.nombre+' · '+modelo.alto.toFixed(2)+' m · '+(tri/1000).toFixed(1)+' mil triángulos · '+modelo.mallas.length+' mallas';
+  function cargar(tipo){
+    for(const m of modelos){escena.remove(m.raiz);m.mallas.forEach(mesh=>{mesh.geometry.dispose();mesh.material.dispose();});}
+    const esGoblin=['goblin','cobrador'].includes(tipo);if(!esGoblin)comparar=false;document.body.classList.toggle('mvComparando',comparar);
+    $('opcionVariante').hidden=$('compararGoblins').hidden=!esGoblin;
+    $('compararGoblins').setAttribute('aria-pressed',comparar);$('compararGoblins').textContent=comparar?'Ver una variante':'Ver las cuatro variantes';
+    $('cara').disabled=comparar;
+    const variantes=comparar?Object.keys(F.VARIANTES_GOBLIN):[$('varianteGoblin').value];
+    modelos=variantes.map(varianteGoblin=>F.crear(tipo,{varianteGoblin}));modelo=modelos[0];
+    for(const m of modelos)escena.add(m.raiz);
+    const tri=modelos.reduce((n,m)=>n+m.mallas.reduce((s,mesh)=>s+mesh.geometry.attributes.position.count/3,0),0);
+    $('datos').textContent=(comparar?'Cuatro variantes · tamaño relativo real':modelo.nombre+(esGoblin?' · '+F.VARIANTES_GOBLIN[modelo.varianteGoblin].nombre:'')+' · '+modelo.alto.toFixed(2)+' m')+' · '+(tri/1000).toFixed(1)+' mil triángulos · '+modelos.length*3+' mallas';
+    $('fichasVariantes').hidden=!comparar;$('fichasVariantes').replaceChildren();
+    if(comparar)for(const m of modelos){const v=F.VARIANTES_GOBLIN[m.varianteGoblin],ficha=document.createElement('div'),nombre=document.createElement('b'),detalle=document.createElement('small');nombre.textContent=v.nombre;detalle.textContent=v.sombrero+' · '+m.alto.toFixed(2)+' m';ficha.append(nombre,detalle);$('fichasVariantes').append(ficha);}
     listaAnims();}
   $('tipo').value=F.TIPOS[q.get('tipo')]?q.get('tipo'):'adreida';cargar($('tipo').value);
   if([...$('anim').options].some(o=>o.value===q.get('anim')))$('anim').value=q.get('anim');
   $('tipo').addEventListener('change',()=>{cargar($('tipo').value);t=0;encuadrarAnimacion();});
+  $('varianteGoblin').addEventListener('change',()=>{comparar=false;cargar($('tipo').value);t=0;encuadrarAnimacion();});
+  $('compararGoblins').addEventListener('click',()=>{comparar=!comparar;cargar($('tipo').value);t=0;encuadrarAnimacion();});
   $('anim').addEventListener('change',()=>{t=0;encuadrarAnimacion();});
   const actual=()=>ANIMS.find(a=>a[0]===$('anim').value)||ANIMS[0];
-  function encuadrarAnimacion(){const muerte=actual()[4];Object.assign(meta,muerte?{dist:4.8,alto:.35,el:.4,az:1.1}:encuadres.cuerpo(modelo));suelo.scale.set(muerte?1.8:1,1,muerte?1.8:1);prepararPolvo(muerte);}
+  function encuadrarAnimacion(){const muerte=actual()[4];Object.assign(meta,comparar?{dist:6.4,alto:.7,el:.15,az:0}:muerte?{dist:4.8,alto:.35,el:.4,az:1.1}:encuadres.cuerpo(modelo));suelo.scale.set(comparar?1.35:muerte?1.8:1,1,comparar?1:muerte?1.8:1);prepararPolvo(comparar?null:muerte);}
+
   encuadrarAnimacion();
   $('repetir').addEventListener('click',()=>{t=0;pausa=false;$('pausa').textContent='Pausa';});
   $('faseAnim').addEventListener('input',()=>{t=+$('faseAnim').value*(actual()[1]-.00001);pausa=true;$('pausa').textContent='Seguir';});
   $('pausa').addEventListener('click',()=>{pausa=!pausa;$('pausa').textContent=pausa?'Seguir':'Pausa';});
   $('girar').addEventListener('click',()=>{girar=!girar;$('girar').setAttribute('aria-pressed',girar);});
   $('cara').addEventListener('click',()=>Object.assign(meta,encuadres.cara(modelo),{az:0}));
-  $('cuerpo').addEventListener('click',()=>Object.assign(meta,encuadres.cuerpo(modelo)));
+  $('cuerpo').addEventListener('click',encuadrarAnimacion);
   // Arrastrar gira; dos dedos pellizcan; la rueda acerca.
   const punteros=new Map();let pellizco=0;
   lienzo.addEventListener('pointerdown',e=>{lienzo.setPointerCapture(e.pointerId);punteros.set(e.pointerId,[e.clientX,e.clientY]);});
@@ -80,8 +94,11 @@
     if(!pausa)t+=dt*+$('vel').value;if(girar)meta.az+=dt*.4;
     for(const k in vista)vista[k]+=(meta[k]-vista[k])*Math.min(1,dt*8);
     const [nombre,dur,,,muerte]=actual(),fase=(t%dur)/dur,k=muerte?Math.min(1,(t%dur)/muerte.duracion):fase;
-    $('faseAnim').value=fase;modelo.raiz.position.set(0,0,muerte?-F.recorridoMuerteGoblin(muerte,k):0);
-    F.posar(modelo,{anim:muerte?'muerte':nombre,muerte,t,k,fase:t*TAU_PASO,paso:1});
+    $('faseAnim').value=fase;
+    for(const [i,m]of modelos.entries()){
+      m.raiz.position.set(comparar?(i-1.5)*1.15:0,0,muerte?-F.recorridoMuerteGoblin(muerte,k):0);
+      F.posar(m,{anim:muerte?'muerte':nombre,muerte,t,k,fase:t*TAU_PASO,paso:1});
+    }
     dibujarPolvo(t%dur);const c=Math.cos(vista.el),centroZ=muerte?-muerte.distancia*.5:0;camara.position.set(Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,centroZ+Math.cos(vista.az)*c*vista.dist);camara.lookAt(0,vista.alto,centroZ);
     render.render(escena,camara);requestAnimationFrame(cuadro);}
   const TAU_PASO=Math.PI*2/1.1;

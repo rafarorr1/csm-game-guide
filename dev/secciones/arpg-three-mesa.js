@@ -388,7 +388,7 @@
   const PARRY={dur:.35,perfecto:.18,perfectoLanza:.25,cd:.5,bloqueo:.3,aturde:2,aturdeJefe:1,expuesto:2};
   const hitboxMat=new THREE.MeshBasicMaterial({visible:false});
   let heroe=null,sigId=1;const jugadores=[];const enemigos=[],lanzas=[],globos=[];
-  function cuerpoDe(tipo){const m=MOD.crear(tipo);const caja=new THREE.Mesh(new THREE.CylinderGeometry(m.radio*1.35,m.radio*1.35,m.alto*1.05,10).translate(0,m.alto*.52,0),hitboxMat);m.raiz.add(caja);m.caja=caja;escena.add(m.raiz);return m;}
+  function cuerpoDe(tipo){const m=MOD.crear(tipo,{varianteGoblin:tipo==='goblin'||tipo==='cobrador'?MOD.elegirVarianteGoblin(rnd):'clasico'});const caja=new THREE.Mesh(new THREE.CylinderGeometry(m.radio*1.35,m.radio*1.35,m.alto*1.05,10).translate(0,m.alto*.52,0),hitboxMat);m.raiz.add(caja);m.caja=caja;escena.add(m.raiz);return m;}
   // Se juega con Adreida (cuerpo a cuerpo, el hacha a dos manos) o con Mohamed (a distancia, una pistola de seis balas).
   const HEROES={adreida:{nombre:'Adreida',alma:120,atq:12,retrato:'lider_adreida'},
     mohamed:{nombre:'Mohamed',alma:100,atq:9,retrato:'lider_mohamed',cargador:6,cadencia:.24,recarga:1.1,alcance:15,vel:30}};
