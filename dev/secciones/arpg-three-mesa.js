@@ -949,7 +949,7 @@
     marca('onda',e.pos.x,e.pos.z,5,0x916aff,.8);}
   const peligrosTroll=[];
   const geoRocaTroll=new THREE.IcosahedronGeometry(.36,0),matRocaTroll=new THREE.MeshStandardMaterial({color:0x887566,roughness:1});
-  function liberarModeloTroll(m){m.raiz.removeFromParent();const geometrías=new Set(),materiales=new Set(),esqueletos=new Set();m.raiz.traverse(o=>{if(o.skeleton)esqueletos.add(o.skeleton);if(o.geometry)geometrías.add(o.geometry);if(o.material)for(const mat of Array.isArray(o.material)?o.material:[o.material])materiales.add(mat);});for(const g of geometrías){if(g.userData.sinArma)g.setIndex(g.userData.sinArma);g.dispose();}for(const mat of materiales)mat.dispose();for(const esq of esqueletos)esq.dispose();}
+  function liberarModeloTroll(m){m.raiz.removeFromParent();const geometrías=new Set(),materiales=new Set(),esqueletos=new Set();m.raiz.traverse(o=>{if(o.skeleton)esqueletos.add(o.skeleton);if(o.geometry)geometrías.add(o.geometry);if(o.material)for(const mat of Array.isArray(o.material)?o.material:[o.material])materiales.add(mat);});for(const g of geometrías){if(g.userData.compartida)continue;if(g.userData.sinArma)g.setIndex(g.userData.sinArma);g.dispose();}for(const mat of materiales)mat.dispose();for(const esq of esqueletos)esq.dispose();}
   function quitarPeligroTroll(p){if(p.marca)quitarMarca(p.marca);if(p.modelo)liberarModeloTroll(p.modelo);else escena.remove(p.m);const i=peligrosTroll.indexOf(p);if(i>=0)peligrosTroll.splice(i,1);}
   function limpiarPeligrosTroll(e){for(const p of [...peligrosTroll])if(!e||p.dueno===e)quitarPeligroTroll(p);}
   function peligroTroll(e,tipo,m,desde,hasta,dur,altura,radio,dano,modelo=null){dentroPlaza(hasta,radio);hasta.y=0;

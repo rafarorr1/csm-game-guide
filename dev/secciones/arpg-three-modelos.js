@@ -1,9 +1,9 @@
 /* Modelos 3D sencillos para la prueba de ARPG (arpg-three): Adreida, el Goblin
    de Camino, el Kobold lancero, el Saqueador y Can, el de los Goblins. Son
    low poly, hechos con primitivas de three.js (cápsulas, cajas, conos) y
-   colores por vértice sacados de su carta, sin archivos de modelo. Los goblins
-   suavizan sus volúmenes con más segmentos y normales interpoladas; su piel
-   expuesta usa color, normales y rugosidad compartidos, sin añadir mallas. Adreida
+   colores por vértice sacados de su carta. Los goblins del juego usan la malla
+   PBR local de Scenario con pesos suaves; el modelo de primitivas permanece
+   disponible para el cuaderno UV y como alternativa. Adreida
    es la detallada: sólidos de revolución, mechones y correas en tubo, la
    cabeza esculpida y las hojas del hacha extruidas, con sombreado suave.
      · Esqueleto de huesos (THREE.Bone): cadera, torso, cabeza, brazos con
@@ -26,6 +26,7 @@
   const suave=k=>k<=0?0:k>=1?1:k*k*(3-2*k);
   const tramo=(k,a,b)=>suave((k-a)/(b-a));
   function fabrica(THREE,{pielGoblin=true}={}){
+    const goblinScenario=pielGoblin&&window.CAOZ_ARPG_GOBLIN&&window.CAOZ_GOBLIN_DATOS?window.CAOZ_ARPG_GOBLIN.fabrica(THREE):null;
     const animacion=window.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(THREE);
     const V=(x,y,z)=>new THREE.Vector3(x,y,z);
     const matriz=(pos=[0,0,0],rot=[0,0,0],esc=1)=>new THREE.Matrix4().compose(V(...pos),new THREE.Quaternion().setFromEuler(new THREE.Euler(...rot)),Array.isArray(esc)?V(...esc):V(esc,esc,esc));
@@ -70,7 +71,7 @@
       }return r;
     }
     function fundir(piezas){
-      const conArma=piezas.some(p=>p.armaArrojable),conPiel=piezas.some(p=>p.pielReal),conHacha=piezas.some(p=>p.hachaReal),conUV=conPiel||conHacha,uvs=[];
+      const conArma=piezas.some(p=>p.armaArrojable),conPiel=piezas.some(p=>p.pielReal||p.telaReal||p.maderaReal),conHacha=piezas.some(p=>p.hachaReal),conUV=conPiel||conHacha,uvs=[];
       let n=0;const gs=piezas.map(p=>{const g=(p.geo.index?p.geo.toNonIndexed():p.geo.clone());if(conUV)uvs.push(uvPiel(p,g));g.applyMatrix4(p.m);n+=g.attributes.position.count;return [g,p.color,p.vario,p.hueso,p.pielReal,p.telaReal,p.hachaReal,p.maderaReal,p.armaArrojable];});
       const P=new Float32Array(n*3),N=new Float32Array(n*3),C=new Float32Array(n*3),SI=new Uint16Array(n*4),SW=new Float32Array(n*4),c=new THREE.Color();let o=0;
       const ARMA=conArma?new Float32Array(n):null;
@@ -108,7 +109,7 @@ outgoingLight=mix(outgoingLight,uColorD*1.6,uDestello);
 if(uDisuelve>0.){float bordeM=1.-smoothstep(0.,.1,quemaM-(uDisuelve*1.15-.08));outgoingLight=mix(outgoingLight,vec3(5.,1.6,.3),bordeM);}
 #include <opaque_fragment>`);};
         m.customProgramCacheKey=()=>'arpg-modelo';return m;};
-      return {u,piel:hacer({roughness:.82,metalness:0,side:lisos?THREE.DoubleSide:THREE.FrontSide}),metal:hacer({roughness:.32,metalness:.85}),brillo:hacer({roughness:1,metalness:0,color:0x000000},4)};
+      return {u,hacer,piel:hacer({roughness:.82,metalness:0,side:lisos?THREE.DoubleSide:THREE.FrontSide}),metal:hacer({roughness:.32,metalness:.85}),brillo:hacer({roughness:1,metalness:0,color:0x000000},4)};
     }
 
     // Una sola copia de las texturas por fábrica, compartida por toda la horda y por los cobradores.
@@ -390,13 +391,20 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(!bolsaVariantes.length){bolsaVariantes.push(...Object.keys(VARIANTES_GOBLIN));for(let i=bolsaVariantes.length-1;i>0;i--){const j=Math.floor(azar()*(i+1));[bolsaVariantes[i],bolsaVariantes[j]]=[bolsaVariantes[j],bolsaVariantes[i]];}}
       return bolsaVariantes.pop();
     }
-    function goblin(cobrador=false,variante='clasico'){
+    function goblin(cobrador=false,variante='clasico',scenario=false){
       const aspecto=VARIANTES_GOBLIN[variante],oreja=.3*aspecto.orejas;
       // Más segmentos sólo en la silueta orgánica; mismo esqueleto y tres mallas por goblin.
       const piel=0x8d9b4f,piel2=0x7a8943,chaleco=0x5b4230,panuelo=cobrador?0x703798:0x8e3324,tela=0x4f4636,bota=0x3d2c20;
-      const p={muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p);
-      if(variante==='antorcha'){H.llama=new THREE.Bone();H.manoD.add(H.llama);H.llama.position.set(0,-.02,.39);}
-      const {pon,montar,miembro}=constructor(H,.025,12,4,[piel,piel2],{[chaleco]:1,[tela]:1,[panuelo]:2,[0x3a3024]:1});
+      const p=scenario?goblinScenario.p():{muslo:.24,pierna:.22,pie:.05,cintura:.05,torso:.3,hombros:.17,brazo:.2,antebrazo:.19,ancho:.08},H=esqueleto(p);
+      if(scenario)goblinScenario.preparar(H);
+      if(variante==='antorcha'){H.llama=new THREE.Bone();H.manoD.add(H.llama);H.llama.position.set(0,scenario?-.07:-.02,.39);}
+      const piezas=constructor(H,.025,12,4,[piel,piel2],{[chaleco]:1,[tela]:1,[panuelo]:2,[0x3a3024]:1});
+      const {montar,miembro}=piezas;
+      const pon=(hueso,mat,geo,color,pos,rot,esc,vario,opciones)=>{
+        if(scenario&&hueso.startsWith('mano')){geo.applyMatrix4(matriz(pos,rot,esc)).rotateZ(Math.PI).translate(0,-.09,0);pos=rot=undefined;esc=1;}
+        piezas.pon(hueso,mat,geo,color,pos,rot,esc,vario,opciones);
+      };
+      if(!scenario){
       pon('cadera','piel',G.cajaSuave(.24,.13,.16,.025),tela,[0,0,0]);pon('cadera','piel',G.cil(.15,.2,.18,14,true),tela,[0,-.08,0],[0,0,0],[1,1,.8],.045);
       pon('cadera','piel',G.cil(.14,.145,.05,16),0x2e2218,[0,.05,0],[0,0,0],[1,1,.75]);pon('cadera','piel',G.cajaSuave(.08,.07,.06,.012),0x6b4c32,[.1,.0,.1]);
       for(const l of ['I','D']){miembro('pierna'+l,.055,.16,piel2);miembro('rodilla'+l,.05,.14,piel2);pon('pie'+l,'piel',G.cajaSuave(.1,.13,.15,.024),bota,[0,.04,.02]);pon('pie'+l,'piel',G.cil(.07,.06,.06,12),bota,[0,.1,0]);}
@@ -408,7 +416,8 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       for(const s of [1,-1]){pon('cabeza','piel',G.cono(.055*aspecto.orejas,oreja,12),piel,[s*(.05+oreja/2),.19,-.02],[0,0,-s*(Math.PI/2-.3)],[1,1,.35]);
         pon('cabeza','brillo',G.bola(.025,10,6),0xffd23a,[s*.052,.16,.12]);pon('cabeza','piel',G.caja(.06,.015,.02),0x2a2a12,[s*.05,.19,.125],[0,0,s*.3]);
         pon('cabeza','piel',G.cono(.01,.03,8),0xefe6d2,[s*.04,.06,.11],[Math.PI,0,0]);}
-      if(variante==='clasico')pon('cabeza','piel',G.casco(.145,20,7,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.04);
+      }
+      if(variante==='clasico'&&!scenario)pon('cabeza','piel',G.casco(.145,20,7,1.1),0x3a3024,[0,.18,-.02],[-.4,0,0],1,.04);
       else if(variante==='dosHachas'){
         pon('cabeza','metal',G.casco(.154,18,8,1.65),0xa6acb4,[0,.14,0],undefined,[1.06,1,1],.025,{hachaReal:true});
         pon('cabeza','piel',G.cil(.159,.16,.033,18,true),0x2e2218,[0,.145,0]);
@@ -417,12 +426,12 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         pon('cabeza','piel',G.casco(.15,18,7,1.5),0x3a3024,[0,.135,0]);
         pon('cabeza','piel',G.tubo([[0,.245,0],[.005,.31,-.02],[.055,.345,-.035],[.115,.31,-.025]],t=>.09*(1-t)+.008,12,8),0x3a3024,[0,0,0]);
         pon('cabeza','piel',G.cil(.152,.156,.035,18,true),panuelo,[0,.16,0]);
-      }else{
+      }else if(variante==='antorcha'){
         pon('cabeza','piel',G.cil(.24,.245,.025,20),0x3a3024,[0,.235,-.01],[.08,0,.04],[1,1,.65]);
         pon('cabeza','piel',G.casco(.135,18,7,1.55),0x3a3024,[0,.22,-.01],[.08,0,.04]);
         pon('cabeza','piel',G.cil(.136,.139,.026,16,true),0x2e2218,[0,.24,-.01]);
       }
-      for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,12),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,12,8),piel2,[0,-.02,0]);}
+      if(!scenario)for(const l of ['I','D']){miembro('brazo'+l,.045,.13,piel);miembro('ante'+l,.042,.12,piel);pon('ante'+l,'piel',G.cil(.05,.055,.1,12),chaleco,[0,-.1,0]);pon('mano'+l,'piel',G.bola(.045,12,8),piel2,[0,-.02,0]);}
       if(cobrador){pon('cadera','piel',G.bola(.095,14,10),0x4d2b17,[.19,-.04,0],[0,0,.2],[1,1.2,.85]);pon('cadera','metal',G.bola(.035,10,6),0xe6b64e,[.19,.035,.065]);}
       // Las armas comparten los materiales de madera y metal, sin añadir mallas.
       const hacha=l=>{
@@ -543,12 +552,14 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
         pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
     const constructores={adreida,goblin,cobrador:()=>goblin(true),troll,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
-    function crear(tipo,{varianteGoblin='clasico'}={}){
+    function crear(tipo,{varianteGoblin='clasico',modeloGoblin='scenario'}={}){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const esGoblin=tipo==='goblin'||tipo==='cobrador';
       varianteGoblin=esGoblin&&VARIANTES_GOBLIN[varianteGoblin]?varianteGoblin:'clasico';
       const aspecto=esGoblin?VARIANTES_GOBLIN[varianteGoblin]:null,escala=aspecto?.escala||1;
-      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=esGoblin?goblin(tipo==='cobrador',varianteGoblin):constructores[tipo](),mallas=montar(M,escala);
+      const scenario=esGoblin&&!!goblinScenario&&modeloGoblin!=='clasico';
+      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=esGoblin?goblin(tipo==='cobrador',varianteGoblin,scenario):constructores[tipo](),mallas=montar(M,escala);
+      if(scenario)goblinScenario.montar(H,M,mallas,varianteGoblin,escala,aspecto.orejas);
       if(escala!==1)for(const clave in p)if(typeof p[clave]==='number')p[clave]*=escala;
       // Los goblins suavizan el sombreado sin duplicar la cara visible de sus materiales.
       if(tipo==='goblin'||tipo==='cobrador'){M.piel.side=THREE.FrontSide;aplicarPielGoblin(M.piel);aplicarMetalHachaGoblin(M.metal);}
@@ -556,14 +567,14 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
       if(tipo==='mohamed'){M.metal.roughness=.78;M.metal.metalness=.4;M.metal.envMapIntensity=.12;const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
-      return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo],alto:TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
+      return {tipo,H,M,mallas,p,modeloGoblin:scenario?'scenario':null,raiz:H.raiz,...TIPOS[tipo],alto:TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
     }
 
     // Dos mallas estáticas reutilizables, extraídas del hacha real con sus UV y texturas.
     // Los materiales propios evitan que el proyectil destelle o se disuelva con quien lo lanzó.
     let piezasHachaArrojadiza=null;
     function crearHachaArrojadiza(){
-      if(!piezasHachaArrojadiza){const base=crear('goblin');piezasHachaArrojadiza=[];
+      if(!piezasHachaArrojadiza){const base=crear('goblin',{modeloGoblin:'clasico'});piezasHachaArrojadiza=[];
         const local=base.H.manoD.matrixWorld.clone().invert();
         for(const mesh of base.mallas){const a=mesh.geometry.attributes,mano=mesh.skeleton.bones.indexOf(base.H.manoD),indices=[];
           for(let i=0;i<a.position.count;i++)if(a.skinIndex.getX(i)===mano&&(a.maderaReal?.getX(i)||a.hachaReal?.getX(i)))indices.push(i);
@@ -709,9 +720,16 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         H['mano'+l].rotation.y=(m.varianteGoblin==='dosHachas'&&l==='I'?-1:1)*Math.PI/2*cae;
       }
       H.cabeza.rotation.x=-.35*cae;
+      if(m.modeloGoblin==='scenario'){
+        // Al asentarse, suelta la guardia del antebrazo: ni la mano ni el mango sostienen el torso.
+        const descanso=tramo(k,.55,1);H.torso.rotation.y*=1-descanso;H.torso.rotation.z*=1-descanso;
+        H.cabeza.rotation.x+=(-.5-H.cabeza.rotation.x)*descanso;
+        for(const l of ['I','D']){H['ante'+l].rotation.x*=1-descanso;H['brazo'+l].rotation.x*=1-descanso;}
+      }
       H.cuerpo.position.y=k<.55?Math.sin(k/.55*Math.PI)*.18:0;
     }
     function apoyarMuerteGoblin(m,partido=false,k=0){
+      if(m.modeloGoblin==='scenario')return goblinScenario.apoyar(m,partido,k);
       const clave=m.tipo+':'+m.varianteGoblin;let apoyos=apoyosGoblin.get(clave);const esq=m.mallas[0].skeleton;
       if(!apoyos){const direcciones=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)if(x||y||z)direcciones.push(new THREE.Vector3(x,y,z));
         const extremos=esq.bones.map(()=>direcciones.map(()=>({d:-Infinity,p:null})));
@@ -758,6 +776,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
 
     // Pone la pose. a={anim,t (segundos en la animación), k (0..1 de la animación), fase (del paso), paso (0..1 cuánto anda)}.
     function posar(m,a){
+      if(m.modeloGoblin==='scenario')goblinScenario.posar(m,a);
       const H=m.H,esc=m.tipo==='troll'?1.5:m.tipo==='can'?1.25:1;
       for(const k in H)if(k!=='raiz'){H[k].rotation.set(0,0,0);}
       H.cuerpo.position.set(0,0,0);H.cuerpo.rotation.set(0,0,0);
@@ -884,7 +903,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         // Media vuelta sobre el mango: el filo queda al frente, también durante el ataque.
         // El ajuste del agarre conserva la geometría y las UV del cuaderno de pintura.
         // Al caer afloja la muñeca para que el arma también repose sobre el suelo.
-        if(m.tipo==='goblin'||m.tipo==='cobrador'){
+        if((m.tipo==='goblin'||m.tipo==='cobrador')&&m.modeloGoblin!=='scenario'){
           const giro=Math.PI*(a.anim==='muerte'?1-tramo(k,.12,.66):1);H.manoD.rotateZ(giro);
           if(m.varianteGoblin==='dosHachas')H.manoI.rotateZ(giro);
         }

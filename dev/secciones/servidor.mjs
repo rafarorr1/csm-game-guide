@@ -21,7 +21,7 @@ import {derivarInvocar,pagina as paginaInvocar} from './invocar-exportar.mjs';
 import {derivarVisorGpu,pagina as paginaVisorGpu} from './visor-gpu-exportar.mjs';
 import {derivarVisorThree,pagina as paginaVisorThree} from './visor-three-exportar.mjs';
 import {derivarMesaThree,pagina as paginaMesaThree} from './mesa-three-exportar.mjs';
-import {derivarArpgThree,pagina as paginaArpgThree,texturasGoblin,texturasPiso} from './arpg-three-exportar.mjs';
+import {derivarArpgThree,pagina as paginaArpgThree,texturasGoblin,texturasPiso,recursosGoblin} from './arpg-three-exportar.mjs';
 import {pagina as paginaCasasThree,texturasCasas} from './casas-three-exportar.mjs';
 import {derivarTeaser,pagina as paginaTeaser} from './teaser-exportar.mjs';
 import {derivarPesadillas3d,pagina as paginaPesadillas3d,recursosPesadillas3d} from './pesadillas-3d-exportar.mjs';
@@ -97,7 +97,7 @@ export function crearServidor(){return http.createServer((req,res)=>{
     if(recurso==='generado/mulligan/datos.js')return enviar(res,200,derivarMulligan().datosJS,mime['.js']);
     if(recurso==='generado/invitaciones/datos.js')return enviar(res,200,derivarInvitaciones().datosJS,mime['.js']);
     if(recurso==='generado/estudio-nombres/datos.js')return enviar(res,200,derivarNombres().datosJS,mime['.js']);
-    if(publicos.has(recurso)||texturasGoblin.includes(recurso)||texturasPiso.includes(recurso)||texturasCasas.includes(recurso))return archivo(res,recurso,carpeta);
+    if(publicos.has(recurso)||texturasGoblin.includes(recurso)||recursosGoblin.includes(recurso)||texturasPiso.includes(recurso)||texturasCasas.includes(recurso))return archivo(res,recurso,carpeta);
     if(recurso.startsWith('juego/')&&componentes.has(recurso.slice(6)))return archivo(res,recurso.slice(6),juego);
     if(recurso.startsWith('juego/art/')&&recursosPitagorasLocales.has(recurso.slice(6)))return archivo(res,recurso.slice(6),juego);
     if(recurso==='api/arte/catalogo'||recurso==='catalogo-vacio.json')return enviar(res,200,JSON.stringify({cartas:[]}),mime['.json']);

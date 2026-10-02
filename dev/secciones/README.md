@@ -1317,7 +1317,17 @@ El kit también incluye un **cuaderno autónomo de 6000 × 7200**: `goblin-cuade
 
 Se pinta en «Mi ilustración» y se oculta «Orientación y bordes» antes de devolver el PNG completo. `goblin-cuaderno-base.png` y `goblin-cuaderno-bordes.png` permiten el mismo flujo en otros editores. `cuaderno.js` comparte entre exportador y visor las 39 zonas de extracción: el PNG de 6000 × 7200 se convierte automáticamente al atlas 4096 × 4096, sin interpolación; nombres y referencias quedan fuera. El exportador comprueba una reconstrucción idéntica píxel por píxel. El atlas, OBJ, UV y modelo v2 se conservan; no se necesita adaptar una ilustración ya empezada en la versión suavizada.
 
-### Piel de los goblins
+### Goblins de Scenario en el juego
+
+El goblin aprobado de Scenario / Tripo 3.1 reemplaza al cuerpo de primitivas en partidas y en el visor. `arpg-three-goblin.js` adapta sus 7,872 triángulos al esqueleto procedural existente, con pesos suaves en hombros, codos, cintura y piernas. Conserva los avisos de ataque, destellos, disolución, armas arrojadizas y las 24 caídas. La muerte por corte crea dos secciones cerradas en la cintura; las caras no conectan ambas mitades. El contacto con el suelo toma en cuenta todos los pesos del vértice.
+
+Las cuatro variantes mantienen sombreros, armas, tamaños y orejas. El cobrador conserva su bolsa y moneda. El cuerpo usa tres mapas PBR locales de 1024 × 1024, compartidos por toda la horda; cada variante comparte su geometría, pero tiene un esqueleto independiente. Son tres llamadas de dibujo por goblin y cuatro para la antorcha. Las armas mantienen la madera y el metal que ya se habían elegido. No se añade un cargador GLTF, servicios remotos, CDN ni físicas por personaje.
+
+`goblin-scenario/preparar.py` compila el GLB aprobado y normalizado a 1.15 m (identificado por SHA-256) a `datos.js` y sus mapas. Requiere Python, numpy y Pillow sólo para reconstruir los recursos; `procedencia.json` registra el asset de Scenario. Para regenerar: `python dev/secciones/goblin-scenario/preparar.py /ruta/goblin-caoz-115cm.glb`. Prueba focalizada: `node dev/secciones/pruebas_arpg_goblin_scenario.mjs`. El visor de cuatro variantes se abre con `modelos-visor.html?tipo=goblin&comparar=1`.
+
+El cuaderno UV sigue usando el modelo clásico mediante `fabrica(THREE,{pielGoblin:false})`; también se puede pedir `crear('goblin',{modeloGoblin:'clasico'})`. Las texturas descritas abajo corresponden al modelo clásico y a los accesorios conservados.
+
+### Piel de los goblins (modelo clásico)
 
 Goblin de Camino y cobrador usan el material aportado en `goblin-skin-bumpy-bl-q9btow.zip`: color sRGB, normales OpenGL y un mapa de superficie con oclusión en rojo y rugosidad en verde. Los tres archivos locales de `texturas-goblin/` son de 1024 × 1024 y suman unos 4.4 MB; `procedencia.json` documenta sus fuentes y tratamiento. El relieve tiene intensidad 0.7, la oclusión del material se aplica al 50 %, y la piel conserva metalness=0. No hay desplazamiento de vértices ni nuevos polígonos.
 
@@ -1334,7 +1344,7 @@ La geometría y el atlas del cuaderno UV v2 siguen intactos. Su visor pide `fabr
 
 ### Cuatro variantes de goblin
 
-Las apariciones de goblins de camino y cobradores recorren una bolsa barajada con cuatro siluetas. Cada grupo de cuatro incluye todas, con las mismas texturas compartidas de piel, arpillera, metal oxidado y madera:
+Las apariciones de goblins de camino y cobradores recorren una bolsa barajada con cuatro siluetas. Cada grupo de cuatro incluye todas. El cuerpo de Scenario comparte sus mapas PBR y las armas conservan el metal oxidado y la madera:
 
 | Variante | Arma | Sombrero | Tamaño corporal | Orejas |
 | --- | --- | --- | --- | --- |

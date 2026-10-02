@@ -50,7 +50,7 @@
     for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada'].includes(n))continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
     if([...$('anim').options].some(o=>o.value===antes))$('anim').value=antes;}
   function cargar(tipo){
-    for(const m of modelos){escena.remove(m.raiz);m.mallas.forEach(mesh=>{mesh.geometry.dispose();mesh.material.dispose();});}
+    for(const m of modelos){escena.remove(m.raiz);m.mallas.forEach(mesh=>{if(!mesh.geometry.userData.compartida)mesh.geometry.dispose();mesh.material.dispose();});for(const s of new Set(m.mallas.map(mesh=>mesh.skeleton)))s.dispose();}
     const esGoblin=['goblin','cobrador'].includes(tipo);if(!esGoblin)comparar=false;document.body.classList.toggle('mvComparando',comparar);
     $('opcionVariante').hidden=$('compararGoblins').hidden=!esGoblin;
     $('compararGoblins').setAttribute('aria-pressed',comparar);$('compararGoblins').textContent=comparar?'Ver una variante':'Ver las cuatro variantes';
@@ -58,8 +58,8 @@
     const variantes=comparar?Object.keys(F.VARIANTES_GOBLIN):[$('varianteGoblin').value];
     modelos=variantes.map(varianteGoblin=>F.crear(tipo,{varianteGoblin}));modelo=modelos[0];
     for(const m of modelos)escena.add(m.raiz);
-    const tri=modelos.reduce((n,m)=>n+m.mallas.reduce((s,mesh)=>s+mesh.geometry.attributes.position.count/3,0),0);
-    $('datos').textContent=(comparar?'Cuatro variantes · tamaño relativo real':modelo.nombre+(esGoblin?' · '+F.VARIANTES_GOBLIN[modelo.varianteGoblin].nombre:'')+' · '+modelo.alto.toFixed(2)+' m')+' · '+(tri/1000).toFixed(1)+' mil triángulos · '+modelos.length*3+' mallas';
+    const tri=modelos.reduce((n,m)=>n+m.mallas.reduce((s,mesh)=>s+(mesh.geometry.index?.count||mesh.geometry.attributes.position.count)/3,0),0);
+    $('datos').textContent=(comparar?'Cuatro variantes · tamaño relativo real':modelo.nombre+(esGoblin?' · '+F.VARIANTES_GOBLIN[modelo.varianteGoblin].nombre:'')+' · '+modelo.alto.toFixed(2)+' m')+' · '+(tri/1000).toFixed(1)+' mil triángulos · '+modelos.reduce((n,m)=>n+m.mallas.length,0)+' mallas';
     $('fichasVariantes').hidden=!comparar;$('fichasVariantes').replaceChildren();
     if(comparar)for(const m of modelos){const v=F.VARIANTES_GOBLIN[m.varianteGoblin],ficha=document.createElement('div'),nombre=document.createElement('b'),detalle=document.createElement('small');nombre.textContent=v.nombre;detalle.textContent=v.sombrero+' · '+m.alto.toFixed(2)+' m';ficha.append(nombre,detalle);$('fichasVariantes').append(ficha);}
     listaAnims();}

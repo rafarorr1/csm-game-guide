@@ -1,0 +1,12 @@
+{
+  "fuente": "Scenario / Tripo 3.1",
+  "assetId": "asset_zNSmSDHeAb7Tu7FDkp3MoiKo",
+  "projectId": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "sha256Glb": "b05471f0c602608a122e1af3dc2333cb912b149892625434fe2b2f2e7fafa886",
+  "alturaMetros": 1.15,
+  "triangulos": 7872,
+  "vertices": 5495,
+  "mapas": 1024,
+  "rig": "Adaptación manual al esqueleto procedural de Caoz ARPG; hasta dos influencias por vértice.",
+  "herramienta": "preparar.py; GLB aprobado como entrada. El juego no usa servicios remotos."
+}
