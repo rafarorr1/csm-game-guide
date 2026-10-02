@@ -34,9 +34,9 @@
  dp3 r4.y, modelo[1], r3
  dp3 r4.z, modelo[2], r3
  dp3 r5.x, luna, r4
- max r5.x, r5.x, base.x
- mul r5.x, r5.x, base.w
- add r5.x, r5.x, base.z
+ max r5.x, base.x, r5.x
+ mul r5.x, base.w, r5.x
+ add r5.x, base.z, r5.x
  mul r6.xyz, pigmento, r5.xxx
  mul color.xyz, tinte, r6
  mov color.w, tinte.w

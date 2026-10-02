@@ -42,12 +42,14 @@ void dibujar(Juego&j){C3D_FrameBegin(C3D_FRAME_SYNCDRAW);cursorDinamico=0;std::v
  for(V p:std::array<V,2>{{{-3.5f,7.5f},{4.5f,-10}}}){caja(p.x,0,p.z,.38f,.2f,.38f,0x79746a);caja(p.x,.2f,p.z,.12f,1.8f,.12f,0x45474b);caja(p.x,2,p.z,.42f,.6f,.42f,0xffc45b);caja(p.x,2.6f,p.z,.56f,.15f,.56f,0x9a7448);}
  caja(6.5f,0,-5.5f,2.5f,.7f,1.4f,0x66503b);caja(8.5f,0,4.8f,1.1f,1.2f,1.1f,0x6c4e36);lote();
  // Sombras baratas bajo los personajes.
- for(const auto&e:j.enemigos)if(distancia(e.p,j.h.p)<19)abanico(e.p,.015f,e.tipo==TROLL?.9f:.4f,0,PI,0x1e2428);abanico(j.h.p,.015f,.5f,0,PI,0x1e2428);lote(.6f);
+ for(const auto&e:j.enemigos){if(distancia(e.p,j.h.p)<19)abanico(e.p,.015f,e.tipo==TROLL?.9f:.4f,0,PI,0x1e2428);}
+ abanico(j.h.p,.015f,.5f,0,PI,0x1e2428);lote(.6f);
  for(const auto&e:j.enemigos){if(e.estado!=PREPARA)continue;float radio=e.tipo==CAN?4.6f:e.tipo==TROLL?3.8f:e.tipo==ESCUDO?2.5f:2;float dur=e.tipo==CAN?(e.combo?.55f:1.05f):e.tipo==TROLL?(e.segunda?1.105f:1.3f):e.tipo==KOBOLD?1.1f:.85f;uint32_t c=dur-e.t<.18f?0xbdf5ff:0xe8a15e;
   if(e.tipo==KOBOLD){V b=e.p+frente(e.dir)*11;triangulo(e.p.x,.035f,e.p.z,b.x+.12f,.035f,b.z,b.x-.12f,.035f,b.z,c);}else if(e.tipo==TROLL&&e.numero%3==1)abanico(e.p,.035f,3.5f,0,PI,0xa882c9);else if(e.tipo==CAN&&e.combo==1){abanico(e.p,.035f,radio,e.dir-PI/3,PI/6,c);abanico(e.p,.035f,radio,e.dir+PI/3,PI/6,c);}else abanico(e.p,.035f,radio,e.dir,e.tipo==CAN?PI/6:1.1f,c);
  }for(const auto&p:j.proyectiles)if(p.tipo)aro(p.destino,.04f,p.radio,.07f,p.dur-p.t<.25f?0xc5ffff:p.dur-p.t<.55f?0xffdc55:0xec8049);lote(.38f);
  for(const auto&e:j.efectos){float k=e.t/e.dur;if(e.tipo==4){abanico(e.p,.021f,e.radio*std::fmin(1.f,(e.dur-e.t)/.4f),0,PI,0x191717);aro(e.p,.06f,e.radio,.1f,0x857364);}else if(e.tipo==5)caja(e.p.x,std::sin(k*PI)*1.5f,e.p.z,e.radio,e.radio,e.radio,e.color);else aro(e.p,.1f,e.radio*(.4f+k*.6f),.07f,e.color);}lote(.8f);
- for(const auto&e:j.enemigos)if(distancia(e.p,j.h.p)<20)actor(e,0);actor(j.h,j.alto(j.h),j.h.tipo==MOHAMED&&j.ultiActivo>0?.3f:1);if(j.tieneAliado)actor(j.aliado,0,.6f);
+ for(const auto&e:j.enemigos){if(distancia(e.p,j.h.p)<20)actor(e,0);}
+ actor(j.h,j.alto(j.h),j.h.tipo==MOHAMED&&j.ultiActivo>0?.3f:1);if(j.tieneAliado)actor(j.aliado,0,.6f);
  for(const auto&p:j.proyectiles){if(p.tipo==2){Actor a;a.tipo=COBRADOR;a.p=p.p;a.anim=DOLOR;a.k=.5f;a.dir=j.tiempo*5;actor(a,p.alto);}else if(p.tipo==1)caja(p.p.x,p.alto,p.p.z,.45f,.4f,.45f,0x9a9181);else{V d=unidad(p.vel),b=p.p-d*.65f;triangulo(p.p.x,1.05f,p.p.z,b.x+d.z*.1f,1.05f,b.z-d.x*.1f,b.x-d.z*.1f,1.05f,b.z+d.x*.1f,p.enemigo?0xffad50:0xd4e9ff);}}
  for(const auto&o:j.objetos){if(o.tipo==1)caja(o.p.x,.25f,o.p.z,.35f,.5f,.09f,0xc5a369);else{caja(o.p.x,.1f,o.p.z,.25f,.32f,.25f,0xb54445);caja(o.p.x,.42f,o.p.z,.1f,.09f,.1f,0xd9b981);}}lote();C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_COLOR);for(int i:ocultas){float a=i*TAU/15;V p{std::cos(a)*19.2f,std::sin(a)*19.2f};objeto(8+i%3,p,0,angulo(p*-1),.22f);}C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_ALL);C3D_FrameEnd(0);}
 void cerrarDibujo(){for(auto&m:modelos){if(m.vertices)linearFree(m.vertices);if(m.indices)linearFree(m.indices);}if(piso.vertices)linearFree(piso.vertices);if(dinamico)linearFree(dinamico);if(target)C3D_RenderTargetDelete(target);shaderProgramFree(&programa);if(shader)DVLB_Free(shader);}
