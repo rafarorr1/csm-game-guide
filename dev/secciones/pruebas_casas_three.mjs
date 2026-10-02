@@ -58,7 +58,7 @@ try{
     assert.ok(e.webgl2&&e.version==='186'&&e.hdr&&e.muestras===4,caso+': WebGL 2, three r186, HDR con MSAA 4×');
     assert.deepEqual(e.pases,['render','oclusion','saneado','resplandor','salida'],caso+': oclusión, saneado (sin NaN), resplandor y salida');
     assert.deepEqual([...new Set(e.casas.map(c=>c.tipo))].sort(),['entramada','piedra','taberna'],caso+': los tres tipos de casa');
-    assert.ok(e.casas.every(c=>c.triangulos<3500&&c.ventanas>=4),caso+': cada casa cuesta menos de 3.500 triángulos ('+e.casas.map(c=>c.tipo+' '+c.triangulos).join(', ')+')');
+    assert.ok(e.casas.every(c=>c.triangulos<(c.tipo==='taberna'?8000:3500)&&c.ventanas>=4),caso+': cada casa respeta su presupuesto (3.500; taberna con tres toneles detallados: 8.000) ('+e.casas.map(c=>c.tipo+' '+c.triangulos).join(', ')+')');
     const d=await r('r.dibujar()');assert.ok(e.mallasCalle<=14&&d.llamadas<120,caso+': las seis casas se funden en '+e.mallasCalle+' mallas; la escena, '+d.llamadas+' llamadas y '+(d.triangulos/1000).toFixed(0)+' mil triángulos');
     // Las ventanas encendidas brillan cálidas sobre el yeso de alrededor.
     await r('r.camara("entramada")');await r('r.avanzar(3)');const vs=await r('r.ventanas("entramada")');assert.ok(vs.length>=2,caso+': se ven ventanas encendidas de la casa entramada');

@@ -52,7 +52,7 @@
       for(let i=0;i<14;i++){let x=rnd()*T,y=rnd()*T;const p=[[x,y]];for(let k=0;k<9;k++){x+=(rnd()-.5)*26;y+=rnd()*20;p.push([x,y]);}
         for(const [k2,col,w] of [[g,'rgba(70,56,40,.45)',1],[ga,'#3a3a3a',2]]){k2.strokeStyle=col;k2.lineWidth=w;k2.beginPath();p.forEach(([px,py],j)=>j?k2.lineTo(px,py):k2.moveTo(px,py));k2.stroke();}}
       return {map:tex(c,true),normalMap:tex(normales(a,1.4))};}
-    function madera(){const T=512,[c,g]=lienzo(T,T),[a,ga]=lienzo(T,T);g.fillStyle='#3c2616';g.fillRect(0,0,T,T);ga.fillStyle='#7a7a7a';ga.fillRect(0,0,T,T);
+    function madera(base='#3c2616'){const T=512,[c,g]=lienzo(T,T),[a,ga]=lienzo(T,T);g.fillStyle=base;g.fillRect(0,0,T,T);ga.fillStyle='#7a7a7a';ga.fillRect(0,0,T,T);
       for(let i=0;i<420;i++){const y=rnd()*T,o=2+rnd()*6,cl=rnd(),w=.6+rnd()*2.2;g.strokeStyle=`rgba(${cl<.5?28:112},${cl<.5?16:74},${cl<.5?8:44},${.18+rnd()*.35})`;g.lineWidth=w;ga.strokeStyle=cl<.5?'rgba(40,40,40,.6)':'rgba(170,170,170,.5)';ga.lineWidth=w;
         for(const k of [g,ga]){k.beginPath();for(let x=-8;x<=T+8;x+=16){const yy=y+Math.sin(x*.012+i)*o+Math.sin(x*.05+i*2)*2;x<0?k.moveTo(x,yy):k.lineTo(x,yy);}k.stroke();}}
       for(let i=0;i<7;i++){const x=rnd()*T,y=rnd()*T;envuelto(T,x,y,14,(X,Y)=>{mancha(g,X,Y,12,'30,16,8',.8);mancha(ga,X,Y,12,'30,30,30',.9);});}
@@ -94,6 +94,8 @@
       madera:estandar({...madera(),roughness:.78,color:0xd8c8b8}),
       piedra:estandar({...sillares(),normalScale:new THREE.Vector2(1.3,1.3),roughness:.92}),
       teja:estandar({...tejas(),roughness:.7}),
+      roble:estandar({...madera('#92734d'),roughness:.9,envMapIntensity:.2}),
+      forja:estandar({color:0x454951,metalness:.25,roughness:.85,envMapIntensity:.2}),
       tablas:estandar({...tablas(),roughness:.8}),
       hierro:estandar({color:0x9a9aa2,metalness:.75,roughness:.45}),
       planta:estandar({roughness:.85,flatShading:true}),
@@ -101,6 +103,18 @@
       agua:estandar({color:0x1e3c42,emissive:0x061214,roughness:.48,metalness:0,envMapIntensity:.2}),
       farol:new THREE.MeshBasicMaterial({color:new THREE.Color(4,2.4,1.1),vertexColors:false}),
     };
+    // Las referencias se conservan al fundir/clonar materiales: las casas ocultables reciben
+    // las imágenes cuando terminan de cargar. Si falta un mapa, permanece su alternativa local.
+    const [superficie,gs]=lienzo(2,2);gs.fillStyle='rgb(255,230,0)';gs.fillRect(0,0,2,2);
+    M.teja.roughnessMap=M.teja.aoMap=tex(superficie,false);M.teja.roughness=1;M.teja.aoMapIntensity=.5;
+    M.teja.normalScale.set(.7,.7);M.teja.envMapIntensity=.2;
+    const texturasListas=opciones.texturas===false?Promise.resolve([]):Promise.allSettled([
+      ['color',M.teja.map],['normal',M.teja.normalMap],['superficie',M.teja.roughnessMap]
+    ].map(async([nombre,destino])=>{
+      const t=await new THREE.TextureLoader().loadAsync((opciones.rutaTejas||'./texturas-casas/')+'tejas-'+nombre+'.webp');
+      // La reserva de GPU tiene el tamaño del respaldo; hay que recrearla al cambiar a 1024 px.
+      destino.dispose();destino.image=t.image;destino.needsUpdate=true;t.dispose();return nombre;
+    })).then(r=>{if(r.some(x=>x.status==='rejected'))console.warn('Algún mapa de las tejas no cargó; se conserva su material de respaldo.');return r;});
     // Las ventanas: interior mapping. Por cada píxel del cristal se sigue la mirada dentro de una habitación
     // (en unidades de la ventana: x -1..2, y -0.8..1.6, fondo 2.3 m) y se pinta lo que se vería.
     M.ventana=new THREE.ShaderMaterial({uniforms:uniformes,
@@ -212,12 +226,12 @@
       // Tejado a dos aguas (cumbrera en X): dos losas de tejas con UV propias (u a lo largo, v pendiente abajo),
       // tablas de canto en los hastiales, cumbrera y los hastiales de yeso con su entramado.
       function tejado(W,D,yb,pend,vuelo,opc={}){const R=D/2*Math.tan(pend),L=(D/2+vuelo)/Math.cos(pend),ancho=W+2*vuelo;
-        for(const s of [-1,1]){const g=new THREE.BoxGeometry(ancho,.14,L),p=g.attributes.position,uv=g.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,p.getX(i)/1.4,-s*p.getZ(i)/1.2);
+        for(const s of [-1,1]){const g=new THREE.BoxGeometry(ancho,.14,L),p=g.attributes.position,uv=g.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,p.getX(i)/4,-s*p.getZ(i)/4);
           const zc=s*(L/2*Math.cos(pend)-vuelo/2*0),m=mat4([0,yb+R-L/2*Math.sin(pend)+.07,s*(L/2*Math.cos(pend))],[s*pend,0,0]);pon('teja',g,m,{uv:'propio',sucio:false,tinte:opc.tinteTeja});
           for(const x of [-ancho/2,ancho/2])caja('madera',.08,.3,L+.05,[x,yb+R-L/2*Math.sin(pend)-.04,s*(L/2*Math.cos(pend))],[s*pend,0,0],{sucio:false});
           // Tabla de alero: tapa el canto de la losa (sin ella se ve la teja estirada como una raya naranja).
           caja('madera',ancho+.1,.24,.07,[0,yb+R-L*Math.sin(pend)+.02,s*(D/2+vuelo+.03)],[s*pend*.35,0,0],{sucio:false});}
-        caja('teja',ancho+.1,.2,.34,[0,yb+R+.12,0],[0,0,0],{escala:1.2,sucio:false,tinte:opc.tinteTeja});
+        caja('teja',ancho+.1,.2,.34,[0,yb+R+.12,0],[0,0,0],{escala:4,sucio:false,tinte:opc.tinteTeja});
         const tri=new THREE.Shape();tri.moveTo(-D/2,0);tri.lineTo(D/2,0);tri.lineTo(0,R);tri.lineTo(-D/2,0);
         for(const s of [-1,1]){const g=new THREE.ExtrudeGeometry(tri,{depth:.2,bevelEnabled:false});pon(opc.hastial||'yeso',g,mat4([s*W/2-(s>0?.2:0),yb,0],[0,Math.PI/2*(s>0?1:1),0]).multiply(mat4([0,0,0])),{escala:1.6});
           if((opc.hastial||'yeso')==='yeso'){const fa=fachada(s>0?Math.PI/2:-Math.PI/2,W/2+.01,yb);fa.caja('madera',.16,R-.1,.1,[0,(R-.1)/2,.03]);fa.caja('madera',D-.2,.14,.1,[0,.07,.03]);
@@ -261,7 +275,7 @@
       const tb=C.fachada(Math.PI,D/2,y0);C.ventana(tb,W*.2,1.6,1.1,1,{suelo:true});
       for(const [a,s] of [[Math.PI/2,1],[-Math.PI/2,-1]]){const f=C.fachada(a,W/2,y2);C.ventana(f,0,1.3,.8,1);C.entramado(f,D2,h2,[[0,.8]]);const f1=C.fachada(a,W/2,y0);C.ventana(f1,s*.6,1.6,1,1,{suelo:true,postigos:true});}
       // Toneles junto a la puerta.
-      for(const [x,z] of [[-1.55,D/2+.55],[-2.2,D/2+.5],[-1.9,D/2+1.15]]){C.pon('madera',new THREE.CylinderGeometry(.36,.4,.95,10),mat4([x,.475,z]),{escala:.9});for(const y of [.2,.75])C.pon('hierro',new THREE.CylinderGeometry(.41,.41,.05,10,1,true),mat4([x,y,z]));}
+      for(const [x,z] of [[-1.55,D/2+.55],[-2.2,D/2+.5],[-1.9,D/2+1.15]])barrilCarga(C,{pos:[x,0,z],radio:.34});
       const R=C.tejado(W,D2,yT,.82,.5,{tinteTeja:o.tinteTeja||[.9,.95,1]});
       return {alto:yT+R,humo:C.chimenea(-W/2+1,0,yT-.5,yT+R+.7),huella:[W+.4,D2+.4]};}
     function piedra(C,o){const W=o.ancho??5.2,D=o.fondo??4.6,h1=3.1,yT=h1,pend=1;
@@ -272,7 +286,7 @@
       const R=C.tejado(W,D,yT,pend,.5,{hastial:'piedra',tinteTeja:o.tinteTeja||[.85,.95,.85]});
       // Buhardilla en el faldón de delante: un pequeño hastial con su ventana y su tejadillo.
       const bz=D*.12,by=yT+R*.3,fd=C.fachada(0,bz+.55,by);C.caja('yeso',1.2,1.1,1.1,[0,by+.55,bz],[0,0,0],{tinte:[1,.97,.9]});C.ventana(fd,0,.55,.6,.6,{halo:true});
-      for(const s of [-1,1])C.caja('teja',.9,.1,1.4,[s*.38,by+1.33,bz+.05],[0,0,s*.75],{escala:1.2,sucio:false});
+      for(const s of [-1,1])C.caja('teja',.9,.1,1.4,[s*.38,by+1.33,bz+.05],[0,0,s*.75],{escala:4,sucio:false});
       // Chimenea exterior de sillares, desde el suelo.
       C.caja('piedra',1.1,yT+R*.5,.7,[W/2+.35,(yT+R*.5)/2,-D*.15],[0,0,0],{escala:1.3});
       return {alto:yT+R,humo:C.chimenea(W/2+.35,-D*.15,yT+R*.5,yT+R+.9),huella:[W+1.2,D+.6]};}
@@ -317,7 +331,73 @@
       // Matas al pie del brocal.
       for(let i=0;i<12;i++){const a=rnd()*TAU,r=R+.05+rnd()*.12,v=rnd();C.pon('planta',new THREE.IcosahedronGeometry(.07+rnd()*.06,0),mat4([Math.sin(a)*r,.05,Math.cos(a)*r],[rnd()*3,rnd()*3,0],[1,.6,1]),{tinte:[.16+v*.1,.3+v*.15,.1],sucio:false});}
       return {alto:yV+.12+Rt,huella:[2*X+.6,2*R+.6]};}
-    const CONSTRUCTORES={entramada,taberna,piedra,pozo};
+    // Utilería: piezas de madera y herrajes fundidos por material, sin objetos animados.
+    function tablaCarga(C,w,h,d,pos,rot=[0,0,0],tinte=[1,1,1]){
+      const g=new THREE.BoxGeometry(w,h,d),p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
+      const dimensiones=[w,h,d],largo=dimensiones.indexOf(Math.max(...dimensiones));
+      for(let i=0;i<p.count;i++){
+        const xyz=[p.getX(i),p.getY(i),p.getZ(i)],normal=[Math.abs(n.getX(i)),Math.abs(n.getY(i)),Math.abs(n.getZ(i))];
+        const cara=normal.indexOf(Math.max(...normal)),u=cara===largo?(largo+1)%3:largo,v=[0,1,2].find(k=>k!==cara&&k!==u);
+        uv.setXY(i,xyz[u]/.8,xyz[v]/.32);
+      }
+      C.pon('roble',g,mat4(pos,rot),{uv:'propio',sucio:false,tinte});
+    }
+    function cajaCarga(C,o={}){
+      const S=o.tamano??1,b=.105*S,interior=S-2*b,tono=[.86+rnd()*.25,.84+rnd()*.22,.8+rnd()*.18];
+      // Cuatro caras con cinco tablones; las juntas dejan leer su construcción desde arriba.
+      for(const lado of [-1,1])for(let i=0;i<5;i++){
+        const y=b+(i+.5)*interior/5;
+        tablaCarga(C,S-2*b,interior/5-.009*S,.06*S,[0,y,lado*(S/2-.032*S)],[0,0,0],tono);
+        tablaCarga(C,.06*S,interior/5-.009*S,S-2*b,[lado*(S/2-.032*S),y,0],[0,0,0],tono);
+      }
+      for(const y of [.035*S,S-.035*S])for(let i=0;i<5;i++)tablaCarga(C,(S-2*b)/5-.009*S,.065*S,S-2*b,[-S/2+b+(i+.5)*interior/5,y,0],[0,0,0],tono);
+      for(const x of [-1,1])for(const z of [-1,1])tablaCarga(C,b,S,b,[x*(S-b)/2,S/2,z*(S-b)/2]);
+      for(const lado of [-1,1])for(const y of [b/2,S-b/2]){
+        tablaCarga(C,S,b,b,[0,y,lado*(S-b)/2]);tablaCarga(C,b,b,S,[lado*(S-b)/2,y,0]);
+      }
+      for(const lado of [-1,1]){
+        tablaCarga(C,interior*1.32,b*.8,.045*S,[0,S/2,lado*(S/2+.006*S)],[0,0,lado*Math.PI/4],[1.12,1.06,.95]);
+        tablaCarga(C,.045*S,b*.8,interior*1.32,[lado*(S/2+.006*S),S/2,0],[lado*Math.PI/4,0,0],[1.12,1.06,.95]);
+        for(const x of [-1,1])for(const y of [.065*S,.935*S]){
+          C.pon('forja',new THREE.CylinderGeometry(.022*S,.022*S,.009*S,6),mat4([x*(S-b)/2,y,lado*(S/2+.008*S)],[Math.PI/2,0,0]),{sucio:false});
+          C.pon('forja',new THREE.CylinderGeometry(.022*S,.022*S,.009*S,6),mat4([lado*(S/2+.008*S),y,x*(S-b)/2],[0,0,Math.PI/2]),{sucio:false});
+        }
+        // Escuadras oscuras bajo los clavos, sin superficies superpuestas.
+        for(const x of [-1,1])C.caja('forja',b*.74,S*.23,.015*S,[x*(S-b)/2,S*.15,lado*(S/2+.016*S)],undefined,{sucio:false});
+      }
+      return {alto:S,huella:[S+.03,S+.03]};
+    }
+    function barrilCarga(C,o={}){
+      const H=o.alto??.94,R=o.radio??.4,N=16,F=mat4(o.pos||[0,0,0],o.rot||[0,0,0]);
+      const perfil=[0,.06,.2,.5,.8,.94,1].map(t=>new THREE.Vector2(R*(.79+.21*Math.sin(Math.PI*t)),H*t));
+      // Duelas abombadas y separadas: sus cantos y las tapas tienen volumen real.
+      for(let i=0;i<N;i++){
+        const g=new THREE.LatheGeometry(perfil,2,i*TAU/N+.008,TAU/N-.016),p=g.attributes.position,uv=g.attributes.uv;
+        for(let k=0;k<p.count;k++)uv.setXY(k,p.getY(k)/.8,uv.getX(k)*.48+i*.17);
+        const v=.8+rnd()*.35;C.pon('roble',g,F,{uv:'propio',sucio:false,tinte:[v,v*.94,v*.85]});
+      }
+      for(const y of [.045*H,.955*H]){
+        C.pon('roble',new THREE.CylinderGeometry(R*.77,R*.77,.035,24),F.clone().multiply(mat4([0,y-.025,0])),{sucio:false,tinte:[.58,.54,.48]});
+        for(let i=-3;i<=3;i++){
+          const x=i*R*.205,w=R*.195,l=2*Math.sqrt(Math.max(0,(R*.77)**2-(Math.abs(x)+w/2)**2));
+          // Tapas encastradas de siete tablas, recortadas al círculo interior.
+          const g=new THREE.BoxGeometry(w,.032,l),p=g.attributes.position,uv=g.attributes.uv;
+          for(let k=0;k<p.count;k++)uv.setXY(k,p.getZ(k)/.8,p.getX(k)/.32+i*.2);
+          C.pon('roble',g,F.clone().multiply(mat4([x,y,0])),{uv:'propio',sucio:false,tinte:[1.08,1,.86]});
+        }
+      }
+      for(const t of [.085,.27,.73,.915]){
+        const r=R*(.79+.21*Math.sin(Math.PI*t))+.008;
+        C.pon('forja',new THREE.CylinderGeometry(r,r,.055*H,24,1,true),F.clone().multiply(mat4([0,t*H,0])),{sucio:false});
+        for(let i=0;i<6;i++){
+          const a=i*TAU/6+.15;
+          C.pon('forja',new THREE.SphereGeometry(.018,5,3),F.clone().multiply(mat4([Math.sin(a)*(r+.005),t*H,Math.cos(a)*(r+.005)])),{sucio:false,tinte:[1.5,1.4,1.25]});
+        }
+      }
+      C.pon('roble',new THREE.CylinderGeometry(.042,.045,.025,10),F.clone().multiply(mat4([.11,H*.979,0])),{sucio:false,tinte:[.45,.36,.26]});
+      return {alto:H,huella:[R*2+.04,R*2+.04]};
+    }
+    const CONSTRUCTORES={entramada,taberna,piedra,pozo,caja:cajaCarga,barril:barrilCarga};
 
     // Una casa: un grupo con una malla por material (en coordenadas de la casa; el frente mira a +Z).
     function casa(tipo,o={}){semilla=((o.semilla??1)*48271)%2147483647||1;const C=Casa(),info=CONSTRUCTORES[tipo](C,o),g=new THREE.Group();let tri=0;
@@ -353,7 +433,7 @@
       }
       if(opciones.ocultables)grupo.userData.ocultacion={opacidades,cajas};
       return grupo;}
-    return {casa,fundir,materiales:M,uniformes,TIPOS};
+    return {casa,utileria:(tipo,o)=>casa(tipo,o),fundir,materiales:M,uniformes,TIPOS,texturasListas};
   }
   window.CAOZ_CASAS=Object.freeze({fabrica,TIPOS});
 })();

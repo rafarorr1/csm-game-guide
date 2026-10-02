@@ -1,0 +1,18 @@
+{
+  "archivoAportado": "clay-shingles1-bl.zip",
+  "fuentes": {
+    "clay-shingles1_albedo.png": "8081292a601820df06d16ba9338f360dab7108cbb3ff4dab7f58f6d6ad6d6ad8",
+    "clay-shingles1_normal-ogl.png": "338509866c1821217127576f49e85c15f659b9bf9cda938b371794dda361eecf",
+    "clay-shingles1_ao.png": "b3675efd4f7f74669d81fd18269b64a185fe51ad8785a7e4fdda209ea4d8539f",
+    "clay-shingles1_roughness.png": "6a5dd65da6f88c66f2f3b991089d74d92ced0018561606080a4a9c34b6a9a75d"
+  },
+  "resolucionColorNormal": 1024,
+  "resolucionSuperficie": 512,
+  "color": "sRGB, WebP calidad 90",
+  "normal": "OpenGL, datos lineales, WebP sin pérdida",
+  "superficie": "Lineal: rojo oclusión; verde rugosidad; azul 0 (barro no metálico). WebP sin pérdida.",
+  "escalaMetros": 4,
+  "oclusion": 0.5,
+  "relieve": 0.7,
+  "geometria": "Sin desplazamiento ni polígonos por teja; mapas compartidos entre casas y pozo."
+}

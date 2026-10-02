@@ -353,10 +353,10 @@ casa del módulo `casas-three.js`, que también usa la plaza del ARPG.
   - encima, cortinas, vidrio emplomado en rombos y el reflejo del cielo;
   - un halo cálido en la fachada y la luz que cae al suelo, sin luces reales;
   - la semilla de cada ventana (qué habitación y si está encendida) llega al shader con `flat`: interpolada, el hash la convertía en moteado.
-- **Texturas pintadas por código, con relieve:** yeso con manchas, grietas y desconchones; roble; sillares; tejas con musgo; tablas con herrajes. La base de las paredes se oscurece con color por vértice.
+- **Texturas pintadas por código, con relieve:** yeso con manchas, grietas y desconchones; roble; sillares; tablas con herrajes. Los tejados y el pozo usan las tejas de barro aportadas en `clay-shingles1-bl.zip`, con color y normal OpenGL a 1024 px y oclusión/rugosidad empaquetadas a 512 px. Todos comparten los tres mapas locales de `texturas-casas/` (1.68 MB), repetidos cada 4 m; oclusión al 50 %, relieve 0.7, sin desplazamiento. Si un mapa falla, permanece la textura procedural de respaldo. La base de las paredes se oscurece con color por vértice.
 - **Coste:**
-  - entre 800 y 2.800 triángulos por casa;
-  - `fundir()` junta todas las casas en una malla por material, así que la calle entera son unas 12 mallas;
+  - las casas normales quedan por debajo de 3.500 triángulos; la taberna, con sus tres toneles detallados, usa unos 7.300;
+  - `fundir()` junta todas las casas en una malla por material, así que la calle entera son como máximo 14 mallas;
   - las farolas no tienen sombra, porque una luz puntual con sombra dibuja la escena seis veces.
 - Cámara orbital, vistas de cada casa, noche o atardecer, y botón para apagar las luces de dentro.
 
@@ -364,6 +364,8 @@ casa del módulo `casas-three.js`, que también usa la plaza del ARPG.
 node dev/secciones/pruebas_casas_three.mjs
 python3 dev/secciones/publicar.py --publicar --seccion casas-three --salida /tmp/caoz-casas-three
 ```
+
+Las cajas y barriles se construyen en `casas-three.js` mediante `utileria('caja'|'barril', opciones)`. La caja tiene tablones separados, marco, refuerzos diagonales, escuadras y clavos. El barril tiene 16 duelas abombadas, cuatro aros con remaches, tapas de siete tablas y tapón. Comparten dos materiales mates (roble y forja), y se funden con el barrio sin añadir llamadas por objeto ni actualizaciones por fotograma. También reemplazan los toneles de la taberna. La vista `casas-three.html?solo=utileria` permite inspeccionarlos de cerca; el juego conserva sus ubicaciones y colisiones.
 
 ## Caoz ARPG (ARPG en three.js, proyecto paralelo)
 
@@ -1438,3 +1440,16 @@ Comprobaciones específicas:
 ### Propuesta de HUD · Caoz ARPG
 
 Interfaz de obsidiana, latón y marfil con iconos vectoriales locales. Dos esferas grandes de Alma (roja, izquierda) y Furia (ámbar, derecha) flanquean las siete habilidades. Se vacían verticalmente y muestran la cantidad actual y máxima en el centro. El retrato y nombre quedan sobre las habilidades; en pantallas pequeñas las esferas suben para conservar espacio. El HUD muestra la recarga en segundos, adapta las teclas al mando y mantiene la munición de Mohamed y las tres cartas del destino visibles sin abrir las métricas. La misión queda arriba a la izquierda y el objetivo arriba al centro. La selección de personaje, etapas, efectos, cooperativo y demostración están en pausa. El diseño se adapta a escritorio, móvil y controles táctiles; no agrega luces, texturas ni posprocesado al render.
+
+### Código externo evaluado · 2 de octubre de 2026
+
+Estas opciones se revisaron en sus repositorios originales. Son propuestas, todavía no dependencias del juego:
+
+| Proyecto | Aplicación posible en Caoz | Cuándo conviene |
+| --- | --- | --- |
+| [navcat](https://github.com/isaac-mason/navcat) · MIT | Malla navegable, caminos suaves y multitudes; complemento a las decisiones de Yuka. JavaScript puro, datos serializables en JSON. | Primera prueba para rutas del mundo abierto: generar el mapa antes de jugar y comparar atascos/coste con el A* actual. |
+| [three-mesh-bvh](https://github.com/gkjohnson/three-mesh-bvh) · MIT | Acelerar rayos y consultas contra geometría compleja. | Al añadir colisión real con escenarios grandes; no sustituye una medición ni acelera por sí solo el dibujado. Las colisiones actuales con círculos/cajas ya son baratas. |
+| [howler.js](https://github.com/goldfire/howler.js) · MIT | Sonidos simultáneos, volumen, fundidos y audio espacial para golpes, pasos y ambiente. | Al incorporar el diseño sonoro; archivos locales, voces limitadas y desbloqueo de audio con el primer gesto del usuario. |
+| [glTF Transform](https://github.com/donmccurdy/glTF-Transform) · MIT | Optimizar modelos glTF/GLB y texturas durante la preparación de recursos. | Cuando incorporemos modelos exportados de Blender; herramienta de desarrollo, sin coste de ejecución por sí misma. No optimiza automáticamente nuestras primitivas actuales. |
+
+[Recast Navigation](https://github.com/isaac-mason/recast-navigation-js) es otra opción de navegación (WASM, multitudes y obstáculos temporales). Para nuestra CSP actual, navcat ofrece una prueba más directa. [Rapier](https://github.com/dimforge/rapier) sería candidato para objetos empujables y destrucción física; supone integrar simulación y WebAssembly, por lo que conviene reservarlo para una necesidad concreta y medir antes de reemplazar colisiones ligeras. No se incorporó ningún motor o biblioteca adicional con esta revisión de arte.

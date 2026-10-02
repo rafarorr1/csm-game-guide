@@ -6,6 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
+import {texturasCasas} from './casas-three-exportar.mjs';
 import {datosDesdeMotor,leer,juego,hash,extraerDeclaracion} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
 export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
@@ -15,7 +16,7 @@ export const cartasArpgThree=Object.freeze([...botinArpgThree.flatMap(id=>['norm
 export const componentesArpgThree=Object.freeze(['carta-pintor.js','carta-diseno.css','fuentes/cinzel.woff2','fuentes/cormorant-garamond.woff2','fuentes/cormorant-garamond-italica.woff2']);
 export const texturasGoblin=Object.freeze(['texturas-goblin/piel-color.webp','texturas-goblin/piel-normal.png','texturas-goblin/piel-superficie.png','texturas-goblin/ropa-color.webp','texturas-goblin/ropa-normal.webp','texturas-goblin/ropa-superficie.webp','texturas-goblin/hacha-color.webp','texturas-goblin/hacha-normal.webp','texturas-goblin/hacha-superficie.webp','texturas-goblin/mango-color.webp','texturas-goblin/mango-normal.webp','texturas-goblin/mango-superficie.webp']);
 export const texturasPiso=Object.freeze(['texturas-piso/vegetacion-color.webp','texturas-piso/vegetacion-normal.webp','texturas-piso/vegetacion-superficie.webp']);
-export const entornoArpgThree=Object.freeze(['arpg-three-tiempo.js','arpg-three-impactos.js','yuka-goals-vendor.js','yuka-LICENSE.txt','arpg-three-ia.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...texturasPiso]);
+export const entornoArpgThree=Object.freeze(['arpg-three-tiempo.js','arpg-three-impactos.js','yuka-goals-vendor.js','yuka-LICENSE.txt','arpg-three-ia.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...texturasPiso,...texturasCasas]);
 function ilustraciones(){
   const encuadres=JSON.parse(leer('art/encuadres.json'));
   return cartasArpgThree.map(([id,acabado])=>{

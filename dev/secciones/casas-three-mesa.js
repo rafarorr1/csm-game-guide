@@ -51,16 +51,18 @@
   // El pozo, en medio de la calle (fuera de «casas»: no tiene ventanas).
   const pozo=CASAS.casa('pozo',{semilla:21});pozo.position.set(-3.2,0,1.2);pozo.rotation.y=.35;
   // ?solo=pozo: sólo el pozo en el empedrado, con la cámara girando a su alrededor.
-  const SOLO_POZO=q.get('solo')==='pozo';
-  const calle=CASAS.fundir(SOLO_POZO?[pozo]:[...casas,pozo]);escena.add(calle);
+  const SOLO_POZO=q.get('solo')==='pozo',SOLO_UTILERIA=q.get('solo')==='utileria';
+  if(SOLO_UTILERIA){const relleno=new THREE.DirectionalLight(0xffe1b0,1.8);relleno.position.set(4,7,8);escena.add(relleno);}
+  const utileria=[['caja',-.65,0,.35,{tamano:1}],['caja',-.58,1,.35,{tamano:.65}],['barril',.7,0,.4,{}],['barril',1.3,.41,1.3,{}]].map(([tipo,x,y,z,o],i)=>{const g=CASAS.utileria(tipo,{...o,semilla:31+i});g.position.set(x,y,z);if(i===3)g.rotation.set(Math.PI/2,0,.65);else g.rotation.y=i===1?-.2:.15;return g;});
+  const calle=CASAS.fundir(SOLO_POZO?[pozo]:SOLO_UTILERIA?utileria:[...casas,pozo,...utileria]);escena.add(calle);
   // Farolas: poste de hierro, farol que brilla y una luz de verdad cada una (sin sombra: una luz puntual con sombra dibuja la escena seis veces).
   const farolas=[];
-  for(const [x,z] of [[-4.3,-2.4],[4.3,2.6]]){const g=new THREE.Group();g.position.set(x,0,z);escena.add(g);
+  for(const [x,z] of (SOLO_UTILERIA?[]:[[-4.3,-2.4],[4.3,2.6]])){const g=new THREE.Group();g.position.set(x,0,z);escena.add(g);
     const hierro=CASAS.materiales.hierro,m=(geo,mat,y)=>{const o=new THREE.Mesh(geo,mat);o.position.y=y;o.castShadow=true;g.add(o);return o;};
     m(new THREE.CylinderGeometry(.08,.12,3.6,8),hierro,1.8);m(new THREE.CylinderGeometry(.2,.28,.3,8),hierro,.15);m(new THREE.CylinderGeometry(.25,.12,.18,6),hierro,3.9);m(new THREE.BoxGeometry(.3,.4,.3),CASAS.materiales.farol,3.65);m(new THREE.ConeGeometry(.3,.3,6),hierro,4.05);
     const luz=new THREE.PointLight(0xffb070,38,16,1.7);luz.position.y=3.6;g.add(luz);farolas.push(luz);}
   // Humo de las chimeneas: bocanadas grises que suben, crecen y se deshacen con el viento.
-  const humos=(SOLO_POZO?[]:casas).map(c=>c.userData.humo?c.localToWorld(c.userData.humo.clone()):null).filter(Boolean);
+  const humos=(SOLO_POZO||SOLO_UTILERIA?[]:casas).map(c=>c.userData.humo?c.localToWorld(c.userData.humo.clone()):null).filter(Boolean);
   const NH=humos.length*40,hPos=new Float32Array(NH*3),hEdad=new Float32Array(NH),geoH=new THREE.BufferGeometry();geoH.setAttribute('position',new THREE.BufferAttribute(hPos,3));geoH.setAttribute('aEdad',new THREE.BufferAttribute(hEdad,1));
   const escHumo={value:1};
   const humo=new THREE.Points(geoH,new THREE.ShaderMaterial({uniforms:{uEsc:escHumo},transparent:true,depthWrite:false,
@@ -87,7 +89,7 @@
 
   /* ---- Cámara orbital -------------------------------------------------------------------- */
   // Las vistas de cerca se quedan dentro de la calle (la acera de enfrente está a unos 8 m).
-  const VISTAS={calle:{foco:[0,1.6,0],yaw:.35,pitch:.32,dist:26},entramada:{foco:[-8.5,3.4,-5],yaw:.25,pitch:.2,dist:9.5},taberna:{foco:[0,3.4,-5.5],yaw:-.15,pitch:.18,dist:10},piedra:{foco:[8.5,3,-5.5],yaw:-.25,pitch:.12,dist:10},pozo:{foco:[-3.2,1.3,1.2],yaw:.55,pitch:.3,dist:6.5}};
+  const VISTAS={utileria:{foco:[.15,.65,.6],yaw:.55,pitch:.32,dist:5.7},calle:{foco:[0,1.6,0],yaw:.35,pitch:.32,dist:26},entramada:{foco:[-8.5,3.4,-5],yaw:.25,pitch:.2,dist:9.5},taberna:{foco:[0,3.4,-5.5],yaw:-.15,pitch:.18,dist:10},piedra:{foco:[8.5,3,-5.5],yaw:-.25,pitch:.12,dist:10},pozo:{foco:[-3.2,1.3,1.2],yaw:.55,pitch:.3,dist:6.5}};
   const vista={foco:new V3(0,1.6,0),yaw:.35,pitch:.32,dist:26,obj:null,girar:!reducido&&!CAPTURA};
   function irA(k){const v=VISTAS[k];vista.obj={foco:new V3(...v.foco),yaw:v.yaw,pitch:v.pitch,dist:v.dist};for(const b of document.querySelectorAll('[data-vista]'))b.setAttribute('aria-pressed',String(b.dataset.vista===k));}
   let arrastre=null;
@@ -109,6 +111,15 @@
   const tri=casas.map(c=>c.userData.triangulos);
   $('ficha').innerHTML=['entramada','taberna','piedra'].map(t=>{const c=casas.find(c=>c.userData.tipo===t);return `<li><b>${{entramada:'Casa entramada',taberna:'La Jarra Rota (taberna)',piedra:'Cabaña de piedra'}[t]}</b><span>${c.userData.triangulos.toLocaleString('es')} triángulos · ${c.userData.ventanas.length} ventanas</span></li>`;}).join('')+`<li><b>Pozo</b><span>${pozo.userData.triangulos.toLocaleString('es')} triángulos</span></li>`;
 
+  if(SOLO_UTILERIA){
+    $('csTitulo').textContent='Cajas y barriles';
+    document.querySelector('.csCabecera > p:last-child').textContent='Roble con veta, tablones separados, refuerzos diagonales, clavos, duelas abombadas, tapas encastradas y aros de hierro mate. Son los mismos modelos de la plaza. Arrastra para girar y usa la rueda para acercarte.';
+    for(const b of document.querySelectorAll('[data-vista]'))b.hidden=b.dataset.vista!=='utileria';
+    $('luces').hidden=true;
+    $('ficha').innerHTML=['caja','barril'].map(t=>{const g=utileria.find(g=>g.userData.tipo===t);return `<li><b>${t==='caja'?'Caja de suministros':'Barril de roble'}</b><span>${g.userData.triangulos.toLocaleString('es')} triángulos · 2 materiales compartidos</span></li>`;}).join('');
+    $('lienzo').setAttribute('aria-label','Cajas de suministros y barriles de roble');
+  }
+
   /* ---- Fotogramas ------------------------------------------------------------------------ */
   let reloj=0,listo=false,simple=false,revisados=0,cuadros=0;
   function paso(dt){reloj+=dt;CASAS.uniformes.uT.value=reloj;const u=CASAS.uniformes.uLuz;u.value+=((luces?1:0)-u.value)*Math.min(1,dt*6);
@@ -123,9 +134,10 @@
   function cuadro(ahora){const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;paso(dt);dibujar();fps.n++;
     if(ahora-fps.t>=1000){const i=renderer.info.render;$('info').textContent=`${Math.round(fps.n*1000/(ahora-fps.t))} fps · ${i.calls} llamadas · ${(i.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;fps.n=0;fps.t=ahora;}
     requestAnimationFrame(cuadro);}
-  ponerHora('noche');ponerLuces(true);const inicio=SOLO_POZO?'pozo':'calle';irA(inicio);Object.assign(vista,{...VISTAS[inicio],foco:new V3(...VISTAS[inicio].foco)});vista.girar=!reducido&&!CAPTURA;$('girar').checked=vista.girar;
+  ponerHora(SOLO_UTILERIA?'atardecer':'noche');ponerLuces(true);const inicio=SOLO_POZO?'pozo':SOLO_UTILERIA?'utileria':'calle';irA(inicio);Object.assign(vista,{...VISTAS[inicio],foco:new V3(...VISTAS[inicio].foco)});vista.girar=!reducido&&!CAPTURA&&!SOLO_UTILERIA;$('girar').checked=vista.girar;
   medir();new ResizeObserver(medir).observe(esc);listo=true;paso(1/60);
-  estado('Arrastra para girar, rueda para acercar. Las ventanas son un solo cuadro cada una: la habitación de dentro la pinta su shader.');
+  estado('Arrastra para girar, rueda para acercar. Cargando las tejas de barro…');
+  CASAS.texturasListas.then(r=>{estado(r.every(x=>x.status==='fulfilled')?'Tejas de barro cargadas · Color y relieve de 1024 px. Arrastra para girar y usa la rueda para acercar.':'Las tejas usan el material de respaldo porque no se pudo cargar algún mapa.');if(CAPTURA)dibujar();});
   if(!CAPTURA)requestAnimationFrame(cuadro);else dibujar();
 
   // Revisión: avanzar(s) a pasos de 1/30 s y dibuja; ventanaPantalla(i) da el centro en pantalla de una ventana del frente.

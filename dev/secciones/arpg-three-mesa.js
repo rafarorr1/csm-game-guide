@@ -189,9 +189,10 @@
     const cm=(geo,mat,x,y,z,rx=0,ry=0,rz=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=m.receiveShadow=true;carro.add(m);};
     cm(new THREE.BoxGeometry(2.6,.15,1.4),MAT.madera,0,.8,0);for(const s of [-1,1])cm(new THREE.BoxGeometry(2.6,.5,.1),MAT.madera,0,1.1,s*.7);
     cm(new THREE.CylinderGeometry(.55,.55,.12,10),MAT.madera,-.8,.55,.8,Math.PI/2);cm(new THREE.CylinderGeometry(.55,.55,.12,10),MAT.madera,.9,.4,-.85,Math.PI/2,0,.3);obstaculos.push({x:6.5,z:-5.5,r:1.5});
-    const barril=(x,z,tumbado)=>{const m=poner(new THREE.CylinderGeometry(.36,.4,.9,10),MAT.madera,x,tumbado?.38:.45,z);if(tumbado)m.rotation.set(Math.PI/2,0,rnd()*3);for(const y of [-.3,.3]){const a=new THREE.Mesh(new THREE.TorusGeometry(.39,.03,4,12),MAT.hierro);a.rotation.x=Math.PI/2;a.position.y=y;m.add(a);}};
+    // La utilería comparte los materiales y el fundido de las casas (incluida su ocultación).
+    const barril=(x,z,tumbado)=>{const g=CASAS.utileria('barril',{semilla:Math.round((x+z)*100)+900});g.position.set(x,tumbado?.41:0,z);if(tumbado){g.rotation.set(Math.PI/2,0,.7);g.position.add(new V3(0,-.47,0).applyEuler(g.rotation));}else g.rotation.y=.3;barrio.push(g);};
     barril(-8.5,5,false);barril(-7.8,5.6,false);barril(-8.9,5.9,true);obstaculos.push({x:-8.3,z:5.5,r:1.1});
-    for(const [x,z,s] of [[8.2,4.4,.9],[8.9,5.2,.7],[8.4,4.6,.6]])poner(new THREE.BoxGeometry(s,s,s),MAT.madera,x,s/2+(s===.6?.9:0),z,rnd());obstaculos.push({x:8.5,z:4.8,r:1});
+    for(const [x,z,s] of [[8.2,4.4,.9],[8.9,5.2,.7],[8.4,4.6,.6]]){const g=CASAS.utileria('caja',{tamano:s,semilla:Math.round(x*100)});g.position.set(x,s===.6?.9:0,z);g.rotation.y=rnd();barrio.push(g);}obstaculos.push({x:8.5,z:4.8,r:1});
     // Faroles de forja: zócalo de piedra, fuste acanalado, jaula y remate de cobre.
     const forja=std(0x28313a,{metalness:.55,roughness:.72}),cobre=std(0x967041,{metalness:.5,roughness:.68}),ambar=std(0x6e441b,{emissive:0xffb33e,emissiveIntensity:.28,roughness:1,transparent:true,opacity:.32,depthWrite:false});
     for(const [x,z] of [[-3.5,7.5],[4.5,-10]]){

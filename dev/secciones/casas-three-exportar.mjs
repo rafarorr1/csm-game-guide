@@ -1,13 +1,14 @@
 /* Exporta la muestra de las casas de Tomsage (casas-three.html): el módulo de
    casas (casas-three.js) y three.js empaquetado (visor-three-vendor.js, sin
-   CDN). No usa arte ni datos del juego: todo se pinta por código. */
+   CDN). Incluye las tejas aportadas por el usuario y texturas de madera procedurales. */
 import fs from 'node:fs';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 import {hash} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
 export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
-export const entornoCasasThree=Object.freeze(['casas-three.js','casas-three-mesa.js','casas-three-mesa.css','visor-three-vendor.js']);
+export const texturasCasas=Object.freeze(['texturas-casas/tejas-color.webp','texturas-casas/tejas-normal.webp','texturas-casas/tejas-superficie.webp']);
+export const entornoCasasThree=Object.freeze(['casas-three.js','casas-three-mesa.js','casas-three-mesa.css','visor-three-vendor.js',...texturasCasas]);
 export const pagina=()=>fs.readFileSync(path.join(aqui,'casas-three.html'),'utf8').replaceAll('__CSP__',csp);
 export function exportar(destino){
   destino=path.resolve(destino);
