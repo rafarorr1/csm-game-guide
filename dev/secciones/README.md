@@ -1319,3 +1319,31 @@ Goblin de Camino y cobrador usan el material aportado en `goblin-skin-bumpy-bl-q
 La máscara por vértice `pielReal` limita la textura a las 16 piezas de piel expuesta: cabeza, mandíbula, nariz, orejas, pecho, brazos, antebrazos, manos, muslos y pantorrillas. Ropa, botas, ojos, cejas, colmillos y armas conservan sus materiales. Se mantienen tres mallas por personaje. Las texturas se cargan una vez por fábrica y se comparten entre todas sus instancias; las UV de detalle respetan aproximadamente un metro por repetición y viajan con los huesos, para que el patrón no se deslice durante una animación.
 
 La geometría y el atlas del cuaderno UV v2 siguen intactos. Su visor pide `fabrica(THREE,{pielGoblin:false})`, para mostrar la ilustración cargada sin sustituirla por la piel del juego. Los mapas se resuelven desde la URL de `arpg-three-modelos.js`, quedan incluidos en la exportación y se sirven mediante una lista explícita de archivos locales. `node dev/secciones/pruebas_arpg_piel_goblin.mjs` comprueba la máscara exacta de las 16 piezas, la reutilización de texturas, los espacios de color, la compatibilidad del cuaderno, los otros personajes y los recursos exportados.
+
+
+### Caídas de goblins según el golpe letal
+
+Goblins de Camino y cobradores tienen **24 coreografías: dos por cada una de 12 causas**. Al morir se elige una variante al azar, independiente de la semilla de daño y botín. La causa y dirección se capturan en el impacto letal y ya no cambian por golpes posteriores.
+
+| Ataque que mata | Variante 1 | Variante 2 |
+| --- | --- | --- |
+| Primer tajo | Cae sobre un costado | Dobla rodillas y cae de espaldas |
+| Revés | Gira y cae lateralmente | Tropieza de lado |
+| Remate del combo | Derribo de espaldas | Se dobla y desploma hacia delante |
+| Cargado (desde media carga) | Una rodada completa sobre hombros | Una rodada completa de costado |
+| Torbellino | Pirueta y caída lateral | Barrido de piernas y caída frontal |
+| Aterrizaje de Adreida | Sale despedido y rebota | Vuelco y caída frontal |
+| Disparo de Mohamed | Pierde fuerza en las rodillas | Se encoge y cae de lado |
+| Abanico de Mohamed | Tambalea y cae hacia atrás | Giro corto y desplome |
+| Daga frontal | Se dobla sobre el abdomen | Rodilla y caída lateral |
+| Daga por la espalda | Cae de bruces | Gira y se desploma |
+| Golpe de Adreidos | Derribo diagonal | Tropiezo y caída frontal |
+| Proyectil devuelto con parry | Impacto y espalda | Giro y costado |
+
+El parry cuerpo a cuerpo, Provocar, dash y backflip no causan daño y no generan una muerte propia. Disparo/abanico conservan su causa y trayectoria en vuelo aunque Mohamed cambie de estado; Adreidos usa su posición de impacto, y el proyectil devuelto conserva a su defensor en cooperativo.
+
+Las caídas duran entre 0,95 y 1,65 s; después reposan 0,35 s y se disuelven durante 0,9 s. Un muerto deja inmediatamente de atacar, bloquear el paso y contar como vivo, y entrega el botín una sola vez. El desplazamiento se detiene antes de atravesar el pozo, otros obstáculos o la muralla. Sólo hay una pequeña nube de polvo por aterrizaje.
+
+Son poses del esqueleto existente, con las mismas tres mallas y polígonos. El apoyo contra el suelo usa extremos precalculados por hueso y tipo, compartidos entre instancias; no añade un motor físico. Los giros completos conservan su ángulo continuo y la entrada desde la pose anterior se mezcla durante 90 ms.
+
+Para revisar: `modelos-visor.html?tipo=goblin&anim=muerte-cargado-1` (también `tipo=cobrador`). El selector contiene las 24 variantes; **Momento** congela y recorre la animación, **Repetir** la reinicia y **Velocidad** permite cámara lenta. `pruebas_arpg_muertes_goblin.mjs` verifica ambas variantes en ambos modelos, apoyo, continuidad, rodada de 360°, pose final inmóvil, recorrido a 30/60/120 FPS, obstáculos, causa inmutable y limpieza. Las pruebas de control y disparos comprueban además que los ataques reales entregan la causa correcta.

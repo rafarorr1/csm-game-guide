@@ -7,7 +7,8 @@
   // Animaciones: nombre, duración de un ciclo (s) y para quién tiene sentido.
   const ANIMS=[['quieto',2.8],['andar',1.1],['tajoA',1.1,'adreida'],['revesA',1.1,'adreida'],['estocadaA',1.4,'adreida'],['torbellino',1],['salto',1.3],['parry',.8],
     ['golpe',1.1],['reves',1.1],['estocada',1.3],['aviso',1],['esquiva',.7],['grito',1.2],['lanzar',1.1],['apunta',1.2],['disparar',.5,'mohamed'],['acrobacia',1,'mohamed'],
-    ['cargaMazazo',1.5,'troll'],['mazazo',1.4,'troll'],['aturdido',2],['dolor',.5],['muerte',2]];
+    ['cargaMazazo',1.5,'troll'],['mazazo',1.4,'troll'],['aturdido',2],['dolor',.5],['muerte',2],
+    ...Object.entries(F.muertesGoblin).flatMap(([tipo,variantes])=>variantes.map((p,i)=>['muerte-'+tipo+'-'+(i+1),p.duracion+.7,'goblins',p.nombre,F.crearMuerteGoblin(tipo,i)]))];
   const lienzo=$('lienzo'),render=new THREE.WebGLRenderer({canvas:lienzo,antialias:true});
   render.setPixelRatio(Math.min(2,devicePixelRatio));render.outputColorSpace=THREE.SRGBColorSpace;render.toneMapping=THREE.AgXToneMapping;render.toneMappingExposure=1.1;
   render.shadowMap.enabled=true;render.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -25,7 +26,7 @@
   let modelo=null,t=0,pausa=false,girar=false;
   for(const k of Object.keys(F.TIPOS)){const o=document.createElement('option');o.value=k;o.textContent=F.TIPOS[k].nombre;$('tipo').append(o);}
   function listaAnims(){const tipo=$('tipo').value,antes=$('anim').value;$('anim').innerHTML='';
-    for(const [n,,solo] of ANIMS){if(solo&&solo!==tipo)continue;if(tipo==='adreida'&&['golpe','reves','estocada'].includes(n))continue;const o=document.createElement('option');o.value=o.textContent=n;$('anim').append(o);}
+    for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada'].includes(n))continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
     if([...$('anim').options].some(o=>o.value===antes))$('anim').value=antes;}
   function cargar(tipo){if(modelo){escena.remove(modelo.raiz);modelo.mallas.forEach(m=>{m.geometry.dispose();m.material.dispose();});}
     modelo=F.crear(tipo);escena.add(modelo.raiz);Object.assign(meta,encuadres.cuerpo(modelo));
@@ -33,9 +34,14 @@
     $('datos').textContent=modelo.nombre+' · '+modelo.alto.toFixed(2)+' m · '+(tri/1000).toFixed(1)+' mil triángulos · '+modelo.mallas.length+' mallas';
     listaAnims();}
   $('tipo').value=F.TIPOS[q.get('tipo')]?q.get('tipo'):'adreida';cargar($('tipo').value);
-  if(q.get('anim'))$('anim').value=q.get('anim');
-  $('tipo').addEventListener('change',()=>{cargar($('tipo').value);t=0;});
-  $('anim').addEventListener('change',()=>{t=0;});
+  if([...$('anim').options].some(o=>o.value===q.get('anim')))$('anim').value=q.get('anim');
+  $('tipo').addEventListener('change',()=>{cargar($('tipo').value);t=0;encuadrarAnimacion();});
+  $('anim').addEventListener('change',()=>{t=0;encuadrarAnimacion();});
+  const actual=()=>ANIMS.find(a=>a[0]===$('anim').value)||ANIMS[0];
+  function encuadrarAnimacion(){const muerte=actual()[4];Object.assign(meta,muerte?{dist:3.8,alto:.45,el:.4,az:.35}:encuadres.cuerpo(modelo));suelo.scale.setScalar(muerte?1.8:1);}
+  encuadrarAnimacion();
+  $('repetir').addEventListener('click',()=>{t=0;pausa=false;$('pausa').textContent='Pausa';});
+  $('faseAnim').addEventListener('input',()=>{t=+$('faseAnim').value*(actual()[1]-.00001);pausa=true;$('pausa').textContent='Seguir';});
   $('pausa').addEventListener('click',()=>{pausa=!pausa;$('pausa').textContent=pausa?'Seguir':'Pausa';});
   $('girar').addEventListener('click',()=>{girar=!girar;$('girar').setAttribute('aria-pressed',girar);});
   $('cara').addEventListener('click',()=>Object.assign(meta,encuadres.cara(modelo),{az:0}));
@@ -54,9 +60,10 @@
   function cuadro(ahora){const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;
     if(!pausa)t+=dt*+$('vel').value;if(girar)meta.az+=dt*.4;
     for(const k in vista)vista[k]+=(meta[k]-vista[k])*Math.min(1,dt*8);
-    const [nombre,dur]=ANIMS.find(a=>a[0]===$('anim').value)||ANIMS[0],k=(t%dur)/dur;
-    F.posar(modelo,{anim:nombre,t,k,fase:t*TAU_PASO,paso:1});
-    const c=Math.cos(vista.el);camara.position.set(Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,Math.cos(vista.az)*c*vista.dist);camara.lookAt(0,vista.alto,0);
+    const [nombre,dur,,,muerte]=actual(),fase=(t%dur)/dur,k=muerte?Math.min(1,(t%dur)/muerte.duracion):fase;
+    $('faseAnim').value=fase;modelo.raiz.position.set(0,0,muerte?-muerte.distancia*(1-Math.pow(1-Math.min(1,k/.86),3)):0);
+    F.posar(modelo,{anim:muerte?'muerte':nombre,muerte,t,k,fase:t*TAU_PASO,paso:1});
+    const c=Math.cos(vista.el),centroZ=muerte?modelo.raiz.position.z*.65:0;camara.position.set(Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,centroZ+Math.cos(vista.az)*c*vista.dist);camara.lookAt(0,vista.alto,centroZ);
     render.render(escena,camara);requestAnimationFrame(cuadro);}
   const TAU_PASO=Math.PI*2/1.1;
   requestAnimationFrame(cuadro);

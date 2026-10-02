@@ -24,14 +24,14 @@ function avanzar(t){const n=Math.round(t*100);for(let i=0;i<n;i++){reloj.t+=.01;
 `,c);
 const run=s=>vm.runInContext(s,c);
 run('reset();ctl.atacar=true;avanzar(.01);ctl.atacar=false;avanzar(.7)');
-assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),12);
+assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),12);assert.equal(run('impactos[0].o.causa'),'tajo');
 run('ctl.atacar=true;avanzar(.01);ctl.atacar=false;avanzar(.65)');
-assert.equal(run('heroe.combo'),1,'Los clics cortos continúan el combo');
+assert.equal(run('heroe.combo'),1,'Los clics cortos continúan el combo');assert.equal(run('impactos.at(-1).o.causa'),'reves');
 run('reset();ctl.atacar=true;avanzar(2)');
 assert.equal(run('impactos.length'),0,'Mantener nunca dispara automáticamente');
 assert.equal(run('heroe.carga'),1);
 run('ctl.atacar=false;avanzar(.7)');
-assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.equal(run('Math.max(...sacudidas)'),.28,'Sacudida leve al soltar, incluso sin acertar');assert.ok(run('heroe.pos.z>.6&&heroe.pos.z<.7'),'El cargado avanza 65 cm al soltar');assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
+assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.equal(run('impactos[0].o.causa'),'cargado');assert.equal(run('Math.max(...sacudidas)'),.28,'Sacudida leve al soltar, incluso sin acertar');assert.ok(run('heroe.pos.z>.6&&heroe.pos.z<.7'),'El cargado avanza 65 cm al soltar');assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
 run('reset();ctl.atacar=true;avanzar(.55);ctl.atacar=false;avanzar(.7)');
 assert.ok(run('impactos[0].d>12&&impactos[0].d<36'),'Carga parcial proporcional');
 for(const estado of ['golpe','carga','torbellino','abanico']){
@@ -57,7 +57,7 @@ for(const [pad,mov,esperado] of [[true,-1,4],[true,0,5],[true,1,5],[false,-1,5]]
   run(`reset();mando.activo=${pad};usar('salto',new V3(0,0,5));ctl.mov.set(0,0,${mov});avanzar(.72)`);
   assert.ok(Math.abs(run('heroe.pos.z')-esperado)<.001);
   assert.equal(run('heroe.estado'),'quieto');assert.equal(run('impactos.length'),1);
-  assert.equal(run('heroe.alto'),0);assert.equal(run('Math.max(...sacudidas)'),.32,'Aterrizaje con sacudida leve');
+  assert.equal(run('heroe.alto'),0);assert.equal(run('impactos[0].o.causa'),'salto');assert.equal(run('Math.max(...sacudidas)'),.32,'Aterrizaje con sacudida leve');
 }
 run("reset();mando.activo=true;usar('salto',new V3(0,0,5));ctl.mov.set(0,0,-1);avanzar(.25);ctl.mov.set(0,0,1);avanzar(.47)");
 assert.ok(Math.abs(run('heroe.pos.z')-5)<.001,'Adelante recupera la distancia original sin rebasarla');

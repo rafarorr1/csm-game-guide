@@ -14,7 +14,7 @@ let heroe,ent,ctl,mando,disparosPendientes,punteria=null;
 const ejeBala=new V3(0,1,0),ejeCanon=new V3(0,-1,0),estiloBala='plomo';
 const frente=a=>new V3(Math.sin(a),0,Math.cos(a)),plano=(a,b)=>Math.hypot(a.x-b.x,a.z-b.z),rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z),aDistancia=()=>heroe.tipo==='mohamed';
 const geoMira=new THREE.BufferGeometry().setFromPoints([new V3(),new V3()]),lineaMira={},puntoMira={position:new V3(),material:{color:new THREE.Color()}};
-const particula=()=>{},chispas=()=>{},numero=()=>{},activarFaseTroll=()=>{},blindadoTroll=()=>false,rnd=()=>.5,morir=e=>e.estado='muere',mallaBala=()=>new THREE.Group();
+const particula=()=>{},chispas=()=>{},numero=()=>{},activarFaseTroll=()=>{},blindadoTroll=()=>false,rnd=()=>.5,morir=(e,impacto)=>{e.estado='muere';e.letal=impacto;},mallaBala=()=>new THREE.Group();
 ${get('HEROES','const')}
 ${['conHeroe','puntoApuntado','objetivoDisparo','actualizarPunteria','impactoBala','disparar','pasoBalas','danar'].map(n=>get(n)).join('\n')}
 const modelo=MOD.crear('mohamed');escena.add(modelo.raiz);
@@ -53,3 +53,11 @@ run('caso=iniciar(true,"goblin",3,0);caso.e.pos.x+=2;conHeroe(caso.h,()=>{dispar
 assert.equal(run('punteria.enemigo'),null,'No atrae la mira hacia un enemigo fuera de la dirección apuntada');
 for(let i=0;i<60;i++)run('pasoBalas(1/60)');assert.equal(run('caso.e.vida'),100);
 console.log('✓ Impactos a 20/30/60/120/144 FPS; el pozo bloquea y los tiros desviados fallan');
+
+// La bala conserva el ataque y su dirección aunque Mohamed cambie de estado o se mueva.
+for(const causa of ['disparo','abanico']){
+ run(`caso=iniciar(true,"goblin",6,0);caso.e.vida=1;conHeroe(caso.h,()=>{disparar({causa:'${causa}'});actualizarPunteria();});caso.h.estado='salto';caso.h.pos.x+=10;`);
+ for(let i=0;i<70;i++)run('pasoBalas(1/120)');
+ assert.equal(run('caso.e.letal.causa'),causa);assert.ok(run('caso.e.letal.direccion.z>.9'));assert.equal(run('caso.e.vida<=0'),true);
+}
+console.log('✓ Disparo y abanico conservan el origen letal en vuelo y cooperativo');

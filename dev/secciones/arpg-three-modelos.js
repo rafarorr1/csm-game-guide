@@ -458,6 +458,90 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
       return {tipo,H,M,mallas,p,raiz:H.raiz,...TIPOS[tipo]};
     }
 
+    // Dos coreografías por golpe letal. Los giros se interpolan como ángulos continuos:
+    // convertir la rodada completa a un slerp la acortaría por el camino más corto.
+    const secuenciaMuerte=(nombre,duracion,distancia,impacto,cuadros,adelante=false)=>{
+      let pose={k:0,caida:0,lado:0,giro:0,vuelo:0,rodillas:0,encoger:0,brazos:0,cabeza:0,torso:0,asimetria:0};
+      return Object.freeze({nombre,duracion,distancia,impacto,adelante,cuadros:cuadros.map(p=>Object.freeze(pose={...pose,...p}))});
+    };
+    const muertesGoblin=Object.freeze({
+      tajo:[
+        secuenciaMuerte('Tajo · cae sobre el costado',.95,.65,.64,[{k:0},{k:.18,torso:.25,giro:.3,brazos:.5},{k:.64,caida:-1.42,lado:.45,rodillas:.7,brazos:1,asimetria:.6},{k:1,caida:-1.5,lado:.55,rodillas:.45,cabeza:.25}]),
+        secuenciaMuerte('Tajo · rodillas y espalda',1.1,.45,.78,[{k:0},{k:.25,rodillas:1.6,encoger:.6,torso:.6,brazos:.25},{k:.5,caida:-.55,rodillas:1.8},{k:.78,caida:-1.5,rodillas:.6,brazos:.8},{k:1,lado:-.22,cabeza:-.2,rodillas:.35}])],
+      reves:[
+        secuenciaMuerte('Revés · vuelta y caída lateral',1,.8,.72,[{k:0},{k:.2,giro:-.6,torso:-.2,brazos:.8},{k:.5,giro:-1.7,caida:-.7,lado:-.35},{k:.72,giro:-2.2,caida:-1.45,lado:-.45,rodillas:.9},{k:1,rodillas:.3,cabeza:.3}]),
+        secuenciaMuerte('Revés · tropieza de lado',1.1,.65,.76,[{k:0},{k:.22,lado:-.45,asimetria:1,rodillas:.8,brazos:.9},{k:.48,lado:-.8,caida:.45,rodillas:1.1},{k:.76,lado:-1.3,caida:.6,encoger:.4},{k:1,lado:-1.45,brazos:.4,rodillas:.65}])],
+      estocada:[
+        secuenciaMuerte('Remate · derribo de espaldas',1.05,1.05,.66,[{k:0},{k:.18,caida:-.45,vuelo:.14,brazos:1,cabeza:-.4},{k:.4,caida:-1.2,vuelo:.2,rodillas:.5},{k:.66,caida:-1.52,vuelo:0,rodillas:1.1},{k:1,rodillas:.25,lado:.12}]),
+        secuenciaMuerte('Remate · se dobla y desploma',1.15,.75,.76,[{k:0},{k:.2,torso:.9,encoger:.8,rodillas:.8,brazos:-.5},{k:.47,rodillas:1.6,caida:.45},{k:.76,caida:1.4,rodillas:.7,torso:.25,brazos:.6},{k:1,caida:1.5,lado:.25,rodillas:.45}],true)],
+      cargado:[
+        secuenciaMuerte('Cargado · rueda sobre los hombros',1.55,2.3,.8,[{k:0},{k:.16,caida:-1.1,vuelo:.16,rodillas:1.3,encoger:1,brazos:.6},{k:.3,caida:-1.57,vuelo:0,rodillas:1.8,encoger:1.5},{k:.8,caida:-7.85,rodillas:1.7},{k:1,caida:-7.85,rodillas:.35,encoger:.1,brazos:1.1,lado:.15}]),
+        secuenciaMuerte('Cargado · rueda de costado',1.65,2.05,.83,[{k:0},{k:.18,caida:-.8,lado:.25,vuelo:.12,brazos:.8},{k:.32,caida:-1.57,lado:0,vuelo:0,rodillas:1.5,encoger:1},{k:.83,giro:6.28318530718,rodillas:1.3},{k:1,caida:-1.5,rodillas:.55,encoger:.2,brazos:1.2}])],
+      torbellino:[
+        secuenciaMuerte('Torbellino · pirueta y costado',1.2,1.2,.74,[{k:0},{k:.2,giro:1.8,brazos:1.3,vuelo:.06},{k:.48,giro:4.1,caida:-.7,rodillas:.6},{k:.74,giro:5.1,caida:-1.48,vuelo:0,lado:.35},{k:1,rodillas:.4,brazos:.6,cabeza:.3}]),
+        secuenciaMuerte('Torbellino · barrido de piernas',1.1,1,.7,[{k:0},{k:.22,giro:-1,caida:.5,rodillas:1.5,encoger:.8,vuelo:.14},{k:.48,giro:-2.2,caida:1.2,vuelo:.08,brazos:1.1},{k:.7,giro:-2.7,caida:1.5,vuelo:0,rodillas:.7},{k:1,lado:-.3,rodillas:.4}],true)],
+      salto:[
+        secuenciaMuerte('Salto · sale despedido y rebota',1.4,1.65,.58,[{k:0},{k:.24,vuelo:.8,caida:-.6,rodillas:1.1,brazos:1.4},{k:.58,vuelo:0,caida:-1.48,rodillas:.5},{k:.7,vuelo:.12,rodillas:1.1},{k:.86,vuelo:0,caida:-1.55},{k:1,rodillas:.35,brazos:.8}]),
+        secuenciaMuerte('Salto · vuelco y caída frontal',1.45,1.45,.64,[{k:0},{k:.22,vuelo:.65,caida:.6,giro:.35,rodillas:1.3,encoger:.8,brazos:.9},{k:.44,vuelo:.42,caida:1.35,giro:.6},{k:.64,vuelo:0,caida:1.52,rodillas:.8},{k:.76,vuelo:.08,lado:.35},{k:1,vuelo:0,rodillas:.35,brazos:.5}],true)],
+      disparo:[
+        secuenciaMuerte('Disparo · pierde fuerza en las rodillas',1.05,.28,.78,[{k:0},{k:.16,torso:-.25,cabeza:-.3,brazos:.3},{k:.4,rodillas:1.5,encoger:.5,caida:-.3},{k:.78,caida:-1.5,rodillas:.7,brazos:.65},{k:1,rodillas:.3,cabeza:.15}]),
+        secuenciaMuerte('Disparo · se encoge y cae de lado',1.1,.35,.77,[{k:0},{k:.17,torso:.45,brazos:-.45,encoger:.4},{k:.42,lado:.5,rodillas:1.1,asimetria:.8},{k:.77,lado:1.4,caida:-.35,rodillas:.8},{k:1,lado:1.5,cabeza:.3,brazos:.2}])],
+      abanico:[
+        secuenciaMuerte('Abanico · tambalea y cae hacia atrás',1.2,.65,.8,[{k:0},{k:.14,torso:-.3,lado:.18,brazos:.5},{k:.3,lado:-.2,rodillas:.65},{k:.48,lado:.3,caida:-.6,brazos:1},{k:.8,caida:-1.52,lado:.2,rodillas:.8},{k:1,rodillas:.25}]),
+        secuenciaMuerte('Abanico · giro corto y desplome',1.05,.7,.74,[{k:0},{k:.2,giro:.65,torso:-.25,brazos:.9},{k:.45,giro:1.15,caida:-.7,lado:-.4,rodillas:1.1},{k:.74,caida:-1.45,lado:-.5},{k:1,rodillas:.35,brazos:.4}])],
+      daga:[
+        secuenciaMuerte('Daga · se dobla sobre el abdomen',1.2,.2,.8,[{k:0},{k:.23,torso:.9,encoger:.8,brazos:-.7,cabeza:.25},{k:.52,rodillas:1.8,caida:.4},{k:.8,caida:1.35,torso:.3,rodillas:.8},{k:1,caida:1.5,lado:.15,brazos:.2}],true),
+        secuenciaMuerte('Daga · rodilla y caída de costado',1.3,.18,.82,[{k:0},{k:.25,torso:.7,brazos:-.6,rodillas:1.3,asimetria:1},{k:.56,lado:-.55,encoger:.6,rodillas:1.6},{k:.82,lado:-1.4,caida:.4},{k:1,rodillas:.8,brazos:.15}])],
+      espalda:[
+        secuenciaMuerte('Daga por detrás · cae de bruces',1.05,.5,.7,[{k:0},{k:.18,torso:-.3,cabeza:-.45,brazos:.9},{k:.44,caida:.8,rodillas:.9,brazos:1.2},{k:.7,caida:1.52,rodillas:.5},{k:1,brazos:.55,lado:.13}],true),
+        secuenciaMuerte('Daga por detrás · gira y se desploma',1.3,.35,.84,[{k:0},{k:.25,giro:.7,cabeza:-.3,torso:.2,brazos:.4},{k:.5,giro:1.4,rodillas:1.5,caida:-.4},{k:.84,giro:1.7,caida:-1.5,lado:.3},{k:1,rodillas:.35,brazos:.8}])],
+      adreidos:[
+        secuenciaMuerte('Adreidos · derribo diagonal',1.05,.9,.72,[{k:0},{k:.2,caida:-.4,giro:.4,brazos:1},{k:.45,caida:-.9,lado:.4,rodillas:.8},{k:.72,caida:-1.5,lado:.6},{k:1,rodillas:.25,brazos:.7}]),
+        secuenciaMuerte('Adreidos · tropiezo y caída frontal',1.15,.8,.8,[{k:0},{k:.23,torso:.6,rodillas:.9,asimetria:1,brazos:.5},{k:.5,caida:.6,rodillas:1.5},{k:.8,caida:1.5,rodillas:.6,brazos:1},{k:1,lado:-.25,rodillas:.3}],true)],
+      parry:[
+        secuenciaMuerte('Proyectil devuelto · impacto y espalda',1.15,1.15,.7,[{k:0},{k:.2,caida:-.5,vuelo:.25,brazos:1.3,cabeza:-.4},{k:.45,caida:-1.3,vuelo:.12,rodillas:1},{k:.7,caida:-1.52,vuelo:0},{k:1,rodillas:.35,lado:-.2}]),
+        secuenciaMuerte('Proyectil devuelto · giro y costado',1.2,1,.76,[{k:0},{k:.2,giro:-.6,torso:-.4,brazos:1},{k:.5,giro:-1.4,lado:-.7,rodillas:1.2,vuelo:.1},{k:.76,caida:-1.4,lado:-.55,vuelo:0},{k:1,rodillas:.4,brazos:.5}])]
+    });
+    function crearMuerteGoblin(tipo='tajo',variante=Math.random()<.5?0:1){
+      if(!Object.hasOwn(muertesGoblin,tipo))tipo='tajo';variante=variante===1?1:0;
+      const p=muertesGoblin[tipo][variante];return {tipo,variante,duracion:p.duracion,distancia:p.distancia,impacto:p.impacto,adelante:p.adelante};
+    }
+    function posarMuerteGoblin(m,a){
+      const muerte=a.muerte||crearMuerteGoblin('tajo',0),p=muertesGoblin[muerte.tipo]?.[muerte.variante]||muertesGoblin.tajo[0],k=Math.min(1,Math.max(0,a.k||0));
+      let j=1;while(j<p.cuadros.length-1&&k>p.cuadros[j].k)j++;
+      const u=p.cuadros[j-1],v=p.cuadros[j],w=suave((k-u.k)/(v.k-u.k)),valor=n=>u[n]+(v[n]-u[n])*w;
+      const H=m.H,lado=muerte.variante===1?-1:1,alinear=(muerte.angulo||0)*tramo(k,0,.22);
+      H.cuerpo.rotation.set(valor('caida'),valor('giro'),valor('lado'));H.cuerpo.quaternion.premultiply(giroMuerte.setFromAxisAngle(ejeMuerte,alinear));H.cuerpo.position.y=valor('vuelo');
+      H.torso.rotation.set(valor('torso'),lado*valor('asimetria')*.2,0);H.cabeza.rotation.set(valor('cabeza'),0,lado*tramo(k,.65,1)*.12);
+      H.cadera.rotation.y=0;
+      for(const [l,s] of [['I',1],['D',-1]]){
+        const diferencia=s*valor('asimetria');
+        H['pierna'+l].rotation.set(-valor('encoger')-valor('rodillas')*.3+diferencia*.3,0,s*.13*tramo(k,.3,1));
+        H['rodilla'+l].rotation.x=Math.max(0,valor('rodillas')+diferencia*.4);
+        H['pie'+l].rotation.x=-.15*tramo(k,.4,1);
+        H['brazo'+l].rotation.set(-.3-valor('encoger')*.35,0,s*(.18+valor('brazos')*.8));
+        H['ante'+l].rotation.x=-.25-valor('encoger')*.65-valor('brazos')*.15;
+      }
+    }
+    // Apoyo de bajo coste: 26 extremos de cada hueso, precalculados una vez por tipo.
+    // No hay rigid bodies ni barridos de los miles de vértices durante la partida.
+    const apoyosGoblin=new Map(),puntoApoyo=new THREE.Vector3(),ejeMuerte=new THREE.Vector3(0,1,0),giroMuerte=new THREE.Quaternion();
+    function apoyarMuerteGoblin(m){
+      let apoyos=apoyosGoblin.get(m.tipo);const esq=m.mallas[0].skeleton;
+      if(!apoyos){const direcciones=[];for(let x=-1;x<=1;x++)for(let y=-1;y<=1;y++)for(let z=-1;z<=1;z++)if(x||y||z)direcciones.push(new THREE.Vector3(x,y,z));
+        const extremos=esq.bones.map(()=>direcciones.map(()=>({d:-Infinity,p:null})));
+        for(const mesh of m.mallas){const g=mesh.geometry;for(let i=0;i<g.attributes.position.count;i++){
+          const b=g.attributes.skinIndex.getX(i);puntoApoyo.fromBufferAttribute(g.attributes.position,i).applyMatrix4(esq.boneInverses[b]);
+          for(let j=0;j<direcciones.length;j++){const d=puntoApoyo.dot(direcciones[j]),e=extremos[b][j];if(d>e.d){e.d=d;e.p=puntoApoyo.clone();}}
+        }}
+        apoyos=extremos.map(lista=>[...new Map(lista.filter(e=>e.p).map(e=>[e.p.toArray().join(','),e.p])).values()]);apoyosGoblin.set(m.tipo,apoyos);
+      }
+      // La altura escrita en la coreografía es el vuelo sobre el contacto, no el pivote de los pies.
+      const vuelo=m.H.cuerpo.position.y;m.H.cuerpo.position.y=0;m.raiz.updateMatrixWorld(true);let minimo=Infinity;
+      for(let i=0;i<apoyos.length;i++){const e=esq.bones[i].matrixWorld.elements;for(const p of apoyos[i])minimo=Math.min(minimo,e[1]*p.x+e[5]*p.y+e[9]*p.z+e[13]);}
+      m.H.cuerpo.position.y=vuelo+.012-minimo+m.raiz.position.y;
+    }
+
     const salidas=new WeakMap();
     function recogerPose(m,a){
       let e=salidas.get(m);
@@ -467,11 +551,13 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
       if(a.mezclar!==true||!e.valida){e.dur=0;e.t=0;}
       else if(estado!==e.estado){
         // Sólo la vuelta a guardia: avisos, impactos y aturdimientos conservan sus instantes.
-        e.dur=locomocion.includes(estado)&&!locomocion.includes(e.estado)?.16:0;e.t=0;
+        e.dur=estado==='muere'&&(m.tipo==='goblin'||m.tipo==='cobrador')?.09:locomocion.includes(estado)&&!locomocion.includes(e.estado)?.16:0;e.t=0;
         for(let i=0;i<e.huesos.length;i++){e.desde[i].copy(e.ultima[i]);e.desdePos[i].copy(e.pos[i]);}
       }
       e.t+=Math.max(0,Math.min(.05,a.dt||0));const w=e.dur?suave(e.t/e.dur):1;
-      for(let i=0;i<e.huesos.length;i++){const b=e.huesos[i];if(w<1){b.quaternion.slerp(e.desde[i],1-w);b.position.lerpVectors(e.desdePos[i],b.position,w);}e.ultima[i].copy(b.quaternion);e.pos[i].copy(b.position);}
+      for(let i=0;i<e.huesos.length;i++){const b=e.huesos[i];if(w<1){b.quaternion.slerp(e.desde[i],1-w);b.position.lerpVectors(e.desdePos[i],b.position,w);}}
+      for(let i=0;i<e.huesos.length;i++){e.ultima[i].copy(e.huesos[i].quaternion);e.pos[i].copy(e.huesos[i].position);}
+      if(a.anim==='muerte'&&(m.tipo==='goblin'||m.tipo==='cobrador'))apoyarMuerteGoblin(m);
       e.estado=estado;e.valida=a.mezclar===true;
     }
 
@@ -570,7 +656,7 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
         case 'aturdido':andar(t*3,.08);H.cabeza.rotation.z=Math.sin(t*5)*.3;H.torso.rotation.z=Math.sin(t*5+1)*.12;H.brazoI.rotation.z=.4;H.brazoD.rotation.z=-.4;H.anteD.rotation.x=-.2;break;
         case 'dolor':H.torso.rotation.x=-.3*(1-k);H.cabeza.rotation.x=-.3*(1-k);H.brazoI.rotation.z=.4*(1-k)+.18;break;
         // Muerte: se le doblan las rodillas y cae de espaldas.
-        case 'muerte':{const r=tramo(k,0,.35),c=tramo(k,.25,.8);H.rodillaI.rotation.x=1.2*r*(1-c*.6);H.rodillaD.rotation.x=.9*r*(1-c*.6);H.piernaI.rotation.x=-.8*r*(1-c);H.piernaD.rotation.x=-.5*r*(1-c);
+        case 'muerte':{if(m.tipo==='goblin'||m.tipo==='cobrador'){posarMuerteGoblin(m,a);break;}const r=tramo(k,0,.35),c=tramo(k,.25,.8);H.rodillaI.rotation.x=1.2*r*(1-c*.6);H.rodillaD.rotation.x=.9*r*(1-c*.6);H.piernaI.rotation.x=-.8*r*(1-c);H.piernaD.rotation.x=-.5*r*(1-c);
           H.brazoI.rotation.z=.18+1.2*c;H.brazoD.rotation.z=-.18-1.1*c;H.cabeza.rotation.x=-.4*c;
           H.cuerpo.rotation.x=-Math.PI/2*c*.96;H.cuerpo.position.y=-.3*r*(1-c)*esc+.12*c*esc;H.cuerpo.position.z=-(m.alto*.22)*c;break;}
       }
@@ -582,7 +668,7 @@ diffuseColor.rgb*=mix(1.,mix(1.,superficiePiel.r,.5),vPielReal);
         recogerPose(m,a);
       }
     }
-    return {crear,posar,TIPOS,animacion};
+    return {crear,posar,TIPOS,animacion,muertesGoblin,crearMuerteGoblin};
   }
   window.CAOZ_ARPG_MODELOS=Object.freeze({fabrica});
 })();
