@@ -1,0 +1,17 @@
+{
+  "archivoAportado": "angled-blocks-vegetation-bl.zip",
+  "fuentes": {
+    "angled-blocks-vegetation_albedo.png": "d15cea7ab508da51ae432a04d293a63ae3a3696da8e262e132bef2fbdf2e46d7",
+    "angled-blocks-vegetation_normal-ogl.png": "aa463a46b0062f8e16294f1516b41cc41476462d2b0140c2d459dcfa5cfeb980",
+    "angled-blocks-vegetation_ao.png": "c02c9f259cf6b80900a3ceb74ab95ef91691d1cacb564ac2c54c22afa90c2a14",
+    "angled-blocks-vegetation_roughness.png": "323d82273dc4a708c2a4eeebc12b5bfaa87d20681b38293acb5616e105bac812"
+  },
+  "resolucion": 1024,
+  "color": "sRGB, WebP calidad 90",
+  "normal": "OpenGL, datos lineales, WebP sin pérdida",
+  "superficie": "Datos lineales; rojo: oclusión, verde: rugosidad, azul: 255. WebP sin pérdida.",
+  "escalaMetros": 4.8,
+  "oclusion": 0.5,
+  "relieve": 0.7,
+  "geometria": "Se conserva la malla del suelo; sin desplazamiento ni teselación."
+}

@@ -110,6 +110,37 @@
   const mundo=new THREE.Group();escena.add(mundo);
   const matSuelo=new THREE.MeshStandardMaterial({color:0xffffff,roughness:.92,metalness:0,normalScale:new THREE.Vector2(1.2,1.2)});
   const suelo=new THREE.Mesh(new THREE.CircleGeometry(R/Math.cos(Math.PI/PANELES),PANELES).rotateZ(Math.PI/PANELES),matSuelo);suelo.rotation.x=-Math.PI/2;suelo.receiveShadow=true;mundo.add(suelo);
+  // Comparación optativa del material aportado: conserva la geometría y la partida.
+  async function prepararPruebaPiso(){
+    if(!['vegetacion','actual'].includes(q.get('piso')))return;
+    const panel=$('pruebaPiso'),selector=$('pisoPrueba'),mensaje=$('pisoMensaje');
+    panel.hidden=false;selector.disabled=true;mensaje.textContent='Cargando textura…';
+    const cargador=new THREE.TextureLoader(),texturas=[];
+    try{
+      const repeticion=2*R/Math.cos(Math.PI/PANELES)/4.8;
+      // Las tres capas comparten UV; sólo el color se interpreta como sRGB.
+      const resultados=await Promise.allSettled(['color','normal','superficie'].map(async nombre=>{
+        const t=await cargador.loadAsync('./texturas-piso/vegetacion-'+nombre+'.webp');texturas.push(t);
+        t.colorSpace=nombre==='color'?THREE.SRGBColorSpace:THREE.NoColorSpace;
+        t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(repeticion,repeticion);
+        t.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());return t;
+      }));
+      if(resultados.some(r=>r.status==='rejected'))throw Error('No se pudo cargar el piso de prueba.');
+      const [color,normal,superficie]=resultados.map(r=>r.value);
+      const vegetacion=new THREE.MeshStandardMaterial({map:color,normalMap:normal,normalScale:new THREE.Vector2(.7,.7),
+        aoMap:superficie,aoMapIntensity:.5,roughnessMap:superficie,roughness:1,metalness:0,envMapIntensity:.35});
+      const aplicar=()=>{
+        suelo.material=selector.value==='vegetacion'?vegetacion:matSuelo;
+        const url=new URL(location.href);url.searchParams.set('piso',selector.value);history.replaceState(null,'',url);
+        mensaje.textContent=selector.value==='vegetacion'?'Piedra con vegetación':'Adoquines originales';
+        if(listo)dibujarCuadro();
+      };
+      selector.value=q.get('piso');selector.disabled=false;selector.onchange=aplicar;aplicar();
+    }catch(error){
+      for(const t of texturas)t.dispose();selector.value='actual';mensaje.textContent='No se pudo cargar la textura; se conserva el piso actual.';
+      console.warn(error.message);
+    }
+  }
   const matPasto=new THREE.MeshStandardMaterial({color:0x4b6337,roughness:1});
   {const [c,g]=lienzoDe(128,128);g.fillStyle='#a5ad91';g.fillRect(0,0,128,128);for(let i=0;i<1800;i++){g.strokeStyle=i%3?'#869377':'#c3c6a4';const x=(i*37.7)%128,y=(i*61.3)%128;g.beginPath();g.moveTo(x,y);g.lineTo(x+(i%3)-1,y-2-i%4);g.stroke();}matPasto.map=tex(c,true,[56,56]);}
   const terreno=new THREE.Mesh(new THREE.CircleGeometry(ABIERTO?112:85,96),matPasto);terreno.rotation.x=-Math.PI/2;terreno.position.y=-.025;terreno.receiveShadow=true;mundo.add(terreno);
@@ -1378,6 +1409,7 @@
 
   async function preparar(){
     const suelo=adoquines();Object.assign(matSuelo,suelo);matSuelo.needsUpdate=true;capaQuemada.material.map=quemaduras();capaQuemada.material.needsUpdate=true;
+    await prepararPruebaPiso();
     crearEquipo();reiniciarExploracion();medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
     estado('Preparando las cartas del botín…');await CAOZ_CARTA_PINTOR.fuentes();const logo=await imagen('./art/logo.webp');dorso.mat=F.materialDorso(CAOZ_CARTA_PINTOR.dorso(logo));
     estado(ABIERTO?'Mundo abierto · Explora los caminos, descubre el mapa y libera los tres campamentos. R: ulti · M: ampliar mapa.':COOP?'Cooperativo: J1 Adreida, J2 Mohamed. Una carta y un d20 para ambos. Ulti: R / L3.':'Los portones sellados dejan entrar invasores; sus sellos ámbar bloquean tu salida. WASD para moverte, clic izquierdo para atacar hacia el cursor, Espacio para parry, clic derecho para saltar, Q Torbellino, E Provocar.');

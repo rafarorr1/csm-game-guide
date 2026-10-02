@@ -38,6 +38,10 @@
     <label>Balas de Mohamed <select id="estiloBala"><option value="plomo">A · Plomo de pistola de chispa</option><option value="trazadora">B · Bala de latón trazadora</option></select></label>
   </fieldset>
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
+    <div id="pruebaPiso" class="apPruebaPiso" hidden>
+      <label>Prueba de piso <select id="pisoPrueba"><option value="vegetacion">Piedra con vegetación</option><option value="actual">Piso actual</option></select></label>
+      <small id="pisoMensaje" role="status"></small>
+    </div>
     <div id="pausaOtra" class="apPausaOtra" hidden><p>Otra partida está activa.</p><button type="button" id="reanudarPartida" class="apBoton">Continuar aquí</button></div>
     <button type="button" id="pausaPantalla" class="apBoton apPausaPantalla">Pausa · Esc / Options</button>
     <canvas tabindex="-1" id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
