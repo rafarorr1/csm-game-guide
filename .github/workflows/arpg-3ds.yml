@@ -1,0 +1,35 @@
+name: Compilar ARPG para 3DS
+on:
+  push:
+    branches: [feature/visor-3d-coleccion]
+    paths:
+      - 'dev/ports/3ds/**'
+      - '.github/workflows/arpg-3ds.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compilar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exportar los modelos del juego
+        run: node dev/ports/3ds/tools/exportar.mjs
+      - name: Comprobar la simulacion nativa
+        run: g++ -std=c++17 -O2 -Idev/ports/3ds/include dev/ports/3ds/source/juego.cpp dev/ports/3ds/tools/pruebas.cpp -o /tmp/pruebas-3ds && /tmp/pruebas-3ds
+      - name: Compilar ARM11 con devkitPro
+        run: docker run --rm -v "$PWD:/src" -w /src/dev/ports/3ds devkitpro/devkitarm:20260610 make -j2
+      - name: Preparar carpeta para Homebrew Launcher
+        run: |
+          mkdir -p entrega/3ds/LasGrietas3DS
+          cp dev/ports/3ds/LasGrietas3DS.3dsx dev/ports/3ds/LasGrietas3DS.smdh entrega/3ds/LasGrietas3DS/
+          cp dev/ports/3ds/LEEME.txt entrega/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LasGrietas3DS-homebrew
+          path: entrega/
+          retention-days: 30

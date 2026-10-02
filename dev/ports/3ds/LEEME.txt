@@ -1,0 +1,32 @@
+LAS GRIETAS DEL EDITOR - ADAPTACIÓN NATIVA PARA 3DS
+
+Prototipo para Nintendo 3DS, 3DS XL y 2DS originales con Homebrew Launcher.
+
+INSTALACIÓN
+1. Copia la carpeta "3ds" de este paquete a la raíz de la tarjeta SD.
+2. En Homebrew Launcher, abre "Las Grietas del Editor".
+3. Elige Adreida o Mohamed y pulsa A.
+
+El archivo .3dsx ya incluye los modelos mediante RomFS. No necesita conexión,
+una copia del sitio web, claves de Nintendo ni archivos de juegos comerciales.
+
+CONTROLES
+Circle Pad: moverse; durante la carga, orientar el golpe sin moverse.
+A: ataque básico; con Adreida, mantener y soltar carga el hacha.
+B: dash. L: parry. X: salto. Y: torbellino o abanico.
+R: ulti. Cruceta arriba: provocar. START: pausa / reiniciar tras morir.
+SELECT: volver a elegir personaje. L + R + START: volver al launcher.
+En las cartas: izquierda/derecha para elegir, A para tirar y continuar.
+
+ALCANCE DE ESTA VERSIÓN
+Adaptación de un jugador con ambos héroes, las oleadas de la plaza, Can,
+El Recaudador, cartas con d20, habilidades y modelos/poses del juego original.
+Los gráficos son simplificados: colores por vértice e iluminación sencilla.
+No incluye el mundo abierto, cooperativo, texturas PBR, posprocesado, editor
+ni equivalencia exacta de todos los efectos y animaciones de la versión web.
+La pantalla superior dibuja en 2D (sin estereoscopía); la inferior muestra HUD.
+
+VALIDACIÓN
+Compilación ARM11 y pruebas de simulación en el proceso de construcción.
+Pendiente comprobar arranque, aspecto y rendimiento en una 3DS física.
+No se garantiza una tasa de cuadros antes de esa prueba.
