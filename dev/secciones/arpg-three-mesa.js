@@ -1282,10 +1282,10 @@
   esc.addEventListener('pointermove',()=>{mando.activo=false;});
   function movTeclado(){const v=new V3();for(const k of teclas){const d=DIRS[k];if(d){v.x+=d[0];v.z+=d[1];}}return v.lengthSq()?v.normalize():v;}
   function apuntar(cx,cy){const b=esc.getBoundingClientRect();puntero.set((cx-b.left)/b.width*2-1,-(cy-b.top)/b.height*2+1);}
-  function bajo(){escena.updateMatrixWorld(true);ray.setFromCamera(puntero,camara);const cajas=[...enemigos.filter(e=>e.estado!=='muere').map(e=>e.m.caja),...botines.filter(b=>b.listo&&!b.recogida&&!b.volando).map(b=>b.caja)];
+  function bajo(incluirBotin=false){escena.updateMatrixWorld(true);ray.setFromCamera(puntero,camara);const cajas=[...enemigos.filter(e=>e.estado!=='muere').map(e=>e.m.caja),...(incluirBotin?botines.filter(b=>b.listo&&!b.recogida&&!b.volando).map(b=>b.caja):[])];
     const hit=ray.intersectObjects(cajas,false)[0];ray.ray.intersectPlane(planoSuelo,ent.suelo);return hit?(hit.object.userData.enemigo||hit.object.userData.botin):null;}
   lienzo.addEventListener('contextmenu',e=>e.preventDefault());
-  lienzo.addEventListener('pointerdown',e=>{apuntar(e.clientX,e.clientY);camara.updateMatrixWorld();const s=bajo();
+  lienzo.addEventListener('pointerdown',e=>{apuntar(e.clientX,e.clientY);camara.updateMatrixWorld();const s=bajo(e.pointerType==='touch');
     if(e.pointerType==='touch'){activarTactil();if(s?.bono){ent.lectura=s;ent.lecturaHasta=reloj.t+2.5;}return;}// en táctil, tocar una carta la lee; se recoge pasando por encima
     ent.piloto=false;ent.dentro=true;lienzo.setPointerCapture?.(e.pointerId);
     if(e.button===2)usar('salto',ent.suelo.clone());else if(e.button===0)ent.atacando=ent.pendiente=true;});
@@ -1518,7 +1518,8 @@
     if(paron>0){paron-=dt;dt*=.08;}
     reloj.t+=dt;tiempo.value=reloj.t;F.tiempo.value=reloj.t;CASAS.uniformes.uT.value=reloj.t;
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
-    for(const b of botines)b.mirada+=(((ent.sobre===b||ent.lectura===b)?1:0)-b.mirada)*Math.min(1,dt*20);
+    // Las cartas no reaccionan al cursor ni tapan la selección de enemigos; sólo un toque explícito permite leerlas.
+    for(const b of botines)b.mirada+=((ent.lectura===b?1:0)-b.mirada)*Math.min(1,dt*20);
     for(const h of jugadores)conHeroe(h,()=>{leerControles();const antes=h.pos.clone();pasoHeroe(dt);respetarMuralla(antes,h.pos,h.radio);h.velocidad??=new V3();const v=h.pos.clone().sub(antes).multiplyScalar(1/Math.max(dt,.001));if(v.length()>VEL)v.setLength(VEL);h.velocidad.lerp(v,1-Math.exp(-dt*8));});
     if(luzCompanero){const j=jugadores[1];luzCompanero.position.set(j.pos.x,4,j.pos.z);luzCompanero.intensity=j.vivo?24:0;}
     const h=heroe;presion.rutas=0;pasoAliados(dt);pasoExploracion(dt);pasoRefuerzosCan();coordinarEnemigos();for(const e of [...enemigos])conHeroe(objetivoEnemigo(e),()=>pasoEnemigo(e,dt));separar();pasoOleadas(dt);pasoPeligrosTroll(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
@@ -1550,7 +1551,7 @@
     for(const f of fuegos)f.luz.intensity=55+Math.sin(reloj.t*11+f.x)*9+Math.sin(reloj.t*23+f.z)*6;for(const b of braseros)b.luz.intensity=24+Math.sin(reloj.t*13+b.x)*5;
     for(const n of [...numeros]){const s=reloj.t-n.t0;n.e.pos.y=n.y+s*1.4;n.e.el.style.opacity=String(Math.max(0,1-Math.max(0,s-.45)/.5));if(s>.95){quitarEtiqueta(n.e);numeros.splice(numeros.indexOf(n),1);}}
     pasoCamara(dt,dtReal);camara.updateMatrixWorld();lineaMira.visible=puntoMira.visible=false;for(const j of jugadores)if(j.tipo==='mohamed')conHeroe(j,actualizarPunteria);hud();
-    lienzo.style.cursor=ent.sobre?.d?'crosshair':ent.sobre?.bono?'pointer':'default';
+    lienzo.style.cursor=ent.sobre?.d?'crosshair':'default';
     return true;
   }
   const matEstrella=new THREE.MeshBasicMaterial({color:0xffe070,toneMapped:false});

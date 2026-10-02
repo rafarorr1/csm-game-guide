@@ -1212,6 +1212,8 @@ Las cartas físicas del cooperativo usan acabado mate: rugosidad 0,95, metal 0, 
 
 `node dev/secciones/pruebas_arpg_balance_coop.mjs` comprueba vida, composición de oleadas y campamentos, refuerzos iniciales, plazas de ataque y materiales, tanto en solitario como en cooperativo.
 
+Las cartas de botín no reaccionan al cursor: conservan su tamaño, orientación ambiental e iluminación y no interceptan la selección de enemigos. Se recogen pasando por encima. En táctil se mantiene la lectura mediante un toque explícito.
+
 ### Liberación de carga, pociones y efectos
 
 La entrada de Adreida distingue el botón sostenido de un clic pendiente: el pendiente ya no mantiene una carga. Se recoge `pointerup` también fuera del lienzo y se cancela con seguridad al perder captura; la pérdida automática de captura después de soltar normalmente no cancela el golpe. Se conserva la recuperación intencional de 0,3 s tras el cargado completo. La prueba `pruebas_arpg_adreida_control.mjs` cubre liberación, pendiente residual, pérdida de captura y clic corto.

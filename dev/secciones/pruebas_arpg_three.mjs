@@ -11,8 +11,8 @@
        vino y los atacantes de fuera de la pantalla tienen su flecha; como
        mucho dos atacan cuerpo a cuerpo a la vez;
      · Q Torbellino y clic derecho Salto requieren Furia; E lanza el hacha búmeran;
-     · el botín: la carta se levanta con el ratón encima (o al tocarla), se lee
-       entera y se recoge pisándola;
+     · el botín: el cursor no altera la carta; tocarla permite leerla
+       y se recoge pisándola;
      · la partida entera (el piloto automático gana las cuatro oleadas y a Can,
        que suelta la Llave del Mago), la derrota y volver a empezar;
      · táctil (palanca, Atacar con puntería automática y Esquiva), movimiento
@@ -225,18 +225,18 @@ try{
     assert.deepEqual(errores,[],'Sin errores con las habilidades');await contexto.close();}
   console.log('✓ Q Torbellino y clic derecho Salto al cursor con Furia; E Búmeran sin coste, con ida y regreso');
 
-  // ---- Botín: se lee con el ratón encima y se recoge pisándolo -------------------------------
+  // ---- Botín: el cursor no altera las cartas; se recogen pisándolas -------------------------
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(false)');await r('r.heroe({x:0,z:3,dir:0})');
     await r('r.soltar("mazo","dorado",1.5,6)');await r('r.avanzar(.5)');const s=await r('r.botinPantalla(0)');const atq=(await r('r.estado()')).heroe.atq;
-    await pagina.mouse.move(s.x,s.y);await r('r.avanzar(.6)');let e=await r('r.estado()');const c=await r('r.rectBotin(0)');
-    assert.ok(e.botines[0].mirada>.95&&e.botines[0].escala>3,'Con el ratón encima la carta se levanta y crece ('+e.botines[0].escala+'×)');
-    assert.ok(c.izquierda>=0&&c.derecha<=c.ancho&&c.arriba>=0&&c.abajo<=c.alto&&c.abajo-c.arriba>c.alto*.28,'…entera en pantalla y grande para leerla ('+Math.round(c.abajo-c.arriba)+' px)');
+    await pagina.mouse.move(s.x,s.y);await r('r.avanzar(.6)');let e=await r('r.estado()');
+    assert.ok(e.botines[0].mirada===0&&e.botines[0].escala===1,'El cursor conserva la escala y no activa la lectura');
+    assert.equal(e.sobre,null,'La carta no captura el cursor ni tapa la selección de enemigos');
     assert.ok(/Mazo de Brock/.test(e.botines[0].nombre)&&/Dorado/.test(e.botines[0].nombre)&&/ATQ/.test(e.botines[0].nombre),'…con su nombre, edición y bonificación');
     await pagina.mouse.move(5,5);await r('r.control({mov:[.45,.9]})');e=await r('r.avanzar(1.2)');await r('r.control(null)');e=await r('r.avanzar(.6)');
     assert.ok(e.heroe.botin.includes('mazo/dorado')&&e.heroe.atq>atq&&!e.botines.length,'Pisarla la recoge y da ATQ ('+atq+' → '+e.heroe.atq+')');
     assert.equal(await pagina.locator('#botin figure').count(),1,'La carta recogida aparece en la lista del botín');
     assert.deepEqual(errores,[],'Sin errores con el botín');await contexto.close();}
-  console.log('✓ Botín en cartas físicas: se lee con el ratón encima y se recoge pisándolo');
+  console.log('✓ Botín en cartas físicas: sin reacción al cursor; recogida por proximidad');
 
   // ---- La partida entera con el piloto automático; la derrota --------------------------
   {const {contexto,pagina,errores,r}=await abrir(navegador);await r('r.oleadas(true)');await r('r.piloto(true)');let e;
