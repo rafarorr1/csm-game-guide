@@ -195,6 +195,7 @@
       const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
       switch(a.anim){
+        case 'recogerLlave':case 'mirarLlave':return {G:[-.3,.22,.3],A:dirA(-2.95,.55),arriba:[0,1,0],soltarIzquierda:1,brazoLibre:[-.5,0,.3,-.7,0,0]};
         case 'andar':{const f=a.fase||0,p=Math.max(0,Math.min(1,a.paso??1)),r=correr(p),balanceo=Math.cos(f-.12);
           const libre=[-.08+balanceo*.30*p,-.05*Math.sin(f)*p,.22+Math.sin(f)*.025*p,-.35-.08*balanceo*p,0,0],datos=muestrearCarrera(f),offset=3+carreraImportada.huesos.length*4;
           for(let i=0;i<libre.length;i++)libre[i]+=(datos[offset+i]-libre[i])*r;
@@ -215,9 +216,27 @@
         case 'salto':{const arr=tramo(k,.12,.3)*(1-tramo(k,.75,.9)),cae=tramo(k,.75,.9);return mezcla(reposo(),vertical(2.1*arr-.7*cae),Math.max(arr,cae));}
         default:return reposo();}}
 
+    function posarLlave(m,a){
+      const H=m.H,k=a.anim==='mirarLlave'?1:Math.max(0,Math.min(1,a.k||0)),baja=tramo(k,0,.38)*(1-tramo(k,.55,1));
+      H.cuerpo.position.y=-.72*baja;H.cuerpo.position.z=-.03*baja;
+      H.cadera.rotation.x=-.08*baja;H.torso.rotation.x=.1+1.05*baja;H.cabeza.rotation.x=.24+.2*baja;
+      H.piernaI.rotation.x=-1.35*baja;H.piernaD.rotation.x=-1.28*baja;
+      H.rodillaI.rotation.x=.12+2.35*baja;H.rodillaD.rotation.x=.12+2.23*baja;
+      H.pieI.rotation.x=-1.12*baja;H.pieD.rotation.x=-1.07*baja;
+    }
+    const metaLlave=new THREE.Vector3(),poloLlave=new THREE.Vector3(),giroLlave=new THREE.Quaternion(),orientacionLlave=new THREE.Quaternion().setFromEuler(new THREE.Euler(0,0,Math.PI/2));
+    function resolverLlave(m,a){
+      const H=m.H,k=a.anim==='mirarLlave'?1:Math.max(0,Math.min(1,a.k||0)),alcance=tramo(k,0,.4),levanta=tramo(k,.55,1);
+      metaLlave.set(.32,1.2-1.03*alcance+1.23*levanta,.35+.23*alcance-.18*levanta);
+      H.raiz.updateMatrixWorld(true);metaLlave.applyMatrix4(H.raiz.matrixWorld);poloLlave.set(.85,.8,.3).applyMatrix4(H.raiz.matrixWorld);
+      ik(H.brazoI,H.anteI,H.manoI,metaLlave,poloLlave);
+      H.raiz.getWorldQuaternion(giroLlave).multiply(orientacionLlave);H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(giroLlave);
+      H.manoI.updateMatrixWorld(true);
+    }
     function posar(m,a){
       const H=m.H,k=a.k||0,respira=Math.sin((a.t||0)*2.2);
       switch(a.anim){
+        case 'recogerLlave':case 'mirarLlave':posarLlave(m,a);break;
         case 'rodar':posarRoll(m,a);break;
         case 'muerte':posarMuerte(m,a);break;
         case 'quieto':H.torso.rotation.x=.1+respira*.012;H.rodillaI.rotation.x=H.rodillaD.rotation.x=.12;H.cuerpo.position.y=-.025+respira*.006;break;
@@ -286,6 +305,7 @@
         H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
       }
       const agarre=agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];mezclar(m,a,agarre);
+      if(['recogerLlave','mirarLlave'].includes(a.anim))apoyarBotas(m);
       if(a.anim==='andar'&&(a.mezclar!==true||memoria(m).tiempo>0)){apoyarBotas(m);memoria(m).pos.copy(H.cuerpo.position);}
       {
         const tela=m.tela||(m.tela={t:t,aperturas:Array(7).fill(0)}),dt=Math.max(0,Math.min(.05,t-tela.t));tela.t=t;
@@ -304,10 +324,11 @@
         H.brazoD.rotation.set(-.45-1.05*vuelo-.6*guardia+s,0,-.2);H.anteD.rotation.x=-.65+.45*vuelo-.5*guardia;H.manoD.rotation.set(0,0,0);
         H.brazoI.rotation.set(-.35-.8*guardia-s,0,.2);H.anteI.rotation.x=-.7-.3*guardia;H.manoI.rotation.set(0,0,0);
       }else if(!['grito','muerte','rodar'].includes(a.anim))empunar(m,agarre);
+      if(['recogerLlave','mirarLlave'].includes(a.anim))resolverLlave(m,a);
       // La entrada a una caída parte de la pose visible, incluidas las manos resueltas por IK.
       const e=memoria(m);e.huesos.forEach((b,i)=>e.ultima[i].copy(b.quaternion));
     }
-    return {posar,resolver,muertes,elegirMuerte,roll,desplazamientoRoll,longitudZancada,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
+    return {posar,resolver,posarLlave,resolverLlave,muertes,elegirMuerte,roll,desplazamientoRoll,longitudZancada,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
   }
   window.CAOZ_ARPG_ADREIDA_ANIMACION=Object.freeze({fabrica,validar,predeterminados});
 })();

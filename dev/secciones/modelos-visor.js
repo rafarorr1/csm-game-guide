@@ -5,7 +5,7 @@
 (function(){
   const {THREE}=window.CAOZ_THREE,F=CAOZ_ARPG_MODELOS.fabrica(THREE),$=id=>document.getElementById(id),q=new URLSearchParams(location.search);
   // Animaciones: nombre, duración de un ciclo (s) y para quién tiene sentido.
-  const ANIMS=[['quieto',2.8],['andar',1.1],['rodar',F.animacion.roll.duracion+.6,'adreida','Roll evasivo · Entrada del Troll',{roll:true,duracion:F.animacion.roll.duracion}],['tajoA',1.1,'adreida'],['revesA',1.1,'adreida'],['estocadaA',1.4,'adreida'],['torbellino',1],['salto',1.3],['parry',.8],
+  const ANIMS=[['quieto',2.8],['andar',1.1],['recogerLlave',1.8,'adreida','Recoger la llave'],['mirarLlave',2,'adreida','Examinar la llave'],['rodar',F.animacion.roll.duracion+.6,'adreida','Roll evasivo · Entrada del Troll',{roll:true,duracion:F.animacion.roll.duracion}],['tajoA',1.1,'adreida'],['revesA',1.1,'adreida'],['estocadaA',1.4,'adreida'],['torbellino',1],['salto',1.3],['parry',.8],
     ['golpe',1.1],['reves',1.1],['estocada',1.3],['aviso',1],['esquiva',.7],['grito',1.2],['lanzar',1.1],['apunta',1.2],['disparar',.5,'mohamed'],['acrobacia',1,'mohamed'],
     ['cargaMazazo',1.5,'troll'],['mazazo',1.4,'troll'],['aturdido',2],['dolor',.5],['muerte',2],
     ...F.animacion.muertes.map(p=>['muerte-adreida-'+(p.variante+1),p.duracion+.7,'adreida','Muerte de Adreida · '+p.nombre,{...p,adreida:true,distancia:0}]),

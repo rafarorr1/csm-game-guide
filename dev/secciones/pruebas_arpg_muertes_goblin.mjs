@@ -1,7 +1,7 @@
 /* Coreografías de muerte y golpe letal reales, sin GPU ni motor físico adicional. */
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
-const c=vm.createContext({console});c.window=c;
+const c=vm.createContext({console});c.window=c;c.prepararLlaveDelUltimo=()=>{};
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const {THREE}=c.CAOZ_THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(THREE),v=new THREE.Vector3();
 const causas=['tajo','reves','estocada','cargado','torbellino','salto','disparo','abanico','daga','espalda','adreidos','parry'];

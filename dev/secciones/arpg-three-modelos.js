@@ -805,6 +805,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       // La cinemática inversa coloca después el hacha sobre el hombro de Adreida.
       if(m.tipo==='adreida'){H.brazoD.rotation.x=-.3;H.anteD.rotation.x=-.75;H.brazoD.rotation.z=-.22;}
       if(!(m.tipo==='adreida'&&animacion.posar(m,a)))switch(a.anim){
+        case 'recogerLlave':case 'mirarLlave':animacion.posarLlave(m,a);break;
         case 'andar':andar(a.fase||0,a.paso??1);break;
         // Huida: zancada rápida, torso inclinado y la mano libre protegiendo la cabeza.
         case 'huir':andar(a.fase||0,1.15);H.torso.rotation.x+=.22;H.cabeza.rotation.y=Math.sin(t*7)*.3;H.cabeza.rotation.x=-.18;H.brazoI.rotation.x=-1.6;H.brazoI.rotation.z=.65;H.anteI.rotation.x=-1.2;H.brazoD.rotation.x+=.5;H.cuerpo.position.y-=.04;break;
@@ -891,6 +892,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(m.tipo==='saqueador'&&a.escudazo){H.brazoI.rotation.set(-1.35,0,.15);H.anteI.rotation.x=-.35;H.torso.rotation.x+=.18*a.escudazo;H.torso.position.z=.09*a.escudazo;}
       else if(m.tipo==='saqueador')H.torso.position.z=0;
       if(m.tipo==='adreida')animacion.resolver(m,a);
+      else if(['recogerLlave','mirarLlave'].includes(a.anim))animacion.resolverLlave(m,a);
       else{
         if(m.tipo==='mohamed'&&a.armaLista){const r=a.retroceso||0;H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}
         // Poses de las variantes: ambas hachas participan en el mismo golpe anunciado.

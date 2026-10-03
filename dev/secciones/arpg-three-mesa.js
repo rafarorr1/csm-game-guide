@@ -22,7 +22,7 @@
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
-  let cinematicaTroll=null;
+  let cinematicaTroll=null,llaveEntradaTroll=null;
   window.CAOZ_ARPG_IA.configurar(q.get('ia')==='clasica'?'clasica':'yuka');
   const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
   const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;$('diagnostico').open=true;};
@@ -1212,6 +1212,7 @@
       e.muerte=m;e.emp.set(0,0,0);e.tirón=null;
     }
     cancelarAtaque(e);limpiarPeligrosTroll(e);cambiar(e,'muere');e.vida=0;brasas(e.pos,14,e.m.alto);if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}
+    prepararLlaveDelUltimo(e);
     if(e.tipo==='can')asustarGoblins(e);
     if(e.sinBotin)return;
     rog.bajas++;if([1,3,5].includes(rog.bajas))soltarDestino(e.pos);
@@ -1274,7 +1275,7 @@
     ol.i++;const O=OLEADAS[ol.i];if(ol.i===0||ol.i===4)iniciarDestino(ol.i===0?1:2);if(O.etapa===2&&O.fase===1)for(const h of jugadores){h.alma=Math.min(h.almaMax,h.alma+40);h.vivo=true;cambiar(h,'quieto');}let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n*FACTOR_COOP;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(!DEF[ol.cola[i][0]].jefe&&!DEF[ol.cola[j][0]].jefe)[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;if(O.etapa===2&&O.fase===3){iniciarEntradaTroll();return;}banner(O.nombre,O.texto||(O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.'));}
-  function reiniciar(){cinematicaTroll?.cancelar();mostrarEntradaTroll(false);impactoFX.limpiar();temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+  function reiniciar(){llaveEntradaTroll=null;cinematicaTroll?.cancelar();mostrarEntradaTroll(false);impactoFX.limpiar();temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const b of [...bumeranes])quitarBumeran(b);
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);limpiarFuegoRopa();for(const h of jugadores)liberarModeloTroll(h.m);limpiarAliados();crearEquipo();reiniciarExploracion();$('botin').innerHTML='';Object.assign(ol,{i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});$('fin').hidden=true;finMostrado=false;prepararVistaEntrada();}
 
@@ -1597,6 +1598,26 @@
     pasoFuegoRopa(h,dt);
   }
   /* ---- Entrada cinematográfica del Troll, entre las fases 2 y 3 ----------------------- */
+  function prepararLlaveDelUltimo(e){
+    if(ABIERTO||!ol.auto||ol.i!==5||ol.cola.length||llaveEntradaTroll||enemigos.some(o=>o.estado!=='muere'))return;
+    llaveEntradaTroll=e.pos.clone();ol.descanso=0;
+  }
+  function lugarLlaveTroll(origen){
+    // La llave cae unos tres metros hacia espacio abierto; comprueba también los
+    // cinco metros del roll y el sitio reservado al compañero antes de elegir.
+    const hacia=rumbo(origen,new V3()),valido=(p,r)=>PLANOS_MURALLA.every(n=>p.x*n.x+p.z*n.z<=R-r)&&pasoLibreEnemigo(p,p,r);
+    for(const radio of [3,2.5,3.5,4,5])for(let i=0;i<24;i++){
+      const a=hacia+(i%2?1:-1)*Math.ceil(i/2)*TAU/24,caida=origen.clone().addScaledVector(frente(a),radio);
+      for(let j=0;j<16;j++){
+        const dir=rumbo(caida,new V3())+j*TAU/16,centro=caida.clone().sub(new V3(.32,0,.58).applyAxisAngle(new V3(0,1,0),dir)),fin=centro.clone().addScaledVector(frente(dir),5);
+        if(!valido(centro,1.4)||!valido(fin,.75)||!pasoLibreEnemigo(centro,fin,.75))continue;
+        const acompanantes=[];for(const lado of [3,-3,2,-2]){const p=new V3(lado,0,4.5).applyAxisAngle(new V3(0,1,0),dir).add(centro);if(valido(p,.6)){acompanantes.push(p);break;}}
+        if(COOP&&!acompanantes.length)continue;return {origen,centro,dir,acompanantes};
+      }
+    }
+    // Respaldo para posiciones de revisión fuera de la plaza; el centro está despejado.
+    return {origen,centro:new V3(),dir:0};
+  }
   function mostrarEntradaTroll(v){esc.classList.toggle('cinematica',v);$('cinematicaTroll').hidden=!v;if(!v)delete esc.dataset.cinematicaFase;}
   function vaciarControlesEntrada(){
     teclas.clear();for(const h of jugadores){h.entrada.atacando=h.entrada.pendiente=h.entrada.piloto=false;h.entrada.palanca=null;h.control.atacar=false;h.control.mov.set(0,0,0);h.mando.listo=false;h.disparosPendientes.length=0;h.ruta=null;h.paso=0;h.alto=0;h.giro=0;h.carga=0;h.emp?.set(0,0,0);h.velocidad?.set(0,0,0);if(h.vivo)cambiar(h,'quieto');}
@@ -1607,6 +1628,7 @@
     h.dir+=difAng(h.dir,rumbo(h.pos,p))*Math.min(1,dt*10);h.pos.lerp(p,avance/d);h.fase+=avance/MOD.animacion.longitudZancada(.52)*TAU;return false;
   }
   cinematicaTroll=window.CAOZ_ARPG_ENTRADA_TROLL.fabrica(THREE,MOD,{escena,caminar:caminarEntrada,
+    recoger(h){h.llaves++;},
     rotulo(fase,texto){mostrarEntradaTroll(true);esc.dataset.cinematicaFase=fase;$('cinematicaTexto').textContent=texto;},
     impactar(p){romperPiso(p);polvo(p,38,2.3);marca('onda',p.x,p.z,3.4,0xb9ad93,.65);impactoFX.agujero(p);temblar(.8);},
     terminar(troll){vaciarControlesEntrada();troll.quieto=false;troll.dentro=true;troll.cd=1.1;cambiar(troll,'persigue');ol.espera=1.5;mostrarEntradaTroll(false);banner('El Recaudador','«Esta plaza tiene dueño. ¡Paguen el piso!»');lienzo.focus();}
@@ -1618,14 +1640,14 @@
     for(const b of [...bumeranes])quitarBumeran(b);for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;limpiarPeligrosTroll();
     for(const g of globos)escena.remove(g.m);globos.length=0;for(const o of [...marcas])if(!o.fijo)quitarMarca(o);
     lineaMira.visible=puntoMira.visible=seleccion.m.visible=aura.visible=estela.visible=rastroArco.visible=rastroRecto.visible=false;
-    const troll=crearEnemigo('troll',0,0,{quieto:true});cinematicaTroll.iniciar(jugadores,troll);
+    const sitio=lugarLlaveTroll(llaveEntradaTroll||new V3(-2.5,0,-1.5)),troll=crearEnemigo('troll',sitio.centro.x,sitio.centro.z,{quieto:true});llaveEntradaTroll=null;cinematicaTroll.iniciar(jugadores,troll,sitio);
   }
   function pasoEntradaTroll(dt,dtReal){
-    presion.rutas=0;cinematicaTroll.paso(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
+    presion.rutas=0;for(const e of [...enemigos])if(e.estado==='muere')pasoEnemigo(e,dt);posarEnemigos(dt,true);cinematicaTroll.paso(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
     pasoCamara(dtReal,dtReal);hemi.intensity=.5+clima.paso(dtReal,vista.foco)*.18;hud(dtReal);return true;
   }
   // Enlace de revisión: reproduce esta transición sin tener que superar las dos cuadrillas.
-  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);}}
+  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
 
   /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
@@ -1644,7 +1666,21 @@
     if(luzCompanero){const j=jugadores[1];luzCompanero.position.set(j.pos.x,4,j.pos.z);luzCompanero.intensity=j.vivo?24:0;}
     const h=heroe;presion.rutas=0;pasoAliados(dt);pasoExploracion(dt);pasoRefuerzosCan();coordinarEnemigos();for(const e of [...enemigos])conHeroe(objetivoEnemigo(e),()=>pasoEnemigo(e,dt));separar();pasoOleadas(dt);if(cinematicaTroll.activa)return pasoEntradaTroll(0,dtReal);pasoPeligrosTroll(dt);pasoLanzas(dt);pasoBalas(dt);pasoGlobos(dt);pasoBotin(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
     for(const h of jugadores)conHeroe(h,()=>{posarHeroe(dt);impactoFX.hacha(h,dt);});pasoBumeranes(dt);
-    for(const e of enemigos){const m=e.m;m.raiz.position.set(e.pos.x,0,e.pos.z);m.raiz.rotation.y=e.dir;const d=e.d;
+    posarEnemigos(dt);
+    const sel=ent.sobre?.d?ent.sobre:null;seleccion.m.visible=!!sel&&sel.estado!=='muere';if(sel){seleccion.m.position.set(sel.pos.x,.045,sel.pos.z);seleccion.m.scale.setScalar(sel.radio*1.8);}
+    // Aura de Provocar y la luz del héroe (dorada mientras dura).
+    aura.visible=h.escudo>0;aura.position.set(h.pos.x,(h.alto||0)+1,h.pos.z);aura.material.uniforms.uA.value=Math.min(1,h.escudo)*.9;
+    rastroCorte(h);
+    estela.visible=girando(h);estela.position.set(h.pos.x,1.05,h.pos.z);estela.rotation.y=-h.giro;
+    luzHeroe.color.setHex(h.escudo>0?0xffc870:0xffd2a0);luzHeroe.intensity=h.vivo?40:18;
+    for(const f of fuegos)f.luz.intensity=55+Math.sin(reloj.t*11+f.x)*9+Math.sin(reloj.t*23+f.z)*6;for(const b of braseros)b.luz.intensity=24+Math.sin(reloj.t*13+b.x)*5;
+    for(const n of [...numeros]){const s=reloj.t-n.t0;n.e.pos.y=n.y+s*1.4;n.e.el.style.opacity=String(Math.max(0,1-Math.max(0,s-.45)/.5));if(s>.95){quitarEtiqueta(n.e);numeros.splice(numeros.indexOf(n),1);}}
+    pasoCamara(dt,dtReal);hemi.intensity=.5+clima.paso(dtReal,vista.foco)*.18;camara.updateMatrixWorld();retirarHuidosFueraDeCamara();lineaMira.visible=puntoMira.visible=false;for(const j of jugadores)if(j.tipo==='mohamed')conHeroe(j,actualizarPunteria);hud(dtReal);
+    lienzo.style.cursor=ent.sobre?.d?'crosshair':'default';
+    return true;
+  }
+  function posarEnemigos(dt,soloMuertos=false){
+    for(const e of enemigos){if(soloMuertos&&e.estado!=='muere')continue;const m=e.m;m.raiz.position.set(e.pos.x,0,e.pos.z);m.raiz.rotation.y=e.dir;const d=e.d;
       const aDistanciaEnemigo=d.lanza||e.tiraHacha;
       const ka=e.ataque?Math.min(1,(reloj.t-e.ataque.t0)/e.ataque.dur):1;
       const pe={quieto:['quieto'],entra:['andar'],huye:['huir'],persigue:[e.paso>.05?'andar':'quieto'],aviso:[aDistanciaEnemigo?'apunta':'aviso',ka],golpe:[aDistanciaEnemigo?'lanzar':'golpe',aDistanciaEnemigo?e.t/d.golpe*.6:.38+.24*(e.t/d.golpe)],
@@ -1662,17 +1698,6 @@
       if(e.estado==='aturdido'){if(!e.estrellas){e.estrellas=new THREE.Group();for(let i=0;i<3;i++){const s=new THREE.Mesh(new THREE.OctahedronGeometry(.07),matEstrella);s.position.set(Math.cos(i*TAU/3)*.3,0,Math.sin(i*TAU/3)*.3);e.estrellas.add(s);}escena.add(e.estrellas);}
         e.estrellas.position.set(e.pos.x,m.alto+.25,e.pos.z);e.estrellas.rotation.y=reloj.t*5;}
       else if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}}
-    const sel=ent.sobre?.d?ent.sobre:null;seleccion.m.visible=!!sel&&sel.estado!=='muere';if(sel){seleccion.m.position.set(sel.pos.x,.045,sel.pos.z);seleccion.m.scale.setScalar(sel.radio*1.8);}
-    // Aura de Provocar y la luz del héroe (dorada mientras dura).
-    aura.visible=h.escudo>0;aura.position.set(h.pos.x,(h.alto||0)+1,h.pos.z);aura.material.uniforms.uA.value=Math.min(1,h.escudo)*.9;
-    rastroCorte(h);
-    estela.visible=girando(h);estela.position.set(h.pos.x,1.05,h.pos.z);estela.rotation.y=-h.giro;
-    luzHeroe.color.setHex(h.escudo>0?0xffc870:0xffd2a0);luzHeroe.intensity=h.vivo?40:18;
-    for(const f of fuegos)f.luz.intensity=55+Math.sin(reloj.t*11+f.x)*9+Math.sin(reloj.t*23+f.z)*6;for(const b of braseros)b.luz.intensity=24+Math.sin(reloj.t*13+b.x)*5;
-    for(const n of [...numeros]){const s=reloj.t-n.t0;n.e.pos.y=n.y+s*1.4;n.e.el.style.opacity=String(Math.max(0,1-Math.max(0,s-.45)/.5));if(s>.95){quitarEtiqueta(n.e);numeros.splice(numeros.indexOf(n),1);}}
-    pasoCamara(dt,dtReal);hemi.intensity=.5+clima.paso(dtReal,vista.foco)*.18;camara.updateMatrixWorld();retirarHuidosFueraDeCamara();lineaMira.visible=puntoMira.visible=false;for(const j of jugadores)if(j.tipo==='mohamed')conHeroe(j,actualizarPunteria);hud(dtReal);
-    lienzo.style.cursor=ent.sobre?.d?'crosshair':'default';
-    return true;
   }
   const matEstrella=new THREE.MeshBasicMaterial({color:0xffe070,toneMapped:false});
   const aura=new THREE.Mesh(new THREE.SphereGeometry(1.25,24,16),new THREE.ShaderMaterial({uniforms:{uA:{value:0},uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,

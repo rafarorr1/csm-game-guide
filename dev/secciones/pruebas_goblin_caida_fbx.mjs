@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {extraerDeclaracion} from './fuentes.mjs';
-const c=vm.createContext({console,atob});c.window=c;
+const c=vm.createContext({console,atob});c.window=c;c.prepararLlaveDelUltimo=()=>{};
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','goblin-scenario/datos.js','arpg-three-goblin.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(T),v=new T.Vector3();
 assert.equal(F.muertesGoblinImportadas.length,4);

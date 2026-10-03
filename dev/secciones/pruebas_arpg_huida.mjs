@@ -2,7 +2,7 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8'),get=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
-const c=vm.createContext({console});c.window=c;
+const c=vm.createContext({console});c.window=c;c.prepararLlaveDelUltimo=()=>{};
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 vm.runInContext(`
 const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2,FACTOR_COOP=2;
