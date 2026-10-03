@@ -7,7 +7,11 @@
     const leer=(s,T)=>{const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new T(a.buffer);};
     function preparar(H){
       // Pose A del archivo aprobado; longitudes, agarres y colisión del juego intactos.
-      for(const [l,s]of [['I',1],['D',-1]]){H['brazo'+l].rotation.z=s*.31;H['pierna'+l].rotation.z=s*.12;}
+      for(const [l,s]of [['I',1],['D',-1]]){
+        H['brazo'+l].rotation.z=s*.31;H['pierna'+l].rotation.z=s*.12;
+        // El mango atraviesa el ancho de la palma, perpendicular a los dedos.
+        H['mano'+l].rotation.z=s*(Math.PI/2-.31);
+      }
     }
     function montar(H,M,mallas){
       if(!geometria){

@@ -884,7 +884,7 @@
       if(h.t>=.7)cambiar(h,'quieto');}
     // El botín se recoge al pasar por encima.
     for(const b of botines)if(b.listo&&!b.volando&&!b.recogida&&plano(b.pos,h.pos)<1.1)recoger(b);
-    h.inclinacion=(h.inclinacion||0)+(Math.max(-.16,Math.min(.16,difAng(dirAnterior,h.dir)/Math.max(.001,dt)*.018))-(h.inclinacion||0))*(1-Math.exp(-dt*8));h.fase+=movido*TAU/(aDistancia()?1.75:2.55);h.paso+=((movido>0&&h.estado!=='esquiva'?(aDistancia()?1:Math.min(1,mov.length())):0)-h.paso)*(1-Math.exp(-dt*10));dentroPlaza(h.pos,h.radio);}
+    h.inclinacion=(h.inclinacion||0)+(Math.max(-.16,Math.min(.16,difAng(dirAnterior,h.dir)/Math.max(.001,dt)*.018))-(h.inclinacion||0))*(1-Math.exp(-dt*8));h.paso+=((movido>0&&h.estado!=='esquiva'?(aDistancia()?1:Math.min(1,mov.length())):0)-h.paso)*(1-Math.exp(-dt*10));h.fase+=movido*TAU/(aDistancia()?1.75:MOD.animacion.longitudZancada(h.paso));dentroPlaza(h.pos,h.radio);}
 
   /* ---- Ataques enemigos: la zona exacta en el suelo, que se llena hasta el golpe ---------- */
   // Mientras se llena, el atacante gira hacia ti; en el último tramo se fija (la marca se enciende): es el momento de apartarse o esquivar.
@@ -1489,7 +1489,7 @@
       if(paso>1e-5){const antes=a.pos.clone();a.dir+=difAng(a.dir,rumbo(a.pos,p))*Math.min(1,dt*12);a.pos.lerp(p,paso/dd);dentroPlaza(a.pos,a.radio);paso=plano(antes,a.pos);}
     }
     else if(obj&&a.cd<=0){a.atacando=true;a.t=0;a.golpeo=false;a.cd=1.1;a.dir=rumbo(a.pos,obj.pos);}
-    a.fase+=paso*TAU/2.1;MOD.posar(a.m,{anim:a.atacando?'tajoA':paso?'andar':'quieto',k:a.t/.6,t:reloj.t,fase:a.fase,paso:paso?1:0,dt,mezclar:true});
+    a.fase+=paso*TAU/MOD.animacion.longitudZancada(1);MOD.posar(a.m,{anim:a.atacando?'tajoA':paso?'andar':'quieto',k:a.t/.6,t:reloj.t,fase:a.fase,paso:paso?1:0,dt,mezclar:true});
     a.m.raiz.position.copy(a.pos);a.m.raiz.rotation.y=a.dir;a.m.M.u.uBorde.value=.12;a.m.M.u.uColorB.value.setHex(0x80c9bb);
     a.rotulo.pos.copy(a.pos).setY(2.7);a.rotulo.el.textContent='Adreidos · '+Math.ceil(a.vida)+' s';
   }}

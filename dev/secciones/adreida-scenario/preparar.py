@@ -101,22 +101,23 @@ pesos=w[soldado]
 indices=np.argsort(-pesos,axis=1)[:,:4]
 valores=np.take_along_axis(pesos,indices,axis=1)
 valores/=valores.sum(axis=1)[:,None]
-# Cerrar las manos de la pose A alrededor del mango (eje Y del hueso mano).
-# Conserva los dedos y sus UV; la unión con el brazal se mezcla hasta la muñeca.
-for i in np.where(brazosBajos & (p[:,1]<.98))[0]:
+# Cerrar los dedos desde los nudillos, conservando la palma y el ancho de la mano.
+# En la pose A el mango cruza la palma en X; el enlace de mano gira ese eje a Y.
+for i in np.where(brazosBajos & (p[:,1]<1.07))[0]:
     x,y,z=p[i];s=1 if x>=0 else -1
-    angulo=np.clip((.98-y)/.18,0,1)*4.8
-    radio=.037+(z-.03)*.3
-    local=np.array([s*radio*np.cos(angulo),-.045-(abs(x)-.39)*.85,radio*np.sin(angulo)])
-    a=s*.31;c=np.cos(a);sen=np.sin(a)
-    destino=np.array([s*(.25+.6*np.sin(.31)),1.4972-.6*np.cos(.31),0])+np.array([c*local[0]-sen*local[1],sen*local[0]+c*local[1],local[2]])
-    k=1-suave(.92,.98,y);p[i]=p[i]*(1-k)+destino*k
+    if y<.91:
+        angulo=np.clip((.91-y)/.115,0,1)*np.pi*1.15
+        radio=.035+(z-.035)*.3
+        p[i,1]=.91-radio*np.sin(angulo)
+        p[i,2]=.025+radio*(1-np.cos(angulo))
+    k=1-suave(.97,1.07,y)
+    p[i]+=k*np.array([s*(.25+.6*np.sin(.31)-.392),1.4972-.6*np.cos(.31)-.91,-.060])
 # Recalcular sólo las normales de las manos deformadas, soldando las costuras UV.
 normales=np.zeros((cantidad,3))
 caras=np.cross(p[tri[:,1]]-p[tri[:,0]],p[tri[:,2]]-p[tri[:,0]])
 for j in range(3):np.add.at(normales,soldado[tri[:,j]],caras)
 normales/=np.maximum(np.linalg.norm(normales,axis=1,keepdims=True),1e-8)
-manos=brazosBajos & (puntos[soldado,1]<.99)
+manos=brazosBajos & (puntos[soldado,1]<1.07)
 n[manos]=normales[soldado[manos]]
 def codificar(a,t): return base64.b64encode(a.astype(t).tobytes()).decode()
 datos={'huesos':nombres,'posicion':codificar(p,'<f4'),'normal':codificar(n,'<f4'),'uv':codificar(uv,'<f4'),'triangulos':codificar(tri,'<u2'),'hueso':codificar(indices,'u1'),'peso':codificar(valores,'<f4')}

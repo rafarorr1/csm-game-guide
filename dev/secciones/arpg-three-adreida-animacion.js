@@ -32,11 +32,41 @@
       b.parent.getWorldQuaternion(_q).invert();yIK.copy(dir).normalize().negate();zIK.crossVectors(normalIK,yIK).normalize();
       b.quaternion.setFromRotationMatrix(baseIK.makeBasis(normalIK,yIK,zIK)).premultiply(_q);b.updateMatrixWorld(true);
     }
-    function ik(brazo,ante,mano,T,polo){const S=brazo.getWorldPosition(_v[0]),a=ante.position.length(),b=mano.position.length(),D=_v[1].copy(T).sub(S);
+    function ik(brazo,ante,mano,T,polo,signo=1){const S=brazo.getWorldPosition(_v[0]),a=ante.position.length(),b=mano.position.length(),D=_v[1].copy(T).sub(S);
       const d=Math.min(a+b-1e-3,Math.max(Math.abs(a-b)+1e-3,D.length())),dir=D.normalize(),x=(a*a-b*b+d*d)/(2*d),h=Math.sqrt(Math.max(0,a*a-x*x));
-      const p=_v[2].copy(polo).sub(S);p.addScaledVector(dir,-p.dot(dir));if(p.lengthSq()<1e-8)p.set(0,-1,0);p.normalize();normalIK.crossVectors(dir,p).normalize();
+      const p=_v[2].copy(polo).sub(S);p.addScaledVector(dir,-p.dot(dir));if(p.lengthSq()<1e-8)p.set(0,-1,0);p.normalize();normalIK.crossVectors(dir,p).normalize().multiplyScalar(signo);
       const E=_v[3].copy(S).addScaledVector(dir,x).addScaledVector(p,h);apuntarHueso(brazo,_v[4].copy(E).sub(S));apuntarHueso(ante,_v[5].copy(S).addScaledVector(dir,d).sub(E));}
     const dirA=(f,e)=>[Math.sin(f)*Math.cos(e),Math.sin(e),Math.cos(f)*Math.cos(e)];
+    // Ciclo por distancia, apoyo lineal y recuperación con tangentes continuas.
+    // Referencia de diseño: LimbSolver / SwingTwist de Ossos (véase README).
+    // Implementación local: no requiere importar el motor de animación.
+    const correr=paso=>suave(((paso??1)-.3)/.6);
+    const longitudZancada=paso=>{const p=Math.max(0,Math.min(1,paso??1));return (1.35+1.3*correr(p))*Math.max(.15,suave(p/.24))*ajustes.zancada;};
+    const ejePie=new THREE.Vector3(1,0,0),giroPie=new THREE.Quaternion(),orientacionPie=new THREE.Quaternion();
+    function marcha(m,a){
+      const H=m.H,amp=suave(Math.max(0,Math.min(1,a.paso??1))/.24),run=correr(a.paso),fase=a.fase||0;
+      const ciclo=((fase/TAU)%1+1)%1,contacto=.60-.20*run,largo=longitudZancada(a.paso),medio=largo*contacto*.5;
+      const giro=a.giroCarrera||0,s=Math.sin(fase),onda=Math.cos(fase*2-1.5);
+      H.cuerpo.position.set(s*.012*amp,(-.025*(1-amp)+(-.10-.09*run-(.013+.018*run)*onda)*amp),0);
+      H.cadera.rotation.set(.015*amp,s*.045*amp,-s*.016*amp-giro*.18);
+      H.torso.rotation.set(.10+(.025+.09*run)*amp,-s*.035*amp,s*.014*amp+giro*.45);
+      H.cabeza.rotation.set(-.04-.045*run*amp,s*.012*amp,-s*.008*amp-giro*.25);
+      H.raiz.updateMatrixWorld(true);
+      for(const [lado,desfase,signo]of [['I',0,1],['D',.5,-1]]){
+        const f=(ciclo+desfase)%1,apoyo=f<contacto,u=apoyo?f/contacto:(f-contacto)/(1-contacto);
+        // Durante el apoyo, dz/df = -largo: cancela exactamente el avance del cuerpo.
+        const tangente=-largo*(1-contacto),z=apoyo?medio-largo*f:-medio+2*medio*suave(u)+tangente*(2*u*u*u-3*u*u+u);
+        const levanta=apoyo?0:Math.sin(Math.PI*u)**2*(.13+.15*run)*amp;
+        const inclina=apoyo?(-.10*(1-tramo(u,0,.18))+.30*tramo(u,.70,1))*amp:(.10+.20*Math.cos(Math.PI*u))*amp;
+        const altura=.086+levanta+.10*Math.max(0,Math.sin(inclina));
+        const objetivo=_v[6].set(signo*.115,altura,z).applyMatrix4(H.raiz.matrixWorld);
+        const polo=_v[7].set(signo*.115,.5,1).applyMatrix4(H.raiz.matrixWorld);
+        ik(H['pierna'+lado],H['rodilla'+lado],H['pie'+lado],objetivo,polo,-1);
+        H.raiz.getWorldQuaternion(orientacionPie);H['pie'+lado].parent.getWorldQuaternion(_q).invert();
+        H['pie'+lado].quaternion.copy(_q).multiply(orientacionPie).multiply(giroPie.setFromAxisAngle(ejePie,inclina));
+        H['pie'+lado].updateMatrixWorld(true);
+      }
+    }
     const _agarre=Array.from({length:8},()=>new THREE.Vector3()),_orientacion=new THREE.Quaternion();
     function empunar(m,{G,A,arriba}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
       const g=_v[6].fromArray(G).applyMatrix4(T),a=_v[7].fromArray(A).transformDirection(T),up=_v[8].fromArray(arriba||[0,1,0]).transformDirection(T);
@@ -88,28 +118,7 @@
       const H=m.H,k=a.k||0,respira=Math.sin((a.t||0)*2.2);
       switch(a.anim){
         case 'quieto':H.torso.rotation.x=.1+respira*.012;H.rodillaI.rotation.x=H.rodillaD.rotation.x=.12;H.cuerpo.position.y=-.025+respira*.006;break;
-        case 'andar':{const fase=a.fase||0,amp=(a.paso??1)*ajustes.zancada,s=Math.sin(fase),giro=a.giroCarrera||0;
-          // Apoyo largo y recogida rápida: el pie empuja, despega y vuelve con la rodilla alta.
-          const rebote=(1-Math.cos(fase*2))*.024*amp;
-          H.cuerpo.position.set(s*.04*amp,-.025-.04*amp+rebote,Math.sin(fase*2)*.012*amp);
-          for(const [lado,desfase] of [['I',0],['D',.5]]){
-            const f=((fase/TAU+desfase)%1+1)%1,apoyo=f<.58;
-            const u=apoyo?f/.58:(f-.58)/.42,w=suave(u);
-            const z=(apoyo?.4-.8*u:-.4+.8*w)*amp;
-            const eleva=apoyo?0:Math.sin(Math.PI*u)*.2*amp;
-            const abajo=m.p.muslo+m.p.pierna-.035+H.cuerpo.position.y-eleva;
-            const A=m.p.muslo,B=m.p.pierna,d=Math.min(A+B-.008,Math.max(.2,Math.hypot(z,abajo)));
-            const rodilla=Math.PI-Math.acos(Math.max(-1,Math.min(1,(A*A+B*B-d*d)/(2*A*B))));
-            const muslo=Math.atan2(-z,abajo)-Math.acos(Math.max(-1,Math.min(1,(A*A+d*d-B*B)/(2*A*d))));
-            H['pierna'+lado].rotation.set(muslo*amp,0,(lado==='I'?-.04:.04)*amp);
-            H['rodilla'+lado].rotation.x=.12+(rodilla-.12)*amp;
-            H['pie'+lado].rotation.x=(-muslo-rodilla)*amp+(apoyo?tramo(u,.65,1)*.35:Math.sin(Math.PI*u)*.13)*amp;
-          }
-          H.cadera.rotation.set(.025*amp,s*.16*amp,-s*.055*amp-giro*.4);
-          H.torso.rotation.set(.16+amp*.04+Math.sin(fase*2-.3)*.022*amp,-Math.sin(fase-.25)*.1*amp,s*.04*amp+giro);
-          H.cabeza.rotation.set(-.075-Math.sin(fase*2-.3)*.014*amp,s*.045*amp,-s*.025*amp-giro*.6);
-          break;
-        }
+        case 'andar':marcha(m,a);break;
         // Los hachazos de Adreida: el brazo casi horizontal barre un arco delante (el hacha lo prolonga).
         // brazoD.z lo levanta hacia su derecha y brazoD.y lo barre en horizontal: -.5 detrás a la derecha, 1.57 delante, 2.5 a la izquierda.
         case 'tajoA':case 'revesA':{const r=a.anim==='revesA',car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1),de=r?2.4:-.55,a2=r?-.45:2.35;
@@ -190,7 +199,7 @@
         H.brazoI.rotation.set(-.35-.8*guardia-s,0,.2);H.anteI.rotation.x=-.7-.3*guardia;H.manoI.rotation.set(0,0,0);
       }else if(!['grito','muerte'].includes(a.anim))empunar(m,agarre);
     }
-    return {posar,resolver,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
+    return {posar,resolver,longitudZancada,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
   }
   window.CAOZ_ARPG_ADREIDA_ANIMACION=Object.freeze({fabrica,validar,predeterminados});
 })();
