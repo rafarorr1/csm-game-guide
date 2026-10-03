@@ -35,6 +35,8 @@
       foco.castShadow=true;foco.shadow.mapSize.set(1024,1024);foco.shadow.camera.near=.1;foco.shadow.camera.far=10;foco.shadow.bias=-.0004;foco.shadow.normalBias=.025;interior.add(foco,foco.target);
       decorado=window.CAOZ_ARPG_CASA_INTERIOR.crear(THREE,{reducido:typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion:reduce)').matches});interior.add(decorado.raiz);
       protagonista=MOD.crear('adreida');protagonista.raiz.position.copy(decorado.entrada);protagonista.raiz.rotation.y=Math.PI;interior.add(protagonista.raiz);
+      // Un contraluz frío y tenue perfila sólo a Adreida; no ilumina el piso ni añade sombras.
+      protagonista.M.u.uColorB.value.set(0x9faab8);protagonista.M.u.uBorde.value=.028;
       habitantes=[{nombre:'Madre goblin',x:-.58,z:-2.9,escala:1.08},{nombre:'Hijo goblin',x:.23,z:-2.92,escala:.64}].map((d,i)=>{
         const m=MOD.crear('goblin');m.raiz.name=d.nombre;for(const a of m.mallas.slice(1))a.visible=false;
         m.raiz.scale.setScalar(d.escala);m.raiz.position.set(d.x,0,d.z);m.raiz.rotation.y=i?-.12:.15;interior.add(m.raiz);
