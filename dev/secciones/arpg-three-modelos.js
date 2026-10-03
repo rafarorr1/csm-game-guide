@@ -27,6 +27,7 @@
   const tramo=(k,a,b)=>suave((k-a)/(b-a));
   function fabrica(THREE,{pielGoblin=true}={}){
     const goblinScenario=pielGoblin&&window.CAOZ_ARPG_GOBLIN&&window.CAOZ_GOBLIN_DATOS?window.CAOZ_ARPG_GOBLIN.fabrica(THREE):null;
+    const adreidaScenario=window.CAOZ_ARPG_ADREIDA&&window.CAOZ_ADREIDA_DATOS?window.CAOZ_ARPG_ADREIDA.fabrica(THREE):null;
     const animacion=window.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(THREE);
     const V=(x,y,z)=>new THREE.Vector3(x,y,z);
     const matriz=(pos=[0,0,0],rot=[0,0,0],esc=1)=>new THREE.Matrix4().compose(V(...pos),new THREE.Quaternion().setFromEuler(new THREE.Euler(...rot)),Array.isArray(esc)?V(...esc):V(esc,esc,esc));
@@ -190,11 +191,14 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
     function constructor(H,varioBase=.14,ladosMiembro=7,tapasMiembro=2,coloresPiel=[],coloresTela={}){
       let armaArrojable=false;const piezas=new Map(),huesos=[];H.cuerpo.traverse(o=>{if(o.isBone)huesos.push(o);});
       const pon=(hueso,mat,geo,color,pos,rot,esc,vario=varioBase,{hachaReal=false,maderaReal=false}={})=>{if(!piezas.has(mat))piezas.set(mat,[]);piezas.get(mat).push({geo,color,m:matriz(pos,rot,esc),vario,hueso:huesos.indexOf(H[hueso]),nombre:hueso,pielReal:coloresPiel.includes(color),telaReal:coloresTela[color]||0,hachaReal,maderaReal,armaArrojable});};
-      const montar=(M,escala=1)=>{
+      const montar=(M,escala=1,soloArma=false)=>{
         // Escala de construcción: huesos y piezas crecen juntos, sin escalar la raíz ni las colisiones dos veces.
         if(escala!==1)for(const hueso of huesos)hueso.position.multiplyScalar(escala);
         H.raiz.updateMatrixWorld(true);const esq=new THREE.Skeleton(huesos),mallas=[];
-        for(const [mat,lista] of piezas){for(const p of lista){if(escala!==1){p.geo.scale(escala,escala,escala);p.m.elements[12]*=escala;p.m.elements[13]*=escala;p.m.elements[14]*=escala;}p.m.premultiply(H[p.nombre].matrixWorld);}
+        for(const [mat,todas] of piezas){const lista=soloArma?todas.filter(p=>p.armaArrojable):todas;
+          if(soloArma)for(const p of todas)if(!p.armaArrojable)p.geo.dispose();
+          if(!lista.length)continue;
+          for(const p of lista){if(escala!==1){p.geo.scale(escala,escala,escala);p.m.elements[12]*=escala;p.m.elements[13]*=escala;p.m.elements[14]*=escala;}p.m.premultiply(H[p.nombre].matrixWorld);}
           const malla=new THREE.SkinnedMesh(fundir(lista),M[mat]);malla.castShadow=mat!=='brillo';malla.receiveShadow=true;malla.frustumCulled=false;H.raiz.add(malla);malla.bind(esq,malla.matrixWorld);mallas.push(malla);}
         return mallas;};
       // Miembros: una cápsula que cuelga del hueso.
@@ -218,10 +222,11 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
     // diagonal y los tres aros de plata, hombrera de cuero en capas (izquierda), brazales con púas de hueso, el
     // cinturón ancho con la hebilla y los cráneos de pájaro, el faldón de piel sobre la falda de tela y las botas
     // altas con correas y púa en la rodilla. Sombreado suave; tres mallas como los demás.
-    function adreida(){
+    function adreida(scenario=false){
       const p={muslo:.47,pierna:.45,pie:.05,cintura:.08,torso:.52,hombros:.25,brazo:.31,antebrazo:.29,ancho:.11},H=esqueleto(p);
       // Paños articulados desde la cintura; comparten las mismas mallas del personaje.
       for(let i=0;i<7;i++){H["falda"+i]=new THREE.Bone();H.cadera.add(H["falda"+i]);}
+      if(scenario)adreidaScenario.preparar(H);
       const {pon,montar,marcarArma}=constructor(H,.035);
       const piel=0x86c49c,piel2=0x76b18b,piel3=0x93d0a8,pelo=0x1c1f38,cuero=0x3e2b1f,cuero2=0x5a3a22,brazal=0x6d4529,negro=0x1d1a23,tela=0x2a2530,
         hueso=0xe9e0cc,plata=0xd9dbe6,pielT=0xa48258,pielT2=0x7c5f3e,pielT3=0xbd9c6c,bota=0x241c1d,suela=0x120e0e;
@@ -552,14 +557,16 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         pon('manoD','metal',G.cil(.024,.028,.3,8),0x5a5e66,[0,-.2,0],[0,0,0],1,.06);pon('manoD','metal',G.toro(.03,.008,8),0xc8a050,[0,-.34,0],[Math.PI/2,0,0]);
         pon('manoD','piel',G.caja(.045,.07,.14),0x5a3422,[0,-.02,-.06],[-.35,0,0]);pon('manoD','metal',G.caja(.02,.05,.03),0xc8a050,[0,-.08,.035]);}});}
     const constructores={adreida,goblin,cobrador:()=>goblin(true),troll,kobold,saqueador:()=>humano(false),can:()=>humano(true),mohamed};
-    function crear(tipo,{varianteGoblin='clasico',modeloGoblin='scenario'}={}){
+    function crear(tipo,{varianteGoblin='clasico',modeloGoblin='scenario',modeloAdreida='scenario'}={}){
       semilla=[...tipo].reduce((a,c)=>a*31+c.charCodeAt(0),7)%2147483646+1;
       const esGoblin=tipo==='goblin'||tipo==='cobrador';
       varianteGoblin=esGoblin&&VARIANTES_GOBLIN[varianteGoblin]?varianteGoblin:'clasico';
       const aspecto=esGoblin?VARIANTES_GOBLIN[varianteGoblin]:null,escala=aspecto?.escala||1;
       const scenario=esGoblin&&!!goblinScenario&&modeloGoblin!=='clasico';
-      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=esGoblin?goblin(tipo==='cobrador',varianteGoblin,scenario):constructores[tipo](),mallas=montar(M,escala);
+      const nuevaAdreida=tipo==='adreida'&&!!adreidaScenario&&modeloAdreida!=='clasico';
+      const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=esGoblin?goblin(tipo==='cobrador',varianteGoblin,scenario):tipo==='adreida'?adreida(nuevaAdreida):constructores[tipo](),mallas=montar(M,escala,nuevaAdreida);
       if(scenario)goblinScenario.montar(H,M,mallas,varianteGoblin,escala,aspecto.orejas);
+      if(nuevaAdreida)adreidaScenario.montar(H,M,mallas);
       if(escala!==1)for(const clave in p)if(typeof p[clave]==='number')p[clave]*=escala;
       // Los goblins suavizan el sombreado sin duplicar la cara visible de sus materiales.
       if(tipo==='goblin'||tipo==='cobrador'){M.piel.side=THREE.FrontSide;aplicarPielGoblin(M.piel);aplicarMetalHachaGoblin(M.metal);}
@@ -567,7 +574,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
       if(tipo==='mohamed'){M.metal.roughness=.78;M.metal.metalness=.4;M.metal.envMapIntensity=.12;const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
-      return {tipo,H,M,mallas,p,modeloGoblin:scenario?'scenario':null,raiz:H.raiz,...TIPOS[tipo],alto:TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
+      return {tipo,H,M,mallas,p,modeloGoblin:scenario?'scenario':null,modeloAdreida:nuevaAdreida?'scenario':null,raiz:H.raiz,...TIPOS[tipo],alto:TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
     }
 
     // Dos mallas estáticas reutilizables, extraídas del hacha real con sus UV y texturas.

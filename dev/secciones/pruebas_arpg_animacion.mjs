@@ -2,8 +2,8 @@
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
-const c=vm.createContext({console});c.window=c;
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+const c=vm.createContext({console,atob});c.window=c;
+for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const {THREE}=c.CAOZ_THREE,M=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=M.crear('adreida'),exacto=M.crear('adreida');
 const cuerpo=h=>Object.fromEntries(Object.entries(h.H).filter(([k])=>k!=='raiz'&&!k.startsWith('falda')).map(([k,b])=>[k,{q:b.quaternion.clone(),p:b.position.clone()}]));
 function igual(h,foto,etiqueta){for(const [k,b] of Object.entries(foto)){assert.ok(h.H[k].quaternion.angleTo(b.q)<1e-6,`${etiqueta}: ${k}`);assert.ok(h.H[k].position.distanceTo(b.p)<1e-8,`${etiqueta}: posición ${k}`);}}
@@ -12,7 +12,7 @@ function seguro(h){
   const apoyo=h.H.manoD.localToWorld(new THREE.Vector3(0,-.3,0)),mano=h.H.manoI.getWorldPosition(new THREE.Vector3());
   assert.ok(apoyo.distanceTo(mano)<.005,'Las dos manos siguen en el mango al mezclar');
   assert.ok(Object.values(h.H).every(b=>b.matrixWorld.elements.every(Number.isFinite)),'Sin matrices inválidas');
-  assert.equal(h.mallas.length,3,'No aumenta el número de mallas');
+  assert.equal(h.mallas.length,4,'Cuerpo Scenario y tres materiales del hacha');
 }
 let t=0;
 const inicial={anim:'andar',estado:'andar',fase:1.8,paso:1,t:0,mezclar:true,dt:0};

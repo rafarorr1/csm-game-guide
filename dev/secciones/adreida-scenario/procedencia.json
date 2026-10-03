@@ -1,0 +1,13 @@
+{
+  "fuente": "Scenario / Tripo 3.1",
+  "assetId": "asset_qoc5bQ5VyS7BjtGaNaXA5Lma",
+  "sha256Glb": "9218f846f012f428b8022a3003e0e8659b0190b473bf37af864bef5fdb40bd30",
+  "alturaLogicaMetros": 1.95,
+  "alturaVisualMetros": 1.913112,
+  "radioColisionMetros": 0.42,
+  "triangulos": 15408,
+  "vertices": 11879,
+  "mapas": 1024,
+  "rig": "Esqueleto procedural original, cuatro influencias suaves, falda en siete paños. Hacha independiente.",
+  "herramienta": "preparar.py; el juego no usa servicios remotos."
+}
