@@ -1,0 +1,11 @@
+{
+  "fuente": "Fast Run.fbx, aportado por el usuario",
+  "sha256": "59b5445dea301657944aa47a06e1c7a09a52797ff92674b87b6213ebfd6cc470",
+  "accion": "Armature|mixamo.com|Layer0",
+  "duracion": 0.5333333333333333,
+  "muestras": 64,
+  "inicio": 0.21875,
+  "escalaPiernas": 1.0954248554703117,
+  "adaptacion": "Cadera, pecho, cabeza, piernas, pies y brazo izquierdo. Derecha reservada para el hacha. Traslación horizontal eliminada del avance; suelo adaptado a las botas. Sin geometría ni texturas del FBX.",
+  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python dev/secciones/adreida-scenario/extraer-fast-run.py -- entrada.fbx fuente.json; node dev/secciones/adreida-scenario/preparar-fast-run.mjs fuente.json"
+}

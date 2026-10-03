@@ -49,10 +49,25 @@ for(const paso of [.15,.3,.55,1])for(const zancada of [.75,1,1.15]){
   if(f<contacto){m.H.pieI.getWorldPosition(v);const z=v.z+f*largo;min=Math.min(min,z);max=Math.max(max,z);}
   for(const j of botas){cuerpo.getVertexPosition(j,v);alturaMin=Math.min(alturaMin,v.y);}
  }
- assert.ok(max-min<.012,`Apoyo sin patinar: paso ${paso}, zancada ${zancada}`);
+ if(paso<=.3)assert.ok(max-min<.012,`Apoyo de marcha sin patinar: paso ${paso}, zancada ${zancada}`); // Fast Run incluye rodadura de talón y punta; su tobillo no está fijo.
  assert.ok(alturaMin>-.002&&alturaMin<.015,'Las suelas llegan al piso sin hundirse');
 }
 F.animacion.restablecer();
+// Fast Run conserva sus fases de apoyo y vuelo, la flexión profunda de rodilla
+// y la misma pose aunque cambie la posición/orientación del personaje en la plaza.
+let vuelo=0,apoyo=0,rodilla=0;
+for(let i=0;i<120;i++){
+ F.posar(m,{anim:'andar',fase:i/120*Math.PI*2,paso:1});m.raiz.updateMatrixWorld(true);let baja=Infinity;
+ for(const j of botas)baja=Math.min(baja,cuerpo.getVertexPosition(j,v).y);
+ if(baja>.05)vuelo++;if(baja<.015)apoyo++;
+ rodilla=Math.max(rodilla,m.H.rodillaI.rotation.x,m.H.rodillaD.rotation.x);
+}
+assert.ok(vuelo>5&&apoyo>40,'La carrera conserva despegue, vuelo y contacto');
+assert.ok(rodilla>1.8,'Recoge la pierna con la flexión del clip importado');
+F.posar(m,{anim:'andar',fase:2.1,paso:.55});const altura=m.H.cuerpo.position.y;
+m.raiz.position.set(17,0,-8);m.raiz.rotation.y=2.4;F.posar(m,{anim:'andar',fase:2.1,paso:.55});
+assert.ok(Math.abs(m.H.cuerpo.position.y-altura)<1e-7,'El apoyo se calcula en el espacio del personaje');
+m.raiz.position.set(0,0,0);m.raiz.rotation.set(0,0,0);
 // No debe haber un salto de orientación al reiniciar el ciclo.
 const articulaciones=['piernaI','rodillaI','pieI','piernaD','rodillaD','pieD'];
 F.posar(m,{anim:'andar',fase:Math.PI*2-1e-5,paso:1});const fin=articulaciones.map(n=>m.H[n].quaternion.clone());

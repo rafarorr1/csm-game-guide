@@ -432,7 +432,7 @@
   let tipoHeroe=q.get('heroe')==='mohamed'?'mohamed':'adreida';
   const aDistancia=()=>heroe?.tipo==='mohamed';
   function crearHeroe(tipo=tipoHeroe){const T=HEROES[tipo],m=cuerpoDe(tipo);heroe={id:jugadores.length,tipo,m,pos:new V3(0,0,4),dir:Math.PI,giro:0,estado:'quieto',t:0,alma:T.alma,almaMax:T.alma,furia:0,atqBase:T.atq,atq:T.atq,basicos:1,especial:1,dash:1,
-    balas:T.cargador||0,recargaT:0,cadT:0,disparoT:9,disparos:0,ultiT:0,sigilo:0,bumeran:null,recogeHacha:0,cd:{salto:0,provocar:0,bumeran:0,esquiva:0,parry:0,ulti:0},parrys:0,bloqueos:0,parryExito:false,escudo:0,fase:0,paso:0,golpeo:false,tick:0,
+    balas:T.cargador||0,recargaT:0,cadT:0,disparoT:9,disparos:0,ultiT:0,sigilo:0,bumeran:null,recogeHacha:0,cd:{salto:0,provocar:0,bumeran:0,esquiva:0,parry:0,ulti:0},parrys:0,bloqueos:0,parryExito:false,escudo:0,fase:0,paso:0,golpeo:false,torbellino:null,
     incendio:null,carga:0,bloqueoBasico:false,saltoMando:false,acortarSalto:0,combo:0,finGolpe:-9,invul:0,vatq:1,dirEsq:new V3(),destello:0,brilloParry:0,dolor:1,vivo:true,botin:[],llaves:0,objetivoSalto:null,origenSalto:null,radio:m.radio,muerteT:0,golpeDe:null};m.caja.userData.heroe=true;
     heroe.entrada={...ent,suelo:new V3(),rev:null,atacando:false,pendiente:false,piloto:false};heroe.control={mov:new V3(),atacar:false,apunta:null};heroe.mando={...mando,indice:null,botones:[],dir:new V3(0,0,-1),activo:false,listo:false};heroe.disparosPendientes=[];
     jugadores.push(heroe);return heroe;}
@@ -756,11 +756,13 @@
      WASD mueve; clics cortos encadenan el combo y mantener/soltar carga un hachazo;
      Espacio hace parry e interrumpe el ataque; clic derecho, Salto al cursor; Q Torbellino; E Hacha búmeran. */
   const VEL=5.8,DUR_ESQ=.2,VEL_ESQ=17;
+  const TORBELLINO={dur:1.35,radio:2.55,intervalo:.2};
   // El combo empieza lento (se ve venir cada hachazo) y se acelera con la velocidad de ataque de las cartas (heroe.vatq).
   const COMBO=[{dur:.6,imp:.3,alc:2.05,ang:1.1,mult:1,emp:1.4,anim:'tajoA'},{dur:.6,imp:.3,alc:2.05,ang:1.1,mult:1,emp:1.4,anim:'revesA'},{dur:.8,imp:.39,alc:2.7,ang:.5,mult:1.8,emp:3.8,anim:'estocadaA'}];
   const frente=a=>new V3(Math.sin(a),0,Math.cos(a));
   const libre=()=>heroe.vivo&&(['quieto','andar'].includes(heroe.estado)||heroe.estado==='golpe'&&heroe.golpeo);
-  function cambiar(e,s){e.estado=s;e.t=0;}
+  function cambiar(e,s){e.estado=s;e.t=0;if(e.torbellino&&!['torbellino','esquiva'].includes(s))e.torbellino=null;}
+  function girando(h){return h.estado==='torbellino'||h.estado==='esquiva'&&!!h.torbellino;}
   const cercano=r=>enemigos.filter(e=>e.estado!=='muere'&&plano(e.pos,heroe.pos)<r).sort((a,b)=>plano(a.pos,heroe.pos)-plano(b.pos,heroe.pos))[0]||null;
   // Hacia dónde apunta: el cursor; en táctil (sin cursor), el enemigo más cercano; si no, de frente.
   function puntoApuntado(){if(ctl.apunta)return ctl.apunta.clone();const e=cercano(7);return e?e.pos.clone():heroe.pos.clone().add(frente(heroe.dir).multiplyScalar(3));}
@@ -778,12 +780,13 @@
       const am=amenaza(),hacia=am?am.p:punto||ctl.apunta;if(hacia&&plano(hacia,heroe.pos)>.05)heroe.dir=rumbo(heroe.pos,hacia);
       heroe.parryExito=false;heroe.carga=0;heroe.bloqueoBasico=true;ent.pendiente=false;paron=0;cambiar(heroe,'parry');return true;}
     if(h==='esquiva'){if(['salto','grito','esquiva','muerta'].includes(heroe.estado)||heroe.cd.esquiva>0)return false;
-      const v=punto?punto.clone().setY(0):ctl.mov.lengthSq()>.01?ctl.mov.clone():frente(heroe.dir);heroe.dirEsq.copy(v.normalize());heroe.dir=rumbo(new V3(),heroe.dirEsq);
+      const v=punto?punto.clone().setY(0):ctl.mov.lengthSq()>.01?ctl.mov.clone():frente(heroe.dir);heroe.dirEsq.copy(v.normalize());const dir=rumbo(new V3(),heroe.dirEsq);
+      if(heroe.torbellino)heroe.giro+=heroe.dir-dir;heroe.dir=dir;
       heroe.cd.esquiva=H.cd*(heroe.dash??1);heroe.invul=DUR_ESQ+.1;heroe.esqDesde=heroe.pos.clone();if(heroe.incendio)apagarFuego(heroe,true);cambiar(heroe,'esquiva');return true;}
     if(!libre())return false;if(heroe.furia<H.coste){rechazo(h,'Te falta Furia');return false;}if((heroe.cd[h]||0)>0){rechazo(h,'Aún no está lista');return false;}
     heroe.furia-=H.coste;if(H.cd)heroe.cd[h]=H.cd;
     if(h==='torbellino'&&aDistancia()){const base=rumbo(heroe.pos,puntoApuntado());heroe.dir=base;for(let i=-3;i<=3;i++)disparar({angulo:i*.12,gratis:true,causa:'abanico',dano:Math.round(heroe.atq*1.2*(heroe.especial??1))});cambiar(heroe,'abanico');temblar(.1);}
-    else if(h==='torbellino'){cambiar(heroe,'torbellino');heroe.tick=0;}
+    else if(h==='torbellino'){cambiar(heroe,'torbellino');heroe.torbellino={t:0,impactos:new Map()};}
     if(h==='salto'){const p=punto?punto.clone():puntoApuntado(),d=plano(p,heroe.pos);if(d>8)p.sub(heroe.pos).multiplyScalar(8/d).add(heroe.pos);
       p.y=0;dentroPlaza(p,heroe.radio);respetarMuralla(heroe.pos,p,heroe.radio);heroe.origenSalto=heroe.pos.clone();heroe.objetivoSalto=p;heroe.saltoMando=!aDistancia()&&mando.activo;heroe.acortarSalto=0;heroe.dirSalto=p.clone().sub(heroe.pos).normalize();heroe.dir=rumbo(heroe.pos,p);cambiar(heroe,'salto');heroe.golpeo=false;}
     if(h==='bumeran'){const p=punto||puntoApuntado();if(plano(p,heroe.pos)>.1)heroe.dir=rumbo(heroe.pos,p);cambiar(heroe,'lanzarHacha');heroe.golpeo=false;heroe.carga=0;ent.pendiente=false;}
@@ -815,6 +818,22 @@
       if(arco<Math.PI){const v=e.pos.clone().sub(heroe.pos).setY(0).normalize();if(v.dot(f)<Math.cos(arco)&&d>e.radio+.3)continue;}
       danar(e,dano,opc);n++;const p=e.pos.clone().lerp(heroe.pos,.35).setY(1.1);chispas(p,opc?.chispas??10,[1,.75,.4],6,.45);}
     return n;}
+  function pasoTorbellino(dt,desde){const h=heroe,g=h.torbellino;if(!g)return;g.t+=dt;
+    // Barre el recorrido real, no sólo la posición final del cuadro. Cada enemigo
+    // conserva su intervalo de daño al entrar al dash o volver al giro normal.
+    const dx=h.pos.x-desde.x,dz=h.pos.z-desde.z,l2=dx*dx+dz*dz;
+    for(const e of enemigos){if(e.estado==='muere'||(g.impactos.get(e.id)??0)>g.t+1e-8)continue;
+      const k=l2?Math.max(0,Math.min(1,((e.pos.x-desde.x)*dx+(e.pos.z-desde.z)*dz)/l2)):0;
+      const x=desde.x+dx*k,z=desde.z+dz*k;if(Math.hypot(e.pos.x-x,e.pos.z-z)>TORBELLINO.radio+e.radio)continue;const origen=new V3(x,0,z);
+      g.impactos.set(e.id,g.t+TORBELLINO.intervalo);
+      danar(e,h.atq*.5*(h.especial??1),{empuje:1.1,crit:false,causa:'torbellino',origen});
+      chispas(e.pos.clone().lerp(origen,.35).setY(1.1),6,[1,.75,.4],6,.45);h.furia=Math.min(100,h.furia+1.5);}
+    if(rnd()<.8){const a=rnd()*TAU;particula(h.pos.x+Math.cos(a)*2,1+rnd()*.3,h.pos.z+Math.sin(a)*2,-Math.sin(a)*6,.3,Math.cos(a)*6,.25,.5,2.2,1.6,1.2,0);}
+    // Un dash tardío conserva el giro hasta completar su recorrido; no reinicia
+    // los 1,35 s ni cobra Furia de nuevo. Después continúa sólo el tiempo restante.
+    if(h.estado==='esquiva'&&h.t<DUR_ESQ-1e-8)return;
+    if(g.t>=TORBELLINO.dur-1e-8)cambiar(h,'quieto');else if(h.estado==='esquiva'){cambiar(h,'torbellino');h.t=g.t;}
+  }
   let paron=0;// el parón al golpear: congela el mundo un instante (se siente el impacto)
   // Recibir un golpe: se marca quién fue (destella y la pantalla indica de dónde vino).
   function herir(dano,desde,culpable){if(!heroe.vivo)return;dano=Math.round(dano*(heroe.escudo>0?.5:1));heroe.alma-=dano;heroe.destello=1;heroe.dolor=0;heroe.furia=Math.min(100,heroe.furia+dano*.7);
@@ -834,7 +853,7 @@
   }
   function esquivado(e){numero(heroe.pos.clone().setY(2.4),'¡Esquivado!','esquivado');heroe.furia=Math.min(100,heroe.furia+8);heroe.esquivados=(heroe.esquivados||0)+1;if(e)e.culpableT=reloj.t;}
   function pasoHeroe(dt){const h=heroe;h.t+=dt;h.sigilo=Math.max(0,h.sigilo-dt);h.ultiT=Math.max(0,h.ultiT-dt);h.brilloParry=Math.max(0,h.brilloParry-dt);for(const k in h.cd)h.cd[k]=Math.max(0,h.cd[k]-dt);h.escudo=Math.max(0,h.escudo-dt);h.invul=Math.max(0,h.invul-dt);h.destello=Math.max(0,h.destello-dt*5);h.dolor=Math.min(1,h.dolor+dt*4);
-    h.recogeHacha=Math.max(0,(h.recogeHacha||0)-dt);const dirAnterior=h.dir;let movido=0;const mov=ctl.mov;if(h.bloqueoBasico)ent.pendiente=false;if(!ctl.atacar)h.bloqueoBasico=false;
+    h.recogeHacha=Math.max(0,(h.recogeHacha||0)-dt);const dirAnterior=h.dir,desdeGiro=h.torbellino?h.pos.clone():null;let movido=0;const mov=ctl.mov;if(h.bloqueoBasico)ent.pendiente=false;if(!ctl.atacar)h.bloqueoBasico=false;
     const andar=(v,vel)=>{if(v.lengthSq()<.01)return 0;const l=Math.min(1,v.length()),paso=vel*l*dt;h.pos.x+=v.x/v.length()*paso;h.pos.z+=v.z/v.length()*paso;return paso;};
     if(h.incendio)pasoFuego(dt);if(h.estado==='muerta'){h.muerteT+=dt;return;}
     if(h.retroceso){h.pos.addScaledVector(h.retroceso,dt);h.retroceso.multiplyScalar(Math.exp(-dt*9));if(h.retroceso.lengthSq()<.01)h.retroceso=null;}
@@ -863,13 +882,11 @@
     else if(h.estado==='recuperacion'){if(h.t>=.3){h.finGolpe=reloj.t;cambiar(h,'quieto');}}
     else if(h.estado==='parry'){const am=amenaza();if(am&&h.t<PARRY.perfecto)h.dir+=difAng(h.dir,rumbo(h.pos,am.p))*Math.min(1,dt*20);
       if(h.t>=PARRY.dur){if(!h.parryExito)h.cd.parry=PARRY.cd;cambiar(h,'quieto');}}
-    else if(h.estado==='esquiva'){if(h.t<DUR_ESQ){h.pos.addScaledVector(h.dirEsq,VEL_ESQ*dt*(1-h.t/DUR_ESQ*.4));movido=1;
+    else if(h.estado==='esquiva'){const inicio=Math.max(0,h.t-dt),fin=Math.min(DUR_ESQ,h.t);
+      if(fin>inicio){h.pos.addScaledVector(h.dirEsq,VEL_ESQ*((fin-inicio)-.2*(fin*fin-inicio*inicio)/DUR_ESQ));movido=1;
         if(rnd()<.9)particula(h.pos.x+(rnd()-.5)*.5,.3+rnd()*1.4,h.pos.z+(rnd()-.5)*.5,-h.dirEsq.x*2,.2,-h.dirEsq.z*2,.3,.9,.6,.9,1.3,0);}
-      else cambiar(h,'quieto');}
-    else if(h.estado==='torbellino'){const D=1.35;movido=andar(mov,4);if(movido)h.dir=rumbo(new V3(),mov);
-      h.tick-=dt;if(h.tick<=0){h.tick=.2;const n=golpearEn(2.55,Math.PI,h.atq*.5*(h.especial??1),{empuje:1.1,crit:false,chispas:6,causa:'torbellino'});if(n)h.furia=Math.min(100,h.furia+n*1.5);}
-      if(rnd()<.8){const a=rnd()*TAU;particula(h.pos.x+Math.cos(a)*2,1+rnd()*.3,h.pos.z+Math.sin(a)*2,-Math.sin(a)*6,.3,Math.cos(a)*6,.25,.5,2.2,1.6,1.2,0);}
-      if(h.t>=D)cambiar(h,'quieto');}
+      if(h.t>=DUR_ESQ-1e-8&&!h.torbellino)cambiar(h,'quieto');}
+    else if(h.estado==='torbellino'){movido=andar(mov,4);if(movido)h.dir=rumbo(new V3(),mov);}
     else if(h.estado==='salto'){const D=.72,k=Math.min(1,h.t/D),m=tramo(k,.12,.86);ajustarSalto(h,mov,dt,k);h.pos.lerpVectors(h.origenSalto,h.objetivoSalto,m);if(h.saltoMando)h.pos.addScaledVector(h.dirSalto,-h.acortarSalto*m);h.alto=Math.sin(Math.PI*m)*2.4;h.invul=Math.max(h.invul,k<.86?.05:0);
       // Mohamed cae del backflip: los que lo han visto (a 6 m y mirando hacia él) se quedan impresionados, aturdidos unos segundos.
       // Adreida, en cambio, clava el hacha.
@@ -884,7 +901,8 @@
       if(h.t>=.7)cambiar(h,'quieto');}
     // El botín se recoge al pasar por encima.
     for(const b of botines)if(b.listo&&!b.volando&&!b.recogida&&plano(b.pos,h.pos)<1.1)recoger(b);
-    h.inclinacion=(h.inclinacion||0)+(Math.max(-.16,Math.min(.16,difAng(dirAnterior,h.dir)/Math.max(.001,dt)*.018))-(h.inclinacion||0))*(1-Math.exp(-dt*8));h.paso+=((movido>0&&h.estado!=='esquiva'?(aDistancia()?1:Math.min(1,mov.length())):0)-h.paso)*(1-Math.exp(-dt*10));h.fase+=movido*TAU/(aDistancia()?1.75:MOD.animacion.longitudZancada(h.paso));dentroPlaza(h.pos,h.radio);}
+    h.inclinacion=(h.inclinacion||0)+(Math.max(-.16,Math.min(.16,difAng(dirAnterior,h.dir)/Math.max(.001,dt)*.018))-(h.inclinacion||0))*(1-Math.exp(-dt*8));h.paso+=((movido>0&&h.estado!=='esquiva'?(aDistancia()?1:Math.min(1,mov.length())):0)-h.paso)*(1-Math.exp(-dt*10));h.fase+=movido*TAU/(aDistancia()?1.75:MOD.animacion.longitudZancada(h.paso));dentroPlaza(h.pos,h.radio);
+    if(desdeGiro&&h.torbellino){respetarMuralla(desdeGiro,h.pos,h.radio);pasoTorbellino(dt,desdeGiro);}}
 
   /* ---- Ataques enemigos: la zona exacta en el suelo, que se llena hasta el golpe ---------- */
   // Mientras se llena, el atacante gira hacia ti; en el último tramo se fija (la marca se enciende): es el momento de apartarse o esquivar.
@@ -1424,7 +1442,7 @@
   function hud(){hudEquipo();const h=heroe;$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');$('almaTxt').textContent=Math.ceil(h.alma)+' / '+h.almaMax;
     const fuego=$('hudFuego');fuego.hidden=!h.incendio;if(h.incendio){const texto='En llamas · '+Math.ceil(h.incendio.restante)+' s · Dash para apagar';if(fuego.textContent!==texto)fuego.textContent=texto;}
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');$('furiaTxt').textContent=Math.floor(h.furia)+' / 100';
-    for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0,recarga=cd>0?String(Math.ceil(cd)):'';if(b.dataset.recarga!==recarga)b.dataset.recarga=recarga;b.style.setProperty('--cd',(H.cd?cd/(H.cd*(k==='esquiva'?(h.dash??1):1))*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',{torbellino:'torbellino',salto:'salto',provocar:'grito',bumeran:'lanzarHacha',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
+    for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0,recarga=cd>0?String(Math.ceil(cd)):'';if(b.dataset.recarga!==recarga)b.dataset.recarga=recarga;b.style.setProperty('--cd',(H.cd?cd/(H.cd*(k==='esquiva'?(h.dash??1):1))*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',k==='torbellino'?girando(h):{salto:'salto',provocar:'grito',bumeran:'lanzarHacha',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
     const botonAtaque=document.querySelector('[data-hab="tajo"]');if(botonAtaque){botonAtaque.classList.toggle('cargando',h.estado==='carga');botonAtaque.style.setProperty('--carga',`${Math.round(h.carga*100)}%`);const rotulo=botonAtaque.querySelector('small');if(rotulo){const texto=aDistancia()?'Disparar':h.bumeran?'Sin hacha':h.estado==='carga'?`Cargar ${Math.round(h.carga*100)}%`:'Atacar';if(rotulo.textContent!==texto)rotulo.textContent=texto;}}
     const cartas='Cartas del destino · '+rog.mano.length+' / 3';if($('hudCartas').textContent!==cartas)$('hudCartas').textContent=cartas;
     const municion=$('hudMunicion');municion.hidden=!aDistancia();if(aDistancia()){const texto=h.recargaT>0?'Recargando…':'Balas · '+h.balas+' / '+HEROES.mohamed.cargador;if(municion.textContent!==texto)municion.textContent=texto;}
@@ -1543,9 +1561,9 @@
 
   function posarHeroe(dt){
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
-    if(h.estado==='torbellino'){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
-    const ph=poses.heroe||(!aDistancia()&&h.recogeHacha>0&&['quieto','andar'].includes(h.estado)?['recogerHachaA',1-h.recogeHacha/.25]:null)||{lanzarHacha:['lanzarHachaA',h.t/.46],quieto:['quieto'],andar:['andar'],recuperacion:[COMBO[h.combo].anim,.64],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.t/1)]}[h.estado];
-    MOD.posar(hm,{sinHacha:!!h.bumeran,anim:!h.recogeHacha&&!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:!poses.heroe&&['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,giroCarrera:h.inclinacion||0,t:reloj.t,fase:poses.heroe?ph[1]*TAU:h.fase,paso:poses.heroe?1:h.paso,dt,estado:h.estado,mezclar:!poses.heroe,armaLista:aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45),retroceso:Math.max(0,1-h.disparoT*6)});
+    if(girando(h)){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
+    const ph=poses.heroe||(!aDistancia()&&h.recogeHacha>0&&['quieto','andar'].includes(h.estado)?['recogerHachaA',1-h.recogeHacha/.25]:null)||{lanzarHacha:['lanzarHachaA',h.t/.46],quieto:['quieto'],andar:['andar'],recuperacion:[COMBO[h.combo].anim,.64],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:girando(h)?['torbellino']:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.t/1)]}[h.estado];
+    MOD.posar(hm,{sinHacha:!!h.bumeran,anim:!h.recogeHacha&&!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:!poses.heroe&&['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,giroCarrera:h.inclinacion||0,t:reloj.t,fase:poses.heroe?ph[1]*TAU:h.fase,paso:poses.heroe?1:h.paso,dt,estado:girando(h)?'torbellino':h.estado,mezclar:!poses.heroe,armaLista:aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45),retroceso:Math.max(0,1-h.disparoT*6)});
     if(h.dolor<1&&['quieto','andar'].includes(h.estado)){hm.H.torso.rotation.x-=.25*(1-h.dolor);}
     // Rojo al recibir; azulado y translúcido mientras es invulnerable (esquiva).
     if(h.destello>0){hm.M.u.uDestello.value=h.destello*.8;hm.M.u.uColorD.value.setRGB(1,.25,.2);}else{hm.M.u.uDestello.value=h.invul>0?.4:0;hm.M.u.uColorD.value.setRGB(.55,.8,1.3);}
@@ -1595,7 +1613,7 @@
     // Aura de Provocar y la luz del héroe (dorada mientras dura).
     aura.visible=h.escudo>0;aura.position.set(h.pos.x,(h.alto||0)+1,h.pos.z);aura.material.uniforms.uA.value=Math.min(1,h.escudo)*.9;
     rastroCorte(h);
-    estela.visible=h.estado==='torbellino';estela.position.set(h.pos.x,1.05,h.pos.z);estela.rotation.y=-h.giro;
+    estela.visible=girando(h);estela.position.set(h.pos.x,1.05,h.pos.z);estela.rotation.y=-h.giro;
     luzHeroe.color.setHex(h.escudo>0?0xffc870:0xffd2a0);luzHeroe.intensity=h.vivo?40:18;
     for(const f of fuegos)f.luz.intensity=55+Math.sin(reloj.t*11+f.x)*9+Math.sin(reloj.t*23+f.z)*6;for(const b of braseros)b.luz.intensity=24+Math.sin(reloj.t*13+b.x)*5;
     for(const n of [...numeros]){const s=reloj.t-n.t0;n.e.pos.y=n.y+s*1.4;n.e.el.style.opacity=String(Math.max(0,1-Math.max(0,s-.45)/.5));if(s>.95){quitarEtiqueta(n.e);numeros.splice(numeros.indexOf(n),1);}}
