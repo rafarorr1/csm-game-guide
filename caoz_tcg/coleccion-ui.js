@@ -527,6 +527,10 @@
       requestAnimationFrame(()=>{if(!rejilla.isConnected)return;if(comportamientoPrevio)rejilla.style.scrollBehavior=comportamientoPrevio;else rejilla.style.removeProperty('scroll-behavior');if(encajePrevio)rejilla.style.scrollSnapType=encajePrevio;else rejilla.style.removeProperty('scroll-snap-type');});
       mundoHost?.style.setProperty('--reserva-der','0px');mundoHost?.style.removeProperty('--controles-alto');
     };
+    // La vuelta visual tarda unos fotogramas, pero el destino ya existe y es
+    // interactivo. Recuperar el foco al iniciar permite continuar con teclado
+    // sin tener que esperar a que termine el viaje de la ficha.
+    const enfocar=()=>{if(panel?.open&&miniatura.isConnected&&(panel.dataset.transicion==='volver-archivo'||s.vista==='cartas'))miniatura.focus({preventScroll:true});};
     mensaje('Volviendo a Mis cartas…');
     let terminado=false;
     const terminar=nodo=>{
@@ -534,10 +538,10 @@
       detalleCapa?.remove();detalleCapa=null;encuadreDetalle=null;s.vista='cartas';focoLista=null;
       panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
       activarMundo('cartas');actualizarCabecera();mensaje('');entradaDelMundo('cartas');
-      const enfocar=()=>{if(panel?.open&&s.vista==='cartas'&&miniatura.isConnected)miniatura.focus({preventScroll:true});};
       requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>miniatura.removeAttribute('data-regreso-activa'),720);});
     };
-    const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino,alTerminar:terminar});
+    requestAnimationFrame(enfocar);
+    const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino:()=>{prepararDestino();requestAnimationFrame(enfocar);},alTerminar:terminar});
     if(ok)return true;
     miniatura.removeAttribute('data-regreso-activa');panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');panel.dataset.vista='detalle';archivoCapa.setAttribute('hidden','');mensaje('');return false;
   }

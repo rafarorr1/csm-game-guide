@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### v65 · Build 304 · Regreso accesible del visor · 2026-10-03
+
+- Al regresar del visualizador, el foco de teclado vuelve a la carta elegida
+  desde el inicio de su animación de regreso; no hay que esperar a que termine
+  el movimiento para continuar explorando la colección.
+- La cobertura de sobres reconoce tanto su modelo 3D de biblioteca como la
+  escena de apertura y verifica que ambas se liberen al cerrar la Colección.
+
 ### v64 · Build 303 · Arte de Beta en la candidata · 2026-10-02
 
 - Al publicar ilustraciones en **Beta** desde el Estudio, la **Beta de
