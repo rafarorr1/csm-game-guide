@@ -2291,7 +2291,8 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       t.check(m.concederSobreCampana('regresion-sobre-uno')&&m.concederSobreCampana('regresion-sobre-uno'),pagina+': la campaña concede su premio de forma idempotente.');
       t.igual(m.sobres(),3,pagina+': repetir el recibo de campaña conserva sus tres sobres.');
       t.check(m.recompensasPendientes().length===1&&m.recompensasPendientes()[0].cantidad===3&&!m.inventarioSobres().length,pagina+': una victoria guarda una elección pendiente de tres, sin asignar tipos.');
-      escogerPremios();w.showGallery();const primera=await nuevaDesdeMenu(),pack=m.pendiente(),contenido=JSON.stringify(pack);
+      escogerPremios();w.showGallery();const primera=await nuevaDesdeMenu(),pack=m.pendiente(),contenido=JSON.stringify(pack),escenaApertura=escenas.at(-1),escenasAntesDeSeleccion=escenas.length;
+      t.check(escenaApertura?.host?.closest('.sobresApertura')===primera,pagina+': la última escena pertenece al sobre que se abre.');
       t.check(pack?.cartas.length===5&&pack.cartas.every(c=>['normal','foil'].includes(c.acabado)&&m.tiene(c.id,c.acabado))&&[1,2].includes(pack.cartas.filter(c=>c.acabado==='foil').length),pagina+': consume un sobre y guarda sus cinco cartas mixtas antes de presentarlas.');
       t.igual(m.sobres(),2,pagina+': abrir desde Colección consume exactamente un sobre.');
       t.check(pack.cartas.every(c=>m.elegido(c.id)==='normal'),pagina+': recibir premios conserva las ediciones equipadas.');
@@ -2305,7 +2306,7 @@ PRUEBAS.suite('coleccionSobres',async t=>{
         // del componente y los del documento, incluida la guardia móvil.
         gesto.setPointerCapture=()=>{};
         puntero(gesto,'pointerdown',41,120,120);puntero(gesto,'pointermove',41,170,150);puntero(gesto,'pointerup',41,170,150);clic(gesto);
-        t.check(escenas[0].giros>0&&raiz().dataset.fase==='sellado'&&escenas[0].abiertas===0,pagina+': arrastrar gira el sobre sin abrirlo.');
+        t.check(escenaApertura.giros>0&&raiz().dataset.fase==='sellado'&&escenaApertura.abiertas===0,pagina+': arrastrar gira el sobre sin abrirlo.');
         // Es otro toque inmediato, sin esperar los 500 ms de la supresión de
         // clics del tablero: esa guardia no debe consumir acciones del sobre.
         const romper=accion();puntero(romper,'pointerdown',42,150,470);puntero(romper,'pointerup',42,150,470);clic(romper);
@@ -2313,13 +2314,13 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       }finally{gesto.setPointerCapture=capturar;}
       await esperar(()=>liberarImagenes.length>0,'espera a decodificar las ilustraciones reales.');
       t.igual(raiz().dataset.fase,'preparando',pagina+': la rotura espera mientras el arte no puede pintarse.');
-      t.igual(escenas[0].abiertas,0,pagina+': no rompe la funda antes de tener el arte listo.');
+      t.igual(escenaApertura.abiertas,0,pagina+': no rompe la funda antes de tener el arte listo.');
       t.check(m.seleccionar(pack.cartas.find(c=>c.acabado==='foil').id,'foil'),pagina+': un cambio de colección puede llegar durante la preparación.');
-      t.check(raiz()===primera&&escenas.length===1,pagina+': ese evento conserva la instancia y las descargas del mismo pending.');
+      t.check(raiz()===primera&&escenas.length===escenasAntesDeSeleccion&&escenas.at(-1)===escenaApertura,pagina+': ese evento conserva la instancia y las descargas del mismo pending.');
       bloquearArte=false;liberarImagenes.splice(0).forEach(f=>f());
-      await esperar(()=>escenas[0].abiertas===1,'continúa al terminar la decodificación.');
-      t.check(escenas[0].arteListo,pagina+': todas las imágenes están cargadas y decodificadas al empezar la apertura.');
-      escenas[0].soltar();await drenar();
+      await esperar(()=>escenaApertura.abiertas===1,'continúa al terminar la decodificación.');
+      t.check(escenaApertura.arteListo,pagina+': todas las imágenes están cargadas y decodificadas al empezar la apertura.');
+      escenaApertura.soltar();await drenar();
       const imagenes=[...raiz().querySelectorAll('.sobresFrente img')],fuentes=imagenes.map(n=>n.getAttribute('src')),mutaciones=[];
       const vigilarArte=new w.MutationObserver(cambios=>mutaciones.push(...cambios));vigilarArte.observe(primera,{subtree:true,attributes:true,attributeFilter:['src']});
       try{
@@ -2334,7 +2335,7 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       await pulsar();
       t.check(!m.pendiente()&&!raiz()&&panel().open,pagina+': Volver cierra el pending y regresa a Colección.');
       t.check(m.sobres()===2&&pack.cartas.every(c=>m.tiene(c.id,c.acabado)),pagina+': volver conserva premios y contador.');
-      t.igual(escenas[0].destruida,1,pagina+': Volver libera una sola vez la escena.');
+      t.igual(escenaApertura.destruida,1,pagina+': Volver libera una sola vez la escena.');
 
       t.check(m.concederSobreCampana('regresion-sobre-dos'),pagina+': concede otro recorrido independiente.');escogerPremios();await nuevaDesdeMenu();
       const persistido=JSON.stringify(m.pendiente());await pulsar();const interrumpida=escenas.at(-1);
@@ -2381,6 +2382,10 @@ PRUEBAS.suite('coleccionSobres',async t=>{
       await pulsar();t.check(!m.pendiente()&&m.sobres()===10&&antiguas.every(c=>m.tiene(c.id,c.acabado)),pagina+': cerrar el legado conserva sus premios y el total de diez sobres.');
       t.igual(JSON.stringify(m.recompensasPendientes()),eleccionesLegado,pagina+': cerrar el legado conserva las elecciones nuevas sin asignarlas.');
       t.igual(JSON.stringify(m.inventarioSobres()),inventarioLegado,pagina+': cerrar el legado tampoco consume sobres sellados por tipo.');
+      // El catálogo vuelve a montar su sobre 3D después de cerrar el último
+      // premio. Cerramos la Colección antes de comprobar la limpieza total:
+      // así también cubrimos ese último modelo que sigue visible al usuario.
+      panel().querySelector('.coleccionCerrar').click();await drenar();
       t.check(escenas.every(e=>e.destruida===1),pagina+': todas las escenas utilizadas se destruyen una sola vez.');
       t.nota(pagina+': premio real, arte decodificado, cinco volteos, toque final, recuperación de cierre y legado de tres cartas.');
     }finally{
