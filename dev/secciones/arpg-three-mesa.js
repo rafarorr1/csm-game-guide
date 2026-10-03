@@ -275,6 +275,7 @@
   }
   // Luces: luna azul con sombras (sigue a Adreida), cielo tenue y la luz que ella lleva (el radio de luz de Diablo).
   const hemi=new THREE.HemisphereLight(0x829abd,0x29251f,.5);escena.add(hemi);
+  const clima=window.CAOZ_ARPG_CLIMA.fabrica(THREE,escena,{obstaculos,techos:casasFundidas.userData.ocultacion.cajas,abierto:ABIERTO,reducido,perforar:impactoFX.perforar});
   const luna=new THREE.DirectionalLight(0xc1d6ff,2.1);luna.castShadow=true;luna.shadow.mapSize.set(CAPTURA?2048:1024,CAPTURA?2048:1024);luna.shadow.radius=3;luna.shadow.blurSamples=12;luna.shadow.bias=-.0004;luna.shadow.normalBias=.03;
   Object.assign(luna.shadow.camera,{left:-18,right:18,top:18,bottom:-18,near:1,far:70});escena.add(luna,luna.target);
   const luzHeroe=new THREE.PointLight(0xffd2a0,40,16,1.5);escena.add(luzHeroe);
@@ -1271,10 +1272,10 @@
   // DualSense y otros mandos que el navegador presenta con distribución estándar.
   let mando={indice:null,botones:[],activo:false,foco:true,listo:false,dir:new V3(0,0,-1)};
   const pausa={activa:false,boton:false,confirmar:false};
-  function ponerPausa(v){if(rog.abierto||v===pausa.activa)return;pausa.activa=v;sincronizarTiempo();
+  function ponerPausa(v){if(rog.abierto||v===pausa.activa)return;pausa.activa=v;sincronizarTiempo();clima.pausar(v||document.hidden||!partidaActiva);
     ent.atacando=ent.pendiente=false;ctl.atacar=false;ctl.mov.set(0,0,0);teclas.clear();mando.listo=false;mando.activo=false;
     for(const h of jugadores){h.entrada.atacando=h.entrada.pendiente=false;h.control.atacar=false;h.mando.listo=h.mando.activo=false;if(h.estado==='carga'){h.carga=0;cambiar(h,'quieto');}}
-    if(v){$('pausa').showModal();$('continuar').focus();}else{$('pausa').close();lienzo.focus();}}
+    if(v){$('pausa').showModal();$('continuar').focus();}else{$('pausa').close();lienzo.focus();clima.desbloquearAudio();}}
   function leerPausaMando(){let g;try{g=Array.from(navigator.getGamepads?.()||[]).find(g=>g?.connected&&g.mapping==='standard');}catch{return;}
     const pads=Array.from(navigator.getGamepads?.()||[]).filter(g=>g?.connected&&g.mapping==='standard');const b=pads.some(g=>g.buttons[9]?.pressed),x=pads.some(g=>g.buttons[0]?.pressed);
     const pulsado=b&&!pausa.boton,confirma=x&&!pausa.confirmar;pausa.boton=b;pausa.confirmar=x;
@@ -1330,7 +1331,7 @@
     // Al conectar o volver a la ventana, soltar primero evita ataques involuntarios.
     if(document.hidden||!mando.foco||!mando.listo){mando.botones=botones;mando.activo=false;mando.listo=!document.hidden&&mando.foco&&!actividad;return null;}
     const nuevos=botones.map((v,i)=>v&&!mando.botones[i]);mando.botones=botones;
-    if(actividad){mando.activo=true;ent.piloto=false;ent.atacando=ent.pendiente=false;}
+    if(actividad){clima.desbloquearAudio(true);mando.activo=true;ent.piloto=false;ent.atacando=ent.pendiente=false;}
     if(!mando.activo){return null;}
     if(mira.lengthSq())mando.dir.copy(mira).normalize();else if(mov.lengthSq())mando.dir.copy(mov).normalize();
     const apunta=heroe.pos.clone().addScaledVector(mando.dir,7);
@@ -1617,7 +1618,7 @@
     luzHeroe.color.setHex(h.escudo>0?0xffc870:0xffd2a0);luzHeroe.intensity=h.vivo?40:18;
     for(const f of fuegos)f.luz.intensity=55+Math.sin(reloj.t*11+f.x)*9+Math.sin(reloj.t*23+f.z)*6;for(const b of braseros)b.luz.intensity=24+Math.sin(reloj.t*13+b.x)*5;
     for(const n of [...numeros]){const s=reloj.t-n.t0;n.e.pos.y=n.y+s*1.4;n.e.el.style.opacity=String(Math.max(0,1-Math.max(0,s-.45)/.5));if(s>.95){quitarEtiqueta(n.e);numeros.splice(numeros.indexOf(n),1);}}
-    pasoCamara(dt,dtReal);camara.updateMatrixWorld();retirarHuidosFueraDeCamara();lineaMira.visible=puntoMira.visible=false;for(const j of jugadores)if(j.tipo==='mohamed')conHeroe(j,actualizarPunteria);hud();
+    pasoCamara(dt,dtReal);hemi.intensity=.5+clima.paso(dtReal,vista.foco)*.18;camara.updateMatrixWorld();retirarHuidosFueraDeCamara();lineaMira.visible=puntoMira.visible=false;for(const j of jugadores)if(j.tipo==='mohamed')conHeroe(j,actualizarPunteria);hud();
     lienzo.style.cursor=ent.sobre?.d?'crosshair':'default';
     return true;
   }
@@ -1661,6 +1662,12 @@
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};
   {const sel=$('estiloBala');sel.value=estiloBala;sel.onchange=()=>{estiloBala=sel.value;};}
+  // Preferencias locales; el audio sólo se desbloquea con un gesto del jugador.
+  for(const [id,clave] of [['climaLluvia','activo'],['climaSonido','sonido']]){const c=$(id);try{c.checked=localStorage.getItem('caoz-arpg-'+id)!=='0';}catch{}
+    clima.configurar({[clave]:c.checked});c.onchange=()=>{clima.configurar({[clave]:c.checked});if(clave==='activo'&&!c.checked)hemi.intensity=.5;try{localStorage.setItem('caoz-arpg-'+id,c.checked?'1':'0');}catch{}};}
+  const activarAudioClima=()=>clima.desbloquearAudio();
+  addEventListener('pointerdown',activarAudioClima,{capture:true});addEventListener('keydown',activarAudioClima,{capture:true});
+  addEventListener('pagehide',()=>clima.pausar(true));
   $('demo').onclick=()=>{ent.piloto=!ent.piloto;$('demo').setAttribute('aria-pressed',String(ent.piloto));ponerPausa(false);};
   $('reiniciar').onclick=()=>{reiniciar();ponerPausa(false);};
   // Elegir personaje: cambia el héroe y los rótulos de la barra (sus habilidades son otras) y vuelve a empezar.
@@ -1694,7 +1701,7 @@
   let partidaActiva=true;
   const canalPartida=!CAPTURA&&typeof BroadcastChannel==='function'?new BroadcastChannel('caoz-arpg-partida'):null;
   function activarPartida(){sincronizarTiempo();partidaActiva=true;$('pausaOtra').hidden=true;canalPartida?.postMessage('activar');}
-  if(canalPartida){canalPartida.onmessage=e=>{if(e.data!=='activar')return;sincronizarTiempo();partidaActiva=false;$('pausaOtra').hidden=false;
+  if(canalPartida){canalPartida.onmessage=e=>{if(e.data!=='activar')return;sincronizarTiempo();partidaActiva=false;clima.pausar(true);$('pausaOtra').hidden=false;
       ent.atacando=ent.pendiente=false;teclas.clear();mando.listo=false;
       if(heroe?.estado==='carga'){heroe.carga=0;cambiar(heroe,'quieto');}};
     addEventListener('focus',activarPartida);
@@ -1702,7 +1709,7 @@
     addEventListener('keydown',()=>{if(!partidaActiva)activarPartida();});
     activarPartida();}
   $('reanudarPartida').onclick=activarPartida;
-  document.addEventListener('visibilitychange',sincronizarTiempo);
+  document.addEventListener('visibilitychange',()=>{sincronizarTiempo();clima.pausar(document.hidden||!partidaActiva||pausa.activa||rog.abierto);});
   function simularPaso(dt){
     laboratorio?.antes?.(dt);
     if(paso(dt)===false)return false;
@@ -1715,6 +1722,7 @@
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
+    clima.pausar(document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido);
     if(document.hidden||!partidaActiva){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     leerPausaMando();
     if(pausa.activa){sincronizarTiempo();antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
@@ -1752,6 +1760,7 @@
   window.CAOZ_ARPG_THREE_REVISION=Object.freeze({
     ia(modo){if(modo!==undefined)configurarIA(modo);return {modo:window.CAOZ_ARPG_IA.modo(),goblins:enemigos.filter(e=>e.ia&&e.estado!=='muere').map(e=>({id:e.id,variante:e.m.varianteGoblin,accion:e.ia.accion,decisiones:e.ia.decisiones}))};},
     impactos:()=>impactoFX.estado(),
+    clima:()=>clima.estado(),
     bumeranes:()=>bumeranes.map(b=>({dueno:b.h.id,fase:b.fase,x:b.g.position.x,y:b.g.position.y,z:b.g.position.z,distancia:b.distancia})),
     equipo:()=>jugadores.map(h=>({id:h.id,tipo:h.tipo,x:h.pos.x,z:h.pos.z,alma:h.alma,estado:h.estado,cd:{...h.cd},sigilo:h.sigilo,fuego:h.incendio?.restante||0,ultiT:h.ultiT,basicos:h.basicos,disparos:h.disparos})),
     aliados:()=>aliados.map(a=>({vida:a.vida,x:a.pos.x,z:a.pos.z})),
