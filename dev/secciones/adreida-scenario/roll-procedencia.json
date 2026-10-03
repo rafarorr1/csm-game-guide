@@ -1,0 +1,9 @@
+{
+  "fuente": "Sprinting Forward Roll.fbx",
+  "sha256": "14f9ac98ac290518572c5438a872cb89a0ae4c0473afa231ad482b484d2ef6c6",
+  "duracion": 1.1666666666666667,
+  "muestras": 36,
+  "uso": "Esquiva de Adreida durante la llegada del Troll a la plaza.",
+  "adaptacion": "Quince huesos, 5 metros de desplazamiento horizontal, vuelo conservado y contacto del cuerpo y hacha precalculado. Sin malla ni texturas del maniquí.",
+  "reproduccion": "Extraer el FBX con extraer-muertes.py en Blender y ejecutar node dev/secciones/adreida-scenario/preparar-roll.mjs fuente.json."
+}

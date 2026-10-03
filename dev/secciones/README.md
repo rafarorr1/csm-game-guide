@@ -1342,6 +1342,16 @@ Para la marcha lenta y la transición se conserva la referencia corporal CC0 de 
 
 Referencias de GitHub revisadas para esta mejora: [Ossos, LimbSolver y SwingTwistBase](https://github.com/sketchpunklabs/ossos/tree/d1325d878f4875d0eafe42f8861a853263d57081/src/ikrig/solvers), sobre IK de dos huesos y dirección de flexión, y [Sketchbook, estados de movimiento](https://github.com/swift502/Sketchbook/tree/62f4b7986fd1ce1e4f91daba89ef032c20a6ce55/src/ts/characters/character_states), sobre transiciones entre caminar y correr. Ambos usan licencia MIT. Son referencias de diseño: esta implementación mantiene el solver local y no incorpora sus bibliotecas ni sus clips, ni añade mallas o llamadas de dibujo.
 
+### Entrada cinematográfica del Troll
+
+Entre la segunda y la tercera oleada de la Etapa 2, el combate se suspende y Adreida camina al centro usando las rutas que rodean el pozo. Una sombra crece bajo ella; el Recaudador cae del cielo mientras Adreida se aparta con **Sprinting Forward Roll.fbx**. El impacto levanta piedras, polvo y un cráter; la cámara tiembla y Adreida se vuelve hacia el jefe antes de devolver el control. Los refuerzos entran después. La caída de presentación no causa daño ni consume habilidades.
+
+`arpg-three-entrada-troll.js` contiene la secuencia. Tras la caminata, el Troll empieza a caer a los 0,85 s; el roll comienza a los 1,05 s; el impacto ocurre a los 1,92 s y el control vuelve a los 3,05 s. El FBX conserva sus 1,167 s, con 36 muestras de quince huesos y un recorrido adaptado a cinco metros. Añade unos 19 KB de poses precalculadas, sin cargar el FBX ni calcular contactos sobre vértices durante la partida. `adreida-scenario/preparar-roll.mjs` y `roll-procedencia.json` documentan la reconstrucción.
+
+Escape/Options pausa también la cinemática; **Omitir · Enter** conduce directamente a la batalla. Reiniciar limpia la secuencia. En cooperativo, Mohamed se aparta mientras Adreida hace el roll y se conserva el escalado de enemigos; si se juega sólo con Mohamed, usa su esquiva acrobática en la misma escena.
+
+Para revisarla directamente: `arpg-three.html?etapa=2&heroe=adreida&entrada=troll&piso=vegetacion`. **Volver a empezar** la reproduce de nuevo. El clip aislado está en `modelos-visor.html?tipo=adreida&anim=rodar`. `node dev/secciones/pruebas_arpg_entrada_troll.mjs` comprueba apoyo y vuelo del roll, continuidad, rutas alrededor del pozo, transición real de oleadas, cooperativo, omisión y reinicio a distintas frecuencias.
+
 ### Goblins de Scenario en el juego
 
 El goblin aprobado de Scenario / Tripo 3.1 reemplaza al cuerpo de primitivas en partidas y en el visor. `arpg-three-goblin.js` adapta sus 7,872 triángulos al esqueleto procedural existente, con pesos suaves en hombros, codos, cintura y piernas. Conserva los avisos de ataque, destellos, disolución y armas arrojadizas. Sus muertes usan ahora las cuatro caídas FBX importadas descritas abajo, con contacto precalculado para el cuerpo y las armas.

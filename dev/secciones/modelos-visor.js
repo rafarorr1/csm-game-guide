@@ -5,7 +5,7 @@
 (function(){
   const {THREE}=window.CAOZ_THREE,F=CAOZ_ARPG_MODELOS.fabrica(THREE),$=id=>document.getElementById(id),q=new URLSearchParams(location.search);
   // Animaciones: nombre, duración de un ciclo (s) y para quién tiene sentido.
-  const ANIMS=[['quieto',2.8],['andar',1.1],['tajoA',1.1,'adreida'],['revesA',1.1,'adreida'],['estocadaA',1.4,'adreida'],['torbellino',1],['salto',1.3],['parry',.8],
+  const ANIMS=[['quieto',2.8],['andar',1.1],['rodar',F.animacion.roll.duracion+.6,'adreida','Roll evasivo · Entrada del Troll',{roll:true,duracion:F.animacion.roll.duracion}],['tajoA',1.1,'adreida'],['revesA',1.1,'adreida'],['estocadaA',1.4,'adreida'],['torbellino',1],['salto',1.3],['parry',.8],
     ['golpe',1.1],['reves',1.1],['estocada',1.3],['aviso',1],['esquiva',.7],['grito',1.2],['lanzar',1.1],['apunta',1.2],['disparar',.5,'mohamed'],['acrobacia',1,'mohamed'],
     ['cargaMazazo',1.5,'troll'],['mazazo',1.4,'troll'],['aturdido',2],['dolor',.5],['muerte',2],
     ...F.animacion.muertes.map(p=>['muerte-adreida-'+(p.variante+1),p.duracion+.7,'adreida','Muerte de Adreida · '+p.nombre,{...p,adreida:true,distancia:0}]),
@@ -28,7 +28,7 @@
     vertexShader:'attribute float tamano;attribute float alfa;varying float opacidad;void main(){vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_PointSize=tamano*45./(-p.z);opacidad=alfa;}',
     fragmentShader:'varying float opacidad;void main(){float a=1.-smoothstep(.04,.5,length(gl_PointCoord-.5));gl_FragColor=vec4(.6,.52,.39,a*opacidad*.52);}'}));
   nubePolvo.frustumCulled=false;escena.add(nubePolvo);let particulasVista=[];
-  function prepararPolvo(muerte){particulasVista=[];cuadricula.visible=!!muerte;if(!muerte||muerte.adreida)return;
+  function prepararPolvo(muerte){particulasVista=[];cuadricula.visible=!!muerte;if(!muerte||muerte.adreida||muerte.roll)return;
     const eventos=muerte.contactos.map((k,i)=>({k,fuerza:muerte.fuerza*(i ? .45 : 1),roce:false})),r=muerte.rodada;
     if(r)for(let d=muerte.distancia*.2+.4;d<=muerte.distancia;d+=.4){let a=r.inicio,b=r.fin;for(let i=0;i<24;i++){const c=(a+b)/2;if(F.recorridoMuerteGoblin(muerte,c)<d)a=c;else b=c;}eventos.push({k:(a+b)/2,fuerza:muerte.fuerza,roce:true});}
     let semilla=17;const azar=()=>((semilla=semilla*16807%2147483647)-1)/2147483646;
@@ -73,7 +73,7 @@
   const actual=()=>{const a=ANIMS.find(a=>a[0]===$('anim').value)||ANIMS[0];
     // Mostrar la carrera a la cadencia real del juego: distancia por ciclo / 5,8 m/s.
     return modelo.tipo==='adreida'&&a[0]==='andar'?[a[0],F.animacion.longitudZancada(1)/5.8]:a;};
-  function encuadrarAnimacion(){const muerte=actual()[4],fin=muerte?.importada?F.desplazamientoMuerteGoblin(modelo,muerte,1,new THREE.Vector3()):null;meta.cx=comparar?0:(fin?.x||0)*.5;meta.cz=comparar?0:fin?fin.z*.5:-(muerte?.distancia||0)*.5;Object.assign(meta,comparar?{dist:6.4,alto:.7,el:.15,az:0}:muerte?.importada?{dist:3.7,alto:.45,el:.4,az:.7}:muerte?{dist:4.8,alto:.35,el:.4,az:1.1}:encuadres.cuerpo(modelo));suelo.scale.set(comparar?1.35:muerte?1.8:1,1,comparar?1:muerte?1.8:1);prepararPolvo(comparar?null:muerte);}
+  function encuadrarAnimacion(){const muerte=actual()[4],fin=muerte?.roll?F.animacion.desplazamientoRoll(1,new THREE.Vector3()):muerte?.importada?F.desplazamientoMuerteGoblin(modelo,muerte,1,new THREE.Vector3()):null;meta.cx=comparar?0:(fin?.x||0)*.5;meta.cz=comparar?0:fin?fin.z*.5:-(muerte?.distancia||0)*.5;Object.assign(meta,comparar?{dist:6.4,alto:.7,el:.15,az:0}:muerte?.roll?{dist:7.7,alto:.7,el:.4,az:1.1}:muerte?.importada?{dist:3.7,alto:.45,el:.4,az:.7}:muerte?{dist:4.8,alto:.35,el:.4,az:1.1}:encuadres.cuerpo(modelo));suelo.position.z=muerte?.roll?2.5:0;suelo.scale.set(comparar?1.35:muerte?.roll?2.1:muerte?1.8:1,1,comparar?1:muerte?.roll?2.1:muerte?1.8:1);prepararPolvo(comparar?null:muerte);}
 
   encuadrarAnimacion();
   $('repetir').addEventListener('click',()=>{t=0;pausa=false;$('pausa').textContent='Pausa';});
@@ -99,8 +99,8 @@
     const [nombre,dur,,,muerte]=actual(),fase=(t%dur)/dur,k=muerte?Math.min(1,(t%dur)/muerte.duracion):fase;
     $('faseAnim').value=fase;
     for(const [i,m]of modelos.entries()){
-      m.raiz.position.set(comparar?(i-1.5)*1.15:0,0,muerte&&!muerte.adreida&&!muerte.importada?-F.recorridoMuerteGoblin(muerte,k):0);
-      F.posar(m,{anim:muerte?'muerte':nombre,muerte,t,k,fase:nombre==='andar'?fase*Math.PI*2:t*TAU_PASO,paso:1});
+      m.raiz.position.set(comparar?(i-1.5)*1.15:0,0,muerte&&!muerte.roll&&!muerte.adreida&&!muerte.importada?-F.recorridoMuerteGoblin(muerte,k):0);
+      F.posar(m,{anim:muerte?.roll?'rodar':muerte?'muerte':nombre,muerte,t,k,fase:nombre==='andar'?fase*Math.PI*2:t*TAU_PASO,paso:1});
     }
     dibujarPolvo(t%dur);const c=Math.cos(vista.el);camara.position.set(vista.cx+Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,vista.cz+Math.cos(vista.az)*c*vista.dist);camara.lookAt(vista.cx,vista.alto,vista.cz);
     render.render(escena,camara);requestAnimationFrame(cuadro);}

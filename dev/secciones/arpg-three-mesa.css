@@ -268,3 +268,13 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
 .apHabilidadesCristal button.enCurso{border-color:#ffe0a2;box-shadow:inset 0 0 16px #dab67430}
 .apHabilidadesCristal button.cargando{background:linear-gradient(to top,#95641cb3 var(--carga),#29212c55 var(--carga));border-color:#ffdc8b;box-shadow:0 0 9px #ffc55a50}
 @media(prefers-reduced-transparency:reduce){.apHabilidadesCristal{background:#122028}.apHabilidadesCristal button{background:#1b2c33}}
+
+/* La entrada del Recaudador conserva Esc/Options para pausar. */
+.apCinematica{position:absolute;inset:0;z-index:24;pointer-events:none;display:flex;align-items:flex-end;justify-content:center;padding-bottom:5%;color:#ede2cc}
+.apCinematica[hidden]{display:none}
+.apCinematica::before,.apCinematica::after{content:"";position:absolute;left:0;right:0;height:9%;background:#08090de8}
+.apCinematica::before{top:0}.apCinematica::after{bottom:0}
+.apCinematica p{position:relative;z-index:1;margin:0;font:small-caps 600 clamp(16px,2.2vw,28px)/1.5 Georgia,serif;letter-spacing:.1em;text-shadow:0 2px 8px #000}
+.apCinematica button{position:absolute;right:18px;bottom:12px;z-index:2;pointer-events:auto;border:1px solid #b9a78266;border-radius:5px;background:#17191ddd;color:#e0d6c4;padding:7px 12px;cursor:pointer}
+.cinematica :is(.apHud,.apMision,.apObjetivo,.apBanner,.apBotin,.apCapa,.apTostada,.apFlechas,.apGolpeDir,.apEquipo,.apIdentidad,.apMapa){visibility:hidden;pointer-events:none}
+.cinematica .apHerramientas{z-index:25}

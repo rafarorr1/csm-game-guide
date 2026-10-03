@@ -4,8 +4,10 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const s=fs.readFileSync(new URL('./arpg-three-mesa.js',import.meta.url),'utf8');
-const c=vm.createContext({console});c.window=c;
+const c=vm.createContext({console});c.window=c;c.cinematicaTroll=null;c.impactoFX={agujero(){}};c.clima={pausar(){},desbloquearAudio(){}};c.partidaActiva=true;c.medidorGPU=null;
 vm.runInContext(fs.readFileSync(new URL('./visor-three-vendor.js',import.meta.url),'utf8'),c);
+vm.runInContext(fs.readFileSync(new URL('./arpg-three-adreida-animacion.js',import.meta.url),'utf8'),c);
+c.MOD={animacion:c.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(c.CAOZ_THREE.THREE)};
 const extraer=(n,t='function')=>extraerDeclaracion(s,n,t).texto;
 vm.runInContext(`
 const V3=CAOZ_THREE.THREE.Vector3,TAU=Math.PI*2,enemigos=[],botines=[],reloj={t:0},rog={abierto:false},pausa={activa:false};
@@ -31,7 +33,7 @@ run('reset();ctl.atacar=true;avanzar(2)');
 assert.equal(run('impactos.length'),0,'Mantener nunca dispara automáticamente');
 assert.equal(run('heroe.carga'),1);
 run('ctl.atacar=false;avanzar(.7)');
-assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.equal(run('impactos[0].o.causa'),'cargado');assert.equal(run('Math.max(...sacudidas)'),.28,'Sacudida leve al soltar, incluso sin acertar');assert.ok(run('heroe.pos.z>.6&&heroe.pos.z<.7'),'El cargado avanza 65 cm al soltar');assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
+assert.equal(run('impactos.length'),1);assert.equal(run('impactos[0].d'),36);assert.equal(run('impactos[0].o.causa'),'cargado');assert.equal(run('Math.max(...sacudidas)'),.72,'Sacudida al soltar, incluso sin acertar');assert.ok(run('heroe.pos.z>.6&&heroe.pos.z<.7'),'El cargado avanza 65 cm al soltar');assert.ok(run('impactos[0].o.empuje>=17'),'Empuje contundente a carga completa');
 run('reset();ctl.atacar=true;avanzar(.55);ctl.atacar=false;avanzar(.7)');
 assert.ok(run('impactos[0].d>12&&impactos[0].d<36'),'Carga parcial proporcional');
 for(const estado of ['golpe','carga','torbellino','abanico']){
@@ -57,7 +59,7 @@ for(const [pad,mov,esperado] of [[true,-1,4],[true,0,5],[true,1,5],[false,-1,5]]
   run(`reset();mando.activo=${pad};usar('salto',new V3(0,0,5));ctl.mov.set(0,0,${mov});avanzar(.72)`);
   assert.ok(Math.abs(run('heroe.pos.z')-esperado)<.001);
   assert.equal(run('heroe.estado'),'quieto');assert.equal(run('impactos.length'),1);
-  assert.equal(run('heroe.alto'),0);assert.equal(run('impactos[0].o.causa'),'salto');assert.equal(run('Math.max(...sacudidas)'),.32,'Aterrizaje con sacudida leve');
+  assert.equal(run('heroe.alto'),0);assert.equal(run('impactos[0].o.causa'),'salto');assert.equal(run('Math.max(...sacudidas)'),.78,'Aterrizaje con sacudida');
 }
 run("reset();mando.activo=true;usar('salto',new V3(0,0,5));ctl.mov.set(0,0,-1);avanzar(.25);ctl.mov.set(0,0,1);avanzar(.47)");
 assert.ok(Math.abs(run('heroe.pos.z')-5)<.001,'Adelante recupera la distancia original sin rebasarla');
@@ -69,7 +71,7 @@ run('for(let i=0;i<60;i++)ajustarResolucion(60)');assert.equal(run('escalaRender
 run('CAPTURA=true;for(let i=0;i<10;i++)ajustarResolucion(20)');assert.equal(run('escalaRender'),1);
 console.log('✓ Resolución adaptativa acotada; recupera detalle; capturas sin cambios');
 // Una partida cedida o escondida no consume lógica ni dibuja, aunque siga recibiendo RAF.
-const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0}});pausa.window=pausa;
+const pausa=vm.createContext({document:{hidden:false},performance:{now:()=>0}});pausa.window=pausa;pausa.clima={pausar(){}};
 vm.runInContext(fs.readFileSync(new URL('./arpg-three-tiempo.js',import.meta.url),'utf8'),pausa);
 vm.runInContext(`const laboratorio=null,pausa={activa:false},rog={abierto:false},temporizador=CAOZ_ARPG_TIEMPO.crearReloj();
 let partidaActiva=false,antes=0,siguienteDibujo=0,fps={n:0,t:0,cpu:0,render:0},cuadrosLentos=0,cuadrosRapidos=0,logica=0,dibujos=0,solicitudes=0;
