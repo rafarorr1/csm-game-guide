@@ -1,0 +1,60 @@
+{
+  "origen": "Scenario · Caoz ARPG",
+  "coleccion": "col_HiSXeDSRaS9eWcF33daFPDVd",
+  "concepto": "asset_MEz2eqvKQoFfw5qbutUFzD43",
+  "fotos": {
+    "foto-familia.webp": "asset_S8GceNnrThSdrXv1W1FYPMNT",
+    "foto-comida.webp": "asset_eBzhVcL8yDrKpus9M2PQyEf1"
+  },
+  "malla": "asset_qe8i8NNJhdvdXnJNSsavKB8q",
+  "modelo": "model_tripo-v3-1-image-to-3d",
+  "sha256Fuente": "5bc4bf71895164b1873a31197221b09dd3b6448391a2dd6ac4f72061355a20e5",
+  "triangulos": 29602,
+  "materiales": 1,
+  "creditosMalla": 60,
+  "nota": "El proveedor entregó 29.602 triángulos pese al objetivo de 20.000. Se conserva como una sola malla estática; los retratos son independientes.",
+  "acabado": "asset_3YvECswk23TWA1h6Z7YZczg6",
+  "modeloAcabado": "model_trellis-2-retexture",
+  "sha256FuenteFinal": "a89589a374f9cad4296991bc4b688b92e5d07ac01695054563c09920ea928cd5",
+  "creditosAcabado": 25,
+  "verticesFinales": 32183,
+  "ajuste": {
+    "giroGrados": 24.213,
+    "ancho": 8.5,
+    "fondo": 7.6,
+    "piso": 0,
+    "marco": "Se recortan puntas sueltas sobre la ventana y se completa el dintel con geometría local."
+  },
+  "texturas": {
+    "color": 2048,
+    "superficie": 1024,
+    "normal": "Plano neutro: el acabado final no incluye mapa normal",
+    "fotos": [
+      768,
+      512
+    ]
+  },
+  "parametrosMalla": {
+    "image": "asset_MEz2eqvKQoFfw5qbutUFzD43",
+    "texture": true,
+    "pbr": true,
+    "delight": true,
+    "orientation": "align_image",
+    "faceLimit": 20000,
+    "smartLowPoly": true,
+    "quad": false,
+    "autoSize": false,
+    "seed": 731103,
+    "textureSeed": 731103
+  },
+  "parametrosAcabado": {
+    "model": "asset_qe8i8NNJhdvdXnJNSsavKB8q",
+    "image": "asset_MEz2eqvKQoFfw5qbutUFzD43",
+    "resolution": 1024,
+    "textureSize": 4096,
+    "texSlatGuidanceStrength": 1,
+    "texSlatSamplingSteps": 20,
+    "seed": 731103
+  },
+  "triangulosFinales": 28385
+}
