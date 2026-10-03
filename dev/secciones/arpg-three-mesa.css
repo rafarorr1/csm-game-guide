@@ -248,3 +248,23 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
 .apHabilidades button::before{content:attr(data-recarga);position:absolute;inset:0;display:grid;place-items:center;padding-bottom:8px;z-index:2;color:#f5ecd8;font:700 18px system-ui,sans-serif;text-shadow:0 1px 6px #000;pointer-events:none}
 
 .apFuego{display:block;color:#ffb375;font-size:11px;font-weight:700}.apFuego[hidden]{display:none}.apNumero.fuego{color:#ffb375;text-shadow:0 2px 5px #4c1609}
+
+/* QuickLiquid: cristal detrás del contenido; contadores y eventos siguen en el botón nativo. */
+.apHabilidadesCristal{position:relative;background:linear-gradient(#18282f40,#09121773);border-color:#d4c09970;border-radius:12px;box-shadow:0 8px 25px #0006,inset 0 1px #fff1}
+.apCristalBarra,.apCristalHabilidad{position:absolute;inset:0;border-radius:inherit;pointer-events:none}
+.apCristalBarra>.ql-content,.apCristalHabilidad>.ql-content{display:none}
+.apHabilidadesCristal button{z-index:1;border-radius:8px;background:linear-gradient(145deg,#78919418,#07111638);border-color:#d8d8bd66;box-shadow:inset 0 1px #eef5ec13;color:#eddfbc}
+.apHabilidadesCristal button:hover{background:linear-gradient(145deg,#adbea322,#25383e55);border-color:#e4ce93b3}
+.apHabilidadesCristal button:focus-visible{outline:2px solid #ffe3a0;outline-offset:2px}
+.apHabilidadesCristal button>span,.apHabilidadesCristal button>small,.apHabilidadesCristal button>kbd,.apHabilidadesCristal button>em{z-index:1;pointer-events:none;text-shadow:0 1px 3px #000,0 0 5px #0008}
+.apHabilidadesCristal button>span{position:relative}
+.apHabilidadesCristal button>em{top:17px}
+.apHabilidadesCristal button::after{z-index:2;background:conic-gradient(#040b10c9 var(--cd,0%),transparent 0)}
+.apHabilidadesCristal button::before{z-index:3}
+.apHabilidadesCristal button[data-hab="ulti"]{background:linear-gradient(145deg,#75b9d226,#122d3945);border-color:#b8d8df8c;color:#dbf6fa}
+/* Un filtro en todo el botón aislaría el fondo y rompería la refracción. */
+.apHabilidadesCristal button.sinFuria{filter:none;background:#10182066;border-color:#8d9d963a}
+.apHabilidadesCristal button.sinFuria>span,.apHabilidadesCristal button.sinFuria>small,.apHabilidadesCristal button.sinFuria>kbd,.apHabilidadesCristal button.sinFuria>em{opacity:.45}
+.apHabilidadesCristal button.enCurso{border-color:#ffe0a2;box-shadow:inset 0 0 16px #dab67430}
+.apHabilidadesCristal button.cargando{background:linear-gradient(to top,#95641cb3 var(--carga),#29212c55 var(--carga));border-color:#ffdc8b;box-shadow:0 0 9px #ffc55a50}
+@media(prefers-reduced-transparency:reduce){.apHabilidadesCristal{background:#122028}.apHabilidadesCristal button{background:#1b2c33}}

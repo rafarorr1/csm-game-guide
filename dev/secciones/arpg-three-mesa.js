@@ -1438,6 +1438,7 @@
 
   /* ---- HUD --------------------------------------------------------------------------- */
   const liquidosHud=window.CAOZ_ARPG_ORBES.crear($('orbeAlma'),$('orbeFuria'));
+  const cristalHabilidades=window.CAOZ_ARPG_ORBES.crearHabilidades(document.querySelector('.apHabilidades'));
   let tostadaHasta=0,bannerHasta=0,finMostrado=false;
   function tostada(html,mala=false){const t=$('tostada');t.innerHTML=html;t.classList.toggle('mala',mala);t.classList.add('visto');tostadaHasta=reloj.t+(mala?1.2:2.6);}
   function banner(titulo,texto){const b=$('banner');b.innerHTML=`<b>${titulo}</b><small>${texto}</small>`;b.classList.add('visto');bannerHasta=reloj.t+2.8;}
@@ -1763,6 +1764,7 @@
     impactos:()=>impactoFX.estado(),
     clima:()=>clima.estado(),
     orbes:()=>liquidosHud.estado(),
+    cristalHabilidades:()=>cristalHabilidades.estado(),
     bumeranes:()=>bumeranes.map(b=>({dueno:b.h.id,fase:b.fase,x:b.g.position.x,y:b.g.position.y,z:b.g.position.z,distancia:b.distancia})),
     equipo:()=>jugadores.map(h=>({id:h.id,tipo:h.tipo,x:h.pos.x,z:h.pos.z,alma:h.alma,estado:h.estado,cd:{...h.cd},sigilo:h.sigilo,fuego:h.incendio?.restante||0,ultiT:h.ultiT,basicos:h.basicos,disparos:h.disparos})),
     aliados:()=>aliados.map(a=>({vida:a.vida,x:a.pos.x,z:a.pos.z})),

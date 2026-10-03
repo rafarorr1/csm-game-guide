@@ -75,5 +75,19 @@
     return {paso,estado:()=>orbes.map(o=>({...o.estado.estado(),dibujos:o.dibujos,lente:o.lente.getPerformanceMetrics()})),
       destruir(){for(const o of orbes){o.lente.destroy();o.canvas.remove();o.medidor.querySelector('.apCristal')?.remove();o.medidor.classList.remove('apLiquidoListo');}}};
   }
-  window.CAOZ_ARPG_ORBES=Object.freeze({crear,crearEstado});
+  // Cristal en el panel y las siete habilidades. Los botones nativos y sus rótulos no se envuelven.
+  function crearHabilidades(barra){
+    const lentes=[],elementos=[];
+    const montar=(padre,clase,opciones)=>{
+      const cristal=document.createElement('div');cristal.className=clase;cristal.setAttribute('aria-hidden','true');padre.prepend(cristal);
+      lentes.push(new window.CAOZ_QUICK_LIQUID.LiquidGlassEngine(cristal,{material:'clear',quality:'low',appearance:'dark',ior:1.46,
+        blur:0,chromaticAberration:0,saturation:1.03,tint:'9, 19, 25',tintOpacity:.22,edgeHighlight:.48,specularStrength:.24,
+        elevation:0,noiseOpacity:0,dynamicLighting:false,cursorTracking:false,hoverLighting:false,parallax:false,...opciones}));elementos.push(cristal);
+    };
+    montar(barra,'apCristalBarra',{borderRadius:12,refractionStrength:6,bezelWidth:12,thickness:9,tintOpacity:.3});
+    for(const boton of barra.querySelectorAll('button[data-hab]'))montar(boton,'apCristalHabilidad',{borderRadius:8,refractionStrength:5,bezelWidth:10,thickness:8});
+    barra.classList.add('apHabilidadesCristal');
+    return {estado:()=>lentes.map(l=>l.getPerformanceMetrics()),destruir(){for(const l of lentes)l.destroy();for(const e of elementos)e.remove();barra.classList.remove('apHabilidadesCristal');}};
+  }
+  window.CAOZ_ARPG_ORBES=Object.freeze({crear,crearEstado,crearHabilidades});
 })();

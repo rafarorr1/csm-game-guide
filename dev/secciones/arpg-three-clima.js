@@ -1,10 +1,14 @@
-/* Lluvia de Tomsage: dos mallas, sin luces ni reflejos con cámaras adicionales.
+/* Lluvia de Tomsage: tres mallas, sin luces ni reflejos con cámaras adicionales.
    El clima tiene su propia semilla y no altera el azar del combate o del botín. */
 'use strict';
 (function(){
+  // Integral del viento: las ráfagas cambian la velocidad sin saltar las posiciones.
+  const EXPOSICION=.028;
+  function derivaViento(t,salida){salida.x=8*t-1.6/.55*Math.cos(t*.55)-.65/1.43*Math.cos(t*1.43);salida.y=1.7*t-.5/.37*Math.cos(t*.37+.8);return salida;}
   function fabrica(THREE,escena,{obstaculos=[],techos=[],abierto=false,reducido=false,perforar=()=>{}}={}){
     let semilla=731;const azar=()=>((semilla=(semilla*16807)%2147483647)/2147483647);
     const TAU=Math.PI*2,tiempo={value:0},centro={value:new THREE.Vector2()},radio=abierto?108:24;
+    const deriva={value:new THREE.Vector2()},cola={value:new THREE.Vector2()},anteriorViento=new THREE.Vector2();
     let activo=true,sonido=true,pausado=false,reloj=0,proximo=14,relampago=-100,trueno=null,totalTruenos=0;
     // Las gotas desaparecen al alcanzar los tejados; el mapa de alturas se calcula una sola vez.
     const lado=256,extension=120,alturas=new Float32Array(lado*lado);
@@ -15,28 +19,65 @@
     const P=[],S=[],E=[],cantidad=reducido?220:440;
     for(let i=0;i<cantidad;i++){const s=[azar()*44,azar()*16,azar()*44];for(let j=0;j<2;j++){P.push(0,0,0);S.push(...s);E.push(j);}}
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aSemilla',new THREE.Float32BufferAttribute(S,3));g.setAttribute('aExtremo',new THREE.Float32BufferAttribute(E,1));
-    const lluviaMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,fog:true,
-      uniforms:{...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),uT:tiempo,uCentro:centro,uTechos:{value:refugios}},
-      vertexShader:`uniform float uT;uniform vec2 uCentro;uniform sampler2D uTechos;
-        attribute vec3 aSemilla;attribute float aExtremo;varying float vAlpha;
+    const uniformesLluvia={...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),uT:tiempo,uCentro:centro,uTechos:{value:refugios},uDeriva:deriva,uCola:cola};
+    const funcionesLluvia=`uniform float uT;uniform vec2 uCentro;uniform sampler2D uTechos;uniform vec2 uDeriva;uniform vec2 uCola;
+      attribute vec3 aSemilla;
+      vec2 envolver(vec2 p){return mod(p-uCentro+22.,44.)-22.+uCentro;}
+      float techo(vec2 p){return texture2D(uTechos,(p+120.)/240.).r;}
+      float bordeLluvia(vec2 p){return 1.-smoothstep(17.,22.,max(abs(p.x-uCentro.x),abs(p.y-uCentro.y)));}
+      float libreHastaCielo(vec2 p,float y,float rapidez){
+        // Recorrer hacia arriba evita que reaparezcan gotas que ya atravesaron un tejado.
+        float visible=1.;vec2 viento=uCola/${EXPOSICION};
+        for(int i=0;i<=8;i++){float altura=y+(16.-y)*float(i)/8.;vec2 antes=p-viento*(altura-y)/rapidez;
+          visible*=step(techo(antes)+.012,altura);}
+        return visible;
+      }`;
+    const lluviaMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,fog:true,uniforms:uniformesLluvia,
+      vertexShader:funcionesLluvia+`
+        attribute float aExtremo;varying float vAlpha;varying vec3 vMundo;
         #include <fog_pars_vertex>
-        void main(){float rapidez=8.+aSemilla.x*.075;float y=mod(aSemilla.y-uT*rapidez,16.);
-          vec2 p=mod(aSemilla.xz+vec2(uT*.72,uT*.19)-uCentro+22.,44.)-22.+uCentro;
-          float techo=texture2D(uTechos,(p+120.)/240.).r;
-          float borde=1.-smoothstep(17.,22.,max(abs(p.x-uCentro.x),abs(p.y-uCentro.y)));
-          vAlpha=borde*smoothstep(techo+.08,techo+.65,y)*(1.-smoothstep(13.,16.,y));
-          vec3 pos=vec3(p.x,y,p.y)+vec3(.045,.48,.012)*aExtremo;
-          vec4 mvPosition=modelViewMatrix*vec4(pos,1.);gl_Position=projectionMatrix*mvPosition;
+        void main(){float rapidez=12.+aSemilla.x*.075;float y=mod(aSemilla.y-uT*rapidez,16.);
+          vec2 p=envolver(aSemilla.xz+uDeriva);
+          float visible=libreHastaCielo(p,max(.025,y),rapidez);
+          // La cola es la posición anterior real: va contra el viento y hacia arriba.
+          vec3 pos=vec3(p.x,y,p.y)+vec3(-uCola.x,rapidez*${EXPOSICION},-uCola.y)*aExtremo;
+          vAlpha=bordeLluvia(p)*visible*(1.-smoothstep(14.,16.,y))*(1.-aExtremo*.85);
+          vMundo=pos;vec4 mvPosition=modelViewMatrix*vec4(pos,1.);gl_Position=projectionMatrix*mvPosition;
           #include <fog_vertex>
         }`,
-      fragmentShader:`varying float vAlpha;
+      fragmentShader:`uniform sampler2D uTechos;varying float vAlpha;varying vec3 vMundo;
         #include <fog_pars_fragment>
-        void main(){gl_FragColor=vec4(.34,.43,.55,.26*vAlpha);
+        void main(){if(vMundo.y<=texture2D(uTechos,(vMundo.xz+120.)/240.).r+.014)discard;
+          gl_FragColor=vec4(.4,.49,.59,.34*vAlpha);
           #include <tonemapping_fragment>
           #include <colorspace_fragment>
           #include <fog_fragment>
         }`});
     const lluvia=new THREE.LineSegments(g,lluviaMat);lluvia.name='Lluvia ligera';lluvia.frustumCulled=false;lluvia.renderOrder=3;escena.add(lluvia);
+    // Una reserva de anillos para los impactos de esas mismas gotas, sin partículas de CPU.
+    const sp=[],ss=[],su=[],si=[];
+    for(let i=0;i<cantidad;i+=2){const k=sp.length/3;for(const [u,v] of [[-1,-1],[1,-1],[1,1],[-1,1]]){sp.push(0,0,0);ss.push(...S.slice(i*6,i*6+3));su.push(u,v);}si.push(k,k+2,k+1,k,k+3,k+2);}
+    const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));sg.setAttribute('aSemilla',new THREE.Float32BufferAttribute(ss,3));sg.setAttribute('uv',new THREE.Float32BufferAttribute(su,2));sg.setIndex(si);
+    const salpicarMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,fog:true,uniforms:uniformesLluvia,
+      vertexShader:funcionesLluvia+`
+        varying vec2 vUv;varying float vAlpha;
+        #include <fog_pars_vertex>
+        void main(){float rapidez=12.+aSemilla.x*.075,y=mod(aSemilla.y-uT*rapidez,16.),edad=(16.-y)/rapidez,k=clamp(edad/.16,0.,1.);
+          vec2 p=envolver(aSemilla.xz+uDeriva-uCola/${EXPOSICION}*edad);
+          float visible=step(edad,.16)*step(techo(p),.001)*libreHastaCielo(p,.025,rapidez);
+          float radio=.035+k*.13;vec3 pos=vec3(p.x+uv.x*radio,.03,p.y+uv.y*radio*.7);vUv=uv;
+          vAlpha=visible*bordeLluvia(p)*(1.-k)*.22;
+          vec4 mvPosition=modelViewMatrix*vec4(pos,1.);gl_Position=projectionMatrix*mvPosition;
+          #include <fog_vertex>
+        }`,
+      fragmentShader:`varying vec2 vUv;varying float vAlpha;
+        #include <fog_pars_fragment>
+        void main(){float anillo=1.-smoothstep(.03,.18,abs(length(vUv)-.72));gl_FragColor=vec4(.34,.41,.47,vAlpha*anillo);
+          #include <tonemapping_fragment>
+          #include <colorspace_fragment>
+          #include <fog_fragment>
+        }`});
+    const salpicaduras=new THREE.Mesh(sg,salpicarMat);salpicaduras.name='Salpicaduras de lluvia';salpicaduras.frustumCulled=false;salpicaduras.renderOrder=2;escena.add(salpicaduras);
     // Charcos irregulares en coordenadas del mundo, separados de edificios y utilería.
     const posiciones=[],uvs=[],fases=[],indices=[],charcos=[];
     for(let intento=0;intento<3000&&charcos.length<(abierto?130:28);intento++){
@@ -113,6 +154,7 @@
     }
     function paso(dt,foco){
       if(!activo||pausado)return 0;reloj+=Math.min(.1,Math.max(0,dt));tiempo.value=reloj;centro.value.set(foco.x,foco.z);
+      derivaViento(reloj,deriva.value);derivaViento(reloj-EXPOSICION,anteriorViento);cola.value.copy(deriva.value).sub(anteriorViento);
       if(reloj>=proximo){relampago=reloj;trueno={cuando:reloj+3.8+azar()*2.4,pan:(azar()<.5?-1:1)*(.25+azar()*.35)};proximo=reloj+28+azar()*22;}
       if(trueno&&reloj>=trueno.cuando){totalTruenos++;sonarTrueno(trueno.pan);trueno=null;}
       const t=reloj-relampago,destello=!reducido&&t>=0&&t<1.8?Math.sin(t/1.8*Math.PI)**2:0;
@@ -120,14 +162,14 @@
     }
     function configurar(opciones){
       if(opciones.activo!==undefined)activo=!!opciones.activo;if(opciones.sonido!==undefined)sonido=!!opciones.sonido;
-      lluvia.visible=agua.visible=activo;
+      lluvia.visible=agua.visible=salpicaduras.visible=activo;
       if(!activo){charcoMat.uniforms.uDestello.value=0;relampago=-100;trueno=null;proximo=reloj+14;}
       if(!activo||!sonido)for(const voz of voces)voz.stop();
       ajustarAudio();
     }
     return {paso,configurar,desbloquearAudio,pausar(v){if(pausado!==v){pausado=v;ajustarAudio();}},
-      estado:()=>({activo,sonido,pausado,tiempo:reloj,gotas:cantidad,charcos:charcos.length,mallas:2,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
-      destruir(){for(const voz of voces)voz.stop();lluviaAudio?.stop();audio?.close().catch(()=>{});escena.remove(lluvia,agua);g.dispose();cg.dispose();lluviaMat.dispose();charcoMat.dispose();refugios.dispose();}};
+      estado:()=>({activo,sonido,pausado,tiempo:reloj,gotas:cantidad,charcos:charcos.length,mallas:3,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
+      destruir(){for(const voz of voces)voz.stop();lluviaAudio?.stop();audio?.close().catch(()=>{});escena.remove(lluvia,agua,salpicaduras);g.dispose();cg.dispose();sg.dispose();lluviaMat.dispose();charcoMat.dispose();salpicarMat.dispose();refugios.dispose();}};
   }
-  window.CAOZ_ARPG_CLIMA=Object.freeze({fabrica});
+  window.CAOZ_ARPG_CLIMA=Object.freeze({fabrica,derivaViento});
 })();
