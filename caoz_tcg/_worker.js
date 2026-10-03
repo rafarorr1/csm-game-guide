@@ -250,18 +250,22 @@ async function filasArte(db,privado,id=null){
     return {...plana,acabado,variantes};
   }).sort((a,b)=>a.id.localeCompare(b.id));
 }
+// La candidata de balance vive en otro origen y sólo lee las caras ya
+// públicas de Beta. No se habilitan cookies, escritura ni rutas del Estudio.
+const ORIGEN_BALANCE='https://aislados.caoz-tcg.pages.dev';
+const corsBalance=req=>({Vary:'Origin',...(req.headers.get('origin')===ORIGEN_BALANCE?{'Access-Control-Allow-Origin':ORIGEN_BALANCE}:{})});
 async function apiArte(req,env){
   const u=new URL(req.url),ruta=u.pathname.slice('/api/arte/'.length),db=env.SFX_DB;
   if(!db||!env.SFX_ADMIN_HASH||!env.SFX_SESSION_KEY)return json({error:'El estudio privado está pendiente de conectar con Cloudflare.'},503);
   if(!['GET','HEAD'].includes(req.method)&&req.headers.get('origin')!==u.origin)return json({error:'Origen no autorizado.'},403);
   await Promise.all([prepararArte(db),prepararTitulos(db)]);
   if(req.method==='GET'&&ruta==='catalogo'){
-    const [cartas,titulos]=await Promise.all([filasArte(db,false),filasTitulos(db,false)]);return json({cartas,titulos});
+    const [cartas,titulos]=await Promise.all([filasArte(db,false),filasTitulos(db,false)]);return json({cartas,titulos},200,corsBalance(req));
   }
   if(['GET','HEAD'].includes(req.method)&&/^imagen\/[a-f0-9]{64}$/.test(ruta)){
-    const hash=ruta.slice(7),fila=await db.prepare('SELECT contenido,mime FROM imagenes WHERE hash=?').bind(hash).first();
-    if(!fila)return json({error:'Ilustración no encontrada.'},404);
-    const b=new Uint8Array(fila.contenido),headers={'Content-Type':fila.mime,'X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=31536000, immutable','Content-Length':String(b.length),ETag:'"'+hash+'"','Content-Security-Policy':"default-src 'none'; sandbox"};
+    const hash=ruta.slice(7),fila=await db.prepare('SELECT contenido,mime FROM imagenes WHERE hash=?').bind(hash).first(),cors=corsBalance(req);
+    if(!fila)return json({error:'Ilustración no encontrada.'},404,cors);
+    const b=new Uint8Array(fila.contenido),headers={'Content-Type':fila.mime,'X-Content-Type-Options':'nosniff','Cache-Control':'public, max-age=31536000, immutable','Content-Length':String(b.length),ETag:'"'+hash+'"','Content-Security-Policy':"default-src 'none'; sandbox",...cors};
     if(req.headers.get('if-none-match')===headers.ETag)return new Response(null,{status:304,headers});
     return new Response(req.method==='HEAD'?null:b,{headers});
   }

@@ -44,6 +44,15 @@ const estado=await dato('/api/estudio/arte/estado');assert.equal(estado.beta.pen
 assert.equal((await req('/api/estudio/arte/publicar/beta','POST',undefined,{'If-Match':estado.beta.huella,Origin:'null'})).status,403);
 await dato('/api/estudio/arte/publicar/beta','POST',undefined,{'If-Match':estado.beta.huella});
 const enBeta=await dato('/api/arte/catalogo','GET',undefined,{},eb);assert.equal(enBeta.cartas[0].acabado,'dorado');assert.equal(enBeta.cartas[0].hash,sha(arte));assert.equal(enBeta.cartas[0].x,20);assert.equal(enBeta.cartas[0].variantes.dorado.heredada,true);assert.deepEqual(enBeta.titulos,[{id:'tal',revision:1,titulo:'Nombre del borrador'}]);assert.deepEqual(Object.keys(enBeta.titulos[0]).sort(),['id','revision','titulo']);
+// La candidata aislada sólo recibe el catálogo e imágenes ya públicas de
+// Beta. No hay credenciales, escrituras ni CORS para otros orígenes.
+const origenBalance='https://aislados.caoz-tcg.pages.dev';
+r=await req('/api/arte/catalogo','GET',undefined,{Origin:origenBalance,Cookie:''},eb);assert.equal(r.status,200);assert.equal(r.headers.get('access-control-allow-origin'),origenBalance);assert.equal(r.headers.get('access-control-allow-credentials'),null);assert.equal(r.headers.get('vary'),'Origin');
+r=await req('/api/arte/imagen/'+sha(arte),'GET',undefined,{Origin:origenBalance,Cookie:''},eb);assert.equal(r.status,200);assert.equal(r.headers.get('access-control-allow-origin'),origenBalance);assert.deepEqual(Buffer.from(await r.arrayBuffer()),arte);
+r=await req('/api/arte/catalogo','GET',undefined,{Origin:'https://ajena.invalid',Cookie:''},eb);assert.equal(r.status,200);assert.equal(r.headers.get('access-control-allow-origin'),null,'Otro origen no recibe autorización CORS.');assert.equal(r.headers.get('vary'),'Origin','La caché debe separar la respuesta autorizada de otros orígenes.');
+const escrituraBalance=await req('/api/arte/carta/tal/normal','PATCH','{"x":20,"y":30,"z":120}',{'If-Match':'1',Origin:origenBalance,Cookie:''},eb);
+assert.equal(escrituraBalance.status,401,'La candidata no puede editar Beta sin una sesión del Estudio.');
+assert.equal(escrituraBalance.headers.get('access-control-allow-origin'),null,'Las escrituras nunca se habilitan por CORS para la candidata.');
 assert.equal(JSON.stringify(await dato('/api/arte/catalogo')),arteAnterior);
 let ep=await dato('/api/estudio/arte/estado');assert.equal(ep.beta.pendientes,0);assert.equal(ep.produccion.pendientes,1);
 await dato('/api/estudio/arte/publicar/produccion','POST',undefined,{'If-Match':ep.produccion.huella});

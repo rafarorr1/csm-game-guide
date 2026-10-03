@@ -23,9 +23,9 @@
     if(opciones.pendiente()){opciones.estado('Guarda o descarta la vista previa antes de publicar.',true);return;}
     ocupado=true;botones();await actualizar();ocupado=false;botones();
     const plan=datos?.[destino];if(!plan?.pendientes||plan.error)return;
-    const nombre=destino==='beta'?'beta':'producción',d=$('publicacionDialogo');
+    const incluyeBalance=destino==='beta'&&opciones.tipo==='arte',nombre=incluyeBalance?'beta y beta de balance':destino==='beta'?'beta':'producción',d=$('publicacionDialogo');
     $('publicacionTitulo').textContent='Publicar en '+nombre;
-    $('publicacionTexto').textContent='Estos cambios guardados pasarán a '+nombre+'. El otro destino conservará su versión.';
+    $('publicacionTexto').textContent=incluyeBalance?'Estos cambios guardados pasarán a Beta y a la Beta de balance. Producción conservará su versión.':'Estos cambios guardados pasarán a '+nombre+'. El otro destino conservará su versión.';
     $('publicacionLista').replaceChildren(...plan.ids.map(id=>{const li=document.createElement('li');li.textContent=opciones.nombre(id);return li;}));
     $('publicacionAceptar').textContent='Publicar en '+nombre;d.returnValue='';d.showModal();$('publicacionCancelar').focus();
     const aceptar=await new Promise(resolve=>d.addEventListener('close',()=>resolve(d.returnValue==='publicar'),{once:true}));if(!aceptar)return;
@@ -33,7 +33,7 @@
     try{
       let r;
       do{opciones.estado('Publicando los cambios en '+nombre+'…');r=await pedir('publicar/'+destino,{method:'POST',headers:{'If-Match':plan.huella}});}while(r.preparando);
-      await actualizar();opciones.estado('Publicado en '+nombre+'. El juego recibirá los cambios al volver a abrirlo o durante el próximo minuto.');
+      await actualizar();opciones.estado(incluyeBalance?'Publicado en Beta y en la Beta de balance. Ambas recibirán los cambios al volver a abrirlas o durante el próximo minuto.':'Publicado en '+nombre+'. El juego recibirá los cambios al volver a abrirlo o durante el próximo minuto.');
     }catch(e){if(e.status===409&&opciones.recargar)await opciones.recargar().catch(()=>{});await actualizar();opciones.estado(e.message,true);}
     finally{ocupado=false;opciones.bloquear(false);botones();}
   }

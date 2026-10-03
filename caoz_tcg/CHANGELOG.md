@@ -1,5 +1,13 @@
 # Registro de versiones — el TCG del Domo
 
+### v64 · Build 303 · Arte de Beta en la candidata · 2026-10-02
+
+- Al publicar ilustraciones en **Beta** desde el Estudio, la **Beta de
+  balance** recibe esas mismas caras públicas al recargar, sin compartir
+  cuentas, progreso, borradores ni permisos de edición.
+- El diálogo de publicación deja claro ese alcance y enlaza directamente al
+  playtest aislado.
+
 ### v63 · Build 302 · Acceso al playtest de balance · 2026-09-28
 
 - El menú privado de **Develop** incluye una entrada explícita a la **Beta de
