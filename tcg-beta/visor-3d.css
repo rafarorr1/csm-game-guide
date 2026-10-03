@@ -1,7 +1,12 @@
 /* Visor 3D de la Colección (visor-3d.js). Cada capa repite la misma cadena de
    transformaciones con su propia perspectiva: sin preserve-3d, el canto sale de
    láminas a distinta profundidad y las caras se ocultan con backface-visibility. */
-.visor3d{--w:300px;--h:420px;--p:1200px;--radio:12px;--rx:0rad;--ry:0rad;--rz:0rad;--y:0px;--s:1;--gx:72%;--gy:26%;--fx:50%;--fy:50%;--inclina:0;--pila:1;
+/* La reserva lateral se hereda desde Colección. Registrarla permite que el
+   mismo halo, círculo rúnico y pedestal se desplacen de Archivo a Detalle en
+   lugar de recalcularse de golpe cuando aparece el panel de acabados. */
+@property --reserva-der{syntax:'<length>';inherits:true;initial-value:0px}
+@property --controles-alto{syntax:'<length>';inherits:true;initial-value:250px}
+.visor3d{--w:300px;--h:420px;--p:1200px;--radio:12px;--rx:0rad;--ry:0rad;--rz:0rad;--y:0px;--s:1;--entrada-x:0px;--entrada-y:0px;--gx:72%;--gy:26%;--fx:50%;--fy:50%;--inclina:0;--pila:1;
   --canto:#5d4c35;--canto-luz:#a88f63;--halo:#5a3d1c;--holo:0;--destellos:.2;
   position:fixed;inset:0;width:100%;height:100%;max-width:none;max-height:none;margin:0;padding:0;border:0;overflow:hidden;
   background:#07050c;color:#efe6d6;font-family:var(--sans,system-ui,sans-serif);flex-direction:column;
@@ -30,23 +35,25 @@
 /* Pedestal: anillo rúnico tumbado bajo la carta. La máscara es la textura del
    anillo; el color lo pone la edición. Los hijos giran dentro de su plano. */
 .visor3dPedestal{position:absolute;left:50%;top:calc(50% + var(--h) / 2 + 6px);width:calc(var(--w) * 1.7);aspect-ratio:1;pointer-events:none;
-  transform:translate(-50%,-50%) perspective(700px) rotateX(74deg)}
+  transform:translate(-50%,-50%) perspective(700px) rotateX(74deg);will-change:top,width,opacity;
+  transition:top .74s cubic-bezier(.16,.78,.18,1),width .74s cubic-bezier(.16,.78,.18,1),opacity .42s ease}
 .visor3dAnillo{position:absolute;inset:0;rotate:var(--anillo-giro,0rad);opacity:var(--anillo-brillo,.5);mix-blend-mode:screen;
   background:radial-gradient(circle,color-mix(in srgb,var(--anillo,#e39a4c) 55%,#fff) 0%,var(--anillo,#e39a4c) 55%,color-mix(in srgb,var(--anillo,#e39a4c) 70%,#000) 100%);
   -webkit-mask:var(--anillo-mascara) center/contain no-repeat;mask:var(--anillo-mascara) center/contain no-repeat;filter:drop-shadow(0 0 6px var(--anillo,#e39a4c))}
 .visor3dAnilloInterior{inset:22%;rotate:calc(var(--anillo-giro,0rad) * -1.6);opacity:calc(var(--anillo-brillo,.5) * .7)}
 .visor3dSuelo{position:absolute;left:50%;top:calc(50% + var(--h) / 2 + 14px);width:calc(var(--w) * 1.5);height:calc(var(--w) * .28);translate:-50% -50%;border-radius:50%;
-  background:radial-gradient(closest-side,#000a,#0000),radial-gradient(closest-side,color-mix(in srgb,var(--canto-luz) 30%,transparent),transparent);pointer-events:none}
+  background:radial-gradient(closest-side,#000a,#0000),radial-gradient(closest-side,color-mix(in srgb,var(--canto-luz) 30%,transparent),transparent);pointer-events:none;will-change:top,width,height,opacity;
+  transition:top .74s cubic-bezier(.16,.78,.18,1),width .74s cubic-bezier(.16,.78,.18,1),height .74s cubic-bezier(.16,.78,.18,1),opacity .42s ease}
 
 .visor3dCapa{position:absolute;left:50%;top:50%;width:var(--w);height:var(--h);margin:calc(var(--h) / -2) 0 0 calc(var(--w) / -2);border-radius:var(--radio);
-  transform:perspective(var(--p)) translateY(var(--y)) scale(var(--s)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) translateZ(var(--z,0px)) translate(var(--dx,0px),var(--dy,0px)) rotate(var(--giro-pila,0deg));
+  transform:perspective(var(--p)) translate(var(--entrada-x),calc(var(--y) + var(--entrada-y))) scale(var(--s)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) translateZ(var(--z,0px)) translate(var(--dx,0px),var(--dy,0px)) rotate(var(--giro-pila,0deg));
   will-change:transform}
 .visor3dCanto{background:linear-gradient(90deg,var(--canto),var(--canto-luz) 45%,var(--canto) 55%,color-mix(in srgb,var(--canto) 70%,#000))}
 .visor3dPila{opacity:var(--pila);box-shadow:0 10px 26px #0009;border:1px solid #9669f55c;
   background:linear-gradient(180deg,#ffffff14,transparent 42%),repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),linear-gradient(165deg,#33224f,#1b1230)}
 .visor3dCara{backface-visibility:hidden;-webkit-backface-visibility:hidden}
 .visor3dFrente{filter:drop-shadow(0 18px 30px #000a)}
-.visor3dDorso{transform:perspective(var(--p)) translateY(var(--y)) scale(var(--s)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) rotateY(180deg) translateZ(var(--z,0px));
+.visor3dDorso{transform:perspective(var(--p)) translate(var(--entrada-x),calc(var(--y) + var(--entrada-y))) scale(var(--s)) rotateX(var(--rx)) rotateY(var(--ry)) rotateZ(var(--rz)) rotateY(180deg) translateZ(var(--z,0px));
   display:grid;place-items:center;overflow:hidden;border:2px solid var(--canto-luz);box-shadow:0 18px 30px #000a,inset 0 0 0 6px #0006,inset 0 0 0 7px color-mix(in srgb,var(--canto-luz) 55%,transparent);
   background:radial-gradient(circle at 50% 46%,#5b3d8c66,transparent 58%),linear-gradient(180deg,#ffffff14,transparent 42%),repeating-linear-gradient(45deg,#33225580 0 4px,#251841 4px 9px),linear-gradient(165deg,#33224f,#1b1230)}
 .visor3dSello{position:absolute;left:50%;top:50%;width:78%;aspect-ratio:1;translate:-50% -50%;border-radius:50%;border:1px solid #c69eff57;box-shadow:inset 0 0 0 10px #c69eff12,0 0 30px #9669f533}
@@ -94,6 +101,10 @@
    medida y respaldo, invisibles. */
 .visor3dGL{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;display:block}
 .visor3d.visor3dConGL .visor3dCapa{visibility:hidden}
+.visor3d.visor3dEntraDesdeArchivo.visor3dConGL .visor3dCapa{visibility:visible}
+.visor3d.visor3dEntraDesdeArchivo .visor3dGL{visibility:hidden}
+.visor3d.visor3dDevolviendo .visor3dCuerpo,.visor3d.visor3dDevolviendo .visor3dGL{visibility:hidden}
+.visor3d.visor3dPreparandoRegreso .visor3dControles{pointer-events:none;opacity:.32}
 /* Sin la carta actual en WebGL (cargando, bloqueada o sin soporte) el lienzo no
    puede quedarse mostrando la anterior. */
 .visor3d:not(.visor3dConGL) .visor3dGL{visibility:hidden}
@@ -115,3 +126,18 @@
    del detalle de Colección): la carta, el pedestal y el halo se centran en el
    resto, mientras las partículas siguen llenando todo. */
 .visor3dIncrustado .visor3dEscena{margin-right:var(--reserva-der,0px)}
+
+/* Mundo persistente: el Archivo puede vivir dentro de la misma noche del
+   visor sin crear una carta o contexto WebGL hasta que el usuario elige una.
+   La interfaz que lo aloja pone sus propios controles encima; el ambiente no
+   captura puntero mientras está en modo ambiente. */
+.visor3d.visor3dMundo{position:relative;inset:auto;display:block;width:100%;height:100%;padding:0;border-radius:0;background:#07050c;overflow:hidden}
+.visor3dMundo .visor3dEscena{position:absolute;inset:0;display:block;min-height:0;margin-right:var(--reserva-der,0px);will-change:margin-right,inset}
+.visor3dMundo[data-modo="ambiente"] .visor3dEscena{pointer-events:none;cursor:default}
+.visor3dMundo[data-modo="ambiente"] :is(.visor3dControles,.visor3dCandadoEscena){display:none}
+.visor3dMundo[data-modo="ambiente"] .visor3dPedestal{top:52%;width:min(680px,72vw);opacity:.78}
+.visor3dMundo[data-modo="ambiente"] .visor3dSuelo{top:54%;width:min(600px,66vw);height:min(150px,18vw);opacity:.8}
+.visor3dMundo[data-modo="ambiente"] .visor3dHalo{opacity:.96}
+.visor3dMundo[data-modo="carta"] .visor3dEscena{touch-action:none;cursor:grab}
+.visor3dMundo[data-modo="carta"] .visor3dEscena.arrastrando{cursor:grabbing}
+@media(prefers-reduced-motion:reduce){.visor3dMundo .visor3dEscena{cursor:default}}
