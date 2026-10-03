@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+<title>Caoz TCG · Talesyn vs Fender para 3DS</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./3ds-talesyn-fender.css">
+<script src="./datos.js"></script>
+<script src="./3ds-talesyn-fender.js" defer></script>
+</head>
+<body>
+<main class="pagina" aria-labelledby="titulo">
+  <header class="cabecera">
+    <div>
+      <p class="ceja">REVISIÓN AISLADA · NINTENDO 3DS HOMEbrew</p>
+      <h1 id="titulo">Talesyn vs Fender</h1>
+      <p>Vertical slice del Domo pensado para dos pantallas: Fender arriba; Talesyn, la mano y todas las decisiones táctiles abajo.</p>
+    </div>
+    <div class="cabeceraAcciones" aria-label="Escenarios de prueba">
+      <button type="button" id="reiniciar">Duelo normal</button>
+      <button type="button" class="dorada" id="exhibicion">Probar llegada de Thal</button>
+    </div>
+  </header>
+
+  <section class="consola" aria-label="Prototipo de Nintendo 3DS">
+    <div class="cuerpo cuerpoSuperior">
+      <div class="camara"></div>
+      <section class="pantalla pantallaSuperior" id="pantallaSuperior" aria-label="Pantalla superior: campo de Fender"></section>
+    </div>
+    <div class="bisagra"><span></span><b>CAOZ CON TODO</b><span></span></div>
+    <div class="cuerpo cuerpoInferior">
+      <div class="controlesFisicos" aria-hidden="true"><i class="stick"></i><i class="cruceta">✚</i></div>
+      <section class="pantalla pantallaInferior" id="pantallaInferior" aria-label="Pantalla táctil: campo de Talesyn y controles"></section>
+      <div class="botonesFisicos" aria-hidden="true"><i>Y</i><i>X</i><i>B</i><i>A</i></div>
+    </div>
+  </section>
+
+  <section class="nota" aria-labelledby="notaTitulo">
+    <div><p class="ceja">QUÉ ESTÁS REVISANDO</p><h2 id="notaTitulo">Una partida, no una mesa encogida</h2></div>
+    <p>La pantalla superior informa y resuelve: campo rival, intención de Fender y visor de carta. La inferior concentra todo lo que se puede tocar: mano, campo propio, objetivos espejados y acciones. Teclado de prueba: <kbd>A</kbd> jugar, <kbd>X</kbd> terminar turno, <kbd>Y</kbd> Luz de Kenya, <kbd>B</kbd> cancelar, <kbd>←</kbd>/<kbd>→</kbd> mano.</p>
+  </section>
+</main>
+</body>
+</html>

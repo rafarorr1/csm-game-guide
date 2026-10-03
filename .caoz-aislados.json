@@ -1,6 +1,10 @@
 {
   "formato": "caoz.secciones.aisladas",
   "secciones": {
+    "3ds-talesyn-fender": {
+      "fuente": "7de55ded2d28deff85c30c82d7f36e05d031155d",
+      "ruta": "tcg/3ds-talesyn-fender"
+    },
     "arpg-three": {
       "fuente": "8e9a211db4066b41315a533f343bd41d84b25cb6",
       "ruta": "tcg/arpg-three"
