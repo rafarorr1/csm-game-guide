@@ -79,6 +79,7 @@
 #coleccionPanel .coleccionDetalleCabecera{position:relative;flex:none;text-align:center;padding:0 120px;min-height:53px}
 #coleccionPanel .coleccionDetalleCabecera h3{font-family:var(--serif,Georgia,serif);font-size:25px;line-height:1.2;text-wrap:balance;color:#edd6aa}
 #coleccionPanel .coleccionDetalleCabecera p{color:#b8a28a;font-size:12px;margin-top:4px}
+#coleccionPanel .coleccionDetalleCabecera .coleccionDetalleArtista{color:#d6c59f;font-size:11px;font-style:italic;letter-spacing:.15px}
 #coleccionPanel .coleccionAtras{position:absolute;left:0;top:0;font-size:12px;padding:7px 11px;min-height:34px;background:none;box-shadow:none;border:0}
 #coleccionPanel .coleccionAtras svg{width:15px;height:15px}
 #coleccionPanel .coleccionVersiones{flex:1;min-height:140px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:24px;max-width:780px;width:100%;margin:0 auto;padding:8px 8px 6px;background:radial-gradient(ellipse at 50% 55%,#af865624,transparent 72%)}

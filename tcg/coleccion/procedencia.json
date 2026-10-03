@@ -9,7 +9,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/index.html",
-          "sha256": "d126b69f50fb39fecd4edc784674ae66018ab2c83192a7ada6a5ee2699cf901a"
+          "sha256": "83234a4c42175697ecacafae18413e31cd9c391022e0b85c3fa4f8de0983e8d4"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -91,7 +91,7 @@
       "fuentes": [
         {
           "archivo": "caoz_tcg/movil.html",
-          "sha256": "5b2572820bb5061f5df4db3dbfac8fb33d6991cb09325c7ed2e5d5b3b9e735d0"
+          "sha256": "05e09ccec2fd27ee96c8850243dce84cb97f1ecf093bbd724055e46f3d0a896a"
         },
         {
           "archivo": "caoz_tcg/motor.js",
@@ -171,14 +171,15 @@
     "arte-vistas.js": "ea75079ed7acd5ac03e69e503db82111f7417930bed88933d7552e235c81eaf1",
     "coleccion-modelo.js": "66ef643bf474e1d0e5fd6bf2512b813eed88aab9dd33d5ea4e8099de8cce0bb0",
     "logros.js": "1c795dff5283adeaeb305c3cce2135f27b0c45c2df3f6fafda398c1107f044e9",
-    "arte-remoto.js": "ac4407882d695f7e58ee2a9ea8b7e0d898f5772c9b06c41a94798accfab8570b",
-    "coleccion-ui.js": "bc80a6a8dd56439adf6c7c2184b12641225a84cf2a7e05dd3c4e4bfd96d40221",
-    "visor-3d.js": "956f01e790262197ee55c145d63c6a9e37d44648d996a201da2e2419b13360ea",
-    "visor-3d-gl.js": "e395d37e72e6239450e52018901836831077f32010701e0acf6aa6f394457bfd",
-    "visor-3d.css": "6a95d2275fd614d42d993baed6eb2ec86dd546d417ef18a0c4b24cf120494c30",
-    "carta-pintor.js": "3f3e5bba1d3ffbb35264f516db1601a0aed2b58e4518d4d87115525c58a8b066",
+    "nombres-cartas.js": "b866cd0ae6f7ffa5efa725d127c120f336589c7ec10ef4108b4af8a149206748",
+    "arte-remoto.js": "302415ea2401ca561d7e7504888916d1fcfca88f5222931662b9691e6cae5b57",
+    "coleccion-ui.js": "7794f1b7a4344d4d1202990816834e73905b25307939920e0932365c53fae4b9",
+    "visor-3d.js": "5089711c21c02ea181bd2b2fc23c883c26004646a35e25bc058e83e122ba3b12",
+    "visor-3d-gl.js": "6e400dc5d7ee5ee85a4b1bf276125e41f6203ee39ac3f258de617cd0ade99464",
+    "visor-3d.css": "be89cc35b4be6a140ab04a0fcfa2b215c9a7febded6f243a86cc6b40fa6f5935",
+    "carta-pintor.js": "7d7062b500238328305187ba6bcbffdb518c66dd7bf209c10459c864b63cf714",
     "carta-diseno.js": "0b3327ee89de1c5539e81d45da4eecb30f9dad48f689a231238e3b68be3b7b36",
-    "carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
+    "carta-diseno.css": "5f45b8fbe3db70887402267b8018157e7d5c0d99dc477e33b4a7ba2d94102451",
     "fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
     "fuentes/cormorant-garamond.woff2": "d80df8ff5aecd299a61549f9e29ab1ed0b9b05f4ea71d50fe978e07d5240b235",
     "fuentes/cormorant-garamond-italica.woff2": "4fb55a7a6d564d428061fe12c82c896264bcc8b7f0b52840bf88e0db5b91256f",
@@ -186,8 +187,8 @@
     "sobres-apertura.js": "031a9e88ba2e140aee63ec075f1acb7174335d6a2a0a605fbafe0f1d3dfddc7b",
     "sobres-revelacion.js": "0409659d3b519531ffbae3b3d62e37ad8c258c7afa7f48c0bad1510dd0b6152c",
     "sobres-apertura.css": "12d234191ead3690e54b1dbc596a62266d7bc98173c3c9e3801de8fabfcbdc3f",
-    "coleccion.css": "364a1cd2d13fd75ff3ed8dc44e836618464b727b03724f6c34e498cd960ce001",
-    "acabados.css": "781cba7ca6fa9a021940dd7e79453cdb44588d0631e2e457d903cb71bc1024f9"
+    "coleccion.css": "de686400092bafef2105dc4934ed44781b13598a6e9aa6f62c32da655b819687",
+    "acabados.css": "6f992e83fd4bedc74f976254cdcb83e76450061a5669eda22dac0c84f20f70de"
   },
   "arte": {
     "acertijo-dorado-v1.webp": "ee7abed7dbd16c10ef25bf25dc18c6f2b8c5ac86ac2fb6cf85eff8d652304d4c",

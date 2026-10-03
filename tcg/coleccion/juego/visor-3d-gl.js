@@ -16,7 +16,7 @@ varying vec3 vPos;varying vec3 vNor;varying vec2 vUv;
 void main(){vec4 w=uModel*vec4(aPos,1.);vPos=w.xyz;vNor=uRot*aNor;vUv=aUv;gl_Position=uProy*uVista*w;}`;
   const FRAG=`precision highp float;
 uniform sampler2D uColor,uNormal,uOrm,uMascara;
-uniform float uUsaOrm,uUsaMascara,uCanto,uMetal,uRugosidad,uRelieve,uHolo,uDestellos,uLaca,uTiempo,uPulso;
+uniform float uUsaOrm,uUsaMascara,uFoilSoloArte,uCanto,uMetal,uRugosidad,uRelieve,uHolo,uDestellos,uLaca,uTiempo,uPulso;
 uniform vec3 uCam,uT,uB,uLuzDir,uLuzCol,uPuntoPos,uPuntoCol,uCantoCol;
 varying vec3 vPos;varying vec3 vNor;varying vec2 vUv;
 vec3 tono(float h){return clamp(abs(mod(h*6.+vec3(0.,4.,2.),6.)-3.)-1.,0.,1.);}
@@ -49,11 +49,16 @@ void main(){
   vec3 Lp=uPuntoPos-vPos;float dp=length(Lp);c+=luz(N,V,Lp/dp,uPuntoCol/(1.+dp*dp*.06),albedo,F0,rug);
   float fr=pow(1.-max(dot(N,V),0.),5.);vec3 F=F0+(1.-F0)*fr;
   c+=estudio(reflect(-V,N))*F*mix(1.,.35,rug);
-  // Laca: capa lisa sobre lo impreso, con la normal de la cara.
+  // Laca: capa lisa sobre lo impreso, con la normal de la cara. En Foil la
+  // película queda exactamente donde la máscara marca la ilustración: el
+  // texto, las gemas y el marco no reciben un segundo destello al girarla.
+  vec4 mascara=vec4(1.);
+  if(uUsaMascara>.5)mascara=texture2D(uMascara,vUv);
   float fc=.04+.96*pow(1.-max(dot(Ng,V),0.),5.);
-  c+=estudio(reflect(-V,Ng))*fc*uLaca*.6*(1.-met);
+  float laca=uLaca*(uFoilSoloArte>.5?mascara.r:1.);
+  c+=estudio(reflect(-V,Ng))*fc*laca*.6*(1.-met);
   if(uUsaMascara>.5){
-    vec4 m=texture2D(uMascara,vUv);
+    vec4 m=mascara;
     vec2 inc=vec2(dot(V,uT),dot(V,uB));
     float lum=dot(base,vec3(.3,.59,.11));
     float banda=(vUv.x*.9+vUv.y*1.3)*1.5+inc.x*2.8-inc.y*2.2+m.b*.35;
@@ -113,7 +118,7 @@ void main(){
     try{prog=gl.createProgram();gl.attachShader(prog,shader(gl.VERTEX_SHADER,VERT));gl.attachShader(prog,shader(gl.FRAGMENT_SHADER,FRAG));gl.linkProgram(prog);
       if(!gl.getProgramParameter(prog,gl.LINK_STATUS))throw Error(gl.getProgramInfoLog(prog));}catch(e){console.warn('Visor 3D sin WebGL:',e.message);return null;}
     gl.useProgram(prog);
-    const u={};for(const n of ['uModel','uVista','uProy','uRot','uColor','uNormal','uOrm','uMascara','uUsaOrm','uUsaMascara','uCanto','uMetal','uRugosidad','uRelieve','uHolo','uDestellos','uLaca','uTiempo','uPulso','uCam','uT','uB','uLuzDir','uLuzCol','uPuntoPos','uPuntoCol','uCantoCol'])u[n]=gl.getUniformLocation(prog,n);
+    const u={};for(const n of ['uModel','uVista','uProy','uRot','uColor','uNormal','uOrm','uMascara','uUsaOrm','uUsaMascara','uFoilSoloArte','uCanto','uMetal','uRugosidad','uRelieve','uHolo','uDestellos','uLaca','uTiempo','uPulso','uCam','uT','uB','uLuzDir','uLuzCol','uPuntoPos','uPuntoCol','uCantoCol'])u[n]=gl.getUniformLocation(prog,n);
     const a={pos:gl.getAttribLocation(prog,'aPos'),nor:gl.getAttribLocation(prog,'aNor'),uv:gl.getAttribLocation(prog,'aUv')};
     const geo=geometria(),bufs={};
     for(const [k,d]of Object.entries(geo)){const b=gl.createBuffer();gl.bindBuffer(gl.ARRAY_BUFFER,b);gl.bufferData(gl.ARRAY_BUFFER,d,gl.STATIC_DRAW);bufs[k]={b,n:d.length/8};}
@@ -164,7 +169,7 @@ void main(){
       gl.uniform3fv(u.uT,mat.aplicar(model,[1,0,0]));gl.uniform3fv(u.uB,mat.aplicar(model,[0,1,0]));
       usar(0,frente.color,'uColor');usar(1,frente.normal,'uNormal');usar(2,frente.orm,'uOrm');usar(3,frente.mascara,'uMascara');
       gl.uniform1f(u.uUsaOrm,1);gl.uniform1f(u.uRelieve,.9);gl.uniform1f(u.uLaca,ed.laca);
-      gl.uniform1f(u.uUsaMascara,pintarFrente?1:0);gl.uniform1f(u.uHolo,ed.holo);gl.uniform1f(u.uDestellos,ed.destellos);
+      gl.uniform1f(u.uUsaMascara,pintarFrente?1:0);gl.uniform1f(u.uFoilSoloArte,edicion==='foil'?1:0);gl.uniform1f(u.uHolo,ed.holo);gl.uniform1f(u.uDestellos,ed.destellos);
       atributos(bufs.frente);gl.drawArrays(gl.TRIANGLES,0,bufs.frente.n);
     }
     // e: {rx,ry,rz,y,s,tiempo,luzX,luzY,pulso,pila}. Ángulos como en el CSS del visor.

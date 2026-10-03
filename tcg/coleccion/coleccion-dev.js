@@ -1,7 +1,7 @@
 'use strict';
 (function(){
   const parametros=new URLSearchParams(location.search),estado=parametros.get('estado')||'sobres';
-  const estados=['nuevo','sobres','premio-domo','premio-campana','legado-sobres','ediciones','muestrario','legacy','canjes','logros'];
+  const estados=['nuevo','sobres','premio-domo','premio-campana','legado-sobres','ediciones','muestrario','artista','legacy','canjes','logros'];
   const acabado=['normal','foil','dorado'].includes(parametros.get('acabado'))?parametros.get('acabado'):'normal';
   function prepararLogros(){
     const logros=window.CAOZ_LOGROS;
@@ -61,6 +61,12 @@
         m.otorgarCopia(id,'foil');m.otorgarCopia(id,'dorado');m.seleccionar(id,acabado);
       }
     }
+    if(estado==='artista'){
+      // La colección contiene un único crédito ficticio en su catálogo local.
+      // Las tres copias permiten comprobar que pertenece a la carta y no a
+      // una edición concreta.
+      for(const serie of ['foil','dorado'])m.otorgarCopia('machete',serie);
+    }
     if(estado==='legacy'){
       const preferidos=['eric','tal','lider_fender'].filter(id=>m.ids().includes(id)),ids=[...new Set(preferidos.concat(m.ids()))].slice(0,3);
       const cartas=ids.map((id,i)=>({id,acabado:i===1?'dorado':'foil',nueva:true}));cartas.forEach(c=>m.desbloquear(c.id,c.acabado));
@@ -80,17 +86,17 @@
       }else location.search=parametros.toString();
     });
     document.getElementById('devAbrir').onclick=()=>abrirColeccion();
-    document.getElementById('devEstado').textContent=m.ids().length+' cartas disponibles · '+(estado==='muestrario'?'En memoria: todas las ediciones para revisar ilustraciones.':estado==='logros'?'Logros, progreso y sobres sólo en memoria temporal.':'Almacenamiento temporal · sin partida activa.');
+    document.getElementById('devEstado').textContent=m.ids().length+' cartas disponibles · '+(estado==='muestrario'?'En memoria: todas las ediciones para revisar ilustraciones.':estado==='artista'?'Crédito ficticio de Machete en Normal, Foil y Dorada; no consulta el Estudio.':estado==='logros'?'Logros, progreso y sobres sólo en memoria temporal.':'Almacenamiento temporal · sin partida activa.');
     // El proveedor real carga exclusivamente los archivos locales; el servidor
-    // responde un catálogo remoto vacío, sin contactar los estudios publicados.
+    // responde el crédito ficticio de la muestra, sin contactar los estudios.
     cargarArte().catch(()=>{}).finally(()=>{
       if(['premio-domo','premio-campana','legado-sobres'].includes(estado)){
         if(typeof abrirRecompensaSobres!=='function')throw Error('La elección de recompensas no está disponible.');
         abrirRecompensaSobres();return;
       }
       abrirColeccion();
-      const carta=parametros.get('carta');
-      if(carta&&m.ids().includes(carta))document.querySelector('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]')?.click();
+      const carta=parametros.get('carta')||(estado==='artista'?'machete':'');
+      if(carta&&m.ids().includes(carta))document.querySelector?.('#coleccionPanel .coleccionMini[data-carta="'+carta+'"]')?.click();
       else if(estado==='logros'||parametros.get('pestana')==='logros')abrirPestana('Logros');
       else if(parametros.get('pestana')==='sobres')abrirPestana('Sobres');
     });

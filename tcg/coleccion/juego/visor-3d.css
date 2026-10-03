@@ -25,6 +25,7 @@
 .visor3dTitulos{min-width:0}
 .visor3dAntetitulo{display:block;font-size:11px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--canto-luz)}
 .visor3dTitulo{margin:2px 0 0;font:400 clamp(20px,4.6vw,28px)/1.15 var(--serif,Georgia,serif);color:#f3dfb4;text-wrap:balance}
+.visor3dArtista{margin:4px 0 0;color:#cbbda8;font-size:12px;line-height:1.25;text-wrap:balance}
 .visor3dCerrar{flex:none;width:44px;height:44px;display:grid;place-items:center;border-radius:12px;border:1px solid #ffffff26;background:#ffffff0f;color:#efe6d6;cursor:pointer}
 .visor3dCerrar svg,.visor3dVoltear svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 .visor3dCerrar:hover{background:#ffffff1f}
@@ -81,6 +82,9 @@
 .visor3dDestellos{background-size:180px 180px;background-position:calc(var(--fx) * .4) calc(var(--fy) * .4);mix-blend-mode:color-dodge;opacity:calc(var(--destellos) * var(--inclina))}
 .visor3dBrillo{background:radial-gradient(circle at var(--gx) var(--gy),#ffffff6b 0%,#ffffff1f 24%,#0000 52%,#0000002e 100%);mix-blend-mode:soft-light}
 .visor3dBrillo::after{content:"";position:absolute;inset:0;border-radius:inherit;background:radial-gradient(circle at var(--gx) var(--gy),#ffffff38 0%,#ffffff00 32%);mix-blend-mode:screen}
+/* La luz de Foil queda dentro del arte también en el respaldo CSS del visor.
+   La máscara WebGL aplica la misma regla cuando sí hay aceleración disponible. */
+.visor3d[data-acabado="foil"] :is(.visor3dFoil,.visor3dDestellos,.visor3dBrillo){clip-path:inset(12.27% 7.42% 44.49% round 1%)}
 
 .visor3dPie{position:relative;z-index:3;display:flex;flex-direction:column;align-items:center;gap:8px;padding:6px 16px 16px}
 .visor3dEdiciones{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}

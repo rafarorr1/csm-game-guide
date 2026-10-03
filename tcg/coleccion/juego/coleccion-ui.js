@@ -13,11 +13,12 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
+  const artistaVisible=id=>window.CAOZ_ARTE?.artista?.(id)||null;
   let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null,cartaTransferida=null,entradaMenu=0,archivoCapa=null,detalleCapa=null,encuadreDetalle=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real',logrosProtagonista:'todos'};
   function dato(id){
-    if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
-    const c=CARDS[id];return {...c,id,n:nombreVisible(id,c.n),sub:typeof tribeLine==='function'?tribeLine(c):c.t};
+    if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),artista:artistaVisible(id),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
+    const c=CARDS[id];return {...c,id,n:nombreVisible(id,c.n),artista:artistaVisible(id),sub:typeof tribeLine==='function'?tribeLine(c):c.t};
   }
   function icono(tipo){
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
@@ -151,7 +152,7 @@
       actualizarCarta(nodo);
       actualizarMiniatura(id);
     };
-    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
+    const visible=mundo3D.mostrarCarta({id,titulo:c.n,artista:c.artista,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
     // montarMundo sólo confirma después de insertar la ficha. Así, si el
     // visor no estuviera disponible, el vuelo conserva su salida de respaldo.
     if(visible&&entrega){
@@ -286,7 +287,23 @@
   }
   function falloGuardado(){mensaje('No se pudo guardar. Libera espacio en el navegador e inténtalo otra vez.',true);}
   function cambio(){if(!panel?.open||guardando||finalCampana?.confirmando||transicionDetalle)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='logros')dibujarLogros();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
-  function arteActualizado(){if(!panel?.open||transicionDetalle)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
+  /* El catálogo público puede llegar después de que la misma ficha ya inició
+     su viaje al visor. El crédito no merece reconstruir la escena ni cortar
+     ese viaje: se actualiza en su cabecera y se conserva en la configuración
+     del visor que abrirá la ampliación. */
+  function actualizarCreditoDetalle(){
+    if(s.vista!=='detalle'||!s.carta)return;
+    const cabecera=detalleCapa?.querySelector('.coleccionDetalleCabecera')||contenido?.querySelector('.coleccionDetalleCabecera');if(!cabecera)return;
+    const artista=dato(s.carta).artista,anterior=cabecera.querySelector('.coleccionDetalleArtista');
+    if(artista){if(anterior)anterior.textContent='Ilustración: '+artista;else cabecera.append(crear('p','coleccionDetalleArtista','Ilustración: '+artista));}
+    else anterior?.remove();
+    mundo3D?.actualizar?.({artista});escena3D?.actualizar?.({artista});
+  }
+  function arteActualizado(){
+    if(!panel?.open)return;
+    panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);
+    actualizarCreditoDetalle();
+  }
   function nombresActualizados(){
     if(!panel?.open||transicionDetalle)return;
     if(s.vista==='detalle')dibujarDetalle();
@@ -527,6 +544,10 @@
       requestAnimationFrame(()=>{if(!rejilla.isConnected)return;if(comportamientoPrevio)rejilla.style.scrollBehavior=comportamientoPrevio;else rejilla.style.removeProperty('scroll-behavior');if(encajePrevio)rejilla.style.scrollSnapType=encajePrevio;else rejilla.style.removeProperty('scroll-snap-type');});
       mundoHost?.style.setProperty('--reserva-der','0px');mundoHost?.style.removeProperty('--controles-alto');
     };
+    // La vuelta visual tarda unos fotogramas, pero el destino ya existe y es
+    // interactivo. Recuperar el foco al iniciar permite continuar con teclado
+    // sin tener que esperar a que termine el viaje de la ficha.
+    const enfocar=()=>{if(panel?.open&&miniatura.isConnected&&(panel.dataset.transicion==='volver-archivo'||s.vista==='cartas'))miniatura.focus({preventScroll:true});};
     mensaje('Volviendo a Mis cartas…');
     let terminado=false;
     const terminar=nodo=>{
@@ -534,10 +555,10 @@
       detalleCapa?.remove();detalleCapa=null;encuadreDetalle=null;s.vista='cartas';focoLista=null;
       panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
       activarMundo('cartas');actualizarCabecera();mensaje('');entradaDelMundo('cartas');
-      const enfocar=()=>{if(panel?.open&&s.vista==='cartas'&&miniatura.isConnected)miniatura.focus({preventScroll:true});};
       requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>miniatura.removeAttribute('data-regreso-activa'),720);});
     };
-    const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino,alTerminar:terminar});
+    requestAnimationFrame(enfocar);
+    const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino:()=>{prepararDestino();requestAnimationFrame(enfocar);},alTerminar:terminar});
     if(ok)return true;
     miniatura.removeAttribute('data-regreso-activa');panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');panel.dataset.vista='detalle';archivoCapa.setAttribute('hidden','');mensaje('');return false;
   }
@@ -552,7 +573,9 @@
     else{vaciarContenido();panel.dataset.vista='detalle';}
     const destino=preservarArchivo?detalleCapa:contenido;
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));
-    cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));destino.append(cab);
+    cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));
+    if(c.artista)cab.append(crear('p','coleccionDetalleArtista','Ilustración: '+c.artista));
+    destino.append(cab);
     const versiones=crear('div','coleccionVersiones');
     ACABADOS.forEach(a=>{
       const visible=estadoEdicionVisible(s.carta,a),{tiene,cantidad,elegida}=visible,demostracion=!!visible.demostracion,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
@@ -593,7 +616,7 @@
       if(escena3D)escenario.append(escena3D.raiz);
       zona.append(escenario,versiones);destino.append(zona);
       if(escena3D)escena3D.actualizar({ediciones:edicionesDe(s.carta),edicion:s.acabadoVista});
-      else escena3D=window.CAOZ_VISOR3D.montar(escenario,{id:s.carta,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(s.carta,a),ediciones:edicionesDe(s.carta)});
+      else escena3D=window.CAOZ_VISOR3D.montar(escenario,{id:s.carta,titulo:c.n,artista:c.artista,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(s.carta,a),ediciones:edicionesDe(s.carta)});
       // En el teléfono la escena ocupa lo que dejan libre los controles de abajo.
       const medirControles=()=>{zona.style.setProperty('--controles-alto',Math.ceil(versiones.getBoundingClientRect().height+20)+'px');escena3D?.medir();};
       medirControles();requestAnimationFrame(medirControles);

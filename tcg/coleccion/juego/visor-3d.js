@@ -334,6 +334,11 @@
       soltarSuperficie();configuracion=null;dlg.dataset.modo='ambiente';dlg.setAttribute('aria-hidden','true');delete dlg.dataset.carta;medir();
     }
     function actualizar(nuevo={}){
+      // El Archivo puede recibir el crédito público mientras su misma ficha
+      // viaja al visor. Guardarlo aquí evita reconstruir la carta y hace que
+      // la ampliación posterior use exactamente la atribución actual.
+      if(configuracion&&Object.hasOwn(nuevo,'titulo'))configuracion={...configuracion,titulo:nuevo.titulo};
+      if(configuracion&&Object.hasOwn(nuevo,'artista'))configuracion={...configuracion,artista:nuevo.artista};
       const tono=nuevo.edicion||nuevo.tono||nuevo.inicial;
       if(!carta){if(tono)aplicarTono(tono);medir();return;}
       if(typeof nuevo.crearCarta==='function'&&nuevo.id&&nuevo.id!==configuracion?.id){mostrarCarta({...configuracion,...nuevo});return;}
@@ -438,7 +443,7 @@
     const controles='<div class="visor3dControles"><button type="button" class="visor3dVoltear" aria-label="Voltear la carta"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg></button><button type="button" class="visor3dAmpliar" aria-label="Ver a pantalla completa"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button></div><span class="visor3dCandadoEscena">Edición bloqueada</span>';
     dlg.innerHTML='<canvas class="visor3dMotas" aria-hidden="true"></canvas><div class="visor3dHalo" aria-hidden="true"></div>'+(incrustado?
       '<div class="visor3dEscena"><div class="visor3dPedestal" aria-hidden="true"><i class="visor3dAnillo"></i><i class="visor3dAnillo visor3dAnilloInterior"></i></div><div class="visor3dSuelo" aria-hidden="true"></div><div class="visor3dCuerpo"></div><canvas class="visor3dGL" aria-hidden="true"></canvas></div><canvas class="visor3dChispas" aria-hidden="true"></canvas>'+controles:
-      '<header class="visor3dCabecera"><div class="visor3dTitulos"><span class="visor3dAntetitulo"></span><h2 class="visor3dTitulo"></h2></div><button type="button" class="visor3dCerrar" aria-label="Cerrar el visor 3D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>'+
+      '<header class="visor3dCabecera"><div class="visor3dTitulos"><span class="visor3dAntetitulo"></span><h2 class="visor3dTitulo"></h2><p class="visor3dArtista" hidden></p></div><button type="button" class="visor3dCerrar" aria-label="Cerrar el visor 3D"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></header>'+
       '<div class="visor3dEscena"><div class="visor3dPedestal" aria-hidden="true"><i class="visor3dAnillo"></i><i class="visor3dAnillo visor3dAnilloInterior"></i></div><div class="visor3dSuelo" aria-hidden="true"></div><div class="visor3dCuerpo"></div><canvas class="visor3dGL" aria-hidden="true"></canvas></div><canvas class="visor3dChispas" aria-hidden="true"></canvas>'+
       '<footer class="visor3dPie"><div class="visor3dEdiciones" role="group" aria-label="Edición"></div><p class="visor3dCopias" role="status"></p><div class="visor3dAcciones"><button type="button" class="visor3dVoltear"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 12a9 9 0 0 1 15.5-6.2L21 8M21 3v5h-5M21 12a9 9 0 0 1-15.5 6.2L3 16M3 21v-5h5"/></svg>Voltear</button></div><p class="visor3dAyuda">Arrastra para girar · doble toque para voltear</p></footer>');
     const $=s=>dlg.querySelector(s);
@@ -467,7 +472,11 @@
         dlg.classList.add('visor3dConGL');
       }catch(error){console.warn('Visor 3D: se usan las capas CSS.',error);dlg.classList.remove('visor3dConGL');}
     }
-    if(!incrustado)$('.visor3dTitulo').textContent=o.titulo||'';
+    if(!incrustado){
+      $('.visor3dTitulo').textContent=o.titulo||'';
+      const credito=$('.visor3dArtista'),artista=typeof o.artista==='string'?o.artista.trim():'';
+      credito.textContent=artista?'Ilustración: '+artista:'';credito.hidden=!artista;
+    }
     escena.setAttribute('role','img');escena.setAttribute('aria-label',(o.titulo||'Carta')+'. Arrastra para girarla.');
 
     // Capas: pila de copias (detrás), láminas del canto, dorso y frente.
@@ -642,6 +651,13 @@
       medir();reanudar();rafaga(70,1);
       // Cambiar de edición o de copias sin rehacer la escena ni el WebGL.
       function actualizar(nuevo={}){
+        // La versión incrustada no muestra cabecera, pero puede abrir la
+        // ampliación. Conserva el crédito actualizado sin redibujar la ficha.
+        if(Object.hasOwn(nuevo,'titulo'))o={...o,titulo:nuevo.titulo};
+        if(Object.hasOwn(nuevo,'artista')){
+          o={...o,artista:nuevo.artista};const credito=$('.visor3dArtista'),artista=typeof o.artista==='string'?o.artista.trim():'';
+          if(credito){credito.textContent=artista?'Ilustración: '+artista:'';credito.hidden=!artista;}
+        }
         if(nuevo.ediciones)ediciones=nuevo.ediciones.filter(e=>NOMBRES[e.id]);
         const antes=copias,destino=nuevo.edicion&&NOMBRES[nuevo.edicion]?nuevo.edicion:edicion;
         if(destino!==edicion){edicion=destino;ponerCarta();impulso(reducir()?0:PI*2);rafaga(70,1);return;}

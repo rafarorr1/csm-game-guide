@@ -22,4 +22,7 @@
 /* Reflejo que recorre las ediciones Foil y Dorada en la Colección. */
 .cdCarta:is([data-acabado="foil"],[data-acabado="dorado"])::after{content:"";position:absolute;inset:0;pointer-events:none;border-radius:inherit;
   background-image:var(--acabado-brillo);z-index:3;background-size:280% 160%;background-position:0% 40%;mix-blend-mode:screen;opacity:.3;animation:acabadoReflejo 10s ease-in-out infinite}
+/* Foil es una película sobre la ilustración; el metal, nombre, reglas y gemas
+   conservan una lectura estable. Dorada sigue usando su acabado de carta completa. */
+.cdCarta[data-acabado="foil"]::after{inset:12.27% 7.42% 44.49%;border-radius:1%}
 @media (prefers-reduced-motion:reduce){.cdCarta::after{animation:none!important}.cdCarta>.cdLienzo{transition:none}}

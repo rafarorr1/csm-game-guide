@@ -199,6 +199,18 @@
   function pintarMascara(d,acabado,k=1){
     const [cv,g]=plantilla(k),full=esFull(d,acabado),B=L.cuerpo;
     g.fillStyle='#000';g.fillRect(0,0,TW,TH);
+    // Foil es una película de la ilustración, nunca de la tipografía, marco o
+    // gemas. R activa el arco iris y G los destellos en visor-3d-gl.js.
+    if(acabado==='foil'){
+      const A=full?B:L.arte;rr(g,A.x,A.y,A.w,A.h,A.r);g.fillStyle='rgb(200,230,40)';g.fill();
+      if(full){
+        const T=d.stats?FULL.texto:FULL.textoSinStats;g.save();g.globalCompositeOperation='destination-out';
+        rr(g,L.nombre.x,L.nombre.y,L.nombre.w,L.nombre.h,L.nombre.r);g.fill();
+        g.fillRect(B.x,FULL.tipoY-28,B.w,58);rr(g,T.x,T.y,T.w,T.h,T.r);g.fill();
+        for(const m of gemas(d)){g.beginPath();g.arc(m.cx,m.cy,m.r+14,0,TAU);g.fill();}g.restore();
+      }
+      return cv;
+    }
     rr(g,L.marco.x,L.marco.y,L.marco.w,L.marco.h,L.marco.r);g.fillStyle='rgb(210,150,0)';g.fill();
     if(full){
       rr(g,B.x,B.y,B.w,B.h,B.r);g.fillStyle='rgb(120,210,0)';g.fill();

@@ -63,6 +63,13 @@
   mix-blend-mode:screen;opacity:.34;animation:acabadoReflejo 10s ease-in-out infinite;
   transition:opacity .25s ease,background-position .3s ease;
 }
+/* Foil conserva su identidad de edición en el borde impreso, pero la película
+   y el barrido luminoso viven exclusivamente dentro de la ilustración. Esta
+   regla también cubre la cara de respaldo cuando no pudo cargar el pintor. */
+[data-acabado="foil"] .marcoDibujo::before,
+[data-acabado="foil"] .marcoDibujo::after,
+.miniatura[data-acabado="foil"]::before,
+.miniatura[data-acabado="foil"]::after{clip-path:inset(12.27% 7.42% 44.49% round 1%)}
 @keyframes acabadoReflejo{0%,12%,100%{background-position:0% 40%;opacity:.22}48%,60%{background-position:100% 60%;opacity:.42}}
 @media(hover:hover){
   :is([data-acabado="foil"],[data-acabado="dorado"]):hover .marcoDibujo::after,
