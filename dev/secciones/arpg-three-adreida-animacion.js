@@ -50,7 +50,8 @@
       H.manoD.parent.getWorldQuaternion(_q).invert();H.manoD.quaternion.setFromRotationMatrix(_m.makeBasis(x,y,z)).premultiply(_q);H.manoD.updateMatrixWorld(true);
       // La izquierda envuelve el mango entre la derecha y la cabeza, nunca fuera del pomo.
       const apoyo=H.manoD.localToWorld(_agarre[7].set(0,-separacion,0));
-      ik(H.brazoI,H.anteI,H.manoI,apoyo,_agarre[3].set(.7,-.5,-.35).applyMatrix4(T));
+      // El codo izquierdo pasa por delante del pecho al cruzar para sujetar el mango.
+      ik(H.brazoI,H.anteI,H.manoI,apoyo,_agarre[3].set(.7,-.15,.8).applyMatrix4(T));
       const orientacion=H.manoD.getWorldQuaternion(_orientacion);
       H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);H.manoI.updateMatrixWorld(true);}
     const ejeDesde=new THREE.Vector3(),ejeHasta=new THREE.Vector3(),giroAgarre=new THREE.Quaternion(),giroParcial=new THREE.Quaternion();
@@ -67,7 +68,7 @@
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
       // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
-      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2-.4)*.018*(a.paso??1):Math.sin(t*2.2)*.004;return {G:[-.11,.35+bob,.36],A:dirA(-2.73,.46),arriba:[0,1,0]};};
+      const reposo=()=>{const bob=a.anim==='andar'?Math.sin((a.fase||0)*2-.4)*.018*(a.paso??1):Math.sin(t*2.2)*.004;return {G:[0,.35+bob,.48],A:dirA(-2.73,.46),arriba:[0,1,0]};};
       const horizontal=(f,e)=>{const r=.42-.08*Math.abs(Math.sin(f));return {G:[Math.sin(f)*r,.28,Math.cos(f)*r],A:dirA(f,e),arriba:[0,1,0]};};
       const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});

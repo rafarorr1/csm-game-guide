@@ -20,6 +20,19 @@ for(let i=0;i<a.position.count;i++){
  if(influyentes.some(b=>b&&[m.H.manoI,m.H.manoD].includes(b)))assert.ok(!influyentes.some(b=>b&&['cadera','piernaI','piernaD',...Array.from({length:7},(_,j)=>'falda'+j)].some(n=>m.H[n]===b)),'Mano sin pesos de falda o pierna');
 }
 const v=new THREE.Vector3();let poses=0;
+// Regresión: el agarre cruzado debe rodear el pecho; no basta con que la mano
+// alcance el mango si el codo o la superficie del antebrazo quedan dentro del torso.
+const antebrazoIzquierdo=[];
+for(let i=0;i<a.position.count;i++){
+ let peso=0;for(let j=0;j<4;j++)if(cuerpo.skeleton.bones[a.skinIndex.array[i*4+j]]===m.H.anteI)peso+=a.skinWeight.array[i*4+j];
+ if(peso>.85)antebrazoIzquierdo.push(i);
+}
+assert.ok(antebrazoIzquierdo.length>50,'La prueba mide la superficie del antebrazo');
+for(const anim of ['quieto','andar'])for(let i=0;i<50;i++){
+ F.posar(m,{anim,t:i/50,fase:i/50*Math.PI*2,paso:1});m.raiz.updateMatrixWorld(true);
+ assert.ok(m.H.torso.worldToLocal(m.H.anteI.getWorldPosition(v)).z>.24,anim+': codo delante del pecho');
+ for(const j of antebrazoIzquierdo){cuerpo.getVertexPosition(j,v).applyMatrix4(cuerpo.matrixWorld);m.H.torso.worldToLocal(v);assert.ok(v.z>.18,anim+': antebrazo fuera del torso');}
+}
 for(const anim of ['quieto','andar','tajoA','revesA','estocadaA','parry','salto','torbellino','lanzarHachaA','recogerHachaA','grito','dolor','muerte'])for(const k of [0,.25,.5,.65,.8,1])for(const potencia of [0,1]){
  F.posar(m,{anim,k,potencia,t:k,fase:k*Math.PI*2,paso:1});m.raiz.updateMatrixWorld(true);
  for(let i=0;i<a.position.count;i++){cuerpo.getVertexPosition(i,v);assert.ok(Number.isFinite(v.x+v.y+v.z),anim+': deformación finita');assert.ok(v.length()<4,anim+': sin vértices disparados');}
