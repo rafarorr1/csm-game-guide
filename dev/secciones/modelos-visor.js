@@ -9,6 +9,7 @@
     ['golpe',1.1],['reves',1.1],['estocada',1.3],['aviso',1],['esquiva',.7],['grito',1.2],['lanzar',1.1],['apunta',1.2],['disparar',.5,'mohamed'],['acrobacia',1,'mohamed'],
     ['muerte-partida',2.05,'goblins','Cargado completo · partido en dos',{...F.crearMuerteGoblin('cargado',0),partido:true,rodada:null,duracion:1.35,distancia:1.4,contactos:[.55,.8]}],
     ['cargaMazazo',1.5,'troll'],['mazazo',1.4,'troll'],['aturdido',2],['dolor',.5],['muerte',2],
+    ...F.animacion.muertes.map(p=>['muerte-adreida-'+(p.variante+1),p.duracion+.7,'adreida','Muerte de Adreida · '+p.nombre,{...p,adreida:true,distancia:0}]),
     ...Object.entries(F.muertesGoblin).flatMap(([tipo,variantes])=>variantes.map((p,i)=>['muerte-'+tipo+'-'+(i+1),p.duracion+.7,'goblins',p.nombre,F.crearMuerteGoblin(tipo,i)]))];
   const lienzo=$('lienzo'),render=new THREE.WebGLRenderer({canvas:lienzo,antialias:true});
   render.setPixelRatio(Math.min(2,devicePixelRatio));render.outputColorSpace=THREE.SRGBColorSpace;render.toneMapping=THREE.AgXToneMapping;render.toneMappingExposure=1.1;
@@ -28,7 +29,7 @@
     vertexShader:'attribute float tamano;attribute float alfa;varying float opacidad;void main(){vec4 p=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*p;gl_PointSize=tamano*45./(-p.z);opacidad=alfa;}',
     fragmentShader:'varying float opacidad;void main(){float a=1.-smoothstep(.04,.5,length(gl_PointCoord-.5));gl_FragColor=vec4(.6,.52,.39,a*opacidad*.52);}'}));
   nubePolvo.frustumCulled=false;escena.add(nubePolvo);let particulasVista=[];
-  function prepararPolvo(muerte){particulasVista=[];cuadricula.visible=!!muerte;if(!muerte)return;
+  function prepararPolvo(muerte){particulasVista=[];cuadricula.visible=!!muerte;if(!muerte||muerte.adreida)return;
     const eventos=muerte.contactos.map((k,i)=>({k,fuerza:muerte.fuerza*(i ? .45 : 1),roce:false})),r=muerte.rodada;
     if(r)for(let d=muerte.distancia*.2+.4;d<=muerte.distancia;d+=.4){let a=r.inicio,b=r.fin;for(let i=0;i<24;i++){const c=(a+b)/2;if(F.recorridoMuerteGoblin(muerte,c)<d)a=c;else b=c;}eventos.push({k:(a+b)/2,fuerza:muerte.fuerza,roce:true});}
     let semilla=17;const azar=()=>((semilla=semilla*16807%2147483647)-1)/2147483646;
@@ -47,7 +48,7 @@
   $('varianteGoblin').value=F.VARIANTES_GOBLIN[q.get('variante')]?q.get('variante'):'clasico';
   for(const k of Object.keys(F.TIPOS)){const o=document.createElement('option');o.value=k;o.textContent=F.TIPOS[k].nombre;$('tipo').append(o);}
   function listaAnims(){const tipo=$('tipo').value,antes=$('anim').value;$('anim').innerHTML='';
-    for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada'].includes(n))continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
+    for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada','muerte'].includes(n))continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
     if([...$('anim').options].some(o=>o.value===antes))$('anim').value=antes;}
   function cargar(tipo){
     for(const m of modelos){escena.remove(m.raiz);m.mallas.forEach(mesh=>{if(!mesh.geometry.userData.compartida)mesh.geometry.dispose();mesh.material.dispose();});for(const s of new Set(m.mallas.map(mesh=>mesh.skeleton)))s.dispose();}
@@ -98,7 +99,7 @@
     const [nombre,dur,,,muerte]=actual(),fase=(t%dur)/dur,k=muerte?Math.min(1,(t%dur)/muerte.duracion):fase;
     $('faseAnim').value=fase;
     for(const [i,m]of modelos.entries()){
-      m.raiz.position.set(comparar?(i-1.5)*1.15:0,0,muerte?-F.recorridoMuerteGoblin(muerte,k):0);
+      m.raiz.position.set(comparar?(i-1.5)*1.15:0,0,muerte&&!muerte.adreida?-F.recorridoMuerteGoblin(muerte,k):0);
       F.posar(m,{anim:muerte?'muerte':nombre,muerte,t,k,fase:nombre==='andar'?fase*Math.PI*2:t*TAU_PASO,paso:1});
     }
     dibujarPolvo(t%dur);const c=Math.cos(vista.el),centroZ=muerte?-muerte.distancia*.5:0;camara.position.set(Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,centroZ+Math.cos(vista.az)*c*vista.dist);camara.lookAt(0,vista.alto,centroZ);

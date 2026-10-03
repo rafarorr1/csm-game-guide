@@ -1,0 +1,21 @@
+{
+  "fuentes": [
+    {
+      "fuente": "Two Handed Sword Death.fbx",
+      "sha256": "872b23585ff56ee515ffaa4d17f8b2194276e1938fd01534f3d1b8564b3a9080",
+      "accion": "Armature|mixamo.com|Layer0",
+      "duracion": 2.4,
+      "muestras": 73
+    },
+    {
+      "fuente": "Two Handed Sword Death (1).fbx",
+      "sha256": "d0b7194d689657542e15b72cf2af25c57d6c4bd726349310fc817d9b5531592c",
+      "accion": "Armature|mixamo.com|Layer0",
+      "duracion": 2.6,
+      "muestras": 79
+    }
+  ],
+  "origen": "Dos FBX Mixamo aportados por el usuario el 3 de octubre de 2026.",
+  "adaptacion": "Quince huesos, desplazamiento relativo al punto de muerte, proporciones originales de Adreida y contacto del cuerpo y arma horneado. Interpolación de cuaterniones, sin bucle, pose final retenida. No se incluyen geometrías ni texturas de los FBX.",
+  "reproduccion": "Extraer cada FBX con extraer-muertes.py (Blender --background --factory-startup --python-exit-code 1). Luego: node dev/secciones/adreida-scenario/preparar-muertes.mjs fuente-a.json fuente-b.json"
+}

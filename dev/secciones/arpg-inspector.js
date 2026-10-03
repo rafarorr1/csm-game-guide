@@ -38,6 +38,7 @@ async function iniciar(){
       </details>
       <h2>Ataques reales</h2>
       <div class="labFila"><button data-accion="basico">Básico</button><button data-accion="cargado">Cargado</button><button data-accion="salto">Salto</button><button data-accion="parry">Parry</button><button data-accion="bumeran">Búmeran</button></div>
+      <button id="labMorir">Probar muerte del personaje</button>
       <label>Dirección del regreso del búmeran<input id="labRumboBumeran" type="range" min="-180" max="180" step="5" value="180"></label>
       <h2>Enemigos de prueba</h2>
       <label>IA de goblins<select id="labIA"><option value="yuka">Yuka · Tácticas por variante</option><option value="clasica">IA anterior · Comparar</option></select></label>
@@ -79,6 +80,7 @@ async function iniciar(){
   $('labIA').value=r.ia().modo;$('labIA').onchange=()=>{r.ia($('labIA').value);decir('IA aplicada. Se conservan los ataques que ya estaban avisados.');};
   $('labInvocar').onclick=ejecutar(()=>{api.invocar($('labEnemigo').value,numero('labCantidad'),ajustesEnemigo());decir('Enemigos añadidos alrededor del personaje.');});
   $('labDerrotarCan').onclick=()=>{volver();decir(api.derrotarCan()?'Can ha caído: los goblins huyen hasta salir de cuadro.':'Añade primero a Can y a sus goblins.');};
+  $('labMorir').onclick=()=>{volver();const m=api.morirHeroe();decir(m?`${m.nombre} · ${m.duracion} segundos. La pantalla de derrota espera al final del clip.`:'Muerte de Mohamed.');};
   $('labNan').onchange=()=>r.nan($('labNan').checked,2,-1);
   $('labCristal').onchange=()=>r.cristal($('labCristal').checked);
   $('labCamara').oninput=()=>{r.camara({dist:numero('labCamara')});if(detenido)api.paso();};

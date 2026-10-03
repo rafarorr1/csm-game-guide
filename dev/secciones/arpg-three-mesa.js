@@ -435,7 +435,7 @@
   const aDistancia=()=>heroe?.tipo==='mohamed';
   function crearHeroe(tipo=tipoHeroe){const T=HEROES[tipo],m=cuerpoDe(tipo);heroe={id:jugadores.length,tipo,m,pos:new V3(0,0,4),dir:Math.PI,giro:0,estado:'quieto',t:0,alma:T.alma,almaMax:T.alma,furia:0,atqBase:T.atq,atq:T.atq,basicos:1,especial:1,dash:1,
     balas:T.cargador||0,recargaT:0,cadT:0,disparoT:9,disparos:0,ultiT:0,sigilo:0,bumeran:null,recogeHacha:0,cd:{salto:0,provocar:0,bumeran:0,esquiva:0,parry:0,ulti:0},parrys:0,bloqueos:0,parryExito:false,escudo:0,fase:0,paso:0,golpeo:false,torbellino:null,
-    incendio:null,carga:0,bloqueoBasico:false,saltoMando:false,acortarSalto:0,combo:0,finGolpe:-9,invul:0,vatq:1,dirEsq:new V3(),destello:0,brilloParry:0,dolor:1,vivo:true,botin:[],llaves:0,objetivoSalto:null,origenSalto:null,radio:m.radio,muerteT:0,golpeDe:null};m.caja.userData.heroe=true;
+    incendio:null,carga:0,bloqueoBasico:false,saltoMando:false,acortarSalto:0,combo:0,finGolpe:-9,invul:0,vatq:1,dirEsq:new V3(),destello:0,brilloParry:0,dolor:1,vivo:true,botin:[],llaves:0,objetivoSalto:null,origenSalto:null,radio:m.radio,muerteT:0,muerte:null,golpeDe:null};m.caja.userData.heroe=true;
     heroe.entrada={...ent,suelo:new V3(),rev:null,atacando:false,pendiente:false,piloto:false};heroe.control={mov:new V3(),atacar:false,apunta:null};heroe.mando={...mando,indice:null,botones:[],dir:new V3(0,0,-1),activo:false,listo:false};heroe.disparosPendientes=[];
     jugadores.push(heroe);return heroe;}
   function conHeroe(h,fn){const anterior=[heroe,ent,ctl,mando,disparosPendientes];heroe=h;ent=h.entrada;ctl=h.control;mando=h.mando;disparosPendientes=h.disparosPendientes;
@@ -500,7 +500,7 @@
       $('destinoResultado').textContent='d20: '+dado+' · '+(r.tipo==='critico'?'¡CRÍTICO! Pierdes '+antes+' buffs positivos. Conservas tus penalizaciones.':(r.tipo==='beneficio'?'¡BENEFICIO! ':'RIESGO: ')+DESTINO.texto(c,r.tipo==='beneficio'));
       pintarDestino();$('destinoSeguir').focus();});}
   function seguirDestino(){if(!rog.abierto||!rog.resuelto)return;rog.terminado=ol.i;rog.abierto=false;$('destino').close();
-    ent.atacando=ent.pendiente=false;teclas.clear();for(const h of jugadores){h.mando.listo=h.mando.activo=false;h.entrada.atacando=h.entrada.pendiente=false;h.invul=.5;if(!h.vivo){h.vivo=true;h.alma=h.almaMax*.5;cambiar(h,'quieto');h.muerteT=0;h.pos.copy(heroe.pos).add(new V3(2,0,0));}}
+    ent.atacando=ent.pendiente=false;teclas.clear();for(const h of jugadores){h.mando.listo=h.mando.activo=false;h.entrada.atacando=h.entrada.pendiente=false;h.invul=.5;if(!h.vivo){h.vivo=true;h.alma=h.almaMax*.5;cambiar(h,'quieto');h.muerteT=0;h.muerte=null;h.pos.copy(heroe.pos).add(new V3(2,0,0));}}
     for(const b of [...botines])quitarBotin(b);ol.descanso=.8;
     if(ABIERTO){if(exploracion.activa)exploracion.activa.limpio=true;exploracion.activa=null;return;}
     if(ol.i===OLEADAS.length-1){rog.vuelta++;ol.i=-1;ol.fin=false;rog.terminado=-2;}}
@@ -840,7 +840,9 @@
   // Recibir un golpe: se marca quién fue (destella y la pantalla indica de dónde vino).
   function herir(dano,desde,culpable){if(!heroe.vivo)return;dano=Math.round(dano*(heroe.escudo>0?.5:1));heroe.alma-=dano;heroe.destello=1;heroe.dolor=0;heroe.furia=Math.min(100,heroe.furia+dano*.7);
     numero(heroe.pos.clone().setY(2.3),String(dano),'recibido');temblar(.18);heroe.heridaT=reloj.t;heroe.golpeDe={desde:desde.clone(),t:reloj.t,id:culpable?.id??null};if(culpable)culpable.culpableT=reloj.t;
-    if(heroe.alma<=0){heroe.alma=0;heroe.vivo=false;heroe.incendio=null;cambiar(heroe,'muerta');}}
+    if(heroe.alma<=0){heroe.alma=0;heroe.vivo=false;heroe.incendio=null;heroe.muerteT=0;heroe.alto=0;
+      // Se sortea una sola vez por muerte; el clip no cambia al recibir otros impactos.
+      heroe.muerte=heroe.tipo==='adreida'?MOD.animacion.elegirMuerte(rnd):null;cambiar(heroe,'muerta');}}
   // Quemadura personal: cinco pulsos, sin acumular daño entre antorchas. El dash la extingue.
   function prenderFuego(e){const h=heroe;if(h.tipo!=='adreida'||!h.vivo||h.invul>0)return;
     const antes=h.incendio;h.incendio={restante:5,pulso:antes?.pulso??1,particulas:0,origen:e.pos.clone(),culpable:e};
@@ -1460,7 +1462,7 @@
     flechas();golpeDir();
     $('vineta').style.opacity=h.heridaT===undefined?'0':Math.max(0,.9*(1-(reloj.t-h.heridaT)/.45)).toFixed(3);
     if(tostadaHasta&&reloj.t>tostadaHasta){$('tostada').classList.remove('visto');tostadaHasta=0;}if(bannerHasta&&reloj.t>bannerHasta){$('banner').classList.remove('visto');bannerHasta=0;}
-    if(jugadores.every(j=>!j.vivo&&j.muerteT>1.3)&&!finMostrado){finMostrado=true;$('fin').hidden=false;$('finTitulo').textContent='Has caído';$('finTexto').textContent='Los goblins celebran en la plaza. Tomsage aún te necesita.';}
+    if(jugadores.every(j=>!j.vivo&&j.muerteT>(j.muerte?.duracion||1)+.3)&&!finMostrado){finMostrado=true;$('fin').hidden=false;$('finTitulo').textContent='Has caído';$('finTexto').textContent='Los goblins celebran en la plaza. Tomsage aún te necesita.';}
     if(ol.fin&&!finMostrado&&!botines.length){finMostrado=true;$('fin').hidden=false;$('finTitulo').textContent='Tomsage resiste';$('finTexto').textContent='Has liberado Tomsage de Can y de los cobradores de piso. Botín recogido: '+h.botin.length+' cartas.';}}
   // Quien te ataca desde fuera de la pantalla: una flecha en el borde que apunta hacia él (roja al fijarse).
   const flechasEl=[];
@@ -1567,8 +1569,8 @@
   function posarHeroe(dt){
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
     if(girando(h)){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
-    const ph=poses.heroe||(!aDistancia()&&h.recogeHacha>0&&['quieto','andar'].includes(h.estado)?['recogerHachaA',1-h.recogeHacha/.25]:null)||{lanzarHacha:['lanzarHachaA',h.t/.46],quieto:['quieto'],andar:['andar'],recuperacion:[COMBO[h.combo].anim,.64],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:girando(h)?['torbellino']:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.t/1)]}[h.estado];
-    MOD.posar(hm,{sinHacha:!!h.bumeran,anim:!h.recogeHacha&&!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:!poses.heroe&&['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,giroCarrera:h.inclinacion||0,t:reloj.t,fase:poses.heroe?ph[1]*TAU:h.fase,paso:poses.heroe?1:h.paso,dt,estado:girando(h)?'torbellino':h.estado,mezclar:!poses.heroe,armaLista:aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45),retroceso:Math.max(0,1-h.disparoT*6)});
+    const ph=poses.heroe||(!aDistancia()&&h.recogeHacha>0&&['quieto','andar'].includes(h.estado)?['recogerHachaA',1-h.recogeHacha/.25]:null)||{lanzarHacha:['lanzarHachaA',h.t/.46],quieto:['quieto'],andar:['andar'],recuperacion:[COMBO[h.combo].anim,.64],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:girando(h)?['torbellino']:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.muerteT/(h.muerte?.duracion||1))]}[h.estado];
+    MOD.posar(hm,{muerte:h.muerte,sinHacha:!!h.bumeran,anim:!h.recogeHacha&&!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:!poses.heroe&&['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,giroCarrera:h.inclinacion||0,t:reloj.t,fase:poses.heroe?ph[1]*TAU:h.fase,paso:poses.heroe?1:h.paso,dt,estado:girando(h)?'torbellino':h.estado,mezclar:!poses.heroe,armaLista:aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45),retroceso:Math.max(0,1-h.disparoT*6)});
     if(h.dolor<1&&['quieto','andar'].includes(h.estado)){hm.H.torso.rotation.x-=.25*(1-h.dolor);}
     // Rojo al recibir; azulado y translúcido mientras es invulnerable (esquiva).
     if(h.destello>0){hm.M.u.uDestello.value=h.destello*.8;hm.M.u.uColorD.value.setRGB(1,.25,.2);}else{hm.M.u.uDestello.value=h.invul>0?.4:0;hm.M.u.uColorD.value.setRGB(.55,.8,1.3);}
@@ -1797,7 +1799,7 @@
     cristalHabilidades:()=>cristalHabilidades.estado(),
     cristal:v=>window.CAOZ_ARPG_ORBES.configurarRefraccion(v),
     bumeranes:()=>bumeranes.map(b=>({dueno:b.h.id,fase:b.fase,x:b.g.position.x,y:b.g.position.y,z:b.g.position.z,distancia:b.distancia})),
-    equipo:()=>jugadores.map(h=>({id:h.id,tipo:h.tipo,x:h.pos.x,z:h.pos.z,alma:h.alma,estado:h.estado,cd:{...h.cd},sigilo:h.sigilo,fuego:h.incendio?.restante||0,ultiT:h.ultiT,basicos:h.basicos,disparos:h.disparos})),
+    equipo:()=>jugadores.map(h=>({id:h.id,tipo:h.tipo,x:h.pos.x,z:h.pos.z,alma:h.alma,estado:h.estado,muerte:h.muerte?{...h.muerte,t:h.muerteT}:null,cd:{...h.cd},sigilo:h.sigilo,fuego:h.incendio?.restante||0,ultiT:h.ultiT,basicos:h.basicos,disparos:h.disparos})),
     aliados:()=>aliados.map(a=>({vida:a.vida,x:a.pos.x,z:a.pos.z})),
     exploracion:()=>({descubiertas:exploracion.celdas.size,activa:exploracion.activa?.nombre,campamentos:exploracion.campamentos.map(c=>({...c}))}),
     jugador(i,accion,p){const h=jugadores[i];if(!h)return;return conHeroe(h,()=>{if(accion==='control'){ent.rev=p?{mov:new V3(p.mov?.[0]||0,0,p.mov?.[1]||0),atacar:!!p.atacar,apunta:p.apunta?new V3(p.apunta[0],0,p.apunta[1]):null}:null;return;}if(accion==='posicion'){h.pos.set(p.x,0,p.z);if(p.dir!==undefined)h.dir=p.dir;return;}if(accion==='parryPrueba')return parryPerfecto(null,h.pos.clone());return usar(accion);});},
@@ -1864,6 +1866,7 @@
         for(const [k,min,max] of [['vida',1,3000],['vel',0,8],['dano',0,100]])if(!Number.isFinite(p[k])||p[k]<min||p[k]>max)throw Error('Parámetro fuera de rango: '+k);
         for(let i=0;i<n;i++){const a=i*TAU/n,radio=p.quieto?Math.max(1.7,Math.sqrt(n)*.9):7,e=crearEnemigo(tipo,heroe.pos.x+Math.sin(a)*radio,heroe.pos.z-Math.cos(a)*radio,{quieto:p.quieto,varianteGoblin:p.varianteGoblin});Object.assign(e.d,{vida:p.vida,vel:p.vel,dano:p.dano});e.vida=e.vidaMax=p.vida;e.dentro=true;if(!p.quieto)cambiar(e,'persigue');}
       },
+      morirHeroe(){poses.heroe=null;herir(heroe.almaMax*4,heroe.pos.clone());return heroe.muerte;},
       derrotarCan(){const can=enemigos.find(e=>e.tipo==='can'&&e.estado!=='muere');if(!can)return false;can.sinBotin=true;morir(can);return true;},
       prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
       proteger(){for(const h of jugadores){h.alma=h.almaMax;h.invul=1;h.mando.foco=h.mando.activo=h.mando.listo=false;}},
