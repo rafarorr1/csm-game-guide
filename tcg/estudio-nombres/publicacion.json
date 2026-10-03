@@ -1,17 +1,17 @@
 {
   "archivos": {
     "_headers": "35554eb6b924bdcd3ab1fd4f9fef74191577cf1af1fadc489bd396d46c484c2c",
-    "estudio-nombres.css": "b68e4dab6f936182cc1739f182c2b86306e67bc3151a8cf67324f449479c3644",
-    "estudio-nombres.js": "a1a345c070bb82365c940f8a8373d4844f243326b302c74512ea321da657e69e",
-    "generado/datos.js": "4c385cc8451295849da8e399361f1e17408da10a6897b6b688a4374719b3eede",
-    "index.html": "faaf7e6c50fe9278d3dda0703aed54ec0aa48ea4b0720f738091c470a4963901",
-    "juego/nombres-cartas.js": "884b38a11d94aa86edce184cf542c81ee7525cf5f3d08d4d2c6dfbd5fe8fa43c",
-    "procedencia.json": "bd11a14f1125d0961040cd8325811268393b0903f209cb91f75a2dbebcf9b42a"
+    "estudio-nombres.css": "e0a5245a23815f178d2cf021b062170f1ca11cd6ecd7f57182b08c8a98c51463",
+    "estudio-nombres.js": "dde7eaf79c4d48f926bea2390dbc73250412db8110f0e58b612a201915aaf002",
+    "generado/datos.js": "19acab6a642134e8ddd49bf4a11c280a93cfd425d686e50e7dd10c4df785b2e6",
+    "index.html": "e4799fb95f5a132ab38415b2d45da979be81c2fbcea1fbb9a1246525c48b6796",
+    "juego/nombres-cartas.js": "b866cd0ae6f7ffa5efa725d127c120f336589c7ec10ef4108b4af8a149206748",
+    "procedencia.json": "1e39fd6eb0f18a4cba2ab96cff911964c7c9df2ec9d01c8ed1053b4daeed5291"
   },
   "formato": "caoz.secciones.aisladas",
   "fuente": {
-    "rama": "feature/editar-nombres-estudio",
-    "sha": "cc67476f8ae22a7827f5376489bb4cad2ef3dfa7"
+    "rama": "feature/credito-artistas-estudio",
+    "sha": "4e60460b3957a0799d99689d39f2aa7d94b06b4a"
   },
   "seccion": "estudio-nombres",
   "version": 1

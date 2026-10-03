@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Estudio de nombres · revisión aislada de Caoz</title>
+<title>Estudio de títulos y créditos · revisión aislada de Caoz</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="./estudio-nombres.css">
 <script src="./generado/datos.js"></script>
@@ -16,8 +16,8 @@
   <header class="estudioNombresCabecera">
     <div>
       <p class="estudioNombresEtiqueta">REVISIÓN AISLADA · CATÁLOGO</p>
-      <h1 id="estudioNombresTitulo">Nombres con una segunda oportunidad</h1>
-      <p>Revisa títulos visibles sin tocar los IDs, las reglas ni la partida. Cada cambio queda como borrador local de esta página.</p>
+      <h1 id="estudioNombresTitulo">Títulos y créditos con una segunda oportunidad</h1>
+      <p>Revisa el título visible y el crédito de cada ilustración sin tocar los IDs, las reglas ni la partida. Cada cambio queda como borrador local de esta página.</p>
     </div>
     <aside class="estudioNombresLimiteCabecera" aria-label="Límite de la revisión">
       <strong>Sin publicación automática</strong>
@@ -25,11 +25,11 @@
     </aside>
   </header>
 
-  <section class="estudioNombresFlujo" aria-label="Flujo de un cambio de nombre">
+  <section class="estudioNombresFlujo" aria-label="Flujo de un cambio de título o crédito">
     <strong>1. Edita</strong><span>→</span><strong>2. Guarda el borrador</strong><span>→</span><strong>3. Revisa antes de beta</strong><span>→</span><strong>4. Producción conserva el original</strong>
   </section>
 
-  <section class="estudioNombresPanel" aria-label="Editor de nombres de cartas">
+  <section class="estudioNombresPanel" aria-label="Editor de títulos y créditos de cartas">
     <nav class="estudioNombresLista" aria-label="Cartas de muestra">
       <div class="estudioNombresListaCabecera">
         <div><p class="estudioNombresEtiqueta">MUESTRA DEL CATÁLOGO</p><h2>5 cartas reales</h2></div>
@@ -42,7 +42,7 @@
       <div class="estudioNombresFicha" id="estudioNombresFicha" aria-live="polite"></div>
       <div class="estudioNombresEdicion">
         <div class="estudioNombresEdicionCabecera">
-          <div><p class="estudioNombresEtiqueta">TÍTULO VISIBLE</p><h2 id="estudioNombresEditorTitulo">Edita el nombre</h2></div>
+          <div><p class="estudioNombresEtiqueta">FICHA VISIBLE</p><h2 id="estudioNombresEditorTitulo">Edita la ficha</h2></div>
           <span id="estudioNombresRegla" class="estudioNombresRegla"></span>
         </div>
         <label class="estudioNombresCampo" for="estudioNombresTituloInput">
@@ -53,6 +53,17 @@
         <div class="estudioNombresAcciones">
           <button type="button" class="btn gold" id="estudioNombresGuardar">Guardar borrador</button>
           <button type="button" class="btn" id="estudioNombresRestaurar">Restaurar original</button>
+        </div>
+        <div class="estudioNombresSeparador" aria-hidden="true"></div>
+        <label class="estudioNombresCampo" for="estudioNombresArtistaInput">
+          <span>Artista de la ilustración</span>
+          <input id="estudioNombresArtistaInput" type="text" autocomplete="off" spellcheck="true" placeholder="Nombre del artista">
+        </label>
+        <p class="estudioNombresAyuda">Este crédito se comparte entre las ediciones Normal, Foil y Dorada y aparecerá como <em>Ilustración: …</em> en el visualizador.</p>
+        <p id="estudioNombresValidacionArtista" class="estudioNombresValidacion" role="status" aria-live="polite"></p>
+        <div class="estudioNombresAcciones">
+          <button type="button" class="btn gold" id="estudioNombresGuardarArtista">Guardar artista</button>
+          <button type="button" class="btn" id="estudioNombresQuitarArtista">Quitar crédito</button>
         </div>
         <p id="estudioNombresMensaje" class="estudioNombresMensaje" role="status" aria-live="polite"></p>
       </div>
@@ -70,7 +81,7 @@
   </section>
 
   <aside class="estudioNombresNota" aria-label="Límites de la revisión">
-    <strong>Esta página no publica nada.</strong> No inicia sesión, no consulta red, no cambia cartas del juego ni guarda progreso. Recargarla descarta todos los borradores de la muestra.
+    <strong>Esta página no publica nada.</strong> No inicia sesión, no consulta red, no cambia cartas del juego ni guarda progreso. Recargarla descarta todos los borradores de títulos y créditos de la muestra.
   </aside>
 </main>
 </body>

@@ -6,14 +6,14 @@
   "online": false,
   "red": false,
   "progresoReal": false,
-  "proposito": "Revisar cinco títulos reales del catálogo con el validador compartido, sin publicar ni alterar los nombres canónicos.",
+  "proposito": "Revisar títulos y créditos de cinco cartas reales con los validadores compartidos, sin publicar ni alterar los datos canónicos.",
   "componente": {
     "archivo": "caoz_tcg/nombres-cartas.js",
-    "sha256": "884b38a11d94aa86edce184cf542c81ee7525cf5f3d08d4d2c6dfbd5fe8fa43c"
+    "sha256": "b866cd0ae6f7ffa5efa725d127c120f336589c7ec10ef4108b4af8a149206748"
   },
   "entorno": {
-    "estudio-nombres.css": "b68e4dab6f936182cc1739f182c2b86306e67bc3151a8cf67324f449479c3644",
-    "estudio-nombres.js": "a1a345c070bb82365c940f8a8373d4844f243326b302c74512ea321da657e69e"
+    "estudio-nombres.css": "e0a5245a23815f178d2cf021b062170f1ca11cd6ecd7f57182b08c8a98c51463",
+    "estudio-nombres.js": "dde7eaf79c4d48f926bea2390dbc73250412db8110f0e58b612a201915aaf002"
   },
   "fixture": {
     "cartas": [
@@ -23,11 +23,11 @@
       "discipulo",
       "pergamino"
     ],
-    "fuenteMotor": "41b62b60c30296e065e5a05a3c4c1f5432f683a30261920465ce83af43f5e076"
+    "fuenteMotor": "f2380454aedcc6460cc4f7e7e218f55e0b8b39d118890cb3f5c398c29375c32f"
   },
   "derivados": {
-    "plantilla": "ce6b1800c6ce9beadbb6066a37b9a4c04859ee9573e698241e3f9b193e2f01e8",
-    "index.html": "faaf7e6c50fe9278d3dda0703aed54ec0aa48ea4b0720f738091c470a4963901",
-    "generado/datos.js": "4c385cc8451295849da8e399361f1e17408da10a6897b6b688a4374719b3eede"
+    "plantilla": "cbe0416fe8697487fced0d947b899d91bad392243ef04a335e82bcee660bad01",
+    "index.html": "e4799fb95f5a132ab38415b2d45da979be81c2fbcea1fbb9a1246525c48b6796",
+    "generado/datos.js": "19acab6a642134e8ddd49bf4a11c280a93cfd425d686e50e7dd10c4df785b2e6"
   }
 }
