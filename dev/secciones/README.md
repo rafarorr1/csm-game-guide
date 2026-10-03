@@ -1352,6 +1352,14 @@ Las cuatro variantes mantienen sombreros, armas, tamaños y orejas. El cobrador 
 
 El cuaderno UV sigue usando el modelo clásico mediante `fabrica(THREE,{pielGoblin:false})`; también se puede pedir `crear('goblin',{modeloGoblin:'clasico'})`. Las texturas descritas abajo corresponden al modelo clásico y a los accesorios conservados.
 
+### Prueba de caída importada del goblin
+
+`modelos-visor.html?tipo=goblin&anim=muerte-fbx` muestra **Falling Back Death.fbx**, aportado por el usuario el 3 de octubre de 2026, sobre el goblin actual. Dura 2,2 s y mantiene la pose final durante 0,8 s antes de repetir. **Momento**, **Repetir** y **Velocidad** permiten revisar el movimiento y las cuatro variantes. Es una prueba aislada: las muertes del combate siguen usando sus animaciones actuales.
+
+Se adaptan 67 muestras de quince huesos a las proporciones del goblin, con retroceso y apoyo del cuerpo y las armas precalculados. El cuello se relaja al terminar para que una oreja no sostenga todo el cuerpo; la antorcha se apaga durante la caída. La axila izquierda usa una corrección de pesos sobre una copia de la geometría, exclusiva de esta prueba, que se restaura al cambiar de animación. Los datos (unos 152 KB) se cargan sólo en el visor.
+
+`adreida-scenario/extraer-muertes.py` extrae el FBX con Blender y `node dev/secciones/goblin-scenario/preparar-caida-prueba.mjs fuente.json` regenera el bloque del visor y `caida-prueba-procedencia.json`. La preparación requiere FFmpeg para leer el atlas de color y distinguir piel del accesorio de la espalda. `node dev/secciones/pruebas_goblin_caida_fbx.mjs` comprueba 724 poses, contacto con el suelo, continuidad, pose final inmóvil y restauración de las mallas compartidas.
+
 ### Piel de los goblins (modelo clásico)
 
 Goblin de Camino y cobrador usan el material aportado en `goblin-skin-bumpy-bl-q9btow.zip`: color sRGB, normales OpenGL y un mapa de superficie con oclusión en rojo y rugosidad en verde. Los tres archivos locales de `texturas-goblin/` son de 1024 × 1024 y suman unos 4.4 MB; `procedencia.json` documenta sus fuentes y tratamiento. El relieve tiene intensidad 0.7, la oclusión del material se aplica al 50 %, y la piel conserva metalness=0. No hay desplazamiento de vértices ni nuevos polígonos.
