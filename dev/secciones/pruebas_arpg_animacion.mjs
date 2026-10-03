@@ -7,10 +7,10 @@ for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adrei
 const {THREE}=c.CAOZ_THREE,M=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=M.crear('adreida'),exacto=M.crear('adreida');
 const cuerpo=h=>Object.fromEntries(Object.entries(h.H).filter(([k])=>k!=='raiz'&&!k.startsWith('falda')).map(([k,b])=>[k,{q:b.quaternion.clone(),p:b.position.clone()}]));
 function igual(h,foto,etiqueta){for(const [k,b] of Object.entries(foto)){assert.ok(h.H[k].quaternion.angleTo(b.q)<1e-6,`${etiqueta}: ${k}`);assert.ok(h.H[k].position.distanceTo(b.p)<1e-8,`${etiqueta}: posición ${k}`);}}
-function seguro(h){
+function seguro(h,dosManos=false){
   h.raiz.updateMatrixWorld(true);
   const apoyo=h.H.manoD.localToWorld(new THREE.Vector3(0,-.3,0)),mano=h.H.manoI.getWorldPosition(new THREE.Vector3());
-  assert.ok(apoyo.distanceTo(mano)<.005,'Las dos manos siguen en el mango al mezclar');
+  if(dosManos)assert.ok(apoyo.distanceTo(mano)<.005,'Las dos manos llegan al mango antes del impacto');
   assert.ok(Object.values(h.H).every(b=>b.matrixWorld.elements.every(Number.isFinite)),'Sin matrices inválidas');
   assert.equal(h.mallas.length,4,'Cuerpo Scenario y tres materiales del hacha');
 }
@@ -20,7 +20,8 @@ M.posar(m,inicial);const foto=cuerpo(m);
 M.posar(m,{anim:'tajoA',estado:'carga',k:0,dt:0,t:0,mezclar:true});igual(m,foto,'Entrada sin salto de pose');
 const movimientos=[['carga','tajoA',.38,1],['golpe','tajoA',.64,.17],['recuperacion','tajoA',.64,.3],['quieto','quieto',0,.6],['andar','andar',0,.6],['carga','revesA',.38,.4],['parry','parry',1,.42]];
 for(const [estado,anim,k,dur] of movimientos)for(let i=1;i<=Math.ceil(dur*120);i++){
-  t+=1/120;M.posar(m,{estado,anim,k:estado==='recuperacion'?k:k*i/Math.ceil(dur*120),potencia:1,paso:1,fase:t*6,t,dt:1/120,mezclar:true});seguro(m);
+  const avance=estado==='recuperacion'?k:k*i/Math.ceil(dur*120);
+  t+=1/120;M.posar(m,{estado,anim,k:avance,potencia:1,paso:1,fase:t*6,t,dt:1/120,mezclar:true});seguro(m,estado==='recuperacion'||estado==='golpe'&&avance>=.38||estado==='parry'&&i/120>=.04);
 }
 // La pose de impacto coincide con la versión exacta aunque el usuario alargue las transiciones.
 M.animacion.configurar({version:1,personaje:'adreida',ajustes:{caminar:.3,carga:.18,regreso:.4,zancada:1}});
@@ -64,6 +65,17 @@ for(const paso of [.3,1]){
  for(const n of ['torso','cadera','cabeza','manoI','manoD'])assert.ok(m.H[n].quaternion.angleTo(antes[n].q)<.001,'Movimiento corporal continuo: '+n);
 }
 console.log('✓ Carrera de acción: pecho visible, contragiro de cadera, mirada estable y ciclo continuo');
+// La mano libre se incorpora al mango sin saltar al cambiar de estado y alcanza
+// el agarre completo antes de que pueda producirse el impacto o el parry.
+for(const fase of [0,1.6,3.2,4.8])for(const destino of ['quieto','carga','parry']){
+ const h=M.crear('adreida'),andar={anim:'andar',estado:'andar',fase,paso:1,mezclar:true,t:1,dt:0};
+ M.posar(h,andar);const partida=cuerpo(h),anim=destino==='carga'?'tajoA':destino;
+ M.posar(h,{anim,estado:destino,k:0,mezclar:true,t:1,dt:0});igual(h,partida,'Soltar y sujetar sin salto: '+destino);
+ for(let i=1;i<=24;i++)M.posar(h,{anim,estado:destino,k:destino==='carga'?.38:destino==='parry'?.5:0,mezclar:true,t:1+i/120,dt:1/120});
+ seguro(h,true);
+ const guardia=cuerpo(h);M.posar(h,{...andar,t:1.2});igual(h,guardia,'Volver a carrera sin salto: '+destino);
+}
+console.log('✓ Carrera a una mano: transiciones continuas a reposo, carga y parry');
 console.log('✓ Transiciones continuas, agarre, impacto exacto, recuperación fija, 30/60/120 Hz, independencia y variantes validadas');
 
 // Regresión del tirón al recoger el hacha: la dirección del mango y el plano del codo
@@ -76,7 +88,7 @@ for(const anim of ['tajoA','revesA','estocadaA'])for(const potencia of [0,1]){
  for(let i=0;i<25;i++)poses.push({anim:'quieto',estado:'quieto'});
  let anterior=null;
  for(const [i,pose] of poses.entries()){
-  M.posar(m,{...pose,t:i/60,dt:1/60,mezclar:true});seguro(m);
+  M.posar(m,{...pose,t:i/60,dt:1/60,mezclar:true});seguro(m,pose.estado==='recuperacion'||pose.estado==='golpe'&&pose.k>=.38);
   if(anterior&&(pose.k>=.66||pose.estado==='quieto'))for(const nombre of ['brazoI','anteI','manoI','brazoD','anteD','manoD']){
    assert.ok(m.H[nombre].quaternion.angleTo(anterior[nombre].q)<1,`Recogida continua: ${anim}, carga ${potencia}, cuadro ${i}, ${nombre}`);
   }

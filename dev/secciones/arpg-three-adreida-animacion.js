@@ -21,7 +21,7 @@
     const estados=new WeakMap();
     const configuracion=()=>({version:1,personaje:'adreida',ajustes:{...ajustes}});
     function configurar(p){const nuevos=validar(p);ajustes=nuevos;return configuracion();}
-    /* ---- El hacha a dos manos de Adreida ------------------------------------------------------
+    /* ---- El hacha de Adreida: una mano al desplazarse, dos en combate -------------------------
        Cada pose dice dónde está la empuñadura (G, la mano derecha) y hacia dónde apunta el hacha (A),
        en el espacio del torso; los dos brazos llegan con cinemática inversa de dos huesos: la derecha
        a G, junto al pomo, y la izquierda 30 cm hacia la cabeza del hacha. La mano derecha se orienta para
@@ -84,23 +84,33 @@
         H['pie'+lado].updateMatrixWorld(true);
       }
     }
-    const _agarre=Array.from({length:8},()=>new THREE.Vector3()),_orientacion=new THREE.Quaternion();
-    function empunar(m,{G,A,arriba}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
+    const _agarre=Array.from({length:8},()=>new THREE.Vector3()),_orientacion=new THREE.Quaternion(),qLibre=new THREE.Quaternion(),eLibre=new THREE.Euler();
+    function empunar(m,{G,A,arriba,soltarIzquierda=0,brazoLibre=[0,0,.18,-.4]}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
       const g=_v[6].fromArray(G).applyMatrix4(T),a=_v[7].fromArray(A).transformDirection(T),up=_v[8].fromArray(arriba||[0,1,0]).transformDirection(T);
-      // Los dos agarres deben quedar al alcance sin estirar los brazos ni soltar el mango.
+      // Sólo las manos que sujetan el arma limitan su alcance.
       const separacion=.3,sd=H.brazoD.getWorldPosition(_agarre[0]),si=H.brazoI.getWorldPosition(_agarre[1]).addScaledVector(a,-separacion);
       const alcance=m.p.brazo+m.p.antebrazo-.015;
-      for(let i=0;i<8;i++)for(let j=0;j<2;j++){const centro=j?si:sd,delta=_agarre[2].copy(g).sub(centro);if(delta.length()>alcance)g.copy(centro).add(delta.setLength(alcance));}
+      for(let i=0;i<8;i++)for(let j=0;j<2;j++){const peso=j?1-soltarIzquierda:1;if(!peso)continue;const centro=j?si:sd,delta=_agarre[2].copy(g).sub(centro),d=delta.length();if(d>alcance)g.addScaledVector(delta,(alcance/d-1)*peso);}
       ik(H.brazoD,H.anteD,H.manoD,g,_agarre[3].set(-.7,-.5,-.35).applyMatrix4(T));
       // La mano derecha: -Y por el mango, X (la cara del hacha) lo más cerca posible de «arriba».
       const y=_agarre[4].copy(a).negate(),x=_agarre[5].copy(up).addScaledVector(y,-up.dot(y));if(x.lengthSq()<1e-6)x.set(1,0,0);x.normalize();const z=_agarre[6].crossVectors(x,y);
       H.manoD.parent.getWorldQuaternion(_q).invert();H.manoD.quaternion.setFromRotationMatrix(_m.makeBasis(x,y,z)).premultiply(_q);H.manoD.updateMatrixWorld(true);
-      // La izquierda envuelve el mango entre la derecha y la cabeza, nunca fuera del pomo.
-      const apoyo=H.manoD.localToWorld(_agarre[7].set(0,-separacion,0));
-      // El codo izquierdo pasa por delante del pecho al cruzar para sujetar el mango.
-      ik(H.brazoI,H.anteI,H.manoI,apoyo,_agarre[3].set(.7,-.15,.8).applyMatrix4(T));
-      const orientacion=H.manoD.getWorldQuaternion(_orientacion);
-      H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);H.manoI.updateMatrixWorld(true);}
+      if(soltarIzquierda<1){
+        // La izquierda se incorpora al mango para atacar y protegerse.
+        const apoyo=H.manoD.localToWorld(_agarre[7].set(0,-separacion,0));
+        ik(H.brazoI,H.anteI,H.manoI,apoyo,_agarre[3].set(.7,-.15,.8).applyMatrix4(T));
+        const orientacion=H.manoD.getWorldQuaternion(_orientacion);
+        H.manoI.parent.getWorldQuaternion(_q).invert();H.manoI.quaternion.copy(_q).multiply(orientacion);
+      }
+      if(soltarIzquierda>0){
+        // El brazo libre contrapesa la pierna izquierda. Mezclar también el codo y
+        // la muñeca permite volver al agarre de combate sin un salto de pose.
+        H.brazoI.quaternion.slerp(qLibre.setFromEuler(eLibre.set(brazoLibre[0],brazoLibre[1],brazoLibre[2])),soltarIzquierda);
+        H.anteI.quaternion.slerp(qLibre.setFromEuler(eLibre.set(brazoLibre[3],0,0)),soltarIzquierda);
+        H.manoI.quaternion.slerp(qLibre.setFromEuler(eLibre.set(0,0,m.modeloAdreida==='scenario'?Math.PI/2-.31:0)),soltarIzquierda);
+      }
+      H.brazoI.updateMatrixWorld(true);
+    }
     const ejeDesde=new THREE.Vector3(),ejeHasta=new THREE.Vector3(),giroAgarre=new THREE.Quaternion(),giroParcial=new THREE.Quaternion();
     function mezclarAgarre(dest,p,q,w,arco=0){
       ejeDesde.fromArray(p.A).normalize();ejeHasta.fromArray(q.A).normalize();giroAgarre.setFromUnitVectors(ejeDesde,ejeHasta);
@@ -115,14 +125,17 @@
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
       // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
-      const reposo=()=>{const mov=a.anim==='andar'?(a.paso??1):0,f=a.fase||0;
-        // El hacha acompaña al pecho con una pequeña respuesta retrasada de brazos y muñecas.
-        const bob=mov?Math.sin(f*2-.9)*.012*mov:Math.sin(t*2.2)*.004;
-        return {G:[Math.sin(f-.45)*.014*mov,.35+bob,.48+Math.cos(f*2-.7)*.008*mov],A:dirA(-2.73+Math.sin(f-.5)*.045*mov,.46+Math.sin(f*2-1.1)*.026*mov),arriba:[0,1,0]};};
+      const reposo=()=>({G:[0,.35+Math.sin(t*2.2)*.004,.48],A:dirA(-2.73,.46),arriba:[0,1,0]});
       const horizontal=(f,e)=>{const r=.42-.08*Math.abs(Math.sin(f));return {G:[Math.sin(f)*r,.28,Math.cos(f)*r],A:dirA(f,e),arriba:[0,1,0]};};
       const mezcla=(p,q,w)=>({G:p.G.map((v,i)=>v+(q.G[i]-v)*w),A:(()=>{const v=p.A.map((x,i)=>x+(q.A[i]-x)*w),l=Math.hypot(...v)||1;return v.map(x=>x/l);})(),arriba:q.arriba||p.arriba});
       const vertical=al=>({G:[-.04,.35+Math.sin(al)*.38,.05+Math.cos(al)*.38],A:[-.08,Math.sin(al),Math.cos(al)],arriba:[1,0,0]});
       switch(a.anim){
+        case 'andar':{const f=a.fase||0,p=Math.max(0,Math.min(1,a.paso??1)),r=correr(p),balanceo=Math.cos(f-.12);
+          // Una mano sujeta el mango delante del hombro derecho; la cabeza del
+          // hacha descansa detrás. El brazo izquierdo bombea al lado del cuerpo.
+          return {G:[-.29+Math.sin(f-.4)*.012*p,.20+Math.sin(f*2-.9)*.012*p,.34+Math.sin(f-.3)*.02*p],
+            A:dirA(-3.03+Math.sin(f-.5)*.035*p,.55+Math.sin(f*2-1.1)*.025*p),arriba:[0,1,0],soltarIzquierda:1,
+            brazoLibre:[-.08+balanceo*(.30+.25*r)*p,-.05*Math.sin(f)*p,.22+Math.sin(f)*.025*p,-.35-.65*r-.08*balanceo*p]};}
         case 'tajoA':case 'revesA':{const r=a.anim==='revesA',s=r?-1:1,car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1);
           const f=(-1.3*car+2.4*gol)*s,e=-.25;return mezclarAgarre({G:[],A:[],arriba:[]},mezcla(reposo(),horizontal(f,e),Math.max(car,gol)),reposo(),rec,.24);}
         case 'estocadaA':{const car=tramo(k,0,.38),emp=tramo(k,.38,.48),rec=tramo(k,.66,1);return mezcla(mezcla(reposo(),vertical(-.8+2.8*car-2.3*emp),Math.min(1,car*1.5)),reposo(),rec);}
@@ -166,10 +179,10 @@
       let e=estados.get(m);if(e)return e;
       const huesos=Object.entries(m.H).filter(([k])=>k!=='raiz'&&!/^(brazo|ante|mano|falda)/.test(k)).map(([,b])=>b);
       e={huesos,ultima:huesos.map(()=>new THREE.Quaternion()),desde:huesos.map(()=>new THREE.Quaternion()),pos:new THREE.Vector3(),desdePos:new THREE.Vector3(),
-        agarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0]},desdeAgarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0]},valido:false,libre:false,estado:null,tiempo:0,duracion:0};
+        agarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0],soltarIzquierda:0,brazoLibre:[0,0,.18,-.4]},desdeAgarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0],soltarIzquierda:0,brazoLibre:[0,0,.18,-.4]},valido:false,libre:false,estado:null,tiempo:0,duracion:0};
       estados.set(m,e);return e;
     }
-    function copiarAgarre(dest,src){for(const k of ['G','A','arriba'])for(let i=0;i<3;i++)dest[k][i]=src[k][i];}
+    function copiarAgarre(dest,src){for(const k of ['G','A','arriba','brazoLibre'])for(let i=0;i<src[k].length;i++)dest[k][i]=src[k][i];dest.soltarIzquierda=src.soltarIzquierda;}
     function mezclar(m,a,agarre){
       const e=memoria(m),estado=a.estado||(['tajoA','revesA','estocadaA'].includes(a.anim)?'golpe':a.anim),libre=['grito','muerte'].includes(a.anim),exacta=a.mezclar!==true;
       const nuevo=estado!==e.estado||a.anim!==e.anim;
@@ -186,13 +199,15 @@
         e.huesos.forEach((b,i)=>b.quaternion.slerp(e.desde[i],1-w));
         m.H.cuerpo.position.lerpVectors(e.desdePos,m.H.cuerpo.position,w);
         mezclarAgarre(agarre,e.desdeAgarre,agarre,w,['quieto','andar'].includes(estado)?.24:0);
+        agarre.soltarIzquierda=e.desdeAgarre.soltarIzquierda+(agarre.soltarIzquierda-e.desdeAgarre.soltarIzquierda)*w;
+        for(let i=0;i<4;i++)agarre.brazoLibre[i]=e.desdeAgarre.brazoLibre[i]+(agarre.brazoLibre[i]-e.desdeAgarre.brazoLibre[i])*w;
       }
       e.huesos.forEach((b,i)=>e.ultima[i].copy(b.quaternion));e.pos.copy(m.H.cuerpo.position);copiarAgarre(e.agarre,agarre);
       e.estado=estado;e.anim=a.anim;e.libre=libre;e.valido=!exacta;
     }
     function resolver(m,a){
       const H=m.H,k=a.k||0,t=a.t||0;
-      // Adreida agarra el hacha con las dos manos (salvo al gritar, con los brazos abiertos, y al caer).
+      // Al desplazarse lleva el hacha con la derecha; vuelve a dos manos en combate.
       // El hachazo cargado toma impulso con cadera y torso, hundiendo las rodillas antes del barrido.
       if(a.potencia>0&&['tajoA','revesA','estocadaA'].includes(a.anim)){
         const p=a.potencia,pre=tramo(k,0,.38)*(1-tramo(k,.4,.62)),gol=tramo(k,.4,.62)*(1-tramo(k,.66,1));
@@ -200,7 +215,7 @@
         H.torso.rotation.x+=p*(-.2*pre+.24*gol);H.cuerpo.position.y-=p*(.13*pre+.08*gol);
         H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
       }
-      const agarre=agarreAdreida(a);mezclar(m,a,agarre);
+      const agarre=agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4];mezclar(m,a,agarre);
       {
         const tela=m.tela||(m.tela={t:t,aperturas:Array(7).fill(0)}),dt=Math.max(0,Math.min(.05,t-tela.t));tela.t=t;
         for(let i=0;i<7;i++){

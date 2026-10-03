@@ -28,10 +28,14 @@ for(let i=0;i<a.position.count;i++){
  if(peso>.85)antebrazoIzquierdo.push(i);
 }
 assert.ok(antebrazoIzquierdo.length>50,'La prueba mide la superficie del antebrazo');
-for(const anim of ['quieto','andar'])for(let i=0;i<50;i++){
+for(const anim of ['quieto'])for(let i=0;i<50;i++){
  F.posar(m,{anim,t:i/50,fase:i/50*Math.PI*2,paso:1});m.raiz.updateMatrixWorld(true);
  assert.ok(m.H.torso.worldToLocal(m.H.anteI.getWorldPosition(v)).z>.24,anim+': codo delante del pecho');
  for(const j of antebrazoIzquierdo){cuerpo.getVertexPosition(j,v).applyMatrix4(cuerpo.matrixWorld);m.H.torso.worldToLocal(v);assert.ok(v.z>.18,anim+': antebrazo fuera del torso');}
+}
+for(let i=0;i<100;i++){
+ F.posar(m,{anim:'andar',fase:i/100*Math.PI*2,paso:1});m.raiz.updateMatrixWorld(true);
+ for(const j of antebrazoIzquierdo){cuerpo.getVertexPosition(j,v).applyMatrix4(cuerpo.matrixWorld);m.H.torso.worldToLocal(v);assert.ok(v.x>.20,'El antebrazo libre no atraviesa el cuerpo al correr');}
 }
 // Apoyo real: al avanzar una zancada, el pie apoyado debe conservar su posición
 // sobre el suelo. Revisar también velocidades de mando y extremos del inspector.

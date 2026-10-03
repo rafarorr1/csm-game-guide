@@ -12,7 +12,7 @@
     "Sprint_Loop"
   ],
   "muestrasPorCiclo": 32,
-  "adaptacion": "Pelvis, pecho y cabeza expresados en el espacio del personaje; pose media eliminada para aplicar la guardia del hacha de Adreida. Se conservan el solver de piernas y el agarre a dos manos.",
+  "adaptacion": "Pelvis, pecho y cabeza expresados en el espacio del personaje; pose media eliminada para aplicar la guardia del hacha de Adreida. Se conserva el solver de piernas. Al desplazarse lleva el hacha con la derecha y el brazo izquierdo libre; en reposo y combate vuelve al agarre a dos manos.",
   "compilador": "preparar-movimiento.mjs",
   "salida": "Bloque movimientoCorporal en arpg-three-adreida-animacion.js"
 }
