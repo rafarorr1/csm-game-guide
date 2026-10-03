@@ -56,4 +56,15 @@ vm.runInContext(extraerDeclaracion(mesa,'cerrarEtapaTroll').texto,a);
 const troll={tipo:'troll',estado:'muere'};a.enemigos=[troll,{tipo:'troll',estado:'persigue'}];assert(!a.cerrarEtapaTroll(troll));
 a.enemigos=[troll];a.ol.cola=[['troll',0]];assert(!a.cerrarEtapaTroll(troll));a.ol.cola=[];a.ABIERTO=true;assert(!a.cerrarEtapaTroll(troll));a.ABIERTO=false;a.ol.i=5;assert(!a.cerrarEtapaTroll(troll));a.ol.i=6;
 assert(a.cerrarEtapaTroll(troll));assert.equal(habilitadas,1);assert.equal(huidas,1);assert.equal(a.ol.cola.length,0);assert.equal(a.refuerzosCan.length,0);assert.equal(a.ol.fin,false);assert.equal(a.ol.descanso,null);
+// Relámpagos localizados: sin mallas ni luces nuevas por cuadro, y sin avanzar en pausa.
+for(const reducido of [false,true]){
+  const casa=c.CAOZ_ARPG_CASA_INTERIOR.crear(T,{reducido}),cantidad=casa.raiz.children.length;
+  for(let i=0;i<6*60;i++)casa.paso(1/60);casa.paso(.17);const luz=casa.raiz.getObjectByName('Luz del relámpago');
+  assert(casa.estado().relampagos>=1);assert(casa.estado().destello>0);assert(luz.intensity>0&&luz.intensity<=8);
+  assert.equal(casa.raiz.getObjectByName('Relámpago exterior').visible,!reducido);
+  const detenido=JSON.stringify(casa.estado());casa.paso(0);assert.equal(JSON.stringify(casa.estado()),detenido);
+  for(let i=0;i<120;i++)casa.paso(1/60);assert.equal(luz.intensity,0);assert.equal(casa.raiz.children.length,cantidad);
+  casa.reiniciar();assert.equal(casa.estado().relampagos,0);assert.equal(luz.intensity,0);
+}
+assert.equal(epilogo.escena.children.filter(o=>o.isLight&&o.castShadow).length,1,'Sólo un mapa de sombras en la habitación');
 console.log('✓ Casa: llave obligatoria, dos decisiones, un golpe para ambos, cuerpos apoyados, mando sin pulsaciones heredadas, pausa, reinicio y regreso único a 30/60/120 FPS; espera al último Troll.');

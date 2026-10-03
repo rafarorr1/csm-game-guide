@@ -1354,6 +1354,24 @@ Escape/Options pausa también la cinemática; **Omitir · Enter** conduce a la b
 
 Revisión directa: `arpg-three.html?etapa=2&heroe=adreida&entrada=troll&piso=vegetacion` incluye la caída del último cobrador; **Volver a empezar** la reproduce. El visor ofrece `anim=recogerLlave`, `anim=mirarLlave` y `anim=rodar` con `tipo=adreida`. `pruebas_arpg_entrada_troll.mjs` comprueba el roll, las rutas y la transición de oleadas. `pruebas_arpg_llave_troll.mjs` verifica la baja real que dispara la secuencia, el contacto de la mano con el suelo, la colocación segura, el orden de las fases y la recogida única al pausar, omitir o reiniciar.
 
+### Puntuación y estilo de combate
+
+El contador `arpg-three-estilo.js` lleva el score de la partida, compartido en cooperativo. Cada baja real suma su valor base multiplicado por el rango alcanzado **incluyendo el golpe letal**: goblin 100, kobold 125, cobrador 150, saqueador 250, Can 1.500 y Troll 2.500. El multiplicador modifica únicamente los puntos, nunca el daño. Los golpes sin baja alimentan el combo, pero no dan puntos por sí solos.
+
+| Impactos encadenados | Rango | Multiplicador |
+| --- | --- | --- |
+| 1 | D | ×1 |
+| 3 | C | ×1,5 |
+| 6 | B | ×2 |
+| 10 | A | ×3 |
+| 15 | S | ×4 |
+| 22 | SS | ×6 |
+| 30 | SSS | ×8 |
+
+Cada impacto que causa daño renueva una ventana de **3 segundos**. Al agotarse, cadena y multiplicador vuelven a **0**; los puntos acumulados se conservan. El siguiente golpe comienza en D/×1. Fallos, blindaje y cadáveres no renuevan el tiempo. Las bajas de Adreidos puntúan, pero sus impactos no mantienen solos la cadena. Las bajas técnicas de las vistas de revisión, las huidas y la familia del epílogo no dan puntos. Pausa, pestaña inactiva y diálogo de cartas suspenden el contador; el hitstop no alarga sus tres segundos. Reiniciar o comenzar una partida nueva limpia el score.
+
+El HUD muestra puntos, rango, multiplicador y una barra de tiempo, con espacio separado del botín; se oculta durante cinemáticas y dentro de la casa. Prueba acotada: `node dev/secciones/pruebas_arpg_estilo.mjs` verifica los umbrales, vencimiento a distintas tasas, bajas, blindaje, cadáveres, asistencia y pausas reales.
+
 ### Casa de los goblins · Epílogo de la Etapa 2
 
 Al morir el último Recaudador, se cancelan sus proyectiles y refuerzos. Los enemigos restantes huyen y la plaza deja de generar oleadas. En cooperativo se espera a los dos Trolls, incluidos los que aún no han entrado. Una casa de piedra tiene un hueco real en la fachada y una puerta que se abre con la llave recogida en la cinemática anterior; consume una sola llave. Un aro discreto marca la entrada. Se puede pulsar la puerta o **Ir a la casa de la llave**, usar **F**, o acercarse y pulsar **×** en el mando. Adreida sigue una ruta hasta ella.
@@ -1363,6 +1381,8 @@ Al morir el último Recaudador, se cancelan sus proyectiles y refuerzos. Los ene
 El decorado de `arpg-three-casa-interior.js` usa la casa diseñada en Scenario: mesa con tres puestos, camas de adulto y niño, fogón, alacenas, baúl, ropa y juguetes. Los dos retratos muestran al padre, la madre y su hijo felices. Se colocan sobre la pared como imágenes independientes, con marcos mates sin cristal reflectante. El recorrido central queda despejado.
 
 `casa-goblin-scenario/` conserva la malla, los mapas PBR locales y las fotos, además del concepto y la procedencia. La malla original tiene **29.602 triángulos** y un solo material; el color es de **2048 × 2048**, la superficie de **1024 × 1024**, y cada retrato de **768 × 512**. Scenario/Tripo reconstruyó el volumen y Trellis refinó el acabado, con 85 créditos en total para la versión 3D. Las texturas se cargan al abrir la puerta; la transición espera a que estén listas. El decorado usa un único material y transformaciones estáticas, y comparte el renderer del juego. `preparar.py /ruta/interior.glb` reproduce la conversión con numpy y Pillow; alinea la habitación y sitúa la superficie del piso en Y=0. Las pruebas del epílogo también verifican el piso del recorrido y que las fotos estén delante de la pared.
+
+La habitación queda en penumbra: luz ambiental reducida, fotos que responden a la iluminación, vela tenue y un foco cálido con sombra dirigido a la madre y su hijo. Conserva un solo mapa de sombras. Por la ventana aparece un relámpago inicial a los 6 segundos y luego cada 14–26 segundos, con un trazo exterior y un breve reflejo azulado local. No usa un flash de pantalla, bloom ni un nuevo renderer. Pausar congela la tormenta; movimiento reducido cambia el rayo por una variación lenta y suave de luz. `pruebas_arpg_casa_goblin.mjs` cubre también destellos, reposo, reinicio y cantidad estable de objetos.
 
 En ambos casos Adreida sale por la misma puerta y comienza de nuevo la **Etapa 1**. Se conservan las preferencias de personaje, cooperativo y controles de la URL, pero se reinicia la partida y sus mejoras. Por ahora este epílogo reemplaza el cierre y la tirada final de cartas del segundo nivel.
 

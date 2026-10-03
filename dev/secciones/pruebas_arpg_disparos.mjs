@@ -6,7 +6,8 @@ import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8');
 const get=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
 const c=vm.createContext({console});c.window=c;c.cinematicaTroll=null;
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+for(const f of ['arpg-three-estilo.js','visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+c.estilo=c.CAOZ_ARPG_ESTILO.crear();
 vm.runInContext(`
 const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),escena=new THREE.Scene(),reloj={t:0};
 const obstaculos=[],enemigos=[],jugadores=[],balas=[],PLANOS_MURALLA=[{x:0,z:1},{x:0,z:-1},{x:1,z:0},{x:-1,z:0}],ABIERTO=false,R=26,poses={};

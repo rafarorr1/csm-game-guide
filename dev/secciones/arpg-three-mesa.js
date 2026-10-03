@@ -22,6 +22,7 @@
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
+  const estilo=window.CAOZ_ARPG_ESTILO.crear();
   let cinematicaTroll=null,llaveEntradaTroll=null,casaGoblin=null,casaVisitable=null,llaveDelRecaudador=false;
   window.CAOZ_ARPG_IA.configurar(q.get('ia')==='clasica'?'clasica':'yuka');
   const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
@@ -809,6 +810,7 @@
   }
   function danar(e,dano,opc={}){if(e.estado==='muere')return;activarFaseTroll(e);heroe.ultimo=e;
     if(blindadoTroll(e)){if((e.avisoBlindaje??-9)<reloj.t){numero(e.pos.clone().setY(e.m.alto+.3),'¡Necesitas un parry!','bloqueo');e.avisoBlindaje=reloj.t+.8;}return;}const crit=opc.crit??rnd()<.12;const expuesto=e.expuestoHasta>reloj.t;dano=Math.round(opc.exacto?dano:dano*(crit?1.8:1)*(expuesto?2:1)*(.9+rnd()*.2));if(e.tipo==='troll'&&!e.fase2)dano=Math.min(dano,e.vida-e.vidaMax*.5);e.vida-=dano;e.destello=1;activarFaseTroll(e);
+    estilo.impacto(dano,{tipo:e.tipo,baja:e.vida<=0,directo:opc.causa!=='adreidos'});
     numero(e.pos.clone().setY(e.m.alto+.3),String(dano),crit||expuesto?'critico':'dano');
     const lejos=(opc.direccion?opc.direccion.clone():e.pos.clone().sub(opc.origen||heroe.pos)).setY(0).normalize();if(lejos.lengthSq()<.001)lejos.copy(frente(heroe.dir));e.emp.addScaledVector(lejos,(opc.empuje??1.6)*(e.d.aguante?.35:1));
     if(e.vida<=0){morir(e,{causa:opc.causa||'tajo',direccion:lejos,cargaCompleta:opc.cargaCompleta});return;}
@@ -1276,7 +1278,7 @@
     ol.i++;const O=OLEADAS[ol.i];if(ol.i===0||ol.i===4)iniciarDestino(ol.i===0?1:2);if(O.etapa===2&&O.fase===1)for(const h of jugadores){h.alma=Math.min(h.almaMax,h.alma+40);h.vivo=true;cambiar(h,'quieto');}let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n*FACTOR_COOP;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(!DEF[ol.cola[i][0]].jefe&&!DEF[ol.cola[j][0]].jefe)[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;if(O.etapa===2&&O.fase===3){iniciarEntradaTroll();return;}banner(O.nombre,O.texto||(O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.'));}
-  function reiniciar(){casaGoblin?.cancelar();llaveDelRecaudador=false;llaveEntradaTroll=null;cinematicaTroll?.cancelar();mostrarEntradaTroll(false);impactoFX.limpiar();temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+  function reiniciar(){estilo.reiniciar();casaGoblin?.cancelar();llaveDelRecaudador=false;llaveEntradaTroll=null;cinematicaTroll?.cancelar();mostrarEntradaTroll(false);impactoFX.limpiar();temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const b of [...bumeranes])quitarBumeran(b);
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);limpiarFuegoRopa();for(const h of jugadores)liberarModeloTroll(h.m);limpiarAliados();crearEquipo();reiniciarExploracion();$('botin').innerHTML='';Object.assign(ol,{i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});$('fin').hidden=true;finMostrado=false;prepararVistaEntrada();}
 
@@ -1466,7 +1468,14 @@
   function tostada(html,mala=false){const t=$('tostada');t.innerHTML=html;t.classList.toggle('mala',mala);t.classList.add('visto');tostadaHasta=reloj.t+(mala?1.2:2.6);}
   function banner(titulo,texto){const b=$('banner');b.innerHTML=`<b>${titulo}</b><small>${texto}</small>`;b.classList.add('visto');bannerHasta=reloj.t+2.8;}
   function textoHud(el,valor){if(el.textContent!==valor)el.textContent=valor;}
-  function hud(dt=0){hudEquipo();const h=heroe;liquidosHud.paso(dt,{alma:h.alma,almaMax:h.almaMax,furia:h.furia,vx:h.velocidad?.x||0,vz:h.velocidad?.z||0});$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');textoHud($('almaTxt'),Math.ceil(h.alma)+' / '+h.almaMax);
+  const estiloHud={panel:$('estilo'),puntos:$('estiloPuntos'),rango:$('estiloRango'),multi:$('estiloMulti'),nombre:$('estiloNombre'),golpes:$('estiloGolpes'),barra:$('estiloTiempo'),ultima:$('estiloUltima')};
+  function hudEstilo(){const s=estilo.estado(),h=estiloHud;
+    textoHud(h.puntos,s.puntos.toLocaleString('es-MX'));textoHud(h.rango,s.rango);textoHud(h.multi,'×'+String(s.multiplicador).replace('.',','));textoHud(h.nombre,s.nombre);
+    textoHud(h.golpes,s.golpes?s.golpes+' impactos · '+s.restante.toFixed(1)+' s':'3 s para enlazar');textoHud(h.ultima,s.ultimo?'+'+s.ultimo+' puntos':'');
+    const nivel=s.rango==='—'?'0':s.rango;if(h.panel.dataset.rango!==nivel)h.panel.dataset.rango=nivel;
+    h.barra.style.transform='scaleX('+(s.restante/3).toFixed(3)+')';
+  }
+  function hud(dt=0){hudEstilo();hudEquipo();const h=heroe;liquidosHud.paso(dt,{alma:h.alma,almaMax:h.almaMax,furia:h.furia,vx:h.velocidad?.x||0,vz:h.velocidad?.z||0});$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');textoHud($('almaTxt'),Math.ceil(h.alma)+' / '+h.almaMax);
     const fuego=$('hudFuego');fuego.hidden=!h.incendio;if(h.incendio){const texto='En llamas · '+Math.ceil(h.incendio.restante)+' s · Dash para apagar';if(fuego.textContent!==texto)fuego.textContent=texto;}
     $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');textoHud($('furiaTxt'),Math.floor(h.furia)+' / 100');
     for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0,recarga=cd>0?String(Math.ceil(cd)):'';if(b.dataset.recarga!==recarga)b.dataset.recarga=recarga;b.style.setProperty('--cd',(H.cd?cd/(H.cd*(k==='esquiva'?(h.dash??1):1))*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',k==='torbellino'?girando(h):{salto:'salto',provocar:'grito',bumeran:'lanzarHacha',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
@@ -1697,6 +1706,7 @@
     const dtReal=dt;
     leerPausaMando();if(pausa.activa)return false;
     if(rog.abierto){mandoDestino();return false;}
+    estilo.paso(dtReal);
     escena.updateMatrixWorld(true);
     if(paron>0){paron-=dt;dt*=.08;}
     reloj.t+=dt;tiempo.value=reloj.t;F.tiempo.value=reloj.t;CASAS.uniformes.uT.value=reloj.t;
@@ -1909,6 +1919,7 @@
     ia(modo){if(modo!==undefined)configurarIA(modo);return {modo:window.CAOZ_ARPG_IA.modo(),goblins:enemigos.filter(e=>e.ia&&e.estado!=='muere').map(e=>({id:e.id,variante:e.m.varianteGoblin,accion:e.ia.accion,decisiones:e.ia.decisiones}))};},
     entradaTroll:()=>cinematicaTroll.estado(),
     casaGoblin:()=>casaGoblin.estado(),
+    estilo:()=>estilo.estado(),
     impactos:()=>impactoFX.estado(),
     clima:()=>clima.estado(),
     orbes:()=>liquidosHud.estado(),

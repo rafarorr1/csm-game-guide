@@ -3,7 +3,7 @@
 'use strict';
 (function(){
   const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL('./casa-goblin-scenario/',document.currentScript.src).href:null;
-  function crear(THREE){
+  function crear(THREE,{reducido=false}={}){
     const datos=window.CAOZ_CASA_GOBLIN_DATOS,raiz=new THREE.Group(),pendientes=[],mapas=new Map(),materiales=new Map();
     raiz.name='Interior · Scenario';let listo=!ruta;
     const leer=(s,T)=>new T(Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer);
@@ -32,11 +32,11 @@
       const alto=r.ancho*2/3;
       caja(r.ancho+.16,alto+.16,.065,r.x,r.y,r.z,marco);
       caja(r.ancho+.055,alto+.055,.07,r.x,r.y,r.z+.009,borde);
-      const m=new THREE.Mesh(new THREE.PlaneGeometry(r.ancho,alto),new THREE.MeshBasicMaterial({map:textura(r.nombre,true,true),color:0xc8bda7,toneMapped:true}));
+      const m=new THREE.Mesh(new THREE.PlaneGeometry(r.ancho,alto),new THREE.MeshStandardMaterial({map:textura(r.nombre,true,true),color:0xa59b89,roughness:1,envMapIntensity:.08}));
       m.name=r.nombre;m.position.set(r.x,r.y,r.z+.052);raiz.add(m);
     }
     // La ventana conserva un fondo nocturno aunque detrás del diorama no haya ciudad.
-    const cielo=new THREE.Mesh(new THREE.PlaneGeometry(1.32,1.14),new THREE.MeshBasicMaterial({color:0x13243b}));
+    const cielo=new THREE.Mesh(new THREE.PlaneGeometry(1.32,1.14),new THREE.MeshBasicMaterial({color:0x070f1c}));
     cielo.position.set(2.25,1.66,-3.52);raiz.add(cielo);
     const luna=new THREE.Mesh(new THREE.CircleGeometry(.09,16),new THREE.MeshBasicMaterial({color:0xb5c8dd}));
     luna.position.set(2.6,1.95,-3.50);raiz.add(luna);
@@ -52,12 +52,27 @@
     cera.position.set(-2.8,.83,.3);raiz.add(cera);
     const llama=new THREE.Mesh(new THREE.SphereGeometry(.043,8,6),new THREE.MeshBasicMaterial({color:0xffb950}));
     llama.scale.set(.6,1.7,.6);llama.position.set(-2.8,.99,.3);raiz.add(llama);
-    const vela=new THREE.PointLight(0xffaa54,1.8,4,2);vela.position.set(-2.8,1.04,.3);raiz.add(vela);
+    const vela=new THREE.PointLight(0xffaa54,.6,3,2);vela.position.set(-2.8,1.04,.3);raiz.add(vela);
+    // Relámpagos al otro lado del cristal: sólo una línea y una luz local, sin otra pasada.
+    const trazo=new THREE.BufferGeometry().setFromPoints([[2.08,2.19,-3.47],[2.18,1.98,-3.47],[2.10,1.82,-3.47],[2.31,1.63,-3.47],[2.22,1.47,-3.47],[2.42,1.18,-3.47]].map(p=>new THREE.Vector3(...p)));
+    const rayo=new THREE.Line(trazo,new THREE.LineBasicMaterial({color:0xc9e1ff,transparent:true,opacity:0,depthWrite:false}));rayo.name='Relámpago exterior';rayo.visible=false;raiz.add(rayo);
+    const luzVentana=new THREE.PointLight(0x9bbfe8,0,7,2);luzVentana.name='Luz del relámpago';luzVentana.position.set(2.25,2,-3.05);raiz.add(luzVentana);
+    const noche=new THREE.Color(0x070f1c),destelloCielo=new THREE.Color(0x849ebd);
+    let reloj=0,siguiente=6,inicio=-100,relampagos=0,destello=0,semilla=73;
+    const azar=()=>{semilla=semilla*16807%2147483647;return semilla/2147483647;};
+    function paso(dt){if(!Number.isFinite(dt)||dt<=0)return;reloj+=dt;
+      if(reloj>=siguiente){inicio=siguiente;relampagos++;siguiente=reloj+14+azar()*12;}
+      const t=reloj-inicio,pulso=(centro,ancho)=>Math.max(0,1-Math.abs(t-centro)/ancho);
+      destello=reducido?pulso(.85,.85)*.18:Math.max(pulso(.16,.16),pulso(.48,.22)*.65);
+      cielo.material.color.copy(noche).lerp(destelloCielo,destello*.85);luzVentana.intensity=destello*8;
+      rayo.visible=destello>.025&&!reducido;rayo.material.opacity=destello;
+    }
+    function reiniciar(){reloj=relampagos=destello=0;siguiente=6;inicio=-100;semilla=73;rayo.visible=false;rayo.material.opacity=0;luzVentana.intensity=0;cielo.material.color.copy(noche);}
     // Decorado inmutable: el motor no recalcula cientos de transformaciones de utilería por cuadro.
     raiz.traverse(o=>{o.updateMatrix();o.matrixAutoUpdate=false;});raiz.matrixAutoUpdate=true;
     Promise.all(pendientes).then(()=>{listo=true;});
     const estadisticas={triangulos:0,mallas:0,retratos:2};raiz.traverse(o=>{if(o.isMesh){estadisticas.mallas++;estadisticas.triangulos+=(o.geometry.index?.count||o.geometry.attributes.position.count)/3;}});
-    return {raiz,get listo(){return listo;},estadisticas,
+    return {raiz,get listo(){return listo;},estadisticas,paso,reiniciar,estado:()=>({tiempo:reloj,relampagos,destello}),
       entrada:new THREE.Vector3(-.6,0,3.25)};
   }
   window.CAOZ_ARPG_CASA_INTERIOR=Object.freeze({crear});

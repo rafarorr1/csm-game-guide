@@ -290,3 +290,16 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
 .enCasaGoblin :is(.apHud,.apMision,.apObjetivo,.apBanner,.apBotin,.apCapa,.apTostada,.apFlechas,.apGolpeDir,.apEquipo,.apIdentidad,.apMapa,.apPalanca){visibility:hidden;pointer-events:none}
 .entrandoCasa::after{content:"";position:absolute;inset:0;background:#080b0e;pointer-events:none;z-index:23;animation:casaOscurecer 1.1s ease-in forwards}
 @keyframes casaOscurecer{0%,45%{opacity:0}100%{opacity:1}}
+
+/* Estilo de combate: puntos permanentes de la partida y cadena de tres segundos. */
+.apEstilo{--tinta:#cabdaa;position:absolute;right:22px;top:76px;width:188px;padding:12px 14px 10px;border-right:2px solid var(--tinta);background:linear-gradient(270deg,#10151de8,#10151d65,transparent);color:var(--tinta);pointer-events:none;text-align:right;text-shadow:0 2px 5px #000;z-index:5}
+.apEstiloTotal{display:flex;align-items:center;justify-content:space-between;gap:12px}.apEstiloTotal span{font:700 8px system-ui;letter-spacing:1.6px;color:#b1aba0}.apEstiloTotal strong{font:600 21px Georgia,serif;color:#fff0d5;font-variant-numeric:tabular-nums}
+.apEstiloCadena{display:flex;justify-content:flex-end;align-items:center;gap:15px;margin:6px 0}.apEstiloCadena>b{font:italic 800 42px/.95 Georgia,serif;letter-spacing:-3px}.apEstiloCadena div{display:flex;flex-direction:column;gap:3px}.apEstiloCadena strong{font:italic 700 24px Georgia,serif}.apEstiloCadena span{font:600 10px system-ui}
+.apEstiloReloj{height:3px;background:#fff1;border-radius:2px;overflow:hidden;margin:8px 0}.apEstiloReloj i{display:block;height:100%;width:100%;background:var(--tinta);transform:scaleX(0);transform-origin:left}
+.apEstiloDetalle{display:flex;align-items:center;justify-content:space-between;gap:5px;min-height:14px;font:9px system-ui;white-space:nowrap;color:#d6cfbd}.apEstiloDetalle b{color:#ffe8a7;font-weight:600}
+.apEstilo[data-rango="0"] .apEstiloCadena{opacity:.42}.apEstilo[data-rango="C"]{--tinta:#a2c7b9}.apEstilo[data-rango="B"]{--tinta:#91c8da}.apEstilo[data-rango="A"]{--tinta:#c5b0e5}.apEstilo[data-rango="S"]{--tinta:#f0c77e}.apEstilo[data-rango="SS"]{--tinta:#ffb271}.apEstilo[data-rango="SSS"]{--tinta:#ff8c73}
+.apBotin{top:235px;max-height:calc(100% - 400px)}
+:is(.enCasaGoblin,.cinematica) .apEstilo{visibility:hidden}
+@media(max-width:760px){.apEstilo{right:12px;top:144px;width:150px;padding:8px 9px}.apEstiloTotal strong{font-size:18px}.apEstiloCadena>b{font-size:32px}.apEstiloCadena strong{font-size:20px}.apEstiloCadena span{font-size:9px}.apEstiloDetalle{font-size:8px}.apBotin{top:268px;max-height:20%}}
+@media(max-height:520px){.apEstilo{top:66px;width:154px;padding:6px 10px}.apEstiloCadena>b{font-size:30px}.apEstiloCadena{margin:3px 0}.apEstiloTotal strong{font-size:18px}.apBotin{top:188px;max-height:18%}}
+@media(max-width:760px) and (max-height:520px){.apObjetivo{top:18px;left:50%;right:auto;transform:translateX(-50%);width:30%}}

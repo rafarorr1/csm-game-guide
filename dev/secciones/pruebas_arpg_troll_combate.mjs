@@ -5,8 +5,9 @@ import assert from 'node:assert/strict';
 import {extraerDeclaracion} from './fuentes.mjs';
 const fuente=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8');
 const c=vm.createContext({console});c.window=c;
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+for(const f of ['arpg-three-estilo.js','visor-three-vendor.js','arpg-three-adreida-animacion.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const extraer=(n,t='function')=>extraerDeclaracion(fuente,n,t).texto;
+c.estilo=c.CAOZ_ARPG_ESTILO.crear();
 vm.runInContext(`
 const FACTOR_COOP=1;const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,MOD=CAOZ_ARPG_MODELOS.fabrica(THREE),TAU=Math.PI*2;
 const escena=new THREE.Scene(),enemigos=[],reloj={t:0},heroe={pos:new V3(),radio:.4,invul:0,vivo:true,dir:Math.PI,estado:'quieto',t:0,cd:{},furia:0,parrys:0};

@@ -27,10 +27,13 @@
     function posarHeroe(anim,k,dt){const m=protagonista;MOD.posar(m,{anim,k,t:total,dt,mezclar:true,desplazamientoExterno:true,fase:total*6,paso:.5,combo:1});}
     function construirInterior(){
       if(interior)return;
-      interior=new THREE.Scene();interior.background=new THREE.Color(0x090d12);interior.environment=plaza.environment;interior.environmentIntensity=.12;
-      interior.add(new THREE.HemisphereLight(0xaac1da,0x514033,.85));const luz=new THREE.DirectionalLight(0xffd7a0,2.5);luz.position.set(-3,6,4);luz.castShadow=true;luz.shadow.mapSize.set(1024,1024);Object.assign(luz.shadow.camera,{left:-6,right:6,top:6,bottom:-6,near:.1,far:20});luz.shadow.bias=-.0005;luz.shadow.normalBias=.02;interior.add(luz);
-      const frio=new THREE.DirectionalLight(0x94b7ef,.75);frio.position.set(3,5,-4);interior.add(frio);
-      decorado=window.CAOZ_ARPG_CASA_INTERIOR.crear(THREE);interior.add(decorado.raiz);
+      interior=new THREE.Scene();interior.background=new THREE.Color(0x04070b);interior.environment=plaza.environment;interior.environmentIntensity=.025;
+      interior.add(new THREE.HemisphereLight(0x879fbd,0x31261e,.22));
+      const relleno=new THREE.DirectionalLight(0xe5c49b,.32);relleno.position.set(-3,6,4);interior.add(relleno);
+      // Un único foco con sombra destaca las caras y separa a la familia de la pared.
+      const foco=new THREE.SpotLight(0xffdfb4,54,9,.34,.72,2);foco.name='Foco de la familia';foco.position.set(.15,3.8,-1.5);foco.target.position.set(-.15,.65,-2.88);
+      foco.castShadow=true;foco.shadow.mapSize.set(1024,1024);foco.shadow.camera.near=.1;foco.shadow.camera.far=10;foco.shadow.bias=-.0004;foco.shadow.normalBias=.025;interior.add(foco,foco.target);
+      decorado=window.CAOZ_ARPG_CASA_INTERIOR.crear(THREE,{reducido:typeof matchMedia==='function'&&matchMedia('(prefers-reduced-motion:reduce)').matches});interior.add(decorado.raiz);
       protagonista=MOD.crear('adreida');protagonista.raiz.position.copy(decorado.entrada);protagonista.raiz.rotation.y=Math.PI;interior.add(protagonista.raiz);
       habitantes=[{nombre:'Madre goblin',x:-.58,z:-2.9,escala:1.08},{nombre:'Hijo goblin',x:.23,z:-2.92,escala:.64}].map((d,i)=>{
         const m=MOD.crear('goblin');m.raiz.name=d.nombre;for(const a of m.mallas.slice(1))a.visible=false;
@@ -70,12 +73,12 @@
         protagonista.raiz.rotation.y=0;protagonista.raiz.position.z=Math.min(3.8,protagonista.raiz.position.z+dt*2.4);protagonista.raiz.position.x=decorado.entrada.x*suave((protagonista.raiz.position.z+.65)/3.9);posarHeroe('andar',0,dt);
         if(protagonista.raiz.position.z>=3.75){cambiar('fin');volver();}
       }
-      if(enInterior())posarHabitantes(dt);
+      if(enInterior()){posarHabitantes(dt);decorado.paso(dt);}
     }
     function enInterior(){return ['entrar','decision','golpe','despues','salir','fin'].includes(fase);}
     function cancelar(){fase='cerrada';t=total=0;actor=null;peticion=false;golpeDado=false;halo.visible=false;hoja.rotation.y=0;soltado=false;botones=[];
-      if(protagonista)protagonista.raiz.position.copy(decorado.entrada);if(protagonista)protagonista.raiz.rotation.y=Math.PI;for(const n of habitantes){n.vivo=true;n.muerte=null;n.caida=0;}interfaz(estado());}
-    function estado(){return {fase,interior:enInterior(),golpeDado,vivos:habitantes.filter(n=>n.vivo).length,puerta:aproximacion.toArray(),accion:peticion,decorado:decorado?.estadisticas||null};}
+      decorado?.reiniciar();if(protagonista)protagonista.raiz.position.copy(decorado.entrada);if(protagonista)protagonista.raiz.rotation.y=Math.PI;for(const n of habitantes){n.vivo=true;n.muerte=null;n.caida=0;}interfaz(estado());}
+    function estado(){return {fase,interior:enInterior(),golpeDado,vivos:habitantes.filter(n=>n.vivo).length,puerta:aproximacion.toArray(),accion:peticion,decorado:decorado?.estadisticas||null,ambiente:decorado?.estado()||null};}
     return {habilitar,solicitar,cerca,paso,golpear,salir,mando,cancelar,estado,contiene:ray=>ray.intersectObject(entrada,false).length>0,
       get activa(){return fase!=='cerrada';},get bloquea(){return !['cerrada','plaza'].includes(fase);},get interior(){return enInterior();},
       get escena(){return interior;},camara(aspecto){camara.aspect=aspecto;camara.fov=aspecto<1?48:36;camara.updateProjectionMatrix();return camara;}};
