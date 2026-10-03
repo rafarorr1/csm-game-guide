@@ -43,25 +43,28 @@
   const vista={az:.35,el:.12,dist:4.6,alto:1.05,cx:0,cz:0},meta={...vista};
   const encuadres={cara:m=>({dist:1.55,alto:m.alto*.86,el:.06}),cuerpo:m=>({dist:m.alto*2.35,alto:m.alto*.54,el:.12})};
   let modelo=null,modelos=[],t=0,pausa=false,girar=false,comparar=q.get('comparar')==='1';
-  for(const [id,v]of Object.entries(F.VARIANTES_GOBLIN)){const o=document.createElement('option');o.value=id;o.textContent=v.nombre;$('varianteGoblin').append(o);}
-  $('varianteGoblin').value=F.VARIANTES_GOBLIN[q.get('variante')]?q.get('variante'):'clasico';
+  let tipoVariantes=null;
   for(const k of Object.keys(F.TIPOS)){const o=document.createElement('option');o.value=k;o.textContent=F.TIPOS[k].nombre;$('tipo').append(o);}
   function listaAnims(){const tipo=$('tipo').value,antes=$('anim').value;$('anim').innerHTML='';
-    for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada','muerte'].includes(n)||['goblin','cobrador'].includes(tipo)&&n==='muerte')continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
+    for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador','kobold'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada','muerte'].includes(n)||['goblin','cobrador','kobold'].includes(tipo)&&n==='muerte')continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
     if([...$('anim').options].some(o=>o.value===antes))$('anim').value=antes;}
   function cargar(tipo){
     for(const m of modelos){escena.remove(m.raiz);m.mallas.forEach(mesh=>{if(!mesh.geometry.userData.compartida)mesh.geometry.dispose();mesh.material.dispose();});for(const s of new Set(m.mallas.map(mesh=>mesh.skeleton)))s.dispose();}
-    const esGoblin=['goblin','cobrador'].includes(tipo);if(!esGoblin)comparar=false;document.body.classList.toggle('mvComparando',comparar);
+    const catálogo=tipo==='kobold'?F.VARIANTES_KOBOLD:F.VARIANTES_GOBLIN;
+    if(tipoVariantes!==tipo){$('varianteGoblin').replaceChildren();for(const [id,v]of Object.entries(catálogo)){const o=document.createElement('option');o.value=id;o.textContent=v.nombre;$('varianteGoblin').append(o);}
+      if(!tipoVariantes&&catálogo[q.get('variante')])$('varianteGoblin').value=q.get('variante');tipoVariantes=tipo;
+    }
+    const esGoblin=['goblin','cobrador','kobold'].includes(tipo);if(!esGoblin)comparar=false;document.body.classList.toggle('mvComparando',comparar);
     $('opcionVariante').hidden=$('compararGoblins').hidden=!esGoblin;
     $('compararGoblins').setAttribute('aria-pressed',comparar);$('compararGoblins').textContent=comparar?'Ver una variante':'Ver las cuatro variantes';
     $('cara').disabled=comparar;
-    const variantes=comparar?Object.keys(F.VARIANTES_GOBLIN):[$('varianteGoblin').value];
-    modelos=variantes.map(varianteGoblin=>F.crear(tipo,{varianteGoblin}));modelo=modelos[0];
+    const variantes=comparar?Object.keys(catálogo):[$('varianteGoblin').value];
+    modelos=variantes.map(varianteGoblin=>F.crear(tipo,{varianteGoblin,varianteKobold:varianteGoblin}));modelo=modelos[0];
     for(const m of modelos)escena.add(m.raiz);
     const tri=modelos.reduce((n,m)=>n+m.mallas.reduce((s,mesh)=>s+(mesh.geometry.index?.count||mesh.geometry.attributes.position.count)/3,0),0);
-    $('datos').textContent=(comparar?'Cuatro variantes · tamaño relativo real':modelo.nombre+(esGoblin?' · '+F.VARIANTES_GOBLIN[modelo.varianteGoblin].nombre:'')+' · '+modelo.alto.toFixed(2)+' m')+' · '+(tri/1000).toFixed(1)+' mil triángulos · '+modelos.reduce((n,m)=>n+m.mallas.length,0)+' mallas';
+    $('datos').textContent=(comparar?'Cuatro variantes · tamaño relativo real':modelo.nombre+(esGoblin?' · '+catálogo[modelo.varianteKobold||modelo.varianteGoblin].nombre:'')+' · '+modelo.alto.toFixed(2)+' m')+' · '+(tri/1000).toFixed(1)+' mil triángulos · '+modelos.reduce((n,m)=>n+m.mallas.length,0)+' mallas';
     $('fichasVariantes').hidden=!comparar;$('fichasVariantes').replaceChildren();
-    if(comparar)for(const m of modelos){const v=F.VARIANTES_GOBLIN[m.varianteGoblin],ficha=document.createElement('div'),nombre=document.createElement('b'),detalle=document.createElement('small');nombre.textContent=v.nombre;detalle.textContent=v.sombrero+' · '+m.alto.toFixed(2)+' m';ficha.append(nombre,detalle);$('fichasVariantes').append(ficha);}
+    if(comparar)for(const m of modelos){const v=catálogo[m.varianteKobold||m.varianteGoblin],ficha=document.createElement('div'),nombre=document.createElement('b'),detalle=document.createElement('small');nombre.textContent=v.nombre;detalle.textContent=(v.detalle||v.sombrero)+' · '+m.alto.toFixed(2)+' m';ficha.append(nombre,detalle);$('fichasVariantes').append(ficha);}
     listaAnims();}
   $('tipo').value=F.TIPOS[q.get('tipo')]?q.get('tipo'):'adreida';cargar($('tipo').value);
   const animInicial=q.get('anim')==='muerte-fbx'?'muerte-goblin-1':q.get('anim');

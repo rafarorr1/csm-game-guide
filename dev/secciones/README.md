@@ -1423,6 +1423,14 @@ Los 15 huesos se interpolan entre muestras a 30 Hz sin cambiar el tiempo de actu
 
 Para reconstruir: extraer los cuatro FBX con Blender y `adreida-scenario/extraer-muertes.py`, y ejecutar `node dev/secciones/goblin-scenario/preparar-muertes.mjs atras.json derecha.json zombie.json desplome.json`. FFmpeg lee el atlas sólo durante la preparación. `goblin-scenario/muertes-procedencia.json` registra fuentes, SHA-256 y duraciones. `node dev/secciones/pruebas_goblin_caida_fbx.mjs` comprueba 3.872 poses, apoyo, continuidad, final inmóvil, geometrías compartidas, selección uniforme, causa inmutable, recorrido a 30/60/120 FPS, colisiones, polvo y limpieza. Las coreografías procedurales anteriores quedan sólo como compatibilidad del modelo clásico del cuaderno UV.
 
+#### Kobolds de Scenario: cuatro lanceros
+
+Los kobolds usan cuatro mallas de Scenario / Tripo 3.1: **Lancero rojizo**, **Acechador verde** con capucha, **Lancero acorazado** y **Vigía de hueso**. Se eligen al aparecer, conservan 1,25 m de altura, las colisiones y las estadísticas del lancero. Cada cuerpo tiene su atlas PBR de 1024 px; la lanza se monta por separado en la mano. Mallas y texturas se comparten entre apariciones de la misma variante. No se llama a Scenario durante la partida.
+
+Las cuatro muertes son los mismos FBX de los goblins: caída hacia atrás, caída lateral, caída zombi y desplome de rodillas. Se adaptan al esqueleto de cada kobold, con cola y contactos de cuerpo y lanza precalculados. Una baja elige una caída una sola vez, respeta su desplazamiento y las colisiones, levanta polvo al tocar el suelo, retiene la postura final y luego desvanece el cuerpo.
+
+Visor: `modelos-visor.html?tipo=kobold&comparar=1`; admite las cuatro variantes y las cuatro muertes. Los recursos y procedencia están en `kobold-scenario/`; `preparar.py` convierte los GLB y `preparar-muertes.mjs` usa las mismas cuatro fuentes JSON extraídas para el goblin. Prueba focalizada: `node dev/secciones/pruebas_arpg_kobold_scenario.mjs`.
+
 ### Piel de los goblins (modelo clásico)
 
 Goblin de Camino y cobrador usan el material aportado en `goblin-skin-bumpy-bl-q9btow.zip`: color sRGB, normales OpenGL y un mapa de superficie con oclusión en rojo y rugosidad en verde. Los tres archivos locales de `texturas-goblin/` son de 1024 × 1024 y suman unos 4.4 MB; `procedencia.json` documenta sus fuentes y tratamiento. El relieve tiene intensidad 0.7, la oclusión del material se aplica al 50 %, y la piel conserva metalness=0. No hay desplazamiento de vértices ni nuevos polígonos.

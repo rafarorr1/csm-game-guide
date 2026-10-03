@@ -1,0 +1,55 @@
+{
+  "fecha": "2026-10-03",
+  "proyecto": "Caoz ARPG",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "coleccion": "col_AnmX8eiydQKgbAUcimzC257J",
+  "referencia": "asset_QT8JycVywJt7Te6A7h6ZLs2k",
+  "modeloConcepto": "model_openai-gpt-image-2-5-sunburst",
+  "modelo3D": "model_tripo-v3-1-image-to-3d",
+  "creditos": 232,
+  "variantes": [
+    {
+      "id": "rojizo",
+      "nombre": "Lancero rojizo",
+      "delta": "rust-red brick scales, cream throat and belly, two modest ivory horns, a ragged olive-brown sleeveless linen tunic, dark worn leather belt and wrist wraps, a faded dark-red neck scarf. Lean wiry build. His reptilian face is sly and suspicious.",
+      "concepto": "asset_n1gnUr7mUof6xkCqhnE9qWNz",
+      "malla": "asset_uudpKkGKbdpHaZTTQ8NbAGzC"
+    },
+    {
+      "id": "capucha",
+      "nombre": "Acechador verde",
+      "delta": "moss-green scales, pale ochre throat, short ivory horns, a close-fitting dark forest-green cloth hood open around the face and horns, fitted patched brown leather vest, charcoal split cloth tabs, leather bracers. Lean sneaky build. No cloak or cape. His reptilian face has alert narrow amber eyes.",
+      "concepto": "asset_goPkCezozQMXjfrQ5LGAEtSh",
+      "malla": "asset_hqrvAXKQAMq2cMn7yHixd8Cj"
+    },
+    {
+      "id": "acorazado",
+      "nombre": "Lancero acorazado",
+      "delta": "slate-gray blue scales, charcoal throat, stout blunt ivory horns, battered rusty iron skullcap with horn holes, one rounded rusty iron shoulder plate and fitted rust-red leather chest armor, brown short split cloth tabs and wrist guards. Stockier build. Matte metal with no polished shine.",
+      "concepto": "asset_oy1ks7773sT31DL3D1NARLVu",
+      "malla": "asset_H4MFz4DfLTWtEi2pfC2hQtUF"
+    },
+    {
+      "id": "huesos",
+      "nombre": "Vigía de hueso",
+      "delta": "ochre sandy golden scales, pale cream throat, longer curved brown-tipped ivory horns, bone tooth necklace and small bone charms on a simple dark-brown fitted leather harness, tattered maroon short split cloth tabs, simple leather wrist wraps. Slightly tall lean build, no staff or headdress. Proud severe reptilian expression.",
+      "concepto": "asset_ceqDkMGfXQio5r61kA5TUokK",
+      "malla": "asset_i4HC2ABWZTB8LTFHXjGTticL"
+    }
+  ],
+  "parametros3D": {
+    "image": "asset_n1gnUr7mUof6xkCqhnE9qWNz",
+    "texture": true,
+    "pbr": true,
+    "delight": true,
+    "orientation": "align_image",
+    "faceLimit": 8000,
+    "smartLowPoly": false,
+    "quad": false,
+    "autoSize": false,
+    "seed": 731210,
+    "textureSeed": 731210
+  },
+  "preparacion": "Normalizados a 1,25 m, texturas locales 1024 px, 17 huesos y lanza separada. Cuatro muertes de los goblins adaptadas por variante."
+}

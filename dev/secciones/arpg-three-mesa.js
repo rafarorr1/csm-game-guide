@@ -429,7 +429,7 @@
   const PARRY={dur:.35,perfecto:.18,perfectoLanza:.25,cd:.5,bloqueo:.3,aturde:2,aturdeJefe:1,expuesto:2};
   const hitboxMat=new THREE.MeshBasicMaterial({visible:false});
   let heroe=null,sigId=1;const jugadores=[];const enemigos=[],lanzas=[],globos=[];
-  function cuerpoDe(tipo,varianteGoblin){const m=MOD.crear(tipo,{varianteGoblin:tipo==='goblin'||tipo==='cobrador'?(varianteGoblin||MOD.elegirVarianteGoblin(rnd)):'clasico'});const caja=new THREE.Mesh(new THREE.CylinderGeometry(m.radio*1.35,m.radio*1.35,m.alto*1.05,10).translate(0,m.alto*.52,0),hitboxMat);m.raiz.add(caja);m.caja=caja;escena.add(m.raiz);return m;}
+  function cuerpoDe(tipo,varianteGoblin,varianteKobold){const m=MOD.crear(tipo,{varianteGoblin:tipo==='goblin'||tipo==='cobrador'?(varianteGoblin||MOD.elegirVarianteGoblin(rnd)):'clasico',varianteKobold:tipo==='kobold'?(varianteKobold||Object.keys(MOD.VARIANTES_KOBOLD)[Math.floor(rnd()*4)]):undefined});const caja=new THREE.Mesh(new THREE.CylinderGeometry(m.radio*1.35,m.radio*1.35,m.alto*1.05,10).translate(0,m.alto*.52,0),hitboxMat);m.raiz.add(caja);m.caja=caja;escena.add(m.raiz);return m;}
   // Se juega con Adreida (cuerpo a cuerpo, el hacha a dos manos) o con Mohamed (a distancia, una pistola de seis balas).
   const HEROES={adreida:{nombre:'Adreida',alma:120,atq:12,retrato:'lider_adreida'},
     mohamed:{nombre:'Mohamed',alma:100,atq:9,retrato:'lider_mohamed',cargador:6,cadencia:.24,recarga:1.1,alcance:15,vel:30}};
@@ -451,7 +451,7 @@
     e.objetivo=elegido.id;e.objetivoHasta=reloj.t+1.2;return elegido;
   }
 
-  function crearEnemigo(tipo,x,z,opc={}){const m=cuerpoDe(tipo,opc.varianteGoblin),d={...DEF[tipo],vida:Math.round(DEF[tipo].vida*(1+.25*(rog.vuelta-1)))*FACTOR_COOP,dano:Math.round(DEF[tipo].dano*(1+.1*(rog.vuelta-1)))},e={id:sigId++,tipo,m,d,pos:new V3(x,0,z),dir:rumbo(new V3(x,0,z),new V3()),vida:d.vida,vidaMax:d.vida,estado:opc.quieto?'quieto':'entra',t:0,cd:.4+rnd()*.8,emp:new V3(),fase:rnd()*TAU,paso:0,
+  function crearEnemigo(tipo,x,z,opc={}){const m=cuerpoDe(tipo,opc.varianteGoblin,opc.varianteKobold),d={...DEF[tipo],vida:Math.round(DEF[tipo].vida*(1+.25*(rog.vuelta-1)))*FACTOR_COOP,dano:Math.round(DEF[tipo].dano*(1+.1*(rog.vuelta-1)))},e={id:sigId++,tipo,m,d,pos:new V3(x,0,z),dir:rumbo(new V3(x,0,z),new V3()),vida:d.vida,vidaMax:d.vida,estado:opc.quieto?'quieto':'entra',t:0,cd:.4+rnd()*.8,emp:new V3(),fase:rnd()*TAU,paso:0,
       destello:0,radio:m.radio,sector:sectorLibre(x,z),turnoHasta:0,ultimoTurno:-10,rodeo:(rnd()-.5)*1.6,provocado:0,dentro:Math.hypot(x,z)<R-.5,quieto:!!opc.quieto,ataques:0,gritó:false,ataque:null,alerta:null,aturdidoT:0,estrellas:null,culpableT:-9};
     e.ia=window.CAOZ_ARPG_IA?.crear(e)||null;
     m.caja.userData.enemigo=e;m.raiz.position.copy(e.pos);enemigos.push(e);return e;}
@@ -1206,7 +1206,7 @@
     }
   }
   function morir(e,impacto={}){if(e.estado==='muere')return;
-    if(e.tipo==='goblin'||e.tipo==='cobrador'){
+    if(e.tipo==='goblin'||e.tipo==='cobrador'||e.m.modeloKobold==='scenario'){
       const m=MOD.crearMuerteGoblin(impacto.causa,MOD.muertesGoblinImportadas.length?Math.floor(rnd()*MOD.muertesGoblinImportadas.length):undefined),direccion=(impacto.direccion||frente(e.dir+Math.PI)).clone().setY(0).normalize();
       m.direccion=direccion;m.angulo=difAng(e.dir,Math.atan2(direccion.x,direccion.z)+(m.adelante?0:Math.PI));m.recorrido=0;m.contactosEmitidos=0;m.roce=0;
       if(m.importada){m.desplazamientoExterno=true;m.anterior=new V3();}
