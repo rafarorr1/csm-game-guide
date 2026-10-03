@@ -212,7 +212,7 @@
           if(rnd()<.55)fa.geo('planta',new THREE.IcosahedronGeometry(.045,0),[x-w/2+.1+i*(w-.2)/6+(rnd()-.5)*.1,y-h/2+.05+rnd()*.05,.2],[0,0,0],{tinte:rnd()<.7?[.8,.12,.1]:[.9,.75,.8],sucio:false});}}
         return s;}
       function puerta(fa,x,w,h,alto0,opc={}){const y=alto0+h/2;fa.caja('madera',.14,h+.1,.16,[x-w/2-.07,y,.06]);fa.caja('madera',.14,h+.1,.16,[x+w/2+.07,y,.06]);fa.caja('madera',w+.46,.2,.2,[x,y+h/2+.1,.08]);
-        fa.caja('tablas',w,h,.08,[x,y,.035],[0,0,0],{escala:1.1});fa.caja('hierro',.05,.18,.06,[x+w*.32,y,.10]);fa.caja('piedra',w+.5,.18,.5,[x,alto0-.09,.25]);
+        if(opc.hoja!==false){fa.caja('tablas',w,h,.08,[x,y,.035],[0,0,0],{escala:1.1});fa.caja('hierro',.05,.18,.06,[x+w*.32,y,.10]);}fa.caja('piedra',w+.5,.18,.5,[x,alto0-.09,.25]);
         if(opc.farol){const fx=x+(w/2+.45)*opc.farol;fa.caja('hierro',.06,.06,.42,[fx,y+.75,.21]);fa.caja('hierro',.22,.05,.22,[fx,y+.62,.4]);fa.caja('farol',.16,.24,.16,[fx,y+.46,.4],[0,0,0],{sucio:false});fa.caja('hierro',.2,.04,.2,[fx,y+.33,.4]);
           cuadro('halo',1.3,1.5,fa.F,[fx,y+.4,.02],{sem:900+sem});cuadro('derrame',2.2,2.4,fa.F.clone().multiply(mat4([fx,-fa.alto+.03,0],[-Math.PI/2,0,0])),[0,-1.2,0],{sem:900+sem});}}
       // Entramado de una planta: pies derechos, travesaño y tornapuntas en los paños sin ventana.
@@ -279,8 +279,17 @@
       const R=C.tejado(W,D2,yT,.82,.5,{tinteTeja:o.tinteTeja||[.9,.95,1]});
       return {alto:yT+R,humo:C.chimenea(-W/2+1,0,yT-.5,yT+R+.7),huella:[W+.4,D2+.4]};}
     function piedra(C,o){const W=o.ancho??5.2,D=o.fondo??4.6,h1=3.1,yT=h1,pend=1;
-      C.pon('piedra',new THREE.BoxGeometry(W,h1,D,1,3,1),mat4([0,h1/2,0]),{escala:1.3});C.caja('madera',W+.1,.2,D+.1,[0,yT-.1,0]);
-      const fb=C.fachada(0,D/2,0);C.puerta(fb,-W*.22,1,2,0,{farol:-1});C.ventana(fb,W*.22,1.5,1,1,{suelo:true,postigos:true,flores:true});
+      if(o.puertaInteractiva){
+        // La casa visitable tiene un hueco real en la fachada; la hoja vive fuera del fundido.
+        const x=-W*.22,izq=x-.5,der=x+.5;
+        C.caja('piedra',izq+W/2,h1,.3,[(izq-W/2)/2,h1/2,D/2-.15]);
+        C.caja('piedra',W/2-der,h1,.3,[(der+W/2)/2,h1/2,D/2-.15]);
+        C.caja('piedra',1,h1-2,.3,[x,2+(h1-2)/2,D/2-.15]);
+        C.caja('piedra',W,h1,.3,[0,h1/2,-D/2+.15]);
+        for(const lado of [-1,1])C.caja('piedra',.3,h1,D,[lado*(W/2-.15),h1/2,0]);
+      }else C.pon('piedra',new THREE.BoxGeometry(W,h1,D,1,3,1),mat4([0,h1/2,0]),{escala:1.3});
+      C.caja('madera',W+.1,.2,D+.1,[0,yT-.1,0]);
+      const fb=C.fachada(0,D/2,0);C.puerta(fb,-W*.22,1,2,0,{farol:-1,hoja:!o.puertaInteractiva});C.ventana(fb,W*.22,1.5,1,1,{suelo:true,postigos:true,flores:true});
       const tb=C.fachada(Math.PI,D/2,0);C.ventana(tb,0,1.5,.9,.9,{suelo:true});
       const fl=C.fachada(-Math.PI/2,W/2,0);C.ventana(fl,.3,1.5,.8,.9,{suelo:true,flores:true});
       const R=C.tejado(W,D,yT,pend,.5,{hastial:'piedra',tinteTeja:o.tinteTeja||[.85,.95,.85]});
@@ -289,7 +298,7 @@
       for(const s of [-1,1])C.caja('teja',.9,.1,1.4,[s*.38,by+1.33,bz+.05],[0,0,s*.75],{escala:4,sucio:false});
       // Chimenea exterior de sillares, desde el suelo.
       C.caja('piedra',1.1,yT+R*.5,.7,[W/2+.35,(yT+R*.5)/2,-D*.15],[0,0,0],{escala:1.3});
-      return {alto:yT+R,humo:C.chimenea(W/2+.35,-D*.15,yT+R*.5,yT+R+.9),huella:[W+1.2,D+.6]};}
+      return {alto:yT+R,humo:C.chimenea(W/2+.35,-D*.15,yT+R*.5,yT+R+.9),huella:[W+1.2,D+.6],puerta:o.puertaInteractiva?{x:-W*.22,z:D/2+.06,ancho:1,alto:2}:null};}
     // El pozo de la plaza: brocal de sillares en tres hiladas a soga con remate de losas, el hueco oscuro con el
     // agua al fondo, dos postes de roble sobre zapatas con un tejadillo de tejas, el torno con la cuerda enrollada
     // y su manivela, el cubo colgado y otro sobre el brocal, el abrevadero de piedra y matas al pie.

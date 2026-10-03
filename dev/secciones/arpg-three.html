@@ -28,6 +28,7 @@
 <script src="./arpg-three-ia.js"></script>
 <script src="./llave-scenario/datos.js"></script>
 <script src="./arpg-three-entrada-troll.js"></script>
+<script src="./arpg-three-casa-goblin.js"></script>
 <script src="./arpg-three-mesa.js" defer></script>
 </head>
 <body>
@@ -40,6 +41,11 @@
       <button type="button" id="abrirPausa" class="apBoton">Pausa <kbd>Esc</kbd></button>
     </div>
     <canvas tabindex="-1" id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
+    <button id="abrirCasa" class="apAbrirCasa" hidden>Ir a la casa de la llave · F</button>
+    <section id="casaPanel" class="apCasaPanel" aria-label="Interior de la casa" hidden>
+      <p id="casaTexto" role="status"></p>
+      <div><button id="casaGolpear">Dar un golpe · J / □ / R2</button><button id="casaSalir">Salir por la puerta · F / ×</button></div>
+    </section>
     <div id="cinematicaTroll" class="apCinematica" hidden><p id="cinematicaTexto" role="status"></p><button type="button" id="omitirCinematica">Omitir · Enter</button></div>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>

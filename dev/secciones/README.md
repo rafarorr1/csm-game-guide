@@ -1354,6 +1354,16 @@ Escape/Options pausa también la cinemática; **Omitir · Enter** conduce a la b
 
 Revisión directa: `arpg-three.html?etapa=2&heroe=adreida&entrada=troll&piso=vegetacion` incluye la caída del último cobrador; **Volver a empezar** la reproduce. El visor ofrece `anim=recogerLlave`, `anim=mirarLlave` y `anim=rodar` con `tipo=adreida`. `pruebas_arpg_entrada_troll.mjs` comprueba el roll, las rutas y la transición de oleadas. `pruebas_arpg_llave_troll.mjs` verifica la baja real que dispara la secuencia, el contacto de la mano con el suelo, la colocación segura, el orden de las fases y la recogida única al pausar, omitir o reiniciar.
 
+### Casa de los goblins · Epílogo de la Etapa 2
+
+Al morir el último Recaudador, se cancelan sus proyectiles y refuerzos. Los enemigos restantes huyen y la plaza deja de generar oleadas. En cooperativo se espera a los dos Trolls, incluidos los que aún no han entrado. Una casa de piedra tiene un hueco real en la fachada y una puerta que se abre con la llave recogida en la cinemática anterior; consume una sola llave. Un aro discreto marca la entrada. Se puede pulsar la puerta o **Ir a la casa de la llave**, usar **F**, o acercarse y pulsar **×** en el mando. Adreida sigue una ruta hasta ella.
+
+`arpg-three-casa-goblin.js` construye el interior al entrar y reutiliza el renderer, los materiales y los modelos existentes. La cámara muestra una habitación abierta hacia el espectador, con una madre goblin y su hijo desarmados, juntos contra la pared y temblando. La entrada de Adreida es automática; dentro sólo hay dos acciones narrativas: **Dar un golpe** (**J**, **□** o **R2**) mata a ambos en el mismo impacto, o **Salir por la puerta** (**F** o **×**) permite marcharse sin atacarlos. Después del golpe sólo queda salir. No hay habilidades, ataques de los habitantes ni recompensas dentro; la pausa sigue disponible. El mando exige soltar los botones al entrar para evitar una elección accidental.
+
+En ambos casos Adreida sale por la misma puerta y comienza de nuevo la **Etapa 1**. Se conservan las preferencias de personaje, cooperativo y controles de la URL, pero se reinicia la partida y sus mejoras. Por ahora este epílogo reemplaza el cierre y la tirada final de cartas del segundo nivel.
+
+Revisión directa: `arpg-three.html?etapa=2&heroe=adreida&piso=vegetacion&entrada=casa` prepara una baja real del Troll y la llave, dejando al personaje junto a la puerta. `node dev/secciones/pruebas_arpg_casa_goblin.mjs` verifica llave obligatoria, consumo único, ambas decisiones, golpe simultáneo, caídas apoyadas, pausa, mando, reinicio, regreso único a 30/60/120 FPS y cierre después del último Troll.
+
 ### Llave del Recaudador · Scenario
 
 La llave de la entrada del Troll usa un modelo de **Scenario / Tripo P1**, diseñado a partir de un concepto de GPT Image 2.5 Sunburst: hierro ennegrecido, anilla de bronce gastado con pequeños cuernos, remaches y dos dientes. Mantiene la trayectoria, la recogida y el contador de la cinemática.

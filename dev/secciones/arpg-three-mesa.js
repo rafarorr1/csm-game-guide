@@ -22,7 +22,7 @@
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
-  let cinematicaTroll=null,llaveEntradaTroll=null;
+  let cinematicaTroll=null,llaveEntradaTroll=null,casaGoblin=null,casaVisitable=null,llaveDelRecaudador=false;
   window.CAOZ_ARPG_IA.configurar(q.get('ia')==='clasica'?'clasica':'yuka');
   const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
   const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;$('diagnostico').open=true;};
@@ -172,7 +172,7 @@
   // Las casas de Tomsage (casas-three.js): entramadas, de piedra y la taberna, con su interior tras las ventanas.
   // En corro, dejando tres calles por donde entra el asedio; el frente mira a la plaza. Tres arden.
   const CASAS=window.CAOZ_CASAS.fabrica(THREE,{renderer}),barrio=[];
-  function casa(tipo,x,z,ry,opc,arde){const g=CASAS.casa(tipo,opc);g.position.set(x,0,z);g.rotation.y=ry;barrio.push(g);const u=g.userData;
+  function casa(tipo,x,z,ry,opc,arde){const g=CASAS.casa(tipo,opc);if(opc.puertaInteractiva)casaVisitable=g;g.position.set(x,0,z);g.rotation.y=ry;barrio.push(g);const u=g.userData;
     if(arde){g.updateMatrixWorld(true);const cima=g.localToWorld(new V3(0,u.alto-1,0)),f=llamas(cima.x,cima.y,cima.z,u.huella[0]*.6,3,6),luz=new THREE.PointLight(0xff7a2a,60,16,1.7);
       luz.position.copy(g.localToWorld(new V3(0,u.alto-.5,u.huella[1]/2+1)));mundo.add(luz);fuegos.push({luz,x,z,alto:cima.y});}
     if(Math.hypot(x,z)<R+Math.max(...u.huella)*.7)obstaculos.push({x,z,r:Math.max(...u.huella)*.5});
@@ -181,7 +181,7 @@
   const calle=a=>new V3(Math.cos(a),0,Math.sin(a));
   {let n=0;const tipos=['entramada','piedra','entramada','taberna','entramada','piedra'];
     for(let a=0;a<TAU;a+=TAU/15){if(CALLES.some(c=>Math.abs(difAng(a,c))<.3))continue;const r=18.8+rnd()*.8,t=tipos[n%tipos.length]==='taberna'&&n!==3?'entramada':tipos[n%tipos.length];
-      casa(t,Math.cos(a)*r,Math.sin(a)*r,Math.atan2(-Math.cos(a),-Math.sin(a))+(rnd()-.5)*.15,{semilla:n+2,ancho:t==='entramada'?5.4+rnd()*1.2:undefined,tinteYeso:[1,.95+rnd()*.05,.86+rnd()*.14],tinteTeja:[.8+rnd()*.2,.8+rnd()*.15,.8+rnd()*.15]},[1,4,8].includes(n));n++;}
+      casa(t,Math.cos(a)*r,Math.sin(a)*r,Math.atan2(-Math.cos(a),-Math.sin(a))+(rnd()-.5)*.15,{puertaInteractiva:n===5,semilla:n+2,ancho:t==='entramada'?5.4+rnd()*1.2:undefined,tinteYeso:[1,.95+rnd()*.05,.86+rnd()*.14],tinteTeja:[.8+rnd()*.2,.8+rnd()*.15,.8+rnd()*.15]},[1,4,8].includes(n));n++;}
   }
   // El pozo, un carro volcado, barriles, cajas y dos braseros.
   const braseros=[];
@@ -775,7 +775,7 @@
     for(const l of lanzas){if(l.clavada||l.devuelta)continue;const v=H.pos.clone().sub(l.g.position).setY(0),d=v.length();if(d>9||v.dot(l.dir)<d*.7)continue;const r=d/l.vel;if(r<t){t=r;mejor=l.g.position;}}
     for(const p of peligrosTroll){if(p.devuelto||plano(H.pos,p.hasta)>p.radio+H.radio*.6)continue;const r=p.dur-p.t;if(r<t){t=r;mejor=p.desde;}}
     return mejor?{p:mejor.clone(),t}:null;}
-  function usar(h,punto){if(h==='provocar'&&!aDistancia())h='bumeran';if(h==='bumeran'&&aDistancia())return false;if(cinematicaTroll?.activa||pausa.activa||rog.abierto||!heroe.vivo||heroe.estado==='recuperacion')return false;const H=HAB[h];
+  function usar(h,punto){if(h==='provocar'&&!aDistancia())h='bumeran';if(h==='bumeran'&&aDistancia())return false;if(casaGoblin?.bloquea||cinematicaTroll?.activa||pausa.activa||rog.abierto||!heroe.vivo||heroe.estado==='recuperacion')return false;const H=HAB[h];
     if(h==='ulti')return lanzarUlti();
     if(heroe.bumeran&&['bumeran','torbellino'].includes(h)){rechazo(h,'Espera a recuperar el hacha');return false;}
     // Parry: se puede incluso a mitad de un golpe; mira sola hacia lo que viene (o hacia el cursor).
@@ -1177,9 +1177,9 @@
     e.fase+=movido*TAU/(e.m.alto*.95);e.paso+=((movido>0?1:0)-e.paso)*Math.min(1,dt*10);
     if(e.estado!=='muere'&&!e.huida?.cruzando&&(e.dentro||e.estado==='persigue'))dentroPlaza(e.pos,e.radio);}
   // Sin su jefe cancelan el ataque y buscan una salida; desaparecer no concede botín.
-  function asustarGoblins(can){
+  function asustarGoblins(can,todos=false){
     refuerzosCan.length=0;ol.cola=ol.cola.filter(([tipo])=>!['goblin','cobrador'].includes(tipo));ol.lote=0;
-    for(const e of enemigos){if(!['goblin','cobrador'].includes(e.tipo)||e.estado==='muere'||e.huida)continue;
+    for(const e of enemigos){if((!todos&&!['goblin','cobrador'].includes(e.tipo))||e.estado==='muere'||e.huida)continue;
       cancelarAtaque(e);e.ia=null;e.plan=e.ruta=e.evade=e.tirón=null;e.provocado=0;e.emp.set(0,0,0);e.culpableT=-9;
       presion.primeraLinea.delete(e.id);e.turnoHasta=0;
       let direccion,entrada;
@@ -1214,9 +1214,10 @@
     cancelarAtaque(e);limpiarPeligrosTroll(e);cambiar(e,'muere');e.vida=0;brasas(e.pos,14,e.m.alto);if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}
     prepararLlaveDelUltimo(e);
     if(e.tipo==='can')asustarGoblins(e);
+    if(e.tipo==='troll')cerrarEtapaTroll(e);
     if(e.sinBotin)return;
     rog.bajas++;if([1,3,5].includes(rog.bajas))soltarDestino(e.pos);
-    if(e.tipo==='troll'){globo(e.pos);globo(e.pos);globo(e.pos);banner('¡Se acabó el cobro de piso!','El Recaudador ha caído. Acaba con los cobradores que queden.');return;}
+    if(e.tipo==='troll'){globo(e.pos);globo(e.pos);globo(e.pos);if(!casaGoblin?.activa)banner(ABIERTO?'El Recaudador ha caído':'Un Recaudador menos',ABIERTO?'La plaza respira de nuevo.':'Todavía queda otro Troll.');return;}
     if(e.tipo==='can'){soltar('llavemago','dorado',e.pos.x,e.pos.z,e.pos.clone().setY(1.5));globo(e.pos);globo(e.pos);return;}
     if(rnd()<e.d.globo)globo(e.pos);}
 
@@ -1254,7 +1255,7 @@
     {nombre:'Cobro de piso · Fase 3/3 · El Recaudador',fase:3,grupos:[['troll',1],['cobrador',6]],maxVivos:4,jefe:true,jefeNombre:'El Recaudador',etapa:2,texto:'«Esta plaza tiene dueño. ¡Paguen el piso!» Un troll de tres metros y seis goblins vienen a cobrar.'},
   ];
   const ol={auto:!CAPTURA,i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false};
-  function pasoOleadas(dt){if(cinematicaTroll?.activa||ABIERTO||!ol.auto||ol.fin||!jugadores.some(h=>h.vivo))return;
+  function pasoOleadas(dt){if(casaGoblin?.activa||cinematicaTroll?.activa||ABIERTO||!ol.auto||ol.fin||!jugadores.some(h=>h.vivo))return;
     if(refuerzosCan.length)return;
     const vivos=enemigos.filter(e=>e.estado!=='muere').length+peligrosTroll.filter(p=>p.tipo==='goblin'&&!p.devuelto).length+enemigos.filter(e=>e.goblinSujeto).length;
     if(ol.cola.length){const max=(OLEADAS[ol.i]?.maxVivos??5)*FACTOR_COOP;ol.descanso=null;ol.espera-=dt;
@@ -1275,7 +1276,7 @@
     ol.i++;const O=OLEADAS[ol.i];if(ol.i===0||ol.i===4)iniciarDestino(ol.i===0?1:2);if(O.etapa===2&&O.fase===1)for(const h of jugadores){h.alma=Math.min(h.almaMax,h.alma+40);h.vivo=true;cambiar(h,'quieto');}let k=0;ol.cola=[];for(const [tipo,n] of O.grupos)for(let i=0;i<n*FACTOR_COOP;i++)ol.cola.push([tipo,k++]);
     for(let i=ol.cola.length-1;i>0;i--){const j=Math.floor(rnd()*(i+1));if(!DEF[ol.cola[i][0]].jefe&&!DEF[ol.cola[j][0]].jefe)[ol.cola[i],ol.cola[j]]=[ol.cola[j],ol.cola[i]];}
     ol.espera=.6;ol.lote=0;ol.descanso=null;if(O.etapa===2&&O.fase===3){iniciarEntradaTroll();return;}banner(O.nombre,O.texto||(O.jefe?'Can entra con su escolta.':'Llegan en grupos. Busca un hueco y contraataca.'));}
-  function reiniciar(){llaveEntradaTroll=null;cinematicaTroll?.cancelar();mostrarEntradaTroll(false);impactoFX.limpiar();temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+  function reiniciar(){casaGoblin?.cancelar();llaveDelRecaudador=false;llaveEntradaTroll=null;cinematicaTroll?.cancelar();mostrarEntradaTroll(false);impactoFX.limpiar();temporizador.reiniciar();if(rog.abierto)$('destino').close();Object.assign(rog,{vuelta:1,nivel:0,cartas:[],mano:[],efectos:[],emitidas:0,bajas:0,abierto:false,resuelto:false,terminado:-1});limpiarPeligrosTroll();escombros.length=0;mallaEscombros.count=0;presion.siguiente=0;presion.primeraLinea.clear();refuerzosCan.length=0;disparosPendientes.length=0;punteria=null;lineaMira.visible=puntoMira.visible=false;for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;for(const b of [...botines])quitarBotin(b);for(const g of globos)escena.remove(g.m);globos.length=0;for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
     for(const b of [...bumeranes])quitarBumeran(b);
     for(const o of [...marcas])if(!o.fijo)quitarMarca(o);limpiarFuegoRopa();for(const h of jugadores)liberarModeloTroll(h.m);limpiarAliados();crearEquipo();reiniciarExploracion();$('botin').innerHTML='';Object.assign(ol,{i:q.get('etapa')==='2'?3:-1,cola:[],espera:1.8,lote:0,descanso:1.8,fin:false});$('fin').hidden=true;finMostrado=false;prepararVistaEntrada();}
 
@@ -1354,6 +1355,7 @@
     if(mira.lengthSq())mando.dir.copy(mira).normalize();else if(mov.lengthSq())mando.dir.copy(mov).normalize();
     const apunta=heroe.pos.clone().addScaledVector(mando.dir,7);
     ctl.mov.copy(mov);ctl.apunta=apunta;
+    if(nuevos[0]&&casaGoblin?.activa&&casaGoblin.cerca([heroe])){intentarCasa(heroe);return {mov:new V3(),apunta,atacar:false};}
     for(const [i,accion] of Object.entries(BOTONES_MANDO))if(nuevos[i]){
       // Adreida salta cinco metros hacia el stick izquierdo, o hacia su frente si está centrado.
       const destino=accion==='salto'&&!aDistancia()?heroe.pos.clone().addScaledVector(mov.lengthSq()?mov.clone().normalize():frente(heroe.dir),5):apunta.clone();
@@ -1371,7 +1373,8 @@
   function bajo(incluirBotin=false){escena.updateMatrixWorld(true);ray.setFromCamera(puntero,camara);const cajas=[...enemigos.filter(e=>e.estado!=='muere').map(e=>e.m.caja),...(incluirBotin?botines.filter(b=>b.listo&&!b.recogida&&!b.volando).map(b=>b.caja):[])];
     const hit=ray.intersectObjects(cajas,false)[0];ray.ray.intersectPlane(planoSuelo,ent.suelo);return hit?(hit.object.userData.enemigo||hit.object.userData.botin):null;}
   lienzo.addEventListener('contextmenu',e=>e.preventDefault());
-  lienzo.addEventListener('pointerdown',e=>{if(cinematicaTroll?.activa)return;apuntar(e.clientX,e.clientY);camara.updateMatrixWorld();const s=bajo(e.pointerType==='touch');
+  lienzo.addEventListener('pointerdown',e=>{if(casaGoblin?.bloquea||cinematicaTroll?.activa)return;apuntar(e.clientX,e.clientY);camara.updateMatrixWorld();const s=bajo(e.pointerType==='touch');
+    if(e.button===0&&casaGoblin?.activa&&casaGoblin.contiene(ray)){e.preventDefault();intentarCasa();return;}
     if(e.pointerType==='touch'){activarTactil();if(s?.bono){ent.lectura=s;ent.lecturaHasta=reloj.t+2.5;}return;}// en táctil, tocar una carta la lee; se recoge pasando por encima
     ent.piloto=false;ent.dentro=true;lienzo.setPointerCapture?.(e.pointerId);
     if(e.button===2)usar('salto',ent.suelo.clone());else if(e.button===0)ent.atacando=ent.pendiente=true;});
@@ -1388,12 +1391,14 @@
   addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&!(e.buttons&1)&&ent.atacando)soltarBasico();});
   lienzo.addEventListener('pointerleave',()=>{ent.dentro=false;});
   addEventListener('keydown',e=>{const k=e.code;if(k==='KeyM'&&ABIERTO){e.preventDefault();if(!e.repeat){exploracion.grande=!exploracion.grande;$('mapaPanel').classList.toggle('ampliado',exploracion.grande);pintarMapa();}return;}if(k==='Escape'){e.preventDefault();if(!e.repeat)ponerPausa(!pausa.activa);return;}if(cinematicaTroll?.activa&&!pausa.activa){if(k==='Enter'&&!e.repeat){e.preventDefault();cinematicaTroll.finalizar();}return;}if(pausa.activa||rog.abierto||e.target.closest?.('input,textarea,select,summary,button,a'))return;
+    if(casaGoblin?.bloquea){e.preventDefault();if(!e.repeat){if(k==='KeyF'||k==='Enter')casaGoblin.salir();else if(k==='KeyJ')casaGoblin.golpear();}return;}
+    if(casaGoblin?.activa&&k==='KeyF'){e.preventDefault();if(!e.repeat)intentarCasa();return;}
     if(DIRS[k]){e.preventDefault();teclas.add(k);ent.piloto=false;return;}
     const h=ACCION[k];if(h){e.preventDefault();if(e.repeat)return;ent.piloto=false;usar(h,h==='salto'?puntoApuntado():null);}});
   addEventListener('keyup',e=>{teclas.delete(e.code);});addEventListener('blur',()=>{teclas.clear();ent.atacando=false;});
   // Botones del HUD (y de táctil): Atacar se mantiene pulsado; los demás lanzan su habilidad.
   for(const b of document.querySelectorAll('[data-hab]')){
-    b.addEventListener('pointerdown',e=>{if(cinematicaTroll?.activa)return;const h=b.dataset.hab;mando.activo=false;e.preventDefault();e.stopPropagation();ent.piloto=false;if(e.pointerType==='touch')activarTactil();if(h==='tajo'){ent.atacando=ent.pendiente=true;b.setPointerCapture?.(e.pointerId);return;}usar(h,h==='salto'?puntoApuntado():null);});
+    b.addEventListener('pointerdown',e=>{if(casaGoblin?.bloquea||cinematicaTroll?.activa)return;const h=b.dataset.hab;mando.activo=false;e.preventDefault();e.stopPropagation();ent.piloto=false;if(e.pointerType==='touch')activarTactil();if(h==='tajo'){ent.atacando=ent.pendiente=true;b.setPointerCapture?.(e.pointerId);return;}usar(h,h==='salto'?puntoApuntado():null);});
     if(b.dataset.hab==='tajo')for(const t of ['pointerup','pointercancel','lostpointercapture'])b.addEventListener(t,()=>{if(t==='lostpointercapture'){if(ent.atacando)soltarBasico(true);}else soltarBasico(t==='pointercancel');});}
   // Palanca táctil: arrastra para andar (la cámara mira al norte: arriba es el fondo de la plaza).
   function activarTactil(){if(ent.tactil)return;ent.tactil=true;esc.classList.add('tactil');}
@@ -1478,7 +1483,7 @@
     $('vineta').style.opacity=h.heridaT===undefined?'0':Math.max(0,.9*(1-(reloj.t-h.heridaT)/.45)).toFixed(3);
     if(tostadaHasta&&reloj.t>tostadaHasta){$('tostada').classList.remove('visto');tostadaHasta=0;}if(bannerHasta&&reloj.t>bannerHasta){$('banner').classList.remove('visto');bannerHasta=0;}
     if(jugadores.every(j=>!j.vivo&&j.muerteT>(j.muerte?.duracion||1)+.3)&&!finMostrado){finMostrado=true;$('fin').hidden=false;$('finTitulo').textContent='Has caído';$('finTexto').textContent='Los goblins celebran en la plaza. Tomsage aún te necesita.';}
-    if(ol.fin&&!finMostrado&&!botines.length){finMostrado=true;$('fin').hidden=false;$('finTitulo').textContent='Tomsage resiste';$('finTexto').textContent='Has liberado Tomsage de Can y de los cobradores de piso. Botín recogido: '+h.botin.length+' cartas.';}}
+    if(ol.fin&&!casaGoblin?.activa&&!finMostrado&&!botines.length){finMostrado=true;$('fin').hidden=false;$('finTitulo').textContent='Tomsage resiste';$('finTexto').textContent='Has liberado Tomsage de Can y de los cobradores de piso. Botín recogido: '+h.botin.length+' cartas.';}}
   // Quien te ataca desde fuera de la pantalla: una flecha en el borde que apunta hacia él (roja al fijarse).
   const flechasEl=[];
   function flechas(){const b=esc.getBoundingClientRect(),W=b.width,H=b.height;let n=0;
@@ -1628,7 +1633,7 @@
     h.dir+=difAng(h.dir,rumbo(h.pos,p))*Math.min(1,dt*10);h.pos.lerp(p,avance/d);h.fase+=avance/MOD.animacion.longitudZancada(.52)*TAU;return false;
   }
   cinematicaTroll=window.CAOZ_ARPG_ENTRADA_TROLL.fabrica(THREE,MOD,{escena,caminar:caminarEntrada,
-    recoger(h){h.llaves++;},
+    recoger(h){h.llaves++;llaveDelRecaudador=true;},
     rotulo(fase,texto){mostrarEntradaTroll(true);esc.dataset.cinematicaFase=fase;$('cinematicaTexto').textContent=texto;},
     impactar(p){romperPiso(p);polvo(p,38,2.3);marca('onda',p.x,p.z,3.4,0xb9ad93,.65);impactoFX.agujero(p);temblar(.8);},
     terminar(troll){vaciarControlesEntrada();troll.quieto=false;troll.dentro=true;troll.cd=1.1;cambiar(troll,'persigue');ol.espera=1.5;mostrarEntradaTroll(false);banner('El Recaudador','«Esta plaza tiene dueño. ¡Paguen el piso!»');lienzo.focus();}
@@ -1646,8 +1651,45 @@
     presion.rutas=0;for(const e of [...enemigos])if(e.estado==='muere')pasoEnemigo(e,dt);posarEnemigos(dt,true);cinematicaTroll.paso(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);
     pasoCamara(dtReal,dtReal);hemi.intensity=.5+clima.paso(dtReal,vista.foco)*.18;hud(dtReal);return true;
   }
+  /* ---- Casa tras el Recaudador: escena local, sin habilidades de combate -------- */
+  function limpiarCombateCasa(){
+    vaciarControlesEntrada();limpiarAliados();limpiarPeligrosTroll();limpiarFuegoRopa();
+    for(const h of jugadores)h.incendio=null;
+    for(const b of [...bumeranes])quitarBumeran(b);
+    for(const l of lanzas)escena.remove(l.g);lanzas.length=0;for(const b of balas)escena.remove(b.g);balas.length=0;
+    lineaMira.visible=puntoMira.visible=seleccion.m.visible=aura.visible=estela.visible=rastroArco.visible=rastroRecto.visible=false;
+  }
+  function cerrarEtapaTroll(e){
+    if(ABIERTO||ol.i!==6||enemigos.some(o=>o.tipo==='troll'&&o.estado!=='muere')||ol.cola.some(([tipo])=>tipo==='troll'))return false;
+    ol.cola=[];ol.lote=0;ol.descanso=null;ol.fin=false;refuerzosCan.length=0;
+    limpiarCombateCasa();asustarGoblins(e,true);casaGoblin.habilitar();
+    banner('La plaza queda en silencio','La llave del Recaudador abre una de las casas.');return true;
+  }
+  function interfazCasa(s){
+    esc.dataset.casaFase=s.fase;esc.classList.toggle('enCasaGoblin',s.interior);esc.classList.toggle('entrandoCasa',s.fase==='abrir');
+    $('casaPanel').hidden=!s.interior;$('abrirCasa').hidden=s.fase!=='plaza';
+    $('casaGolpear').hidden=s.golpeDado;$('casaGolpear').disabled=s.fase!=='decision';
+    $('casaSalir').disabled=!['decision','despues'].includes(s.fase);
+    $('casaTexto').textContent=s.fase==='entrar'?'Adreida entra en la casa.':s.fase==='salir'?'De vuelta a la plaza…':s.golpeDado?'La habitación queda en silencio.':'Una madre goblin y su hijo se refugian contra la pared.';
+    if(s.interior)clima.pausar(true);if(['decision','despues'].includes(s.fase))lienzo.focus();
+  }
+  casaGoblin=window.CAOZ_ARPG_CASA_GOBLIN.fabrica(THREE,MOD,{plaza:escena,casa:casaVisitable,materiales:CASAS.materiales,caminar:caminarEntrada,
+    consumirLlave(){const h=jugadores.find(h=>h.llaves>0);if(!llaveDelRecaudador||!h)return false;h.llaves--;llaveDelRecaudador=false;return true;},
+    limpiar:limpiarCombateCasa,interfaz:interfazCasa,
+    volver(){const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo'])u.searchParams.delete(k);location.assign(u.href);}
+  });
+  function intentarCasa(h){if(pausa.activa||rog.abierto||!casaGoblin?.activa)return false;h??=casaGoblin.cerca(jugadores)||jugadores.find(h=>h.vivo);if(!h)return false;vaciarControlesEntrada();return casaGoblin.solicitar(h);}
+  $('abrirCasa').onclick=()=>intentarCasa();$('casaGolpear').onclick=()=>{if(!pausa.activa)casaGoblin.golpear();};$('casaSalir').onclick=()=>{if(!pausa.activa)casaGoblin.salir();};
+  function actualizarPuertaCasa(){if(!casaGoblin?.activa||casaGoblin.bloquea)return;const cerca=casaGoblin.cerca(jugadores);$('abrirCasa').hidden=false;textoHud($('abrirCasa'),cerca?'Abrir con la llave · F / ×':'Ir a la casa de la llave · F');}
+  function pasoCasaGoblin(dt,dtReal){
+    presion.rutas=0;
+    if(casaGoblin.interior){let pads=[];try{pads=Array.from(navigator.getGamepads?.()||[]).filter(g=>g?.connected&&g.mapping==='standard');}catch{}casaGoblin.mando(pads.find(g=>g.index===jugadores[0].mando.indice)||pads[0]);}
+    casaGoblin.paso(dt);
+    if(!casaGoblin.interior){for(const e of [...enemigos])pasoEnemigo(e,dt);posarEnemigos(dt);pasoMarcas();ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dtReal);pasoCamara(dtReal,dtReal);retirarHuidosFueraDeCamara();hud(dtReal);}
+    return true;
+  }
   // Enlace de revisión: reproduce esta transición sin tener que superar las dos cuadrillas.
-  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
+  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
 
   /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
@@ -1658,6 +1700,7 @@
     escena.updateMatrixWorld(true);
     if(paron>0){paron-=dt;dt*=.08;}
     reloj.t+=dt;tiempo.value=reloj.t;F.tiempo.value=reloj.t;CASAS.uniformes.uT.value=reloj.t;
+    if(casaGoblin?.bloquea)return pasoCasaGoblin(dt,dtReal);
     if(cinematicaTroll.activa)return pasoEntradaTroll(dt,dtReal);
     camara.updateMatrixWorld();ent.sobre=ent.dentro&&!ent.tactil?bajo():null;if(ent.lectura&&reloj.t>ent.lecturaHasta)ent.lectura=null;
     // Las cartas no reaccionan al cursor ni tapan la selección de enemigos; sólo un toque explícito permite leerlas.
@@ -1676,7 +1719,7 @@
     for(const f of fuegos)f.luz.intensity=55+Math.sin(reloj.t*11+f.x)*9+Math.sin(reloj.t*23+f.z)*6;for(const b of braseros)b.luz.intensity=24+Math.sin(reloj.t*13+b.x)*5;
     for(const n of [...numeros]){const s=reloj.t-n.t0;n.e.pos.y=n.y+s*1.4;n.e.el.style.opacity=String(Math.max(0,1-Math.max(0,s-.45)/.5));if(s>.95){quitarEtiqueta(n.e);numeros.splice(numeros.indexOf(n),1);}}
     pasoCamara(dt,dtReal);hemi.intensity=.5+clima.paso(dtReal,vista.foco)*.18;camara.updateMatrixWorld();retirarHuidosFueraDeCamara();lineaMira.visible=puntoMira.visible=false;for(const j of jugadores)if(j.tipo==='mohamed')conHeroe(j,actualizarPunteria);hud(dtReal);
-    lienzo.style.cursor=ent.sobre?.d?'crosshair':'default';
+    actualizarPuertaCasa();lienzo.style.cursor=ent.sobre?.d?'crosshair':'default';
     return true;
   }
   function posarEnemigos(dt,soloMuertos=false){
@@ -1799,7 +1842,7 @@
   rotulos();
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
   function dibujar(){renderer.info.reset();medidorGPU?.iniciar();
-    try{if(simple)renderer.render(escena,camara);else composer.render();}finally{medidorGPU?.terminar();}
+    try{if(casaGoblin?.interior)renderer.render(casaGoblin.escena,casaGoblin.camara(camara.aspect));else if(simple)renderer.render(escena,camara);else composer.render();}finally{medidorGPU?.terminar();}
     if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}else aviso('La escena sale negra en esta tarjeta gráfica ('+gpu+'). Cuéntanos qué navegador y dispositivo usas.');}}}
   // Algunos navegadores integrados mantienen visibles varias pestañas: sólo la última activada renderiza.
   let partidaActiva=true;
@@ -1827,7 +1870,7 @@
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
-    clima.pausar(document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido);
+    clima.pausar(document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
     if(document.hidden||!partidaActiva){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     leerPausaMando();
     if(pausa.activa){sincronizarTiempo();antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
@@ -1865,6 +1908,7 @@
   window.CAOZ_ARPG_THREE_REVISION=Object.freeze({
     ia(modo){if(modo!==undefined)configurarIA(modo);return {modo:window.CAOZ_ARPG_IA.modo(),goblins:enemigos.filter(e=>e.ia&&e.estado!=='muere').map(e=>({id:e.id,variante:e.m.varianteGoblin,accion:e.ia.accion,decisiones:e.ia.decisiones}))};},
     entradaTroll:()=>cinematicaTroll.estado(),
+    casaGoblin:()=>casaGoblin.estado(),
     impactos:()=>impactoFX.estado(),
     clima:()=>clima.estado(),
     orbes:()=>liquidosHud.estado(),
