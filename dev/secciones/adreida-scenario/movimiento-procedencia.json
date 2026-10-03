@@ -1,0 +1,18 @@
+{
+  "autor": "Quaternius",
+  "biblioteca": "Universal Animation Library, Standard",
+  "licencia": "CC0-1.0",
+  "pagina": "https://quaternius.com/packs/universalanimationlibrary.html",
+  "repositorio": "https://github.com/Seyamalam/blood-league-kickoff",
+  "commit": "aa02a4e6d8337a0604d2da131bcbbeb1f01badf0",
+  "archivo": "public/assets/vendor/quaternius/universal-animation-library.glb",
+  "sha256": "4c748767741a3e495d89667b9a218b690ba9810b9517a12e960780e3ca72c4e9",
+  "clips": [
+    "Walk_Loop",
+    "Sprint_Loop"
+  ],
+  "muestrasPorCiclo": 32,
+  "adaptacion": "Pelvis, pecho y cabeza expresados en el espacio del personaje; pose media eliminada para aplicar la guardia del hacha de Adreida. Se conservan el solver de piernas y el agarre a dos manos.",
+  "compilador": "preparar-movimiento.mjs",
+  "salida": "Bloque movimientoCorporal en arpg-three-adreida-animacion.js"
+}

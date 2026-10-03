@@ -46,6 +46,24 @@ for(const malo of [{...p,version:9},{...p,personaje:'mohamed'},{...p,ajustes:{..
   assert.throws(()=>M.animacion.configurar(malo));assert.equal(JSON.stringify(M.animacion.configuracion()),valido,'Importación atómica');
 }
 M.animacion.restablecer();assert.equal(JSON.stringify(M.animacion.configuracion()),original);
+// Regresión del torso inmóvil: medir el pecho en el espacio del personaje,
+// porque dos giros locales pueden cancelarse al heredar la rotación de la cadera.
+const euler=new THREE.Euler(),orientacion=new THREE.Quaternion(),muestras=[];
+for(let i=0;i<120;i++){
+ M.posar(m,{anim:'andar',fase:i/120*Math.PI*2,paso:1,t:i/120});m.raiz.updateMatrixWorld(true);seguro(m);
+ const giro=nombre=>euler.setFromQuaternion(m.H[nombre].getWorldQuaternion(orientacion)).y;
+ muestras.push({pecho:giro('torso'),cadera:giro('cadera'),cabeza:giro('cabeza')});
+}
+const rango=nombre=>Math.max(...muestras.map(p=>p[nombre]))-Math.min(...muestras.map(p=>p[nombre]));
+assert.ok(rango('pecho')>.45&&rango('pecho')<.85,'El pecho participa sin exagerar el giro');
+assert.ok(rango('cadera')>.15,'La cintura contrapesa el movimiento');
+assert.ok(rango('cabeza')<rango('pecho')*.3,'La cabeza estabiliza la mirada');
+for(const paso of [.3,1]){
+ M.posar(m,{anim:'andar',fase:Math.PI*2-1e-5,paso});const antes=cuerpo(m);
+ M.posar(m,{anim:'andar',fase:0,paso});
+ for(const n of ['torso','cadera','cabeza','manoI','manoD'])assert.ok(m.H[n].quaternion.angleTo(antes[n].q)<.001,'Movimiento corporal continuo: '+n);
+}
+console.log('✓ Carrera de acción: pecho visible, contragiro de cadera, mirada estable y ciclo continuo');
 console.log('✓ Transiciones continuas, agarre, impacto exacto, recuperación fija, 30/60/120 Hz, independencia y variantes validadas');
 
 // Regresión del tirón al recoger el hacha: la dirección del mango y el plano del codo
