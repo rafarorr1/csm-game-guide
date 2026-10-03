@@ -1148,6 +1148,201 @@ const P = s => G.pl[s];
 
 const ME = 0, FOE = 1;
 
+/* --------------------------------------------------------------------------
+   TELEMETRÍA DE LOGROS
+
+   El motor sólo junta hechos de la partida; no conoce la Colección ni la
+   pantalla. Al terminar, la pantalla llama telemetriaFinalizar(), que entrega
+   un resumen serializable a CAOZ_LOGROS si ese módulo está disponible. Esta
+   separación evita que una animación, un registro o una red modifiquen las
+   reglas del duelo.
+
+   Los premios se excluyen deliberadamente de IA, pruebas, partidas rápidas,
+   tutoriales y online. En línea el anfitrión ve los dos lados pero no posee la
+   Colección del invitado; premiar ahí sin un recibo autoritativo duplicaría o
+   adjudicaría progreso a la cuenta equivocada.
+   -------------------------------------------------------------------------- */
+
+let VOLADO_LOGRO_PENDIENTE = null;
+let SECUENCIA_LOGRO_PARTIDA = 0;
+
+/* El ID sólo deduplica eventos de una misma partida en el inventario local.
+   No identifica a una persona ni viaja por red: una partida online no puede
+   otorgar logros hasta que exista un registro autoritativo de ambos jugadores. */
+function telemetriaIdPartida(){
+  const marca=Date.now().toString(36),secuencia=(++SECUENCIA_LOGRO_PARTIDA).toString(36);
+  const azar=Math.random().toString(36).slice(2,10)||'0';
+  return 'logro-'+marca+'-'+secuencia+'-'+azar;
+}
+
+function telemetriaEsPrueba(){
+  try{ return new URLSearchParams(globalThis.location?.search||'').has('test'); }
+  catch(_){ return false; }
+}
+
+function telemetriaEsElegible(g=G){
+  return !!(g && !g.auto && !g.fast && !g.silent && !g.online && !g.guest &&
+    !g.tutorial && !g.campana?.prueba && !g.campana?.pruebaEditor &&
+    !g.campana?.pruebaFinalGero && !telemetriaEsPrueba());
+}
+
+function telemetriaLado(){
+  return {cartasJugadas:[],cartasEntradas:[],cancionesJugadas:0,
+    danoAlmaRecibido:0,danoAlmaPorCarta:{},ultimoGolpe:null};
+}
+
+function telemetriaNueva(voladoCara){
+  return {version:1,id:telemetriaIdPartida(),inicioMs:0,voladoCara:voladoCara===true||voladoCara===false?voladoCara:null,
+    lados:[telemetriaLado(),telemetriaLado()],hitos:{},fin:null,finalEnviado:false,reintentoFinal:false};
+}
+
+function telemetriaEventoId(sufijo,g=G){
+  const base=typeof g?.telemetria?.id==='string'?g.telemetria.id:'';
+  return base?base+'-'+String(sufijo):undefined;
+}
+
+/* La moneda se lanza antes de que exista G. final-core.js deja aquí el
+   resultado y newGame lo adopta sólo si sigue perteneciendo a esa apertura. */
+function telemetriaAnotarVolado(cara,partida){
+  if(cara!==true&&cara!==false)return;
+  VOLADO_LOGRO_PENDIENTE={cara,partida:Number.isInteger(partida)?partida:null};
+}
+
+function telemetriaTomarVolado(){
+  const pendiente=VOLADO_LOGRO_PENDIENTE;
+  if(!pendiente)return null;
+  const actual=typeof PARTIDA_N==='number'?PARTIDA_N:null;
+  if(pendiente.partida!==null&&actual!==null&&pendiente.partida!==actual){
+    if(pendiente.partida<actual)VOLADO_LOGRO_PENDIENTE=null;
+    return null;
+  }
+  VOLADO_LOGRO_PENDIENTE=null;
+  return pendiente.cara;
+}
+
+function telemetriaRegistrar(evento,g=G){
+  if(!telemetriaEsElegible(g))return false;
+  const api=globalThis.CAOZ_LOGROS;
+  if(!api||typeof api.registrar!=='function')return false;
+  try{ return !!api.registrar({...evento,elegible:true})?.ok; }
+  catch(_){ return false; }
+}
+
+function telemetriaCartaJugada(side,id){
+  const t=G?.telemetria,l=t?.lados?.[side],c=CARDS[id];
+  if(!l||!c)return;
+  if(!l.cartasJugadas.includes(id))l.cartasJugadas.push(id);
+  if(c.sub?.includes('cancion'))l.cancionesJugadas++;
+}
+
+function telemetriaCartaEntra(side,id){
+  const l=G?.telemetria?.lados?.[side];
+  if(l&&!l.cartasEntradas.includes(id))l.cartasEntradas.push(id);
+}
+
+function telemetriaOrigen(opt={}){
+  const id=typeof opt.origen==='string'?opt.origen:opt.att?.card?.id;
+  return typeof id==='string'&&CARDS[id]?id:null;
+}
+
+function telemetriaDanoAlma(side,n,opt={}){
+  const l=G?.telemetria?.lados?.[side];
+  const cantidad=Number.isFinite(n)?Math.max(0,Math.floor(n)):0;
+  if(!l||!cantidad)return;
+  l.danoAlmaRecibido+=cantidad;
+  const atacante=Number.isInteger(opt.atacante)?opt.atacante:(Number.isInteger(opt.att?.side)?opt.att.side:null);
+  const origen=telemetriaOrigen(opt),agresor=atacante==null?null:G.telemetria?.lados?.[atacante];
+  if(!agresor)return;
+  if(origen){
+    agresor.danoAlmaPorCarta[origen]=(agresor.danoAlmaPorCarta[origen]||0)+cantidad;
+    agresor.ultimoGolpe={origen};
+  }
+}
+
+function telemetriaDanoUnidad(u,opt={}){
+  if(!u||!G?.telemetria)return;
+  const atacante=Number.isInteger(opt.att?.side)?opt.att.side:(Number.isInteger(opt.atacante)?opt.atacante:null);
+  u.ultimoDano={origen:telemetriaOrigen(opt),atacante,letal:opt.letal===true};
+}
+
+function telemetriaMarcarFin(causa,extra={}){
+  if(!G?.telemetria||G.telemetria.fin)return;
+  const origen=typeof extra.origen==='string'&&CARDS[extra.origen]?extra.origen:null;
+  G.telemetria.fin={causa:String(causa||'otro'),origen};
+}
+
+function telemetriaHito(id,evento){
+  const t=G?.telemetria;
+  if(!t||t.hitos[id]||!telemetriaEsElegible())return;
+  if(telemetriaRegistrar({...evento,eventoId:telemetriaEventoId('hito-'+id)}))t.hitos[id]=true;
+}
+
+function telemetriaRevisarCampo(){
+  if(!telemetriaEsElegible()||!G?.telemetria)return;
+  const p=P(ME),lider=p?.leaderId;
+  if(lider==='talesin'){
+    const cero=p.field.find(u=>u.alive&&u.atkInicial===0&&u.atk>=10);
+    if(cero)telemetriaHito('talesin_cero_a_heroe',{tipo:'hito-campo',protagonista:lider,atkBase:0,atk:cero.atk});
+  }
+  if(lider==='rafaela'){
+    const apostoles=p.field.filter(u=>u.alive&&u.tribes.includes('Discípulo'));
+    if(apostoles.length>=5)telemetriaHito('rafaela_charles_menson',{tipo:'hito-campo',protagonista:lider,apostoles:apostoles.length});
+    const oculto=apostoles.find(u=>!u.revealed&&u.keys.has('sigilo')&&u.atk>=6);
+    if(oculto)telemetriaHito('rafaela_oculto',{tipo:'hito-campo',protagonista:lider,apostolSigiloso:true,atk:oculto.atk});
+  }
+}
+
+function telemetriaMuerteUnidad(u){
+  if(!telemetriaEsElegible()||!u)return;
+  const ultimo=u.ultimoDano;
+  // Una destrucción posterior no puede reutilizar un golpe antiguo de Rul:
+  // este honor exige que el daño del Dragón sea lo que redujo a Thal a 0 PV.
+  if(u.dmg<u.maxHp||!ultimo?.letal||P(ME).leaderId!=='rafaela'||u.card.id!=='tal'||ultimo.atacante!==ME||ultimo.origen!=='tok_dragon')return;
+  telemetriaRegistrar({tipo:'muerte-unidad',protagonista:P(ME).leaderId,
+    objetivo:u.card.id,origen:ultimo.origen,eventoId:telemetriaEventoId('muerte-'+u.uid)});
+}
+
+function telemetriaTutorialCompletado(lider){
+  if(lider!=='fender'||telemetriaEsPrueba())return false;
+  const api=globalThis.CAOZ_LOGROS;
+  if(!api||typeof api.registrar!=='function')return false;
+  try{return !!api.registrar({tipo:'tutorial-completado',protagonista:lider,completado:true,
+    eventoId:telemetriaEventoId('tutorial-'+lider)})?.ok;}
+  catch(_){return false;}
+}
+
+function telemetriaFinalizar(winner,why){
+  const g=G,t=g?.telemetria;
+  if(!g||!t||t.finalEnviado)return false;
+  if(!telemetriaEsElegible(g))return false;
+  const yo=t.lados[ME],fin=t.fin||{},inicio=Number(t.inicioMs)||0;
+  const duracion=inicio>0?Math.max(0,Date.now()-inicio):Number.MAX_SAFE_INTEGER;
+  const gana=winner===ME;
+  if(t.voladoCara===true||t.voladoCara===false){
+    telemetriaRegistrar({tipo:'volado',protagonista:P(ME).leaderId,cara:t.voladoCara,
+      eventoId:telemetriaEventoId('volado')},g);
+  }
+  const guardado=telemetriaRegistrar({tipo:'partida-finalizada',ganada:gana,ganador:gana?'local':'rival',
+    protagonista:P(ME).leaderId,rival:P(FOE).leaderId,ronda:Math.ceil(g.turnNo/2),duracionMs:duracion,
+    danoAlmaRecibido:yo.danoAlmaRecibido,almaFinal:Math.max(0,P(ME).alma),
+    cartasJugadas:yo.cartasJugadas.slice(),cartasEntradas:yo.cartasEntradas.slice(),
+    cancionesJugadas:yo.cancionesJugadas,danoAlmaPorCarta:{...yo.danoAlmaPorCarta},
+    // Sólo la fuente del daño que terminó el duelo sirve como último golpe;
+    // reutilizar un golpe anterior daría falsos Machete/Thal tras un hechizo.
+    ultimoGolpe:gana&&fin.causa==='alma'?{origen:fin.origen}:null,
+    causa:fin.causa||'otro',pergaminoGano:fin.causa==='deseo',eventoId:telemetriaEventoId('final')},g);
+  if(guardado)t.finalEnviado=true;
+  else if(!t.reintentoFinal){
+    // Un fallo transitorio de almacenamiento no pierde el logro: reintentamos
+    // una vez con el mismo evento, que el inventario deduplica de forma segura.
+    t.reintentoFinal=true;
+    setTimeout(()=>{
+      if(G===g&&g.telemetria===t&&!t.finalEnviado)telemetriaFinalizar(winner,why);
+    },180);
+  }
+  return guardado;
+}
+
 function newPlayer(side, leaderId){
   return { side, leaderId, L:LEADERS[leaderId],
     deck:shuffle(buildDeck(leaderId)), hand:[], field:[], traps:[], grave:[], relics:[],
@@ -1165,7 +1360,7 @@ function newGame(myLeader, foeLeader, opts={}){
   G = { pl:[newPlayer(0,myLeader), newPlayer(1,foeLeader)],
         active:0, turnNo:0, phase:'inicio', over:false, log:[],
         place:null, diedThisTurn:[], busy:false, fast:false, tutorial:!!opts.tutorial,
-        firstDraw:true };
+        firstDraw:true, telemetria:telemetriaNueva(telemetriaTomarVolado()) };
   return G;
 }
 
@@ -1215,7 +1410,9 @@ function mkUnit(cardId, side){
     keysOwn:new Set(c.keys||[]), aKeys:new Set(), keys:new Set(),
     objs:[], alive:true, sick:true, attacked:false, attackedEver:false,
     stunned:0, infected:false, possessed:false, tookFire:false,
-    atk:c.a||0, maxHp:c.h||1, actUsed:false, marked:false, noCounter:false,
+    // La carta puede transformarse (por ejemplo Rulchete), pero los logros
+    // necesitan conservar cuál era su ATQ al nacer, no el de su forma actual.
+    atkInicial:c.a||0, atk:c.a||0, maxHp:c.h||1, actUsed:false, marked:false, noCounter:false,
     hotMetal:false, doomed:false, stolen:false, blind:false, revealed:false,
     noFly:false, trapProof:false, tIgnoreTaunt:false, noClause:false, killer:null };
   return heredarAscension(u, side);
@@ -1258,6 +1455,9 @@ function recalc(){
     u.keys=k;
   });
   for(const p of G.pl)p.corte=avanceCorte(p.field,p.corte);
+  // Los tres hitos de mesa se observan después de auras, objetos y pasivas:
+  // así la cifra usada por el logro es exactamente la que ve el jugador.
+  telemetriaRevisarCampo();
 }
 
 function grant(u,g){ // ¿algún objeto le da esta propiedad?
@@ -1323,6 +1523,9 @@ async function dmgU(u, n, opt={}){
     if(!efectoThal) await fxLunge(opt.att,u);
   }
   u.dmg+=n;
+  // Conserva el origen del daño que realmente pudo matar a la unidad.
+  // Así un daño antiguo de Rul no se recicla si después otra regla la destruye.
+  telemetriaDanoUnidad(u,{...opt,letal:golpe.letal});
   if(opt.att) u.killer=opt.att;
   if(efectoThal&&golpe.letal) u.fxCeniza=true;
   netFx('hit',{uid:u.uid,n,...golpe});
@@ -1342,12 +1545,18 @@ function healU(u,n){
 
 async function dmgFace(s,n,opt={}){
   if(G.over) return;
+  const almaAntes=Math.max(0,P(s).alma);
+  const danoEfectivo=Math.min(Math.max(0,Number(n)||0),almaAntes);
+  telemetriaDanoAlma(s,danoEfectivo,opt);
   P(s).alma-=n;
   log(`<b>${P(s).L.n}</b> pierde ${n} Alma → ${Math.max(0,P(s).alma)}.`,'dmg');
   render();
   netFx('face',{side:(s===FOE?0:1),n});
   await fxFace(s,n);
-  if(P(s).alma<=0) endGame(1-s, 'El Mago del Domo reclama el alma de '+P(s).L.n+'.');
+  if(P(s).alma<=0){
+    telemetriaMarcarFin('alma',{origen:telemetriaOrigen(opt)});
+    endGame(1-s, 'El Mago del Domo reclama el alma de '+P(s).L.n+'.');
+  }
 }
 
 /* ---------- muerte ---------- */
@@ -1391,6 +1600,7 @@ async function killUnit(u, opt={}){
   else if(!petuniaAsciende) await fxDeath(u); // se anima mientras sigue en el campo
   const idx=P(s).field.indexOf(u); if(idx>=0) P(s).field.splice(idx,1);
   u.alive=false;
+  telemetriaMuerteUnidad(u);
   // La muerte rompe la corte antes de que una Trampa o un Al morir la repueble.
   P(s).corte=avanceCorte(P(s).field,P(s).corte);
   G.diedThisTurn.push({id:u.card.id, side:s});
@@ -1417,9 +1627,13 @@ async function killUnit(u, opt={}){
   // Lugar El Domo: el efecto visual ya mostró el viaje, y la regla conserva
   // el orden original respecto a objetos, Nexo y Puntos Robados.
   if(G.place && CARDS[G.place.id].domeDeath){
+    telemetriaDanoAlma(s,Math.min(1,Math.max(0,P(s).alma)),{origen:'domo'});
     P(s).alma--; P(1-s).pd++;
     log('El Domo cobra: −1 Alma para su controlador, +1 PD para el rival.','sys');
-    if(P(s).alma<=0){ endGame(1-s,'El Domo devora a '+P(s).L.n+'.'); return; }
+    if(P(s).alma<=0){
+      telemetriaMarcarFin('alma',{origen:'domo'});
+      endGame(1-s,'El Domo devora a '+P(s).L.n+'.'); return;
+    }
   }
   // Talesin: Ficha de Gracia
   if(P(s).leaderId==='talesin' && !P(s).ascended){
@@ -1718,6 +1932,9 @@ async function fastWindow(side, ctx){
 async function lanzarRapido(side,c,ctx){
   const partida=G;
   const card=CARDS[c];
+  // Los Rápidos no pasan por playFromHand, pero sí cuentan como cartas
+  // usadas (en especial Palabra de Curación, que es Canción y Rápido).
+  telemetriaCartaJugada(side,c);
   await antesDeHechizo(side,c);
   if(card.counter) await card.castCounter(G,side,ctx.ev);
   else if(card.reroll) await card.castReroll(G,side,ctx.ev);
@@ -1802,6 +2019,9 @@ async function setupMatch(myLeader, foeLeader, opts={}){
   }
   if(G!==partida||G.over)return;
   G.active=1-first; G.phase='inicio';
+  // El reloj de logros comienza cuando la mano ya quedó resuelta: elegir el
+  // mulligan no debe convertir la pantalla de preparación en tiempo de duelo.
+  if(G.telemetria)G.telemetria.inicioMs=Date.now();
   render();
   await startTurn(first);
 }
@@ -2025,6 +2245,7 @@ async function startTurn(s){
   if(G!==partida||G.over)return;
   p.corte=avanceCorte(p.field,p.corte,G.turnNo);
   if(p.corte.turnos>=2){
+    telemetriaMarcarFin('corte');
     endGame(s,`${p.L.n} mantiene la corte durante dos turnos y gana el duelo.`);return;
   }
   if(p.corte.turnos===1){
@@ -2043,7 +2264,10 @@ async function startTurn(s){
       if(G!==partida||partida.over)return;
       if(!runas) await nap(900);
       if(G!==partida||partida.over)return;
-      if(p.scrollTurns>=2){ endGame(s,`${p.L.n} formula su Deseo Ilimitado. El Domo obedece.`); return; } }
+      if(p.scrollTurns>=2){
+        telemetriaMarcarFin('deseo',{origen:'pergamino'});
+        endGame(s,`${p.L.n} formula su Deseo Ilimitado. El Domo obedece.`); return;
+      } }
   }
   if(G.over) return;
   // Fase de Robo
@@ -2186,6 +2410,9 @@ async function playFromHand(s, id, forcedTargets){
   }
   P(s).pd-=cost;
   P(s).hand.splice(P(s).hand.indexOf(id),1);
+  // Se registra al pagar, antes de que una respuesta pueda contrarrestar la
+  // carta: haberla usado sí cuenta aunque su efecto sea neutralizado.
+  telemetriaCartaJugada(s,id);
   // La restricción sólo pertenece al jefe final. Se fija al pagar la carta,
   // antes de abrir la prueba, para que la IA no pueda encadenar otra cuando
   // vuelva de un minijuego ni si la presentación se cancela.
@@ -2241,6 +2468,7 @@ async function playFromHand(s, id, forcedTargets){
   else if(c.t==='personaje'){
     const u=mkUnit(id,s);
     P(s).field.push(u); recalc();
+    telemetriaCartaEntra(s,id);
     if(u.keys.has('prisa')) u.sick=false;
     render();
     // Thal trae su propia entrada (onda de ácido) después de sobrevivir la
@@ -2309,23 +2537,30 @@ async function pruebaDelEditor(s,id,partida=G){
     const pendientes=Math.min(Math.max(0,parejas-aciertos),Math.max(0,P(FOE).alma));
     if(pendientes){P(FOE).alma-=pendientes;log('Recordaste '+pendientes+' '+(pendientes===1?'pareja':'parejas')+'. Pitágoras pierde '+pendientes+' Alma.','dmg');}
     const derrota=resultado.fallosMemoria>=3&&P(FOE).alma>0;
-    if(derrota){P(ME).alma-=5;log('Perdiste tus tres vidas en la memoria del Editor. Pierdes 5 Alma.','dmg');}
+    if(derrota){
+      telemetriaDanoAlma(ME,Math.min(5,Math.max(0,P(ME).alma)),{origen:'editor'});
+      P(ME).alma-=5;log('Perdiste tus tres vidas en la memoria del Editor. Pierdes 5 Alma.','dmg');
+    }
     render();if(derrota)await fxFace(ME,5);else if(pendientes)await fxFace(FOE,pendientes);
     if(G!==partida||partida.over)return;
     // El final empieza después de retirar la prueba y su nube. Nunca debajo
     // del minijuego, ni dos veces por un acierto y su resultado final.
-    if(P(FOE).alma<=0)endGame(ME,'Rompiste el último recuerdo de Pitágoras.');
-    else if(P(ME).alma<=0)endGame(FOE,'Pitágoras consumió tu Alma.');
+    if(P(FOE).alma<=0){telemetriaMarcarFin('alma',{origen:'editor'});endGame(ME,'Rompiste el último recuerdo de Pitágoras.');}
+    else if(P(ME).alma<=0){telemetriaMarcarFin('alma',{origen:'editor'});endGame(FOE,'Pitágoras consumió tu Alma.');}
     return;
   }
   const lado=resultado.sobrevivio?FOE:ME;
+  telemetriaDanoAlma(lado,Math.min(2,Math.max(0,P(lado).alma)),{origen:'editor'});
   P(lado).alma-=2;
   log(resultado.sobrevivio?'Sobreviviste al corte del Editor. Pitágoras pierde 2 Alma.':'El Editor te alcanza. Pierdes 2 Alma.','dmg');
   render();await fxFace(lado,2);
   // Otra partida puede comenzar durante el impacto: no concluirla por el
   // resultado de una prueba que pertenecía a la anterior.
   if(G!==partida||partida.over)return;
-  if(P(lado).alma<=0)endGame(1-lado,resultado.sobrevivio?'Rompiste el último juego de Pitágoras.':'Pitágoras consumió tu Alma.');
+  if(P(lado).alma<=0){
+    telemetriaMarcarFin('alma',{origen:'editor'});
+    endGame(1-lado,resultado.sobrevivio?'Rompiste el último juego de Pitágoras.':'Pitágoras consumió tu Alma.');
+  }
 }
 
 /* ---------- habilidad de líder ---------- */
@@ -2549,7 +2784,9 @@ async function doAttack(u, target){
       await destroy(target,{silent:true}); render(); return true;
     }
     if(target==='face'){
-      await dmgFace(d,atk,{src:'combate'});
+      // El atacante viaja con el daño al Alma para que el cierre pueda saber
+      // si fue Machete, Petunia Sagrada o Thal quien dio el golpe final.
+      await dmgFace(d,atk,{src:'combate',att:u});
     } else {
       const back = target.atk;
       const noCounter = u.noCounter || target.marked || target.atk<=0;

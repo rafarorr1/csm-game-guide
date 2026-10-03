@@ -501,6 +501,18 @@
 #coleccionPanel .coleccionSobreGuardado{scroll-snap-align:center;scroll-snap-stop:always;width:var(--sobre-ancho);flex:0 0 var(--sobre-ancho);min-height:0;padding:6px 0 0;display:flex;flex-direction:column;align-items:center;gap:14px;border:0;background:none;box-shadow:none;filter:none!important;translate:none!important;opacity:.48;scale:.84;transition:opacity .22s ease,scale .22s ease;touch-action:pan-x}
 #coleccionPanel .coleccionSobreGuardado.seleccionado{opacity:1;scale:1}
 #coleccionPanel .coleccionSobreGuardado .coleccionSobre{width:calc(100% - 12px);height:auto;max-height:none;aspect-ratio:.68;rotate:0deg;margin:0}
+/* El sobre activo es la única pieza WebGL de la biblioteca. Se manipula como
+   un objeto físico, no como una miniatura: el cursor y el halo aclaran que
+   se puede arrastrar para descubrir su reverso sin cargar la escena de cada
+   sobre que queda al fondo. */
+#coleccionPanel .coleccionSobreGuardado.modelo3d{cursor:grab;touch-action:none;isolation:isolate}
+#coleccionPanel .coleccionSobreGuardado.modelo3d .coleccionSobre{filter:drop-shadow(0 18px 18px #000b) drop-shadow(0 0 15px color-mix(in srgb,var(--sobre-color) 34%,transparent));transition:filter .18s ease}
+#coleccionPanel .coleccionSobreGuardado.modelo3d[data-orientacion="reverso"] .coleccionSobre{filter:drop-shadow(0 18px 18px #000c) drop-shadow(0 0 18px #d9bd7a42)}
+#coleccionPanel .coleccionSobreGuardado.modelo3d::before{content:"ARRASTRA PARA GIRAR";position:absolute;z-index:4;left:50%;bottom:calc(100% + 3px);translate:-50% 0;min-width:max-content;padding:3px 7px;border:1px solid #d7bb7c72;border-radius:20px;background:#0b0714bd;color:#eadab7;font:700 8px/1 var(--sans,system-ui);letter-spacing:.7px;opacity:.9;pointer-events:none;text-shadow:0 1px 3px #000;box-shadow:0 3px 8px #0007}
+#coleccionPanel .coleccionSobreGuardado.modelo3d.girando{cursor:grabbing}
+#coleccionPanel .coleccionSobreGuardado.modelo3d.girando .coleccionSobre{filter:drop-shadow(0 22px 23px #000d) drop-shadow(0 0 23px color-mix(in srgb,var(--sobre-color) 48%,#ead696))}
+#coleccionPanel .coleccionSobreGuardado.modelo3d:focus-visible{outline:2px solid #f4d58a;outline-offset:5px;border-radius:10px}
+#coleccionPanel .coleccionSobreGuardado.modelo3d:focus-visible::before{border-color:#f4d58a;color:#fff0cb}
 #coleccionPanel .coleccionSobreExistencias{font:700 13px var(--sans,system-ui);color:#f1e2c2;background:#120f1c;border:1px solid color-mix(in srgb,var(--sobre-color) 65%,#aaa);border-radius:20px;padding:4px 15px;min-width:50px;text-align:center;letter-spacing:.2px}
 #coleccionPanel .coleccionCarreteNavegacion{flex:none;display:flex;align-items:center;justify-content:center;gap:26px;padding-top:9px}
 #coleccionPanel .coleccionCarreteNavegacion .coleccionBoton{width:41px;min-height:41px;padding:3px;font-size:30px;background:#21182e;border-color:#6b516f;border-radius:50%;box-shadow:none}
@@ -562,7 +574,7 @@
   #coleccionPanel .coleccionDeslizarPista{padding-top:4px}
   #coleccionPanel .coleccionReanudarSobre{min-height:28px;padding:4px 9px;font-size:11px}
 }
-@media(prefers-reduced-motion:reduce){#coleccionPanel .coleccionSobreGuardado,#coleccionPanel .coleccionRecompensaElegir .coleccionSobre{transition:none}}
+@media(prefers-reduced-motion:reduce){#coleccionPanel .coleccionSobreGuardado,#coleccionPanel .coleccionRecompensaElegir .coleccionSobre,#coleccionPanel .coleccionSobreGuardado.modelo3d .coleccionSobre{transition:none}}
 #coleccionPanel .coleccionRecompensaElegir{flex:none}
 #coleccionPanel .coleccionRecompensaElegir .coleccionSobre{width:var(--premio-ancho,100px);height:calc(var(--premio-ancho,100px)/.68);max-width:none;flex:none}
 #coleccionPanel .coleccionSobreGuardado{position:relative;gap:0;padding:5px 0}
@@ -674,6 +686,18 @@
 #coleccionPanel[data-vista="detalle"]:has(.con3D) :is(.coleccionPestanas,.coleccionPie,.coleccionTitulos,.coleccionEmblema){display:none}
 #coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionCabecera{position:absolute;top:max(14px,env(safe-area-inset-top));right:max(16px,env(safe-area-inset-right));z-index:7;margin:0;padding:0;min-height:0;border:0;background:none}
 #coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+#coleccionPanel.coleccionFusionando{inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;max-width:none;height:var(--coleccion-alto,100dvh);max-height:none;margin:0;padding:0;border:0;border-radius:0;box-shadow:none;background:#06040b}
+#coleccionPanel.coleccionFusionando .coleccionInterior{padding:0;border:0;border-radius:0;background:none}
+#coleccionPanel.coleccionFusionando .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
+/* La ficha aún está encontrando su encuadre: los controles se habilitan al
+   terminar el mismo FLIP. Así un clic veloz no sustituye la ficha a mitad de
+   trayecto ni fuerza una segunda transición. */
+#coleccionPanel.coleccionFusionando .coleccionMundoVisor{pointer-events:none!important}
+/* Archivo y detalle coexisten brevemente en este único plano. La capa de
+   detalle no crea otro fondo: flota sobre la misma escena que ya sostenía la
+   biblioteca mientras sus controles entran y el Archivo sale de cuadro. */
+#coleccionPanel .coleccionDetalleCapa{position:absolute;inset:0;z-index:4;display:block;pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionDetalleCapa :is(.coleccionDetalleCabecera .coleccionAtras,.coleccionVersiones,.coleccionReglas button){pointer-events:auto}
 #coleccionPanel[data-vista="detalle"]:has(.con3D) .coleccionEstado{position:absolute;left:0;right:0;bottom:12px;z-index:7;text-align:center;pointer-events:none}
 #coleccionPanel .coleccionDetalle3D.con3D~.coleccionAviso{position:absolute;left:0;right:360px;bottom:16px;z-index:5;margin:0;text-align:center;color:#cbbfd9b3;pointer-events:none}
 #coleccionPanel .coleccionDetalle3D.con3D~.coleccionDetalleCabecera,#coleccionPanel .coleccionDetalleCabecera:has(~.con3D){position:absolute;top:max(14px,env(safe-area-inset-top));left:0;right:360px;z-index:6;padding:0 72px;pointer-events:none;text-shadow:0 2px 12px #000}
@@ -717,3 +741,869 @@
 #coleccionPanel.coleccionAbriendoSobre .coleccionContenido{position:relative;flex:1;min-height:0;margin:0;padding:0;overflow:hidden}
 #coleccionPanel.coleccionAbriendoSobre .coleccionAperturaSobre{border-radius:0;background:#06040b}
 #coleccionPanel.coleccionAbriendoSobre .coleccionEstado:not(:empty){position:absolute;left:0;right:0;top:16px;z-index:8;text-align:center}
+
+/* Archivo del Domo: la biblioteca ya no vive dentro de una caja reducida. La
+   carta individual ya abre el visor 3D a pantalla completa; el listado, sobres
+   y canjes comparten ahora su misma noche, halo y cristal. Conservamos las
+   tres columnas y el scroll interno: cambiar esa geometría haría crecer las
+   miniaturas de forma desigual y rompería la lectura de las cartas. */
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre){
+  position:fixed;inset:var(--coleccion-top,0px) 0 auto 0;width:100vw;height:var(--coleccion-alto,100dvh);max-width:none;max-height:none;margin:0;padding:0;
+  overflow:hidden;border:0;border-radius:0;background:#06040b;box-shadow:none;isolation:isolate;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre)::backdrop{background:#000;backdrop-filter:none}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior{
+  padding:max(22px,env(safe-area-inset-top)) max(28px,env(safe-area-inset-right)) max(14px,env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));
+  border:0;border-radius:0;background:
+    radial-gradient(ellipse 55% 48% at 50% 35%,#5a349044,transparent 72%),
+    radial-gradient(ellipse 92% 72% at 50% 42%,#281441aa,transparent 78%),
+    radial-gradient(ellipse 130% 105% at 50% 50%,#150d24,#06040b 82%);
+  isolation:isolate;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior::before{
+  content:'';display:block;position:absolute;z-index:0;left:50%;top:52%;width:min(920px,78vw);aspect-ratio:1;translate:-50% -50%;
+  opacity:.26;pointer-events:none;filter:drop-shadow(0 0 18px #a273d86b);
+  background:repeating-conic-gradient(from .08turn,#e6c9ff 0deg 1deg,transparent 1deg 11deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 49%,#000 49.2% 50.4%,transparent 50.8% 61%,#000 61.2% 61.7%,transparent 62%);
+  mask:radial-gradient(circle,transparent 0 49%,#000 49.2% 50.4%,transparent 50.8% 61%,#000 61.2% 61.7%,transparent 62%);
+  border:1px solid #e6c9ff38;border-radius:50%;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior::after{
+  content:'';display:block;position:absolute;z-index:0;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 26%,#f0d1ff12,transparent 26%),radial-gradient(circle at 82% 78%,#b879ff0d,transparent 31%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior>:not(.barridoModal){position:relative;z-index:1}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera{
+  width:min(1360px,100%);margin:0 auto 12px;padding:11px 15px;min-height:58px;border:1px solid #ffffff1f;border-radius:18px;
+  background:linear-gradient(100deg,#120c1cb8,#0b0712a6);box-shadow:inset 0 1px 0 #ffffff12,0 10px 30px #0005;
+  -webkit-backdrop-filter:blur(15px) saturate(130%);backdrop-filter:blur(15px) saturate(130%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera::before,
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera::after{display:none}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionEmblema{border-color:#c99bff78;background:radial-gradient(circle at 36% 27%,#fbebff75,#7039a4 43%,#1a102b 78%);box-shadow:0 0 20px #ae73ef40}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionAntetitulo{color:#dfc6ff;text-shadow:0 0 15px #bb8bff80}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) h2{color:#f4e5ff;text-shadow:0 2px 17px #000,0 0 20px #bd89ff36}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCerrar{
+  border-color:#ffffff2b;border-radius:12px;background:#0d0916b8;color:#f1e5ff;box-shadow:inset 0 1px 0 #ffffff12;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCerrar:hover{background:#2a1b3cbf}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestanas{
+  width:max-content;max-width:100%;margin:0 auto 12px;padding:4px;overflow-x:auto;border:1px solid #ffffff1c;border-radius:999px;
+  background:#0d0916a8;box-shadow:inset 0 1px 0 #ffffff10,0 8px 22px #0004;-webkit-backdrop-filter:blur(12px) saturate(130%);backdrop-filter:blur(12px) saturate(130%);
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana{min-width:142px;border:1px solid transparent;border-radius:999px;color:#d5c5e4}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana[aria-current="page"]{border-color:#d2a8ff73;background:linear-gradient(135deg,#8a56ba55,#2d1a42c7);box-shadow:inset 0 1px 0 #ffffff1d,0 0 16px #a66ce334;color:#fff1ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionNumero{border-color:#d2a8ff5c;background:#09060f;color:#f5e8ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionContenido{width:min(1360px,100%);align-self:center;gap:11px}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionFiltros{padding:8px;border:1px solid #ffffff18;border-radius:15px;background:#0c0812a1;box-shadow:inset 0 1px 0 #ffffff0e;-webkit-backdrop-filter:blur(11px);backdrop-filter:blur(11px)}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) :is(.coleccionBuscar,select){border-color:#c9a0f04a;background:#090611bd;color:#f0e4fa}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionBuscar{color:#dfc2ff}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionRejilla{
+  max-width:1360px;width:100%;align-self:center;padding:15px 22px 18px;gap:20px 24px;border:1px solid #ffffff0d;border-radius:22px;
+  background:radial-gradient(ellipse at 50% 30%,#b87aff12,transparent 58%);box-shadow:none;scrollbar-color:#a879ce #100a18;
+}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini{filter:drop-shadow(0 16px 18px #0009);transition:translate .18s ease,filter .18s ease}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini:hover{translate:0 -5px!important;filter:drop-shadow(0 20px 24px #000d) brightness(1.08)!important}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMiniInfo{padding:3px 7px;border-radius:999px;background:#090611a8;box-shadow:0 3px 12px #0006}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPuntos i{border-color:#dac3ee7d;background:#251633}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionEstado{min-height:22px;color:#ddd0e9;text-shadow:0 1px 7px #000}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPie{width:min(1360px,100%);align-self:center;padding:7px 11px 0;border-top-color:#ffffff1a;color:#d7c8e4}
+#coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionVolver{color:#eadbfa;text-decoration-color:#c89df477}
+
+@media(max-width:580px){
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre){width:100vw;height:var(--coleccion-alto,100dvh);padding:0}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionInterior{padding:max(12px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(8px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionCabecera{min-height:48px;margin-bottom:8px;padding:7px 10px;border-radius:14px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestanas{width:100%;margin-bottom:8px;padding:3px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionPestana{min-width:0;border-radius:999px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionFiltros{padding:6px;border-radius:12px}
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionRejilla{padding:10px 5px 14px;gap:13px 11px;border-radius:15px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel:not([data-vista="detalle"]):not(.coleccionFinalCampana):not(.coleccionAbriendoSobre) .coleccionMini{transition:none}
+}
+
+/* Archivo inmersivo -------------------------------------------------------
+   Mis cartas conserva la biblioteca que se recorre: tres cartas por fila y
+   desplazamiento vertical. Al abrir una, el archivo se despeja y la ficha
+   seleccionada viaja hasta el visor ya existente. No hay un carrusel ni una
+   segunda versión del visor. */
+#coleccionPanel[data-vista="cartas"] .coleccionInterior{
+  padding:0!important;border:0!important;border-radius:0!important;
+  background:
+    radial-gradient(ellipse 42% 46% at 50% 48%,#7952bc33 0%,#2b164855 42%,transparent 72%),
+    radial-gradient(ellipse 98% 88% at 50% 40%,#160b2aac,transparent 76%),
+    linear-gradient(180deg,#090611,#030207 78%,#020104)!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionCabecera{
+  position:absolute;z-index:9;left:max(22px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));
+  width:fit-content!important;max-width:calc(100vw - 76px)!important;min-height:0;margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionTitulos{display:block}
+#coleccionPanel[data-vista="cartas"] .coleccionCabecera .coleccionAntetitulo{display:block;color:#cfb8ef;font-size:10px;letter-spacing:3px;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-vista="cartas"] h2{font-size:clamp(22px,2.2vw,31px);color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-vista="cartas"] .coleccionCerrar{
+  position:fixed;z-index:11;right:max(18px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));
+  width:42px;height:42px;margin:0;padding:0;border:1px solid #ffffff36!important;border-radius:50%!important;
+  background:#120b1b78!important;box-shadow:0 8px 25px #0007,inset 0 1px 0 #ffffff1c!important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel[data-vista="cartas"] .coleccionPestanas{
+  position:absolute;z-index:10;left:50%;top:max(18px,env(safe-area-inset-top));translate:-50% 0;
+  display:flex;gap:clamp(11px,2vw,24px);width:max-content;max-width:calc(100vw - 200px);margin:0!important;padding:0!important;
+  overflow:visible;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana{
+  position:relative;min-width:0!important;min-height:34px;padding:5px 1px!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;color:#bdb0ce!important;font:600 14px/1.2 var(--serif,Georgia,serif)!important;
+  transition:color .2s ease,opacity .2s ease;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana::after{content:'';position:absolute;left:50%;right:50%;bottom:0;height:1px;background:#f0c976;box-shadow:0 0 10px #efbd6855;transition:left .2s ease,right .2s ease}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana[aria-current="page"]{color:#fff1cf!important}
+#coleccionPanel[data-vista="cartas"] .coleccionPestana[aria-current="page"]::after{left:0;right:0}
+#coleccionPanel[data-vista="cartas"] .coleccionNumero{min-width:17px;padding:0 4px;border-color:#d9b5f154!important;border-radius:7px;background:#130b1d!important;color:#f7ebff!important;font-size:10px}
+#coleccionPanel[data-vista="cartas"] .coleccionContenido{position:relative;width:100%!important;max-width:none!important;align-self:stretch;gap:0;overflow:hidden}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos{
+  position:absolute;z-index:8;top:max(88px,calc(env(safe-area-inset-top) + 72px));left:max(22px,env(safe-area-inset-left));
+  display:grid;grid-template-columns:minmax(170px,260px) 150px 135px;gap:7px;width:min(570px,calc(100vw - 44px));
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos :is(.coleccionBuscar,select){
+  min-height:34px;height:34px;border:0!important;border-bottom:1px solid #e1c6ff4f!important;border-radius:0!important;
+  background:#0b06105e!important;box-shadow:0 7px 18px #0003!important;color:#eee5f8!important;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);
+}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos .coleccionBuscar{padding:0 7px;color:#e2c6ff}
+#coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos select{padding:0 5px;font-size:12px}
+#coleccionPanel[data-vista="cartas"] .coleccionEscenaArchivo{position:absolute;inset:0;overflow:hidden;isolation:isolate;perspective:1200px;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionEscenaArchivo::before{
+  content:'';position:absolute;z-index:0;left:50%;top:47%;width:min(760px,74vw);aspect-ratio:1;translate:-50% -50%;pointer-events:none;opacity:.44;
+  background:repeating-conic-gradient(from .07turn,#edd6ff 0deg 1deg,transparent 1.5deg 10deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  filter:drop-shadow(0 0 18px #b076ed71);
+}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoMotas{position:absolute;z-index:0;inset:0;pointer-events:none;opacity:.65;background-image:radial-gradient(circle at 13% 22%,#fff7d2 0 1px,transparent 2px),radial-gradient(circle at 30% 67%,#cda2ff 0 1px,transparent 2px),radial-gradient(circle at 81% 28%,#e6c3ff 0 1px,transparent 2px),radial-gradient(circle at 71% 74%,#f4d09a 0 1px,transparent 2px),radial-gradient(circle at 47% 15%,#fff7d2 0 1px,transparent 2px);background-size:173px 157px,251px 233px,199px 281px,311px 269px,419px 347px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoPedestal{position:absolute;z-index:1;left:50%;top:calc(50% + min(18vh,145px));width:clamp(310px,48vw,680px);aspect-ratio:2.9;translate:-50% -50%;border:1px solid #d7b7ff42;border-radius:50%;background:radial-gradient(ellipse,#9b6bc02e 0 18%,transparent 52%),repeating-conic-gradient(from .1turn,#f2d5ff70 0deg 1deg,transparent 1.7deg 9deg);box-shadow:0 0 32px #a06bd643,inset 0 0 20px #dec6ff13;opacity:.75}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{
+  position:absolute;z-index:3;top:max(147px,calc(env(safe-area-inset-top) + 130px));right:max(24px,env(safe-area-inset-right));bottom:max(22px,env(safe-area-inset-bottom));left:max(24px,env(safe-area-inset-left));
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;grid-auto-rows:max-content;align-content:start;
+  width:auto!important;height:auto!important;max-width:none!important;min-height:0;align-self:stretch!important;flex:none!important;padding:18px clamp(10px,2vw,30px) 82px!important;gap:clamp(14px,2.3vw,30px)!important;
+  overflow-y:auto!important;overflow-x:hidden!important;scroll-snap-type:y proximity;scroll-behavior:smooth;scrollbar-width:thin;scrollbar-color:#c58deb #12091a;overscroll-behavior:contain;touch-action:pan-y;
+  background:linear-gradient(180deg,#0e09151a,transparent 24%,#0b06121c)!important;border:0!important;border-radius:0!important;box-shadow:none!important;
+  pointer-events:auto;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar{width:8px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar-track{background:#10091a70;border-radius:999px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla::-webkit-scrollbar-thumb{border:2px solid transparent;border-radius:999px;background:#c58deb99;background-clip:padding-box}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini{
+  z-index:1;align-self:start;min-width:0;scroll-snap-align:start;scroll-margin-block:18px;
+  filter:drop-shadow(0 14px 17px #0009)!important;transition:translate .24s cubic-bezier(.2,.76,.25,1),scale .24s cubic-bezier(.2,.76,.25,1),rotate .24s cubic-bezier(.2,.76,.25,1),filter .24s ease,opacity .24s ease;
+}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini:not([data-animacion]):hover{z-index:4;translate:0 -7px!important;scale:1.025;filter:drop-shadow(0 23px 25px #000d) brightness(1.08)!important}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMini:focus-visible{z-index:4;outline:2px solid #f2d89d;outline-offset:7px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMiniInfo{width:auto;max-width:100%;padding:3px 7px;border-radius:999px;background:#0906119e;box-shadow:0 3px 12px #0006}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMiniPie{min-height:15px;line-height:15px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos{gap:5px}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos i{width:7px;height:7px;border-color:#efe0ff9c;background:#3d2458}
+#coleccionPanel[data-vista="cartas"] .coleccionResumenArchivo{position:absolute;z-index:8;right:max(24px,env(safe-area-inset-right));top:max(123px,calc(env(safe-area-inset-top) + 106px));margin:0;color:#d9c7eb;font-size:11px;letter-spacing:.55px;text-align:right;text-shadow:0 2px 10px #000;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionArchivoPista{position:absolute;z-index:8;left:50%;bottom:max(6px,env(safe-area-inset-bottom));translate:-50% 0;width:max-content;max-width:calc(100vw - 28px);margin:0;color:#b4a5c8a8;font-size:10px;text-align:center;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionEstado{position:absolute;z-index:12;left:50%;top:max(111px,calc(env(safe-area-inset-top) + 94px));translate:-50% 0;min-height:0;color:#f0d8aa;text-shadow:0 2px 10px #000;pointer-events:none}
+#coleccionPanel[data-vista="cartas"] .coleccionPie{position:absolute;z-index:10;right:max(20px,env(safe-area-inset-right));bottom:max(14px,env(safe-area-inset-bottom));width:auto!important;min-height:0;margin:0!important;padding:0!important;border:0!important;color:#bcb0ca;background:none!important}
+#coleccionPanel[data-vista="cartas"] .coleccionTotales{display:none}
+#coleccionPanel[data-vista="cartas"] .coleccionVolver{padding:0!important;color:#d8c5ed!important;font-size:11px!important;text-decoration-color:#d8c5ed80!important}
+#coleccionPanel[data-vista="cartas"] .coleccionVacio{position:absolute;z-index:9;inset:0;display:flex;padding:0 24px;background:#07040bb8;color:#e9d9f6}
+
+/* La biblioteca y el visor son dos encuadres del mismo mundo. Antes de que la
+   carta elegida alcance el pedestal, el resto de la interfaz abandona el
+   plano por sus propios bordes; no se desvanece en el centro ni deja un
+   fotograma que parezca otra pantalla. */
+#coleccionPanel[data-vista="cartas"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){will-change:translate,opacity,filter}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla{overflow:hidden!important;pointer-events:none}
+#coleccionPanel.coleccionAbriendoCarta .coleccionCabecera{
+  opacity:0;translate:calc(-100vw - 96px) -8px;filter:blur(5px);pointer-events:none;
+  transition:opacity .34s ease,translate .5s cubic-bezier(.16,.76,.18,1),filter .27s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionPestanas{
+  opacity:0;translate:-50% calc(-100vh - 78px);filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease,translate .48s cubic-bezier(.16,.76,.18,1),filter .25s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionFiltrosInmersivos{
+  opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease .03s,translate .48s cubic-bezier(.16,.76,.18,1) .03s,filter .24s ease .03s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionResumenArchivo{
+  opacity:0;translate:calc(100vw + 96px) 0;filter:blur(5px);pointer-events:none;
+  transition:opacity .3s ease .04s,translate .48s cubic-bezier(.16,.76,.18,1) .04s,filter .24s ease .04s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionPie{
+  opacity:0;translate:0 calc(100vh + 60px);filter:blur(4px);pointer-events:none;
+  transition:opacity .28s ease .05s,translate .44s cubic-bezier(.16,.76,.18,1) .05s,filter .22s ease .05s;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionEstado{
+  opacity:0;translate:-50% calc(-100vh - 62px);filter:blur(4px);pointer-events:none;
+  transition:opacity .26s ease,translate .42s cubic-bezier(.16,.76,.18,1),filter .2s ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini{
+  transition-duration:.48s,.5s,.5s,.38s,.34s;
+  transition-timing-function:cubic-bezier(.18,.76,.2,1),cubic-bezier(.18,.76,.2,1),cubic-bezier(.18,.76,.2,1),ease,ease;
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini[data-animacion="sale"]{
+  translate:var(--coleccion-salida-x,0) var(--coleccion-salida-y,0)!important;scale:.46;rotate:var(--coleccion-salida-giro,0deg);opacity:0;
+  filter:blur(3px) brightness(.4) saturate(.36)!important;transition-delay:var(--coleccion-salida-demora,0ms);
+}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini[data-animacion="entra"]{opacity:0!important;filter:brightness(.78)!important}
+#coleccionPanel.coleccionRegresandoArchivo :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado){
+  opacity:0;pointer-events:none;
+}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionDetalleCapa{opacity:0;translate:0 -20px;pointer-events:none;transition:opacity .28s ease,translate .4s cubic-bezier(.16,.78,.18,1)}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionArchivoRejilla .coleccionMini:not([data-regreso-activa]){opacity:0;pointer-events:none}
+#coleccionPanel.coleccionRegresandoArchivo .coleccionArchivoRejilla .coleccionMini[data-regreso-activa]{z-index:8;pointer-events:none}
+#coleccionPanel .coleccionVueloCarta{
+  position:fixed!important;z-index:50;margin:0!important;min-width:0!important;max-width:none!important;max-height:none!important;pointer-events:none;
+  translate:0 0;scale:1;rotate:0deg;opacity:1;transform:none!important;will-change:translate,scale,opacity,filter;
+  transition:translate .56s cubic-bezier(.16,.79,.21,1),scale .56s cubic-bezier(.16,.79,.21,1),opacity .22s ease,filter .56s ease;
+}
+#coleccionPanel .coleccionVueloCartaEntra{translate:var(--coleccion-vuelo-x,0) var(--coleccion-vuelo-y,0);scale:var(--coleccion-vuelo-escala,1);filter:drop-shadow(0 27px 33px #000d) brightness(1.04)!important}
+#coleccionPanel .coleccionVueloCartaEntregada{opacity:0}
+
+@media(max-width:760px){
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera{left:max(14px,env(safe-area-inset-left));top:max(11px,env(safe-area-inset-top))}
+  #coleccionPanel[data-vista="cartas"] .coleccionCabecera .coleccionAntetitulo{font-size:8px;letter-spacing:2px}
+  #coleccionPanel[data-vista="cartas"] h2{font-size:21px}
+  #coleccionPanel[data-vista="cartas"] .coleccionCerrar{right:max(12px,env(safe-area-inset-right));top:max(11px,env(safe-area-inset-top));width:37px;height:37px}
+  #coleccionPanel[data-vista="cartas"] .coleccionPestanas{top:max(48px,calc(env(safe-area-inset-top) + 40px));gap:10px;max-width:calc(100vw - 26px)}
+  #coleccionPanel[data-vista="cartas"] .coleccionPestana{font-size:12px!important}
+  #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos{top:max(82px,calc(env(safe-area-inset-top) + 75px));left:max(12px,env(safe-area-inset-left));grid-template-columns:minmax(100px,1fr) 103px 94px;width:calc(100vw - 24px);gap:4px}
+  #coleccionPanel[data-vista="cartas"] .coleccionFiltrosInmersivos :is(.coleccionBuscar,select){min-height:31px;height:31px;font-size:10px}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoPedestal{top:calc(50% + min(19vh,120px));width:82vw}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{top:max(126px,calc(env(safe-area-inset-top) + 118px));right:max(9px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));left:max(9px,env(safe-area-inset-left));padding:9px 3px 48px!important;gap:10px 5px!important;scrollbar-gutter:auto}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionMiniInfo{padding:2px 5px}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos{gap:4px}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla .coleccionPuntos i{width:6px;height:6px}
+  #coleccionPanel[data-vista="cartas"] .coleccionResumenArchivo{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoPista{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionPie{display:none}
+  #coleccionPanel[data-vista="cartas"] .coleccionEstado{top:max(118px,calc(env(safe-area-inset-top) + 109px));font-size:10px}
+}
+@media(max-width:760px) and (max-height:650px){
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{top:max(114px,calc(env(safe-area-inset-top) + 106px));bottom:4px}
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel[data-vista="cartas"] .coleccionArchivoRejilla{scroll-behavior:auto}
+  #coleccionPanel.coleccionAbriendoCarta :is(.coleccionArchivoRejilla .coleccionMini,.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado),#coleccionPanel .coleccionVueloCarta{transition:none}
+}
+
+/* Un solo mundo para Archivo y detalle -----------------------------------
+   El fondo no se reproduce en dos pantallas: este huésped conserva la escena
+   real del visor mientras la rejilla se recorre y también cuando una ficha se
+   convierte en la carta central. Los controles sólo flotan sobre la escena. */
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor{
+  position:absolute!important;inset:0!important;z-index:0!important;display:block;
+  overflow:hidden;pointer-events:none;isolation:isolate;
+  /* La misma variable mueve escena, halo y tarjeta dentro del visor. La
+     transición ocurre sobre este huésped persistente, no entre dos fondos. */
+  transition:--reserva-der .76s cubic-bezier(.42,0,.58,1),--controles-alto .76s cubic-bezier(.42,0,.58,1);
+}
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor[hidden]{display:none}
+#coleccionPanel[data-mundo] .coleccionInterior>.coleccionMundoVisor .visor3dMundo{width:100%;height:100%}
+#coleccionPanel[data-mundo] .coleccionInterior>:not(.coleccionMundoVisor):not(.barridoModal){position:relative;z-index:2}
+
+/* El Archivo usa exactamente la noche, halo, motas y pedestal del visor;
+   se eliminan el aro y el degradado que antes intentaban imitarla con CSS. */
+#coleccionPanel[data-mundo] .coleccionInterior{background:transparent!important}
+/* El Archivo no conserva una versión de respaldo del cielo del visor. Esta
+   regla también se mantiene durante el fotograma en que la vista lógica aún
+   dice "cartas" pero el mundo ya está preparando el detalle: de otro modo el
+   aro antiguo reaparece un instante detrás de la carta que viaja. */
+#coleccionPanel[data-mundo] .coleccionInterior::before,
+#coleccionPanel[data-mundo] .coleccionInterior::after,
+#coleccionPanel[data-mundo] .coleccionEscenaArchivo::before{display:none!important}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor{--reserva-der:0px}
+
+/* Las fichas siguen en tres columnas y scroll vertical, pero cada una tiene
+   una deriva propia dentro del mundo. La caja de clic no cambia de tamaño. */
+#coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta{
+  animation:coleccionCartaFlota 4.8s ease-in-out var(--archivo-flota-demora,0s) infinite alternate;
+  will-change:translate,rotate;
+}
+@keyframes coleccionCartaFlota{
+  from{translate:0 0;rotate:0deg}
+  to{translate:0 var(--archivo-flota-y,-5px);rotate:var(--archivo-flota-giro,.5deg)}
+}
+
+/* En el detalle el mismo host deja libre la columna de ediciones. La capa de
+   controles no roba el arrastre de la carta: sólo sus botones reciben puntero. */
+#coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:360px;pointer-events:auto}
+#coleccionPanel.coleccionFusionando[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:0px}
+#coleccionPanel[data-mundo="detalle"] .coleccionInterior{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionContenido{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor{pointer-events:none}
+#coleccionPanel[data-mundo="detalle"] :is(.coleccionMundoVisor,.coleccionDetalle3D.conMundoVisor .coleccionVersiones,.coleccionDetalleCabecera .coleccionAtras,.coleccionCabecera .coleccionCerrar){pointer-events:auto}
+
+@media(max-width:760px){
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor{--reserva-der:0px}
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor .visor3dEscena{inset:0 0 var(--controles-alto,250px) 0;margin-right:0}
+  /* El acabado se elige abajo en móvil: las acciones de la carta descansan
+     inmediatamente encima, siempre dentro de la parte visible de la escena. */
+  #coleccionPanel[data-mundo="detalle"] .coleccionMundoVisor .visor3dControles{
+    right:10px;top:auto;bottom:calc(var(--controles-alto,250px) + 10px);translate:0;
+  }
+}
+
+/* Coreografía del mismo mundo ------------------------------------------------
+   Estos dos estados se activan sólo cuando el controlador ya dejó listo el
+   siguiente encuadre. Así el fondo del visor jamás se corta: el Archivo sale
+   por los bordes y los controles del detalle llegan desde fuera del plano.
+   `coleccionAbriendoCarta` sigue siendo la salida de la carta elegida. */
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionCabecera{
+  animation:coleccionArchivoCabeceraEntra .52s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionPestanas{
+  animation:coleccionArchivoPestanasEntran .48s .04s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionFiltrosInmersivos{
+  animation:coleccionArchivoFiltrosEntran .5s .08s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionResumenArchivo{
+  animation:coleccionArchivoResumenEntra .46s .13s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionPie{
+  animation:coleccionArchivoPieEntra .42s .11s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionEstado{
+  animation:coleccionArchivoEstadoEntra .4s .06s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini{
+  animation:coleccionArchivoCartaEntra .46s var(--archivo-entrada-demora,0ms) cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 1){--archivo-entrada-x:-52px;--archivo-entrada-y:28px;--archivo-entrada-demora:80ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n + 2){--archivo-entrada-x:0px;--archivo-entrada-y:48px;--archivo-entrada-demora:110ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini:nth-child(3n){--archivo-entrada-x:52px;--archivo-entrada-y:28px;--archivo-entrada-demora:140ms}
+#coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini[data-regreso-activa]{animation:none!important;opacity:1}
+#coleccionPanel.coleccionAbriendoCarta .coleccionArchivoRejilla .coleccionMini{animation:none!important}
+
+@keyframes coleccionArchivoCabeceraEntra{
+  from{opacity:0;translate:calc(-100vw - 96px) -8px;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoPestanasEntran{
+  from{opacity:0;translate:-50% calc(-100vh - 78px);filter:blur(5px)}
+  to{opacity:1;translate:-50% 0;filter:none}
+}
+@keyframes coleccionArchivoFiltrosEntran{
+  from{opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoResumenEntra{
+  from{opacity:0;translate:calc(100vw + 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoPieEntra{
+  from{opacity:0;translate:0 calc(100vh + 60px);filter:blur(4px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionArchivoEstadoEntra{
+  from{opacity:0;translate:-50% calc(-100vh - 62px);filter:blur(4px)}
+  to{opacity:1;translate:-50% 0;filter:none}
+}
+@keyframes coleccionArchivoCartaEntra{
+  from{opacity:0;translate:var(--archivo-entrada-x,0) var(--archivo-entrada-y,42px);scale:.88}
+  to{opacity:1;translate:0 0;scale:1}
+}
+
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalleCabecera:has(~.coleccionDetalle3D.conMundoVisor){
+  animation:coleccionDetalleCabeceraEntra .5s .04s cubic-bezier(.16,.8,.2,1) backwards;
+}
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor .coleccionVersiones{
+  animation:coleccionDetallePanelEntra .54s .1s cubic-bezier(.16,.8,.2,1) backwards;
+}
+/* La escena nunca recibe un fade o scale al abrir una carta. El anillo, halo
+   y pedestal son el mismo nodo que estaba detrás del Archivo; sólo cambian
+   sus coordenadas dentro de la transición FLIP de la ficha seleccionada. */
+#coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dControles{
+  animation:coleccionDetalleHerramientasEntran .44s .17s cubic-bezier(.16,.8,.2,1) backwards;
+}
+@keyframes coleccionDetalleCabeceraEntra{
+  from{opacity:0;translate:calc(-100vw - 96px) 0;filter:blur(5px)}
+  to{opacity:1;translate:0 0;filter:none}
+}
+@keyframes coleccionDetallePanelEntra{
+  from{opacity:0;translate:calc(100vw + 96px) -50%;scale:.97;filter:blur(6px)}
+  to{opacity:1;translate:0 -50%;scale:1;filter:none}
+}
+@keyframes coleccionDetalleHerramientasEntran{
+  from{opacity:0;translate:calc(100vw + 72px) -50%;filter:blur(4px)}
+  to{opacity:1;translate:0 -50%;filter:none}
+}
+@media(max-width:760px){
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionDetalle3D.conMundoVisor .coleccionVersiones{
+    animation-name:coleccionDetallePanelEntraMovil;
+  }
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] .coleccionMundoVisor .visor3dMundo[data-modo="carta"] .visor3dControles{
+    animation-name:coleccionDetalleHerramientasEntranMovil;
+  }
+  @keyframes coleccionDetallePanelEntraMovil{
+    from{opacity:0;translate:0 calc(100vh + 72px);scale:.97;filter:blur(6px)}
+    to{opacity:1;translate:0 0;scale:1;filter:none}
+  }
+  @keyframes coleccionDetalleHerramientasEntranMovil{
+    from{opacity:0;translate:calc(100vw + 72px) 0;filter:blur(4px)}
+    to{opacity:1;translate:0 0;filter:none}
+  }
+}
+@media(prefers-reduced-motion:reduce){
+  #coleccionPanel[data-mundo="archivo"] .coleccionArchivoRejilla .coleccionMini>.coleccionCarta,
+  #coleccionPanel.coleccionArchivoEntrando[data-mundo="archivo"] :is(.coleccionCabecera,.coleccionPestanas,.coleccionFiltrosInmersivos,.coleccionResumenArchivo,.coleccionPie,.coleccionEstado,.coleccionMini),
+  #coleccionPanel.coleccionDetalleEntrando[data-mundo="detalle"] :is(.coleccionDetalleCabecera,.coleccionVersiones,.visor3dEscena,.visor3dControles){animation:none!important}
+}
+
+/* Logros -------------------------------------------------------------------
+   El registro vive dentro de la Colección: conserva el mismo papel oscuro,
+   latón y jerarquía de la biblioteca, sin introducir otra caja o un modal. */
+#coleccionPanel[data-vista="logros"] .coleccionContenido{gap:0}
+#coleccionPanel .coleccionLogros{
+  width:min(100%,1020px);flex:1;min-height:0;display:flex;flex-direction:column;
+  margin:0 auto;padding:1px 4px 0;color:#e4d2b2;
+}
+#coleccionPanel .coleccionLogrosVacios{
+  align-items:center;justify-content:center;gap:9px;text-align:center;
+  color:#c5ad89;
+}
+#coleccionPanel .coleccionLogrosVacios h3{font:600 25px/1.2 var(--serif,Georgia,serif);color:#efd8a4}
+#coleccionPanel .coleccionLogrosVacios p{max-width:390px;font-size:13px;line-height:1.55}
+#coleccionPanel .coleccionLogrosCabecera{
+  display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-rows:auto auto auto;
+  column-gap:26px;align-items:center;flex:none;padding:3px 3px 13px;border-bottom:1px solid #9b754442;
+}
+#coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo{grid-column:1;grid-row:1;margin-bottom:2px}
+#coleccionPanel .coleccionLogrosCabecera>h3{
+  grid-column:1;grid-row:2;font:700 28px/1.08 var(--serif,Georgia,serif);
+  letter-spacing:.3px;color:#f1dcae;
+}
+#coleccionPanel .coleccionLogrosCabecera>p{
+  grid-column:1;grid-row:3;max-width:610px;margin-top:5px;color:#bca68a;
+  font-size:12px;line-height:1.45;
+}
+#coleccionPanel .coleccionLogrosCuenta{
+  grid-column:2;grid-row:1 / 4;align-self:center;display:grid;
+  grid-template-columns:auto minmax(74px,1fr);grid-template-areas:"numero texto" "accion accion";
+  column-gap:8px;row-gap:2px;min-width:154px;padding:5px 0 5px 17px;
+  border-left:1px solid #9b75445e;color:#bca788;
+}
+#coleccionPanel .coleccionLogrosCuenta strong{
+  grid-area:numero;align-self:center;font:700 25px/1 var(--serif,Georgia,serif);
+  font-variant-numeric:tabular-nums;color:#f1dba9;text-align:right;white-space:nowrap;
+}
+#coleccionPanel .coleccionLogrosCuenta>span{
+  grid-area:text;align-self:center;font-size:10px;line-height:1.22;
+  letter-spacing:.55px;text-transform:uppercase;
+}
+#coleccionPanel .coleccionLogrosSobres{
+  grid-area:accion;justify-self:stretch;min-height:30px;margin-top:3px;padding:5px 8px;
+  border-color:#a9874e;background:linear-gradient(110deg,#644729,#392719);box-shadow:inset 0 1px 0 #d3af6b35,0 2px 0 #130d08;
+  color:#f1d6a1;font-size:12px;
+}
+#coleccionPanel .coleccionLogrosSobres svg{width:15px;height:15px}
+
+/* Los filtros se deslizan si no caben: nunca fuerzan la lista ni recortan un
+   nombre de protagonista. */
+#coleccionPanel .coleccionLogrosFiltros{
+  display:flex;gap:7px;flex:none;overflow-x:auto;overflow-y:hidden;
+  overscroll-behavior-x:contain;scrollbar-width:thin;scrollbar-color:#87643d #1b120e;
+  padding:12px 2px 10px;scroll-snap-type:x proximity;
+}
+#coleccionPanel .coleccionLogrosFiltro{
+  min-height:32px;padding:5px 12px;flex:none;white-space:nowrap;scroll-snap-align:start;
+  border-color:#7152329c;background:linear-gradient(160deg,#312318d9,#1b1410e8);
+  box-shadow:inset 0 1px 0 #c6a26c1f,0 1px 0 #090706;color:#bea98b;font-size:12px;
+}
+#coleccionPanel .coleccionLogrosFiltro:hover{border-color:#b48d51;color:#ecd4a5}
+#coleccionPanel .coleccionLogrosFiltro[aria-pressed="true"]{
+  border-color:#d0a961;color:#f4ddab;background:linear-gradient(160deg,#74502a,#3b291b);
+  box-shadow:inset 0 1px 0 #f0d18b42,0 1px 0 #110b07;
+}
+
+/* Sólo esta zona hace scroll; la cabecera, filtros y recompensa permanecen
+   siempre disponibles. El espacio al final evita que la última ficha choque
+   con el borde al llegar con rueda o toque. */
+#coleccionPanel .coleccionListaLogros{
+  display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;align-content:start;
+  flex:1;min-height:0;overflow-x:hidden;overflow-y:auto;overscroll-behavior:contain;
+  touch-action:pan-y;scrollbar-width:thin;scrollbar-color:#8d6d43 #18100d;
+  scrollbar-gutter:stable;gap:10px 12px;padding:2px 10px 20px 2px;
+}
+#coleccionPanel .coleccionLogro{
+  display:grid;grid-template-columns:64px minmax(0,1fr) max-content;
+  grid-template-areas:"sello titulo premio" "sello descripcion descripcion" "sello meta prueba";
+  column-gap:12px;row-gap:8px;align-items:start;min-width:0;min-height:132px;
+  padding:12px 14px;border:1px solid #80603d80;border-radius:4px;
+  background:radial-gradient(ellipse at 0 0,#a2793a12,transparent 46%),linear-gradient(120deg,#2c1f16e8,#17110edb);
+  box-shadow:inset 0 1px 0 #e1bd8030,inset 0 -16px 27px #00000024,0 3px 9px #0000001c;
+  transition:border-color .18s ease,translate .18s ease,filter .18s ease;
+}
+#coleccionPanel .coleccionLogro:hover{border-color:#af8950;translate:0 -1px;filter:brightness(1.055)}
+#coleccionPanel .coleccionLogro.completado{
+  border-color:#b9985d;background:radial-gradient(ellipse at 0 0,#d1aa5623,transparent 48%),linear-gradient(120deg,#302516eb,#1e1810e8);
+  box-shadow:inset 0 1px 0 #f3d89348,inset 0 -16px 27px #0000001f,0 3px 9px #00000020;
+}
+#coleccionPanel .coleccionLogroSello{
+  grid-area:sello;display:grid;place-items:center;justify-self:center;align-self:center;width:64px;height:72px;
+  position:relative;color:#a58f72;isolation:isolate;
+}
+#coleccionPanel .coleccionMedalla{
+  --medalla-acento:#d8a85e;--medalla-sombra:#593819;--medalla-cinta:#63411d;--medalla-metal:#e9c77a;
+  --medalla-nucleo:#20150f;--medalla-brillo:#fff0bd;
+}
+#coleccionPanel .coleccionMedalla[data-protagonista="mohamed"]{--medalla-acento:#65c7e4;--medalla-sombra:#164967;--medalla-cinta:#274f6e;--medalla-metal:#badfec}
+#coleccionPanel .coleccionMedalla[data-protagonista="fender"]{--medalla-acento:#e17750;--medalla-sombra:#662718;--medalla-cinta:#76341f;--medalla-metal:#f0b18b}
+#coleccionPanel .coleccionMedalla[data-protagonista="talesin"]{--medalla-acento:#ddc69b;--medalla-sombra:#6a5841;--medalla-cinta:#76644b;--medalla-metal:#fff0c4}
+#coleccionPanel .coleccionMedalla[data-protagonista="rafaela"]{--medalla-acento:#a8cd78;--medalla-sombra:#3f5c30;--medalla-cinta:#4d6b37;--medalla-metal:#d8ecac}
+#coleccionPanel .coleccionMedalla[data-protagonista="adreida"]{--medalla-acento:#d399df;--medalla-sombra:#60366e;--medalla-cinta:#6b4079;--medalla-metal:#f0c2f5}
+#coleccionPanel .coleccionMedallaSvg{
+  display:block;width:64px;height:72px;overflow:visible;transform-origin:50% 58%;
+  filter:drop-shadow(0 4px 4px #0009);transition:transform .2s ease,filter .2s ease;
+}
+#coleccionPanel .coleccionLogro:hover .coleccionMedallaSvg{transform:translateY(-2px) rotate(-2deg) scale(1.035);filter:drop-shadow(0 6px 7px #000b)}
+#coleccionPanel .medallaCinta{stroke:#140e0b;stroke-width:2;stroke-linejoin:round}
+#coleccionPanel .medallaCintaIzquierda{fill:color-mix(in srgb,var(--medalla-cinta),#0d0907 27%)}
+#coleccionPanel .medallaCintaDerecha{fill:color-mix(in srgb,var(--medalla-cinta),#fff 12%)}
+#coleccionPanel .medallaHalo{fill:#090605;border-radius:50%;opacity:.88}
+#coleccionPanel .medallaAro{fill:#20130b;stroke:var(--medalla-metal);stroke-width:3}
+#coleccionPanel .medallaNucleo{fill:color-mix(in srgb,var(--medalla-nucleo),var(--medalla-sombra) 32%);stroke:var(--medalla-acento);stroke-width:1.4}
+#coleccionPanel .medallaRayas{fill:var(--medalla-metal);opacity:.78}
+#coleccionPanel .medallaGlifo{fill:none;stroke:var(--medalla-acento);stroke-width:3;stroke-linecap:round;stroke-linejoin:round}
+#coleccionPanel .medallaGlifo .medallaRelleno{fill:var(--medalla-acento);stroke:var(--medalla-acento)}
+#coleccionPanel .medallaNumero{fill:var(--medalla-acento);stroke:none;font:700 25px/1 var(--serif,Georgia,serif)}
+#coleccionPanel .medallaMicroNumero{fill:var(--medalla-acento);stroke:none;font:700 13px/1 var(--serif,Georgia,serif);letter-spacing:-.7px}
+#coleccionPanel .medallaBrillo{fill:none;stroke:var(--medalla-brillo);stroke-width:2;stroke-linecap:round;opacity:.65}
+#coleccionPanel .coleccionMedalla[data-rareza="oro"] .medallaAro{stroke:#f2c462}
+#coleccionPanel .coleccionMedalla[data-rareza="eclipse"] .medallaAro{stroke:#c692f0;stroke-dasharray:3 1}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"] .coleccionMedallaSvg{filter:grayscale(.52) saturate(.5) brightness(.67) drop-shadow(0 4px 4px #0009)}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"] .medallaGlifo{opacity:.62}
+#coleccionPanel .coleccionMedalla[data-estado="pendiente"]::after{
+  content:'◆';position:absolute;z-index:2;right:0;bottom:7px;width:17px;height:17px;display:grid;place-items:center;
+  border:1px solid #b7a78d80;border-radius:50%;background:#17100de8;box-shadow:0 2px 5px #0009;color:#d1c2a8;font-size:9px;
+}
+#coleccionPanel .coleccionLogro.completado .coleccionMedallaSvg{filter:drop-shadow(0 4px 5px #0009) drop-shadow(0 0 8px color-mix(in srgb,var(--medalla-acento),transparent 72%))}
+#coleccionPanel .coleccionLogroTitulo{
+  grid-area:titulo;min-width:0;align-self:end;margin:0;padding-top:3px;overflow-wrap:anywhere;hyphens:auto;
+  font:600 18px/1.15 var(--serif,Georgia,serif);letter-spacing:.15px;color:#efd9ac;
+}
+#coleccionPanel .coleccionLogroDescripcion{
+  grid-area:descripcion;min-width:0;max-width:100%;align-self:start;margin:0;overflow-wrap:anywhere;hyphens:auto;
+  color:#b9a58b;font-size:11px;line-height:1.4;text-wrap:pretty;
+}
+#coleccionPanel .coleccionLogroMeta{
+  grid-area:meta;display:grid;grid-template-columns:minmax(56px,1fr) auto;gap:8px;
+  align-self:end;align-items:center;min-width:0;color:#ae9b80;font-size:10px;line-height:1.2;
+}
+#coleccionPanel .coleccionLogroMeta progress{
+  width:100%;min-width:0;height:7px;overflow:hidden;border:1px solid #806440;border-radius:999px;
+  appearance:none;background:#120d0b;accent-color:#c49146;
+}
+#coleccionPanel .coleccionLogroMeta progress::-webkit-progress-bar{background:#120d0b}
+#coleccionPanel .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#80612d,#d4a653);box-shadow:inset 0 1px #ffe0a24d}
+#coleccionPanel .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#80612d,#d4a653);box-shadow:inset 0 1px #ffe0a24d}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta{color:#d4bd8d}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#ad7f31,#f0c86f)}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#ad7f31,#f0c86f)}
+#coleccionPanel .coleccionLogroPremio{
+  grid-area:premio;display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;
+  align-self:start;padding-top:4px;color:#d3b270;font-size:10px;font-weight:700;letter-spacing:.45px;text-transform:uppercase;white-space:nowrap;
+}
+#coleccionPanel .coleccionLogroPremio svg{width:14px;height:14px}
+#coleccionPanel .coleccionLogro.completado .coleccionLogroPremio{color:#efd28f}
+#coleccionPanel .coleccionLogroPrueba{
+  grid-area:prueba;justify-self:end;min-height:27px;padding:4px 8px;border-color:#8b6b42;
+  background:#241810;box-shadow:none;color:#d4ba8b;font-size:11px;
+}
+#coleccionPanel .coleccionLogroPrueba:hover{background:#493220}
+#coleccionPanel .coleccionLogrosNota{
+  flex:none;max-width:650px;margin:7px auto 0;padding:7px 14px 0;border-top:1px solid #8b683e42;
+  color:#aa967b;font-size:10px;line-height:1.35;text-align:center;
+}
+
+@media(max-width:760px){
+  #coleccionPanel[data-vista="logros"] .coleccionPestana{min-width:0;flex:1;padding-inline:7px;font-size:13px;gap:5px}
+  #coleccionPanel[data-vista="logros"] .coleccionPestana svg{width:16px;height:16px}
+  #coleccionPanel[data-vista="logros"] .coleccionNumero{min-width:20px;padding-inline:4px;font-size:10px}
+  #coleccionPanel .coleccionLogros{padding-inline:0}
+  #coleccionPanel .coleccionLogrosCabecera{column-gap:15px;padding-bottom:10px}
+  #coleccionPanel .coleccionLogrosCabecera>h3{font-size:25px}
+  #coleccionPanel .coleccionLogrosCuenta{min-width:137px;padding-left:12px}
+  #coleccionPanel .coleccionLogrosCuenta strong{font-size:22px}
+  #coleccionPanel .coleccionListaLogros{gap:9px;padding-right:7px}
+  #coleccionPanel .coleccionLogro{padding:11px 10px;column-gap:10px}
+}
+@media(max-width:620px){
+  #coleccionPanel .coleccionLogrosCabecera{grid-template-columns:1fr;grid-template-rows:auto auto auto auto;row-gap:0}
+  #coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo,
+  #coleccionPanel .coleccionLogrosCabecera>h3,
+  #coleccionPanel .coleccionLogrosCabecera>p{grid-column:1}
+  #coleccionPanel .coleccionLogrosCabecera>.coleccionAntetitulo{grid-row:1}
+  #coleccionPanel .coleccionLogrosCabecera>h3{grid-row:2}
+  #coleccionPanel .coleccionLogrosCabecera>p{grid-row:3;max-width:none;padding-right:2px}
+  #coleccionPanel .coleccionLogrosCuenta{
+    grid-column:1;grid-row:4;justify-self:stretch;grid-template-columns:auto 1fr auto;
+    grid-template-areas:"numero texto accion";align-items:center;min-width:0;margin-top:9px;padding:8px 0 0;border-top:1px solid #8f6c4045;border-left:0;
+  }
+  #coleccionPanel .coleccionLogrosSobres{justify-self:end;min-height:29px;margin:0;padding:4px 8px}
+  #coleccionPanel .coleccionLogrosFiltros{padding-top:9px;padding-bottom:8px}
+  #coleccionPanel .coleccionListaLogros{grid-template-columns:1fr;padding-bottom:15px}
+  #coleccionPanel .coleccionLogro{
+    grid-template-columns:60px minmax(0,1fr) max-content;grid-template-areas:"sello titulo premio" "sello descripcion descripcion" "sello meta prueba";
+    row-gap:7px;min-height:146px;padding:11px 12px 10px;
+  }
+  #coleccionPanel .coleccionLogroSello{width:60px;height:68px}
+  #coleccionPanel .coleccionMedallaSvg{width:60px;height:68px}
+  #coleccionPanel .coleccionLogroMeta{align-self:start;padding-top:2px}
+  #coleccionPanel .coleccionLogroPremio{align-self:start;padding:2px 0 0}
+  #coleccionPanel .coleccionLogroPrueba{align-self:end}
+}
+@media(max-width:420px){
+  #coleccionPanel[data-vista="logros"] .coleccionPestana{padding-inline:4px;font-size:11px;gap:3px}
+  #coleccionPanel[data-vista="logros"] .coleccionPestana svg{display:none}
+  #coleccionPanel .coleccionLogrosCabecera>h3{font-size:23px}
+  #coleccionPanel .coleccionLogrosCabecera>p{font-size:11px}
+  #coleccionPanel .coleccionLogrosCuenta{column-gap:6px}
+  #coleccionPanel .coleccionLogrosCuenta>span{font-size:9px}
+  #coleccionPanel .coleccionLogro{grid-template-columns:52px minmax(0,1fr) max-content;min-height:156px;padding:10px 8px;column-gap:8px}
+  #coleccionPanel .coleccionLogroSello{width:52px;height:60px}
+  #coleccionPanel .coleccionMedallaSvg{width:52px;height:60px}
+  #coleccionPanel .coleccionLogroTitulo{font-size:16px}
+  #coleccionPanel .coleccionLogroDescripcion{font-size:10px}
+  #coleccionPanel .coleccionLogroMeta{gap:5px;font-size:9px}
+  #coleccionPanel .coleccionLogroPremio{font-size:9px}
+}
+
+/* Un mismo mundo para las pestañas principales ---------------------------
+   El Archivo ya conserva un visor vivo detrás de Mis cartas. Sobres, Canjear
+   y Logros no deben volver a encerrarse en un segundo diálogo: sus controles
+   flotan sobre ese mismo halo, motas y círculo rúnico. El bloque se limita a
+   las tres vistas auxiliares para no cambiar la coreografía Archivo → detalle
+   ni las pantallas transitorias de apertura/recompensa. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]){
+  --escena-cristal:#0905108f;
+  --escena-cristal-fuerte:#0a0612ba;
+  --escena-borde:#ead7ff32;
+  --escena-texto:#e9dcf5;
+  --escena-suave:#cbb9dc;
+}
+
+/* Si el visor WebGL no estuviera disponible, el mismo encuadre conserva una
+   alternativa visual silenciosa; cuando el visor existe, :empty deja de
+   coincidir y no duplica su halo ni sus motas. */
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty{
+  background:
+    radial-gradient(ellipse 55% 48% at 50% 44%,#7443b447,transparent 72%),
+    radial-gradient(ellipse 90% 70% at 50% 40%,#2b174bba,transparent 78%),
+    linear-gradient(180deg,#090611,#030207 78%,#020104);
+}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty::before{
+  content:'';position:absolute;left:50%;top:52%;width:min(680px,72vw);aspect-ratio:1;
+  translate:-50% -50%;opacity:.72;pointer-events:none;
+  background:repeating-conic-gradient(from .08turn,#ead5ff 0deg 1deg,transparent 1.6deg 10deg);
+  -webkit-mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  mask:radial-gradient(circle,transparent 0 38%,#000 38.4% 39.1%,transparent 39.6% 51%,#000 51.4% 52%,transparent 52.5% 63%,#000 63.4% 63.8%,transparent 64.3%);
+  filter:drop-shadow(0 0 18px #b076ed71);
+}
+#coleccionPanel[data-mundo="archivo"] .coleccionMundoVisor:empty::after{
+  content:'';position:absolute;inset:0;pointer-events:none;opacity:.64;
+  background-image:radial-gradient(circle at 13% 22%,#fff7d2 0 1px,transparent 2px),radial-gradient(circle at 30% 67%,#cda2ff 0 1px,transparent 2px),radial-gradient(circle at 81% 28%,#e6c3ff 0 1px,transparent 2px),radial-gradient(circle at 71% 74%,#f4d09a 0 1px,transparent 2px),radial-gradient(circle at 47% 15%,#fff7d2 0 1px,transparent 2px);
+  background-size:173px 157px,251px 233px,199px 281px,311px 269px,419px 347px;
+}
+
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionInterior{
+  padding:0!important;border:0!important;border-radius:0!important;background:transparent!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{
+  position:absolute;z-index:9;left:max(22px,env(safe-area-inset-left));top:max(16px,env(safe-area-inset-top));
+  width:fit-content!important;max-width:calc(100vw - 76px)!important;min-height:0;margin:0!important;padding:0!important;
+  border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionTitulos{display:block}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera .coleccionAntetitulo{
+  display:block;color:#cfb8ef;font-size:10px;letter-spacing:3px;text-shadow:0 0 14px #b77bff8f;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) h2{
+  font-size:clamp(22px,2.2vw,31px);color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{
+  position:fixed;z-index:11;right:max(18px,env(safe-area-inset-right));top:max(16px,env(safe-area-inset-top));
+  width:42px;height:42px;margin:0;padding:0;border:1px solid #ffffff36!important;border-radius:50%!important;
+  background:#120b1b78!important;box-shadow:0 8px 25px #0007,inset 0 1px 0 #ffffff1c!important;
+  -webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{
+  position:absolute;z-index:10;left:50%;top:max(18px,env(safe-area-inset-top));translate:-50% 0;
+  display:flex;gap:clamp(11px,2vw,24px);width:max-content;max-width:calc(100vw - 200px);margin:0!important;padding:0!important;
+  overflow:visible;border:0!important;border-radius:0!important;background:none!important;box-shadow:none!important;
+  -webkit-backdrop-filter:none!important;backdrop-filter:none!important;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana{
+  position:relative;min-width:0!important;min-height:34px;padding:5px 1px!important;border:0!important;border-radius:0!important;
+  background:none!important;box-shadow:none!important;color:#bdb0ce!important;font:600 14px/1.2 var(--serif,Georgia,serif)!important;
+  transition:color .2s ease,opacity .2s ease;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana::after{
+  content:'';position:absolute;left:50%;right:50%;bottom:0;height:1px;background:#f0c976;box-shadow:0 0 10px #efbd6855;transition:left .2s ease,right .2s ease;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana[aria-current="page"]{color:#fff1cf!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana[aria-current="page"]::after{left:0;right:0}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionNumero{
+  min-width:17px;padding:0 4px;border-color:#d9b5f154!important;border-radius:7px;background:#130b1d!important;color:#f7ebff!important;font-size:10px;
+}
+
+/* El contenido conserva su flujo propio, pero ya no ocupa una caja: se
+   convierte en una capa transparente sobre la escena compartida. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{
+  position:absolute;z-index:3;top:max(94px,calc(env(safe-area-inset-top) + 82px));right:max(28px,env(safe-area-inset-right));bottom:max(36px,env(safe-area-inset-bottom));left:max(28px,env(safe-area-inset-left));
+  width:auto!important;max-width:none!important;align-self:auto;gap:0;overflow:hidden;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionEstado{
+  position:absolute;z-index:12;left:50%;bottom:max(9px,env(safe-area-inset-bottom));translate:-50% 0;min-height:0;
+  color:#f0d8aa;text-align:center;text-shadow:0 2px 10px #000;pointer-events:none;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{
+  position:absolute;z-index:10;right:max(20px,env(safe-area-inset-right));bottom:max(10px,env(safe-area-inset-bottom));
+  width:auto!important;min-height:0;margin:0!important;padding:0!important;border:0!important;background:none!important;color:#bcb0ca;
+}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionTotales{display:none}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionVolver{
+  padding:0!important;color:#d8c5ed!important;font-size:11px!important;text-decoration-color:#d8c5ed80!important;
+}
+
+/* Sobres: título, carrusel y acciones flotan sobre el pedestal del visor. */
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo{
+  position:relative;z-index:2;max-width:570px;margin:0 auto;padding:2px 16px 8px;text-align:center;text-shadow:0 3px 16px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo .coleccionAntetitulo{display:block;color:#cfb8ef;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo p{color:#d4c4e6}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresPorElegir,
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionReanudarSobre{
+  position:relative;z-index:3;border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:inset 0 1px 0 #fff2,0 9px 25px #0005;
+  -webkit-backdrop-filter:blur(9px) saturate(120%);backdrop-filter:blur(9px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionBibliotecaSobres{width:min(960px,100%)}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionCarreteVentana{
+  background:radial-gradient(ellipse at 50% 62%,#aa76e12b,transparent 62%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionCarreteNavegacion .coleccionBoton{
+  border-color:var(--escena-borde);background:var(--escena-cristal-fuerte);box-shadow:inset 0 1px 0 #fff2,0 5px 18px #0007;
+  -webkit-backdrop-filter:blur(9px);backdrop-filter:blur(9px);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreSeleccion h4{color:#f3e8ff;text-shadow:0 2px 10px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreSeleccion p,
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionDeslizarPista{color:#cfbedf;text-shadow:0 2px 8px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreAcciones{
+  position:relative;z-index:4;padding-top:6px;text-shadow:0 2px 8px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresVacios{color:var(--escena-texto);text-shadow:0 2px 12px #000}
+#coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobresVaciosSello{border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:0 12px 34px #0008}
+
+/* Canjear: la lista de recetas es una constelación de controles legibles, no
+   una tarjeta violeta independiente. */
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller{
+  width:min(690px,100%);padding:clamp(14px,3vh,30px) clamp(8px,2vw,20px);gap:14px;color:var(--escena-texto);text-shadow:0 2px 12px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] :is(.coleccionTallerRegla,.coleccionTallerNota){color:#d4c4e6}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjesListos{padding:5px 7px;background:transparent}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo{
+  border-color:var(--escena-borde);background:linear-gradient(110deg,#140d20a9,#08050d8a);box-shadow:inset 0 1px 0 #fff2,0 8px 24px #0005;
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo strong{color:#f1e5ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo span,
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjesListos>p{color:#cfbedf}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeFisico{border-top-color:#ead7ff30;color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeFisico summary{color:#eadbfa}
+
+/* Logros: conservan su grilla y scroll, pero el registro se lee como placas
+   suspendidas en el Archivo, con el halo y las motas aún visibles entre ellas. */
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogros{width:min(100%,1080px);padding:0 5px;color:var(--escena-texto)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera{
+  border-bottom-color:#ead7ff2b;text-shadow:0 2px 12px #000;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>.coleccionAntetitulo{color:#cfb8ef;text-shadow:0 0 14px #b77bff8f}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>h3{color:#f5eaff;text-shadow:0 2px 16px #000,0 0 22px #9f69df5e}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera>p,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCuenta{color:#cfbedf;border-color:#ead7ff30}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCuenta strong{color:#f3e8ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosSobres,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro{
+  border-color:var(--escena-borde);background:var(--escena-cristal);box-shadow:inset 0 1px 0 #fff2,0 6px 18px #0005;
+  -webkit-backdrop-filter:blur(9px) saturate(120%);backdrop-filter:blur(9px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro{color:#d7c7e7}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosFiltro[aria-pressed="true"]{
+  border-color:#e5c8ff90;background:linear-gradient(135deg,#8757b575,#2c1942a8);color:#fff1ff;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionListaLogros{scrollbar-color:#c58deb #12091a}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro{
+  border-color:#ead7ff2e;background:linear-gradient(112deg,#130c1eb5,#08050daf);box-shadow:inset 0 1px 0 #fff2,0 9px 25px #0005;
+  -webkit-backdrop-filter:blur(10px) saturate(120%);backdrop-filter:blur(10px) saturate(120%);
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro:hover{border-color:#e7c6ff80;filter:brightness(1.1)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogro.completado{
+  border-color:#f0ca8b86;background:linear-gradient(112deg,#3a25149e,#100a1499);box-shadow:inset 0 1px 0 #fff3,0 9px 25px #0005,0 0 22px #d7a6561b;
+}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroSello{border-color:transparent;background:transparent;color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroTitulo{color:#f2e5ff}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroDescripcion,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta,
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosNota{color:#cbb9dc}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress{border-color:#ddc2ff65;background:#0b0611}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-webkit-progress-bar{background:#0b0611}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-webkit-progress-value{background:linear-gradient(90deg,#8d5bc4,#ddb46b)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroMeta progress::-moz-progress-bar{background:linear-gradient(90deg,#8d5bc4,#ddb46b)}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogroPrueba{border-color:#d9b5f16e;background:#130b1b9e;color:#eadbfa}
+#coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosNota{border-top-color:#ead7ff2b;text-shadow:0 2px 9px #000}
+
+@media(max-width:760px){
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{left:max(14px,env(safe-area-inset-left));top:max(11px,env(safe-area-inset-top))}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera .coleccionAntetitulo{font-size:8px;letter-spacing:2px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) h2{font-size:21px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{right:max(12px,env(safe-area-inset-right));top:max(11px,env(safe-area-inset-top));width:37px;height:37px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{top:max(48px,calc(env(safe-area-inset-top) + 40px));gap:10px;max-width:calc(100vw - 26px)}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestana{font-size:12px!important}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{top:max(88px,calc(env(safe-area-inset-top) + 79px));right:max(10px,env(safe-area-inset-right));bottom:max(7px,env(safe-area-inset-bottom));left:max(10px,env(safe-area-inset-left))}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo{padding-bottom:4px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo h3{font-size:24px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller{padding:8px 2px;gap:10px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionCanjeListo{background:#100919a8}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogros{padding-inline:0}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionLogrosCabecera{padding-inline:3px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="logros"] .coleccionListaLogros{padding-right:4px}
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{display:none}
+}
+@media(max-width:760px) and (max-height:650px){
+  #coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{top:max(80px,calc(env(safe-area-inset-top) + 72px));bottom:3px}
+  #coleccionPanel[data-mundo="archivo"][data-vista="sobres"] .coleccionSobreTitulo p{display:none}
+  #coleccionPanel[data-mundo="archivo"][data-vista="canje"] .coleccionTaller h3{font-size:24px}
+}
+
+/* El huésped común llega después de la composición del Archivo y normaliza
+   sus hijos a z-index 2. Reafirmamos la capa de navegación de Mis cartas
+   para que su escena decorativa jamás capture los clics de sus pestañas. */
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionCabecera{position:absolute!important;z-index:9!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionPestanas{position:absolute!important;z-index:10!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionCerrar{position:fixed!important;z-index:11!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionContenido{position:relative!important;z-index:2!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionEstado{position:absolute!important;z-index:12!important}
+#coleccionPanel[data-mundo="archivo"][data-vista="cartas"] .coleccionPie{position:absolute!important;z-index:10!important}
+
+/* La capa común del mundo usa un selector muy específico para normalizar sus
+   hijos. Las pestañas auxiliares son HUDs del mismo mundo, no flujo normal:
+   se reafirma su anclaje para que, en alturas cortas, Sobres no empuje los
+   botones bajo el pie ni pierda el centro de la escena. */
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCabecera{position:absolute!important;z-index:9!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPestanas{position:absolute!important;z-index:10!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionCerrar{position:fixed!important;z-index:11!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionContenido{position:absolute!important;z-index:3!important;flex:none!important;align-self:stretch!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionEstado{position:absolute!important;z-index:12!important}
+#coleccionPanel[data-mundo="archivo"]:is([data-vista="sobres"],[data-vista="canje"],[data-vista="logros"]) .coleccionPie{position:absolute!important;z-index:10!important}

@@ -13,23 +13,76 @@
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
-  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null;
-  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real'};
+  let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null,cartaTransferida=null,entradaMenu=0,archivoCapa=null,detalleCapa=null,encuadreDetalle=null;
+  const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real',logrosProtagonista:'todos'};
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,n:nombreVisible(id,c.n),sub:typeof tribeLine==='function'?tribeLine(c):c.t};
   }
   function icono(tipo){
     const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','0 0 24 24');svg.setAttribute('aria-hidden','true');
-    const trazos={libro:'M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3z M12 6v15 M6 8h3 M6 11h3 M15 8h3 M15 11h3',cerrar:'m6 6 12 12 M18 6 6 18',buscar:'M16 10a6 6 0 1 1-12 0 6 6 0 0 1 12 0 M15 15l6 6',candado:'M7 10V7a5 5 0 0 1 10 0v3 M5 10h14v11H5z M12 14v3',sobre:'M5 3h14l2 18H3z M6 7h12 M6 17h12 M12 9l3 3-3 3-3-3z',check:'m5 12 5 5L20 6',flecha:'m14 5-7 7 7 7'};
+    const trazos={libro:'M3 4h7l2 2 2-2h7v15h-7l-2 2-2-2H3z M12 6v15 M6 8h3 M6 11h3 M15 8h3 M15 11h3',cerrar:'m6 6 12 12 M18 6 6 18',buscar:'M16 10a6 6 0 1 1-12 0 6 6 0 0 1 12 0 M15 15l6 6',candado:'M7 10V7a5 5 0 0 1 10 0v3 M5 10h14v11H5z M12 14v3',sobre:'M5 3h14l2 18H3z M6 7h12 M6 17h12 M12 9l3 3-3 3-3-3z',check:'m5 12 5 5L20 6',flecha:'m14 5-7 7 7 7',logro:'M12 3 14.7 8.6 21 9.5l-4.6 4.5 1.1 6.4-5.5-2.9-5.5 2.9 1.1-6.4L3 9.5l6.3-.9z'};
     const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',trazos[tipo]||trazos.libro);svg.append(p);return svg;
+  }
+  /* Cada logro conserva su propio emblema, pero todos comparten la acuñación
+     del Domo. Así el catálogo se siente como un registro de hazañas y no
+     como una lista de checks repetidos. Los glifos son SVG local: no añaden
+     descargas ni retrasan el scroll de la Colección. */
+  const MEDALLAS_LOGRO=Object.freeze({
+    mohamed_sneaky_tricky:'pergamino',mohamed_ctt:'escudo',mohamed_ahora_me_ves:'ojo',mohamed_ladron_templos:'templo',mohamed_backstabber:'daga',mohamed_cinco_caras:'moneda',
+    fender_bardnt:'lira',fender_22_canciones:'musica',fender_vida_goblin:'goblin',fender_olvidadizo:'reloj',fender_rapidin:'alas',
+    talesin_amor_salvaje:'rosa',talesin_thalesyn:'thal',talesin_presidente_thal:'corona',talesin_hola_papi:'corazonPergamino',talesin_cero_a_heroe:'ceroDiez',talesin_talesimp:'petunia',
+    rafaela_rul_no_es_negro:'rul',rafaela_you_rul:'rulCorona',rafaela_charles_menson:'apostoles',rafaela_oculto:'oculto',
+    adreida_dos_orejas:'orejas',adreida_adreidos:'espejo'
+  });
+  const GLIFOS_MEDALLA=Object.freeze({
+    pergamino:'<path d="M35 31h24v31H35z M39 31c-5 3-5 8 0 10m16-10c5 3 5 8 0 10M39 52c-5 3-5 8 0 10m16-10c5 3 5 8 0 10"/><path d="m47 41 3 4 5 1-4 3 1 5-5-3-4 3 1-5-4-3 5-1z" class="medallaRelleno"/>',
+    escudo:'<path d="M48 29 66 36v13c0 12-7 19-18 23-11-4-18-11-18-23V36z"/><path d="m39 49 6 6 12-14"/>',
+    ojo:'<path d="M28 49s8-14 20-14 20 14 20 14-8 14-20 14-20-14-20-14z"/><circle cx="48" cy="49" r="6" class="medallaRelleno"/><path d="M48 25v5m0 38v5m-27-24h5m44 0h5"/>',
+    templo:'<path d="m28 42 20-14 20 14H28zM32 45v18m11-18v18m10-18v18m11-18v18M27 65h42"/><path d="M38 35h20"/>',
+    daga:'<path d="m62 31-7 8 4 4-9 9-4-4-15 15-4-4 15-15-4-4 9-9 4 4 8-7z"/><path d="m29 61 7 7m-12-2 7 7"/>',
+    moneda:'<circle cx="48" cy="49" r="20"/><circle cx="48" cy="49" r="15"/><text x="48" y="57" text-anchor="middle" class="medallaNumero">5</text><path d="m29 31-4-4m42 4 4-4m-42 40-4 4m42-4 4 4"/>',
+    lira:'<path d="M36 31v19c0 12 6 19 12 19s12-7 12-19V31M36 32c7 5 17 5 24 0M33 32h30M41 41v15m14-15v15M36 70h24"/><circle cx="48" cy="51" r="3" class="medallaRelleno"/>',
+    musica:'<path d="M39 33v25a7 7 0 1 1-4-6V39l23-5v21a7 7 0 1 1-4-6V37z"/><text x="49" y="69" text-anchor="middle" class="medallaMicroNumero">22</text>',
+    goblin:'<path d="m30 42 12-6 6-8 6 8 12 6-7 8 1 13-12 7-12-7 1-13z"/><path d="m36 50 5 2m14-2-5 2m-10 8h16"/><circle cx="41" cy="48" r="2" class="medallaRelleno"/><circle cx="55" cy="48" r="2" class="medallaRelleno"/>',
+    reloj:'<path d="M37 29h22m-22 40h22M39 32c0 7 5 10 9 16 4-6 9-9 9-16M39 66c0-7 5-10 9-16 4 6 9 9 9 16"/><path d="M43 43h10m-10 12h10"/>',
+    alas:'<path d="M48 37v25m-10-18-13-7m13 12-13 7m33-12 13-7m-13 12 13 7"/><path d="M40 31h16v8H40zM40 62h16v8H40z"/><path d="m29 34-7 5 8 1m-8 13 8 1-7 5m45-25 7 5-8 1m8 13-8 1 7 5"/>',
+    rosa:'<path d="M48 69V51m0 8-10-8m10 3 10-8"/><path d="M48 50c-15 0-15-15-6-16-1-9 12-9 13 0 9 1 9 16-7 16z"/><path d="m43 42 5-5 5 5m-5-5v10"/>',
+    thal:'<path d="M48 27c10 10 16 17 16 27 0 10-7 17-16 17s-16-7-16-17c0-10 6-17 16-27z"/><path d="m48 39-6 15 6-3 6 3z" class="medallaRelleno"/><path d="M48 60v5"/>',
+    corona:'<path d="m29 39 8 8 11-16 11 16 8-8-4 25H33zM33 68h30"/><path d="m35 35-4-7m14 1v-7m14 13 4-7"/>',
+    corazonPergamino:'<path d="M35 32h25v30H35zM39 32c-5 3-5 8 0 10m17-10c5 3 5 8 0 10M39 52c-5 3-5 8 0 10m17-10c5 3 5 8 0 10"/><path d="M48 55c-13-8-6-17 0-10 6-7 13 2 0 10z" class="medallaRelleno"/>',
+    ceroDiez:'<text x="36" y="56" text-anchor="middle" class="medallaNumero">0</text><path d="M45 49h16m-6-6 6 6-6 6"/><text x="56" y="69" text-anchor="middle" class="medallaMicroNumero">10</text><path d="M28 31h40M28 70h40"/>',
+    petunia:'<path d="M48 31c3 8 8 9 15 8-4 7-2 12 4 16-9 1-12 5-13 12-5-5-10-5-15 0-1-7-4-11-13-12 6-4 8-9 4-16 7 1 12 0 15-8z"/><circle cx="48" cy="49" r="5" class="medallaRelleno"/><path d="m48 24 2 4 4 2-4 2-2 4-2-4-4-2 4-2z"/>',
+    rul:'<path d="m48 28 15 9v24l-15 9-15-9V37z"/><path d="M48 36v26m-8-19 8-7 8 7m-8 12 8 7"/><circle cx="48" cy="49" r="3" class="medallaRelleno"/>',
+    rulCorona:'<path d="m30 42 7 6 11-15 11 15 7-6-4 22H34zM35 68h26"/><path d="M48 38v21m-7-13 7-5 7 5"/><circle cx="48" cy="51" r="3" class="medallaRelleno"/>',
+    apostoles:'<path d="M30 67v-9c0-7 5-11 10-11s10 4 10 11v9M46 67v-9c0-7 5-11 10-11s10 4 10 11v9"/><circle cx="40" cy="39" r="7"/><circle cx="56" cy="39" r="7"/><path d="M48 67v-12c0-8-5-13-12-13m12 13c0-8 5-13 12-13"/><circle cx="48" cy="32" r="7" class="medallaRelleno"/>',
+    oculto:'<path d="M29 59c3-18 10-29 19-29s16 11 19 29"/><path d="M35 56s5-8 13-8 13 8 13 8-5 8-13 8-13-8-13-8z"/><circle cx="48" cy="56" r="4" class="medallaRelleno"/><path d="m28 67 8-6m32 6-8-6"/>',
+    orejas:'<path d="M38 66c-7-8-10-20-7-30 2-8 10-8 11 1l3 15M58 66c7-8 10-20 7-30-2-8-10-8-11 1l-3 15"/><path d="M37 63c4 5 18 5 22 0"/><circle cx="43" cy="62" r="2" class="medallaRelleno"/><circle cx="53" cy="62" r="2" class="medallaRelleno"/>',
+    espejo:'<path d="M48 28 65 37v24L48 70 31 61V37z"/><path d="M48 31v36M42 42c-6 3-6 10 0 13m12-13c6 3 6 10 0 13"/><path d="m37 37 7 5m15-5-7 5m-15 15-7 5m29-5-7-5"/>'
+  });
+  function medallaLogro(def,tiene){
+    const motivo=MEDALLAS_LOGRO[def.id]||'escudo',rareza=def.tipo==='racha'||Number(def.meta)>=100?'eclipse':(['conjunto','campo','combate'].includes(def.tipo)?'oro':def.tipo==='contador'?'plata':'bronce'),sello=crear('span','coleccionLogroSello coleccionMedalla');
+    sello.dataset.medalla=motivo;sello.dataset.protagonista=def.protagonista;sello.dataset.rareza=rareza;sello.dataset.estado=tiene?'obtenida':'pendiente';sello.setAttribute('aria-hidden','true');
+    const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.classList.add('coleccionMedallaSvg');svg.setAttribute('viewBox','0 0 96 96');svg.setAttribute('focusable','false');svg.setAttribute('aria-hidden','true');
+    svg.innerHTML='<path class="medallaCinta medallaCintaIzquierda" d="M26 20 43 28 39 55 23 47z"/><path class="medallaCinta medallaCintaDerecha" d="m70 20-17 8 4 27 16-8z"/><circle class="medallaHalo" cx="48" cy="50" r="33"/><circle class="medallaAro" cx="48" cy="50" r="29"/><circle class="medallaNucleo" cx="48" cy="50" r="23"/><path class="medallaRayas" d="m48 18 2 5 5 2-5 2-2 5-2-5-5-2 5-2zM22 50l5-2 2-5 2 5 5 2-5 2-2 5-2-5zM74 50l-5-2-2-5-2 5-5 2 5 2 2 5 2-5z"/><g class="medallaGlifo">'+(GLIFOS_MEDALLA[motivo]||GLIFOS_MEDALLA.escudo)+'</g><path class="medallaBrillo" d="M33 34c7-9 20-12 31-6"/>';
+    sello.append(svg);return sello;
   }
   function boton(texto,accion,clase=''){
     const b=crear('button','coleccionBoton '+clase,texto);b.type='button';b.addEventListener('click',accion);return b;
   }
   function sonido(id){window.CAOZ_AUDIO?.play(id);}
   function mensaje(texto,error=false){if(!estado)return;estado.textContent=texto;estado.classList.toggle('error',error);carruselSobres?.medir();if(s.vista==='recompensa')medirRecompensa();}
-  function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);}
+  function limpiarEntradaMenu(){clearTimeout(entradaMenu);entradaMenu=0;panel?.classList.remove('coleccionDetalleEntrando','coleccionArchivoEntrando');}
+  function entradaDelMundo(vista){
+    limpiarEntradaMenu();
+    if(!panel||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+    const clase=vista==='detalle'?'coleccionDetalleEntrando':'coleccionArchivoEntrando';
+    panel.classList.add(clase);
+    // La clase sólo define la pose de arranque y el keyframe de entrada. Al
+    // retirarla después no se vuelve a pintar otro estado del menú.
+    entradaMenu=setTimeout(()=>{panel?.classList.remove(clase);entradaMenu=0;},700);
+  }
+  function limpiarTiempos(){guardando=false;cancelAnimationFrame(frame);limpiarEntradaMenu();limpiarTransicionDetalle();}
   function esFinalCampana(){return !!finalCampana?.activa;}
   function aplicarModoFinalCampana(activo){
     if(!panel)return;
@@ -57,25 +110,97 @@
     if(anterior){anterior.cancelada=true;anterior.componente?.destruir();}
     panel?.classList.remove('coleccionAbriendoSobre');
   }
+  // Archivo y detalle comparten una única escena persistente. Así el catálogo
+  // no intenta imitar al visor: sus controles y cartas viven sobre el mismo
+  // halo, motas y pedestal que recibe la carta al abrirse.
+  function montarMundoVisor(){
+    if(!mundoHost||mundo3D||!window.CAOZ_VISOR3D?.montarMundo)return;
+    mundo3D=window.CAOZ_VISOR3D.montarMundo(mundoHost,{inicial:'normal',logoUrl:'art/logo.webp',sonar:sonido});
+  }
+  function soltarMundoVisor(){
+    mundo3D?.destruir();mundo3D=null;
+    mundoHost?.replaceChildren();
+    panel?.removeAttribute('data-mundo');
+  }
+  function tonoMundoVisor(id){
+    if(!id||!mundo3D?.actualizar)return;
+    mundo3D.actualizar({edicion:modelo().elegido(id)});
+  }
+  // La ficha que se ve en el Archivo ya contiene su <img> decodificada y, para
+  // las cartas del Diseño, su lienzo horneado. La entregamos al visor en vez de
+  // pedir una segunda ficha: el cambio de menú conserva el mismo recurso en
+  // memoria y el pintor WebGL recibe ese mismo <img> como fuente.
+  function tomarCartaTransferida(id,acabado){
+    const entrega=cartaTransferida;
+    if(!entrega||entrega.id!==id||entrega.acabado!==acabado||!entrega.nodo)return null;
+    return entrega;
+  }
+  function mostrarCartaEnMundo(id){
+    if(!id||!mundo3D?.mostrarCarta)return false;
+    const c=dato(id);
+    tonoMundoVisor(id);
+    const entrega=tomarCartaTransferida(id,s.acabadoVista);
+    // Guardamos el rectángulo ya interpolado del vuelo antes de que el visor
+    // adopte el nodo. El visor lo usa como pose inicial y converge desde ahí:
+    // no hay ni recarga del arte ni teletransporte entre los dos encuadres.
+    const r=entrega?.nodo?.getBoundingClientRect();
+    const continuidad=!matchMedia('(prefers-reduced-motion: reduce)').matches&&r?.width>8&&r?.height>8?{izquierda:r.left,arriba:r.top,ancho:r.width,alto:r.height,esperar:panel?.classList.contains('coleccionFusionando')}:null;
+    const refrescarFicha=(nodo,acabado)=>{
+      nodo.dataset.coleccionAcabado=acabado;nodo.dataset.acabado=acabado;
+      nodo.classList.toggle('cdFullArt',acabado==='dorado');nodo.classList.toggle('cdClasica',acabado!=='dorado');
+      actualizarCarta(nodo);
+      actualizarMiniatura(id);
+    };
+    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
+    // montarMundo sólo confirma después de insertar la ficha. Así, si el
+    // visor no estuviera disponible, el vuelo conserva su salida de respaldo.
+    if(visible&&entrega){
+      entrega.entregada=true;cartaTransferida=null;
+      if(entrega.transicion){entrega.transicion.vuelo=null;entrega.transicion.transferida=true;}
+    }
+    return visible;
+  }
+  function activarMundo(vista){
+    // Todas las pestañas principales de la Colección viven sobre el mismo
+    // mundo del Archivo. Sobres, Canjear y Logros no son cuadros ajenos: sus
+    // controles flotan sobre el halo, las motas y el círculo rúnico que ya ve
+    // el jugador al abrir Mis cartas. Sólo las escenas transitorias (elección
+    // de recompensa, contenido y apertura) pueden apartar ese mundo.
+    const archivo=['cartas','sobres','canje','logros'].includes(vista),activo=archivo||vista==='detalle';
+    if(!activo){if(mundo3D)soltarMundoVisor();else{mundoHost?.setAttribute('hidden','');panel?.removeAttribute('data-mundo');}return;}
+    mundoHost?.removeAttribute('hidden');montarMundoVisor();
+    if(archivo&&!transicionDetalle){encuadreDetalle=null;mundoHost?.style.removeProperty('--reserva-der');mundoHost?.style.removeProperty('--controles-alto');}
+    else if(vista==='detalle'&&encuadreDetalle&&!panel?.classList.contains('coleccionFusionando')){mundoHost?.style.setProperty('--reserva-der',encuadreDetalle.reserva+'px');mundoHost?.style.setProperty('--controles-alto',encuadreDetalle.controles+'px');}
+    if(archivo)mundoHost?.setAttribute('aria-hidden','true');else mundoHost?.removeAttribute('aria-hidden');
+    panel.dataset.mundo=archivo?'archivo':'detalle';
+  }
   function medida(){
     if(!panel?.open)return;
     const v=window.visualViewport,alto=v?v.height:innerHeight;
     panel.style.setProperty('--coleccion-alto',alto+'px');panel.style.setProperty('--coleccion-top',(v?v.offsetTop:0)+'px');
     panel.classList.toggle('coleccionBaja',alto<650);panel.classList.toggle('coleccionTeclado',alto<430);
     if(s.vista==='detalle')paginacionReglas();
-    encajarCartas();carruselSobres?.medir();if(s.vista==='recompensa')medirRecompensa();
+    encajarCartas();mundo3D?.medir();carruselSobres?.medir();carruselCartas?.medir();if(s.vista==='recompensa')medirRecompensa();
   }
   function encajarCartas(){
     if(!panel?.open)return;
     const movil=panel.clientWidth<550;
     panel.querySelectorAll('.coleccionCarta').forEach(n=>{
-      if(n.closest('.sobresApertura,.visor3d'))return;
+      if(n.closest('.sobresApertura,.visor3d,.coleccionVueloCarta'))return;
       if(!n.getClientRects().length)return;
       const p=n.parentElement,clase=p.classList;let alto=p.clientHeight,ancho=p.clientWidth;
       // Las filas de la lista crecen con el ancho de sus tres columnas. No
       // dependemos de la altura visible: el resto se recorre con scroll.
       const mini=clase.contains('coleccionMini');
-      if(mini){alto=280;ancho=206;n.style.zoom=Math.max(.1,(p.clientWidth-8)/200);}
+      if(mini){
+        alto=280;ancho=206;
+        // La biblioteca puede ser mucho más ancha que el diálogo anterior.
+        // Conservamos tres columnas, pero nunca dejamos que una miniatura sea
+        // más alta que la primera fila visible: así una laptop baja no abre
+        // mostrando cartas cortadas aunque haya sitio horizontal de sobra.
+        const rejilla=p.parentElement,porAncho=Math.max(.1,(p.clientWidth-8)/200),porAlto=rejilla?Math.max(.1,(rejilla.clientHeight-10)/303):porAncho;
+        n.style.zoom=Math.min(porAncho,porAlto);
+      }
       else if(clase.contains('coleccionVersion')&&movil){const caja=p.parentElement;const filas=getComputedStyle(caja).gridTemplateRows.split(' ').map(Number.parseFloat);alto=filas[1]||caja.clientHeight-214;ancho=caja.clientWidth-30;}
       else{
         const estilos=getComputedStyle(p),gap=parseFloat(estilos.rowGap)||0;
@@ -90,7 +215,15 @@
     });
     if(restaurarLista&&s.vista==='cartas'){
       const grid=contenido.querySelector('.coleccionRejilla');
-      if(grid){grid.scrollTop=s.desplazamiento;const tarjeta=[...grid.children].find(n=>n.dataset.carta===focoLista);tarjeta?.focus({preventScroll:true});}
+      if(grid){
+        // El archivo sí usa desplazamiento suave para los gestos normales,
+        // pero volver del visor debe recuperar exactamente la fila desde la
+        // que se abrió; de otro modo el navegador sigue animando el salto y
+        // deja al usuario mirando una posición intermedia.
+        const comportamiento=grid.style.scrollBehavior,encaje=grid.style.scrollSnapType;grid.style.scrollBehavior='auto';grid.style.scrollSnapType='none';grid.scrollTop=s.desplazamiento;void grid.offsetHeight;
+        requestAnimationFrame(()=>{if(!grid.isConnected)return;if(comportamiento)grid.style.scrollBehavior=comportamiento;else grid.style.removeProperty('scroll-behavior');if(encaje)grid.style.scrollSnapType=encaje;else grid.style.removeProperty('scroll-snap-type');});
+        const tarjeta=[...grid.children].find(n=>n.dataset.carta===focoLista);tarjeta?.focus({preventScroll:true});
+      }
       restaurarLista=false;focoLista=null;
     }
   }
@@ -98,9 +231,9 @@
   function crearPanel(){
     if(panel)return;
     panel=crear('dialog');panel.id='coleccionPanel';panel.setAttribute('aria-labelledby','coleccionTitulo');
-    panel.innerHTML='<div class="coleccionInterior"><header class="coleccionCabecera"><div class="coleccionEmblema" aria-hidden="true"></div><div class="coleccionTitulos"><span class="coleccionAntetitulo">EL ARCHIVO DEL DOMO</span><h2 id="coleccionTitulo">Colección de cartas</h2></div><button type="button" class="coleccionCerrar" aria-label="Cerrar colección"></button></header><nav class="coleccionPestanas" aria-label="Secciones de la colección"></nav><main class="coleccionContenido"></main><div class="coleccionEstado" role="status" aria-live="polite"></div><footer class="coleccionPie"><span class="coleccionTotales"></span><button type="button" class="coleccionVolver">Volver a Extras</button></footer></div>';
+    panel.innerHTML='<div class="coleccionInterior"><div class="coleccionMundoVisor" aria-hidden="true"></div><header class="coleccionCabecera"><div class="coleccionEmblema" aria-hidden="true"></div><div class="coleccionTitulos"><span class="coleccionAntetitulo">EL ARCHIVO DEL DOMO</span><h2 id="coleccionTitulo">Colección de cartas</h2></div><button type="button" class="coleccionCerrar" aria-label="Cerrar colección"></button></header><nav class="coleccionPestanas" aria-label="Secciones de la colección"></nav><main class="coleccionContenido"></main><div class="coleccionEstado" role="status" aria-live="polite"></div><footer class="coleccionPie"><span class="coleccionTotales"></span><button type="button" class="coleccionVolver">Volver a Extras</button></footer></div>';
     panel.querySelector('.coleccionEmblema').append(icono('libro'));panel.querySelector('.coleccionCerrar').append(icono('cerrar'));
-    contenido=panel.querySelector('.coleccionContenido');barra=panel.querySelector('.coleccionPestanas');estado=panel.querySelector('.coleccionEstado');
+    contenido=panel.querySelector('.coleccionContenido');barra=panel.querySelector('.coleccionPestanas');estado=panel.querySelector('.coleccionEstado');mundoHost=panel.querySelector('.coleccionMundoVisor');
     panel.querySelector('.coleccionCerrar').onclick=cerrar;panel.querySelector('.coleccionVolver').onclick=cerrar;
     panel.addEventListener('cancel',e=>{e.preventDefault();if(esFinalCampana())return;if(s.vista==='detalle')ir('cartas');else cerrar();});
     panel.addEventListener('close',limpiar);
@@ -126,7 +259,7 @@
     panel.querySelector('.coleccionVolver').textContent=origen?.id==='extras'?'Volver a Extras':'Volver';
     window.addEventListener('resize',medida);window.visualViewport?.addEventListener('resize',medida);window.visualViewport?.addEventListener('scroll',medida);
     window.addEventListener('caoz:coleccion',cambio);window.addEventListener('caoz:arte',arteActualizado);window.addEventListener('caoz:nombres',nombresActualizados);window.addEventListener('caoz:coleccion-error',falloGuardado);
-    medida();dibujar();
+    medida();activarMundo(s.vista);dibujar();
     observador=new ResizeObserver(()=>{cancelAnimationFrame(frame);frame=requestAnimationFrame(medida);});observador.observe(panel);observador.observe(contenido);
     if(typeof animarTransicionMenu==='function')animarTransicionMenu(panel.querySelector('.coleccionInterior'),panel);
     if(!opciones.finalCampana)panel.querySelector('.coleccionCerrar')?.focus({preventScroll:true});
@@ -134,9 +267,9 @@
   function limpiar(evento){
     // close se encola: no desmontar una Colección que ya se volvió a abrir.
     if(evento?.type==='close'&&panel?.open)return;
-    soltarEscena3D();
+    soltarEscena3D();soltarMundoVisor();cartaTransferida=null;limpiarEntradaMenu();
     if(evento?.type==='close'){const aviso=alCerrarRecompensa;alCerrarRecompensa=null;aviso?.();}
-    destruirApertura();destruirCarrusel();destruirVistasSobres();limpiarTiempos();limpiarFinalCampana();observador?.disconnect();observador=null;
+    destruirApertura();destruirCarrusel();destruirCarruselCartas();destruirVistasSobres();limpiarTiempos();limpiarFinalCampana();observador?.disconnect();observador=null;
     window.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('resize',medida);window.visualViewport?.removeEventListener('scroll',medida);
     window.removeEventListener('caoz:coleccion',cambio);window.removeEventListener('caoz:arte',arteActualizado);window.removeEventListener('caoz:nombres',nombresActualizados);window.removeEventListener('caoz:coleccion-error',falloGuardado);
     // El evento close llega después de comenzar el regreso. Limpiar sólo una
@@ -152,56 +285,88 @@
     return true;
   }
   function falloGuardado(){mensaje('No se pudo guardar. Libera espacio en el navegador e inténtalo otra vez.',true);}
-  function cambio(){if(!panel?.open||guardando||finalCampana?.confirmando)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
-  function arteActualizado(){if(!panel?.open)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
+  function cambio(){if(!panel?.open||guardando||finalCampana?.confirmando||transicionDetalle)return;actualizarCabecera();if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='cartas')dibujarLista();else if(s.vista==='canje')dibujarCanje();else if(s.vista==='logros')dibujarLogros();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarSobres();}
+  function arteActualizado(){if(!panel?.open||transicionDetalle)return;panel.querySelectorAll('.coleccionCarta').forEach(actualizarCarta);}
   function nombresActualizados(){
-    if(!panel?.open)return;
+    if(!panel?.open||transicionDetalle)return;
     if(s.vista==='detalle')dibujarDetalle();
     else if(s.vista==='cartas')dibujarLista();
+    else if(s.vista==='logros')dibujarLogros();
     else if(s.vista==='contenidoSobre')dibujarContenidoSobre();
   }
   function actualizarCabecera(){
-    const m=modelo(),ids=m.ids(),premium=ids.reduce((n,id)=>n+(m.tiene(id,'foil')?1:0)+(m.tiene(id,'dorado')?1:0),0);
-    panel.querySelector('.coleccionTotales').textContent=ids.length+' normales · '+premium+' ediciones especiales';
-    barra.replaceChildren();const cartas=boton('Mis cartas',()=>ir('cartas'),'coleccionPestana'),sobres=boton('Sobres',()=>ir('sobres'),'coleccionPestana'),canje=boton('Canjear',()=>ir('canje'),'coleccionPestana');
+    const m=modelo(),ids=m.ids(),premium=ids.reduce((n,id)=>n+(m.tiene(id,'foil')?1:0)+(m.tiene(id,'dorado')?1:0),0),resumenLogros=window.CAOZ_LOGROS?.resumen?.();
+    panel.querySelector('.coleccionTotales').textContent=s.vista==='logros'&&resumenLogros?resumenLogros.obtenidos+' / '+resumenLogros.total+' logros':ids.length+' normales · '+premium+' ediciones especiales';
+    barra.replaceChildren();const cartas=boton('Mis cartas',()=>ir('cartas'),'coleccionPestana'),sobres=boton('Sobres',()=>ir('sobres'),'coleccionPestana'),canje=boton('Canjear',()=>ir('canje'),'coleccionPestana'),logros=boton('Logros',()=>ir('logros'),'coleccionPestana');
     cartas.prepend(icono('libro'));sobres.prepend(icono('sobre'));sobres.append(crear('span','coleccionNumero',m.sobres()));
-    cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');barra.append(cartas,sobres,canje);
+    cartas.dataset.vista='cartas';sobres.dataset.vista='sobres';canje.dataset.vista='canje';logros.dataset.vista='logros';
+    cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');sobres.setAttribute('aria-current',['sobres','recompensa','contenidoSobre'].includes(s.vista)?'page':'false');canje.prepend(icono('candado'));canje.setAttribute('aria-current',s.vista==='canje'?'page':'false');logros.prepend(icono('logro'));logros.setAttribute('aria-current',s.vista==='logros'?'page':'false');if(resumenLogros)logros.append(crear('span','coleccionNumero',resumenLogros.pendientes));barra.append(cartas,sobres,canje,logros);
   }
-  function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista)s.desplazamiento=contenido.querySelector('.coleccionRejilla')?.scrollTop||0;}
-  function ir(vista){if(esFinalCampana()&&vista!=='recompensa')return;if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(s.vista==='detalle'&&vista==='cartas')focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();}
-  function dibujar(){actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){dibujarSobres();return;}destruirApertura();destruirCarrusel();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
+  function guardarPosicionLista(){if(s.vista==='cartas'&&!restaurarLista){const lista=contenido.querySelector('.coleccionRejilla');s.desplazamiento=lista?.scrollTop||0;}}
+  function ir(vista){
+    if(esFinalCampana()&&vista!=='recompensa')return;
+    const anterior=s.vista,regresarAlArchivo=anterior==='detalle'&&vista==='cartas';
+    if(regresarAlArchivo&&volverAlArchivoFusionado())return;
+    if(vista!=='detalle')soltarEscena3D();guardarPosicionLista();if(regresarAlArchivo)focoLista=s.carta;limpiarTiempos();s.vista=vista;mensaje('');dibujar();
+    if(regresarAlArchivo)entradaDelMundo('cartas');
+  }
+  function dibujar(){activarMundo(s.vista);actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){destruirCarruselCartas();dibujarSobres();return;}destruirApertura();destruirCarrusel();destruirCarruselCartas();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='logros')dibujarLogros();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
     const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
     const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
     return modelo().ids().filter(id=>{const c=dato(id);return (!q||normalizar(c.n+' '+c.sub).includes(q))&&(s.tipo==='todos'||c.t===s.tipo)&&(!enMazo||enMazo.has(id))&&(s.mazo!=='cajon'||c.set==='cajon');}).sort((a,b)=>{const x=dato(a),y=dato(b);return relevancia(a)-relevancia(b)||Number(y.t==='protagonista')-Number(x.t==='protagonista')||(Number(x.c)||0)-(Number(y.c)||0)||x.n.localeCompare(y.n,'es');});
   }
+  /* El Archivo conserva la biblioteca que se recorre: tres cartas por fila,
+     scroll vertical y las cartas reales. El visor inmersivo aparece al elegir
+     una; no necesitamos una escena WebGL por cada miniatura. */
   function dibujarGaleria(){
-    const filtros=crear('div','coleccionFiltros'),buscar=crear('label','coleccionBuscar');buscar.append(icono('buscar'));
+    const filtros=crear('div','coleccionFiltros coleccionFiltrosInmersivos'),buscar=crear('label','coleccionBuscar');buscar.append(icono('buscar'));
     const input=crear('input');input.type='search';input.placeholder='Buscar una carta…';input.setAttribute('aria-label','Buscar cartas por nombre');input.value=s.busqueda;input.autocomplete='off';
     input.oninput=()=>{s.busqueda=input.value;s.desplazamiento=0;dibujarLista();};buscar.append(input);filtros.append(buscar);
     const selector=(nombre,opciones,valor,cambiar)=>{const label=crear('label','coleccionFiltro');label.append(crear('span','coleccionSr',nombre));const select=crear('select');select.setAttribute('aria-label',nombre);opciones.forEach(([v,n])=>{const op=crear('option','',n);op.value=v;select.append(op);});select.value=valor;select.onchange=()=>{cambiar(select.value);s.desplazamiento=0;dibujarLista();};label.append(select);return label;};
     filtros.append(selector('Filtrar por mazo',[['todos','Todos los mazos'],...Object.keys(LEADERS).map(id=>[id,LEADERS[id].n]),['cajon','El Cajón']],s.mazo,v=>s.mazo=v));
     filtros.append(selector('Filtrar por tipo',[['todos','Todos los tipos'],['protagonista','Protagonistas'],['personaje','Personajes'],['hechizo','Hechizos'],['trampa','Trampas'],['objeto','Objetos'],['lugar','Lugares']],s.tipo,v=>s.tipo=v));
-    const grid=crear('div','coleccionRejilla');grid.setAttribute('role','region');grid.setAttribute('aria-label','Cartas de tu colección');grid.tabIndex=0;
+    const capa=crear('section','coleccionArchivoCapa');archivoCapa=capa;detalleCapa=null;
+    const escena=crear('section','coleccionEscenaArchivo');escena.setAttribute('aria-label','Archivo inmersivo de cartas');
+    const grid=crear('div','coleccionRejilla coleccionArchivoRejilla');grid.setAttribute('role','region');grid.setAttribute('aria-label','Cartas de tu colección. Desplázate para recorrerlas y abre una para verla en detalle.');grid.tabIndex=0;
     grid.addEventListener('scroll',()=>{if(grid.isConnected&&!restaurarLista)s.desplazamiento=grid.scrollTop;},{passive:true});
-    const resumen=crear('div','coleccionResumen');resumen.setAttribute('role','status');
-    contenido.append(filtros,resumen,grid);dibujarLista();
+    const resumen=crear('p','coleccionResumen coleccionResumenArchivo');resumen.setAttribute('role','status');resumen.setAttribute('aria-live','polite');
+    escena.append(grid,resumen);capa.append(filtros,escena);contenido.append(capa);dibujarLista();
   }
+  function destruirCarruselCartas(){carruselCartas?.destruir();carruselCartas=null;}
   function dibujarLista(){
     const grid=contenido.querySelector('.coleccionRejilla');if(!grid)return;
-    const ids=idsFiltrados();restaurarLista=true;
+    destruirCarruselCartas();
+    const ids=idsFiltrados(),resumen=contenido.querySelector('.coleccionResumen');restaurarLista=true;
     if(grid.contains(document.activeElement))focoLista=document.activeElement.dataset.carta||null;
-    contenido.querySelector('.coleccionResumen').textContent=ids.length+' cartas'+(s.busqueda?' encontradas':' en tu colección')+' · Elige una para cambiar su edición';
     grid.replaceChildren();
+    if(!ids.length){
+      resumen.textContent='No hay cartas con esos filtros.';
+      const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.desplazamiento=0;dibujarLista();}));grid.append(vacio);programarAjuste();return;
+    }
+    resumen.textContent=ids.length+' cartas'+(s.busqueda?' encontradas':' en tu colección')+' · Elige una para verla en el visor';
     ids.forEach(id=>{
-      const c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v)),b=boton('',()=>verCarta(id),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Ver tres versiones.');
+      const c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v));let b;
+      b=boton('',()=>abrirCartaDesdeArchivo(id,b),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
+      const orden=ids.indexOf(id),altura=3+(orden%5)*1.3;b.style.setProperty('--archivo-flota-demora',(orden%9)*.23+'s');b.style.setProperty('--archivo-flota-y',-altura+'px');b.style.setProperty('--archivo-flota-giro',((orden%2?1:-1)*(0.35+(orden%4)*.18))+'deg');
+      b.addEventListener('pointerenter',()=>tonoMundoVisor(id),{passive:true});b.addEventListener('focus',()=>tonoMundoVisor(id));
       const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');
       const pie=crear('span','coleccionMiniPie'),puntos=crear('span','coleccionPuntos');
       propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
       pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);
     });
-    if(!ids.length){const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.desplazamiento=0;dibujar();}));grid.append(vacio);}
     programarAjuste();
+  }
+  /* Al volver desde el visor no reconstruimos la fila —la ficha sigue siendo
+     el mismo nodo—, pero sí reflejamos en su marco los acabados que hayan
+     cambiado mientras estaba abierta. Los puntos y el texto accesible se
+     actualizan sin sustituir la carta ni alterar su geometría. */
+  function actualizarMiniatura(id){
+    const mini=archivoCapa?.querySelector('.coleccionMini[data-carta="'+id+'"]');if(!mini)return;
+    const a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v)),puntos=mini.querySelector('.coleccionPuntos');
+    mini.setAttribute('aria-label',dato(id).n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
+    if(!puntos)return;
+    puntos.replaceChildren();propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
   }
   function actualizarCarta(nodo){
     const soporte=nodo.matches('[data-arte-id]')?nodo:nodo.querySelector('[data-arte-id]');if(!soporte)return;
@@ -247,16 +412,151 @@
     accion.dataset.demoEdiciones=s.demoEdiciones;accion.setAttribute('aria-label',texto[s.demoEdiciones]+'. '+nota[s.demoEdiciones]);
     caja.append(accion,crear('p','coleccionDemoNota',nota[s.demoEdiciones]));return caja;
   }
-  function verCarta(id){s.carta=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';ir('detalle');sonido('ui_confirm');}
+  function limpiarTransicionDetalle(transicion=transicionDetalle){
+    if(!transicion||transicion!==transicionDetalle)return;
+    clearTimeout(transicion.temporizador);clearTimeout(transicion.entrega);
+    // Si el recorrido se interrumpe antes de entrar al visor, devolvemos la
+    // ficha real a su botón. No dejamos una miniatura vacía ni descartamos la
+    // imagen que ya estaba decodificada. Una ficha entregada pertenece ahora al
+    // visor y no se toca aquí.
+    if(transicion.vuelo&&transicion.origenMiniatura?.isConnected&&!transicion.transferida&&s.vista==='cartas'){
+      transicion.origenMiniatura.prepend(transicion.vuelo);
+      transicion.vuelo.classList.remove('coleccionVueloCarta','coleccionVueloCartaEntra','coleccionVueloCartaEntregada');
+      for(const propiedad of ['left','top','width','height','font-size','zoom','--cw','--ch','--coleccion-vuelo-x','--coleccion-vuelo-y','--coleccion-vuelo-escala'])transicion.vuelo.style.removeProperty(propiedad);
+    }else transicion.vuelo?.remove();
+    if(cartaTransferida?.transicion===transicion)cartaTransferida=null;
+    transicion.rejilla?.classList.remove('coleccionRejillaSaliendo');
+    transicion.rejilla?.removeAttribute('aria-busy');transicion.rejilla?.removeAttribute('inert');
+    transicion.bloqueados?.forEach(n=>n?.removeAttribute('inert'));
+    transicion.cartas?.forEach(n=>{delete n.dataset.animacion;n.removeAttribute('aria-hidden');n.removeAttribute('tabindex');n.style.removeProperty('--coleccion-salida-x');n.style.removeProperty('--coleccion-salida-y');n.style.removeProperty('--coleccion-salida-giro');n.style.removeProperty('--coleccion-salida-demora');});
+    panel?.classList.remove('coleccionAbriendoCarta');panel?.removeAttribute('data-transicion');panel?.removeAttribute('data-carta-activa');
+    transicionDetalle=null;
+  }
+  // La propia escena confirma cuándo la ficha terminó su interpolación. El
+  // Archivo no se oculta con un segundo reloj que pueda adelantarse bajo una
+  // caída de fps: sólo se aparta después del último fotograma real del FLIP.
+  function completarApertura(transicion){
+    if(transicionDetalle!==transicion||!panel?.open||s.vista!=='detalle')return;
+    archivoCapa?.setAttribute('hidden','');detalleCapa?.removeAttribute('inert');panel.dataset.vista='detalle';panel.classList.remove('coleccionFusionando');mensaje('');
+    limpiarTransicionDetalle(transicion);sonido('ui_confirm');
+  }
+  function prepararEncuadreDetalle(){
+    const movil=innerWidth<760,reserva=movil?0:360,controles=movil?Math.max(250,Math.min(320,Math.round(innerHeight*.34))):0;
+    encuadreDetalle=mundo3D?.encuadreColeccion?.({reserva,controles})||{modo:'coleccion',reserva,controles};
+    return {movil,reserva,controles};
+  }
+  function abrirCartaDesdeArchivo(id,miniatura){
+    if(transicionDetalle||!panel?.open||s.vista!=='cartas')return;
+    tonoMundoVisor(id);
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){verCarta(id,miniatura);return;}
+    const rejilla=contenido.querySelector('.coleccionRejilla'),ficha=miniatura?.querySelector('.coleccionCarta');
+    if(!rejilla||!ficha||!ficha.isConnected){verCarta(id);return;}
+    const origen=ficha.getBoundingClientRect();
+    if(origen.width<12||origen.height<12){verCarta(id);return;}
+    /* No hay una "carta de vuelo" independiente. La ficha de la rejilla se
+       inserta directamente en el visor persistente y el visor le aplica FLIP
+       desde este rectángulo. Así Archivo y detalle son el mismo mundo y la
+       misma ficha, no dos pantallas que se turnan para mostrarla. */
+    const {reserva,controles}=prepararEncuadreDetalle();
+    guardarPosicionLista();focoLista=id;s.cartaSeleccionada=id;
+    const cartas=[...rejilla.querySelectorAll('.coleccionMini')],bloqueados=[rejilla,contenido.querySelector('.coleccionFiltrosInmersivos'),barra].filter(Boolean);
+    const transicion={origen,origenMiniatura:miniatura,rejilla,cartas,bloqueados,temporizador:0,entrega:0,transferida:false};transicionDetalle=transicion;
+    const centro={x:origen.left+origen.width/2,y:origen.top+origen.height/2};
+    cartas.forEach((n,indice)=>{
+      n.dataset.animacion=n===miniatura?'entra':'sale';n.tabIndex=-1;
+      if(n!==miniatura){
+        n.setAttribute('aria-hidden','true');const r=n.getBoundingClientRect(),dx=r.left+r.width/2-centro.x,dy=r.top+r.height/2-centro.y,distancia=Math.max(1,Math.hypot(dx,dy)),impulso=Math.min(500,180+distancia*.38),lado=dx/distancia,alto=dy/distancia;
+        n.style.setProperty('--coleccion-salida-x',Math.round(lado*impulso)+'px');n.style.setProperty('--coleccion-salida-y',Math.round(alto*impulso*.72)+'px');n.style.setProperty('--coleccion-salida-giro',((indice%2?1:-1)*(7+(indice%4)*2))+'deg');n.style.setProperty('--coleccion-salida-demora',Math.min(110,(indice%7)*17)+'ms');
+      }
+    });
+    bloqueados.forEach(n=>n.setAttribute('inert',''));
+    rejilla.setAttribute('aria-busy','true');panel.dataset.transicion='abrir-carta';panel.dataset.cartaActiva=id;mensaje('Abriendo '+dato(id).n+'…');
+    cartaTransferida={id,acabado:modelo().elegido(id),nodo:ficha,transicion,entregada:false};
+    s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=modelo().elegido(id);s.regla=0;s.demoEdiciones='real';s.vista='detalle';
+    panel.classList.add('coleccionFusionando');activarMundo('detalle');actualizarCabecera();dibujarDetalle({preservarArchivo:true});entradaDelMundo('detalle');
+    requestAnimationFrame(()=>{if(transicionDetalle!==transicion)return;mundoHost?.style.setProperty('--reserva-der',reserva+'px');mundoHost?.style.setProperty('--controles-alto',controles+'px');mundo3D?.iniciarEntrada?.();panel.classList.add('coleccionAbriendoCarta');rejilla.classList.add('coleccionRejillaSaliendo');
+      // Sólo es un seguro ante una API de visor interrumpida; el cierre normal
+      // lo dispara alTerminarEntrada desde el mismo raf que dibuja la carta.
+      transicion.temporizador=setTimeout(()=>completarApertura(transicion),2500);
+    });
+  }
+  function verCarta(id,miniatura){
+    // Movimiento reducido no reproduce el vuelo, pero aún puede entregar la
+    // ficha ya cargada al visor de forma instantánea.
+    const ficha=miniatura?.querySelector('.coleccionCarta'),acabado=modelo().elegido(id);
+    if(ficha)cartaTransferida={id,acabado,nodo:ficha,transicion:null,entregada:false};
+    tonoMundoVisor(id);s.carta=id;s.cartaSeleccionada=id;s.acabadoVista=acabado;s.regla=0;s.demoEdiciones='real';
+    /* Movimiento reducido no significa volver a construir el Archivo. La
+       carta aparece de inmediato, pero sus dos estados siguen compartiendo el
+       mismo mundo, capa y ficha para que «Mis cartas» no abra otra pantalla. */
+    if(archivoCapa?.isConnected&&miniatura?.isConnected){
+      guardarPosicionLista();focoLista=id;prepararEncuadreDetalle();s.vista='detalle';
+      activarMundo('detalle');actualizarCabecera();panel.dataset.vista='detalle';dibujarDetalle({preservarArchivo:true});
+      archivoCapa.setAttribute('hidden','');mensaje('');entradaDelMundo('detalle');sonido('ui_confirm');return;
+    }
+    ir('detalle');sonido('ui_confirm');
+  }
   // El detalle es la carta en 3D (visor-3d.js incrustado): una escena por carta
-  // que sólo cambia de edición o de copias al redibujar, sin rehacer su WebGL.
+  // que sólo cambia de edición o de copias al redibujar. Cuando está disponible
+  // el mundo persistente, no se crea una segunda escena: la carta toma el
+  // pedestal que ya estaba detrás del archivo.
   let escena3D=null;
   const edicionesDe=id=>ACABADOS.map(a=>({id:a,...estadoEdicionVisible(id,a)}));
-  function soltarEscena3D(){escena3D?.destruir();escena3D=null;}
-  function dibujarDetalle(){
-    if(!s.carta){ir('cartas');return;}vaciarContenido();panel.dataset.vista='detalle';
+  function soltarEscena3D(){escena3D?.destruir();escena3D=null;mundo3D?.ocultarCarta?.();}
+  function volverAlArchivoFusionado(){
+    /* Si el usuario vuelve justo durante la última fracción de la llegada,
+       cerramos esa coreografía sobre los mismos nodos antes de iniciar el
+       viaje inverso. Jamás caemos en `dibujar()` (que reconstruiría Archivo)
+       sólo porque un RAF lento aún no retiró su marcador transitorio. */
+    if(transicionDetalle&&s.vista==='detalle')completarApertura(transicionDetalle);
+    const id=s.carta,miniatura=archivoCapa?.querySelector('.coleccionMini[data-carta="'+id+'"]'),rejilla=archivoCapa?.querySelector('.coleccionRejilla');
+    if(!id||!miniatura||!rejilla||!mundo3D?.devolverCarta||transicionDetalle)return false;
+    // La biblioteca se quedó montada debajo del detalle. La volvemos a poner
+    // en escena antes de mover la ficha: no se regenera ninguna fila, arte ni
+    // anillo. Sólo el mismo nodo vuelve a ocupar su celda original.
+    archivoCapa.removeAttribute('hidden');focoLista=id;miniatura.dataset.regresoActiva='';
+    panel.classList.add('coleccionRegresandoArchivo');panel.dataset.transicion='volver-archivo';panel.dataset.cartaActiva=id;panel.dataset.vista='cartas';
+    /* La celda elegida está vacía mientras su ficha vive en el visor. Primero
+       la devolvemos (sin pintar todavía) y sólo entonces restauramos scroll:
+       así la rejilla ya tiene la altura real de esa fila y el destino del FLIP
+       no queda una pantalla más abajo en móvil. */
+    const prepararDestino=()=>{
+      encajarCartas();
+      const comportamientoPrevio=rejilla.style.scrollBehavior,encajePrevio=rejilla.style.scrollSnapType;
+      rejilla.style.scrollBehavior='auto';rejilla.style.scrollSnapType='none';rejilla.scrollTop=s.desplazamiento;void rejilla.offsetHeight;
+      requestAnimationFrame(()=>{if(!rejilla.isConnected)return;if(comportamientoPrevio)rejilla.style.scrollBehavior=comportamientoPrevio;else rejilla.style.removeProperty('scroll-behavior');if(encajePrevio)rejilla.style.scrollSnapType=encajePrevio;else rejilla.style.removeProperty('scroll-snap-type');});
+      mundoHost?.style.setProperty('--reserva-der','0px');mundoHost?.style.removeProperty('--controles-alto');
+    };
+    // La vuelta visual tarda unos fotogramas, pero el destino ya existe y es
+    // interactivo. Recuperar el foco al iniciar permite continuar con teclado
+    // sin tener que esperar a que termine el viaje de la ficha.
+    const enfocar=()=>{if(panel?.open&&miniatura.isConnected&&(panel.dataset.transicion==='volver-archivo'||s.vista==='cartas'))miniatura.focus({preventScroll:true});};
+    mensaje('Volviendo a Mis cartas…');
+    let terminado=false;
+    const terminar=nodo=>{
+      if(terminado||!panel?.open)return;terminado=true;
+      detalleCapa?.remove();detalleCapa=null;encuadreDetalle=null;s.vista='cartas';focoLista=null;
+      panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');
+      activarMundo('cartas');actualizarCabecera();mensaje('');entradaDelMundo('cartas');
+      requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>miniatura.removeAttribute('data-regreso-activa'),720);});
+    };
+    requestAnimationFrame(enfocar);
+    const ok=mundo3D.devolverCarta(miniatura,{duracion:760,prepararDestino:()=>{prepararDestino();requestAnimationFrame(enfocar);},alTerminar:terminar});
+    if(ok)return true;
+    miniatura.removeAttribute('data-regreso-activa');panel.classList.remove('coleccionRegresandoArchivo');panel.removeAttribute('data-transicion');panel.removeAttribute('data-carta-activa');panel.dataset.vista='detalle';archivoCapa.setAttribute('hidden','');mensaje('');return false;
+  }
+  function dibujarDetalle(opciones={}){
+    if(!s.carta){ir('cartas');return;}
+    // Una vez que se abrió desde la biblioteca, Archivo y detalle siguen
+    // siendo las dos capas del mismo componente incluso si se cambia edición,
+    // se actualiza el arte o llega un cambio del modelo. Nunca se hace un
+    // replaceChildren que destruiría la ruta inversa de la ficha.
+    const preservarArchivo=archivoCapa?.isConnected&&(opciones.preservarArchivo===true||panel?.dataset.mundo==='detalle');
+    if(preservarArchivo){detalleCapa?.remove();detalleCapa=crear('section','coleccionDetalleCapa');if(transicionDetalle)detalleCapa.setAttribute('inert','');contenido.append(detalleCapa);}
+    else{vaciarContenido();panel.dataset.vista='detalle';}
+    const destino=preservarArchivo?detalleCapa:contenido;
     const c=dato(s.carta),cab=crear('div','coleccionDetalleCabecera'),atras=boton('Mis cartas',()=>ir('cartas'),'coleccionAtras');atras.prepend(icono('flecha'));
-    cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));contenido.append(cab);
+    cab.append(atras,crear('h3','',c.n),crear('p','',limpiarTexto(c.sub)));destino.append(cab);
     const versiones=crear('div','coleccionVersiones');
     ACABADOS.forEach(a=>{
       const visible=estadoEdicionVisible(s.carta,a),{tiene,cantidad,elegida}=visible,demostracion=!!visible.demostracion,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
@@ -276,22 +576,40 @@
     });
     const demo=controlDemoEdiciones();if(demo)versiones.append(demo);
     const zona=crear('div','coleccionDetalle3D');
-    if(window.CAOZ_VISOR3D?.montar){
+    if(mundo3D?.mostrarCarta){
+      // Los controles quedan en el DOM de la Colección, pero la carta se dibuja
+      // dentro del mismo mundo que el archivo. La escena no se desmonta ni se
+      // vuelve a encender entre una vista y la otra.
+      zona.classList.add('con3D','conMundoVisor');zona.append(versiones);destino.append(zona);
+      mostrarCartaEnMundo(s.carta);
+      const medirControles=()=>{
+        const alto=(encuadreDetalle?.modo==='coleccion'?encuadreDetalle.controles:Math.ceil(versiones.getBoundingClientRect().height+20))+'px';
+        // En teléfono la escena y sus controles internos comparten esta reserva:
+        // así Voltear/Ampliar quedan justo arriba del panel de acabados, no debajo.
+        zona.style.setProperty('--controles-alto',alto);
+        if(!panel.classList.contains('coleccionFusionando'))mundoHost?.style.setProperty('--controles-alto',alto);
+        mundo3D?.medir();
+      };
+      medirControles();requestAnimationFrame(medirControles);
+    }else if(window.CAOZ_VISOR3D?.montar){
       zona.classList.add('con3D');const escenario=crear('div','coleccionEscena3D');
       if(escena3D&&escena3D.id!==s.carta)soltarEscena3D();
       if(escena3D)escenario.append(escena3D.raiz);
-      zona.append(escenario,versiones);contenido.append(zona);
+      zona.append(escenario,versiones);destino.append(zona);
       if(escena3D)escena3D.actualizar({ediciones:edicionesDe(s.carta),edicion:s.acabadoVista});
       else escena3D=window.CAOZ_VISOR3D.montar(escenario,{id:s.carta,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(s.carta,a),ediciones:edicionesDe(s.carta)});
       // En el teléfono la escena ocupa lo que dejan libre los controles de abajo.
       const medirControles=()=>{zona.style.setProperty('--controles-alto',Math.ceil(versiones.getBoundingClientRect().height+20)+'px');escena3D?.medir();};
       medirControles();requestAnimationFrame(medirControles);
-    }else{zona.append(versiones);contenido.append(zona);}
+      // El visor alternativo conserva el recorrido funcional aunque no pueda
+      // adoptar la ficha en vuelo. Ya no retenemos el nodo huérfano del Archivo.
+      cartaTransferida=null;
+    }else{cartaTransferida=null;zona.append(versiones);destino.append(zona);}
     const reglas=crear('section','coleccionReglas');reglas.setAttribute('aria-label','Información de la carta');
     const linea=crear('div','coleccionReglasTitulo');linea.append(crear('strong','','Habilidades'));
     const stats=c.t==='personaje'?'Coste '+c.c+' · Ataque '+c.a+' · Vida '+c.h:c.t==='protagonista'?'Protagonista':'Coste '+c.c;linea.append(crear('span','',stats));
-    reglas.append(linea,crear('p','coleccionReglaTexto'),crear('div','coleccionReglaPaginas'));contenido.append(reglas);
-    contenido.append(crear('p','coleccionAviso','Las tres ediciones tienen las mismas habilidades. Tu elección se usa en todas tus partidas.'));
+    reglas.append(linea,crear('p','coleccionReglaTexto'),crear('div','coleccionReglaPaginas'));destino.append(reglas);
+    destino.append(crear('p','coleccionAviso','Las tres ediciones tienen las mismas habilidades. Tu elección se usa en todas tus partidas.'));
     // Medir en este mismo render evita un fotograma con el retrato del tamaño
     // anterior encima del contador al alternar ediciones en teléfonos bajos.
     encajarCartas();programarAjuste();
@@ -330,20 +648,33 @@
     s.regla=Math.min(s.regla,paginas.length-1);texto.textContent=paginas[s.regla];nav.replaceChildren();
     if(paginas.length>1){const anterior=boton('‹',()=>{s.regla--;paginacionReglas();}),siguiente=boton('›',()=>{s.regla++;paginacionReglas();});anterior.disabled=s.regla===0;siguiente.disabled=s.regla===paginas.length-1;anterior.setAttribute('aria-label','Página anterior de habilidades');siguiente.setAttribute('aria-label','Página siguiente de habilidades');nav.append(anterior,crear('span','',(s.regla+1)+' / '+paginas.length),siguiente);}
   }
-  function destruirVistasSobres(){for(const vista of vistasSobres)vista.destruir();vistasSobres.clear();}
-  function vaciarContenido(){destruirVistasSobres();contenido.replaceChildren();}
+  function destruirVistaSobre(registro){
+    if(!registro||registro.destruida)return;registro.destruida=true;vistasSobres.delete(registro);
+    try{registro.vista?.destruir?.();registro.vista?.cancelar?.();}catch(_){}registro.host?.remove();
+    if(registro.sobre?.__coleccionVistaSobre===registro){delete registro.sobre.__coleccionVistaSobre;if(!registro.sobre.classList.contains('coleccionSobre3DInteractivo'))registro.sobre.classList.remove('conSobreReal');}
+  }
+  function registrarVistaSobre(sobre,host,vista,tipo){
+    if(!vista||(!vista.destruir&&!vista.cancelar)){host.remove();return null;}
+    const registro={sobre,host,vista,tipo,destruida:false,destruir:()=>destruirVistaSobre(registro)};
+    sobre.__coleccionVistaSobre=registro;vistasSobres.add(registro);sobre.classList.add('conSobreReal');return registro;
+  }
+  function montarPrevisualizacionSobre(sobre,grupo){
+    if(!sobre||sobre.__coleccionVistaSobre||!window.CAOZ_SOBRES_ESCENA?.previsualizar)return null;
+    const host=crear('div','coleccionSobreReal');sobre.append(host);
+    try{return registrarVistaSobre(sobre,host,window.CAOZ_SOBRES_ESCENA.previsualizar(host,{grupo:grupo.id,logoUrl:'art/logo.webp',arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp'}),'previsualizacion');}
+    catch(_){host.remove();return null;}
+  }
+  function destruirPrevisualizacionSobre(sobre){const registro=sobre?.__coleccionVistaSobre;if(registro?.tipo==='previsualizacion')registro.destruir();}
+  function destruirVistasSobres(){for(const vista of [...vistasSobres])vista.destruir();vistasSobres.clear();}
+  function vaciarContenido(){destruirVistasSobres();contenido.replaceChildren();archivoCapa=null;detalleCapa=null;}
   function destruirCarrusel(){carruselSobres?.destruir();carruselSobres=null;}
   function colorSobre(nodo,grupo){nodo.dataset.grupo=grupo;nodo.style.setProperty('--sobre-color',COLORES_SOBRES[grupo]||'#947640');}
-  function envoltura(grupo){
+  function envoltura(grupo,opciones={}){
     const sobre=crear('div','coleccionSobre coleccionSobreColor');colorSobre(sobre,grupo.id);sobre.setAttribute('aria-hidden','true');
     sobre.append(crear('span','coleccionSobreMarca','CAOZ'),crear('span','coleccionSobreLinea','CON TODO'),icono('libro'),crear('span','coleccionSobreSello','✦'),crear('span','coleccionSobreColeccion',grupo.nombre),crear('span','coleccionSobreLeyenda','5 CARTAS'));
     // La misma textura de la apertura, sin montar una escena 3D por cada sobre.
     // El papel CSS queda como respaldo si el módulo aún no está disponible.
-    if(window.CAOZ_SOBRES_ESCENA?.previsualizar){
-      const host=crear('div','coleccionSobreReal');sobre.append(host);
-      try{const vista=window.CAOZ_SOBRES_ESCENA.previsualizar(host,{grupo:grupo.id,logoUrl:'art/logo.webp',arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp'});if(vista?.destruir){vistasSobres.add(vista);sobre.classList.add('conSobreReal');}else host.remove();}
-      catch(_){host.remove();}
-    }
+    if(opciones.previsualizar!==false)montarPrevisualizacionSobre(sobre,grupo);
     return sobre;
   }
   function abrirRecompensaSobres(opciones={}){
@@ -561,7 +892,8 @@
     destruirCarrusel();destruirApertura();vaciarContenido();panel.dataset.vista='recompensa';
     const premio=modelo().recompensasPendientes().find(p=>p.id===s.recompensaId);if(!premio){s.eleccion=[];ir('sobres');return;}
     const cantidad=Math.min(3,premio.cantidad),grupos=modelo().grupos();s.eleccion=s.eleccion.filter(id=>grupos.some(g=>g.id===id)).slice(0,cantidad);
-    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo',premio.origen==='campana'?'CAMPAÑA COMPLETADA':premio.origen==='domo'?'VICTORIA EN EL DOMO':'RECOMPENSA PENDIENTE'),crear('h3','',cantidad===1?'Elige tu sobre':'Elige tus '+cantidad+' sobres'),crear('p','',premio.cantidad>3?'Elige esta tanda de 3. Quedan '+premio.cantidad+' sobres por asignar.':'Puedes repetir colección. Guárdalos y ábrelos cuando quieras.'));contenido.append(cab);
+    const origenPremio=premio.origen==='campana'?'CAMPAÑA COMPLETADA':premio.origen==='domo'?'VICTORIA EN EL DOMO':premio.origen==='logro'?'LOGRO DESBLOQUEADO':'RECOMPENSA PENDIENTE';
+    const cab=crear('div','coleccionSobreTitulo');cab.append(crear('span','coleccionAntetitulo',origenPremio),crear('h3','',cantidad===1?'Elige tu sobre':'Elige tus '+cantidad+' sobres'),crear('p','',premio.cantidad>3?'Elige esta tanda de 3. Quedan '+premio.cantidad+' sobres por asignar.':'Puedes repetir colección. Guárdalos y ábrelos cuando quieras.'));contenido.append(cab);
     const opciones=crear('div','coleccionRecompensaOpciones');opciones.setAttribute('role','group');opciones.setAttribute('aria-label','Tipos de sobre para tu recompensa');
     const acciones=[],actualizar=()=>{
       const total=s.eleccion.length;cuenta.textContent=total+' de '+cantidad+' elegidos';cuenta.dataset.elegidos=total;
@@ -607,11 +939,48 @@
     if(inventario.length){
       const escena=crear('div','coleccionBibliotecaSobres'),ventana=crear('div','coleccionCarreteVentana'),carrete=crear('div','coleccionCarruselSobres');carrete.setAttribute('role','region');carrete.setAttribute('aria-label','Tus sobres guardados');carrete.tabIndex=0;
       const botones=inventario.map(item=>{const g=grupos.find(g=>g.id===item.grupo),b=boton('',()=>centrar(item.grupo),'coleccionSobreGuardado');colorSobre(b,item.grupo);b.setAttribute('aria-label',g.nombre+'. '+item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados'));b.append(envoltura(g),crear('span','coleccionSobreExistencias','×'+item.cantidad));carrete.append(b);return b;});
-      ventana.append(carrete);const navegacion=crear('div','coleccionCarreteNavegacion'),anterior=boton('‹',()=>mover(-1),'coleccionSobreAnterior'),siguiente=boton('›',()=>mover(1),'coleccionSobreSiguiente'),rotulo=crear('div','coleccionSobreSeleccion'),nombre=crear('h4'),cantidad=crear('p');anterior.setAttribute('aria-label','Sobre anterior');siguiente.setAttribute('aria-label','Sobre siguiente');rotulo.setAttribute('aria-live','polite');rotulo.append(nombre,cantidad);navegacion.append(anterior,rotulo,siguiente);escena.append(ventana,navegacion,crear('p','coleccionDeslizarPista','Desliza · Arrastra · Usa las flechas'));contenido.append(escena);
+      ventana.append(carrete);const navegacion=crear('div','coleccionCarreteNavegacion'),anterior=boton('‹',()=>mover(-1),'coleccionSobreAnterior'),siguiente=boton('›',()=>mover(1),'coleccionSobreSiguiente'),rotulo=crear('div','coleccionSobreSeleccion'),nombre=crear('h4'),cantidad=crear('p');anterior.setAttribute('aria-label','Sobre anterior');siguiente.setAttribute('aria-label','Sobre siguiente');rotulo.setAttribute('aria-live','polite');rotulo.append(nombre,cantidad);navegacion.append(anterior,rotulo,siguiente);escena.append(ventana,navegacion,crear('p','coleccionDeslizarPista','Desliza para elegir · Arrastra el sobre para girarlo'));contenido.append(escena);
       const ver=boton('Ver contenido',()=>verContenidoSobre(s.grupoSobre,'sobres'),'coleccionVerContenido');acciones.prepend(ver);
-      let arrastre=null,omitirClick=false,raf=0,anchoAnterior=0,altoAnterior=0,destino=null,finDesplazamiento=0;
+      let arrastre=null,omitirClick=false,raf=0,anchoAnterior=0,altoAnterior=0,destino=null,finDesplazamiento=0,modelo3D=null,botonModelo3D=null,animacionGiro=0;
       const indice=()=>Math.max(0,inventario.findIndex(p=>p.grupo===s.grupoSobre));
-      function seleccionar(i){const item=inventario[i],g=grupos.find(g=>g.id===item.grupo);s.grupoSobre=item.grupo;botones.forEach((b,j)=>{b.setAttribute('aria-pressed',String(j===i));b.classList.toggle('seleccionado',j===i);});carrete.dataset.grupo=item.grupo;nombre.textContent=g.nombre;cantidad.textContent=item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados');anterior.disabled=i===0;siguiente.disabled=i===inventario.length-1;}
+      const anguloCorto=n=>Math.atan2(Math.sin(n),Math.cos(n));
+      function actualizarModelo(registro,yaw,pitch){
+        if(modelo3D!==registro)return;
+        registro.yaw=yaw;registro.pitch=Math.max(-.55,Math.min(.55,pitch));registro.vista.orientar(registro.yaw,registro.pitch);
+        const lado=Math.cos(registro.yaw)>=0?'frente':'reverso';registro.boton.dataset.orientacion=lado;registro.sobre.dataset.orientacion=lado;
+        registro.boton.setAttribute('aria-description','Modelo tridimensional, '+lado+'. Arrastra horizontalmente para girarlo; Flecha izquierda o derecha gira el sobre; Inicio muestra el frente y Fin el reverso.');
+      }
+      function animarModelo(yaw,pitch){
+        const registro=modelo3D;if(!registro)return;cancelAnimationFrame(animacionGiro);
+        const inicioYaw=registro.yaw,inicioPitch=registro.pitch,finalYaw=inicioYaw+anguloCorto(yaw-inicioYaw),reducir=matchMedia('(prefers-reduced-motion:reduce)').matches;
+        if(reducir){actualizarModelo(registro,finalYaw,pitch);return;}
+        const inicio=performance.now(),duracion=170,paso=ahora=>{
+          if(modelo3D!==registro)return;
+          const p=Math.min(1,(ahora-inicio)/duracion),suave=1-Math.pow(1-p,3);actualizarModelo(registro,inicioYaw+(finalYaw-inicioYaw)*suave,inicioPitch+(pitch-inicioPitch)*suave);
+          if(p<1)animacionGiro=requestAnimationFrame(paso);else animacionGiro=0;
+        };animacionGiro=requestAnimationFrame(paso);
+      }
+      function desmontarModelo(restaurar=true){
+        cancelAnimationFrame(animacionGiro);animacionGiro=0;const registro=modelo3D;modelo3D=null;botonModelo3D=null;if(!registro)return;
+        registro.registroVista.destruir();registro.sobre.classList.remove('conSobreReal','coleccionSobre3DInteractivo');registro.boton.classList.remove('modelo3d','girando');delete registro.boton.dataset.modelo;delete registro.boton.dataset.orientacion;delete registro.boton.dataset.girando;delete registro.sobre.dataset.orientacion;registro.boton.removeAttribute('aria-description');
+        if(restaurar&&registro.sobre.isConnected)montarPrevisualizacionSobre(registro.sobre,registro.grupo);
+      }
+      function montarModelo(b,grupo){
+        if(botonModelo3D===b)return;desmontarModelo(true);botonModelo3D=b;
+        const sobre=b.querySelector('.coleccionSobre');if(!sobre||!window.CAOZ_SOBRES_ESCENA?.crear){botonModelo3D=null;return;}
+        destruirPrevisualizacionSobre(sobre);
+        const host=crear('div','coleccionSobreReal');sobre.append(host);
+        try{
+          const vista=window.CAOZ_SOBRES_ESCENA.crear(host,{variante:'reliquia',grupo:grupo.id,logoUrl:'art/logo.webp',arteUrl:id=>typeof urlArte==='function'?urlArte(id):'art/'+id+'.webp'});
+          if(!vista?.orientar||!vista?.destruir)throw Error('El modelo 3D no está disponible.');
+          const registroVista=registrarVistaSobre(sobre,host,vista,'modelo');if(!registroVista)throw Error('El modelo 3D no se pudo registrar.');
+          modelo3D={vista,host,registroVista,boton:b,sobre,grupo,yaw:-.14,pitch:.06};b.classList.add('modelo3d');b.dataset.modelo='3d';b.setAttribute('aria-keyshortcuts','ArrowLeft ArrowRight ArrowUp ArrowDown Home End');sobre.classList.add('coleccionSobre3DInteractivo');actualizarModelo(modelo3D,-.14,.06);
+        }catch(_){host.remove();botonModelo3D=null;montarPrevisualizacionSobre(sobre,grupo);}
+      }
+      function seleccionar(i){
+        const item=inventario[i],g=grupos.find(g=>g.id===item.grupo),b=botones[i];s.grupoSobre=item.grupo;
+        botones.forEach((boton,j)=>{boton.setAttribute('aria-pressed',String(j===i));boton.classList.toggle('seleccionado',j===i);});carrete.dataset.grupo=item.grupo;nombre.textContent=g.nombre;cantidad.textContent=item.cantidad+(item.cantidad===1?' sobre guardado':' sobres guardados');anterior.disabled=i===0;siguiente.disabled=i===inventario.length-1;montarModelo(b,g);
+      }
       function objetivo(i){return botones[i].offsetLeft-carrete.clientWidth/2+botones[i].offsetWidth/2;}
       function cercano(){const centro=carrete.scrollLeft+carrete.clientWidth/2;let mejor=0;botones.forEach((b,i)=>{if(Math.abs(b.offsetLeft+b.offsetWidth/2-centro)<Math.abs(botones[mejor].offsetLeft+botones[mejor].offsetWidth/2-centro))mejor=i;});return mejor;}
       function terminarDesplazamiento(){clearTimeout(finDesplazamiento);finDesplazamiento=0;carrete.dataset.desplazando='false';carrete.setAttribute('aria-busy','false');abrir.disabled=false;}
@@ -643,6 +1012,40 @@
       function interrumpirDesplazamiento(){
         if(destino===null)return;destino=null;terminarDesplazamiento();carrete.scrollTo({left:carrete.scrollLeft,behavior:'instant'});seleccionar(cercano());
       }
+      function prepararGiro(botonSobre){
+        let gesto=null,omitir=false;
+        const cancelarGesto=e=>{
+          if(!gesto||(e&&e.pointerId!==gesto.id))return;
+          const movido=gesto.movido,id=gesto.id;gesto=null;botonSobre.classList.remove('girando');delete botonSobre.dataset.girando;
+          if(botonSobre.hasPointerCapture?.(id))botonSobre.releasePointerCapture(id);
+          if(movido)omitir=true;
+        };
+        botonSobre.addEventListener('pointerdown',e=>{
+          if(botonModelo3D!==botonSobre||!modelo3D||(e.pointerType==='mouse'&&e.button!==0))return;
+          // Este gesto pertenece al modelo activo. Así el arrastre no cae en
+          // el carrusel ni puede confundirse con el clic que selecciona/abre.
+          e.stopPropagation();interrumpirDesplazamiento();omitir=false;gesto={id:e.pointerId,x:e.clientX,yaw:modelo3D.yaw,pitch:modelo3D.pitch,movido:false};botonSobre.setPointerCapture?.(e.pointerId);
+        });
+        botonSobre.addEventListener('pointermove',e=>{
+          if(!gesto||gesto.id!==e.pointerId||botonModelo3D!==botonSobre||!modelo3D)return;
+          const dx=e.clientX-gesto.x;if(!gesto.movido&&Math.abs(dx)>5){gesto.movido=true;botonSobre.classList.add('girando');botonSobre.dataset.girando='true';}
+          if(gesto.movido){e.preventDefault();e.stopPropagation();actualizarModelo(modelo3D,gesto.yaw+dx*.012,gesto.pitch);}
+        });
+        botonSobre.addEventListener('pointerup',cancelarGesto);botonSobre.addEventListener('pointercancel',cancelarGesto);botonSobre.addEventListener('lostpointercapture',cancelarGesto);
+        botonSobre.addEventListener('click',e=>{if(!omitir)return;e.preventDefault();e.stopImmediatePropagation();omitir=false;},true);
+        botonSobre.addEventListener('keydown',e=>{
+          if(botonModelo3D!==botonSobre||!modelo3D)return;
+          const paso=e.shiftKey ? .45 : .22;
+          if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown','Home','End'].includes(e.key))return;
+          e.preventDefault();e.stopPropagation();
+          if(e.key==='Home')animarModelo(-.14,.06);
+          else if(e.key==='End')animarModelo(Math.PI-.14,.06);
+          else if(e.key==='ArrowLeft')animarModelo(modelo3D.yaw-paso,modelo3D.pitch);
+          else if(e.key==='ArrowRight')animarModelo(modelo3D.yaw+paso,modelo3D.pitch);
+          else animarModelo(modelo3D.yaw,modelo3D.pitch+(e.key==='ArrowUp'?paso:-paso));
+        });
+      }
+      botones.forEach(prepararGiro);
       carrete.addEventListener('scroll',()=>{cancelAnimationFrame(raf);raf=requestAnimationFrame(seguirDesplazamiento);},{passive:true});
       carrete.addEventListener('scrollend',seguirDesplazamiento);
       carrete.addEventListener('wheel',interrumpirDesplazamiento,{passive:true});
@@ -653,13 +1056,51 @@
       const soltar=e=>{if(!arrastre||arrastre.id!==e.pointerId)return;const movido=arrastre.movido;arrastre=null;carrete.classList.remove('arrastrando');if(carrete.hasPointerCapture(e.pointerId))carrete.releasePointerCapture(e.pointerId);if(movido){omitirClick=true;centrar(inventario[cercano()].grupo);}};
       carrete.addEventListener('pointerup',soltar);carrete.addEventListener('pointercancel',soltar);carrete.addEventListener('lostpointercapture',e=>{if(arrastre?.id===e.pointerId)soltar(e);});
       carrete.addEventListener('click',e=>{if(omitirClick){e.preventDefault();e.stopImmediatePropagation();omitirClick=false;}},true);
-      carruselSobres={medir,destruir:()=>{cancelAnimationFrame(raf);clearTimeout(finDesplazamiento);destino=null;arrastre=null;}};
+      carruselSobres={medir,destruir:()=>{cancelAnimationFrame(raf);clearTimeout(finDesplazamiento);destino=null;arrastre=null;desmontarModelo(false);}};
       seleccionar(indice());contenido.append(acciones);medir();
     }else{
       const vacio=crear('div','coleccionSobresVacios'),sello=crear('div','coleccionSobresVaciosSello');sello.append(icono('sobre'));vacio.append(sello,crear('h4','','Tu tesoro empieza aquí'),crear('p','',recompensas.length?'Elige las colecciones de tus recompensas para guardar tus primeros sobres.':'Gana una partida contra el Domo para conseguir 1 sobre, o completa la campaña para ganar 3.'));contenido.append(vacio,acciones);
     }
     if(modelo().betaDisponible()){const beta=boton('Sobre de prueba · Beta',()=>{if(guardando)return;guardando=true;let ok;try{ok=modelo().darSobreBeta();}finally{guardando=false;}if(ok){dibujarSobres();actualizarCabecera();mensaje('Recompensa de prueba añadida. Elige su colección.');}else mensaje('No se pudo añadir el sobre. Inténtalo de nuevo.',true);},'coleccionBeta');acciones.append(beta);}
     carruselSobres?.medir();
+  }
+  function dibujarLogros(){
+    vaciarContenido();panel.dataset.vista='logros';
+    const api=window.CAOZ_LOGROS;
+    if(!api){
+      const fallo=crear('section','coleccionLogros coleccionLogrosVacios');fallo.append(crear('h3','','Los logros todavía no están disponibles'),crear('p','','No se pudo cargar el registro de honores. Tus sobres y cartas permanecen intactos.'));
+      contenido.append(fallo);return;
+    }
+    const estadoLogros=api.leer(),resumen=api.resumen(estadoLogros),recompensas=modelo().recompensasPendientes().filter(p=>p.origen==='logro'),sobresPendientes=recompensas.reduce((n,p)=>n+p.cantidad,0),pendientesPorLogro=new Set(recompensas.map(p=>p.referencia));
+    const caja=crear('section','coleccionLogros');
+    const cabecera=crear('header','coleccionLogrosCabecera');cabecera.append(crear('span','coleccionAntetitulo','HONORES DEL DOMO'),crear('h3','','Logros'),crear('p','','Cada logro desbloqueado concede 1 sobre. Los sobres se guardan hasta que elijas su colección.'));
+    const cuenta=crear('div','coleccionLogrosCuenta');cuenta.setAttribute('role','status');cuenta.append(crear('strong','',resumen.obtenidos+' / '+resumen.total),crear('span','','logros completados'));
+    if(sobresPendientes){
+      const elegir=boton(sobresPendientes===1?'Elegir mi sobre':'Elegir mis '+sobresPendientes+' sobres',()=>elegirPendiente(recompensas[0]),'coleccionLogrosSobres');elegir.prepend(icono('sobre'));cuenta.append(elegir);
+    }
+    cabecera.append(cuenta);caja.append(cabecera);
+    const filtros=crear('div','coleccionLogrosFiltros');filtros.setAttribute('role','group');filtros.setAttribute('aria-label','Filtrar logros por protagonista');
+    const opciones=[['todos','Todos'],...api.protagonistas.map(id=>[id,LEADERS[id]?.n||id])];
+    if(!opciones.some(([id])=>id===s.logrosProtagonista))s.logrosProtagonista='todos';
+    for(const [id,nombre] of opciones){
+      const filtro=boton(nombre,()=>{s.logrosProtagonista=id;dibujarLogros();actualizarCabecera();},'coleccionLogrosFiltro');filtro.setAttribute('aria-pressed',s.logrosProtagonista===id?'true':'false');filtros.append(filtro);
+    }
+    caja.append(filtros);
+    const lista=crear('div','coleccionListaLogros');lista.setAttribute('role','region');lista.setAttribute('aria-label','Lista de logros del Domo');lista.tabIndex=0;
+    const defs=api.definiciones.filter(def=>s.logrosProtagonista==='todos'||def.protagonista===s.logrosProtagonista);
+    for(const def of defs){
+      const tiene=api.logrado(estadoLogros,def.id),progreso=api.progreso(def,estadoLogros),tarjeta=crear('article','coleccionLogro');tarjeta.classList.toggle('completado',tiene);tarjeta.dataset.logro=def.id;tarjeta.dataset.protagonista=def.protagonista;
+      const sello=medallaLogro(def,tiene),titulo=crear('h4','coleccionLogroTitulo',def.titulo),descripcion=crear('p','coleccionLogroDescripcion',def.descripcion);
+      const estadoPremio=tiene?(pendientesPorLogro.has(def.id)?'Sobre por elegir':'Sobre recibido'):progreso.texto;
+      const meta=crear('div','coleccionLogroMeta'),barraProgreso=crear('progress');barraProgreso.max=Math.max(1,progreso.total);barraProgreso.value=Math.min(progreso.actual,progreso.total);barraProgreso.setAttribute('aria-label',def.titulo+': '+progreso.texto);meta.append(barraProgreso,crear('span','',estadoPremio));
+      const premio=crear('span','coleccionLogroPremio','+1 sobre');premio.prepend(icono('sobre'));
+      tarjeta.append(sello,titulo,descripcion,meta,premio);
+      if(window.CAOZ_DEV?.aislado&&!tiene){
+        const prueba=boton('Simular',()=>{const r=api.simularDesbloqueo(def.id);if(r.ok&&r.nuevos.length){mensaje('Logro desbloqueado: '+def.titulo+' · +1 sobre.');sonido('ui_confirm');}else mensaje('Ese logro ya estaba registrado o no se pudo guardar.',true);dibujarLogros();actualizarCabecera();},'coleccionLogroPrueba');prueba.setAttribute('aria-label','Simular logro '+def.titulo);tarjeta.append(prueba);
+      }
+      lista.append(tarjeta);
+    }
+    caja.append(lista,crear('p','coleccionLogrosNota','El progreso se guarda con tu colección. Un logro sólo puede entregar su sobre una vez.'));contenido.append(caja);
   }
   function dibujarCanje(){
     vaciarContenido();panel.dataset.vista='canje';

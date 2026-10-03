@@ -523,6 +523,12 @@ async function voladoDomo(nombreRival){
   if(!tirada){ui.cerrar();toast('La moneda no pudo asentarse. Vuelve a iniciar el duelo.');return null;}
   const ganas=(tirada.valor===0?'cara':'cruz')===eleccion;
   if(!await voladoPresentar(ui,tirada,nombreRival,ganas)){ui.cancelar();return null;}
+  // La partida todavía no existe durante el volado. El motor recoge este dato
+  // al crear G y lo conserva hasta el cierre para la racha de cinco caras.
+  if(typeof telemetriaAnotarVolado==='function'){
+    const partida=typeof PARTIDA_N==='number'?PARTIDA_N:null;
+    telemetriaAnotarVolado(tirada.valor===0,partida);
+  }
   ui.cerrar();return ganas?ME:FOE;
 }
 
