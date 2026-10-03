@@ -660,7 +660,9 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         secuenciaMuerte('Proyectil devuelto · impacto y espalda',1.15,1.15,.7,[{k:0},{k:.2,caida:-.5,vuelo:.25,brazos:1.3,cabeza:-.4},{k:.45,caida:-1.3,vuelo:.12,rodillas:1},{k:.7,caida:-1.52,vuelo:0},{k:1,rodillas:.35,lado:-.2}]),
         secuenciaMuerte('Proyectil devuelto · giro y costado',1.2,1,.76,[{k:0},{k:.2,giro:-.6,torso:-.4,brazos:1},{k:.5,giro:-1.4,lado:-.7,rodillas:1.2,vuelo:.1},{k:.76,caida:-1.4,lado:-.55,vuelo:0},{k:1,rodillas:.4,brazos:.5}])]
     });
-    function crearMuerteGoblin(tipo='tajo',variante=Math.random()<.5?0:1){
+    function crearMuerteGoblin(tipo='tajo',variante){
+      if(goblinScenario?.crearMuerte)return goblinScenario.crearMuerte(tipo,variante);
+      variante??=Math.random()<.5?0:1;
       if(!Object.hasOwn(muertesGoblin,tipo))tipo='tajo';variante=variante===1?1:0;
       const p=muertesGoblin[tipo][variante],rodada=tipo==='cargado'?{inicio:variante ? .32 : .3,fin:variante ? .83 : .8}:null;
       const fuerza=Math.hypot(p.distancia/p.duracion,Math.sqrt(19.6*Math.max(...p.cuadros.map(c=>c.vuelo))));
@@ -668,7 +670,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         contactos:tipo==='salto'?[p.impacto,variante?1:.86]:[rodada?.inicio??p.impacto],fuerza};
     }
     // El 80 % del recorrido del cargado ocurre durante la vuelta y usa su misma curva angular.
-    function recorridoMuerteGoblin(m,k){k=Math.max(0,Math.min(1,k));const r=m.rodada;
+    function recorridoMuerteGoblin(m,k){if(m.importada)return 0;k=Math.max(0,Math.min(1,k));const r=m.rodada;
       return m.distancia*(r ? .2*tramo(k,0,r.inicio)+.8*tramo(k,r.inicio,r.fin) : 1-Math.pow(1-Math.min(1,k/.86),3));
     }
     // Partículas bajas y breves; el juego y el visor comparten el mismo emisor.
@@ -678,6 +680,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         emitir(p.x+Math.cos(a)*.15,.06,p.z+Math.sin(a)*.15,Math.cos(a)*v+(dir?.x||0)*intensidad*.25,.25+azar()*.3,Math.sin(a)*v+(dir?.z||0)*intensidad*.25,.35+azar()*.3,2.3+azar()*1.2,.28,.23,.17,.7);}
     }
     function posarMuerteGoblin(m,a){
+      if(m.modeloGoblin==='scenario'&&goblinScenario.posarMuerte(m,a))return;
       if(a.muerte?.partido){posarMuertePartida(m,a);return;}
       const muerte=a.muerte||crearMuerteGoblin('tajo',0),p=muertesGoblin[muerte.tipo]?.[muerte.variante]||muertesGoblin.tajo[0],k=Math.min(1,Math.max(0,a.k||0));
       let j=1;while(j<p.cuadros.length-1&&k>p.cuadros[j].k)j++;
@@ -777,7 +780,8 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       e.t+=Math.max(0,Math.min(.05,a.dt||0));const w=e.dur?suave(e.t/e.dur):1;
       for(let i=0;i<e.huesos.length;i++){const b=e.huesos[i];if(w<1){b.quaternion.slerp(e.desde[i],1-w);b.position.lerpVectors(e.desdePos[i],b.position,w);}}
       for(let i=0;i<e.huesos.length;i++){e.ultima[i].copy(e.huesos[i].quaternion);e.pos[i].copy(e.huesos[i].position);}
-      if(a.anim==='muerte'&&(m.tipo==='goblin'||m.tipo==='cobrador'))apoyarMuerteGoblin(m,!!a.muerte?.partido,a.k||0);
+      // Las caídas importadas llevan el contacto horneado; no recorren vértices por cuadro.
+      if(a.anim==='muerte'&&(m.tipo==='goblin'||m.tipo==='cobrador')&&!(m.modeloGoblin==='scenario'&&(!a.muerte||a.muerte.importada)))apoyarMuerteGoblin(m,!!a.muerte?.partido,a.k||0);
       e.estado=estado;e.valida=a.mezclar===true;
     }
 
@@ -917,7 +921,8 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
         recogerPose(m,a);
       }
     }
-    return {crear,crearHachaArrojadiza,crearHachaAdreida,mostrarHacha,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte};
+    return {crear,crearHachaArrojadiza,crearHachaAdreida,mostrarHacha,posar,TIPOS,VARIANTES_GOBLIN,elegirVarianteGoblin,animacion,muertesGoblin,crearMuerteGoblin,recorridoMuerteGoblin,emitirPolvoMuerte,
+      muertesGoblinImportadas:goblinScenario?.muertes||[],desplazamientoMuerteGoblin:goblinScenario?.desplazamientoMuerte};
   }
   window.CAOZ_ARPG_MODELOS=Object.freeze({fabrica});
 })();

@@ -1204,8 +1204,11 @@
   }
   function morir(e,impacto={}){if(e.estado==='muere')return;
     if(e.tipo==='goblin'||e.tipo==='cobrador'){
-      const m=MOD.crearMuerteGoblin(impacto.causa),direccion=(impacto.direccion||frente(e.dir+Math.PI)).clone().setY(0).normalize();
-      m.direccion=direccion;m.angulo=difAng(e.dir,Math.atan2(direccion.x,direccion.z)+(m.adelante?0:Math.PI));m.recorrido=0;m.contactosEmitidos=0;m.roce=0;if(impacto.causa==='cargado'&&impacto.cargaCompleta&&rnd()<.33){m.partido=true;m.rodada=null;m.duracion=1.35;m.distancia=1.4;m.contactos=[.55,.8];}e.muerte=m;e.emp.set(0,0,0);e.tirón=null;
+      const m=MOD.crearMuerteGoblin(impacto.causa,MOD.muertesGoblinImportadas.length?Math.floor(rnd()*MOD.muertesGoblinImportadas.length):undefined),direccion=(impacto.direccion||frente(e.dir+Math.PI)).clone().setY(0).normalize();
+      m.direccion=direccion;m.angulo=difAng(e.dir,Math.atan2(direccion.x,direccion.z)+(m.adelante?0:Math.PI));m.recorrido=0;m.contactosEmitidos=0;m.roce=0;
+      if(m.importada){m.desplazamientoExterno=true;m.anterior=new V3();}
+      else if(impacto.causa==='cargado'&&impacto.cargaCompleta&&rnd()<.33){m.partido=true;m.rodada=null;m.duracion=1.35;m.distancia=1.4;m.contactos=[.55,.8];}
+      e.muerte=m;e.emp.set(0,0,0);e.tirón=null;
     }
     cancelarAtaque(e);limpiarPeligrosTroll(e);cambiar(e,'muere');e.vida=0;brasas(e.pos,14,e.m.alto);if(e.estrellas){escena.remove(e.estrellas);e.estrellas=null;}
     if(e.tipo==='can')asustarGoblins(e);
@@ -1216,8 +1219,18 @@
     if(rnd()<e.d.globo)globo(e.pos);}
 
   // El recorrido de la caída depende del tiempo absoluto y se detiene ante pozo o muralla.
-  // No suma el antiguo empuje: una muerte cargada debe dar una sola rodada, sin deslizarse de más.
-  function avanzarCaidaGoblin(e){const m=e.muerte,k=Math.min(1,e.t/m.duracion),viaje=MOD.recorridoMuerteGoblin(m,k),anterior=m.recorrido;let avance=0;
+  // El desplazamiento del FBX pasa por las mismas colisiones; no se suma el empuje del golpe.
+  function avanzarCaidaGoblin(e){const m=e.muerte,k=Math.min(1,e.t/m.duracion);
+    if(m.importada){
+      const local=MOD.desplazamientoMuerteGoblin(e.m,m,k,new V3()),delta=local.clone().sub(m.anterior);m.anterior.copy(local);
+      const x=delta.x,z=delta.z;delta.set(x*Math.cos(e.dir)+z*Math.sin(e.dir),0,z*Math.cos(e.dir)-x*Math.sin(e.dir));
+      if(!m.bloqueada){const n=Math.max(1,Math.ceil(delta.length()/.08));delta.multiplyScalar(1/n);
+        for(let i=0;i<n;i++){const siguiente=e.pos.clone().add(delta),libre=siguiente.clone();dentroPlaza(libre,Math.max(e.radio,.58));if(plano(siguiente,libre)>.015){m.bloqueada=true;break;}e.pos.copy(siguiente);}
+      }
+      while(m.contactosEmitidos<m.contactos.length&&k>=m.contactos[m.contactosEmitidos]){MOD.emitirPolvoMuerte(e.pos,m.fuerza,m.direccion,particula,rnd);m.contactosEmitidos++;}
+      return;
+    }
+    const viaje=MOD.recorridoMuerteGoblin(m,k),anterior=m.recorrido;let avance=0;
     if(!m.bloqueada){const distancia=viaje-m.recorrido,n=Math.max(1,Math.ceil(distancia/.12));
       for(let i=0;i<n;i++){const siguiente=e.pos.clone().addScaledVector(m.direccion,distancia/n),libre=siguiente.clone();dentroPlaza(libre,Math.max(e.radio,.58));
         if(plano(siguiente,libre)>.015){m.bloqueada=true;break;}e.pos.copy(siguiente);avance+=distancia/n;}

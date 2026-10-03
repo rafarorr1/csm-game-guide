@@ -1,13 +1,16 @@
-/* Prueba de Falling Back Death sobre el goblin real. Sólo modifica los datos del visor.
+/* Adapta cuatro muertes FBX a los goblins y cobradores del juego.
    Extracción: Blender --background --factory-startup --python-exit-code 1 --python
    dev/secciones/adreida-scenario/extraer-muertes.py -- entrada.fbx fuente.json
-   Adaptación: node dev/secciones/goblin-scenario/preparar-caida-prueba.mjs fuente.json
+   Adaptación: node dev/secciones/goblin-scenario/preparar-muertes.mjs atras.json derecha.json zombie.json desplome.json
    Requiere FFmpeg para leer el atlas de color durante la preparación. */
 import fs from 'node:fs';
 import vm from 'node:vm';
 import {execFileSync} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
-const fuente=JSON.parse(fs.readFileSync(process.argv[2],'utf8'));
+const entradas=process.argv.slice(2);
+if(entradas.length!==4)throw Error('Se requieren cuatro fuentes JSON: atrás, derecha, zombie y desplome.');
+const fuentes=entradas.map(p=>JSON.parse(fs.readFileSync(p,'utf8')));
+const clips=[],procedencias=[],nombres=['Caída hacia atrás','Caída sobre el lado derecho','Caída zombi','Desplome de rodillas'];
 const c=vm.createContext({console,atob});c.window=c;
 for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','goblin-scenario/datos.js','arpg-three-goblin.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL('../'+f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(T);
@@ -16,7 +19,9 @@ const pixeles=execFileSync('ffmpeg',['-v','error','-i',fileURLToPath(new URL('co
 const ladoMapa=Math.sqrt(pixeles.length/3);if(!Number.isInteger(ladoMapa))throw Error('Se esperaba el atlas cuadrado del goblin.');
 const huesos=['cadera','torso','cabeza',...['I','D'].flatMap(l=>['pierna','rodilla','pie','brazo','ante','mano'].map(n=>n+l))];
 const v=a=>new T.Vector3().fromArray(a),q=a=>new T.Quaternion().fromArray(a),pos=(f,n)=>v(f[n].p);
-const tmp=new T.Quaternion(),base=new T.Matrix4(),vertice=new T.Vector3(),rest=fuente.reposo;
+const tmp=new T.Quaternion(),base=new T.Matrix4(),vertice=new T.Vector3();
+for(const [varianteMuerte,fuente] of fuentes.entries()){
+const rest=fuente.reposo;
 const delta=(f,n)=>q(f[n].q).multiply(q(rest[n].q).invert());
 function orientar(b,mundo){b.parent.getWorldQuaternion(tmp).invert();b.quaternion.copy(tmp).multiply(mundo);b.updateMatrixWorld(true);}
 function cadena(f,origen,codo,extremo,b1,b2,invertir){
@@ -26,9 +31,9 @@ function cadena(f,origen,codo,extremo,b1,b2,invertir){
   x.normalize().multiplyScalar(invertir?-1:1);
   for(const [b,d] of [[b1,d1],[b2,d2]]){const y=d.clone().negate(),z=new T.Vector3().crossVectors(x,y).normalize();orientar(b,new T.Quaternion().setFromRotationMatrix(base.makeBasis(x,y,z)));}
 }
-const variantes={},pesosPrueba=[];
-for(const variante of Object.keys(F.VARIANTES_GOBLIN)){
-  const m=F.crear('goblin',{varianteGoblin:variante}),H=m.H;
+const variantes={},pesosPrueba=[];let impacto=.5;
+for(const tipo of ['goblin','cobrador'])for(const variante of Object.keys(F.VARIANTES_GOBLIN)){
+  const m=F.crear(tipo,{varianteGoblin:variante}),H=m.H;
   const mesh=m.mallas[0],g=mesh.geometry.clone(),a=g.attributes,escalaModelo=F.VARIANTES_GOBLIN[variante].escala;
   mesh.geometry=g;
   for(let i=0;i<a.position.count;i++){
@@ -41,7 +46,7 @@ for(const variante of Object.keys(F.VARIANTES_GOBLIN)){
       const [r,g,b]=pixeles.subarray((py*ladoMapa+px)*3,(py*ladoMapa+px)*3+3),piel=g>r*.77&&g>b*1.4&&r>b*1.4,espalda=b>r*1.06&&b>g*1.02;
       if(!piel&&!espalda)continue;
       const bs=['anteI','brazoI','torso'],ws=piel?[1-w,w,0]:[0,0,1];a.skinIndex.setXYZW(i,...bs.map(n=>mesh.skeleton.bones.indexOf(H[n])),0);a.skinWeight.setXYZW(i,...ws,0);
-      if(variante==='clasico')pesosPrueba.push([i,...ws.map(n=>+n.toFixed(6))]);
+      if(variante==='clasico'&&tipo==='goblin')pesosPrueba.push([i,...ws.map(n=>+n.toFixed(6))]);
     }
   }
   H.raiz.updateMatrixWorld(true);
@@ -50,7 +55,7 @@ for(const variante of Object.keys(F.VARIANTES_GOBLIN)){
   const apoyos=m.mallas.map(mesh=>({mesh,indices:mesh.geometry.index?[...new Set(mesh.geometry.index.array)]:Array.from({length:mesh.geometry.attributes.position.count},(_,i)=>i)}));
   const minimo=piezas=>{let y=Infinity;H.raiz.updateMatrixWorld(true);for(const {mesh,indices} of piezas)for(const i of indices)y=Math.min(y,mesh.getVertexPosition(i,vertice).y);return y;};
   const escala=(m.p.muslo+m.p.pierna)/(pos(rest,'LeftUpLeg').distanceTo(pos(rest,'LeftLeg'))+pos(rest,'LeftLeg').distanceTo(pos(rest,'LeftFoot')));
-  const origen=pos(fuente.poses[0],'Hips'),filas=[];
+  const origen=pos(fuente.poses[0],'Hips'),filas=[],alturas=[];
   for(const [indice,f] of fuente.poses.entries()){
     for(const o of originales){o.b.position.copy(o.p);o.b.quaternion.copy(o.q);}
     H.cuerpo.position.set((f.Hips.p[0]-origen.x)*escala,(f.Hips.p[1]-rest.Hips.p[1])*escala,(f.Hips.p[2]-origen.z)*escala);
@@ -60,7 +65,8 @@ for(const variante of Object.keys(F.VARIANTES_GOBLIN)){
     if(H.llama)H.llama.scale.setScalar(Math.max(.001,1-Math.min(1,k/.32)));
     // Sus orejas y cráneo son mucho mayores que los del maniquí. Al asentarse,
     // relaja la torsión del cuello para no apoyar todo el cuerpo en una oreja.
-    const arriba=new T.Vector3(0,1,0),ejeCabeza=new T.Vector3(0,1,0).applyQuaternion(cabeza).setY(0).normalize();
+    const caraFinal=new T.Vector3(0,0,1).applyQuaternion(delta(fuente.poses.at(-1),'Head')).y;
+    const arriba=new T.Vector3(0,caraFinal<0?-1:1,0),ejeCabeza=new T.Vector3(0,1,0).applyQuaternion(cabeza).setY(0).normalize();
     const lateralCabeza=new T.Vector3().crossVectors(ejeCabeza,arriba).normalize();
     cabeza.slerp(new T.Quaternion().setFromRotationMatrix(base.makeBasis(lateralCabeza,ejeCabeza,arriba)),u*u*(3-2*u));
     orientar(H.cabeza,cabeza);
@@ -83,16 +89,19 @@ for(const variante of Object.keys(F.VARIANTES_GOBLIN)){
       const x=new T.Vector3(0,1,0),y=new T.Vector3().crossVectors(z,x).normalize();
       orientar(H['mano'+lado],new T.Quaternion().setFromRotationMatrix(base.makeBasis(x,y,z)));
     }
-    H.cuerpo.position.y+=.012-minimo(apoyos);
+    H.cuerpo.position.y+=.012-minimo(apoyos);H.raiz.updateMatrixWorld(true);alturas.push(H.cadera.getWorldPosition(new T.Vector3()).y);
     const fila=[...H.cuerpo.position.toArray()];for(const nombre of huesos)fila.push(...H[nombre].quaternion.toArray());filas.push(fila);
   }
   // Mismo hemisferio para poder interpolar sin vueltas completas entre muestras.
   for(let i=1;i<filas.length;i++)for(let j=0;j<huesos.length;j++){const o=3+j*4;if(filas[i].slice(o,o+4).reduce((s,x,k)=>s+x*filas[i-1][o+k],0)<0)for(let k=0;k<4;k++)filas[i][o+k]*=-1;}
-  variantes[variante]=filas.flat().map(x=>+x.toFixed(6));
+  if(tipo==='goblin'&&variante==='clasico'){const contacto=alturas.findIndex((y,i)=>i>fuente.muestras*.15&&y<alturas.at(-1)+.06);impacto=Math.max(.2,contacto/(fuente.muestras-1));}
+  variantes[tipo+':'+variante]=Buffer.from(new Float32Array(filas.flat()).buffer).toString('base64');
 }
-const clip={nombre:'Falling Back Death · Prueba',duracion:fuente.duracion,muestras:fuente.muestras,huesos,ancho:3+huesos.length*4,pesosPrueba,variantes};
-const archivo=new URL('../modelos-visor.js',import.meta.url),actual=fs.readFileSync(archivo,'utf8'),inicio='  // INICIO CAIDA GOBLIN FBX',fin='  // FIN CAIDA GOBLIN FBX';
-const bloque=inicio+' — generado por goblin-scenario/preparar-caida-prueba.mjs.\n  const caidaGoblinImportada='+JSON.stringify(clip)+';\n'+fin;
-fs.writeFileSync(archivo,actual.includes(inicio)?actual.slice(0,actual.indexOf(inicio))+bloque+actual.slice(actual.indexOf(fin)+fin.length):actual.replace('  // Animaciones:',bloque+'\n  // Animaciones:'));
-fs.writeFileSync(new URL('caida-prueba-procedencia.json',import.meta.url),JSON.stringify({fuente:fuente.fuente,sha256:fuente.sha256,accion:fuente.accion,duracion:fuente.duracion,muestras:fuente.muestras,origen:'FBX Mixamo aportado por el usuario el 3 de octubre de 2026.',alcance:'Prueba aislada en el visor. No cambia las muertes del combate.',adaptacion:'Quince huesos del rig actual; misma escala. Retroceso relativo al origen, contacto del cuerpo y armas horneado por variante. Relajación del cuello y corrección local de pesos de la axila izquierda en una copia exclusiva del visor. Conserva la pose final.',reproduccion:'Extraer con adreida-scenario/extraer-muertes.py; adaptar con node dev/secciones/goblin-scenario/preparar-caida-prueba.mjs fuente.json (requiere FFmpeg para leer el atlas).'},null,2)+'\n');
-console.log(JSON.stringify({duracion:clip.duracion,muestras:clip.muestras,variantes:Object.keys(variantes),bytes:JSON.stringify(clip).length}));
+const clip={nombre:nombres[varianteMuerte],duracion:fuente.duracion,muestras:fuente.muestras,huesos,ancho:3+huesos.length*4,pesosPrueba,variantes,impacto};
+clips.push(clip);procedencias.push({fuente:fuente.fuente,sha256:fuente.sha256,accion:fuente.accion,duracion:fuente.duracion,muestras:fuente.muestras,nombre:clip.nombre});
+}
+const archivo=new URL('../arpg-three-goblin.js',import.meta.url),actual=fs.readFileSync(archivo,'utf8'),inicio='  // INICIO MUERTES GOBLIN FBX',fin='  // FIN MUERTES GOBLIN FBX';
+const bloque=inicio+' — generado por goblin-scenario/preparar-muertes.mjs.\n  const muertesImportadas='+JSON.stringify(clips)+';\n'+fin;
+fs.writeFileSync(archivo,actual.includes(inicio)?actual.slice(0,actual.indexOf(inicio))+bloque+actual.slice(actual.indexOf(fin)+fin.length):actual.replace('  function fabrica(THREE){',bloque+'\n  function fabrica(THREE){'));
+fs.writeFileSync(new URL('muertes-procedencia.json',import.meta.url),JSON.stringify({fuentes:procedencias,origen:'Cuatro FBX Mixamo aportados por el usuario el 3 de octubre de 2026.',alcance:'Sustituyen las muertes del goblin de Scenario y del cobrador. Selección uniforme e inmutable por baja.',adaptacion:'Quince huesos. Contactos precalculados para los dos tipos y sus cuatro variantes. Corrección de axila en geometría compartida exclusiva de las caídas; postura final retenida.',reproduccion:'Extraer cada FBX con adreida-scenario/extraer-muertes.py y ejecutar preparar-muertes.mjs atras.json derecha.json zombie.json desplome.json. Requiere Blender y FFmpeg sólo al preparar.'},null,2)+'\n');
+console.log(JSON.stringify({clips:clips.map(c=>({nombre:c.nombre,duracion:c.duracion,muestras:c.muestras})),bytes:JSON.stringify(clips).length}));

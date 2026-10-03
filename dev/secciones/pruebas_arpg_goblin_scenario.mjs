@@ -14,17 +14,11 @@ for(const varianteGoblin of Object.keys(F.VARIANTES_GOBLIN)){
  const esq=m.mallas[0].skeleton;
  for(let i=0;i<g.index.count;i+=3){const bs=[0,1,2].map(j=>esq.bones[a.skinIndex.getX(g.index.getX(i+j))]);assert.ok(!(bs.some(b=>[m.H.manoI,m.H.manoD].includes(b))&&bs.some(b=>[m.H.piernaI,m.H.piernaD,m.H.cadera].includes(b))),'Manos sin pesos de cadera/pierna');}
  for(const anim of ['quieto','andar','golpe','reves','estocada','aviso','lanzar','aturdido'])for(const k of [0,.25,.5,.75,1]){F.posar(m,{anim,k,t:k,fase:k*Math.PI*2,paso:1});assert.ok(puntos(m).every(v=>Number.isFinite(v.x+v.y+v.z)),'Poses finitas');}
- for(const tipo of Object.keys(F.muertesGoblin))for(const variante of [0,1]){const muerte=F.crearMuerteGoblin(tipo,variante);for(const k of [.4,.7,1]){F.posar(m,{anim:'muerte',k,muerte});if(k===1)probarSuelo(m);}}
- const muerte={...F.crearMuerteGoblin('cargado',0),partido:true};F.posar(m,{anim:'muerte',k:1,muerte});probarSuelo(m);
- const cortada=m.mallas[0].geometry,superiores=new Set();
- m.raiz.updateMatrixWorld(true);
- for(const nombre of ['cadera','torso','cabeza']){let minimo=Infinity;for(let i=0;i<cortada.attributes.position.count;i++)if(esq.bones[cortada.attributes.skinIndex.getX(i)]===m.H[nombre]){m.mallas[0].getVertexPosition(i,v);minimo=Math.min(minimo,v.y);}assert.ok(minimo<.09*m.alto/1.15,`${nombre} descansa en el piso, sin sostenerse sobre el arma (${minimo})`);}
-m.H.torso.traverse(b=>superiores.add(b));
- for(let i=0;i<cortada.attributes.position.count;i+=3){const lados=new Set();for(let j=0;j<3;j++)for(let k=0;k<4;k++)if(cortada.attributes.skinWeight.array[(i+j)*4+k]>.001)lados.add(superiores.has(esq.bones[cortada.attributes.skinIndex.array[(i+j)*4+k]]));assert.ok(lados.size<=1,'Ninguna cara une las dos mitades del cadáver: '+JSON.stringify([0,1,2].map(j=>({p:Array.from(cortada.attributes.position.array.slice((i+j)*3,(i+j)*3+3)),b:Array.from(cortada.attributes.skinIndex.array.slice((i+j)*4,(i+j)*4+4)),w:Array.from(cortada.attributes.skinWeight.array.slice((i+j)*4,(i+j)*4+4))}))));}
- F.posar(m,{anim:'quieto',t:0});assert.equal(m.mallas[0].geometry,g,'El visor puede volver a una pose viva tras el corte');
+ for(const p of F.muertesGoblinImportadas){const muerte=F.crearMuerteGoblin('tajo',p.variante);for(const k of [.4,.7,1]){F.posar(m,{anim:'muerte',k,muerte});if(k===1)probarSuelo(m);}}
+ F.posar(m,{anim:'quieto',t:0});assert.equal(m.mallas[0].geometry,g,'Restaura la geometría viva tras la caída');
  assert.equal(F.crear('goblin',{varianteGoblin}).mallas[0].geometry,g,'Reutiliza geometría tras otras apariciones');
 }
 assert.equal(F.crearHachaArrojadiza().children.length,2,'Hacha arrojadiza conserva madera y metal');
 assert.equal(c.CAOZ_ARPG_MODELOS.fabrica(THREE,{pielGoblin:false}).crear('goblin').modeloGoblin,null,'El cuaderno de UV conserva el modelo clásico');
 for(const f of recursosGoblin){assert.ok(fs.existsSync(new URL(f,import.meta.url)));assert.ok(entornoArpgThree.includes(f));}
-console.log('✓ Scenario: cuatro variantes, 24 caídas por variante, corte sin puentes, pesos, armas y recursos compartidos.');
+console.log('✓ Scenario: cuatro variantes, cuatro caídas FBX por variante, pesos, armas y recursos compartidos.');

@@ -1344,7 +1344,7 @@ Referencias de GitHub revisadas para esta mejora: [Ossos, LimbSolver y SwingTwis
 
 ### Goblins de Scenario en el juego
 
-El goblin aprobado de Scenario / Tripo 3.1 reemplaza al cuerpo de primitivas en partidas y en el visor. `arpg-three-goblin.js` adapta sus 7,872 triángulos al esqueleto procedural existente, con pesos suaves en hombros, codos, cintura y piernas. Conserva los avisos de ataque, destellos, disolución, armas arrojadizas y las 24 caídas. La muerte por corte crea dos secciones cerradas en la cintura; las caras no conectan ambas mitades. El contacto con el suelo toma en cuenta todos los pesos del vértice.
+El goblin aprobado de Scenario / Tripo 3.1 reemplaza al cuerpo de primitivas en partidas y en el visor. `arpg-three-goblin.js` adapta sus 7,872 triángulos al esqueleto procedural existente, con pesos suaves en hombros, codos, cintura y piernas. Conserva los avisos de ataque, destellos, disolución y armas arrojadizas. Sus muertes usan ahora las cuatro caídas FBX importadas descritas abajo, con contacto precalculado para el cuerpo y las armas.
 
 Las cuatro variantes mantienen sombreros, armas, tamaños y orejas. El cobrador conserva su bolsa y moneda. El cuerpo usa tres mapas PBR locales de 1024 × 1024, compartidos por toda la horda; cada variante comparte su geometría, pero tiene un esqueleto independiente. Son tres llamadas de dibujo por goblin y cuatro para la antorcha. Las armas mantienen la madera y el metal que ya se habían elegido. No se añade un cargador GLTF, servicios remotos, CDN ni físicas por personaje.
 
@@ -1352,13 +1352,22 @@ Las cuatro variantes mantienen sombreros, armas, tamaños y orejas. El cobrador 
 
 El cuaderno UV sigue usando el modelo clásico mediante `fabrica(THREE,{pielGoblin:false})`; también se puede pedir `crear('goblin',{modeloGoblin:'clasico'})`. Las texturas descritas abajo corresponden al modelo clásico y a los accesorios conservados.
 
-### Prueba de caída importada del goblin
+### Cuatro muertes FBX de los goblins
 
-`modelos-visor.html?tipo=goblin&anim=muerte-fbx` muestra **Falling Back Death.fbx**, aportado por el usuario el 3 de octubre de 2026, sobre el goblin actual. Dura 2,2 s y mantiene la pose final durante 0,8 s antes de repetir. **Momento**, **Repetir** y **Velocidad** permiten revisar el movimiento y las cuatro variantes. Es una prueba aislada: las muertes del combate siguen usando sus animaciones actuales.
+Goblins de Camino y cobradores eligen una de estas cuatro animaciones con **25 % de probabilidad cada una**, una sola vez por golpe letal. Sustituyen las 24 caídas anteriores y el corte en dos mitades durante el combate. Se conserva la causa del golpe para depuración; otro ataque no reinicia la caída ni vuelve a sortearla.
 
-Se adaptan 67 muestras de quince huesos a las proporciones del goblin, con retroceso y apoyo del cuerpo y las armas precalculados. El cuello se relaja al terminar para que una oreja no sostenga todo el cuerpo; la antorcha se apaga durante la caída. La axila izquierda usa una corrección de pesos sobre una copia de la geometría, exclusiva de esta prueba, que se restaura al cambiar de animación. Los datos (unos 152 KB) se cargan sólo en el visor.
+| Fuente aportada por el usuario | Visor | Duración |
+| --- | --- | --- |
+| Falling Back Death.fbx | `muerte-goblin-1` · Caída hacia atrás | 2,2 s |
+| Standing Death Right 01.fbx | `muerte-goblin-2` · Caída sobre el lado derecho | 2,0 s |
+| Zombie Death.fbx | `muerte-goblin-3` · Caída zombi | 2,97 s |
+| Dying.fbx | `muerte-goblin-4` · Desplome de rodillas | 4,33 s |
 
-`adreida-scenario/extraer-muertes.py` extrae el FBX con Blender y `node dev/secciones/goblin-scenario/preparar-caida-prueba.mjs fuente.json` regenera el bloque del visor y `caida-prueba-procedencia.json`. La preparación requiere FFmpeg para leer el atlas de color y distinguir piel del accesorio de la espalda. `node dev/secciones/pruebas_goblin_caida_fbx.mjs` comprueba 724 poses, contacto con el suelo, continuidad, pose final inmóvil y restauración de las mallas compartidas.
+Abrir `modelos-visor.html?tipo=goblin&anim=muerte-goblin-1` (también `tipo=cobrador`). **Momento**, **Repetir** y **Velocidad** permiten revisar las cuatro caídas y sus variantes de armas. El enlace anterior `anim=muerte-fbx` abre la primera. La cámara queda fija y encuadra el desplazamiento completo. En combate, el cadáver reposa 0,35 s tras el clip y se disuelve durante 0,9 s; deja de atacar y bloquear el paso al recibir el golpe letal y entrega el botín una sola vez.
+
+Los 15 huesos se interpolan entre muestras a 30 Hz sin cambiar el tiempo de actualización del juego. Los datos Float32 (unos 953 KB codificados en el módulo del goblin) incluyen el contacto precalculado para los dos tipos y sus cuatro variantes. Las geometrías de caída se comparten y corrigen el peso de la axila izquierda; las mallas vivas permanecen intactas. La antorcha se apaga y la pose final se retiene. No se recorren vértices para apoyar cada cadáver durante la partida. El movimiento horizontal del FBX pasa por las colisiones del pozo y la muralla; el polvo se emite una vez cuando la cadera alcanza la altura de apoyo.
+
+Para reconstruir: extraer los cuatro FBX con Blender y `adreida-scenario/extraer-muertes.py`, y ejecutar `node dev/secciones/goblin-scenario/preparar-muertes.mjs atras.json derecha.json zombie.json desplome.json`. FFmpeg lee el atlas sólo durante la preparación. `goblin-scenario/muertes-procedencia.json` registra fuentes, SHA-256 y duraciones. `node dev/secciones/pruebas_goblin_caida_fbx.mjs` comprueba 3.872 poses, apoyo, continuidad, final inmóvil, geometrías compartidas, selección uniforme, causa inmutable, recorrido a 30/60/120 FPS, colisiones, polvo y limpieza. Las coreografías procedurales anteriores quedan sólo como compatibilidad del modelo clásico del cuaderno UV.
 
 ### Piel de los goblins (modelo clásico)
 
@@ -1406,41 +1415,11 @@ Un golpe de antorcha que alcanza a **Adreida** le aplica quemadura durante **5 s
 
 El inspector permite seleccionar la variante al invocar enemigos para reproducir ambos ataques. `node dev/secciones/pruebas_arpg_hachas_fuego.mjs` comprueba la IA, los impactos y devoluciones a 20/30/60/144 FPS, obstáculos, flechas existentes, reutilización de las hachas y duración, renovación y cancelación del fuego.
 
-### Caídas de goblins según el golpe letal
-
-Goblins de Camino y cobradores tienen **24 coreografías: dos por cada una de 12 causas**. Al morir se elige una variante al azar, independiente de la semilla de daño y botín. La causa y dirección se capturan en el impacto letal y ya no cambian por golpes posteriores.
-
-| Ataque que mata | Variante 1 | Variante 2 |
-| --- | --- | --- |
-| Primer tajo | Cae sobre un costado | Dobla rodillas y cae de espaldas |
-| Revés | Gira y cae lateralmente | Tropieza de lado |
-| Remate del combo | Derribo de espaldas | Se dobla y desploma hacia delante |
-| Cargado (desde media carga) | Una rodada completa sobre hombros | Una rodada completa de costado |
-| Torbellino | Pirueta y caída lateral | Barrido de piernas y caída frontal |
-| Aterrizaje de Adreida | Sale despedido y rebota | Vuelco y caída frontal |
-| Disparo de Mohamed | Pierde fuerza en las rodillas | Se encoge y cae de lado |
-| Abanico de Mohamed | Tambalea y cae hacia atrás | Giro corto y desplome |
-| Daga frontal | Se dobla sobre el abdomen | Rodilla y caída lateral |
-| Daga por la espalda | Cae de bruces | Gira y se desploma |
-| Golpe de Adreidos | Derribo diagonal | Tropiezo y caída frontal |
-| Proyectil devuelto con parry | Impacto y espalda | Giro y costado |
-
-El parry cuerpo a cuerpo, Provocar, dash y backflip no causan daño y no generan una muerte propia. Disparo/abanico conservan su causa y trayectoria en vuelo aunque Mohamed cambie de estado; Adreidos usa su posición de impacto, y el proyectil devuelto conserva a su defensor en cooperativo.
-
-Las caídas duran entre 0,95 y 1,65 s; después reposan 0,35 s y se disuelven durante 0,9 s. Un muerto deja inmediatamente de atacar, bloquear el paso y contar como vivo, y entrega el botín una sola vez. El desplazamiento se detiene antes de atravesar el pozo, otros obstáculos o la muralla. El polvo es bajo y breve: sólo aparece con impulso suficiente al tocar el piso, añade una segunda nube menor en los rebotes y pequeñas emisiones cada 40 cm durante la rodada. El polvo de roce se detiene al quedar inmóvil o chocar con un obstáculo; usa la reserva de partículas del juego.
-
-Son poses del esqueleto existente, con las mismas tres mallas y polígonos. El apoyo contra el suelo usa extremos precalculados por hueso y tipo, compartidos entre instancias; no añade un motor físico. Los giros completos conservan su ángulo continuo y la entrada desde la pose anterior se mezcla durante 90 ms. Todas las variantes relajan torso, piernas y manos hasta quedar acostadas; las pruebas comprueban el apoyo de cadera, torso y cabeza, no sólo el vértice más bajo de un arma. El pivote horizontal está en la cadera. En el cargado, el 80 % de los 2,30/2,05 m se recorre durante la vuelta con la misma curva angular; el giro de costado orienta el cuerpo perpendicularmente al avance.
-
-Para revisar: `modelos-visor.html?tipo=goblin&anim=muerte-cargado-1` (también `tipo=cobrador`). El selector contiene las 24 variantes y la caída en dos mitades; **Momento** congela y recorre la animación, **Repetir** la reinicia y **Velocidad** permite cámara lenta. La cámara y la cuadrícula del suelo permanecen fijas durante la caída para hacer visible su avance; el visor usa la misma trayectoria y emisor de polvo que el combate, también al recorrer el tiempo manualmente. `pruebas_arpg_muertes_goblin.mjs` verifica ambas variantes en ambos modelos, apoyo, continuidad, rodada de 360°, pose final inmóvil, recorrido a 30/60/120 FPS, obstáculos, causa inmutable y limpieza. Las pruebas de control y disparos comprueban además que los ataques reales entregan la causa correcta.
-
-
 ### Impactos, escenario y movimientos · octubre de 2026
 
 El aterrizaje de Adreida abre un cráter irregular con el fondo 32 cm bajo el piso y un borde de adoquín que comparte sus texturas. Dura cinco segundos de juego, incluida la pausa del impacto; durante los últimos 1,5 s pierde opacidad progresivamente, conservando su radio y profundidad. El piso reaparece con cobertura complementaria: no se contrae el agujero ni se añade otra pasada de render. El menú de pausa congela ese tiempo. `arpg-three-impactos.js` mantiene como máximo ocho cráteres y libera su geometría al desaparecer o reiniciar. El mismo módulo dibuja una cinta ámbar desde el filo real del hacha en los golpes cargados, con un núcleo fino y una cola de 0,19 s.
 
 La sacudida del golpe cargado y del salto es mayor y avanza con el tiempo del cuadro, sin ralentizarse por el parón del impacto. Incluye un giro breve de cámara y respeta la preferencia de movimiento reducido. Los enemigos vivos reaccionan al impacto con torso y cabeza; el empuje, las chispas y el polvo conservan el sentido del golpe. Las flechas devueltas muestran sólo «¡Parry!»; los conos de Can conservan sus avisos visuales sin los rótulos «Centro» y «Lados».
-
-Un goblin de camino o cobrador que muere por un golpe cargado al 100 % tiene un **33 % de probabilidad de partirse por la cintura**. Las mitades se separan, giran y apoyan independientemente en el suelo antes de disolverse. La carga parcial conserva las dos rodadas anteriores. No añade mallas ni un motor físico. Se puede revisar en `modelos-visor.html?tipo=goblin&anim=muerte-partida`.
 
 Los faroles tienen zócalo de piedra, columna con anillos de cobre, jaula de forja, paneles ámbar y remate. Las llamas quedan dentro de la jaula; se reutilizan las dos luces existentes y se funde la geometría estática por material. Las casas interpuestas entre cámara y cualquiera de los jugadores bajan suavemente hasta un 18 % de cobertura mediante tramado; recuperan su aspecto al dejar de ocultarlos. Siguen agrupadas por material, sin duplicar las llamadas por cada casa.
 
@@ -1450,7 +1429,7 @@ La IA elige destinos con espacio libre, anticipo corto del movimiento y flanqueo
 
 Tras «¡A mí, goblins!», llegan **12 goblins (24 en cooperativo)** por los tres portones en grupos separados por 0,42 s. No atraviesan las murallas. La cola tiene un límite de 32 enemigos vivos para evitar picos sin control y debe terminar antes de avanzar la oleada. En el mapa abierto llegan por tres direcciones alrededor de Can.
 
-Comprobaciones acotadas: `pruebas_arpg_impactos.mjs` (cráteres y casas), `pruebas_arpg_muertes_goblin.mjs` (probabilidad y apoyo de ambas mitades), `pruebas_arpg_ritmo.mjs` (rutas, turnos y refuerzos), `pruebas_arpg_animacion.mjs` y `pruebas_arpg_can.mjs` (continuidad y combate).
+Comprobaciones acotadas: `pruebas_arpg_impactos.mjs` (cráteres y casas), `pruebas_goblin_caida_fbx.mjs` (cuatro caídas, apoyo y limpieza), `pruebas_arpg_ritmo.mjs` (rutas, turnos y refuerzos), `pruebas_arpg_animacion.mjs` y `pruebas_arpg_can.mjs` (continuidad y combate).
 
 
 ### Huida tras la muerte de Can y piedras del Troll

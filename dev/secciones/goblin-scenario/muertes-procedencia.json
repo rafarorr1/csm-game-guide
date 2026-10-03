@@ -1,0 +1,40 @@
+{
+  "fuentes": [
+    {
+      "fuente": "Falling Back Death.fbx",
+      "sha256": "f3e1954ced2ede81e7155e5f5c75f6bb038d4c38e9b0267ce7cc55c583e6945a",
+      "accion": "Armature|mixamo.com|Layer0",
+      "duracion": 2.2,
+      "muestras": 67,
+      "nombre": "Caída hacia atrás"
+    },
+    {
+      "fuente": "Standing Death Right 01.fbx",
+      "sha256": "3e511c218ce4af9574a867d0f9961454e01c1a650d94e6d179938e5a38513af5",
+      "accion": "Armature|mixamo.com|Layer0",
+      "duracion": 2,
+      "muestras": 61,
+      "nombre": "Caída sobre el lado derecho"
+    },
+    {
+      "fuente": "Zombie Death.fbx",
+      "sha256": "270bdbc24e79e880982cc7e800b028e149b886910bb8dcf475beb475c1d4ea45",
+      "accion": "Armature|mixamo.com|Layer0",
+      "duracion": 2.966666666666667,
+      "muestras": 90,
+      "nombre": "Caída zombi"
+    },
+    {
+      "fuente": "Dying.fbx",
+      "sha256": "b5a53596927915054ccb051b70113b8e08e7222cc450a4df535743c2f6aa7b14",
+      "accion": "Armature|mixamo.com|Layer0",
+      "duracion": 4.333333333333333,
+      "muestras": 131,
+      "nombre": "Desplome de rodillas"
+    }
+  ],
+  "origen": "Cuatro FBX Mixamo aportados por el usuario el 3 de octubre de 2026.",
+  "alcance": "Sustituyen las muertes del goblin de Scenario y del cobrador. Selección uniforme e inmutable por baja.",
+  "adaptacion": "Quince huesos. Contactos precalculados para los dos tipos y sus cuatro variantes. Corrección de axila en geometría compartida exclusiva de las caídas; postura final retenida.",
+  "reproduccion": "Extraer cada FBX con adreida-scenario/extraer-muertes.py y ejecutar preparar-muertes.mjs atras.json derecha.json zombie.json desplome.json. Requiere Blender y FFmpeg sólo al preparar."
+}
