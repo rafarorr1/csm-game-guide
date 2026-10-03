@@ -1,0 +1,25 @@
+{
+  "fuente": "Scenario / GPT Image 2.5 Sunburst + Tripo P1",
+  "teamId": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "projectId": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "conceptoAssetId": "asset_1DFp956VebcvcfLbTJDisZoc",
+  "assetId": "asset_JytbwECJxXCMUEVVefb7wPZt",
+  "collectionId": "col_h8pcvYBdvxuTqpE7pdg7iT8D",
+  "sha256Glb": "f03b403c4e8099fce555461e417309c8d1625cffdeacb3617101752e7baae838",
+  "triangulos": 2360,
+  "vertices": 1717,
+  "largoMetros": 0.72,
+  "mapas": 512,
+  "creditosConcepto": 12,
+  "creditosModelo": 100,
+  "modelo": "model_tripo-p1-image-to-3d",
+  "parametros": {
+    "faceLimit": 2400,
+    "pbr": true,
+    "delight": true,
+    "orientation": "align_image",
+    "seed": 381706,
+    "textureSeed": 381706
+  },
+  "adaptacion": "Una malla rígida, origen en la anilla, cara en XY. Mapas PBR 512, rugosidad mínima 0,706 y metalidad reducida en el juego. Sin emisión ni luces adicionales. Recursos locales y reutilizados al reiniciar."
+}

@@ -1354,6 +1354,14 @@ Escape/Options pausa también la cinemática; **Omitir · Enter** conduce a la b
 
 Revisión directa: `arpg-three.html?etapa=2&heroe=adreida&entrada=troll&piso=vegetacion` incluye la caída del último cobrador; **Volver a empezar** la reproduce. El visor ofrece `anim=recogerLlave`, `anim=mirarLlave` y `anim=rodar` con `tipo=adreida`. `pruebas_arpg_entrada_troll.mjs` comprueba el roll, las rutas y la transición de oleadas. `pruebas_arpg_llave_troll.mjs` verifica la baja real que dispara la secuencia, el contacto de la mano con el suelo, la colocación segura, el orden de las fases y la recogida única al pausar, omitir o reiniciar.
 
+### Llave del Recaudador · Scenario
+
+La llave de la entrada del Troll usa un modelo de **Scenario / Tripo P1**, diseñado a partir de un concepto de GPT Image 2.5 Sunburst: hierro ennegrecido, anilla de bronce gastado con pequeños cuernos, remaches y dos dientes. Mantiene la trayectoria, la recogida y el contador de la cinemática.
+
+`llave-scenario/` contiene el concepto, la malla precalculada y tres mapas PBR de **512 × 512**. Son **2.360 triángulos, 1.717 vértices y una sola malla**, de 72 cm para conservar la lectura de la llave anterior desde la cámara isométrica. El origen está en la anilla para seguir a la mano. No añade emisión, luces ni cargadores GLB: usa el three.js empaquetado. La rugosidad mínima es 0,706 y la metalidad se limita a 0,55 para controlar los reflejos.
+
+`preparar.py /ruta/llave-recaudador.glb` reproduce los recursos (numpy y Pillow); `procedencia.json` registra los assets de Scenario, los parámetros, el hash original y los 112 créditos de generación. El concepto y el modelo están archivados en **Utilería · Llave del Recaudador**, dentro de **Caoz ARPG**. El servidor local y el exportador incluyen los recursos, sin solicitudes externas durante la partida.
+
 ### Goblins de Scenario en el juego
 
 El goblin aprobado de Scenario / Tripo 3.1 reemplaza al cuerpo de primitivas en partidas y en el visor. `arpg-three-goblin.js` adapta sus 7,872 triángulos al esqueleto procedural existente, con pesos suaves en hombros, codos, cintura y piernas. Conserva los avisos de ataque, destellos, disolución y armas arrojadizas. Sus muertes usan ahora las cuatro caídas FBX importadas descritas abajo, con contacto precalculado para el cuerpo y las armas.

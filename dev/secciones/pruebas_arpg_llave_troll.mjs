@@ -2,8 +2,14 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs';import vm from 'node:vm';import {extraerDeclaracion} from './fuentes.mjs';
 const leer=f=>fs.readFileSync(new URL(f,import.meta.url),'utf8'),c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','arpg-three-modelos.js','arpg-three-entrada-troll.js'])vm.runInContext(leer(f),c);
+for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','arpg-three-modelos.js','llave-scenario/datos.js','arpg-three-entrada-troll.js'])vm.runInContext(leer(f),c);
 const T=c.CAOZ_THREE.THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(T),V=T.Vector3,mesa=leer('arpg-three-mesa.js'),get=n=>extraerDeclaracion(mesa,n).texto;
+const llave=c.CAOZ_ARPG_ENTRADA_TROLL.crearLlave(T),meshLlave=llave.children[0];
+assert(llave.userData.scenario);assert.equal(llave.children.length,1,'Una sola malla para la llave');
+assert.equal(meshLlave.geometry.index.count/3,2360);
+const cajaLlave=new T.Box3().setFromObject(llave);assert(Math.abs(cajaLlave.max.y-cajaLlave.min.y-.72)<1e-5);
+assert(cajaLlave.min.z>-.06&&cajaLlave.max.z<.06,'El grosor queda por encima del piso al tumbarla');
+assert.equal(meshLlave.material.emissive.getHex(),0);
 const m=F.crear('adreida'),v=new V(),indices=m.mallas.map(mesh=>mesh.geometry.index?[...new Set(mesh.geometry.index.array)]:Array.from({length:mesh.geometry.attributes.position.count},(_,i)=>i));let suelo=Infinity,manoContacto;
 for(let i=0;i<=100;i++){
   const k=i/100;F.posar(m,{anim:'recogerLlave',k,t:k*1.8});m.raiz.updateMatrixWorld(true);

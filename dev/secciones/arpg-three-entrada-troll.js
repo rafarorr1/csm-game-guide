@@ -2,19 +2,34 @@
    Todo usa tiempo de simulación: pausa, omisión y reinicio conservan su orden. */
 'use strict';
 (function(){
+  const rutaLlave=typeof document!=='undefined'&&document.currentScript?.src?new URL('./llave-scenario/',document.currentScript.src).href:null;
   const TIEMPOS=Object.freeze({botin:1.05,recoger:1.8,contacto:.46,sombra:0,caida:.85,roll:1.05,impacto:1.92,fin:3.05});
+  function crearLlave(THREE){
+    const raiz=new THREE.Group(),datos=window.CAOZ_LLAVE_DATOS;raiz.name='Llave del Recaudador';
+    if(datos){
+      const leer=(s,T)=>new T(Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer),g=new THREE.BufferGeometry(),mapas={};
+      for(const [nombre,ancho] of [['position',3],['normal',3],['uv',2]])g.setAttribute(nombre,new THREE.BufferAttribute(leer(datos[nombre],Float32Array),ancho));
+      g.setIndex(new THREE.BufferAttribute(leer(datos.index,Uint16Array),1));g.computeBoundingSphere();
+      if(rutaLlave)for(const nombre of ['color','superficie','normal']){const t=new THREE.TextureLoader().load(rutaLlave+nombre+'.webp');t.flipY=false;t.colorSpace=nombre==='color'?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=4;mapas[nombre]=t;}
+      // Una sola malla y mapas locales: el relieve no añade geometría ni luces.
+      const material=new THREE.MeshStandardMaterial({map:mapas.color||null,normalMap:mapas.normal||null,roughnessMap:mapas.superficie||null,metalnessMap:mapas.superficie||null,roughness:1,metalness:.55,normalScale:new THREE.Vector2(.5,.5)});
+      const m=new THREE.Mesh(g,material);m.name='Llave · Scenario';m.castShadow=m.receiveShadow=true;raiz.add(m);raiz.userData.scenario=true;
+    }else{
+      // Respaldo para el visor o las herramientas que no cargan los recursos del juego.
+      const material=new THREE.MeshStandardMaterial({color:0xb59a63,metalness:.35,roughness:.75});
+      const pieza=(g,x,y,z)=>{const m=new THREE.Mesh(g,material);m.position.set(x,y,z);raiz.add(m);};
+      pieza(new THREE.TorusGeometry(.13,.038,6,16),0,0,0);pieza(new THREE.BoxGeometry(.075,.42,.075),0,-.33,0);
+      pieza(new THREE.BoxGeometry(.19,.07,.075),.06,-.43,0);pieza(new THREE.BoxGeometry(.19,.07,.075),.06,-.54,0);
+    }
+    return raiz;
+  }
   function fabrica(THREE,MOD,{escena,caminar,impactar,terminar,rotulo,recoger=()=>{}}){
     const V=THREE.Vector3,centro=new V(),desplazamiento=new V(),foco=new V(),eje=new V(0,1,0),puntoMano=new V(),rotacionSuelo=new THREE.Quaternion(),rotacionMano=new THREE.Quaternion(),angulosMano=new THREE.Euler();let estado=null;
     const material=new THREE.ShaderMaterial({transparent:true,depthWrite:false,polygonOffset:true,polygonOffsetFactor:-1,uniforms:{opacidad:{value:0}},
       vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
       fragmentShader:'varying vec2 vUv;uniform float opacidad;void main(){float r=length(vUv-.5)*2.;float a=(1.-smoothstep(.45,1.,r))*opacidad;gl_FragColor=vec4(.008,.009,.018,a);}'});
     const sombra=new THREE.Mesh(new THREE.PlaneGeometry(2,2),material);sombra.rotation.x=-Math.PI/2;sombra.visible=false;sombra.renderOrder=2;escena.add(sombra);
-    // Llave de hierro dorado: anilla, vástago y dos dientes. Reutilizada en cada partida.
-    const llave=new THREE.Group(),metal=new THREE.MeshStandardMaterial({color:0xe5bb62,metalness:.5,roughness:.48,emissive:0x92631e,emissiveIntensity:.22});
-    function pieza(g,x,y,z){const m=new THREE.Mesh(g,metal);m.position.set(x,y,z);llave.add(m);}
-    pieza(new THREE.TorusGeometry(.13,.038,6,16),0,0,0);
-    pieza(new THREE.BoxGeometry(.075,.42,.075),0,-.33,0);
-    pieza(new THREE.BoxGeometry(.19,.07,.075),.06,-.43,0);pieza(new THREE.BoxGeometry(.19,.07,.075),.06,-.54,0);
+    const llave=crearLlave(THREE);
     llave.visible=false;escena.add(llave);
     const suave=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
     function posar(h,anim,k,dt,t){h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;
@@ -76,5 +91,5 @@
     function encuadre(){if(!estado)return null;const s=estado;foco.copy(s.actor.pos).add(centro).multiplyScalar(.5);return {foco,distancia:Math.max(18,14+s.actor.pos.distanceTo(centro)*1.4)};}
     return {iniciar,paso,finalizar,cancelar,encuadre,get activa(){return !!estado;},estado:()=>estado?{fase:estado.fase,t:estado.t,impacto:estado.impacto,recogida:estado.recogida,actor:estado.actor.tipo,alturaTroll:estado.troll.m.raiz.position.y,centro:centro.toArray(),llave:llave.position.toArray()}:null};
   }
-  window.CAOZ_ARPG_ENTRADA_TROLL=Object.freeze({fabrica,TIEMPOS});
+  window.CAOZ_ARPG_ENTRADA_TROLL=Object.freeze({fabrica,crearLlave,TIEMPOS});
 })();
