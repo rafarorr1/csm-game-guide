@@ -23,6 +23,19 @@
     function estado(){return {nivel:limitar(nivel.value),objetivo,tiempo,energia,inclinacion:limitar(balanceo.value,-5,5)};}
     return {paso,estado};
   }
+  // Comparación del inspector: desactivar refracción conserva los reflejos precalculados.
+  let refraccion=true;
+  const lentesActivas=new Map();
+  function crearLente(elemento,config){
+    const lente=new window.CAOZ_QUICK_LIQUID.LiquidGlassEngine(elemento,{...config,...(!refraccion?{refractionStrength:0,saturation:1}:{})});
+    lentesActivas.set(lente,config);return lente;
+  }
+  function configurarRefraccion(v){
+    if(v===undefined)return refraccion;
+    refraccion=!!v;
+    for(const [lente,c] of lentesActivas)lente.updateConfig({refractionStrength:refraccion?c.refractionStrength:0,saturation:refraccion?c.saturation:1});
+    return refraccion;
+  }
   function crear(alma,furia){
     const movimiento=matchMedia('(prefers-reduced-motion: reduce)'),orbes=[];
     const paletas=[{profundo:'#350916',medio:'#a41e3f',claro:'#ec6270',superficie:'#ffc0b7',bruma:'#ea8492'},
@@ -32,15 +45,15 @@
       canvas.className='apLiquido';canvas.width=canvas.height=192;canvas.setAttribute('aria-hidden','true');
       const g=canvas.getContext('2d',{alpha:true});if(!g)continue;
       cristal.className='apCristal';cristal.setAttribute('aria-hidden','true');medidor.append(canvas,cristal);
-      const lente=new window.CAOZ_QUICK_LIQUID.LiquidGlassEngine(cristal,{material:'clear',borderRadius:999,quality:'low',appearance:'dark',
+      const lente=crearLente(cristal,{material:'clear',borderRadius:999,quality:'low',appearance:'dark',
         refractionStrength:9,bezelWidth:20,thickness:14,ior:1.46,chromaticAberration:0,blur:0,saturation:1.06,tintOpacity:0,
-        edgeHighlight:.68,specularStrength:.3,elevation:0,noiseOpacity:0,dynamicLighting:false,cursorTracking:false,hoverLighting:false,parallax:false});
+        edgeHighlight:.476,specularStrength:.21,elevation:0,noiseOpacity:0,dynamicLighting:false,cursorTracking:false,hoverLighting:false,parallax:false});
       medidor.classList.add('apLiquidoListo');g.setTransform(1.92,0,0,1.92,0,0);
       const p=paletas[indice],fondo=g.createRadialGradient(39,27,5,50,50,72);fondo.addColorStop(0,'#243039');fondo.addColorStop(.7,'#111b23');fondo.addColorStop(1,'#05090d');
       const cuerpo=g.createLinearGradient(6,0,94,0);cuerpo.addColorStop(0,p.profundo);cuerpo.addColorStop(.35,p.medio);cuerpo.addColorStop(.62,p.claro);cuerpo.addColorStop(1,p.profundo);
       const profundidad=g.createLinearGradient(0,10,0,100);profundidad.addColorStop(0,'#0000');profundidad.addColorStop(.65,'#0000');profundidad.addColorStop(1,'#100b18b3');
       const borde=g.createRadialGradient(50,50,25,50,50,50);borde.addColorStop(0,'#0000');borde.addColorStop(.78,'#0000');borde.addColorStop(1,'#02060bcc');
-      const brillo=g.createRadialGradient(28,20,0,28,20,31);brillo.addColorStop(0,'#fff9df2e');brillo.addColorStop(.65,'#fff9df08');brillo.addColorStop(1,'#ffffff00');
+      const brillo=g.createRadialGradient(28,20,0,28,20,31);brillo.addColorStop(0,'#fff9df20');brillo.addColorStop(.65,'#fff9df08');brillo.addColorStop(1,'#ffffff00');
       orbes.push({elemento,medidor,canvas,g,lente,p,fondo,cuerpo,profundidad,borde,brillo,estado:crearEstado(indice?0:1),ultimo:null,numero:null,desdeDibujo:1,dibujos:0});
     }
     function dibujar(o,s){
@@ -67,27 +80,27 @@
         // Valores exactos para accesibilidad; el líquido interpola sin alterar los números del HUD.
         const numero=String(i?Math.floor(valor):Math.ceil(valor)),clave=numero+'/'+max;
         if(clave!==o.numero){o.numero=clave;o.elemento.setAttribute('role','meter');o.elemento.setAttribute('aria-valuemin','0');o.elemento.setAttribute('aria-valuemax',String(max));o.elemento.setAttribute('aria-valuenow',numero);o.elemento.setAttribute('aria-valuetext',numero+' de '+max);}
-        if(o.ultimo===null||o.desdeDibujo>=1/30-1e-6&&(!movimiento.matches||o.ultimo!==porcentaje)){
+        if(o.ultimo===null||o.desdeDibujo>=1/30-1e-6&&((!movimiento.matches&&porcentaje>0)||o.ultimo!==porcentaje)){
           dibujar(o,s);o.desdeDibujo=0;o.ultimo=porcentaje;
         }
       }
     }
     return {paso,estado:()=>orbes.map(o=>({...o.estado.estado(),dibujos:o.dibujos,lente:o.lente.getPerformanceMetrics()})),
-      destruir(){for(const o of orbes){o.lente.destroy();o.canvas.remove();o.medidor.querySelector('.apCristal')?.remove();o.medidor.classList.remove('apLiquidoListo');}}};
+      destruir(){for(const o of orbes){o.lente.destroy();lentesActivas.delete(o.lente);o.canvas.remove();o.medidor.querySelector('.apCristal')?.remove();o.medidor.classList.remove('apLiquidoListo');}}};
   }
   // Cristal en el panel y las siete habilidades. Los botones nativos y sus rótulos no se envuelven.
   function crearHabilidades(barra){
     const lentes=[],elementos=[];
     const montar=(padre,clase,opciones)=>{
       const cristal=document.createElement('div');cristal.className=clase;cristal.setAttribute('aria-hidden','true');padre.prepend(cristal);
-      lentes.push(new window.CAOZ_QUICK_LIQUID.LiquidGlassEngine(cristal,{material:'clear',quality:'low',appearance:'dark',ior:1.46,
-        blur:0,chromaticAberration:0,saturation:1.03,tint:'9, 19, 25',tintOpacity:.22,edgeHighlight:.48,specularStrength:.24,
+      lentes.push(crearLente(cristal,{material:'clear',quality:'low',appearance:'dark',ior:1.46,
+        blur:0,chromaticAberration:0,saturation:1.03,tint:'9, 19, 25',tintOpacity:.22,edgeHighlight:.336,specularStrength:.168,
         elevation:0,noiseOpacity:0,dynamicLighting:false,cursorTracking:false,hoverLighting:false,parallax:false,...opciones}));elementos.push(cristal);
     };
     montar(barra,'apCristalBarra',{borderRadius:12,refractionStrength:6,bezelWidth:12,thickness:9,tintOpacity:.3});
     for(const boton of barra.querySelectorAll('button[data-hab]'))montar(boton,'apCristalHabilidad',{borderRadius:8,refractionStrength:5,bezelWidth:10,thickness:8});
     barra.classList.add('apHabilidadesCristal');
-    return {estado:()=>lentes.map(l=>l.getPerformanceMetrics()),destruir(){for(const l of lentes)l.destroy();for(const e of elementos)e.remove();barra.classList.remove('apHabilidadesCristal');}};
+    return {estado:()=>lentes.map(l=>l.getPerformanceMetrics()),destruir(){for(const l of lentes){l.destroy();lentesActivas.delete(l);}for(const e of elementos)e.remove();barra.classList.remove('apHabilidadesCristal');}};
   }
-  window.CAOZ_ARPG_ORBES=Object.freeze({crear,crearEstado,crearHabilidades});
+  window.CAOZ_ARPG_ORBES=Object.freeze({crear,crearEstado,crearHabilidades,configurarRefraccion});
 })();

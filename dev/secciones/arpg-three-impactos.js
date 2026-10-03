@@ -4,7 +4,7 @@
 (function(){
   function fabrica(THREE,escena){
     const MAX=8,TAU=Math.PI*2,crateres=[],huecos={value:Array.from({length:MAX},()=>new THREE.Vector4(0,0,0,0))};
-    const materiales=new WeakSet(),cintas=new Map(),centro=new THREE.Vector3(),mano=new THREE.Vector3();
+    const cantidadHuecos={value:0},materiales=new WeakSet(),cintas=new Map(),centro=new THREE.Vector3(),mano=new THREE.Vector3();
     let materialPiso=null;
     // Cobertura complementaria: el piso reaparece donde el cráter pierde opacidad.
     // Conserva la profundidad sin transparencias ordenadas ni otra pasada de render.
@@ -21,12 +21,12 @@
       if(materiales.has(material))return;materiales.add(material);
       const previo=material.onBeforeCompile,clave=material.customProgramCacheKey();
       material.onBeforeCompile=function(sh,r){
-        previo.call(this,sh,r);sh.uniforms.uHuecos=huecos;
+        previo.call(this,sh,r);sh.uniforms.uHuecos=huecos;sh.uniforms.uCantidadHuecos=cantidadHuecos;
         sh.vertexShader='varying vec3 vPisoMundo;\n'+sh.vertexShader;
         sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvPisoMundo=(modelMatrix*vec4(position,1.)).xyz;');
-        sh.fragmentShader='varying vec3 vPisoMundo;uniform vec4 uHuecos[8];\n'+sh.fragmentShader;
+        sh.fragmentShader='varying vec3 vPisoMundo;uniform vec4 uHuecos[8];uniform int uCantidadHuecos;\n'+sh.fragmentShader;
         sh.fragmentShader=sh.fragmentShader.replace('#include <clipping_planes_fragment>',`#include <clipping_planes_fragment>
-          for(int i=0;i<8;i++){vec2 p=vPisoMundo.xz-uHuecos[i].xy;float a=length(p)>.0001?atan(p.y,p.x):0.;
+          for(int i=0;i<8;i++){if(i>=uCantidadHuecos)break;vec2 p=vPisoMundo.xz-uHuecos[i].xy;float a=length(p)>.0001?atan(p.y,p.x):0.;
             float borde=uHuecos[i].z*(1.+.055*sin(a*7.)+.035*cos(a*11.));
             if(uHuecos[i].z>0.&&length(p)<borde&&${cobertura}<uHuecos[i].w)discard;}`);
       };
@@ -63,14 +63,14 @@
       crateres.push({mesh,labio,fondo,opacidad,t:0,radio});actualizarHuecos();
     }
     function quitar(c){escena.remove(c.mesh);c.mesh.geometry.dispose();c.labio.dispose();c.fondo.dispose();}
-    function actualizarHuecos(){for(let i=0;i<MAX;i++){const c=crateres[i];if(c)huecos.value[i].set(c.mesh.position.x,c.mesh.position.z,c.radio,c.opacidad.value);else huecos.value[i].set(0,0,0,0);}}
+    function actualizarHuecos(){cantidadHuecos.value=crateres.length;for(let i=0;i<MAX;i++){const c=crateres[i];if(c)huecos.value[i].set(c.mesh.position.x,c.mesh.position.z,c.radio,c.opacidad.value);else huecos.value[i].set(0,0,0,0);}}
     function crearCinta(){
       const n=20,P=new Float32Array(n*6),A=new Float32Array(n*2),U=new Float32Array(n*4),I=[];
       for(let i=0;i<n;i++){U.set([i/(n-1),0,i/(n-1),1],i*4);if(i<n-1){const k=i*2;I.push(k,k+1,k+2,k+1,k+3,k+2);}}
       const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(P,3).setUsage(THREE.DynamicDrawUsage));g.setAttribute('aVida',new THREE.BufferAttribute(A,1).setUsage(THREE.DynamicDrawUsage));g.setAttribute('uv',new THREE.BufferAttribute(U,2));g.setIndex(I);
       const m=new THREE.ShaderMaterial({transparent:true,depthWrite:false,side:THREE.DoubleSide,blending:THREE.AdditiveBlending,
         vertexShader:'attribute float aVida;varying vec2 vUv;varying float vVida;void main(){vUv=uv;vVida=aVida;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-        fragmentShader:'varying vec2 vUv;varying float vVida;void main(){float borde=sin(vUv.y*3.14159);float hilo=pow(max(0.,1.-abs(vUv.y-.7)*14.),3.);vec3 c=mix(vec3(.65,.16,.035),vec3(1.,.8,.4),hilo);gl_FragColor=vec4(c,.65*vVida*borde);}'});
+        fragmentShader:'varying vec2 vUv;varying float vVida;void main(){float borde=sin(vUv.y*3.14159);float hilo=pow(max(0.,1.-abs(vUv.y-.7)*14.),3.);vec3 c=mix(vec3(.65,.16,.035),vec3(1.,.8,.4),hilo);gl_FragColor=vec4(c,.65*.7*vVida*borde);}'});
       const mesh=new THREE.Mesh(g,m);mesh.frustumCulled=false;mesh.renderOrder=2;mesh.visible=false;escena.add(mesh);
       return {mesh,g,puntos:[],reloj:0};
     }

@@ -50,11 +50,11 @@
   const gl=renderer.getContext(),hdr=renderer.extensions.has('EXT_color_buffer_half_float')||renderer.extensions.has('EXT_color_buffer_float'),muestras=Math.min(CAPTURA?4:2,gl.getParameter(gl.MAX_SAMPLES)||0);
   const depura=gl.getExtension('WEBGL_debug_renderer_info'),gpu=String(depura?gl.getParameter(depura.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)).slice(0,60);
   // Bruma azul al fondo: el centro de combate queda despejado. No requiere otra pasada.
-  const escena=new THREE.Scene();escena.background=new THREE.Color(0x233442);escena.fog=new THREE.Fog(0x233442,13,56);
+  const escena=new THREE.Scene();escena.matrixWorldAutoUpdate=false;escena.background=new THREE.Color(0x233442);escena.fog=new THREE.Fog(0x233442,13,56);
   // Entorno de los reflejos: noche azul arriba y el resplandor naranja del incendio en el horizonte.
   {const e=new THREE.Scene();e.background=new THREE.Color(0x05040a);const caja=(w,h,color,f,pos)=>{const m=new THREE.Mesh(new THREE.PlaneGeometry(w,h),new THREE.MeshBasicMaterial({color:new THREE.Color(color).multiplyScalar(f),side:THREE.DoubleSide}));m.position.set(...pos);m.lookAt(0,0,0);e.add(m);};
     caja(8,8,0x6f86c8,.9,[0,9,0]);caja(14,2.5,0xff7a30,1.6,[0,1,-9]);caja(10,2,0xff8a40,1.1,[9,1,3]);caja(10,2,0x2a3050,.8,[-9,1,2]);
-    escena.environment=new THREE.PMREMGenerator(renderer).fromScene(e,.03).texture;escena.environmentIntensity=.55;}
+    escena.environment=new THREE.PMREMGenerator(renderer).fromScene(e,.03).texture;escena.environmentIntensity=.385;}
   const impactoFX=window.CAOZ_ARPG_IMPACTOS.fabrica(THREE,escena);
   const camara=new THREE.PerspectiveCamera(32,1,.5,1200);
   const objetivo=new THREE.WebGLRenderTarget(2,2,{type:hdr?THREE.HalfFloatType:THREE.UnsignedByteType,samples:muestras});
@@ -62,17 +62,18 @@
   const oclusion=new GTAOPass(escena,camara,2,2);oclusion.updateGtaoMaterial({radius:.9,distanceExponent:1.5,thickness:1.2,scale:1,samples:8});oclusion.blendIntensity=.425;
   // La oclusión sólo oculta puntos y líneas en su pasada de normales; las llamas, haces y marcas (transparentes) tampoco deben hacer sombra de contacto.
   {const ocultar=oclusion._overrideVisibility.bind(oclusion);oclusion._overrideVisibility=function(){ocultar();escena.traverse(n=>{if(n.visible&&(n.material?.transparent||n.material?.userData?.sinOclusion)){n.visible=false;this._visibilityCache.push(n);}});};}
-  const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.25,.45,1.05),salida=new OutputPass();
+  const resplandor=new UnrealBloomPass(new THREE.Vector2(2,2),.175,.45,1.05),salida=new OutputPass();
   // Oclusión y halo trabajan a media resolución; la escena y el HUD conservan su detalle.
   // El compositor vuelve a llamar setSize al redimensionar: aplicar la escala en cada pasada.
   for(const pasada of [oclusion,resplandor]){const ajustar=pasada.setSize.bind(pasada);pasada.setSize=(w,h)=>ajustar(Math.max(32,Math.round(w*.5)),Math.max(32,Math.round(h*.5)));}
   // Saneado: un píxel NaN o infinito (en Metal salen de cálculos que otras tarjetas toleran) lo agranda el
-  // resplandor en cuadros negros. Esta pasada los cambia por negro antes del resplandor, vengan de donde vengan.
+  // resplandor en cuadros negros. Se descartan valores inválidos y se limita HDR a 16 antes del halo,
+  // muy por encima del blanco; así tampoco desbordan sus acumulaciones de media precisión.
   const saneado={enabled:true,needsSwap:true,clear:false,renderToScreen:false,setSize(){},dispose(){},
     mat:new THREE.ShaderMaterial({uniforms:{tDiffuse:{value:null}},depthTest:false,depthWrite:false,
       vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=vec4(position.xy,0.,1.);}',
       fragmentShader:`uniform sampler2D tDiffuse;varying vec2 vUv;
-        float limpio(float x){return (x>=0.&&x<=60000.)?x:(x>60000.?60000.:0.);}
+        float limpio(float x){return (isnan(x)||isinf(x))?0.:clamp(x,0.,16.);}
         void main(){vec4 c=texture2D(tDiffuse,vUv);gl_FragColor=vec4(limpio(c.r),limpio(c.g),limpio(c.b),limpio(c.a));}`}),
     render(r,escribir,leer){this.mat.uniforms.tDiffuse.value=leer.texture;r.setRenderTarget(this.renderToScreen?null:escribir);r.render(this.escenaQ,this.camQ);}};
   saneado.escenaQ=new THREE.Scene();saneado.escenaQ.add(new THREE.Mesh(new THREE.PlaneGeometry(2,2),saneado.mat));saneado.camQ=new THREE.OrthographicCamera(-1,1,1,-1,0,1);
@@ -286,7 +287,7 @@
   const geoP=new THREE.BufferGeometry();geoP.setAttribute('position',new THREE.BufferAttribute(pPos,3).setUsage(THREE.DynamicDrawUsage));geoP.setAttribute('aColor',new THREE.BufferAttribute(pCol,4).setUsage(THREE.DynamicDrawUsage));geoP.setAttribute('aTam',new THREE.BufferAttribute(pTam,1).setUsage(THREE.DynamicDrawUsage));
   const puntos=new THREE.Points(geoP,new THREE.ShaderMaterial({uniforms:{uEsc:escPuntos},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     vertexShader:`attribute float aTam;attribute vec4 aColor;uniform float uEsc;varying vec4 vC;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);gl_Position=projectionMatrix*mv;gl_PointSize=aTam*uEsc*60./(-mv.z);vC=aColor;}`,
-    fragmentShader:`varying vec4 vC;void main(){float d=length(gl_PointCoord-.5);float a=1.-smoothstep(.05,.5,d);gl_FragColor=vec4(vC.rgb,vC.a*a);}`}));
+    fragmentShader:`varying vec4 vC;void main(){float d=length(gl_PointCoord-.5);float a=1.-smoothstep(.05,.5,d);gl_FragColor=vec4(vC.rgb,vC.a*a*.7);}`}));
   puntos.frustumCulled=false;puntos.renderOrder=3;escena.add(puntos);
   function particula(x,y,z,vx,vy,vz,vida,tam,r,g,b,grav=0){const i=pSig;pSig=(pSig+1)%NP;pPos.set([x,y,z],i*3);pVel.set([vx,vy,vz],i*3);pVida[i]=vida;pMax[i]=vida;pTam[i]=tam;pBase.set([r,g,b,1],i*4);pGrav[i]=grav;}
   function chispas(p,n,color=[1,.7,.3],vel=6,tam=.5){for(let i=0;i<n;i++){const a=rnd()*TAU,e=rnd()*1.2-.1,v=vel*(.4+rnd()*.8);particula(p.x,p.y,p.z,Math.cos(a)*Math.cos(e)*v,Math.sin(e)*v+1,Math.sin(a)*Math.cos(e)*v,.35+rnd()*.4,tam*(.6+rnd()*.8),color[0]*3,color[1]*3,color[2]*3,14);}}
@@ -518,7 +519,7 @@
   const botines=[];
   const matHaz=new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:`varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader:`uniform float uT;uniform vec3 uC;uniform float uF;varying vec2 vUv;void main(){float a=pow(1.-vUv.y,1.6)*(.75+.25*sin(vUv.x*TAU*3.+uT*3.));gl_FragColor=vec4(uC*uF,a);}`.replace('TAU','6.2832')});
+    fragmentShader:`uniform float uT;uniform vec3 uC;uniform float uF;varying vec2 vUv;void main(){float a=pow(max(1.-vUv.y,0.),1.6)*(.75+.25*sin(vUv.x*TAU*3.+uT*3.));gl_FragColor=vec4(uC*uF,a);}`.replace('TAU','6.2832')});
   // Sólo el botín de este ARPG: acabado mate para que las dos luces de los héroes no cieguen la cámara.
   function suavizarCarta(g){g.traverse(o=>{if(!o.isMesh)return;for(const m of Array.isArray(o.material)?o.material:[o.material]){if(!m.isMeshStandardMaterial)continue;
     m.roughness=.95;m.roughnessMap=null;m.metalness=0;m.metalnessMap=null;m.envMapIntensity=0;m.anisotropy=0;m.clearcoat=0;m.iridescence=0;m.specularIntensity=0;m.normalScale?.setScalar(.2);
@@ -570,18 +571,18 @@
   // Flechas luminosas: punta ancha, asta, plumas y una estela afilada orientadas hacia el avance.
   const matPuntaLanza=new THREE.MeshBasicMaterial({color:new THREE.Color(2.6,1.8,.65),toneMapped:false});
   const geoPluma=new THREE.ConeGeometry(.12,.36,4).rotateX(-Math.PI/2).translate(0,0,-.48);
-  const materialesHaloFlecha=[0xffa530,0xfff3c0,0xffd060].map(color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.32,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
-  const materialesHaloHacha=[new THREE.Color(2.8,1.55,.18),new THREE.Color(3.2,2.8,1.5),new THREE.Color(3.4,2.1,.3)].map(color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.72,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  const materialesHaloFlecha=[0xffa530,0xfff3c0,0xffd060].map(color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.224,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
+  const materialesHaloHacha=[new THREE.Color(2.8,1.55,.18),new THREE.Color(3.2,2.8,1.5),new THREE.Color(3.4,2.1,.3)].map(color=>new THREE.MeshBasicMaterial({color,transparent:true,opacity:.504,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));
   const geoEstelaFlecha=new THREE.PlaneGeometry(.24,2.2).rotateX(Math.PI/2).translate(0,0,-1.55);
   const matEstelaFlecha=new THREE.ShaderMaterial({transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:`varying vec2 vUv;void main(){vUv=uv;vec3 p=position;p.x*=uv.y;gl_Position=projectionMatrix*modelViewMatrix*vec4(p,1.);}`,
-    fragmentShader:`varying vec2 vUv;void main(){float centro=1.-abs(vUv.x*2.-1.);float a=pow(centro,1.5)*vUv.y*vUv.y;gl_FragColor=vec4(vec3(2.4,1.25,.25),a*.65);}`});
+    fragmentShader:`varying vec2 vUv;void main(){float centro=1.-abs(vUv.x*2.-1.);float a=pow(max(centro,0.),1.5)*vUv.y*vUv.y;gl_FragColor=vec4(vec3(2.4,1.25,.25),a*.65*.7);}`});
   const matEstelaHacha=new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:matEstelaFlecha.vertexShader,
-    fragmentShader:`uniform float uT;varying vec2 vUv;void main(){float centro=1.-abs(vUv.x*2.-1.);float a=pow(centro,1.6)*pow(vUv.y,1.35);a*=.85+.15*sin(vUv.y*24.-uT*28.);gl_FragColor=vec4(mix(vec3(2.2,1.05,.08),vec3(3.1,2.2,.55),centro),a*.58);}`});
+    fragmentShader:`uniform float uT;varying vec2 vUv;void main(){float centro=1.-abs(vUv.x*2.-1.);float a=pow(max(centro,0.),1.6)*pow(max(vUv.y,0.),1.35);a*=.85+.15*sin(vUv.y*24.-uT*28.);gl_FragColor=vec4(mix(vec3(2.2,1.05,.08),vec3(3.1,2.2,.55),centro),a*.58*.7);}`});
   // Un halo brillante (aditivo, lo agranda el resplandor) alrededor de lo que vuela: se ve de lejos y marca el momento del parry.
   const geoHalo=new THREE.SphereGeometry(1,14,10);
-  const halo=(color,r)=>{const m=new THREE.Mesh(geoHalo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.6,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));m.scale.setScalar(r);m.renderOrder=3;return m;};
+  const halo=(color,r)=>{const m=new THREE.Mesh(geoHalo,new THREE.MeshBasicMaterial({color,transparent:true,opacity:.42,blending:THREE.AdditiveBlending,depthWrite:false,toneMapped:false}));m.scale.setScalar(r);m.renderOrder=3;return m;};
   function lanzar(e,a){const g=new THREE.Group(),punta=new THREE.Mesh(geoPunta,matPuntaLanza),brillo=new THREE.Mesh(geoPunta,materialesHaloFlecha[0]);brillo.scale.setScalar(1.25);
     const estela=new THREE.Group();for(const giro of [0,Math.PI/2]){const cinta=new THREE.Mesh(geoEstelaFlecha,matEstelaFlecha);cinta.rotation.z=giro;estela.add(cinta);}
     g.add(new THREE.Mesh(geoLanza,matPuntaLanza),new THREE.Mesh(geoPluma,matPuntaLanza),punta,brillo,estela);const dir=frente(a.dir),p=e.pos.clone().setY(1.1);
@@ -1442,9 +1443,10 @@
   let tostadaHasta=0,bannerHasta=0,finMostrado=false;
   function tostada(html,mala=false){const t=$('tostada');t.innerHTML=html;t.classList.toggle('mala',mala);t.classList.add('visto');tostadaHasta=reloj.t+(mala?1.2:2.6);}
   function banner(titulo,texto){const b=$('banner');b.innerHTML=`<b>${titulo}</b><small>${texto}</small>`;b.classList.add('visto');bannerHasta=reloj.t+2.8;}
-  function hud(dt=0){hudEquipo();const h=heroe;liquidosHud.paso(dt,{alma:h.alma,almaMax:h.almaMax,furia:h.furia,vx:h.velocidad?.x||0,vz:h.velocidad?.z||0});$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');$('almaTxt').textContent=Math.ceil(h.alma)+' / '+h.almaMax;
+  function textoHud(el,valor){if(el.textContent!==valor)el.textContent=valor;}
+  function hud(dt=0){hudEquipo();const h=heroe;liquidosHud.paso(dt,{alma:h.alma,almaMax:h.almaMax,furia:h.furia,vx:h.velocidad?.x||0,vz:h.velocidad?.z||0});$('orbeAlma').style.setProperty('--lleno',(h.alma/h.almaMax*100).toFixed(1)+'%');textoHud($('almaTxt'),Math.ceil(h.alma)+' / '+h.almaMax);
     const fuego=$('hudFuego');fuego.hidden=!h.incendio;if(h.incendio){const texto='En llamas · '+Math.ceil(h.incendio.restante)+' s · Dash para apagar';if(fuego.textContent!==texto)fuego.textContent=texto;}
-    $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');$('furiaTxt').textContent=Math.floor(h.furia)+' / 100';
+    $('orbeFuria').style.setProperty('--lleno',h.furia.toFixed(1)+'%');textoHud($('furiaTxt'),Math.floor(h.furia)+' / 100');
     for(const b of document.querySelectorAll('[data-hab]')){const k=b.dataset.hab,H=HAB[k];if(!H)continue;const cd=h.cd[k]||0,recarga=cd>0?String(Math.ceil(cd)):'';if(b.dataset.recarga!==recarga)b.dataset.recarga=recarga;b.style.setProperty('--cd',(H.cd?cd/(H.cd*(k==='esquiva'?(h.dash??1):1))*100:0).toFixed(1)+'%');b.classList.toggle('sinFuria',h.furia<H.coste);b.classList.toggle('enCurso',k==='torbellino'?girando(h):{salto:'salto',provocar:'grito',bumeran:'lanzarHacha',esquiva:'esquiva',parry:'parry'}[k]===h.estado);}
     const botonAtaque=document.querySelector('[data-hab="tajo"]');if(botonAtaque){botonAtaque.classList.toggle('cargando',h.estado==='carga');botonAtaque.style.setProperty('--carga',`${Math.round(h.carga*100)}%`);const rotulo=botonAtaque.querySelector('small');if(rotulo){const texto=aDistancia()?'Disparar':h.bumeran?'Sin hacha':h.estado==='carga'?`Cargar ${Math.round(h.carga*100)}%`:'Atacar';if(rotulo.textContent!==texto)rotulo.textContent=texto;}}
     const cartas='Cartas del destino · '+rog.mano.length+' / 3';if($('hudCartas').textContent!==cartas)$('hudCartas').textContent=cartas;
@@ -1547,7 +1549,7 @@
     $('mapaTexto').textContent='Mapa · '+Math.round(exploracion.celdas.size/(56*56)*100)+' % explorado · M';
   }
   function hudEquipo(){const el=$('equipoEstado');el.hidden=!COOP;el.textContent=jugadores.map(h=>`${h.id+1} · ${HEROES[h.tipo].nombre}: ${Math.ceil(h.alma)}/${h.almaMax} Alma · ${Math.floor(h.furia)} Furia · Ulti ${h.cd.ulti>0?Math.ceil(h.cd.ulti)+' s':'lista'}${h.ultiT>0?' (activa '+Math.ceil(h.ultiT)+' s)':''}${!h.vivo?' · Caído':''}`).join('    |    ');
-    const b=document.querySelector('[data-hab="ulti"] small');b.textContent=heroe.cd.ulti>0?`Ulti ${Math.ceil(heroe.cd.ulti)} s`:heroe.tipo==='adreida'?'Adreidos':'Velo azul';
+    const b=document.querySelector('[data-hab="ulti"] small');textoHud(b,heroe.cd.ulti>0?`Ulti ${Math.ceil(heroe.cd.ulti)} s`:heroe.tipo==='adreida'?'Adreidos':'Velo azul');
     if(ABIERTO)$('mapaPanel').hidden=false;
   }
 
@@ -1627,12 +1629,12 @@
   const matEstrella=new THREE.MeshBasicMaterial({color:0xffe070,toneMapped:false});
   const aura=new THREE.Mesh(new THREE.SphereGeometry(1.25,24,16),new THREE.ShaderMaterial({uniforms:{uA:{value:0},uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,
     vertexShader:`varying vec3 vN,vV;varying float vY;void main(){vec4 mv=modelViewMatrix*vec4(position,1.);vN=normalize(normalMatrix*normal);vV=normalize(-mv.xyz);vY=position.y;gl_Position=projectionMatrix*mv;}`,
-    fragmentShader:`uniform float uA,uT;varying vec3 vN,vV;varying float vY;void main(){float f=pow(clamp(1.-abs(dot(vN,vV)),0.,1.),2.5)*(.7+.3*sin(vY*14.-uT*6.));gl_FragColor=vec4(vec3(1.,.75,.3)*1.6,f*uA);}`}));aura.visible=false;escena.add(aura);
+    fragmentShader:`uniform float uA,uT;varying vec3 vN,vV;varying float vY;void main(){float f=pow(clamp(1.-abs(dot(vN,vV)),0.,1.),2.5)*(.7+.3*sin(vY*14.-uT*6.));gl_FragColor=vec4(vec3(1.,.75,.3)*1.6,f*uA*.7);}`}));aura.visible=false;escena.add(aura);
   // El rastro del hachazo: un arco que se dibuja detrás del hacha (del lado donde empieza el tajo) y se desvanece;
   // coincide con la zona que golpea. La estocada deja una estela recta al frente.
   const matRastro=new THREE.ShaderMaterial({uniforms:{uP:{value:0},uA:{value:0},uS:{value:1}},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:'attribute float aK,aR;varying float vK,vR;void main(){vK=aK;vR=aR;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',
-    fragmentShader:`uniform float uP,uA,uS;varying float vK,vR;void main(){float k=mix(1.-vK,vK,uS);float a=pow(smoothstep(uP-.55,uP,k),2.)*step(k,uP)*smoothstep(.35,.9,vR)*(1.-smoothstep(.93,1.,vR));gl_FragColor=vec4(vec3(1.,.88,.7)*.9,a*uA*.55);}`});
+    fragmentShader:`uniform float uP,uA,uS;varying float vK,vR;void main(){float k=mix(1.-vK,vK,uS);float a=pow(smoothstep(uP-.55,uP,k),2.)*step(k,uP)*smoothstep(.35,.9,vR)*(1.-smoothstep(.93,1.,vR));gl_FragColor=vec4(vec3(1.,.88,.7)*.9,a*uA*.55*.7);}`});
   function geoRastro(forma){const P=[],K=[],Rr=[],I=[],n=28;
     for(let i=0;i<=n;i++){const t=i/n;for(let j=0;j<2;j++){if(forma==='arco'){const f=-1.15+2.3*t,r=j?2.15:1.2;P.push(Math.sin(f)*r,0,Math.cos(f)*r);}else{P.push(j?.09:-.09,0,.6+2.2*t);}K.push(t);Rr.push(forma==='arco'?j:.5+.5*Math.sin(Math.PI*t));}
       if(i<n){const o=i*2;I.push(o,o+1,o+2,o+1,o+3,o+2);}}
@@ -1643,22 +1645,48 @@
     m.visible=true;m.scale.setScalar(1+.3*(h.carga||0));u.uA.value*=1+1.8*(h.carga||0);m.position.set(h.pos.x,.75,h.pos.z);m.rotation.y=h.dir;}
   const estela=new THREE.Mesh(new THREE.RingGeometry(1.1,2.5,48,1).rotateX(-Math.PI/2),new THREE.ShaderMaterial({uniforms:{uT:tiempo},transparent:true,depthWrite:false,blending:THREE.AdditiveBlending,side:THREE.DoubleSide,
     vertexShader:`varying vec3 vP;void main(){vP=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}`,
-    fragmentShader:`varying vec3 vP;void main(){float a=atan(vP.z,vP.x)/6.2832+.5,r=length(vP.xz);float s=pow(fract(a*2.),3.)*smoothstep(1.1,1.6,r)*(1.-smoothstep(2.1,2.5,r));gl_FragColor=vec4(vec3(1.,.85,.6)*1.8,s*.8);}`}));estela.visible=false;escena.add(estela);
+    fragmentShader:`varying vec3 vP;void main(){float a=atan(vP.z,vP.x)/6.2832+.5,r=length(vP.xz);float s=pow(fract(a*2.),3.)*smoothstep(1.1,1.6,r)*(1.-smoothstep(2.1,2.5,r));gl_FragColor=vec4(vec3(1.,.85,.6)*1.8,s*.8*.7);}`}));estela.visible=false;escena.add(estela);
 
-  // Resolución adaptativa de la escena: el HUD permanece a resolución nativa.
+  // Consultas asíncronas: miden trabajo real de GPU, sin readPixels ni esperar al controlador.
+  function crearMedidorGPU(gl){
+    const ext=gl.getExtension('EXT_disjoint_timer_query_webgl2');
+    let pendiente=[],actual=null,turno=0,ms=null;
+    function limpiar(){for(const q of pendiente)gl.deleteQuery(q);pendiente=[];ms=null;}
+    return {iniciar(){
+      if(!ext)return;
+      if(gl.getParameter(ext.GPU_DISJOINT_EXT)){limpiar();return;}
+      while(pendiente.length&&gl.getQueryParameter(pendiente[0],gl.QUERY_RESULT_AVAILABLE)){
+        const q=pendiente.shift(),valor=gl.getQueryParameter(q,gl.QUERY_RESULT)/1e6;gl.deleteQuery(q);
+        if(Number.isFinite(valor)&&valor>=0)ms=ms===null?valor:ms+(valor-ms)*.2;
+      }
+      if(++turno%20===0&&pendiente.length<4){actual=gl.createQuery();if(actual)gl.beginQuery(ext.TIME_ELAPSED_EXT,actual);}
+    },terminar(){if(actual){gl.endQuery(ext.TIME_ELAPSED_EXT);pendiente.push(actual);actual=null;}},leer:()=>ms,
+    reiniciar:limpiar};
+  }
+  const medidorGPU=!CAPTURA&&!laboratorio?crearMedidorGPU(gl):null;
+  // Objetivo de 60 FPS: reservar margen para CPU y composición del HUD.
+  // Si el navegador presenta a 30 Hz, no se castiga la resolución con una GPU desocupada.
   let escalaRender=1,cuadrosLentos=0,cuadrosRapidos=0;
   function ajustarResolucion(f){if(CAPTURA||laboratorio||document.hidden||pausa.activa)return;
-    cuadrosLentos=f<45?cuadrosLentos+1:0;cuadrosRapidos=f>58?cuadrosRapidos+1:0;
+    const gpuMs=medidorGPU?.leer();
+    cuadrosLentos=(gpuMs!==null&&gpuMs!==undefined?gpuMs>13:f<56)?cuadrosLentos+1:0;
+    cuadrosRapidos=(gpuMs!==null&&gpuMs!==undefined?gpuMs<9:f>58)?cuadrosRapidos+1:0;
     const anterior=escalaRender;
     if(cuadrosLentos>=2){escalaRender=Math.max(.7,escalaRender-.1);cuadrosLentos=0;}
     else if(cuadrosRapidos>=6){escalaRender=Math.min(1,escalaRender+.05);cuadrosRapidos=0;}
     if(Math.abs(anterior-escalaRender)>.001)medir();
   }
-  function medir(){
+  // Cambiar el tamaño borra el lienzo: se difiere hasta justo antes de dibujar.
+  // ResizeObserver y la escala adaptativa nunca dejan un cuadro vacío en pantalla.
+  let tamanoPendiente=true,ultimoTamano='';
+  function medir(){tamanoPendiente=true;}
+  function aplicarTamano(){
+    if(!tamanoPendiente)return;tamanoPendiente=false;
     const b=esc.getBoundingClientRect(),fija=laboratorio?.resolucion;
     const W=fija?.ancho||Math.max(1,b.width),H=fija?.alto||Math.max(1,b.height);
     // El presupuesto normal admite 1080p nativos; el inspector puede fijar el búfer aunque su vista sea menor.
     const dpr=fija?1:CAPTURA?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.25,Math.sqrt((1920*1080)/(W*H)))*escalaRender;
+    const clave=[W,H,dpr].join('/');if(clave===ultimoTamano)return;ultimoTamano=clave;medidorGPU?.reiniciar();
     renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
   }
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
@@ -1697,7 +1725,8 @@
   for(const b of document.querySelectorAll('[data-heroe]'))b.onclick=()=>elegir(b.dataset.heroe);
   rotulos();
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
-  function dibujar(){renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
+  function dibujar(){renderer.info.reset();medidorGPU?.iniciar();
+    try{if(simple)renderer.render(escena,camara);else composer.render();}finally{medidorGPU?.terminar();}
     if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}else aviso('La escena sale negra en esta tarjeta gráfica ('+gpu+'). Cuéntanos qué navegador y dispositivo usas.');}}}
   // Algunos navegadores integrados mantienen visibles varias pestañas: sólo la última activada renderiza.
   let partidaActiva=true;
@@ -1718,6 +1747,7 @@
     laboratorio?.despuesPaso?.(dt);return true;
   }
   function dibujarCuadro(){
+    aplicarTamano();
     // Poses, raíces y cámara pertenecen al mismo cuadro; no se sustituyen al dibujar.
     escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);
     for(const e of etiquetas)colocar(e);dibujar();
@@ -1742,7 +1772,7 @@
     laboratorio?.despues?.({intervalo,simulacion:preparado-inicio,envio:finDibujo-preparado,llamadas:renderer.info.render.calls,triangulos:renderer.info.render.triangles,pasos:avance.pasos,avance:avance.avance,descartado:avance.descartado});
     fps.cpu+=(preparado-inicio-fps.cpu)*.1;fps.render+=(performance.now()-preparado-fps.render)*.1;
     fps.n++;if(ahora-fps.t>=1000){fps.v=Math.round(fps.n*1000/(ahora-fps.t));fps.n=0;fps.t=ahora;ajustarResolucion(fps.v);const i=renderer.info;
-      $('info').textContent=`${fps.v} fps · Actualización por cuadro · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · ${gl.drawingBufferWidth} × ${gl.drawingBufferHeight} px internos · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
+      $('info').textContent=`${fps.v} fps · Actualización por cuadro · CPU ${fps.cpu.toFixed(1)} ms / render ${fps.render.toFixed(1)} ms · GPU ${medidorGPU?.leer()?.toFixed(1)??'N/D'} ms · ${gl.drawingBufferWidth} × ${gl.drawingBufferHeight} px internos · ${renderer.getPixelRatio().toFixed(2)}× resolución · ${i.render.calls} llamadas · ${(i.render.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;}
     requestAnimationFrame(cuadro);
   }
 
@@ -1753,7 +1783,7 @@
     crearEquipo();reiniciarExploracion();medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
     estado('Preparando las cartas del botín…');await CAOZ_CARTA_PINTOR.fuentes();const logo=await imagen('./art/logo.webp');dorso.mat=F.materialDorso(CAOZ_CARTA_PINTOR.dorso(logo));
     estado(ABIERTO?'Mundo abierto · Explora los caminos, descubre el mapa y libera los tres campamentos. R: ulti · M: ampliar mapa.':COOP?'Cooperativo: J1 Adreida, J2 Mohamed. Una carta y un d20 para ambos. Ulti: R / L3.':'Los portones sellados dejan entrar invasores; sus sellos ámbar bloquean tu salida. WASD para moverte, clic izquierdo para atacar hacia el cursor, Espacio para parry, clic derecho para saltar. Q: Torbellino / Abanico. E: Búmeran / Provocar.');
-    listo=true;simularPaso(1/60);sincronizarTiempo();if(!CAPTURA)requestAnimationFrame(cuadro);else dibujar();
+    listo=true;simularPaso(1/60);sincronizarTiempo();if(!CAPTURA)requestAnimationFrame(cuadro);else dibujarCuadro();
   }
 
   // Revisión: fps define la duración de cada actualización, igual que los cuadros de la partida.
@@ -1765,6 +1795,7 @@
     clima:()=>clima.estado(),
     orbes:()=>liquidosHud.estado(),
     cristalHabilidades:()=>cristalHabilidades.estado(),
+    cristal:v=>window.CAOZ_ARPG_ORBES.configurarRefraccion(v),
     bumeranes:()=>bumeranes.map(b=>({dueno:b.h.id,fase:b.fase,x:b.g.position.x,y:b.g.position.y,z:b.g.position.z,distancia:b.distancia})),
     equipo:()=>jugadores.map(h=>({id:h.id,tipo:h.tipo,x:h.pos.x,z:h.pos.z,alma:h.alma,estado:h.estado,cd:{...h.cd},sigilo:h.sigilo,fuego:h.incendio?.restante||0,ultiT:h.ultiT,basicos:h.basicos,disparos:h.disparos})),
     aliados:()=>aliados.map(a=>({vida:a.vida,x:a.pos.x,z:a.pos.z})),
@@ -1837,7 +1868,7 @@
       prepararAccion(){poses.heroe=null;for(const k of Object.keys(heroe.cd))heroe.cd[k]=0;heroe.furia=100;heroe.carga=0;heroe.bloqueoBasico=false;cambiar(heroe,'quieto');ent.pendiente=false;},
       proteger(){for(const h of jugadores){h.alma=h.almaMax;h.invul=1;h.mando.foco=h.mando.activo=h.mando.listo=false;}},
       restaurarEntrada(){for(const h of jugadores){h.mando.foco=document.hasFocus();h.mando.listo=false;}},
-      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},hdr,muestras,coop:COOP,ia:window.CAOZ_ARPG_IA.modo(),animacion:MOD.animacion.configuracion(),simulacionHz:null,reloj:laboratorio.fijo?'referencia-por-cuadro':'tiempo-real',limiteRender:laboratorio.limite||0,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
+      entorno(){const b=esc.getBoundingClientRect();return {ancho:Math.round(b.width),alto:Math.round(b.height),anchoRender:gl.drawingBufferWidth,altoRender:gl.drawingBufferHeight,resolucionFija:!!laboratorio.resolucion,dpr:renderer.getPixelRatio(),gpu,three:THREE.REVISION,efectos:{...efectos},refraccionHud:window.CAOZ_ARPG_ORBES.configurarRefraccion(),hdr,muestras,coop:COOP,ia:window.CAOZ_ARPG_IA.modo(),animacion:MOD.animacion.configuracion(),simulacionHz:null,reloj:laboratorio.fijo?'referencia-por-cuadro':'tiempo-real',limiteRender:laboratorio.limite||0,optimizacion:q.get('referencia')==='1'?'referencia':'actual'};},
       animacion:{leer:MOD.animacion.configuracion,aplicar:MOD.animacion.configurar,restablecer:MOD.animacion.restablecer},
       valores:()=>structuredClone(originales)
     };

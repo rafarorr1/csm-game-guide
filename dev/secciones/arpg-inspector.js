@@ -50,7 +50,7 @@ async function iniciar(){
       <h2>Imagen</h2>
       <label>Distancia de cámara<input id="labCamara" type="range" min="0.45" max="1.4" step="0.05" value="1"></label>
       <div class="labFila"><label><input type="checkbox" data-lab-efecto="sombras" checked> Sombras</label><label><input type="checkbox" data-lab-efecto="oclusion"> Oclusión</label><label><input type="checkbox" data-lab-efecto="resplandor" checked> Halo</label></div>
-      <button id="labExportar">Exportar ajustes JSON</button>
+      <label><input type="checkbox" id="labCristal" checked> Refracción del HUD</label><label><input type="checkbox" id="labNan"> Probar protección contra píxeles inválidos</label><button id="labExportar">Exportar ajustes JSON</button>
     </fieldset>
     <section><h2>Rendimiento</h2><p id="labMetricas">Esperando muestras…</p><p id="labPersonaje"></p><p class="labNota">Envío = trabajo de CPU para dibujar; no mide GPU. Resolución adaptativa desactivada en el inspector.</p>
     <label>Límite de render<select id="labHz"><option value="0">Sin límite</option><option value="30">30 FPS</option><option value="60">60 FPS</option><option value="120">120 FPS</option></select></label><p id="labReloj" class="labNota">Actualización por cuadro · dibujo directo</p>
@@ -79,6 +79,8 @@ async function iniciar(){
   $('labIA').value=r.ia().modo;$('labIA').onchange=()=>{r.ia($('labIA').value);decir('IA aplicada. Se conservan los ataques que ya estaban avisados.');};
   $('labInvocar').onclick=ejecutar(()=>{api.invocar($('labEnemigo').value,numero('labCantidad'),ajustesEnemigo());decir('Enemigos añadidos alrededor del personaje.');});
   $('labDerrotarCan').onclick=()=>{volver();decir(api.derrotarCan()?'Can ha caído: los goblins huyen hasta salir de cuadro.':'Añade primero a Can y a sus goblins.');};
+  $('labNan').onchange=()=>r.nan($('labNan').checked,2,-1);
+  $('labCristal').onchange=()=>r.cristal($('labCristal').checked);
   $('labCamara').oninput=()=>{r.camara({dist:numero('labCamara')});if(detenido)api.paso();};
   for(const c of panel.querySelectorAll('[data-lab-efecto]'))c.onchange=()=>r.efecto(c.dataset.labEfecto,c.checked);
   for(const b of panel.querySelectorAll('[data-accion]'))b.onclick=()=>{volver();api.prepararAccion();const h=r.equipo()[0];if(b.dataset.accion==='basico'||b.dataset.accion==='cargado'){r.control({atacar:true,apunta:[h.x,h.z-5]});secuencia={t:0,duracion:b.dataset.accion==='cargado'?1:.06,x:h.x,z:h.z-5};}else r.usar(b.dataset.accion,h.x,h.z-5);};
