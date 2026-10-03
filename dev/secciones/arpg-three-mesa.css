@@ -92,6 +92,11 @@ html[data-captura] .apEscenario{height:100vh;border:0;border-radius:0}
 .apMedidor{grid-area:2/1;position:relative;overflow:hidden;border-radius:50%;background:radial-gradient(circle at 50% 70%,#291319,#080e12 75%);border:4px solid #99825a;box-shadow:0 0 0 2px #172127,0 0 0 3px #bca37188,inset 0 0 15px #000,0 6px 18px #0008}
 .apMedidor i{position:absolute;left:0;right:0;bottom:0;height:var(--lleno);transition:height .18s ease-out;background:linear-gradient(90deg,#682134,#c44150 48%,#8c2536);box-shadow:inset 0 3px 5px #ffada866}
 .apMedidor::after{content:'';position:absolute;inset:0;border-radius:50%;background:radial-gradient(ellipse at 32% 21%,#ffeac435,transparent 33%),radial-gradient(circle,transparent 46%,#0009 100%);box-shadow:inset 0 0 0 2px #edcf9844;pointer-events:none}
+.apMedidor.apLiquidoListo>i{display:none}
+.apMedidor.apLiquidoListo::after{background:none;box-shadow:inset 0 0 0 2px #edcf9844}
+.apLiquido,.apCristal{position:absolute;inset:0;width:100%;height:100%;border-radius:50%;pointer-events:none}
+.apCristal .ql-content{display:none}
+@media(prefers-reduced-transparency:reduce){.apCristal .ql-tint,.apCristal .ql-lens{display:none}}
 .apFuria .apMedidor{background:radial-gradient(circle at 50% 70%,#372312,#080e12 75%)}
 .apFuria i{background:linear-gradient(90deg,#9b5420,#e9ab42 48%,#b57527);box-shadow:inset 0 3px 5px #fff1b880}
 .apMunicion{display:block;margin-top:3px;font:700 9px/1 system-ui,sans-serif;color:#c9d6dd}

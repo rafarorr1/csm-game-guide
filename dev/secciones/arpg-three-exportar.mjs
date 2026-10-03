@@ -18,7 +18,7 @@ export const texturasGoblin=Object.freeze(['texturas-goblin/piel-color.webp','te
 export const recursosGoblin=Object.freeze(['arpg-three-goblin.js','goblin-scenario/datos.js','goblin-scenario/color.webp','goblin-scenario/normal.webp','goblin-scenario/superficie.webp']);
 export const recursosAdreida=Object.freeze(['arpg-three-adreida.js','adreida-scenario/datos.js','adreida-scenario/color.webp','adreida-scenario/normal.webp','adreida-scenario/superficie.webp']);
 export const texturasPiso=Object.freeze(['texturas-piso/vegetacion-color.webp','texturas-piso/vegetacion-normal.webp','texturas-piso/vegetacion-superficie.webp']);
-export const entornoArpgThree=Object.freeze(['arpg-three-tiempo.js','arpg-three-impactos.js','arpg-three-clima.js','yuka-goals-vendor.js','yuka-LICENSE.txt','arpg-three-ia.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...recursosGoblin,...recursosAdreida,...texturasPiso,...texturasCasas]);
+export const entornoArpgThree=Object.freeze(['arpg-three-tiempo.js','arpg-three-impactos.js','arpg-three-clima.js','quick-liquid-vendor.js','quick-liquid-LICENSE.txt','arpg-three-orbes.js','yuka-goals-vendor.js','yuka-LICENSE.txt','arpg-three-ia.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...recursosGoblin,...recursosAdreida,...texturasPiso,...texturasCasas]);
 function ilustraciones(){
   const encuadres=JSON.parse(leer('art/encuadres.json'));
   return cartasArpgThree.map(([id,acabado])=>{

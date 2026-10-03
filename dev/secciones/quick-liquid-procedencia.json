@@ -1,0 +1,19 @@
+{
+  "proyecto": "QuickLiquid",
+  "repositorio": "https://github.com/amarnath3003/quickLiquid",
+  "commit": "fbb19b5f1cd4097e62831da44df0bee0097433ca",
+  "version": "0.1.2",
+  "licencia": "MIT · quick-liquid-LICENSE.txt",
+  "exportaciones": [
+    "LiquidGlassEngine",
+    "Spring"
+  ],
+  "empaquetador": "esbuild@0.25.10",
+  "opciones": "--bundle --minify --format=iife --global-name=CAOZ_QUICK_LIQUID --target=es2020",
+  "sha256": "8db3e97713461523a74145eb8bf1d37010e6875262568fd6de1cc1018b900d04",
+  "adaptacion": "Motor original sin modificar. arpg-three-orbes.js aporta el líquido interior, dos lienzos 192×192 y reloj compartido con el juego; sin React, CDN ni scripts en línea.",
+  "entrada": [
+    "export { LiquidGlassEngine } from './packages/quick-liquid/src/core/engine';",
+    "export { Spring } from './packages/quick-liquid/src/animations/spring';"
+  ]
+}
