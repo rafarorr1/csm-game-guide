@@ -2,7 +2,23 @@
    nunca se alteran IDs, reglas, IA, red ni el estado de una partida. */
 'use strict';
 (function(){
-  const BASE=new URL('.',location.href),CLAVE='caoz_arte_publico_v2:'+BASE.pathname;
+  // La mesa candidata de balance conserva sus archivos de respaldo locales,
+  // pero consulta las publicaciones de arte de Beta. El origen sólo se admite
+  // si lo fijó su exportador: no dejamos que una query o un dato persistido
+  // convierta el juego en un consumidor de imágenes ajenas.
+  const BASE_LOCAL=new URL('.',location.href),ORIGEN_BETA='https://beta.caoz-tcg.pages.dev';
+  function basePublica(){
+    const candidato=globalThis.CAOZ_ARTE_PUBLICO_ORIGEN;
+    if(typeof candidato!=='string')return BASE_LOCAL;
+    try{
+      const u=new URL(candidato,BASE_LOCAL);
+      return u.protocol==='https:'&&u.origin===ORIGEN_BETA&&u.pathname==='/'&&!u.search&&!u.hash?u:BASE_LOCAL;
+    }catch(e){return BASE_LOCAL;}
+  }
+  const BASE_API=basePublica(),CLAVE='caoz_arte_publico_v2:'+BASE_LOCAL.pathname;
+  // Conservamos rutas relativas en el juego normal; la balance aislada usa
+  // URLs absolutas para que jamás intente pedir /balance/api/arte/….
+  const rutaPublica=r=>BASE_API.href===BASE_LOCAL.href?r:new URL(r,BASE_API).href;
   const HASH=/^[a-f0-9]{64}$/,MIME=new Set(['image/webp','image/png','image/jpeg']);
   const EXCLUIR='.cartaJugador,.liderJugador,.fichaJugador,.cartaPitagoras,.identidadPitagoras';
   let muestra=null;
@@ -127,7 +143,7 @@
     const normal=variantes.normal?.activo!==false?variantes.normal:null;
     const hash=e?.heredada?normal?.hash:e?.hash;
     const base=encValido(e)?{x:e.x,y:e.y,z:e.z}:encuadreDe(originales[id]);
-    return {acabado,url:hash?'api/arte/imagen/'+hash:rutaOriginal(id,originales[id]),
+    return {acabado,url:hash?rutaPublica('api/arte/imagen/'+hash):rutaOriginal(id,originales[id]),
       encuadre:vista?CAOZ_VISTAS.resolver(e?.vistas,vista,base):base,
       disenoPropio:!!(e&&e.acabado===acabado&&e.hash&&!e.heredada)};
   }
@@ -159,6 +175,16 @@
     for(const p of ['--ex','--ey','--ez'])nodo.style.removeProperty(p);
     if(nodo.classList.contains('lrostro'))nodo.textContent=LEADERS[nodo.dataset.arteId.slice(6)]?.art||'';
   }
+  function cargarImagen(img,url){
+    let externa=false;try{externa=new URL(url,BASE_LOCAL).origin!==BASE_LOCAL.origin;}catch(e){}
+    const cambia=img.getAttribute('src')!==url||externa&&img.crossOrigin!=='anonymous';
+    if(!cambia)return img;
+    if(externa)img.crossOrigin='anonymous';else img.removeAttribute('crossorigin');
+    // Si el mismo src llegó primero sin CORS, forzamos una carga limpia antes
+    // de que el pintor de cartas lo lleve a canvas.
+    if(img.getAttribute('src')===url)img.removeAttribute('src');
+    img.src=url;return img;
+  }
   function pintar(nodo){
     const id=nodo.dataset.arteId;acabar(nodo,id);
     if(nodo.closest(EXCLUIR))return;
@@ -167,7 +193,7 @@
     const url=window.urlArte(id,nodo);variables(nodo,enc);
     if(nodo.classList.contains('lrostro')){
       let img=nodo.querySelector('img');if(!img){nodo.textContent='';img=document.createElement('img');img.alt='';nodo.appendChild(img);}
-      if(img.getAttribute('src')!==url)img.src=url;
+      cargarImagen(img,url);
     }else{
       nodo.classList.add('conarte');nodo.classList.remove('sinarte');
       if(typeof ponerDibujo==='function')ponerDibujo(nodo,url,enc);
@@ -198,7 +224,7 @@
     if(location.protocol==='file:')return Promise.resolve(false);
     if(peticion)return peticion;
     peticion=(async()=>{
-      const catalogo=limpiarCatalogo(await pedir(new URL('api/arte/catalogo',BASE).href,4500));
+      const catalogo=limpiarCatalogo(await pedir(new URL('api/arte/catalogo',BASE_API).href,4500));
       if(!catalogo){reintentarCatalogo();return false;}
       clearTimeout(reintento);reintento=null;intentos=0;
       const nuevaFirma=JSON.stringify({cartas:catalogo.cartas,titulos:[...catalogo.titulos.values()]});
@@ -215,7 +241,7 @@
     if(carga)return carga;
     carga=(async()=>{
       if(location.protocol!=='file:'){
-        const datos=await pedir(new URL('art/encuadres.json',BASE).href,2500);
+        const datos=await pedir(new URL('art/encuadres.json',BASE_LOCAL).href,2500);
         if(datos&&typeof datos==='object'&&!Array.isArray(datos))originales=limpiarOriginales(datos);
       }
       recomponer();guardar();actualizar();void refrescar();
@@ -235,6 +261,7 @@
   window.nombreCarta=(id,base)=>nombre(id,base);
   window.nombreLider=(id,base)=>nombre('lider_'+id,base);
   window.ponerNombreCarta=ponerNombre;
+  window.cargarImagenArte=cargarImagen;
   window.CAOZ_ARTE=Object.freeze({refrescar,actualizar,acabar,version,nombre,ponerNombre,encuadre:encuadreVista,previsualizar:datos=>{if(parent===window||!new URLSearchParams(location.search).has('estudioVista'))return;muestra=datos;if(datos.url)ARTE[datos.id]=datos.encuadre;else delete ARTE[datos.id];},modificado:(id,nodo)=>{const a=acabadoElegido(id,nodo),e=registroElegido(id,a);return !!originales[id]?.variantes?.[a]||!!e&&(!!e.hash||encValido(e));}});
   // Una carta puede construirse fuera del DOM; al entrar ya conocemos su superficie.
   // Sólo se observan nodos añadidos: modificar el encuadre no dispara un bucle.

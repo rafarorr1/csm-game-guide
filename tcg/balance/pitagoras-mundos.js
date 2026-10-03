@@ -298,7 +298,7 @@
     const enc=typeof ARTE!=='undefined'?ARTE[id]:null;if(id!=='lucius'&&enc==null)return null;
     const url=urlArte(id),previa=arteMemoria.get(id);
     if(previa&&(!actualizar||previa.getAttribute('src')===url)){if(actualizar)previa.encuadre=(window.CAOZ_ARTE?.encuadre(id,(document.getElementById('panelCerrar')?'movil_':'desktop_')+'memoria')||encuadreDe(ARTE[id]));return previa;}
-    const imagen=new Image();imagen.encuadre=(window.CAOZ_ARTE?.encuadre(id,(document.getElementById('panelCerrar')?'movil_':'desktop_')+'memoria')||encuadreDe(ARTE[id]));arteMemoria.set(id,imagen);imagen.src=url;return imagen;
+    const imagen=new Image();imagen.encuadre=(window.CAOZ_ARTE?.encuadre(id,(document.getElementById('panelCerrar')?'movil_':'desktop_')+'memoria')||encuadreDe(ARTE[id]));arteMemoria.set(id,imagen);if(typeof window.cargarImagenArte==='function')window.cargarImagenArte(imagen,url);else imagen.src=url;return imagen;
   }
   function instalarMemoriaCSS(){
     if(document.getElementById('ppMemoriaCSS'))return;const estilo=document.createElement('style');estilo.id='ppMemoriaCSS';estilo.textContent=`

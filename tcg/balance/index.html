@@ -12,6 +12,7 @@
   location.replace(location.pathname+'?'+q.toString()+location.hash);
 })();
 </script>
+<script>window.CAOZ_ARTE_PUBLICO_ORIGEN="https://beta.caoz-tcg.pages.dev/";</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <title>Caoz Con Todo — El Juego de Cartas</title>
@@ -31,7 +32,7 @@
   var q=new URLSearchParams(location.search);
   if(!('serviceWorker' in navigator)||q.has('test')||q.has('estudioVista')
      ||!(location.protocol==='https:'||location.hostname==='localhost'))return;
-  navigator.serviceWorker.register('sw.js?b=304&test=arranque').catch(function(){});
+  navigator.serviceWorker.register('sw.js?b=305&test=arranque').catch(function(){});
 })();
 </script>
 <!-- Los teléfonos tienen su propia pantalla, hecha de pie: movil.html. Se
@@ -2252,7 +2253,7 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 #extrasBack{margin-top:0;min-height:44px;font-size:14px}
 @media(max-width:380px){#extras{gap:12px;padding:18px}.extrasOpciones{gap:9px}.extrasOpciones .btn{font-size:12px;padding:10px}}
 </style>
-<link rel="stylesheet" href="mulligan-ui.css?b=304&test=arranque">
+<link rel="stylesheet" href="mulligan-ui.css?b=305&test=arranque">
 </head>
 <body>
 <div id="arranqueCaoz" role="status" aria-label="Cargando Caoz Con Todo">
@@ -2437,9 +2438,9 @@ body.remate #leaderFoe{animation:remate 1.7s ease-in-out infinite;will-change:fi
 <div id="prompt"><span class="pmsg" id="pmsg"></span><span id="pbtns" style="display:flex;gap:8px"></span></div>
 <div id="inspect"><div class="big" id="inspectCard"></div></div>
 
-<script src="motor.js?b=304&test=arranque"></script>
-<script src="final.js?b=304&test=arranque"></script>
-<script src="mulligan-ui.js?b=304&test=arranque"></script>
+<script src="motor.js?b=305&test=arranque"></script>
+<script src="final.js?b=305&test=arranque"></script>
+<script src="mulligan-ui.js?b=305&test=arranque"></script>
 <script>
 /* ==========================================================================
    CAOZ CON TODO — TCG · Simulador
@@ -2458,7 +2459,7 @@ const $$ = s => [...document.querySelectorAll(s)];
    puede ir a ver qué cambió. publicar.sh avisa si se queda desfasado.
    Para las notas de cada versión está CHANGELOG.md. */
 
-const BUILD = {n:304, fecha:'2026-09-28'};
+const BUILD = {n:305, fecha:'2026-10-02'};
 
 function encajarAncho(nodo, minFactor){
   if(!nodo) return;
@@ -2544,7 +2545,8 @@ function ponerDibujo(nodo, url, enc){
   if(!caja){caja=document.createElement('div');caja.className='marcoDibujo';nodo.prepend(caja);}
   let img=caja.querySelector('img');
   if(!img){img=document.createElement('img');img.className='dibujo';img.alt='';caja.appendChild(img);}
-  if(img.getAttribute('src')!==url)img.src=url;
+  if(typeof window.cargarImagenArte==='function')window.cargarImagenArte(img,url);
+  else if(img.getAttribute('src')!==url)img.src=url;
   caja.style.setProperty('--url', `url("${url}")`);
   nodo.style.setProperty('--ex', enc.x+'%');nodo.style.setProperty('--ey', enc.y+'%');
   nodo.style.setProperty('--ez', (enc.z/100).toFixed(3));
@@ -2866,7 +2868,7 @@ function showInspectLeader(d,side){
   const encL = CAOZ_ARTE.encuadre('lider_'+p.leaderId,'desktop_detalle',box);
   box.innerHTML=`<div class="top"><div class="cost">★</div><div class="nm">${L.n}</div></div>
     <div data-arte-id="lider_${p.leaderId}" class="art${encL?' conarte':''}"${encL ? ` style="--ex:${encL.x}%;--ey:${encL.y}%;--ez:${(encL.z/100).toFixed(3)}"` : ''}>${
-      encL ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId,box)}"></div>` : ''}${L.art}</div>
+      encL ? `<div class="marcoDibujo"><img class="dibujo" alt="" crossorigin="anonymous" src="${urlArte('lider_'+p.leaderId,box)}"></div>` : ''}${L.art}</div>
     <div class="tribe">${L.ep} · ${L.arch}</div>
     <div class="txt" style="font-style:italic;color:#a99ac6;font-size:11px">${L.lore}</div>
     <div class="bigsep"></div>
@@ -3536,7 +3538,7 @@ function renderLeaders(){
     const enc = CAOZ_ARTE.encuadre('lider_'+p.leaderId,'desktop_hud',host);
     host.innerHTML=`<div data-lado-arte="${side}" data-arte-id="lider_${p.leaderId}" data-acabado="${acabadoArte('lider_'+p.leaderId,host)}" class="leadercard${usable?' usable':''}${(mine&&p.leaderUsed)?' spent':''}${target?' tgt':''}${enc?' conarte':''}" id="lead${side}"${
       enc ? ` style="--ex:${enc.x}%;--ey:${enc.y}%;--ez:${(enc.z/100).toFixed(3)}"` : ''}>
-      ${enc ? `<div class="marcoDibujo"><img class="dibujo" alt="" src="${urlArte('lider_'+p.leaderId,host)}"></div>` : ''}
+      ${enc ? `<div class="marcoDibujo"><img class="dibujo" alt="" crossorigin="anonymous" src="${urlArte('lider_'+p.leaderId,host)}"></div>` : ''}
       <div class="lcName">${L.n}</div>
       <div class="lcArt">${L.art}</div>
       <div class="lcEp">${L.ep}</div>
@@ -5322,7 +5324,7 @@ if(new URLSearchParams(location.search).has('biblia')){
    necesitan leer siempre lo último del servidor. */
 if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost')
    && !new URLSearchParams(location.search).has('test') && !new URLSearchParams(location.search).has('estudioVista')){
-  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=304&test=arranque').catch(()=>{}); });
+  addEventListener('load', ()=>{ navigator.serviceWorker.register('sw.js?b=305&test=arranque').catch(()=>{}); });
 }
 /* El menú ya existe desde el HTML para que la cuenta, las invitaciones y la
    campaña puedan inicializarse normalmente. Sólo se ocultó su presentación

@@ -691,7 +691,10 @@
     const imagen = url => new Promise(r => {
       if (!url) { r(null); return; }
       const i = new Image(); i.decoding = 'async';
-      i.onload = () => r(i.naturalWidth ? i : null); i.onerror = () => r(null); i.src = url;
+      i.onload = () => r(i.naturalWidth ? i : null); i.onerror = () => r(null);
+      // La portada puede venir del catálogo público de Beta en la candidata.
+      // Se configura CORS antes de src para poder dibujarla en su textura.
+      if(typeof window.cargarImagenArte==='function')window.cargarImagenArte(i,url);else i.src = url;
     });
     const id = portadas[grupo] || (variante === 'arcano' ? null : 'magodomo');
     const arteUrl = id ? (typeof opciones.arteUrl === 'function' ? opciones.arteUrl(id) : 'art/' + id + '.webp') : null;

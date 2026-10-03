@@ -80,7 +80,10 @@
         const ancho=movil?320:448;unicas=lista.length;
         for(const [i,c]of lista.entries()){
           await new Promise(r=>requestAnimationFrame(()=>r()));if(!vivo)return false;
-          const img=new Image();img.decoding='async';if(c.url)img.src=c.url;await cargada(img);
+          const img=new Image();img.decoding='async';
+          // La candidata recibe caras desde Beta. El helper fija CORS antes de
+          // asignar el origen, para que el pintor pueda usarlas como textura.
+          if(c.url){if(typeof window.cargarImagenArte==='function')window.cargarImagenArte(img,c.url);else img.src=c.url;}await cargada(img);
           const tex=pintor.texturas({id:c.id,acabado:c.acabado||'normal',nombre:c.nombre,arte:{img:img.naturalWidth?img:null,enc:c.enc||{x:50,y:50,z:100}},ancho});
           gl.cargarFrente(tex,c.acabado||'normal',CANTO[c.acabado]||CANTO.normal,i);
           progreso((i+1)/lista.length);

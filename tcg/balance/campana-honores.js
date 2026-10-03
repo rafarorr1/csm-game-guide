@@ -45,7 +45,7 @@
       const enc=encuadreDe(ARTE['lider_'+id])&&(window.CAOZ_ARTE?.modificado('lider_'+id)?(CAOZ_ARTE.encuadre('lider_'+id,(document.getElementById('panelCerrar')?'movil_':'desktop_')+'honor')):(rostros[id]||{x:50,y:20,z:220}));let img=retrato.querySelector('img');
       if(!enc){img?.remove();continue;}
       if(!img){img=document.createElement('img');img.alt='';img.draggable=false;img.onerror=()=>{img.hidden=true;};retrato.appendChild(img);}
-      const url=urlArte('lider_'+id);if(img.hidden||img.getAttribute('src')!==url){img.hidden=false;img.src=url;}
+      const url=urlArte('lider_'+id);if(img.hidden||img.getAttribute('src')!==url){img.hidden=false;if(typeof window.cargarImagenArte==='function')window.cargarImagenArte(img,url);else img.src=url;}
       img.style.width=enc.z+'%';img.style.transform='translate(-'+enc.x+'%,-'+enc.y+'%)';
     }
   }

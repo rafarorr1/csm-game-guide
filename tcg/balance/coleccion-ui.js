@@ -12,9 +12,17 @@
   const textoCopias=n=>n+' '+(n===1?'copia':'copias');
   const limpiarTexto=t=>{const d=document.createElement('div');d.innerHTML=t||'';return d.textContent.replace(/\s+/g,' ').trim();};
   const normalizar=t=>String(t).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  // La referencia exportada declara su vista en <body>; el juego completo
+  // conserva el marcador del panel móvil. Centralizarlo evita que una carta
+  // móvil de Archivo use por accidente los encuadres de escritorio.
+  const prefijoVista=()=>document.body?.dataset?.vista==='movil'||document.getElementById('panelCerrar')?'movil_':'desktop_';
   const nombreVisible=(id,base)=>window.CAOZ_ARTE?.nombre?.(id,base)||base;
   let panel,contenido,barra,estado,volverFoco,origen,observador,frame=0,guardando=false,restaurarLista=false,focoLista=null,aperturaSobre=null,carruselSobres=null,carruselCartas=null,conservarFondo=false,alCerrarRecompensa=null,finalCampana=null,transicionDetalle=null,mundo3D=null,mundoHost=null,cartaTransferida=null,entradaMenu=0,archivoCapa=null,detalleCapa=null,encuadreDetalle=null;
   const s={vista:'cartas',busqueda:'',mazo:'todos',tipo:'todos',desplazamiento:0,carta:null,cartaSeleccionada:null,acabadoVista:'normal',regla:0,grupoSobre:'',verContenidoSobre:false,recompensaId:null,eleccion:[],mostrarPendiente:false,volverContenido:'sobres',demoEdiciones:'real',logrosProtagonista:'todos'};
+  // La referencia externa conserva exactamente Archivo y Visor, pero no es
+  // una cuenta ni una puerta al juego: el adaptador aislado la activa antes de
+  // cargar este componente. La experiencia normal nunca define esta bandera.
+  const esReferenciaVisual=()=>window.CAOZ_REFERENCIA_VISUAL===true;
   function dato(id){
     if(id.startsWith('lider_')){const l=LEADERS[id.slice(6)];return {id,n:nombreVisible(id,l.n),t:'protagonista',art:l.art,c:'✦',x:[l.pasiva,typeof l.hab==='object'?'<b>'+l.hab.n+':</b> '+l.hab.d:l.hab,l.hab2?'<b>'+l.hab2.n+':</b> '+l.hab2.d:''].filter(Boolean).join(' '),sub:l.ep};}
     const c=CARDS[id];return {...c,id,n:nombreVisible(id,c.n),sub:typeof tribeLine==='function'?tribeLine(c):c.t};
@@ -140,18 +148,28 @@
     const c=dato(id);
     tonoMundoVisor(id);
     const entrega=tomarCartaTransferida(id,s.acabadoVista);
+    // La ficha sale de Archivo con encuadre de Colección, pero al tocar el
+    // pedestal debe conservar el mismo nodo y pasar al encuadre de Detalle.
+    // Así una ilustración Foil/Dorada con composición propia no queda cortada
+    // ni vuelve a pedir otra imagen al entrar al visor.
+    const vistaDetalle=prefijoVista()+'detalle';
+    const prepararFichaDetalle=(nodo,acabado)=>{
+      if(!nodo)return nodo;
+      nodo.dataset.coleccionAcabado=acabado;nodo.dataset.acabado=acabado;nodo.dataset.vistaArte=vistaDetalle;
+      nodo.classList.toggle('cdFullArt',acabado==='dorado');nodo.classList.toggle('cdClasica',acabado!=='dorado');
+      actualizarCarta(nodo);return nodo;
+    };
+    if(entrega?.nodo)prepararFichaDetalle(entrega.nodo,s.acabadoVista);
     // Guardamos el rectángulo ya interpolado del vuelo antes de que el visor
     // adopte el nodo. El visor lo usa como pose inicial y converge desde ahí:
     // no hay ni recarga del arte ni teletransporte entre los dos encuadres.
     const r=entrega?.nodo?.getBoundingClientRect();
     const continuidad=!matchMedia('(prefers-reduced-motion: reduce)').matches&&r?.width>8&&r?.height>8?{izquierda:r.left,arriba:r.top,ancho:r.width,alto:r.height,esperar:panel?.classList.contains('coleccionFusionando')}:null;
     const refrescarFicha=(nodo,acabado)=>{
-      nodo.dataset.coleccionAcabado=acabado;nodo.dataset.acabado=acabado;
-      nodo.classList.toggle('cdFullArt',acabado==='dorado');nodo.classList.toggle('cdClasica',acabado!=='dorado');
-      actualizarCarta(nodo);
+      prepararFichaDetalle(nodo,acabado);
       actualizarMiniatura(id);
     };
-    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>carta(id,a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
+    const visible=mundo3D.mostrarCarta({id,titulo:c.n,inicial:s.acabadoVista,logoUrl:'art/logo.webp',sonar:sonido,crearCarta:a=>prepararFichaDetalle(carta(id,a),a),actualizarCarta:refrescarFicha,cartaLista:entrega?.nodo||null,continuidad,encuadre:encuadreDetalle,ediciones:edicionesDe(id),sinGL:true,alTerminarEntrada:entrega?.transicion?()=>completarApertura(entrega.transicion):null});
     // montarMundo sólo confirma después de insertar la ficha. Así, si el
     // visor no estuviera disponible, el vuelo conserva su salida de respaldo.
     if(visible&&entrega){
@@ -296,6 +314,10 @@
   }
   function actualizarCabecera(){
     const m=modelo(),ids=m.ids(),premium=ids.reduce((n,id)=>n+(m.tiene(id,'foil')?1:0)+(m.tiene(id,'dorado')?1:0),0),resumenLogros=window.CAOZ_LOGROS?.resumen?.();
+    if(esReferenciaVisual()){
+      panel.querySelector('.coleccionTotales').textContent=ids.length+' cartas · Archivo visual';
+      barra.replaceChildren();const cartas=boton('Archivo de cartas',()=>ir('cartas'),'coleccionPestana');cartas.prepend(icono('libro'));cartas.dataset.vista='cartas';cartas.setAttribute('aria-current',s.vista==='cartas'||s.vista==='detalle'?'page':'false');barra.append(cartas);return;
+    }
     panel.querySelector('.coleccionTotales').textContent=s.vista==='logros'&&resumenLogros?resumenLogros.obtenidos+' / '+resumenLogros.total+' logros':ids.length+' normales · '+premium+' ediciones especiales';
     barra.replaceChildren();const cartas=boton('Mis cartas',()=>ir('cartas'),'coleccionPestana'),sobres=boton('Sobres',()=>ir('sobres'),'coleccionPestana'),canje=boton('Canjear',()=>ir('canje'),'coleccionPestana'),logros=boton('Logros',()=>ir('logros'),'coleccionPestana');
     cartas.prepend(icono('libro'));sobres.prepend(icono('sobre'));sobres.append(crear('span','coleccionNumero',m.sobres()));
@@ -348,9 +370,9 @@
   }
   function dibujar(){activarMundo(s.vista);actualizarCabecera();panel.dataset.vista=s.vista;if(s.vista==='sobres'){destruirCarruselCartas();dibujarSobres();return;}destruirApertura();destruirCarrusel();destruirCarruselCartas();vaciarContenido();if(s.vista==='cartas')dibujarGaleria();else if(s.vista==='detalle')dibujarDetalle();else if(s.vista==='logros')dibujarLogros();else if(s.vista==='recompensa')(esFinalCampana()?dibujarRecompensaFinalCampana:dibujarRecompensa)();else if(s.vista==='contenidoSobre')dibujarContenidoSobre();else dibujarCanje();}
   function idsFiltrados(){
-    const q=normalizar(s.busqueda).trim(),enMazo=s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
+    const q=normalizar(s.busqueda).trim(),enMazo=!esReferenciaVisual()&&s.mazo!=='todos'&&s.mazo!=='cajon'?new Set((DECKS[s.mazo]?.list||[]).map(x=>x[0]).concat('lider_'+s.mazo)):null;
     const relevancia=id=>{const nombre=normalizar(dato(id).n);return !q?0:nombre===q?0:nombre.startsWith(q)?1:nombre.includes(q)?2:3;};
-    return modelo().ids().filter(id=>{const c=dato(id);return (!q||normalizar(c.n+' '+c.sub).includes(q))&&(s.tipo==='todos'||c.t===s.tipo)&&(!enMazo||enMazo.has(id))&&(s.mazo!=='cajon'||c.set==='cajon');}).sort((a,b)=>{const x=dato(a),y=dato(b);return relevancia(a)-relevancia(b)||Number(y.t==='protagonista')-Number(x.t==='protagonista')||(Number(x.c)||0)-(Number(y.c)||0)||x.n.localeCompare(y.n,'es');});
+    return modelo().ids().filter(id=>{const c=dato(id);return (!q||normalizar(c.n+' '+c.sub).includes(q))&&(s.tipo==='todos'||c.t===s.tipo)&&(!enMazo||enMazo.has(id))&&(esReferenciaVisual()||s.mazo!=='cajon'||c.set==='cajon');}).sort((a,b)=>{const x=dato(a),y=dato(b);return relevancia(a)-relevancia(b)||Number(y.t==='protagonista')-Number(x.t==='protagonista')||(Number(x.c)||0)-(Number(y.c)||0)||x.n.localeCompare(y.n,'es');});
   }
   /* El Archivo conserva la biblioteca que se recorre: tres cartas por fila,
      scroll vertical y las cartas reales. El visor inmersivo aparece al elegir
@@ -360,7 +382,7 @@
     const input=crear('input');input.type='search';input.placeholder='Buscar una carta…';input.setAttribute('aria-label','Buscar cartas por nombre');input.value=s.busqueda;input.autocomplete='off';
     input.oninput=()=>{s.busqueda=input.value;s.desplazamiento=0;dibujarLista();};buscar.append(input);filtros.append(buscar);
     const selector=(nombre,opciones,valor,cambiar)=>{const label=crear('label','coleccionFiltro');label.append(crear('span','coleccionSr',nombre));const select=crear('select');select.setAttribute('aria-label',nombre);opciones.forEach(([v,n])=>{const op=crear('option','',n);op.value=v;select.append(op);});select.value=valor;select.onchange=()=>{cambiar(select.value);s.desplazamiento=0;dibujarLista();};label.append(select);return label;};
-    filtros.append(selector('Filtrar por mazo',[['todos','Todos los mazos'],...Object.keys(LEADERS).map(id=>[id,LEADERS[id].n]),['cajon','El Cajón']],s.mazo,v=>s.mazo=v));
+    if(!esReferenciaVisual())filtros.append(selector('Filtrar por mazo',[['todos','Todos los mazos'],...Object.keys(LEADERS).map(id=>[id,LEADERS[id].n]),['cajon','El Cajón']],s.mazo,v=>s.mazo=v));
     filtros.append(selector('Filtrar por tipo',[['todos','Todos los tipos'],['protagonista','Protagonistas'],['personaje','Personajes'],['hechizo','Hechizos'],['trampa','Trampas'],['objeto','Objetos'],['lugar','Lugares']],s.tipo,v=>s.tipo=v));
     const capa=crear('section','coleccionArchivoCapa');archivoCapa=capa;detalleCapa=null;
     const escena=crear('section','coleccionEscenaArchivo');escena.setAttribute('aria-label','Archivo inmersivo de cartas');
@@ -380,15 +402,16 @@
       resumen.textContent='No hay cartas con esos filtros.';
       const vacio=crear('div','coleccionVacio');vacio.append(icono('buscar'),crear('h3','','No hay cartas con esos filtros.'),boton('Limpiar filtros',()=>{s.busqueda='';s.mazo='todos';s.tipo='todos';s.desplazamiento=0;dibujarLista();}));grid.append(vacio);programarAjuste();return;
     }
-    resumen.textContent=ids.length+' cartas'+(s.busqueda?' encontradas':' en tu colección')+' · Elige una para verla en el visor';
+    resumen.textContent=esReferenciaVisual()?ids.length+' cartas'+(s.busqueda?' encontradas':' en el Archivo visual')+' · Elige una para verla en el visor':ids.length+' cartas'+(s.busqueda?' encontradas':' en tu colección')+' · Elige una para verla en el visor';
     ids.forEach(id=>{
       const c=dato(id),a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v));let b;
-      b=boton('',()=>abrirCartaDesdeArchivo(id,b),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
+      const descripcion=esReferenciaVisual()?c.n+'. Acabados disponibles: '+propias.map(v=>NOMBRES[v]).join(', ')+'. Muestra: '+NOMBRES[a]+'. Abrir carta.':c.n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.';
+      b=boton('',()=>abrirCartaDesdeArchivo(id,b),'coleccionMini');b.dataset.carta=id;b.setAttribute('aria-label',descripcion);
       const orden=ids.indexOf(id),altura=3+(orden%5)*1.3;b.style.setProperty('--archivo-flota-demora',(orden%9)*.23+'s');b.style.setProperty('--archivo-flota-y',-altura+'px');b.style.setProperty('--archivo-flota-giro',((orden%2?1:-1)*(0.35+(orden%4)*.18))+'deg');
       b.addEventListener('pointerenter',()=>tonoMundoVisor(id),{passive:true});b.addEventListener('focus',()=>tonoMundoVisor(id));
       const ficha=carta(id,a),info=crear('span','coleccionMiniInfo');
       const pie=crear('span','coleccionMiniPie'),puntos=crear('span','coleccionPuntos');
-      propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
+      propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=esReferenciaVisual()?NOMBRES[v]+' disponible para referencia'+(v===a?' · Muestra':''):NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
       pie.append(puntos);info.append(pie);b.append(ficha,info);grid.append(b);
     });
     programarAjuste();
@@ -400,9 +423,9 @@
   function actualizarMiniatura(id){
     const mini=archivoCapa?.querySelector('.coleccionMini[data-carta="'+id+'"]');if(!mini)return;
     const a=modelo().elegido(id),propias=ACABADOS.filter(v=>modelo().tiene(id,v)),puntos=mini.querySelector('.coleccionPuntos');
-    mini.setAttribute('aria-label',dato(id).n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
+    mini.setAttribute('aria-label',esReferenciaVisual()?dato(id).n+'. Acabados disponibles: '+propias.map(v=>NOMBRES[v]).join(', ')+'. Muestra: '+NOMBRES[a]+'. Abrir carta.':dato(id).n+'. Ediciones desbloqueadas: '+propias.map(v=>NOMBRES[v]).join(', ')+'. En uso: '+NOMBRES[a]+'. Abrir carta.');
     if(!puntos)return;
-    puntos.replaceChildren();propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
+    puntos.replaceChildren();propias.forEach(v=>{const p=crear('i','propia');p.dataset.edicion=v;p.classList.toggle('elegida',v===a);p.title=esReferenciaVisual()?NOMBRES[v]+' disponible para referencia'+(v===a?' · Muestra':''):NOMBRES[v]+' desbloqueada'+(v===a?' · En uso':'');p.setAttribute('aria-hidden','true');puntos.append(p);});
   }
   function actualizarCarta(nodo){
     const soporte=nodo.matches('[data-arte-id]')?nodo:nodo.querySelector('[data-arte-id]');if(!soporte)return;
@@ -420,7 +443,7 @@
     const diseno=!id.startsWith('lider_')&&window.CAOZ_CARTA_DISENO;
     const n=diseno?diseno.crear(id,acabado):(id.startsWith('lider_')?cartaDeLiderVS(id.slice(6),''):cardEl(id,{})).cloneNode(true);
     n.classList.add('coleccionCarta');n.dataset.coleccionAcabado=acabado;n.dataset.acabado=acabado;
-    n.dataset.vistaArte=(document.getElementById('panelCerrar')?'movil_':'desktop_')+'coleccion';
+    n.dataset.vistaArte=prefijoVista()+'coleccion';
     n.removeAttribute('tabindex');n.setAttribute('aria-hidden','true');actualizarCarta(n);return n;
   }
   function cartaSobre(item){
@@ -593,7 +616,13 @@
       activarMundo('cartas');actualizarCabecera();mensaje('');
       restaurarInteraccion();
       const enfocar=()=>{if(panel?.open&&s.vista==='cartas'&&miniatura.isConnected)miniatura.focus({preventScroll:true});};
-      requestAnimationFrame(()=>{enfocar();setTimeout(enfocar,48);setTimeout(()=>{miniatura.removeAttribute('data-regreso-activa');mundoHost?.style.removeProperty('--coleccion-regreso-duracion');},Math.max(90,720-duracionRegreso));});
+      requestAnimationFrame(()=>{
+        // El FLIP ya llegó a su destino: ahora (no antes) restituimos el
+        // encuadre de Archivo para que la miniatura conserve su composición
+        // de rejilla y la siguiente apertura pueda adoptar el mismo nodo.
+        if(nodo?.isConnected){nodo.dataset.vistaArte=prefijoVista()+'coleccion';actualizarCarta(nodo);}
+        actualizarMiniatura(id);enfocar();setTimeout(enfocar,48);setTimeout(()=>{miniatura.removeAttribute('data-regreso-activa');mundoHost?.style.removeProperty('--coleccion-regreso-duracion');},Math.max(90,720-duracionRegreso));
+      });
     };
     const ok=mundo3D.devolverCarta(miniatura,{duracion:duracionRegreso,directo:true,prepararDestino,alTerminar:terminar});
     if(ok)return true;
@@ -615,21 +644,34 @@
     const versiones=crear('div','coleccionVersiones');
     ACABADOS.forEach(a=>{
       const visible=estadoEdicionVisible(s.carta,a),{tiene,cantidad,elegida}=visible,demostracion=!!visible.demostracion,slot=crear('section','coleccionVersion');slot.dataset.edicion=a;slot.classList.toggle('elegida',elegida);slot.classList.toggle('bloqueada',!tiene);slot.classList.toggle('vista',s.acabadoVista===a);
-      const etiqueta=boton(NOMBRES[a],()=>{s.acabadoVista=a;dibujarDetalle();},'coleccionElegirAcabado');etiqueta.setAttribute('aria-pressed',s.acabadoVista===a?'true':'false');etiqueta.setAttribute('aria-label',NOMBRES[a]+'. '+textoCopias(cantidad)+'.');slot.append(etiqueta,carta(s.carta,a));
+      const etiqueta=boton(NOMBRES[a],()=>{
+        s.acabadoVista=a;
+        // En el Archivo las tres caras existen para comparación visual. La
+        // elección es efímera, pero debe seguir la ficha que vuelve a la
+        // rejilla: de otro modo Foil/Dorada se verían y el siguiente viaje
+        // intentaría adoptar una Normal, creando una segunda carta.
+        if(esReferenciaVisual()){
+          guardando=true;try{modelo().seleccionar(s.carta,a);}finally{guardando=false;}
+        }
+        dibujarDetalle();
+      },'coleccionElegirAcabado');etiqueta.setAttribute('aria-pressed',s.acabadoVista===a?'true':'false');etiqueta.setAttribute('aria-label',NOMBRES[a]+'. '+textoCopias(cantidad)+'.');slot.append(etiqueta,carta(s.carta,a));
       const estadoEd=crear('span','coleccionEstadoEdicion'),copias=crear('span','coleccionCantidadEdicion',textoCopias(cantidad));copias.dataset.cantidad=cantidad;
       const separador=crear('span','coleccionCantidadSeparador','·');separador.setAttribute('aria-hidden','true');
-      const estadoTexto=demostracion?(s.demoEdiciones==='bloqueadas'?'Bloqueada · prueba':'Desbloqueada · prueba'):elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Por canje':'En sobres o canje';
+      const estadoTexto=esReferenciaVisual()?(elegida?'Muestra visual':'Disponible para referencia'):demostracion?(s.demoEdiciones==='bloqueadas'?'Bloqueada · prueba':'Desbloqueada · prueba'):elegida?'En uso':tiene?'Desbloqueada':a==='dorado'?'Por canje':'En sobres o canje';
       estadoEd.append(copias,separador,icono(demostracion?(tiene?'libro':'candado'):elegida?'check':tiene?'libro':'candado'),crear('span','',estadoTexto));slot.append(estadoEd);
-      const textoAccion=demostracion?(s.demoEdiciones==='bloqueadas'?'Bloqueada · prueba':'Desbloqueada · prueba'):elegida?'En uso':tiene?'Usar':a==='dorado'?'Ver cómo mejorar':'Ver sobres';
-      const b=boton(textoAccion,()=>{
-        if(demostracion)return;
-        if(!tiene){ir(a==='dorado'?'canje':'sobres');return;}
-        guardando=true;let ok=false;try{ok=modelo().seleccionar(s.carta,a);}finally{guardando=false;}
-        if(ok){dibujarDetalle();actualizarCabecera();mensaje(c.n+' · '+NOMBRES[a]+' equipada.');sonido('ui_confirm');const activo=contenido.querySelector('[data-edicion="'+a+'"] button');activo?.focus({preventScroll:true});}
-        else mensaje('No se pudo guardar la selección. Inténtalo de nuevo.',true);
-      },'coleccionUsar');b.disabled=demostracion||elegida;b.setAttribute('aria-label',demostracion?textoAccion+'. Vista temporal.':elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Ver cómo conseguir una Dorada':'Desbloquear Foil en sobres o por canje');slot.append(b);if(!demostracion)slot.append(mejoraDeCarta(s.carta,a));versiones.append(slot);
+      if(!esReferenciaVisual()){
+        const textoAccion=demostracion?(s.demoEdiciones==='bloqueadas'?'Bloqueada · prueba':'Desbloqueada · prueba'):elegida?'En uso':tiene?'Usar':a==='dorado'?'Ver cómo mejorar':'Ver sobres';
+        const b=boton(textoAccion,()=>{
+          if(demostracion)return;
+          if(!tiene){ir(a==='dorado'?'canje':'sobres');return;}
+          guardando=true;let ok=false;try{ok=modelo().seleccionar(s.carta,a);}finally{guardando=false;}
+          if(ok){dibujarDetalle();actualizarCabecera();mensaje(c.n+' · '+NOMBRES[a]+' equipada.');sonido('ui_confirm');const activo=contenido.querySelector('[data-edicion="'+a+'"] button');activo?.focus({preventScroll:true});}
+          else mensaje('No se pudo guardar la selección. Inténtalo de nuevo.',true);
+        },'coleccionUsar');b.disabled=demostracion||elegida;b.setAttribute('aria-label',demostracion?textoAccion+'. Vista temporal.':elegida?NOMBRES[a]+' en uso':tiene?'Usar edición '+NOMBRES[a]:a==='dorado'?'Ver cómo conseguir una Dorada':'Desbloquear Foil en sobres o por canje');slot.append(b);if(!demostracion)slot.append(mejoraDeCarta(s.carta,a));
+      }
+      versiones.append(slot);
     });
-    const demo=controlDemoEdiciones();if(demo)versiones.append(demo);
+    const demo=!esReferenciaVisual()&&controlDemoEdiciones();if(demo)versiones.append(demo);
     const zona=crear('div','coleccionDetalle3D');
     if(mundo3D?.mostrarCarta){
       // Los controles quedan en el DOM de la Colección, pero la carta se dibuja
@@ -664,7 +706,7 @@
     const linea=crear('div','coleccionReglasTitulo');linea.append(crear('strong','','Habilidades'));
     const stats=c.t==='personaje'?'Coste '+c.c+' · Ataque '+c.a+' · Vida '+c.h:c.t==='protagonista'?'Protagonista':'Coste '+c.c;linea.append(crear('span','',stats));
     reglas.append(linea,crear('p','coleccionReglaTexto'),crear('div','coleccionReglaPaginas'));destino.append(reglas);
-    destino.append(crear('p','coleccionAviso','Las tres ediciones tienen las mismas habilidades. Tu elección se usa en todas tus partidas.'));
+    destino.append(crear('p','coleccionAviso',esReferenciaVisual()?'Referencia visual: Normal, Foil y Dorada comparten la misma carta.':'Las tres ediciones tienen las mismas habilidades. Tu elección se usa en todas tus partidas.'));
     // Medir en este mismo render evita un fotograma con el retrato del tamaño
     // anterior encima del contador al alternar ediciones en teléfonos bajos.
     encajarCartas();programarAjuste();
