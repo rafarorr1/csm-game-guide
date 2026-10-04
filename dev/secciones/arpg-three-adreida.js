@@ -42,7 +42,9 @@
         geometria.setAttribute('color',new THREE.BufferAttribute(new Float32Array(p.length).fill(1),3));
         geometria.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(indices,4));
         geometria.setAttribute('skinWeight',new THREE.BufferAttribute(leer(datos.peso,Float32Array),4));
-        geometria.setIndex(new THREE.BufferAttribute(leer(datos.triangulos,Uint16Array),1));
+        // El rostro nuevo retira sólo los triángulos de la cara anterior; conserva pelo, pesos y agarres.
+        const indicesCuerpo=window.CAOZ_ADREIDA_ROSTRO_DATOS?.indicesCuerpo||datos.triangulos;
+        geometria.setIndex(new THREE.BufferAttribute(leer(indicesCuerpo,Uint16Array),1));
         if(datos.agarre){
           geometria.morphTargetsRelative=true;
           for(const [atributo,campo]of [['position','posicion'],['normal','normal']])geometria.morphAttributes[atributo]=['I','D'].map(lado=>{

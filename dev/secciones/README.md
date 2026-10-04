@@ -422,7 +422,7 @@ oleadas, y al final entra Can, el de los Goblins.
   - WASD (o flechas) mueve;
   - Adreida corre con el ciclo completo **Fast Run.fbx** aportado por el usuario: cadera, torso, cabeza, piernas, pies y brazo izquierdo. Se adapta a sus proporciones y mantiene 5,8 m/s, con 3,1 m por ciclo (unos 0,53 s). La marcha lenta conserva los apoyos con IK y 1,35 m por ciclo; ambas se mezclan según el stick. La derecha sostiene el hacha sobre el hombro; la izquierda acompaña la zancada;
   - los clics cortos encadenan tres hachazos: tajo, revés y un hachazo vertical. Mantener y soltar prepara un golpe cargado: 0,9 s para cargar al máximo, hasta ×3 el daño de ese básico y más empuje; queda inmóvil mientras carga. El brillo y el porcentaje del botón indican la carga;
-  - Adreida utiliza el modelo aprobado de Scenario / Tripo 3.1, con piel verde oliva, cabello oscuro, top y falda de cuero, hombrera con púas y cinturón de cráneos. El cuerpo con brazos y piernas modulares tiene 61.204 triángulos; el hacha de Scenario añade 4.290 y el conjunto usa dos llamadas de dibujo;
+  - Adreida utiliza el modelo aprobado de Scenario / Tripo 3.1, con piel verde oliva, cabello oscuro, top y falda de cuero, hombrera con púas y cinturón de cráneos. El cuerpo con brazos y piernas modulares conserva 60.846 triángulos tras retirar la cara anterior; el hacha añade 4.290 y la cabeza expresiva 11.824: 76.960 triángulos y cinco mallas en total;
   - El hacha de Scenario tiene filos de acero gastado, hierro oscuro grabado, bronce y mango de cuero. `arpg-three-hacha-adreida.js` enlaza una única malla a la mano derecha; comparte geometría y mapas con Adreidos. Conserva 1,625 m de largo, 0,76 m de ancho, los agarres y el búmeran de 4 m. El parry y la disolución siguen afectando al arma en mano; el proyectil tiene su propio material. Atlas de color y normales de 1024 px, superficie de 512, rugosidad mínima de 0,67 y sin emisión. Revisión aislada en `modelos-visor.html?tipo=adreida&arma=hacha`, con botón para volver al personaje. Fuentes y conversión en `hacha-adreida-scenario/`; prueba enfocada: `node dev/secciones/pruebas_arpg_hacha_adreida_scenario.mjs`;
   - Adreida descansa el hacha de doble filo sobre el hombro derecho, con la cabeza detrás y ambas manos delante del pecho; la empuña con las dos manos al atacar: cada pose dice dónde va la empuñadura y hacia dónde apunta el hacha, y los dos brazos llegan con cinemática inversa (la derecha junto al pomo y la izquierda 30 cm hacia la cabeza, siempre sobre el mango y dentro del alcance de ambos brazos);
   - en cada impacto la cabeza del hacha barre la zona que golpea, con un rastro de corte;
@@ -1599,6 +1599,14 @@ Comprobaciones específicas:
 - `node dev/secciones/pruebas_arpg_ritmo.mjs --yuka`: ritmo, rutas del pozo, participación de todos los goblins y oleadas con Yuka; sin `--yuka` comprueba la IA anterior.
 - Añadir `--medir` compara CPU de IA/combate de 24 goblins con semilla 11, cuatro rondas alternadas por modo y 1200 pasos medidos por ronda. Es una medición sin modelos ni renderizador: **no mide FPS ni coste de GPU**. La revisión inicial dio 0,156–0,158 ms/paso con Yuka y 0,167–0,175 ms/paso con la IA anterior en este equipo; repetir para comparar cambios.
 - `pruebas_arpg_hachas_fuego.mjs` conserva la comprobación de los ataques y parry; `pruebas_arpg_inspector.mjs` verifica que proveedor local, adaptador y licencia se exportan juntos.
+
+### Rostro expresivo de Adreida
+
+`adreida-rostro.html` abre el estudio facial local: nueve emociones, intensidad, mirada, parpadeo y transiciones. Permite aislar la cabeza o verla en el personaje completo. Usa exactamente las mallas y controles del juego; mover la cámara no modifica la actuación.
+
+La nueva cabeza combina un sculpt propio de Scenario con topología y unidades faciales CC0 de MakeHuman/MPFB, adaptadas en Blender. Tiene 20 canales de deformación, globos oculares independientes, dientes, colmillos y mapas PBR de 2048 px. El runtime `arpg-three-rostro-adreida.js` comparte geometrías y texturas entre Adreida y Adreidos, manteniendo sus expresiones independientes. Las reacciones de combate y la cinemática del Mago ya usan el rostro.
+
+La procedencia, reconstrucción y límites están en [adreida-rostro/README.md](adreida-rostro/README.md). Los controles permiten preparar actuación sin diálogo; un acabado cinematográfico final exige seguir puliendo cabello, correctivos extremos y la actuación de cada plano. Pruebas específicas: `node dev/secciones/pruebas_arpg_rostro_runtime.mjs` y `node dev/secciones/pruebas_arpg_rostro_adreida.mjs`.
 
 ### Propuesta de HUD · Caoz ARPG
 

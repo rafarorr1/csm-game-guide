@@ -1,0 +1,2283 @@
+{
+  "fuenteSculpt": "/Users/rafaelrosales/Documents/Codex/2026-09-29/quiero-trabajar-en-un-juego-que/outputs/cara-adreida/fuente-orientada.blend",
+  "meshFuente": "tripo_node_d546b19e-d205-4720-bf1d-4524d528e37e",
+  "formulaFrente": "gameX=(px-512)*0.49/1024; gameY=1.715+(512-py)*0.49/1024; gameZ=-blenderY obtenido por raycast",
+  "offsetVerticalFinal": -0.02,
+  "notaOffset": "destinoJuego NO tiene offset. destinoJuegoFinal YA tiene -0.020m para encajar el pelo; elegir una sola convenci\u00f3n. El sculpt y la malla retopologizada deben compartir offset final.",
+  "advertencia": "Puntos frontales marcados manualmente sobre render 1024. Anclas de orejaSuperior corresponden a punta semiorca. Comisuras evitan puntas de colmillos. Radio ocular propuesto debe verificarse en cierre y mirada.",
+  "anclas": {
+    "canthusInteriorI": {
+      "nombre": "canthusInteriorI",
+      "fuenteMPFB": [
+        0.1676,
+        7.2761,
+        1.3942
+      ],
+      "indicesCabeza": [
+        2300
+      ],
+      "destinoJuego": [
+        0.022490235045552254,
+        1.785341739654541,
+        0.043766796588897705
+      ],
+      "destinoJuegoFinal": [
+        0.022490235045552254,
+        1.765341739654541,
+        0.043766796588897705
+      ],
+      "destinoBlender": [
+        0.022490235045552254,
+        -0.043766796588897705,
+        1.785341739654541
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        559,
+        365
+      ],
+      "triangulo": 54672
+    },
+    "canthusExteriorI": {
+      "nombre": "canthusExteriorI",
+      "fuenteMPFB": [
+        0.4531,
+        7.2897,
+        1.3462
+      ],
+      "indicesCabeza": [
+        2255
+      ],
+      "destinoJuego": [
+        0.06316406279802322,
+        1.7906054258346558,
+        0.035789668560028076
+      ],
+      "destinoJuegoFinal": [
+        0.06316406279802322,
+        1.7706054258346557,
+        0.035789668560028076
+      ],
+      "destinoBlender": [
+        0.06316406279802322,
+        -0.035789668560028076,
+        1.7906054258346558
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        644,
+        354
+      ],
+      "triangulo": 69139
+    },
+    "parpadoSuperiorI": {
+      "nombre": "parpadoSuperiorI",
+      "fuenteMPFB": [
+        0.3095,
+        7.3456,
+        1.4117
+      ],
+      "indicesCabeza": [
+        2236
+      ],
+      "destinoJuego": [
+        0.04354492202401161,
+        1.7977832555770874,
+        0.04845237731933594
+      ],
+      "destinoJuegoFinal": [
+        0.04354492202401161,
+        1.7777832555770874,
+        0.04845237731933594
+      ],
+      "destinoBlender": [
+        0.04354492202401161,
+        -0.04845237731933594,
+        1.7977832555770874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        603,
+        339
+      ],
+      "triangulo": 62137
+    },
+    "parpadoInferiorI": {
+      "nombre": "parpadoInferiorI",
+      "fuenteMPFB": [
+        0.3097,
+        7.2215,
+        1.3981
+      ],
+      "indicesCabeza": [
+        2276
+      ],
+      "destinoJuego": [
+        0.04354492202401161,
+        1.7800781726837158,
+        0.04393637180328369
+      ],
+      "destinoJuegoFinal": [
+        0.04354492202401161,
+        1.7600781726837158,
+        0.04393637180328369
+      ],
+      "destinoBlender": [
+        0.04354492202401161,
+        -0.04393637180328369,
+        1.7800781726837158
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        603,
+        376
+      ],
+      "triangulo": 62552
+    },
+    "canthusInteriorD": {
+      "nombre": "canthusInteriorD",
+      "fuenteMPFB": [
+        -0.1676,
+        7.2761,
+        1.3942
+      ],
+      "indicesCabeza": [
+        67
+      ],
+      "destinoJuego": [
+        -0.02153320237994194,
+        1.785341739654541,
+        0.04454195499420166
+      ],
+      "destinoJuegoFinal": [
+        -0.02153320237994194,
+        1.765341739654541,
+        0.04454195499420166
+      ],
+      "destinoBlender": [
+        -0.02153320237994194,
+        -0.04454195499420166,
+        1.785341739654541
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        467,
+        365
+      ],
+      "triangulo": 41558
+    },
+    "canthusExteriorD": {
+      "nombre": "canthusExteriorD",
+      "fuenteMPFB": [
+        -0.4531,
+        7.2897,
+        1.3462
+      ],
+      "indicesCabeza": [
+        22
+      ],
+      "destinoJuego": [
+        -0.06220703199505806,
+        1.7906054258346558,
+        0.036853909492492676
+      ],
+      "destinoJuegoFinal": [
+        -0.06220703199505806,
+        1.7706054258346557,
+        0.036853909492492676
+      ],
+      "destinoBlender": [
+        -0.06220703199505806,
+        -0.036853909492492676,
+        1.7906054258346558
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        382,
+        354
+      ],
+      "triangulo": 28205
+    },
+    "parpadoSuperiorD": {
+      "nombre": "parpadoSuperiorD",
+      "fuenteMPFB": [
+        -0.3095,
+        7.3456,
+        1.4117
+      ],
+      "indicesCabeza": [
+        3
+      ],
+      "destinoJuego": [
+        -0.041630860418081284,
+        1.7977832555770874,
+        0.05134320259094238
+      ],
+      "destinoJuegoFinal": [
+        -0.041630860418081284,
+        1.7777832555770874,
+        0.05134320259094238
+      ],
+      "destinoBlender": [
+        -0.041630860418081284,
+        -0.05134320259094238,
+        1.7977832555770874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        425,
+        339
+      ],
+      "triangulo": 35239
+    },
+    "parpadoInferiorD": {
+      "nombre": "parpadoInferiorD",
+      "fuenteMPFB": [
+        -0.3097,
+        7.2215,
+        1.3981
+      ],
+      "indicesCabeza": [
+        43
+      ],
+      "destinoJuego": [
+        -0.041630860418081284,
+        1.7800781726837158,
+        0.04563868045806885
+      ],
+      "destinoJuegoFinal": [
+        -0.041630860418081284,
+        1.7600781726837158,
+        0.04563868045806885
+      ],
+      "destinoBlender": [
+        -0.041630860418081284,
+        -0.04563868045806885,
+        1.7800781726837158
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        425,
+        376
+      ],
+      "triangulo": 35342
+    },
+    "bordePalpebralSuperiorI": {
+      "nombre": "bordePalpebralSuperiorI",
+      "fuenteMPFB": [
+        0.311,
+        7.3315,
+        1.4107
+      ],
+      "indicesCabeza": [
+        2234
+      ],
+      "destinoJuego": [
+        0.04306640475988388,
+        1.7949120998382568,
+        0.04603219032287598
+      ],
+      "destinoJuegoFinal": [
+        0.04306640475988388,
+        1.7749120998382568,
+        0.04603219032287598
+      ],
+      "destinoBlender": [
+        0.04306640475988388,
+        -0.04603219032287598,
+        1.7949120998382568
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        602,
+        345
+      ],
+      "triangulo": 62043
+    },
+    "bordePalpebralInferiorI": {
+      "nombre": "bordePalpebralInferiorI",
+      "fuenteMPFB": [
+        0.3109,
+        7.2395,
+        1.4046
+      ],
+      "indicesCabeza": [
+        2277
+      ],
+      "destinoJuego": [
+        0.04258789122104645,
+        1.7839062213897705,
+        0.040570735931396484
+      ],
+      "destinoJuegoFinal": [
+        0.04258789122104645,
+        1.7639062213897705,
+        0.040570735931396484
+      ],
+      "destinoBlender": [
+        0.04258789122104645,
+        -0.040570735931396484,
+        1.7839062213897705
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        601,
+        368
+      ],
+      "triangulo": 62360
+    },
+    "bordePalpebralSuperiorD": {
+      "nombre": "bordePalpebralSuperiorD",
+      "fuenteMPFB": [
+        -0.311,
+        7.3315,
+        1.4107
+      ],
+      "indicesCabeza": [
+        1
+      ],
+      "destinoJuego": [
+        -0.041630860418081284,
+        1.7949120998382568,
+        0.041308462619781494
+      ],
+      "destinoJuegoFinal": [
+        -0.041630860418081284,
+        1.7749120998382568,
+        0.041308462619781494
+      ],
+      "destinoBlender": [
+        -0.041630860418081284,
+        -0.041308462619781494,
+        1.7949120998382568
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        425,
+        345
+      ],
+      "triangulo": 35610
+    },
+    "bordePalpebralInferiorD": {
+      "nombre": "bordePalpebralInferiorD",
+      "fuenteMPFB": [
+        -0.3109,
+        7.2395,
+        1.4046
+      ],
+      "indicesCabeza": [
+        44
+      ],
+      "destinoJuego": [
+        -0.041630860418081284,
+        1.7839062213897705,
+        0.04183340072631836
+      ],
+      "destinoJuegoFinal": [
+        -0.041630860418081284,
+        1.7639062213897705,
+        0.04183340072631836
+      ],
+      "destinoBlender": [
+        -0.041630860418081284,
+        -0.04183340072631836,
+        1.7839062213897705
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        425,
+        368
+      ],
+      "triangulo": 35253
+    },
+    "cejaInteriorI": {
+      "nombre": "cejaInteriorI",
+      "fuenteMPFB": [
+        0.1185,
+        7.3232,
+        1.4463
+      ],
+      "indicesCabeza": [
+        2346
+      ],
+      "destinoJuego": [
+        0.022968750447034836,
+        1.8044824600219727,
+        0.06288641691207886
+      ],
+      "destinoJuegoFinal": [
+        0.022968750447034836,
+        1.7844824600219726,
+        0.06288641691207886
+      ],
+      "destinoBlender": [
+        0.022968750447034836,
+        -0.06288641691207886,
+        1.8044824600219727
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        560,
+        325
+      ],
+      "triangulo": 54751
+    },
+    "cejaCentroI": {
+      "nombre": "cejaCentroI",
+      "fuenteMPFB": [
+        0.4086,
+        7.3923,
+        1.3801
+      ],
+      "indicesCabeza": [
+        2397
+      ],
+      "destinoJuego": [
+        0.04545898362994194,
+        1.8130956888198853,
+        0.059282779693603516
+      ],
+      "destinoJuegoFinal": [
+        0.04545898362994194,
+        1.7930956888198852,
+        0.059282779693603516
+      ],
+      "destinoBlender": [
+        0.04545898362994194,
+        -0.059282779693603516,
+        1.8130956888198853
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        607,
+        307
+      ],
+      "triangulo": 62986
+    },
+    "cejaExteriorI": {
+      "nombre": "cejaExteriorI",
+      "fuenteMPFB": [
+        0.5485,
+        7.3092,
+        1.2618
+      ],
+      "indicesCabeza": [
+        2413
+      ],
+      "destinoJuego": [
+        0.06794922053813934,
+        1.811181664466858,
+        0.041045546531677246
+      ],
+      "destinoJuegoFinal": [
+        0.06794922053813934,
+        1.791181664466858,
+        0.041045546531677246
+      ],
+      "destinoBlender": [
+        0.06794922053813934,
+        -0.041045546531677246,
+        1.811181664466858
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        654,
+        311
+      ],
+      "triangulo": 71029
+    },
+    "cejaInteriorD": {
+      "nombre": "cejaInteriorD",
+      "fuenteMPFB": [
+        -0.1185,
+        7.3232,
+        1.4463
+      ],
+      "indicesCabeza": [
+        113
+      ],
+      "destinoJuego": [
+        -0.021054686978459358,
+        1.8044824600219727,
+        0.0631217360496521
+      ],
+      "destinoJuegoFinal": [
+        -0.021054686978459358,
+        1.7844824600219726,
+        0.0631217360496521
+      ],
+      "destinoBlender": [
+        -0.021054686978459358,
+        -0.0631217360496521,
+        1.8044824600219727
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        468,
+        325
+      ],
+      "triangulo": 41717
+    },
+    "cejaCentroD": {
+      "nombre": "cejaCentroD",
+      "fuenteMPFB": [
+        -0.4086,
+        7.3923,
+        1.3801
+      ],
+      "indicesCabeza": [
+        172
+      ],
+      "destinoJuego": [
+        -0.04833007976412773,
+        1.8130956888198853,
+        0.05693930387496948
+      ],
+      "destinoJuegoFinal": [
+        -0.04833007976412773,
+        1.7930956888198852,
+        0.05693930387496948
+      ],
+      "destinoBlender": [
+        -0.04833007976412773,
+        -0.05693930387496948,
+        1.8130956888198853
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        411,
+        307
+      ],
+      "triangulo": 33017
+    },
+    "cejaExteriorD": {
+      "nombre": "cejaExteriorD",
+      "fuenteMPFB": [
+        -0.5485,
+        7.3092,
+        1.2618
+      ],
+      "indicesCabeza": [
+        188
+      ],
+      "destinoJuego": [
+        -0.06890624761581421,
+        1.811181664466858,
+        0.037407875061035156
+      ],
+      "destinoJuegoFinal": [
+        -0.06890624761581421,
+        1.791181664466858,
+        0.037407875061035156
+      ],
+      "destinoBlender": [
+        -0.06890624761581421,
+        -0.037407875061035156,
+        1.811181664466858
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        368,
+        311
+      ],
+      "triangulo": 25548
+    },
+    "puenteNariz": {
+      "nombre": "puenteNariz",
+      "fuenteMPFB": [
+        0.0,
+        7.3231,
+        1.5057
+      ],
+      "indicesCabeza": [
+        132
+      ],
+      "destinoJuego": [
+        0.0,
+        1.790126919746399,
+        0.06475615501403809
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.770126919746399,
+        0.06475615501403809
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.06475615501403809,
+        1.790126919746399
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        355
+      ],
+      "triangulo": 47872
+    },
+    "dorsoNariz": {
+      "nombre": "dorsoNariz",
+      "fuenteMPFB": [
+        0.0,
+        7.1046,
+        1.583
+      ],
+      "indicesCabeza": [
+        164
+      ],
+      "destinoJuego": [
+        0.0,
+        1.7623730897903442,
+        0.08193397521972656
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.7423730897903442,
+        0.08193397521972656
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.08193397521972656,
+        1.7623730897903442
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        413
+      ],
+      "triangulo": 47987
+    },
+    "puntaNariz": {
+      "nombre": "puntaNariz",
+      "fuenteMPFB": [
+        0.0,
+        6.909,
+        1.6807
+      ],
+      "indicesCabeza": [
+        297
+      ],
+      "destinoJuego": [
+        0.0,
+        1.7408398389816284,
+        0.09504979848861694
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.7208398389816284,
+        0.09504979848861694
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.09504979848861694,
+        1.7408398389816284
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        458
+      ],
+      "triangulo": 47516
+    },
+    "baseNariz": {
+      "nombre": "baseNariz",
+      "fuenteMPFB": [
+        0.0,
+        6.8268,
+        1.6033
+      ],
+      "indicesCabeza": [
+        312
+      ],
+      "destinoJuego": [
+        0.0,
+        1.7307909727096558,
+        0.08729428052902222
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.7107909727096557,
+        0.08729428052902222
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.08729428052902222,
+        1.7307909727096558
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        479
+      ],
+      "triangulo": 47737
+    },
+    "columela": {
+      "nombre": "columela",
+      "fuenteMPFB": [
+        0.0,
+        6.7894,
+        1.5627
+      ],
+      "indicesCabeza": [
+        343
+      ],
+      "destinoJuego": [
+        0.0,
+        1.7250487804412842,
+        0.07843810319900513
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.7050487804412842,
+        0.07843810319900513
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.07843810319900513,
+        1.7250487804412842
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        491
+      ],
+      "triangulo": 48287
+    },
+    "filtrum": {
+      "nombre": "filtrum",
+      "fuenteMPFB": [
+        0.0,
+        6.7502,
+        1.5635
+      ],
+      "indicesCabeza": [
+        1776
+      ],
+      "destinoJuego": [
+        0.0,
+        1.7169140577316284,
+        0.08127415180206299
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.6969140577316284,
+        0.08127415180206299
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.08127415180206299,
+        1.7169140577316284
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        508
+      ],
+      "triangulo": 47867
+    },
+    "alaNarizI": {
+      "nombre": "alaNarizI",
+      "fuenteMPFB": [
+        0.1687,
+        6.881,
+        1.5072
+      ],
+      "indicesCabeza": [
+        2548
+      ],
+      "destinoJuego": [
+        0.018183594569563866,
+        1.7370116710662842,
+        0.07339394092559814
+      ],
+      "destinoJuegoFinal": [
+        0.018183594569563866,
+        1.7170116710662842,
+        0.07339394092559814
+      ],
+      "destinoBlender": [
+        0.018183594569563866,
+        -0.07339394092559814,
+        1.7370116710662842
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        550,
+        466
+      ],
+      "triangulo": 52836
+    },
+    "alaNarizD": {
+      "nombre": "alaNarizD",
+      "fuenteMPFB": [
+        -0.1687,
+        6.881,
+        1.5072
+      ],
+      "indicesCabeza": [
+        337
+      ],
+      "destinoJuego": [
+        -0.017705077305436134,
+        1.7370116710662842,
+        0.07750707864761353
+      ],
+      "destinoJuegoFinal": [
+        -0.017705077305436134,
+        1.7170116710662842,
+        0.07750707864761353
+      ],
+      "destinoBlender": [
+        -0.017705077305436134,
+        -0.07750707864761353,
+        1.7370116710662842
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        475,
+        466
+      ],
+      "triangulo": 42655
+    },
+    "comisuraI": {
+      "nombre": "comisuraI",
+      "fuenteMPFB": [
+        0.25545,
+        6.61045,
+        1.4043999999999999
+      ],
+      "indicesCabeza": [
+        2611,
+        2644
+      ],
+      "destinoJuego": [
+        0.039238281548023224,
+        1.6972949504852295,
+        0.059593796730041504
+      ],
+      "destinoJuegoFinal": [
+        0.039238281548023224,
+        1.6772949504852295,
+        0.059593796730041504
+      ],
+      "destinoBlender": [
+        0.039238281548023224,
+        -0.059593796730041504,
+        1.6972949504852295
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        594,
+        549
+      ],
+      "triangulo": 60780
+    },
+    "comisuraD": {
+      "nombre": "comisuraD",
+      "fuenteMPFB": [
+        -0.25545,
+        6.61045,
+        1.4043999999999999
+      ],
+      "indicesCabeza": [
+        402,
+        435
+      ],
+      "destinoJuego": [
+        -0.036845702677965164,
+        1.6972949504852295,
+        0.061099112033843994
+      ],
+      "destinoJuegoFinal": [
+        -0.036845702677965164,
+        1.6772949504852295,
+        0.061099112033843994
+      ],
+      "destinoBlender": [
+        -0.036845702677965164,
+        -0.061099112033843994,
+        1.6972949504852295
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        435,
+        549
+      ],
+      "triangulo": 36948
+    },
+    "labioSuperior": {
+      "nombre": "labioSuperior",
+      "fuenteMPFB": [
+        0.0,
+        6.6743500000000004,
+        1.54825
+      ],
+      "indicesCabeza": [
+        509,
+        571
+      ],
+      "destinoJuego": [
+        0.0,
+        1.7049511671066284,
+        0.08357226848602295
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.6849511671066284,
+        0.08357226848602295
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.08357226848602295,
+        1.7049511671066284
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        533
+      ],
+      "triangulo": 48057
+    },
+    "labioInferior": {
+      "nombre": "labioInferior",
+      "fuenteMPFB": [
+        0.0,
+        6.5666,
+        1.53105
+      ],
+      "indicesCabeza": [
+        495,
+        557
+      ],
+      "destinoJuego": [
+        0.0,
+        1.6905957460403442,
+        0.08242172002792358
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.6705957460403442,
+        0.08242172002792358
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.08242172002792358,
+        1.6905957460403442
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        563
+      ],
+      "triangulo": 47866
+    },
+    "labioSuperiorI": {
+      "nombre": "labioSuperiorI",
+      "fuenteMPFB": [
+        0.11904999999999999,
+        6.67465,
+        1.51655
+      ],
+      "indicesCabeza": [
+        2661,
+        2742
+      ],
+      "destinoJuego": [
+        0.022968750447034836,
+        1.703515648841858,
+        0.076080322265625
+      ],
+      "destinoJuegoFinal": [
+        0.022968750447034836,
+        1.683515648841858,
+        0.076080322265625
+      ],
+      "destinoBlender": [
+        0.022968750447034836,
+        -0.076080322265625,
+        1.703515648841858
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        560,
+        536
+      ],
+      "triangulo": 54739
+    },
+    "labioSuperiorD": {
+      "nombre": "labioSuperiorD",
+      "fuenteMPFB": [
+        -0.11904999999999999,
+        6.67465,
+        1.51655
+      ],
+      "indicesCabeza": [
+        452,
+        550
+      ],
+      "destinoJuego": [
+        -0.021054686978459358,
+        1.703515648841858,
+        0.07479143142700195
+      ],
+      "destinoJuegoFinal": [
+        -0.021054686978459358,
+        1.683515648841858,
+        0.07479143142700195
+      ],
+      "destinoBlender": [
+        -0.021054686978459358,
+        -0.07479143142700195,
+        1.703515648841858
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        468,
+        536
+      ],
+      "triangulo": 41614
+    },
+    "labioInferiorI": {
+      "nombre": "labioInferiorI",
+      "fuenteMPFB": [
+        0.11605,
+        6.5781,
+        1.4958
+      ],
+      "indicesCabeza": [
+        2687,
+        2744
+      ],
+      "destinoJuego": [
+        0.02201171964406967,
+        1.691074252128601,
+        0.07811832427978516
+      ],
+      "destinoJuegoFinal": [
+        0.02201171964406967,
+        1.671074252128601,
+        0.07811832427978516
+      ],
+      "destinoBlender": [
+        0.02201171964406967,
+        -0.07811832427978516,
+        1.691074252128601
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        558,
+        562
+      ],
+      "triangulo": 54523
+    },
+    "labioInferiorD": {
+      "nombre": "labioInferiorD",
+      "fuenteMPFB": [
+        -0.11605,
+        6.5781,
+        1.4958
+      ],
+      "indicesCabeza": [
+        483,
+        552
+      ],
+      "destinoJuego": [
+        -0.021054686978459358,
+        1.691074252128601,
+        0.07528358697891235
+      ],
+      "destinoJuegoFinal": [
+        -0.021054686978459358,
+        1.671074252128601,
+        0.07528358697891235
+      ],
+      "destinoBlender": [
+        -0.021054686978459358,
+        -0.07528358697891235,
+        1.691074252128601
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        468,
+        562
+      ],
+      "triangulo": 41264
+    },
+    "mentonInferior": {
+      "nombre": "mentonInferior",
+      "fuenteMPFB": [
+        0.0,
+        6.2006,
+        1.4344
+      ],
+      "indicesCabeza": [
+        1659
+      ],
+      "destinoJuego": [
+        0.0,
+        1.6365234851837158,
+        0.07054245471954346
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.6165234851837158,
+        0.07054245471954346
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.07054245471954346,
+        1.6365234851837158
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        676
+      ],
+      "triangulo": 47940
+    },
+    "mentonFrontal": {
+      "nombre": "mentonFrontal",
+      "fuenteMPFB": [
+        0.0,
+        6.3268,
+        1.499
+      ],
+      "indicesCabeza": [
+        1596
+      ],
+      "destinoJuego": [
+        0.0,
+        1.65087890625,
+        0.07876324653625488
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.63087890625,
+        0.07876324653625488
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.07876324653625488,
+        1.65087890625
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        646
+      ],
+      "triangulo": 47749
+    },
+    "submenton": {
+      "nombre": "submenton",
+      "fuenteMPFB": [
+        0.0,
+        6.1645,
+        1.1405
+      ],
+      "indicesCabeza": [
+        783
+      ],
+      "destinoJuego": [
+        0.0,
+        1.631259799003601,
+        0.009342372417449951
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.611259799003601,
+        0.009342372417449951
+      ],
+      "destinoBlender": [
+        0.0,
+        -0.009342372417449951,
+        1.631259799003601
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        687
+      ],
+      "triangulo": 48310
+    },
+    "mandibulaAnguloI": {
+      "nombre": "mandibulaAnguloI",
+      "fuenteMPFB": [
+        0.5796,
+        6.6127,
+        0.8261
+      ],
+      "indicesCabeza": [
+        3041
+      ],
+      "destinoJuego": [
+        0.07512695342302322,
+        1.689638614654541,
+        0.007105827331542969
+      ],
+      "destinoJuegoFinal": [
+        0.07512695342302322,
+        1.669638614654541,
+        0.007105827331542969
+      ],
+      "destinoBlender": [
+        0.07512695342302322,
+        -0.007105827331542969,
+        1.689638614654541
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        669,
+        565
+      ],
+      "triangulo": 73937
+    },
+    "mandibulaAnguloD": {
+      "nombre": "mandibulaAnguloD",
+      "fuenteMPFB": [
+        -0.5796,
+        6.6127,
+        0.8261
+      ],
+      "indicesCabeza": [
+        889
+      ],
+      "destinoJuego": [
+        -0.07560546696186066,
+        1.689638614654541,
+        0.0006639361381530762
+      ],
+      "destinoJuegoFinal": [
+        -0.07560546696186066,
+        1.669638614654541,
+        0.0006639361381530762
+      ],
+      "destinoBlender": [
+        -0.07560546696186066,
+        -0.0006639361381530762,
+        1.689638614654541
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        354,
+        565
+      ],
+      "triangulo": 21441
+    },
+    "mandibulaFrontalI": {
+      "nombre": "mandibulaFrontalI",
+      "fuenteMPFB": [
+        0.2822,
+        6.316,
+        1.3088
+      ],
+      "indicesCabeza": [
+        3789
+      ],
+      "destinoJuego": [
+        0.04498047009110451,
+        1.6542285680770874,
+        0.04582715034484863
+      ],
+      "destinoJuegoFinal": [
+        0.04498047009110451,
+        1.6342285680770874,
+        0.04582715034484863
+      ],
+      "destinoBlender": [
+        0.04498047009110451,
+        -0.04582715034484863,
+        1.6542285680770874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        606,
+        639
+      ],
+      "triangulo": 62263
+    },
+    "mandibulaFrontalD": {
+      "nombre": "mandibulaFrontalD",
+      "fuenteMPFB": [
+        -0.2822,
+        6.316,
+        1.3088
+      ],
+      "indicesCabeza": [
+        1657
+      ],
+      "destinoJuego": [
+        -0.044501952826976776,
+        1.6542285680770874,
+        0.036994993686676025
+      ],
+      "destinoJuegoFinal": [
+        -0.044501952826976776,
+        1.6342285680770874,
+        0.036994993686676025
+      ],
+      "destinoBlender": [
+        -0.044501952826976776,
+        -0.036994993686676025,
+        1.6542285680770874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        419,
+        639
+      ],
+      "triangulo": 34294
+    },
+    "mandibulaArticulacionI": {
+      "nombre": "mandibulaArticulacionI",
+      "fuenteMPFB": [
+        0.6924,
+        6.9527,
+        0.7108
+      ],
+      "indicesCabeza": [
+        3668
+      ],
+      "destinoJuego": [
+        0.08708984404802322,
+        1.7279199361801147,
+        -0.02452850341796875
+      ],
+      "destinoJuegoFinal": [
+        0.08708984404802322,
+        1.7079199361801147,
+        -0.02452850341796875
+      ],
+      "destinoBlender": [
+        0.08708984404802322,
+        0.02452850341796875,
+        1.7279199361801147
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        694,
+        485
+      ],
+      "triangulo": 80405
+    },
+    "mandibulaArticulacionD": {
+      "nombre": "mandibulaArticulacionD",
+      "fuenteMPFB": [
+        -0.6924,
+        6.9527,
+        0.7108
+      ],
+      "indicesCabeza": [
+        1531
+      ],
+      "destinoJuego": [
+        -0.08613280951976776,
+        1.7279199361801147,
+        -0.05865788459777832
+      ],
+      "destinoJuegoFinal": [
+        -0.08613280951976776,
+        1.7079199361801147,
+        -0.05865788459777832
+      ],
+      "destinoBlender": [
+        -0.08613280951976776,
+        0.05865788459777832,
+        1.7279199361801147
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        332,
+        485
+      ],
+      "triangulo": 17098
+    },
+    "pomuloI": {
+      "nombre": "pomuloI",
+      "fuenteMPFB": [
+        0.4689,
+        6.9935,
+        1.3472
+      ],
+      "indicesCabeza": [
+        3704
+      ],
+      "destinoJuego": [
+        0.06268554925918579,
+        1.7604589462280273,
+        0.04556381702423096
+      ],
+      "destinoJuegoFinal": [
+        0.06268554925918579,
+        1.7404589462280273,
+        0.04556381702423096
+      ],
+      "destinoBlender": [
+        0.06268554925918579,
+        -0.04556381702423096,
+        1.7604589462280273
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        643,
+        417
+      ],
+      "triangulo": 68702
+    },
+    "pomuloD": {
+      "nombre": "pomuloD",
+      "fuenteMPFB": [
+        -0.4689,
+        6.9935,
+        1.3472
+      ],
+      "indicesCabeza": [
+        1567
+      ],
+      "destinoJuego": [
+        -0.06172851473093033,
+        1.7604589462280273,
+        0.04544597864151001
+      ],
+      "destinoJuegoFinal": [
+        -0.06172851473093033,
+        1.7404589462280273,
+        0.04544597864151001
+      ],
+      "destinoBlender": [
+        -0.06172851473093033,
+        -0.04544597864151001,
+        1.7604589462280273
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        383,
+        417
+      ],
+      "triangulo": 28412
+    },
+    "mejillaI": {
+      "nombre": "mejillaI",
+      "fuenteMPFB": [
+        0.5503,
+        6.7903,
+        1.1837
+      ],
+      "indicesCabeza": [
+        3723
+      ],
+      "destinoJuego": [
+        0.05694336071610451,
+        1.7236132621765137,
+        0.052184343338012695
+      ],
+      "destinoJuegoFinal": [
+        0.05694336071610451,
+        1.7036132621765137,
+        0.052184343338012695
+      ],
+      "destinoBlender": [
+        0.05694336071610451,
+        -0.052184343338012695,
+        1.7236132621765137
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        631,
+        494
+      ],
+      "triangulo": 66793
+    },
+    "mejillaD": {
+      "nombre": "mejillaD",
+      "fuenteMPFB": [
+        -0.5503,
+        6.7903,
+        1.1837
+      ],
+      "indicesCabeza": [
+        1587
+      ],
+      "destinoJuego": [
+        -0.058378905057907104,
+        1.7236132621765137,
+        0.048909127712249756
+      ],
+      "destinoJuegoFinal": [
+        -0.058378905057907104,
+        1.7036132621765137,
+        0.048909127712249756
+      ],
+      "destinoBlender": [
+        -0.058378905057907104,
+        -0.048909127712249756,
+        1.7236132621765137
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        390,
+        494
+      ],
+      "triangulo": 29850
+    },
+    "sienI": {
+      "nombre": "sienI",
+      "fuenteMPFB": [
+        0.7131,
+        7.6112,
+        0.7985
+      ],
+      "indicesCabeza": [
+        4115
+      ],
+      "destinoJuego": [
+        0.08565429598093033,
+        1.8188378810882568,
+        -0.025535225868225098
+      ],
+      "destinoJuegoFinal": [
+        0.08565429598093033,
+        1.7988378810882568,
+        -0.025535225868225098
+      ],
+      "destinoBlender": [
+        0.08565429598093033,
+        0.025535225868225098,
+        1.8188378810882568
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        691,
+        295
+      ],
+      "triangulo": 79625
+    },
+    "sienD": {
+      "nombre": "sienD",
+      "fuenteMPFB": [
+        -0.7131,
+        7.6112,
+        0.7985
+      ],
+      "indicesCabeza": [
+        1996
+      ],
+      "destinoJuego": [
+        -0.08661133050918579,
+        1.8188378810882568,
+        -0.03785562515258789
+      ],
+      "destinoJuegoFinal": [
+        -0.08661133050918579,
+        1.7988378810882568,
+        -0.03785562515258789
+      ],
+      "destinoBlender": [
+        -0.08661133050918579,
+        0.03785562515258789,
+        1.8188378810882568
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        331,
+        295
+      ],
+      "triangulo": 16621
+    },
+    "frenteI": {
+      "nombre": "frenteI",
+      "fuenteMPFB": [
+        0.2693,
+        7.8177,
+        1.4145
+      ],
+      "indicesCabeza": [
+        2460
+      ],
+      "destinoJuego": [
+        0.026796875521540642,
+        1.8456348180770874,
+        0.0545620322227478
+      ],
+      "destinoJuegoFinal": [
+        0.026796875521540642,
+        1.8256348180770874,
+        0.0545620322227478
+      ],
+      "destinoBlender": [
+        0.026796875521540642,
+        -0.0545620322227478,
+        1.8456348180770874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        568,
+        239
+      ],
+      "triangulo": 56348
+    },
+    "frenteD": {
+      "nombre": "frenteD",
+      "fuenteMPFB": [
+        -0.2693,
+        7.8177,
+        1.4145
+      ],
+      "indicesCabeza": [
+        240
+      ],
+      "destinoJuego": [
+        -0.026796875521540642,
+        1.8456348180770874,
+        0.05353516340255737
+      ],
+      "destinoJuegoFinal": [
+        -0.026796875521540642,
+        1.8256348180770874,
+        0.05353516340255737
+      ],
+      "destinoBlender": [
+        -0.026796875521540642,
+        -0.05353516340255737,
+        1.8456348180770874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        456,
+        239
+      ],
+      "triangulo": 39575
+    },
+    "orejaFrontalI": {
+      "nombre": "orejaFrontalI",
+      "fuenteMPFB": [
+        0.7084,
+        6.9745,
+        0.6333
+      ],
+      "indicesCabeza": [
+        3976
+      ],
+      "destinoJuego": [
+        0.09666015952825546,
+        1.7738574743270874,
+        -0.07015013694763184
+      ],
+      "destinoJuegoFinal": [
+        0.09666015952825546,
+        1.7538574743270874,
+        -0.07015013694763184
+      ],
+      "destinoBlender": [
+        0.09666015952825546,
+        0.07015013694763184,
+        1.7738574743270874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        714,
+        389
+      ],
+      "triangulo": 84397
+    },
+    "orejaFrontalD": {
+      "nombre": "orejaFrontalD",
+      "fuenteMPFB": [
+        -0.7084,
+        6.9745,
+        0.6333
+      ],
+      "indicesCabeza": [
+        1855
+      ],
+      "destinoJuego": [
+        -0.0971386730670929,
+        1.7738574743270874,
+        -0.06794357299804688
+      ],
+      "destinoJuegoFinal": [
+        -0.0971386730670929,
+        1.7538574743270874,
+        -0.06794357299804688
+      ],
+      "destinoBlender": [
+        -0.0971386730670929,
+        0.06794357299804688,
+        1.7738574743270874
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        309,
+        389
+      ],
+      "triangulo": 12958
+    },
+    "orejaSuperiorI": {
+      "nombre": "orejaSuperiorI",
+      "fuenteMPFB": [
+        0.84355,
+        7.3148,
+        0.44455
+      ],
+      "indicesCabeza": [
+        3971,
+        4012
+      ],
+      "destinoJuego": [
+        0.15073242783546448,
+        1.814052700996399,
+        -0.13495147228240967
+      ],
+      "destinoJuegoFinal": [
+        0.15073242783546448,
+        1.794052700996399,
+        -0.13495147228240967
+      ],
+      "destinoBlender": [
+        0.15073242783546448,
+        0.13495147228240967,
+        1.814052700996399
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        827,
+        305
+      ],
+      "triangulo": 92007
+    },
+    "orejaSuperiorD": {
+      "nombre": "orejaSuperiorD",
+      "fuenteMPFB": [
+        -0.84355,
+        7.3148,
+        0.44455
+      ],
+      "indicesCabeza": [
+        1850,
+        1891
+      ],
+      "destinoJuego": [
+        -0.1526464819908142,
+        1.814052700996399,
+        -0.12976837158203125
+      ],
+      "destinoJuegoFinal": [
+        -0.1526464819908142,
+        1.794052700996399,
+        -0.12976837158203125
+      ],
+      "destinoBlender": [
+        -0.1526464819908142,
+        0.12976837158203125,
+        1.814052700996399
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        193,
+        305
+      ],
+      "triangulo": 4521
+    },
+    "orejaPosteriorI": {
+      "nombre": "orejaPosteriorI",
+      "fuenteMPFB": [
+        0.83555,
+        7.150399999999999,
+        0.3695
+      ],
+      "indicesCabeza": [
+        3974,
+        4212
+      ],
+      "destinoJuego": [
+        0.13254882395267487,
+        1.7886914014816284,
+        -0.12729370594024658
+      ],
+      "destinoJuegoFinal": [
+        0.13254882395267487,
+        1.7686914014816284,
+        -0.12729370594024658
+      ],
+      "destinoBlender": [
+        0.13254882395267487,
+        0.12729370594024658,
+        1.7886914014816284
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        789,
+        358
+      ],
+      "triangulo": 90158
+    },
+    "orejaPosteriorD": {
+      "nombre": "orejaPosteriorD",
+      "fuenteMPFB": [
+        -0.83555,
+        7.150399999999999,
+        0.3695
+      ],
+      "indicesCabeza": [
+        1853,
+        2093
+      ],
+      "destinoJuego": [
+        -0.13350586593151093,
+        1.7886914014816284,
+        -0.12250661849975586
+      ],
+      "destinoJuegoFinal": [
+        -0.13350586593151093,
+        1.7686914014816284,
+        -0.12250661849975586
+      ],
+      "destinoBlender": [
+        -0.13350586593151093,
+        0.12250661849975586,
+        1.7886914014816284
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        233,
+        358
+      ],
+      "triangulo": 6985
+    },
+    "orejaLobuloI": {
+      "nombre": "orejaLobuloI",
+      "fuenteMPFB": [
+        0.72195,
+        6.8843,
+        0.5278499999999999
+      ],
+      "indicesCabeza": [
+        3997,
+        4286
+      ],
+      "destinoJuego": [
+        0.09522461146116257,
+        1.729833960533142,
+        -0.06493055820465088
+      ],
+      "destinoJuegoFinal": [
+        0.09522461146116257,
+        1.709833960533142,
+        -0.06493055820465088
+      ],
+      "destinoBlender": [
+        0.09522461146116257,
+        0.06493055820465088,
+        1.729833960533142
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        711,
+        481
+      ],
+      "triangulo": 83850
+    },
+    "orejaLobuloD": {
+      "nombre": "orejaLobuloD",
+      "fuenteMPFB": [
+        -0.72195,
+        6.8843,
+        0.5278499999999999
+      ],
+      "indicesCabeza": [
+        1876,
+        2167
+      ],
+      "destinoJuego": [
+        -0.09522461146116257,
+        1.729833960533142,
+        -0.06259047985076904
+      ],
+      "destinoJuegoFinal": [
+        -0.09522461146116257,
+        1.709833960533142,
+        -0.06259047985076904
+      ],
+      "destinoBlender": [
+        -0.09522461146116257,
+        0.06259047985076904,
+        1.729833960533142
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        313,
+        481
+      ],
+      "triangulo": 13358
+    },
+    "craneoSuperior": {
+      "nombre": "craneoSuperior",
+      "fuenteMPFB": [
+        0.0,
+        8.4913,
+        0.6961
+      ],
+      "indicesCabeza": [
+        875
+      ],
+      "destinoJuego": [
+        0.0,
+        1.9145410060882568,
+        -0.04972708225250244
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.8945410060882568,
+        -0.04972708225250244
+      ],
+      "destinoBlender": [
+        0.0,
+        0.04972708225250244,
+        1.9145410060882568
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        95
+      ],
+      "triangulo": 48777
+    },
+    "craneoLateralI": {
+      "nombre": "craneoLateralI",
+      "fuenteMPFB": [
+        0.7521,
+        7.655,
+        0.4809
+      ],
+      "indicesCabeza": [
+        3146
+      ],
+      "destinoJuego": [
+        0.08086913824081421,
+        1.851377010345459,
+        -0.04640650749206543
+      ],
+      "destinoJuegoFinal": [
+        0.08086913824081421,
+        1.831377010345459,
+        -0.04640650749206543
+      ],
+      "destinoBlender": [
+        0.08086913824081421,
+        0.04640650749206543,
+        1.851377010345459
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        681,
+        227
+      ],
+      "triangulo": 77869
+    },
+    "craneoLateralD": {
+      "nombre": "craneoLateralD",
+      "fuenteMPFB": [
+        -0.7521,
+        7.655,
+        0.4809
+      ],
+      "indicesCabeza": [
+        1002
+      ],
+      "destinoJuego": [
+        -0.07991211116313934,
+        1.851377010345459,
+        -0.045307278633117676
+      ],
+      "destinoJuegoFinal": [
+        -0.07991211116313934,
+        1.831377010345459,
+        -0.045307278633117676
+      ],
+      "destinoBlender": [
+        -0.07991211116313934,
+        0.045307278633117676,
+        1.851377010345459
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        345,
+        227
+      ],
+      "triangulo": 20217
+    },
+    "cuelloFrontal": {
+      "nombre": "cuelloFrontal",
+      "fuenteMPFB": [
+        0.0,
+        5.7815,
+        0.6917
+      ],
+      "indicesCabeza": [
+        808
+      ],
+      "destinoJuego": [
+        0.0,
+        1.5901074409484863,
+        -0.007734775543212891
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.5701074409484863,
+        -0.007734775543212891
+      ],
+      "destinoBlender": [
+        0.0,
+        0.007734775543212891,
+        1.5901074409484863
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        512,
+        773
+      ],
+      "triangulo": 48183
+    },
+    "cuelloI": {
+      "nombre": "cuelloI",
+      "fuenteMPFB": [
+        0.9908,
+        5.7049,
+        0.0565
+      ],
+      "indicesCabeza": [
+        3491
+      ],
+      "destinoJuego": [
+        0.06938476860523224,
+        1.614990234375,
+        -0.049973368644714355
+      ],
+      "destinoJuegoFinal": [
+        0.06938476860523224,
+        1.594990234375,
+        -0.049973368644714355
+      ],
+      "destinoBlender": [
+        0.06938476860523224,
+        0.049973368644714355,
+        1.614990234375
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        657,
+        721
+      ],
+      "triangulo": 72270
+    },
+    "cuelloD": {
+      "nombre": "cuelloD",
+      "fuenteMPFB": [
+        -0.9908,
+        5.7049,
+        0.0565
+      ],
+      "indicesCabeza": [
+        1349
+      ],
+      "destinoJuego": [
+        -0.06794922053813934,
+        1.614990234375,
+        -0.04722714424133301
+      ],
+      "destinoJuegoFinal": [
+        -0.06794922053813934,
+        1.594990234375,
+        -0.04722714424133301
+      ],
+      "destinoBlender": [
+        -0.06794922053813934,
+        0.04722714424133301,
+        1.614990234375
+      ],
+      "metodo": "Pixel frontal + raycast sobre geometr\u00eda en espacio mundo",
+      "pixelFrente": [
+        370,
+        721
+      ],
+      "triangulo": 26235
+    },
+    "centroOjoI": {
+      "nombre": "centroOjoI",
+      "fuenteMPFB": [
+        0.30774999999999997,
+        7.28415,
+        1.24535
+      ],
+      "indicesCabeza": [],
+      "destinoJuego": [
+        0.04354492202401161,
+        1.7891699075698853,
+        0.021740252152085304
+      ],
+      "destinoJuegoFinal": [
+        0.04354492202401161,
+        1.7691699075698852,
+        0.021740252152085304
+      ],
+      "destinoBlender": [
+        0.04354492202401161,
+        -0.021740252152085304,
+        1.7891699075698853
+      ],
+      "metodo": "Frente iris menos radio ocular0.019m",
+      "pixelFrente": [
+        603,
+        357
+      ],
+      "radioOcularPropuesto": 0.019,
+      "frenteIrisBlender": [
+        0.04354492202401161,
+        -0.040740251541137695,
+        1.7891699075698853
+      ]
+    },
+    "centroOjoD": {
+      "nombre": "centroOjoD",
+      "fuenteMPFB": [
+        -0.30774999999999997,
+        7.28415,
+        1.24535
+      ],
+      "indicesCabeza": [],
+      "destinoJuego": [
+        -0.041630860418081284,
+        1.7891699075698853,
+        0.023228341713547707
+      ],
+      "destinoJuegoFinal": [
+        -0.041630860418081284,
+        1.7691699075698852,
+        0.023228341713547707
+      ],
+      "destinoBlender": [
+        -0.041630860418081284,
+        -0.023228341713547707,
+        1.7891699075698853
+      ],
+      "metodo": "Frente iris menos radio ocular0.019m",
+      "pixelFrente": [
+        425,
+        357
+      ],
+      "radioOcularPropuesto": 0.019,
+      "frenteIrisBlender": [
+        -0.041630860418081284,
+        -0.0422283411026001,
+        1.7891699075698853
+      ]
+    },
+    "craneoPosterior": {
+      "nombre": "craneoPosterior",
+      "fuenteMPFB": [
+        0.0,
+        7.442,
+        -0.3916
+      ],
+      "indicesCabeza": [
+        1823
+      ],
+      "destinoJuego": [
+        0.0,
+        1.815000057220459,
+        -0.18427807092666626
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.795000057220459,
+        -0.18427807092666626
+      ],
+      "destinoBlender": [
+        0.0,
+        0.18427807092666626,
+        1.815000057220459
+      ],
+      "metodo": "Raycast posterior hacia delante"
+    },
+    "cuelloPosterior": {
+      "nombre": "cuelloPosterior",
+      "fuenteMPFB": [
+        0.4364,
+        5.7266,
+        -0.3964
+      ],
+      "indicesCabeza": [
+        3497
+      ],
+      "destinoJuego": [
+        0.0,
+        1.590000033378601,
+        -0.16142386198043823
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.570000033378601,
+        -0.16142386198043823
+      ],
+      "destinoBlender": [
+        0.0,
+        0.16142386198043823,
+        1.590000033378601
+      ],
+      "metodo": "Raycast posterior hacia delante"
+    },
+    "centroCabeza": {
+      "nombre": "centroCabeza",
+      "fuenteMPFB": [
+        0.0,
+        6.97495,
+        0.16075
+      ],
+      "indicesCabeza": [],
+      "destinoJuego": [
+        0.0,
+        1.746000051498413,
+        -0.03582751750946045
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.726000051498413,
+        -0.03582751750946045
+      ],
+      "destinoBlender": [
+        0.0,
+        0.03582751750946045,
+        1.746000051498413
+      ],
+      "metodo": "Promedio entre frente y nuca a altura anat\u00f3mica"
+    },
+    "centroCraneo": {
+      "nombre": "centroCraneo",
+      "fuenteMPFB": [
+        0.0,
+        8.40435,
+        0.08245
+      ],
+      "indicesCabeza": [],
+      "destinoJuego": [
+        0.0,
+        1.878999948501587,
+        -0.05717688798904419
+      ],
+      "destinoJuegoFinal": [
+        0.0,
+        1.858999948501587,
+        -0.05717688798904419
+      ],
+      "destinoBlender": [
+        0.0,
+        0.05717688798904419,
+        1.878999948501587
+      ],
+      "metodo": "Promedio entre frente y nuca a altura anat\u00f3mica"
+    }
+  },
+  "fallidas": [],
+  "verificacion": {
+    "cantidad": 71,
+    "finitas": true
+  }
+}

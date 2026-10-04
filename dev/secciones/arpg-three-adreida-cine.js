@@ -6,8 +6,9 @@
     const lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const v=new T.Vector3(),q=new T.Quaternion(),contactos=new WeakMap();
     const huesos=m=>Object.entries(m.H).filter(([,b])=>b.isBone);
-    const capturar=m=>({rot:Object.fromEntries(huesos(m).map(([k,b])=>[k,b.quaternion.clone()])),pos:m.H.cuerpo.position.clone()});
-    function mezclar(m,desde,k){for(const [n,b]of huesos(m))b.quaternion.slerp(desde.rot[n],1-suave(k));m.H.cuerpo.position.lerp(desde.pos,1-suave(k));}
+    const capturar=m=>({rot:Object.fromEntries(huesos(m).map(([k,b])=>[k,b.quaternion.clone()])),pos:m.H.cuerpo.position.clone(),rostro:MOD.rostro?.capturar(m)||null});
+    function mezclar(m,desde,k){for(const [n,b]of huesos(m))b.quaternion.slerp(desde.rot[n],1-suave(k));m.H.cuerpo.position.lerp(desde.pos,1-suave(k));MOD.rostro?.mezclar(m,desde.rostro,k);}
+    function restaurar(m,desde){m.H.cuerpo.position.copy(desde.pos);for(const [n,b]of huesos(m))if(desde.rot[n])b.quaternion.copy(desde.rot[n]);MOD.rostro?.restaurar(m,desde.rostro);m.raiz.updateMatrixWorld(true);}
     function crearFPS(){
       const m=MOD.crear('adreida'),mesh=m.mallas[0],g=mesh.geometry,si=g.attributes.skinIndex,sw=g.attributes.skinWeight;
       const brazos=new Set(['anteI','manoI','anteD','manoD'].map(n=>mesh.skeleton.bones.indexOf(m.H[n]))),indices=[];
@@ -17,7 +18,7 @@
       for(let i=0;i<origen.length;i+=3)if([0,1,2].every(j=>peso(origen[i+j])>.15))indices.push(...origen.slice(i,i+3));
       // Se comparten los atributos y mapas; sólo se crea el índice de los dos brazos.
       const parcial=new T.BufferGeometry();for(const [n,a]of Object.entries(g.attributes))parcial.setAttribute(n,a);parcial.morphAttributes=g.morphAttributes;parcial.morphTargetsRelative=g.morphTargetsRelative;parcial.setIndex(indices);mesh.geometry=parcial;
-      for(const p of m.mallas){p.castShadow=p.receiveShadow=false;p.frustumCulled=false;}
+      for(const p of m.mallas){p.castShadow=p.receiveShadow=false;p.frustumCulled=false;if(p.userData.rostro)p.visible=false;}
       m.raiz.name='Adreida · brazos en primera persona';m.raiz.visible=false;
       return m;
     }
@@ -72,7 +73,7 @@
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
     }
-    return {crearFPS,fps,fbx,capturar,caer,buscar,levantar};
+    return {crearFPS,fps,fbx,capturar,restaurar,mezclar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();

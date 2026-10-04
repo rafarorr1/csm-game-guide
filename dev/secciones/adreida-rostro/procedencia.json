@@ -1,0 +1,22 @@
+{
+  "fecha": "2026-10-04",
+  "proyectoScenario": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "coleccionScenario": "col_Pm1CWzqXqxYpuPuWj7nsL7xV",
+  "creditos": 103,
+  "concepto": {
+    "asset": "asset_Cj1nsVbwmqfrtJEQ8fiSXCN9",
+    "modelo": "model_openai-gpt-image-2-5-sunburst",
+    "job": "job_P8euFUPqH1sxTyFWD1JDh4R4",
+    "creditos": 13
+  },
+  "sculpt": {
+    "asset": "asset_pZK3L6g5TeG8RUz6QEh4avSo",
+    "modelo": "model_tripo-v3-1-image-to-3d",
+    "job": "job_i8G5JphaRpt9gBUK7eQmaCPi",
+    "seed": 1627692965,
+    "creditos": 90,
+    "sha256": "d3c2aa8ec6fb7e834314b6ca931285e5200eebf4bb08e10384603969f0d3dfd8"
+  },
+  "topologia": "MPFB2 d0a32e57a7f915cb2f2b95410e2117648c7bbb7e · CC0-1.0",
+  "motor": "Three.js local; sin peticiones externas durante el juego"
+}

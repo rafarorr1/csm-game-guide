@@ -50,7 +50,7 @@
     for(const [n,,solo,etiqueta] of ANIMS){if(solo&&(solo==='goblins'?!['goblin','cobrador','kobold'].includes(tipo):solo!==tipo))continue;if(tipo==='adreida'&&['golpe','reves','estocada','muerte'].includes(n)||['goblin','cobrador','kobold'].includes(tipo)&&n==='muerte')continue;const o=document.createElement('option');o.value=n;o.textContent=etiqueta||n;$('anim').append(o);}
     if([...$('anim').options].some(o=>o.value===antes))$('anim').value=antes;}
   function cargar(tipo){
-    for(const m of modelos){escena.remove(m.raiz);m.mallas.forEach(mesh=>{if(!mesh.geometry.userData.compartida)mesh.geometry.dispose();mesh.material.dispose();});for(const s of new Set(m.mallas.map(mesh=>mesh.skeleton)))s.dispose();}
+    for(const m of modelos){escena.remove(m.raiz);m.mallas.forEach(mesh=>{if(!mesh.geometry.userData.compartida)mesh.geometry.dispose();mesh.material.dispose();});for(const s of new Set(m.mallas.map(mesh=>mesh.skeleton)))s?.dispose();}
     const catálogo=tipo==='kobold'?F.VARIANTES_KOBOLD:F.VARIANTES_GOBLIN;
     if(tipoVariantes!==tipo){$('varianteGoblin').replaceChildren();for(const [id,v]of Object.entries(catálogo)){const o=document.createElement('option');o.value=id;o.textContent=v.nombre;$('varianteGoblin').append(o);}
       if(!tipoVariantes&&catálogo[q.get('variante')])$('varianteGoblin').value=q.get('variante');tipoVariantes=tipo;

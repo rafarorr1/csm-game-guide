@@ -1,0 +1,10 @@
+Topología y unidades de acción facial: MakeHuman/MPFB2.
+Fuente oficial: https://github.com/makehumancommunity/mpfb2
+Commit: d0a32e57a7f915cb2f2b95410e2117648c7bbb7e
+Licencia de estos datos (malla, targets y rig): CC0-1.0.
+No se incorpora el código GPL de MPFB al juego.
+
+cabeza-mpfb-con-targets.json contiene sólo la región de la cabeza de base.obj,
+con sus UV y deltas de expresión remapeados. landmarks.json documenta los
+vértices anatómicos oficiales y las máscaras de boca y ojos. Son la plantilla
+de topología, no la identidad final de Adreida.

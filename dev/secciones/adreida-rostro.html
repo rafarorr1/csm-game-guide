@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="__CSP__">
+<title>Adreida · Estudio de expresiones | Caoz ARPG</title>
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="./adreida-rostro-visor.css">
+<script src="./visor-three-vendor.js"></script>
+<script src="./adreida-scenario/combate.js"></script>
+<script src="./arpg-three-adreida-animacion.js"></script>
+<script src="./goblin-scenario/datos.js"></script>
+<script src="./arpg-three-goblin.js"></script>
+<script src="./kobold-scenario/datos.js"></script>
+<script src="./kobold-scenario/muertes.js"></script>
+<script src="./arpg-three-kobold.js"></script>
+<script src="./adreida-scenario/datos.js"></script>
+<script src="./adreida-piernas-scenario/datos.js"></script>
+<script src="./arpg-three-adreida.js"></script>
+<script src="./hacha-adreida-scenario/datos.js"></script>
+<script src="./arpg-three-hacha-adreida.js"></script>
+<script src="./adreida-rostro/datos.js"></script>
+<script src="./arpg-three-rostro-adreida.js"></script>
+<script src="./arpg-three-modelos.js"></script>
+<script src="./adreida-rostro-visor.js" defer></script>
+</head>
+<body>
+<main class="estudio">
+  <section class="retrato" aria-label="Vista tridimensional de Adreida">
+    <canvas id="rostroLienzo" tabindex="0" aria-label="Adreida en 3D. Arrastra para girar la vista. Usa las flechas del teclado para girar y más o menos para acercar."></canvas>
+    <header class="identidad">
+      <a href="./arpg-three.html?heroe=adreida&amp;piso=scenario" class="marca">CAOZ <span>ARPG</span></a>
+      <p>Estudio de personaje</p>
+      <h1>Adreida</h1>
+      <span class="subtitulo">Expresión sin palabras</span>
+    </header>
+    <div class="aviso" id="rostroEstado" role="status">Preparando a Adreida…</div>
+    <div class="lectura" aria-live="polite" aria-atomic="true">
+      <span class="indice" id="rostroIndice">01 / 09</span>
+      <p id="rostroNombre">Neutral</p>
+      <span id="rostroLectura">Presente. Escucha antes de actuar.</span>
+    </div>
+    <div class="barraVista">
+      <div class="encuadres" role="group" aria-label="Encuadre de cámara">
+        <button type="button" data-encuadre="frente" aria-pressed="true">Frente</button>
+        <button type="button" data-encuadre="tresCuartos" aria-pressed="false">Tres cuartos</button>
+        <button type="button" data-encuadre="cuerpo" aria-pressed="false">Cuerpo</button>
+      </div>
+      <span class="ayudaVista">Arrastra para girar · rueda para acercar</span>
+    </div>
+  </section>
+  <aside class="controles" aria-label="Dirección de expresiones">
+    <div class="modoModelo" role="group" aria-label="Elementos visibles">
+      <button type="button" data-aislado="true" aria-pressed="true">Rostro aislado</button>
+      <button type="button" data-aislado="false" aria-pressed="false">Con personaje</button>
+    </div>
+    <div class="cabeceraPanel"><span class="numeroSeccion">01</span><div><h2>Intención</h2><p>Elige lo que siente.</p></div></div>
+    <div class="emociones" role="group" aria-label="Expresiones de Adreida">
+      <button type="button" data-expresion="neutral" aria-pressed="true"><span>01</span>Neutral</button>
+      <button type="button" data-expresion="determinacion" aria-pressed="false"><span>02</span>Determinación</button>
+      <button type="button" data-expresion="ira" aria-pressed="false"><span>03</span>Ira</button>
+      <button type="button" data-expresion="miedo" aria-pressed="false"><span>04</span>Miedo</button>
+      <button type="button" data-expresion="dolor" aria-pressed="false"><span>05</span>Dolor</button>
+      <button type="button" data-expresion="tristeza" aria-pressed="false"><span>06</span>Tristeza</button>
+      <button type="button" data-expresion="desconfianza" aria-pressed="false"><span>07</span>Desconfianza</button>
+      <button type="button" data-expresion="alivio" aria-pressed="false"><span>08</span>Alivio</button>
+      <button type="button" data-expresion="sorpresa" aria-pressed="false"><span>09</span>Sorpresa</button>
+    </div>
+    <div class="control">
+      <label for="rostroIntensidad">Intensidad <output id="intensidadValor" for="rostroIntensidad">80 %</output></label>
+      <input id="rostroIntensidad" type="range" min="0" max="1" step="0.01" value="0.8">
+      <div class="extremos"><span>Contenida</span><span>Abierta</span></div>
+    </div>
+    <div class="separador"></div>
+    <div class="cabeceraPanel"><span class="numeroSeccion">02</span><div><h2>Mirada</h2><p>La atención también cuenta la historia.</p></div></div>
+    <div class="control">
+      <label for="miradaHorizontal">Horizontal <output id="horizontalValor" for="miradaHorizontal">Centro</output></label>
+      <input id="miradaHorizontal" type="range" min="-1" max="1" step="0.01" value="0">
+      <div class="extremos"><span>Izquierda</span><span>Derecha</span></div>
+    </div>
+    <div class="control">
+      <label for="miradaVertical">Vertical <output id="verticalValor" for="miradaVertical">Centro</output></label>
+      <input id="miradaVertical" type="range" min="-1" max="1" step="0.01" value="0">
+      <div class="extremos"><span>Abajo</span><span>Arriba</span></div>
+    </div>
+    <div class="filaParpadeo">
+      <label class="interruptor"><input id="parpadeoAutomatico" type="checkbox" checked><span>Parpadeo natural</span></label>
+      <button id="parpadear" class="botonDiscreto" type="button">Parpadear</button>
+    </div>
+    <div class="separador"></div>
+    <div class="cabeceraPanel"><span class="numeroSeccion">03</span><div><h2>Interpretación</h2><p>Una emoción se convierte en otra.</p></div></div>
+    <button id="secuenciaEmocional" class="botonSecuencia" type="button" aria-pressed="false"><span class="simboloReproducir" aria-hidden="true">▶</span><span id="secuenciaTexto">Reproducir secuencia</span></button>
+    <p class="notaSecuencia">Neutral → sospecha → miedo → determinación → alivio.</p>
+    <button id="restablecerRostro" class="restablecer" type="button">Restablecer controles</button>
+    <a class="volver" href="./modelos-visor.html?tipo=adreida">Abrir visor de cuerpo y animaciones <span aria-hidden="true">↗</span></a>
+  </aside>
+</main>
+</body>
+</html>
