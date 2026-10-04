@@ -1,9 +1,9 @@
-/* La salida de la casa encadena el meteorito una vez y respeta pausa y reinicio. */
+/* El meteorito cierra Alpha .01 en negro, sin reiniciar la partida; el editor sigue siendo reversible. */
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-rigged/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-impactos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js','arpg-cine-camara.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-impactos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js','arpg-cine-camara.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,MOD=c.CAOZ_ARPG_MODELOS.fabrica(T),escena=new T.Scene(),camara=new T.PerspectiveCamera(32,16/9,.5,1200),casas=new T.Group();
 const g=new T.BoxGeometry(6,7,5).toNonIndexed();g.translate(5,3.5,-17);const casa=new T.Mesh(g,new T.MeshStandardMaterial());casa.castShadow=true;casas.add(casa);escena.add(casas);
 const tapa=new T.Mesh(new T.BoxGeometry(6,9,6).toNonIndexed(),new T.MeshStandardMaterial());tapa.position.set(0,4.5,20);casas.add(tapa);
@@ -11,12 +11,12 @@ const salidaCasa=new T.Mesh(new T.BoxGeometry(6,7,5).toNonIndexed(),new T.MeshSt
 casas.userData.ocultacion={cajas:[casa,tapa,salidaCasa].map(m=>new T.Box3().setFromObject(m)),opacidades:new Float32Array([1,1,1])};
 const actor={tipo:'adreida',vivo:true,m:MOD.crear('adreida'),pos:new T.Vector3(10,0,10),dir:0,fase:0};escena.add(actor.m.raiz);
 const otro={tipo:'mohamed',vivo:true,m:MOD.crear('mohamed'),pos:new T.Vector3(),dir:0,fase:0};escena.add(otro.m.raiz);
-const fx=c.CAOZ_ARPG_IMPACTOS.fabrica(T,escena);fx.actualizarMaterial(new T.MeshStandardMaterial());let impactos=0,regresos=0,negro=0,lluvia=null;
-const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,planoDeFase:c.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia(t){lluvia=t;},impactar(p){impactos++;fx.agujero(p,{radio:8.4,profundidad:24,duracion:30});},volver(){regresos++;},interfaz(s){negro=s.negro;}});
+const fx=c.CAOZ_ARPG_IMPACTOS.fabrica(T,escena);fx.actualizarMaterial(new T.MeshStandardMaterial());let impactos=0,regresos=0,negro=0,lluvia=null,avisosFin=0,ultimaInterfaz=null;
+const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,planoDeFase:c.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia(t){lluvia=t;},impactar(p){impactos++;fx.agujero(p,{radio:8.4,profundidad:24,duracion:30});},volver(){regresos++;},interfaz(s){negro=s.negro;ultimaInterfaz={...s};if(s.fase==='fin')avisosFin++;}});
 assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES.vertigo,2.8,'El dolly frontal dura un segundo más');
 for(const fps of [30,60,120]){
- camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,impactosAntes=impactos,posAntes=actor.pos.clone();
+ camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,finAntes=avisosFin,impactosAntes=impactos,posAntes=actor.pos.clone();
  assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[],velocidadesPies=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null;
  for(let i=0;i<fps*40&&!cine.estado().terminado;i++){
   const est=cine.estado();if(orden.at(-1)!==est.fase)orden.push(est.fase);
@@ -120,18 +120,18 @@ for(const fps of [30,60,120]){
  assert(razon>1.01,'La velocidad debe aumentar durante el insert');
  for(let i=2;i<velocidadesPies.length;i++)assert(Math.abs(velocidadesPies[i]/velocidadesPies[i-1]-razon)<1e-7,'La velocidad crece exponencialmente: igual factor en intervalos iguales');
  assert(velocidadesPies.at(-1)>velocidadesPies[0]*15,'El arranque pasa de lento a carrera de forma perceptible');
- assert.equal(regresos,antes+1);assert.equal(impactos,impactosAntes+1);assert.equal(negro,1);
+ assert.equal(regresos,antes,'El final no regresa al primer nivel');assert.equal(avisosFin,finAntes+1,'La interfaz recibe un único final');assert.equal(ultimaInterfaz.fase,'fin');assert.equal(impactos,impactosAntes+1);assert.equal(negro,1);
  assert.equal(fx.estado().crateres.at(-1).radio,8.4);assert.equal(fx.estado().crateres.at(-1).profundidad,24);assert.equal(cine.recursos.fragmentos.count,180);assert.equal(cine.recursos.humo.count,28);
  assert(cine.estado().derrumbe>2);assert.equal(casa.castShadow,false);
- for(let i=0;i<120;i++)cine.paso(1/fps);assert.equal(regresos,antes+1,'No duplica la navegación');
+ const estadoTerminado=JSON.stringify(cine.estado());for(let i=0;i<120;i++)cine.paso(1/fps);assert.equal(regresos,antes,'La pantalla final no navega después');assert.equal(avisosFin,finAntes+1);assert.equal(JSON.stringify(cine.estado()),estadoTerminado,'El final permanece detenido');
  cine.cancelar();fx.limpiar();assert(!cine.activa);assert(actor.pos.equals(posAntes),'Cancelar restaura al actor, sin dejarlo bajo el piso');assert.equal(actor.m.raiz.visible,true);assert.equal(otro.m.raiz.visible,true);assert.equal(casa.castShadow,true);assert.equal(camara.fov,32);assert.equal(camara.near,.5);
 }
-for(const segundos of [0,4,6,8,13,20]){const antes=regresos;cine.iniciar([actor,otro]);for(let i=0;i<segundos*60;i++)cine.paso(1/60);assert(cine.finalizar());assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Omitir restaura la casa aunque se interrumpa el dolly');assert(!cine.finalizar());cine.paso(1);assert.equal(regresos,antes+1,'Omitir navega una sola vez');cine.cancelar();fx.limpiar();}
+for(const segundos of [0,4,6,8,13,20]){const antes=regresos,finAntes=avisosFin;cine.iniciar([actor,otro]);for(let i=0;i<segundos*60;i++)cine.paso(1/60);assert(cine.finalizar());assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Omitir restaura la casa aunque se interrumpa el dolly');assert(!cine.finalizar());cine.paso(1);assert.equal(regresos,antes,'Omitir llega al mismo final sin navegar');assert.equal(avisosFin,finAntes+1);assert.equal(ultimaInterfaz.fase,'fin');assert.equal(negro,1);cine.cancelar();fx.limpiar();}
 for(let j=0;j<2;j++){cine.iniciar([actor,otro]);while(cine.estado().fase!=='vertigo')cine.paso(1/60);assert(casas.userData.ocultacion.opacidades[1]<.1);cine.cancelar();assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Cancelar también restaura la casa, incluso al repetir la toma');}
 const n=escena.children.length;
 for(let i=0;i<4;i++){cine.iniciar([actor,otro]);cine.cancelar();assert.equal(escena.children.length,n,'Reutiliza los efectos entre revisiones');}
 cine.iniciar([otro]);assert.equal(otro.m.raiz.visible,false);cine.cancelar();assert.equal(escena.children.length,n,'El actor de historia prestado se retira');
-console.log('✓ Final del mago: dolly frontal de 2,8 s, giro posterior y cierre superwide sin corte, brazos FPS, pausa, dos jugadores, actor Adreida, sima de 24 m de profundidad, ruinas, omisión/reinicio y regreso único a 30/60/120 FPS.');
+console.log('✓ Final del mago: dolly frontal de 2,8 s, giro posterior y cierre superwide sin corte, brazos FPS, pausa, dos jugadores, actor Adreida, sima de 24 m de profundidad, ruinas, omisión/reinicio y final permanente sin navegación a 30/60/120 FPS.');
 
 // Se hornea una vez y se puede saltar en ambas direcciones sin ejecutar actuación.
 cine.iniciar([actor,otro]);const cuadros=[];
@@ -144,6 +144,7 @@ for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){
  for(const x of cuadros[i].agarres)x.n.morphTargetInfluences.fill(-1);
  const f=cuadros[i];cine.mostrarCuadro(f);const actual=cine.estado();for(const clave of ['mago','meteorito']){assert(actual[clave].every((v,j)=>Math.abs(v-f.estado[clave][j])<1e-5),'Posiciones visuales conservadas con precisión submilimétrica');actual[clave]=f.estado[clave];}assert.equal(JSON.stringify(actual),JSON.stringify(f.estado),'Restaurar conserva fase, relojes, lluvia y posiciones');
  for(const x of f.agarres)assert.deepEqual(x.n.morphTargetInfluences,x.pesos,'Buscar cuadros restaura el cierre de los dedos, incluido el POV');
+ assert.equal(ultimaInterfaz.fase,f.estado.terminado?'fin':f.estado.fase,'Buscar el cuadro final restaura también el aviso terminal');if(f.estado.terminado)assert.equal(negro,1);
  const antes=cine.capturarCuadro();camara.position.set(70,20,-30);camara.lookAt(new T.Vector3(2,3,4));cine.vistaEditor(false);
  const despues=cine.capturarCuadro();for(let j=0;j<antes.poses.length;j++){if(j%12===10)continue;assert(Math.abs(antes.poses[j]-despues.poses[j])<1e-6,'Mover cámara no cambia transformaciones, huesos ni brazos POV');}
  cine.vistaEditor(true);const externa=cine.capturarCuadro();for(let j=0;j<antes.poses.length;j++){if(j%12===10)continue;assert(Math.abs(antes.poses[j]-externa.poses[j])<1e-6,'Alternar vista sólo cambia visibilidad');}

@@ -51,8 +51,8 @@
         geometria.setAttribute('color',new THREE.BufferAttribute(new Float32Array(p.length).fill(1),3));
         geometria.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(indices,4));
         geometria.setAttribute('skinWeight',new THREE.BufferAttribute(leer(datos.peso,Float32Array),4));
-        // El rostro nuevo retira sólo los triángulos de la cara anterior; conserva pelo, pesos y agarres.
-        const rostro=window.CAOZ_ADREIDA_ROSTRO_DATOS;
+        // Sólo el prototipo facial completo retira la cara anterior; el juego conserva todos sus triángulos.
+        const rostro=window.CAOZ_ARPG_ROSTRO_ADREIDA&&window.CAOZ_ADREIDA_ROSTRO_DATOS;
         const indicesCuerpo=rostro?(datos.indicesConRostro||(!datos.brazosRigged&&rostro.indicesCuerpo)||datos.triangulos):datos.triangulos;
         geometria.setIndex(new THREE.BufferAttribute(leer(indicesCuerpo,Uint16Array),1));
         if(datos.agarre){

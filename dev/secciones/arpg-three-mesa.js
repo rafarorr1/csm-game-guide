@@ -27,7 +27,7 @@
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
   const estilo=window.CAOZ_ARPG_ESTILO.crear();
-  let finalMago=null,cinematicaTroll=null,llaveEntradaTroll=null,casaGoblin=null,casaVisitable=null,llaveDelRecaudador=false;
+  let finalMago=null,cinematicaTroll=null,llaveEntradaTroll=null,casaGoblin=null,casaVisitable=null,llaveDelRecaudador=false,alphaTerminada=false;
   window.CAOZ_ARPG_IA.configurar(q.get('ia')==='clasica'?'clasica':'yuka');
   const laboratorio=q.get('inspector')==='1'?{detenido:false,antes:null,despues:null}:null;
   const estado=t=>{$('estado').textContent=t;},aviso=t=>{estado(t);$('info').textContent=t;$('diagnostico').open=true;};
@@ -1314,7 +1314,7 @@
   // DualSense y otros mandos que el navegador presenta con distribución estándar.
   let mando={indice:null,botones:[],activo:false,foco:true,listo:false,dir:new V3(0,0,-1)};
   const pausa={activa:false,boton:false,confirmar:false};
-  function ponerPausa(v){if(rog.abierto||v===pausa.activa)return;pausa.activa=v;sincronizarTiempo();clima.pausar(v||document.hidden||!partidaActiva);
+  function ponerPausa(v){if(alphaTerminada||rog.abierto||v===pausa.activa)return;pausa.activa=v;sincronizarTiempo();clima.pausar(v||document.hidden||!partidaActiva);
     ent.atacando=ent.pendiente=false;ctl.atacar=false;ctl.mov.set(0,0,0);teclas.clear();mando.listo=false;mando.activo=false;
     for(const h of jugadores){h.entrada.atacando=h.entrada.pendiente=false;h.control.atacar=false;h.mando.listo=h.mando.activo=false;if(h.estado==='carga'){h.carga=0;cambiar(h,'quieto');}}
     if(v){$('pausa').showModal();$('continuar').focus();}else{$('pausa').close();lienzo.focus();clima.desbloquearAudio();}}
@@ -1709,11 +1709,12 @@
     limpiar:limpiarCombateCasa,interfaz:interfazCasa,
     volver:iniciarFinalMago
   });
-  function volverNivelUno(){if(EDITOR_CINE)return;const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo','plano','momento','toma'])u.searchParams.delete(k);location.assign(u.href);}
   finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia:(t,p)=>clima.cinematica(t,p),
     impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
-    interfaz(s){const activa=s.fase!=='inactiva';mostrarEntradaTroll(activa);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';$('fundidoFinal').style.opacity=String(s.negro);$('fundidoFinal').hidden=!activa;},
-    volver:volverNivelUno
+    interfaz(s){const activa=s.fase!=='inactiva';alphaTerminada=s.fase==='fin';mostrarEntradaTroll(activa);esc.classList.toggle('finAlpha',alphaTerminada);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';
+      const fundido=$('fundidoFinal');fundido.style.opacity=String(s.negro);fundido.hidden=!activa;fundido.setAttribute('aria-hidden',String(!alphaTerminada));$('finAlphaTexto').hidden=!alphaTerminada;
+      if(alphaTerminada)clima.pausar(true);
+    }
   });
   function iniciarFinalMago(){
     const salida=casaGoblin.estado(),puerta=new V3().fromArray(salida.puerta),umbral=new V3().fromArray(salida.umbral),normal=new V3().fromArray(salida.normal);limpiarCombateCasa();casaGoblin.cancelar();casaGoblin.abrirSalida();ol.auto=false;ol.cola=[];paron=0;
@@ -1924,7 +1925,7 @@
     addEventListener('keydown',()=>{if(!partidaActiva)activarPartida();});
     activarPartida();}
   $('reanudarPartida').onclick=activarPartida;
-  document.addEventListener('visibilitychange',()=>{sincronizarTiempo();clima.pausar(document.hidden||!partidaActiva||pausa.activa||rog.abierto);});
+  document.addEventListener('visibilitychange',()=>{sincronizarTiempo();clima.pausar(alphaTerminada||document.hidden||!partidaActiva||pausa.activa||rog.abierto);});
   function simularPaso(dt){
     laboratorio?.antes?.(dt);
     if(paso(dt)===false)return false;
@@ -1941,8 +1942,11 @@
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
-    clima.pausar(EDITOR_CINE||document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
+    clima.pausar(alphaTerminada||EDITOR_CINE||document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
     if(document.hidden||!partidaActiva){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
+    // El epílogo ha terminado: el cartel HTML permanece sin mantener activa la escena 3D.
+    // El editor sí puede seguir buscando cuadros anteriores y reanudar la secuencia.
+    if(alphaTerminada&&!EDITOR_CINE){sincronizarTiempo();antes=ahora;requestAnimationFrame(cuadro);return;}
     if(!EDITOR_CINE)leerPausaMando();
     if(pausa.activa){sincronizarTiempo();antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     const limite=laboratorio?.limite||0;

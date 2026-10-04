@@ -1,10 +1,10 @@
-/* Cabeza real de Adreida: datos exportados, deformación, agarre y edición de cine. */
+/* Prototipo facial fuera del juego. Cabeza real de Adreida: datos exportados, deformación, agarre y edición de cine. */
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const archivo=nombre=>new URL(nombre,import.meta.url),c=vm.createContext({console,atob});c.window=c;
 assert(fs.existsSync(archivo('adreida-rostro/datos.js')),'Falta exportar la cabeza real: adreida-rostro/datos.js');
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-rigged/datos.js','adreida-rostro/datos.js','arpg-three-rostro-adreida.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js'])vm.runInContext(fs.readFileSync(archivo(f),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','adreida-rostro/datos.js','arpg-three-rostro-adreida.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js'])vm.runInContext(fs.readFileSync(archivo(f),'utf8'),c,{filename:f});
 const T=c.CAOZ_THREE.THREE,datos=c.CAOZ_ADREIDA_ROSTRO_DATOS;
 const leer=(s,C)=>{const b=Buffer.from(s,'base64');return new C(Uint8Array.from(b).buffer);};
 const finitos=(a,mensaje)=>assert(a.every(Number.isFinite),mensaje);

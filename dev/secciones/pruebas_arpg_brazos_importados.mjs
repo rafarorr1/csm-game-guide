@@ -1,4 +1,4 @@
-/* Brazos importados: remapeo sin pérdidas, articulación real y contacto de la piel con el hacha. */
+/* Prototipo fuera del juego. Brazos importados: remapeo sin pérdidas, articulación real y contacto de la piel con el hacha. */
 import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ cargar('adreida-piernas-scenario/datos.js');const anterior=c.CAOZ_ADREIDA_PIERNA
 assert(fs.existsSync(archivo('adreida-brazos-rigged/datos.js')),'Falta exportar los brazos importados');
 for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-rigged/datos.js','adreida-rostro/datos.js','arpg-three-rostro-adreida.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-adreida-cine.js'])cargar(f);
 const d=c.CAOZ_ADREIDA_PIERNAS_DATOS,T=c.CAOZ_THREE.THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(T),m=F.crear('adreida'),otro=F.crear('adreida'),cuerpo=m.mallas[0],g=cuerpo.geometry,a=g.attributes;
-assert.equal(d.brazosRigged,true,'El modelo activo utiliza el archivo importado');
+assert.equal(d.brazosRigged,true,'La prueba carga explícitamente el prototipo importado');
 assert.equal(cuerpo.isSkinnedMesh,true);assert(m.rostro&&m.hachaScenario,'Rostro y arma conviven con los brazos nuevos');
 assert.equal(g,otro.mallas[0].geometry,'Adreidos comparte la geometría y los mapas');
 assert.notEqual(cuerpo.skeleton,otro.mallas[0].skeleton);assert.notEqual(cuerpo.material,otro.mallas[0].material);assert.notEqual(cuerpo.morphTargetInfluences,otro.mallas[0].morphTargetInfluences);
