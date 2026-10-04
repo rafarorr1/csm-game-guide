@@ -82,6 +82,7 @@ for(const fps of [30,60,120]){
   }
   if(actual.fase==='ataquePOV'&&actual.t>.15){const mano=cine.recursos.brazosFPS.H.manoD.getWorldPosition(new T.Vector3()).project(camara);assert(Math.abs(mano.x)<1&&Math.abs(mano.y)<1,'El arma empieza su arco dentro del encuadre FPS');}
   if(est.fase==='ataquePOV'&&actual.fase==='desaparece')assert(actor.pos.z<3,'El ataque no reinicia la aproximación al cortar');
+  if(est.fase==='techo'&&actual.fase==='cielo'){assert(cine.recursos.meteorito.visible);assert.equal(actual.meteorito[1],54,'El primer cuadro del meteorito ya está en el cielo, nunca frente a los brazos');assert(cine.recursos.meteorito.position.distanceTo(camara.position)>50,'Su estela queda lejos del plano cercano');}
   if(actual.fase==='cielo'&&actual.t>.6)assert.equal(camara.fov,24,'El zoom se completa enseguida al descubrir el meteorito');
   if(actual.fase==='caida'&&actual.t>.75){assert(actor.m.H.cabeza.getWorldPosition(new T.Vector3()).y<1.4,'Crouching baja el cuerpo para protegerse');poseAntes=['cadera','torso','brazoI','brazoD'].map(n=>({n,q:actor.m.H[n].quaternion.clone()}));}
   if(['impacto','negro'].includes(actual.fase)&&actual.t>0){

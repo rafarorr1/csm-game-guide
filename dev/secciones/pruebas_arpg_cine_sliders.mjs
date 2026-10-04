@@ -22,8 +22,8 @@ const documento={body:new Elemento(),activeElement:null,hidden:false,createEleme
 let ms=0;
 const c=vm.createContext({console,atob,document:documento,localStorage:{getItem:()=>null,setItem(){}},performance:{now:()=>ms++},setTimeout:f=>pendientes.push(f),requestAnimationFrame:f=>pendientes.push(f),addEventListener(){}});c.window=c;
 for(const archivo of ['visor-three-vendor.js','arpg-cine-camara.js','arpg-cine-editor.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),c);
-const T=c.CAOZ_THREE.THREE,camara=new T.PerspectiveCamera(),fases=['salida','descubrir','vertigo'];let simulado=0,reinicios=0,pasos=0,restauraciones=0;
-const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){pasos++;simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(fases.length-1,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=fases.length*120-1}),vista(){},capturar(){return {simulado,x:camara.position.x};},mostrar(c){restauraciones++;simulado=c.simulado;camara.position.x=c.x;}};
+const T=c.CAOZ_THREE.THREE,camara=new T.PerspectiveCamera(),fases=['salida','descubrir','vertigo'];let simulado=0,reinicios=0,pasos=0,restauraciones=0,vistaExterna=null;
+const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){pasos++;simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(fases.length-1,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=fases.length*120-1}),vista(v){vistaExterna=v;},capturar(){return {simulado,x:camara.position.x};},mostrar(c){restauraciones++;simulado=c.simulado;camara.position.x=c.x;}};
 const editor=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api),$=id=>elementos.get(id);
 async function ceder(){assert(pendientes.length,'Debe haber un tramo de simulación pendiente');pendientes.shift()();await Promise.resolve();await Promise.resolve();}
 async function completar(){let n=0;while(pendientes.length){assert(++n<1000,'Una búsqueda debe terminar');await ceder();}}
@@ -81,3 +81,17 @@ console.log('✓ Búsqueda por cuadro sin velo ni resimulación y slider único 
 
 const pasosAntes=pasos,reiniciosAntes=reinicios;for(const f of [0,1700,20,1500,100,1400,50]){entrada('ceTiempo',f);await completar();assert.equal(simulado,f);}assert.equal(pasos,pasosAntes,'El scrub no ejecuta simulación en ninguna dirección');assert.equal(reinicios,reiniciosAntes);assert(restauraciones>10);
 console.log('✓ Búsquedas instantáneas por caché, sin simulación ni reinicios; actuación independiente del encuadre.');
+
+// Los keyframes no sustituyen el cuerpo completo por brazos POV ni al revés.
+entrada('ceTiempo',1210);await completar();agrupado.antesDibujo();assert.equal(vistaExterna,false);assert.equal($('cePOV').checked,true);
+assert.equal($('ceFrames').textContent,'Plano F010 · Global F1210');
+$('ceKey').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,false,'El primer keyframe conserva los brazos originales');
+const seleccionar=$('ceLista').children[0].onclick();await completar();await seleccionar;agrupado.antesDibujo();assert.equal(vistaExterna,false,'Seleccionar un keyframe no cambia el actor');
+$('cePOV').checked=false;$('cePOV').emitir('change');agrupado.antesDibujo();assert.equal(vistaExterna,true,'Sólo la opción explícita puede cambiar su visibilidad');
+$('ceKey').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true);
+$('ceEliminar').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true,'Borrar el último keyframe tampoco cambia la representación');
+$('ceBase').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true,'Convertir la cámara original conserva la representación');
+entrada('ceTiempo',1320);await completar();assert.equal($('ceFrames').textContent,'Plano F120 · Global F1320');
+$('ceVelocidad').value='.25';agrupado.paso(.1);assert.equal($('ceFrames').textContent,'Plano F120 · Global F1320','La referencia de cuadros no depende de la velocidad');
+entrada('ceTiempo',1440);await completar();assert.equal($('ceFrames').textContent,'Plano F000 · Global F1440','El contador local se reinicia al cambiar de plano');
+console.log('✓ Keyframes conservan la representación del actor; contador de cuadros local/global con base 60 e índices desde cero.');

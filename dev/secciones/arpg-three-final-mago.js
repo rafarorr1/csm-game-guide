@@ -122,6 +122,11 @@
     function camaraJuego(amplitud=1,fov=32){const h=s.actor,objetivo=h.pos.clone().lerp(centro,.35).setY(.75);const d=22*amplitud;mirar(objetivo.clone().add(new V(0,Math.sin(.92)*d,Math.cos(.92)*d)),objetivo,fov);}
     function camaraPerfil(){const objetivo=s.remate.clone().setY(.85),lateral=new V(-s.avance.z,0,s.avance.x);mirar(objetivo.clone().addScaledVector(lateral,12).add(new V(0,8.4,0)),objetivo,36);}
     function vistaOjos(objetivo,correr=false,fov=68){const h=s.actor,balanceo=correr&&!reducido?Math.sin(h.fase*2)*.035:0;mirar(h.pos.clone().add(new V(Math.sin(h.dir)*.12,1.69+balanceo,Math.cos(h.dir)*.12)),objetivo,fov);}
+    // La posición debe estar lista antes del primer cuadro visible: así la estela
+    // nunca aparece en el origen ni conserva la posición de una reproducción anterior.
+    function colocarMeteorito(edad){const r=recursos,h=s.actor,k=lim(edad/(DURACIONES.cielo+DURACIONES.caida));
+      r.meteorito.position.lerpVectors(cielo,h.pos.clone().setY(1),k*k);r.meteorito.quaternion.setFromUnitVectors(new V(0,1,0),cielo.clone().sub(h.pos).normalize());r.roca.rotation.set(edad*.8,edad*1.2,edad*.5);r.luz.position.copy(r.meteorito.position);r.luz.intensity=250;
+    }
     function camaraVertigo(k){
       const foco=new V(0,2.35,0),direccion=new V(0,.09,1).normalize(),distancia=24-17*suave(k);
       // La capucha mira a +Z: el eje de cámara permite ver al mago de frente.
@@ -201,9 +206,8 @@
         h.m.H.cabeza.rotation.x-=.55*suave((k-.65)/.35);camaraPerfil();
         if(t>=DURACIONES.voltear){h.dir=s.dirInicio+delta;h.m.raiz.rotation.y=h.dir;cambio('techo');}
       }
-      else if(f==='techo'){posar('quieto',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.3,0)));if(t>=DURACIONES.techo){r.meteorito.visible=true;cambio('cielo');}}
-      else if(f==='cielo'||f==='caida'){const edad=(f==='caida'?DURACIONES.cielo:0)+t,k=lim(edad/(DURACIONES.cielo+DURACIONES.caida)),viaje=k*k;
-        r.meteorito.position.lerpVectors(cielo,h.pos.clone().setY(1),viaje);r.meteorito.quaternion.setFromUnitVectors(new V(0,1,0),cielo.clone().sub(h.pos).normalize());r.roca.rotation.set(edad*.8,edad*1.2,edad*.5);r.luz.position.copy(r.meteorito.position);r.luz.intensity=250;
+      else if(f==='techo'){posar('quieto',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.3,0)));if(t>=DURACIONES.techo){colocarMeteorito(0);r.meteorito.visible=true;cambio('cielo');}}
+      else if(f==='cielo'||f==='caida'){const edad=(f==='caida'?DURACIONES.cielo:0)+t;colocarMeteorito(edad);
         if(f==='cielo'){const objetivo=r.mago.position.clone().add(new V(0,2,0)).lerp(r.meteorito.position,suave(t/.4));vistaOjos(objetivo,false,68-44*suave((t-.12)/.45));if(t>=DURACIONES.cielo)cambio('caida');}
         else{h.m.raiz.position.copy(h.pos);actuacion.fbx(h.m,'prepararMeteorito',t/.67,s.pose,t/.22);camaraJuego(.8);if(t>=DURACIONES.caida){explosion();cambio('impacto');camaraDestruccion(0);}}
       }else if(f==='impacto'){
