@@ -6,11 +6,12 @@ const c=vm.createContext({console,atob});c.window=c;
 for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-impactos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,MOD=c.CAOZ_ARPG_MODELOS.fabrica(T),escena=new T.Scene(),camara=new T.PerspectiveCamera(32,16/9,.5,1200),casas=new T.Group();
 const g=new T.BoxGeometry(6,7,5).toNonIndexed();g.translate(5,3.5,-17);const casa=new T.Mesh(g,new T.MeshStandardMaterial());casa.castShadow=true;casas.add(casa);escena.add(casas);
-casas.userData.ocultacion={cajas:[new T.Box3().setFromObject(casa)],opacidades:new Float32Array([1])};
+const tapa=new T.Mesh(new T.BoxGeometry(6,9,6).toNonIndexed(),new T.MeshStandardMaterial());tapa.position.set(16.5,4.5,16.5);casas.add(tapa);
+casas.userData.ocultacion={cajas:[new T.Box3().setFromObject(casa),new T.Box3().setFromObject(tapa)],opacidades:new Float32Array([1,1])};
 const actor={tipo:'adreida',vivo:true,m:MOD.crear('adreida'),pos:new T.Vector3(10,0,10),dir:0,fase:0};escena.add(actor.m.raiz);
 const otro={tipo:'mohamed',vivo:true,m:MOD.crear('mohamed'),pos:new T.Vector3(),dir:0,fase:0};escena.add(otro.m.raiz);
 const fx=c.CAOZ_ARPG_IMPACTOS.fabrica(T,escena);fx.actualizarMaterial(new T.MeshStandardMaterial());let impactos=0,regresos=0,negro=0;
-const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,caminar(h,p,dt,vel=2.65){const d=h.pos.distanceTo(p);h.dir=Math.atan2(p.x-h.pos.x,p.z-h.pos.z);h.pos.lerp(p,Math.min(1,vel*dt/Math.max(.001,d)));h.fase+=vel*dt*2;return d<.04;},impactar(p){impactos++;fx.agujero(p,{radio:8.4,profundidad:24,duracion:30});},volver(){regresos++;},interfaz(s){negro=s.negro;}});
+const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,impactar(p){impactos++;fx.agujero(p,{radio:8.4,profundidad:24,duracion:30});},volver(){regresos++;},interfaz(s){negro=s.negro;}});
 assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 for(const fps of [30,60,120]){
  camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,impactosAntes=impactos,posAntes=actor.pos.clone();
@@ -25,7 +26,11 @@ for(const fps of [30,60,120]){
   if(['desaparece','tropezar','buscar','levantarse'].includes(cine.estado().fase))assert(actor.m.mallas[0].visible,'El ataque, caída y recuperación se ven en tercera persona');
   if(cine.estado().fase==='buscar'&&cine.estado().t>.1){const cabeza=actor.m.H.cabeza.getWorldPosition(new T.Vector3());assert(cabeza.y<1.25,'Busca al mago desde el suelo');}
   const actual=cine.estado();
-  if(est.fase==='salida'&&actual.fase==='descubrir')inicioPaneo={pos:camara.position.clone(),q:camara.quaternion.clone()};
+  if(est.fase==='salida'&&actual.fase==='descubrir'){
+   inicioPaneo={pos:camara.position.clone(),q:camara.quaternion.clone()};
+   const derecha=new T.Vector3(1,0,0).applyQuaternion(camara.quaternion),haciaMago=new T.Vector3(0,2.35,0).sub(camara.position);
+   assert(haciaMago.dot(derecha)>0,'El mago queda a la derecha del encuadre inicial: paneo de izquierda a derecha');
+  }
   if(actual.fase==='descubrir'){
    assert(camara.position.distanceTo(inicioPaneo.pos)<1e-8,'El paneo gira en su sitio, sin avanzar hacia el dolly');
    assert.equal(camara.fov,42,'El primer plano no hace zoom');
@@ -38,6 +43,17 @@ for(const fps of [30,60,120]){
   if(actual.fase==='vertigo'&&actual.t>0){
    const d=camara.position.distanceTo(new T.Vector3(0,2.35,0));assert(Math.abs(d*Math.tan(camara.fov*Math.PI/360)-24*Math.tan(9*Math.PI/180))<1e-6,'Dolly y focal se compensan para mantener el tamaño del mago');
    assert(cine.recursos.aura.visible&&cine.recursos.mago.visible,'El mago está envuelto en el hechizo');
+   assert.equal(actual.casaDolly,1,'Sólo selecciona la casa que tapa el inicio del dolly');
+   assert(casas.userData.ocultacion.opacidades[1]<.1);assert.equal(casas.userData.ocultacion.opacidades[0],1);
+  }
+  if(actual.fase!=='vertigo')assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Las casas vuelven a su opacidad fuera del dolly');
+  if(['carrera','ataquePOV','desaparece','tropezar'].includes(actual.fase)){
+   assert(Math.abs(actor.pos.x-actor.pos.z)<1e-7,'Carrera, ataque y tropiezo conservan la misma línea desde la puerta');
+   if(['desaparece','tropezar'].includes(actual.fase)&&actual.t>0){const frente=new T.Vector3(Math.sin(actor.dir),0,Math.cos(actor.dir)),vista=camara.getWorldDirection(new T.Vector3()).setY(0).normalize();assert(Math.abs(frente.dot(vista))<1e-6,'El fallo se ve de perfil');}
+  }
+  if(actual.fase==='impacto'){
+   assert(camara.position.y>29,'El plano posterior al meteorito abre la vista de la plaza');
+   for(const p of [[-18,0,0],[18,0,0],[0,0,-18],[0,0,18]]){const ndc=new T.Vector3(...p).project(camara);assert(Math.abs(ndc.x)<1&&Math.abs(ndc.y)<1,'La destrucción de ambos lados queda dentro del plano general');}
   }
   if(actual.fase==='ataquePOV'&&actual.t>.15){const mano=cine.recursos.brazosFPS.H.manoD.getWorldPosition(new T.Vector3()).project(camara);assert(Math.abs(mano.x)<1&&Math.abs(mano.y)<1,'El arma empieza su arco dentro del encuadre FPS');}
   if(est.fase==='ataquePOV'&&actual.fase==='desaparece')assert(actor.pos.z<3,'El ataque no reinicia la aproximación al cortar');
@@ -56,7 +72,8 @@ for(const fps of [30,60,120]){
  for(let i=0;i<120;i++)cine.paso(1/fps);assert.equal(regresos,antes+1,'No duplica la navegación');
  cine.cancelar();fx.limpiar();assert(!cine.activa);assert(actor.pos.equals(posAntes),'Cancelar restaura al actor, sin dejarlo bajo el piso');assert.equal(actor.m.raiz.visible,true);assert.equal(otro.m.raiz.visible,true);assert.equal(casa.castShadow,true);assert.equal(camara.fov,32);assert.equal(camara.near,.5);
 }
-for(const segundos of [0,4,8,13,20]){const antes=regresos;cine.iniciar([actor,otro]);for(let i=0;i<segundos*60;i++)cine.paso(1/60);assert(cine.finalizar());assert(!cine.finalizar());cine.paso(1);assert.equal(regresos,antes+1,'Omitir navega una sola vez');cine.cancelar();fx.limpiar();}
+for(const segundos of [0,4,6,8,13,20]){const antes=regresos;cine.iniciar([actor,otro]);for(let i=0;i<segundos*60;i++)cine.paso(1/60);assert(cine.finalizar());assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Omitir restaura la casa aunque se interrumpa el dolly');assert(!cine.finalizar());cine.paso(1);assert.equal(regresos,antes+1,'Omitir navega una sola vez');cine.cancelar();fx.limpiar();}
+for(let j=0;j<2;j++){cine.iniciar([actor,otro]);while(cine.estado().fase!=='vertigo')cine.paso(1/60);assert(casas.userData.ocultacion.opacidades[1]<.1);cine.cancelar();assert(casas.userData.ocultacion.opacidades.every(v=>v===1),'Cancelar también restaura la casa, incluso al repetir la toma');}
 const n=escena.children.length;
 for(let i=0;i<4;i++){cine.iniciar([actor,otro]);cine.cancelar();assert.equal(escena.children.length,n,'Reutiliza los efectos entre revisiones');}
 cine.iniciar([otro]);assert.equal(otro.m.raiz.visible,false);cine.cancelar();assert.equal(escena.children.length,n,'El actor de historia prestado se retira');

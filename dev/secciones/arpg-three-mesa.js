@@ -1706,7 +1706,7 @@
     volver:iniciarFinalMago
   });
   function volverNivelUno(){const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo','plano','momento'])u.searchParams.delete(k);location.assign(u.href);}
-  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,caminar:caminarEntrada,piso:()=>suelo.material,reducido,
+  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,
     impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
     interfaz(s){const activa=s.fase!=='inactiva';mostrarEntradaTroll(activa);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';$('fundidoFinal').style.opacity=String(s.negro);$('fundidoFinal').hidden=!activa;},
     volver:volverNivelUno
