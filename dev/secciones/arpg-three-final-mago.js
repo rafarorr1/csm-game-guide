@@ -2,9 +2,9 @@
    Los recursos se reservan sólo al reproducirlo; no agrega trabajo a las oleadas. */
 'use strict';
 (function(){
-  // A 30 FPS: paneo 72 f, corte y vértigo 54 f; corte del hachazo en f 14;
-  // preparación 32 f; destrucción en plano general 47 f y caída cercana 54 f.
-  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:1.8,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,techo:2.3,cielo:1.7,caida:1.05,impacto:1.55,abismo:1.8,negro:1.2});
+  // A 30 FPS: paneo 72 f, corte y vértigo 84 f; corte del hachazo en f 14;
+  // giro tras levantarse 33 f; destrucción y caída en una sola toma de 101 f.
+  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:2.8,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,impactar,interfaz,volver,piso=()=>null,reducido=false}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','techo','cielo'];
@@ -74,20 +74,24 @@
               transformed.xz+=d*k*(1.6+aRuina.w*2.4);transformed.y=max(.08+aRuina.w*.45+p.y*.2,transformed.y-(aRuina.y*.85)*k+sin(k*3.14159)*aRuina.w*1.7);}`);
         };mat.customProgramCacheKey=()=>clave+'-epilogo-ruinas';mat.needsUpdate=true;
       });
-      const caja=casas.userData.ocultacion?.cajas.filter(b=>b.max.y>4&&b.getCenter(new V()).z<-8).sort((a,b)=>a.getCenter(new V()).distanceToSquared(new V(5,0,-17))-b.getCenter(new V()).distanceToSquared(new V(5,0,-17)))[0];
-      if(caja){caja.getCenter(techo);techo.z+=.3;casas.updateMatrixWorld(true);const ray=new T.Raycaster(new V(techo.x,caja.max.y+3,techo.z),new V(0,-1,0));const contacto=ray.intersectObject(casas,true)[0];techo.y=(contacto?.point.y||caja.max.y)+.13;}else techo.set(6,7.8,-17);
-      cielo.copy(destino).add(new V(techo.x*1.6,54,techo.z*1.6));
       recursos={grupo,brazosFPS,mago,brazos,baston,sello,orbita,aura,motas,meteorito,roca,cola,luz,fragmentos,humo,onda};
+    }
+    function prepararTecho(salida,avance){
+      // Reaparece encima de la casa de salida, detrás de la dirección del ataque.
+      const caja=casas.userData.ocultacion?.cajas.filter(b=>b.max.y>4&&b.getCenter(new V()).sub(centro).dot(avance)<-4).sort((a,b)=>a.getCenter(new V()).setY(0).distanceToSquared(salida)-b.getCenter(new V()).setY(0).distanceToSquared(salida))[0];
+      if(caja){caja.getCenter(techo);techo.z+=.3;casas.updateMatrixWorld(true);const ray=new T.Raycaster(new V(techo.x,caja.max.y+3,techo.z),new V(0,-1,0));const contacto=ray.intersectObject(casas,true)[0];techo.y=(contacto?.point.y??caja.max.y)+.13;}
+      else techo.copy(centro).addScaledVector(avance,-18).setY(7.8);
+      cielo.copy(destino).add(new V(techo.x*1.6,54,techo.z*1.6));
     }
     function visibilidad(){const pov=POV.includes(s.fase);s.actor.m.raiz.visible=true;s.actor.m.mallas.forEach((m,i)=>m.visible=!pov&&s.mallas[i]);recursos.brazosFPS.raiz.visible=pov&&!s.impactado;}
     function restaurarCasaDolly(){if(s?.casaDolly>=0){casas.userData.ocultacion.opacidades[s.casaDolly]=s.opacidadCasa;s.casaDolly=-1;}}
-    function cambio(fase){if(s.fase==='vertigo'&&fase!=='vertigo')restaurarCasaDolly();s.fase=fase;s.t=0;s.pose=actuacion.capturar(s.actor.m);s.inicio=s.actor.pos.clone();visibilidad();interfaz({fase,negro:0});}
+    function cambio(fase){if(s.fase==='vertigo'&&fase!=='vertigo')restaurarCasaDolly();s.fase=fase;s.t=0;s.pose=actuacion.capturar(s.actor.m);s.inicio=s.actor.pos.clone();s.dirInicio=s.actor.dir;visibilidad();interfaz({fase,negro:0});}
     function iniciar(jugadores,{puerta,umbral,normal}={}){if(s)return false;preparar();terminado=false;
       let actor=jugadores.find(h=>h.tipo==='adreida'&&h.vivo),prestado=false;
       if(!actor){const m=MOD.crear('adreida');escena.add(m.raiz);actor={tipo:'adreida',m,pos:new V(),radio:m.radio,dir:0,fase:0,vivo:true};prestado=true;}
       visitadas=jugadores.map(h=>({h,visible:h.m.raiz.visible,mallas:h.m.mallas.map(m=>m.visible),pos:h.pos.clone(),dir:h.dir,raiz:h.m.raiz.position.clone(),giro:h.m.raiz.quaternion.clone(),pose:actuacion.capturar(h.m)}));for(const x of visitadas)x.h.m.raiz.visible=x.h===actor;
       const fuera=normal?.clone()||centro.clone().sub(puerta||new V(10,0,10)).normalize(),salida=puerta?.clone()||new V(10,0,10);
-      const avance=centro.clone().sub(salida).setY(0).normalize();destino.copy(centro).addScaledVector(avance,-3.5);
+      const avance=centro.clone().sub(salida).setY(0).normalize();destino.copy(centro).addScaledVector(avance,-3.5);prepararTecho(salida,avance);
       actor.pos.copy(umbral||salida.clone().addScaledVector(fuera,-1.8));actor.dir=Math.atan2(fuera.x,fuera.z);actor.giro180=null;actor.alto=0;
       s={actor,prestado,fase:'salida',t:0,total:0,impactado:false,origen:actor.pos.clone(),salida,fuera,avance,remate:centro.clone().addScaledVector(avance,-.45),tropiezo:centro.clone().addScaledVector(avance,.8),casaDolly:-1,dollyPreparado:false,mallas:actor.m.mallas.map(m=>m.visible)};
       recursos.grupo.visible=true;recursos.mago.visible=recursos.sello.visible=false;recursos.meteorito.visible=recursos.onda.visible=false;recursos.fragmentos.count=recursos.humo.count=0;recursos.luz.intensity=0;
@@ -97,13 +101,14 @@
       mirar(s.salida.clone().addScaledVector(s.fuera,5.5).addScaledVector(izquierda,3.5).setY(3.5),foco,42);
       desdeCamara.copy(camara.position);giroPaneo.copy(camara.quaternion);
     }
-    function posar(anim,dt,k=0,paso=1){const h=s.actor;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;MOD.posar(h.m,{anim,k,t:s.total,dt,mezclar:true,estado:anim,fase:h.fase,paso:anim==='andar'?paso:0});h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;}
+    function posar(anim,dt,k=0,paso=1,extra={}){const h=s.actor;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;MOD.posar(h.m,{anim,k,t:s.total,dt,mezclar:true,estado:anim,fase:h.fase,paso:anim==='andar'?paso:0,...extra});h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;}
     function mirar(pos,objetivo,fov){camara.position.copy(pos);camara.lookAt(objetivo);camara.fov=fov;camara.near=.045;camara.updateProjectionMatrix();camara.updateMatrixWorld(true);}
     function camaraJuego(amplitud=1,fov=32){const h=s.actor,objetivo=h.pos.clone().lerp(centro,.35).setY(.75);const d=22*amplitud;mirar(objetivo.clone().add(new V(0,Math.sin(.92)*d,Math.cos(.92)*d)),objetivo,fov);}
     function camaraPerfil(){const objetivo=s.remate.clone().setY(.85),lateral=new V(-s.avance.z,0,s.avance.x);mirar(objetivo.clone().addScaledVector(lateral,12).add(new V(0,8.4,0)),objetivo,36);}
     function vistaOjos(objetivo,correr=false,fov=68){const h=s.actor,balanceo=correr&&!reducido?Math.sin(h.fase*2)*.035:0;mirar(h.pos.clone().add(new V(Math.sin(h.dir)*.12,1.69+balanceo,Math.cos(h.dir)*.12)),objetivo,fov);}
     function camaraVertigo(k){
-      const foco=new V(0,2.35,0),direccion=s.salida.clone().setY(2.2).normalize(),distancia=24-17*suave(k);
+      const foco=new V(0,2.35,0),direccion=new V(0,.09,1).normalize(),distancia=24-17*suave(k);
+      // La capucha mira a +Z: el eje de cámara permite ver al mago de frente.
       // d * tan(FOV/2) constante: el mago mantiene tamaño mientras cambia el fondo.
       const fov=T.MathUtils.radToDeg(2*Math.atan(24*Math.tan(T.MathUtils.degToRad(18)/2)/distancia));
       mirar(foco.clone().addScaledVector(direccion,distancia),foco,fov);
@@ -135,11 +140,8 @@
       const objetivo=centro.clone().lerp(s.impacto,.25).setY(.4),d=22*(2.1+.2*suave(t/1.2));
       mirar(objetivo.clone().add(new V(0,Math.sin(.92)*d,Math.cos(.92)*d)),objetivo,48);
     }
-    function camaraAbismo(){
-      const objetivo=s.actor.pos.clone().add(new V(0,.9,0));mirar(objetivo.clone().add(new V(0,9.2,4.8)),objetivo,40);
-    }
     function paso(dt){if(!s||dt<0)return false;if(terminado||dt===0)return true;const h=s.actor,r=recursos;s.t+=dt;s.total+=dt;const t=s.t,f=s.fase;
-      const enTecho=['levantarse','techo','cielo','caida','impacto','abismo','negro'].includes(f);
+      const enTecho=['levantarse','voltear','techo','cielo','caida','impacto','negro'].includes(f);
       r.mago.position.copy(enTecho?techo:centro).add(new V(0,(['salida','descubrir','vertigo','carrera','ataquePOV','desaparece'].includes(s.fase)?1.05:.03)+Math.sin(s.total*2)*.035,0));r.mago.rotation.y=enTecho?rumbo(r.mago.position,h.pos):0;
       const hechizo=r.mago.visible&&!s.impactado,levantados=hechizo?.92+Math.sin(s.total*2.5)*.08:0;r.brazos.forEach((b,i)=>{b.rotation.x=-levantados*2.2;b.rotation.z=(i?1:-1)*(.24+levantados*.45);});r.baston.rotation.z=Math.sin(s.total*1.4)*.035;
       r.cola.material.uniforms.uTiempo.value=s.total;r.sello.rotation.y=s.total*.3;r.orbita.visible=hechizo;r.orbita.position.copy(r.mago.position).add(new V(0,2.6,0));r.orbita.rotation.set(s.total*.4,s.total*.7,0);
@@ -174,8 +176,14 @@
       }else if(f==='buscar'){
         actuacion.buscar(h.m,t);camaraPerfil();if(t>=DURACIONES.buscar)cambio('levantarse');
       }else if(f==='levantarse'){
-        const k=lim(t/DURACIONES.levantarse);actuacion.levantar(h.m,s.pose,k);h.dir+=angulo(h.dir,rumbo(h.pos,techo))*suave((k-.65)/.35)*Math.min(1,dt*5);h.m.raiz.rotation.y=h.dir;camaraPerfil();
-        if(t>=DURACIONES.levantarse){r.mago.visible=true;cambio('techo');}
+        const k=lim(t/DURACIONES.levantarse);actuacion.levantar(h.m,s.pose,k);camaraPerfil();
+        if(t>=DURACIONES.levantarse){r.mago.visible=true;cambio('voltear');}
+      }else if(f==='voltear'){
+        // Termina de incorporarse antes del giro; las pisadas siguen el clip de 180°.
+        const k=lim(t/DURACIONES.voltear),delta=angulo(s.dirInicio,rumbo(h.pos,techo));
+        h.dir=s.dirInicio+delta*MOD.animacion.avanceGiro(k);posar('giro180',dt,k,0,{sentidoGiro:Math.sign(delta)});
+        h.m.H.cabeza.rotation.x-=.55*suave((k-.65)/.35);camaraPerfil();
+        if(t>=DURACIONES.voltear){h.dir=s.dirInicio+delta;h.m.raiz.rotation.y=h.dir;cambio('techo');}
       }
       else if(f==='techo'){posar('quieto',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.3,0)));if(t>=DURACIONES.techo){r.meteorito.visible=true;cambio('cielo');}}
       else if(f==='cielo'||f==='caida'){const edad=(f==='caida'?DURACIONES.cielo:0)+t,k=lim(edad/(DURACIONES.cielo+DURACIONES.caida)),viaje=k*k;
@@ -183,11 +191,9 @@
         if(f==='cielo'){const objetivo=r.mago.position.clone().add(new V(0,2,0)).lerp(r.meteorito.position,suave(t/.4));vistaOjos(objetivo,false,68-44*suave((t-.12)/.45));if(t>=DURACIONES.cielo)cambio('caida');}
         else{h.m.raiz.position.copy(h.pos);actuacion.fbx(h.m,'prepararMeteorito',t/.67,s.pose,t/.22);camaraJuego(.8);if(t>=DURACIONES.caida){explosion();cambio('impacto');camaraDestruccion(0);}}
       }else if(f==='impacto'){
-        caerAbismo(t);escombros(t);camaraDestruccion(t);if(!reducido){camara.position.x+=Math.sin(t*53)*.28*Math.exp(-t*2);camara.position.y+=Math.cos(t*67)*.2*Math.exp(-t*2);}if(t>=DURACIONES.impacto)cambio('abismo');
-      }else if(f==='abismo'){
-        const edad=DURACIONES.impacto+t;caerAbismo(edad);escombros(edad);camaraAbismo();if(t>=DURACIONES.abismo)cambio('negro');
+        caerAbismo(t);escombros(t);camaraDestruccion(t);if(!reducido){camara.position.x+=Math.sin(t*53)*.28*Math.exp(-t*2);camara.position.y+=Math.cos(t*67)*.2*Math.exp(-t*2);}if(t>=DURACIONES.impacto)cambio('negro');
       }else if(f==='negro'){
-        const edad=DURACIONES.impacto+DURACIONES.abismo+t;caerAbismo(edad);escombros(edad);camaraAbismo();interfaz({fase:f,negro:suave(t/.6)});if(t>=DURACIONES.negro)finalizar();
+        const edad=DURACIONES.impacto+t;caerAbismo(edad);escombros(edad);camaraDestruccion(edad);interfaz({fase:f,negro:suave(t/.6)});if(t>=DURACIONES.negro)finalizar();
       }
       if(s){if(POV.includes(s.fase))actuacion.fps(r.brazosFPS,camara,s.fase==='carrera'?h.fase:0,s.total,s.fase==='ataquePOV'?lim(s.t/1.05)*.82:null);h.m.raiz.updateMatrixWorld(true);r.grupo.updateMatrixWorld(true);camara.updateMatrixWorld(true);}return true;
     }

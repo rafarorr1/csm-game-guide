@@ -70,7 +70,6 @@
       // Primero recoge una rodilla y carga el peso en las manos; luego estira el torso.
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
-      m.H.cabeza.rotation.x-=.7*suave((k-.68)/.32);
     }
     return {crearFPS,fps,fbx,capturar,caer,buscar,levantar};
   }
