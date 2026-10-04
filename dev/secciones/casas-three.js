@@ -116,7 +116,7 @@
       // La reserva de GPU tiene el tamaño del respaldo; hay que recrearla al cambiar a 1024 px.
       destino.dispose();destino.image=t.image;destino.needsUpdate=true;t.dispose();return nombre;
     })).then(r=>{if(r.some(x=>x.status==='rejected'))console.warn('Algún mapa de las tejas no cargó; se conserva su material de respaldo.');return r;});
-    const arquitectura=opciones.scenario===false?null:window.CAOZ_ARQUITECTURA?.fabrica(THREE,opciones);
+    const arquitectura=opciones.scenario===false?null:window.CAOZ_ARQUITECTURA?.fabrica(THREE,{...opciones,uniformes});
     const texturasListas=Promise.all([tejasListas,arquitectura?.texturasListas||[]]).then(r=>r.flat());
     // Las ventanas: interior mapping. Por cada píxel del cristal se sigue la mirada dentro de una habitación
     // (en unidades de la ventana: x -1..2, y -0.8..1.6, fondo 2.3 m) y se pinta lo que se vería.
@@ -451,7 +451,7 @@
       }
       if(opciones.ocultables)grupo.userData.ocultacion={opacidades,cajas};
       return grupo;}
-    return {casa,utileria:(tipo,o)=>casa(tipo,o),fundir,materiales:M,uniformes,TIPOS,texturasListas};
+    return {casa,lucesFaroles:(casas,escena,fundidas)=>arquitectura?.lucesFaroles(casas,escena,fundidas)||(()=>{}),utileria:(tipo,o)=>casa(tipo,o),fundir,materiales:M,uniformes,TIPOS,texturasListas};
   }
   window.CAOZ_CASAS=Object.freeze({fabrica,TIPOS});
 })();

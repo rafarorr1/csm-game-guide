@@ -271,6 +271,7 @@
   fundirMundo();
   // Las casas se funden aparte (su módulo conserva el color por vértice y los atributos de las ventanas).
   const casasFundidas=CASAS.fundir(barrio,{ocultables:true});mundo.add(casasFundidas);
+  const iluminarFaroles=CASAS.lucesFaroles(barrio,escena,casasFundidas);
   const rayoCasa=new THREE.Ray(),interseccionCasa=new V3(),destinoCasa=new V3();
   function actualizarCasasOcultas(dt){
     const {cajas,opacidades}=casasFundidas.userData.ocultacion;
@@ -1936,7 +1937,7 @@
     if(editorCine)editorCine.antesDibujo();
     else if(tomaCine&&finalMago?.activa){const v=camarasCine.tomaEn(tomaCine,finalMago.estado());if(camarasCine.aplicar(camara,v.camara))finalMago.vistaEditor(v.vista==='externa');}
     const restaurarRespiracion=finalMago?.respirarCamara();
-    try{escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);for(const e of etiquetas)colocar(e);dibujar();}
+    try{iluminarFaroles(camara,!casaGoblin?.interior&&!finalMago?.estado()?.impactado);escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);for(const e of etiquetas)colocar(e);dibujar();}
     finally{restaurarRespiracion?.();}
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};

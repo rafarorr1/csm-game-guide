@@ -7,6 +7,12 @@
   const planoDeFase=(f,version=VERSION)=>version===1?f:['carrera','ataquePOV',...(version<4?['desaparece']:[])].includes(f)?'carrera':['tropezar','buscar','levantarse','voltear',...(version>=4?['desaparece']:[])].includes(f)?'tropezar':version>=3&&['techo','cielo'].includes(f)?'techo':f;
   const idsPorVersion=Object.fromEntries([1,2,3,4,5,6].map(v=>[v,Object.freeze([...new Set(fases.filter(f=>v>=5||f!=='pies').map(f=>planoDeFase(f,v)))])]));
   const idsPlanos=idsPorVersion[VERSION];
+  // Catálogo central: una entrada por secuencia; los planos pertenecen a ella.
+  const escenas=Object.freeze([
+    Object.freeze({id:'troll',nombre:'La llave y el Recaudador',detalle:'Entrada del jefe · Etapa 2',modo:'reproduccion',entrada:'troll'}),
+    Object.freeze({id:'casa',nombre:'La casa goblin',detalle:'Escena interactiva · Etapa 2',modo:'interactiva',entrada:'casa'}),
+    Object.freeze({id:'mago',nombre:'El mago y el meteorito',detalle:'Salida de la casa · Epílogo',modo:'edicion',entrada:'mago'})
+  ]);
   const curvas=['suave','lineal','corte'];
   function validar(d){
     if(!d||![1,2,3,4,5,6].includes(d.version)||d.escena!=='mago'||d.revision!==REVISION||!d.planos||typeof d.planos!=='object'||Array.isArray(d.planos))throw Error('La toma no pertenece a esta versión de la escena del mago.');
@@ -75,5 +81,5 @@
     }
     return {muestra,aplicar,capturar,tomaEn,agrupar};
   }
-  window.CAOZ_ARPG_CINE_CAMARA=Object.freeze({CLAVE,REVISION,VERSION,fases,planos:idsPlanos,planoDeFase,validar,nueva,crear});
+  window.CAOZ_ARPG_CINE_CAMARA=Object.freeze({CLAVE,REVISION,VERSION,escenas,fases,planos:idsPlanos,planoDeFase,validar,nueva,crear});
 })();

@@ -12,7 +12,7 @@ class Elemento{
   append(...hijos){this.children.push(...hijos);}
   prepend(...hijos){this.children.unshift(...hijos);}
   replaceChildren(...hijos){this.children=hijos;}
-  querySelector(){return null;}
+  querySelector(selector){return selector==='nav'?this.children.find(e=>e.tag==='nav'):null;}
   addEventListener(n,f){(this.eventos[n]??=[]).push(f);}
   setPointerCapture(){}
   focus(){documento.activeElement=this;}
@@ -20,7 +20,7 @@ class Elemento{
 }
 const documento={body:new Elemento(),activeElement:null,hidden:false,createElement:t=>new Elemento(t),getElementById:id=>elementos.get(id),querySelector:()=>new Elemento(),querySelectorAll:()=>creados.filter(e=>e.dataset.fase),addEventListener(){}};
 let ms=0;
-const c=vm.createContext({console,atob,document:documento,localStorage:{getItem:()=>null,setItem(){}},performance:{now:()=>ms++},setTimeout:f=>pendientes.push(f),requestAnimationFrame:f=>pendientes.push(f),addEventListener(){}});c.window=c;
+const c=vm.createContext({console,atob,URL,URLSearchParams,location:{href:'http://127.0.0.1:8900/dev/secciones/arpg-cine.html?piso=scenario',search:'?piso=scenario'},document:documento,localStorage:{getItem:()=>null,setItem(){}},performance:{now:()=>ms++},setTimeout:f=>pendientes.push(f),requestAnimationFrame:f=>pendientes.push(f),addEventListener(){}});c.window=c;
 for(const archivo of ['visor-three-vendor.js','arpg-cine-camara.js','arpg-cine-editor.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,camara=new T.PerspectiveCamera(),fases=['salida','descubrir','vertigo'];let simulado=0,reinicios=0,pasos=0,restauraciones=0,vistaExterna=null;
 const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){pasos++;simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(fases.length-1,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=fases.length*120-1}),vista(v){vistaExterna=v;},capturar(){return {simulado,x:camara.position.x};},mostrar(c){restauraciones++;simulado=c.simulado;camara.position.x=c.x;}};

@@ -1,0 +1,33 @@
+{
+  "nombre": "Farol de pared de Tomsage",
+  "fecha": "2026-10-04",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "collection_id": "col_GsqEB9NDtoryU5BeFLRWY9jT",
+  "concepto": {
+    "modelo": "model_openai-gpt-image-2-5-sunburst",
+    "asset_id": "asset_5E4ZU3xvCbG51XhLPeF1p5Ly",
+    "creditos": 12
+  },
+  "modelo": {
+    "modelo": "model_tripo-v3-1-image-to-3d",
+    "asset_id": "asset_Uv64is8QQVgFJyXA7pVyouXR",
+    "parametros": {
+      "texture": true,
+      "pbr": true,
+      "faceLimit": 4000,
+      "autoSize": true
+    },
+    "creditos": 45,
+    "sha256": "9c9c51b6a96cde66271b12f1fc8bbca5cf890750cc2d913ed920f635ae4f8c4e"
+  },
+  "integracion": {
+    "triangulos": 3470,
+    "altura_m": 0.95,
+    "mapas_px": 512,
+    "materiales": 1,
+    "luces_puntuales_maximas": 2,
+    "sombras_luces": false,
+    "notas": "Modelo hueco. Malla compartida, llama emisiva limitada a la mecha y luces cercanas. Faroles antiguos retirados de la malla de piedra y entramado al cargar; pozo y puertas intactos."
+  }
+}

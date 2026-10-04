@@ -56,6 +56,7 @@
   const utileria=[['caja',-.65,0,.35,{tamano:1}],['caja',-.58,1,.35,{tamano:.65}],['barril',.7,0,.4,{}],['barril',1.3,.41,1.3,{}]].map(([tipo,x,y,z,o],i)=>{const g=CASAS.utileria(tipo,{...o,semilla:31+i});g.position.set(x,y,z);if(i===3)g.rotation.set(Math.PI/2,0,.65);else g.rotation.y=i===1?-.2:.15;return g;});
   const detalle=new THREE.Group();escena.add(detalle);
   const calle=CASAS.fundir(SOLO_POZO?[pozo]:SOLO_UTILERIA?utileria:[...casas,pozo,...utileria]);escena.add(calle);
+  const iluminarFaroles=CASAS.lucesFaroles(casas,escena,calle);
   // Farolas: poste de hierro, farol que brilla y una luz de verdad cada una (sin sombra: una luz puntual con sombra dibuja la escena seis veces).
   const farolas=[];
   for(const [x,z] of (SOLO_UTILERIA?[]:[[-4.3,-2.4],[4.3,2.6]])){const g=new THREE.Group();g.position.set(x,0,z);escena.add(g);
@@ -109,8 +110,8 @@
 
   /* ---- Botones y marcador ------------------------------------------------------------------ */
   let luces=true;
-  function ponerLuces(v){luces=v;$('luces').setAttribute('aria-pressed',String(v));$('luces').textContent=v?'Luces de dentro: encendidas':'Luces de dentro: apagadas';}
-  $('luces').hidden=arquitecturaScenario;
+  function ponerLuces(v){luces=v;$('luces').setAttribute('aria-pressed',String(v));$('luces').textContent=v?'Luces: encendidas':'Luces: apagadas';}
+  $('luces').hidden=false;
   $('luces').onclick=()=>ponerLuces(!luces);
   for(const b of document.querySelectorAll('[data-hora]'))b.onclick=()=>ponerHora(b.dataset.hora);
   for(const b of document.querySelectorAll('[data-vista]'))b.onclick=()=>irA(b.dataset.vista);
@@ -135,7 +136,7 @@
   function medir(){const b=esc.getBoundingClientRect(),dpr=Math.min(devicePixelRatio||1,2),W=Math.max(1,b.width),H=Math.max(1,b.height);
     renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?52:36;camara.updateProjectionMatrix();escHumo.value=H*dpr/900;}
   function negro(){const px=new Uint8Array(4),W=gl.drawingBufferWidth,H=gl.drawingBufferHeight;let s=0;for(let k=0;k<9;k++){gl.readPixels(Math.floor(W*(.2+.3*(k%3))),Math.floor(H*(.2+.3*Math.floor(k/3))),1,1,gl.RGBA,gl.UNSIGNED_BYTE,px);s+=px[0]+px[1]+px[2];}return s<27;}
-  function dibujar(){renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
+  function dibujar(){iluminarFaroles(camara);renderer.info.reset();if(simple)renderer.render(escena,camara);else composer.render();
     if(!CAPTURA&&revisados<3&&++cuadros>=5+revisados*20){revisados++;if(negro()){if(!simple){simple=true;aviso('El posproceso no funciona en esta tarjeta gráfica ('+gpu+'): se muestra sin él.');}}}}
   let antes=performance.now(),fps={n:0,t:performance.now()};
   function cuadro(ahora){const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;paso(dt);dibujar();fps.n++;
