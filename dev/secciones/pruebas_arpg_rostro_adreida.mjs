@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const archivo=nombre=>new URL(nombre,import.meta.url),c=vm.createContext({console,atob});c.window=c;
 assert(fs.existsSync(archivo('adreida-rostro/datos.js')),'Falta exportar la cabeza real: adreida-rostro/datos.js');
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','adreida-rostro/datos.js','arpg-three-rostro-adreida.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js'])vm.runInContext(fs.readFileSync(archivo(f),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-rigged/datos.js','adreida-rostro/datos.js','arpg-three-rostro-adreida.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js'])vm.runInContext(fs.readFileSync(archivo(f),'utf8'),c,{filename:f});
 const T=c.CAOZ_THREE.THREE,datos=c.CAOZ_ADREIDA_ROSTRO_DATOS;
 const leer=(s,C)=>{const b=Buffer.from(s,'base64');return new C(Uint8Array.from(b).buffer);};
 const finitos=(a,mensaje)=>assert(a.every(Number.isFinite),mensaje);
@@ -43,7 +43,8 @@ for(const [i,mesh]of m.rostro.mallas.entries()){
 // La sustitución no elimina triángulos de brazos, manos, hombro, piernas ni botas.
 const cuerpo=m.mallas[0],original=c.CAOZ_ADREIDA_PIERNAS_DATOS,indicesOriginales=leer(original.triangulos,Uint16Array),actuales=cuerpo.geometry.index.array;
 assert(datos.indicesCuerpo,'El paquete declara la retirada de la cara anterior');
-const indicesEsperados=typeof datos.indicesCuerpo==='string'?leer(datos.indicesCuerpo,Uint16Array):Uint16Array.from(datos.indicesCuerpo);
+const recorteFacial=original.indicesConRostro||datos.indicesCuerpo;
+const indicesEsperados=typeof recorteFacial==='string'?leer(recorteFacial,Uint16Array):Uint16Array.from(recorteFacial);
 assert.deepEqual(Array.from(actuales),Array.from(indicesEsperados),'La cara anterior se retira realmente del cuerpo');
 assert(actuales.length<indicesOriginales.length,'Se reemplaza la superficie anterior, no se superponen dos caras');
 const tris=a=>{const t=new Set();for(let i=0;i<a.length;i+=3)t.add(a[i]+','+a[i+1]+','+a[i+2]);return t;},baseTris=tris(indicesOriginales),cuerpoTris=tris(actuales);

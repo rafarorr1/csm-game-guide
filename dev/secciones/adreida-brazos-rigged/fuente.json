@@ -1,0 +1,13 @@
+{
+  "archivo": "MyRiggedArms2.blend",
+  "sha256": "d8bfa6d8093d86d2f9acdfc64479282f05a9a55ea5959478b81ff419fa4da96c",
+  "textura": "young_lightskinned_male_diffuse.png",
+  "texturaSha256": "3efa23b6125e1a71538d00c84e8ecc6eb5bc155b657c08a7f596d7b7fad9b908",
+  "verticesBrazos": 4646,
+  "triangulosBrazos": 8236,
+  "falanges": 30,
+  "verticesCuerpo": 35355,
+  "triangulosCuerpo": 50440,
+  "triangulosConRostroRecortado": 50082,
+  "origen": "Archivo proporcionado por el usuario; el original no se modifica."
+}

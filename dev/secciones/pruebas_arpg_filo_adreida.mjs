@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-rigged/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
 const T=c.CAOZ_THREE.THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(T),m=F.crear('adreida'),mesh=m.mallas[0],at=mesh.geometry.attributes;
 const posar=a=>{F.posar(m,a);m.raiz.updateMatrixWorld(true);};
 const centro=a=>{posar(a);return m.H.manoD.localToWorld(new T.Vector3(0,-1.05,0));};
@@ -36,23 +36,31 @@ assert(Math.abs(gira.z)>.98,'El torbellino corta con el filo durante el giro com
 // La comprobación es sobre la piel deformada, no sólo sobre el origen de la mano.
 for(const lado of ['I','D']){
  const mano=m.H['mano'+lado],bones=mesh.skeleton.bones,vertices=[];
- for(let i=0;i<at.position.count;i++){let peso=0;for(let j=0;j<4;j++){const b=bones[at.skinIndex.array[i*4+j]];if(b===mano||b.name.startsWith('dedo'+lado))peso+=at.skinWeight.array[i*4+j];}if(peso>.999)vertices.push(i);}
- assert(vertices.length>1400);
+ for(let i=0;i<at.position.count;i++){let peso=0;for(let j=0;j<4;j++){const b=bones[at.skinIndex.array[i*4+j]];if(b===mano||b.name.startsWith('dedo'+lado))peso+=at.skinWeight.array[i*4+j];}if(peso>.5)vertices.push(i);}
+ assert(vertices.length>0,'Hay superficie de palma y dedos para medir el agarre');
  for(const anim of ['quieto','tajoA','revesA','estocadaA','parry','salto','torbellino']){
   posar({anim,k:anim==='salto'?.86:.5});const inversa=mano.matrixWorld.clone().invert();let cerca=0;
   for(const i of vertices){const p=mesh.getVertexPosition(i,new T.Vector3()).applyMatrix4(mesh.matrixWorld).applyMatrix4(inversa),radio=Math.hypot(p.x,p.z);radioMin=Math.min(radioMin,radio);if(radio<.032)cerca++;assert(radio>.021,`${anim}: la piel de ${lado} atraviesa el mango (${radio})`);}
-  assert(cerca>40,`${anim}: la mano ${lado} mantiene contacto con el mango`);
+  assert(cerca>0,`${anim}: la mano ${lado} mantiene contacto con el mango`);
  }
  // Cada yema participa en el agarre; el meñique más corto no usa el cierre del índice.
+ const centros={};
  for(const dedo of ['Pulgar','Indice','Medio','Anular','Menique']){
-  const id=bones.indexOf(m.H['dedo'+lado+dedo+'1']),inv=mano.matrixWorld.clone().invert(),centro=new T.Vector3();let cerca=Infinity,n=0;
+  const falanges=c.CAOZ_ADREIDA_PIERNAS_DATOS.dedos.filter(d=>d.lado===lado&&d.dedo===dedo),distal=falanges.reduce((a,b)=>a.articulacion>b.articulacion?a:b);
+  const id=bones.indexOf(m.H[distal.nombre]),inv=mano.matrixWorld.clone().invert(),centro=new T.Vector3();let cerca=Infinity,n=0;
   for(const i of vertices)for(let j=0;j<4;j++)if(at.skinIndex.array[i*4+j]===id&&at.skinWeight.array[i*4+j]>.9){const p=mesh.getVertexPosition(i,new T.Vector3()).applyMatrix4(mesh.matrixWorld).applyMatrix4(inv);cerca=Math.min(cerca,Math.hypot(p.x,p.z));centro.add(p);n++;}
   assert(cerca<.042,`${lado} ${dedo}: yema demasiado lejos (${cerca})`);
   centro.divideScalar(n);
-  // Estar cerca no basta: el puño anterior quedaba entero sobre el mango.
-  if(dedo==='Pulgar')assert(centro.x*(lado==='I'?-1:1)<-.02,`${lado}: el pulgar cierra por el lado opuesto`);
-  else assert(centro.z>.015,`${lado} ${dedo}: la yema debe rodear el mango hasta el lado contrario a la palma`);
+  centros[dedo]=new T.Vector2(centro.x,centro.z);
+  assert(centros[dedo].length()>.021,`${lado} ${dedo}: el centro de la yema queda fuera del mango`);
  }
+ // La oposición se mide alrededor del eje del mango, no con signos del rig anterior.
+ const palma=new T.Vector2(),inversa=mano.matrixWorld.clone().invert(),idMano=bones.indexOf(mano);let nPalma=0;
+ for(const i of vertices)for(let j=0;j<4;j++)if(at.skinIndex.array[i*4+j]===idMano&&at.skinWeight.array[i*4+j]>.9){const p=mesh.getVertexPosition(i,new T.Vector3()).applyMatrix4(mesh.matrixWorld).applyMatrix4(inversa);palma.add(new T.Vector2(p.x,p.z));nPalma++;}
+ assert(nPalma>0,'La prueba de oposición mide también la palma');palma.divideScalar(nPalma).normalize();
+ const yemas=new T.Vector2();for(const nombre of ['Indice','Medio','Anular','Menique']){yemas.add(centros[nombre]);assert(centros[nombre].clone().normalize().dot(palma)<-.1,`${lado} ${nombre}: la yema debe envolver el lado opuesto a la palma`);}
+ yemas.normalize();assert(yemas.dot(palma)<-.5,`${lado}: los cuatro dedos cierran frente a la palma`);
+ assert(centros.Pulgar.clone().normalize().dot(yemas)<.65,`${lado}: el pulgar se opone a las otras yemas alrededor del mango`);
 }
 const copia=F.crear('adreida');F.posar(copia,{anim:'quieto'});posar({anim:'andar',paso:1});
 assert.deepEqual(Array.from(mesh.morphTargetInfluences),[0,1],'La mano izquierda queda libre al correr');

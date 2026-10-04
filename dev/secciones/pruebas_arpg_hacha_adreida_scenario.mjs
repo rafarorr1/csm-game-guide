@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-rigged/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
 const T=c.CAOZ_THREE.THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(T),m=F.crear('adreida'),otro=F.crear('adreida'),g=m.hachaScenario.geometry;
 assert.equal(g,otro.hachaScenario.geometry,'Geometría compartida con Adreidos');
 assert.notEqual(m.hachaScenario.material,otro.hachaScenario.material,'Destellos independientes');

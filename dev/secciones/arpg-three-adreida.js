@@ -2,7 +2,7 @@
 'use strict';
 (function(){
   const modular=window.CAOZ_ADREIDA_PIERNAS_DATOS||window.CAOZ_ADREIDA_MODULAR_DATOS;
-  const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL(modular?.piernas?'./adreida-piernas-scenario/':modular?'./adreida-brazos-scenario/':'./adreida-scenario/',document.currentScript.src).href:null;
+  const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL(modular?.brazosRigged?'./adreida-brazos-rigged/':modular?.piernas?'./adreida-piernas-scenario/':modular?'./adreida-brazos-scenario/':'./adreida-scenario/',document.currentScript.src).href:null;
   function fabrica(THREE){
     const datos=modular||window.CAOZ_ADREIDA_DATOS;let geometria,mapas;
     const leer=(s,T)=>{const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new T(a.buffer);};
@@ -13,7 +13,11 @@
         // El mango atraviesa el ancho de la palma, perpendicular a los dedos.
         H['mano'+l].rotation.z=s*(Math.PI/2-.31);
       }
-      for(const d of datos.dedos||[]){const b=new THREE.Bone();b.name=d.nombre;b.position.fromArray(d.posicion);H[d.padre].add(b);H[d.nombre]=b;}
+      for(const d of datos.dedos||[]){const b=new THREE.Bone();b.name=d.nombre;b.position.fromArray(d.posicion);
+        // Los dedos importados traen su orientación de reposo, incluida en el enlace de la piel.
+        if(d.rotacion)b.quaternion.fromArray(d.rotacion).normalize();
+        H[d.padre].add(b);H[d.nombre]=b;
+      }
     }
     // Flexión calibrada para cada longitud de dedo alrededor del mango de 5.2 cm.
     const cierreDedos={Pulgar:[.233,1.039],Indice:[1.65,1.139],Medio:[1.545,.701],Anular:[1.693,.408],Menique:[1.675,.446]};
@@ -23,9 +27,14 @@
       // Pose absoluta: el editor puede buscar cualquier cuadro sin arrastrar estados.
       for(const d of datos.dedos){const b=m.H[d.nombre],s=d.lado==='I'?1:-1;
         const libre=(a.sinHacha&&!(d.lado==='D'&&a.agarreDerecha))||a.anim==='grito'||a.anim==='muerte'||(d.lado==='I'&&['andar','recogerLlave','mirarLlave'].includes(a.anim));
-        const cierre=libre?.38:1,pulgar=d.dedo==='Pulgar';
         libres[d.lado]=libre;
-        b.rotation.set(0,s*cierre*cierreDedos[d.dedo][d.articulacion],pulgar&&!d.articulacion?-s*.582*cierre:0);
+        if(d.abierto&&d.cerrado){
+          // Poses locales absolutas: el puño respeta las tres falanges y la orientación del rig.
+          b.quaternion.fromArray(libre?d.abierto:d.cerrado).normalize();
+        }else{
+          const cierre=libre?.38:1,pulgar=d.dedo==='Pulgar';
+          b.rotation.set(0,s*cierre*cierreDedos[d.dedo][d.articulacion],pulgar&&!d.articulacion?-s*.582*cierre:0);
+        }
       }
       // El correctivo conserva el volumen de la palma al cerrar los dedos sobre el mango.
       const influencias=m.mallas[0].morphTargetInfluences;
@@ -43,12 +52,13 @@
         geometria.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(indices,4));
         geometria.setAttribute('skinWeight',new THREE.BufferAttribute(leer(datos.peso,Float32Array),4));
         // El rostro nuevo retira sólo los triángulos de la cara anterior; conserva pelo, pesos y agarres.
-        const indicesCuerpo=window.CAOZ_ADREIDA_ROSTRO_DATOS?.indicesCuerpo||datos.triangulos;
+        const rostro=window.CAOZ_ADREIDA_ROSTRO_DATOS;
+        const indicesCuerpo=rostro?(datos.indicesConRostro||(!datos.brazosRigged&&rostro.indicesCuerpo)||datos.triangulos):datos.triangulos;
         geometria.setIndex(new THREE.BufferAttribute(leer(indicesCuerpo,Uint16Array),1));
         if(datos.agarre){
           geometria.morphTargetsRelative=true;
           for(const [atributo,campo]of [['position','posicion'],['normal','normal']])geometria.morphAttributes[atributo]=['I','D'].map(lado=>{
-            const d=datos.agarre[lado],ids=leer(d.indices,Uint16Array),valores=leer(d[campo],Float32Array),delta=new Float32Array(p.length);
+            const d=datos.agarre[lado]||{},ids=leer(d.indices||'',Uint16Array),valores=leer(d[campo]||'',Float32Array),delta=new Float32Array(p.length);
             for(let i=0;i<ids.length;i++)delta.set(valores.subarray(i*3,i*3+3),ids[i]*3);
             const a=new THREE.BufferAttribute(delta,3);a.name='Agarre '+lado;return a;
           });

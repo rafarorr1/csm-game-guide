@@ -4,10 +4,10 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {recursosAdreida,entornoArpgThree} from './arpg-three-exportar.mjs';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-rigged/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
 const {THREE}=c.CAOZ_THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=F.crear('adreida'),otro=F.crear('adreida'),clasico=F.crear('adreida',{modeloAdreida:'clasico'});
 const cuerpo=m.mallas[0],g=cuerpo.geometry,a=g.attributes;
-assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,61204);assert(g.index.count/3<65000,'Presupuesto del cuerpo por debajo de 65 mil triángulos');assert.equal(m.mallas.length,2);
+assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count,Buffer.from(c.CAOZ_ADREIDA_PIERNAS_DATOS.triangulos,'base64').length/2,'Se utiliza el cuerpo activo completo');assert(g.index.count/3<65000,'Presupuesto del cuerpo por debajo de 65 mil triángulos');assert.equal(m.mallas.length,2);
 assert.equal(m.alto,clasico.alto);assert.equal(m.radio,clasico.radio);assert.deepEqual(m.p,clasico.p);
 // La envolvente de morphs es conservadora; medir el cuerpo base, no esa reserva.
 const cajaBase=new THREE.Box3().setFromBufferAttribute(a.position);assert.ok(Math.abs(cajaBase.max.y-cajaBase.min.y-1.913112)<.0001,'Altura del modelo aprobado');
@@ -93,7 +93,7 @@ for(const pagina of ['arpg-three.html','modelos-visor.html']){const html=fs.read
 console.log(`✓ Adreida Scenario: ${poses} poses, 1200 muestras de marcha, apoyo, suelas, continuidad, escala, pesos, hacha y Adreidos.`);
 
 // Cada falange de la malla modular debe deformar sus propios vértices.
-const d=c.CAOZ_ADREIDA_PIERNAS_DATOS;assert.equal(d.dedos.length,20);
+const d=c.CAOZ_ADREIDA_PIERNAS_DATOS;assert.equal(d.dedos.length,30,'Tres falanges por cada uno de los diez dedos');
 assert.equal(d.apoyoCarrera.length,256,'Apoyo horneado sin cálculos de malla adicionales por cuadro');
 assert(d.apoyoCarrera.every(x=>Number.isFinite(x)&&Math.abs(x)<.08));
 for(const lado of ['I','D'])for(const pieza of ['pierna','bota']){
@@ -116,11 +116,10 @@ for(const f of d.dedos){const indice=fps.mallas[0].skeleton.bones.indexOf(fps.H[
  const propios=Array.from({length:a.position.count},(_,i)=>i).filter(i=>Array.from({length:4},(_,j)=>a.skinIndex.array[i*4+j]===indice&&a.skinWeight.array[i*4+j]>.5).some(Boolean));
  assert(propios.length>0&&propios.every(i=>seleccion.has(i)),f.nombre+': se conserva completo en primera persona');
 }
-console.log('✓ Veinte falanges, agarre articulado y dedos completos en los planos FPS.');
+console.log(`✓ ${d.dedos.length} falanges, agarre articulado y dedos completos en los planos FPS.`);
 
 c.CAOZ_ARPG_ADREIDA_CINE.fabrica(THREE,F).fps(fps,new THREE.PerspectiveCamera(),1,0);
 F.posar(m,{anim:'quieto'});
-assert.equal(fps.H.dedoDIndice0.rotation.y,m.H.dedoDIndice0.rotation.y,'El POV conserva el agarre derecho calibrado para el mango');
-assert(fps.H.dedoIIndice0.rotation.y<1,'La mano izquierda del POV queda libre');
+for(const dedo of d.dedos){const esperado=new THREE.Quaternion().fromArray(dedo.lado==='D'?dedo.cerrado:dedo.abierto);assert(fps.H[dedo.nombre].quaternion.angleTo(esperado)<1e-6,'El POV conserva el agarre derecho y abre la mano izquierda: '+dedo.nombre);}
 assert.equal(fps.mallas[0].geometry.morphAttributes,g.morphAttributes,'El POV comparte los correctivos del cuerpo');
 assert.deepEqual(Array.from(fps.mallas[0].morphTargetInfluences),[0,1],'El POV cierra sólo la mano que sostiene el hacha');
