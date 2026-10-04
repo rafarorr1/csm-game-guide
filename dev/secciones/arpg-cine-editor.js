@@ -2,7 +2,7 @@
 'use strict';
 window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   const M=window.CAOZ_ARPG_CINE_CAMARA,C=M.crear(T),V=T.Vector3,$=id=>document.getElementById(id),clonar=v=>JSON.parse(JSON.stringify(v));
-  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',vertigo:'Dolly zoom',carrera:'Carrera, ataque y desaparición',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Caída, búsqueda y recuperación',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'El mago en el techo',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
+  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',vertigo:'Dolly zoom',carrera:'Carrera, ataque y desaparición',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Caída, búsqueda y recuperación',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'Mago en el techo y meteorito',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
   let toma=M.nueva(),deshacer=[],rehacer=[],guion=[],frames=[],cuadro=0,acumulado=0,ocupado=true,reproduce=false,grabando=false,libre=null,nativa=null,seleccion=null,token=0,ultimoUI=0,arrastre=null,destino=null,arrastreTiempo=null;
   const teclas=new Set();
   document.body.classList.add('cineEditor');document.title='Cine · Caoz ARPG';
@@ -22,7 +22,7 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   const tiempoLocal=()=>(cuadro-(plano()?.inicio||0))/60;
   const claves=()=>toma.planos[fase()]?.claves||[];
   const reloj=f=>`${String(Math.floor(f/3600)).padStart(2,'0')}:${String(Math.floor(f/60)%60).padStart(2,'0')}:${String(f%60).padStart(2,'0')}`;
-  function ocupadoEn(v,t='Buscando cuadro…'){ocupado=v;velo.hidden=!v;velo.textContent=t;$('ceCampos').disabled=v;centro.classList.toggle('ceBloqueado',v);$('ceTiempo').disabled=$('ceLocal').disabled=!guion.at(-1)?.fin;}
+  function ocupadoEn(v,t='Preparando la acción…'){ocupado=v;velo.hidden=!v||!!guion.at(-1)?.fin;velo.textContent=t;$('ceCampos').disabled=v;centro.classList.toggle('ceBloqueado',v);$('ceTiempo').disabled=$('ceLocal').disabled=!guion.at(-1)?.fin;}
   const ceder=()=>new Promise(r=>setTimeout(r,0));
   function capturarNativa(){nativa=C.capturar(camara,Math.max(1,camara.position.distanceTo(new V().fromArray(api.estado().actor).add(new V(0,1,0)))));}
   async function preparar(){
@@ -35,17 +35,19 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
         if(e.terminado)break;if(i%90===0)await ceder();
       }
       if(!api.estado().terminado)throw Error('La acción excede un minuto; revisa el guion antes de editarlo.');
-      guion.at(-1).fin=frames.length;if(toma.version===1){try{localStorage.setItem(M.CLAVE+'.respaldo-v1',JSON.stringify(toma));}catch{}}toma=C.agrupar(toma,frames);api.reiniciar();cuadro=0;capturarNativa();dibujarGuion();ocupadoEn(false);actualizar(true);guardar();mensaje('Elige un plano, mueve la cámara y pulsa K para registrar el encuadre.');
+      guion.at(-1).fin=frames.length;if(toma.version<3){try{localStorage.setItem(M.CLAVE+'.respaldo-v'+toma.version,JSON.stringify(toma));}catch{}}toma=C.agrupar(toma,frames);api.reiniciar();cuadro=0;capturarNativa();dibujarGuion();ocupadoEn(false);actualizar(true);guardar();mensaje('Elige un plano, mueve la cámara y pulsa K para registrar el encuadre.');
     }catch(e){ocupadoEn(true,'No se pudo preparar la escena');mensaje(e.message);}
   }
   async function buscar(f){
     if(!guion.at(-1)?.fin||!Number.isFinite(f))return false;
     const solicitud=++token;reproduce=false;if(grabando)terminarGrabacion();libre=null;seleccion=null;acumulado=0;f=Math.max(0,Math.min(frames.length-1,Math.round(f)));destino=f;ocupadoEn(true);actualizar();
     try{
-      // Deja pintar el control y agrupa entradas rápidas antes de reconstruir la escena.
-      await ceder();if(solicitud!==token)return false;
-      api.reiniciar();let hasta=performance.now()+8;
-      for(let i=1;i<=f;i++){api.paso(1/60);if(performance.now()>=hasta){await ceder();if(solicitud!==token)return false;hasta=performance.now()+8;}}
+      // Agrupa entradas del mismo cuadro. Cada reconstrucción termina antes de
+      // renderizar: nunca se presentan poses parciales ni un velo sobre la escena.
+      await new Promise(requestAnimationFrame);if(solicitud!==token)return false;
+      let desde=cuadro;
+      if(f<cuadro){api.reiniciar();desde=0;}else{C.aplicar(camara,nativa);api.vista(false);}
+      for(let i=desde;i<f;i++)api.paso(1/60);
       cuadro=f;destino=null;capturarNativa();ocupadoEn(false);actualizar(true);return true;
     }catch(e){if(solicitud!==token)return false;destino=null;ocupadoEn(false);actualizar();mensaje('No se pudo buscar ese cuadro: '+e.message);return false;}
   }

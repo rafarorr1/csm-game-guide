@@ -53,3 +53,13 @@ contexto.AudioContext=AudioPrueba;
  clima.configurar({sonido:true});await new Promise(resolve=>setImmediate(resolve));assert.equal(clima.estado().audio,'running');clima.desbloquearAudio();assert.equal(creado,1,'No se duplican contexto ni bucle');
  clima.destruir();assert.equal(clima.estado().audio,'closed');}
 console.log('OK: lluvia/charcos a 20/30/60/144 FPS; techos, cráteres, movimiento reducido, pausas, audio y recursos acotados.');
+
+// Lluvia suspendida por el mago; la búsqueda temporal es absoluta y reversible.
+{const {escena,clima}=preparar();const u=escena.getObjectByName('Lluvia ligera').material.uniforms;
+ clima.cinematica(0,{x:2,z:3});const congelada=u.uDeriva.value.clone();avanzar(clima,4);assert.equal(u.uT.value,0);assert.equal(clima.estado().tiempo,0);assert(u.uDeriva.value.equals(congelada));assert(u.uCola.value.length()>0,'Las gotas detenidas mantienen la diagonal del viento');
+ clima.cinematica(2,{x:2,z:3});assert.equal(u.uT.value,2);assert(!u.uDeriva.value.equals(congelada));const futuro=u.uDeriva.value.clone();
+ clima.pausar(true);clima.cinematica(.5,{x:2,z:3});assert.equal(u.uT.value,.5,'El editor puede buscar mientras el audio está pausado');clima.cinematica(2,{x:2,z:3});assert(u.uDeriva.value.equals(futuro));
+ clima.cinematica(0,{x:2,z:3});assert(u.uDeriva.value.equals(congelada),'Volver antes de la desaparición congela exactamente las mismas gotas');
+ clima.configurar({activo:false});clima.cinematica(3,{x:2,z:3});assert(escena.children.every(n=>!n.visible),'Se respeta la preferencia de desactivar lluvia');
+ clima.cinematica(null);assert.equal(clima.estado().tiempoCine,null);clima.configurar({activo:true});clima.pausar(false);avanzar(clima,1);assert(Math.abs(u.uT.value-1)<1e-8);clima.destruir();}
+console.log('OK: suspensión, liberación, búsqueda reversible del clima y restauración de la partida.');

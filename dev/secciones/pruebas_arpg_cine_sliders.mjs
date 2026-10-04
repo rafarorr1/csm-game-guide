@@ -20,7 +20,7 @@ class Elemento{
 }
 const documento={body:new Elemento(),activeElement:null,hidden:false,createElement:t=>new Elemento(t),getElementById:id=>elementos.get(id),querySelector:()=>new Elemento(),querySelectorAll:()=>creados.filter(e=>e.dataset.fase),addEventListener(){}};
 let ms=0;
-const c=vm.createContext({console,atob,document:documento,localStorage:{getItem:()=>null,setItem(){}},performance:{now:()=>ms++},setTimeout:f=>pendientes.push(f),addEventListener(){}});c.window=c;
+const c=vm.createContext({console,atob,document:documento,localStorage:{getItem:()=>null,setItem(){}},performance:{now:()=>ms++},setTimeout:f=>pendientes.push(f),requestAnimationFrame:f=>pendientes.push(f),addEventListener(){}});c.window=c;
 for(const archivo of ['visor-three-vendor.js','arpg-cine-camara.js','arpg-cine-editor.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,camara=new T.PerspectiveCamera(),fases=['salida','descubrir','vertigo'];let simulado=0,reinicios=0;
 const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(fases.length-1,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=fases.length*120-1}),vista(){}};
@@ -37,10 +37,10 @@ await completar();comprobar(160,40);assert.equal(simulado,160);assert.equal($('c
 entrada('ceTiempo',25);editor.paso(.1);comprobar(25,25);await completar();editor.paso(.1);comprobar(25,25);$('ceTiempo').emitir('pointerup');
 
 // Varias entradas antes de reconstruir sólo ejecutan la última solicitud.
-const antes=reinicios;entrada('ceTiempo',310);entrada('ceTiempo',40);entrada('ceTiempo',270);await completar();assert.equal(reinicios,antes+1);assert.equal(simulado,270);comprobar(270,30);
+const antes=reinicios;entrada('ceTiempo',310);entrada('ceTiempo',40);entrada('ceTiempo',270);await completar();assert.equal(reinicios,antes);assert.equal(simulado,270);comprobar(270,30);assert.equal(creados.find(e=>e.className==='ceOcupado').hidden,true,'La búsqueda no tapa la vista');
 
-// Cancelar una búsqueda en marcha no deja que ésta confirme sobre la más reciente.
-entrada('ceTiempo',350);await ceder();assert(simulado<350);entrada('ceTiempo',150);await completar();assert.equal(simulado,150);comprobar(150,30);assert.equal($('ceCampos').disabled,false);
+// Cada búsqueda termina antes de pintar; una reversa posterior se evalúa completa.
+entrada('ceTiempo',350);await ceder();assert.equal(simulado,350);entrada('ceTiempo',150);await completar();assert.equal(simulado,150);comprobar(150,30);assert.equal($('ceCampos').disabled,false);
 
 // El slider local conserva el mismo plano desde el primer hasta el último cuadro.
 $('ceLocal').emitir('pointerdown');entrada('ceLocal',119);editor.paso(.1);comprobar(239,119);await ceder();entrada('ceLocal',0);await completar();comprobar(120,0);assert.equal(simulado,120);
@@ -61,7 +61,7 @@ console.log('✓ Sliders: arrastre con render activo, búsqueda durante el gesto
 // El plano 04 reúne las antiguas acciones 04–06 y el 05 reúne 07–10.
 fases.push('carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro');
 const agrupado=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api);await completar();
-assert.equal($('cePlanos').children.length,10);assert.equal($('ceTiras').children.length,10);
+assert.equal($('cePlanos').children.length,9);assert.equal($('ceTiras').children.length,9);
 entrada('ceTiempo',370);await completar();assert.equal(Number($('ceLocal').max),359);
 $('ceLocal').emitir('pointerdown');entrada('ceLocal',250);await completar();comprobar(610,250);assert.equal(api.estado().fase,'desaparece');
 assert.equal($('cePlanoTitulo').textContent,'04 / Carrera, ataque y desaparición');$('ceLocal').emitir('pointerup');
@@ -71,4 +71,10 @@ entrada('ceTiempo',730);await completar();assert.equal(Number($('ceLocal').max),
 assert.equal($('cePlanoTitulo').textContent,'05 / Caída, búsqueda y recuperación');assert.equal(api.estado().fase,'voltear');
 entrada('ceTiempo',710);await completar();$('ceVelocidad').value='1';$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert.equal(simulado,719,'La grabación acaba al final del grupo completo');
 entrada('ceTiempo',470);await completar();$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert(simulado>480,'Cambiar de acción no detiene la grabación');assert.equal($('ceGrabar').textContent,'■ Detener grabación');$('ceGrabar').onclick();
-console.log('✓ Grupos del editor: diez planos, sliders completos, keyframes compartidos y grabación continua entre acciones.');
+console.log('✓ Grupos del editor: nueve planos, sliders completos, keyframes compartidos y grabación continua entre acciones.');
+
+entrada('ceTiempo',1210);await completar();assert.equal(Number($('ceLocal').max),239);entrada('ceLocal',239);await completar();comprobar(1439,239);assert.equal(api.estado().fase,'cielo');assert.equal($('cePlanoTitulo').textContent,'06 / Mago en el techo y meteorito');
+// Una cámara libre no contamina la cámara programada al continuar hacia adelante.
+const antesAvance=reinicios;entrada('ceTiempo',1450);await completar();assert.equal(reinicios,antesAvance,'Avanzar reutiliza el estado del cuadro anterior');
+entrada('ceTiempo',1400);await completar();assert.equal(reinicios,antesAvance+1,'Retroceder reconstruye con la semilla inicial');assert.equal(simulado,1400);
+console.log('✓ Búsqueda por cuadro sin velo, avance incremental y slider único de techo/meteorito.');

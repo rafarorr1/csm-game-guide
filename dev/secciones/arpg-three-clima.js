@@ -9,7 +9,7 @@
     let semilla=731;const azar=()=>((semilla=(semilla*16807)%2147483647)/2147483647);
     const TAU=Math.PI*2,tiempo={value:0},centro={value:new THREE.Vector2()},radio=abierto?108:24;
     const deriva={value:new THREE.Vector2()},cola={value:new THREE.Vector2()},anteriorViento=new THREE.Vector2();
-    let activo=true,sonido=true,pausado=false,reloj=0,proximo=14,relampago=-100,trueno=null,totalTruenos=0;
+    let activo=true,sonido=true,pausado=false,tiempoCine=null,reloj=0,proximo=14,relampago=-100,trueno=null,totalTruenos=0;
     // Las gotas desaparecen al alcanzar los tejados; el mapa de alturas se calcula una sola vez.
     const lado=256,extension=120,alturas=new Float32Array(lado*lado);
     for(const caja of techos){const minX=Math.max(0,Math.floor((caja.min.x+extension)/(2*extension)*lado)),maxX=Math.min(lado-1,Math.ceil((caja.max.x+extension)/(2*extension)*lado));
@@ -119,7 +119,7 @@
     let audio=null,maestro=null,lluviaAudio=null,bufferTrueno=null,reanudando=false;
     const voces=new Set();let intencionAudio=false;
     function ajustarAudio(forzar=false){
-      intencionAudio=activo&&sonido&&!pausado;
+      intencionAudio=activo&&sonido&&!pausado&&(tiempoCine===null||tiempoCine>0);
       if(!audio||audio.state==='closed'||reanudando&&!forzar)return;
       const debeSonar=intencionAudio;
       if(debeSonar&&audio.state==='running'||!debeSonar&&audio.state==='suspended')return;
@@ -131,7 +131,7 @@
       });
     }
     function desbloquearAudio(desdeMando=false){
-      if(!activo||!sonido||pausado||desdeMando&&audio)return;
+      if(!activo||!sonido||pausado||tiempoCine===0||desdeMando&&audio)return;
       if(!audio){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;
         try{audio=new Audio();maestro=audio.createGain();maestro.gain.value=.48;maestro.connect(audio.destination);
           const ruido=audio.createBuffer(2,audio.sampleRate*4,audio.sampleRate);let s=3191;const ruidoAzar=()=>((s=(s*16807)%2147483647)/2147483647)*2-1;
@@ -152,9 +152,20 @@
       fuente.connect(filtro);filtro.connect(envolvente);envolvente.connect(posicion);posicion.connect(maestro);voces.add(fuente);
       fuente.onended=()=>{voces.delete(fuente);fuente.disconnect();filtro.disconnect();envolvente.disconnect();posicion.disconnect();};fuente.start();fuente.stop(t+9);
     }
+    function situar(t,foco){
+      tiempo.value=t;if(foco)centro.value.set(foco.x,foco.z);
+      derivaViento(t,deriva.value);derivaViento(t-EXPOSICION,anteriorViento);cola.value.copy(deriva.value).sub(anteriorViento);
+    }
+    // Tiempo absoluto de la escena: permite retroceder sin depender del reloj real.
+    function cinematica(t,foco){
+      const antes=tiempoCine;tiempoCine=t===null?null:Math.max(0,t);
+      situar(tiempoCine??reloj,foco);charcoMat.uniforms.uDestello.value=0;
+      if(antes!==tiempoCine&&(antes===null||tiempoCine===null||antes===0||tiempoCine===0)){
+        for(const voz of voces)voz.stop();ajustarAudio();
+      }
+    }
     function paso(dt,foco){
-      if(!activo||pausado)return 0;reloj+=Math.min(.1,Math.max(0,dt));tiempo.value=reloj;centro.value.set(foco.x,foco.z);
-      derivaViento(reloj,deriva.value);derivaViento(reloj-EXPOSICION,anteriorViento);cola.value.copy(deriva.value).sub(anteriorViento);
+      if(!activo||pausado||tiempoCine!==null)return 0;reloj+=Math.min(.1,Math.max(0,dt));situar(reloj,foco);
       if(reloj>=proximo){relampago=reloj;trueno={cuando:reloj+3.8+azar()*2.4,pan:(azar()<.5?-1:1)*(.25+azar()*.35)};proximo=reloj+28+azar()*22;}
       if(trueno&&reloj>=trueno.cuando){totalTruenos++;sonarTrueno(trueno.pan);trueno=null;}
       const t=reloj-relampago,destello=!reducido&&t>=0&&t<1.8?Math.sin(t/1.8*Math.PI)**2:0;
@@ -167,8 +178,8 @@
       if(!activo||!sonido)for(const voz of voces)voz.stop();
       ajustarAudio();
     }
-    return {paso,configurar,desbloquearAudio,pausar(v){if(pausado!==v){pausado=v;ajustarAudio();}},
-      estado:()=>({activo,sonido,pausado,tiempo:reloj,gotas:cantidad,charcos:charcos.length,mallas:3,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
+    return {paso,configurar,cinematica,desbloquearAudio,pausar(v){if(pausado!==v){pausado=v;ajustarAudio();}},
+      estado:()=>({activo,sonido,pausado,tiempo:reloj,tiempoCine,gotas:cantidad,charcos:charcos.length,mallas:3,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
       destruir(){for(const voz of voces)voz.stop();lluviaAudio?.stop();audio?.close().catch(()=>{});escena.remove(lluvia,agua,salpicaduras);g.dispose();cg.dispose();sg.dispose();lluviaMat.dispose();charcoMat.dispose();salpicarMat.dispose();refugios.dispose();}};
   }
   window.CAOZ_ARPG_CLIMA=Object.freeze({fabrica,derivaViento});
