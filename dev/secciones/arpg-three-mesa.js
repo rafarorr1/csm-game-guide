@@ -20,6 +20,10 @@
 'use strict';
 (function(){
   const $=id=>document.getElementById(id),q=new URLSearchParams(location.search),CAPTURA=q.get('captura')==='1';
+  const EDITOR_CINE=location.pathname.endsWith('/arpg-cine.html');let editorCine=null,tomaCine=null;
+  if(EDITOR_CINE){q.set('etapa','2');q.set('heroe','adreida');q.set('coop','0');q.set('entrada','mago');q.delete('plano');q.delete('momento');}
+  const camarasCine=window.CAOZ_ARPG_CINE_CAMARA.crear(window.CAOZ_THREE.THREE);
+  if(!EDITOR_CINE&&q.get('toma')==='local'){try{tomaCine=window.CAOZ_ARPG_CINE_CAMARA.validar(JSON.parse(localStorage.getItem(window.CAOZ_ARPG_CINE_CAMARA.CLAVE)));}catch(e){console.warn('No se pudo cargar la toma local:',e.message);}}
   const COOP=q.get('coop')==='1',DOS_MANDOS=q.get('mandos')==='2',ABIERTO=q.get('mundo')==='abierto';
   const FACTOR_COOP=COOP?2:1;
   const estilo=window.CAOZ_ARPG_ESTILO.crear();
@@ -1409,7 +1413,7 @@
   addEventListener('pointerup',soltarPuntero);addEventListener('pointercancel',soltarPuntero);
   addEventListener('pointermove',e=>{if(e.pointerType==='mouse'&&!(e.buttons&1)&&ent.atacando)soltarBasico();});
   lienzo.addEventListener('pointerleave',()=>{ent.dentro=false;});
-  addEventListener('keydown',e=>{const k=e.code;if(k==='KeyM'&&ABIERTO){e.preventDefault();if(!e.repeat){exploracion.grande=!exploracion.grande;$('mapaPanel').classList.toggle('ampliado',exploracion.grande);pintarMapa();}return;}if(k==='Escape'){e.preventDefault();if(!e.repeat)ponerPausa(!pausa.activa);return;}if((cinematicaTroll?.activa||finalMago?.activa)&&!pausa.activa){if(k==='Enter'&&!e.repeat){e.preventDefault();(finalMago?.activa?finalMago:cinematicaTroll).finalizar();}return;}if(pausa.activa||rog.abierto||e.target.closest?.('input,textarea,select,summary,button,a'))return;
+  addEventListener('keydown',e=>{if(EDITOR_CINE)return;const k=e.code;if(k==='KeyM'&&ABIERTO){e.preventDefault();if(!e.repeat){exploracion.grande=!exploracion.grande;$('mapaPanel').classList.toggle('ampliado',exploracion.grande);pintarMapa();}return;}if(k==='Escape'){e.preventDefault();if(!e.repeat)ponerPausa(!pausa.activa);return;}if((cinematicaTroll?.activa||finalMago?.activa)&&!pausa.activa){if(k==='Enter'&&!e.repeat){e.preventDefault();(finalMago?.activa?finalMago:cinematicaTroll).finalizar();}return;}if(pausa.activa||rog.abierto||e.target.closest?.('input,textarea,select,summary,button,a'))return;
     if(casaGoblin?.bloquea){e.preventDefault();if(!e.repeat){if(k==='KeyF'||k==='Enter')casaGoblin.salir();else if(k==='KeyJ')casaGoblin.golpear();}return;}
     if(casaGoblin?.activa&&k==='KeyF'){e.preventDefault();if(!e.repeat)intentarCasa();return;}
     if(DIRS[k]){e.preventDefault();teclas.add(k);ent.piloto=false;return;}
@@ -1604,7 +1608,7 @@
   /* ---- Cámara ------------------------------------------------------------------------ */
   const vista={dist:1,distanciaActual:21,temblor:0,tiempoSacudida:0,foco:new V3(0,0,4)};
   function temblar(f){if(!reducido)vista.temblor=Math.max(vista.temblor,f);}
-  esc.addEventListener('wheel',e=>{e.preventDefault();vista.dist=Math.max(.65,Math.min(1.45,vista.dist*(e.deltaY>0?1.08:.93)));},{passive:false});
+  esc.addEventListener('wheel',e=>{if(EDITOR_CINE)return;e.preventDefault();vista.dist=Math.max(.65,Math.min(1.45,vista.dist*(e.deltaY>0?1.08:.93)));},{passive:false});
   function pasoCamara(dt,dtReal=dt){const retrato=camara.aspect<.9;const vivos=jugadores.filter(h=>h.vivo),centro=new V3();for(const h of vivos)centro.add(h.pos);centro.divideScalar(vivos.length||1);const planoEntrada=cinematicaTroll?.encuadre();vista.foco.lerp(planoEntrada?.foco||(vivos.length?centro:heroe.pos),Math.min(1,dt*6));vista.temblor=Math.max(0,vista.temblor*Math.exp(-dtReal*9));
     const separacion=vivos.length>1?plano(vivos[0].pos,vivos[1].pos):0,metaD=planoEntrada?planoEntrada.distancia/Math.min(1,camara.aspect):Math.max(21*vista.dist,14+separacion*2.2/Math.min(1,camara.aspect)),D=(vista.distanciaActual+=(metaD-vista.distanciaActual)*(1-Math.exp(-dt*4))),el=.92,tr=vista.temblor,t=(vista.tiempoSacudida+=dtReal);
     escena.fog.near=D*.62;escena.fog.far=D*2.65;
@@ -1705,7 +1709,7 @@
     limpiar:limpiarCombateCasa,interfaz:interfazCasa,
     volver:iniciarFinalMago
   });
-  function volverNivelUno(){const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo','plano','momento'])u.searchParams.delete(k);location.assign(u.href);}
+  function volverNivelUno(){if(EDITOR_CINE)return;const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo','plano','momento','toma'])u.searchParams.delete(k);location.assign(u.href);}
   finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,
     impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
     interfaz(s){const activa=s.fase!=='inactiva';mostrarEntradaTroll(activa);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';$('fundidoFinal').style.opacity=String(s.negro);$('fundidoFinal').hidden=!activa;},
@@ -1721,6 +1725,13 @@
     const p=finalMago.estado()?.actor;if(p){luna.position.set(p[0]-14,22,p[2]-12);luna.target.position.set(...p);luzHeroe.position.set(p[0],p[1]+5.5,p[2]+2.2);}
     return true;
   }
+  // Sólo el editor local controla este puente. La partida conserva su reloj habitual.
+  function puenteCine(){return {
+    reiniciar(){finalMago.cancelar();impactoFX.limpiar();pVida.fill(0);pCol.fill(0);pSig=0;escombros.length=0;mallaEscombros.count=0;semilla=11;reloj.t=0;for(const h of jugadores){h.fase=0;MOD.posar(h.m,{anim:'quieto',t:0,dt:0,mezclar:false});}iniciarFinalMago();},
+    paso(dt){reloj.t+=dt;tiempo.value=F.tiempo.value=CASAS.uniformes.uT.value=reloj.t;pasoFinalMago(dt,dt);},
+    estado:()=>finalMago.estado(),vista:externa=>finalMago.vistaEditor(externa),
+    duraciones:window.CAOZ_ARPG_FINAL_MAGO.DURACIONES
+  };}
   function intentarCasa(h){if(pausa.activa||rog.abierto||!casaGoblin?.activa)return false;h??=casaGoblin.cerca(jugadores)||jugadores.find(h=>h.vivo);if(!h)return false;vaciarControlesEntrada();return casaGoblin.solicitar(h);}
   $('abrirCasa').onclick=()=>intentarCasa();$('casaGolpear').onclick=()=>{if(!pausa.activa)casaGoblin.golpear();};$('casaSalir').onclick=()=>{if(!pausa.activa)casaGoblin.salir();};
   function actualizarPuertaCasa(){if(!casaGoblin?.activa||casaGoblin.bloquea)return;const cerca=casaGoblin.cerca(jugadores);$('abrirCasa').hidden=false;textoHud($('abrirCasa'),cerca?'Abrir con la llave · F / ×':'Ir a la casa de la llave · F');}
@@ -1738,6 +1749,7 @@
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
   function paso(dt){
     const dtReal=dt;
+    if(EDITOR_CINE)return false;
     leerPausaMando();if(pausa.activa)return false;
     if(rog.abierto){mandoDestino();return false;}
     estilo.paso(dtReal);
@@ -1910,14 +1922,16 @@
   function dibujarCuadro(){
     aplicarTamano();
     // Poses, raíces y cámara pertenecen al mismo cuadro; no se sustituyen al dibujar.
+    if(editorCine)editorCine.antesDibujo();
+    else if(tomaCine&&finalMago?.activa){const e=finalMago.estado(),p=tomaCine.planos[e.fase];if(camarasCine.aplicar(camara,camarasCine.muestra(p?.claves,e.t)))finalMago.vistaEditor(p.vista==='externa');}
     escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);
     for(const e of etiquetas)colocar(e);dibujar();
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){
-    clima.pausar(document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
+    clima.pausar(EDITOR_CINE||document.hidden||!partidaActiva||pausa.activa||rog.abierto||!!laboratorio?.detenido||!!casaGoblin?.interior);
     if(document.hidden||!partidaActiva){sincronizarTiempo();antes=ahora;siguienteDibujo=0;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
-    leerPausaMando();
+    if(!EDITOR_CINE)leerPausaMando();
     if(pausa.activa){sincronizarTiempo();antes=ahora;fps.n=0;fps.t=ahora;requestAnimationFrame(cuadro);return;}
     const limite=laboratorio?.limite||0;
     if(limite&&ahora+.1<siguienteDibujo){requestAnimationFrame(cuadro);return;}
@@ -1926,6 +1940,7 @@
     if(intervalo>250){fps.n=0;fps.t=ahora;cuadrosLentos=cuadrosRapidos=0;}
     const inicio=performance.now();let avance={pasos:0,avance:0,descartado:0};
     if(rog.abierto){sincronizarTiempo();mandoDestino();}
+    else if(editorCine){sincronizarTiempo();editorCine.paso(Math.min(.1,intervalo/1000));}
     else if(laboratorio?.detenido)sincronizarTiempo();
     else avance=laboratorio?.fijo?temporizador.avanzar(1/60,simularPaso):temporizador.avanzar(intervalo/1000,simularPaso);
     const preparado=performance.now();
@@ -1944,7 +1959,7 @@
     crearEquipo();reiniciarExploracion();medir();new ResizeObserver(medir).observe(esc);aplicarEfectos();
     estado('Preparando las cartas del botín…');await CAOZ_CARTA_PINTOR.fuentes();const logo=await imagen('./art/logo.webp');dorso.mat=F.materialDorso(CAOZ_CARTA_PINTOR.dorso(logo));
     estado(ABIERTO?'Mundo abierto · Explora los caminos, descubre el mapa y libera los tres campamentos. R: ulti · M: ampliar mapa.':COOP?'Cooperativo: J1 Adreida, J2 Mohamed. Una carta y un d20 para ambos. Ulti: R / L3.':'Los portones sellados dejan entrar invasores; sus sellos ámbar bloquean tu salida. WASD para moverte, clic izquierdo para atacar hacia el cursor, Espacio para parry, clic derecho para saltar. Q: Torbellino / Abanico. E: Búmeran / Provocar.');
-    prepararVistaEntrada();listo=true;simularPaso(1/60);sincronizarTiempo();if(!CAPTURA)requestAnimationFrame(cuadro);else dibujarCuadro();
+    prepararVistaEntrada();if(EDITOR_CINE){clima.pausar(true);editorCine=window.CAOZ_ARPG_CINE_EDITOR.crear(THREE,camara,lienzo,puenteCine());}listo=true;simularPaso(1/60);sincronizarTiempo();if(!CAPTURA)requestAnimationFrame(cuadro);else dibujarCuadro();
   }
 
   // Revisión: fps define la duración de cada actualización, igual que los cuadros de la partida.
