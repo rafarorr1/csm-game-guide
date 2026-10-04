@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
-<title>Las Grietas del Editor · Caoz</title>
+<meta name="application-version" content="Alpha .01">
+<title>Caoz ARPG · Alpha .01</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="./juego/carta-diseno.css">
 <link rel="stylesheet" href="./arpg-three-mesa.css">
@@ -12,75 +13,148 @@
 <script src="./juego/carta-pintor.js"></script>
 <script src="./visor-three-vendor.js"></script>
 <script src="./three-carta.js"></script>
+<script src="./arquitectura-scenario/datos.js"></script>
+<script src="./carreta-scenario/datos.js"></script>
+<script src="./farol-scenario/datos.js"></script>
+<script src="./arpg-three-arquitectura.js"></script>
 <script src="./casas-three.js"></script>
+<script src="./adreida-scenario/combate.js"></script>
+<script src="./arpg-three-adreida-animacion.js"></script>
+<script src="./goblin-scenario/datos.js"></script>
+<script src="./arpg-three-goblin.js"></script>
+<script src="./kobold-scenario/datos.js"></script>
+<script src="./kobold-scenario/muertes.js"></script>
+<script src="./arpg-three-kobold.js"></script>
+<script src="./adreida-scenario/datos.js"></script>
+<script src="./adreida-brazos-scenario/datos.js"></script>
+<script src="./arpg-three-adreida.js"></script>
+<script src="./hacha-adreida-scenario/datos.js"></script>
+<script src="./arpg-three-hacha-adreida.js"></script>
 <script src="./arpg-three-modelos.js"></script>
+<script src="./arpg-three-tiempo.js"></script>
+<script src="./arpg-three-impactos.js"></script>
+<script src="./arpg-three-piso.js"></script>
+<script src="./arpg-three-clima.js"></script>
+<script src="./quick-liquid-vendor.js"></script>
+<script src="./arpg-three-orbes.js"></script>
+<script src="./yuka-goals-vendor.js"></script>
+<script src="./arpg-three-ia.js"></script>
+<script src="./llave-scenario/datos.js"></script>
+<script src="./arpg-three-entrada-troll.js"></script>
+<script src="./adreida-scenario/cinematica.js"></script>
+<script src="./arpg-three-adreida-cine.js"></script>
+<script src="./arpg-three-final-mago.js"></script>
+<script src="./arpg-cine-camara.js"></script>
+<script src="./casa-goblin-scenario/datos.js"></script>
+<script src="./arpg-three-casa-interior.js"></script>
+<script src="./arpg-three-casa-goblin.js"></script>
+<script src="./arpg-three-estilo.js"></script>
 <script src="./arpg-three-mesa.js" defer></script>
 </head>
 <body>
-<main class="apShell" aria-label="Las Grietas del Editor">
-  <nav class="apEtapas" aria-label="Etapas"><a href="?etapa=1">Etapa 1 · El asedio</a><a href="?etapa=2">Etapa 2 · Cobro de piso</a><a href="?mundo=abierto">Mundo abierto · Prototipo</a></nav>
-  <div class="apControles" role="group" aria-label="Acciones">
-    <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
-    <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
-    <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
-    <button type="button" class="apBoton" id="abrirPausa">Pausa · Esc / Options</button>
-    <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
-  </div>
-  <label class="apModo">Partida <select id="modoEquipo"><option value="solo">Un jugador</option><option value="mixto">Cooperativo · Teclado/ratón + mando</option><option value="mandos">Cooperativo · Dos mandos</option></select></label>
-  <fieldset class="apEfectos">
-    <legend>Efectos e interfaz</legend>
-    <label><input type="checkbox" data-mostrar-stats checked> Mostrar estadísticas (incluye FPS)</label>
-    <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
-    <label><input type="checkbox" data-efecto="oclusion"> Oclusión ambiental</label>
-    <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
-    <label>Balas de Mohamed <select id="estiloBala"><option value="plomo">A · Plomo de pistola de chispa</option><option value="trazadora">B · Bala de latón trazadora</option></select></label>
-  </fieldset>
+<main class="apShell" aria-label="Caoz ARPG">
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
     <div id="pausaOtra" class="apPausaOtra" hidden><p>Otra partida está activa.</p><button type="button" id="reanudarPartida" class="apBoton">Continuar aquí</button></div>
-    <button type="button" id="pausaPantalla" class="apBoton apPausaPantalla">Pausa · Esc / Options</button>
+    <div class="apIdentidad" aria-label="Caoz ARPG"><b>CAOZ <span>ARPG</span></b><small>Alpha .01 · La plaza de Tomsage</small></div>
+    <div class="apHerramientas">
+      <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
+      <button type="button" id="abrirPausa" class="apBoton">Pausa <kbd>Esc</kbd></button>
+    </div>
     <canvas tabindex="-1" id="lienzo" aria-label="La plaza de Tomsage, vista desde arriba"></canvas>
+    <button id="abrirCasa" class="apAbrirCasa" hidden>Ir a la casa de la llave · F</button>
+    <section id="casaPanel" class="apCasaPanel" aria-label="Interior de la casa" hidden>
+      <p id="casaTexto" role="status"></p>
+      <div><button id="casaGolpear">Dar un golpe · J / □ / R2</button><button id="casaSalir">Salir por la puerta · F / ×</button></div>
+    </section>
+    <div id="fundidoFinal" class="apFundidoFinal" hidden aria-hidden="true"></div>
+    <div id="cinematicaTroll" class="apCinematica" hidden><p id="cinematicaTexto" role="status"></p><button type="button" id="omitirCinematica">Omitir · Enter</button></div>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>
     <div class="apGolpeDir" id="golpeDir"><i></i></div>
     <div class="apFlechas" id="flechas"></div>
-    <p class="apOleada" id="oleada"></p>
+    <div class="apMision"><small>EL ASEDIO · TOMSAGE</small><p class="apOleada" id="oleada"></p><span id="hudCartas">Cartas del destino · 0 / 3</span></div>
     <div class="apObjetivo" id="objetivo" hidden><b id="objNombre"></b><div class="apBarra"><i id="objVida"></i></div></div>
     <div class="apBanner" id="banner" role="status"></div>
     <p class="apTostada" id="tostada" role="status"></p>
     <p id="equipoEstado" class="apEquipo" hidden></p>
     <aside id="mapaPanel" class="apMapa" hidden><canvas id="mapaExplorado" width="336" height="336" aria-label="Mapa descubierto del mundo"></canvas><small id="mapaTexto"></small></aside>
-    <div class="apStats" id="stats"></div>
+    <aside class="apEstilo" id="estilo" data-rango="0" aria-label="Puntuación y estilo de combate">
+      <div class="apEstiloTotal"><span>PUNTUACIÓN</span><strong id="estiloPuntos">0</strong></div>
+      <div class="apEstiloCadena"><b id="estiloRango">—</b><div><strong id="estiloMulti">×0</strong><span id="estiloNombre">Enlaza tus golpes</span></div></div>
+      <div class="apEstiloReloj" aria-hidden="true"><i id="estiloTiempo"></i></div>
+      <div class="apEstiloDetalle"><span id="estiloGolpes">3 s para enlazar</span><b id="estiloUltima"></b></div>
+    </aside>
     <div class="apBotin" id="botin" aria-label="Botín recogido"></div>
     <div class="apHud">
-      <div class="apOrbe apAlma" id="orbeAlma"><i></i><b id="almaTxt"></b><small>Alma</small></div>
-      <div class="apHabilidades" role="group" aria-label="Habilidades">
-        <img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida">
-        <button type="button" data-hab="tajo" title="Pulsar: básico · Mantener y soltar: golpe cargado"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
-        <button type="button" data-hab="parry" title="Parry (justo antes del golpe)"><span>⛨</span><small>Parry</small><kbd>Espacio</kbd></button>
-        <button type="button" data-hab="esquiva" title="Dash"><span>»</span><small>Dash</small><kbd>Shift</kbd></button>
-        <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
-        <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
-        <button type="button" data-hab="ulti" title="Ulti · 90 segundos; cada parry resta uno"><span>◆</span><small>Ulti</small><kbd>R / L3</kbd></button>
-        <button type="button" data-hab="provocar" title="Provocar"><span>✦</span><small>Provocar</small><kbd>E</kbd></button>
+      <div class="apRecurso apAlma" id="orbeAlma" aria-label="Alma"><small>Alma</small><div class="apMedidor" aria-hidden="true"><i></i></div><b id="almaTxt"></b></div>
+      <div class="apCentroHud">
+        <section class="apPersonaje" aria-label="Estado del personaje">
+          <div class="apMarcoRetrato"><img class="apRetrato" src="./art/lider_adreida.webp" alt="Adreida"></div>
+          <div class="apVitales">
+            <div class="apNombreHeroe"><b id="hudNombre">Adreida</b><small id="hudClase">Guerrera semiorca</small></div>
+            <small class="apMunicion" id="hudMunicion" hidden></small>
+            <small class="apFuego" id="hudFuego" hidden></small>
+          </div>
+        </section>
+        <div class="apHabilidades" role="group" aria-label="Habilidades">
+          <button type="button" data-hab="tajo" title="Pulsar: básico · Mantener y soltar: golpe cargado"><span>⚔</span><small>Atacar</small><kbd>Clic izq.</kbd></button>
+          <button type="button" data-hab="parry" title="Parry (justo antes del golpe)"><span>⛨</span><small>Parry</small><kbd>Espacio</kbd></button>
+          <button type="button" data-hab="esquiva" title="Dash"><span>»</span><small>Dash</small><kbd>Shift</kbd></button>
+          <button type="button" data-hab="salto" title="Salto (25 Furia)"><span>⤓</span><small>Salto</small><kbd>Clic dcho.</kbd><em>25</em></button>
+          <button type="button" data-hab="torbellino" title="Torbellino (30 Furia)"><span>↻</span><small>Torbellino</small><kbd>Q</kbd><em>30</em></button>
+          <button type="button" data-hab="ulti" title="Ulti · 90 segundos; cada parry resta uno"><span>◆</span><small>Ulti</small><kbd>R / L3</kbd></button>
+          <button type="button" data-hab="bumeran" title="Hacha búmeran · E"><span>↶</span><small>Búmeran</small><kbd>E</kbd></button>
+        </div>
       </div>
-      <div class="apOrbe apFuria" id="orbeFuria"><i></i><b id="furiaTxt"></b><small>Furia</small></div>
+      <div class="apRecurso apFuria" id="orbeFuria" aria-label="Furia"><small>Furia</small><div class="apMedidor" aria-hidden="true"><i></i></div><b id="furiaTxt"></b></div>
     </div>
     <div class="apPalanca" id="palanca" aria-label="Palanca para andar"><i></i></div>
     <div class="apFin" id="fin" hidden><h2 id="finTitulo"></h2><p id="finTexto"></p><button type="button" id="reintentar">Volver a empezar</button></div>
-    <p class="apInfo" id="info">Preparando…</p>
+    <details class="apDiagnostico" id="diagnostico">
+      <summary>Diagnóstico <span aria-hidden="true">⌃</span></summary>
+      <div class="apCajon">
+        <header><b>Diagnóstico de la partida</b><button type="button" id="cerrarDiagnostico" aria-label="Cerrar diagnóstico">×</button></header>
+        <p class="apInfo" id="info">Preparando…</p>
+        <h3>Atributos</h3><div class="apStats" id="stats"></div>
+        <h3>Controles y estado</h3>
+        <p id="estadoMando" class="apEstado" role="status">PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.</p>
+        <p id="estado" class="apEstado" role="status" aria-live="polite">Preparando la plaza…</p>
+      </div>
+    </details>
   </section>
-  <p id="estadoMando" class="apEstado" role="status">PS5: conecta el DualSense por USB o Bluetooth y pulsa un botón.</p>
-  <p id="estado" class="apEstado" role="status" aria-live="polite">Preparando la plaza…</p>
 </main>
 <dialog id="pausa" class="apMenuPausa" aria-labelledby="pausaTitulo">
+  <p class="apSelloMenu">CAOZ ARPG · Alpha .01</p>
   <h2 id="pausaTitulo">En pausa</h2>
-  <p>La partida se detiene aquí.</p>
+  <p>La plaza puede esperar.</p>
+  <button type="button" id="continuar" class="apBoton">Continuar</button>
+  <nav class="apEtapas" aria-label="Etapas"><a href="?etapa=1">Etapa 1 · El asedio</a><a href="?etapa=2">Etapa 2 · Cobro de piso</a><a href="?mundo=abierto">Mundo abierto · Prototipo</a></nav>
+  <div class="apControles" role="group" aria-label="Acciones">
+    <span class="apElegir" role="group" aria-label="Personaje"><button type="button" class="apBoton" data-heroe="adreida" aria-pressed="true">⚔ Adreida · hacha</button><button type="button" class="apBoton" data-heroe="mohamed" aria-pressed="false">➶ Mohamed · pistola</button></span>
+    <button type="button" class="apBoton" id="demo" aria-pressed="false">▶ Demostración (juega sola)</button>
+    <button type="button" class="apBoton" id="reiniciar">Volver a empezar</button>
+  </div>
+  <label class="apModo">Partida <select id="modoEquipo"><option value="solo">Un jugador</option><option value="mixto">Cooperativo · Teclado/ratón + mando</option><option value="mandos">Cooperativo · Dos mandos</option></select></label>
+  <label class="apModo">Comportamiento de goblins <select id="modoIA"><option value="yuka">Yuka · Tácticas por variante</option><option value="clasica">IA anterior · Comparar</option></select></label>
+  <fieldset class="apEfectos">
+    <legend>Efectos e interfaz</legend>
+    <label><input type="checkbox" data-mostrar-stats checked> Mostrar atributos del personaje</label>
+    <label><input type="checkbox" data-efecto="sombras" checked> Sombras</label>
+    <label><input type="checkbox" data-efecto="oclusion"> Oclusión ambiental</label>
+    <label><input type="checkbox" data-efecto="resplandor" checked> Resplandor</label>
+    <label><input type="checkbox" id="climaLluvia" checked> Lluvia y charcos</label>
+    <label><input type="checkbox" id="climaSonido" checked> Sonido de lluvia y truenos lejanos</label>
+    <label>Balas de Mohamed <select id="estiloBala"><option value="plomo">A · Plomo de pistola de chispa</option><option value="trazadora">B · Bala de latón trazadora</option></select></label>
+  </fieldset>
+
+    <div id="pruebaPiso" class="apPruebaPiso" hidden>
+      <label>Textura del piso <select id="pisoPrueba"><option value="scenario">Adoquines Scenario · relieve</option><option value="vegetacion">Piedra con vegetación</option><option value="actual">Adoquines originales</option></select></label>
+      <small id="pisoMensaje" role="status"></small>
+    </div>
   <div class="apAjustesPausa">
-    <label><input type="checkbox" data-mostrar-stats checked> Mostrar estadísticas (incluye FPS)</label>
     <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
     <p id="estadoPantalla" role="status" aria-live="polite"></p>
   </div>
-  <button type="button" id="continuar" class="apBoton">Continuar</button>
   <small>Escape · Options del control · × para continuar</small>
 </dialog>
 <dialog id="destino" class="apDestino" aria-labelledby="destinoTitulo">
