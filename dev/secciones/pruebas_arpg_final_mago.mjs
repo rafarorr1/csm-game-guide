@@ -17,7 +17,7 @@ assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES.vertigo,2.8,'El dolly frontal dura un segundo más');
 for(const fps of [30,60,120]){
  camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,impactosAntes=impactos,posAntes=actor.pos.clone();
- assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null;
+ assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[],velocidadesPies=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null;
  for(let i=0;i<fps*40&&!cine.estado().terminado;i++){
   const est=cine.estado();if(orden.at(-1)!==est.fase)orden.push(est.fase);
   const fijo=JSON.stringify(est);cine.paso(0);assert.equal(JSON.stringify(cine.estado()),fijo,'La pausa no avanza');cine.paso(1/fps);
@@ -48,13 +48,17 @@ for(const fps of [30,60,120]){
    assert(camara.position.distanceTo(inicioPaneo.pos)>3,'El segundo plano comienza con un corte a otra posición');
    assert(Math.abs(camara.fov-18)<1e-8,'El dolly empieza con su propia focal');
   }
+  if(est.fase==='vertigo'&&actual.fase==='pies'){
+   assert(Math.abs(actor.pos.distanceTo(new T.Vector3(10,0,10))-2*(11/90)**2)<1e-8,'El primer cuadro usa la posición del antiguo F011');
+  }
+  if(est.fase==='pies'&&actual.fase==='pies')velocidadesPies.push(new T.Vector3(...actual.actor).distanceTo(new T.Vector3(...est.actor))*fps);
   if(actual.fase==='pies'){
    assert(camara.position.y<.6,'El insert mira las botas desde el piso');assert(!actual.pov);
    const bota=actor.pos.clone().setY(.2).project(camara);assert(Math.abs(bota.x)<.8&&Math.abs(bota.y)<.8,'Las botas quedan en el encuadre');
    assert(actor.pos.distanceTo(new T.Vector3(10,0,10))<=2.001,'El insert sólo muestra las primeras pisadas');
   }
-  if(est.fase==='pies'&&actual.fase==='carrera')assert(Math.abs(actual.total-actual.inicios.pies-1.5)<1e-8,'Insert de exactamente 1,5 s a 30/60/120 FPS');
-  if(est.fase==='pies'&&actual.fase==='carrera')assert(new T.Vector3(...actual.actor).distanceTo(new T.Vector3(...est.actor))<.1,'La carrera continúa desde la última pisada del insert sin saltar a la puerta');
+  if(est.fase==='pies'&&actual.fase==='carrera')assert(Math.abs(actual.total-actual.inicios.pies-Math.ceil((79/60)*fps-1e-8)/fps)<1e-8,'El insert recorta once cuadros, con duración cuantizada sólo al paso de simulación');
+  if(est.fase==='pies'&&actual.fase==='carrera')assert(new T.Vector3(...actual.actor).distanceTo(new T.Vector3(...est.actor))<5.8/fps+.001,'La carrera continúa desde la última pisada del insert sin saltar a la puerta');
   if(actual.fase==='vertigo'&&actual.t>0){
    const d=camara.position.distanceTo(new T.Vector3(0,2.35,0));assert(Math.abs(d*Math.tan(camara.fov*Math.PI/360)-24*Math.tan(9*Math.PI/180))<1e-6,'Dolly y focal se compensan para mantener el tamaño del mago');
    const frenteMago=new T.Vector3(0,0,1).applyQuaternion(cine.recursos.mago.quaternion),haciaCamara=camara.position.clone().sub(cine.recursos.mago.position).setY(0).normalize();
@@ -112,6 +116,10 @@ for(const fps of [30,60,120]){
   }
  }
  assert.deepEqual(orden,['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro']);
+ assert(velocidadesPies.length>25);const razon=velocidadesPies[1]/velocidadesPies[0];
+ assert(razon>1.01,'La velocidad debe aumentar durante el insert');
+ for(let i=2;i<velocidadesPies.length;i++)assert(Math.abs(velocidadesPies[i]/velocidadesPies[i-1]-razon)<1e-7,'La velocidad crece exponencialmente: igual factor en intervalos iguales');
+ assert(velocidadesPies.at(-1)>velocidadesPies[0]*15,'El arranque pasa de lento a carrera de forma perceptible');
  assert.equal(regresos,antes+1);assert.equal(impactos,impactosAntes+1);assert.equal(negro,1);
  assert.equal(fx.estado().crateres.at(-1).radio,8.4);assert.equal(fx.estado().crateres.at(-1).profundidad,24);assert.equal(cine.recursos.fragmentos.count,180);assert.equal(cine.recursos.humo.count,28);
  assert(cine.estado().derrumbe>2);assert.equal(casa.castShadow,false);
@@ -129,6 +137,7 @@ console.log('✓ Final del mago: dolly frontal de 2,8 s, giro posterior y cierre
 cine.iniciar([actor,otro]);const cuadros=[];
 while(!cine.estado().terminado){cuadros.push(cine.capturarCuadro());cine.paso(1/60);}
 cuadros.push(cine.capturarCuadro());
+assert.equal(cuadros.filter(f=>f.estado.fase==='pies').length,79,'El editor muestra 79 cuadros: el F011 previo es el nuevo F000');
 const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='pies'&&f.estado.t>.7),cuadros.findIndex(f=>f.estado.fase==='techo'),cuadros.findIndex(f=>f.estado.fase==='desaparece'),cuadros.findIndex(f=>f.estado.fase==='cielo'&&f.estado.t>.8),cuadros.findIndex(f=>f.estado.fase==='impacto'&&f.estado.t>1.4),cuadros.length-1];
 const recursosAntes=escena.children.length;
 for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){

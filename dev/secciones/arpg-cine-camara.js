@@ -3,13 +3,13 @@
 (function(){
   const CLAVE='caoz.arpg.cine.mago.v1',REVISION='mago-v2';
   const fases=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
-  const VERSION=5;
+  const VERSION=6,RECORTE_PIES=11/60;
   const planoDeFase=(f,version=VERSION)=>version===1?f:['carrera','ataquePOV',...(version<4?['desaparece']:[])].includes(f)?'carrera':['tropezar','buscar','levantarse','voltear',...(version>=4?['desaparece']:[])].includes(f)?'tropezar':version>=3&&['techo','cielo'].includes(f)?'techo':f;
-  const idsPorVersion=Object.fromEntries([1,2,3,4,5].map(v=>[v,Object.freeze([...new Set(fases.filter(f=>v>=5||f!=='pies').map(f=>planoDeFase(f,v)))])]));
+  const idsPorVersion=Object.fromEntries([1,2,3,4,5,6].map(v=>[v,Object.freeze([...new Set(fases.filter(f=>v>=5||f!=='pies').map(f=>planoDeFase(f,v)))])]));
   const idsPlanos=idsPorVersion[VERSION];
   const curvas=['suave','lineal','corte'];
   function validar(d){
-    if(!d||![1,2,3,4,5].includes(d.version)||d.escena!=='mago'||d.revision!==REVISION||!d.planos||typeof d.planos!=='object'||Array.isArray(d.planos))throw Error('La toma no pertenece a esta versión de la escena del mago.');
+    if(!d||![1,2,3,4,5,6].includes(d.version)||d.escena!=='mago'||d.revision!==REVISION||!d.planos||typeof d.planos!=='object'||Array.isArray(d.planos))throw Error('La toma no pertenece a esta versión de la escena del mago.');
     const numero=(n,a,b)=>typeof n==='number'&&Number.isFinite(n)&&n>=a&&n<=b;
     const vector=(v,n)=>Array.isArray(v)&&v.length===n&&v.every(x=>numero(x,-10000,10000));
     const planos={};let total=0;
@@ -48,7 +48,7 @@
       const id=planoDeFase(estado.fase,toma.version),p=toma.planos[id];
       const inicio=estado.inicios?.[fases.find(f=>planoDeFase(f,toma.version)===id)];
       const t=inicio!==undefined?estado.total-inicio:toma.version===1||id!==planoDeFase(estado.fase)?estado.t:estado.tPlano;
-      return {camara:muestra(p?.claves,t),vista:p?.vistas?.[estado.fase]||p?.vista};
+      return {camara:muestra(p?.claves,t+(id==='pies'&&toma.version===5?RECORTE_PIES:0)),vista:p?.vistas?.[estado.fase]||p?.vista};
     }
     // Las tomas antiguas usaban una pista por acción. Se conservan sus encuadres
     // y sus cortes al reunirlas, incluyendo las acciones que seguían sin editar.
@@ -57,6 +57,11 @@
       const salida={...toma,version:VERSION,planos:{}},inicios=new Map();
       frames.forEach((f,i)=>{const id=planoDeFase(f.accion,toma.version);if(!inicios.has(id))inicios.set(id,i);});
       for(const id of idsPlanos){
+        // El antiguo F011 pasa a F000: recorta la pista junto con la actuación.
+        // Muestrea la curva previa para conservar incluso interpolaciones suaves.
+        if(id==='pies'&&toma.version===5&&toma.planos.pies?.claves.length){
+          salida.planos.pies={...JSON.parse(JSON.stringify(toma.planos.pies)),claves:frames.filter(f=>f.fase==='pies').map(f=>({...muestra(toma.planos.pies.claves,f.t+RECORTE_PIES),t:f.t,curva:'lineal'}))};continue;
+        }
         const acciones=fases.filter(f=>planoDeFase(f)===id),origen=f=>planoDeFase(f,toma.version),pistas=[...new Set(acciones.map(origen))];
         if(pistas.length===1&&fases.filter(f=>origen(f)===pistas[0]).join()===acciones.join()){if(toma.planos[pistas[0]])salida.planos[id]=JSON.parse(JSON.stringify(toma.planos[pistas[0]]));continue;}
         if(!pistas.some(f=>toma.planos[f]?.claves.length))continue;

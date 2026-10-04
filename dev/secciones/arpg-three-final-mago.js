@@ -4,7 +4,8 @@
 (function(){
   // A 30 FPS: paneo 72 f, corte y vértigo 84 f; corte del hachazo en f 14;
   // giro tras levantarse 33 f; destrucción y caída en una sola toma de 101 f.
-  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:2.8,pies:1.5,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
+  const RECORTE_PIES=11/60,DURACION_PIES_ORIGINAL=1.5;
+  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:2.8,pies:DURACION_PIES_ORIGINAL-RECORTE_PIES,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,impactar,interfaz,volver,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','techo','cielo'];
@@ -127,6 +128,22 @@
       // Travelling bajo de perfil: deja espacio delante de las botas y corta bajo la rodilla.
       foco.addScaledVector(s.avance,.22);mirar(foco.clone().addScaledVector(lateral,2.5).addScaledVector(s.avance,.45).setY(.48),foco,36);
     }
+    function iniciarPies(){
+      const h=s.actor,d=s.salida.distanceTo(destino),distancia=Math.min(2,d*.2),inicio=distancia*(RECORTE_PIES/DURACION_PIES_ORIGINAL)**2,total=s.total;
+      h.dir=Math.atan2(s.avance.x,s.avance.z);cambio('pies');
+      // Prepara sólo la actuación hasta el antiguo F011, incluida la mezcla
+      // desde reposo. No consume tiempo de montaje ni adelanta lluvia o efectos.
+      for(let f=1;f<=11;f++){
+        const antes=h.pos.clone();h.pos.copy(s.salida).addScaledVector(s.avance,distancia*(f/90)**2);
+        h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(1)*TAU;s.total=total+f/60;posar('andar',1/60);
+      }
+      s.total=total;
+      // Integral de v(t)=v0*exp(a*t/duración). Elige a para entrar al POV
+      // con su misma velocidad, manteniendo la distancia y el tiempo del plano 05.
+      const velocidadFinal=d>0?(d-distancia)*5.8/d:0,objetivo=velocidadFinal*DURACIONES.pies/Math.max(1e-6,distancia-inicio);
+      let menor=0,mayor=16;for(let i=0;i<32;i++){const a=(menor+mayor)/2;if(a/(-Math.expm1(-a))<objetivo)menor=a;else mayor=a;}
+      s.pies={distancia,inicio,exponente:(menor+mayor)/2};camaraPies();
+    }
     // Se aplica después de la cámara editada y se deshace tras dibujar: no se
     // acumula al pausar ni se graba dos veces al convertirla en keyframes.
     function respirarCamara(){
@@ -194,13 +211,12 @@
         camara.quaternion.slerpQuaternions(giroPaneo,finPaneo,suave(t/2.1));camara.updateMatrixWorld(true);
         if(t>=DURACIONES.descubrir){cambio('vertigo');camaraVertigo(0);}
       }else if(f==='pies'){
-        // Primer impulso en tiempo dilatado; el ciclo avanza por distancia, no por reloj.
-        const k=lim(t/DURACIONES.pies),antes=h.pos.clone(),distancia=Math.min(2,s.salida.distanceTo(destino)*.2);
-        h.pos.copy(s.salida).addScaledVector(s.avance,distancia*k*k);h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(1)*TAU;
+        const k=lim(t/DURACIONES.pies),antes=h.pos.clone(),p=s.pies,avance=Math.expm1(p.exponente*k)/Math.expm1(p.exponente);
+        h.pos.copy(s.salida).addScaledVector(s.avance,p.inicio+(p.distancia-p.inicio)*avance);h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(1)*TAU;
         posar('andar',dt);camaraPies();
         if(t+1e-8>=DURACIONES.pies){s.inicioCarrera.copy(h.pos);cambio('carrera');vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),true);}
       }else if(f==='vertigo'){
-        posar('quieto',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo){h.dir=Math.atan2(s.avance.x,s.avance.z);cambio('pies');camaraPies();}
+        posar('quieto',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo)iniciarPies();
       }else if(f==='carrera'){
         // Conserva la duración anterior para no desfasar las cámaras ya editadas.
         const d=s.salida.distanceTo(destino),recorrido=Math.min(d,t*5.8),antes=h.pos.clone();h.pos.lerpVectors(s.inicioCarrera,destino,d>0?recorrido/d:1);h.dir=Math.atan2(s.avance.x,s.avance.z);

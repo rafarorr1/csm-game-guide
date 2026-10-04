@@ -18,7 +18,7 @@ const vuelta=M.validar(JSON.parse(JSON.stringify(v)));assert.equal(vuelta.planos
 console.log('✓ Tomas de cámara: posiciones, focal, rotación normalizada, interpolaciones, cortes exactos, 30/60/120 FPS e importación validada.');
 
 // La desaparición pertenece al plano 06; la actuación conserva su tiempo absoluto.
-assert.equal(M.planos.length,10);assert.equal(M.VERSION,5);
+assert.equal(M.planos.length,10);assert.equal(M.VERSION,6);
 assert.equal(M.planoDeFase('ataquePOV'),'carrera');assert.equal(M.planoDeFase('desaparece'),'tropezar');
 for(const f of ['tropezar','buscar','levantarse','voltear'])assert.equal(M.planoDeFase(f),'tropezar');
 const cuadros=[],inicios={};let grupo=null,inicio=0;
@@ -27,16 +27,16 @@ for(const [a,accion]of M.fases.entries()){
  if(id!==grupo){grupo=id;inicio=a;}
  for(let f=0;f<60;f++)cuadros.push({fase:id,accion,tAccion:f/60,t:a+f/60-inicio,camara:k(0,99)});
 }
-for(const version of [1,2,3,4]){
+for(const version of [1,2,3,4,5]){
  const antigua={...M.nueva(),version,planos:{}};
  for(const [i,accion]of M.fases.entries()){
-  if(accion==='pies')continue;const id=M.planoDeFase(accion,version);if(antigua.planos[id])continue;
+  if(accion==='pies'&&version<5)continue;const id=M.planoDeFase(accion,version);if(antigua.planos[id])continue;
   antigua.planos[id]={vista:i%2?'externa':'original',claves:[k(0,i*100,42,'suave'),k(8,i*100+80)]};
  }
- M.validar(antigua);const agrupada=C.agrupar(antigua,cuadros);assert.equal(agrupada.version,5);
+ M.validar(antigua);const agrupada=C.agrupar(antigua,cuadros);assert.equal(agrupada.version,6);
  for(const [i,f]of cuadros.entries()){
-  if(f.accion==='pies'){assert.equal(C.tomaEn(agrupada,{fase:'pies',t:f.tAccion,tPlano:f.t}).camara,null,'El insert nuevo conserva su cámara original');continue;}
-  const origen=M.planoDeFase(f.accion,version),primera=M.fases.find(a=>M.planoDeFase(a,version)===origen),t=i/60-inicios[primera];
+  if(f.accion==='pies'&&version<5){assert.equal(C.tomaEn(agrupada,{fase:'pies',t:f.tAccion,tPlano:f.t}).camara,null,'El insert nuevo conserva su cámara original');continue;}
+  const origen=M.planoDeFase(f.accion,version),primera=M.fases.find(a=>M.planoDeFase(a,version)===origen),t=i/60-inicios[primera]+(f.accion==='pies'&&version===5?11/60:0);
   const esperado=C.muestra(antigua.planos[origen].claves,t),actual=C.muestra(agrupada.planos[f.fase].claves,f.t);
   assert(Math.abs(actual.pos[0]-esperado.pos[0])<1e-8,`La cámara v${version} conserva el encuadre global en ${f.accion} ${f.tAccion}`);
   const runtime=C.tomaEn(antigua,{fase:f.accion,t:f.tAccion,tPlano:f.t,total:i/60,inicios});
@@ -51,4 +51,4 @@ const migrada=C.agrupar(parcial,cuadros);assert(migrada.planos.tropezar.claves.l
 assert.equal(C.muestra(migrada.planos.tropezar.claves,1).pos[0],99,'La recuperación no editada conserva la cámara original');
 assert.equal(M.planoDeFase('cielo'),'techo');assert.equal(M.planoDeFase('cielo',2),'cielo');
 assert.throws(()=>M.validar({...M.nueva(),planos:{carrera:{vista:'original',claves:[],vistas:{desaparece:'externa'}}}}));
-console.log('✓ Formato 5: insert de pies, corte a recuperación, migración de versiones 1/2/3/4 sin perder encuadres, vistas, curvas ni el reloj global.');
+console.log('✓ Formato 6: recorte F011, insert de pies, corte a recuperación, migración de versiones 1/2/3/4/5 sin perder encuadres, vistas, curvas ni el reloj global.');
