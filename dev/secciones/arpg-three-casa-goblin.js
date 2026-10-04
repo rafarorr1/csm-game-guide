@@ -80,10 +80,10 @@
     function enInterior(){return ['entrar','decision','golpe','despues','salir','fin'].includes(fase);}
     function cancelar(){fase='cerrada';t=total=0;actor=null;peticion=false;golpeDado=false;halo.visible=false;hoja.rotation.y=0;soltado=false;botones=[];
       decorado?.reiniciar();if(protagonista)protagonista.raiz.position.copy(decorado.entrada);if(protagonista)protagonista.raiz.rotation.y=Math.PI;for(const n of habitantes){n.vivo=true;n.muerte=null;n.caida=0;}interfaz(estado());}
-    function estado(){return {fase,interior:enInterior(),golpeDado,vivos:habitantes.filter(n=>n.vivo).length,puerta:aproximacion.toArray(),accion:peticion,decorado:decorado?.estadisticas||null,ambiente:decorado?.estado()||null};}
+    function estado(){return {fase,interior:enInterior(),golpeDado,vivos:habitantes.filter(n=>n.vivo).length,puerta:aproximacion.toArray(),umbral:umbral.toArray(),normal:normal.toArray(),accion:peticion,decorado:decorado?.estadisticas||null,ambiente:decorado?.estado()||null};}
     return {habilitar,solicitar,cerca,paso,golpear,salir,mando,cancelar,estado,contiene:ray=>ray.intersectObject(entrada,false).length>0,
       get activa(){return fase!=='cerrada';},get bloquea(){return !['cerrada','plaza'].includes(fase);},get interior(){return enInterior();},
-      get escena(){return interior;},camara(aspecto){camara.aspect=aspecto;camara.fov=aspecto<1?48:36;camara.updateProjectionMatrix();return camara;}};
+      abrirSalida(){hoja.rotation.y=-1.5;},get escena(){return interior;},camara(aspecto){camara.aspect=aspecto;camara.fov=aspecto<1?48:36;camara.updateProjectionMatrix();return camara;}};
   }
   window.CAOZ_ARPG_CASA_GOBLIN=Object.freeze({fabrica});
 })();

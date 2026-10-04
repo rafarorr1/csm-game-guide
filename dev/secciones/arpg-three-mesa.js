@@ -1707,15 +1707,15 @@
   });
   function volverNivelUno(){const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo','plano','momento'])u.searchParams.delete(k);location.assign(u.href);}
   finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,caminar:caminarEntrada,piso:()=>suelo.material,reducido,
-    impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:3.2,duracion:30});polvo(p,60,4);},
+    impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
     interfaz(s){const activa=s.fase!=='inactiva';mostrarEntradaTroll(activa);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';$('fundidoFinal').style.opacity=String(s.negro);$('fundidoFinal').hidden=!activa;},
     volver:volverNivelUno
   });
   function iniciarFinalMago(){
-    const puerta=new V3().fromArray(casaGoblin.estado().puerta);limpiarCombateCasa();casaGoblin.cancelar();ol.auto=false;ol.cola=[];paron=0;
+    const salida=casaGoblin.estado(),puerta=new V3().fromArray(salida.puerta),umbral=new V3().fromArray(salida.umbral),normal=new V3().fromArray(salida.normal);limpiarCombateCasa();casaGoblin.cancelar();casaGoblin.abrirSalida();ol.auto=false;ol.cola=[];paron=0;
     for(const e of [...enemigos]){cancelarAtaque(e);escena.remove(e.m.raiz);}enemigos.length=0;
     for(const b of [...botines])quitarBotin(b);for(const o of [...marcas])if(!o.fijo)quitarMarca(o);
-    escena.fog.near=32;escena.fog.far=170;finalMago.iniciar(jugadores,{puerta});
+    escena.fog.near=32;escena.fog.far=170;finalMago.iniciar(jugadores,{puerta,umbral,normal});
   }
   function pasoFinalMago(dt,dtReal){presion.rutas=0;if(q.get('entrada')==='mago'&&q.has('plano'))dt=0;finalMago.paso(dt);ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dt);tiempo.value=reloj.t;
     const p=finalMago.estado()?.actor;if(p){luna.position.set(p[0]-14,22,p[2]-12);luna.target.position.set(...p);luzHeroe.position.set(p[0],5.5,p[2]+2.2);}
@@ -1732,7 +1732,7 @@
     return true;
   }
   // Enlace de revisión: reproduce esta transición sin tener que superar las dos cuadrillas.
-  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)finalMago.paso(1/60);const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)finalMago.paso(1/60);}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
+  function prepararVistaEntrada(){if(!ABIERTO&&q.get('entrada')==='mago'){iniciarFinalMago();const plano=q.get('plano');if(plano&&Object.hasOwn(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES,plano)){const avanzar=()=>{presion.rutas=0;finalMago.paso(1/60);pasoParticulas(1/60);pasoEscombros(1/60);impactoFX.paso(1/60);};for(let i=0;i<2400&&finalMago.estado().fase!==plano;i++)avanzar();const momento=Math.max(0,Math.min(window.CAOZ_ARPG_FINAL_MAGO.DURACIONES[plano]-.05,Number(q.get('momento'))||.6));for(let i=0;i<Math.ceil(momento*60);i++)avanzar();}return;}if(!ABIERTO&&q.get('entrada')==='casa'){ol.i=6;ol.cola=[];ol.auto=true;llaveDelRecaudador=true;heroe.llaves++;heroe.pos.fromArray(casaGoblin.estado().puerta).add(new V3(0,0,1));const jefe=crearEnemigo('troll',0,0,{quieto:true});jefe.sinBotin=true;morir(jefe);return;}if(!ABIERTO&&q.get('entrada')==='troll'){ol.i=5;ol.cola=[];ol.descanso=0;ol.auto=true;iniciarDestino(2);const ultimo=crearEnemigo('cobrador',-2.5,-1.5,{quieto:true});ultimo.sinBotin=true;morir(ultimo,{causa:'tajo'});}}
 
   /* ---- Actualización por cuadro ----------------------------------------------------------- */
   let listo=false,simple=false,revisados=0,cuadros=0;const poses={};
@@ -1848,7 +1848,7 @@
     // El presupuesto normal admite 1080p nativos; el inspector puede fijar el búfer aunque su vista sea menor.
     const dpr=fija?1:CAPTURA?Math.min(devicePixelRatio||1,2):Math.min(devicePixelRatio||1,1.25,Math.sqrt((1920*1080)/(W*H)))*escalaRender;
     const clave=[W,H,dpr].join('/');if(clave===ultimoTamano)return;ultimoTamano=clave;medidorGPU?.reiniciar();
-    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
+    renderer.setPixelRatio(dpr);renderer.setSize(W,H,false);composer.setPixelRatio(dpr);composer.setSize(W,H);camara.aspect=W/H;if(!finalMago?.activa)camara.fov=W/H<.9?44:32;camara.updateProjectionMatrix();escPuntos.value=H*dpr/900;
   }
   function aplicarEfectos(){renderer.shadowMap.enabled=efectos.sombras;luna.castShadow=efectos.sombras;oclusion.enabled=efectos.oclusion;resplandor.enabled=efectos.resplandor;escena.traverse(o=>{if(o.material&&!Array.isArray(o.material))o.material.needsUpdate=true;});}
   for(const c of document.querySelectorAll('[data-efecto]'))c.onchange=()=>{efectos[c.dataset.efecto]=c.checked;aplicarEfectos();};

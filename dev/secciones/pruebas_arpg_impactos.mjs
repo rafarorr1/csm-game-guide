@@ -22,6 +22,13 @@ fx.paso(.65);assert.equal(fx.estado().crateres.length,1);assert.ok(shader.unifor
 fx.paso(.11);assert.equal(fx.estado().crateres.length,0);assert.equal(shader.uniforms.uHuecos.value[0].z,0);assert.equal(shader.uniforms.uCantidadHuecos.value,0,'Piso sin cráteres omite cálculos por píxel');assert.equal(escena.children.length,0);
 for(let i=0;i<20;i++)fx.agujero(new THREE.Vector3(i,0,0));assert.equal(fx.estado().crateres.length,8);assert.equal(escena.children.length,8);
 fx.limpiar();assert.equal(escena.children.length,0);assert.ok(shader.uniforms.uHuecos.value.every(v=>v.z===0));
+// La sima mantiene el labio a ras de la plaza; no estira adoquines por sus paredes.
+fx.agujero(new THREE.Vector3(),{radio:8.4,profundidad:24,duracion:30});
+const sima=escena.getObjectByName('Sima bajo Tomsage');sima.geometry.computeBoundingBox();
+assert(sima.geometry.boundingBox.min.y<-24);assert(sima.geometry.boundingBox.max.y<.2);
+assert.equal(sima.material[1].map,null,'Las paredes son roca, no pavimento estirado');
+const ray=new THREE.Raycaster(new THREE.Vector3(0,1,0),new THREE.Vector3(0,-1,0));escena.updateMatrixWorld(true);
+assert(ray.intersectObject(sima)[0].point.y<-24,'La profundidad existe en geometría, no sólo en color');fx.limpiar();
 console.log('✓ Cráter bajo el piso, radio constante, desvanecimiento gradual y limpieza a los cinco segundos');
 // La cinta usa los puntos mundiales del arma y se desvanece al terminar el ataque.
 const raiz=new THREE.Group(),mano=new THREE.Object3D(),punta=new THREE.Object3D();
