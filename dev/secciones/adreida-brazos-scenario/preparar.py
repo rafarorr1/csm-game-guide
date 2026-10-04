@@ -127,9 +127,10 @@ for s,lado in [(1,'I'),(-1,'D')]:
     ss=np.zeros((len(pp),4),dtype=np.uint8);ww=np.zeros((len(pp),4));ss[:,0]=nombres.index('ante'+lado);ww[:,0]=1
     tt=vtri[:,[0,2,1]] if s<0 else vtri
     partes.append({'nombre':'vendas'+lado,'p':pp,'n':normales(pp,tt),'uv':vuv.copy(),'tri':tt,'si':ss,'sw':ww,'atlas':'vendas','pieza':2})
-# Hombrera rígida, anclada al brazo, con la abertura orientada hacia el torso.
+# Hombrera rígida apoyada sobre el deltoides; acompaña el brazo sin despegarse.
+# Bajar 4 cm y acercar 3 cm en el marco del hombro elimina el hueco del montaje anterior.
 hp,hu,ht,hm,sha=glb('hombrera-original.glb');fuentes['hombrera']=sha;atlases['hombrera']=hm
-hp-=np.array([(hp[:,0].max()+hp[:,0].min())/2,hp[:,1].max(),(hp[:,2].max()+hp[:,2].min())/2]);hp*=.285/np.ptp(hp[:,1]);hp=hp@rz(.31).T+np.array([.277,1.6572,0])
+hp-=np.array([(hp[:,0].max()+hp[:,0].min())/2,hp[:,1].max(),(hp[:,2].max()+hp[:,2].min())/2]);hp*=.285/np.ptp(hp[:,1]);hp=(hp+np.array([-.03,-.04,0]))@rz(.31).T+np.array([.277,1.6572,0])
 ss=np.zeros((len(hp),4),dtype=np.uint8);ww=np.zeros((len(hp),4));ss[:,0]=nombres.index('brazoI');ww[:,0]=1
 partes.append({'nombre':'hombreraI','p':hp,'n':normales(hp,ht),'uv':hu,'tri':ht,'si':ss,'sw':ww,'atlas':'hombrera','pieza':3})
 # Un solo atlas 2048: el cuerpo y los brazos conservan 1024; vendas/hombrera 512.
