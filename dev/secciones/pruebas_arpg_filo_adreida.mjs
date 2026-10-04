@@ -14,6 +14,20 @@ for(const potencia of [0,.001,.5,1])for(const [anim,k] of [['tajoA',.5],['revesA
   alineacionMin=Math.min(alineacionMin,Math.abs(v.z));
   assert(Math.abs(v.z)>.99,`${anim}, carga ${potencia}: la trayectoria presenta el filo, no la cara plana (${Math.abs(v.z)})`);
 }
+// Regresión del mango atravesando el antebrazo al caminar/correr.
+const antebrazo=[];
+for(let i=0;i<at.position.count;i++){let peso=0;for(let j=0;j<4;j++){const b=mesh.skeleton.bones[at.skinIndex.array[i*4+j]];if(b===m.H.anteD||b===m.H.brazoD)peso+=at.skinWeight.array[i*4+j];}if(peso>.7)antebrazo.push(i);}
+let separacionMin=Infinity;
+for(const paso of [.15,.3,.55,.75,1])for(let cuadro=0;cuadro<24;cuadro++){
+ posar({anim:'andar',paso,fase:cuadro/24*Math.PI*2});const inv=m.H.manoD.matrixWorld.clone().invert(),q=m.H.manoD.getWorldQuaternion(new T.Quaternion());
+ assert(new T.Vector3(0,0,-1).applyQuaternion(q).y>.84,'La hoja apunta hacia arriba al llevar el hacha');
+ let altura=0,cantidad=0;
+ for(const i of antebrazo){const p=mesh.getVertexPosition(i,new T.Vector3()).applyMatrix4(mesh.matrixWorld).applyMatrix4(inv);
+  if(p.y<-.1&&p.y>-.88){const radio=Math.hypot(p.x,p.z);separacionMin=Math.min(separacionMin,radio);assert(radio>.035,`El mango atraviesa el brazo: paso ${paso}, cuadro ${cuadro}, separación ${radio}`);altura-=p.z;cantidad++;}
+ }
+ assert(cantidad>0&&altura/cantidad>.07,'El antebrazo queda por encima del mango');
+}
+console.log(`✓ 120 poses de marcha: mango bajo el brazo, filo hacia arriba y separación mínima del eje ${(separacionMin*100).toFixed(2)} cm.`);
 // En el torbellino gira la raíz completa; el filo debe seguir la tangente del círculo.
 m.raiz.rotation.y=.001;const gira=centro({anim:'torbellino'});
 m.raiz.rotation.y=-.001;gira.sub(centro({anim:'torbellino'}));m.raiz.rotation.y=0;posar({anim:'torbellino'});

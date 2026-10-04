@@ -180,13 +180,13 @@
       if(run>0)marchaImportada(m,a,run);
     }
     const _agarre=Array.from({length:8},()=>new THREE.Vector3()),_orientacion=new THREE.Quaternion(),qLibre=new THREE.Quaternion(),eLibre=new THREE.Euler();
-    function empunar(m,{G,A,arriba,soltarIzquierda=0,brazoLibre=[0,0,.18,-.4,0,0]}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
+    function empunar(m,{G,A,arriba,poloDerecho=[-.7,-.5,-.35],soltarIzquierda=0,brazoLibre=[0,0,.18,-.4,0,0]}){const H=m.H;H.raiz.updateMatrixWorld(true);const T=H.torso.matrixWorld;
       const g=_v[6].fromArray(G).applyMatrix4(T),a=_v[7].fromArray(A).transformDirection(T),up=_v[8].fromArray(arriba||[0,1,0]).transformDirection(T);
       // Sólo las manos que sujetan el arma limitan su alcance.
       const separacion=.3,sd=H.brazoD.getWorldPosition(_agarre[0]),si=H.brazoI.getWorldPosition(_agarre[1]).addScaledVector(a,-separacion);
       const alcance=m.p.brazo+m.p.antebrazo-.015;
       for(let i=0;i<8;i++)for(let j=0;j<2;j++){const peso=j?1-soltarIzquierda:1;if(!peso)continue;const centro=j?si:sd,delta=_agarre[2].copy(g).sub(centro),d=delta.length();if(d>alcance)g.addScaledVector(delta,(alcance/d-1)*peso);}
-      ik(H.brazoD,H.anteD,H.manoD,g,_agarre[3].set(-.7,-.5,-.35).applyMatrix4(T));
+      ik(H.brazoD,H.anteD,H.manoD,g,_agarre[3].fromArray(poloDerecho).applyMatrix4(T));
       // La mano derecha: -Y por el mango, X (la cara del hacha) lo más cerca posible de «arriba».
       const y=_agarre[4].copy(a).negate(),x=_agarre[5].copy(up).addScaledVector(y,-up.dot(y));if(x.lengthSq()<1e-6)x.set(1,0,0);x.normalize();const z=_agarre[6].crossVectors(x,y);
       H.manoD.parent.getWorldQuaternion(_q).invert();H.manoD.quaternion.setFromRotationMatrix(_m.makeBasis(x,y,z)).premultiply(_q);H.manoD.updateMatrixWorld(true);
@@ -207,12 +207,19 @@
       H.brazoI.updateMatrixWorld(true);
     }
     const ejeDesde=new THREE.Vector3(),ejeHasta=new THREE.Vector3(),giroAgarre=new THREE.Quaternion(),giroParcial=new THREE.Quaternion();
+    const marcoDesde=new THREE.Quaternion(),marcoHasta=new THREE.Quaternion(),marcoX=new THREE.Vector3(),marcoY=new THREE.Vector3(),marcoZ=new THREE.Vector3(),marcoM=new THREE.Matrix4();
+    function orientarAgarre(q,p){
+      marcoY.fromArray(p.A).normalize().negate();marcoX.fromArray(p.arriba).addScaledVector(marcoY,-marcoX.dot(marcoY)).normalize();marcoZ.crossVectors(marcoX,marcoY);
+      return q.setFromRotationMatrix(marcoM.makeBasis(marcoX,marcoY,marcoZ));
+    }
     function mezclarAgarre(dest,p,q,w,arco=0){
       ejeDesde.fromArray(p.A).normalize();ejeHasta.fromArray(q.A).normalize();giroAgarre.setFromUnitVectors(ejeDesde,ejeHasta);
       const amplitud=Math.min(1,giroAgarre.angleTo(giroParcial.identity())/1.4);
-      giroParcial.slerp(giroAgarre,w);ejeDesde.applyQuaternion(giroParcial);
-      for(const campo of ['G','arriba'])for(let i=0;i<3;i++)dest[campo][i]=p[campo][i]+(q[campo][i]-p[campo][i])*w;
-      ejeDesde.toArray(dest.A);
+      // Interpolar el marco completo evita que «arriba» cruce el mango y dé un latigazo de muñeca.
+      orientarAgarre(marcoDesde,p).slerp(orientarAgarre(marcoHasta,q),w);
+      for(let i=0;i<3;i++)dest.G[i]=p.G[i]+(q.G[i]-p.G[i])*w;
+      ejeDesde.set(0,-1,0).applyQuaternion(marcoDesde).toArray(dest.A);
+      marcoX.set(1,0,0).applyQuaternion(marcoDesde).toArray(dest.arriba);
       // El mango rodea el cuerpo por delante; el apoyo izquierdo no cruza el hombro.
       dest.G[2]+=arco*Math.sin(Math.PI*w)*amplitud;
       return dest;
@@ -234,6 +241,10 @@
           const u=Math.max(0,Math.min(1,(k-fasesFilo[i])/(fasesFilo[i+1]-fasesFilo[i])));giro=valores[i]+(valores[i+1]-valores[i])*u;
         }
       }else if(a.anim==='salto'){giro=-.158;peso=tramo(k,.7,.83)*(1-tramo(k,.9,1));}
+      else if(['quieto','andar','recogerLlave','mirarLlave','recogerHachaA'].includes(a.anim)){
+        // Palma sobre el mango y filo hacia arriba al llevar el hacha, con un cuarto de vuelta.
+        giro=-Math.PI/2;peso=1;agarre.poloDerecho=[-.75,.15,.25];
+      }
       if(!peso)return;
       ejeFilo.fromArray(agarre.A).normalize().negate();
       arribaFilo.fromArray(agarre.arriba).applyAxisAngle(ejeFilo,giro*peso).toArray(agarre.arriba);
@@ -251,10 +262,10 @@
           const libre=[-.08+balanceo*.30*p,-.05*Math.sin(f)*p,.22+Math.sin(f)*.025*p,-.35-.08*balanceo*p,0,0],datos=muestrearCarrera(f),offset=3+carreraImportada.huesos.length*4;
           for(let i=0;i<libre.length;i++)libre[i]+=(datos[offset+i]-libre[i])*r;
           libre[2]+=.12*r; // La hombrera y el torso de Adreida son más anchos que el maniquí.
-          // Una mano sujeta el mango delante del hombro derecho; la cabeza del
-          // hacha descansa detrás. El brazo izquierdo bombea al lado del cuerpo.
+          // Una mano lleva el mango bajo el antebrazo: la cabeza queda detrás
+          // y algo más baja, sin atravesar el codo. El brazo izquierdo queda libre.
           return {G:[-.29+Math.sin(f-.4)*.012*p,.20+Math.sin(f*2-.9)*.012*p,.34+Math.sin(f-.3)*.02*p],
-            A:dirA(-3.03+Math.sin(f-.5)*.035*p,.55-.60*r+Math.sin(f*2-1.1)*.025*p),arriba:[0,1,0],soltarIzquierda:1,
+            A:dirA(-3.03+Math.sin(f-.5)*.035*p,-.10-.05*r+Math.sin(f*2-1.1)*.025*p),arriba:[0,1,0],soltarIzquierda:1,
             brazoLibre:libre};}
         case 'tajoA':case 'revesA':{const r=a.anim==='revesA',s=r?-1:1,car=tramo(k,0,.4),gol=tramo(k,.4,.62),rec=tramo(k,.66,1);
           const f=(-1.3*car+2.4*gol)*s,e=-.25;return mezclarAgarre({G:[],A:[],arriba:[]},mezcla(reposo(),horizontal(f,e),Math.max(car,gol)),reposo(),rec,.24);}
@@ -320,10 +331,10 @@
       let e=estados.get(m);if(e)return e;
       const huesos=Object.entries(m.H).filter(([k])=>k!=='raiz'&&!/^falda/.test(k)).map(([,b])=>b);
       e={huesos,ultima:huesos.map(()=>new THREE.Quaternion()),desde:huesos.map(()=>new THREE.Quaternion()),pos:new THREE.Vector3(),desdePos:new THREE.Vector3(),
-        agarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0],soltarIzquierda:0,brazoLibre:[0,0,.18,-.4,0,0]},desdeAgarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0],soltarIzquierda:0,brazoLibre:[0,0,.18,-.4,0,0]},valido:false,libre:false,estado:null,tiempo:0,duracion:0};
+        agarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0],soltarIzquierda:0,poloDerecho:[-.7,-.5,-.35],brazoLibre:[0,0,.18,-.4,0,0]},desdeAgarre:{G:[0,0,0],A:[0,0,1],arriba:[0,1,0],soltarIzquierda:0,poloDerecho:[-.7,-.5,-.35],brazoLibre:[0,0,.18,-.4,0,0]},valido:false,libre:false,estado:null,tiempo:0,duracion:0};
       estados.set(m,e);return e;
     }
-    function copiarAgarre(dest,src){for(const k of ['G','A','arriba','brazoLibre'])for(let i=0;i<src[k].length;i++)dest[k][i]=src[k][i];dest.soltarIzquierda=src.soltarIzquierda;}
+    function copiarAgarre(dest,src){for(const k of ['G','A','arriba','brazoLibre','poloDerecho'])for(let i=0;i<src[k].length;i++)dest[k][i]=src[k][i];dest.soltarIzquierda=src.soltarIzquierda;}
     function mezclar(m,a,agarre){
       const e=memoria(m),estado=a.estado||(['tajoA','revesA','estocadaA'].includes(a.anim)?'golpe':a.anim),libre=a.anim==='grito',exacta=a.mezclar!==true;
       const nuevo=estado!==e.estado||a.anim!==e.anim;
@@ -341,7 +352,7 @@
         m.H.cuerpo.position.lerpVectors(e.desdePos,m.H.cuerpo.position,w);
         mezclarAgarre(agarre,e.desdeAgarre,agarre,w,['quieto','andar'].includes(estado)?.24:0);
         agarre.soltarIzquierda=e.desdeAgarre.soltarIzquierda+(agarre.soltarIzquierda-e.desdeAgarre.soltarIzquierda)*w;
-        for(let i=0;i<agarre.brazoLibre.length;i++)agarre.brazoLibre[i]=e.desdeAgarre.brazoLibre[i]+(agarre.brazoLibre[i]-e.desdeAgarre.brazoLibre[i])*w;
+        for(const campo of ['brazoLibre','poloDerecho'])for(let i=0;i<agarre[campo].length;i++)agarre[campo][i]=e.desdeAgarre[campo][i]+(agarre[campo][i]-e.desdeAgarre[campo][i])*w;
       }
       e.huesos.forEach((b,i)=>e.ultima[i].copy(b.quaternion));e.pos.copy(m.H.cuerpo.position);copiarAgarre(e.agarre,agarre);
       e.estado=estado;e.anim=a.anim;e.libre=libre;e.valido=!exacta;
@@ -356,7 +367,7 @@
         H.torso.rotation.x+=p*(-.2*pre+.24*gol);H.cuerpo.position.y-=p*(.13*pre+.08*gol);
         H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
       }
-      const clip=clipCombate(a),agarre=clip?agarreCombate(a,clip):agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];alinearFilo(agarre,a);mezclar(m,a,agarre);
+      const clip=clipCombate(a),agarre=clip?agarreCombate(a,clip):agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];alinearFilo(agarre,a);agarre.poloDerecho??=[-.7,-.5,-.35];mezclar(m,a,agarre);
       if(clip||['recogerLlave','mirarLlave'].includes(a.anim))apoyarBotas(m);
       if(a.anim==='andar'&&(a.mezclar!==true||memoria(m).tiempo>0)){apoyarBotas(m);memoria(m).pos.copy(H.cuerpo.position);}
       {
