@@ -14,7 +14,7 @@ const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,caminar(h,p
 assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 for(const fps of [30,60,120]){
  camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,impactosAntes=impactos,posAntes=actor.pos.clone();
- assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[];let ultimoAlto=0,poseAntes=null;
+ assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null;
  for(let i=0;i<fps*40&&!cine.estado().terminado;i++){
   const est=cine.estado();if(orden.at(-1)!==est.fase)orden.push(est.fase);
   const fijo=JSON.stringify(est);cine.paso(0);assert.equal(JSON.stringify(cine.estado()),fijo,'La pausa no avanza');cine.paso(1/fps);
@@ -25,6 +25,16 @@ for(const fps of [30,60,120]){
   if(['desaparece','tropezar','buscar','levantarse'].includes(cine.estado().fase))assert(actor.m.mallas[0].visible,'El ataque, caída y recuperación se ven en tercera persona');
   if(cine.estado().fase==='buscar'&&cine.estado().t>.1){const cabeza=actor.m.H.cabeza.getWorldPosition(new T.Vector3());assert(cabeza.y<1.25,'Busca al mago desde el suelo');}
   const actual=cine.estado();
+  if(est.fase==='salida'&&actual.fase==='descubrir')inicioPaneo={pos:camara.position.clone(),q:camara.quaternion.clone()};
+  if(actual.fase==='descubrir'){
+   assert(camara.position.distanceTo(inicioPaneo.pos)<1e-8,'El paneo gira en su sitio, sin avanzar hacia el dolly');
+   assert.equal(camara.fov,42,'El primer plano no hace zoom');
+   if(actual.t>2.1){assert(camara.quaternion.angleTo(inicioPaneo.q)>.5,'El paneo recorre de Adreida al mago');const foco=new T.Vector3(0,2.35,0).project(camara);assert(Math.hypot(foco.x,foco.y)<1e-6,'El paneo termina encuadrando al mago');}
+  }
+  if(est.fase==='descubrir'&&actual.fase==='vertigo'){
+   assert(camara.position.distanceTo(inicioPaneo.pos)>3,'El segundo plano comienza con un corte a otra posición');
+   assert(Math.abs(camara.fov-18)<1e-8,'El dolly empieza con su propia focal');
+  }
   if(actual.fase==='vertigo'&&actual.t>0){
    const d=camara.position.distanceTo(new T.Vector3(0,2.35,0));assert(Math.abs(d*Math.tan(camara.fov*Math.PI/360)-24*Math.tan(9*Math.PI/180))<1e-6,'Dolly y focal se compensan para mantener el tamaño del mago');
    assert(cine.recursos.aura.visible&&cine.recursos.mago.visible,'El mago está envuelto en el hechizo');

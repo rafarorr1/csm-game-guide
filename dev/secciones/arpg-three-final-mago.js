@@ -2,13 +2,13 @@
    Los recursos se reservan sólo al reproducirlo; no agrega trabajo a las oleadas. */
 'use strict';
 (function(){
-  // A 30 FPS: revelación 23 f + vértigo 54 f; corte del hachazo en f 14;
+  // A 30 FPS: paneo 72 f, corte y vértigo 54 f; corte del hachazo en f 14;
   // preparación 32 f; impacto 6 f, caída legible 65 f y fundido antes del fondo.
-  const DURACIONES=Object.freeze({salida:2.6,descubrir:.75,vertigo:1.8,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,techo:2.3,cielo:1.7,caida:1.05,impacto:.2,abismo:2.15,negro:1.2});
+  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:1.8,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,techo:2.3,cielo:1.7,caida:1.05,impacto:.2,abismo:2.15,negro:1.2});
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,caminar,impactar,interfaz,volver,piso=()=>null,reducido=false}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','techo','cielo'];
-    const centro=new V(0,0,0),destino=new V(0,0,3.5),techo=new V(),cielo=new V(),desdeCamara=new V(),miraInicial=new V(),objeto=new T.Object3D();
+    const centro=new V(0,0,0),destino=new V(0,0,3.5),techo=new V(),cielo=new V(),desdeCamara=new V(),giroPaneo=new T.Quaternion(),finPaneo=new T.Quaternion(),objeto=new T.Object3D();
     const camBase={fov:camara.fov,near:camara.near},derrumbe={value:-1};let s=null,recursos=null,visitadas=[],sombras=[],mallasRuina=[],terminado=false;
     const rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z),angulo=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
     function material(color,extra={}){return new T.MeshStandardMaterial({color,roughness:.86,metalness:0,...extra});}
@@ -93,7 +93,7 @@
     }
     function camaraSalida(){const h=s.actor,derecha=new V(s.fuera.z,0,-s.fuera.x),foco=s.origen.clone().lerp(h.pos,.5).setY(1.1);
       mirar(s.salida.clone().addScaledVector(s.fuera,5.5).addScaledVector(derecha,3.5).setY(3.5),foco,42);
-      desdeCamara.copy(camara.position);miraInicial.copy(foco);
+      desdeCamara.copy(camara.position);giroPaneo.copy(camara.quaternion);
     }
     function posar(anim,dt,k=0,paso=1){const h=s.actor;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;MOD.posar(h.m,{anim,k,t:s.total,dt,mezclar:true,estado:anim,fase:h.fase,paso:anim==='andar'?paso:0});h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;}
     function mirar(pos,objetivo,fov){camara.position.copy(pos);camara.lookAt(objetivo);camara.fov=fov;camara.near=.045;camara.updateProjectionMatrix();camara.updateMatrixWorld(true);}
@@ -135,8 +135,11 @@
         if(t>=DURACIONES.salida){r.mago.visible=r.sello.visible=true;cambio('descubrir');}
       }else if(f==='descubrir'){
         h.dir+=angulo(h.dir,rumbo(h.pos,centro))*Math.min(1,dt*3);posar('quieto',dt);
-        const k=suave(t/DURACIONES.descubrir);camaraVertigo(0);const objetivo=camara.position.clone();mirar(desdeCamara.clone().lerp(objetivo,k),miraInicial.clone().lerp(new V(0,2.35,0),k),42-24*k);
-        if(t>=DURACIONES.descubrir)cambio('vertigo');
+        // Plano 1: sólo gira la cámara desde Adreida al mago; posición y focal fijas.
+        // Sostiene el final del paneo 0,3 s antes del corte al plano de vértigo.
+        mirar(desdeCamara,new V(0,2.35,0),42);finPaneo.copy(camara.quaternion);
+        camara.quaternion.slerpQuaternions(giroPaneo,finPaneo,suave(t/2.1));camara.updateMatrixWorld(true);
+        if(t>=DURACIONES.descubrir){cambio('vertigo');camaraVertigo(0);}
       }else if(f==='vertigo'){
         posar('quieto',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo)cambio('carrera');
       }else if(f==='carrera'){
