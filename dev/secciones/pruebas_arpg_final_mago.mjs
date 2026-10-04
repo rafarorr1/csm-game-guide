@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-impactos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js','arpg-cine-camara.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js','arpg-three-impactos.js','adreida-scenario/cinematica.js','arpg-three-adreida-cine.js','arpg-three-final-mago.js','arpg-cine-camara.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,MOD=c.CAOZ_ARPG_MODELOS.fabrica(T),escena=new T.Scene(),camara=new T.PerspectiveCamera(32,16/9,.5,1200),casas=new T.Group();
 const g=new T.BoxGeometry(6,7,5).toNonIndexed();g.translate(5,3.5,-17);const casa=new T.Mesh(g,new T.MeshStandardMaterial());casa.castShadow=true;casas.add(casa);escena.add(casas);
 const tapa=new T.Mesh(new T.BoxGeometry(6,9,6).toNonIndexed(),new T.MeshStandardMaterial());tapa.position.set(0,4.5,20);casas.add(tapa);

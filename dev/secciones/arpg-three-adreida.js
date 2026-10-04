@@ -1,8 +1,8 @@
 /* Adreida de Scenario: cuerpo compartido, materiales locales y esqueleto del combate. */
 'use strict';
 (function(){
-  const modular=window.CAOZ_ADREIDA_MODULAR_DATOS;
-  const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL(modular?'./adreida-brazos-scenario/':'./adreida-scenario/',document.currentScript.src).href:null;
+  const modular=window.CAOZ_ADREIDA_PIERNAS_DATOS||window.CAOZ_ADREIDA_MODULAR_DATOS;
+  const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL(modular?.piernas?'./adreida-piernas-scenario/':modular?'./adreida-brazos-scenario/':'./adreida-scenario/',document.currentScript.src).href:null;
   function fabrica(THREE){
     const datos=modular||window.CAOZ_ADREIDA_DATOS;let geometria,mapas;
     const leer=(s,T)=>{const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new T(a.buffer);};
@@ -51,7 +51,7 @@
             const a=new THREE.BufferAttribute(delta,3);a.name='Agarre '+lado;return a;
           });
         }
-        geometria.userData.compartida=true;geometria.computeBoundingSphere();
+        geometria.userData.compartida=true;geometria.userData.apoyoCarrera=datos.apoyoCarrera;geometria.computeBoundingSphere();
       }
       if(!mapas){mapas={};if(ruta)for(const nombre of ['color','normal','superficie']){const t=new THREE.TextureLoader().load(ruta+nombre+'.webp');t.flipY=false;t.colorSpace=nombre==='color'?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=4;mapas[nombre]=t;}}
       const material=M.hacer({map:mapas.color||null,normalMap:mapas.normal||null,roughnessMap:mapas.superficie||null,metalnessMap:mapas.superficie||null,roughness:1,metalness:1,normalScale:new THREE.Vector2(.65,.65),envMapIntensity:.25,side:THREE.FrontSide});

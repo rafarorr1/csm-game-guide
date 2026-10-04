@@ -1,0 +1,74 @@
+{
+  "proyecto": "Caoz ARPG",
+  "fecha": "2026-10-04",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "coleccion": "col_ow7pkbcF4U8d9mAaKS1HK9P1",
+  "referencia": "asset_FJ9aBLGzifk1qfm96UCVAJn1",
+  "modeloImagen": "model_openai-gpt-image-2-5-sunburst",
+  "modelo3D": "model_tripo-v3-1-image-to-3d",
+  "estado": "Integrado en el rig de Adreida para revisión local.",
+  "recursos": {
+    "pierna": {
+      "concepto": "asset_9yYLEorerAJhVuT3oRPCt2g7",
+      "parametrosImagen": {
+        "referenceImages": [
+          "asset_FJ9aBLGzifk1qfm96UCVAJn1"
+        ],
+        "width": 1024,
+        "height": 1536,
+        "numOutputs": 1,
+        "quality": "high",
+        "background": "opaque",
+        "prompt": "Crea una referencia de modelado 3D de UNA SOLA PIERNA IZQUIERDA anatómica modular de Adreida, la guerrera semiorca adulta musculosa de la imagen de referencia aprobada. Conserva exactamente su piel oliva tostada desaturada, musculatura atlética femenina poderosa, muslo fuerte, rodilla clara y natural, pantorrilla definida y tobillo firme. Un miembro completo desde justo debajo de la articulación de cadera hasta el pie completo con cinco dedos naturales. Arriba, una tapa de modelado cerrada y lisa, sin herida ni sangre. Pierna vertical, recta, rodilla apenas relajada, planta horizontal, pie apuntando hacia delante de ella. Vista frontal casi ortográfica, muy ligeramente de tres cuartos (10 grados), para leer la rótula, espinilla, talón y empeine. Mantén el muslo y la pantorrilla a una longitud anatómica equilibrada. Piel mate con poro fino, tendones y pequeñas cicatrices discretas; sin venas exageradas ni músculos de culturista. Sin pelvis, torso, falda, ropa, botas, vendas, armadura, joyas ni otra pierna. No estilizar como muñeca, no caricatura. Estilo de personaje de videojuego de fantasía oscura realista estilizado, exactamente como la referencia, volumen limpio legible. Objeto único centrado y completo con 12% de margen, fondo gris claro uniforme, iluminación de estudio neutra muy difusa, sin sombras dramáticas ni base ni pedestal, sin etiquetas ni texto. La referencia determina identidad y material, la salida muestra solamente la pierna modular para reconstrucción 3D y posterior rig."
+      },
+      "parametros3D": {
+        "image": "asset_9yYLEorerAJhVuT3oRPCt2g7",
+        "texture": true,
+        "pbr": true,
+        "faceLimit": 8000,
+        "autoSize": true,
+        "orientation": "align_image"
+      },
+      "jobImagen": "job_T67K7nY3dWgdg6LfPFinVfnS",
+      "job3D": "job_GH7MLBoaRN98pBvr8BRUagkF",
+      "malla": "asset_YvUk3qNTUxvjzfkvCkt8mCbs",
+      "triangulosOriginales": 7754,
+      "verticesOriginales": 4788,
+      "semilla": 2144648766,
+      "archivoOriginal": "pierna-original.glb"
+    },
+    "bota": {
+      "concepto": "asset_BPj43bYAgBaTX6LdWE852owk",
+      "parametrosImagen": {
+        "referenceImages": [
+          "asset_FJ9aBLGzifk1qfm96UCVAJn1"
+        ],
+        "width": 1024,
+        "height": 1280,
+        "numOutputs": 1,
+        "quality": "high",
+        "background": "opaque",
+        "prompt": "Crea UNA SOLA BOTA IZQUIERDA modular para Adreida, la semiorca adulta de la referencia. Reproduce fielmente sus botas oscuras de cuero marrón gastado: caña hasta media pantorrilla dejando la rodilla libre, tres correas cruzadas bien definidas rodeando la caña, hebillas pequeñas de hierro envejecido, costuras robustas, puntera ancha redondeada reforzada, suela de cuero gruesa fina y talón de trabajo bajo. Acabado mate rugoso, pliegues naturales donde se dobla el tobillo, bordes gastados, detalles funcionales legibles, sin brillo fuerte. NO agregar placas metálicas, púas, adornos ni cambiar su estilo a botas modernas. Una sola bota VACÍA, sin pierna ni pie ni piel ni maniquí en el interior; abertura superior claramente hueca y oscura, borde fino de cuero visible. Pie plano sobre un plano imaginario, caña vertical, proporciones aptas para el pie y pantorrilla fuerte de una guerrera de 1.95 metros. Vista frontal tres cuartos ligeramente elevada, el pie apuntando hacia la cámara y un poco hacia la izquierda del espectador para que se vea puntera y perfil. Una sola pieza entera centrada con márgenes, fondo gris claro uniforme, luz de estudio neutra suave y difusa, sin piso, sin base ni pedestal, sin palabras ni etiquetas. Fantasía medieval oscura realista estilizada, coherente con la ropa de cuero del personaje aprobado. Referencia de reconstrucción de malla 3D independiente que después se ajustará al rig de tobillo y rodilla."
+      },
+      "parametros3D": {
+        "image": "asset_BPj43bYAgBaTX6LdWE852owk",
+        "texture": true,
+        "pbr": true,
+        "faceLimit": 5000,
+        "autoSize": true,
+        "orientation": "align_image"
+      },
+      "jobImagen": "job_mGbn9tEPeECoBjkvp3WbMgS6",
+      "job3D": "job_kcDrtYzXdDiBEn2uBo2UyyKa",
+      "malla": "asset_4ybnKpz6k52PfMBGPwNkTubv",
+      "triangulosOriginales": 4676,
+      "verticesOriginales": 3359,
+      "semilla": 1212682948,
+      "archivoOriginal": "bota-original.glb"
+    }
+  },
+  "creditosConceptos": 25,
+  "creditosMallas": 90,
+  "creditosTotales": 115
+}

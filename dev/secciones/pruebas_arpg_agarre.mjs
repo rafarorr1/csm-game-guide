@@ -3,7 +3,7 @@ import fs from 'node:fs';
 import vm from 'node:vm';
 import assert from 'node:assert/strict';
 const contexto=vm.createContext({console,atob});contexto.window=contexto;
-for(const archivo of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-scenario/datos.js','arpg-three-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),contexto);
+for(const archivo of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),contexto);
 const {THREE}=contexto.CAOZ_THREE,modelos=contexto.CAOZ_ARPG_MODELOS.fabrica(THREE),m=modelos.crear('adreida');
 let maxError=0;
 for(const anim of ['quieto','tajoA','revesA','estocadaA','parry','salto','torbellino']){

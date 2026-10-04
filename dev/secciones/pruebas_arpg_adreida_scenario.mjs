@@ -4,10 +4,10 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {recursosAdreida,entornoArpgThree} from './arpg-three-exportar.mjs';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-piernas-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
 const {THREE}=c.CAOZ_THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=F.crear('adreida'),otro=F.crear('adreida'),clasico=F.crear('adreida',{modeloAdreida:'clasico'});
 const cuerpo=m.mallas[0],g=cuerpo.geometry,a=g.attributes;
-assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,44706);assert.equal(m.mallas.length,2);
+assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,61204);assert(g.index.count/3<65000,'Presupuesto del cuerpo por debajo de 65 mil triángulos');assert.equal(m.mallas.length,2);
 assert.equal(m.alto,clasico.alto);assert.equal(m.radio,clasico.radio);assert.deepEqual(m.p,clasico.p);
 // La envolvente de morphs es conservadora; medir el cuerpo base, no esa reserva.
 const cajaBase=new THREE.Box3().setFromBufferAttribute(a.position);assert.ok(Math.abs(cajaBase.max.y-cajaBase.min.y-1.913112)<.0001,'Altura del modelo aprobado');
@@ -51,7 +51,7 @@ for(const paso of [.15,.3,.55,1])for(const zancada of [.75,1,1.15]){
   for(const j of botas){cuerpo.getVertexPosition(j,v);alturaMin=Math.min(alturaMin,v.y);}
  }
  if(paso<=.3)assert.ok(max-min<.012,`Apoyo de marcha sin patinar: paso ${paso}, zancada ${zancada}`); // Fast Run incluye rodadura de talón y punta; su tobillo no está fijo.
- assert.ok(alturaMin>-.002&&alturaMin<.015,'Las suelas llegan al piso sin hundirse');
+ assert.ok(alturaMin>-.002&&alturaMin<.015,`Las suelas llegan al piso sin hundirse: paso ${paso}, zancada ${zancada}, altura ${alturaMin}`);
 }
 F.animacion.restablecer();
 // Fast Run conserva sus fases de apoyo y vuelo, la flexión profunda de rodilla
@@ -63,7 +63,7 @@ for(let i=0;i<120;i++){
  if(baja>.05)vuelo++;if(baja<.015)apoyo++;
  rodilla=Math.max(rodilla,m.H.rodillaI.rotation.x,m.H.rodillaD.rotation.x);
 }
-assert.ok(vuelo>5&&apoyo>40,'La carrera conserva despegue, vuelo y contacto');
+assert.ok(vuelo>5&&apoyo>40,`La carrera conserva despegue, vuelo y contacto: ${vuelo} vuelo, ${apoyo} apoyo`);
 assert.ok(rodilla>1.8,'Recoge la pierna con la flexión del clip importado');
 F.posar(m,{anim:'andar',fase:2.1,paso:.55});const altura=m.H.cuerpo.position.y;
 m.raiz.position.set(17,0,-8);m.raiz.rotation.y=2.4;F.posar(m,{anim:'andar',fase:2.1,paso:.55});
@@ -93,7 +93,16 @@ for(const pagina of ['arpg-three.html','modelos-visor.html']){const html=fs.read
 console.log(`✓ Adreida Scenario: ${poses} poses, 1200 muestras de marcha, apoyo, suelas, continuidad, escala, pesos, hacha y Adreidos.`);
 
 // Cada falange de la malla modular debe deformar sus propios vértices.
-const d=c.CAOZ_ADREIDA_MODULAR_DATOS;assert.equal(d.dedos.length,20);
+const d=c.CAOZ_ADREIDA_PIERNAS_DATOS;assert.equal(d.dedos.length,20);
+assert.equal(d.apoyoCarrera.length,256,'Apoyo horneado sin cálculos de malla adicionales por cuadro');
+assert(d.apoyoCarrera.every(x=>Number.isFinite(x)&&Math.abs(x)<.08));
+for(const lado of ['I','D'])for(const pieza of ['pierna','bota']){
+ const parte=d.partes.find(p=>p.nombre===pieza+lado);assert(parte&&parte.triangulos>3000,'Pieza detallada e independiente: '+pieza+lado);
+ for(let i=parte.inicio;i<parte.inicio+parte.vertices;i++)for(let j=0;j<4;j++)if(a.skinWeight.array[i*4+j]>.001){
+  const hueso=cuerpo.skeleton.bones[a.skinIndex.array[i*4+j]];
+  assert(['cadera','pierna'+lado,'rodilla'+lado,'pie'+lado].some(n=>m.H[n]===hueso),'Las piernas no arrastran la falda, el otro lado ni los brazos');
+ }
+}
 for(const f of d.dedos){const b=m.H[f.nombre],indice=cuerpo.skeleton.bones.indexOf(b);assert.equal(b.parent,m.H[f.padre]);
  const vertices=[];for(let i=0;i<a.position.count;i++)for(let j=0;j<4;j++)if(a.skinIndex.array[i*4+j]===indice&&a.skinWeight.array[i*4+j]>.1){vertices.push(i);break;}
  assert(vertices.length>3,f.nombre+': tiene superficie propia');

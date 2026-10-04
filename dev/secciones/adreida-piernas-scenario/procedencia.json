@@ -1,0 +1,77 @@
+{
+  "fuentesSha256": {
+    "pierna": "4d9bdf67511495c173a40f37a9d38314fbcd299fc4eae8b3b436b4481e213fe6",
+    "bota": "eead8cab1263bcacf173140af4df462b9d26305be34cec691b839d462a858733",
+    "cuerpoConBrazos": "569d986387a6bc47afdfa9d115f4d96ad2863d7331fdb22b152806731a3332d9"
+  },
+  "triangulos": 61204,
+  "vertices": 42327,
+  "partes": [
+    {
+      "nombre": "cuerpo",
+      "inicio": 0,
+      "vertices": 8792,
+      "triangulos": 10510
+    },
+    {
+      "nombre": "brazoI",
+      "inicio": 8792,
+      "vertices": 5809,
+      "triangulos": 9500
+    },
+    {
+      "nombre": "brazoD",
+      "inicio": 14601,
+      "vertices": 5809,
+      "triangulos": 9500
+    },
+    {
+      "nombre": "vendasI",
+      "inicio": 20410,
+      "vertices": 2706,
+      "triangulos": 3762
+    },
+    {
+      "nombre": "vendasD",
+      "inicio": 23116,
+      "vertices": 2706,
+      "triangulos": 3762
+    },
+    {
+      "nombre": "hombreraI",
+      "inicio": 25822,
+      "vertices": 3667,
+      "triangulos": 4764
+    },
+    {
+      "nombre": "piernaI",
+      "inicio": 29489,
+      "vertices": 3060,
+      "triangulos": 5027
+    },
+    {
+      "nombre": "botaI",
+      "inicio": 32549,
+      "vertices": 3359,
+      "triangulos": 4676
+    },
+    {
+      "nombre": "piernaD",
+      "inicio": 35908,
+      "vertices": 3060,
+      "triangulos": 5027
+    },
+    {
+      "nombre": "botaD",
+      "inicio": 38968,
+      "vertices": 3359,
+      "triangulos": 4676
+    }
+  ],
+  "atlas": 2048,
+  "falanges": 20,
+  "correctivosAgarre": 2,
+  "rig": "Esqueleto original: cadera, muslos, rodillas y pies; cuatro pesos máximo. Sin huesos adicionales.",
+  "retiradosCuerpo": 2908,
+  "fuenteEscenario": "../propuestas-scenario/piernas-adreida/procedencia.json"
+}
