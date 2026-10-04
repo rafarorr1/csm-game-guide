@@ -1,0 +1,20 @@
+{
+  "asset": "asset_m5Ap8khG8NvPSPmjBVWCbkW5",
+  "modelo": "model_openai-gpt-image-2-5-sunburst",
+  "fecha": "2026-10-04",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "coleccion": "col_GsqEB9NDtoryU5BeFLRWY9jT",
+  "costeCU": 12,
+  "sha256": "a544ee7da254206ec2366bba2d78c6fc50ce715a6f1d2051ff3df721c58fdbbb",
+  "resolucion": {
+    "color": 1024,
+    "normal": 512,
+    "superficie": 512
+  },
+  "escalaMetros": 3.8,
+  "color": "sRGB; bordes emparejados para repetición",
+  "normal": "OpenGL lineal; relieve aproximado derivado de la luminancia, no medido",
+  "superficie": "R: oclusión, G: rugosidad, B: altura aproximada",
+  "render": "Parallax de tres muestras sólo en el suelo; una malla, sin teselación ni nuevas luces."
+}

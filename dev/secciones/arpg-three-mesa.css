@@ -303,3 +303,8 @@ button:focus-visible,summary:focus-visible,select:focus-visible{outline:2px soli
 @media(max-width:760px){.apEstilo{right:12px;top:144px;width:150px;padding:8px 9px}.apEstiloTotal strong{font-size:18px}.apEstiloCadena>b{font-size:32px}.apEstiloCadena strong{font-size:20px}.apEstiloCadena span{font-size:9px}.apEstiloDetalle{font-size:8px}.apBotin{top:268px;max-height:20%}}
 @media(max-height:520px){.apEstilo{top:66px;width:154px;padding:6px 10px}.apEstiloCadena>b{font-size:30px}.apEstiloCadena{margin:3px 0}.apEstiloTotal strong{font-size:18px}.apBotin{top:188px;max-height:18%}}
 @media(max-width:760px) and (max-height:520px){.apObjetivo{top:18px;left:50%;right:auto;transform:translateX(-50%);width:30%}}
+
+/* El negro pertenece al reloj de la escena: también se detiene al pausar. */
+.apFundidoFinal{position:absolute;inset:0;background:#000;opacity:0;z-index:24;pointer-events:none}
+.apFundidoFinal[hidden]{display:none}
+.cinematica :is(.apAbrirCasa,.apCasaPanel,.apDiagnostico,.apPalanca){visibility:hidden;pointer-events:none}

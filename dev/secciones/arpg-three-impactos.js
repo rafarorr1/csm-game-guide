@@ -51,16 +51,17 @@
       materialPiso=m;perforar(m);
       for(const c of crateres){c.labio.map=m.map;c.labio.normalMap=m.normalMap;c.labio.roughnessMap=m.roughnessMap;c.labio.aoMap=m.aoMap;c.labio.normalScale.copy(m.normalScale);c.labio.needsUpdate=true;}
     }
-    function agujero(p){
+    function agujero(p,{radio=1.05,profundidad=.32,duracion=5}={}){
       if(!materialPiso)return;
       if(crateres.length>=MAX)quitar(crateres.shift());
-      const radio=1.05,g=geometriaCrater(),uv=g.attributes.uv,diametro=52/Math.cos(Math.PI/24),a=Math.PI/24;
+      const g=geometriaCrater(),uv=g.attributes.uv,diametro=52/Math.cos(Math.PI/24),a=Math.PI/24;
       for(let i=0;i<uv.count;i++){const x=p.x+uv.getX(i)*radio,z=p.z+uv.getY(i)*radio;uv.setXY(i,.5+(x*Math.cos(a)-z*Math.sin(a))/diametro,.5+(-x*Math.sin(a)-z*Math.cos(a))/diametro);}
       const labio=materialPiso.clone();labio.vertexColors=true;labio.side=THREE.DoubleSide;
       const fondo=interior.clone(),opacidad={value:1};
+      if(profundidad>1){fondo.map=materialPiso.map;fondo.normalMap=materialPiso.normalMap;fondo.normalScale.set(.9,.9);fondo.color.setHex(0x70645d);}
       desvanecerMaterial(labio,opacidad);desvanecerMaterial(fondo,opacidad);
-      const mesh=new THREE.Mesh(g,[labio,fondo]);mesh.position.set(p.x,0,p.z);mesh.scale.set(radio,1,radio);mesh.receiveShadow=true;escena.add(mesh);
-      crateres.push({mesh,labio,fondo,opacidad,t:0,radio});actualizarHuecos();
+      const mesh=new THREE.Mesh(g,[labio,fondo]);mesh.position.set(p.x,0,p.z);mesh.scale.set(radio,profundidad/.32,radio);mesh.receiveShadow=true;escena.add(mesh);
+      crateres.push({mesh,labio,fondo,opacidad,t:0,radio,duracion});actualizarHuecos();
     }
     function quitar(c){escena.remove(c.mesh);c.mesh.geometry.dispose();c.labio.dispose();c.fondo.dispose();}
     function actualizarHuecos(){cantidadHuecos.value=crateres.length;for(let i=0;i<MAX;i++){const c=crateres[i];if(c)huecos.value[i].set(c.mesh.position.x,c.mesh.position.z,c.radio,c.opacidad.value);else huecos.value[i].set(0,0,0,0);}}
@@ -88,8 +89,8 @@
       c.g.attributes.position.needsUpdate=c.g.attributes.aVida.needsUpdate=true;
     }
     function paso(dt){
-      for(let i=crateres.length-1;i>=0;i--){const c=crateres[i];c.t+=dt;if(c.t>=5){quitar(c);crateres.splice(i,1);continue;}
-        const k=Math.max(0,Math.min(1,(c.t-3.5)/1.5));c.opacidad.value=1-k*k*(3-2*k);}
+      for(let i=crateres.length-1;i>=0;i--){const c=crateres[i];c.t+=dt;if(c.t>=c.duracion){quitar(c);crateres.splice(i,1);continue;}
+        const k=Math.max(0,Math.min(1,(c.t-c.duracion+1.5)/1.5));c.opacidad.value=1-k*k*(3-2*k);}
       actualizarHuecos();
     }
     function limpiar(){for(const c of crateres)quitar(c);crateres.length=0;actualizarHuecos();for(const c of cintas.values()){escena.remove(c.mesh);c.g.dispose();c.mesh.material.dispose();}cintas.clear();}

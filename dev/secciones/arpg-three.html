@@ -29,6 +29,7 @@
 <script src="./arpg-three-modelos.js"></script>
 <script src="./arpg-three-tiempo.js"></script>
 <script src="./arpg-three-impactos.js"></script>
+<script src="./arpg-three-piso.js"></script>
 <script src="./arpg-three-clima.js"></script>
 <script src="./quick-liquid-vendor.js"></script>
 <script src="./arpg-three-orbes.js"></script>
@@ -36,6 +37,7 @@
 <script src="./arpg-three-ia.js"></script>
 <script src="./llave-scenario/datos.js"></script>
 <script src="./arpg-three-entrada-troll.js"></script>
+<script src="./arpg-three-final-mago.js"></script>
 <script src="./casa-goblin-scenario/datos.js"></script>
 <script src="./arpg-three-casa-interior.js"></script>
 <script src="./arpg-three-casa-goblin.js"></script>
@@ -57,6 +59,7 @@
       <p id="casaTexto" role="status"></p>
       <div><button id="casaGolpear">Dar un golpe · J / □ / R2</button><button id="casaSalir">Salir por la puerta · F / ×</button></div>
     </section>
+    <div id="fundidoFinal" class="apFundidoFinal" hidden aria-hidden="true"></div>
     <div id="cinematicaTroll" class="apCinematica" hidden><p id="cinematicaTexto" role="status"></p><button type="button" id="omitirCinematica">Omitir · Enter</button></div>
     <div class="apCapa" id="capa"></div>
     <div class="apVineta" id="vineta"></div>
@@ -138,7 +141,7 @@
   </fieldset>
 
     <div id="pruebaPiso" class="apPruebaPiso" hidden>
-      <label>Textura del piso <select id="pisoPrueba"><option value="vegetacion">Piedra con vegetación</option><option value="actual">Adoquines originales</option></select></label>
+      <label>Textura del piso <select id="pisoPrueba"><option value="scenario">Adoquines Scenario · relieve</option><option value="vegetacion">Piedra con vegetación</option><option value="actual">Adoquines originales</option></select></label>
       <small id="pisoMensaje" role="status"></small>
     </div>
   <div class="apAjustesPausa">

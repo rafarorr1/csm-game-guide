@@ -48,7 +48,7 @@ for(const hz of [30,60,120])for(const modo of ['solo','coop','mohamed'])for(cons
 }
 // Ejecuta la lógica real de oleadas: sólo fase 2 → 3; conserva refuerzos y escalado cooperativo.
 for(const factor of [1,2]){
-  const entorno={ABIERTO:false,FACTOR_COOP:factor,CAPTURA:false,q:new URLSearchParams('etapa=2'),Math,reloj:{t:0},rnd:()=>.3,refuerzosCan:[],peligrosTroll:[],enemigos:[],jugadores:[{vivo:true}],rog:{cartas:[],terminado:-1},DEF:{troll:{jefe:true},cobrador:{},kobold:{}},banner(){},iniciarDestino(){},cinematicaTroll:{activa:false},entradas:0};
+  const entorno={ABIERTO:false,FACTOR_COOP:factor,CAPTURA:false,q:new URLSearchParams('etapa=2'),Math,reloj:{t:0},rnd:()=>.3,refuerzosCan:[],peligrosTroll:[],enemigos:[],jugadores:[{vivo:true}],rog:{cartas:[],terminado:-1},DEF:{troll:{jefe:true},cobrador:{},kobold:{}},banner(){},iniciarDestino(){},casaGoblin:null,finalMago:null,cinematicaTroll:{activa:false},entradas:0};
   // Las funciones invocadas sin receptor necesitan un cierre explícito, como en la partida.
   entorno.iniciarEntradaTroll=()=>{const i=entorno.ol.cola.findIndex(([t])=>t==='troll');entorno.ol.cola.splice(i,1);entorno.entradas++;entorno.cinematicaTroll.activa=true;};
   vm.createContext(entorno);vm.runInContext(mesa.slice(mesa.indexOf('  const OLEADAS='),mesa.indexOf('  function reiniciar(){'))+';this.ol=ol;this.avanzar=pasoOleadas;',entorno);

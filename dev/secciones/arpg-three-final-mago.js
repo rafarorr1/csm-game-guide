@@ -1,0 +1,119 @@
+/* Epílogo de la casa: mago, persecución en primera persona y meteorito.
+   Los recursos se reservan sólo al reproducirlo; no agrega trabajo a las oleadas. */
+'use strict';
+(function(){
+  const DURACIONES=Object.freeze({salida:3.2,carrera:12,desaparece:.7,buscar:3.1,techo:2.3,cielo:1.7,caida:.85,impacto:3.6,negro:1.6});
+  function fabrica(T,MOD,{escena,camara,casas,entorno=null,caminar,impactar,interfaz,volver,piso=()=>null,reducido=false}){
+    const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
+    const centro=new V(0,0,0),destino=new V(0,0,2.1),techo=new V(),cielo=new V(),desdeCamara=new V(),miraInicial=new V(),objeto=new T.Object3D();
+    const camBase={fov:camara.fov,near:camara.near},derrumbe={value:-1};let s=null,recursos=null,visitadas=[],sombras=[],mallasRuina=[],terminado=false;
+    const rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z),angulo=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
+    function material(color,extra={}){return new T.MeshStandardMaterial({color,roughness:.86,metalness:0,...extra});}
+    function preparar(){if(recursos)return;
+      const grupo=new T.Group();grupo.name='Epílogo · El mago';escena.add(grupo);grupo.visible=false;
+      const mago=new T.Group();mago.name='Mago encapuchado';grupo.add(mago);
+      const tela=material(0x5b506c),borde=material(0x91805d,{metalness:.4}),negro=material(0x08080f),piel=material(0x89908b),magia=new T.MeshBasicMaterial({color:0xb7a1ed,toneMapped:false});
+      if(typeof document!=='undefined'){const l=new T.TextureLoader();tela.map=l.load('./texturas-goblin/ropa-color.webp');tela.map.colorSpace=T.SRGBColorSpace;tela.normalMap=l.load('./texturas-goblin/ropa-normal.webp');tela.normalScale.set(.3,.3);}
+      const luzMago=new T.PointLight(0xb7a1e0,9,4,2);luzMago.position.set(0,1.7,.8);mago.add(luzMago);
+      const pieza=(g,mat,p,padre=mago)=>{const m=new T.Mesh(g,mat);m.position.set(...p);padre.add(m);m.castShadow=true;return m;};
+      // Pliegues de la túnica en la silueta, ribetes y capucha con rostro en sombra.
+      const tunica=new T.CylinderGeometry(.27,.58,1.55,24,5,true),pos=tunica.attributes.position;
+      for(let i=0;i<pos.count;i++){const a=Math.atan2(pos.getZ(i),pos.getX(i)),f=1+.09*Math.cos(a*12)*(1-(pos.getY(i)+.775)/1.55);pos.setXYZ(i,pos.getX(i)*f,pos.getY(i),pos.getZ(i)*f);}tunica.computeVertexNormals();
+      pieza(tunica,tela,[0,.82,0]);pieza(new T.CylinderGeometry(.51,.51,.04,24),negro,[0,.05,0]);pieza(new T.TorusGeometry(.53,.032,5,24),borde,[0,.07,0]).rotation.x=Math.PI/2;
+      pieza(new T.SphereGeometry(.35,16,12),tela,[0,1.78,0]).scale.set(1,1.12,.9);
+      pieza(new T.SphereGeometry(.245,16,10),negro,[0,1.77,.19]).scale.set(.86,1,.3);
+      for(const x of [-.08,.08])pieza(new T.SphereGeometry(.024,6,5),magia,[x,1.79,.267]);
+      pieza(new T.TorusGeometry(.235,.042,6,20),borde,[0,1.76,.22]).scale.set(.92,1.18,1);
+      pieza(new T.CylinderGeometry(.29,.34,.12,12),borde,[0,1.2,0]);
+      const brazos=[];
+      for(const lado of [-1,1]){const b=new T.Group();b.position.set(lado*.29,1.44,0);mago.add(b);b.rotation.z=lado*.24;brazos.push(b);pieza(new T.CylinderGeometry(.16,.24,.68,10),tela,[0,-.28,0],b);pieza(new T.TorusGeometry(.23,.027,5,12),borde,[0,-.61,0],b).rotation.x=Math.PI/2;pieza(new T.SphereGeometry(.1,8,6),piel,[0,-.72,.015],b);}
+      const baston=new T.Group();baston.position.set(-.63,.02,.08);mago.add(baston);pieza(new T.CylinderGeometry(.033,.055,2.1,8),borde,[0,1.05,0],baston);pieza(new T.TorusGeometry(.16,.028,6,16),borde,[0,2.23,0],baston);pieza(new T.OctahedronGeometry(.115),magia,[0,2.23,0],baston);
+      const sello=new T.Mesh(new T.RingGeometry(.62,.69,48).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0x9572d6,transparent:true,opacity:.3,depthWrite:false,side:T.DoubleSide}));sello.position.y=.055;grupo.add(sello);
+      const orbita=new T.Mesh(new T.TorusGeometry(.48,.025,5,32),magia);orbita.visible=false;grupo.add(orbita);
+      const meteorito=new T.Group();meteorito.name='Meteorito';grupo.add(meteorito);
+      const rocaGeo=new T.DodecahedronGeometry(2.15,2),rp=rocaGeo.attributes.position;
+      for(let i=0;i<rp.count;i++){const x=rp.getX(i),y=rp.getY(i),z=rp.getZ(i),r=1+.1*Math.sin(x*3.7+y*2.1)*Math.cos(z*4.3)+.06*Math.sin(y*8+z*2);rp.setXYZ(i,x*r,y*r,z*r);}rocaGeo.computeVertexNormals();
+      const rocaMat=material(0x261b16,{emissive:0x441006,emissiveIntensity:.25,flatShading:true});
+      rocaMat.onBeforeCompile=sh=>{sh.vertexShader='varying vec3 vRoca;\n'+sh.vertexShader;sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvRoca=position;');sh.fragmentShader='varying vec3 vRoca;\n'+sh.fragmentShader;
+        sh.fragmentShader=sh.fragmentShader.replace('#include <emissivemap_fragment>',`#include <emissivemap_fragment>
+          float veta=abs(sin(vRoca.x*4.7+sin(vRoca.z*5.3))*cos(vRoca.y*5.1+sin(vRoca.x*3.9)));
+          float lava=1.-smoothstep(.025,.095,veta);totalEmissiveRadiance+=vec3(2.4,.5,.055)*lava;`);};
+      const roca=pieza(rocaGeo,rocaMat,[0,0,0],meteorito);
+      const cola=new T.Mesh(new T.ConeGeometry(2.1,11,24,8,true),new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,uniforms:{uTiempo:{value:0}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:'varying vec2 vUv;uniform float uTiempo;void main(){float ruido=.5+.25*sin(vUv.x*63.+vUv.y*27.-uTiempo*15.)+.25*sin(vUv.x*103.-vUv.y*48.+uTiempo*19.);float a=pow(1.-vUv.y,1.6)*smoothstep(.25,.8,ruido)*.65;gl_FragColor=vec4(mix(vec3(1.,.12,.01),vec3(1.,.7,.16),1.-vUv.y),a);}'} ));cola.position.y=6;meteorito.add(cola);
+      const luz=new T.PointLight(0xf78c43,0,26,2);grupo.add(luz);
+      const piedraGeo=new T.DodecahedronGeometry(1,0),piedraMat=piso()?.clone()||material(0x656260);piedraMat.flatShading=true;piedraMat.onBeforeCompile=()=>{};piedraMat.customProgramCacheKey=()=> 'fragmento-meteorito';
+      const uv=piedraGeo.attributes.uv,rep=piedraMat.map?.repeat.x||1;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)/rep,uv.getY(i)/rep);
+      const fragmentos=new T.InstancedMesh(piedraGeo,piedraMat,180);fragmentos.instanceMatrix.setUsage(T.DynamicDrawUsage);fragmentos.frustumCulled=false;fragmentos.count=0;fragmentos.castShadow=false;fragmentos.receiveShadow=true;grupo.add(fragmentos);
+      const pix=new Uint8Array(64*64*4);for(let y=0;y<64;y++)for(let x=0;x<64;x++){const dx=(x-31.5)/31.5,dy=(y-31.5)/31.5,r=dx*dx+dy*dy,o=(y*64+x)*4,a=Math.pow(Math.max(0,1-r),2)*(0.75+.25*Math.sin(x*.55)*Math.sin(y*.41));pix.set([255,255,255,Math.round(a*255)],o);}
+      const nubeTex=new T.DataTexture(pix,64,64);nubeTex.needsUpdate=true;const nubeGeo=new T.PlaneGeometry(4,4),nubeMat=new T.MeshBasicMaterial({map:nubeTex,color:0x8d8175,transparent:true,opacity:.28,depthWrite:false}),nubes=28;
+      // Instancias opacas de piedra y una nube de polvo de baja densidad, sin luces con sombras.
+      const humo=new T.InstancedMesh(nubeGeo,nubeMat,nubes);humo.instanceMatrix.setUsage(T.DynamicDrawUsage);humo.frustumCulled=false;humo.count=0;grupo.add(humo);
+      const onda=new T.Mesh(new T.RingGeometry(.93,1,80).rotateX(-Math.PI/2),new T.MeshBasicMaterial({color:0xb8a390,transparent:true,opacity:.45,depthWrite:false,side:T.DoubleSide}));onda.position.y=.04;grupo.add(onda);
+      // La agrupación por material se conserva: los trozos se desplazan en el shader.
+      (entorno||casas).traverse(m=>{if(!m.isMesh||!m.material.isMeshStandardMaterial||m.geometry.index)return;mallasRuina.push(m);
+        const g=m.geometry,a=g.attributes.position,n=a.count,datos=new Float32Array(n*4);
+        for(let i=0;i<n;i+=3){const x=Math.floor((a.getX(i)+a.getX(i+1)+a.getX(i+2))/3/1.65)*1.65+.825,y=Math.floor((a.getY(i)+a.getY(i+1)+a.getY(i+2))/3/1.35)*1.35+.675,z=Math.floor((a.getZ(i)+a.getZ(i+1)+a.getZ(i+2))/3/1.65)*1.65+.825;const r=Math.abs(Math.sin(x*17.2+y*53.1+z*7.3));for(let j=0;j<3;j++)datos.set([x,y,z,r],(i+j)*4);}
+        g.setAttribute('aRuina',new T.BufferAttribute(datos,4));const mat=m.material,anterior=mat.onBeforeCompile,clave=mat.customProgramCacheKey();
+        mat.onBeforeCompile=function(sh,r){anterior.call(this,sh,r);sh.uniforms.uDerrumbe=derrumbe;sh.vertexShader='attribute vec4 aRuina;uniform float uDerrumbe;\n'+sh.vertexShader;
+          sh.vertexShader=sh.vertexShader.replace('#include <begin_vertex>',`#include <begin_vertex>
+            if(uDerrumbe>=0.&&length(aRuina.xz)<29.){float t=max(0.,uDerrumbe-length(aRuina.xz)*.012);float k=min(1.,t*.75);vec3 p=transformed-aRuina.xyz;
+              float a=k*(aRuina.w-.5)*2.8,c=cos(a),s=sin(a);p.xy=mat2(c,-s,s,c)*p.xy;
+              vec2 d=normalize(aRuina.xz+vec2(.001));transformed=aRuina.xyz+p;
+              transformed.xz+=d*k*(1.6+aRuina.w*2.4);transformed.y=max(.08+aRuina.w*.45+p.y*.2,transformed.y-(aRuina.y*.85)*k+sin(k*3.14159)*aRuina.w*1.7);}`);
+        };mat.customProgramCacheKey=()=>clave+'-epilogo-ruinas';mat.needsUpdate=true;
+      });
+      const caja=casas.userData.ocultacion?.cajas.filter(b=>b.max.y>4&&b.getCenter(new V()).z<-8).sort((a,b)=>a.getCenter(new V()).distanceToSquared(new V(5,0,-17))-b.getCenter(new V()).distanceToSquared(new V(5,0,-17)))[0];
+      if(caja){caja.getCenter(techo);techo.z+=.3;casas.updateMatrixWorld(true);const ray=new T.Raycaster(new V(techo.x,caja.max.y+3,techo.z),new V(0,-1,0));const contacto=ray.intersectObject(casas,true)[0];techo.y=(contacto?.point.y||caja.max.y)+.13;}else techo.set(6,7.8,-17);
+      cielo.copy(destino).add(new V(techo.x*1.6,54,techo.z*1.6));
+      recursos={grupo,mago,brazos,baston,sello,orbita,meteorito,roca,cola,luz,fragmentos,humo,onda};
+    }
+    function cambio(fase){s.fase=fase;s.t=0;s.actor.m.raiz.visible=!s.impactado;s.actor.m.mallas[0].visible=!['carrera','desaparece','techo','cielo'].includes(fase);interfaz({fase,negro:0});}
+    function iniciar(jugadores,{puerta}={}){if(s)return false;preparar();terminado=false;
+      let actor=jugadores.find(h=>h.tipo==='adreida'&&h.vivo),prestado=false;
+      if(!actor){const m=MOD.crear('adreida');escena.add(m.raiz);actor={tipo:'adreida',m,pos:new V(),radio:m.radio,dir:0,fase:0,vivo:true};prestado=true;}
+      visitadas=jugadores.map(h=>({h,visible:h.m.raiz.visible,mallas:h.m.mallas.map(m=>m.visible)}));for(const x of visitadas)x.h.m.raiz.visible=x.h===actor;
+      actor.pos.copy(puerta||new V(10,0,10));actor.dir=rumbo(actor.pos,centro);actor.giro180=null;actor.alto=0;
+      desdeCamara.copy(camara.position);camara.getWorldDirection(miraInicial).multiplyScalar(15).add(camara.position);
+      s={actor,prestado,fase:'salida',t:0,total:0,impactado:false,origen:actor.pos.clone()};
+      recursos.grupo.visible=true;recursos.mago.visible=true;recursos.sello.visible=true;recursos.meteorito.visible=recursos.onda.visible=false;recursos.fragmentos.count=recursos.humo.count=0;recursos.luz.intensity=0;
+      casas.userData.ocultacion?.opacidades.fill(1);derrumbe.value=-1;cambio('salida');paso(0);return true;
+    }
+    function posar(anim,dt,k=0){const h=s.actor;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;MOD.posar(h.m,{anim,k,t:s.total,dt,mezclar:true,estado:anim,fase:h.fase,paso:anim==='andar'?1:0});h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;}
+    function mirar(pos,objetivo,fov){camara.position.copy(pos);camara.lookAt(objetivo);camara.fov=fov;camara.near=.12;camara.updateProjectionMatrix();camara.updateMatrixWorld(true);}
+    function camaraJuego(amplitud=1,fov=32){const h=s.actor,objetivo=h.pos.clone().lerp(centro,.35).setY(.75);const d=22*amplitud;mirar(objetivo.clone().add(new V(0,Math.sin(.92)*d,Math.cos(.92)*d)),objetivo,fov);}
+    function vistaOjos(objetivo,correr=false){const h=s.actor,balanceo=correr&&!reducido?Math.sin(h.fase*2)*.035:0;mirar(h.pos.clone().add(new V(Math.sin(h.dir)*.12,1.69+balanceo,Math.cos(h.dir)*.12)),objetivo,68);}
+    function explosion(){if(s.impactado)return;s.impactado=true;const r=recursos;impactar(s.actor.pos);r.meteorito.visible=false;r.mago.visible=false;r.onda.visible=true;s.actor.m.raiz.visible=false;r.luz.position.copy(s.actor.pos).setY(3);r.luz.intensity=900;
+      sombras=[];for(const m of mallasRuina){sombras.push([m,m.castShadow]);m.castShadow=false;}
+    }
+    function escombros(t){const r=recursos,p=s.actor.pos;derrumbe.value=t;r.fragmentos.count=180;
+      for(let i=0;i<180;i++){const a=i*2.399963,b=(i*17%31)/31,v=4+b*11,d=.8+v*t,altura=Math.max(.06,(5+b*10)*t-7.5*t*t),tam=.12+(i%9)/9*.5;objeto.position.set(p.x+Math.cos(a)*d,altura,p.z+Math.sin(a)*d);objeto.rotation.set(t*(i%5),a+t*2,t*3);objeto.scale.set(tam,tam*.7,tam);objeto.updateMatrix();r.fragmentos.setMatrixAt(i,objeto.matrix);}
+      r.fragmentos.instanceMatrix.needsUpdate=true;r.humo.count=28;
+      for(let i=0;i<28;i++){const a=i*TAU/28,d=2+t*(2+i%3);objeto.position.set(p.x+Math.cos(a)*d,.3+t*(.6+i%3*.3),p.z+Math.sin(a)*d);objeto.quaternion.copy(camara.quaternion);objeto.scale.setScalar(.35+t*(.5+i%4*.2));objeto.updateMatrix();r.humo.setMatrixAt(i,objeto.matrix);}r.humo.instanceMatrix.needsUpdate=true;r.humo.material.opacity=.28*(1-lim((t-2)/2));
+      r.onda.position.set(p.x,.04,p.z);r.onda.scale.setScalar(1+t*14);r.onda.material.opacity=.45*(1-lim(t/1.3));r.luz.intensity=650*Math.exp(-t*2.8);
+    }
+    function paso(dt){if(!s||dt<0)return false;if(terminado||dt===0)return true;const h=s.actor,r=recursos;s.t+=dt;s.total+=dt;const t=s.t,f=s.fase;
+      r.mago.position.copy(['techo','cielo','caida','impacto','negro'].includes(f)?techo:centro).add(new V(0,(s.fase==='salida'||s.fase==='carrera'||s.fase==='desaparece'?1.05:.03)+Math.sin(s.total*2)*.035,0));r.mago.rotation.y=rumbo(r.mago.position,h.pos);
+      const hechizo=['techo','cielo','caida'].includes(f),levantados=hechizo?(f==='techo'?suave(t/1.1):1):0;r.brazos.forEach((b,i)=>{b.rotation.x=-levantados*2.2;b.rotation.z=(i?1:-1)*(.24+levantados*.45);});r.baston.rotation.z=Math.sin(s.total*1.4)*.035;
+      r.cola.material.uniforms.uTiempo.value=s.total;r.sello.rotation.y=s.total*.3;r.orbita.visible=hechizo;r.orbita.position.copy(r.mago.position).add(new V(0,2.6,0));r.orbita.rotation.set(s.total*.4,s.total*.7,0);
+      const pov=['carrera','desaparece','techo','cielo'].includes(f);h.m.raiz.visible=!s.impactado;h.m.mallas[0].visible=!pov;
+      if(f==='salida'){posar('quieto',dt);const k=suave(t/DURACIONES.salida),objetivo=miraInicial.clone().lerp(new V(0,1.5,0),k),pos=desdeCamara.clone().lerp(new V(5,7.5,11),k);mirar(pos,objetivo,32);if(t>=DURACIONES.salida)cambio('carrera');}
+      else if(f==='carrera'){const llego=caminar(h,destino,dt,5.8);posar('andar',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.45,0)),true);if(llego||t>=DURACIONES.carrera){h.pos.copy(destino);cambio('desaparece');}}
+      else if(f==='desaparece'){posar('tajoA',dt,lim(t/.6));vistaOjos(new V(0,2.5,0));if(t>.22)r.mago.visible=false;r.sello.scale.setScalar(1+suave(t/.6)*2);r.sello.material.opacity=.5*(1-suave(t/.7));if(t>=DURACIONES.desaparece){r.sello.visible=false;cambio('buscar');}}
+      else if(f==='buscar'){const mirarArriba=suave((t-2.15)/.7);h.dir=Math.PI+Math.sin(t*3.6)*1.15*(1-mirarArriba);h.dir+=angulo(h.dir,rumbo(h.pos,techo))*mirarArriba;posar('quieto',dt);h.m.H.cabeza.rotation.y=Math.sin(t*4.5)*.35*(1-mirarArriba);h.m.H.cabeza.rotation.x=-.8*mirarArriba;h.m.H.torso.rotation.x-=.1*mirarArriba;camaraJuego();if(t>=DURACIONES.buscar){r.mago.visible=true;cambio('techo');}}
+      else if(f==='techo'){posar('quieto',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.3,0)));if(t>=DURACIONES.techo){r.meteorito.visible=true;cambio('cielo');}}
+      else if(f==='cielo'||f==='caida'){const edad=(f==='caida'?DURACIONES.cielo:0)+t,k=lim(edad/(DURACIONES.cielo+DURACIONES.caida)),viaje=k*k;
+        r.meteorito.position.lerpVectors(cielo,h.pos.clone().setY(1),viaje);r.meteorito.quaternion.setFromUnitVectors(new V(0,1,0),cielo.clone().sub(h.pos).normalize());r.roca.rotation.set(edad*.8,edad*1.2,edad*.5);r.luz.position.copy(r.meteorito.position);r.luz.intensity=250;
+        if(f==='cielo'){const mirar=r.mago.position.clone().add(new V(0,2,0)).lerp(r.meteorito.position,suave(t/1.15));vistaOjos(mirar);if(t>=DURACIONES.cielo)cambio('caida');}
+        else{posar('quieto',dt);h.m.H.cabeza.rotation.x=-.8;camaraJuego(1.12);if(t>=DURACIONES.caida){explosion();cambio('impacto');}}
+      }else if(f==='impacto'){escombros(t);camaraJuego(1.12+.9*suave(t/2),38);if(!reducido){camara.position.x+=Math.sin(t*53)*.28*Math.exp(-t*2);camara.position.y+=Math.cos(t*67)*.2*Math.exp(-t*2);}if(t>=DURACIONES.impacto)cambio('negro');}
+      else if(f==='negro'){escombros(DURACIONES.impacto+t);interfaz({fase:f,negro:suave(t/1.15)});if(t>=DURACIONES.negro)finalizar();}
+      if(s){h.m.raiz.updateMatrixWorld(true);r.grupo.updateMatrixWorld(true);camara.updateMatrixWorld(true);}return true;
+    }
+    function finalizar(){if(!s||terminado)return false;terminado=true;interfaz({fase:'fin',negro:1});volver();return true;}
+    function cancelar(){if(recursos){recursos.grupo.visible=false;recursos.sello.scale.setScalar(1);recursos.sello.material.opacity=.3;}derrumbe.value=-1;for(const [m,v]of sombras)m.castShadow=v;sombras=[];
+      for(const x of visitadas){x.h.m.raiz.visible=x.visible;x.h.m.mallas.forEach((m,i)=>m.visible=x.mallas[i]);}visitadas=[];if(s?.prestado){escena.remove(s.actor.m.raiz);for(const m of s.actor.m.mallas)m.material.dispose();for(const esqueleto of new Set(s.actor.m.mallas.map(m=>m.skeleton)))esqueleto?.dispose();}s=null;terminado=false;camara.fov=camBase.fov;camara.near=camBase.near;camara.updateProjectionMatrix();interfaz({fase:'inactiva',negro:0});}
+    function estado(){return s?{fase:s.fase,t:s.t,total:s.total,impactado:s.impactado,pov:['carrera','desaparece','techo','cielo'].includes(s.fase),actor:s.actor.pos.toArray(),mago:recursos.mago.position.toArray(),meteorito:recursos.meteorito.position.toArray(),derrumbe:derrumbe.value,terminado}:null;}
+    return {iniciar,paso,cancelar,finalizar,estado,get activa(){return !!s;},get recursos(){return recursos;}};
+  }
+  window.CAOZ_ARPG_FINAL_MAGO=Object.freeze({fabrica,DURACIONES});
+})();
