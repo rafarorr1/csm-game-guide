@@ -3,7 +3,7 @@
 window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   const M=window.CAOZ_ARPG_CINE_CAMARA,C=M.crear(T),V=T.Vector3,$=id=>document.getElementById(id),clonar=v=>JSON.parse(JSON.stringify(v));
   const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',vertigo:'Dolly zoom',carrera:'Corre hacia él',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Cae al suelo',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'El mago en el techo',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
-  let toma=M.nueva(),deshacer=[],rehacer=[],guion=[],frames=[],cuadro=0,acumulado=0,ocupado=true,reproduce=false,grabando=false,libre=null,nativa=null,seleccion=null,token=0,ultimoUI=0,arrastre=null;
+  let toma=M.nueva(),deshacer=[],rehacer=[],guion=[],frames=[],cuadro=0,acumulado=0,ocupado=true,reproduce=false,grabando=false,libre=null,nativa=null,seleccion=null,token=0,ultimoUI=0,arrastre=null,destino=null,arrastreTiempo=null;
   const teclas=new Set();
   document.body.classList.add('cineEditor');document.title='Cine · Caoz ARPG';
   const cab=document.createElement('header');cab.className='ceCab';cab.innerHTML=`<div><span class="ceMarca">C</span><div><b>CINE <em>/ CAOZ ARPG</em></b><small>El mago y el meteorito · Mesa de montaje</small></div></div><div class="ceAcciones"><span id="ceGuardado" role="status">Preparando…</span><button id="ceImportar">Importar</button><button id="ceExportar">Exportar toma</button><a id="ceProbar" href="./arpg-three.html?etapa=2&heroe=adreida&entrada=mago&toma=local" target="_blank" rel="noopener">Probar en juego ↗</a></div>`;
@@ -16,12 +16,13 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   function mensaje(t){$('ceMensaje').textContent=t;}
   function guardar(){try{localStorage.setItem(M.CLAVE,JSON.stringify(toma));$('ceGuardado').textContent='● Guardado en este navegador';}catch{$('ceGuardado').textContent='Sin espacio para guardar';mensaje('Exporta la toma para conservarla; no se pudo guardar en el navegador.');}}
   function recordar(){deshacer.push(clonar(toma));if(deshacer.length>40)deshacer.shift();rehacer=[];}
-  const plano=()=>guion.find(p=>cuadro>=p.inicio&&cuadro<p.fin)||guion.at(-1);
+  const planoEn=f=>guion.find(p=>f>=p.inicio&&f<p.fin)||guion.at(-1);
+  const plano=()=>planoEn(cuadro);
   const fase=()=>api.estado()?.fase;
   const tiempoLocal=()=>api.estado()?.t||0;
   const claves=()=>toma.planos[fase()]?.claves||[];
   const reloj=f=>`${String(Math.floor(f/3600)).padStart(2,'0')}:${String(Math.floor(f/60)%60).padStart(2,'0')}:${String(f%60).padStart(2,'0')}`;
-  function ocupadoEn(v,t='Buscando cuadro…'){ocupado=v;velo.hidden=!v;velo.textContent=t;$('ceCampos').disabled=v;centro.classList.toggle('ceBloqueado',v);}
+  function ocupadoEn(v,t='Buscando cuadro…'){ocupado=v;velo.hidden=!v;velo.textContent=t;$('ceCampos').disabled=v;centro.classList.toggle('ceBloqueado',v);$('ceTiempo').disabled=$('ceLocal').disabled=!guion.at(-1)?.fin;}
   const ceder=()=>new Promise(r=>setTimeout(r,0));
   function capturarNativa(){nativa=C.capturar(camara,Math.max(1,camara.position.distanceTo(new V().fromArray(api.estado().actor).add(new V(0,1,0)))));}
   async function preparar(){
@@ -37,11 +38,15 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
     }catch(e){ocupadoEn(true,'No se pudo preparar la escena');mensaje(e.message);}
   }
   async function buscar(f){
-    if(!frames.length)return;const solicitud=++token;reproduce=false;if(grabando)terminarGrabacion();libre=null;seleccion=null;acumulado=0;f=Math.max(0,Math.min(frames.length-1,Math.round(f)));ocupadoEn(true);
+    if(!guion.at(-1)?.fin||!Number.isFinite(f))return false;
+    const solicitud=++token;reproduce=false;if(grabando)terminarGrabacion();libre=null;seleccion=null;acumulado=0;f=Math.max(0,Math.min(frames.length-1,Math.round(f)));destino=f;ocupadoEn(true);actualizar();
     try{
-      api.reiniciar();for(let i=1;i<=f;i++){api.paso(1/60);if(i%90===0){await ceder();if(solicitud!==token)return false;}}
-      cuadro=f;capturarNativa();ocupadoEn(false);actualizar(true);return true;
-    }catch(e){ocupadoEn(false);mensaje('No se pudo buscar ese cuadro: '+e.message);return false;}
+      // Deja pintar el control y agrupa entradas rápidas antes de reconstruir la escena.
+      await ceder();if(solicitud!==token)return false;
+      api.reiniciar();let hasta=performance.now()+8;
+      for(let i=1;i<=f;i++){api.paso(1/60);if(performance.now()>=hasta){await ceder();if(solicitud!==token)return false;hasta=performance.now()+8;}}
+      cuadro=f;destino=null;capturarNativa();ocupadoEn(false);actualizar(true);return true;
+    }catch(e){if(solicitud!==token)return false;destino=null;ocupadoEn(false);actualizar();mensaje('No se pudo buscar ese cuadro: '+e.message);return false;}
   }
   function dibujarGuion(){
     $('cePlanos').replaceChildren();$('ceTiras').replaceChildren();
@@ -65,8 +70,14 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
     $('ceKeyTiempo').max=Math.max(0,(p.fin-p.inicio-1)/60).toFixed(3);
   }
   function actualizar(completo=false){
-    if(!guion.length)return;const p=plano(),f=fase();$('ceReloj').textContent=reloj(cuadro);$('ceTiempo').value=cuadro;$('ceLocal').max=p.fin-p.inicio-1;$('ceLocal').value=cuadro-p.inicio;$('ceLocalReloj').textContent=tiempoLocal().toFixed(2)+' s';$('cePlanoTitulo').textContent=`${String(guion.indexOf(p)+1).padStart(2,'0')} / ${nombres[f]}`;
-    $('ceModo').textContent=grabando?'● GRABANDO':libre?'CÁMARA LIBRE · PULSA K':claves().length?'TU TOMA':'CÁMARA ORIGINAL';$('ceModo').dataset.libre=String(!!libre);$('cePlay').textContent=reproduce?'Ⅱ Pausar':'▶ Reproducir';$('ceGrabar').textContent=grabando?'■ Detener grabación':'● Grabar recorrido de cámara';$('ceGrabar').classList.toggle('grabando',grabando);$('ceUndo').disabled=!deshacer.length;$('ceRedo').disabled=!rehacer.length;
+    if(!guion.at(-1)?.fin)return;
+    // El reloj de render no debe devolver el pulgar al último cuadro confirmado.
+    const visible=destino??cuadro,p=arrastreTiempo?.id==='ceLocal'?arrastreTiempo.plano:planoEn(visible),f=frames[visible].fase;
+    $('ceReloj').textContent=reloj(visible);$('ceTiempo').value=visible;$('ceTiempo').setAttribute('aria-valuetext',reloj(visible));
+    $('ceLocal').max=p.fin-p.inicio-1;$('ceLocal').value=visible-p.inicio;$('ceLocalReloj').textContent=frames[visible].t.toFixed(2)+' s';$('ceLocal').setAttribute('aria-valuetext',$('ceLocalReloj').textContent);
+    $('ceLocalTitulo').textContent='Tiempo del plano · '+nombres[p.fase];$('cePlanoTitulo').textContent=`${String(guion.indexOf(p)+1).padStart(2,'0')} / ${nombres[f]}`;
+    $('cePlay').textContent=reproduce?'Ⅱ Pausar':'▶ Reproducir';if(ocupado)return;
+    $('ceModo').textContent=grabando?'● GRABANDO':libre?'CÁMARA LIBRE · PULSA K':claves().length?'TU TOMA':'CÁMARA ORIGINAL';$('ceModo').dataset.libre=String(!!libre);$('ceGrabar').textContent=grabando?'■ Detener grabación':'● Grabar recorrido de cámara';$('ceGrabar').classList.toggle('grabando',grabando);$('ceUndo').disabled=!deshacer.length;$('ceRedo').disabled=!rehacer.length;
     if(completo){for(const b of document.querySelectorAll('[data-fase]')){b.setAttribute('aria-current',b.dataset.fase===f?'step':'false');if(b.querySelector('i'))b.querySelector('i').textContent=toma.planos[b.dataset.fase]?.claves.length?'◆':'';}$('cePOV').checked=toma.planos[f]?.vista==='original';lista();}
     camposCamara();
   }
@@ -77,7 +88,15 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   function terminarGrabacion(){if(!grabando)return;ponerClave(false);grabando=false;reproduce=false;libre=null;guardar();actualizar(true);mensaje('Recorrido guardado. Reproduce el plano para revisarlo.');}
   function reproducir(){if(ocupado)return;if(grabando){terminarGrabacion();return;}libre=null;seleccion=null;if(cuadro>=frames.length-1){buscar(0).then(ok=>{if(ok)reproduce=true;});}else reproduce=!reproduce;actualizar(true);}
   $('cePlay').onclick=reproducir;$('ceInicio').onclick=()=>buscar(0);$('ceAtras').onclick=()=>buscar(cuadro-1);$('ceAdelante').onclick=()=>buscar(cuadro+1);
-  for(const id of ['ceTiempo','ceLocal']){$(id).oninput=()=>{reproduce=false;const f=Number($(id).value)+(id==='ceLocal'?plano().inicio:0);$('ceReloj').textContent=reloj(f);};$(id).onchange=()=>buscar(Number($(id).value)+(id==='ceLocal'?plano().inicio:0));}
+  for(const id of ['ceTiempo','ceLocal']){
+    const control=$(id);control.disabled=true;
+    control.onpointerdown=e=>{if(!guion.at(-1)?.fin)return;reproduce=false;if(grabando)terminarGrabacion();arrastreTiempo={id,plano:planoEn(destino??cuadro)};control.setPointerCapture(e.pointerId);actualizar();};
+    const solicitar=()=>{if(!guion.at(-1)?.fin)return;reproduce=false;const p=arrastreTiempo?.id===id?arrastreTiempo.plano:planoEn(destino??cuadro),f=Number(control.value)+(id==='ceLocal'?p.inicio:0);if(f!==(destino??cuadro))void buscar(f);};
+    control.oninput=solicitar;control.onchange=solicitar;
+    // El inicio del plano queda fijo durante todo el gesto, incluso al buscar hacia atrás.
+    const soltar=()=>{if(arrastreTiempo?.id===id){arrastreTiempo=null;actualizar();}};
+    for(const evento of ['pointerup','pointercancel','lostpointercapture','blur'])control.addEventListener(evento,soltar);
+  }
   $('ceLibre').onclick=()=>{hacerLibre();lienzo.focus();};$('ceOriginal').onclick=()=>{if(ocupado)return;reproduce=false;libre=clonar(nativa);actualizar();mensaje('Encuadre original recuperado en la vista previa. Pulsa K para guardarlo o reproduce para volver a tu toma.');};
   function mirarA(p){hacerLibre();if(!libre)return;const desde=new V().fromArray(libre.pos),hacia=new V().fromArray(p);camara.position.copy(desde);camara.lookAt(hacia);libre.rot=camara.quaternion.toArray();libre.distancia=Math.max(.2,Math.min(300,desde.distanceTo(hacia)));actualizar();}
   $('ceAdreida').onclick=()=>{const p=[...api.estado().actor];p[1]+=1;mirarA(p);};$('ceMago').onclick=()=>{const p=[...api.estado().mago];p[1]+=1.3;mirarA(p);};
