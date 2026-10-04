@@ -1710,7 +1710,7 @@
     volver:iniciarFinalMago
   });
   function volverNivelUno(){if(EDITOR_CINE)return;const u=new URL(location.href);u.searchParams.set('etapa','1');for(const k of ['entrada','captura','mundo','plano','momento','toma'])u.searchParams.delete(k);location.assign(u.href);}
-  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,
+  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,
     impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
     interfaz(s){const activa=s.fase!=='inactiva';mostrarEntradaTroll(activa);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';$('fundidoFinal').style.opacity=String(s.negro);$('fundidoFinal').hidden=!activa;},
     volver:volverNivelUno
@@ -1923,7 +1923,7 @@
     aplicarTamano();
     // Poses, raíces y cámara pertenecen al mismo cuadro; no se sustituyen al dibujar.
     if(editorCine)editorCine.antesDibujo();
-    else if(tomaCine&&finalMago?.activa){const e=finalMago.estado(),p=tomaCine.planos[e.fase];if(camarasCine.aplicar(camara,camarasCine.muestra(p?.claves,e.t)))finalMago.vistaEditor(p.vista==='externa');}
+    else if(tomaCine&&finalMago?.activa){const v=camarasCine.tomaEn(tomaCine,finalMago.estado());if(camarasCine.aplicar(camara,v.camara))finalMago.vistaEditor(v.vista==='externa');}
     escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);
     for(const e of etiquetas)colocar(e);dibujar();
   }

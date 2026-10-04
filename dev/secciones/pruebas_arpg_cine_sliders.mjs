@@ -15,6 +15,7 @@ class Elemento{
   querySelector(){return null;}
   addEventListener(n,f){(this.eventos[n]??=[]).push(f);}
   setPointerCapture(){}
+  focus(){documento.activeElement=this;}
   emitir(tipo){const e={target:this,pointerId:1};this['on'+tipo]?.(e);for(const f of this.eventos[tipo]||[])f(e);}
 }
 const documento={body:new Elemento(),activeElement:null,hidden:false,createElement:t=>new Elemento(t),getElementById:id=>elementos.get(id),querySelector:()=>new Elemento(),querySelectorAll:()=>creados.filter(e=>e.dataset.fase),addEventListener(){}};
@@ -22,7 +23,7 @@ let ms=0;
 const c=vm.createContext({console,atob,document:documento,localStorage:{getItem:()=>null,setItem(){}},performance:{now:()=>ms++},setTimeout:f=>pendientes.push(f),addEventListener(){}});c.window=c;
 for(const archivo of ['visor-three-vendor.js','arpg-cine-camara.js','arpg-cine-editor.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,camara=new T.PerspectiveCamera(),fases=['salida','descubrir','vertigo'];let simulado=0,reinicios=0;
-const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(2,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=359}),vista(){}};
+const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(fases.length-1,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=fases.length*120-1}),vista(){}};
 const editor=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api),$=id=>elementos.get(id);
 async function ceder(){assert(pendientes.length,'Debe haber un tramo de simulación pendiente');pendientes.shift()();await Promise.resolve();await Promise.resolve();}
 async function completar(){let n=0;while(pendientes.length){assert(++n<1000,'Una búsqueda debe terminar');await ceder();}}
@@ -56,3 +57,18 @@ $('ceVelocidad').value='1';$('cePlay').onclick();editor.paso(.1);assert(simulado
 assert.equal($('cePlay').textContent,'▶ Reproducir');
 const css=fs.readFileSync(new URL('arpg-cine-editor.css',import.meta.url),'utf8');assert(!/\.ceBloqueado \.ceMontaje\s*\{/.test(css),'Buscar no debe desactivar los rangos durante el gesto');
 console.log('✓ Sliders: arrastre con render activo, búsqueda durante el gesto, reversa, último destino, cancelación concurrente, plano local estable, extremos, teclado y pausa.');
+
+// El plano 04 reúne las antiguas acciones 04–06 y el 05 reúne 07–10.
+fases.push('carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro');
+const agrupado=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api);await completar();
+assert.equal($('cePlanos').children.length,10);assert.equal($('ceTiras').children.length,10);
+entrada('ceTiempo',370);await completar();assert.equal(Number($('ceLocal').max),359);
+$('ceLocal').emitir('pointerdown');entrada('ceLocal',250);await completar();comprobar(610,250);assert.equal(api.estado().fase,'desaparece');
+assert.equal($('cePlanoTitulo').textContent,'04 / Carrera, ataque y desaparición');$('ceLocal').emitir('pointerup');
+$('ceCurva').value='suave';$('ceKey').onclick();assert.equal($('ceCuenta').textContent,1);assert.equal($('ceKeyTiempo').value,'4.167');
+entrada('ceLocal',100);await completar();assert.equal($('ceCuenta').textContent,1,'La misma pista está disponible en todas las acciones del plano');
+entrada('ceTiempo',730);await completar();assert.equal(Number($('ceLocal').max),479);entrada('ceLocal',479);await completar();comprobar(1199,479);
+assert.equal($('cePlanoTitulo').textContent,'05 / Caída, búsqueda y recuperación');assert.equal(api.estado().fase,'voltear');
+entrada('ceTiempo',710);await completar();$('ceVelocidad').value='1';$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert.equal(simulado,719,'La grabación acaba al final del grupo completo');
+entrada('ceTiempo',470);await completar();$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert(simulado>480,'Cambiar de acción no detiene la grabación');assert.equal($('ceGrabar').textContent,'■ Detener grabación');$('ceGrabar').onclick();
+console.log('✓ Grupos del editor: diez planos, sliders completos, keyframes compartidos y grabación continua entre acciones.');
