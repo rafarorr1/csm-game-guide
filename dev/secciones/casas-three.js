@@ -1,4 +1,5 @@
-/* Casas de Tomsage para three.js: bonitas y baratas.
+/* Casas de Tomsage: primero usa arpg-three-arquitectura.js (Scenario), si está cargado.
+   El resto de este módulo conserva el generador clásico y la utilería compartida.
    Cómo se ven de juego grande sin gastar polígonos:
      · Interior mapping en las ventanas: cada cristal es un solo cuadro, pero su
        shader calcula por dónde entraría la mirada en una habitación de verdad
@@ -108,13 +109,15 @@
     const [superficie,gs]=lienzo(2,2);gs.fillStyle='rgb(255,230,0)';gs.fillRect(0,0,2,2);
     M.teja.roughnessMap=M.teja.aoMap=tex(superficie,false);M.teja.roughness=1;M.teja.aoMapIntensity=.5;
     M.teja.normalScale.set(.7,.7);M.teja.envMapIntensity=.2;
-    const texturasListas=opciones.texturas===false?Promise.resolve([]):Promise.allSettled([
+    const tejasListas=opciones.texturas===false?Promise.resolve([]):Promise.allSettled([
       ['color',M.teja.map],['normal',M.teja.normalMap],['superficie',M.teja.roughnessMap]
     ].map(async([nombre,destino])=>{
       const t=await new THREE.TextureLoader().loadAsync((opciones.rutaTejas||'./texturas-casas/')+'tejas-'+nombre+'.webp');
       // La reserva de GPU tiene el tamaño del respaldo; hay que recrearla al cambiar a 1024 px.
       destino.dispose();destino.image=t.image;destino.needsUpdate=true;t.dispose();return nombre;
     })).then(r=>{if(r.some(x=>x.status==='rejected'))console.warn('Algún mapa de las tejas no cargó; se conserva su material de respaldo.');return r;});
+    const arquitectura=opciones.scenario===false?null:window.CAOZ_ARQUITECTURA?.fabrica(THREE,opciones);
+    const texturasListas=Promise.all([tejasListas,arquitectura?.texturasListas||[]]).then(r=>r.flat());
     // Las ventanas: interior mapping. Por cada píxel del cristal se sigue la mirada dentro de una habitación
     // (en unidades de la ventana: x -1..2, y -0.8..1.6, fondo 2.3 m) y se pinta lo que se vería.
     M.ventana=new THREE.ShaderMaterial({uniforms:uniformes,
@@ -332,14 +335,17 @@
         for(const y of [.1,-.1])C.pon('hierro',new THREE.CylinderGeometry(.153+y*.12,.153+y*.12,.03,12,1,true),en([0,y,0]));
         C.pon('hierro',new THREE.TorusGeometry(.16,.01,4,14,Math.PI),en([0,.15,0]));};
       cubo([0,yC,.11],0);cubo([-Math.sin(.9)*rm,hR+.25,Math.cos(.9)*rm],.4);
+      abrevadero(C,R,tono);
+      // Matas al pie del brocal.
+      for(let i=0;i<12;i++){const a=rnd()*TAU,r=R+.05+rnd()*.12,v=rnd();C.pon('planta',new THREE.IcosahedronGeometry(.07+rnd()*.06,0),mat4([Math.sin(a)*r,.05,Math.cos(a)*r],[rnd()*3,rnd()*3,0],[1,.6,1]),{tinte:[.16+v*.1,.3+v*.15,.1],sucio:false});}
+      return {alto:yV+.12+Rt,huella:[2*X+.6,2*R+.6]};}
+    function abrevadero(C,R=1.02,tono=()=>[.8,.78,.73]){
       // El abrevadero: una pila de piedra con agua, a un lado y de cara a la plaza.
       {const F=mat4([R+.95,0,1.05],[0,-.75,0]),en=(p,r=[0,0,0])=>F.clone().multiply(mat4(p,r)),L=1.5,A=.55,H=.48,g=.09;
         C.pon('piedra',new THREE.BoxGeometry(L,.1,A),en([0,.05,0]),{escala:2.6,tinte:tono()});
         for(const s of [-1,1]){C.pon('piedra',new THREE.BoxGeometry(L,H,g),en([0,H/2,s*(A/2-g/2)]),{escala:2.6,tinte:tono()});C.pon('piedra',new THREE.BoxGeometry(g,H,A-2*g),en([s*(L/2-g/2),H/2,0]),{escala:2.6,tinte:tono()});}
         C.pon('agua',new THREE.PlaneGeometry(L-2*g,A-2*g),en([0,H-.08,0],[-Math.PI/2,0,0]),{uv:'propio',sucio:false});}
-      // Matas al pie del brocal.
-      for(let i=0;i<12;i++){const a=rnd()*TAU,r=R+.05+rnd()*.12,v=rnd();C.pon('planta',new THREE.IcosahedronGeometry(.07+rnd()*.06,0),mat4([Math.sin(a)*r,.05,Math.cos(a)*r],[rnd()*3,rnd()*3,0],[1,.6,1]),{tinte:[.16+v*.1,.3+v*.15,.1],sucio:false});}
-      return {alto:yV+.12+Rt,huella:[2*X+.6,2*R+.6]};}
+    }
     // Utilería: piezas de madera y herrajes fundidos por material, sin objetos animados.
     function tablaCarga(C,w,h,d,pos,rot=[0,0,0],tinte=[1,1,1]){
       const g=new THREE.BoxGeometry(w,h,d),p=g.attributes.position,n=g.attributes.normal,uv=g.attributes.uv;
@@ -409,7 +415,10 @@
     const CONSTRUCTORES={entramada,taberna,piedra,pozo,caja:cajaCarga,barril:barrilCarga};
 
     // Una casa: un grupo con una malla por material (en coordenadas de la casa; el frente mira a +Z).
-    function casa(tipo,o={}){semilla=((o.semilla??1)*48271)%2147483647||1;const C=Casa(),info=CONSTRUCTORES[tipo](C,o),g=new THREE.Group();let tri=0;
+    function casa(tipo,o={}){
+      const nuevo=arquitectura?.casa(tipo,o);
+      if(nuevo){if(tipo==='pozo'){const C=Casa();abrevadero(C,o.radio??1.02);for(const [nombre,lista] of C.piezas){const geo=unir(lista),m=new THREE.Mesh(geo,M[nombre]);m.castShadow=m.receiveShadow=nombre!=='agua';nuevo.add(m);nuevo.userData.triangulos+=geo.attributes.position.count/3;}}return nuevo;}
+      semilla=((o.semilla??1)*48271)%2147483647||1;const C=Casa(),info=CONSTRUCTORES[tipo](C,o),g=new THREE.Group();let tri=0;
       for(const [nombre,lista] of C.piezas){const geo=unir(lista),m=new THREE.Mesh(geo,M[nombre]);const sombra=!['ventana','halo','derrame','farol'].includes(nombre);m.castShadow=sombra;m.receiveShadow=sombra;
         if(['halo','derrame'].includes(nombre))m.renderOrder=2;g.add(m);tri+=geo.attributes.position.count/3;}
       g.userData={tipo,...info,triangulos:Math.round(tri),ventanas:C.ventanas};return g;}

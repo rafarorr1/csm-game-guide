@@ -344,6 +344,16 @@ python3 dev/secciones/publicar.py --publicar --seccion mesa-three --salida /tmp/
 La revisión está en `/casas-three/`: una calle de noche con los tres tipos de
 casa del módulo `casas-three.js`, que también usa la plaza del ARPG.
 
+La versión actual utiliza cuatro modelos de **Scenario / Tripo 3.1**: casa de entramado, cabaña de piedra, taberna y pozo con torno y cubo. Comparten madera oscura gastada, mampostería y tejas de barro con musgo, tomando como referencia el interior de la casa goblin. Los atlas de color son de 2048 px para las casas y 1024 px para el pozo; normales de 1024 y superficie de 512. La rugosidad tiene un mínimo de 0,76, con reflejos suaves y sin una capa extra de oclusión ambiental.
+
+`arpg-three-arquitectura.js` monta las mallas locales de `arquitectura-scenario/datos.js`. Cada tipo comparte geometría y material entre sus apariciones, y `fundir()` agrupa las copias del barrio por atlas. Conserva la ocultación de casas ante la cámara, las huellas de navegación y el abrevadero del pozo. La fachada de la casa visitable tiene el vano recortado de verdad: la puerta móvil del epílogo sigue siendo independiente.
+
+Revisión local: `casas-three.html` y `casas-three.html?solo=pozo`. Prueba de escala, atributos, puerta y agrupación: `node dev/secciones/pruebas_arpg_arquitectura_scenario.mjs`. Para reconstruir desde los cuatro GLB, ejecutar `arquitectura-scenario/preparar.py /carpeta/modelos`; `ajustes.json` fija orientación y tamaño, y `procedencia.json` conserva referencias, parámetros y assets de Scenario. No hay servicios externos durante la partida.
+
+### Generador clásico de respaldo
+
+Se conserva con `casas-three.html?arquitectura=clasica` y con la opción de fábrica `{scenario:false}`. Sus pruebas de interior mapping usan esa vista explícita:
+
 - **Tipos:**
   - la entramada: dos plantas, la de arriba volada sobre ménsulas;
   - la taberna La Jarra Rota: planta baja de sillares, letrero colgado y toneles;
@@ -383,7 +393,7 @@ oleadas, y al final entra Can, el de los Goblins.
 - **La plaza:**
   - ciudad rodeada por una muralla de 24 paños, a 26 m del centro, con las casas dentro del recinto. La colisión coincide con las caras interiores de piedra. Tres portones alineados con las calles dejan entrar a los invasores; un sello ámbar visible impide que el jugador los cruce. Las oleadas aparecen fuera de esos portones y avanzan por ellos;
   - prueba de límites y portones: `node dev/secciones/pruebas_arpg_muralla.mjs`;
-  - adoquines con relieve, las casas de Tomsage (`casas-three.js`, con su interior tras las ventanas; tres arden), el pozo, un carro, barriles y braseros;
+  - adoquines con relieve, las casas de Tomsage (`casas-three.js`, con modelos de Scenario; tres arden), el pozo, un carro, barriles y braseros;
   - piso predeterminado con la textura aportada en `angled-blocks-vegetation-bl.zip`, también al abrir el juego sin parámetros. **Pausa → Textura del piso** permite comparar con los adoquines originales sin reiniciar; `?piso=actual` elige ese material explícitamente. La elección se conserva en los enlaces de etapas. `&captura=1` permite comparar el mismo encuadre quieto. Los tres mapas locales de `texturas-piso/` (1024 × 1024, unos 2.7 MB en total) aportan color sRGB, normales OpenGL y oclusión/rugosidad empaquetadas; repetición de 7.2 m (piedras un 50 % mayores que en la primera prueba), relieve 0.7 y oclusión al 50 %. No añade polígonos, desplazamiento ni llamadas de dibujo; los tres mapas son compartidos con las piedras del salto y los bordes de cráter. Si fallan al cargar, conserva el material original y muestra el aviso. Fuentes y tratamiento en `texturas-piso/procedencia.json`;
   - luna azul plateada con iluminación lateral y sombras, cielo frío de relleno, la luz cálida que lleva Adreida (el radio de luz de Diablo) y el fuego. La bruma azul de distancia comienza después del 62 % de la distancia de cámara y se completa a 2.65 veces esa distancia; se adapta al zoom y al encuadre cooperativo, sin otra pasada de render ni partículas adicionales;
   - lluvia con viento diagonal y charcos con bordes irregulares y ondas pequeñas (`arpg-three-clima.js`). Las gotas caen a 12–15.3 m/s con viento sostenido de unos 8 m/s y ráfagas suaves. El desplazamiento usa la integral del viento, y cada estela une la gota con su posición 28 ms antes, por lo que dirección y movimiento coinciden. Se animan en GPU alrededor de la cámara; un recorrido hacia el cielo oculta las gotas que ya chocaron con tejados. Una reserva de 220 salpicaduras (110 con movimiento reducido) sigue los impactos sobre suelo descubierto. Los charcos evitan casas/obstáculos y respetan los agujeros del salto. Tres mallas adicionales, sin luces nuevas, sombras, cámaras de reflejo ni posproceso. 440 gotas y 28 charcos en la plaza; el mundo abierto reparte 130 charcos. La opción de movimiento reducido usa 220 gotas y elimina el destello;

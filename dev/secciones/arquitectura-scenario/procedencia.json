@@ -1,0 +1,123 @@
+{
+  "fecha": "2026-10-04",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "coleccion": "col_GsqEB9NDtoryU5BeFLRWY9jT",
+  "modeloConcepto": "model_openai-gpt-image-2-5-sunburst",
+  "modeloMalla": "model_tripo-v3-1-image-to-3d",
+  "referencia": "asset_MEz2eqvKQoFfw5qbutUFzD43",
+  "conceptos": [
+    "asset_zjo2HJibH9spz8qVqcL5UNjC",
+    "asset_2Fq58CgRSUvaHTWqW8Kh5gxv",
+    "asset_JzbwKjdbvnedZLwb91GrE5p3",
+    "asset_zvAEGMKkqjLdhnuud7bBoXAL"
+  ],
+  "parametrosConceptos": [
+    {
+      "prompt": "Create a single production-quality 3D game environment asset concept for Caoz ARPG, a grounded stylized dark medieval action RPG. Use the reference ONLY for the art direction and worn material language: dark aged oak, warm ochre plaster, rough cool grey stone, rusty forged iron, muted terracotta shingles with sparse moss, hand-crafted uneven edges and restrained detail. NOT a cutaway interior. Physically built believable structure, slightly stylized chunky shapes like a polished game asset, detailed matte PBR surfaces, no glossy highlights, no glow effects. Isolated complete exterior object centered on plain light grey background, neutral diffuse studio illumination, front three-quarter view at moderate elevation, front door clearly visible, entire object and roof in frame, simple soft contact shadow. No people, characters, labels, text, landscape, ground platform or other buildings. Geometry readable enough for single-image 3D reconstruction. A compact two-storey medieval house, ground floor 6m wide x 5m deep, roughly 8m tall including roof, rectangular plan. Large slightly overhanging upper storey, exposed dark oak beams and diagonal braces framing aged ochre lime plaster; symmetrical restrained front with one ground-floor closed plank door and two small shuttered windows, three upper windows; steep muted red clay tile gable roof, small stone chimney on rear corner, gutters, iron wall lantern. No exterior staircase or balcony; keep the street footprint compact.",
+      "referenceImages": [
+        "asset_MEz2eqvKQoFfw5qbutUFzD43"
+      ],
+      "width": 1280,
+      "height": 1280,
+      "quality": "high",
+      "background": "opaque",
+      "numOutputs": 1
+    },
+    {
+      "prompt": "Create a single production-quality 3D game environment asset concept for Caoz ARPG, a grounded stylized dark medieval action RPG. Use the reference ONLY for the art direction and worn material language: dark aged oak, warm ochre plaster, rough cool grey stone, rusty forged iron, muted terracotta shingles with sparse moss, hand-crafted uneven edges and restrained detail. NOT a cutaway interior. Physically built believable structure, slightly stylized chunky shapes like a polished game asset, detailed matte PBR surfaces, no glossy highlights, no glow effects. Isolated complete exterior object centered on plain light grey background, neutral diffuse studio illumination, front three-quarter view at moderate elevation, front door clearly visible, entire object and roof in frame, simple soft contact shadow. No people, characters, labels, text, landscape, ground platform or other buildings. Geometry readable enough for single-image 3D reconstruction. A modest one-storey stone cottage, rectangular plan 5.2m wide x 4.6m deep, wall eaves at 3.1m, roof at 5.5m. FRONT has exactly one rectangular wooden plank door on the LEFT (its center 28 percent of facade width from the left edge), door is 1m wide and 2m high with bottom at ground level, no stairs or raised porch. On RIGHT, one small wooden shuttered window at 1.5m. Rough grey stone walls, dark timber lintels, steep terracotta tiled roof with one little central dormer, stone chimney attached to right side. Iron ring door knocker and small wall lantern. Slight goblin craft motifs only on iron hinges, modest everyday home.",
+      "referenceImages": [
+        "asset_MEz2eqvKQoFfw5qbutUFzD43"
+      ],
+      "width": 1280,
+      "height": 1280,
+      "quality": "high",
+      "background": "opaque",
+      "numOutputs": 1
+    },
+    {
+      "prompt": "Create a single production-quality 3D game environment asset concept for Caoz ARPG, a grounded stylized dark medieval action RPG. Use the reference ONLY for the art direction and worn material language: dark aged oak, warm ochre plaster, rough cool grey stone, rusty forged iron, muted terracotta shingles with sparse moss, hand-crafted uneven edges and restrained detail. NOT a cutaway interior. Physically built believable structure, slightly stylized chunky shapes like a polished game asset, detailed matte PBR surfaces, no glossy highlights, no glow effects. Isolated complete exterior object centered on plain light grey background, neutral diffuse studio illumination, front three-quarter view at moderate elevation, front door clearly visible, entire object and roof in frame, simple soft contact shadow. No people, characters, labels, text, landscape, ground platform or other buildings. Geometry readable enough for single-image 3D reconstruction. A sturdy broad two-storey medieval tavern, rectangular floor plan 7.6m wide x 6m deep, around 8.5m tall including gabled roof. Grey stone ground floor, dark oak half-timber and warm dirty plaster on overhanging upper floor, four shuttered upper windows, central closed double plank entrance flanked by two large leaded windows. Terracotta clay tile roof with small chips and moss, stout chimney, one hanging carved wooden sign showing a simple tankard symbol (NO LETTERS), iron brackets. Keep barrels and loose props out of this asset. No stairs or extended porch. Compact silhouette.",
+      "referenceImages": [
+        "asset_MEz2eqvKQoFfw5qbutUFzD43"
+      ],
+      "width": 1280,
+      "height": 1280,
+      "quality": "high",
+      "background": "opaque",
+      "numOutputs": 1
+    },
+    {
+      "prompt": "Create a single production-quality 3D game environment asset concept for Caoz ARPG, a grounded stylized dark medieval action RPG. Use the reference ONLY for the art direction and worn material language: dark aged oak, warm ochre plaster, rough cool grey stone, rusty forged iron, muted terracotta shingles with sparse moss, hand-crafted uneven edges and restrained detail. NOT a cutaway interior. Physically built believable structure, slightly stylized chunky shapes like a polished game asset, detailed matte PBR surfaces, no glossy highlights, no glow effects. Isolated complete exterior object centered on plain light grey background, neutral diffuse studio illumination, front three-quarter view at moderate elevation, front door clearly visible, entire object and roof in frame, simple soft contact shadow. No people, characters, labels, text, landscape, ground platform or other buildings. Geometry readable enough for single-image 3D reconstruction. A compact circular medieval village well, waist-high coarse grey stone ring 2.04m outer diameter and 0.86m high, clear deep dark open hole in the center. Two thick dark oak posts carry a simple steep terracotta clay tile gabled canopy, 2.8m wide x 2.05m deep, total height about 3m. Wood axle with visibly wound hemp rope, forged iron crank on the right, single small wooden bucket hanging INSIDE the well opening. Sparse moss in stone joints, heavy capstones polished only by wear, iron joinery. No trough, no ground platform, no scattered props, no flowers, no people. The object must sit directly on the ground. The well opening must remain hollow, never solid stone.",
+      "referenceImages": [
+        "asset_MEz2eqvKQoFfw5qbutUFzD43"
+      ],
+      "width": 1280,
+      "height": 1280,
+      "quality": "high",
+      "background": "opaque",
+      "numOutputs": 1
+    }
+  ],
+  "parametrosMallas": [
+    {
+      "image": "asset_zjo2HJibH9spz8qVqcL5UNjC",
+      "texture": true,
+      "pbr": true,
+      "delight": true,
+      "orientation": "align_image",
+      "faceLimit": 12000,
+      "smartLowPoly": false,
+      "quad": false,
+      "autoSize": false,
+      "seed": 731300
+    },
+    {
+      "image": "asset_2Fq58CgRSUvaHTWqW8Kh5gxv",
+      "texture": true,
+      "pbr": true,
+      "delight": true,
+      "orientation": "align_image",
+      "faceLimit": 12000,
+      "smartLowPoly": false,
+      "quad": false,
+      "autoSize": false,
+      "seed": 731301
+    },
+    {
+      "image": "asset_JzbwKjdbvnedZLwb91GrE5p3",
+      "texture": true,
+      "pbr": true,
+      "delight": true,
+      "orientation": "align_image",
+      "faceLimit": 12000,
+      "smartLowPoly": false,
+      "quad": false,
+      "autoSize": false,
+      "seed": 731302
+    },
+    {
+      "image": "asset_zvAEGMKkqjLdhnuud7bBoXAL",
+      "texture": true,
+      "pbr": true,
+      "delight": true,
+      "orientation": "align_image",
+      "faceLimit": 4000,
+      "smartLowPoly": false,
+      "quad": false,
+      "autoSize": false,
+      "seed": 731303
+    }
+  ],
+  "procesado": {
+    "mallas": "GLB → geometrías estáticas compartidas; frente +Z y base a Y=0",
+    "mapas": "Color sRGB 2048 casas / 1024 pozo; normales 1024; superficie 512; acabado mate sin AO adicional",
+    "puerta": "El vano de la casa interactiva se recorta por planos, interpolando UV y normales"
+  },
+  "mallas": [
+    "asset_f3C41XKDjZkqS2ydHcKfNuhy",
+    "asset_af3JWWmCTHyQLvuXNt2DEQR3",
+    "asset_8MzJvCMNZyrSz2nwRWRVk5y6",
+    "asset_FVqqyxt1qLUXumV4WQUAfob7"
+  ],
+  "costeCU": 232
+}

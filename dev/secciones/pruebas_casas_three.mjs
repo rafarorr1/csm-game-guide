@@ -33,7 +33,8 @@ try{
 
 const {chromium}=createRequire(import.meta.url)(process.env.PLAYWRIGHT_MODULE||'playwright');
 const servidor=crearServidor();await new Promise((ok,mal)=>{servidor.once('error',mal);servidor.listen(0,'127.0.0.1',ok);});
-const base='http://127.0.0.1:'+servidor.address().port+'/dev/secciones/casas-three.html';
+// Las pruebas del interior mapping corresponden al generador clásico de respaldo.
+const base='http://127.0.0.1:'+servidor.address().port+'/dev/secciones/casas-three.html?arquitectura=clasica';
 const R='CAOZ_CASAS_THREE_REVISION';
 // Color medio de un cuadrado del lienzo alrededor de un punto (píxeles CSS).
 const zona=(pagina,x,y,r)=>pagina.evaluate(([x,y,r])=>{const c=document.getElementById('lienzo'),k=c.width/c.clientWidth,g=document.createElement('canvas');g.width=g.height=24;const q=g.getContext('2d');
@@ -45,7 +46,7 @@ async function abrir(navegador,{ancho=1280,alto=800,captura=true,reducido=false,
   pagina.on('pageerror',e=>errores.push(e.message));
   pagina.on('console',m=>{if((m.type()==='error'||m.type()==='warning')&&!/GL Driver Message|swiftshader|GroupMarkerNotSet/i.test(m.text()))errores.push(m.text());});
   if(sinWebgl)await pagina.addInitScript(()=>{const g=HTMLCanvasElement.prototype.getContext;HTMLCanvasElement.prototype.getContext=function(t,...a){return t==='webgl2'?null:g.call(this,t,...a);};});
-  await pagina.goto(base+(captura?'?captura=1':''));
+  await pagina.goto(base+(captura?'&captura=1':''));
   if(!sinWebgl)await pagina.waitForFunction(R=>window[R]?.listo(),R,{timeout:120000});
   const r=(f,...a)=>pagina.evaluate(([R,f,a])=>{const r=window[R];return (0,eval)('(r,a)=>'+f)(r,a);},[R,f,a]);
   return {contexto,pagina,errores,r};

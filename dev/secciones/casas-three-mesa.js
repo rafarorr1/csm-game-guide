@@ -23,7 +23,7 @@
   const depura=gl.getExtension('WEBGL_debug_renderer_info'),gpu=String(depura?gl.getParameter(depura.UNMASKED_RENDERER_WEBGL):gl.getParameter(gl.RENDERER)).slice(0,60);
   const escena=new THREE.Scene();
   const camara=new THREE.PerspectiveCamera(36,1,.3,300);
-  const CASAS=window.CAOZ_CASAS.fabrica(THREE,{renderer});
+  const CASAS=window.CAOZ_CASAS.fabrica(THREE,{renderer,scenario:q.get('arquitectura')!=='clasica'});
 
   // Dos horas: noche (luna azul, las ventanas mandan) y atardecer (sol bajo y cálido, cielo naranja).
   const HORAS={noche:{fondo:0x080a14,niebla:0x0a0c16,hemiA:0x4a5a90,hemiB:0x1a120c,hemi:.45,sol:0x9fb4ff,solI:1.3,solPos:[-18,26,12],env:[[0x5a6aa8,.8],[0x1a1c2a,.5]],expo:1.1},
@@ -47,13 +47,14 @@
   // Las casas, a un lado y al otro de la calle, con variaciones de color.
   const PLAN=[['entramada',-8.5,-6.5,0,{semilla:3,ancho:6,fondo:5}],['taberna',0,-7,0,{semilla:7}],['piedra',8.5,-6.2,0,{semilla:11}],
     ['piedra',-9,7.5,Math.PI,{semilla:5,tinteTeja:[.8,.85,.95]}],['entramada',0,7.5,Math.PI,{semilla:9,ancho:6.6,tinteYeso:[1,.93,.82],tinteTeja:[.85,.8,.8]}],['entramada',9,7,Math.PI,{semilla:13,ancho:5.4,tinteYeso:[.92,.95,1]}]];
-  const casas=PLAN.map(([tipo,x,z,r,o])=>{const c=CASAS.casa(tipo,o);c.position.set(x,0,z);c.rotation.y=r;return c;});
+  const casas=(window.CAOZ_ARQUITECTURA_DATOS&&q.get('arquitectura')!=='clasica'?PLAN.slice(0,3):PLAN).map(([tipo,x,z,r,o])=>{const c=CASAS.casa(tipo,o);c.position.set(x,0,z);c.rotation.y=r;return c;});
   // El pozo, en medio de la calle (fuera de «casas»: no tiene ventanas).
   const pozo=CASAS.casa('pozo',{semilla:21});pozo.position.set(-3.2,0,1.2);pozo.rotation.y=.35;
   // ?solo=pozo: sólo el pozo en el empedrado, con la cámara girando a su alrededor.
   const SOLO_POZO=q.get('solo')==='pozo',SOLO_UTILERIA=q.get('solo')==='utileria';
   if(SOLO_UTILERIA){const relleno=new THREE.DirectionalLight(0xffe1b0,1.8);relleno.position.set(4,7,8);escena.add(relleno);}
   const utileria=[['caja',-.65,0,.35,{tamano:1}],['caja',-.58,1,.35,{tamano:.65}],['barril',.7,0,.4,{}],['barril',1.3,.41,1.3,{}]].map(([tipo,x,y,z,o],i)=>{const g=CASAS.utileria(tipo,{...o,semilla:31+i});g.position.set(x,y,z);if(i===3)g.rotation.set(Math.PI/2,0,.65);else g.rotation.y=i===1?-.2:.15;return g;});
+  const detalle=new THREE.Group();escena.add(detalle);
   const calle=CASAS.fundir(SOLO_POZO?[pozo]:SOLO_UTILERIA?utileria:[...casas,pozo,...utileria]);escena.add(calle);
   // Farolas: poste de hierro, farol que brilla y una luz de verdad cada una (sin sombra: una luz puntual con sombra dibuja la escena seis veces).
   const farolas=[];
@@ -62,7 +63,7 @@
     m(new THREE.CylinderGeometry(.08,.12,3.6,8),hierro,1.8);m(new THREE.CylinderGeometry(.2,.28,.3,8),hierro,.15);m(new THREE.CylinderGeometry(.25,.12,.18,6),hierro,3.9);m(new THREE.BoxGeometry(.3,.4,.3),CASAS.materiales.farol,3.65);m(new THREE.ConeGeometry(.3,.3,6),hierro,4.05);
     const luz=new THREE.PointLight(0xffb070,38,16,1.7);luz.position.y=3.6;g.add(luz);farolas.push(luz);}
   // Humo de las chimeneas: bocanadas grises que suben, crecen y se deshacen con el viento.
-  const humos=(SOLO_POZO||SOLO_UTILERIA?[]:casas).map(c=>c.userData.humo?c.localToWorld(c.userData.humo.clone()):null).filter(Boolean);
+  const casasHumo=(SOLO_POZO||SOLO_UTILERIA?[]:casas).filter(c=>c.userData.humo),humos=casasHumo.map(c=>c.localToWorld(c.userData.humo.clone()));
   const NH=humos.length*40,hPos=new Float32Array(NH*3),hEdad=new Float32Array(NH),geoH=new THREE.BufferGeometry();geoH.setAttribute('position',new THREE.BufferAttribute(hPos,3));geoH.setAttribute('aEdad',new THREE.BufferAttribute(hEdad,1));
   const escHumo={value:1};
   const humo=new THREE.Points(geoH,new THREE.ShaderMaterial({uniforms:{uEsc:escHumo},transparent:true,depthWrite:false,
@@ -71,6 +72,7 @@
   humo.frustumCulled=false;humo.renderOrder=3;escena.add(humo);
   for(let i=0;i<NH;i++)hEdad[i]=(i%40)/40;
   function pasoHumo(dt){for(let i=0;i<NH;i++){const f=humos[Math.floor(i/40)];hEdad[i]+=dt/6;if(hEdad[i]>=1)hEdad[i]-=1;const e=hEdad[i],s=i*1.37;
+      if(detalle.children.length&&!detalle.children.includes(casasHumo[Math.floor(i/40)])){hPos[i*3+1]=-1000;continue;}
       hPos[i*3]=f.x+e*2.2+Math.sin(s+e*6)*.25*e;hPos[i*3+1]=f.y+e*5;hPos[i*3+2]=f.z+Math.cos(s*1.7+e*5)*.3*e;}
     geoH.attributes.position.needsUpdate=geoH.attributes.aEdad.needsUpdate=true;}
 
@@ -90,8 +92,12 @@
   /* ---- Cámara orbital -------------------------------------------------------------------- */
   // Las vistas de cerca se quedan dentro de la calle (la acera de enfrente está a unos 8 m).
   const VISTAS={utileria:{foco:[.15,.65,.6],yaw:.55,pitch:.32,dist:5.7},calle:{foco:[0,1.6,0],yaw:.35,pitch:.32,dist:26},entramada:{foco:[-8.5,3.4,-5],yaw:.25,pitch:.2,dist:9.5},taberna:{foco:[0,3.4,-5.5],yaw:-.15,pitch:.18,dist:10},piedra:{foco:[8.5,3,-5.5],yaw:-.25,pitch:.12,dist:10},pozo:{foco:[-3.2,1.3,1.2],yaw:.55,pitch:.3,dist:6.5}};
+  const arquitecturaScenario=casas.some(c=>c.userData.arquitecturaScenario);
+  if(arquitecturaScenario){for(const tipo of ['entramada','taberna','piedra']){const c=casas.find(c=>c.userData.tipo===tipo),alto=c.userData.alto;VISTAS[tipo]={foco:[c.position.x,alto*.45,c.position.z],yaw:.35,pitch:.3,dist:alto*2.1};}VISTAS.calle={foco:[0,2,-3],yaw:.16,pitch:.4,dist:36};}
   const vista={foco:new V3(0,1.6,0),yaw:.35,pitch:.32,dist:26,obj:null,girar:!reducido&&!CAPTURA};
-  function irA(k){const v=VISTAS[k];vista.obj={foco:new V3(...v.foco),yaw:v.yaw,pitch:v.pitch,dist:v.dist};for(const b of document.querySelectorAll('[data-vista]'))b.setAttribute('aria-pressed',String(b.dataset.vista===k));}
+  function irA(k){const v=VISTAS[k];
+    if(arquitecturaScenario&&!SOLO_POZO&&!SOLO_UTILERIA){detalle.clear();const elegido=k==='pozo'?pozo:casas.find(c=>c.userData.tipo===k);calle.visible=k==='calle';if(elegido)detalle.add(elegido);else if(k==='utileria')detalle.add(...utileria);for(const luz of farolas)luz.parent.visible=calle.visible;}
+    vista.obj={foco:new V3(...v.foco),yaw:v.yaw,pitch:v.pitch,dist:v.dist};for(const b of document.querySelectorAll('[data-vista]'))b.setAttribute('aria-pressed',String(b.dataset.vista===k));}
   let arrastre=null;
   lienzo.addEventListener('pointerdown',e=>{arrastre={x:e.clientX,y:e.clientY};lienzo.setPointerCapture?.(e.pointerId);vista.obj=null;vista.girar=false;$('girar').checked=false;});
   lienzo.addEventListener('pointermove',e=>{if(!arrastre)return;vista.yaw-=(e.clientX-arrastre.x)*.006;vista.pitch=Math.max(.04,Math.min(1.2,vista.pitch+(e.clientY-arrastre.y)*.004));arrastre={x:e.clientX,y:e.clientY};});
@@ -104,12 +110,13 @@
   /* ---- Botones y marcador ------------------------------------------------------------------ */
   let luces=true;
   function ponerLuces(v){luces=v;$('luces').setAttribute('aria-pressed',String(v));$('luces').textContent=v?'Luces de dentro: encendidas':'Luces de dentro: apagadas';}
+  $('luces').hidden=arquitecturaScenario;
   $('luces').onclick=()=>ponerLuces(!luces);
   for(const b of document.querySelectorAll('[data-hora]'))b.onclick=()=>ponerHora(b.dataset.hora);
   for(const b of document.querySelectorAll('[data-vista]'))b.onclick=()=>irA(b.dataset.vista);
   $('girar').onchange=e=>{vista.girar=e.target.checked;};
   const tri=casas.map(c=>c.userData.triangulos);
-  $('ficha').innerHTML=['entramada','taberna','piedra'].map(t=>{const c=casas.find(c=>c.userData.tipo===t);return `<li><b>${{entramada:'Casa entramada',taberna:'La Jarra Rota (taberna)',piedra:'Cabaña de piedra'}[t]}</b><span>${c.userData.triangulos.toLocaleString('es')} triángulos · ${c.userData.ventanas.length} ventanas</span></li>`;}).join('')+`<li><b>Pozo</b><span>${pozo.userData.triangulos.toLocaleString('es')} triángulos</span></li>`;
+  $('ficha').innerHTML=['entramada','taberna','piedra'].map(t=>{const c=casas.find(c=>c.userData.tipo===t);return `<li><b>${{entramada:'Casa entramada',taberna:'La Jarra Rota (taberna)',piedra:'Cabaña de piedra'}[t]}</b><span>${c.userData.triangulos.toLocaleString('es')} triángulos · ${c.userData.arquitecturaScenario?'Scenario · atlas compartido':c.userData.ventanas.length+' ventanas'}</span></li>`;}).join('')+`<li><b>Pozo</b><span>${pozo.userData.triangulos.toLocaleString('es')} triángulos</span></li>`;
 
   if(SOLO_UTILERIA){
     $('csTitulo').textContent='Cajas y barriles';
@@ -134,10 +141,10 @@
   function cuadro(ahora){const dt=Math.min(.05,(ahora-antes)/1000);antes=ahora;paso(dt);dibujar();fps.n++;
     if(ahora-fps.t>=1000){const i=renderer.info.render;$('info').textContent=`${Math.round(fps.n*1000/(ahora-fps.t))} fps · ${i.calls} llamadas · ${(i.triangles/1000).toFixed(0)} mil triángulos · ${hdr?'HDR':'8 bits'} · MSAA ${muestras}× · ${simple?'sin posproceso · ':''}${gpu} · three ${THREE.REVISION}`;fps.n=0;fps.t=ahora;}
     requestAnimationFrame(cuadro);}
-  ponerHora(SOLO_UTILERIA?'atardecer':'noche');ponerLuces(true);const inicio=SOLO_POZO?'pozo':SOLO_UTILERIA?'utileria':'calle';irA(inicio);Object.assign(vista,{...VISTAS[inicio],foco:new V3(...VISTAS[inicio].foco)});vista.girar=!reducido&&!CAPTURA&&!SOLO_UTILERIA;$('girar').checked=vista.girar;
+  ponerHora(SOLO_UTILERIA||arquitecturaScenario?'atardecer':'noche');ponerLuces(true);const inicio=SOLO_POZO?'pozo':SOLO_UTILERIA?'utileria':'calle';irA(inicio);Object.assign(vista,{...VISTAS[inicio],foco:new V3(...VISTAS[inicio].foco)});vista.girar=!reducido&&!CAPTURA&&!SOLO_UTILERIA;$('girar').checked=vista.girar;
   medir();new ResizeObserver(medir).observe(esc);listo=true;paso(1/60);
-  estado('Arrastra para girar, rueda para acercar. Cargando las tejas de barro…');
-  CASAS.texturasListas.then(r=>{estado(r.every(x=>x.status==='fulfilled')?'Tejas de barro cargadas · Color y relieve de 1024 px. Arrastra para girar y usa la rueda para acercar.':'Las tejas usan el material de respaldo porque no se pudo cargar algún mapa.');if(CAPTURA)dibujar();});
+  estado('Arrastra para girar, rueda para acercar. Cargando los materiales de Tomsage…');
+  CASAS.texturasListas.then(r=>{estado(r.every(x=>x.status==='fulfilled')?'Arquitectura de Scenario · Materiales cargados. Arrastra para girar y usa la rueda para acercar.':'No se pudo cargar algún material de la arquitectura.');if(CAPTURA)dibujar();});
   if(!CAPTURA)requestAnimationFrame(cuadro);else dibujar();
 
   // Revisión: avanzar(s) a pasos de 1/30 s y dibuja; ventanaPantalla(i) da el centro en pantalla de una ventana del frente.

@@ -6,7 +6,7 @@
     const V=THREE.Vector3,suave=x=>{x=Math.max(0,Math.min(1,x));return x*x*(3-2*x);};
     let fase='cerrada',t=0,total=0,actor=null,interior=null,protagonista=null,habitantes=[],golpeDado=false,botones=[],soltado=false,peticion=false;let decorado=null;
     const datos=casa.userData.puerta,marco=new THREE.Group(),hoja=new THREE.Group(),normal=new V(0,0,1).applyQuaternion(casa.quaternion);
-    casa.updateMatrixWorld(true);marco.position.copy(casa.localToWorld(new V(datos.x,0,datos.z)));marco.quaternion.copy(casa.quaternion);plaza.add(marco);
+    casa.updateMatrixWorld(true);marco.position.copy(casa.localToWorld(new V(datos.x,0,datos.z)));marco.quaternion.copy(casa.quaternion);marco.scale.set(datos.ancho||1,(datos.alto||2)/2,1);plaza.add(marco);
     const aproximacion=marco.position.clone().addScaledVector(normal,2.25),umbral=marco.position.clone().addScaledVector(normal,.45);
     const propia=(color,o={})=>new THREE.MeshStandardMaterial({color,roughness:.9,...o});
     const roble=materiales.tablas.clone();roble.vertexColors=false;const metal=propia(0x66533c,{metalness:.35});

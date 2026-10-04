@@ -6,7 +6,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import {fileURLToPath} from 'node:url';
-import {texturasCasas} from './casas-three-exportar.mjs';
+import {texturasCasas,recursosArquitectura} from './casas-three-exportar.mjs';
 import {datosDesdeMotor,leer,juego,hash,extraerDeclaracion} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
 export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
@@ -20,7 +20,7 @@ export const recursosKobold=Object.freeze(['arpg-three-kobold.js','kobold-scenar
 export const recursosLlave=Object.freeze(['arpg-three-casa-goblin.js','arpg-three-casa-interior.js','casa-goblin-scenario/datos.js','casa-goblin-scenario/color-0.webp','casa-goblin-scenario/normal-0.webp','casa-goblin-scenario/superficie-0.webp','casa-goblin-scenario/foto-familia.webp','casa-goblin-scenario/foto-comida.webp','llave-scenario/datos.js','llave-scenario/color.webp','llave-scenario/normal.webp','llave-scenario/superficie.webp']);
 export const recursosAdreida=Object.freeze(['arpg-three-entrada-troll.js','arpg-three-adreida.js','adreida-scenario/datos.js','adreida-scenario/color.webp','adreida-scenario/normal.webp','adreida-scenario/superficie.webp']);
 export const texturasPiso=Object.freeze(['texturas-piso/vegetacion-color.webp','texturas-piso/vegetacion-normal.webp','texturas-piso/vegetacion-superficie.webp']);
-export const entornoArpgThree=Object.freeze(['arpg-three-estilo.js','arpg-three-tiempo.js','arpg-three-impactos.js','arpg-three-clima.js','quick-liquid-vendor.js','quick-liquid-LICENSE.txt','arpg-three-orbes.js','yuka-goals-vendor.js','yuka-LICENSE.txt','arpg-three-ia.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...recursosGoblin,...recursosKobold,...recursosAdreida,...recursosLlave,...texturasPiso,...texturasCasas]);
+export const entornoArpgThree=Object.freeze(['arpg-three-estilo.js','arpg-three-tiempo.js','arpg-three-impactos.js','arpg-three-clima.js','quick-liquid-vendor.js','quick-liquid-LICENSE.txt','arpg-three-orbes.js','yuka-goals-vendor.js','yuka-LICENSE.txt','arpg-three-ia.js','arpg-three-mesa.js','arpg-three-mesa.css','arpg-three-adreida-animacion.js','arpg-three-modelos.js','casas-three.js','visor-three-vendor.js','three-carta.js',...texturasGoblin,...recursosGoblin,...recursosKobold,...recursosAdreida,...recursosLlave,...texturasPiso,...texturasCasas,...recursosArquitectura]);
 function ilustraciones(){
   const encuadres=JSON.parse(leer('art/encuadres.json'));
   return cartasArpgThree.map(([id,acabado])=>{
