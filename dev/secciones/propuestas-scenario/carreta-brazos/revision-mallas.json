@@ -1,0 +1,176 @@
+[
+  {
+    "archivo": "carreta.glb",
+    "original": "carreta-original.glb",
+    "sha256": "12ad15c73e3f8ce30a4c9a9ef100914ae2628a1b718f1e0519b4e5bbc3731042",
+    "sha256Original": "c4f740ec813181ff3b67814a34404aba634a830c16e5a2d37e956ead031c9e43",
+    "dimensionesMetros": [
+      2.196418,
+      1.25,
+      2.747682
+    ],
+    "limitesMetros": [
+      [
+        -1.0982092494859854,
+        0.0,
+        -1.373840764370191
+      ],
+      [
+        1.0982092494859854,
+        1.25,
+        1.3738407643701913
+      ]
+    ],
+    "anclaje": "suelo",
+    "espejoX": false,
+    "triangulos": 8731,
+    "vertices": 7403,
+    "materiales": 1,
+    "rig": false
+  },
+  {
+    "archivo": "brazo-izquierdo.glb",
+    "original": "brazo-izquierdo-original.glb",
+    "sha256": "41f1562a485b922daffaf01b69c62869f6dfec074e0fade395a78eebcb35d30e",
+    "sha256Original": "6e8f53babbe8a431b0012d8b96fa2b36437fc14d41c625133707638cdaac5925",
+    "dimensionesMetros": [
+      0.227599,
+      0.8,
+      0.241487
+    ],
+    "limitesMetros": [
+      [
+        -0.11379930973052982,
+        -0.8,
+        -0.12074326276779174
+      ],
+      [
+        0.1137993097305298,
+        0.0,
+        0.12074326276779174
+      ]
+    ],
+    "anclaje": "superior",
+    "espejoX": false,
+    "triangulos": 9500,
+    "vertices": 5809,
+    "materiales": 1,
+    "rig": false
+  },
+  {
+    "archivo": "brazo-derecho.glb",
+    "original": "brazo-izquierdo-original.glb",
+    "sha256": "89b5eb4579267bcb8bed1a10c8a6d7304641e9589e36ab03651c9e43481a5ff2",
+    "sha256Original": "6e8f53babbe8a431b0012d8b96fa2b36437fc14d41c625133707638cdaac5925",
+    "dimensionesMetros": [
+      0.227599,
+      0.8,
+      0.241487
+    ],
+    "limitesMetros": [
+      [
+        -0.1137993097305298,
+        -0.8,
+        -0.12074326276779174
+      ],
+      [
+        0.11379930973052982,
+        0.0,
+        0.12074326276779174
+      ]
+    ],
+    "anclaje": "superior",
+    "espejoX": true,
+    "triangulos": 9500,
+    "vertices": 5809,
+    "materiales": 1,
+    "rig": false
+  },
+  {
+    "archivo": "vendas-izquierdas.glb",
+    "original": "vendas-original.glb",
+    "sha256": "b36df75d57d5c6017ec0f6084c95c9e7e6a3993bff01d943486dd27d4dbaf0aa",
+    "sha256Original": "12308fe5e9d4edaa84fe4d55736f3b952c81a5b4eed908d5fe30edbc27a8cf5e",
+    "dimensionesMetros": [
+      0.100697,
+      0.25,
+      0.113376
+    ],
+    "limitesMetros": [
+      [
+        -0.050348511129408566,
+        -0.125,
+        -0.05668799870573801
+      ],
+      [
+        0.05034851112940857,
+        0.125,
+        0.05668799870573801
+      ]
+    ],
+    "anclaje": "centro",
+    "espejoX": false,
+    "triangulos": 3762,
+    "vertices": 2706,
+    "materiales": 1,
+    "rig": false
+  },
+  {
+    "archivo": "vendas-derechas.glb",
+    "original": "vendas-original.glb",
+    "sha256": "e1e754939ceb92d8b2622163ddd988f7bf825a8f0f123e8c846ee5d24654ddae",
+    "sha256Original": "12308fe5e9d4edaa84fe4d55736f3b952c81a5b4eed908d5fe30edbc27a8cf5e",
+    "dimensionesMetros": [
+      0.100697,
+      0.25,
+      0.113376
+    ],
+    "limitesMetros": [
+      [
+        -0.05034851112940857,
+        -0.125,
+        -0.05668799870573801
+      ],
+      [
+        0.050348511129408566,
+        0.125,
+        0.05668799870573801
+      ]
+    ],
+    "anclaje": "centro",
+    "espejoX": true,
+    "triangulos": 3762,
+    "vertices": 2706,
+    "materiales": 1,
+    "rig": false
+  },
+  {
+    "archivo": "hombrera-izquierda.glb",
+    "original": "hombrera-original.glb",
+    "sha256": "d7f9a6098e5601097e4e85aea35996638509c3017a21e0294a74907604a663a9",
+    "sha256Original": "7aca671422987c09f0834bb47f3e5d646655f4d59e46bcc4dcb03a6882073a31",
+    "dimensionesMetros": [
+      0.282518,
+      0.34,
+      0.26027
+    ],
+    "limitesMetros": [
+      [
+        -0.14125909934723851,
+        -0.17,
+        -0.1301347783179332
+      ],
+      [
+        0.14125909934723851,
+        0.17,
+        0.1301347783179332
+      ]
+    ],
+    "anclaje": "centro",
+    "espejoX": false,
+    "triangulos": 4764,
+    "vertices": 3667,
+    "materiales": 1,
+    "rig": false
+  }
+]

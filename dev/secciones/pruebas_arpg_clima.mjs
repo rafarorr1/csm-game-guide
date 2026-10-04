@@ -31,7 +31,7 @@ for(const hz of [20,30,60,144]){
   assert.ok(u.uCola.value.x/.028>5.7&&u.uCola.value.x/.028<10.3,'Viento sostenido en la misma dirección');}
  const referencia=contexto.CAOZ_ARPG_CLIMA.derivaViento(10,new T.Vector2());
  for(const hz of [20,30,144]){const otro=preparar();avanzar(otro.clima,10,hz);assert.ok(otro.escena.getObjectByName('Lluvia ligera').material.uniforms.uDeriva.value.distanceTo(referencia)<1e-8,'El viento no depende de FPS');otro.clima.destruir();}
- assert.equal(escena.getObjectByName('Salpicaduras de lluvia').geometry.attributes.position.count,880,'220 impactos reutilizables en una malla');
+ assert.equal(escena.getObjectByName('Salpicaduras de lluvia').geometry.drawRange.count,1320,'La partida dibuja los mismos 220 impactos en una malla');
  clima.destruir();}
 // Audio simulado sólo para verificar recursos y pausas; la compilación visual se revisa en navegador.
 let creado=0;const fuentes=[];
@@ -63,3 +63,20 @@ console.log('OK: lluvia/charcos a 20/30/60/144 FPS; techos, cráteres, movimient
  clima.configurar({activo:false});clima.cinematica(3,{x:2,z:3});assert(escena.children.every(n=>!n.visible),'Se respeta la preferencia de desactivar lluvia');
  clima.cinematica(null);assert.equal(clima.estado().tiempoCine,null);clima.configurar({activo:true});clima.pausar(false);avanzar(clima,1);assert(Math.abs(u.uT.value-1)<1e-8);clima.destruir();}
 console.log('OK: suspensión, liberación, búsqueda reversible del clima y restauración de la partida.');
+
+// La cinemática intensifica la lluvia sin cambiar los charcos ni asignar geometrías al recorrerla.
+for(const reducido of [false,true]){
+ const {escena,clima}=preparar({reducido}),base=reducido?220:440,cine=Math.round(base*1.4);
+ const lluvia=escena.getObjectByName('Lluvia ligera').geometry,salpicaduras=escena.getObjectByName('Salpicaduras de lluvia').geometry;
+ const semillas=lluvia.attributes.aSemilla,agua=escena.getObjectByName('Charcos de lluvia').geometry.attributes.position;
+ const charcos=agua.array.slice();
+ assert.equal(lluvia.drawRange.count,base*2);
+ for(const t of [0,2,6,.5,0,15]){
+  clima.cinematica(t,{x:3,z:-2});assert.equal(clima.estado().gotas,cine);
+  assert.equal(lluvia.drawRange.count,cine*2);assert.equal(salpicaduras.drawRange.count,Math.ceil(cine/2)*6);
+  assert.equal(lluvia.attributes.aSemilla,semillas);assert.deepEqual(agua.array,charcos);assert.equal(escena.children.length,3);
+ }
+ clima.cinematica(null);assert.equal(clima.estado().gotas,base);assert.equal(lluvia.drawRange.count,base*2);
+ assert.equal(salpicaduras.drawRange.count,Math.ceil(base/2)*6);clima.destruir();
+}
+console.log('OK: 40% más de lluvia cinematográfica, recursos reutilizados y densidad normal al salir.');

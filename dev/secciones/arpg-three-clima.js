@@ -16,9 +16,13 @@
       const minZ=Math.max(0,Math.floor((caja.min.z+extension)/(2*extension)*lado)),maxZ=Math.min(lado-1,Math.ceil((caja.max.z+extension)/(2*extension)*lado));
       for(let z=minZ;z<=maxZ;z++)for(let x=minX;x<=maxX;x++)alturas[z*lado+x]=Math.max(alturas[z*lado+x],caja.max.y);}
     const refugios=new THREE.DataTexture(alturas,lado,lado,THREE.RedFormat,THREE.FloatType);refugios.needsUpdate=true;
-    const P=[],S=[],E=[],cantidad=reducido?220:440;
-    for(let i=0;i<cantidad;i++){const s=[azar()*44,azar()*16,azar()*44];for(let j=0;j<2;j++){P.push(0,0,0);S.push(...s);E.push(j);}}
+    const P=[],S=[],E=[],cantidad=reducido?220:440,cantidadCine=Math.round(cantidad*1.4);
+    // Reserva para la tormenta del mago: cambia sólo el rango dibujado, sin crear recursos al buscar un cuadro.
+    let semillaPartida;
+    for(let i=0;i<cantidadCine;i++){if(i===cantidad)semillaPartida=semilla;const s=[azar()*44,azar()*16,azar()*44];for(let j=0;j<2;j++){P.push(0,0,0);S.push(...s);E.push(j);}}
+    semilla=semillaPartida; // Las gotas adicionales no recolocan charcos ni alteran los truenos de la partida.
     const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(P,3));g.setAttribute('aSemilla',new THREE.Float32BufferAttribute(S,3));g.setAttribute('aExtremo',new THREE.Float32BufferAttribute(E,1));
+    g.setDrawRange(0,cantidad*2);
     const uniformesLluvia={...THREE.UniformsUtils.clone(THREE.UniformsLib.fog),uT:tiempo,uCentro:centro,uTechos:{value:refugios},uDeriva:deriva,uCola:cola};
     const funcionesLluvia=`uniform float uT;uniform vec2 uCentro;uniform sampler2D uTechos;uniform vec2 uDeriva;uniform vec2 uCola;
       attribute vec3 aSemilla;
@@ -56,8 +60,9 @@
     const lluvia=new THREE.LineSegments(g,lluviaMat);lluvia.name='Lluvia ligera';lluvia.frustumCulled=false;lluvia.renderOrder=3;escena.add(lluvia);
     // Una reserva de anillos para los impactos de esas mismas gotas, sin partículas de CPU.
     const sp=[],ss=[],su=[],si=[];
-    for(let i=0;i<cantidad;i+=2){const k=sp.length/3;for(const [u,v] of [[-1,-1],[1,-1],[1,1],[-1,1]]){sp.push(0,0,0);ss.push(...S.slice(i*6,i*6+3));su.push(u,v);}si.push(k,k+2,k+1,k,k+3,k+2);}
+    for(let i=0;i<cantidadCine;i+=2){const k=sp.length/3;for(const [u,v] of [[-1,-1],[1,-1],[1,1],[-1,1]]){sp.push(0,0,0);ss.push(...S.slice(i*6,i*6+3));su.push(u,v);}si.push(k,k+2,k+1,k,k+3,k+2);}
     const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(sp,3));sg.setAttribute('aSemilla',new THREE.Float32BufferAttribute(ss,3));sg.setAttribute('uv',new THREE.Float32BufferAttribute(su,2));sg.setIndex(si);
+    sg.setDrawRange(0,Math.ceil(cantidad/2)*6);
     const salpicarMat=new THREE.ShaderMaterial({transparent:true,depthWrite:false,fog:true,uniforms:uniformesLluvia,
       vertexShader:funcionesLluvia+`
         varying vec2 vUv;varying float vAlpha;
@@ -159,6 +164,8 @@
     // Tiempo absoluto de la escena: permite retroceder sin depender del reloj real.
     function cinematica(t,foco){
       const antes=tiempoCine;tiempoCine=t===null?null:Math.max(0,t);
+      const gotas=tiempoCine===null?cantidad:cantidadCine;
+      g.setDrawRange(0,gotas*2);sg.setDrawRange(0,Math.ceil(gotas/2)*6);
       situar(tiempoCine??reloj,foco);charcoMat.uniforms.uDestello.value=0;
       if(antes!==tiempoCine&&(antes===null||tiempoCine===null||antes===0||tiempoCine===0)){
         for(const voz of voces)voz.stop();ajustarAudio();
@@ -179,7 +186,7 @@
       ajustarAudio();
     }
     return {paso,configurar,cinematica,desbloquearAudio,pausar(v){if(pausado!==v){pausado=v;ajustarAudio();}},
-      estado:()=>({activo,sonido,pausado,tiempo:reloj,tiempoCine,gotas:cantidad,charcos:charcos.length,mallas:3,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
+      estado:()=>({activo,sonido,pausado,tiempo:reloj,tiempoCine,gotas:tiempoCine===null?cantidad:cantidadCine,charcos:charcos.length,mallas:3,truenos:totalTruenos,audio:audio?.state||'pendiente',voces:voces.size}),
       destruir(){for(const voz of voces)voz.stop();lluviaAudio?.stop();audio?.close().catch(()=>{});escena.remove(lluvia,agua,salpicaduras);g.dispose();cg.dispose();sg.dispose();lluviaMat.dispose();charcoMat.dispose();salpicarMat.dispose();refugios.dispose();}};
   }
   window.CAOZ_ARPG_CLIMA=Object.freeze({fabrica,derivaViento});

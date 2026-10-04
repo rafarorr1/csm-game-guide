@@ -1,0 +1,153 @@
+{
+  "proyecto": "Caoz ARPG",
+  "fecha": "2026-10-04",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "estado": "Diseños y mallas independientes para revisión; rig e integración pendientes.",
+  "colecciones": {
+    "arquitectura": "col_GsqEB9NDtoryU5BeFLRWY9jT",
+    "brazos": "col_QSgYQSEgvk9qX3JCu1jGXW93"
+  },
+  "referencias": {
+    "adreida": "asset_FJ9aBLGzifk1qfm96UCVAJn1",
+    "casa": "asset_2Fq58CgRSUvaHTWqW8Kh5gxv"
+  },
+  "modeloImagen": "model_openai-gpt-image-2-5-sunburst",
+  "modelo3D": "model_tripo-v3-1-image-to-3d",
+  "recursos": {
+    "carreta": {
+      "concepto": "asset_cn4XdHGapL2NswM12LJCccR4",
+      "parametrosImagen": {
+        "prompt": "Create one complete medieval two-wheeled wooden handcart game prop for Caoz ARPG. Match the attached house reference's grounded stylized dark fantasy craftsmanship, muted weathered oak and rusty forged iron, restrained realistic surface detail, matte rough materials. A sturdy empty rectangular timber cargo bed, visible plank floor and low plank sides, two large clearly constructed spoked wooden wheels with iron rims, aligned axle, long pair of parallel pulling shafts, worn wooden handles, small rope lashings and iron corner straps. Physically plausible construction, readable silhouette, no excessive ornament or clutter. Single isolated full cart, all wheels and shafts inside frame with margins. Three-quarter front view slightly above wheel level so cargo interior and both wheels are legible. Diffuse neutral studio lighting, clean light grey background, no dramatic shadows, no ground base, no people, no house, no words, no labels. Suitable as single-image 3D reconstruction reference.",
+        "referenceImages": [
+          "asset_2Fq58CgRSUvaHTWqW8Kh5gxv"
+        ],
+        "width": 1280,
+        "height": 1280,
+        "numOutputs": 1,
+        "quality": "high",
+        "background": "opaque"
+      },
+      "parametros3D": {
+        "image": "asset_cn4XdHGapL2NswM12LJCccR4",
+        "texture": true,
+        "pbr": true,
+        "faceLimit": 10000,
+        "autoSize": true,
+        "orientation": "align_image"
+      },
+      "jobImagen": "job_wmp2pHFW14WtZXxjzAtz3svW",
+      "job3D": "job_gDRh4wXpcfKmsJ7YVHJGNowP",
+      "malla": "asset_kgWKekrj5WsfL7ejbcvee5sT",
+      "estado": "success",
+      "triangulos": 8731,
+      "vertices": 7403,
+      "materiales": 1,
+      "rig": false,
+      "semilla": 538531807,
+      "urlScenario": "https://app.scenario.com/assets?openAssetId=asset_kgWKekrj5WsfL7ejbcvee5sT&teamId=team_fusHPzE5VJ4KYZ3QPyxC2Eaa&projectId=proj_yCSENgpggrHw8YbSmZXSuQ4w"
+    },
+    "brazo": {
+      "concepto": "asset_8fvUpG7LL3JTnYjabWEAvxdi",
+      "parametrosImagen": {
+        "prompt": "Create an isolated clean 3D character modular modeling reference for the LEFT BARE ARM AND HAND of Adreida, the adult muscular female half-orc in the attached approved reference. Preserve her olive tan skin, athletic feminine muscle volume, broad deltoid, strong upper arm, defined but natural elbow and forearm, and dark short fingernails. One complete arm only from the rounded deltoid/shoulder attachment down to all five fingertips. Neutral relaxed straight pose with very slight elbow bend, arm vertical in the picture, palm facing toward camera at a slight three-quarter angle, thumb on the viewer's right as appropriate for her left hand, five anatomically correct fully separated relaxed fingers with clear negative space, no fist, no weapon. Show tendons and knuckles, subtle skin grain and restrained small healed scratches, not exaggerated veins. The shoulder attachment is a clean untextured closed modeling cap, no injury, no blood. No torso, face, clothing, wraps, jewelry, armor or extra limbs. Entire object centered with 12% margins, isolated on plain light grey studio background, soft even neutral illumination, near-orthographic view with minimal perspective. Same grounded stylized medieval action RPG realism and proportions as the approved character, high quality game asset reference for reconstruction and later rigging.",
+        "referenceImages": [
+          "asset_FJ9aBLGzifk1qfm96UCVAJn1"
+        ],
+        "width": 1024,
+        "height": 1536,
+        "numOutputs": 1,
+        "quality": "high",
+        "background": "opaque"
+      },
+      "parametros3D": {
+        "image": "asset_8fvUpG7LL3JTnYjabWEAvxdi",
+        "texture": true,
+        "pbr": true,
+        "faceLimit": 10000,
+        "autoSize": true,
+        "orientation": "align_image"
+      },
+      "jobImagen": "job_BycJz1AMxNPo1meTCDjR5qwU",
+      "job3D": "job_PhroXvRn2oyr25u1fJBHCrBM",
+      "malla": "asset_TtwPR4hDgdHVujd5DEuv1hN7",
+      "estado": "success",
+      "triangulos": 9500,
+      "vertices": 5809,
+      "materiales": 1,
+      "rig": false,
+      "semilla": 1475491594,
+      "urlScenario": "https://app.scenario.com/assets?openAssetId=asset_TtwPR4hDgdHVujd5DEuv1hN7&teamId=team_fusHPzE5VJ4KYZ3QPyxC2Eaa&projectId=proj_yCSENgpggrHw8YbSmZXSuQ4w"
+    },
+    "vendas": {
+      "concepto": "asset_QdcoCSGFG9PZCJk9x2JvuZ6M",
+      "parametrosImagen": {
+        "prompt": "Design ONE SEPARATE EMPTY FOREARM WRAP for Adreida, the adult muscular half-orc woman in image 1; image 2 shows her bare arm for fit and skin scale only. Extract the style of her dark worn brown leather forearm bindings and combine with weathered muted brown linen bandages underneath: overlapping diagonal strips, visible stitched leather edges, subtle cloth weave, small restrained copper rivets, rough matte material. This is a removable HOLLOW conical sleeve around the forearm only, from just below elbow to wrist; both wrist and elbow openings are wide open and visibly empty, dark hollow interior with the same material, no skin and no hand or arm inside. Sleeve length about 0.25 meter, top opening diameter about 0.105 meter, wrist opening diameter about 0.065 meter, thin believable flexible material. Straight neutral orientation vertical, upper opening at top and wrist opening at bottom; three-quarter slightly elevated near orthographic view showing both outside and empty top opening. One continuous clothing prop centered with margin, isolated light grey studio background, soft even illumination. Match reference dark medieval grounded stylized game realism. No mannequin, no display stand, no text, no extra parts or duplicate sleeve.",
+        "referenceImages": [
+          "asset_FJ9aBLGzifk1qfm96UCVAJn1",
+          "asset_8fvUpG7LL3JTnYjabWEAvxdi"
+        ],
+        "width": 1024,
+        "height": 1280,
+        "numOutputs": 1,
+        "quality": "high",
+        "background": "opaque"
+      },
+      "parametros3D": {
+        "image": "asset_QdcoCSGFG9PZCJk9x2JvuZ6M",
+        "texture": true,
+        "pbr": true,
+        "faceLimit": 4000,
+        "autoSize": true,
+        "orientation": "align_image"
+      },
+      "jobImagen": "job_pbBMpLzQpNAac2MjEEkLg9UM",
+      "job3D": "job_jUkC469UqYVA9VL1JBdT7NQr",
+      "malla": "asset_xUFR2SZmKTXTVbShtz99nSba",
+      "estado": "success",
+      "triangulos": 3762,
+      "vertices": 2706,
+      "materiales": 1,
+      "rig": false,
+      "semilla": 1820672565,
+      "urlScenario": "https://app.scenario.com/assets?openAssetId=asset_xUFR2SZmKTXTVbShtz99nSba&teamId=team_fusHPzE5VJ4KYZ3QPyxC2Eaa&projectId=proj_yCSENgpggrHw8YbSmZXSuQ4w"
+    },
+    "hombrera": {
+      "concepto": "asset_TSGipXzoCrKuvh6LMkidW85M",
+      "parametrosImagen": {
+        "prompt": "Create ONE SEPARATE LEFT SHOULDER PAULDRON accessory for Adreida, the adult muscular half-orc in approved image 1; image 2 gives her shoulder volume only. Faithfully match her asymmetric dark rusty iron shoulder armor: curved broad shoulder cup with five short sharp forged metal spikes, three smaller overlapping articulated steel plates tapering downward over outer upper arm, leather trim and a few handmade iron rivets. Dense but clearly readable silhouette, worn edges, pitted dark metal with subtle rust, rough matte surface, no glossy sheen, no skull ornament. This armor is EMPTY inside: show the hollow concave padded underside beneath the shoulder cup and the opening along inner arm; NO body, arm, skin or mannequin inside, no torso armor, no hanging straps that tie to other body parts. About 0.28 meter wide and 0.34 meter tall, enough clearance for a strong female shoulder. Isolated single complete modular armor piece centered with margin, three-quarter front view slightly from below allowing a glimpse of hollow underside, near orthographic perspective, light grey neutral studio background, diffuse even lighting. Same grounded stylized dark fantasy game quality as the character, designed for later placement on a skeletal rig. No labels, typography or extra pieces.",
+        "referenceImages": [
+          "asset_FJ9aBLGzifk1qfm96UCVAJn1",
+          "asset_8fvUpG7LL3JTnYjabWEAvxdi"
+        ],
+        "width": 1280,
+        "height": 1280,
+        "numOutputs": 1,
+        "quality": "high",
+        "background": "opaque"
+      },
+      "parametros3D": {
+        "image": "asset_TSGipXzoCrKuvh6LMkidW85M",
+        "texture": true,
+        "pbr": true,
+        "faceLimit": 5000,
+        "autoSize": true,
+        "orientation": "align_image"
+      },
+      "jobImagen": "job_j54Acq7jXrANg4aoubsaJitC",
+      "job3D": "job_DBTF7WpuxtAksdWU8dhQXV7y",
+      "malla": "asset_SqKKYVf41RdLmmuGjrh7oNfC",
+      "estado": "success",
+      "triangulos": 4764,
+      "vertices": 3667,
+      "materiales": 1,
+      "rig": false,
+      "semilla": 792512923,
+      "urlScenario": "https://app.scenario.com/assets?openAssetId=asset_SqKKYVf41RdLmmuGjrh7oNfC&teamId=team_fusHPzE5VJ4KYZ3QPyxC2Eaa&projectId=proj_yCSENgpggrHw8YbSmZXSuQ4w"
+    }
+  },
+  "creditosConceptos": 52,
+  "notaRig": "Los brazos tienen manos, pero aún no tienen huesos ni pesos. El derecho se obtiene por reflexión del izquierdo. Las vendas y la hombrera se conservan en archivos aparte. La topología, los pivotes y el ajuste al cuerpo se revisarán antes de integrar.",
+  "creditosMallas": 180,
+  "creditosTotales": 232
+}

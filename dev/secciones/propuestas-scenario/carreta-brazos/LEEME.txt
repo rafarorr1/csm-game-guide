@@ -1,0 +1,31 @@
+Caoz ARPG · Recursos de Scenario · 4 de octubre de 2026
+
+GENERADO
+Carreta y tres componentes modulares para Adreida: brazo con mano, vendas y hombrera.
+Los originales GLB conservan las texturas PBR incrustadas y no tienen rig.
+Las imágenes PNG son los conceptos; las mallas son reconstrucciones de esos conceptos.
+
+COPIAS DE REVISIÓN
+carreta.glb: altura 1,25 m; base en Y=0.
+brazo-izquierdo.glb y brazo-derecho.glb: altura 0,80 m; extremo superior en Y=0.
+vendas-izquierdas.glb y vendas-derechas.glb: altura 0,25 m; centro en el origen.
+hombrera-izquierda.glb: altura 0,34 m; centro en el origen.
+Los derechos son reflejos de los izquierdos en X, mediante un nodo con escala negativa.
+Aplicar esa transformación en el programa de modelado antes de crear sus huesos.
+No son piezas ya ajustadas entre sí: estas medidas sólo establecen una escala de revisión.
+
+SIGUIENTE PASO DE RIG
+Conservar las longitudes actuales de Adreida: hombro-codo 0,31 m, codo-muñeca 0,29 m.
+Ajustar las piezas al cuerpo actual y revisar orientación, uniones y separaciones.
+Revisar la topología del codo y dedos antes de asignar pesos; la malla generada es triangular.
+Crear huesos para muñeca y dedos; comprobar el cierre de la mano sobre el mango.
+Asignar las vendas a los huesos del antebrazo; evitar que la hombrera siga los dedos.
+Revisar parry, carrera, ataque y POV con el rig final y ajustar pesos en flexión máxima.
+Preparar después una versión de menor detalle para la cámara isométrica.
+Ninguno de estos recursos reemplaza todavía el modelo o las animaciones en la partida.
+
+REPRODUCIR
+Con Python y numpy: python preparar.py
+Mantener los cuatro archivos *-original.glb junto al script.
+revision-mallas.json contiene dimensiones, triángulos, comprobaciones y SHA-256.
+procedencia.json conserva el modelo, prompts, referencias y assets de Scenario.
