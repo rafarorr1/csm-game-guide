@@ -1718,7 +1718,7 @@
     escena.fog.near=32;escena.fog.far=170;finalMago.iniciar(jugadores,{puerta,umbral,normal});
   }
   function pasoFinalMago(dt,dtReal){presion.rutas=0;if(q.get('entrada')==='mago'&&q.has('plano'))dt=0;finalMago.paso(dt);ambiente(dt);pasoParticulas(dt);pasoEscombros(dt);impactoFX.paso(dt);tiempo.value=reloj.t;
-    const p=finalMago.estado()?.actor;if(p){luna.position.set(p[0]-14,22,p[2]-12);luna.target.position.set(...p);luzHeroe.position.set(p[0],5.5,p[2]+2.2);}
+    const p=finalMago.estado()?.actor;if(p){luna.position.set(p[0]-14,22,p[2]-12);luna.target.position.set(...p);luzHeroe.position.set(p[0],p[1]+5.5,p[2]+2.2);}
     return true;
   }
   function intentarCasa(h){if(pausa.activa||rog.abierto||!casaGoblin?.activa)return false;h??=casaGoblin.cerca(jugadores)||jugadores.find(h=>h.vivo);if(!h)return false;vaciarControlesEntrada();return casaGoblin.solicitar(h);}

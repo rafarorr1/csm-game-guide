@@ -1,0 +1,18 @@
+{
+  "fuentes": [
+    {
+      "fuente": "Great Sword Crouching.fbx",
+      "sha256": "fec4f755751ceeb655caec2a61541f7c51938d5a48c47537af267a2748718ed7",
+      "duracion": 0.6666666666666666,
+      "muestras": 21
+    },
+    {
+      "fuente": "Falling.fbx",
+      "sha256": "3b6813386f50a597b32d8b10805a6c0b1d15b0fd4bab12b5a6f9ff3069778c68",
+      "duracion": 4.5,
+      "muestras": 136
+    }
+  ],
+  "adaptacion": "Veintidós huesos, proporciones del modelo actual, agarre del hacha resuelto con IK en Crouching. Falling conserva las poses sin corrección de suelo: la gravedad y el desplazamiento los dirige el epílogo. Sin mallas ni texturas de los FBX.",
+  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json"
+}

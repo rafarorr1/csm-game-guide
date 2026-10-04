@@ -20,7 +20,7 @@
       m.raiz.name='Adreida · brazos en primera persona';m.raiz.visible=false;
       return m;
     }
-    function fps(m,camara,fase,t){
+    function fps(m,camara,fase,t,ataque=null){
       MOD.posar(m,{anim:'quieto',dt:0,t,sinHacha:true,mezclar:false});const H=m.H;
       H.cuerpo.position.set(0,0,0);H.cadera.rotation.set(0,0,0);H.torso.rotation.set(0,0,Math.sin(fase)*.018);
       for(const [l,signo]of [['D',-1],['I',1]]){
@@ -29,9 +29,21 @@
         H['ante'+l].rotation.set(-1.3-paso*.16,0,0);
         H['mano'+l].rotation.set(0,0,signo*(Math.PI/2-.31));
       }
-      m.raiz.position.set(0,-1.50,-.20).applyQuaternion(camara.quaternion).add(camara.position);
+      // El mismo clip y el mismo progreso continúan después del corte a tercera persona.
+      const entradaAtaque=ataque===null?0:suave(ataque/.085);
+      if(ataque!==null){const desde=capturar(m);MOD.posar(m,{anim:'tajoA',k:ataque,t,dt:0,mezclar:false});mezclar(m,desde,entradaAtaque);}
+      // El agarre de tercera persona arma el golpe detrás del hombro. Adelanta el
+      // modelo de vista para mantener manos y filo dentro del encuadre durante ese arco.
+      m.raiz.position.set(-.15*entradaAtaque,-1.50-.14*entradaAtaque,-.20-.8*entradaAtaque).applyQuaternion(camara.quaternion).add(camara.position);
       m.raiz.quaternion.copy(camara.quaternion).multiply(q.setFromAxisAngle(v.set(0,1,0),Math.PI));
       m.raiz.updateMatrixWorld(true);
+    }
+    function fbx(m,nombre,k,desde=null,entrada=1){
+      const clip=window.CAOZ_ADREIDA_CINE_CLIPS[nombre],{datos,ancho,huesos,muestras}=clip;
+      const f=lim(k)*(muestras-1),i=Math.floor(f),j=Math.min(muestras-1,i+1),u=f-i;
+      m.H.cuerpo.position.fromArray(datos,i*ancho).lerp(v.fromArray(datos,j*ancho),u);
+      for(let n=0;n<huesos.length;n++)m.H[huesos[n]].quaternion.fromArray(datos,i*ancho+3+n*4).normalize().slerp(q.fromArray(datos,j*ancho+3+n*4).normalize(),u);
+      if(desde)mezclar(m,desde,entrada);m.raiz.updateMatrixWorld(true);
     }
     function baseSuelo(m){
       MOD.posar(m,{anim:'quieto',dt:0,t:0,mezclar:false});const H=m.H;
@@ -60,7 +72,7 @@
       mezclar(m,desde,k);apoyar(m);
       m.H.cabeza.rotation.x-=.7*suave((k-.68)/.32);
     }
-    return {crearFPS,fps,capturar,caer,buscar,levantar};
+    return {crearFPS,fps,fbx,capturar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();
