@@ -109,5 +109,6 @@ for(const f of d.dedos){const indice=fps.mallas[0].skeleton.bones.indexOf(fps.H[
 console.log('✓ Veinte falanges, agarre articulado y dedos completos en los planos FPS.');
 
 c.CAOZ_ARPG_ADREIDA_CINE.fabrica(THREE,F).fps(fps,new THREE.PerspectiveCamera(),1,0);
-assert.equal(fps.H.dedoDIndice0.rotation.y,-1.6,'El POV de carrera conserva el agarre derecho');
+F.posar(m,{anim:'quieto'});
+assert.equal(fps.H.dedoDIndice0.rotation.y,m.H.dedoDIndice0.rotation.y,'El POV conserva el agarre derecho calibrado para el mango');
 assert(fps.H.dedoIIndice0.rotation.y<1,'La mano izquierda del POV queda libre');

@@ -15,13 +15,15 @@
       }
       for(const d of datos.dedos||[]){const b=new THREE.Bone();b.name=d.nombre;b.position.fromArray(d.posicion);H[d.padre].add(b);H[d.nombre]=b;}
     }
+    // Flexión calibrada para cada longitud de dedo alrededor del mango de 5.2 cm.
+    const cierreDedos={Pulgar:[.233,1.039],Indice:[1.65,1.139],Medio:[1.545,.701],Anular:[1.693,.408],Menique:[1.675,.446]};
     function posar(m,a){
       if(m.modeloAdreida!=='scenario'||!datos.dedos)return;
       // Pose absoluta: el editor puede buscar cualquier cuadro sin arrastrar estados.
       for(const d of datos.dedos){const b=m.H[d.nombre],s=d.lado==='I'?1:-1;
         const libre=(a.sinHacha&&!(d.lado==='D'&&a.agarreDerecha))||a.anim==='grito'||a.anim==='muerte'||(d.lado==='I'&&['andar','recogerLlave','mirarLlave'].includes(a.anim));
         const cierre=libre?.38:1,pulgar=d.dedo==='Pulgar';
-        b.rotation.set(0,s*cierre*(pulgar?.8:d.articulacion?1.2:1.6),pulgar&&!d.articulacion?-s*.6*cierre:0);
+        b.rotation.set(0,s*cierre*cierreDedos[d.dedo][d.articulacion],pulgar&&!d.articulacion?-s*.582*cierre:0);
       }
     }
     function montar(H,M,mallas){

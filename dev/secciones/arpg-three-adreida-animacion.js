@@ -217,6 +217,27 @@
       dest.G[2]+=arco*Math.sin(Math.PI*w)*amplitud;
       return dest;
     }
+    // Corrección del arma de espada a hacha: Z es el filo y X la cara plana.
+    // Ángulos medidos con la velocidad de la cabeza del hacha en el rig completo.
+    // Se gira sobre el mango: los dos puntos de apoyo conservan su posición.
+    const fasesFilo=[.4,.44,.48,.4875,.5,.52,.56,.6];
+    const filosBasicos={tajoA:[-.632,-.856,-1.053,-1.136,-1.275,-1.366,-1.494,-1.604],revesA:[-.603,-.458,-.185,-.193,-.205,-.061,.058,-.011],estocadaA:[-.419,-.289,-.152,.034,.059,.342,.55,.1]};
+    const ejeFilo=new THREE.Vector3(),arribaFilo=new THREE.Vector3();
+    function alinearFilo(agarre,a){
+      const k=a.k||0,p=Math.max(0,Math.min(1,a.potencia||0));let giro=0,peso=0;
+      if(filosBasicos[a.anim]){
+        peso=tramo(k,.18,.4)*(1-tramo(k,.6,.9));
+        if(p>0||['carga','recuperacion'].includes(a.estado)){
+          giro=a.anim==='tajoA'?.033+.068*p:a.anim==='revesA'?-.006-.068*p:.206+.02*p;
+        }else{
+          const valores=filosBasicos[a.anim];let i=0;while(i<fasesFilo.length-2&&k>fasesFilo[i+1])i++;
+          const u=Math.max(0,Math.min(1,(k-fasesFilo[i])/(fasesFilo[i+1]-fasesFilo[i])));giro=valores[i]+(valores[i+1]-valores[i])*u;
+        }
+      }else if(a.anim==='salto'){giro=-.158;peso=tramo(k,.7,.83)*(1-tramo(k,.9,1));}
+      if(!peso)return;
+      ejeFilo.fromArray(agarre.A).normalize().negate();
+      arribaFilo.fromArray(agarre.arriba).applyAxisAngle(ejeFilo,giro*peso).toArray(agarre.arriba);
+    }
     // Dónde lleva el hacha en cada animación (espacio del torso: +Z delante, +X su izquierda, -X su derecha).
     function agarreAdreida(a){const k=a.k||0,t=a.t||0;
       // El mango descansa sobre el hombro derecho; la cabeza queda detrás y las manos delante del pecho.
@@ -335,7 +356,7 @@
         H.torso.rotation.x+=p*(-.2*pre+.24*gol);H.cuerpo.position.y-=p*(.13*pre+.08*gol);
         H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
       }
-      const clip=clipCombate(a),agarre=clip?agarreCombate(a,clip):agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];mezclar(m,a,agarre);
+      const clip=clipCombate(a),agarre=clip?agarreCombate(a,clip):agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];alinearFilo(agarre,a);mezclar(m,a,agarre);
       if(clip||['recogerLlave','mirarLlave'].includes(a.anim))apoyarBotas(m);
       if(a.anim==='andar'&&(a.mezclar!==true||memoria(m).tiempo>0)){apoyarBotas(m);memoria(m).pos.copy(H.cuerpo.position);}
       {

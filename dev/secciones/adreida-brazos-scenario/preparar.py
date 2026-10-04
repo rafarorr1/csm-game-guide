@@ -98,6 +98,8 @@ for lado,s in [('I',1),('D',-1)]:
             v=np.median(pa[zona],axis=0);v[1]=np.interp(t,[0,.08,.43,.70,.79,.875,1],[.058,0,-.31,-.55,-.60,-.65,-.735]);v[0]*=s
             return v@R.T+hombro
         b0,b1=punto(base),punto(medio);local0=Rm.T@(b0-mano);local1=Rm.T@(b1-b0)
+        # La palma apoya fuera del mango (radio 2.6 cm), no sobre su eje.
+        local0+=np.array([-s*.005,0,-.030])
         ids=[]
         for k,pos in enumerate([local0,local1]):
             nom='dedo'+lado+nombre+str(k);ids.append(len(nombres));nombres.append(nom)
@@ -105,6 +107,8 @@ for lado,s in [('I',1),('D',-1)]:
         zona=(dedo_vert==j)&(prof>base-.015)
         w=suave(base-.015,base+.027,prof[zona]);distal=suave(medio-.012,medio+.014,prof[zona])
         ss[zona]=np.array([im,ids[0],ids[1],0]);ww[zona]=np.column_stack([1-w,w*(1-distal),w*distal,np.zeros(sum(zona))])
+    # Transición hasta la muñeca; las falanges reciben el mismo desplazamiento en reposo.
+    pp+=wmano[:,None]*(Rm@np.array([-s*.005,0,-.030]))
     tt=tri[:,[0,2,1]] if s<0 else tri.copy()
     partes.append({'nombre':'brazo'+lado,'p':pp,'n':normales(pp,tt),'uv':uv.copy(),'tri':tt,'si':ss,'sw':ww,'atlas':'brazo','pieza':1})
 # Las vendas quedan fuera de la piel y siguen la misma mezcla de codo y muñeca.
