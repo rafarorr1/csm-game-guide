@@ -8,7 +8,7 @@ import {hash} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
 export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 export const texturasCasas=Object.freeze(['texturas-casas/tejas-color.webp','texturas-casas/tejas-normal.webp','texturas-casas/tejas-superficie.webp']);
-export const recursosArquitectura=Object.freeze(['arpg-three-arquitectura.js','arquitectura-scenario/datos.js','farol-scenario/datos.js',...['color','normal','superficie'].map(m=>'farol-scenario/'+m+'.webp'),...['entramada','piedra','taberna','pozo'].flatMap(tipo=>['color','normal','superficie'].map(mapa=>'arquitectura-scenario/'+tipo+'-'+mapa+'-0.webp'))]);
+export const recursosArquitectura=Object.freeze(['carreta-scenario/datos.js',...['color','normal','superficie'].map(m=>'carreta-scenario/carreta-'+m+'-0.webp'),'arpg-three-arquitectura.js','arquitectura-scenario/datos.js','farol-scenario/datos.js',...['color','normal','superficie'].map(m=>'farol-scenario/'+m+'.webp'),...['entramada','piedra','taberna','pozo'].flatMap(tipo=>['color','normal','superficie'].map(mapa=>'arquitectura-scenario/'+tipo+'-'+mapa+'-0.webp'))]);
 export const entornoCasasThree=Object.freeze(['casas-three.js','casas-three-mesa.js','casas-three-mesa.css','visor-three-vendor.js',...texturasCasas,...recursosArquitectura]);
 export const pagina=()=>fs.readFileSync(path.join(aqui,'casas-three.html'),'utf8').replaceAll('__CSP__',csp);
 export function exportar(destino){

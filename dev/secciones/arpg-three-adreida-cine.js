@@ -11,6 +11,7 @@
     function crearFPS(){
       const m=MOD.crear('adreida'),mesh=m.mallas[0],g=mesh.geometry,si=g.attributes.skinIndex,sw=g.attributes.skinWeight;
       const brazos=new Set(['anteI','manoI','anteD','manoD'].map(n=>mesh.skeleton.bones.indexOf(m.H[n]))),indices=[];
+      for(const lado of ['I','D'])m.H['mano'+lado].traverse(b=>{if(b.isBone)brazos.add(mesh.skeleton.bones.indexOf(b));});
       const peso=i=>{let p=0;for(let j=0;j<4;j++)if(brazos.has(si.array[i*4+j]))p+=sw.array[i*4+j];return p;};
       const origen=g.index?.array||Array.from({length:g.attributes.position.count},(_,i)=>i);
       for(let i=0;i<origen.length;i+=3)if([0,1,2].every(j=>peso(origen[i+j])>.15))indices.push(...origen.slice(i,i+3));
@@ -21,7 +22,7 @@
       return m;
     }
     function fps(m,camara,fase,t,ataque=null){
-      MOD.posar(m,{anim:'quieto',dt:0,t,sinHacha:true,mezclar:false});const H=m.H;
+      MOD.posar(m,{anim:'quieto',dt:0,t,sinHacha:true,agarreDerecha:true,mezclar:false});const H=m.H;
       H.cuerpo.position.set(0,0,0);H.cadera.rotation.set(0,0,0);H.torso.rotation.set(0,0,Math.sin(fase)*.018);
       for(const [l,signo]of [['D',-1],['I',1]]){
         const paso=Math.sin(fase+(l==='I'?Math.PI:0));

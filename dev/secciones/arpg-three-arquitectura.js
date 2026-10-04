@@ -3,13 +3,15 @@
 'use strict';
 (function(){
   function fabrica(THREE,opciones={}){
-    const datos=window.CAOZ_ARQUITECTURA_DATOS;if(!datos)return null;
+    if(!window.CAOZ_ARQUITECTURA_DATOS)return null;
+    const datos={...window.CAOZ_ARQUITECTURA_DATOS,...window.CAOZ_CARRETA_DATOS?{carreta:window.CAOZ_CARRETA_DATOS}:{}};
     const uniformes=opciones.uniformes||{uT:{value:0},uLuz:{value:1}};
     const materiales=new Map(),geometrias=new Map(),cargas=[],ruta=opciones.rutaArquitectura||'./arquitectura-scenario/';
     const decodificar=(s,Tipo)=>new Tipo(Uint8Array.from(atob(s),c=>c.charCodeAt(0)).buffer);
     function textura(tipo,nombre,indice){
       if(opciones.texturas===false)return null;
-      let t;const lista=new Promise((resolver,rechazar)=>{t=new THREE.TextureLoader().load(ruta+tipo+'-'+nombre+'-'+indice+'.webp',resolver,undefined,rechazar);});
+      const carpeta=tipo==='carreta'?(opciones.rutaCarreta||'./carreta-scenario/'):ruta;
+      let t;const lista=new Promise((resolver,rechazar)=>{t=new THREE.TextureLoader().load(carpeta+tipo+'-'+nombre+'-'+indice+'.webp',resolver,undefined,rechazar);});
       t.colorSpace=nombre==='color'?THREE.SRGBColorSpace:THREE.NoColorSpace;t.flipY=false;
       t.anisotropy=Math.min(4,opciones.renderer?.capabilities.getMaxAnisotropy()||1);cargas.push(lista);return t;
     }
@@ -63,6 +65,10 @@
     }
     function casa(tipo,o={}){
       const d=datos[tipo];if(!d)return null;const grupo=new THREE.Group(),anchoBase={entramada:6,piedra:5.2,taberna:7.6,pozo:2.04}[tipo];
+      if(tipo==='carreta'){
+        d.mallas.forEach((p,i)=>{const m=new THREE.Mesh(geometria(tipo,i,false),materiales.get(tipo+':'+p.material));m.castShadow=m.receiveShadow=true;grupo.add(m);});
+        grupo.name='Carreta de madera · Scenario';grupo.userData={tipo,arquitecturaScenario:true,alto:d.tamano[1],huella:[d.tamano[0],d.tamano[2]],triangulos:d.mallas.reduce((n,p,i)=>n+geometria(tipo,i,false).attributes.position.count/3,0),ventanas:[],humo:null,puerta:null};return grupo;
+      }
       const sx=tipo==='pozo'?(o.radio??1.02)/1.02:(o.ancho??anchoBase)/anchoBase,sz=tipo==='pozo'?sx:(o.fondo??{entramada:5,piedra:4.6,taberna:6}[tipo])/{entramada:5,piedra:4.6,taberna:6}[tipo];
       let triangulos=0;
       d.mallas.forEach((p,i)=>{let g=geometria(tipo,i,tipo==='piedra'&&!!o.puertaInteractiva);if(sx!==1||sz!==1)g=g.clone().scale(sx,1,sz);

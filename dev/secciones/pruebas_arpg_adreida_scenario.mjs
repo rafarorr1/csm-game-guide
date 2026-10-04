@@ -4,10 +4,10 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {recursosAdreida,entornoArpgThree} from './arpg-three-exportar.mjs';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','adreida-brazos-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
 const {THREE}=c.CAOZ_THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=F.crear('adreida'),otro=F.crear('adreida'),clasico=F.crear('adreida',{modeloAdreida:'clasico'});
 const cuerpo=m.mallas[0],g=cuerpo.geometry,a=g.attributes;
-assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,15408);assert.equal(m.mallas.length,2);
+assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,44706);assert.equal(m.mallas.length,2);
 assert.equal(m.alto,clasico.alto);assert.equal(m.radio,clasico.radio);assert.deepEqual(m.p,clasico.p);
 g.computeBoundingBox();assert.ok(Math.abs(g.boundingBox.max.y-g.boundingBox.min.y-1.913112)<.0001,'Altura del modelo aprobado');
 assert.equal(g,otro.mallas[0].geometry,'Adreidos reutiliza el cuerpo');assert.notEqual(cuerpo.skeleton,otro.mallas[0].skeleton);assert.notEqual(m.M.u,otro.M.u,'Efectos independientes');
@@ -90,3 +90,24 @@ F.mostrarHacha(m,true);assert.equal(g.index,indiceCuerpo);assert.equal(m.hachaSc
 for(const f of recursosAdreida){assert.ok(fs.existsSync(new URL(f,import.meta.url)));assert.ok(entornoArpgThree.includes(f));}
 for(const pagina of ['arpg-three.html','modelos-visor.html']){const html=fs.readFileSync(new URL(pagina,import.meta.url),'utf8');assert.ok(html.indexOf('adreida-scenario/datos.js')<html.indexOf('arpg-three-modelos.js'));assert.ok(html.includes('arpg-three-adreida.js'));}
 console.log(`✓ Adreida Scenario: ${poses} poses, 1200 muestras de marcha, apoyo, suelas, continuidad, escala, pesos, hacha y Adreidos.`);
+
+// Cada falange de la malla modular debe deformar sus propios vértices.
+const d=c.CAOZ_ADREIDA_MODULAR_DATOS;assert.equal(d.dedos.length,20);
+for(const f of d.dedos){const b=m.H[f.nombre],indice=cuerpo.skeleton.bones.indexOf(b);assert.equal(b.parent,m.H[f.padre]);
+ const vertices=[];for(let i=0;i<a.position.count;i++)for(let j=0;j<4;j++)if(a.skinIndex.array[i*4+j]===indice&&a.skinWeight.array[i*4+j]>.1){vertices.push(i);break;}
+ assert(vertices.length>3,f.nombre+': tiene superficie propia');
+ F.posar(m,{anim:'quieto',mezclar:false});m.raiz.updateMatrixWorld(true);const cerrado=vertices.map(i=>cuerpo.getVertexPosition(i,new THREE.Vector3()));
+ F.posar(m,{anim:'quieto',sinHacha:true,mezclar:false});m.raiz.updateMatrixWorld(true);
+ assert(vertices.some((i,j)=>cuerpo.getVertexPosition(i,v).distanceTo(cerrado[j])>.01),f.nombre+': abre el agarre al soltar el hacha');
+}
+vm.runInContext(fs.readFileSync(new URL('arpg-three-adreida-cine.js',import.meta.url),'utf8'),c);
+const fps=c.CAOZ_ARPG_ADREIDA_CINE.fabrica(THREE,F).crearFPS(),seleccion=new Set(fps.mallas[0].geometry.index.array);
+for(const f of d.dedos){const indice=fps.mallas[0].skeleton.bones.indexOf(fps.H[f.nombre]);
+ const propios=Array.from({length:a.position.count},(_,i)=>i).filter(i=>Array.from({length:4},(_,j)=>a.skinIndex.array[i*4+j]===indice&&a.skinWeight.array[i*4+j]>.5).some(Boolean));
+ assert(propios.length>0&&propios.every(i=>seleccion.has(i)),f.nombre+': se conserva completo en primera persona');
+}
+console.log('✓ Veinte falanges, agarre articulado y dedos completos en los planos FPS.');
+
+c.CAOZ_ARPG_ADREIDA_CINE.fabrica(THREE,F).fps(fps,new THREE.PerspectiveCamera(),1,0);
+assert.equal(fps.H.dedoDIndice0.rotation.y,-1.6,'El POV de carrera conserva el agarre derecho');
+assert(fps.H.dedoIIndice0.rotation.y<1,'La mano izquierda del POV queda libre');

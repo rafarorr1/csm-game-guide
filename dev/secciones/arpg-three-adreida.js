@@ -1,9 +1,10 @@
 /* Adreida de Scenario: cuerpo compartido, materiales locales y esqueleto del combate. */
 'use strict';
 (function(){
-  const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL('./adreida-scenario/',document.currentScript.src).href:null;
+  const modular=window.CAOZ_ADREIDA_MODULAR_DATOS;
+  const ruta=typeof document!=='undefined'&&document.currentScript?.src?new URL(modular?'./adreida-brazos-scenario/':'./adreida-scenario/',document.currentScript.src).href:null;
   function fabrica(THREE){
-    const datos=window.CAOZ_ADREIDA_DATOS;let geometria,mapas;
+    const datos=modular||window.CAOZ_ADREIDA_DATOS;let geometria,mapas;
     const leer=(s,T)=>{const b=atob(s),a=new Uint8Array(b.length);for(let i=0;i<b.length;i++)a[i]=b.charCodeAt(i);return new T(a.buffer);};
     function preparar(H){
       // Pose A del archivo aprobado; longitudes, agarres y colisión del juego intactos.
@@ -11,6 +12,16 @@
         H['brazo'+l].rotation.z=s*.31;H['pierna'+l].rotation.z=s*.12;
         // El mango atraviesa el ancho de la palma, perpendicular a los dedos.
         H['mano'+l].rotation.z=s*(Math.PI/2-.31);
+      }
+      for(const d of datos.dedos||[]){const b=new THREE.Bone();b.name=d.nombre;b.position.fromArray(d.posicion);H[d.padre].add(b);H[d.nombre]=b;}
+    }
+    function posar(m,a){
+      if(m.modeloAdreida!=='scenario'||!datos.dedos)return;
+      // Pose absoluta: el editor puede buscar cualquier cuadro sin arrastrar estados.
+      for(const d of datos.dedos){const b=m.H[d.nombre],s=d.lado==='I'?1:-1;
+        const libre=(a.sinHacha&&!(d.lado==='D'&&a.agarreDerecha))||a.anim==='grito'||a.anim==='muerte'||(d.lado==='I'&&['andar','recogerLlave','mirarLlave'].includes(a.anim));
+        const cierre=libre?.38:1,pulgar=d.dedo==='Pulgar';
+        b.rotation.set(0,s*cierre*(pulgar?.8:d.articulacion?1.2:1.6),pulgar&&!d.articulacion?-s*.6*cierre:0);
       }
     }
     function montar(H,M,mallas){
@@ -32,7 +43,7 @@
       const mesh=new THREE.SkinnedMesh(geometria,material);mesh.name='Adreida · Scenario';mesh.castShadow=mesh.receiveShadow=true;mesh.frustumCulled=false;
       H.raiz.add(mesh);mesh.bind(mallas[0].skeleton,mesh.matrixWorld);M.cuerpo=material;mallas.unshift(mesh);
     }
-    return {preparar,montar};
+    return {preparar,montar,posar};
   }
   window.CAOZ_ARPG_ADREIDA=Object.freeze({fabrica});
 })();

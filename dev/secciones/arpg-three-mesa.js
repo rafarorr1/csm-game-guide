@@ -192,14 +192,13 @@
     for(let a=0;a<TAU;a+=TAU/15){if(CALLES.some(c=>Math.abs(difAng(a,c))<.3))continue;const r=18.8+rnd()*.8,t=tipos[n%tipos.length]==='taberna'&&n!==3?'entramada':tipos[n%tipos.length];
       casa(t,Math.cos(a)*r,Math.sin(a)*r,Math.atan2(-Math.cos(a),-Math.sin(a))+(rnd()-.5)*.15,{puertaInteractiva:n===5,semilla:n+2,ancho:t==='entramada'?5.4+rnd()*1.2:undefined,tinteYeso:[1,.95+rnd()*.05,.86+rnd()*.14],tinteTeja:[.8+rnd()*.2,.8+rnd()*.15,.8+rnd()*.15]},[1,4,8].includes(n));n++;}
   }
-  // El pozo, un carro volcado, barriles, cajas y dos braseros.
+  // El pozo, la carreta de Scenario, barriles, cajas y dos braseros.
   const braseros=[];
   // El pozo (casas-three.js, con los materiales de las casas): se funde con ellas; el abrevadero queda hacia la plaza.
   {const pozo=CASAS.casa('pozo',{semilla:21});pozo.position.set(-5,0,-3);pozo.rotation.y=.27;barrio.push(pozo);obstaculos.push({x:-5,z:-3,r:1.3},{x:-2.82,z:-2.51,r:.55});
-    const carro=new THREE.Group();carro.position.set(6.5,0,-5.5);carro.rotation.set(0,.6,.35);mundo.add(carro);
-    const cm=(geo,mat,x,y,z,rx=0,ry=0,rz=0)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.rotation.set(rx,ry,rz);m.castShadow=m.receiveShadow=true;carro.add(m);};
-    cm(new THREE.BoxGeometry(2.6,.15,1.4),MAT.madera,0,.8,0);for(const s of [-1,1])cm(new THREE.BoxGeometry(2.6,.5,.1),MAT.madera,0,1.1,s*.7);
-    cm(new THREE.CylinderGeometry(.55,.55,.12,10),MAT.madera,-.8,.55,.8,Math.PI/2);cm(new THREE.CylinderGeometry(.55,.55,.12,10),MAT.madera,.9,.4,-.85,Math.PI/2,0,.3);obstaculos.push({x:6.5,z:-5.5,r:1.5});
+    const carro=CASAS.casa('carreta');carro.position.set(6.5,0,-5.5);carro.rotation.y=.6;barrio.push(carro);
+    // Dos volúmenes pequeños siguen la caja y las varas sin cerrar el paso alrededor.
+    for(const z of [-.65,.65]){const p=new V3(0,0,z).applyAxisAngle(new V3(0,1,0),.6).add(carro.position);obstaculos.push({x:p.x,z:p.z,r:1.05});}
     // La utilería comparte los materiales y el fundido de las casas (incluida su ocultación).
     const barril=(x,z,tumbado)=>{const g=CASAS.utileria('barril',{semilla:Math.round((x+z)*100)+900});g.position.set(x,tumbado?.41:0,z);if(tumbado){g.rotation.set(Math.PI/2,0,.7);g.position.add(new V3(0,-.47,0).applyEuler(g.rotation));}else g.rotation.y=.3;barrio.push(g);};
     barril(-8.5,5,false);barril(-7.8,5.6,false);barril(-8.9,5.9,true);obstaculos.push({x:-8.3,z:5.5,r:1.1});

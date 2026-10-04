@@ -903,7 +903,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       }
       if(m.tipo==='saqueador'&&a.escudazo){H.brazoI.rotation.set(-1.35,0,.15);H.anteI.rotation.x=-.35;H.torso.rotation.x+=.18*a.escudazo;H.torso.position.z=.09*a.escudazo;}
       else if(m.tipo==='saqueador')H.torso.position.z=0;
-      if(m.tipo==='adreida')animacion.resolver(m,a);
+      if(m.tipo==='adreida'){animacion.resolver(m,a);adreidaScenario?.posar(m,a);}
       else if(['recogerLlave','mirarLlave'].includes(a.anim))animacion.resolverLlave(m,a);
       else{
         if(m.tipo==='mohamed'&&a.armaLista){const r=a.retroceso||0;H.brazoD.rotation.set(-1.52-.3*r,0,.05);H.anteD.rotation.set(-.05-.25*r,0,0);H.manoD.rotation.set(0,0,0);H.torso.rotation.y-=.15;}

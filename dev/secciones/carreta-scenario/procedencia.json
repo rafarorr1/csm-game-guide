@@ -1,0 +1,12 @@
+{
+  "fuenteSha256": "c4f740ec813181ff3b67814a34404aba634a830c16e5a2d37e956ead031c9e43",
+  "asset": "asset_kgWKekrj5WsfL7ejbcvee5sT",
+  "triangulos": 8731,
+  "tamano": [
+    2.1964184989719704,
+    1.25,
+    2.747681528740382
+  ],
+  "atlas": 1024,
+  "fuenteEscenario": "../propuestas-scenario/carreta-brazos/procedencia.json"
+}

@@ -5,7 +5,7 @@ import vm from 'node:vm';
 import {recursosArquitectura} from './casas-three-exportar.mjs';
 const contexto2d=new Proxy({}, {get(o,k){if(k==='getImageData'||k==='createImageData')return (...a)=>({data:new Uint8ClampedArray(a.length===4?a[2]*a[3]*4:a[0]*a[1]*4)});if(k==='createLinearGradient'||k==='createRadialGradient')return ()=>({addColorStop(){}});if(k==='measureText')return ()=>({width:30});return o[k]??(()=>{});}});
 const c=vm.createContext({console,atob,document:{createElement:()=>({width:0,height:0,getContext:()=>contexto2d})}});c.window=c;
-for(const f of ['visor-three-vendor.js','arquitectura-scenario/datos.js','farol-scenario/datos.js','arpg-three-arquitectura.js','casas-three.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
+for(const f of ['visor-three-vendor.js','arquitectura-scenario/datos.js','carreta-scenario/datos.js','farol-scenario/datos.js','arpg-three-arquitectura.js','casas-three.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,F=c.CAOZ_CASAS.fabrica(T,{texturas:false}),tipos=['entramada','piedra','taberna','pozo'];
 for(const ruta of recursosArquitectura)assert(fs.statSync(new URL(ruta,import.meta.url)).size>20,ruta);
 const casas=tipos.map(tipo=>F.casa(tipo));
@@ -48,3 +48,11 @@ const luces=escena.children.filter(n=>n.isPointLight);assert.equal(luces.length,
 actualizar(camara,false);assert(luces.every(l=>l.intensity===0),'El impacto apaga las luces');
 barrio.userData.ocultacion.opacidades.fill(0);actualizar(camara);assert(luces.every(l=>l.intensity===0),'Una fachada invisible no conserva luces flotantes');
 console.log('✓ Faroles huecos compartidos, llama localizada y máximo de dos luces sin sombras; ocultación e impacto respetados.');
+
+const carreta=F.casa('carreta');assert.equal(carreta.userData.tipo,'carreta');
+assert.equal(carreta.userData.triangulos,8731);assert.equal(carreta.children.length,1);
+const cc=new T.Box3().setFromObject(carreta);assert(Math.abs(cc.min.y)<1e-6);assert(Math.abs(cc.max.y-1.25)<1e-6);
+const junto=F.fundir([...casas,carreta],{ocultables:true});
+assert.equal(junto.children.length,F.fundir(casas).children.length+1,'La carreta añade un único material agrupado');
+assert.equal(junto.userData.ocultacion.opacidades.length,casas.length+1,'La carreta participa en ocultación e impacto');
+console.log('✓ Carreta: suelo, dimensiones, colisión visual y un material agrupado.');

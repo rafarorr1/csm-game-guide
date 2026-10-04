@@ -1,0 +1,51 @@
+{
+  "fuentesSha256": {
+    "brazo": "6e8f53babbe8a431b0012d8b96fa2b36437fc14d41c625133707638cdaac5925",
+    "vendas": "12308fe5e9d4edaa84fe4d55736f3b952c81a5b4eed908d5fe30edbc27a8cf5e",
+    "hombrera": "7aca671422987c09f0834bb47f3e5d646655f4d59e46bcc4dcb03a6882073a31"
+  },
+  "triangulos": 44706,
+  "vertices": 31223,
+  "partes": [
+    {
+      "nombre": "cuerpo",
+      "inicio": 0,
+      "vertices": 10526,
+      "triangulos": 13418
+    },
+    {
+      "nombre": "brazoI",
+      "inicio": 10526,
+      "vertices": 5809,
+      "triangulos": 9500
+    },
+    {
+      "nombre": "brazoD",
+      "inicio": 16335,
+      "vertices": 5809,
+      "triangulos": 9500
+    },
+    {
+      "nombre": "vendasI",
+      "inicio": 22144,
+      "vertices": 2706,
+      "triangulos": 3762
+    },
+    {
+      "nombre": "vendasD",
+      "inicio": 24850,
+      "vertices": 2706,
+      "triangulos": 3762
+    },
+    {
+      "nombre": "hombreraI",
+      "inicio": 27556,
+      "vertices": 3667,
+      "triangulos": 4764
+    }
+  ],
+  "atlas": 2048,
+  "falanges": 20,
+  "rig": "Esqueleto original más dos falanges por dedo. Hombrera rígida; cuatro pesos máximo.",
+  "fuenteEscenario": "../propuestas-scenario/carreta-brazos/procedencia.json"
+}
