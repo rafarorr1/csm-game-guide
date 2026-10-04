@@ -59,7 +59,7 @@ const css=fs.readFileSync(new URL('arpg-cine-editor.css',import.meta.url),'utf8'
 console.log('✓ Sliders: arrastre con render activo, búsqueda durante el gesto, reversa, último destino, cancelación concurrente, plano local estable, extremos, teclado y pausa.');
 
 // El corte a tercera persona pertenece al plano 06, desde desaparece.
-fases.splice(2,0,'pies');fases.push('carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro');
+fases.splice(3,0,'pies');fases.push('carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro');
 const agrupado=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api);await completar();
 assert.equal($('cePlanos').children.length,10);assert.equal($('ceTiras').children.length,10);
 entrada('ceTiempo',490);await completar();assert.equal(Number($('ceLocal').max),239);

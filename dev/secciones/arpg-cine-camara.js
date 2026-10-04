@@ -2,7 +2,7 @@
 'use strict';
 (function(){
   const CLAVE='caoz.arpg.cine.mago.v1',REVISION='mago-v2';
-  const fases=['salida','descubrir','pies','vertigo','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
+  const fases=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
   const VERSION=5;
   const planoDeFase=(f,version=VERSION)=>version===1?f:['carrera','ataquePOV',...(version<4?['desaparece']:[])].includes(f)?'carrera':['tropezar','buscar','levantarse','voltear',...(version>=4?['desaparece']:[])].includes(f)?'tropezar':version>=3&&['techo','cielo'].includes(f)?'techo':f;
   const idsPorVersion=Object.fromEntries([1,2,3,4,5].map(v=>[v,Object.freeze([...new Set(fases.filter(f=>v>=5||f!=='pies').map(f=>planoDeFase(f,v)))])]));

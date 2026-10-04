@@ -29,7 +29,7 @@ for(const fps of [30,60,120]){
   if(cine.estado().fase==='buscar'&&cine.estado().t>.1){const cabeza=actor.m.H.cabeza.getWorldPosition(new T.Vector3());assert(cabeza.y<1.25,'Busca al mago desde el suelo');}
   const actual=cine.estado();
   assert.equal(lluvia,actual.tLluvia,'El clima sigue exactamente el tiempo de la secuencia');
-  if(['salida','descubrir','pies','vertigo','carrera','ataquePOV'].includes(actual.fase)){assert.equal(actual.lluviaLiberada,false);assert.equal(lluvia,0,'Las gotas siguen suspendidas durante el hechizo');}
+  if(['salida','descubrir','vertigo','pies','carrera','ataquePOV'].includes(actual.fase)){assert.equal(actual.lluviaLiberada,false);assert.equal(lluvia,0,'Las gotas siguen suspendidas durante el hechizo');}
   if(!est.lluviaLiberada&&actual.lluviaLiberada){assert.equal(actual.fase,'desaparece');assert.equal(cine.recursos.mago.visible,false,'La lluvia se libera justo al desaparecer');assert.equal(lluvia,0);}
   if(est.lluviaLiberada)assert(Math.abs(actual.tLluvia-est.tLluvia-1/fps)<1e-8,'La lluvia cae desde que se interrumpe el hechizo');
   assert.equal(actual.plano,c.CAOZ_ARPG_CINE_CAMARA.planoDeFase(actual.fase));
@@ -44,7 +44,7 @@ for(const fps of [30,60,120]){
    assert.equal(camara.fov,42,'El primer plano no hace zoom');
    if(actual.t>2.1){assert(camara.quaternion.angleTo(inicioPaneo.q)>.5,'El paneo recorre de Adreida al mago');const foco=new T.Vector3(0,2.35,0).project(camara);assert(Math.hypot(foco.x,foco.y)<1e-6,'El paneo termina encuadrando al mago');}
   }
-  if(est.fase==='pies'&&actual.fase==='vertigo'){
+  if(est.fase==='descubrir'&&actual.fase==='vertigo'){
    assert(camara.position.distanceTo(inicioPaneo.pos)>3,'El segundo plano comienza con un corte a otra posición');
    assert(Math.abs(camara.fov-18)<1e-8,'El dolly empieza con su propia focal');
   }
@@ -53,8 +53,8 @@ for(const fps of [30,60,120]){
    const bota=actor.pos.clone().setY(.2).project(camara);assert(Math.abs(bota.x)<.8&&Math.abs(bota.y)<.8,'Las botas quedan en el encuadre');
    assert(actor.pos.distanceTo(new T.Vector3(10,0,10))<=2.001,'El insert sólo muestra las primeras pisadas');
   }
-  if(est.fase==='pies'&&actual.fase==='vertigo')assert(Math.abs(actual.total-actual.inicios.pies-1.5)<1e-8,'Insert de exactamente 1,5 s a 30/60/120 FPS');
-  if(est.fase==='vertigo'&&actual.fase==='carrera')assert.deepEqual(actual.actor,est.actor,'No vuelve a la puerta al retomar la carrera');
+  if(est.fase==='pies'&&actual.fase==='carrera')assert(Math.abs(actual.total-actual.inicios.pies-1.5)<1e-8,'Insert de exactamente 1,5 s a 30/60/120 FPS');
+  if(est.fase==='pies'&&actual.fase==='carrera')assert(new T.Vector3(...actual.actor).distanceTo(new T.Vector3(...est.actor))<.1,'La carrera continúa desde la última pisada del insert sin saltar a la puerta');
   if(actual.fase==='vertigo'&&actual.t>0){
    const d=camara.position.distanceTo(new T.Vector3(0,2.35,0));assert(Math.abs(d*Math.tan(camara.fov*Math.PI/360)-24*Math.tan(9*Math.PI/180))<1e-6,'Dolly y focal se compensan para mantener el tamaño del mago');
    const frenteMago=new T.Vector3(0,0,1).applyQuaternion(cine.recursos.mago.quaternion),haciaCamara=camara.position.clone().sub(cine.recursos.mago.position).setY(0).normalize();
@@ -111,7 +111,7 @@ for(const fps of [30,60,120]){
    if(actual.fase==='impacto'&&actual.t>2.5){assert(actual.actor[1]<-3,'Desciende realmente dentro de la geometría');assert(poseAntes.reduce((s,{n,q})=>s+q.angleTo(actor.m.H[n].quaternion),0)>.5,'La pose cambia de Crouching a Falling');const cabeza=actor.m.H.cabeza.getWorldPosition(new T.Vector3()).project(camara);assert(Math.abs(cabeza.x)<.8&&Math.abs(cabeza.y)<.8,'La cámara mantiene la caída dentro del plano');}
   }
  }
- assert.deepEqual(orden,['salida','descubrir','pies','vertigo','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro']);
+ assert.deepEqual(orden,['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro']);
  assert.equal(regresos,antes+1);assert.equal(impactos,impactosAntes+1);assert.equal(negro,1);
  assert.equal(fx.estado().crateres.at(-1).radio,8.4);assert.equal(fx.estado().crateres.at(-1).profundidad,24);assert.equal(cine.recursos.fragmentos.count,180);assert.equal(cine.recursos.humo.count,28);
  assert(cine.estado().derrumbe>2);assert.equal(casa.castShadow,false);

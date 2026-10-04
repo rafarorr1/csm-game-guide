@@ -4,7 +4,7 @@
 (function(){
   // A 30 FPS: paneo 72 f, corte y vértigo 84 f; corte del hachazo en f 14;
   // giro tras levantarse 33 f; destrucción y caída en una sola toma de 101 f.
-  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,pies:1.5,vertigo:2.8,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
+  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:2.8,pies:1.5,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,impactar,interfaz,volver,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','techo','cielo'];
@@ -178,7 +178,7 @@
     }
     function paso(dt){if(!s||dt<0)return false;if(terminado||dt===0)return true;const h=s.actor,r=recursos;s.t+=dt;s.total+=dt;s.tPlano+=dt;if(s.lluviaLiberada)s.tLluvia+=dt;const t=s.t,f=s.fase;
       const enTecho=['levantarse','voltear','techo','cielo','caida','impacto','negro'].includes(f);
-      r.mago.position.copy(enTecho?techo:centro).add(new V(0,(['salida','descubrir','pies','vertigo','carrera','ataquePOV','desaparece'].includes(s.fase)?1.05:.03)+Math.sin(s.total*2)*.035,0));r.mago.rotation.y=enTecho?rumbo(r.mago.position,h.pos):0;
+      r.mago.position.copy(enTecho?techo:centro).add(new V(0,(['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece'].includes(s.fase)?1.05:.03)+Math.sin(s.total*2)*.035,0));r.mago.rotation.y=enTecho?rumbo(r.mago.position,h.pos):0;
       const hechizo=r.mago.visible&&!s.impactado,levantados=hechizo?.92+Math.sin(s.total*2.5)*.08:0;r.brazos.forEach((b,i)=>{b.rotation.x=-levantados*2.2;b.rotation.z=(i?1:-1)*(.24+levantados*.45);});r.baston.rotation.z=Math.sin(s.total*1.4)*.035;
       r.cola.material.uniforms.uTiempo.value=s.total;r.sello.rotation.y=s.total*.3;r.orbita.visible=hechizo;r.orbita.position.copy(r.mago.position).add(new V(0,2.6,0));r.orbita.rotation.set(s.total*.4,s.total*.7,0);
       r.aura.rotation.y=s.total*.8;for(let i=0;i<28;i++){const k=(i/28+s.total*.19)%1,a=i*2.399+s.total*.7;objeto.position.set(Math.cos(a)*.9,.1+k*2.6,Math.sin(a)*.9);objeto.rotation.set(a,k*5,a*.3);objeto.scale.setScalar(.6+Math.sin(k*Math.PI)*.7);objeto.updateMatrix();r.motas.setMatrixAt(i,objeto.matrix);}r.motas.instanceMatrix.needsUpdate=true;
@@ -192,15 +192,15 @@
         // Sostiene el final del paneo 0,3 s antes del corte al plano de vértigo.
         mirar(desdeCamara,new V(0,2.35,0),42);finPaneo.copy(camara.quaternion);
         camara.quaternion.slerpQuaternions(giroPaneo,finPaneo,suave(t/2.1));camara.updateMatrixWorld(true);
-        if(t>=DURACIONES.descubrir){h.dir=Math.atan2(s.avance.x,s.avance.z);cambio('pies');camaraPies();}
+        if(t>=DURACIONES.descubrir){cambio('vertigo');camaraVertigo(0);}
       }else if(f==='pies'){
         // Primer impulso en tiempo dilatado; el ciclo avanza por distancia, no por reloj.
         const k=lim(t/DURACIONES.pies),antes=h.pos.clone(),distancia=Math.min(2,s.salida.distanceTo(destino)*.2);
         h.pos.copy(s.salida).addScaledVector(s.avance,distancia*k*k);h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(1)*TAU;
         posar('andar',dt);camaraPies();
-        if(t+1e-8>=DURACIONES.pies){s.inicioCarrera.copy(h.pos);cambio('vertigo');camaraVertigo(0);}
+        if(t+1e-8>=DURACIONES.pies){s.inicioCarrera.copy(h.pos);cambio('carrera');vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),true);}
       }else if(f==='vertigo'){
-        posar('andar',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo){cambio('carrera');vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),true);}
+        posar('quieto',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo){h.dir=Math.atan2(s.avance.x,s.avance.z);cambio('pies');camaraPies();}
       }else if(f==='carrera'){
         // Conserva la duración anterior para no desfasar las cámaras ya editadas.
         const d=s.salida.distanceTo(destino),recorrido=Math.min(d,t*5.8),antes=h.pos.clone();h.pos.lerpVectors(s.inicioCarrera,destino,d>0?recorrido/d:1);h.dir=Math.atan2(s.avance.x,s.avance.z);
