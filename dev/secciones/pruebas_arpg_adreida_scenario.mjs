@@ -4,10 +4,10 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {recursosAdreida,entornoArpgThree} from './arpg-three-exportar.mjs';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
 const {THREE}=c.CAOZ_THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=F.crear('adreida'),otro=F.crear('adreida'),clasico=F.crear('adreida',{modeloAdreida:'clasico'});
 const cuerpo=m.mallas[0],g=cuerpo.geometry,a=g.attributes;
-assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,15408);assert.equal(m.mallas.length,4);
+assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,15408);assert.equal(m.mallas.length,2);
 assert.equal(m.alto,clasico.alto);assert.equal(m.radio,clasico.radio);assert.deepEqual(m.p,clasico.p);
 g.computeBoundingBox();assert.ok(Math.abs(g.boundingBox.max.y-g.boundingBox.min.y-1.913112)<.0001,'Altura del modelo aprobado');
 assert.equal(g,otro.mallas[0].geometry,'Adreidos reutiliza el cuerpo');assert.notEqual(cuerpo.skeleton,otro.mallas[0].skeleton);assert.notEqual(m.M.u,otro.M.u,'Efectos independientes');
@@ -83,9 +83,9 @@ for(const anim of ['quieto','andar','tajoA','revesA','estocadaA','salto','parry'
  for(const nombre of ['manoI','manoD','pieI','pieD'])assert.ok(m.H[nombre].getWorldPosition(v).distanceTo(clasico.H[nombre].getWorldPosition(new THREE.Vector3()))<1e-6,nombre+': mismo contacto');
 }
 const indiceCuerpo=g.index;
-F.mostrarHacha(m,false);assert.equal(g.index,indiceCuerpo,'El búmeran no borra el cuerpo');assert.ok(m.mallas.slice(1).every(mesh=>mesh.geometry.index.count===0),'El hacha abandona las manos');
-const hacha=F.crearHachaAdreida(m),segunda=F.crearHachaAdreida(m);assert.equal(hacha.children.length,3);hacha.children.forEach((mesh,i)=>assert.equal(mesh.geometry,segunda.children[i].geometry));
-F.mostrarHacha(m,true);assert.equal(g.index,indiceCuerpo);assert.ok(m.mallas.slice(1).every(mesh=>mesh.geometry.index===null),'El hacha vuelve completa');
+F.mostrarHacha(m,false);assert.equal(g.index,indiceCuerpo,'El búmeran no borra el cuerpo');assert.equal(m.hachaScenario.visible,false,'El hacha abandona las manos');assert.equal(otro.hachaScenario.visible,true,'Adreidos conserva su hacha');
+const hacha=F.crearHachaAdreida(m),segunda=F.crearHachaAdreida(m);assert.equal(hacha.children.length,1);hacha.children.forEach((mesh,i)=>assert.equal(mesh.geometry,segunda.children[i].geometry));
+F.mostrarHacha(m,true);assert.equal(g.index,indiceCuerpo);assert.equal(m.hachaScenario.visible,true,'El hacha vuelve completa');assert.ok(m.hachaScenario.geometry.index.count>0);
 for(const f of recursosAdreida){assert.ok(fs.existsSync(new URL(f,import.meta.url)));assert.ok(entornoArpgThree.includes(f));}
 for(const pagina of ['arpg-three.html','modelos-visor.html']){const html=fs.readFileSync(new URL(pagina,import.meta.url),'utf8');assert.ok(html.indexOf('adreida-scenario/datos.js')<html.indexOf('arpg-three-modelos.js'));assert.ok(html.includes('arpg-three-adreida.js'));}
 console.log(`✓ Adreida Scenario: ${poses} poses, 1200 muestras de marcha, apoyo, suelas, continuidad, escala, pesos, hacha y Adreidos.`);

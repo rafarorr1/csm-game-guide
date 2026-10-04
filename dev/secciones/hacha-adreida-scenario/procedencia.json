@@ -1,0 +1,35 @@
+{
+  "fuente": "Scenario · GPT Image 2.5 Sunburst + Tripo 3.1",
+  "team_id": "team_fusHPzE5VJ4KYZ3QPyxC2Eaa",
+  "project_id": "proj_yCSENgpggrHw8YbSmZXSuQ4w",
+  "collectionId": "col_9tCF8sJK6AR6VmDutpRBu6QU",
+  "referenciaAdreida": "asset_FJ9aBLGzifk1qfm96UCVAJn1",
+  "conceptoAssetId": "asset_aaQVDPDSheb4zJriq54ZoDyo",
+  "assetId": "asset_zi588qKyfzJmAaTXeXD514uT",
+  "modelos": {
+    "concepto": "model_openai-gpt-image-2-5-sunburst",
+    "malla": "model_tripo-v3-1-image-to-3d"
+  },
+  "parametrosConcepto": {
+    "prompt": "Design ONE exceptional, heavy double-bladed battle axe for ADREIDA, the adult half-orc warrior in the reference image, for the dark-fantasy isometric game Caoz ARPG. The reference defines ONLY the materials, character identity and artistic style; do NOT include the woman, any body parts or hands in the output. A believable premium game prop, hand-crafted brutal elegance: two broad balanced crescent blades with deep beards and pointed upper tips, charcoal forged iron faces, worn satin steel cutting edges, restrained engraved angular orcish knotwork, thick bronze collars and structural rivets. One small recessed teal stone set into the central socket, non-emissive. Straight dark ash-wood haft with a generous dark oxblood-brown leather wrapped grip, visible stitching and tight worn leather winding, bronze ferrule and a short pointed metal pommel. Deliberate strong silhouette, weapon looks heavy and powerful, not a toy or a plastic ornament. Match reference's sculpted dark-fantasy realism with slightly stylized proportions, dark leather, muted iron and old bronze. No mirror chrome, no magical glow, no particles, no floating ornaments, no chains, no cloth streamers, no blood. Entire axe 1.62 meters long from pommel to head tip; the double blade spans 0.76 meters and occupies the top 0.50 meters of length; shaft diameter 0.055 meters. Two-handed straight cylindrical grip unobstructed over the lower 0.55 meters. Head is symmetric left/right in mass, with subtle craftsmanship differences only in scratches. Axe upright vertically, blades at TOP, pommel at BOTTOM, front broad face almost exactly facing camera, 5 degrees yaw at most so thickness reads. Full object centered with generous margins, neutral diffuse studio illumination, no baked directional shadows, isolated on TRANSPARENT background. ONE axe only, no ground plane, no pedestal, no text, no grid, no montage, no additional views. High-detail albedo and clear separations suitable for PBR image-to-3D reconstruction and 4500 triangles.",
+    "referenceImages": [
+      "asset_FJ9aBLGzifk1qfm96UCVAJn1"
+    ],
+    "width": 1024,
+    "height": 1536,
+    "quality": "high",
+    "numOutputs": 1,
+    "background": "transparent"
+  },
+  "parametrosMalla": {
+    "image": "asset_aaQVDPDSheb4zJriq54ZoDyo",
+    "texture": true,
+    "pbr": true,
+    "delight": true,
+    "orientation": "align_image",
+    "faceLimit": 4500,
+    "seed": 731500
+  },
+  "creditos": 58,
+  "adaptacion": "Longitud 1,625 m, ancho 0,76 m, grosor máximo 0,13 m. Cabeza hacia -Y en la mano derecha, filos en Z. Mango reducido en el agarre. Una malla indexada y tres mapas locales. Geometría y mapas compartidos con Adreidos; material de efectos por personaje, proyectil independiente. Sin emisión ni luces adicionales."
+}

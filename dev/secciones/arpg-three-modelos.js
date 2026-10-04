@@ -28,6 +28,7 @@
   function fabrica(THREE,{pielGoblin=true}={}){
     const goblinScenario=pielGoblin&&window.CAOZ_ARPG_GOBLIN&&window.CAOZ_GOBLIN_DATOS?window.CAOZ_ARPG_GOBLIN.fabrica(THREE):null;
     const adreidaScenario=window.CAOZ_ARPG_ADREIDA&&window.CAOZ_ADREIDA_DATOS?window.CAOZ_ARPG_ADREIDA.fabrica(THREE):null;
+    const hachaAdreidaScenario=window.CAOZ_ARPG_HACHA_ADREIDA&&window.CAOZ_HACHA_ADREIDA_DATOS?window.CAOZ_ARPG_HACHA_ADREIDA.fabrica(THREE):null;
     const koboldScenario=window.CAOZ_ARPG_KOBOLD&&window.CAOZ_KOBOLD_DATOS?window.CAOZ_ARPG_KOBOLD.fabrica(THREE):null;
     const animacion=window.CAOZ_ARPG_ADREIDA_ANIMACION.fabrica(THREE);
     const V=(x,y,z)=>new THREE.Vector3(x,y,z);
@@ -574,6 +575,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       const M=materiales(TIPOS[tipo].lisos),{H,montar,p}=esGoblin?goblin(tipo==='cobrador',varianteGoblin,scenario):tipo==='adreida'?adreida(nuevaAdreida):tipo==='kobold'?kobold(nuevoKobold,varianteKobold):constructores[tipo](),mallas=montar(M,escala,nuevaAdreida||nuevoKobold);
       if(scenario)goblinScenario.montar(H,M,mallas,varianteGoblin,escala,aspecto.orejas);
       if(nuevaAdreida)adreidaScenario.montar(H,M,mallas);
+      const hachaScenario=nuevaAdreida&&hachaAdreidaScenario?hachaAdreidaScenario.montar(H,M,mallas):null;
       if(nuevoKobold)koboldScenario.montar(H,M,mallas,varianteKobold);
       if(escala!==1)for(const clave in p)if(typeof p[clave]==='number')p[clave]*=escala;
       // Los goblins suavizan el sombreado sin duplicar la cara visible de sus materiales.
@@ -582,7 +584,7 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
       if(tipo==='adreida'){M.metal.roughness=.62;M.metal.metalness=.65;M.metal.envMapIntensity=.25;const punta=new THREE.Object3D();punta.position.set(0,-1.1,0);H.manoD.add(punta);M.punta=punta;}
       // La boca de la pistola de Mohamed (de donde salen las balas).
       if(tipo==='mohamed'){M.metal.roughness=.78;M.metal.metalness=.4;M.metal.envMapIntensity=.12;const boca=new THREE.Object3D();boca.position.set(0,-.36,0);H.manoD.add(boca);M.boca=boca;M.punta=boca;}
-      return {tipo,H,M,mallas,p,modeloGoblin:scenario?'scenario':null,modeloAdreida:nuevaAdreida?'scenario':null,modeloKobold:nuevoKobold?'scenario':null,varianteKobold:tipo==='kobold'?varianteKobold:null,raiz:H.raiz,...TIPOS[tipo],alto:nuevoKobold?koboldScenario.alto(varianteKobold):TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
+      return {tipo,H,M,mallas,p,hachaScenario,modeloGoblin:scenario?'scenario':null,modeloAdreida:nuevaAdreida?'scenario':null,modeloKobold:nuevoKobold?'scenario':null,varianteKobold:tipo==='kobold'?varianteKobold:null,raiz:H.raiz,...TIPOS[tipo],alto:nuevoKobold?koboldScenario.alto(varianteKobold):TIPOS[tipo].alto*escala,radio:TIPOS[tipo].radio*escala,varianteGoblin:esGoblin?varianteGoblin:null};
     }
 
     // Dos mallas estáticas reutilizables, extraídas del hacha real con sus UV y texturas.
@@ -606,12 +608,14 @@ metalnessFactor=mix(metalness,texture2D(metalnessMap,vMetalnessMapUv).b*.65,vHac
 
     // Retira sólo los triángulos del arma: manos, brazales y sombras permanecen correctos.
     function mostrarHacha(m,visible){if(m.tipo!=='adreida')return;m.sinHacha=!visible;
+      if(m.hachaScenario){m.hachaScenario.visible=visible;return;}
       for(const mesh of m.mallas){const g=mesh.geometry,a=g.attributes.armaArrojable;if(!a)continue;
         if(!visible&&!g.userData.sinArma){const indices=[];for(let i=0;i<a.count;i++)if(a.getX(i)<.5)indices.push(i);g.userData.sinArma=new THREE.BufferAttribute(new Uint32Array(indices),1);}
         g.setIndex(visible?null:g.userData.sinArma);}
     }
     let piezasHachaAdreida=null;
     function crearHachaAdreida(m){
+      if(m.hachaScenario)return hachaAdreidaScenario.crearArrojada();
       if(!piezasHachaAdreida){piezasHachaAdreida=[];const materialesArma=materiales(true);materialesArma.metal.roughness=.62;materialesArma.metal.envMapIntensity=.25;
         // Las posiciones de construcción usan la pose de enlace, independiente del ataque actual.
         for(const mesh of m.mallas){const a=mesh.geometry.attributes,indices=[];for(let i=0;i<a.position.count;i++)if(a.armaArrojable?.getX(i)>.5)indices.push(i);if(!indices.length)continue;
