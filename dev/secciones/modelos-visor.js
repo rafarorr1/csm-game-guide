@@ -5,7 +5,7 @@
 (function(){
   const {THREE}=window.CAOZ_THREE,F=CAOZ_ARPG_MODELOS.fabrica(THREE),$=id=>document.getElementById(id),q=new URLSearchParams(location.search);
   // Animaciones: nombre, duración de un ciclo (s) y para quién tiene sentido.
-  const ANIMS=[['quieto',2.8],['andar',1.1],['recogerLlave',1.8,'adreida','Recoger la llave'],['mirarLlave',2,'adreida','Examinar la llave'],['rodar',F.animacion.roll.duracion+.6,'adreida','Roll evasivo · Entrada del Troll',{roll:true,duracion:F.animacion.roll.duracion}],['tajoA',1.1,'adreida'],['revesA',1.1,'adreida'],['estocadaA',1.4,'adreida'],['torbellino',1],['salto',1.3],['parry',.8],
+  const ANIMS=[['quieto',2.8],['giro180',.46,'adreida','Giro de 180° · Great Sword'],['andar',1.1],['recogerLlave',1.8,'adreida','Recoger la llave'],['mirarLlave',2,'adreida','Examinar la llave'],['rodar',F.animacion.roll.duracion+.6,'adreida','Roll evasivo · Entrada del Troll',{roll:true,duracion:F.animacion.roll.duracion}],['tajoA',.6,'adreida','Básico 1 · Great Sword Slash'],['revesA',.6,'adreida','Básico 2 · Great Sword Slash'],['estocadaA',.8,'adreida','Básico 3 · Great Sword Slash'],['torbellino',1],['salto',1.3],['parry',.8],
     ['golpe',1.1],['reves',1.1],['estocada',1.3],['aviso',1],['esquiva',.7],['grito',1.2],['lanzar',1.1],['apunta',1.2],['disparar',.5,'mohamed'],['acrobacia',1,'mohamed'],
     ['cargaMazazo',1.5,'troll'],['mazazo',1.4,'troll'],['aturdido',2],['dolor',.5],['muerte',2],
     ...F.animacion.muertes.map(p=>['muerte-adreida-'+(p.variante+1),p.duracion+.7,'adreida','Muerte de Adreida · '+p.nombre,{...p,adreida:true,distancia:0}]),
@@ -80,7 +80,11 @@
   $('anim').addEventListener('change',()=>{t=0;encuadrarAnimacion();});
   const actual=()=>{const a=ANIMS.find(a=>a[0]===$('anim').value)||ANIMS[0];
     // Mostrar la carrera a la cadencia real del juego: distancia por ciclo / 5,8 m/s.
-    return modelo.tipo==='adreida'&&a[0]==='andar'?[a[0],F.animacion.longitudZancada(1)/5.8]:a;};
+    if(modelo.tipo==='adreida'){
+      if(a[0]==='andar')return [a[0],F.animacion.longitudZancada(1)/5.8];
+      const duracion={tajoA:.6,revesA:.6,estocadaA:.8,parry:.35}[a[0]];
+      if(duracion)return [a[0],duracion,...a.slice(2)];
+    }return a;};
   function encuadrarAnimacion(){
     $('hacha').setAttribute('aria-pressed',verHacha);$('hacha').textContent=verHacha?'Ver a Adreida':'Ver hacha';
     $('anim').disabled=verHacha;$('cara').disabled=verHacha||comparar;
@@ -114,6 +118,7 @@
     const [nombre,dur,,,muerte]=actual(),fase=(t%dur)/dur,k=muerte?Math.min(1,(t%dur)/muerte.duracion):fase;
     $('faseAnim').value=fase;
     for(const [i,m]of modelos.entries()){
+      m.raiz.rotation.y=nombre==='giro180'?-Math.PI*F.animacion.avanceGiro(k):0;
       m.raiz.position.set(comparar?(i-1.5)*1.15:0,0,muerte&&!muerte.roll&&!muerte.adreida&&!muerte.importada?-F.recorridoMuerteGoblin(muerte,k):0);
       F.posar(m,{anim:muerte?.roll?'rodar':muerte?'muerte':nombre,muerte,t,k,fase:nombre==='andar'?fase*Math.PI*2:t*TAU_PASO,paso:1});
     }

@@ -765,7 +765,7 @@
   const COMBO=[{dur:.6,imp:.3,alc:2.05,ang:1.1,mult:1,emp:1.4,anim:'tajoA'},{dur:.6,imp:.3,alc:2.05,ang:1.1,mult:1,emp:1.4,anim:'revesA'},{dur:.8,imp:.39,alc:2.7,ang:.5,mult:1.8,emp:3.8,anim:'estocadaA'}];
   const frente=a=>new V3(Math.sin(a),0,Math.cos(a));
   const libre=()=>!cinematicaTroll?.activa&&heroe.vivo&&(['quieto','andar'].includes(heroe.estado)||heroe.estado==='golpe'&&heroe.golpeo);
-  function cambiar(e,s){e.estado=s;e.t=0;if(e.torbellino&&!['torbellino','esquiva'].includes(s))e.torbellino=null;}
+  function cambiar(e,s){e.estado=s;e.t=0;e.giro180=null;if(e.torbellino&&!['torbellino','esquiva'].includes(s))e.torbellino=null;}
   function girando(h){return h.estado==='torbellino'||h.estado==='esquiva'&&!!h.torbellino;}
   const cercano=r=>enemigos.filter(e=>e.estado!=='muere'&&plano(e.pos,heroe.pos)<r).sort((a,b)=>plano(a.pos,heroe.pos)-plano(b.pos,heroe.pos))[0]||null;
   // Hacia dónde apunta: el cursor; en táctil (sin cursor), el enemigo más cercano; si no, de frente.
@@ -859,6 +859,16 @@
       particula(h.pos.x+Math.cos(a)*.27,(h.alto||0)+.45+rnd()*.85,h.pos.z+Math.sin(a)*.27,Math.cos(a)*.1,.8+rnd()*.6,Math.sin(a)*.1,.45,.85,1.8,.5,.06,-.4);}
   }
   function esquivado(e){numero(heroe.pos.clone().setY(2.4),'¡Esquivado!','esquivado');heroe.furia=Math.min(100,heroe.furia+8);heroe.esquivados=(heroe.esquivados||0)+1;if(e)e.culpableT=reloj.t;}
+  // La orientación de combate responde enseguida; el modelo completa el pivote con los pies.
+  // El avance del clip depende del tiempo de simulación, nunca de cuántas veces se dibuja.
+  function orientarAdreida(h,mov,dt){
+    const cfg=MOD.animacion.giro180;
+    if(h.giro180){h.giro180.t+=dt;if(h.giro180.t>=cfg.duracion-1e-8)h.giro180=null;}
+    if(mov.lengthSq()<.01)return;
+    const destino=rumbo(new V3(),mov),delta=difAng(h.dir,destino);
+    if(!h.giro180&&!h.bumeran&&!h.recogeHacha&&Math.abs(delta)>=cfg.umbral){h.giro180={t:0,delta};h.dir+=delta;}
+    else if(!h.giro180)h.dir+=delta*Math.min(1,dt*18);
+  }
   function pasoHeroe(dt){const h=heroe;h.t+=dt;h.sigilo=Math.max(0,h.sigilo-dt);h.ultiT=Math.max(0,h.ultiT-dt);h.brilloParry=Math.max(0,h.brilloParry-dt);for(const k in h.cd)h.cd[k]=Math.max(0,h.cd[k]-dt);h.escudo=Math.max(0,h.escudo-dt);h.invul=Math.max(0,h.invul-dt);h.destello=Math.max(0,h.destello-dt*5);h.dolor=Math.min(1,h.dolor+dt*4);
     h.recogeHacha=Math.max(0,(h.recogeHacha||0)-dt);const dirAnterior=h.dir,desdeGiro=h.torbellino?h.pos.clone():null;let movido=0;const mov=ctl.mov;if(h.bloqueoBasico)ent.pendiente=false;if(!ctl.atacar)h.bloqueoBasico=false;
     const andar=(v,vel)=>{if(v.lengthSq()<.01)return 0;const l=Math.min(1,v.length()),paso=vel*l*dt;h.pos.x+=v.x/v.length()*paso;h.pos.z+=v.z/v.length()*paso;return paso;};
@@ -870,7 +880,10 @@
       if(apunta&&(h.sigilo>0||h.balas>0&&h.recargaT<=0)&&h.cadT<=0)disparar();
       h.estado=movido>0?'andar':'quieto';}
     else if(h.estado==='abanico'){if(h.t>=.3)cambiar(h,'quieto');}
-    else if(['quieto','andar'].includes(h.estado)){movido=ctl.atacar&&!h.bloqueoBasico&&!h.bumeran?0:andar(mov,VEL);if(h.bumeran&&ctl.apunta&&plano(ctl.apunta,h.pos)>.1)h.dir+=difAng(h.dir,rumbo(h.pos,ctl.apunta))*Math.min(1,dt*18);else if(movido)h.dir+=difAng(h.dir,rumbo(new V3(),mov))*Math.min(1,dt*18);
+    else if(['quieto','andar'].includes(h.estado)){
+      if(h.bumeran&&ctl.apunta&&plano(ctl.apunta,h.pos)>.1)h.dir+=difAng(h.dir,rumbo(h.pos,ctl.apunta))*Math.min(1,dt*18);else orientarAdreida(h,mov,dt);
+      const avanceGiro=h.giro180?.35+.65*MOD.animacion.avanceGiro(h.giro180.t/MOD.animacion.giro180.duracion):1;
+      movido=ctl.atacar&&!h.bloqueoBasico&&!h.bumeran?0:andar(mov,VEL*avanceGiro);
       if(h.bumeran)ent.pendiente=false;
       if(ctl.atacar&&!h.bloqueoBasico&&!h.bumeran){if(ent.piloto)iniciarGolpe();else iniciarCarga();}else h.estado=movido>0?'andar':'quieto';}
     else if(h.estado==='lanzarHacha'){if(!h.golpeo&&h.t>=.2){h.golpeo=true;lanzarBumeran(h);}if(h.t>=.46)cambiar(h,'quieto');}
@@ -1597,9 +1610,10 @@
 
   function posarHeroe(dt){
     const h=heroe,hm=h.m;hm.raiz.position.set(h.pos.x,h.alto||0,h.pos.z);
-    if(girando(h)){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir;}
-    const ph=poses.heroe||(!aDistancia()&&h.recogeHacha>0&&['quieto','andar'].includes(h.estado)?['recogerHachaA',1-h.recogeHacha/.25]:null)||{lanzarHacha:['lanzarHachaA',h.t/.46],quieto:['quieto'],andar:['andar'],recuperacion:[COMBO[h.combo].anim,.64],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:girando(h)?['torbellino']:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.muerteT/(h.muerte?.duracion||1))]}[h.estado];
-    MOD.posar(hm,{muerte:h.muerte,sinHacha:!!h.bumeran,anim:!h.recogeHacha&&!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],potencia:!poses.heroe&&['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,giroCarrera:h.inclinacion||0,t:reloj.t,fase:poses.heroe?ph[1]*TAU:h.fase,paso:poses.heroe?1:h.paso,dt,estado:girando(h)?'torbellino':h.estado,mezclar:!poses.heroe,armaLista:aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45),retroceso:Math.max(0,1-h.disparoT*6)});
+    const vuelta=!poses.heroe&&h.giro180,kGiro=vuelta?vuelta.t/MOD.animacion.giro180.duracion:0;
+    if(girando(h)){h.giro+=dt*17;hm.raiz.rotation.y=h.dir+h.giro;}else{h.giro=0;hm.raiz.rotation.y=h.dir+(vuelta?vuelta.delta*(MOD.animacion.avanceGiro(kGiro)-1):0);}
+    const ph=poses.heroe||(vuelta?['giro180',kGiro]:null)||(!aDistancia()&&h.recogeHacha>0&&['quieto','andar'].includes(h.estado)?['recogerHachaA',1-h.recogeHacha/.25]:null)||{lanzarHacha:['lanzarHachaA',h.t/.46],quieto:['quieto'],andar:['andar'],recuperacion:[COMBO[h.combo].anim,.64],carga:[COMBO[h.combo].anim,Math.min(.38,h.t/COMBO[h.combo].dur)],golpe:[COMBO[h.combo].anim,h.t/COMBO[h.combo].dur],esquiva:girando(h)?['torbellino']:['esquiva',h.t/DUR_ESQ],torbellino:['torbellino'],salto:[aDistancia()?'acrobacia':'salto',h.t/.72],abanico:['disparar',h.t/.3],grito:['grito',h.t/.7],parry:['parry',h.t/PARRY.dur],muerta:['muerte',Math.min(1,h.muerteT/(h.muerte?.duracion||1))]}[h.estado];
+    MOD.posar(hm,{muerte:h.muerte,sinHacha:!!h.bumeran,anim:!vuelta&&!h.recogeHacha&&!poses.heroe&&!aDistancia()&&h.paso>.005&&['quieto','andar'].includes(h.estado)?'andar':ph[0],k:ph[1],sentidoGiro:vuelta?Math.sign(vuelta.delta):0,potencia:!poses.heroe&&['carga','golpe','recuperacion'].includes(h.estado)?h.carga:0,giroCarrera:h.inclinacion||0,t:reloj.t,fase:poses.heroe?ph[1]*TAU:h.fase,paso:poses.heroe?1:h.paso,dt,estado:vuelta?'giro180':girando(h)?'torbellino':h.estado,mezclar:!poses.heroe,armaLista:aDistancia()&&!poses.heroe&&['quieto','andar'].includes(h.estado)&&(ctl.atacar||h.disparoT<.45),retroceso:Math.max(0,1-h.disparoT*6)});
     if(h.dolor<1&&['quieto','andar'].includes(h.estado)){hm.H.torso.rotation.x-=.25*(1-h.dolor);}
     // Rojo al recibir; azulado y translúcido mientras es invulnerable (esquiva).
     if(h.destello>0){hm.M.u.uDestello.value=h.destello*.8;hm.M.u.uColorD.value.setRGB(1,.25,.2);}else{hm.M.u.uDestello.value=h.invul>0?.4:0;hm.M.u.uColorD.value.setRGB(.55,.8,1.3);}

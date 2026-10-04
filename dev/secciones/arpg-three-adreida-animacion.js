@@ -47,6 +47,36 @@
       m.H.cuerpo.position.fromArray(datos,i*ancho).lerp(muerteP.fromArray(datos,j*ancho),u);
       for(let n=0;n<huesos.length;n++)m.H[huesos[n]].quaternion.fromArray(datos,i*ancho+3+n*4).normalize().slerp(muerteQ.fromArray(datos,j*ancho+3+n*4).normalize(),u);
     }
+    const combate=window.CAOZ_ADREIDA_COMBATE||null;
+    const giro180=Object.freeze({duracion:.46,umbral:Math.PI*5/6});
+    function clipCombate(a){
+      if(!combate)return null;
+      if(['tajoA','revesA','estocadaA'].includes(a.anim)&&(a.potencia>0||a.estado==='carga'||a.estado==='recuperacion'))return null;
+      return combate[a.anim]||null;
+    }
+    function faseCombate(a,clip){
+      const k=Math.max(0,Math.min(1,a.k||0));if(clip.impacto===null)return k;
+      // Cada contacto del FBX cae exactamente en el instante que calcula el daño.
+      const impacto=a.anim==='estocadaA'?.39/.8:.5;
+      return k<=impacto?k/impacto*clip.impacto:clip.impacto+(k-impacto)/(1-impacto)*(1-clip.impacto);
+    }
+    const combateP=new THREE.Vector3(),combateQ=new THREE.Quaternion();
+    function muestraCombate(a,clip){const f=faseCombate(a,clip)*(clip.muestras-1),i=Math.floor(f);return {i,j:Math.min(clip.muestras-1,i+1),u:f-i};}
+    function avanceGiro(k){if(!combate)return suave(k);const c=combate.giro180,{i,j,u}=muestraCombate({k},c),o=c.ancho-1;return c.datos[i*c.ancho+o]*(1-u)+c.datos[j*c.ancho+o]*u;}
+    function posarCombate(m,a,clip){
+      const {datos,ancho,huesos}=clip,{i,j,u}=muestraCombate(a,clip),H=m.H,espejo=a.anim==='giro180'&&a.sentidoGiro>0;
+      H.cuerpo.position.fromArray(datos,i*ancho).lerp(combateP.fromArray(datos,j*ancho),u);if(espejo)H.cuerpo.position.x*=-1;
+      for(let n=0;n<huesos.length;n++){
+        const nombre=huesos[n],destino=espejo&&/[ID]$/.test(nombre)?nombre.slice(0,-1)+(nombre.endsWith('I')?'D':'I'):nombre;
+        const q=H[destino].quaternion.fromArray(datos,i*ancho+3+n*4).normalize().slerp(combateQ.fromArray(datos,j*ancho+3+n*4).normalize(),u);
+        if(espejo){q.y*=-1;q.z*=-1;}
+      }
+    }
+    function agarreCombate(a,clip){
+      const {datos,ancho,huesos}=clip,{i,j,u}=muestraCombate(a,clip),o=3+huesos.length*4,espejo=a.anim==='giro180'&&a.sentidoGiro>0;
+      const r={};for(const [nombre,n]of [['G',0],['A',3],['arriba',6]]){r[nombre]=[0,1,2].map(k=>datos[i*ancho+o+n+k]*(1-u)+datos[j*ancho+o+n+k]*u);if(espejo)r[nombre][0]*=-1;}
+      return r;
+    }
     const configuracion=()=>({version:1,personaje:'adreida',ajustes:{...ajustes}});
     function configurar(p){const nuevos=validar(p);ajustes=nuevos;return configuracion();}
     /* ---- El hacha de Adreida: una mano al desplazarse, dos en combate -------------------------
@@ -234,6 +264,7 @@
       H.manoI.updateMatrixWorld(true);
     }
     function posar(m,a){
+      const clip=clipCombate(a);if(clip){posarCombate(m,a,clip);return true;}
       const H=m.H,k=a.k||0,respira=Math.sin((a.t||0)*2.2);
       switch(a.anim){
         case 'recogerLlave':case 'mirarLlave':posarLlave(m,a);break;
@@ -278,7 +309,7 @@
       if(exacta||!e.valido||libre||e.libre){e.duracion=0;e.tiempo=0;}
       else if(nuevo){
         // La pose final del cargado se mantiene exactamente durante sus 0,3 s de recuperación.
-        e.duracion=a.anim==='rodar'?.06:a.anim==='muerte'?.1:estado==='carga'?ajustes.carga:estado==='andar'?ajustes.caminar:estado==='quieto'?ajustes.regreso:estado==='golpe'?Math.min(.08,ajustes.carga):estado==='parry'?.035:0;
+        e.duracion=a.anim==='giro180'?.06:a.anim==='rodar'?.06:a.anim==='muerte'?.1:estado==='carga'?ajustes.carga:estado==='andar'?ajustes.caminar:estado==='quieto'?ajustes.regreso:estado==='golpe'?Math.min(.08,ajustes.carga):estado==='parry'?.035:0;
         e.tiempo=0;e.desdePos.copy(e.pos);e.huesos.forEach((b,i)=>e.desde[i].copy(e.ultima[i]));copiarAgarre(e.desdeAgarre,e.agarre);
       }
       e.tiempo+=Math.max(0,Math.min(.05,a.dt||0));
@@ -304,8 +335,8 @@
         H.torso.rotation.x+=p*(-.2*pre+.24*gol);H.cuerpo.position.y-=p*(.13*pre+.08*gol);
         H.rodillaI.rotation.x+=p*(.3*pre+.15*gol);H.rodillaD.rotation.x+=p*.28*pre;
       }
-      const agarre=agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];mezclar(m,a,agarre);
-      if(['recogerLlave','mirarLlave'].includes(a.anim))apoyarBotas(m);
+      const clip=clipCombate(a),agarre=clip?agarreCombate(a,clip):agarreAdreida(a);agarre.soltarIzquierda??=0;agarre.brazoLibre??=[0,0,.18,-.4,0,0];mezclar(m,a,agarre);
+      if(clip||['recogerLlave','mirarLlave'].includes(a.anim))apoyarBotas(m);
       if(a.anim==='andar'&&(a.mezclar!==true||memoria(m).tiempo>0)){apoyarBotas(m);memoria(m).pos.copy(H.cuerpo.position);}
       {
         const tela=m.tela||(m.tela={t:t,aperturas:Array(7).fill(0)}),dt=Math.max(0,Math.min(.05,t-tela.t));tela.t=t;
@@ -328,7 +359,7 @@
       // La entrada a una caída parte de la pose visible, incluidas las manos resueltas por IK.
       const e=memoria(m);e.huesos.forEach((b,i)=>e.ultima[i].copy(b.quaternion));
     }
-    return {posar,resolver,posarLlave,resolverLlave,muertes,elegirMuerte,roll,desplazamientoRoll,longitudZancada,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
+    return {posar,resolver,giro180,avanceGiro,clipCombate,posarLlave,resolverLlave,muertes,elegirMuerte,roll,desplazamientoRoll,longitudZancada,configuracion,configurar,restablecer:()=>{ajustes={...predeterminados};return configuracion();}};
   }
   window.CAOZ_ARPG_ADREIDA_ANIMACION=Object.freeze({fabrica,validar,predeterminados});
 })();

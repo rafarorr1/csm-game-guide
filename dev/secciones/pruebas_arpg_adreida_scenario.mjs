@@ -4,7 +4,7 @@ import vm from 'node:vm';
 import assert from 'node:assert/strict';
 import {recursosAdreida,entornoArpgThree} from './arpg-three-exportar.mjs';
 const c=vm.createContext({console,atob});c.window=c;
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
+for(const f of ['visor-three-vendor.js','adreida-scenario/combate.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js','arpg-three-adreida.js','hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js','arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL(f,import.meta.url),'utf8'),c,{filename:f});
 const {THREE}=c.CAOZ_THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=F.crear('adreida'),otro=F.crear('adreida'),clasico=F.crear('adreida',{modeloAdreida:'clasico'});
 const cuerpo=m.mallas[0],g=cuerpo.geometry,a=g.attributes;
 assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,15408);assert.equal(m.mallas.length,2);
@@ -77,10 +77,11 @@ for(const anim of ['quieto','andar','tajoA','revesA','estocadaA','parry','salto'
  for(let i=0;i<a.position.count;i++){cuerpo.getVertexPosition(i,v);assert.ok(Number.isFinite(v.x+v.y+v.z),anim+': deformación finita');assert.ok(v.length()<4,anim+': sin vértices disparados');}
  poses++;
 }
-// La adaptación no cambia los puntos de contacto del hacha ni sus animaciones.
+// La adaptación conserva los contactos relativos. El apoyo vertical se corrige
+// para la suela de cada modelo (las botas clásicas tienen otra geometría).
 for(const anim of ['quieto','andar','tajoA','revesA','estocadaA','salto','parry'])for(const k of [0,.5,1]){
  for(const h of [m,clasico]){F.posar(h,{anim,k,t:k,paso:1,fase:k*6});h.raiz.updateMatrixWorld(true);}
- for(const nombre of ['manoI','manoD','pieI','pieD'])assert.ok(m.H[nombre].getWorldPosition(v).distanceTo(clasico.H[nombre].getWorldPosition(new THREE.Vector3()))<1e-6,nombre+': mismo contacto');
+ for(const nombre of ['manoI','manoD','pieI','pieD'])assert.ok(m.H.cuerpo.worldToLocal(m.H[nombre].getWorldPosition(v)).distanceTo(clasico.H.cuerpo.worldToLocal(clasico.H[nombre].getWorldPosition(new THREE.Vector3())))<1e-6,nombre+': mismo contacto relativo');
 }
 const indiceCuerpo=g.index;
 F.mostrarHacha(m,false);assert.equal(g.index,indiceCuerpo,'El búmeran no borra el cuerpo');assert.equal(m.hachaScenario.visible,false,'El hacha abandona las manos');assert.equal(otro.hachaScenario.visible,true,'Adreidos conserva su hacha');

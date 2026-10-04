@@ -1,0 +1,48 @@
+{
+  "fuentes": [
+    {
+      "archivo": "Great Sword Blocking.fbx",
+      "sha256": "ce1b0762a3840df6c810d9198b1cf69223978f2d3988e5d03fe92489c6e9e0db",
+      "duracion": 0.5,
+      "muestras": 16
+    },
+    {
+      "archivo": "Great Sword Slash.fbx",
+      "sha256": "ada51e1b7871fd7ebb7a096a8dec0309feabb5c7efe5e7022950ade8ae979b69",
+      "duracion": 3.066666666666667,
+      "muestras": 93
+    },
+    {
+      "archivo": "Great Sword 180 Turn.fbx",
+      "sha256": "7b4d00a9dcdb8638e66d9f5c4322d676a99b2823a225edcf422b76bf6db81e1b",
+      "duracion": 0.8,
+      "muestras": 25
+    }
+  ],
+  "segmentos": {
+    "tajoA": [
+      0,
+      24,
+      12
+    ],
+    "revesA": [
+      24,
+      48,
+      39
+    ],
+    "estocadaA": [
+      48,
+      92,
+      66
+    ],
+    "parry": [
+      0,
+      15
+    ],
+    "giro180": [
+      0,
+      24
+    ]
+  },
+  "adaptacion": "Nueve huesos del cuerpo y referencias del mango tomadas de los nudillos. Traslación horizontal del FBX eliminada; contacto de las botas horneado. El giro del clip se separa del esqueleto para que el control lo aplique una sola vez. Tiempos de impacto originales del juego conservados. No incluye mallas ni texturas de los FBX."
+}
