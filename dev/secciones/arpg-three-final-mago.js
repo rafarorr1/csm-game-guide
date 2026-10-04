@@ -4,7 +4,7 @@
 (function(){
   // A 30 FPS: paneo 72 f, corte y vértigo 84 f; corte del hachazo en f 14;
   // giro tras levantarse 33 f; destrucción y caída en una sola toma de 101 f.
-  const RECORTE_PIES=11/60,DURACION_PIES_ORIGINAL=1.5;
+  const RECORTE_PIES=11/60,DURACION_PIES_ORIGINAL=1.5,DESAPARECER_MAGO=.86;
   const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:2.8,pies:DURACION_PIES_ORIGINAL-RECORTE_PIES,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,impactar,interfaz,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
@@ -202,7 +202,7 @@
       else if(f==='pies'){de=hacia='ira';a=.35;b=.50;k=t/.65;}
       else if(f==='carrera'){de=hacia='ira';a=.50;b=.63;k=t/.9;}
       else if(f==='ataquePOV'){de=hacia='ira';a=.63;b=.76;k=t/DURACIONES.ataquePOV;}
-      else if(f==='desaparece'){de='ira';hacia='sorpresa';a=.76;b=.65;k=(t-.17)/.40;}
+      else if(f==='desaparece'){de='ira';hacia='sorpresa';a=.76;b=.65;k=(t-(DESAPARECER_MAGO-DURACIONES.ataquePOV))/.2;}
       else if(f==='tropezar'){de='sorpresa';hacia='dolor';a=.65;b=.58;k=t/.25;}
       else if(f==='buscar'){de='dolor';hacia='desconfianza';a=.58;b=.64;k=t/.4;mirada=[Math.sin(t*2.4)*.34,-.08];}
       else if(f==='levantarse'){de='desconfianza';hacia='determinacion';a=.64;b=.45;k=t/.8;mirada=[0,-.06*(1-suave(t/1.75))];}
@@ -223,7 +223,16 @@
     function mirar(pos,objetivo,fov){camara.position.copy(pos);camara.lookAt(objetivo);camara.fov=fov;camara.near=.045;camara.updateProjectionMatrix();camara.updateMatrixWorld(true);}
     function camaraJuego(amplitud=1,fov=32){const h=s.actor,objetivo=h.pos.clone().lerp(centro,.35).setY(.75);const d=22*amplitud;mirar(objetivo.clone().add(new V(0,Math.sin(.92)*d,Math.cos(.92)*d)),objetivo,fov);}
     function camaraPerfil(){const objetivo=s.remate.clone().setY(.85),lateral=new V(-s.avance.z,0,s.avance.x);mirar(objetivo.clone().addScaledVector(lateral,12).add(new V(0,8.4,0)),objetivo,36);}
-    function vistaOjos(objetivo,correr=false,fov=68){const h=s.actor,balanceo=correr&&!reducido?Math.sin(h.fase*2)*.035:0;mirar(h.pos.clone().add(new V(Math.sin(h.dir)*.12,1.69+balanceo,Math.cos(h.dir)*.12)),objetivo,fov);}
+    function vistaOjos(objetivo,correr=false,fov=68,altura=1.69){const h=s.actor,balanceo=correr&&!reducido?Math.sin(h.fase*2)*.035:0;mirar(h.pos.clone().add(new V(Math.sin(h.dir)*.12,altura+balanceo,Math.cos(h.dir)*.12)),objetivo,fov);}
+    function deslizamiento(edad){
+      const clip=window.CAOZ_ADREIDA_CINE_CLIPS.deslizarAtaque,duracion=DURACIONES.ataquePOV+DURACIONES.desaparece;
+      // Se conserva el arranque, la rodilla baja y el barrido del FBX. Su vuelta
+      // a pie firme se sustituye por la caída al fallar, dentro del mismo plano.
+      const fin=Math.min(1,1.5/clip.duracion),k=lim(edad/duracion)*fin;
+      const avance=u=>{const f=u*(clip.muestras-1),i=Math.floor(f),j=Math.min(i+1,clip.muestras-1);return T.MathUtils.lerp(clip.raiz[i*3+2],clip.raiz[j*3+2],f-i);};
+      const origen=avance(0),recorrido=avance(fin)-origen;
+      return {k,avance:lim((avance(k)-origen)/Math.max(.001,recorrido))};
+    }
     function camaraPies(){
       const foco=s.actor.pos.clone().setY(.3),lateral=new V(-s.avance.z,0,s.avance.x);
       // Travelling bajo de perfil: deja espacio delante de las botas y corta bajo la rodilla.
@@ -324,10 +333,11 @@
         h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(1)*TAU;posar('andar',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),true);
         if(recorrido>=d||t>=DURACIONES.carrera){h.pos.copy(destino);cambio('ataquePOV');}
       }else if(f==='ataquePOV'||f==='desaparece'){
-        const edad=(f==='desaparece'?DURACIONES.ataquePOV:0)+t,k=lim(edad/1.05)*.82;
-        h.pos.lerpVectors(destino,s.remate,suave(edad/1.05));h.dir=Math.atan2(s.avance.x,s.avance.z);posar('tajoA',dt,k);
-        if(f==='ataquePOV')vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)));else camaraPerfil();
-        if(edad>.65){r.mago.visible=r.orbita.visible=false;s.lluviaLiberada=true;}r.sello.scale.setScalar(1+suave((edad-.65)/.4)*2);r.sello.material.opacity=.5*(1-suave((edad-.65)/.4));
+        const edad=(f==='desaparece'?DURACIONES.ataquePOV:0)+t,slide=deslizamiento(edad);
+        h.pos.lerpVectors(destino,s.remate,slide.avance);h.dir=Math.atan2(s.avance.x,s.avance.z);h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;
+        actuacion.deslizar(h.m,slide.k,f==='ataquePOV'?s.pose:null,edad/.12);
+        if(f==='ataquePOV')vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),false,68,1.69+h.m.H.cuerpo.position.y*.75);else camaraPerfil();
+        if(edad>DESAPARECER_MAGO){r.mago.visible=r.orbita.visible=false;s.lluviaLiberada=true;}r.sello.scale.setScalar(1+suave((edad-DESAPARECER_MAGO)/.19)*2);r.sello.material.opacity=.5*(1-suave((edad-DESAPARECER_MAGO)/.19));
         if(f==='ataquePOV'&&t>=DURACIONES.ataquePOV){cambio('desaparece');camaraPerfil();}
         else if(f==='desaparece'&&t>=DURACIONES.desaparece){r.sello.visible=false;cambio('tropezar');}
       }else if(f==='tropezar'){
@@ -354,7 +364,7 @@
       }else if(f==='negro'){
         const edad=DURACIONES.impacto+t;caerAbismo(edad);escombros(edad);camaraDestruccion(edad);interfaz({fase:f,negro:suave(t/.6)});if(t>=DURACIONES.negro)finalizar();
       }
-      if(s){actuarRostro();ambienteLluvia(s.tLluvia,h.pos);if(POV.includes(s.fase))actuacion.fps(r.brazosFPS,camara,s.fase==='carrera'?h.fase:0,s.total,s.fase==='ataquePOV'?lim(s.t/1.05)*.82:null);h.m.raiz.updateMatrixWorld(true);r.grupo.updateMatrixWorld(true);camara.updateMatrixWorld(true);}return true;
+      if(s){actuarRostro();ambienteLluvia(s.tLluvia,h.pos);if(POV.includes(s.fase))actuacion.fps(r.brazosFPS,camara,s.fase==='carrera'?h.fase:0,s.total,s.fase==='ataquePOV'?deslizamiento(s.t).k:null,s.fase==='ataquePOV'?'deslizarAtaque':null);h.m.raiz.updateMatrixWorld(true);r.grupo.updateMatrixWorld(true);camara.updateMatrixWorld(true);}return true;
     }
     function finalizar(){if(!s||terminado)return false;restaurarCasaDolly();terminado=true;interfaz({fase:'fin',negro:1});return true;}
     function cancelar(){ambienteLluvia(null);restaurarCasaDolly();if(recursos){recursos.grupo.visible=false;recursos.brazosFPS.raiz.visible=false;recursos.losasPiso.visible=false;recursos.sello.scale.setScalar(1);recursos.sello.material.opacity=.3;}derrumbe.value=tiempoPiso.value=-1;centroOnda.value.set(0,0,0);for(const [m,v]of sombras)m.castShadow=v;sombras=[];
@@ -385,6 +395,7 @@
       [recursos.sello,recursos.humo,recursos.onda].forEach((m,i)=>m.material.opacity=c.opacidad[i]);
       if(c.opacidades)casas.userData.ocultacion.opacidades.set(c.opacidades);mallasRuina.forEach((m,i)=>m.castShadow=c.sombras[i]);
       recursos.cola.material.uniforms.uTiempo.value=s.total;ambienteLluvia(s.tLluvia,s.actor.pos);
+      actuacion.capaFPS(recursos.brazosFPS,s.fase==='ataquePOV');
       for(const raiz of [s.actor.m.raiz,recursos.grupo,recursos.brazosFPS.raiz])raiz.updateMatrixWorld(true);
       interfaz({fase:terminado?'fin':s.fase,negro:terminado?1:s.fase==='negro'?suave(s.t/.6):0});
     }

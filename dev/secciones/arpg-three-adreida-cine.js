@@ -22,7 +22,7 @@
       m.raiz.name='Adreida · brazos en primera persona';m.raiz.visible=false;
       return m;
     }
-    function fps(m,camara,fase,t,ataque=null){
+    function fps(m,camara,fase,t,ataque=null,clipAtaque=null){
       MOD.posar(m,{anim:'quieto',dt:0,t,sinHacha:true,agarreDerecha:true,mezclar:false});const H=m.H;
       H.cuerpo.position.set(0,0,0);H.cadera.rotation.set(0,0,0);H.torso.rotation.set(0,0,Math.sin(fase)*.018);
       for(const [l,signo]of [['D',-1],['I',1]]){
@@ -33,19 +33,40 @@
       }
       // El mismo clip y el mismo progreso continúan después del corte a tercera persona.
       const entradaAtaque=ataque===null?0:suave(ataque/.085);
-      if(ataque!==null){const desde=capturar(m);MOD.posar(m,{anim:'tajoA',k:ataque,t,dt:0,mezclar:false});mezclar(m,desde,entradaAtaque);}
+      if(ataque!==null){const desde=capturar(m);if(clipAtaque==='deslizarAtaque')deslizar(m,ataque);else MOD.posar(m,{anim:'tajoA',k:ataque,t,dt:0,mezclar:false});mezclar(m,desde,entradaAtaque);}
       // El agarre de tercera persona arma el golpe detrás del hombro. Adelanta el
       // modelo de vista para mantener manos y filo dentro del encuadre durante ese arco.
+      // La preparación del slide lleva el filo sobre la cabeza: el modelo de
+      // vista necesita más separación para que la hoja no atraviese la lente.
+      const deslizante=clipAtaque==='deslizarAtaque';
+      // Como modelo de vista, los antebrazos del slide se dibujan delante del
+      // entorno: acercarse al mago no oculta las manos dentro de su túnica.
+      capaFPS(m,deslizante);
       m.raiz.position.set(-.15*entradaAtaque,-1.50-.14*entradaAtaque,-.20-.8*entradaAtaque).applyQuaternion(camara.quaternion).add(camara.position);
-      m.raiz.quaternion.copy(camara.quaternion).multiply(q.setFromAxisAngle(v.set(0,1,0),Math.PI));
+      m.raiz.quaternion.copy(camara.quaternion);if(deslizante)m.raiz.rotateX(-1.05*entradaAtaque);
+      m.raiz.quaternion.multiply(q.setFromAxisAngle(v.set(0,1,0),Math.PI));
+      if(deslizante){
+        // Adaptación de presentación FPS: mantiene el agarre en primer término
+        // y orienta la preparación sobre el encuadre, sin tocar al actor real.
+        m.raiz.updateMatrixWorld(true);const mano=m.H.manoD.getWorldPosition(new T.Vector3());
+        const apoyo=new T.Vector3(.3,-.75,-1.18).applyQuaternion(camara.quaternion).add(camara.position);
+        m.raiz.position.addScaledVector(apoyo.sub(mano),entradaAtaque);
+      }
       m.raiz.updateMatrixWorld(true);
     }
+    function capaFPS(m,deslizante){for(const p of m.mallas){p.material.depthTest=p.material.depthWrite=!deslizante;p.renderOrder=deslizante?40:0;}}
     function fbx(m,nombre,k,desde=null,entrada=1){
       const clip=window.CAOZ_ADREIDA_CINE_CLIPS[nombre],{datos,ancho,huesos,muestras}=clip;
       const f=lim(k)*(muestras-1),i=Math.floor(f),j=Math.min(muestras-1,i+1),u=f-i;
       m.H.cuerpo.position.fromArray(datos,i*ancho).lerp(v.fromArray(datos,j*ancho),u);
       for(let n=0;n<huesos.length;n++)m.H[huesos[n]].quaternion.fromArray(datos,i*ancho+3+n*4).normalize().slerp(q.fromArray(datos,j*ancho+3+n*4).normalize(),u);
       if(desde)mezclar(m,desde,entrada);m.raiz.updateMatrixWorld(true);
+    }
+    function deslizar(m,k,desde=null,entrada=1){
+      // El FBX aporta cuerpo y arco del arma; el rig aprobado mantiene las dos
+      // manos cerradas sobre el mango, incluso al venir de la carrera a una mano.
+      MOD.posar(m,{anim:'quieto',dt:0,t:0,mezclar:false});
+      fbx(m,'deslizarAtaque',k,desde,entrada);
     }
     function baseSuelo(m){
       MOD.posar(m,{anim:'quieto',dt:0,t:0,mezclar:false});const H=m.H;
@@ -73,7 +94,7 @@
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
     }
-    return {crearFPS,fps,fbx,capturar,restaurar,mezclar,caer,buscar,levantar};
+    return {crearFPS,fps,capaFPS,fbx,deslizar,capturar,restaurar,mezclar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();

@@ -11,8 +11,57 @@
       "sha256": "3b6813386f50a597b32d8b10805a6c0b1d15b0fd4bab12b5a6f9ff3069778c68",
       "duracion": 4.5,
       "muestras": 136
+    },
+    {
+      "fuente": "Great Sword Slide Attack.fbx",
+      "sha256": "b0c6d7a134b7a6e35268cf5667478c51a5be6b9286b4c006845919511bbe89a3",
+      "duracion": 2.1333333333333333,
+      "muestras": 65
     }
   ],
   "adaptacion": "Veintidós huesos, proporciones del modelo actual, agarre del hacha resuelto con IK en Crouching. Falling conserva las poses sin corrección de suelo: la gravedad y el desplazamiento los dirige el epílogo. Sin mallas ni texturas de los FBX.",
-  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json"
+  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json",
+  "deslizarAtaque": {
+    "clip": "deslizarAtaque",
+    "modelo": "adreida-piernas-scenario/datos.js",
+    "fps": 120,
+    "muestras": 257,
+    "adaptacion": "Pose local de 22 huesos y altura de apoyo sobre las botas del modelo aprobado. Las dos manos sujetan el hacha con el mismo IK del combate; horneado a 120 Hz después de interpolar las referencias fuente para conservar el agarre entre muestras. XZ del cuerpo permanecen a cero; raiz contiene XYZ por muestra, en metros relativos al primer cuadro (Y=0). No incluye mallas, materiales ni texturas del FBX.",
+    "golpe": {
+      "segundo": 1.3,
+      "fotogramaFuente": 39,
+      "fpsFuente": 30,
+      "fotogramaHorneado": 156,
+      "criterio": "El eje del mango cruza hacia delante durante el barrido; no es un evento de daño."
+    },
+    "hitos": {
+      "arranque": [
+        0,
+        0.3
+      ],
+      "cuerpoBajo": [
+        0.35,
+        0.8
+      ],
+      "preparacion": [
+        0.3,
+        1.1
+      ],
+      "barrido": [
+        1.17,
+        1.4
+      ],
+      "recuperacion": [
+        1.4,
+        2.1333333333333333
+      ]
+    },
+    "desplazamientoFinal": [
+      -0.073096,
+      0,
+      3.820291
+    ],
+    "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json",
+    "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
+  }
 }
