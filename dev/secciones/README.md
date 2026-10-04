@@ -379,6 +379,13 @@ Las cajas y barriles se construyen en `casas-three.js` mediante `utileria('caja'
 
 ## Caoz ARPG (ARPG en three.js, proyecto paralelo)
 
+### Alpha .01 · 4 de octubre de 2026
+
+Versión pública: <https://aislados.caoz-tcg.pages.dev/arpg-three/>. Incluye las dos etapas, Adreida y Mohamed, cooperativo local, cartas de riesgo, entrada del Troll, casa goblin, final del mago y prototipo de mundo abierto. Los modelos de Scenario, brazos, hacha, arquitectura, texturas y fuentes viajan con el paquete; no requieren Scenario ni una cuenta para jugar. **Alpha .01** aparece en el título, HUD, pausa y `procedencia.json`.
+
+La versión se declara en `arpg-three-exportar.mjs`. El publicador verifica controles de Adreida, disparos, balance cooperativo, cartas, Troll y final del mago; `pruebas_arpg_publicacion.mjs` comprueba además la integridad de los 150 archivos del paquete y sus siete rutas en Chromium, incluida la vista táctil. Para las pruebas de navegador puede indicarse `PLAYWRIGHT_MODULE=/ruta/a/playwright`. El archivo histórico `pruebas_arpg_three.mjs` conserva expectativas de la primera sala (tres mallas, oclusión inicial, combo mantenido y buffs inmediatos); no es la puerta de publicación de esta Alpha.
+
+
 La revisión está en `/arpg-three/`: el Hito 1 de la propuesta de un ARPG al
 estilo Diablo con los personajes del juego. Es una sala jugable: Adreida, la
 Guerrera Semiorca, defiende la plaza de Tomsage bajo asedio contra cuatro

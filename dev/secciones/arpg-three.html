@@ -4,7 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta http-equiv="Content-Security-Policy" content="__CSP__">
-<title>Caoz ARPG</title>
+<meta name="application-version" content="__VERSION_ARPG__">
+<title>Caoz ARPG · __VERSION_ARPG__</title>
 <link rel="icon" href="data:,">
 <link rel="stylesheet" href="./juego/carta-diseno.css">
 <link rel="stylesheet" href="./arpg-three-mesa.css">
@@ -54,7 +55,7 @@
 <main class="apShell" aria-label="Caoz ARPG">
   <section class="apEscenario" id="escenario" aria-label="La plaza de Tomsage">
     <div id="pausaOtra" class="apPausaOtra" hidden><p>Otra partida está activa.</p><button type="button" id="reanudarPartida" class="apBoton">Continuar aquí</button></div>
-    <div class="apIdentidad" aria-label="Caoz ARPG"><b>CAOZ <span>ARPG</span></b><small>La plaza de Tomsage</small></div>
+    <div class="apIdentidad" aria-label="Caoz ARPG"><b>CAOZ <span>ARPG</span></b><small>__VERSION_ARPG__ · La plaza de Tomsage</small></div>
     <div class="apHerramientas">
       <button type="button" class="apBoton" data-pantalla-completa aria-pressed="false">Pantalla completa</button>
       <button type="button" id="abrirPausa" class="apBoton">Pausa <kbd>Esc</kbd></button>
@@ -123,7 +124,7 @@
   </section>
 </main>
 <dialog id="pausa" class="apMenuPausa" aria-labelledby="pausaTitulo">
-  <p class="apSelloMenu">CAOZ ARPG</p>
+  <p class="apSelloMenu">CAOZ ARPG · __VERSION_ARPG__</p>
   <h2 id="pausaTitulo">En pausa</h2>
   <p>La plaza puede esperar.</p>
   <button type="button" id="continuar" class="apBoton">Continuar</button>

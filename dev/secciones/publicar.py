@@ -155,7 +155,10 @@ SECCIONES = {
         'nombre': 'Caoz ARPG (ARPG en three.js)',
         'exportador': 'arpg-three-exportar.mjs',
         'requeridos': {'index.html', 'procedencia.json', '_headers', 'visor-three-vendor.js', 'three-carta.js', 'arpg-three-adreida-animacion.js','arpg-three-modelos.js', 'arpg-three-tiempo.js','arpg-three-mesa.js', 'juego/carta-pintor.js'},
-        'pruebas': ('pruebas_arpg_three.mjs',),
+        'pruebas': ('pruebas_arpg_adreida_control.mjs', 'pruebas_arpg_disparos.mjs',
+                    'pruebas_arpg_balance_coop.mjs', 'pruebas_arpg_destino.mjs',
+                    'pruebas_arpg_troll_combate.mjs', 'pruebas_arpg_final_mago.mjs',
+                    'pruebas_arpg_publicacion.mjs'),
     },
     'pesadillas-3d': {
         'nombre': 'Pruebas de Pitágoras en 3D',

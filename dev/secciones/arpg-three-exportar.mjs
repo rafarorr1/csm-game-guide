@@ -1,7 +1,5 @@
-/* Exporta la prueba de ARPG en three.js («Caoz ARPG», Hito 1):
-   modelos 3D sencillos hechos con primitivas (arpg-three-modelos.js), three.js
-   empaquetado en visor-three-vendor.js (sin CDN) y las cartas físicas de
-   three-carta.js para el botín (los Objetos del juego en sus tres ediciones). */
+/* Exporta Caoz ARPG completo con sus modelos, texturas y cinemáticas locales.
+   three.js y las dependencias van empaquetadas, sin CDN ni scripts en línea. */
 import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
@@ -9,6 +7,7 @@ import {fileURLToPath} from 'node:url';
 import {texturasCasas,recursosArquitectura} from './casas-three-exportar.mjs';
 import {datosDesdeMotor,leer,juego,hash,extraerDeclaracion} from './fuentes.mjs';
 const aqui=path.dirname(fileURLToPath(import.meta.url));
+export const versionArpgThree='Alpha .01';
 export const csp="default-src 'none'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; worker-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'";
 // El botín: Objetos de equipo en sus tres ediciones y la Llave del Mago (sólo dorada, la suelta Can).
 export const botinArpgThree=Object.freeze(['mazo','arco','collar','espadaluz','espadaboveda','lentesmachete','sombrero','brazosagua']);
@@ -38,7 +37,7 @@ export function derivarArpgThree(){
   new vm.Script(datosJS,{filename:'arpg-three-datos.js'});
   return {datosJS,lista};
 }
-export const pagina=generado=>fs.readFileSync(path.join(aqui,'arpg-three.html'),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__',generado);
+export const pagina=generado=>fs.readFileSync(path.join(aqui,'arpg-three.html'),'utf8').replaceAll('__CSP__',csp).replaceAll('__GENERADO__',generado).replaceAll('__VERSION_ARPG__',versionArpgThree);
 export function exportar(destino){
   destino=path.resolve(destino);
   if(fs.existsSync(destino)&&(!fs.statSync(destino).isDirectory()||fs.readdirSync(destino).length))throw Error('El destino debe estar vacío; no se sobrescribe otro sitio.');
@@ -48,7 +47,7 @@ export function exportar(destino){
   const entorno={};for(const f of entornoArpgThree){const b=fs.readFileSync(path.join(aqui,f));escribir(f,b);entorno[f]=hash(b);}
   const componentes={};for(const f of componentesArpgThree){const b=fs.readFileSync(path.join(juego,f));escribir('juego/'+f,b);componentes[f]=hash(b);}
   const arte={};for(const url of ['art/logo.webp','art/lider_adreida.webp','art/lider_mohamed.webp',...lista.map(c=>c.url)]){const b=fs.readFileSync(path.join(juego,url));escribir(url,b);arte[url.slice(4)]=hash(b);}
-  const procedencia={seccion:'arpg-three',partida:false,almacenamiento:'ninguno',proposito:'Proyecto paralelo: prueba de un ARPG isométrico al estilo Diablo en three.js (Hito 1, una sala jugable) con modelos 3D sencillos hechos con primitivas y el botín como cartas físicas del juego.',three:'0.186.1',
+  const procedencia={seccion:'arpg-three',version:versionArpgThree,partida:false,almacenamiento:'preferencias locales; sin cuentas ni guardado de la partida',proposito:'Caoz ARPG: dos etapas, Adreida y Mohamed, cooperativo local, cartas de riesgo, cinemáticas y prototipo de mundo abierto. Modelos y recursos incluidos para jugar en el navegador.',three:'0.186.1',
     cartas:lista.map(c=>c.id+'/'+c.acabado),componentes,arte,entorno,derivados:{'index.html':hash(html),'generado/datos.js':hash(datosJS)}};
   escribir('procedencia.json',JSON.stringify(procedencia,null,2));
   escribir('_headers','/*\n  Cache-Control: no-store\n  X-Content-Type-Options: nosniff\n  Content-Security-Policy: '+csp+'\n');

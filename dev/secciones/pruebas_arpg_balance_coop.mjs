@@ -2,7 +2,7 @@
 import fs from 'node:fs';import vm from 'node:vm';import assert from 'node:assert/strict';import {extraerDeclaracion} from './fuentes.mjs';
 const s=fs.readFileSync(new URL('arpg-three-mesa.js',import.meta.url),'utf8'),get=(n,t='function')=>extraerDeclaracion(s,n,t).texto;
 for(const factor of [1,2]){
- const c=vm.createContext({});c.window=c;c.cinematicaTroll=null;vm.runInContext(fs.readFileSync(new URL('visor-three-vendor.js',import.meta.url),'utf8'),c);const run=s=>vm.runInContext(s,c);
+ const c=vm.createContext({});c.window=c;c.cinematicaTroll=null;c.finalMago=null;c.casaGoblin=null;vm.runInContext(fs.readFileSync(new URL('visor-three-vendor.js',import.meta.url),'utf8'),c);const run=s=>vm.runInContext(s,c);
  run(`const THREE=CAOZ_THREE.THREE,V3=THREE.Vector3,FACTOR_COOP=${factor},TAU=Math.PI*2,R=26,CAPTURA=true,q={get:()=>null},COOP=${factor===2};let ABIERTO=false;
  const refuerzosCan=[];function iniciarEntradaTroll(){const i=ol.cola.findIndex(([t])=>t==='troll');ol.cola.splice(i,1);crearEnemigo('troll',0,0,{quieto:true});}
  const rog={vuelta:1,cartas:[],terminado:-1},heroe={pos:new V3(),vivo:true,alma:60,almaMax:120},jugadores=[heroe],enemigos=[],peligrosTroll=[],CALLES=[-Math.PI/2,Math.PI/6,Math.PI*5/6];let sigId=1;
