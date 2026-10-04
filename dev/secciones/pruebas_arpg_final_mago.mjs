@@ -141,7 +141,9 @@ assert.equal(cuadros.filter(f=>f.estado.fase==='pies').length,79,'El editor mues
 const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='pies'&&f.estado.t>.7),cuadros.findIndex(f=>f.estado.fase==='techo'),cuadros.findIndex(f=>f.estado.fase==='desaparece'),cuadros.findIndex(f=>f.estado.fase==='cielo'&&f.estado.t>.8),cuadros.findIndex(f=>f.estado.fase==='impacto'&&f.estado.t>1.4),cuadros.length-1];
 const recursosAntes=escena.children.length;
 for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){
+ for(const x of cuadros[i].agarres)x.n.morphTargetInfluences.fill(-1);
  const f=cuadros[i];cine.mostrarCuadro(f);const actual=cine.estado();for(const clave of ['mago','meteorito']){assert(actual[clave].every((v,j)=>Math.abs(v-f.estado[clave][j])<1e-5),'Posiciones visuales conservadas con precisión submilimétrica');actual[clave]=f.estado[clave];}assert.equal(JSON.stringify(actual),JSON.stringify(f.estado),'Restaurar conserva fase, relojes, lluvia y posiciones');
+ for(const x of f.agarres)assert.deepEqual(x.n.morphTargetInfluences,x.pesos,'Buscar cuadros restaura el cierre de los dedos, incluido el POV');
  const antes=cine.capturarCuadro();camara.position.set(70,20,-30);camara.lookAt(new T.Vector3(2,3,4));cine.vistaEditor(false);
  const despues=cine.capturarCuadro();for(let j=0;j<antes.poses.length;j++){if(j%12===10)continue;assert(Math.abs(antes.poses[j]-despues.poses[j])<1e-6,'Mover cámara no cambia transformaciones, huesos ni brazos POV');}
  cine.vistaEditor(true);const externa=cine.capturarCuadro();for(let j=0;j<antes.poses.length;j++){if(j%12===10)continue;assert(Math.abs(antes.poses[j]-externa.poses[j])<1e-6,'Alternar vista sólo cambia visibilidad');}

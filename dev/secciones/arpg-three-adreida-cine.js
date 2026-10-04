@@ -16,7 +16,7 @@
       const origen=g.index?.array||Array.from({length:g.attributes.position.count},(_,i)=>i);
       for(let i=0;i<origen.length;i+=3)if([0,1,2].every(j=>peso(origen[i+j])>.15))indices.push(...origen.slice(i,i+3));
       // Se comparten los atributos y mapas; sólo se crea el índice de los dos brazos.
-      const parcial=new T.BufferGeometry();for(const [n,a]of Object.entries(g.attributes))parcial.setAttribute(n,a);parcial.setIndex(indices);mesh.geometry=parcial;
+      const parcial=new T.BufferGeometry();for(const [n,a]of Object.entries(g.attributes))parcial.setAttribute(n,a);parcial.morphAttributes=g.morphAttributes;parcial.morphTargetsRelative=g.morphTargetsRelative;parcial.setIndex(indices);mesh.geometry=parcial;
       for(const p of m.mallas){p.castShadow=p.receiveShadow=false;p.frustumCulled=false;}
       m.raiz.name='Adreida · brazos en primera persona';m.raiz.visible=false;
       return m;

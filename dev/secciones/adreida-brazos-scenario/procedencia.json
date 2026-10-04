@@ -47,5 +47,6 @@
   "atlas": 2048,
   "falanges": 20,
   "rig": "Esqueleto original más dos falanges por dedo. Hombrera rígida; cuatro pesos máximo.",
-  "fuenteEscenario": "../propuestas-scenario/carreta-brazos/procedencia.json"
+  "fuenteEscenario": "../propuestas-scenario/carreta-brazos/procedencia.json",
+  "correctivosAgarre": 2
 }

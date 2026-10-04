@@ -263,10 +263,11 @@
     // reservas dinámicas pequeñas; nunca se duplican geometrías ni texturas.
     function capturarCuadro(){
       if(!nodosCine){nodosCine=[];for(const raiz of [s.actor.m.raiz,recursos.grupo,recursos.brazosFPS.raiz])raiz.traverse(n=>nodosCine.push(n));}
-      const poses=new Float32Array(nodosCine.length*12),instancias=[];
+      const poses=new Float32Array(nodosCine.length*12),instancias=[],agarres=[];
       nodosCine.forEach((n,i)=>{const j=i*12;n.position.toArray(poses,j);n.quaternion.toArray(poses,j+3);n.scale.toArray(poses,j+7);poses[j+10]=+n.visible;poses[j+11]=n.intensity||0;
+        if(n.morphTargetInfluences)agarres.push({n,pesos:n.morphTargetInfluences.slice()});
         if(n.isInstancedMesh)instancias.push({n,i:n.instanceMatrix.array.slice(0,n.count*16),cantidad:n.count});});
-      return {estado:estado(),poses,instancias,dir:s.actor.dir,faseActor:s.actor.fase,opacidadCasa:s.opacidadCasa,
+      return {estado:estado(),poses,instancias,agarres,dir:s.actor.dir,faseActor:s.actor.fase,opacidadCasa:s.opacidadCasa,
         opacidades:casas.userData.ocultacion?.opacidades.slice(),sombras:mallasRuina.map(m=>m.castShadow),
         opacidad:[recursos.sello,recursos.humo,recursos.onda].map(m=>m.material.opacity)};
     }
@@ -276,6 +277,7 @@
       s.opacidadCasa=c.opacidadCasa;s.actor.pos.fromArray(e.actor);s.actor.dir=c.dir;s.actor.fase=c.faseActor;terminado=e.terminado;derrumbe.value=e.derrumbe;
       nodosCine.forEach((n,i)=>{const j=i*12;n.position.fromArray(c.poses,j);n.quaternion.fromArray(c.poses,j+3).normalize();n.scale.fromArray(c.poses,j+7);n.visible=!!c.poses[j+10];if(n.isLight)n.intensity=c.poses[j+11];});
       for(const x of c.instancias){x.n.count=x.cantidad;x.n.instanceMatrix.array.set(x.i);x.n.instanceMatrix.needsUpdate=true;}
+      for(const x of c.agarres||[])x.pesos.forEach((peso,i)=>x.n.morphTargetInfluences[i]=peso);
       [recursos.sello,recursos.humo,recursos.onda].forEach((m,i)=>m.material.opacity=c.opacidad[i]);
       if(c.opacidades)casas.userData.ocultacion.opacidades.set(c.opacidades);mallasRuina.forEach((m,i)=>m.castShadow=c.sombras[i]);
       recursos.cola.material.uniforms.uTiempo.value=s.total;ambienteLluvia(s.tLluvia,s.actor.pos);

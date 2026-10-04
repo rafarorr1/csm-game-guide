@@ -9,7 +9,8 @@ const {THREE}=c.CAOZ_THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(THREE),m=F.crear('adrei
 const cuerpo=m.mallas[0],g=cuerpo.geometry,a=g.attributes;
 assert.equal(m.modeloAdreida,'scenario');assert.equal(g.index.count/3,44706);assert.equal(m.mallas.length,2);
 assert.equal(m.alto,clasico.alto);assert.equal(m.radio,clasico.radio);assert.deepEqual(m.p,clasico.p);
-g.computeBoundingBox();assert.ok(Math.abs(g.boundingBox.max.y-g.boundingBox.min.y-1.913112)<.0001,'Altura del modelo aprobado');
+// La envolvente de morphs es conservadora; medir el cuerpo base, no esa reserva.
+const cajaBase=new THREE.Box3().setFromBufferAttribute(a.position);assert.ok(Math.abs(cajaBase.max.y-cajaBase.min.y-1.913112)<.0001,'Altura del modelo aprobado');
 assert.equal(g,otro.mallas[0].geometry,'Adreidos reutiliza el cuerpo');assert.notEqual(cuerpo.skeleton,otro.mallas[0].skeleton);assert.notEqual(m.M.u,otro.M.u,'Efectos independientes');
 for(let i=0;i<a.position.count;i++){
  let suma=0;for(let j=0;j<4;j++){const w=a.skinWeight.array[i*4+j];assert.ok(w>=0&&w<=1);suma+=w;assert.ok(a.skinIndex.array[i*4+j]<cuerpo.skeleton.bones.length);}assert.ok(Math.abs(suma-1)<1e-5);
@@ -112,3 +113,5 @@ c.CAOZ_ARPG_ADREIDA_CINE.fabrica(THREE,F).fps(fps,new THREE.PerspectiveCamera(),
 F.posar(m,{anim:'quieto'});
 assert.equal(fps.H.dedoDIndice0.rotation.y,m.H.dedoDIndice0.rotation.y,'El POV conserva el agarre derecho calibrado para el mango');
 assert(fps.H.dedoIIndice0.rotation.y<1,'La mano izquierda del POV queda libre');
+assert.equal(fps.mallas[0].geometry.morphAttributes,g.morphAttributes,'El POV comparte los correctivos del cuerpo');
+assert.deepEqual(Array.from(fps.mallas[0].morphTargetInfluences),[0,1],'El POV cierra sólo la mano que sostiene el hacha');

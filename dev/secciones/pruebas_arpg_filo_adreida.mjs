@@ -45,11 +45,19 @@ for(const lado of ['I','D']){
  }
  // Cada yema participa en el agarre; el meñique más corto no usa el cierre del índice.
  for(const dedo of ['Pulgar','Indice','Medio','Anular','Menique']){
-  const id=bones.indexOf(m.H['dedo'+lado+dedo+'1']),inv=mano.matrixWorld.clone().invert();let cerca=Infinity;
-  for(const i of vertices)for(let j=0;j<4;j++)if(at.skinIndex.array[i*4+j]===id&&at.skinWeight.array[i*4+j]>.9){const p=mesh.getVertexPosition(i,new T.Vector3()).applyMatrix4(mesh.matrixWorld).applyMatrix4(inv);cerca=Math.min(cerca,Math.hypot(p.x,p.z));}
+  const id=bones.indexOf(m.H['dedo'+lado+dedo+'1']),inv=mano.matrixWorld.clone().invert(),centro=new T.Vector3();let cerca=Infinity,n=0;
+  for(const i of vertices)for(let j=0;j<4;j++)if(at.skinIndex.array[i*4+j]===id&&at.skinWeight.array[i*4+j]>.9){const p=mesh.getVertexPosition(i,new T.Vector3()).applyMatrix4(mesh.matrixWorld).applyMatrix4(inv);cerca=Math.min(cerca,Math.hypot(p.x,p.z));centro.add(p);n++;}
   assert(cerca<.042,`${lado} ${dedo}: yema demasiado lejos (${cerca})`);
+  centro.divideScalar(n);
+  // Estar cerca no basta: el puño anterior quedaba entero sobre el mango.
+  if(dedo==='Pulgar')assert(centro.x*(lado==='I'?-1:1)<-.02,`${lado}: el pulgar cierra por el lado opuesto`);
+  else assert(centro.z>.015,`${lado} ${dedo}: la yema debe rodear el mango hasta el lado contrario a la palma`);
  }
 }
+const copia=F.crear('adreida');F.posar(copia,{anim:'quieto'});posar({anim:'andar',paso:1});
+assert.deepEqual(Array.from(mesh.morphTargetInfluences),[0,1],'La mano izquierda queda libre al correr');
+assert.deepEqual(Array.from(copia.mallas[0].morphTargetInfluences),[1,1],'Adreidos conserva su propio agarre');
+posar({anim:'quieto',sinHacha:true});assert.deepEqual(Array.from(mesh.morphTargetInfluences),[0,0],'Soltar el hacha abre las dos manos');
 // El giro del arma no puede producir un salto de orientación al terminar el ataque.
 for(const fps of [30,60,144])for(const anim of ['tajoA','revesA','estocadaA']){
  const h=F.crear('adreida');let ultima;

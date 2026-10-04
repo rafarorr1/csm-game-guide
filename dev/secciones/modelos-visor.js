@@ -42,6 +42,7 @@
   // Cámara orbital: ángulo, elevación, distancia y altura del punto mirado.
   const vista={az:.35,el:.12,dist:4.6,alto:1.05,cx:0,cz:0},meta={...vista};
   const encuadres={cara:m=>({dist:1.55,alto:m.alto*.86,el:.06}),cuerpo:m=>({dist:m.alto*2.35,alto:m.alto*.54,el:.12})};
+  let verMano=q.get('detalle')==='mano';const puntoMano=new THREE.Vector3();
   let modelo=null,modelos=[],t=0,pausa=false,girar=false,comparar=q.get('comparar')==='1';
   let tipoVariantes=null,hachaVista=null,datosPersonaje='',verHacha=q.get('arma')==='hacha';
   for(const k of Object.keys(F.TIPOS)){const o=document.createElement('option');o.value=k;o.textContent=F.TIPOS[k].nombre;$('tipo').append(o);}
@@ -54,7 +55,7 @@
     if(tipoVariantes!==tipo){$('varianteGoblin').replaceChildren();for(const [id,v]of Object.entries(catálogo)){const o=document.createElement('option');o.value=id;o.textContent=v.nombre;$('varianteGoblin').append(o);}
       if(!tipoVariantes&&catálogo[q.get('variante')])$('varianteGoblin').value=q.get('variante');tipoVariantes=tipo;
     }
-    if(tipo!=='adreida')verHacha=false;
+    if(tipo!=='adreida'){verHacha=false;verMano=false;}
     const esGoblin=['goblin','cobrador','kobold'].includes(tipo);if(!esGoblin)comparar=false;document.body.classList.toggle('mvComparando',comparar);
     $('opcionVariante').hidden=$('compararGoblins').hidden=!esGoblin;
     $('compararGoblins').setAttribute('aria-pressed',comparar);$('compararGoblins').textContent=comparar?'Ver una variante':'Ver las cuatro variantes';
@@ -62,7 +63,7 @@
     const variantes=comparar?Object.keys(catálogo):[$('varianteGoblin').value];
     modelos=variantes.map(varianteGoblin=>F.crear(tipo,{varianteGoblin,varianteKobold:varianteGoblin}));modelo=modelos[0];
     for(const m of modelos)escena.add(m.raiz);
-    $('hacha').hidden=!modelo.hachaScenario;
+    $('hacha').hidden=!modelo.hachaScenario;$('mano').hidden=tipo!=='adreida';
     if(!modelo.hachaScenario)verHacha=false;
     if(modelo.hachaScenario&&!hachaVista){hachaVista=F.crearHachaAdreida(modelo);hachaVista.setRotationFromMatrix(new THREE.Matrix4().set(0,0,1,0,1,0,0,0,0,1,0,0,0,0,0,1));hachaVista.position.y=.88;escena.add(hachaVista);}
     const tri=modelos.reduce((n,m)=>n+m.mallas.reduce((s,mesh)=>s+(mesh.geometry.index?.count||mesh.geometry.attributes.position.count)/3,0),0);
@@ -91,16 +92,17 @@
     $('datos').textContent=verHacha?'Hacha de Adreida · 1,63 m · '+(modelo.hachaScenario.geometry.index.count/3).toLocaleString('es')+' triángulos · 1 malla':datosPersonaje;
     if(hachaVista)hachaVista.visible=verHacha;for(const m of modelos)m.raiz.visible=!verHacha;
     if(verHacha){Object.assign(meta,{dist:3.8,alto:.84,el:.05,az:.12,cx:0,cz:0});suelo.position.z=0;suelo.scale.set(1,1,1);prepararPolvo(null);return;}
-    const muerte=actual()[4],fin=muerte?.roll?F.animacion.desplazamientoRoll(1,new THREE.Vector3()):muerte?.importada?F.desplazamientoMuerteGoblin(modelo,muerte,1,new THREE.Vector3()):null;meta.cx=comparar?0:(fin?.x||0)*.5;meta.cz=comparar?0:fin?fin.z*.5:-(muerte?.distancia||0)*.5;Object.assign(meta,comparar?{dist:6.4,alto:.7,el:.15,az:0}:muerte?.roll?{dist:7.7,alto:.7,el:.4,az:1.1}:muerte?.importada?{dist:3.7,alto:.45,el:.4,az:.7}:muerte?{dist:4.8,alto:.35,el:.4,az:1.1}:encuadres.cuerpo(modelo));suelo.position.z=muerte?.roll?2.5:0;suelo.scale.set(comparar?1.35:muerte?.roll?2.1:muerte?1.8:1,1,comparar?1:muerte?.roll?2.1:muerte?1.8:1);prepararPolvo(comparar?null:muerte);}
+    const muerte=actual()[4],fin=muerte?.roll?F.animacion.desplazamientoRoll(1,new THREE.Vector3()):muerte?.importada?F.desplazamientoMuerteGoblin(modelo,muerte,1,new THREE.Vector3()):null;meta.cx=comparar?0:(fin?.x||0)*.5;meta.cz=comparar?0:fin?fin.z*.5:-(muerte?.distancia||0)*.5;Object.assign(meta,comparar?{dist:6.4,alto:.7,el:.15,az:0}:muerte?.roll?{dist:7.7,alto:.7,el:.4,az:1.1}:muerte?.importada?{dist:3.7,alto:.45,el:.4,az:.7}:muerte?{dist:4.8,alto:.35,el:.4,az:1.1}:encuadres.cuerpo(modelo));suelo.position.z=muerte?.roll?2.5:0;suelo.scale.set(comparar?1.35:muerte?.roll?2.1:muerte?1.8:1,1,comparar?1:muerte?.roll?2.1:muerte?1.8:1);prepararPolvo(comparar?null:muerte);if(verMano)Object.assign(meta,{dist:.62,el:.1});}
 
   encuadrarAnimacion();
   $('repetir').addEventListener('click',()=>{t=0;pausa=false;$('pausa').textContent='Pausa';});
   $('faseAnim').addEventListener('input',()=>{t=+$('faseAnim').value*(actual()[1]-.00001);pausa=true;$('pausa').textContent='Seguir';});
   $('pausa').addEventListener('click',()=>{pausa=!pausa;$('pausa').textContent=pausa?'Seguir':'Pausa';});
   $('girar').addEventListener('click',()=>{girar=!girar;$('girar').setAttribute('aria-pressed',girar);});
-  $('cara').addEventListener('click',()=>Object.assign(meta,encuadres.cara(modelo),{az:0}));
-  $('cuerpo').addEventListener('click',()=>{verHacha=false;encuadrarAnimacion();});
-  $('hacha').addEventListener('click',()=>{verHacha=!verHacha;encuadrarAnimacion();});
+  $('cara').addEventListener('click',()=>{verMano=false;Object.assign(meta,encuadres.cara(modelo),{az:0,cx:0,cz:0});});
+  $('mano').addEventListener('click',()=>{verMano=true;verHacha=false;encuadrarAnimacion();});
+  $('cuerpo').addEventListener('click',()=>{verMano=false;verHacha=false;encuadrarAnimacion();});
+  $('hacha').addEventListener('click',()=>{verMano=false;verHacha=!verHacha;encuadrarAnimacion();});
   // Arrastrar gira; dos dedos pellizcan; la rueda acerca.
   const punteros=new Map();let pellizco=0;
   lienzo.addEventListener('pointerdown',e=>{lienzo.setPointerCapture(e.pointerId);punteros.set(e.pointerId,[e.clientX,e.clientY]);});
@@ -122,6 +124,7 @@
       m.raiz.position.set(comparar?(i-1.5)*1.15:0,0,muerte&&!muerte.roll&&!muerte.adreida&&!muerte.importada?-F.recorridoMuerteGoblin(muerte,k):0);
       F.posar(m,{anim:muerte?.roll?'rodar':muerte?'muerte':nombre,muerte,t,k,fase:nombre==='andar'?fase*Math.PI*2:t*TAU_PASO,paso:1});
     }
+    if(verMano){modelo.raiz.updateMatrixWorld(true);modelo.H.manoD.getWorldPosition(puntoMano);meta.cx=vista.cx=puntoMano.x;meta.alto=vista.alto=puntoMano.y;meta.cz=vista.cz=puntoMano.z;}
     dibujarPolvo(t%dur);const c=Math.cos(vista.el);camara.position.set(vista.cx+Math.sin(vista.az)*c*vista.dist,vista.alto+Math.sin(vista.el)*vista.dist,vista.cz+Math.cos(vista.az)*c*vista.dist);camara.lookAt(vista.cx,vista.alto,vista.cz);
     render.render(escena,camara);requestAnimationFrame(cuadro);}
   const TAU_PASO=Math.PI*2/1.1;

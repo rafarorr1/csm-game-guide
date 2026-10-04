@@ -2,7 +2,7 @@
 Uso: python preparar.py /carpeta/con/los/cuatro/GLB/originales
 Requiere numpy y Pillow. Genera un atlas y un cuerpo de dos llamadas de dibujo con el hacha.
 """
-import base64, hashlib, io, json, struct, sys
+import base64, hashlib, io, json, struct, sys, subprocess, tempfile
 from pathlib import Path
 import numpy as np
 from PIL import Image
@@ -150,7 +150,41 @@ for a in partes:
     rangos.append({'nombre':a['nombre'],'inicio':offset,'vertices':len(a['p']),'triangulos':len(a['tri'])});offset+=len(a['p'])
 p=np.concatenate(pos);tt=np.concatenate(tris);w=np.concatenate(sws);assert offset<65535 and np.allclose(w.sum(1),1)
 datos={'huesos':nombres,'dedos':dedos,'partes':rangos,'posicion':cod(p,'<f4'),'normal':cod(np.concatenate(nor),'<f4'),'uv':cod(np.concatenate(uvs),'<f4'),'hueso':cod(np.concatenate(sis),'u1'),'peso':cod(w,'<f4'),'triangulos':cod(tt,'<u2'),'pieza':cod(ids,'u1')}
+# Correctivo de agarre: los dedos recorren un arco alrededor del mango, no forman
+# un puño encima de él. La mano abierta y su articulación se conservan como base.
+correccion=[]
+# Enderezar la inclinación de la palma de la malla fuente antes de abrazar el cilindro.
+y_mango=-pa[:,0]/np.cos(.31)
+palma=(prof>.79)&(prof<.86)&(dedo_vert!=0)
+plano=np.linalg.lstsq(np.column_stack([prof[palma],y_mango[palma],np.ones(sum(palma))]),pa[palma,2],rcond=None)[0]
+z_plano=np.column_stack([prof,y_mango,np.ones(len(prof))])@plano
+dz=np.clip((pa[:,2]-z_plano)*.65,-.012,.012)
+u=suave(.79,.867,prof);theta=-np.pi/2+.92*u;radio=.041-.004*u-dz
+objetivo=np.column_stack([radio*np.cos(theta)-np.maximum(0,.79-prof)*.6,y_mango,radio*np.sin(theta)])
+for j,base in enumerate(bases):
+    zona=(dedo_vert==j)&(prof>base-.014);todos=np.where(dedo_vert==j)[0]
+    for i in np.where(zona)[0]:
+        cerca=todos[np.abs(prof[todos]-prof[i])<.008]
+        if len(cerca)<8:cerca=todos[np.argsort(np.abs(prof[todos]-prof[i]))[:12]]
+        z0,z1=np.quantile(pa[cerca,2],[.03,.97]);mitad=max(.004,(z1-z0)/2)
+        grosor=(pa[i,2]-(z0+z1)/2)*min(1,.009/mitad)
+        longitud=max(0,prof[i]-base)*(.68 if j==0 else .84)
+        angulo=(-1.2-longitud/.030) if j==0 else (-.65+longitud/.037)
+        r=.037-grosor;dedo=np.array([r*np.cos(angulo),y_mango[i],r*np.sin(angulo)])
+        mezcla=float(suave(base-.014,base+.012,prof[i]));objetivo[i]=objetivo[i]*(1-mezcla)+dedo*mezcla
+for parte in partes:
+    if parte['nombre'] not in ['brazoI','brazoD']:continue
+    lado=parte['nombre'][-1];inicio=next(a['inicio']for a in rangos if a['nombre']==parte['nombre'])
+    for i in np.where(prof>.71)[0]:
+        punto=objetivo[i].copy()
+        if lado=='I':punto[0]*=-1
+        correccion.append([inicio+int(i),lado,*punto.tolist(),float(suave(.71,.77,prof[i]))])
 (AQUI/'datos.js').write_text('/* Generado por preparar.py: cuerpo, brazos, vendas y hombrera con un atlas. */\nwindow.CAOZ_ADREIDA_MODULAR_DATOS='+json.dumps(datos,separators=(',',':'))+';\n')
-(AQUI/'procedencia.json').write_text(json.dumps({'fuentesSha256':fuentes,'triangulos':len(tt),'vertices':len(p),'partes':rangos,'atlas':2048,'falanges':20,'rig':'Esqueleto original más dos falanges por dedo. Hombrera rígida; cuatro pesos máximo.','fuenteEscenario':'../propuestas-scenario/carreta-brazos/procedencia.json'},indent=2,ensure_ascii=False)+'\n')
+(AQUI/'procedencia.json').write_text(json.dumps({'fuentesSha256':fuentes,'triangulos':len(tt),'vertices':len(p),'partes':rangos,'atlas':2048,'falanges':20,'correctivosAgarre':2,'rig':'Esqueleto original más dos falanges por dedo. Hombrera rígida; cuatro pesos máximo.','fuenteEscenario':'../propuestas-scenario/carreta-brazos/procedencia.json'},indent=2,ensure_ascii=False)+'\n')
+# El correctivo se convierte a espacio de enlace, para que siga funcionando con
+# las poses del brazo y la muñeca sin añadir mallas ni calcular vértices por cuadro.
+with tempfile.NamedTemporaryFile(mode='w',suffix='.json',encoding='utf-8') as temporal:
+    json.dump(correccion,temporal);temporal.flush()
+    subprocess.run(['node',str(AQUI/'preparar-agarre.mjs'),temporal.name],check=True)
 print(json.dumps({'triangulos':len(tt),'vertices':len(p),'retiradosCuerpo':int(sum(quitar)),'partes':rangos}))
 

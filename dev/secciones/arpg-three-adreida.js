@@ -19,12 +19,17 @@
     const cierreDedos={Pulgar:[.233,1.039],Indice:[1.65,1.139],Medio:[1.545,.701],Anular:[1.693,.408],Menique:[1.675,.446]};
     function posar(m,a){
       if(m.modeloAdreida!=='scenario'||!datos.dedos)return;
+      const libres={};
       // Pose absoluta: el editor puede buscar cualquier cuadro sin arrastrar estados.
       for(const d of datos.dedos){const b=m.H[d.nombre],s=d.lado==='I'?1:-1;
         const libre=(a.sinHacha&&!(d.lado==='D'&&a.agarreDerecha))||a.anim==='grito'||a.anim==='muerte'||(d.lado==='I'&&['andar','recogerLlave','mirarLlave'].includes(a.anim));
         const cierre=libre?.38:1,pulgar=d.dedo==='Pulgar';
+        libres[d.lado]=libre;
         b.rotation.set(0,s*cierre*cierreDedos[d.dedo][d.articulacion],pulgar&&!d.articulacion?-s*.582*cierre:0);
       }
+      // El correctivo conserva el volumen de la palma al cerrar los dedos sobre el mango.
+      const influencias=m.mallas[0].morphTargetInfluences;
+      if(influencias)for(const [i,lado]of ['I','D'].entries())influencias[i]=libres[lado]?0:1;
     }
     function montar(H,M,mallas){
       if(!geometria){
@@ -38,6 +43,14 @@
         geometria.setAttribute('skinIndex',new THREE.Uint16BufferAttribute(indices,4));
         geometria.setAttribute('skinWeight',new THREE.BufferAttribute(leer(datos.peso,Float32Array),4));
         geometria.setIndex(new THREE.BufferAttribute(leer(datos.triangulos,Uint16Array),1));
+        if(datos.agarre){
+          geometria.morphTargetsRelative=true;
+          for(const [atributo,campo]of [['position','posicion'],['normal','normal']])geometria.morphAttributes[atributo]=['I','D'].map(lado=>{
+            const d=datos.agarre[lado],ids=leer(d.indices,Uint16Array),valores=leer(d[campo],Float32Array),delta=new Float32Array(p.length);
+            for(let i=0;i<ids.length;i++)delta.set(valores.subarray(i*3,i*3+3),ids[i]*3);
+            const a=new THREE.BufferAttribute(delta,3);a.name='Agarre '+lado;return a;
+          });
+        }
         geometria.userData.compartida=true;geometria.computeBoundingSphere();
       }
       if(!mapas){mapas={};if(ruta)for(const nombre of ['color','normal','superficie']){const t=new THREE.TextureLoader().load(ruta+nombre+'.webp');t.flipY=false;t.colorSpace=nombre==='color'?THREE.SRGBColorSpace:THREE.NoColorSpace;t.anisotropy=4;mapas[nombre]=t;}}
