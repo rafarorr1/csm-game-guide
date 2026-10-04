@@ -2,14 +2,14 @@
 'use strict';
 (function(){
   const CLAVE='caoz.arpg.cine.mago.v1',REVISION='mago-v2';
-  const fases=['salida','descubrir','vertigo','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
-  const VERSION=4;
+  const fases=['salida','descubrir','pies','vertigo','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
+  const VERSION=5;
   const planoDeFase=(f,version=VERSION)=>version===1?f:['carrera','ataquePOV',...(version<4?['desaparece']:[])].includes(f)?'carrera':['tropezar','buscar','levantarse','voltear',...(version>=4?['desaparece']:[])].includes(f)?'tropezar':version>=3&&['techo','cielo'].includes(f)?'techo':f;
-  const idsPorVersion=Object.fromEntries([1,2,3,4].map(v=>[v,Object.freeze([...new Set(fases.map(f=>planoDeFase(f,v)))])]));
+  const idsPorVersion=Object.fromEntries([1,2,3,4,5].map(v=>[v,Object.freeze([...new Set(fases.filter(f=>v>=5||f!=='pies').map(f=>planoDeFase(f,v)))])]));
   const idsPlanos=idsPorVersion[VERSION];
   const curvas=['suave','lineal','corte'];
   function validar(d){
-    if(!d||![1,2,3,4].includes(d.version)||d.escena!=='mago'||d.revision!==REVISION||!d.planos||typeof d.planos!=='object'||Array.isArray(d.planos))throw Error('La toma no pertenece a esta versión de la escena del mago.');
+    if(!d||![1,2,3,4,5].includes(d.version)||d.escena!=='mago'||d.revision!==REVISION||!d.planos||typeof d.planos!=='object'||Array.isArray(d.planos))throw Error('La toma no pertenece a esta versión de la escena del mago.');
     const numero=(n,a,b)=>typeof n==='number'&&Number.isFinite(n)&&n>=a&&n<=b;
     const vector=(v,n)=>Array.isArray(v)&&v.length===n&&v.every(x=>numero(x,-10000,10000));
     const planos={};let total=0;

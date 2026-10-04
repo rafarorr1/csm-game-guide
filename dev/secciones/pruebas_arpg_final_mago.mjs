@@ -29,7 +29,7 @@ for(const fps of [30,60,120]){
   if(cine.estado().fase==='buscar'&&cine.estado().t>.1){const cabeza=actor.m.H.cabeza.getWorldPosition(new T.Vector3());assert(cabeza.y<1.25,'Busca al mago desde el suelo');}
   const actual=cine.estado();
   assert.equal(lluvia,actual.tLluvia,'El clima sigue exactamente el tiempo de la secuencia');
-  if(['salida','descubrir','vertigo','carrera','ataquePOV'].includes(actual.fase)){assert.equal(actual.lluviaLiberada,false);assert.equal(lluvia,0,'Las gotas siguen suspendidas durante el hechizo');}
+  if(['salida','descubrir','pies','vertigo','carrera','ataquePOV'].includes(actual.fase)){assert.equal(actual.lluviaLiberada,false);assert.equal(lluvia,0,'Las gotas siguen suspendidas durante el hechizo');}
   if(!est.lluviaLiberada&&actual.lluviaLiberada){assert.equal(actual.fase,'desaparece');assert.equal(cine.recursos.mago.visible,false,'La lluvia se libera justo al desaparecer');assert.equal(lluvia,0);}
   if(est.lluviaLiberada)assert(Math.abs(actual.tLluvia-est.tLluvia-1/fps)<1e-8,'La lluvia cae desde que se interrumpe el hechizo');
   assert.equal(actual.plano,c.CAOZ_ARPG_CINE_CAMARA.planoDeFase(actual.fase));
@@ -44,10 +44,17 @@ for(const fps of [30,60,120]){
    assert.equal(camara.fov,42,'El primer plano no hace zoom');
    if(actual.t>2.1){assert(camara.quaternion.angleTo(inicioPaneo.q)>.5,'El paneo recorre de Adreida al mago');const foco=new T.Vector3(0,2.35,0).project(camara);assert(Math.hypot(foco.x,foco.y)<1e-6,'El paneo termina encuadrando al mago');}
   }
-  if(est.fase==='descubrir'&&actual.fase==='vertigo'){
+  if(est.fase==='pies'&&actual.fase==='vertigo'){
    assert(camara.position.distanceTo(inicioPaneo.pos)>3,'El segundo plano comienza con un corte a otra posición');
    assert(Math.abs(camara.fov-18)<1e-8,'El dolly empieza con su propia focal');
   }
+  if(actual.fase==='pies'){
+   assert(camara.position.y<.6,'El insert mira las botas desde el piso');assert(!actual.pov);
+   const bota=actor.pos.clone().setY(.2).project(camara);assert(Math.abs(bota.x)<.8&&Math.abs(bota.y)<.8,'Las botas quedan en el encuadre');
+   assert(actor.pos.distanceTo(new T.Vector3(10,0,10))<=2.001,'El insert sólo muestra las primeras pisadas');
+  }
+  if(est.fase==='pies'&&actual.fase==='vertigo')assert(Math.abs(actual.total-actual.inicios.pies-1.5)<1e-8,'Insert de exactamente 1,5 s a 30/60/120 FPS');
+  if(est.fase==='vertigo'&&actual.fase==='carrera')assert.deepEqual(actual.actor,est.actor,'No vuelve a la puerta al retomar la carrera');
   if(actual.fase==='vertigo'&&actual.t>0){
    const d=camara.position.distanceTo(new T.Vector3(0,2.35,0));assert(Math.abs(d*Math.tan(camara.fov*Math.PI/360)-24*Math.tan(9*Math.PI/180))<1e-6,'Dolly y focal se compensan para mantener el tamaño del mago');
    const frenteMago=new T.Vector3(0,0,1).applyQuaternion(cine.recursos.mago.quaternion),haciaCamara=camara.position.clone().sub(cine.recursos.mago.position).setY(0).normalize();
@@ -71,6 +78,8 @@ for(const fps of [30,60,120]){
    assert(haciaTecho.dot(antes)<-.9,'El mago reaparece en el techo detrás de Adreida');
   }
   if(est.fase==='voltear'&&actual.fase==='techo'){
+   assert(Math.abs(camara.position.y-actor.pos.y-1.69)<1e-8,'El primer cuadro ya está en sus ojos, sin un fotograma de la cámara anterior');
+   const foco=cine.recursos.mago.position.clone().add(new T.Vector3(0,1.3,0)).project(camara);assert(Math.hypot(foco.x,foco.y)<1e-6,'La primera cámara POV apunta al mago');
    const delta=Math.atan2(Math.sin(actor.dir-dirAtaque),Math.cos(actor.dir-dirAtaque));assert(Math.abs(delta)>Math.PI*5/6,'Voltea hacia atrás antes del corte a sus ojos');
   }
   if(['impacto','negro'].includes(actual.fase)){
@@ -84,6 +93,17 @@ for(const fps of [30,60,120]){
   if(est.fase==='ataquePOV'&&actual.fase==='desaparece')assert(actor.pos.z<3,'El ataque no reinicia la aproximación al cortar');
   if(est.fase==='techo'&&actual.fase==='cielo'){assert(cine.recursos.meteorito.visible);assert.equal(actual.meteorito[1],54,'El primer cuadro del meteorito ya está en el cielo, nunca frente a los brazos');assert(cine.recursos.meteorito.position.distanceTo(camara.position)>50,'Su estela queda lejos del plano cercano');}
   if(actual.fase==='cielo'&&actual.t>.6)assert.equal(camara.fov,24,'El zoom se completa enseguida al descubrir el meteorito');
+  if(actual.fase==='caida'){
+   assert(camara.position.y>10,'El corte de preparación también empieza con su cámara correcta');
+   const base=c.CAOZ_ARPG_CINE_CAMARA.crear(T).capturar(camara),pose=cine.capturarCuadro().poses;
+   const restaurar=cine.respirarCamara();assert.equal(typeof restaurar,'function');const agitada=camara.position.clone();
+   assert(agitada.distanceTo(new T.Vector3(...base.pos))<.05,'Respiración leve, sin sacudidas de impacto');
+   if(actual.t>.2&&actual.t<.8)assert(agitada.distanceTo(new T.Vector3(...base.pos))>.001,'La respiración mueve la cámara');
+   restaurar();assert.deepEqual(camara.position.toArray(),base.pos);assert.deepEqual(camara.quaternion.toArray(),base.rot);
+   const otra=cine.respirarCamara();assert(camara.position.equals(agitada),'El mismo cuadro no acumula movimiento');otra();
+   assert.deepEqual(cine.capturarCuadro().poses,pose,'La respiración no mueve actores ni brazos');
+   camara.position.set(7,12,20);const editada=camara.position.clone(),volver=cine.respirarCamara();volver();assert(camara.position.equals(editada),'También restaura la cámara editada');camara.position.fromArray(base.pos);
+  }else assert.equal(cine.respirarCamara(),null,'El movimiento sólo pertenece a la preparación del impacto');
   if(actual.fase==='caida'&&actual.t>.75){assert(actor.m.H.cabeza.getWorldPosition(new T.Vector3()).y<1.4,'Crouching baja el cuerpo para protegerse');poseAntes=['cadera','torso','brazoI','brazoD'].map(n=>({n,q:actor.m.H[n].quaternion.clone()}));}
   if(['impacto','negro'].includes(actual.fase)&&actual.t>0){
    assert(actor.m.raiz.visible&&actor.m.mallas[0].visible,'El impacto nunca oculta a Adreida');
@@ -91,7 +111,7 @@ for(const fps of [30,60,120]){
    if(actual.fase==='impacto'&&actual.t>2.5){assert(actual.actor[1]<-3,'Desciende realmente dentro de la geometría');assert(poseAntes.reduce((s,{n,q})=>s+q.angleTo(actor.m.H[n].quaternion),0)>.5,'La pose cambia de Crouching a Falling');const cabeza=actor.m.H.cabeza.getWorldPosition(new T.Vector3()).project(camara);assert(Math.abs(cabeza.x)<.8&&Math.abs(cabeza.y)<.8,'La cámara mantiene la caída dentro del plano');}
   }
  }
- assert.deepEqual(orden,['salida','descubrir','vertigo','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro']);
+ assert.deepEqual(orden,['salida','descubrir','pies','vertigo','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro']);
  assert.equal(regresos,antes+1);assert.equal(impactos,impactosAntes+1);assert.equal(negro,1);
  assert.equal(fx.estado().crateres.at(-1).radio,8.4);assert.equal(fx.estado().crateres.at(-1).profundidad,24);assert.equal(cine.recursos.fragmentos.count,180);assert.equal(cine.recursos.humo.count,28);
  assert(cine.estado().derrumbe>2);assert.equal(casa.castShadow,false);
@@ -109,7 +129,7 @@ console.log('✓ Final del mago: dolly frontal de 2,8 s, giro posterior y cierre
 cine.iniciar([actor,otro]);const cuadros=[];
 while(!cine.estado().terminado){cuadros.push(cine.capturarCuadro());cine.paso(1/60);}
 cuadros.push(cine.capturarCuadro());
-const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='desaparece'),cuadros.findIndex(f=>f.estado.fase==='cielo'&&f.estado.t>.8),cuadros.findIndex(f=>f.estado.fase==='impacto'&&f.estado.t>1.4),cuadros.length-1];
+const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='pies'&&f.estado.t>.7),cuadros.findIndex(f=>f.estado.fase==='techo'),cuadros.findIndex(f=>f.estado.fase==='desaparece'),cuadros.findIndex(f=>f.estado.fase==='cielo'&&f.estado.t>.8),cuadros.findIndex(f=>f.estado.fase==='impacto'&&f.estado.t>1.4),cuadros.length-1];
 const recursosAntes=escena.children.length;
 for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){
  const f=cuadros[i];cine.mostrarCuadro(f);const actual=cine.estado();for(const clave of ['mago','meteorito']){assert(actual[clave].every((v,j)=>Math.abs(v-f.estado[clave][j])<1e-5),'Posiciones visuales conservadas con precisión submilimétrica');actual[clave]=f.estado[clave];}assert.equal(JSON.stringify(actual),JSON.stringify(f.estado),'Restaurar conserva fase, relojes, lluvia y posiciones');

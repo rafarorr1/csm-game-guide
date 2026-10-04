@@ -1935,8 +1935,9 @@
     // Poses, raíces y cámara pertenecen al mismo cuadro; no se sustituyen al dibujar.
     if(editorCine)editorCine.antesDibujo();
     else if(tomaCine&&finalMago?.activa){const v=camarasCine.tomaEn(tomaCine,finalMago.estado());if(camarasCine.aplicar(camara,v.camara))finalMago.vistaEditor(v.vista==='externa');}
-    escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);
-    for(const e of etiquetas)colocar(e);dibujar();
+    const restaurarRespiracion=finalMago?.respirarCamara();
+    try{escena.updateMatrixWorld(true);camara.updateMatrixWorld(true);for(const e of etiquetas)colocar(e);dibujar();}
+    finally{restaurarRespiracion?.();}
   }
   let antes=performance.now(),siguienteDibujo=0,fps={n:0,t:performance.now(),v:0,cpu:0,render:0};
   function cuadro(ahora){

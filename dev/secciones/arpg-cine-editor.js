@@ -2,7 +2,7 @@
 'use strict';
 window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   const M=window.CAOZ_ARPG_CINE_CAMARA,C=M.crear(T),V=T.Vector3,$=id=>document.getElementById(id),clonar=v=>JSON.parse(JSON.stringify(v));
-  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',vertigo:'Dolly zoom',carrera:'Carrera e inicio del ataque',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Fallo, caída y recuperación',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'Mago en el techo y meteorito',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
+  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',pies:'Pies · arranque de carrera',vertigo:'Dolly zoom',carrera:'Carrera e inicio del ataque',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Fallo, caída y recuperación',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'Mago en el techo y meteorito',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
   let toma=M.nueva(),deshacer=[],rehacer=[],guion=[],frames=[],cuadro=0,acumulado=0,ocupado=true,reproduce=false,grabando=false,libre=null,nativa=null,seleccion=null,token=0,ultimoUI=0,arrastre=null,destino=null,arrastreTiempo=null;
   const teclas=new Set(),vistasPrevias=new Map();
   document.body.classList.add('cineEditor');document.title='Cine · Caoz ARPG';

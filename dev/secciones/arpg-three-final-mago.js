@@ -4,7 +4,7 @@
 (function(){
   // A 30 FPS: paneo 72 f, corte y vértigo 84 f; corte del hachazo en f 14;
   // giro tras levantarse 33 f; destrucción y caída en una sola toma de 101 f.
-  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,vertigo:2.8,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
+  const DURACIONES=Object.freeze({salida:2.6,descubrir:2.4,pies:1.5,vertigo:2.8,carrera:12,ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,impactar,interfaz,volver,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','techo','cielo'];
@@ -109,7 +109,7 @@
       const fuera=normal?.clone()||centro.clone().sub(puerta||new V(10,0,10)).normalize(),salida=puerta?.clone()||new V(10,0,10);
       const avance=centro.clone().sub(salida).setY(0).normalize();destino.copy(centro).addScaledVector(avance,-3.5);prepararTecho(salida,avance);
       actor.pos.copy(umbral||salida.clone().addScaledVector(fuera,-1.8));actor.dir=Math.atan2(fuera.x,fuera.z);actor.giro180=null;actor.alto=0;
-      s={actor,prestado,inicios:{},lluviaLiberada:false,tLluvia:0,fase:'salida',t:0,total:0,impactado:false,origen:actor.pos.clone(),salida,fuera,avance,remate:centro.clone().addScaledVector(avance,-.45),tropiezo:centro.clone().addScaledVector(avance,.8),casaDolly:-1,dollyPreparado:false,mallas:actor.m.mallas.map(m=>m.visible)};nodosCine=null;
+      s={actor,prestado,inicios:{},lluviaLiberada:false,tLluvia:0,fase:'salida',t:0,total:0,impactado:false,origen:actor.pos.clone(),salida,inicioCarrera:salida.clone(),fuera,avance,remate:centro.clone().addScaledVector(avance,-.45),tropiezo:centro.clone().addScaledVector(avance,.8),casaDolly:-1,dollyPreparado:false,mallas:actor.m.mallas.map(m=>m.visible)};nodosCine=null;
       recursos.grupo.visible=true;recursos.mago.visible=recursos.sello.visible=false;recursos.meteorito.visible=recursos.onda.visible=false;recursos.fragmentos.count=recursos.humo.count=0;recursos.luz.intensity=0;
       casas.userData.ocultacion?.opacidades.fill(1);derrumbe.value=-1;posar('quieto',0);cambio('salida');camaraSalida();ambienteLluvia(0,actor.pos);return true;
     }
@@ -122,6 +122,21 @@
     function camaraJuego(amplitud=1,fov=32){const h=s.actor,objetivo=h.pos.clone().lerp(centro,.35).setY(.75);const d=22*amplitud;mirar(objetivo.clone().add(new V(0,Math.sin(.92)*d,Math.cos(.92)*d)),objetivo,fov);}
     function camaraPerfil(){const objetivo=s.remate.clone().setY(.85),lateral=new V(-s.avance.z,0,s.avance.x);mirar(objetivo.clone().addScaledVector(lateral,12).add(new V(0,8.4,0)),objetivo,36);}
     function vistaOjos(objetivo,correr=false,fov=68){const h=s.actor,balanceo=correr&&!reducido?Math.sin(h.fase*2)*.035:0;mirar(h.pos.clone().add(new V(Math.sin(h.dir)*.12,1.69+balanceo,Math.cos(h.dir)*.12)),objetivo,fov);}
+    function camaraPies(){
+      const foco=s.actor.pos.clone().setY(.3),lateral=new V(-s.avance.z,0,s.avance.x);
+      // Travelling bajo de perfil: deja espacio delante de las botas y corta bajo la rodilla.
+      foco.addScaledVector(s.avance,.22);mirar(foco.clone().addScaledVector(lateral,2.5).addScaledVector(s.avance,.45).setY(.48),foco,36);
+    }
+    // Se aplica después de la cámara editada y se deshace tras dibujar: no se
+    // acumula al pausar ni se graba dos veces al convertirla en keyframes.
+    function respirarCamara(){
+      if(!s||s.fase!=='caida'||reducido)return null;
+      const t=s.t,envolvente=suave(t/.12)*(1-suave((t-(DURACIONES.caida-.18))/.18));
+      const pos=camara.position.clone(),rot=camara.quaternion.clone(),pulso=Math.sin(t*TAU*.85);
+      camara.position.add(new V(Math.sin(t*TAU*.45)*.012,pulso*.035,0).multiplyScalar(envolvente).applyQuaternion(rot));
+      camara.rotateX(pulso*.0025*envolvente);camara.rotateZ(Math.sin(t*TAU*.65)*.0018*envolvente);camara.updateMatrixWorld(true);
+      return ()=>{camara.position.copy(pos);camara.quaternion.copy(rot);camara.updateMatrixWorld(true);};
+    }
     // La posición debe estar lista antes del primer cuadro visible: así la estela
     // nunca aparece en el origen ni conserva la posición de una reproducción anterior.
     function colocarMeteorito(edad){const r=recursos,h=s.actor,k=lim(edad/(DURACIONES.cielo+DURACIONES.caida));
@@ -163,7 +178,7 @@
     }
     function paso(dt){if(!s||dt<0)return false;if(terminado||dt===0)return true;const h=s.actor,r=recursos;s.t+=dt;s.total+=dt;s.tPlano+=dt;if(s.lluviaLiberada)s.tLluvia+=dt;const t=s.t,f=s.fase;
       const enTecho=['levantarse','voltear','techo','cielo','caida','impacto','negro'].includes(f);
-      r.mago.position.copy(enTecho?techo:centro).add(new V(0,(['salida','descubrir','vertigo','carrera','ataquePOV','desaparece'].includes(s.fase)?1.05:.03)+Math.sin(s.total*2)*.035,0));r.mago.rotation.y=enTecho?rumbo(r.mago.position,h.pos):0;
+      r.mago.position.copy(enTecho?techo:centro).add(new V(0,(['salida','descubrir','pies','vertigo','carrera','ataquePOV','desaparece'].includes(s.fase)?1.05:.03)+Math.sin(s.total*2)*.035,0));r.mago.rotation.y=enTecho?rumbo(r.mago.position,h.pos):0;
       const hechizo=r.mago.visible&&!s.impactado,levantados=hechizo?.92+Math.sin(s.total*2.5)*.08:0;r.brazos.forEach((b,i)=>{b.rotation.x=-levantados*2.2;b.rotation.z=(i?1:-1)*(.24+levantados*.45);});r.baston.rotation.z=Math.sin(s.total*1.4)*.035;
       r.cola.material.uniforms.uTiempo.value=s.total;r.sello.rotation.y=s.total*.3;r.orbita.visible=hechizo;r.orbita.position.copy(r.mago.position).add(new V(0,2.6,0));r.orbita.rotation.set(s.total*.4,s.total*.7,0);
       r.aura.rotation.y=s.total*.8;for(let i=0;i<28;i++){const k=(i/28+s.total*.19)%1,a=i*2.399+s.total*.7;objeto.position.set(Math.cos(a)*.9,.1+k*2.6,Math.sin(a)*.9);objeto.rotation.set(a,k*5,a*.3);objeto.scale.setScalar(.6+Math.sin(k*Math.PI)*.7);objeto.updateMatrix();r.motas.setMatrixAt(i,objeto.matrix);}r.motas.instanceMatrix.needsUpdate=true;
@@ -177,11 +192,18 @@
         // Sostiene el final del paneo 0,3 s antes del corte al plano de vértigo.
         mirar(desdeCamara,new V(0,2.35,0),42);finPaneo.copy(camara.quaternion);
         camara.quaternion.slerpQuaternions(giroPaneo,finPaneo,suave(t/2.1));camara.updateMatrixWorld(true);
-        if(t>=DURACIONES.descubrir){cambio('vertigo');camaraVertigo(0);}
+        if(t>=DURACIONES.descubrir){h.dir=Math.atan2(s.avance.x,s.avance.z);cambio('pies');camaraPies();}
+      }else if(f==='pies'){
+        // Primer impulso en tiempo dilatado; el ciclo avanza por distancia, no por reloj.
+        const k=lim(t/DURACIONES.pies),antes=h.pos.clone(),distancia=Math.min(2,s.salida.distanceTo(destino)*.2);
+        h.pos.copy(s.salida).addScaledVector(s.avance,distancia*k*k);h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(1)*TAU;
+        posar('andar',dt);camaraPies();
+        if(t+1e-8>=DURACIONES.pies){s.inicioCarrera.copy(h.pos);cambio('vertigo');camaraVertigo(0);}
       }else if(f==='vertigo'){
-        posar('quieto',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo)cambio('carrera');
+        posar('andar',dt);camaraVertigo(t/DURACIONES.vertigo);if(t>=DURACIONES.vertigo){cambio('carrera');vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),true);}
       }else if(f==='carrera'){
-        const d=s.salida.distanceTo(destino),recorrido=Math.min(d,t*5.8),antes=h.pos.clone();h.pos.copy(s.salida).addScaledVector(s.avance,recorrido);h.dir=Math.atan2(s.avance.x,s.avance.z);
+        // Conserva la duración anterior para no desfasar las cámaras ya editadas.
+        const d=s.salida.distanceTo(destino),recorrido=Math.min(d,t*5.8),antes=h.pos.clone();h.pos.lerpVectors(s.inicioCarrera,destino,d>0?recorrido/d:1);h.dir=Math.atan2(s.avance.x,s.avance.z);
         h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(1)*TAU;posar('andar',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.1,0)),true);
         if(recorrido>=d||t>=DURACIONES.carrera){h.pos.copy(destino);cambio('ataquePOV');}
       }else if(f==='ataquePOV'||f==='desaparece'){
@@ -204,11 +226,11 @@
         const k=lim(t/DURACIONES.voltear),delta=angulo(s.dirInicio,rumbo(h.pos,techo));
         h.dir=s.dirInicio+delta*MOD.animacion.avanceGiro(k);posar('giro180',dt,k,0,{sentidoGiro:Math.sign(delta)});
         h.m.H.cabeza.rotation.x-=.55*suave((k-.65)/.35);camaraPerfil();
-        if(t>=DURACIONES.voltear){h.dir=s.dirInicio+delta;h.m.raiz.rotation.y=h.dir;cambio('techo');}
+        if(t>=DURACIONES.voltear){h.dir=s.dirInicio+delta;h.m.raiz.rotation.y=h.dir;cambio('techo');vistaOjos(r.mago.position.clone().add(new V(0,1.3,0)));}
       }
       else if(f==='techo'){posar('quieto',dt);vistaOjos(r.mago.position.clone().add(new V(0,1.3,0)));if(t>=DURACIONES.techo){colocarMeteorito(0);r.meteorito.visible=true;cambio('cielo');}}
       else if(f==='cielo'||f==='caida'){const edad=(f==='caida'?DURACIONES.cielo:0)+t;colocarMeteorito(edad);
-        if(f==='cielo'){const objetivo=r.mago.position.clone().add(new V(0,2,0)).lerp(r.meteorito.position,suave(t/.4));vistaOjos(objetivo,false,68-44*suave((t-.12)/.45));if(t>=DURACIONES.cielo)cambio('caida');}
+        if(f==='cielo'){const objetivo=r.mago.position.clone().add(new V(0,2,0)).lerp(r.meteorito.position,suave(t/.4));vistaOjos(objetivo,false,68-44*suave((t-.12)/.45));if(t>=DURACIONES.cielo){cambio('caida');camaraJuego(.8);}}
         else{h.m.raiz.position.copy(h.pos);actuacion.fbx(h.m,'prepararMeteorito',t/.67,s.pose,t/.22);camaraJuego(.8);if(t>=DURACIONES.caida){explosion();cambio('impacto');camaraDestruccion(0);}}
       }else if(f==='impacto'){
         caerAbismo(t);escombros(t);camaraDestruccion(t);if(!reducido){camara.position.x+=Math.sin(t*53)*.28*Math.exp(-t*2);camara.position.y+=Math.cos(t*67)*.2*Math.exp(-t*2);}if(t>=DURACIONES.impacto)cambio('negro');
@@ -244,7 +266,7 @@
       for(const raiz of [s.actor.m.raiz,recursos.grupo,recursos.brazosFPS.raiz])raiz.updateMatrixWorld(true);
       interfaz({fase:s.fase,negro:s.fase==='negro'?suave(s.t/.6):0});
     }
-    return {iniciar,paso,cancelar,finalizar,estado,vistaEditor,capturarCuadro,mostrarCuadro,get activa(){return !!s;},get recursos(){return recursos;}};
+    return {iniciar,paso,cancelar,finalizar,estado,vistaEditor,respirarCamara,capturarCuadro,mostrarCuadro,get activa(){return !!s;},get recursos(){return recursos;}};
   }
   window.CAOZ_ARPG_FINAL_MAGO=Object.freeze({fabrica,DURACIONES});
 })();
