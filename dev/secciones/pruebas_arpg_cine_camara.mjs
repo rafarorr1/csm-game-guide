@@ -13,34 +13,40 @@ a[0].curva='corte';assert.equal(C.muestra(a,1.999).pos[0],0);assert.equal(C.mues
 a[0].curva='suave';assert(C.muestra(a,.5).pos[0]<2.5);assert(C.muestra(a,1.5).pos[0]>7.5);
 a[1].rot=new T.Quaternion().setFromAxisAngle(new T.Vector3(0,1,0),Math.PI).toArray();const m=C.muestra(a,1);assert(Math.abs(new T.Quaternion().fromArray(m.rot).length()-1)<1e-10);C.aplicar(camara,m);assert.equal(camara.position.x,5);assert.equal(camara.fov,42);
 for(const fps of [30,60,120]){for(let i=0;i<=fps*2;i++){const t=i/fps,r=C.muestra(a,t);assert(r.pos.every(Number.isFinite));assert(r.fov>=22&&r.fov<=62);}assert.equal(C.muestra(a,2).pos[0],10);}
-for(const alterar of [x=>x.version=4,x=>x.revision='otra',x=>x.planos.salida.claves[0].pos=[NaN,0,0],x=>x.planos.salida.claves[0].fov=0,x=>x.planos.salida.claves[0].rot=[0,0,0,0],x=>x.planos.salida.claves[0].t=-1,x=>x.planos.salida.claves.push(k(0,4)),x=>x.planos.inventado={vista:'externa',claves:[]}]){const malo=JSON.parse(JSON.stringify(v));alterar(malo);assert.throws(()=>M.validar(malo));}
+for(const alterar of [x=>x.version=9,x=>x.revision='otra',x=>x.planos.salida.claves[0].pos=[NaN,0,0],x=>x.planos.salida.claves[0].fov=0,x=>x.planos.salida.claves[0].rot=[0,0,0,0],x=>x.planos.salida.claves[0].t=-1,x=>x.planos.salida.claves.push(k(0,4)),x=>x.planos.inventado={vista:'externa',claves:[]}]){const malo=JSON.parse(JSON.stringify(v));alterar(malo);assert.throws(()=>M.validar(malo));}
 const vuelta=M.validar(JSON.parse(JSON.stringify(v)));assert.equal(vuelta.planos.salida.claves.length,2);assert(!vuelta.planos.vertigo,'Un plano sin edición conserva su cámara del guion');
 console.log('✓ Tomas de cámara: posiciones, focal, rotación normalizada, interpolaciones, cortes exactos, 30/60/120 FPS e importación validada.');
 
-// Dos grupos editoriales conservan una pista continua entre sus acciones.
-assert.equal(M.planos.length,9);
-assert.equal(M.planoDeFase('ataquePOV'),'carrera');assert.equal(M.planoDeFase('desaparece'),'carrera');
+// La desaparición pasa al plano 05; la actuación conserva su tiempo absoluto.
+assert.equal(M.planos.length,9);assert.equal(M.VERSION,4);
+assert.equal(M.planoDeFase('ataquePOV'),'carrera');assert.equal(M.planoDeFase('desaparece'),'tropezar');
 for(const f of ['tropezar','buscar','levantarse','voltear'])assert.equal(M.planoDeFase(f),'tropezar');
-const vieja={...M.nueva(),version:1,planos:{carrera:{vista:'original',claves:[k(0,10),k(1,20)]},desaparece:{vista:'externa',claves:[k(0,30)]},salida:{vista:'externa',claves:[k(0,5)]}}};
-M.validar(vieja);const cuadros=[];
-for(const [i,accion]of ['carrera','ataquePOV','desaparece'].entries())for(let f=0;f<60;f++)cuadros.push({fase:'carrera',accion,tAccion:f/60,t:i+f/60,camara:k(0,99)});
-const agrupada=C.agrupar(vieja,cuadros);assert.equal(agrupada.version,3);assert.equal(agrupada.planos.carrera.claves.length,180);assert.equal(agrupada.planos.salida.claves.length,1);assert(!agrupada.planos.desaparece);
-for(const f of cuadros){const esperado=C.muestra(vieja.planos[f.accion]?.claves,f.tAccion)||f.camara,actual=C.tomaEn(agrupada,{fase:f.accion,t:f.tAccion,tPlano:f.t});assert.equal(actual.camara.pos[0],esperado.pos[0]);}
-assert.equal(C.tomaEn(agrupada,{fase:'ataquePOV',t:0,tPlano:1}).vista,'original');assert.equal(C.tomaEn(agrupada,{fase:'desaparece',t:0,tPlano:2}).vista,'externa');
-assert.equal(C.tomaEn(vieja,{fase:'desaparece',t:.2,tPlano:2.2}).camara.pos[0],30,'La partida también puede abrir tomas antiguas');
-const continua=M.nueva();continua.planos.carrera={vista:'externa',claves:[k(0,0),k(3,30)]};
-assert(Math.abs(C.tomaEn(continua,{fase:'ataquePOV',t:.1,tPlano:2.1}).camara.pos[0]-21)<1e-8,'Una acción nueva no reinicia la pista');
-assert.equal(JSON.stringify(M.validar(agrupada)),JSON.stringify(agrupada),'Exportación e importación conservan la migración');
-assert.throws(()=>M.validar({...continua,planos:{ataquePOV:{vista:'externa',claves:[]}}}));
-assert.throws(()=>M.validar({...continua,planos:{carrera:{vista:'original',claves:[],vistas:{salida:'externa'}}}}));
-console.log('✓ Nueve planos, reloj continuo, migración de tomas anteriores con cámaras sin editar, cortes, vistas e importación compatible.');
-
-// Las tomas con diez planos reúnen techo y cielo sin reinterpretar las otras pistas.
-const anterior={...M.nueva(),version:2,planos:{techo:{vista:'original',claves:[k(0,1),k(1,3)]},cielo:{vista:'externa',claves:[k(0,7)]},carrera:{vista:'externa',claves:[k(0,9),k(2,12,42,'suave')]}}};
-M.validar(anterior);
-const techoFrames=[];for(const [i,accion]of ['techo','cielo'].entries())for(let f=0;f<60;f++)techoFrames.push({fase:'techo',accion,tAccion:f/60,t:i+f/60,camara:k(0,99)});
-const nueve=C.agrupar(anterior,techoFrames);assert.equal(nueve.version,3);assert(!nueve.planos.cielo);assert.equal(JSON.stringify(nueve.planos.carrera),JSON.stringify(anterior.planos.carrera));
-for(const f of techoFrames)assert.equal(C.muestra(nueve.planos.techo.claves,f.t).pos[0],C.muestra(anterior.planos[f.accion].claves,f.tAccion).pos[0]);
-assert.equal(C.tomaEn(anterior,{fase:'cielo',t:.2,tPlano:1.2}).camara.pos[0],7,'Una toma v2 aún usa el reloj propio de cielo');
+const cuadros=[],inicios={};let grupo=null,inicio=0;
+for(const [a,accion]of M.fases.entries()){
+ const id=M.planoDeFase(accion);inicios[accion]=a;
+ if(id!==grupo){grupo=id;inicio=a;}
+ for(let f=0;f<60;f++)cuadros.push({fase:id,accion,tAccion:f/60,t:a+f/60-inicio,camara:k(0,99)});
+}
+for(const version of [1,2,3]){
+ const antigua={...M.nueva(),version,planos:{}};
+ for(const [i,accion]of M.fases.entries()){
+  const id=M.planoDeFase(accion,version);if(antigua.planos[id])continue;
+  antigua.planos[id]={vista:i%2?'externa':'original',claves:[k(0,i*100,42,'suave'),k(8,i*100+80)]};
+ }
+ M.validar(antigua);const agrupada=C.agrupar(antigua,cuadros);assert.equal(agrupada.version,4);
+ for(const [i,f]of cuadros.entries()){
+  const origen=M.planoDeFase(f.accion,version),primera=M.fases.find(a=>M.planoDeFase(a,version)===origen),t=i/60-inicios[primera];
+  const esperado=C.muestra(antigua.planos[origen].claves,t),actual=C.muestra(agrupada.planos[f.fase].claves,f.t);
+  assert(Math.abs(actual.pos[0]-esperado.pos[0])<1e-8,`La cámara v${version} conserva el encuadre global en ${f.accion} ${f.tAccion}`);
+  const runtime=C.tomaEn(antigua,{fase:f.accion,t:f.tAccion,tPlano:f.t,total:i/60,inicios});
+  assert(Math.abs(runtime.camara.pos[0]-esperado.pos[0])<1e-8,'La partida reproduce las tomas antiguas con su reloj original');
+ }
+ assert.equal(JSON.stringify(agrupada.planos.salida),JSON.stringify(antigua.planos.salida),'Las pistas que no cambian conservan sus keyframes originales');
+ assert.equal(JSON.stringify(M.validar(agrupada)),JSON.stringify(agrupada));
+}
+const parcial={...M.nueva(),version:3,planos:{carrera:{vista:'externa',claves:[k(0,1),k(3,4)]}}};
+const migrada=C.agrupar(parcial,cuadros);assert(migrada.planos.tropezar.claves.length,'El final del plano 04 sigue a la desaparición hasta el 05');
+assert.equal(C.muestra(migrada.planos.tropezar.claves,1).pos[0],99,'La recuperación no editada conserva la cámara original');
 assert.equal(M.planoDeFase('cielo'),'techo');assert.equal(M.planoDeFase('cielo',2),'cielo');
-console.log('✓ Techo y meteorito: pista única y compatibilidad con tomas de 10 planos.');
+assert.throws(()=>M.validar({...M.nueva(),planos:{carrera:{vista:'original',claves:[],vistas:{desaparece:'externa'}}}}));
+console.log('✓ Formato 4: corte al plano 05, migración de versiones 1/2/3 sin perder encuadres, vistas, curvas ni el reloj global.');

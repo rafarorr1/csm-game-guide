@@ -22,8 +22,8 @@ const documento={body:new Elemento(),activeElement:null,hidden:false,createEleme
 let ms=0;
 const c=vm.createContext({console,atob,document:documento,localStorage:{getItem:()=>null,setItem(){}},performance:{now:()=>ms++},setTimeout:f=>pendientes.push(f),requestAnimationFrame:f=>pendientes.push(f),addEventListener(){}});c.window=c;
 for(const archivo of ['visor-three-vendor.js','arpg-cine-camara.js','arpg-cine-editor.js'])vm.runInContext(fs.readFileSync(new URL(archivo,import.meta.url),'utf8'),c);
-const T=c.CAOZ_THREE.THREE,camara=new T.PerspectiveCamera(),fases=['salida','descubrir','vertigo'];let simulado=0,reinicios=0;
-const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(fases.length-1,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=fases.length*120-1}),vista(){}};
+const T=c.CAOZ_THREE.THREE,camara=new T.PerspectiveCamera(),fases=['salida','descubrir','vertigo'];let simulado=0,reinicios=0,pasos=0,restauraciones=0;
+const api={reiniciar(){simulado=0;reinicios++;camara.position.set(0,2,10);},paso(){pasos++;simulado++;camara.position.x=simulado;},estado:()=>({fase:fases[Math.min(fases.length-1,Math.floor(simulado/120))],t:(simulado%120)/60,actor:[0,0,0],mago:[1,0,0],terminado:simulado>=fases.length*120-1}),vista(){},capturar(){return {simulado,x:camara.position.x};},mostrar(c){restauraciones++;simulado=c.simulado;camara.position.x=c.x;}};
 const editor=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api),$=id=>elementos.get(id);
 async function ceder(){assert(pendientes.length,'Debe haber un tramo de simulación pendiente');pendientes.shift()();await Promise.resolve();await Promise.resolve();}
 async function completar(){let n=0;while(pendientes.length){assert(++n<1000,'Una búsqueda debe terminar');await ceder();}}
@@ -58,23 +58,26 @@ assert.equal($('cePlay').textContent,'▶ Reproducir');
 const css=fs.readFileSync(new URL('arpg-cine-editor.css',import.meta.url),'utf8');assert(!/\.ceBloqueado \.ceMontaje\s*\{/.test(css),'Buscar no debe desactivar los rangos durante el gesto');
 console.log('✓ Sliders: arrastre con render activo, búsqueda durante el gesto, reversa, último destino, cancelación concurrente, plano local estable, extremos, teclado y pausa.');
 
-// El plano 04 reúne las antiguas acciones 04–06 y el 05 reúne 07–10.
+// El corte a tercera persona pertenece al plano 05, desde desaparece.
 fases.push('carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro');
 const agrupado=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api);await completar();
 assert.equal($('cePlanos').children.length,9);assert.equal($('ceTiras').children.length,9);
-entrada('ceTiempo',370);await completar();assert.equal(Number($('ceLocal').max),359);
-$('ceLocal').emitir('pointerdown');entrada('ceLocal',250);await completar();comprobar(610,250);assert.equal(api.estado().fase,'desaparece');
-assert.equal($('cePlanoTitulo').textContent,'04 / Carrera, ataque y desaparición');$('ceLocal').emitir('pointerup');
-$('ceCurva').value='suave';$('ceKey').onclick();assert.equal($('ceCuenta').textContent,1);assert.equal($('ceKeyTiempo').value,'4.167');
-entrada('ceLocal',100);await completar();assert.equal($('ceCuenta').textContent,1,'La misma pista está disponible en todas las acciones del plano');
-entrada('ceTiempo',730);await completar();assert.equal(Number($('ceLocal').max),479);entrada('ceLocal',479);await completar();comprobar(1199,479);
-assert.equal($('cePlanoTitulo').textContent,'05 / Caída, búsqueda y recuperación');assert.equal(api.estado().fase,'voltear');
-entrada('ceTiempo',710);await completar();$('ceVelocidad').value='1';$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert.equal(simulado,719,'La grabación acaba al final del grupo completo');
-entrada('ceTiempo',470);await completar();$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert(simulado>480,'Cambiar de acción no detiene la grabación');assert.equal($('ceGrabar').textContent,'■ Detener grabación');$('ceGrabar').onclick();
+entrada('ceTiempo',370);await completar();assert.equal(Number($('ceLocal').max),239);
+$('ceLocal').emitir('pointerdown');entrada('ceLocal',200);await completar();comprobar(560,200);assert.equal(api.estado().fase,'ataquePOV');
+assert.equal($('cePlanoTitulo').textContent,'04 / Carrera e inicio del ataque');$('ceLocal').emitir('pointerup');
+$('ceCurva').value='suave';$('ceKey').onclick();assert.equal($('ceCuenta').textContent,1);assert.equal($('ceKeyTiempo').value,'3.333');
+entrada('ceLocal',100);await completar();assert.equal($('ceCuenta').textContent,1);
+entrada('ceTiempo',600);await completar();comprobar(600,0);assert.equal(api.estado().fase,'desaparece');assert.equal(Number($('ceLocal').max),599);
+entrada('ceLocal',599);await completar();comprobar(1199,599);assert.equal($('cePlanoTitulo').textContent,'05 / Fallo, caída y recuperación');
+entrada('ceTiempo',590);await completar();$('ceVelocidad').value='1';$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert.equal(simulado,599,'La grabación acaba antes de desaparecer');
+entrada('ceTiempo',710);await completar();$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert(simulado>720,'Cambiar de acción no detiene el plano 05');assert.equal($('ceGrabar').textContent,'■ Detener grabación');$('ceGrabar').onclick();
 console.log('✓ Grupos del editor: nueve planos, sliders completos, keyframes compartidos y grabación continua entre acciones.');
 
 entrada('ceTiempo',1210);await completar();assert.equal(Number($('ceLocal').max),239);entrada('ceLocal',239);await completar();comprobar(1439,239);assert.equal(api.estado().fase,'cielo');assert.equal($('cePlanoTitulo').textContent,'06 / Mago en el techo y meteorito');
 // Una cámara libre no contamina la cámara programada al continuar hacia adelante.
-const antesAvance=reinicios;entrada('ceTiempo',1450);await completar();assert.equal(reinicios,antesAvance,'Avanzar reutiliza el estado del cuadro anterior');
-entrada('ceTiempo',1400);await completar();assert.equal(reinicios,antesAvance+1,'Retroceder reconstruye con la semilla inicial');assert.equal(simulado,1400);
-console.log('✓ Búsqueda por cuadro sin velo, avance incremental y slider único de techo/meteorito.');
+const antesAvance=reinicios;entrada('ceTiempo',1450);await completar();assert.equal(reinicios,antesAvance,'Avanzar restaura el cuadro preparado');
+entrada('ceTiempo',1400);await completar();assert.equal(reinicios,antesAvance,'Retroceder restaura un cuadro ya preparado');assert.equal(simulado,1400);
+console.log('✓ Búsqueda por cuadro sin velo ni resimulación y slider único de techo/meteorito.');
+
+const pasosAntes=pasos,reiniciosAntes=reinicios;for(const f of [0,1700,20,1500,100,1400,50]){entrada('ceTiempo',f);await completar();assert.equal(simulado,f);}assert.equal(pasos,pasosAntes,'El scrub no ejecuta simulación en ninguna dirección');assert.equal(reinicios,reiniciosAntes);assert(restauraciones>10);
+console.log('✓ Búsquedas instantáneas por caché, sin simulación ni reinicios; actuación independiente del encuadre.');

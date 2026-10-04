@@ -1729,6 +1729,17 @@
   function puenteCine(){return {
     reiniciar(){finalMago.cancelar();impactoFX.limpiar();pVida.fill(0);pCol.fill(0);pSig=0;escombros.length=0;mallaEscombros.count=0;semilla=11;reloj.t=0;for(const h of jugadores){h.fase=0;MOD.posar(h.m,{anim:'quieto',t:0,dt:0,mezclar:false});}iniciarFinalMago();},
     paso(dt){reloj.t+=dt;tiempo.value=F.tiempo.value=CASAS.uniformes.uT.value=reloj.t;pasoFinalMago(dt,dt);},
+    capturar(){
+      const vivas=[];for(let i=0;i<NP;i++)if(pCol[i*4+3]>0)vivas.push(...pPos.subarray(i*3,i*3+3),...pCol.subarray(i*4,i*4+4),pTam[i]);
+      return {cine:finalMago.capturarCuadro(),particulas:new Float32Array(vivas)};
+    },
+    mostrar(c){
+      finalMago.mostrarCuadro(c.cine);const e=c.cine.estado,p=e.actor;
+      reloj.t=tiempo.value=F.tiempo.value=CASAS.uniformes.uT.value=e.total;
+      pCol.fill(0);for(let i=0;i<c.particulas.length/8;i++){const j=i*8;pPos.set(c.particulas.subarray(j,j+3),i*3);pCol.set(c.particulas.subarray(j+3,j+7),i*4);pTam[i]=c.particulas[j+7];}
+      for(const a of Object.values(geoP.attributes))a.needsUpdate=true;
+      impactoFX.vistaCine(e.impactado);luna.position.set(p[0]-14,22,p[2]-12);luna.target.position.set(...p);luzHeroe.position.set(p[0],p[1]+5.5,p[2]+2.2);
+    },
     estado:()=>finalMago.estado(),vista:externa=>finalMago.vistaEditor(externa),
     duraciones:window.CAOZ_ARPG_FINAL_MAGO.DURACIONES
   };}

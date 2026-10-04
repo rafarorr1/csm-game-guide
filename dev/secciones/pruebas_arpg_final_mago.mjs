@@ -103,3 +103,21 @@ const n=escena.children.length;
 for(let i=0;i<4;i++){cine.iniciar([actor,otro]);cine.cancelar();assert.equal(escena.children.length,n,'Reutiliza los efectos entre revisiones');}
 cine.iniciar([otro]);assert.equal(otro.m.raiz.visible,false);cine.cancelar();assert.equal(escena.children.length,n,'El actor de historia prestado se retira');
 console.log('✓ Final del mago: dolly frontal de 2,8 s, giro posterior y cierre superwide sin corte, brazos FPS, pausa, dos jugadores, actor Adreida, sima de 24 m de profundidad, ruinas, omisión/reinicio y regreso único a 30/60/120 FPS.');
+
+// Se hornea una vez y se puede saltar en ambas direcciones sin ejecutar actuación.
+cine.iniciar([actor,otro]);const cuadros=[];
+while(!cine.estado().terminado){cuadros.push(cine.capturarCuadro());cine.paso(1/60);}
+cuadros.push(cine.capturarCuadro());
+const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='desaparece'),cuadros.findIndex(f=>f.estado.fase==='cielo'&&f.estado.t>.8),cuadros.findIndex(f=>f.estado.fase==='impacto'&&f.estado.t>1.4),cuadros.length-1];
+const recursosAntes=escena.children.length;
+for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){
+ const f=cuadros[i];cine.mostrarCuadro(f);const actual=cine.estado();for(const clave of ['mago','meteorito']){assert(actual[clave].every((v,j)=>Math.abs(v-f.estado[clave][j])<1e-5),'Posiciones visuales conservadas con precisión submilimétrica');actual[clave]=f.estado[clave];}assert.equal(JSON.stringify(actual),JSON.stringify(f.estado),'Restaurar conserva fase, relojes, lluvia y posiciones');
+ const antes=cine.capturarCuadro();camara.position.set(70,20,-30);camara.lookAt(new T.Vector3(2,3,4));cine.vistaEditor(false);
+ const despues=cine.capturarCuadro();for(let j=0;j<antes.poses.length;j++){if(j%12===10)continue;assert(Math.abs(antes.poses[j]-despues.poses[j])<1e-6,'Mover cámara no cambia transformaciones, huesos ni brazos POV');}
+ cine.vistaEditor(true);const externa=cine.capturarCuadro();for(let j=0;j<antes.poses.length;j++){if(j%12===10)continue;assert(Math.abs(antes.poses[j]-externa.poses[j])<1e-6,'Alternar vista sólo cambia visibilidad');}
+ assert.equal(escena.children.length,recursosAntes,'Scrub no reserva geometría ni crea partículas nuevas');
+}
+const bytes=cuadros.reduce((n,f)=>n+f.poses.byteLength+f.instancias.reduce((m,x)=>m+x.i.byteLength,0),0);
+assert(bytes<64*1024*1024,'La actuación almacenada debe caber en 64 MiB sin duplicar texturas');
+cine.cancelar();fx.limpiar();
+console.log(`✓ Actuación bloqueada: caché reversible de ${cuadros.length} cuadros (${(bytes/1024/1024).toFixed(1)} MiB), brazos anclados, instancias y sombras restauradas sin resimular.`);

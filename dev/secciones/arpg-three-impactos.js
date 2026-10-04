@@ -117,7 +117,10 @@
       actualizarHuecos();
     }
     function limpiar(){for(const c of crateres)quitar(c);crateres.length=0;actualizarHuecos();for(const c of cintas.values()){escena.remove(c.mesh);c.g.dispose();c.mesh.material.dispose();}cintas.clear();}
-    return {perforar,actualizarMaterial,agujero,hacha,paso,limpiar,estado:()=>({crateres:crateres.map(c=>({t:c.t,x:c.mesh.position.x,z:c.mesh.position.z,radio:c.radio,profundidad:c.profundidad,opacidad:c.opacidad.value})),cintas:cintas.size})};
+    // La sima ya existe al terminar de preparar el editor: alternar su vista
+    // no vuelve a reservar geometría al cruzar el impacto hacia atrás y adelante.
+    function vistaCine(activa){for(const c of crateres)c.mesh.visible=activa;cantidadHuecos.value=activa?crateres.length:0;}
+    return {perforar,actualizarMaterial,agujero,hacha,paso,limpiar,vistaCine,estado:()=>({crateres:crateres.map(c=>({t:c.t,x:c.mesh.position.x,z:c.mesh.position.z,radio:c.radio,profundidad:c.profundidad,opacidad:c.opacidad.value})),cintas:cintas.size})};
   }
   window.CAOZ_ARPG_IMPACTOS={fabrica};
 })();
