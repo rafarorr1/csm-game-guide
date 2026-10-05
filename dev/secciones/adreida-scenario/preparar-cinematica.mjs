@@ -1,17 +1,18 @@
 /* Adapta los FBX del meteorito, sin incorporar el maniquí ni sus texturas.
    Extraer con extraer-combate.py; uso: node preparar-cinematica.mjs crouching.json falling.json
-   Incrementales: --deslizar slide.json o --salir walking-left-turn.json. */
+   Incrementales: --deslizar slide.json, --salir walking-left-turn.json,
+   --correr running.json o --equipar equip-over-shoulder.json. */
 import fs from 'node:fs';
 import vm from 'node:vm';
-const argumentos=process.argv.slice(2),soloDeslizar=argumentos[0]==='--deslizar',soloSalir=argumentos[0]==='--salir',incremental=soloDeslizar||soloSalir;
+const argumentos=process.argv.slice(2),soloDeslizar=argumentos[0]==='--deslizar',soloSalir=argumentos[0]==='--salir',soloCorrer=argumentos[0]==='--correr',soloEquipar=argumentos[0]==='--equipar',brazosFuente=soloSalir||soloCorrer||soloEquipar,incremental=soloDeslizar||brazosFuente;
 const fuentes=argumentos.slice(incremental?1:0).map(p=>JSON.parse(fs.readFileSync(p,'utf8')));
-if(fuentes.length!==(incremental?1:2))throw Error('Indica Crouching y Falling, --deslizar slide.json o --salir walking-left-turn.json, extraídos con extraer-combate.py.');
+if(fuentes.length!==(incremental?1:2))throw Error('Indica Crouching y Falling o un modo incremental --deslizar, --salir, --correr, --equipar seguido del JSON extraído con extraer-combate.py.');
 // El modo incremental conserva sin retargetear las tomas ya aprobadas.
 const previos=vm.createContext({window:{}});
 if(incremental)vm.runInContext(fs.readFileSync(new URL('cinematica.js',import.meta.url),'utf8'),previos);
 const procedenciaAnterior=incremental?JSON.parse(fs.readFileSync(new URL('cinematica-procedencia.json',import.meta.url),'utf8')):null;
 const c=vm.createContext({console,atob});c.window=c;c.CAOZ_ADREIDA_COMBATE={};
-for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js',...(incremental?['adreida-piernas-scenario/datos.js']:[]),'arpg-three-adreida.js',...(soloSalir?['hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js']:[]),'arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL('../'+f,import.meta.url),'utf8'),c);
+for(const f of ['visor-three-vendor.js','arpg-three-adreida-animacion.js','adreida-scenario/datos.js',...(incremental?['adreida-piernas-scenario/datos.js']:[]),'arpg-three-adreida.js',...(brazosFuente?['hacha-adreida-scenario/datos.js','arpg-three-hacha-adreida.js']:[]),'arpg-three-modelos.js'])vm.runInContext(fs.readFileSync(new URL('../'+f,import.meta.url),'utf8'),c);
 const T=c.CAOZ_THREE.THREE,F=c.CAOZ_ARPG_MODELOS.fabrica(T),m=F.crear('adreida'),H=m.H;
 const huesos=['cadera','torso','cabeza',...['I','D'].flatMap(l=>['pierna','rodilla','pie','brazo','ante','mano'].map(n=>n+l)),...Array.from({length:7},(_,i)=>'falda'+i)];
 const cuerpoHuesos=['cadera','torso','cabeza','piernaI','rodillaI','pieI','piernaD','rodillaD','pieD'];
@@ -40,7 +41,7 @@ function densificar(fuente,factor){
   return {...fuente,poses,muestras:poses.length};
 }
 const clips=incremental?previos.window.CAOZ_ADREIDA_CINE_CLIPS:{};
-for(const [indice,nombre]of (soloSalir?[]:soloDeslizar?['deslizarAtaque']:['prepararMeteorito','caerAbismo']).entries()){
+for(const [indice,nombre]of (brazosFuente?[]:soloDeslizar?['deslizarAtaque']:['prepararMeteorito','caerAbismo']).entries()){
   const fuente=soloDeslizar?densificar(fuentes[indice],4):fuentes[indice],rest=fuente.reposo,filas=[];planos.clear();
   const escala=(m.p.muslo+m.p.pierna)/(pos(rest,'LeftUpLeg').distanceTo(pos(rest,'LeftLeg'))+pos(rest,'LeftLeg').distanceTo(pos(rest,'LeftFoot')));
   const escalaBrazo=(m.p.brazo+m.p.antebrazo)/(pos(rest,'RightArm').distanceTo(pos(rest,'RightForeArm'))+pos(rest,'RightForeArm').distanceTo(pos(rest,'RightHand')));
@@ -81,8 +82,11 @@ for(const [indice,nombre]of (soloSalir?[]:soloDeslizar?['deslizarAtaque']:['prep
     clips[nombre].golpe={segundo:1.3,fotogramaFuente:39,fpsFuente:30,fotogramaHorneado:156,criterio:'El eje del mango cruza hacia delante durante el barrido; no es un evento de daño.'};
   }
 }
-if(soloSalir){
+if(brazosFuente){
   const fuente=densificar(fuentes[0],4),rest=fuente.reposo,filas=[],raiz=[],giros=[],ejeY=new T.Vector3(0,1,0),frente=new T.Vector3();planos.clear();
+  const nombre=soloCorrer?'carreraCine':soloEquipar?'equiparHacha':'salidaConGiro';
+  const referenciasSuelo=['LeftFoot','LeftToeBase','LeftToe_End','RightFoot','RightToeBase','RightToe_End'];
+  const sueloFuente=soloCorrer?Math.min(...fuente.poses.flatMap(f=>referenciasSuelo.map(n=>f[n].p[1]))):0;
   const escala=(m.p.muslo+m.p.pierna)/(pos(rest,'LeftUpLeg').distanceTo(pos(rest,'LeftLeg'))+pos(rest,'LeftLeg').distanceTo(pos(rest,'LeftFoot')));
   const delta=(f,n)=>q(f[n].q).multiply(q(rest[n].q).invert()),inicio=pos(fuente.poses[0],'Hips');
   let yawInicial=null,yawAnterior=0;
@@ -100,23 +104,28 @@ if(soloSalir){
       cadena(f,n+'Arm',n+'ForeArm',n+'Hand',H['brazo'+l],H['ante'+l],l==='I');
       orientar(H['mano'+l],delta(f,n+'Hand').multiply(q([0,0,Math.sin((l==='I'?1:-1)*Math.PI/4),Math.cos(Math.PI/4)])));
     }
-    // Walking lleva la mano relajada, cuyo marco de reposo no coincide con el
-    // del hacha. Índice/meñique fijan el mango transversal a la palma sin mover
+    // La fuente lleva la mano relajada, cuyo marco de reposo no coincide con
+    // el del hacha. Índice/meñique fijan el mango transversal a la palma sin mover
     // la mano, el codo ni el hombro del FBX.
     const eje=pos(f,'RightHandIndex1').sub(pos(f,'RightHandPinky1')).normalize().negate();
     const palma=pos(f,'RightHandIndex1').add(pos(f,'RightHandPinky1')).multiplyScalar(.5).sub(pos(f,'RightHand')).normalize();
     palma.addScaledVector(eje,-palma.dot(eje)).normalize();const normal=new T.Vector3().crossVectors(palma,eje).normalize();
     orientar(H.manoD,new T.Quaternion().setFromRotationMatrix(base.makeBasis(palma,eje,normal)));
     // Sólo se resuelve la tela. No se aplica el IK de combate sobre los brazos:
-    // ambos conservan el balanceo y el giro de Walking Left Turn.
+    // ambos conservan el balanceo y el giro de la animación fuente.
     m.tela=null;F.animacion.resolver(m,{anim:'muerte',t:0,dt:0,mezclar:false});H.raiz.updateMatrixWorld(true);
     let minimo=Infinity;for(const i of botas)minimo=Math.min(minimo,cuerpo.getVertexPosition(i,new T.Vector3()).y);
-    H.cuerpo.position.y+=.012-minimo;H.raiz.updateMatrixWorld(true);
+    // Running conserva su fase aérea, en lugar de pegar una bota al suelo en
+    // cada muestra. En salida/equipar el apoyo coincide con la suela aprobada.
+    const vuelo=soloCorrer?Math.max(0,Math.min(...referenciasSuelo.map(n=>f[n].p[1]))-sueloFuente)*escala:0;
+    H.cuerpo.position.y+=.012+vuelo-minimo;H.raiz.updateMatrixWorld(true);
     filas.push([...H.cuerpo.position.toArray(),...huesos.flatMap(n=>H[n].quaternion.toArray())]);
     const p=pos(f,'Hips').sub(inicio).multiplyScalar(escala).applyAxisAngle(ejeY,-yawInicial);raiz.push(p.x,0,p.z);giros.push(yaw-yawInicial);
   }
   for(let i=1;i<filas.length;i++)for(let j=0;j<huesos.length;j++){const o=3+j*4;if(filas[i].slice(o,o+4).reduce((s,x,k)=>s+x*filas[i-1][o+k],0)<0)for(let k=0;k<4;k++)filas[i][o+k]*=-1;}
-  clips.salidaConGiro={huesos,ancho:filas[0].length,muestras:filas.length,duracion:fuente.duracion,fps:120,datos:filas.flat().map(x=>+x.toFixed(6)),raiz:raiz.map(x=>+x.toFixed(6)),giros:giros.map(x=>+x.toFixed(6)),escalaFuente:escala,yawInicialFuente:yawInicial,agarre:'derecha'};
+  clips[nombre]={huesos,ancho:filas[0].length,muestras:filas.length,duracion:fuente.duracion,fps:120,datos:filas.flat().map(x=>+x.toFixed(6)),raiz:raiz.map(x=>+x.toFixed(6)),giros:giros.map(x=>+x.toFixed(6)),escalaFuente:escala,yawInicialFuente:yawInicial,agarre:soloCorrer?'libre':'derecha'};
+  if(soloCorrer)clips[nombre].ciclico=true;
+  if(soloEquipar)clips[nombre].transferencia={contacto:.9,extraccion:1,libre:1.5,fpsFuente:30,fotogramaContacto:27,fotogramaExtraccion:30,fotogramaLibre:45};
 }
 fs.writeFileSync(new URL('cinematica.js',import.meta.url),'/* FBX aportados por el usuario; generado por preparar-cinematica.mjs. */\nwindow.CAOZ_ADREIDA_CINE_CLIPS='+JSON.stringify(clips)+';\n');
 const procedencia=incremental?{...procedenciaAnterior}:{fuentes:[],adaptacion:'Veintidós huesos, proporciones del modelo actual, agarre del hacha resuelto con IK en Crouching. Falling conserva las poses sin corrección de suelo: la gravedad y el desplazamiento los dirige el epílogo. Sin mallas ni texturas de los FBX.',reproduccion:'Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json'};
@@ -141,6 +150,15 @@ if(soloSalir){
     reproduccion:'Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- "Walking Left Turn.fbx" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json',
     licencia:'Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente.'};
   if(!procedencia.reproduccion.includes(procedencia.salidaConGiro.reproduccion))procedencia.reproduccion+='; '+procedencia.salidaConGiro.reproduccion;
+}
+if(soloCorrer||soloEquipar){
+  const nombre=soloCorrer?'carreraCine':'equiparHacha',clip=clips[nombre],fuente=fuentes[0];
+  procedencia[nombre]={clip:nombre,modelo:'adreida-piernas-scenario/datos.js',fps:120,muestras:clip.muestras,escalaPiernas:clip.escalaFuente,yawInicialFuente:clip.yawInicialFuente,giroFinal:clip.giros.at(-1),desplazamientoFinal:clip.raiz.slice(-3),
+    adaptacion:'Veintidós huesos del rig aprobado, ambos brazos del FBX sin IK de combate. La palma derecha se orienta con las referencias índice/meñique sin mover hombro, codo ni mano. Cuerpo XZ=0; raiz XYZ y giros yaw, relativos al primer cuadro, se entregan separados y sólo se aplican en el guion. Interpolación fuente previa al horneado a 120 Hz. '+(soloCorrer?'Ciclo de Running completo; conserva elevación de las botas durante la fase aérea. El POV puede usar sólo los brazos y suprimir la raíz.':'El gesto de Equip se conserva completo; la transferencia del accesorio espalda→mano corresponde al runtime y sus tiempos se expresan en segundos fuente.'),
+    ...(soloEquipar?{transferencia:clip.transferencia}:{}),
+    reproduccion:`Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- "${fuente.fuente}" ${soloCorrer?'running':'equip-over-shoulder'}.json; node preparar-cinematica.mjs ${soloCorrer?'--correr running':'--equipar equip-over-shoulder'}.json`,
+    licencia:'Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente.'};
+  if(!procedencia.reproduccion.includes(procedencia[nombre].reproduccion))procedencia.reproduccion+='; '+procedencia[nombre].reproduccion;
 }
 fs.writeFileSync(new URL('cinematica-procedencia.json',import.meta.url),JSON.stringify(procedencia,null,2)+'\n');
 console.log(JSON.stringify(Object.fromEntries(Object.entries(clips).map(([n,v])=>[n,{duracion:v.duracion,muestras:v.muestras}]))));

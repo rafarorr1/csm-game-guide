@@ -4,11 +4,49 @@
 (function(){
   function fabrica(T,MOD){
     const lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
-    const v=new T.Vector3(),q=new T.Quaternion(),contactos=new WeakMap(),contactosSalida=new WeakMap(),remates=new WeakMap();
+    const v=new T.Vector3(),q=new T.Quaternion(),contactos=new WeakMap(),contactosSalida=new WeakMap(),remates=new WeakMap(),hachas=new WeakMap();
     const huesos=m=>Object.entries(m.H).filter(([,b])=>b.isBone);
-    const capturar=m=>({rot:Object.fromEntries(huesos(m).map(([k,b])=>[k,b.quaternion.clone()])),pos:m.H.cuerpo.position.clone(),rostro:MOD.rostro?.capturar(m)||null});
+    const capturar=m=>({rot:Object.fromEntries(huesos(m).map(([k,b])=>[k,b.quaternion.clone()])),pos:m.H.cuerpo.position.clone(),rostro:MOD.rostro?.capturar(m)||null,hacha:capturarHacha(m),agarres:m.mallas.map(mesh=>mesh.morphTargetInfluences?.slice()||null)});
     function mezclar(m,desde,k){for(const [n,b]of huesos(m))b.quaternion.slerp(desde.rot[n],1-suave(k));m.H.cuerpo.position.lerp(desde.pos,1-suave(k));MOD.rostro?.mezclar(m,desde.rostro,k);}
-    function restaurar(m,desde){m.H.cuerpo.position.copy(desde.pos);for(const [n,b]of huesos(m))if(desde.rot[n])b.quaternion.copy(desde.rot[n]);MOD.rostro?.restaurar(m,desde.rostro);m.raiz.updateMatrixWorld(true);}
+    function restaurar(m,desde){m.H.cuerpo.position.copy(desde.pos);for(const [n,b]of huesos(m))if(desde.rot[n])b.quaternion.copy(desde.rot[n]);MOD.rostro?.restaurar(m,desde.rostro);if(desde.hacha)restaurarHacha(m,desde.hacha);desde.agarres?.forEach((valores,i)=>{if(valores)m.mallas[i].morphTargetInfluences.splice(0,valores.length,...valores);});m.raiz.updateMatrixWorld(true);}
+    function prepararHacha(m){
+      let e=hachas.get(m);if(e)return e.nodo;
+      const original=m.hachaScenario;if(!original)return null;
+      const nodo=new T.Group(),malla=new T.Mesh(original.geometry,original.material),indice=original.skeleton.bones.indexOf(m.H.manoD);
+      nodo.name='Hacha de Adreida · accesorio de cine';malla.name='Hacha aprobada · estiba';nodo.visible=false;
+      // La geometría sigue intacta: la inversa de enlace coloca sus vértices en
+      // espacio del mango. El nodo permanece siempre bajo el torso, también al buscar cuadros.
+      malla.matrixAutoUpdate=false;malla.matrix.copy(original.skeleton.boneInverses[indice]);malla.frustumCulled=false;malla.castShadow=original.castShadow;malla.receiveShadow=original.receiveShadow;
+      nodo.add(malla);m.H.torso.add(nodo);e={nodo,malla,original,modo:'mano',activo:false,visible:original.visible,espalda:null};hachas.set(m,e);
+      return nodo;
+    }
+    function capturarHacha(m){
+      const e=hachas.get(m);return {modo:e?.activo?e.modo:null,visible:e?.visible??m.hachaScenario?.visible??true,original:m.hachaScenario?.visible??true,sinHacha:m.sinHacha,
+        pos:e?.nodo.position.clone()||null,rot:e?.nodo.quaternion.clone()||null,esc:e?.nodo.scale.clone()||null};
+    }
+    function restaurarHacha(m,estado){
+      if(!estado)return;let e=hachas.get(m);if(estado.modo&&!e){prepararHacha(m);e=hachas.get(m);}
+      if(e){e.activo=!!estado.modo;e.modo=estado.modo||'mano';e.visible=estado.visible;if(estado.pos)e.nodo.position.copy(estado.pos);if(estado.rot)e.nodo.quaternion.copy(estado.rot);if(estado.esc)e.nodo.scale.copy(estado.esc);e.nodo.visible=e.activo&&e.visible&&e.modo==='espalda';}
+      if(m.hachaScenario)m.hachaScenario.visible=estado.original;if(estado.sinHacha===undefined)delete m.sinHacha;else m.sinHacha=estado.sinHacha;
+    }
+    function visibilidadHacha(m,visible){
+      const e=hachas.get(m);if(e){e.visible=visible;e.nodo.visible=visible&&e.activo&&e.modo==='espalda';}
+      if(m.hachaScenario)m.hachaScenario.visible=visible&&(!e?.activo||e.modo==='mano');
+    }
+    function estibaHacha(m,e){
+      if(e.espalda)return;
+      const anterior=capturar(m),clip=window.CAOZ_ADREIDA_CINE_CLIPS.equiparHacha;
+      MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,agarreDerecha:true,mezclar:false});fbx(m,'equiparHacha',clip.transferencia.contacto/clip.duracion);
+      // La propia mano del clip determina el agarre de espalda. En el cuadro de
+      // contacto, accesorio rígido y arma enlazada coinciden vértice por vértice.
+      e.espalda=m.H.torso.matrixWorld.clone().invert().multiply(m.H.manoD.matrixWorld);restaurar(m,anterior);
+    }
+    function portarHacha(m,modo){
+      prepararHacha(m);const e=hachas.get(m);if(!e)return;
+      e.activo=true;e.modo=modo==='espalda'?'espalda':'mano';m.sinHacha=e.modo==='espalda';
+      if(e.modo==='espalda'){estibaHacha(m,e);e.activo=true;e.modo='espalda';m.sinHacha=true;e.espalda.decompose(e.nodo.position,e.nodo.quaternion,e.nodo.scale);}
+      visibilidadHacha(m,e.visible);m.raiz.updateMatrixWorld(true);
+    }
     function crearFPS(){
       const m=MOD.crear('adreida'),mesh=m.mallas[0],g=mesh.geometry,si=g.attributes.skinIndex,sw=g.attributes.skinWeight;
       const brazos=new Set(['anteI','manoI','anteD','manoD'].map(n=>mesh.skeleton.bones.indexOf(m.H[n]))),indices=[];
@@ -23,6 +61,7 @@
       return m;
     }
     function fps(m,camara,fase,t,ataque=null,clipAtaque=null){
+      const carreraVista=ataque===null&&clipAtaque==='carreraCine';
       MOD.posar(m,{anim:'quieto',dt:0,t,sinHacha:true,agarreDerecha:true,mezclar:false});const H=m.H;
       H.cuerpo.position.set(0,0,0);H.cadera.rotation.set(0,0,0);H.torso.rotation.set(0,0,Math.sin(fase)*.018);
       for(const [l,signo]of [['D',-1],['I',1]]){
@@ -31,6 +70,7 @@
         H['ante'+l].rotation.set(-1.3-paso*.16,0,0);
         H['mano'+l].rotation.set(0,0,signo*(Math.PI/2-.31));
       }
+      if(carreraVista)carreraCine(m,((fase/(Math.PI*2))%1+1)%1);
       // El mismo clip y el mismo progreso continúan después del corte a tercera persona.
       const entradaAtaque=ataque===null?0:clipAtaque==='rematarDeslizamiento'?1:suave(ataque/.085);
       if(ataque!==null){const desde=capturar(m);if(clipAtaque==='deslizarAtaque')deslizar(m,ataque);else if(clipAtaque==='rematarDeslizamiento')rematarDeslizamiento(m,ataque);else MOD.posar(m,{anim:'tajoA',k:ataque,t,dt:0,mezclar:false});mezclar(m,desde,entradaAtaque);}
@@ -42,7 +82,7 @@
       // Como modelo de vista, los antebrazos del slide se dibujan delante del
       // entorno: acercarse al mago no oculta las manos dentro de su túnica.
       capaFPS(m,deslizante);
-      m.raiz.position.set(-.15*entradaAtaque,-1.50-.14*entradaAtaque,-.20-.8*entradaAtaque).applyQuaternion(camara.quaternion).add(camara.position);
+      m.raiz.position.set(-.15*entradaAtaque,-(carreraVista?1.68:1.50)-.14*entradaAtaque,-(carreraVista?.52:.20)-.8*entradaAtaque).applyQuaternion(camara.quaternion).add(camara.position);
       m.raiz.quaternion.copy(camara.quaternion);if(deslizante)m.raiz.rotateX(-1.05*entradaAtaque);
       m.raiz.quaternion.multiply(q.setFromAxisAngle(v.set(0,1,0),Math.PI));
       if(deslizante){
@@ -53,6 +93,12 @@
         m.raiz.position.addScaledVector(apoyo.sub(mano),entradaAtaque);
       }
       m.raiz.updateMatrixWorld(true);
+      if(carreraVista){
+        // El ciclo conserva hombros y codos; la muñeca sostiene el hacha hacia
+        // el lateral derecho del encuadre, sin barrer al mago con el filo.
+        const y=new T.Vector3(-.72,-.60,.35).normalize(),x=new T.Vector3(0,0,1);x.addScaledVector(y,-x.dot(y)).normalize();const z=new T.Vector3().crossVectors(x,y);
+        const orientacion=new T.Quaternion().setFromRotationMatrix(new T.Matrix4().makeBasis(x,y,z)).premultiply(camara.quaternion),padre=H.manoD.parent.getWorldQuaternion(new T.Quaternion()).invert();H.manoD.quaternion.copy(padre).multiply(orientacion);m.raiz.updateMatrixWorld(true);
+      }
     }
     function capaFPS(m,deslizante){for(const p of m.mallas){p.material.depthTest=p.material.depthWrite=!deslizante;p.renderOrder=deslizante?40:0;}}
     function fbx(m,nombre,k,desde=null,entrada=1){
@@ -68,10 +114,21 @@
       MOD.posar(m,{anim:'quieto',dt:0,t:0,mezclar:false});
       fbx(m,'deslizarAtaque',k,desde,entrada);
     }
+    function carreraCine(m,k,desde=null,entrada=1){
+      const espalda=hachas.get(m)?.modo==='espalda';
+      MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,agarreDerecha:!espalda,mezclar:false});fbx(m,'carreraCine',k,desde,entrada);
+    }
+    function equiparHacha(m,k,desde=null,entrada=1){
+      const clip=window.CAOZ_ADREIDA_CINE_CLIPS.equiparHacha,t=lim(k)*clip.duracion,contacto=clip.transferencia.contacto,tomada=t+1e-8>=contacto;
+      prepararHacha(m);estibaHacha(m,hachas.get(m));
+      MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,agarreDerecha:tomada,mezclar:false});fbx(m,'equiparHacha',k);
+      if(clip.giros){const f=lim(k)*(clip.muestras-1),i=Math.floor(f),j=Math.min(clip.muestras-1,i+1),giro=clip.giros[i]+(clip.giros[j]-clip.giros[i])*(f-i);m.H.cadera.quaternion.premultiply(q.setFromAxisAngle(v.set(0,1,0),giro));}
+      if(desde)mezclar(m,desde,entrada);apoyarSalida(m);portarHacha(m,tomada?'mano':'espalda');
+    }
     function salidaConGiro(m,k,desde=null,entrada=1){
       // Inicializa dedos y correctivos del mango. La pose FBX reemplaza después
       // todos los huesos del cuerpo y ambos brazos, sin resolverles otro gesto.
-      MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,agarreDerecha:true,mezclar:false});
+      MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,agarreDerecha:hachas.get(m)?.modo!=='espalda',mezclar:false});
       fbx(m,'salidaConGiro',k,desde,entrada);
       apoyarSalida(m);
     }
@@ -227,7 +284,7 @@
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
     }
-    return {crearFPS,fps,capaFPS,fbx,deslizar,salidaConGiro,apoyarSalida,movimientoSalida,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
+    return {crearFPS,fps,capaFPS,fbx,deslizar,carreraCine,equiparHacha,prepararHacha,portarHacha,visibilidadHacha,capturarHacha,restaurarHacha,salidaConGiro,apoyarSalida,movimientoSalida,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();

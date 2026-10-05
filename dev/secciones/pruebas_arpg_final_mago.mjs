@@ -17,7 +17,7 @@ const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,planoDeFase
 assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES.vertigo,2.8,'El dolly frontal dura un segundo más');
 assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[4],'carrera');assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[5],'tropezar','El slide conserva el identificador del plano 6 y sus keyframes');
-for(const [fase,segundos]of Object.entries({carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3}))assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES[fase],segundos,'El montaje separa slide, incorporación, giro y POV: '+fase);
+for(const [fase,segundos]of Object.entries({descubrir:3.4,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3}))assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES[fase],segundos,'El montaje separa slide, incorporación, giro y POV: '+fase);
 for(const fps of [30,60,120]){
  camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,finAntes=avisosFin,impactosAntes=impactos,posAntes=actor.pos.clone();
  assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[],velocidadesPies=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null,inicioPOV=null,rematePos=null,minBusqueda=Infinity,maxBusqueda=-Infinity,particulasVistas=false,reunionVista=false,observacion=0;
@@ -26,7 +26,7 @@ for(const fps of [30,60,120]){
   const fijo=JSON.stringify(est);cine.paso(0);assert.equal(JSON.stringify(cine.estado()),fijo,'La pausa no avanza');cine.paso(1/fps);
   assert(Number.isFinite(camara.position.length()+camara.quaternion.lengthSq()));
   if(cine.estado().fase==='techo'&&cine.estado().t>.1)assert(Math.abs(cine.estado().mago[1]-7.16)<.04,'El mago se apoya sobre el tejado');
-  if(cine.estado().pov){assert(actor.m.mallas.every(m=>!m.visible),'El cuerpo real y su arma no tapan la primera persona');assert(cine.recursos.brazosFPS.raiz.visible,'Hay dos brazos reales en primera persona');}
+  if(cine.estado().pov){assert(actor.m.mallas.every(m=>!m.visible),'El cuerpo real y su arma no tapan la primera persona');assert.equal(cine.recursos.brazosFPS.raiz.visible,['carrera','ataquePOV'].includes(cine.estado().fase),'Sólo la toma 5 muestra brazos; la toma 7 mantiene el POV despejado');}
   if(cine.estado().fase==='salida')assert(!cine.recursos.mago.visible,'Adreida sale antes de descubrir al mago');
   if(['desaparece','tropezar','buscar','levantarse'].includes(cine.estado().fase))assert(actor.m.mallas[0].visible,'Deslizamiento, giro y búsqueda se ven en tercera persona');
   if(cine.estado().fase==='buscar'&&cine.estado().t>.1){const cabeza=actor.m.H.cabeza.getWorldPosition(new T.Vector3());assert(cabeza.y>1.35,'Busca al mago de pie después del giro');minBusqueda=Math.min(minBusqueda,actor.m.H.cabeza.rotation.y);maxBusqueda=Math.max(maxBusqueda,actor.m.H.cabeza.rotation.y);}
@@ -73,7 +73,7 @@ for(const fps of [30,60,120]){
   if(actual.fase==='descubrir'){
    assert(camara.position.distanceTo(inicioPaneo.pos)<1e-8,'El paneo gira en su sitio, sin avanzar hacia el dolly');
    assert.equal(camara.fov,42,'El primer plano no hace zoom');
-   if(actual.t>2.1){assert(camara.quaternion.angleTo(inicioPaneo.q)>.5,'El paneo recorre de Adreida al mago');const foco=new T.Vector3(0,2.35,0).project(camara);assert(Math.hypot(foco.x,foco.y)<1e-6,'El paneo termina encuadrando al mago');}
+   if(actual.t>3.1){assert(camara.quaternion.angleTo(inicioPaneo.q)>.5,'El paneo recorre de Adreida al mago');const foco=new T.Vector3(0,2.35,0).project(camara);assert(Math.hypot(foco.x,foco.y)<1e-6,'El paneo termina encuadrando al mago');}
   }
   if(est.fase==='descubrir'&&actual.fase==='vertigo'){
    assert(camara.position.distanceTo(inicioPaneo.pos)>3,'El segundo plano comienza con un corte a otra posición');
@@ -103,21 +103,23 @@ for(const fps of [30,60,120]){
    assert(Math.abs(actor.pos.x-actor.pos.z)<1e-7,'Carrera, ataque y tropiezo conservan la misma línea desde la puerta');
    if(['desaparece','tropezar'].includes(actual.fase)&&actual.t>0){const frente=new T.Vector3(Math.sin(actor.dir),0,Math.cos(actor.dir)),vista=camara.getWorldDirection(new T.Vector3()).setY(0).normalize();assert(Math.abs(frente.dot(vista))<1e-6,'El fallo se ve de perfil');}
   }
-  if(est.fase==='desaparece'&&actual.fase==='levantarse'){dirAtaque=actor.dir;rematePos=actor.pos.clone();}
+  if(est.fase==='desaparece'&&actual.fase==='levantarse'){dirAtaque=actor.dir;rematePos=new T.Vector3(Math.sin(actor.dir),0,Math.cos(actor.dir)).multiplyScalar(-1.6);}
+  if(actual.fase==='levantarse'&&actual.t>.05)assert(actor.pos.distanceTo(rematePos)>.035,'La incorporación conserva impulso después del slide');
+  if(est.fase==='tropezar'&&actual.fase==='buscar'){assert(actor.pos.distanceTo(rematePos)>.40&&actor.pos.distanceTo(rematePos)<.43,'El remate avanza 42 cm después del slide antes de plantar el giro');rematePos=actor.pos.clone();}
   if(['levantarse','tropezar','buscar'].includes(actual.fase)){
    assert.equal(actor.dir,dirAtaque,'No gira hacia el tejado antes de cortar al POV');
-   assert(actor.pos.distanceTo(rematePos)<1e-8,'Planta el apoyo al incorporarse y no patina durante el giro');
+   if(actual.fase==='buscar')assert(actor.pos.distanceTo(rematePos)<1e-8,'La búsqueda conserva el apoyo final del giro');
   }
   if(est.fase==='buscar'&&actual.fase==='voltear'){
    inicioPOV=camara.getWorldDirection(new T.Vector3());
-   assert(actual.pov&&actual.brazosFPS,'El plano 7 empieza desde sus ojos antes de girar');
+   assert(actual.pov&&!actual.brazosFPS,'El plano 7 empieza desde sus ojos, sin brazos');
    assert(Math.abs(camara.position.y-actor.pos.y-1.69)<1e-8,'El corte tiene altura de ojos desde el primer cuadro');
    const haciaMago=cine.recursos.mago.position.clone().sub(camara.position).normalize();
    assert(inicioPOV.dot(haciaMago)<0,'El mago permanece detrás del campo visual al entrar al POV');
    assert.equal(actor.dir,dirAtaque,'El cuerpo todavía no ha girado en el corte');
   }
   if(actual.fase==='voltear'&&actual.t>0){
-   assert(actual.pov&&actual.brazosFPS,'Todo el giro al tejado ocurre en primera persona');
+   assert(actual.pov&&!actual.brazosFPS,'Todo el giro al tejado ocurre en primera persona, sin brazos');
    const haciaTecho=cine.recursos.mago.position.clone().sub(actor.pos).setY(0).normalize(),antes=new T.Vector3(Math.sin(dirAtaque),0,Math.cos(dirAtaque));
    assert(haciaTecho.dot(antes)<-.9,'El mago reaparece sobre la casa detrás de Adreida');
    if(actual.t>4.5)assert(camara.getWorldDirection(new T.Vector3()).dot(inicioPOV)<-.7,'La mirada recorre realmente el giro hacia atrás');

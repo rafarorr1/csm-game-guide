@@ -23,10 +23,22 @@
       "sha256": "d0c3f046bf71e722b0cf918abec02f78ee07a32f996535b4a5d872578deb3d54",
       "duracion": 1.2,
       "muestras": 37
+    },
+    {
+      "fuente": "Running.fbx",
+      "sha256": "3d0588abbe100f56215f6607510057d85e48b2729e8a188e3d07fa642bdae087",
+      "duracion": 0.6333333333333333,
+      "muestras": 20
+    },
+    {
+      "fuente": "Unarmed Equip Over Shoulder.fbx",
+      "sha256": "2176323121080d1215b9e14401e81074ed48b9671c375a7aa3ba316624118a06",
+      "duracion": 1.6666666666666667,
+      "muestras": 51
     }
   ],
   "adaptacion": "Veintidós huesos, proporciones del modelo actual, agarre del hacha resuelto con IK en Crouching. Falling conserva las poses sin corrección de suelo: la gravedad y el desplazamiento los dirige el epílogo. Sin mallas ni texturas de los FBX.",
-  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Walking Left Turn.fbx\" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json",
+  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Walking Left Turn.fbx\" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Running.fbx\" running.json; node preparar-cinematica.mjs --correr running.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Unarmed Equip Over Shoulder.fbx\" equip-over-shoulder.json; node preparar-cinematica.mjs --equipar equip-over-shoulder.json",
   "deslizarAtaque": {
     "clip": "deslizarAtaque",
     "modelo": "adreida-piernas-scenario/datos.js",
@@ -85,6 +97,49 @@
     ],
     "adaptacion": "Walking Left Turn completo: 22 huesos, incluidos ambos brazos, sin IK que sustituya su actuación. Mano derecha cerrada sobre el hacha aprobada, izquierda libre. Poses locales sin desplazamiento XZ ni yaw global; raiz contiene XYZ relativos al primer cuadro, con Y=0, y giros contiene yaw en radianes relativo al inicio. Ambos se aplican sólo en el guion. Retarget a proporciones y botas aprobadas, interpolación fuente previa al horneado a 120 Hz. Sin maniquí, texturas ni FBX en el runtime.",
     "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Walking Left Turn.fbx\" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json",
+    "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
+  },
+  "carreraCine": {
+    "clip": "carreraCine",
+    "modelo": "adreida-piernas-scenario/datos.js",
+    "fps": 120,
+    "muestras": 77,
+    "escalaPiernas": 1.0954248554703117,
+    "yawInicialFuente": -0.10094323710188272,
+    "giroFinal": 0,
+    "desplazamientoFinal": [
+      0.405567,
+      0,
+      4.00412
+    ],
+    "adaptacion": "Veintidós huesos del rig aprobado, ambos brazos del FBX sin IK de combate. La palma derecha se orienta con las referencias índice/meñique sin mover hombro, codo ni mano. Cuerpo XZ=0; raiz XYZ y giros yaw, relativos al primer cuadro, se entregan separados y sólo se aplican en el guion. Interpolación fuente previa al horneado a 120 Hz. Ciclo de Running completo; conserva elevación de las botas durante la fase aérea. El POV puede usar sólo los brazos y suprimir la raíz.",
+    "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Running.fbx\" running.json; node preparar-cinematica.mjs --correr running.json",
+    "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
+  },
+  "equiparHacha": {
+    "clip": "equiparHacha",
+    "modelo": "adreida-piernas-scenario/datos.js",
+    "fps": 120,
+    "muestras": 201,
+    "escalaPiernas": 1.0954248554703117,
+    "yawInicialFuente": -0.20940632516813168,
+    "giroFinal": -0.665525,
+    "desplazamientoFinal": [
+      -0.055053,
+      0,
+      -0.223881
+    ],
+    "adaptacion": "Veintidós huesos del rig aprobado, ambos brazos del FBX sin IK de combate. La palma derecha se orienta con las referencias índice/meñique sin mover hombro, codo ni mano. Cuerpo XZ=0; raiz XYZ y giros yaw, relativos al primer cuadro, se entregan separados y sólo se aplican en el guion. Interpolación fuente previa al horneado a 120 Hz. El gesto de Equip se conserva completo; la transferencia del accesorio espalda→mano corresponde al runtime y sus tiempos se expresan en segundos fuente.",
+    "transferencia": {
+      "contacto": 0.9,
+      "extraccion": 1,
+      "libre": 1.5,
+      "fpsFuente": 30,
+      "fotogramaContacto": 27,
+      "fotogramaExtraccion": 30,
+      "fotogramaLibre": 45
+    },
+    "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Unarmed Equip Over Shoulder.fbx\" equip-over-shoulder.json; node preparar-cinematica.mjs --equipar equip-over-shoulder.json",
     "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
   }
 }

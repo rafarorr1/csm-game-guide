@@ -5,7 +5,7 @@
   const fases=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','levantarse','tropezar','buscar','voltear','techo','hechizo','cielo','caida','impacto','negro'];
   const fases7=fases.filter(f=>f!=='hechizo');
   const fasesAnteriores=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
-  const VERSION=9,RECORTE_PIES=11/60,PAUSA_PARTICULAS=2,versiones=[1,2,3,4,5,6,7,8,9];
+  const VERSION=10,RECORTE_PIES=11/60,PAUSA_PARTICULAS=2,AMPLIACION_PANEO=3.4/2.4,versiones=[1,2,3,4,5,6,7,8,9,10];
   const antes={ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7};
   const montaje7={ataquePOV:.48,desaparece:.42,levantarse:.52,tropezar:1,buscar:1.85,voltear:1.6,techo:1.3,cielo:1.7};
   const montaje8={ataquePOV:.96,desaparece:.08,levantarse:.16,tropezar:.74,buscar:1.2,voltear:2.6,techo:1.4,cielo:1.7};
@@ -33,7 +33,7 @@
     for(const [fase,p]of Object.entries(d.planos)){
       if(!idsPorVersion[d.version].includes(fase)||!p||!['externa','original'].includes(p.vista)||!Array.isArray(p.claves)||p.claves.length>1500)throw Error('Plano o lista de keyframes inválidos.');
       const claves=p.claves.map(k=>{
-        if(!k||!numero(k.t,0,d.version>=9?120:60)||!vector(k.pos,3)||!vector(k.rot,4)||!numero(k.fov,8,110)||!numero(k.distancia,.2,300)||!curvas.includes(k.curva))throw Error('Un keyframe contiene una cámara o tiempo inválido.');
+        if(!k||!numero(k.t,0,d.version>=10?180:d.version>=9?120:60)||!vector(k.pos,3)||!vector(k.rot,4)||!numero(k.fov,8,110)||!numero(k.distancia,.2,300)||!curvas.includes(k.curva))throw Error('Un keyframe contiene una cámara o tiempo inválido.');
         const largo=Math.hypot(...k.rot);if(largo<.5||largo>1.5)throw Error('Orientación de cámara inválida.');
         return {t:k.t,pos:[...k.pos],rot:k.rot.map(n=>n/largo),fov:k.fov,distancia:k.distancia,curva:k.curva};
       }).sort((a,b)=>a.t-b.t);
@@ -49,7 +49,7 @@
       }
       if(p.nativasHasta!==undefined){
         if(d.version<9||!p.nativasHasta||typeof p.nativasHasta!=='object'||Array.isArray(p.nativasHasta))throw Error('Intervalos de cámara programada inválidos.');
-        planos[fase].nativasHasta={};for(const [f,t]of Object.entries(p.nativasHasta)){if(!accionesDe(fase,d.version).includes(f)||!numero(t,0,60))throw Error('Intervalo de cámara programada inválido.');planos[fase].nativasHasta[f]=t;}
+        planos[fase].nativasHasta={};for(const [f,t]of Object.entries(p.nativasHasta)){if(!accionesDe(fase,d.version).includes(f)||!numero(t,0,d.version>=10?90:60))throw Error('Intervalo de cámara programada inválido.');planos[fase].nativasHasta[f]=t;}
       }
     }
     return {version:d.version,escena:'mago',revision:REVISION,nombre:String(d.nombre||'Mi toma').slice(0,100),planos};
@@ -75,6 +75,10 @@
       const f=estado.fase,id=planoDeFase(f,toma.version),inicio=estado.inicios?.[accionesDe(id,toma.version)[0]];
       const local=Number.isFinite(inicio)&&Number.isFinite(estado.total)?estado.total-inicio:toma.version===1||id!==planoDeFase(f)?estado.t:estado.tPlano;
       if(toma.version===VERSION)return local;
+      if(f==='descubrir')return local/AMPLIACION_PANEO;
+      // v10 sólo alarga el paneo. Los demás relojes y cámaras v9 ya coinciden
+      // con el montaje actual, incluidos el hold y el hechizo editados.
+      if(toma.version===9)return local;
       // El recorrido externo ya editado permanece continuo aunque la actuación
       // se incorpore antes. Las claves del viejo giro quedan fuera del plano.
       if(toma.version>=4&&id==='tropezar')return local*retimeRecuperacion(toma.version);
@@ -94,18 +98,25 @@
     function tomaEn(toma,estado){
       // El nuevo giro empieza después del corte POV. Nunca reutiliza el giro
       // externo de un montaje anterior, aunque comparta su id de acción.
-      if(toma.version<7&&estado.fase==='voltear'||toma.version<VERSION&&estado.fase==='hechizo')return {camara:null,vista:'original'};
+      if(toma.version<7&&estado.fase==='voltear'||toma.version<9&&estado.fase==='hechizo')return {camara:null,vista:'original'};
       const p=toma.planos[planoDeFase(estado.fase,toma.version)];
-      const hasta=toma.version<VERSION&&estado.fase==='voltear'?PAUSA_PARTICULAS:p?.nativasHasta?.[estado.fase];
-      return {camara:p?.nativas?.includes(estado.fase)||estado.t+1e-8<hasta?null:muestra(p?.claves,tiempoDeToma(toma,estado)),vista:p?.vistas?.[estado.fase]||p?.vista};
+      const hasta=toma.version<9&&estado.fase==='voltear'?PAUSA_PARTICULAS:p?.nativasHasta?.[estado.fase],tiempoAccion=toma.version<10&&estado.fase==='descubrir'?estado.t/AMPLIACION_PANEO:estado.t;
+      return {camara:p?.nativas?.includes(estado.fase)||tiempoAccion+1e-8<hasta?null:muestra(p?.claves,tiempoDeToma(toma,estado)),vista:p?.vistas?.[estado.fase]||p?.vista};
     }
     // Las tomas antiguas usaban una pista por acción. Se conservan sus encuadres
     // y sus cortes al reunirlas, incluyendo las acciones que seguían sin editar.
     function agrupar(toma,frames){
       if(toma.version===VERSION)return toma;
+      function ampliarPaneo(p){const copia=JSON.parse(JSON.stringify(p));copia.claves.forEach(k=>k.t*=AMPLIACION_PANEO);if(copia.nativasHasta?.descubrir!==undefined)copia.nativasHasta.descubrir*=AMPLIACION_PANEO;return copia;}
+      if(toma.version===9){
+        const salida=JSON.parse(JSON.stringify(toma));salida.version=VERSION;
+        if(salida.planos.descubrir)salida.planos.descubrir=ampliarPaneo(salida.planos.descubrir);
+        return validar(salida);
+      }
       const salida={...toma,version:VERSION,planos:{}},inicios={};
       frames.forEach((f,i)=>{if(inicios[f.accion]===undefined)inicios[f.accion]=i/60-f.tAccion;});
       for(const id of idsPlanos){
+        if(id==='descubrir'){if(toma.planos.descubrir)salida.planos.descubrir=ampliarPaneo(toma.planos.descubrir);continue;}
         // El antiguo F011 pasa a F000: recorta la pista junto con la actuación.
         // Muestrea la curva previa para conservar incluso interpolaciones suaves.
         if(id==='pies'&&toma.version===5&&toma.planos.pies?.claves.length){
