@@ -9,7 +9,7 @@ ARCH := -march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
 FLAGS := $(ARCH) -O2 -g -Wall -Wextra -ffunction-sections -fdata-sections -D__3DS__ -Iinclude -I$(DEVKITPRO)/libctru/include
 CXXFLAGS := $(FLAGS) -std=gnu++17 -fno-rtti -fno-exceptions
 LDFLAGS := $(ARCH) -specs=3dsx.specs -Wl,--gc-sections -Wl,-Map,build/$(TARGET).map -L$(DEVKITPRO)/libctru/lib
-OBJECTS := build/main.o build/juego.o build/dibujo.o build/hud.o build/audio.o build/vshader.o
+OBJECTS := build/main.o build/juego.o build/dibujo.o build/hud.o build/audio.o build/diagnostico.o build/vshader.o
 # Un cambio de recursos debe reconstruir el contenedor aunque el ELF sea idéntico.
 ROMFS_FILES := $(shell find romfs -type f)
 .PHONY: all clean paquete
@@ -20,7 +20,10 @@ build/%.o: source/%.cpp | build
 	$(CXX) $(CXXFLAGS) -MMD -MP -c $< -o $@
 build/vshader.shbin: source/vshader.v.pica | build
 	$(DEVKITPRO)/tools/bin/picasso -o $@ $<
-build/vshader.c: build/vshader.shbin tools/incrustar.py
+build/vshader.validado: build/vshader.shbin tools/pruebas-shader.py
+	python3 tools/pruebas-shader.py $< --picasso $(DEVKITPRO)/tools/bin/picasso
+	touch $@
+build/vshader.c: build/vshader.shbin tools/incrustar.py build/vshader.validado
 	python3 tools/incrustar.py $< $@
 build/vshader.o: build/vshader.c
 	$(CC) $(FLAGS) -c $< -o $@

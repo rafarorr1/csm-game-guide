@@ -36,6 +36,10 @@ GitHub Actions (`.github/workflows/arpg-3ds.yml`) exporta, ejecuta las pruebas d
 
 ## Pruebas y emulador
 
+La revisión **Alpha .01 r1** aborda el bloqueo físico reportado después de «La plaza está lista». El shader escribe completos los registros de salida y el estado 3D desactiva ProcTex heredado del HUD. Son medidas de compatibilidad con PICA200; la comprobación en emulador no demuestra que resuelvan el fallo de la consola. `tools/pruebas-shader.py` revisa el shader compilado durante `make` para impedir salidas incompletas y MOVA consecutivos.
+
+`sdmc:/3ds/CaozARPG/arranque.log` registra la carga y los primeros envíos a la GPU. Sólo marca `ARRANQUE COMPLETO` después de que `C3D_FrameBegin` confirme dos cuadros 3D; después deja de escribir. Cada hito cierra el archivo para conservarlo ante un bloqueo. El siguiente arranque rota el archivo a `arranque-anterior.log`, sin acumular registros. No contiene información personal ni se envía por red.
+
 ```sh
 c++ -std=c++17 -O2 -Idev/ports/3ds/include dev/ports/3ds/source/juego.cpp dev/ports/3ds/tools/pruebas.cpp -o /tmp/pruebas-caoz-3ds
 /tmp/pruebas-caoz-3ds

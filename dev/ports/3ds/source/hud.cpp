@@ -53,7 +53,7 @@ void cartas(const Juego& j){titulo("EL DESTINO TIENE UN PRECIO");texto("Elige un
  texto(j.tirando||j.resuelto?std::to_string(j.dado):"?",160,172,.6f,marfil,true);texto("1: pierdes los buffs; conservas los riesgos",160,207,.28f,color(0xde9b8d),true,310);
  texto(j.resuelto?"A · Continuar":j.tirando?"El d20 está rodando…":"← / → · Elegir     A · Tirar",160,223,.31f,marfil,true,310);
 }
-void menu(const Juego& j){titulo("CAOZ ARPG");texto("ALPHA .01 · EDICIÓN 3DS",160,34,.31f,laton,true);texto("Una ciudad. Dos destinos.",160,60,.44f,marfil,true);
+void menu(const Juego& j){titulo("CAOZ ARPG");texto("ALPHA .01 r1 · EDICIÓN 3DS",160,34,.31f,laton,true);texto("Una ciudad. Dos destinos.",160,60,.44f,marfil,true);
  for(int n=0;n<2;n++){float x=15+n*151;placa(x,91,139,65,n==j.seleccionHeroe);texto(n==0?"ADREIDA":"MOHAMED",x+69,103,.45f,marfil,true);texto(n==0?"Hacha, furia y parry":"Pólvora y sombras",x+69,129,.31f,gris,true);}
  texto("← / → · Elegir     Y · Etapa 2",160,176,.33f,gris,true);placa(67,201,186,28,true);texto("A · Entrar a Tomsage",160,205,.41f,marfil,true);
 }

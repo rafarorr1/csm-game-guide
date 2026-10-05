@@ -1,4 +1,4 @@
-CAOZ ARPG · ALPHA .01 · EDICIÓN NATIVA OLD 3DS
+CAOZ ARPG · ALPHA .01 r1 · EDICIÓN NATIVA OLD 3DS
 
 Para Nintendo 3DS, 3DS XL y 2DS originales con Homebrew Launcher.
 
@@ -12,6 +12,17 @@ INSTALACIÓN
 El .3dsx contiene los modelos, texturas y sonido. No requiere internet,
 una copia del sitio ni archivos de juegos comerciales. Conserva junto
 al ejecutable su icono CaozARPG.smdh. SHA256.json permite verificar la copia.
+
+ACTUALIZACIÓN r1
+Sustituye CaozARPG.3dsx y CaozARPG.smdh en la misma carpeta de la SD.
+El menú identifica esta revisión como "ALPHA .01 r1".
+Se refuerza la transición gráfica después de cargar: salida completa del
+shader y restablecimiento del estado de texturas entre HUD y escena 3D.
+El bloqueo reportado en consola física aún requiere confirmación allí.
+Si vuelve a detenerse, comparte /3ds/CaozARPG/arranque.log de la SD.
+El registro sólo escribe durante el arranque; no afecta al combate.
+Al abrir otra vez el juego, conserva el intento anterior como
+/3ds/CaozARPG/arranque-anterior.log.
 
 CONTROLES
 Circle Pad: moverse y orientar el personaje.

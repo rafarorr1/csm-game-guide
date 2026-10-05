@@ -9,6 +9,7 @@
 #include "dibujo.hpp"
 #include "hud.hpp"
 #include "audio.hpp"
+#include "diagnostico.hpp"
 using namespace Grietas;
 namespace {
 void elegir(Juego& j,int heroe){j.iniciar(heroe?MOHAMED:ADREIDA);j.menu=true;j.seleccionHeroe=heroe;}
@@ -36,16 +37,21 @@ bool capturarPantallas(const Juego& j,float fps){
 void esperarSalida(){while(aptMainLoop()){hidScanInput();if(hidKeysDown()&KEY_START)break;gspWaitForVBlank();}}
 }
 int main(){
+ iniciarRegistro();registrarInicio("Inicializando pantallas");
  gfxInitDefault();gfxSet3D(false);
  const Result rom=romfsInit();const bool gpu=C3D_Init(C3D_DEFAULT_CMDBUF_SIZE*2);
  const bool interfaz=gpu&&iniciarHUD();
  if(R_FAILED(rom)||!gpu||!interfaz){consoleInit(GFX_BOTTOM,nullptr);std::printf("CAOZ ARPG\nNo se pudo iniciar la edicion 3DS.\nComprueba el archivo .3dsx completo.\nSTART: salir\n");esperarSalida();if(gpu){cerrarHUD();C3D_Fini();}if(R_SUCCEEDED(rom))romfsExit();gfxExit();return 1;}
+ registrarInicio("Pantallas y HUD listos; comienza la carga");
  cargaHUD(.01f,"Abriendo las puertas de la plaza…");
  if(!iniciarDibujo(cargaHUD)){errorHUD("No se pudieron cargar los recursos. START: salir");esperarSalida();cerrarDibujo();cerrarHUD();C3D_Fini();romfsExit();gfxExit();return 1;}
+ registrarInicio("Modelos, texturas y shader cargados");
  cargaHUD(.97f,"Preparando la tormenta y el sonido…");
  bool sonido=iniciarAudio(),metricas=false,esperaSoltar=true;
- cargaHUD(1,"La plaza está lista");
+ registrarInicio(sonido?"Audio listo":"Continuando sin audio");
+ cargaHUD(1,"Abriendo la plaza · revisión 1");
  Juego juego;u64 anterior=osGetTime();float segundosFPS=0,fps=0;unsigned cuadros=0;int palancaMenu=0;
+ registrarInicio("Simulación lista; comienza el primer cuadro");
  while(aptMainLoop()){
   hidScanInput();const u32 abajo=hidKeysDown(),sostenido=hidKeysHeld();
   if((sostenido&(KEY_L|KEY_R))==(KEY_L|KEY_R)&&(abajo&KEY_START))break;

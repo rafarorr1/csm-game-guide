@@ -54,6 +54,8 @@
  mul r6.xyz, pigmento, r5.xxx
  mul color.xyz, tinte, r6
  mov color.w, tinte.w
- mov coordenada.xy, uv
+ ; Escribir el registro habilitado completo, como los shaders de Citro2D.
+ ; PICA200 exige escribir cada componente de salida configurado una sola vez.
+ mov coordenada, uv
  end
 .end

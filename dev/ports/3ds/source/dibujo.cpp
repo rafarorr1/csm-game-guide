@@ -1,6 +1,7 @@
 /* PICA200: modelos Scenario, dos pesos de piel, texturas y efectos de coste acotado. */
 #include "dibujo.hpp"
 #include "hud.hpp"
+#include "diagnostico.hpp"
 #include <3ds.h>
 #include <citro3d.h>
 #include <citro2d.h>
@@ -77,6 +78,8 @@ static void actor(const Actor&a,float y,float transparencia=1,float escala=1,boo
 static void lote(float alpha=1){if(temporal.empty())return;size_t n=std::min<size_t>(temporal.size(),MAX_VERTICES_DINAMICOS-cursorDinamico);n-=n%3;if(n){Vert* segmento=dinamico+cursorDinamico;std::memcpy(segmento,temporal.data(),n*sizeof(Vert));GSPGPU_FlushDataCache(segmento,n*sizeof(Vert));cursorDinamico+=n;identidadHueso();transformar({},0,0);C3D_FVUnifSet(GPU_VERTEX_SHADER,uTinte,1,1,1,alpha);C3D_TexBind(0,&blanca);enviar(segmento,n);}temporal.clear();}
 // Citro2D cambia shaders, atributos, mezclado y combinadores al dibujar el HUD.
 static void estado3D(){
+ // El shader 3D sólo entrega UV0; no heredar el generador UV1 del HUD.
+ C3D_ProcTexBind(0,nullptr);
  C3D_BindProgram(&programa);auto*a=C3D_GetAttrInfo();AttrInfo_Init(a);AttrInfo_AddLoader(a,0,GPU_FLOAT,3);AttrInfo_AddLoader(a,1,GPU_FLOAT,3);AttrInfo_AddLoader(a,2,GPU_FLOAT,3);AttrInfo_AddLoader(a,3,GPU_FLOAT,3);AttrInfo_AddLoader(a,4,GPU_FLOAT,2);
  for(int n=0;n<6;n++){C3D_TexEnvInit(C3D_GetTexEnv(n));}
  auto*env=C3D_GetTexEnv(0);C3D_TexEnvSrc(env,C3D_RGB,GPU_TEXTURE0,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR);C3D_TexEnvFunc(env,C3D_RGB,GPU_MODULATE);C3D_TexEnvSrc(env,C3D_Alpha,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR);C3D_TexEnvFunc(env,C3D_Alpha,GPU_REPLACE);
@@ -171,7 +174,12 @@ static void pisoVisual(const Juego&j){
  abanico(j.h.p,-7.95f,radio*.54f,0,PI,0x9f421e);aro(j.h.p,-7.92f,radio*.34f,.12f,0xe89a35);lote();
 }
 void dibujar(Juego&j){
- C3D_FrameBegin(C3D_FRAME_SYNCDRAW);cursorDinamico=0;temporal.clear();C3D_RenderTargetClear(target,C3D_CLEAR_ALL,0x152632ff,0);C3D_FrameDrawOn(target);estado3D();
+ static unsigned cuadrosInicio=0;
+ if(cuadrosInicio<3)registrarInicio("Esperando la GPU antes del cuadro 3D");
+ C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+ if(cuadrosInicio<3)registrarInicio("La GPU terminó el cuadro anterior");
+ if(cuadrosInicio==2)terminarRegistro();
+ cursorDinamico=0;temporal.clear();C3D_RenderTargetClear(target,C3D_CLEAR_ALL,0x152632ff,0);C3D_FrameDrawOn(target);estado3D();
  C3D_Mtx proy,vista;camX+=(j.h.p.x-camX)*.12f;camZ+=(j.h.p.z-camZ)*.12f;float shake=std::sin(j.tiempo*53)*j.sacudida*.3f;
  C3D_FVec ojo=FVec3_New(camX+shake,17,camZ+13),mirada=FVec3_New(camX,.7f,camZ);float fov=32;
  const bool casa=j.secuencia==CASA_GOBLIN;const bool cine=j.secuencia==EPILOGO_MAGO;const float t=j.secuenciaT;
@@ -222,7 +230,12 @@ void dibujar(Juego&j){
   C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_COLOR);for(int i=0;i<casasOcultas;i++){const auto&c=ocultas[i];objeto(c.tipo,c.p,c.y,c.giro,c.alfa);}C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_ALL);
   magoVisual(j);meteoritoVisual(j);cielo(j);lluvia(j);
  }
- dibujarHUDSuperior(j,target);dibujarHUD(j);C2D_Flush();C3D_FrameEnd(0);
+ if(cuadrosInicio<2)registrarInicio("Escena preparada; preparando HUD");
+ dibujarHUDSuperior(j,target);dibujarHUD(j);C2D_Flush();
+ if(cuadrosInicio<2)registrarInicio("Enviando escena y HUD a la GPU");
+ C3D_FrameEnd(0);
+ if(cuadrosInicio<2)registrarInicio("Cuadro enviado; falta confirmar su ejecución");
+ if(cuadrosInicio<3)cuadrosInicio++;
 }
 void cerrarDibujo(){
  for(auto&m:modelos){if(m.vertices)linearFree(m.vertices);if(m.indices)linearFree(m.indices);m.vertices=nullptr;m.indices=nullptr;}
