@@ -11,7 +11,7 @@
 namespace Grietas {
 struct Vert {float x,y,z,r,g,b,nx,ny,nz,h0,h1,peso,u,v;};
 struct Grupo {uint32_t inicio,cantidad;int32_t textura;};
-struct Modelo {uint32_t nv=0,ni=0,nh=0,nc=0,nf=0;Vert* vertices=nullptr;u16* indices=nullptr;std::vector<float> poses;std::vector<Grupo> grupos;};
+struct Modelo {uint32_t nv=0,ni=0,nh=0,nc=0,nf=0;Vert* vertices=nullptr;u16* indices=nullptr;std::vector<float> poses;std::vector<Grupo> grupos;float minimo[3]={1e9f,1e9f,1e9f},maximo[3]={-1e9f,-1e9f,-1e9f};};
 static constexpr int NUM_MODELOS=22, MAX_VERTICES_DINAMICOS=18000;
 static Modelo modelos[NUM_MODELOS];
 static const char*nombres[]={"adreida","mohamed","goblin","kobold","saqueador","can","troll","cobrador","entramada","piedra","taberna","pozo","carreta","piso","goblin-dosHachas","goblin-cuchillo","goblin-antorcha","kobold-capucha","kobold-acorazado","kobold-huesos","interior","mago"};
@@ -29,6 +29,7 @@ static bool leer(Modelo&m,const char*nombre){
  m.poses.resize(m.nh*12*m.nc*m.nf);ok=ok&&fread(m.poses.data(),4,m.poses.size(),f)==m.poses.size();fclose(f);
  for(auto&g:m.grupos)if(g.inicio+g.cantidad>m.ni||g.cantidad%3)return false;
  for(uint32_t i=0;i<m.ni;i++)if(m.indices[i]>=m.nv)return false;
+ for(uint32_t i=0;i<m.nv;i++){const float p[3]={m.vertices[i].x,m.vertices[i].y,m.vertices[i].z};for(int k=0;k<3;k++){m.minimo[k]=std::fmin(m.minimo[k],p[k]);m.maximo[k]=std::fmax(m.maximo[k],p[k]);}}
  GSPGPU_FlushDataCache(m.vertices,m.nv*sizeof(Vert));GSPGPU_FlushDataCache(m.indices,ib);return ok;
 }
 static bool leerTextura(C3D_Tex&t,int indice){
@@ -50,6 +51,22 @@ static void transformar(V p,float y,float dir,float escala=1){C3D_Mtx m;Mtx_Iden
 static void enviar(Vert*v,int n,u16*indices=nullptr,int ni=0){if(n<=0)return;C3D_BufInfo*buf=C3D_GetBufInfo();BufInfo_Init(buf);BufInfo_Add(buf,v,sizeof(Vert),5,0x43210);if(ni)C3D_DrawElements(GPU_TRIANGLES,ni,C3D_UNSIGNED_SHORT,indices);else C3D_DrawArrays(GPU_TRIANGLES,0,n);}
 static void enviarModelo(Modelo&m,bool sinArma=false){for(const auto&g:m.grupos){if(sinArma && &g!=&m.grupos.front())continue;C3D_TexBind(0,g.textura>=0&&g.textura<(int)texturas.size()?&texturas[g.textura]:&blanca);enviar(m.vertices,m.nv,m.indices+g.inicio,g.cantidad);}}
 static void objeto(int tipo,V p,float y,float dir,float alpha=1,float escala=1){Modelo&m=modelos[tipo];identidadHueso();transformar(p,y,dir,escala);C3D_FVUnifSet(GPU_VERTEX_SHADER,uTinte,.83f,.91f,1,alpha);enviarModelo(m);}
+// La caja orientada incluye la altura real del tejado (hasta diez metros).
+// Prueba varios rayos de la zona de combate, no sólo la posición del personaje.
+static bool casaInterpuesta(const Modelo&m,V p,float y,float giro,C3D_FVec ojo,V objetivo,float alto){
+ const float c=std::cos(giro),s=std::sin(giro),ox=ojo.x-p.x,oz=ojo.z-p.z,tx=objetivo.x-p.x,tz=objetivo.z-p.z;
+ const float a[3]={c*ox-s*oz,ojo.y-y,s*ox+c*oz},b[3]={c*tx-s*tz,alto-y,s*tx+c*tz};
+ float entrada=0,salida=.995f;
+ for(int k=0;k<3;k++){const float margen=k==1?.25f:.55f,lo=m.minimo[k]-margen,hi=m.maximo[k]+margen,d=b[k]-a[k];
+  if(std::fabs(d)<.0001f){if(a[k]<lo||a[k]>hi)return false;continue;}
+  float t0=(lo-a[k])/d,t1=(hi-a[k])/d;if(t0>t1)std::swap(t0,t1);entrada=std::fmax(entrada,t0);salida=std::fmin(salida,t1);if(entrada>salida)return false;
+ }return salida>=0&&entrada<.995f;
+}
+static bool camaraDentroCasa(const Modelo&m,V p,float y,float giro,C3D_FVec ojo){
+ const float c=std::cos(giro),s=std::sin(giro),dx=ojo.x-p.x,dz=ojo.z-p.z,v[3]={c*dx-s*dz,ojo.y-y,s*dx+c*dz};
+ for(int k=0;k<3;k++)if(v[k]<m.minimo[k]-.65f||v[k]>m.maximo[k]+.65f)return false;return true;
+}
+static std::array<float,15> opacidadCasas{{1,1,1,1,1,1,1,1,1,1,1,1,1,1,1}};
 static void actor(const Actor&a,float y,float transparencia=1,float escala=1,bool sinArma=false){
  int tipo=a.tipo;if(a.tipo==GOBLIN){const int variante=a.variante%4;if(variante)tipo=13+variante;}if(a.tipo==KOBOLD){const int variante=a.variante%4;if(variante)tipo=16+variante;}
  Modelo&m=modelos[tipo];int anim=a.anim;if(anim==MUERTE&&(a.tipo==GOBLIN||a.tipo==COBRADOR||a.tipo==KOBOLD||a.tipo==ADREIDA)){int v=a.numero%(a.tipo==ADREIDA?2:4);if(v)anim=12+v;}int clip=std::max(0,std::min((int)m.nc-1,anim));float frame=limite(a.k,0,1)*(m.nf-1);int f=(int)frame,g=std::min((int)m.nf-1,f+1);float mezcla=frame-f;
@@ -174,11 +191,14 @@ void dibujar(Juego&j){
   const float flash=std::fmod(j.tiempo,14.31f);if(flash<.15f){cinta({2.13f,-3.4f},2.2f,{2.35f,-3.4f},1.2f,.035f,0xb4e4ed);lote(.8f);}
  }else{
   identidadHueso();transformar({},0,0);C3D_FVUnifSet(GPU_VERTEX_SHADER,uTinte,.62f,.78f,.85f,1);C3D_TexBind(0,&blanca);enviar(bosque.vertices,bosque.nv);pisoVisual(j);
-  std::vector<int> ocultas;
+  struct CasaTransparente {int tipo;V p;float y,giro,alfa;};std::array<CasaTransparente,15> ocultas{};int casasOcultas=0;
   for(int i=0;i<15;i++){float a=i*TAU/15;bool puerta=false;for(float c:{-PI/2,PI/6,PI*5/6})if(std::fabs(delta(a,c))<.3f)puerta=true;if(puerta)continue;V p{std::cos(a)*19.2f,std::sin(a)*19.2f};if(!cine&&distancia(p,j.h.p)>27)continue;
-   if(cine&&distancia(p,{ojo.x,ojo.z})<4)continue;
    float impacto=cine&&t>17?limite((t-17-distancia(p,j.h.p)/23)*1.8f,0,1):0;V desplazamiento=unidad(p-j.h.p)*(impacto*2.6f);
-   float alfa=!cine&&p.z>j.h.p.z&&p.z-j.h.p.z<8&&std::fabs(p.x-j.h.p.x)<3?.22f:1;if(alfa<1)ocultas.push_back(i);else objeto(8+i%3,p+desplazamiento,-impacto*1.25f,angulo(p*-1)+impacto*.12f);
+   const int tipo=8+i%3;const V posicion=p+desplazamiento;const float altura=-impacto*1.25f,giro=angulo(p*-1)+impacto*.12f;
+   if(camaraDentroCasa(modelos[tipo],posicion,altura,giro,ojo)){opacidadCasas[i]=.075f;continue;}
+   bool tapa=false;if(!cine)for(V margen:std::array<V,5>{{{0,0},{-3.2f,0},{3.2f,0},{0,-2.4f},{0,2.4f}}})if(casaInterpuesta(modelos[tipo],posicion,altura,giro,ojo,j.h.p+margen,.85f)){tapa=true;break;}
+   const float deseada=tapa?.075f:1;opacidadCasas[i]+=(deseada-opacidadCasas[i])*.22f;float alfa=cine?1:opacidadCasas[i];
+   if(alfa<.995f)ocultas[casasOcultas++]={tipo,posicion,altura,giro,alfa};else objeto(tipo,posicion,altura,giro);
   }
   objeto(11,{-5,-3},0,.27f);objeto(12,{6.5f,-5.5f},0,.3f);
   for(int i=0;i<48;i++){float a=i*TAU/48;V p{std::cos(a)*26.5f,std::sin(a)*26.5f};bool puerta=false;for(float c:{-PI/2,PI/6,PI*5/6})if(std::fabs(delta(a,c))<.09f)puerta=true;if(!cine&&distancia(p,j.h.p)>28)continue;
@@ -199,7 +219,7 @@ void dibujar(Juego&j){
   for(const auto&p:j.proyectiles){if(p.tipo==2){Actor a;a.tipo=COBRADOR;a.p=p.p;a.anim=DOLOR;a.k=.5f;a.dir=j.tiempo*5;actor(a,p.alto);}else if(p.tipo==1){cono(p.p,p.alto,.4f,.5f,0x8c9487,6);cono(p.p,p.alto,.4f,-.3f,0x6b786a,6);}else if(p.tipo==3||p.tipo==4){caja(p.p.x,p.alto,p.p.z,.12f,.45f,.09f,0xe5b660);caja(p.p.x,p.alto+.3f,p.p.z,.48f,.16f,.12f,0xf3d574);aro(p.p,p.alto,.34f,.035f,0xd0b67e);}else {V d=unidad(p.vel);cinta(p.p,1.05f,p.p-d*.65f,1.05f,.035f,p.enemigo?0xffbe61:0xc1e8f3);}}
   for(const auto&o:j.objetos){if(o.tipo==1){float y=.38f+std::sin(j.tiempo*2)*.05f;caja(o.p.x,y,o.p.z,.35f,.5f,.055f,0xb99151);caja(o.p.x,y+.045f,o.p.z+.04f,.26f,.41f,.015f,0x2b4856);}else if(o.tipo==2){aro(o.p,.12f,.17f,.055f,0xd7c478);caja(o.p.x,.14f,o.p.z+.2f,.07f,.07f,.35f,0xd7c478);}else{cono(o.p,.15f,.15f,.28f,0xab3340,8);cono(o.p,.15f,.15f,-.1f,0x7a3542,8);caja(o.p.x,.43f,o.p.z,.12f,.08f,.12f,0xc1ac79);}}lote();
   if(j.fuegoT>0){for(int i=0;i<7;i++){float k=fraccion(j.tiempo*2.2f+i*.173f);V p=j.h.p+frente(i*TAU/7)*.25f;cinta(p,.3f+k,p+V{.03f,0},.65f+k,.075f,0xe79c43);}lote(.72f);}
-  C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_COLOR);for(int i:ocultas){float a=i*TAU/15;V p{std::cos(a)*19.2f,std::sin(a)*19.2f};objeto(8+i%3,p,0,angulo(p*-1),.22f);}C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_ALL);
+  C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_COLOR);for(int i=0;i<casasOcultas;i++){const auto&c=ocultas[i];objeto(c.tipo,c.p,c.y,c.giro,c.alfa);}C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_ALL);
   magoVisual(j);meteoritoVisual(j);cielo(j);lluvia(j);
  }
  dibujarHUDSuperior(j,target);dibujarHUD(j);C2D_Flush();C3D_FrameEnd(0);
