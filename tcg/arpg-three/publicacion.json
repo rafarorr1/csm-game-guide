@@ -19,7 +19,7 @@
     "arpg-three-bosque.js": "0c3412d2ba7d778c49b3866423b4058e3aa6ea4e9930efb853fc312a7cca039a",
     "arpg-three-casa-goblin.js": "f90d3b342330ce509e3416062b246b45cf91389233a11eed7db3822c34981ec9",
     "arpg-three-casa-interior.js": "b7dd10df40a8444adfd068e566eb73849f2a108b4cc44bdcd429b0c3b4787521",
-    "arpg-three-clima.js": "40ac08f69f3d2995a342cdb4cd95ce31608f26f844259f22c4f91a2cd92f3432",
+    "arpg-three-clima.js": "820a3e9006f809e73ef0f5891edd79444395115aa56fc3f8f87a3187d419727d",
     "arpg-three-entrada-troll.js": "9bf63f396cf22bc2147926c6aea6fa12bd351e6b831cf31f9887918faf42f104",
     "arpg-three-estilo.js": "023931112cef4f44c4d8c3575ed78ea7f6e3a62540134fc6d582fde55df553a5",
     "arpg-three-final-mago.js": "cdd6360736dccb683fa5d803c2a857bc79b5a3c7ad3207a55633946bfba7670c",
@@ -125,7 +125,7 @@
     "llave-scenario/datos.js": "0ba2b534c0c97c4d127a9796e8aefa7a11f75eb128f94d64dca11c6433a5aeae",
     "llave-scenario/normal.webp": "f5f85d73be50c0cad0d65c62a8ad89da99d16f4e4483db372d3396e40b1311d5",
     "llave-scenario/superficie.webp": "4359ba767d754ff9f107370a358cdffe342dc0bba82a93fe8f28cec5b30e0115",
-    "procedencia.json": "475d985b6c4789e95d81dcf8ac2dafe0bceb47e859c514d6c2374db1eb9be342",
+    "procedencia.json": "a1281c42e334fa8b742668fe02823db17c61b5712da9c63d50ba08d8848da732",
     "quick-liquid-LICENSE.txt": "70d39e15f5af14d3cf436d1677577763d7c77b494e087c30c5d733b05ca74414",
     "quick-liquid-vendor.js": "8db3e97713461523a74145eb8bf1d37010e6875262568fd6de1cc1018b900d04",
     "texturas-casas/tejas-color.webp": "589862158416fe3fb50e5106b45517509fb6d083c045b94ce9fe7648b7113377",
@@ -157,7 +157,7 @@
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "6f1bb73cb53ab38552fd2780e39e53f01ed616d2"
+    "sha": "1efdb68582f5bd308dd2589032f3a99a613109aa"
   },
   "seccion": "arpg-three",
   "version": 1
