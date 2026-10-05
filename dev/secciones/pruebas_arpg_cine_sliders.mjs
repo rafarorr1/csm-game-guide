@@ -59,7 +59,7 @@ const css=fs.readFileSync(new URL('arpg-cine-editor.css',import.meta.url),'utf8'
 console.log('✓ Sliders: arrastre con render activo, búsqueda durante el gesto, reversa, último destino, cancelación concurrente, plano local estable, extremos, teclado y pausa.');
 
 // El corte a tercera persona pertenece al plano 06, desde desaparece.
-fases.splice(3,0,'pies');fases.push('carrera','ataquePOV','desaparece','levantarse','tropezar','buscar','voltear','techo','cielo','caida','impacto','negro');
+fases.splice(3,0,'pies');fases.push('carrera','ataquePOV','desaparece','levantarse','tropezar','buscar','voltear','techo','hechizo','cielo','caida','impacto','negro');
 const agrupado=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api);await completar();
 assert.equal($('cePlanos').children.length,10);assert.equal($('ceTiras').children.length,10);
 entrada('ceTiempo',490);await completar();assert.equal(Number($('ceLocal').max),239);
@@ -73,7 +73,7 @@ entrada('ceTiempo',710);await completar();$('ceVelocidad').value='1';$('ceGrabar
 entrada('ceTiempo',830);await completar();$('ceGrabar').onclick();for(let i=0;i<5;i++)agrupado.paso(.1);assert(simulado>840,'Cambiar de acción no detiene el plano 06');assert.equal($('ceGrabar').textContent,'■ Detener grabación');$('ceGrabar').onclick();
 console.log('✓ Grupos del editor: diez planos, sliders completos, keyframes compartidos y grabación continua entre acciones.');
 
-entrada('ceTiempo',1210);await completar();assert.equal(api.estado().fase,'voltear');assert.equal(Number($('ceLocal').max),359);entrada('ceLocal',359);await completar();comprobar(1559,359);assert.equal(api.estado().fase,'cielo');assert.equal($('cePlanoTitulo').textContent,'07 / POV · estela y reaparición');
+entrada('ceTiempo',1210);await completar();assert.equal(api.estado().fase,'voltear');assert.equal(Number($('ceLocal').max),479);entrada('ceLocal',479);await completar();comprobar(1679,479);assert.equal(api.estado().fase,'cielo');assert.equal($('cePlanoTitulo').textContent,'07 / POV · estela, reaparición y hechizo');
 // Una cámara libre no contamina la cámara programada al continuar hacia adelante.
 const antesAvance=reinicios;entrada('ceTiempo',1570);await completar();assert.equal(reinicios,antesAvance,'Avanzar restaura el cuadro preparado');
 entrada('ceTiempo',1520);await completar();assert.equal(reinicios,antesAvance,'Retroceder restaura un cuadro ya preparado');assert.equal(simulado,1520);
@@ -93,17 +93,21 @@ $('ceEliminar').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true,
 $('ceBase').onclick();agrupado.antesDibujo();assert.equal(vistaExterna,true,'Convertir la cámara original conserva la representación');
 entrada('ceTiempo',1440);await completar();assert.equal($('ceFrames').textContent,'Plano F240 · Global F1440');
 $('ceVelocidad').value='.25';agrupado.paso(.1);assert.equal($('ceFrames').textContent,'Plano F240 · Global F1440','La referencia de cuadros no depende de la velocidad');
-entrada('ceTiempo',1560);await completar();assert.equal($('ceFrames').textContent,'Plano F000 · Global F1560','El contador local se reinicia al cambiar de plano');
+entrada('ceTiempo',1680);await completar();assert.equal($('ceFrames').textContent,'Plano F000 · Global F1680','El contador local se reinicia al cambiar de plano');
 console.log('✓ Keyframes conservan la representación del actor; contador de cuadros local/global con base 60 e índices desde cero.');
 
 // Migrar/importar respalda cada versión sin sobrescribir otra toma manual.
 const M=c.CAOZ_ARPG_CINE_CAMARA,clave=M.CLAVE,backup=clave+'.respaldo-v7',anterior={...M.nueva(),version:7,nombre:'Cámara manual',planos:{techo:{vista:'original',claves:[{t:0,pos:[42,2,10],rot:[0,0,0,1],fov:42,distancia:10,curva:'lineal'}]}}};
 almacenamiento.set(backup,'otro respaldo manual');
 async function importar(toma){const texto=JSON.stringify(toma);$('ceArchivo').files=[{size:texto.length,text:async()=>texto}];await $('ceArchivo').onchange();}
-await importar(anterior);assert.equal(almacenamiento.get(backup),'otro respaldo manual');assert.equal(almacenamiento.get(backup+'.1'),JSON.stringify(anterior));assert.equal(JSON.parse(almacenamiento.get(clave)).version,8);
+await importar(anterior);assert.equal(almacenamiento.get(backup),'otro respaldo manual');assert.equal(almacenamiento.get(backup+'.1'),JSON.stringify(anterior));assert.equal(JSON.parse(almacenamiento.get(clave)).version,9);
 await importar(anterior);assert(!almacenamiento.has(backup+'.2'),'Reimportar la misma toma reutiliza su copia exacta');
-entrada('ceTiempo',1210);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,42,'Una cámara manual v7 sigue editable en la estela v8');
+entrada('ceTiempo',1210);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,1210,'El nuevo hold conserva su cámara nativa al importar');assert.equal(JSON.parse(almacenamiento.get(clave)).planos.techo.nativasHasta.voltear,2);
+entrada('ceTiempo',1330);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,42,'La cámara manual v7 se conserva tras el hold');
+entrada('ceTiempo',1450);await completar();assert.equal(api.estado().fase,'hechizo');agrupado.antesDibujo();assert.equal(camara.position.x,1450,'La nueva acción hechizo queda programada hasta editarla');
+$('ceKey').onclick();assert(!JSON.parse(almacenamiento.get(clave)).planos.techo.nativas?.includes('hechizo'),'Una clave explícita permite editar el hechizo');
+entrada('ceTiempo',1210);await completar();$('ceKey').onclick();assert(!JSON.parse(almacenamiento.get(clave)).planos.techo.nativasHasta,'También se puede editar explícitamente la cámara del hold');
 const heredada={...anterior,version:6,nombre:'Techo anterior'};await importar(heredada);
 entrada('ceTiempo',1210);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,1210,'El giro nativo heredado sigue la nueva escena en vivo');assert(JSON.parse(almacenamiento.get(clave)).planos.techo.nativas.includes('voltear'));
 $('ceKey').onclick();assert(!JSON.parse(almacenamiento.get(clave)).planos.techo.nativas?.includes('voltear'),'Guardar una cámara explícita permite editar la acción antes nativa');
-console.log('✓ Formato 8 en editor: respaldos sin sobrescritura, importación v7 manual, recorrido nativo en vivo y edición explícita posterior.');
+console.log('✓ Formato 9 en editor: respaldos sin sobrescritura, importación manual, hold y hechizo nativos, edición explícita de ambas acciones.');

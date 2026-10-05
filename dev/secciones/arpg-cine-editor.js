@@ -2,7 +2,7 @@
 'use strict';
 window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   const M=window.CAOZ_ARPG_CINE_CAMARA,C=M.crear(T),V=T.Vector3,$=id=>document.getElementById(id),clonar=v=>JSON.parse(JSON.stringify(v));
-  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',pies:'Pies · arranque de carrera',vertigo:'Dolly zoom',carrera:'Carrera y deslizamiento',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Incorporación, golpe y búsqueda',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'POV · estela y reaparición',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
+  const nombres={salida:'Sale de la casa',descubrir:'Descubre al mago',pies:'Pies · arranque de carrera',vertigo:'Dolly zoom',carrera:'Carrera y deslizamiento',ataquePOV:'Inicia el hachazo',desaparece:'El mago desaparece',tropezar:'Incorporación, golpe y búsqueda',buscar:'Busca al mago',levantarse:'Se incorpora',voltear:'Mira hacia atrás',techo:'POV · estela, reaparición y hechizo',hechizo:'Conjura el meteorito',cielo:'Revela el meteorito',caida:'Se prepara al impacto',impacto:'Impacto y caída',negro:'Fundido a negro'};
   let toma=M.nueva(),deshacer=[],rehacer=[],guion=[],frames=[],cuadro=0,acumulado=0,ocupado=true,reproduce=false,grabando=false,libre=null,nativa=null,seleccion=null,token=0,ultimoUI=0,arrastre=null,destino=null,arrastreTiempo=null;
   const teclas=new Set(),vistasPrevias=new Map();
   document.body.classList.add('cineEditor');document.title='Cine · Caoz ARPG';
@@ -99,6 +99,7 @@ window.CAOZ_ARPG_CINE_EDITOR={crear(T,camara,lienzo,api){
   function hacerLibre(){if(ocupado)return;libre??=clonar(vistaActual());if(!grabando)reproduce=false;camposCamara();actualizar();}
   function ponerClave(registrarHistoria=true){if(ocupado)return;if(registrarHistoria)recordar();const f=fase(),vista=vistaDeAccion(),p=toma.planos[f]??={vista,claves:[]},t=Math.round(tiempoLocal()*60)/60,k={...clonar(libre||vistaActual()),t,curva:grabando?'lineal':$('ceCurva').value};
     if(p.nativas){p.nativas=p.nativas.filter(a=>a!==api.estado().fase);if(!p.nativas.length)delete p.nativas;}
+    if(p.nativasHasta&&api.estado().t+1e-8<p.nativasHasta[api.estado().fase]){delete p.nativasHasta[api.estado().fase];if(!Object.keys(p.nativasHasta).length)delete p.nativasHasta;}
     if(!p.claves.length){p.vista=vista;delete p.vistas;}vistasPrevias.delete(f);p.claves=p.claves.filter(c=>Math.abs(c.t-t)>1/120);p.claves.push(k);p.claves.sort((a,b)=>a.t-b.t);seleccion=p.claves.indexOf(k);$('ceKeyTiempo').value=t.toFixed(3);if(!grabando)libre=null;guardar();actualizar(true);if(!grabando)mensaje(`Keyframe guardado en ${nombres[f]}, ${t.toFixed(2)} s.`);
   }
   function terminarGrabacion(){if(!grabando)return;ponerClave(false);grabando=false;reproduce=false;libre=null;guardar();actualizar(true);mensaje('Recorrido guardado. Reproduce el plano para revisarlo.');}
