@@ -19,13 +19,14 @@ const vuelta=M.validar(JSON.parse(JSON.stringify(v)));assert.equal(vuelta.planos
 console.log('✓ Tomas de cámara: posiciones, focal, rotación normalizada, interpolaciones, cortes exactos, 30/60/120 FPS e importación validada.');
 
 // Diez planos estables; el giro se inicia únicamente tras el corte al POV.
-assert.equal(M.planos.length,10);assert.equal(M.VERSION,7);
+assert.equal(M.planos.length,10);assert.equal(M.VERSION,8);
 assert.equal(M.planoDeFase('ataquePOV'),'carrera');assert.equal(M.planoDeFase('desaparece'),'tropezar');
 for(const f of ['tropezar','buscar','levantarse'])assert.equal(M.planoDeFase(f),'tropezar');
 assert.equal(M.planoDeFase('voltear'),'techo');assert.equal(M.planoDeFase('voltear',6),'tropezar');
 assert(M.fases.indexOf('levantarse')<M.fases.indexOf('tropezar'));
-const duracion={salida:1,descubrir:1,vertigo:1,pies:79/60,carrera:2,ataquePOV:.48,desaparece:.42,levantarse:.52,tropezar:1,buscar:1.85,voltear:1.6,techo:1.3,cielo:1.7,caida:1,impacto:1,negro:1};
-const antes={desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7};
+const duracion={salida:1,descubrir:1,vertigo:1,pies:79/60,carrera:2,ataquePOV:.96,desaparece:.08,levantarse:.16,tropezar:.74,buscar:1.2,voltear:2.6,techo:1.4,cielo:1.7,caida:1,impacto:1,negro:1};
+const antes={ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7};
+const montaje7={ataquePOV:.48,desaparece:.42,levantarse:.52,tropezar:1,buscar:1.85,voltear:1.6,techo:1.3,cielo:1.7};
 const ordenAnterior=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
 const cuadros=[],inicios={};let grupo=null,inicio=0,total=0;
 for(const accion of M.fases){
@@ -38,36 +39,37 @@ for(const accion of M.fases){
  total+=Math.ceil(duracion[accion]*60)/60;
 }
 function relojAnterior(version,f){
- const id=M.planoDeFase(f.accion,version),acciones=ordenAnterior.filter(a=>M.planoDeFase(a,version)===id),e=f.estado;
- if(version>=4&&id==='tropezar')return f.t*6.02/3.79;
- const t=antes[f.accion]===undefined?f.tAccion:f.tAccion*antes[f.accion]/duracion[f.accion];
+ const duracionPrevia=version>=7?montaje7:antes,orden=version>=7?M.fases:ordenAnterior;
+ const id=M.planoDeFase(f.accion,version),acciones=orden.filter(a=>M.planoDeFase(a,version)===id),e=f.estado;
+ if(version>=4&&id==='tropezar')return f.t*(version>=7?3.79:6.02)/2.18;
+ const t=duracionPrevia[f.accion]===undefined?f.tAccion:f.tAccion*duracionPrevia[f.accion]/duracion[f.accion];
  if(version===1)return t;
- if(id==='tropezar'||id==='techo')return acciones.slice(0,acciones.indexOf(f.accion)).reduce((s,a)=>s+antes[a],0)+t;
+ if(id==='tropezar'||id==='techo')return acciones.slice(0,acciones.indexOf(f.accion)).reduce((s,a)=>s+duracionPrevia[a],0)+t;
+ if(f.accion==='desaparece')return e.inicios.ataquePOV-e.inicios.carrera+.48+t;
  const local=e.total-e.inicios[acciones[0]];
- return local+(f.accion==='desaparece'?t-f.tAccion:0)+(id==='pies'&&version===5?11/60:0);
+ return local+(f.accion==='ataquePOV'?t-f.tAccion:0)+(id==='pies'&&version===5?11/60:0);
 }
-for(const version of [1,2,3,4,5,6]){
+for(const version of [1,2,3,4,5,6,7]){
  const antigua={...M.nueva(),version,planos:{}};
  for(const [i,accion]of ordenAnterior.entries()){
   if(accion==='pies'&&version<5)continue;const id=M.planoDeFase(accion,version);if(antigua.planos[id])continue;
   antigua.planos[id]={vista:i%2?'externa':'original',claves:[k(0,i*100,42,'suave'),k(8,i*100+80)]};
  }
- const intacta=JSON.stringify(antigua);M.validar(antigua);const agrupada=C.agrupar(antigua,cuadros);assert.equal(agrupada.version,7);
+ const intacta=JSON.stringify(antigua);M.validar(antigua);const agrupada=C.agrupar(antigua,cuadros);assert.equal(agrupada.version,8);
  assert.equal(JSON.stringify(antigua),intacta,'La migración nunca modifica el documento original');
  for(const f of cuadros){
   const runtime=C.tomaEn(antigua,f.estado),convertida=C.tomaEn(agrupada,f.estado);
   if(f.accion==='pies'&&version<5){assert.equal(convertida.camara,null,'El insert nuevo conserva su cámara original');continue;}
-  const esperado=f.accion==='voltear'?f.camara:C.muestra(antigua.planos[M.planoDeFase(f.accion,version)].claves,relojAnterior(version,f));
-  assert(Math.abs(convertida.camara.pos[0]-esperado.pos[0])<1e-8,`La migración v${version} conserva el encuadre en ${f.accion} ${f.tAccion}`);
-  if(f.accion==='voltear'){assert.equal(runtime.camara,null);assert.equal(runtime.vista,'original');assert.equal(convertida.vista,'original','El giro nuevo conserva los brazos POV');}
-  else assert(Math.abs(runtime.camara.pos[0]-convertida.camara.pos[0])<1e-8,'El juego y el editor evalúan el mismo montaje antiguo');
+  const esperado=f.accion==='voltear'&&version<7?null:C.muestra(antigua.planos[M.planoDeFase(f.accion,version)].claves,relojAnterior(version,f));
+  if(!esperado){assert.equal(runtime.camara,null);assert.equal(convertida.camara,null);assert.equal(runtime.vista,'original');assert.equal(convertida.vista,'original','El giro nuevo conserva los brazos POV');}
+  else {assert(Math.abs(convertida.camara.pos[0]-esperado.pos[0])<1e-8,`La migración v${version} conserva el encuadre en ${f.accion} ${f.tAccion}`);assert(Math.abs(runtime.camara.pos[0]-convertida.camara.pos[0])<1e-8,'El juego y el editor evalúan el mismo montaje antiguo');}
  }
  assert.equal(JSON.stringify(agrupada.planos.salida),JSON.stringify(antigua.planos.salida),'Las pistas que no cambian conservan sus keyframes originales');
  if(version>=4){
   assert.equal(agrupada.planos.tropezar.claves.length,antigua.planos.tropezar.claves.length,'El plano 06 conserva todas las claves, incluso fuera del intervalo visible');
   assert.equal(agrupada.planos.tropezar.claves[0].curva,'suave');
-  for(const fps of [30,60,120])for(let i=0;i<3.79*fps;i++){
-   const tiempo=i/fps,a=C.muestra(antigua.planos.tropezar.claves,tiempo*6.02/3.79),b=C.muestra(agrupada.planos.tropezar.claves,tiempo);
+  for(const fps of [30,60,120])for(let i=0;i<2.18*fps;i++){
+   const tiempo=i/fps,a=C.muestra(antigua.planos.tropezar.claves,tiempo*(version>=7?3.79:6.02)/2.18),b=C.muestra(agrupada.planos.tropezar.claves,tiempo);
    assert(Math.abs(a.pos[0]-b.pos[0])<1e-8,'El retime continuo conserva también el easing entre cuadros');
   }
  }
@@ -77,13 +79,25 @@ assert.throws(()=>M.validar({...M.nueva(),version:4,planos:{pies:{vista:'origina
 const parcial={...M.nueva(),version:3,planos:{carrera:{vista:'externa',claves:[k(0,1),k(3,4)]}}};
 const migrada=C.agrupar(parcial,cuadros);assert(migrada.planos.tropezar.claves.length,'El final del antiguo plano de carrera sigue a la desaparición');
 const sinEditar=cuadros.find(f=>f.accion==='levantarse');
-assert.equal(C.tomaEn(migrada,sinEditar.estado).camara.pos[0],sinEditar.camara.pos[0],'La recuperación no editada conserva la cámara original');
+assert.equal(C.tomaEn(migrada,sinEditar.estado).camara,null,'La recuperación no editada conserva la cámara programada en vivo');assert(migrada.planos.tropezar.nativas.includes('levantarse'));
 assert(!migrada.planos.techo,'Sin cámaras de techo/cielo se conserva todo el nuevo POV programado');
 const giroAnterior={...M.nueva(),version:1,planos:{voltear:{vista:'externa',claves:[k(0,4)]}}};
 assert(!C.agrupar(giroAnterior,cuadros).planos.techo,'Una cámara antigua del giro externo no contamina el nuevo POV');
 const juntas={...M.nueva(),version:6,planos:{tropezar:{vista:'externa',vistas:{voltear:'externa',buscar:'original'},claves:[k(0,1),k(.0011,2)]}}};
 const ajustadas=C.agrupar(juntas,cuadros);assert.equal(ajustadas.planos.tropezar.claves.length,2);assert(!('voltear' in ajustadas.planos.tropezar.vistas));assert.equal(ajustadas.planos.tropezar.vistas.buscar,'original');
+const cercanasV7={...M.nueva(),version:7,planos:{tropezar:{vista:'original',claves:[k(0,1),k(.0000011,2)]}}};
+assert.equal(C.agrupar(M.validar(cercanasV7),cuadros).planos.tropezar.claves.length,2,'El retime conserva claves v7 muy próximas sin rechazarlas');
 assert.equal(M.planoDeFase('cielo'),'techo');assert.equal(M.planoDeFase('cielo',2),'cielo');
 assert.throws(()=>M.validar({...M.nueva(),planos:{carrera:{vista:'original',claves:[],vistas:{desaparece:'externa'}}}}));
 assert.throws(()=>M.validar({...M.nueva(),planos:{tropezar:{vista:'original',claves:[],vistas:{voltear:'externa'}}}}));
-console.log('✓ Formato 7: diez planos, nuevo POV, migración de versiones 1–6, retime continuo del plano 06, cámaras de techo/cielo, vistas y reloj idéntico en editor/juego.');
+const soloCarrera={...M.nueva(),version:1,planos:{carrera:{vista:'original',claves:[k(0,2),k(2,6)]}}};
+const carreraMigrada=C.agrupar(soloCarrera,cuadros),slide=cuadros.find(f=>f.accion==='ataquePOV');
+assert.equal(C.tomaEn(carreraMigrada,slide.estado).camara,null,'Alargar el slide no convierte una acción sin editar en cámara fija');
+assert(carreraMigrada.planos.carrera.nativas.includes('ataquePOV'));
+const techoV7={...M.nueva(),version:7,planos:{techo:{vista:'original',claves:[k(0,42),k(4.6,98)]}}};
+const techoV8=C.agrupar(techoV7,cuadros),inicioGiro=cuadros.find(f=>f.accion==='voltear');
+assert.equal(C.tomaEn(techoV8,inicioGiro.estado).camara.pos[0],42,'Una cámara explícita v7 se conserva también durante la nueva estela');
+assert(!techoV8.planos.techo.nativas,'El formato 7 no permite inferir qué claves creó el usuario');
+for(const nativas of [['inventada'],['voltear','voltear'],['buscar']])assert.throws(()=>M.validar({...M.nueva(),planos:{techo:{vista:'original',claves:[k(0,1)],nativas}}}));
+assert.throws(()=>M.validar({...M.nueva(),version:7,planos:{techo:{vista:'original',claves:[k(0,1)],nativas:['voltear']}}}));
+console.log('✓ Formato 8: diez planos, slide completo, migración de versiones 1–7, retime de planos 05/06/07, nativas en vivo, cámaras v7 explícitas y reloj idéntico en editor/juego.');

@@ -4,13 +4,16 @@
   const CLAVE='caoz.arpg.cine.mago.v1',REVISION='mago-v2';
   const fases=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','levantarse','tropezar','buscar','voltear','techo','cielo','caida','impacto','negro'];
   const fasesAnteriores=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
-  const VERSION=7,RECORTE_PIES=11/60,versiones=[1,2,3,4,5,6,7];
-  const antes={desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7};
-  const ahora={desaparece:.42,levantarse:.52,tropezar:1,buscar:1.85,voltear:1.6,techo:1.3,cielo:1.7};
-  const RETIME_RECUPERACION=(antes.desaparece+antes.tropezar+antes.buscar+antes.levantarse)/(ahora.desaparece+ahora.levantarse+ahora.tropezar+ahora.buscar);
+  const VERSION=8,RECORTE_PIES=11/60,versiones=[1,2,3,4,5,6,7,8];
+  const antes={ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7};
+  const montaje7={ataquePOV:.48,desaparece:.42,levantarse:.52,tropezar:1,buscar:1.85,voltear:1.6,techo:1.3,cielo:1.7};
+  const ahora={ataquePOV:.96,desaparece:.08,levantarse:.16,tropezar:.74,buscar:1.2,voltear:2.6,techo:1.4,cielo:1.7};
+  const tiemposDe=v=>v>=7?montaje7:antes;
+  const recuperacion=d=>d.desaparece+d.levantarse+d.tropezar+d.buscar;
+  const retimeRecuperacion=v=>recuperacion(tiemposDe(v))/recuperacion(ahora);
   const planoDeFase=(f,version=VERSION)=>version===1?f:['carrera','ataquePOV',...(version<4?['desaparece']:[])].includes(f)?'carrera':['tropezar','buscar','levantarse',...(version<7?['voltear']:[]),...(version>=4?['desaparece']:[])].includes(f)?'tropezar':version>=3&&['techo','cielo',...(version>=7?['voltear']:[])].includes(f)?'techo':f;
-  const accionesDe=(id,v)=> (v<VERSION?fasesAnteriores:fases).filter(f=>planoDeFase(f,v)===id);
-  const idsPorVersion=Object.fromEntries(versiones.map(v=>[v,Object.freeze([...new Set((v<VERSION?fasesAnteriores:fases).filter(f=>v>=5||f!=='pies').map(f=>planoDeFase(f,v)))])]));
+  const accionesDe=(id,v)=> (v<7?fasesAnteriores:fases).filter(f=>planoDeFase(f,v)===id);
+  const idsPorVersion=Object.fromEntries(versiones.map(v=>[v,Object.freeze([...new Set((v<7?fasesAnteriores:fases).filter(f=>v>=5||f!=='pies').map(f=>planoDeFase(f,v)))])]));
   const idsPlanos=idsPorVersion[VERSION];
   // Catálogo central: una entrada por secuencia; los planos pertenecen a ella.
   const escenas=Object.freeze([
@@ -31,11 +34,15 @@
         const largo=Math.hypot(...k.rot);if(largo<.5||largo>1.5)throw Error('Orientación de cámara inválida.');
         return {t:k.t,pos:[...k.pos],rot:k.rot.map(n=>n/largo),fov:k.fov,distancia:k.distancia,curva:k.curva};
       }).sort((a,b)=>a.t-b.t);
-      if(claves.some((k,i)=>i&&k.t-claves[i-1].t<(d.version>=7?1e-6:.001)))throw Error('Dos keyframes ocupan el mismo momento.');
+      if(claves.some((k,i)=>i&&k.t-claves[i-1].t<(d.version>=8?1e-7:d.version>=7?1e-6:.001)))throw Error('Dos keyframes ocupan el mismo momento.');
       total+=claves.length;if(total>5000)throw Error('La toma supera 5000 keyframes.');planos[fase]={vista:p.vista,claves};
       if(d.version>=2&&p.vistas!==undefined){
         if(!p.vistas||typeof p.vistas!=='object'||Array.isArray(p.vistas))throw Error('Vistas de acciones inválidas.');
         planos[fase].vistas={};for(const [accion,vista]of Object.entries(p.vistas)){if(!fases.includes(accion)||planoDeFase(accion,d.version)!==fase||!['original','externa'].includes(vista))throw Error('Vista de acción inválida.');planos[fase].vistas[accion]=vista;}
+      }
+      if(p.nativas!==undefined){
+        if(d.version<8||!Array.isArray(p.nativas)||new Set(p.nativas).size!==p.nativas.length||p.nativas.some(f=>!accionesDe(fase,d.version).includes(f)))throw Error('Acciones con cámara programada inválidas.');
+        planos[fase].nativas=[...p.nativas];
       }
     }
     return {version:d.version,escena:'mago',revision:REVISION,nombre:String(d.nombre||'Mi toma').slice(0,100),planos};
@@ -63,21 +70,25 @@
       if(toma.version===VERSION)return local;
       // El recorrido externo ya editado permanece continuo aunque la actuación
       // se incorpore antes. Las claves del viejo giro quedan fuera del plano.
-      if(toma.version>=4&&id==='tropezar')return local*RETIME_RECUPERACION;
-      const t=antes[f]===undefined?estado.t:estado.t*antes[f]/ahora[f];
+      if(toma.version>=4&&id==='tropezar')return local*retimeRecuperacion(toma.version);
+      const anteriores=tiemposDe(toma.version),t=anteriores[f]===undefined?estado.t:estado.t*anteriores[f]/ahora[f];
       if(toma.version===1)return t;
       if(id==='tropezar'||id==='techo'){
-        const acciones=accionesDe(id,toma.version);return acciones.slice(0,acciones.indexOf(f)).reduce((s,a)=>s+antes[a],0)+t;
+        const acciones=accionesDe(id,toma.version);return acciones.slice(0,acciones.indexOf(f)).reduce((s,a)=>s+anteriores[a],0)+t;
       }
-      if(f==='desaparece')return local-estado.t+t;
+      if(f==='ataquePOV')return local-estado.t+t;
+      if(f==='desaparece'){
+        const ataque=estado.inicios?.ataquePOV,carrera=estado.inicios?.carrera;
+        return (Number.isFinite(ataque)&&Number.isFinite(carrera)?ataque-carrera:local-estado.t-ahora.ataquePOV)+anteriores.ataquePOV+t;
+      }
       return local+(id==='pies'&&toma.version===5?RECORTE_PIES:0);
     }
     function tomaEn(toma,estado){
       // El nuevo giro empieza después del corte POV. Nunca reutiliza el giro
       // externo de un montaje anterior, aunque comparta su id de acción.
-      if(toma.version<VERSION&&estado.fase==='voltear')return {camara:null,vista:'original'};
+      if(toma.version<7&&estado.fase==='voltear')return {camara:null,vista:'original'};
       const p=toma.planos[planoDeFase(estado.fase,toma.version)];
-      return {camara:muestra(p?.claves,tiempoDeToma(toma,estado)),vista:p?.vistas?.[estado.fase]||p?.vista};
+      return {camara:p?.nativas?.includes(estado.fase)?null:muestra(p?.claves,tiempoDeToma(toma,estado)),vista:p?.vistas?.[estado.fase]||p?.vista};
     }
     // Las tomas antiguas usaban una pista por acción. Se conservan sus encuadres
     // y sus cortes al reunirlas, incluyendo las acciones que seguían sin editar.
@@ -93,12 +104,15 @@
         }
         const acciones=accionesDe(id,VERSION),origen=f=>planoDeFase(f,toma.version),pistas=[...new Set(acciones.map(origen))];
         if(id==='tropezar'&&toma.version>=4){
-          const p=toma.planos.tropezar;if(p){salida.planos[id]=JSON.parse(JSON.stringify(p));salida.planos[id].claves.forEach(k=>k.t/=RETIME_RECUPERACION);if(p.vistas)salida.planos[id].vistas=Object.fromEntries(acciones.filter(a=>p.vistas[a]).map(a=>[a,p.vistas[a]]));}continue;
+          const p=toma.planos.tropezar;if(p){salida.planos[id]=JSON.parse(JSON.stringify(p));salida.planos[id].claves.forEach(k=>k.t/=retimeRecuperacion(toma.version));if(p.vistas)salida.planos[id].vistas=Object.fromEntries(acciones.filter(a=>p.vistas[a]).map(a=>[a,p.vistas[a]]));}continue;
         }
-        if(pistas.length===1&&accionesDe(pistas[0],toma.version).join()===acciones.join()){if(toma.planos[pistas[0]])salida.planos[id]=JSON.parse(JSON.stringify(toma.planos[pistas[0]]));continue;}
-        if(!acciones.some(f=>f!=='voltear'&&toma.planos[origen(f)]?.claves.length))continue;
-        const cuadros=frames.map((f,i)=>({...f,indice:i})).filter(f=>f.fase===id),vistas=Object.fromEntries(acciones.map(f=>[f,f==='voltear'?'original':toma.planos[origen(f)]?.vistas?.[f]||toma.planos[origen(f)]?.vista||'original']));
-        salida.planos[id]={vista:vistas[acciones[0]],vistas,claves:cuadros.map((f,i)=>{
+        if(!['carrera','techo'].includes(id)&&pistas.length===1&&accionesDe(pistas[0],toma.version).join()===acciones.join()){if(toma.planos[pistas[0]])salida.planos[id]=JSON.parse(JSON.stringify(toma.planos[pistas[0]]));continue;}
+        const nativas=acciones.filter(f=>(f==='voltear'&&toma.version<7)||!toma.planos[origen(f)]?.claves.length);
+        if(nativas.length===acciones.length)continue;
+        const cuadros=frames.map((f,i)=>({...f,indice:i})).filter(f=>f.fase===id&&!nativas.includes(f.accion)),vistas=Object.fromEntries(acciones.map(f=>[f,nativas.includes(f)?'original':toma.planos[origen(f)]?.vistas?.[f]||toma.planos[origen(f)]?.vista||'original']));
+        // Desde v8 la cámara programada se evalúa en vivo: no queda congelada
+        // en claves al importar una toma que sólo editaba otras acciones.
+        salida.planos[id]={vista:vistas[acciones[0]],vistas,...(nativas.length?{nativas}:{}),claves:cuadros.map((f,i)=>{
           const estado={fase:f.accion,t:f.tAccion,tPlano:f.t,total:f.indice/60,inicios,...f.estado},camara=tomaEn(toma,estado).camara||f.camara;
           const siguiente=cuadros[i+1]?.accion,corte=origen(siguiente)!==origen(f.accion)||siguiente!==f.accion&&(id==='tropezar'||f.accion==='voltear');
           return {...camara,t:f.t,curva:corte?'corte':'lineal'};

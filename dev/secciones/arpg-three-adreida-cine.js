@@ -32,13 +32,13 @@
         H['mano'+l].rotation.set(0,0,signo*(Math.PI/2-.31));
       }
       // El mismo clip y el mismo progreso continúan después del corte a tercera persona.
-      const entradaAtaque=ataque===null?0:suave(ataque/.085);
-      if(ataque!==null){const desde=capturar(m);if(clipAtaque==='deslizarAtaque')deslizar(m,ataque);else MOD.posar(m,{anim:'tajoA',k:ataque,t,dt:0,mezclar:false});mezclar(m,desde,entradaAtaque);}
+      const entradaAtaque=ataque===null?0:clipAtaque==='rematarDeslizamiento'?1:suave(ataque/.085);
+      if(ataque!==null){const desde=capturar(m);if(clipAtaque==='deslizarAtaque')deslizar(m,ataque);else if(clipAtaque==='rematarDeslizamiento')rematarDeslizamiento(m,ataque);else MOD.posar(m,{anim:'tajoA',k:ataque,t,dt:0,mezclar:false});mezclar(m,desde,entradaAtaque);}
       // El agarre de tercera persona arma el golpe detrás del hombro. Adelanta el
       // modelo de vista para mantener manos y filo dentro del encuadre durante ese arco.
       // La preparación del slide lleva el filo sobre la cabeza: el modelo de
       // vista necesita más separación para que la hoja no atraviese la lente.
-      const deslizante=clipAtaque==='deslizarAtaque';
+      const deslizante=clipAtaque==='deslizarAtaque'||clipAtaque==='rematarDeslizamiento';
       // Como modelo de vista, los antebrazos del slide se dibujan delante del
       // entorno: acercarse al mago no oculta las manos dentro de su túnica.
       capaFPS(m,deslizante);
@@ -68,6 +68,7 @@
       MOD.posar(m,{anim:'quieto',dt:0,t:0,mezclar:false});
       fbx(m,'deslizarAtaque',k,desde,entrada);
     }
+    const tiemposRemate=Object.freeze({duracion:1.04,subida:.30,giro:.46,freno:.28});
     const ejeY=new T.Vector3(0,1,0),giroRemate=new T.Quaternion(),pivoteRemate=new T.Vector3();
     const puntosIK=Array.from({length:9},()=>new T.Vector3()),giroIK=new T.Quaternion(),padreIK=new T.Quaternion(),manoIK=new T.Quaternion();
     function orientarTramo(hijo,punta,destino){
@@ -136,15 +137,17 @@
       p={inicio,giro,fin,suelo,pivote};remates.set(m,p);return p;
     }
     function rematarDeslizamiento(m,k,desde=null,entrada=1){
-      const p=posesRemate(m),t=lim(k)*1.52;
+      const p=posesRemate(m),{duracion,subida,giro,freno}=tiemposRemate,t=lim(k)*duracion,finGiro=subida+giro,anticipacion=.05,inicioGiro=subida-anticipacion;
       if(t===0)restaurar(m,p.inicio);
-      else if(t<.52){restaurar(m,p.giro);mezclar(m,p.inicio,t/.52);}
-      else if(t<1.10)restaurar(m,p.giro);
-      else{restaurar(m,p.fin);mezclar(m,p.giro,(t-1.10)/.42);}
+      else if(t<subida){restaurar(m,p.giro);mezclar(m,p.inicio,t/subida);}
+      else if(t<finGiro)restaurar(m,p.giro);
+      else{restaurar(m,p.fin);mezclar(m,p.giro,(t-finGiro)/freno);}
       // Se evalúa el ángulo completo: interpolar sólo el cuaternión inicial y
       // final perdería la vuelta de 360°. La raíz permanece fija en la plaza.
-      const u=lim((t-.52)/.58),peso=Math.sin(Math.PI*u)**2,H=m.H;
-      if(t>=.52&&t<=1.10){
+      // El giro empieza durante los últimos 50 ms de incorporación, de modo que
+      // al acabar de subir la cadera ya avanza y no aparece una pausa de preparación.
+      const u=lim((t-inicioGiro)/(giro+anticipacion)),peso=Math.sin(Math.PI*u)**2,H=m.H;
+      if(t>=inicioGiro&&t<=finGiro){
         // Carga sobre la izquierda, recoge la derecha y vuelve a apoyarla.
         // El pecho retrasa el arma respecto a la cadera durante la aceleración.
         H.piernaI.rotation.x-=.16*peso;H.rodillaI.rotation.x+=.26*peso;H.pieI.rotation.x-=.10*peso;
@@ -152,20 +155,21 @@
         H.cadera.rotation.z-=.09*peso;H.torso.rotation.x+=.10*peso;H.torso.rotation.y-=.36*peso;H.torso.rotation.z+=.07*peso;H.cabeza.rotation.y+=.18*peso;
       }
       const vuelta=Math.PI*2*suave(u);H.cadera.quaternion.premultiply(giroRemate.setFromAxisAngle(ejeY,vuelta));
-      if(t>=.52&&t<=1.10){
+      if(t>=inicioGiro&&t<=finGiro){
         // La bota izquierda gira sobre el mismo punto. Sólo el cuerpo transfiere
         // su peso alrededor de ese apoyo; la raíz de la plaza queda inmóvil.
-        m.raiz.updateMatrixWorld(true);m.raiz.worldToLocal(H.pieI.getWorldPosition(pivoteRemate));H.cuerpo.position.x+=p.pivote.x-pivoteRemate.x;H.cuerpo.position.z+=p.pivote.z-pivoteRemate.z;
+        const apoyo=suave((t-inicioGiro)/anticipacion);m.raiz.updateMatrixWorld(true);m.raiz.worldToLocal(H.pieI.getWorldPosition(pivoteRemate));H.cuerpo.position.x+=(p.pivote.x-pivoteRemate.x)*apoyo;H.cuerpo.position.z+=(p.pivote.z-pivoteRemate.z)*apoyo;
       }
       if(desde)mezclar(m,desde,entrada);
       if(t>0&&(!desde||entrada>0)){cerrarAgarre(m);apoyarRemate(m,p.suelo);}
       m.raiz.updateMatrixWorld(true);
     }
-    function buscarDePie(m,t,desde=null,entrada=1){
-      const p=posesRemate(m);restaurar(m,p.fin);t=Math.max(0,t);
-      // Izquierda, derecha y una última comprobación lateral antes del corte POV.
-      const mirada=t<.43?-.95*suave(t/.43):t<1.10?-.95+1.98*suave((t-.43)/.67):t<1.62?1.03-1.50*suave((t-1.10)/.52):-.47+.47*suave((t-1.62)/.23);
-      m.H.torso.rotation.y=mirada*.16;m.H.cabeza.rotation.y=mirada;m.H.cabeza.rotation.x=-.035+Math.sin(Math.min(t,1.85)*Math.PI/1.85)*.045;
+    function buscarDePie(m,t,desde=null,entrada=1,duracion=1.2){
+      const p=posesRemate(m);restaurar(m,p.fin);const u=lim(t/Math.max(.01,duracion));
+      // Comprueba izquierda y derecha; regresa al centro con velocidad cero para
+      // entregar la mirada al POV sin cortar un giro de cabeza a medio recorrido.
+      const mirada=u<.28?-.95*suave(u/.28):u<.72?-.95+1.98*suave((u-.28)/.44):1.03*(1-suave((u-.72)/.28));
+      m.H.torso.rotation.y=mirada*.16;m.H.cabeza.rotation.y=mirada;m.H.cabeza.rotation.x=-.035+Math.sin(u*Math.PI)**2*.045;
       if(desde){mezclar(m,desde,entrada);if(entrada>0){cerrarAgarre(m);apoyarRemate(m,p.suelo);}}
       m.raiz.updateMatrixWorld(true);
     }
@@ -195,7 +199,7 @@
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
     }
-    return {crearFPS,fps,capaFPS,fbx,deslizar,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
+    return {crearFPS,fps,capaFPS,fbx,deslizar,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();
