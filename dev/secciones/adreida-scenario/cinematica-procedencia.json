@@ -17,10 +17,16 @@
       "sha256": "b0c6d7a134b7a6e35268cf5667478c51a5be6b9286b4c006845919511bbe89a3",
       "duracion": 2.1333333333333333,
       "muestras": 65
+    },
+    {
+      "fuente": "Walking Left Turn.fbx",
+      "sha256": "d0c3f046bf71e722b0cf918abec02f78ee07a32f996535b4a5d872578deb3d54",
+      "duracion": 1.2,
+      "muestras": 37
     }
   ],
   "adaptacion": "Veintidós huesos, proporciones del modelo actual, agarre del hacha resuelto con IK en Crouching. Falling conserva las poses sin corrección de suelo: la gravedad y el desplazamiento los dirige el epílogo. Sin mallas ni texturas de los FBX.",
-  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json",
+  "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- entrada.fbx salida.json; node preparar-cinematica.mjs crouching.json falling.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json; Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Walking Left Turn.fbx\" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json",
   "deslizarAtaque": {
     "clip": "deslizarAtaque",
     "modelo": "adreida-piernas-scenario/datos.js",
@@ -62,6 +68,23 @@
       3.820291
     ],
     "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Great Sword Slide Attack.fbx\" slide.json; node preparar-cinematica.mjs --deslizar slide.json",
+    "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
+  },
+  "salidaConGiro": {
+    "clip": "salidaConGiro",
+    "modelo": "adreida-piernas-scenario/datos.js",
+    "fps": 120,
+    "muestras": 145,
+    "escalaPiernas": 1.0954248554703117,
+    "yawInicialFuente": 0.0513794822545189,
+    "giroFinal": 0.630883,
+    "desplazamientoFinal": [
+      0.359405,
+      0,
+      1.760999
+    ],
+    "adaptacion": "Walking Left Turn completo: 22 huesos, incluidos ambos brazos, sin IK que sustituya su actuación. Mano derecha cerrada sobre el hacha aprobada, izquierda libre. Poses locales sin desplazamiento XZ ni yaw global; raiz contiene XYZ relativos al primer cuadro, con Y=0, y giros contiene yaw en radianes relativo al inicio. Ambos se aplican sólo en el guion. Retarget a proporciones y botas aprobadas, interpolación fuente previa al horneado a 120 Hz. Sin maniquí, texturas ni FBX en el runtime.",
+    "reproduccion": "Blender --background --factory-startup --python-exit-code 1 --python extraer-combate.py -- \"Walking Left Turn.fbx\" walking-left-turn.json; node preparar-cinematica.mjs --salir walking-left-turn.json",
     "licencia": "Animación FBX aportada por el usuario; se redistribuyen únicamente poses adaptadas. No se atribuye licencia CC0 al archivo fuente."
   }
 }

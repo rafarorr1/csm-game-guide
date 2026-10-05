@@ -6,16 +6,27 @@
     const V=T.Vector3,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const azar=i=>{const n=Math.sin(i*127.1+91.7)*43758.5453;return n-Math.floor(n);};
     const luces=[];escena.traverse(n=>{if(n.isAmbientLight||n.isHemisphereLight||n.isDirectionalLight)luces.push(n);});
-    const cantidad=reducido?3:4,tramos=reducido?12:18,ramas=reducido?5:7,capacidad=cantidad*(tramos+ramas*2);
+    // Un primer canal se reenciende enseguida. Tras el silencio, otros dos
+    // sistemas responden a distancias y tiempos distintos; no es un metrónomo.
+    const guionCompleto=[
+      {cuando:.28,duracion:.09,lateral:-38,distancia:105,canal:0,fuerza:.58,ancho:.11},
+      {cuando:.445,duracion:.17,lateral:-38,distancia:105,canal:0,fuerza:1.08,ancho:.15},
+      {cuando:1.73,duracion:.255,lateral:65,distancia:162,canal:2,fuerza:.92,ancho:.19},
+      {cuando:1.825,duracion:.145,lateral:-185,distancia:231,canal:3,fuerza:.65,ancho:.22},
+      {cuando:2.615,duracion:.305,lateral:148,distancia:195,canal:4,fuerza:1.10,ancho:.20},
+      {cuando:2.654,duracion:.19,lateral:18,distancia:178,canal:5,fuerza:.90,ancho:.16}
+    ];
+    const guion=reducido?[guionCompleto[1],guionCompleto[2],guionCompleto[5]]:guionCompleto;
+    const cantidad=guion.length,tramos=reducido?12:18,ramas=reducido?5:7,capacidad=cantidad*(tramos+ramas*2);
     const geometria=new T.CylinderGeometry(1,1,1,5,1,true);
     const nucleo=new T.InstancedMesh(geometria,new T.MeshBasicMaterial({color:0xc9ffe0,toneMapped:false,fog:false}),capacidad);
     const contorno=new T.InstancedMesh(geometria,new T.MeshBasicMaterial({color:0x27d779,transparent:true,opacity:.30,depthWrite:false,toneMapped:false,fog:false}),capacidad);
     nucleo.name='Mago · núcleos de rayos verdes';contorno.name='Mago · contorno de rayos verdes';
     for(const m of [contorno,nucleo]){m.count=0;m.visible=false;m.frustumCulled=false;m.castShadow=m.receiveShadow=false;m.instanceMatrix.setUsage(T.DynamicDrawUsage);grupo.add(m);}
-    const nubesCantidad=reducido?18:30,geoNubes=new T.PlaneGeometry(1,1),semillas=new Float32Array(nubesCantidad),densidades=new Float32Array(nubesCantidad);
+    const nubesCantidad=reducido?24:42,geoNubes=new T.PlaneGeometry(1,1),semillas=new Float32Array(nubesCantidad),densidades=new Float32Array(nubesCantidad);
     for(let i=0;i<nubesCantidad;i++){semillas[i]=azar(i+831)*41;densidades[i]=.57+azar(i+718)*.25;}
     geoNubes.setAttribute('aSemilla',new T.InstancedBufferAttribute(semillas,1));geoNubes.setAttribute('aDensidad',new T.InstancedBufferAttribute(densidades,1));
-    const uniformes={uTiempo:{value:0},uPresencia:{value:0},uNoche:{value:0},uRayos:{value:Array.from({length:4},()=>new T.Vector4())},uMeteorito:{value:new T.Vector4()},uEdadMeteorito:{value:0}};
+    const uniformes={uTiempo:{value:0},uPresencia:{value:0},uNoche:{value:0},uRayos:{value:Array.from({length:6},()=>new T.Vector4())},uMeteorito:{value:new T.Vector4()},uEdadMeteorito:{value:0}};
     const matNubes=new T.ShaderMaterial({transparent:true,depthWrite:false,toneMapped:false,side:T.DoubleSide,uniforms:uniformes,
       vertexShader:`attribute float aSemilla;attribute float aDensidad;
         varying vec2 vUv;varying vec3 vMundo;varying float vSemilla;varying float vDensidad;
@@ -32,7 +43,7 @@
           gl_Position=projectionMatrix*viewMatrix*vec4(mundo,1.);
         }`,
       fragmentShader:`varying vec2 vUv;varying vec3 vMundo;varying float vSemilla;varying float vDensidad;
-        uniform float uTiempo;uniform float uPresencia;uniform float uNoche;uniform vec4 uRayos[4];uniform vec4 uMeteorito;uniform float uEdadMeteorito;
+        uniform float uTiempo;uniform float uPresencia;uniform float uNoche;uniform vec4 uRayos[6];uniform vec4 uMeteorito;uniform float uEdadMeteorito;
         float hashNube(vec2 p){vec3 q=fract(vec3(p.xyx)*.1031);q+=dot(q,q.yzx+33.33);return fract((q.x+q.y)*q.z);}
         float ruidoNube(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(hashNube(i),hashNube(i+vec2(1.,0.)),f.x),mix(hashNube(i+vec2(0.,1.)),hashNube(i+vec2(1.,1.)),f.x),f.y);}
         float vapor(vec2 p){return ruidoNube(p)*.57+ruidoNube(p*2.07+vec2(13.1,7.7))*.28+ruidoNube(p*4.13+vec2(7.4,17.9))*.15;}
@@ -40,14 +51,15 @@
           vec2 q=(vUv-.5)*vec2(4.6,3.3)+vec2(vSemilla,uTiempo*.027);float n=vapor(q*1.45);
           float borde=1.-length((vUv-.5)*vec2(2.05,2.2));
           float forma=smoothstep(.02,.45,borde+(n-.5)*.52)*smoothstep(.19,.67,n);
-          float luz=0.;for(int i=0;i<4;i++){vec3 d=vMundo-uRayos[i].xyz;luz+=exp(-dot(d,d)/650.)*uRayos[i].w;}
+          float alpha=forma*vDensidad*uPresencia;if(alpha<.004)discard;
+          float luz=0.;for(int i=0;i<6;i++){vec3 d=vMundo-uRayos[i].xyz;luz+=exp(-dot(d,d)/950.)*uRayos[i].w;}
           vec3 desdeMeteoro=vMundo-uMeteorito.xyz;float distancia=length(desdeMeteoro);
           float meteoro=exp(-distancia*distancia/105.)*uMeteorito.w;
           float hueco=(1.-smoothstep(1.8,6.8,distancia))*uMeteorito.w;
-          vec3 color=mix(vec3(.024,.034,.045),vec3(.009,.014,.022),uNoche)*(0.7+n*.9);
+          vec3 color=mix(vec3(.028,.039,.049),vec3(.017,.024,.033),uNoche)*(0.7+n*.9);
           color+=vec3(.026,.27,.09)*min(1.3,luz)*(.55+n*.75);
           color+=vec3(.065,.55,.18)*meteoro*(.75+.25*sin(uEdadMeteorito*7.));
-          float alpha=forma*vDensidad*uPresencia*(1.-hueco*.86);if(alpha<.003)discard;
+          alpha*=1.-hueco*.86;if(alpha<.003)discard;
           gl_FragColor=vec4(color,alpha);
           #include <colorspace_fragment>
         }`});
@@ -65,31 +77,35 @@
       desdeCielo.copy(opciones.cielo||origen.clone().addScaledVector(frente,-12).setY(54));impacto.copy(opciones.impacto||origen.clone().addScaledVector(frente,18).setY(1));
       rayos.length=0;
       for(let r=0;r<cantidad;r++){
-        const lateral=[-29,33,-43,21][r],distancia=[82,117,96,129][r],fin=origen.clone().addScaledVector(lado,lateral).addScaledVector(frente,-distancia);fin.y=origen.y+10+distancia*.09;
-        const inicio=fin.clone().addScaledVector(lado,(azar(r+70)-.5)*12).addScaledVector(frente,(azar(r+82)-.5)*7);inicio.y+=31+azar(r+23)*18;
+        const meta=guion[r],{lateral,distancia,canal}=meta,fin=origen.clone().addScaledVector(lado,lateral).addScaledVector(frente,-distancia);fin.y=origen.y+10+distancia*.09;
+        const inicio=fin.clone().addScaledVector(lado,(azar(canal+70)-.5)*17).addScaledVector(frente,(azar(canal+82)-.5)*11);inicio.y+=39+distancia*.15+azar(canal+23)*19;
         const puntos=[];
-        for(let i=0;i<=tramos;i++){const k=i/tramos,p=inicio.clone().lerp(fin,k),amplitud=Math.sin(k*Math.PI)*3.4;p.addScaledVector(lado,(azar(r*100+i*3+1)-.5)*amplitud*2);p.addScaledVector(frente,(azar(r*100+i*3+2)-.5)*amplitud*1.1);puntos.push(p);}
+        for(let i=0;i<=tramos;i++){const k=i/tramos,p=inicio.clone().lerp(fin,k),amplitud=Math.sin(k*Math.PI)*(2.8+distancia*.01);p.addScaledVector(lado,(azar(canal*100+i*3+1)-.5)*amplitud*2);p.addScaledVector(frente,(azar(canal*100+i*3+2)-.5)*amplitud*1.1);puntos.push(p);}
         const segmentos=[];for(let i=0;i<tramos;i++)segmentos.push({a:puntos[i],b:puntos[i+1],inicio:i/tramos,fin:(i+1)/tramos,grueso:1});
         for(let rama=0;rama<2;rama++){
-          const n=Math.floor(tramos*(rama===0?.34:.63)),de=puntos[n],hasta=de.clone().addScaledVector(lado,(rama?1:-1)*(5+azar(r*7+rama+3)*6)).addScaledVector(frente,-2);hasta.y-=7+azar(r*9+rama+73)*5;
+          const n=Math.floor(tramos*(rama===0?.34:.63)),de=puntos[n],hasta=de.clone().addScaledVector(lado,(rama?1:-1)*(5+azar(canal*7+rama+3)*6)).addScaledVector(frente,-2);hasta.y-=7+azar(canal*9+rama+73)*5;
           let anterior=de;
-          for(let j=1;j<=ramas;j++){const k=j/ramas,p=de.clone().lerp(hasta,k);p.addScaledVector(lado,(azar(r*23+rama*73+j)-.5)*2.3*Math.sin(k*Math.PI));
+          for(let j=1;j<=ramas;j++){const k=j/ramas,p=de.clone().lerp(hasta,k);p.addScaledVector(lado,(azar(canal*23+rama*73+j)-.5)*2.3*Math.sin(k*Math.PI));
             const empieza=n/tramos+(j-1)/ramas*.19;segmentos.push({a:anterior,b:p,inicio:empieza,fin:empieza+.19/ramas,grueso:.54});anterior=p;
           }
         }
-        rayos.push({cuando:reducido?[.48,1.32,2.3][r]:[.45,1.05,1.72,2.38][r],duracion:.36+r*.022,segmentos,foco:inicio.clone().lerp(fin,.25)});
+        rayos.push({...meta,segmentos,foco:inicio.clone().lerp(fin,.27)});
       }
       grupo.updateWorldMatrix(true,false);inversa.copy(grupo.matrixWorld).invert();let nube=0;
       function colocar(p,ancho,alto){objeto.position.copy(p).applyMatrix4(inversa);objeto.quaternion.identity();objeto.scale.set(ancho,alto,1);objeto.updateMatrix();nubes.setMatrixAt(nube++,objeto.matrix);}
       // Los bancos coinciden con las descargas: la luz aparece dentro de las
       // nubes lejanas, no como un lavado verde sobre todo el encuadre.
-      for(let r=0;r<rayos.length;r++)for(let j=0;j<(reducido?3:4);j++){
-        a.copy(rayos[r].foco).addScaledVector(lado,(j-1.5)*14).addScaledVector(frente,(azar(r*7+j+2)-.5)*18);a.y+=(azar(r*11+j+1)-.5)*16;
-        colocar(a,32+azar(r*13+j+9)*19,13+azar(r*9+j+71)*10);
+      for(let r=0;r<rayos.length;r++)for(let j=0;j<3;j++){
+        a.copy(rayos[r].foco).addScaledVector(lado,(j-1)*25).addScaledVector(frente,(azar(r*7+j+2)-.5)*32);a.y+=(azar(r*11+j+1)-.5)*26;
+        colocar(a,58+azar(r*13+j+9)*35,24+azar(r*9+j+71)*19);
       }
-      for(let j=0;j<(reducido?4:6);j++){
-        a.copy(origen).addScaledVector(frente,-(76+azar(j+220)*48)).addScaledVector(lado,(j/(reducido?3:5)-.5)*98);a.y=origen.y+27+azar(j+190)*19;
-        colocar(a,35+azar(j+339)*15,14+azar(j+290)*8);
+      // Dos capas desbordan los lados y la parte alta del encuadre. Al alzar la
+      // mirada no se descubre el borde de una nubecita aislada sobre la plaza.
+      const bancos=reducido?10:16,columnas=bancos/2;
+      for(let j=0;j<bancos;j++){
+        const nivel=Math.floor(j/columnas),columna=j%columnas,lateral=(columna/(columnas-1)-.5)*(nivel?380:510),distancia=115+azar(j+220)*115;
+        a.copy(origen).addScaledVector(frente,-distancia).addScaledVector(lado,lateral);a.y=origen.y+(nivel?94:40)+azar(j+190)*(nivel?84:34);
+        colocar(a,76+azar(j+339)*54,32+azar(j+290)*29);
       }
       const pasos=reducido?5:8;
       for(let j=0;j<pasos;j++){
@@ -117,13 +133,13 @@
       nubes.visible=uniformes.uPresencia.value>0;for(const v of uniformes.uRayos.value)v.w=0;
       for(let ir=0;ir<rayos.length;ir++){const r=rayos[ir];
         const edad=tiempo-r.cuando;if(edad<0||edad>=r.duracion||t>=segundos)continue;
-        const pulso=suave(edad/.025)*(1-suave((edad-.12)/(r.duracion-.12))),descenso=suave(edad/.115);estado.pulso=Math.max(estado.pulso,pulso);
-        uniformes.uRayos.value[ir].set(r.foco.x,r.foco.y,r.foco.z,pulso);
+        const ataque=Math.min(.016,r.duracion*.18),meseta=r.duracion*.23,pulso=suave(edad/ataque)*(1-suave((edad-meseta)/(r.duracion-meseta))),descenso=suave(edad/Math.min(.105,r.duracion*.42));estado.pulso=Math.max(estado.pulso,pulso);
+        uniformes.uRayos.value[ir].set(r.foco.x,r.foco.y,r.foco.z,pulso*r.fuerza);
         for(const s of r.segmentos){
           const dibujado=lim((descenso-s.inicio)/(s.fin-s.inicio));if(dibujado<=0||pulso<=0)continue;
           a.copy(s.a).applyMatrix4(inversa);b.copy(s.a).lerp(s.b,dibujado).applyMatrix4(inversa);eje.subVectors(b,a);const largo=eje.length();if(largo<.00001)continue;
           medio.copy(a).add(b).multiplyScalar(.5);objeto.position.copy(medio);objeto.quaternion.setFromUnitVectors(ejeY,eje.divideScalar(largo));
-          const radio=(reducido?.080:.092)*s.grueso*pulso;objeto.scale.set(radio,largo,radio);objeto.updateMatrix();nucleo.setMatrixAt(cuenta,objeto.matrix);
+          const radio=r.ancho*s.grueso*pulso;objeto.scale.set(radio,largo,radio);objeto.updateMatrix();nucleo.setMatrixAt(cuenta,objeto.matrix);
           objeto.scale.set(radio*3.9,largo,radio*3.9);objeto.updateMatrix();contorno.setMatrixAt(cuenta++,objeto.matrix);
         }
       }

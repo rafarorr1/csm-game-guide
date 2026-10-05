@@ -9,7 +9,7 @@
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,impactar,interfaz,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','voltear','techo','hechizo','cielo'];
-    const centro=new V(0,0,0),destino=new V(0,0,3.5),techo=new V(),cielo=new V(),desdeCamara=new V(),giroPaneo=new T.Quaternion(),finPaneo=new T.Quaternion(),objeto=new T.Object3D();
+    const centro=new V(0,0,0),destino=new V(0,0,3.5),techo=new V(),cielo=new V(),desdeCamara=new V(),giroPaneo=new T.Quaternion(),finPaneo=new T.Quaternion(),objeto=new T.Object3D(),raizSalida=new V(),ejeSalida=new V(0,1,0);
     const camBase={fov:camara.fov,near:camara.near},derrumbe={value:-1},centroOnda={value:new V()},tiempoPiso={value:-1};let s=null,recursos=null,visitadas=[],sombras=[],mallasRuina=[],terminado=false,nodosCine=null;
     const rumbo=(a,b)=>Math.atan2(b.x-a.x,b.z-a.z),angulo=(a,b)=>Math.atan2(Math.sin(b-a),Math.cos(b-a));
     function material(color,extra={}){return new T.MeshStandardMaterial({color,roughness:.86,metalness:0,...extra});}
@@ -146,20 +146,6 @@
           float veta=abs(sin(vRoca.x*4.7+sin(vRoca.z*5.3))*cos(vRoca.y*5.1+sin(vRoca.x*3.9)));
           float lava=1.-smoothstep(.025,.095,veta);totalEmissiveRadiance+=vec3(.12,2.4,.95)*lava;`);};
       const roca=pieza(rocaGeo,rocaMat,[0,0,0],meteorito);
-      // Desde el POV se ve el meteoro de frente. El viento curva su estela
-      // lateralmente para que siga leyéndose detrás de la roca y entre nubes.
-      const colaGeo=new T.ConeGeometry(2.1,18,24,16,true),colaP=colaGeo.attributes.position;
-      for(let i=0;i<colaP.count;i++){const k=(colaP.getY(i)+9)/18;colaP.setX(i,colaP.getX(i)+12*k*k);colaP.setZ(i,colaP.getZ(i)+2*Math.sin(k*Math.PI));}colaGeo.computeBoundingSphere();
-      const cola=new T.Mesh(colaGeo,new T.ShaderMaterial({transparent:true,depthWrite:false,side:T.DoubleSide,blending:T.AdditiveBlending,uniforms:{uTiempo:{value:0}},vertexShader:'varying vec2 vUv;void main(){vUv=uv;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.);}',fragmentShader:`varying vec2 vUv;uniform float uTiempo;
-        float azarCola(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
-        float vaporCola(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.-2.*f);return mix(mix(azarCola(i),azarCola(i+vec2(1.,0.)),f.x),mix(azarCola(i+vec2(0.,1.)),azarCola(i+vec2(1.,1.)),f.x),f.y);}
-        void main(){
-          float angulo=vUv.x*6.283185;vec2 p=vec2(cos(angulo)*3.7+sin(angulo)*2.2,vUv.y*7.-uTiempo*2.3);
-          float vapor=vaporCola(p)*.7+vaporCola(p*2.07+vec2(13.2,6.9))*.3;
-          float a=pow(1.-vUv.y,1.35)*smoothstep(.18,.68,vapor)*.78;
-          vec3 color=mix(vec3(.008,.28,.075),vec3(.16,1.,.44),pow(1.-vUv.y,2.));
-          gl_FragColor=vec4(color,a);
-        }`} ));cola.position.y=9.5;meteorito.add(cola);
       const luz=new T.PointLight(0x56ff9f,0,26,2);grupo.add(luz);
       const piedraGeo=new T.DodecahedronGeometry(1,0),piedraMat=piso()?.clone()||material(0x656260);piedraMat.flatShading=true;piedraMat.onBeforeCompile=()=>{};piedraMat.customProgramCacheKey=()=> 'fragmento-meteorito';
       const uv=piedraGeo.attributes.uv,rep=piedraMat.map?.repeat.x||1;for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)/rep,uv.getY(i)/rep);
@@ -202,7 +188,7 @@
             }`);
         };mat.customProgramCacheKey=()=>clave+'-epilogo-onda-radial-v2';mat.needsUpdate=true;m.frustumCulled=false;
       });
-      recursos={grupo,brazosFPS,mago,brazos,baston,sello,orbita,aura,motas,luzMago,particulasMago,hechizoMago,meteorito,roca,cola,luz,fragmentos,humo,onda,frenteOnda,losasPiso};
+      recursos={grupo,brazosFPS,mago,brazos,baston,sello,orbita,aura,motas,luzMago,particulasMago,hechizoMago,meteorito,roca,luz,fragmentos,humo,onda,frenteOnda,losasPiso};
     }
     function prepararTecho(salida,avance){
       // Reaparece encima de la casa de salida, detrás de la dirección del ataque.
@@ -226,13 +212,27 @@
       actor.pos.copy(umbral||salida.clone().addScaledVector(fuera,-1.8));actor.dir=Math.atan2(fuera.x,fuera.z);actor.giro180=null;actor.alto=0;
       s={actor,prestado,inicios:{},lluviaLiberada:false,golpeMago:null,tLluvia:0,duracionCarreraAnterior:Math.ceil(Math.min(12,salida.distanceTo(destino)/5.8)*60-1e-8)/60,fase:'salida',t:0,total:0,impactado:false,origen:actor.pos.clone(),salida,inicioCarrera:salida.clone(),fuera,avance,remate:centro.clone().addScaledVector(avance,-1.6),tropiezo:centro.clone().addScaledVector(avance,.8),casaDolly:-1,dollyPreparado:false,mallas:actor.m.mallas.map(m=>m.visible)};nodosCine=null;
       recursos.particulasMago.restaurar();recursos.hechizoMago.restaurar();recursos.aura.visible=true;recursos.luzMago.intensity=5;recursos.grupo.visible=true;recursos.mago.visible=recursos.sello.visible=false;recursos.meteorito.visible=recursos.onda.visible=recursos.frenteOnda.visible=recursos.losasPiso.visible=false;recursos.fragmentos.count=recursos.humo.count=0;recursos.luz.intensity=0;tiempoPiso.value=-1;centroOnda.value.set(0,0,0);
-      casas.userData.ocultacion?.opacidades.fill(1);derrumbe.value=-1;posar('quieto',0);cambio('salida');camaraSalida();ambienteLluvia(0,actor.pos);return true;
+      casas.userData.ocultacion?.opacidades.fill(1);derrumbe.value=-1;posar('quieto',0,0,1,{mezclar:false});s.reposoSalida=actuacion.capturar(actor.m);
+      actuacion.movimientoSalida(1,raizSalida);s.escalaSalida=s.origen.distanceTo(s.salida)/Math.hypot(raizSalida.x,raizSalida.z);
+      s.giroSalida=rumbo(s.origen,s.salida)-Math.atan2(raizSalida.x,raizSalida.z);
+      posarSalida(0);cambio('salida');camaraSalida();ambienteLluvia(0,actor.pos);return true;
+    }
+    function posarSalida(t){
+      // Walking Left Turn aporta la curva y el giro. La raíz se aplica una sola
+      // vez, fuera del esqueleto, alineada con los 1,8 m libres frente a la puerta.
+      const h=s.actor,u=Math.min(1.8,Math.max(0,t)),freno=Math.max(0,u-1.4),k=(u-freno*freno/.8)/1.6;
+      const giro=actuacion.movimientoSalida(k,raizSalida);
+      h.pos.copy(raizSalida).setY(0).applyAxisAngle(ejeSalida,s.giroSalida).multiplyScalar(s.escalaSalida).add(s.origen);
+      h.dir=s.giroSalida+giro;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;
+      // El último apoyo desacelera antes de asentarse; el plano conserva su duración.
+      actuacion.salidaConGiro(h.m,k,s.reposoSalida,1-lim((t-1.65)/.35));
+      h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;
     }
     function camaraSalida(){const h=s.actor,izquierda=new V(-s.fuera.z,0,s.fuera.x),foco=s.origen.clone().lerp(h.pos,.5).setY(1.1);
       mirar(s.salida.clone().addScaledVector(s.fuera,5.5).addScaledVector(izquierda,3.5).setY(3.5),foco,42);
       desdeCamara.copy(camara.position);giroPaneo.copy(camara.quaternion);
     }
-    function posar(anim,dt,k=0,paso=1,extra={}){const h=s.actor;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;MOD.posar(h.m,{anim,k,t:s.total,dt,mezclar:true,estado:anim,fase:h.fase,paso:anim==='andar'?paso:0,...extra});h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;}
+    function posar(anim,dt,k=0,paso=1,extra={}){const h=s.actor;h.m.raiz.position.copy(h.pos);h.m.raiz.rotation.y=h.dir;MOD.posar(h.m,{anim,k,t:s.total,dt,mezclar:true,estado:anim,fase:h.fase,paso:anim==='andar'?paso:0,...extra});if(['salida','descubrir','vertigo'].includes(s.fase))actuacion.apoyarSalida(h.m);h.m.M.u.uDestello.value=h.m.M.u.uBorde.value=0;}
     function actuarRostro(){
       if(!s?.actor.m.rostro||!MOD.rostro)return;
       // La intención pertenece a la actuación. Ni el objetivo de cámara ni sus
@@ -360,7 +360,7 @@
       camara.rotateX(pulso*.0025*envolvente);camara.rotateZ(Math.sin(t*TAU*.65)*.0018*envolvente);camara.updateMatrixWorld(true);
       return ()=>{camara.position.copy(pos);camara.quaternion.copy(rot);camara.updateMatrixWorld(true);};
     }
-    // La posición debe estar lista antes del primer cuadro visible: así la estela
+    // La posición debe estar lista antes del primer cuadro visible: así la roca
     // nunca aparece en el origen ni conserva la posición de una reproducción anterior.
     function colocarMeteorito(edad){const r=recursos,h=s.actor,k=lim(edad/(DURACIONES.cielo+DURACIONES.caida));
       r.meteorito.position.lerpVectors(cielo,h.pos.clone().setY(1),k*k);r.meteorito.quaternion.setFromUnitVectors(new V(0,1,0),cielo.clone().sub(h.pos).normalize());r.roca.rotation.set(edad*.8,edad*1.2,edad*.5);r.luz.position.copy(r.meteorito.position);r.luz.intensity=250;
@@ -412,11 +412,11 @@
       const reposo=.92+Math.sin(s.total*2.5)*.08,levantados=hechizo?reposo*(1-carga)+(.58+.76*invocacion)*carga:0;
       r.brazos.forEach((b,i)=>{b.rotation.x=-levantados*2.2;b.rotation.z=(i?1:-1)*(.24+levantados*.45-.22*carga*(1-invocacion));});
       r.baston.rotation.z=Math.sin(s.total*1.4)*.035;r.baston.rotation.x=-.14*carga*invocacion;
-      r.cola.material.uniforms.uTiempo.value=s.total;r.sello.rotation.y=s.total*.3;r.orbita.visible=hechizo;r.orbita.position.copy(r.mago.position).add(new V(0,2.6,0));r.orbita.rotation.set(s.total*.4,s.total*.7,0);
+      r.sello.rotation.y=s.total*.3;r.orbita.visible=hechizo;r.orbita.position.copy(r.mago.position).add(new V(0,2.6,0));r.orbita.rotation.set(s.total*.4,s.total*.7,0);
       r.aura.rotation.y=s.total*.8;for(let i=0;i<28;i++){const k=(i/28+s.total*.19)%1,a=i*2.399+s.total*.7;objeto.position.set(Math.cos(a)*.9,.1+k*2.6,Math.sin(a)*.9);objeto.rotation.set(a,k*5,a*.3);objeto.scale.setScalar(.6+Math.sin(k*Math.PI)*.7);objeto.updateMatrix();r.motas.setMatrixAt(i,objeto.matrix);}r.motas.instanceMatrix.needsUpdate=true;
       visibilidad();
       if(f==='salida'){
-        const k=suave(t/2.1),antes=h.pos.clone();h.pos.lerpVectors(s.origen,s.salida,k);h.fase+=antes.distanceTo(h.pos)/MOD.animacion.longitudZancada(.42)*TAU;posar(t<2.1?'andar':'quieto',dt,0,.42);camaraSalida();
+        posarSalida(t);camaraSalida();
         if(t>=DURACIONES.salida){r.mago.visible=r.sello.visible=true;cambio('descubrir');}
       }else if(f==='descubrir'){
         h.dir+=angulo(h.dir,rumbo(h.pos,centro))*Math.min(1,dt*3);posar('quieto',dt);
@@ -508,7 +508,7 @@
       if(c.rostros){MOD.rostro?.restaurar(s.actor.m,c.rostros[0]);MOD.rostro?.restaurar(recursos.brazosFPS,c.rostros[1]);}
       [recursos.sello,recursos.humo,recursos.onda,recursos.frenteOnda].forEach((m,i)=>m.material.opacity=c.opacidad[i]);
       if(c.opacidades)casas.userData.ocultacion.opacidades.set(c.opacidades);mallasRuina.forEach((m,i)=>m.castShadow=c.sombras[i]);
-      recursos.particulasMago.mostrar(c.particulas);recursos.cola.material.uniforms.uTiempo.value=s.total;ambienteLluvia(s.tLluvia,s.actor.pos,{edadHechizo:edadTormenta()});recursos.hechizoMago.mostrar(c.hechizo);
+      recursos.particulasMago.mostrar(c.particulas);ambienteLluvia(s.tLluvia,s.actor.pos,{edadHechizo:edadTormenta()});recursos.hechizoMago.mostrar(c.hechizo);
       actuacion.capaFPS(recursos.brazosFPS,s.fase==='ataquePOV');
       for(const raiz of [s.actor.m.raiz,recursos.grupo,recursos.brazosFPS.raiz])raiz.updateMatrixWorld(true);
       interfaz({fase:terminado?'fin':s.fase,negro:terminado?1:s.fase==='negro'?suave(s.t/.6):0});

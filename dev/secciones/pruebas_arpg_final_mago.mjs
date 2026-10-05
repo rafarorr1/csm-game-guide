@@ -57,7 +57,7 @@ for(const fps of [30,60,120]){
   }
   if(['techo','hechizo'].includes(actual.fase))assert.equal(camara.fov,44,'La reconstrucción se ve con el acercamiento del final de la estela');
   if(actual.fase==='techo'&&actual.t>.55&&actual.t<1.2){assert(magia.disolucion.value>0&&magia.disolucion.value<1,'El POV permite ver la reconstrucción progresiva');reunionVista=true;}
-  if(actual.fase==='cielo'){assert.equal(magia.disolucion.value,0,'El mago queda completo antes del meteorito');assert.equal(magia.particulas.count,0);}
+  if(actual.fase==='cielo'){assert.equal(cine.recursos.meteorito.children.length,1,'El meteorito sólo dibuja la roca: no lleva estela');assert.equal(magia.disolucion.value,0,'El mago queda completo antes del meteorito');assert.equal(magia.particulas.count,0);}
 
   assert.equal(lluvia,actual.tLluvia,'El clima sigue exactamente el tiempo de la secuencia');
   if(['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','levantarse'].includes(actual.fase)){assert.equal(actual.lluviaLiberada,false);assert.equal(lluvia,0,'Las gotas siguen suspendidas durante el hechizo');}
@@ -146,7 +146,7 @@ for(const fps of [30,60,120]){
    assert(actor.m.H.cabeza.getWorldPosition(new T.Vector3()).y-actor.pos.y<1.35,'El plano 6 continúa con la rodilla baja en pleno slide');
   }
   if(['desaparece','levantarse','tropezar'].includes(actual.fase)&&actual.t>0){const apoyo=actor.m.H.manoD.localToWorld(new T.Vector3(0,-.3,0));assert(apoyo.distanceTo(actor.m.H.manoI.getWorldPosition(new T.Vector3()))<.006,'El hachazo fallido conserva las manos sobre el mango');}
-  if(est.fase==='hechizo'&&actual.fase==='cielo'){assert.equal(camara.fov,44,'El meteorito no reinicia el zoom a una focal más abierta');assert(cine.recursos.meteorito.visible);assert.equal(actual.meteorito[1],54,'El primer cuadro del meteorito ya está en el cielo, nunca frente a los brazos');assert(cine.recursos.meteorito.position.distanceTo(camara.position)>50,'Su estela queda lejos del plano cercano');}
+  if(est.fase==='hechizo'&&actual.fase==='cielo'){assert.equal(camara.fov,44,'El meteorito no reinicia el zoom a una focal más abierta');assert(cine.recursos.meteorito.visible);assert.equal(actual.meteorito[1],54,'El primer cuadro del meteorito ya está en el cielo, nunca frente a los brazos');assert(cine.recursos.meteorito.position.distanceTo(camara.position)>50,'La roca queda lejos del plano cercano');}
   if(actual.fase==='cielo'&&actual.t>.6)assert.equal(camara.fov,24,'El zoom se completa enseguida al descubrir el meteorito');
   if(actual.fase==='caida'){
    assert(camara.position.y>10,'El corte de preparación también empieza con su cámara correcta');

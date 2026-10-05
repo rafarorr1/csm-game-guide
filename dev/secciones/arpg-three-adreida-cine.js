@@ -4,7 +4,7 @@
 (function(){
   function fabrica(T,MOD){
     const lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
-    const v=new T.Vector3(),q=new T.Quaternion(),contactos=new WeakMap(),remates=new WeakMap();
+    const v=new T.Vector3(),q=new T.Quaternion(),contactos=new WeakMap(),contactosSalida=new WeakMap(),remates=new WeakMap();
     const huesos=m=>Object.entries(m.H).filter(([,b])=>b.isBone);
     const capturar=m=>({rot:Object.fromEntries(huesos(m).map(([k,b])=>[k,b.quaternion.clone()])),pos:m.H.cuerpo.position.clone(),rostro:MOD.rostro?.capturar(m)||null});
     function mezclar(m,desde,k){for(const [n,b]of huesos(m))b.quaternion.slerp(desde.rot[n],1-suave(k));m.H.cuerpo.position.lerp(desde.pos,1-suave(k));MOD.rostro?.mezclar(m,desde.rostro,k);}
@@ -67,6 +67,34 @@
       // manos cerradas sobre el mango, incluso al venir de la carrera a una mano.
       MOD.posar(m,{anim:'quieto',dt:0,t:0,mezclar:false});
       fbx(m,'deslizarAtaque',k,desde,entrada);
+    }
+    function salidaConGiro(m,k,desde=null,entrada=1){
+      // Inicializa dedos y correctivos del mango. La pose FBX reemplaza después
+      // todos los huesos del cuerpo y ambos brazos, sin resolverles otro gesto.
+      MOD.posar(m,{anim:'quieto',dt:0,t:0,sinHacha:true,agarreDerecha:true,mezclar:false});
+      fbx(m,'salidaConGiro',k,desde,entrada);
+      apoyarSalida(m);
+    }
+    function apoyarSalida(m){
+      const mesh=m.mallas[0],g=mesh.geometry,p=g.attributes.position;let puntos=contactosSalida.get(g);
+      if(!puntos){
+        // Extremos de cada bota en 98 direcciones. Se eligen una vez sobre la
+        // geometría compartida; cada cuadro de cine evalúa sólo esos apoyos.
+        const botas=[[],[]],seleccion=new Set();for(let i=0;i<p.count;i++)if(p.getY(i)<.24)botas[p.getX(i)<0?0:1].push(i);
+        for(const bota of botas)for(let x=-2;x<=2;x++)for(let y=-2;y<=2;y++)for(let z=-2;z<=2;z++)if(Math.max(Math.abs(x),Math.abs(y),Math.abs(z))===2){
+          let minimo=Infinity,indice=-1;for(const i of bota){const d=x*p.getX(i)+y*p.getY(i)+z*p.getZ(i);if(d<minimo){minimo=d;indice=i;}}if(indice>=0)seleccion.add(indice);
+        }
+        puntos=[...seleccion];contactosSalida.set(g,puntos);
+      }
+      m.raiz.updateMatrixWorld(true);let minimo=Infinity;
+      for(const i of puntos)minimo=Math.min(minimo,mesh.getVertexPosition(i,v).y);
+      if(Number.isFinite(minimo))m.H.cuerpo.position.y+=.012-minimo;
+      m.raiz.updateMatrixWorld(true);
+    }
+    function movimientoSalida(k,desplazamiento){
+      const clip=window.CAOZ_ADREIDA_CINE_CLIPS.salidaConGiro,f=lim(k)*(clip.muestras-1),i=Math.floor(f),j=Math.min(clip.muestras-1,i+1),u=f-i;
+      desplazamiento.fromArray(clip.raiz,i*3).lerp(v.fromArray(clip.raiz,j*3),u);
+      return clip.giros[i]+(clip.giros[j]-clip.giros[i])*u;
     }
     const tiemposRemate=Object.freeze({duracion:1.04,subida:.30,giro:.46,freno:.28});
     const ejeY=new T.Vector3(0,1,0),giroRemate=new T.Quaternion(),pivoteRemate=new T.Vector3();
@@ -199,7 +227,7 @@
       const apoyo=Math.sin(Math.PI*lim(k/.8));m.H.torso.rotation.x+=apoyo*.48;m.H.rodillaI.rotation.x+=apoyo*.45;
       mezclar(m,desde,k);apoyar(m);
     }
-    return {crearFPS,fps,capaFPS,fbx,deslizar,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
+    return {crearFPS,fps,capaFPS,fbx,deslizar,salidaConGiro,apoyarSalida,movimientoSalida,tiemposRemate,rematarDeslizamiento,buscarDePie,capturar,restaurar,mezclar,caer,buscar,levantar};
   }
   window.CAOZ_ARPG_ADREIDA_CINE=Object.freeze({fabrica});
 })();
