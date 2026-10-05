@@ -80,3 +80,37 @@ for(const reducido of [false,true]){
  assert.equal(salpicaduras.drawRange.count,Math.ceil(base/2)*6);clima.destruir();
 }
 console.log('OK: 40% más de lluvia cinematográfica, recursos reutilizados y densidad normal al salir.');
+
+// El hechizo aumenta densidad y viento durante tres segundos, sin integrar por pasos.
+for(const reducido of [false,true]){
+ const creadosAntes=creado,fuentesAntes=fuentes.length,{escena,clima}=preparar({reducido}),base=reducido?220:440,cine=Math.round(base*1.4),maximo=reducido?525:1050;
+ const lluvia=escena.getObjectByName('Lluvia ligera'),salpicaduras=escena.getObjectByName('Salpicaduras de lluvia'),u=lluvia.material.uniforms;
+ const atributos=lluvia.geometry.attributes,charcos=escena.getObjectByName('Charcos de lluvia').geometry.attributes.position.array.slice();
+ assert.equal(atributos.position.count,maximo*2,'La tormenta usa una reserva fija de gotas');
+ const foco={x:3,z:-2},foto=()=>JSON.stringify({deriva:u.uDeriva.value.toArray(),cola:u.uCola.value.toArray(),fuerza:u.uTormenta.value,densidad:u.uGotas.value,gotas:lluvia.geometry.drawRange.count,salpicaduras:salpicaduras.geometry.drawRange.count});
+ const capturas=new Map();let cantidadAnterior=cine;
+ for(const edad of [-1,0,.5,1.5,3,4,9]){
+  const t=12+edad;clima.cinematica(t,foco,{edadHechizo:edad});const k=Math.max(0,Math.min(1,edad/3)),fuerza=k*k*(3-2*k),densidad=cine+(maximo-cine)*fuerza;
+  assert.equal(clima.estado().intensidadTormenta,fuerza);assert.equal(clima.estado().edadHechizo,edad);assert.equal(u.uGotas.value,densidad);
+  assert.equal(clima.estado().gotas,Math.ceil(densidad));assert(clima.estado().gotas>=cantidadAnterior);cantidadAnterior=clima.estado().gotas;
+  assert.equal(lluvia.geometry.drawRange.count,Math.ceil(densidad)*2);assert.equal(salpicaduras.geometry.drawRange.count,Math.ceil(Math.ceil(densidad)/2)*6);
+  assert.equal(lluvia.geometry.attributes,atributos);assert.equal(escena.children.length,3);assert.deepEqual(escena.getObjectByName('Charcos de lluvia').geometry.attributes.position.array,charcos);
+  const actual=contexto.CAOZ_ARPG_CLIMA.derivaViento(t,new T.Vector2(),edad),previa=contexto.CAOZ_ARPG_CLIMA.derivaViento(t-.028,new T.Vector2(),edad-.028);
+  assert(u.uDeriva.value.distanceTo(actual)<1e-9);assert(u.uCola.value.distanceTo(actual.sub(previa))<1e-9,'La cola sigue el desplazamiento integral incluso al cambiar la ráfaga');
+  capturas.set(edad,foto());
+ }
+ clima.pausar(true);
+ for(const edad of [4,0,9,.5,1.5,-1,3]){clima.cinematica(12+edad,foco,{edadHechizo:edad});assert.equal(foto(),capturas.get(edad),'Scrub inverso y saltos reconstruyen exactamente la misma tormenta');}
+ assert.equal(creado,creadosAntes);assert.equal(fuentes.length,fuentesAntes,'Recorrer la tormenta no crea audio ni truenos');assert.equal(clima.estado().truenos,0);
+ const normal=contexto.CAOZ_ARPG_CLIMA.derivaViento(15,new T.Vector2()).sub(contexto.CAOZ_ARPG_CLIMA.derivaViento(15-.028,new T.Vector2())).divideScalar(.028);
+ const fuerte=u.uCola.value.clone().divideScalar(.028);assert(fuerte.x>normal.x+13.99&&fuerte.y>normal.y+4.99,'El viento sostenido es más intenso y mantiene la diagonal');
+ clima.cinematica(null,foco,{edadHechizo:20});assert.equal(clima.estado().gotas,base);assert.equal(clima.estado().intensidadTormenta,0);assert.equal(clima.estado().edadHechizo,-1);
+ clima.pausar(false);avanzar(clima,1);assert(u.uDeriva.value.distanceTo(contexto.CAOZ_ARPG_CLIMA.derivaViento(1,new T.Vector2()))<1e-8,'La partida recupera exactamente su viento normal');clima.destruir();
+}
+// La integral es continua y su velocidad también en ambos extremos de la rampa.
+for(const edad of [0,3]){
+ const h=1e-5,t=12+edad,antes=contexto.CAOZ_ARPG_CLIMA.derivaViento(t-h,new T.Vector2(),edad-h),centro=contexto.CAOZ_ARPG_CLIMA.derivaViento(t,new T.Vector2(),edad),despues=contexto.CAOZ_ARPG_CLIMA.derivaViento(t+h,new T.Vector2(),edad+h);
+ const vAntes=centro.clone().sub(antes).divideScalar(h),vDespues=despues.clone().sub(centro).divideScalar(h);
+ assert(centro.distanceTo(antes)<.0003&&centro.distanceTo(despues)<.0003,'La posición no salta al comenzar o terminar el hechizo');assert(vAntes.distanceTo(vDespues)<.001,'El viento entra y sale de la rampa sin cambio brusco de velocidad');
+}
+console.log('OK: tormenta progresiva de 616→1050 gotas (308→525 reducido), viento integral continuo, tres mallas, scrub exacto y audio intacto.');

@@ -1709,7 +1709,7 @@
     limpiar:limpiarCombateCasa,interfaz:interfazCasa,
     volver:iniciarFinalMago
   });
-  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia:(t,p)=>clima.cinematica(t,p),
+  finalMago=window.CAOZ_ARPG_FINAL_MAGO.fabrica(THREE,MOD,{escena,camara,casas:casasFundidas,entorno:mundo,piso:()=>suelo.material,reducido,planoDeFase:window.CAOZ_ARPG_CINE_CAMARA.planoDeFase,ambienteLluvia:(t,p,tormenta)=>clima.cinematica(t,p,tormenta),
     impactar(p){impactoFX.agujero(p,{radio:8.4,profundidad:24,duracion:30});polvo(p,60,4);},
     interfaz(s){const activa=s.fase!=='inactiva';alphaTerminada=s.fase==='fin';mostrarEntradaTroll(activa);esc.classList.toggle('finAlpha',alphaTerminada);esc.dataset.cinematicaFase=s.fase;$('cinematicaTexto').textContent='';
       const fundido=$('fundidoFinal');fundido.style.opacity=String(s.negro);fundido.hidden=!activa;fundido.setAttribute('aria-hidden',String(!alphaTerminada));$('finAlphaTexto').hidden=!alphaTerminada;
