@@ -70,6 +70,7 @@
     "llavemago-dorado-v1.webp": "5544e73160ca8661b726769ff18006734af1f586dc0af17d70bd354f940502b2"
   },
   "entorno": {
+    "arpg-three-carga.js": "44d8ca870f42b2deacc94c91ebc31615b9196d91265f9ec0ba3d45d2482e8776",
     "arpg-three-estilo.js": "023931112cef4f44c4d8c3575ed78ea7f6e3a62540134fc6d582fde55df553a5",
     "arpg-three-tiempo.js": "06617957fe6a18af18682acb2a533f90f2c33af9d92e59fc3df1c3ec137eb334",
     "arpg-three-impactos.js": "9cc0b7d3325294c7f971dbf5e496a71e6a5fc8e56f7b3fd57d629d6763fff3c0",
@@ -81,8 +82,8 @@
     "yuka-goals-vendor.js": "cea6505b58e5a2b1e270c088eef7550fdd26f981e15b860329796a00e0846837",
     "yuka-LICENSE.txt": "a10f703d839d14166f1cb60e501933a2d00827ee0982e5f1a0e434ac0f4a3c38",
     "arpg-three-ia.js": "f4ba4c135e21d45f061fc49ef900ecb1b9476e0bbeb058791ac1a9d6b5ba2435",
-    "arpg-three-mesa.js": "fbb9d61ab1880406907ee94b256ea378fed6c2e2102262c708d88f289ddfe6f3",
-    "arpg-three-mesa.css": "de744f674dfeb3f37d581d0a5082e3f91f52223c51cf3d9a06ebead42313cb6d",
+    "arpg-three-mesa.js": "28feea0dabfc29f97c9159a35f9c5a9ed6a71792d367e03c9e77424b6658df4d",
+    "arpg-three-mesa.css": "b702da67ac063016ff5492fc49421eee3c06323e6024766937032663c49ef887",
     "arpg-three-adreida-animacion.js": "f3716857937bdded40dda572c8e8a2719ee9deeacdeed9b38bc5247b3f54f67e",
     "arpg-three-modelos.js": "5457981b7446a1e280be4d8d529fd682e2f1c477d19a254f54e3d0dbae573c50",
     "casas-three.js": "d93f41853c441508ae15603555895f160a02c9837d3aa815a6bed59bf79ef4b3",
@@ -188,7 +189,7 @@
     "arquitectura-scenario/pozo-superficie-0.webp": "2e2803edef92c3d454eba47c2200982dcb02752460edfc2b5c8aa004af36f7fc"
   },
   "derivados": {
-    "index.html": "6af83b6cbdd117a5c4071d3635c7e7e517801e3af77d9d45e1a45af806a388bc",
+    "index.html": "f73cefb09be0daf5400ce387ec9565a3006fe29e6d4987eddc7df8c5a23e4763",
     "generado/datos.js": "79b119c2cf06a1cf51b7a2fb9ca4ebb65ab93b0ad779fcbe20276b0cf81276d3"
   }
 }

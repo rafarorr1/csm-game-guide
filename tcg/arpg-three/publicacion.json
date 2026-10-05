@@ -17,6 +17,7 @@
     "arpg-three-adreida.js": "ab3e95f25bfc2c025b160dc563b3f51e951ea0f80abf4c2e5cd4e27d54f9dacd",
     "arpg-three-arquitectura.js": "85214f097665bcbebdfc2138f2a19a608080d94b2ffe302c19bbce2480aaac6c",
     "arpg-three-bosque.js": "0c3412d2ba7d778c49b3866423b4058e3aa6ea4e9930efb853fc312a7cca039a",
+    "arpg-three-carga.js": "44d8ca870f42b2deacc94c91ebc31615b9196d91265f9ec0ba3d45d2482e8776",
     "arpg-three-casa-goblin.js": "f90d3b342330ce509e3416062b246b45cf91389233a11eed7db3822c34981ec9",
     "arpg-three-casa-interior.js": "b7dd10df40a8444adfd068e566eb73849f2a108b4cc44bdcd429b0c3b4787521",
     "arpg-three-clima.js": "820a3e9006f809e73ef0f5891edd79444395115aa56fc3f8f87a3187d419727d",
@@ -30,8 +31,8 @@
     "arpg-three-kobold.js": "ad16a45af096f56a085b0d1f2b32648c66fbdf23865aea5a24b0ca0c6be4ea8c",
     "arpg-three-mago-hechizo.js": "ab53a5547dfacebe4cc57ba379ddf27218bbe5e9fd9129e368b433b3279558fa",
     "arpg-three-mago-particulas.js": "ca4735c1828ccd4e8c8b8f7da6ab5e7ef8d27ac9637c69fa83dccf854bf4633b",
-    "arpg-three-mesa.css": "de744f674dfeb3f37d581d0a5082e3f91f52223c51cf3d9a06ebead42313cb6d",
-    "arpg-three-mesa.js": "fbb9d61ab1880406907ee94b256ea378fed6c2e2102262c708d88f289ddfe6f3",
+    "arpg-three-mesa.css": "b702da67ac063016ff5492fc49421eee3c06323e6024766937032663c49ef887",
+    "arpg-three-mesa.js": "28feea0dabfc29f97c9159a35f9c5a9ed6a71792d367e03c9e77424b6658df4d",
     "arpg-three-modelos.js": "5457981b7446a1e280be4d8d529fd682e2f1c477d19a254f54e3d0dbae573c50",
     "arpg-three-orbes.js": "4659a5659117c8d4404be6e8a612b5f4f194d58bb0ccf486cd0877d989ff215e",
     "arpg-three-piso.js": "666eb9d9a0670e8d5308bc4423c971c1736f4093bf90676afc83a467b86fd15c",
@@ -101,7 +102,7 @@
     "hacha-adreida-scenario/datos.js": "53cbc8040c720605f0075c7826871ddf24717d2186a580708a2766acc7218682",
     "hacha-adreida-scenario/normal.webp": "fa5a4cf0675e77cb2080073f22ae192ca8833d6165cd859dec056b46393ce156",
     "hacha-adreida-scenario/superficie.webp": "eb86413c6b153d3e4c00072c3fefbf61c0b028c261abec9cd453035c3e887a38",
-    "index.html": "6af83b6cbdd117a5c4071d3635c7e7e517801e3af77d9d45e1a45af806a388bc",
+    "index.html": "f73cefb09be0daf5400ce387ec9565a3006fe29e6d4987eddc7df8c5a23e4763",
     "juego/carta-diseno.css": "5b915df6da8ec4dcb2bfd53ca1c0798ef0ae76602bc47bca2f6551c87fcfc290",
     "juego/carta-pintor.js": "1163bae8ca552795a8cee071e9c0a3a5ff97c1e8ece7c5a85cdec40062fb9918",
     "juego/fuentes/cinzel.woff2": "09941fb1c169c38fd414536b37690057fc01b3117a5c63dd6571186540c8f370",
@@ -125,7 +126,7 @@
     "llave-scenario/datos.js": "0ba2b534c0c97c4d127a9796e8aefa7a11f75eb128f94d64dca11c6433a5aeae",
     "llave-scenario/normal.webp": "f5f85d73be50c0cad0d65c62a8ad89da99d16f4e4483db372d3396e40b1311d5",
     "llave-scenario/superficie.webp": "4359ba767d754ff9f107370a358cdffe342dc0bba82a93fe8f28cec5b30e0115",
-    "procedencia.json": "a1281c42e334fa8b742668fe02823db17c61b5712da9c63d50ba08d8848da732",
+    "procedencia.json": "a2ab2283d3e6e309733f60a2e2e1b0e220ca35c7a9bebfc498f42f66f77e9062",
     "quick-liquid-LICENSE.txt": "70d39e15f5af14d3cf436d1677577763d7c77b494e087c30c5d733b05ca74414",
     "quick-liquid-vendor.js": "8db3e97713461523a74145eb8bf1d37010e6875262568fd6de1cc1018b900d04",
     "texturas-casas/tejas-color.webp": "589862158416fe3fb50e5106b45517509fb6d083c045b94ce9fe7648b7113377",
@@ -157,7 +158,7 @@
   "formato": "caoz.secciones.aisladas",
   "fuente": {
     "rama": "feature/visor-3d-coleccion",
-    "sha": "1efdb68582f5bd308dd2589032f3a99a613109aa"
+    "sha": "d21625ca29b3000ba42cbdaac36b9142388b4327"
   },
   "seccion": "arpg-three",
   "version": 1
