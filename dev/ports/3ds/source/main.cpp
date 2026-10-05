@@ -23,7 +23,7 @@ int main(){
  cargaHUD(.97f,"Preparando la tormenta y el sonido…");
  bool sonido=iniciarAudio(),metricas=false,esperaSoltar=true;
  cargaHUD(1,"La plaza está lista");
- Juego juego;u64 anterior=osGetTime();float segundosFPS=0,fps=0;unsigned cuadros=0;
+ Juego juego;u64 anterior=osGetTime();float segundosFPS=0,fps=0;unsigned cuadros=0;int palancaMenu=0;
  while(aptMainLoop()){
   hidScanInput();const u32 abajo=hidKeysDown(),sostenido=hidKeysHeld();
   if((sostenido&(KEY_L|KEY_R))==(KEY_L|KEY_R)&&(abajo&KEY_START))break;
@@ -32,10 +32,12 @@ int main(){
   if(segundosFPS>=.7f){fps=cuadros/segundosFPS;cuadros=0;segundosFPS=0;}
   touchPosition toque{};hidTouchRead(&toque);const bool pulsa=(abajo&KEY_TOUCH)!=0;
   const int tactil=(sostenido&KEY_TOUCH)?tocarHUD(toque.px,toque.py):-1;
+  circlePosition palanca{};hidCircleRead(&palanca);const int lado=palanca.dx>90?1:palanca.dx< -90?-1:0;
+  const bool derecha=(abajo&KEY_DRIGHT)||(lado==1&&palancaMenu!=1),izquierda=(abajo&KEY_DLEFT)||(lado==-1&&palancaMenu!=-1);palancaMenu=lado;
   bool consumir=false;
   if(juego.secuencia==FIN_ALPHA){if(abajo&KEY_START){elegir(juego,juego.seleccionHeroe);esperaSoltar=true;}consumir=true;}
   else if(juego.menu){
-   if(abajo&(KEY_DLEFT|KEY_DRIGHT))elegir(juego,1-juego.seleccionHeroe);
+   if(izquierda||derecha)elegir(juego,1-juego.seleccionHeroe);
    if(pulsa&&toque.py>=91&&toque.py<156)elegir(juego,toque.px<160?0:1);
    if((abajo&(KEY_A|KEY_Y))||(pulsa&&toque.py>=201)){juego.iniciarNivel((abajo&KEY_Y)?2:1);esperaSoltar=true;}
    consumir=true;
@@ -46,7 +48,7 @@ int main(){
    if(abajo&KEY_Y)metricas=!metricas;
    consumir=true;
   }else if(juego.cartas){
-   if(!juego.tirando&&!juego.resuelto){if(abajo&KEY_DLEFT)juego.elegida=(juego.elegida+2)%3;if(abajo&KEY_DRIGHT)juego.elegida=(juego.elegida+1)%3;if(pulsa&&toque.py>=54&&toque.py<161)juego.elegida=std::min(2,std::max(0,(int(toque.px)-10)/102));}
+   if(!juego.tirando&&!juego.resuelto){if(izquierda)juego.elegida=(juego.elegida+2)%3;if(derecha)juego.elegida=(juego.elegida+1)%3;if(pulsa&&toque.py>=54&&toque.py<161)juego.elegida=std::min(2,std::max(0,(int(toque.px)-10)/102));}
    if((abajo&KEY_A)||(pulsa&&toque.py>=165)){if(juego.resuelto)juego.continuarCarta();else juego.tirar(juego.elegida);esperaSoltar=true;}
    consumir=true;
   }else if((abajo&KEY_START)||(pulsa&&tactil==7)){juego.pausa=true;consumir=true;esperaSoltar=true;}
@@ -55,7 +57,7 @@ int main(){
   if(!(sostenido&acciones))esperaSoltar=false;
   Entrada entrada{};
   if(!consumir&&!esperaSoltar){
-   circlePosition palanca{};hidCircleRead(&palanca);const float x=palanca.dx/156.f,z=-palanca.dy/156.f,mag=std::sqrt(x*x+z*z);
+   const float x=palanca.dx/156.f,z=-palanca.dy/156.f,mag=std::sqrt(x*x+z*z);
    if(mag>.18f)entrada.mov=unidad({x,z})*limite((mag-.18f)/.82f,0,1);
    entrada.ataque=(sostenido&KEY_A)||tactil==0;
    entrada.parry=(abajo&KEY_L)||(pulsa&&tactil==1);

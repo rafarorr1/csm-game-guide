@@ -48,7 +48,8 @@ V Juego::ruta(V inicio,V fin,float radio)const{
  if(!abierto(finN)){
   float distanciaMejor=1e9f;int elegida=-1;
   for(int z=-4;z<=4;z++)for(int x=-4;x<=4;x++){int X=finN%N+x,Z=finN/N+z;if(X<0||X>=N||Z<0||Z>=N)continue;int n=Z*N+X;if(abierto(n)){float d=distancia(punto(n),fin);if(d<distanciaMejor){elegida=n;distanciaMejor=d;}}}
-  if(elegida<0)return inicio;finN=elegida;
+  if(elegida<0){return inicio;}
+  finN=elegida;
  }
  auto heuristica=[&](int n){int x=std::abs(n%N-finN%N),z=std::abs(n/N-finN/N);return uint16_t(10*std::max(x,z)+4*std::min(x,z));};
  padres.fill(-2);indiceMonticulo.fill(-1);costes.fill(65535);int cantidad=0;
@@ -60,15 +61,18 @@ V Juego::ruta(V inicio,V fin,float radio)const{
  const int dx[]={1,-1,0,0,1,1,-1,-1},dz[]={0,0,1,-1,1,-1,1,-1};
  while(cantidad){int n=sacar();uint16_t h=heuristica(n);if(h<menor){menor=h;mejor=n;}if(n==finN){mejor=n;break;}
   for(int d=0;d<8;d++){int x=n%N+dx[d],z=n/N+dz[d];if(x<0||x>=N||z<0||z>=N)continue;int m=z*N+x;
-   if(indiceMonticulo[m]==-2||!abierto(m))continue;if(d>=4&&(!abierto(n+dx[d])||!abierto(n+dz[d]*N)))continue;
-   if(n==inicioN&&!libre(inicio,punto(m),radio))continue;uint16_t coste=costes[n]+(d<4?10:14);if(coste>=costes[m])continue;
+   if(indiceMonticulo[m]==-2||!abierto(m)){continue;}
+   if(d>=4&&(!abierto(n+dx[d])||!abierto(n+dz[d]*N))){continue;}
+   if(n==inicioN&&!libre(inicio,punto(m),radio)){continue;}
+   uint16_t coste=costes[n]+(d<4?10:14);if(coste>=costes[m])continue;
    padres[m]=n;costes[m]=coste;prioridad[m]=coste+heuristica(m);poner(m);
   }
  }
  V resultado=inicio;for(int n=mejor;n>=0&&n!=inicioN;n=padres[n])if(libre(inicio,punto(n),radio)){resultado=punto(n);break;}return resultado;
 }
 V Juego::rodear(Actor&a,V destino,float dt,float vel,int lado){
- if(distancia(a.p,destino)<.08f)return{};float radio=a.tipo==TROLL?.73f:.34f;a.rutaT-=dt;V meta=destino;
+ if(distancia(a.p,destino)<.08f){return{};}
+ float radio=a.tipo==TROLL?.73f:.34f;a.rutaT-=dt;V meta=destino;
  if(!libre(a.p,destino,radio)){
   if(a.rutaT<=0||distancia(destino,a.rutaMeta)>2||distancia(a.rutaPaso,a.p)<.35f||!libre(a.p,a.rutaPaso,radio)){
    a.rutaPaso=ruta(a.p,destino,radio);a.rutaMeta=destino;a.rutaT=.65f+(a.id%4)*.04f;
@@ -81,11 +85,13 @@ V Juego::rodear(Actor&a,V destino,float dt,float vel,int lado){
 }
 void Juego::sumarGolpe(){comboT=3;golpesCombo++;multiplicador=std::min(8,1+(golpesCombo-1)/3);}
 void Juego::danar(Actor&a,float dano,V origen,bool fuerte){
- if(!vivo(a)||dano<=0)return;if(a.tipo==TROLL&&a.segunda&&a.expuesto<=0){efecto(a.p,1,1,.2f,0x8877ff);return;}if(a.expuesto>0)dano*=2;if(a.tipo==TROLL&&!a.segunda&&a.vida-dano<a.maxVida*.5f)dano=std::max(0.f,a.vida-a.maxVida*.5f);
+ if(!vivo(a)||dano<=0){return;}
+ if(a.tipo==TROLL&&a.segunda&&a.expuesto<=0){efecto(a.p,1,1,.2f,0x8877ff);return;}if(a.expuesto>0)dano*=2;if(a.tipo==TROLL&&!a.segunda&&a.vida-dano<a.maxVida*.5f)dano=std::max(0.f,a.vida-a.maxVida*.5f);
  a.vida-=dano;a.flash=.16f;a.empuje=unidad(a.p-origen)*(fuerte?13.f:2.f);furia=std::min(100.f,furia+4);paron=std::max(paron,fuerte?.055f:.035f);efecto(a.p,1,fuerte?1:.5f,.25f,0xffd28a);sumarGolpe();
  if(a.vida<=0){a.vida=0;cambiar(a,CAIDO);a.partido=fuerte&&goblin(a)&&azar()<.33f;bajas++;ultimaBaja=a.p;score+=(a.tipo==TROLL||a.tipo==CAN?1000:a.tipo==ESCUDO?150:50)*std::max(1,multiplicador);
   V botin=a.p;if(largo(botin)>24)botin=botin*(24/largo(botin));if(!libre(botin,botin,.35f))botin=h.p;
-  if(objetos.size()<MAX_OBJETOS&&(bajas==1||bajas==3||bajas==5))objetos.push_back({botin,1});if(objetos.size()<MAX_OBJETOS&&azar()<.1f)objetos.push_back({botin,0});
+  if(objetos.size()<MAX_OBJETOS&&(bajas==1||bajas==3||bajas==5)){objetos.push_back({botin,1});}
+  if(objetos.size()<MAX_OBJETOS&&azar()<.1f){objetos.push_back({botin,0});}
   if(a.tipo==CAN){avisar("Can ha caido. Los goblins huyen",3);cola.clear();for(auto&e:enemigos)if(&e!=&a&&vivo(e)){cambiar(e,HUYENDO);float mejor=1e9f;for(float c:calles){V puerta={std::cos(c)*29,std::sin(c)*29};float d=distancia(e.p,puerta);if(d<mejor){mejor=d;e.destino=puerta;}}}}
  }else if(a.tipo==TROLL&&!a.segunda&&a.vida<=a.maxVida*.5f){a.segunda=true;a.cd=.3f;avisar("Armadura: haz Parry para herirlo",3);}
  else if(a.tipo!=CAN&&a.tipo!=TROLL&&a.tipo!=ESCUDO){cambiar(a,ATURDIDO);a.espera=fuerte?.6f:.2f;}
@@ -99,18 +105,18 @@ void Juego::disparar(float dir,float dano){if(proyectiles.size()>=MAX_PROYECTILE
 void Juego::atacar(bool cargado){h.carga=cargado?limite((h.t-.18f)/.72f,0,1):0;cambiar(h,ATAQUE);h.t=.228f;h.combo=h.carga>=.5f?0:h.combo%3;}
 void Juego::lanzarBumeran(){if(bumeran||proyectiles.size()>=MAX_PROYECTILES)return;Proyectil p;p.tipo=4;p.p=h.p;p.origen=h.p;p.destino=h.p+frente(h.dir)*4;p.vel=frente(h.dir)*16;p.dur=1.3f;p.dano=18*bonus[1];p.radio=.8f;proyectiles.push_back(p);bumeran=true;}
 void Juego::habilidad(const Entrada&i){if(h.vida<=0)return;
- if(i.parry&&cds[0]<=0&&h.estado!=SALTANDO&&h.estado!=ESQUIVA){h.carga=0;giroRestante=0;cambiar(h,PARRANDO);cds[0]=.5f;return;}
+ if(i.parry&&cds[0]<=0&&h.estado!=SALTANDO&&h.estado!=ESQUIVA){if(largo(i.mov)>.1f)h.dir=angulo(i.mov);h.carga=0;giroRestante=0;cambiar(h,PARRANDO);cds[0]=.5f;return;}
  if(i.dash&&cds[1]<=0&&h.estado!=SALTANDO&&h.estado!=RECUPERA){if(h.estado==GIRANDO)giroRestante=std::max(.23f,1.1f-h.t);h.destino=unidad(i.mov);if(largo(h.destino)<.1f)h.destino=frente(h.dir);cambiar(h,ESQUIVA);h.invul=.23f;cds[1]=1.05f*bonus[3];fuegoT=fuegoTick=0;return;}
  bool libreH=h.estado==GUARDIA||h.estado==CARGA;if(!libreH)return;
- if(i.salto&&cds[2]<=0&&furia>=25){h.origen=h.p;h.destino=h.p+frente(h.dir)*5;cambiar(h,SALTANDO);h.invul=.73f;furia-=25;cds[2]=5;}
+ if(i.salto&&cds[2]<=0&&furia>=25){if(largo(i.mov)>.1f)h.dir=angulo(i.mov);h.origen=h.p;h.destino=h.p+frente(h.dir)*5;cambiar(h,SALTANDO);h.invul=.73f;furia-=25;cds[2]=5;}
  else if(i.giro&&!bumeran&&cds[3]<=0&&furia>=30){furia-=30;cds[3]=1;if(h.tipo==MOHAMED){for(int k=-3;k<=3;k++)disparar(h.dir+k*.13f,9*bonus[0]);}else cambiar(h,GIRANDO);}
- else if(i.provoca&&cds[4]<=0&&!bumeran){cds[4]=10;if(h.tipo==ADREIDA)lanzarBumeran();else{for(auto&e:enemigos)if(vivo(e)&&distancia(e.p,h.p)<7)e.empuje=unidad(h.p-e.p)*6;efecto(h.p,2,7,.4f,0xffdc55);}}
+ else if(i.provoca&&cds[4]<=0&&!bumeran){if(largo(i.mov)>.1f)h.dir=angulo(i.mov);cds[4]=10;if(h.tipo==ADREIDA)lanzarBumeran();else{for(auto&e:enemigos)if(vivo(e)&&distancia(e.p,h.p)<7)e.empuje=unidad(h.p-e.p)*6;efecto(h.p,2,7,.4f,0xffdc55);}}
  else if(i.ulti&&ultiRestante<=0){ultiRestante=h.tipo==ADREIDA?100:90;ultiActivo=h.tipo==ADREIDA?15:10;if(h.tipo==ADREIDA){aliado=h;aliado.p.x+=1.5f;aliado.vida=120;aliado.estado=GUARDIA;aliado.t=0;aliado.rutaT=0;tieneAliado=true;avisar("Adreidos: 15 segundos",2);}else avisar("Sigilo: busca sus espaldas",2);}
 }
 void Juego::pasoHeroe(float dt,const Entrada&i){
  h.t+=dt*(h.estado==ATAQUE?bonus[4]:1.f);h.flash=std::max(0.f,h.flash-dt);h.invul=std::max(0.f,h.invul-dt);for(auto&cd:cds)cd=std::max(0.f,cd-dt);ultiRestante=std::max(0.f,ultiRestante-dt);ultiActivo=std::max(0.f,ultiActivo-dt);if(ultiActivo<=0)tieneAliado=false;
  if(largo(h.empuje)>.05f){mover(h,h.empuje*dt);h.empuje=h.empuje*std::exp(-dt*9);}habilidad(i);
- if(fuegoT>0){float activo=std::min(dt,fuegoT);fuegoT=std::max(0.f,fuegoT-dt);fuegoTick+=activo;if(fuegoTick>=1){fuegoTick-=1;herir(3,h.p);}if((int)(tiempo*12)!=(int)((tiempo-dt)*12))efecto(h.p,6,.2f,.5f,0xff702a);}
+ if(fuegoT>0){float activo=std::min(dt,fuegoT);fuegoT=std::max(0.f,fuegoT-dt);fuegoTick+=activo;if(fuegoTick>=1){fuegoTick-=1;herir(3,h.p,nullptr,true);}if((int)(tiempo*12)!=(int)((tiempo-dt)*12))efecto(h.p,6,.2f,.5f,0xff702a);}
  if(h.estado==GUARDIA){V mov=i.mov;if(largo(mov)>.1f){h.dir=angulo(mov);V antes=h.p;mover(h,mov*(5*dt));h.fase+=distancia(h.p,antes)/2.55f;h.anim=CORRER;}else h.anim=REPOSO;
   if(i.ataque){if(h.tipo==ADREIDA){if(!bumeran)cambiar(h,CARGA);}else if(cadencia<=0&&recarga<=0){if(ultiActivo>0){Actor*blanco=nullptr;for(auto&e:enemigos)if(vivo(e)&&distancia(e.p,h.p)<2&&libre(h.p,e.p,.05f)){blanco=&e;break;}if(blanco){bool espalda=std::fabs(delta(blanco->dir,angulo(h.p-blanco->p)))>PI*.6f;danar(*blanco,9*bonus[0]*(espalda?5:1.5f),h.p);efecto(h.p,1,1,.3f,0x69baff);}cadencia=.4f/bonus[4];}
    else if(balas>0){h.dir=apuntar(h.dir);disparar(h.dir,9*bonus[0]);balas--;cadencia=.24f/bonus[4];if(!balas)recarga=1.1f;}}}
@@ -204,7 +210,8 @@ void Juego::tirar(int i){if(!cartas||tirando||resuelto)return;elegida=std::max(0
 void Juego::resolverCarta(int resultado){tirando=false;resuelto=true;dado=std::max(1,std::min(20,resultado));auto c=opciones[elegida];float porcentaje=h.maxVida>0?h.vida/h.maxVida:0;
  if(dado==1){ventajas.fill(1);avisar("1 critico: pierdes los beneficios",5);}
  else{bool exito=dado>=c.umbral;float cambio=exito?c.premio:-c.castigo;if(c.atributo==3)cambio=-cambio;auto& origen=exito?ventajas:penalidades;origen[c.atributo]=limite(origen[c.atributo]*(1+cambio),.2f,5);avisar(exito?"El destino te favorece":"El riesgo tiene un precio",5);}
- for(int k=0;k<5;k++)bonus[k]=limite(ventajas[k]*penalidades[k],.35f,5);h.maxVida=datos[h.tipo].vida*bonus[2];h.vida=h.maxVida*porcentaje;
+ for(int k=0;k<5;k++){bonus[k]=limite(ventajas[k]*penalidades[k],.35f,5);}
+ h.maxVida=datos[h.tipo].vida*bonus[2];h.vida=h.maxVida*porcentaje;
 }
 void Juego::aplicarCarta(){resolverCarta(1+(int)(azar()*20));}
 void Juego::continuarCarta(){if(!cartas||!resuelto)return;cartas=false;nivel=2;mano=bajas=0;descanso=3;objetos.clear();enemigos.clear();proyectiles.clear();bumeran=false;h.vida=std::min(h.maxVida,h.vida+h.maxVida*.25f);avisar("Cobro de piso",3);}
@@ -214,12 +221,13 @@ void Juego::entrarCasa(){secuencia=CASA_GOBLIN;secuenciaT=0;h.p={0,3.8f};h.dir=P
 }
 void Juego::salirCasa(){secuencia=EPILOGO_MAGO;secuenciaT=0;plano=0;h.p=puertaCasa;h.dir=-PI/2;h.origen=h.p;h.empuje={};cambiar(h,GUARDIA);mago.p={0,-1};mago.dir=PI*.5f;mago.anim=AVISO;lluviaNarrativa=0;meteorito=crater=negro=0;avisar("",0);}
 void Juego::pasoSecuencia(float dt,const Entrada&i){secuenciaT+=dt;
- if(secuencia==PLAZA_LIBRE){pasoHeroe(dt,i);pasoEnemigos(dt);if(llave&&distancia(h.p,puertaCasa)<1.1f)entrarCasa();return;}
+ if(secuencia==PLAZA_LIBRE){pasoHeroe(dt,i);pasoEnemigos(dt);pasoProyectiles(dt);if(llave&&distancia(h.p,puertaCasa)<1.1f)entrarCasa();return;}
  if(secuencia==CASA_GOBLIN){
   if(h.estado==ATAQUE){h.t+=dt;animar(h,true);if(h.t>.6f)cambiar(h,GUARDIA);}else{h.anim=largo(i.mov)>.1f?CORRER:REPOSO;if(largo(i.mov)>.1f){h.dir=angulo(i.mov);h.p=h.p+i.mov*(dt*3.5f);h.p.x=limite(h.p.x,-3.7f,3.7f);h.p.z=limite(h.p.z,-3.4f,4.6f);h.fase+=largo(i.mov)*dt*2;}h.k=std::fmod(h.fase,1.f);
    if(i.ataque&&familiaViva&&distancia(h.p,{0,-2.3f})<3.1f){familiaViva=false;h.dir=PI;cambiar(h,ATAQUE);for(auto&a:familia)cambiar(a,CAIDO);avisar("",0);}}
   for(auto&a:familia){if(a.estado==CAIDO){a.t=std::min(1.35f,a.t+dt);animar(a);}else{a.anim=DOLOR;a.k=.15f+.08f*std::sin(secuenciaT*8);}}
-  if(h.p.z>4.35f&&std::fabs(h.p.x)<1.7f&&secuenciaT>.5f)salirCasa();return;
+  if(h.p.z>4.35f&&std::fabs(h.p.x)<1.7f&&secuenciaT>.5f){salirCasa();}
+  return;
  }
  if(secuencia==ENTRADA_TROLL){
   if(plano==0){V mov=rodear(h,llaveP,dt,4.5f,1);h.anim=CORRER;h.k=std::fmod(h.fase,1.f);if(distancia(h.p,llaveP)<.4f||secuenciaT>9){plano=1;secuenciaT=0;h.p=llaveP;h.anim=REPOSO;h.origen=h.p;}(void)mov;return;}

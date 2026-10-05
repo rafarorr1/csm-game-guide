@@ -32,8 +32,6 @@ jobs:
         run: node dev/ports/3ds/tools/exportar.mjs
       - name: Comprobar geometría, animaciones y texturas exportadas
         run: node dev/ports/3ds/tools/pruebas-recursos.mjs
-      - name: Validar mallas, piel y texturas nativas
-        run: node dev/ports/3ds/tools/pruebas-recursos.mjs
       - name: Comprobar la simulacion nativa
         run: g++ -std=c++17 -O2 -Idev/ports/3ds/include dev/ports/3ds/source/juego.cpp dev/ports/3ds/tools/pruebas.cpp -o /tmp/pruebas-3ds && /tmp/pruebas-3ds
       - name: Compilar ARM11 con devkitPro

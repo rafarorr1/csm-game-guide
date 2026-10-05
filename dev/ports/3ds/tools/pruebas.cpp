@@ -44,6 +44,12 @@ static void armas(){
  j.iniciar(ADREIDA);j.h.p={0,0};j.h.dir=0;j.h.estado=PARRANDO;j.h.t=.05f;j.invocar(GOBLIN,{0,1});auto&b=j.enemigos[0];b.variante=3;b.numero=1;b.estado=PREPARA;b.t=2;b.dir=PI;j.pasoEnemigos(.01f);assert(j.fuegoT==0&&j.parrys==1);
  j.iniciar(ADREIDA);j.h.p={0,0};j.invocar(GOBLIN,{0,6});auto&g=j.enemigos[0];g.variante=0;g.numero=0;g.cd=0;j.pasoEnemigos(.01f);assert(g.combo==2&&g.estado==PREPARA);g.t=2;j.pasoEnemigos(.01f);assert(j.proyectiles.size()==1&&j.proyectiles[0].tipo==3);j.pasoProyectiles(.4f);assert(j.proyectiles[0].alto>2.5f);
 }
+static void regresiones(){
+ Juego j;Entrada entrada;entrada.mov={-1,0};entrada.parry=true;j.iniciar(ADREIDA);j.h.dir=0;j.habilidad(entrada);assert(cerca(j.h.dir,-PI*.5f));
+ entrada.parry=false;entrada.salto=true;j.iniciar(ADREIDA);j.furia=100;j.h.dir=0;j.habilidad(entrada);assert(j.h.destino.x<j.h.p.x-4.9f);
+ j.iniciar(ADREIDA);j.h.dir=0;j.h.estado=PARRANDO;j.h.t=.05f;j.fuegoT=2;j.fuegoTick=.99f;float vida=j.h.vida;j.pasoHeroe(.02f,{});assert(j.parrys==0&&j.h.vida<vida);
+ j.iniciar(ADREIDA);j.secuencia=PLAZA_LIBRE;j.lanzarBumeran();avanzar(j,1.5f);assert(!j.bumeran&&j.proyectiles.empty());
+}
 static void cartasPuntos(){
  Juego j;j.iniciar(ADREIDA);for(int n=0;n<5;n++){Actor a;a.vida=1;a.p={float(n),0};j.danar(a,100,{});}int cartas=0;for(const auto&o:j.objetos)cartas+=o.tipo==1;assert(cartas==3);assert(j.score>=250&&j.multiplicador==2);j.paron=0;j.descanso=100;avanzar(j,3.1f);assert(j.multiplicador==0&&j.comboT==0);
  j.oleada=3;j.mano=3;j.descanso=0;j.paso(.05f,{});assert(j.cartas);assert(j.opciones[0].umbral==2&&j.opciones[0].castigo==0);j.tirar(0);for(int i=0;i<40;i++)j.paso(.05f,{});assert(j.resuelto&&j.dado>=1&&j.dado<=20);
@@ -69,4 +75,4 @@ static void limitesPausaMuerte(){
  j.iniciar(ADREIDA);j.descanso=1000;j.h.vida=j.h.maxVida=100000;for(int n=0;n<14;n++)j.invocar(Tipo(GOBLIN+n%6),{float(n%5)*2-5,float(n/5)*3-5});
  for(int n=0;n<30000;n++){Entrada e;e.mov=frente(n*.003f);e.ataque=n%70<35;e.parry=n%37==0;e.dash=n%80==0;e.salto=n%350==0;e.giro=n%200==0;e.provoca=n%500==0;e.ulti=n%6500==0;j.paso(1.f/60,e);assert(std::isfinite(j.h.p.x)&&std::isfinite(j.h.p.z)&&std::isfinite(j.h.vida));assert(j.enemigos.size()<=MAX_ENEMIGOS&&j.proyectiles.size()<=MAX_PROYECTILES&&j.efectos.size()<=MAX_EFECTOS&&j.objetos.size()<=MAX_OBJETOS);}
 }
-int main(){auto t=std::chrono::steady_clock::now();control();ultis();navegación();bosses();armas();cartasPuntos();historia();limitesPausaMuerte();double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-t).count();std::printf("OK: control, carga, parry, salto, ultis, rutas, Can, Troll, piedras, hachas, fuego, cartas, puntuacion, historia completa, limites y muerte (%.0f ms anfitrion)\n",ms);}
+int main(){auto t=std::chrono::steady_clock::now();control();ultis();navegación();bosses();armas();regresiones();cartasPuntos();historia();limitesPausaMuerte();double ms=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-t).count();std::printf("OK: control, carga, parry, salto, ultis, rutas, Can, Troll, piedras, hachas, fuego, cartas, puntuacion, historia completa, limites y muerte (%.0f ms anfitrion)\n",ms);}

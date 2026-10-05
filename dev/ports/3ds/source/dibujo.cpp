@@ -61,21 +61,25 @@ static void lote(float alpha=1){if(temporal.empty())return;size_t n=std::min<siz
 // Citro2D cambia shaders, atributos, mezclado y combinadores al dibujar el HUD.
 static void estado3D(){
  C3D_BindProgram(&programa);auto*a=C3D_GetAttrInfo();AttrInfo_Init(a);AttrInfo_AddLoader(a,0,GPU_FLOAT,3);AttrInfo_AddLoader(a,1,GPU_FLOAT,3);AttrInfo_AddLoader(a,2,GPU_FLOAT,3);AttrInfo_AddLoader(a,3,GPU_FLOAT,3);AttrInfo_AddLoader(a,4,GPU_FLOAT,2);
- for(int n=0;n<6;n++)C3D_TexEnvInit(C3D_GetTexEnv(n));auto*env=C3D_GetTexEnv(0);C3D_TexEnvSrc(env,C3D_RGB,GPU_TEXTURE0,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR);C3D_TexEnvFunc(env,C3D_RGB,GPU_MODULATE);C3D_TexEnvSrc(env,C3D_Alpha,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR);C3D_TexEnvFunc(env,C3D_Alpha,GPU_REPLACE);
+ for(int n=0;n<6;n++){C3D_TexEnvInit(C3D_GetTexEnv(n));}
+ auto*env=C3D_GetTexEnv(0);C3D_TexEnvSrc(env,C3D_RGB,GPU_TEXTURE0,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR);C3D_TexEnvFunc(env,C3D_RGB,GPU_MODULATE);C3D_TexEnvSrc(env,C3D_Alpha,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR,GPU_PRIMARY_COLOR);C3D_TexEnvFunc(env,C3D_Alpha,GPU_REPLACE);
  C3D_CullFace(GPU_CULL_NONE);C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_ALL);C3D_AlphaTest(false,GPU_ALWAYS,0);C3D_AlphaBlend(GPU_BLEND_ADD,GPU_BLEND_ADD,GPU_SRC_ALPHA,GPU_ONE_MINUS_SRC_ALPHA,GPU_ONE,GPU_ONE_MINUS_SRC_ALPHA);C3D_FogGasMode(GPU_NO_FOG,GPU_PLAIN_DENSITY,false);
 }
 bool iniciarDibujo(ProgresoDibujo progreso){
  auto informar=[&](float v,const char*s){if(progreso)progreso(v,s);};informar(.05f,"Preparando PICA200");
  shader=DVLB_ParseFile((u32*)vshader_shbin,vshader_shbin_size);if(!shader)return false;shaderProgramInit(&programa);programaListo=true;shaderProgramSetVsh(&programa,&shader->DVLE[0]);C3D_BindProgram(&programa);
  uProy=shaderInstanceGetUniformLocation(programa.vertexShader,"proyeccion");uModelo=shaderInstanceGetUniformLocation(programa.vertexShader,"modelo");uHuesos=shaderInstanceGetUniformLocation(programa.vertexShader,"huesos");uTinte=shaderInstanceGetUniformLocation(programa.vertexShader,"tinte");if(uHuesos<0||uHuesos+72>96)return false;
- if(!C3D_TexInit(&blanca,8,8,GPU_RGB565))return false;blancaLista=true;u16 pixeles[64];std::fill(pixeles,pixeles+64,0xffff);C3D_TexUpload(&blanca,pixeles);C3D_TexSetFilter(&blanca,GPU_NEAREST,GPU_NEAREST);C3D_TexFlush(&blanca);
+ if(!C3D_TexInit(&blanca,8,8,GPU_RGB565))return false;
+ blancaLista=true;u16 pixeles[64];std::fill(pixeles,pixeles+64,0xffff);C3D_TexUpload(&blanca,pixeles);C3D_TexSetFilter(&blanca,GPU_NEAREST,GPU_NEAREST);C3D_TexFlush(&blanca);
  FILE*f=fopen("romfs:/texturas.bin","rb");uint32_t numero=0;if(!f)return false;bool correcto=fread(&numero,4,1,f)==1&&numero>0&&numero<64;fclose(f);if(!correcto)return false;texturas.resize(numero);
  for(uint32_t i=0;i<numero;i++){informar(.1f+.32f*i/numero,"Cargando los materiales de Tomsage");if(!leerTextura(texturas[i],i))return false;}
  for(int i=0;i<NUM_MODELOS;i++){informar(.42f+.45f*i/NUM_MODELOS,nombres[i]);if(!leer(modelos[i],nombres[i]))return false;}
  indicesPiso=(u16*)linearAlloc(modelos[13].ni*sizeof(u16));if(!indicesPiso)return false;
  dinamico=(Vert*)linearAlloc(MAX_VERTICES_DINAMICOS*sizeof(Vert));if(!dinamico)return false;temporal.reserve(MAX_VERTICES_DINAMICOS);
  // Bosque persistente en un único buffer: árboles de varias alturas y tres copas.
- triangulo(-90,-.08f,-90,90,-.08f,-90,90,-.08f,90,0x253d36);triangulo(-90,-.08f,-90,90,-.08f,90,-90,-.08f,90,0x253d36);
+ // El césped sólo rodea la plaza; una lámina debajo taparía el cráter profundo.
+ auto cesped=[](float x0,float z0,float x1,float z1){triangulo(x0,-.08f,z0,x0,-.08f,z1,x1,-.08f,z1,0x253d36);triangulo(x0,-.08f,z0,x1,-.08f,z1,x1,-.08f,z0,0x253d36);};
+ cesped(-90,-90,-28,90);cesped(28,-90,90,90);cesped(-28,-90,28,-28);cesped(-28,28,28,90);
  for(int i=0;i<128;i++){float a=i*2.399963f,r=30+(i*17%24),alto=3.8f+(i*7%19)*.16f;V p{std::cos(a)*r,std::sin(a)*r};caja(p.x,0,p.z,.22f,alto*.72f,.22f,0x413d35);cono(p,alto*.20f,1.55f,alto*.59f,0x27443d);cono(p,alto*.43f,1.15f,alto*.55f,0x325447);cono(p,alto*.69f,.76f,alto*.43f,0x3a5c4f);}
  bosque.nv=temporal.size();bosque.vertices=(Vert*)linearAlloc(bosque.nv*sizeof(Vert));if(!bosque.vertices)return false;std::memcpy(bosque.vertices,temporal.data(),bosque.nv*sizeof(Vert));GSPGPU_FlushDataCache(bosque.vertices,bosque.nv*sizeof(Vert));temporal.clear();
  // El callback dibuja su propia pantalla antes de crear el target definitivo.
@@ -106,7 +110,8 @@ static void lluvia(const Juego&j){
  C3D_DepthTest(true,GPU_GREATER,GPU_WRITE_ALL);
 }
 static void magoVisual(const Juego&j){
- if(j.secuencia!=EPILOGO_MAGO)return;const float t=j.secuenciaT;
+ if(j.secuencia!=EPILOGO_MAGO)return;
+ const float t=j.secuenciaT;
  if(t<7.5f||t>11.25f){float alto=t>8?4.8f:.65f+std::sin(j.tiempo*2)*.08f;float alfa=t>8?limite((t-11.25f)*3,0,1):1;
   objeto(21,j.mago.p,alto,j.mago.dir,alfa);
   for(int i=0;i<16;i++){float a=i*.6f+j.tiempo*2;V p=j.mago.p+frente(a)*(.7f+.1f*std::sin(i));cinta(p,alto+.1f+i*.13f,p+frente(a+.8f)*.13f,alto+.22f+i*.13f,.025f,0x53de89);}lote(.72f);
@@ -123,7 +128,8 @@ static void magoVisual(const Juego&j){
  }
 }
 static void meteoritoVisual(const Juego&j){
- if(j.secuencia!=EPILOGO_MAGO||j.secuenciaT<15.2f)return;float t=j.secuenciaT;
+ if(j.secuencia!=EPILOGO_MAGO||j.secuenciaT<15.2f)return;
+ float t=j.secuenciaT;
  if(t<17){float k=limite((t-15.2f)/1.8f,0,1);V p=j.h.p+V{-5,3}*(1-k);float y=32*(1-k*k);
   cono(p,y,1.5f,2.2f,0x315c43,9);cono(p,y,1.5f,-1.8f,0x4b7960,9);lote();aro(p,y+.05f,1.62f,.18f,0x82e8a2);lote(.8f);
  }
@@ -132,7 +138,7 @@ static void meteoritoVisual(const Juego&j){
  }
 }
 static void cielo(const Juego&j){
- float temporalRayo=std::fmod(j.tiempo+7.3f,18.73f);float flash=temporalRayo<.09f||temporalRayo>.22f&&temporalRayo<.27f?.45f:0;
+ float temporalRayo=std::fmod(j.tiempo+7.3f,18.73f);float flash=temporalRayo<.09f||(temporalRayo>.22f&&temporalRayo<.27f)?.45f:0;
  if(j.secuencia==EPILOGO_MAGO&&j.secuenciaT>12&&j.secuenciaT<16.6f){float t=j.secuenciaT;flash=std::fmod(t*1.13f,1.73f)<.1f||std::fmod(t*.79f,.93f)<.07f?.8f:.18f;}
  if(flash>.3f){for(int i=0;i<3;i++){float x=-30+i*29+std::sin(j.tiempo*.2f)*3;V p{x,-39};cinta(p,28,p+V{1,-1},22,.05f,0x9ce8ca);cinta(p+V{1,-1},22,p+V{-.5f,-1.5f},17,.055f,0x9ce8ca);cinta(p+V{-.5f,-1.5f},17,p+V{1.2f,-2.1f},12,.06f,0x9ce8ca);}lote(flash);}
  // Bancos de niebla bajos al pie de los árboles, nunca sobre los avisos de combate.
@@ -179,11 +185,13 @@ void dibujar(Juego&j){
    if(!puerta){caja(p.x,0,p.z,3.5f,3.4f,1.2f,0x626f6c);caja(p.x,3.4f,p.z,1.4f,.7f,1.3f,0x75827b);}else{caja(p.x,3.7f,p.z,4,1,1.2f,0x82765f);for(int k=-3;k<=3;k++)caja(p.x+k*.4f,0,p.z,.08f,3.7f,.08f,0x424345);}}
   for(V p:std::array<V,2>{{{-3.5f,7.5f},{4.5f,-10}}}){caja(p.x,0,p.z,.38f,.2f,.38f,0x79746a);caja(p.x,.2f,p.z,.12f,1.8f,.12f,0x45474b);caja(p.x,2,p.z,.42f,.6f,.42f,0xb98649);caja(p.x,2.6f,p.z,.56f,.15f,.56f,0x80664d);}
   caja(8.5f,0,4.8f,1.1f,1.2f,1.1f,0x6c4e36);lote();
-  for(const auto&e:j.enemigos)if(distancia(e.p,j.h.p)<22)abanico(e.p,.015f,e.tipo==TROLL?.9f:.4f,0,PI,0x192026);abanico(j.h.p,.015f,.5f,0,PI,0x192026);lote(.62f);
+  for(const auto&e:j.enemigos){if(distancia(e.p,j.h.p)<22)abanico(e.p,.015f,e.tipo==TROLL?.9f:.4f,0,PI,0x192026);}
+  abanico(j.h.p,.015f,.5f,0,PI,0x192026);lote(.62f);
   for(const auto&e:j.enemigos){if(e.estado!=PREPARA)continue;float radio=j.avisoRadio(e),dur=j.avisoDur(e);uint32_t c=j.imparable(e)?0xb683c8:dur-e.t<.18f?0xbdf5ff:0xe8a15e;
    if(e.tipo==KOBOLD){V b=e.p+frente(e.dir)*11;cinta(e.p,.035f,b,.035f,.045f,c);}else if(j.imparable(e))abanico(e.p,.035f,radio,0,PI,c);else if(e.tipo==CAN&&e.combo==1){abanico(e.p,.035f,radio,e.dir-PI/3,PI/6,c);abanico(e.p,.035f,radio,e.dir+PI/3,PI/6,c);}else abanico(e.p,.035f,radio,e.dir,e.tipo==CAN?PI/6:1.1f,c);
   }
-  for(const auto&p:j.proyectiles)if(p.tipo==1||p.tipo==2)aro(p.destino,.04f,p.radio,.07f,p.dur-p.t<.25f?0xc5ffff:p.dur-p.t<.55f?0xffdc55:0xec8049);lote(.42f);
+  for(const auto&p:j.proyectiles){if(p.tipo==1||p.tipo==2)aro(p.destino,.04f,p.radio,.07f,p.dur-p.t<.25f?0xc5ffff:p.dur-p.t<.55f?0xffdc55:0xec8049);}
+  lote(.42f);
   for(const auto&e:j.efectos){float k=e.t/e.dur;if(e.tipo==4){abanico(e.p,.022f,e.radio,0,PI,0x151b1c);aro(e.p,.06f,e.radio,.1f,0x65736b);lote((1-k)*.85f);}else if(e.tipo==5)caja(e.p.x,std::sin(k*PI)*1.5f,e.p.z,e.radio,e.radio,e.radio,e.color);else aro(e.p,.1f,e.radio*(.4f+k*.6f),.07f,e.color);}lote(.8f);
   for(const auto&e:j.enemigos)if(distancia(e.p,j.h.p)<22)actor(e,0);
   const bool pov=cine&&(j.plano==2||j.plano==4||j.plano==5||(j.plano==6&&t<16.6f));if(!pov)actor(j.h,j.alto(j.h),j.h.tipo==MOHAMED&&j.ultiActivo>0?.3f:1);if(j.tieneAliado)actor(j.aliado,0,.65f);
@@ -198,7 +206,13 @@ void dibujar(Juego&j){
 }
 void cerrarDibujo(){
  for(auto&m:modelos){if(m.vertices)linearFree(m.vertices);if(m.indices)linearFree(m.indices);m.vertices=nullptr;m.indices=nullptr;}
- for(auto&t:texturas)if(t.data)C3D_TexDelete(&t);texturas.clear();if(blancaLista){C3D_TexDelete(&blanca);blancaLista=false;}
- if(indicesPiso)linearFree(indicesPiso);if(bosque.vertices)linearFree(bosque.vertices);if(dinamico)linearFree(dinamico);if(target)C3D_RenderTargetDelete(target);if(programaListo)shaderProgramFree(&programa);if(shader)DVLB_Free(shader);
+ for(auto&t:texturas){if(t.data)C3D_TexDelete(&t);}
+ texturas.clear();if(blancaLista){C3D_TexDelete(&blanca);blancaLista=false;}
+ if(indicesPiso)linearFree(indicesPiso);
+ if(bosque.vertices)linearFree(bosque.vertices);
+ if(dinamico)linearFree(dinamico);
+ if(target)C3D_RenderTargetDelete(target);
+ if(programaListo)shaderProgramFree(&programa);
+ if(shader)DVLB_Free(shader);
 }
 }

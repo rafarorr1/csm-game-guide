@@ -28,11 +28,13 @@ sd.mkdir(parents=True, exist_ok=True)
 for extension in ['3dsx', 'smdh']:
     shutil.copy2(raiz / (nombre + '.' + extension), sd)
 shutil.copy2(raiz / 'LEEME.txt', sd.parents[1])
-archivos = sorted(p for p in sd.parents[1].rglob('*') if p.is_file())
+# La lista explícita evita arrastrar archivos de entregas anteriores o un hash de sí mismo.
+archivos = [sd / (nombre + '.' + extension) for extension in ['3dsx', 'smdh']]
+archivos.append(sd.parents[1] / 'LEEME.txt')
 manifiesto = {str(p.relative_to(sd.parents[1])): {'bytes': p.stat().st_size, 'sha256': hashlib.sha256(p.read_bytes()).hexdigest()} for p in archivos}
 (sd.parents[1] / 'SHA256.json').write_text(json.dumps(manifiesto, indent=2) + '\n')
 zip_destino = salida / (nombre + '-Old3DS.zip')
 with zipfile.ZipFile(zip_destino, 'w', zipfile.ZIP_DEFLATED, compresslevel=9) as paquete:
-    for archivo in sorted(p for p in sd.parents[1].rglob('*') if p.is_file()):
+    for archivo in sorted(archivos + [sd.parents[1] / 'SHA256.json']):
         paquete.write(archivo, archivo.relative_to(sd.parents[1]))
 print(json.dumps({'zip': str(zip_destino), 'carpeta_sd': str(sd.parents[1]), 'archivos': manifiesto}, indent=2))
