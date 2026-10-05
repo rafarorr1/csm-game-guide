@@ -1,32 +1,49 @@
-CAOZ ARPG - ADAPTACIÓN NATIVA PARA 3DS
+CAOZ ARPG · ALPHA .01 · EDICIÓN NATIVA OLD 3DS
 
-Prototipo para Nintendo 3DS, 3DS XL y 2DS originales con Homebrew Launcher.
+Para Nintendo 3DS, 3DS XL y 2DS originales con Homebrew Launcher.
 
 INSTALACIÓN
-1. Copia la carpeta "3ds" de este paquete a la raíz de la tarjeta SD.
-2. En Homebrew Launcher, abre "Caoz ARPG".
-3. Elige Adreida o Mohamed y pulsa A.
+1. Descomprime CaozARPG-Old3DS.zip.
+2. Copia la carpeta "3ds" a la raíz de tu tarjeta SD.
+   Debe quedar: /3ds/CaozARPG/CaozARPG.3dsx
+3. En Homebrew Launcher, abre "Caoz ARPG".
+4. Elige Adreida o Mohamed y pulsa A. Y inicia directamente la etapa 2.
 
-El archivo .3dsx ya incluye los modelos mediante RomFS. No necesita conexión,
-una copia del sitio web, claves de Nintendo ni archivos de juegos comerciales.
+El .3dsx contiene los modelos, texturas y sonido. No requiere internet,
+una copia del sitio ni archivos de juegos comerciales. Conserva junto
+al ejecutable su icono CaozARPG.smdh. SHA256.json permite verificar la copia.
 
 CONTROLES
-Circle Pad: moverse; durante la carga, orientar el golpe sin moverse.
-A: ataque básico; con Adreida, mantener y soltar carga el hacha.
-B: dash. L: parry. X: salto. Y: torbellino o abanico.
-R: ulti. Cruceta arriba: provocar. START: pausa / reiniciar tras morir.
-SELECT: volver a elegir personaje. L + R + START: volver al launcher.
-En las cartas: izquierda/derecha para elegir, A para tirar y continuar.
+Circle Pad: moverse y orientar el personaje.
+A: básico; mantener y soltar carga el golpe de Adreida.
+B: dash y apagar fuego. L: parry (puede interrumpir el ataque).
+X: salto de 5 metros. Y: torbellino de Adreida / abanico de Mohamed.
+Cruceta arriba: búmeran de Adreida / provocar con Mohamed.
+R: ulti. Adreidos dura 15 s, recarga 100 s. Mohamed: sigilo 10 s, recarga 90 s.
+Cada parry reduce un segundo la recarga del ulti.
+START: pausa. SELECT: mostrar/ocultar rendimiento.
+L + R + START: salir al Homebrew Launcher.
+Los botones de habilidades también se pueden tocar en la pantalla inferior.
 
-ALCANCE DE ESTA VERSIÓN
-Adaptación de un jugador con ambos héroes, las oleadas de la plaza, Can,
-El Recaudador, cartas con d20, habilidades y modelos/poses del juego original.
-Los gráficos son simplificados: colores por vértice e iluminación sencilla.
-No incluye el mundo abierto, cooperativo, texturas PBR, posprocesado, editor
-ni equivalencia exacta de todos los efectos y animaciones de la versión web.
-La pantalla superior dibuja en 2D (sin estereoscopía); la inferior muestra HUD.
+PAUSA: A / START continúa, B regresa al selector, X activa/desactiva sonido,
+Y muestra/oculta rendimiento. Tras morir, A / START reinicia la etapa.
+CARTAS: izquierda/derecha o tocar para elegir; A para tirar y continuar.
+
+PROGRESIÓN
+Etapa 1: oleadas, Can, recoger tres cartas y elegir un riesgo con d20.
+Etapa 2: goblins, llave y entrada del Troll, boss blindado a media vida.
+Al vencerlo, acércate a la casa señalada al este de la plaza.
+En la casa puedes golpear a los goblins o salir por la puerta inferior.
+Al salir sigue la secuencia del mago hasta «Fin de Alpha .01».
+
+GRÁFICOS Y ALCANCE
+Versión nativa C++ con modelos y texturas adaptados del juego actual.
+400 x 240 arriba, HUD 320 x 240 abajo; sin estereoscopía.
+Un jugador. No incluye cooperativo, mundo abierto ni editor.
+Las luces, efectos, cámaras y animaciones están simplificados para Old 3DS.
+El sonido es opcional si el servicio NDSP no está disponible.
 
 VALIDACIÓN
-Compilación ARM11 y pruebas de simulación en el proceso de construcción.
-Pendiente comprobar arranque, aspecto y rendimiento en una 3DS física.
-No se garantiza una tasa de cuadros antes de esa prueba.
+El paquete se compila para ARM11, verifica RomFS y ejecuta pruebas de lógica.
+La prueba en emulador no garantiza el rendimiento en una consola física.
+Antes de afirmar una tasa de cuadros hace falta medirla en tu Old 3DS.

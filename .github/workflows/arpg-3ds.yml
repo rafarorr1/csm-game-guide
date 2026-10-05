@@ -4,6 +4,12 @@ on:
     branches: [feature/visor-3d-coleccion]
     paths:
       - 'dev/ports/3ds/**'
+      - 'dev/secciones/arpg-three-modelos.js'
+      - 'dev/secciones/arpg-three-*.js'
+      - 'dev/secciones/casas-three.js'
+      - 'dev/secciones/visor-three-vendor.js'
+      - 'dev/secciones/*-scenario/**'
+      - 'dev/secciones/texturas-*/**'
       - '.github/workflows/arpg-3ds.yml'
   workflow_dispatch:
 permissions:
@@ -11,25 +17,32 @@ permissions:
 jobs:
   compilar:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Preparar el conversor de texturas
+        run: python3 -m pip install 'Pillow==12.3.0'
       - name: Exportar los modelos del juego
         run: node dev/ports/3ds/tools/exportar.mjs
+      - name: Comprobar geometría, animaciones y texturas exportadas
+        run: node dev/ports/3ds/tools/pruebas-recursos.mjs
+      - name: Validar mallas, piel y texturas nativas
+        run: node dev/ports/3ds/tools/pruebas-recursos.mjs
       - name: Comprobar la simulacion nativa
         run: g++ -std=c++17 -O2 -Idev/ports/3ds/include dev/ports/3ds/source/juego.cpp dev/ports/3ds/tools/pruebas.cpp -o /tmp/pruebas-3ds && /tmp/pruebas-3ds
       - name: Compilar ARM11 con devkitPro
         run: docker run --rm -v "$PWD:/src" -w /src/dev/ports/3ds devkitpro/devkitarm:20260610 make -j2
-      - name: Preparar carpeta para Homebrew Launcher
-        run: |
-          mkdir -p entrega/3ds/LasGrietas3DS
-          cp dev/ports/3ds/LasGrietas3DS.3dsx dev/ports/3ds/LasGrietas3DS.smdh entrega/3ds/LasGrietas3DS/
-          cp dev/ports/3ds/LEEME.txt entrega/
+      - name: Validar y empaquetar para Homebrew Launcher
+        run: python3 dev/ports/3ds/tools/empaquetar.py --salida entrega
       - uses: actions/upload-artifact@v4
         with:
-          name: LasGrietas3DS-homebrew
+          name: CaozARPG-Old3DS
           path: entrega/
           retention-days: 30
+          if-no-files-found: error

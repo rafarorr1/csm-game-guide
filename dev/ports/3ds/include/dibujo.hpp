@@ -1,3 +1,8 @@
 #pragma once
 #include "juego.hpp"
-namespace Grietas {bool iniciarDibujo();void dibujar(Juego&j);void cerrarDibujo();}
+namespace Grietas {
+using ProgresoDibujo=void(*)(float,const char*);
+bool iniciarDibujo(ProgresoDibujo progreso=nullptr);
+void dibujar(Juego&j);
+void cerrarDibujo();
+}

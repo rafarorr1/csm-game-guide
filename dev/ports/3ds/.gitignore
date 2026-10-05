@@ -4,3 +4,12 @@
 /*.elf
 /*.3dsx
 /*.smdh
+
+/romfs/audio/
+/romfs/texturas/
+/romfs/*.json
+/*.zip
+/icono.png
+
+__pycache__/
+*.pyc

@@ -1,23 +1,40 @@
-; PICA200: un hueso rígido por vértice, igual que los modelos originales.
+; PICA200: dos influencias por vértice y atlas original reducido.
 .fvec proyeccion[4]
 .fvec modelo[4]
 .fvec huesos[72]
 .fvec tinte
-.constf base(0.0,1.0,0.36,0.64)
+.constf base(0.0,1.0,0.50,0.50)
 .constf luna(-0.35,0.85,0.39,0.0)
 .out posicion position
 .out color color
+.out coordenada texcoord0
 .alias entrada v0
 .alias pigmento v1
 .alias normal v2
-.alias hueso v3
+.alias piel v3
+.alias uv v4
 .proc main
  mov r0.xyz, entrada
  mov r0.w, base.y
- mova a0.x, hueso.x
+ mova a0.x, piel.x
  dp4 r1.x, huesos[a0.x], r0
  dp4 r1.y, huesos[a0.x+1], r0
  dp4 r1.z, huesos[a0.x+2], r0
+ dp3 r3.x, huesos[a0.x], normal
+ dp3 r3.y, huesos[a0.x+1], normal
+ dp3 r3.z, huesos[a0.x+2], normal
+ mova a0.x, piel.y
+ dp4 r7.x, huesos[a0.x], r0
+ dp4 r7.y, huesos[a0.x+1], r0
+ dp4 r7.z, huesos[a0.x+2], r0
+ dp3 r8.x, huesos[a0.x], normal
+ dp3 r8.y, huesos[a0.x+1], normal
+ dp3 r8.z, huesos[a0.x+2], normal
+ add r9.x, base.y, -piel.z
+ mul r1.xyz, r1, piel.zzz
+ mad r1.xyz, r7, r9.xxx, r1
+ mul r3.xyz, r3, piel.zzz
+ mad r3.xyz, r8, r9.xxx, r3
  mov r1.w, base.y
  dp4 r2.x, modelo[0], r1
  dp4 r2.y, modelo[1], r1
@@ -27,9 +44,6 @@
  dp4 posicion.y, proyeccion[1], r2
  dp4 posicion.z, proyeccion[2], r2
  dp4 posicion.w, proyeccion[3], r2
- dp3 r3.x, huesos[a0.x], normal
- dp3 r3.y, huesos[a0.x+1], normal
- dp3 r3.z, huesos[a0.x+2], normal
  dp3 r4.x, modelo[0], r3
  dp3 r4.y, modelo[1], r3
  dp3 r4.z, modelo[2], r3
@@ -40,5 +54,6 @@
  mul r6.xyz, pigmento, r5.xxx
  mul color.xyz, tinte, r6
  mov color.w, tinte.w
+ mov coordenada.xy, uv
  end
 .end
