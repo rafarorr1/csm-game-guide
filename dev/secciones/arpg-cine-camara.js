@@ -5,11 +5,11 @@
   const fases=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','levantarse','tropezar','buscar','voltear','techo','hechizo','cielo','caida','impacto','negro'];
   const fases7=fases.filter(f=>f!=='hechizo');
   const fasesAnteriores=['salida','descubrir','vertigo','pies','carrera','ataquePOV','desaparece','tropezar','buscar','levantarse','voltear','techo','cielo','caida','impacto','negro'];
-  const VERSION=11,ANTICIPO_PUERTA=1,RECORTE_PIES=11/60,PAUSA_PARTICULAS=2,AMPLIACION_PANEO=3.4/2.4,versiones=[1,2,3,4,5,6,7,8,9,10,11];
+  const VERSION=12,INICIO_PAUSA=9,PAUSA_FINAL=.7,ANTICIPO_PUERTA=1,RECORTE_PIES=11/60,PAUSA_PARTICULAS=2,AMPLIACION_PANEO=3.4/2.4,versiones=[1,2,3,4,5,6,7,8,9,10,11,12];
   const antes={ataquePOV:.48,desaparece:.57,tropezar:.9,buscar:2.8,levantarse:1.75,voltear:1.1,techo:2.3,cielo:1.7};
   const montaje7={ataquePOV:.48,desaparece:.42,levantarse:.52,tropezar:1,buscar:1.85,voltear:1.6,techo:1.3,cielo:1.7};
   const montaje8={ataquePOV:.96,desaparece:.08,levantarse:.16,tropezar:.74,buscar:1.2,voltear:2.6,techo:1.4,cielo:1.7};
-  const ahora={carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.3,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3,cielo:1.7};
+  const ahora={carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.3,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3.7,cielo:1.7};
   const tiemposDe=v=>v>=8?montaje8:v===7?montaje7:antes;
   const recuperacion=d=>d.desaparece+d.levantarse+d.tropezar+d.buscar;
   const retimeRecuperacion=v=>recuperacion(tiemposDe(v))/recuperacion(ahora);
@@ -31,14 +31,15 @@
     const vector=(v,n)=>Array.isArray(v)&&v.length===n&&v.every(x=>numero(x,-10000,10000));
     const planos={};let total=0;
     for(const [fase,p]of Object.entries(d.planos)){
-      if(!idsPorVersion[d.version].includes(fase)||!p||!['externa','original'].includes(p.vista)||!Array.isArray(p.claves)||p.claves.length>1500)throw Error('Plano o lista de keyframes inválidos.');
+      if(!idsPorVersion[d.version].includes(fase)||!p||!['externa','original'].includes(p.vista)||!Array.isArray(p.claves)||p.claves.length>(d.version>=12?1502:1500))throw Error('Plano o lista de keyframes inválidos.');
       const claves=p.claves.map(k=>{
-        if(!k||!numero(k.t,0,d.version>=11?240:d.version>=10?180:d.version>=9?120:60)||!vector(k.pos,3)||!vector(k.rot,4)||!numero(k.fov,8,110)||!numero(k.distancia,.2,300)||!curvas.includes(k.curva))throw Error('Un keyframe contiene una cámara o tiempo inválido.');
+        if(!k||!numero(k.t,0,d.version>=12?240.7:d.version>=11?240:d.version>=10?180:d.version>=9?120:60)||!vector(k.pos,3)||!vector(k.rot,4)||!numero(k.fov,8,110)||!numero(k.distancia,.2,300)||!curvas.includes(k.curva))throw Error('Un keyframe contiene una cámara o tiempo inválido.');
         const largo=Math.hypot(...k.rot);if(largo<.5||largo>1.5)throw Error('Orientación de cámara inválida.');
-        return {t:k.t,pos:[...k.pos],rot:k.rot.map(n=>n/largo),fov:k.fov,distancia:k.distancia,curva:k.curva};
+        if(k.tramoSuave!==undefined&&(d.version<12||!Array.isArray(k.tramoSuave)||k.tramoSuave.length!==2||!k.tramoSuave.every(n=>numero(n,0,1))||k.tramoSuave[0]>=k.tramoSuave[1]))throw Error('Tramo de interpolación suave inválido.');
+        return {t:k.t,pos:[...k.pos],rot:k.rot.map(n=>n/largo),fov:k.fov,distancia:k.distancia,curva:k.curva,...(k.tramoSuave?{tramoSuave:[...k.tramoSuave]}:{})};
       }).sort((a,b)=>a.t-b.t);
-      if(claves.some((k,i)=>i&&k.t-claves[i-1].t<(d.version>=8?1e-7:d.version>=7?1e-6:.001)))throw Error('Dos keyframes ocupan el mismo momento.');
-      total+=claves.length;if(total>5000)throw Error('La toma supera 5000 keyframes.');planos[fase]={vista:p.vista,claves};
+      if(claves.some((k,i)=>i&&(d.version>=12?k.t<=claves[i-1].t:k.t-claves[i-1].t<(d.version>=8?1e-7:d.version>=7?1e-6:.001))))throw Error('Dos keyframes ocupan el mismo momento.');
+      total+=claves.length;if(total>(d.version>=12?5002:5000))throw Error('La toma supera el límite de keyframes.');planos[fase]={vista:p.vista,claves};
       if(d.version>=2&&p.vistas!==undefined){
         if(!p.vistas||typeof p.vistas!=='object'||Array.isArray(p.vistas))throw Error('Vistas de acciones inválidas.');
         planos[fase].vistas={};for(const [accion,vista]of Object.entries(p.vistas)){if(!fases.includes(accion)||planoDeFase(accion,d.version)!==fase||!['original','externa'].includes(vista))throw Error('Vista de acción inválida.');planos[fase].vistas[accion]=vista;}
@@ -49,7 +50,7 @@
       }
       if(p.nativasHasta!==undefined){
         if(d.version<9||!p.nativasHasta||typeof p.nativasHasta!=='object'||Array.isArray(p.nativasHasta))throw Error('Intervalos de cámara programada inválidos.');
-        planos[fase].nativasHasta={};for(const [f,t]of Object.entries(p.nativasHasta)){if(!accionesDe(fase,d.version).includes(f)||!numero(t,0,d.version>=11?120:d.version>=10?90:60))throw Error('Intervalo de cámara programada inválido.');planos[fase].nativasHasta[f]=t;}
+        planos[fase].nativasHasta={};for(const [f,t]of Object.entries(p.nativasHasta)){if(!accionesDe(fase,d.version).includes(f)||!numero(t,0,d.version>=12?120.7:d.version>=11?120:d.version>=10?90:60))throw Error('Intervalo de cámara programada inválido.');planos[fase].nativasHasta[f]=t;}
       }
     }
     return {version:d.version,escena:'mago',revision:REVISION,nombre:String(d.nombre||'Mi toma').slice(0,100),planos};
@@ -57,15 +58,20 @@
   const nueva=()=>({version:VERSION,escena:'mago',revision:REVISION,nombre:'El mago · Mi toma',planos:{}});
   function crear(T){
     const qa=new T.Quaternion(),qb=new T.Quaternion();
-    function muestra(claves,t){
+    function muestra(claves,t,antes=false){
       if(!claves?.length)return null;
       let a=claves[0],b=a;
       // Un reloj acumulado puede quedar unas milmillonésimas antes del cuadro.
       // El corte debe ocurrir en ese cuadro tanto en juego como en el editor.
-      for(const k of claves){if(k.t<=t+1e-8)a=k;if(k.t>t+1e-8){b=k;break;}b=a;}
+      for(const k of claves){if(antes?k.t<t:k.t<=t+1e-8)a=k;else{b=k;break;}b=a;}
       if(t<=claves[0].t)b=a=claves[0];
       let u=a===b?0:Math.max(0,Math.min(1,(t-a.t)/(b.t-a.t)));
-      if(a.curva==='corte')u=0;else if(a.curva==='suave')u=u*u*(3-2*u);
+      if(a.curva==='corte')u=0;else if(a.curva==='suave'){
+        // Al insertar una pausa, cada mitad recorre su tramo de la curva original.
+        // La diferencia factorizada evita cancelación cerca de sus extremos.
+        if(a.tramoSuave){const [x,y]=a.tramoSuave,d=y-x,h=6*x*(1-x);u=u*(h+u*d*(3-6*x-2*u*d))/(h+d*(3-6*x-2*d));}
+        else u=u*u*(3-2*u);
+      }
       qa.fromArray(a.rot).slerp(qb.fromArray(b.rot),u);
       return {pos:a.pos.map((n,i)=>n+(b.pos[i]-n)*u),rot:qa.toArray(),fov:a.fov+(b.fov-a.fov)*u,distancia:a.distancia+(b.distancia-a.distancia)*u};
     }
@@ -75,11 +81,12 @@
       const f=estado.fase,id=planoDeFase(f,toma.version),inicio=estado.inicios?.[accionesDe(id,toma.version)[0]];
       const local=Number.isFinite(inicio)&&Number.isFinite(estado.total)?estado.total-inicio:toma.version===1||id!==planoDeFase(f)?estado.t:estado.tPlano;
       if(toma.version===VERSION)return local;
-      if(f==='salida')return Math.max(0,local-ANTICIPO_PUERTA);
-      if(toma.version===10)return local;
+      if(toma.version>=9&&id==='techo')return local<INICIO_PAUSA?local:local<INICIO_PAUSA+PAUSA_FINAL?INICIO_PAUSA:local-PAUSA_FINAL;
+      if(toma.version<11&&f==='salida')return Math.max(0,local-ANTICIPO_PUERTA);
+      if(toma.version>=10)return local;
       if(f==='descubrir')return local/AMPLIACION_PANEO;
-      // v10 sólo alarga el paneo. Los demás relojes y cámaras v9 ya coinciden
-      // con el montaje actual, incluidos el hold y el hechizo editados.
+      // v10 alargó el paneo; v11 antepuso la patada; v12 añade la pausa
+      // final del hechizo. Cada cambio se aplica sólo a versiones anteriores.
       if(toma.version===9)return local;
       // El recorrido externo ya editado permanece continuo aunque la actuación
       // se incorpore antes. Las claves del viejo giro quedan fuera del plano.
@@ -101,9 +108,11 @@
       // El nuevo giro empieza después del corte POV. Nunca reutiliza el giro
       // externo de un montaje anterior, aunque comparta su id de acción.
       if(toma.version<7&&estado.fase==='voltear'||toma.version<9&&estado.fase==='hechizo')return {camara:null,vista:'original'};
-      const p=toma.planos[planoDeFase(estado.fase,toma.version)];
-      const hasta=toma.version<9&&estado.fase==='voltear'?PAUSA_PARTICULAS:p?.nativasHasta?.[estado.fase],tiempoAccion=toma.version<11&&estado.fase==='salida'?Math.max(0,estado.t-ANTICIPO_PUERTA):toma.version<10&&estado.fase==='descubrir'?estado.t/AMPLIACION_PANEO:estado.t;
-      return {camara:p?.nativas?.includes(estado.fase)||tiempoAccion+1e-8<hasta?null:muestra(p?.claves,tiempoDeToma(toma,estado)),vista:p?.vistas?.[estado.fase]||p?.vista};
+      const id=planoDeFase(estado.fase,toma.version),p=toma.planos[id];
+      const inicio=estado.inicios?.voltear,local=Number.isFinite(inicio)&&Number.isFinite(estado.total)?estado.total-inicio:estado.tPlano;
+      const pausa=toma.version>=9&&toma.version<12&&id==='techo'&&local+1e-8>=INICIO_PAUSA&&local+1e-8<INICIO_PAUSA+PAUSA_FINAL;
+      const hasta=toma.version<9&&estado.fase==='voltear'?PAUSA_PARTICULAS:p?.nativasHasta?.[estado.fase],tiempoAccion=toma.version<11&&estado.fase==='salida'?Math.max(0,estado.t-ANTICIPO_PUERTA):toma.version<10&&estado.fase==='descubrir'?estado.t/AMPLIACION_PANEO:toma.version>=9&&toma.version<12&&estado.fase==='hechizo'?Math.min(estado.t,3):estado.t;
+      return {camara:p?.nativas?.includes(estado.fase)||tiempoAccion+1e-8<hasta||pausa&&estado.fase==='hechizo'&&hasta>=3?null:muestra(p?.claves,pausa?INICIO_PAUSA:tiempoDeToma(toma,estado),pausa),vista:p?.vistas?.[estado.fase]||p?.vista};
     }
     // Las tomas antiguas usaban una pista por acción. Se conservan sus encuadres
     // y sus cortes al reunirlas, incluyendo las acciones que seguían sin editar.
@@ -111,10 +120,32 @@
       if(toma.version===VERSION)return toma;
       function ampliarPaneo(p){const copia=JSON.parse(JSON.stringify(p));copia.claves.forEach(k=>k.t*=AMPLIACION_PANEO);if(copia.nativasHasta?.descubrir!==undefined)copia.nativasHasta.descubrir*=AMPLIACION_PANEO;return copia;}
       function anticiparPuerta(p){const copia=JSON.parse(JSON.stringify(p));copia.claves.forEach(k=>k.t+=ANTICIPO_PUERTA);if(copia.nativasHasta?.salida!==undefined)copia.nativasHasta.salida+=ANTICIPO_PUERTA;return copia;}
+      function pausarHechizo(p){
+        const copia=JSON.parse(JSON.stringify(p)),claves=copia.claves;
+        if(copia.nativasHasta?.hechizo>=3)copia.nativasHasta.hechizo+=PAUSA_FINAL;
+        const i=claves.findIndex(k=>k.t>=INICIO_PAUSA);
+        if(i<0)return copia; // La cola de una pista sin más claves ya es inmóvil.
+        const a=claves[i-1],b=claves[i],tFin=b.t;
+        const quieta=muestra(claves,INICIO_PAUSA,true);
+        claves.slice(i).forEach(k=>k.t+=PAUSA_FINAL);
+        if(!a)return copia; // Antes de su primera clave, la cámara ya es constante.
+        const pausa={...quieta,t:INICIO_PAUSA,curva:'corte'};
+        if(tFin===INICIO_PAUSA)claves.splice(i,0,pausa);
+        else{
+          const continua={...quieta,t:INICIO_PAUSA+PAUSA_FINAL,curva:a.curva};
+          if(a.curva==='suave'){
+            const u=(INICIO_PAUSA-a.t)/(tFin-a.t);
+            a.tramoSuave=[0,u];continua.tramoSuave=[u,1];
+          }
+          claves.splice(i,0,pausa,continua);
+        }
+        return copia;
+      }
       if(toma.version>=9){
         const salida=JSON.parse(JSON.stringify(toma));salida.version=VERSION;
         if(toma.version===9&&salida.planos.descubrir)salida.planos.descubrir=ampliarPaneo(salida.planos.descubrir);
-        if(salida.planos.salida)salida.planos.salida=anticiparPuerta(salida.planos.salida);
+        if(toma.version<11&&salida.planos.salida)salida.planos.salida=anticiparPuerta(salida.planos.salida);
+        if(salida.planos.techo)salida.planos.techo=pausarHechizo(salida.planos.techo);
         return validar(salida);
       }
       const salida={...toma,version:VERSION,planos:{}},inicios={};

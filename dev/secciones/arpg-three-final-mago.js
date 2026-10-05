@@ -4,8 +4,8 @@
 (function(){
   // El corte conserva el impulso del slide. La incorporación arma el giro;
   // la búsqueda del tejado comienza desde los ojos, después de mirar a los lados.
-  const ANTICIPO_PUERTA=1,RECORTE_PIES=11/60,DURACION_PIES_ORIGINAL=1.5,DURACION_SLIDE=.90,GOLPE_MAGO=1.36,ESPERA_PARTICULAS=2,REACCION_PARTICULAS=.5,VIAJE_PARTICULAS=2.6;
-  const DURACIONES=Object.freeze({salida:2.6+ANTICIPO_PUERTA,descubrir:3.4,vertigo:2.8,pies:DURACION_PIES_ORIGINAL-RECORTE_PIES,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.20,voltear:ESPERA_PARTICULAS+VIAJE_PARTICULAS,techo:1.4,hechizo:3,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
+  const ANTICIPO_PUERTA=1,RECORTE_PIES=11/60,DURACION_PIES_ORIGINAL=1.5,DURACION_SLIDE=.90,GOLPE_MAGO=1.36,ESPERA_PARTICULAS=2,REACCION_PARTICULAS=.5,VIAJE_PARTICULAS=2.6,DURACION_INVOCACION=3;
+  const DURACIONES=Object.freeze({salida:2.6+ANTICIPO_PUERTA,descubrir:3.4,vertigo:2.8,pies:DURACION_PIES_ORIGINAL-RECORTE_PIES,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.20,voltear:ESPERA_PARTICULAS+VIAJE_PARTICULAS,techo:1.4,hechizo:DURACION_INVOCACION+.7,cielo:1.7,caida:1.05,impacto:3.35,negro:1.2});
   function fabrica(T,MOD,{escena,camara,casas,entorno=null,puertaSalida=null,impactar,interfaz,piso=()=>null,reducido=false,planoDeFase=f=>f,ambienteLluvia=()=>{}}){
     const V=T.Vector3,TAU=Math.PI*2,lim=x=>Math.max(0,Math.min(1,x)),suave=x=>{x=lim(x);return x*x*(3-2*x);};
     const actuacion=window.CAOZ_ARPG_ADREIDA_CINE.fabrica(T,MOD),POV=['carrera','ataquePOV','voltear','techo','hechizo','cielo'],POV_BRAZOS=['carrera','ataquePOV'];
@@ -322,6 +322,7 @@
       if(['tropezar','buscar'].includes(f))r.particulasMago.actualizar({fase:'explosion',t:edad,desdeImpacto:edad});
       else if(f==='voltear')r.particulasMago.actualizar(t+1e-8<ESPERA_PARTICULAS?{fase:'explosion',t:edad,desdeImpacto:edad}:{fase:'viaje',t:t-ESPERA_PARTICULAS,duracion:VIAJE_PARTICULAS,desdeImpacto:edad});
       else if(f==='techo')r.particulasMago.actualizar({fase:'reunion',t,duracion:DURACIONES.techo,desdeImpacto:edad});
+      else if(f==='hechizo')r.particulasMago.actualizar({fase:'resorte',t,duracion:DURACIONES.techo});
       else r.particulasMago.restaurar();
       // El foco del hechizo reaparece con su silueta, sin una luz huérfana
       // delatando al mago antes de que las partículas lleguen al tejado.
@@ -499,7 +500,7 @@
         if(edad>=0){
           r.hechizoMago.preparar({cielo,impacto:s.impacto||h.pos});
           const visible=['cielo','caida'].includes(s.fase);
-          r.hechizoMago.actualizar(edad,DURACIONES.hechizo,visible?{meteorito:r.meteorito.position,edadMeteorito:s.total-s.inicios.cielo}:{});
+          r.hechizoMago.actualizar(edad,DURACION_INVOCACION,visible?{meteorito:r.meteorito.position,edadMeteorito:s.total-s.inicios.cielo}:{});
         }
         if(POV_BRAZOS.includes(s.fase)){
           actuacion.fps(r.brazosFPS,camara,s.fase==='carrera'?h.fase:0,s.total,s.fase==='ataquePOV'?(s.t<DURACION_SLIDE?deslizamiento(s.t).k:(s.t-DURACION_SLIDE)/actuacion.tiemposRemate.duracion):null,s.fase==='ataquePOV'?(s.t<DURACION_SLIDE?'deslizarAtaque':'rematarDeslizamiento'):'carreraCine');

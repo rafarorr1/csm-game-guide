@@ -107,7 +107,7 @@ console.log('✓ Keyframes conservan la representación del actor; contador de c
 const M=c.CAOZ_ARPG_CINE_CAMARA,clave=M.CLAVE,backup=clave+'.respaldo-v7',anterior={...M.nueva(),version:7,nombre:'Cámara manual',planos:{techo:{vista:'original',claves:[{t:0,pos:[42,2,10],rot:[0,0,0,1],fov:42,distancia:10,curva:'lineal'}]}}};
 almacenamiento.set(backup,'otro respaldo manual');
 async function importar(toma){const texto=JSON.stringify(toma);$('ceArchivo').files=[{size:texto.length,text:async()=>texto}];await $('ceArchivo').onchange();}
-await importar(anterior);assert.equal(almacenamiento.get(backup),'otro respaldo manual');assert.equal(almacenamiento.get(backup+'.1'),JSON.stringify(anterior));assert.equal(JSON.parse(almacenamiento.get(clave)).version,11);
+await importar(anterior);assert.equal(almacenamiento.get(backup),'otro respaldo manual');assert.equal(almacenamiento.get(backup+'.1'),JSON.stringify(anterior));assert.equal(JSON.parse(almacenamiento.get(clave)).version,12);
 await importar(anterior);assert(!almacenamiento.has(backup+'.2'),'Reimportar la misma toma reutiliza su copia exacta');
 entrada('ceTiempo',1210);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,1210,'El nuevo hold conserva su cámara nativa al importar');assert.equal(JSON.parse(almacenamiento.get(clave)).planos.techo.nativasHasta.voltear,2);
 entrada('ceTiempo',1330);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,42,'La cámara manual v7 se conserva tras el hold');
@@ -120,6 +120,33 @@ $('ceKey').onclick();assert(!JSON.parse(almacenamiento.get(clave)).planos.techo.
 console.log('✓ Formato 10 en editor: respaldos sin sobrescritura, importación manual, hold y hechizo nativos, edición explícita de ambas acciones.');
 
 const manual9={...M.nueva(),version:9,nombre:'Paneo conservado',planos:{descubrir:{vista:'externa',claves:[{t:0,pos:[12,2,10],rot:[0,0,0,1],fov:42,distancia:10,curva:'suave'},{t:2.4,pos:[24,2,10],rot:[0,0,0,1],fov:55,distancia:10,curva:'corte'}]},techo:{vista:'original',claves:[{t:0,pos:[85,2,10],rot:[0,0,0,1],fov:44,distancia:10,curva:'lineal'}]}}};
-await importar(manual9);const guardada10=JSON.parse(almacenamiento.get(clave));assert.equal(guardada10.version,11);assert.equal(almacenamiento.get(clave+'.respaldo-v9'),JSON.stringify(manual9));assert(Math.abs(guardada10.planos.descubrir.claves[1].t-3.4)<1e-10);assert.equal(JSON.stringify(guardada10.planos.techo),JSON.stringify(manual9.planos.techo));
+await importar(manual9);const guardada10=JSON.parse(almacenamiento.get(clave));assert.equal(guardada10.version,12);assert.equal(almacenamiento.get(clave+'.respaldo-v9'),JSON.stringify(manual9));assert(Math.abs(guardada10.planos.descubrir.claves[1].t-3.4)<1e-10);assert.equal(JSON.stringify(guardada10.planos.techo),JSON.stringify(manual9.planos.techo));
 for(const f of [1210,1330,1450,1570]){entrada('ceTiempo',f);await completar();agrupado.antesDibujo();assert.equal(camara.position.x,85,'La cámara guardada de v9 continúa en todas las acciones del plano 07');assert.equal($('cePOV').checked,false);assert.equal($('cePOV').disabled,true);assert.equal($('cePOVControl').hidden,true);assert.equal($('cePOVControl').style.display,'none');assert.equal(vistaExterna,false);}
 console.log('✓ Importar v9 respalda la toma, estira sólo el paneo y conserva las cámaras de POV7 con su opción de brazos bloqueada.');
+
+// La apertura automática de v11 usa el montaje real de toma 07: 11.4 segundos.
+const key12=(t,x,curva='suave')=>({t,pos:[x,2,10],rot:[0,0,0,1],fov:42+x/10,distancia:10,curva});
+const manual11=M.validar({...M.nueva(),version:11,nombre:'Pausa editable',planos:{salida:{vista:'externa',claves:[key12(1,10)]},techo:{vista:'original',claves:[key12(0,20),key12(6,50),key12(10.7,90)]}}});
+const respaldo11=clave+'.respaldo-v11';almacenamiento.set(respaldo11,'otra toma v11');almacenamiento.set(clave,JSON.stringify(manual11));
+let cuadro12=0;
+const inicios12={voltear:0,techo:4.6,hechizo:6,cielo:9.7};
+const api12={
+ reiniciar(){cuadro12=0;camara.position.set(0,2,10);},paso(){cuadro12++;camara.position.x=cuadro12;},
+ estado(){const fase=cuadro12<276?'voltear':cuadro12<360?'techo':cuadro12<582?'hechizo':'cielo';return {fase,t:cuadro12/60-inicios12[fase],tPlano:cuadro12/60,total:cuadro12/60,inicios:inicios12,actor:[0,0,0],mago:[1,0,0],terminado:cuadro12>=683};},
+ vista(v){vistaExterna=v;},capturar(){return {cuadro12,x:camara.position.x};},mostrar(c){cuadro12=c.cuadro12;camara.position.x=c.x;}
+};
+const editor12=c.CAOZ_ARPG_CINE_EDITOR.crear(T,camara,new Elemento('canvas'),api12);await completar();
+const guardada12=JSON.parse(almacenamiento.get(clave));assert.equal(guardada12.version,12);assert.equal(almacenamiento.get(respaldo11),'otra toma v11');assert.equal(almacenamiento.get(respaldo11+'.1'),JSON.stringify(manual11));
+assert.equal(JSON.stringify(guardada12.planos.salida),JSON.stringify(manual11.planos.salida),'Abrir v11 conserva salida sin anteponer otra patada');assert.equal(Number($('ceLocal').max),683);
+const evaluador=M.crear(T),quieta=evaluador.muestra(manual11.planos.techo.claves,9);
+for(const f of [0,539,540,541,560,581,582,600,683,560,540,582]){
+ entrada('ceLocal',f);await completar();editor12.antesDibujo();assert.equal(cuadro12,f);assert.equal(Number($('ceLocal').value),f);
+ const esperada=evaluador.tomaEn(manual11,api12.estado()).camara;assert(Math.abs(camara.position.x-esperada.pos[0])<1e-9,'Scrub y juego conservan la cámara al cruzar la pausa');assert(Math.abs(camara.fov-esperada.fov)<1e-9);
+ if(f>=540&&f<582)assert(Math.abs(camara.position.x-quieta.pos[0])<1e-9,'Los cuadros F540–F581 quedan inmóviles');
+}
+await importar(manual11);assert(!almacenamiento.has(respaldo11+'.2'),'Importar reutiliza el respaldo automático exacto');
+entrada('ceLocal',560);await completar();editor12.antesDibujo();entrada('ceFov',68);$('ceKey').onclick();
+const editada12=JSON.parse(almacenamiento.get(clave)),nuevaClave=editada12.planos.techo.claves.find(k=>Math.abs(k.t-560/60)<1e-9);assert.equal(nuevaClave.fov,68,'La pausa es editable con los controles normales');
+entrada('ceLocal',540);await completar();entrada('ceLocal',560);await completar();editor12.antesDibujo();assert.equal(camara.fov,68);
+$('ceUndo').onclick();editor12.antesDibujo();assert(Math.abs(camara.fov-quieta.fov)<1e-9,'Deshacer recupera la pausa migrada');
+console.log('✓ Editor v12: respaldo automático v11 sin sobrescribir, importación idempotente, slider de 684 cuadros, pausa F540–F581, easing y edición/deshacer dentro de la pausa.');

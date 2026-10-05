@@ -17,7 +17,7 @@ const cine=c.CAOZ_ARPG_FINAL_MAGO.fabrica(T,MOD,{escena,camara,casas,planoDeFase
 assert.equal(cine.recursos,null,'No reserva geometrías hasta entrar');
 assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES.vertigo,2.8,'El dolly frontal dura un segundo más');
 assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[4],'carrera');assert.equal(c.CAOZ_ARPG_CINE_CAMARA.planos[5],'tropezar','El slide conserva el identificador del plano 6 y sus keyframes');
-for(const [fase,segundos]of Object.entries({salida:3.6,descubrir:3.4,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3}))assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES[fase],segundos,'El montaje separa slide, incorporación, giro y POV: '+fase);
+for(const [fase,segundos]of Object.entries({salida:3.6,descubrir:3.4,carrera:93/60,ataquePOV:.55,desaparece:.35,levantarse:.30,tropezar:.74,buscar:1.2,voltear:4.6,techo:1.4,hechizo:3.7}))assert.equal(c.CAOZ_ARPG_FINAL_MAGO.DURACIONES[fase],segundos,'El montaje separa slide, incorporación, giro y POV: '+fase);
 for(const fps of [30,60,120]){
  camara.position.set(12,16,22);camara.lookAt(actor.pos);const antes=regresos,finAntes=avisosFin,impactosAntes=impactos,posAntes=actor.pos.clone();
  assert(cine.iniciar([actor,otro],{puerta:new T.Vector3(10,0,10)}));assert(!cine.iniciar([actor]));const orden=[],velocidadesPies=[];let ultimoAlto=0,poseAntes=null,inicioPaneo=null,dirAtaque=null,ultimaCamara=null,inicioPOV=null,rematePos=null,inicioPies=null,minBusqueda=Infinity,maxBusqueda=-Infinity,particulasVistas=false,reunionVista=false,observacion=0;
@@ -33,7 +33,9 @@ for(const fps of [30,60,120]){
   const actual=cine.estado();
   const magia=cine.recursos.particulasMago,hechizo=cine.recursos.hechizoMago;
   if(actual.fase==='hechizo'){
-   assert(!cine.recursos.meteorito.visible,'No aparece el meteorito durante los tres segundos del hechizo');
+   assert.equal(magia.estado.fase,'resorte','La liberación del portal continúa al empezar el hechizo');
+   if(actual.t>.65)assert.equal(magia.pliegue.value,0,'Las estructuras recuperan exactamente su forma después del rebote');
+   assert(!cine.recursos.meteorito.visible,'No aparece el meteorito durante la invocación y su pausa adicional');
    if(actual.t>1.5&&hechizo.estado.pulsoFinal<.01){assert(escena.background.r<fondoOriginal.r*.45,'El cielo se oscurece después de reconstruirse el mago');assert(ambiente.intensity<.5&&luna.intensity<2);}
    if(hechizo.estado.pulso>.2)assert(hechizo.nucleo.count>0,'El pulso dibuja rayos verdes durante la invocación');
   }
@@ -197,9 +199,14 @@ cuadros.push(cine.capturarCuadro());
 const inicio5=cuadros.findIndex(f=>f.estado.fase==='carrera'),inicioSlide=cuadros.findIndex(f=>f.estado.fase==='ataquePOV'),inicio6=cuadros.findIndex(f=>f.estado.fase==='desaparece');
 assert.equal(inicioSlide-inicio5,93,'F093 del plano 5 inicia exactamente el deslizamiento');
 assert.equal(inicio6-inicio5,126,'F126 corta al plano 6 manteniendo el mismo slide');
-assert.equal(cuadros.filter(f=>f.estado.fase==='hechizo').length,180,'El hechizo dura tres segundos antes del meteorito');
+assert.equal(cuadros.filter(f=>f.estado.fase==='hechizo').length,222,'La invocación conserva sus tres segundos y espera otros 42 cuadros antes del meteorito');
+const pulsoManos=cuadros.find(f=>f.estado.fase==='hechizo'&&f.estado.t>=2.72);
+assert(pulsoManos.hechizo.estado.pulsoFinal>.9,'Los rayos de las manos conservan el máximo original; no se estiran al alargar el plano');
+const esperaMeteorito=cuadros.filter(f=>f.estado.fase==='hechizo'&&f.estado.t>=3-1e-8);
+assert.equal(esperaMeteorito.length,42,'La espera después de los rayos agrega exactamente 0,7 segundos');
+for(const f of esperaMeteorito){assert.equal(f.hechizo.estado.pulsoFinal,0,'Los rayos no se repiten durante la pausa');assert.equal(f.particulas.portal.pliegue,0,'El resorte termina antes del cierre del hechizo');}
 assert.equal(cuadros.filter(f=>f.estado.fase==='pies').length,79,'El editor muestra 79 cuadros: el F011 previo es el nuevo F000');
-const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='ataquePOV'&&f.estado.t>.3),cuadros.findIndex(f=>f.estado.fase==='pies'&&f.estado.t>.7),cuadros.findIndex(f=>f.estado.fase==='techo'),cuadros.findIndex(f=>f.estado.fase==='desaparece'),cuadros.findIndex(f=>f.estado.fase==='levantarse'&&f.estado.t>.1),cuadros.findIndex(f=>f.estado.fase==='voltear'&&f.estado.t>.45),cuadros.findIndex(f=>f.estado.fase==='tropezar'&&f.estado.t>.3),cuadros.findIndex(f=>f.estado.fase==='techo'&&f.estado.t>.75),cuadros.findIndex(f=>f.estado.fase==='hechizo'&&f.estado.t>1.1),cuadros.findIndex(f=>f.estado.fase==='cielo'&&f.estado.t>.8),cuadros.findIndex(f=>f.estado.fase==='impacto'&&f.estado.t>1.4),cuadros.length-1];
+const muestras=[0,cuadros.findIndex(f=>f.estado.fase==='ataquePOV'&&f.estado.t>.3),cuadros.findIndex(f=>f.estado.fase==='pies'&&f.estado.t>.7),cuadros.findIndex(f=>f.estado.fase==='techo'),cuadros.findIndex(f=>f.estado.fase==='desaparece'),cuadros.findIndex(f=>f.estado.fase==='levantarse'&&f.estado.t>.1),cuadros.findIndex(f=>f.estado.fase==='voltear'&&f.estado.t>.45),cuadros.findIndex(f=>f.estado.fase==='tropezar'&&f.estado.t>.3),cuadros.findIndex(f=>f.estado.fase==='techo'&&f.estado.t>.75),cuadros.findIndex(f=>f.estado.fase==='hechizo'&&f.estado.t>.16),cuadros.findIndex(f=>f.estado.fase==='hechizo'&&f.estado.t>1.1),cuadros.findIndex(f=>f.estado.fase==='cielo'&&f.estado.t>.8),cuadros.findIndex(f=>f.estado.fase==='impacto'&&f.estado.t>1.4),cuadros.length-1];
 const recursosAntes=escena.children.length;
 for(const i of [...muestras,...muestras.slice().reverse(),...muestras]){
  for(const x of cuadros[i].agarres)x.n.morphTargetInfluences.fill(-1);

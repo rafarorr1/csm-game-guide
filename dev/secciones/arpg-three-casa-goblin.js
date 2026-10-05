@@ -16,7 +16,6 @@
     hoja.position.x=.5;hoja.userData.sentidoApertura=1;marco.add(hoja);caja(hoja,1,2,.08,[-.5,1,0],roble);
     for(const y of [.35,1.55])caja(hoja,.91,.085,.025,[-.5,y,.058],metal);
     caja(hoja,.1,.2,.05,[-.82,.95,.08],metal);
-    const marca=new THREE.Mesh(new THREE.TorusGeometry(.105,.025,5,12),propia(0xd2ab61));marca.position.set(-.31,1.24,.065);hoja.add(marca);
     const entrada=new THREE.Mesh(new THREE.PlaneGeometry(1.25,2.3),new THREE.MeshBasicMaterial({visible:false}));entrada.position.set(0,1,.14);marco.add(entrada);
     const halo=new THREE.Mesh(new THREE.RingGeometry(.45,.53,32).rotateX(-Math.PI/2),new THREE.MeshBasicMaterial({color:0xc5a166,transparent:true,opacity:.55,depthWrite:false}));halo.position.copy(aproximacion).setY(.035);halo.visible=false;plaza.add(halo);
     const camara=new THREE.PerspectiveCamera(36,1,.1,60);camara.position.set(6.8,8.5,11.5);camara.lookAt(0,.6,-.2);
