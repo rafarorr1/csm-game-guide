@@ -4,6 +4,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
+#include <sys/stat.h>
 #include "juego.hpp"
 #include "dibujo.hpp"
 #include "hud.hpp"
@@ -11,6 +12,27 @@
 using namespace Grietas;
 namespace {
 void elegir(Juego& j,int heroe){j.iniciar(heroe?MOHAMED:ADREIDA);j.menu=true;j.seleccionHeroe=heroe;}
+// Captura las dos pantallas del propio juego para diagnosticar en consola o emulador.
+// La lectura se hace con la GPU sincronizada; nunca accede al escritorio anfitrión.
+bool capturarPantallas(const Juego& j,float fps){
+ mkdir("sdmc:/3ds",0777);mkdir("sdmc:/3ds/CaozARPG",0777);mkdir("sdmc:/3ds/CaozARPG/capturas",0777);
+ const unsigned long long id=osGetTime();bool correcto=true;
+ C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+ for(int n=0;n<2;n++){
+  const gfxScreen_t pantalla=n?GFX_BOTTOM:GFX_TOP;u16 ancho=0,alto=0;
+  u8* origen=gfxGetFramebuffer(pantalla,GFX_LEFT,&ancho,&alto);
+  if(!origen||ancho!=240||(alto!=400&&alto!=320)){correcto=false;continue;}
+  GSPGPU_InvalidateDataCache(origen,ancho*alto*3);
+  char ruta[160];std::snprintf(ruta,sizeof(ruta),"sdmc:/3ds/CaozARPG/capturas/%llu-%s.ppm",id,n?"inferior":"superior");
+  FILE* f=std::fopen(ruta,"wb");if(!f){correcto=false;continue;}
+  std::fprintf(f,"P6\n%u %u\n255\n",alto,ancho);u8 fila[400*3];
+  for(int y=0;y<ancho;y++){for(int x=0;x<alto;x++){const u8* p=origen+(x*ancho+ancho-1-y)*3;fila[x*3]=p[2];fila[x*3+1]=p[1];fila[x*3+2]=p[0];}if(std::fwrite(fila,3,alto,f)!=alto)correcto=false;}
+  if(std::fclose(f)!=0)correcto=false;
+ }
+ char ruta[160];std::snprintf(ruta,sizeof(ruta),"sdmc:/3ds/CaozARPG/capturas/%llu.json",id);
+ if(FILE* f=std::fopen(ruta,"w")){std::fprintf(f,"{\"fps\":%.2f,\"cpu_ms\":%.2f,\"gpu_ms\":%.2f,\"memoria_lineal_libre\":%lu,\"nivel\":%d,\"oleada\":%d,\"heroe\":%d,\"vida\":%.1f,\"enemigos\":%d,\"score\":%d,\"secuencia\":%d,\"tiempo\":%.2f}\n",fps,C3D_GetProcessingTime(),C3D_GetDrawingTime(),(unsigned long)linearSpaceFree(),j.nivel,j.oleada,int(j.h.tipo),j.h.vida,j.vivos(),j.score,int(j.secuencia),j.tiempo);std::fclose(f);}
+ C3D_FrameEnd(0);return correcto;
+}
 void esperarSalida(){while(aptMainLoop()){hidScanInput();if(hidKeysDown()&KEY_START)break;gspWaitForVBlank();}}
 }
 int main(){
@@ -35,7 +57,9 @@ int main(){
   circlePosition palanca{};hidCircleRead(&palanca);const int lado=palanca.dx>90?1:palanca.dx< -90?-1:0;
   const bool derecha=(abajo&KEY_DRIGHT)||(lado==1&&palancaMenu!=1),izquierda=(abajo&KEY_DLEFT)||(lado==-1&&palancaMenu!=-1);palancaMenu=lado;
   bool consumir=false;
-  if(juego.secuencia==FIN_ALPHA){if(abajo&KEY_START){elegir(juego,juego.seleccionHeroe);esperaSoltar=true;}consumir=true;}
+  const bool captura=(sostenido&KEY_SELECT)&&(abajo&KEY_START);
+  if(captura){juego.avisar(capturarPantallas(juego,fps)?"Captura guardada en la SD":"No se pudo guardar la captura",2);anterior=osGetTime();consumir=true;}
+  else if(juego.secuencia==FIN_ALPHA){if(abajo&KEY_START){elegir(juego,juego.seleccionHeroe);esperaSoltar=true;}consumir=true;}
   else if(juego.menu){
    if(izquierda||derecha)elegir(juego,1-juego.seleccionHeroe);
    if(pulsa&&toque.py>=91&&toque.py<156)elegir(juego,toque.px<160?0:1);
@@ -52,7 +76,7 @@ int main(){
    if((abajo&KEY_A)||(pulsa&&toque.py>=165)){if(juego.resuelto)juego.continuarCarta();else juego.tirar(juego.elegida);esperaSoltar=true;}
    consumir=true;
   }else if((abajo&KEY_START)||(pulsa&&tactil==7)){juego.pausa=true;consumir=true;esperaSoltar=true;}
-  if(abajo&KEY_SELECT)metricas=!metricas;
+  if((abajo&KEY_SELECT)&&!captura)metricas=!metricas;
   constexpr u32 acciones=KEY_A|KEY_B|KEY_X|KEY_Y|KEY_L|KEY_R|KEY_DUP|KEY_TOUCH;
   if(!(sostenido&acciones))esperaSoltar=false;
   Entrada entrada{};
@@ -67,7 +91,8 @@ int main(){
    entrada.provoca=(abajo&KEY_DUP)||(pulsa&&tactil==5);
    entrada.ulti=(abajo&KEY_R)||(pulsa&&tactil==6);
   }
-  juego.paso(dt,entrada);pasoAudio(juego,dt);metricasHUD(fps,metricas,sonido);dibujar(juego);
+  if(!captura)juego.paso(dt,entrada);
+  pasoAudio(juego,dt);metricasHUD(fps,metricas,sonido);dibujar(juego);
   // C3D_FRAME_SYNCDRAW ya espera la pantalla; otro VBlank reduciría la frecuencia.
  }
  cerrarAudio();cerrarDibujo();cerrarHUD();C3D_Fini();romfsExit();gfxExit();return 0;

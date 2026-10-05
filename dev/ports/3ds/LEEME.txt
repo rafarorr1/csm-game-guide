@@ -22,6 +22,8 @@ Cruceta arriba: búmeran de Adreida / provocar con Mohamed.
 R: ulti. Adreidos dura 15 s, recarga 100 s. Mohamed: sigilo 10 s, recarga 90 s.
 Cada parry reduce un segundo la recarga del ulti.
 START: pausa. SELECT: mostrar/ocultar rendimiento.
+SELECT + START: guardar ambas pantallas y métricas en
+/3ds/CaozARPG/capturas/ (archivos PPM y JSON para revisar problemas).
 L + R + START: salir al Homebrew Launcher.
 Los botones de habilidades también se pueden tocar en la pantalla inferior.
 

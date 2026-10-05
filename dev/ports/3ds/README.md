@@ -43,7 +43,7 @@ c++ -std=c++17 -O2 -Idev/ports/3ds/include dev/ports/3ds/source/juego.cpp dev/po
 
 La batería cubre combate, cartas, navegación, límites de objetos y la progresión narrativa. También se ejecuta con AddressSanitizer y UndefinedBehaviorSanitizer en el anfitrión. El exportador valida mallas, presupuestos, pesos e índices.
 
-`tools/emular.py --azahar /ruta/al/ejecutable` crea un perfil aislado de Azahar con Old 3DS, CPU al 100 %, resolución nativa y temporización de GPU. Acepta `--video`, `--grabar-tas` y `--reproducir-tas archivo.ctm`. La grabación termina al cerrar el emulador normalmente. La guía de usuario está en `LEEME.txt`.
+`tools/emular.py --azahar /ruta/al/ejecutable` crea un perfil aislado de Azahar con Old 3DS, CPU al 100 %, resolución nativa y temporización de GPU. Acepta `--video`, `--grabar-tas` y `--reproducir-tas archivo.ctm`. La grabación termina al cerrar el emulador normalmente. La guía de usuario está en `LEEME.txt`. `tools/secuencia_azahar.py` genera entradas TAS reproducibles. SELECT + START guarda las dos pantallas PPM y métricas JSON en `sdmc:/3ds/CaozARPG/capturas/`; permite revisar el renderizado real del ejecutable incluso cuando el emulador no admite vídeo con su backend gráfico.
 
 ## Referencias de implementación
 

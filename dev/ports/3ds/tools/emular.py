@@ -6,6 +6,8 @@ import os
 import pathlib
 import shlex
 import subprocess
+import sys
+import time
 
 raiz = pathlib.Path(__file__).resolve().parents[1]
 parser = argparse.ArgumentParser(description=__doc__)
@@ -13,11 +15,14 @@ parser.add_argument('rom', nargs='?', type=pathlib.Path, default=raiz / 'CaozARP
 parser.add_argument('--azahar', type=pathlib.Path, default=os.environ.get('AZAHAR_BIN'))
 parser.add_argument('--salida', type=pathlib.Path, default=raiz.parents[4] / 'outputs' / '3ds' / 'azahar')
 parser.add_argument('--video', action='store_true', help='Graba ambas pantallas en partida.mkv; cerrar Azahar de forma normal.')
+parser.add_argument('--grafica', choices=['vulkan', 'opengl'], help='Motor de Azahar; el volcado de vídeo requiere OpenGL en 2126.1.2.')
 parser.add_argument('--ffmpeg-lib', type=pathlib.Path, default=os.environ.get('AZAHAR_FFMPEG_LIB'), help='Directorio de bibliotecas FFmpeg compatibles con esta versión de Azahar.')
 parser.add_argument('--grabar-tas', action='store_true', help='Registra entradas en partida.ctm.')
 parser.add_argument('--reproducir-tas', type=pathlib.Path)
 parser.add_argument('--preparar', action='store_true', help='Sólo crea el perfil y muestra el comando; no abre una ventana.')
 args = parser.parse_args()
+if args.grafica is None:
+    args.grafica = 'opengl' if args.video else 'vulkan'
 if args.grabar_tas and args.reproducir_tas:
     parser.error('No se puede grabar y reproducir TAS al mismo tiempo.')
 if args.azahar is None:
@@ -48,12 +53,12 @@ if args.ffmpeg_lib is not None:
 configuracion = {
     'Core': {'cpu_clock_percentage': '100'},
     'System': {'is_new_3ds': 'false'},
-    'Renderer': {'graphics_api': '2', 'resolution_factor': '1', 'simulate_3ds_gpu_timings': 'true'},
+    'Renderer': {'graphics_api': '2' if args.grafica == 'vulkan' else '1', 'resolution_factor': '1', 'simulate_3ds_gpu_timings': 'true'},
     'Layout': {'layout_option': '0'},
     'Miscellaneous': {'check_for_update_on_start': 'false', 'log_filter': '*:Info'},
     'UI': {'firstStart': 'false', 'confirmClose': 'false', 'saveStateWarning': 'false', 'singleWindowMode': 'true', 'pauseWhenInBackground': 'false', 'enable_discord_presence': 'false', r'Paths\screenshotPath': str(salida)},
     'WebService': {'enable_telemetry': 'false'},
-    'VideoDumping': {'output_format': 'matroska', 'video_encoder': 'ffv1', 'video_bitrate': '4000000', 'audio_encoder': 'pcm_s16le'},
+    'VideoDumping': {'output_format': 'matroska', 'video_encoder': 'ffv1', 'video_encoder_options': '', 'video_bitrate': '4000000', 'audio_encoder': 'pcm_s16le', 'audio_encoder_options': ''},
 }
 texto = ''
 for seccion, valores in configuracion.items():
@@ -70,13 +75,32 @@ if args.grabar_tas:
 if args.reproducir_tas:
     comando += ['-p', str(args.reproducir_tas.resolve())]
 comando.append(str(rom))
-manifiesto = {'rom': str(rom), 'sha256': hashlib.sha256(rom.read_bytes()).hexdigest(), 'perfil': 'Old 3DS; CPU 100%; resolución 1x; Vulkan', 'comando': comando, 'directorio': str(salida), 'entorno': {k: entorno[k] for k in ['XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_CACHE_HOME'] + (['DYLD_LIBRARY_PATH'] if args.ffmpeg_lib else [])}, 'hardware_fisico': False}
+variables = ['XDG_DATA_HOME', 'XDG_CONFIG_HOME', 'XDG_CACHE_HOME'] + (['DYLD_LIBRARY_PATH'] if args.ffmpeg_lib else [])
+manifiesto = {'rom': str(rom), 'sha256': hashlib.sha256(rom.read_bytes()).hexdigest(), 'perfil': 'Old 3DS; CPU 100%; resolución 1x; ' + args.grafica, 'comando': comando, 'directorio': str(salida), 'entorno': {k: entorno[k] for k in variables}, 'hardware_fisico': False}
 (salida / 'sesion.json').write_text(json.dumps(manifiesto, ensure_ascii=False, indent=2) + '\n')
 print('Directorio portable: ' + str(salida), flush=True)
 print(shlex.join(comando), flush=True)
 print('Controles de Azahar: A/S = A/B, Z/X = X/Y, Q/W = L/R, M/N = START/SELECT, flechas = Circle Pad, T/F/G/H = cruceta arriba/izquierda/abajo/derecha.', flush=True)
 print('Cierra con el menú Salir de Azahar para finalizar vídeo y TAS; no mates el proceso.', flush=True)
 if not args.preparar:
+    if sys.platform == 'darwin':
+        # Una sesión independiente conserva XDG y no depende de la terminal del editor.
+        # Azahar detecta correctamente una app desacoplada cuando launchd es su padre.
+        hijo = os.fork()
+        if hijo == 0:
+            os.setsid()
+            if os.fork() > 0:
+                os._exit(0)
+            time.sleep(.2)
+            (salida / 'azahar.pid').write_text(str(os.getpid()) + '\n')
+            os.chdir(salida)
+            with (salida / 'azahar-consola.log').open('w') as registro:
+                os.dup2(registro.fileno(), 1)
+                os.dup2(registro.fileno(), 2)
+                os.execve(comando[0], comando, entorno)
+        os.waitpid(hijo, 0)
+        print('Instancia independiente; PID en ' + str(salida / 'azahar.pid'), flush=True)
+        raise SystemExit(0)
     with (salida / 'azahar-consola.log').open('w') as registro:
         resultado = subprocess.run(comando, cwd=salida, env=entorno, stdout=registro, stderr=subprocess.STDOUT)
     raise SystemExit(resultado.returncode)
